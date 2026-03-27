@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>マサラテトリス DX</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍛</text></svg>">
+    
+    <!-- OGP Tags -->
+    <meta property="og:title" content="マサラテトリス DX | ST GAMES">
+    <meta property="og:description" content="激辛難易度のインド風テトリス">
+    <meta property="og:image" content="https://tk.st/images/masala-tetris-dx-ogp.png">
+    <meta property="og:url" content="https://tk.st/masala-tetris-dx/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Sans+JP:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        /* ベース設定 */
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: radial-gradient(circle at center, #3e1f08 0%, #1a0b02 100%);
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .font-masala { font-family: 'Cinzel Decorative', cursive; }
+
+        .pattern-bg {
+            background-color: #2a1205;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d97706' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* メインエリア構造 */
+        .main-content-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            justify-content: center;
+        }
+
+        /* ゲーム画面コンテナ */
+        .game-container {
+            position: relative;
+            border: 4px solid #d97706;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.5);
+            background: rgba(0, 0, 0, 0.9);
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* UIパネル共通 */
+        .panel-box {
+            background: linear-gradient(to bottom, #5a2508, #351202);
+            border: 1px solid #b45309;
+            border-radius: 6px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* ボタン */
+        .btn-masala {
+            background: linear-gradient(45deg, #d97706, #b45309);
+            border: 2px solid #fcd34d;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+        }
+        .btn-masala:active { transform: scale(0.95); }
+        .btn-masala:disabled { filter: grayscale(100%); opacity: 0.6; transform: none; }
+
+        .btn-shiva {
+            background: linear-gradient(135deg, #4f46e5, #312e81);
+            border: 2px solid #818cf8;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shiva::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            20% { transform: translateX(100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        /* AI思考エフェクト */
+        .maharaja-box {
+            border-left: 4px solid #f59e0b;
+            background: rgba(0, 0, 0, 0.6);
+        }
+        .ai-thinking {
+            animation: pulse-gold 1.5s infinite;
+            border-color: #a855f7;
+        }
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(252, 211, 77, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0); }
+        }
+
+        /* フローティングテキスト */
+        .flash-text {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #000;
+            pointer-events: none;
+            animation: popUp 1.2s forwards;
+            white-space: nowrap;
+            z-index: 20;
+            width: 100%;
+            text-align: center;
+        }
+        @keyframes popUp {
+            0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+            10% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            90% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -120%) scale(1); }
+        }
+
+        /* コントローラー */
+        .control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(217, 119, 6, 0.5);
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            touch-action: manipulation; 
+        }
+        .control-btn:active { background: rgba(245, 158, 11, 0.6); transform: scale(0.95); }
+        
+        .input-masala {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #d97706;
+            color: #fcd34d;
+            text-align: center;
+        }
+
+        /* モーダル */
+        .modal-celebrate { animation: celebratePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes celebratePop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .firework {
+            position: absolute;
+            border-radius: 50%;
+            animation: fireworkAnim 1s ease-out forwards;
+        }
+        @keyframes fireworkAnim {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(10); opacity: 0; }
+        }
+
+        /* モードスタイル */
+        .ura-mode .game-container { border-color: #9333ea; box-shadow: 0 0 30px rgba(147, 51, 234, 0.6); }
+        .ura-mode #main-title span { color: #a855f7; }
+        .ura-mode .btn-shiva { background: linear-gradient(135deg, #6b21a8, #3b0764); border-color: #a855f7; }
+        
+        .easy-mode .game-container { border-color: #22c55e; box-shadow: 0 0 30px rgba(34, 197, 94, 0.4); }
+        .easy-mode #main-title span { color: #4ade80; }
+        .easy-mode .btn-shiva { background: linear-gradient(135deg, #059669, #064e3b); border-color: #34d399; }
+
+        /* ★PCレイアウト定義 */
+        @media (min-width: 768px) {
+            .main-content-wrapper {
+                flex-direction: row; /* 横並び */
+                align-items: center; /* 垂直中央 */
+                gap: 1.5rem;
+                padding: 1rem;
+            }
+            .game-container {
+                height: 80vh;
+                max-height: 800px;
+                width: auto;
+                aspect-ratio: 12/20;
+            }
+            .mobile-only { display: none !important; }
+            .desktop-only { display: flex !important; }
+            
+            .desktop-sidebar {
+                height: 80vh;
+                max-height: 800px;
+            }
+        }
+        
+        /* ★スマホレイアウト定義 */
+        @media (max-width: 767px) {
+            .main-content-wrapper {
+                flex-direction: column; /* 縦積み */
+                align-items: center;
+                justify-content: flex-start;
+                padding: 4px;
+            }
+            .game-container {
+                width: auto;
+                height: 100%; 
+                /* ★修正: コントローラー領域分をさらに大きく確保して重なりを防ぐ */
+                max-height: calc(100dvh - 320px); 
+                aspect-ratio: 12/20;
+            }
+            .desktop-only { display: none !important; }
+            .mobile-only { display: flex !important; }
+        }
+    </style>
+</head>
+<body class="pattern-bg">
+
+    <!-- 1. ヘッダーエリア (共通・最上部固定) -->
+    <header class="w-full p-2 flex justify-between items-center bg-black/60 border-b border-amber-800 shrink-0 z-10 h-14">
+        <div class="flex items-center gap-2 overflow-hidden">
+            <!-- 音量ボタン -->
+            <button id="mute-btn" class="w-8 h-8 rounded-full bg-amber-900/80 border border-amber-500 flex items-center justify-center text-amber-400 mr-1">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            
+            <div class="w-9 h-9 bg-amber-600 rounded-full border-2 border-yellow-400 flex items-center justify-center overflow-hidden shadow-lg shrink-0 relative">
+                <span id="ai-icon" class="text-xl">👳🏾‍♂️</span>
+                <span id="ai-sparkle" class="absolute -top-1 -right-1 text-[10px] hidden animate-spin">✨</span>
+            </div>
+            <!-- マハラジャのセリフ -->
+            <div id="maharaja-box" class="maharaja-box px-2 py-1 rounded flex-1 min-w-0 transition-all duration-300">
+                <p id="maharaja-text" class="text-xs text-amber-200 italic truncate">ナマステ！準備はいいか？</p>
+            </div>
+        </div>
+        <div class="flex flex-col items-end shrink-0 ml-2">
+            <input type="text" id="player-name" value="匿名マサラ" class="input-masala rounded px-1 py-0.5 text-[10px] w-20 focus:outline-none" placeholder="名前">
+        </div>
+    </header>
+
+    <!-- 2. スマホ用ステータスバー (ヘッダー直下・スマホのみ) -->
+    <div class="mobile-only w-full px-2 py-1 flex justify-between items-center bg-amber-900/20 shrink-0 gap-2">
+        <div class="panel-box flex-1 flex justify-between px-2 py-1 items-center">
+            <div class="flex flex-col">
+                <span class="text-[8px] text-amber-400">SCORE</span>
+                <span id="mobile-score" class="font-masala text-lg leading-none">0</span>
+            </div>
+            <div class="flex flex-col items-end">
+                <span class="text-[8px] text-red-400">STAGE</span>
+                <span id="mobile-level" class="font-masala text-lg leading-none">1</span>
+            </div>
+        </div>
+        <!-- タイムバー -->
+        <div class="panel-box w-1/3 px-2 py-1 flex flex-col justify-center">
+            <div class="flex justify-between text-[8px] text-gray-300 mb-0.5">
+                <span>Time</span>
+                <span id="mobile-time-text">60s</span>
+            </div>
+            <div class="w-full bg-black h-1.5 rounded-full overflow-hidden border border-gray-600">
+                <div id="mobile-time-bar" class="h-full bg-green-500 transition-all duration-200" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. メインコンテンツエリア (PC: 横並び / Mobile: 縦積み) -->
+    <div class="main-content-wrapper">
+        
+        <!-- 左サイドバー (PCのみ) -->
+        <div class="desktop-only desktop-sidebar flex-col gap-2 w-48 shrink-0 justify-between">
+            <div class="flex flex-col gap-2">
+                <!-- Score & Stage 横並び -->
+                <div class="panel-box p-3 flex justify-around items-center">
+                    <div class="text-center">
+                        <div class="text-amber-400 text-[10px] font-bold">SCORE</div>
+                        <div id="pc-score" class="text-xl font-masala text-white leading-none">0</div>
+                    </div>
+                    <div class="w-px h-8 bg-amber-800/50"></div>
+                    <div class="text-center">
+                        <div class="text-red-400 text-[10px] font-bold">STAGE</div>
+                        <div id="pc-level" class="text-xl font-masala text-white leading-none">1</div>
+                    </div>
+                </div>
+
+                <div class="panel-box p-4 text-center">
+                    <div class="text-xs text-gray-300 mb-1">Time Limit</div>
+                    <div class="w-full bg-black h-2 rounded-full overflow-hidden border border-gray-600 relative mb-1">
+                        <div id="pc-time-bar" class="h-full bg-green-500 transition-all duration-200" style="width: 100%"></div>
+                    </div>
+                    <div id="pc-time-text" class="text-xs text-gray-400">60s</div>
+                </div>
+            </div>
+            
+            <!-- PC版シヴァボタン -->
+            <div class="mt-auto mb-4">
+                <button id="btn-shiva-pc" class="btn-masala btn-shiva w-full py-3 rounded-lg shadow-lg flex flex-row items-center justify-center gap-2 group relative transition-all" onclick="activateShiva()">
+                    <div class="text-2xl group-active:scale-110 transition-transform">🔱</div>
+                    <span class="font-bold text-sm shiva-label">シヴァ神の力</span>
+                    <div id="shiva-cooldown-pc" class="absolute inset-0 bg-black/80 flex items-center justify-center text-xl font-bold text-white hidden">5</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ゲーム画面 (中央) -->
+        <div class="game-container">
+            <canvas id="tetris"></canvas>
+            
+            <!-- START SCREEN -->
+            <div id="start-screen" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20 backdrop-blur-sm px-4">
+                <h1 id="main-title" class="font-masala text-4xl md:text-5xl text-amber-400 mb-2 text-center drop-shadow-lg leading-tight">Masala<br><span class="text-red-500">Tetris DX</span></h1>
+                <p class="text-amber-100 text-xs mb-4 text-center">Sound Edition</p>
+                
+                <div class="bg-amber-900/30 border border-amber-700 rounded p-2 w-full max-w-[200px] mb-4 text-xs">
+                    <h3 class="text-center text-amber-400 font-bold border-b border-amber-700 mb-1 pb-1">High Scores</h3>
+                    <ul id="ranking-list" class="text-gray-200 space-y-1 h-16 overflow-y-auto">
+                        <li class="text-center text-gray-500">No Data</li>
+                    </ul>
+                </div>
+                <button id="start-btn" class="btn-masala px-8 py-3 rounded-full text-xl font-bold tracking-wider animate-pulse">PLAY</button>
+            </div>
+
+            <!-- GAME OVER / RESULT -->
+            <div id="game-over-screen" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20 hidden px-4">
+                <h2 id="result-title" class="font-masala text-4xl text-red-500 mb-2 text-center leading-tight">GAME OVER</h2>
+                <div class="text-2xl text-white mb-4 font-bold"><span id="final-score">0</span> Score</div>
+                <div class="flex gap-2 mb-6">
+                    <button onclick="shareSNS('x')" class="bg-black border border-white text-white px-3 py-2 rounded text-xs hover:bg-gray-800 flex items-center gap-1"><i class="fab fa-x-twitter"></i> Post</button>
+                    <button onclick="shareSNS('line')" class="bg-[#06C755] text-white px-3 py-2 rounded text-xs hover:opacity-90 flex items-center gap-1"><i class="fab fa-line"></i> LINE</button>
+                </div>
+                <button id="restart-btn" class="btn-masala px-8 py-3 rounded-full text-xl font-bold">RETRY</button>
+            </div>
+            
+            <!-- LEVEL UP MODAL -->
+            <div id="levelup-modal" class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none hidden">
+                <div class="bg-gradient-to-br from-red-900 to-black border-4 border-yellow-500 p-6 rounded-xl text-center shadow-2xl transform scale-0 modal-celebrate relative overflow-hidden w-4/5">
+                    <h2 id="modal-title" class="font-masala text-3xl text-yellow-400 mb-2 drop-shadow-md">STAGE UP!</h2>
+                    <p id="modal-desc" class="text-white text-lg">Speed x 1.5 !!</p>
+                    <div class="text-6xl mt-2 animate-bounce">🔥</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右サイドバー (PCのみ: Next/Help/Special Blocks) -->
+        <div class="desktop-only desktop-sidebar flex-col w-48 shrink-0 gap-3 pt-4">
+            <div class="panel-box p-3 flex flex-col items-center">
+                <h3 class="font-bold text-amber-400 text-xs mb-2">NEXT</h3>
+                <div class="w-20 h-20 flex items-center justify-center bg-black/30 rounded border border-amber-900/50">
+                    <canvas id="next-piece" width="80" height="80"></canvas>
+                </div>
+            </div>
+            
+            <!-- Special Blocks一覧 -->
+            <div class="panel-box p-3 text-xs text-amber-100">
+                <h3 class="font-bold text-amber-400 border-b border-amber-700 pb-1 mb-2">Special Blocks</h3>
+                <ul class="space-y-1.5">
+                    <li class="flex items-center gap-2"><span class="text-lg leading-none">🔱</span> 三叉槍 (Trident)</li>
+                    <li class="flex items-center gap-2"><span class="text-lg leading-none">🌸</span> 蓮 (Lotus)</li>
+                    <li class="flex items-center gap-2"><span class="text-lg leading-none">🐘</span> 象 (Elephant)</li>
+                </ul>
+                <div id="prob-text" class="mt-2 text-[10px] text-gray-400">*20%の確率</div>
+            </div>
+
+            <div class="panel-box p-3 text-xs text-amber-100">
+                <h3 class="font-bold text-amber-400 border-b border-amber-700 pb-1 mb-2">Controls</h3>
+                <div class="mb-1">A D : 移動</div>
+                <div class="mb-1">W : 回転</div>
+                <div class="mb-1">S : 落下</div>
+                <div>Space : 一気に落下</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. スマホ用コントローラー (下部固定) -->
+    <div class="mobile-only w-full pb-2 pt-1 px-2 flex flex-col shrink-0 z-30 bg-gradient-to-t from-black via-black/90 to-transparent fixed bottom-0 left-0">
+        <!-- 操作エリア全体 -->
+        <div class="flex justify-between items-end w-full max-w-md mx-auto relative">
+            
+            <!-- 左側: 十字キー的配置 -->
+            <div class="grid grid-cols-3 gap-2 w-40 h-32 mb-2">
+                <!-- 1行目 -->
+                <div></div>
+                <button id="btn-rotate" class="control-btn w-12 h-12 text-amber-400 active:bg-amber-900/50 mb-[-10px] mx-auto transform translate-y-2"><i class="fas fa-redo text-sm"></i></button>
+                <div></div>
+                
+                <!-- 2行目 -->
+                <button id="btn-left" class="control-btn w-12 h-12 text-amber-400 active:bg-amber-900/50 mx-auto"><i class="fas fa-arrow-left text-sm"></i></button>
+                <button id="btn-down" class="control-btn w-12 h-12 text-amber-400 active:bg-amber-900/50 mx-auto"><i class="fas fa-arrow-down text-sm"></i></button>
+                <button id="btn-right" class="control-btn w-12 h-12 text-amber-400 active:bg-amber-900/50 mx-auto"><i class="fas fa-arrow-right text-sm"></i></button>
+            </div>
+
+            <!-- 右側: DROP + シヴァ -->
+            <div class="flex items-end gap-4 mb-3">
+                <button id="btn-drop" class="control-btn w-16 h-16 rounded-full bg-amber-600/40 border-2 border-amber-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(217,119,6,0.4)] active:bg-amber-600 active:scale-95">
+                    DROP
+                </button>
+                
+                <button id="btn-shiva-mobile" class="btn-masala btn-shiva w-12 h-12 rounded-full shadow-lg flex items-center justify-center relative transition-all active:scale-90" onclick="activateShiva()">
+                    <div class="text-xl">🔱</div>
+                    <div id="shiva-cooldown-mobile" class="absolute inset-0 bg-black/80 rounded-full flex items-center justify-center text-sm font-bold text-white hidden">5</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const apiKey = ""; 
+    
+    // --- Sound System ---
+    const SoundManager = {
+        ctx: null,
+        isMuted: false,
+        gainNode: null,
+        bgmTimer: null,
+        
+        init() {
+            if (this.ctx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+            this.gainNode = this.ctx.createGain();
+            this.gainNode.gain.value = 0.15; // Master Volume
+            this.gainNode.connect(this.ctx.destination);
+        },
+
+        toggleMute() {
+            this.isMuted = !this.isMuted;
+            if(this.gainNode) {
+                this.gainNode.gain.value = this.isMuted ? 0 : 0.15;
+            }
+            const icon = document.querySelector('#mute-btn i');
+            if(icon) icon.className = this.isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+        },
+
+        playTone(freq, type = 'sine', duration = 0.1, vol = 1.0) {
+            if (this.isMuted || !this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.gainNode);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+        },
+
+        // シタール風サウンド
+        playSitar(note, length = 0.3) {
+            if (this.isMuted || !this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+
+            osc.type = 'sawtooth';
+            osc.frequency.value = note;
+
+            filter.type = 'lowpass';
+            filter.Q.value = 5; // 共鳴を強く
+            filter.frequency.setValueAtTime(note * 2, this.ctx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(note, this.ctx.currentTime + length);
+
+            gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + length);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.gainNode);
+
+            osc.start();
+            osc.stop(this.ctx.currentTime + length);
+            
+            // ドローン音（共鳴弦）
+            const drone = this.ctx.createOscillator();
+            const droneGain = this.ctx.createGain();
+            drone.type = 'triangle';
+            drone.frequency.value = note * 1.5; // 5度
+            droneGain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            droneGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + length);
+            drone.connect(droneGain);
+            droneGain.connect(this.gainNode);
+            drone.start();
+            drone.stop(this.ctx.currentTime + length);
+        },
+
+        // タブラ風サウンド
+        playTabla(type) {
+            if (this.isMuted || !this.ctx) return;
+            if (type === 'high') {
+                // 「トゥン」：高い音
+                this.playTone(400, 'sine', 0.1, 0.8);
+            } else {
+                // 「ゲ」：低いベンド音
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.gainNode);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+        },
+
+        playSE(type) {
+            if(!this.ctx) return;
+            switch(type) {
+                case 'move': this.playTabla('high'); break;
+                case 'rotate': this.playSitar(523.25, 0.1); break; // C5
+                case 'drop': 
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.2);
+                    g.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                    g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
+                    osc.connect(g);
+                    g.connect(this.gainNode);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.2);
+                    break;
+                case 'clear':
+                    // ジャラーン（和音）
+                    [261.63, 329.63, 392.00, 523.25, 659.25].forEach((f, i) => { // C Major +
+                        setTimeout(() => this.playSitar(f, 0.8), i * 50);
+                    });
+                    break;
+                case 'shiva':
+                    // 激しい不協和音
+                    [100, 150, 200, 300, 450].forEach(f => {
+                        const o = this.ctx.createOscillator();
+                        o.type = 'sawtooth';
+                        o.frequency.value = f;
+                        const gn = this.ctx.createGain();
+                        gn.gain.value = 0.5;
+                        gn.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.0);
+                        o.connect(gn);
+                        gn.connect(this.gainNode);
+                        o.start();
+                        o.stop(this.ctx.currentTime + 1.0);
+                    });
+                    break;
+            }
+        },
+
+        startBGM() {
+            if(this.bgmTimer) clearInterval(this.bgmTimer);
+            if(!this.ctx) return;
+
+            // ラーガ風スケール (C Db E F G Ab B)
+            const scale = [261.63, 277.18, 329.63, 349.23, 392.00, 415.30, 493.88]; 
+            let step = 0;
+
+            this.bgmTimer = setInterval(() => {
+                if(isPaused || isGameOver) return;
+                
+                // リズム (タブラ)
+                if(step % 4 === 0) this.playTabla('low');
+                else if(step % 2 === 0) this.playTabla('high');
+
+                // メロディ (ランダムなシタール)
+                if (Math.random() > 0.6) {
+                    const note = scale[Math.floor(Math.random() * scale.length)];
+                    // オクターブ変化
+                    const octave = Math.random() > 0.8 ? 2 : 1;
+                    this.playSitar(note * octave, 0.4);
+                }
+                step++;
+            }, 250); // BPM 120 approx
+        },
+
+        stopBGM() {
+            if(this.bgmTimer) clearInterval(this.bgmTimer);
+        }
+    };
+
+    // --- DOM Elements ---
+    const canvas = document.getElementById('tetris');
+    const context = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('next-piece');
+    const nextContext = nextCanvas.getContext('2d');
+
+    // Canvas Logic Size
+    canvas.width = 240;
+    canvas.height = 400;
+    context.scale(20, 20); // 1 block = 20 logic pixels
+    nextContext.scale(20, 20);
+
+    // --- Game Constants ---
+    const COLORS = [
+        null,
+        '#FF5733', '#FFC300', '#DAF7A6', '#C70039', '#900C3F', '#33FF57', '#33C1FF', // Standard
+        '#FFD700', // Trident
+        '#FF1493', // Lotus
+        '#A9A9A9', // Elephant
+        '#FFFFFF', // Nirvana
+    ];
+
+    const arena = createMatrix(12, 20);
+    
+    const player = {
+        pos: {x: 0, y: 0},
+        matrix: null,
+        next: null, 
+        score: 0,
+        level: 1,
+        dropInterval: 260, 
+        nextPieceOverride: null
+    };
+
+    let dropCounter = 0;
+    let lastTime = 0;
+    let levelStartTime = 0;
+    let isGameOver = false;
+    let isPaused = true;
+    let isControlsInverted = false;
+    let shivaCooldown = false;
+
+    // Modes
+    let isSecretMode = false;
+    let isEasyMode = false;
+    let SHIVA_COOLDOWN_TIME = 5; 
+    const SECRET_NAMES = ['津崎', '大矢', '柚木'];
+    const EASY_NAMES = ['芥川', '武田'];
+    
+    let currentPersona = 'maharaja';
+
+    // AI Data
+    const AI_QUOTES = {
+        maharaja: {
+            icon: "👳🏾‍♂️",
+            role: "Kingly Maharaja",
+            start: ["ナマステ！マサラテトリスへようこそ！", "スパイスの準備はいいかね？"],
+            good: ["素晴らしい！", "辛さが効いてきたぞ！", "エレガントだ！"],
+            bad: ["おっと危ない！", "シヴァ神に祈れ！"],
+            levelup: ["レベルアップ！激辛モードじゃ！"],
+            shiva: ["シヴァ神の力が宿った！", "破壊と再生の舞！"],
+            gameover: ["また挑戦するがよい。", "良い夢は見れたかな？"],
+            clear: ["見事だ！伝説のマサラマスターよ！"]
+        },
+        buddha: {
+            icon: "🧘",
+            role: "Calm Buddha",
+            start: ["安らぎのパズルへようこそ。", "焦らず、ありのままに。"],
+            good: ["見事な調和です。", "善き行いです。"],
+            bad: ["執着を捨てなさい。", "苦しみを受け入れなさい。"],
+            levelup: ["修行の成果が出ています。", "時が満ちました。"],
+            shiva: ["天からの慈悲です。", "徳が報われました。"],
+            gameover: ["終わりは新たな始まり。", "諸行無常です。"],
+            clear: ["涅槃（ニルヴァーナ）が見えましたか？"]
+        },
+        shiva: {
+            icon: "🔱",
+            role: "God Shiva",
+            start: ["破壊の舞を踊る覚悟はあるか？", "世界を壊し、再生せよ！"],
+            good: ["破壊的だ！", "カオスこそ至高！"],
+            bad: ["愚かな！滅びるぞ！", "脆弱な精神め！"],
+            levelup: ["終焉が加速する！", "もっと激しく！"],
+            shiva: ["我が力に平伏せ！", "運命をねじ曲げる！"],
+            gameover: ["塵に還れ！", "再生をやり直せ！"],
+            clear: ["貴様こそが真の破壊神か…！"]
+        }
+    };
+
+    // --- Core Logic ---
+
+    function createMatrix(w, h) {
+        const matrix = [];
+        while (h--) matrix.push(new Array(w).fill(0));
+        return matrix;
+    }
+
+    function generateRandomPiece() {
+        let threshold = isSecretMode ? 0.5 : (isEasyMode ? 0.1 : 0.2);
+        const isSpecial = Math.random() < threshold;
+        
+        if (isSpecial) {
+            const specials = ['Trident', 'Lotus', 'Elephant'];
+            return createPiece(specials[Math.floor(Math.random() * specials.length)]);
+        } else {
+            const pieces = 'ILJOTSZ';
+            return createPiece(pieces[pieces.length * Math.random() | 0]);
+        }
+    }
+
+    function createPiece(type) {
+        switch(type) {
+            case 'I': return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
+            case 'L': return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+            case 'J': return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
+            case 'O': return [[4, 4], [4, 4]];
+            case 'Z': return [[5, 5, 0], [0, 5, 5], [0, 0, 0]];
+            case 'S': return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+            case 'T': return [[0, 7, 0], [7, 7, 7], [0, 0, 0]];
+            case 'Trident': return [[8, 0, 8, 0, 8], [8, 8, 8, 8, 8], [0, 0, 8, 0, 0], [0, 0, 8, 0, 0], [0, 0, 0, 0, 0]];
+            case 'Lotus': return [[0, 9, 0], [9, 9, 9], [0, 9, 0]];
+            case 'Elephant': return [[10, 0, 10], [10, 10, 10], [0, 10, 0]];
+            case 'Nirvana': return [[11]];
+        }
+    }
+
+    function drawBlock(ctx, x, y, colorIndex) {
+        if (colorIndex === 0) return;
+        
+        // Special rendering for Trident (8) and Nirvana (11)
+        if (colorIndex === 8) {
+            const time = Date.now() / 200;
+            const glow = Math.abs(Math.sin(time)) * 0.5 + 0.5;
+            ctx.fillStyle = `rgba(255, 215, 0, ${glow})`;
+            ctx.fillRect(x, y, 1, 1);
+            ctx.lineWidth = 0.1;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${glow})`;
+            ctx.strokeRect(x, y, 1, 1);
+            return;
+        }
+        if (colorIndex === 11) {
+            const time = Date.now() / 300;
+            const glow = Math.abs(Math.sin(time)) * 0.5 + 0.5;
+            ctx.fillStyle = `rgba(255, 255, 255, ${glow * 0.8 + 0.2})`;
+            ctx.fillRect(x, y, 1, 1);
+            return;
+        }
+
+        ctx.fillStyle = COLORS[colorIndex];
+        ctx.fillRect(x, y, 1, 1);
+        ctx.lineWidth = 0.05;
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.strokeRect(x, y, 1, 1);
+
+        if (colorIndex >= 9) {
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.font = '0.6px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            let symbol = colorIndex === 9 ? '🌸' : '🐘';
+            ctx.fillText(symbol, x + 0.5, y + 0.55);
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(x + 0.2, y + 0.2, 0.2, 0.2);
+        }
+    }
+
+    function draw() {
+        context.fillStyle = '#1a0b02';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        drawMatrix(arena, {x: 0, y: 0});
+        drawMatrix(player.matrix, player.pos);
+    }
+    
+    function drawNext() {
+        nextContext.fillStyle = '#1a0b02';
+        nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+        if (!player.next) return;
+        const matrix = player.next;
+        const w = matrix[0].length;
+        const h = matrix.length;
+        const offsetX = (4 - w) / 2;
+        const offsetY = (4 - h) / 2;
+        const scale = w > 4 ? 0.6 : 1.0;
+        nextContext.save();
+        if(w > 4) nextContext.scale(scale, scale);
+        matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) drawBlock(nextContext, x + (w > 4 ? 0.5 : offsetX), y + (w > 4 ? 0.5 : offsetY), value);
+            });
+        });
+        nextContext.restore();
+    }
+
+    function drawMatrix(matrix, offset) {
+        matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) drawBlock(context, x + offset.x, y + offset.y, value);
+            });
+        });
+    }
+
+    function merge(arena, player) {
+        player.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+            });
+        });
+    }
+
+    function rotate(matrix, dir) {
+        for (let y = 0; y < matrix.length; ++y) {
+            for (let x = 0; x < y; ++x) {
+                [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+            }
+        }
+        if (dir > 0) matrix.forEach(row => row.reverse());
+        else matrix.reverse();
+    }
+
+    function playerDrop(isManual = false) {
+        player.pos.y++;
+        if(isManual) {
+            player.score += 1;
+            updateDisplay();
+        }
+        if (collide(arena, player)) {
+            player.pos.y--;
+            merge(arena, player);
+            SoundManager.playSE('drop');
+            playerReset();
+            arenaSweep();
+            updateDisplay();
+        }
+        dropCounter = 0;
+    }
+
+    function playerHardDrop() {
+        let droppedRows = 0;
+        while (!collide(arena, player)) {
+            player.pos.y++;
+            droppedRows++;
+        }
+        player.pos.y--;
+        droppedRows--; 
+        if(droppedRows > 0) player.score += droppedRows * 2;
+        merge(arena, player);
+        SoundManager.playSE('drop');
+        playerReset();
+        arenaSweep();
+        updateDisplay();
+        dropCounter = 0;
+    }
+
+    function playerMove(offset) {
+        if (isControlsInverted) offset = -offset;
+        player.pos.x += offset;
+        if (collide(arena, player)) player.pos.x -= offset;
+        else SoundManager.playSE('move');
+    }
+
+    function playerRotate(dir) {
+        const pos = player.pos.x;
+        let offset = 1;
+        rotate(player.matrix, dir);
+        while (collide(arena, player)) {
+            player.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > player.matrix[0].length) {
+                rotate(player.matrix, -dir);
+                player.pos.x = pos;
+                return;
+            }
+        }
+        SoundManager.playSE('rotate');
+    }
+
+    function playerReset() {
+        if (player.nextPieceOverride) {
+            player.matrix = createPiece(player.nextPieceOverride);
+            player.nextPieceOverride = null;
+        } else {
+            if (player.next === null) player.next = generateRandomPiece();
+            player.matrix = player.next;
+            player.next = generateRandomPiece();
+        }
+        player.pos.y = 0;
+        player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+        if (collide(arena, player)) gameOver();
+    }
+
+    function collide(arena, player) {
+        const [m, o] = [player.matrix, player.pos];
+        for (let y = 0; y < m.length; ++y) {
+            for (let x = 0; x < m[y].length; ++x) {
+                if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) return true;
+            }
+        }
+        return false;
+    }
+
+    function arenaSweep() {
+        let rowCount = 0;
+        outer: for (let y = arena.length - 1; y > 0; --y) {
+            for (let x = 0; x < arena[y].length; ++x) {
+                if (arena[y][x] === 0) continue outer;
+            }
+            const row = arena.splice(y, 1)[0].fill(0);
+            arena.unshift(row);
+            ++y;
+            rowCount++;
+        }
+        if (rowCount > 0) {
+            SoundManager.playSE('clear');
+            const lineScores = [0, 100, 300, 500, 1000];
+            const bonus = Math.floor(lineScores[rowCount] * (1 + (player.level - 1) * 0.2));
+            player.score += bonus;
+            
+            if (rowCount >= 2) generateGeminiComment('good', `Cleared ${rowCount} lines!`);
+            else if (Math.random() > 0.8) aiSay('good');
+            
+            showFloatingText(rowCount === 4 ? "VINDALOO!!" : "+" + bonus, rowCount === 4 ? "text-red-500" : "text-yellow-400");
+        }
+    }
+
+    // --- Gemini / AI ---
+    async function generateGeminiComment(eventType, contextText) {
+        const sparkle = document.getElementById('ai-sparkle');
+        const box = document.getElementById('maharaja-box');
+        if(sparkle) sparkle.classList.remove('hidden');
+        if(box) box.classList.add('ai-thinking');
+
+        if (!apiKey) {
+            aiSay(eventType);
+            if(sparkle) sparkle.classList.add('hidden');
+            if(box) box.classList.remove('ai-thinking');
+            return;
+        }
+
+        const role = AI_QUOTES[currentPersona].role;
+        const prompt = `Character: ${role} (Masala Tetris). Language: Japanese. Context: ${contextText}. React in 1 short sentence (max 20 chars).`;
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await response.json();
+            if (data.candidates && data.candidates[0].content) {
+                aiAnnounce(data.candidates[0].content.parts[0].text);
+            } else {
+                aiSay(eventType);
+            }
+        } catch (error) {
+            aiSay(eventType);
+        } finally {
+            if(sparkle) sparkle.classList.add('hidden');
+            if(box) box.classList.remove('ai-thinking');
+        }
+    }
+
+    function aiAnnounce(text) {
+        const el = document.getElementById('maharaja-text');
+        el.style.opacity = 0;
+        setTimeout(() => {
+            el.innerText = text;
+            el.style.color = '#fcd34d';
+            el.style.opacity = 1;
+        }, 200);
+        setTimeout(() => { el.style.color = ''; }, 5000);
+    }
+
+    function aiSay(category) {
+        const quotes = AI_QUOTES[currentPersona];
+        const options = quotes[category];
+        if (!options) return;
+        const text = options[Math.floor(Math.random() * options.length)];
+        const el = document.getElementById('maharaja-text');
+        el.style.opacity = 0;
+        setTimeout(() => {
+            el.innerText = text;
+            el.style.color = '';
+            el.style.opacity = 1;
+        }, 200);
+    }
+
+    // --- Abilities ---
+    function activateShiva() {
+        if (shivaCooldown || isPaused || isGameOver) return;
+        shivaCooldown = true;
+        
+        SoundManager.playSE('shiva'); // サウンド再生
+
+        const toggleBtnState = (disabled) => {
+            document.getElementById('btn-shiva-pc').disabled = disabled;
+            document.getElementById('btn-shiva-mobile').disabled = disabled;
+            const overlays = [document.getElementById('shiva-cooldown-pc'), document.getElementById('shiva-cooldown-mobile')];
+            overlays.forEach(el => {
+                if(disabled) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        };
+
+        toggleBtnState(true);
+        
+        let timeLeft = SHIVA_COOLDOWN_TIME;
+        const updateTimer = () => {
+            document.getElementById('shiva-cooldown-pc').innerText = timeLeft;
+            document.getElementById('shiva-cooldown-mobile').innerText = timeLeft;
+        };
+        updateTimer();
+
+        const timer = setInterval(() => {
+            timeLeft--;
+            updateTimer();
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                shivaCooldown = false;
+                toggleBtnState(false);
+            }
+        }, 1000);
+
+        const failChance = isEasyMode ? 0 : 0.2;
+        if (Math.random() < failChance) {
+            player.next = createPiece('Trident');
+            showFloatingText("次、三叉槍！", "text-red-500");
+            generateGeminiComment('shiva', 'Shiva power backfired!');
+            document.body.style.filter = 'hue-rotate(270deg)';
+            setTimeout(() => document.body.style.filter = 'none', 300);
+        } else {
+             // Effects Logic
+             const effects = [
+                { name: "Bottom Clear", text: "下段浄化！", type: 'good', func: () => { arena.splice(arena.length - 2, 2); arena.unshift(new Array(12).fill(0), new Array(12).fill(0)); }},
+                { name: "Score Boost", text: "スコア+100", type: 'good', func: () => player.score += 100 },
+                { name: "Current Change", text: "Iミノ召喚！", type: 'good', func: () => { player.matrix = createPiece('I'); player.pos.x = Math.max(0, Math.min(arena[0].length - 4, player.pos.x)); }},
+                { name: "Chaos", text: "操作反転！", type: 'bad', func: () => { isControlsInverted = true; setTimeout(() => { isControlsInverted = false; aiSay('good'); }, 5000); }},
+            ];
+            
+            if (isEasyMode) {
+                effects.push({name: "Nirvana", text: "涅槃(1x1)！", type: 'good', func: () => { player.matrix = createPiece('Nirvana'); player.pos.x = Math.floor(arena[0].length/2); }});
+            }
+            
+            const validEffects = isEasyMode ? effects.filter(e => e.type === 'good') : effects;
+            const selected = validEffects[Math.floor(Math.random() * validEffects.length)];
+            selected.func();
+            showFloatingText(selected.text, selected.type === 'good' ? 'text-cyan-400' : 'text-purple-500');
+            generateGeminiComment('shiva', `Shiva Effect: ${selected.text}`);
+        }
+    }
+
+    // --- Game Loop & UI ---
+    function updateDisplay() {
+        document.getElementById('mobile-score').innerText = player.score;
+        document.getElementById('pc-score').innerText = player.score;
+        
+        let stgText = player.level;
+        if (isSecretMode) stgText = "LAST";
+        if (isEasyMode) stgText = "0";
+        
+        document.getElementById('mobile-level').innerText = stgText;
+        document.getElementById('pc-level').innerText = stgText;
+    }
+
+    function checkTimeLimit(currentTime) {
+        const remainingTime = Math.max(0, 60000 - (currentTime - levelStartTime));
+        const progress = (remainingTime / 60000) * 100;
+        const secondsLeft = Math.ceil(remainingTime / 1000);
+        
+        // Update PC & Mobile Bars
+        ['mobile', 'pc'].forEach(prefix => {
+            document.getElementById(`${prefix}-time-bar`).style.width = `${progress}%`;
+            const txt = document.getElementById(`${prefix}-time-text`);
+            txt.innerText = `${secondsLeft}s`;
+            
+            if (secondsLeft <= 10) {
+                txt.classList.add('text-red-500', 'font-bold', 'animate-pulse');
+                document.getElementById(`${prefix}-time-bar`).classList.replace('bg-green-500', 'bg-red-600');
+            } else {
+                txt.classList.remove('text-red-500', 'font-bold', 'animate-pulse');
+                document.getElementById(`${prefix}-time-bar`).classList.replace('bg-red-600', 'bg-green-500');
+            }
+        });
+
+        if (remainingTime <= 0) {
+            if (isSecretMode || isEasyMode) gameClear();
+            else levelUp(currentTime);
+        }
+    }
+
+    function levelUp(currentTime) {
+        player.level++;
+        levelStartTime = currentTime; 
+        player.dropInterval = Math.max(50, player.dropInterval / 1.5); 
+        updateDisplay();
+        generateGeminiComment('levelup', 'Level Up!');
+        
+        const modal = document.getElementById('levelup-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.add('hidden'), 2000);
+        fireworks(5);
+    }
+
+    function gameClear() {
+        isPaused = true;
+        SoundManager.stopBGM(); // BGM停止
+        generateGeminiComment('clear', 'Game Cleared!');
+        const modal = document.getElementById('levelup-modal');
+        document.getElementById('modal-title').innerText = "CONGRATULATIONS!";
+        document.getElementById('modal-desc').innerText = isEasyMode ? "お見事！" : "Game Clear!";
+        modal.classList.remove('hidden');
+        
+        let count = 0;
+        const fwInterval = setInterval(() => { fireworks(3); count++; if(count>20) clearInterval(fwInterval); }, 300);
+        setTimeout(() => { modal.classList.add('hidden'); showResultScreen(true); }, 4000);
+        saveScore(true);
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        SoundManager.stopBGM(); // BGM停止
+        generateGeminiComment('gameover', `Lost with ${player.score}`);
+        showResultScreen(false);
+        saveScore();
+    }
+
+    function showResultScreen(isClear) {
+        const screen = document.getElementById('game-over-screen');
+        const title = document.getElementById('result-title');
+        document.getElementById('final-score').innerText = player.score;
+        screen.classList.remove('hidden');
+        title.innerText = isClear ? "GAME CLEAR" : "GAME OVER";
+        title.className = isClear ? "font-masala text-4xl text-yellow-400 animate-pulse" : "font-masala text-4xl text-red-500";
+    }
+
+    function fireworks(count) {
+        const container = document.getElementById('levelup-modal');
+        for(let i=0; i<count; i++) {
+            const f = document.createElement('div');
+            f.className = 'firework';
+            f.style.left = 50 + (Math.random()-0.5)*60 + '%';
+            f.style.top = 50 + (Math.random()-0.5)*60 + '%';
+            f.style.backgroundColor = COLORS[Math.floor(Math.random()*COLORS.length)];
+            f.style.width = (10 + Math.random()*10) + 'px';
+            f.style.height = f.style.width;
+            container.appendChild(f);
+            setTimeout(()=>f.remove(), 1000);
+        }
+    }
+    
+    function showFloatingText(text, colorClass) {
+        const el = document.createElement('div');
+        el.className = `flash-text ${colorClass}`;
+        el.innerText = text;
+        document.querySelector('.game-container').appendChild(el);
+        setTimeout(() => el.remove(), 1500);
+    }
+
+    function saveScore(isClear = false) {
+        const name = document.getElementById('player-name').value || "匿名マサラ";
+        let stageText = player.level;
+        if (isSecretMode) stageText = isClear ? "CLEARED" : "LAST";
+        if (isEasyMode) stageText = isClear ? "COMPLETE" : "0";
+
+        let rankings = JSON.parse(localStorage.getItem('masalaRankings')) || [];
+        rankings.push({ name, score: player.score, stage: stageText });
+        rankings.sort((a, b) => b.score - a.score);
+        localStorage.setItem('masalaRankings', JSON.stringify(rankings.slice(0, 5)));
+        renderRanking();
+    }
+
+    function renderRanking() {
+        const list = document.getElementById('ranking-list');
+        const rankings = JSON.parse(localStorage.getItem('masalaRankings')) || [];
+        if (rankings.length === 0) { list.innerHTML = '<li class="text-center text-gray-500">No Data</li>'; return; }
+        list.innerHTML = rankings.map((r, i) => `
+            <li class="flex justify-between border-b border-amber-800/30 pb-1">
+                <span>${i+1}. ${r.name}</span><span class="text-amber-400">${r.score}</span>
+            </li>`).join('');
+    }
+
+    function update(time = 0) {
+        if (isPaused || isGameOver) return;
+        const deltaTime = time - lastTime;
+        lastTime = time;
+        dropCounter += deltaTime;
+        if (dropCounter > player.dropInterval) playerDrop();
+        checkTimeLimit(time);
+        draw();
+        drawNext();
+        requestAnimationFrame(update);
+    }
+
+    function resetGame() {
+        const nameInput = document.getElementById('player-name').value;
+        isSecretMode = SECRET_NAMES.includes(nameInput);
+        isEasyMode = EASY_NAMES.includes(nameInput);
+        
+        currentPersona = isSecretMode ? 'shiva' : (isEasyMode ? 'buddha' : 'maharaja');
+        document.body.className = `pattern-bg ${isSecretMode ? 'ura-mode' : (isEasyMode ? 'easy-mode' : '')}`;
+        
+        const labels = document.querySelectorAll('.shiva-label');
+        const newLabel = isSecretMode ? "シヴァ神の怒り" : (isEasyMode ? "仏陀の慈悲" : "シヴァ神の力");
+        labels.forEach(l => l.innerText = newLabel);
+
+        player.dropInterval = isSecretMode ? 86 : (isEasyMode ? 520 : 260);
+        SHIVA_COOLDOWN_TIME = isSecretMode ? 1 : 5;
+
+        const probText = document.getElementById('prob-text');
+        if (isSecretMode) {
+            probText.innerText = "*50%の確率";
+        } else if (isEasyMode) {
+            probText.innerText = "*10%の確率";
+        } else {
+            probText.innerText = "*20%の確率";
+        }
+
+        document.getElementById('ai-icon').innerText = AI_QUOTES[currentPersona].icon;
+        
+        arena.forEach(row => row.fill(0));
+        player.score = 0;
+        player.level = 1;
+        player.nextPieceOverride = null;
+        player.next = generateRandomPiece();
+        
+        isGameOver = false;
+        isPaused = false;
+        shivaCooldown = false;
+        dropCounter = 0;
+        lastTime = performance.now();
+        levelStartTime = performance.now(); 
+        
+        updateDisplay();
+        playerReset();
+        generateGeminiComment('start', 'Start Game');
+        
+        // --- Sound Start ---
+        SoundManager.init(); // 初回クリックでAudioContext起動
+        SoundManager.startBGM();
+        // -------------------
+
+        update(performance.now());
+    }
+
+    // --- Input Handling ---
+    document.addEventListener('keydown', event => {
+        if (isPaused || isGameOver) return;
+        if (event.keyCode === 65) playerMove(-1); 
+        else if (event.keyCode === 68) playerMove(1);
+        else if (event.keyCode === 83) playerDrop(true); 
+        else if (event.keyCode === 87) playerRotate(1);
+        else if (event.keyCode === 32) playerHardDrop();
+    });
+
+    function bindTouch(id, action) {
+        const btn = document.getElementById(id);
+        if(!btn) return;
+        const handle = (e) => {
+            if(e.cancelable) e.preventDefault();
+            if (!isPaused && !isGameOver) action();
+        };
+        btn.addEventListener('touchstart', handle, {passive: false});
+        btn.addEventListener('mousedown', handle);
+    }
+    
+    bindTouch('btn-left', () => playerMove(-1));
+    bindTouch('btn-right', () => playerMove(1));
+    bindTouch('btn-down', () => playerDrop(true));
+    bindTouch('btn-rotate', () => playerRotate(1));
+    bindTouch('btn-drop', () => playerHardDrop());
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+        document.getElementById('start-screen').classList.add('hidden');
+        resetGame();
+    });
+    document.getElementById('restart-btn').addEventListener('click', () => {
+        document.getElementById('game-over-screen').classList.add('hidden');
+        resetGame();
+    });
+    document.getElementById('mute-btn').addEventListener('click', () => {
+        SoundManager.toggleMute();
+    });
+
+    window.shareSNS = function(platform) {
+        const text = `マサラテトリスDX Score:${player.score} 👳🏾‍♂️🍛 #MasalaTetris`;
+        const url = window.location.href;
+        if (platform === 'x') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        else if (platform === 'line') window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    renderRanking();
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    aiSay('start');
+
+</script>
+</body>
+</html>

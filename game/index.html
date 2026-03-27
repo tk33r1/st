@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ja" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ST GAMES</title>
+  <meta property="og:title" content="ST GAMES">
+  <meta property="og:description" content="AIコーディング能力計測のために制作したゲームのアーカイブ">
+  <meta property="og:image" content="https://tk.st/images/st-games-ogp.png">
+  <meta property="og:url" content="https://tk.st/game/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #120c24;
+      --surface: #221646;
+      --text: #f6f2ff;
+      --primary: #00e5ff;
+      --secondary: #ff4fd8;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+        radial-gradient(circle at 20% 20%, rgba(0,229,255,0.18), transparent 24%),
+        radial-gradient(circle at 80% 15%, rgba(255,79,216,0.18), transparent 22%),
+        linear-gradient(180deg, #0b0718 0%, #120c24 55%, #1c1032 100%);
+      background-size: 24px 24px, 24px 24px, 100% 100%, 100% 100%, 100% 100%;
+      color: var(--text);
+      font-family: "VT323", monospace;
+      overflow: hidden;
+    }
+
+    /* ビネットエフェクト（画面四隅の暗がり） */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 50%, rgba(0, 0, 0, 0.55) 120%);
+      z-index: 45;
+    }
+
+    /* 動くスキャンライン */
+    .scanlines::before {
+      content: "";
+      position: fixed;
+      inset: -100% 0;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03),
+        rgba(255,255,255,0.01) 50%,
+        rgba(0,0,0,0.08) 51%,
+        rgba(0,0,0,0.03)
+      );
+      background-size: 100% 4px;
+      opacity: 0.3;
+      mix-blend-mode: screen;
+      z-index: 50;
+      animation: scanline 10s linear infinite;
+    }
+
+    @keyframes scanline {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(50%); }
+    }
+
+    .pixel-title {
+      font-family: "Press Start 2P", cursive;
+      text-shadow:
+        0 0 8px rgba(0,229,255,0.45),
+        0 0 18px rgba(255,79,216,0.35);
+      letter-spacing: 0.08em;
+    }
+
+    .retro-panel {
+      background: color-mix(in srgb, var(--surface) 88%, black 12%);
+      border: 3px solid var(--primary);
+      box-shadow:
+        0 0 0 3px rgba(255,79,216,0.18) inset,
+        0 0 24px rgba(0,229,255,0.14);
+    }
+
+    .game-card {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
+        var(--surface);
+      border: 2px solid rgba(0,229,255,0.4);
+      box-shadow:
+        0 0 0 2px rgba(255,79,216,0.1) inset,
+        0 12px 24px rgba(0,0,0,0.28);
+      /* アニメーションを少しバウンシーに */
+      transition: transform 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 250ms ease, border-color 250ms ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      border-color: var(--secondary);
+      box-shadow:
+        0 0 0 2px rgba(0,229,255,0.2) inset,
+        0 20px 35px rgba(0,0,0,0.4);
+    }
+
+    .pixel-btn {
+      font-family: "Press Start 2P", cursive;
+      border: 2px solid var(--text);
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.35);
+      transition: transform 100ms ease, box-shadow 100ms ease, filter 160ms ease;
+    }
+
+    .pixel-btn:hover {
+      filter: brightness(1.15);
+    }
+
+    .pixel-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.35);
+    }
+
+    .pixel-input {
+      background: rgba(10, 8, 22, 0.82);
+      border: 2px solid rgba(246,242,255,0.25);
+      color: var(--text);
+      font-family: "VT323", monospace;
+    }
+
+    .pixel-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.18);
+    }
+
+    /* セレクトボックスの矢印カスタマイズ */
+    select.pixel-input {
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23f6f2ff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 32px;
+    }
+
+    .blink-dot {
+      animation: blink 1s steps(2, start) infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0.3; }
+    }
+
+    .fade-up {
+      animation: fadeUp 500ms ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .img-frame {
+      background:
+        linear-gradient(135deg, rgba(0,229,255,0.18), rgba(255,79,216,0.16)),
+        #0e0a1d;
+      border: 2px solid rgba(246,242,255,0.16);
+      overflow: hidden;
+    }
+
+    .status-chip {
+      border: 1px solid rgba(246,242,255,0.18);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .retro-heart {
+      display: inline-block;
+      width: 44px;
+      height: 44px;
+      background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="1" height="1" fill="%23ff1744"/><rect x="2" y="1" width="1" height="1" fill="%23ff1744"/><rect x="5" y="1" width="1" height="1" fill="%23ff1744"/><rect x="6" y="1" width="1" height="1" fill="%23ff1744"/><rect x="0" y="2" width="1" height="1" fill="%23ff1744"/><rect x="1" y="2" width="1" height="1" fill="%23ff1744"/><rect x="2" y="2" width="1" height="1" fill="%23ff1744"/><rect x="3" y="2" width="1" height="1" fill="%23ff1744"/><rect x="4" y="2" width="1" height="1" fill="%23ff1744"/><rect x="5" y="2" width="1" height="1" fill="%23ff1744"/><rect x="6" y="2" width="1" height="1" fill="%23ff1744"/><rect x="7" y="2" width="1" height="1" fill="%23ff1744"/><rect x="0" y="3" width="1" height="1" fill="%23ff1744"/><rect x="1" y="3" width="1" height="1" fill="%23ff1744"/><rect x="2" y="3" width="1" height="1" fill="%23ff1744"/><rect x="3" y="3" width="1" height="1" fill="%23ff1744"/><rect x="4" y="3" width="1" height="1" fill="%23ff1744"/><rect x="5" y="3" width="1" height="1" fill="%23ff1744"/><rect x="6" y="3" width="1" height="1" fill="%23ff1744"/><rect x="7" y="3" width="1" height="1" fill="%23ff1744"/><rect x="0" y="4" width="1" height="1" fill="%23ff1744"/><rect x="1" y="4" width="1" height="1" fill="%23ff1744"/><rect x="2" y="4" width="1" height="1" fill="%23ff1744"/><rect x="3" y="4" width="1" height="1" fill="%23ff1744"/><rect x="4" y="4" width="1" height="1" fill="%23ff1744"/><rect x="5" y="4" width="1" height="1" fill="%23ff1744"/><rect x="6" y="4" width="1" height="1" fill="%23ff1744"/><rect x="7" y="4" width="1" height="1" fill="%23ff1744"/><rect x="1" y="5" width="1" height="1" fill="%23ff1744"/><rect x="2" y="5" width="1" height="1" fill="%23ff1744"/><rect x="3" y="5" width="1" height="1" fill="%23ff1744"/><rect x="4" y="5" width="1" height="1" fill="%23ff1744"/><rect x="5" y="5" width="1" height="1" fill="%23ff1744"/><rect x="6" y="5" width="1" height="1" fill="%23ff1744"/><rect x="2" y="6" width="1" height="1" fill="%23ff1744"/><rect x="3" y="6" width="1" height="1" fill="%23ff1744"/><rect x="4" y="6" width="1" height="1" fill="%23ff1744"/><rect x="5" y="6" width="1" height="1" fill="%23ff1744"/><rect x="3" y="7" width="1" height="1" fill="%23ff1744"/><rect x="4" y="7" width="1" height="1" fill="%23ff1744"/></svg>');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      animation: pixelHeartbeat 1.2s ease-in-out infinite;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 6px rgba(255, 23, 68, 0.6));
+    }
+
+    @keyframes pixelHeartbeat {
+      0% { transform: scale(1); }
+      15% { transform: scale(1.25); }
+      30% { transform: scale(1); }
+      45% { transform: scale(1.25); }
+      60% { transform: scale(1); }
+      100% { transform: scale(1); }
+    }
+  </style>
+ </head>
+ <body class="h-full relative">
+  <div class="vignette"></div>
+  <div id="app" class="scanlines h-full w-full overflow-auto relative z-10">
+   <header class="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-4">
+    <div class="max-w-6xl mx-auto retro-panel rounded-none p-4 sm:p-6">
+     <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+      
+      <!-- タイトル部分 -->
+      <div class="flex items-center gap-3">
+       <span class="blink-dot inline-block w-3 h-3 rounded-full" id="status-dot"></span>
+       <h1 id="title-text" class="pixel-title leading-tight text-[24px] sm:text-[28px]">ST GAMES</h1>
+       <div class="retro-heart ml-3 sm:ml-5"></div>
+      </div>
+      
+      <!-- 検索・ソート・ステータス -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+       <div class="relative w-full sm:w-56">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60"></i>
+        <input type="text" id="search-input" placeholder="SEARCH..." class="pixel-input w-full pl-9 pr-4 py-2.5 text-[20px]" autocomplete="off">
+       </div>
+       
+       <!-- appearance-noneクラスを追加してデフォルトの矢印を非表示化 -->
+       <select id="sort-select" class="pixel-input appearance-none px-3 py-2.5 text-[20px] cursor-pointer">
+        <option value="newest">NEWEST</option>
+        <option value="oldest">OLDEST</option>
+        <option value="title">TITLE</option>
+       </select>
+
+       <div class="status-chip px-4 py-2.5 flex items-center justify-center gap-2 text-[18px] whitespace-nowrap">
+        <i data-lucide="database" class="w-4 h-4 text-cyan-400"></i>
+        <span>SAVED: <span id="game-count">0</span></span>
+       </div>
+      </div>
+      
+     </div>
+    </div>
+   </header>
+   
+   <main class="w-full px-4 sm:px-6 lg:px-10 pb-40 relative z-10">
+    <section class="max-w-6xl mx-auto">
+     <div id="message-bar" class="hidden mb-4 retro-panel px-4 py-3 text-[20px]"></div>
+     
+     <div id="empty-state" class="retro-panel p-8 sm:p-10 text-center fade-up hidden">
+      <div class="mx-auto w-16 h-16 flex items-center justify-center mb-5" aria-hidden="true">
+       <i data-lucide="ghost" class="w-12 h-12 opacity-60"></i>
+      </div>
+      <h2 class="pixel-title text-[16px] sm:text-[20px] leading-relaxed">NO GAMES FOUND</h2>
+      <p class="mt-4 text-[24px] sm:text-[28px] opacity-85 text-center">条件に一致するゲームが見つかりません。</p>
+     </div>
+     
+     <div id="game-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+    </section>
+   </main>
+  </div>
+  
+  <script>
+    const defaultConfig = {
+      background_color: "#120c24",
+      surface_color: "#221646",
+      text_color: "#f6f2ff",
+      primary_action_color: "#00e5ff",
+      secondary_action_color: "#ff4fd8",
+      font_family: "Press Start 2P",
+      font_size: 18,
+      page_title: "ST GAMES"
+    };
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          const merged = { ...defaultConfig, ...config };
+
+          document.documentElement.style.setProperty("--bg", merged.background_color);
+          document.documentElement.style.setProperty("--surface", merged.surface_color);
+          document.documentElement.style.setProperty("--text", merged.text_color);
+          document.documentElement.style.setProperty("--primary", merged.primary_action_color);
+          document.documentElement.style.setProperty("--secondary", merged.secondary_action_color);
+
+          const title = document.getElementById("title-text");
+          const statusDot = document.getElementById("status-dot");
+          const body = document.body;
+          const messageBar = document.getElementById("message-bar");
+
+          if(title) title.textContent = merged.page_title;
+
+          const fontStackPrimary = `${merged.font_family}, "Press Start 2P", cursive`;
+          const fontStackBody = `${merged.font_family}, "VT323", monospace`;
+
+          body.style.color = merged.text_color;
+          if(title) title.style.fontFamily = fontStackPrimary;
+          if(messageBar) messageBar.style.fontFamily = fontStackBody;
+
+          const base = Number(merged.font_size) || defaultConfig.font_size;
+          // タイトルのフォントサイズをさらに調整（前回より約4px小さく）
+          if(title) title.style.fontSize = `clamp(20px, ${base * 1.3}px, 28px)`;
+
+          if(statusDot) {
+            statusDot.style.backgroundColor = merged.secondary_action_color;
+            statusDot.style.boxShadow = `0 0 10px ${merged.secondary_action_color}`;
+          }
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => (config.background_color || defaultConfig.background_color),
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => (config.surface_color || defaultConfig.surface_color),
+              set: (value) => {
+                config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => (config.text_color || defaultConfig.text_color),
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => (config.primary_action_color || defaultConfig.primary_action_color),
+              set: (value) => {
+                config.primary_action_color = value;
+                window.elementSdk.setConfig({ primary_action_color: value });
+              }
+            },
+            {
+              get: () => (config.secondary_action_color || defaultConfig.secondary_action_color),
+              set: (value) => {
+                config.secondary_action_color = value;
+                window.elementSdk.setConfig({ secondary_action_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => (config.font_family || defaultConfig.font_family),
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => (config.font_size || defaultConfig.font_size),
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["page_title", config.page_title || defaultConfig.page_title]
+        ])
+      });
+    }
+
+    let records = [];
+    const grid = document.getElementById("game-grid");
+    const emptyState = document.getElementById("empty-state");
+    const countEl = document.getElementById("game-count");
+    const messageBar = document.getElementById("message-bar");
+    const searchInput = document.getElementById("search-input");
+    const sortSelect = document.getElementById("sort-select");
+
+    function showMessage(text, type) {
+      if (!text) {
+        messageBar.classList.add("hidden");
+        messageBar.textContent = "";
+        return;
+      }
+      messageBar.classList.remove("hidden");
+      messageBar.textContent = text;
+      messageBar.style.borderColor = type === "error" ? "var(--secondary)" : "var(--primary)";
+      messageBar.style.color = "var(--text)";
+    }
+
+    function createCard(record) {
+      const card = document.createElement("article");
+      card.className = "game-card fade-up p-4 flex flex-col gap-4";
+      card.dataset.id = record.id;
+
+      const top = document.createElement("div");
+      top.className = "img-frame aspect-[1200/630] w-full relative group";
+
+      const img = document.createElement("img");
+      img.alt = record.title;
+      img.loading = "lazy";
+      img.className = "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105";
+      img.src = record.imageUrl;
+      img.onerror = function() {
+        this.style.display = "none";
+        const fallback = document.createElement("div");
+        fallback.className = "w-full h-full flex flex-col items-center justify-center opacity-50";
+        fallback.innerHTML = '<i data-lucide="tv" class="w-10 h-10 mb-2"></i><span class="text-[24px]">NO SIGNAL</span>';
+        if (!top.querySelector("div")) top.appendChild(fallback);
+        this.alt = "Image unavailable";
+        lucide.createIcons();
+      };
+      top.appendChild(img);
+
+      const body = document.createElement("div");
+      body.className = "flex flex-col gap-3 flex-grow";
+
+      const title = document.createElement("h3");
+      title.className = "pixel-title text-[14px] sm:text-[16px] leading-relaxed text-cyan-300";
+      title.textContent = record.title;
+
+      const desc = document.createElement("p");
+      // ディスクリプションのフォントサイズを小さく、文字色をグレーに
+      desc.className = "text-[14px] sm:text-[16px] leading-[1.5] text-gray-400 flex-grow";
+      desc.textContent = record.description;
+
+      const footer = document.createElement("div");
+      footer.className = "flex items-center gap-3 flex-wrap pt-2 mt-auto border-t border-white/10";
+
+      const playLink = document.createElement("a");
+      playLink.href = record.url;
+      playLink.target = "_blank";
+      playLink.rel = "noopener noreferrer";
+      playLink.className = "pixel-btn inline-flex items-center gap-2 px-4 py-2 mt-2 text-[11px] bg-fuchsia-400 text-black ml-auto";
+      playLink.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-black"></i><span>START</span>';
+
+      footer.appendChild(playLink);
+
+      body.appendChild(title);
+      body.appendChild(desc);
+      body.appendChild(footer);
+
+      card.appendChild(top);
+      card.appendChild(body);
+
+      return card;
+    }
+
+    // 検索とソートを適用して表示を更新する関数
+    function updateView() {
+      const term = searchInput.value.toLowerCase();
+      const sortType = sortSelect.value;
+      
+      // 検索フィルター
+      let filtered = records.filter(record => 
+        record.title.toLowerCase().includes(term) || 
+        record.description.toLowerCase().includes(term)
+      );
+      
+      // ソート
+      filtered.sort((a, b) => {
+        if (sortType === 'title') {
+          return a.title.localeCompare(b.title, 'ja');
+        } else if (sortType === 'oldest') {
+          return a.id - b.id;
+        } else {
+          // newest (デフォルト)
+          return b.id - a.id;
+        }
+      });
+      
+      // 描画
+      grid.innerHTML = "";
+      filtered.forEach((record, index) => {
+        const card = createCard(record);
+        // アニメーションのディレイを少しずらす
+        card.style.animationDelay = `${index * 50}ms`;
+        grid.appendChild(card);
+      });
+      
+      // カウンターと空ステートの更新
+      countEl.textContent = String(filtered.length);
+      emptyState.classList.toggle("hidden", filtered.length > 0);
+      
+      lucide.createIcons();
+    }
+
+    // イベントリスナーの登録
+    searchInput.addEventListener("input", updateView);
+    sortSelect.addEventListener("change", updateView);
+
+    async function loadGames() {
+      try {
+        const response = await fetch('https://tk.st/data/game.json');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        records = await response.json();
+        updateView();
+      } catch (error) {
+        console.warn('Failed to load games:', error);
+        showMessage('サーバーとの通信に失敗しました。テスト用データを表示しています。', 'error');
+        
+        // フォールバックデータ
+        records = [
+          {
+            "id": 1,
+            "title": "あいうえおクエスト",
+            "url": "https://example.com/game1",
+            "imageUrl": "https://example.com/images/game1.jpg",
+            "description": "AIと対話して進める新感覚RPGです。言葉の力でモンスターを倒そう。"
+          },
+          {
+            "id": 2,
+            "title": "爆速タイピングバトル",
+            "url": "https://example.com/game2",
+            "imageUrl": "https://example.com/images/game2.jpg",
+            "description": "生成AIが作る独特な例文を打ち込むタイピングゲーム。君の限界に挑戦しろ！"
+          },
+          {
+            "id": 3,
+            "title": "NEON RIDER 2099",
+            "url": "https://example.com/game3",
+            "imageUrl": "https://example.com/images/game3.jpg",
+            "description": "サイバーパンクな都市を駆け抜けるハイスピードレース。"
+          }
+        ];
+        updateView();
+      }
+    }
+
+    // 初回読み込み
+    loadGames();
+    
+    // アイコンの初期化
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="ja" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shinya Takeda - Terminal Portfolio</title>
+  <meta property="og:title" content="ST@portfolio">
+  <meta property="og:description" content="Shinya Takeda個人の多面的な総合プラットフォーム">
+  <meta property="og:image" content="https://tk.st/images/st-ogp.png">
+  <meta property="og:url" content="https://tk.st/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&amp;family=Roboto+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+  <style>
+    html, body { 
+      height: 100%; 
+      margin: 0; 
+      -webkit-text-size-adjust: 100%; 
+      text-size-adjust: 100%;
+    }
+    body { box-sizing: border-box; }
+    
+    html, body, input, textarea, button, select, * { 
+      font-family: 'Fira Code', 'Roboto Mono', monospace !important; 
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeSlide 0.4s ease forwards;
+      opacity: 0;
+    }
+
+    .scanline {
+      pointer-events: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+      z-index: 999;
+    }
+
+    .glow { text-shadow: 0 0 8px currentColor; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    .cmd-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      caret-color: #4ade80;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full overflow-hidden">
+  <div id="app" class="h-full w-full flex flex-col" style="background:#0c0c0c; color:#d4d4d4;">
+   <div class="scanline"></div><header class="flex items-center justify-between px-4 py-2 border-b" style="background:#1a1a1a; border-color:#333;">
+    <div class="flex gap-1.5">
+     <div class="w-2.5 h-2.5 rounded-full" style="background:#f87171;"></div>
+     <div class="w-2.5 h-2.5 rounded-full" style="background:#fbbf24;"></div>
+     <div class="w-2.5 h-2.5 rounded-full" style="background:#4ade80;"></div>
+    </div>
+    <div class="flex items-center gap-2">
+     <span style="color:#4ade80;">▸</span> <span id="titlebar-name" class="text-xs tracking-wider" style="color:#888;">ST@portfolio:~</span>
+    </div>
+   </header><main id="terminal-body" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-1" style="scroll-behavior:smooth;">
+    <div id="boot-area"></div>
+    <div id="output-area"></div>
+    <div class="flex items-center gap-2 mt-4" id="input-line"><span id="prompt-prefix" class="text-xs whitespace-nowrap" style="color:#4ade80;">ST@portfolio:~$</span> <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" style="color:#d4d4d4;" autocomplete="off" spellcheck="false" placeholder="type 'help' to get started..." aria-label="Command input">
+    </div>
+   </main><footer class="flex items-center justify-between px-4 py-1.5 text-xs border-t" style="background:#1a1a1a; border-color:#333; color:#666;"><span id="status-left">READY</span> <span id="status-right"></span>
+   </footer>
+  </div>
+  <script>
+    // === CONFIG & SDK ===
+    const defaultConfig = {
+      display_name: 'Shinya Takeda',
+      job_title: 'Digital Marketer',
+      bio_text: 'Passionate about building elegant solutions with clean code. Specializing in modern web technologies and cloud architecture.',
+      location_text: 'Saitama, Japan',
+      email_text: 'shinya@example.com',
+      background_color: '#0c0c0c',
+      surface_color: '#1a1a1a',
+      text_color: '#d4d4d4',
+      primary_color: '#4ade80',
+      secondary_color: '#888888',
+      font_family: 'Fira Code',
+      font_size: 14
+    };
+
+    let commandHistory = [];
+    let historyIndex = -1;
+
+    // === PORTFOLIO DATA ===
+    const projects = [
+      { name: '/dj', desc: 'Overview, achievements, upcoming schedule | DJ HCP', tech: 'Big room House, full-on Psytrance, Dance POP', link: 'https://tk.st/dj' },
+      { name: '/job', desc: 'Under construction', tech: 'EC, AB Testing, UIUX, Search Engine, Web ads, GA4, Looker, ADK', link: 'https://tk.st/job' },
+      { name: '/game', desc: 'AI coding benchmark: Game Sandbox', tech: 'Gemini, ChatGPT, Antigravity', link: 'https://tk.st/game' },
+      { name: '/think', desc: 'A shared margin for contemplating the essence of life.', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/think' },
+      { name: '/glitch', desc: 'Under construction', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch' }
+    ];
+
+    // === HELPER FUNCTIONS ===
+    function getConfig() {
+      return window.elementSdk?.config || defaultConfig;
+    }
+
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function printToOutput(html, delay = 0) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const div = document.createElement('div');
+          div.className = 'fade-in';
+          div.style.animationDelay = '0s';
+          div.innerHTML = html;
+          document.getElementById('output-area').appendChild(div);
+          scrollToBottom();
+          resolve();
+        }, delay);
+      });
+    }
+
+    function scrollToBottom() {
+      const body = document.getElementById('terminal-body');
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function makeBar(pct) {
+      const filled = Math.round(pct / 5);
+      const empty = 20 - filled;
+      const c = getConfig();
+      return `<span style="color:${c.primary_color};">${'█'.repeat(filled)}</span><span style="color:#333;">${'░'.repeat(empty)}</span>`;
+    }
+
+    // === COMMANDS ===
+    const commands = {
+      help() {
+        const c = getConfig();
+        return `
+          <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
+            <div style="color:${c.primary_color};" class="glow text-sm font-bold mb-2">Available Commands:</div>
+            <div class="grid gap-1 text-xs" style="color:${c.text_color};">
+              <div class="flex"><span class="w-24" style="color:${c.primary_color};">about</span><span>- Learn about me</span></div>
+              <div class="flex"><span class="w-24" style="color:${c.primary_color};">identify</span><span>- View personality versions</span></div>
+              <div class="flex"><span class="w-24" style="color:${c.primary_color};">pages</span><span>- Browse sub-directories</span></div>
+              <div class="flex"><span class="w-24" style="color:${c.primary_color};">contact</span><span>- Contact me</span></div>
+              <div class="flex"><span class="w-24" style="color:${c.primary_color};">clear</span><span>- Clear terminal</span></div>
+              <div class="flex"><span class="w-24" style="color:${c.primary_color};">help</span><span>- Show this menu</span></div>
+            </div>
+          </div>`;
+      },
+
+      '/dj'() { window.open('https://tk.st/dj', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /dj...</div>`; },
+      '/job'() { window.open('https://tk.st/job', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /job...</div>`; },
+      '/game'() { window.open('https://tk.st/game', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /game...</div>`; },
+      '/think'() { window.open('https://tk.st/think', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /think...</div>`; },
+      '/glitch'() { window.open('https://tk.st/glitch', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /glitch...</div>`; },
+
+      about() {
+        const c = getConfig();
+        const name = c.display_name || defaultConfig.display_name;
+        const title = c.job_title || defaultConfig.job_title;
+        const bioLines = [
+          "The sun for the cyber realm, The moon for music and philosophy.",
+          "I love profound tranquility, laced with a spoonful of madness."
+        ];
+        const loc = c.location_text || defaultConfig.location_text;
+        return `
+          <div class="my-3 p-4 border rounded w-[90%] max-w-[800px]" style="border-color:#333; background:#111;">
+            <div class="text-lg font-bold glow mb-1" style="color:${c.primary_color};">${esc(name)}</div>
+            <div class="text-xs mb-4" style="color:${c.secondary_color};">${esc(title)}</div>
+            <div class="text-xs leading-relaxed mb-4" style="color:${c.text_color};">${bioLines.map(line => esc(line)).join('<br/>')}</div>
+            <div class="space-y-1 pt-2 border-t" style="border-color:#333;">
+              <div class="flex justify-between text-xs">
+                <span style="color:${c.secondary_color};">📍 Location</span>
+                <span style="color:${c.text_color};">${esc(loc)}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span style="color:${c.secondary_color};">♉ Zodiac</span>
+                <span style="color:${c.text_color};">Taurus</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span style="color:${c.secondary_color};">📏 Height</span>
+                <span style="color:${c.text_color};">169.9 cm</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span style="color:${c.secondary_color};">🩸 Blood</span>
+                <span style="color:${c.text_color};">O Rh+</span>
+              </div>
+            </div>
+          </div>`;
+      },
+
+      projects() {
+        const c = getConfig();
+        let cards = projects.map(p =>
+          `<div class="p-3 border rounded cursor-pointer hover:border-opacity-100 transition-colors" style="border-color:#333; background:#111;" onclick="window.open('${p.link}', '_blank', 'noopener,noreferrer')">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-bold" style="color:${c.primary_color};">${esc(p.name)}</span>
+            </div>
+            <div class="text-xs mb-2" style="color:${c.text_color};">${esc(p.desc)}</div>
+            <div class="text-[10px]" style="color:${c.secondary_color};">⚙ ${esc(p.tech)}</div>
+          </div>`
+        ).join('');
+        return `
+          <div class="my-3 space-y-2 w-[90%] max-w-[800px]">
+            <div class="text-sm font-bold glow mb-2" style="color:${c.primary_color};">Sub-directories</div>
+            <div class="space-y-2">${cards}</div>
+          </div>`;
+      },
+
+      pages() { return this.projects(); },
+
+      contact() {
+        window.open('https://tk.st/contact', '_blank');
+        return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening contact page...</div>`;
+      },
+
+      identify() {
+        const c = getConfig();
+        return new Promise(resolve => {
+          const html = `
+            <div class="my-3 w-[90%] max-w-[800px]">
+              <div class="text-sm font-bold glow mb-3" style="color:${c.primary_color};">Please select a profile to initialize:</div>
+              <div class="space-y-2">
+                <div class="p-3 border rounded cursor-pointer transition-colors" style="border-color:#4ade80; background:#0a1f0a;" onclick="window.executeIdentifyVersion('2.0')">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-bold" style="color:#4ade80;">ver.2.0 [ACTIVE]</span>
+                    <span class="text-[10px]" style="color:${c.secondary_color};">2025.08.20</span>
+                  </div>
+                  <div class="text-xs" style="color:${c.secondary_color};">Post-traffic accident (MBTI & Strengths)</div>
+                </div>
+                <div class="p-3 border rounded cursor-pointer transition-colors" style="border-color:#333; background:#111; hover:border-color:#888;" onclick="window.executeIdentifyVersion('1.0')">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-bold" style="color:#888;">ver.1.0 [ARCHIVED]</span>
+                    <span class="text-[10px]" style="color:${c.secondary_color};">2025.07.10</span>
+                  </div>
+                  <div class="text-xs" style="color:${c.secondary_color};">Pre-traffic accident (MBTI & Strengths)</div>
+                </div>
+              </div>
+            </div>`;
+          
+          printToOutput(html, 100).then(resolve);
+          
+          window.executeIdentifyVersion = async (version) => {
+            if (version === '2.0') {
+              const traits = [
+                { name: 'Extraverted', pct: 56, opposite: 'Introverted' },
+                { name: 'Intuitive', pct: 94, opposite: 'Observant' },
+                { name: 'Feeling', pct: 51, opposite: 'Thinking' },
+                { name: 'Judging', pct: 53, opposite: 'Prospecting' },
+                { name: 'Assertive', pct: 83, opposite: 'Turbulent' }
+              ];
+              
+              let rows = traits.map(t => {
+                let labelText = t.name === 'Feeling' ? `${t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
+                return `
+                  <div class="text-xs mb-4">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span style="color:${c.text_color};">${esc(t.name)}</span>
+                      <span style="color:${c.secondary_color};">${esc(t.opposite)}</span>
+                    </div>
+                    <div style="position:relative; height:16px; width:100%; background:#1a1a1a; border-radius:8px; border:1px solid #333;">
+                      <div style="position:absolute; left:${t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${c.primary_color}; border-radius:50%; border:2px solid #0c0c0c; z-index:2;"></div>
+                      <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${c.primary_color}; opacity:0.3;"></div>
+                    </div>
+                    <div style="margin-top:4px; text-align:center; font-size:10px; color:${c.secondary_color};">${labelText}</div>
+                  </div>`;
+              }).join('');
+              
+              const strengths = [
+                { name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' },
+                { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' },
+                { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' },
+                { name: 'Executing', pct: 15.034, pattern: 'dots' }
+              ];
+              
+              const patternDefs = `
+                <svg width="0" height="0">
+                  <defs>
+                    <pattern id="v20-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${c.primary_color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="${c.background_color}" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="${c.background_color}" stroke-width="1.5"/></pattern>
+                    <pattern id="v20-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${c.primary_color}"/><line x1="3" y1="0" x2="3" y2="6" stroke="${c.background_color}" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="${c.background_color}" stroke-width="1"/></pattern>
+                    <pattern id="v20-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${c.primary_color}"/><circle cx="3" cy="3" r="1" fill="${c.background_color}"/></pattern>
+                  </defs>
+                </svg>`;
+              
+              let barHTML = patternDefs + strengths.map(s => {
+                let fillVal = s.pattern === 'solid' ? c.primary_color : `url(#v20-${s.pattern}-pattern)`;
+                return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}"/></svg>`;
+              }).join('');
+              
+              const strengthsRows = strengths.map(s => {
+                let fillVal = s.pattern === 'solid' ? c.primary_color : `url(#v20-${s.pattern}-pattern)`;
+                return `
+                <div class="text-xs flex items-center justify-between" style="color:${c.text_color};">
+                  <div class="flex items-center gap-2">
+                    <svg width="12" height="12" style="border:1px solid #333;"><rect x="0" y="0" width="12" height="12" fill="${fillVal}"/></svg>
+                    <span>${esc(s.name)}</span>
+                  </div>
+                  <span style="color:${c.secondary_color};">${s.pct.toFixed(1)}%</span>
+                </div>`;
+              }).join('');
+              
+              const cliftonThemesV2 = [
+                { rank: '1', theme: 'Maximizer', category: 'Influencing' },
+                { rank: '2', theme: 'Input', category: 'Strategic Thinking' },
+                { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' },
+                { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
+                { rank: '5', theme: 'Individualization', category: 'Relationship Building' }
+              ];
+              
+              const tableRowsV2 = cliftonThemesV2.map(row => `
+                <div class="flex text-xs border-b last:border-0" style="border-color:#333; padding:8px 0;">
+                  <div class="w-8" style="color:${c.primary_color};">${row.rank}</div>
+                  <div class="flex-1 truncate" style="color:${c.text_color};">${row.theme}</div>
+                  <div class="w-56 text-right truncate" style="color:${c.secondary_color};">${row.category}</div>
+                </div>`).join('');
+              
+              const result = `
+                <div class="my-4 w-[90%] max-w-[800px]">
+                  <div class="p-4 border rounded" style="border-color:#333; background:#111;">
+                    <div class="text-sm font-bold glow mb-4" style="color:${c.primary_color};">MBTI: Protagonist (ENFJ-A)</div>
+                    <div class="space-y-1 mb-6">${rows}</div>
+                    
+                    <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color:#333; color:${c.primary_color};">CliftonStrengths</div>
+                    <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background:#1a1a1a;" class="mb-3">${barHTML}</div>
+                    <div class="space-y-2 mb-6">${strengthsRows}</div>
+                    
+                    <div class="mt-4 pt-2" style="overflow-x:auto;">
+                      <div class="flex text-[10px] font-bold mb-1" style="color:${c.primary_color}; min-width:400px;">
+                        <div class="w-8">RANK</div>
+                        <div class="flex-1">THEME</div>
+                        <div class="w-56 text-right">CATEGORY</div>
+                      </div>
+                      <div style="border-color:#333; overflow-x:auto; border-top:1px solid #333; min-width:400px;">${tableRowsV2}</div>
+                    </div>
+                  </div>
+                </div>`;
+              await printToOutput(result, 100);
+
+            } else if (version === '1.0') {
+              const traits = [
+                { name: 'Extraverted', pct: 61, opposite: 'Introverted' },
+                { name: 'Intuitive', pct: 69, opposite: 'Observant' },
+                { name: 'Feeling', pct: 34, opposite: 'Thinking' },
+                { name: 'Judging', pct: 61, opposite: 'Prospecting' },
+                { name: 'Assertive', pct: 78, opposite: 'Turbulent' }
+              ];
+              
+              let rows = traits.map(t => {
+                let labelText = t.name === 'Feeling' ? `${100 - t.pct}% Thinking` : `${t.pct}% ${esc(t.name)}`;
+                return `
+                  <div class="text-xs mb-4">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span style="color:${c.text_color};">${esc(t.name)}</span>
+                      <span style="color:${c.secondary_color};">${esc(t.opposite)}</span>
+                    </div>
+                    <div style="position:relative; height:16px; width:100%; background:#1a1a1a; border-radius:8px; border:1px solid #333;">
+                      <div style="position:absolute; left:${t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:#888; border-radius:50%; border:2px solid #0c0c0c; z-index:2;"></div>
+                      <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:#888; opacity:0.3;"></div>
+                    </div>
+                    <div style="margin-top:4px; text-align:center; font-size:10px; color:${c.secondary_color};">${labelText}</div>
+                  </div>`;
+              }).join('');
+
+              const strengths = [
+                { name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' },
+                { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' },
+                { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' },
+                { name: 'Executing', pct: 16.5057, pattern: 'dots' }
+              ];
+              
+              const patternDefs1 = `
+                <svg width="0" height="0">
+                  <defs>
+                    <pattern id="v10-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="#888"/><line x1="0" y1="0" x2="8" y2="8" stroke="${c.background_color}" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="${c.background_color}" stroke-width="1.5"/></pattern>
+                    <pattern id="v10-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="#888"/><line x1="3" y1="0" x2="3" y2="6" stroke="${c.background_color}" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="${c.background_color}" stroke-width="1"/></pattern>
+                    <pattern id="v10-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="#888"/><circle cx="3" cy="3" r="1" fill="${c.background_color}"/></pattern>
+                  </defs>
+                </svg>`;
+              
+              let barHTML1 = patternDefs1 + strengths.map(s => {
+                let fillVal = s.pattern === 'solid' ? '#888' : `url(#v10-${s.pattern}-pattern)`;
+                return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}"/></svg>`;
+              }).join('');
+              
+              const strengthsRows = strengths.map(s => {
+                let fillVal = s.pattern === 'solid' ? '#888' : `url(#v10-${s.pattern}-pattern)`;
+                return `
+                <div class="text-xs flex items-center justify-between" style="color:${c.text_color};">
+                  <div class="flex items-center gap-2">
+                    <svg width="12" height="12" style="border:1px solid #333;"><rect x="0" y="0" width="12" height="12" fill="${fillVal}"/></svg>
+                    <span>${esc(s.name)}</span>
+                  </div>
+                  <span style="color:${c.secondary_color};">${s.pct.toFixed(1)}%</span>
+                </div>`;
+              }).join('');
+              
+              const cliftonThemes = [
+                { rank: '1', theme: 'Maximizer', category: 'Influencing' },
+                { rank: '2', theme: 'Learner', category: 'Strategic Thinking' },
+                { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' },
+                { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
+                { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }
+              ];
+              
+              const tableRows = cliftonThemes.map(row => `
+                <div class="flex text-xs border-b last:border-0" style="border-color:#333; padding:8px 0;">
+                  <div class="w-8" style="color:${c.secondary_color};">${row.rank}</div>
+                  <div class="flex-1 truncate" style="color:${c.text_color};">${row.theme}</div>
+                  <div class="w-56 text-right truncate" style="color:${c.secondary_color};">${row.category}</div>
+                </div>`).join('');
+
+              const result = `
+                <div class="my-4 w-[90%] max-w-[800px]">
+                  <div class="p-4 border rounded" style="border-color:#333; background:#111;">
+                    <div class="text-sm font-bold glow mb-4" style="color:#888;">MBTI: Commander (ENTJ-A)</div>
+                    <div class="space-y-1 mb-6">${rows}</div>
+                    
+                    <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color:#333; color:#888;">CliftonStrengths</div>
+                    <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background:#1a1a1a;" class="mb-3">${barHTML1}</div>
+                    <div class="space-y-2 mb-6">${strengthsRows}</div>
+                    
+                    <div class="mt-4 pt-2" style="overflow-x:auto;">
+                      <div class="flex text-[10px] font-bold mb-1" style="color:${c.secondary_color}; min-width:400px;">
+                        <div class="w-8">RANK</div>
+                        <div class="flex-1">THEME</div>
+                        <div class="w-56 text-right">CATEGORY</div>
+                      </div>
+                      <div style="border-color:#333; overflow-x:auto; border-top:1px solid #333; min-width:400px;">${tableRows}</div>
+                    </div>
+                  </div>
+                </div>`;
+              await printToOutput(result, 100);
+            }
+            scrollToBottom();
+          };
+        });
+      },
+
+      async akutagawa() {
+        const c = getConfig();
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px]';
+        loadingDiv.style.color = c.primary_color;
+        document.getElementById('output-area').appendChild(loadingDiv);
+        scrollToBottom();
+
+        const spinners = ['|', '/', '-', '\\'];
+        let frameIndex = 0;
+        const loadingInterval = setInterval(() => {
+          loadingDiv.textContent = `Loading...  ${spinners[frameIndex % 4]}`;
+          frameIndex++;
+        }, 300);
+
+        await new Promise(r => setTimeout(r, 5000));
+        clearInterval(loadingInterval);
+        loadingDiv.remove();
+
+        const msg = "I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.";
+        return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px]" style="border-color:#333; background:#111; color:${c.text_color};">${esc(msg)}</div>`;
+      },
+
+      tsuzaki() {
+        return new Promise(resolve => {
+          const c = getConfig();
+
+          const gameContainer = document.createElement('div');
+          gameContainer.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:#0c0c0c; z-index:10000; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:'Fira Code', 'Roboto Mono', monospace; color:#d4d4d4;";
+
+          const gameDisplay = document.createElement('pre');
+          gameDisplay.style.cssText = "font-size: 16px; line-height: 1.2; letter-spacing: 2px; background:#111; padding:20px; border:1px solid #333; border-radius:8px;";
+          
+          gameContainer.appendChild(gameDisplay);
+          document.body.appendChild(gameContainer);
+
+          let mapWidth = 30;
+          let mapHeight = 15;
+          let map = [];
+          let player = { x: 0, y: 0, hp: 20, maxHp: 20, atk: 5 };
+          let enemies = [];
+          let depth = 1;
+          let messages = ["Welcome to Terminal Rogue.", "Use WASD/Arrows to move, ESC to quit.", "Find '>' to descend."];
+
+          function log(msg) {
+              messages.push(msg);
+              if (messages.length > 5) messages.shift();
+          }
+
+          function generateLevel() {
+              map = Array(mapHeight).fill().map(() => Array(mapWidth).fill('#'));
+              let px = Math.floor(mapWidth/2), py = Math.floor(mapHeight/2);
+              player.x = px; player.y = py;
+              let x = px, y = py;
+              let floors = 0;
+              while(floors < mapWidth * mapHeight * 0.45) {
+                  if (map[y][x] === '#') { map[y][x] = '.'; floors++; }
+                  let r = Math.random();
+                  if (r < 0.25 && y > 1) y--;
+                  else if (r < 0.5 && y < mapHeight - 2) y++;
+                  else if (r < 0.75 && x > 1) x--;
+                  else if (x < mapWidth - 2) x++;
+              }
+              
+              let placedStairs = false;
+              while(!placedStairs) {
+                  let sx = Math.floor(Math.random() * mapWidth);
+                  let sy = Math.floor(Math.random() * mapHeight);
+                  if (map[sy][sx] === '.' && (sx !== px || sy !== py)) {
+                      map[sy][sx] = '>';
+                      placedStairs = true;
+                  }
+              }
+
+              enemies = [];
+              let numEnemies = depth + 3;
+              for (let i = 0; i < numEnemies; i++) {
+                  let ex, ey;
+                  while(true) {
+                      ex = Math.floor(Math.random() * mapWidth);
+                      ey = Math.floor(Math.random() * mapHeight);
+                      if (map[ey][ex] === '.' && Math.abs(ex - px) + Math.abs(ey - py) > 6) {
+                          enemies.push({ x: ex, y: ey, hp: 8 + depth*3, atk: 2 + depth, char: 'E' });
+                          break;
+                      }
+                  }
+              }
+          }
+
+          function render() {
+              let display = `<span style="color:${c.primary_color};">Depth: ${depth}</span>  HP: <span style="color:${player.hp <= player.maxHp * 0.3 ? '#ef4444' : '#d4d4d4'};">${player.hp}/${player.maxHp}</span>\n\n`;
+              let screen = map.map(row => [...row]);
+              enemies.forEach(e => {
+                  if (e.hp > 0) screen[e.y][e.x] = `<span style="color:#ef4444">${e.char}</span>`;
+              });
+              screen[player.y][player.x] = `<span style="color:${c.primary_color}">@</span>`;
+              
+              display += screen.map(row => row.map(cell => cell === '#' ? `<span style="color:#555">#</span>` : cell).join('')).join('\n');
+              display += '\n\n<span style="color:#888;">--- LOG ---</span>\n' + messages.map(m => `<span style="color:#ccc;">${m}</span>`).join('\n');
+              gameDisplay.innerHTML = display;
+          }
+
+          function endGame(msg, win = false) {
+              window.removeEventListener('keydown', handleKey);
+              let titleHtml = win ? `<div style="text-align:center; color:${c.primary_color}; font-size:24px; margin-bottom:20px;">GAME CLEARED!</div>` : `<div style="text-align:center; color:#ef4444; font-size:24px; margin-bottom:20px;">GAME OVER</div>`;
+              gameDisplay.innerHTML = `${titleHtml}<div style="text-align:center; margin-bottom:20px; color:#d4d4d4;">${msg}</div><div style="text-align:center; color:#888; font-size:12px;">Press any key to return...</div>`;
+              window.addEventListener('keydown', () => {
+                  gameContainer.remove();
+                  resolve();
+              }, { once: true });
+          }
+
+          function update(dx, dy) {
+              let nx = player.x + dx;
+              let ny = player.y + dy;
+              
+              let hitEnemy = enemies.find(e => e.hp > 0 && e.x === nx && e.y === ny);
+              if (hitEnemy) {
+                  let dmg = player.atk + Math.floor(Math.random() * 3);
+                  hitEnemy.hp -= dmg;
+                  log(`You hit E for ${dmg} dmg!`);
+                  if (hitEnemy.hp <= 0) log("E died.");
+              } else if (map[ny][nx] === '>') {
+                  if (depth >= 5) {
+                      endGame("You have conquered the Terminal Rogue!", true);
+                      return;
+                  }
+                  depth++;
+                  player.maxHp += 5;
+                  player.hp = Math.min(player.maxHp, player.hp + 10);
+                  player.atk += 1;
+                  log(`Descended to Depth ${depth}. Stats improved!`);
+                  generateLevel();
+              } else if (map[ny][nx] === '.') {
+                  player.x = nx;
+                  player.y = ny;
+              }
+
+              // 敵のターン
+              enemies.filter(e => e.hp > 0).forEach(e => {
+                  let dist = Math.abs(player.x - e.x) + Math.abs(player.y - e.y);
+                  if (dist === 1) {
+                      let edmg = e.atk + Math.floor(Math.random() * 2);
+                      player.hp -= edmg;
+                      log(`E hits you for ${edmg} dmg!`);
+                  } else if (dist < 10) {
+                      let moveX = 0, moveY = 0;
+                      if (Math.abs(player.x - e.x) > Math.abs(player.y - e.y)) {
+                          moveX = player.x > e.x ? 1 : -1;
+                      } else {
+                          moveY = player.y > e.y ? 1 : -1;
+                      }
+                      
+                      let canMove = (mx, my) => map[e.y + my][e.x + mx] === '.' && !enemies.some(other => other.hp > 0 && other.x === e.x + mx && other.y === e.y + my) && !(player.x === e.x + mx && player.y === e.y + my);
+
+                      if (canMove(moveX, moveY)) {
+                          e.x += moveX; e.y += moveY;
+                      } else if (moveX !== 0) {
+                          moveY = player.y > e.y ? 1 : (player.y < e.y ? -1 : 0);
+                          if (moveY !== 0 && canMove(0, moveY)) e.y += moveY;
+                      } else if (moveY !== 0) {
+                          moveX = player.x > e.x ? 1 : (player.x < e.x ? -1 : 0);
+                          if (moveX !== 0 && canMove(moveX, 0)) e.x += moveX;
+                      }
+                  }
+              });
+
+              if (player.hp <= 0) {
+                  endGame(`You died on Depth ${depth}.`);
+              } else {
+                  render();
+              }
+          }
+
+          const handleKey = (e) => {
+              if (e.key === 'Escape') {
+                  gameContainer.remove();
+                  resolve();
+                  return;
+              }
+              let dx = 0, dy = 0;
+              if (e.key === 'ArrowUp' || e.key === 'w') dy = -1;
+              if (e.key === 'ArrowDown' || e.key === 's') dy = 1;
+              if (e.key === 'ArrowLeft' || e.key === 'a') dx = -1;
+              if (e.key === 'ArrowRight' || e.key === 'd') dx = 1;
+              
+              if (dx !== 0 || dy !== 0) {
+                  e.preventDefault();
+                  update(dx, dy);
+              }
+          };
+
+          window.addEventListener('keydown', handleKey);
+          generateLevel();
+          render();
+        });
+      },
+
+      clear() {
+        document.getElementById('output-area').innerHTML = '';
+        return null;
+      }
+    };
+
+    // === BOOT SEQUENCE ===
+    async function boot() {
+      const c = getConfig();
+      const bootArea = document.getElementById('boot-area');
+      const lines = [
+        { text: 'Initializing terminal...', delay: 200 },
+        { text: `Loading profile: ${c.display_name || defaultConfig.display_name}`, delay: 300 },
+        { text: 'System ready.', delay: 200 },
+        { text: '', delay: 100 },
+      ];
+
+      for (const line of lines) {
+        await new Promise(r => setTimeout(r, line.delay));
+        const div = document.createElement('div');
+        div.className = 'text-xs fade-in';
+        div.style.color = c.secondary_color || '#888';
+        div.textContent = line.text;
+        bootArea.appendChild(div);
+      }
+
+      await new Promise(r => setTimeout(r, 200));
+      const header = document.createElement('div');
+      
+      header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
+      header.innerHTML = `
+        <pre class="logo-ascii text-xs md:text-sm glow m-0 leading-tight" style="color:${c.primary_color};">
+███████╗████████╗
+██╔════╝╚══██╔══╝
+███████╗   ██║
+╚════██║   ██║
+███████║   ██║
+╚══════╝   ╚═╝</pre>
+        <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
+          <div style="color:${c.primary_color};">${esc(c.display_name || defaultConfig.display_name)}</div>
+          <div style="color:${c.secondary_color};">${esc(c.job_title || defaultConfig.job_title)}</div>
+          <div class="pt-2" style="color:${c.secondary_color};">Type <span style="color:#fff;">'help'</span> to explore.</div>
+        </div>`;
+      bootArea.appendChild(header);
+      scrollToBottom();
+      document.getElementById('cmd-input').focus();
+    }
+
+    // === COMMAND HANDLER ===
+    async function handleCommand(input) {
+      const c = getConfig();
+      const trimmed = input.trim().toLowerCase();
+
+      const echo = document.createElement('div');
+      echo.className = 'text-xs mt-3';
+      echo.innerHTML = `<span style="color:${c.primary_color};">ST@portfolio:~$</span> <span style="color:${c.text_color};">${esc(input)}</span>`;
+      document.getElementById('output-area').appendChild(echo);
+
+      if (!trimmed) return;
+
+      commandHistory.unshift(trimmed);
+      historyIndex = -1;
+
+      if (commands[trimmed]) {
+        const result = await commands[trimmed]();
+        if (result) await printToOutput(result, 100);
+      } else {
+        await printToOutput(`<div class="text-xs my-1" style="color:#f87171;">Command not found: '${esc(trimmed)}'. Type <span style="color:${c.primary_color};">help</span> for available commands.</div>`, 50);
+      }
+      scrollToBottom();
+    }
+
+    // === INPUT HANDLING ===
+    const cmdInput = document.getElementById('cmd-input');
+    cmdInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = cmdInput.value;
+        cmdInput.value = '';
+        await handleCommand(val);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (historyIndex < commandHistory.length - 1) {
+          historyIndex++;
+          cmdInput.value = commandHistory[historyIndex];
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+          historyIndex--;
+          cmdInput.value = commandHistory[historyIndex];
+        } else {
+          historyIndex = -1;
+          cmdInput.value = '';
+        }
+      }
+    });
+
+    document.getElementById('terminal-body').addEventListener('click', () => cmdInput.focus());
+
+    // Update status bar time
+    function updateTime() {
+      document.getElementById('status-right').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // === ELEMENT SDK ===
+    function applyConfig(config) {
+      const c = { ...defaultConfig, ...config };
+      const app = document.getElementById('app');
+      app.style.background = c.background_color;
+      app.style.color = c.text_color;
+      app.style.fontFamily = `${c.font_family}, 'Fira Code', 'Roboto Mono', monospace`;
+      app.style.fontSize = `${c.font_size || 14}px`;
+
+      document.querySelectorAll('header, footer').forEach(el => el.style.background = c.surface_color);
+
+      const prompt = document.getElementById('prompt-prefix');
+      if (prompt) prompt.style.color = c.primary_color;
+
+      const tb = document.getElementById('titlebar-name');
+      if (tb) {
+        tb.textContent = 'ST@portfolio:~';
+        tb.style.color = c.secondary_color;
+      }
+
+      cmdInput.style.color = c.text_color;
+      cmdInput.style.caretColor = c.primary_color;
+
+      document.getElementById('status-left').style.color = c.secondary_color;
+      document.getElementById('status-right').style.color = c.secondary_color;
+    }
+
+    if (window.elementSdk && typeof window.elementSdk.init === 'function') {
+      window.elementSdk.init({
+        defaultConfig,
+        async onConfigChange(config) { applyConfig(config); },
+        mapToCapabilities(config) {
+          const c = { ...defaultConfig, ...config };
+          function colorMutable(key) {
+            return {
+              get: () => c[key] || defaultConfig[key],
+              set: (v) => { c[key] = v; window.elementSdk?.setConfig({ [key]: v }); }
+            };
+          }
+          return {
+            recolorables: [
+              colorMutable('background_color'), colorMutable('surface_color'),
+              colorMutable('text_color'), colorMutable('primary_color'), colorMutable('secondary_color')
+            ],
+            borderables: [],
+            fontEditable: {
+              get: () => c.font_family || defaultConfig.font_family,
+              set: (v) => { c.font_family = v; window.elementSdk?.setConfig({ font_family: v }); }
+            },
+            fontSizeable: {
+              get: () => c.font_size || defaultConfig.font_size,
+              set: (v) => { c.font_size = v; window.elementSdk?.setConfig({ font_size: v }); }
+            }
+          };
+        },
+        mapToEditPanelValues(config) {
+          const c = { ...defaultConfig, ...config };
+          return new Map([
+            ['display_name', c.display_name || defaultConfig.display_name],
+            ['job_title', c.job_title || defaultConfig.job_title],
+            ['bio_text', c.bio_text || defaultConfig.bio_text],
+            ['location_text', c.location_text || defaultConfig.location_text],
+            ['email_text', c.email_text || defaultConfig.email_text]
+          ]);
+        }
+      });
+    }
+
+    boot();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e294b2bd74eca1b',t:'MTc3NDU2MTAxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
