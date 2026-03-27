@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マサラテトリス🔱🐘🪷</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐘</text></svg>">
+
+        <!-- OGP Tags -->
+    <meta property="og:title" content="マサラテトリス | ST GAMES">
+    <meta property="og:description" content="激辛難易度のインド風テトリス">
+    <meta property="og:image" content="https://tk.st/images/ogp/masala-tetris-ogp.png">
+    <meta property="og:url" content="https://tk.st/masala-tetris/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation; 
+            overscroll-behavior: none; 
+            background-image: url('https://images.unsplash.com/photo-1524492412937-b28074a5d7da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; 
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; 
+            min-height: 100vh;
+            padding-top: 1rem; 
+            padding-bottom: 1rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            position: relative; 
+            background-color: rgba(0, 0, 0, 0.45); 
+        }
+        canvas#tetrisCanvas { 
+            border: 2px solid #4A3B4F; 
+            border-radius: 8px;
+            background-color: #FFF8E1; 
+            display: block; 
+        }
+        canvas#nextPieceCanvas { 
+             border: 1px solid #FFD700; 
+             border-radius: 6px;
+             background-color: rgba(126, 87, 194, 0.6); 
+        }
+        .controls button, .game-info-panel button, .share-buttons button {
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .controls button:active, .game-info-panel button:active, .share-buttons button:active {
+            transform: scale(0.95);
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.75); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #FFD180; 
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            max-width: 90%;
+            width: 400px;
+            color: #4A3B4F; 
+        }
+        .message-box { 
+            min-height: 50px; 
+            max-height: 90px; 
+            overflow-y: auto; 
+            border: 1px solid #F57C00; 
+            background-color: #FFF3E0; 
+            color: #BF360C; 
+            margin-top: 0.25rem; 
+            padding: 6px; 
+            border-radius: 6px;
+        }
+        .game-info-panel {
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            md:align-items: stretch; 
+            background-color: rgba(46, 26, 70, 0.85); 
+        }
+        .score-level-nextpiece {
+            display: flex;
+            flex-direction: column; 
+            md:flex-direction: row; 
+            justify-content: space-between; 
+            align-items: center; 
+            md:align-items: flex-start; 
+            width: 100%; 
+            gap: 0.5rem; 
+            md:gap: 1rem; 
+        }
+        .score-level-container { 
+            display: flex;
+            flex-direction: row; 
+            justify-content: space-around; 
+            width: 100%; 
+            md:flex-direction: column; 
+            md:justify-content: flex-start;
+            md:w-auto; 
+        }
+        .score-display, .stage-display { 
+            text-align: center; 
+            md:text-left; 
+        }
+
+        .score-level { 
+            flex-grow: 1; 
+        }
+        .thank-you-message {
+            text-align: center; 
+            margin-top: 0.25rem; 
+            margin-bottom: 0.5rem; 
+            font-size: 0.75rem; 
+            color: #FFF;   
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8); 
+        }
+        .stage-clear-modal-content {
+            background: linear-gradient(135deg, #FFD700, #FF8C00, #FF4500); 
+            color: white;
+            border: 3px solid #FFF;
+            box-shadow: 0 0 30px #FFD700, 0 0 60px #FF8C00; 
+        }
+        .stage-clear-modal-content h2 {
+            font-size: 2.5rem; 
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: pulse 1.5s infinite; 
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .main-title {
+            color: #FFEB3B; 
+            text-shadow: 2px 2px 4px #000000, 0 0 10px #FFD700; 
+        }
+        .ranking-list {
+            list-style: none; 
+            padding-left: 0; 
+            text-align: left;
+            max-height: 120px; 
+            overflow-y: auto;
+        }
+        .ranking-list li {
+            margin-bottom: 0.25rem;
+            font-size: 0.75rem; 
+            color: #E0E0E0;
+        }
+        #playerNameInput {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid #FFD700;
+            color: #FFFFFF;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem; 
+            width: calc(100% - 5rem); 
+            font-size: 0.875rem; 
+        }
+        #playerNameInput:focus {
+            outline: none;
+            border-color: #F59E0B; 
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .mobile-controls-container { 
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr)); 
+            gap: 0.25rem; 
+            width: 100%;
+            max-width: 280px; 
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 0.75rem; 
+        }
+        .mobile-controls-container button {
+            padding-top: 0.75rem; 
+            padding-bottom: 0.75rem;
+            font-size: 0.875rem; 
+            line-height: 1; 
+        }
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem; 
+            margin-top: 1rem;
+        }
+        .share-buttons button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem; 
+            font-weight: bold;
+            color: white;
+            display: inline-flex; 
+            align-items: center; 
+            gap: 0.3rem; 
+        }
+        .share-x { background-color: #1DA1F2; } 
+        .share-x:hover { background-color: #0c85d0; }
+        .share-line { background-color: #00B900; } 
+        .share-line:hover { background-color: #008a00; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1 class="text-3xl sm:text-4xl font-bold mb-1 text-center main-title">マサラテトリス🔱🐘🪷</h1>
+        <div class="thank-you-message">
+            インフォシス大矢さん・柚木さんに感謝を込めて ※五十音順
+        </div>
+
+        <div id="gameAreaContainer" class="flex flex-col md:flex-row items-center md:items-start justify-center gap-2 md:gap-3 mb-2 w-full max-w-5xl px-1 sm:px-2">
+            <canvas id="tetrisCanvas" class="shadow-lg"></canvas>
+
+            <div id="gameInfoPanel" class="game-info-panel bg-opacity-75 bg-purple-800 p-3 md:p-4 rounded-lg shadow-md w-full md:w-80 text-center md:text-left mt-2 md:mt-0">
+                
+                <div class="controls md:hidden mobile-controls-container">
+                    <button id="leftButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md">←</button>
+                    <button id="rotateButton" class="bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-lg shadow-md">回転</button>
+                    <button id="rightButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md">→</button>
+                    <button id="softDropButton" class="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-md col-start-1">↓</button>
+                    <button id="hardDropButton" class="bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg shadow-md col-span-2">DROP</button>
+                </div>
+
+                <div class="score-level-nextpiece mb-2 md:mb-3">
+                    <div class="score-level-container md:score-level">
+                        <div class="score-display">
+                            <h2 class="text-lg sm:text-xl md:text-2xl font-semibold mb-0.5 md:mb-1 text-yellow-300">スコア</h2>
+                            <p id="score" class="text-xl sm:text-2xl md:text-3xl mb-1 md:mb-3 text-white">0</p>
+                        </div>
+                        <div class="stage-display">
+                            <h2 class="text-lg sm:text-xl md:text-2xl font-semibold mb-0.5 md:mb-1 text-yellow-300">ステージ</h2> 
+                            <p id="stage" class="text-xl sm:text-2xl md:text-3xl text-white">1</p> 
+                        </div>
+                    </div>
+                     <div class="w-full md:w-auto text-center md:text-left mt-2 md:mt-0">
+                        <p id="timeLeft" class="text-sm sm:text-md md:text-lg text-yellow-200">残り: 180秒</p> 
+                    </div>
+                    <div class="next-piece-container flex flex-col items-center mt-2 md:mt-0"> 
+                        <h2 class="text-md sm:text-lg md:text-xl font-semibold mb-0.5 md:mb-1 text-yellow-300 text-center">次のブロック</h2>
+                        <canvas id="nextPieceCanvas"></canvas> 
+                    </div>
+                </div>
+                
+                <button id="startPauseButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-md sm:text-lg mb-2 shadow-md">
+                    開始！
+                </button>
+                <button id="shivaSupportButton" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg text-md sm:text-lg shadow-md mb-1" disabled>
+                    シヴァ神の支援 🕉️
+                </button>
+                 <div id="shivaEffectMessage" class="message-box w-full text-xs sm:text-sm mb-2"> 
+                    シヴァ神のご加護はいかに...
+                </div>
+                <button id="aiCheerButton" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-lg text-md sm:text-lg shadow-md mb-1" disabled>
+                    マハラジャからの応援！ 🙏
+                </button>
+                <div id="aiCheerMessage" class="message-box w-full text-xs sm:text-sm"> 
+                    マハラジャからの応援メッセージ受信BOX
+                </div>
+
+                <div class="mt-2 md:mt-3">
+                     <div class="mb-1 flex items-center">
+                        <label for="playerNameInput" class="text-xs sm:text-sm text-yellow-200 mr-2 shrink-0">プレイヤー:</label>
+                        <input type="text" id="playerNameInput" class="font-bold text-white text-xs sm:text-sm" maxlength="10">
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-semibold text-yellow-300 mb-1 text-center md:text-left">ハイスコアランキング 🏆</h3>
+                    <ul id="highScoreList" class="ranking-list bg-purple-700 bg-opacity-50 p-2 rounded-md">
+                        <li id="loadingScores">ランキング読込中...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <p class="mt-2 md:mt-4 text-xs sm:text-sm text-yellow-200 text-center md:block hidden">操作: ← → ↓ キーで移動、↑ で回転、スペースでハードドロップ</p>
+    </div>
+
+    <div id="gameOverModal" class="modal hidden">
+        <div class="modal-content bg-gradient-to-br from-amber-400 to-orange-500 text-purple-900 p-6 sm:p-8 rounded-xl shadow-2xl">
+            <h2 id="gameOverTitle" class="text-3xl sm:text-4xl font-bold mb-4">ゲームオーバー！</h2>
+            <p id="finalScore" class="text-xl sm:text-2xl mb-2">最終スコア: 0</p>
+            <div class="share-buttons mb-4">
+                <button id="shareToXGameOver" class="share-x"><i class="fab fa-twitter"></i> Xで共有</button>
+                <button id="shareToLineGameOver" class="share-line"><i class="fab fa-line"></i> LINEで共有</button>
+            </div>
+            
+            <div id="aiAdviceMessage" class="message-box w-full mb-4 p-3 bg-yellow-100 text-sm text-yellow-800"> 
+                AIからの助言はここに表示されます。
+            </div>
+            <button id="aiAdviceButton" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg text-lg shadow-md mb-4">
+                別の助言を授かる 🧘
+            </button>
+            <button id="restartButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-md">
+                再挑戦！
+            </button>
+        </div>
+    </div>
+
+    <div id="stageClearModal" class="modal hidden">
+        <div class="modal-content stage-clear-modal-content p-6 sm:p-8 rounded-xl shadow-2xl">
+            <h2 id="stageClearTitle" class="mb-4">ステージクリア！🎉</h2>
+            <p id="stageClearStage" class="text-xl sm:text-2xl mb-2">ステージ <span id="clearedStage">1</span> 到達！</p> 
+            <p id="stageClearScore" class="text-lg sm:text-xl mb-2">現在のスコア: <span id="currentScoreAtClear">0</span></p>
+            <div class="share-buttons mb-4">
+                <button id="shareToXStageClear" class="share-x"><i class="fab fa-twitter"></i> Xで共有</button>
+                <button id="shareToLineStageClear" class="share-line"><i class="fab fa-line"></i> LINEで共有</button>
+            </div>
+            <div id="aiStageClearMessage" class="message-box w-full text-sm mb-6 bg-white bg-opacity-20 text-white"> 
+                マハラジャからのお祝いメッセージ！
+            </div>
+            <button id="nextStageButton" class="w-full bg-yellow-300 hover:bg-yellow-400 text-purple-900 font-bold py-3 px-8 rounded-lg text-xl shadow-md">
+                次のステージへ！ 🐘
+            </button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Firebase SDKのインポート
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Canvas要素の取得
+        const canvas = document.getElementById('tetrisCanvas');
+        const context = canvas.getContext('2d');
+        const nextPieceCanvas = document.getElementById('nextPieceCanvas');
+        const nextPieceContext = nextPieceCanvas.getContext('2d');
+
+        // UI要素の取得
+        const scoreElement = document.getElementById('score');
+        const stageElement = document.getElementById('stage'); 
+        const timeLeftElement = document.getElementById('timeLeft'); 
+        const startPauseButton = document.getElementById('startPauseButton'); 
+        const gameOverModal = document.getElementById('gameOverModal');
+        const finalScoreElement = document.getElementById('finalScore');
+        const restartButton = document.getElementById('restartButton');
+        const highScoreListElement = document.getElementById('highScoreList');
+        const loadingScoresElement = document.getElementById('loadingScores');
+        const playerNameInputElement = document.getElementById('playerNameInput'); 
+        
+        // AI機能関連UI
+        const aiCheerButton = document.getElementById('aiCheerButton');
+        const aiCheerMessageElement = document.getElementById('aiCheerMessage');
+        const aiAdviceButton = document.getElementById('aiAdviceButton');
+        const aiAdviceMessageElement = document.getElementById('aiAdviceMessage');
+        const shivaSupportButton = document.getElementById('shivaSupportButton');
+        const shivaEffectMessageElement = document.getElementById('shivaEffectMessage');
+
+        // ステージクリアモーダルUI
+        const stageClearModal = document.getElementById('stageClearModal');
+        const clearedStageElement = document.getElementById('clearedStage'); 
+        const currentScoreAtClearElement = document.getElementById('currentScoreAtClear');
+        const aiStageClearMessageElement = document.getElementById('aiStageClearMessage');
+        const nextStageButton = document.getElementById('nextStageButton');
+        const shareToXStageClearButton = document.getElementById('shareToXStageClear');
+        const shareToLineStageClearButton = document.getElementById('shareToLineStageClear');
+
+        // ゲームオーバーモーダルUI (共有ボタン)
+        const shareToXGameOverButton = document.getElementById('shareToXGameOver');
+        const shareToLineGameOverButton = document.getElementById('shareToLineGameOver');
+
+
+        // モバイル操作ボタン (情報パネル内)
+        const leftButton = document.getElementById('leftButton'); 
+        const rightButton = document.getElementById('rightButton'); 
+        const rotateButton = document.getElementById('rotateButton'); 
+        const softDropButton = document.getElementById('softDropButton'); 
+        const hardDropButton = document.getElementById('hardDropButton'); 
+
+
+        // ゲーム設定
+        const COLS = 10; 
+        const ROWS = 20; 
+        
+        const INFO_PANEL_WIDTH_DESKTOP = 320; 
+        const GAP_DESKTOP = 12; 
+        const CONTAINER_PADDING_X_DESKTOP = 16 * 2; 
+        const MAX_CONTAINER_WIDTH_DESKTOP = 1024; 
+
+        let tetrisCanvasMaxWidth;
+
+        if (window.innerWidth < 768) { 
+            tetrisCanvasMaxWidth = window.innerWidth * 0.90; 
+        } else { 
+            const effectiveContainerWidth = Math.min(MAX_CONTAINER_WIDTH_DESKTOP, window.innerWidth) - CONTAINER_PADDING_X_DESKTOP;
+            tetrisCanvasMaxWidth = effectiveContainerWidth - INFO_PANEL_WIDTH_DESKTOP - GAP_DESKTOP;
+        }
+        tetrisCanvasMaxWidth = Math.max(tetrisCanvasMaxWidth, COLS * 10); 
+
+        const canvasAvailableHeight = window.innerHeight * 0.72; 
+        const blockWidthBased = tetrisCanvasMaxWidth / COLS;
+        const blockHeightBased = canvasAvailableHeight / ROWS;
+
+        const maxBlockSizeForDevice = window.innerWidth < 768 ? 28 : 32; 
+        const BLOCK_SIZE = Math.max(12, Math.min(maxBlockSizeForDevice, Math.floor(Math.min(blockWidthBased, blockHeightBased))));
+
+
+        const NEXT_PIECE_BLOCK_SIZE = Math.max(8, Math.min(18, Math.floor(BLOCK_SIZE * 0.65))); 
+
+        canvas.width = COLS * BLOCK_SIZE;
+        canvas.height = ROWS * BLOCK_SIZE;
+        
+        nextPieceCanvas.width = 5 * NEXT_PIECE_BLOCK_SIZE + NEXT_PIECE_BLOCK_SIZE * 0.5; 
+        nextPieceCanvas.height = 4 * NEXT_PIECE_BLOCK_SIZE + NEXT_PIECE_BLOCK_SIZE * 0.5;
+
+        const gameAreaContainer = document.getElementById('gameAreaContainer');
+        if (window.innerWidth >= 768) { 
+            const calculatedGameAreaWidth = canvas.width + INFO_PANEL_WIDTH_DESKTOP + GAP_DESKTOP;
+            gameAreaContainer.style.maxWidth = `${calculatedGameAreaWidth}px`;
+        } else {
+            gameAreaContainer.style.maxWidth = '100%';
+        }
+
+
+        // 新しいインドモチーフブロックの定義
+        const TRISHULA_SHAPE_NEW = [ 
+            [1,0,1,0,1],
+            [1,1,1,1,1],
+            [0,0,1,0,0],
+            [0,0,1,0,0]
+        ];
+        const LOTUS_FLOWER_SHAPE_NEW = [ 
+            [0,1,0],
+            [1,1,1],
+            [0,1,0]
+        ];
+        const ELEPHANT_FACE_SYMMETRIC = [
+            [1,0,1], 
+            [1,1,1], 
+            [0,1,0]  
+        ];
+
+
+        const MOTIF_SHAPES = [
+            { shape: TRISHULA_SHAPE_NEW, color: '#FFD700' },    
+            { shape: LOTUS_FLOWER_SHAPE_NEW, color: '#FF80AB' },
+            { shape: ELEPHANT_FACE_SYMMETRIC, color: '#B0BEC5' } 
+        ];
+
+
+        const SHAPES = [ 
+            [[1,1,1,1]], 
+            [[1,1,0], [0,1,1]], 
+            [[0,1,1], [1,1,0]], 
+            [[1,1,1], [0,1,0]], 
+            [[1,1,1], [1,0,0]], 
+            [[1,1,1], [0,0,1]], 
+            [[1,1], [1,1]]  
+        ];
+        const COLORS = [ 
+            '#FF9933', '#FF4081', '#00ACC1', '#FFC107', 
+            '#7E57C2', '#4CAF50', '#D32F2F'
+        ];
+
+
+        // ゲーム状態変数
+        let board = [];
+        let currentPiece;
+        let nextPiece;
+        let score = 0;
+        let currentStage = 1; 
+        let linesCleared = 0; 
+        let gameOver = false;
+        let gamePaused = false; 
+        let stageClearPause = false; 
+        let dropCounter = 0;
+        const INITIAL_DROP_INTERVAL = 500; 
+        let dropInterval = INITIAL_DROP_INTERVAL / 2; 
+        const MIN_DROP_INTERVAL = 30; 
+        let lastTime = 0;
+        let animationFrameId;
+        let isFetchingAI = false; 
+        let gameTimePlayed = 0; 
+        let lastPeriodicCheerTime = 0; 
+        const PERIODIC_CHEER_INTERVAL = 45000; 
+        let periodicCheerIntervalId = null;
+        let pieceSpawnCounter = 0; 
+        const MOTIF_SPAWN_RATE = 5; 
+        const SOFT_DROP_SCORE_PER_ROW = 1; 
+        const HARD_DROP_SCORE_PER_ROW = 2; 
+        let stageUpTimer = 0; 
+        const STAGE_UP_INTERVAL = 180000; 
+        let gameStarted = false; 
+        let keysReversed = false; 
+        let userId = null; 
+        let db; 
+        let auth; 
+        let unsubscribeScores = null;
+        let playerName = localStorage.getItem('masalaTetrisPlayerName') || '匿名マサラ';
+        playerNameInputElement.value = playerName; 
+        let shivaSupportCooldown = 0; 
+        const SHIVA_COOLDOWN_TIME = 5000; 
+
+
+        // Firebaseの初期化
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'masala-tetris-default-app-id'; 
+
+        if (firebaseConfig) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug'); 
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth initialization error:", error);
+                        if(loadingScoresElement) loadingScoresElement.textContent = "認証エラー。ランキング利用不可。";
+                    }
+                };
+
+                initAuth().then(() => {
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid; 
+                            console.log("Firebase Auth: User is signed in with UID:", userId);
+                            loadHighScores(); 
+                        } else {
+                            console.log("Firebase Auth: User is signed out.");
+                            userId = null;
+                            if (unsubscribeScores) {
+                                unsubscribeScores();
+                                unsubscribeScores = null;
+                            }
+                        }
+                    });
+                });
+            } catch (e) {
+                console.error("Firebase Initialization Error:", e);
+                if(loadingScoresElement) loadingScoresElement.textContent = "ランキング機能初期化エラー。";
+            }
+        } else {
+            console.warn("Firebase config not found. Score saving and ranking will be disabled.");
+            if(loadingScoresElement) loadingScoresElement.textContent = "ランキング機能が無効です (設定未検出)。";
+        }
+
+        // プレイヤー名入力ボックスのイベントリスナー
+        playerNameInputElement.addEventListener('change', (event) => {
+            const newName = event.target.value.trim();
+            if (newName !== "") {
+                playerName = newName.substring(0, 10); 
+                localStorage.setItem('masalaTetrisPlayerName', playerName);
+                playerNameInputElement.value = playerName; 
+                if (db && userId) loadHighScores(); 
+            } else {
+                playerName = localStorage.getItem('masalaTetrisPlayerName') || '匿名マサラ'; 
+                playerNameInputElement.value = playerName;
+                alert("名前は空にできません。");
+            }
+        });
+        playerNameInputElement.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                playerNameInputElement.blur(); 
+            }
+        });
+
+
+        // Gemini API呼び出し関数
+        async function fetchAIGeneratedText(prompt, outputElement, buttonElement) {
+            if (isFetchingAI && outputElement !== shivaEffectMessageElement && buttonElement !== shivaSupportButton) { 
+                return;
+            }
+            isFetchingAI = true;
+            const originalButtonDisabledState = buttonElement ? buttonElement.disabled : false;
+            if (buttonElement) buttonElement.disabled = true;
+            
+            const originalButtonText = buttonElement ? buttonElement.innerHTML : '';
+            if (buttonElement) buttonElement.innerHTML = 'AIが思考中... ✨';
+
+            try {
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Gemini API Error:", errorData);
+                    throw new Error(`APIリクエスト失敗 ステータス ${response.status}: ${errorData?.error?.message || response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputElement.textContent = text;
+                } else {
+                    console.error("予期しないAPI応答構造:", result);
+                    outputElement.textContent = 'AIからの応答取得に失敗しました。(応答形式エラー)';
+                }
+            } catch (error) {
+                console.error('AIテキスト取得エラー:', error);
+                outputElement.textContent = `エラー: ${error.message}`;
+            } finally {
+                isFetchingAI = false;
+                if (buttonElement) {
+                    // シヴァ神ボタンはクールダウン後に有効化するため、ここでは何もしないか、
+                    // クールダウン状態に応じて制御する (今回はshivaSupportButton.onclick内で制御)
+                    if (buttonElement !== shivaSupportButton) {
+                         buttonElement.disabled = originalButtonDisabledState;
+                    }
+                    buttonElement.innerHTML = originalButtonText;
+                }
+            }
+        }
+        
+        // AI応援メッセージ取得 (手動ボタン用)
+        aiCheerButton.addEventListener('click', () => {
+            const prompt = `あなたはインドの映画に出てくるような情熱的な応援団長「マハラジャ」です！プレイヤー「${playerName}」がテトリスで素晴らしいプレイを続けています。現在のスコアは${score}点、ステージは${currentStage}です。非常にドラマチックで、元気と勇気が湧いてくるような、インド風の応援メッセージを日本語で生成してください。インドに関連する言葉（例：ナマステ、シュクリヤ、マハラジャ、ガネーシャ神など）や絵文字（例：🙏, 🇮🇳, 🕌, 🦚, ✨, 🔥）を使い、プレイヤーを最大限に称賛してください！例：「おお、我が友「${playerName}」よ！その輝かしいプレイ、まるでガンジス川の流れのように美しい！スコア${score}点、ステージ${currentStage}とは、まさに神々の祝福！続けよ、勝利の舞を！🔥🙏🇮🇳」`; 
+            fetchAIGeneratedText(prompt, aiCheerMessageElement, aiCheerButton);
+        });
+
+        // AIアドバイス取得 (手動ボタン用)
+        aiAdviceButton.addEventListener('click', () => {
+            const prompt = `あなたはインドの賢者のような、深く穏やかなテトリスコーチです。プレイヤー「${playerName}」がゲームオーバーになりました。最終スコアは ${score} 点、最終ステージは ${currentStage} でした。「前回のアドバイスとは異なる、新しい視点から」次のプレイに役立つ、哲学的で心に響く短いアドバイスを一つ、日本語で生成してください。プレイヤーを優しく励まし、内なる力に気づかせるようなトーンでお願いします。インドの叡智を感じさせる言葉や、穏やかな絵文字（例：🧘, 🕉️, ✨, 🙏）を使ってください。例：「再びの挑戦、お疲れ様です、修行者「${playerName}」よ。${score}点、ステージ${currentStage}。結果は移ろうもの。大切なのは心の成長です。今度は、ブロックが落ちてくる様を、まるで宇宙のリズムのように感じてみてはいかがでしょうか。そこに新たな発見があるやもしれません。ナマステ。🧘✨」`; 
+            fetchAIGeneratedText(prompt, aiAdviceMessageElement, aiAdviceButton);
+        });
+
+        // 定期的なAI応援メッセージ
+        function triggerPeriodicAICheer() {
+            if (gameOver || gamePaused || stageClearPause || isFetchingAI) return; 
+            const currentTime = Date.now();
+            if (currentTime - lastPeriodicCheerTime < PERIODIC_CHEER_INTERVAL - 5000) return; 
+            lastPeriodicCheerTime = currentTime;
+            const minutesPlayed = Math.floor(gameTimePlayed / 60000); 
+            const secondsPlayed = Math.floor((gameTimePlayed % 60000) / 1000); 
+            const prompt = `あなたはインドの祭りの陽気な案内人「マハラジャ」です！プレイヤー「${playerName}」はテトリスを${minutesPlayed}分${secondsPlayed}秒間プレイしており、現在のスコアは${score}点、ステージは${currentStage}です。プレイヤーを励まし、さらにゲームを楽しませるような、短くて楽しいインド風の応援メッセージを日本語で生成してください。ユーモアを交え、絵文字（例：🎉, 🇮🇳, 💃, ✨）も使ってください！例：「ナマステ、「${playerName}」！プレイタイム${minutesPlayed}分${secondsPlayed}秒！素晴らしい集中力だね！この調子で、チャイでも飲みながらリラックスして楽しんでいこう！💃🎉🇮🇳」`; 
+            fetchAIGeneratedText(prompt, aiCheerMessageElement, null); 
+        }
+
+        // ボードの初期化
+        function createBoard() {
+            return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        }
+
+        // 新しいテトリミノを生成
+        function createPiece() {
+            pieceSpawnCounter++;
+            let selectedShape, pieceColor, pieceType;
+
+            if (pieceSpawnCounter % MOTIF_SPAWN_RATE === 0) {
+                const motifIndex = Math.floor(Math.random() * MOTIF_SHAPES.length);
+                selectedShape = MOTIF_SHAPES[motifIndex].shape;
+                pieceColor = MOTIF_SHAPES[motifIndex].color;
+                pieceType = 'motif';
+            } else {
+                const typeId = Math.floor(Math.random() * SHAPES.length);
+                selectedShape = SHAPES[typeId];
+                pieceColor = COLORS[typeId];
+                pieceType = 'normal';
+            }
+            return {
+                x: Math.floor(COLS / 2) - Math.floor(selectedShape[0].length / 2),
+                y: 0, 
+                shape: selectedShape,
+                color: pieceColor,
+                type: pieceType, 
+                rotation: 0 
+            };
+        }
+
+        // 描画関数: 1つのブロックを描画
+        function drawSquare(x, y, color, ctx, bs = BLOCK_SIZE) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x * bs, y * bs, bs, bs);
+            ctx.strokeStyle = '#4A3B4F'; 
+            ctx.lineWidth = 1.5; 
+            ctx.strokeRect(x * bs, y * bs, bs, bs);
+        }
+
+        // 描画関数: ボード全体を描画
+        function drawBoard() {
+            context.clearRect(0, 0, canvas.width, canvas.height); 
+            context.fillStyle = '#FFF8E1'; 
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            board.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        drawSquare(x, y, value, context);
+                    }
+                });
+            });
+        }
+
+        // 描画関数: 現在操作中のテトリミノを描画
+        function drawPiece(piece, ctx = context, bs = BLOCK_SIZE, drawX = piece.x, drawY = piece.y) {
+            piece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        drawSquare(drawX + x, drawY + y, piece.color, ctx, bs);
+                    }
+                });
+            });
+        }
+        
+        // 描画関数: 次のテトリミノを描画
+        function drawNextPiece() {
+            nextPieceContext.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
+            nextPieceContext.fillStyle = 'rgba(126, 87, 194, 0.7)'; 
+            nextPieceContext.fillRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
+
+            if (nextPiece) {
+                const shape = nextPiece.shape;
+                const pieceWidth = shape[0].length; 
+                const pieceHeight = shape.length;  
+
+                const offsetX = (nextPieceCanvas.width / NEXT_PIECE_BLOCK_SIZE - pieceWidth) / 2;
+                const offsetY = (nextPieceCanvas.height / NEXT_PIECE_BLOCK_SIZE - pieceHeight) / 2;
+                
+                drawPiece({...nextPiece, x:0, y:0}, nextPieceContext, NEXT_PIECE_BLOCK_SIZE, offsetX, offsetY);
+            }
+        }
+
+        // 衝突判定
+        function checkCollision(piece, newX, newY, newShape) {
+            const shapeToTest = newShape || piece.shape;
+            for (let y = 0; y < shapeToTest.length; y++) {
+                for (let x = 0; x < shapeToTest[y].length; x++) {
+                    if (shapeToTest[y][x]) {
+                        let nextBoardX = newX + x;
+                        let nextBoardY = newY + y;
+                        if (nextBoardX < 0 || nextBoardX >= COLS || nextBoardY >= ROWS || (nextBoardY >= 0 && board[nextBoardY] && board[nextBoardY][nextBoardX])) {
+                            return true; 
+                        }
+                    }
+                }
+            }
+            return false; 
+        }
+
+        // テトリミノをボードに固定
+        function lockPiece() {
+            currentPiece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        if (currentPiece.y + y < 0) { 
+                            gameOver = true;
+                            return;
+                        }
+                        board[currentPiece.y + y][currentPiece.x + x] = currentPiece.color;
+                    }
+                });
+            });
+            if (gameOver) return;
+
+            clearLinesAndUpdateScore(); 
+            
+            if (!stageClearPause && !gameOver) { 
+                currentPiece = nextPiece;
+                nextPiece = createPiece(); 
+                drawNextPiece(); 
+                if (checkCollision(currentPiece, currentPiece.x, currentPiece.y)) {
+                    gameOver = true; 
+                }
+            }
+        }
+
+        // ステージクリア（レベルアップ）時の処理
+        function handleStageClear() {
+            stageClearPause = true; 
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            managePeriodicCheerTimer(false); 
+
+            clearedStageElement.textContent = currentStage; 
+            currentScoreAtClearElement.textContent = score; 
+            aiStageClearMessageElement.textContent = "マハラジャがお祝いの言葉を考えています...✨";
+            stageClearModal.classList.remove('hidden');
+
+            const shareText = `${playerName}さんがマサラテトリスでステージ${currentStage}に到達！スコア${score}点！あなたも挑戦しませんか？ #マサラテトリス`;
+            const gameUrl = "https://g.co/gemini/share/cb87afeda783";
+
+            shareToXStageClearButton.onclick = () => {
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(gameUrl)}`, '_blank');
+            };
+            shareToLineStageClearButton.onclick = () => {
+                window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareText + "\n" + gameUrl)}`, '_blank');
+            };
+
+            const prompt = `あなたはインドの宮殿の祝祭を取り仕切る「グランド・マハラジャ」です！プレイヤー「${playerName}」がテトリスで見事ステージ${currentStage}に到達し、クリアしました！現在のスコアは${score}点です。この輝かしい瞬間を、インドの壮大な祭りのように、最大限に祝福するメッセージを日本語で生成してください！詩的で、情熱的で、少しユーモラスな要素も混ぜてください。花火が打ち上がり、象が踊り、音楽が鳴り響くような、そんな賑やかな雰囲気を言葉で表現してください。絵文字（例：🎉, 🎊, 👑, 🐘, 🕌, 🦚, 💃, 🕺, ✨, 🌟, 💖）をふんだんに使ってください！例：「見よ、この栄光を！ステージ${currentStage}達成、誠におめでとうございます、我が勇者「${playerName}」よ！🎉🎊 あなたの妙技は、まるでタージ・マハルの如く壮麗！夜空には祝福の花火が舞い、宮殿では象たちが喜びのダンスを踊っておりますぞ！🐘💃 この勢いで、次のステージも制覇するのじゃ！マハラジャより愛を込めて！💖👑」`; 
+            fetchAIGeneratedText(prompt, aiStageClearMessageElement, null); 
+        }
+
+        nextStageButton.addEventListener('click', () => {
+            stageClearModal.classList.add('hidden');
+            stageClearPause = false;
+            
+            if (!gameOver) { 
+                currentPiece = nextPiece; 
+                nextPiece = createPiece();
+                drawNextPiece();
+                if (checkCollision(currentPiece, currentPiece.x, currentPiece.y)) {
+                    gameOver = true; 
+                    showGameOverScreen(); 
+                    return;
+                }
+                lastTime = performance.now(); 
+                managePeriodicCheerTimer(true); 
+                animationFrameId = requestAnimationFrame(gameLoop); 
+            } else {
+                showGameOverScreen(); 
+            }
+        });
+
+
+        // ライン消去とスコア更新
+        function clearLinesAndUpdateScore() {
+            let linesClearedThisTurn = 0;
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (board[y].every(value => value !== 0)) {
+                    linesClearedThisTurn++;
+                    board.splice(y, 1); 
+                    board.unshift(Array(COLS).fill(0)); 
+                    y++; 
+                }
+            }
+
+            if (linesClearedThisTurn > 0) {
+                let points = 0;
+                if (linesClearedThisTurn === 1) points = 100;
+                else if (linesClearedThisTurn === 2) points = 300;
+                else if (linesClearedThisTurn === 3) points = 500;
+                else if (linesClearedThisTurn >= 4) points = 1000; 
+                
+                score += points * currentStage; 
+                updateScoreDisplay();
+
+                if (linesClearedThisTurn >= 2 && !isFetchingAI && !stageClearPause) { 
+                     const prompt = `あなたはインドの祭りの司会者のように、超ハイテンションなテトリス応援団長「マハラジャ」です！プレイヤー「${playerName}」がなんと${linesClearedThisTurn}ライン同時に消すという、まさに奇跡の技を見せました！現在のスコアは${score}点、ステージは${currentStage}です。この偉業を称え、踊りだしたくなるような、最高にエキサイティングなインド風の応援メッセージを日本語で生成してください！「素晴らしい！」「最高！」といった言葉や、インドの神様の名前、お祭りの名前（例：ディワリ、ホーリー）、縁起の良い言葉、絵文字（例：💃,🕺,🎉,🎊,✨,🌟,👑,🕌,🦚）をふんだんに使ってください！例：「バッレバッレ！「${playerName}」！見てください皆さん！${linesClearedThisTurn}ライン同時消し！これはまさにディワリ祭りの花火のよう！スコア${score}点、ステージ${currentStage}！ガネーシャ神も踊り出すこの瞬間！シャバッシュ！🕺🎉🎊🇮🇳」`; 
+                     fetchAIGeneratedText(prompt, aiCheerMessageElement, null);
+                }
+            }
+        }
+        
+        function updateScoreDisplay() { scoreElement.textContent = score; }
+        function updateStageDisplay() { stageElement.textContent = currentStage; } 
+        function updateTimeLeftDisplay() {
+            const timeLeft = Math.max(0, Math.ceil((STAGE_UP_INTERVAL - (stageUpTimer % STAGE_UP_INTERVAL)) / 1000)); 
+            timeLeftElement.textContent = `残り: ${timeLeft}秒`;
+        }
+
+
+        // movePiece関数を修正: isIntentionalDropフラグを追加
+        function movePiece(dx, dy, isIntentionalDrop = false) {
+            if (gamePaused || gameOver || stageClearPause) return false; 
+            if (!checkCollision(currentPiece, currentPiece.x + dx, currentPiece.y + dy)) {
+                currentPiece.x += dx;
+                currentPiece.y += dy;
+                if (dy > 0 && isIntentionalDrop) { 
+                    score += SOFT_DROP_SCORE_PER_ROW;
+                    updateScoreDisplay();
+                }
+                return true;
+            }
+            return false;
+        }
+
+        // dropPiece関数を修正: isIntentionalDropフラグをmovePieceに渡す
+        function dropPiece(isIntentionalDrop = false) { 
+            if (gamePaused || gameOver || stageClearPause) return; 
+            if (!movePiece(0, 1, isIntentionalDrop)) { 
+                lockPiece();
+            } 
+            dropCounter = 0; 
+        }
+
+        function rotatePiece() {
+            if (gamePaused || gameOver || stageClearPause) return; 
+
+            const pieceToRotate = currentPiece; 
+            const originalShape = pieceToRotate.shape;
+            
+            const newShapeRows = originalShape[0].length;
+            const newShapeCols = originalShape.length;
+            const newShape = Array.from({ length: newShapeRows }, () => Array(newShapeCols).fill(0));
+
+            for (let y = 0; y < newShapeCols; y++) { 
+                for (let x = 0; x < newShapeRows; x++) { 
+                    newShape[x][newShapeCols - 1 - y] = originalShape[y][x];
+                }
+            }
+            
+            const offsets = [ 
+                { x: 0, y: 0 }, { x: 1, y: 0 }, { x: -1, y: 0 }, 
+                { x: 2, y: 0 }, { x: -2, y: 0 }, { x: 0, y: -1 }, 
+                { x: 0, y: -2}, { x: 1, y: -1}, { x: -1, y: -1},
+                { x: 1, y: 1}, {x: -1, y: 1} 
+            ];
+
+            for (const offset of offsets) {
+                let adjustedX = pieceToRotate.x + offset.x;
+                let adjustedY = pieceToRotate.y + offset.y;
+                if (!checkCollision(pieceToRotate, adjustedX, adjustedY, newShape)) {
+                    pieceToRotate.shape = newShape;
+                    pieceToRotate.x = adjustedX;
+                    pieceToRotate.y = adjustedY;
+                    pieceToRotate.rotation = (pieceToRotate.rotation + 1) % 4;
+                    return;
+                }
+            }
+        }
+        
+        // hardDrop関数を修正: movePiece呼び出し時のisIntentionalDropをfalseに
+        function hardDrop() {
+            if (gamePaused || gameOver || stageClearPause) return; 
+            let cellsDropped = 0;
+            while (movePiece(0, 1, false)) { 
+                cellsDropped++;
+            }
+            score += cellsDropped * HARD_DROP_SCORE_PER_ROW; 
+            updateScoreDisplay();
+            lockPiece(); 
+        }
+
+        // --- シヴァ神の支援 機能 ---
+        const SHIVA_EFFECTS = [
+            { name: "盤面下3ライン消去", type: "good", effect: () => {
+                let linesRemoved = 0;
+                for (let i = 0; i < 3; i++) {
+                    const targetRow = ROWS - 1 - linesRemoved; 
+                    if (targetRow >=0 && board.length > targetRow) { 
+                         board.splice(targetRow, 1);
+                         board.unshift(Array(COLS).fill(0));
+                         linesRemoved++;
+                    } else { break; }
+                }
+                score += linesRemoved * 50 * currentStage; 
+                updateScoreDisplay(); drawBoard(); 
+                return `シヴァ神の恵み！盤面下部 ${linesRemoved} ラインが浄化されました！✨ スコアボーナス！`;
+            }},
+            { name: "スコア +500", type: "good", effect: () => {
+                score += 500 * currentStage; updateScoreDisplay(); 
+                return `シヴァ神の祝福！スコアが ${500 * currentStage} 点増加しました！💰`;
+            }},
+            { name: "次のブロックがIミノになる", type: "good", effect: () => {
+                nextPiece = { x: Math.floor(COLS / 2) - 2, y: 0, shape: SHAPES[0], color: COLORS[0], type: 'normal', rotation: 0 };
+                drawNextPiece();
+                return `シヴァ神の導き！次のブロックは恵みのIブロックです！🙌`;
+            }},
+            { name: "10秒間落下速度半減", type: "good", effect: () => {
+                const originalInterval = dropInterval; dropInterval *= 2;
+                shivaEffectMessageElement.dataset.activeEffect = 'speedDown'; 
+                setTimeout(() => { 
+                    if (shivaEffectMessageElement.dataset.activeEffect === 'speedDown' && !gameOver && !gamePaused && !stageClearPause) {
+                        dropInterval = originalInterval; 
+                    }
+                    delete shivaEffectMessageElement.dataset.activeEffect;
+                }, 10000);
+                return `シヴァ神の慈悲！10秒間、時が緩やかに流れます...⏳`;
+            }},
+            { name: "盤面にランダムな穴を3つ開ける", type: "bad", effect: () => {
+                let holesMade = 0;
+                for (let i = 0; i < 3 && holesMade < 3; i++) { 
+                    let attempts = 0;
+                    while(attempts < 10) { 
+                        const randY = Math.floor(Math.random() * (ROWS - 5)) + 5; 
+                        const randX = Math.floor(Math.random() * COLS);
+                        if (board[randY] && board[randY][randX] === 0) { 
+                            board[randY][randX] = '#777777'; holesMade++; break; 
+                        }
+                        attempts++;
+                    }
+                }
+                drawBoard();
+                return `シヴァ神の試練！盤面に ${holesMade} つの障害物が現れました！🚧`;
+            }},
+            { name: "スコア -200", type: "bad", effect: () => {
+                score = Math.max(0, score - (200 * currentStage)); updateScoreDisplay(); 
+                return `シヴァ神の気まぐれ！スコアが ${200 * currentStage} 点減少...😭 でも大丈夫！`;
+            }},
+            { name: "7秒間操作が左右反転", type: "bad", effect: () => { 
+                keysReversed = true; 
+                shivaEffectMessageElement.dataset.activeEffect = 'reverseControls';
+                setTimeout(() => {
+                    if (shivaEffectMessageElement.dataset.activeEffect === 'reverseControls') {
+                        keysReversed = false; 
+                        shivaEffectMessageElement.textContent = "操作反転解除！";
+                         setTimeout(() => { 
+                            if (shivaEffectMessageElement.textContent === "操作反転解除！") {
+                                shivaEffectMessageElement.textContent = "シヴァ神のご加護はいかに...";
+                            }
+                        }, 1500);
+                    }
+                    delete shivaEffectMessageElement.dataset.activeEffect;
+                }, 7000); 
+                return `シヴァ神のいたずら！7秒間、操作が左右反転します！😵‍💫`;
+            }},
+             { name: "盤面全クリア（ただしスコアはそのまま）", type: "super_good", effect: () => {
+                board = createBoard(); drawBoard();
+                return `シヴァ神の破壊と再生！盤面が全てクリアされました！新たな始まりです！🌌`;
+            }},
+             { name: "次のブロックが三叉槍になる", type: "bad", effect: () => { 
+                const trishula = MOTIF_SHAPES.find(m => m.shape === TRISHULA_SHAPE_NEW);
+                if (trishula) {
+                    nextPiece = { 
+                        x: Math.floor(COLS / 2) - Math.floor(trishula.shape[0].length / 2), 
+                        y: 0, 
+                        shape: trishula.shape, 
+                        color: trishula.color, 
+                        type: 'motif', 
+                        rotation: 0 
+                    };
+                    drawNextPiece();
+                    return `シヴァ神の裁き！次のブロックは巨大な三叉槍だ！🔱`;
+                }
+                return `シヴァ神の気まぐれ…何も起こらなかったようだ。`; 
+            }},
+        ];
+
+        shivaSupportButton.addEventListener('click', () => {
+            if (gameOver || gamePaused || stageClearPause || isFetchingAI || shivaSupportCooldown > 0) return; 
+
+            const randomIndex = Math.floor(Math.random() * SHIVA_EFFECTS.length);
+            const effect = SHIVA_EFFECTS[randomIndex];
+            
+            const originalButtonText = shivaSupportButton.innerHTML;
+            shivaSupportButton.innerHTML = "祈祷中...🕉️";
+            shivaSupportButton.disabled = true;
+            shivaSupportCooldown = SHIVA_COOLDOWN_TIME; 
+
+            shivaEffectMessageElement.textContent = `シヴァ神が ${effect.name} を発動！`;
+            const resultMessage = effect.effect(); 
+            
+            setTimeout(() => {
+                shivaEffectMessageElement.textContent = resultMessage;
+            }, 1500); 
+        });
+
+
+        // ゲームループ
+        function gameLoop(currentTime) {
+            if (gameOver || stageClearPause) { 
+                if (gameOver && !stageClearPause) showGameOverScreen(); 
+                return;
+            }
+            if (gamePaused) {
+                animationFrameId = requestAnimationFrame(gameLoop); 
+                return;
+            }
+
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            dropCounter += deltaTime;
+            gameTimePlayed += deltaTime; 
+            stageUpTimer += deltaTime; 
+
+            if (shivaSupportCooldown > 0) {
+                shivaSupportCooldown -= deltaTime;
+                if (shivaSupportCooldown <= 0) {
+                    shivaSupportCooldown = 0;
+                    shivaSupportButton.disabled = false;
+                    shivaSupportButton.innerHTML = "シヴァ神の支援 🕉️";
+                } else {
+                    shivaSupportButton.innerHTML = `祈祷中...(${Math.ceil(shivaSupportCooldown/1000)})`;
+                }
+            }
+
+
+            if (stageUpTimer >= STAGE_UP_INTERVAL) { 
+                currentStage++; 
+                dropInterval = Math.max(MIN_DROP_INTERVAL, INITIAL_DROP_INTERVAL / Math.pow(1.5, currentStage -1) ); 
+                updateStageDisplay(); 
+                handleStageClear(); 
+                stageUpTimer = 0; 
+            }
+
+
+            if (dropCounter > dropInterval) {
+                dropPiece(); 
+            }
+
+            updateTimeLeftDisplay(); 
+            drawBoard();
+            drawPiece(currentPiece);
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function managePeriodicCheerTimer(start) {
+            if (start) {
+                if (periodicCheerIntervalId === null) { 
+                    lastPeriodicCheerTime = Date.now(); 
+                    periodicCheerIntervalId = setInterval(triggerPeriodicAICheer, PERIODIC_CHEER_INTERVAL);
+                }
+            } else {
+                if (periodicCheerIntervalId !== null) {
+                    clearInterval(periodicCheerIntervalId);
+                    periodicCheerIntervalId = null;
+                }
+            }
+        }
+
+        function startGame() {
+            if (!localStorage.getItem('masalaTetrisPlayerName')) { 
+                const nameFromPrompt = prompt("ランキングに表示する名前を入力してください (最大10文字):", "匿名マサラ");
+                if (nameFromPrompt && nameFromPrompt.trim() !== "") {
+                    playerName = nameFromPrompt.trim().substring(0, 10);
+                } else {
+                    playerName = "匿名マサラ"; 
+                }
+                localStorage.setItem('masalaTetrisPlayerName', playerName);
+            } else {
+                 playerName = localStorage.getItem('masalaTetrisPlayerName');
+            }
+            playerNameInputElement.value = playerName; 
+
+
+            board = createBoard();
+            pieceSpawnCounter = 0; 
+            currentPiece = createPiece();
+            nextPiece = createPiece(); 
+            score = 0;
+            currentStage = 1; 
+            linesCleared = 0;
+            gameOver = false;
+            gamePaused = false;
+            stageClearPause = false; 
+            dropInterval = INITIAL_DROP_INTERVAL / 2; 
+            dropCounter = 0;
+            gameTimePlayed = 0;
+            stageUpTimer = 0; 
+            lastTime = performance.now(); 
+            keysReversed = false; 
+            gameStarted = true; 
+            shivaSupportCooldown = 0; 
+            shivaSupportButton.disabled = false; 
+            shivaSupportButton.innerHTML = "シヴァ神の支援 🕉️";
+
+
+            updateScoreDisplay();
+            updateStageDisplay(); 
+            updateTimeLeftDisplay(); 
+            drawNextPiece();
+            
+            startPauseButton.textContent = '一時停止'; 
+            startPauseButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+            startPauseButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600', 'text-purple-900');
+            
+            aiCheerButton.disabled = false;
+            aiCheerMessageElement.textContent = 'マハラジャからの応援メッセージ受信BOX'; 
+            aiAdviceMessageElement.textContent = 'AIからの助言はここに表示されます。';
+            
+            shivaEffectMessageElement.textContent = "シヴァ神のご加護はいかに...";
+
+
+            gameOverModal.classList.add('hidden');
+            stageClearModal.classList.add('hidden'); 
+            managePeriodicCheerTimer(true); 
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // startPauseButton のイベントリスナーを修正
+        startPauseButton.addEventListener('click', () => {
+            if (!gameStarted) { 
+                startGame();
+            } else { 
+                togglePause();
+            }
+        });
+
+        function togglePause() {
+            if (gameOver || stageClearPause) return; 
+            gamePaused = !gamePaused;
+            if (gamePaused) {
+                startPauseButton.textContent = '再開';
+                startPauseButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600', 'text-purple-900');
+                startPauseButton.classList.add('bg-teal-500', 'hover:bg-teal-600', 'text-white');
+                managePeriodicCheerTimer(false); 
+                if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            } else {
+                startPauseButton.textContent = '一時停止';
+                startPauseButton.classList.remove('bg-teal-500', 'hover:bg-teal-600', 'text-white');
+                startPauseButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600', 'text-purple-900');
+                lastTime = performance.now(); 
+                managePeriodicCheerTimer(true); 
+                animationFrameId = requestAnimationFrame(gameLoop); 
+            }
+        }
+
+        async function saveScoreToFirestore(scoreToSave, stageReached, pName) { 
+            if (!db || !userId) { 
+                console.warn("Firestoreが初期化されていないか未認証のためスコアを保存できません。");
+                return null;
+            }
+            try {
+                const scoresCollectionPath = `artifacts/${appId}/public/data/scores`;
+                const docRef = await addDoc(collection(db, scoresCollectionPath), {
+                    playerName: pName, 
+                    score: scoreToSave,
+                    stage: stageReached,
+                    timestamp: serverTimestamp(),
+                    gameTitle: "マサラテトリス" 
+                });
+                console.log("スコア保存成功 Document ID:", docRef.id);
+                return docRef.id; 
+            } catch (error) {
+                console.error("スコア保存エラー:", error);
+                return null;
+            }
+        }
+
+        async function showGameOverScreen() {
+            if (stageClearPause) return; 
+            finalScoreElement.textContent = `最終スコア: ${score}`;
+            gameOverModal.classList.remove('hidden');
+            
+            startPauseButton.textContent = '再挑戦！'; 
+            startPauseButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600', 'text-purple-900', 'bg-teal-500', 'hover:bg-teal-600', 'text-white');
+            startPauseButton.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+            gameStarted = false; 
+
+            aiCheerButton.disabled = true;
+            shivaSupportButton.disabled = true; 
+            shivaSupportButton.classList.add('bg-gray-500', 'hover:bg-gray-500', 'cursor-not-allowed');
+            shivaSupportButton.classList.remove('bg-cyan-500', 'hover:bg-cyan-600');
+            keysReversed = false; 
+
+            managePeriodicCheerTimer(false); 
+            
+            await saveScoreToFirestore(score, currentStage, playerName); 
+            
+            const shareText = `${playerName}さんがマサラテトリスでステージ${currentStage}、${score}点を獲得しました！ #マサラテトリス`;
+            const gameUrl = "https://g.co/gemini/share/cb87afeda783";
+
+            shareToXGameOverButton.onclick = () => {
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(gameUrl)}`, '_blank');
+            };
+            shareToLineGameOverButton.onclick = () => {
+                window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareText + "\n" + gameUrl)}`, '_blank');
+            };
+
+
+            if (!isFetchingAI) {
+                const prompt = `あなたはインドの賢者のような、深く穏やかなテトリスコーチです。プレイヤー「${playerName}」がゲームオーバーになりました。最終スコアは ${score} 点、最終ステージは ${currentStage} でした。次のプレイに役立つ、哲学的で心に響く短いアドバイスを一つ、日本語で生成してください。プレイヤーを優しく励まし、内なる力に気づかせるようなトーンでお願いします。インドの叡智を感じさせる言葉や、穏やかな絵文字（例：🧘, 🕉️, ✨, 🙏）を使ってください。例：「お疲れ様でした、修行者「${playerName}」よ。${score}点、ステージ${currentStage}という結果は、あなたの内なる成長の証です。次の挑戦では、心の静寂を保ち、ブロック一つ一つとの調和を感じてみてはいかがでしょうか。内なる光が道を示すでしょう。ナマステ。🧘✨」`; 
+                fetchAIGeneratedText(prompt, aiAdviceMessageElement, aiAdviceButton); 
+            } else {
+                 aiAdviceMessageElement.textContent = 'AIが応答準備中です。少々お待ちください...';
+            }
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        }
+
+        function loadHighScores() {
+            if (!db) {
+                if(loadingScoresElement) loadingScoresElement.textContent = "ランキング機能が無効です。";
+                return;
+            }
+            if (!userId) { 
+                console.warn("User ID not available yet for loading high scores. Waiting for auth state change.");
+                if(loadingScoresElement) loadingScoresElement.textContent = "ユーザー認証待機中...";
+                return; 
+            }
+
+            if (unsubscribeScores) {
+                unsubscribeScores();
+            }
+
+            const scoresCollectionPath = `artifacts/${appId}/public/data/scores`;
+            console.log(`Attempting to load scores from: ${scoresCollectionPath}`);
+            const q = query(collection(db, scoresCollectionPath), orderBy("score", "desc"), limit(5));
+
+            unsubscribeScores = onSnapshot(q, (querySnapshot) => {
+                highScoreListElement.innerHTML = ''; 
+                if (querySnapshot.empty) {
+                    const li = document.createElement('li');
+                    li.textContent = 'まだスコアがありません。一番乗りを目指そう！';
+                    highScoreListElement.appendChild(li);
+                } else {
+                    querySnapshot.forEach((doc, index) => { 
+                        const data = doc.data();
+                        const li = document.createElement('li');
+                        const dateObj = data.timestamp?.toDate ? data.timestamp.toDate() : null;
+                        const dateString = dateObj ? `${dateObj.getFullYear()}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')} ${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}` : '日付不明';
+                        const displayName = data.playerName || '匿名プレイヤー'; 
+                        li.textContent = `${displayName} : ${data.score}点 (ステージ ${data.stage || '不明'}) - ${dateString}`;
+                        highScoreListElement.appendChild(li);
+                    });
+                }
+                if(loadingScoresElement) loadingScoresElement.style.display = 'none';
+            }, (error) => {
+                console.error("Error loading high scores from Firestore: ", error);
+                console.error("Detailed Firestore error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+                highScoreListElement.innerHTML = `<li>ランキングの読込エラー: ${error.code || error.message}</li>`;
+                if(loadingScoresElement) loadingScoresElement.style.display = 'none';
+            });
+        }
+
+
+        function gameKeyHandler(event) {
+            if (gameOver || stageClearPause) { 
+                 if (event.key === 'Enter' && gameOver && !stageClearPause) {
+                    startPauseButton.click(); 
+                 }
+                 return;
+            }
+            if (gamePaused && event.key.toLowerCase() !== 'p') return;
+
+            let key = event.key.toLowerCase();
+
+            if (keysReversed) { 
+                if (key === 'arrowleft' || key === 'a') { movePiece(1, 0, false); event.preventDefault(); return; } 
+                if (key === 'arrowright' || key === 'd') { movePiece(-1, 0, false); event.preventDefault(); return; }
+            }
+
+            switch (key) {
+                case 'arrowleft': case 'a': movePiece(-1, 0, false); break;
+                case 'arrowright': case 'd': movePiece(1, 0, false); break;
+                case 'arrowdown': case 's': dropPiece(true); break; 
+                case 'arrowup': case 'w': rotatePiece(); break;
+                case ' ': hardDrop(); event.preventDefault(); break;
+                case 'p': 
+                    if (gameStarted && !gameOver && !stageClearPause) togglePause(); 
+                    break;
+                case 'enter': 
+                    if (!gameStarted && !stageClearPause) startPauseButton.click(); 
+                    break;
+            }
+        }
+        document.removeEventListener('keydown', gameKeyHandler); 
+        document.addEventListener('keydown', gameKeyHandler); 
+        
+        const originalLeftClickHandler = () => movePiece(-1, 0, false); 
+        const originalRightClickHandler = () => movePiece(1, 0, false);
+
+        if (leftButton) leftButton.onclick = () => { if(stageClearPause || !gameStarted) return; keysReversed ? originalRightClickHandler() : originalLeftClickHandler(); };
+        if (rightButton) rightButton.onclick = () => { if(stageClearPause || !gameStarted) return; keysReversed ? originalLeftClickHandler() : originalRightClickHandler(); };
+        if (rotateButton) rotateButton.onclick = () => { if(stageClearPause || !gameStarted) return; rotatePiece(); };
+        if (softDropButton) softDropButton.onclick = () => { if(stageClearPause || !gameStarted) return; dropPiece(true); }; 
+        if (hardDropButton) hardDropButton.onclick = () => { if(stageClearPause || !gameStarted) return; hardDrop(); };
+
+
+        let touchStartX = 0; let touchStartY = 0; let touchEndX = 0; let touchEndY = 0;
+        const swipeThreshold = 30; const tapThresholdTime = 200; let touchStartTime = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (gamePaused || gameOver || stageClearPause || !gameStarted) return; e.preventDefault();
+            touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY;
+            touchStartTime = new Date().getTime();
+        }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => {
+            if (gamePaused || gameOver || stageClearPause || !gameStarted) return; e.preventDefault(); 
+        }, { passive: false });
+        canvas.addEventListener('touchend', (e) => {
+            if (gamePaused || gameOver || stageClearPause || !gameStarted) return; e.preventDefault();
+            touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: false });
+
+        function handleSwipe() {
+            if (gamePaused || gameOver || stageClearPause || !gameStarted) return;
+            const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY;
+            const touchDuration = new Date().getTime() - touchStartTime;
+            if (touchDuration < tapThresholdTime && Math.abs(deltaX) < swipeThreshold && Math.abs(deltaY) < swipeThreshold) {
+                rotatePiece(); return;
+            }
+            if (Math.abs(deltaX) > Math.abs(deltaY)) { 
+                if (Math.abs(deltaX) > swipeThreshold) { 
+                    if (deltaX > 0) { keysReversed ? movePiece(-1,0, false) : movePiece(1,0, false); }
+                    else { keysReversed ? movePiece(1,0, false) : movePiece(-1,0, false); }
+                }
+            } else { 
+                if (Math.abs(deltaY) > swipeThreshold) { 
+                    if (deltaY > 0) dropPiece(true); 
+                }
+            }
+        }
+
+        restartButton.addEventListener('click', () => {
+            gameOverModal.classList.add('hidden');
+            startGame(); 
+        });
+        
+        function initialDraw() {
+            board = createBoard(); 
+            drawBoard(); 
+            
+            nextPieceContext.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
+            nextPieceContext.fillStyle = 'rgba(126, 87, 194, 0.7)'; 
+            nextPieceContext.fillRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
+            
+            aiCheerMessageElement.textContent = 'マハラジャからの応援メッセージ受信BOX'; 
+            aiAdviceMessageElement.textContent = 'AIからの助言はここに表示されます。';
+            shivaEffectMessageElement.textContent = "シヴァ神のご加護はいかに...";
+            startPauseButton.textContent = '開始！'; 
+            startPauseButton.classList.remove('bg-orange-500', 'hover:bg-orange-600', 'bg-yellow-500', 'hover:bg-yellow-600', 'text-purple-900', 'bg-teal-500', 'hover:bg-teal-600', 'text-white');
+            startPauseButton.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+            timeLeftElement.textContent = `残り: ${STAGE_UP_INTERVAL / 1000}秒`; 
+            managePeriodicCheerTimer(false); 
+            gameStarted = false; 
+            playerNameInputElement.value = playerName; 
+        }
+        initialDraw();
+    </script>
+</body>
+</html>
