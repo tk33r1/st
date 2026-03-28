@@ -127,6 +127,7 @@
       font-size: clamp(3rem, 10vh, 7rem);
       font-weight: 900;
       letter-spacing: 0.1em;
+      padding-top: 0.1em; /* 中央揃え補正: 縦書きのletter-spacing余白を相殺 */
       line-height: 1.1;
       writing-mode: vertical-rl;
       text-orientation: upright;
@@ -138,9 +139,10 @@
     }
 
     .hero-tagline {
-      font-size: clamp(1rem, 2vw, 1.3rem);
+      font-size: clamp(0.75rem, 3.5vw, 1.3rem);
       font-weight: 300;
       letter-spacing: 0.15em;
+      padding-left: 0.15em; /* 中央揃え補正: 横書きのletter-spacing余白を相殺 */
       color: var(--black);
       margin-bottom: 20px;
       text-transform: uppercase;
@@ -243,18 +245,25 @@
     }
 
     .philosophy-content {
+      /* display: flex を使用してはみ出した際も左右均等になるよう補正 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      max-width: 600px;
       z-index: 10;
       position: relative;
+      width: 100%;
+      /* max-width制限を撤廃して右ズレを防止 */
     }
 
     .philosophy-text {
-      font-size: clamp(1.1rem, 3.5vw, 3rem);
+      font-size: clamp(0.9rem, 3.5vw, 3rem);
       font-weight: 700;
       line-height: 1.8;
       color: var(--black);
       letter-spacing: 0.05em;
+      padding-left: 0.05em; /* 中央揃え補正: letter-spacing余白を相殺 */
       white-space: nowrap;
     }
 
