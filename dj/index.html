@@ -47,7 +47,6 @@
 
     #app {
       width: 100%;
-      overflow-x: hidden;
     }
 
     :root {
@@ -132,8 +131,8 @@
       writing-mode: vertical-rl;
       text-orientation: upright;
       color: var(--black);
-      max-height: 85vh; /* 表示領域を広げました */
-      white-space: nowrap; /* 強制的に1行（縦1列）にする */
+      max-height: 85vh;
+      white-space: nowrap;
       margin: 0 auto;
       text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
     }
@@ -148,7 +147,7 @@
       opacity: 0.8;
     }
 
-    /* ===== おすすめ機能: タイピングアニメーション ===== */
+    /* ===== Typewriter Animation ===== */
     .typewriter-text {
       overflow: hidden;
       white-space: nowrap;
@@ -169,7 +168,7 @@
       50% { border-color: var(--black); }
     }
 
-    /* ===== UI Enhancements: Sync Rate ===== */
+    /* ===== SYNC RATE Progress ===== */
     .progress-container {
       position: fixed;
       top: 0;
@@ -251,11 +250,12 @@
     }
 
     .philosophy-text {
-      font-size: clamp(1.5rem, 4vw, 3rem);
+      font-size: clamp(1.1rem, 3.5vw, 3rem);
       font-weight: 700;
       line-height: 1.8;
       color: var(--black);
       letter-spacing: 0.05em;
+      white-space: nowrap;
     }
 
     .philosophy-text > div:first-child {
@@ -300,7 +300,6 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 15px;
       font-size: 1rem;
       color: var(--dark-blue-purple);
       font-weight: 600;
@@ -321,19 +320,20 @@
     }
 
     .gear-image {
-      width: 120px;
-      height: 120px;
-      object-fit: contain;
-      z-index: 2;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
       transition: transform 0.3s ease;
-      filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+      opacity: 0.9;
     }
 
     .gear-item:hover .gear-image {
       transform: scale(1.1);
     }
-
-    .gear-label { z-index: 2; }
 
     .at-field {
       position: absolute;
@@ -487,7 +487,6 @@
       line-height: 1.6;
     }
 
-    /* ===== Timeline Link Style ===== */
     .timeline-link {
       color: inherit;
       text-decoration: none;
@@ -509,13 +508,12 @@
       font-weight: 600;
     }
 
-    /* レスポンシブ対応のGoogleカレンダーコンテナ */
     .calendar-container {
       background: var(--dark-blue-purple);
       padding: 10px;
       border-radius: 8px;
       width: 100%;
-      height: 500px; /* PCでの基本高 */
+      height: 500px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       overflow: hidden;
     }
@@ -548,7 +546,6 @@
       color: var(--white);
     }
 
-    /* レスポンシブ対応のWistiaコンテナ */
     .video-container {
       width: 100%;
       max-width: 1000px;
@@ -596,23 +593,11 @@
       max-width: 600px;
     }
 
-    .contact-message {
-      font-size: clamp(1.2rem, 3vw, 2rem);
-      line-height: 1.8;
-      color: var(--black);
-      margin-bottom: 60px;
-      font-weight: 300;
-      letter-spacing: 0.02em;
-    }
-
-    /* ===== Logo Space ===== */
     .contact-logo-space {
-      width: 120px;
-      height: 120px;
+      position: relative;
+      width: 130px;
+      height: 150px;
       margin: 0 auto 30px auto;
-      background: rgba(156, 122, 247, 0.05);
-      border: 2px dashed var(--neo-purple);
-      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -620,15 +605,33 @@
     }
 
     .contact-logo-space:hover {
-      background: rgba(156, 122, 247, 0.15);
       transform: scale(1.05);
     }
 
-    .contact-logo-space img {
-      width: 100%;
+    .logo-hex-border {
+      position: absolute;
+      top: 0; 
+      left: 0; 
+      width: 100%; 
       height: 100%;
+      z-index: 1;
+    }
+
+    .contact-logo-space img {
+      position: relative;
+      z-index: 2;
+      width: 75%;
+      height: 75%;
       object-fit: contain;
-      padding: 15px; /* ロゴが枠のギリギリにならないよう調整 */
+    }
+
+    .contact-message {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      line-height: 1.8;
+      color: var(--black);
+      margin-bottom: 60px;
+      font-weight: 300;
+      letter-spacing: 0.02em;
     }
 
     .contact-buttons {
@@ -774,7 +777,7 @@
   </style>
 </head>
 <body>
-  <!-- 追加: シンクロ率メーター -->
+  <!-- SYNC RATE Meter -->
   <div class="progress-container">
     <div class="progress-bar" id="progressBar"></div>
   </div>
@@ -802,22 +805,20 @@
         <div class="philosophy-octahedron">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <g fill="none" stroke="var(--neo-purple)" stroke-width="0.7" stroke-linejoin="round" stroke-linecap="round">
-              <!-- Back edges (opacity lowered for depth) -->
               <g opacity="0.4">
-                <line x1="50" y1="5" x2="50" y2="35" /> <!-- Top to Back -->
-                <line x1="50" y1="95" x2="50" y2="35" /> <!-- Bottom to Back -->
-                <line x1="10" y1="50" x2="50" y2="35" /> <!-- Left to Back -->
-                <line x1="90" y1="50" x2="50" y2="35" /> <!-- Right to Back -->
+                <line x1="50" y1="5" x2="50" y2="35" />
+                <line x1="50" y1="95" x2="50" y2="35" />
+                <line x1="10" y1="50" x2="50" y2="35" />
+                <line x1="90" y1="50" x2="50" y2="35" />
               </g>
-              <!-- Front edges -->
-              <line x1="50" y1="5" x2="10" y2="50" /> <!-- Top to Left -->
-              <line x1="50" y1="5" x2="90" y2="50" /> <!-- Top to Right -->
-              <line x1="50" y1="5" x2="50" y2="65" /> <!-- Top to Front -->
-              <line x1="50" y1="95" x2="10" y2="50" /> <!-- Bottom to Left -->
-              <line x1="50" y1="95" x2="90" y2="50" /> <!-- Bottom to Right -->
-              <line x1="50" y1="95" x2="50" y2="65" /> <!-- Bottom to Front -->
-              <line x1="10" y1="50" x2="50" y2="65" /> <!-- Left to Front -->
-              <line x1="90" y1="50" x2="50" y2="65" /> <!-- Right to Front -->
+              <line x1="50" y1="5" x2="10" y2="50" />
+              <line x1="50" y1="5" x2="90" y2="50" />
+              <line x1="50" y1="5" x2="50" y2="65" />
+              <line x1="50" y1="95" x2="10" y2="50" />
+              <line x1="50" y1="95" x2="90" y2="50" />
+              <line x1="50" y1="95" x2="50" y2="65" />
+              <line x1="10" y1="50" x2="50" y2="65" />
+              <line x1="90" y1="50" x2="50" y2="65" />
             </g>
           </svg>
         </div>
@@ -836,7 +837,6 @@
       <div class="gear-content reveal">
         <div class="gear-item" data-gear="controller">
           <img src="https://tk.st/images/contents/DJ-Controller-purple.png" alt="DJ Controller" class="gear-image">
-          <div class="gear-label">🎛️ DJ Controller</div>
           <div class="at-field">
             <div class="hexagon-layer"></div>
             <div class="hexagon-layer"></div>
@@ -844,7 +844,6 @@
         </div>
         <div class="gear-item" data-gear="headphone">
           <img src="https://tk.st/images/contents/lollipop-headphone.png" alt="Lollipop Headphone" class="gear-image">
-          <div class="gear-label">🎧 Lollipop Headphone</div>
           <div class="at-field">
             <div class="hexagon-layer"></div>
             <div class="hexagon-layer"></div>
@@ -852,7 +851,6 @@
         </div>
         <div class="gear-item" data-gear="turntable">
           <img src="https://tk.st/images/contents/happy-death.png" alt="Turntable" class="gear-image">
-          <div class="gear-label">💿 Turntable</div>
           <div class="at-field">
             <div class="hexagon-layer"></div>
             <div class="hexagon-layer"></div>
@@ -876,7 +874,7 @@
       </div>
     </section>
 
-    <!-- OPERATION (Calendar & Timeline) -->
+    <!-- OPERATION -->
     <section class="operation-section">
       <div class="operation-container">
         <div class="reveal">
@@ -885,7 +883,7 @@
             <div class="timeline-item">
               <div class="timeline-year">2026</div>
               <div class="timeline-event">
-                <a href="https://tk.st/images/contents/NEXTORM-BASE-#16_Ohjo-bldg.png" target="_blank" rel="noopener noreferrer" class="timeline-link">
+                <a href="https://tk.st/images/contents/NEXTORM-BASE-16_Ohjo-bldg.png" target="_blank" rel="noopener noreferrer" class="timeline-link">
                   NEXTORM -BASE- #16<br>
                   Ohjo-bldg
                 </a>
@@ -911,7 +909,6 @@
         </div>
         <div class="reveal">
           <div class="operation-title">📅 Schedule / Future</div>
-          <!-- 挿入: レスポンシブ化されたGoogleカレンダー -->
           <div class="calendar-container">
             <iframe src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo" frameborder="0" scrolling="no"></iframe>
           </div>
@@ -922,9 +919,8 @@
     <!-- VIDEO -->
     <section class="video-section">
       <div class="video-title reveal">🎬 Visual Database</div>
-      <!-- 挿入: Wistia 動画プレーヤー (iframeフォールバック) -->
       <div class="video-container reveal">
-        <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" allowtransparency="true" frameborder="0" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen width="100%" height="100%"></iframe>
+        <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" allowtransparency="true" frameborder="0" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen></iframe>
       </div>
     </section>
 
@@ -936,8 +932,10 @@
         </svg>
       </div>
       <div class="contact-content reveal">
-        <!-- 追加: 六角形のロゴスペース -->
         <div class="contact-logo-space" title="DJ Human Choreomania Project Logo">
+          <svg class="logo-hex-border" viewBox="0 0 100 115" preserveAspectRatio="none">
+            <polygon points="50,2 98,27.5 98,87.5 50,113 2,87.5 2,27.5" fill="rgba(156, 122, 247, 0.05)" stroke="var(--neo-purple)" stroke-width="2" stroke-dasharray="4,4" />
+          </svg>
           <img src="https://tk.st/images/contents/dj-logo3.png" alt="DJ Logo">
         </div>
         
@@ -971,7 +969,7 @@
     </footer>
   </div>
 
-  <!-- 画像モーダル -->
+  <!-- Image Modal -->
   <div class="image-modal" id="imageModal">
     <div class="image-modal-content">
       <button class="modal-close" id="modalClose">&times;</button>
@@ -979,13 +977,19 @@
     </div>
   </div>
 
-  <!-- トップへ戻るボタン -->
+  <!-- Back to Top Button -->
   <button class="back-to-top" id="backToTop" title="トップへ戻る">
     <i data-lucide="chevron-up" style="width: 28px; height: 28px;"></i>
   </button>
 
   <script>
-    // 1. A.T. Field Effect (ホバー/タップアニメーション)
+    // 1. DOM Elements Cache (パフォーマンス向上のためのキャッシュ)
+    const progressBar = document.getElementById('progressBar');
+    const syncRateText = document.getElementById('syncRateText');
+    const footer = document.querySelector('.site-footer');
+    const backToTopBtn = document.getElementById('backToTop');
+    
+    // 2. A.T. Field Effect
     const triggerAtField = (item) => {
       const atField = item.querySelector('.at-field');
       if (!atField) return;
@@ -999,34 +1003,30 @@
       item.addEventListener('touchstart', () => triggerAtField(item), { passive: true });
     });
 
-    // 2. おすすめ機能: スクロール連動フェードイン (Scroll Reveal)
+    // 3. Scroll Reveal Animation
     const revealElements = document.querySelectorAll('.reveal');
-    
-    // スクロール時の監視設定
     const revealObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('active');
-          // 一度表示されたら監視を解除（再スクロールで消えないようにする）
           observer.unobserve(entry.target);
         }
       });
     }, {
       root: null,
       rootMargin: '0px',
-      threshold: 0.15 // 要素が15%見えたら発火
+      threshold: 0.15
     });
 
     revealElements.forEach(el => revealObserver.observe(el));
 
-    // ロード直後にヒーローセクションのアニメーションを発火させる
     window.addEventListener('load', () => {
       document.querySelectorAll('.hero-section .reveal').forEach(el => {
         el.classList.add('active');
       });
     });
 
-    // 4. SYNC RATE (Scroll Progress)
+    // 4. SYNC RATE & Back to Top (Scroll Progress)
     window.addEventListener('scroll', () => {
       const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
       const clientHeight = document.documentElement.clientHeight;
@@ -1037,17 +1037,10 @@
       if (scrollPercent < 0) scrollPercent = 0;
       if (scrollPercent > 1) scrollPercent = 1;
       
-      const progressBar = document.getElementById('progressBar');
-      const syncRateText = document.getElementById('syncRateText');
-      const footer = document.querySelector('.site-footer');
-      
       if (progressBar && syncRateText && footer) {
-        // プログレスバーは画面全体のスクロールに連動
         progressBar.style.width = (scrollPercent * 100) + '%';
         
-        // フッターが見え始めるスクロール位置
         const footerTopScroll = footer.offsetTop - clientHeight;
-        // 最下部到達判定（ブラウザの描画誤差を考慮して-2pxの余裕を持たせる）
         const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
         
         let displayRate = '';
@@ -1057,11 +1050,9 @@
           displayRate = '∞%';
           isRunaway = true;
         } else if (scrollTop >= footerTopScroll) {
-          // フッターが見えたら400%
           displayRate = '400.00%';
           isRunaway = true;
         } else {
-          // フッターが見える直前までを 0% 〜 399.99% にマッピング
           let ratePercent = footerTopScroll > 0 ? (scrollTop / footerTopScroll) : 0;
           let syncRate = ratePercent * 399.99;
           displayRate = syncRate.toFixed(2) + '%';
@@ -1070,7 +1061,6 @@
         
         syncRateText.textContent = `SYNC RATE: ${displayRate}`;
         
-        // 暴走状態（300%超え）で色を赤（アクセントカラー）に変更
         if (isRunaway) {
           syncRateText.style.color = 'var(--accent-red)';
           syncRateText.style.borderColor = 'var(--accent-red)';
@@ -1082,8 +1072,6 @@
         }
       }
 
-      // Back to Topボタンの表示制御
-      const backToTopBtn = document.getElementById('backToTop');
       if (backToTopBtn) {
         if (scrollTop > 300) {
           backToTopBtn.classList.add('visible');
@@ -1093,24 +1081,21 @@
       }
     }, { passive: true });
 
-    // トップへ戻るボタンのクリックイベント
-    const backToTopBtn = document.getElementById('backToTop');
     if (backToTopBtn) {
       backToTopBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
 
-    // 6. 画像モーダルの制御
+    // 5. Image Modal Control
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
     const closeModalBtn = document.getElementById('modalClose');
     const timelineLinks = document.querySelectorAll('.timeline-link');
 
-    // リンククリック時にモーダルを開く
     timelineLinks.forEach(link => {
       link.addEventListener('click', (e) => {
-        e.preventDefault(); // 別タブで開く挙動をキャンセル
+        e.preventDefault();
         const imgSrc = link.getAttribute('href');
         if (imgSrc) {
           modalImg.src = imgSrc;
@@ -1119,21 +1104,17 @@
       });
     });
 
-    // モーダルを閉じる関数
     const hideModal = () => {
       modal.classList.remove('active');
-      // アニメーション完了後に画像ソースをクリア（ちらつき防止）
       setTimeout(() => {
         modalImg.src = '';
       }, 300);
     };
 
-    // 閉じるボタンで閉じる
     if (closeModalBtn) {
       closeModalBtn.addEventListener('click', hideModal);
     }
 
-    // 背景クリックで閉じる
     if (modal) {
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -1142,14 +1123,13 @@
       });
     }
 
-    // ESCキーで閉じる
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && modal.classList.contains('active')) {
         hideModal();
       }
     });
 
-    // 5. Initialize Lucide Icons
+    // 6. Initialize Lucide Icons
     lucide.createIcons();
   </script>
 </body>
