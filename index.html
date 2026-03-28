@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" class="h-full">
+<html lang="ja">
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&amp;family=Roboto+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
   <style>
     html, body { 
-      height: 100%; 
       margin: 0; 
       -webkit-text-size-adjust: 100%; 
       text-size-adjust: 100%;
@@ -66,8 +65,8 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
- <body class="h-full overflow-hidden">
-  <div id="app" class="h-full w-full flex flex-col" style="background:#0c0c0c; color:#d4d4d4;">
+ <body class="bg-[#0c0c0c]">
+  <div id="app" class="min-h-screen w-full flex flex-col" style="background:#0c0c0c; color:#d4d4d4;">
    <div class="scanline"></div><header class="flex items-center justify-between px-4 py-2 border-b" style="background:#1a1a1a; border-color:#333;">
     <div class="flex gap-1.5">
      <div class="w-2.5 h-2.5 rounded-full" style="background:#f87171;"></div>
@@ -77,12 +76,12 @@
     <div class="flex items-center gap-2">
      <span style="color:#4ade80;">▸</span> <span id="titlebar-name" class="text-xs tracking-wider" style="color:#888;">ST@portfolio:~</span>
     </div>
-   </header><main id="terminal-body" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-1" style="scroll-behavior:smooth;">
+   </header><main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1" style="scroll-behavior:smooth;">
     <div id="boot-area"></div>
     <div id="output-area"></div>
     <div class="flex items-center gap-2 mt-4" id="input-line"><span id="prompt-prefix" class="text-xs whitespace-nowrap" style="color:#4ade80;">ST@portfolio:~$</span> <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" style="color:#d4d4d4;" autocomplete="off" spellcheck="false" placeholder="type 'help' to get started..." aria-label="Command input">
     </div>
-   </main><footer class="flex items-center justify-between px-4 py-1.5 text-xs border-t" style="background:#1a1a1a; border-color:#333; color:#666;"><span id="status-left">READY</span> <span id="status-right"></span>
+   </main><footer class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto" style="background:#1a1a1a; border-color:#333; color:#666;"><span id="status-left">READY</span> <span id="status-right"></span>
    </footer>
   </div>
   <script>
@@ -140,8 +139,11 @@
     }
 
     function scrollToBottom() {
-      const body = document.getElementById('terminal-body');
-      body.scrollTop = body.scrollHeight;
+      // 全体スクロールに変更
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
     }
 
     function makeBar(pct) {
@@ -753,7 +755,8 @@
       }
     });
 
-    document.getElementById('terminal-body').addEventListener('click', () => cmdInput.focus());
+    // ▼▼▼ コマンド入力位置への強制スクロール・フォーカスを防止するため、以下の行を削除・無効化しました ▼▼▼
+    // document.getElementById('terminal-body').addEventListener('click', () => cmdInput.focus());
 
     // Update status bar time
     function updateTime() {
