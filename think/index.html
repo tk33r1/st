@@ -1,35 +1,37 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja" class="h-full">
- <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>思索の余白</title>
   <link rel="icon" href="https://tk.st/images/favicons/think-favicon.png" type="image/png">
   <meta property="og:title" content="思索の余白">
   <meta property="og:description" content="人生の本質を思索するための場所">
-  <meta property="og:image" content="https://files.tkd.st/ogp/think-ogp.png">
-  <meta property="og:url" content="https://tkd.st/think/">
+  <meta property="og:image" content="https://tk.st/images/ogp/think-ogp.png">
+  <meta property="og:url" content="https://tk.st/think/">
   <meta property="og:type" content="article">
   <meta name="twitter:card" content="summary_large_image">
+  
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Zen+Kaku+Gothic+New:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
+  
   <style>
+    /* =========================================
+       Base & Layout Styles
+       ========================================= */
     html, body {
       height: 100%;
       width: 100%;
-    }
-
-    body {
       margin: 0;
-      background: #ffffff;
-      color: #111111;
       overflow: hidden;
     }
 
+    /* 上品な紙の質感を表現するノイズ背景 */
     .paper-noise {
       background-image:
         radial-gradient(circle at 20% 20%, rgba(0,0,0,0.025) 0, rgba(0,0,0,0.025) 1px, transparent 1px),
@@ -38,378 +40,606 @@
       background-size: 160px 160px, 220px 220px, 280px 280px;
     }
 
-    .fade-up {
-      opacity: 0;
-      transform: translateY(18px);
-      animation: fadeUp 1.4s ease forwards;
+    body.dark-mode .paper-noise {
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px),
+        radial-gradient(circle at 80% 30%, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 1px),
+        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.01) 0, rgba(255,255,255,0.01) 1px, transparent 1px);
     }
 
-    .fade-soft {
-      opacity: 0;
-      animation: fadeSoft 1.8s ease forwards;
+    ::selection { background: rgba(120,120,120,0.2); }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* =========================================
+       Zen Mode Styles (集中モード)
+       ========================================= */
+    body.zen-mode #headerTitleArea,
+    body.zen-mode nav,
+    body.zen-mode footer,
+    body.zen-mode #metaContent {
+      opacity: 0 !important;
+      filter: blur(4px) !important;
+      pointer-events: none;
+    }
+    #headerTitleArea, nav, footer, #metaContent {
+      transition: opacity 1.5s ease-in-out, filter 1.5s ease-in-out;
     }
 
-    .delay-1 { animation-delay: 0.15s; }
-    .delay-2 { animation-delay: 0.35s; }
-    .delay-3 { animation-delay: 0.65s; }
-    .delay-4 { animation-delay: 0.95s; }
-
-    @keyframes fadeUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    body.zen-mode .action-btns-wrapper,
+    body.zen-mode #zenToggleBtn,
+    body.zen-mode #themeToggleBtn {
+      opacity: 0.3 !important;
+    }
+    body.zen-mode .action-btns-wrapper:hover,
+    body.zen-mode #zenToggleBtn:hover,
+    body.zen-mode #themeToggleBtn:hover {
+      opacity: 1 !important;
+    }
+    
+    #zenToggleBtn, #themeToggleBtn {
+      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.5s ease-in-out;
     }
 
-    @keyframes fadeSoft {
-      to {
-        opacity: 1;
-      }
+    /* =========================================
+       Animation Definitions
+       ========================================= */
+    @keyframes breathe {
+      0%, 100% { transform: scaleX(0.88); opacity: 0.45; }
+      50% { transform: scaleX(1); opacity: 0.9; }
     }
-
     .breath-line {
       transform-origin: center;
       animation: breathe 6s ease-in-out infinite;
     }
 
-    @keyframes breathe {
-      0%, 100% { transform: scaleX(0.88); opacity: 0.45; }
-      50% { transform: scaleX(1); opacity: 0.9; }
+    @keyframes fadeUpIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOutDown {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-10px); }
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
     }
 
-    .selection-soft::selection {
-      background: rgba(17,17,17,0.12);
+    .anim-ready { opacity: 0; }
+    
+    .play-fade-up { animation: fadeUpIn 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    .play-fade-out { animation: fadeOutDown 0.4s ease-out forwards; }
+    .play-fade-in { animation: fadeIn 2.5s ease-out forwards; }
+
+    .delay-200 { animation-delay: 400ms; }
+    .delay-400 { animation-delay: 800ms; }
+    .delay-600 { animation-delay: 1200ms; }
+    .delay-800 { animation-delay: 1600ms; }
+
+    .reference-link { text-decoration: underline; text-underline-offset: 3px; transition: color 0.4s ease; }
+    body.dark-mode .reference-link:hover { color: #ffffff !important; }
+    body:not(.dark-mode) .reference-link:hover { color: #111111 !important; }
+
+    .action-btn:hover { color: #111111 !important; }
+    body.dark-mode .action-btn:hover { color: #ffffff !important; }
+
+    button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
     }
 
-    button {
-      touch-action: manipulation;
+    .share-option-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      transition: all 0.3s ease;
+      background-color: rgba(0,0,0,0.03);
     }
+    body.dark-mode .share-option-btn { background-color: rgba(255,255,255,0.03); }
+    .share-option-btn:hover { transform: translateY(-4px); background-color: rgba(0,0,0,0.06); }
+    body.dark-mode .share-option-btn:hover { background-color: rgba(255,255,255,0.06); }
   </style>
-  <style>body { box-sizing: border-box; }</style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
- </head>
- <body class="h-full w-full selection-soft">
-  <main id="app" class="paper-noise h-full w-full overflow-auto">
-   <div class="mx-auto flex h-full w-full max-w-7xl flex-col justify-between px-8 py-10 sm:px-14 sm:py-14 lg:px-24 lg:py-20">
-    <header class="fade-soft delay-1">
-     <div class="flex flex-col gap-8">
-      <div class="flex items-center gap-4 text-[#111111]">
-       <div id="topMark" class="h-px w-16 bg-[#d9d9d9] breath-line"></div>
-       <p id="subtitle" class="tracking-[0.28em] uppercase text-[11px] sm:text-xs text-[#777777] font-medium cursor-pointer hover:text-[#111111] transition" style="font-family: 'Zen Kaku Gothic New', sans-serif;">Space for Contemplation</p>
-      </div>
-      <nav class="flex flex-col gap-2 sm:gap-3">
-       <div id="buttonScroller" class="flex gap-2 sm:gap-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory scroll-smooth scrollbar-hide" style="scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
-        <button data-theme="love" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">愛とは</button> <button data-theme="happiness" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">幸せとは</button> <button data-theme="self" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">自我とは</button> <button data-theme="madness" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">狂気とは</button> <button data-theme="death" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">死とは</button> <button data-theme="freedom" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">自由とは</button> <button data-theme="society" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">社会とは</button> <button data-theme="universe" class="theme-button fade-up delay-2 px-4 py-2 text-sm sm:text-base border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 rounded-sm flex-shrink-0 snap-start" style="font-family: 'Zen Kaku Gothic New', sans-serif;">時空とは</button>
-       </div>
-      </nav>
-     </div>
-    </header>
-    <section class="flex-1 flex items-center justify-center">
-     <div class="w-full max-w-5xl px-2 sm:px-0">
-      <div class="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-16 items-start lg:items-center">
-       <div class="flex-1 flex flex-col justify-center min-h-0">
-        <h1 id="title" class="fade-up delay-2 text-[#111111] leading-[1.8] font-medium text-3xl sm:text-5xl lg:text-6xl" style="word-spacing: 0.5em;">思索の余白</h1>
-       </div>
-       <div class="w-full lg:w-1 h-px lg:h-40 bg-gradient-to-b from-transparent via-[#d9d9d9] to-transparent fade-soft delay-3"></div>
-       <div class="flex-1 min-h-0">
-        <div class="fade-soft delay-3">
-         <div id="midLine" class="h-1 w-12 bg-[#e7e7e7] mb-6 sm:mb-8"></div>
+</head>
+
+<body class="h-full w-full bg-[#ffffff] text-[#111111] transition-colors duration-700">
+  <main id="app" class="paper-noise no-scrollbar h-full w-full overflow-auto relative flex flex-col transition-colors duration-700">
+    <div class="mx-auto flex flex-1 w-full max-w-7xl flex-col px-8 py-10 sm:px-14 sm:py-14 lg:px-24 lg:py-20 pb-0 sm:pb-0">
+      
+      <!-- Header Section -->
+      <header class="anim-ready play-fade-in">
+        <div class="flex flex-col gap-8 w-full">
+          <div class="flex items-center justify-between w-full">
+            <div class="flex items-center gap-4 text-[#111111]" id="headerTitleArea">
+              <div id="topMark" class="h-px w-16 bg-[#d9d9d9] breath-line transition-colors duration-700"></div>
+              <p id="subtitle" class="tracking-[0.28em] uppercase text-[11px] sm:text-xs text-[#777777] font-medium cursor-pointer transition-colors duration-300">
+                Space for Contemplation
+              </p>
+            </div>
+            
+            <div class="flex items-center gap-3 sm:gap-4 relative z-10">
+              <button id="zenToggleBtn" class="p-2 text-[#777777] transition-all duration-500 rounded-full focus:outline-none" title="集中モード">
+                <i data-lucide="maximize" id="zenToggleIcon" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+              </button>
+              
+              <!-- テーマ切り替えトグルスイッチ -->
+              <button id="themeToggleBtn" class="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-500 focus:outline-none border border-black/10 bg-black/5" title="夜の余白へ" style="padding: 2px;">
+                <div class="absolute inset-0 flex items-center justify-between px-1.5 opacity-30 pointer-events-none">
+                  <i data-lucide="sun" class="w-2.5 h-2.5"></i>
+                  <i data-lucide="moon" class="w-2.5 h-2.5"></i>
+                </div>
+                <span id="themeToggleHandle" class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-all duration-500 translate-x-0 flex items-center justify-center relative z-10">
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <nav class="flex flex-col gap-2 sm:gap-3">
+            <div id="buttonScroller" class="flex gap-2 sm:gap-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory scroll-smooth no-scrollbar pb-2 sm:pb-0" style="-webkit-overflow-scrolling: touch;">
+              <button data-theme="love" class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">愛とは</button> 
+              <button data-theme="happiness" class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">幸せとは</button> 
+              <button data-theme="self" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">自我とは</button> 
+              <button data-theme="madness" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">狂気とは</button> 
+              <button data-theme="death" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">死とは</button> 
+              <button data-theme="freedom" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">自由とは</button> 
+              <button data-theme="society" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">社会とは</button> 
+              <button data-theme="universe" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">時空とは</button>
+            </div>
+          </nav>
         </div>
-        <p id="body" class="fade-up delay-3 text-[#555555] leading-[2.2] text-sm sm:text-base lg:text-lg max-w-xl" style="font-family: 'Cormorant Garamond', serif; letter-spacing: 0.05em;">何かを強く語るためではなく、 <br><br>
-          まだ言葉になりきらないもののために、 <br><br>
-          この白さと余白を残しておく。 <br><br>
-          考えは完成しなくていい。 <br><br>
-          ここでは、沈黙さえ <br>
-          ひとつの文章になる。</p>
-       </div>
-      </div>
-     </div>
-    </section>
-    <footer class="fade-soft delay-4 pt-10 pb-12 sm:pb-10">
-     <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-      <p id="footer" class="text-sm sm:text-base text-[#8a8a8a] leading-[1.9] max-w-xl" style="font-family: 'Zen Kaku Gothic New', sans-serif;">余白は、あなたの思考を置くためのスペース。</p>
-     </div>
-    </footer><button id="disclosureButton" class="fixed bottom-6 right-6 flex items-center gap-2 px-3 py-2 text-xs sm:text-sm rounded-full border border-[#d9d9d9] bg-white text-[#777777] transition hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 hover:shadow-sm" style="font-family: 'Zen Kaku Gothic New', sans-serif;"> <i data-lucide="info" style="width:14px;height:14px;flex-shrink-0;"></i> <span>広告について</span> </button>
-    <div id="disclosureModal" class="hidden fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-4" style="backdrop-filter: blur(2px);">
-     <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 sm:p-8 animate-in fade-in duration-300">
-      <h2 class="text-lg sm:text-xl font-medium text-[#111111] mb-4" style="font-family: 'Zen Kaku Gothic New', sans-serif;">広告について</h2>
-      <p class="text-sm sm:text-base text-[#555555] leading-[1.9] mb-6" style="font-family: 'Cormorant Garamond', serif;">記事内で紹介している本にはアフィリエイトリンクが含まれています。もし本選びの参考になりましたら、リンクからのご購入でサイト運営を応援いただけると励みになります。</p><button id="disclosureCloseButton" class="w-full px-4 py-2 bg-[#111111] text-white rounded-sm transition hover:bg-[#333333] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2" style="font-family: 'Zen Kaku Gothic New', sans-serif;">閉じる</button>
-     </div>
+      </header>
+
+      <!-- Main Content Section -->
+      <section class="flex-1 flex items-center justify-center mt-8 sm:mt-16 mb-4 sm:mb-8">
+        <div class="w-full max-w-5xl px-2 sm:px-0">
+          <div class="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-16 items-start lg:items-center">
+            
+            <div class="flex-1 flex flex-col justify-center min-h-0">
+              <h1 id="title" class="content-element anim-ready play-fade-up leading-[1.8] font-semibold text-3xl sm:text-5xl lg:text-6xl whitespace-nowrap transition-colors duration-700" style="letter-spacing: 0.15em;">思索の余白</h1>
+            </div>
+            
+            <div id="vLine" class="content-element anim-ready play-fade-in delay-400 w-full lg:w-1 h-px lg:h-40 bg-gradient-to-b from-transparent via-[#d9d9d9] to-transparent transition-colors duration-700"></div>
+            
+            <div class="flex-1 min-h-0">
+              <div id="hLineWrapper" class="content-element anim-ready play-fade-in delay-400">
+                <div id="hLine" class="h-1 w-12 bg-[#e7e7e7] mb-6 sm:mb-8 transition-colors duration-700"></div>
+              </div>
+              
+              <div id="body" class="content-element anim-ready play-fade-up delay-200 leading-[2.2] text-sm sm:text-base lg:text-lg max-w-xl transition-colors duration-700" style="letter-spacing: 0.08em;">
+                交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
+              </div>
+              
+              <div id="metaInfo" class="content-element anim-ready play-fade-up delay-400 mt-8 flex flex-col gap-2 text-xs sm:text-sm tracking-widest transition-colors duration-700">
+                <div id="metaContent" style="display: none;" class="flex flex-col gap-2">
+                  <p id="lastUpdated" class="leading-[1.8] flex items-start sm:items-center"></p>
+                  <p id="reference" class="leading-[1.8] flex items-start sm:items-center"></p>
+                </div>
+                
+                <div class="mt-4 flex items-center gap-6 transition-opacity duration-500 action-btns-wrapper opacity-70 hover:opacity-100">
+                  <button id="copyContentBtn" class="action-btn flex items-center gap-1.5 text-[#8a8a8a] transition-colors duration-300 focus:outline-none tracking-widest">
+                    <i data-lucide="copy" id="copyContentIcon" class="w-3.5 h-3.5"></i>
+                    <span id="copyContentText" class="text-[11px]">書き留める</span>
+                  </button>
+                  <button id="openShareModalBtn" class="action-btn flex items-center gap-1.5 text-[#8a8a8a] transition-colors duration-300 focus:outline-none tracking-widest">
+                    <i data-lucide="share-2" id="sharePageIcon" class="w-3.5 h-3.5"></i>
+                    <span id="sharePageText" class="text-[11px]">共有する</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </section>
     </div>
-   </div>
+
+    <!-- Footer Section -->
+    <footer class="anim-ready play-fade-in delay-600 mt-auto w-full flex flex-col">
+      <div class="mx-auto w-full max-w-7xl px-8 sm:px-14 lg:px-24 pb-12 sm:pb-16 pt-4 flex flex-col relative gap-12">
+        <p id="footerText" class="text-center text-sm sm:text-base leading-[1.9] transition-colors duration-700">余白は、あなたの思考を置くためのスペース。</p>
+        <div class="w-full flex justify-end">
+          <button id="disclosureBtn" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-full border bg-transparent transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 whitespace-nowrap tracking-widest"> 
+            <i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i>
+            <span id="disclosureText">広告について</span> 
+          </button>
+        </div>
+      </div>
+
+      <div id="footerBottom" class="w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]">
+        <p id="copyright" class="text-center text-[10px] sm:text-xs tracking-[0.1em] transition-colors duration-700">© 2026 Shinya Takeda. All Rights Reserved.</p>
+      </div>
+    </footer>
   </main>
+
+  <!-- Modals -->
+  <div id="disclosureModal" class="hidden fixed inset-0 flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-all duration-500" style="background-color: rgba(0,0,0,0.4);">
+    <div id="modalContent" class="rounded-lg shadow-2xl max-w-md w-full p-6 sm:p-8 transition-colors duration-500">
+      <h2 id="modalTitle" class="text-lg sm:text-xl font-medium mb-4 transition-colors duration-500 tracking-wider">広告について</h2>
+      <p id="modalBody" class="text-sm sm:text-base leading-[1.9] mb-6 transition-colors duration-500">記事内で紹介している本にはアフィリエイトリンクが含まれています。もし本選びの参考になりましたら、リンクからのご購入でサイト運営を応援いただけると励みになります。</p>
+      <button id="closeModalBtn" class="w-full px-4 py-2 rounded-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 tracking-widest">閉じる</button>
+    </div>
+  </div>
+
+  <div id="shareModal" class="hidden fixed inset-0 flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all duration-500" style="background-color: rgba(0,0,0,0.4);">
+    <div id="shareModalContent" class="rounded-lg shadow-2xl max-w-sm w-full p-6 sm:p-8 transition-colors duration-500">
+      <h2 id="shareModalTitle" class="text-lg font-medium mb-6 text-center tracking-widest">思索を共有する</h2>
+      <div class="grid grid-cols-2 gap-4 mb-8">
+        <button id="shareX" class="share-option-btn"><i data-lucide="twitter" class="w-6 h-6"></i><span class="text-[11px] tracking-widest">X</span></button>
+        <button id="shareLine" class="share-option-btn"><i data-lucide="message-circle" class="w-6 h-6"></i><span class="text-[11px] tracking-widest">LINE</span></button>
+        <button id="shareNotion" class="share-option-btn"><i data-lucide="file-text" class="w-6 h-6"></i><span class="text-[11px] tracking-widest">Notion</span></button>
+        <button id="shareCopy" class="share-option-btn"><i data-lucide="link" id="shareCopyIcon" class="w-6 h-6"></i><span id="shareCopyText" class="text-[11px] tracking-widest text-center">URLコピー</span></button>
+      </div>
+      <button id="closeShareModalBtn" class="w-full px-4 py-2 border border-black/10 rounded-sm transition-colors focus:outline-none tracking-widest text-xs opacity-60 hover:opacity-100">キャンセル</button>
+    </div>
+  </div>
+
   <script>
+    /* =========================================
+       Data Definitions
+       ========================================= */
     const themes = {
       love: {
         title: "愛とは",
-        body: "相手を理解したい、その存在を認めたい。完璧さではなく、傷つきやすさを共有することなのだろうか。愛は、もしかして、誰かの不完全さをそのまま受け入れることから始まるのではないだろうか。"
+        body: "誰かからの見返りを期待したり、何かと交換したりするものではない。かといって、自己犠牲でもない。愛とは、自立した人間同士が、配慮と尊重、転じて責任を持って相対し、互いの核心を知ろうとする中で、自発的にただ、与えるもののように思う。",
+        lastUpdated: "2026.03.12",
+        reference: `エーリッヒ・フロム（2020）『<a href="https://a.r10.to/hkGD1f" target="_blank" rel="noopener noreferrer" class="reference-link">愛するということ</a>』鈴木晶訳, 紀伊國屋書店.`
       },
       happiness: {
         title: "幸せとは",
-        body: "大きな達成感よりも、朝日が差す机の上での静寂。満足することは、すべてを手に入れることではなく、今ここにあるものを数えることかもしれない。幸せは、追い求めるものではなく、気づくものなのかもしれない。"
+        body: "絶え間なく幸せであり続けることは、人間である限り不可能。であれば、自分がコントロールできる範囲の苦しみを取り除く努力をし、それ以外は前向きに手放していく。その静かな諦念が、結果として幸せだと感じる時間を長くするのだろう。",
+        lastUpdated: "2026.03.16",
+        reference: `今枝由郎訳（2001）『<a href="https://a.r10.to/h5DyaJ" target="_blank" rel="noopener noreferrer" class="reference-link">スッタニパータ ブッダの言葉</a>』光文社.`
       },
-      self: {
-        title: "自我とは",
-        body: "自分らしさを求めながら、その自分さえも移ろいゆく。今の自分は、昨日の自分ではなく、明日も変わり続ける。自我とは、固定されたものではなく、絶え間なく変化する流れの中でのみ存在するのかもしれない。"
-      },
-      madness: {
-        title: "狂気とは",
-        body: "常識の外にある輝き。創造の狂気と破壊の狂気、二つの道がある。もしかして、狂気とは正気との境界線を引いた私たちの側の都合なのではないだろうか。時に狂気こそが、世界を変える力になる。"
-      },
-      death: {
-        title: "死とは",
-        body: "すべてのはじまりの終わり。死を前にすると、本当に大切なものが見える。失うから、今この瞬間が輝く。死は、生の意味を問う、最後の問い。そしてそれは、実は最初から私たちの中にあったのだ。"
-      },
-      freedom: {
-        title: "自由とは",
-        body: "選択することの責任を引き受けることではないだろうか。完全な自由は存在しない。むしろ、制限の中でも自分らしく在ることが、本当の自由なのかもしれない。自由とは、与えられるものではなく、自分たちで創り出すものなのだ。"
-      },
-      society: {
-        title: "社会とは",
-        body: "個人の集合であり、同時に個人を超えた何か。誰もが社会の一部であり、社会は誰もが作っている。共存とは、完全には理解できない他者と、それでも歩み続けることなのだろうか。"
-      },
-      universe: {
-        title: "時空とは",
-        body: "すべての存在の舞台。時間と空間は分かちがたく結びつき、宇宙全体を包む。人間はその中でもなお小さく、しかし時空の一部でもある。星々の光は過去からの手紙。時空を見つめることは、存在の深さを感じることかもしれない。"
-      }
+      self: { title: "自我とは", body: "...", lastUpdated: "2026.03.27", reference: "カール・グスタフ・ユング（1990）『自我と無意識』高橋義孝訳, 第三文明社." },
+      madness: { title: "狂気とは", body: "...", lastUpdated: "2026.03.26", reference: "ミシェル・フーコー（1975）『狂気の歴史』田村俶訳, 新潮社." },
+      death: { title: "死とは", body: "...", lastUpdated: "2026.03.25", reference: "マルティン・ハイデガー（1994）『存在と時間』細谷貞夫訳, ちくま学芸文庫." },
+      freedom: { title: "自由とは", body: "...", lastUpdated: "2026.03.24", reference: "ジャン＝ポール・サルトル（2007）『存在と無』松浪信三郎訳, ちくま学芸文庫." },
+      society: { title: "社会とは", body: "...", lastUpdated: "2026.03.23", reference: "ジャン＝ジャック・ルソー（1954）『社会契約論』桑原武夫訳, 岩波文庫." },
+      universe: { title: "時空とは", body: "...", lastUpdated: "2026.03.22", reference: "スティーヴン・ホーキング（1989）『ホーキング、宇宙を語る』林一訳, 早川書房." }
     };
+
+    const lightPalette = { background_color: "#ffffff", surface_color: "#e7e7e7", text_color: "#111111", primary_action_color: "#111111", secondary_action_color: "#777777", meta_text_color: "#8a8a8a", copyright_color: "#b0b0b0" };
+    const darkPalette = { background_color: "#161618", surface_color: "#333333", text_color: "#f4f4f5", primary_action_color: "#ffffff", secondary_action_color: "#a1a1aa", meta_text_color: "#8a8a8a", copyright_color: "#71717a" };
 
     const defaultConfig = {
-      background_color: "#ffffff",
-      surface_color: "#e7e7e7",
-      text_color: "#111111",
-      primary_action_color: "#111111",
-      secondary_action_color: "#777777",
-      font_family: "Cormorant Garamond",
-      font_size: 18,
-      main_title: "思索の余白",
-      subtitle_text: "Space for Contemplation",
-      body_text: "何かを強く語るためではなく、まだ言葉になりきらないもののために、この白さと余白を残しておく。考えは完成しなくていい。ここでは、沈黙さえひとつの文章になる。",
-      footer_text: "余白は、あなたの思考を置くためのスペース。"
+      ...lightPalette, font_family: "Cormorant Garamond", font_size: 18, main_title: "思索の余白", subtitle_text: "Space for Contemplation",
+      body_text: "交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。",
+      last_updated_text: "2025.10.12", reference_text: "", footer_text: "余白は、あなたの思考を置くためのスペース。"
     };
 
-    const els = {};
+    const SITE_URL = "https://tk.st/think/";
+    const UTM_PARAMS = "?utm_source=tk.st&utm_medium=referral&utm_campaign=think_space";
+
+    /* =========================================
+       DOM Elements
+       ========================================= */
+    const els = {
+      app: document.getElementById('app'),
+      headerTitleArea: document.getElementById('headerTitleArea'),
+      title: document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      body: document.getElementById('body'),
+      footerText: document.getElementById('footerText'),
+      topMark: document.getElementById('topMark'),
+      vLine: document.getElementById('vLine'),
+      hLine: document.getElementById('hLine'),
+      metaInfo: document.getElementById('metaInfo'),
+      metaContent: document.getElementById('metaContent'),
+      lastUpdated: document.getElementById('lastUpdated'),
+      reference: document.getElementById('reference'),
+      footerBottom: document.getElementById('footerBottom'),
+      copyright: document.getElementById('copyright'),
+      disclosureBtn: document.getElementById('disclosureBtn'),
+      disclosureText: document.getElementById('disclosureText'),
+      modalContent: document.getElementById('modalContent'),
+      modalTitle: document.getElementById('modalTitle'),
+      modalBody: document.getElementById('modalBody'),
+      closeModalBtn: document.getElementById('closeModalBtn'),
+      themeToggleBtn: document.getElementById('themeToggleBtn'),
+      themeToggleHandle: document.getElementById('themeToggleHandle'),
+      zenToggleBtn: document.getElementById('zenToggleBtn'),
+      zenToggleIcon: document.getElementById('zenToggleIcon'),
+      copyContentBtn: document.getElementById('copyContentBtn'),
+      copyContentIcon: document.getElementById('copyContentIcon'),
+      copyContentText: document.getElementById('copyContentText'),
+      openShareModalBtn: document.getElementById('openShareModalBtn'),
+      sharePageText: document.getElementById('sharePageText'),
+      shareModal: document.getElementById('shareModal'),
+      shareModalContent: document.getElementById('shareModalContent'),
+      shareModalTitle: document.getElementById('shareModalTitle'),
+      closeShareModalBtn: document.getElementById('closeShareModalBtn'),
+      shareX: document.getElementById('shareX'),
+      shareLine: document.getElementById('shareLine'),
+      shareNotion: document.getElementById('shareNotion'),
+      shareCopy: document.getElementById('shareCopy'),
+      shareCopyIcon: document.getElementById('shareCopyIcon'),
+      shareCopyText: document.getElementById('shareCopyText'),
+      themeBtns: document.querySelectorAll('.theme-btn'),
+      contentElements: document.querySelectorAll('.content-element')
+    };
+    
     let currentTheme = null;
+    let isAnimating = false;
+    let isDarkMode = false; 
+    let isZenMode = false;
 
-    function applyConfig(config) {
-      const merged = { ...defaultConfig, ...config };
-      const baseSize = Number(merged.font_size || defaultConfig.font_size);
+    const getBadgeHtml = (text) => {
+      const border = isDarkMode ? 'border-white/20' : 'border-black/10';
+      const bg = isDarkMode ? 'bg-white/5' : 'bg-black/[0.03]';
+      const textColor = isDarkMode ? 'text-white/60' : 'text-black/50';
+      return `<span class="inline-block border ${border} rounded-sm px-1.5 py-0.5 mr-2 text-[10px] ${textColor} ${bg} flex-shrink-0 mt-0.5 sm:mt-0 transition-colors duration-500">${text}</span>`;
+    };
 
-      document.body.style.backgroundColor = merged.background_color;
-      document.body.style.color = merged.text_color;
-
-      els.app.style.backgroundColor = merged.background_color;
-      els.subtitle.style.color = merged.secondary_action_color;
-      els.title.style.color = merged.text_color;
-      els.body.style.color = merged.secondary_action_color;
-      els.footer.style.color = merged.secondary_action_color;
-
-      els.topMark.style.backgroundColor = merged.surface_color;
-      els.midLine.style.backgroundColor = merged.surface_color;
-
-      document.querySelectorAll('.theme-button').forEach(btn => {
-        btn.style.borderColor = merged.surface_color;
-        btn.style.color = merged.secondary_action_color;
-        btn.style.backgroundColor = merged.background_color;
-      });
-
-      if (!currentTheme) {
-        els.title.textContent = merged.main_title;
-        els.subtitle.textContent = merged.subtitle_text;
-        els.body.textContent = merged.body_text;
-        els.footer.textContent = merged.footer_text;
-      }
-
-      const serifStack = '"Hiragino Mincho ProN", "Yu Mincho", Georgia, serif';
-      const sansStack = '"Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif';
-
-      els.title.style.fontFamily = `${merged.font_family}, ${serifStack}`;
-      els.body.style.fontFamily = `${merged.font_family}, ${serifStack}`;
-      els.footer.style.fontFamily = `${merged.font_family}, ${serifStack}`;
-      els.subtitle.style.fontFamily = `${merged.font_family}, ${sansStack}`;
-
-      els.title.style.fontSize = `${baseSize * 3.2}px`;
-      els.body.style.fontSize = `${baseSize}px`;
-      els.footer.style.fontSize = `${baseSize * 0.82}px`;
-      els.subtitle.style.fontSize = `${baseSize * 0.62}px`;
+    /* =========================================
+       Core Logic
+       ========================================= */
+       
+    function updateContentData(themeName) {
+      const theme = (themeName && themeName !== 'reset') ? themes[themeName] : defaultConfig;
+      els.title.textContent = theme.title || theme.main_title;
+      els.body.innerHTML = theme.body || theme.body_text;
+      const updated = theme.lastUpdated || (themeName === 'reset' ? defaultConfig.last_updated_text : '');
+      const ref = theme.reference || (themeName === 'reset' ? defaultConfig.reference_text : '');
+      let hasMeta = false;
+      if (updated) {
+        els.lastUpdated.innerHTML = `${getBadgeHtml('最終更新日')}<span>${updated}</span>`;
+        els.lastUpdated.style.display = 'flex';
+        hasMeta = true;
+      } else { els.lastUpdated.style.display = 'none'; }
+      if (ref) {
+        els.reference.innerHTML = `${getBadgeHtml('参考文献')}<span>${ref}</span>`;
+        els.reference.style.display = 'flex';
+        hasMeta = true;
+      } else { els.reference.style.display = 'none'; }
+      els.metaContent.style.display = hasMeta ? 'flex' : 'none';
     }
 
     function switchTheme(themeName) {
-      if (themeName === 'reset') {
-        currentTheme = null;
-        
-        els.title.style.animation = 'none';
-        els.body.style.animation = 'none';
-
-        setTimeout(() => {
-          els.title.textContent = '思索の余白';
-          els.body.innerHTML = '何かを強く語るためではなく、<br><br>まだ言葉になりきらないもののために、<br><br>この白さと余白を残しておく。<br><br>考えは完成しなくていい。<br><br>ここでは、沈黙さえ<br>ひとつの文章になる。';
-
-          els.title.style.animation = '';
-          els.body.style.animation = '';
-          els.title.classList.remove('fade-up');
-          els.body.classList.remove('fade-up');
-
-          void els.title.offsetWidth;
-          void els.body.offsetWidth;
-
-          els.title.classList.add('fade-up', 'delay-2');
-          els.body.classList.add('fade-up', 'delay-3');
-        }, 150);
-
-        document.querySelectorAll('.theme-button').forEach(btn => {
-          btn.style.borderColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.surface_color) || defaultConfig.surface_color;
-          btn.style.color = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.secondary_action_color) || defaultConfig.secondary_action_color;
-        });
-        return;
-      }
-
-      const theme = themes[themeName];
-      currentTheme = themeName;
-
-      els.title.style.animation = 'none';
-      els.body.style.animation = 'none';
-
+      if (isAnimating || currentTheme === themeName) return;
+      isAnimating = true;
+      currentTheme = themeName === 'reset' ? null : themeName;
+      els.contentElements.forEach(el => {
+        el.classList.remove('play-fade-up', 'play-fade-in', 'delay-200', 'delay-400', 'delay-600', 'delay-800');
+        el.classList.add('play-fade-out');
+      });
       setTimeout(() => {
-        els.title.textContent = theme.title;
-        els.body.textContent = theme.body;
+        updateContentData(themeName);
+        els.contentElements.forEach(el => {
+          el.classList.remove('play-fade-out');
+          void el.offsetWidth; 
+          if (el.id === 'title') el.classList.add('play-fade-up');
+          else if (el.id === 'body') el.classList.add('play-fade-up', 'delay-400');
+          else if (el.id === 'metaInfo') el.classList.add('play-fade-up', 'delay-800');
+          else el.classList.add('play-fade-in', 'delay-800');
+        });
+        setTimeout(() => { isAnimating = false; }, 1800); 
+      }, 400);
+      const config = (window.elementSdk && window.elementSdk.config) ? window.elementSdk.config : defaultConfig;
+      updateButtonsHighlight(themeName, isDarkMode ? darkPalette : config);
+    }
 
-        els.title.style.animation = '';
-        els.body.style.animation = '';
-        els.title.classList.remove('fade-up');
-        els.body.classList.remove('fade-up');
+    function applyColors(palette) {
+      document.body.style.backgroundColor = palette.background_color;
+      document.body.style.color = palette.text_color;
+      els.app.style.backgroundColor = palette.background_color;
+      els.headerTitleArea.style.color = palette.text_color;
+      els.title.style.color = palette.text_color;
+      els.subtitle.style.color = palette.secondary_action_color;
+      els.body.style.color = palette.secondary_action_color;
+      els.footerText.style.color = palette.secondary_action_color;
+      els.metaInfo.style.color = palette.meta_text_color;
+      els.copyright.style.color = palette.copyright_color;
+      els.topMark.style.backgroundColor = palette.surface_color;
+      els.hLine.style.backgroundColor = palette.surface_color;
+      const gradVia = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(217,217,217,1)';
+      els.vLine.style.backgroundImage = `linear-gradient(to bottom, transparent, ${gradVia}, transparent)`;
+      
+      if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        els.themeToggleBtn.style.backgroundColor = "rgba(255,255,255,0.1)";
+        els.themeToggleBtn.style.borderColor = "rgba(255,255,255,0.1)";
+        els.themeToggleBtn.title = "昼の余白へ"; 
+        els.themeToggleHandle.style.transform = "translateX(1.25rem)";
+        els.themeToggleHandle.innerHTML = '<i data-lucide="moon" class="w-2.5 h-2.5 text-[#a1a1aa]"></i>';
+        
+        els.zenToggleBtn.className = "p-2 text-[#a1a1aa] transition-all duration-500 rounded-full hover:bg-white/10 hover:text-white focus:outline-none";
+        els.subtitle.classList.add('hover:text-white');
+        els.footerBottom.className = "w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-white/[0.06]";
+        els.disclosureBtn.className = "flex items-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-full border border-white/20 bg-transparent text-[#a1a1aa] transition-all hover:border-white hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#111111] hover:bg-white/5 whitespace-nowrap tracking-widest";
+        
+        els.modalContent.style.backgroundColor = "#27272a";
+        els.modalTitle.style.color = "#f4f4f5";
+        els.modalBody.style.color = "#a1a1aa";
+        els.closeModalBtn.style.backgroundColor = "#f4f4f5";
+        els.closeModalBtn.style.color = "#111111";
+        els.shareModalContent.style.backgroundColor = "#27272a";
+        els.shareModalTitle.style.color = "#f4f4f5";
+        els.closeShareModalBtn.style.borderColor = "rgba(255,255,255,0.1)";
+        els.closeShareModalBtn.style.color = "#a1a1aa";
+      } else {
+        document.body.classList.remove('dark-mode');
+        els.themeToggleBtn.style.backgroundColor = "rgba(0,0,0,0.05)";
+        els.themeToggleBtn.style.borderColor = "rgba(0,0,0,0.1)";
+        els.themeToggleBtn.title = "夜の余白へ"; 
+        els.themeToggleHandle.style.transform = "translateX(0)";
+        els.themeToggleHandle.innerHTML = '<i data-lucide="sun" class="w-2.5 h-2.5 text-[#777777]"></i>';
 
-        void els.title.offsetWidth;
-        void els.body.offsetWidth;
+        els.zenToggleBtn.className = "p-2 text-[#777777] transition-all duration-500 rounded-full hover:bg-black/5 hover:text-[#111111] focus:outline-none";
+        els.subtitle.classList.remove('hover:text-white');
+        els.footerBottom.className = "w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]";
+        els.disclosureBtn.className = "flex items-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-full border border-black/10 bg-transparent text-[#777777] transition-all hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 hover:bg-black/5 whitespace-nowrap tracking-widest";
+        
+        els.modalContent.style.backgroundColor = "#ffffff";
+        els.modalTitle.style.color = "#111111";
+        els.modalBody.style.color = "#555555";
+        els.closeModalBtn.style.backgroundColor = "#111111";
+        els.closeModalBtn.style.color = "#ffffff";
+        els.shareModalContent.style.backgroundColor = "#ffffff";
+        els.shareModalTitle.style.color = "#111111";
+        els.closeShareModalBtn.style.borderColor = "rgba(0,0,0,0.1)";
+        els.closeShareModalBtn.style.color = "#777777";
+      }
+      
+      lucide.createIcons(); 
+      updateButtonsHighlight(currentTheme, palette);
+      updateContentData(currentTheme || 'reset');
+    }
 
-        els.title.classList.add('fade-up');
-        els.body.classList.add('fade-up');
-        els.title.style.animationDelay = '0.15s';
-        els.body.style.animationDelay = '0.35s';
-      }, 150);
+    function applyConfig(config) {
+      const mergedLight = { ...defaultConfig, ...config };
+      const baseSize = Number(mergedLight.font_size);
+      const serifStack = `"${mergedLight.font_family}", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif`;
+      const allTextElements = [els.title, els.body, els.footerText, els.modalBody, els.subtitle, els.metaInfo, els.copyright, els.disclosureText, els.modalTitle, els.closeModalBtn, els.copyContentText, els.sharePageText, els.shareModalTitle, els.shareCopyText, ...els.themeBtns];
+      allTextElements.forEach(el => { if (el && el.style) el.style.fontFamily = serifStack; });
+      els.title.style.fontSize = `${baseSize * 3.2}px`;
+      els.body.style.fontSize = `${baseSize}px`;
+      els.footerText.style.fontSize = `${baseSize * 0.82}px`;
+      els.subtitle.style.fontSize = `${baseSize * 0.62}px`;
+      applyColors(isDarkMode ? darkPalette : mergedLight);
+    }
 
-      document.querySelectorAll('.theme-button').forEach(btn => {
+    function updateButtonsHighlight(themeName, palette) {
+      els.themeBtns.forEach(btn => {
         if (btn.dataset.theme === themeName) {
-          btn.style.borderColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.primary_action_color) || defaultConfig.primary_action_color;
-          btn.style.color = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.primary_action_color) || defaultConfig.primary_action_color;
+          btn.style.borderColor = palette.primary_action_color;
+          btn.style.color = palette.primary_action_color;
+          btn.style.fontWeight = '500';
         } else {
-          btn.style.borderColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.surface_color) || defaultConfig.surface_color;
-          btn.style.color = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.secondary_action_color) || defaultConfig.secondary_action_color;
+          btn.style.borderColor = palette.surface_color;
+          btn.style.color = palette.secondary_action_color;
+          btn.style.fontWeight = '400';
         }
+        btn.style.backgroundColor = palette.background_color;
       });
     }
+
+    /* =========================================
+       Event Listeners
+       ========================================= */
+    els.themeBtns.forEach(btn => btn.addEventListener('click', () => switchTheme(btn.dataset.theme)));
+    els.subtitle.addEventListener('click', () => switchTheme('reset'));
+
+    els.themeToggleBtn.addEventListener('click', () => {
+      isDarkMode = !isDarkMode;
+      applyConfig((window.elementSdk && window.elementSdk.config) || defaultConfig);
+    });
+
+    els.zenToggleBtn.addEventListener('click', () => {
+      isZenMode = !isZenMode;
+      document.body.classList.toggle('zen-mode', isZenMode);
+      els.zenToggleIcon.setAttribute('data-lucide', isZenMode ? 'minimize' : 'maximize');
+      lucide.createIcons();
+    });
+
+    const copyToClipboard = (text, successCallback) => {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        if (successCallback) successCallback();
+      } catch (e) { console.error('Copy failed', e); }
+    };
+
+    const getFormattedContent = () => {
+      const title = els.title.textContent;
+      let bodyText = els.body.innerHTML.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]+>/g, '');
+      return `【${title}】\n${bodyText}\n\n― 思索の余白\n${SITE_URL}`;
+    };
+
+    els.copyContentBtn.addEventListener('click', () => {
+      copyToClipboard(getFormattedContent(), () => {
+        els.copyContentIcon.setAttribute('data-lucide', 'check');
+        els.copyContentText.textContent = '書き留めました';
+        lucide.createIcons();
+        setTimeout(() => {
+          els.copyContentIcon.setAttribute('data-lucide', 'copy');
+          els.copyContentText.textContent = '書き留める';
+          lucide.createIcons();
+        }, 3000);
+      });
+    });
+
+    els.openShareModalBtn.addEventListener('click', () => els.shareModal.classList.remove('hidden'));
+    els.closeShareModalBtn.addEventListener('click', () => els.shareModal.classList.add('hidden'));
+
+    const getShareInfo = () => {
+      const title = els.title.textContent;
+      const shareUrl = `${SITE_URL}${UTM_PARAMS}`;
+      const text = currentTheme ? `思索の余白：${title}` : `思索の余白 ― 人生の本質を思索するための場所`;
+      return { text, shareUrl };
+    };
+
+    els.shareX.addEventListener('click', () => {
+      const { text, shareUrl } = getShareInfo();
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+    });
+    els.shareLine.addEventListener('click', () => {
+      const { text, shareUrl } = getShareInfo();
+      window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, '_blank');
+    });
+    
+    els.shareNotion.addEventListener('click', () => {
+      copyToClipboard(getFormattedContent(), () => {
+        const span = els.shareNotion.querySelector('span');
+        const originalText = span.textContent;
+        span.textContent = 'コピー完了';
+        setTimeout(() => {
+          span.textContent = originalText;
+          window.open('https://notion.new', '_blank');
+        }, 1000);
+      });
+    });
+    els.shareCopy.addEventListener('click', () => {
+      const { shareUrl } = getShareInfo();
+      copyToClipboard(shareUrl, () => {
+        els.shareCopyIcon.setAttribute('data-lucide', 'check');
+        els.shareCopyText.textContent = 'コピー完了';
+        lucide.createIcons();
+        setTimeout(() => {
+          els.shareCopyIcon.setAttribute('data-lucide', 'link');
+          els.shareCopyText.textContent = 'URLコピー';
+          lucide.createIcons();
+        }, 2000);
+      });
+    });
+
+    els.disclosureBtn.addEventListener('click', () => document.getElementById('disclosureModal').classList.remove('hidden'));
+    els.closeModalBtn.addEventListener('click', () => document.getElementById('disclosureModal').classList.add('hidden'));
+    window.addEventListener('click', (e) => {
+      if (e.target.id === 'disclosureModal') e.target.classList.add('hidden');
+      if (e.target.id === 'shareModal') e.target.classList.add('hidden');
+    });
+
+    lucide.createIcons();
 
     if (window.elementSdk) {
       window.elementSdk.init({
         defaultConfig,
-        onConfigChange: async (config) => {
-          applyConfig(config);
-        },
+        onConfigChange: (config) => applyConfig(config),
         mapToCapabilities: (config) => ({
           recolorables: [
-            {
-              get: () => (config.background_color || defaultConfig.background_color),
-              set: (value) => {
-                config.background_color = value;
-                window.elementSdk.setConfig({ background_color: value });
-              }
-            },
-            {
-              get: () => (config.surface_color || defaultConfig.surface_color),
-              set: (value) => {
-                config.surface_color = value;
-                window.elementSdk.setConfig({ surface_color: value });
-              }
-            },
-            {
-              get: () => (config.text_color || defaultConfig.text_color),
-              set: (value) => {
-                config.text_color = value;
-                window.elementSdk.setConfig({ text_color: value });
-              }
-            },
-            {
-              get: () => (config.primary_action_color || defaultConfig.primary_action_color),
-              set: (value) => {
-                config.primary_action_color = value;
-                window.elementSdk.setConfig({ primary_action_color: value });
-              }
-            },
-            {
-              get: () => (config.secondary_action_color || defaultConfig.secondary_action_color),
-              set: (value) => {
-                config.secondary_action_color = value;
-                window.elementSdk.setConfig({ secondary_action_color: value });
-              }
-            }
+            { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+            { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+            { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+            { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+            { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
           ],
           borderables: [],
-          fontEditable: {
-            get: () => (config.font_family || defaultConfig.font_family),
-            set: (value) => {
-              config.font_family = value;
-              window.elementSdk.setConfig({ font_family: value });
-            }
-          },
-          fontSizeable: {
-            get: () => (config.font_size || defaultConfig.font_size),
-            set: (value) => {
-              config.font_size = value;
-              window.elementSdk.setConfig({ font_size: value });
-            }
-          }
+          fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+          fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
         }),
-        mapToEditPanelValues: (config) => new Map([
-          ["main_title", config.main_title || defaultConfig.main_title],
-          ["subtitle_text", config.subtitle_text || defaultConfig.subtitle_text],
-          ["body_text", config.body_text || defaultConfig.body_text],
-          ["footer_text", config.footer_text || defaultConfig.footer_text]
-        ])
+        mapToEditPanelValues: (config) => new Map([ ["main_title", config.main_title || defaultConfig.main_title], ["subtitle_text", config.subtitle_text || defaultConfig.subtitle_text], ["body_text", config.body_text || defaultConfig.body_text], ["footer_text", config.footer_text || defaultConfig.footer_text] ])
       });
     }
-
-    els.app = document.getElementById('app');
-    els.title = document.getElementById('title');
-    els.subtitle = document.getElementById('subtitle');
-    els.body = document.getElementById('body');
-    els.footer = document.getElementById('footer');
-    els.topMark = document.getElementById('topMark');
-    els.midLine = document.getElementById('midLine');
-
     applyConfig((window.elementSdk && window.elementSdk.config) || defaultConfig);
-
-    document.querySelectorAll('[data-theme]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        switchTheme(btn.dataset.theme);
-      });
-    });
-
-    const subtitleEl = document.getElementById('subtitle');
-    if (subtitleEl) {
-      subtitleEl.addEventListener('click', () => {
-        location.reload();
-      });
-    }
-
-    const disclosureButton = document.getElementById('disclosureButton');
-    const disclosureModal = document.getElementById('disclosureModal');
-    const disclosureCloseButton = document.getElementById('disclosureCloseButton');
-
-    disclosureButton.addEventListener('click', () => {
-      disclosureModal.classList.remove('hidden');
-    });
-
-    disclosureCloseButton.addEventListener('click', () => {
-      disclosureModal.classList.add('hidden');
-    });
-
-    disclosureModal.addEventListener('click', (e) => {
-      if (e.target === disclosureModal) {
-        disclosureModal.classList.add('hidden');
-      }
-    });
-
-    lucide.createIcons();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e2bcc098508eb82',t:'MTc3NDU4NzI2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

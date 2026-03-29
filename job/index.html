@@ -1,101 +1,1061 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>現在メンテナンス中です | Under Construction</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
-        
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-        }
+<!doctype html>
+<html lang="ja" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logic &amp; Playfulness 2026 Portfolio</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root{
+      --bg:#f7fbff;
+      --surface:#ffffff;
+      --text:#10233f;
+      --primary:#124bda;
+      --secondary:#ff2fa9;
+    }
 
-        .animate-float {
-            animation: float 3s ease-in-out infinite;
-        }
+    html, body {
+      height: 100%;
+    }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(18,75,218,0.08), transparent 28%),
+        radial-gradient(circle at 88% 14%, rgba(255,47,169,0.10), transparent 24%),
+        radial-gradient(circle at 82% 80%, rgba(103,60,255,0.10), transparent 26%),
+        linear-gradient(180deg, #f9fcff 0%, #f3f8ff 52%, #f9fbff 100%);
+      color: var(--text);
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
 
-        .progress-bar {
-            width: 70%; /* 進捗状況のシミュレーション */
-        }
-    </style>
-</head>
-<body class="min-h-screen flex items-center justify-center p-4">
+    .app-shell {
+      height: 100%;
+      width: 100%;
+      overflow: auto;
+      position: relative;
+    }
 
-    <div class="max-w-2xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden p-8 md:p-12 text-center">
-        <!-- アイコンセクション -->
-        <div class="mb-8 flex justify-center">
-            <div class="animate-float">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-32 h-32 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                </svg>
-            </div>
+    .glass-nav {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(255,255,255,0.72);
+      border-bottom: 1px solid rgba(18,75,218,0.09);
+    }
+
+    .grid-noise::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(18,75,218,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(18,75,218,0.045) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.55), transparent 80%);
+      -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.55), transparent 80%);
+      opacity:.25;
+    }
+
+    .hero-glow{
+      position:absolute;
+      inset:auto;
+      width: 22rem;
+      height: 22rem;
+      border-radius:9999px;
+      filter: blur(48px);
+      opacity:.22;
+      pointer-events:none;
+    }
+
+    .hero-glow.blue{
+      background: #124bda;
+      top: 4%;
+      left: -4%;
+    }
+
+    .hero-glow.pink{
+      background: #ff2fa9;
+      right: -2%;
+      top: 18%;
+    }
+
+    .logic-card,
+    .skill-card,
+    .work-card,
+    .contact-panel,
+    .mini-panel {
+      background: rgba(255,255,255,0.76);
+      border: 1px solid rgba(16,35,63,0.08);
+      box-shadow: 0 20px 60px rgba(18,75,218,0.08);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .section-kicker {
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .headline-balance {
+      text-wrap: balance;
+    }
+
+    .gradient-title {
+      background: linear-gradient(90deg, var(--text) 0%, var(--primary) 50%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .cta-primary,
+    .cta-secondary,
+    .nav-link,
+    .chip,
+    .detail-button,
+    .send-button,
+    .modal-close,
+    .inline-link {
+      transition: transform .22s ease, box-shadow .22s ease, background-color .22s ease, color .22s ease, border-color .22s ease, opacity .22s ease;
+    }
+
+    .cta-primary:hover,
+    .cta-secondary:hover,
+    .detail-button:hover,
+    .send-button:hover,
+    .modal-close:hover {
+      transform: translateY(-2px);
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
+    .skill-card:hover,
+    .work-card:hover,
+    .logic-card:hover,
+    .contact-panel:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 24px 70px rgba(18,75,218,0.12);
+    }
+
+    .motion-rise {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .motion-rise.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .delay-1 { transition-delay: .1s; }
+    .delay-2 { transition-delay: .2s; }
+    .delay-3 { transition-delay: .3s; }
+    .delay-4 { transition-delay: .4s; }
+    .delay-5 { transition-delay: .5s; }
+
+    .neon-line {
+      box-shadow: 0 0 0 1px rgba(255,47,169,0.16), 0 0 22px rgba(255,47,169,0.18);
+    }
+
+    .stat-bar {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      box-shadow: 0 0 24px rgba(255,47,169,0.28);
+    }
+
+    .agent-orb {
+      position: absolute;
+      right: 4%;
+      bottom: 6%;
+      width: 72px;
+      height: 72px;
+      border-radius: 9999px;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.25) 24%, transparent 25%),
+        linear-gradient(135deg, #ff2fa9 0%, #9a4dff 100%);
+      box-shadow: 0 0 0 7px rgba(255,255,255,0.65), 0 0 32px rgba(255,47,169,0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: drift 4.8s ease-in-out infinite;
+    }
+
+    .agent-orb::before,
+    .agent-orb::after{
+      content:"";
+      position:absolute;
+      top: 28px;
+      width: 7px;
+      height: 7px;
+      border-radius:9999px;
+      background:#fff;
+    }
+
+    .agent-orb::before { left: 22px; }
+    .agent-orb::after { right: 22px; }
+
+    .agent-mouth {
+      position:absolute;
+      bottom: 18px;
+      width: 22px;
+      height: 10px;
+      border-bottom: 3px solid white;
+      border-radius: 0 0 999px 999px;
+    }
+
+    @keyframes drift {
+      0%,100% { transform: translate(0,0) rotate(0deg); }
+      50% { transform: translate(0,-8px) rotate(2deg); }
+    }
+
+    .sheep {
+      position: fixed;
+      z-index: 20;
+      right: 12px;
+      bottom: 16px;
+      pointer-events: none;
+      opacity: .88;
+      transform: translateX(0);
+      transition: transform .1s linear;
+      filter: drop-shadow(0 8px 18px rgba(255,47,169,.08));
+    }
+
+    .sheep-track {
+      width: 92px;
+      height: 46px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(16,35,63,0.08);
+      box-shadow: 0 8px 25px rgba(16,35,63,0.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .work-badge {
+      background: rgba(18,75,218,0.08);
+      color: var(--primary);
+      border: 1px solid rgba(18,75,218,0.14);
+    }
+
+    .case-visual {
+      position: relative;
+      overflow: hidden;
+      min-height: 210px;
+    }
+
+    .case-visual::after {
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, transparent, rgba(16,35,63,0.08));
+      pointer-events:none;
+    }
+
+    .modal-backdrop {
+      background: rgba(8,18,37,0.58);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .field {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(16,35,63,0.12);
+      color: var(--text);
+    }
+
+    .field:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(18,75,218,0.12);
+    }
+
+    .focus-ring:focus-visible {
+      outline: 3px solid rgba(18,75,218,0.22);
+      outline-offset: 2px;
+    }
+
+    .submit-note {
+      min-height: 1.5rem;
+      transition: opacity 0.5s ease;
+    }
+
+    .footer-grid {
+      background: linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.76));
+      border-top: 1px solid rgba(16,35,63,0.08);
+    }
+
+    /* フィルターボタンとアイテム用のアニメーション */
+    .filter-btn {
+      transition: all 0.3s ease;
+      opacity: 0.6;
+    }
+    .filter-btn.active {
+      opacity: 1;
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .work-item {
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      transform-origin: top center;
+    }
+    .work-item.hidden-item {
+      display: none;
+    }
+
+    @media (max-width: 767px) {
+      .hero-glow.blue { top: 2%; left: -20%; }
+      .hero-glow.pink { right: -18%; top: 26%; }
+      .sheep { right: 8px; bottom: 12px; transform: scale(.84); transform-origin: bottom right; }
+    }
+  </style>
+ </head>
+ <body class="h-full">
+  <div class="app-shell w-full relative scroll-smooth" id="app">
+   <div class="hero-glow blue"></div>
+   <div class="hero-glow pink"></div>
+   
+   <header class="sticky top-0 z-40 glass-nav">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+     <div class="flex items-center justify-between py-4 gap-4">
+       <a href="#hero" class="focus-ring inline-flex items-center gap-3 rounded-full px-3 py-2">
+       <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-sm" id="brandMark" style="background:linear-gradient(135deg, #124bda, #ff2fa9);">
+        LP
+       </div>
+       <div>
+        <div id="brandName" class="font-black tracking-tight text-base sm:text-lg">
+         Your Name / Logo
         </div>
-
-        <!-- テキストセクション -->
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-            只今、サイトのメンテナンス中です
-        </h1>
-        <p class="text-gray-600 mb-6 leading-relaxed">
-            より良いサービスを提供するため、現在システムのリニューアルを行っております。<br class="hidden md:block">
-            ご不便をおかけいたしますが、公開まで今しばらくお待ちください。
-        </p>
-
-        <!-- サイトTOPへのリンクボタン -->
-        <div class="mb-10">
-            <a href="https://tk.st" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                TOPへ
-            </a>
+        <div class="text-xs opacity-70">
+         Logic &amp; Playfulness 2026
         </div>
-
-        <!-- 進捗バー -->
-        <div class="mb-10">
-            <div class="flex justify-between text-sm text-gray-500 mb-2">
-                <span>進捗状況</span>
-                <span>70%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-3">
-                <div class="bg-blue-500 h-3 rounded-full progress-bar transition-all duration-1000"></div>
-            </div>
-        </div>
-
-        <!-- 予定日・お問い合わせ -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">公開予定日</h2>
-                <p class="text-xl font-bold text-gray-700">2026年 4月 中旬</p>
-            </div>
-            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">お問い合わせ</h2>
-                <a href="https://tk.st/contact" class="text-xl font-bold text-blue-600 hover:underline">tk.st/contact</a>
-            </div>
-        </div>
-
-        <!-- フッター/SNS -->
-        <div class="pt-8 border-t border-gray-100">
-            <div class="flex justify-center space-x-6 mb-4 text-gray-400">
-                <!-- Twitter (X) Link -->
-                <a href="https://tk.st/tw" target="_blank" rel="noopener noreferrer" class="hover:text-blue-500 transition-colors">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
-                </a>
-                <!-- Instagram Link -->
-                <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer" class="hover:text-pink-500 transition-colors">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                </a>
-            </div>
-            <p class="text-xs text-gray-400 uppercase tracking-widest">&copy; 2026 ST. All Rights Reserved.</p>
-        </div>
+       </div></a>
+      <nav aria-label="グローバルナビゲーション" class="hidden md:flex items-center gap-2">
+        <a class="nav-link focus-ring rounded-full px-4 py-2 text-sm font-bold" href="#about">About</a> 
+        <a class="nav-link focus-ring rounded-full px-4 py-2 text-sm font-bold" href="#skills">Skills</a> 
+        <a class="nav-link focus-ring rounded-full px-4 py-2 text-sm font-bold" href="#works">Works</a> 
+        <a class="nav-link focus-ring rounded-full px-4 py-2 text-sm font-bold" href="#contact">Contact</a>
+      </nav>
+      <button id="menuButton" class="md:hidden focus-ring inline-flex items-center justify-center rounded-full p-3 logic-card" aria-expanded="false" aria-controls="mobileMenu" aria-label="メニューを開く"> 
+        <i data-lucide="menu" class="w-5 h-5"></i> 
+      </button>
+     </div>
+     <div id="mobileMenu" class="hidden md:hidden pb-4">
+      <div class="logic-card rounded-3xl p-3 flex flex-col gap-1">
+        <a class="nav-link focus-ring rounded-2xl px-4 py-3 text-sm font-bold" href="#about">About</a> 
+        <a class="nav-link focus-ring rounded-2xl px-4 py-3 text-sm font-bold" href="#skills">Skills</a> 
+        <a class="nav-link focus-ring rounded-2xl px-4 py-3 text-sm font-bold" href="#works">Works</a> 
+        <a class="nav-link focus-ring rounded-2xl px-4 py-3 text-sm font-bold" href="#contact">Contact</a>
+      </div>
+     </div>
     </div>
+   </header>
 
-</body>
+   <main class="w-full">
+    <section id="hero" class="relative grid-noise">
+     <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24 lg:pb-28">
+      <div class="grid lg:grid-cols-[1.15fr_0.85fr] gap-10 items-center">
+       <div>
+        <div class="section-kicker motion-rise">
+         Digital Marketer / Strategist / Builder
+        </div>
+        <h1 id="heroTitle" class="motion-rise delay-1 headline-balance gradient-title mt-5 font-black leading-tight text-4xl sm:text-5xl lg:text-7xl">データ駆動のグロースハックから、AI・Web3の次世代UX実装まで。ビジネス課題をテクノロジーで解決するデジタルマーケター。</h1>
+        <p id="heroSubtitle" class="motion-rise delay-2 mt-6 max-w-3xl text-base sm:text-lg lg:text-xl leading-8 text-slate-700">ECのUI/UX改善、GA4/Lookerによるデータ基盤構築、AIエージェント開発を横断し、顧客体験とLTVを最大化します。</p>
+        <div class="motion-rise delay-3 mt-8 flex flex-col sm:flex-row gap-4">
+          <a href="#works" id="worksButton" class="cta-primary focus-ring inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm sm:text-base font-bold text-white shadow-lg" style="background:var(--primary); box-shadow:0 18px 34px rgba(18,75,218,.22);"> 
+            <i data-lucide="briefcase" class="w-5 h-5"></i> <span>Works（実績を見る）</span> 
+          </a> 
+          <a href="#contact" class="cta-secondary focus-ring inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm sm:text-base font-bold border-2" style="border-color:rgba(16,35,63,.12); color:var(--text); background:rgba(255,255,255,.8);"> 
+            <i data-lucide="send" class="w-5 h-5"></i> <span>Contact（お問い合わせ）</span> 
+          </a>
+        </div>
+        <div class="motion-rise delay-4 mt-10 grid sm:grid-cols-3 gap-4">
+         <div class="mini-panel rounded-3xl p-4">
+          <div class="text-xs font-bold uppercase tracking-[0.2em] opacity-60">Core</div>
+          <div class="mt-2 font-extrabold text-lg">Data &amp; Growth</div>
+          <div class="mt-1 text-sm leading-6 opacity-80">GA4 / Looker / AB Testing</div>
+         </div>
+         <div class="mini-panel rounded-3xl p-4 neon-line">
+          <div class="text-xs font-bold uppercase tracking-[0.2em] opacity-60">Edge</div>
+          <div class="mt-2 font-extrabold text-lg">AI Agent UX</div>
+          <div class="mt-1 text-sm leading-6 opacity-80">Character-driven interaction</div>
+         </div>
+         <div class="mini-panel rounded-3xl p-4">
+          <div class="text-xs font-bold uppercase tracking-[0.2em] opacity-60">Future</div>
+          <div class="mt-2 font-extrabold text-lg">Web3 / CDN</div>
+          <div class="mt-1 text-sm leading-6 opacity-80">Speed, loyalty, next-gen touchpoints</div>
+         </div>
+        </div>
+       </div>
+       <div class="motion-rise delay-3">
+        <div class="logic-card rounded-[2rem] p-5 sm:p-6 lg:p-7 relative overflow-hidden">
+         <div class="flex items-center justify-between">
+          <div>
+           <div class="text-xs font-bold uppercase tracking-[0.2em] opacity-60">Signal Board</div>
+           <div class="mt-2 text-2xl font-black">Logic × Playfulness</div>
+          </div>
+          <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold work-badge">
+            <span class="w-2.5 h-2.5 rounded-full" style="background:var(--secondary); box-shadow:0 0 14px rgba(255,47,169,.75);"></span> Live
+          </div>
+         </div>
+         <div class="mt-6 grid grid-cols-2 gap-4">
+          <div class="rounded-3xl p-4" style="background:linear-gradient(135deg, rgba(18,75,218,.10), rgba(18,75,218,.03));">
+           <div class="text-xs uppercase tracking-[0.2em] font-bold opacity-60">CVR Lift</div>
+           <div class="mt-3 text-3xl font-black">+18%</div>
+           <div class="mt-2 stat-bar h-2 rounded-full bg-white/80">
+            <div class="stat-bar-fill" style="width:78%;"></div>
+           </div>
+          </div>
+          <div class="rounded-3xl p-4" style="background:linear-gradient(135deg, rgba(255,47,169,.12), rgba(154,77,255,.04));">
+           <div class="text-xs uppercase tracking-[0.2em] font-bold opacity-60">Engagement</div>
+           <div class="mt-3 text-3xl font-black">+31%</div>
+           <div class="mt-2 stat-bar h-2 rounded-full bg-white/80">
+            <div class="stat-bar-fill" style="width:84%;"></div>
+           </div>
+          </div>
+          <div class="col-span-2 rounded-[1.75rem] p-5 relative overflow-hidden" style="background:linear-gradient(135deg, rgba(16,35,63,.97), rgba(18,75,218,.88) 55%, rgba(154,77,255,.92)); color:white;">
+           <div class="text-xs uppercase tracking-[0.24em] font-bold text-white/70">Experience Architecture</div>
+           <div class="mt-3 text-2xl sm:text-3xl font-black leading-tight">指標を読むだけでなく、<br>心に残る体験まで設計する。</div>
+           <div class="mt-4 max-w-md text-sm sm:text-base leading-7 text-white/80">
+            EC・広告・分析・AI・Web3を横断して、成果と新規性の両方を成立させる設計思想を可視化しています。
+           </div>
+           <div class="agent-orb" aria-hidden="true">
+            <div class="agent-mouth"></div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <section id="about" class="py-16 sm:py-20 lg:py-24">
+     <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+      <div class="section-kicker motion-rise">About</div>
+      <div class="grid lg:grid-cols-[0.85fr_1.15fr] gap-8 lg:gap-12 mt-6">
+       <div class="logic-card rounded-[2rem] p-6 sm:p-8 motion-rise delay-1">
+        <div class="rounded-[1.75rem] p-6 relative overflow-hidden" style="background:linear-gradient(135deg, rgba(18,75,218,.11), rgba(255,47,169,.08));">
+         <div class="flex items-center justify-between gap-4">
+          <div>
+           <div class="text-xs uppercase tracking-[0.2em] font-bold opacity-60">Profile Image</div>
+           <div class="mt-2 text-xl font-black">Strategic Builder</div>
+          </div>
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg" style="background:linear-gradient(135deg, #124bda, #ff2fa9);">
+            <i data-lucide="sparkles" class="w-7 h-7"></i>
+          </div>
+         </div>
+         <div class="mt-6 rounded-[1.5rem] bg-white/80 p-6">
+          <div class="aspect-square rounded-[1.5rem] flex items-center justify-center relative overflow-hidden" style="background: radial-gradient(circle at 30% 20%, rgba(18,75,218,.28), transparent 24%), radial-gradient(circle at 70% 30%, rgba(255,47,169,.22), transparent 20%), linear-gradient(135deg, rgba(16,35,63,.98), rgba(18,75,218,.88));">
+           <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px); background-size:20px 20px;"></div>
+           <div class="relative z-10 text-center text-white">
+            <div class="mx-auto w-28 h-28 rounded-full flex items-center justify-center border border-white/25" style="background:rgba(255,255,255,.12);">
+              <i data-lucide="user-round" class="w-14 h-14"></i>
+            </div>
+            <div class="mt-4 text-xl font-black">Full-stack Marketer</div>
+            <div class="mt-1 text-sm text-white/75">Data • UX • AI Agent • Web3</div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="logic-card rounded-[2rem] p-6 sm:p-8 motion-rise delay-2">
+        <h2 id="aboutTitle" class="text-3xl sm:text-4xl font-black leading-tight headline-balance">About Me</h2>
+        <p id="aboutBody" class="mt-6 text-base sm:text-lg leading-8 text-slate-700">「数値を読み解く」だけでなく「新しい体験を創る」フルスタックなマーケターです。大規模小売ECにおける定量的アプローチ（ABテスト、UI/UX改善、広告運用）を強みとしながら、現在はAgent Development Kitを用いたエンタメ型AIエージェントの開発や、Web3領域のトークノミクスを活用した次世代の顧客接点構築にも取り組んでいます。<br><br>「ビジネスの成長」と「ユーザーの心に響く体験」を、テクノロジーの力で両立させることをミッションとしています。</p>
+        <div class="mt-8 grid sm:grid-cols-2 gap-4">
+         <div class="rounded-3xl p-5" style="background:rgba(18,75,218,.06); border:1px solid rgba(18,75,218,.10);">
+          <div class="flex items-center gap-3">
+            <i data-lucide="line-chart" class="w-5 h-5" style="color:var(--primary);"></i>
+           <div class="font-extrabold">論理的な施策設計</div>
+          </div>
+          <p class="mt-3 text-sm leading-7 opacity-80">指標設計から改善検証まで、再現性のある意思決定を組み立てます。</p>
+         </div>
+         <div class="rounded-3xl p-5" style="background:rgba(255,47,169,.06); border:1px solid rgba(255,47,169,.14);">
+          <div class="flex items-center gap-3">
+            <i data-lucide="bot" class="w-5 h-5" style="color:var(--secondary);"></i>
+           <div class="font-extrabold">遊び心ある体験設計</div>
+          </div>
+          <p class="mt-3 text-sm leading-7 opacity-80">記憶に残るキャラクター性や、新規性のある接点づくりを強みにしています。</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <section id="skills" class="py-16 sm:py-20 lg:py-24">
+     <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+       <div>
+        <div class="section-kicker motion-rise">Skills</div>
+        <h2 class="motion-rise delay-1 mt-3 text-3xl sm:text-4xl lg:text-5xl font-black headline-balance">コアコンピタンスを、<span class="gradient-title">見える強さ</span>に。</h2>
+       </div>
+       <p class="motion-rise delay-2 max-w-2xl text-base sm:text-lg leading-8 text-slate-700">論理的な改善力と、次世代テクノロジーを使った体験設計力を、3つの領域で整理しています。</p>
+      </div>
+      <div class="mt-10 grid lg:grid-cols-3 gap-6">
+       <article class="skill-card rounded-[2rem] p-6 sm:p-7 motion-rise delay-1">
+        <div class="flex items-start justify-between gap-4">
+         <div>
+          <div class="section-kicker">Category 1</div>
+          <h3 class="mt-2 text-2xl font-black">Data &amp; Growth</h3>
+         </div>
+         <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white" style="background:var(--primary);">
+            <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+         </div>
+        </div>
+        <div class="mt-6 space-y-5">
+         <div>
+          <div class="font-extrabold">GA4 / Looker</div>
+          <p class="mt-1 text-sm leading-7 text-slate-700">計測設計からダッシュボード構築による意思決定の高速化</p>
+         </div>
+         <div>
+          <div class="font-extrabold">AB Testing / UIUX</div>
+          <p class="mt-1 text-sm leading-7 text-slate-700">仮説検証サイクルに基づくCVR・LTV向上</p>
+         </div>
+         <div>
+          <div class="font-extrabold">EC</div>
+          <p class="mt-1 text-sm leading-7 text-slate-700">オムニチャネル（OMO）を意識したユーザー体験の設計</p>
+         </div>
+        </div>
+       </article>
+
+       <article class="skill-card rounded-[2rem] p-6 sm:p-7 motion-rise delay-2">
+        <div class="flex items-start justify-between gap-4">
+         <div>
+          <div class="section-kicker">Category 2</div>
+          <h3 class="mt-2 text-2xl font-black">Traffic &amp; Performance</h3>
+         </div>
+         <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white" style="background:linear-gradient(135deg, #124bda, #6b48ff);">
+            <i data-lucide="gauge" class="w-6 h-6"></i>
+         </div>
+        </div>
+        <div class="mt-6 space-y-5">
+         <div>
+          <div class="font-extrabold">Search Engine / Web ads</div>
+          <p class="mt-1 text-sm leading-7 text-slate-700">AI自動入札とファーストパーティデータを活用したROI最大化</p>
+         </div>
+         <div>
+          <div class="font-extrabold">CDN</div>
+          <p class="mt-1 text-sm leading-7 text-slate-700">エッジキャッシュチューニングによる表示速度とSEOの改善</p>
+         </div>
+        </div>
+       </article>
+
+       <article class="skill-card rounded-[2rem] p-6 sm:p-7 motion-rise delay-3 neon-line">
+        <div class="flex items-start justify-between gap-4">
+         <div>
+          <div class="section-kicker">Category 3</div>
+          <h3 class="mt-2 text-2xl font-black">Next-Gen Tech</h3>
+         </div>
+         <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white" style="background:linear-gradient(135deg, #ff2fa9, #7a4cff); box-shadow:0 0 28px rgba(255,47,169,.25);">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+         </div>
+        </div>
+        <div class="mt-6 space-y-5">
+         <div>
+          <div class="font-extrabold">Agent Development Kit</div>
+          <p class="mt-1 text-sm leading-7 text-slate-700">キャラクター性を持たせた対話型AIの実装</p>
+         </div>
+         <div>
+          <div class="font-extrabold">web3</div>
+          <p class="mt-1 text-sm leading-7 text-slate-700">ウォレット認証やトークンを活用したプロトタイプ開発</p>
+         </div>
+        </div>
+       </article>
+      </div>
+     </div>
+    </section>
+
+    <section id="works" class="py-16 sm:py-20 lg:py-24">
+     <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+      <div class="section-kicker motion-rise">Works / Case Studies</div>
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mt-3">
+       <h2 class="motion-rise delay-1 text-3xl sm:text-4xl lg:text-5xl font-black headline-balance">成果を生む仕組みと、記憶に残る体験の実例。</h2>
+       <p class="motion-rise delay-2 max-w-2xl text-base sm:text-lg leading-8 text-slate-700">データ、AI、CDN、Web3まで横断した3つのケースを、カード形式で見やすくまとめています。</p>
+      </div>
+
+      <!-- フィルター機能追加 -->
+      <div class="motion-rise delay-3 mt-8 flex flex-wrap gap-3">
+        <button class="filter-btn active focus-ring rounded-full px-4 py-2 text-sm font-bold border border-slate-300" data-filter="all">All</button>
+        <button class="filter-btn focus-ring rounded-full px-4 py-2 text-sm font-bold border border-slate-300" data-filter="data">Data & Growth</button>
+        <button class="filter-btn focus-ring rounded-full px-4 py-2 text-sm font-bold border border-slate-300" data-filter="ai">AI & UX</button>
+        <button class="filter-btn focus-ring rounded-full px-4 py-2 text-sm font-bold border border-slate-300" data-filter="web3">Web3 & CDN</button>
+      </div>
+
+      <div class="mt-10 grid lg:grid-cols-3 gap-6" id="worksGrid">
+       <!-- Case 1 -->
+       <article class="work-item work-card rounded-[2rem] overflow-hidden motion-rise delay-1" data-category="data">
+        <div class="case-visual p-5" style="background: radial-gradient(circle at 25% 25%, rgba(18,75,218,.22), transparent 26%), linear-gradient(135deg, #f5f9ff, #eaf2ff);">
+         <div class="absolute inset-0 p-5">
+          <div class="h-full rounded-[1.6rem] p-4 flex flex-col justify-between" style="background:rgba(255,255,255,.88); border:1px solid rgba(18,75,218,.10);">
+           <div class="flex items-center justify-between">
+            <div class="text-xs font-bold uppercase tracking-[0.2em] opacity-60">Case 1</div>
+            <i data-lucide="layout-dashboard" class="w-5 h-5" style="color:var(--primary);"></i>
+           </div>
+           <div class="grid grid-cols-3 gap-2 items-end">
+            <div class="rounded-2xl p-3" style="background:rgba(18,75,218,.08);">
+             <div class="h-16 rounded-xl" style="background:linear-gradient(180deg, rgba(18,75,218,.20), rgba(18,75,218,.08));"></div>
+            </div>
+            <div class="rounded-2xl p-3" style="background:rgba(18,75,218,.06);">
+             <div class="h-24 rounded-xl" style="background:linear-gradient(180deg, rgba(18,75,218,.28), rgba(18,75,218,.10));"></div>
+            </div>
+            <div class="rounded-2xl p-3" style="background:rgba(18,75,218,.08);">
+             <div class="h-12 rounded-xl" style="background:linear-gradient(180deg, rgba(18,75,218,.22), rgba(18,75,218,.08));"></div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="p-6">
+         <h3 class="text-xl font-black leading-8">大規模小売・インテリアECにおけるデータ駆動型UI/UX改善とOMO推進</h3>
+         <div class="mt-4 flex flex-wrap gap-2">
+            <span class="chip work-badge rounded-full px-3 py-1 text-xs font-bold">EC</span> 
+            <span class="chip work-badge rounded-full px-3 py-1 text-xs font-bold">GA4</span> 
+            <span class="chip work-badge rounded-full px-3 py-1 text-xs font-bold">Looker</span> 
+            <span class="chip work-badge rounded-full px-3 py-1 text-xs font-bold">AB Testing</span> 
+            <span class="chip work-badge rounded-full px-3 py-1 text-xs font-bold">UIUX</span>
+         </div>
+         <p class="mt-4 text-sm leading-7 text-slate-700">GA4とLookerを用いたデータ基盤構築により、オンラインと実店舗の分断を解消。データに基づく高速なABテストでCVRを改善。</p>
+         <button class="detail-button focus-ring mt-5 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-white" style="background:var(--primary);" data-case="case1"> 
+            <span>詳細を見る</span> <i data-lucide="arrow-right" class="w-4 h-4"></i> 
+         </button>
+        </div>
+       </article>
+
+       <!-- Case 2 -->
+       <article class="work-item work-card rounded-[2rem] overflow-hidden motion-rise delay-2 neon-line" data-category="ai">
+        <div class="case-visual p-5" style="background: radial-gradient(circle at 72% 28%, rgba(255,47,169,.24), transparent 24%), radial-gradient(circle at 30% 72%, rgba(122,76,255,.20), transparent 20%), linear-gradient(135deg, #fff5fb, #f5efff);">
+         <div class="absolute inset-0 p-5">
+          <div class="h-full rounded-[1.6rem] p-4 relative overflow-hidden" style="background:linear-gradient(135deg, rgba(16,35,63,.96), rgba(83,54,180,.95));">
+           <div class="text-white/70 text-xs uppercase tracking-[0.2em] font-bold">Case 2</div>
+           <div class="mt-4 flex items-center gap-3">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #ff2fa9, #ffa3d7); box-shadow:0 0 20px rgba(255,47,169,.35);"><span class="text-white text-xl">🐑</span></div>
+            <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #7a4cff, #ff2fa9); box-shadow:0 0 20px rgba(122,76,255,.35);"><span class="text-white text-xl">🤖</span></div>
+           </div>
+           <div class="mt-5 rounded-3xl p-4 bg-white/10 border border-white/10 text-white">
+            <div class="text-sm font-bold">こんにちは、スンポーです。</div>
+            <div class="mt-2 text-xs text-white/70">今日はどんな気分？おすすめ体験を案内するよ。</div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="p-6">
+         <h3 class="text-xl font-black leading-8">エンタメ型AIエージェントとキャラクター開発による新規UX創出</h3>
+         <div class="mt-4 flex flex-wrap gap-2">
+            <span class="chip rounded-full px-3 py-1 text-xs font-bold" style="background:rgba(255,47,169,.10); color:var(--secondary); border:1px solid rgba(255,47,169,.16);">Agent Development Kit</span> 
+            <span class="chip rounded-full px-3 py-1 text-xs font-bold" style="background:rgba(255,47,169,.10); color:var(--secondary); border:1px solid rgba(255,47,169,.16);">UIUX</span>
+         </div>
+         <p class="mt-4 text-sm leading-7 text-slate-700">単なる案内役ではない、独自キャラクターを用いた対話型AIを実装。サイト滞在時間の伸長とエンゲージメント強化を実現。</p>
+         <button class="detail-button focus-ring mt-5 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-white" style="background:linear-gradient(135deg, #ff2fa9, #7a4cff);" data-case="case2"> 
+            <span>詳細を見る</span> <i data-lucide="arrow-right" class="w-4 h-4"></i> 
+         </button>
+        </div>
+       </article>
+
+       <!-- Case 3 -->
+       <article class="work-item work-card rounded-[2rem] overflow-hidden motion-rise delay-3" data-category="web3">
+        <div class="case-visual p-5" style="background: radial-gradient(circle at 22% 22%, rgba(122,76,255,.18), transparent 24%), radial-gradient(circle at 72% 62%, rgba(18,75,218,.18), transparent 28%), linear-gradient(135deg, #f6f3ff, #eff7ff);">
+         <div class="absolute inset-0 p-5">
+          <div class="h-full rounded-[1.6rem] p-4 flex flex-col justify-between" style="background:rgba(255,255,255,.88); border:1px solid rgba(122,76,255,.12);">
+           <div class="flex items-center justify-between">
+            <div class="text-xs font-bold uppercase tracking-[0.2em] opacity-60">Case 3</div>
+            <i data-lucide="network" class="w-5 h-5" style="color:#7a4cff;"></i>
+           </div>
+           <div class="grid grid-cols-3 gap-3 items-center">
+            <div class="col-span-2 rounded-2xl p-3" style="background:rgba(122,76,255,.08);">
+             <div class="flex items-center justify-between">
+                <span class="w-3 h-3 rounded-full" style="background:#7a4cff;"></span> 
+                <span class="w-3 h-3 rounded-full" style="background:#124bda;"></span> 
+                <span class="w-3 h-3 rounded-full" style="background:#ff2fa9;"></span>
+             </div>
+             <div class="mt-3 h-1 rounded-full" style="background:linear-gradient(90deg, #7a4cff, #124bda, #ff2fa9);"></div>
+             <div class="mt-3 h-1 rounded-full" style="background:linear-gradient(90deg, rgba(122,76,255,.3), rgba(18,75,218,.2));"></div>
+            </div>
+            <div class="rounded-full aspect-square flex items-center justify-center text-xl" style="background:linear-gradient(135deg, #7a4cff, #124bda); color:white;">◈</div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="p-6">
+         <h3 class="text-xl font-black leading-8">グローバル配信基盤の最適化とWeb3・次世代広告戦略の統合</h3>
+         <div class="mt-4 flex flex-wrap gap-2">
+            <span class="chip rounded-full px-3 py-1 text-xs font-bold" style="background:rgba(122,76,255,.10); color:#6d44ff; border:1px solid rgba(122,76,255,.16);">CDN</span> 
+            <span class="chip rounded-full px-3 py-1 text-xs font-bold" style="background:rgba(122,76,255,.10); color:#6d44ff; border:1px solid rgba(122,76,255,.16);">Search Engine</span> 
+            <span class="chip rounded-full px-3 py-1 text-xs font-bold" style="background:rgba(122,76,255,.10); color:#6d44ff; border:1px solid rgba(122,76,255,.16);">Web ads</span> 
+            <span class="chip rounded-full px-3 py-1 text-xs font-bold" style="background:rgba(122,76,255,.10); color:#6d44ff; border:1px solid rgba(122,76,255,.16);">web3</span>
+         </div>
+         <p class="mt-4 text-sm leading-7 text-slate-700">CDNチューニングによる圧倒的なサイト高速化で広告CPAを低減。同時にWeb3技術を用いた次世代ロイヤルティ施策を検証。</p>
+         <button class="detail-button focus-ring mt-5 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-white" style="background:linear-gradient(135deg, #6d44ff, #124bda);" data-case="case3"> 
+            <span>詳細を見る</span> <i data-lucide="arrow-right" class="w-4 h-4"></i> 
+         </button>
+        </div>
+       </article>
+      </div>
+     </div>
+    </section>
+
+    <section id="contact" class="py-16 sm:py-20 lg:py-24">
+     <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-[0.92fr_1.08fr] gap-6 lg:gap-8">
+       <div class="contact-panel rounded-[2rem] p-6 sm:p-8 motion-rise">
+        <div class="section-kicker">Contact</div>
+        <h2 id="contactTitle" class="mt-3 text-3xl sm:text-4xl font-black headline-balance">Contact</h2>
+        <p id="contactBody" class="mt-5 text-base sm:text-lg leading-8 text-slate-700">プロジェクトのご相談や、より詳細な職務経歴についてのお問い合わせはこちらからお願いいたします。</p>
+        <div class="mt-8 space-y-4">
+         <div class="rounded-3xl p-4" style="background:rgba(18,75,218,.06); border:1px solid rgba(18,75,218,.10);">
+          <div class="flex items-center gap-3">
+            <i data-lucide="mail" class="w-5 h-5" style="color:var(--primary);"></i>
+           <div class="font-bold">ご相談歓迎</div>
+          </div>
+          <p class="mt-2 text-sm leading-7 opacity-80">EC改善、分析基盤、AIエージェント、次世代UXの企画まで幅広く対応可能です。</p>
+         </div>
+         <div class="rounded-3xl p-4" style="background:rgba(255,47,169,.06); border:1px solid rgba(255,47,169,.14);">
+          <div class="flex items-center gap-3">
+            <i data-lucide="rocket" class="w-5 h-5" style="color:var(--secondary);"></i>
+           <div class="font-bold">初回の壁打ちにも</div>
+          </div>
+          <p class="mt-2 text-sm leading-7 opacity-80">まだ要件が固まっていない段階でも、課題整理から伴走する前提で設計しています。</p>
+         </div>
+        </div>
+       </div>
+       <div class="contact-panel rounded-[2rem] p-6 sm:p-8 motion-rise delay-1">
+        <form id="contactForm" class="space-y-5" novalidate>
+         <div>
+            <label for="name" class="block text-sm font-bold mb-2">名前</label> 
+            <input id="name" name="name" type="text" class="field w-full rounded-2xl px-4 py-4 text-base" placeholder="お名前を入力してください">
+         </div>
+         <div>
+            <label for="email" class="block text-sm font-bold mb-2">メールアドレス</label> 
+            <input id="email" name="email" type="email" class="field w-full rounded-2xl px-4 py-4 text-base" placeholder="you@example.com">
+         </div>
+         <div>
+            <label for="message" class="block text-sm font-bold mb-2">お問い合わせ内容</label> 
+            <textarea id="message" name="message" rows="6" class="field w-full rounded-2xl px-4 py-4 text-base resize-none" placeholder="ご相談内容をご記入ください"></textarea>
+         </div>
+         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+            <button type="submit" class="send-button focus-ring inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm sm:text-base font-bold text-white" style="background:var(--primary); box-shadow:0 18px 34px rgba(18,75,218,.22);"> 
+                <i data-lucide="send" class="w-5 h-5"></i> <span>送信する</span> 
+            </button>
+          <div id="submitNote" class="submit-note text-sm font-medium opacity-0" aria-live="polite"></div>
+         </div>
+        </form>
+       </div>
+      </div>
+     </div>
+    </section>
+   </main>
+
+   <footer class="footer-grid">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+     <p id="footerText" class="text-sm text-slate-700">© 2026 Your Name. Built with Tailwind CSS / Lucide.</p>
+     <a href="#hero" class="inline-link focus-ring inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-bold work-badge"> 
+        <i data-lucide="arrow-up" class="w-4 h-4"></i> <span>Back to top</span> 
+     </a>
+    </div>
+   </footer>
+
+   <!-- Sheep Animation -->
+   <div class="sheep" id="sheep" aria-hidden="true">
+    <div class="sheep-track">
+        <span style="font-size:1.55rem;">🐑</span>
+    </div>
+   </div>
+
+   <!-- Modal for Case Studies -->
+   <div id="caseModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6" aria-hidden="true">
+    <div class="modal-backdrop absolute inset-0"></div>
+    <div class="relative z-10 w-full max-w-3xl logic-card rounded-[2rem] p-6 sm:p-8">
+     <div class="flex items-start justify-between gap-4">
+      <div>
+       <div class="section-kicker">Case Detail</div>
+       <h3 id="modalTitle" class="mt-2 text-2xl sm:text-3xl font-black leading-tight"></h3>
+      </div>
+      <button id="modalClose" class="modal-close focus-ring rounded-full p-3 border" style="border-color:rgba(16,35,63,.12); background:rgba(255,255,255,.8);" aria-label="閉じる"> 
+        <i data-lucide="x" class="w-5 h-5"></i> 
+      </button>
+     </div>
+     <div id="modalTags" class="mt-5 flex flex-wrap gap-2"></div>
+     <p id="modalDescription" class="mt-6 text-base sm:text-lg leading-8 text-slate-700"></p>
+     <div class="mt-6 rounded-[1.75rem] p-5 sm:p-6" style="background:linear-gradient(135deg, rgba(18,75,218,.06), rgba(255,47,169,.06)); border:1px solid rgba(16,35,63,.08);">
+      <div class="font-extrabold text-lg">Highlights</div>
+      <ul id="modalHighlights" class="mt-4 space-y-3 text-sm sm:text-base leading-7 text-slate-700"></ul>
+     </div>
+    </div>
+   </div>
+
+  </div> <!-- end of app-shell -->
+
+  <script>
+    // --- Data & Content ---
+    const caseDetails = {
+      case1: {
+        title: "大規模小売・インテリアECにおけるデータ駆動型UI/UX改善とOMO推進",
+        tags: ["EC", "GA4", "Looker", "AB Testing", "UIUX"],
+        description: "大規模小売・インテリアECにおいて、オンラインと実店舗の行動データをつなぎ、改善施策の速度と精度を上げるプロジェクト。計測の整備から可視化、改善実装まで一気通貫で設計しました。",
+        highlights: [
+          "GA4の計測設計とイベント整理により、意思決定の土台を標準化",
+          "Lookerダッシュボードで現場がすぐ判断できる状態を構築",
+          "商品詳細・導線・訴求のABテストを高速に回しCVR改善へ接続"
+        ]
+      },
+      case2: {
+        title: "エンタメ型AIエージェントとキャラクター開発による新規UX創出",
+        tags: ["Agent Development Kit", "UIUX"],
+        description: "独自キャラクターを活かした会話体験を設計し、案内のためだけではない“愛着のあるAI接点”を実装。ブランド体験の延長としてAIを使うことで、サイト滞在価値を高める企画です。",
+        highlights: [
+          "キャラクターの口調・役割・世界観を設計して体験の差別化を実現",
+          "チャット体験をUI全体と一体化し、自然な回遊導線を形成",
+          "遊び心と実用性を両立し、エンゲージメント強化へ接続"
+        ]
+      },
+      case3: {
+        title: "グローバル配信基盤の最適化とWeb3・次世代広告戦略の統合",
+        tags: ["CDN", "Search Engine", "Web ads", "web3"],
+        description: "表示速度の最適化と広告効率の改善を基盤にしながら、Web3技術による新しいロイヤルティ施策も検証したハイブリッド型の取り組み。短期成果と未来施策の両立を目指しました。",
+        highlights: [
+          "CDNのキャッシュ設計・配信最適化で体感速度とSEOの両面を改善",
+          "高速化によって広告流入後の離脱を抑制しCPA改善に寄与",
+          "Web3のトークンや認証を活用した次世代接点の可能性をプロトタイプ化"
+        ]
+      }
+    };
+
+    // --- UI Interactions ---
+    
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Helper to toggle menu icon reliably with Lucide
+    const setMenuIcon = (iconName) => {
+      const menuButton = document.getElementById("menuButton");
+      menuButton.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
+      lucide.createIcons();
+    };
+
+    // Mobile Menu Toggle
+    const menuButton = document.getElementById("menuButton");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    menuButton.addEventListener("click", () => {
+      const isOpen = !mobileMenu.classList.contains("hidden");
+      mobileMenu.classList.toggle("hidden");
+      menuButton.setAttribute("aria-expanded", String(!isOpen));
+      // Re-inject <i> then refresh Lucide to swap icons correctly
+      setMenuIcon(isOpen ? "menu" : "x");
+    });
+
+    mobileMenu.querySelectorAll("a").forEach(link => {
+      link.addEventListener("click", () => {
+        mobileMenu.classList.add("hidden");
+        menuButton.setAttribute("aria-expanded", "false");
+        setMenuIcon("menu");
+      });
+    });
+
+    // Modal Logic
+    const modal = document.getElementById("caseModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalTags = document.getElementById("modalTags");
+    const modalDescription = document.getElementById("modalDescription");
+    const modalHighlights = document.getElementById("modalHighlights");
+    const modalClose = document.getElementById("modalClose");
+
+    function openModal(caseKey) {
+      const item = caseDetails[caseKey];
+      if (!item) return;
+      
+      modalTitle.textContent = item.title;
+      modalDescription.textContent = item.description;
+      modalTags.innerHTML = "";
+      modalHighlights.innerHTML = "";
+
+      item.tags.forEach(tag => {
+        const span = document.createElement("span");
+        span.className = "rounded-full px-3 py-1 text-xs font-bold";
+        span.style.background = "rgba(18,75,218,.08)";
+        span.style.color = "var(--primary)";
+        span.style.border = "1px solid rgba(18,75,218,.14)";
+        span.textContent = tag;
+        modalTags.appendChild(span);
+      });
+
+      item.highlights.forEach(text => {
+        const li = document.createElement("li");
+        li.className = "flex items-start gap-3";
+        li.innerHTML = `<span class="mt-2 w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:linear-gradient(135deg, var(--primary), var(--secondary));"></span><span>${text}</span>`;
+        modalHighlights.appendChild(li);
+      });
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    document.querySelectorAll(".detail-button").forEach(button => {
+      button.addEventListener("click", () => {
+        openModal(button.getAttribute("data-case"));
+      });
+    });
+
+    modalClose.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal || e.target.classList.contains("modal-backdrop")) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeModal();
+      }
+    });
+
+    // Contact Form Logic
+    const contactForm = document.getElementById("contactForm");
+    const submitNote = document.getElementById("submitNote");
+    let submitTimeout;
+
+    function showMessage(msg, color) {
+        submitNote.textContent = msg;
+        submitNote.style.color = color;
+        submitNote.style.opacity = "1";
+        
+        clearTimeout(submitTimeout);
+        // Fade out after 4 seconds
+        submitTimeout = setTimeout(() => {
+            submitNote.style.opacity = "0";
+        }, 4000);
+    }
+
+    contactForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const message = document.getElementById("message").value.trim();
+
+      if (!name || !email || !message) {
+        showMessage("未入力の項目があります。すべて入力してください。", "#c02666");
+        return;
+      }
+
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if (!emailOk) {
+        showMessage("メールアドレスの形式を確認してください。", "#c02666");
+        return;
+      }
+
+      showMessage("ありがとうございます。内容を受け付けました。", "var(--primary)");
+      contactForm.reset();
+    });
+
+    // Scroll Animation (Optimized with requestAnimationFrame)
+    const sheep = document.getElementById("sheep");
+    const app = document.getElementById("app");
+    let isTickingScroll = false;
+
+    app.addEventListener("scroll", () => {
+      if (!isTickingScroll) {
+        window.requestAnimationFrame(() => {
+          const maxScroll = app.scrollHeight - app.clientHeight;
+          const ratio = maxScroll > 0 ? app.scrollTop / maxScroll : 0;
+          const travel = Math.min(220, ratio * 220);
+          sheep.style.transform = `translateX(-${travel}px)`;
+          isTickingScroll = false;
+        });
+        isTickingScroll = true;
+      }
+    });
+
+    // --- Added Features ---
+
+    // 1. Scroll Reveal (Intersection Observer)
+    const revealOptions = {
+      root: null,
+      rootMargin: '0px 0px -50px 0px',
+      threshold: 0.1
+    };
+
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, revealOptions);
+
+    document.querySelectorAll('.motion-rise').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    // 2. Works Filter
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const workItems = document.querySelectorAll('.work-item');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active class from all
+        filterBtns.forEach(b => b.classList.remove('active'));
+        
+        // Add active class to clicked
+        btn.classList.add('active');
+        const filterValue = btn.getAttribute('data-filter');
+
+        workItems.forEach(item => {
+          if (filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
+            item.classList.remove('hidden-item');
+            // setTimeout to allow display:block to apply before animating opacity
+            setTimeout(() => {
+              item.style.opacity = '1';
+              item.style.transform = 'scale(1)';
+            }, 10);
+          } else {
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.95)';
+            // Wait for transition to finish before hiding
+            setTimeout(() => {
+              item.classList.add('hidden-item');
+            }, 400); // matches CSS transition duration
+          }
+        });
+      });
+    });
+
+  </script>
+ </body>
 </html>
