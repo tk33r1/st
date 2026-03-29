@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Check, Car, Bus, Bike, TreePine, Building, AlertTriangle, RefreshCw, Keyboard, X, Activity } from 'lucide-react';
 
-// --- カスタムフック：マウス移動距離の計測 ---
+// --- カスタムフック：マウス移動距離の計測a ---
 const useMouseTracking = (active) => {
   const [distance, setDistance] = useState(0);
   const lastPos = useRef({ x: null, y: null });
