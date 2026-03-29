@@ -233,30 +233,6 @@
       50% { transform: translate(0,-8px) rotate(2deg); }
     }
 
-    .sheep {
-      position: fixed;
-      z-index: 20;
-      right: 12px;
-      bottom: 16px;
-      pointer-events: none;
-      opacity: .88;
-      transform: translateX(0);
-      transition: transform .1s linear;
-      filter: drop-shadow(0 8px 18px rgba(255,47,169,.08));
-    }
-
-    .sheep-track {
-      width: 92px;
-      height: 46px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.8);
-      border: 1px solid rgba(16,35,63,0.08);
-      box-shadow: 0 8px 25px rgba(16,35,63,0.08);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
     .work-badge {
       background: rgba(18,75,218,0.08);
       color: var(--primary);
@@ -332,7 +308,6 @@
     @media (max-width: 767px) {
       .hero-glow.blue { top: 2%; left: -20%; }
       .hero-glow.pink { right: -18%; top: 26%; }
-      .sheep { right: 8px; bottom: 12px; transform: scale(.84); transform-origin: bottom right; }
     }
   </style>
  </head>
@@ -655,11 +630,11 @@
           <div class="h-full rounded-[1.6rem] p-4 relative overflow-hidden" style="background:linear-gradient(135deg, rgba(16,35,63,.96), rgba(83,54,180,.95));">
            <div class="text-white/70 text-xs uppercase tracking-[0.2em] font-bold">Case 2</div>
            <div class="mt-4 flex items-center gap-3">
-            <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #ff2fa9, #ffa3d7); box-shadow:0 0 20px rgba(255,47,169,.35);"><span class="text-white text-xl">🐑</span></div>
+            <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #ff2fa9, #ffa3d7); box-shadow:0 0 20px rgba(255,47,169,.35);"><span class="text-white text-xl">✨</span></div>
             <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg, #7a4cff, #ff2fa9); box-shadow:0 0 20px rgba(122,76,255,.35);"><span class="text-white text-xl">🤖</span></div>
            </div>
            <div class="mt-5 rounded-3xl p-4 bg-white/10 border border-white/10 text-white">
-            <div class="text-sm font-bold">こんにちは、スンポーです。</div>
+            <div class="text-sm font-bold">こんにちは！</div>
             <div class="mt-2 text-xs text-white/70">今日はどんな気分？おすすめ体験を案内するよ。</div>
            </div>
           </div>
@@ -771,21 +746,16 @@
     </section>
    </main>
 
-   <footer class="footer-grid">
-    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-     <p id="footerText" class="text-sm text-slate-700">© 2026 Your Name. Built with Tailwind CSS / Lucide.</p>
-     <a href="#hero" class="inline-link focus-ring inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-bold work-badge"> 
-        <i data-lucide="arrow-up" class="w-4 h-4"></i> <span>Back to top</span> 
-     </a>
+   <footer class="footer-grid relative">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-10 flex items-center justify-center">
+     <p id="footerText" class="text-sm text-slate-700">© 2026 Shinya Takeda. All Rights Reserved.</p>
     </div>
    </footer>
 
-   <!-- Sheep Animation -->
-   <div class="sheep" id="sheep" aria-hidden="true">
-    <div class="sheep-track">
-        <span style="font-size:1.55rem;">🐑</span>
-    </div>
-   </div>
+   <!-- Back to Top Button -->
+   <a href="#hero" id="backToTop" class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 focus-ring flex items-center justify-center w-12 h-12 rounded-full text-white shadow-lg transition-all duration-300 opacity-0 translate-y-4 pointer-events-none" style="background:var(--primary); box-shadow:0 8px 24px rgba(18,75,218,.3);" aria-label="一番上に戻る">
+     <i data-lucide="arrow-up" class="w-5 h-5"></i>
+   </a>
 
    <!-- Modal for Case Studies -->
    <div id="caseModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6" aria-hidden="true">
@@ -983,25 +953,29 @@
       contactForm.reset();
     });
 
-    // Scroll Animation (Optimized with requestAnimationFrame)
-    const sheep = document.getElementById("sheep");
+    // --- Added Features ---
+
+    // Scroll Logic for Back to Top Button
+    const backToTop = document.getElementById("backToTop");
     const app = document.getElementById("app");
     let isTickingScroll = false;
 
     app.addEventListener("scroll", () => {
       if (!isTickingScroll) {
         window.requestAnimationFrame(() => {
-          const maxScroll = app.scrollHeight - app.clientHeight;
-          const ratio = maxScroll > 0 ? app.scrollTop / maxScroll : 0;
-          const travel = Math.min(220, ratio * 220);
-          sheep.style.transform = `translateX(-${travel}px)`;
+          // 300px以上スクロールしたらボタンを表示
+          if (app.scrollTop > 300) {
+            backToTop.classList.remove("opacity-0", "translate-y-4", "pointer-events-none");
+            backToTop.classList.add("opacity-100", "translate-y-0", "pointer-events-auto");
+          } else {
+            backToTop.classList.add("opacity-0", "translate-y-4", "pointer-events-none");
+            backToTop.classList.remove("opacity-100", "translate-y-0", "pointer-events-auto");
+          }
           isTickingScroll = false;
         });
         isTickingScroll = true;
       }
     });
-
-    // --- Added Features ---
 
     // 1. Scroll Reveal (Intersection Observer)
     const revealOptions = {
