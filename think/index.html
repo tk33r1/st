@@ -78,8 +78,26 @@
       opacity: 1 !important;
     }
     
+    body.zen-mode .nav-arrow {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
     #zenToggleBtn, #themeToggleBtn {
       transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.5s ease-in-out;
+    }
+
+    .nav-arrow {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease-in-out, color 0.5s ease-in-out;
+    }
+    .nav-arrow.is-visible {
+      opacity: 0.3;
+      pointer-events: auto;
+    }
+    .nav-arrow.is-visible:hover {
+      opacity: 0.8;
     }
 
     /* =========================================
@@ -153,7 +171,7 @@
       
       <!-- Header Section -->
       <header class="anim-ready play-fade-in">
-        <div class="flex flex-col gap-8 w-full">
+        <div class="flex flex-col gap-10 sm:gap-12 w-full">
           <div class="flex items-center justify-between w-full">
             <div class="flex items-center gap-4 text-[#111111]" id="headerTitleArea">
               <div id="topMark" class="h-px w-16 bg-[#d9d9d9] breath-line transition-colors duration-700"></div>
@@ -167,7 +185,6 @@
                 <i data-lucide="maximize" id="zenToggleIcon" class="w-4 h-4 sm:w-5 sm:h-5"></i>
               </button>
               
-              <!-- テーマ切り替えトグルスイッチ -->
               <button id="themeToggleBtn" class="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-500 focus:outline-none border border-black/10 bg-black/5" title="夜の余白へ" style="padding: 2px;">
                 <div class="absolute inset-0 flex items-center justify-between px-1.5 opacity-30 pointer-events-none">
                   <i data-lucide="sun" class="w-2.5 h-2.5"></i>
@@ -183,6 +200,7 @@
             <div id="buttonScroller" class="flex gap-2 sm:gap-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory scroll-smooth no-scrollbar pb-2 sm:pb-0" style="-webkit-overflow-scrolling: touch;">
               <button data-theme="love" class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">愛とは</button> 
               <button data-theme="happiness" class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">幸せとは</button> 
+              <button data-theme="failure" class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">失敗とは</button> 
               <button data-theme="self" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">自我とは</button> 
               <button data-theme="madness" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">狂気とは</button> 
               <button data-theme="death" disabled class="theme-btn px-4 py-2 text-sm sm:text-base border bg-transparent rounded-sm flex-shrink-0 snap-start transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 disabled:opacity-30 disabled:cursor-not-allowed">死とは</button> 
@@ -195,12 +213,21 @@
       </header>
 
       <!-- Main Content Section -->
-      <section class="flex-1 flex items-center justify-center mt-8 sm:mt-16 mb-4 sm:mb-8">
-        <div class="w-full max-w-5xl px-2 sm:px-0">
+      <section class="flex-1 flex items-center justify-center mt-8 sm:mt-16 mb-4 sm:mb-8 w-full">
+        <div class="w-full max-w-5xl px-2 sm:px-0 relative">
+          
+          <!-- Navigation Arrows -->
+          <button id="prevThemeBtn" class="nav-arrow absolute -left-6 sm:-left-12 top-1/2 -translate-y-1/2 z-[45] p-1 sm:p-2 text-[#777777] focus:outline-none">
+            <i data-lucide="chevron-left" class="w-6 h-6 sm:w-10 sm:h-10"></i>
+          </button>
+          <button id="nextThemeBtn" class="nav-arrow absolute -right-6 sm:-right-12 top-1/2 -translate-y-1/2 z-[45] p-1 sm:p-2 text-[#777777] focus:outline-none">
+            <i data-lucide="chevron-right" class="w-6 h-6 sm:w-10 sm:h-10"></i>
+          </button>
+
           <div class="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-16 items-start lg:items-center">
             
             <div class="flex-1 flex flex-col justify-center min-h-0">
-              <h1 id="title" class="content-element anim-ready play-fade-up leading-[1.8] font-semibold text-3xl sm:text-5xl lg:text-6xl whitespace-nowrap transition-colors duration-700" style="letter-spacing: 0.15em;">思索の余白</h1>
+              <h1 id="title" class="content-element anim-ready play-fade-up leading-[1.8] font-semibold text-3xl sm:text-5xl lg:text-6xl whitespace-nowrap transition-colors duration-700 pr-2 sm:pr-0" style="letter-spacing: 0.15em;">思索の余白</h1>
             </div>
             
             <div id="vLine" class="content-element anim-ready play-fade-in delay-400 w-full lg:w-1 h-px lg:h-40 bg-gradient-to-b from-transparent via-[#d9d9d9] to-transparent transition-colors duration-700"></div>
@@ -241,7 +268,8 @@
     <!-- Footer Section -->
     <footer class="anim-ready play-fade-in delay-600 mt-auto w-full flex flex-col">
       <div class="mx-auto w-full max-w-7xl px-8 sm:px-14 lg:px-24 pb-12 sm:pb-16 pt-4 flex flex-col relative gap-12">
-        <p id="footerText" class="text-center text-sm sm:text-base leading-[1.9] transition-colors duration-700">余白は、あなたの思考を置くためのスペース。</p>
+        <!-- 修正: フッターテキスト -->
+        <p id="footerText" class="text-center text-sm sm:text-base leading-[1.9] transition-colors duration-700">余白は、あなたの思考を置くスペース。</p>
         <div class="w-full flex justify-end">
           <button id="disclosureBtn" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-full border bg-transparent transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 whitespace-nowrap tracking-widest"> 
             <i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i>
@@ -295,12 +323,18 @@
         lastUpdated: "2026.03.16",
         reference: `今枝由郎訳（2001）『<a href="https://a.r10.to/h5DyaJ" target="_blank" rel="noopener noreferrer" class="reference-link">スッタニパータ ブッダの言葉</a>』光文社.`
       },
-      self: { title: "自我とは", body: "...", lastUpdated: "2026.03.27", reference: "カール・グスタフ・ユング（1990）『自我と無意識』高橋義孝訳, 第三文明社." },
-      madness: { title: "狂気とは", body: "...", lastUpdated: "2026.03.26", reference: "ミシェル・フーコー（1975）『狂気の歴史』田村俶訳, 新潮社." },
-      death: { title: "死とは", body: "...", lastUpdated: "2026.03.25", reference: "マルティン・ハイデガー（1994）『存在と時間』細谷貞夫訳, ちくま学芸文庫." },
-      freedom: { title: "自由とは", body: "...", lastUpdated: "2026.03.24", reference: "ジャン＝ポール・サルトル（2007）『存在と無』松浪信三郎訳, ちくま学芸文庫." },
-      society: { title: "社会とは", body: "...", lastUpdated: "2026.03.23", reference: "ジャン＝ジャック・ルソー（1954）『社会契約論』桑原武夫訳, 岩波文庫." },
-      universe: { title: "時空とは", body: "...", lastUpdated: "2026.03.22", reference: "スティーヴン・ホーキング（1989）『ホーキング、宇宙を語る』林一訳, 早川書房." }
+      failure: {
+        title: "失敗とは",
+        body: "失敗の反対は成功だと思いがち。実際には何もしないこと。失敗は新たな学びを伴うが、何もしなければ何も得られない。早く失敗することが成功への近道。それに誰しも気づきながら、怠惰でありたいと願う無意識に、成功の反対に失敗があることを、私たちは常に語りかけられる。",
+        lastUpdated: "2025.12.28",
+        reference: `エリック・リース（2012）『<a href="https://a.r10.to/hRO0hL" target="_blank" rel="noopener noreferrer" class="reference-link">リーン・スタートアップ</a>』井口耕二訳, 日経BP.`
+      },
+      self: { title: "自我とは", body: "自分らしさを求めながら、その自分さえも移ろいゆく。今の自分は、昨日の自分ではなく、明日も変わり続ける。自我とは、固定されたものではなく、絶え間なく変化する流れの中でのみ存在するのかもしれない。", lastUpdated: "2026.03.27", reference: "カール・グスタフ・ユング（1990）『自我と無意識』高橋義孝訳, 第三文明社." },
+      madness: { title: "狂気とは", body: "常識の外にある輝き。創造の狂気と破壊の狂気、二つの道がある。もしかして、狂気とは正気との境界線を引いた私たちの側の都合なのではないだろうか。時に狂気こそが、世界を変える力になる。", lastUpdated: "2026.03.26", reference: "ミシェル・フーコー（1975）『狂気の歴史』田村俶訳, 新潮社." },
+      death: { title: "死とは", body: "すべてのはじまりの終わり。死を前にすると、本当に大切なものが見える。失うから、今この瞬間が輝く。死は、生の意味を問う、最後の問い。そしてそれは、実は最初から私たちの中にあったのだ。", lastUpdated: "2026.03.25", reference: "マルティン・ハイデガー（1994）『存在と時間』細谷貞夫訳, ちくま学芸文庫." },
+      freedom: { title: "自由とは", body: "選択することの責任を引き受けることではないだろうか。完全な自由は存在しない。むしろ、制限の中でも自分らしく在ることが、本当の自由なのかもしれない。自由とは、与えられるものではなく、自分たちで創り出すものなのだ。", lastUpdated: "2026.03.24", reference: "ジャン＝ポール・サルトル（2007）『存在と無』松浪信三郎訳, ちくま学芸文庫." },
+      society: { title: "社会とは", body: "個人の集合であり、同時に個人を超えた何か。誰もが社会の一部であり、社会は誰もが作っている。共存とは、完全には理解できない他者と、それでも歩み続けることなのだろうか。", lastUpdated: "2026.03.23", reference: "ジャン＝ジャック・ルソー（1954）『社会契約論』桑原武夫訳, 岩波文庫." },
+      universe: { title: "時空とは", body: "すべての存在の舞台。時間と空間は分かちがたく結びつき、宇宙全体を包む。人間はその中でもなお小さく、しかし時空の一部でもある。星々の光は過去からの手紙。時空を見つめることは、存在の深さを感じることかもしれない。", lastUpdated: "2026.03.22", reference: "スティーヴン・ホーキング（1989）『ホーキング、宇宙を語る』林一訳, 早川書房." }
     };
 
     const lightPalette = { background_color: "#ffffff", surface_color: "#e7e7e7", text_color: "#111111", primary_action_color: "#111111", secondary_action_color: "#777777", meta_text_color: "#8a8a8a", copyright_color: "#b0b0b0" };
@@ -309,14 +343,16 @@
     const defaultConfig = {
       ...lightPalette, font_family: "Cormorant Garamond", font_size: 18, main_title: "思索の余白", subtitle_text: "Space for Contemplation",
       body_text: "交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。",
-      last_updated_text: "2025.10.12", reference_text: "", footer_text: "余白は、あなたの思考を置くためのスペース。"
+      last_updated_text: "2025.10.12", reference_text: "", 
+      // 修正: 初期設定のフッターテキスト
+      footer_text: "余白は、あなたの思考を置くスペース。"
     };
 
     const SITE_URL = "https://tk.st/think/";
     const UTM_PARAMS = "?utm_source=tk.st&utm_medium=referral&utm_campaign=think_space";
 
     /* =========================================
-       DOM Elements
+       DOM Elements & State
        ========================================= */
     const els = {
       app: document.getElementById('app'),
@@ -360,7 +396,9 @@
       shareCopyIcon: document.getElementById('shareCopyIcon'),
       shareCopyText: document.getElementById('shareCopyText'),
       themeBtns: document.querySelectorAll('.theme-btn'),
-      contentElements: document.querySelectorAll('.content-element')
+      contentElements: document.querySelectorAll('.content-element'),
+      prevThemeBtn: document.getElementById('prevThemeBtn'),
+      nextThemeBtn: document.getElementById('nextThemeBtn')
     };
     
     let currentTheme = null;
@@ -421,6 +459,28 @@
       }, 400);
       const config = (window.elementSdk && window.elementSdk.config) ? window.elementSdk.config : defaultConfig;
       updateButtonsHighlight(themeName, isDarkMode ? darkPalette : config);
+      updateArrows();
+    }
+
+    function updateArrows() {
+      const availableThemes = Array.from(els.themeBtns).filter(btn => !btn.disabled).map(btn => btn.dataset.theme);
+      const currentIndex = currentTheme ? availableThemes.indexOf(currentTheme) : -1;
+
+      if (currentIndex === -1) {
+        els.prevThemeBtn.classList.remove('is-visible');
+        if (availableThemes.length > 0) {
+          els.nextThemeBtn.classList.add('is-visible');
+        } else {
+          els.nextThemeBtn.classList.remove('is-visible');
+        }
+      } else {
+        els.prevThemeBtn.classList.add('is-visible');
+        if (currentIndex < availableThemes.length - 1) {
+          els.nextThemeBtn.classList.add('is-visible');
+        } else {
+          els.nextThemeBtn.classList.remove('is-visible');
+        }
+      }
     }
 
     function applyColors(palette) {
@@ -447,6 +507,9 @@
         els.themeToggleHandle.style.transform = "translateX(1.25rem)";
         els.themeToggleHandle.innerHTML = '<i data-lucide="moon" class="w-2.5 h-2.5 text-[#a1a1aa]"></i>';
         
+        els.prevThemeBtn.style.color = "#a1a1aa";
+        els.nextThemeBtn.style.color = "#a1a1aa";
+
         els.zenToggleBtn.className = "p-2 text-[#a1a1aa] transition-all duration-500 rounded-full hover:bg-white/10 hover:text-white focus:outline-none";
         els.subtitle.classList.add('hover:text-white');
         els.footerBottom.className = "w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-white/[0.06]";
@@ -469,6 +532,9 @@
         els.themeToggleHandle.style.transform = "translateX(0)";
         els.themeToggleHandle.innerHTML = '<i data-lucide="sun" class="w-2.5 h-2.5 text-[#777777]"></i>';
 
+        els.prevThemeBtn.style.color = "#777777";
+        els.nextThemeBtn.style.color = "#777777";
+
         els.zenToggleBtn.className = "p-2 text-[#777777] transition-all duration-500 rounded-full hover:bg-black/5 hover:text-[#111111] focus:outline-none";
         els.subtitle.classList.remove('hover:text-white');
         els.footerBottom.className = "w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]";
@@ -488,6 +554,7 @@
       lucide.createIcons(); 
       updateButtonsHighlight(currentTheme, palette);
       updateContentData(currentTheme || 'reset');
+      updateArrows();
     }
 
     function applyConfig(config) {
@@ -496,7 +563,7 @@
       const serifStack = `"${mergedLight.font_family}", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif`;
       const allTextElements = [els.title, els.body, els.footerText, els.modalBody, els.subtitle, els.metaInfo, els.copyright, els.disclosureText, els.modalTitle, els.closeModalBtn, els.copyContentText, els.sharePageText, els.shareModalTitle, els.shareCopyText, ...els.themeBtns];
       allTextElements.forEach(el => { if (el && el.style) el.style.fontFamily = serifStack; });
-      els.title.style.fontSize = `${baseSize * 3.2}px`;
+      els.title.style.fontSize = `clamp(${baseSize * 2}px, 9vw, ${baseSize * 3.2}px)`;
       els.body.style.fontSize = `${baseSize}px`;
       els.footerText.style.fontSize = `${baseSize * 0.82}px`;
       els.subtitle.style.fontSize = `${baseSize * 0.62}px`;
@@ -521,6 +588,75 @@
     /* =========================================
        Event Listeners
        ========================================= */
+    
+    function moveTheme(direction) {
+      const availableThemes = Array.from(els.themeBtns)
+                                   .filter(btn => !btn.disabled)
+                                   .map(btn => btn.dataset.theme);
+      
+      let targetTheme = null;
+
+      if (direction === 'next') {
+        if (!currentTheme) {
+          targetTheme = availableThemes[0];
+        } else {
+          const currentIndex = availableThemes.indexOf(currentTheme);
+          if (currentIndex !== -1 && currentIndex < availableThemes.length - 1) {
+            targetTheme = availableThemes[currentIndex + 1];
+          }
+        }
+      } else if (direction === 'prev') {
+        if (currentTheme) {
+          const currentIndex = availableThemes.indexOf(currentTheme);
+          if (currentIndex > 0) {
+            targetTheme = availableThemes[currentIndex - 1];
+          } else if (currentIndex === 0) {
+            targetTheme = 'reset';
+          }
+        }
+      }
+
+      if (targetTheme !== null) {
+        switchTheme(targetTheme);
+        if (targetTheme !== 'reset') {
+          const btn = document.querySelector(`button[data-theme="${targetTheme}"]`);
+          if (btn) {
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        } else {
+          document.getElementById('buttonScroller').scrollTo({ left: 0, behavior: 'smooth' });
+        }
+      }
+    }
+
+    els.prevThemeBtn.addEventListener('click', () => moveTheme('prev'));
+    els.nextThemeBtn.addEventListener('click', () => moveTheme('next'));
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    els.app.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    els.app.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      const touchEndY = e.changedTouches[0].screenY;
+      const xDiff = touchStartX - touchEndX;
+      const yDiff = touchStartY - touchEndY;
+
+      if (els.app.scrollTop <= 0 && yDiff < -100 && Math.abs(yDiff) > Math.abs(xDiff)) {
+        location.reload();
+        return;
+      }
+
+      if (Math.abs(xDiff) > 50 && Math.abs(xDiff) > Math.abs(yDiff)) {
+        if (xDiff > 0) moveTheme('next');
+        else moveTheme('prev');
+      }
+    }, { passive: true });
+
     els.themeBtns.forEach(btn => btn.addEventListener('click', () => switchTheme(btn.dataset.theme)));
     els.subtitle.addEventListener('click', () => switchTheme('reset'));
 
@@ -585,7 +721,6 @@
       const { text, shareUrl } = getShareInfo();
       window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, '_blank');
     });
-    
     els.shareNotion.addEventListener('click', () => {
       copyToClipboard(getFormattedContent(), () => {
         const span = els.shareNotion.querySelector('span');
