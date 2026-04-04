@@ -31,8 +31,37 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .fade-in {
-      animation: fadeSlide 0.4s ease forwards;
+      animation: fadeSlide 0.5s ease forwards;
       opacity: 0;
+    }
+
+    @keyframes dance {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-4px) rotate(-15deg); }
+      50% { transform: translateY(0) rotate(0deg); }
+      75% { transform: translateY(-4px) rotate(15deg); }
+    }
+    .dancing-emoji {
+      display: inline-block;
+      animation: dance 1s ease-in-out infinite;
+      margin-left: 8px;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      10% { transform: translate(-1px, -2px) rotate(-1deg); }
+      20% { transform: translate(-3px, 0px) rotate(1deg); }
+      30% { transform: translate(3px, 2px) rotate(0deg); }
+      40% { transform: translate(1px, -1px) rotate(1deg); }
+      50% { transform: translate(-1px, 2px) rotate(-1deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      70% { transform: translate(3px, 1px) rotate(-1deg); }
+      80% { transform: translate(-1px, -1px) rotate(1deg); }
+      90% { transform: translate(1px, 2px) rotate(0deg); }
+      100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+    .shake-animation {
+      animation: shake 0.3s infinite;
     }
 
     .scanline {
@@ -62,7 +91,6 @@
       caret-color: #4ade80;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
  <body class="bg-[#0c0c0c]">
@@ -74,12 +102,12 @@
      <div class="w-2.5 h-2.5 rounded-full" style="background:#4ade80;"></div>
     </div>
     <div class="flex items-center gap-2">
-     <span style="color:#4ade80;">▸</span> <span id="titlebar-name" class="text-xs tracking-wider" style="color:#888;">ST@portfolio:~</span>
+     <span style="color:#4ade80;" class="theme-color-target">▸</span> <span id="titlebar-name" class="text-xs tracking-wider" style="color:#888;">ST@portfolio:~</span>
     </div>
    </header><main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1" style="scroll-behavior:smooth;">
     <div id="boot-area"></div>
     <div id="output-area"></div>
-    <div class="flex items-center gap-2 mt-4" id="input-line"><span id="prompt-prefix" class="text-xs whitespace-nowrap" style="color:#4ade80;">ST@portfolio:~$</span> <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" style="color:#d4d4d4;" autocomplete="off" spellcheck="false" placeholder="type 'help' to get started..." aria-label="Command input">
+    <div class="hidden items-center gap-2 mt-4" id="input-line"><span id="prompt-prefix" class="text-xs whitespace-nowrap" style="color:#4ade80;">ST@portfolio:~$</span> <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" style="color:#d4d4d4;" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
     </div>
    </main><footer class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto" style="background:#1a1a1a; border-color:#333; color:#666;"><span id="status-left">READY</span> <span id="status-right"></span>
    </footer>
@@ -132,27 +160,9 @@
           div.style.animationDelay = '0s';
           div.innerHTML = html;
           document.getElementById('output-area').appendChild(div);
-          scrollToBottom();
           resolve();
         }, delay);
       });
-    }
-
-    function scrollToBottom() {
-      // コマンド実行時の強制スクロールを無効化
-      /*
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: 'smooth'
-      });
-      */
-    }
-
-    function makeBar(pct) {
-      const filled = Math.round(pct / 5);
-      const empty = 20 - filled;
-      const c = getConfig();
-      return `<span style="color:${c.primary_color};">${'█'.repeat(filled)}</span><span style="color:#333;">${'░'.repeat(empty)}</span>`;
     }
 
     // === COMMANDS ===
@@ -161,23 +171,89 @@
         const c = getConfig();
         return `
           <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
-            <div style="color:${c.primary_color};" class="glow text-sm font-bold mb-2">Available Commands:</div>
+            <div style="color:${c.primary_color};" class="glow text-sm font-bold mb-2 theme-color-target">Available Commands:</div>
             <div class="grid gap-1 text-xs" style="color:${c.text_color};">
-              <div class="flex"><span class="w-24" style="color:${c.primary_color};">about</span><span>- Learn about me</span></div>
-              <div class="flex"><span class="w-24" style="color:${c.primary_color};">identify</span><span>- View personality versions</span></div>
-              <div class="flex"><span class="w-24" style="color:${c.primary_color};">pages</span><span>- Browse web2-directories</span></div>
-              <div class="flex"><span class="w-24" style="color:${c.primary_color};">contact</span><span>- Contact me</span></div>
-              <div class="flex"><span class="w-24" style="color:${c.primary_color};">clear</span><span>- Clear terminal</span></div>
-              <div class="flex"><span class="w-24" style="color:${c.primary_color};">help</span><span>- Show this menu</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">about</span><span>- Learn about me</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">identify</span><span>- View personality versions</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">magi</span><span>- Talk to ST multi-agent</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">pages</span><span>- Explore Web2 creations</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">bitcoin</span><span>- Enjoy Web3 journey</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">contact</span><span>- Contact me</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">clear</span><span>- Clear terminal</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">help</span><span>- Show this menu</span></div>
             </div>
+            <div class="text-[10px] mt-4 opacity-50 italic">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>
           </div>`;
       },
 
-      '/dj'() { window.open('https://tk.st/dj', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /dj...</div>`; },
-      '/job'() { window.open('https://tk.st/job', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /job...</div>`; },
-      '/game'() { window.open('https://tk.st/game', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /game...</div>`; },
-      '/think'() { window.open('https://tk.st/think', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /think...</div>`; },
-      '/glitch'() { window.open('https://tk.st/glitch', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening /glitch...</div>`; },
+      '/dj'() { window.open('https://tk.st/dj', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs theme-color-target" style="color:${getConfig().primary_color};">Opening /dj...</div>`; },
+      '/job'() { window.open('https://tk.st/job', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs theme-color-target" style="color:${getConfig().primary_color};">Opening /job...</div>`; },
+      '/game'() { window.open('https://tk.st/game', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs theme-color-target" style="color:${getConfig().primary_color};">Opening /game...</div>`; },
+      '/think'() { window.open('https://tk.st/think', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs theme-color-target" style="color:${getConfig().primary_color};">Opening /think...</div>`; },
+      '/glitch'() { window.open('https://tk.st/glitch', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs theme-color-target" style="color:${getConfig().primary_color};">Opening /glitch...</div>`; },
+
+      magi() { window.open('https://tk.st/magi', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs theme-color-target" style="color:${getConfig().primary_color};">Activate the MAGI system ...</div>`; },
+
+      bitcoin() {
+        const c = getConfig();
+        const uniqueId = Date.now();
+        
+        const toggleMenu = `
+          const menus = ['earn-opts-${uniqueId}', 'buy-opts-${uniqueId}', 'use-opts-${uniqueId}'];
+          const target = event.currentTarget.getAttribute('data-target');
+          menus.forEach(id => {
+            const el = document.getElementById(id);
+            if(id === target) {
+              el.classList.toggle('hidden');
+              el.classList.toggle('flex');
+            } else {
+              el.classList.add('hidden');
+              el.classList.remove('flex');
+            }
+          });
+        `;
+
+        return `
+          <div class="my-3 w-[90%] max-w-[800px]">
+            <div class="text-sm font-bold glow mb-3 theme-color-target" style="color:${c.primary_color};">BITCOIN YEN Ecosystem</div>
+            <div class="flex gap-2 flex-wrap">
+              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-[#0a1f0a] hover:bg-[#143314] theme-border-target" style="border-color:${c.primary_color};" data-target="earn-opts-${uniqueId}" onclick="${toggleMenu.replace(/\n/g, '')}">
+                Earn
+              </div>
+              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-[#0a1f0a] hover:bg-[#143314] theme-border-target" style="border-color:${c.primary_color};" data-target="buy-opts-${uniqueId}" onclick="${toggleMenu.replace(/\n/g, '')}">
+                Buy
+              </div>
+              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-[#0a1f0a] hover:bg-[#143314] theme-border-target" style="border-color:${c.primary_color};" data-target="use-opts-${uniqueId}" onclick="${toggleMenu.replace(/\n/g, '')}">
+                Use
+              </div>
+            </div>
+            
+            <div id="earn-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color:${c.secondary_color};">
+              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color:#333;" onclick="window.open('https://tk.st/bitcoinyen/ascii_roguelike', '_blank', 'noopener,noreferrer')">
+                <div style="color:${c.text_color};">🎮 Play to Earn</div>
+                <div class="text-xs mt-0.5 theme-color-target" style="color:${c.primary_color};">ASCII Roguelike</div>
+              </div>
+            </div>
+
+            <div id="buy-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color:${c.secondary_color};">
+              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color:#333;" onclick="window.open('https://tk.st/bitcoinyen/ln', '_blank', 'noopener,noreferrer')">
+                <div style="color:${c.text_color};">⚡ Direct Purchase</div>
+                <div class="text-xs mt-0.5 theme-color-target" style="color:${c.primary_color};">Lightning Network</div>
+              </div>
+              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color:#333;" onclick="window.open('https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN', '_blank', 'noopener,noreferrer')">
+                <div style="color:${c.text_color};">🛒 Marketplace</div>
+                <div class="text-xs mt-0.5 theme-color-target" style="color:${c.primary_color};">UniSat</div>
+              </div>
+            </div>
+            
+            <div id="use-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color:${c.secondary_color};">
+              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color:#333;" onclick="window.open('https://tk.st/bitcoinyen/bbm', '_blank', 'noopener,noreferrer')">
+                <div style="color:${c.text_color};">📨 Letter to the future</div>
+                <div class="text-xs mt-0.5 theme-color-target" style="color:${c.primary_color};">Bitcoin Bottle Mail</div>
+              </div>
+            </div>
+          </div>`;
+      },
 
       about() {
         const c = getConfig();
@@ -190,7 +266,7 @@
         const loc = c.location_text || defaultConfig.location_text;
         return `
           <div class="my-3 p-4 border rounded w-[90%] max-w-[800px]" style="border-color:#333; background:#111;">
-            <div class="text-lg font-bold glow mb-1" style="color:${c.primary_color};">${esc(name)}</div>
+            <div class="text-lg font-bold glow mb-1 theme-color-target" style="color:${c.primary_color};">${esc(name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
             <div class="text-xs mb-4" style="color:${c.secondary_color};">${esc(title)}</div>
             <div class="text-xs leading-relaxed mb-4" style="color:${c.text_color};">${bioLines.map(line => esc(line)).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t" style="border-color:#333;">
@@ -217,9 +293,9 @@
       projects() {
         const c = getConfig();
         let cards = projects.map(p =>
-          `<div class="p-3 border rounded cursor-pointer hover:border-opacity-100 transition-colors" style="border-color:#333; background:#111;" onclick="window.open('${p.link}', '_blank', 'noopener,noreferrer')">
+          `<div class="p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color:#333;" onclick="window.open('${p.link}', '_blank', 'noopener,noreferrer')">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-sm font-bold" style="color:${c.primary_color};">${esc(p.name)}</span>
+              <span class="text-sm font-bold theme-color-target" style="color:${c.primary_color};">${esc(p.name)}</span>
             </div>
             <div class="text-xs mb-2" style="color:${c.text_color};">${esc(p.desc)}</div>
             <div class="text-[10px]" style="color:${c.secondary_color};">⚙ ${esc(p.tech)}</div>
@@ -227,7 +303,7 @@
         ).join('');
         return `
           <div class="my-3 space-y-2 w-[90%] max-w-[800px]">
-            <div class="text-sm font-bold glow mb-2" style="color:${c.primary_color};">web2-directories</div>
+            <div class="text-sm font-bold glow mb-2 theme-color-target" style="color:${c.primary_color};">Explore Web2 creations</div>
             <div class="space-y-2">${cards}</div>
           </div>`;
       },
@@ -236,24 +312,25 @@
 
       contact() {
         window.open('https://tk.st/contact', '_blank');
-        return `<div class="my-3 text-xs" style="color:${getConfig().primary_color};">Opening contact page...</div>`;
+        return `<div class="my-3 text-xs theme-color-target" style="color:${getConfig().primary_color};">Opening contact page...</div>`;
       },
 
       identify() {
         const c = getConfig();
+        const uniqueId = 'id-' + Date.now();
         return new Promise(resolve => {
           const html = `
             <div class="my-3 w-[90%] max-w-[800px]">
-              <div class="text-sm font-bold glow mb-3" style="color:${c.primary_color};">Please select a profile to initialize:</div>
+              <div class="text-sm font-bold glow mb-3 theme-color-target" style="color:${c.primary_color};">Please select a profile to initialize:</div>
               <div class="space-y-2">
-                <div class="p-3 border rounded cursor-pointer transition-colors" style="border-color:#4ade80; background:#0a1f0a;" onclick="window.executeIdentifyVersion('2.0')">
+                <div class="p-3 border rounded cursor-pointer transition-colors bg-[#0a1f0a] hover:bg-[#143314] theme-border-target" style="border-color:#4ade80;" onclick="window.executeIdentifyVersion('2.0', '${uniqueId}')">
                   <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-bold" style="color:#4ade80;">ver.2.0 [ACTIVE]</span>
+                    <span class="text-xs font-bold theme-color-target" style="color:#4ade80;">ver.2.0 [ACTIVE]</span>
                     <span class="text-[10px]" style="color:${c.secondary_color};">2025.08.20</span>
                   </div>
                   <div class="text-xs" style="color:${c.secondary_color};">Post-traffic accident (MBTI & Strengths)</div>
                 </div>
-                <div class="p-3 border rounded cursor-pointer transition-colors" style="border-color:#333; background:#111; hover:border-color:#888;" onclick="window.executeIdentifyVersion('1.0')">
+                <div class="p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color:#333;" onclick="window.executeIdentifyVersion('1.0', '${uniqueId}')">
                   <div class="flex justify-between items-center mb-1">
                     <span class="text-xs font-bold" style="color:#888;">ver.1.0 [ARCHIVED]</span>
                     <span class="text-[10px]" style="color:${c.secondary_color};">2025.07.10</span>
@@ -261,22 +338,24 @@
                   <div class="text-xs" style="color:${c.secondary_color};">Pre-traffic accident (MBTI & Strengths)</div>
                 </div>
               </div>
+              <div id="identify-result-${uniqueId}"></div>
             </div>`;
           
           printToOutput(html, 100).then(resolve);
           
-          window.executeIdentifyVersion = async (version) => {
+          window.executeIdentifyVersion = async (version, targetId) => {
+            let result = '';
             if (version === '2.0') {
               const traits = [
                 { name: 'Extraverted', pct: 56, opposite: 'Introverted' },
                 { name: 'Intuitive', pct: 94, opposite: 'Observant' },
-                { name: 'Feeling', pct: 51, opposite: 'Thinking' },
+                { name: 'Thinking', pct: 49, opposite: 'Feeling' },
                 { name: 'Judging', pct: 53, opposite: 'Prospecting' },
                 { name: 'Assertive', pct: 83, opposite: 'Turbulent' }
               ];
               
               let rows = traits.map(t => {
-                let labelText = t.name === 'Feeling' ? `${t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
+                let labelText = t.name === 'Thinking' ? `${100 - t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
                 return `
                   <div class="text-xs mb-4">
                     <div class="flex items-center justify-between mb-1.5">
@@ -284,8 +363,8 @@
                       <span style="color:${c.secondary_color};">${esc(t.opposite)}</span>
                     </div>
                     <div style="position:relative; height:16px; width:100%; background:#1a1a1a; border-radius:8px; border:1px solid #333;">
-                      <div style="position:absolute; left:${t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${c.primary_color}; border-radius:50%; border:2px solid #0c0c0c; z-index:2;"></div>
-                      <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${c.primary_color}; opacity:0.3;"></div>
+                      <div class="theme-bg-target theme-border-target" style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${c.primary_color}; border-radius:50%; border:2px solid #0c0c0c; z-index:2;"></div>
+                      <div class="theme-bg-target" style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${c.primary_color}; opacity:0.3;"></div>
                     </div>
                     <div style="margin-top:4px; text-align:center; font-size:10px; color:${c.secondary_color};">${labelText}</div>
                   </div>`;
@@ -301,23 +380,25 @@
               const patternDefs = `
                 <svg width="0" height="0">
                   <defs>
-                    <pattern id="v20-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${c.primary_color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="${c.background_color}" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="${c.background_color}" stroke-width="1.5"/></pattern>
-                    <pattern id="v20-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${c.primary_color}"/><line x1="3" y1="0" x2="3" y2="6" stroke="${c.background_color}" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="${c.background_color}" stroke-width="1"/></pattern>
-                    <pattern id="v20-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${c.primary_color}"/><circle cx="3" cy="3" r="1" fill="${c.background_color}"/></pattern>
+                    <pattern id="v20-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${c.primary_color}" class="theme-fill-target"/><line x1="0" y1="0" x2="8" y2="8" stroke="${c.background_color}" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="${c.background_color}" stroke-width="1.5"/></pattern>
+                    <pattern id="v20-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${c.primary_color}" class="theme-fill-target"/><line x1="3" y1="0" x2="3" y2="6" stroke="${c.background_color}" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="${c.background_color}" stroke-width="1"/></pattern>
+                    <pattern id="v20-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${c.primary_color}" class="theme-fill-target"/><circle cx="3" cy="3" r="1" fill="${c.background_color}"/></pattern>
                   </defs>
                 </svg>`;
               
               let barHTML = patternDefs + strengths.map(s => {
                 let fillVal = s.pattern === 'solid' ? c.primary_color : `url(#v20-${s.pattern}-pattern)`;
-                return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}"/></svg>`;
+                let cls = s.pattern === 'solid' ? 'class="theme-fill-target"' : '';
+                return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}" ${cls}/></svg>`;
               }).join('');
               
               const strengthsRows = strengths.map(s => {
                 let fillVal = s.pattern === 'solid' ? c.primary_color : `url(#v20-${s.pattern}-pattern)`;
+                let cls = s.pattern === 'solid' ? 'class="theme-fill-target"' : '';
                 return `
                 <div class="text-xs flex items-center justify-between" style="color:${c.text_color};">
                   <div class="flex items-center gap-2">
-                    <svg width="12" height="12" style="border:1px solid #333;"><rect x="0" y="0" width="12" height="12" fill="${fillVal}"/></svg>
+                    <svg width="12" height="12" style="border:1px solid #333;"><rect x="0" y="0" width="12" height="12" fill="${fillVal}" ${cls}/></svg>
                     <span>${esc(s.name)}</span>
                   </div>
                   <span style="color:${c.secondary_color};">${s.pct.toFixed(1)}%</span>
@@ -334,23 +415,23 @@
               
               const tableRowsV2 = cliftonThemesV2.map(row => `
                 <div class="flex text-xs border-b last:border-0" style="border-color:#333; padding:8px 0;">
-                  <div class="w-8" style="color:${c.primary_color};">${row.rank}</div>
+                  <div class="w-8 theme-color-target" style="color:${c.primary_color};">${row.rank}</div>
                   <div class="flex-1 truncate" style="color:${c.text_color};">${row.theme}</div>
                   <div class="w-56 text-right truncate" style="color:${c.secondary_color};">${row.category}</div>
                 </div>`).join('');
               
-              const result = `
-                <div class="my-4 w-[90%] max-w-[800px]">
+              result = `
+                <div class="mt-4 fade-in w-full">
                   <div class="p-4 border rounded" style="border-color:#333; background:#111;">
-                    <div class="text-sm font-bold glow mb-4" style="color:${c.primary_color};">MBTI: Protagonist (ENFJ-A)</div>
+                    <a href="https://tk.st/mbti" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline theme-color-target" style="color:${c.primary_color};">MBTI: Protagonist (ENFJ-A) 🔗</a>
                     <div class="space-y-1 mb-6">${rows}</div>
                     
-                    <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color:#333; color:${c.primary_color};">CliftonStrengths</div>
+                    <a href="https://tk.st/cliftonstrengths" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline theme-color-target" style="border-color:#333; color:${c.primary_color};">CliftonStrengths: Strategic Thinking 🔗</a>
                     <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background:#1a1a1a;" class="mb-3">${barHTML}</div>
                     <div class="space-y-2 mb-6">${strengthsRows}</div>
                     
                     <div class="mt-4 pt-2" style="overflow-x:auto;">
-                      <div class="flex text-[10px] font-bold mb-1" style="color:${c.primary_color}; min-width:400px;">
+                      <div class="flex text-[10px] font-bold mb-1 theme-color-target" style="color:${c.primary_color}; min-width:400px;">
                         <div class="w-8">RANK</div>
                         <div class="flex-1">THEME</div>
                         <div class="w-56 text-right">CATEGORY</div>
@@ -359,19 +440,18 @@
                     </div>
                   </div>
                 </div>`;
-              await printToOutput(result, 100);
 
             } else if (version === '1.0') {
               const traits = [
                 { name: 'Extraverted', pct: 61, opposite: 'Introverted' },
                 { name: 'Intuitive', pct: 69, opposite: 'Observant' },
-                { name: 'Feeling', pct: 34, opposite: 'Thinking' },
+                { name: 'Thinking', pct: 66, opposite: 'Feeling' },
                 { name: 'Judging', pct: 61, opposite: 'Prospecting' },
                 { name: 'Assertive', pct: 78, opposite: 'Turbulent' }
               ];
               
               let rows = traits.map(t => {
-                let labelText = t.name === 'Feeling' ? `${100 - t.pct}% Thinking` : `${t.pct}% ${esc(t.name)}`;
+                let labelText = t.name === 'Thinking' ? `${100 - t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
                 return `
                   <div class="text-xs mb-4">
                     <div class="flex items-center justify-between mb-1.5">
@@ -379,7 +459,7 @@
                       <span style="color:${c.secondary_color};">${esc(t.opposite)}</span>
                     </div>
                     <div style="position:relative; height:16px; width:100%; background:#1a1a1a; border-radius:8px; border:1px solid #333;">
-                      <div style="position:absolute; left:${t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:#888; border-radius:50%; border:2px solid #0c0c0c; z-index:2;"></div>
+                      <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:#888; border-radius:50%; border:2px solid #0c0c0c; z-index:2;"></div>
                       <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:#888; opacity:0.3;"></div>
                     </div>
                     <div style="margin-top:4px; text-align:center; font-size:10px; color:${c.secondary_color};">${labelText}</div>
@@ -434,13 +514,13 @@
                   <div class="w-56 text-right truncate" style="color:${c.secondary_color};">${row.category}</div>
                 </div>`).join('');
 
-              const result = `
-                <div class="my-4 w-[90%] max-w-[800px]">
+              result = `
+                <div class="mt-4 fade-in w-full">
                   <div class="p-4 border rounded" style="border-color:#333; background:#111;">
                     <div class="text-sm font-bold glow mb-4" style="color:#888;">MBTI: Commander (ENTJ-A)</div>
                     <div class="space-y-1 mb-6">${rows}</div>
                     
-                    <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color:#333; color:#888;">CliftonStrengths</div>
+                    <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color:#333; color:#888;">CliftonStrengths: Strategic Thinking</div>
                     <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background:#1a1a1a;" class="mb-3">${barHTML1}</div>
                     <div class="space-y-2 mb-6">${strengthsRows}</div>
                     
@@ -454,20 +534,29 @@
                     </div>
                   </div>
                 </div>`;
-              await printToOutput(result, 100);
             }
-            scrollToBottom();
+            
+            const container = document.getElementById(`identify-result-${targetId || uniqueId}`);
+            if (container) {
+              container.innerHTML = result;
+            } else {
+              await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`, 0);
+            }
           };
         });
       },
 
+      clear() {
+        document.getElementById('output-area').innerHTML = '';
+        return null;
+      },
+      
       async akutagawa() {
         const c = getConfig();
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px]';
         loadingDiv.style.color = c.primary_color;
         document.getElementById('output-area').appendChild(loadingDiv);
-        scrollToBottom();
 
         const spinners = ['|', '/', '-', '\\'];
         let frameIndex = 0;
@@ -484,184 +573,129 @@
         return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px]" style="border-color:#333; background:#111; color:${c.text_color};">${esc(msg)}</div>`;
       },
 
-      tsuzaki() {
+      // === RECOMMENDED / HIDDEN COMMANDS ===
+      history() {
+        const c = getConfig();
+        if (commandHistory.length === 0) return `<div class="my-3 text-xs" style="color:${c.secondary_color};">No history available.</div>`;
+        const list = commandHistory.slice().reverse().map((cmd, i) => `  ${(i+1).toString().padStart(3, ' ')}  ${esc(cmd)}`).join('<br>');
+        return `<div class="my-3 text-xs" style="color:${c.secondary_color}; font-family: monospace;">${list}</div>`;
+      },
+
+      theme(args) {
+        const c = getConfig();
+        const colors = {
+          green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', 
+          orange: '#fb923c', purple: '#c084fc', white: '#ffffff',
+          red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee'
+        };
+        
+        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) {
+          return `<div class="my-3 text-xs" style="color:${c.secondary_color};">Usage: theme &lt;color&gt;<br>Available colors: <span style="color:${c.text_color};">${Object.keys(colors).join(', ')}</span></div>`;
+        }
+        
+        const newColor = colors[args[0].toLowerCase()];
+        
+        // Configの更新
+        defaultConfig.primary_color = newColor;
+        if (window.elementSdk && typeof window.elementSdk.setConfig === 'function') {
+          window.elementSdk.setConfig({ primary_color: newColor });
+        }
+        
+        // 既存の要素の色を即座に書き換えるハック
+        document.getElementById('prompt-prefix').style.color = newColor;
+        document.querySelectorAll('.theme-color-target').forEach(el => el.style.color = newColor);
+        document.querySelectorAll('.theme-bg-target').forEach(el => el.style.background = newColor);
+        document.querySelectorAll('.theme-border-target').forEach(el => el.style.borderColor = newColor);
+        document.querySelectorAll('.theme-fill-target').forEach(el => el.setAttribute('fill', newColor));
+        
+        return `<div class="my-3 text-xs theme-color-target" style="color:${newColor};">Theme color successfully changed to ${esc(args[0])}.</div>`;
+      },
+      
+      date() {
+        const d = new Date().toString();
+        return `<div class="my-3 text-xs" style="color:${getConfig().secondary_color};">${esc(d)}</div>`;
+      },
+      
+      sudo() {
+        return `<div class="my-3 text-xs text-red-500 font-bold">sudo: permission denied. This incident will be reported.</div>`;
+      },
+      
+      destroy() {
+        document.body.classList.add('shake-animation');
+        setTimeout(() => {
+          document.body.classList.remove('shake-animation');
+        }, 1500);
+        return `<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM COMPROMISED.<br>EMERGENCY PROTOCOL ACTIVATED.</div>`;
+      },
+
+      matrix() {
+        const c = getConfig();
         return new Promise(resolve => {
-          const c = getConfig();
-
-          const gameContainer = document.createElement('div');
-          gameContainer.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:#0c0c0c; z-index:10000; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:'Fira Code', 'Roboto Mono', monospace; color:#d4d4d4;";
-
-          const gameDisplay = document.createElement('pre');
-          gameDisplay.style.cssText = "font-size: 16px; line-height: 1.2; letter-spacing: 2px; background:#111; padding:20px; border:1px solid #333; border-radius:8px;";
+          const canvas = document.createElement('canvas');
+          canvas.style.position = 'fixed';
+          canvas.style.top = '0';
+          canvas.style.left = '0';
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+          canvas.style.zIndex = '9999';
+          canvas.style.background = '#000';
+          document.body.appendChild(canvas);
+          const ctx = canvas.getContext('2d');
           
-          gameContainer.appendChild(gameDisplay);
-          document.body.appendChild(gameContainer);
-
-          let mapWidth = 30;
-          let mapHeight = 15;
-          let map = [];
-          let player = { x: 0, y: 0, hp: 20, maxHp: 20, atk: 5 };
-          let enemies = [];
-          let depth = 1;
-          let messages = ["Welcome to Terminal Rogue.", "Use WASD/Arrows to move, ESC to quit.", "Find '>' to descend."];
-
-          function log(msg) {
-              messages.push(msg);
-              if (messages.length > 5) messages.shift();
+          let w = canvas.width = window.innerWidth;
+          let h = canvas.height = window.innerHeight;
+          
+          const fontSize = 14;
+          const columns = w / fontSize;
+          const drops = [];
+          for(let x = 0; x < columns; x++) drops[x] = 1;
+          
+          function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = c.primary_color;
+            ctx.font = fontSize + 'px monospace';
+            for(let i = 0; i < drops.length; i++) {
+              const text = String.fromCharCode(0x30A0 + Math.random() * 96);
+              ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+              if(drops[i] * fontSize > h && Math.random() > 0.975) drops[i] = 0;
+              drops[i]++;
+            }
           }
-
-          function generateLevel() {
-              map = Array(mapHeight).fill().map(() => Array(mapWidth).fill('#'));
-              let px = Math.floor(mapWidth/2), py = Math.floor(mapHeight/2);
-              player.x = px; player.y = py;
-              let x = px, y = py;
-              let floors = 0;
-              while(floors < mapWidth * mapHeight * 0.45) {
-                  if (map[y][x] === '#') { map[y][x] = '.'; floors++; }
-                  let r = Math.random();
-                  if (r < 0.25 && y > 1) y--;
-                  else if (r < 0.5 && y < mapHeight - 2) y++;
-                  else if (r < 0.75 && x > 1) x--;
-                  else if (x < mapWidth - 2) x++;
-              }
-              
-              let placedStairs = false;
-              while(!placedStairs) {
-                  let sx = Math.floor(Math.random() * mapWidth);
-                  let sy = Math.floor(Math.random() * mapHeight);
-                  if (map[sy][sx] === '.' && (sx !== px || sy !== py)) {
-                      map[sy][sx] = '>';
-                      placedStairs = true;
-                  }
-              }
-
-              enemies = [];
-              let numEnemies = depth + 3;
-              for (let i = 0; i < numEnemies; i++) {
-                  let ex, ey;
-                  while(true) {
-                      ex = Math.floor(Math.random() * mapWidth);
-                      ey = Math.floor(Math.random() * mapHeight);
-                      if (map[ey][ex] === '.' && Math.abs(ex - px) + Math.abs(ey - py) > 6) {
-                          enemies.push({ x: ex, y: ey, hp: 8 + depth*3, atk: 2 + depth, char: 'E' });
-                          break;
-                      }
-                  }
-              }
-          }
-
-          function render() {
-              let display = `<span style="color:${c.primary_color};">Depth: ${depth}</span>  HP: <span style="color:${player.hp <= player.maxHp * 0.3 ? '#ef4444' : '#d4d4d4'};">${player.hp}/${player.maxHp}</span>\n\n`;
-              let screen = map.map(row => [...row]);
-              enemies.forEach(e => {
-                  if (e.hp > 0) screen[e.y][e.x] = `<span style="color:#ef4444">${e.char}</span>`;
-              });
-              screen[player.y][player.x] = `<span style="color:${c.primary_color}">@</span>`;
-              
-              display += screen.map(row => row.map(cell => cell === '#' ? `<span style="color:#555">#</span>` : cell).join('')).join('\n');
-              display += '\n\n<span style="color:#888;">--- LOG ---</span>\n' + messages.map(m => `<span style="color:#ccc;">${m}</span>`).join('\n');
-              gameDisplay.innerHTML = display;
-          }
-
-          function endGame(msg, win = false) {
-              window.removeEventListener('keydown', handleKey);
-              let titleHtml = win ? `<div style="text-align:center; color:${c.primary_color}; font-size:24px; margin-bottom:20px;">GAME CLEARED!</div>` : `<div style="text-align:center; color:#ef4444; font-size:24px; margin-bottom:20px;">GAME OVER</div>`;
-              gameDisplay.innerHTML = `${titleHtml}<div style="text-align:center; margin-bottom:20px; color:#d4d4d4;">${msg}</div><div style="text-align:center; color:#888; font-size:12px;">Press any key to return...</div>`;
-              window.addEventListener('keydown', () => {
-                  gameContainer.remove();
-                  resolve();
-              }, { once: true });
-          }
-
-          function update(dx, dy) {
-              let nx = player.x + dx;
-              let ny = player.y + dy;
-              
-              let hitEnemy = enemies.find(e => e.hp > 0 && e.x === nx && e.y === ny);
-              if (hitEnemy) {
-                  let dmg = player.atk + Math.floor(Math.random() * 3);
-                  hitEnemy.hp -= dmg;
-                  log(`You hit E for ${dmg} dmg!`);
-                  if (hitEnemy.hp <= 0) log("E died.");
-              } else if (map[ny][nx] === '>') {
-                  if (depth >= 5) {
-                      endGame("You have conquered the Terminal Rogue!", true);
-                      return;
-                  }
-                  depth++;
-                  player.maxHp += 5;
-                  player.hp = Math.min(player.maxHp, player.hp + 10);
-                  player.atk += 1;
-                  log(`Descended to Depth ${depth}. Stats improved!`);
-                  generateLevel();
-              } else if (map[ny][nx] === '.') {
-                  player.x = nx;
-                  player.y = ny;
-              }
-
-              // 敵のターン
-              enemies.filter(e => e.hp > 0).forEach(e => {
-                  let dist = Math.abs(player.x - e.x) + Math.abs(player.y - e.y);
-                  if (dist === 1) {
-                      let edmg = e.atk + Math.floor(Math.random() * 2);
-                      player.hp -= edmg;
-                      log(`E hits you for ${edmg} dmg!`);
-                  } else if (dist < 10) {
-                      let moveX = 0, moveY = 0;
-                      if (Math.abs(player.x - e.x) > Math.abs(player.y - e.y)) {
-                          moveX = player.x > e.x ? 1 : -1;
-                      } else {
-                          moveY = player.y > e.y ? 1 : -1;
-                      }
-                      
-                      let canMove = (mx, my) => map[e.y + my][e.x + mx] === '.' && !enemies.some(other => other.hp > 0 && other.x === e.x + mx && other.y === e.y + my) && !(player.x === e.x + mx && player.y === e.y + my);
-
-                      if (canMove(moveX, moveY)) {
-                          e.x += moveX; e.y += moveY;
-                      } else if (moveX !== 0) {
-                          moveY = player.y > e.y ? 1 : (player.y < e.y ? -1 : 0);
-                          if (moveY !== 0 && canMove(0, moveY)) e.y += moveY;
-                      } else if (moveY !== 0) {
-                          moveX = player.x > e.x ? 1 : (player.x < e.x ? -1 : 0);
-                          if (moveX !== 0 && canMove(moveX, 0)) e.x += moveX;
-                      }
-                  }
-              });
-
-              if (player.hp <= 0) {
-                  endGame(`You died on Depth ${depth}.`);
-              } else {
-                  render();
-              }
-          }
-
-          const handleKey = (e) => {
-              if (e.key === 'Escape') {
-                  gameContainer.remove();
-                  resolve();
-                  return;
-              }
-              let dx = 0, dy = 0;
-              if (e.key === 'ArrowUp' || e.key === 'w') dy = -1;
-              if (e.key === 'ArrowDown' || e.key === 's') dy = 1;
-              if (e.key === 'ArrowLeft' || e.key === 'a') dx = -1;
-              if (e.key === 'ArrowRight' || e.key === 'd') dx = 1;
-              
-              if (dx !== 0 || dy !== 0) {
-                  e.preventDefault();
-                  update(dx, dy);
-              }
+          
+          const interval = setInterval(draw, 33);
+          
+          const endMatrix = (e) => {
+            if(e.type === 'keydown' && e.key !== 'Escape') return;
+            clearInterval(interval);
+            canvas.remove();
+            window.removeEventListener('keydown', endMatrix);
+            window.removeEventListener('click', endMatrix);
+            resolve(`<div class="text-xs mt-2 theme-color-target" style="color:${c.primary_color};">Matrix simulation ended.</div>`);
           };
-
-          window.addEventListener('keydown', handleKey);
-          generateLevel();
-          render();
+          
+          window.addEventListener('keydown', endMatrix);
+          window.addEventListener('click', endMatrix);
+          
+          printToOutput(`<div class="text-xs mb-2" style="color:${c.secondary_color};">Entering Matrix... Press ESC or Click to exit.</div>`, 0);
         });
       },
 
-      clear() {
-        document.getElementById('output-area').innerHTML = '';
-        return null;
+      secret() {
+        const c = getConfig();
+        return `
+          <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
+            <div style="color:${c.primary_color};" class="glow text-sm font-bold mb-2 theme-color-target">Hidden Commands:</div>
+            <div class="grid gap-1 text-xs" style="color:${c.text_color};">
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">akutagawa</span><span>- A message from the past</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">date</span><span>- Display current date and time</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">destroy</span><span>- Do not use</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">history</span><span>- Show command history</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">matrix</span><span>- Enter the Matrix</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">sudo</span><span>- Execute a command as superuser</span></div>
+              <div class="flex"><span class="w-24 theme-color-target" style="color:${c.primary_color};">theme</span><span>- Change terminal color [color]</span></div>
+            </div>
+          </div>`;
       }
     };
 
@@ -670,10 +704,11 @@
       const c = getConfig();
       const bootArea = document.getElementById('boot-area');
       const lines = [
-        { text: 'Initializing terminal...', delay: 200 },
-        { text: `Loading profile: ${c.display_name || defaultConfig.display_name}`, delay: 300 },
-        { text: 'System ready.', delay: 200 },
-        { text: '', delay: 100 },
+        { text: 'Initializing terminal...', delay: 250 },
+        { text: `Connecting to <span style="font-weight:bold;">Bitcoin Mainnet</span>... [OK]`, delay: 450 },
+        { text: `Loading profile: ${c.display_name || defaultConfig.display_name}`, delay: 400 },
+        { text: `<span class="theme-color-target" style="color:${c.primary_color};">Web3</span> system ready.`, delay: 300 },
+        { text: '', delay: 150 },
       ];
 
       for (const line of lines) {
@@ -681,7 +716,7 @@
         const div = document.createElement('div');
         div.className = 'text-xs fade-in';
         div.style.color = c.secondary_color || '#888';
-        div.textContent = line.text;
+        div.innerHTML = line.text;
         bootArea.appendChild(div);
       }
 
@@ -690,7 +725,7 @@
       
       header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
       header.innerHTML = `
-        <pre class="logo-ascii text-xs md:text-sm glow m-0 leading-tight" style="color:${c.primary_color};">
+        <pre class="logo-ascii text-xs md:text-sm glow m-0 leading-tight theme-color-target" style="color:${c.primary_color};">
 ███████╗████████╗
 ██╔════╝╚══██╔══╝
 ███████╗   ██║
@@ -698,37 +733,45 @@
 ███████║   ██║
 ╚══════╝   ╚═╝</pre>
         <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
-          <div style="color:${c.primary_color};">${esc(c.display_name || defaultConfig.display_name)}</div>
+          <div class="theme-color-target" style="color:${c.primary_color};">${esc(c.display_name || defaultConfig.display_name)}</div>
           <div style="color:${c.secondary_color};">${esc(c.job_title || defaultConfig.job_title)}</div>
           <div class="pt-2" style="color:${c.secondary_color};">Type <span style="color:#fff;">'help'</span> to explore.</div>
         </div>`;
       bootArea.appendChild(header);
-      scrollToBottom();
+      
+      const inputLine = document.getElementById('input-line');
+      inputLine.classList.remove('hidden');
+      inputLine.classList.add('flex', 'fade-in');
+      
       document.getElementById('cmd-input').focus();
     }
 
     // === COMMAND HANDLER ===
     async function handleCommand(input) {
       const c = getConfig();
-      const trimmed = input.trim().toLowerCase();
+      const trimmed = input.trim();
+      
+      if (!trimmed) return;
 
       const echo = document.createElement('div');
       echo.className = 'text-xs mt-3';
-      echo.innerHTML = `<span style="color:${c.primary_color};">ST@portfolio:~$</span> <span style="color:${c.text_color};">${esc(input)}</span>`;
+      echo.innerHTML = `<span class="theme-color-target" style="color:${c.primary_color};">ST@portfolio:~$</span> <span style="color:${c.text_color};">${esc(input)}</span>`;
       document.getElementById('output-area').appendChild(echo);
-
-      if (!trimmed) return;
 
       commandHistory.unshift(trimmed);
       historyIndex = -1;
 
-      if (commands[trimmed]) {
-        const result = await commands[trimmed]();
+      // 引数の解析
+      const parts = trimmed.split(/\s+/);
+      const cmd = parts[0].toLowerCase();
+      const args = parts.slice(1);
+
+      if (commands[cmd]) {
+        const result = await commands[cmd](args);
         if (result) await printToOutput(result, 100);
       } else {
-        await printToOutput(`<div class="text-xs my-1" style="color:#f87171;">Command not found: '${esc(trimmed)}'. Type <span style="color:${c.primary_color};">help</span> for available commands.</div>`, 50);
+        await printToOutput(`<div class="text-xs my-1" style="color:#f87171;">Command not found: '${esc(cmd)}'. Type <span class="theme-color-target" style="color:${c.primary_color};">help</span> for available commands.</div>`, 50);
       }
-      scrollToBottom();
     }
 
     // === INPUT HANDLING ===
@@ -754,13 +797,29 @@
           historyIndex = -1;
           cmdInput.value = '';
         }
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const val = cmdInput.value.toLowerCase();
+        if (!val) return;
+        const matches = Object.keys(commands).filter(cmd => cmd.startsWith(val));
+        if (matches.length === 1) {
+          cmdInput.value = matches[0];
+        } else if (matches.length > 1) {
+          const echo = document.createElement('div');
+          echo.className = 'text-xs mt-2 opacity-70';
+          echo.style.color = getConfig().text_color;
+          echo.textContent = matches.join('   ');
+          document.getElementById('output-area').appendChild(echo);
+        }
       }
     });
 
-    // ▼▼▼ コマンド入力位置への強制スクロール・フォーカスを防止するため、以下の行を削除・無効化しました ▼▼▼
-    // document.getElementById('terminal-body').addEventListener('click', () => cmdInput.focus());
+    document.getElementById('app').addEventListener('click', (e) => {
+      if (window.getSelection().toString()) return;
+      if (e.target.tagName === 'A' || e.target.closest('a') || e.target.closest('.cursor-pointer') || e.target.tagName === 'INPUT') return;
+      cmdInput.focus();
+    });
 
-    // Update status bar time
     function updateTime() {
       document.getElementById('status-right').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
     }
@@ -837,5 +896,5 @@
 
     boot();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e294b2bd74eca1b',t:'MTc3NDU2MTAxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ </body>
 </html>
