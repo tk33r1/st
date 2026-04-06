@@ -212,6 +212,7 @@
   }
   .pad-row {
     display: flex;
+    justify-content: center;
   }
   .pad-btn {
     width: 50px;
@@ -230,15 +231,19 @@
     color: var(--bg-color);
     border-color: var(--theme-color);
   }
+  .pad-spacer {
+    width: 50px;
+    margin: 4px;
+  }
 
   /* 画面幅が狭いデバイス（スマホなど）用のスタイル */
   @media (max-width: 768px) {
     body {
       align-items: flex-start;
-      padding-top: 10px;
+      padding-top: 0; /* 画面を広く使うために上部の余白を消去 */
     }
     #game-wrapper {
-      padding: 10px;
+      padding: 5px;
       border: none;
       box-shadow: none;
       width: 100%;
@@ -246,22 +251,38 @@
       box-sizing: border-box;
     }
     #game-screen {
-      /* マップ全体（60文字）が画面に収まるようにフォントサイズを動的計算 */
-      font-size: 2.2vw;
+      /* マップ全体がギリギリ収まるようにフォントサイズと行間を調整 */
+      font-size: 2.7vw;
       letter-spacing: 0; 
+      line-height: 1.0;
     }
     #status-bar {
-      font-size: 3vw;
+      font-size: 3.5vw;
+      margin-bottom: 5px;
+      padding-bottom: 5px;
     }
     #log-window {
-      font-size: 3vw;
-      height: 5em;
+      font-size: 3.5vw;
+      height: 4.5em; /* ログの高さも少し抑える */
+      margin-top: 5px;
+      padding-top: 5px;
     }
     #help-bar {
       display: none; /* スマホでは仮想パッドを使うためキー操作ヘルプを隠す */
     }
     #virtual-pad {
       display: flex;
+      margin-top: 10px;
+    }
+    .pad-btn {
+      width: 70px;  /* 横幅を広げて押しやすく */
+      height: 45px; /* 高さを抑えて画面を占有しないように */
+      font-size: 24px;
+      margin: 2px;
+    }
+    .pad-spacer {
+      width: 70px;
+      margin: 2px;
     }
     .title-main {
       font-size: 28px;
@@ -291,7 +312,7 @@
     </div>
     <div class="pad-row">
       <button class="pad-btn" id="btn-left">◀</button>
-      <div style="width: 50px; margin: 4px;"></div> <!-- Waitボタンの代わりの空白スペース -->
+      <div class="pad-spacer"></div> <!-- Waitボタンの代わりの空白スペース -->
       <button class="pad-btn" id="btn-right">▶</button>
     </div>
     <div class="pad-row">
@@ -346,7 +367,7 @@ let floor = 1;
 
 let player = {
   x: 0, y: 0,
-  hp: 20, maxHp: 20,
+  hp: 10, maxHp: 10,
   atk: 3,
   char: '@',
   level: 1,
@@ -355,9 +376,9 @@ let player = {
 };
 
 const ENEMY_TYPES = [
-  { char: 'S', name: 'Slime', hp: 4, atk: 1, exp: 2 },
-  { char: 'G', name: 'Goblin', hp: 8, atk: 3, exp: 4 },
-  { char: 'D', name: 'Dragon', hp: 16, atk: 5, exp: 15 } // ドラゴンは経験値が高い
+  { char: 'S', name: 'Slime', hp: 4, atk: 1, exp: 3 },
+  { char: 'G', name: 'Goblin', hp: 8, atk: 3, exp: 6 },
+  { char: 'D', name: 'Dragon', hp: 16, atk: 5, exp: 12 }
 ];
 
 // --- ユーティリティ ---
@@ -379,7 +400,7 @@ function init() {
   player.level = 1;
   player.exp = 0;
   player.maxExp = 10;
-  player.maxHp = 20;
+  player.maxHp = 10;
   player.hp = player.maxHp;
   player.atk = 3;
 
@@ -506,8 +527,8 @@ function generateMap() {
       }
     }
 
-    // 階層が深くなるほど敵の数が増えやすい。全体的な敵のベース量を増加。
-    let enemyCount = Math.floor(Math.random() * 4) + Math.floor(floor / 2) + 1; 
+    // 階層が深くなるほど敵の数が増えやすい。全体的な敵のベース量をさらに増加（最低3匹～）。
+    let enemyCount = Math.floor(Math.random() * 4) + Math.floor(floor / 2) + 3; 
     for (let e = 0; e < enemyCount; e++) {
       let ex = Math.floor(Math.random() * r.w) + r.x;
       let ey = Math.floor(Math.random() * r.h) + r.y;
@@ -547,7 +568,7 @@ function generateMap() {
         // ゴールデンゴブリンのステータス書き換え
         if (isGolden) {
           enemyObj.name = 'Golden Goblin';
-          enemyObj.exp = typeTemplate.exp * 2; // 経験値2倍
+          enemyObj.exp = 24; // ゴールデンゴブリンの経験値を24に変更
         }
 
         enemies.push(enemyObj);
@@ -803,7 +824,7 @@ function isPassableForEnemy(x, y) {
 function levelUp() {
   player.level++;
   player.exp -= player.maxExp;
-  player.maxExp = Math.floor(player.maxExp * 1.5); // 次のレベルへの必要EXP増加
+  player.maxExp = Math.floor(player.maxExp * 1.7); // 次のレベルへの必要EXP増加(1.7倍切り捨て)
   player.maxHp += 5;
   player.hp = player.maxHp; // レベルアップで全回復
   player.atk += 1;
@@ -906,11 +927,13 @@ function gameClear() {
   overlay.style.display = 'flex';
   msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
 <pre style="color: var(--theme-color); font-size: 18px; line-height: 1.2; text-align: left; display: inline-block; margin-top: 15px;">
-   ___________
-  /         /|
- /_________/ |
- |  [ ₿ ]  | |
- |_________|/
+      __________
+     /         /|
+    /_________/ |
+   | .-------. ||
+   | | [ ₿ ] | ||
+   | '-------' |/
+   '-----------'
 </pre><br><br>`;
   btn.style.display = 'inline-block';
   retryBtn.style.display = 'none';
