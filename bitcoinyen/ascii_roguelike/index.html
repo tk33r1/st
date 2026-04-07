@@ -4,7 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ASCII Roguelike</title>
+  <link rel="icon" href="https://tk.st/images/favicons/ascii_roguelike-favicon.png" type="image/png">
+  <link rel="canonical" href="https://tk.st/bitcoinyen/ascii-roguelike/">
+  <meta property="og:title" content="ASCII Roguelike">">
+  <meta property="og:description" content="ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう">
+  <meta property="og:image" content="https://tk.st/images/ogp/ascii_roguelike-ogp.png">
+  <meta property="og:url" content="https://tk.st/bitcoinyen/ascii-roguelike/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
 <style>
+  * {
+    -webkit-tap-highlight-color: transparent; /* タップ時のちらつき(ハイライト)を防止 */
+  }
+
   :root {
     --theme-color: #4ade80;
     --bg-color: #000000;
@@ -22,6 +34,7 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
+    height: 100dvh; /* スマホのアドレスバー等を考慮した高さに設定 */
     margin: 0;
     overflow: hidden;
     user-select: none;
@@ -36,8 +49,10 @@
     box-shadow: 0 0 15px rgba(170, 170, 170, 0.15);
     display: flex;
     flex-direction: column;
+    width: 100%;
     max-width: 100vw;
-    max-height: 100vh;
+    height: 100vh;
+    height: 100dvh; /* 高さを画面にキッチリ収める */
     box-sizing: border-box;
   }
 
@@ -55,6 +70,7 @@
     overflow: auto;
     touch-action: pan-x pan-y; /* この中だけスワイプでのスクロールを許可 */
     flex-grow: 1; /* 縦幅を最大限使う */
+    min-height: 0; /* 画面サイズに合わせて縮小できるようにする（ログが隠れるのを防ぐ） */
     position: relative;
     cursor: pointer;
   }
@@ -224,6 +240,7 @@
     #game-wrapper {
       width: 100vw;
       height: 100vh;
+      height: 100dvh; /* スマホ用に高さを固定 */
       border: none;
       padding: 10px;
     }
@@ -927,9 +944,9 @@ function logMessage(msg) {
   if (logs.length > 5) logs.shift();
 }
 
-// --- ハイスコア管理 (Cloudflare Tunnel & 自宅サーバー) ---
-// ※ Cloudflare Tunnelで公開したご自宅のサーバーのURLに変更してください
-const API_URL = 'https://your-tunnel-name.your-domain.com/scores';
+// --- ハイスコア管理 (Cloudflare Workers & D1) ---
+// ※ Cloudflare WorkersでデプロイしたURLに変更してください
+const API_URL = 'https://your-worker-name.your-subdomain.workers.dev/scores';
 
 async function getHighScores() {
   try {
@@ -943,11 +960,11 @@ async function getHighScores() {
   }
 }
 
-async function saveHighScore(currentTurn) {
+async function saveHighScore(currentTurn, playerName) {
   const date = new Date();
   const dateStr = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
   const timestamp = Date.now();
-  const newScore = { turns: currentTurn, date: dateStr, timestamp: timestamp };
+  const newScore = { turns: currentTurn, date: dateStr, timestamp: timestamp, name: playerName };
 
   try {
     const response = await fetch(API_URL, {
@@ -966,7 +983,7 @@ async function saveHighScore(currentTurn) {
   }
 }
 
-async function gameClear() {
+function gameClear() {
   gameState = 'CLEAR';
   const overlay = document.getElementById('overlay');
   const msg = document.getElementById('overlay-msg');
@@ -974,19 +991,57 @@ async function gameClear() {
   const retryBtn = document.getElementById('retry-btn');
   
   overlay.style.display = 'flex';
-  // 通信中用のLoading画面を表示
+  
+  // 名前入力フォームの表示
   msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
 <span style="font-size: 20px; font-weight: bold; margin-top: 10px; display: block;">Clear Turns: <span class="color-player">${turn}</span></span>
-<br><div style="color: var(--normal-color); margin-top: 20px;">Saving and loading Global Leaderboard...</div><br>`;
-  
-  // APIを通じてハイスコアを保存・取得 (非同期通信)
-  const result = await saveHighScore(turn);
-  const highScores = result.scores;
-  const currentTimestamp = result.currentTimestamp;
-  
+<pre style="color: var(--theme-color); font-size: 18px; line-height: 1.2; text-align: left; display: inline-block; margin-top: 10px;">
+      __________
+     /         /|
+    /_________/ |
+   | .-------. ||
+   | | [ ₿ ] | ||
+   | '-------' |/
+   '-----------'
+</pre><br><br>
+<div style="margin-top: 10px;">
+  <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="15" style="padding: 10px; font-size: 18px; font-family: monospace; background: #222; border: 1px solid var(--theme-color); color: var(--white-color); text-align: center; width: 200px; border-radius: 4px; outline: none;">
+  <br><br>
+  <button id="submit-score-btn" class="btn">Submit Score</button>
+</div>`;
+
+  btn.style.display = 'none'; // 送信完了までは非表示
+  retryBtn.style.display = 'none';
+
+  // 入力欄にフォーカス
+  setTimeout(() => {
+    const nameInput = document.getElementById('player-name-input');
+    if(nameInput) nameInput.focus();
+  }, 100);
+
+  // Submitボタンが押されたときの処理
+  document.getElementById('submit-score-btn').addEventListener('click', async () => {
+    let playerName = document.getElementById('player-name-input').value.trim();
+    if (!playerName) playerName = 'Anonymous';
+    
+    // 通信中用のLoading画面を表示
+    msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
+  <span style="font-size: 20px; font-weight: bold; margin-top: 10px; display: block;">Clear Turns: <span class="color-player">${turn}</span></span>
+  <br><div style="color: var(--normal-color); margin-top: 20px;">Saving and loading Leaderboard...</div><br>`;
+    
+    // APIを通じてハイスコアを保存・取得
+    const result = await saveHighScore(turn, playerName);
+    showRanking(result.scores, result.currentTimestamp);
+  });
+}
+
+function showRanking(highScores, currentTimestamp) {
+  const msg = document.getElementById('overlay-msg');
+  const btn = document.getElementById('reward-btn');
+
   // ランキングUIの構築
   let leaderboardHtml = `<div style="text-align: left; display: inline-block; margin-top: 15px; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid var(--map-color); border-radius: 8px;">`;
-  leaderboardHtml += `<div style="color: var(--white-color); font-weight: bold; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;">--- GLOBAL FASTEST CLEARS ---</div>`;
+  leaderboardHtml += `<div style="color: var(--white-color); font-weight: bold; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;">--- RANKING ---</div>`;
   
   if (highScores.length === 0) {
      leaderboardHtml += `<div style="color: var(--normal-color); text-align: center;">No data</div>`;
@@ -998,10 +1053,11 @@ async function gameClear() {
       else if (index === 2) rankColor = '#b45309'; // 3位はブロンズ
       
       let isCurrent = (score.timestamp === currentTimestamp); 
-      
       let bgColor = isCurrent ? 'background-color: rgba(74, 222, 128, 0.2);' : '';
+      let nameStr = score.name || 'Anonymous';
+      
       leaderboardHtml += `<div style="color: ${rankColor}; ${bgColor} padding: 4px 8px; font-family: monospace; font-size: 18px;">`;
-      leaderboardHtml += `${index + 1}. ${score.turns.toString().padStart(4, ' ')} turns <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span> ${isCurrent ? '<span class="color-player">← YOU!</span>' : ''}`;
+      leaderboardHtml += `${index + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${nameStr}</span> <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span> ${isCurrent ? '<span class="color-player">← YOU!</span>' : ''}`;
       leaderboardHtml += `</div>`;
     });
   }
@@ -1020,7 +1076,6 @@ async function gameClear() {
    '-----------'
 </pre><br>${leaderboardHtml}<br>`;
   btn.style.display = 'inline-block';
-  retryBtn.style.display = 'none';
   btn.focus(); 
 }
 
