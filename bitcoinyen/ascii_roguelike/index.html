@@ -283,6 +283,7 @@
   <div id="overlay">
     <div id="overlay-msg"></div>
     <button id="submit-score-btn" class="btn" style="display:none; margin-top: 10px;">Submit Score</button>
+    <a href="https://tk.st/bitcoinyen/certification" target="_blank" id="reward-btn" class="btn" style="display:none; margin-top: 20px;">[ Get 1 trillion BITCOIN YEN ]</a>
     <button id="retry-btn" class="btn" style="display:none; margin-top: 20px;">[ Retry ]</button>
   </div>
 </div>
@@ -796,6 +797,7 @@ function gameClear() {
   const submitBtn = document.getElementById('submit-score-btn');
   submitBtn.style.display = 'inline-block';
   document.getElementById('retry-btn').style.display = 'none';
+  document.getElementById('reward-btn').style.display = 'none';
 
   setTimeout(() => document.getElementById('player-name-input')?.focus(), 100);
 
@@ -815,30 +817,27 @@ function gameClear() {
 function showRanking(scores) {
   const msg = document.getElementById('overlay-msg');
   let html = `<div style="text-align: left; display: inline-block; margin-top: 15px; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid var(--map-color); border-radius: 8px;">
-    <div style="color: var(--white-color); font-weight: bold; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;">--- LEADERBOARD ---</div>`;
+    <div style="color: var(--white-color); font-weight: bold; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;">-- LEADERBOARD --</div>`;
   
   const displayScores = scores || sessionHighScores;
   
   if (displayScores.length === 0) {
     html += `<div style="color: var(--normal-color); text-align: center;">No data</div>`;
   } else {
-    // 直近で追加されたスコアを特定するための最大タイムスタンプ
-    const latestTimestamp = displayScores.reduce((max, score) => Math.max(max, score.timestamp || 0), 0);
-
     displayScores.slice(0, 5).forEach((score, i) => {
       let color = i === 0 ? '#fbbf24' : (i === 1 ? '#9ca3af' : (i === 2 ? '#b45309' : 'var(--normal-color)'));
-      let isLast = score.timestamp === latestTimestamp;
       let dateStr = score.date ? ` <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span>` : '';
       
       html += `<div style="color: ${color}; font-family: monospace; font-size: 18px; padding: 4px;">
-        ${i + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${score.name}</span>${dateStr} ${isLast ? '<span class="color-player">← YOU!</span>' : ''}
+        ${i + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${score.name}</span>${dateStr}
       </div>`;
     });
   }
   html += `</div>`;
 
   msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>${html}`;
-  document.getElementById('retry-btn').style.display = 'inline-block';
+  document.getElementById('retry-btn').style.display = 'none';
+  document.getElementById('reward-btn').style.display = 'inline-block';
 }
 
 function gameOver(px, py) {
@@ -850,6 +849,7 @@ function gameOver(px, py) {
   overlay.style.display = 'flex';
   document.getElementById('overlay-msg').innerHTML = `<span class="color-bad">=== GAME OVER ===<br><br>You have perished in the dungeon...</span>`;
   document.getElementById('submit-score-btn').style.display = 'none';
+  document.getElementById('reward-btn').style.display = 'none';
   document.getElementById('retry-btn').style.display = 'inline-block';
 }
 
