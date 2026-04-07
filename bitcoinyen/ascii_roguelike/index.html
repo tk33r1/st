@@ -2,16 +2,16 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ASCII Roguelike</title>
 <style>
   :root {
-    --theme-color: #4ade80; /* ミントグリーン（良い・重要） */
+    --theme-color: #4ade80;
     --bg-color: #000000;
-    --enemy-color: #ef4444; /* 赤（悪い） */
-    --map-color: #777777; /* 暗めのグレー（地形） */
-    --normal-color: #bbbbbb; /* グレー（普通） */
-    --white-color: #ffffff; /* 白（HPなど特定の強調用） */
+    --enemy-color: #ef4444;
+    --map-color: #777777;
+    --normal-color: #bbbbbb;
+    --white-color: #ffffff;
   }
 
   body {
@@ -25,6 +25,7 @@
     margin: 0;
     overflow: hidden;
     user-select: none;
+    touch-action: none; /* 全体のデフォルトのスワイプを防止 */
   }
 
   #game-wrapper {
@@ -33,6 +34,11 @@
     padding: 20px;
     background-color: var(--bg-color);
     box-shadow: 0 0 15px rgba(170, 170, 170, 0.15);
+    display: flex;
+    flex-direction: column;
+    max-width: 100vw;
+    max-height: 100vh;
+    box-sizing: border-box;
   }
 
   #status-bar {
@@ -40,29 +46,44 @@
     margin-bottom: 10px;
     border-bottom: 1px dashed var(--normal-color);
     padding-bottom: 10px;
+    flex-shrink: 0;
   }
+
+  /* スクロール用のコンテナ */
+  #screen-container {
+    width: 100%;
+    overflow: auto;
+    touch-action: pan-x pan-y; /* この中だけスワイプでのスクロールを許可 */
+    flex-grow: 1; /* 縦幅を最大限使う */
+    position: relative;
+    cursor: pointer;
+  }
+
+  /* Chrome/Safari等のスクロールバーのカスタマイズ */
+  #screen-container::-webkit-scrollbar { width: 8px; height: 8px; }
+  #screen-container::-webkit-scrollbar-track { background: var(--bg-color); }
+  #screen-container::-webkit-scrollbar-thumb { background: var(--map-color); border-radius: 4px; }
 
   #game-screen {
     line-height: 1.1;
     font-size: 18px;
     letter-spacing: 0.1em;
     margin: 0;
-    padding: 0;
+    padding: 10px;
     white-space: pre;
+    display: inline-block; /* 中身のサイズに合わせて広がるように */
   }
 
-  /* 視界ごとのスタイル */
   .visible { opacity: 1.0; }
   .explored { opacity: 0.35; }
   
-  /* キャラクター・地形ごとの色設定 */
   .color-player { color: var(--theme-color); }
   .color-artifact { color: var(--theme-color); font-weight: bold; }
   .color-enemy { color: var(--enemy-color); font-weight: bold; }
   .color-map { color: var(--map-color); }
   .color-stairs { color: var(--white-color); font-weight: bold; }
   .color-trap { color: var(--enemy-color); }
-  .color-golden { color: #fbbf24; font-weight: bold; text-shadow: 0 0 5px rgba(251, 191, 36, 0.6); } /* ゴールデンゴブリン用 */
+  .color-golden { color: #fbbf24; font-weight: bold; text-shadow: 0 0 5px rgba(251, 191, 36, 0.6); }
 
   .color-good { color: var(--theme-color); }
   .color-bad { color: var(--enemy-color); }
@@ -71,13 +92,12 @@
 
   @keyframes damageFlash {
     0% { background-color: rgba(239, 68, 68, 0.4); }
-    100% { background-color: var(--bg-color); }
+    100% { background-color: transparent; }
   }
   .damage-flash {
     animation: damageFlash 0.3s ease-out;
   }
 
-  /* 画面揺れエフェクト */
   @keyframes shake {
     0% { transform: translate(1px, 1px) rotate(0deg); }
     20% { transform: translate(-3px, 0px) rotate(1deg); }
@@ -90,9 +110,8 @@
     animation: shake 0.3s;
   }
 
-  /* タイトル画面のスタイル */
   #title-screen {
-    position: fixed; /* absoluteからfixedに変更し、ウィンドウ全体を覆うようにして外側の枠を隠す */
+    position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background-color: var(--bg-color);
     z-index: 20;
@@ -100,6 +119,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
   }
   .title-main {
     color: var(--theme-color);
@@ -128,10 +148,6 @@
     color: var(--white-color);
     font-size: 20px;
     animation: blink 1.5s infinite;
-    cursor: pointer;
-  }
-  .blink:hover {
-    color: var(--theme-color);
   }
   @keyframes blink {
     0%, 100% { opacity: 1; }
@@ -139,20 +155,21 @@
   }
   
   #log-window {
-    margin-top: 15px;
+    margin-top: 10px;
     border-top: 1px dashed var(--normal-color);
     padding-top: 10px;
-    height: 6.5em;
+    height: 6em;
     overflow: hidden;
     font-size: 16px;
+    flex-shrink: 0;
   }
 
   #help-bar {
     margin-top: 10px;
-    padding-top: 10px;
     font-size: 14px;
     color: var(--map-color);
     text-align: center;
+    flex-shrink: 0;
   }
 
   #overlay {
@@ -197,92 +214,35 @@
     border-color: var(--normal-color);
     color: var(--normal-color);
   }
-
   #retry-btn:hover, #retry-btn:focus {
     background: var(--normal-color);
     color: var(--bg-color);
   }
 
-  /* スマートフォン向けレスポンシブ対応と仮想パッド */
-  #virtual-pad {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 15px;
-  }
-  .pad-row {
-    display: flex;
-    justify-content: center;
-  }
-  .pad-btn {
-    width: 50px;
-    height: 50px;
-    margin: 4px;
-    background-color: transparent;
-    border: 1px solid var(--normal-color);
-    color: var(--normal-color);
-    font-size: 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    touch-action: manipulation; /* ダブルタップズームを防止 */
-  }
-  .pad-btn:active {
-    background-color: var(--theme-color);
-    color: var(--bg-color);
-    border-color: var(--theme-color);
-  }
-  .pad-spacer {
-    width: 50px;
-    margin: 4px;
-  }
-
   /* 画面幅が狭いデバイス（スマホなど）用のスタイル */
   @media (max-width: 768px) {
-    body {
-      align-items: flex-start;
-      padding-top: 0; /* 画面を広く使うために上部の余白を消去 */
-    }
     #game-wrapper {
-      padding: 5px;
+      width: 100vw;
+      height: 100vh;
       border: none;
-      box-shadow: none;
-      width: 100%;
-      max-width: 100vw;
-      box-sizing: border-box;
+      padding: 10px;
+    }
+    #screen-container {
+      border: 1px solid var(--map-color);
+      margin-bottom: 5px;
     }
     #game-screen {
-      /* マップ全体がギリギリ収まるようにフォントサイズと行間を調整 */
-      font-size: 2.7vw;
-      letter-spacing: 0; 
-      line-height: 1.0;
+      font-size: 24px; /* スマホではフォントを拡大表示してスワイプ可能にする */
     }
     #status-bar {
-      font-size: 3.5vw;
-      margin-bottom: 5px;
-      padding-bottom: 5px;
+      font-size: 14px;
     }
     #log-window {
-      font-size: 3.5vw;
-      height: 4.5em; /* ログの高さも少し抑える */
-      margin-top: 5px;
-      padding-top: 5px;
+      font-size: 14px;
+      height: 4.5em;
     }
     #help-bar {
-      display: none; /* スマホでは仮想パッドを使うためキー操作ヘルプを隠す */
-    }
-    #virtual-pad {
-      display: flex;
-      margin-top: 10px;
-    }
-    .pad-btn {
-      width: 70px;  /* 横幅を広げて押しやすく */
-      height: 45px; /* 高さを抑えて画面を占有しないように */
-      font-size: 24px;
-      margin: 2px;
-    }
-    .pad-spacer {
-      width: 70px;
-      margin: 2px;
+      font-size: 12px;
     }
     .title-main {
       font-size: 28px;
@@ -294,6 +254,9 @@
     .title-sub {
       font-size: 12px;
     }
+    .blink {
+      font-size: 16px;
+    }
   }
 </style>
 </head>
@@ -301,24 +264,12 @@
 
 <div id="game-wrapper">
   <div id="status-bar"></div>
-  <pre id="game-screen"></pre>
-  <div id="log-window"></div>
-  <div id="help-bar">Move: [Arrows] or [H,J,K,L] | Attack: Bump into enemy</div>
-  
-  <!-- 仮想パッド (スマホ用) -->
-  <div id="virtual-pad">
-    <div class="pad-row">
-      <button class="pad-btn" id="btn-up">▲</button>
-    </div>
-    <div class="pad-row">
-      <button class="pad-btn" id="btn-left">◀</button>
-      <div class="pad-spacer"></div> <!-- Waitボタンの代わりの空白スペース -->
-      <button class="pad-btn" id="btn-right">▶</button>
-    </div>
-    <div class="pad-row">
-      <button class="pad-btn" id="btn-down">▼</button>
-    </div>
+  <!-- スワイプ＆タップ操作の基盤となるコンテナ -->
+  <div id="screen-container">
+    <pre id="game-screen"></pre>
   </div>
+  <div id="log-window"></div>
+  <div id="help-bar">Move: [Arrows] or Tap Screen | Swipe to look around</div>
 
   <!-- タイトル画面 -->
   <div id="title-screen">
@@ -331,7 +282,7 @@
     </pre>
     <div class="title-main">ASCII Roguelike</div>
     <div class="title-sub">Find the hidden 1 Trillion BITCOIN YEN</div>
-    <div class="blink" id="start-btn">> PRESS ANY KEY TO START</div>
+    <div class="blink">> TAP OR PRESS ANY KEY TO START</div>
   </div>
 
   <!-- ゲームクリア・ゲームオーバー時のオーバーレイUI -->
@@ -367,12 +318,12 @@ let floor = 1;
 
 let player = {
   x: 0, y: 0,
-  hp: 10, maxHp: 10,
+  hp: 15, maxHp: 15,
   atk: 3,
   char: '@',
   level: 1,
   exp: 0,
-  maxExp: 10
+  maxExp: 15
 };
 
 const ENEMY_TYPES = [
@@ -399,8 +350,8 @@ function init() {
   // プレイヤー初期化
   player.level = 1;
   player.exp = 0;
-  player.maxExp = 10;
-  player.maxHp = 10;
+  player.maxExp = 15;
+  player.maxHp = 15;
   player.hp = player.maxHp;
   player.atk = 3;
 
@@ -422,6 +373,9 @@ function generateFloor() {
   calcFOV();
   draw();
   updateStatus();
+  
+  // マップ生成時にプレイヤーが画面中心にくるようにスクロール
+  setTimeout(scrollToPlayerCenter, 50); 
 }
 
 function generateMap() {
@@ -500,7 +454,7 @@ function generateMap() {
   else if (floor === 2) goalChance = 0.25;
   else if (floor === 3) goalChance = 0.50;
   else if (floor === 4) goalChance = 0.75;
-  else goalChance = 1.0; // 5階以降は確定
+  else goalChance = 1.0;
 
   if (Math.random() < goalChance) {
     artifact = { x: targetX, y: targetY };
@@ -527,17 +481,15 @@ function generateMap() {
       }
     }
 
-    // 階層が深くなるほど敵の数が増えやすい。全体的な敵のベース量をさらに増加（最低3匹～）。
+    // 階層が深くなるほど敵の数が増えやすい。
     let enemyCount = Math.floor(Math.random() * 4) + Math.floor(floor / 2) + 3; 
     for (let e = 0; e < enemyCount; e++) {
       let ex = Math.floor(Math.random() * r.w) + r.x;
       let ey = Math.floor(Math.random() * r.h) + r.y;
       if ((map[ey][ex] === '.' || map[ey][ex] === '^') && !(ex === artifact.x && ey === artifact.y) && !(ex === stairs.x && ey === stairs.y)) {
         
-        // 階層に応じた出現確率の計算
-        let slimeChance = Math.max(0, 0.70 - (floor - 1) * 0.175); // 1階70%, 2階52.5%, 3階35%, 4階17.5%, 5階以降0%
-        let goblinChance = 0.30; // 一律30%
-        // 残りの確率が自動的にドラゴンの確率になる(1階0%, 2階17.5%, 3階35%, 4階52.5%, 5階以降70%)
+        let slimeChance = Math.max(0, 0.70 - (floor - 1) * 0.175);
+        let goblinChance = 0.30;
         
         let r_enemy = Math.random();
         let typeTemplate;
@@ -547,7 +499,6 @@ function generateMap() {
           typeTemplate = ENEMY_TYPES.find(ent => ent.char === 'S');
         } else if (r_enemy < slimeChance + goblinChance) {
           typeTemplate = ENEMY_TYPES.find(ent => ent.char === 'G');
-          // ゴブリンの場合、30%の確率でゴールデンゴブリンに変化
           if (Math.random() < 0.30) {
              isGolden = true;
           }
@@ -565,10 +516,9 @@ function generateMap() {
           isGolden: isGolden
         };
 
-        // ゴールデンゴブリンのステータス書き換え
         if (isGolden) {
           enemyObj.name = 'Golden Goblin';
-          enemyObj.exp = 24; // ゴールデンゴブリンの経験値を24に変更
+          enemyObj.exp = 24;
         }
 
         enemies.push(enemyObj);
@@ -600,14 +550,12 @@ function createVCorridor(y1, y2, x) {
 
 // --- 視界 (FOV) 計算 ---
 function calcFOV() {
-  // 現在の視界(2)を探索済み(1)に下げる
   for (let y = 0; y < MAP_H; y++) {
     for (let x = 0; x < MAP_W; x++) {
       if (visibility[y][x] === 2) visibility[y][x] = 1;
     }
   }
   
-  // レイキャスティングによる視界計算
   visibility[player.y][player.x] = 2;
   for (let angle = 0; angle < 360; angle += 2) {
     let rad = angle * Math.PI / 180;
@@ -624,18 +572,13 @@ function calcFOV() {
       if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) break;
       visibility[ty][tx] = 2;
       
-      if (map[ty][tx] === '#' || map[ty][tx] === '+') break; // 視界が遮られる
+      if (map[ty][tx] === '#' || map[ty][tx] === '+') break;
     }
   }
 }
 
 // --- ロジックとターン進行 ---
 function handleInput(key) {
-  if (gameState === 'TITLE') {
-    init();
-    return;
-  }
-
   if (gameState !== 'PLAYING') return;
   
   let dx = 0, dy = 0;
@@ -643,47 +586,41 @@ function handleInput(key) {
   else if (key === 'ArrowDown' || key === 'j') dy = 1;
   else if (key === 'ArrowLeft' || key === 'h') dx = -1;
   else if (key === 'ArrowRight' || key === 'l') dx = 1;
-  else return; // その他のキーは無視
+  else return; 
 
   let targetX = player.x + dx;
   let targetY = player.y + dy;
 
-  // 進行方向の判定
   let enemy = enemies.find(e => e.hp > 0 && e.x === targetX && e.y === targetY);
   
   if (enemy) {
-    // 敵を攻撃
     enemy.hp -= player.atk;
     logMessage(`<span class="color-good">You strike ${enemy.name} for ${player.atk} damage.</span>`);
     if (enemy.hp <= 0) {
       logMessage(`<span class="color-good">${enemy.name} is defeated! (+${enemy.exp} EXP)</span>`);
       
-      // ゴールデンゴブリンの100%アイテムドロップ
       if (enemy.isGolden) {
          items.push(getRandomItem(enemy.x, enemy.y));
          logMessage(`<span class="color-good">${enemy.name} dropped an item!</span>`);
       }
 
       enemies = enemies.filter(e => e.hp > 0);
-      kills++; // 討伐数をカウント
+      kills++;
       
-      // 経験値とレベルアップ処理
       player.exp += enemy.exp;
       if (player.exp >= player.maxExp) {
         levelUp();
       }
     }
   } else if (map[targetY] && (map[targetY][targetX] === '.' || map[targetY][targetX] === '+' || map[targetY][targetX] === '^')) {
-    // 移動可能
     if (map[targetY][targetX] === '+') {
-      map[targetY][targetX] = '.'; // ドアを開ける
+      map[targetY][targetX] = '.';
       logMessage(`<span class="color-normal">You opened a door.</span>`);
     } else if (map[targetY][targetX] === '^') {
-      // トラップの処理
       player.hp -= 5;
       logMessage(`<span class="color-bad">You stepped on a trap! Took 5 damage.</span>`);
       triggerDamageFlash();
-      map[targetY][targetX] = '.'; // 踏んだら罠は消える
+      map[targetY][targetX] = '.'; 
       if (player.hp <= 0) {
         player.x = targetX;
         player.y = targetY;
@@ -695,14 +632,11 @@ function handleInput(key) {
     player.x = targetX;
     player.y = targetY;
   } else {
-    // 壁など
-    return; // ターンを進めない
+    return;
   }
 
-  // ターンを進める
   turn++;
 
-  // アイテム取得判定
   let itemIndex = items.findIndex(i => i.x === player.x && i.y === player.y);
   if (itemIndex !== -1) {
     let item = items[itemIndex];
@@ -718,7 +652,6 @@ function handleInput(key) {
       player.hp += 5;
       logMessage(`<span class="color-good">You equipped a ${item.name}! Max HP +5.</span>`);
     } else if (item.type === 'scroll') {
-      // マップの全貌を明らかにする
       for (let y = 0; y < MAP_H; y++) {
         for (let x = 0; x < MAP_W; x++) {
           if (visibility[y][x] === 0) visibility[y][x] = 1;
@@ -729,55 +662,137 @@ function handleInput(key) {
     items.splice(itemIndex, 1);
   }
 
-  // クリア判定
   if (artifact.x !== -1 && player.x === artifact.x && player.y === artifact.y) {
     gameClear();
     return;
   }
 
-  // 階段を下りる判定
   if (stairs.x !== -1 && player.x === stairs.x && player.y === stairs.y) {
     floor++;
     logMessage(`<span class="color-normal">You descend to Floor ${floor}...</span>`);
     generateFloor();
-    return; // 階段を下りたターンは敵の行動をスキップして新しい階へ
+    return;
   }
 
-  // 敵のターン
   enemiesTurn();
 
-  // 状態更新
   calcFOV();
   draw();
   updateStatus();
+  
+  // 移動後にプレイヤーが画面外に出そうなら自動スクロール
+  scrollToPlayerIfNeeded();
 }
 
+// --- キーボード入力 ---
 window.addEventListener('keydown', (e) => {
-  // デフォルトのスクロールなどを防ぐ
+  if (gameState === 'TITLE') {
+    init();
+    return;
+  }
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
     e.preventDefault();
   }
   handleInput(e.key);
 });
 
-// 仮想パッドのイベントリスナー
-document.getElementById('btn-up').addEventListener('click', () => handleInput('ArrowUp'));
-document.getElementById('btn-down').addEventListener('click', () => handleInput('ArrowDown'));
-document.getElementById('btn-left').addEventListener('click', () => handleInput('ArrowLeft'));
-document.getElementById('btn-right').addEventListener('click', () => handleInput('ArrowRight'));
+// --- タップ＆スワイプ入力処理 ---
+let isDragging = false;
+let startX, startY;
+const gameScreen = document.getElementById('game-screen');
+const screenContainer = document.getElementById('screen-container');
+
+gameScreen.addEventListener('pointerdown', (e) => {
+  isDragging = false;
+  startX = e.clientX;
+  startY = e.clientY;
+});
+
+gameScreen.addEventListener('pointermove', (e) => {
+  // 10px以上指が動いたらスワイプ（スクロール）と判定し、タップ移動はキャンセルする
+  if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10) {
+    isDragging = true;
+  }
+});
+
+gameScreen.addEventListener('pointerup', (e) => {
+  if (isDragging) return; // スワイプ時は移動処理をしない
+
+  if (gameState !== 'PLAYING') return;
+
+  // タップした座標から、プレイヤーのどちらの方向をタップしたかを判定
+  let rect = gameScreen.getBoundingClientRect();
+  let tapX = e.clientX - rect.left;
+  let tapY = e.clientY - rect.top;
+
+  let cellW = rect.width / MAP_W;
+  let cellH = rect.height / MAP_H;
+
+  let targetX = Math.floor(tapX / cellW);
+  let targetY = Math.floor(tapY / cellH);
+
+  let dx = targetX - player.x;
+  let dy = targetY - player.y;
+
+  if (dx === 0 && dy === 0) return; // プレイヤー自身をタップした場合は無視
+
+  // より差が大きい軸の方向へ1歩進む
+  let key = '';
+  if (Math.abs(dx) > Math.abs(dy)) {
+    key = dx > 0 ? 'ArrowRight' : 'ArrowLeft';
+  } else {
+    key = dy > 0 ? 'ArrowDown' : 'ArrowUp';
+  }
+  handleInput(key);
+});
+
+// タイトル画面全体をタップ可能に
+document.getElementById('title-screen').addEventListener('click', () => {
+  if (gameState === 'TITLE') init();
+});
+
+
+// --- スクロール追従機能 ---
+function scrollToPlayerCenter() {
+  let cellW = gameScreen.clientWidth / MAP_W;
+  let cellH = gameScreen.clientHeight / MAP_H;
+  let playerPixX = player.x * cellW + cellW / 2;
+  let playerPixY = player.y * cellH + cellH / 2;
+  
+  screenContainer.scrollLeft = playerPixX - screenContainer.clientWidth / 2;
+  screenContainer.scrollTop = playerPixY - screenContainer.clientHeight / 2;
+}
+
+function scrollToPlayerIfNeeded() {
+  let cellW = gameScreen.clientWidth / MAP_W;
+  let cellH = gameScreen.clientHeight / MAP_H;
+  let playerPixX = player.x * cellW;
+  let playerPixY = player.y * cellH;
+  let padX = cellW * 3; // 画面端から3マス分余裕を持つ
+  let padY = cellH * 3;
+
+  if (playerPixX < screenContainer.scrollLeft + padX) {
+    screenContainer.scrollLeft = playerPixX - padX;
+  } else if (playerPixX > screenContainer.scrollLeft + screenContainer.clientWidth - padX - cellW) {
+    screenContainer.scrollLeft = playerPixX - screenContainer.clientWidth + padX + cellW;
+  }
+
+  if (playerPixY < screenContainer.scrollTop + padY) {
+    screenContainer.scrollTop = playerPixY - padY;
+  } else if (playerPixY > screenContainer.scrollTop + screenContainer.clientHeight - padY - cellH) {
+    screenContainer.scrollTop = playerPixY - screenContainer.clientHeight + padY + cellH;
+  }
+}
 
 function enemiesTurn() {
   for (let enemy of enemies) {
     if (enemy.hp <= 0) continue;
     
-    // プレイヤーが視界内にいるか確認
     if (visibility[enemy.y][enemy.x] === 2) {
       let dx = player.x - enemy.x;
       let dy = player.y - enemy.y;
       
-      // 斜め攻撃を禁止（上下左右の隣接時のみ攻撃）
       if (Math.abs(dx) + Math.abs(dy) === 1) {
-        // 隣接時は攻撃
         player.hp -= enemy.atk;
         logMessage(`<span class="color-bad">${enemy.name} hits you for ${enemy.atk} damage!</span>`);
         triggerDamageFlash();
@@ -787,7 +802,6 @@ function enemiesTurn() {
           return;
         }
       } else {
-        // 近づく
         let stepX = 0, stepY = 0;
         if (Math.abs(dx) > Math.abs(dy)) stepX = Math.sign(dx);
         else stepY = Math.sign(dy);
@@ -796,7 +810,6 @@ function enemiesTurn() {
           enemy.x += stepX;
           enemy.y += stepY;
         } else {
-          // 直進できない場合はもう一方の軸を試す
           stepX = stepY === 0 ? Math.sign(dx) : 0;
           stepY = stepX === 0 ? Math.sign(dy) : 0;
           if (stepX !== 0 || stepY !== 0) {
@@ -813,9 +826,9 @@ function enemiesTurn() {
 
 function isPassableForEnemy(x, y) {
   if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
-  if (map[y][x] === '#') return false; // 壁は不可
-  if (map[y][x] === '+') return false; // 敵はドアを開けられない仕様
-  if (map[y][x] === '^') return false; // 敵はトラップを避ける
+  if (map[y][x] === '#') return false; 
+  if (map[y][x] === '+') return false; 
+  if (map[y][x] === '^') return false; 
   if (player.x === x && player.y === y) return false;
   if (enemies.some(e => e.hp > 0 && e.x === x && e.y === y)) return false;
   return true;
@@ -824,18 +837,18 @@ function isPassableForEnemy(x, y) {
 function levelUp() {
   player.level++;
   player.exp -= player.maxExp;
-  player.maxExp = Math.floor(player.maxExp * 1.7); // 次のレベルへの必要EXP増加(1.7倍切り捨て)
+  player.maxExp = Math.floor(player.maxExp * 1.8); 
   player.maxHp += 5;
-  player.hp = player.maxHp; // レベルアップで全回復
+  player.hp = player.maxHp; 
   player.atk += 1;
   logMessage(`<span class="color-good">LEVEL UP! You are now Lvl ${player.level}! (HP restored)</span>`);
-  triggerDamageFlash(); // 演出として画面を揺らす
+  triggerDamageFlash(); 
 }
 
 function triggerDamageFlash() {
   const wrapper = document.getElementById('game-wrapper');
   wrapper.classList.remove('damage-flash', 'shake');
-  void wrapper.offsetWidth; // リフローを強制してアニメーションを再起動
+  void wrapper.offsetWidth; 
   wrapper.classList.add('damage-flash', 'shake');
 }
 
@@ -848,7 +861,7 @@ function draw() {
       let vis = visibility[y][x];
       
       if (vis === 0) {
-        rowHtml += '<span> </span>'; // 未探索
+        rowHtml += '<span> </span>'; 
         continue;
       }
 
@@ -859,7 +872,6 @@ function draw() {
          colorClass = 'color-trap';
       }
 
-      // エンティティの描画 (上に重なるものから優先)
       let item = items.find(i => i.x === x && i.y === y);
       if (item) {
         char = item.char;
@@ -894,10 +906,9 @@ function draw() {
   }
   document.getElementById('game-screen').innerHTML = html;
   
-  // ログの描画 (新しいものほど明るくフェード)
   let logHtml = '';
   for (let i = 0; i < logs.length; i++) {
-    let opacity = 0.4 + (i / (logs.length - 1 || 1)) * 0.6; // 最新が1.0、古いほど薄く
+    let opacity = 0.4 + (i / (logs.length - 1 || 1)) * 0.6; 
     logHtml += `<div style="opacity: ${opacity}">> ${logs[i]}</div>`;
   }
   document.getElementById('log-window').innerHTML = logHtml;
@@ -916,8 +927,46 @@ function logMessage(msg) {
   if (logs.length > 5) logs.shift();
 }
 
-// --- ゲームクリア・オーバー処理 ---
-function gameClear() {
+// --- ハイスコア管理 (Cloudflare Tunnel & 自宅サーバー) ---
+// ※ Cloudflare Tunnelで公開したご自宅のサーバーのURLに変更してください
+const API_URL = 'https://your-tunnel-name.your-domain.com/scores';
+
+async function getHighScores() {
+  try {
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error('Failed to fetch');
+    const data = await response.json();
+    return data || [];
+  } catch (error) {
+    console.error('Failed to get scores:', error);
+    return [];
+  }
+}
+
+async function saveHighScore(currentTurn) {
+  const date = new Date();
+  const dateStr = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+  const timestamp = Date.now();
+  const newScore = { turns: currentTurn, date: dateStr, timestamp: timestamp };
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newScore)
+    });
+    
+    if (!response.ok) throw new Error('Failed to save');
+    const data = await response.json();
+    return { scores: data, currentTimestamp: timestamp };
+  } catch (error) {
+    console.error('Error saving score:', error);
+    // API通信エラー時は、仮として今回のスコアだけを表示する
+    return { scores: [newScore], currentTimestamp: timestamp };
+  }
+}
+
+async function gameClear() {
   gameState = 'CLEAR';
   const overlay = document.getElementById('overlay');
   const msg = document.getElementById('overlay-msg');
@@ -925,8 +974,43 @@ function gameClear() {
   const retryBtn = document.getElementById('retry-btn');
   
   overlay.style.display = 'flex';
+  // 通信中用のLoading画面を表示
   msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
-<pre style="color: var(--theme-color); font-size: 18px; line-height: 1.2; text-align: left; display: inline-block; margin-top: 15px;">
+<span style="font-size: 20px; font-weight: bold; margin-top: 10px; display: block;">Clear Turns: <span class="color-player">${turn}</span></span>
+<br><div style="color: var(--normal-color); margin-top: 20px;">Saving and loading Global Leaderboard...</div><br>`;
+  
+  // APIを通じてハイスコアを保存・取得 (非同期通信)
+  const result = await saveHighScore(turn);
+  const highScores = result.scores;
+  const currentTimestamp = result.currentTimestamp;
+  
+  // ランキングUIの構築
+  let leaderboardHtml = `<div style="text-align: left; display: inline-block; margin-top: 15px; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid var(--map-color); border-radius: 8px;">`;
+  leaderboardHtml += `<div style="color: var(--white-color); font-weight: bold; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;">--- GLOBAL FASTEST CLEARS ---</div>`;
+  
+  if (highScores.length === 0) {
+     leaderboardHtml += `<div style="color: var(--normal-color); text-align: center;">No data</div>`;
+  } else {
+    highScores.forEach((score, index) => {
+      let rankColor = 'var(--normal-color)';
+      if (index === 0) rankColor = '#fbbf24'; // 1位はゴールド
+      else if (index === 1) rankColor = '#9ca3af'; // 2位はシルバー
+      else if (index === 2) rankColor = '#b45309'; // 3位はブロンズ
+      
+      let isCurrent = (score.timestamp === currentTimestamp); 
+      
+      let bgColor = isCurrent ? 'background-color: rgba(74, 222, 128, 0.2);' : '';
+      leaderboardHtml += `<div style="color: ${rankColor}; ${bgColor} padding: 4px 8px; font-family: monospace; font-size: 18px;">`;
+      leaderboardHtml += `${index + 1}. ${score.turns.toString().padStart(4, ' ')} turns <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span> ${isCurrent ? '<span class="color-player">← YOU!</span>' : ''}`;
+      leaderboardHtml += `</div>`;
+    });
+  }
+  leaderboardHtml += `</div>`;
+
+  // 通信完了後、ランキングを含めたリザルト画面に更新
+  msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
+<span style="font-size: 20px; font-weight: bold; margin-top: 10px; display: block;">Clear Turns: <span class="color-player">${turn}</span></span>
+<pre style="color: var(--theme-color); font-size: 18px; line-height: 1.2; text-align: left; display: inline-block; margin-top: 10px;">
       __________
      /         /|
     /_________/ |
@@ -934,10 +1018,10 @@ function gameClear() {
    | | [ ₿ ] | ||
    | '-------' |/
    '-----------'
-</pre><br><br>`;
+</pre><br>${leaderboardHtml}<br>`;
   btn.style.display = 'inline-block';
   retryBtn.style.display = 'none';
-  btn.focus(); // Enterキーで発火できるようにフォーカスを当てる
+  btn.focus(); 
 }
 
 function gameOver() {
@@ -951,21 +1035,10 @@ function gameOver() {
   msg.innerHTML = `<span class="color-bad">=== GAME OVER ===<br><br>You have perished in the dungeon...</span>`;
   btn.style.display = 'none';
   retryBtn.style.display = 'inline-block';
-  retryBtn.focus(); // Enterキーでリトライできるようにフォーカスを当てる
+  retryBtn.focus(); 
 }
 
-// リトライボタンのイベントリスナー
 document.getElementById('retry-btn').addEventListener('click', init);
-
-// スタートボタン（タイトル画面）のイベントリスナー（クリックでも開始可能に）
-document.getElementById('start-btn').addEventListener('click', () => {
-  if (gameState === 'TITLE') {
-    init();
-  }
-});
-
-// 起動時はタイトル画面を表示したまま待機するため、init()の自動呼び出しは削除
-// init();
 
 </script>
 </body>
