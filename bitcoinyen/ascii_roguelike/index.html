@@ -4,17 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ASCII Roguelike</title>
-  <link rel="icon" href="https://tk.st/images/favicons/ascii_roguelike-favicon.png" type="image/png">
+  <link rel="icon" href="https://tk.st/images/favicons/ascii-roguelike-favicon.png" type="image/png">
   <link rel="canonical" href="https://tk.st/bitcoinyen/ascii-roguelike/">
-  <meta property="og:title" content="ASCII Roguelike">">
+  <meta property="og:title" content="ASCII Roguelike">
   <meta property="og:description" content="ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう">
-  <meta property="og:image" content="https://tk.st/images/ogp/ascii_roguelike-ogp.png">
+  <meta property="og:image" content="https://tk.st/images/ogp/ascii-roguelike-ogp.png">
   <meta property="og:url" content="https://tk.st/bitcoinyen/ascii-roguelike/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
 <style>
   * {
-    -webkit-tap-highlight-color: transparent; /* タップ時のちらつき(ハイライト)を防止 */
+    -webkit-tap-highlight-color: transparent;
   }
 
   :root {
@@ -34,11 +34,11 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    height: 100dvh; /* スマホのアドレスバー等を考慮した高さに設定 */
+    height: 100dvh;
     margin: 0;
     overflow: hidden;
     user-select: none;
-    touch-action: none; /* 全体のデフォルトのスワイプを防止 */
+    touch-action: none;
   }
 
   #game-wrapper {
@@ -52,7 +52,7 @@
     width: 100%;
     max-width: 100vw;
     height: 100vh;
-    height: 100dvh; /* 高さを画面にキッチリ収める */
+    height: 100dvh;
     box-sizing: border-box;
   }
 
@@ -64,18 +64,16 @@
     flex-shrink: 0;
   }
 
-  /* スクロール用のコンテナ */
   #screen-container {
     width: 100%;
     overflow: auto;
-    touch-action: pan-x pan-y; /* この中だけスワイプでのスクロールを許可 */
-    flex-grow: 1; /* 縦幅を最大限使う */
-    min-height: 0; /* 画面サイズに合わせて縮小できるようにする（ログが隠れるのを防ぐ） */
+    touch-action: pan-x pan-y;
+    flex-grow: 1;
+    min-height: 0;
     position: relative;
     cursor: pointer;
   }
 
-  /* Chrome/Safari等のスクロールバーのカスタマイズ */
   #screen-container::-webkit-scrollbar { width: 8px; height: 8px; }
   #screen-container::-webkit-scrollbar-track { background: var(--bg-color); }
   #screen-container::-webkit-scrollbar-thumb { background: var(--map-color); border-radius: 4px; }
@@ -87,7 +85,7 @@
     margin: 0;
     padding: 10px;
     white-space: pre;
-    display: inline-block; /* 中身のサイズに合わせて広がるように */
+    display: inline-block;
   }
 
   .visible { opacity: 1.0; }
@@ -106,13 +104,19 @@
   .color-normal { color: var(--normal-color); }
   .color-white { color: var(--white-color); }
 
+  /* ダメージエフェクト */
   @keyframes damageFlash {
     0% { background-color: rgba(239, 68, 68, 0.4); }
     100% { background-color: transparent; }
   }
-  .damage-flash {
-    animation: damageFlash 0.3s ease-out;
+  .damage-flash { animation: damageFlash 0.3s ease-out; }
+
+  /* 回復・レベルアップエフェクト */
+  @keyframes healFlash {
+    0% { background-color: rgba(74, 222, 128, 0.3); }
+    100% { background-color: transparent; }
   }
+  .heal-flash { animation: healFlash 0.4s ease-out; }
 
   @keyframes shake {
     0% { transform: translate(1px, 1px) rotate(0deg); }
@@ -122,9 +126,7 @@
     80% { transform: translate(-1px, -1px) rotate(1deg); }
     100% { transform: translate(1px, -2px) rotate(-1deg); }
   }
-  .shake {
-    animation: shake 0.3s;
-  }
+  .shake { animation: shake 0.3s; }
 
   #title-screen {
     position: fixed;
@@ -235,45 +237,23 @@
     color: var(--bg-color);
   }
 
-  /* 画面幅が狭いデバイス（スマホなど）用のスタイル */
   @media (max-width: 768px) {
     #game-wrapper {
       width: 100vw;
       height: 100vh;
-      height: 100dvh; /* スマホ用に高さを固定 */
+      height: 100dvh;
       border: none;
       padding: 10px;
     }
-    #screen-container {
-      border: 1px solid var(--map-color);
-      margin-bottom: 5px;
-    }
-    #game-screen {
-      font-size: 24px; /* スマホではフォントを拡大表示してスワイプ可能にする */
-    }
-    #status-bar {
-      font-size: 14px;
-    }
-    #log-window {
-      font-size: 14px;
-      height: 4.5em;
-    }
-    #help-bar {
-      font-size: 12px;
-    }
-    .title-main {
-      font-size: 28px;
-    }
-    .title-art {
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
-    .title-sub {
-      font-size: 12px;
-    }
-    .blink {
-      font-size: 16px;
-    }
+    #screen-container { border: 1px solid var(--map-color); margin-bottom: 5px; }
+    #game-screen { font-size: 24px; }
+    #status-bar { font-size: 14px; }
+    #log-window { font-size: 14px; height: 4.5em; }
+    #help-bar { font-size: 12px; }
+    .title-main { font-size: 28px; }
+    .title-art { font-size: 16px; margin-bottom: 10px; }
+    .title-sub { font-size: 12px; }
+    .blink { font-size: 16px; }
   }
 </style>
 </head>
@@ -281,14 +261,12 @@
 
 <div id="game-wrapper">
   <div id="status-bar"></div>
-  <!-- スワイプ＆タップ操作の基盤となるコンテナ -->
   <div id="screen-container">
     <pre id="game-screen"></pre>
   </div>
   <div id="log-window"></div>
-  <div id="help-bar">Move: [Arrows] or Tap Screen | Swipe to look around</div>
+  <div id="help-bar">Move: [Arrows] or Tap | Swipe to scroll</div>
 
-  <!-- タイトル画面 -->
   <div id="title-screen">
     <pre class="title-art">
 <span class="color-map">#########</span>
@@ -302,45 +280,35 @@
     <div class="blink">> TAP OR PRESS ANY KEY TO START</div>
   </div>
 
-  <!-- ゲームクリア・ゲームオーバー時のオーバーレイUI -->
   <div id="overlay">
     <div id="overlay-msg"></div>
-    <a href="https://tk.st/bitcoinyen/certification" target="_blank" id="reward-btn" class="btn">[ Get 1 trillion BITCOIN YEN ]</a>
+    <button id="submit-score-btn" class="btn" style="display:none; margin-top: 10px;">Submit Score</button>
     <button id="retry-btn" class="btn" style="display:none; margin-top: 20px;">[ Retry ]</button>
   </div>
 </div>
 
 <script>
 // --- ゲーム定数 ---
-const MAP_W = 60;
-const MAP_H = 20;
+const MAP_W = 60, MAP_H = 20;
 const FOV_RADIUS = 7;
-const MAX_ROOMS = 8;
-const ROOM_MIN = 4;
-const ROOM_MAX = 9;
+const MAX_ROOMS = 8, ROOM_MIN = 4, ROOM_MAX = 9;
+
+// Cloudflare Workers のエンドポイント (ご自身の環境に合わせて変更してください)
+const API_URL = 'https://your-worker-name.your-subdomain.workers.dev/scores';
 
 // --- ゲーム状態管理 ---
-let gameState = 'TITLE'; // TITLE, START, PLAYING, CLEAR, GAMEOVER
-let map = [];
-let visibility = []; // 0: 未探索, 1: 探索済み(暗), 2: 視界内(明)
-let rooms = [];
-let enemies = [];
-let items = []; // アイテムリスト
-let logs = [];
+let gameState = 'TITLE'; // TITLE, PLAYING, CLEAR, GAMEOVER
+let map = [], visibility = [], rooms = [], enemies = [], items = [], logs = [];
 let artifact = { x: -1, y: -1 };
 let stairs = { x: -1, y: -1 };
-let turn = 0;
-let kills = 0;
-let floor = 1;
+let turn = 0, floor = 1;
+let sessionHighScores = []; // インメモリでのランキング保存用 (APIエラー時のフォールバック用)
 
 let player = {
   x: 0, y: 0,
   hp: 15, maxHp: 15,
-  atk: 3,
-  char: '@',
-  level: 1,
-  exp: 0,
-  maxExp: 15
+  atk: 3, char: '@',
+  level: 1, exp: 0, maxExp: 15
 };
 
 const ENEMY_TYPES = [
@@ -351,11 +319,51 @@ const ENEMY_TYPES = [
 
 // --- ユーティリティ ---
 function getRandomItem(x, y) {
-  let rand = Math.random();
-  if (rand < 0.5) return { x, y, type: 'potion', char: '*', name: 'Potion' };
-  if (rand < 0.7) return { x, y, type: 'sword', char: '/', name: 'Sword' };
-  if (rand < 0.9) return { x, y, type: 'shield', char: '[', name: 'Shield' };
-  return { x, y, type: 'scroll', char: '?', name: 'Magic Map' };
+  const rand = Math.random();
+  if (rand < 0.45) return { x, y, type: 'potion', char: '*', name: 'Potion' };
+  if (rand < 0.65) return { x, y, type: 'sword', char: '/', name: 'Sword' };
+  if (rand < 0.85) return { x, y, type: 'shield', char: '[', name: 'Shield' };
+  if (rand < 0.95) return { x, y, type: 'scroll', char: '?', name: 'Magic Map' };
+  return { x, y, type: 'ring', char: '=', name: 'Power Ring' }; // 新アイテム追加
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// --- API連携 (スコア保存・取得) ---
+async function getHighScores() {
+  try {
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.warn('API fetch failed, falling back to local session data.', error);
+    return sessionHighScores;
+  }
+}
+
+async function saveHighScore(currentTurn, playerName) {
+  const date = new Date();
+  const dateStr = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+  const newScore = { turns: currentTurn, date: dateStr, timestamp: Date.now(), name: playerName };
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newScore)
+    });
+    
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.warn('API save failed, saving to local session instead.', error);
+    // API送信に失敗した場合はローカルの配列に保存して、疑似的にランキングデータを返す
+    sessionHighScores.push(newScore);
+    sessionHighScores.sort((a, b) => a.turns - b.turns);
+    return sessionHighScores;
+  }
 }
 
 // --- 初期化とマップ生成 ---
@@ -364,39 +372,24 @@ function init() {
   document.getElementById('overlay').style.display = 'none';
   gameState = 'PLAYING';
   
-  // プレイヤー初期化
-  player.level = 1;
-  player.exp = 0;
-  player.maxExp = 15;
-  player.maxHp = 15;
-  player.hp = player.maxHp;
-  player.atk = 3;
-
-  floor = 1;
-  turn = 0;
-  kills = 0;
-  logs = [];
+  Object.assign(player, { level: 1, exp: 0, maxExp: 15, maxHp: 15, hp: 15, atk: 3 });
+  floor = 1; turn = 0; logs = [];
   
   logMessage(`<span class="color-normal">Welcome to the ASCII Roguelike.</span>`);
-  
   generateFloor();
 }
 
 function generateFloor() {
-  enemies = [];
-  items = [];
-  rooms = [];
+  enemies = []; items = []; rooms = [];
   generateMap();
   calcFOV();
   draw();
   updateStatus();
-  
-  // マップ生成時にプレイヤーが画面中心にくるようにスクロール
   setTimeout(scrollToPlayerCenter, 50); 
 }
 
 function generateMap() {
-  // マップと視界配列を初期化
+  // 初期化
   for (let y = 0; y < MAP_H; y++) {
     map[y] = new Array(MAP_W).fill('#');
     visibility[y] = new Array(MAP_W).fill(0);
@@ -404,76 +397,57 @@ function generateMap() {
 
   // 部屋の生成
   for (let i = 0; i < MAX_ROOMS; i++) {
-    let w = Math.floor(Math.random() * (ROOM_MAX - ROOM_MIN)) + ROOM_MIN;
-    let h = Math.floor(Math.random() * (ROOM_MAX - ROOM_MIN)) + ROOM_MIN;
-    let x = Math.floor(Math.random() * (MAP_W - w - 2)) + 1;
-    let y = Math.floor(Math.random() * (MAP_H - h - 2)) + 1;
+    let w = randInt(ROOM_MIN, ROOM_MAX);
+    let h = randInt(ROOM_MIN, ROOM_MAX);
+    let x = randInt(1, MAP_W - w - 1);
+    let y = randInt(1, MAP_H - h - 1);
     
     let newRoom = { x, y, w, h };
-    let failed = false;
-    for (let r of rooms) {
-      if (newRoom.x <= r.x + r.w + 1 && newRoom.x + newRoom.w + 1 >= r.x &&
-          newRoom.y <= r.y + r.h + 1 && newRoom.y + newRoom.h + 1 >= r.y) {
-        failed = true; break;
-      }
-    }
+    let failed = rooms.some(r => 
+      newRoom.x <= r.x + r.w + 1 && newRoom.x + newRoom.w + 1 >= r.x &&
+      newRoom.y <= r.y + r.h + 1 && newRoom.y + newRoom.h + 1 >= r.y
+    );
     
     if (!failed) {
-      // 部屋を床(.)にする
       for (let ry = y; ry < y + h; ry++) {
-        for (let rx = x; rx < x + w; rx++) {
-          map[ry][rx] = '.';
-        }
+        for (let rx = x; rx < x + w; rx++) map[ry][rx] = '.';
       }
       
-      // 前の部屋と通路で繋ぐ
       if (rooms.length > 0) {
         let prev = rooms[rooms.length - 1];
-        let cx1 = Math.floor(prev.x + prev.w / 2);
-        let cy1 = Math.floor(prev.y + prev.h / 2);
-        let cx2 = Math.floor(newRoom.x + newRoom.w / 2);
-        let cy2 = Math.floor(newRoom.y + newRoom.h / 2);
+        let cx1 = Math.floor(prev.x + prev.w / 2), cy1 = Math.floor(prev.y + prev.h / 2);
+        let cx2 = Math.floor(newRoom.x + newRoom.w / 2), cy2 = Math.floor(newRoom.y + newRoom.h / 2);
         
         if (Math.random() < 0.5) {
-          createHCorridor(cx1, cx2, cy1);
-          createVCorridor(cy1, cy2, cx2);
+          createHCorridor(cx1, cx2, cy1); createVCorridor(cy1, cy2, cx2);
         } else {
-          createVCorridor(cy1, cy2, cx1);
-          createHCorridor(cx1, cx2, cy2);
+          createVCorridor(cy1, cy2, cx1); createHCorridor(cx1, cx2, cy2);
         }
       }
       rooms.push(newRoom);
     }
   }
 
-  // ドア(+)の簡易配置（部屋の境界の通路部分）
-  for (let r of rooms) {
+  // ドア配置
+  rooms.forEach(r => {
     for (let x = r.x; x < r.x + r.w; x++) {
-      if (map[r.y - 1] && map[r.y - 1][x] === '.') map[r.y - 1][x] = '+';
-      if (map[r.y + r.h] && map[r.y + r.h][x] === '.') map[r.y + r.h][x] = '+';
+      if (map[r.y - 1]?.[x] === '.') map[r.y - 1][x] = '+';
+      if (map[r.y + r.h]?.[x] === '.') map[r.y + r.h][x] = '+';
     }
     for (let y = r.y; y < r.y + r.h; y++) {
       if (map[y][r.x - 1] === '.') map[y][r.x - 1] = '+';
       if (map[y][r.x + r.w] === '.') map[y][r.x + r.w] = '+';
     }
-  }
+  });
 
-  // ゴール(₿)と階段(>)の配置 (最後の部屋)
-  artifact = { x: -1, y: -1 };
-  stairs = { x: -1, y: -1 };
+  // 目標配置
+  artifact = { x: -1, y: -1 }; stairs = { x: -1, y: -1 };
   let lastRoom = rooms[rooms.length - 1];
   let targetX = Math.floor(lastRoom.x + lastRoom.w / 2);
   let targetY = Math.floor(lastRoom.y + lastRoom.h / 2);
 
-  // 階層によるGoalの出現確率
-  let goalChance = 0;
-  if (floor === 1) goalChance = 0.0;
-  else if (floor === 2) goalChance = 0.25;
-  else if (floor === 3) goalChance = 0.50;
-  else if (floor === 4) goalChance = 0.75;
-  else goalChance = 1.0;
-
-  if (Math.random() < goalChance) {
+  let goalChance = (floor - 1) * 0.25;
+  if (Math.random() < goalChance || floor >= 5) {
     artifact = { x: targetX, y: targetY };
     if(floor === 1) logMessage(`<span class="color-good">Find the Bitcoin '₿' to escape!</span>`);
   } else {
@@ -481,88 +455,65 @@ function generateMap() {
     if(floor === 1) logMessage(`<span class="color-normal">Find the Stairs '>' to go deeper.</span>`);
   }
 
-  // プレイヤーの配置 (最初の部屋)
+  // プレイヤー配置
   player.x = Math.floor(rooms[0].x + rooms[0].w / 2);
   player.y = Math.floor(rooms[0].y + rooms[0].h / 2);
 
-  // 敵の配置 (最初の部屋以外)
+  // 敵・アイテム・罠の配置
   for (let i = 1; i < rooms.length; i++) {
     let r = rooms[i];
     
-    // トラップの配置（30%の確率で部屋に配置）
+    // トラップ
     if (Math.random() < 0.3) {
-      let tx = Math.floor(Math.random() * r.w) + r.x;
-      let ty = Math.floor(Math.random() * r.h) + r.y;
-      if (map[ty][tx] === '.' && !(tx === artifact.x && ty === artifact.y) && !(tx === stairs.x && ty === stairs.y) && !(tx === player.x && ty === player.y)) {
-         map[ty][tx] = '^';
-      }
+      let tx = randInt(r.x, r.x + r.w), ty = randInt(r.y, r.y + r.h);
+      if (map[ty][tx] === '.' && !isSpecialTile(tx, ty)) map[ty][tx] = '^';
     }
 
-    // 階層が深くなるほど敵の数が増えやすい。
-    let enemyCount = Math.floor(Math.random() * 4) + Math.floor(floor / 2) + 3; 
+    // 敵
+    let enemyCount = randInt(0, 4) + Math.floor(floor / 2) + 2; 
     for (let e = 0; e < enemyCount; e++) {
-      let ex = Math.floor(Math.random() * r.w) + r.x;
-      let ey = Math.floor(Math.random() * r.h) + r.y;
-      if ((map[ey][ex] === '.' || map[ey][ex] === '^') && !(ex === artifact.x && ey === artifact.y) && !(ex === stairs.x && ey === stairs.y)) {
-        
-        let slimeChance = Math.max(0, 0.70 - (floor - 1) * 0.175);
-        let goblinChance = 0.30;
-        
-        let r_enemy = Math.random();
-        let typeTemplate;
+      let ex = randInt(r.x, r.x + r.w), ey = randInt(r.y, r.y + r.h);
+      if ((map[ey][ex] === '.' || map[ey][ex] === '^') && !isSpecialTile(ex, ey)) {
+        let typeTemplate = ENEMY_TYPES[2]; // Default Dragon
+        let rand = Math.random();
         let isGolden = false;
 
-        if (r_enemy < slimeChance) {
-          typeTemplate = ENEMY_TYPES.find(ent => ent.char === 'S');
-        } else if (r_enemy < slimeChance + goblinChance) {
-          typeTemplate = ENEMY_TYPES.find(ent => ent.char === 'G');
-          if (Math.random() < 0.30) {
-             isGolden = true;
-          }
-        } else {
-          typeTemplate = ENEMY_TYPES.find(ent => ent.char === 'D');
+        if (rand < Math.max(0, 0.70 - (floor - 1) * 0.15)) typeTemplate = ENEMY_TYPES[0]; // Slime
+        else if (rand < 0.95) {
+            typeTemplate = ENEMY_TYPES[1]; // Goblin
+            isGolden = Math.random() < 0.2;
         }
 
-        let enemyObj = { 
+        enemies.push({ 
           x: ex, y: ey, 
-          hp: typeTemplate.hp, 
-          atk: typeTemplate.atk, 
-          char: typeTemplate.char, 
-          name: typeTemplate.name, 
-          exp: typeTemplate.exp,
-          isGolden: isGolden
-        };
-
-        if (isGolden) {
-          enemyObj.name = 'Golden Goblin';
-          enemyObj.exp = 24;
-        }
-
-        enemies.push(enemyObj);
+          ...typeTemplate, 
+          name: isGolden ? 'Golden Goblin' : typeTemplate.name,
+          exp: isGolden ? 24 : typeTemplate.exp,
+          isGolden
+        });
       }
     }
 
-    // アイテムの配置 (最初の部屋以外に50%の確率で)
-    if (i !== 0 && Math.random() < 0.5) {
-      let ix = Math.floor(Math.random() * r.w) + r.x;
-      let iy = Math.floor(Math.random() * r.h) + r.y;
-      if ((map[iy][ix] === '.' || map[iy][ix] === '^') && !(ix === artifact.x && iy === artifact.y) && !(ix === stairs.x && iy === stairs.y)) {
+    // アイテム
+    if (Math.random() < 0.5) {
+      let ix = randInt(r.x, r.x + r.w), iy = randInt(r.y, r.y + r.h);
+      if ((map[iy][ix] === '.' || map[iy][ix] === '^') && !isSpecialTile(ix, iy)) {
         items.push(getRandomItem(ix, iy));
       }
     }
   }
 }
 
+function isSpecialTile(x, y) {
+    return (x === artifact.x && y === artifact.y) || (x === stairs.x && y === stairs.y) || (x === player.x && y === player.y);
+}
+
 function createHCorridor(x1, x2, y) {
-  for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
-    if (map[y][x] === '#') map[y][x] = '.';
-  }
+  for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) if (map[y][x] === '#') map[y][x] = '.';
 }
 
 function createVCorridor(y1, y2, x) {
-  for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
-    if (map[y][x] === '#') map[y][x] = '.';
-  }
+  for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) if (map[y][x] === '#') map[y][x] = '.';
 }
 
 // --- 視界 (FOV) 計算 ---
@@ -575,20 +526,13 @@ function calcFOV() {
   
   visibility[player.y][player.x] = 2;
   for (let angle = 0; angle < 360; angle += 2) {
-    let rad = angle * Math.PI / 180;
-    let dx = Math.cos(rad);
-    let dy = Math.sin(rad);
-    
-    let ox = player.x + 0.5;
-    let oy = player.y + 0.5;
+    let dx = Math.cos(angle * Math.PI / 180), dy = Math.sin(angle * Math.PI / 180);
+    let ox = player.x + 0.5, oy = player.y + 0.5;
     
     for (let r = 0; r < FOV_RADIUS; r++) {
-      let tx = Math.floor(ox + dx * r);
-      let ty = Math.floor(oy + dy * r);
-      
+      let tx = Math.floor(ox + dx * r), ty = Math.floor(oy + dy * r);
       if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) break;
       visibility[ty][tx] = 2;
-      
       if (map[ty][tx] === '#' || map[ty][tx] === '+') break;
     }
   }
@@ -605,338 +549,221 @@ function handleInput(key) {
   else if (key === 'ArrowRight' || key === 'l') dx = 1;
   else return; 
 
-  let targetX = player.x + dx;
-  let targetY = player.y + dy;
-
+  let targetX = player.x + dx, targetY = player.y + dy;
   let enemy = enemies.find(e => e.hp > 0 && e.x === targetX && e.y === targetY);
   
   if (enemy) {
+    // 攻撃処理
     enemy.hp -= player.atk;
     logMessage(`<span class="color-good">You strike ${enemy.name} for ${player.atk} damage.</span>`);
     if (enemy.hp <= 0) {
       logMessage(`<span class="color-good">${enemy.name} is defeated! (+${enemy.exp} EXP)</span>`);
-      
       if (enemy.isGolden) {
          items.push(getRandomItem(enemy.x, enemy.y));
          logMessage(`<span class="color-good">${enemy.name} dropped an item!</span>`);
       }
-
-      enemies = enemies.filter(e => e.hp > 0);
-      kills++;
-      
       player.exp += enemy.exp;
-      if (player.exp >= player.maxExp) {
-        levelUp();
-      }
+      if (player.exp >= player.maxExp) levelUp();
     }
-  } else if (map[targetY] && (map[targetY][targetX] === '.' || map[targetY][targetX] === '+' || map[targetY][targetX] === '^')) {
+  } else if (map[targetY]?.[targetX] && ['.', '+', '^'].includes(map[targetY][targetX])) {
+    // 移動処理
     if (map[targetY][targetX] === '+') {
       map[targetY][targetX] = '.';
       logMessage(`<span class="color-normal">You opened a door.</span>`);
     } else if (map[targetY][targetX] === '^') {
       player.hp -= 5;
       logMessage(`<span class="color-bad">You stepped on a trap! Took 5 damage.</span>`);
-      triggerDamageFlash();
+      triggerEffect('damage-flash', 'shake');
       map[targetY][targetX] = '.'; 
-      if (player.hp <= 0) {
-        player.x = targetX;
-        player.y = targetY;
-        draw(); updateStatus();
-        gameOver();
-        return;
-      }
+      if (player.hp <= 0) return gameOver(targetX, targetY);
     }
-    player.x = targetX;
-    player.y = targetY;
+    player.x = targetX; player.y = targetY;
   } else {
-    return;
+    return; // 壁など無効な移動
   }
 
   turn++;
+  processItemsOnFloor();
 
+  // ゴール判定
+  if (player.x === artifact.x && player.y === artifact.y) return gameClear();
+  if (player.x === stairs.x && player.y === stairs.y) {
+    floor++;
+    logMessage(`<span class="color-normal">You descend to Floor ${floor}...</span>`);
+    return generateFloor();
+  }
+
+  enemiesTurn();
+  if (gameState !== 'PLAYING') return; // 敵のターンで死んだ場合
+
+  calcFOV(); draw(); updateStatus();
+  scrollToPlayerIfNeeded();
+}
+
+function processItemsOnFloor() {
   let itemIndex = items.findIndex(i => i.x === player.x && i.y === player.y);
   if (itemIndex !== -1) {
     let item = items[itemIndex];
     if (item.type === 'potion') {
-      let heal = 15;
-      player.hp = Math.min(player.maxHp, player.hp + heal);
-      logMessage(`<span class="color-good">You drank a ${item.name}! Recovered ${heal} HP.</span>`);
+      player.hp = Math.min(player.maxHp, player.hp + 15);
+      logMessage(`<span class="color-good">You drank a ${item.name}! Recovered HP.</span>`);
+      triggerEffect('heal-flash');
     } else if (item.type === 'sword') {
       player.atk += 1;
-      logMessage(`<span class="color-good">You equipped a ${item.name}! Atk +1.</span>`);
+      logMessage(`<span class="color-good">Equipped ${item.name}! Atk +1.</span>`);
     } else if (item.type === 'shield') {
-      player.maxHp += 5;
-      player.hp += 5;
-      logMessage(`<span class="color-good">You equipped a ${item.name}! Max HP +5.</span>`);
+      player.maxHp += 5; player.hp += 5;
+      logMessage(`<span class="color-good">Equipped ${item.name}! Max HP +5.</span>`);
+      triggerEffect('heal-flash');
+    } else if (item.type === 'ring') {
+      player.maxHp += 3; player.hp += 3; player.atk += 1;
+      logMessage(`<span class="color-good">Equipped ${item.name}! Power surged!</span>`);
+      triggerEffect('heal-flash');
     } else if (item.type === 'scroll') {
-      for (let y = 0; y < MAP_H; y++) {
-        for (let x = 0; x < MAP_W; x++) {
-          if (visibility[y][x] === 0) visibility[y][x] = 1;
-        }
-      }
-      logMessage(`<span class="color-good">You read a ${item.name}! The floor layout is revealed.</span>`);
+      visibility.forEach(row => row.fill(1)); // 全て探索済みに
+      logMessage(`<span class="color-good">Read ${item.name}! Map revealed.</span>`);
     }
     items.splice(itemIndex, 1);
   }
-
-  if (artifact.x !== -1 && player.x === artifact.x && player.y === artifact.y) {
-    gameClear();
-    return;
-  }
-
-  if (stairs.x !== -1 && player.x === stairs.x && player.y === stairs.y) {
-    floor++;
-    logMessage(`<span class="color-normal">You descend to Floor ${floor}...</span>`);
-    generateFloor();
-    return;
-  }
-
-  enemiesTurn();
-
-  calcFOV();
-  draw();
-  updateStatus();
-  
-  // 移動後にプレイヤーが画面外に出そうなら自動スクロール
-  scrollToPlayerIfNeeded();
 }
 
-// --- キーボード入力 ---
+// --- 入力イベント ---
 window.addEventListener('keydown', (e) => {
-  if (gameState === 'TITLE') {
-    init();
-    return;
-  }
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-    e.preventDefault();
-  }
+  if (gameState === 'TITLE') return init();
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
   handleInput(e.key);
 });
 
-// --- タップ＆スワイプ入力処理 ---
-let isDragging = false;
-let startX, startY;
+let isDragging = false, startX, startY;
 const gameScreen = document.getElementById('game-screen');
 const screenContainer = document.getElementById('screen-container');
 
-gameScreen.addEventListener('pointerdown', (e) => {
-  isDragging = false;
-  startX = e.clientX;
-  startY = e.clientY;
+gameScreen.addEventListener('pointerdown', e => { isDragging = false; startX = e.clientX; startY = e.clientY; });
+gameScreen.addEventListener('pointermove', e => {
+  if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10) isDragging = true;
 });
+gameScreen.addEventListener('pointerup', e => {
+  if (isDragging || gameState !== 'PLAYING') return;
 
-gameScreen.addEventListener('pointermove', (e) => {
-  // 10px以上指が動いたらスワイプ（スクロール）と判定し、タップ移動はキャンセルする
-  if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10) {
-    isDragging = true;
-  }
-});
-
-gameScreen.addEventListener('pointerup', (e) => {
-  if (isDragging) return; // スワイプ時は移動処理をしない
-
-  if (gameState !== 'PLAYING') return;
-
-  // タップした座標から、プレイヤーのどちらの方向をタップしたかを判定
   let rect = gameScreen.getBoundingClientRect();
-  let tapX = e.clientX - rect.left;
-  let tapY = e.clientY - rect.top;
+  let tapX = e.clientX - rect.left, tapY = e.clientY - rect.top;
+  let cellW = rect.width / MAP_W, cellH = rect.height / MAP_H;
 
-  let cellW = rect.width / MAP_W;
-  let cellH = rect.height / MAP_H;
+  let dx = Math.floor(tapX / cellW) - player.x;
+  let dy = Math.floor(tapY / cellH) - player.y;
 
-  let targetX = Math.floor(tapX / cellW);
-  let targetY = Math.floor(tapY / cellH);
-
-  let dx = targetX - player.x;
-  let dy = targetY - player.y;
-
-  if (dx === 0 && dy === 0) return; // プレイヤー自身をタップした場合は無視
-
-  // より差が大きい軸の方向へ1歩進む
-  let key = '';
-  if (Math.abs(dx) > Math.abs(dy)) {
-    key = dx > 0 ? 'ArrowRight' : 'ArrowLeft';
-  } else {
-    key = dy > 0 ? 'ArrowDown' : 'ArrowUp';
-  }
-  handleInput(key);
+  if (dx === 0 && dy === 0) return;
+  handleInput(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'ArrowRight' : 'ArrowLeft') : (dy > 0 ? 'ArrowDown' : 'ArrowUp'));
 });
 
-// タイトル画面全体をタップ可能に
-document.getElementById('title-screen').addEventListener('click', () => {
-  if (gameState === 'TITLE') init();
-});
+document.getElementById('title-screen').addEventListener('click', () => { if (gameState === 'TITLE') init(); });
 
-
-// --- スクロール追従機能 ---
+// --- スクロール ---
 function scrollToPlayerCenter() {
-  let cellW = gameScreen.clientWidth / MAP_W;
-  let cellH = gameScreen.clientHeight / MAP_H;
-  let playerPixX = player.x * cellW + cellW / 2;
-  let playerPixY = player.y * cellH + cellH / 2;
-  
-  screenContainer.scrollLeft = playerPixX - screenContainer.clientWidth / 2;
-  screenContainer.scrollTop = playerPixY - screenContainer.clientHeight / 2;
+  let cellW = gameScreen.clientWidth / MAP_W, cellH = gameScreen.clientHeight / MAP_H;
+  screenContainer.scrollLeft = (player.x * cellW + cellW / 2) - screenContainer.clientWidth / 2;
+  screenContainer.scrollTop = (player.y * cellH + cellH / 2) - screenContainer.clientHeight / 2;
 }
 
 function scrollToPlayerIfNeeded() {
-  let cellW = gameScreen.clientWidth / MAP_W;
-  let cellH = gameScreen.clientHeight / MAP_H;
-  let playerPixX = player.x * cellW;
-  let playerPixY = player.y * cellH;
-  let padX = cellW * 3; // 画面端から3マス分余裕を持つ
-  let padY = cellH * 3;
+  let cellW = gameScreen.clientWidth / MAP_W, cellH = gameScreen.clientHeight / MAP_H;
+  let px = player.x * cellW, py = player.y * cellH;
+  let padX = cellW * 3, padY = cellH * 3;
 
-  if (playerPixX < screenContainer.scrollLeft + padX) {
-    screenContainer.scrollLeft = playerPixX - padX;
-  } else if (playerPixX > screenContainer.scrollLeft + screenContainer.clientWidth - padX - cellW) {
-    screenContainer.scrollLeft = playerPixX - screenContainer.clientWidth + padX + cellW;
-  }
+  if (px < screenContainer.scrollLeft + padX) screenContainer.scrollLeft = px - padX;
+  else if (px > screenContainer.scrollLeft + screenContainer.clientWidth - padX - cellW) screenContainer.scrollLeft = px - screenContainer.clientWidth + padX + cellW;
 
-  if (playerPixY < screenContainer.scrollTop + padY) {
-    screenContainer.scrollTop = playerPixY - padY;
-  } else if (playerPixY > screenContainer.scrollTop + screenContainer.clientHeight - padY - cellH) {
-    screenContainer.scrollTop = playerPixY - screenContainer.clientHeight + padY + cellH;
-  }
+  if (py < screenContainer.scrollTop + padY) screenContainer.scrollTop = py - padY;
+  else if (py > screenContainer.scrollTop + screenContainer.clientHeight - padY - cellH) screenContainer.scrollTop = py - screenContainer.clientHeight + padY + cellH;
 }
 
 function enemiesTurn() {
   for (let enemy of enemies) {
-    if (enemy.hp <= 0) continue;
+    if (enemy.hp <= 0 || visibility[enemy.y][enemy.x] !== 2) continue;
     
-    if (visibility[enemy.y][enemy.x] === 2) {
-      let dx = player.x - enemy.x;
-      let dy = player.y - enemy.y;
+    let dx = player.x - enemy.x, dy = player.y - enemy.y;
+    if (Math.abs(dx) + Math.abs(dy) === 1) {
+      player.hp -= enemy.atk;
+      logMessage(`<span class="color-bad">${enemy.name} hits you for ${enemy.atk} damage!</span>`);
+      triggerEffect('damage-flash', 'shake');
+      if (player.hp <= 0) return gameOver(player.x, player.y);
+    } else {
+      let stepX = Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) : 0;
+      let stepY = stepX === 0 ? Math.sign(dy) : 0;
       
-      if (Math.abs(dx) + Math.abs(dy) === 1) {
-        player.hp -= enemy.atk;
-        logMessage(`<span class="color-bad">${enemy.name} hits you for ${enemy.atk} damage!</span>`);
-        triggerDamageFlash();
-        if (player.hp <= 0) {
-          draw(); updateStatus();
-          gameOver();
-          return;
-        }
+      if (isPassable(enemy.x + stepX, enemy.y + stepY)) {
+        enemy.x += stepX; enemy.y += stepY;
       } else {
-        let stepX = 0, stepY = 0;
-        if (Math.abs(dx) > Math.abs(dy)) stepX = Math.sign(dx);
-        else stepY = Math.sign(dy);
-        
-        if (isPassableForEnemy(enemy.x + stepX, enemy.y + stepY)) {
-          enemy.x += stepX;
-          enemy.y += stepY;
-        } else {
-          stepX = stepY === 0 ? Math.sign(dx) : 0;
-          stepY = stepX === 0 ? Math.sign(dy) : 0;
-          if (stepX !== 0 || stepY !== 0) {
-            if (isPassableForEnemy(enemy.x + stepX, enemy.y + stepY)) {
-              enemy.x += stepX;
-              enemy.y += stepY;
-            }
-          }
+        stepX = stepY === 0 ? Math.sign(dx) : 0;
+        stepY = stepX === 0 ? Math.sign(dy) : 0;
+        if ((stepX || stepY) && isPassable(enemy.x + stepX, enemy.y + stepY)) {
+          enemy.x += stepX; enemy.y += stepY;
         }
       }
     }
   }
 }
 
-function isPassableForEnemy(x, y) {
+function isPassable(x, y) {
   if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
-  if (map[y][x] === '#') return false; 
-  if (map[y][x] === '+') return false; 
-  if (map[y][x] === '^') return false; 
-  if (player.x === x && player.y === y) return false;
-  if (enemies.some(e => e.hp > 0 && e.x === x && e.y === y)) return false;
-  return true;
+  return !['#', '+', '^'].includes(map[y][x]) && !(player.x === x && player.y === y) && !enemies.some(e => e.hp > 0 && e.x === x && e.y === y);
 }
 
 function levelUp() {
   player.level++;
   player.exp -= player.maxExp;
-  player.maxExp = Math.floor(player.maxExp * 1.8); 
+  player.maxExp = Math.floor(player.maxExp * 1.7); // レベルアップに必要な経験値の倍率を1.7倍に修正
   player.maxHp += 5;
   player.hp = player.maxHp; 
   player.atk += 1;
   logMessage(`<span class="color-good">LEVEL UP! You are now Lvl ${player.level}! (HP restored)</span>`);
-  triggerDamageFlash(); 
+  triggerEffect('heal-flash'); 
 }
 
-function triggerDamageFlash() {
+function triggerEffect(...classes) {
   const wrapper = document.getElementById('game-wrapper');
-  wrapper.classList.remove('damage-flash', 'shake');
+  wrapper.classList.remove('damage-flash', 'heal-flash', 'shake');
   void wrapper.offsetWidth; 
-  wrapper.classList.add('damage-flash', 'shake');
+  wrapper.classList.add(...classes);
 }
 
-// --- 描画とUI ---
+// --- 描画 ---
 function draw() {
   let html = '';
   for (let y = 0; y < MAP_H; y++) {
     let rowHtml = '';
     for (let x = 0; x < MAP_W; x++) {
       let vis = visibility[y][x];
-      
-      if (vis === 0) {
-        rowHtml += '<span> </span>'; 
-        continue;
-      }
+      if (vis === 0) { rowHtml += '<span> </span>'; continue; }
 
       let char = map[y][x];
-      let colorClass = 'color-map';
+      let colorClass = char === '^' ? 'color-trap' : 'color-map';
       
-      if (char === '^') {
-         colorClass = 'color-trap';
-      }
-
       let item = items.find(i => i.x === x && i.y === y);
-      if (item) {
-        char = item.char;
-        colorClass = 'color-white';
-      }
-
-      if (stairs.x === x && stairs.y === y) {
-        char = '>';
-        colorClass = 'color-stairs';
-      }
-
-      if (artifact.x !== -1 && artifact.x === x && artifact.y === y) {
-        char = '₿';
-        colorClass = 'color-artifact';
-      }
+      if (item) { char = item.char; colorClass = 'color-white'; }
+      if (stairs.x === x && stairs.y === y) { char = '>'; colorClass = 'color-stairs'; }
+      if (artifact.x === x && artifact.y === y) { char = '₿'; colorClass = 'color-artifact'; }
       
       let enemy = enemies.find(e => e.hp > 0 && e.x === x && e.y === y);
-      if (enemy) {
-        char = enemy.char;
-        colorClass = enemy.isGolden ? 'color-golden' : 'color-enemy';
-      }
-      
-      if (player.x === x && player.y === y) {
-        char = player.char;
-        colorClass = 'color-player';
-      }
+      if (enemy) { char = enemy.char; colorClass = enemy.isGolden ? 'color-golden' : 'color-enemy'; }
+      if (player.x === x && player.y === y) { char = player.char; colorClass = 'color-player'; }
 
-      let cls = vis === 2 ? 'visible' : 'explored';
-      rowHtml += `<span class="${cls} ${colorClass}">${char}</span>`;
+      rowHtml += `<span class="${vis === 2 ? 'visible' : 'explored'} ${colorClass}">${char}</span>`;
     }
     html += rowHtml + '\n';
   }
   document.getElementById('game-screen').innerHTML = html;
   
-  let logHtml = '';
-  for (let i = 0; i < logs.length; i++) {
-    let opacity = 0.4 + (i / (logs.length - 1 || 1)) * 0.6; 
-    logHtml += `<div style="opacity: ${opacity}">> ${logs[i]}</div>`;
-  }
-  document.getElementById('log-window').innerHTML = logHtml;
+  document.getElementById('log-window').innerHTML = logs.map((msg, i) => 
+    `<div style="opacity: ${0.4 + (i / (logs.length - 1 || 1)) * 0.6}">> ${msg}</div>`
+  ).join('');
 }
 
 function updateStatus() {
-  let hpColorClass = player.hp <= 5 ? 'color-bad' : 'color-white';
+  let hpColor = player.hp <= 5 ? 'color-bad' : 'color-white';
   let goalText = artifact.x !== -1 ? `<span class="color-good">Bitcoin '₿'</span>` : `<span class="color-white">Stairs '>'</span>`;
-  
   document.getElementById('status-bar').innerHTML = 
-    `HP: <span class="${hpColorClass}">${Math.max(0, player.hp)}/${player.maxHp}</span> | Lvl: ${player.level} | EXP: ${player.exp}/${player.maxExp} | Atk: ${player.atk} | Floor: ${floor} | Goal: ${goalText}`;
+    `HP: <span class="${hpColor}">${Math.max(0, player.hp)}/${player.maxHp}</span> | Lvl: ${player.level} | EXP: ${player.exp}/${player.maxExp} | Atk: ${player.atk} | Floor: ${floor} | Goal: ${goalText}`;
 }
 
 function logMessage(msg) {
@@ -944,55 +771,13 @@ function logMessage(msg) {
   if (logs.length > 5) logs.shift();
 }
 
-// --- ハイスコア管理 (Cloudflare Workers & D1) ---
-// ※ Cloudflare WorkersでデプロイしたURLに変更してください
-const API_URL = 'https://your-worker-name.your-subdomain.workers.dev/scores';
-
-async function getHighScores() {
-  try {
-    const response = await fetch(API_URL);
-    if (!response.ok) throw new Error('Failed to fetch');
-    const data = await response.json();
-    return data || [];
-  } catch (error) {
-    console.error('Failed to get scores:', error);
-    return [];
-  }
-}
-
-async function saveHighScore(currentTurn, playerName) {
-  const date = new Date();
-  const dateStr = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
-  const timestamp = Date.now();
-  const newScore = { turns: currentTurn, date: dateStr, timestamp: timestamp, name: playerName };
-
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newScore)
-    });
-    
-    if (!response.ok) throw new Error('Failed to save');
-    const data = await response.json();
-    return { scores: data, currentTimestamp: timestamp };
-  } catch (error) {
-    console.error('Error saving score:', error);
-    // API通信エラー時は、仮として今回のスコアだけを表示する
-    return { scores: [newScore], currentTimestamp: timestamp };
-  }
-}
-
+// --- ゲーム終了処理 ---
 function gameClear() {
   gameState = 'CLEAR';
   const overlay = document.getElementById('overlay');
   const msg = document.getElementById('overlay-msg');
-  const btn = document.getElementById('reward-btn');
-  const retryBtn = document.getElementById('retry-btn');
   
   overlay.style.display = 'flex';
-  
-  // 名前入力フォームの表示
   msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
 <span style="font-size: 20px; font-weight: bold; margin-top: 10px; display: block;">Clear Turns: <span class="color-player">${turn}</span></span>
 <pre style="color: var(--theme-color); font-size: 18px; line-height: 1.2; text-align: left; display: inline-block; margin-top: 10px;">
@@ -1006,95 +791,69 @@ function gameClear() {
 </pre><br><br>
 <div style="margin-top: 10px;">
   <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="15" style="padding: 10px; font-size: 18px; font-family: monospace; background: #222; border: 1px solid var(--theme-color); color: var(--white-color); text-align: center; width: 200px; border-radius: 4px; outline: none;">
-  <br><br>
-  <button id="submit-score-btn" class="btn">Submit Score</button>
 </div>`;
 
-  btn.style.display = 'none'; // 送信完了までは非表示
-  retryBtn.style.display = 'none';
+  const submitBtn = document.getElementById('submit-score-btn');
+  submitBtn.style.display = 'inline-block';
+  document.getElementById('retry-btn').style.display = 'none';
 
-  // 入力欄にフォーカス
-  setTimeout(() => {
-    const nameInput = document.getElementById('player-name-input');
-    if(nameInput) nameInput.focus();
-  }, 100);
+  setTimeout(() => document.getElementById('player-name-input')?.focus(), 100);
 
-  // Submitボタンが押されたときの処理
-  document.getElementById('submit-score-btn').addEventListener('click', async () => {
-    let playerName = document.getElementById('player-name-input').value.trim();
-    if (!playerName) playerName = 'Anonymous';
+  // Cloudflare WorkersのAPIへスコアを送信するように変更
+  submitBtn.onclick = async () => {
+    let name = document.getElementById('player-name-input').value.trim() || 'Anonymous';
+    submitBtn.style.display = 'none';
     
-    // 通信中用のLoading画面を表示
-    msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
-  <span style="font-size: 20px; font-weight: bold; margin-top: 10px; display: block;">Clear Turns: <span class="color-player">${turn}</span></span>
-  <br><div style="color: var(--normal-color); margin-top: 20px;">Saving and loading Leaderboard...</div><br>`;
+    // 送信中のメッセージ表示
+    msg.innerHTML += `<br><div style="color: var(--normal-color); margin-top: 20px; font-size: 16px;">Saving score to leaderboard...</div>`;
     
-    // APIを通じてハイスコアを保存・取得
-    const result = await saveHighScore(turn, playerName);
-    showRanking(result.scores, result.currentTimestamp);
-  });
+    const scores = await saveHighScore(turn, name);
+    showRanking(scores);
+  };
 }
 
-function showRanking(highScores, currentTimestamp) {
+function showRanking(scores) {
   const msg = document.getElementById('overlay-msg');
-  const btn = document.getElementById('reward-btn');
-
-  // ランキングUIの構築
-  let leaderboardHtml = `<div style="text-align: left; display: inline-block; margin-top: 15px; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid var(--map-color); border-radius: 8px;">`;
-  leaderboardHtml += `<div style="color: var(--white-color); font-weight: bold; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;">--- RANKING ---</div>`;
+  let html = `<div style="text-align: left; display: inline-block; margin-top: 15px; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid var(--map-color); border-radius: 8px;">
+    <div style="color: var(--white-color); font-weight: bold; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;">--- LEADERBOARD ---</div>`;
   
-  if (highScores.length === 0) {
-     leaderboardHtml += `<div style="color: var(--normal-color); text-align: center;">No data</div>`;
+  const displayScores = scores || sessionHighScores;
+  
+  if (displayScores.length === 0) {
+    html += `<div style="color: var(--normal-color); text-align: center;">No data</div>`;
   } else {
-    highScores.forEach((score, index) => {
-      let rankColor = 'var(--normal-color)';
-      if (index === 0) rankColor = '#fbbf24'; // 1位はゴールド
-      else if (index === 1) rankColor = '#9ca3af'; // 2位はシルバー
-      else if (index === 2) rankColor = '#b45309'; // 3位はブロンズ
+    // 直近で追加されたスコアを特定するための最大タイムスタンプ
+    const latestTimestamp = displayScores.reduce((max, score) => Math.max(max, score.timestamp || 0), 0);
+
+    displayScores.slice(0, 5).forEach((score, i) => {
+      let color = i === 0 ? '#fbbf24' : (i === 1 ? '#9ca3af' : (i === 2 ? '#b45309' : 'var(--normal-color)'));
+      let isLast = score.timestamp === latestTimestamp;
+      let dateStr = score.date ? ` <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span>` : '';
       
-      let isCurrent = (score.timestamp === currentTimestamp); 
-      let bgColor = isCurrent ? 'background-color: rgba(74, 222, 128, 0.2);' : '';
-      let nameStr = score.name || 'Anonymous';
-      
-      leaderboardHtml += `<div style="color: ${rankColor}; ${bgColor} padding: 4px 8px; font-family: monospace; font-size: 18px;">`;
-      leaderboardHtml += `${index + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${nameStr}</span> <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span> ${isCurrent ? '<span class="color-player">← YOU!</span>' : ''}`;
-      leaderboardHtml += `</div>`;
+      html += `<div style="color: ${color}; font-family: monospace; font-size: 18px; padding: 4px;">
+        ${i + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${score.name}</span>${dateStr} ${isLast ? '<span class="color-player">← YOU!</span>' : ''}
+      </div>`;
     });
   }
-  leaderboardHtml += `</div>`;
+  html += `</div>`;
 
-  // 通信完了後、ランキングを含めたリザルト画面に更新
-  msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>
-<span style="font-size: 20px; font-weight: bold; margin-top: 10px; display: block;">Clear Turns: <span class="color-player">${turn}</span></span>
-<pre style="color: var(--theme-color); font-size: 18px; line-height: 1.2; text-align: left; display: inline-block; margin-top: 10px;">
-      __________
-     /         /|
-    /_________/ |
-   | .-------. ||
-   | | [ ₿ ] | ||
-   | '-------' |/
-   '-----------'
-</pre><br>${leaderboardHtml}<br>`;
-  btn.style.display = 'inline-block';
-  btn.focus(); 
+  msg.innerHTML = `<span class="color-good">=== QUEST COMPLETE ===</span><br><br>You have retrieved the BITCOIN YEN!<br>${html}`;
+  document.getElementById('retry-btn').style.display = 'inline-block';
 }
 
-function gameOver() {
+function gameOver(px, py) {
+  player.x = px; player.y = py;
+  draw(); updateStatus();
   gameState = 'GAMEOVER';
-  const overlay = document.getElementById('overlay');
-  const msg = document.getElementById('overlay-msg');
-  const btn = document.getElementById('reward-btn');
-  const retryBtn = document.getElementById('retry-btn');
   
+  const overlay = document.getElementById('overlay');
   overlay.style.display = 'flex';
-  msg.innerHTML = `<span class="color-bad">=== GAME OVER ===<br><br>You have perished in the dungeon...</span>`;
-  btn.style.display = 'none';
-  retryBtn.style.display = 'inline-block';
-  retryBtn.focus(); 
+  document.getElementById('overlay-msg').innerHTML = `<span class="color-bad">=== GAME OVER ===<br><br>You have perished in the dungeon...</span>`;
+  document.getElementById('submit-score-btn').style.display = 'none';
+  document.getElementById('retry-btn').style.display = 'inline-block';
 }
 
 document.getElementById('retry-btn').addEventListener('click', init);
-
 </script>
 </body>
 </html>
