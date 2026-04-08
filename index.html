@@ -19,18 +19,20 @@
       --surface-color: #1a1a1a;
       --text-color: #d4d4d4;
       --primary-color: #4ade80;
+      --primary-bg: #4ade8026;
+      --primary-bg-hover: #4ade8040;
       --secondary-color: #888888;
       --border-color: #333333;
     }
 
     /* Tailwind CSS Utilities Replacements */
     *, ::before, ::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: var(--border-color); }
-    html { line-height: 1.5; -webkit-text-size-adjust: 100%; }
+    html { line-height: 1.5; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     
-    .bg-\[\#0a1f0a\] { background-color: #0a1f0a; }
     .bg-\[\#111\] { background-color: #111; }
-    .hover\:bg-\[\#143314\]:hover { background-color: #143314; }
     .hover\:bg-\[\#222\]:hover { background-color: #222; }
+    .bg-primary-dim { background-color: var(--primary-bg); }
+    .hover\:bg-primary-dim-hover:hover { background-color: var(--primary-bg-hover); }
 
     .min-h-screen { min-height: 100vh; }
     .w-full { width: 100%; }
@@ -131,12 +133,9 @@
     /* Custom Styles */
     html, body { 
       margin: 0; 
-      -webkit-text-size-adjust: 100%; 
-      text-size-adjust: 100%;
       background-color: var(--bg-color);
       color: var(--text-color);
     }
-    body { box-sizing: border-box; }
     
     html, body, input, textarea, button, select, * { 
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; 
@@ -207,27 +206,70 @@
       caret-color: var(--primary-color);
       color: var(--text-color);
     }
+
+    /* Window Buttons styling */
+    .window-btn-group:hover .window-icon {
+      opacity: 1;
+    }
+    .window-icon {
+      opacity: 0;
+      transition: opacity 0.2s;
+      color: rgba(0, 0, 0, 0.6);
+      width: 6px;
+      height: 6px;
+    }
+    .window-btn {
+      transition: opacity 0.2s, transform 0.1s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .window-btn:hover {
+      opacity: 0.8;
+    }
+    .window-btn:active {
+      transform: scale(0.9);
+    }
   </style>
  </head>
  <body>
-  <div id="app" class="min-h-screen w-full flex flex-col">
-   <div class="scanline"></div><header class="flex items-center justify-between px-4 py-2 border-b" style="background: var(--surface-color);">
-    <div class="flex gap-1.5">
-     <div class="w-2.5 h-2.5 rounded-full" style="background:#f87171;"></div>
-     <div class="w-2.5 h-2.5 rounded-full" style="background:#fbbf24;"></div>
-     <div class="w-2.5 h-2.5 rounded-full" style="background:#4ade80;"></div>
+  <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
+   <div class="scanline"></div>
+   <header class="flex items-center justify-between px-4 py-2 border-b" style="background: var(--surface-color);">
+    <div class="flex gap-1.5 window-btn-group">
+     <!-- Added IDs, cursor styles, and titles for Mac-like buttons -->
+     <div id="btn-close" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#f87171;" title="Close Terminal">
+       <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg>
+     </div>
+     <div id="btn-minimize" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#fbbf24;" title="Enter Matrix">
+       <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg>
+     </div>
+     <div id="btn-maximize" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#4ade80;" title="Toggle Fullscreen">
+       <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+         <path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/>
+       </svg>
+     </div>
     </div>
     <div class="flex items-center gap-2">
      <span style="color: var(--primary-color);">▸</span> <span id="titlebar-name" class="text-xs tracking-wider" style="color: var(--secondary-color);">ST@portfolio:~</span>
     </div>
-   </header><main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1" style="scroll-behavior:smooth;">
+   </header>
+   
+   <main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1" style="scroll-behavior:smooth;">
     <div id="boot-area"></div>
     <div id="output-area"></div>
-    <div class="hidden items-center gap-2 mt-4" id="input-line"><span id="prompt-prefix" class="text-xs whitespace-nowrap" style="color: var(--primary-color);">ST@portfolio:~$</span> <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
+    <div class="hidden items-center gap-2 mt-4" id="input-line">
+     <span id="prompt-prefix" class="text-xs whitespace-nowrap" style="color: var(--primary-color);">ST@portfolio:~$</span> 
+     <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
     </div>
-   </main><footer class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto" style="background: var(--surface-color); color:#666;"><span id="status-left">READY</span> <span id="status-right"></span>
+   </main>
+   
+   <footer id="terminal-footer" class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto" style="background: var(--surface-color); color:#666;">
+    <span id="status-left">READY</span> <span id="status-right"></span>
    </footer>
   </div>
+
   <script>
     // === CONFIG ===
     const config = {
@@ -281,6 +323,68 @@
       });
     }
 
+    function createMBTIRows(traits, isVer2) {
+      return traits.map(t => {
+        let labelText = t.name === 'Thinking' ? `${100 - t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
+        let colorVar = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+        return `
+          <div class="text-xs mb-4">
+            <div class="flex items-center justify-between mb-1.5">
+              <span style="color: var(--text-color);">${esc(t.name)}</span>
+              <span style="color: var(--secondary-color);">${esc(t.opposite)}</span>
+            </div>
+            <div style="position:relative; height:16px; width:100%; background: var(--surface-color); border-radius:8px; border:1px solid var(--border-color);">
+              <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${colorVar}; border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
+              <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${colorVar}; opacity:0.3;"></div>
+            </div>
+            <div style="margin-top:4px; text-align:center; font-size:10px; color: var(--secondary-color);">${labelText}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function createStrengthsHTML(strengths, isVer2) {
+      let colorVar = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      let verPrefix = isVer2 ? 'v20' : 'v10';
+      
+      const patternDefs = `
+        <svg width="0" height="0">
+          <defs>
+            <pattern id="${verPrefix}-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${colorVar}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
+            <pattern id="${verPrefix}-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${colorVar}"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
+            <pattern id="${verPrefix}-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${colorVar}"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
+          </defs>
+        </svg>`;
+
+      let barHTML = patternDefs + strengths.map(s => {
+        let fillVal = s.pattern === 'solid' ? colorVar : `url(#${verPrefix}-${s.pattern}-pattern)`;
+        return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}"/></svg>`;
+      }).join('');
+
+      const strengthsRows = strengths.map(s => {
+        let fillVal = s.pattern === 'solid' ? colorVar : `url(#${verPrefix}-${s.pattern}-pattern)`;
+        return `
+        <div class="text-xs flex items-center justify-between" style="color: var(--text-color);">
+          <div class="flex items-center gap-2">
+            <svg width="12" height="12" style="border:1px solid var(--border-color);"><rect x="0" y="0" width="12" height="12" fill="${fillVal}"/></svg>
+            <span>${esc(s.name)}</span>
+          </div>
+          <span style="color: var(--secondary-color);">${s.pct.toFixed(1)}%</span>
+        </div>`;
+      }).join('');
+
+      return { barHTML, strengthsRows };
+    }
+
+    function createThemesTable(themes, isVer2) {
+      let rankColorVar = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      return themes.map(row => `
+        <div class="flex text-xs border-b last:border-0" style="border-color: var(--border-color); padding:8px 0;">
+          <div class="w-8" style="color: ${rankColorVar};">${row.rank}</div>
+          <div class="flex-1 truncate" style="color: var(--text-color);">${row.theme}</div>
+          <div class="w-56 text-right truncate" style="color: var(--secondary-color);">${row.category}</div>
+        </div>`).join('');
+    }
+
     // === COMMANDS ===
     const commands = {
       help() {
@@ -315,16 +419,16 @@
           <div class="my-3 w-[90%] max-w-[800px]">
             <div class="text-sm font-bold glow mb-3" style="color: var(--primary-color);">BITCOIN YEN Ecosystem</div>
             <div class="flex gap-2 flex-wrap">
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-[#0a1f0a] hover:bg-[#143314]" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('earn-opts-${uniqueId}', ${allIds})">
+              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('earn-opts-${uniqueId}', ${allIds})">
                 Earn
               </div>
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-[#0a1f0a] hover:bg-[#143314]" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('buy-opts-${uniqueId}', ${allIds})">
+              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('buy-opts-${uniqueId}', ${allIds})">
                 Buy
               </div>
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-[#0a1f0a] hover:bg-[#143314]" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('use-opts-${uniqueId}', ${allIds})">
+              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('use-opts-${uniqueId}', ${allIds})">
                 Use
               </div>
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-[#0a1f0a] hover:bg-[#143314]" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('view-opts-${uniqueId}', ${allIds})">
+              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('view-opts-${uniqueId}', ${allIds})">
                 View
               </div>
             </div>
@@ -433,7 +537,7 @@
             <div class="my-3 w-[90%] max-w-[800px]">
               <div class="text-sm font-bold glow mb-3" style="color: var(--primary-color);">Please select a profile to initialize:</div>
               <div class="space-y-2">
-                <div class="p-3 border rounded cursor-pointer transition-colors bg-[#0a1f0a] hover:bg-[#143314]" style="border-color: var(--primary-color);" onclick="window.executeIdentifyVersion('2.0', '${uniqueId}')">
+                <div class="p-3 border rounded cursor-pointer transition-colors bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.executeIdentifyVersion('2.0', '${uniqueId}')">
                   <div class="flex justify-between items-center mb-1">
                     <span class="text-xs font-bold" style="color: var(--primary-color);">ver.2.0 [ACTIVE]</span>
                     <span class="text-[10px]" style="color: var(--secondary-color);">2025.08.20</span>
@@ -463,22 +567,7 @@
                 { name: 'Judging', pct: 53, opposite: 'Prospecting' },
                 { name: 'Assertive', pct: 83, opposite: 'Turbulent' }
               ];
-              
-              let rows = traits.map(t => {
-                let labelText = t.name === 'Thinking' ? `${100 - t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
-                return `
-                  <div class="text-xs mb-4">
-                    <div class="flex items-center justify-between mb-1.5">
-                      <span style="color: var(--text-color);">${esc(t.name)}</span>
-                      <span style="color: var(--secondary-color);">${esc(t.opposite)}</span>
-                    </div>
-                    <div style="position:relative; height:16px; width:100%; background: var(--surface-color); border-radius:8px; border:1px solid var(--border-color);">
-                      <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background: var(--primary-color); border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
-                      <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background: var(--primary-color); opacity:0.3;"></div>
-                    </div>
-                    <div style="margin-top:4px; text-align:center; font-size:10px; color: var(--secondary-color);">${labelText}</div>
-                  </div>`;
-              }).join('');
+              const rows = createMBTIRows(traits, true);
               
               const strengths = [
                 { name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' },
@@ -486,47 +575,16 @@
                 { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' },
                 { name: 'Executing', pct: 15.034, pattern: 'dots' }
               ];
+              const { barHTML, strengthsRows } = createStrengthsHTML(strengths, true);
               
-              const patternDefs = `
-                <svg width="0" height="0">
-                  <defs>
-                    <pattern id="v20-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="var(--primary-color)"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
-                    <pattern id="v20-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="var(--primary-color)"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
-                    <pattern id="v20-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="var(--primary-color)"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
-                  </defs>
-                </svg>`;
-              
-              let barHTML = patternDefs + strengths.map(s => {
-                let fillVal = s.pattern === 'solid' ? 'var(--primary-color)' : `url(#v20-${s.pattern}-pattern)`;
-                return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}"/></svg>`;
-              }).join('');
-              
-              const strengthsRows = strengths.map(s => {
-                let fillVal = s.pattern === 'solid' ? 'var(--primary-color)' : `url(#v20-${s.pattern}-pattern)`;
-                return `
-                <div class="text-xs flex items-center justify-between" style="color: var(--text-color);">
-                  <div class="flex items-center gap-2">
-                    <svg width="12" height="12" style="border:1px solid var(--border-color);"><rect x="0" y="0" width="12" height="12" fill="${fillVal}"/></svg>
-                    <span>${esc(s.name)}</span>
-                  </div>
-                  <span style="color: var(--secondary-color);">${s.pct.toFixed(1)}%</span>
-                </div>`;
-              }).join('');
-              
-              const cliftonThemesV2 = [
+              const cliftonThemes = [
                 { rank: '1', theme: 'Maximizer', category: 'Influencing' },
                 { rank: '2', theme: 'Input', category: 'Strategic Thinking' },
                 { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' },
                 { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
                 { rank: '5', theme: 'Individualization', category: 'Relationship Building' }
               ];
-              
-              const tableRowsV2 = cliftonThemesV2.map(row => `
-                <div class="flex text-xs border-b last:border-0" style="border-color: var(--border-color); padding:8px 0;">
-                  <div class="w-8" style="color: var(--primary-color);">${row.rank}</div>
-                  <div class="flex-1 truncate" style="color: var(--text-color);">${row.theme}</div>
-                  <div class="w-56 text-right truncate" style="color: var(--secondary-color);">${row.category}</div>
-                </div>`).join('');
+              const tableRows = createThemesTable(cliftonThemes, true);
               
               result = `
                 <div class="mt-4 fade-in w-full">
@@ -544,7 +602,7 @@
                         <div class="flex-1">THEME</div>
                         <div class="w-56 text-right">CATEGORY</div>
                       </div>
-                      <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRowsV2}</div>
+                      <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
                     </div>
                   </div>
                 </div>`;
@@ -557,22 +615,7 @@
                 { name: 'Judging', pct: 61, opposite: 'Prospecting' },
                 { name: 'Assertive', pct: 78, opposite: 'Turbulent' }
               ];
-              
-              let rows = traits.map(t => {
-                let labelText = t.name === 'Thinking' ? `${100 - t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
-                return `
-                  <div class="text-xs mb-4">
-                    <div class="flex items-center justify-between mb-1.5">
-                      <span style="color: var(--text-color);">${esc(t.name)}</span>
-                      <span style="color: var(--secondary-color);">${esc(t.opposite)}</span>
-                    </div>
-                    <div style="position:relative; height:16px; width:100%; background: var(--surface-color); border-radius:8px; border:1px solid var(--border-color);">
-                      <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:var(--secondary-color); border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
-                      <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:var(--secondary-color); opacity:0.3;"></div>
-                    </div>
-                    <div style="margin-top:4px; text-align:center; font-size:10px; color: var(--secondary-color);">${labelText}</div>
-                  </div>`;
-              }).join('');
+              const rows = createMBTIRows(traits, false);
 
               const strengths = [
                 { name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' },
@@ -580,32 +623,7 @@
                 { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' },
                 { name: 'Executing', pct: 16.5057, pattern: 'dots' }
               ];
-              
-              const patternDefs1 = `
-                <svg width="0" height="0">
-                  <defs>
-                    <pattern id="v10-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="var(--secondary-color)"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
-                    <pattern id="v10-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="var(--secondary-color)"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
-                    <pattern id="v10-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="var(--secondary-color)"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
-                  </defs>
-                </svg>`;
-              
-              let barHTML1 = patternDefs1 + strengths.map(s => {
-                let fillVal = s.pattern === 'solid' ? 'var(--secondary-color)' : `url(#v10-${s.pattern}-pattern)`;
-                return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}"/></svg>`;
-              }).join('');
-              
-              const strengthsRows = strengths.map(s => {
-                let fillVal = s.pattern === 'solid' ? 'var(--secondary-color)' : `url(#v10-${s.pattern}-pattern)`;
-                return `
-                <div class="text-xs flex items-center justify-between" style="color: var(--text-color);">
-                  <div class="flex items-center gap-2">
-                    <svg width="12" height="12" style="border:1px solid var(--border-color);"><rect x="0" y="0" width="12" height="12" fill="${fillVal}"/></svg>
-                    <span>${esc(s.name)}</span>
-                  </div>
-                  <span style="color: var(--secondary-color);">${s.pct.toFixed(1)}%</span>
-                </div>`;
-              }).join('');
+              const { barHTML, strengthsRows } = createStrengthsHTML(strengths, false);
               
               const cliftonThemes = [
                 { rank: '1', theme: 'Maximizer', category: 'Influencing' },
@@ -614,13 +632,7 @@
                 { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
                 { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }
               ];
-              
-              const tableRows = cliftonThemes.map(row => `
-                <div class="flex text-xs border-b last:border-0" style="border-color: var(--border-color); padding:8px 0;">
-                  <div class="w-8" style="color: var(--secondary-color);">${row.rank}</div>
-                  <div class="flex-1 truncate" style="color: var(--text-color);">${row.theme}</div>
-                  <div class="w-56 text-right truncate" style="color: var(--secondary-color);">${row.category}</div>
-                </div>`).join('');
+              const tableRows = createThemesTable(cliftonThemes, false);
 
               result = `
                 <div class="mt-4 fade-in w-full">
@@ -629,7 +641,7 @@
                     <div class="space-y-1 mb-6">${rows}</div>
                     
                     <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color: var(--border-color); color: var(--secondary-color);">CliftonStrengths: Strategic Thinking</div>
-                    <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML1}</div>
+                    <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
                     <div class="space-y-2 mb-6">${strengthsRows}</div>
                     
                     <div class="mt-4 pt-2" style="overflow-x:auto;">
@@ -702,6 +714,8 @@
         
         // CSS変数を更新するだけで全体の色が変わる
         document.documentElement.style.setProperty('--primary-color', newColor);
+        document.documentElement.style.setProperty('--primary-bg', newColor + '26'); // 15% opacity
+        document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40'); // 25% opacity
         
         return `<div class="my-3 text-xs" style="color: var(--primary-color);">Theme color successfully changed to ${esc(args[0])}.</div>`;
       },
@@ -911,14 +925,61 @@
     document.getElementById('app').addEventListener('click', (e) => {
       if (window.getSelection().toString()) return;
       if (e.target.tagName === 'A' || e.target.closest('a') || e.target.closest('.cursor-pointer') || e.target.tagName === 'INPUT') return;
+      // ウィンドウボタンのクリック時はフォーカスを奪わない
+      if (e.target.classList.contains('window-btn')) return;
+      
       cmdInput.focus();
     });
 
     function updateTime() {
-      document.getElementById('status-right').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+      const statusElement = document.getElementById('status-right');
+      if (statusElement) {
+        statusElement.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+      }
     }
     setInterval(updateTime, 1000);
     updateTime();
+
+    // === WINDOW BUTTONS LOGIC ===
+    const btnClose = document.getElementById('btn-close');
+    const btnMinimize = document.getElementById('btn-minimize');
+    const btnMaximize = document.getElementById('btn-maximize');
+
+    // 赤：シャットダウン
+    btnClose.addEventListener('click', () => {
+      const app = document.getElementById('app');
+      app.style.opacity = '0'; // フェードアウト
+      setTimeout(() => {
+        // 真っ暗な画面にメッセージを表示
+        document.body.innerHTML = `
+          <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:#000; color:var(--secondary-color); cursor:pointer;" onclick="location.reload()">
+            <div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div>
+            <div class="hover:underline" style="color:var(--primary-color); animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>
+          </div>
+        `;
+      }, 500);
+    });
+
+    // 黄：マトリックスエフェクト
+    btnMinimize.addEventListener('click', async (e) => {
+      e.stopPropagation(); // クリックイベントの伝播を防ぎ、即座に終了するのを防止する
+      const result = await commands.matrix();
+      if (result) await printToOutput(result, 100);
+    });
+
+    // 緑：フルスクリーン
+    btnMaximize.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          // iframeなどフルスクリーンが許可されていない環境の場合のフォールバックエラー表示
+          printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`, 0);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
 
     boot();
   </script>
