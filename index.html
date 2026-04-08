@@ -802,7 +802,7 @@
         { text: 'Initializing terminal...', delay: 250 },
         { text: `Connecting to <span style="font-weight:bold;">Bitcoin Mainnet</span>... [NG]`, delay: 450 },
         { text: `Loading profile: ${config.display_name}`, delay: 400 },
-        { text: `<span style="color: var(--primary-color);">Web2</span> system ready.`, delay: 300 },
+        { text: `<span style="color: var(--primary-color);">Web2</span> standalone system ready.`, delay: 300 },
         { text: '', delay: 150 },
       ];
 
@@ -823,10 +823,10 @@
         <pre class="logo-ascii text-xs md:text-sm glow m-0 leading-tight" style="color: var(--primary-color);">
 ███████╗████████╗
 ██╔════╝╚══██╔══╝
-███████╗   ██║
-╚════██║   ██║
-███████║   ██║
-╚══════╝   ╚═╝</pre>
+███████╗<span style="opacity:0">╚══</span>██║
+╚════██║<span style="opacity:0">╚══</span>██║
+███████║<span style="opacity:0">╚══</span>██║
+╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
           <div style="color: var(--primary-color);">${esc(config.display_name)}</div>
           <div style="color: var(--secondary-color);">${esc(config.job_title)}</div>
