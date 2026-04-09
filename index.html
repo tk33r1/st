@@ -161,22 +161,10 @@
       animation: dance 1s ease-in-out infinite;
       margin-left: 8px;
     }
-
-    @keyframes shake {
-      0% { transform: translate(1px, 1px) rotate(0deg); }
-      10% { transform: translate(-1px, -2px) rotate(-1deg); }
-      20% { transform: translate(-3px, 0px) rotate(1deg); }
-      30% { transform: translate(3px, 2px) rotate(0deg); }
-      40% { transform: translate(1px, -1px) rotate(1deg); }
-      50% { transform: translate(-1px, 2px) rotate(-1deg); }
-      60% { transform: translate(-3px, 1px) rotate(0deg); }
-      70% { transform: translate(3px, 1px) rotate(-1deg); }
-      80% { transform: translate(-1px, -1px) rotate(1deg); }
-      90% { transform: translate(1px, 2px) rotate(0deg); }
-      100% { transform: translate(1px, -2px) rotate(-1deg); }
-    }
-    .shake-animation {
-      animation: shake 0.3s infinite;
+    
+    @keyframes breatheSlow {
+      0%, 100% { transform: scale(1); opacity: 0.1; }
+      50% { transform: scale(1.6); opacity: 0.8; }
     }
 
     .scanline {
@@ -231,6 +219,41 @@
     .window-btn:active {
       transform: scale(0.9);
     }
+
+    /* === Choreomania Mode Animations === */
+    body.choreomania-active {
+      --mouse-x: 0.5;
+      --mouse-y: 0.5;
+      filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5);
+    }
+    body.choreomania-active #app * {
+      transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s;
+      animation: none !important; /* fade-in等によるtransform固定を解除し、全て動くようにする */
+    }
+    body.choreomania-active #app .fade-in {
+      opacity: 1 !important; /* アニメーション解除により opacity: 0 に戻るのを防ぐ */
+    }
+    body.choreomania-active #app *:nth-child(odd):not(input, .scanline, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer) {
+      transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important;
+    }
+    body.choreomania-active #app *:nth-child(even):not(input, .scanline, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer) {
+      transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important;
+    }
+    body.choreomania-active #app span {
+      display: inline-block;
+    }
+    body.choreomania-active #app span, 
+    body.choreomania-active #app a, 
+    body.choreomania-active #app div.text-xs,
+    body.choreomania-active #app div.text-sm {
+      color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important;
+      text-shadow: 0 0 8px currentColor;
+    }
+    body.choreomania-active #app svg {
+      color: hsl(calc(var(--mouse-y) * 360), 80%, 60%) !important;
+      fill: currentColor;
+      transform: rotate(calc((var(--mouse-x) - 0.5) * 90deg));
+    }
   </style>
  </head>
  <body>
@@ -238,7 +261,6 @@
    <div class="scanline"></div>
    <header class="flex items-center justify-between px-4 py-2 border-b" style="background: var(--surface-color);">
     <div class="flex gap-1.5 window-btn-group">
-     <!-- Added IDs, cursor styles, and titles for Mac-like buttons -->
      <div id="btn-close" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#f87171;" title="Close Terminal">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg>
      </div>
@@ -256,7 +278,7 @@
     </div>
    </header>
    
-   <main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1" style="scroll-behavior:smooth;">
+   <main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1" style="scroll-behavior:smooth; position: relative;">
     <div id="boot-area"></div>
     <div id="output-area"></div>
     <div class="hidden items-center gap-2 mt-4" id="input-line">
@@ -280,6 +302,10 @@
 
     let commandHistory = [];
     let historyIndex = -1;
+
+    let isDestroyed = false;
+    let destroyedElements = [];
+    let destroyInterval = null;
 
     // === PORTFOLIO DATA ===
     const projects = [
@@ -325,7 +351,9 @@
 
     function createMBTIRows(traits, isVer2) {
       return traits.map(t => {
-        let labelText = t.name === 'Thinking' ? `${100 - t.pct}% Feeling` : `${t.pct}% ${esc(t.name)}`;
+        let labelPct = t.pct >= 50 ? t.pct : 100 - t.pct;
+        let labelName = t.pct >= 50 ? t.name : t.opposite;
+        let labelText = `${labelPct}% ${esc(labelName)}`;
         let colorVar = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
         return `
           <div class="text-xs mb-4">
@@ -384,6 +412,113 @@
           <div class="w-56 text-right truncate" style="color: var(--secondary-color);">${row.category}</div>
         </div>`).join('');
     }
+
+    window.executeIdentifyVersion = async (version, targetId) => {
+      let result = '';
+      if (version === '2.0') {
+        const traits = [
+          { name: 'Extraverted', pct: 54, opposite: 'Introverted' },
+          { name: 'Intuitive', pct: 94, opposite: 'Observant' },
+          { name: 'Thinking', pct: 41, opposite: 'Feeling' },
+          { name: 'Judging', pct: 46, opposite: 'Prospecting' },
+          { name: 'Assertive', pct: 83, opposite: 'Turbulent' }
+        ];
+        const rows = createMBTIRows(traits, true);
+        
+        const strengths = [
+          { name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' },
+          { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' },
+          { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' },
+          { name: 'Executing', pct: 15.034, pattern: 'dots' }
+        ];
+        const { barHTML, strengthsRows } = createStrengthsHTML(strengths, true);
+        
+        const cliftonThemes = [
+          { rank: '1', theme: 'Maximizer', category: 'Influencing' },
+          { rank: '2', theme: 'Input', category: 'Strategic Thinking' },
+          { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' },
+          { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
+          { rank: '5', theme: 'Individualization', category: 'Relationship Building' }
+        ];
+        const tableRows = createThemesTable(cliftonThemes, true);
+        
+        result = `
+          <div class="mt-4 fade-in w-full">
+            <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
+              <a href="https://tk.st/mbti" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: var(--primary-color);">MBTI: Campaigner (ENFP-A) 🔗</a>
+              <div class="space-y-1 mb-6">${rows}</div>
+              
+              <a href="https://tk.st/cliftonstrengths" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline" style="border-color: var(--border-color); color: var(--primary-color);">CliftonStrengths: Strategic Thinking 🔗</a>
+              <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
+              <div class="space-y-2 mb-6">${strengthsRows}</div>
+              
+              <div class="mt-4 pt-2" style="overflow-x:auto;">
+                <div class="flex text-[10px] font-bold mb-1" style="color: var(--primary-color); min-width:400px;">
+                  <div class="w-8">RANK</div>
+                  <div class="flex-1">THEME</div>
+                  <div class="w-56 text-right">CATEGORY</div>
+                </div>
+                <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
+              </div>
+            </div>
+          </div>`;
+
+      } else if (version === '1.0') {
+        const traits = [
+          { name: 'Extraverted', pct: 61, opposite: 'Introverted' },
+          { name: 'Intuitive', pct: 69, opposite: 'Observant' },
+          { name: 'Thinking', pct: 66, opposite: 'Feeling' },
+          { name: 'Judging', pct: 61, opposite: 'Prospecting' },
+          { name: 'Assertive', pct: 78, opposite: 'Turbulent' }
+        ];
+        const rows = createMBTIRows(traits, false);
+
+        const strengths = [
+          { name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' },
+          { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' },
+          { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' },
+          { name: 'Executing', pct: 16.5057, pattern: 'dots' }
+        ];
+        const { barHTML, strengthsRows } = createStrengthsHTML(strengths, false);
+        
+        const cliftonThemes = [
+          { rank: '1', theme: 'Maximizer', category: 'Influencing' },
+          { rank: '2', theme: 'Learner', category: 'Strategic Thinking' },
+          { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' },
+          { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
+          { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }
+        ];
+        const tableRows = createThemesTable(cliftonThemes, false);
+
+        result = `
+          <div class="mt-4 fade-in w-full">
+            <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
+              <div class="text-sm font-bold glow mb-4" style="color: var(--secondary-color);">MBTI: Commander (ENTJ-A)</div>
+              <div class="space-y-1 mb-6">${rows}</div>
+              
+              <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color: var(--border-color); color: var(--secondary-color);">CliftonStrengths: Strategic Thinking</div>
+              <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
+              <div class="space-y-2 mb-6">${strengthsRows}</div>
+              
+              <div class="mt-4 pt-2" style="overflow-x:auto;">
+                <div class="flex text-[10px] font-bold mb-1" style="color: var(--secondary-color); min-width:400px;">
+                  <div class="w-8">RANK</div>
+                  <div class="flex-1">THEME</div>
+                  <div class="w-56 text-right">CATEGORY</div>
+                </div>
+                <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
+              </div>
+            </div>
+          </div>`;
+      }
+      
+      const container = document.getElementById(`identify-result-${targetId}`);
+      if (container) {
+        container.innerHTML = result;
+      } else {
+        await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`, 0);
+      }
+    };
 
     // === COMMANDS ===
     const commands = {
@@ -532,138 +667,27 @@
 
       identify() {
         const uniqueId = 'id-' + Date.now();
-        return new Promise(resolve => {
-          const html = `
-            <div class="my-3 w-[90%] max-w-[800px]">
-              <div class="text-sm font-bold glow mb-3" style="color: var(--primary-color);">Please select a profile to initialize:</div>
-              <div class="space-y-2">
-                <div class="p-3 border rounded cursor-pointer transition-colors bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.executeIdentifyVersion('2.0', '${uniqueId}')">
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-bold" style="color: var(--primary-color);">ver.2.0 [ACTIVE]</span>
-                    <span class="text-[10px]" style="color: var(--secondary-color);">2025.08.20</span>
-                  </div>
-                  <div class="text-xs" style="color: var(--secondary-color);">Post-traffic accident (MBTI & Strengths)</div>
+        return `
+          <div class="my-3 w-[90%] max-w-[800px]">
+            <div class="text-sm font-bold glow mb-3" style="color: var(--primary-color);">Please select a profile to initialize:</div>
+            <div class="space-y-2">
+              <div class="p-3 border rounded cursor-pointer transition-colors bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.executeIdentifyVersion('2.0', '${uniqueId}')">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold" style="color: var(--primary-color);">ver.2.0 [ACTIVE]</span>
+                  <span class="text-[10px]" style="color: var(--secondary-color);">2025.08.20</span>
                 </div>
-                <div class="p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.executeIdentifyVersion('1.0', '${uniqueId}')">
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-bold" style="color: var(--secondary-color);">ver.1.0 [ARCHIVED]</span>
-                    <span class="text-[10px]" style="color: var(--secondary-color);">2025.07.10</span>
-                  </div>
-                  <div class="text-xs" style="color: var(--secondary-color);">Pre-traffic accident (MBTI & Strengths)</div>
-                </div>
+                <div class="text-xs" style="color: var(--secondary-color);">Post-traffic accident (MBTI & Strengths)</div>
               </div>
-              <div id="identify-result-${uniqueId}"></div>
-            </div>`;
-          
-          printToOutput(html, 100).then(resolve);
-          
-          window.executeIdentifyVersion = async (version, targetId) => {
-            let result = '';
-            if (version === '2.0') {
-              const traits = [
-                { name: 'Extraverted', pct: 56, opposite: 'Introverted' },
-                { name: 'Intuitive', pct: 94, opposite: 'Observant' },
-                { name: 'Thinking', pct: 49, opposite: 'Feeling' },
-                { name: 'Judging', pct: 53, opposite: 'Prospecting' },
-                { name: 'Assertive', pct: 83, opposite: 'Turbulent' }
-              ];
-              const rows = createMBTIRows(traits, true);
-              
-              const strengths = [
-                { name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' },
-                { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' },
-                { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' },
-                { name: 'Executing', pct: 15.034, pattern: 'dots' }
-              ];
-              const { barHTML, strengthsRows } = createStrengthsHTML(strengths, true);
-              
-              const cliftonThemes = [
-                { rank: '1', theme: 'Maximizer', category: 'Influencing' },
-                { rank: '2', theme: 'Input', category: 'Strategic Thinking' },
-                { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' },
-                { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
-                { rank: '5', theme: 'Individualization', category: 'Relationship Building' }
-              ];
-              const tableRows = createThemesTable(cliftonThemes, true);
-              
-              result = `
-                <div class="mt-4 fade-in w-full">
-                  <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
-                    <a href="https://tk.st/mbti" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: var(--primary-color);">MBTI: Protagonist (ENFJ-A) 🔗</a>
-                    <div class="space-y-1 mb-6">${rows}</div>
-                    
-                    <a href="https://tk.st/cliftonstrengths" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline" style="border-color: var(--border-color); color: var(--primary-color);">CliftonStrengths: Strategic Thinking 🔗</a>
-                    <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
-                    <div class="space-y-2 mb-6">${strengthsRows}</div>
-                    
-                    <div class="mt-4 pt-2" style="overflow-x:auto;">
-                      <div class="flex text-[10px] font-bold mb-1" style="color: var(--primary-color); min-width:400px;">
-                        <div class="w-8">RANK</div>
-                        <div class="flex-1">THEME</div>
-                        <div class="w-56 text-right">CATEGORY</div>
-                      </div>
-                      <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
-                    </div>
-                  </div>
-                </div>`;
-
-            } else if (version === '1.0') {
-              const traits = [
-                { name: 'Extraverted', pct: 61, opposite: 'Introverted' },
-                { name: 'Intuitive', pct: 69, opposite: 'Observant' },
-                { name: 'Thinking', pct: 66, opposite: 'Feeling' },
-                { name: 'Judging', pct: 61, opposite: 'Prospecting' },
-                { name: 'Assertive', pct: 78, opposite: 'Turbulent' }
-              ];
-              const rows = createMBTIRows(traits, false);
-
-              const strengths = [
-                { name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' },
-                { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' },
-                { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' },
-                { name: 'Executing', pct: 16.5057, pattern: 'dots' }
-              ];
-              const { barHTML, strengthsRows } = createStrengthsHTML(strengths, false);
-              
-              const cliftonThemes = [
-                { rank: '1', theme: 'Maximizer', category: 'Influencing' },
-                { rank: '2', theme: 'Learner', category: 'Strategic Thinking' },
-                { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' },
-                { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
-                { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }
-              ];
-              const tableRows = createThemesTable(cliftonThemes, false);
-
-              result = `
-                <div class="mt-4 fade-in w-full">
-                  <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
-                    <div class="text-sm font-bold glow mb-4" style="color: var(--secondary-color);">MBTI: Commander (ENTJ-A)</div>
-                    <div class="space-y-1 mb-6">${rows}</div>
-                    
-                    <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color: var(--border-color); color: var(--secondary-color);">CliftonStrengths: Strategic Thinking</div>
-                    <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
-                    <div class="space-y-2 mb-6">${strengthsRows}</div>
-                    
-                    <div class="mt-4 pt-2" style="overflow-x:auto;">
-                      <div class="flex text-[10px] font-bold mb-1" style="color: var(--secondary-color); min-width:400px;">
-                        <div class="w-8">RANK</div>
-                        <div class="flex-1">THEME</div>
-                        <div class="w-56 text-right">CATEGORY</div>
-                      </div>
-                      <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
-                    </div>
-                  </div>
-                </div>`;
-            }
-            
-            const container = document.getElementById(`identify-result-${targetId || uniqueId}`);
-            if (container) {
-              container.innerHTML = result;
-            } else {
-              await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`, 0);
-            }
-          };
-        });
+              <div class="p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.executeIdentifyVersion('1.0', '${uniqueId}')">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold" style="color: var(--secondary-color);">ver.1.0 [ARCHIVED]</span>
+                  <span class="text-[10px]" style="color: var(--secondary-color);">2025.07.10</span>
+                </div>
+                <div class="text-xs" style="color: var(--secondary-color);">Pre-traffic accident (MBTI & Strengths)</div>
+              </div>
+            </div>
+            <div id="identify-result-${uniqueId}"></div>
+          </div>`;
       },
 
       clear() {
@@ -712,29 +736,208 @@
         
         const newColor = colors[args[0].toLowerCase()];
         
-        // CSS変数を更新するだけで全体の色が変わる
         document.documentElement.style.setProperty('--primary-color', newColor);
-        document.documentElement.style.setProperty('--primary-bg', newColor + '26'); // 15% opacity
-        document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40'); // 25% opacity
+        document.documentElement.style.setProperty('--primary-bg', newColor + '26');
+        document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40');
         
         return `<div class="my-3 text-xs" style="color: var(--primary-color);">Theme color successfully changed to ${esc(args[0])}.</div>`;
       },
       
-      date() {
-        const d = new Date().toString();
-        return `<div class="my-3 text-xs" style="color: var(--secondary-color);">${esc(d)}</div>`;
-      },
-      
-      sudo() {
-        return `<div class="my-3 text-xs text-red-500 font-bold">sudo: permission denied. This incident will be reported.</div>`;
-      },
-      
       destroy() {
-        document.body.classList.add('shake-animation');
-        setTimeout(() => {
-          document.body.classList.remove('shake-animation');
-        }, 1500);
-        return `<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM COMPROMISED.<br>EMERGENCY PROTOCOL ACTIVATED.</div>`;
+        if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold">System is already destroyed. Waiting for 'rebuild'.</div>`;
+        
+        isDestroyed = true;
+        destroyedElements = [];
+        
+        // 入力欄と重要なラッパー領域以外を落下対象にする
+        const elements = Array.from(document.querySelectorAll('#app *:not(.scanline, #app, #terminal-body, #output-area, #input-line, #input-line *)'));
+        
+        destroyInterval = setInterval(() => {
+          for (let i = 0; i < 5; i++) {
+            if (elements.length === 0) {
+              clearInterval(destroyInterval);
+              break;
+            }
+            const idx = Math.floor(Math.random() * elements.length);
+            const el = elements.splice(idx, 1)[0];
+            
+            if (el && el.style) {
+              // 復元のために元のstyleを保存
+              destroyedElements.push({
+                element: el,
+                cssText: el.style.cssText
+              });
+
+              el.style.transition = 'all 2s ease-in';
+              el.style.transform = `translate(${(Math.random() - 0.5) * 300}px, ${window.innerHeight}px) rotate(${(Math.random() - 0.5) * 360}deg)`;
+              el.style.opacity = '0';
+              el.style.pointerEvents = 'none';
+            }
+          }
+        }, 30);
+
+        return `<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`;
+      },
+
+      rebuild() {
+        if (!isDestroyed) return null;
+        
+        clearInterval(destroyInterval);
+        
+        let elements = [...destroyedElements];
+        
+        let rebuildInterval = setInterval(() => {
+          for (let i = 0; i < 5; i++) {
+            if (elements.length === 0) {
+              clearInterval(rebuildInterval);
+              isDestroyed = false;
+              destroyedElements = [];
+              break;
+            }
+            const item = elements.pop();
+            if (item.element) {
+              item.element.style.transition = 'all 1s ease-out';
+              item.element.style.transform = 'translate(0px, 0px) rotate(0deg)';
+              item.element.style.opacity = '1';
+              item.element.style.pointerEvents = 'auto';
+              
+              // アニメーション完了後に元のCSSに戻す
+              setTimeout(() => {
+                item.element.style.cssText = item.cssText;
+              }, 1000);
+            }
+          }
+        }, 30);
+        
+        return `<div class="my-3 text-xs" style="color: var(--primary-color);">System rebuild initiated... restoring core components.</div>`;
+      },
+
+      choreomania() {
+        document.body.classList.toggle('choreomania-active');
+        const isActive = document.body.classList.contains('choreomania-active');
+        
+        if (isActive) {
+          document.body.style.setProperty('--mouse-x', 0.5);
+          document.body.style.setProperty('--mouse-y', 0.5);
+          return `<div class="my-3 text-xs font-bold glow" style="color: #ff00ff;">CHOREOMANIA MODE: ACTIVATED.<br>Transcending the ego.</div>`;
+        } else {
+          document.body.style.removeProperty('--mouse-x');
+          document.body.style.removeProperty('--mouse-y');
+          return `<div class="my-3 text-xs" style="color: var(--secondary-color);">Choreomania mode deactivated. Back to reality.</div>`;
+        }
+      },
+
+      meditation() {
+        return new Promise(resolve => {
+          // 背景のオーバーレイ（奥行きのある深い暗闇）
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.width = '100%';
+          overlay.style.height = '100%';
+          overlay.style.background = 'radial-gradient(circle at center, #111827 0%, #000000 100%)';
+          overlay.style.zIndex = '10000';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.opacity = '0';
+          overlay.style.transition = 'opacity 4s ease';
+          
+          // 呼吸をガイドする光のオーブ
+          const circle = document.createElement('div');
+          circle.style.position = 'absolute';
+          circle.style.width = '200px';
+          circle.style.height = '200px';
+          circle.style.borderRadius = '50%';
+          circle.style.background = 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%)';
+          circle.style.boxShadow = '0 0 60px rgba(74, 222, 128, 0.05), inset 0 0 40px rgba(74, 222, 128, 0.05)';
+          circle.style.animation = 'breatheSlow 10s infinite ease-in-out';
+          
+          // メッセージ表示領域
+          const textContainer = document.createElement('div');
+          textContainer.style.position = 'absolute';
+          textContainer.style.color = 'rgba(255, 255, 255, 0.5)';
+          textContainer.style.fontFamily = 'monospace';
+          textContainer.style.fontSize = '13px';
+          textContainer.style.textAlign = 'center';
+          textContainer.style.letterSpacing = '0.05em';
+          textContainer.style.lineHeight = '2';
+          textContainer.style.pointerEvents = 'none'; // クリックの邪魔にならないように
+          textContainer.style.transition = 'opacity 3s ease';
+          textContainer.style.opacity = '0';
+
+          // 瞑想を導く短いメッセージ群
+          const messages = [
+            "Look slightly forward.",
+            "Inhale deeply...",
+            "...and exhale gently.",
+            "Quietly close your eyes.",
+            "Enjoy the feeling of simply being still.",
+            "Feel the weight of your body.",
+            "Notice the sounds around you.",
+            "Let them be.",
+            "Feel your natural breath.",
+            "Let your mind be completely free.",
+            "Bring your awareness back to the present.",
+            "Take a moment to notice how you feel."
+          ];
+          
+          overlay.appendChild(circle);
+          overlay.appendChild(textContainer);
+          document.body.appendChild(overlay);
+          
+          let isMeditating = true;
+
+          // フェードイン開始
+          setTimeout(() => { overlay.style.opacity = '1'; }, 100);
+
+          // メッセージを順に表示するループ処理 (async/awaitによる安全な実装)
+          const runMeditation = async () => {
+            await new Promise(r => setTimeout(r, 4000)); // 画面が完全に暗くなるのを待つ
+
+            for (const msg of messages) {
+              if (!isMeditating) break;
+
+              // テキストをセットしてフェードイン
+              textContainer.innerHTML = msg;
+              textContainer.style.opacity = '1';
+              
+              // 7秒間表示
+              await new Promise(r => setTimeout(r, 7000));
+              if (!isMeditating) break;
+              
+              // フェードアウト
+              textContainer.style.opacity = '0';
+              // 3秒間の完全な静寂
+              await new Promise(r => setTimeout(r, 3000));
+            }
+
+            // 全メッセージ終了後は静寂を保つ
+            if (isMeditating) {
+              textContainer.innerHTML = "Breathe...<br><span style='font-size:10px; opacity:0.3;'>(Press ESC or Click to return)</span>";
+              textContainer.style.opacity = '1';
+            }
+          };
+
+          runMeditation();
+          
+          // 終了処理
+          const exitMeditation = (e) => {
+            if (e.type === 'keydown' && e.key !== 'Escape') return;
+            isMeditating = false; // 表示ループを中断
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.remove();
+              document.removeEventListener('click', exitMeditation);
+              document.removeEventListener('keydown', exitMeditation);
+              resolve(`<div class="my-3 text-xs" style="color: var(--secondary-color);">Returned to reality.</div>`);
+            }, 4000); // ゆっくりと現実に戻る
+          };
+          
+          document.addEventListener('click', exitMeditation);
+          document.addEventListener('keydown', exitMeditation);
+        });
       },
 
       matrix() {
@@ -750,26 +953,29 @@
           document.body.appendChild(canvas);
           const ctx = canvas.getContext('2d');
           
-          let w = canvas.width = window.innerWidth;
-          let h = canvas.height = window.innerHeight;
+          const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+          };
+          resizeCanvas();
+          window.addEventListener('resize', resizeCanvas);
           
           const fontSize = 14;
-          const columns = w / fontSize;
+          const columns = canvas.width / fontSize;
           const drops = [];
           for(let x = 0; x < columns; x++) drops[x] = 1;
           
-          // 現在のプライマリカラーを取得
           const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
 
           function draw() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, w, h);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = primaryColor;
             ctx.font = fontSize + 'px monospace';
             for(let i = 0; i < drops.length; i++) {
               const text = String.fromCharCode(0x30A0 + Math.random() * 96);
               ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-              if(drops[i] * fontSize > h && Math.random() > 0.975) drops[i] = 0;
+              if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
               drops[i]++;
             }
           }
@@ -780,6 +986,7 @@
             if(e.type === 'keydown' && e.key !== 'Escape') return;
             clearInterval(interval);
             canvas.remove();
+            window.removeEventListener('resize', resizeCanvas);
             window.removeEventListener('keydown', endMatrix);
             window.removeEventListener('click', endMatrix);
             resolve(`<div class="text-xs mt-2" style="color: var(--primary-color);">Matrix simulation ended.</div>`);
@@ -798,16 +1005,26 @@
             <div style="color: var(--primary-color);" class="glow text-sm font-bold mb-2">Hidden Commands:</div>
             <div class="grid gap-1 text-xs" style="color: var(--text-color);">
               <div class="flex"><span class="w-24" style="color: var(--primary-color);">akutagawa</span><span>- A message from the past</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">date</span><span>- Display current date and time</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">destroy</span><span>- Do not use</span></div>
+              <div class="flex"><span class="w-24" style="color: var(--primary-color);">choreomania</span><span>- Merging souls in ecstasy</span></div>
+              <div class="flex"><span class="w-24" style="color: var(--primary-color);">destroy</span><span>- And rebuild</span></div>
               <div class="flex"><span class="w-24" style="color: var(--primary-color);">history</span><span>- Show command history</span></div>
               <div class="flex"><span class="w-24" style="color: var(--primary-color);">matrix</span><span>- Enter the Matrix</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">sudo</span><span>- Execute a command as superuser</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">theme</span><span>- Change terminal color [color]</span></div>
+              <div class="flex"><span class="w-24" style="color: var(--primary-color);">meditation</span><span>- Clear your mind</span></div>
+              <div class="flex"><span class="w-24" style="color: var(--primary-color);">theme</span><span>- Change terminal color</span></div>
             </div>
           </div>`;
       }
     };
+
+    // === MOUSE EVENT FOR CHOREOMANIA ===
+    document.addEventListener('mousemove', (e) => {
+      if (document.body.classList.contains('choreomania-active')) {
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+        document.body.style.setProperty('--mouse-x', x);
+        document.body.style.setProperty('--mouse-y', y);
+      }
+    });
 
     // === BOOT SEQUENCE ===
     async function boot() {
@@ -869,10 +1086,14 @@
       commandHistory.unshift(trimmed);
       historyIndex = -1;
 
-      // 引数の解析
       const parts = trimmed.split(/\s+/);
       const cmd = parts[0].toLowerCase();
       const args = parts.slice(1);
+
+      if (isDestroyed && cmd !== 'rebuild') {
+        await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+        return;
+      }
 
       if (commands[cmd]) {
         const result = await commands[cmd](args);
@@ -925,7 +1146,6 @@
     document.getElementById('app').addEventListener('click', (e) => {
       if (window.getSelection().toString()) return;
       if (e.target.tagName === 'A' || e.target.closest('a') || e.target.closest('.cursor-pointer') || e.target.tagName === 'INPUT') return;
-      // ウィンドウボタンのクリック時はフォーカスを奪わない
       if (e.target.classList.contains('window-btn')) return;
       
       cmdInput.focus();
@@ -945,12 +1165,10 @@
     const btnMinimize = document.getElementById('btn-minimize');
     const btnMaximize = document.getElementById('btn-maximize');
 
-    // 赤：シャットダウン
     btnClose.addEventListener('click', () => {
       const app = document.getElementById('app');
-      app.style.opacity = '0'; // フェードアウト
+      app.style.opacity = '0';
       setTimeout(() => {
-        // 真っ暗な画面にメッセージを表示
         document.body.innerHTML = `
           <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:#000; color:var(--secondary-color); cursor:pointer;" onclick="location.reload()">
             <div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div>
@@ -960,18 +1178,15 @@
       }, 500);
     });
 
-    // 黄：マトリックスエフェクト
     btnMinimize.addEventListener('click', async (e) => {
-      e.stopPropagation(); // クリックイベントの伝播を防ぎ、即座に終了するのを防止する
+      e.stopPropagation();
       const result = await commands.matrix();
       if (result) await printToOutput(result, 100);
     });
 
-    // 緑：フルスクリーン
     btnMaximize.addEventListener('click', () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(err => {
-          // iframeなどフルスクリーンが許可されていない環境の場合のフォールバックエラー表示
           printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`, 0);
         });
       } else {
