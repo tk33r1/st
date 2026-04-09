@@ -228,10 +228,10 @@
     }
     body.choreomania-active #app * {
       transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s;
-      animation: none !important; /* fade-in等によるtransform固定を解除し、全て動くようにする */
+      animation: none !important;
     }
     body.choreomania-active #app .fade-in {
-      opacity: 1 !important; /* アニメーション解除により opacity: 0 に戻るのを防ぐ */
+      opacity: 1 !important;
     }
     body.choreomania-active #app *:nth-child(odd):not(input, .scanline, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer) {
       transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important;
@@ -245,7 +245,8 @@
     body.choreomania-active #app span, 
     body.choreomania-active #app a, 
     body.choreomania-active #app div.text-xs,
-    body.choreomania-active #app div.text-sm {
+    body.choreomania-active #app div.text-sm,
+    body.choreomania-active #app .choreo-text {
       color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important;
       text-shadow: 0 0 8px currentColor;
     }
@@ -257,14 +258,14 @@
   </style>
  </head>
  <body>
-  <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
+  <div id="app" class="min-h-screen w-full flex flex-col" style="transition: opacity 0.5s;">
    <div class="scanline"></div>
    <header class="flex items-center justify-between px-4 py-2 border-b" style="background: var(--surface-color);">
     <div class="flex gap-1.5 window-btn-group">
      <div id="btn-close" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#f87171;" title="Close Terminal">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg>
      </div>
-     <div id="btn-minimize" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#fbbf24;" title="Enter Matrix">
+     <div id="btn-minimize" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#fbbf24;" title="Minimize Terminal">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg>
      </div>
      <div id="btn-maximize" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#4ade80;" title="Toggle Fullscreen">
@@ -273,7 +274,7 @@
        </svg>
      </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()" title="Reload Terminal" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
      <span style="color: var(--primary-color);">▸</span> <span id="titlebar-name" class="text-xs tracking-wider" style="color: var(--secondary-color);">ST@portfolio:~</span>
     </div>
    </header>
@@ -293,21 +294,14 @@
   </div>
 
   <script>
-    // === CONFIG ===
-    const config = {
-      display_name: 'Shinya Takeda',
-      job_title: 'Digital Marketer',
-      location_text: 'Saitama, Japan',
-    };
+    // === CONFIG & HELPERS ===
+    const config = { display_name: 'Shinya Takeda', job_title: 'Digital Marketer', location_text: 'Saitama, Japan' };
+    const $ = id => document.getElementById(id);
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+    const esc = str => { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; };
 
-    let commandHistory = [];
-    let historyIndex = -1;
+    let commandHistory = [], historyIndex = -1, isDestroyed = false, destroyedElements = [], destroyInterval = null, currentVersion = 1;
 
-    let isDestroyed = false;
-    let destroyedElements = [];
-    let destroyInterval = null;
-
-    // === PORTFOLIO DATA ===
     const projects = [
       { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', tech: 'Big room House, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj' },
       { name: '/job', desc: 'An Optimization and data-driven growth strategy.', tech: 'EC, AB Testing, UIUX, Search Engine, Web ads, GA4, Looker, ADK', link: 'https://tk.st/job' },
@@ -316,742 +310,321 @@
       { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch' }
     ];
 
-    // === HELPER FUNCTIONS ===
-    window.toggleBitcoinMenu = (targetId, allIds) => {
-      allIds.forEach(id => {
-        const el = document.getElementById(id);
-        if(id === targetId) {
-          el.classList.toggle('hidden');
-          el.classList.toggle('flex');
-        } else {
-          el.classList.add('hidden');
-          el.classList.remove('flex');
-        }
-      });
+    window.toggleBtc = (targetId, allIds) => allIds.forEach(id => {
+      const el = $(id), isTarget = id === targetId;
+      el.classList.toggle('hidden', !isTarget); el.classList.toggle('flex', isTarget);
+    });
+
+    async function printToOutput(html, ms = 0) {
+      await delay(ms);
+      const div = document.createElement('div'); div.className = 'fade-in'; div.innerHTML = html;
+      $('output-area').appendChild(div);
+    }
+
+    // === UI GENERATORS ===
+    const createMBTIRows = (traits, isVer2) => traits.map(t => {
+      let pct = t.pct >= 50 ? t.pct : 100 - t.pct, name = t.pct >= 50 ? t.name : t.opposite, color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      return `
+        <div class="text-xs mb-4">
+          <div class="flex items-center justify-between mb-1.5"><span class="choreo-text" style="color: var(--text-color);">${esc(t.name)}</span><span class="choreo-text" style="color: var(--secondary-color);">${esc(t.opposite)}</span></div>
+          <div style="position:relative; height:16px; width:100%; background: var(--surface-color); border-radius:8px; border:1px solid var(--border-color);">
+            <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${color}; border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
+            <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${color}; opacity:0.3;"></div>
+          </div>
+          <div class="choreo-text" style="margin-top:4px; text-align:center; font-size:10px; color: var(--secondary-color);">${pct}% ${esc(name)}</div>
+        </div>`;
+    }).join('');
+
+    const createStrengthsHTML = (strengths, isVer2) => {
+      let color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)', vp = (isVer2 ? 'v2' : 'v1') + Date.now();
+      const patternDefs = `
+        <svg width="0" height="0"><defs>
+          <pattern id="${vp}-diagonal" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
+          <pattern id="${vp}-grid" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
+          <pattern id="${vp}-dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
+        </defs></svg>`;
+      const barHTML = patternDefs + strengths.map(s => `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg>`).join('');
+      const strengthsRows = strengths.map(s => `
+        <div class="text-xs flex items-center justify-between" style="color: var(--text-color);">
+          <div class="flex items-center gap-2"><svg width="12" height="12" style="border:1px solid var(--border-color);"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg><span class="choreo-text">${esc(s.name)}</span></div>
+          <span class="choreo-text" style="color: var(--secondary-color);">${s.pct.toFixed(1)}%</span>
+        </div>`).join('');
+      return { barHTML, strengthsRows };
     };
 
-    function esc(str) {
-      const d = document.createElement('div');
-      d.textContent = str;
-      return d.innerHTML;
-    }
+    const createThemesTable = (themes, isVer2) => themes.map(row => `
+      <div class="flex text-xs border-b last:border-0" style="border-color: var(--border-color); padding:8px 0;">
+        <div class="w-8 choreo-text" style="color: ${isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)'};">${row.rank}</div>
+        <div class="flex-1 truncate choreo-text" style="color: var(--text-color);">${row.theme}</div>
+        <div class="w-56 text-right truncate choreo-text" style="color: var(--secondary-color);">${row.category}</div>
+      </div>`).join('');
 
-    function printToOutput(html, delay = 0) {
-      return new Promise(resolve => {
-        setTimeout(() => {
-          const div = document.createElement('div');
-          div.className = 'fade-in';
-          div.style.animationDelay = '0s';
-          div.innerHTML = html;
-          document.getElementById('output-area').appendChild(div);
-          resolve();
-        }, delay);
-      });
-    }
-
-    function createMBTIRows(traits, isVer2) {
-      return traits.map(t => {
-        let labelPct = t.pct >= 50 ? t.pct : 100 - t.pct;
-        let labelName = t.pct >= 50 ? t.name : t.opposite;
-        let labelText = `${labelPct}% ${esc(labelName)}`;
-        let colorVar = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
-        return `
-          <div class="text-xs mb-4">
-            <div class="flex items-center justify-between mb-1.5">
-              <span style="color: var(--text-color);">${esc(t.name)}</span>
-              <span style="color: var(--secondary-color);">${esc(t.opposite)}</span>
-            </div>
-            <div style="position:relative; height:16px; width:100%; background: var(--surface-color); border-radius:8px; border:1px solid var(--border-color);">
-              <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${colorVar}; border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
-              <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${colorVar}; opacity:0.3;"></div>
-            </div>
-            <div style="margin-top:4px; text-align:center; font-size:10px; color: var(--secondary-color);">${labelText}</div>
-          </div>`;
-      }).join('');
-    }
-
-    function createStrengthsHTML(strengths, isVer2) {
-      let colorVar = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
-      let verPrefix = isVer2 ? 'v20' : 'v10';
-      
-      const patternDefs = `
-        <svg width="0" height="0">
-          <defs>
-            <pattern id="${verPrefix}-diagonal-pattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${colorVar}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
-            <pattern id="${verPrefix}-grid-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${colorVar}"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
-            <pattern id="${verPrefix}-dots-pattern" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${colorVar}"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
-          </defs>
-        </svg>`;
-
-      let barHTML = patternDefs + strengths.map(s => {
-        let fillVal = s.pattern === 'solid' ? colorVar : `url(#${verPrefix}-${s.pattern}-pattern)`;
-        return `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${fillVal}"/></svg>`;
-      }).join('');
-
-      const strengthsRows = strengths.map(s => {
-        let fillVal = s.pattern === 'solid' ? colorVar : `url(#${verPrefix}-${s.pattern}-pattern)`;
-        return `
-        <div class="text-xs flex items-center justify-between" style="color: var(--text-color);">
-          <div class="flex items-center gap-2">
-            <svg width="12" height="12" style="border:1px solid var(--border-color);"><rect x="0" y="0" width="12" height="12" fill="${fillVal}"/></svg>
-            <span>${esc(s.name)}</span>
-          </div>
-          <span style="color: var(--secondary-color);">${s.pct.toFixed(1)}%</span>
-        </div>`;
-      }).join('');
-
-      return { barHTML, strengthsRows };
-    }
-
-    function createThemesTable(themes, isVer2) {
-      let rankColorVar = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
-      return themes.map(row => `
-        <div class="flex text-xs border-b last:border-0" style="border-color: var(--border-color); padding:8px 0;">
-          <div class="w-8" style="color: ${rankColorVar};">${row.rank}</div>
-          <div class="flex-1 truncate" style="color: var(--text-color);">${row.theme}</div>
-          <div class="w-56 text-right truncate" style="color: var(--secondary-color);">${row.category}</div>
-        </div>`).join('');
-    }
+    const renderCmdList = (title, cmdList) => `
+      <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
+        <div style="color: var(--primary-color);" class="glow text-sm font-bold mb-2 choreo-text">${title}</div>
+        <div class="grid gap-1 text-xs" style="color: var(--text-color);">${cmdList.map(c => `<div class="flex"><span class="w-24 choreo-text" style="color: var(--primary-color);">${c[0]}</span><span class="choreo-text">- ${c[1]}</span></div>`).join('')}</div>
+        ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic choreo-text">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
+      </div>`;
 
     window.executeIdentifyVersion = async (version, targetId) => {
-      let result = '';
-      if (version === '2.0') {
-        const traits = [
-          { name: 'Extraverted', pct: 54, opposite: 'Introverted' },
-          { name: 'Intuitive', pct: 94, opposite: 'Observant' },
-          { name: 'Thinking', pct: 41, opposite: 'Feeling' },
-          { name: 'Judging', pct: 46, opposite: 'Prospecting' },
-          { name: 'Assertive', pct: 83, opposite: 'Turbulent' }
-        ];
-        const rows = createMBTIRows(traits, true);
-        
-        const strengths = [
-          { name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' },
-          { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' },
-          { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' },
-          { name: 'Executing', pct: 15.034, pattern: 'dots' }
-        ];
-        const { barHTML, strengthsRows } = createStrengthsHTML(strengths, true);
-        
-        const cliftonThemes = [
-          { rank: '1', theme: 'Maximizer', category: 'Influencing' },
-          { rank: '2', theme: 'Input', category: 'Strategic Thinking' },
-          { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' },
-          { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
-          { rank: '5', theme: 'Individualization', category: 'Relationship Building' }
-        ];
-        const tableRows = createThemesTable(cliftonThemes, true);
-        
-        result = `
-          <div class="mt-4 fade-in w-full">
-            <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
-              <a href="https://tk.st/mbti" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: var(--primary-color);">MBTI: Campaigner (ENFP-A) 🔗</a>
-              <div class="space-y-1 mb-6">${rows}</div>
-              
-              <a href="https://tk.st/cliftonstrengths" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline" style="border-color: var(--border-color); color: var(--primary-color);">CliftonStrengths: Strategic Thinking 🔗</a>
-              <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
-              <div class="space-y-2 mb-6">${strengthsRows}</div>
-              
-              <div class="mt-4 pt-2" style="overflow-x:auto;">
-                <div class="flex text-[10px] font-bold mb-1" style="color: var(--primary-color); min-width:400px;">
-                  <div class="w-8">RANK</div>
-                  <div class="flex-1">THEME</div>
-                  <div class="w-56 text-right">CATEGORY</div>
-                </div>
-                <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
-              </div>
+      const isV2 = version === '2.0';
+      const data = isV2 ? {
+        m: { t: 'MBTI: Campaigner (ENFP-A) 🔗', l: 'https://tk.st/mbti' }, s: { t: 'CliftonStrengths: Strategic Thinking 🔗', l: 'https://tk.st/cliftonstrengths' },
+        traits: [{ name: 'Extraverted', pct: 54, opposite: 'Introverted' }, { name: 'Intuitive', pct: 94, opposite: 'Observant' }, { name: 'Thinking', pct: 41, opposite: 'Feeling' }, { name: 'Judging', pct: 46, opposite: 'Prospecting' }, { name: 'Assertive', pct: 83, opposite: 'Turbulent' }],
+        strengths: [{ name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' }, { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' }, { name: 'Executing', pct: 15.034, pattern: 'dots' }],
+        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Input', category: 'Strategic Thinking' }, { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Individualization', category: 'Relationship Building' }]
+      } : {
+        m: { t: 'MBTI: Commander (ENTJ-A)', l: null }, s: { t: 'CliftonStrengths: Strategic Thinking', l: null },
+        traits: [{ name: 'Extraverted', pct: 61, opposite: 'Introverted' }, { name: 'Intuitive', pct: 69, opposite: 'Observant' }, { name: 'Thinking', pct: 66, opposite: 'Feeling' }, { name: 'Judging', pct: 61, opposite: 'Prospecting' }, { name: 'Assertive', pct: 78, opposite: 'Turbulent' }],
+        strengths: [{ name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' }, { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' }, { name: 'Executing', pct: 16.5057, pattern: 'dots' }],
+        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Learner', category: 'Strategic Thinking' }, { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }]
+      };
+
+      const rows = createMBTIRows(data.traits, isV2), { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, isV2), tableRows = createThemesTable(data.themes, isV2), titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline choreo-text" style="color: ${titleColor};">${data.m.t}</a>` : `<div class="text-sm font-bold glow mb-4 choreo-text" style="color: ${titleColor}; pointer-events: none;">${data.m.t}</div>`;
+      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline choreo-text" style="border-color: var(--border-color); color: ${titleColor};">${data.s.t}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t choreo-text" style="border-color: var(--border-color); color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
+
+      const result = `
+        <div class="mt-4 fade-in w-full">
+          <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
+            ${mbtiHtml}<div class="space-y-1 mb-6">${rows}</div>${strHtml}
+            <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
+            <div class="space-y-2 mb-6">${strengthsRows}</div>
+            <div class="mt-4 pt-2" style="overflow-x:auto;">
+              <div class="flex text-[10px] font-bold mb-1" style="color: ${titleColor}; min-width:400px;"><div class="w-8 choreo-text">RANK</div><div class="flex-1 choreo-text">THEME</div><div class="w-56 text-right choreo-text">CATEGORY</div></div>
+              <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
             </div>
-          </div>`;
-
-      } else if (version === '1.0') {
-        const traits = [
-          { name: 'Extraverted', pct: 61, opposite: 'Introverted' },
-          { name: 'Intuitive', pct: 69, opposite: 'Observant' },
-          { name: 'Thinking', pct: 66, opposite: 'Feeling' },
-          { name: 'Judging', pct: 61, opposite: 'Prospecting' },
-          { name: 'Assertive', pct: 78, opposite: 'Turbulent' }
-        ];
-        const rows = createMBTIRows(traits, false);
-
-        const strengths = [
-          { name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' },
-          { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' },
-          { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' },
-          { name: 'Executing', pct: 16.5057, pattern: 'dots' }
-        ];
-        const { barHTML, strengthsRows } = createStrengthsHTML(strengths, false);
-        
-        const cliftonThemes = [
-          { rank: '1', theme: 'Maximizer', category: 'Influencing' },
-          { rank: '2', theme: 'Learner', category: 'Strategic Thinking' },
-          { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' },
-          { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' },
-          { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }
-        ];
-        const tableRows = createThemesTable(cliftonThemes, false);
-
-        result = `
-          <div class="mt-4 fade-in w-full">
-            <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
-              <div class="text-sm font-bold glow mb-4" style="color: var(--secondary-color);">MBTI: Commander (ENTJ-A)</div>
-              <div class="space-y-1 mb-6">${rows}</div>
-              
-              <div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t" style="border-color: var(--border-color); color: var(--secondary-color);">CliftonStrengths: Strategic Thinking</div>
-              <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
-              <div class="space-y-2 mb-6">${strengthsRows}</div>
-              
-              <div class="mt-4 pt-2" style="overflow-x:auto;">
-                <div class="flex text-[10px] font-bold mb-1" style="color: var(--secondary-color); min-width:400px;">
-                  <div class="w-8">RANK</div>
-                  <div class="flex-1">THEME</div>
-                  <div class="w-56 text-right">CATEGORY</div>
-                </div>
-                <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
-              </div>
-            </div>
-          </div>`;
-      }
+          </div>
+        </div>`;
       
-      const container = document.getElementById(`identify-result-${targetId}`);
-      if (container) {
-        container.innerHTML = result;
-      } else {
-        await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`, 0);
-      }
+      const container = $(`identify-result-${targetId}`);
+      if (container) container.innerHTML = result; else await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`);
     };
 
     // === COMMANDS ===
     const commands = {
-      help() {
-        return `
-          <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
-            <div style="color: var(--primary-color);" class="glow text-sm font-bold mb-2">Available Commands:</div>
-            <div class="grid gap-1 text-xs" style="color: var(--text-color);">
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">about</span><span>- Learn about me</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">identify</span><span>- View personality versions</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">pages</span><span>- Explore Web2 creations</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">bitcoin</span><span>- Enjoy Web3 journey</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">magi</span><span>- Talk to ST multi-agent</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">contact</span><span>- Contact me</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">clear</span><span>- Clear terminal</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">help</span><span>- Show this menu</span></div>
-            </div>
-            <div class="text-[10px] mt-4 opacity-50 italic">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>
-          </div>`;
-      },
-
-      '/dj'() { window.open('https://tk.st/dj', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color: var(--primary-color);">Opening /dj...</div>`; },
-      '/job'() { window.open('https://tk.st/job', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color: var(--primary-color);">Opening /job...</div>`; },
-      '/game'() { window.open('https://tk.st/game', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color: var(--primary-color);">Opening /game...</div>`; },
-      '/think'() { window.open('https://tk.st/think', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color: var(--primary-color);">Opening /think...</div>`; },
-      '/glitch'() { window.open('https://tk.st/glitch', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color: var(--primary-color);">Opening /glitch...</div>`; },
-
+      help: () => renderCmdList('Available Commands:', [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['bitcoin', 'Enjoy Web3 journey'], ['magi', 'Talk to ST multi-agent'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']]),
+      secret: () => renderCmdList('Hidden Commands:', [['akutagawa', 'A message from the past'], ['choreomania', 'Merging souls in ecstasy'], ['destroy', 'And rebuild'], ['history', 'Show command history'], ['matrix', 'Enter the Matrix'], ['meditation', 'Clear your mind'], ['theme', 'Change terminal color']]),
+      clear: () => { $('output-area').innerHTML = ''; return null; },
+      
       bitcoin() {
-        const uniqueId = Date.now();
-        const allIds = `['earn-opts-${uniqueId}', 'buy-opts-${uniqueId}', 'use-opts-${uniqueId}', 'view-opts-${uniqueId}']`;
-
+        const uniqueId = Date.now(), tabs = ['earn', 'buy', 'use', 'view'], allIds = `[${tabs.map(t => `'${t}-opts-${uniqueId}'`).join(',')}]`;
+        const btcData = {
+          earn: [{ i: '🎮', t: 'Play to Earn', s: 'ASCII Roguelike', l: 'https://tk.st/bitcoinyen/ascii-roguelike' }],
+          buy:  [{ i: '⚡', t: 'Direct Purchase', s: 'Lightning Network', l: 'https://tk.st/bitcoinyen/ln' }, { i: '🛒', t: 'Marketplace', s: 'UniSat', l: 'https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN' }],
+          use:  [{ i: '📨', t: 'Letter to the future', s: 'Bitcoin Bottle Mail', l: 'https://tk.st/bitcoinyen/bbm' }],
+          view: [{ i: '🪙', t: 'Dive into my Bitcoin token', s: 'Bitcoin Mainnet', l: 'https://unisat.io/runes/detail/BITCOINYEN' }, { i: '🌐', t: 'Dive into my Web3 page', s: 'Bitcoin Mainnet', l: 'https://web3.tk.st' }]
+        };
+        const renderItems = items => items.map(item => `<div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('${item.l}', '_blank', 'noopener,noreferrer')"><div class="choreo-text" style="color: var(--text-color);">${item.i} ${item.t}</div><div class="text-xs mt-0.5 choreo-text" style="color: var(--primary-color);">${item.s}</div></div>`).join('');
         return `
           <div class="my-3 w-[90%] max-w-[800px]">
-            <div class="text-sm font-bold glow mb-3" style="color: var(--primary-color);">BITCOIN YEN Ecosystem</div>
-            <div class="flex gap-2 flex-wrap">
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('earn-opts-${uniqueId}', ${allIds})">
-                Earn
-              </div>
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('buy-opts-${uniqueId}', ${allIds})">
-                Buy
-              </div>
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('use-opts-${uniqueId}', ${allIds})">
-                Use
-              </div>
-              <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.toggleBitcoinMenu('view-opts-${uniqueId}', ${allIds})">
-                View
-              </div>
-            </div>
-            
-            <div id="earn-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color: var(--secondary-color);">
-              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('https://tk.st/bitcoinyen/ascii-roguelike', '_blank', 'noopener,noreferrer')">
-                <div style="color: var(--text-color);">🎮 Play to Earn</div>
-                <div class="text-xs mt-0.5" style="color: var(--primary-color);">ASCII Roguelike</div>
-              </div>
-            </div>
-
-            <div id="buy-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color: var(--secondary-color);">
-              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('https://tk.st/bitcoinyen/ln', '_blank', 'noopener,noreferrer')">
-                <div style="color: var(--text-color);">⚡ Direct Purchase</div>
-                <div class="text-xs mt-0.5" style="color: var(--primary-color);">Lightning Network</div>
-              </div>
-              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN', '_blank', 'noopener,noreferrer')">
-                <div style="color: var(--text-color);">🛒 Marketplace</div>
-                <div class="text-xs mt-0.5" style="color: var(--primary-color);">UniSat</div>
-              </div>
-            </div>
-            
-            <div id="use-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color: var(--secondary-color);">
-              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('https://tk.st/bitcoinyen/bbm', '_blank', 'noopener,noreferrer')">
-                <div style="color: var(--text-color);">📨 Letter to the future</div>
-                <div class="text-xs mt-0.5" style="color: var(--primary-color);">Bitcoin Bottle Mail</div>
-              </div>
-            </div>
-
-            <div id="view-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color: var(--secondary-color);">
-              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('https://unisat.io/runes/detail/BITCOINYEN', '_blank', 'noopener,noreferrer')">
-                <div style="color: var(--text-color);">🪙 Dive into my Bitcoin token</div>
-                <div class="text-xs mt-0.5" style="color: var(--primary-color);">Bitcoin Mainnet</div>
-              </div>
-              <div class="px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('https://web3.tk.st', '_blank', 'noopener,noreferrer')">
-                <div style="color: var(--text-color);">🌐 Dive into my Web3 page</div>
-                <div class="text-xs mt-0.5" style="color: var(--primary-color);">Bitcoin Mainnet</div>
-              </div>
-            </div>
-
+            <div class="text-sm font-bold glow mb-3 choreo-text" style="color: var(--primary-color);">BITCOIN YEN Ecosystem</div>
+            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover choreo-text" style="border-color: var(--primary-color);" onclick="window.toggleBtc('${t}-opts-${uniqueId}', ${allIds})">${t.charAt(0).toUpperCase() + t.slice(1)}</div>`).join('')}</div>
+            ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color: var(--secondary-color);">${renderItems(btcData[t])}</div>`).join('')}
           </div>`;
       },
-
-      magi() { window.open('https://tk.st/magi', '_blank', 'noopener,noreferrer'); return `<div class="my-3 text-xs" style="color: var(--primary-color);">Activate the MAGI system ...</div>`; },
 
       about() {
-        const name = config.display_name;
-        const title = config.job_title;
-        const bioLines = [
-          "The sun for the cyber realm, The moon for music and philosophy.",
-          "I love profound tranquility, laced with a spoonful of madness."
-        ];
-        const loc = config.location_text;
+        const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
         return `
           <div class="my-3 p-4 border rounded w-[90%] max-w-[800px]" style="border-color: var(--border-color); background: var(--surface-color);">
-            <div class="text-lg font-bold glow mb-1" style="color: var(--primary-color);">${esc(name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
-            <div class="text-xs mb-4" style="color: var(--secondary-color);">${esc(title)}</div>
-            <div class="text-xs leading-relaxed mb-4" style="color: var(--text-color);">${bioLines.map(line => esc(line)).join('<br/>')}</div>
+            <div class="text-lg font-bold glow mb-1 choreo-text" style="color: var(--primary-color);">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
+            <div class="text-xs mb-4 choreo-text" style="color: var(--secondary-color);">${esc(config.job_title)}</div>
+            <div class="text-xs leading-relaxed mb-4 choreo-text" style="color: var(--text-color);">${bioLines.map(line => esc(line)).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t" style="border-color: var(--border-color);">
-              <div class="flex justify-between text-xs">
-                <span style="color: var(--secondary-color);">📍 Location</span>
-                <span style="color: var(--text-color);">${esc(loc)}</span>
-              </div>
-              <div class="flex justify-between text-xs">
-                <span style="color: var(--secondary-color);">♉ Zodiac</span>
-                <span style="color: var(--text-color);">Taurus</span>
-              </div>
-              <div class="flex justify-between text-xs">
-                <span style="color: var(--secondary-color);">📏 Height</span>
-                <span style="color: var(--text-color);">169.9 cm</span>
-              </div>
-              <div class="flex justify-between text-xs">
-                <span style="color: var(--secondary-color);">🩸 Blood</span>
-                <span style="color: var(--text-color);">O Rh+</span>
-              </div>
+              ${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="choreo-text" style="color: var(--secondary-color);">${r[0]}</span><span class="choreo-text" style="color: var(--text-color);">${esc(r[1])}</span></div>`).join('')}
             </div>
           </div>`;
       },
 
-      pages() {
-        let cards = projects.map(p =>
-          `<div class="p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('${p.link}', '_blank', 'noopener,noreferrer')">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-sm font-bold" style="color: var(--primary-color);">${esc(p.name)}</span>
-            </div>
-            <div class="text-xs mb-2" style="color: var(--text-color);">${esc(p.desc)}</div>
-            <div class="text-[10px]" style="color: var(--secondary-color);">⚙ ${esc(p.tech)}</div>
-          </div>`
-        ).join('');
-        return `
-          <div class="my-3 space-y-2 w-[90%] max-w-[800px]">
-            <div class="text-sm font-bold glow mb-2" style="color: var(--primary-color);">Explore Web2 creations</div>
-            <div class="space-y-2">${cards}</div>
-          </div>`;
-      },
-
-      contact() {
-        window.open('https://tk.st/contact', '_blank');
-        return `<div class="my-3 text-xs" style="color: var(--primary-color);">Opening contact page...</div>`;
-      },
+      pages: () => `<div class="my-3 space-y-2 w-[90%] max-w-[800px]"><div class="text-sm font-bold glow mb-2 choreo-text" style="color: var(--primary-color);">Explore Web2 creations</div><div class="space-y-2">${projects.map(p => `<div class="p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.open('${p.link}', '_blank', 'noopener,noreferrer')"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold choreo-text" style="color: var(--primary-color);">${esc(p.name)}</span></div><div class="text-xs mb-2 choreo-text" style="color: var(--text-color);">${esc(p.desc)}</div><div class="text-[10px] choreo-text" style="color: var(--secondary-color);">⚙ ${esc(p.tech)}</div></div>`).join('')}</div></div>`,
 
       identify() {
         const uniqueId = 'id-' + Date.now();
         return `
           <div class="my-3 w-[90%] max-w-[800px]">
-            <div class="text-sm font-bold glow mb-3" style="color: var(--primary-color);">Please select a profile to initialize:</div>
+            <div class="text-sm font-bold glow mb-3 choreo-text" style="color: var(--primary-color);">Please select a profile to initialize:</div>
             <div class="space-y-2">
-              <div class="p-3 border rounded cursor-pointer transition-colors bg-primary-dim hover:bg-primary-dim-hover" style="border-color: var(--primary-color);" onclick="window.executeIdentifyVersion('2.0', '${uniqueId}')">
-                <div class="flex justify-between items-center mb-1">
-                  <span class="text-xs font-bold" style="color: var(--primary-color);">ver.2.0 [ACTIVE]</span>
-                  <span class="text-[10px]" style="color: var(--secondary-color);">2025.08.20</span>
-                </div>
-                <div class="text-xs" style="color: var(--secondary-color);">Post-traffic accident (MBTI & Strengths)</div>
-              </div>
-              <div class="p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color);" onclick="window.executeIdentifyVersion('1.0', '${uniqueId}')">
-                <div class="flex justify-between items-center mb-1">
-                  <span class="text-xs font-bold" style="color: var(--secondary-color);">ver.1.0 [ARCHIVED]</span>
-                  <span class="text-[10px]" style="color: var(--secondary-color);">2025.07.10</span>
-                </div>
-                <div class="text-xs" style="color: var(--secondary-color);">Pre-traffic accident (MBTI & Strengths)</div>
-              </div>
+              ${[['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'var(--primary-color)'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-[#111] hover:bg-[#222]', 'var(--secondary-color)']].map(v => `<div class="p-3 border rounded cursor-pointer transition-colors ${v[4]}" style="border-color: ${v[5] === 'var(--primary-color)' ? 'var(--primary-color)' : 'var(--border-color)'};" onclick="window.executeIdentifyVersion('${v[0]}', '${uniqueId}')"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold choreo-text" style="color: ${v[5]};">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] choreo-text" style="color: var(--secondary-color);">${v[2]}</span></div><div class="text-xs choreo-text" style="color: var(--secondary-color);">${v[3]} (MBTI & Strengths)</div></div>`).join('')}
             </div>
             <div id="identify-result-${uniqueId}"></div>
           </div>`;
       },
-
-      clear() {
-        document.getElementById('output-area').innerHTML = '';
-        return null;
-      },
       
       async akutagawa() {
-        const loadingDiv = document.createElement('div');
-        loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px]';
-        loadingDiv.style.color = 'var(--primary-color)';
-        document.getElementById('output-area').appendChild(loadingDiv);
-
-        const spinners = ['|', '/', '-', '\\'];
-        let frameIndex = 0;
-        const loadingInterval = setInterval(() => {
-          loadingDiv.textContent = `Loading...  ${spinners[frameIndex % 4]}`;
-          frameIndex++;
-        }, 300);
-
-        await new Promise(r => setTimeout(r, 5000));
-        clearInterval(loadingInterval);
-        loadingDiv.remove();
-
-        const msg = "I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.";
-        return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px]" style="border-color: var(--border-color); background: var(--surface-color); color: var(--text-color);">${esc(msg)}</div>`;
+        const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] choreo-text'; loadingDiv.style.color = 'var(--primary-color)'; $('output-area').appendChild(loadingDiv);
+        const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
+        const loadingInterval = setInterval(() => { loadingDiv.textContent = `Loading...  ${spinners[frameIndex++ % 4]}`; }, 300);
+        await delay(5000); clearInterval(loadingInterval); loadingDiv.remove();
+        return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px] choreo-text" style="border-color: var(--border-color); background: var(--surface-color); color: var(--text-color);">I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.</div>`;
       },
 
-      // === RECOMMENDED / HIDDEN COMMANDS ===
-      history() {
-        if (commandHistory.length === 0) return `<div class="my-3 text-xs" style="color: var(--secondary-color);">No history available.</div>`;
-        const list = commandHistory.slice().reverse().map((cmd, i) => `  ${(i+1).toString().padStart(3, ' ')}  ${esc(cmd)}`).join('<br>');
-        return `<div class="my-3 text-xs" style="color: var(--secondary-color); font-family: monospace;">${list}</div>`;
-      },
+      history: () => commandHistory.length === 0 ? `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">No history available.</div>` : `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color); font-family: monospace;">${commandHistory.slice().reverse().map((cmd, i) => `  ${(i+1).toString().padStart(3, ' ')}  ${esc(cmd)}`).join('<br>')}</div>`,
 
       theme(args) {
-        const colors = {
-          green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', 
-          orange: '#fb923c', purple: '#c084fc', white: '#ffffff',
-          red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee'
-        };
-        
-        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) {
-          return `<div class="my-3 text-xs" style="color: var(--secondary-color);">Usage: theme &lt;color&gt;<br>Available colors: <span style="color: var(--text-color);">${Object.keys(colors).join(', ')}</span></div>`;
-        }
-        
+        const colors = { green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', orange: '#fb923c', purple: '#c084fc', white: '#ffffff', red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee' };
+        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">Usage: theme &lt;color&gt;<br>Available colors: <span class="choreo-text" style="color: var(--text-color);">${Object.keys(colors).join(', ')}</span></div>`;
         const newColor = colors[args[0].toLowerCase()];
-        
-        document.documentElement.style.setProperty('--primary-color', newColor);
-        document.documentElement.style.setProperty('--primary-bg', newColor + '26');
-        document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40');
-        
-        return `<div class="my-3 text-xs" style="color: var(--primary-color);">Theme color successfully changed to ${esc(args[0])}.</div>`;
+        document.documentElement.style.setProperty('--primary-color', newColor); document.documentElement.style.setProperty('--primary-bg', newColor + '26'); document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40');
+        return `<div class="my-3 text-xs choreo-text" style="color: var(--primary-color);">Theme color successfully changed to ${esc(args[0])}.</div>`;
       },
       
       destroy() {
-        if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold">System is already destroyed. Waiting for 'rebuild'.</div>`;
-        
-        isDestroyed = true;
-        destroyedElements = [];
-        
-        // 入力欄と重要なラッパー領域以外を落下対象にする
+        if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold choreo-text">System is already destroyed. Waiting for 'rebuild'.</div>`;
+        isDestroyed = true; destroyedElements = [];
         const elements = Array.from(document.querySelectorAll('#app *:not(.scanline, #app, #terminal-body, #output-area, #input-line, #input-line *)'));
         
         destroyInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
-            if (elements.length === 0) {
-              clearInterval(destroyInterval);
-              break;
-            }
-            const idx = Math.floor(Math.random() * elements.length);
-            const el = elements.splice(idx, 1)[0];
-            
+            if (elements.length === 0) { clearInterval(destroyInterval); break; }
+            const el = elements.splice(Math.floor(Math.random() * elements.length), 1)[0];
             if (el && el.style) {
-              // 復元のために元のstyleを保存
-              destroyedElements.push({
-                element: el,
-                cssText: el.style.cssText
-              });
-
-              el.style.transition = 'all 2s ease-in';
-              el.style.transform = `translate(${(Math.random() - 0.5) * 300}px, ${window.innerHeight}px) rotate(${(Math.random() - 0.5) * 360}deg)`;
-              el.style.opacity = '0';
-              el.style.pointerEvents = 'none';
+              destroyedElements.push({ element: el, cssText: el.style.cssText });
+              el.style.transition = 'all 2s ease-in'; el.style.transform = `translate(${(Math.random() - 0.5) * 300}px, ${window.innerHeight}px) rotate(${(Math.random() - 0.5) * 360}deg)`; el.style.opacity = '0'; el.style.pointerEvents = 'none';
             }
           }
         }, 30);
-
-        return `<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`;
+        return `<div class="my-3 text-xs text-red-500 font-bold choreo-text">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`;
       },
 
       rebuild() {
         if (!isDestroyed) return null;
-        
-        clearInterval(destroyInterval);
-        
-        let elements = [...destroyedElements];
+        clearInterval(destroyInterval); let elements = [...destroyedElements];
         
         let rebuildInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) {
-              clearInterval(rebuildInterval);
-              isDestroyed = false;
-              destroyedElements = [];
+              clearInterval(rebuildInterval); isDestroyed = false; destroyedElements = []; currentVersion++;
+              const nameEl = $('display-name-el');
+              if(nameEl) nameEl.innerHTML = `${esc(config.display_name)} <span class="choreo-text" style="font-size: 0.8em; opacity: 0.8; color: var(--secondary-color);">ver.${currentVersion}.0</span>`;
               break;
             }
             const item = elements.pop();
             if (item.element) {
-              item.element.style.transition = 'all 1s ease-out';
-              item.element.style.transform = 'translate(0px, 0px) rotate(0deg)';
-              item.element.style.opacity = '1';
-              item.element.style.pointerEvents = 'auto';
-              
-              // アニメーション完了後に元のCSSに戻す
-              setTimeout(() => {
-                item.element.style.cssText = item.cssText;
-              }, 1000);
+              item.element.style.transition = 'all 1s ease-out'; item.element.style.transform = 'translate(0px, 0px) rotate(0deg)'; item.element.style.opacity = '1'; item.element.style.pointerEvents = 'auto';
+              setTimeout(() => { item.element.style.cssText = item.cssText; }, 1000);
             }
           }
         }, 30);
-        
-        return `<div class="my-3 text-xs" style="color: var(--primary-color);">System rebuild initiated... restoring core components.</div>`;
+        return `<div class="my-3 text-xs choreo-text" style="color: var(--primary-color);">System rebuild initiated... restoring core components.</div>`;
       },
 
       choreomania() {
         document.body.classList.toggle('choreomania-active');
-        const isActive = document.body.classList.contains('choreomania-active');
-        
-        if (isActive) {
-          document.body.style.setProperty('--mouse-x', 0.5);
-          document.body.style.setProperty('--mouse-y', 0.5);
-          return `<div class="my-3 text-xs font-bold glow" style="color: #ff00ff;">CHOREOMANIA MODE: ACTIVATED.<br>Transcending the ego.</div>`;
+        if (document.body.classList.contains('choreomania-active')) {
+          document.body.style.setProperty('--mouse-x', 0.5); document.body.style.setProperty('--mouse-y', 0.5);
+          return `<div class="my-3 text-xs font-bold glow choreo-text" style="color: #ff00ff;">CHOREOMANIA MODE: ACTIVATED.<br>Transcending the ego.</div>`;
         } else {
-          document.body.style.removeProperty('--mouse-x');
-          document.body.style.removeProperty('--mouse-y');
-          return `<div class="my-3 text-xs" style="color: var(--secondary-color);">Choreomania mode deactivated. Back to reality.</div>`;
+          document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
+          return `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">Choreomania mode deactivated. Back to reality.</div>`;
         }
       },
 
       meditation() {
         return new Promise(resolve => {
-          // 背景のオーバーレイ（奥行きのある深い暗闇）
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           const overlay = document.createElement('div');
-          overlay.style.position = 'fixed';
-          overlay.style.top = '0';
-          overlay.style.left = '0';
-          overlay.style.width = '100%';
-          overlay.style.height = '100%';
-          overlay.style.background = 'radial-gradient(circle at center, #111827 0%, #000000 100%)';
-          overlay.style.zIndex = '10000';
-          overlay.style.display = 'flex';
-          overlay.style.alignItems = 'center';
-          overlay.style.justifyContent = 'center';
-          overlay.style.opacity = '0';
-          overlay.style.transition = 'opacity 4s ease';
+          overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,#111827 0%,#000 100%);z-index:10000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 4s ease;`;
           
-          // 呼吸をガイドする光のオーブ
           const circle = document.createElement('div');
-          circle.style.position = 'absolute';
-          circle.style.width = '200px';
-          circle.style.height = '200px';
-          circle.style.borderRadius = '50%';
-          circle.style.background = 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%)';
-          circle.style.boxShadow = '0 0 60px rgba(74, 222, 128, 0.05), inset 0 0 40px rgba(74, 222, 128, 0.05)';
-          circle.style.animation = 'breatheSlow 10s infinite ease-in-out';
+          circle.style.cssText = `position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.05) 0%,transparent 60%);box-shadow:0 0 60px rgba(74,222,128,0.05),inset 0 0 40px rgba(74,222,128,0.05);animation:breatheSlow 10s infinite ease-in-out;`;
           
-          // メッセージ表示領域
           const textContainer = document.createElement('div');
-          textContainer.style.position = 'absolute';
-          textContainer.style.color = 'rgba(255, 255, 255, 0.5)';
-          textContainer.style.fontFamily = 'monospace';
-          textContainer.style.fontSize = '13px';
-          textContainer.style.textAlign = 'center';
-          textContainer.style.letterSpacing = '0.05em';
-          textContainer.style.lineHeight = '2';
-          textContainer.style.pointerEvents = 'none'; // クリックの邪魔にならないように
-          textContainer.style.transition = 'opacity 3s ease';
-          textContainer.style.opacity = '0';
+          textContainer.style.cssText = `position:absolute;color:rgba(255,255,255,0.5);font-family:monospace;font-size:13px;text-align:center;letter-spacing:0.05em;line-height:2;pointer-events:none;transition:opacity 3s ease;opacity:0;`;
 
-          // 瞑想を導く短いメッセージ群
-          const messages = [
-            "Look slightly forward.",
-            "Inhale deeply...",
-            "...and exhale gently.",
-            "Quietly close your eyes.",
-            "Enjoy the feeling of simply being still.",
-            "Feel the weight of your body.",
-            "Notice the sounds around you.",
-            "Let them be.",
-            "Feel your natural breath.",
-            "Let your mind be completely free.",
-            "Bring your awareness back to the present.",
-            "Take a moment to notice how you feel."
-          ];
+          const messages = ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."];
           
-          overlay.appendChild(circle);
-          overlay.appendChild(textContainer);
-          document.body.appendChild(overlay);
-          
+          overlay.appendChild(circle); overlay.appendChild(textContainer); document.body.appendChild(overlay);
           let isMeditating = true;
-
-          // フェードイン開始
           setTimeout(() => { overlay.style.opacity = '1'; }, 100);
 
-          // メッセージを順に表示するループ処理 (async/awaitによる安全な実装)
-          const runMeditation = async () => {
-            await new Promise(r => setTimeout(r, 4000)); // 画面が完全に暗くなるのを待つ
-
+          (async () => {
+            await delay(4000);
             for (const msg of messages) {
               if (!isMeditating) break;
-
-              // テキストをセットしてフェードイン
-              textContainer.innerHTML = msg;
-              textContainer.style.opacity = '1';
-              
-              // 7秒間表示
-              await new Promise(r => setTimeout(r, 7000));
+              textContainer.innerHTML = msg; textContainer.style.opacity = '1';
+              await delay(7000);
               if (!isMeditating) break;
-              
-              // フェードアウト
               textContainer.style.opacity = '0';
-              // 3秒間の完全な静寂
-              await new Promise(r => setTimeout(r, 3000));
+              await delay(3000);
             }
-
-            // 全メッセージ終了後は静寂を保つ
             if (isMeditating) {
               textContainer.innerHTML = "Breathe...<br><span style='font-size:10px; opacity:0.3;'>(Press ESC or Click to return)</span>";
               textContainer.style.opacity = '1';
             }
-          };
-
-          runMeditation();
+          })();
           
-          // 終了処理
-          const exitMeditation = (e) => {
+          const exitMeditation = async (e) => {
             if (e.type === 'keydown' && e.key !== 'Escape') return;
-            isMeditating = false; // 表示ループを中断
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-              overlay.remove();
-              document.removeEventListener('click', exitMeditation);
-              document.removeEventListener('keydown', exitMeditation);
-              resolve(`<div class="my-3 text-xs" style="color: var(--secondary-color);">Returned to reality.</div>`);
-            }, 4000); // ゆっくりと現実に戻る
+            isMeditating = false; overlay.style.opacity = '0';
+            await delay(4000);
+            overlay.remove(); document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
+            resolve(`<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">Returned to reality.</div>`);
           };
-          
-          document.addEventListener('click', exitMeditation);
-          document.addEventListener('keydown', exitMeditation);
+          document.addEventListener('click', exitMeditation); document.addEventListener('keydown', exitMeditation);
         });
       },
 
       matrix() {
         return new Promise(resolve => {
           const canvas = document.createElement('canvas');
-          canvas.style.position = 'fixed';
-          canvas.style.top = '0';
-          canvas.style.left = '0';
-          canvas.style.width = '100%';
-          canvas.style.height = '100%';
-          canvas.style.zIndex = '9999';
-          canvas.style.background = '#000';
+          canvas.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;`;
           document.body.appendChild(canvas);
           const ctx = canvas.getContext('2d');
+          const resizeCanvas = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+          resizeCanvas(); window.addEventListener('resize', resizeCanvas);
           
-          const resizeCanvas = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-          };
-          resizeCanvas();
-          window.addEventListener('resize', resizeCanvas);
-          
-          const fontSize = 14;
-          const columns = canvas.width / fontSize;
-          const drops = [];
-          for(let x = 0; x < columns; x++) drops[x] = 1;
-          
-          const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
+          const fontSize = 14, columns = canvas.width / fontSize, drops = Array(Math.floor(columns)).fill(1), primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
 
-          function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = primaryColor;
-            ctx.font = fontSize + 'px monospace';
+          const interval = setInterval(() => {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = primaryColor; ctx.font = fontSize + 'px monospace';
             for(let i = 0; i < drops.length; i++) {
-              const text = String.fromCharCode(0x30A0 + Math.random() * 96);
-              ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+              ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), i * fontSize, drops[i] * fontSize);
               if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
               drops[i]++;
             }
-          }
-          
-          const interval = setInterval(draw, 33);
+          }, 33);
           
           const endMatrix = (e) => {
             if(e.type === 'keydown' && e.key !== 'Escape') return;
-            clearInterval(interval);
-            canvas.remove();
-            window.removeEventListener('resize', resizeCanvas);
-            window.removeEventListener('keydown', endMatrix);
-            window.removeEventListener('click', endMatrix);
-            resolve(`<div class="text-xs mt-2" style="color: var(--primary-color);">Matrix simulation ended.</div>`);
+            clearInterval(interval); canvas.remove();
+            window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix); window.removeEventListener('click', endMatrix);
+            resolve(`<div class="text-xs mt-2 choreo-text" style="color: var(--primary-color);">Matrix simulation ended.</div>`);
           };
-          
-          window.addEventListener('keydown', endMatrix);
-          window.addEventListener('click', endMatrix);
-          
-          printToOutput(`<div class="text-xs mb-2" style="color: var(--secondary-color);">Entering Matrix... Press ESC or Click to exit.</div>`, 0);
+          window.addEventListener('keydown', endMatrix); window.addEventListener('click', endMatrix);
+          printToOutput(`<div class="text-xs mb-2 choreo-text" style="color: var(--secondary-color);">Entering Matrix... Press ESC or Click to exit.</div>`);
         });
-      },
-
-      secret() {
-        return `
-          <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
-            <div style="color: var(--primary-color);" class="glow text-sm font-bold mb-2">Hidden Commands:</div>
-            <div class="grid gap-1 text-xs" style="color: var(--text-color);">
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">akutagawa</span><span>- A message from the past</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">choreomania</span><span>- Merging souls in ecstasy</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">destroy</span><span>- And rebuild</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">history</span><span>- Show command history</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">matrix</span><span>- Enter the Matrix</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">meditation</span><span>- Clear your mind</span></div>
-              <div class="flex"><span class="w-24" style="color: var(--primary-color);">theme</span><span>- Change terminal color</span></div>
-            </div>
-          </div>`;
       }
     };
 
-    // === MOUSE EVENT FOR CHOREOMANIA ===
-    document.addEventListener('mousemove', (e) => {
-      if (document.body.classList.contains('choreomania-active')) {
-        const x = e.clientX / window.innerWidth;
-        const y = e.clientY / window.innerHeight;
-        document.body.style.setProperty('--mouse-x', x);
-        document.body.style.setProperty('--mouse-y', y);
-      }
+    // URL Commands Shortcuts
+    Object.entries({ '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/think': 'https://tk.st/think', '/glitch': 'https://tk.st/glitch', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' }).forEach(([cmd, url]) => {
+      commands[cmd] = () => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return `<div class="my-3 text-xs choreo-text" style="color: var(--primary-color);">Opening ${cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : cmd)}...</div>`;
+      };
     });
+
+    // === INTERACTION EVENT FOR CHOREOMANIA ===
+    const handleChoreomaniaMove = (clientX, clientY) => {
+      if (document.body.classList.contains('choreomania-active')) { document.body.style.setProperty('--mouse-x', clientX / window.innerWidth); document.body.style.setProperty('--mouse-y', clientY / window.innerHeight); }
+    };
+    document.addEventListener('mousemove', (e) => handleChoreomaniaMove(e.clientX, e.clientY));
+    document.addEventListener('touchmove', (e) => { if (e.touches.length > 0) handleChoreomaniaMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 
     // === BOOT SEQUENCE ===
     async function boot() {
-      const bootArea = document.getElementById('boot-area');
-      const lines = [
-        { text: 'Initializing terminal...', delay: 250 },
-        { text: `Connecting to <span style="font-weight:bold;">Bitcoin Mainnet</span>... [NG]`, delay: 450 },
-        { text: `Loading profile: ${config.display_name}`, delay: 400 },
-        { text: `<span style="color: var(--primary-color);">Web2</span> standalone system ready.`, delay: 300 },
-        { text: '', delay: 150 },
-      ];
-
-      for (const line of lines) {
-        await new Promise(r => setTimeout(r, line.delay));
-        const div = document.createElement('div');
-        div.className = 'text-xs fade-in';
-        div.style.color = 'var(--secondary-color)';
-        div.innerHTML = line.text;
-        bootArea.appendChild(div);
+      const bootArea = $('boot-area');
+      for (const line of [{ text: 'Initializing terminal...', delay: 250 }, { text: `Connecting to <span style="font-weight:bold;">Bitcoin Mainnet</span>... [NG]`, delay: 450 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="choreo-text" style="color: var(--primary-color);">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }]) {
+        await delay(line.delay);
+        const div = document.createElement('div'); div.className = 'text-xs fade-in choreo-text'; div.style.color = 'var(--secondary-color)'; div.innerHTML = line.text; bootArea.appendChild(div);
       }
 
-      await new Promise(r => setTimeout(r, 200));
-      const header = document.createElement('div');
-      
-      header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
+      await delay(200);
+      const header = document.createElement('div'); header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
       header.innerHTML = `
-        <pre class="logo-ascii text-xs md:text-sm glow m-0 leading-tight" style="color: var(--primary-color);">
+        <pre class="text-xs md:text-sm glow m-0 leading-tight choreo-text" style="color: var(--primary-color);">
 ███████╗████████╗
 ██╔════╝╚══██╔══╝
 ███████╗<span style="opacity:0">╚══</span>██║
@@ -1059,141 +632,79 @@
 ███████║<span style="opacity:0">╚══</span>██║
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
-          <div style="color: var(--primary-color);">${esc(config.display_name)}</div>
-          <div style="color: var(--secondary-color);">${esc(config.job_title)}</div>
-          <div class="pt-2" style="color: var(--secondary-color);">Type <span style="color:#fff;">'help'</span> to explore.</div>
+          <div id="display-name-el" class="choreo-text" style="color: var(--primary-color);">${esc(config.display_name)}${currentVersion > 1 ? ` <span class="choreo-text" style="font-size: 0.8em; opacity: 0.8; color: var(--secondary-color);">ver.${currentVersion}.0</span>` : ''}</div>
+          <div class="choreo-text" style="color: var(--secondary-color);">${esc(config.job_title)}</div>
+          <div class="pt-2 choreo-text" style="color: var(--secondary-color);">Type <span class="choreo-text" style="color:#fff;">'help'</span> to explore.</div>
         </div>`;
       bootArea.appendChild(header);
       
-      const inputLine = document.getElementById('input-line');
-      inputLine.classList.remove('hidden');
-      inputLine.classList.add('flex', 'fade-in');
-      
-      document.getElementById('cmd-input').focus();
+      const inputLine = $('input-line'); inputLine.classList.remove('hidden'); inputLine.classList.add('flex', 'fade-in');
+      $('cmd-input').focus();
     }
 
     // === COMMAND HANDLER ===
     async function handleCommand(input) {
-      const trimmed = input.trim();
-      
-      if (!trimmed) return;
-
-      const echo = document.createElement('div');
-      echo.className = 'text-xs mt-3';
-      echo.innerHTML = `<span style="color: var(--primary-color);">ST@portfolio:~$</span> <span style="color: var(--text-color);">${esc(input)}</span>`;
-      document.getElementById('output-area').appendChild(echo);
-
-      commandHistory.unshift(trimmed);
-      historyIndex = -1;
-
-      const parts = trimmed.split(/\s+/);
-      const cmd = parts[0].toLowerCase();
-      const args = parts.slice(1);
-
-      if (isDestroyed && cmd !== 'rebuild') {
-        await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
-        return;
-      }
-
-      if (commands[cmd]) {
-        const result = await commands[cmd](args);
-        if (result) await printToOutput(result, 100);
-      } else {
-        await printToOutput(`<div class="text-xs my-1" style="color:#f87171;">Command not found: '${esc(cmd)}'. Type <span style="color: var(--primary-color);">help</span> for available commands.</div>`, 50);
-      }
+      const trimmed = input.trim(); if (!trimmed) return;
+      const echo = document.createElement('div'); echo.className = 'text-xs mt-3'; echo.innerHTML = `<span class="choreo-text" style="color: var(--primary-color);">ST@portfolio:~$</span> <span class="choreo-text" style="color: var(--text-color);">${esc(input)}</span>`; $('output-area').appendChild(echo);
+      commandHistory.unshift(trimmed); historyIndex = -1;
+      const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
+      if (isDestroyed && cmd !== 'rebuild') return await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold choreo-text">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+      if (commands[cmd]) { const result = await commands[cmd](args); if (result) await printToOutput(result, 100); } 
+      else await printToOutput(`<div class="text-xs my-1 choreo-text" style="color:#f87171;">Command not found: '${esc(cmd)}'. Type <span class="choreo-text" style="color: var(--primary-color);">help</span> for available commands.</div>`, 50);
     }
 
     // === INPUT HANDLING ===
-    const cmdInput = document.getElementById('cmd-input');
+    const cmdInput = $('cmd-input');
     cmdInput.addEventListener('keydown', async (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const val = cmdInput.value;
-        cmdInput.value = '';
-        await handleCommand(val);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (historyIndex < commandHistory.length - 1) {
-          historyIndex++;
-          cmdInput.value = commandHistory[historyIndex];
-        }
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (historyIndex > 0) {
-          historyIndex--;
-          cmdInput.value = commandHistory[historyIndex];
-        } else {
-          historyIndex = -1;
-          cmdInput.value = '';
-        }
-      } else if (e.key === 'Tab') {
-        e.preventDefault();
-        const val = cmdInput.value.toLowerCase();
-        if (!val) return;
-        const matches = Object.keys(commands).filter(cmd => cmd.startsWith(val));
-        if (matches.length === 1) {
-          cmdInput.value = matches[0];
-        } else if (matches.length > 1) {
-          const echo = document.createElement('div');
-          echo.className = 'text-xs mt-2 opacity-70';
-          echo.style.color = 'var(--text-color)';
-          echo.textContent = matches.join('   ');
-          document.getElementById('output-area').appendChild(echo);
+      if (e.key === 'Enter') { e.preventDefault(); const val = cmdInput.value; cmdInput.value = ''; await handleCommand(val); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (historyIndex < commandHistory.length - 1) cmdInput.value = commandHistory[++historyIndex]; }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); if (historyIndex > 0) cmdInput.value = commandHistory[--historyIndex]; else { historyIndex = -1; cmdInput.value = ''; } }
+      else if (e.key === 'Tab') {
+        e.preventDefault(); const val = cmdInput.value.toLowerCase(); if (!val) return;
+        const matches = Object.keys(commands).filter(c => c.startsWith(val));
+        if (matches.length === 1) cmdInput.value = matches[0];
+        else if (matches.length > 1) {
+          const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 choreo-text'; echo.style.color = 'var(--text-color)'; echo.textContent = matches.join('   '); $('output-area').appendChild(echo);
         }
       }
     });
 
-    document.getElementById('app').addEventListener('click', (e) => {
-      if (window.getSelection().toString()) return;
-      if (e.target.tagName === 'A' || e.target.closest('a') || e.target.closest('.cursor-pointer') || e.target.tagName === 'INPUT') return;
-      if (e.target.classList.contains('window-btn')) return;
-      
-      cmdInput.focus();
-    });
+    $('app').addEventListener('click', (e) => { if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn')) cmdInput.focus(); });
 
-    function updateTime() {
-      const statusElement = document.getElementById('status-right');
-      if (statusElement) {
-        statusElement.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
-      }
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
+    setInterval(() => { const el = $('status-right'); if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
 
     // === WINDOW BUTTONS LOGIC ===
-    const btnClose = document.getElementById('btn-close');
-    const btnMinimize = document.getElementById('btn-minimize');
-    const btnMaximize = document.getElementById('btn-maximize');
-
-    btnClose.addEventListener('click', () => {
-      const app = document.getElementById('app');
-      app.style.opacity = '0';
-      setTimeout(() => {
-        document.body.innerHTML = `
-          <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:#000; color:var(--secondary-color); cursor:pointer;" onclick="location.reload()">
-            <div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div>
-            <div class="hover:underline" style="color:var(--primary-color); animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>
-          </div>
-        `;
-      }, 500);
+    $('btn-close').addEventListener('click', async () => {
+      $('app').style.opacity = '0'; await delay(500);
+      document.body.innerHTML = `<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:#000; color:var(--secondary-color); cursor:pointer;" onclick="location.reload()"><div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline" style="color:var(--primary-color); animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div></div>`;
     });
 
-    btnMinimize.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const result = await commands.matrix();
-      if (result) await printToOutput(result, 100);
-    });
-
-    btnMaximize.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`, 0);
+    $('btn-minimize').addEventListener('click', async (e) => {
+      e.stopPropagation(); const app = $('app');
+      app.style.transformOrigin = 'center'; app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; app.style.transform = 'scaleY(0.01)'; app.style.pointerEvents = 'none';
+      await delay(300);
+      app.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out'; app.style.transform = 'scaleY(0.01) scaleX(0)'; app.style.opacity = '0';
+      await delay(300);
+      let minIcon = $('minimized-icon');
+      if (!minIcon) {
+        minIcon = document.createElement('div'); minIcon.id = 'minimized-icon'; minIcon.innerHTML = `<span style="color: var(--primary-color);">▸ Terminal</span> <span style="color: var(--secondary-color);">[Click to unfold]</span>`;
+        minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.5);opacity:0;transition:opacity 0.3s ease;`;
+        minIcon.addEventListener('click', async () => {
+          minIcon.style.opacity = '0'; await delay(300); minIcon.style.display = 'none';
+          app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; app.style.transform = 'scaleY(0.01) scaleX(1)'; app.style.opacity = '1';
+          await delay(300);
+          app.style.transition = 'transform 0.3s ease-out'; app.style.transform = 'scale(1)'; app.style.pointerEvents = 'auto';
+          await delay(300);
+          app.style.transform = ''; app.style.transition = ''; app.style.pointerEvents = ''; $('cmd-input').focus();
         });
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }
+        document.body.appendChild(minIcon);
+      } else { minIcon.style.display = 'block'; }
+      void minIcon.offsetWidth; minIcon.style.opacity = '1';
+    });
+
+    $('btn-maximize').addEventListener('click', () => {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`)); }
+      else { if (document.exitFullscreen) document.exitFullscreen(); }
     });
 
     boot();
