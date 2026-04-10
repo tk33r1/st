@@ -14,7 +14,6 @@
   <meta property="og:type" content="article">
   <meta name="twitter:card" content="summary_large_image">
   
-  <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   
@@ -22,6 +21,42 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap" rel="stylesheet">
   
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Shinya Takeda - Terminal Portfolio",
+            "item": "https://tk.st/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "思索の余白",
+            "item": "https://tk.st/think/"
+          }
+        ]
+      },
+      {
+        "@type": "Article",
+        "headline": "思索の余白",
+        "description": "人生の本質を思索するための場所",
+        "image": "https://tk.st/images/ogp/think-ogp.png",
+        "url": "https://tk.st/think/",
+        "author": {
+          "@type": "Person",
+          "@id": "https://tk.st/#shitake"
+        }
+      }
+    ]
+  }
+  </script>
+
   <style>
     /* =========================================
        Base & Layout Styles
@@ -184,7 +219,7 @@
             
             <div class="flex items-center gap-3 sm:gap-4 relative z-10">
               <button id="zenToggleBtn" class="p-2 text-[#777777] transition-all duration-500 rounded-full focus:outline-none" title="集中モード">
-                <i data-lucide="maximize" id="zenToggleIcon" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                <i data-lucide="maximize" class="w-4 h-4 sm:w-5 sm:h-5"></i>
               </button>
               
               <button id="themeToggleBtn" class="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-500 focus:outline-none border border-black/10 bg-black/5" title="夜の余白へ" style="padding: 2px;">
@@ -251,12 +286,12 @@
                 
                 <div class="mt-4 flex items-center gap-6 transition-opacity duration-500 action-btns-wrapper opacity-70 hover:opacity-100">
                   <button id="copyContentBtn" class="action-btn flex items-center gap-1.5 text-[#8a8a8a] transition-colors duration-300 focus:outline-none tracking-widest">
-                    <i data-lucide="copy" id="copyContentIcon" class="w-3.5 h-3.5"></i>
-                    <span id="copyContentText" class="text-[11px]">書き留める</span>
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    <span class="text-[11px]">書き留める</span>
                   </button>
                   <button id="openShareModalBtn" class="action-btn flex items-center gap-1.5 text-[#8a8a8a] transition-colors duration-300 focus:outline-none tracking-widest">
-                    <i data-lucide="share-2" id="sharePageIcon" class="w-3.5 h-3.5"></i>
-                    <span id="sharePageText" class="text-[11px]">共有する</span>
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    <span class="text-[11px]">共有する</span>
                   </button>
                 </div>
               </div>
@@ -270,7 +305,6 @@
     <!-- Footer Section -->
     <footer class="anim-ready play-fade-in delay-600 mt-auto w-full flex flex-col">
       <div class="mx-auto w-full max-w-7xl px-8 sm:px-14 lg:px-24 pb-12 sm:pb-16 pt-4 flex flex-col relative gap-12">
-        <!-- 修正: フッターテキスト -->
         <p id="footerText" class="text-center text-sm sm:text-base leading-[1.9] transition-colors duration-700">余白は、あなたの思考を置くスペース。</p>
         <div class="w-full flex justify-end">
           <button id="disclosureBtn" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-full border bg-transparent transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 whitespace-nowrap tracking-widest"> 
@@ -302,7 +336,7 @@
         <button id="shareX" class="share-option-btn"><i data-lucide="twitter" class="w-6 h-6"></i><span class="text-[11px] tracking-widest">X</span></button>
         <button id="shareLine" class="share-option-btn"><i data-lucide="message-circle" class="w-6 h-6"></i><span class="text-[11px] tracking-widest">LINE</span></button>
         <button id="shareNotion" class="share-option-btn"><i data-lucide="file-text" class="w-6 h-6"></i><span class="text-[11px] tracking-widest">Notion</span></button>
-        <button id="shareCopy" class="share-option-btn"><i data-lucide="link" id="shareCopyIcon" class="w-6 h-6"></i><span id="shareCopyText" class="text-[11px] tracking-widest text-center">URLコピー</span></button>
+        <button id="shareCopy" class="share-option-btn"><i data-lucide="link" class="w-6 h-6"></i><span class="text-[11px] tracking-widest text-center">URLコピー</span></button>
       </div>
       <button id="closeShareModalBtn" class="w-full px-4 py-2 border border-black/10 rounded-sm transition-colors focus:outline-none tracking-widest text-xs opacity-60 hover:opacity-100">キャンセル</button>
     </div>
@@ -346,7 +380,6 @@
       ...lightPalette, font_family: "Cormorant Garamond", font_size: 18, main_title: "思索の余白", subtitle_text: "Space for Contemplation",
       body_text: "交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。",
       last_updated_text: "2025.10.12", reference_text: "", 
-      // 修正: 初期設定のフッターテキスト
       footer_text: "余白は、あなたの思考を置くスペース。"
     };
 
@@ -381,12 +414,8 @@
       themeToggleBtn: document.getElementById('themeToggleBtn'),
       themeToggleHandle: document.getElementById('themeToggleHandle'),
       zenToggleBtn: document.getElementById('zenToggleBtn'),
-      zenToggleIcon: document.getElementById('zenToggleIcon'),
       copyContentBtn: document.getElementById('copyContentBtn'),
-      copyContentIcon: document.getElementById('copyContentIcon'),
-      copyContentText: document.getElementById('copyContentText'),
       openShareModalBtn: document.getElementById('openShareModalBtn'),
-      sharePageText: document.getElementById('sharePageText'),
       shareModal: document.getElementById('shareModal'),
       shareModalContent: document.getElementById('shareModalContent'),
       shareModalTitle: document.getElementById('shareModalTitle'),
@@ -395,8 +424,6 @@
       shareLine: document.getElementById('shareLine'),
       shareNotion: document.getElementById('shareNotion'),
       shareCopy: document.getElementById('shareCopy'),
-      shareCopyIcon: document.getElementById('shareCopyIcon'),
-      shareCopyText: document.getElementById('shareCopyText'),
       themeBtns: document.querySelectorAll('.theme-btn'),
       contentElements: document.querySelectorAll('.content-element'),
       prevThemeBtn: document.getElementById('prevThemeBtn'),
@@ -459,8 +486,7 @@
         });
         setTimeout(() => { isAnimating = false; }, 1800); 
       }, 400);
-      const config = (window.elementSdk && window.elementSdk.config) ? window.elementSdk.config : defaultConfig;
-      updateButtonsHighlight(themeName, isDarkMode ? darkPalette : config);
+      updateButtonsHighlight(themeName, isDarkMode ? darkPalette : defaultConfig);
       updateArrows();
     }
 
@@ -559,17 +585,24 @@
       updateArrows();
     }
 
-    function applyConfig(config) {
-      const mergedLight = { ...defaultConfig, ...config };
-      const baseSize = Number(mergedLight.font_size);
-      const serifStack = `"${mergedLight.font_family}", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif`;
-      const allTextElements = [els.title, els.body, els.footerText, els.modalBody, els.subtitle, els.metaInfo, els.copyright, els.disclosureText, els.modalTitle, els.closeModalBtn, els.copyContentText, els.sharePageText, els.shareModalTitle, els.shareCopyText, ...els.themeBtns];
+    function applyConfig() {
+      const baseSize = Number(defaultConfig.font_size);
+      const serifStack = `"${defaultConfig.font_family}", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif`;
+      
+      // Removed specific IDs that no longer exist, generalized text application
+      const allTextElements = [
+        els.title, els.body, els.footerText, els.modalBody, els.subtitle, 
+        els.metaInfo, els.copyright, els.disclosureText, els.modalTitle, 
+        els.closeModalBtn, els.shareModalTitle, ...els.themeBtns
+      ];
       allTextElements.forEach(el => { if (el && el.style) el.style.fontFamily = serifStack; });
+      
       els.title.style.fontSize = `clamp(${baseSize * 2}px, 9vw, ${baseSize * 3.2}px)`;
       els.body.style.fontSize = `${baseSize}px`;
       els.footerText.style.fontSize = `${baseSize * 0.82}px`;
       els.subtitle.style.fontSize = `${baseSize * 0.62}px`;
-      applyColors(isDarkMode ? darkPalette : mergedLight);
+      
+      applyColors(isDarkMode ? darkPalette : defaultConfig);
     }
 
     function updateButtonsHighlight(themeName, palette) {
@@ -664,13 +697,14 @@
 
     els.themeToggleBtn.addEventListener('click', () => {
       isDarkMode = !isDarkMode;
-      applyConfig((window.elementSdk && window.elementSdk.config) || defaultConfig);
+      applyConfig();
     });
 
     els.zenToggleBtn.addEventListener('click', () => {
       isZenMode = !isZenMode;
       document.body.classList.toggle('zen-mode', isZenMode);
-      els.zenToggleIcon.setAttribute('data-lucide', isZenMode ? 'minimize' : 'maximize');
+      // アイコンを動的に再生成
+      els.zenToggleBtn.innerHTML = `<i data-lucide="${isZenMode ? 'minimize' : 'maximize'}" class="w-4 h-4 sm:w-5 sm:h-5"></i>`;
       lucide.createIcons();
     });
 
@@ -694,12 +728,17 @@
 
     els.copyContentBtn.addEventListener('click', () => {
       copyToClipboard(getFormattedContent(), () => {
-        els.copyContentIcon.setAttribute('data-lucide', 'check');
-        els.copyContentText.textContent = '書き留めました';
+        // アイコンとテキストを動的に再生成
+        els.copyContentBtn.innerHTML = `
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span class="text-[11px]">書き留めました</span>
+        `;
         lucide.createIcons();
         setTimeout(() => {
-          els.copyContentIcon.setAttribute('data-lucide', 'copy');
-          els.copyContentText.textContent = '書き留める';
+          els.copyContentBtn.innerHTML = `
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span class="text-[11px]">書き留める</span>
+          `;
           lucide.createIcons();
         }, 3000);
       });
@@ -737,12 +776,17 @@
     els.shareCopy.addEventListener('click', () => {
       const { shareUrl } = getShareInfo();
       copyToClipboard(shareUrl, () => {
-        els.shareCopyIcon.setAttribute('data-lucide', 'check');
-        els.shareCopyText.textContent = 'コピー完了';
+        // アイコンとテキストを動的に再生成
+        els.shareCopy.innerHTML = `
+          <i data-lucide="check" class="w-6 h-6"></i>
+          <span class="text-[11px] tracking-widest text-center">コピー完了</span>
+        `;
         lucide.createIcons();
         setTimeout(() => {
-          els.shareCopyIcon.setAttribute('data-lucide', 'link');
-          els.shareCopyText.textContent = 'URLコピー';
+          els.shareCopy.innerHTML = `
+            <i data-lucide="link" class="w-6 h-6"></i>
+            <span class="text-[11px] tracking-widest text-center">URLコピー</span>
+          `;
           lucide.createIcons();
         }, 2000);
       });
@@ -757,26 +801,7 @@
 
     lucide.createIcons();
 
-    if (window.elementSdk) {
-      window.elementSdk.init({
-        defaultConfig,
-        onConfigChange: (config) => applyConfig(config),
-        mapToCapabilities: (config) => ({
-          recolorables: [
-            { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
-            { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
-            { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
-            { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
-            { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
-          ],
-          borderables: [],
-          fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
-          fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
-        }),
-        mapToEditPanelValues: (config) => new Map([ ["main_title", config.main_title || defaultConfig.main_title], ["subtitle_text", config.subtitle_text || defaultConfig.subtitle_text], ["body_text", config.body_text || defaultConfig.body_text], ["footer_text", config.footer_text || defaultConfig.footer_text] ])
-      });
-    }
-    applyConfig((window.elementSdk && window.elementSdk.config) || defaultConfig);
+    applyConfig();
   </script>
 </body>
 </html>

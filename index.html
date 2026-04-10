@@ -258,52 +258,64 @@
     }
   </style>
   <script type="application/ld+json">
-   {
-     "@context": "https://schema.org",
-     "@type": "ProfilePage",
-     "mainEntity": {
-     "@type": "Person",
-     "@id": "https://tk.st/#shitake",
-     "name": "Shinya Takeda",
-     "alternateName": "武田 伸也",
-     "jobTitle": "Technical Marketing Lead",
-     "worksFor": {
-     "@type": "Organization",
-     "name": "Nitori"
-     },
-     "homeLocation": {
-     "@type": "Place",
-     "name": "Saitama, Japan"
-     },
-     "description": "The sun for the cyber realm, The moon for music and philosophy. I love profound tranquility, laced with a spoonful of madness.",
-     "url": "https://tk.st/",
-     "sameAs": [
-     "https://x.com/Tah_Keh",
-     "https://www.instagram.com/dj_hcp/",
-     "https://www.linkedin.com/in/shinyatakeda/",
-     ],
-     "knowsAbout": [
-     // 1. 大領域（ドメイン）
-     "Technical Marketing",
-     "Digital Marketing Optimization",
-     // 2. 方法論・戦略
-     "Data Analytics",
-     "GA4 Strategy",
-     "A/B Testing",
-     // 3. 具体的な技術・実装
-     "Server-side GTM",
-     "Frontend Development",
-     "Site Reliability Engineering",
-     "Web3 & On-chain Systems",
-     // 4. その他の専門性
-     "DJ (Psytrance / Big Room House)",
-     "Philosophy"
-     ]
-     },
-     "headline": "Shinya Takeda - Terminal Portfolio",
-     "description": "Explore the layers of Shinya Takeda. Use the command line to dive in."
-   }
-</script>
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      "mainEntity": {
+        "@type": "Person",
+        "@id": "https://tk.st/#shitake",
+        "name": "Shinya Takeda",
+        "alternateName": [
+          "武田 伸也",
+          "人類踊狂計画",
+          "Human Choreomania Project"
+        ],
+        "jobTitle": "Technical Marketing Lead",
+        "worksFor": {
+          "@type": "Organization",
+          "name": "Nitori"
+        },
+        "homeLocation": {
+          "@type": "Place",
+          "name": "Saitama, Japan"
+        },
+        "description": "The sun for the cyber realm, The moon for music and philosophy. I love profound tranquility, laced with a spoonful of madness.",
+        "url": "https://tk.st/",
+        "sameAs": [
+          "https://x.com/Tah_Keh",
+          "https://www.instagram.com/dj_hcp/",
+          "https://www.linkedin.com/in/shinyatakeda/"
+        ],
+        "knowsAbout": [
+          // 1. 大領域（ドメイン）
+          "Technical Marketing",
+          "Digital Marketing Optimization",
+          // 2. 方法論・戦略
+          "Data Analytics",
+          "GA4 Strategy",
+          "A/B Testing",
+          "AI Agent Architecture",
+          // 3. 具体的な技術・実装
+          "Server-side GTM",
+          "Frontend Development",
+          "Site Reliability Engineering",
+          "Web3 & On-chain Systems",
+          // 4. 音楽・DJ・オーディオ
+          "DJing",
+          "Psytrance",
+          "Big Room House",
+          "Techno & Trance",
+          // 5. 哲学・思想
+          "Philosophy",
+          "Friedrich Nietzsche",
+          "Erich Fromm",
+          "Buddha"
+        ]
+      },
+      "headline": "Shinya Takeda - Terminal Portfolio",
+      "description": "Explore the layers of Shinya Takeda. Use the command line to dive in."
+    }
+  </script>
  </head>
  <body>
   <div id="app" class="min-h-screen w-full flex flex-col" style="transition: opacity 0.5s;">
@@ -664,7 +676,7 @@
     // === BOOT SEQUENCE ===
     async function boot() {
       const bootArea = $('boot-area');
-      for (const line of [{ text: 'Initializing terminal...', delay: 250 }, { text: `Connecting to <span style="font-weight:bold;">Bitcoin Mainnet</span>... [NG]`, delay: 450 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="choreo-text" style="color: var(--primary-color);">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }]) {
+      for (const line of [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="choreo-text" style="color: var(--primary-color);">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }]) {
         await delay(line.delay);
         const div = document.createElement('div'); div.className = 'text-xs fade-in choreo-text'; div.style.color = 'var(--secondary-color)'; div.innerHTML = line.text; bootArea.appendChild(div);
       }

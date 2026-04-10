@@ -3,16 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="DJのポートフォリオページ。ボランティアで活動しております。">
+  <meta name="description" content="DJのポートフォリオページ。ボランティアで活動しております。">
   <title>人類踊狂計画 - DJ Human Choreomania Project</title>
   <link rel="icon" href="https://tk.st/images/favicons/dj-favicon.png" type="image/png">
   <link rel="canonical" href="https://tk.st/dj/">
+  
+  <!-- OGP & Twitter Cards -->
   <meta property="og:title" content="人類踊狂計画 - DJ Human Choreomania Project">
   <meta property="og:description" content="DJのポートフォリオページ。ボランティアで活動しております。">
   <meta property="og:image" content="https://tk.st/images/ogp/dj-ogp.png">
   <meta property="og:url" content="https://tk.st/dj/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "人類踊狂計画 - DJ Human Choreomania Project",
+      "description": "DJのポートフォリオページ。ボランティアで活動しております。",
+      "url": "https://tk.st/dj/",
+      "author": {
+        "@type": "Person",
+        "@id": "https://tk.st/#shitake"
+      },
+      "mainEntity": { 
+        "@type": "MusicGroup",
+        "name": "人類踊狂計画",
+        "alternateName": "Human Choreomania Project",
+        "image": "https://tk.st/images/contents/dj-logo3.png",
+        "genre": ["Rock"],
+        "foundingDate": "2024"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Shinya Takeda - Terminal Portfolio",
+            "item": "https://tk.st/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "人類踊狂計画 - DJ Human Choreomania Project",
+            "item": "https://tk.st/dj/"
+          }
+        ]
+      }
+    }
+  </script>
   
   <!-- Google Fonts: Noto Serif JP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,28 +65,11 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
   <style>
+    /* ===== RESET & BASE ===== */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-    }
-
-    html, body {
-      min-height: 100vh;
-      width: 100%;
-      scroll-behavior: smooth;
-      overflow-x: hidden;
-    }
-
-    body {
-      background: #ffffff;
-      color: #1a1a1a;
-      font-family: 'Noto Serif JP', 'Georgia', serif;
-      line-height: 1.6;
-    }
-
-    #app {
-      width: 100%;
     }
 
     :root {
@@ -54,6 +79,19 @@
       --white: #ffffff;
       --black: #1a1a1a;
       --accent-red: #ff3333;
+    }
+
+    html, body {
+      min-height: 100vh;
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: 'Noto Serif JP', 'Georgia', serif;
+      line-height: 1.6;
     }
 
     /* ===== Scroll Reveal Animation ===== */
@@ -70,8 +108,6 @@
 
     /* ===== HERO ===== */
     .hero-section {
-      width: 100%;
-      height: 100%;
       background: var(--white);
       background-image: 
         linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
@@ -117,15 +153,13 @@
       justify-content: center;
       gap: 30px;
       padding: 20px;
-      height: 100%;
-      width: 100%;
     }
 
     .hero-title {
       font-size: clamp(3rem, 10vh, 7rem);
       font-weight: 900;
       letter-spacing: 0.1em;
-      padding-top: 0.1em; /* 中央揃え補正: 縦書きのletter-spacing余白を相殺 */
+      padding-top: 0.1em; 
       line-height: 1.1;
       writing-mode: vertical-rl;
       text-orientation: upright;
@@ -136,11 +170,15 @@
       text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
     }
 
+    .hero-tagline-wrapper {
+      text-align: center;
+    }
+
     .hero-tagline {
       font-size: clamp(0.75rem, 3.5vw, 1.3rem);
       font-weight: 300;
       letter-spacing: 0.15em;
-      padding-left: 0.15em; /* 中央揃え補正: 横書きのletter-spacing余白を相殺 */
+      padding-left: 0.15em; 
       color: var(--black);
       margin-bottom: 20px;
       text-transform: uppercase;
@@ -205,7 +243,6 @@
 
     /* ===== PHILOSOPHY ===== */
     .philosophy-section {
-      width: 100%;
       min-height: 100vh;
       background: var(--white);
       position: relative;
@@ -243,7 +280,6 @@
     }
 
     .philosophy-content {
-      /* display: flex を使用してはみ出した際も左右均等になるよう補正 */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -251,8 +287,6 @@
       text-align: center;
       z-index: 10;
       position: relative;
-      width: 100%;
-      /* max-width制限を撤廃して右ズレを防止 */
     }
 
     .philosophy-text {
@@ -261,7 +295,7 @@
       line-height: 1.8;
       color: var(--black);
       letter-spacing: 0.05em;
-      padding-left: 0.05em; /* 中央揃え補正: letter-spacing余白を相殺 */
+      padding-left: 0.05em; 
       white-space: nowrap;
     }
 
@@ -271,7 +305,6 @@
 
     /* ===== GEAR ===== */
     .gear-section {
-      width: 100%;
       min-height: 100vh;
       position: relative;
       overflow: hidden;
@@ -380,7 +413,6 @@
 
     /* ===== SOUND LOG ===== */
     .sound-log-section {
-      width: 100%;
       min-height: 100vh;
       background: var(--dark-blue-purple);
       position: relative;
@@ -435,9 +467,17 @@
       text-transform: uppercase;
     }
 
+    .mixcloud-player {
+      width: 100%;
+      height: 362px;
+      max-width: 600px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
     /* ===== OPERATION (Calendar & Timeline) ===== */
     .operation-section {
-      width: 100%;
       min-height: 100vh;
       background: var(--white);
       padding: 80px 40px;
@@ -455,7 +495,6 @@
     @media (max-width: 768px) {
       .operation-container {
         grid-template-columns: 1fr;
-        gap: 60px;
       }
     }
 
@@ -528,12 +567,11 @@
     .calendar-container iframe {
       width: 100%;
       height: 100%;
-      border: 0;
+      border: none;
     }
 
     /* ===== VIDEO ===== */
     .video-section {
-      width: 100%;
       min-height: 100vh;
       background: var(--dark-blue-purple);
       padding: 80px 40px;
@@ -566,7 +604,7 @@
     .video-container iframe {
       width: 100%;
       height: 100%;
-      border: 0;
+      border: none;
       position: absolute;
       top: 0;
       left: 0;
@@ -574,7 +612,6 @@
 
     /* ===== CONTACT ===== */
     .contact-section {
-      width: 100%;
       min-height: 100vh;
       background: var(--white);
       display: flex;
@@ -640,6 +677,10 @@
       font-weight: 300;
       letter-spacing: 0.02em;
     }
+    
+    .contact-message-sub {
+      margin-top: 20px;
+    }
 
     .contact-buttons {
       display: flex;
@@ -678,6 +719,11 @@
       color: inherit;
       text-decoration: none;
     }
+    
+    .icon-lg {
+      width: 28px;
+      height: 28px;
+    }
 
     /* ===== Back to Top Button ===== */
     .back-to-top {
@@ -715,7 +761,6 @@
 
     /* ===== FOOTER ===== */
     .site-footer {
-      width: 100%;
       padding: 30px 20px;
       background: var(--dark-blue-purple);
       color: rgba(255, 255, 255, 0.5);
@@ -790,191 +835,189 @@
   </div>
   <div class="sync-rate-text" id="syncRateText">SYNC RATE: 0.00%</div>
 
-  <div id="app">
-    <!-- HERO -->
-    <section class="hero-section">
-      <div class="reticle top-left"></div>
-      <div class="reticle top-right"></div>
-      <div class="reticle bottom-left"></div>
-      <div class="reticle bottom-right"></div>
-      
-      <div class="hero-content">
-        <h1 class="hero-title reveal">人類踊狂計画</h1>
-        <div style="text-align: center;" class="reveal">
-          <div class="hero-tagline typewriter-text">DJ HUMAN CHOREOMANIA PROJECT</div>
-        </div>
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="reticle top-left"></div>
+    <div class="reticle top-right"></div>
+    <div class="reticle bottom-left"></div>
+    <div class="reticle bottom-right"></div>
+    
+    <div class="hero-content">
+      <h1 class="hero-title reveal">人類踊狂計画</h1>
+      <div class="hero-tagline-wrapper reveal">
+        <div class="hero-tagline typewriter-text">DJ HUMAN CHOREOMANIA PROJECT</div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- PHILOSOPHY -->
-    <section class="philosophy-section">
-      <div class="philosophy-bg">
-        <div class="philosophy-octahedron">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g fill="none" stroke="var(--neo-purple)" stroke-width="0.7" stroke-linejoin="round" stroke-linecap="round">
-              <g opacity="0.4">
-                <line x1="50" y1="5" x2="50" y2="35" />
-                <line x1="50" y1="95" x2="50" y2="35" />
-                <line x1="10" y1="50" x2="50" y2="35" />
-                <line x1="90" y1="50" x2="50" y2="35" />
-              </g>
-              <line x1="50" y1="5" x2="10" y2="50" />
-              <line x1="50" y1="5" x2="90" y2="50" />
-              <line x1="50" y1="5" x2="50" y2="65" />
-              <line x1="50" y1="95" x2="10" y2="50" />
-              <line x1="50" y1="95" x2="90" y2="50" />
-              <line x1="50" y1="95" x2="50" y2="65" />
-              <line x1="10" y1="50" x2="50" y2="65" />
-              <line x1="90" y1="50" x2="50" y2="65" />
+  <!-- PHILOSOPHY -->
+  <section class="philosophy-section">
+    <div class="philosophy-bg">
+      <div class="philosophy-octahedron">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <g fill="none" stroke="var(--neo-purple)" stroke-width="0.7" stroke-linejoin="round" stroke-linecap="round">
+            <g opacity="0.4">
+              <line x1="50" y1="5" x2="50" y2="35" />
+              <line x1="50" y1="95" x2="50" y2="35" />
+              <line x1="10" y1="50" x2="50" y2="35" />
+              <line x1="90" y1="50" x2="50" y2="35" />
             </g>
-          </svg>
-        </div>
-      </div>
-      <div class="philosophy-content reveal">
-        <div class="philosophy-text">
-          <div>サウンドインパクトによる人類の補完</div>
-          <div>ビートで心の壁を中和する</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- GEAR -->
-    <section class="gear-section">
-      <div class="gear-bg-split"></div>
-      <div class="gear-content reveal">
-        <div class="gear-item" data-gear="controller">
-          <img src="https://tk.st/images/contents/DJ-Controller-purple.png" alt="DJ Controller" class="gear-image">
-          <div class="at-field">
-            <div class="hexagon-layer"></div>
-            <div class="hexagon-layer"></div>
-          </div>
-        </div>
-        <div class="gear-item" data-gear="headphone">
-          <img src="https://tk.st/images/contents/lollipop-headphone.png" alt="Lollipop Headphone" class="gear-image">
-          <div class="at-field">
-            <div class="hexagon-layer"></div>
-            <div class="hexagon-layer"></div>
-          </div>
-        </div>
-        <div class="gear-item" data-gear="turntable">
-          <img src="https://tk.st/images/contents/happy-death.png" alt="Turntable" class="gear-image">
-          <div class="at-field">
-            <div class="hexagon-layer"></div>
-            <div class="hexagon-layer"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SOUND LOG -->
-    <section class="sound-log-section">
-      <div class="sound-log-header reveal">🔊 Audio Stream: Active</div>
-      <div class="genre-list reveal">
-        <div class="genre-item">BIG ROOM HOUSE</div>
-        <div class="genre-item">PSYTRANCE</div>
-        <div class="genre-item">DANCE POP</div>
-        <div class="genre-item">PARA PARA</div>
-      </div>
-      <div class="mixcloud-container reveal">
-        <div class="mixcloud-label">» Sound Log Database</div>
-        <iframe src="https://embed.beatport.com/?id=5012224&type=release" width="100%" height="362" frameborder="0" scrolling="no" style="max-width:600px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);"></iframe>
-      </div>
-    </section>
-
-    <!-- OPERATION -->
-    <section class="operation-section">
-      <div class="operation-container">
-        <div class="reveal">
-          <div class="operation-title">📊 Archive / Past</div>
-          <div class="timeline">
-            <div class="timeline-item">
-              <div class="timeline-year">2026</div>
-              <div class="timeline-event">
-                <a href="https://tk.st/images/contents/NEXTORM-BASE-16_Ohjo-bldg.png" target="_blank" rel="noopener noreferrer" class="timeline-link">
-                  NEXTORM -BASE- #16<br>
-                  Ohjo-bldg
-                </a>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-year">2025</div>
-              <div class="timeline-event">
-                <a href="https://tk.st/images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank" rel="noopener noreferrer" class="timeline-link">
-                  Night-Drip<br>
-                  Shinjuku-HEIST.
-                </a>
-              </div>
-            </div>
-            <div class="timeline-item">
-              <div class="timeline-year">2024</div>
-              <div class="timeline-event">
-                Project Launch<br>
-                人類踊狂計画 Initiation
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="reveal">
-          <div class="operation-title">📅 Schedule / Future</div>
-          <div class="calendar-container">
-            <iframe src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo" frameborder="0" scrolling="no"></iframe>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIDEO -->
-    <section class="video-section">
-      <div class="video-title reveal">🎬 Visual Database</div>
-      <div class="video-container reveal">
-        <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" allowtransparency="true" frameborder="0" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen></iframe>
-      </div>
-    </section>
-
-    <!-- CONTACT -->
-    <section class="contact-section">
-      <div class="contact-bg-decoration">
-        <svg viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="50,0 93.3,27.5 93.3,82.5 50,115 6.7,82.5 6.7,27.5" fill="none" stroke="var(--neo-purple)" stroke-width="0.5" />
+            <line x1="50" y1="5" x2="10" y2="50" />
+            <line x1="50" y1="5" x2="90" y2="50" />
+            <line x1="50" y1="5" x2="50" y2="65" />
+            <line x1="50" y1="95" x2="10" y2="50" />
+            <line x1="50" y1="95" x2="90" y2="50" />
+            <line x1="50" y1="95" x2="50" y2="65" />
+            <line x1="10" y1="50" x2="50" y2="65" />
+            <line x1="90" y1="50" x2="50" y2="65" />
+          </g>
         </svg>
       </div>
-      <div class="contact-content reveal">
-        <div class="contact-logo-space" title="DJ Human Choreomania Project Logo">
-          <svg class="logo-hex-border" viewBox="0 0 100 115" preserveAspectRatio="none">
-            <polygon points="50,2 98,27.5 98,87.5 50,113 2,87.5 2,27.5" fill="rgba(156, 122, 247, 0.05)" stroke="var(--neo-purple)" stroke-width="2" stroke-dasharray="4,4" />
-          </svg>
-          <img src="https://tk.st/images/contents/dj-logo3.png" alt="DJ Logo">
-        </div>
-        
-        <div class="contact-message">
-          <div>ボランティアでお手伝いしております。</div>
-          <div style="margin-top: 20px;">ご興味ありましたら、ご連絡ください。</div>
-        </div>
-        <div class="contact-buttons">
-          <button class="hex-button" title="Instagram">
-            <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer">
-              <i data-lucide="instagram" style="width: 28px; height: 28px;"></i>
-            </a>
-          </button>
-          <button class="hex-button" title="X / Twitter">
-            <a href="https://tk.st/tw" target="_blank" rel="noopener noreferrer">
-              <i data-lucide="twitter" style="width: 28px; height: 28px;"></i>
-            </a>
-          </button>
-          <button class="hex-button" title="Email">
-            <a href="https://tk.st/contact" target="_blank" rel="noopener noreferrer">
-              <i data-lucide="mail" style="width: 28px; height: 28px;"></i>
-            </a>
-          </button>
+    </div>
+    <div class="philosophy-content reveal">
+      <div class="philosophy-text">
+        <div>サウンドインパクトによる人類の補完</div>
+        <div>ビートで心の壁を中和する</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GEAR -->
+  <section class="gear-section">
+    <div class="gear-bg-split"></div>
+    <div class="gear-content reveal">
+      <div class="gear-item" data-gear="controller">
+        <img src="https://tk.st/images/contents/DJ-Controller-purple.png" alt="DJ Controller" class="gear-image">
+        <div class="at-field">
+          <div class="hexagon-layer"></div>
+          <div class="hexagon-layer"></div>
         </div>
       </div>
-    </section>
+      <div class="gear-item" data-gear="headphone">
+        <img src="https://tk.st/images/contents/lollipop-headphone.png" alt="Lollipop Headphone" class="gear-image">
+        <div class="at-field">
+          <div class="hexagon-layer"></div>
+          <div class="hexagon-layer"></div>
+        </div>
+      </div>
+      <div class="gear-item" data-gear="turntable">
+        <img src="https://tk.st/images/contents/happy-death.png" alt="Turntable" class="gear-image">
+        <div class="at-field">
+          <div class="hexagon-layer"></div>
+          <div class="hexagon-layer"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- FOOTER -->
-    <footer class="site-footer">
-      ©2026 DJ Human Choreomania Project. All Rights Reserved.
-    </footer>
-  </div>
+  <!-- SOUND LOG -->
+  <section class="sound-log-section">
+    <div class="sound-log-header reveal">🔊 Audio Stream: Active</div>
+    <div class="genre-list reveal">
+      <div class="genre-item">BIG ROOM HOUSE</div>
+      <div class="genre-item">PSYTRANCE</div>
+      <div class="genre-item">DANCE POP</div>
+      <div class="genre-item">PARA PARA</div>
+    </div>
+    <div class="mixcloud-container reveal">
+      <div class="mixcloud-label">» Sound Log Database</div>
+      <iframe src="https://embed.beatport.com/?id=5012224&type=release" class="mixcloud-player" scrolling="no" title="Beatport Player"></iframe>
+    </div>
+  </section>
+
+  <!-- OPERATION -->
+  <section class="operation-section">
+    <div class="operation-container">
+      <div class="reveal">
+        <div class="operation-title">📊 Archive / Past</div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-year">2026</div>
+            <div class="timeline-event">
+              <a href="https://tk.st/images/contents/NEXTORM-BASE-16_Ohjo-bldg.png" target="_blank" rel="noopener noreferrer" class="timeline-link">
+                NEXTORM -BASE- #16<br>
+                Ohjo-bldg
+              </a>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2025</div>
+            <div class="timeline-event">
+              <a href="https://tk.st/images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank" rel="noopener noreferrer" class="timeline-link">
+                Night-Drip<br>
+                Shinjuku-HEIST.
+              </a>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-year">2024</div>
+            <div class="timeline-event">
+              Project Launch<br>
+              人類踊狂計画 Initiation
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="operation-title">📅 Schedule / Future</div>
+        <div class="calendar-container">
+          <iframe src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo" scrolling="no" title="Google Calendar"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEO -->
+  <section class="video-section">
+    <div class="video-title reveal">🎬 Visual Database</div>
+    <div class="video-container reveal">
+      <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen></iframe>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact-section">
+    <div class="contact-bg-decoration">
+      <svg viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,0 93.3,27.5 93.3,82.5 50,115 6.7,82.5 6.7,27.5" fill="none" stroke="var(--neo-purple)" stroke-width="0.5" />
+      </svg>
+    </div>
+    <div class="contact-content reveal">
+      <div class="contact-logo-space" title="DJ Human Choreomania Project Logo">
+        <svg class="logo-hex-border" viewBox="0 0 100 115" preserveAspectRatio="none">
+          <polygon points="50,2 98,27.5 98,87.5 50,113 2,87.5 2,27.5" fill="rgba(156, 122, 247, 0.05)" stroke="var(--neo-purple)" stroke-width="2" stroke-dasharray="4,4" />
+        </svg>
+        <img src="https://tk.st/images/contents/dj-logo3.png" alt="DJ Logo">
+      </div>
+      
+      <div class="contact-message">
+        <div>ボランティアでお手伝いしております。</div>
+        <div class="contact-message-sub">ご興味ありましたら、ご連絡ください。</div>
+      </div>
+      <div class="contact-buttons">
+        <button class="hex-button" title="Instagram">
+          <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer">
+            <i data-lucide="instagram" class="icon-lg"></i>
+          </a>
+        </button>
+        <button class="hex-button" title="X / Twitter">
+          <a href="https://tk.st/tw" target="_blank" rel="noopener noreferrer">
+            <i data-lucide="twitter" class="icon-lg"></i>
+          </a>
+        </button>
+        <button class="hex-button" title="Email">
+          <a href="https://tk.st/contact" target="_blank" rel="noopener noreferrer">
+            <i data-lucide="mail" class="icon-lg"></i>
+          </a>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    ©2026 DJ Human Choreomania Project. All Rights Reserved.
+  </footer>
 
   <!-- Image Modal -->
   <div class="image-modal" id="imageModal">
@@ -986,11 +1029,11 @@
 
   <!-- Back to Top Button -->
   <button class="back-to-top" id="backToTop" title="トップへ戻る">
-    <i data-lucide="chevron-up" style="width: 28px; height: 28px;"></i>
+    <i data-lucide="chevron-up" class="icon-lg"></i>
   </button>
 
   <script>
-    // 1. DOM Elements Cache (パフォーマンス向上のためのキャッシュ)
+    // 1. DOM Elements Cache
     const progressBar = document.getElementById('progressBar');
     const syncRateText = document.getElementById('syncRateText');
     const footer = document.querySelector('.site-footer');
@@ -1035,17 +1078,15 @@
 
     // 4. SYNC RATE & Back to Top (Scroll Progress)
     window.addEventListener('scroll', () => {
-      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-      const clientHeight = document.documentElement.clientHeight;
+      const scrollTop = window.scrollY;
+      const clientHeight = window.innerHeight;
       const scrollHeight = document.documentElement.scrollHeight;
       const maxScroll = scrollHeight - clientHeight;
       
-      let scrollPercent = maxScroll > 0 ? scrollTop / maxScroll : 0;
-      if (scrollPercent < 0) scrollPercent = 0;
-      if (scrollPercent > 1) scrollPercent = 1;
+      let scrollPercent = maxScroll > 0 ? Math.max(0, Math.min(1, scrollTop / maxScroll)) : 0;
       
       if (progressBar && syncRateText && footer) {
-        progressBar.style.width = (scrollPercent * 100) + '%';
+        progressBar.style.width = `${scrollPercent * 100}%`;
         
         const footerTopScroll = footer.offsetTop - clientHeight;
         const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
@@ -1060,9 +1101,9 @@
           displayRate = '400.00%';
           isRunaway = true;
         } else {
-          let ratePercent = footerTopScroll > 0 ? (scrollTop / footerTopScroll) : 0;
-          let syncRate = ratePercent * 399.99;
-          displayRate = syncRate.toFixed(2) + '%';
+          const ratePercent = footerTopScroll > 0 ? (scrollTop / footerTopScroll) : 0;
+          const syncRate = ratePercent * 399.99;
+          displayRate = `${syncRate.toFixed(2)}%`;
           isRunaway = syncRate > 300;
         }
         
@@ -1080,11 +1121,7 @@
       }
 
       if (backToTopBtn) {
-        if (scrollTop > 300) {
-          backToTopBtn.classList.add('visible');
-        } else {
-          backToTopBtn.classList.remove('visible');
-        }
+        backToTopBtn.classList.toggle('visible', scrollTop > 300);
       }
     }, { passive: true });
 

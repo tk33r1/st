@@ -13,6 +13,50 @@
   <meta property="og:url" content="https://tk.st/bitcoinyen/ascii-roguelike/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Shinya Takeda - Terminal Portfolio",
+            "item": "https://tk.st/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Overview BITCOIN YEN",
+            "item": "https://tk.st/bitcoinyen/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "ASCII Roguelike",
+            "item": "https://tk.st/bitcoinyen/ascii-roguelike/"
+          }
+        ]
+      },
+      {
+        "@type": "VideoGame",
+        "name": "ASCII Roguelike",
+        "description": "ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう",
+        "url": "https://tk.st/bitcoinyen/ascii-roguelike/",
+        "image": "https://tk.st/images/ogp/ascii-roguelike-ogp.png",
+        "playMode": "SinglePlayer",
+        "applicationCategory": "Game",
+        "operatingSystem": "Web Browser",
+        "author": {
+          "@type": "Person",
+          "@id": "https://tk.st/#shitake"
+        }
+      }
+    ]
+  }
+  </script>
 <style>
   * {
     -webkit-tap-highlight-color: transparent;
@@ -51,9 +95,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 100vw;
-    height: 100vh;
-    height: 100dvh;
+    height: 100%;
     box-sizing: border-box;
   }
 
@@ -131,7 +173,7 @@
 
   #title-screen {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     background-color: var(--bg-color);
     z-index: 20;
     display: flex;
@@ -194,7 +236,7 @@
   #overlay {
     display: none;
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.85);
     flex-direction: column;
     justify-content: center;
@@ -240,9 +282,6 @@
 
   @media (max-width: 768px) {
     #game-wrapper {
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
       border: none;
       padding: 10px;
     }
@@ -326,11 +365,22 @@ function getRandomItem(x, y) {
   if (rand < 0.65) return { x, y, type: 'sword', char: '/', name: 'Sword' };
   if (rand < 0.85) return { x, y, type: 'shield', char: '[', name: 'Shield' };
   if (rand < 0.95) return { x, y, type: 'scroll', char: '?', name: 'Magic Map' };
-  return { x, y, type: 'ring', char: '=', name: 'Power Ring' }; // 新アイテム追加
+  return { x, y, type: 'ring', char: '=', name: 'Power Ring' };
 }
 
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// XSS対策用のエスケープ関数を追加
+function escapeHTML(str) {
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag] || tag));
 }
 
 // --- API連携 (スコア保存・取得) ---
@@ -361,7 +411,6 @@ async function saveHighScore(currentTurn, playerName) {
     return await response.json();
   } catch (error) {
     console.warn('API save failed, saving to local session instead.', error);
-    // API送信に失敗した場合はローカルの配列に保存して、疑似的にランキングデータを返す
     sessionHighScores.push(newScore);
     sessionHighScores.sort((a, b) => a.turns - b.turns);
     return sessionHighScores;
@@ -382,7 +431,6 @@ function init() {
 }
 
 function generateFloor() {
-  enemies = []; items = []; rooms = [];
   generateMap();
   calcFOV();
   draw();
@@ -391,10 +439,11 @@ function generateFloor() {
 }
 
 function generateMap() {
-  // 初期化
+  enemies = []; items = []; rooms = [];
+
   for (let y = 0; y < MAP_H; y++) {
-    map[y] = new Array(MAP_W).fill('#');
-    visibility[y] = new Array(MAP_W).fill(0);
+    map[y] = Array(MAP_W).fill('#');
+    visibility[y] = Array(MAP_W).fill(0);
   }
 
   // 部屋の生成
@@ -476,13 +525,13 @@ function generateMap() {
     for (let e = 0; e < enemyCount; e++) {
       let ex = randInt(r.x, r.x + r.w), ey = randInt(r.y, r.y + r.h);
       if ((map[ey][ex] === '.' || map[ey][ex] === '^') && !isSpecialTile(ex, ey)) {
-        let typeTemplate = ENEMY_TYPES[2]; // Default Dragon
+        let typeTemplate = ENEMY_TYPES[2];
         let rand = Math.random();
         let isGolden = false;
 
-        if (rand < Math.max(0, 0.70 - (floor - 1) * 0.15)) typeTemplate = ENEMY_TYPES[0]; // Slime
+        if (rand < Math.max(0, 0.70 - (floor - 1) * 0.15)) typeTemplate = ENEMY_TYPES[0];
         else if (rand < 0.95) {
-            typeTemplate = ENEMY_TYPES[1]; // Goblin
+            typeTemplate = ENEMY_TYPES[1];
             isGolden = Math.random() < 0.2;
         }
 
@@ -555,7 +604,6 @@ function handleInput(key) {
   let enemy = enemies.find(e => e.hp > 0 && e.x === targetX && e.y === targetY);
   
   if (enemy) {
-    // 攻撃処理
     enemy.hp -= player.atk;
     logMessage(`<span class="color-good">You strike ${enemy.name} for ${player.atk} damage.</span>`);
     if (enemy.hp <= 0) {
@@ -565,10 +613,11 @@ function handleInput(key) {
          logMessage(`<span class="color-good">${enemy.name} dropped an item!</span>`);
       }
       player.exp += enemy.exp;
-      if (player.exp >= player.maxExp) levelUp();
+      while (player.exp >= player.maxExp) {
+        levelUp();
+      }
     }
   } else if (map[targetY]?.[targetX] && ['.', '+', '^'].includes(map[targetY][targetX])) {
-    // 移動処理
     if (map[targetY][targetX] === '+') {
       map[targetY][targetX] = '.';
       logMessage(`<span class="color-normal">You opened a door.</span>`);
@@ -581,13 +630,12 @@ function handleInput(key) {
     }
     player.x = targetX; player.y = targetY;
   } else {
-    return; // 壁など無効な移動
+    return;
   }
 
   turn++;
   processItemsOnFloor();
 
-  // ゴール判定
   if (player.x === artifact.x && player.y === artifact.y) return gameClear();
   if (player.x === stairs.x && player.y === stairs.y) {
     floor++;
@@ -596,7 +644,7 @@ function handleInput(key) {
   }
 
   enemiesTurn();
-  if (gameState !== 'PLAYING') return; // 敵のターンで死んだ場合
+  if (gameState !== 'PLAYING') return;
 
   calcFOV(); draw(); updateStatus();
   scrollToPlayerIfNeeded();
@@ -622,7 +670,7 @@ function processItemsOnFloor() {
       logMessage(`<span class="color-good">Equipped ${item.name}! Power surged!</span>`);
       triggerEffect('heal-flash');
     } else if (item.type === 'scroll') {
-      visibility.forEach(row => row.fill(1)); // 全て探索済みに
+      visibility.forEach(row => row.fill(1));
       logMessage(`<span class="color-good">Read ${item.name}! Map revealed.</span>`);
     }
     items.splice(itemIndex, 1);
@@ -648,8 +696,10 @@ gameScreen.addEventListener('pointerup', e => {
   if (isDragging || gameState !== 'PLAYING') return;
 
   let rect = gameScreen.getBoundingClientRect();
-  let tapX = e.clientX - rect.left, tapY = e.clientY - rect.top;
-  let cellW = rect.width / MAP_W, cellH = rect.height / MAP_H;
+  let cellW = (rect.width - 20) / MAP_W;
+  let cellH = (rect.height - 20) / MAP_H;
+  let tapX = e.clientX - rect.left - 10;
+  let tapY = e.clientY - rect.top - 10;
 
   let dx = Math.floor(tapX / cellW) - player.x;
   let dy = Math.floor(tapY / cellH) - player.y;
@@ -662,14 +712,16 @@ document.getElementById('title-screen').addEventListener('click', () => { if (ga
 
 // --- スクロール ---
 function scrollToPlayerCenter() {
-  let cellW = gameScreen.clientWidth / MAP_W, cellH = gameScreen.clientHeight / MAP_H;
-  screenContainer.scrollLeft = (player.x * cellW + cellW / 2) - screenContainer.clientWidth / 2;
-  screenContainer.scrollTop = (player.y * cellH + cellH / 2) - screenContainer.clientHeight / 2;
+  let cellW = (gameScreen.clientWidth - 20) / MAP_W;
+  let cellH = (gameScreen.clientHeight - 20) / MAP_H;
+  screenContainer.scrollLeft = (player.x * cellW + cellW / 2 + 10) - screenContainer.clientWidth / 2;
+  screenContainer.scrollTop = (player.y * cellH + cellH / 2 + 10) - screenContainer.clientHeight / 2;
 }
 
 function scrollToPlayerIfNeeded() {
-  let cellW = gameScreen.clientWidth / MAP_W, cellH = gameScreen.clientHeight / MAP_H;
-  let px = player.x * cellW, py = player.y * cellH;
+  let cellW = (gameScreen.clientWidth - 20) / MAP_W;
+  let cellH = (gameScreen.clientHeight - 20) / MAP_H;
+  let px = player.x * cellW + 10, py = player.y * cellH + 10;
   let padX = cellW * 3, padY = cellH * 3;
 
   if (px < screenContainer.scrollLeft + padX) screenContainer.scrollLeft = px - padX;
@@ -714,7 +766,7 @@ function isPassable(x, y) {
 function levelUp() {
   player.level++;
   player.exp -= player.maxExp;
-  player.maxExp = Math.floor(player.maxExp * 1.7); // レベルアップに必要な経験値の倍率を1.7倍に修正
+  player.maxExp = Math.floor(player.maxExp * 1.7);
   player.maxHp += 5;
   player.hp = player.maxHp; 
   player.atk += 1;
@@ -733,10 +785,9 @@ function triggerEffect(...classes) {
 function draw() {
   let html = '';
   for (let y = 0; y < MAP_H; y++) {
-    let rowHtml = '';
     for (let x = 0; x < MAP_W; x++) {
       let vis = visibility[y][x];
-      if (vis === 0) { rowHtml += '<span> </span>'; continue; }
+      if (vis === 0) { html += '<span> </span>'; continue; }
 
       let char = map[y][x];
       let colorClass = char === '^' ? 'color-trap' : 'color-map';
@@ -750,9 +801,9 @@ function draw() {
       if (enemy) { char = enemy.char; colorClass = enemy.isGolden ? 'color-golden' : 'color-enemy'; }
       if (player.x === x && player.y === y) { char = player.char; colorClass = 'color-player'; }
 
-      rowHtml += `<span class="${vis === 2 ? 'visible' : 'explored'} ${colorClass}">${char}</span>`;
+      html += `<span class="${vis === 2 ? 'visible' : 'explored'} ${colorClass}">${char}</span>`;
     }
-    html += rowHtml + '\n';
+    html += '\n';
   }
   document.getElementById('game-screen').innerHTML = html;
   
@@ -802,12 +853,10 @@ function gameClear() {
 
   setTimeout(() => document.getElementById('player-name-input')?.focus(), 100);
 
-  // Cloudflare WorkersのAPIへスコアを送信するように変更
   submitBtn.onclick = async () => {
     let name = document.getElementById('player-name-input').value.trim() || 'Anonymous';
     submitBtn.style.display = 'none';
     
-    // 送信中のメッセージ表示
     msg.innerHTML += `<br><div style="color: var(--normal-color); margin-top: 20px; font-size: 16px;">Saving score to leaderboard...</div>`;
     
     const scores = await saveHighScore(turn, name);
@@ -829,8 +878,9 @@ function showRanking(scores) {
       let color = i === 0 ? '#fbbf24' : (i === 1 ? '#9ca3af' : (i === 2 ? '#b45309' : 'var(--normal-color)'));
       let dateStr = score.date ? ` <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span>` : '';
       
+      // escapeHTML関数を適用してXSSを防止
       html += `<div style="color: ${color}; font-family: monospace; font-size: 18px; padding: 4px;">
-        ${i + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${score.name}</span>${dateStr}
+        ${i + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${escapeHTML(score.name)}</span>${dateStr}
       </div>`;
     });
   }
