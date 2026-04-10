@@ -35,6 +35,18 @@
     .bg-primary-dim { background-color: var(--primary-bg); }
     .hover\:bg-primary-dim-hover:hover { background-color: var(--primary-bg-hover); }
 
+    /* Custom Color Utilities */
+    .text-primary { color: var(--primary-color); }
+    .text-secondary { color: var(--secondary-color); }
+    .text-normal { color: var(--text-color); }
+    .bg-surface { background-color: var(--surface-color); }
+    .border-color { border-color: var(--border-color); }
+    .border-primary { border-color: var(--primary-color); }
+    .border-secondary { border-color: var(--secondary-color); }
+    .bg-red-400 { background-color: #f87171; }
+    .bg-yellow-400 { background-color: #fbbf24; }
+    .bg-green-400 { background-color: #4ade80; }
+
     .min-h-screen { min-height: 100vh; }
     .w-full { width: 100%; }
     .w-2\.5 { width: 0.625rem; }
@@ -46,12 +58,14 @@
     .max-w-\[800px\] { max-width: 800px; }
     .max-w-\[300px\] { max-width: 300px; }
     .max-w-\[400px\] { max-width: 400px; }
+    .min-w-\[400px\] { min-width: 400px; }
 
     .flex { display: flex; }
     .hidden { display: none; }
     .block { display: block; }
     .inline-block { display: inline-block; }
     .grid { display: grid; }
+    .relative { position: relative; }
 
     .flex-col { flex-direction: column; }
     .items-center { align-items: center; }
@@ -113,7 +127,7 @@
     .tracking-wider { letter-spacing: 0.05em; }
     .whitespace-nowrap { white-space: nowrap; }
     .text-right { text-align: right; }
-    .text-red-500 { color: #ef4444; }
+    .text-center { text-align: center; }
     .italic { font-style: italic; }
     .leading-relaxed { line-height: 1.625; }
     .leading-tight { line-height: 1.25; }
@@ -124,6 +138,9 @@
     .opacity-50 { opacity: 0.5; }
     .opacity-70 { opacity: 0.7; }
     .hover\:underline:hover { text-decoration: underline; }
+    .overflow-x-auto { overflow-x: auto; }
+    .overflow-hidden { overflow: hidden; }
+    .no-underline { text-decoration: none; }
 
     /* Screen Reader Only (SEO & Accessibility) */
     .sr-only {
@@ -393,35 +410,35 @@
 
   <div id="app" class="min-h-screen w-full flex flex-col" style="transition: opacity 0.5s;">
    <div class="scanline"></div>
-   <header class="flex items-center justify-between px-4 py-2 border-b" style="background: var(--surface-color);">
+   <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
     <div class="flex gap-1.5 window-btn-group">
-     <div id="btn-close" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#f87171;" title="Close Terminal">
+     <div id="btn-close" class="w-2.5 h-2.5 rounded-full window-btn bg-red-400" title="Close Terminal">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg>
      </div>
-     <div id="btn-minimize" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#fbbf24;" title="Minimize Terminal">
+     <div id="btn-minimize" class="w-2.5 h-2.5 rounded-full window-btn bg-yellow-400" title="Minimize Terminal">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg>
      </div>
-     <div id="btn-maximize" class="w-2.5 h-2.5 rounded-full window-btn" style="background:#4ade80;" title="Toggle Fullscreen">
+     <div id="btn-maximize" class="w-2.5 h-2.5 rounded-full window-btn bg-green-400" title="Toggle Fullscreen">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
          <path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/>
        </svg>
      </div>
     </div>
     <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()" title="Reload Terminal" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
-     <span style="color: var(--primary-color);">▸</span> <span id="titlebar-name" class="text-xs tracking-wider" style="color: var(--secondary-color);">ST@portfolio:~</span>
+     <span class="text-primary">▸</span> <span id="titlebar-name" class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
     </div>
    </header>
    
-   <main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1" style="scroll-behavior:smooth; position: relative;">
+   <main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1 relative" style="scroll-behavior:smooth;">
     <div id="boot-area"></div>
     <div id="output-area"></div>
     <div class="hidden items-center gap-2 mt-4" id="input-line">
-     <span id="prompt-prefix" class="text-xs whitespace-nowrap" style="color: var(--primary-color);">ST@portfolio:~$</span> 
+     <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span> 
      <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
     </div>
    </main>
    
-   <footer id="terminal-footer" class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto" style="background: var(--surface-color); color:#666;">
+   <footer id="terminal-footer" class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto bg-surface border-color" style="color:#666;">
     <span id="status-left">READY</span> <span id="status-right"></span>
    </footer>
   </div>
@@ -459,12 +476,12 @@
       let pct = t.pct >= 50 ? t.pct : 100 - t.pct, name = t.pct >= 50 ? t.name : t.opposite, color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       return `
         <div class="text-xs mb-4">
-          <div class="flex items-center justify-between mb-1.5"><span class="choreo-text" style="color: var(--text-color);">${esc(t.name)}</span><span class="choreo-text" style="color: var(--secondary-color);">${esc(t.opposite)}</span></div>
-          <div style="position:relative; height:16px; width:100%; background: var(--surface-color); border-radius:8px; border:1px solid var(--border-color);">
+          <div class="flex items-center justify-between mb-1.5"><span class="choreo-text text-normal">${esc(t.name)}</span><span class="choreo-text text-secondary">${esc(t.opposite)}</span></div>
+          <div class="relative h-4 w-full rounded-full border border-color bg-surface">
             <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${color}; border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
             <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${color}; opacity:0.3;"></div>
           </div>
-          <div class="choreo-text" style="margin-top:4px; text-align:center; font-size:10px; color: var(--secondary-color);">${pct}% ${esc(name)}</div>
+          <div class="choreo-text text-center text-[10px] text-secondary mt-1">${pct}% ${esc(name)}</div>
         </div>`;
     }).join('');
 
@@ -478,25 +495,25 @@
         </defs></svg>`;
       const barHTML = patternDefs + strengths.map(s => `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg>`).join('');
       const strengthsRows = strengths.map(s => `
-        <div class="text-xs flex items-center justify-between" style="color: var(--text-color);">
-          <div class="flex items-center gap-2"><svg width="12" height="12" style="border:1px solid var(--border-color);"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg><span class="choreo-text">${esc(s.name)}</span></div>
-          <span class="choreo-text" style="color: var(--secondary-color);">${s.pct.toFixed(1)}%</span>
+        <div class="text-xs flex items-center justify-between text-normal">
+          <div class="flex items-center gap-2"><svg width="12" height="12" class="border border-color"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg><span class="choreo-text">${esc(s.name)}</span></div>
+          <span class="choreo-text text-secondary">${s.pct.toFixed(1)}%</span>
         </div>`).join('');
       return { barHTML, strengthsRows };
     };
 
     const createThemesTable = (themes, isVer2) => themes.map(row => `
-      <div class="flex text-xs border-b last:border-0" style="border-color: var(--border-color); padding:8px 0;">
+      <div class="flex text-xs border-b last:border-0 border-color py-2">
         <div class="w-8 choreo-text" style="color: ${isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)'};">${row.rank}</div>
-        <div class="flex-1 truncate choreo-text" style="color: var(--text-color);">${row.theme}</div>
-        <div class="w-56 text-right truncate choreo-text" style="color: var(--secondary-color);">${row.category}</div>
+        <div class="flex-1 truncate choreo-text text-normal">${row.theme}</div>
+        <div class="w-56 text-right truncate choreo-text text-secondary">${row.category}</div>
       </div>`).join('');
 
     const renderCmdList = (title, cmdList) => `
       <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
-        <div style="color: var(--primary-color);" class="glow text-sm font-bold mb-2 choreo-text">${title}</div>
-        <div class="grid gap-1 text-xs" style="color: var(--text-color);">${cmdList.map(c => `<div class="flex"><span class="w-24 choreo-text" style="color: var(--primary-color);">${c[0]}</span><span class="choreo-text">- ${c[1]}</span></div>`).join('')}</div>
-        ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic choreo-text">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
+        <div class="glow text-sm font-bold mb-2 choreo-text text-primary">${title}</div>
+        <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 choreo-text text-primary">${c[0]}</span><span class="choreo-text">- ${c[1]}</span></div>`).join('')}</div>
+        ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic choreo-text text-normal">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
       </div>`;
 
     window.executeIdentifyVersion = async (version, targetId) => {
@@ -515,17 +532,17 @@
 
       const rows = createMBTIRows(data.traits, isV2), { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, isV2), tableRows = createThemesTable(data.themes, isV2), titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline choreo-text" style="color: ${titleColor};">${data.m.t}</a>` : `<div class="text-sm font-bold glow mb-4 choreo-text" style="color: ${titleColor}; pointer-events: none;">${data.m.t}</div>`;
-      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline choreo-text" style="border-color: var(--border-color); color: ${titleColor};">${data.s.t}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t choreo-text" style="border-color: var(--border-color); color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
+      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline choreo-text border-color" style="color: ${titleColor};">${data.s.t}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t choreo-text border-color" style="color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
 
       const result = `
         <div class="mt-4 fade-in w-full">
-          <div class="p-4 border rounded" style="border-color: var(--border-color); background: var(--surface-color);">
+          <div class="p-4 border rounded border-color bg-surface">
             ${mbtiHtml}<div class="space-y-1 mb-6">${rows}</div>${strHtml}
-            <div style="width:100%; height:16px; border-radius:2px; overflow:hidden; background: var(--surface-color);" class="mb-3">${barHTML}</div>
+            <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden">${barHTML}</div>
             <div class="space-y-2 mb-6">${strengthsRows}</div>
-            <div class="mt-4 pt-2" style="overflow-x:auto;">
-              <div class="flex text-[10px] font-bold mb-1" style="color: ${titleColor}; min-width:400px;"><div class="w-8 choreo-text">RANK</div><div class="flex-1 choreo-text">THEME</div><div class="w-56 text-right choreo-text">CATEGORY</div></div>
-              <div style="border-color: var(--border-color); overflow-x:auto; border-top:1px solid var(--border-color); min-width:400px;">${tableRows}</div>
+            <div class="mt-4 pt-2 overflow-x-auto">
+              <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};"><div class="w-8 choreo-text">RANK</div><div class="flex-1 choreo-text">THEME</div><div class="w-56 text-right choreo-text">CATEGORY</div></div>
+              <div class="overflow-x-auto border-t border-color min-w-[400px]">${tableRows}</div>
             </div>
           </div>
         </div>`;
@@ -548,60 +565,58 @@
           use:  [{ i: '📨', t: 'Letter to the future', s: 'Bitcoin Bottle Mail', l: 'https://tk.st/bitcoinyen/bbm' }],
           view: [{ i: '🪙', t: 'Dive into my Bitcoin token', s: 'Bitcoin Mainnet', l: 'https://unisat.io/runes/detail/BITCOINYEN' }, { i: '🌐', t: 'Dive into my Web3 page', s: 'Bitcoin Mainnet', l: 'https://web3.tk.st' }]
         };
-        // Changed div to a tag for SEO
-        const renderItems = items => items.map(item => `<a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color); text-decoration: none;"><div class="choreo-text" style="color: var(--text-color);">${item.i} ${item.t}</div><div class="text-xs mt-0.5 choreo-text" style="color: var(--primary-color);">${item.s}</div></a>`).join('');
+        const renderItems = items => items.map(item => `<a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-[#111] hover:bg-[#222] border-color no-underline"><div class="choreo-text text-normal">${item.i} ${item.t}</div><div class="text-xs mt-0.5 choreo-text text-primary">${item.s}</div></a>`).join('');
         return `
           <div class="my-3 w-[90%] max-w-[800px]">
-            <div class="text-sm font-bold glow mb-3 choreo-text" style="color: var(--primary-color);">BITCOIN YEN Ecosystem</div>
-            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover choreo-text" style="border-color: var(--primary-color);" onclick="window.toggleBtc('${t}-opts-${uniqueId}', ${allIds})">${t.charAt(0).toUpperCase() + t.slice(1)}</div>`).join('')}</div>
-            ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2" style="border-color: var(--secondary-color);">${renderItems(btcData[t])}</div>`).join('')}
+            <div class="text-sm font-bold glow mb-3 choreo-text text-primary">BITCOIN YEN Ecosystem</div>
+            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover choreo-text border-primary" onclick="window.toggleBtc('${t}-opts-${uniqueId}', ${allIds})">${t.charAt(0).toUpperCase() + t.slice(1)}</div>`).join('')}</div>
+            ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">${renderItems(btcData[t])}</div>`).join('')}
           </div>`;
       },
 
       about() {
         const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
         return `
-          <div class="my-3 p-4 border rounded w-[90%] max-w-[800px]" style="border-color: var(--border-color); background: var(--surface-color);">
-            <div class="text-lg font-bold glow mb-1 choreo-text" style="color: var(--primary-color);">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
-            <div class="text-xs mb-4 choreo-text" style="color: var(--secondary-color);">${esc(config.job_title)}</div>
-            <div class="text-xs leading-relaxed mb-4 choreo-text" style="color: var(--text-color);">${bioLines.map(line => esc(line)).join('<br/>')}</div>
-            <div class="space-y-1 pt-2 border-t" style="border-color: var(--border-color);">
-              ${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="choreo-text" style="color: var(--secondary-color);">${r[0]}</span><span class="choreo-text" style="color: var(--text-color);">${esc(r[1])}</span></div>`).join('')}
+          <div class="my-3 p-4 border rounded w-[90%] max-w-[800px] border-color bg-surface">
+            <div class="text-lg font-bold glow mb-1 choreo-text text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
+            <div class="text-xs mb-4 choreo-text text-secondary">${esc(config.job_title)}</div>
+            <div class="text-xs leading-relaxed mb-4 choreo-text text-normal">${bioLines.map(line => esc(line)).join('<br/>')}</div>
+            <div class="space-y-1 pt-2 border-t border-color">
+              ${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="choreo-text text-secondary">${r[0]}</span><span class="choreo-text text-normal">${esc(r[1])}</span></div>`).join('')}
             </div>
           </div>`;
       },
 
-      // Changed div to a tag for SEO
-      pages: () => `<div class="my-3 space-y-2 w-[90%] max-w-[800px]"><div class="text-sm font-bold glow mb-2 choreo-text" style="color: var(--primary-color);">Explore Web2 creations</div><div class="space-y-2">${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222]" style="border-color: var(--border-color); text-decoration: none;"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold choreo-text" style="color: var(--primary-color);">${esc(p.name)}</span></div><div class="text-xs mb-2 choreo-text" style="color: var(--text-color);">${esc(p.desc)}</div><div class="text-[10px] choreo-text" style="color: var(--secondary-color);">⚙ ${esc(p.tech)}</div></a>`).join('')}</div></div>`,
+      pages: () => `<div class="my-3 space-y-2 w-[90%] max-w-[800px]"><div class="text-sm font-bold glow mb-2 choreo-text text-primary">Explore Web2 creations</div><div class="space-y-2">${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-[#111] hover:bg-[#222] border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold choreo-text text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 choreo-text text-normal">${esc(p.desc)}</div><div class="text-[10px] choreo-text text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}</div></div>`,
 
       identify() {
         const uniqueId = 'id-' + Date.now();
         return `
           <div class="my-3 w-[90%] max-w-[800px]">
-            <div class="text-sm font-bold glow mb-3 choreo-text" style="color: var(--primary-color);">Please select a profile to initialize:</div>
+            <div class="text-sm font-bold glow mb-3 choreo-text text-primary">Please select a profile to initialize:</div>
             <div class="space-y-2">
-              ${[['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'var(--primary-color)'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-[#111] hover:bg-[#222]', 'var(--secondary-color)']].map(v => `<div class="p-3 border rounded cursor-pointer transition-colors ${v[4]}" style="border-color: ${v[5] === 'var(--primary-color)' ? 'var(--primary-color)' : 'var(--border-color)'};" onclick="window.executeIdentifyVersion('${v[0]}', '${uniqueId}')"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold choreo-text" style="color: ${v[5]};">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] choreo-text" style="color: var(--secondary-color);">${v[2]}</span></div><div class="text-xs choreo-text" style="color: var(--secondary-color);">${v[3]} (MBTI & Strengths)</div></div>`).join('')}
+              ${[['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-[#111] hover:bg-[#222]', 'border-color', 'text-secondary']].map(v => `<div class="p-3 border rounded cursor-pointer transition-colors ${v[4]} ${v[5]}" onclick="window.executeIdentifyVersion('${v[0]}', '${uniqueId}')"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold choreo-text ${v[6]}">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] choreo-text text-secondary">${v[2]}</span></div><div class="text-xs choreo-text text-secondary">${v[3]} (MBTI & Strengths)</div></div>`).join('')}
             </div>
             <div id="identify-result-${uniqueId}"></div>
           </div>`;
       },
       
       async akutagawa() {
-        const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] choreo-text'; loadingDiv.style.color = 'var(--primary-color)'; $('output-area').appendChild(loadingDiv);
+        const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] choreo-text text-primary'; $('output-area').appendChild(loadingDiv);
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `Loading...  ${spinners[frameIndex++ % 4]}`; }, 300);
         await delay(5000); clearInterval(loadingInterval); loadingDiv.remove();
-        return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px] choreo-text" style="border-color: var(--border-color); background: var(--surface-color); color: var(--text-color);">I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.</div>`;
+        return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px] choreo-text border-color bg-surface text-normal">I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.</div>`;
       },
 
-      history: () => commandHistory.length === 0 ? `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">No history available.</div>` : `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color); font-family: monospace;">${commandHistory.slice().reverse().map((cmd, i) => `  ${(i+1).toString().padStart(3, ' ')}  ${esc(cmd)}`).join('<br>')}</div>`,
+      history: () => commandHistory.length === 0 ? `<div class="my-3 text-xs choreo-text text-secondary">No history available.</div>` : `<div class="my-3 text-xs choreo-text text-secondary" style="font-family: monospace;">${commandHistory.slice().reverse().map((cmd, i) => `  ${(i+1).toString().padStart(3, ' ')}  ${esc(cmd)}`).join('<br>')}</div>`,
 
       theme(args) {
         const colors = { green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', orange: '#fb923c', purple: '#c084fc', white: '#ffffff', red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee' };
-        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">Usage: theme &lt;color&gt;<br>Available colors: <span class="choreo-text" style="color: var(--text-color);">${Object.keys(colors).join(', ')}</span></div>`;
+        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return `<div class="my-3 text-xs choreo-text text-secondary">Usage: theme &lt;color&gt;<br>Available colors: <span class="choreo-text text-normal">${Object.keys(colors).join(', ')}</span></div>`;
         const newColor = colors[args[0].toLowerCase()];
         document.documentElement.style.setProperty('--primary-color', newColor); document.documentElement.style.setProperty('--primary-bg', newColor + '26'); document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40');
-        return `<div class="my-3 text-xs choreo-text" style="color: var(--primary-color);">Theme color successfully changed to ${esc(args[0])}.</div>`;
+        return `<div class="my-3 text-xs choreo-text text-primary">Theme color successfully changed to ${esc(args[0])}.</div>`;
       },
       
       destroy() {
@@ -631,7 +646,7 @@
             if (elements.length === 0) {
               clearInterval(rebuildInterval); isDestroyed = false; destroyedElements = []; currentVersion++;
               const nameEl = $('display-name-el');
-              if(nameEl) nameEl.innerHTML = `${esc(config.display_name)} <span class="choreo-text" style="font-size: 0.8em; opacity: 0.8; color: var(--secondary-color);">ver.${currentVersion}.0</span>`;
+              if(nameEl) nameEl.innerHTML = `${esc(config.display_name)} <span class="choreo-text text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
               break;
             }
             const item = elements.pop();
@@ -641,7 +656,7 @@
             }
           }
         }, 30);
-        return `<div class="my-3 text-xs choreo-text" style="color: var(--primary-color);">System rebuild initiated... restoring core components.</div>`;
+        return `<div class="my-3 text-xs choreo-text text-primary">System rebuild initiated... restoring core components.</div>`;
       },
 
       choreomania() {
@@ -651,7 +666,7 @@
           return `<div class="my-3 text-xs font-bold glow choreo-text" style="color: #ff00ff;">CHOREOMANIA MODE: ACTIVATED.<br>Transcending the ego.</div>`;
         } else {
           document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
-          return `<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">Choreomania mode deactivated. Back to reality.</div>`;
+          return `<div class="my-3 text-xs choreo-text text-secondary">Choreomania mode deactivated. Back to reality.</div>`;
         }
       },
 
@@ -694,7 +709,7 @@
             isMeditating = false; overlay.style.opacity = '0';
             await delay(4000);
             overlay.remove(); document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
-            resolve(`<div class="my-3 text-xs choreo-text" style="color: var(--secondary-color);">Returned to reality.</div>`);
+            resolve(`<div class="my-3 text-xs choreo-text text-secondary">Returned to reality.</div>`);
           };
           document.addEventListener('click', exitMeditation); document.addEventListener('keydown', exitMeditation);
         });
@@ -725,10 +740,10 @@
             if(e.type === 'keydown' && e.key !== 'Escape') return;
             clearInterval(interval); canvas.remove();
             window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix); window.removeEventListener('click', endMatrix);
-            resolve(`<div class="text-xs mt-2 choreo-text" style="color: var(--primary-color);">Matrix simulation ended.</div>`);
+            resolve(`<div class="text-xs mt-2 choreo-text text-primary">Matrix simulation ended.</div>`);
           };
           window.addEventListener('keydown', endMatrix); window.addEventListener('click', endMatrix);
-          printToOutput(`<div class="text-xs mb-2 choreo-text" style="color: var(--secondary-color);">Entering Matrix... Press ESC or Click to exit.</div>`);
+          printToOutput(`<div class="text-xs mb-2 choreo-text text-secondary">Entering Matrix... Press ESC or Click to exit.</div>`);
         });
       }
     };
@@ -737,7 +752,7 @@
     Object.entries({ '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/think': 'https://tk.st/think', '/glitch': 'https://tk.st/glitch', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' }).forEach(([cmd, url]) => {
       commands[cmd] = () => {
         window.open(url, '_blank', 'noopener,noreferrer');
-        return `<div class="my-3 text-xs choreo-text" style="color: var(--primary-color);">Opening ${cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : cmd)}...</div>`;
+        return `<div class="my-3 text-xs choreo-text text-primary">Opening ${cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : cmd)}...</div>`;
       };
     });
 
@@ -751,15 +766,15 @@
     // === BOOT SEQUENCE ===
     async function boot() {
       const bootArea = $('boot-area');
-      for (const line of [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="choreo-text" style="color: var(--primary-color);">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }]) {
+      for (const line of [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="choreo-text text-primary">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }]) {
         await delay(line.delay);
-        const div = document.createElement('div'); div.className = 'text-xs fade-in choreo-text'; div.style.color = 'var(--secondary-color)'; div.innerHTML = line.text; bootArea.appendChild(div);
+        const div = document.createElement('div'); div.className = 'text-xs fade-in choreo-text text-secondary'; div.innerHTML = line.text; bootArea.appendChild(div);
       }
 
       await delay(200);
       const header = document.createElement('div'); header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
       header.innerHTML = `
-        <pre class="text-xs md:text-sm glow m-0 leading-tight choreo-text" style="color: var(--primary-color);">
+        <pre class="text-xs md:text-sm glow m-0 leading-tight choreo-text text-primary">
 ███████╗████████╗
 ██╔════╝╚══██╔══╝
 ███████╗<span style="opacity:0">╚══</span>██║
@@ -767,9 +782,9 @@
 ███████║<span style="opacity:0">╚══</span>██║
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
-          <div id="display-name-el" class="choreo-text" style="color: var(--primary-color);">${esc(config.display_name)}${currentVersion > 1 ? ` <span class="choreo-text" style="font-size: 0.8em; opacity: 0.8; color: var(--secondary-color);">ver.${currentVersion}.0</span>` : ''}</div>
-          <div class="choreo-text" style="color: var(--secondary-color);">${esc(config.job_title)}</div>
-          <div class="pt-2 choreo-text" style="color: var(--secondary-color);">Type <span class="choreo-text" style="color:#fff;">'help'</span> to explore.</div>
+          <div id="display-name-el" class="choreo-text text-primary">${esc(config.display_name)}${currentVersion > 1 ? ` <span class="choreo-text text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>` : ''}</div>
+          <div class="choreo-text text-secondary">${esc(config.job_title)}</div>
+          <div class="pt-2 choreo-text text-secondary">Type <span class="choreo-text" style="color:#fff;">'help'</span> to explore.</div>
         </div>`;
       bootArea.appendChild(header);
       
@@ -780,12 +795,12 @@
     // === COMMAND HANDLER ===
     async function handleCommand(input) {
       const trimmed = input.trim(); if (!trimmed) return;
-      const echo = document.createElement('div'); echo.className = 'text-xs mt-3'; echo.innerHTML = `<span class="choreo-text" style="color: var(--primary-color);">ST@portfolio:~$</span> <span class="choreo-text" style="color: var(--text-color);">${esc(input)}</span>`; $('output-area').appendChild(echo);
+      const echo = document.createElement('div'); echo.className = 'text-xs mt-3'; echo.innerHTML = `<span class="choreo-text text-primary">ST@portfolio:~$</span> <span class="choreo-text text-normal">${esc(input)}</span>`; $('output-area').appendChild(echo);
       commandHistory.unshift(trimmed); historyIndex = -1;
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
       if (isDestroyed && cmd !== 'rebuild') return await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold choreo-text">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
       if (commands[cmd]) { const result = await commands[cmd](args); if (result) await printToOutput(result, 100); } 
-      else await printToOutput(`<div class="text-xs my-1 choreo-text" style="color:#f87171;">Command not found: '${esc(cmd)}'. Type <span class="choreo-text" style="color: var(--primary-color);">help</span> for available commands.</div>`, 50);
+      else await printToOutput(`<div class="text-xs my-1 choreo-text text-red-500">Command not found: '${esc(cmd)}'. Type <span class="choreo-text text-primary">help</span> for available commands.</div>`, 50);
     }
 
     // === INPUT HANDLING ===
@@ -799,7 +814,7 @@
         const matches = Object.keys(commands).filter(c => c.startsWith(val));
         if (matches.length === 1) cmdInput.value = matches[0];
         else if (matches.length > 1) {
-          const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 choreo-text'; echo.style.color = 'var(--text-color)'; echo.textContent = matches.join('   '); $('output-area').appendChild(echo);
+          const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 choreo-text text-normal'; echo.textContent = matches.join('   '); $('output-area').appendChild(echo);
         }
       }
     });
@@ -811,7 +826,7 @@
     // === WINDOW BUTTONS LOGIC ===
     $('btn-close').addEventListener('click', async () => {
       $('app').style.opacity = '0'; await delay(500);
-      document.body.innerHTML = `<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:#000; color:var(--secondary-color); cursor:pointer;" onclick="location.reload()"><div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline" style="color:var(--primary-color); animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div></div>`;
+      document.body.innerHTML = `<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:#000; color:var(--secondary-color); cursor:pointer;" onclick="location.reload()"><div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div></div>`;
     });
 
     $('btn-minimize').addEventListener('click', async (e) => {
@@ -822,7 +837,7 @@
       await delay(300);
       let minIcon = $('minimized-icon');
       if (!minIcon) {
-        minIcon = document.createElement('div'); minIcon.id = 'minimized-icon'; minIcon.innerHTML = `<span style="color: var(--primary-color);">▸ Terminal</span> <span style="color: var(--secondary-color);">[Click to unfold]</span>`;
+        minIcon = document.createElement('div'); minIcon.id = 'minimized-icon'; minIcon.innerHTML = `<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`;
         minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.5);opacity:0;transition:opacity 0.3s ease;`;
         minIcon.addEventListener('click', async () => {
           minIcon.style.opacity = '0'; await delay(300); minIcon.style.display = 'none';
