@@ -171,7 +171,7 @@
       margin: 0; 
       background-color: var(--bg-color);
       color: var(--text-color);
-      /* 【修正】横スクロールの発生を防止 */
+      /* 横スクロールの発生を防止 */
       overflow-x: hidden;
     }
     
@@ -443,13 +443,16 @@
     
     // Helpers
     const delay = ms => new Promise(r => setTimeout(r, ms));
-    const esc = str => { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; };
+    
+    // エスケープ処理の最適化: DOM生成を避けて正規表現で置換
+    const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
 
     // App State
     const MAX_HISTORY = 50;
     let commandHistory = [], historyIndex = -1, isDestroyed = false, destroyedElements = [], destroyInterval = null, currentVersion = 1;
     let isMatrixActive = false, isMeditationActive = false;
 
+    // === DATA MODULES ===
     const projects = [
       { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj' },
       { name: '/job', desc: 'An Optimization and data-driven growth strategy.', tech: 'EC, UIUX, Search Engine, Web ads, GA4, Frontend, Web3, SEO, AIO, AI Agent', link: 'https://tk.st/job' },
@@ -458,9 +461,27 @@
       { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch' }
     ];
 
+    const PROFILE_DATA = {
+      '2.0': {
+        m: { t: 'MBTI: Campaigner (ENFP-A) 🔗', l: 'https://tk.st/mbti' }, 
+        s: { t: 'CliftonStrengths: Strategic Thinking 🔗', l: 'https://tk.st/data/st-cliftonstrengths-top5-ver2.pdf' },
+        traits: [{ name: 'Extraverted', pct: 54, opposite: 'Introverted' }, { name: 'Intuitive', pct: 94, opposite: 'Observant' }, { name: 'Thinking', pct: 41, opposite: 'Feeling' }, { name: 'Judging', pct: 46, opposite: 'Prospecting' }, { name: 'Assertive', pct: 83, opposite: 'Turbulent' }],
+        strengths: [{ name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' }, { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' }, { name: 'Executing', pct: 15.034, pattern: 'dots' }],
+        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Input', category: 'Strategic Thinking' }, { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Individualization', category: 'Relationship Building' }]
+      },
+      '1.0': {
+        m: { t: 'MBTI: Commander (ENTJ-A)', l: null }, 
+        s: { t: 'CliftonStrengths: Strategic Thinking', l: null },
+        traits: [{ name: 'Extraverted', pct: 61, opposite: 'Introverted' }, { name: 'Intuitive', pct: 69, opposite: 'Observant' }, { name: 'Thinking', pct: 66, opposite: 'Feeling' }, { name: 'Judging', pct: 61, opposite: 'Prospecting' }, { name: 'Assertive', pct: 78, opposite: 'Turbulent' }],
+        strengths: [{ name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' }, { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' }, { name: 'Executing', pct: 16.5057, pattern: 'dots' }],
+        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Learner', category: 'Strategic Thinking' }, { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }]
+      }
+    };
+
     window.toggleBtc = (targetId, allIds) => allIds.forEach(id => {
-      const el = document.getElementById(id), isTarget = id === targetId;
-      if(el) {
+      const el = document.getElementById(id);
+      if (el) {
+        const isTarget = id === targetId;
         el.classList.toggle('hidden', !isTarget); 
         el.classList.toggle('flex', isTarget);
       }
@@ -472,16 +493,20 @@
       div.className = 'fade-in'; 
       div.innerHTML = html;
       DOM.output.appendChild(div);
-      // 【修正】入力欄（DOM.inputLine）に合わせてスクロールするように変更
       DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 
     // === UI GENERATORS ===
     const createMBTIRows = (traits, isVer2) => traits.map(t => {
-      let pct = t.pct >= 50 ? t.pct : 100 - t.pct, name = t.pct >= 50 ? t.name : t.opposite, color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      const pct = t.pct >= 50 ? t.pct : 100 - t.pct;
+      const name = t.pct >= 50 ? t.name : t.opposite;
+      const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       return `
         <div class="text-xs mb-4">
-          <div class="flex items-center justify-between mb-1.5"><span class="text-normal">${esc(t.name)}</span><span class="text-secondary">${esc(t.opposite)}</span></div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-normal">${esc(t.name)}</span>
+            <span class="text-secondary">${esc(t.opposite)}</span>
+          </div>
           <div class="relative h-4 w-full rounded-full border border-color bg-surface">
             <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${color}; border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
             <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${color}; opacity:0.3;"></div>
@@ -491,7 +516,8 @@
     }).join('');
 
     const createStrengthsHTML = (strengths, isVer2) => {
-      let color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)', vp = (isVer2 ? 'v2' : 'v1') + Date.now();
+      const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      const vp = (isVer2 ? 'v2' : 'v1') + Date.now();
       const patternDefs = `
         <svg width="0" height="0"><defs>
           <pattern id="${vp}-diagonal" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
@@ -523,21 +549,20 @@
 
     window.executeIdentifyVersion = async (version, targetId) => {
       const isV2 = version === '2.0';
-      const data = isV2 ? {
-        m: { t: 'MBTI: Campaigner (ENFP-A) 🔗', l: 'https://tk.st/mbti' }, s: { t: 'CliftonStrengths: Strategic Thinking 🔗', l: 'https://tk.st/data/st-cliftonstrengths-top5-ver2.pdf' },
-        traits: [{ name: 'Extraverted', pct: 54, opposite: 'Introverted' }, { name: 'Intuitive', pct: 94, opposite: 'Observant' }, { name: 'Thinking', pct: 41, opposite: 'Feeling' }, { name: 'Judging', pct: 46, opposite: 'Prospecting' }, { name: 'Assertive', pct: 83, opposite: 'Turbulent' }],
-        strengths: [{ name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' }, { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' }, { name: 'Executing', pct: 15.034, pattern: 'dots' }],
-        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Input', category: 'Strategic Thinking' }, { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Individualization', category: 'Relationship Building' }]
-      } : {
-        m: { t: 'MBTI: Commander (ENTJ-A)', l: null }, s: { t: 'CliftonStrengths: Strategic Thinking', l: null },
-        traits: [{ name: 'Extraverted', pct: 61, opposite: 'Introverted' }, { name: 'Intuitive', pct: 69, opposite: 'Observant' }, { name: 'Thinking', pct: 66, opposite: 'Feeling' }, { name: 'Judging', pct: 61, opposite: 'Prospecting' }, { name: 'Assertive', pct: 78, opposite: 'Turbulent' }],
-        strengths: [{ name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' }, { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' }, { name: 'Executing', pct: 16.5057, pattern: 'dots' }],
-        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Learner', category: 'Strategic Thinking' }, { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }]
-      };
+      const data = PROFILE_DATA[version] || PROFILE_DATA['1.0']; // Fallback
 
-      const rows = createMBTIRows(data.traits, isV2), { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, isV2), tableRows = createThemesTable(data.themes, isV2), titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
-      const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${data.m.t}</a>` : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${data.m.t}</div>`;
-      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${data.s.t}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
+      const rows = createMBTIRows(data.traits, isV2);
+      const { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, isV2);
+      const tableRows = createThemesTable(data.themes, isV2);
+      const titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      
+      const mbtiHtml = data.m.l 
+        ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${data.m.t}</a>` 
+        : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${data.m.t}</div>`;
+      
+      const strHtml = data.s.l 
+        ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${data.s.t}</a>` 
+        : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
 
       const result = `
         <div class="mt-4 fade-in w-full">
@@ -553,7 +578,8 @@
         </div>`;
       
       const container = document.getElementById(`identify-result-${targetId}`);
-      if (container) container.innerHTML = result; else await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`);
+      if (container) container.innerHTML = result; 
+      else await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`);
     };
 
     // === COMMANDS ===
@@ -637,7 +663,10 @@
             const el = elements.splice(Math.floor(Math.random() * elements.length), 1)[0];
             if (el && el.style) {
               destroyedElements.push({ element: el, cssText: el.style.cssText });
-              el.style.transition = 'all 2s ease-in'; el.style.transform = `translate(${(Math.random() - 0.5) * 300}px, ${window.innerHeight}px) rotate(${(Math.random() - 0.5) * 360}deg)`; el.style.opacity = '0'; el.style.pointerEvents = 'none';
+              el.style.transition = 'all 2s ease-in'; 
+              el.style.transform = `translate(${(Math.random() - 0.5) * 300}px, ${window.innerHeight}px) rotate(${(Math.random() - 0.5) * 360}deg)`; 
+              el.style.opacity = '0'; 
+              el.style.pointerEvents = 'none';
             }
           }
         }, 30);
@@ -658,7 +687,10 @@
             }
             const item = elements.pop();
             if (item.element) {
-              item.element.style.transition = 'all 1s ease-out'; item.element.style.transform = 'translate(0px, 0px) rotate(0deg)'; item.element.style.opacity = '1'; item.element.style.pointerEvents = 'auto';
+              item.element.style.transition = 'all 1s ease-out'; 
+              item.element.style.transform = 'translate(0px, 0px) rotate(0deg)'; 
+              item.element.style.opacity = '1'; 
+              item.element.style.pointerEvents = 'auto';
               setTimeout(() => { item.element.style.cssText = item.cssText; }, 1000);
             }
           }
@@ -719,7 +751,9 @@
             e.stopPropagation(); 
             isMeditating = false; overlay.style.opacity = '0';
             await delay(4000);
-            overlay.remove(); document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
+            overlay.remove(); 
+            document.removeEventListener('click', exitMeditation); 
+            document.removeEventListener('keydown', exitMeditation);
             isMeditationActive = false;
             resolve(`<div class="my-3 text-xs text-secondary">Returned to reality.</div>`);
           };
@@ -755,7 +789,9 @@
             if(e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation();
             clearInterval(interval); canvas.remove();
-            window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix, true); window.removeEventListener('click', endMatrix, true);
+            window.removeEventListener('resize', resizeCanvas); 
+            window.removeEventListener('keydown', endMatrix, true); 
+            window.removeEventListener('click', endMatrix, true);
             isMatrixActive = false;
             resolve(`<div class="text-xs mt-2 text-primary">Matrix simulation ended.</div>`);
           };
@@ -766,7 +802,8 @@
     };
 
     // URL Commands Shortcuts
-    Object.entries({ '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/think': 'https://tk.st/think', '/glitch': 'https://tk.st/glitch', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' }).forEach(([cmd, url]) => {
+    const urlCommands = { '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/think': 'https://tk.st/think', '/glitch': 'https://tk.st/glitch', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' };
+    Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
         window.open(url, '_blank', 'noopener,noreferrer');
         return `<div class="my-3 text-xs text-primary">Opening ${cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : cmd)}...</div>`;
@@ -791,13 +828,24 @@
 
     // === BOOT SEQUENCE ===
     async function boot() {
-      for (const line of [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }]) {
+      const bootMessages = [
+        { text: 'Initializing terminal...', delay: 250 }, 
+        { text: `Loading profile: ${config.display_name}`, delay: 400 }, 
+        { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, 
+        { text: '', delay: 150 }
+      ];
+
+      for (const line of bootMessages) {
         await delay(line.delay);
-        const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.innerHTML = line.text; DOM.bootArea.appendChild(div);
+        const div = document.createElement('div'); 
+        div.className = 'text-xs fade-in text-secondary'; 
+        div.innerHTML = line.text; 
+        DOM.bootArea.appendChild(div);
       }
 
       await delay(200);
-      const header = document.createElement('div'); header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
+      const header = document.createElement('div'); 
+      header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
       header.innerHTML = `
         <pre class="text-xs md:text-sm glow m-0 leading-tight text-primary">
 ███████╗████████╗
@@ -833,7 +881,9 @@
       
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
       
-      if (isDestroyed && cmd !== 'rebuild') return await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+      if (isDestroyed && cmd !== 'rebuild') {
+        return await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+      }
       
       if (commands[cmd]) { 
         const result = await commands[cmd](args); 
@@ -847,24 +897,48 @@
     DOM.input.addEventListener('keydown', async (e) => {
       if (isMatrixActive || isMeditationActive) return;
 
-      if (e.key === 'Enter') { e.preventDefault(); const val = DOM.input.value; DOM.input.value = ''; await handleCommand(val); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); if (historyIndex < commandHistory.length - 1) DOM.input.value = commandHistory[++historyIndex]; }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); if (historyIndex > 0) DOM.input.value = commandHistory[--historyIndex]; else { historyIndex = -1; DOM.input.value = ''; } }
+      if (e.key === 'Enter') { 
+        e.preventDefault(); 
+        const val = DOM.input.value; 
+        DOM.input.value = ''; 
+        await handleCommand(val); 
+      }
+      else if (e.key === 'ArrowUp') { 
+        e.preventDefault(); 
+        if (historyIndex < commandHistory.length - 1) DOM.input.value = commandHistory[++historyIndex]; 
+      }
+      else if (e.key === 'ArrowDown') { 
+        e.preventDefault(); 
+        if (historyIndex > 0) DOM.input.value = commandHistory[--historyIndex]; 
+        else { historyIndex = -1; DOM.input.value = ''; } 
+      }
       else if (e.key === 'Tab') {
-        e.preventDefault(); const val = DOM.input.value.toLowerCase(); if (!val) return;
+        e.preventDefault(); 
+        const val = DOM.input.value.toLowerCase(); 
+        if (!val) return;
+        
         const matches = Object.keys(commands).filter(c => c.startsWith(val));
-        if (matches.length === 1) DOM.input.value = matches[0];
-        else if (matches.length > 1) {
-          const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 text-normal'; echo.textContent = matches.join('  '); DOM.output.appendChild(echo);
-          // 【修正】入力欄に合わせてスクロールするように変更
+        if (matches.length === 1) {
+          DOM.input.value = matches[0];
+        } else if (matches.length > 1) {
+          const echo = document.createElement('div'); 
+          echo.className = 'text-xs mt-2 opacity-70 text-normal'; 
+          echo.textContent = matches.join('  '); 
+          DOM.output.appendChild(echo);
           DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
       }
     });
 
-    DOM.app.addEventListener('click', (e) => { if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn')) DOM.input.focus(); });
+    DOM.app.addEventListener('click', (e) => { 
+      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn')) {
+        DOM.input.focus(); 
+      }
+    });
 
-    setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
+    setInterval(() => { 
+      if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); 
+    }, 1000);
 
     // === WINDOW BUTTONS LOGIC ===
     document.getElementById('btn-close').addEventListener('click', async () => {
@@ -874,30 +948,62 @@
 
     document.getElementById('btn-minimize').addEventListener('click', async (e) => {
       e.stopPropagation();
-      DOM.app.style.transformOrigin = 'center'; DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; DOM.app.style.transform = 'scaleY(0.01)'; DOM.app.style.pointerEvents = 'none';
+      
+      DOM.app.style.transformOrigin = 'bottom center'; 
+      DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; 
+      DOM.app.style.transform = 'scaleY(0.01)'; 
+      DOM.app.style.pointerEvents = 'none';
       await delay(300);
-      DOM.app.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out'; DOM.app.style.transform = 'scaleY(0.01) scaleX(0)'; DOM.app.style.opacity = '0';
+      
+      DOM.app.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out'; 
+      DOM.app.style.transform = 'scaleY(0.01) scaleX(0)'; 
+      DOM.app.style.opacity = '0';
       await delay(300);
+
       let minIcon = document.getElementById('minimized-icon');
       if (!minIcon) {
-        minIcon = document.createElement('div'); minIcon.id = 'minimized-icon'; minIcon.innerHTML = `<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`;
+        minIcon = document.createElement('div'); 
+        minIcon.id = 'minimized-icon'; 
+        minIcon.innerHTML = `<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`;
         minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.5);opacity:0;transition:opacity 0.3s ease;`;
+        
         minIcon.addEventListener('click', async () => {
-          minIcon.style.opacity = '0'; await delay(300); minIcon.style.display = 'none';
-          DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; DOM.app.style.transform = 'scaleY(0.01) scaleX(1)'; DOM.app.style.opacity = '1';
+          minIcon.style.opacity = '0'; 
+          await delay(300); 
+          minIcon.style.display = 'none';
+          
+          DOM.app.style.transformOrigin = 'bottom center';
+          DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; 
+          DOM.app.style.transform = 'scaleY(0.01) scaleX(1)'; 
+          DOM.app.style.opacity = '1';
           await delay(300);
-          DOM.app.style.transition = 'transform 0.3s ease-out'; DOM.app.style.transform = 'scale(1)'; DOM.app.style.pointerEvents = 'auto';
+          
+          DOM.app.style.transition = 'transform 0.3s ease-out'; 
+          DOM.app.style.transform = 'scale(1)'; 
+          DOM.app.style.pointerEvents = 'auto';
           await delay(300);
-          DOM.app.style.transform = ''; DOM.app.style.transition = ''; DOM.app.style.pointerEvents = ''; DOM.input.focus();
+          
+          DOM.app.style.transform = ''; 
+          DOM.app.style.transition = ''; 
+          DOM.app.style.pointerEvents = ''; 
+          DOM.input.focus();
         });
         document.body.appendChild(minIcon);
-      } else { minIcon.style.display = 'block'; }
-      void minIcon.offsetWidth; minIcon.style.opacity = '1';
+      } else { 
+        minIcon.style.display = 'block'; 
+      }
+      
+      // 修復箇所: 途切れていたコードを結合
+      void minIcon.offsetWidth; 
+      minIcon.style.opacity = '1';
     });
 
     document.getElementById('btn-maximize').addEventListener('click', () => {
-      if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`)); }
-      else { if (document.exitFullscreen) document.exitFullscreen(); }
+      if (!document.fullscreenElement) { 
+        document.documentElement.requestFullscreen().catch(() => printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`)); 
+      } else { 
+        if (document.exitFullscreen) document.exitFullscreen(); 
+      }
     });
 
     boot();
