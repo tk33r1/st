@@ -171,7 +171,6 @@
       margin: 0; 
       background-color: var(--bg-color);
       color: var(--text-color);
-      /* 横スクロールの発生を防止 */
       overflow-x: hidden;
     }
     
@@ -246,6 +245,32 @@
     }
     .window-btn:active {
       transform: scale(0.9);
+    }
+
+    /* --- Extracted Component Styles --- */
+
+    /* MBTI Progress Bar */
+    .mbti-bar-container { position: relative; height: 1rem; width: 100%; border-radius: 9999px; border: 1px solid var(--border-color); background-color: var(--surface-color); }
+    .mbti-bar-fill { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg-color); z-index: 2; transition: left 0.5s ease; }
+    .mbti-bar-bg { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 2px; opacity: 0.3; }
+
+    /* Meditation Components */
+    .meditation-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #111827 0%, #000 100%); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 4s ease; }
+    .meditation-circle { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); box-shadow: 0 0 60px rgba(74,222,128,0.05), inset 0 0 40px rgba(74,222,128,0.05); animation: breatheSlow 10s infinite ease-in-out; }
+    .meditation-text { position: absolute; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 13px; text-align: center; letter-spacing: 0.05em; line-height: 2; pointer-events: none; transition: opacity 3s ease; opacity: 0; }
+
+    /* Destruction Animations */
+    .destroyed-element {
+      transition: transform 2s ease-in, opacity 2s ease-in !important;
+      transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    .rebuilding-element {
+      transition: transform 1s ease-out, opacity 1s ease-out !important;
+      transform: translate(0px, 0px) rotate(0deg) !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
     }
 
     /* === Choreomania Mode Animations === */
@@ -417,6 +442,7 @@
    
    <main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1 relative" style="scroll-behavior:smooth;">
     <div id="boot-area"></div>
+    <!-- Removed inline aria attributes and rely on standard dynamic insertion -->
     <div id="output-area" aria-live="polite" aria-atomic="false"></div>
     <div class="hidden items-center gap-2 mt-4" id="input-line">
      <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span> 
@@ -443,8 +469,6 @@
     
     // Helpers
     const delay = ms => new Promise(r => setTimeout(r, ms));
-    
-    // エスケープ処理の最適化: DOM生成を避けて正規表現で置換
     const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
 
     // App State
@@ -478,12 +502,31 @@
       }
     };
 
-    window.toggleBtc = (targetId, allIds) => allIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        const isTarget = id === targetId;
-        el.classList.toggle('hidden', !isTarget); 
-        el.classList.toggle('flex', isTarget);
+    // === EVENT DELEGATION FOR UI INTERACTIONS ===
+    DOM.output.addEventListener('click', async (e) => {
+      // Handle Toggle Buttons
+      const toggleBtn = e.target.closest('[data-action="toggleBtc"]');
+      if (toggleBtn) {
+        const targetId = toggleBtn.dataset.target;
+        const allIds = toggleBtn.dataset.all.split(',');
+        allIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            const isTarget = id === targetId;
+            el.classList.toggle('hidden', !isTarget);
+            el.classList.toggle('flex', isTarget);
+          }
+        });
+        return;
+      }
+
+      // Handle Identify Profile Selection
+      const identifyBtn = e.target.closest('[data-action="identify"]');
+      if (identifyBtn) {
+        const version = identifyBtn.dataset.version;
+        const targetId = identifyBtn.dataset.id;
+        await executeIdentifyVersion(version, targetId);
+        return;
       }
     });
 
@@ -507,9 +550,9 @@
             <span class="text-normal">${esc(t.name)}</span>
             <span class="text-secondary">${esc(t.opposite)}</span>
           </div>
-          <div class="relative h-4 w-full rounded-full border border-color bg-surface">
-            <div style="position:absolute; left:${100 - t.pct}%; top:50%; transform:translate(-50%, -50%); width:12px; height:12px; background:${color}; border-radius:50%; border:2px solid var(--bg-color); z-index:2;"></div>
-            <div style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:100%; height:2px; background:${color}; opacity:0.3;"></div>
+          <div class="mbti-bar-container">
+            <div class="mbti-bar-fill" style="left:${100 - t.pct}%; background:${color};"></div>
+            <div class="mbti-bar-bg" style="width:100%; background:${color};"></div>
           </div>
           <div class="text-center text-[10px] text-secondary mt-1">${pct}% ${esc(name)}</div>
         </div>`;
@@ -524,10 +567,18 @@
           <pattern id="${vp}-grid" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
           <pattern id="${vp}-dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
         </defs></svg>`;
-      const barHTML = patternDefs + strengths.map(s => `<svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="16" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg>`).join('');
+      const barHTML = patternDefs + strengths.map(s => `
+        <svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none">
+          <rect x="0" y="0" width="100" height="16" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/>
+        </svg>`).join('');
       const strengthsRows = strengths.map(s => `
         <div class="text-xs flex items-center justify-between text-normal">
-          <div class="flex items-center gap-2"><svg width="12" height="12" class="border border-color"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg><span>${esc(s.name)}</span></div>
+          <div class="flex items-center gap-2">
+            <svg width="12" height="12" class="border border-color">
+              <rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/>
+            </svg>
+            <span>${esc(s.name)}</span>
+          </div>
           <span class="text-secondary">${s.pct.toFixed(1)}%</span>
         </div>`).join('');
       return { barHTML, strengthsRows };
@@ -543,11 +594,13 @@
     const renderCmdList = (title, cmdList) => `
       <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
         <div class="glow text-sm font-bold mb-2 text-primary">${title}</div>
-        <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${c[0]}</span><span>- ${c[1]}</span></div>`).join('')}</div>
+        <div class="grid gap-1 text-xs text-normal">
+          ${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${c[0]}</span><span>- ${c[1]}</span></div>`).join('')}
+        </div>
         ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic text-normal">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
       </div>`;
 
-    window.executeIdentifyVersion = async (version, targetId) => {
+    const executeIdentifyVersion = async (version, targetId) => {
       const isV2 = version === '2.0';
       const data = PROFILE_DATA[version] || PROFILE_DATA['1.0']; // Fallback
 
@@ -567,11 +620,19 @@
       const result = `
         <div class="mt-4 fade-in w-full">
           <div class="p-4 border rounded border-color bg-surface">
-            ${mbtiHtml}<div class="space-y-1 mb-6">${rows}</div>${strHtml}
-            <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden">${barHTML}</div>
+            ${mbtiHtml}
+            <div class="space-y-1 mb-6">${rows}</div>
+            ${strHtml}
+            <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden">
+              ${barHTML}
+            </div>
             <div class="space-y-2 mb-6">${strengthsRows}</div>
             <div class="mt-4 pt-2 overflow-x-auto">
-              <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};"><div class="w-8">RANK</div><div class="flex-1">THEME</div><div class="w-56 text-right">CATEGORY</div></div>
+              <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};">
+                <div class="w-8">RANK</div>
+                <div class="flex-1">THEME</div>
+                <div class="w-56 text-right">CATEGORY</div>
+              </div>
               <div class="overflow-x-auto border-t border-color min-w-[400px]">${tableRows}</div>
             </div>
           </div>
@@ -589,19 +650,39 @@
       clear: () => { DOM.output.innerHTML = ''; return null; },
       
       bitcoin() {
-        const uniqueId = Date.now(), tabs = ['earn', 'buy', 'use', 'view'], allIds = `[${tabs.map(t => `'${t}-opts-${uniqueId}'`).join(',')}]`;
+        const uniqueId = Date.now();
+        const tabs = ['earn', 'buy', 'use', 'view'];
+        const allIds = tabs.map(t => `${t}-opts-${uniqueId}`).join(',');
+        
         const btcData = {
           earn: [{ i: '🎮', t: 'Play to Earn', s: 'ASCII Roguelike', l: 'https://tk.st/bitcoinyen/ascii-roguelike' }],
           buy:  [{ i: '⚡', t: 'Direct Purchase', s: 'Lightning Network', l: 'https://tk.st/bitcoinyen/ln' }, { i: '🛒', t: 'Marketplace', s: 'UniSat', l: 'https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN' }],
           use:  [{ i: '📨', t: 'Letter to the future', s: 'Bitcoin Bottle Mail', l: 'https://tk.st/bitcoinyen/bbm' }],
           view: [{ i: '🪙', t: 'Dive into my Bitcoin token', s: 'Bitcoin Mainnet', l: 'https://unisat.io/runes/detail/BITCOINYEN' }, { i: '🌐', t: 'Dive into my Web3 page', s: 'Bitcoin Mainnet', l: 'https://web3.tk.st' }]
         };
-        const renderItems = items => items.map(item => `<a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="text-normal">${item.i} ${item.t}</div><div class="text-xs mt-0.5 text-primary">${item.s}</div></a>`).join('');
+        
+        const renderItems = items => items.map(item => `
+          <a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-surface-alt hover:bg-surface-hover border-color no-underline">
+            <div class="text-normal">${item.i} ${item.t}</div>
+            <div class="text-xs mt-0.5 text-primary">${item.s}</div>
+          </a>`).join('');
+          
         return `
           <div class="my-3 w-[90%] max-w-[800px]">
             <div class="text-sm font-bold glow mb-3 text-primary">BITCOIN YEN Ecosystem</div>
-            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" onclick="window.toggleBtc('${t}-opts-${uniqueId}', ${allIds})">${t.charAt(0).toUpperCase() + t.slice(1)}</div>`).join('')}</div>
-            ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">${renderItems(btcData[t])}</div>`).join('')}
+            <div class="flex gap-2 flex-wrap">
+              ${tabs.map(t => `
+                <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" 
+                     data-action="toggleBtc" data-target="${t}-opts-${uniqueId}" data-all="${allIds}">
+                  ${t.charAt(0).toUpperCase() + t.slice(1)}
+                </div>
+              `).join('')}
+            </div>
+            ${tabs.map(t => `
+              <div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">
+                ${renderItems(btcData[t])}
+              </div>
+            `).join('')}
           </div>`;
       },
 
@@ -613,20 +694,51 @@
             <div class="text-xs mb-4 text-secondary">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t border-color">
-              ${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}
+              ${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `
+                <div class="flex justify-between text-xs">
+                  <span class="text-secondary">${r[0]}</span>
+                  <span class="text-normal">${esc(r[1])}</span>
+                </div>
+              `).join('')}
             </div>
           </div>`;
       },
 
-      pages: () => `<div class="my-3 space-y-2 w-[90%] max-w-[800px]"><div class="text-sm font-bold glow mb-2 text-primary">Explore Web2 creations</div><div class="space-y-2">${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(p.desc)}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}</div></div>`,
+      pages: () => `
+        <div class="my-3 space-y-2 w-[90%] max-w-[800px]">
+          <div class="text-sm font-bold glow mb-2 text-primary">Explore Web2 creations</div>
+          <div class="space-y-2">
+            ${projects.map(p => `
+              <a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm font-bold text-primary">${esc(p.name)}</span>
+                </div>
+                <div class="text-xs mb-2 text-normal">${esc(p.desc)}</div>
+                <div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div>
+              </a>
+            `).join('')}
+          </div>
+        </div>`,
 
       identify() {
         const uniqueId = 'id-' + Date.now();
+        const versions = [
+          ['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], 
+          ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']
+        ];
         return `
           <div class="my-3 w-[90%] max-w-[800px]">
             <div class="text-sm font-bold glow mb-3 text-primary">Please select a profile to initialize:</div>
             <div class="space-y-2">
-              ${[['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']].map(v => `<div class="p-3 border rounded cursor-pointer transition-colors ${v[4]} ${v[5]}" onclick="window.executeIdentifyVersion('${v[0]}', '${uniqueId}')"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold ${v[6]}">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] text-secondary">${v[2]}</span></div><div class="text-xs text-secondary">${v[3]} (MBTI & Strengths)</div></div>`).join('')}
+              ${versions.map(v => `
+                <div class="p-3 border rounded cursor-pointer transition-colors ${v[4]} ${v[5]}" data-action="identify" data-version="${v[0]}" data-id="${uniqueId}">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-bold ${v[6]}">ver.${v[0]} [${v[1]}]</span>
+                    <span class="text-[10px] text-secondary">${v[2]}</span>
+                  </div>
+                  <div class="text-xs text-secondary">${v[3]} (MBTI & Strengths)</div>
+                </div>
+              `).join('')}
             </div>
             <div id="identify-result-${uniqueId}"></div>
           </div>`;
@@ -662,11 +774,13 @@
             if (elements.length === 0) { clearInterval(destroyInterval); break; }
             const el = elements.splice(Math.floor(Math.random() * elements.length), 1)[0];
             if (el && el.style) {
-              destroyedElements.push({ element: el, cssText: el.style.cssText });
-              el.style.transition = 'all 2s ease-in'; 
-              el.style.transform = `translate(${(Math.random() - 0.5) * 300}px, ${window.innerHeight}px) rotate(${(Math.random() - 0.5) * 360}deg)`; 
-              el.style.opacity = '0'; 
-              el.style.pointerEvents = 'none';
+              destroyedElements.push({ element: el });
+              // Delegate animation to CSS via custom properties
+              el.style.setProperty('--dx', `${(Math.random() - 0.5) * 300}px`);
+              el.style.setProperty('--dy', `${window.innerHeight}px`);
+              el.style.setProperty('--deg', `${(Math.random() - 0.5) * 360}deg`);
+              el.classList.add('destroyed-element');
+              el.classList.remove('rebuilding-element');
             }
           }
         }, 30);
@@ -687,11 +801,15 @@
             }
             const item = elements.pop();
             if (item.element) {
-              item.element.style.transition = 'all 1s ease-out'; 
-              item.element.style.transform = 'translate(0px, 0px) rotate(0deg)'; 
-              item.element.style.opacity = '1'; 
-              item.element.style.pointerEvents = 'auto';
-              setTimeout(() => { item.element.style.cssText = item.cssText; }, 1000);
+              item.element.classList.remove('destroyed-element');
+              item.element.classList.add('rebuilding-element');
+              // Clean up classes after animation completes
+              setTimeout(() => {
+                 item.element.classList.remove('rebuilding-element');
+                 item.element.style.removeProperty('--dx');
+                 item.element.style.removeProperty('--dy');
+                 item.element.style.removeProperty('--deg');
+              }, 1000);
             }
           }
         }, 30);
@@ -716,19 +834,22 @@
         return new Promise(resolve => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           const overlay = document.createElement('div');
-          overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,#111827 0%,#000 100%);z-index:10000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 4s ease;`;
+          overlay.className = 'meditation-overlay';
           
           const circle = document.createElement('div');
-          circle.style.cssText = `position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.05) 0%,transparent 60%);box-shadow:0 0 60px rgba(74,222,128,0.05),inset 0 0 40px rgba(74,222,128,0.05);animation:breatheSlow 10s infinite ease-in-out;`;
+          circle.className = 'meditation-circle';
           
           const textContainer = document.createElement('div');
-          textContainer.style.cssText = `position:absolute;color:rgba(255,255,255,0.5);font-family:monospace;font-size:13px;text-align:center;letter-spacing:0.05em;line-height:2;pointer-events:none;transition:opacity 3s ease;opacity:0;`;
+          textContainer.className = 'meditation-text';
 
           const messages = ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."];
           
           overlay.appendChild(circle); overlay.appendChild(textContainer); document.body.appendChild(overlay);
           let isMeditating = true;
-          setTimeout(() => { overlay.style.opacity = '1'; }, 100);
+          
+          // Force reflow to trigger CSS transition
+          void overlay.offsetWidth;
+          overlay.style.opacity = '1';
 
           (async () => {
             await delay(4000);
@@ -993,7 +1114,6 @@
         minIcon.style.display = 'block'; 
       }
       
-      // 修復箇所: 途切れていたコードを結合
       void minIcon.offsetWidth; 
       minIcon.style.opacity = '1';
     });
