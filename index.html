@@ -15,8 +15,22 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <style>
-    /* Theme Variables */
+    /* Theme Variables (Light Mode Default) */
     :root {
+      --bg-color: #f3f4f6;
+      --surface-color: #ffffff;
+      --surface-alt: #f9fafb;
+      --surface-hover: #e5e7eb;
+      --text-color: #1f2937;
+      --primary-color: #15803d;
+      --primary-bg: #dcfce7;
+      --primary-bg-hover: #bbf7d0;
+      --secondary-color: #6b7280;
+      --border-color: #d1d5db;
+    }
+
+    /* Dark Mode Theme */
+    [data-theme="dark"] {
       --bg-color: #0c0c0c;
       --surface-color: #1a1a1a;
       --surface-alt: #111111;
@@ -138,6 +152,12 @@
     .leading-tight { line-height: 1.25; }
     .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+    /* Button Reset & Utilities */
+    button { background: transparent; padding: 0; cursor: pointer; color: inherit; }
+    .transition-opacity { transition-property: opacity; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 200ms; }
+    .duration-500 { transition-duration: 500ms; }
+    .hover\:opacity-70:hover { opacity: 0.7; }
+
     .cursor-pointer { cursor: pointer; }
     .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
     .opacity-50 { opacity: 0.5; }
@@ -172,6 +192,7 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       overflow-x: hidden;
+      transition: background-color 0.3s, color 0.3s;
     }
     
     html, body, input, textarea, button, select, * { 
@@ -247,19 +268,67 @@
       transform: scale(0.9);
     }
 
-    /* --- Extracted Component Styles --- */
+    /* --- Theme Toggle Switch Styles --- */
+    .theme-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .theme-switch input {
+      display: none;
+    }
+    .theme-switch .track {
+      width: 56px;
+      height: 30px;
+      background-color: var(--surface-hover);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      transition: background-color 0.3s, border-color 0.3s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 7px;
+    }
+    .theme-switch .thumb {
+      width: 22px;
+      height: 22px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      z-index: 1;
+    }
+    .theme-switch .icon {
+      width: 14px;
+      height: 14px;
+      z-index: 2;
+      color: #9ca3af;
+      transition: color 0.3s;
+    }
+    .theme-switch input:not(:checked) + .track .icon.sun {
+      color: #1f2937;
+    }
+    .theme-switch input:checked + .track .icon.moon {
+      color: #1f2937;
+    }
+    .theme-switch input:checked + .track .thumb {
+      transform: translateX(26px);
+    }
 
-    /* MBTI Progress Bar */
+    /* --- Extracted Component Styles --- */
     .mbti-bar-container { position: relative; height: 1rem; width: 100%; border-radius: 9999px; border: 1px solid var(--border-color); background-color: var(--surface-color); }
     .mbti-bar-fill { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg-color); z-index: 2; transition: left 0.5s ease; }
     .mbti-bar-bg { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 2px; opacity: 0.3; }
 
-    /* Meditation Components */
     .meditation-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #111827 0%, #000 100%); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 4s ease; }
     .meditation-circle { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); box-shadow: 0 0 60px rgba(74,222,128,0.05), inset 0 0 40px rgba(74,222,128,0.05); animation: breatheSlow 10s infinite ease-in-out; }
     .meditation-text { position: absolute; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 13px; text-align: center; letter-spacing: 0.05em; line-height: 2; pointer-events: none; transition: opacity 3s ease; opacity: 0; }
 
-    /* Destruction Animations */
     .destroyed-element {
       transition: transform 2s ease-in, opacity 2s ease-in !important;
       transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important;
@@ -273,7 +342,6 @@
       pointer-events: auto !important;
     }
 
-    /* === Choreomania Mode Animations === */
     body.choreomania-active {
       --mouse-x: 0.5;
       --mouse-y: 0.5;
@@ -294,8 +362,12 @@
       transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important;
       will-change: transform;
     }
-    body.choreomania-active #app span {
+    body.choreomania-active #app span:not(.hidden) {
       display: inline-block;
+    }
+    body.choreomania-active #app span.hidden,
+    body.choreomania-active #theme-label {
+      display: none !important;
     }
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) {
       color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important;
@@ -434,23 +506,36 @@
     <p>Change terminal color</p>
   </div>
 
-  <div id="app" class="min-h-screen w-full flex flex-col" style="transition: opacity 0.5s;">
+  <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
    <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
     <div class="flex gap-2.5 window-btn-group">
-     <div id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal">
+     <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg>
-     </div>
-     <div id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal">
+     </button>
+     <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg>
-     </div>
-     <div id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen">
+     </button>
+     <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
        <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
          <path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/>
        </svg>
-     </div>
+     </button>
     </div>
-    <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()" title="Reload Terminal" style="transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
-     <span class="text-primary">▸</span> <span id="titlebar-name" class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
+    
+    <div class="flex items-center gap-4">
+     <label class="theme-switch" title="Toggle Light/Dark Mode">
+       <input type="checkbox" id="theme-toggle">
+       <div class="track">
+         <svg class="icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+         <svg class="icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+         <div class="thumb"></div>
+       </div>
+     </label>
+     <span class="text-xs text-secondary hidden md:block w-8 text-center" id="theme-label">Light</span>
+
+     <button id="btn-reload" class="flex items-center gap-2 cursor-pointer ml-2 transition-opacity hover:opacity-70" title="Reload Terminal" aria-label="Reload Terminal">
+      <span class="text-primary">▸</span> <span id="titlebar-name" class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
+     </button>
     </div>
    </header>
    
@@ -463,7 +548,7 @@
     </div>
    </main>
    
-   <footer id="terminal-footer" class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto bg-surface border-color" style="color:#666;">
+   <footer id="terminal-footer" class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto bg-surface border-color text-secondary">
     <span id="status-left">READY</span> <span id="status-right"></span>
    </footer>
   </div>
@@ -477,7 +562,9 @@
       input: document.getElementById('cmd-input'),
       inputLine: document.getElementById('input-line'),
       bootArea: document.getElementById('boot-area'),
-      statusRight: document.getElementById('status-right')
+      statusRight: document.getElementById('status-right'),
+      themeToggle: document.getElementById('theme-toggle'),
+      themeLabel: document.getElementById('theme-label')
     };
     
     // Helpers
@@ -486,7 +573,8 @@
 
     // App State
     const MAX_HISTORY = 50;
-    let commandHistory = [], historyIndex = -1, isDestroyed = false, destroyedElements = [], destroyInterval = null, currentVersion = 1;
+    let commandHistory = [], historyIndex = -1, currentVersion = 1;
+    let isDestroyed = false, destroyedElements = [], destroyInterval = null;
     let isMatrixActive = false, isMeditationActive = false;
 
     // === DATA MODULES ===
@@ -515,9 +603,28 @@
       }
     };
 
+    // === THEME AND JOB TITLE LOGIC ===
+    DOM.themeToggle.addEventListener('change', (e) => {
+      const isDark = e.target.checked;
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      DOM.themeLabel.textContent = isDark ? 'Dark' : 'Light';
+      
+      // Update Job Title
+      config.job_title = isDark ? 'Hacker Poet' : 'Technical Marketing Lead';
+      
+      const headerJobTitle = document.getElementById('header-job-title');
+      if (headerJobTitle) {
+        headerJobTitle.textContent = config.job_title;
+      }
+      
+      // Update all dynamic job titles in the output area
+      document.querySelectorAll('.dynamic-job-title').forEach(el => {
+        el.textContent = config.job_title;
+      });
+    });
+
     // === EVENT DELEGATION FOR UI INTERACTIONS ===
     DOM.output.addEventListener('click', async (e) => {
-      // Handle Toggle Buttons
       const toggleBtn = e.target.closest('[data-action="toggleBtc"]');
       if (toggleBtn) {
         const targetId = toggleBtn.dataset.target;
@@ -533,21 +640,13 @@
         return;
       }
 
-      // Handle Identify Profile Selection
       const identifyBtn = e.target.closest('[data-action="identify"]');
       if (identifyBtn) {
         e.preventDefault();
-        
-        // Update URL via History API to make it shareable and crawlable
         const url = identifyBtn.getAttribute('href');
         if (url) {
-          try {
-            window.history.pushState({}, '', url);
-          } catch (err) {
-            // iframeやblob URL環境など、pushStateが制限されている場合はエラーを無視する
-          }
+          try { window.history.pushState({}, '', url); } catch (err) {}
         }
-
         const version = identifyBtn.dataset.version;
         const targetId = identifyBtn.dataset.id;
         await executeIdentifyVersion(version, targetId);
@@ -575,7 +674,7 @@
             <span class="text-normal">${esc(t.name)}</span>
             <span class="text-secondary">${esc(t.opposite)}</span>
           </div>
-          <div class="mbti-bar-container">
+          <div class="mbti-bar-container" aria-hidden="true">
             <div class="mbti-bar-fill" style="left:${100 - t.pct}%; background:${color};"></div>
             <div class="mbti-bar-bg" style="width:100%; background:${color};"></div>
           </div>
@@ -587,13 +686,13 @@
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       const vp = (isVer2 ? 'v2' : 'v1') + Date.now();
       const patternDefs = `
-        <svg width="0" height="0"><defs>
+        <svg width="0" height="0" style="position:absolute;"><defs>
           <pattern id="${vp}-diagonal" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
           <pattern id="${vp}-grid" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
           <pattern id="${vp}-dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
         </defs></svg>`;
       const barHTML = patternDefs + strengths.map(s => `
-        <svg style="display:inline-block; width:${s.pct}%; height:16px; vertical-align:top;" viewBox="0 0 100 16" preserveAspectRatio="none">
+        <svg style="display:block; width:${s.pct}%; height:16px;" viewBox="0 0 100 16" preserveAspectRatio="none">
           <rect x="0" y="0" width="100" height="16" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/>
         </svg>`).join('');
       const strengthsRows = strengths.map(s => `
@@ -627,7 +726,7 @@
 
     const executeIdentifyVersion = async (version, targetId) => {
       const isV2 = version === '2.0';
-      const data = PROFILE_DATA[version] || PROFILE_DATA['1.0']; // Fallback
+      const data = PROFILE_DATA[version] || PROFILE_DATA['1.0'];
 
       const rows = createMBTIRows(data.traits, isV2);
       const { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, isV2);
@@ -648,7 +747,7 @@
             ${mbtiHtml}
             <div class="space-y-1 mb-6">${rows}</div>
             ${strHtml}
-            <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden">
+            <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden flex">
               ${barHTML}
             </div>
             <div class="space-y-2 mb-6">${strengthsRows}</div>
@@ -675,7 +774,7 @@
       clear: () => { DOM.output.innerHTML = ''; return null; },
       
       bitcoin() {
-        const uniqueId = 'btc-' + Date.now(); // 修正：IDが数字始まりにならないようプレフィックスを追加
+        const uniqueId = 'btc-' + Date.now();
         const tabs = ['earn', 'buy', 'use', 'view'];
         const allIds = tabs.map(t => `${t}-opts-${uniqueId}`).join(',');
         
@@ -716,7 +815,7 @@
         return `
           <div class="my-3 p-4 border rounded w-[90%] max-w-[800px] border-color bg-surface">
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
-            <div class="text-xs mb-4 text-secondary">${esc(config.job_title)}</div>
+            <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t border-color">
               ${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `
@@ -864,6 +963,7 @@
           
           const textContainer = document.createElement('div');
           textContainer.className = 'meditation-text';
+          textContainer.setAttribute('aria-live', 'polite');
 
           const messages = ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."];
           
@@ -892,11 +992,13 @@
           const exitMeditation = async (e) => {
             if (e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation(); 
-            isMeditating = false; overlay.style.opacity = '0';
-            await delay(4000);
-            overlay.remove(); 
+            e.preventDefault();
+            isMeditating = false; 
+            overlay.style.opacity = '0';
             document.removeEventListener('click', exitMeditation); 
             document.removeEventListener('keydown', exitMeditation);
+            await delay(4000);
+            overlay.remove(); 
             isMeditationActive = false;
             resolve(`<div class="my-3 text-xs text-secondary">Returned to reality.</div>`);
           };
@@ -931,7 +1033,9 @@
           const endMatrix = (e) => {
             if(e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation();
-            clearInterval(interval); canvas.remove();
+            e.preventDefault();
+            clearInterval(interval); 
+            canvas.remove();
             window.removeEventListener('resize', resizeCanvas); 
             window.removeEventListener('keydown', endMatrix, true); 
             window.removeEventListener('click', endMatrix, true);
@@ -969,6 +1073,9 @@
     document.addEventListener('mousemove', (e) => handleChoreomaniaMove(e.clientX, e.clientY), { passive: true });
     document.addEventListener('touchmove', (e) => { if (e.touches.length > 0) handleChoreomaniaMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 
+    // 隠しコマンドのリスト
+    const hiddenCommands = ['secret', 'akutagawa', 'choreomania', 'destroy', 'rebuild', 'history', 'matrix', 'meditation', 'theme'];
+
     // === COMMAND HANDLER ===
     async function handleCommand(input) {
       const trimmed = input.trim(); if (!trimmed) return;
@@ -983,16 +1090,23 @@
       historyIndex = -1;
       
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       
       if (isDestroyed && cmd !== 'rebuild') {
         return await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
       }
       
+      // ライトモード時は隠しコマンドを無効化（見つからない扱いにする）
+      if (hiddenCommands.includes(cmd) && !isDark) {
+        await printToOutput(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
+        return;
+      }
+
       if (commands[cmd]) { 
         const result = await commands[cmd](args); 
         if (result) await printToOutput(result, 100); 
       } else {
-        await printToOutput(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-primary">help</span> for available commands.</div>`, 50);
+        await printToOutput(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
       }
     }
 
@@ -1026,8 +1140,8 @@
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
           <div id="display-name-el" class="text-primary">${esc(config.display_name)}${currentVersion > 1 ? ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>` : ''}</div>
-          <div class="text-secondary">${esc(config.job_title)}</div>
-          <div class="pt-2 text-secondary">Type <span style="color:#fff;">'help'</span> to explore.</div>
+          <div id="header-job-title" class="text-secondary">${esc(config.job_title)}</div>
+          <div class="pt-2 text-secondary">Type <span class="text-normal font-bold">'help'</span> to explore.</div>
         </div>`;
       DOM.bootArea.appendChild(header);
       
@@ -1040,16 +1154,13 @@
       const cmdParam = urlParams.get('cmd');
       
       if (cmdParam) {
-        await delay(500); // Wait a bit after boot
-        
+        await delay(500);
         let actualCmd = cmdParam;
-        // Handle shortcuts like "job" to "/job" if missing
         if (!commands[cmdParam] && commands['/' + cmdParam]) {
             actualCmd = '/' + cmdParam;
         }
 
         if (actualCmd === 'identify') {
-            // 修正：handleCommand完了時点でDOM追加は確実なため、不要なdelay(300)を削除
             await handleCommand('identify');
             const v = urlParams.get('v');
             if (v && ['1.0', '2.0'].includes(v)) {
@@ -1073,13 +1184,8 @@
         e.preventDefault(); 
         const val = DOM.input.value; 
         DOM.input.value = ''; 
-        // Reset URL when manual command is entered to keep it clean
         if (window.location.search) {
-          try {
-            window.history.pushState({}, '', window.location.pathname);
-          } catch (err) {
-            // iframeやblob URL環境など、pushStateが制限されている場合はエラーを無視する
-          }
+          try { window.history.pushState({}, '', window.location.pathname); } catch (err) {}
         }
         await handleCommand(val); 
       }
@@ -1097,8 +1203,15 @@
         const val = DOM.input.value.toLowerCase(); 
         if (!val) return;
         
-        const matches = Object.keys(commands).filter(c => c.startsWith(val));
-        if (matches.length === 0) return; // 修正：一致しない場合は何もしない（早期リターン）
+        // 隠しコマンドはライトモードではサジェストにも出さない
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        let availableCommands = Object.keys(commands);
+        if (!isDark) {
+          availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c));
+        }
+
+        const matches = availableCommands.filter(c => c.startsWith(val));
+        if (matches.length === 0) return;
         
         if (matches.length === 1) {
           DOM.input.value = matches[0];
@@ -1113,7 +1226,7 @@
     });
 
     DOM.app.addEventListener('click', (e) => { 
-      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn')) {
+      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch')) {
         DOM.input.focus(); 
       }
     });
@@ -1122,10 +1235,53 @@
       if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); 
     }, 1000);
 
+    // === SOFT RELOAD LOGIC ===
+    async function softReload() {
+      const overlay = document.getElementById('close-overlay');
+      if (overlay) overlay.remove();
+
+      DOM.app.style.opacity = '0';
+      await delay(300);
+      
+      // State Reset
+      commandHistory = [];
+      historyIndex = -1;
+      isDestroyed = false;
+      destroyedElements = [];
+      if (destroyInterval) clearInterval(destroyInterval);
+      currentVersion = 1;
+      isMatrixActive = false;
+      isMeditationActive = false;
+      
+      DOM.bootArea.innerHTML = '';
+      DOM.output.innerHTML = '';
+      DOM.input.value = '';
+      DOM.inputLine.classList.add('hidden');
+      DOM.inputLine.classList.remove('flex', 'fade-in');
+      document.body.classList.remove('choreomania-active');
+      document.body.style.removeProperty('--mouse-x');
+      document.body.style.removeProperty('--mouse-y');
+      
+      if (window.location.search) {
+        try { window.history.pushState({}, '', window.location.pathname); } catch (err) {}
+      }
+      
+      DOM.app.style.opacity = '1';
+      boot();
+    }
+
+    document.getElementById('btn-reload').addEventListener('click', softReload);
+
     // === WINDOW BUTTONS LOGIC ===
     document.getElementById('btn-close').addEventListener('click', async () => {
       DOM.app.style.opacity = '0'; await delay(500);
-      document.body.innerHTML = `<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:#000; color:var(--secondary-color); cursor:pointer;" onclick="location.reload()"><div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div></div>`;
+      
+      const overlay = document.createElement('div');
+      overlay.id = 'close-overlay';
+      overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:var(--bg-color); color:var(--secondary-color); cursor:pointer; z-index:10000;`;
+      overlay.innerHTML = `<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>`;
+      overlay.addEventListener('click', softReload);
+      document.body.appendChild(overlay);
     });
 
     document.getElementById('btn-minimize').addEventListener('click', async (e) => {
@@ -1147,7 +1303,7 @@
         minIcon = document.createElement('div'); 
         minIcon.id = 'minimized-icon'; 
         minIcon.innerHTML = `<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`;
-        minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.5);opacity:0;transition:opacity 0.3s ease;`;
+        minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;`;
         
         minIcon.addEventListener('click', async () => {
           minIcon.style.opacity = '0'; 
