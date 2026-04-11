@@ -354,11 +354,11 @@
     body.choreomania-active #app .fade-in {
       opacity: 1 !important;
     }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer) {
+    body.choreomania-active #app *:nth-child(odd):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) {
       transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important;
       will-change: transform;
     }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer) {
+    body.choreomania-active #app *:nth-child(even):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) {
       transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important;
       will-change: transform;
     }
@@ -369,11 +369,11 @@
     body.choreomania-active #theme-label {
       display: none !important;
     }
-    body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) {
+    body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow):not(.theme-switch *) {
       color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important;
       text-shadow: 0 0 8px currentColor;
     }
-    body.choreomania-active #app svg {
+    body.choreomania-active #app svg:not(.theme-switch svg) {
       color: hsl(calc(var(--mouse-y) * 360), 80%, 60%) !important;
       fill: currentColor;
       transform: rotate(calc((var(--mouse-x) - 0.5) * 90deg));
