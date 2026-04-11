@@ -603,6 +603,9 @@
       }
     };
 
+    // 隠しコマンドのリスト
+    const hiddenCommands = ['secret', 'akutagawa', 'choreomania', 'destroy', 'rebuild', 'history', 'matrix', 'meditation', 'theme'];
+
     // === THEME AND JOB TITLE LOGIC ===
     DOM.themeToggle.addEventListener('change', (e) => {
       const isDark = e.target.checked;
@@ -1073,9 +1076,6 @@
     document.addEventListener('mousemove', (e) => handleChoreomaniaMove(e.clientX, e.clientY), { passive: true });
     document.addEventListener('touchmove', (e) => { if (e.touches.length > 0) handleChoreomaniaMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 
-    // 隠しコマンドのリスト
-    const hiddenCommands = ['secret', 'akutagawa', 'choreomania', 'destroy', 'rebuild', 'history', 'matrix', 'meditation', 'theme'];
-
     // === COMMAND HANDLER ===
     async function handleCommand(input) {
       const trimmed = input.trim(); if (!trimmed) return;
@@ -1128,6 +1128,24 @@
       }
 
       await delay(200);
+      
+      // --- Deep Link Resolution (Early Phase to check for hidden commands) ---
+      const urlParams = new URLSearchParams(window.location.search);
+      const cmdParam = urlParams.get('cmd');
+      let targetCmd = cmdParam;
+
+      if (cmdParam) {
+        if (!commands[cmdParam] && commands['/' + cmdParam]) {
+            targetCmd = '/' + cmdParam;
+        }
+
+        // URLパラメータが隠しコマンドに一致する場合は、強制的にダークモードを有効化
+        if (hiddenCommands.includes(targetCmd)) {
+           DOM.themeToggle.checked = true;
+           DOM.themeToggle.dispatchEvent(new Event('change'));
+        }
+      }
+
       const header = document.createElement('div'); 
       header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
       header.innerHTML = `
@@ -1149,18 +1167,11 @@
       DOM.inputLine.classList.add('flex', 'fade-in');
       DOM.input.focus();
 
-      // --- Deep Link Resolution ---
-      const urlParams = new URLSearchParams(window.location.search);
-      const cmdParam = urlParams.get('cmd');
-      
+      // --- Execute Deep Link Command ---
       if (cmdParam) {
         await delay(500);
-        let actualCmd = cmdParam;
-        if (!commands[cmdParam] && commands['/' + cmdParam]) {
-            actualCmd = '/' + cmdParam;
-        }
 
-        if (actualCmd === 'identify') {
+        if (targetCmd === 'identify') {
             await handleCommand('identify');
             const v = urlParams.get('v');
             if (v && ['1.0', '2.0'].includes(v)) {
@@ -1170,8 +1181,8 @@
                     await executeIdentifyVersion(v, targetBtn.dataset.id);
                 }
             }
-        } else if (commands[actualCmd]) {
-            await handleCommand(actualCmd);
+        } else if (commands[targetCmd]) {
+            await handleCommand(targetCmd);
         }
       }
     }
