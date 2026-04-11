@@ -171,6 +171,8 @@
       margin: 0; 
       background-color: var(--bg-color);
       color: var(--text-color);
+      /* 【修正】横スクロールの発生を防止 */
+      overflow-x: hidden;
     }
     
     html, body, input, textarea, button, select, * { 
@@ -270,7 +272,6 @@
     body.choreomania-active #app span {
       display: inline-block;
     }
-    /* choreo-text だったものを全て内包するセレクタに最適化 */
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) {
       color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important;
       text-shadow: 0 0 8px currentColor;
@@ -471,7 +472,8 @@
       div.className = 'fade-in'; 
       div.innerHTML = html;
       DOM.output.appendChild(div);
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      // 【修正】入力欄（DOM.inputLine）に合わせてスクロールするように変更
+      DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 
     // === UI GENERATORS ===
@@ -854,7 +856,8 @@
         if (matches.length === 1) DOM.input.value = matches[0];
         else if (matches.length > 1) {
           const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 text-normal'; echo.textContent = matches.join('  '); DOM.output.appendChild(echo);
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          // 【修正】入力欄に合わせてスクロールするように変更
+          DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
       }
     });
