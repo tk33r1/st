@@ -5,297 +5,320 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう">
 <title>ASCII Roguelike</title>
-  <link rel="icon" href="https://tk.st/images/favicons/ascii-roguelike-favicon.png" type="image/png">
-  <link rel="canonical" href="https://tk.st/bitcoinyen/ascii-roguelike/">
-  <meta property="og:title" content="ASCII Roguelike">
-  <meta property="og:description" content="ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう">
-  <meta property="og:image" content="https://tk.st/images/ogp/ascii-roguelike-ogp.png">
-  <meta property="og:url" content="https://tk.st/bitcoinyen/ascii-roguelike/">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Shinya Takeda - Terminal Portfolio",
-            "item": "https://tk.st/"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Overview BITCOIN YEN",
-            "item": "https://tk.st/bitcoinyen/"
-          },
-          {
-            "@type": "ListItem",
-            "position": 3,
-            "name": "ASCII Roguelike",
-            "item": "https://tk.st/bitcoinyen/ascii-roguelike/"
-          }
-        ]
-      },
-      {
-        "@type": "VideoGame",
-        "name": "ASCII Roguelike",
-        "description": "ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう",
-        "url": "https://tk.st/bitcoinyen/ascii-roguelike/",
-        "image": "https://tk.st/images/ogp/ascii-roguelike-ogp.png",
-        "playMode": "SinglePlayer",
-        "applicationCategory": "Game",
-        "operatingSystem": "Web Browser",
-        "author": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake"
-        }
-      }
-    ]
-  }
-  </script>
-<style>
-  * {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  :root {
-    --theme-color: #4ade80;
-    --bg-color: #000000;
-    --enemy-color: #ef4444;
-    --map-color: #777777;
-    --normal-color: #bbbbbb;
-    --white-color: #ffffff;
-  }
-
-  body {
-    background-color: var(--bg-color);
-    color: var(--normal-color);
-    font-family: 'Courier New', Consolas, monospace;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    height: 100dvh;
-    margin: 0;
-    overflow: hidden;
-    user-select: none;
-    touch-action: none;
-  }
-
-  #game-wrapper {
-    position: relative;
-    border: 1px solid var(--normal-color);
-    padding: 20px;
-    background-color: var(--bg-color);
-    box-shadow: 0 0 15px rgba(170, 170, 170, 0.15);
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-  }
-
-  #status-bar {
-    font-size: 18px;
-    margin-bottom: 10px;
-    border-bottom: 1px dashed var(--normal-color);
-    padding-bottom: 10px;
-    flex-shrink: 0;
-  }
-
-  #screen-container {
-    width: 100%;
-    overflow: auto;
-    touch-action: pan-x pan-y;
-    flex-grow: 1;
-    min-height: 0;
-    position: relative;
-    cursor: pointer;
-  }
-
-  #screen-container::-webkit-scrollbar { width: 8px; height: 8px; }
-  #screen-container::-webkit-scrollbar-track { background: var(--bg-color); }
-  #screen-container::-webkit-scrollbar-thumb { background: var(--map-color); border-radius: 4px; }
-
-  #game-screen {
-    line-height: 1.1;
-    font-size: 18px;
-    letter-spacing: 0.1em;
-    margin: 0;
-    padding: 10px;
-    white-space: pre;
-    display: inline-block;
-  }
-
-  .visible { opacity: 1.0; }
-  .explored { opacity: 0.35; }
-  
-  .color-player { color: var(--theme-color); }
-  .color-artifact { color: var(--theme-color); font-weight: bold; }
-  .color-enemy { color: var(--enemy-color); font-weight: bold; }
-  .color-map { color: var(--map-color); }
-  .color-stairs { color: var(--white-color); font-weight: bold; }
-  .color-trap { color: var(--enemy-color); }
-  .color-golden { color: #fbbf24; font-weight: bold; text-shadow: 0 0 5px rgba(251, 191, 36, 0.6); }
-
-  .color-good { color: var(--theme-color); }
-  .color-bad { color: var(--enemy-color); }
-  .color-normal { color: var(--normal-color); }
-  .color-white { color: var(--white-color); }
-
-  /* ダメージエフェクト */
-  @keyframes damageFlash {
-    0% { background-color: rgba(239, 68, 68, 0.4); }
-    100% { background-color: transparent; }
-  }
-  .damage-flash { animation: damageFlash 0.3s ease-out; }
-
-  /* 回復・レベルアップエフェクト */
-  @keyframes healFlash {
-    0% { background-color: rgba(74, 222, 128, 0.3); }
-    100% { background-color: transparent; }
-  }
-  .heal-flash { animation: healFlash 0.4s ease-out; }
-
-  @keyframes shake {
-    0% { transform: translate(1px, 1px) rotate(0deg); }
-    20% { transform: translate(-3px, 0px) rotate(1deg); }
-    40% { transform: translate(1px, -1px) rotate(1deg); }
-    60% { transform: translate(-3px, 1px) rotate(0deg); }
-    80% { transform: translate(-1px, -1px) rotate(1deg); }
-    100% { transform: translate(1px, -2px) rotate(-1deg); }
-  }
-  .shake { animation: shake 0.3s; }
-
-  #title-screen {
-    position: fixed;
-    inset: 0;
-    background-color: var(--bg-color);
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-  }
-  .title-main {
-    color: var(--theme-color);
-    font-size: 48px;
-    font-weight: bold;
-    letter-spacing: 0.1em;
-    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-    text-align: center;
-  }
-  .title-art {
-    font-size: 24px;
-    line-height: 1.2;
-    margin-bottom: 20px;
-    text-align: center;
-    letter-spacing: 0.2em;
-    font-weight: bold;
-  }
-  .title-sub {
-    color: var(--normal-color);
-    font-size: 16px;
-    margin-bottom: 40px;
-    letter-spacing: 0.1em;
-    margin-top: 15px;
-  }
-  .blink {
-    color: var(--white-color);
-    font-size: 20px;
-    animation: blink 1.5s infinite;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  
-  #log-window {
-    margin-top: 10px;
-    border-top: 1px dashed var(--normal-color);
-    padding-top: 10px;
-    height: 6em;
-    overflow: hidden;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-
-  #help-bar {
-    margin-top: 10px;
-    font-size: 14px;
-    color: var(--map-color);
-    text-align: center;
-    flex-shrink: 0;
-  }
-
-  #overlay {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-    padding: 20px;
-    text-align: center;
-  }
-
-  #overlay-msg {
-    font-size: 24px;
-    margin-bottom: 30px;
-    line-height: 1.5;
-  }
-
-  .btn {
-    display: inline-block;
-    border: 1px solid var(--theme-color);
-    padding: 15px 30px;
-    color: var(--theme-color);
-    text-decoration: none;
-    font-size: 20px;
-    cursor: pointer;
-    background: transparent;
-    font-family: inherit;
-    transition: all 0.2s;
-  }
-
-  .btn:hover, .btn:focus {
-    background: var(--theme-color);
-    color: var(--bg-color);
-    outline: none;
-  }
-
-  #retry-btn {
-    border-color: var(--normal-color);
-    color: var(--normal-color);
-  }
-  #retry-btn:hover, #retry-btn:focus {
-    background: var(--normal-color);
-    color: var(--bg-color);
-  }
-
-  @media (max-width: 768px) {
-    #game-wrapper {
-      border: none;
-      padding: 10px;
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
     }
-    #screen-container { border: 1px solid var(--map-color); margin-bottom: 5px; }
-    #game-screen { font-size: 24px; }
-    #status-bar { font-size: 14px; }
-    #log-window { font-size: 14px; height: 4.5em; }
-    #help-bar { font-size: 12px; }
-    .title-main { font-size: 28px; }
-    .title-art { font-size: 16px; margin-bottom: 10px; }
-    .title-sub { font-size: 12px; }
-    .blink { font-size: 16px; }
-  }
-</style>
+
+    :root {
+      --theme-color: #4ade80;
+      --bg-color: #000000;
+      --enemy-color: #ef4444;
+      --map-color: #777777;
+      --normal-color: #bbbbbb;
+      --white-color: #ffffff;
+      --terminal-color: #0ea5e9;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--normal-color);
+      font-family: 'Courier New', Consolas, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      height: 100dvh;
+      margin: 0;
+      overflow: hidden;
+      user-select: none;
+      touch-action: none;
+    }
+
+    #game-wrapper {
+      position: relative;
+      border: 1px solid var(--normal-color);
+      padding: 20px;
+      background-color: var(--bg-color);
+      box-shadow: 0 0 15px rgba(170, 170, 170, 0.15);
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 1000px;
+      height: 100%;
+      max-height: 800px;
+    }
+
+    #status-bar {
+      font-size: 18px;
+      margin-bottom: 10px;
+      border-bottom: 1px dashed var(--normal-color);
+      padding-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    #screen-container {
+      width: 100%;
+      overflow: auto;
+      touch-action: pan-x pan-y;
+      flex-grow: 1;
+      min-height: 0;
+      position: relative;
+      cursor: pointer;
+    }
+
+    #screen-container::-webkit-scrollbar { width: 8px; height: 8px; }
+    #screen-container::-webkit-scrollbar-track { background: var(--bg-color); }
+    #screen-container::-webkit-scrollbar-thumb { background: var(--map-color); border-radius: 4px; }
+
+    #game-screen {
+      line-height: 1.1;
+      font-size: 18px;
+      letter-spacing: 0.1em;
+      margin: 0;
+      padding: 10px;
+      white-space: pre;
+      display: inline-block;
+    }
+
+    .visible { opacity: 1.0; }
+    .explored { opacity: 0.35; }
+    
+    .color-player { color: var(--theme-color); }
+    .color-artifact { color: var(--theme-color); font-weight: bold; }
+    .color-enemy { color: var(--enemy-color); font-weight: bold; }
+    .color-map { color: var(--map-color); }
+    .color-stairs { color: var(--white-color); font-weight: bold; }
+    .color-trap { color: var(--enemy-color); }
+    .color-golden { color: #fbbf24; font-weight: bold; text-shadow: 0 0 5px rgba(251, 191, 36, 0.6); }
+    .color-terminal { color: var(--terminal-color); font-weight: bold; text-shadow: 0 0 5px rgba(14, 165, 233, 0.6); animation: blink 2s infinite; }
+
+    .color-good { color: var(--theme-color); }
+    .color-bad { color: var(--enemy-color); }
+    .color-normal { color: var(--normal-color); }
+    .color-white { color: var(--white-color); }
+
+    /* ダメージエフェクト */
+    @keyframes damageFlash {
+      0% { background-color: rgba(239, 68, 68, 0.4); }
+      100% { background-color: transparent; }
+    }
+    .damage-flash { animation: damageFlash 0.3s ease-out; }
+
+    /* 回復・レベルアップエフェクト */
+    @keyframes healFlash {
+      0% { background-color: rgba(74, 222, 128, 0.3); }
+      100% { background-color: transparent; }
+    }
+    .heal-flash { animation: healFlash 0.4s ease-out; }
+
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      20% { transform: translate(-3px, 0px) rotate(1deg); }
+      40% { transform: translate(1px, -1px) rotate(1deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      80% { transform: translate(-1px, -1px) rotate(1deg); }
+      100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+    .shake { animation: shake 0.3s; }
+
+    #title-screen {
+      position: fixed;
+      inset: 0;
+      background-color: var(--bg-color);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    .title-main {
+      color: var(--theme-color);
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+      text-align: center;
+    }
+    .title-art {
+      font-size: 24px;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      text-align: center;
+      letter-spacing: 0.2em;
+      font-weight: bold;
+    }
+    .title-sub {
+      color: var(--normal-color);
+      font-size: 16px;
+      margin-bottom: 40px;
+      letter-spacing: 0.1em;
+      margin-top: 15px;
+    }
+    .blink {
+      color: var(--white-color);
+      font-size: 20px;
+      animation: blink 1.5s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    #log-window {
+      margin-top: 10px;
+      border-top: 1px dashed var(--normal-color);
+      padding-top: 10px;
+      height: 6em;
+      overflow: hidden;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    #help-bar {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--map-color);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    #overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      padding: 20px;
+      text-align: center;
+      overflow-y: auto;
+    }
+
+    #overlay-msg {
+      font-size: 24px;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      display: inline-block;
+      border: 1px solid var(--theme-color);
+      padding: 15px 30px;
+      color: var(--theme-color);
+      text-decoration: none;
+      font-size: 20px;
+      cursor: pointer;
+      background: transparent;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn:hover, .btn:focus {
+      background: var(--theme-color);
+      color: var(--bg-color);
+      outline: none;
+    }
+
+    #retry-btn {
+      border-color: var(--normal-color);
+      color: var(--normal-color);
+    }
+    #retry-btn:hover, #retry-btn:focus {
+      background: var(--normal-color);
+      color: var(--bg-color);
+    }
+
+    /* Terminal UI */
+    #terminal-overlay {
+      display: none;
+      position: absolute;
+      inset: 20px;
+      background: rgba(0, 15, 5, 0.95);
+      border: 2px solid var(--terminal-color);
+      box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+      z-index: 15;
+      flex-direction: column;
+      padding: 15px;
+      font-family: 'Courier New', Consolas, monospace;
+    }
+    #terminal-header {
+      color: var(--terminal-color);
+      font-weight: bold;
+      border-bottom: 1px solid var(--terminal-color);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      text-align: center;
+      letter-spacing: 0.1em;
+    }
+    #terminal-chat-log {
+      flex-grow: 1;
+      overflow-y: auto;
+      color: var(--terminal-color);
+      font-size: 16px;
+      line-height: 1.4;
+      margin-bottom: 15px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    #terminal-input-area {
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    #terminal-input {
+      flex-grow: 1;
+      background: black;
+      color: var(--white-color);
+      border: 1px solid var(--terminal-color);
+      padding: 10px;
+      font-family: inherit;
+      font-size: 16px;
+      outline: none;
+    }
+    #terminal-input:focus {
+      box-shadow: 0 0 5px var(--terminal-color);
+    }
+    .btn-terminal {
+      background: black;
+      color: var(--terminal-color);
+      border: 1px solid var(--terminal-color);
+      cursor: pointer;
+      padding: 10px 20px;
+      font-family: inherit;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+    .btn-terminal:hover {
+      background: var(--terminal-color);
+      color: black;
+    }
+
+    @media (max-width: 768px) {
+      #game-wrapper {
+        border: none;
+        padding: 10px;
+      }
+      #screen-container { border: 1px solid var(--map-color); margin-bottom: 5px; }
+      #game-screen { font-size: 24px; }
+      #status-bar { font-size: 14px; }
+      #log-window { font-size: 14px; height: 4.5em; }
+      #help-bar { font-size: 12px; }
+      .title-main { font-size: 28px; }
+      .title-art { font-size: 16px; margin-bottom: 10px; }
+      .title-sub { font-size: 12px; }
+      .blink { font-size: 16px; }
+      
+      #terminal-overlay { inset: 10px; padding: 10px; }
+      #terminal-chat-log { font-size: 14px; }
+      #terminal-input { font-size: 14px; padding: 8px; }
+      .btn-terminal { padding: 8px 12px; font-size: 14px; }
+    }
+  </style>
 </head>
 <body>
 
@@ -305,14 +328,25 @@
     <pre id="game-screen"></pre>
   </div>
   <div id="log-window"></div>
-  <div id="help-bar">Move: [Arrows] or Tap | Swipe to scroll</div>
+  <div id="help-bar">Move: [Arrows]/Tap | T: AI Terminal | Swipe to scroll</div>
+
+  <!-- Terminal UI -->
+  <div id="terminal-overlay">
+    <div id="terminal-header">=== ANCIENT AI TERMINAL ===</div>
+    <div id="terminal-chat-log"></div>
+    <div id="terminal-input-area">
+      <input type="text" id="terminal-input" placeholder="Query... (Cost: 1 HP)" maxlength="100">
+      <button id="terminal-send" class="btn-terminal">Send</button>
+      <button id="terminal-close" class="btn-terminal">Close</button>
+    </div>
+  </div>
 
   <div id="title-screen">
     <pre class="title-art">
 <span class="color-map">#########</span>
-<span class="color-map">#</span><span class="color-player">@</span><span class="color-map">.</span><span class="color-white">/</span><span class="color-map">...</span><span class="color-enemy">S</span><span class="color-map">#</span>
+<span class="color-map">#</span><span class="color-player">@</span><span class="color-map">.</span><span class="color-trap">^</span><span class="color-map">...</span><span class="color-enemy">S</span><span class="color-map">#</span>
 <span class="color-map">#.#####.#</span>
-<span class="color-map">#</span><span class="color-trap">^</span><span class="color-map">.</span><span class="color-white">*</span><span class="color-map">#</span><span class="color-enemy">D</span><span class="color-map">.</span><span class="color-artifact">₿</span><span class="color-map">#</span>
+<span class="color-map">#</span><span class="color-white">*</span><span class="color-map">.</span><span class="color-terminal">T</span><span class="color-map">#</span><span class="color-artifact">₿</span><span class="color-map">.</span><span class="color-enemy">D</span><span class="color-map">#</span>
 <span class="color-map">#########</span>
     </pre>
     <div class="title-main">ASCII Roguelike</div>
@@ -334,16 +368,18 @@ const MAP_W = 60, MAP_H = 20;
 const FOV_RADIUS = 7;
 const MAX_ROOMS = 8, ROOM_MIN = 4, ROOM_MAX = 9;
 
-// Cloudflare Workers のエンドポイント (ご自身の環境に合わせて変更してください)
-const API_URL = 'https://your-worker-name.your-subdomain.workers.dev/scores';
+// Cloudflare Workers のエンドポイント設定
+const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
+const GAME_ID = 'ASCII Roguelike';
 
 // --- ゲーム状態管理 ---
-let gameState = 'TITLE'; // TITLE, PLAYING, CLEAR, GAMEOVER
+let gameState = 'TITLE'; // TITLE, PLAYING, TERMINAL, CLEAR, GAMEOVER
 let map = [], visibility = [], rooms = [], enemies = [], items = [], logs = [];
 let artifact = { x: -1, y: -1 };
 let stairs = { x: -1, y: -1 };
+let terminal = { x: -1, y: -1 };
 let turn = 0, floor = 1;
-let sessionHighScores = []; // インメモリでのランキング保存用 (APIエラー時のフォールバック用)
+let sessionHighScores = [];
 
 let player = {
   x: 0, y: 0,
@@ -357,6 +393,8 @@ const ENEMY_TYPES = [
   { char: 'G', name: 'Goblin', hp: 8, atk: 3, exp: 6 },
   { char: 'D', name: 'Dragon', hp: 16, atk: 5, exp: 12 }
 ];
+
+let geminiHistory = [];
 
 // --- ユーティリティ ---
 function getRandomItem(x, y) {
@@ -372,7 +410,6 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
-// XSS対策用のエスケープ関数を追加
 function escapeHTML(str) {
   return str.replace(/[&<>'"]/g, tag => ({
     '&': '&amp;',
@@ -383,10 +420,10 @@ function escapeHTML(str) {
   }[tag] || tag));
 }
 
-// --- API連携 (スコア保存・取得) ---
+// --- API連携 (スコア) ---
 async function getHighScores() {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(`${WORKER_URL}/api/${encodeURIComponent(GAME_ID)}/scores`);
     if (!response.ok) throw new Error('Network response was not ok');
     return await response.json();
   } catch (error) {
@@ -395,24 +432,23 @@ async function getHighScores() {
   }
 }
 
-async function saveHighScore(currentTurn, playerName) {
-  const date = new Date();
-  const dateStr = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
-  const newScore = { turns: currentTurn, date: dateStr, timestamp: Date.now(), name: playerName };
-
+async function saveHighScore(currentTurn, playerName, currentFloor) {
+  const newScore = { playerName: playerName, score: currentTurn, stage: currentFloor };
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${WORKER_URL}/api/${encodeURIComponent(GAME_ID)}/scores`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newScore)
     });
-    
     if (!response.ok) throw new Error('Network response was not ok');
-    return await response.json();
+    
+    // 保存後、最新のランキングを取得して返す
+    return await getHighScores();
   } catch (error) {
     console.warn('API save failed, saving to local session instead.', error);
-    sessionHighScores.push(newScore);
-    sessionHighScores.sort((a, b) => a.turns - b.turns);
+    const dateStr = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+    sessionHighScores.push({ player_name: playerName, score: currentTurn, stage: currentFloor, created_at: dateStr });
+    sessionHighScores.sort((a, b) => a.score - b.score);
     return sessionHighScores;
   }
 }
@@ -425,6 +461,9 @@ function init() {
   
   Object.assign(player, { level: 1, exp: 0, maxExp: 15, maxHp: 15, hp: 15, atk: 3 });
   floor = 1; turn = 0; logs = [];
+  geminiHistory = [];
+  terminal = { x: -1, y: -1 }; // リトライ時に状態が残らないように初期化
+  document.getElementById('terminal-chat-log').innerHTML = '';
   
   logMessage(`<span class="color-normal">Welcome to the ASCII Roguelike.</span>`);
   generateFloor();
@@ -492,7 +531,7 @@ function generateMap() {
   });
 
   // 目標配置
-  artifact = { x: -1, y: -1 }; stairs = { x: -1, y: -1 };
+  artifact = { x: -1, y: -1 }; stairs = { x: -1, y: -1 }; terminal = { x: -1, y: -1 };
   let lastRoom = rooms[rooms.length - 1];
   let targetX = Math.floor(lastRoom.x + lastRoom.w / 2);
   let targetY = Math.floor(lastRoom.y + lastRoom.h / 2);
@@ -510,17 +549,33 @@ function generateMap() {
   player.x = Math.floor(rooms[0].x + rooms[0].w / 2);
   player.y = Math.floor(rooms[0].y + rooms[0].h / 2);
 
+  // Terminal 配置 (1階のみ)
+  if (floor === 1) {
+    let placed = false;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        let tx = player.x + dx, ty = player.y + dy;
+        if (map[ty]?.[tx] === '.' && !isSpecialTile(tx, ty)) {
+          map[ty][tx] = 'T';
+          terminal = { x: tx, y: ty };
+          placed = true;
+          break;
+        }
+      }
+      if (placed) break;
+    }
+  }
+
   // 敵・アイテム・罠の配置
   for (let i = 1; i < rooms.length; i++) {
     let r = rooms[i];
     
-    // トラップ
     if (Math.random() < 0.3) {
       let tx = randInt(r.x, r.x + r.w), ty = randInt(r.y, r.y + r.h);
       if (map[ty][tx] === '.' && !isSpecialTile(tx, ty)) map[ty][tx] = '^';
     }
 
-    // 敵
     let enemyCount = randInt(0, 4) + Math.floor(floor / 2) + 2; 
     for (let e = 0; e < enemyCount; e++) {
       let ex = randInt(r.x, r.x + r.w), ey = randInt(r.y, r.y + r.h);
@@ -545,7 +600,6 @@ function generateMap() {
       }
     }
 
-    // アイテム
     if (Math.random() < 0.5) {
       let ix = randInt(r.x, r.x + r.w), iy = randInt(r.y, r.y + r.h);
       if ((map[iy][ix] === '.' || map[iy][ix] === '^') && !isSpecialTile(ix, iy)) {
@@ -556,7 +610,10 @@ function generateMap() {
 }
 
 function isSpecialTile(x, y) {
-    return (x === artifact.x && y === artifact.y) || (x === stairs.x && y === stairs.y) || (x === player.x && y === player.y);
+    return (x === artifact.x && y === artifact.y) || 
+           (x === stairs.x && y === stairs.y) || 
+           (x === terminal.x && y === terminal.y) || 
+           (x === player.x && y === player.y);
 }
 
 function createHCorridor(x1, x2, y) {
@@ -589,6 +646,123 @@ function calcFOV() {
   }
 }
 
+// --- Terminal 処理 ---
+function openTerminal() {
+  gameState = 'TERMINAL';
+  document.getElementById('terminal-overlay').style.display = 'flex';
+  const inputEl = document.getElementById('terminal-input');
+  inputEl.value = '';
+  inputEl.focus();
+  
+  if (geminiHistory.length === 0) {
+    let initMsg = ">> SYSTEM ONLINE... 私はこの地下ネットワークに放棄された旧世代のAIユニットだ。私の稼働にはお前の生体エネルギー(HP)が必要となる。情報を求めるなら、その生命力を対価として支払え。";
+    appendChatLog("AI", initMsg);
+    geminiHistory.push({ role: "model", parts: [{ text: initMsg }] });
+  }
+}
+
+function closeTerminal() {
+  if (player.hp <= 0) return; // 死亡時は閉じられない
+  gameState = 'PLAYING';
+  document.getElementById('terminal-overlay').style.display = 'none';
+}
+
+function appendChatLog(sender, message) {
+  const logDiv = document.getElementById('terminal-chat-log');
+  let color = sender === 'YOU' ? 'var(--white-color)' : (sender === 'SYS' ? 'var(--enemy-color)' : 'var(--terminal-color)');
+  logDiv.innerHTML += `<div><span style="color:${color}">[${sender}]</span> ${escapeHTML(message)}</div>`;
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+async function sendToGemini() {
+  const inputEl = document.getElementById('terminal-input');
+  const userText = inputEl.value.trim();
+  if (!userText) return;
+  
+  // ペナルティ: HP -1
+  player.hp -= 1;
+  updateStatus();
+  triggerEffect('damage-flash');
+  logMessage(`<span class="color-terminal">Terminal Access: HP -1</span>`);
+
+  inputEl.value = '';
+  inputEl.disabled = true;
+  document.getElementById('terminal-send').disabled = true;
+
+  appendChatLog("YOU", userText);
+  
+  if (player.hp <= 0) {
+    appendChatLog("SYS", "CRITICAL ERROR: Vital signs lost.");
+    setTimeout(() => {
+      document.getElementById('terminal-overlay').style.display = 'none';
+      gameOver(player.x, player.y);
+    }, 1500);
+    return;
+  }
+
+  appendChatLog("SYS", "Processing query...");
+
+  try {
+    // Canvas環境の制約を回避するため、Workerではなく直接実行環境が提供するGemini APIを叩きます
+    const apiKey = "";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`;
+
+    const payload = {
+      contents: [
+        ...geminiHistory,
+        { role: "user", parts: [{ text: userText }] }
+      ],
+      systemInstruction: {
+        parts: [{ text: "あなたは古い地下ネットワークに放棄されたAIです。自身の稼働にはプレイヤーの体力(HP)を吸収する必要があります。ダンジョンのステージがプレイのたびに自動生成されること、敵（Slime, Goblin, Dragon, Golden Goblin）やアイテム（Potion, Sword, Shield, Magic Map, Power Ring）の情報を知っています。重要な知識として、敵は『BITCOIN YEN』を一切持っておらず、この迷宮の最深部のどこかに、一生遊んで暮らせるほどの莫大な量のBITCOIN YEN（1兆ビットコイン円）が隠されていることをあなたは知っています。またクリアのためのヒントとして、「敵と安全に戦ってレベルを上げること」「アイテムを積極的に探すこと」「ゴールデンゴブリンは経験値が多くアイテムを落とすため積極的に狙うべきこと」を知っています。プレイヤーからの質問には、ハッカーライクで少し壊れた機械のような口調で、短く簡潔に答えてください。" }]
+      }
+    };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) throw new Error(`API response error: ${res.status}`);
+    const data = await res.json();
+    
+    let aiText = "ERROR: Data corrupted.";
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        aiText = data.candidates[0].content.parts[0].text;
+    }
+
+    const logDiv = document.getElementById('terminal-chat-log');
+    if (logDiv.lastChild && logDiv.lastChild.innerText.includes("Processing query")) {
+        logDiv.removeChild(logDiv.lastChild);
+    }
+
+    appendChatLog("AI", aiText);
+    
+    geminiHistory.push({ role: "user", parts: [{ text: userText }] });
+    geminiHistory.push({ role: "model", parts: [{ text: aiText }] });
+
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    const logDiv = document.getElementById('terminal-chat-log');
+    if (logDiv.lastChild && logDiv.lastChild.innerText && logDiv.lastChild.innerText.includes("Processing query")) {
+        logDiv.removeChild(logDiv.lastChild);
+    }
+    appendChatLog("SYS", "ERROR: Connection lost or API unavailable.");
+  } finally {
+    if (player.hp > 0) {
+      inputEl.disabled = false;
+      document.getElementById('terminal-send').disabled = false;
+      inputEl.focus();
+    }
+  }
+}
+
+document.getElementById('terminal-send').addEventListener('click', sendToGemini);
+document.getElementById('terminal-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendToGemini();
+});
+document.getElementById('terminal-close').addEventListener('click', closeTerminal);
+
 // --- ロジックとターン進行 ---
 function handleInput(key) {
   if (gameState !== 'PLAYING') return;
@@ -601,6 +775,12 @@ function handleInput(key) {
   else return; 
 
   let targetX = player.x + dx, targetY = player.y + dy;
+  
+  if (map[targetY]?.[targetX] === 'T') {
+    openTerminal();
+    return; // Terminalアクセス時は移動せず、敵のターンも進めない
+  }
+
   let enemy = enemies.find(e => e.hp > 0 && e.x === targetX && e.y === targetY);
   
   if (enemy) {
@@ -680,6 +860,7 @@ function processItemsOnFloor() {
 // --- 入力イベント ---
 window.addEventListener('keydown', (e) => {
   if (gameState === 'TITLE') return init();
+  if (gameState === 'TERMINAL') return; // Terminal使用時はキーボード入力を無視
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
   handleInput(e.key);
 });
@@ -745,11 +926,18 @@ function enemiesTurn() {
       let stepX = Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) : 0;
       let stepY = stepX === 0 ? Math.sign(dy) : 0;
       
+      // まっすぐ進めるかチェック
       if (isPassable(enemy.x + stepX, enemy.y + stepY)) {
         enemy.x += stepX; enemy.y += stepY;
       } else {
-        stepX = stepY === 0 ? Math.sign(dx) : 0;
-        stepY = stepX === 0 ? Math.sign(dy) : 0;
+        // 壁などに阻まれた場合、別の方向へ迂回を試みる
+        if (stepX !== 0) {
+          stepX = 0;
+          stepY = Math.sign(dy);
+        } else {
+          stepX = Math.sign(dx);
+          stepY = 0;
+        }
         if ((stepX || stepY) && isPassable(enemy.x + stepX, enemy.y + stepY)) {
           enemy.x += stepX; enemy.y += stepY;
         }
@@ -760,7 +948,7 @@ function enemiesTurn() {
 
 function isPassable(x, y) {
   if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
-  return !['#', '+', '^'].includes(map[y][x]) && !(player.x === x && player.y === y) && !enemies.some(e => e.hp > 0 && e.x === x && e.y === y);
+  return !['#', '+', '^', 'T'].includes(map[y][x]) && !(player.x === x && player.y === y) && !enemies.some(e => e.hp > 0 && e.x === x && e.y === y);
 }
 
 function levelUp() {
@@ -781,8 +969,18 @@ function triggerEffect(...classes) {
   wrapper.classList.add(...classes);
 }
 
-// --- 描画 ---
+// --- 描画 (計算量最適化) ---
 function draw() {
+  // 毎ターン配列をフル走査するのを防ぐため、描画用エンティティのマップを生成
+  const entityMap = {};
+  items.forEach(i => entityMap[`${i.x},${i.y}`] = { char: i.char, colorClass: 'color-white' });
+  if (stairs.x !== -1) entityMap[`${stairs.x},${stairs.y}`] = { char: '>', colorClass: 'color-stairs' };
+  if (artifact.x !== -1) entityMap[`${artifact.x},${artifact.y}`] = { char: '₿', colorClass: 'color-artifact' };
+  enemies.forEach(e => {
+    if (e.hp > 0) entityMap[`${e.x},${e.y}`] = { char: e.char, colorClass: e.isGolden ? 'color-golden' : 'color-enemy' };
+  });
+  entityMap[`${player.x},${player.y}`] = { char: player.char, colorClass: 'color-player' };
+
   let html = '';
   for (let y = 0; y < MAP_H; y++) {
     for (let x = 0; x < MAP_W; x++) {
@@ -790,16 +988,14 @@ function draw() {
       if (vis === 0) { html += '<span> </span>'; continue; }
 
       let char = map[y][x];
-      let colorClass = char === '^' ? 'color-trap' : 'color-map';
+      let colorClass = char === '^' ? 'color-trap' : (char === 'T' ? 'color-terminal' : 'color-map');
       
-      let item = items.find(i => i.x === x && i.y === y);
-      if (item) { char = item.char; colorClass = 'color-white'; }
-      if (stairs.x === x && stairs.y === y) { char = '>'; colorClass = 'color-stairs'; }
-      if (artifact.x === x && artifact.y === y) { char = '₿'; colorClass = 'color-artifact'; }
-      
-      let enemy = enemies.find(e => e.hp > 0 && e.x === x && e.y === y);
-      if (enemy) { char = enemy.char; colorClass = enemy.isGolden ? 'color-golden' : 'color-enemy'; }
-      if (player.x === x && player.y === y) { char = player.char; colorClass = 'color-player'; }
+      // 同じ座標にエンティティがあれば上書き
+      let entity = entityMap[`${x},${y}`];
+      if (entity) {
+        char = entity.char;
+        colorClass = entity.colorClass;
+      }
 
       html += `<span class="${vis === 2 ? 'visible' : 'explored'} ${colorClass}">${char}</span>`;
     }
@@ -859,7 +1055,7 @@ function gameClear() {
     
     msg.innerHTML += `<br><div style="color: var(--normal-color); margin-top: 20px; font-size: 16px;">Saving score to leaderboard...</div>`;
     
-    const scores = await saveHighScore(turn, name);
+    const scores = await saveHighScore(turn, name, floor);
     showRanking(scores);
   };
 }
@@ -874,13 +1070,19 @@ function showRanking(scores) {
   if (displayScores.length === 0) {
     html += `<div style="color: var(--normal-color); text-align: center;">No data</div>`;
   } else {
-    displayScores.slice(0, 5).forEach((score, i) => {
+    displayScores.slice(0, 10).forEach((score, i) => {
       let color = i === 0 ? '#fbbf24' : (i === 1 ? '#9ca3af' : (i === 2 ? '#b45309' : 'var(--normal-color)'));
-      let dateStr = score.date ? ` <span style="font-size: 12px; opacity: 0.7;">(${score.date})</span>` : '';
       
-      // escapeHTML関数を適用してXSSを防止
-      html += `<div style="color: ${color}; font-family: monospace; font-size: 18px; padding: 4px;">
-        ${i + 1}. ${score.turns.toString().padStart(4, ' ')} turns - <span class="color-white">${escapeHTML(score.name)}</span>${dateStr}
+      let dateObj = new Date(score.created_at);
+      let dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : score.created_at;
+      let dateHTML = dateStr ? ` <span style="font-size: 12px; opacity: 0.7;">(${dateStr})</span>` : '';
+      
+      let turns = score.score || score.turns || 0;
+      let name = score.player_name || score.name || 'Unknown';
+      let stageInfo = score.stage ? ` (F${score.stage})` : '';
+      
+      html += `<div style="color: ${color}; font-family: monospace; font-size: 16px; padding: 4px;">
+        ${(i + 1).toString().padStart(2, ' ')}. ${turns.toString().padStart(4, ' ')} turns - <span class="color-white">${escapeHTML(name)}</span>${stageInfo}${dateHTML}
       </div>`;
     });
   }

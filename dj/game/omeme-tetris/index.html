@@ -409,13 +409,10 @@
     </div>
 
 
-    <script type="module">
-        // Firebase SDKのインポート
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } 
-        from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, setLogLevel } 
-        from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // Worker API設定
+        const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
+        const GAME_ID = 'omeme-tetris';
 
         // Canvas要素の取得
         const canvas = document.getElementById('tetrisCanvas');
@@ -519,7 +516,7 @@
         let periodicCheerIntervalId = null; let pieceSpawnCounter = 0; const MOTIF_SPAWN_RATE = 5; 
         const SOFT_DROP_SCORE_PER_ROW = 1; const HARD_DROP_SCORE_PER_ROW = 2; 
         let stageUpTimer = 0; const STAGE_UP_INTERVAL = 180000; 
-        let gameStarted = false; let keysReversed = false; let userId = null; let db; let auth; 
+        let gameStarted = false; let keysReversed = false;
         let playerName = localStorage.getItem('omemeTetrisPlayerName') || '匿名の修道者'; 
         playerNameInputElement.value = playerName; 
         let junnosukeSupportCooldownActive = false; // じゅんのすけ支援のクールダウンフラグ
@@ -551,42 +548,12 @@
         function drawNextPiece(){nextPieceContext.clearRect(0,0,nextPieceCanvas.width,nextPieceCanvas.height);nextPieceContext.fillStyle='rgba(30,10,50,0.7)';nextPieceContext.fillRect(0,0,nextPieceCanvas.width,nextPieceCanvas.height);if(nextPiece){const s=nextPiece.shape;const pW=s[0].length;const pH=s.length;const oX=(nextPieceCanvas.width/NEXT_PIECE_BLOCK_SIZE-pW)/2;const oY=(nextPieceCanvas.height/NEXT_PIECE_BLOCK_SIZE-pH)/2;drawPiece({...nextPiece, x:0, y:0},nextPieceContext,NEXT_PIECE_BLOCK_SIZE,oX,oY);}}
 
 
-        // Firebaseの初期化
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'omeme-tetris-default-app-id'; 
-        if (firebaseConfig) {
-            try {
-                const app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); setLogLevel('debug'); 
-                
-                const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Init Error:", error);
-                    }
-                };
-                initAuth();
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) { 
-                        userId = user.uid; 
-                        if (db) loadHighScores(); 
-                    } else { 
-                        if(loadingScoresElement) loadingScoresElement.textContent = "認証エラー。ランキング利用不可。"; 
-                    } 
-                });
-            } catch (e) { console.error("Firebase Initialization Error:", e); if(loadingScoresElement) loadingScoresElement.textContent = "ランキング機能初期化エラー。"; }
-        } else { console.warn("Firebase config not found. Score saving and ranking will be disabled."); if(loadingScoresElement) loadingScoresElement.textContent = "ランキング機能が無効です (設定未検出)。"; }
 
         // プレイヤー名入力ボックスのイベントリスナー (変更なし)
         playerNameInputElement.addEventListener('change', (event) => {
             const newName = event.target.value.trim();
-            if (newName !== "") { playerName = newName.substring(0, 10); localStorage.setItem('omemeTetrisPlayerName', playerName); 
-                playerNameInputElement.value = playerName; if (db && (userId || auth?.currentUser) ) loadHighScores(); } 
+            if (newName !== "") { playerName = newName.substring(0, 10); localStorage.setItem('omemeTetrisPlayerName', playerName);
+                playerNameInputElement.value = playerName; loadHighScores(); }
             else { playerName = localStorage.getItem('omemeTetrisPlayerName') || '匿名の修道者'; playerNameInputElement.value = playerName;
                 console.log("名前は空にできません。"); } });
         playerNameInputElement.addEventListener('keypress', (event) => { if (event.key === 'Enter') { playerNameInputElement.blur(); } });
@@ -600,9 +567,8 @@
             const originalButtonText = buttonElement ? buttonElement.innerHTML : '';
             if (buttonElement) buttonElement.innerHTML = 'AIが思考中... ✨';
             try {
-                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }]; const payload = { contents: chatHistory };
-                const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const payload = { model: "gemini-3.1-flash-lite-preview", contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const response = await fetch(`${WORKER_URL}/api/gemini`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!response.ok) { const errorData = await response.json(); console.error("Gemini API Error:", errorData);
                     throw new Error(`APIリクエスト失敗 ステータス ${response.status}: ${errorData?.error?.message || response.statusText}`); }
                 const result = await response.json();
@@ -857,8 +823,17 @@
         startPauseButton.addEventListener('click',()=>{if(!gameStarted){startGame();}else{togglePause();}});
         function togglePause(){if(gameOver||stageClearPause)return;gamePaused=!gamePaused;if(gamePaused){startPauseButton.textContent='再開';startPauseButton.classList.remove('bg-yellow-500','hover:bg-yellow-600');startPauseButton.classList.add('bg-teal-500','hover:bg-teal-600');managePeriodicCheerTimer(false);if(animationFrameId)cancelAnimationFrame(animationFrameId);}else{startPauseButton.textContent='一時停止';startPauseButton.classList.remove('bg-teal-500','hover:bg-teal-600');startPauseButton.classList.add('bg-yellow-500','hover:bg-yellow-600');lastTime=performance.now();managePeriodicCheerTimer(true);animationFrameId=requestAnimationFrame(gameLoop);}}
 
-        // saveScoreToFirestore
-        async function saveScoreToFirestore(sTS,sR,pN){if(!db){console.warn("Firestoreが初期化されていないためスコアを保存できません。");return null;}try{const sCP=`artifacts/${appId}/public/data/scores`;const dR=await addDoc(collection(db,sCP),{playerName:pN,score:sTS,stage:sR,timestamp:serverTimestamp(),gameTitle:"omeme_tetris"});return dR.id;}catch(e){console.error("スコア保存エラー:",e);return null;}}
+        // スコア保存
+        async function saveScore(sTS, sR, pN) {
+            try {
+                const res = await fetch(`${WORKER_URL}/api/${GAME_ID}/scores`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playerName: pN, score: sTS, stage: sR })
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                await loadHighScores();
+            } catch (e) { console.error("スコア保存エラー:", e); }
+        }
 
         // showGameOverScreen関数 (AIメッセージプロンプト変更 - プレイヤー名分岐)
         async function showGameOverScreen() {
@@ -871,7 +846,7 @@
             shivaSupportButton.classList.add('bg-gray-500','hover:bg-gray-500','cursor-not-allowed');
             shivaSupportButton.classList.remove('bg-cyan-500','hover:bg-cyan-600'); 
             keysReversed = false; managePeriodicCheerTimer(false); 
-            await saveScoreToFirestore(score, currentStage, playerName); 
+            await saveScore(score, currentStage, playerName);
             if (!isFetchingAI) {
                 let prompt; const lowerPlayerName = playerName.toLowerCase();
                 if (OMEME_PLAYER_NAMES.includes(lowerPlayerName)) {
@@ -885,36 +860,32 @@
         }
 
         // loadHighScores
-        function loadHighScores(){
-            if(!db){if(loadingScoresElement)loadingScoresElement.textContent="ランキング機能が無効です。";return;}
-            if(!userId){if(loadingScoresElement)loadingScoresElement.textContent="ユーザー認証待機中...";return;}
-            const sCP=`artifacts/${appId}/public/data/scores`;
-            const q=collection(db,sCP); // No orderBy or limit to avoid index/permission errors
-            onSnapshot(q,(qS)=>{
-                let scoresData = [];
-                qS.forEach((doc) => { scoresData.push(doc.data()); });
-                scoresData.sort((a, b) => (b.score || 0) - (a.score || 0)); // Sort in memory
-                scoresData = scoresData.slice(0, 5); // Limit in memory
-
-                highScoreListElement.innerHTML='';
-                if(scoresData.length === 0){
-                    const li=document.createElement('li');li.textContent='まだスコアがありません。一番乗りを目指そう！';highScoreListElement.appendChild(li);
-                }else{
-                    scoresData.forEach((d)=>{
-                        const li=document.createElement('li');
-                        const dO=d.timestamp?.toDate ? d.timestamp.toDate() : null;
-                        const dS=dO?`${dO.getFullYear()}/${(dO.getMonth()+1).toString().padStart(2,'0')}/${dO.getDate().toString().padStart(2,'0')} ${dO.getHours().toString().padStart(2,'0')}:${dO.getMinutes().toString().padStart(2,'0')}`:'日付不明';
-                        const dN=d.playerName||'匿名プレイヤー';
-                        li.textContent=`${dN} : ${d.score}点 (ステージ ${d.stage||'不明'}) - ${dS}`;
+        async function loadHighScores() {
+            try {
+                const res = await fetch(`${WORKER_URL}/api/${GAME_ID}/scores`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const scores = await res.json();
+                highScoreListElement.innerHTML = '';
+                if (!scores || scores.length === 0) {
+                    const li = document.createElement('li');
+                    li.textContent = 'まだスコアがありません。一番乗りを目指そう！';
+                    highScoreListElement.appendChild(li);
+                } else {
+                    scores.forEach((d) => {
+                        const li = document.createElement('li');
+                        const dS = d.created_at
+                            ? new Date(d.created_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })
+                            : '日付不明';
+                        li.textContent = `${d.player_name || '匿名プレイヤー'} : ${d.score}点 (ステージ ${d.stage || '不明'}) - ${dS}`;
                         highScoreListElement.appendChild(li);
                     });
                 }
-                if(loadingScoresElement)loadingScoresElement.style.display='none';
-            },(e)=>{
-                console.error("Error loading high scores from Firestore: ",e);
-                highScoreListElement.innerHTML=`<li>ランキングの読込エラー</li>`;
-                if(loadingScoresElement)loadingScoresElement.style.display='none';
-            });
+                if (loadingScoresElement) loadingScoresElement.style.display = 'none';
+            } catch (e) {
+                console.error("ランキング読込エラー:", e);
+                highScoreListElement.innerHTML = '<li>ランキングの読込エラー</li>';
+                if (loadingScoresElement) loadingScoresElement.style.display = 'none';
+            }
         }
 
         // SNS共有関数 (URL修正)
@@ -945,7 +916,7 @@
             nextPieceContext.clearRect(0,0,nextPieceCanvas.width,nextPieceCanvas.height);
             nextPieceContext.fillStyle='rgba(30,10,50,0.7)';
             nextPieceContext.fillRect(0,0,nextPieceCanvas.width,nextPieceCanvas.height);
-            aiCheerMessageElement.textContent='Googleアカウントでログインすると、犬ギャルからDMが届きます'; // テキスト修正
+            aiCheerMessageElement.textContent='ゲームを開始すると犬ギャルからDMが届くよ！🐶';
             aiAdviceMessageElement.textContent='AIからの助言はここに表示されます。';
             shivaEffectMessageElement.textContent="じゅんのすけはきっと助けてくれる...";
             startPauseButton.textContent='開始！';
@@ -956,6 +927,7 @@
             playerNameInputElement.value=playerName;
         }
         initialDraw();
+        loadHighScores();
     </script>
 </body>
 </html>

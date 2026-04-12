@@ -4,5 +4,5 @@ compatibility_date = "2025-01-01"
 
 [[d1_databases]]
 binding       = "DB"
-database_name = "masala-tetris-db"
-database_id   = "63de16f4-a02b-4a80-83c9-90876ecff37c"
+database_name = "st-games-ranking-db"
+database_id   = "5c785a29-dab6-4b0d-beb2-e5557fac0397"
