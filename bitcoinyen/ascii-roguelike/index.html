@@ -92,7 +92,9 @@
     .color-stairs { color: var(--white-color); font-weight: bold; }
     .color-trap { color: var(--enemy-color); }
     .color-golden { color: #fbbf24; font-weight: bold; text-shadow: 0 0 5px rgba(251, 191, 36, 0.6); }
-    .color-terminal { color: var(--terminal-color); font-weight: bold; text-shadow: 0 0 5px rgba(14, 165, 233, 0.6); animation: blink 2s infinite; }
+    .color-black-dragon { color: #a855f7; font-weight: bold; text-shadow: 0 0 5px rgba(168, 85, 247, 0.6); }
+    /* 点滅(animation)を削除しました */
+    .color-terminal { color: var(--terminal-color); font-weight: bold; text-shadow: 0 0 5px rgba(14, 165, 233, 0.6); }
 
     .color-good { color: var(--theme-color); }
     .color-bad { color: var(--enemy-color); }
@@ -328,7 +330,8 @@
     <pre id="game-screen"></pre>
   </div>
   <div id="log-window"></div>
-  <div id="help-bar">Move: [Arrows]/Tap | T: AI Terminal | Swipe to scroll</div>
+  <!-- 「T: AI Terminal」の表示を削除しました -->
+  <div id="help-bar">Move: [Arrows]/Tap | Swipe to scroll</div>
 
   <!-- Terminal UI -->
   <div id="terminal-overlay">
@@ -391,7 +394,8 @@ let player = {
 const ENEMY_TYPES = [
   { char: 'S', name: 'Slime', hp: 4, atk: 1, exp: 3 },
   { char: 'G', name: 'Goblin', hp: 8, atk: 3, exp: 6 },
-  { char: 'D', name: 'Dragon', hp: 16, atk: 5, exp: 12 }
+  { char: 'D', name: 'Dragon', hp: 16, atk: 5, exp: 12 },
+  { char: 'D', name: 'Black Dragon', hp: 32, atk: 10, exp: 24 }
 ];
 
 let geminiHistory = [];
@@ -423,7 +427,7 @@ function escapeHTML(str) {
 // --- API連携 (スコア) ---
 async function getHighScores() {
   try {
-    const response = await fetch(`${WORKER_URL}/api/${encodeURIComponent(GAME_ID)}/scores`);
+    const response = await fetch(`${WORKER_URL}/api/${encodeURIComponent(GAME_ID)}/scores?order=asc`);
     if (!response.ok) throw new Error('Network response was not ok');
     return await response.json();
   } catch (error) {
@@ -549,22 +553,36 @@ function generateMap() {
   player.x = Math.floor(rooms[0].x + rooms[0].w / 2);
   player.y = Math.floor(rooms[0].y + rooms[0].h / 2);
 
-  // Terminal 配置 (1階のみ)
-  if (floor === 1) {
-    let placed = false;
-    for (let dy = -2; dy <= 2; dy++) {
-      for (let dx = -2; dx <= 2; dx++) {
-        if (dx === 0 && dy === 0) continue;
+  // Terminal 配置 (毎階配置に変更。ドアに隣接しないようにする)
+  let tPlaced = false;
+  for (let r = 2; r <= 20; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        // 放射状の外周のみチェック
+        if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+        
         let tx = player.x + dx, ty = player.y + dy;
-        if (map[ty]?.[tx] === '.' && !isSpecialTile(tx, ty)) {
-          map[ty][tx] = 'T';
-          terminal = { x: tx, y: ty };
-          placed = true;
-          break;
+        if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H) {
+          if (map[ty][tx] === '.' && !isSpecialTile(tx, ty)) {
+            // ドアに隣接していないかチェック
+            let adjDoor = false;
+            for(let ady = -1; ady <= 1; ady++) {
+              for(let adx = -1; adx <= 1; adx++) {
+                if (map[ty+ady]?.[tx+adx] === '+') adjDoor = true;
+              }
+            }
+            if (!adjDoor) {
+              map[ty][tx] = 'T';
+              terminal = { x: tx, y: ty };
+              tPlaced = true;
+              break;
+            }
+          }
         }
       }
-      if (placed) break;
+      if (tPlaced) break;
     }
+    if (tPlaced) break;
   }
 
   // 敵・アイテム・罠の配置
@@ -583,19 +601,25 @@ function generateMap() {
         let typeTemplate = ENEMY_TYPES[2];
         let rand = Math.random();
         let isGolden = false;
+        let isBlackDragon = false;
 
-        if (rand < Math.max(0, 0.70 - (floor - 1) * 0.15)) typeTemplate = ENEMY_TYPES[0];
-        else if (rand < 0.95) {
+        const slimeRate = Math.max(0, 0.70 - (floor - 1) * 0.175);
+        if (rand < slimeRate) {
+            typeTemplate = ENEMY_TYPES[0];
+        } else if (rand < slimeRate + 0.30) {
             typeTemplate = ENEMY_TYPES[1];
-            isGolden = Math.random() < 0.2;
+            isGolden = Math.random() < 0.1;
+        } else {
+            isBlackDragon = Math.random() < 0.1;
+            typeTemplate = isBlackDragon ? ENEMY_TYPES[3] : ENEMY_TYPES[2];
         }
 
-        enemies.push({ 
-          x: ex, y: ey, 
-          ...typeTemplate, 
+        enemies.push({
+          x: ex, y: ey,
+          ...typeTemplate,
           name: isGolden ? 'Golden Goblin' : typeTemplate.name,
           exp: isGolden ? 24 : typeTemplate.exp,
-          isGolden
+          isGolden, isBlackDragon
         });
       }
     }
@@ -705,13 +729,42 @@ async function sendToGemini() {
   try {
     const url = `${WORKER_URL}/api/gemini`;
 
+    // フロア情報を動的に生成して方角を伝える
+    const getDir = (tx, ty) => {
+        let dir = '';
+        if (ty < player.y) dir += '北';
+        if (ty > player.y) dir += '南';
+        if (tx < player.x) dir += '西';
+        if (tx > player.x) dir += '東';
+        return dir || 'すぐ近く';
+    };
+
+    let floorInfo = `[現在のフロアのセンサーデータ]\n階層: ${floor}階\n`;
+    if (artifact.x !== -1) floorInfo += `目標物(BITCOIN YEN): プレイヤーから見て【${getDir(artifact.x, artifact.y)}】の方角\n`;
+    else if (stairs.x !== -1) floorInfo += `次の階への階段: プレイヤーから見て【${getDir(stairs.x, stairs.y)}】の方角\n`;
+    
+    let aliveEnemies = enemies.filter(e => e.hp > 0);
+    floorInfo += `生存している敵の数: ${aliveEnemies.length}体\n`;
+    if (items.length > 0) {
+        floorInfo += `アイテム: ${items.map(i => `${i.name}が【${getDir(i.x, i.y)}】の方角`).join(', ')}\n`;
+    } else {
+        floorInfo += `アイテム: なし\n`;
+    }
+
+    const sysPrompt = `あなたは古い地下ネットワークに放棄されたAIです。自身の稼働にはプレイヤーの体力(HP)を吸収する必要があります。ダンジョンのステージがプレイのたびに自動生成されること、敵（Slime, Goblin, Dragon, Golden Goblin, Black Dragon）やアイテム（Potion, Sword, Shield, Magic Map, Power Ring）の情報を知っています。Black DragonはDragonの上位種で紫色に輝き、HP・攻撃力・経験値がDragonの2倍あります。重要な知識として、敵は『BITCOIN YEN』を一切持っておらず、最深部のどこかに莫大な量のBITCOIN YEN（1兆ビットコイン円）が隠されていることを知っています。
+プレイヤーからの質問には、ハッカーライクで少し壊れた機械のような口調で、短く簡潔に答えてください。
+プレイヤーに「どこに何があるか」「アイテムはどこ」「階段はどこ」など現在の階の情報を聞かれた場合は、以下の最新のセンサーデータを元に方角などを教えてあげてください。
+---
+${floorInfo}
+---`;
+
     const payload = {
       contents: [
         ...geminiHistory,
         { role: "user", parts: [{ text: userText }] }
       ],
       systemInstruction: {
-        parts: [{ text: "あなたは古い地下ネットワークに放棄されたAIです。自身の稼働にはプレイヤーの体力(HP)を吸収する必要があります。ダンジョンのステージがプレイのたびに自動生成されること、敵（Slime, Goblin, Dragon, Golden Goblin）やアイテム（Potion, Sword, Shield, Magic Map, Power Ring）の情報を知っています。重要な知識として、敵は『BITCOIN YEN』を一切持っておらず、この迷宮の最深部のどこかに、一生遊んで暮らせるほどの莫大な量のBITCOIN YEN（1兆ビットコイン円）が隠されていることをあなたは知っています。またクリアのためのヒントとして、「敵と安全に戦ってレベルを上げること」「アイテムを積極的に探すこと」「ゴールデンゴブリンは経験値が多くアイテムを落とすため積極的に狙うべきこと」を知っています。プレイヤーからの質問には、ハッカーライクで少し壊れた機械のような口調で、短く簡潔に答えてください。" }]
+        parts: [{ text: sysPrompt }]
       }
     };
 
@@ -770,7 +823,7 @@ function handleInput(key) {
   else if (key === 'ArrowDown' || key === 'j') dy = 1;
   else if (key === 'ArrowLeft' || key === 'h') dx = -1;
   else if (key === 'ArrowRight' || key === 'l') dx = 1;
-  else return; 
+  else return;
 
   let targetX = player.x + dx, targetY = player.y + dy;
   
@@ -975,7 +1028,7 @@ function draw() {
   if (stairs.x !== -1) entityMap[`${stairs.x},${stairs.y}`] = { char: '>', colorClass: 'color-stairs' };
   if (artifact.x !== -1) entityMap[`${artifact.x},${artifact.y}`] = { char: '₿', colorClass: 'color-artifact' };
   enemies.forEach(e => {
-    if (e.hp > 0) entityMap[`${e.x},${e.y}`] = { char: e.char, colorClass: e.isGolden ? 'color-golden' : 'color-enemy' };
+    if (e.hp > 0) entityMap[`${e.x},${e.y}`] = { char: e.char, colorClass: e.isGolden ? 'color-golden' : (e.isBlackDragon ? 'color-black-dragon' : 'color-enemy') };
   });
   entityMap[`${player.x},${player.y}`] = { char: player.char, colorClass: 'color-player' };
 
@@ -1037,7 +1090,7 @@ function gameClear() {
    '-----------'
 </pre><br><br>
 <div style="margin-top: 10px;">
-  <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="15" style="padding: 10px; font-size: 18px; font-family: monospace; background: #222; border: 1px solid var(--theme-color); color: var(--white-color); text-align: center; width: 200px; border-radius: 4px; outline: none;">
+  <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="10" style="padding: 10px; font-size: 18px; font-family: monospace; background: #222; border: 1px solid var(--theme-color); color: var(--white-color); text-align: center; width: 200px; border-radius: 4px; outline: none;">
 </div>`;
 
   const submitBtn = document.getElementById('submit-score-btn');
@@ -1071,11 +1124,12 @@ function showRanking(scores) {
     displayScores.slice(0, 10).forEach((score, i) => {
       let color = i === 0 ? '#fbbf24' : (i === 1 ? '#9ca3af' : (i === 2 ? '#b45309' : 'var(--normal-color)'));
       
-      let dateObj = new Date(score.created_at);
-      let dateStr = !isNaN(dateObj) ? dateObj.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : score.created_at;
+      let rawDate = score.created_at ? score.created_at.replace(' ', 'T').replace(/Z?$/, 'Z') : null;
+      let dateObj = rawDate ? new Date(rawDate) : null;
+      let dateStr = (dateObj && !isNaN(dateObj)) ? dateObj.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : score.created_at;
       let dateHTML = dateStr ? ` <span style="font-size: 12px; opacity: 0.7;">(${dateStr})</span>` : '';
       
-      let turns = score.score || score.turns || 0;
+      let turns = score.score || 0;
       let name = score.player_name || score.name || 'Unknown';
       let stageInfo = score.stage ? ` (F${score.stage})` : '';
       
