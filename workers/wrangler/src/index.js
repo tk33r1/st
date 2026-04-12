@@ -1,4 +1,4 @@
-const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
+const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st', 'http://127.0.0.1:5500'];
 
 function getCorsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -58,8 +58,9 @@ export default {
 
       if (request.method === 'GET') {
         try {
+          const order = url.searchParams.get('order') === 'asc' ? 'ASC' : 'DESC';
           const { results } = await env.DB.prepare(
-            'SELECT player_name, score, stage, created_at FROM scores WHERE game_id = ? ORDER BY score DESC LIMIT 10'
+            `SELECT player_name, score, stage, created_at FROM scores WHERE game_id = ? ORDER BY score ${order} LIMIT 10`
           ).bind(gameId).all();
           return json(results, 200, cors);
         } catch (e) {
