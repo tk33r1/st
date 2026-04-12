@@ -703,9 +703,7 @@ async function sendToGemini() {
   appendChatLog("SYS", "Processing query...");
 
   try {
-    // Canvas環境の制約を回避するため、Workerではなく直接実行環境が提供するGemini APIを叩きます
-    const apiKey = "";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`;
+    const url = `${WORKER_URL}/api/gemini`;
 
     const payload = {
       contents: [
