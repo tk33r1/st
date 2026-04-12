@@ -383,7 +383,7 @@
 
 
     <script>
-        const WORKER_URL = 'https://masala-tetris-api.tk33r1.workers.dev';
+        const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
 
         // Canvas要素の取得
         const canvas = document.getElementById('tetrisCanvas');
@@ -1212,7 +1212,7 @@
 
         async function saveScore(scoreToSave, stageReached, pName) {
             try {
-                await fetch(`${WORKER_URL}/api/scores`, {
+                await fetch(`${WORKER_URL}/api/masala-tetris/scores`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ playerName: pName, score: scoreToSave, stage: stageReached }),
@@ -1265,7 +1265,7 @@
 
         async function loadHighScores() {
             try {
-                const res = await fetch(`${WORKER_URL}/api/scores`);
+                const res = await fetch(`${WORKER_URL}/api/masala-tetris/scores`);
                 const scores = await res.json();
                 highScoreListElement.innerHTML = '';
                 if (scores.length === 0) {

@@ -32,12 +32,12 @@ export default {
       return new Response('Forbidden', { status: 403 });
     }
 
-    // POST /api/gemini  ─── Gemini API プロキシ
+    // POST /api/gemini  ─── Gemini API プロキシ（全ゲーム共通）
     if (url.pathname === '/api/gemini' && request.method === 'POST') {
       try {
         const body = await request.json();
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${env.GEMINI_API_KEY}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -51,31 +51,35 @@ export default {
       }
     }
 
-    // GET /api/scores  ─── ランキング上位10件取得
-    if (url.pathname === '/api/scores' && request.method === 'GET') {
-      try {
-        const { results } = await env.DB.prepare(
-          'SELECT player_name, score, stage, created_at FROM scores ORDER BY score DESC LIMIT 10'
-        ).all();
-        return json(results, 200, cors);
-      } catch (e) {
-        return json({ error: e.message }, 500, cors);
-      }
-    }
+    // GET /api/:game/scores  ─── ゲーム別ランキング取得
+    const scoresMatch = url.pathname.match(/^\/api\/([^/]+)\/scores$/);
+    if (scoresMatch) {
+      const gameId = scoresMatch[1];
 
-    // POST /api/scores  ─── スコア保存
-    if (url.pathname === '/api/scores' && request.method === 'POST') {
-      try {
-        const { playerName, score, stage } = await request.json();
-        if (!playerName || score == null || stage == null) {
-          return new Response('Bad Request', { status: 400, headers: cors });
+      if (request.method === 'GET') {
+        try {
+          const { results } = await env.DB.prepare(
+            'SELECT player_name, score, stage, created_at FROM scores WHERE game_id = ? ORDER BY score DESC LIMIT 10'
+          ).bind(gameId).all();
+          return json(results, 200, cors);
+        } catch (e) {
+          return json({ error: e.message }, 500, cors);
         }
-        await env.DB.prepare(
-          'INSERT INTO scores (player_name, score, stage) VALUES (?, ?, ?)'
-        ).bind(String(playerName).substring(0, 10), Number(score), Number(stage)).run();
-        return json({ ok: true }, 200, cors);
-      } catch (e) {
-        return json({ error: e.message }, 500, cors);
+      }
+
+      if (request.method === 'POST') {
+        try {
+          const { playerName, score, stage } = await request.json();
+          if (!playerName || score == null || stage == null) {
+            return new Response('Bad Request', { status: 400, headers: cors });
+          }
+          await env.DB.prepare(
+            'INSERT INTO scores (game_id, player_name, score, stage) VALUES (?, ?, ?, ?)'
+          ).bind(gameId, String(playerName).substring(0, 10), Number(score), Number(stage)).run();
+          return json({ ok: true }, 200, cors);
+        } catch (e) {
+          return json({ error: e.message }, 500, cors);
+        }
       }
     }
 

@@ -1,4 +1,4 @@
-name            = "masala-tetris-api"
+name            = "st-games-api"
 main            = "src/index.js"
 compatibility_date = "2025-01-01"
 
