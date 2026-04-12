@@ -15,8 +15,8 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <style>
-    /* Theme Variables (Light Mode Default) */
     :root {
+      --phi: 1.618;
       --bg-color: #f3f4f6;
       --surface-color: #ffffff;
       --surface-alt: #f9fafb;
@@ -27,9 +27,8 @@
       --primary-bg-hover: #bbf7d0;
       --secondary-color: #6b7280;
       --border-color: #d1d5db;
+      --bpm: 60;
     }
-
-    /* Dark Mode Theme */
     [data-theme="dark"] {
       --bg-color: #0c0c0c;
       --surface-color: #1a1a1a;
@@ -42,17 +41,13 @@
       --secondary-color: #888888;
       --border-color: #333333;
     }
-
-    /* Tailwind CSS Utilities Replacements */
     *, ::before, ::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: var(--border-color); }
-    html { line-height: 1.5; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    html { line-height: var(--phi); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     
     .bg-surface-alt { background-color: var(--surface-alt); }
     .hover\:bg-surface-hover:hover { background-color: var(--surface-hover); }
     .bg-primary-dim { background-color: var(--primary-bg); }
     .hover\:bg-primary-dim-hover:hover { background-color: var(--primary-bg-hover); }
-
-    /* Custom Color Utilities */
     .text-primary { color: var(--primary-color); }
     .text-secondary { color: var(--secondary-color); }
     .text-normal { color: var(--text-color); }
@@ -64,50 +59,44 @@
     .bg-red-400 { background-color: #f87171; }
     .bg-yellow-400 { background-color: #fbbf24; }
     .bg-green-400 { background-color: #4ade80; }
-
     .min-h-screen { min-height: 100vh; min-height: 100dvh; }
     .w-full { width: 100%; }
-    .w-3 { width: 0.75rem; }
-    .h-3 { height: 0.75rem; }
+    .w-3 { width: 0.8125rem; }
+    .h-3 { height: 0.8125rem; }
     .w-24 { width: 6rem; }
     .w-8 { width: 2rem; }
     .w-56 { width: 14rem; }
     .w-\[90\%\] { width: 90%; }
-    .max-w-\[800px\] { max-width: 800px; }
+    .max-w-\[809px\] { max-width: 809px; }
     .max-w-\[300px\] { max-width: 300px; }
     .max-w-\[400px\] { max-width: 400px; }
     .min-w-\[400px\] { min-width: 400px; }
-
     .flex { display: flex; }
     .hidden { display: none; }
     .block { display: block; }
     .inline-block { display: inline-block; }
     .grid { display: grid; }
     .relative { position: relative; }
-
     .flex-col { flex-direction: column; }
     .items-center { align-items: center; }
     .justify-between { justify-content: space-between; }
     .justify-center { justify-content: center; }
     .flex-1 { flex: 1 1 0%; }
     .flex-wrap { flex-wrap: wrap; }
-
     .gap-1\.5 { gap: 0.375rem; }
     .gap-2 { gap: 0.5rem; }
     .gap-2\.5 { gap: 0.625rem; }
     .gap-1 { gap: 0.25rem; }
     .gap-4 { gap: 1rem; }
-
     .p-4 { padding: 1rem; }
-    .p-3 { padding: 0.75rem; }
+    .p-3 { padding: 0.8125rem; }
     .px-4 { padding-left: 1rem; padding-right: 1rem; }
-    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-3 { padding-left: 0.8125rem; padding-right: 0.8125rem; }
     .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
     .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-    .pl-3 { padding-left: 0.75rem; }
+    .pl-3 { padding-left: 0.8125rem; }
     .pt-2 { padding-top: 0.5rem; }
     .pt-4 { padding-top: 1rem; }
-
     .m-0 { margin: 0; }
     .mt-4 { margin-top: 1rem; }
     .mt-auto { margin-top: auto; }
@@ -125,10 +114,8 @@
     .my-4 { margin-top: 1rem; margin-bottom: 1rem; }
     .my-1 { margin-top: 0.25rem; margin-bottom: 0.25rem; }
     .ml-2 { margin-left: 0.5rem; }
-
     .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
     .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
-
     .border { border-width: 1px; }
     .border-b { border-bottom-width: 1px; }
     .border-t { border-top-width: 1px; }
@@ -136,28 +123,23 @@
     .last\:border-0:last-child { border-width: 0; }
     .rounded-full { border-radius: 9999px; }
     .rounded { border-radius: 0.25rem; }
-
-    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .text-xs { font-size: 0.8125rem; line-height: 1.25rem; }
     .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+    .text-lg { font-size: 1.3125rem; line-height: 1.75rem; }
     .text-\[10px\] { font-size: 10px; }
-    
     .font-bold { font-weight: 700; }
     .tracking-wider { letter-spacing: 0.05em; }
     .whitespace-nowrap { white-space: nowrap; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
     .italic { font-style: italic; }
-    .leading-relaxed { line-height: 1.625; }
+    .leading-relaxed { line-height: var(--phi); }
     .leading-tight { line-height: 1.25; }
     .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* Button Reset & Utilities */
     button { background: transparent; padding: 0; cursor: pointer; color: inherit; }
     .transition-opacity { transition-property: opacity; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 200ms; }
     .duration-500 { transition-duration: 500ms; }
     .hover\:opacity-70:hover { opacity: 0.7; }
-
     .cursor-pointer { cursor: pointer; }
     .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
     .opacity-50 { opacity: 0.5; }
@@ -166,218 +148,63 @@
     .overflow-x-auto { overflow-x: auto; }
     .overflow-hidden { overflow: hidden; }
     .no-underline { text-decoration: none; }
-
-    /* Screen Reader Only (SEO & Accessibility) */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border-width: 0;
-    }
-
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
     @media (min-width: 768px) {
-      .md\:p-6 { padding: 1.5rem; }
+      .md\:p-6 { padding: 1.3125rem; }
       .md\:gap-8 { gap: 2rem; }
       .md\:text-sm { font-size: 0.875rem; line-height: 1.25rem; }
     }
-
-    /* Custom Styles */
-    html, body { 
-      margin: 0; 
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      overflow-x: hidden;
-      transition: background-color 0.3s, color 0.3s;
-    }
+    html, body { margin: 0; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+    html, body, input, textarea, button, select, * { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; }
     
-    html, body, input, textarea, button, select, * { 
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; 
-    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .bpm-caret { background-color: var(--primary-color); width: 1px; height: 1.25rem; position: absolute; left: 0; pointer-events: none; animation: blink calc(60s / var(--bpm)) step-end infinite; }
+    .caret-transparent { caret-color: transparent !important; }
+    #cmd-input:focus ~ #custom-caret { display: block !important; }
 
-    @keyframes fadeSlide {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .fade-in {
-      animation: fadeSlide 0.5s ease forwards;
-      opacity: 0;
-      will-change: opacity, transform;
-    }
-
-    @keyframes dance {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      25% { transform: translateY(-4px) rotate(-15deg); }
-      50% { transform: translateY(0) rotate(0deg); }
-      75% { transform: translateY(-4px) rotate(15deg); }
-    }
-    .dancing-emoji {
-      display: inline-block;
-      animation: dance 1s ease-in-out infinite;
-      margin-left: 8px;
-      will-change: transform;
-    }
-    
-    @keyframes breatheSlow {
-      0%, 100% { transform: scale(1); opacity: 0.1; }
-      50% { transform: scale(1.6); opacity: 0.8; }
-    }
-
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeSlide calc(30s / var(--bpm)) ease forwards; opacity: 0; will-change: opacity, transform; }
+    @keyframes dance { 0%, 100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-4px) rotate(-15deg); } 50% { transform: translateY(0) rotate(0deg); } 75% { transform: translateY(-4px) rotate(15deg); } }
+    .dancing-emoji { display: inline-block; animation: dance calc(120s / var(--bpm)) ease-in-out infinite; margin-left: 8px; will-change: transform; }
+    @keyframes breatheSlow { 0%, 100% { transform: scale(1); opacity: 0.1; } 50% { transform: scale(var(--phi)); opacity: 0.8; } }
     .glow { text-shadow: 0 0 8px currentColor; }
-
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-color); }
     ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
-
-    .cmd-input {
-      background: transparent;
-      border: none;
-      outline: none;
-      caret-color: var(--primary-color);
-      color: var(--text-color);
-    }
-
-    /* Window Buttons styling */
-    .window-btn:hover .window-icon {
-      opacity: 1;
-    }
-    .window-icon {
-      opacity: 0;
-      transition: opacity 0.2s;
-      color: rgba(0, 0, 0, 0.6);
-      width: 8px;
-      height: 8px;
-      will-change: opacity;
-    }
-    .window-btn {
-      transition: opacity 0.2s, transform 0.1s;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      will-change: opacity, transform;
-    }
-    .window-btn:hover {
-      opacity: 0.8;
-    }
-    .window-btn:active {
-      transform: scale(0.9);
-    }
-
-    /* --- Theme Toggle Switch Styles --- */
-    .theme-switch {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      cursor: pointer;
-    }
-    .theme-switch input {
-      display: none;
-    }
-    .theme-switch .track {
-      width: 56px;
-      height: 30px;
-      background-color: var(--surface-hover);
-      border: 1px solid var(--border-color);
-      border-radius: 999px;
-      transition: background-color 0.3s, border-color 0.3s;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 7px;
-    }
-    .theme-switch .thumb {
-      width: 22px;
-      height: 22px;
-      background-color: #ffffff;
-      border-radius: 50%;
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      z-index: 1;
-    }
-    .theme-switch .icon {
-      width: 14px;
-      height: 14px;
-      z-index: 2;
-      color: #9ca3af;
-      transition: color 0.3s;
-    }
-    .theme-switch input:not(:checked) + .track .icon.sun {
-      color: #1f2937;
-    }
-    .theme-switch input:checked + .track .icon.moon {
-      color: #1f2937;
-    }
-    .theme-switch input:checked + .track .thumb {
-      transform: translateX(26px);
-    }
-
-    /* --- Extracted Component Styles --- */
+    .cmd-input { background: transparent; border: none; outline: none; color: var(--text-color); }
+    .window-btn:hover .window-icon { opacity: 1; }
+    .window-icon { opacity: 0; transition: opacity 0.2s; color: rgba(0, 0, 0, 0.6); width: 8px; height: 8px; will-change: opacity; }
+    .window-btn { transition: opacity 0.2s, transform 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: opacity, transform; }
+    .window-btn:hover { opacity: 0.8; }
+    .window-btn:active { transform: scale(0.9); }
+    .theme-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+    .theme-switch input { display: none; }
+    .theme-switch .track { width: 55px; height: 34px; background-color: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 999px; transition: background-color 0.3s, border-color 0.3s; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
+    .theme-switch .thumb { width: 21px; height: 21px; background-color: #ffffff; border-radius: 50%; position: absolute; top: 5.5px; left: 4px; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 1; }
+    .theme-switch .icon { width: 13px; height: 13px; z-index: 2; color: #9ca3af; transition: color 0.3s; }
+    .theme-switch input:not(:checked) + .track .icon.sun { color: #1f2937; }
+    .theme-switch input:checked + .track .icon.moon { color: #1f2937; }
+    .theme-switch input:checked + .track .thumb { transform: translateX(24px); }
     .mbti-bar-container { position: relative; height: 1rem; width: 100%; border-radius: 9999px; border: 1px solid var(--border-color); background-color: var(--surface-color); }
-    .mbti-bar-fill { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg-color); z-index: 2; transition: left 0.5s ease; }
+    .mbti-bar-fill { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--bg-color); z-index: 2; transition: left 0.5s ease; }
     .mbti-bar-bg { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 2px; opacity: 0.3; }
-
     .meditation-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #111827 0%, #000 100%); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 4s ease; }
-    .meditation-circle { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); box-shadow: 0 0 60px rgba(74,222,128,0.05), inset 0 0 40px rgba(74,222,128,0.05); animation: breatheSlow 10s infinite ease-in-out; }
-    .meditation-text { position: absolute; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 13px; text-align: center; letter-spacing: 0.05em; line-height: 2; pointer-events: none; transition: opacity 3s ease; opacity: 0; }
-
-    .destroyed-element {
-      transition: transform 2s ease-in, opacity 2s ease-in !important;
-      transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
-    .rebuilding-element {
-      transition: transform 1s ease-out, opacity 1s ease-out !important;
-      transform: translate(0px, 0px) rotate(0deg) !important;
-      opacity: 1 !important;
-      pointer-events: auto !important;
-    }
-
-    body.choreomania-active {
-      --mouse-x: 0.5;
-      --mouse-y: 0.5;
-      filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5);
-    }
-    body.choreomania-active #app * {
-      transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s;
-      animation: none !important;
-    }
-    body.choreomania-active #app .fade-in {
-      opacity: 1 !important;
-    }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) {
-      transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important;
-      will-change: transform;
-    }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) {
-      transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important;
-      will-change: transform;
-    }
-    body.choreomania-active #app span:not(.hidden) {
-      display: inline-block;
-    }
-    body.choreomania-active #app span.hidden,
-    body.choreomania-active #theme-label {
-      display: none !important;
-    }
-    body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow):not(.theme-switch *) {
-      color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important;
-      text-shadow: 0 0 8px currentColor;
-    }
-    body.choreomania-active #app svg:not(.theme-switch svg) {
-      color: hsl(calc(var(--mouse-y) * 360), 80%, 60%) !important;
-      fill: currentColor;
-      transform: rotate(calc((var(--mouse-x) - 0.5) * 90deg));
-    }
+    .meditation-circle { position: absolute; width: 233px; height: 233px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); box-shadow: 0 0 55px rgba(74,222,128,0.05), inset 0 0 34px rgba(74,222,128,0.05); animation: breatheSlow calc(480s / var(--bpm)) infinite ease-in-out; }
+    .meditation-text { position: absolute; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 13px; text-align: center; letter-spacing: 0.05em; line-height: var(--phi); pointer-events: none; transition: opacity 3s ease; opacity: 0; }
+    .meditation-spiral-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; animation: breatheSlow calc(480s / var(--bpm)) infinite ease-in-out; }
+    .meditation-spiral { width: 150vmin; height: 150vmin; animation: rotateSpiral calc(8640s / var(--bpm)) linear infinite; }
+    @keyframes rotateSpiral { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .destroyed-element { transition: transform 2s ease-in, opacity 2s ease-in !important; transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important; opacity: 0 !important; pointer-events: none !important; }
+    .rebuilding-element { transition: transform 1s ease-out, opacity 1s ease-out !important; transform: translate(0px, 0px) rotate(0deg) !important; opacity: 1 !important; pointer-events: auto !important; }
+    body.choreomania-active { --mouse-x: 0.5; --mouse-y: 0.5; filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5); }
+    body.choreomania-active #app * { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; }
+    body.choreomania-active #app .fade-in { opacity: 1 !important; }
+    body.choreomania-active #app *:nth-child(odd):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(even):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app span:not(.hidden) { display: inline-block; }
+    body.choreomania-active #app span.hidden, body.choreomania-active #theme-label { display: none !important; }
+    body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow):not(.theme-switch *) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
+    body.choreomania-active #app svg:not(.theme-switch svg) { color: hsl(calc(var(--mouse-y) * 360), 80%, 60%) !important; fill: currentColor; transform: rotate(calc((var(--mouse-x) - 0.5) * 90deg)); }
   </style>
   <script type="application/ld+json">
     {
@@ -387,51 +214,14 @@
         "@type": "Person",
         "@id": "https://tk.st/#shitake",
         "name": "Shinya Takeda",
-        "alternateName": [
-          "武田 伸也",
-          "人類踊狂計画",
-          "Human Choreomania Project",
-          "dj_hcp"
-        ],
+        "alternateName": ["武田 伸也", "人類踊狂計画", "Human Choreomania Project", "dj_hcp"],
         "jobTitle": "Technical Marketing Lead",
-        "worksFor": {
-          "@type": "Organization",
-          "name": "Nitori"
-        },
-        "homeLocation": {
-          "@type": "Place",
-          "name": "Saitama, Japan"
-        },
+        "worksFor": { "@type": "Organization", "name": "Nitori" },
+        "homeLocation": { "@type": "Place", "name": "Saitama, Japan" },
         "description": "The sun for the cyber realm, The moon for music and philosophy. I love profound tranquility, laced with a spoonful of madness.",
         "url": "https://tk.st/",
-        "sameAs": [
-          "https://x.com/Tah_Keh",
-          "https://www.instagram.com/dj_hcp/",
-          "https://www.linkedin.com/in/shinyatakeda/",
-          "https://github.com/tk33r1",
-          "https://www.mixcloud.com/dj_hcp/"
-        ],
-        "knowsAbout": [
-          "Technical Marketing",
-          "Data Analytics",
-          "GA4 Strategy",
-          "A/B Testing",
-          "UI/UX Design",
-          "SEO and AIO",
-          "Management Search Engine",
-          "AI Agent Architecture",
-          "Server-side GTM",
-          "Frontend Development",
-          "Cloudflare Pages",
-          "Web3 & On-chain Systems",
-          "Bitcoin Runes and Ordinals",
-          "DJing",
-          "Full-on Psytrance",
-          "Big Room House",
-          "Melodic Techno",
-          "Philosophy",
-          "Erich Fromm"
-        ]
+        "sameAs": ["https://x.com/Tah_Keh", "https://www.instagram.com/dj_hcp/", "https://www.linkedin.com/in/shinyatakeda/", "https://github.com/tk33r1", "https://www.mixcloud.com/dj_hcp/"],
+        "knowsAbout": ["Technical Marketing", "Data Analytics", "GA4 Strategy", "A/B Testing", "UI/UX Design", "SEO and AIO", "Management Search Engine", "AI Agent Architecture", "Server-side GTM", "Frontend Development", "Cloudflare Pages", "Web3 & On-chain Systems", "Bitcoin Runes and Ordinals", "DJing", "Full-on Psytrance", "Big Room House", "Melodic Techno", "Philosophy", "Erich Fromm"]
       },
       "headline": "Shinya Takeda - Terminal Portfolio",
       "description": "Portfolio of Shinya Takeda. Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ (Human Choreomania Project). Explore my projects and philosophy through this interactive terminal."
@@ -439,19 +229,16 @@
   </script>
  </head>
  <body>
-
   <div class="sr-only">
     <h1>Available Commands:</h1>
     <h2><a href="?cmd=about">about</a></h2>
     <p>Learn about me. Shinya Takeda, Technical Marketing Lead. The sun for the cyber realm, The moon for music and philosophy. I love profound tranquility, laced with a spoonful of madness.</p>
-    
     <h2><a href="?cmd=identify">identify</a></h2>
     <p>View personality versions. MBTI and CliftonStrengths profile.</p>
     <h3><a href="?cmd=identify&v=2.0">ver.2.0 [ACTIVE]</a></h3>
     <p>Post-traffic accident (MBTI & Strengths)</p>
     <h3><a href="?cmd=identify&v=1.0">ver.1.0 [ARCHIVED]</a></h3>
     <p>Pre-traffic accident (MBTI & Strengths)</p>
-    
     <h2><a href="?cmd=pages">pages</a></h2>
     <p>Explore Web2 creations</p>
     <h3><a href="https://tk.st/dj">Overview | DJ Human Choreomania Project</a></h3>
@@ -459,7 +246,6 @@
     <h3><a href="https://tk.st/game">AI coding benchmark: Game Sandbox</a></h3>
     <h3><a href="https://tk.st/think">A shared margin for contemplating the essence of life.</a></h3>
     <h3><a href="https://tk.st/glitch">Finding the "bugs" that lead to better living.</a></h3>
-    
     <h2><a href="?cmd=bitcoin">bitcoin</a></h2>
     <p>Enjoy Web3 journey</p>
     <h3><a href="https://tk.st/bitcoinyen/ascii-roguelike">Play to Earn: ASCII Roguelike</a></h3>
@@ -468,40 +254,31 @@
     <h3><a href="https://tk.st/bitcoinyen/bbm">Letter to the future: Bitcoin Bottle Mail</a></h3>
     <h3><a href="https://unisat.io/runes/detail/BITCOINYEN">Dive into my Bitcoin token</a></h3>
     <h3><a href="https://web3.tk.st">Dive into my Web3 page</a></h3>
-    
     <h2><a href="?cmd=magi">magi</a></h2>
     <p>Talk to ST multi-agent</p>
     <a href="https://tk.st/magi">MAGI System</a>
-    
     <h2><a href="?cmd=contact">contact</a></h2>
     <p>Contact me</p>
     <a href="https://tk.st/contact">Contact Page</a>
-    
     <h2><a href="?cmd=clear">clear</a></h2>
     <p>Clear terminal</p>
-    
     <h2><a href="?cmd=help">help</a></h2>
     <p>Show this menu</p>
-    
     <h1>Hidden Commands:</h1>
     <h2><a href="?cmd=akutagawa">akutagawa</a></h2>
     <p>A message from the past</p>
-    
+    <h2><a href="?cmd=bpm">bpm</a></h2>
+    <p>Set system heartbeat</p>
     <h2><a href="?cmd=choreomania">choreomania</a></h2>
     <p>Merging souls in ecstasy</p>
-    
     <h2><a href="?cmd=destroy">destroy</a></h2>
     <p>And rebuild</p>
-    
     <h2><a href="?cmd=history">history</a></h2>
     <p>Show command history</p>
-    
     <h2><a href="?cmd=matrix">matrix</a></h2>
     <p>Enter the Matrix</p>
-    
     <h2><a href="?cmd=meditation">meditation</a></h2>
     <p>Clear your mind</p>
-    
     <h2><a href="?cmd=theme">theme</a></h2>
     <p>Change terminal color</p>
   </div>
@@ -509,19 +286,10 @@
   <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
    <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
     <div class="flex gap-2.5 window-btn-group">
-     <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal">
-       <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg>
-     </button>
-     <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal">
-       <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg>
-     </button>
-     <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
-       <svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
-         <path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/>
-       </svg>
-     </button>
+     <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg></button>
+     <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg></button>
+     <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen" aria-label="Toggle Fullscreen"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"><path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/></svg></button>
     </div>
-    
     <div class="flex items-center gap-4">
      <label class="theme-switch" title="Toggle Light/Dark Mode">
        <input type="checkbox" id="theme-toggle">
@@ -532,7 +300,6 @@
        </div>
      </label>
      <span class="text-xs text-secondary hidden md:block w-8 text-center" id="theme-label">Light</span>
-
      <button id="btn-reload" class="flex items-center gap-2 cursor-pointer ml-2 transition-opacity hover:opacity-70" title="Reload Terminal" aria-label="Reload Terminal">
       <span class="text-primary">▸</span> <span id="titlebar-name" class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
      </button>
@@ -544,7 +311,11 @@
     <div id="output-area" aria-live="polite" aria-atomic="false"></div>
     <div class="hidden items-center gap-2 mt-4" id="input-line">
      <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span> 
-     <input type="text" id="cmd-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
+     <div class="relative flex-1 flex items-center overflow-hidden">
+       <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
+       <span id="cmd-mirror" class="text-sm absolute left-0 top-0 h-full flex items-center" style="visibility:hidden; white-space:pre;"></span>
+       <span id="custom-caret" class="bpm-caret" style="display:none;"></span>
+     </div>
     </div>
    </main>
    
@@ -554,30 +325,46 @@
   </div>
 
   <script>
-    // === CONFIG & CACHED DOM ELEMENTS ===
     const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Saitama, Japan' };
-    const DOM = {
-      app: document.getElementById('app'),
-      output: document.getElementById('output-area'),
-      input: document.getElementById('cmd-input'),
-      inputLine: document.getElementById('input-line'),
-      bootArea: document.getElementById('boot-area'),
-      statusRight: document.getElementById('status-right'),
-      themeToggle: document.getElementById('theme-toggle'),
-      themeLabel: document.getElementById('theme-label')
+    const DOM = { 
+      app: document.getElementById('app'), 
+      output: document.getElementById('output-area'), 
+      input: document.getElementById('cmd-input'), 
+      inputLine: document.getElementById('input-line'), 
+      bootArea: document.getElementById('boot-area'), 
+      statusRight: document.getElementById('status-right'), 
+      themeToggle: document.getElementById('theme-toggle'), 
+      themeLabel: document.getElementById('theme-label'),
+      mirror: document.getElementById('cmd-mirror'),
+      caret: document.getElementById('custom-caret')
     };
-    
-    // Helpers
     const delay = ms => new Promise(r => setTimeout(r, ms));
     const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
 
-    // App State
     const MAX_HISTORY = 50;
     let commandHistory = [], historyIndex = -1, currentVersion = 1;
     let isDestroyed = false, destroyedElements = [], destroyInterval = null;
     let isMatrixActive = false, isMeditationActive = false;
 
-    // === DATA MODULES ===
+    function addToHistory(entry) {
+      if (commandHistory[0] !== entry) {
+        commandHistory.unshift(entry);
+        if (commandHistory.length > MAX_HISTORY) commandHistory.pop();
+      }
+    }
+
+    function updateCaret() {
+      if (!DOM.input) return;
+      const pos = DOM.input.selectionStart || 0;
+      DOM.mirror.textContent = DOM.input.value.substring(0, pos);
+      const offset = Math.max(0, DOM.mirror.offsetWidth - DOM.input.scrollLeft);
+      DOM.caret.style.transform = `translateX(${offset}px)`;
+    }
+
+    ['input', 'keydown', 'keyup', 'click', 'focus', 'blur', 'scroll'].forEach(ev => {
+      DOM.input.addEventListener(ev, () => setTimeout(updateCaret, 0));
+    });
+
     const projects = [
       { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj' },
       { name: '/job', desc: 'An Optimization and data-driven growth strategy.', tech: 'EC, UIUX, Search Engine, Web ads, GA4, Frontend, Web3, SEO, AIO, AI Agent', link: 'https://tk.st/job' },
@@ -603,36 +390,24 @@
       }
     };
 
-    // 隠しコマンドのリスト
-    const hiddenCommands = ['secret', 'akutagawa', 'choreomania', 'destroy', 'rebuild', 'history', 'matrix', 'meditation', 'theme'];
+    const hiddenCommands = ['akutagawa', 'bpm', 'choreomania', 'destroy', 'history', 'matrix', 'meditation', 'rebuild', 'secret', 'theme'];
 
-    // === THEME AND JOB TITLE LOGIC ===
     DOM.themeToggle.addEventListener('change', (e) => {
       const isDark = e.target.checked;
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
       DOM.themeLabel.textContent = isDark ? 'Dark' : 'Light';
-      
-      // Update Job Title
       config.job_title = isDark ? 'Hacker Poet' : 'Technical Marketing Lead';
-      
       const headerJobTitle = document.getElementById('header-job-title');
-      if (headerJobTitle) {
-        headerJobTitle.textContent = config.job_title;
-      }
-      
-      // Update all dynamic job titles in the output area
-      document.querySelectorAll('.dynamic-job-title').forEach(el => {
-        el.textContent = config.job_title;
-      });
+      if (headerJobTitle) headerJobTitle.textContent = config.job_title;
+      document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
+      addToHistory(`[SYS] Theme changed to ${isDark ? 'dark' : 'light'}`);
     });
 
-    // === EVENT DELEGATION FOR UI INTERACTIONS ===
     DOM.output.addEventListener('click', async (e) => {
       const toggleBtn = e.target.closest('[data-action="toggleBtc"]');
       if (toggleBtn) {
         const targetId = toggleBtn.dataset.target;
-        const allIds = toggleBtn.dataset.all.split(',');
-        allIds.forEach(id => {
+        toggleBtn.dataset.all.split(',').forEach(id => {
           const el = document.getElementById(id);
           if (el) {
             const isTarget = id === targetId;
@@ -642,18 +417,12 @@
         });
         return;
       }
-
       const identifyBtn = e.target.closest('[data-action="identify"]');
       if (identifyBtn) {
         e.preventDefault();
         const url = identifyBtn.getAttribute('href');
-        if (url) {
-          try { window.history.pushState({}, '', url); } catch (err) {}
-        }
-        const version = identifyBtn.dataset.version;
-        const targetId = identifyBtn.dataset.id;
-        await executeIdentifyVersion(version, targetId);
-        return;
+        if (url) { try { window.history.pushState({}, '', url); } catch (err) {} }
+        await executeIdentifyVersion(identifyBtn.dataset.version, identifyBtn.dataset.id);
       }
     });
 
@@ -666,21 +435,14 @@
       DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 
-    // === UI GENERATORS ===
     const createMBTIRows = (traits, isVer2) => traits.map(t => {
       const pct = t.pct >= 50 ? t.pct : 100 - t.pct;
       const name = t.pct >= 50 ? t.name : t.opposite;
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       return `
         <div class="text-xs mb-4">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="text-normal">${esc(t.name)}</span>
-            <span class="text-secondary">${esc(t.opposite)}</span>
-          </div>
-          <div class="mbti-bar-container" aria-hidden="true">
-            <div class="mbti-bar-fill" style="left:${100 - t.pct}%; background:${color};"></div>
-            <div class="mbti-bar-bg" style="width:100%; background:${color};"></div>
-          </div>
+          <div class="flex items-center justify-between mb-1.5"><span class="text-normal">${esc(t.name)}</span><span class="text-secondary">${esc(t.opposite)}</span></div>
+          <div class="mbti-bar-container" aria-hidden="true"><div class="mbti-bar-fill" style="left:${100 - t.pct}%; background:${color};"></div><div class="mbti-bar-bg" style="width:100%; background:${color};"></div></div>
           <div class="text-center text-[10px] text-secondary mt-1">${pct}% ${esc(name)}</div>
         </div>`;
     }).join('');
@@ -688,22 +450,19 @@
     const createStrengthsHTML = (strengths, isVer2) => {
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       const vp = (isVer2 ? 'v2' : 'v1') + Date.now();
-      const patternDefs = `
+      const barHTML = `
         <svg width="0" height="0" style="position:absolute;"><defs>
           <pattern id="${vp}-diagonal" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
           <pattern id="${vp}-grid" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
           <pattern id="${vp}-dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
-        </defs></svg>`;
-      const barHTML = patternDefs + strengths.map(s => `
+        </defs></svg>` + strengths.map(s => `
         <svg style="display:block; width:${s.pct}%; height:16px;" viewBox="0 0 100 16" preserveAspectRatio="none">
           <rect x="0" y="0" width="100" height="16" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/>
         </svg>`).join('');
       const strengthsRows = strengths.map(s => `
         <div class="text-xs flex items-center justify-between text-normal">
           <div class="flex items-center gap-2">
-            <svg width="12" height="12" class="border border-color">
-              <rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/>
-            </svg>
+            <svg width="12" height="12" class="border border-color"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg>
             <span>${esc(s.name)}</span>
           </div>
           <span class="text-secondary">${s.pct.toFixed(1)}%</span>
@@ -719,30 +478,22 @@
       </div>`).join('');
 
     const renderCmdList = (title, cmdList) => `
-      <div class="my-3 space-y-1 w-[90%] max-w-[800px]">
+      <div class="my-3 space-y-1 w-[90%] max-w-[809px]">
         <div class="glow text-sm font-bold mb-2 text-primary">${title}</div>
-        <div class="grid gap-1 text-xs text-normal">
-          ${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${c[0]}</span><span>- ${c[1]}</span></div>`).join('')}
-        </div>
+        <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${c[0]}</span><span>- ${c[1]}</span></div>`).join('')}</div>
         ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic text-normal">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
       </div>`;
 
     const executeIdentifyVersion = async (version, targetId) => {
       const isV2 = version === '2.0';
       const data = PROFILE_DATA[version] || PROFILE_DATA['1.0'];
-
       const rows = createMBTIRows(data.traits, isV2);
       const { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, isV2);
       const tableRows = createThemesTable(data.themes, isV2);
       const titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       
-      const mbtiHtml = data.m.l 
-        ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${data.m.t}</a>` 
-        : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${data.m.t}</div>`;
-      
-      const strHtml = data.s.l 
-        ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${data.s.t}</a>` 
-        : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
+      const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${data.m.t}</a>` : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${data.m.t}</div>`;
+      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${data.s.t}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
 
       const result = `
         <div class="mt-4 fade-in w-full">
@@ -750,137 +501,81 @@
             ${mbtiHtml}
             <div class="space-y-1 mb-6">${rows}</div>
             ${strHtml}
-            <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden flex">
-              ${barHTML}
-            </div>
+            <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden flex">${barHTML}</div>
             <div class="space-y-2 mb-6">${strengthsRows}</div>
             <div class="mt-4 pt-2 overflow-x-auto">
-              <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};">
-                <div class="w-8">RANK</div>
-                <div class="flex-1">THEME</div>
-                <div class="w-56 text-right">CATEGORY</div>
-              </div>
+              <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};"><div class="w-8">RANK</div><div class="flex-1">THEME</div><div class="w-56 text-right">CATEGORY</div></div>
               <div class="overflow-x-auto border-t border-color min-w-[400px]">${tableRows}</div>
             </div>
           </div>
         </div>`;
       
       const container = document.getElementById(`identify-result-${targetId}`);
-      if (container) container.innerHTML = result; 
-      else await printToOutput(`<div class="my-4 w-[90%] max-w-[800px]">${result}</div>`);
+      if (container) container.innerHTML = result; else await printToOutput(`<div class="my-4 w-[90%] max-w-[809px]">${result}</div>`);
     };
 
-    // === COMMANDS ===
     const commands = {
       help: () => renderCmdList('Available Commands:', [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['bitcoin', 'Enjoy Web3 journey'], ['magi', 'Talk to ST multi-agent'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']]),
-      secret: () => renderCmdList('Hidden Commands:', [['akutagawa', 'A message from the past'], ['choreomania', 'Merging souls in ecstasy'], ['destroy', 'And rebuild'], ['history', 'Show command history'], ['matrix', 'Enter the Matrix'], ['meditation', 'Clear your mind'], ['theme', 'Change terminal color']]),
+      secret: () => renderCmdList('Hidden Commands:', [['akutagawa', 'A message from the past'], ['bpm', 'Set system heartbeat'], ['choreomania', 'Merging souls in ecstasy'], ['destroy', 'And rebuild'], ['history', 'Show command history'], ['matrix', 'Enter the Matrix'], ['meditation', 'Clear your mind'], ['theme', 'Change terminal color']]),
       clear: () => { DOM.output.innerHTML = ''; return null; },
-      
       bitcoin() {
         const uniqueId = 'btc-' + Date.now();
         const tabs = ['earn', 'buy', 'use', 'view'];
         const allIds = tabs.map(t => `${t}-opts-${uniqueId}`).join(',');
-        
-        const btcData = {
-          earn: [{ i: '🎮', t: 'Play to Earn', s: 'ASCII Roguelike', l: 'https://tk.st/bitcoinyen/ascii-roguelike' }],
-          buy:  [{ i: '⚡', t: 'Direct Purchase', s: 'Lightning Network', l: 'https://tk.st/bitcoinyen/ln' }, { i: '🛒', t: 'Marketplace', s: 'UniSat', l: 'https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN' }],
-          use:  [{ i: '📨', t: 'Letter to the future', s: 'Bitcoin Bottle Mail', l: 'https://tk.st/bitcoinyen/bbm' }],
-          view: [{ i: '🪙', t: 'Dive into my Bitcoin token', s: 'Bitcoin Mainnet', l: 'https://unisat.io/runes/detail/BITCOINYEN' }, { i: '🌐', t: 'Dive into my Web3 page', s: 'Bitcoin Mainnet', l: 'https://web3.tk.st' }]
-        };
-        
-        const renderItems = items => items.map(item => `
-          <a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-surface-alt hover:bg-surface-hover border-color no-underline">
-            <div class="text-normal">${item.i} ${item.t}</div>
-            <div class="text-xs mt-0.5 text-primary">${item.s}</div>
-          </a>`).join('');
-          
+        const btcData = { earn: [{ i: '🎮', t: 'Play to Earn', s: 'ASCII Roguelike', l: 'https://tk.st/bitcoinyen/ascii-roguelike' }], buy: [{ i: '⚡', t: 'Direct Purchase', s: 'Lightning Network', l: 'https://tk.st/bitcoinyen/ln' }, { i: '🛒', t: 'Marketplace', s: 'UniSat', l: 'https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN' }], use: [{ i: '📨', t: 'Letter to the future', s: 'Bitcoin Bottle Mail', l: 'https://tk.st/bitcoinyen/bbm' }], view: [{ i: '🪙', t: 'Dive into my Bitcoin token', s: 'Bitcoin Mainnet', l: 'https://unisat.io/runes/detail/BITCOINYEN' }, { i: '🌐', t: 'Dive into my Web3 page', s: 'Bitcoin Mainnet', l: 'https://web3.tk.st' }] };
+        const renderItems = items => items.map(item => `<a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="text-normal">${item.i} ${item.t}</div><div class="text-xs mt-0.5 text-primary">${item.s}</div></a>`).join('');
         return `
-          <div class="my-3 w-[90%] max-w-[800px]">
+          <div class="my-3 w-[90%] max-w-[809px]">
             <div class="text-sm font-bold glow mb-3 text-primary">BITCOIN YEN Ecosystem</div>
-            <div class="flex gap-2 flex-wrap">
-              ${tabs.map(t => `
-                <div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" 
-                     data-action="toggleBtc" data-target="${t}-opts-${uniqueId}" data-all="${allIds}">
-                  ${t.charAt(0).toUpperCase() + t.slice(1)}
-                </div>
-              `).join('')}
-            </div>
-            ${tabs.map(t => `
-              <div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">
-                ${renderItems(btcData[t])}
-              </div>
-            `).join('')}
+            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" data-action="toggleBtc" data-target="${t}-opts-${uniqueId}" data-all="${allIds}">${t.charAt(0).toUpperCase() + t.slice(1)}</div>`).join('')}</div>
+            ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">${renderItems(btcData[t])}</div>`).join('')}
           </div>`;
       },
-
       about() {
         const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
         return `
-          <div class="my-3 p-4 border rounded w-[90%] max-w-[800px] border-color bg-surface">
+          <div class="my-3 p-4 border rounded w-[90%] max-w-[809px] border-color bg-surface">
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
-            <div class="space-y-1 pt-2 border-t border-color">
-              ${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `
-                <div class="flex justify-between text-xs">
-                  <span class="text-secondary">${r[0]}</span>
-                  <span class="text-normal">${esc(r[1])}</span>
-                </div>
-              `).join('')}
-            </div>
+            <div class="space-y-1 pt-2 border-t border-color">${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
           </div>`;
       },
-
       pages: () => `
-        <div class="my-3 space-y-2 w-[90%] max-w-[800px]">
+        <div class="my-3 space-y-2 w-[90%] max-w-[809px]">
           <div class="text-sm font-bold glow mb-2 text-primary">Explore Web2 creations</div>
           <div class="space-y-2">
-            ${projects.map(p => `
-              <a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline">
-                <div class="flex items-center justify-between mb-1">
-                  <span class="text-sm font-bold text-primary">${esc(p.name)}</span>
-                </div>
-                <div class="text-xs mb-2 text-normal">${esc(p.desc)}</div>
-                <div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div>
-              </a>
-            `).join('')}
+            ${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(p.desc)}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}
           </div>
         </div>`,
-
       identify() {
         const uniqueId = 'id-' + Date.now();
-        const versions = [
-          ['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], 
-          ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']
-        ];
+        const versions = [['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']];
         return `
-          <div class="my-3 w-[90%] max-w-[800px]">
+          <div class="my-3 w-[90%] max-w-[809px]">
             <div class="text-sm font-bold glow mb-3 text-primary">Please select a profile to initialize:</div>
             <div class="space-y-2">
-              ${versions.map(v => `
-                <a href="?cmd=identify&v=${v[0]}" class="block p-3 border rounded transition-colors no-underline ${v[4]} ${v[5]}" data-action="identify" data-version="${v[0]}" data-id="${uniqueId}">
-                  <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-bold ${v[6]}">ver.${v[0]} [${v[1]}]</span>
-                    <span class="text-[10px] text-secondary">${v[2]}</span>
-                  </div>
-                  <div class="text-xs text-secondary">${v[3]} (MBTI & Strengths)</div>
-                </a>
-              `).join('')}
+              ${versions.map(v => `<a href="?cmd=identify&v=${v[0]}" class="block p-3 border rounded transition-colors no-underline ${v[4]} ${v[5]}" data-action="identify" data-version="${v[0]}" data-id="${uniqueId}"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold ${v[6]}">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] text-secondary">${v[2]}</span></div><div class="text-xs text-secondary">${v[3]} (MBTI & Strengths)</div></a>`).join('')}
             </div>
             <div id="identify-result-${uniqueId}"></div>
           </div>`;
       },
-      
       async akutagawa() {
         const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] text-primary'; DOM.output.appendChild(loadingDiv);
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `Loading...  ${spinners[frameIndex++ % 4]}`; }, 300);
-        await delay(5000); clearInterval(loadingInterval); loadingDiv.remove();
+        await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
         return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px] border-color bg-surface text-normal">I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.</div>`;
       },
-
-      history: () => commandHistory.length === 0 ? `<div class="my-3 text-xs text-secondary">No history available.</div>` : `<div class="my-3 text-xs text-secondary" style="font-family: monospace;">${commandHistory.slice().reverse().map((cmd, i) => `  ${(i+1).toString().padStart(3, ' ')}  ${esc(cmd)}`).join('<br>')}</div>`,
-
+      history() {
+        if (commandHistory.length === 0) return `<div class="my-3 text-xs text-secondary">No history available.</div>`;
+        const historyList = commandHistory.slice().reverse().map((cmd, i) => {
+          const isSys = cmd.startsWith('[SYS]');
+          const displayStr = isSys ? `<span class="opacity-50 italic">${esc(cmd)}</span>` : esc(cmd);
+          return `  ${(i+1).toString().padStart(3, ' ')}  ${displayStr}`;
+        }).join('<br>');
+        return `<div class="my-3 text-xs text-normal" style="font-family: monospace;">${historyList}</div>`;
+      },
       theme(args) {
         const colors = { green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', orange: '#fb923c', purple: '#c084fc', white: '#ffffff', red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee' };
         if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return `<div class="my-3 text-xs text-secondary">Usage: theme &lt;color&gt;<br>Available colors: <span class="text-normal">${Object.keys(colors).join(', ')}</span></div>`;
@@ -890,12 +585,17 @@
         document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40');
         return `<div class="my-3 text-xs text-primary">Theme color successfully changed to ${esc(args[0])}.</div>`;
       },
-      
+      bpm(args) {
+        const currentBpm = getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60';
+        if (!args || args.length === 0 || isNaN(args[0])) return `<div class="my-3 text-xs text-secondary">Usage: bpm &lt;number&gt;<br>Current BPM: <span class="text-normal font-bold">${currentBpm}</span></div>`;
+        const newBpm = Math.max(1, Math.min(999, parseInt(args[0])));
+        document.documentElement.style.setProperty('--bpm', newBpm);
+        return `<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`;
+      },
       destroy() {
         if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold">System is already destroyed. Waiting for 'rebuild'.</div>`;
         isDestroyed = true; destroyedElements = [];
         const elements = Array.from(document.querySelectorAll('#app *:not(#app, #terminal-body, #output-area, #input-line, #input-line *)'));
-        
         destroyInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) { clearInterval(destroyInterval); break; }
@@ -912,11 +612,9 @@
         }, 30);
         return `<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`;
       },
-
       rebuild() {
         if (!isDestroyed) return null;
         clearInterval(destroyInterval); let elements = [...destroyedElements];
-        
         let rebuildInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) {
@@ -940,7 +638,6 @@
         }, 30);
         return `<div class="my-3 text-xs text-primary">System rebuild initiated... restoring core components.</div>`;
       },
-
       choreomania() {
         document.body.classList.toggle('choreomania-active');
         if (document.body.classList.contains('choreomania-active')) {
@@ -951,37 +648,35 @@
           return `<div class="my-3 text-xs text-secondary">Choreomania mode deactivated. Back to reality.</div>`;
         }
       },
-
       meditation() {
         if (isMeditationActive) return `<div class="my-3 text-xs text-red-500">Meditation is already active.</div>`;
         isMeditationActive = true;
-        
         return new Promise(resolve => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           const overlay = document.createElement('div');
           overlay.className = 'meditation-overlay';
-          
+          const svgWrapper = document.createElement('div');
+          svgWrapper.className = 'meditation-spiral-wrapper';
+          svgWrapper.innerHTML = `<svg class="meditation-spiral" viewBox="-1200 -1200 2400 2400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><path d="M 0 0 A 1 1 0 0 1 1 1 A 1 1 0 0 1 0 2 A 2 2 0 0 1 -2 0 A 3 3 0 0 1 1 -3 A 5 5 0 0 1 6 2 A 8 8 0 0 1 -2 10 A 13 13 0 0 1 -15 -3 A 21 21 0 0 1 6 -24 A 34 34 0 0 1 40 10 A 55 55 0 0 1 -15 65 A 89 89 0 0 1 -104 -24 A 144 144 0 0 1 40 -168 A 233 233 0 0 1 273 65 A 377 377 0 0 1 -104 442 A 610 610 0 0 1 -714 -168 A 987 987 0 0 1 273 -1155" fill="none" stroke="currentColor" style="color: var(--primary-color);" stroke-width="1.5" stroke-linecap="round" opacity="0.15"></path></svg>`;
           const circle = document.createElement('div');
           circle.className = 'meditation-circle';
-          
           const textContainer = document.createElement('div');
           textContainer.className = 'meditation-text';
           textContainer.setAttribute('aria-live', 'polite');
-
           const messages = ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."];
-          
-          overlay.appendChild(circle); overlay.appendChild(textContainer); document.body.appendChild(overlay);
+          overlay.appendChild(svgWrapper);
+          overlay.appendChild(circle); 
+          overlay.appendChild(textContainer); 
+          document.body.appendChild(overlay);
           let isMeditating = true;
-          
           void overlay.offsetWidth;
           overlay.style.opacity = '1';
-
           (async () => {
             await delay(4000);
             for (const msg of messages) {
               if (!isMeditating) break;
               textContainer.innerHTML = msg; textContainer.style.opacity = '1';
-              await delay(7000);
+              await delay(5000);
               if (!isMeditating) break;
               textContainer.style.opacity = '0';
               await delay(3000);
@@ -991,28 +686,20 @@
               textContainer.style.opacity = '1';
             }
           })();
-          
           const exitMeditation = async (e) => {
             if (e.type === 'keydown' && e.key !== 'Escape') return;
-            e.stopPropagation(); 
-            e.preventDefault();
-            isMeditating = false; 
-            overlay.style.opacity = '0';
-            document.removeEventListener('click', exitMeditation); 
-            document.removeEventListener('keydown', exitMeditation);
-            await delay(4000);
-            overlay.remove(); 
-            isMeditationActive = false;
+            e.stopPropagation(); e.preventDefault();
+            isMeditating = false; overlay.style.opacity = '0';
+            document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
+            await delay(4000); overlay.remove(); isMeditationActive = false;
             resolve(`<div class="my-3 text-xs text-secondary">Returned to reality.</div>`);
           };
           document.addEventListener('click', exitMeditation); document.addEventListener('keydown', exitMeditation);
         });
       },
-
       matrix() {
         if (isMatrixActive) return `<div class="my-3 text-xs text-red-500">Matrix is already active.</div>`;
         isMatrixActive = true;
-
         return new Promise(resolve => {
           const canvas = document.createElement('canvas');
           canvas.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;`;
@@ -1020,9 +707,7 @@
           const ctx = canvas.getContext('2d');
           const resizeCanvas = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
           resizeCanvas(); window.addEventListener('resize', resizeCanvas);
-          
           const fontSize = 14, columns = canvas.width / fontSize, drops = Array(Math.floor(columns)).fill(1), primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
-
           const interval = setInterval(() => {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = primaryColor; ctx.font = fontSize + 'px monospace';
@@ -1032,16 +717,11 @@
               drops[i]++;
             }
           }, 33);
-          
           const endMatrix = (e) => {
             if(e.type === 'keydown' && e.key !== 'Escape') return;
-            e.stopPropagation();
-            e.preventDefault();
-            clearInterval(interval); 
-            canvas.remove();
-            window.removeEventListener('resize', resizeCanvas); 
-            window.removeEventListener('keydown', endMatrix, true); 
-            window.removeEventListener('click', endMatrix, true);
+            e.stopPropagation(); e.preventDefault();
+            clearInterval(interval); canvas.remove();
+            window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix, true); window.removeEventListener('click', endMatrix, true);
             isMatrixActive = false;
             resolve(`<div class="text-xs mt-2 text-primary">Matrix simulation ended.</div>`);
           };
@@ -1051,7 +731,6 @@
       }
     };
 
-    // URL Commands Shortcuts
     const urlCommands = { '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/think': 'https://tk.st/think', '/glitch': 'https://tk.st/glitch', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
@@ -1060,7 +739,6 @@
       };
     });
 
-    // === INTERACTION EVENT FOR CHOREOMANIA ===
     let choreoTicking = false;
     const handleChoreomaniaMove = (clientX, clientY) => {
       if (!document.body.classList.contains('choreomania-active')) return;
@@ -1076,32 +754,27 @@
     document.addEventListener('mousemove', (e) => handleChoreomaniaMove(e.clientX, e.clientY), { passive: true });
     document.addEventListener('touchmove', (e) => { if (e.touches.length > 0) handleChoreomaniaMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 
-    // === COMMAND HANDLER ===
     async function handleCommand(input) {
       const trimmed = input.trim(); if (!trimmed) return;
-      
       const echo = document.createElement('div'); 
       echo.className = 'text-xs mt-3'; 
       echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(input)}</span>`; 
       DOM.output.appendChild(echo);
-      
-      commandHistory.unshift(trimmed); 
-      if (commandHistory.length > MAX_HISTORY) commandHistory.pop();
+      addToHistory(trimmed);
       historyIndex = -1;
-      
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       
       if (isDestroyed && cmd !== 'rebuild') {
-        return await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+        await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+        return;
       }
       
-      // ライトモード時は隠しコマンドを無効化（見つからない扱いにする）
       if (hiddenCommands.includes(cmd) && !isDark) {
         await printToOutput(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
         return;
       }
-
+      
       if (commands[cmd]) { 
         const result = await commands[cmd](args); 
         if (result) await printToOutput(result, 100); 
@@ -1110,46 +783,24 @@
       }
     }
 
-    // === BOOT SEQUENCE & DEEP LINK HANDLING ===
     async function boot() {
-      const bootMessages = [
-        { text: 'Initializing terminal...', delay: 250 }, 
-        { text: `Loading profile: ${config.display_name}`, delay: 400 }, 
-        { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, 
-        { text: '', delay: 150 }
-      ];
-
+      const bootMessages = [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }];
       for (const line of bootMessages) {
         await delay(line.delay);
-        const div = document.createElement('div'); 
-        div.className = 'text-xs fade-in text-secondary'; 
-        div.innerHTML = line.text; 
-        DOM.bootArea.appendChild(div);
+        const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.innerHTML = line.text; DOM.bootArea.appendChild(div);
       }
-
       await delay(200);
       
-      // --- Deep Link Resolution (Early Phase to check for hidden commands) ---
       const urlParams = new URLSearchParams(window.location.search);
-      const cmdParam = urlParams.get('cmd');
-      let targetCmd = cmdParam;
-
-      if (cmdParam) {
-        if (!commands[cmdParam] && commands['/' + cmdParam]) {
-            targetCmd = '/' + cmdParam;
-        }
-
-        // URLパラメータが隠しコマンドに一致する場合は、強制的にダークモードを有効化
-        if (hiddenCommands.includes(targetCmd)) {
-           DOM.themeToggle.checked = true;
-           DOM.themeToggle.dispatchEvent(new Event('change'));
-        }
+      let targetCmd = urlParams.get('cmd');
+      if (targetCmd) {
+        if (!commands[targetCmd] && commands['/' + targetCmd]) targetCmd = '/' + targetCmd;
+        if (hiddenCommands.includes(targetCmd)) { DOM.themeToggle.checked = true; DOM.themeToggle.dispatchEvent(new Event('change')); }
       }
 
       const header = document.createElement('div'); 
       header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
-      header.innerHTML = `
-        <pre class="text-xs md:text-sm glow m-0 leading-tight text-primary">
+      header.innerHTML = `<pre class="text-xs md:text-sm glow m-0 leading-tight text-primary">
 ███████╗████████╗
 ██╔════╝╚══██╔══╝
 ███████╗<span style="opacity:0">╚══</span>██║
@@ -1162,24 +813,18 @@
           <div class="pt-2 text-secondary">Type <span class="text-normal font-bold">'help'</span> to explore.</div>
         </div>`;
       DOM.bootArea.appendChild(header);
-      
-      DOM.inputLine.classList.remove('hidden'); 
-      DOM.inputLine.classList.add('flex', 'fade-in');
+      DOM.inputLine.classList.remove('hidden'); DOM.inputLine.classList.add('flex', 'fade-in');
       DOM.input.focus();
+      updateCaret();
 
-      // --- Execute Deep Link Command ---
-      if (cmdParam) {
+      if (targetCmd) {
         await delay(500);
-
         if (targetCmd === 'identify') {
             await handleCommand('identify');
             const v = urlParams.get('v');
             if (v && ['1.0', '2.0'].includes(v)) {
-                const identifyBtns = Array.from(document.querySelectorAll('[data-action="identify"]'));
-                const targetBtn = identifyBtns.reverse().find(btn => btn.dataset.version === v);
-                if(targetBtn) {
-                    await executeIdentifyVersion(v, targetBtn.dataset.id);
-                }
+                const targetBtn = Array.from(document.querySelectorAll('[data-action="identify"]')).reverse().find(btn => btn.dataset.version === v);
+                if(targetBtn) await executeIdentifyVersion(v, targetBtn.dataset.id);
             }
         } else if (commands[targetCmd]) {
             await handleCommand(targetCmd);
@@ -1187,170 +832,108 @@
       }
     }
 
-    // === INPUT HANDLING ===
     DOM.input.addEventListener('keydown', async (e) => {
       if (isMatrixActive || isMeditationActive) return;
-
       if (e.key === 'Enter') { 
         e.preventDefault(); 
-        const val = DOM.input.value; 
-        DOM.input.value = ''; 
-        if (window.location.search) {
-          try { window.history.pushState({}, '', window.location.pathname); } catch (err) {}
-        }
+        const val = DOM.input.value; DOM.input.value = ''; updateCaret();
+        if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
         await handleCommand(val); 
-      }
-      else if (e.key === 'ArrowUp') { 
+      } else if (e.key === 'ArrowUp') { 
         e.preventDefault(); 
-        if (historyIndex < commandHistory.length - 1) DOM.input.value = commandHistory[++historyIndex]; 
-      }
-      else if (e.key === 'ArrowDown') { 
+        if (historyIndex < commandHistory.length - 1) { DOM.input.value = commandHistory[++historyIndex]; updateCaret(); }
+      } else if (e.key === 'ArrowDown') { 
         e.preventDefault(); 
-        if (historyIndex > 0) DOM.input.value = commandHistory[--historyIndex]; 
-        else { historyIndex = -1; DOM.input.value = ''; } 
-      }
-      else if (e.key === 'Tab') {
+        if (historyIndex > 0) { DOM.input.value = commandHistory[--historyIndex]; updateCaret(); } else { historyIndex = -1; DOM.input.value = ''; updateCaret(); }
+      } else if (e.key === 'Tab') {
         e.preventDefault(); 
-        const val = DOM.input.value.toLowerCase(); 
-        if (!val) return;
-        
-        // 隠しコマンドはライトモードではサジェストにも出さない
+        const val = DOM.input.value.toLowerCase(); if (!val) return;
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         let availableCommands = Object.keys(commands);
-        if (!isDark) {
-          availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c));
-        }
-
+        if (!isDark) availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c));
         const matches = availableCommands.filter(c => c.startsWith(val));
         if (matches.length === 0) return;
-        
         if (matches.length === 1) {
-          DOM.input.value = matches[0];
-        } else if (matches.length > 1) {
-          const echo = document.createElement('div'); 
-          echo.className = 'text-xs mt-2 opacity-70 text-normal'; 
-          echo.textContent = matches.join('  '); 
-          DOM.output.appendChild(echo);
-          DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          DOM.input.value = matches[0]; updateCaret();
+        } else {
+          const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 text-normal'; echo.textContent = matches.join('  '); 
+          DOM.output.appendChild(echo); DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
       }
     });
 
-    DOM.app.addEventListener('click', (e) => { 
-      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch')) {
-        DOM.input.focus(); 
-      }
-    });
+    DOM.app.addEventListener('click', (e) => { if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch')) DOM.input.focus(); });
+    setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
 
-    setInterval(() => { 
-      if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); 
-    }, 1000);
-
-    // === SOFT RELOAD LOGIC ===
     async function softReload() {
       const overlay = document.getElementById('close-overlay');
       if (overlay) overlay.remove();
-
       DOM.app.style.opacity = '0';
       await delay(300);
       
-      // State Reset
       commandHistory = [];
-      historyIndex = -1;
-      isDestroyed = false;
-      destroyedElements = [];
-      if (destroyInterval) clearInterval(destroyInterval);
-      currentVersion = 1;
-      isMatrixActive = false;
-      isMeditationActive = false;
+      historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); currentVersion = 1; isMatrixActive = false; isMeditationActive = false;
       
-      DOM.bootArea.innerHTML = '';
-      DOM.output.innerHTML = '';
-      DOM.input.value = '';
-      DOM.inputLine.classList.add('hidden');
-      DOM.inputLine.classList.remove('flex', 'fade-in');
-      document.body.classList.remove('choreomania-active');
-      document.body.style.removeProperty('--mouse-x');
-      document.body.style.removeProperty('--mouse-y');
+      document.documentElement.style.removeProperty('--primary-color');
+      document.documentElement.style.removeProperty('--primary-bg');
+      document.documentElement.style.removeProperty('--primary-bg-hover');
+      document.documentElement.style.removeProperty('--bpm');
       
-      if (window.location.search) {
-        try { window.history.pushState({}, '', window.location.pathname); } catch (err) {}
+      if (DOM.themeToggle.checked) {
+        DOM.themeToggle.checked = false;
+        document.documentElement.setAttribute('data-theme', 'light');
+        DOM.themeLabel.textContent = 'Light';
+        config.job_title = 'Technical Marketing Lead';
       }
-      
+
+      DOM.bootArea.innerHTML = ''; DOM.output.innerHTML = ''; DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
+      document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
+      if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
       DOM.app.style.opacity = '1';
       boot();
     }
 
-    document.getElementById('btn-reload').addEventListener('click', softReload);
+    document.getElementById('btn-reload').addEventListener('click', () => { softReload(); });
 
-    // === WINDOW BUTTONS LOGIC ===
     document.getElementById('btn-close').addEventListener('click', async () => {
       DOM.app.style.opacity = '0'; await delay(500);
-      
-      const overlay = document.createElement('div');
-      overlay.id = 'close-overlay';
+      const overlay = document.createElement('div'); overlay.id = 'close-overlay';
       overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:var(--bg-color); color:var(--secondary-color); cursor:pointer; z-index:10000;`;
       overlay.innerHTML = `<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>`;
-      overlay.addEventListener('click', softReload);
+      overlay.addEventListener('click', () => { softReload(); });
       document.body.appendChild(overlay);
     });
 
     document.getElementById('btn-minimize').addEventListener('click', async (e) => {
-      e.stopPropagation();
-      
-      DOM.app.style.transformOrigin = 'bottom center'; 
-      DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; 
-      DOM.app.style.transform = 'scaleY(0.01)'; 
-      DOM.app.style.pointerEvents = 'none';
+      e.stopPropagation(); addToHistory('[SYS] Terminal minimized');
+      DOM.app.style.transformOrigin = 'bottom center'; DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; DOM.app.style.transform = 'scaleY(0.01)'; DOM.app.style.pointerEvents = 'none';
       await delay(300);
-      
-      DOM.app.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out'; 
-      DOM.app.style.transform = 'scaleY(0.01) scaleX(0)'; 
-      DOM.app.style.opacity = '0';
+      DOM.app.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out'; DOM.app.style.transform = 'scaleY(0.01) scaleX(0)'; DOM.app.style.opacity = '0';
       await delay(300);
-
       let minIcon = document.getElementById('minimized-icon');
       if (!minIcon) {
-        minIcon = document.createElement('div'); 
-        minIcon.id = 'minimized-icon'; 
+        minIcon = document.createElement('div'); minIcon.id = 'minimized-icon'; 
         minIcon.innerHTML = `<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`;
         minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;`;
-        
         minIcon.addEventListener('click', async () => {
-          minIcon.style.opacity = '0'; 
-          await delay(300); 
-          minIcon.style.display = 'none';
-          
-          DOM.app.style.transformOrigin = 'bottom center';
-          DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; 
-          DOM.app.style.transform = 'scaleY(0.01) scaleX(1)'; 
-          DOM.app.style.opacity = '1';
+          addToHistory('[SYS] Terminal restored from minimized state');
+          minIcon.style.opacity = '0'; await delay(300); minIcon.style.display = 'none';
+          DOM.app.style.transformOrigin = 'bottom center'; DOM.app.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in'; DOM.app.style.transform = 'scaleY(0.01) scaleX(1)'; DOM.app.style.opacity = '1';
           await delay(300);
-          
-          DOM.app.style.transition = 'transform 0.3s ease-out'; 
-          DOM.app.style.transform = 'scale(1)'; 
-          DOM.app.style.pointerEvents = 'auto';
+          DOM.app.style.transition = 'transform 0.3s ease-out'; DOM.app.style.transform = 'scale(1)'; DOM.app.style.pointerEvents = 'auto';
           await delay(300);
-          
-          DOM.app.style.transform = ''; 
-          DOM.app.style.transition = ''; 
-          DOM.app.style.pointerEvents = ''; 
-          DOM.input.focus();
+          DOM.app.style.transform = ''; DOM.app.style.transition = ''; DOM.app.style.pointerEvents = ''; DOM.input.focus(); updateCaret();
         });
         document.body.appendChild(minIcon);
-      } else { 
-        minIcon.style.display = 'block'; 
-      }
-      
-      void minIcon.offsetWidth; 
-      minIcon.style.opacity = '1';
+      } else { minIcon.style.display = 'block'; }
+      void minIcon.offsetWidth; minIcon.style.opacity = '1';
     });
 
     document.getElementById('btn-maximize').addEventListener('click', () => {
       if (!document.fullscreenElement) { 
-        document.documentElement.requestFullscreen().catch(() => printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`)); 
+        addToHistory('[SYS] Fullscreen requested'); document.documentElement.requestFullscreen().catch(() => printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`)); 
       } else { 
-        if (document.exitFullscreen) document.exitFullscreen(); 
+        addToHistory('[SYS] Exit fullscreen requested'); if (document.exitFullscreen) document.exitFullscreen(); 
       }
     });
 
