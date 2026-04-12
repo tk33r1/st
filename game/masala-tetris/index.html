@@ -1275,8 +1275,8 @@
                 } else {
                     scores.forEach(data => {
                         const li = document.createElement('li');
-                        const dateObj = data.created_at ? new Date(data.created_at) : null;
-                        const dateString = dateObj ? `${dateObj.getFullYear()}/${(dateObj.getMonth()+1).toString().padStart(2,'0')}/${dateObj.getDate().toString().padStart(2,'0')} ${dateObj.getHours().toString().padStart(2,'0')}:${dateObj.getMinutes().toString().padStart(2,'0')}` : '日付不明';
+                        const dateObj = data.created_at ? new Date(data.created_at.replace(' ', 'T') + 'Z') : null;
+                        const dateString = dateObj ? dateObj.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '日付不明';
                         li.textContent = `${data.player_name} : ${data.score}点 (ステージ ${data.stage || '不明'}) - ${dateString}`;
                         highScoreListElement.appendChild(li);
                     });
