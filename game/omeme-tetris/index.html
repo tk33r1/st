@@ -137,20 +137,18 @@
         }
         .game-info-panel {
             display: flex;
-            flex-direction: column; 
-            align-items: center; 
-            md:align-items: stretch; 
-            background-color: rgba(20, 10, 40, 0.85); 
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(20, 10, 40, 0.85);
             border: 1px solid #7F00FF; /* パープルの枠線 */
         }
         .score-level-nextpiece {
             display: flex;
-            flex-direction: row; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            width: 100%; 
-            gap: 0.5rem; 
-            md:gap: 1rem; 
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+            gap: 0.5rem;
         }
         .score-level {
             flex-grow: 1; 
@@ -714,29 +712,31 @@
 
         // テトリミノをボードに固定 (2色ブロック対応)
         function lockPiece() {
-            currentPiece.shape.forEach((row, y) => {
-                row.forEach((value, x) => {
-                    if (currentPiece.y + y < 0) {
+            outer: for (let y = 0; y < currentPiece.shape.length; y++) {
+                const row = currentPiece.shape[y];
+                const boardY = currentPiece.y + y;
+                for (let x = 0; x < row.length; x++) {
+                    const value = row[x];
+                    if (boardY < 0) {
                         if ((currentPiece.isTwoTone && (value === 1 || value === 0)) || (!currentPiece.isTwoTone && value === 1)) {
                             gameOver = true;
+                            break outer;
                         }
-                        if (gameOver) return;
+                        continue;
                     }
-
                     if (currentPiece.isTwoTone) {
                         if (value === 1) { // 主色
-                            if (currentPiece.y + y >= 0) board[currentPiece.y + y][currentPiece.x + x] = currentPiece.color;
+                            board[boardY][currentPiece.x + x] = currentPiece.color;
                         } else if (value === 0) { // 副色
-                            if (currentPiece.y + y >= 0) board[currentPiece.y + y][currentPiece.x + x] = currentPiece.secondaryColor;
+                            board[boardY][currentPiece.x + x] = currentPiece.secondaryColor;
                         }
                     } else { // 通常の単色ブロック
                         if (value === 1) {
-                             if (currentPiece.y + y >= 0) board[currentPiece.y + y][currentPiece.x + x] = currentPiece.color;
+                            board[boardY][currentPiece.x + x] = currentPiece.color;
                         }
                     }
-                });
-                if (gameOver) return;
-            });
+                }
+            }
             if (gameOver) return;
 
             clearLinesAndUpdateScore(); 
@@ -840,7 +840,7 @@
         });
 
         // ゲームループ (ステージアップ時の速度計算を修正)
-        function gameLoop(cT){if(gameOver||stageClearPause){if(gameOver&&!stageClearPause)showGameOverScreen();return;}if(gamePaused){animationFrameId=requestAnimationFrame(gameLoop);return;}const dT=cT-lastTime;lastTime=cT;dropCounter+=dT;gameTimePlayed+=dT;stageUpTimer+=dT;if(stageUpTimer>=STAGE_UP_INTERVAL){currentStage++;dropInterval=Math.max(MIN_DROP_INTERVAL, STAGE_1_DROP_INTERVAL / Math.pow(1.5, currentStage -1) );updateStageDisplay();handleStageClear();stageUpTimer=0;}if(dropCounter>dropInterval){dropPiece();}updateTimeLeftDisplay();drawBoard();drawPiece(currentPiece);animationFrameId=requestAnimationFrame(gameLoop);} 
+        function gameLoop(cT){if(gameOver||stageClearPause){if(gameOver&&!stageClearPause)showGameOverScreen();return;}if(gamePaused){animationFrameId=requestAnimationFrame(gameLoop);return;}const dT=cT-lastTime;lastTime=cT;dropCounter+=dT;gameTimePlayed+=dT;stageUpTimer+=dT;if(stageUpTimer>=STAGE_UP_INTERVAL){currentStage++;dropInterval=Math.max(MIN_DROP_INTERVAL, STAGE_1_DROP_INTERVAL / Math.pow(1.5, currentStage -1) );updateStageDisplay();handleStageClear();stageUpTimer=0;return;}if(dropCounter>dropInterval){dropPiece();}updateTimeLeftDisplay();drawBoard();drawPiece(currentPiece);animationFrameId=requestAnimationFrame(gameLoop);} 
         function managePeriodicCheerTimer(s){if(s){if(periodicCheerIntervalId===null){lastPeriodicCheerTime=Date.now();periodicCheerIntervalId=setInterval(triggerPeriodicAICheer,PERIODIC_CHEER_INTERVAL);}}else{if(periodicCheerIntervalId!==null){clearInterval(periodicCheerIntervalId);periodicCheerIntervalId=null;}}}
 
         // startGame (初期落下速度の計算を修正)
@@ -902,7 +902,7 @@
                 }else{
                     scoresData.forEach((d)=>{
                         const li=document.createElement('li');
-                        const dO=d.timestamp?.toDate?d.timestamp.toDate():null;
+                        const dO=d.timestamp?.toDate ? d.timestamp.toDate() : null;
                         const dS=dO?`${dO.getFullYear()}/${(dO.getMonth()+1).toString().padStart(2,'0')}/${dO.getDate().toString().padStart(2,'0')} ${dO.getHours().toString().padStart(2,'0')}:${dO.getMinutes().toString().padStart(2,'0')}`:'日付不明';
                         const dN=d.playerName||'匿名プレイヤー';
                         li.textContent=`${dN} : ${d.score}点 (ステージ ${d.stage||'不明'}) - ${dS}`;

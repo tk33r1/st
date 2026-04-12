@@ -1,0 +1,8 @@
+name            = "masala-tetris-api"
+main            = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "masala-tetris-db"
+database_id   = "63de16f4-a02b-4a80-83c9-90876ecff37c"
