@@ -1,0 +1,10 @@
+name               = "tk-st-magi-api"
+main               = "src/index.js"
+compatibility_date = "2025-01-01"
+
+routes = [
+  { pattern = "workers.tk.st/magi*", zone_name = "tk.st" },
+]
+
+# シークレットは以下のコマンドで設定してください:
+#   wrangler secret put MAGI_API_KEY  --config workers/magi/wrangler.toml
