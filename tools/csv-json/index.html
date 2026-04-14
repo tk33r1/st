@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to JSON 変換ツール</title>
+    <!-- Tailwind CSS (スタイリング用) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        nitori: {
+                            DEFAULT: 'rgb(0, 158, 150)', /* 指定色: R0 G158 B150 */
+                            50: 'rgba(0, 158, 150, 0.1)',
+                            300: 'rgba(0, 158, 150, 0.4)',
+                            700: 'rgb(0, 126, 120)' /* ホバー用の少し濃い色 */
+                        },
+                        csvcolor: {
+                            DEFAULT: 'rgb(48, 115, 240)', /* ニトリカラーと明るさを揃えた青 */
+                            50: 'rgba(48, 115, 240, 0.1)',
+                            700: 'rgb(38, 92, 192)' /* ホバー用の少し濃い色 */
+                        },
+                        jsoncolor: {
+                            DEFAULT: 'rgb(102, 170, 20)', /* 青みを抜いて黄色に寄せた黄緑 */
+                            50: 'rgba(102, 170, 20, 0.1)',
+                            700: 'rgb(82, 140, 15)' /* ホバー用の少し濃い色 */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons (アイコン用) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* テキストエリアのスクロールバーのスタイルを少し調整 */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto flex flex-col h-full md:h-[calc(100vh-4rem)]">
+        <!-- ヘッダー部分 -->
+        <header class="mb-4 text-center md:text-left shrink-0">
+            <h1 class="text-2xl font-bold text-slate-800 flex items-center justify-center md:justify-start gap-3">
+                <i data-lucide="arrow-right-left" class="w-7 h-7 text-nitori"></i>
+                CSV ↔ JSON 相互変換ツール
+            </h1>
+            <p class="text-slate-500 mt-1 text-sm">ファイルの読み込み・保存を主体とした変換ツールです。中央のボタンで相互に変換できます。</p>
+        </header>
+
+        <!-- メインコンテンツ (3カラム風レイアウト: 左パネル - 変換ボタン - 右パネル) -->
+        <div class="flex flex-col lg:flex-row gap-4 flex-grow min-h-[600px] lg:min-h-0">
+            
+            <!-- 左パネル: CSV -->
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-w-0">
+                <!-- ツールバー -->
+                <div class="p-2.5 bg-slate-100 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2 rounded-t-xl shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5 mx-2">
+                            <i data-lucide="table" class="w-4 h-4 text-csvcolor"></i> CSV
+                        </span>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                        <button id="csvUploadBtn" class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors" title="CSVファイルを読み込む">
+                            <i data-lucide="folder-open" class="w-4 h-4 text-nitori"></i><span class="hidden sm:inline">開く</span>
+                        </button>
+                        <button id="csvDownloadBtn" class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors" title="CSVファイルとして保存">
+                            <i data-lucide="save" class="w-4 h-4 text-nitori"></i><span class="hidden sm:inline">保存</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1 mr-1">
+                        <button id="csvCopyBtn" class="p-1.5 text-slate-500 hover:text-csvcolor hover:bg-csvcolor-50 rounded-md transition-colors" title="コピー"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        <div class="w-px h-4 bg-slate-300 mx-1"></div>
+                        <button id="csvClearBtn" class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="クリア"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <!-- エディタ -->
+                <div class="flex-grow relative">
+                    <textarea id="csvTextarea" class="absolute inset-0 w-full h-full p-4 outline-none font-mono text-sm resize-none whitespace-pre border-none rounded-b-xl" placeholder="ここにCSVデータを貼り付けるか、「開く」からファイルを読み込んでください..."></textarea>
+                </div>
+            </div>
+
+            <!-- 中央パネル: 変換コントロール -->
+            <div class="flex lg:flex-col justify-center items-center gap-3 py-1 lg:py-0 shrink-0">
+                <button id="toJsonBtn" class="group flex items-center justify-center gap-2 flex-1 lg:flex-none px-4 py-3 lg:p-4 bg-csvcolor hover:bg-csvcolor-700 text-white rounded-xl lg:rounded-full shadow-md transition-all hover:scale-105 active:scale-95" title="CSVからJSONへ変換">
+                    <span class="font-bold hidden lg:block tracking-wider">CSV</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5 hidden lg:block group-hover:translate-x-1 transition-transform"></i>
+                    <i data-lucide="arrow-down" class="w-5 h-5 lg:hidden"></i>
+                    <span class="font-bold lg:hidden">JSONへ</span>
+                    <span class="font-bold hidden lg:block tracking-wider">JSON</span>
+                </button>
+                <button id="toCsvBtn" class="group flex items-center justify-center gap-2 flex-1 lg:flex-none px-4 py-3 lg:p-4 bg-jsoncolor hover:bg-jsoncolor-700 text-white rounded-xl lg:rounded-full shadow-md transition-all hover:scale-105 active:scale-95" title="JSONからCSVへ変換">
+                    <span class="font-bold hidden lg:block tracking-wider">JSON</span>
+                    <i data-lucide="arrow-left" class="w-5 h-5 hidden lg:block group-hover:-translate-x-1 transition-transform"></i>
+                    <i data-lucide="arrow-up" class="w-5 h-5 lg:hidden"></i>
+                    <span class="font-bold lg:hidden">CSVへ</span>
+                    <span class="font-bold hidden lg:block tracking-wider">CSV</span>
+                </button>
+            </div>
+
+            <!-- 右パネル: JSON -->
+            <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-w-0">
+                <!-- ツールバー -->
+                <div class="p-2.5 bg-slate-100 border-b border-slate-200 flex flex-wrap justify-between items-center gap-2 rounded-t-xl shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5 mx-2">
+                            <i data-lucide="code" class="w-4 h-4 text-jsoncolor"></i> JSON
+                        </span>
+                        <input type="file" id="jsonFileInput" accept=".json" class="hidden">
+                        <button id="jsonUploadBtn" class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors" title="JSONファイルを読み込む">
+                            <i data-lucide="folder-open" class="w-4 h-4 text-nitori"></i><span class="hidden sm:inline">開く</span>
+                        </button>
+                        <button id="jsonDownloadBtn" class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors" title="JSONファイルとして保存">
+                            <i data-lucide="save" class="w-4 h-4 text-nitori"></i><span class="hidden sm:inline">保存</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1 mr-1">
+                        <button id="jsonCopyBtn" class="p-1.5 text-slate-500 hover:text-jsoncolor hover:bg-jsoncolor-50 rounded-md transition-colors" title="コピー"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        <div class="w-px h-4 bg-slate-300 mx-1"></div>
+                        <button id="jsonClearBtn" class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="クリア"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <!-- エディタ -->
+                <div class="flex-grow relative">
+                    <textarea id="jsonTextarea" class="absolute inset-0 w-full h-full p-4 outline-none font-mono text-sm resize-none whitespace-pre border-none rounded-b-xl" placeholder="ここにJSONデータを貼り付けるか、「開く」からファイルを読み込んでください..."></textarea>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- トースト通知 (メッセージ用) -->
+    <div id="toast" class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-10 opacity-0 flex items-center gap-2 z-50 pointer-events-none">
+        <i id="toastIcon" data-lucide="check-circle" class="w-5 h-5"></i>
+        <span id="toastMessage" class="font-medium"></span>
+    </div>
+
+    <script>
+        // アイコンの初期化
+        lucide.createIcons();
+
+        // DOM要素の取得
+        const csvTextarea = document.getElementById('csvTextarea');
+        const jsonTextarea = document.getElementById('jsonTextarea');
+        const toJsonBtn = document.getElementById('toJsonBtn');
+        const toCsvBtn = document.getElementById('toCsvBtn');
+        
+        const csvClearBtn = document.getElementById('csvClearBtn');
+        const csvCopyBtn = document.getElementById('csvCopyBtn');
+        const csvDownloadBtn = document.getElementById('csvDownloadBtn');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const csvUploadBtn = document.getElementById('csvUploadBtn');
+        
+        const jsonClearBtn = document.getElementById('jsonClearBtn');
+        const jsonCopyBtn = document.getElementById('jsonCopyBtn');
+        const jsonDownloadBtn = document.getElementById('jsonDownloadBtn');
+        const jsonFileInput = document.getElementById('jsonFileInput');
+        const jsonUploadBtn = document.getElementById('jsonUploadBtn');
+        
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const toastIcon = document.getElementById('toastIcon');
+
+        // 初期データのセット
+        const initialCsv = `id,sku,product_name\n1,1234567,test\n2,1234567-1234567,test2`;
+        csvTextarea.value = initialCsv;
+
+        // トースト通知を表示する関数
+        let toastTimeout;
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            if (type === 'success') {
+                toast.className = 'fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center gap-2 z-50 bg-slate-800 text-white translate-y-0 opacity-100';
+                toastIcon.setAttribute('data-lucide', 'check-circle');
+                toastIcon.classList.replace('text-red-400', 'text-green-400');
+            } else {
+                toast.className = 'fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center gap-2 z-50 bg-red-600 text-white translate-y-0 opacity-100';
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+                toastIcon.classList.replace('text-green-400', 'text-white');
+            }
+            lucide.createIcons();
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-10', 'opacity-0');
+            }, 3000);
+        }
+
+        // --- 変換ロジック ---
+
+        // CSV -> JSON
+        function csvToJson(csv) {
+            const lines = csv.trim().split(/\r?\n/);
+            if (lines.length === 0 || lines[0].trim() === '') {
+                throw new Error("CSVデータが空か不正です。");
+            }
+            const headers = lines[0].split(',').map(h => h.trim());
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const currentLine = lines[i];
+                if (!currentLine.trim()) continue;
+                // 簡易的なCSVパーサー
+                const values = currentLine.split(',');
+                const obj = {};
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j]] = values[j] ? values[j].trim() : "";
+                }
+                result.push(obj);
+            }
+            return result;
+        }
+
+        // JSON -> CSV
+        function jsonToCsv(jsonStr) {
+            const data = JSON.parse(jsonStr);
+            if (!Array.isArray(data) || data.length === 0) {
+                throw new Error("有効なJSON配列ではありません。");
+            }
+            
+            // 全てのオブジェクトからキー（ヘッダー）を抽出して重複をなくす
+            const headers = Array.from(new Set(data.flatMap(Object.keys)));
+            
+            const csvRows = [];
+            csvRows.push(headers.join(',')); // ヘッダー行
+            
+            for (const row of data) {
+                const values = headers.map(header => {
+                    let val = row[header];
+                    if (val === null || val === undefined) val = '';
+                    else val = String(val);
+                    
+                    // カンマ、改行、ダブルクォートが含まれる場合はエスケープ
+                    if (val.includes(',') || val.includes('\\n') || val.includes('"')) {
+                        val = '"' + val.replace(/"/g, '""') + '"';
+                    }
+                    return val;
+                });
+                csvRows.push(values.join(','));
+            }
+            return csvRows.join('\n');
+        }
+
+        // --- イベントリスナー ---
+
+        // CSVからJSONへ変換ボタン
+        toJsonBtn.addEventListener('click', () => {
+            if (!csvTextarea.value.trim()) {
+                showToast('CSVデータを入力してください。', 'error');
+                return;
+            }
+            try {
+                const jsonObj = csvToJson(csvTextarea.value);
+                jsonTextarea.value = JSON.stringify(jsonObj, null, 2);
+                showToast('JSON形式に変換しました！');
+            } catch (error) {
+                showToast(error.message || 'CSVの変換に失敗しました。', 'error');
+            }
+        });
+
+        // JSONからCSVへ変換ボタン
+        toCsvBtn.addEventListener('click', () => {
+            if (!jsonTextarea.value.trim()) {
+                showToast('JSONデータを入力してください。', 'error');
+                return;
+            }
+            try {
+                const csvStr = jsonToCsv(jsonTextarea.value);
+                csvTextarea.value = csvStr;
+                showToast('CSV形式に変換しました！');
+            } catch (error) {
+                showToast('JSONの変換に失敗しました。フォーマットを確認してください。', 'error');
+            }
+        });
+
+        // 共通アクション関数
+        const clearArea = (textarea) => { textarea.value = ''; textarea.focus(); };
+        const copyArea = (textarea) => {
+            if (!textarea.value) {
+                showToast('コピーするデータがありません。', 'error');
+                return;
+            }
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+                showToast('クリップボードにコピーしました！');
+            } catch (err) {
+                showToast('コピーに失敗しました。', 'error');
+            }
+        };
+        const downloadFile = (textarea, filename, mimeType) => {
+            if (!textarea.value) {
+                showToast('ダウンロードするデータがありません。', 'error');
+                return;
+            }
+            const blob = new Blob([textarea.value], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(filename + ' をダウンロードしました。');
+        };
+
+        // アクションボタンのイベント設定
+        csvClearBtn.addEventListener('click', () => clearArea(csvTextarea));
+        jsonClearBtn.addEventListener('click', () => clearArea(jsonTextarea));
+        
+        csvCopyBtn.addEventListener('click', () => copyArea(csvTextarea));
+        jsonCopyBtn.addEventListener('click', () => copyArea(jsonTextarea));
+        
+        csvDownloadBtn.addEventListener('click', () => downloadFile(csvTextarea, 'data.csv', 'text/csv'));
+        jsonDownloadBtn.addEventListener('click', () => downloadFile(jsonTextarea, 'data.json', 'application/json'));
+
+        // アップロードの共通機能
+        const setupFileUpload = (uploadBtn, fileInput, textarea, typeLabel) => {
+            uploadBtn.addEventListener('click', () => {
+                fileInput.click(); // 隠してあるinput要素をクリックさせる
+            });
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    textarea.value = e.target.result;
+                    showToast(`${file.name} を読み込みました！`);
+                    // 同じファイルを再度読み込めるようにリセット
+                    fileInput.value = '';
+                };
+                reader.onerror = () => {
+                    showToast(`${typeLabel}ファイルの読み込みに失敗しました。`, 'error');
+                    fileInput.value = '';
+                };
+                reader.readAsText(file);
+            });
+        };
+
+        setupFileUpload(csvUploadBtn, csvFileInput, csvTextarea, 'CSV');
+        setupFileUpload(jsonUploadBtn, jsonFileInput, jsonTextarea, 'JSON');
+
+        // 初期状態で一度CSV->JSON変換を実行しておく
+        toJsonBtn.click();
+    </script>
+</body>
+</html>
