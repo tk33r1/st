@@ -19,6 +19,30 @@
         class="w-full bg-gray-800 text-gray-100 rounded-xl p-4 text-sm resize-none outline-none focus:ring-2 focus:ring-green-500 border border-gray-700 placeholder-gray-500"
       ></textarea>
 
+      <!-- 画像アップロード -->
+      <div class="mt-4">
+        <label
+          for="imageInput"
+          class="flex items-center justify-center gap-2 w-full border-2 border-dashed border-gray-700 rounded-xl p-4 cursor-pointer hover:border-green-600 transition-colors text-gray-400 hover:text-green-400 text-sm"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span id="imageLabel">画像を選択（任意）</span>
+        </label>
+        <input id="imageInput" type="file" accept="image/*" class="hidden" onchange="onImageChange(this)">
+      </div>
+
+      <!-- プレビュー -->
+      <div id="preview" class="hidden mt-3 relative">
+        <img id="previewImg" class="rounded-xl max-h-48 object-contain w-full bg-gray-800">
+        <button onclick="clearImage()" class="absolute top-2 right-2 bg-gray-900 hover:bg-red-600 rounded-full p-1 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
       <button
         id="submitBtn"
         onclick="submit()"
@@ -40,13 +64,35 @@
 
   <script>
     const API = 'https://workers.tk.st/magi';
+    let imageBase64 = null;
+
+    function onImageChange(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        // base64部分のみ抽出（"data:image/jpeg;base64," を除く）
+        imageBase64 = e.target.result.split(',')[1];
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('preview').classList.remove('hidden');
+        document.getElementById('imageLabel').textContent = file.name;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      imageBase64 = null;
+      document.getElementById('imageInput').value = '';
+      document.getElementById('preview').classList.add('hidden');
+      document.getElementById('imageLabel').textContent = '画像を選択（任意）';
+    }
 
     async function submit() {
       const question = document.getElementById('question').value.trim();
       if (!question) return;
 
       const btn = document.getElementById('submitBtn');
-      const statusEl = document.getElementById('status');
       const resultEl = document.getElementById('result');
       const resultText = document.getElementById('resultText');
 
@@ -56,10 +102,13 @@
 
       try {
         // ① 質問を投げる
+        const body = { question, session_id: 'browser' };
+        if (imageBase64) body.image = imageBase64;
+
         const askRes = await fetch(API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question, session_id: 'browser' }),
+          body: JSON.stringify(body),
         });
 
         if (!askRes.ok) throw new Error(`エラー: ${askRes.status}`);
