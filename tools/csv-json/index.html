@@ -198,11 +198,11 @@
             if (type === 'success') {
                 toast.className = 'fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center gap-2 z-50 bg-slate-800 text-white translate-y-0 opacity-100';
                 toastIcon.setAttribute('data-lucide', 'check-circle');
-                toastIcon.classList.replace('text-red-400', 'text-green-400');
+                toastIcon.className = 'w-5 h-5 text-green-400';
             } else {
                 toast.className = 'fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center gap-2 z-50 bg-red-600 text-white translate-y-0 opacity-100';
                 toastIcon.setAttribute('data-lucide', 'alert-circle');
-                toastIcon.classList.replace('text-green-400', 'text-white');
+                toastIcon.className = 'w-5 h-5';
             }
             lucide.createIcons();
             if (toastTimeout) clearTimeout(toastTimeout);
@@ -214,22 +214,53 @@
 
         // --- 変換ロジック ---
 
+        // RFC 4180 準拠のCSVパーサー（クォート・カンマ・改行を含むフィールドに対応）
+        function parseCSV(csvStr) {
+            const rows = [];
+            const s = csvStr.trim();
+            const n = s.length;
+            let i = 0;
+            while (i < n) {
+                const row = [];
+                while (i < n) {
+                    let field = '';
+                    if (s[i] === '"') {
+                        i++; // 開きクォートをスキップ
+                        while (i < n) {
+                            if (s[i] === '"' && s[i + 1] === '"') { field += '"'; i += 2; }
+                            else if (s[i] === '"') { i++; break; } // 閉じクォート
+                            else { field += s[i++]; }
+                        }
+                    } else {
+                        while (i < n && s[i] !== ',' && s[i] !== '\r' && s[i] !== '\n') {
+                            field += s[i++];
+                        }
+                        field = field.trim();
+                    }
+                    row.push(field);
+                    if (i < n && s[i] === ',') { i++; continue; }
+                    break;
+                }
+                if (i < n && s[i] === '\r') i++;
+                if (i < n && s[i] === '\n') i++;
+                if (row.length > 0) rows.push(row);
+            }
+            return rows;
+        }
+
         // CSV -> JSON
         function csvToJson(csv) {
-            const lines = csv.trim().split(/\r?\n/);
-            if (lines.length === 0 || lines[0].trim() === '') {
-                throw new Error("CSVデータが空か不正です。");
-            }
-            const headers = lines[0].split(',').map(h => h.trim());
+            if (!csv.trim()) throw new Error("CSVデータが空か不正です。");
+            const rows = parseCSV(csv);
+            if (rows.length === 0) throw new Error("CSVデータが空か不正です。");
+            const headers = rows[0];
             const result = [];
-            for (let i = 1; i < lines.length; i++) {
-                const currentLine = lines[i];
-                if (!currentLine.trim()) continue;
-                // 簡易的なCSVパーサー
-                const values = currentLine.split(',');
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.length === 0 || (row.length === 1 && row[0] === '')) continue;
                 const obj = {};
                 for (let j = 0; j < headers.length; j++) {
-                    obj[headers[j]] = values[j] ? values[j].trim() : "";
+                    obj[headers[j]] = row[j] !== undefined ? row[j] : '';
                 }
                 result.push(obj);
             }
@@ -300,16 +331,13 @@
 
         // 共通アクション関数
         const clearArea = (textarea) => { textarea.value = ''; textarea.focus(); };
-        const copyArea = (textarea) => {
+        const copyArea = async (textarea) => {
             if (!textarea.value) {
                 showToast('コピーするデータがありません。', 'error');
                 return;
             }
-            textarea.select();
-            textarea.setSelectionRange(0, 99999);
             try {
-                document.execCommand('copy');
-                window.getSelection().removeAllRanges();
+                await navigator.clipboard.writeText(textarea.value);
                 showToast('クリップボードにコピーしました！');
             } catch (err) {
                 showToast('コピーに失敗しました。', 'error');
@@ -369,8 +397,15 @@
         setupFileUpload(csvUploadBtn, csvFileInput, csvTextarea, 'CSV');
         setupFileUpload(jsonUploadBtn, jsonFileInput, jsonTextarea, 'JSON');
 
-        // 初期状態で一度CSV->JSON変換を実行しておく
-        toJsonBtn.click();
+        // 初期状態で一度CSV->JSON変換を実行しておく（トースト通知は出さない）
+        try {
+            if (csvTextarea.value.trim()) {
+                const jsonObj = csvToJson(csvTextarea.value);
+                jsonTextarea.value = JSON.stringify(jsonObj, null, 2);
+            }
+        } catch (error) {
+            console.error('初期変換エラー:', error);
+        }
     </script>
 </body>
 </html>
