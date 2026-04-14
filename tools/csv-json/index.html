@@ -343,21 +343,38 @@
                 showToast('コピーに失敗しました。', 'error');
             }
         };
-        const downloadFile = (textarea, filename, mimeType) => {
+        const downloadFile = async (textarea, filename, mimeType) => {
             if (!textarea.value) {
                 showToast('ダウンロードするデータがありません。', 'error');
                 return;
             }
-            const blob = new Blob([textarea.value], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast(filename + ' をダウンロードしました。');
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const ext = filename.split('.').pop();
+                    const fileHandle = await window.showSaveFilePicker({
+                        suggestedName: filename,
+                        types: [{ description: ext.toUpperCase() + ' ファイル', accept: { [mimeType]: ['.' + ext] } }]
+                    });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(textarea.value);
+                    await writable.close();
+                    showToast(fileHandle.name + ' を保存しました。');
+                } catch (err) {
+                    if (err.name !== 'AbortError') showToast('保存に失敗しました。', 'error');
+                }
+            } else {
+                // showSaveFilePicker 非対応ブラウザ向けフォールバック
+                const blob = new Blob([textarea.value], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast(filename + ' をダウンロードしました。');
+            }
         };
 
         // アクションボタンのイベント設定
