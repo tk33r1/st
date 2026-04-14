@@ -56,9 +56,29 @@
     <div id="status" class="mt-4 text-center text-sm text-gray-400 hidden"></div>
 
     <!-- 結果 -->
-    <div id="result" class="hidden mt-4 bg-gray-900 rounded-2xl p-6 border border-gray-800">
-      <h2 class="text-xs text-gray-500 uppercase tracking-widest mb-3">回答</h2>
-      <div id="resultText" class="text-gray-100 text-sm leading-relaxed whitespace-pre-wrap"></div>
+    <div id="result" class="hidden mt-4 space-y-3">
+
+      <!-- 結論バッジ -->
+      <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800 text-center">
+        <div id="verdictBadge" class="inline-block text-2xl font-bold px-8 py-3 rounded-full mb-4"></div>
+        <div id="votes" class="flex justify-center gap-6"></div>
+      </div>
+
+      <!-- 判定理由 -->
+      <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+        <h2 class="text-xs text-gray-500 uppercase tracking-widest mb-3">判定理由</h2>
+        <div id="reasoning" class="text-gray-100 text-sm leading-relaxed"></div>
+      </div>
+
+      <!-- 議論（折りたたみ） -->
+      <div class="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+        <button onclick="toggleDiscussion()" class="w-full px-6 py-4 text-left text-xs text-gray-500 uppercase tracking-widest hover:text-gray-300 transition-colors flex justify-between items-center">
+          <span>議論の詳細</span>
+          <span id="discussionArrow">▼</span>
+        </button>
+        <div id="discussion" class="hidden px-6 pb-6 space-y-4"></div>
+      </div>
+
     </div>
   </div>
 
@@ -130,9 +150,7 @@
 
           if (data.status === 'done') {
             setStatus('');
-            resultText.textContent = typeof data.result === 'string'
-              ? data.result
-              : JSON.stringify(data.result, null, 2);
+            renderResult(data.result);
             resultEl.classList.remove('hidden');
             break;
           }
@@ -160,6 +178,56 @@
       const el = document.getElementById('status');
       el.textContent = msg;
       el.classList.toggle('hidden', !msg);
+    }
+
+    function renderResult(r) {
+      // 結論を抽出
+      const conclusionMatch = r.final_answer.match(/## 結論[：:]\s*(.+)/);
+      const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '不明';
+      const isApproved = conclusion.includes('承認');
+      const isRejected = conclusion.includes('否決');
+
+      // バッジ
+      const badge = document.getElementById('verdictBadge');
+      badge.textContent = conclusion;
+      badge.className = `inline-block text-2xl font-bold px-8 py-3 rounded-full mb-4 ${
+        isApproved ? 'bg-green-900 text-green-300' :
+        isRejected ? 'bg-red-900 text-red-300' :
+        'bg-yellow-900 text-yellow-300'
+      }`;
+
+      // 各ペルソナの票（最後のラウンドから取得）
+      const personaMap = {};
+      r.discussion.forEach(d => {
+        const match = d.response.match(/【判定】(.+)/);
+        if (match) personaMap[d.persona] = match[1].trim();
+      });
+      const voteColors = { '賛成': 'text-green-400', '反対': 'text-red-400', '保留': 'text-yellow-400' };
+      document.getElementById('votes').innerHTML = Object.entries(personaMap).map(([persona, vote]) => `
+        <div class="text-center">
+          <div class="text-xs text-gray-500 mb-1">${persona}</div>
+          <div class="text-sm font-bold ${voteColors[vote] || 'text-gray-300'}">${vote}</div>
+        </div>
+      `).join('');
+
+      // 判定理由
+      const reasoningMatch = r.final_answer.match(/## 判定理由[^]*?\n([\s\S]+)$/);
+      document.getElementById('reasoning').textContent = reasoningMatch ? reasoningMatch[1].trim() : '';
+
+      // 議論
+      document.getElementById('discussion').innerHTML = r.discussion.map(d => `
+        <div class="border-t border-gray-800 pt-4 first:border-0 first:pt-0">
+          <div class="text-xs text-green-500 font-bold mb-1">${d.persona}</div>
+          <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">${d.response}</div>
+        </div>
+      `).join('');
+    }
+
+    function toggleDiscussion() {
+      const el = document.getElementById('discussion');
+      const arrow = document.getElementById('discussionArrow');
+      const hidden = el.classList.toggle('hidden');
+      arrow.textContent = hidden ? '▼' : '▲';
     }
 
     function sleep(ms) {
