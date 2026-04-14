@@ -181,11 +181,13 @@
     }
 
     function renderResult(r) {
+      const fa = r.final_answer;
+
       // 結論を抽出
-      const conclusionMatch = r.final_answer.match(/## 結論[：:]\s*(.+)/);
+      const conclusionMatch = fa.match(/## 結論[：:]\s*(.+)/);
       const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '不明';
-      const isApproved = conclusion.includes('承認');
-      const isRejected = conclusion.includes('否決');
+      const isApproved = /承認/.test(conclusion);
+      const isRejected = /否決|反対/.test(conclusion);
 
       // バッジ
       const badge = document.getElementById('verdictBadge');
@@ -196,31 +198,29 @@
         'bg-yellow-900 text-yellow-300'
       }`;
 
-      // 各ペルソナの票（最後のラウンドから取得）
-      const personaMap = {};
-      r.discussion.forEach(d => {
-        const match = d.response.match(/【判定】(.+)/);
-        if (match) personaMap[d.persona] = match[1].trim();
-      });
+      // final_answer からペルソナ票を抽出（権威ある情報源）
+      const voteLines = [...fa.matchAll(/^- (.+?)[：:]\s*(.+)$/gm)];
       const voteColors = { '賛成': 'text-green-400', '反対': 'text-red-400', '保留': 'text-yellow-400' };
-      document.getElementById('votes').innerHTML = Object.entries(personaMap).map(([persona, vote]) => `
+      document.getElementById('votes').innerHTML = voteLines.map(([_, persona, vote]) => `
         <div class="text-center">
           <div class="text-xs text-gray-500 mb-1">${persona}</div>
-          <div class="text-sm font-bold ${voteColors[vote] || 'text-gray-300'}">${vote}</div>
+          <div class="text-sm font-bold ${voteColors[vote.trim()] || 'text-gray-300'}">${vote.trim()}</div>
         </div>
       `).join('');
 
       // 判定理由
-      const reasoningMatch = r.final_answer.match(/## 判定理由[^]*?\n([\s\S]+)$/);
+      const reasoningMatch = fa.match(/## 判定理由[^\n]*\n([\s\S]+)$/);
       document.getElementById('reasoning').textContent = reasoningMatch ? reasoningMatch[1].trim() : '';
 
-      // 議論
-      document.getElementById('discussion').innerHTML = r.discussion.map(d => `
+      // 議論（## MAGI以降の混入テキストを除去）
+      document.getElementById('discussion').innerHTML = r.discussion.map(d => {
+        const clean = d.response.replace(/\n## MAGI[\s\S]*$/, '').trim();
+        return `
         <div class="border-t border-gray-800 pt-4 first:border-0 first:pt-0">
           <div class="text-xs text-green-500 font-bold mb-1">${d.persona}</div>
-          <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">${d.response}</div>
-        </div>
-      `).join('');
+          <div class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">${clean}</div>
+        </div>`;
+      }).join('');
     }
 
     function toggleDiscussion() {
