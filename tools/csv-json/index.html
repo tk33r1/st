@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ファイルの読み込み・保存を主体とした変換ツールです。中央のボタンで相互に変換できます。">
     <title>CSV to JSON 変換ツール</title>
+    
+    <!-- SVGファビコンの設定 (相互変換の矢印アイコンをニトリカラーで設定) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23009E96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m16 3 4 4-4 4'/%3E%3Cpath d='M20 7H4'/%3E%3Cpath d='m8 21-4-4 4-4'/%3E%3Cpath d='M4 17h16'/%3E%3C/svg%3E">
+
     <!-- Tailwind CSS (スタイリング用) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -57,12 +62,17 @@
 
     <div class="max-w-7xl mx-auto flex flex-col h-full md:h-[calc(100vh-4rem)]">
         <!-- ヘッダー部分 -->
-        <header class="mb-4 text-center md:text-left shrink-0">
+        <header class="mb-5 text-center md:text-left shrink-0">
             <h1 class="text-2xl font-bold text-slate-800 flex items-center justify-center md:justify-start gap-3">
                 <i data-lucide="arrow-right-left" class="w-7 h-7 text-nitori"></i>
                 CSV ↔ JSON 相互変換ツール
             </h1>
-            <p class="text-slate-500 mt-1 text-sm">ファイルの読み込み・保存を主体とした変換ツールです。中央のボタンで相互に変換できます。</p>
+            
+            <!-- セキュリティに関する安心メッセージ -->
+            <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-xs font-medium border border-slate-200 shadow-sm">
+                <i data-lucide="shield-check" class="w-4 h-4 text-nitori"></i>
+                入力データはブラウザ内で処理され、外部サーバーには送信・保存されません。安心してご利用いただけます。
+            </div>
         </header>
 
         <!-- メインコンテンツ (3カラム風レイアウト: 左パネル - 変換ボタン - 右パネル) -->
@@ -246,7 +256,7 @@
                     else val = String(val);
                     
                     // カンマ、改行、ダブルクォートが含まれる場合はエスケープ
-                    if (val.includes(',') || val.includes('\\n') || val.includes('"')) {
+                    if (val.includes(',') || val.includes('\n') || val.includes('"')) {
                         val = '"' + val.replace(/"/g, '""') + '"';
                     }
                     return val;
@@ -335,7 +345,7 @@
         // アップロードの共通機能
         const setupFileUpload = (uploadBtn, fileInput, textarea, typeLabel) => {
             uploadBtn.addEventListener('click', () => {
-                fileInput.click(); // 隠してあるinput要素をクリックさせる
+                fileInput.click();
             });
 
             fileInput.addEventListener('change', (event) => {
@@ -346,7 +356,6 @@
                 reader.onload = (e) => {
                     textarea.value = e.target.result;
                     showToast(`${file.name} を読み込みました！`);
-                    // 同じファイルを再度読み込めるようにリセット
                     fileInput.value = '';
                 };
                 reader.onerror = () => {
