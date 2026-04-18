@@ -6,8 +6,9 @@
   <title>MAGI</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4">
+<body class="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
 
+  <main class="flex-1 flex items-center justify-center p-4">
   <div class="w-full max-w-2xl">
     <h1 class="text-2xl font-bold mb-6 text-center tracking-widest text-green-400">MAGI</h1>
 
@@ -81,6 +82,21 @@
 
     </div>
   </div>
+  </main>
+
+  <footer class="px-6 pb-4 flex items-center">
+    <div class="flex-1"></div>
+    <span class="text-xs text-gray-600">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+    <div class="flex-1 flex justify-end items-center">
+      <div id="donation-button-container"></div>
+    </div>
+  </footer>
+
+  <script src="../data/buy-me-a-coffee.js"></script>
+  <script>
+    new DonationWidget({ containerId: 'donation-button-container' }).init();
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+  </script>
 
   <script>
     const API = 'https://workers.tk.st/magi';

@@ -253,8 +253,12 @@
         </div>
         
         <!-- フッター -->
-        <footer class="mt-2 text-center text-xs text-slate-400 shrink-0">
-            &copy; <span id="currentYear"></span> Shinya Takeda
+        <footer class="mt-2 text-xs text-slate-400 shrink-0 flex items-center">
+            <div class="flex-1"></div>
+            <span>&copy; <span id="currentYear"></span> Shinya Takeda</span>
+            <div class="flex-1 flex justify-end items-center">
+                <div id="donation-button-container"></div>
+            </div>
         </footer>
     </div>
 
@@ -718,5 +722,8 @@
         document.getElementById('currentYear').textContent = new Date().getFullYear();
 
     </script>
+
+    <script src="../../data/buy-me-a-coffee.js"></script>
+    <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 </body>
 </html>
