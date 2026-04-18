@@ -84,7 +84,7 @@ class DonationWidget {
         this.modal.setAttribute('role', 'dialog');
         this.modal.setAttribute('aria-modal', 'true');
         this.modal.setAttribute('aria-labelledby', 'donation-modal-title');
-        this.modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4';
+        this.modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;';
         this.modal.innerHTML = `
             <div class="bg-white rounded-2xl w-full max-w-2xl relative flex flex-col shadow-2xl overflow-hidden" style="max-height: 90vh;">
                 <button id="donation-close-btn"
@@ -156,13 +156,13 @@ class DonationWidget {
 
         const openModal = () => {
             this._prevOverflow = document.body.style.overflow;
-            this.modal.classList.remove('hidden');
+            this.modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             this.closeBtn.focus();
         };
 
         const closeModal = () => {
-            this.modal.classList.add('hidden');
+            this.modal.style.display = 'none';
             document.body.style.overflow = this._prevOverflow;
         };
 
