@@ -83,18 +83,16 @@ class DonationWidget {
         this.modal.setAttribute('role', 'dialog');
         this.modal.setAttribute('aria-modal', 'true');
         this.modal.setAttribute('aria-labelledby', 'donation-modal-title');
-        this.modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden;';
+        this.modal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100%;background:rgba(0,0,0,0.5);z-index:2147483647;display:none;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden;';
         this.modal.innerHTML = `
             <div style="position:relative;display:flex;flex-direction:column;background:#fff;border-radius:1rem;width:calc(100vw - 2rem);max-width:42rem;max-height:90vh;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;box-sizing:border-box;">
-                <div style="display:flex;align-items:center;justify-content:flex-end;padding:0.75rem 0.75rem 0;flex-shrink:0;">
-                    <button id="donation-close-btn"
-                            aria-label="閉じる"
-                            style="background:#fff;border:1px solid #e5e7eb;border-radius:9999px;padding:0.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.12);color:#4b5563;flex-shrink:0;">
-                        <svg xmlns="http://www.w3.org/2000/svg" style="width:1.5rem;height:1.5rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
+                <button id="donation-close-btn"
+                        aria-label="閉じる"
+                        style="position:absolute;top:0.75rem;right:0.75rem;z-index:10;background:#fff;border:1px solid #e5e7eb;border-radius:9999px;padding:0.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.12);color:#4b5563;">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width:1.5rem;height:1.5rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
                 <div style="overflow-y:auto;overflow-x:hidden;width:100%;flex:1 1 auto;background:#f9f9f9;">
                     <h2 id="donation-modal-title" class="sr-only">Buy Me a Coffee</h2>
                     <iframe src="https://ko-fi.com/${this.kofiId}/?hidefeed=true&widget=true&embed=true&preview=true"
@@ -155,16 +153,20 @@ class DonationWidget {
 
         const triggerBtn = this.openBtnWrapper.querySelector('button');
 
+        const scrollTopBtn = document.getElementById('scroll-top-btn');
+
         const openModal = () => {
             this._prevOverflow = document.body.style.overflow;
             this.modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            if (scrollTopBtn) scrollTopBtn.style.display = 'none';
             this.closeBtn.focus();
         };
 
         const closeModal = () => {
             this.modal.style.display = 'none';
             document.body.style.overflow = this._prevOverflow;
+            if (scrollTopBtn) scrollTopBtn.style.display = '';
         };
 
         triggerBtn.addEventListener('click', openModal, { signal });
@@ -175,7 +177,7 @@ class DonationWidget {
         }, { signal });
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !this.modal.classList.contains('hidden')) closeModal();
+            if (e.key === 'Escape' && this.modal.style.display !== 'none') closeModal();
         }, { signal });
     }
 }
