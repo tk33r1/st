@@ -175,7 +175,7 @@
     ::-webkit-scrollbar-track { background: var(--bg-color); }
     ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
     .cmd-input { background: transparent; border: none; outline: none; color: var(--text-color); }
-    .window-btn:hover .window-icon { opacity: 1; }
+    #window-btns:hover .window-icon { opacity: 1; }
     .window-icon { opacity: 0; transition: opacity 0.2s; color: rgba(0, 0, 0, 0.6); width: 8px; height: 8px; will-change: opacity; }
     .window-btn { transition: opacity 0.2s, transform 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: opacity, transform; }
     .window-btn:hover { opacity: 0.8; }
@@ -289,7 +289,7 @@
 
   <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
    <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
-    <div class="flex gap-2.5">
+    <div class="flex gap-2.5" id="window-btns">
      <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg></button>
      <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg></button>
      <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen" aria-label="Toggle Fullscreen"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"><path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/></svg></button>
