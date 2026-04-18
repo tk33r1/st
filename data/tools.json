@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "title": "CSV ↔ JSON 相互変換ツール",
+    "url": "https://tk.st/tools/csv-json/",
+    "imageUrl": "https://tk.st/images/ogp/csv-json-ogp.png",
+    "category": "converter",
+    "description": "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
+    "tags": ["CSV", "JSON", "変換"]
+  }
+]

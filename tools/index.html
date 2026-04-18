@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="開発・業務で使えるWebツール集">
+  <title>ST TOOLS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%232563eb'/%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="canonical" href="https://tk.st/tools/">
+  <link rel="author" href="https://tk.st/">
+  <meta property="og:title" content="ST TOOLS">
+  <meta property="og:description" content="開発・業務で使えるWebツール集">
+  <meta property="og:image" content="https://tk.st/images/ogp/st-tools-ogp.png">
+  <meta property="og:url" content="https://tk.st/tools/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Shinya Takeda - Terminal Portfolio", "item": "https://tk.st/"},
+          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"}
+        ]
+      },
+      {
+        "@type": "CollectionPage",
+        "@id": "https://tk.st/tools/",
+        "url": "https://tk.st/tools/",
+        "name": "ST TOOLS",
+        "description": "開発・業務で使えるWebツール集",
+        "author": {"@type": "Person", "@id": "https://tk.st/#shitake"}
+      }
+    ]
+  }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      background-color: #f0f9ff;
+      color: #0f172a;
+      font-family: "Inter", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ========== Hero Header ========== */
+    .site-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #0284c7 100%);
+      background-size: 200% 200%;
+      animation: gradient-drift 10s ease infinite;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    @keyframes gradient-drift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Dot pattern */
+    .site-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
+      background-size: 22px 22px;
+      pointer-events: none;
+    }
+
+    /* Light orb */
+    .site-header::after {
+      content: '';
+      position: absolute;
+      top: -60%;
+      right: -10%;
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* Search input inside the blue header */
+    .header-search {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 9px 12px 9px 36px;
+      width: 100%;
+      transition: background 150ms ease, border-color 150ms ease;
+      backdrop-filter: blur(4px);
+    }
+    .header-search::placeholder { color: rgba(255,255,255,0.6); }
+    .header-search:focus {
+      outline: none;
+      background: rgba(255,255,255,0.22);
+      border-color: rgba(255,255,255,0.65);
+    }
+
+    .header-select {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 9px 32px 9px 12px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: background 150ms ease, border-color 150ms ease;
+      backdrop-filter: blur(4px);
+      background-color: rgba(255,255,255,0.15);
+    }
+    .header-select option { background: #1e3a8a; color: #fff; }
+    .header-select:focus { outline: none; border-color: rgba(255,255,255,0.65); }
+
+    /* ========== Card ========== */
+    .tool-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 4px 14px rgba(15,23,42,0.05);
+      transition: transform 220ms cubic-bezier(0.175,0.885,0.32,1.1),
+                  box-shadow 220ms ease,
+                  border-color 220ms ease;
+      position: relative;
+    }
+
+    /* Blue top accent bar */
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #2563eb, #0ea5e9);
+      opacity: 0;
+      transition: opacity 220ms ease;
+      z-index: 1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px);
+      border-color: #bfdbfe;
+      box-shadow: 0 16px 40px rgba(37,99,235,0.14), 0 4px 16px rgba(37,99,235,0.08);
+    }
+    .tool-card:hover::before { opacity: 1; }
+
+    .tool-img-wrap {
+      position: relative;
+      aspect-ratio: 1200 / 630;
+      background: #f1f5f9;
+      overflow: hidden;
+    }
+    .tool-img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      transition: transform 400ms ease;
+    }
+    .tool-card:hover .tool-img { transform: scale(1.03); }
+    .tool-img-fallback {
+      position: absolute; inset: 0;
+      display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; color: #94a3b8; font-size: 12px;
+    }
+
+    /* ========== Badges ========== */
+    .category-badge {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 99px;
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+    }
+    .tag-chip {
+      font-size: 11px; padding: 2px 8px; border-radius: 99px;
+      background: #f8fafc;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    .badge-new {
+      position: absolute; top: 10px; left: 10px; z-index: 2;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 99px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+    }
+
+    /* ========== Open button ========== */
+    .open-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600;
+      padding: 8px 18px; border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      color: #fff;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+      transition: filter 150ms ease, transform 100ms ease, box-shadow 150ms ease;
+    }
+    .open-btn:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 4px 16px rgba(37,99,235,0.4);
+    }
+    .open-btn:active { transform: scale(0.97); }
+
+    /* ========== Category filter ========== */
+    #category-filter {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    #category-filter.visible { display: flex; }
+
+    .filter-chip {
+      font-size: 13px; font-weight: 500;
+      padding: 6px 16px; border-radius: 99px;
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      color: #64748b;
+      cursor: pointer; white-space: nowrap;
+      transition: border-color 150ms ease, background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+    }
+    .filter-chip:hover {
+      border-color: #93c5fd;
+      color: #2563eb;
+      background: #eff6ff;
+    }
+    .filter-chip.active {
+      border-color: #2563eb;
+      background: #2563eb;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    }
+
+    /* ========== Skeleton ========== */
+    .skeleton {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ========== Scroll-to-top ========== */
+    #scroll-top-btn {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      width: 40px; height: 40px; border-radius: 10px;
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      color: #64748b;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(15,23,42,0.1);
+      opacity: 0; pointer-events: none;
+      transition: opacity 250ms ease, transform 250ms ease, border-color 150ms ease, color 150ms ease;
+      transform: translateY(8px);
+    }
+    #scroll-top-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    #scroll-top-btn:hover { border-color: #93c5fd; color: #2563eb; }
+
+    /* ========== Message bar ========== */
+    .msg-error {
+      background: #fff1f2; border-color: #fecdd3; color: #be123c;
+    }
+    .msg-info {
+      background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8;
+    }
+
+    /* ========== Page-wide wrench cursor ========== */
+    body,
+    a, button, select, label, .filter-chip, .open-btn, #scroll-top-btn {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 4 4, auto;
+    }
+    input, textarea {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 4 4, text;
+    }
+
+    /* ========== Header wrench animation ========== */
+    #header-wrench {
+      animation: wrench-ratchet 2.4s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes wrench-ratchet {
+      0%   { transform: scaleX(-1) rotate(0deg); }
+      18%  { transform: scaleX(-1) rotate(38deg); }
+      32%  { transform: scaleX(-1) rotate(0deg); }
+      50%  { transform: scaleX(-1) rotate(38deg); }
+      64%  { transform: scaleX(-1) rotate(0deg); }
+      100% { transform: scaleX(-1) rotate(0deg); }
+    }
+
+    /* ========== Fade-up ========== */
+    .fade-up { animation: fadeUp 380ms ease both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ========== Section divider wave ========== */
+    .wave-divider {
+      display: block;
+      width: 100%;
+      height: 24px;
+      margin-bottom: -2px;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+  <!-- ===== Hero Header ===== -->
+  <header class="site-header">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-3 relative z-10">
+
+      <div class="flex items-center gap-3">
+        <i data-lucide="wrench" id="header-wrench" class="w-6 h-6 text-white/90 shrink-0"></i>
+        <h1 class="text-white font-extrabold tracking-tight shrink-0" style="font-size:18px;letter-spacing:-0.02em">ST TOOLS</h1>
+        <span class="text-sm font-medium px-2.5 py-0.5 rounded-full shrink-0"
+              style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(4px);font-size:12px">
+          <span id="tool-count">0</span> tools
+        </span>
+        <div class="flex items-center gap-2 flex-1 justify-end">
+          <div class="relative w-48 sm:w-64">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60"></i>
+            <input type="text" id="search-input" placeholder="Search tools..."
+                   class="header-search" autocomplete="off" aria-label="Search tools">
+          </div>
+          <select id="sort-select" class="header-select shrink-0" aria-label="Sort tools">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="title">Title</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Wave separator -->
+    <svg class="wave-divider" viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z" fill="#f0f9ff"/>
+    </svg>
+  </header>
+
+  <!-- ===== Main ===== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-8">
+
+    <div id="message-bar" class="hidden mb-5 px-4 py-3 rounded-lg border text-sm"></div>
+    <div id="category-filter"></div>
+
+    <div id="empty-state" class="hidden text-center py-24">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-blue-100 shadow-sm mb-4">
+        <i data-lucide="search-x" class="w-7 h-7 text-blue-300"></i>
+      </div>
+      <p class="text-slate-500 text-sm font-medium">No tools found.</p>
+    </div>
+
+    <div id="tool-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="border-t mt-auto" style="background:#fff;border-color:#e2e8f0">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-5 flex items-center justify-center relative">
+      <span style="font-size:13px;color:#94a3b8">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <div id="donation-button-container" class="absolute right-4 sm:right-6 lg:right-10"></div>
+    </div>
+  </footer>
+
+  <!-- Scroll-to-top -->
+  <button id="scroll-top-btn" aria-label="Scroll to top">
+    <i data-lucide="chevron-up" class="w-4 h-4"></i>
+  </button>
+
+  <script src="../data/buy-me-a-coffee.js"></script>
+  <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
+
+  <script>
+    let records = [];
+    let newIds = new Set();
+    let activeCategory = 'all';
+
+    const grid = document.getElementById('tool-grid');
+    const emptyState = document.getElementById('empty-state');
+    const countEl = document.getElementById('tool-count');
+    const messageBar = document.getElementById('message-bar');
+    const searchInput = document.getElementById('search-input');
+    const sortSelect = document.getElementById('sort-select');
+    const categoryFilter = document.getElementById('category-filter');
+    const scrollTopBtn = document.getElementById('scroll-top-btn');
+
+    const escapeHTML = (str) => String(str).replace(/[&<>"']/g, m =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])
+    );
+
+    function showMessage(text, type) {
+      if (!text) { messageBar.classList.add('hidden'); messageBar.textContent = ''; return; }
+      messageBar.classList.remove('hidden');
+      messageBar.textContent = text;
+      messageBar.className = `mb-5 px-4 py-3 rounded-lg border text-sm ${type === 'error' ? 'msg-error' : 'msg-info'}`;
+    }
+
+    function showSkeletons(count = 6) {
+      grid.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'tool-card';
+        sk.innerHTML = `
+          <div class="skeleton" style="aspect-ratio:1200/630"></div>
+          <div class="p-4 flex flex-col gap-3">
+            <div class="skeleton h-4 w-1/4"></div>
+            <div class="skeleton h-5 w-3/4"></div>
+            <div class="skeleton h-3 w-full"></div>
+            <div class="skeleton h-3 w-5/6"></div>
+          </div>
+        `;
+        grid.appendChild(sk);
+      }
+    }
+
+    function renderCategoryChips() {
+      const cats = [...new Set(records.map(r => r.category).filter(Boolean))].sort();
+      if (!cats.length) return;
+      categoryFilter.classList.add('visible');
+      categoryFilter.innerHTML = '';
+      ['all', ...cats].forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-chip' + (cat === activeCategory ? ' active' : '');
+        btn.textContent = cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1);
+        btn.addEventListener('click', () => {
+          activeCategory = cat;
+          renderCategoryChips();
+          updateView();
+        });
+        categoryFilter.appendChild(btn);
+      });
+    }
+
+    function createCard(record) {
+      const card = document.createElement('article');
+      card.className = 'tool-card fade-up';
+
+      const title = escapeHTML(record.title);
+      const desc = escapeHTML(record.description || '');
+      const category = record.category ? escapeHTML(record.category) : '';
+      const url = escapeHTML(record.url);
+      const imgUrl = escapeHTML(record.imageUrl || '');
+      const tags = (record.tags || []).map(t => escapeHTML(t));
+      const isNew = newIds.has(record.id);
+
+      card.innerHTML = `
+        <div class="tool-img-wrap">
+          <img src="${imgUrl}" alt="${title}" loading="lazy" class="tool-img"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="tool-img-fallback">
+            <i data-lucide="image-off" class="w-8 h-8 opacity-40"></i>
+            <span>No preview</span>
+          </div>
+          ${isNew ? `<span class="badge-new">New</span>` : ''}
+        </div>
+        <div class="p-4 flex flex-col gap-2.5 flex-grow">
+          ${category ? `<div><span class="category-badge">${category}</span></div>` : ''}
+          <h3 style="font-size:15px;font-weight:600;line-height:1.45;color:#0f172a;margin:0">${title}</h3>
+          <p style="font-size:13px;line-height:1.65;color:#64748b;flex-grow:1;margin:0">${desc}</p>
+          ${tags.length ? `
+            <div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:2px">
+              ${tags.map(t => `<span class="tag-chip">${t}</span>`).join('')}
+            </div>` : ''}
+          <div style="padding-top:12px;margin-top:auto;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end">
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="open-btn">
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              Open
+            </a>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    function updateView() {
+      const term = searchInput.value.toLowerCase();
+      const sortType = sortSelect.value;
+
+      let filtered = records.filter(r => {
+        const matchSearch = `${r.title} ${r.description || ''} ${r.category || ''} ${(r.tags || []).join(' ')}`.toLowerCase().includes(term);
+        const matchCat = activeCategory === 'all' || r.category === activeCategory;
+        return matchSearch && matchCat;
+      });
+
+      filtered.sort((a, b) => {
+        if (sortType === 'title') return a.title.localeCompare(b.title, 'ja');
+        if (sortType === 'oldest') return a.id - b.id;
+        return b.id - a.id;
+      });
+
+      grid.innerHTML = '';
+      filtered.forEach((record, i) => {
+        const card = createCard(record);
+        card.style.animationDelay = `${i * 40}ms`;
+        grid.appendChild(card);
+      });
+
+      countEl.textContent = filtered.length;
+      emptyState.classList.toggle('hidden', filtered.length > 0);
+      lucide.createIcons();
+    }
+
+    async function loadTools() {
+      showSkeletons(6);
+      try {
+        const res = await fetch('https://tk.st/data/tools.json');
+        if (!res.ok) throw new Error('Network error');
+        records = await res.json();
+      } catch {
+        showMessage('データの読み込みに失敗しました。', 'error');
+        records = [
+          {
+            id: 1,
+            title: "CSV ↔ JSON 相互変換ツール",
+            url: "https://tk.st/tools/csv-json/",
+            imageUrl: "https://tk.st/images/ogp/csv-json-ogp.png",
+            category: "converter",
+            description: "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
+            tags: ["CSV", "JSON"]
+          }
+        ];
+      } finally {
+        const sorted = [...records].sort((a, b) => b.id - a.id);
+        newIds = new Set(sorted.slice(0, 2).map(r => r.id));
+        renderCategoryChips();
+        updateView();
+      }
+    }
+
+    window.addEventListener('scroll', () => {
+      scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+    });
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    searchInput.addEventListener('input', updateView);
+    sortSelect.addEventListener('change', updateView);
+    lucide.createIcons();
+    loadTools();
+
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
