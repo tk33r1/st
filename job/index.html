@@ -749,7 +749,7 @@
 
    <footer class="footer-grid relative">
     <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-10 flex items-center justify-center">
-     <p id="footerText" class="text-sm text-slate-700">© 2026 Shinya Takeda. All Rights Reserved.</p>
+     <p id="footerText" class="text-sm text-slate-700">© <span id="copyright-year"></span> Shinya Takeda</p>
     </div>
    </footer>
 
@@ -1031,6 +1031,7 @@
       });
     });
 
+    document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
  </body>
 </html>

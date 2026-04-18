@@ -1014,7 +1014,7 @@
 
   <!-- FOOTER -->
   <footer class="site-footer">
-    ©2026 DJ Human Choreomania Project. All Rights Reserved.
+    © <span id="copyright-year"></span> Shinya Takeda
   </footer>
 
   <!-- Image Modal -->
@@ -1173,6 +1173,8 @@
 
     // 6. Initialize Lucide Icons
     lucide.createIcons();
+
+    document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>

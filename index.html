@@ -245,8 +245,9 @@
     <h3><a href="https://tk.st/dj">Overview | DJ Human Choreomania Project</a></h3>
     <h3><a href="https://tk.st/job">An Optimization and data-driven growth strategy.</a></h3>
     <h3><a href="https://tk.st/game">AI coding benchmark: Game Sandbox</a></h3>
-    <h3><a href="https://tk.st/think">A shared margin for contemplating the essence of life.</a></h3>
+    <h3><a href="https://tk.st/tools">AI coding benchmark: Toolbox</a></h3>
     <h3><a href="https://tk.st/glitch">Finding the "bugs" that lead to better living.</a></h3>
+    <h3><a href="https://tk.st/thought">A shared margin for contemplating the essence of life.</a></h3>
     <h2><a href="?cmd=bitcoin">bitcoin</a></h2>
     <p>Enjoy Web3 journey</p>
     <h3><a href="https://tk.st/bitcoinyen/ascii-roguelike">Play to Earn: ASCII Roguelike</a></h3>
@@ -320,7 +321,7 @@
    </main>
    
    <footer id="terminal-footer" class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto bg-surface border-color text-secondary">
-    <span id="status-left">READY</span> <span id="status-right"></span>
+    <span id="status-left">READY</span> <span class="opacity-50">© <span id="copyright-year"></span> Shinya Takeda</span> <span id="status-right"></span>
    </footer>
   </div>
 
@@ -368,9 +369,10 @@
     const projects = [
       { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj' },
       { name: '/job', desc: 'An Optimization and data-driven growth strategy.', tech: 'EC, UIUX, Search Engine, Web ads, GA4, Frontend, Web3, SEO, AIO, AI Agent', link: 'https://tk.st/job' },
-      { name: '/game', desc: 'AI coding benchmark: Game Sandbox', tech: 'Gemini, ChatGPT, Canva AI, Claude, Antigravity', link: 'https://tk.st/game' },
-      { name: '/think', desc: 'A shared margin for contemplating the essence of life.', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/think' },
-      { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch' }
+      { name: '/game', desc: 'AI coding benchmark: Game Sandbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/game' },
+      { name: '/tools', desc: 'AI coding benchmark: Toolbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/tools' },
+      { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch' },
+      { name: '/thought', desc: 'A shared margin for contemplating the essence of life.', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/thought' }
     ];
 
     const PROFILE_DATA = {
@@ -730,7 +732,7 @@
       }
     };
 
-    const urlCommands = { '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/think': 'https://tk.st/think', '/glitch': 'https://tk.st/glitch', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' };
+    const urlCommands = { '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/glitch': 'https://tk.st/glitch', '/thought': 'https://tk.st/thought', '/tools': 'https://tk.st/tools', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
         window.open(url, '_blank', 'noopener,noreferrer');
@@ -863,6 +865,7 @@
 
     DOM.app.addEventListener('click', (e) => { if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch')) DOM.input.focus(); });
     setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
+    document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
     async function softReload() {
       const overlay = document.getElementById('close-overlay');

@@ -316,7 +316,7 @@
       </div>
 
       <div id="footerBottom" class="w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]">
-        <p id="copyright" class="text-center text-[10px] sm:text-xs tracking-[0.1em] transition-colors duration-700">© 2026 Shinya Takeda. All Rights Reserved.</p>
+        <p id="copyright" class="text-center text-[10px] sm:text-xs tracking-[0.1em] transition-colors duration-700">© <span id="copyright-year"></span> Shinya Takeda</p>
       </div>
     </footer>
   </main>
@@ -803,6 +803,8 @@
     lucide.createIcons();
 
     applyConfig();
+
+    document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
