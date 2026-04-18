@@ -288,6 +288,77 @@
       60% { transform: scale(1); }
       100% { transform: scale(1); }
     }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, rgba(255,255,255,0.07) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    #genre-filter {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    #genre-filter.visible { display: flex; }
+
+    .genre-chip {
+      font-family: "Press Start 2P", cursive;
+      font-size: 10px;
+      border: 2px solid rgba(0,229,255,0.3);
+      background: rgba(0,229,255,0.05);
+      color: var(--text);
+      cursor: pointer;
+      padding: 6px 12px;
+      white-space: nowrap;
+      transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+    .genre-chip:hover {
+      border-color: var(--primary);
+      background: rgba(0,229,255,0.12);
+    }
+    .genre-chip.active {
+      border-color: var(--primary);
+      background: rgba(0,229,255,0.2);
+      color: var(--primary);
+      box-shadow: 0 0 8px rgba(0,229,255,0.28);
+    }
+
+    .badge-new {
+      font-family: "Press Start 2P", cursive;
+      font-size: 8px;
+      background: var(--secondary);
+      color: #000;
+      padding: 2px 5px;
+      vertical-align: middle;
+      animation: badge-pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes badge-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,79,216,0.6); }
+      50% { box-shadow: 0 0 10px 3px rgba(255,79,216,0.28); }
+    }
+
+    #scroll-top-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 300ms ease, transform 300ms ease;
+      transform: translateY(12px);
+    }
+    #scroll-top-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
   </style>
 </head>
 
@@ -330,7 +401,9 @@
     <main class="w-full px-4 sm:px-6 lg:px-10 pb-8 relative z-10">
       <section class="max-w-6xl mx-auto">
         <div id="message-bar" class="hidden mb-4 retro-panel px-4 py-3 text-[20px]"></div>
-        
+
+        <div id="genre-filter"></div>
+
         <div id="empty-state" class="retro-panel p-8 sm:p-10 text-center fade-up hidden">
           <div class="mx-auto w-16 h-16 flex items-center justify-center mb-5">
             <i data-lucide="ghost" class="w-12 h-12 opacity-60"></i>
@@ -352,6 +425,10 @@
       </div>
     </footer>
   </div>
+
+  <button id="scroll-top-btn" class="pixel-btn px-3 py-2.5 bg-[var(--surface)] border-cyan-400/70 text-cyan-300" aria-label="Scroll to top">
+    <i data-lucide="chevrons-up" class="w-5 h-5"></i>
+  </button>
 
   <script src="../data/buy-me-a-coffee.js"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
@@ -411,21 +488,64 @@
 
     // --- メインロジック ---
     let records = [];
+    let newIds = new Set();
+    let activeGenre = 'all';
     const grid = document.getElementById("game-grid");
     const emptyState = document.getElementById("empty-state");
     const countEl = document.getElementById("game-count");
     const messageBar = document.getElementById("message-bar");
     const searchInput = document.getElementById("search-input");
     const sortSelect = document.getElementById("sort-select");
+    const genreFilter = document.getElementById("genre-filter");
+    const scrollTopBtn = document.getElementById("scroll-top-btn");
+    const appEl = document.getElementById("app");
 
     function showMessage(text, type) {
       if (!text) {
         messageBar.classList.add("hidden");
+        messageBar.textContent = '';
         return;
       }
       messageBar.classList.remove("hidden");
       messageBar.textContent = text;
       messageBar.style.borderColor = type === "error" ? "var(--secondary)" : "var(--primary)";
+    }
+
+    function showSkeletons(count = 6) {
+      grid.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'game-card p-4 flex flex-col gap-4';
+        sk.innerHTML = `
+          <div class="skeleton aspect-[1200/630] w-full"></div>
+          <div class="flex flex-col gap-3 pt-1">
+            <div class="skeleton h-4 w-3/4 rounded-sm"></div>
+            <div class="skeleton h-3 w-1/4 rounded-sm"></div>
+            <div class="skeleton h-3 w-full rounded-sm"></div>
+            <div class="skeleton h-3 w-5/6 rounded-sm"></div>
+          </div>
+        `;
+        grid.appendChild(sk);
+      }
+    }
+
+    function renderGenreChips() {
+      const genres = [...new Set(records.map(r => r.genre).filter(Boolean))].sort();
+      if (genres.length === 0) return;
+      genreFilter.classList.add('visible');
+      genreFilter.innerHTML = '';
+      ['all', ...genres].forEach(genre => {
+        const chip = document.createElement('button');
+        chip.className = 'genre-chip' + (genre === activeGenre ? ' active' : '');
+        chip.textContent = genre === 'all' ? 'ALL' : genre.toUpperCase();
+        chip.addEventListener('click', () => {
+          activeGenre = genre;
+          playBeep(800, 'square', 0.04);
+          renderGenreChips();
+          updateView();
+        });
+        genreFilter.appendChild(chip);
+      });
     }
 
     // XSS対策用のエスケープ関数
@@ -436,8 +556,6 @@
     function createCard(record) {
       const card = document.createElement("article");
       card.className = "game-card fade-up p-4 flex flex-col gap-4 group cursor-pointer";
-      card.dataset.id = record.id;
-      
       const title = escapeHTML(record.title);
       const desc = escapeHTML(record.description || '');
       const genre = record.genre ? escapeHTML(record.genre) : '';
@@ -445,15 +563,18 @@
       const url = escapeHTML(record.url);
       const imgUrl = escapeHTML(record.imageUrl);
 
+      const isNew = newIds.has(record.id);
+
       card.innerHTML = `
         <div class="img-frame aspect-[1200/630] w-full relative overflow-hidden">
-          <img src="${imgUrl}" alt="${title}" loading="lazy" 
+          <img src="${imgUrl}" alt="${title}" loading="lazy"
                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-               onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');">
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
           <div class="hidden absolute inset-0 flex-col items-center justify-center bg-black/50 text-white/50">
             <i data-lucide="tv" class="w-10 h-10 mb-2"></i>
             <span class="text-[24px]">NO SIGNAL</span>
           </div>
+          ${isNew ? `<span class="badge-new absolute top-2 left-2">NEW!</span>` : ''}
         </div>
         <div class="flex flex-col gap-3 flex-grow">
           <h3 class="pixel-title glitch text-[14px] sm:text-[16px] leading-relaxed text-cyan-300" data-text="${title}">${title}</h3>
@@ -484,9 +605,11 @@
       const term = searchInput.value.toLowerCase();
       const sortType = sortSelect.value;
       
-      let filtered = records.filter(r => 
-        `${r.title} ${r.description || ''} ${r.genre || ''} ${r.ai || ''}`.toLowerCase().includes(term)
-      );
+      let filtered = records.filter(r => {
+        const matchSearch = `${r.title} ${r.description || ''} ${r.genre || ''} ${r.ai || ''}`.toLowerCase().includes(term);
+        const matchGenre = activeGenre === 'all' || r.genre === activeGenre;
+        return matchSearch && matchGenre;
+      });
       
       filtered.sort((a, b) => {
         if (sortType === 'title') return a.title.localeCompare(b.title, 'ja');
@@ -501,13 +624,19 @@
         grid.appendChild(card);
       });
       
-      countEl.textContent = String(filtered.length);
+      countEl.textContent = filtered.length;
       emptyState.classList.toggle("hidden", filtered.length > 0);
       
       lucide.createIcons();
     }
 
+    function computeNewIds() {
+      const sorted = [...records].sort((a, b) => b.id - a.id);
+      newIds = new Set(sorted.slice(0, 2).map(r => r.id));
+    }
+
     async function loadGames() {
+      showSkeletons(6);
       try {
         const res = await fetch('https://tk.st/data/game.json');
         if (!res.ok) throw new Error('Network error');
@@ -520,6 +649,8 @@
           { id: 3, title: "NEON RIDER 2099", url: "#", imageUrl: "https://example.com/not-found.jpg", genre: "racing", description: "サイバーパンクな都市を駆け抜けるハイスピードレース。", ai: "Generated by Claude 3.5 Sonnet" }
         ];
       } finally {
+        computeNewIds();
+        renderGenreChips();
         updateView();
       }
     }
@@ -530,6 +661,16 @@
         el.addEventListener('mouseenter', () => playBeep(900, 'square', 0.02));
       });
     }
+
+    // スクロールトップボタン
+    appEl.addEventListener('scroll', () => {
+      scrollTopBtn.classList.toggle('visible', appEl.scrollTop > 300);
+    });
+    scrollTopBtn.addEventListener('click', () => {
+      appEl.scrollTo({ top: 0, behavior: 'smooth' });
+      playBeep(600, 'sine', 0.1);
+    });
+    lucide.createIcons({ nodes: [scrollTopBtn] });
 
     // 初期化処理
     searchInput.addEventListener("input", updateView);
