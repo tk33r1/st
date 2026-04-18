@@ -146,6 +146,8 @@
     .opacity-50 { opacity: 0.5; }
     .opacity-70 { opacity: 0.7; }
     .hover\:underline:hover { text-decoration: underline; }
+    .hover\:border-primary:hover { border-color: var(--primary-color); }
+    .hover\:text-primary:hover { color: var(--primary-color); }
     .overflow-x-auto { overflow-x: auto; }
     .overflow-hidden { overflow: hidden; }
     .no-underline { text-decoration: none; }
@@ -534,12 +536,14 @@
       },
       about() {
         const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
+        const sns = [['X', '@Tah_Keh', 'https://x.com/Tah_Keh'], ['Instagram', '@dj_hcp', 'https://www.instagram.com/dj_hcp/'], ['LinkedIn', 'shinyatakeda', 'https://www.linkedin.com/in/shinyatakeda/'], ['GitHub', 'tk33r1', 'https://github.com/tk33r1'], ['Mixcloud', 'dj_hcp', 'https://www.mixcloud.com/dj_hcp/'], ['Ko-fi', 'shinyatakeda', 'https://ko-fi.com/shinyatakeda']];
         return `
           <div class="my-3 p-4 border rounded w-[90%] max-w-[809px] border-color bg-surface">
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t border-color">${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
+            <div class="flex flex-wrap gap-2 pt-4 mt-3 border-t border-color">${sns.map(([platform, , url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[10px] px-3 py-1 border rounded-full border-color text-secondary hover:border-primary hover:text-primary transition-colors no-underline">${platform}</a>`).join('')}</div>
           </div>`;
       },
       pages: () => `
@@ -864,7 +868,7 @@
     });
 
     DOM.app.addEventListener('click', (e) => { if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch')) DOM.input.focus(); });
-    setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
+    setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false, timeZoneName: 'short' }); }, 1000);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
     async function softReload() {
