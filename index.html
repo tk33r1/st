@@ -194,9 +194,10 @@
     .meditation-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #111827 0%, #000 100%); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 4s ease; }
     .meditation-circle { position: absolute; width: 233px; height: 233px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); box-shadow: 0 0 55px rgba(74,222,128,0.05), inset 0 0 34px rgba(74,222,128,0.05); animation: breatheSlow calc(480s / var(--bpm)) infinite ease-in-out; }
     .meditation-text { position: absolute; color: rgba(255,255,255,0.5); font-size: 13px; text-align: center; letter-spacing: 0.05em; line-height: var(--phi); pointer-events: none; transition: opacity 3s ease; opacity: 0; }
-    .meditation-spiral-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; animation: breatheSlow calc(480s / var(--bpm)) infinite ease-in-out; }
-    .meditation-spiral { width: 150vmin; height: 150vmin; animation: rotateSpiral calc(8640s / var(--bpm)) linear infinite; }
+    .meditation-spiral-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .meditation-spiral { width: 120vmin; height: 120vmin; animation: rotateSpiral calc(8640s / var(--bpm)) linear infinite; }
     @keyframes rotateSpiral { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes phiRingPulse { 0%, 100% { opacity: 0; transform: scale(0.97); } 50% { opacity: 0.25; transform: scale(1); } }
     .destroyed-element { transition: transform 2s ease-in, opacity 2s ease-in !important; transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important; opacity: 0 !important; pointer-events: none !important; }
     .rebuilding-element { transition: transform 1s ease-out, opacity 1s ease-out !important; transform: translate(0px, 0px) rotate(0deg) !important; opacity: 1 !important; pointer-events: auto !important; }
     body.choreomania-active { --mouse-x: 0.5; --mouse-y: 0.5; filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5); }
@@ -658,24 +659,41 @@
         isMeditationActive = true;
         return new Promise(resolve => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
+          const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
           const overlay = document.createElement('div');
           overlay.className = 'meditation-overlay';
+
+          // Two Fibonacci spirals (golden angle offset)
+          const spiralPath = 'M 0 0 A 1 1 0 0 1 1 1 A 1 1 0 0 1 0 2 A 2 2 0 0 1 -2 0 A 3 3 0 0 1 1 -3 A 5 5 0 0 1 6 2 A 8 8 0 0 1 -2 10 A 13 13 0 0 1 -15 -3 A 21 21 0 0 1 6 -24 A 34 34 0 0 1 40 10 A 55 55 0 0 1 -15 65 A 89 89 0 0 1 -104 -24 A 144 144 0 0 1 40 -168 A 233 233 0 0 1 273 65 A 377 377 0 0 1 -104 442 A 610 610 0 0 1 -714 -168 A 987 987 0 0 1 273 -1155';
           const svgWrapper = document.createElement('div');
           svgWrapper.className = 'meditation-spiral-wrapper';
-          svgWrapper.innerHTML = `<svg class="meditation-spiral" viewBox="-1200 -1200 2400 2400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><path d="M 0 0 A 1 1 0 0 1 1 1 A 1 1 0 0 1 0 2 A 2 2 0 0 1 -2 0 A 3 3 0 0 1 1 -3 A 5 5 0 0 1 6 2 A 8 8 0 0 1 -2 10 A 13 13 0 0 1 -15 -3 A 21 21 0 0 1 6 -24 A 34 34 0 0 1 40 10 A 55 55 0 0 1 -15 65 A 89 89 0 0 1 -104 -24 A 144 144 0 0 1 40 -168 A 233 233 0 0 1 273 65 A 377 377 0 0 1 -104 442 A 610 610 0 0 1 -714 -168 A 987 987 0 0 1 273 -1155" fill="none" stroke="currentColor" style="color: var(--primary-color);" stroke-width="1.5" stroke-linecap="round" opacity="0.15"></path></svg>`;
-          const circle = document.createElement('div');
-          circle.className = 'meditation-circle';
+          svgWrapper.innerHTML = `<svg class="meditation-spiral" viewBox="-1200 -1200 2400 2400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="med-fade" cx="50%" cy="50%" r="50%">
+                <stop offset="50%" stop-color="white" stop-opacity="1"/>
+                <stop offset="100%" stop-color="white" stop-opacity="0"/>
+              </radialGradient>
+              <mask id="med-mask">
+                <rect x="-1200" y="-1200" width="2400" height="2400" fill="url(#med-fade)"/>
+              </mask>
+            </defs>
+            <g mask="url(#med-mask)">
+              <path d="${spiralPath}" fill="none" stroke="${primaryColor}" stroke-width="1" stroke-linecap="round" opacity="0.15"/>
+              <path d="${spiralPath}" fill="none" stroke="${primaryColor}" stroke-width="1" stroke-linecap="round" opacity="0.08" transform="rotate(137.508)"/>
+            </g>
+          </svg>`;
+          overlay.appendChild(svgWrapper);
+
           const textContainer = document.createElement('div');
           textContainer.className = 'meditation-text';
           textContainer.setAttribute('aria-live', 'polite');
-          const messages = ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."];
-          overlay.appendChild(svgWrapper);
-          overlay.appendChild(circle); 
-          overlay.appendChild(textContainer); 
+          overlay.appendChild(textContainer);
           document.body.appendChild(overlay);
+
           let isMeditating = true;
           void overlay.offsetWidth;
           overlay.style.opacity = '1';
+          const messages = ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."];
           (async () => {
             await delay(4000);
             for (const msg of messages) {
@@ -687,14 +705,15 @@
               await delay(3000);
             }
             if (isMeditating) {
-              textContainer.innerHTML = "Breathe...<br><span style='font-size:10px; opacity:0.3;'>(Press ESC or Click to return)</span>";
+              textContainer.innerHTML = "Breathe...<br><span style='font-size:10px;opacity:0.3;'>(Press ESC or Click to return)</span>";
               textContainer.style.opacity = '1';
             }
           })();
           const exitMeditation = async (e) => {
             if (e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation(); e.preventDefault();
-            isMeditating = false; overlay.style.opacity = '0';
+            isMeditating = false;
+            overlay.style.opacity = '0';
             document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
             await delay(4000); overlay.remove(); isMeditationActive = false;
             resolve(`<div class="my-3 text-xs text-secondary">Returned to reality.</div>`);
