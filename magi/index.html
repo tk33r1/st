@@ -212,7 +212,7 @@
     <div class="flex items-center gap-3">
       <div class="w-3 h-3 rounded-full bg-eva-green animate-pulse shadow-[0_0_8px_#4ade80]"></div>
       <h1 class="text-lg md:text-xl font-bold eva-glow tracking-widest font-orbitron">ST-MAGI SYSTEM</h1>
-      <button onclick="showInfo()" class="flex items-center justify-center text-eva-green/50 hover:text-eva-green transitシステムion-all outline-none" title="情報">
+      <button onclick="showInfo()" class="flex items-center justify-center text-eva-green/50 hover:text-eva-green transition-all outline-none" title="情報">
         <i data-lucide="info" class="w-5 h-5"></i>
       </button>
     </div>
@@ -732,8 +732,12 @@
         }
         if (!resultData) throw new Error('タイムアウト');
 
-        applyVerdictToAnimPanel(resultData);
-        setStatus('判定完了。結果を出力します。');
+        if (currentMode === 'magi') {
+          applyVerdictToAnimPanel(resultData);
+          setStatus('判定完了。結果を出力します。');
+        } else {
+          setStatus('応答完了。結果を出力します。');
+        }
         await sleep(2000);
 
         addResultToHistory(question, resultData, currentMode);
@@ -846,13 +850,14 @@
       const cardId = `history-${deliberationCount}`;
       const discId = `disc-${deliberationCount}`;
 
+      const isFree = mode === 'free';
+      const personaCount = Object.keys(personaToMagi).length;
+      const borderColor = isFree ? 'border-eva-orange/20' : 'border-eva-green/20';
+      const textColor = isFree ? 'text-eva-orange/80' : 'text-eva-green/80';
       const discussionHtml = r.discussion.map((d, i) => {
         const magiName = personaToMagi[d.persona] || d.persona;
         const displayName = personaDisplayMap[d.persona] || d.persona;
-        const isFree = mode === 'free';
-        const round = (!isFree && r.rounds > 1) ? `Round ${Math.floor(i / Object.keys(personaToMagi).length) + 1} · ` : '';
-        const borderColor = isFree ? 'border-eva-orange/20' : 'border-eva-green/20';
-        const textColor = isFree ? 'text-eva-orange/80' : 'text-eva-green/80';
+        const round = (!isFree && r.rounds > 1) ? `Round ${Math.floor(i / personaCount) + 1} · ` : '';
         const clean = escapeHtml(d.response.trim());
         return `
           <div class="border-l ${borderColor} pl-3 text-xs">
