@@ -699,11 +699,7 @@
       setStatus('システム接続中...');
 
       try {
-        const requestQuestion = currentMode === 'free'
-          ? `※フリートークモードです。判定は省略し、自由に意見を述べてください。\n\n${question}`
-          : question;
-
-        const body = { question: requestQuestion, session_id: sessionId, mode: currentMode };
+        const body = { question, session_id: sessionId, mode: currentMode };
         if (imageBase64) body.image = imageBase64;
 
         const askRes = await fetch(API, {
