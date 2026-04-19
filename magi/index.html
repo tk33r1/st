@@ -215,24 +215,24 @@
         <span class="block md:hidden">ST-MAGI<br>SYSTEM</span>
         <span class="hidden md:block">ST-MAGI SYSTEM</span>
       </h1>
-      <button onclick="showInfo()" class="flex-shrink-0 flex items-center justify-center text-eva-green/50 hover:text-eva-green transition-all outline-none" title="情報">
+      <button onclick="showInfo()" class="flex-shrink-0 flex items-center justify-center text-eva-green/50 hover:text-eva-green transition-all outline-none ml-2 md:ml-0" title="情報">
         <i data-lucide="info" class="w-4 h-4 md:w-5 md:h-5"></i>
       </button>
     </div>
 
     <div class="flex items-center gap-2 md:gap-5 flex-shrink-0">
       <div class="flex flex-col items-end justify-center">
-        <div class="text-[8px] md:text-[9px] text-eva-orange tracking-widest text-right leading-tight opacity-80 hidden sm:block mb-1">
+        <div class="text-[7px] md:text-[9px] text-eva-orange tracking-widest text-right leading-tight opacity-80 mb-1">
           主電源供給システム<br>MAIN ENERGY SUPPLY SYSTEM
         </div>
-        <div class="flex flex-col md:flex-row gap-1 text-[7px] md:text-[9px] tracking-widest">
+        <div class="flex gap-1 text-[7px] md:text-[9px] tracking-widest">
           <button id="btnInternal" onclick="setPowerMode('internal')" class="px-1 py-0.5 border border-eva-green/30 text-eva-green/30 text-center leading-none transition-all cursor-pointer hover:border-eva-green/60 outline-none">内部<br>INTERNAL</button>
           <button id="btnExternal" onclick="setPowerMode('external')" class="px-1 py-0.5 border border-eva-green bg-eva-green text-eva-dark font-bold text-center leading-none shadow-[0_0_10px_rgba(74,222,128,0.5)] transition-all cursor-pointer outline-none">外部<br>EXTERNER</button>
         </div>
       </div>
 
       <div class="flex flex-col items-end border-l border-eva-green/30 pl-2 md:pl-5">
-        <div id="limitLabel" class="text-[8px] md:text-xs text-eva-orange font-bold tracking-widest mb-0.5 hidden sm:block">活動限界まで</div>
+        <div id="limitLabel" class="text-[8px] md:text-xs text-eva-orange font-bold tracking-widest mb-0.5">活動限界まで</div>
         <div class="flex items-baseline justify-end">
           <span id="atoLabel" class="text-[9px] md:text-xs text-eva-orange font-bold tracking-widest mr-0.5 md:mr-2">あと</span>
           <div id="clockEl" class="font-mono tabular-nums text-eva-orange text-sm md:text-xl font-bold text-right w-[82px] md:w-[130px] tracking-wider eva-glow-orange"></div>
