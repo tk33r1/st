@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ja" class="h-full">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ST-MAGI SYSTEM</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='3' fill='%230a0a0a'/%3E%3Cpolygon points='16,16 16,3 27,9.5 27,22.5' fill='%234ade80' opacity='0.2'/%3E%3Cpolygon points='16,16 27,22.5 16,29 5,22.5' fill='%234ade80' opacity='0.2'/%3E%3Cpolygon points='16,16 5,22.5 5,9.5 16,3' fill='%234ade80' opacity='0.2'/%3E%3Cpolygon points='16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5' fill='none' stroke='%234ade80' stroke-width='1.5'/%3E%3Cline x1='16' y1='3' x2='16' y2='16' stroke='%234ade80' stroke-width='1'/%3E%3Cline x1='16' y1='16' x2='27' y2='22.5' stroke='%234ade80' stroke-width='1'/%3E%3Cline x1='16' y1='16' x2='5' y2='22.5' stroke='%234ade80' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%234ade80'/%3E%3C/svg%3E">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@900&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -18,8 +19,6 @@
             'eva-panel': '#111111',
             'eva-red': '#ef4444',
             'eva-orange': '#f59e0b',
-            'eva-yellow': '#facc15',
-            'eva-blue': '#3b82f6',
           },
           fontFamily: {
             mono: ['"Share Tech Mono"', 'monospace'],
@@ -37,8 +36,6 @@
       --eva-panel: #111111;
       --eva-red: #ef4444;
       --eva-orange: #f59e0b;
-      --eva-yellow: #facc15;
-      --eva-blue: #3b82f6;
     }
 
     body {
@@ -49,12 +46,10 @@
     .eva-glow { text-shadow: 0 0 10px var(--eva-green), 0 0 20px rgba(74,222,128,0.3); }
     .eva-glow-red { text-shadow: 0 0 10px var(--eva-red), 0 0 20px rgba(239,68,68,0.3); }
     .eva-glow-orange { text-shadow: 0 0 10px var(--eva-orange), 0 0 20px rgba(245,158,11,0.3); }
-    .eva-glow-yellow { text-shadow: 0 0 10px var(--eva-yellow), 0 0 20px rgba(250,204,21,0.3); }
 
     .eva-border { border: 1px solid var(--eva-green); box-shadow: inset 0 0 15px rgba(74,222,128,0.05), 0 0 8px rgba(74,222,128,0.1); }
     .eva-border-red { border: 1px solid var(--eva-red); box-shadow: inset 0 0 15px rgba(239,68,68,0.05), 0 0 8px rgba(239,68,68,0.1); }
     .eva-border-orange { border: 1px solid var(--eva-orange); box-shadow: inset 0 0 15px rgba(245,158,11,0.05), 0 0 8px rgba(245,158,11,0.1); }
-    .eva-border-yellow { border: 1px solid var(--eva-yellow); box-shadow: inset 0 0 15px rgba(250,204,21,0.05), 0 0 8px rgba(250,204,21,0.1); }
 
     .scanlines::after {
       content: '';
@@ -68,27 +63,28 @@
       background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L52 17.5 L52 42.5 L30 55 L8 42.5 L8 17.5Z' fill='none' stroke='%234ade80' stroke-opacity='0.04' stroke-width='1'/%3E%3C/svg%3E");
     }
 
-    @keyframes deliberate-glow {
-      0%, 100% { box-shadow: 0 0 5px var(--eva-green), inset 0 0 5px rgba(74,222,128,0.1); }
-      50% { box-shadow: 0 0 20px var(--eva-green), 0 0 40px rgba(74,222,128,0.3), inset 0 0 15px rgba(74,222,128,0.2); }
-    }
-    @keyframes text-flicker {
-      0%, 100% { opacity: 1; }
-      92% { opacity: 1; } 93% { opacity: 0.3; } 94% { opacity: 1; }
-      96% { opacity: 0.5; } 97% { opacity: 1; }
-    }
     @keyframes data-flow {
       0% { stroke-dashoffset: 100; }
       100% { stroke-dashoffset: 0; }
     }
     .data-line {
-      stroke-dasharray: 15 35;
-      animation: data-flow 1.2s linear infinite;
+      stroke-dasharray: 8 18;
+      animation: data-flow 0.35s linear infinite;
     }
     .data-line-reverse {
-      stroke-dasharray: 15 35;
-      animation: data-flow 1.2s linear infinite reverse;
+      stroke-dasharray: 8 18;
+      animation: data-flow 0.28s linear infinite reverse;
     }
+
+    @keyframes poly-deliberate {
+      0%   { opacity: 0.7; }
+      20%  { opacity: 1; }
+      35%  { opacity: 0.4; }
+      55%  { opacity: 0.9; }
+      70%  { opacity: 0.5; }
+      100% { opacity: 0.7; }
+    }
+    .poly-deliberating { animation: poly-deliberate 0.9s ease-in-out infinite; }
 
     .animate-blink { animation: blink 1s step-end infinite; }
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
@@ -241,10 +237,10 @@
         <line id="flowLine3" x1="350" y1="400" x2="450" y2="400" stroke="var(--eva-green)" stroke-width="4" class="data-line" filter="drop-shadow(0 0 4px var(--eva-green))" />
 
         <polygon id="polyBalthasar" points="240,-10 560,-10 560,160 400,240 240,160" fill="rgba(74,222,128,0.05)" stroke="var(--eva-green)" stroke-width="3" class="animate-pulse" style="animation-duration: 2s;" />
-        <text id="textBalthasar" x="400" y="140" text-anchor="middle" fill="var(--eva-green)" font-size="26" font-weight="bold" font-family="'Orbitron', sans-serif" letter-spacing="2" class="eva-glow transition-all duration-500">BALTHASAR・2</text>
+        <text id="textBalthasar" x="400" y="140" text-anchor="middle" fill="var(--eva-green)" font-size="26" font-weight="bold" font-family="'Orbitron', sans-serif" letter-spacing="2" class="eva-glow transition-all duration-500">BALTHASAR-2</text>
 
         <polygon id="polyCasper" points="30,280 270,280 350,320 350,510 30,510" fill="rgba(74,222,128,0.05)" stroke="var(--eva-green)" stroke-width="3" class="animate-pulse" style="animation-duration: 2s; animation-delay: 0.5s;" />
-        <text id="textCasper" x="190" y="390" text-anchor="middle" fill="var(--eva-green)" font-size="26" font-weight="bold" font-family="'Orbitron', sans-serif" letter-spacing="2" class="eva-glow transition-all duration-500">CASPER・3</text>
+        <text id="textCasper" x="190" y="390" text-anchor="middle" fill="var(--eva-green)" font-size="26" font-weight="bold" font-family="'Orbitron', sans-serif" letter-spacing="2" class="eva-glow transition-all duration-500">CASPER-3</text>
 
         <polygon id="polyMelchior" points="530,280 770,280 770,510 450,510 450,320" fill="rgba(74,222,128,0.05)" stroke="var(--eva-green)" stroke-width="3" class="animate-pulse" style="animation-duration: 2s; animation-delay: 1.0s;" />
         <text id="textMelchior" x="610" y="390" text-anchor="middle" fill="var(--eva-green)" font-size="26" font-weight="bold" font-family="'Orbitron', sans-serif" letter-spacing="2" class="eva-glow transition-all duration-500">MELCHIOR-1</text>
@@ -330,12 +326,31 @@
     let deliberationCount = 0;
     const sessionId = Math.random().toString(36).substring(2, 15).toUpperCase();
 
-    const personaToMagi = { '科学者': 'MELCHIOR-1', '母親': 'BALTHASAR-2', '女': 'CASPER-3' };
-    const personaDisplayMap = { '科学者': 'ENTHUSIAST', '母親': 'HUMANIST', '女': 'STRATEGIST' };
-    const magiPolyMap = { '科学者': { poly: 'polyMelchior', text: 'textMelchior' }, '母親': { poly: 'polyBalthasar', text: 'textBalthasar' }, '女': { poly: 'polyCasper', text: 'textCasper' } };
+    const personaToMagi = {
+      'Enthusiast': 'MELCHIOR-1', 'Philosopher': 'BALTHASAR-2', 'Strategist': 'CASPER-3',
+    };
+    const personaDisplayMap = {
+      'Enthusiast': 'ENTHUSIAST', 'Philosopher': 'HUMANIST', 'Strategist': 'STRATEGIST',
+    };
+    const magiPolyMap = {
+      'Enthusiast': { poly: 'polyMelchior', text: 'textMelchior' }, 'Philosopher': { poly: 'polyBalthasar', text: 'textBalthasar' }, 'Strategist': { poly: 'polyCasper', text: 'textCasper' },
+    };
 
     function escapeHtml(s) {
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function parseResult(fa) {
+      const conclusionMatch = fa.match(/## 結論[：:]\s*(.+)/);
+      const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '不明';
+      const reasoningMatch = fa.match(/## 判定理由[^\n]*\n([\s\S]+)$/);
+      return {
+        conclusion,
+        isApproved: /承認/.test(conclusion),
+        isRejected: /否決|反対/.test(conclusion),
+        reasoning: reasoningMatch ? reasoningMatch[1].trim() : '',
+        voteLines: [...fa.matchAll(/^- (.+?)[：:]\s*(.+)$/gm)],
+      };
     }
 
     // --- 電源モード ---
@@ -562,7 +577,10 @@
         const el = document.getElementById(id);
         el.setAttribute('fill', 'rgba(74,222,128,0.05)');
         el.setAttribute('stroke', 'var(--eva-green)');
-        el.classList.add('animate-pulse');
+        el.setAttribute('stroke-width', '3');
+        el.setAttribute('filter', '');
+        el.classList.remove('animate-pulse');
+        el.classList.add('poly-deliberating');
       });
       ['textMelchior', 'textBalthasar', 'textCasper'].forEach(id => {
         const el = document.getElementById(id);
@@ -573,15 +591,10 @@
       verdictText.textContent = '審議中';
       verdictText.className = 'text-lg md:text-2xl font-black tracking-widest ev-mincho animate-blink eva-glow-orange text-eva-orange';
       document.getElementById('animVerdictBox').className = 'border border-eva-green/30 p-[2px] inline-block mr-2 bg-eva-dark/80 backdrop-blur-sm transition-all duration-500';
-      document.getElementById('animVerdictInnerBox').className = 'border border-eva-green/50 px-2 py-1 md:px-3 transition-all duration-500';
     }
 
     function applyVerdictToAnimPanel(r) {
-      const fa = r.final_answer;
-      const conclusionMatch = fa.match(/## 結論[：:]\s*(.+)/);
-      const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '不明';
-      const isApproved = /承認/.test(conclusion);
-      const isRejected = /否決|反対/.test(conclusion);
+      const { conclusion, isApproved, isRejected, voteLines } = parseResult(r.final_answer);
 
       const verdictText = document.getElementById('animVerdictText');
       verdictText.textContent = conclusion;
@@ -598,7 +611,6 @@
         document.getElementById('animVerdictBox').className = 'border border-eva-orange p-[2px] inline-block mr-2 bg-eva-orange/10 shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all duration-500';
       }
 
-      const voteLines = [...fa.matchAll(/^- (.+?)[：:]\s*(.+)$/gm)];
       voteLines.forEach((line) => {
         const persona = line[1].trim();
         const vote = line[2].trim();
@@ -607,22 +619,28 @@
 
         const poly = document.getElementById(config.poly);
         const text = document.getElementById(config.text);
-        poly.classList.remove('animate-pulse');
+        poly.classList.remove('poly-deliberating', 'animate-pulse');
 
         if (/賛成|承認/.test(vote)) {
-          poly.setAttribute('fill', 'rgba(74,222,128,0.2)');
-          poly.setAttribute('stroke', 'var(--eva-green)');
-          text.setAttribute('fill', 'var(--eva-green)');
+          poly.setAttribute('fill', 'rgba(74,222,128,0.35)');
+          poly.setAttribute('stroke', '#4ade80');
+          poly.setAttribute('stroke-width', '4');
+          poly.setAttribute('filter', 'drop-shadow(0 0 12px #4ade80) drop-shadow(0 0 4px #4ade80)');
+          text.setAttribute('fill', '#4ade80');
           text.setAttribute('class', 'eva-glow transition-all duration-500');
         } else if (/反対|否決/.test(vote)) {
-          poly.setAttribute('fill', 'rgba(239,68,68,0.2)');
-          poly.setAttribute('stroke', 'var(--eva-red)');
-          text.setAttribute('fill', 'var(--eva-red)');
+          poly.setAttribute('fill', 'rgba(239,68,68,0.35)');
+          poly.setAttribute('stroke', '#ef4444');
+          poly.setAttribute('stroke-width', '4');
+          poly.setAttribute('filter', 'drop-shadow(0 0 12px #ef4444) drop-shadow(0 0 4px #ef4444)');
+          text.setAttribute('fill', '#ef4444');
           text.setAttribute('class', 'eva-glow-red transition-all duration-500');
         } else if (/保留/.test(vote)) {
-          poly.setAttribute('fill', 'rgba(245,158,11,0.2)');
-          poly.setAttribute('stroke', 'var(--eva-orange)');
-          text.setAttribute('fill', 'var(--eva-orange)');
+          poly.setAttribute('fill', 'rgba(245,158,11,0.35)');
+          poly.setAttribute('stroke', '#f59e0b');
+          poly.setAttribute('stroke-width', '4');
+          poly.setAttribute('filter', 'drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 4px #f59e0b)');
+          text.setAttribute('fill', '#f59e0b');
           text.setAttribute('class', 'eva-glow-orange transition-all duration-500');
         }
       });
@@ -632,13 +650,7 @@
 
     function addResultToHistory(question, r) {
       deliberationCount++;
-      const fa = r.final_answer;
-      const conclusionMatch = fa.match(/## 結論[：:]\s*(.+)/);
-      const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '不明';
-      const isApproved = /承認/.test(conclusion);
-      const isRejected = /否決|反対/.test(conclusion);
-      const reasoningMatch = fa.match(/## 判定理由[^\n]*\n([\s\S]+)$/);
-      const reasoning = reasoningMatch ? reasoningMatch[1].trim() : '';
+      const { conclusion, isApproved, isRejected, reasoning, voteLines } = parseResult(r.final_answer);
 
       const cardId = `history-${deliberationCount}`;
       const discId = `disc-${deliberationCount}`;
@@ -648,7 +660,6 @@
       else if (isRejected) badgeClass += 'text-eva-red border-eva-red bg-eva-red/10 eva-glow-red';
       else badgeClass += 'text-eva-orange border-eva-orange bg-eva-orange/10 eva-glow-orange';
 
-      const voteLines = [...fa.matchAll(/^- (.+?)[：:]\s*(.+)$/gm)];
       const votesHtml = voteLines.map(([_, persona, vote]) => {
         const p = persona.trim();
         const v = vote.trim();
