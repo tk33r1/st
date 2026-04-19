@@ -499,8 +499,11 @@
       const conclusion = conclusionMatch ? conclusionMatch[1].trim() : '不明';
       const reasoningMatch = fa.match(/## 判定理由[^\n]*\n([\s\S]+)$/);
 
-      // 【Persona】【判定】vote 形式を全て抽出し、ペルソナごとに最後の票を採用
-      const allVotes = [...fa.matchAll(/【(.+?)】【判定】([^\n【]+)/gm)];
+      // "Persona：vote" 形式と 【Persona】【判定】vote 形式の両方を抽出し、ペルソナごとに最後の票を採用
+      const allVotes = [
+        ...fa.matchAll(/^(Enthusiast|Humanist|Strategist)[：:]\s*([^\n]+)/gm),
+        ...fa.matchAll(/【(.+?)】【判定】([^\n【]+)/gm),
+      ];
       const lastVoteMap = {};
       allVotes.forEach(m => { lastVoteMap[m[1].trim()] = m[2].trim(); });
       const voteLines = Object.entries(lastVoteMap).map(([persona, vote]) => ['', persona, vote]);
