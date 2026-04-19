@@ -19,7 +19,7 @@ class DonationWidget {
     constructor(config = {}) {
         this.kofiId       = config.kofiId       || 'shinyatakeda';
         this.githubUrl    = config.githubUrl    || 'https://github.com/sponsors/tk33r1';
-        this.lightningUrl = config.lightningUrl || null;
+        this.lightningUrl = config.lightningUrl || 'https://ln.tk.st/i/H4me7dyHUumyGw8ePXbwno?lang=ja-JP';
         this.containerId  = config.containerId  || null;
 
         this.modal          = null;
