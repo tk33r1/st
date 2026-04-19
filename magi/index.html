@@ -211,7 +211,10 @@
   <header class="flex-shrink-0 px-3 py-2 flex items-center justify-between border-b border-eva-green/30 bg-eva-dark relative z-20">
     <div class="flex items-center gap-1 md:gap-3 min-w-0">
       <div class="flex-shrink-0 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-eva-green animate-pulse shadow-[0_0_8px_#4ade80]"></div>
-      <h1 class="text-[13px] md:text-xl font-bold eva-glow tracking-wide md:tracking-widest font-orbitron whitespace-nowrap">ST-MAGI SYSTEM</h1>
+      <h1 class="text-[13px] md:text-xl font-bold eva-glow tracking-wide md:tracking-widest font-orbitron leading-tight">
+        <span class="block md:hidden">ST-MAGI<br>SYSTEM</span>
+        <span class="hidden md:block">ST-MAGI SYSTEM</span>
+      </h1>
       <button onclick="showInfo()" class="flex-shrink-0 flex items-center justify-center text-eva-green/50 hover:text-eva-green transition-all outline-none" title="情報">
         <i data-lucide="info" class="w-4 h-4 md:w-5 md:h-5"></i>
       </button>
@@ -222,7 +225,7 @@
         <div class="text-[8px] md:text-[9px] text-eva-orange tracking-widest text-right leading-tight opacity-80 hidden sm:block mb-1">
           主電源供給システム<br>MAIN ENERGY SUPPLY SYSTEM
         </div>
-        <div class="flex gap-1 text-[7px] md:text-[9px] tracking-widest">
+        <div class="flex flex-col md:flex-row gap-1 text-[7px] md:text-[9px] tracking-widest">
           <button id="btnInternal" onclick="setPowerMode('internal')" class="px-1 py-0.5 border border-eva-green/30 text-eva-green/30 text-center leading-none transition-all cursor-pointer hover:border-eva-green/60 outline-none">内部<br>INTERNAL</button>
           <button id="btnExternal" onclick="setPowerMode('external')" class="px-1 py-0.5 border border-eva-green bg-eva-green text-eva-dark font-bold text-center leading-none shadow-[0_0_10px_rgba(74,222,128,0.5)] transition-all cursor-pointer outline-none">外部<br>EXTERNER</button>
         </div>
