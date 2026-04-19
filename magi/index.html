@@ -69,11 +69,11 @@
     }
     .data-line {
       stroke-dasharray: 8 18;
-      animation: data-flow 0.35s linear infinite;
+      animation: data-flow 0.55s linear infinite;
     }
     .data-line-reverse {
       stroke-dasharray: 8 18;
-      animation: data-flow 0.28s linear infinite reverse;
+      animation: data-flow 0.45s linear infinite reverse;
     }
 
     @keyframes poly-deliberate {
@@ -111,6 +111,23 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: rgba(74,222,128,0.05); }
     ::-webkit-scrollbar-thumb { background: rgba(74,222,128,0.3); border-radius: 3px; }
+
+    @keyframes bar-sweep {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .bar-active {
+      background: linear-gradient(90deg,
+        rgba(74,222,128,0.25) 0%,
+        rgba(74,222,128,0.6)  30%,
+        rgba(74,222,128,1)    50%,
+        rgba(74,222,128,0.6)  70%,
+        rgba(74,222,128,0.25) 100%
+      );
+      background-size: 200% 100%;
+      animation: bar-sweep 1.8s linear infinite;
+      box-shadow: 0 0 6px rgba(74,222,128,0.8);
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-mono scanlines hex-bg relative overflow-x-hidden">
@@ -151,7 +168,7 @@
         <div class="text-[10px] md:text-xs text-eva-green flex items-center justify-center gap-1 mt-1 pointer-events-none">
           <span class="w-2 h-2 rounded-full bg-eva-green shadow-[0_0_5px_#4ade80] animate-pulse"></span> ONLINE
         </div>
-        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full bg-eva-green w-[85%] opacity-80 animate-pulse"></div></div>
+        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full w-[85%] bar-active"></div></div>
       </button>
       <button onclick="showPersona('balthasar')" class="flex-1 text-center py-3 px-1 md:px-2 eva-border bg-eva-green/5 flex flex-col justify-between clip-both stripe-bg relative hover:bg-eva-green/20 transition-all outline-none cursor-pointer">
         <div class="opacity-50 text-[10px] md:text-xs tracking-widest pointer-events-none">BALTHASAR-2</div>
@@ -159,7 +176,7 @@
         <div class="text-[10px] md:text-xs text-eva-green flex items-center justify-center gap-1 mt-1 pointer-events-none">
           <span class="w-2 h-2 rounded-full bg-eva-green shadow-[0_0_5px_#4ade80] animate-pulse"></span> ONLINE
         </div>
-        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full bg-eva-green w-[60%] opacity-80 animate-pulse" style="animation-delay: 0.3s"></div></div>
+        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full w-[60%] bar-active" style="animation-delay: 0.6s"></div></div>
       </button>
       <button onclick="showPersona('casper')" class="flex-1 text-center py-3 px-1 md:px-2 eva-border bg-eva-green/5 flex flex-col justify-between clip-tl stripe-bg relative hover:bg-eva-green/20 transition-all outline-none cursor-pointer">
         <div class="opacity-50 text-[10px] md:text-xs tracking-widest pointer-events-none">CASPER-3</div>
@@ -167,7 +184,7 @@
         <div class="text-[10px] md:text-xs text-eva-green flex items-center justify-center gap-1 mt-1 pointer-events-none">
           <span class="w-2 h-2 rounded-full bg-eva-green shadow-[0_0_5px_#4ade80] animate-pulse"></span> ONLINE
         </div>
-        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full bg-eva-green w-[95%] opacity-80 animate-pulse" style="animation-delay: 0.7s"></div></div>
+        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full w-[95%] bar-active" style="animation-delay: 1.2s"></div></div>
       </button>
     </div>
 
@@ -573,6 +590,10 @@
     // --- アニメーションパネル ---
 
     function resetAnimPanel() {
+      ['flowLine1', 'flowLine2', 'flowLine3'].forEach(id => {
+        document.getElementById(id).style.animationPlayState = 'running';
+      });
+
       ['polyMelchior', 'polyBalthasar', 'polyCasper'].forEach(id => {
         const el = document.getElementById(id);
         el.setAttribute('fill', 'rgba(74,222,128,0.05)');
@@ -594,6 +615,10 @@
     }
 
     function applyVerdictToAnimPanel(r) {
+      ['flowLine1', 'flowLine2', 'flowLine3'].forEach(id => {
+        document.getElementById(id).style.animationPlayState = 'paused';
+      });
+
       const { conclusion, isApproved, isRejected, voteLines } = parseResult(r.final_answer);
 
       const verdictText = document.getElementById('animVerdictText');
