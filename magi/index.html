@@ -116,7 +116,28 @@
       0%   { background-position: -200% center; }
       100% { background-position: 200% center; }
     }
-    .bar-active {
+    @keyframes bar-width-1 {
+      0%   { width: 85%; }
+      20%  { width: 68%; }
+      45%  { width: 93%; }
+      70%  { width: 74%; }
+      100% { width: 85%; }
+    }
+    @keyframes bar-width-2 {
+      0%   { width: 60%; }
+      30%  { width: 80%; }
+      55%  { width: 44%; }
+      80%  { width: 67%; }
+      100% { width: 60%; }
+    }
+    @keyframes bar-width-3 {
+      0%   { width: 95%; }
+      15%  { width: 78%; }
+      40%  { width: 100%; }
+      68%  { width: 82%; }
+      100% { width: 95%; }
+    }
+    .bar-active-1, .bar-active-2, .bar-active-3 {
       background: linear-gradient(90deg,
         rgba(74,222,128,0.25) 0%,
         rgba(74,222,128,0.6)  30%,
@@ -125,9 +146,11 @@
         rgba(74,222,128,0.25) 100%
       );
       background-size: 200% 100%;
-      animation: bar-sweep 1.8s linear infinite;
       box-shadow: 0 0 6px rgba(74,222,128,0.8);
     }
+    .bar-active-1 { animation: bar-sweep 1.8s linear infinite, bar-width-1 3.5s ease-in-out infinite; }
+    .bar-active-2 { animation: bar-sweep 1.8s linear infinite 0.6s, bar-width-2 2.8s ease-in-out infinite 0.4s; }
+    .bar-active-3 { animation: bar-sweep 1.8s linear infinite 1.2s, bar-width-3 4.2s ease-in-out infinite 1.0s; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-mono scanlines hex-bg relative overflow-x-hidden">
@@ -136,6 +159,9 @@
     <div class="flex items-center gap-3">
       <div class="w-3 h-3 rounded-full bg-eva-green animate-pulse shadow-[0_0_8px_#4ade80]"></div>
       <h1 class="text-lg md:text-xl font-bold eva-glow tracking-widest font-orbitron">ST-MAGI SYSTEM</h1>
+      <button onclick="showInfo()" class="w-7 h-7 flex items-center justify-center border border-eva-green/40 text-eva-green/60 hover:border-eva-green hover:text-eva-green transition-all outline-none clip-tl" title="システム情報">
+        <i data-lucide="info" class="w-4 h-4"></i>
+      </button>
     </div>
 
     <div class="flex items-center gap-3 md:gap-5">
@@ -168,7 +194,7 @@
         <div class="text-[10px] md:text-xs text-eva-green flex items-center justify-center gap-1 mt-1 pointer-events-none">
           <span class="w-2 h-2 rounded-full bg-eva-green shadow-[0_0_5px_#4ade80] animate-pulse"></span> ONLINE
         </div>
-        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full w-[85%] bar-active"></div></div>
+        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full bar-active-1"></div></div>
       </button>
       <button onclick="showPersona('balthasar')" class="flex-1 text-center py-3 px-1 md:px-2 eva-border bg-eva-green/5 flex flex-col justify-between clip-both stripe-bg relative hover:bg-eva-green/20 transition-all outline-none cursor-pointer">
         <div class="opacity-50 text-[10px] md:text-xs tracking-widest pointer-events-none">BALTHASAR-2</div>
@@ -176,7 +202,7 @@
         <div class="text-[10px] md:text-xs text-eva-green flex items-center justify-center gap-1 mt-1 pointer-events-none">
           <span class="w-2 h-2 rounded-full bg-eva-green shadow-[0_0_5px_#4ade80] animate-pulse"></span> ONLINE
         </div>
-        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full w-[60%] bar-active" style="animation-delay: 0.6s"></div></div>
+        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full bar-active-2"></div></div>
       </button>
       <button onclick="showPersona('casper')" class="flex-1 text-center py-3 px-1 md:px-2 eva-border bg-eva-green/5 flex flex-col justify-between clip-tl stripe-bg relative hover:bg-eva-green/20 transition-all outline-none cursor-pointer">
         <div class="opacity-50 text-[10px] md:text-xs tracking-widest pointer-events-none">CASPER-3</div>
@@ -184,7 +210,7 @@
         <div class="text-[10px] md:text-xs text-eva-green flex items-center justify-center gap-1 mt-1 pointer-events-none">
           <span class="w-2 h-2 rounded-full bg-eva-green shadow-[0_0_5px_#4ade80] animate-pulse"></span> ONLINE
         </div>
-        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full w-[95%] bar-active" style="animation-delay: 1.2s"></div></div>
+        <div class="absolute bottom-0 left-0 w-full h-[3px] bg-eva-green/20 pointer-events-none"><div class="h-full bar-active-3"></div></div>
       </button>
     </div>
 
@@ -296,11 +322,7 @@
   </main>
 
   <footer class="mt-auto p-4 flex items-center text-xs opacity-60 border-t border-eva-green/20 z-10 bg-eva-dark relative">
-    <div class="flex-1"></div>
-    <div class="tracking-wider text-center">&copy; <span id="currentYear"></span> Shinya Takeda</div>
-    <div class="flex-1 flex justify-end items-center">
-      <div id="donation-button-container"></div>
-    </div>
+    <div class="tracking-wider text-center w-full">&copy; <span id="currentYear"></span> Shinya Takeda</div>
   </footer>
 
   <div id="silenceOverlay" class="fixed inset-0 z-[100] system-silence-bg flex flex-col items-center justify-center hidden scanlines">
@@ -319,6 +341,61 @@
       <div class="text-[10px] tracking-widest opacity-60 mb-1" id="personaModalMagi"></div>
       <div class="text-2xl md:text-3xl font-bold font-orbitron tracking-widest eva-glow mb-4" id="personaModalName"></div>
       <div class="border-t border-eva-green/30 pt-4 text-sm md:text-base text-eva-green/90 leading-relaxed font-sans" id="personaModalDesc"></div>
+    </div>
+  </div>
+
+  <div id="infoModal" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300" onclick="if(event.target === this) closeInfo()">
+    <div class="bg-eva-panel/90 eva-border clip-both p-6 md:p-8 max-w-lg w-full relative transform scale-95 transition-transform duration-300 overflow-y-auto max-h-[90vh]" id="infoModalContent">
+      <button onclick="closeInfo()" class="absolute top-4 right-4 text-eva-green/60 hover:text-eva-green transition-colors outline-none">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+      <div class="text-[10px] tracking-widest opacity-60 mb-1">SYSTEM INFORMATION</div>
+      <div class="text-2xl font-bold font-orbitron tracking-widest eva-glow mb-5">ST-MAGI SYSTEM</div>
+
+      <div class="space-y-5 text-sm text-eva-green/85 font-sans border-t border-eva-green/30 pt-5">
+
+        <div>
+          <div class="text-[10px] tracking-widest text-eva-orange mb-2 font-mono">■ システムの仕組み</div>
+          <p class="leading-relaxed">ST-MAGI SYSTEMは、異なる3つの人格を持つAIエージェントが審議し、多数決で結論を導くシステムです。</p>
+          <ul class="mt-2 space-y-1 pl-3 border-l border-eva-green/20 text-eva-green/70 text-xs leading-relaxed">
+            <li><span class="text-eva-green font-bold">MELCHIOR-1 · ENTHUSIAST</span> — 趣味と直感で動く多趣味なオタク視点</li>
+            <li><span class="text-eva-green font-bold">BALTHASAR-2 · HUMANIST</span> — 哲学と共感を軸にした思索家視点</li>
+            <li><span class="text-eva-green font-bold">CASPER-3 · STRATEGIST</span> — データと合理性で最適解を追う戦略家視点</li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="text-[10px] tracking-widest text-eva-orange mb-2 font-mono">■ 使い方</div>
+          <ol class="space-y-1 pl-3 border-l border-eva-green/20 text-xs leading-relaxed list-decimal list-inside">
+            <li>テキストエリアに審議したい内容を入力する</li>
+            <li>必要に応じて画像を添付する（任意）</li>
+            <li><span class="text-eva-green">MAGIモード</span>（承認/否決/保留の判定あり）または<span class="text-eva-orange">フリーモード</span>（自由な対話）を選択する</li>
+            <li>送信すると3つのMAGIが審議を開始し、結論と判定理由を出力する</li>
+          </ol>
+        </div>
+
+        <div>
+          <div class="text-[10px] tracking-widest text-eva-orange mb-2 font-mono">■ 電源モード</div>
+          <ul class="space-y-1 pl-3 border-l border-eva-green/20 text-xs leading-relaxed">
+            <li><span class="text-eva-green font-bold">外部電源（EXTERNAL）</span> — 通常モード。制限なし。</li>
+            <li><span class="text-eva-red font-bold">内部電源（INTERNAL）</span> — 5分間の活動限界あり。タイムアップでSYSTEM SILENCE。</li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="text-[10px] tracking-widest text-eva-orange mb-2 font-mono">■ 注意事項</div>
+          <ul class="space-y-1 pl-3 border-l border-eva-red/30 text-xs leading-relaxed text-eva-green/70">
+            <li>AIの回答はあくまで参考情報です。重要な判断は必ず人間が行ってください。</li>
+            <li>個人情報・機密情報の入力はお控えください。</li>
+            <li>審議結果はサーバーに一時的に保存されますが、会話履歴の永続的な保存は行いません。</li>
+          </ul>
+        </div>
+
+        <div class="border-t border-eva-green/20 pt-5 flex flex-col items-center gap-3">
+          <div class="text-[10px] tracking-widest opacity-50">SUPPORT THE DEVELOPER</div>
+          <div id="donation-button-container"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -344,13 +421,15 @@
     const sessionId = Math.random().toString(36).substring(2, 15).toUpperCase();
 
     const personaToMagi = {
-      'Enthusiast': 'MELCHIOR-1', 'Philosopher': 'BALTHASAR-2', 'Strategist': 'CASPER-3',
+      'Enthusiast': 'MELCHIOR-1', 'Humanist': 'BALTHASAR-2', 'Strategist': 'CASPER-3',
     };
     const personaDisplayMap = {
-      'Enthusiast': 'ENTHUSIAST', 'Philosopher': 'HUMANIST', 'Strategist': 'STRATEGIST',
+      'Enthusiast': 'ENTHUSIAST', 'Humanist': 'HUMANIST', 'Strategist': 'STRATEGIST',
     };
     const magiPolyMap = {
-      'Enthusiast': { poly: 'polyMelchior', text: 'textMelchior' }, 'Philosopher': { poly: 'polyBalthasar', text: 'textBalthasar' }, 'Strategist': { poly: 'polyCasper', text: 'textCasper' },
+      'Enthusiast': { poly: 'polyMelchior', text: 'textMelchior' },
+      'Humanist':   { poly: 'polyBalthasar', text: 'textBalthasar' },
+      'Strategist': { poly: 'polyCasper',    text: 'textCasper'    },
     };
 
     function escapeHtml(s) {
@@ -461,6 +540,24 @@
         modal.classList.remove('opacity-0');
         content.classList.remove('scale-95');
       }, 10);
+    }
+
+    function showInfo() {
+      const modal = document.getElementById('infoModal');
+      const content = document.getElementById('infoModalContent');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeInfo() {
+      const modal = document.getElementById('infoModal');
+      const content = document.getElementById('infoModalContent');
+      modal.classList.add('opacity-0');
+      content.classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 300);
     }
 
     function closePersona() {
