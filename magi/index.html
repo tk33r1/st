@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ST-MAGI SYSTEM</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='3' fill='%230a0a0a'/%3E%3Cpolygon points='16,16 16,3 27,9.5 27,22.5' fill='%234ade80' opacity='0.2'/%3E%3Cpolygon points='16,16 27,22.5 16,29 5,22.5' fill='%234ade80' opacity='0.2'/%3E%3Cpolygon points='16,16 5,22.5 5,9.5 16,3' fill='%234ade80' opacity='0.2'/%3E%3Cpolygon points='16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5' fill='none' stroke='%234ade80' stroke-width='1.5'/%3E%3Cline x1='16' y1='3' x2='16' y2='16' stroke='%234ade80' stroke-width='1'/%3E%3Cline x1='16' y1='16' x2='27' y2='22.5' stroke='%234ade80' stroke-width='1'/%3E%3Cline x1='16' y1='16' x2='5' y2='22.5' stroke='%234ade80' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%234ade80'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='3' fill='%230a0a0a'/%3E%3Cpolygon points='16,16 16,3 27,9.5 27,22.5' fill='%23f59e0b' opacity='0.2'/%3E%3Cpolygon points='16,16 27,22.5 16,29 5,22.5' fill='%23f59e0b' opacity='0.2'/%3E%3Cpolygon points='16,16 5,22.5 5,9.5 16,3' fill='%23f59e0b' opacity='0.2'/%3E%3Cpolygon points='16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5' fill='none' stroke='%23f59e0b' stroke-width='1.5'/%3E%3Cline x1='16' y1='3' x2='16' y2='16' stroke='%23f59e0b' stroke-width='1'/%3E%3Cline x1='16' y1='16' x2='27' y2='22.5' stroke='%23f59e0b' stroke-width='1'/%3E%3Cline x1='16' y1='16' x2='5' y2='22.5' stroke='%23f59e0b' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23f59e0b'/%3E%3C/svg%3E">
   <link rel="canonical" href="https://tk.st/magi/">
   <link rel="author" href="https://tk.st/">
   <meta property="og:title" content="ST-MAGI SYSTEM">
@@ -195,19 +195,8 @@
     ::-webkit-scrollbar-track { background: rgba(74,222,128,0.05); }
     ::-webkit-scrollbar-thumb { background: rgba(74,222,128,0.3); border-radius: 3px; }
 
-    @keyframes bar-load-1 {
-      0%   { width: 0%; }
-      100% { width: 85%; }
-    }
-    @keyframes bar-load-2 {
-      0%   { width: 0%; }
-      100% { width: 60%; }
-    }
-    @keyframes bar-load-3 {
-      0%   { width: 0%; }
-      100% { width: 95%; }
-    }
     .bar-active-1, .bar-active-2, .bar-active-3 {
+      width: 0%;
       background: linear-gradient(90deg,
         rgba(74,222,128,0.4) 0%,
         rgba(74,222,128,0.85) 75%,
@@ -215,9 +204,6 @@
       );
       box-shadow: 2px 0 8px rgba(74,222,128,0.9), 0 0 4px rgba(74,222,128,0.5);
     }
-    .bar-active-1 { animation: bar-load-1 3.5s linear infinite; }
-    .bar-active-2 { animation: bar-load-2 2.8s linear infinite 0.9s; }
-    .bar-active-3 { animation: bar-load-3 4.3s linear infinite 1.8s; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-mono scanlines hex-bg relative overflow-x-hidden">
@@ -338,13 +324,13 @@
 
     <div id="processingArea" class="hidden w-full relative bg-eva-dark/80 border border-eva-green/30 mt-2 overflow-hidden aspect-[16/11] md:aspect-[16/9] flex items-center justify-center font-sans shadow-[0_0_15px_rgba(74,222,128,0.1)] rounded-lg clip-both backdrop-blur-sm stripe-bg">
       <svg viewBox="0 0 800 500" class="absolute inset-0 w-full h-full object-cover">
-        <line x1="330" y1="205" x2="288" y2="289" stroke="var(--eva-green)" stroke-width="4" opacity="0.3" />
-        <line x1="470" y1="205" x2="512" y2="289" stroke="var(--eva-green)" stroke-width="4" opacity="0.3" />
-        <line x1="350" y1="400" x2="450" y2="400" stroke="var(--eva-green)" stroke-width="4" opacity="0.3" />
+        <line x1="330" y1="205" x2="288" y2="289" stroke="var(--eva-orange)" stroke-width="4" opacity="0.3" />
+        <line x1="470" y1="205" x2="512" y2="289" stroke="var(--eva-orange)" stroke-width="4" opacity="0.3" />
+        <line x1="350" y1="400" x2="450" y2="400" stroke="var(--eva-orange)" stroke-width="4" opacity="0.3" />
 
-        <line id="flowLine1" x1="330" y1="205" x2="288" y2="289" stroke="var(--eva-green)" stroke-width="4" class="data-line" filter="drop-shadow(0 0 4px var(--eva-green))" />
-        <line id="flowLine2" x1="470" y1="205" x2="512" y2="289" stroke="var(--eva-green)" stroke-width="4" class="data-line-reverse" filter="drop-shadow(0 0 4px var(--eva-green))" />
-        <line id="flowLine3" x1="350" y1="400" x2="450" y2="400" stroke="var(--eva-green)" stroke-width="4" class="data-line" filter="drop-shadow(0 0 4px var(--eva-green))" />
+        <line id="flowLine1" x1="330" y1="205" x2="288" y2="289" stroke="var(--eva-orange)" stroke-width="4" class="data-line" filter="drop-shadow(0 0 4px var(--eva-orange))" />
+        <line id="flowLine2" x1="470" y1="205" x2="512" y2="289" stroke="var(--eva-orange)" stroke-width="4" class="data-line-reverse" filter="drop-shadow(0 0 4px var(--eva-orange))" />
+        <line id="flowLine3" x1="350" y1="400" x2="450" y2="400" stroke="var(--eva-orange)" stroke-width="4" class="data-line" filter="drop-shadow(0 0 4px var(--eva-orange))" />
 
         <polygon id="polyBalthasar" points="240,-10 560,-10 560,160 400,240 240,160" fill="rgba(74,222,128,0.05)" stroke="var(--eva-green)" stroke-width="3" class="animate-pulse" style="animation-duration: 2s;" />
         <text id="textBalthasar" x="400" y="140" text-anchor="middle" fill="var(--eva-green)" font-size="26" font-weight="bold" font-family="'Orbitron', sans-serif" letter-spacing="2" class="eva-glow transition-all duration-500">BALTHASAR-2</text>
@@ -423,7 +409,7 @@
 
         <div>
           <div class="text-[10px] tracking-widest text-eva-orange mb-2 font-mono">■ 本システムについて</div>
-          <p class="leading-relaxed">ST-MAGI SYSTEMは、開発者のShinya Takedaの人格を分割したAIエージェントが合議し、結論を導くシステムです。</p>
+          <p class="leading-relaxed">ST-MAGI SYSTEMは、開発者Shinya Takedaの人格を、複数に分けて模したAIエージェントに、合議させ結論を導くシステムです。</p>
           <ul class="mt-2 space-y-1 pl-3 border-l border-eva-green/20 text-eva-green/70 text-xs leading-relaxed">
             <li><span class="text-eva-green font-bold">MELCHIOR-1 · ENTHUSIAST</span> — 趣味と直感で動く多趣味なオタク視点</li>
             <li><span class="text-eva-green font-bold">BALTHASAR-2 · HUMANIST</span> — 哲学と共感を軸にした思索家視点</li>
@@ -444,13 +430,13 @@
         <div>
           <div class="text-[10px] tracking-widest text-eva-orange mb-2 font-mono">■ 注意事項</div>
           <ul class="space-y-1 pl-3 border-l border-eva-red/30 text-xs leading-relaxed text-eva-green/70">
-            <li>審議結果はNERF本部（自宅サーバー）に一時的に保存されますが、会話履歴の保存や学習は行いません。</li>
-            <li>画像を添付して送信した場合、回答に5分以上かかることがあります。</li>
+            <li>会話履歴の永続的な保存や、入力内容に基づいたAI学習は行われません。</li>
+            <li>画像を添付して送信した場合、回答まで5分以上かかることがあります。</li>
           </ul>
         </div>
 
         <div class="border-t border-eva-green/20 pt-5 flex flex-col items-center gap-3">
-          <div class="text-[10px] tracking-widest opacity-50">参考になったと感じたら、サーバー費用ご支援ください</div>
+          <div class="text-[10px] tracking-widest opacity-50">もし楽しめたと感じたら、ご支援ください</div>
           <div id="donation-button-container"></div>
         </div>
       </div>
@@ -467,6 +453,20 @@
 
     document.getElementById('currentYear').textContent = new Date().getFullYear();
     lucide.createIcons();
+
+    function startBarLoop(el) {
+      const duration = 1200 + Math.random() * 3800;
+      el.style.transition = `width ${duration}ms linear`;
+      el.style.width = '100%';
+      el.addEventListener('transitionend', function() {
+        el.style.transition = 'none';
+        el.style.width = '0%';
+        requestAnimationFrame(() => requestAnimationFrame(() => startBarLoop(el)));
+      }, { once: true });
+    }
+    document.querySelectorAll('.bar-active-1, .bar-active-2, .bar-active-3').forEach((el, i) => {
+      setTimeout(() => startBarLoop(el), i * 600);
+    });
 
     const API = 'https://workers.tk.st/magi';
     let imageBase64 = null;
