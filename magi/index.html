@@ -712,21 +712,21 @@
 
         document.getElementById('animCode').textContent = `CODE : ${String(job_id).substring(0, 8).toUpperCase()}`;
 
-        for (let i = 120; i > 0; i--) {
+        for (let i = 90; i > 0; i--) {
           setStatus(`初期データ解析中... ${i}秒後に通信確立`);
           await sleep(1000);
         }
 
         let resultData = null;
         let attempts = 0;
-        while (attempts < 20) {
+        while (attempts < 60) {
           attempts++;
           const res = await fetch(`${API}/${job_id}`);
           const data = await res.json();
           if (data.status === 'done') { resultData = data.result; break; }
           if (data.status === 'error') throw new Error(data.error || '解析プロセスエラー');
-          for (let i = 30; i > 0; i--) {
-            setStatus(`相互演算実行中... (Phase ${attempts}/20) 次の確認まで ${i}秒`);
+          for (let i = 10; i > 0; i--) {
+            setStatus(`相互演算実行中... (Phase ${attempts}) 次の確認まで ${i}秒`);
             await sleep(1000);
           }
         }

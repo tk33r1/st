@@ -37,10 +37,10 @@ export default {
     // POST /magi → 質問を投げて job_id をすぐ返す
     if (request.method === 'POST' && path === '/magi') {
       try {
-        const { question, session_id, image } = await request.json();
+        const { question, session_id, mode, image } = await request.json();
 
         const endpoint = image ? 'https://magi.tk.st/ask_with_image' : 'https://magi.tk.st/ask';
-        const body = { question, session_id: session_id || 'default' };
+        const body = { question, session_id: session_id || 'default', mode: mode || 'magi' };
         if (image) body.image = image.replace(/^data:image\/\w+;base64,/, '');
 
         const askRes = await fetch(endpoint, {
