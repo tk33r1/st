@@ -736,7 +736,7 @@
         setStatus('判定完了。結果を出力します。');
         await sleep(2000);
 
-        addResultToHistory(question, resultData);
+        addResultToHistory(question, resultData, currentMode);
         const ta = document.getElementById('question');
         ta.value = '';
         ta.style.height = '';
@@ -841,66 +841,95 @@
 
     // --- 履歴 ---
 
-    function addResultToHistory(question, r) {
+    function addResultToHistory(question, r, mode) {
       deliberationCount++;
-      const { conclusion, verdict, isApproved, isRejected, reasoning, voteLines } = parseResult(r.final_answer);
-
       const cardId = `history-${deliberationCount}`;
       const discId = `disc-${deliberationCount}`;
-
-      let badgeClass = 'inline-block text-2xl font-bold px-8 py-2 rounded border-2 font-orbitron tracking-widest mb-4 ';
-      if (isApproved) badgeClass += 'text-eva-green border-eva-green bg-eva-green/10 eva-glow';
-      else if (isRejected) badgeClass += 'text-eva-red border-eva-red bg-eva-red/10 eva-glow-red';
-      else badgeClass += 'text-eva-orange border-eva-orange bg-eva-orange/10 eva-glow-orange';
-
-      const votesHtml = voteLines.map(([_, persona, vote]) => {
-        const p = persona.trim();
-        const v = vote.trim();
-        const magiName = personaToMagi[p] || p;
-        let vClass = 'text-eva-green border-eva-green bg-eva-green/5';
-        if (/反対|否決/.test(v)) vClass = 'text-eva-red border-eva-red bg-eva-red/5';
-        else if (/保留/.test(v)) vClass = 'text-eva-orange border-eva-orange bg-eva-orange/5';
-        return `<div class="text-center py-2 border clip-br ${vClass}"><div class="text-[8px] opacity-60">${escapeHtml(magiName)}</div><div class="text-xs font-bold">${escapeHtml(v)}</div></div>`;
-      }).join('');
 
       const discussionHtml = r.discussion.map((d, i) => {
         const magiName = personaToMagi[d.persona] || d.persona;
         const displayName = personaDisplayMap[d.persona] || d.persona;
-        const round = r.rounds > 1 ? `Round ${Math.floor(i / Object.keys(personaToMagi).length) + 1} · ` : '';
+        const isFree = mode === 'free';
+        const round = (!isFree && r.rounds > 1) ? `Round ${Math.floor(i / Object.keys(personaToMagi).length) + 1} · ` : '';
+        const borderColor = isFree ? 'border-eva-orange/20' : 'border-eva-green/20';
+        const textColor = isFree ? 'text-eva-orange/80' : 'text-eva-green/80';
         const clean = escapeHtml(d.response.trim());
         return `
-          <div class="border-l border-eva-green/20 pl-3 text-xs">
+          <div class="border-l ${borderColor} pl-3 text-xs">
             <div class="opacity-40 mb-1 tracking-widest">${round}${escapeHtml(magiName)}: ${escapeHtml(displayName)}</div>
-            <div class="text-eva-green/80 leading-relaxed whitespace-pre-wrap">${clean}</div>
+            <div class="${textColor} leading-relaxed whitespace-pre-wrap">${clean}</div>
           </div>`;
       }).join('');
 
-      const historyItem = `
-        <div id="${cardId}" class="bg-eva-panel/90 clip-both p-6 border border-eva-green/20 backdrop-blur-md relative overflow-hidden transition-all duration-500">
-          <div class="text-[10px] opacity-40 mb-2 tracking-widest">RECORD #${String(deliberationCount).padStart(3, '0')}</div>
-          <div class="text-eva-green/60 text-xs italic mb-4 border-l-2 border-eva-green/20 pl-3">Q: ${escapeHtml(question)}</div>
+      let historyItem;
 
-          <div class="flex flex-col md:flex-row gap-6 items-start">
-            <div class="flex-shrink-0">
-              <div class="${badgeClass}">${escapeHtml(verdict)}</div>
-              <div class="grid grid-cols-3 gap-2 w-full md:w-48">${votesHtml}</div>
+      if (mode === 'free') {
+        historyItem = `
+          <div id="${cardId}" class="bg-eva-panel/90 clip-both p-6 border border-eva-orange/20 backdrop-blur-md relative overflow-hidden transition-all duration-500">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="text-[10px] opacity-40 tracking-widest">RECORD #${String(deliberationCount).padStart(3, '0')}</div>
+              <div class="text-[10px] px-2 py-0.5 border border-eva-orange/50 text-eva-orange/70 tracking-widest">FREE TALK</div>
             </div>
-            <div class="flex-1 w-full">
-              <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-2">Conclusion</h4>
-              <div class="text-sm text-eva-green/90 leading-relaxed mb-3">${escapeHtml(conclusion)}</div>
-              <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-2">Logical Reasoning</h4>
-              <div class="text-sm text-eva-green/80 leading-relaxed whitespace-pre-wrap mb-4">${escapeHtml(reasoning)}</div>
+            <div class="text-eva-orange/60 text-xs italic mb-5 border-l-2 border-eva-orange/20 pl-3">${escapeHtml(question)}</div>
 
-              <button onclick="toggleHistoryDisc('${discId}')" class="flex items-center gap-2 text-[10px] tracking-widest opacity-60 hover:opacity-100 transition-opacity outline-none">
-                <i data-lucide="message-square" class="w-3 h-3"></i> DISCUSSION LOG <i id="arr-${discId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform"></i>
-              </button>
-              <div id="${discId}" class="hidden mt-4 space-y-4 pt-4 border-t border-eva-green/10">
-                ${discussionHtml}
+            <div class="mb-5">
+              <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-3 text-eva-orange">Response</h4>
+              <div class="text-sm text-eva-orange/90 leading-relaxed whitespace-pre-wrap">${escapeHtml(r.final_answer)}</div>
+            </div>
+
+            <button onclick="toggleHistoryDisc('${discId}')" class="flex items-center gap-2 text-[10px] tracking-widest opacity-60 hover:opacity-100 transition-opacity outline-none text-eva-orange">
+              <i data-lucide="message-square" class="w-3 h-3"></i> DISCUSSION LOG <i id="arr-${discId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform"></i>
+            </button>
+            <div id="${discId}" class="hidden mt-4 space-y-4 pt-4 border-t border-eva-orange/10">
+              ${discussionHtml}
+            </div>
+          </div>
+        `;
+      } else {
+        const { conclusion, verdict, isApproved, isRejected, reasoning, voteLines } = parseResult(r.final_answer);
+
+        let badgeClass = 'inline-block text-2xl font-bold px-8 py-2 rounded border-2 font-orbitron tracking-widest mb-4 ';
+        if (isApproved) badgeClass += 'text-eva-green border-eva-green bg-eva-green/10 eva-glow';
+        else if (isRejected) badgeClass += 'text-eva-red border-eva-red bg-eva-red/10 eva-glow-red';
+        else badgeClass += 'text-eva-orange border-eva-orange bg-eva-orange/10 eva-glow-orange';
+
+        const votesHtml = voteLines.map(([_, persona, vote]) => {
+          const p = persona.trim();
+          const v = vote.trim();
+          const magiName = personaToMagi[p] || p;
+          let vClass = 'text-eva-green border-eva-green bg-eva-green/5';
+          if (/反対|否決/.test(v)) vClass = 'text-eva-red border-eva-red bg-eva-red/5';
+          else if (/保留/.test(v)) vClass = 'text-eva-orange border-eva-orange bg-eva-orange/5';
+          return `<div class="text-center py-2 border clip-br ${vClass}"><div class="text-[8px] opacity-60">${escapeHtml(magiName)}</div><div class="text-xs font-bold">${escapeHtml(v)}</div></div>`;
+        }).join('');
+
+        historyItem = `
+          <div id="${cardId}" class="bg-eva-panel/90 clip-both p-6 border border-eva-green/20 backdrop-blur-md relative overflow-hidden transition-all duration-500">
+            <div class="text-[10px] opacity-40 mb-2 tracking-widest">RECORD #${String(deliberationCount).padStart(3, '0')}</div>
+            <div class="text-eva-green/60 text-xs italic mb-4 border-l-2 border-eva-green/20 pl-3">Q: ${escapeHtml(question)}</div>
+
+            <div class="flex flex-col md:flex-row gap-6 items-start">
+              <div class="flex-shrink-0">
+                <div class="${badgeClass}">${escapeHtml(verdict)}</div>
+                <div class="grid grid-cols-3 gap-2 w-full md:w-48">${votesHtml}</div>
+              </div>
+              <div class="flex-1 w-full">
+                <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-2">Conclusion</h4>
+                <div class="text-sm text-eva-green/90 leading-relaxed mb-3">${escapeHtml(conclusion)}</div>
+                <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-2">Logical Reasoning</h4>
+                <div class="text-sm text-eva-green/80 leading-relaxed whitespace-pre-wrap mb-4">${escapeHtml(reasoning)}</div>
+
+                <button onclick="toggleHistoryDisc('${discId}')" class="flex items-center gap-2 text-[10px] tracking-widest opacity-60 hover:opacity-100 transition-opacity outline-none">
+                  <i data-lucide="message-square" class="w-3 h-3"></i> DISCUSSION LOG <i id="arr-${discId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform"></i>
+                </button>
+                <div id="${discId}" class="hidden mt-4 space-y-4 pt-4 border-t border-eva-green/10">
+                  ${discussionHtml}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
+      }
 
       const historyContainer = document.getElementById('resultHistory');
       historyContainer.insertAdjacentHTML('afterbegin', historyItem);
