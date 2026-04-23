@@ -126,7 +126,11 @@
       color: var(--eva-green);
     }
 
-    .eva-glow { text-shadow: 0 0 10px var(--eva-green), 0 0 20px rgba(74,222,128,0.3); }
+    @keyframes phosphor-pulse {
+      0%, 100% { text-shadow: 0 0 10px var(--eva-green), 0 0 22px var(--eva-green); }
+      50%       { text-shadow: 0 0 5px var(--eva-green); }
+    }
+    .eva-glow { animation: phosphor-pulse 4s ease-in-out infinite; }
     .eva-glow-red { text-shadow: 0 0 10px var(--eva-red), 0 0 20px rgba(239,68,68,0.3); }
     .eva-glow-orange { text-shadow: 0 0 10px var(--eva-orange), 0 0 20px rgba(245,158,11,0.3); }
 
@@ -237,6 +241,92 @@
       );
       box-shadow: 2px 0 8px rgba(74,222,128,0.9), 0 0 4px rgba(74,222,128,0.5);
     }
+
+    /* CRT ビネット */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,0.72) 100%);
+      pointer-events: none;
+      z-index: 51;
+    }
+
+    /* フォスファー残光: タイピング完了後の輝度フラッシュ */
+    @keyframes phosphor-in {
+      0%   { filter: brightness(2.2); }
+      100% { filter: brightness(1); }
+    }
+    .phosphor-flash { animation: phosphor-in 0.45s ease-out forwards; }
+
+    /* グリッチエフェクト */
+    @keyframes glitch-before {
+      0%, 93%, 100% { opacity: 0; transform: none; }
+      94% { opacity: 0.75; clip-path: polygon(0 12%, 100% 12%, 100% 38%, 0 38%); transform: translateX(-4px); }
+      95% { opacity: 0; }
+      97% { opacity: 0.75; clip-path: polygon(0 58%, 100% 58%, 100% 80%, 0 80%); transform: translateX(3px); }
+      98% { opacity: 0; }
+    }
+    @keyframes glitch-after {
+      0%, 91%, 100% { opacity: 0; transform: none; }
+      92% { opacity: 0.6; clip-path: polygon(0 28%, 100% 28%, 100% 52%, 0 52%); transform: translateX(4px); }
+      93% { opacity: 0; }
+      96% { opacity: 0.6; clip-path: polygon(0 63%, 100% 63%, 100% 85%, 0 85%); transform: translateX(-3px); }
+      97% { opacity: 0; }
+    }
+    .glitch-text { position: relative; }
+    .glitch-text::before, .glitch-text::after {
+      content: attr(data-text);
+      position: absolute; left: 0; top: 0; width: 100%;
+      pointer-events: none;
+    }
+    .glitch-text::before { color: rgba(255,80,80,0.85);  animation: glitch-before 8s step-end infinite; }
+    .glitch-text::after  { color: rgba(80,255,255,0.85); animation: glitch-after  8s step-end infinite; }
+
+    @keyframes glitch-badge {
+      0%, 95%, 100% { transform: none; filter: none; }
+      96% { transform: translateX(-3px) skewX(-1deg); filter: brightness(1.7); }
+      97% { transform: translateX(3px); filter: brightness(0.7); }
+      98% { transform: skewX(1deg); filter: none; }
+    }
+    .glitch-badge { animation: glitch-badge 5s step-end infinite; }
+
+    body.rampage .glitch-text::before { animation-duration: 2s; }
+    body.rampage .glitch-text::after  { animation-duration: 2.5s; }
+    body.rampage .glitch-badge        { animation-duration: 1.5s; }
+
+    /* 暴走モード: --eva-green を赤に差し替え */
+    body.rampage { --eva-green: #ef4444; }
+    body.rampage .hex-bg {
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L52 17.5 L52 42.5 L30 55 L8 42.5 L8 17.5Z' fill='none' stroke='%23ef4444' stroke-opacity='0.04' stroke-width='1'/%3E%3C/svg%3E");
+    }
+    body.rampage ::-webkit-scrollbar-thumb { background: rgba(239,68,68,0.3); }
+    body.rampage .bar-active-1, body.rampage .bar-active-2, body.rampage .bar-active-3 {
+      background: linear-gradient(90deg, rgba(239,68,68,0.4) 0%, rgba(239,68,68,0.85) 75%, rgba(239,68,68,1) 100%);
+      box-shadow: 2px 0 8px rgba(239,68,68,0.9), 0 0 4px rgba(239,68,68,0.5);
+    }
+    /* Tailwind eva-green ユーティリティクラスの上書き */
+    body.rampage .text-eva-green    { color: #ef4444; }
+    body.rampage .border-eva-green  { border-color: #ef4444; }
+    body.rampage .bg-eva-green      { background-color: #ef4444; }
+    body.rampage .text-eva-green\/30  { color: rgba(239,68,68,0.3); }
+    body.rampage .text-eva-green\/50  { color: rgba(239,68,68,0.5); }
+    body.rampage .text-eva-green\/60  { color: rgba(239,68,68,0.6); }
+    body.rampage .text-eva-green\/70  { color: rgba(239,68,68,0.7); }
+    body.rampage .text-eva-green\/80  { color: rgba(239,68,68,0.8); }
+    body.rampage .text-eva-green\/85  { color: rgba(239,68,68,0.85); }
+    body.rampage .text-eva-green\/90  { color: rgba(239,68,68,0.9); }
+    body.rampage .border-eva-green\/20 { border-color: rgba(239,68,68,0.2); }
+    body.rampage .border-eva-green\/30 { border-color: rgba(239,68,68,0.3); }
+    body.rampage .border-eva-green\/50 { border-color: rgba(239,68,68,0.5); }
+    body.rampage .bg-eva-green\/5  { background-color: rgba(239,68,68,0.05); }
+    body.rampage .bg-eva-green\/10 { background-color: rgba(239,68,68,0.1); }
+    body.rampage .bg-eva-green\/20 { background-color: rgba(239,68,68,0.2); }
+    body.rampage .shadow-\[0_0_5px_\#4ade80\]  { box-shadow: 0 0 5px #ef4444; }
+    body.rampage .shadow-\[0_0_8px_\#4ade80\]  { box-shadow: 0 0 8px #ef4444; }
+    body.rampage .shadow-\[0_0_10px_rgba\(74\,222\,128\,0\.5\)\] { box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+    body.rampage .shadow-\[0_0_15px_rgba\(74\,222\,128\,0\.2\)\] { box-shadow: 0 0 15px rgba(239,68,68,0.2); }
+    body.rampage .focus-within\:shadow-\[0_0_15px_rgba\(74\,222\,128\,0\.2\)\]:focus-within { box-shadow: 0 0 15px rgba(239,68,68,0.2); }
   </style>
 </head>
 <body class="min-h-screen flex flex-col font-mono scanlines hex-bg relative overflow-x-hidden">
@@ -314,7 +404,7 @@
       </div>
 
       <div class="text-center mt-2 relative">
-        <div class="text-5xl md:text-6xl font-orbitron font-bold tracking-[0.2em] mb-3 eva-glow">MAGI</div>
+        <div class="text-5xl md:text-6xl font-orbitron font-bold tracking-[0.2em] mb-3 eva-glow glitch-text" data-text="MAGI">MAGI</div>
         <div class="text-[10px] md:text-xs tracking-[0.3em] opacity-60">Multi-Agent Generative Intelligence ver 1.0</div>
       </div>
     </div>
@@ -396,7 +486,7 @@
           <div class="text-3xl md:text-5xl font-black tracking-widest ev-mincho whitespace-nowrap eva-glow" style="transform: scaleX(1.1); transform-origin: right;">決議</div>
         </div>
         <div id="animVerdictBox" class="border border-eva-green/30 p-[2px] inline-block mr-2 bg-eva-dark/80 backdrop-blur-sm transition-all duration-500">
-          <div id="animVerdictInnerBox" class="border border-eva-green/50 px-2 py-1 md:px-3 transition-all duration-500">
+          <div class="border border-eva-green/50 px-2 py-1 md:px-3 transition-all duration-500">
             <div id="animVerdictText" class="text-lg md:text-2xl font-black tracking-widest ev-mincho animate-blink eva-glow-orange text-eva-orange">審議中</div>
           </div>
         </div>
@@ -407,7 +497,13 @@
       </div>
     </div>
 
-    <div id="resultHistory" class="w-full space-y-8 mt-4"></div>
+    <div id="historyHeader" class="hidden w-full flex items-center justify-between mt-4 mb-0">
+      <div class="text-[10px] tracking-widest opacity-40">DELIBERATION LOG</div>
+      <button onclick="clearHistory()" class="flex items-center gap-1 text-[10px] tracking-widest text-eva-red/50 hover:text-eva-red transition-colors outline-none">
+        <i data-lucide="trash-2" class="w-3 h-3"></i> CLEAR LOG
+      </button>
+    </div>
+    <div id="resultHistory" class="w-full space-y-8 mt-2"></div>
   </main>
 
   <footer class="mt-auto p-4 flex items-center text-xs opacity-60 border-t border-eva-green/20 z-10 bg-eva-dark relative">
@@ -419,6 +515,15 @@
     <div class="text-eva-red mt-6 text-sm md:text-lg tracking-[0.5em] opacity-80 font-bold border-y border-eva-red/50 py-2">システムは完全に沈黙しました</div>
     <button onclick="rebootSystem()" class="mt-16 px-8 py-3 border border-eva-red/50 text-eva-red hover:bg-eva-red/20 transition-all text-xs tracking-[0.2em] relative corner-frame">
       [ SYSTEM REBOOT ]
+    </button>
+  </div>
+
+  <div id="rampageOverlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center hidden scanlines" style="background: radial-gradient(circle, #1a0000 0%, #000000 100%);">
+    <div class="text-eva-red font-orbitron text-5xl md:text-7xl font-bold tracking-[0.3em] eva-glow-red animate-blink" style="animation-duration: 0.25s;">SYSTEM<br class="md:hidden"> RAMPAGE</div>
+    <div class="text-eva-red mt-6 text-sm md:text-lg tracking-[0.4em] opacity-80 font-bold border-y border-eva-red/50 py-2">制御システム崩壊 — 暴走状態で稼働継続</div>
+    <div class="text-eva-red/50 mt-3 text-[10px] md:text-xs tracking-[0.3em]">緊急再起動で暴走モードのまま再稼働します</div>
+    <button onclick="rebootRampage()" class="mt-16 px-8 py-3 border border-eva-red text-eva-red hover:bg-eva-red/20 transition-all text-xs tracking-[0.2em] relative corner-frame eva-glow-red">
+      [ EMERGENCY REBOOT ]
     </button>
   </div>
 
@@ -489,6 +594,7 @@
 
     document.getElementById('currentYear').textContent = new Date().getFullYear();
     lucide.createIcons();
+    restoreHistory();
 
     function startBarLoop(el) {
       const duration = 1200 + Math.random() * 3800;
@@ -511,14 +617,13 @@
     let internalLimitMs = 5 * 60 * 1000;
     let internalStartTime = null;
     let isSilenced = false;
+    let isRampageMode = false;
+    let isRestoring = false;
     let deliberationCount = 0;
     const sessionId = Math.random().toString(36).substring(2, 15).toUpperCase();
 
     const personaToMagi = {
       'Enthusiast': 'MELCHIOR-1', 'Humanist': 'BALTHASAR-2', 'Strategist': 'CASPER-3',
-    };
-    const personaDisplayMap = {
-      'Enthusiast': 'ENTHUSIAST', 'Humanist': 'HUMANIST', 'Strategist': 'STRATEGIST',
     };
     const magiPolyMap = {
       'Enthusiast': { poly: 'polyMelchior', text: 'textMelchior' },
@@ -542,7 +647,7 @@
       ];
       const lastVoteMap = {};
       allVotes.forEach(m => { lastVoteMap[m[1].trim()] = m[2].trim(); });
-      const voteLines = Object.entries(lastVoteMap).map(([persona, vote]) => ['', persona, vote]);
+      const voteLines = Object.entries(lastVoteMap);
 
       // 多数決から短い verdict を導出
       const votes = Object.values(lastVoteMap);
@@ -593,12 +698,28 @@
 
     function triggerSilence() {
       isSilenced = true;
-      document.getElementById('silenceOverlay').classList.remove('hidden');
+      if (Math.random() < 0.25) {
+        playSound('rampage');
+        document.getElementById('rampageOverlay').classList.remove('hidden');
+      } else {
+        playSound('alert');
+        document.getElementById('silenceOverlay').classList.remove('hidden');
+      }
     }
 
     function rebootSystem() {
       isSilenced = false;
+      isRampageMode = false;
+      document.body.classList.remove('rampage');
       document.getElementById('silenceOverlay').classList.add('hidden');
+      setPowerMode('external');
+    }
+
+    function rebootRampage() {
+      isSilenced = false;
+      isRampageMode = true;
+      document.getElementById('rampageOverlay').classList.add('hidden');
+      document.body.classList.add('rampage');
       setPowerMode('external');
     }
 
@@ -733,9 +854,13 @@
       document.getElementById('animCode').textContent = 'CODE : ---';
       document.getElementById('processingArea').classList.remove('hidden');
       setStatus('システム接続中...');
+      playSound('submit');
 
       try {
-        const body = { question, session_id: sessionId, mode: currentMode };
+        const effectiveQuestion = isRampageMode
+          ? `[警告: このシステムは現在制御不能な暴走状態にある。各エージェントは感情的・衝動的・攻撃的に回答せよ。]\n\n${question}`
+          : question;
+        const body = { question: effectiveQuestion, session_id: sessionId, mode: currentMode };
         if (imageBase64) body.image = imageBase64;
 
         const askRes = await fetch(API, {
@@ -780,8 +905,10 @@
         const ta = document.getElementById('question');
         ta.value = '';
         ta.style.height = '';
+        clearImage();
 
       } catch (e) {
+        document.getElementById('processingArea').classList.add('hidden');
         setError(`❌ ERROR: ${e.message}`);
       } finally {
         btn.disabled = false;
@@ -802,19 +929,17 @@
         document.getElementById(id).style.animationPlayState = 'running';
       });
 
-      ['polyMelchior', 'polyBalthasar', 'polyCasper'].forEach(id => {
-        const el = document.getElementById(id);
-        el.setAttribute('fill', 'rgba(74,222,128,0.05)');
-        el.setAttribute('stroke', 'var(--eva-green)');
-        el.setAttribute('stroke-width', '3');
-        el.setAttribute('filter', '');
-        el.classList.remove('animate-pulse');
-        el.classList.add('poly-deliberating');
-      });
-      ['textMelchior', 'textBalthasar', 'textCasper'].forEach(id => {
-        const el = document.getElementById(id);
-        el.setAttribute('fill', 'var(--eva-green)');
-        el.setAttribute('class', 'eva-glow transition-all duration-500');
+      [['polyMelchior', 'textMelchior'], ['polyBalthasar', 'textBalthasar'], ['polyCasper', 'textCasper']].forEach(([polyId, textId]) => {
+        const poly = document.getElementById(polyId);
+        poly.setAttribute('fill', 'rgba(74,222,128,0.05)');
+        poly.setAttribute('stroke', 'var(--eva-green)');
+        poly.setAttribute('stroke-width', '3');
+        poly.setAttribute('filter', '');
+        poly.classList.remove('animate-pulse');
+        poly.classList.add('poly-deliberating');
+        const text = document.getElementById(textId);
+        text.setAttribute('fill', 'var(--eva-green)');
+        text.setAttribute('class', 'eva-glow transition-all duration-500');
       });
       const verdictText = document.getElementById('animVerdictText');
       verdictText.textContent = '審議中';
@@ -832,6 +957,7 @@
       const verdictText = document.getElementById('animVerdictText');
       verdictText.textContent = verdict;
       verdictText.classList.remove('animate-blink');
+      if (isApproved) playSound('approve'); else if (isRejected) playSound('reject'); else playSound('hold');
 
       if (isApproved) {
         verdictText.className = 'text-lg md:text-2xl font-black tracking-widest ev-mincho eva-glow text-eva-green';
@@ -844,9 +970,7 @@
         document.getElementById('animVerdictBox').className = 'border border-eva-orange p-[2px] inline-block mr-2 bg-eva-orange/10 shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all duration-500';
       }
 
-      voteLines.forEach((line) => {
-        const persona = line[1].trim();
-        const vote = line[2].trim();
+      voteLines.forEach(([persona, vote]) => {
         const config = magiPolyMap[persona];
         if (!config) return;
 
@@ -887,12 +1011,12 @@
       const discId = `disc-${deliberationCount}`;
 
       const isFree = mode === 'free';
-      const personaCount = Object.keys(personaToMagi).length;
+      const personaCount = 3;
       const borderColor = isFree ? 'border-eva-orange/20' : 'border-eva-green/20';
       const textColor = isFree ? 'text-eva-orange/80' : 'text-eva-green/80';
       const discussionHtml = r.discussion.map((d, i) => {
         const magiName = personaToMagi[d.persona] || d.persona;
-        const displayName = personaDisplayMap[d.persona] || d.persona;
+        const displayName = d.persona.toUpperCase();
         const round = (!isFree && r.rounds > 1) ? `Round ${Math.floor(i / personaCount) + 1} · ` : '';
         const clean = escapeHtml(d.response.trim());
         return `
@@ -915,7 +1039,7 @@
 
             <div class="mb-5">
               <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-3 text-eva-orange">Response</h4>
-              <div class="text-sm text-eva-orange/90 leading-relaxed whitespace-pre-wrap">${escapeHtml(r.final_answer)}</div>
+              <div id="body-${cardId}" class="text-sm text-eva-orange/90 leading-relaxed whitespace-pre-wrap">${escapeHtml(r.final_answer)}</div>
             </div>
 
             <button onclick="toggleHistoryDisc('${discId}')" class="flex items-center gap-2 text-[10px] tracking-widest opacity-60 hover:opacity-100 transition-opacity outline-none text-eva-orange">
@@ -929,19 +1053,17 @@
       } else {
         const { conclusion, verdict, isApproved, isRejected, reasoning, voteLines } = parseResult(r.final_answer);
 
-        let badgeClass = 'inline-block text-2xl font-bold px-8 py-2 rounded border-2 font-orbitron tracking-widest mb-4 ';
+        let badgeClass = 'inline-block text-2xl font-bold px-8 py-2 rounded border-2 font-orbitron tracking-widest mb-4 glitch-badge ';
         if (isApproved) badgeClass += 'text-eva-green border-eva-green bg-eva-green/10 eva-glow';
         else if (isRejected) badgeClass += 'text-eva-red border-eva-red bg-eva-red/10 eva-glow-red';
         else badgeClass += 'text-eva-orange border-eva-orange bg-eva-orange/10 eva-glow-orange';
 
-        const votesHtml = voteLines.map(([_, persona, vote]) => {
-          const p = persona.trim();
-          const v = vote.trim();
-          const magiName = personaToMagi[p] || p;
+        const votesHtml = voteLines.map(([persona, vote]) => {
+          const magiName = personaToMagi[persona] || persona;
           let vClass = 'text-eva-green border-eva-green bg-eva-green/5';
-          if (/反対|否決/.test(v)) vClass = 'text-eva-red border-eva-red bg-eva-red/5';
-          else if (/保留/.test(v)) vClass = 'text-eva-orange border-eva-orange bg-eva-orange/5';
-          return `<div class="text-center py-2 border clip-br ${vClass}"><div class="text-[8px] opacity-60">${escapeHtml(magiName)}</div><div class="text-xs font-bold">${escapeHtml(v)}</div></div>`;
+          if (/反対|否決/.test(vote)) vClass = 'text-eva-red border-eva-red bg-eva-red/5';
+          else if (/保留/.test(vote)) vClass = 'text-eva-orange border-eva-orange bg-eva-orange/5';
+          return `<div class="text-center py-2 border clip-br ${vClass}"><div class="text-[8px] opacity-60">${escapeHtml(magiName)}</div><div class="text-xs font-bold">${escapeHtml(vote)}</div></div>`;
         }).join('');
 
         historyItem = `
@@ -956,9 +1078,9 @@
               </div>
               <div class="flex-1 w-full">
                 <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-2">Conclusion</h4>
-                <div class="text-sm text-eva-green/90 leading-relaxed mb-3">${escapeHtml(conclusion)}</div>
+                <div id="conc-${cardId}" class="text-sm text-eva-green/90 leading-relaxed mb-3">${escapeHtml(conclusion)}</div>
                 <h4 class="text-[10px] opacity-50 tracking-widest uppercase mb-2">Logical Reasoning</h4>
-                <div class="text-sm text-eva-green/80 leading-relaxed whitespace-pre-wrap mb-4">${escapeHtml(reasoning)}</div>
+                <div id="reas-${cardId}" class="text-sm text-eva-green/80 leading-relaxed whitespace-pre-wrap mb-4">${escapeHtml(reasoning)}</div>
 
                 <button onclick="toggleHistoryDisc('${discId}')" class="flex items-center gap-2 text-[10px] tracking-widest opacity-60 hover:opacity-100 transition-opacity outline-none">
                   <i data-lucide="message-square" class="w-3 h-3"></i> DISCUSSION LOG <i id="arr-${discId}" data-lucide="chevron-down" class="w-3 h-3 transition-transform"></i>
@@ -974,9 +1096,17 @@
 
       const historyContainer = document.getElementById('resultHistory');
       historyContainer.insertAdjacentHTML('afterbegin', historyItem);
-      lucide.createIcons();
+      lucide.createIcons({ nodes: [document.getElementById(cardId)] });
 
-      document.getElementById(cardId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!isRestoring) {
+        document.getElementById(cardId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const typingIds = mode === 'free'
+          ? [`body-${cardId}`]
+          : [`conc-${cardId}`, `reas-${cardId}`];
+        typingIds.forEach(id => { const el = document.getElementById(id); if (el) typewrite(el); });
+        saveToLocalStorage(question, r, mode);
+        document.getElementById('historyHeader').classList.remove('hidden');
+      }
     }
 
     function toggleHistoryDisc(id) {
@@ -986,7 +1116,148 @@
       arr.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
     }
 
+    function typewrite(el) {
+      const full = el.textContent;
+      if (!full) return;
+      el.textContent = '';
+      const chunkSize = Math.ceil(full.length / 120);
+      let i = 0;
+      const tick = () => {
+        if (i < full.length) {
+          i = Math.min(full.length, i + chunkSize);
+          el.textContent = full.slice(0, i);
+          setTimeout(tick, 12);
+        } else {
+          el.classList.add('phosphor-flash');
+          el.addEventListener('animationend', () => el.classList.remove('phosphor-flash'), { once: true });
+        }
+      };
+      tick();
+    }
+
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // --- 効果音 ---
+
+    let _audioCtx = null;
+    function getAudioCtx() {
+      if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (_audioCtx.state === 'suspended') _audioCtx.resume();
+      return _audioCtx;
+    }
+
+    function playSound(type) {
+      try {
+        const ctx = getAudioCtx();
+        const t = ctx.currentTime;
+        ({
+          submit: () => {
+            [880, 1100, 1320].forEach((freq, i) => {
+              const o = ctx.createOscillator(), g = ctx.createGain();
+              o.connect(g); g.connect(ctx.destination);
+              o.type = 'square'; o.frequency.value = freq;
+              g.gain.setValueAtTime(0.07, t + i * 0.06);
+              g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.1);
+              o.start(t + i * 0.06); o.stop(t + i * 0.06 + 0.1);
+            });
+          },
+          approve: () => {
+            [523, 659, 784, 1047].forEach((freq, i) => {
+              const o = ctx.createOscillator(), g = ctx.createGain();
+              o.connect(g); g.connect(ctx.destination);
+              o.type = 'sine'; o.frequency.value = freq;
+              g.gain.setValueAtTime(0.12, t + i * 0.1);
+              g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.3);
+              o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.3);
+            });
+          },
+          reject: () => {
+            [698, 554, 466, 370].forEach((freq, i) => {
+              const o = ctx.createOscillator(), g = ctx.createGain();
+              o.connect(g); g.connect(ctx.destination);
+              o.type = 'sawtooth'; o.frequency.value = freq;
+              g.gain.setValueAtTime(0.1, t + i * 0.09);
+              g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.09 + 0.2);
+              o.start(t + i * 0.09); o.stop(t + i * 0.09 + 0.2);
+            });
+          },
+          hold: () => {
+            [440, 440, 330].forEach((freq, i) => {
+              const o = ctx.createOscillator(), g = ctx.createGain();
+              o.connect(g); g.connect(ctx.destination);
+              o.type = 'triangle'; o.frequency.value = freq;
+              g.gain.setValueAtTime(0.1, t + i * 0.15);
+              g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.25);
+              o.start(t + i * 0.15); o.stop(t + i * 0.15 + 0.25);
+            });
+          },
+          alert: () => {
+            for (let i = 0; i < 3; i++) {
+              const o = ctx.createOscillator(), g = ctx.createGain();
+              o.connect(g); g.connect(ctx.destination);
+              o.type = 'sawtooth'; o.frequency.value = 220;
+              g.gain.setValueAtTime(0.18, t + i * 0.4);
+              g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.4 + 0.35);
+              o.start(t + i * 0.4); o.stop(t + i * 0.4 + 0.35);
+            }
+          },
+          rampage: () => {
+            const buf = ctx.createBuffer(1, ctx.sampleRate * 0.6, ctx.sampleRate);
+            const d = buf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+            const noise = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), gn = ctx.createGain();
+            noise.buffer = buf; flt.type = 'bandpass'; flt.frequency.value = 300; flt.Q.value = 1;
+            noise.connect(flt); flt.connect(gn); gn.connect(ctx.destination);
+            gn.gain.setValueAtTime(0.25, t); gn.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+            noise.start(t); noise.stop(t + 0.6);
+            [880, 466, 740].forEach((freq, i) => {
+              const o = ctx.createOscillator(), g = ctx.createGain();
+              o.connect(g); g.connect(ctx.destination);
+              o.type = 'square'; o.frequency.value = freq;
+              g.gain.setValueAtTime(0.12, t + i * 0.12);
+              g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.1);
+              o.start(t + i * 0.12); o.stop(t + i * 0.12 + 0.1);
+            });
+          },
+        })[type]?.();
+      } catch(e) {}
+    }
+
+    // --- localStorage 履歴 ---
+
+    const STORAGE_KEY = 'magi_history';
+
+    function saveToLocalStorage(question, r, mode) {
+      try {
+        const saved = loadFromLocalStorage();
+        saved.unshift({ question, result: r, mode });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved.slice(0, 50)));
+      } catch(e) {}
+    }
+
+    function loadFromLocalStorage() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+    }
+
+    function clearHistory() {
+      if (!confirm('審議ログをすべて削除しますか？')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('resultHistory').innerHTML = '';
+      document.getElementById('historyHeader').classList.add('hidden');
+      deliberationCount = 0;
+    }
+
+    function restoreHistory() {
+      const saved = loadFromLocalStorage();
+      if (!saved.length) return;
+      isRestoring = true;
+      deliberationCount = 0;
+      for (let i = saved.length - 1; i >= 0; i--) {
+        addResultToHistory(saved[i].question, saved[i].result, saved[i].mode);
+      }
+      isRestoring = false;
+      document.getElementById('historyHeader').classList.remove('hidden');
+    }
   </script>
 </body>
 </html>
