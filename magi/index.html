@@ -126,11 +126,7 @@
       color: var(--eva-green);
     }
 
-    @keyframes phosphor-pulse {
-      0%, 100% { text-shadow: 0 0 10px var(--eva-green), 0 0 22px var(--eva-green); }
-      50%       { text-shadow: 0 0 5px var(--eva-green); }
-    }
-    .eva-glow { animation: phosphor-pulse 4s ease-in-out infinite; }
+    .eva-glow { text-shadow: 0 0 10px var(--eva-green), 0 0 20px rgba(74,222,128,0.3); }
     .eva-glow-red { text-shadow: 0 0 10px var(--eva-red), 0 0 20px rgba(239,68,68,0.3); }
     .eva-glow-orange { text-shadow: 0 0 10px var(--eva-orange), 0 0 20px rgba(245,158,11,0.3); }
 
@@ -241,23 +237,6 @@
       );
       box-shadow: 2px 0 8px rgba(74,222,128,0.9), 0 0 4px rgba(74,222,128,0.5);
     }
-
-    /* CRT ビネット */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,0.72) 100%);
-      pointer-events: none;
-      z-index: 51;
-    }
-
-    /* フォスファー残光: タイピング完了後の輝度フラッシュ */
-    @keyframes phosphor-in {
-      0%   { filter: brightness(2.2); }
-      100% { filter: brightness(1); }
-    }
-    .phosphor-flash { animation: phosphor-in 0.45s ease-out forwards; }
 
     /* グリッチエフェクト */
     @keyframes glitch-before {
@@ -1127,9 +1106,6 @@
           i = Math.min(full.length, i + chunkSize);
           el.textContent = full.slice(0, i);
           setTimeout(tick, 12);
-        } else {
-          el.classList.add('phosphor-flash');
-          el.addEventListener('animationend', () => el.classList.remove('phosphor-flash'), { once: true });
         }
       };
       tick();
