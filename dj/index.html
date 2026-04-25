@@ -763,8 +763,28 @@
       background: var(--dark-blue-purple);
       color: rgba(255, 255, 255, 0.5);
       text-align: center;
+      position: relative;
       font-size: 0.8rem;
       letter-spacing: 0.05em;
+    }
+
+    .site-footer-back {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(156, 122, 247, 0.6);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      text-decoration: none;
+      border: 1px solid rgba(156, 122, 247, 0.25);
+      padding: 4px 10px;
+      letter-spacing: 0.12em;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+    .site-footer-back:hover {
+      color: var(--neo-purple);
+      border-color: var(--neo-purple);
     }
 
     /* ===== Image Modal ===== */
@@ -1014,6 +1034,7 @@
 
   <!-- FOOTER -->
   <footer class="site-footer">
+    <a href="https://tk.st/" class="site-footer-back" aria-label="tk.st へ戻る">&lt;</a>
     © <span id="copyright-year"></span> Shinya Takeda
   </footer>
 

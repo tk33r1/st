@@ -14,6 +14,8 @@
   <meta property="og:url" content="https://tk.st/game/">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:description" content="AIコーディング能力計測のために制作したゲームのアーカイブ">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/st-games-ogp.png">
   
   <script type="application/ld+json">
   {
@@ -359,6 +361,11 @@
       pointer-events: auto;
       transform: translateY(0);
     }
+    @media (max-width: 640px) {
+      #scroll-top-btn {
+        bottom: 60px;
+      }
+    }
   </style>
 </head>
 
@@ -415,9 +422,11 @@
         <div id="game-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
       </section>
     </main>
-    <footer class="w-full px-4 sm:px-6 lg:px-10 pb-6 relative z-10">
+    <footer class="w-full px-4 sm:px-6 lg:px-10 pt-4 pb-6 relative z-10" style="border-top: 1px solid rgba(0,229,255,0.25); box-shadow: 0 -1px 12px rgba(0,229,255,0.08); margin-top: 8px;">
       <div class="max-w-6xl mx-auto flex items-center">
-        <div class="flex-1"></div>
+        <div class="flex-1 flex items-center">
+          <a href="https://tk.st/" class="pixel-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] bg-transparent border-white/30 text-white/50 hover:text-white/80 hover:border-white/60" aria-label="Back to tk.st"><span>&lt;</span><span class="hidden sm:inline">tk.st</span></a>
+        </div>
         <span class="text-[16px] opacity-40">&copy; <span id="currentYear"></span> Shinya Takeda</span>
         <div class="flex-1 flex justify-end items-center">
           <div id="donation-button-container"></div>

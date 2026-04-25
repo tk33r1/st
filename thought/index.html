@@ -176,6 +176,9 @@
     .delay-600 { animation-delay: 1200ms; }
     .delay-800 { animation-delay: 1600ms; }
 
+    .breadcrumb-home { text-decoration: none; opacity: 0.5; transition: opacity 0.3s ease; }
+    .breadcrumb-home:hover { opacity: 0.85; }
+
     .reference-link { text-decoration: underline; text-underline-offset: 3px; transition: color 0.4s ease; }
     body.dark-mode .reference-link:hover { color: #ffffff !important; }
     body:not(.dark-mode) .reference-link:hover { color: #111111 !important; }
@@ -317,7 +320,8 @@
         </div>
       </div>
 
-      <div id="footerBottom" class="w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]">
+      <div id="footerBottom" class="relative w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]">
+        <a href="https://tk.st/" class="breadcrumb-home absolute left-4 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs tracking-[0.1em] transition-colors duration-700" style="font-family:'Cormorant Garamond',serif;" aria-label="tk.st へ戻る">&lt;</a>
         <p id="copyright" class="text-center text-[10px] sm:text-xs tracking-[0.1em] transition-colors duration-700">© <span id="copyright-year"></span> Shinya Takeda</p>
       </div>
     </footer>
@@ -543,7 +547,7 @@
 
         els.zenToggleBtn.className = "p-2 text-[#a1a1aa] transition-all duration-500 rounded-full hover:bg-white/10 hover:text-white focus:outline-none";
         els.subtitle.classList.add('hover:text-white');
-        els.footerBottom.className = "w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-white/[0.06]";
+        els.footerBottom.className = "relative w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-white/[0.06]";
         els.disclosureBtn.className = "flex items-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-full border border-white/20 bg-transparent text-[#a1a1aa] transition-all hover:border-white hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#111111] hover:bg-white/5 whitespace-nowrap tracking-widest";
         
         els.modalContent.style.backgroundColor = "#27272a";
@@ -568,7 +572,7 @@
 
         els.zenToggleBtn.className = "p-2 text-[#777777] transition-all duration-500 rounded-full hover:bg-black/5 hover:text-[#111111] focus:outline-none";
         els.subtitle.classList.remove('hover:text-white');
-        els.footerBottom.className = "w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]";
+        els.footerBottom.className = "relative w-full py-5 sm:py-6 px-4 transition-colors duration-700 border-t border-black/[0.06]";
         els.disclosureBtn.className = "flex items-center gap-2 px-4 py-2 text-xs sm:text-sm rounded-full border border-black/10 bg-transparent text-[#777777] transition-all hover:border-[#111111] hover:text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-2 hover:bg-black/5 whitespace-nowrap tracking-widest";
         
         els.modalContent.style.backgroundColor = "#ffffff";
@@ -595,7 +599,7 @@
       // Removed specific IDs that no longer exist, generalized text application
       const allTextElements = [
         els.title, els.body, els.footerText, els.modalBody, els.subtitle, 
-        els.metaInfo, els.copyright, els.disclosureText, els.modalTitle, 
+        els.metaInfo, els.copyright, els.disclosureText, els.modalTitle,
         els.closeModalBtn, els.shareModalTitle, ...els.themeBtns
       ];
       allTextElements.forEach(el => { if (el && el.style) el.style.fontFamily = serifStack; });
