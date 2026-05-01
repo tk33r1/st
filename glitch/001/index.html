@@ -107,15 +107,6 @@
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     .header-right { display: flex; align-items: center; gap: 12px; }
 
-    .back-link {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--text-dim);
-      text-decoration: none;
-      letter-spacing: 0.04em;
-      transition: color 0.15s;
-    }
-    .back-link:hover { color: var(--accent); }
 
     /* progress bar */
     .progress-bar {
@@ -557,6 +548,18 @@
       color: var(--text);
       line-height: 1.8;
     }
+    .comment-delete {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      margin-left: auto;
+      transition: color 0.15s;
+    }
+    .comment-delete:hover { color: oklch(65% 0.18 25); }
 
     /* ── FOOTER ── */
     footer {
@@ -615,8 +618,6 @@
         <span class="slash">/</span>glitch<span class="logo-blink"></span>
       </a>
       <div class="header-right">
-        <a href="../index.html" class="back-link">← 一覧へ</a>
-
       </div>
     </div>
   </div>
@@ -909,19 +910,30 @@ claude</code></pre>
   }
 
   // Comment form
-  const comments = JSON.parse(localStorage.getItem('glitch-comments-001') || '[]');
+  const ARTICLE_ID = '001';
+  const API_URL = '/glitch/api/comments/' + ARTICLE_ID;
 
-  function renderComments() {
+  async function loadComments() {
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      if (Array.isArray(data)) renderComments(data);
+    } catch (_) {}
+  }
+
+  function renderComments(comments) {
     const list = document.getElementById('commentList');
-    const existing = list.querySelectorAll('.comment-item.user-added');
-    existing.forEach(el => el.remove());
+    list.querySelectorAll('.comment-item.user-added').forEach(el => el.remove());
     comments.forEach(c => {
+      const date = c.created_at ? c.created_at.split(' ')[0].replace(/-/g, '.') : '';
       const div = document.createElement('div');
       div.className = 'comment-item user-added';
+      div.setAttribute('data-id', c.id);
       div.innerHTML = `
         <div class="comment-header">
           <span class="comment-handle">${escHtml(c.handle)}</span>
-          <span class="comment-date">${c.date}</span>
+          <span class="comment-date">${date}</span>
+          <button class="comment-delete" onclick="deleteComment(${c.id})">×</button>
         </div>
         <p class="comment-text">${escHtml(c.text)}</p>
       `;
@@ -933,21 +945,33 @@ claude</code></pre>
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  function submitComment(e) {
+  async function submitComment(e) {
     e.preventDefault();
     const handle = document.getElementById('commentHandle').value.trim() || 'anon';
     const text = document.getElementById('commentText').value.trim();
     if (!text) return;
-    const now = new Date();
-    const date = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-    comments.push({ handle, text, date });
-    localStorage.setItem('glitch-comments-001', JSON.stringify(comments));
-    renderComments();
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handle, text }),
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) renderComments(data);
+    } catch (_) {}
     document.getElementById('commentHandle').value = '';
     document.getElementById('commentText').value = '';
   }
 
-  renderComments();
+  async function deleteComment(id) {
+    try {
+      const res = await fetch(API_URL + '/' + id, { method: 'DELETE' });
+      const data = await res.json();
+      if (Array.isArray(data)) renderComments(data);
+    } catch (_) {}
+  }
+
+  loadComments();
 </script>
 
 </body>

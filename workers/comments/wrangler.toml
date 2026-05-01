@@ -1,0 +1,12 @@
+name               = "tk-st-comments"
+main               = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "glitch-comments-db"
+database_id   = "7c173e20-5c0e-4a8b-8478-9e6acabe8fe7"
+
+[[routes]]
+pattern   = "tk.st/glitch/api/*"
+zone_name = "tk.st"

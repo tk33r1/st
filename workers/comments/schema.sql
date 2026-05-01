@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS comments (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id TEXT    NOT NULL,
+  handle     TEXT    NOT NULL,
+  text       TEXT    NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
