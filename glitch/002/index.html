@@ -791,7 +791,9 @@
       <div class="footer-center">
         <p class="footer-copy">© <span id="footerYear"></span> Shinya Takeda — 情報は自己責任でどうぞ。</p>
       </div>
-      <div class="footer-spacer"></div>
+      <div class="footer-spacer" style="flex:1; display:flex; justify-content: flex-end;">
+        <div id="donation-button-container"></div>
+      </div>
     </div>
   </div>
 </footer>
@@ -887,6 +889,6 @@
 </script>
 
 <script src="../../data/buy-me-a-coffee.js"></script>
-<script>new DonationWidget().init();</script>
+<script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 </body>
 </html>
