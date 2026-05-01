@@ -65,6 +65,69 @@ class DonationWidget {
                 animation: donationPopAndShake 3s ease-in-out infinite;
                 transform-origin: center center;
             }
+            .donation-widget-wrapper {
+                position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .donation-widget-tooltip {
+                position: absolute;
+                bottom: 100%;
+                margin-bottom: 0.75rem;
+                opacity: 0;
+                transition: opacity 300ms;
+                background-color: #1f2937;
+                color: #fff;
+                font-size: 0.75rem;
+                font-weight: 700;
+                padding: 0.375rem 0.75rem;
+                border-radius: 0.5rem;
+                white-space: nowrap;
+                pointer-events: none;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                z-index: 10;
+            }
+            .donation-widget-wrapper:hover .donation-widget-tooltip {
+                opacity: 1;
+            }
+            .donation-widget-tooltip::after {
+                content: '';
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border-width: 4px;
+                border-style: solid;
+                border-color: #1f2937 transparent transparent transparent;
+            }
+            .donation-widget-button {
+                transition: transform 300ms;
+                background-color: transparent;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                border-radius: 9999px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
+                outline: none;
+                filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.07)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+            }
+            .donation-widget-button:focus-visible {
+                box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1f2937;
+            }
+            .donation-widget-wrapper:hover .donation-widget-button {
+                transform: translateY(-0.5rem);
+            }
+            .donation-widget-button img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+                display: block;
+            }
         `;
         document.head.appendChild(style);
     }
@@ -73,7 +136,7 @@ class DonationWidget {
         const lightningBtn = this.lightningUrl ? `
             <a href="${this.lightningUrl}" target="_blank" rel="noopener noreferrer"
                style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#F7931A;color:#fff;font-size:0.875rem;font-weight:500;padding:0.5rem 1rem;border-radius:0.5rem;flex:1 1 0;min-width:0;box-sizing:border-box;text-decoration:none;">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg style="width:1.25rem;height:1.25rem;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M14.24 10.56C13.93 11.8 12 11.17 11.4 11L11.95 8.82C12.57 8.99 14.56 9.26 14.24 10.56M11.13 12.12L10.53 14.53C11.29 14.73 13.53 15.43 13.87 14.09C14.21 12.7 11.9 12.32 11.13 12.12M21.7 14.42C20.36 19.78 14.94 23.04 9.58 21.7C4.22 20.36.963 14.94 2.3 9.58C3.64 4.22 9.06.964 14.42 2.3C19.77 3.64 23.03 9.06 21.7 14.42M13.61 8.25L14.05 6.25L12.89 6L12.46 7.97C12.15 7.9 11.83 7.82 11.5 7.75L11.94 5.76L10.78 5.5L10.34 7.5C10.08 7.44 9.83 7.38 9.59 7.31L8 6.92L7.72 8.15C7.72 8.15 8.58 8.35 8.56 8.36C9 8.46 9.07 8.75 9.06 9L8.56 11.1C8.58 11.11 8.62 11.11 8.66 11.13L8.55 11.1L7.85 13.97C7.8 14.12 7.64 14.35 7.3 14.27C7.31 14.28 6.46 14.06 6.46 14.06L5.91 15.37L7.41 15.74C7.7 15.82 7.98 15.9 8.26 15.97L7.82 17.97L8.97 18.24L9.41 16.23C9.73 16.32 10.04 16.4 10.35 16.47L9.91 18.47L11.07 18.74L11.5 16.75C13.6 17.17 15.17 17 15.87 15.08C16.44 13.53 15.82 12.62 14.71 12.04C15.53 11.84 16.15 11.3 16.32 10.27C16.56 8.84 15.46 8.1 13.94 7.68Z"/>
                 </svg>
                 Lightning Network
@@ -94,7 +157,7 @@ class DonationWidget {
                     </svg>
                 </button>
                 <div style="overflow-y:auto;overflow-x:hidden;width:100%;flex:1 1 auto;background:#f9f9f9;">
-                    <h2 id="donation-modal-title" class="sr-only">Buy Me a Coffee</h2>
+                    <h2 id="donation-modal-title" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0;">Buy Me a Coffee</h2>
                     <iframe src="https://ko-fi.com/${this.kofiId}/?hidefeed=true&widget=true&embed=true&preview=true"
                             style="border:none;width:100%;padding:4px;background:#f9f9f9;display:block;"
                             height="712"
@@ -127,15 +190,14 @@ class DonationWidget {
 
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `
-            <div class="relative group flex justify-center items-center">
-                <div class="absolute bottom-full mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap pointer-events-none shadow-lg z-10" aria-hidden="true">
+            <div class="donation-widget-wrapper">
+                <div class="donation-widget-tooltip" aria-hidden="true">
                     Buy Me a Coffee
-                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                 </div>
                 <button aria-label="Buy Me a Coffee - 寄付モーダルを開く"
-                        class="transition-transform duration-300 group-hover:-translate-y-2 bg-transparent border-none p-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-800 rounded-full drop-shadow-md flex items-center justify-center w-8 h-8">
-                    <div class="donation-animate-pop-shake w-full h-full flex items-center justify-center">
-                        <img src="https://storage.ko-fi.com/cdn/logomarkLogo.png" alt="" class="max-w-full max-h-full object-contain">
+                        class="donation-widget-button">
+                    <div class="donation-animate-pop-shake" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                        <img src="https://storage.ko-fi.com/cdn/logomarkLogo.png" alt="">
                     </div>
                 </button>
             </div>
