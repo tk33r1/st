@@ -7,7 +7,6 @@ compatibility_date = "2025-01-01"
 routes = [
   { pattern = "tk.st/bitcoinyen/bbm/*", zone_name = "tk.st" },
   { pattern = "tk.st/bitcoinyen/ln/*", zone_name = "tk.st" },
-  { pattern = "tk.st/glitch/*", zone_name = "tk.st" },
   { pattern = "tk.st/bitcoinyen/certification/*", zone_name = "tk.st" },
   # 追加したいページがあれば下に行を足してください
   # { pattern = "example.tk.st/secret/*", zone_name = "tk.st" },
