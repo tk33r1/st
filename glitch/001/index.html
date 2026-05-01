@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code を DeepSeek で動かして API コストを 95% 削る — /glitch</title>
+
+  <template id="__bundler_thumbnail" data-bg-color="#09090e">
+    <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+      <rect width="120" height="80" fill="#09090e"/>
+      <text x="12" y="18" font-family="monospace" font-size="7" fill="#5a5a72">/glitch › #001</text>
+      <text x="12" y="34" font-family="monospace" font-size="9" font-weight="bold" fill="#e8e8f0">Claude Code ×</text>
+      <text x="12" y="46" font-family="monospace" font-size="9" font-weight="bold" fill="#4ade80">DeepSeek</text>
+      <rect x="12" y="54" width="80" height="2" rx="1" fill="#13131c"/>
+      <rect x="12" y="60" width="96" height="2" rx="1" fill="#13131c"/>
+      <rect x="12" y="66" width="60" height="2" rx="1" fill="#13131c"/>
+      <rect x="12" y="54" width="2" height="2" fill="#4ade80"/>
+    </svg>
+  </template>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090e;
+      --bg2: #0f0f16;
+      --bg3: #13131c;
+      --border: rgba(255,255,255,0.07);
+      --accent: #4ade80;
+      --accent2: oklch(70% 0.15 200);
+      --text: #c8c8d8;
+      --text-dim: #5a5a72;
+      --text-bright: #e8e8f0;
+      --code-bg: #0c0c14;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-body: 'Noto Sans JP', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      line-height: 1.7;
+      transition: background 0.3s, color 0.3s;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PScwIDAgMjU2IDI1NicgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48ZmlsdGVyIGlkPSdub2lzZSc+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzAuOScgbnVtT2N0YXZlcz0nNCcgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbHRlcj0ndXJsKCNub2lzZSknIG9wYWNpdHk9JzAuMDQnLz48L3N2Zz4=");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+    .wrap-narrow { max-width: 680px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      gap: 16px;
+    }
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    .logo .slash { color: var(--text-dim); }
+    .logo-blink {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--accent);
+      margin-left: 2px;
+      animation: blink 1.1s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .back-link {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    /* progress bar */
+    .progress-bar {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      height: 2px;
+      background: var(--accent);
+      z-index: 200;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    /* ── ARTICLE HEADER ── */
+    .article-header {
+      padding: 56px 0 40px;
+      border-bottom: 1px solid var(--border);
+      position: static;
+    }
+    .article-breadcrumb {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .article-breadcrumb a { color: var(--accent); text-decoration: none; }
+    .article-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .article-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      padding: 2px 8px;
+      border: 1px solid var(--accent);
+      border-radius: 1px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+    }
+    .article-h1 {
+      font-family: var(--font-body);
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      color: var(--text-bright);
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .article-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .meta-item {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .meta-item .dot { color: var(--accent); }
+
+    /* article hero image */
+    .article-hero-img {
+      width: 100%;
+      aspect-ratio: 16/7;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .article-hero-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .article-hero-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(255,255,255,0.015) 4px,
+        rgba(255,255,255,0.015) 8px
+      );
+    }
+    .article-hero-img-placeholder svg { opacity: 0.2; }
+
+    .warning-box {
+      margin: 32px 0;
+      padding: 16px 20px;
+      border: 1px solid oklch(65% 0.15 50);
+      border-left: 3px solid oklch(65% 0.15 50);
+      background: oklch(65% 0.15 50 / 0.05);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: oklch(65% 0.12 50);
+      line-height: 1.7;
+    }
+    .warning-box strong { color: oklch(70% 0.15 50); }
+
+    /* ── ARTICLE BODY ── */
+    .article-body {
+      padding: 48px 0 60px;
+    }
+    .article-body h2 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin: 48px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .article-body h2::before { content: '## '; color: var(--text-dim); }
+
+    .article-body h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin: 32px 0 12px;
+      letter-spacing: -0.01em;
+    }
+    .article-body p {
+      font-size: 0.95rem;
+      line-height: 1.9;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .article-body strong { color: var(--text-bright); font-weight: 600; }
+    .article-body a { color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; }
+    .article-body a:hover { opacity: 0.8; }
+
+    /* inline code */
+    .article-body code {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      background: var(--bg3);
+      padding: 1px 6px;
+      border-radius: 2px;
+      color: var(--accent2);
+    }
+
+    /* code block */
+    .code-block {
+      margin: 24px 0;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .code-block-header {
+      background: var(--bg3);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .code-lang {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .copy-btn {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: color 0.15s;
+      padding: 2px 6px;
+    }
+    .copy-btn:hover { color: var(--accent); }
+    .code-block pre {
+      background: var(--code-bg);
+      padding: 20px;
+      overflow-x: auto;
+      margin: 0;
+    }
+    .code-block pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.82rem;
+      color: var(--text);
+      white-space: pre;
+      line-height: 1.7;
+    }
+    .code-block pre code .kw { color: #4ade80; }
+    .code-block pre code .str { color: oklch(70% 0.12 80); }
+    .code-block pre code .cm { color: var(--text-dim); }
+    .code-block pre code .val { color: oklch(70% 0.15 200); }
+
+    /* steps */
+    .steps {
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 24px 0;
+      border: 1px solid var(--border);
+    }
+    .step {
+      counter-increment: step;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      padding-left: 72px;
+    }
+    .step:last-child { border-bottom: none; }
+    .step::before {
+      content: counter(step, decimal-leading-zero);
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--border);
+      line-height: 1;
+    }
+    .step-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .step p {
+      font-size: 0.88rem;
+      color: var(--text);
+      margin: 0 0 8px;
+      line-height: 1.8;
+    }
+    .step p:last-child { margin-bottom: 0; }
+
+    /* callout */
+    .callout {
+      margin: 24px 0;
+      padding: 16px 20px;
+      border-left: 2px solid var(--accent);
+      background: var(--bg2);
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.8;
+    }
+    .callout strong { color: var(--accent); font-family: var(--font-mono); font-size: 0.75rem; }
+
+    /* cost comparison table */
+    .cost-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+    .cost-table th {
+      padding: 10px 16px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      text-align: left;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+    }
+    .cost-table td {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .cost-table tr:nth-child(even) td { background: var(--bg2); }
+    .cost-table .highlight { color: var(--accent); font-weight: 700; }
+    .cost-table .dim { color: var(--text-dim); }
+
+    /* ── SHARE & COMMENTS ── */
+    .share-section {
+      padding: 32px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+    .share-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .share-label span { color: var(--accent); }
+    .share-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .share-btn {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--bg3);
+      color: var(--text-dim);
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .share-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .share-btn.copied { border-color: var(--accent); color: var(--accent); }
+
+    /* comments */
+    .comments-section { padding: 0 0 80px; }
+    .comments-title {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .comments-title span { color: var(--accent); }
+
+    /* comment form */
+    .comment-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .comment-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .form-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .form-input, .form-textarea {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      padding: 10px 14px;
+      border-radius: 2px;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-dim); }
+    .form-textarea { min-height: 100px; font-family: var(--font-body); font-size: 0.88rem; }
+    .submit-btn {
+      align-self: flex-start;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:hover { opacity: 0.85; }
+
+    /* comment list */
+    .comment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+    }
+    .comment-item {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .comment-handle {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .comment-date {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+    }
+    .comment-text {
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .footer-inner {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .footer-back {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.15s;
+      line-height: 1;
+    }
+    .footer-back:hover { color: var(--accent); }
+    .footer-center {
+      text-align: center;
+      flex: 1;
+    }
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+    .footer-disclaimer {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      opacity: 0.5;
+      margin-top: 4px;
+    }
+    .footer-spacer { width: 1.5rem; }
+
+    @media (max-width: 600px) {
+      .comment-form-row { grid-template-columns: 1fr; }
+      .article-h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<header>
+  <div class="wrap">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <span class="slash">/</span>glitch<span class="logo-blink"></span>
+      </a>
+      <div class="header-right">
+        <a href="../index.html" class="back-link">← 一覧へ</a>
+
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap-narrow">
+
+    <!-- ARTICLE HEADER -->
+    <section class="article-header">
+      <p class="article-breadcrumb">
+        <a href="../index.html">/glitch</a> <span>›</span> #001
+      </p>
+      <div class="article-tags">
+        <span class="article-tag">AI</span>
+        <span class="article-tag">コスト削減</span>
+      </div>
+      <h1 class="article-h1">Claude Code を DeepSeek で動かして<br>API コストを 95% 削る方法</h1>
+      <div class="article-meta-row">
+        <span class="meta-item"><span class="dot">●</span> Shinya Takeda</span>
+        <span class="meta-item">2026.05.01</span>
+        <span class="meta-item">⏱ 約8分</span>
+      </div>
+
+      <!-- 記事画像: <img src="images/001.jpg" alt=""> に差し替え可 -->
+      <div class="article-hero-img">
+        <div class="article-hero-img-placeholder">
+          <svg width="40" height="40" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="28" height="28" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="10" cy="11" r="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 22l7-6 5 5 5-4 11 8" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          <span>image here</span>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <strong>⚠ 免責事項：</strong>
+        この記事は教育目的で書かれています。各サービスの利用規約を必ず確認し、自己責任で実行してください。
+        Anthropic の利用規約が変更される場合があります。
+      </div>
+    </section>
+    <article class="article-body">
+
+      <h2>背景</h2>
+      <p>
+        Claude Code は使いやすい。補完精度も高いし、コードベースの把握能力は現時点でトップクラスだ。
+        ただ、一点だけ致命的な問題がある——<strong>高すぎる</strong>。
+        ヘビーユーザーなら月に数万円を Anthropic に払っているはずだ。
+      </p>
+      <p>
+        一方で DeepSeek は、ベンチマーク上では Claude に肉薄しながらも、API コストは桁違いに安い。
+        そして Claude Code は、バックエンドの LLM を差し替えられるようになっている。
+        この二つを組み合わせない手はない。
+      </p>
+
+      <h2>コスト比較</h2>
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th>モデル</th>
+            <th>Input (per 1M tok)</th>
+            <th>Output (per 1M tok)</th>
+            <th>備考</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Claude Sonnet 4.5</td>
+            <td class="dim">$3.00</td>
+            <td class="dim">$15.00</td>
+            <td class="dim">Claude Code デフォルト</td>
+          </tr>
+          <tr>
+            <td>DeepSeek V3</td>
+            <td class="highlight">$0.14</td>
+            <td class="highlight">$0.28</td>
+            <td class="highlight">約 95% 削減</td>
+          </tr>
+          <tr>
+            <td>DeepSeek R1</td>
+            <td class="highlight">$0.55</td>
+            <td class="highlight">$2.19</td>
+            <td class="dim">推論特化、やや高め</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>仕組み</h2>
+      <p>
+        Claude Code は内部で <code>ANTHROPIC_BASE_URL</code> 環境変数を参照してAPIエンドポイントを決定する。
+        DeepSeek の API は OpenAI 互換フォーマット（<code>/v1/chat/completions</code>）を提供しているが、
+        そのままでは Claude のメッセージフォーマットと一致しない。
+      </p>
+      <p>
+        そこで間に<strong>プロキシサーバー</strong>を立て、Claude フォーマット → OpenAI フォーマット変換を行う。
+        これにより Claude Code は何も知らずに DeepSeek を叩くことになる。
+      </p>
+
+      <h2>手順</h2>
+      <div class="steps">
+        <div class="step">
+          <p class="step-title">DeepSeek の API キーを取得する</p>
+          <p><a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> でアカウントを作成し、API キーを発行する。クレジットを少額チャージしておく（$5 で数ヶ月は余裕）。</p>
+        </div>
+        <div class="step">
+          <p class="step-title">プロキシを立てる（claude-to-openai）</p>
+          <p>変換プロキシの最もシンプルな選択肢は <code>claude-to-openai</code> 系のOSSを使うことだ。Node.js が入っていれば以下で動く。</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><code><span class="cm"># リポジトリを取得</span>
+git clone https://github.com/example/claude-openai-proxy
+cd claude-openai-proxy
+npm install
+
+<span class="cm"># .env に DeepSeek の API キーをセット</span>
+<span class="kw">echo</span> <span class="str">"OPENAI_API_KEY=sk-your-deepseek-key"</span> > .env
+<span class="kw">echo</span> <span class="str">"OPENAI_BASE_URL=https://api.deepseek.com/v1"</span> >> .env
+
+<span class="cm"># プロキシ起動（デフォルト: localhost:8080）</span>
+npm start</code></pre>
+          </div>
+        </div>
+        <div class="step">
+          <p class="step-title">Claude Code の向き先をプロキシに変更する</p>
+          <p>起動前に環境変数を設定するだけ。<code>.bashrc</code> や <code>.zshrc</code> に書いておくと楽だ。</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><code><span class="cm"># シェルに追記（永続化）</span>
+<span class="kw">export</span> <span class="val">ANTHROPIC_BASE_URL</span>=<span class="str">"http://localhost:8080"</span>
+<span class="kw">export</span> <span class="val">ANTHROPIC_API_KEY</span>=<span class="str">"dummy-key"</span>  <span class="cm"># 形式チェックを通すためのダミー</span>
+
+<span class="cm"># Claude Code を起動</span>
+claude</code></pre>
+          </div>
+        </div>
+        <div class="step">
+          <p class="step-title">モデルを指定する（オプション）</p>
+          <p>デフォルトでは DeepSeek V3 が使われる。R1（推論モデル）を使いたい場合はプロキシの設定で切り替える。複雑なアーキテクチャ設計には R1、日常的なコーディングには V3 という使い分けが効率的だ。</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-lang">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><code><span class="cm"># モデルを明示的に指定する場合</span>
+<span class="kw">export</span> <span class="val">CLAUDE_MODEL</span>=<span class="str">"deepseek-reasoner"</span>  <span class="cm"># R1</span>
+<span class="cm"># または</span>
+<span class="kw">export</span> <span class="val">CLAUDE_MODEL</span>=<span class="str">"deepseek-chat"</span>        <span class="cm"># V3</span></code></pre>
+          </div>
+        </div>
+        <div class="step">
+          <p class="step-title">動作確認する</p>
+          <p>Claude Code を起動して簡単なコード生成を頼んでみる。レスポンスが返ってきて、DeepSeek のダッシュボードでトークン消費が記録されていれば成功だ。</p>
+
+          <div class="callout">
+            <strong>TIPS:</strong> 初回は <code>claude --version</code> と <code>claude "hello world の Python を書いて"</code> で疎通確認するのが速い。プロキシのコンソールにリクエストログが流れるはず。
+          </div>
+        </div>
+      </div>
+
+      <h2>落とし穴と注意点</h2>
+      <h3>コンテキスト長の差異</h3>
+      <p>
+        DeepSeek V3 は 64K トークン、R1 は 128K トークンのコンテキストをサポートする。
+        Claude Sonnet の 200K より短いため、大規模なコードベースを丸ごと読ませる用途では限界を感じる場面がある。
+      </p>
+
+      <h3>ツール使用（Function Calling）</h3>
+      <p>
+        Claude Code の一部機能はファイル操作や検索などの「ツール」を呼び出す。
+        DeepSeek も Function Calling に対応しているが、プロキシが正しく変換できない場合がある。
+        エラーが出た場合は、プロキシのバージョンを確認することを推奨する。
+      </p>
+
+      <h3>データはどこを通るか</h3>
+      <p>
+        コードは DeepSeek のサーバー（中国）に送信される。
+        <strong>機密性の高いコードや業務コードには使わないこと。</strong>
+        個人プロジェクトや学習用途に限定するのが賢明だ。
+      </p>
+
+      <div class="callout">
+        <strong>SUMMARY:</strong> 月 $50 払っていた Claude Code のコストが $2〜3 まで落ちた。体感の精度差は正直ほぼない。ただしプライバシーとコンテキスト長の制約は理解した上で使うこと。
+      </div>
+
+    </article>
+
+    <!-- SHARE -->
+    <div class="share-section">
+      <p class="share-label"><span>//</span> シェア</p>
+      <div class="share-buttons">
+        <a class="share-btn" href="https://twitter.com/intent/tweet?text=Claude%20Code%20を%20DeepSeek%20で動かしてコストを95%25削る方法%20%23glitch&url=" target="_blank">
+          𝕏 でシェア
+        </a>
+        <button class="share-btn" onclick="copyUrl(this)">
+          🔗 URLをコピー
+        </button>
+      </div>
+    </div>
+
+    <!-- COMMENTS -->
+    <section class="comments-section">
+      <p class="comments-title"><span>//</span> コメント</p>
+
+      <form class="comment-form" onsubmit="submitComment(event)">
+        <div class="comment-form-row">
+          <div class="form-field">
+            <label class="form-label">ハンドル名</label>
+            <input type="text" class="form-input" placeholder="anon_user" id="commentHandle">
+          </div>
+          <div class="form-field">
+            <label class="form-label">メール（非公開・任意）</label>
+            <input type="email" class="form-input" placeholder="you@example.com">
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">コメント</label>
+          <textarea class="form-textarea" placeholder="感想・補足・反論など..." id="commentText"></textarea>
+        </div>
+        <button type="submit" class="submit-btn">送信 →</button>
+      </form>
+
+      <div class="comment-list" id="commentList">
+        <div class="comment-item">
+          <div class="comment-header">
+            <span class="comment-handle">n0_name</span>
+            <span class="comment-date">2026.05.01</span>
+          </div>
+          <p class="comment-text">プロキシのレイテンシが気になっていたけど、ローカルで立てると実用上ほぼ無視できるレベルだった。V3 で十分すぎる。</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-inner">
+      <a href="https://tk.st" class="footer-back">&lt;</a>
+      <div class="footer-center">
+        <p class="footer-copy">© <span id="footerYear"></span> Shinya Takeda — 情報は自己責任でどうぞ。</p>
+      </div>
+      <div class="footer-spacer"></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // 年を動的表示
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+  // Reading progress bar
+  const progressBar = document.getElementById('progressBar');
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = pct + '%';
+  });
+
+  // Copy code
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 1800);
+    });
+  }
+
+  // Copy URL
+  function copyUrl(btn) {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      btn.textContent = '✓ コピーしました';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '🔗 URLをコピー';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // Comment form
+  const comments = JSON.parse(localStorage.getItem('glitch-comments-001') || '[]');
+
+  function renderComments() {
+    const list = document.getElementById('commentList');
+    const existing = list.querySelectorAll('.comment-item.user-added');
+    existing.forEach(el => el.remove());
+    comments.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'comment-item user-added';
+      div.innerHTML = `
+        <div class="comment-header">
+          <span class="comment-handle">${escHtml(c.handle)}</span>
+          <span class="comment-date">${c.date}</span>
+        </div>
+        <p class="comment-text">${escHtml(c.text)}</p>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function submitComment(e) {
+    e.preventDefault();
+    const handle = document.getElementById('commentHandle').value.trim() || 'anon';
+    const text = document.getElementById('commentText').value.trim();
+    if (!text) return;
+    const now = new Date();
+    const date = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+    comments.push({ handle, text, date });
+    localStorage.setItem('glitch-comments-001', JSON.stringify(comments));
+    renderComments();
+    document.getElementById('commentHandle').value = '';
+    document.getElementById('commentText').value = '';
+  }
+
+  renderComments();
+</script>
+
+</body>
+</html>
