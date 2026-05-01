@@ -54,7 +54,6 @@
   </script>
 
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
@@ -112,12 +111,12 @@
 
     /* ワクワク機能：ブラウン管テレビ起動エフェクト */
     .crt-turn-on {
-      animation: turn-on 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      animation: turn-on 0.6s cubic-bezier(0.23, 1, 0.32, 1);
     }
     @keyframes turn-on {
       0% { transform: scale(1, 0.01); filter: brightness(10); opacity: 0; }
       40% { transform: scale(1, 0.02); filter: brightness(5); opacity: 1; }
-      100% { transform: scale(1, 1); filter: brightness(1); }
+      100% { transform: none; filter: none; }
     }
 
     /* 隠し要素：パーティモード */
@@ -366,6 +365,17 @@
         bottom: 60px;
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .stars-bg { animation: none; }
+      .scanlines::before { animation: none; }
+      .skeleton { animation: none; background: var(--surface); }
+    }
   </style>
 </head>
 
@@ -427,7 +437,7 @@
         <div class="flex-1 flex items-center">
           <a href="https://tk.st/" class="pixel-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] bg-transparent border-white/30 text-white/50 hover:text-white/80 hover:border-white/60" aria-label="Back to tk.st"><span>&lt;</span><span class="hidden sm:inline">tk.st</span></a>
         </div>
-        <span class="text-[16px] opacity-40">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+        <span class="text-[16px] opacity-40">&copy; <span id="currentYear">2024-2026</span> Shinya Takeda</span>
         <div class="flex-1 flex justify-end items-center">
           <div id="donation-button-container"></div>
         </div>
@@ -442,10 +452,12 @@
   <script src="../data/buy-me-a-coffee.js"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script>
     // --- Web Audio API (ワクワク機能：効果音) ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     let isAudioUnlocked = false;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     // ユーザー操作でAudioContextのロックを解除
     const unlockAudio = () => {
@@ -461,7 +473,7 @@
     });
 
     function playBeep(freq = 440, type = 'square', duration = 0.05) {
-      if (!isAudioUnlocked) return;
+      if (!isAudioUnlocked || prefersReducedMotion) return;
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
       oscillator.type = type;
@@ -483,7 +495,7 @@
       if (e.key.toLowerCase() === konamiCode[konamiIndex]) {
         konamiIndex++;
         if (konamiIndex === konamiCode.length) {
-          document.body.classList.toggle('party-mode');
+          if (!prefersReducedMotion) document.body.classList.toggle('party-mode');
           showMessage("🎉 PARTY MODE ACTIVATED! 🎉", "success");
           playBeep(440, 'square', 0.1);
           setTimeout(() => playBeep(660, 'square', 0.1), 100);

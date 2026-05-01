@@ -52,6 +52,11 @@ export default {
           body: JSON.stringify(body),
         });
 
+        if (!askRes.ok) {
+          const errText = await askRes.text();
+          throw new Error(`Backend API Error (${askRes.status}): ${errText.substring(0, 200)}`);
+        }
+
         const data = await askRes.json();
         return new Response(JSON.stringify({ job_id: data.job_id }), {
           headers: { 'Content-Type': 'application/json', ...cors },
@@ -72,6 +77,12 @@ export default {
         const resultRes = await fetch(`https://magi.tk.st/result/${job_id}`, {
           headers: { 'x-api-key': env.MAGI_API_KEY },
         });
+
+        if (!resultRes.ok) {
+          const errText = await resultRes.text();
+          throw new Error(`Backend API Error (${resultRes.status}): ${errText.substring(0, 200)}`);
+        }
+
         const data = await resultRes.json();
         return new Response(JSON.stringify(data), {
           headers: { 'Content-Type': 'application/json', ...cors },

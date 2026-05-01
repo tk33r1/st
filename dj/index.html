@@ -33,7 +33,7 @@
         "name": "人類踊狂計画",
         "alternateName": "Human Choreomania Project",
         "image": "https://tk.st/images/contents/dj-logo3.png",
-        "genre": ["Big room House","Psytrance", "Melodic Techno"],
+        "genre": ["Big room House", "Psytrance", "Melodic Techno"],
         "foundingDate": "2024"
       },
       "breadcrumb": {
@@ -60,9 +60,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;600;900&display=swap" rel="stylesheet">
-  
-  <!-- Lucide Icons -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
   <style>
     /* ===== RESET & BASE ===== */
@@ -108,12 +105,12 @@
 
     /* ===== HERO ===== */
     .hero-section {
-      background: var(--white);
-      background-image: 
+      background-color: var(--white);
+      background-image:
         linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
       background-size: 40px 40px;
-      background-position: center center;
+      background-position: center;
       position: relative;
       overflow: hidden;
       display: flex;
@@ -140,10 +137,6 @@
     .reticle.bottom-left { bottom: 40px; left: 40px; border-right: none; border-top: none; }
     .reticle.bottom-right { bottom: 40px; right: 40px; border-left: none; border-top: none; }
 
-    @media (max-width: 768px) {
-      .reticle { display: none; }
-    }
-
     .hero-content {
       text-align: center;
       z-index: 10;
@@ -167,7 +160,7 @@
       max-height: 85vh;
       white-space: nowrap;
       margin: 0 auto;
-      text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.05);
     }
 
     .hero-tagline-wrapper {
@@ -221,7 +214,8 @@
       height: 100%;
       background: var(--neo-purple);
       width: 0%;
-      transition: width 0.1s ease-out, background 0.3s ease;
+      box-shadow: 0 0 10px rgba(156, 122, 247, 0.6);
+      transition: width 0.1s ease-out, background 0.3s ease, box-shadow 0.3s ease;
     }
     
     .sync-rate-text {
@@ -492,12 +486,6 @@
       gap: 60px;
     }
 
-    @media (max-width: 768px) {
-      .operation-container {
-        grid-template-columns: 1fr;
-      }
-    }
-
     .timeline {
       border-left: 3px solid var(--neo-purple);
       padding-left: 30px;
@@ -703,23 +691,24 @@
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
       position: relative;
       overflow: hidden;
+      text-decoration: none;
     }
 
     .hex-button:hover {
       background: var(--dark-blue-purple);
       transform: scale(1.1) translateY(-5px);
+      box-shadow: 0 10px 20px rgba(156, 122, 247, 0.4);
     }
 
-    .hex-button a {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      color: inherit;
-      text-decoration: none;
+    .sync-rate-text.runaway {
+      color: var(--accent-red);
+      border-color: var(--accent-red);
+      text-shadow: 0 0 8px rgba(255, 51, 51, 0.6);
     }
-    
+    .progress-bar.runaway {
+      background: var(--accent-red);
+      box-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
+    }
     .icon-lg {
       width: 28px;
       height: 28px;
@@ -846,6 +835,89 @@
     .modal-close:hover {
       color: var(--neo-purple);
     }
+
+    .mobile-break {
+      display: none;
+    }
+
+    /* ===== REDUCED MOTION ===== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ===== MOBILE ADJUSTMENTS ===== */
+    @media (max-width: 768px) {
+      .reticle { display: none; }
+      .mobile-break {
+        display: block;
+      }
+      .contact-section {
+        padding: 40px 20px;
+      }
+      .philosophy-section {
+        padding: 60px 20px;
+        min-height: 50vh;
+      }
+      .philosophy-text {
+        font-size: 1.2rem;
+        white-space: normal;
+      }
+      .gear-section {
+        padding: 60px 20px;
+        min-height: auto;
+      }
+      .gear-content {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+      }
+      .gear-item {
+        width: calc(50% - 7.5px);
+        max-width: 220px;
+        height: auto;
+        aspect-ratio: 1 / 1;
+        margin: 0;
+      }
+      .sound-log-section,
+      .operation-section {
+        padding: 50px 20px;
+      }
+      .video-section {
+        padding: 50px 20px;
+        min-height: auto;
+      }
+      .sound-log-header {
+        margin-bottom: 40px;
+      }
+      .genre-list {
+        margin-bottom: 50px;
+        gap: 10px;
+      }
+      .genre-item {
+        padding: 15px;
+      }
+      .operation-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .hero-content {
+        gap: 20px;
+        padding: 15px;
+      }
+      .contact-message {
+        margin-bottom: 40px;
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -896,7 +968,7 @@
     </div>
     <div class="philosophy-content reveal">
       <div class="philosophy-text">
-        <div>サウンドインパクトによる人類の補完</div>
+        <div>サウンドインパクトによる<br class="mobile-break">人類の補完</div>
         <div>ビートで心の壁を中和する</div>
       </div>
     </div>
@@ -907,21 +979,21 @@
     <div class="gear-bg-split"></div>
     <div class="gear-content reveal">
       <div class="gear-item" data-gear="controller">
-        <img src="https://tk.st/images/contents/DJ-Controller-purple.png" alt="DJ Controller" class="gear-image">
+        <img src="https://tk.st/images/contents/DJ-Controller-purple.png" alt="DJ Controller" class="gear-image" loading="lazy">
         <div class="at-field">
           <div class="hexagon-layer"></div>
           <div class="hexagon-layer"></div>
         </div>
       </div>
       <div class="gear-item" data-gear="headphone">
-        <img src="https://tk.st/images/contents/lollipop-headphone.png" alt="Lollipop Headphone" class="gear-image">
+        <img src="https://tk.st/images/contents/lollipop-headphone.png" alt="Lollipop Headphone" class="gear-image" loading="lazy">
         <div class="at-field">
           <div class="hexagon-layer"></div>
           <div class="hexagon-layer"></div>
         </div>
       </div>
       <div class="gear-item" data-gear="turntable">
-        <img src="https://tk.st/images/contents/happy-death.png" alt="Turntable" class="gear-image">
+        <img src="https://tk.st/images/contents/happy-death.png" alt="Turntable" class="gear-image" loading="lazy">
         <div class="at-field">
           <div class="hexagon-layer"></div>
           <div class="hexagon-layer"></div>
@@ -941,7 +1013,7 @@
     </div>
     <div class="mixcloud-container reveal">
       <div class="mixcloud-label">» Sound Log Database</div>
-      <iframe src="https://embed.beatport.com/?id=5012224&type=release" class="mixcloud-player" scrolling="no" title="Beatport Player"></iframe>
+      <iframe src="https://embed.beatport.com/?id=5012224&type=release" class="mixcloud-player" scrolling="no" title="Beatport Player" loading="lazy"></iframe>
     </div>
   </section>
 
@@ -981,7 +1053,7 @@
       <div class="reveal">
         <div class="operation-title">📅 Schedule / Future</div>
         <div class="calendar-container">
-          <iframe src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo" scrolling="no" title="Google Calendar"></iframe>
+          <iframe src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo" scrolling="no" title="Google Calendar" loading="lazy"></iframe>
         </div>
       </div>
     </div>
@@ -991,7 +1063,7 @@
   <section class="video-section">
     <div class="video-title reveal">🎬 Visual Database</div>
     <div class="video-container reveal">
-      <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen></iframe>
+      <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
     </div>
   </section>
 
@@ -1015,21 +1087,15 @@
         <div class="contact-message-sub">ご興味ありましたら、ご連絡ください。</div>
       </div>
       <div class="contact-buttons">
-        <button class="hex-button" title="Instagram">
-          <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer">
-            <i data-lucide="instagram" class="icon-lg"></i>
-          </a>
-        </button>
-        <button class="hex-button" title="X / Twitter">
-          <a href="https://tk.st/tw" target="_blank" rel="noopener noreferrer">
-            <i data-lucide="twitter" class="icon-lg"></i>
-          </a>
-        </button>
-        <button class="hex-button" title="Email">
-          <a href="https://tk.st/contact" target="_blank" rel="noopener noreferrer">
-            <i data-lucide="mail" class="icon-lg"></i>
-          </a>
-        </button>
+        <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Instagram" title="Instagram">
+          <i data-lucide="instagram" class="icon-lg"></i>
+        </a>
+        <a href="https://tk.st/tw" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="X / Twitter" title="X / Twitter">
+          <i data-lucide="twitter" class="icon-lg"></i>
+        </a>
+        <a href="https://tk.st/contact" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Email" title="Email">
+          <i data-lucide="mail" class="icon-lg"></i>
+        </a>
       </div>
     </div>
   </section>
@@ -1037,7 +1103,7 @@
   <!-- FOOTER -->
   <footer class="site-footer">
     <a href="https://tk.st/" class="site-footer-back" aria-label="tk.st へ戻る">&lt;</a>
-    © <span id="copyright-year"></span> Shinya Takeda
+    © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
   <!-- Image Modal -->
@@ -1053,7 +1119,9 @@
     <i data-lucide="chevron-up" class="icon-lg"></i>
   </button>
 
-  <script>
+  <!-- Lucide Icons -->
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script defer>
     // 1. DOM Elements Cache
     const progressBar = document.getElementById('progressBar');
     const syncRateText = document.getElementById('syncRateText');
@@ -1091,7 +1159,7 @@
 
     revealElements.forEach(el => revealObserver.observe(el));
 
-    window.addEventListener('load', () => {
+    window.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.hero-section .reveal').forEach(el => {
         el.classList.add('active');
       });
@@ -1131,13 +1199,11 @@
         syncRateText.textContent = `SYNC RATE: ${displayRate}`;
         
         if (isRunaway) {
-          syncRateText.style.color = 'var(--accent-red)';
-          syncRateText.style.borderColor = 'var(--accent-red)';
-          progressBar.style.background = 'var(--accent-red)';
+          syncRateText.classList.add('runaway');
+          progressBar.classList.add('runaway');
         } else {
-          syncRateText.style.color = 'var(--neo-purple)';
-          syncRateText.style.borderColor = 'var(--neo-purple)';
-          progressBar.style.background = 'var(--neo-purple)';
+          syncRateText.classList.remove('runaway');
+          progressBar.classList.remove('runaway');
         }
       }
 
@@ -1172,7 +1238,7 @@
     const hideModal = () => {
       modal.classList.remove('active');
       setTimeout(() => {
-        modalImg.src = '';
+        modalImg.removeAttribute('src');
       }, 300);
     };
 
