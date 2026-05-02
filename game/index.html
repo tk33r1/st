@@ -7,7 +7,7 @@
   <title>ST GAMES</title>
   <link rel="icon" href="https://tk.st/images/favicons/st-games-favicon.png" type="image/png">
   <link rel="canonical" href="https://tk.st/game/">
-  <link rel="author" href="https://tk.st/">
+
   <meta property="og:title" content="ST GAMES">
   <meta property="og:description" content="AIコーディング能力計測のために制作したゲームのアーカイブ">
   <meta property="og:image" content="https://tk.st/images/ogp/st-games-ogp.png">
@@ -56,108 +56,69 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Architects+Daughter&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --bg: #120c24;
-      --surface: #221646;
-      --text: #f6f2ff;
-      --primary: #00e5ff;
-      --secondary: #ff4fd8;
-    }
-
-    html, body {
-      height: 100%;
-      width: 100%;
+      --bg: #fdf6e3;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --primary: #e63946;
+      --secondary: #ffb703;
+      --accent: #1d3557;
+      --outline: #000000;
     }
 
     body {
       margin: 0;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
-        radial-gradient(circle at 20% 20%, rgba(0,229,255,0.18), transparent 24%),
-        radial-gradient(circle at 80% 15%, rgba(255,79,216,0.18), transparent 22%),
-        linear-gradient(180deg, #0b0718 0%, #120c24 55%, #1c1032 100%);
-      background-size: 24px 24px, 24px 24px, 100% 100%, 100% 100%, 100% 100%;
+      background-color: var(--bg);
       color: var(--text);
-      font-family: "VT323", monospace;
-      overflow: hidden;
+      font-family: 'Architects Daughter', cursive;
+      overflow-x: hidden;
     }
 
-    /* 楽しい背景：動く星屑 */
-    .stars-bg {
+    /* 80s Comic Effects */
+    .halftone-burst {
       position: fixed;
       inset: 0;
       z-index: 1;
       pointer-events: none;
-      background-image: 
-        radial-gradient(2px 2px at 20px 30px, #fff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 40px 70px, #00e5ff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 50px 160px, #fff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 90px 40px, #ff4fd8, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 160px 120px, #00e5ff, rgba(0,0,0,0));
-      background-repeat: repeat;
-      background-size: 200px 200px;
-      animation: stars-anim 60s linear infinite;
-      opacity: 0.4;
-    }
-    @keyframes stars-anim {
-      from { transform: translateY(0); }
-      to { transform: translateY(-2000px); }
+      background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 60%, rgba(255,183,3,0.1) 60%, rgba(255,183,3,0.1) 100%);
+      background-size: 100% 100%;
+      opacity: 0.5;
     }
 
-    /* ワクワク機能：ブラウン管テレビ起動エフェクト */
-    .crt-turn-on {
-      animation: turn-on 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-    @keyframes turn-on {
-      0% { transform: scale(1, 0.01); filter: brightness(10); opacity: 0; }
-      40% { transform: scale(1, 0.02); filter: brightness(5); opacity: 1; }
-      100% { transform: none; filter: none; }
-    }
-
-    /* 隠し要素：パーティモード */
-    .party-mode {
-      animation: rainbow-bg 3s linear infinite;
-    }
-    @keyframes rainbow-bg {
-      0% { filter: hue-rotate(0deg); }
-      100% { filter: hue-rotate(360deg); }
+    .bw-mode {
+      filter: grayscale(1) contrast(1.2) brightness(1.1);
     }
 
     .vignette {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      background: radial-gradient(circle at center, transparent 50%, rgba(0, 0, 0, 0.6) 120%);
+      background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.1) 100%);
       z-index: 45;
     }
 
-    .scanlines::before {
+    /* Comic paper texture */
+    .comic-page::before {
       content: "";
       position: fixed;
-      inset: -100% 0;
+      inset: 0;
       pointer-events: none;
-      background: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0.01) 50%, rgba(0,0,0,0.08) 51%, rgba(0,0,0,0.03));
-      background-size: 100% 4px;
-      opacity: 0.4;
-      mix-blend-mode: screen;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.04;
+      mix-blend-mode: multiply;
       z-index: 50;
-      animation: scanline 10s linear infinite;
     }
 
-    @keyframes scanline {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(50%); }
-    }
-
-    .pixel-title {
-      font-family: "Press Start 2P", cursive;
-      text-shadow: 0 0 8px rgba(0,229,255,0.45), 0 0 18px rgba(255,79,216,0.35);
-      letter-spacing: 0.08em;
+    .comic-title {
+      font-family: "Bangers", cursive;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--outline);
+      -webkit-text-stroke: 1px var(--outline);
+      filter: drop-shadow(3px 3px 0 var(--secondary));
     }
 
     /* ワクワク機能：ホバー時のグリッチエフェクト */
@@ -198,56 +159,67 @@
     }
 
     .retro-panel {
-      background: color-mix(in srgb, var(--surface) 88%, black 12%);
-      border: 3px solid var(--primary);
-      box-shadow: 0 0 0 3px rgba(255,79,216,0.18) inset, 0 0 24px rgba(0,229,255,0.14);
+      background: var(--surface);
+      border: 3px solid var(--outline);
+      box-shadow: 6px 6px 0 var(--outline);
+      position: relative;
     }
 
     .game-card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)), var(--surface);
-      border: 2px solid rgba(0,229,255,0.4);
-      box-shadow: 0 0 0 2px rgba(255,79,216,0.1) inset, 0 12px 24px rgba(0,0,0,0.28);
-      transition: transform 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 250ms ease, border-color 250ms ease;
+      background: var(--surface);
+      border: 3px solid var(--outline);
+      box-shadow: 5px 5px 0 var(--outline);
+      transition: transform 200ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 200ms ease;
+      overflow: hidden;
     }
 
     .game-card:hover {
-      transform: translateY(-6px) scale(1.02);
-      border-color: var(--secondary);
-      box-shadow: 0 0 0 2px rgba(0,229,255,0.2) inset, 0 20px 35px rgba(0,0,0,0.4);
+      transform: translate(-3px, -3px) rotate(-1deg);
+      box-shadow: 8px 8px 0 var(--outline);
     }
 
-    .pixel-btn {
-      font-family: "Press Start 2P", cursive;
-      border: 2px solid var(--text);
-      box-shadow: 4px 4px 0 rgba(0,0,0,0.35);
-      transition: transform 100ms ease, box-shadow 100ms ease, filter 160ms ease;
+    .comic-btn {
+      font-family: "Bangers", cursive;
+      font-size: 1.2rem;
+      padding: 0.5rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: 3px solid var(--outline);
+      box-shadow: 4px 4px 0 var(--outline);
+      transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+      letter-spacing: 1px;
       cursor: pointer;
     }
 
-    .pixel-btn:hover {
-      filter: brightness(1.15);
+    .comic-btn:hover {
+      background: #ff4d4d;
+      transform: translate(-1px, -1px);
+      box-shadow: 5px 5px 0 var(--outline);
     }
 
-    .pixel-btn:active {
+    .comic-btn:active {
       transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 rgba(0,0,0,0.35);
+      box-shadow: 2px 2px 0 var(--outline);
     }
 
-    .pixel-input {
-      background: rgba(10, 8, 22, 0.82);
-      border: 2px solid rgba(246,242,255,0.25);
+    .comic-input {
+      background: #fff;
+      border: 3px solid var(--outline);
       color: var(--text);
-      font-family: "VT323", monospace;
+      font-family: "Kalam", cursive;
+      font-weight: 700;
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
     }
 
-    .pixel-input:focus {
+    .comic-input:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(0,229,255,0.18);
+      border-color: var(--accent);
+      box-shadow: 4px 4px 0 var(--outline);
     }
 
-    select.pixel-input {
-      background-image: url('data:image/svg+xml;utf8,<svg fill="%23f6f2ff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    select.comic-input {
+      background-image: url('data:image/svg+xml,%3Csvg fill="%23000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M7 10l5 5 5-5z"/%3E%3C/svg%3E');
       background-repeat: no-repeat;
       background-position: right 8px center;
       padding-right: 32px;
@@ -260,34 +232,41 @@
     }
 
     .img-frame {
-      background: linear-gradient(135deg, rgba(0,229,255,0.18), rgba(255,79,216,0.16)), #0e0a1d;
-      border: 2px solid rgba(246,242,255,0.16);
+      background: #eee;
+      border-bottom: 3px solid var(--outline);
+      position: relative;
+    }
+
+    .comic-footer {
+      border-top: 3px solid var(--outline);
+      background: #ffffff;
+      margin-top: 40px;
+      box-shadow: 0 -6px 0 var(--outline);
     }
 
     .status-chip {
-      border: 1px solid rgba(246,242,255,0.18);
-      background: rgba(255,255,255,0.05);
+      border: 3px solid var(--outline);
+      background: var(--secondary);
+      font-family: "Bangers", cursive;
+      color: var(--outline);
     }
 
-    .retro-heart {
+    .comic-heart {
       display: inline-block;
       width: 44px; height: 44px;
-      background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg"><path d="M1 2h2v1H1zM5 2h2v1H5zM0 3h8v2H0zM1 5h6v1H1zM2 6h4v1H2zM3 7h2v1H3z" fill="%23ff1744"/></svg>');
+      background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M50 88.7L14.1 53.1C5.1 44.2 5.1 29.8 14.1 20.9 23.1 12 37.5 12 46.5 20.9L50 24.4 53.5 20.9C62.5 12 76.9 12 85.9 20.9 94.9 29.8 94.9 44.2 85.9 53.1L50 88.7Z" fill="%23e63946" stroke="%23000" stroke-width="8"/%3E%3C/svg%3E');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
-      animation: pixelHeartbeat 1.2s ease-in-out infinite;
-      image-rendering: pixelated;
-      filter: drop-shadow(0 0 6px rgba(255, 23, 68, 0.6));
+      animation: comicHeartbeat 1s ease-in-out infinite;
     }
 
-    @keyframes pixelHeartbeat {
-      0% { transform: scale(1); }
-      15% { transform: scale(1.25); }
-      30% { transform: scale(1); }
-      45% { transform: scale(1.25); }
-      60% { transform: scale(1); }
-      100% { transform: scale(1); }
+    @keyframes comicHeartbeat {
+      0% { transform: scale(1) rotate(0deg); }
+      15% { transform: scale(1.3) rotate(-5deg); }
+      30% { transform: scale(1) rotate(0deg); }
+      45% { transform: scale(1.3) rotate(5deg); }
+      60% { transform: scale(1) rotate(0deg); }
     }
 
     .skeleton {
@@ -310,39 +289,38 @@
     #genre-filter.visible { display: flex; }
 
     .genre-chip {
-      font-family: "Press Start 2P", cursive;
-      font-size: 10px;
-      border: 2px solid rgba(0,229,255,0.3);
-      background: rgba(0,229,255,0.05);
-      color: var(--text);
+      font-family: "Bangers", cursive;
+      font-size: 14px;
+      border: 3px solid var(--outline);
+      background: #fff;
+      color: var(--outline);
       cursor: pointer;
-      padding: 6px 12px;
+      padding: 4px 16px;
       white-space: nowrap;
-      transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+      transition: all 150ms ease;
+      box-shadow: 3px 3px 0 var(--outline);
     }
     .genre-chip:hover {
-      border-color: var(--primary);
-      background: rgba(0,229,255,0.12);
+      background: var(--secondary);
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 var(--outline);
     }
     .genre-chip.active {
-      border-color: var(--primary);
-      background: rgba(0,229,255,0.2);
-      color: var(--primary);
-      box-shadow: 0 0 8px rgba(0,229,255,0.28);
+      background: var(--primary);
+      color: #fff;
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 var(--outline);
     }
 
     .badge-new {
-      font-family: "Press Start 2P", cursive;
-      font-size: 8px;
-      background: var(--secondary);
-      color: #000;
-      padding: 2px 5px;
-      vertical-align: middle;
-      animation: badge-pulse 1.6s ease-in-out infinite;
-    }
-    @keyframes badge-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255,79,216,0.6); }
-      50% { box-shadow: 0 0 10px 3px rgba(255,79,216,0.28); }
+      font-family: "Bangers", cursive;
+      font-size: 12px;
+      background: var(--primary);
+      color: #fff;
+      padding: 4px 8px;
+      border: 2px solid var(--outline);
+      transform: rotate(-10deg);
+      box-shadow: 3px 3px 0 var(--outline);
     }
 
     #scroll-top-btn {
@@ -372,41 +350,39 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
-      .stars-bg { animation: none; }
-      .scanlines::before { animation: none; }
       .skeleton { animation: none; background: var(--surface); }
     }
   </style>
 </head>
 
 <body class="h-full relative">
-  <div class="stars-bg"></div>
+  <div class="halftone-burst"></div>
   <div class="vignette"></div>
   
-  <div id="app" class="scanlines crt-turn-on h-full w-full overflow-auto relative z-10">
+  <div id="app" class="comic-page h-full w-full overflow-auto relative z-10">
     <header class="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-4">
       <div class="max-w-6xl mx-auto retro-panel rounded-none p-4 sm:p-6">
         <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           
           <div class="flex items-center gap-3">
-            <h1 id="title-text" class="pixel-title leading-tight text-[24px] sm:text-[28px]">ST GAMES</h1>
-            <div class="retro-heart ml-3 sm:ml-5"></div>
+            <h1 id="title-text" class="comic-title leading-tight text-[32px] sm:text-[40px]">ST GAMES</h1>
+            <div class="comic-heart ml-3 sm:ml-5"></div>
           </div>
           
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             <div class="relative w-full sm:w-56">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60"></i>
-              <input type="text" id="search-input" aria-label="Search games" placeholder="SEARCH..." class="pixel-input w-full pl-9 pr-4 py-2.5 text-[20px] snd-hover" autocomplete="off">
+              <input type="text" id="search-input" aria-label="Search games" placeholder="SEARCH..." class="comic-input w-full pl-9 pr-4 py-2 text-[20px] snd-hover" autocomplete="off">
             </div>
             
-            <select id="sort-select" aria-label="Sort games" class="pixel-input appearance-none px-3 py-2.5 text-[20px] cursor-pointer snd-hover">
+            <select id="sort-select" aria-label="Sort games" class="comic-input appearance-none px-3 py-2 text-[20px] cursor-pointer snd-hover">
               <option value="newest">NEWEST</option>
               <option value="oldest">OLDEST</option>
               <option value="title">TITLE</option>
             </select>
 
-            <div class="status-chip px-4 py-2.5 flex items-center justify-center gap-2 text-[18px] whitespace-nowrap">
-              <i data-lucide="database" class="w-4 h-4 text-cyan-400"></i>
+            <div class="status-chip px-4 py-2.5 flex items-center justify-center gap-2 text-[20px] whitespace-nowrap">
+              <i data-lucide="database" class="w-4 h-4 opacity-60"></i>
               <span>SAVED: <span id="game-count">0</span></span>
             </div>
           </div>
@@ -425,19 +401,19 @@
           <div class="mx-auto w-16 h-16 flex items-center justify-center mb-5">
             <i data-lucide="ghost" class="w-12 h-12 opacity-60"></i>
           </div>
-          <h2 class="pixel-title text-[16px] sm:text-[20px] leading-relaxed">NO GAMES FOUND</h2>
-          <p class="mt-4 text-[24px] sm:text-[28px] opacity-85 text-center">条件に一致するゲームが見つかりません。</p>
+          <h2 class="comic-title text-[20px] sm:text-[24px] leading-relaxed">NO GAMES FOUND</h2>
+          <p class="mt-4 text-[20px] sm:text-[24px] opacity-85 text-center">条件に一致するゲームが見つかりません。</p>
         </div>
         
         <div id="game-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
       </section>
     </main>
-    <footer class="w-full px-4 sm:px-6 lg:px-10 pt-4 pb-6 relative z-10" style="border-top: 1px solid rgba(0,229,255,0.25); box-shadow: 0 -1px 12px rgba(0,229,255,0.08); margin-top: 8px;">
+    <footer class="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-8 relative z-10 comic-footer">
       <div class="max-w-6xl mx-auto flex items-center">
         <div class="flex-1 flex items-center">
-          <a href="https://tk.st/" class="pixel-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] bg-transparent border-white/30 text-white/50 hover:text-white/80 hover:border-white/60" aria-label="Back to tk.st"><span>&lt;</span><span class="hidden sm:inline">tk.st</span></a>
+          <a href="https://tk.st/" class="comic-btn inline-flex items-center gap-1.5 px-3 py-1 text-[14px] bg-white text-black hover:bg-gray-100" aria-label="Back to tk.st"><span>&lt;</span><span class="hidden sm:inline">tk.st</span></a>
         </div>
-        <span class="text-[16px] opacity-40">&copy; <span id="currentYear">2024-2026</span> Shinya Takeda</span>
+        <span class="text-[18px] opacity-60">&copy; <span id="currentYear">2024-2026</span> Shinya Takeda</span>
         <div class="flex-1 flex justify-end items-center">
           <div id="donation-button-container"></div>
         </div>
@@ -445,7 +421,7 @@
     </footer>
   </div>
 
-  <button id="scroll-top-btn" class="pixel-btn px-3 py-2.5 bg-[var(--surface)] border-cyan-400/70 text-cyan-300" aria-label="Scroll to top">
+  <button id="scroll-top-btn" class="comic-btn px-3 py-2 bg-white text-black" aria-label="Scroll to top">
     <i data-lucide="chevrons-up" class="w-5 h-5"></i>
   </button>
 
@@ -472,20 +448,31 @@
       document.addEventListener(evt, unlockAudio, true);
     });
 
-    function playBeep(freq = 440, type = 'square', duration = 0.05) {
+    function playBeep(freq = 440, type = 'sine', duration = 0.05, endFreq = null) {
       if (!isAudioUnlocked || prefersReducedMotion) return;
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
       oscillator.type = type;
-      oscillator.frequency.value = freq;
-      // 音量は控えめに
-      gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      if (endFreq) {
+        oscillator.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+      }
+      gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
       oscillator.start();
       oscillator.stop(audioCtx.currentTime + duration);
     }
+
+    // Comic Sound Wrappers
+    const soundPop = () => playBeep(800, 'triangle', 0.04);
+    const soundPunch = () => playBeep(400, 'sine', 0.2, 50);
+    const soundJingle = () => {
+      playBeep(440, 'triangle', 0.1);
+      setTimeout(() => playBeep(660, 'triangle', 0.1), 80);
+      setTimeout(() => playBeep(880, 'triangle', 0.3), 160);
+    };
 
     // --- 隠しコマンド（コナミコマンドでパーティモード） ---
     const konamiCode = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
@@ -495,11 +482,9 @@
       if (e.key.toLowerCase() === konamiCode[konamiIndex]) {
         konamiIndex++;
         if (konamiIndex === konamiCode.length) {
-          if (!prefersReducedMotion) document.body.classList.toggle('party-mode');
-          showMessage("🎉 PARTY MODE ACTIVATED! 🎉", "success");
-          playBeep(440, 'square', 0.1);
-          setTimeout(() => playBeep(660, 'square', 0.1), 100);
-          setTimeout(() => playBeep(880, 'square', 0.3), 200);
+          document.body.classList.toggle('bw-mode');
+          showMessage("📖 CLASSIC B&W MODE ACTIVATED! 📖", "success");
+          soundJingle();
           konamiIndex = 0;
         }
       } else {
@@ -538,12 +523,14 @@
         const sk = document.createElement('div');
         sk.className = 'game-card p-4 flex flex-col gap-4';
         sk.innerHTML = `
-          <div class="skeleton aspect-[1200/630] w-full"></div>
+          <div class="img-frame aspect-[1200/630] w-full relative overflow-hidden">
+            <div class="skeleton w-full h-full"></div>
+          </div>
           <div class="flex flex-col gap-3 pt-1">
-            <div class="skeleton h-4 w-3/4 rounded-sm"></div>
-            <div class="skeleton h-3 w-1/4 rounded-sm"></div>
-            <div class="skeleton h-3 w-full rounded-sm"></div>
-            <div class="skeleton h-3 w-5/6 rounded-sm"></div>
+            <div class="skeleton h-6 w-3/4 rounded-none"></div>
+            <div class="skeleton h-4 w-1/4 rounded-none"></div>
+            <div class="skeleton h-4 w-full rounded-none"></div>
+            <div class="skeleton h-4 w-5/6 rounded-none"></div>
           </div>
         `;
         grid.appendChild(sk);
@@ -561,7 +548,7 @@
         chip.textContent = genre === 'all' ? 'ALL' : genre.toUpperCase();
         chip.addEventListener('click', () => {
           activeGenre = genre;
-          playBeep(800, 'square', 0.04);
+          soundPop();
           renderGenreChips();
           updateView();
         });
@@ -591,32 +578,32 @@
           <img src="${imgUrl}" alt="${title}" loading="lazy"
                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="hidden absolute inset-0 flex-col items-center justify-center bg-black/50 text-white/50">
+          <div class="hidden absolute inset-0 flex-col items-center justify-center bg-gray-200 text-black/40">
             <i data-lucide="tv" class="w-10 h-10 mb-2"></i>
-            <span class="text-[24px]">NO SIGNAL</span>
+            <span class="comic-title text-[24px]">NO SIGNAL</span>
           </div>
           ${isNew ? `<span class="badge-new absolute top-2 left-2">NEW!</span>` : ''}
         </div>
         <div class="flex flex-col gap-3 flex-grow">
-          <h3 class="pixel-title glitch text-[14px] sm:text-[16px] leading-relaxed text-cyan-300" data-text="${title}">${title}</h3>
+          <h3 class="comic-title text-[20px] sm:text-[24px] leading-tight text-black" data-text="${title}">${title}</h3>
           <div class="flex flex-col gap-2 flex-grow">
-            ${genre ? `<div class="inline-block px-2 py-0.5 border border-cyan-500/50 text-cyan-300 text-[13px] uppercase tracking-widest w-max mb-1 bg-cyan-900/20">${genre}</div>` : ''}
-            <p class="text-[15px] sm:text-[17px] leading-[1.5] text-gray-400">${desc}</p>
-            ${ai ? `<div class="flex items-center gap-1.5 mt-auto pt-2 text-fuchsia-400 text-[13px] sm:text-[15px]"><i data-lucide="bot" class="w-4 h-4"></i><span class="opacity-90">${ai}</span></div>` : ''}
+            ${genre ? `<div class="inline-block px-3 py-0.5 border-2 border-black text-black font-bold text-[14px] uppercase tracking-wider w-max mb-1 bg-yellow-400 font-sans">${genre}</div>` : ''}
+            <p class="text-[16px] sm:text-[18px] leading-[1.4] text-gray-700 font-bold">${desc}</p>
+            ${ai ? `<div class="flex items-center gap-1.5 mt-auto pt-2 text-red-600 font-bold text-[14px] sm:text-[16px]"><i data-lucide="bot" class="w-4 h-4"></i><span class="opacity-90">${ai}</span></div>` : ''}
           </div>
-          <div class="flex items-center gap-3 flex-wrap pt-2 mt-auto border-t border-white/10">
-            <a href="${url}" target="_blank" rel="noopener noreferrer" class="pixel-btn inline-flex items-center gap-2 px-4 py-2 mt-2 text-[11px] bg-fuchsia-400 text-black ml-auto snd-click">
-              <i data-lucide="play" class="w-4 h-4 fill-black"></i><span>START</span>
+          <div class="flex items-center gap-3 flex-wrap pt-2 mt-auto border-t-2 border-black/10">
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="comic-btn inline-flex items-center gap-2 px-6 py-2 mt-2 text-[16px] bg-red-500 text-white ml-auto snd-click">
+              <i data-lucide="play" class="w-4 h-4 fill-white"></i><span>READ GAME</span>
             </a>
           </div>
         </div>
       `;
 
       // カード作成時に動的要素にのみサウンドイベントを付与
-      card.addEventListener('mouseenter', () => playBeep(600, 'square', 0.03));
+      card.addEventListener('mouseenter', soundPop);
       const startBtn = card.querySelector('.snd-click');
       if (startBtn) {
-        startBtn.addEventListener('mousedown', () => playBeep(1200, 'sine', 0.08));
+        startBtn.addEventListener('mousedown', soundPunch);
       }
       
       return card;
@@ -648,7 +635,9 @@
       countEl.textContent = filtered.length;
       emptyState.classList.toggle("hidden", filtered.length > 0);
       
-      lucide.createIcons();
+      lucide.createIcons({
+        attrs: { 'stroke-width': 2.5 }
+      });
     }
 
     function computeNewIds() {
@@ -679,7 +668,7 @@
     // 静的要素（検索バー、セレクトなど）のサウンドイベント初期化
     function initStaticSoundEvents() {
       document.querySelectorAll('.snd-hover').forEach(el => {
-        el.addEventListener('mouseenter', () => playBeep(900, 'square', 0.02));
+        el.addEventListener('mouseenter', soundPop);
       });
     }
 
@@ -689,7 +678,7 @@
     });
     scrollTopBtn.addEventListener('click', () => {
       appEl.scrollTo({ top: 0, behavior: 'smooth' });
-      playBeep(600, 'sine', 0.1);
+      soundPop();
     });
     lucide.createIcons({ nodes: [scrollTopBtn] });
 
@@ -699,7 +688,7 @@
     initStaticSoundEvents();
     loadGames();
 
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    document.getElementById('currentYear').textContent = '2024-' + new Date().getFullYear();
 
   </script>
 </body>

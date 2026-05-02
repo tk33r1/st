@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>/glitch — OGP ジェネレーター</title>
+  <link rel="icon" href="/images/favicons/glitch-favicon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -366,7 +367,7 @@
             </div>
           </div>
           <div style={{ flex: 1, position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            <div style={{ position: 'absolute', inset: 0, left: 0, width: '60px', background: 'linear-gradient(to right, #0d0d0d, transparent)' }}></div>
+            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '60px', background: 'linear-gradient(to right, #0d0d0d, transparent)' }}></div>
           </div>
         </div>
       );
@@ -380,7 +381,7 @@
             <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '100px', background: 'linear-gradient(to bottom, transparent, #09090e)' }}></div>
           </div>
-          <div style={{ padding: '20px 36px 28px 36px', background: '#09090e', borderLeft: `4px solid ${tweak.accentColor}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ flexShrink: 0, padding: '20px 36px 28px 36px', background: '#09090e', borderLeft: `4px solid ${tweak.accentColor}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: tweak.accentColor, letterSpacing: '0.06em' }}>/glitch › #{num}</span>
               {tags.map((tag, i) => <Tag key={i} accent={tweak.accent2Color}>{tag}</Tag>)}
@@ -402,9 +403,9 @@
       return (
         <div style={{ position: 'relative', width: 1200, height: 630, background: '#09090e', overflow: 'hidden', display: 'flex', fontFamily: "'JetBrains Mono',monospace" }}>
           <div style={{ flex: '0 0 876px', position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            <div style={{ position: 'absolute', inset: 0, left: 'auto', width: '60px', background: 'linear-gradient(to right, transparent, #09090e)' }}></div>
+            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '60px', background: 'linear-gradient(to right, transparent, #09090e)' }}></div>
           </div>
-          <div style={{ flex: 1, background: '#09090e', padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ flex: 1, background: '#09090e', padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', marginLeft: '-1px', position: 'relative' }}>
             <div style={{ color: tweak.accentColor, fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em' }}>/glitch</div>
             <div>
               <div style={{ color: tweak.accentColor, fontSize: '108px', fontWeight: 700, lineHeight: 0.9, letterSpacing: '-0.03em', marginBottom: '20px' }}>
