@@ -359,7 +359,7 @@
             background: var(--bg);
             padding: 0;
             display: grid;
-            grid-template-columns: 200px 1fr;
+            grid-template-columns: 260px 1fr;
             align-items: stretch;
             text-decoration: none;
             color: inherit;
@@ -393,8 +393,8 @@
 
         /* サムネイル画像エリア */
         .article-thumb {
-            width: 200px;
-            min-height: 140px;
+            width: 260px;
+            aspect-ratio: 1200 / 630;
             background: var(--bg3);
             border-right: 1px solid var(--border);
             position: relative;
@@ -406,12 +406,13 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
             display: block;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s ease;
         }
 
         .article-card:hover .article-thumb img {
-            transform: scale(1.04);
+            transform: scale(1.05);
         }
 
         /* 画像がない場合のプレースホルダー */
@@ -524,17 +525,23 @@
             gap: 8px;
         }
 
-        /* featured — サムネイル幅を広げる */
+        /* featured — 画像を全幅スタック表示で 1200:630 を正確に再現 */
         .article-card.featured {
-            grid-template-columns: 280px 1fr;
+            grid-template-columns: 1fr;
             background: var(--bg2);
             border-left: 2px solid var(--accent);
             box-shadow: -2px 0 12px rgba(74, 222, 128, 0.08);
         }
 
         .article-card.featured .article-thumb {
-            width: 280px;
-            min-height: 180px;
+            width: 100%;
+            aspect-ratio: 1200 / 630;
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-card.featured .article-body-wrap {
+            padding: 20px 28px 24px;
         }
 
         .featured-badge {
@@ -543,25 +550,23 @@
             color: var(--accent);
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .article-card.featured .article-title {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
         }
 
-        /* モバイル：縦積みに */
+        /* モバイル：通常カードのみ縦積みに（featured はすでに縦積み） */
         @media (max-width: 600px) {
 
-            .article-card,
-            .article-card.featured {
+            .article-card {
                 grid-template-columns: 1fr;
             }
 
-            .article-thumb,
-            .article-card.featured .article-thumb {
+            .article-thumb {
                 width: 100%;
-                min-height: 160px;
+                aspect-ratio: 1200 / 630;
                 border-right: none;
                 border-bottom: 1px solid var(--border);
             }
@@ -619,6 +624,7 @@
             font-family: var(--font-mono);
             font-size: 0.68rem;
             color: var(--text-dim);
+            white-space: nowrap;
         }
 
         .footer-disclaimer {
@@ -1019,7 +1025,9 @@
     <footer>
         <div class="wrap">
             <div class="footer-inner">
-                <a href="https://tk.st" class="footer-back">&lt;</a>
+                <div style="flex:1; display:flex; justify-content: flex-start;">
+                    <a href="https://tk.st" class="footer-back">&lt;</a>
+                </div>
                 <div class="footer-center">
                     <p class="footer-copy">© <span id="footerYear"></span> Shinya Takeda — 情報は自己責任でどうぞ。</p>
                 </div>
