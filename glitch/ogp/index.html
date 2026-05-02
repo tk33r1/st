@@ -308,6 +308,7 @@
       articleNum: '001',
       tag1: 'AI',
       tag2: 'コスト削減',
+      tag3: '',
       readTime: '8分',
       title: 'Claude Code を DeepSeek で動かして\nAPI コストを 95% 削る方法',
       date: '2026.05.01',
@@ -316,52 +317,77 @@
       imageUrl: PLACEHOLDER_IMG
     };
 
-    const TagPill = ({ children, accent = '#ff00ff' }) => (
-      <span style={{ display: 'inline-flex', alignItems: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize: '13px', fontWeight: 400, letterSpacing: '0.06em', color: accent, border: `1px solid ${accent}`, borderRadius: '1px', padding: '3px 10px', whiteSpace: 'nowrap' }}>
-        {children}
-      </span>
-    );
+    const Tag = ({ children, variant = 'pill', accent, fontSize = '13px' }) => {
+      if (variant === 'bar') {
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: accent, fontSize, fontWeight: 500, letterSpacing: '0.04em' }}>
+            <span style={{ width: '2px', height: '12px', background: accent }}></span>
+            {children}
+          </div>
+        );
+      }
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize, fontWeight: 400, letterSpacing: '0.06em', color: accent, border: `1px solid ${accent}`, borderRadius: '1px', padding: '3px 10px', whiteSpace: 'nowrap' }}>
+          {children}
+        </span>
+      );
+    };
 
     function TerminalDesign({ tweak, num, lines }) {
+      const tags = [tweak.tag1, tweak.tag2, tweak.tag3].filter(Boolean);
       return (
         <div style={{ position: 'relative', width: 1200, height: 630, background: '#0d0d0d', overflow: 'hidden', display: 'flex', fontFamily: "'JetBrains Mono',monospace" }}>
-          <div style={{ width: '57%', padding: '64px 72px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', zIndex: 10 }}>
-            <div style={{ color: tweak.accentColor, fontSize: '16px', fontWeight: 700, letterSpacing: '0.05em' }}>/glitch › #{num}</div>
-            <h1 style={{ color: '#e8e8f0', fontSize: lines.length > 3 ? '52px' : lines.length > 2 ? '60px' : '70px', fontWeight: 700, lineHeight: 1.3, margin: 0, letterSpacing: '-0.02em', fontFamily: "'Noto Sans JP',sans-serif", whiteSpace: 'pre-wrap' }}>
-              {tweak.title}
-            </h1>
+          <div style={{ width: '30%', padding: '60px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', zIndex: 10 }}>
+            <div style={{ color: tweak.accentColor, fontSize: '18px', fontWeight: 700, letterSpacing: '0.05em' }}>/glitch #{num}</div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', paddingTop: '40px' }}>
+              <h1 style={{ 
+                color: '#e8e8f0', 
+                fontSize: lines.length > 4 ? '19px' : lines.length > 3 ? '23px' : lines.length > 2 ? '28px' : '34px', 
+                fontWeight: 700, 
+                lineHeight: 1.25, 
+                margin: 0, 
+                letterSpacing: '-0.01em', 
+                fontFamily: "'Noto Sans JP',sans-serif", 
+                whiteSpace: 'pre-wrap' 
+              }}>
+                {tweak.title}
+              </h1>
+            </div>
             <div>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '18px' }}>
-                {tweak.tag1 && <TagPill accent={tweak.accent2Color}>{tweak.tag1}</TagPill>}
-                {tweak.tag2 && <TagPill accent={tweak.accent2Color}>{tweak.tag2}</TagPill>}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '24px' }}>
+                {tags.map((tag, i) => <Tag key={i} variant="bar" accent={tweak.accent2Color} fontSize="14px">{tag}</Tag>)}
               </div>
-              <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                 <span style={{ color: '#5a5a72', fontSize: '13px', fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.04em' }}>{tweak.date}</span>
-                <span style={{ color: '#5a5a72', fontSize: '13px', fontFamily: "'JetBrains Mono',monospace" }}>⊙ {tweak.readTime}</span>
+                <span style={{ color: '#5a5a72', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '15px' }}>⏱</span> {tweak.readTime}
+                </span>
               </div>
             </div>
           </div>
           <div style={{ flex: 1, position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '60px', background: 'linear-gradient(to right, #0d0d0d, transparent)' }}></div>
+            <div style={{ position: 'absolute', inset: 0, left: 0, width: '60px', background: 'linear-gradient(to right, #0d0d0d, transparent)' }}></div>
           </div>
         </div>
       );
     }
 
-    function MonoLightDesign({ tweak, num, lines }) {
+    function CaptionDesign({ tweak, num, lines }) {
+      const tags = [tweak.tag1, tweak.tag2, tweak.tag3].filter(Boolean);
       return (
         <div style={{ position: 'relative', width: 1200, height: 630, background: '#09090e', overflow: 'hidden', display: 'flex', flexDirection: 'column', fontFamily: "'JetBrains Mono',monospace" }}>
-          <div style={{ flex: '1 0 0', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-            <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '4px', background: tweak.accentColor }}></div>
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '100px', background: 'linear-gradient(to bottom, transparent, #09090e)' }}></div>
           </div>
-          <div style={{ flexShrink: 0, padding: '20px 36px 28px 36px', background: '#09090e', borderLeft: `4px solid ${tweak.accentColor}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ padding: '20px 36px 28px 36px', background: '#09090e', borderLeft: `4px solid ${tweak.accentColor}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '13px', fontWeight: 700, color: tweak.accentColor, letterSpacing: '0.06em' }}>/glitch › #{num}</span>
-              {tweak.tag1 && <TagPill accent={tweak.accent2Color}>{tweak.tag1}</TagPill>}
-              {tweak.tag2 && <TagPill accent={tweak.accent2Color}>{tweak.tag2}</TagPill>}
-              <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#5a5a72', fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.04em' }}>⊙ {tweak.readTime}</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: tweak.accentColor, letterSpacing: '0.06em' }}>/glitch › #{num}</span>
+              {tags.map((tag, i) => <Tag key={i} accent={tweak.accent2Color}>{tag}</Tag>)}
+              <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#5a5a72', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span>{tweak.date}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ fontSize: '14px' }}>⏱</span> {tweak.readTime}</span>
+              </span>
             </div>
             <h1 style={{ color: '#e8e8f0', fontSize: lines.length > 1 ? '42px' : '48px', fontWeight: 700, lineHeight: 1.35, margin: 0, letterSpacing: '-0.02em', fontFamily: "'Noto Sans JP',sans-serif", whiteSpace: 'pre-wrap' }}>
               {tweak.title}
@@ -372,31 +398,28 @@
     }
 
     function SplitDesign({ tweak, num, lines }) {
+      const tags = [tweak.tag1, tweak.tag2, tweak.tag3].filter(Boolean);
       return (
         <div style={{ position: 'relative', width: 1200, height: 630, background: '#09090e', overflow: 'hidden', display: 'flex', fontFamily: "'JetBrains Mono',monospace" }}>
           <div style={{ flex: '0 0 876px', position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '60px', background: 'linear-gradient(to right, transparent, #09090e)' }}></div>
+            <div style={{ position: 'absolute', inset: 0, left: 'auto', width: '60px', background: 'linear-gradient(to right, transparent, #09090e)' }}></div>
           </div>
           <div style={{ flex: 1, background: '#09090e', padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ color: tweak.accentColor, fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em' }}>/glitch</div>
             <div>
-              <div style={{ color: tweak.accentColor, fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em', marginBottom: '5px' }}>/glitch</div>
-              <div style={{ color: '#5a5a72', fontSize: '11px', letterSpacing: '0.04em' }}>Gray Area Hacks.</div>
-            </div>
-            <div>
-              <div style={{ color: tweak.accentColor, fontSize: '108px', fontWeight: 700, lineHeight: 0.9, letterSpacing: '-0.03em', fontFamily: "'JetBrains Mono',monospace", marginBottom: '20px' }}>
+              <div style={{ color: tweak.accentColor, fontSize: '108px', fontWeight: 700, lineHeight: 0.9, letterSpacing: '-0.03em', marginBottom: '20px' }}>
                 #{num}
               </div>
               <h1 style={{ color: '#e8e8f0', fontSize: lines.length > 2 ? '19px' : '22px', fontWeight: 700, lineHeight: 1.6, margin: '0 0 20px', letterSpacing: '-0.01em', fontFamily: "'Noto Sans JP',sans-serif", whiteSpace: 'pre-wrap' }}>
                 {tweak.title}
               </h1>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {tweak.tag1 && <TagPill accent={tweak.accent2Color}>{tweak.tag1}</TagPill>}
-                {tweak.tag2 && <TagPill accent={tweak.accent2Color}>{tweak.tag2}</TagPill>}
+                {tags.map((tag, i) => <Tag key={i} variant="bar" accent={tweak.accent2Color}>{tag}</Tag>)}
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <div style={{ color: '#5a5a72', fontSize: '11px', letterSpacing: '0.04em' }}>{tweak.date}</div>
-              <div style={{ color: '#5a5a72', fontSize: '11px' }}>⊙ {tweak.readTime}</div>
+              <div style={{ color: '#5a5a72', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ fontSize: '13px' }}>⏱</span> {tweak.readTime}</div>
             </div>
           </div>
         </div>
@@ -409,7 +432,7 @@
 
       switch (tweak.variant) {
         case 'Terminal': return <TerminalDesign tweak={tweak} num={num} lines={lines} />;
-        case 'Caption': return <MonoLightDesign tweak={tweak} num={num} lines={lines} />;
+        case 'Caption': return <CaptionDesign tweak={tweak} num={num} lines={lines} />;
         default: return <SplitDesign tweak={tweak} num={num} lines={lines} />;
       }
     }
@@ -442,6 +465,7 @@
         tmpRoot.render(<ArticleDesign tweak={tweak} />);
 
         await document.fonts.ready;
+        await new Promise(r => setTimeout(r, 300));
         try {
           const bgMap = { 'Terminal': '#0d0d0d', 'Caption': '#09090e', 'Split': '#09090e' };
           const canvas = await html2canvas(tmp, {
@@ -506,6 +530,7 @@
             <TweakText label="記事番号" value={tweak.articleNum} onChange={v => setTweak('articleNum', v)} />
             <TweakText label="タグ1" value={tweak.tag1} onChange={v => setTweak('tag1', v)} />
             <TweakText label="タグ2" value={tweak.tag2} onChange={v => setTweak('tag2', v)} />
+            <TweakText label="タグ3" value={tweak.tag3} onChange={v => setTweak('tag3', v)} />
             <TweakText label="読了時間" value={tweak.readTime} onChange={v => setTweak('readTime', v)} />
             <TweakText label="日付" value={tweak.date} onChange={v => setTweak('date', v)} />
 
