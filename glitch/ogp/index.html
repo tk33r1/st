@@ -1,386 +1,328 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>/glitch 記事画像テンプレート</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@700;900&display=swap"
-    rel="stylesheet">
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"
-    integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
-    crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
-    integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
-    crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
-    integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
-    crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>/glitch 記事画像テンプレート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <script type="text/babel" src="https://tk.st/data/glitch-panel.jsx"></script>
+<!-- 修正箇所: tweaks-panel.jsx の読み込みパスを絶対URLに変更 -->
+<script type="text/babel" src="https://tk.st/data/tweaks-panel.jsx"></script>
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      background: #0d0d0d;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 32px 16px 100px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .page-label {
-      color: #333;
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      margin-bottom: 20px;
-    }
-
-    .tab-bar {
-      display: flex;
-    }
-
-    .tab-btn {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      padding: 7px 20px;
-      border: 1px solid #2a2a2a;
-      border-bottom: none;
-      background: #090909;
-      color: #3a3a3a;
-      cursor: pointer;
-      letter-spacing: 0.06em;
-      transition: color 0.15s;
-    }
-
-    .tab-btn:hover {
-      color: #666;
-    }
-
-    .tab-btn.active {
-      background: #0d0d0d;
-      color: #6ef07a;
-      border-color: #2a2a2a;
-    }
-
-    .canvas-wrap {
-      border: 1px solid #222;
-    }
-
-    .canvas-scale {
-      transform-origin: top left;
-    }
-
-    .dl-btn {
-      margin-top: 16px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      padding: 10px 28px;
-      background: #6ef07a;
-      color: #080c09;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      transition: opacity 0.15s;
-    }
-
-    .dl-btn:hover {
-      opacity: 0.85;
-    }
-
-    .dl-btn:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-  </style>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    background:#0d0d0d;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:flex-start;
+    padding:32px 16px 100px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .page-label { color:#333; font-size:11px; letter-spacing:0.12em; margin-bottom:20px; }
+  .tab-bar { display:flex; }
+  .tab-btn {
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; padding:7px 20px;
+    border:1px solid #2a2a2a; border-bottom:none;
+    background:#090909; color:#3a3a3a;
+    cursor:pointer; letter-spacing:0.06em; transition:color 0.15s;
+  }
+  .tab-btn:hover { color:#666; }
+  .tab-btn.active { background:#0d0d0d; color:#6ef07a; border-color:#2a2a2a; }
+  .canvas-wrap { border:1px solid #222; }
+  .canvas-scale { transform-origin:top left; }
+  .dl-btn {
+    margin-top:16px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:0.1em;
+    padding:10px 28px;
+    background:#6ef07a; color:#080c09;
+    border:none; cursor:pointer;
+    font-weight:700;
+    transition:opacity 0.15s;
+  }
+  .dl-btn:hover { opacity:0.85; }
+  .dl-btn:disabled { opacity:0.4; cursor:default; }
+</style>
 </head>
-
 <body>
-  <div class="page-label">// /glitch — OGP 1200×630</div>
-  <div id="root"></div>
+<div class="page-label">// /glitch — OGP 1200×630</div>
+<div id="root"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-      "variant": "overlap",
-      "articleNum": "001",
-      "tag1": "AI",
-      "tag2": "コスト削減",
-      "readTime": "8分",
-      "title": "Claude Code を DeepSeek で動かして\nAPI コストを 95% 削る方法",
-      "date": "2026.05.01",
-      "accentColor": "#6ef07a",
-      "imageUrl": "data:image\/jpeg;base64,\/9j\/4QEERXhpZgAATU0AKgAAAAgABQEAAAQAAAABAAAH0AEBAAQAAAABAAAF3IdpAAQAAAABAAAASgESAAMAAAABAAYAAIglAAQAAAABAAAAiAAAAAAAA5AAAAIAAAAEMDIzMpADAAIAAAAUAAAAdJIIAAQAAAABAAAAAAAAAAAyMDI2OjAyOjI4IDE2OjE4OjUwAAADAAIABQAAAAMAAACyAAYABQAAAAEAAADKAAQABQAAAAMAAADSAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAABAAEBEgADAAAAAQAGAAAAAAAA\/+AAEEpGSUYAAQEAAAEAAQAA\/+EDnGh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS4xLjIiPgogIDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CiAgICA8cmRmOkRlc2NyaXB0aW9uCiAgICAgICAgeG1sbnM6Q29udGFpbmVyPSJodHRwOi8vbnMuZ29vZ2xlLmNvbS9waG90b3MvMS4wL2NvbnRhaW5lci8iCiAgICAgICAgeG1sbnM6SXRlbT0iaHR0cDovL25zLmdvb2dsZS5jb20vcGhvdG9zLzEuMC9jb250YWluZXIvaXRlbS8iCiAgICAgICAgeG1sbnM6aGRyZ209Imh0dHA6Ly9ucy5hZG9iZS5jb20vaGRyLWdhaW4tbWFwLzEuMC8iCiAgICAgICAgaGRyZ206VmVyc2lvbj0iMS4wIj4KICAgICAgPENvbnRhaW5lcjpEaXJlY3Rvcnk+CiAgICAgICAgPHJkZjpTZXE+CiAgICAgICAgICA8cmRmOmxpIHJkZjpwYXJzZVR5cGU9IlJlc291cmNlIj4KICAgICAgICAgICAgPENvbnRhaW5lcjpJdGVtCiAgICAgICAgICAgICBJdGVtOlNlbWFudGljPSJQcmltYXJ5IgogICAgICAgICAgICAgSXRlbTpNaW1lPSJpbWFnZS9qcGVnIi8+CiAgICAgICAgICA8L3JkZjpsaT4KICAgICAgICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0iUmVzb3VyY2UiPgogICAgICAgICAgICA8Q29udGFpbmVyOkl0ZW0KICAgICAgICAgICAgIEl0ZW06U2VtYW50aWM9IkdhaW5NYXAiCiAgICAgICAgICAgICBJdGVtOk1pbWU9ImltYWdlL2pwZWciCiAgICAgICAgICAgICBJdGVtOkxlbmd0aD0iNjIxMyIvPgogICAgICAgICAgPC9yZGY6bGk+CiAgICAgICAgPC9yZGY6U2VxPgogICAgICA8L0NvbnRhaW5lcjpEaXJlY3Rvcnk+CiAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgr\/4gIYSUNDX1BST0ZJTEUAAQEAAAIIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAAGRyWFlaAAABVAAAABRnWFlaAAABaAAAABRiWFlaAAABfAAAABR3dHB0AAABkAAAABRyVFJDAAABpAAAAChnVFJDAAABpAAAAChiVFJDAAABpAAAAChjcHJ0AAABzAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAEYAAAAcAEQAaQBzAHAAbABhAHkAIABQADMAIABHAGEAbQB1AHQAIAB3AGkAdABoACAAcwBSAEcAQgAgAFQAcgBhAG4AcwBmAGUAcgAAWFlaIAAAAAAAAIPcAAA9vf\/\/\/7tYWVogAAAAAAAASr0AALE2AAAKuVhZWiAAAAAAAAAoPQAAEQwAAMjYWFlaIAAAAAAAAPbWAAEAAAAA0y1wYXJhAAAAAAAEAAAAAmZmAADypwAADVkAABPQAAAKWwAAAAAAAAAAbWx1YwAAAAAAAAABAAAADGVuVVMAAAAgAAAAHABHAG8AbwBnAGwAZQAgAEkAbgBjAC4AIAAyADAAMQA2\/+IAInVybjppc286c3RkOmlzbzp0czoyMTQ5NjotMQAAAAAA\/9sAQwAIBgYHBgUIBwcHCQkICgwUDQwLCwwZEhMPFB0aHx4dGhwcICQuJyAiLCMcHCg3KSwwMTQ0NB8nOT04MjwuMzQy\/9sAQwEJCQkMCwwYDQ0YMiEcITIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy\/8AAEQgF3AfQAwEiAAIRAQMRAf\/EABwAAAEFAQEBAAAAAAAAAAAAAAEAAgMEBQYHCP\/EAFwQAAEDAgQDBAYHAwgHBgQADwEAAgMEEQUSITEGQVETImFxFDKBkaGxFSNCUnLB0QczYiQ0Q1OCkrLhFmNzk6LC8CU1RFSD0lWUo\/FFZHSEs+IXJjbDRqR10+P\/xAAaAQEBAQEBAQEAAAAAAAAAAAAAAQIDBAUG\/8QALhEBAQACAgICAgICAwABBQEBAAECEQMhEjETQQRRIjIUYQVCcYEVIzNSkaGx\/+IAWE1QRgBNTQAqAAAACAADsAAABwAAAAQwMTAwsAEABAAAAAEAAAACsAIABwAAACAAAAAyAAAAAAADAAAABdJ7AAAAAAAAAAAAAAAAAAAYRQAFyugAAAAA\/9oADAMBAAIRAxEAPwDt2tupBoEwJzdV9B4z04JqeNlQkeSV0kBSSRQBHZBJQG6SCSoKSSSgSSSSApXQSQLmkkkgV9EboJICje6CQQOSSBSUUQUeabdHkiEiDZAIoo3SQSQJOTURugN04JuicFBI3ZPfIIoHynZjS73BMaqPEdR6Lw1iM17WgcB5nT81Z7HktPWMnE8zm\/WEuJKvRABrG790bLGpSxtGGhxJkIHxW0wjNo0dF4rd2vXJqLLbDkpQfeoAVIHABQYnE031EUXNz7+4LmnyObNJbTZt\/JbOOy9riMLOTW3+Ky4WNcHPcNXElT7X6KYXZHe99U0QyOa4Bh256Kx2gbYaabckDUNv94rSIo6Z4tmyjrqpgwM8VF6SXju6ItJce8bhQJxjb6oAKbHO6mxehfHC6ZzLOEbdyUwsIcTY2W1w\/Fn4oebXEEPxsB+alWOgZNi1WMzIhA083aFPGFVEo\/lFY4j7rVpggDvEAeJVaTEqSEXdMCejdVrSGw4TRxnWMvPVxuubxkxs4khhYGtayO5aB5lbT8dLrtpqWSV3iuOrJampxesrH917IyHC3q6Wss1Yqsj7a7nOtmJOgumuoIC4uJcmdqWAN100UNTM9rQb7nVVFn0elZyPvUsDWt1hbudFiuneTufetHCZ+\/Iw62s8exDSQuuTy1TbqSqaI6uQN9U6hQ3VE84vh0LANZZwF6NFDkYxttGtAC85qI5pW4XBTfv3vLm363Fl2DMNxOo\/ndW1ruYadFme1vpsPqIIf3krG28VUkxqkZ6rnPPgFHHgVMyxkdJIfE2CvRUdPB+7hYD5arTPTLnxWqniIgpSAdASLp7IcYqGjt5Y4vAf5LSn1DByLwApHOay5c4DzKaGa3B2ON5p5JD52VmPD6WHVsDL9Tr80pMQpYvWmbfw1VR+NRuNoYZJDtZOjtens2AtFgDYaaKa1gNNliTT4nUhrI4BEHO7pdpqpRhtdMP5VW+YYE2NF9TDF68rB7dVVkxukZcNL3nwQZgtK09\/PKf4nK7FS08ItHDG3xAU7GTNi1XNA\/sKRzWWsXEFNp6TGp4WtmnZC0AWs7W3sWrXfzRzR9ogKwe5zAaOaDKZgEZN56iWQ8wNArkOF0UNstOwnq8Zj8U+Stp4vWmaLdNVSkx2mbcRtfIemyo1LCNhsAAByFlBRj+SNNtyT8VmPxHEZ4nGCic1lvWIt80ymw7GJoWdtUsijtcWNzYoNp80Uer3tb5lU5cYo4t5C633Qo24BABmqKiWTzOUIuGDUDbv7BlubjmKGkRxuSY2pKR7+mhKrAY1VVcj4msh0DX5jaymk4poIzkp45J3DYMFgqUprGhP1hVj5u2Wq4LzO0e33y2a\/wChqQ9Hl05BvzVn\/R7Do\/XmqvjH\/wC1bN0F0057ZJwTCR6xqvf+gTvomj0tBUnwe5\/5LVJ1Svy8k0bZQwnDG70VQ7xfIf1UrMMo2eo2pj8pHhX0E0bUjg9DIPrO2J8ZT+qRwbDD9h9h\/GVbHNIpo2pfRuEx7QPcfB5Rjhw+M\/uH2\/tFWbJo1U0I5KOhqBaRkvueQqpwjDI\/Ve+P8AC\/8AVXjYIWRFT6Ow0aOkqnjo54\/RN+jcNHqGoHtkH6LQsnJoZn0bhvKCpP8Aa\/zS9CoR61NMfxkH5krQIQsnjBnCjpB\/QvHlGPyQNJR2+z72N\/RXTskQpoZ\/o1F0Z\/wwg6lovtsa7x7Fv6K8RyQ0TRtp3QugV1rIkoXXOaL0SgCS1QQR5IILxRKC1oJFBJLzRQ5oXSugqDeyCCIVCSSSSoKSSRQEopIoCkgkigckgggKV0kEDkkEUBSCSSBySCSApIIoEihdJAUkEkQ9BBApIEigkgKSSCBwTgkE4IEvIf2myiTiSnitbs6YfFzl6+F43+0Qk8YTjkyGMD3H9Vx5v6u3D\/ZydLbvHwT4xomQ6NcfJStXlemHhOTRongaoGSSNiifI82axpcfYFw2a8jnnVzjdbs8hIiiBu2WQMNuY3PyCxA0g6iyDrdxRFF\/I3eX5pBrmOuNQnROAjIIun5QR3T7EGngsnbCemBynLnYL\/Naxq2w6VLDGfvA3b71ydNM+mrIpmuIyOFyOmxXazBjgHBoItqCN0FqFwLbg6LguK4zFxA8\/fja75\/ouyo3dnM+C\/dtnbfoVyXGjSMWhfykht7wSpRzTNAtrD+8xw8QsUbLZwtwNwVmtxtzNLXxyDm0ELnaQk0rQTfKSFvVJyyu6ErnyHQzTQO0a5xc0+N1RcbunA6qMHRSAoh10kEUDwS3QGyd20oFg9wHmozqgUE7ZHNdnuQeut081EjhlLjbmqoOikadC1QSF+aQvJvrqm1D+1lDrAWAHwSR196opw1QkOikj1dY6gqKQWcpY+qjSwSWSgt01uB1SExNybFNY67XDxuhELuIVRNGbguPNOdJld0UL3Bhs1MeSbG97ooPndJMSdSVaBJA3uoGNu8WVgaHRRTo7rRoo87w0c1QZqtGgNqhgGmvNCNl9V9D4eaemFpqo5G\/xHm72D5rnz6xNypqh3a1UsnNzyUxm9lR23DTbU00hFw94aB0yjn70f2gQzGHDZWMJhic\/O4cnFrQPgD7ltcOYWIsMptHNe5vau03LrfgAr\/EOHOxDhmvogMz+yzMsNQW6j26WWbNxZdV5XQ8aYphfDL8HpmQiNxfabaGTI83cBrbqNlzhcXuLzqSbqM92yIVkxk9M22pB7FLG7K4OUA12Ujb3VDS8ucXOJJJuhm1unZddNkjHroijqVExpaLqVjQdOSd2dttE0KxSUtz3r+ShcwhxB3V8ZFEhOsnBoCfkG4CA0dI4C2vkoHD2qaSMZrgWChdohBw7rr3UgN1ANVIw7XQTE2CbnQeblMUFjPoCml1yowUboHEg77pXTbo3QNvqrNJb0uO\/Q\/IquNSNFNTC9S3wBVRt0HdnJv8AYKs+lZXZXCxCzYX5XmxsbKXOWvJ+9uEGoJWu3V2jkMUgexxFiuf9IDH2NxfZXYa3JoN7oOsFVTVTQ2doDvvhS1PDSN7s9N9o\/mFzcVcxwtaxTziDo3d19kHU9tA8FrgLOHMJc4bW+qOqzKfG6WoaGVjMrttN2nwK16W2TLG8SwnZp3agpTwtkZlc0OaRsuSxrABYy0zcpH2OS750DSLtOqy8RjcItRrZYzx32uN1Xkk7HRuLXDvA2UeRdFj1C1zjPGLEHvAfn+qwCCDYiyzjl9NXFGR1TSpS24TS1bc2Qoap2XomkAIPodFBFLmmgoig9ySAQ2CAoXSQKBWRskkSgFlOypniYGslka3oHWCiCCB73vldd7nOPU6pmqKCADVAhO3TSUCsgldBAkEEEEwKCCKCkdkkEQgCKSCu1SCgEUDkkEQiEikggQSQSQFFJBEFBJBEFJBJEBFFFFFAboIoaIhdEEOSCAoFAIE8kC96SSKop0CkgigS5pJJAroooIG\/JFDnsoKqupqGLtaqZkTBzJ\/JLZPZJboV2lNxphMshjkldGRs5wsD+q0xiWH1ABiqonE7WcueP5HFn1MrXXLgyx7sXHlDclBzhbUj2KKSop4b9pPGz8TgFMvLh+8v\/AA1MMsuoW7hLNYlZ9Tj+FU981WxxHJuqy3cd4Q19g2f2ho+amX5XDPtkvxuX\/h1GVDI5ZFFxPhNeQ1lUI3n7MnP2rdGUi41C6cPNx883jdpxZ8N8cpUOR3RCzup2X2uAp2tzCwFytLhw8fH3nZGs+DL9S1TynmE2x8F3NPhEAAfP33b93QBSvwqjlFuzdGeRYd1wv5nBhdbrrPx87+nBZfEo+wrtarASxpMJDx912jv+q5iaMwyujla+Nw3a4brth5MPyN+P245Y3j9s1zXfd+CbqDtqtHKwhRy0zZW2Lz5roxtT7w2QzOtoE2RroTldzNgevuTRJc62NtyFQ8OcNbFOZUSsddpLSm5wf1SzeKDbwXGKqlxajqGPLnRSNIzcgTY+4XXtsM7Zo2vYe64AhfOlNOYZo5Gi+Rwd15L1vhjiZssLKZ7M2XRoYfV0va3gvHzYXy3I9HBnNarn2i1uSdn8AqeJ4zBhGFVtfNE97KdmYtaW3IuBYXPiFyh\/ajhwbf0CtufFg\/5lz+PLTtrN3WbxSzeJXD0\/wC07B5yBLHVw+LmA29xC3sK4kw3GnFlFUtlltfLszw2H5LNxsncWZX6b2bxSzi+ybd22X4Ihx5ssstbLML7IXHiid9Qhmbf2qAXX5JZ9LFNMjB9ptvMKMzR2\/eD3hE2nLr8kBfz8bqs6rp2etUMHm4Ks\/GMMY7K6rgzeLwFddjRvvzStpzWX9PYSP6fC0eLwkMdwm3\/ftP7ZAmhqZb8wgGW3KyzjmFtGtfTBv+1aoZOIcHYSBiEB8naqbNNzIL31SyhYMfFuBu1diFO3xc9St4hwF2gxeiv4zhVNbGUbXXSt1KymYxgzjpmNUCfGZt1dZV0c37uppnj+GQFBS5R4p2XwChbJC51hNGfAPBSqKqmpmB80rGNOxc4NB8r9U0bWNuaWUKqyrpHgFk8TgdrOF0fSoP62O\/R4TZpZDBffRLKPBY1TjuHUMrIqqrgjkcNnueAT5XRZjmEStzMxKlIH+saEHQUrWtjItoSdFMQOYWOzHcJp2F9RX0zGOOjneASmYnws2fSV2Wn4X\/oiy6bmXogQOiymcSYE8ZhisBHi4JreJMCNgMTpySfvrTNbBaFDUi8DxyLT8lRbjuESPyMxCmLjz7UWP5K36TBKy0c8bz1a8H5KBjWixHgoSwEklSPngijc98rGNAvcuy28zdUUYxg7jYV9KTfnMFNiq5gOaYYweStPqqRnrVEDT0dI39VA/EcPjB7TEKVnh2gKaEBiF0hGFU+m+Hg4EYpTc\/tojjbh5o1xKHTzP5KNLRiCaYws8cbYAx+UVod+FhKiHGWCSEhskx1trHZF01zE22gTRF1CxZOJ8PhPebU+yO6b\/pZh7h3IarXrHb81NLtuCNvRIxttyt5LAfxlSMNuxmf\/eLflZTf6VYfJTxTFwYHi+WR4aRy8VK02jGEsiyBxFgRbrh01+YgndfHwUL+LuH47ZpKoHlZsZ+RUXtudn4o9mFgf6b4A4C8s7L9YT+RT\/8ATCgbG14aSDyLSP1TTXbcs1thZItasccRQyMD2ROsRe+U\/oifp2mYdWO36FF1WoGNsllCyo+LKNwsIXE+AKsjjCkba8L7ebR+abE1hTsqTmgclnHitpNmQxO8s36JzeKJm3y0MTh1sT8wg1sreqY9jR4rNdxe+9nQU4PTuKCTi+aOxsxtzyeEHRwNb2bQG2NldazTVcnFxcY23dDmtztlupIuMqmZ5bHQOcbbBhd8lluOoLR0S0aNlx7+K+IA\/LHg0m\/OnP6pQcRcUSu1wkAXtreO\/sJWpGcrpHWvAcVneRWWzEcQkAdLQRsfzBkB+SY7H+yJZJDTl\/MOksR8FuOW1+1k02sq\/0lSuaHvjEYPNr+XvQGNUR2k16Zh+iG1sNFkyRtzYKlPjNJEDlkBd0D7quOLcOY3I4XJ11tce2ybNMvG7txVotpaMe6MLf7oIWG50NdLDUyXEYY7S\/eOo20QONUA9RzzpoCCfkmzToG36IWWMziOnbr2Euv3iAhHxA6aWzKdpN\/vIbdTQtApWW+K0LWWJSVM3oxPZNLgPugn4AqtUVtcJcrKcEXtd1MfyCqWdNjEABhdSejCfgsxZlZWYou0nhojG5t7gZCRboCqDcUd9mNh\/sD9EEwI80tFSkxl0ZsIIne1MMZqTr6PCP71vyUGjdpQJaN7KjQ1cddE54YxhGwaSQfeFEeI2DVsMfvcnY0S5nUpnaxfeHuVL\/AEiD25ZIGAbaEn5qhX40YHNfTMaGuGucO+CdnTVL2dbeSBMfUqnhmKNrpzG8NaQCdARyvv7FYqaumheWhwcRuWsv+aC1Tlhq4QCfWHyKvl0YXMwVlO6rhIfbvjdpaeZ2V+fFY2G1j52WpGbVyWSMHdw9ij7dhOjyPcqUmLMeNQD4lVmV0Ebi4xAk662KuhtZlG+sRz03H5Kq8Xq3\/hH6LPfjEcrWtEbBY73ARixNhnLrBxy21cEGqB4o6dVnNxaInVunUEKePEqaQ2EgBtzIVFoW6oEgbFV2zwF1jNGPbopxJTkfvonHwc1BJEe\/fzVhrh1VWN7A+5kYLci4KYzwtHfmjb+KQBEWQ4Jbqt6XSNF31MDbci9p\/NSQ1EExPYPikIF7NIJQTMdZ\/sSkmDTq6yhc6Nru9LG22upATTLTuaPr4nDp2jU2bSNmYXXzEadE+OVpA1sqs1RQNaMzmjr9cP1TTNSOZmEjSByDgVNml581ho5VJJsx1cVSkqoYyfqpCOpaE0VNIRczNb5q7NC6Vl1k1soI0OitSVFC52T0qPNva+qpTtpHElkrH36PCDXmP8kj10a+x8rrBqnBkr2uIGVxF3EC4W\/HNTsw7I6ZmQ27w1C56urIYKhzO0D2kXBab8llqImTRtHrxE\/\/SBRvqGkfvWeH1oWNLiTDoWPNtxkOqrNr2h9xE8t6XU2a22O2B\/pWHb+kC0KN4sNbrloq5rnBpp3WPibLdw8AOFgQOQU2Ooo3gC636aVoYNTtwXK0mYC5uR0WpBMY2jvW801Ntsu4jB9Fkudmuv7l427V2y9ZqaiOTDJ2uIv2brD2LyJt3EDmtcSei+yV0dEqqF7JbpJc0ASuSjdAJtI2SsgklTzQz9o3K6xbdIuSCSCUv1QslZJEBJLmkggQ3SslZG6ICV0QgjQdYJ2YJt0dEXaXN4pt03mltuiBZIjdK6F1FApIIoI3SQSuhASvokkE2CCSW6gKSCRQEIFBJEBEIIohJJJIDdFBJAvcgkEUBTkhshdFPBTgmXTrqKQ2QKSG6ApBBEKKckgiEG7iTiwM1z2G+t721us1pI31PiraS6sITv132Tmm6SSyHk2CaCkkop97I3tqkkgIciHJJIIyL2V6jq445WiZmZnNttR5eKSScg3yA8NkaXNe3kSLFcNjtJJWVkjoQ4yNkc0aBtwD+SSSWbWscsZ3WfgjK\/wBIfTvhY2V7gXN20AvqV6nSwT01MGMfE0nWxBdlvuQUklx5XfhupVfK4SObncQ1xbc7m2l\/emPY57S3tAARrZgBSSSS1y8Ptt01Fh+G1zXSMoZ5nPaHEukcACdeaxcfhpxT01RDBk7VzgfJpNrJJJbPTXHjj7jmoaF9ZURwxvDXyENBOwXTUH7PMWnl7+IUbB4h6SSXl5bIuPFLluutl\/ZfiToX+j4tSlxabMfEfX0vryBXiXGHDWKcIYm1ta6GQTMLmTQXynKSCNdRuD7Ukk1PqNXDH21\/2f4fLiFVO1rwztWhgcb2ABueXS69bpeE3zRhr6oFo\/hKSSuGMy7sZzuXFfHGl9\/BlO1t3Vb\/If9FA7hWljI\/lDyfD\/Jd36nDhfbhfzeWX0s0PClJJWQxmSQl7w3T\/JfQFNgVHRYbTUccTNwCTmNnADxKSS8n\/J7yxkex\/xn8sLllVp0EAY4dnHp0bZYPFXCWF8TUrYqymDJmG8c8TQ18Z5kEAaEckkl8rh\/Jyxzxywun1c+HHOZTIH7K8H9H1mr3zC1iXMsbWvtbTndYNR+yqljN2V87\/AO7+iSS\/RY\/k8uEkkfKzw487u1i1H7OZoxnZXZo+rnNBPs5LBrOEsRp5csTfSH8gwE\/kkkll+RySdtcP4uGfbXwb9mmMVbTLXPZh0XIvOd7reANrcr3uuopv2dYZSxh5mlnnBsXO7rfYAdAkkq8XP+XyS+Mrc\/Gwl3Fk8H0h\/pn+9D\/Q2jae9USJJLV5PzOTjlsXy\/G49xKzhPDon6do4\/xEqV3DGHEaxH3pJJl5eXL24ZYYy6is7hPCydYHHycnN4UwltrUxPtKSS3cvyb+0nHivx4Rh8YsykYPZdUcdw2lhwuV4oY3bXcGtBte26SSc+Xky4MsbVnFhjyy1wsU1BCC+eFxcNgMtvKytQVdBUVEcMeHuzPIDTcD5pJJrPkyttX8njx47ZHSN4aoQ7MYD7LAKzHgdC0W9Gb18UklrXyZfp8vlzxjQioaZjS0QMytANrK26ngkYGvhjc3oWgpJJb7cbfatLw\/hNQ3LNh9O8b6xhY9VwRgFS3+YtjI0BYT8kkltmcmXqtTi5p04jiDgaTDGPnpXvnYdQ2y400czNBE8+wJJJbmVl9OknH730XodTzgePYU70GqJt6NJb+E6pJI268fXQjDqs\/wDwaf8Aun9FkVk1TTTvic2VrmmxBBSSTbE1Rj4sY5nS1e7N5EFTiun2c9wPsCSSbNJPTpuclx7E91c62jiSSQ71R5G1+iSSGim1pZqT8ERXv2zP0H3z+qSSIaK9\/W3mkf6Q1R17WQ6\/fP6pJJE1EzMQf1ef7RVluJSHdxB8yUkkyXUWY8Sfe+Z3vTfpB0sjmteWlrSbkXzHlfbRJJTaaRNr59vSZt9e+bK9hss2L4tTUklbLHHI6weXF1tPApJI0s4pT0lFiBp6bEZKi0bXEujsNTe1\/Ys8yON7Pdve2vVJJNrtGZJW3IkkB\/EdVCauoP8ATSG3POf1SSV0mzHVc5H76b+8f1URqZ7fvpbHlnd+qSSmhr12N0b6HsfQpRKWtDpTJre3rAHY+aoh4OpuR4pJJF2L8u4Ue1gOiSSB3cI11802wa3u7HokkoE0Xv8Aopd9S6xKSSLtG6wNyXHXl0Ub5HHRjnjT7xSSSGlSWSdmuZ9raHOdlA2trHNLBUy2aL6OdskkitTBsT7DEXNq2tnYY8oDgdNehV7EcWfFkbhzRDCdW\/Vk+wHXT80kkW+lb\/SDFr2ZVSNtrmEQt8d1bOOT1MLPpnDxV1LRYS5zG7L0uBqkkrJ2MHEJKSrIfTQtpY2NIcHPzufrubAeCz8zdQ26SSjSTsw5jSCczh3vC3RO9G2IeSSTpZJJA\/sH66m48FDLC4C4LjqRbp5pJIiERuJ7t0vRnNvcEnxCSSKkjgaXh1tBvcqWVo9UAANFgRrfzSSQOawOa17m2c4XIvqPKxU2SJoBa03SSTQi\/tFxsTz1TXDMRmG3JJJA\/swW2AAv4J1PSy1U3Yx95xvsOiSSqI6iKogldG+2Zm4JGiZ6XUN07o12yBJJB3\/AnEcNNCyhqhF2shLY8rLauPPwuoOI\/wBr+I4bjtXSUdK0xwuLdbG+unT2Xv4JJIqSj\/bBjVTCWswmmzNGuZ419g+KjxP9qnEE0bYYfR6N5FnOhYC7XoSLH3JJItcXi2O4tiUh9NxOtnLtfrajN\/hGg9gWXme1jSZHknUk3PzSSQ2tUb3OqYmtkcS54a1uuvx8\/gu\/wXhbifGYo2TSSU9P0lBaLcgDffySSTe0vT1Ph\/gmk4eoqmpZJmnyFzpALXtYfH1Tz9W68p4rxbEJ+IarPVz6OLQc5FgNLbkJJLxZ3+f\/AF7cL\/CNKmr8SGEsAqqgC9r5ne2+vXzXNVtfiU9dMXVlQO8RdpI9m2qSS6Y+2OT6WabEcWiF31tRmtoC5\/68x+S57Fa6urMSL31cpeGgF17k6A8973CSS6yRxuV7UHTVIb2ZmeWb5XvI08bblV84AsTclJJTItI8xso+d7+OqSSaFylmkjqoy1xAzi5Drc+mi9PjBv1H+S2\/gPevOfyP6qX5T\/ALVf5h1X2XfK\/wAl4vUSPfNI5x1Lyfj4hJJa4fQkikpYpIqZ0ZcTY28t12vCmB12IyQ1NOZIIWEuL3ZgDpYAH2lJJa5LrGrjN1z+M0uIx1ks0kkwLnm2QONvA235+9YrX1JdrLKT+I\/qkkpj1Fym08AqntIMkgHUZx+ajLqgA9\/3lySSW1i9U3Dk8+1nO\/VB7p7amTy1SSVjNRd83zOPndAxlp11SSQRnMNlNE1zhclJJFq82nJYHX3S9HNgSkkosB9PYC4Oib2IsLhJJA\/sQWgaIthDW+skkkJ41D2B5SSQOMTWtuN+akYQBYi\/wA0klcUDfXRLK25skkkTaqXqixSSSyHdl1vZD0ZpINtkkkWJmU8Tbt1N1ZjpoTbs848kklNrqRZZSQtdmNyT711XCcNMcVhdJG1xbq0kbG246JJLGd3jV01+J8SpGukjP1jySCTy1K4OScZ\/qtBqBdJJTDqGXSMPfHcvuOdkzPpcJJK2k7IvaXG+hTaunEUbJG2OckHzB\/zSSUlWq6CSSvYSSSSBJJJIBA2St1SSRTbWQQSUCSSSQJ2yCSSEiE0pJIofJGySSBIoJJA72IgJJKKdkO91O2kmyZy1waeYBskkqK0gANgSbc1GkkiEkskoEkkkBR+aSSIflskkkgHNI7JJKg2SCSSBJJJIP\/9k="
-    }/*EDITMODE-END*/;
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "variant": "overlap",
+  "articleNum": "001",
+  "tag1": "AI",
+  "tag2": "コスト削減",
+  "readTime": "8分",
+  "title": "Claude Code を DeepSeek で動かして\nAPI コストを 95% 削る方法",
+  "date": "2026.05.01",
+  "accentColor": "#6ef07a",
+  "imageUrl": "data:image\/jpeg;base64,\/9j\/4QEERXhpZgAATU0AKgAAAAgABQEAAAQAAAABAAAH0AEBAAQAAAABAAAF3IdpAAQAAAABAAAASgESAAMAAAABAAYAAIglAAQAAAABAAAAiAAAAAAAA5AAAAIAAAAEMDIzMpADAAIAAAAUAAAAdJIIAAQAAAABAAAAAAAAAAAyMDI2OjAyOjI4IDE2OjE4OjUwAAADAAIABQAAAAMAAACyAAYABQAAAAEAAADKAAQABQAAAAMAAADSAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAABAAEBEgADAAAAAQAGAAAAAAAA\/+AAEEpGSUYAAQEAAAEAAQAA\/+EDnGh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS4xLjIiPgogIDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+CiAgICA8cmRmOkRlc2NyaXB0aW9uCiAgICAgICAgeG1sbnM6Q29udGFpbmVyPSJodHRwOi8vbnMuZ29vZ2xlLmNvbS9waG90b3MvMS4wL2NvbnRhaW5lci8iCiAgICAgICAgeG1sbnM6SXRlbT0iaHR0cDovL25zLmdvb2dsZS5jb20vcGhvdG9zLzEuMC9jb250YWluZXIvaXRlbS8iCiAgICAgICAgeG1sbnM6aGRyZ209Imh0dHA6Ly9ucy5hZG9iZS5jb20vaGRyLWdhaW4tbWFwLzEuMC8iCiAgICAgICAgaGRyZ206VmVyc2lvbj0iMS4wIj4KICAgICAgPENvbnRhaW5lcjpEaXJlY3Rvcnk+CiAgICAgICAgPHJkZjpTZXE+CiAgICAgICAgICA8cmRmOmxpIHJkZjpwYXJzZVR5cGU9IlJlc291cmNlIj4KICAgICAgICAgICAgPENvbnRhaW5lcjpJdGVtCiAgICAgICAgICAgICBJdGVtOlNlbWFudGljPSJQcmltYXJ5IgogICAgICAgICAgICAgSXRlbTpNaW1lPSJpbWFnZS9qcGVnIi8+CiAgICAgICAgICA8L3JkZjpsaT4KICAgICAgICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0iUmVzb3VyY2UiPgogICAgICAgICAgICA8Q29udGFpbmVyOkl0ZW0KICAgICAgICAgICAgIEl0ZW06U2VtYW50aWM9IkdhaW5NYXAiCiAgICAgICAgICAgICBJdGVtOk1pbWU9ImltYWdlL2pwZWciCiAgICAgICAgICAgICBJdGVtOkxlbmd0aD0iNjIxMyIvPgogICAgICAgICAgPC9yZGY6bGk+CiAgICAgICAgPC9yZGY6U2VxPgogICAgICA8L0NvbnRhaW5lcjpEaXJlY3Rvcnk+CiAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgr\/4gIYSUNDX1BST0ZJTEUAAQEAAAIIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAAGRyWFlaAAABVAAAABRnWFlaAAABaAAAABRiWFlaAAABfAAAABR3dHB0AAABkAAAABRyVFJDAAABpAAAAChnVFJDAAABpAAAAChiVFJDAAABpAAAAChjcHJ0AAABzAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAEYAAAAcAEQAaQBzAHAAbABhAHkAIABQADMAIABHAGEAbQB1AHQAIAB3AGkAdABoACAAcwBSAEcAQgAgAFQAcgBhAG4AcwBmAGUAcgAAWFlaIAAAAAAAAIPcAAA9vf\/\/\/7tYWVogAAAAAAAASr0AALE2AAAKuVhZWiAAAAAAAAAoPQAAEQwAAMjYWFlaIAAAAAAAAPbWAAEAAAAA0y1wYXJhAAAAAAAEAAAAAmZmAADypwAADVkAABPQAAAKWwAAAAAAAAAAbWx1YwAAAAAAAAABAAAADGVuVVMAAAAgAAAAHABHAG8AbwBnAGwAZQAgAEkAbgBjAC4AIAAyADAAMQA2\/+IAInVybjppc286c3RkOmlzbzp0czoyMTQ5NjotMQAAAAAA\/9sAQwAIBgYHBgUIBwcHCQkICgwUDQwLCwwZEhMPFB0aHx4dGhwcICQuJyAiLCMcHCg3KSwwMTQ0NB8nOT04MjwuMzQy\/9sAQwEJCQkMCwwYDQ0YMiEcITIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy\/8AAEQgF3AfQAwEiAAIRAQMRAf\/EABwAAAEFAQEBAAAAAAAAAAAAAAEAAgMEBQYHCP\/EAFwQAAEDAgQDBAYHAwgHBgQADwEAAgMEEQUSITEGQVETImFxFDKBkaGxFSNCUnLB0QczYiQ0Q1OCkrLhFmNzk6LC8CU1RFSD0lWUo\/FFZHSEs+IXJjbDRqR10+P\/xAAaAQEBAQEBAQEAAAAAAAAAAAAAAQIDBAUG\/8QALhEBAQACAgICAgICAwABBQEBAAECEQMhEjETQQRRIjIUYQVCcYEVIzNSkaGx\/+IAWE1QRgBNTQAqAAAACAADsAAABwAAAAQwMTAwsAEABAAAAAEAAAACsAIABwAAACAAAAAyAAAAAAADAAAABdJ7AAAAAAAAAAAAAAAAAAAYRQAFyugAAAAA\/9oADAMBAAIRAxEAPwDt2tupBoEwJzdV9B4z04JqeNlQkeSV0kBSSRQBHZBJQG6SCSoKSSSgSSSSApXQSQLmkkkgV9EboJICje6CQQOSSBSUUQUeabdHkiEiDZAIoo3SQSQJOTURugN04JuicFBI3ZPfIIoHynZjS73BMaqPEdR6Lw1iM17WgcB5nT81Z7HktPWMnE8zm\/WEuJKvRABrG790bLGpSxtGGhxJkIHxW0wjNo0dF4rd2vXJqLLbDkpQfeoAVIHABQYnE031EUXNz7+4LmnyObNJbTZt\/JbOOy9riMLOTW3+Ky4WNcHPcNXElT7X6KYXZHe99U0QyOa4Bh256Kx2gbYaabckDUNv94rSIo6Z4tmyjrqpgwM8VF6SXju6ItJce8bhQJxjb6oAKbHO6mxehfHC6ZzLOEbdyUwsIcTY2W1w\/Fn4oebXEEPxsB+alWOgZNi1WMzIhA083aFPGFVEo\/lFY4j7rVpggDvEAeJVaTEqSEXdMCejdVrSGw4TRxnWMvPVxuubxkxs4khhYGtayO5aB5lbT8dLrtpqWSV3iuOrJampxesrH917IyHC3q6Wss1Yqsj7a7nOtmJOgumuoIC4uJcmdqWAN100UNTM9rQb7nVVFn0elZyPvUsDWt1hbudFiuneTufetHCZ+\/Iw62s8exDSQuuTy1TbqSqaI6uQN9U6hQ3VE84vh0LANZZwF6NFDkYxttGtAC85qI5pW4XBTfv3vLm363Fl2DMNxOo\/ndW1ruYadFme1vpsPqIIf3krG28VUkxqkZ6rnPPgFHHgVMyxkdJIfE2CvRUdPB+7hYD5arTPTLnxWqniIgpSAdASLp7IcYqGjt5Y4vAf5LSn1DByLwApHOay5c4DzKaGa3B2ON5p5JD52VmPD6WHVsDL9Tr80pMQpYvWmbfw1VR+NRuNoYZJDtZOjtens2AtFgDYaaKa1gNNliTT4nUhrI4BEHO7pdpqpRhtdMP5VW+YYE2NF9TDF68rB7dVVkxukZcNL3nwQZgtK09\/PKf4nK7FS08ItHDG3xAU7GTNi1XNA\/sKRzWWsXEFNp6TGp4WtmnZC0AWs7W3sWrXfzRzR9ogKwe5zAaOaDKZgEZN56iWQ8wNArkOF0UNstOwnq8Zj8U+Stp4vWmaLdNVSkx2mbcRtfIemyo1LCNhsAAByFlBRj+SNNtyT8VmPxHEZ4nGCic1lvWIt80ymw7GJoWdtUsijtcWNzYoNp80Uer3tb5lU5cYo4t5C633Qo24BABmqKiWTzOUIuGDUDbv7BlubjmKGkRxuSY2pKR7+mhKrAY1VVcj4msh0DX5jaymk4poIzkp45J3DYMFgqUprGhP1hVj5u2Wq4LzO0e33y2a\/wChqQ9Hl05BvzVn\/R7Do\/XmqvjH\/wC1bN0F0057ZJwTCR6xqvf+gTvomj0tBUnwe5\/5LVJ1Svy8k0bZQwnDG70VQ7xfIf1UrMMo2eo2pj8pHhX0E0bUjg9DIPrO2J8ZT+qRwbDD9h9h\/GVbHNIpo2pfRuEx7QPcfB5Rjhw+M\/uH2\/tFWbJo1U0I5KOhqBaRkvueQqpwjDI\/Ve+P8AC\/8AVXjYIWRFT6Ow0aOkqnjo54\/RN+jcNHqGoHtkH6LQsnJoZn0bhvKCpP8Aa\/zS9CoR61NMfxkH5krQIQsnjBnCjpB\/QvHlGPyQNJR2+z72N\/RXTskQpoZ\/o1F0Z\/wwg6lovtsa7x7Fv6K8RyQ0TRtp3QugV1rIkoXXOaL0SgCS1QQR5IILxRKC1oJFBJLzRQ5oXSugqDeyCCIVCSSSSoKSSRQEopIoCkgkigckgggKV0kEDkkEUBSCSSBySCSApIIoEihdJAUkEkQ9BBApIEigkgKSSCBwTgkE4IEvIf2myiTiSnitbs6YfFzl6+F43+0Qk8YTjkyGMD3H9Vx5v6u3D\/ZydLbvHwT4xomQ6NcfJStXlemHhOTRongaoGSSNiifI82axpcfYFw2a8jnnVzjdbs8hIiiBu2WQMNuY3PyCxA0g6iyDrdxRFF\/I3eX5pBrmOuNQnROAjIIun5QR3T7EGngsnbCemBynLnYL\/Naxq2w6VLDGfvA3b71ydNM+mrIpmuIyOFyOmxXazBjgHBoItqCN0FqFwLbg6LguK4zFxA8\/fja75\/ouyo3dnM+C\/dtnbfoVyXGjSMWhfykht7wSpRzTNAtrD+8xw8QsUbLZwtwNwVmtxtzNLXxyDm0ELnaQk0rQTfKSFvVJyyu6ErnyHQzTQO0a5xc0+N1RcbunA6qMHRSAoh10kEUDwS3QGyd20oFg9wHmozqgUE7ZHNdnuQeut081EjhlLjbmqoOikadC1QSF+aQvJvrqm1D+1lDrAWAHwSR196opw1QkOikj1dY6gqKQWcpY+qjSwSWSgt01uB1SExNybFNY67XDxuhELuIVRNGbguPNOdJld0UL3Bhs1MeSbG97ooPndJMSdSVaBJA3uoGNu8WVgaHRRTo7rRoo87w0c1QZqtGgNqhgGmvNCNl9V9D4eaemFpqo5G\/xHm72D5rnz6xNypqh3a1UsnNzyUxm9lR23DTbU00hFw94aB0yjn70f2gQzGHDZWMJhic\/O4cnFrQPgD7ltcOYWIsMptHNe5vau03LrfgAr\/EOHOxDhmvogMz+yzMsNQW6j26WWbNxZdV5XQ8aYphfDL8HpmQiNxfabaGTI83cBrbqNlzhcXuLzqSbqM92yIVkxk9M22pB7FLG7K4OUA12Ujb3VDS8ucXOJJJuhm1unZddNkjHroijqVExpaLqVjQdOSd2dttE0KxSUtz3r+ShcwhxB3V8ZFEhOsnBoCfkG4CA0dI4C2vkoHD2qaSMZrgWChdohBw7rr3UgN1ANVIw7XQTE2CbnQeblMUFjPoCml1yowUboHEg77pXTbo3QNvqrNJb0uO\/Q\/IquNSNFNTC9S3wBVRt0HdnJv8AYKs+lZXZXCxCzYX5XmxsbKXOWvJ+9uEGoJWu3V2jkMUgexxFiuf9IDH2NxfZXYa3JoN7oOsFVTVTQ2doDvvhS1PDSN7s9N9o\/mFzcVcxwtaxTziDo3d19kHU9tA8FrgLOHMJc4bW+qOqzKfG6WoaGVjMrttN2nwK16W2TLG8SwnZp3agpTwtkZlc0OaRsuSxrABYy0zcpH2OS750DSLtOqy8RjcItRrZYzx32uN1Xkk7HRuLXDvA2UeRdFj1C1zjPGLEHvAfn+qwCCDYiyzjl9NXFGR1TSpS24TS1bc2Qoap2XomkAIPodFBFLmmgoig9ySAQ2CAoXSQKBWRskkSgFlOypniYGslka3oHWCiCCB73vldd7nOPU6pmqKCADVAhO3TSUCsgldBAkEEEEwKCCKCkdkkEQgCKSCu1SCgEUDkkEQiEikggQSQSQFFJBEFBJBEFJBJEBFFFFFAboIoaIhdEEOSCAoFAIE8kC96SSKop0CkgigS5pJJAroooIG\/JFDnsoKqupqGLtaqZkTBzJ\/JLZPZJboV2lNxphMshjkldGRs5wsD+q0xiWH1ABiqonE7WcueP5HFn1MrXXLgyx7sXHlDclBzhbUj2KKSop4b9pPGz8TgFMvLh+8v\/AA1MMsuoW7hLNYlZ9Tj+FU981WxxHJuqy3cd4Q19g2f2ho+amX5XDPtkvxuX\/h1GVDI5ZFFxPhNeQ1lUI3n7MnP2rdGUi41C6cPNx883jdpxZ8N8cpUOR3RCzup2X2uAp2tzCwFytLhw8fH3nZGs+DL9S1TynmE2x8F3NPhEAAfP33b93QBSvwqjlFuzdGeRYd1wv5nBhdbrrPx87+nBZfEo+wrtarASxpMJDx912jv+q5iaMwyujla+Nw3a4brth5MPyN+P245Y3j9s1zXfd+CbqDtqtHKwhRy0zZW2Lz5roxtT7w2QzOtoE2RroTldzNgevuTRJc62NtyFQ8OcNbFOZUSsddpLSm5wf1SzeKDbwXGKqlxajqGPLnRSNIzcgTY+4XXtsM7Zo2vYe64AhfOlNOYZo5Gi+Rwd15L1vhjiZssLKZ7M2XRoYfV0va3gvHzYXy3I9HBnNarn2i1uSdn8AqeJ4zBhGFVtfNE97KdmYtaW3IuBYXPiFyh\/ajhwbf0CtufFg\/5lz+PLTtrN3WbxSzeJXD0\/wC07B5yBLHVw+LmA29xC3sK4kw3GnFlFUtlltfLszw2H5LNxsncWZX6b2bxSzi+ybd22X4Ihx5ssstbLML7IXHiid9Qhmbf2qAXX5JZ9LFNMjB9ptvMKMzR2\/eD3hE2nLr8kBfz8bqs6rp2etUMHm4Ks\/GMMY7K6rgzeLwFddjRvvzStpzWX9PYSP6fC0eLwkMdwm3\/ftP7ZAmhqZb8wgGW3KyzjmFtGtfTBv+1aoZOIcHYSBiEB8naqbNNzIL31SyhYMfFuBu1diFO3xc9St4hwF2gxeiv4zhVNbGUbXXSt1KymYxgzjpmNUCfGZt1dZV0c37uppnj+GQFBS5R4p2XwChbJC51hNGfAPBSqKqmpmB80rGNOxc4NB8r9U0bWNuaWUKqyrpHgFk8TgdrOF0fSoP62O\/R4TZpZDBffRLKPBY1TjuHUMrIqqrgjkcNnueAT5XRZjmEStzMxKlIH+saEHQUrWtjItoSdFMQOYWOzHcJp2F9RX0zGOOjneASmYnws2fSV2Wn4X\/oiy6bmXogQOiymcSYE8ZhisBHi4JreJMCNgMTpySfvrTNbBaFDUi8DxyLT8lRbjuESPyMxCmLjz7UWP5K36TBKy0c8bz1a8H5KBjWixHgoSwEklSPngijc98rGNAvcuy28zdUUYxg7jYV9KTfnMFNiq5gOaYYweStPqqRnrVEDT0dI39VA/EcPjB7TEKVnh2gKaEBiF0hGFU+m+Hg4EYpTc\/tojjbh5o1xKHTzP5KNLRiCaYws8cbYAx+UVod+FhKiHGWCSEhskx1trHZF01zE22gTRF1CxZOJ8PhPebU+yO6b\/pZh7h3IarXrHb81NLtuCNvRIxttyt5LAfxlSMNuxmf\/eLflZTf6VYfJTxTFwYHi+WR4aRy8VK02jGEsiyBxFgRbrh01+YgndfHwUL+LuH47ZpKoHlZsZ+RUXtudn4o9mFgf6b4A4C8s7L9YT+RT\/8ATCgbG14aSDyLSP1TTXbcs1thZItasccRQyMD2ROsRe+U\/oifp2mYdWO36FF1WoGNsllCyo+LKNwsIXE+AKsjjCkba8L7ebR+abE1hTsqTmgclnHitpNmQxO8s36JzeKJm3y0MTh1sT8wg1sreqY9jR4rNdxe+9nQU4PTuKCTi+aOxsxtzyeEHRwNb2bQG2NldazTVcnFxcY23dDmtztlupIuMqmZ5bHQOcbbBhd8lluOoLR0S0aNlx7+K+IA\/LHg0m\/OnP6pQcRcUSu1wkAXtreO\/sJWpGcrpHWvAcVneRWWzEcQkAdLQRsfzBkB+SY7H+yJZJDTl\/MOksR8FuOW1+1k02sq\/0lSuaHvjEYPNr+XvQGNUR2k16Zh+iG1sNFkyRtzYKlPjNJEDlkBd0D7quOLcOY3I4XJ11tce2ybNMvG7txVotpaMe6MLf7oIWG50NdLDUyXEYY7S\/eOo20QONUA9RzzpoCCfkmzToG36IWWMziOnbr2Euv3iAhHxA6aWzKdpN\/vIbdTQtApWW+K0LWWJSVM3oxPZNLgPugn4AqtUVtcJcrKcEXtd1MfyCqWdNjEABhdSejCfgsxZlZWYou0nhojG5t7gZCRboCqDcUd9mNh\/sD9EEwI80tFSkxl0ZsIIne1MMZqTr6PCP71vyUGjdpQJaN7KjQ1cddE54YxhGwaSQfeFEeI2DVsMfvcnY0S5nUpnaxfeHuVL\/AEiD25ZIGAbaEn5qhX40YHNfTMaGuGucO+CdnTVL2dbeSBMfUqnhmKNrpzG8NaQCdARyvv7FYqaumheWhwcRuWsv+aC1Tlhq4QCfWHyKvl0YXMwVlO6rhIfbvjdpaeZ2V+fFY2G1j52WpGbVyWSMHdw9ij7dhOjyPcqUmLMeNQD4lVmV0Ebi4xAk662KuhtZlG+sRz03H5Kq8Xq3\/hH6LPfjEcrWtEbBY73ARixNhnLrBxy21cEGqB4o6dVnNxaInVunUEKePEqaQ2EgBtzIVFoW6oEgbFV2zwF1jNGPbopxJTkfvonHwc1BJEe\/fzVhrh1VWN7A+5kYLci4KYzwtHfmjb+KQBEWQ4Jbqt6XSNF31MDbci9p\/NSQ1EExPYPikIF7NIJQTMdZ\/sSkmDTq6yhc6Nru9LG22upATTLTuaPr4nDp2jU2bSNmYXXzEadE+OVpA1sqs1RQNaMzmjr9cP1TTNSOZmEjSByDgVNml581ho5VJJsx1cVSkqoYyfqpCOpaE0VNIRczNb5q7NC6Vl1k1soI0OitSVFC52T0qPNva+qpTtpHElkrH36PCDXmP8kj10a+x8rrBqnBkr2uIGVxF3EC4W\/HNTsw7I6ZmQ27w1C56urIYKhzO0D2kXBab8llqImTRtHrxE\/\/SBRvqGkfvWeH1oWNLiTDoWPNtxkOqrNr2h9xE8t6XU2a22O2B\/pWHb+kC0KN4sNbrloq5rnBpp3WPibLdw8AOFgQOQU2Ooo3gC636aVoYNTtwXK0mYC5uR0WpBMY2jvW801Ntsu4jB9Fkudmuv7l427V2y9ZqaiOTDJ2uIv2brD2LyJt3EDmtcSei+yV0dEqqF7JbpJc0ASuSjdAJtI2SsgklTzQz9o3K6xbdIuSCSCUv1QslZJEBJLmkggQ3SslZG6ICV0QgjQdYJ2YJt0dEXaXN4pt03mltuiBZIjdK6F1FApIIoI3SQSuhASvokkE2CCSW6gKSCRQEIFBJEBEIIohJJJIDdFBJAvcgkEUBTkhshdFPBTgmXTrqKQ2QKSG6ApBBEKKckgiEG7iTiwM1z2G+t721us1pI31PiraS6sITv132Tmm6SSyHk2CaCkkop97I3tqkkgIciHJJIIyL2V6jq445WiZmZnNttR5eKSScg3yA8NkaXNe3kSLFcNjtJJWVkjoQ4yNkc0aBtwD+SSSWbWscsZ3WfgjK\/wBIfTvhY2V7gXN20AvqV6nSwT01MGMfE0nWxBdlvuQUklx5XfhupVfK4SObncQ1xbc7m2l\/emPY57S3tAARrZgBSSSS1y8Ptt01Fh+G1zXSMoZ5nPaHEukcACdeaxcfhpxT01RDBk7VzgfJpNrJJJbPTXHjj7jmoaF9ZURwxvDXyENBOwXTUH7PMWnl7+IUbB4h6SSXl5bIuPFLluutl\/ZfiToX+j4tSlxabMfEfX0vryBXiXGHDWKcIYm1ta6GQTMLmTQXynKSCNdRuD7Ukk1PqNXDH21\/2f4fLiFVO1rwztWhgcb2ABueXS69bpeE3zRhr6oFo\/hKSSuGMy7sZzuXFfHGl9\/BlO1t3Vb\/If9FA7hWljI\/lDyfD\/Jd36nDhfbhfzeWX0s0PClJJWQxmSQl7w3T\/JfQFNgVHRYbTUccTNwCTmNnADxKSS8n\/J7yxkex\/xn8sLllVp0EAY4dnHp0bZYPFXCWF8TUrYqymDJmG8c8TQ18Z5kEAaEckkl8rh\/Jyxzxywun1c+HHOZTIH7K8H9H1mr3zC1iXMsbWvtbTndYNR+yqljN2V87\/AO7+iSS\/RY\/k8uEkkfKzw487u1i1H7OZoxnZXZo+rnNBPs5LBrOEsRp5csTfSH8gwE\/kkkll+RySdtcP4uGfbXwb9mmMVbTLXPZh0XIvOd7reANrcr3uuopv2dYZSxh5mlnnBsXO7rfYAdAkkq8XP+XyS+Mrc\/Gwl3Fk8H0h\/pn+9D\/Q2jae9USJJLV5PzOTjlsXy\/G49xKzhPDon6do4\/xEqV3DGHEaxH3pJJl5eXL24ZYYy6is7hPCydYHHycnN4UwltrUxPtKSS3cvyb+0nHivx4Rh8YsykYPZdUcdw2lhwuV4oY3bXcGtBte26SSc+Xky4MsbVnFhjyy1wsU1BCC+eFxcNgMtvKytQVdBUVEcMeHuzPIDTcD5pJJrPkyttX8njx47ZHSN4aoQ7MYD7LAKzHgdC0W9Gb18UklrXyZfp8vlzxjQioaZjS0QMytANrK26ngkYGvhjc3oWgpJJb7cbfatLw\/hNQ3LNh9O8b6xhY9VwRgFS3+YtjI0BYT8kkltmcmXqtTi5p04jiDgaTDGPnpXvnYdQ2y400czNBE8+wJJJbmVl9OknH730XodTzgePYU70GqJt6NJb+E6pJI268fXQjDqs\/wDwaf8Aun9FkVk1TTTvic2VrmmxBBSSTbE1Rj4sY5nS1e7N5EFTiun2c9wPsCSSbNJPTpuclx7E91c62jiSSQ71R5G1+iSSGim1pZqT8ERXv2zP0H3z+qSSIaK9\/W3mkf6Q1R17WQ6\/fP6pJJE1EzMQf1ef7RVluJSHdxB8yUkkyXUWY8Sfe+Z3vTfpB0sjmteWlrSbkXzHlfbRJJTaaRNr59vSZt9e+bK9hss2L4tTUklbLHHI6weXF1tPApJI0s4pT0lFiBp6bEZKi0bXEujsNTe1\/Ys8yON7Pdve2vVJJNrtGZJW3IkkB\/EdVCauoP8ATSG3POf1SSV0mzHVc5H76b+8f1URqZ7fvpbHlnd+qSSmhr12N0b6HsfQpRKWtDpTJre3rAHY+aoh4OpuR4pJJF2L8u4Ue1gOiSSB3cI11802wa3u7HokkoE0Xv8Aopd9S6xKSSLtG6wNyXHXl0Ub5HHRjnjT7xSSSGlSWSdmuZ9raHOdlA2trHNLBUy2aL6OdskkitTBsT7DEXNq2tnYY8oDgdNehV7EcWfFkbhzRDCdW\/Vk+wHXT80kkW+lb\/SDFr2ZVSNtrmEQt8d1bOOT1MLPpnDxV1LRYS5zG7L0uBqkkrJ2MHEJKSrIfTQtpY2NIcHPzufrubAeCz8zdQ26SSjSTsw5jSCczh3vC3RO9G2IeSSTpZJJA\/sH66m48FDLC4C4LjqRbp5pJIiERuJ7t0vRnNvcEnxCSSKkjgaXh1tBvcqWVo9UAANFgRrfzSSQOawOa17m2c4XIvqPKxU2SJoBa03SSTQi\/tFxsTz1TXDMRmG3JJJA\/swW2AAv4J1PSy1U3Yx95xvsOiSSqI6iKogldG+2Zm4JGiZ6XUN07o12yBJJB3\/AnEcNNCyhqhF2shLY8rLauPPwuoOI\/wBr+I4bjtXSUdK0xwuLdbG+unT2Xv4JJIqSj\/bBjVTCWswmmzNGuZ419g+KjxP9qnEE0bYYfR6N5FnOhYC7XoSLH3JJItcXi2O4tiUh9NxOtnLtfrajN\/hGg9gWXme1jSZHknUk3PzSSQ2tUb3OqYmtkcS54a1uuvx8\/gu\/wXhbifGYo2TSSU9P0lBaLcgDffySSTe0vT1Ph\/gmk4eoqmpZJmnyFzpALXtYfH1Tz9W68p4rxbEJ+IarPVz6OLQc5FgNLbkJJLxZ3+f\/AF7cL\/CNKmr8SGEsAqqgC9r5ne2+vXzXNVtfiU9dMXVlQO8RdpI9m2qSS6Y+2OT6WabEcWiF31tRmtoC5\/68x+S57Fa6urMSL31cpeGgF17k6A8973CSS6yRxuV7UHTVIb2ZmeWb5XvI08bblV84AsTclJJTItI8xso+d7+OqSSaFylmkjqoy1xAzi5Drc+mi9PjBv1H+S2\/gPevOfyP6qX5T\/ALVf5h1X2XfK\/wAl4vUSPfNI5x1Lyfj4hJJa4fQkikpYpIqZ0ZcTY28t12vCmB12IyQ1NOZIIWEuL3ZgDpYAH2lJJa5LrGrjN1z+M0uIx1ks0kkwLnm2QONvA235+9YrX1JdrLKT+I\/qkkpj1Fym08AqntIMkgHUZx+ajLqgA9\/3lySSW1i9U3Dk8+1nO\/VB7p7amTy1SSVjNRd83zOPndAxlp11SSQRnMNlNE1zhclJJFq82nJYHX3S9HNgSkkosB9PYC4Oib2IsLhJJA\/sQWgaIthDW+skkkJ41D2B5SSQOMTWtuN+akYQBYi\/wA0klcUDfXRLK25skkkTaqXqixSSSyHdl1vZD0ZpINtkkkWJmU8Tbt1N1ZjpoTbs848kklNrqRZZSQtdmNyT711XCcNMcVhdJG1xbq0kbG246JJLGd3jV01+J8SpGukjP1jySCTy1K4OScZ\/qtBqBdJJTDqGXSMPfHcvuOdkzPpcJJK2k7IvaXG+hTaunEUbJG2OckHzB\/zSSUlWq6CSSvYSSSSBJJJIBA2St1SSRTbWQQSUCSSSQJ2yCSSEiE0pJIofJGySSBIoJJA72IgJJKKdkO91O2kmyZy1waeYBskkqK0gANgSbc1GkkiEkskoEkkkBR+aSSIflskkkgHNI7JJKg2SCSSBJJJIP\/9k="
+}/*EDITMODE-END*/;
 
-    const TagPill = ({ children }) => (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        background: '#1d1e1f', color: '#f3f4f6', fontSize: '16px', fontWeight: 700,
-        borderRadius: '100px', height: '44px', padding: '0 24px', whiteSpace: 'nowrap'
-      }}>
-        {children}
-      </span>
-    );
+const TagPill = ({ children }) => (
+  <span style={{ 
+    display:'inline-flex', alignItems:'center', justifyContent:'center',
+    background: '#1d1e1f', color: '#f3f4f6', fontSize: '16px', fontWeight: 700, 
+    borderRadius: '100px', height: '44px', padding: '0 24px', whiteSpace: 'nowrap'
+  }}>
+    {children}
+  </span>
+);
 
-    function App() {
-      const [tweak, setTweak] = useTweaks(TWEAK_DEFAULTS);
+function App() {
+  const [tweak, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
-      // Split title manually so we can handle multi-line inputs explicitly in SVG
-      const lines = tweak.title.split('\n').filter(Boolean);
+  // Split title manually so we can handle multi-line inputs explicitly in SVG
+  const lines = tweak.title.split('\n').filter(Boolean);
 
-      const ArticleDesign = () => (
-        <div style={{
-          position: 'relative', width: 1200, height: 630,
-          backgroundColor: '#f3f4f6', color: '#111827', fontFamily: "'Noto Sans JP', sans-serif",
-          overflow: 'hidden',
-          display: 'flex', flexDirection: 'column'
-        }}>
+  const ArticleDesign = () => (
+    <div style={{
+      position: 'relative', width: 1200, height: 630, 
+      backgroundColor: '#f3f4f6', color: '#111827', fontFamily: "'Noto Sans JP', sans-serif",
+      overflow: 'hidden',
+      display: 'flex', flexDirection: 'column'
+    }}>
 
-          {/* Decorative dots grid (Background) */}
+      {/* Decorative dots grid (Background) */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        opacity: 0.05,
+        backgroundImage: `radial-gradient(${tweak.accentColor} 2px, transparent 2px)`,
+        backgroundSize: '30px 30px'
+      }} />
+
+      {/* Layout variant: Overlap */}
+      {tweak.variant === 'overlap' && (
+        <>
+          {/* Large image background */}
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            opacity: 0.05,
-            backgroundImage: `radial-gradient(${tweak.accentColor} 2px, transparent 2px)`,
-            backgroundSize: '30px 30px'
+            backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center',
+            opacity: 0.15, filter: 'grayscale(100%) blur(4px)'
           }} />
 
-          {/* Layout variant: Overlap */}
-          {tweak.variant === 'overlap' && (
-            <>
-              {/* Large image background */}
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center',
-                opacity: 0.15, filter: 'grayscale(100%) blur(4px)'
-              }} />
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 80px', zIndex: 10 }}>
+            {/* The main card container */}
+            <div style={{
+              background: '#fff', borderRadius: '32px', padding: '64px',
+              width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.08)',
+              border: `4px solid ${tweak.accentColor}`,
+              position: 'relative'
+            }}>
+               <div style={{ 
+                 position: 'absolute', top: '-24px', left: '64px', 
+                 background: tweak.accentColor, color: '#000', padding: '8px 24px', 
+                 borderRadius: '12px', fontSize: '20px', fontWeight: 900, letterSpacing: '0.1em',
+                 fontFamily: "'JetBrains Mono', monospace"
+               }}>
+                 {tweak.articleNum}
+               </div>
 
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '0 80px', zIndex: 10 }}>
-                {/* The main card container */}
-                <div style={{
-                  background: '#fff', borderRadius: '32px', padding: '64px',
-                  width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.08)',
-                  border: `4px solid ${tweak.accentColor}`,
-                  position: 'relative'
-                }}>
-                  <div style={{
-                    position: 'absolute', top: '-24px', left: '64px',
-                    background: tweak.accentColor, color: '#000', padding: '8px 24px',
-                    borderRadius: '12px', fontSize: '20px', fontWeight: 900, letterSpacing: '0.1em',
-                    fontFamily: "'JetBrains Mono', monospace"
-                  }}>
-                    {tweak.articleNum}
-                  </div>
+               <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
+                 {tweak.tag1 && <TagPill>{tweak.tag1}</TagPill>}
+                 {tweak.tag2 && <TagPill>{tweak.tag2}</TagPill>}
+                 <span style={{ 
+                   display: 'inline-flex', alignItems: 'center', color: '#6b7280', fontSize: '18px', fontWeight: 700, marginLeft: 'auto'
+                 }}>
+                   ⏱ {tweak.readTime}
+                 </span>
+               </div>
 
-                  <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-                    {tweak.tag1 && <TagPill>{tweak.tag1}</TagPill>}
-                    {tweak.tag2 && <TagPill>{tweak.tag2}</TagPill>}
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', color: '#6b7280', fontSize: '18px', fontWeight: 700, marginLeft: 'auto'
-                    }}>
-                      ⏱ {tweak.readTime}
-                    </span>
-                  </div>
+               <h1 style={{ 
+                 fontSize: lines.length > 2 ? '54px' : '64px', 
+                 fontWeight: 900, lineHeight: 1.35, margin: '0 0 40px', letterSpacing: '-0.02em',
+                 whiteSpace: 'pre-wrap'
+               }}>
+                 {tweak.title}
+               </h1>
 
-                  <h1 style={{
-                    fontSize: lines.length > 2 ? '54px' : '64px',
-                    fontWeight: 900, lineHeight: 1.35, margin: '0 0 40px', letterSpacing: '-0.02em',
-                    whiteSpace: 'pre-wrap'
-                  }}>
-                    {tweak.title}
-                  </h1>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={tweak.accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line>
-                    </svg>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '24px', fontWeight: 700, color: '#4b5563' }}>
-                      {tweak.date}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Layout variant: Split */}
-          {tweak.variant === 'split' && (
-            <div style={{ display: 'flex', height: '100%', zIndex: 10 }}>
-              <div style={{
-                flex: '1.2', padding: '80px', display: 'flex', flexDirection: 'column',
-                justifyContent: 'center', background: '#fff'
-              }}>
-                <div style={{
-                  display: 'inline-block', background: '#f3f4f6', color: '#374151', padding: '8px 24px',
-                  borderRadius: '8px', fontSize: '18px', fontWeight: 900, letterSpacing: '0.1em',
-                  fontFamily: "'JetBrains Mono', monospace", marginBottom: '32px', width: 'fit-content',
-                  borderLeft: `6px solid ${tweak.accentColor}`
-                }}>
-                  ARTICLE {tweak.articleNum}
-                </div>
-
-                <h1 style={{
-                  fontSize: lines.length > 2 ? '50px' : '58px',
-                  fontWeight: 900, lineHeight: 1.4, margin: '0 0 32px', letterSpacing: '-0.02em',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {tweak.title}
-                </h1>
-
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '48px', flexWrap: 'wrap' }}>
-                  {tweak.tag1 && <TagPill>{tweak.tag1}</TagPill>}
-                  {tweak.tag2 && <TagPill>{tweak.tag2}</TagPill>}
-                </div>
-
-                <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '20px', fontWeight: 700, color: '#6b7280' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={tweak.accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line>
+                  </svg>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '24px', fontWeight: 700, color: '#4b5563' }}>
                     {tweak.date}
                   </span>
-                  <span style={{ color: '#6b7280', fontSize: '18px', fontWeight: 700 }}>
-                    ⏱ {tweak.readTime}
-                  </span>
-                </div>
-              </div>
-              <div style={{
-                flex: '0.8', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center',
-                position: 'relative'
-              }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '20px', background: tweak.accentColor }} />
-              </div>
-            </div>
-          )}
-        </div>
-      );
-
-      const containerRef = useRef(null);
-      const [scale, setScale] = useState(1);
-
-      useEffect(() => {
-        const handleResize = () => {
-          if (containerRef.current) {
-            const parentW = containerRef.current.parentElement.clientWidth;
-            const targetW = Math.min(parentW - 32, 1200);
-            setScale(targetW / 1200);
-          }
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
-
-      const [saving, setSaving] = useState(false);
-      const handleDownload = async () => {
-        setSaving(true);
-        // Give UI a tick to show saving state
-        await new Promise(r => setTimeout(r, 50));
-
-        // Create a temporary un-scaled container to capture at exactly 1200x630
-        const tempNode = document.createElement('div');
-        tempNode.style.position = 'absolute';
-        tempNode.style.top = '-9999px';
-        tempNode.style.left = '-9999px';
-        tempNode.style.width = '1200px';
-        tempNode.style.height = '630px';
-        document.body.appendChild(tempNode);
-
-        // We use ReactDOM to render the pure component into the temp DOM
-        const { createRoot } = ReactDOM;
-        const root = createRoot(tempNode);
-        root.render(<ArticleDesign />);
-
-        // Wait for render
-        await new Promise(r => setTimeout(r, 200));
-
-        try {
-          const canvas = await html2canvas(tempNode, {
-            width: 1200, height: 630, scale: 2, // 2x for retina sharpness
-            backgroundColor: '#f3f4f6',
-            useCORS: true // if loading external images
-          });
-
-          const url = canvas.toDataURL('image/jpeg', 0.9);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `ogp-${tweak.articleNum}.jpg`;
-          a.click();
-        } catch (e) {
-          console.error(e);
-          alert('画像生成に失敗しました');
-        } finally {
-          root.unmount();
-          document.body.removeChild(tempNode);
-          setSaving(false);
-        }
-      };
-
-      const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          setTweak('imageUrl', event.target.result);
-        };
-        reader.readAsDataURL(file);
-      };
-
-      return (
-        <>
-          <div ref={containerRef} className="canvas-wrap" style={{ width: 1200 * scale, height: 630 * scale }}>
-            <div className="canvas-scale" style={{ transform: `scale(${scale})`, width: 1200, height: 630 }}>
-              <ArticleDesign />
+               </div>
             </div>
           </div>
-
-          <button className="dl-btn" onClick={handleDownload} disabled={saving}>
-            {saving ? 'GENERATING...' : 'DOWNLOAD JPG'}
-          </button>
-
-          <TweaksPanel title="OGP Generator">
-            <TweakSection label="Layout" />
-            <TweakRadio label="Variant" value={tweak.variant} options={['overlap', 'split']} onChange={v => setTweak('variant', v)} />
-            <TweakColor label="Accent" value={tweak.accentColor} onChange={v => setTweak('accentColor', v)} />
-
-            <TweakSection label="Content" />
-            <TweakText label="Title (use \n for breaks)" value={tweak.title} onChange={v => setTweak('title', v)} />
-            <TweakText label="Article #" value={tweak.articleNum} onChange={v => setTweak('articleNum', v)} />
-            <TweakText label="Tag 1" value={tweak.tag1} onChange={v => setTweak('tag1', v)} />
-            <TweakText label="Tag 2" value={tweak.tag2} onChange={v => setTweak('tag2', v)} />
-            <TweakText label="Read Time" value={tweak.readTime} onChange={v => setTweak('readTime', v)} />
-            <TweakText label="Date" value={tweak.date} onChange={v => setTweak('date', v)} />
-
-            <TweakSection label="Background Image" />
-            <div style={{ marginTop: 8 }}>
-              <label style={{
-                display: 'block', padding: '6px 12px', background: '#000', color: '#fff',
-                borderRadius: '6px', textAlign: 'center', cursor: 'pointer', fontWeight: 'bold'
-              }}>
-                Upload Image
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
-              </label>
-            </div>
-          </TweaksPanel>
         </>
-      );
+      )}
+
+      {/* Layout variant: Split */}
+      {tweak.variant === 'split' && (
+        <div style={{ display: 'flex', height: '100%', zIndex: 10 }}>
+          <div style={{ 
+            flex: '1.2', padding: '80px', display: 'flex', flexDirection: 'column', 
+            justifyContent: 'center', background: '#fff' 
+          }}>
+            <div style={{ 
+                 display: 'inline-block', background: '#f3f4f6', color: '#374151', padding: '8px 24px', 
+                 borderRadius: '8px', fontSize: '18px', fontWeight: 900, letterSpacing: '0.1em',
+                 fontFamily: "'JetBrains Mono', monospace", marginBottom: '32px', width: 'fit-content',
+                 borderLeft: `6px solid ${tweak.accentColor}`
+               }}>
+                 ARTICLE {tweak.articleNum}
+            </div>
+
+            <h1 style={{ 
+                 fontSize: lines.length > 2 ? '50px' : '58px', 
+                 fontWeight: 900, lineHeight: 1.4, margin: '0 0 32px', letterSpacing: '-0.02em',
+                 whiteSpace: 'pre-wrap'
+               }}>
+                 {tweak.title}
+            </h1>
+
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '48px', flexWrap: 'wrap' }}>
+                 {tweak.tag1 && <TagPill>{tweak.tag1}</TagPill>}
+                 {tweak.tag2 && <TagPill>{tweak.tag2}</TagPill>}
+            </div>
+
+            <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '20px', fontWeight: 700, color: '#6b7280' }}>
+                 {tweak.date}
+               </span>
+               <span style={{ color: '#6b7280', fontSize: '18px', fontWeight: 700 }}>
+                 ⏱ {tweak.readTime}
+               </span>
+            </div>
+          </div>
+          <div style={{ 
+            flex: '0.8', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center',
+            position: 'relative'
+          }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '20px', background: tweak.accentColor }} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const containerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const parentW = containerRef.current.parentElement.clientWidth;
+        const targetW = Math.min(parentW - 32, 1200); 
+        setScale(targetW / 1200);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const [saving, setSaving] = useState(false);
+  const handleDownload = async () => {
+    setSaving(true);
+    // Give UI a tick to show saving state
+    await new Promise(r => setTimeout(r, 50));
+    
+    // Create a temporary un-scaled container to capture at exactly 1200x630
+    const tempNode = document.createElement('div');
+    tempNode.style.position = 'absolute';
+    tempNode.style.top = '-9999px';
+    tempNode.style.left = '-9999px';
+    tempNode.style.width = '1200px';
+    tempNode.style.height = '630px';
+    document.body.appendChild(tempNode);
+
+    // We use ReactDOM to render the pure component into the temp DOM
+    const { createRoot } = ReactDOM;
+    const root = createRoot(tempNode);
+    root.render(<ArticleDesign />);
+
+    // Wait for render
+    await new Promise(r => setTimeout(r, 200));
+
+    try {
+      const canvas = await html2canvas(tempNode, {
+        width: 1200, height: 630, scale: 2, // 2x for retina sharpness
+        backgroundColor: '#f3f4f6',
+        useCORS: true // if loading external images
+      });
+      
+      const url = canvas.toDataURL('image/jpeg', 0.9);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ogp-${tweak.articleNum}.jpg`;
+      a.click();
+    } catch (e) {
+      console.error(e);
+      alert('画像生成に失敗しました');
+    } finally {
+      root.unmount();
+      document.body.removeChild(tempNode);
+      setSaving(false);
     }
+  };
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setTweak('imageUrl', event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <>
+      <div ref={containerRef} className="canvas-wrap" style={{ width: 1200 * scale, height: 630 * scale }}>
+        <div className="canvas-scale" style={{ transform: `scale(${scale})`, width: 1200, height: 630 }}>
+          <ArticleDesign />
+        </div>
+      </div>
+      
+      <button className="dl-btn" onClick={handleDownload} disabled={saving}>
+        {saving ? 'GENERATING...' : 'DOWNLOAD JPG'}
+      </button>
+
+      <TweaksPanel title="OGP Generator">
+        <TweakSection label="Layout" />
+        <TweakRadio label="Variant" value={tweak.variant} options={['overlap', 'split']} onChange={v => setTweak('variant', v)} />
+        <TweakColor label="Accent" value={tweak.accentColor} onChange={v => setTweak('accentColor', v)} />
+        
+        <TweakSection label="Content" />
+        <TweakText label="Title (use \n for breaks)" value={tweak.title} onChange={v => setTweak('title', v)} />
+        <TweakText label="Article #" value={tweak.articleNum} onChange={v => setTweak('articleNum', v)} />
+        <TweakText label="Tag 1" value={tweak.tag1} onChange={v => setTweak('tag1', v)} />
+        <TweakText label="Tag 2" value={tweak.tag2} onChange={v => setTweak('tag2', v)} />
+        <TweakText label="Read Time" value={tweak.readTime} onChange={v => setTweak('readTime', v)} />
+        <TweakText label="Date" value={tweak.date} onChange={v => setTweak('date', v)} />
+        
+        <TweakSection label="Background Image" />
+        <div style={{ marginTop: 8 }}>
+          <label style={{ 
+            display: 'block', padding: '6px 12px', background: '#000', color: '#fff', 
+            borderRadius: '6px', textAlign: 'center', cursor: 'pointer', fontWeight: 'bold' 
+          }}>
+            Upload Image
+            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+          </label>
+        </div>
+      </TweaksPanel>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
 </body>
-
 </html>
