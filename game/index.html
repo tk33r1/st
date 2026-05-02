@@ -100,6 +100,60 @@
       z-index: 45;
     }
 
+    /* Background Decorations */
+    .decor-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0.15;
+    }
+
+    .decor-pow {
+      position: absolute;
+      top: 5%;
+      right: -2%;
+      width: 300px;
+      height: 300px;
+      transform: rotate(15deg);
+    }
+
+    .decor-bam {
+      position: absolute;
+      bottom: 10%;
+      left: -2%;
+      width: 250px;
+      height: 250px;
+      transform: rotate(-10deg);
+    }
+
+    .decor-dots {
+      position: absolute;
+      top: 40%;
+      right: 10%;
+      width: 200px;
+      height: 200px;
+      background-image: radial-gradient(var(--outline) 20%, transparent 20%);
+      background-size: 15px 15px;
+      mask-image: radial-gradient(circle, black, transparent 70%);
+    }
+
+    .decor-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 40px,
+        rgba(0, 0, 0, 0.05) 40px,
+        rgba(0, 0, 0, 0.05) 41px
+      );
+    }
+
     /* Comic paper texture */
     .comic-page::before {
       content: "";
@@ -358,6 +412,25 @@
 <body class="h-full relative">
   <div class="halftone-burst"></div>
   <div class="vignette"></div>
+
+  <div class="decor-layer">
+    <div class="decor-lines"></div>
+    <div class="decor-pow">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M100 10l15 40 45-15-20 45 45 20-45 15 20 45-45-20-15 45-15-45-45 20 20-45-45-20 45-15-20-45 45 15z" fill="var(--secondary)" stroke="var(--outline)" stroke-width="4"/>
+        <text x="52%" y="57%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="40" fill="rgba(0,0,0,0.2)" aria-hidden="true">POW!</text>
+        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="40" fill="var(--primary)" stroke="var(--outline)" stroke-width="1.5">POW!</text>
+      </svg>
+    </div>
+    <div class="decor-bam">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M100 20l10 30 35-10-15 35 35 15-35 10 15 35-35-15-10 35-10-35-35 15 15-35-35-15 35-10-15-35 35 10z" fill="var(--primary)" stroke="var(--outline)" stroke-width="4"/>
+        <text x="52%" y="57%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="36" fill="rgba(0,0,0,0.2)" aria-hidden="true">BAM!</text>
+        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="36" fill="white" stroke="var(--outline)" stroke-width="1.5">BAM!</text>
+      </svg>
+    </div>
+    <div class="decor-dots"></div>
+  </div>
   
   <div id="app" class="comic-page h-full w-full overflow-auto relative z-10">
     <header class="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-4">
