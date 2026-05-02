@@ -299,7 +299,7 @@
       );
     }
 
-    const VARIANTS = ['Terminal', 'Mono Light', 'Split'];
+    const VARIANTS = ['Terminal', 'Caption', 'Split'];
 
     const PLACEHOLDER_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'%3E%3Crect width='1200' height='630' fill='%231d1e1f'/%3E%3Ctext x='50%25' y='50%25' font-size='30' fill='%235a5a72' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3E画像は設定からアップロードできます%3C/text%3E%3C/svg%3E";
 
@@ -341,7 +341,9 @@
               </div>
             </div>
           </div>
-          <div style={{ flex: 1, backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', borderLeft: `1px solid ${tweak.accentColor}` }}></div>
+          <div style={{ flex: 1, position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '60px', background: 'linear-gradient(to right, #0d0d0d, transparent)' }}></div>
+          </div>
         </div>
       );
     }
@@ -407,7 +409,7 @@
 
       switch (tweak.variant) {
         case 'Terminal': return <TerminalDesign tweak={tweak} num={num} lines={lines} />;
-        case 'Mono Light': return <MonoLightDesign tweak={tweak} num={num} lines={lines} />;
+        case 'Caption': return <MonoLightDesign tweak={tweak} num={num} lines={lines} />;
         default: return <SplitDesign tweak={tweak} num={num} lines={lines} />;
       }
     }
@@ -441,7 +443,7 @@
 
         await document.fonts.ready;
         try {
-          const bgMap = { 'Terminal': '#0d0d0d', 'Mono Light': '#09090e', 'Split': '#09090e' };
+          const bgMap = { 'Terminal': '#0d0d0d', 'Caption': '#09090e', 'Split': '#09090e' };
           const canvas = await html2canvas(tmp, {
             width: 1200, height: 630, scale: 2,
             backgroundColor: bgMap[tweak.variant],
