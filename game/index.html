@@ -54,6 +54,11 @@
             "@type": "ListItem",
             "position": 1,
             "url": "https://tk.st/game/masala-tetris/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "url": "https://tk.st/game/masala-tetris-dx/"
           }
         ]
       }
@@ -726,6 +731,20 @@
       newIds = new Set(sorted.slice(0, 2).map(r => r.id));
     }
 
+    function updateItemListSchema(games) {
+      const script = document.querySelector('script[type="application/ld+json"]');
+      if (!script) return;
+      try {
+        const data = JSON.parse(script.textContent);
+        const list = data['@graph'].find(n => n['@type'] === 'ItemList');
+        if (!list) return;
+        list.itemListElement = games
+          .filter(g => g.url && g.url !== '#')
+          .map((g, i) => ({ '@type': 'ListItem', 'position': i + 1, 'url': g.url }));
+        script.textContent = JSON.stringify(data);
+      } catch (e) {}
+    }
+
     async function loadGames() {
       showSkeletons(6);
       try {
@@ -743,6 +762,7 @@
         computeNewIds();
         renderGenreChips();
         updateView();
+        updateItemListSchema(records);
       }
     }
 

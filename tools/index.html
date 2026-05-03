@@ -548,6 +548,20 @@
       lucide.createIcons();
     }
 
+    function updateItemListSchema(tools) {
+      const script = document.querySelector('script[type="application/ld+json"]');
+      if (!script) return;
+      try {
+        const data = JSON.parse(script.textContent);
+        const list = data['@graph'].find(n => n['@type'] === 'ItemList');
+        if (!list) return;
+        list.itemListElement = tools
+          .filter(t => t.url && t.url !== '#')
+          .map((t, i) => ({ '@type': 'ListItem', 'position': i + 1, 'url': t.url }));
+        script.textContent = JSON.stringify(data);
+      } catch (e) {}
+    }
+
     async function loadTools() {
       showSkeletons(6);
       try {
@@ -572,6 +586,7 @@
         newIds = new Set(sorted.slice(0, 2).map(r => r.id));
         renderCategoryChips();
         updateView();
+        updateItemListSchema(records);
       }
     }
 
