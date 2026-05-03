@@ -4,8 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>/glitch</title>
+    <meta name="description" content="システムの隙間を突き、日常のコストを劇的に削る「大声では言えないライフハック」を公開中。Claude CodeのAPI節約術や海外サブスクの格安利用など、知っている人だけが得をするグレーな技術と知恵を発信。Gray Area Hacksで、人生を効率化する秘密のコードを読み解け。">
+    <title>Gray Area Hacks.</title>
     <link rel="icon" href="/images/favicons/glitch-favicon.png" type="image/png">
+    <link rel="canonical" href="https://tk.st/glitch/">
+    <link rel="author" href="https://tk.st/">
+    <meta property="og:title" content="Gray Area Hacks.">
+    <meta property="og:description" content="システムの隙間を突き、日常のコストを劇的に削る「大声では言えないライフハック」を公開中。Claude CodeのAPI節約術や海外サブスクの格安利用など、知っている人だけが得をするグレーな技術と知恵を発信。Gray Area Hacksで、人生を効率化する秘密のコードを読み解け。">
+    <meta property="og:image" content="https://tk.st/images/ogp/glitch-ogp.png">
+    <meta property="og:url" content="https://tk.st/glitch/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:description" content="システムの隙間を突き、日常のコストを劇的に削る「大声では言えないライフハック」を公開中。Claude CodeのAPI節約術や海外サブスクの格安利用など、知っている人だけが得をするグレーな技術と知恵を発信。Gray Area Hacksで、人生を効率化する秘密のコードを読み解け。">
+    <meta name="twitter:image" content="https://tk.st/images/ogp/glitch-ogp.png">
 
     <template id="__bundler_thumbnail" data-bg-color="#09090e">
         <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
@@ -258,46 +269,89 @@
             height: 100%;
             opacity: 0;
         }
+
         .hero-title .accent-glitch::before {
             color: var(--accent2);
             animation: area-glitch-before 5s infinite;
         }
+
         .hero-title .accent-glitch::after {
             color: var(--accent);
             animation: area-glitch-after 5s infinite;
         }
 
         @keyframes area-glitch {
-            0%, 88%, 100% { transform: none; }
-            89% { transform: skewX(-8deg) translateX(2px); }
-            90% { transform: skewX(4deg) translateX(-2px); }
-            91% { transform: none; }
-            93% { transform: skewX(-4deg) translateX(3px); }
-            94% { transform: none; }
+
+            0%,
+            88%,
+            100% {
+                transform: none;
+            }
+
+            89% {
+                transform: skewX(-8deg) translateX(2px);
+            }
+
+            90% {
+                transform: skewX(4deg) translateX(-2px);
+            }
+
+            91% {
+                transform: none;
+            }
+
+            93% {
+                transform: skewX(-4deg) translateX(3px);
+            }
+
+            94% {
+                transform: none;
+            }
         }
+
         @keyframes area-glitch-before {
-            0%, 88%, 100% { opacity: 0; }
+
+            0%,
+            88%,
+            100% {
+                opacity: 0;
+            }
+
             89% {
                 opacity: 1;
                 transform: translateX(-4px);
                 clip-path: polygon(0 20%, 100% 20%, 100% 45%, 0 45%);
             }
+
             90% {
                 opacity: 1;
                 transform: translateX(4px);
                 clip-path: polygon(0 55%, 100% 55%, 100% 75%, 0 75%);
             }
-            91% { opacity: 0; }
+
+            91% {
+                opacity: 0;
+            }
         }
+
         @keyframes area-glitch-after {
-            0%, 90%, 100% { opacity: 0; }
+
+            0%,
+            90%,
+            100% {
+                opacity: 0;
+            }
+
             91% {
                 opacity: 0.8;
                 transform: translateX(6px);
                 clip-path: polygon(0 35%, 100% 35%, 100% 60%, 0 60%);
                 filter: hue-rotate(180deg);
             }
-            93% { opacity: 0; }
+
+            93% {
+                opacity: 0;
+            }
         }
 
         .hero-desc {
@@ -941,20 +995,20 @@
 <body>
     <div class="scan-line"></div>
     <header>
-    <div class="wrap">
-        <div class="header-inner">
-            <a href="index.html" class="logo">
-                <span class="slash">/</span>glitch<span class="logo-blink"></span>
-            </a>
-            <div class="header-right">
-                <div class="search-wrap">
-                    <span class="search-icon">⌕</span>
-                    <input type="text" class="search-input" placeholder="記事を検索..." id="searchInput">
-                </div>
+        <div class="wrap">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <span class="slash">/</span>glitch<span class="logo-blink"></span>
+                </a>
+                <div class="header-right">
+                    <div class="search-wrap">
+                        <span class="search-icon">⌕</span>
+                        <input type="text" class="search-input" placeholder="記事を検索..." id="searchInput">
+                    </div>
 
+                </div>
             </div>
         </div>
-    </div>
     </header>
 
     <main>
@@ -963,8 +1017,8 @@
             <!-- HERO -->
             <section class="hero">
                 <p class="hero-label"><span>root@glitch</span>:~# cat README.md</p>
-                <h1 class="hero-title" data-text="Gray&#10;Area&#10;Hacks.">Gray<br><span
-                        class="accent-glitch" data-text="Area">Area</span><br>Hacks.</h1>
+                <h1 class="hero-title" data-text="Gray&#10;Area&#10;Hacks.">Gray<br><span class="accent-glitch"
+                        data-text="Area">Area</span><br>Hacks.</h1>
                 <p class="hero-desc">
                     システムの隙間をつく。コストを削る。建前を無視する。<br>
                     知っておくと得をするが、大声では言えないライフハックたち。
@@ -1099,8 +1153,8 @@
                     <p class="footer-copy">© <span id="footerYear"></span> Shinya Takeda — 情報は自己責任でどうぞ。</p>
                 </div>
                 <div class="footer-spacer" style="flex:1; display:flex; justify-content: flex-end;">
-              <div id="donation-button-container"></div>
-            </div>
+                    <div id="donation-button-container"></div>
+                </div>
             </div>
         </div>
     </footer>
@@ -1186,8 +1240,8 @@
         document.getElementById('articleCount').textContent = realCards.length;
     </script>
 
-<script src="../data/buy-me-a-coffee.js"></script>
-<script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
+    <script src="../data/buy-me-a-coffee.js"></script>
+    <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 </body>
 
 </html>
