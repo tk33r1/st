@@ -31,25 +31,29 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "Person",
+        "@id": "https://tk.st/#shitake",
+        "name": "Shinya Takeda",
+        "url": "https://tk.st/"
+      },
+      {
         "@type": "BlogPosting",
+        "@id": "https://tk.st/glitch/001/#article",
         "headline": "Claude Code を DeepSeek で動かして API コストを 95% 削る方法",
         "description": "Claude Code のバックエンドを DeepSeek API に差し替えるプロキシ構成で、AI コーディング支援の月額コストを最大95%削減する方法を解説。仕組みから手順・注意点まで。",
         "url": "https://tk.st/glitch/001/",
+        "image": {
+          "@type": "ImageObject",
+          "url": "https://tk.st/images/ogp/glitch-001-ogp.png",
+          "width": 1200,
+          "height": 630
+        },
         "datePublished": "2026-05-01",
         "dateModified": "2026-05-01",
         "inLanguage": "ja",
         "keywords": ["Claude Code", "DeepSeek", "API コスト削減", "AI", "ライフハック"],
-        "author": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake"
-        },
-        "publisher": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake"
-        },
-        "isPartOf": {
-          "@id": "https://tk.st/glitch/#website"
-        }
+        "author": { "@id": "https://tk.st/#shitake" },
+        "publisher": { "@id": "https://tk.st/#shitake" }
       },
       {
         "@type": "BreadcrumbList",
