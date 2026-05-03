@@ -27,26 +27,6 @@
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "WebSite",
-        "@id": "https://tk.st/game/#website",
-        "name": "ST GAMES",
-        "description": "AIコーディング能力計測のために制作したゲームのアーカイブ",
-        "url": "https://tk.st/game/",
-        "inLanguage": "ja",
-        "publisher": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake"
-        },
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://tk.st/game/?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
-      },
-      {
         "@type": "BreadcrumbList",
         "itemListElement": [
           {
@@ -64,19 +44,18 @@
         ]
       },
       {
-        "@type": "CollectionPage",
-        "@id": "https://tk.st/game/#page",
-        "url": "https://tk.st/game/",
+        "@type": "ItemList",
+        "@id": "https://tk.st/game/#list",
         "name": "ST GAMES",
         "description": "AIコーディング能力計測のために制作したゲームのアーカイブ",
-        "inLanguage": "ja",
-        "isPartOf": {
-          "@id": "https://tk.st/game/#website"
-        },
-        "publisher": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake"
-        }
+        "url": "https://tk.st/game/",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "url": "https://tk.st/game/masala-tetris/"
+          }
+        ]
       }
     ]
   }

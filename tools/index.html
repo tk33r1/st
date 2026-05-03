@@ -25,26 +25,6 @@
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "WebSite",
-        "@id": "https://tk.st/tools/#website",
-        "name": "ST TOOLS",
-        "description": "開発・業務で使えるWebツール集",
-        "url": "https://tk.st/tools/",
-        "inLanguage": "ja",
-        "publisher": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake"
-        },
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://tk.st/tools/?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
-      },
-      {
         "@type": "BreadcrumbList",
         "itemListElement": [
           {"@type": "ListItem", "position": 1, "name": "Shinya Takeda - Terminal Portfolio", "item": "https://tk.st/"},
@@ -52,19 +32,18 @@
         ]
       },
       {
-        "@type": "CollectionPage",
-        "@id": "https://tk.st/tools/#page",
-        "url": "https://tk.st/tools/",
+        "@type": "ItemList",
+        "@id": "https://tk.st/tools/#list",
         "name": "ST TOOLS",
         "description": "開発・業務で使えるWebツール集",
-        "inLanguage": "ja",
-        "isPartOf": {
-          "@id": "https://tk.st/tools/#website"
-        },
-        "publisher": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake"
-        }
+        "url": "https://tk.st/tools/",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "url": "https://tk.st/tools/csv-json/"
+          }
+        ]
       }
     ]
   }

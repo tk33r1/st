@@ -26,18 +26,6 @@
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "WebSite",
-          "@id": "https://tk.st/dj/#website",
-          "name": "人類踊狂計画 - DJ Human Choreomania Project",
-          "description": "DJのポートフォリオページ。ボランティアで活動しております。",
-          "url": "https://tk.st/dj/",
-          "inLanguage": "ja",
-          "publisher": {
-            "@type": "Person",
-            "@id": "https://tk.st/#shitake"
-          }
-        },
-        {
           "@type": "BreadcrumbList",
           "itemListElement": [
             {
@@ -55,12 +43,25 @@
           ]
         },
         {
-          "@type": "MusicGroup",
-          "name": "人類踊狂計画",
-          "alternateName": "Human Choreomania Project",
-          "image": "https://tk.st/images/contents/dj-logo3.png",
-          "genre": ["Big room House", "Psytrance", "Melodic Techno"],
-          "foundingDate": "2024"
+          "@type": "ProfilePage",
+          "@id": "https://tk.st/dj/#profilepage",
+          "name": "人類踊狂計画 - DJ Human Choreomania Project",
+          "description": "DJのポートフォリオページ。ボランティアで活動しております。",
+          "url": "https://tk.st/dj/",
+          "inLanguage": "ja",
+          "author": {
+            "@type": "Person",
+            "@id": "https://tk.st/#shitake"
+          },
+          "mainEntity": {
+            "@type": "MusicGroup",
+            "@id": "https://tk.st/dj/#musicgroup",
+            "name": "人類踊狂計画",
+            "alternateName": "Human Choreomania Project",
+            "image": "https://tk.st/images/contents/dj-logo3.png",
+            "genre": ["Big room House", "Psytrance", "Melodic Techno"],
+            "foundingDate": "2024"
+          }
         }
       ]
     }
