@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ST-MAGI SYSTEMは、開発者のShinya Takedaの人格を分割したAIエージェントが合議し、結論を導くシステムです。">
   <title>ST-MAGI SYSTEM</title>
   <link rel="icon" href="https://tk.st/images/favicons/st-magi-favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://tk.st/images/favicons/st-magi-favicon.png">
   <link rel="canonical" href="https://tk.st/magi/">
   <link rel="author" href="https://tk.st/">
   <meta property="og:title" content="ST-MAGI SYSTEM">
@@ -12,6 +14,8 @@
   <meta property="og:image" content="https://tk.st/images/ogp/magi-ogp.png">
   <meta property="og:url" content="https://tk.st/magi/">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ST-MAGI SYSTEM">
+  <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="ST-MAGI SYSTEM">
   <meta name="twitter:description" content="ST-MAGI SYSTEMは、開発者のShinya Takedaの人格を分割したAIエージェントが合議し、結論を導くシステムです。">
@@ -22,23 +26,24 @@
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "WebApplication",
+          "@type": "WebSite",
+          "@id": "https://tk.st/magi/#website",
           "name": "ST-MAGI SYSTEM",
           "description": "ST-MAGI SYSTEMは、開発者のShinya Takedaの人格を分割したAIエージェントが合議し、結論を導くシステムです。",
           "url": "https://tk.st/magi/",
-          "author": {
+          "inLanguage": "ja",
+          "publisher": {
             "@type": "Person",
             "@id": "https://tk.st/#shitake"
           },
-          "applicationCategory": "EntertainmentApplication",
-          "operatingSystem": "Any",
-          "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "JPY"
-          },
-          "browserRequirements": "Requires JavaScript",
-          "featureList": "マルチモーダル対応, サーバーへの保存なし, 完全無料, 日本語対応"
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://tk.st/magi/?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
         },
         {
           "@type": "BreadcrumbList",
@@ -58,7 +63,35 @@
           ]
         },
         {
+          "@type": "WebApplication",
+          "@id": "https://tk.st/magi/#webapp",
+          "name": "ST-MAGI SYSTEM",
+          "description": "ST-MAGI SYSTEMは、開発者のShinya Takedaの人格を分割したAIエージェントが合議し、結論を導くシステムです。",
+          "url": "https://tk.st/magi/",
+          "inLanguage": "ja",
+          "isPartOf": {
+            "@id": "https://tk.st/magi/#website"
+          },
+          "publisher": {
+            "@type": "Person",
+            "@id": "https://tk.st/#shitake"
+          },
+          "applicationCategory": "EntertainmentApplication",
+          "operatingSystem": "Any",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "JPY"
+          },
+          "browserRequirements": "Requires JavaScript",
+          "featureList": "マルチモーダル対応, サーバーへの保存なし, 完全無料, 日本語対応"
+        },
+        {
           "@type": "FAQPage",
+          "@id": "https://tk.st/magi/#faq",
+          "isPartOf": {
+            "@id": "https://tk.st/magi/#website"
+          },
           "mainEntity": [
             {
               "@type": "Question",

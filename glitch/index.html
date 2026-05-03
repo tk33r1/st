@@ -31,6 +31,7 @@
       "@graph": [
         {
           "@type": "WebSite",
+          "@id": "https://tk.st/glitch/#website",
           "name": "Gray Area Hacks.",
           "description": "システムの隙間を突き、日常のコストを劇的に削る「大声では言えないライフハック」を公開中。Claude CodeのAPI節約術や海外サブスクの格安利用など、知っている人だけが得をするグレーな技術と知恵を発信。人生を効率化する秘密のコードを読み解け。",
           "url": "https://tk.st/glitch/",
@@ -1267,6 +1268,13 @@
         });
 
         document.getElementById('searchInput').addEventListener('input', filterArticles);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialQuery = urlParams.get('q');
+        if (initialQuery) {
+            document.getElementById('searchInput').value = initialQuery;
+            filterArticles();
+        }
 
         // Sort
         const articleGrid = document.getElementById('articleGrid');

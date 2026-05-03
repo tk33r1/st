@@ -6,14 +6,19 @@
   <meta name="description" content="AIコーディング能力計測のために制作したゲームのアーカイブ">
   <title>ST GAMES</title>
   <link rel="icon" href="https://tk.st/images/favicons/st-games-favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://tk.st/images/favicons/st-games-favicon.png">
   <link rel="canonical" href="https://tk.st/game/">
+  <link rel="author" href="https://tk.st/">
 
   <meta property="og:title" content="ST GAMES">
   <meta property="og:description" content="AIコーディング能力計測のために制作したゲームのアーカイブ">
   <meta property="og:image" content="https://tk.st/images/ogp/st-games-ogp.png">
   <meta property="og:url" content="https://tk.st/game/">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ST GAMES">
+  <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ST GAMES">
   <meta name="twitter:description" content="AIコーディング能力計測のために制作したゲームのアーカイブ">
   <meta name="twitter:image" content="https://tk.st/images/ogp/st-games-ogp.png">
   
@@ -21,6 +26,26 @@
   {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://tk.st/game/#website",
+        "name": "ST GAMES",
+        "description": "AIコーディング能力計測のために制作したゲームのアーカイブ",
+        "url": "https://tk.st/game/",
+        "inLanguage": "ja",
+        "publisher": {
+          "@type": "Person",
+          "@id": "https://tk.st/#shitake"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://tk.st/game/?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
@@ -40,11 +65,15 @@
       },
       {
         "@type": "CollectionPage",
-        "@id": "https://tk.st/game/",
+        "@id": "https://tk.st/game/#page",
         "url": "https://tk.st/game/",
         "name": "ST GAMES",
         "description": "AIコーディング能力計測のために制作したゲームのアーカイブ",
-        "author": {
+        "inLanguage": "ja",
+        "isPartOf": {
+          "@id": "https://tk.st/game/#website"
+        },
+        "publisher": {
           "@type": "Person",
           "@id": "https://tk.st/#shitake"
         }
@@ -759,6 +788,11 @@
     searchInput.addEventListener("input", updateView);
     sortSelect.addEventListener("change", updateView);
     initStaticSoundEvents();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('q');
+    if (initialQuery) searchInput.value = initialQuery;
+
     loadGames();
 
     document.getElementById('currentYear').textContent = '2024-' + new Date().getFullYear();

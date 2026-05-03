@@ -576,6 +576,11 @@
     searchInput.addEventListener('input', updateView);
     sortSelect.addEventListener('change', updateView);
     lucide.createIcons();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('q');
+    if (initialQuery) searchInput.value = initialQuery;
+
     loadTools();
 
     document.getElementById('currentYear').textContent = new Date().getFullYear();
