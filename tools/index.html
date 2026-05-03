@@ -13,7 +13,10 @@
   <meta property="og:image" content="https://tk.st/images/ogp/st-tools-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/">
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ST TOOLS">
   <meta name="twitter:description" content="開発・業務で使えるWebツール集">
   <meta name="twitter:image" content="https://tk.st/images/ogp/st-tools-ogp.png">
 
@@ -21,6 +24,26 @@
   {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://tk.st/tools/#website",
+        "name": "ST TOOLS",
+        "description": "開発・業務で使えるWebツール集",
+        "url": "https://tk.st/tools/",
+        "inLanguage": "ja",
+        "publisher": {
+          "@type": "Person",
+          "@id": "https://tk.st/#shitake"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://tk.st/tools/?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
@@ -30,11 +53,18 @@
       },
       {
         "@type": "CollectionPage",
-        "@id": "https://tk.st/tools/",
+        "@id": "https://tk.st/tools/#page",
         "url": "https://tk.st/tools/",
         "name": "ST TOOLS",
         "description": "開発・業務で使えるWebツール集",
-        "author": {"@type": "Person", "@id": "https://tk.st/#shitake"}
+        "inLanguage": "ja",
+        "isPartOf": {
+          "@id": "https://tk.st/tools/#website"
+        },
+        "publisher": {
+          "@type": "Person",
+          "@id": "https://tk.st/#shitake"
+        }
       }
     ]
   }

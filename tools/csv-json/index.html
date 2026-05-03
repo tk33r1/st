@@ -14,6 +14,8 @@
     <meta property="og:image" content="https://tk.st/images/ogp/csv-json-ogp.png">
     <meta property="og:url" content="https://tk.st/tools/csv-json/">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ST TOOLS">
+    <meta property="og:locale" content="ja_JP">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="CSV ↔ JSON 相互変換ツール">
     <meta name="twitter:description" content="CSVファイルとJSONファイルの読み込み・保存を主体とした変換ツールです。エクセルファイルからのコピーペーストにも対応しています。">
@@ -24,10 +26,15 @@
       "@graph": [
         {
           "@type": "WebApplication",
+          "@id": "https://tk.st/tools/csv-json/#webapp",
           "name": "CSV ↔ JSON 相互変換ツール",
           "description": "CSVファイルとJSONファイルの読み込み・保存を主体とした変換ツールです。エクセルファイルからのコピーペーストにも対応しています。",
           "url": "https://tk.st/tools/csv-json/",
-          "author": {
+          "inLanguage": "ja",
+          "isPartOf": {
+            "@id": "https://tk.st/tools/#website"
+          },
+          "publisher": {
             "@type": "Person",
             "@id": "https://tk.st/#shitake"
           },
@@ -53,7 +60,7 @@
             {
               "@type": "ListItem",
               "position": 2,
-              "name": "便利ツール一覧 - Useful Tools",
+              "name": "ST TOOLS",
               "item": "https://tk.st/tools/"
             },
             {
@@ -66,6 +73,10 @@
         },
         {
           "@type": "FAQPage",
+          "@id": "https://tk.st/tools/csv-json/#faq",
+          "isPartOf": {
+            "@id": "https://tk.st/tools/csv-json/#webapp"
+          },
           "mainEntity": [
             {
               "@type": "Question",
