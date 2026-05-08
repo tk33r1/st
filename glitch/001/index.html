@@ -4,26 +4,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claude Code を DeepSeek で動かして API コストを 95% 削る — /glitch</title>
+  <title>Claude Code を DeepSeek API に差し替えて、コストを 95% 削る方法 — /glitch</title>
   <link rel="canonical" href="https://tk.st/glitch/001/">
   <link rel="author" href="https://tk.st/">
   <link rel="icon" href="/images/favicons/glitch-favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="/images/favicons/glitch-favicon.png">
 
   <meta name="description"
-    content="Claude Code のバックエンドを DeepSeek API に差し替えるプロキシ構成で、AI コーディング支援の月額コストを最大95%削減する方法を解説。仕組みから手順・注意点まで。">
-  <meta property="og:title" content="Claude Code を DeepSeek で動かして API コストを 95% 削る — /glitch">
+    content="Claude Code のバックエンドを DeepSeek API に差し替えて、AI コーディング支援の月額コストを最大95%削減する方法を解説。仕組みから手順・注意点まで。">
+  <meta property="og:title" content="Claude Code を DeepSeek API に差し替えて、コストを 95% 削る方法 — /glitch">
   <meta property="og:description"
-    content="Claude Code のバックエンドを DeepSeek API に差し替えるプロキシ構成で、AI コーディング支援の月額コストを最大95%削減する方法を解説。">
+    content="Claude Code のバックエンドを DeepSeek API に差し替えて、AI コーディング支援の月額コストを最大95%削減する方法を解説。">
   <meta property="og:url" content="https://tk.st/glitch/001/">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Gray Area Hacks.">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:image" content="https://tk.st/images/ogp/glitch-001-ogp.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Claude Code を DeepSeek で動かして API コストを 95% 削る — /glitch">
+  <meta name="twitter:title" content="Claude Code を DeepSeek API に差し替えて、コストを 95% 削る方法 — /glitch">
   <meta name="twitter:description"
-    content="Claude Code のバックエンドを DeepSeek API に差し替えるプロキシ構成で、AI コーディング支援の月額コストを最大95%削減する方法を解説。">
+    content="Claude Code のバックエンドを DeepSeek API に差し替えて、AI コーディング支援の月額コストを最大95%削減する方法を解説。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/glitch-001-ogp.png">
 
   <script type="application/ld+json">
@@ -33,8 +33,8 @@
       {
         "@type": "BlogPosting",
         "@id": "https://tk.st/glitch/001/#article",
-        "headline": "Claude Code を DeepSeek で動かして API コストを 95% 削る方法",
-        "description": "Claude Code のバックエンドを DeepSeek API に差し替えるプロキシ構成で、AI コーディング支援の月額コストを最大95%削減する方法を解説。仕組みから手順・注意点まで。",
+        "headline": "Claude Code を DeepSeek API に差し替えて、コストを 95% 削る方法",
+        "description": "Claude Code のバックエンドを DeepSeek API に差し替えて、AI コーディング支援の月額コストを最大95%削減する方法を解説。仕組みから手順・注意点まで。",
         "url": "https://tk.st/glitch/001/",
         "image": {
           "@type": "ImageObject",
@@ -43,7 +43,7 @@
           "height": 630
         },
         "datePublished": "2026-05-01",
-        "dateModified": "2026-05-01",
+        "dateModified": "2026-05-09",
         "inLanguage": "ja",
         "keywords": ["Claude Code", "DeepSeek", "API コスト削減", "AI", "ライフハック"],
         "author": {
@@ -77,7 +77,7 @@
           {
             "@type": "ListItem",
             "position": 3,
-            "name": "Claude Code を DeepSeek で動かして API コストを 95% 削る方法",
+            "name": "Claude Code を DeepSeek API に差し替えて、コストを 95% 削る方法",
             "item": "https://tk.st/glitch/001/"
           }
         ]
@@ -926,7 +926,7 @@
           <span class="article-tag">AI</span>
           <span class="article-tag">コスト削減</span>
         </div>
-        <h1 class="article-h1">Claude Code を DeepSeek で動かして<br>API コストを 95% 削る方法</h1>
+        <h1 class="article-h1">Claude Code を DeepSeek API に差し替えて、<br>コストを 95% 削る方法</h1>
         <div class="article-meta-row">
           <span class="meta-item"><span class="dot">●</span> Shinya Takeda</span>
           <span class="meta-item">2026.05.01</span>
@@ -977,122 +977,117 @@
           </thead>
           <tbody>
             <tr>
-              <td>Claude Sonnet 4.5</td>
-              <td class="dim">$3.00</td>
-              <td class="dim">$15.00</td>
+              <td>Claude Opus 4.7</td>
+              <td class="dim">$5.00</td>
+              <td class="dim">$25.00</td>
               <td class="dim">Claude Code デフォルト</td>
             </tr>
             <tr>
-              <td>DeepSeek V3</td>
-              <td class="highlight">$0.14</td>
-              <td class="highlight">$0.28</td>
-              <td class="highlight">約 95% 削減</td>
-            </tr>
-            <tr>
-              <td>DeepSeek R1</td>
-              <td class="highlight">$0.55</td>
-              <td class="highlight">$2.19</td>
-              <td class="dim">推論特化、やや高め</td>
+              <td>DeepSeek V4 Pro</td>
+              <td class="highlight">$0.44</td>
+              <td class="highlight">$0.87</td>
+              <td class="highlight">約 95% 削減 <span style="font-size:0.7em;opacity:0.7">*</span></td>
             </tr>
           </tbody>
         </table>
 
+        <p style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);margin-top:-8px;">
+          * DeepSeek V4 Pro はローンチプロモ価格（2026/05/31 まで）。通常価格は $1.74 / $3.48 per 1M tok（約65〜86% 削減）。
+        </p>
+
         <h2>仕組み</h2>
         <p>
-          Claude Code は内部で <code>ANTHROPIC_BASE_URL</code> 環境変数を参照してAPIエンドポイントを決定する。
-          DeepSeek の API は OpenAI 互換フォーマット（<code>/v1/chat/completions</code>）を提供しているが、
-          そのままでは Claude のメッセージフォーマットと一致しない。
+          Claude Code は内部で <code>ANTHROPIC_BASE_URL</code> 環境変数を参照して API エンドポイントを決定する。
+          DeepSeek は <code>https://api.deepseek.com/anthropic</code> という <strong>Anthropic 互換エンドポイント</strong>を提供しており、
+          これをそのまま向き先に指定できる。プロキシサーバーは不要だ。
         </p>
         <p>
-          そこで間に<strong>プロキシサーバー</strong>を立て、Claude フォーマット → OpenAI フォーマット変換を行う。
-          これにより Claude Code は何も知らずに DeepSeek を叩くことになる。
+          呼び出すモデルは、Claude Code の設定ファイルに <code>ANTHROPIC_DEFAULT_SONNET_MODEL</code> および
+          <code>ANTHROPIC_DEFAULT_OPUS_MODEL</code> を <code>deepseek-v4-pro</code> で上書きすることで固定する。
+          Claude Code 側は Anthropic の API を叩いているつもりのまま、実際のリクエストは DeepSeek に飛ぶ。
         </p>
 
         <h2>手順</h2>
         <div class="steps">
           <div class="step">
             <p class="step-title">DeepSeek の API キーを取得する</p>
-            <p><a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> でアカウントを作成し、API
-              キーを発行する。クレジットを少額チャージしておく（$5 で数ヶ月は余裕）。</p>
+            <p><a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> にアクセスしてアカウントを作成する。予め $5 ほどクレジットをチャージしておく。API キーを発行し、<code>sk-</code> から始まる値をコピーしておく。</p>
           </div>
           <div class="step">
-            <p class="step-title">プロキシを立てる（claude-to-openai）</p>
-            <p>変換プロキシの最もシンプルな選択肢は <code>claude-to-openai</code> 系のOSSを使うことだ。Node.js が入っていれば以下で動く。</p>
+            <p class="step-title">Claude Code CLI をインストールする</p>
+            <p>以下のコマンドを実行するだけでインストールが完了する。</p>
 
             <div class="code-block">
               <div class="code-block-header">
                 <span class="code-lang">bash</span>
                 <button class="copy-btn" onclick="copyCode(this)">copy</button>
               </div>
-              <pre><code><span class="cm"># リポジトリを取得</span>
-git clone https://github.com/example/claude-openai-proxy
-cd claude-openai-proxy
-npm install
-
-<span class="cm"># .env に DeepSeek の API キーをセット</span>
-<span class="kw">echo</span> <span class="str">"OPENAI_API_KEY=sk-your-deepseek-key"</span> > .env
-<span class="kw">echo</span> <span class="str">"OPENAI_BASE_URL=https://api.deepseek.com/v1"</span> >> .env
-
-<span class="cm"># プロキシ起動（デフォルト: localhost:8080）</span>
-npm start</code></pre>
+              <pre><code>curl -fsSL https://claude.ai/install.sh | bash</code></pre>
             </div>
           </div>
           <div class="step">
-            <p class="step-title">Claude Code の向き先をプロキシに変更する</p>
-            <p>起動前に環境変数を設定するだけ。<code>.bashrc</code> や <code>.zshrc</code> に書いておくと楽だ。</p>
+            <p class="step-title">API を DeepSeek に差し替える</p>
+            <p>API キーを安全に保存するためのディレクトリを作成し、パーミッションを絞った上で書き込む。</p>
 
             <div class="code-block">
               <div class="code-block-header">
                 <span class="code-lang">bash</span>
                 <button class="copy-btn" onclick="copyCode(this)">copy</button>
               </div>
-              <pre><code><span class="cm"># シェルに追記（永続化）</span>
-<span class="kw">export</span> <span class="val">ANTHROPIC_BASE_URL</span>=<span class="str">"http://localhost:8080"</span>
-<span class="kw">export</span> <span class="val">ANTHROPIC_API_KEY</span>=<span class="str">"dummy-key"</span>  <span class="cm"># 形式チェックを通すためのダミー</span>
-
-<span class="cm"># Claude Code を起動</span>
-claude</code></pre>
+              <pre><code>mkdir -p ~/.config/deepseek && chmod 700 ~/.config/deepseek
+<span class="kw">echo</span> <span class="str">'export ANTHROPIC_API_KEY="sk-your-key-here"'</span> > ~/.config/deepseek/key.env
+chmod 600 ~/.config/deepseek/key.env
+<span class="kw">source</span> ~/.config/deepseek/key.env</code></pre>
             </div>
+            <p><code>sk-your-key-here</code> の部分を手順 1 でコピーした実際のキーに置き換えること。</p>
           </div>
           <div class="step">
-            <p class="step-title">モデルを指定する（オプション）</p>
-            <p>デフォルトでは DeepSeek V3 が使われる。R1（推論モデル）を使いたい場合はプロキシの設定で切り替える。複雑なアーキテクチャ設計には R1、日常的なコーディングには V3 という使い分けが効率的だ。
-            </p>
+            <p class="step-title">Claude Code の設定を上書きする</p>
+            <p>Claude Code が向き先とするモデルを DeepSeek V4 Pro に固定する設定ファイルを作成する。</p>
 
             <div class="code-block">
               <div class="code-block-header">
                 <span class="code-lang">bash</span>
                 <button class="copy-btn" onclick="copyCode(this)">copy</button>
               </div>
-              <pre><code><span class="cm"># モデルを明示的に指定する場合</span>
-<span class="kw">export</span> <span class="val">CLAUDE_MODEL</span>=<span class="str">"deepseek-reasoner"</span>  <span class="cm"># R1</span>
-<span class="cm"># または</span>
-<span class="kw">export</span> <span class="val">CLAUDE_MODEL</span>=<span class="str">"deepseek-chat"</span>        <span class="cm"># V3</span></code></pre>
+              <pre><code>cat > ~/.config/deepseek/claude-deepseek-settings.json &lt;&lt;EOF
+{
+  "env": {
+    "CLAUDE_CODE_USE_VERTEX": "",
+    "ANTHROPIC_VERTEX_PROJECT_ID": "",
+    "CLOUD_ML_REGION": "",
+    "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-pro",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-v4-pro"
+  }
+}
+EOF
+chmod 600 ~/.config/deepseek/claude-deepseek-settings.json</code></pre>
             </div>
           </div>
           <div class="step">
-            <p class="step-title">動作確認する</p>
-            <p>Claude Code を起動して簡単なコード生成を頼んでみる。レスポンスが返ってきて、DeepSeek のダッシュボードでトークン消費が記録されていれば成功だ。</p>
+            <p class="step-title">Claude Code CLI を立ち上げる</p>
+            <p>API キーを読み込んだ上で、作成した設定ファイルを指定して起動する。</p>
 
-            <div class="callout">
-              <strong>TIPS:</strong> 初回は <code>claude --version</code> と <code>claude "hello world の Python を書いて"</code>
-              で疎通確認するのが速い。プロキシのコンソールにリクエストログが流れるはず。
+            <div class="code-block">
+              <div class="code-block-header">
+                <span class="code-lang">bash</span>
+                <button class="copy-btn" onclick="copyCode(this)">copy</button>
+              </div>
+              <pre><code><span class="kw">source</span> ~/.config/deepseek/key.env && \
+claude --bare --settings ~/.config/deepseek/claude-deepseek-settings.json --model sonnet</code></pre>
             </div>
+          </div>
+          <div class="step">
+            <p class="step-title">DeepSeek V4 Pro に API が飛ぶか確認する</p>
+            <p>起動画面のキャラクター下部に <code>deepseek-v4-pro</code> と表示されていれば設定は成功だ。念のため「こんにちは」などのプロンプトを打ち、DeepSeek の <a href="https://platform.deepseek.com" target="_blank">Usage 画面</a>の Expenses が増加していることを確認する。</p>
           </div>
         </div>
 
         <h2>落とし穴と注意点</h2>
-        <h3>コンテキスト長の差異</h3>
+        <h3>マルチモーダル利用不可</h3>
         <p>
-          DeepSeek V3 は 64K トークン、R1 は 128K トークンのコンテキストをサポートする。
-          Claude Sonnet の 200K より短いため、大規模なコードベースを丸ごと読ませる用途では限界を感じる場面がある。
-        </p>
-
-        <h3>ツール使用（Function Calling）</h3>
-        <p>
-          Claude Code の一部機能はファイル操作や検索などの「ツール」を呼び出す。
-          DeepSeek も Function Calling に対応しているが、プロキシが正しく変換できない場合がある。
-          エラーが出た場合は、プロキシのバージョンを確認することを推奨する。
+          なぜ Claude Code 拡張機能ではなく CLI で差し替えるのか、と思う人もいるかもしれない。実際、拡張機能側の API も差し替え自体は可能だ。しかし DeepSeek V4 Pro は画像入力に対応していないため、拡張機能の機能を活かしきれない。そのため今回は CLI のみの紹介とした。
         </p>
 
         <h3>データはどこを通るか</h3>
@@ -1104,7 +1099,7 @@ claude</code></pre>
 
         <div class="callout">
           <strong>SUMMARY:</strong> 月 $50 払っていた Claude Code のコストが $2〜3
-          まで落ちた。体感の精度差は正直ほぼない。ただしプライバシーとコンテキスト長の制約は理解した上で使うこと。
+          まで落ちた。体感の精度差は正直ほぼない。ただしプライバシーの制約と、マルチモーダルが使えない点は理解した上で使うこと。
         </div>
 
       </article>
@@ -1114,7 +1109,7 @@ claude</code></pre>
         <p class="share-label"><span>//</span> シェア</p>
         <div class="share-buttons">
           <a class="share-btn"
-            href="https://twitter.com/intent/tweet?text=Claude%20Code%20を%20DeepSeek%20で動かしてコストを95%25削る方法%20%23glitch&url="
+            href="https://twitter.com/intent/tweet?text=Claude%20Code%20を%20DeepSeek%20API%20に差し替えてコストを95%25削る方法%20%23glitch&url="
             target="_blank">
             𝕏 でシェア
           </a>
