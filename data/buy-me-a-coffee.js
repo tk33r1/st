@@ -136,6 +136,14 @@ class DonationWidget {
                     flex: none !important;
                     width: 100% !important;
                 }
+                .donation-kofi-wrap {
+                    overflow: hidden;
+                }
+                .donation-kofi-iframe {
+                    transform: scale(0.9);
+                    transform-origin: top left;
+                    width: 111.11% !important;
+                }
             }
         `;
         document.head.appendChild(style);
@@ -167,11 +175,13 @@ class DonationWidget {
                 </button>
                 <div style="overflow-y:auto;overflow-x:hidden;width:100%;flex:1 1 auto;background:#f9f9f9;">
                     <h2 id="donation-modal-title" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0;">Buy Me a Coffee</h2>
-                    <iframe src="https://ko-fi.com/${this.kofiId}/?hidefeed=true&widget=true&embed=true&preview=true"
-                            style="border:none;width:100%;padding:4px;background:#f9f9f9;display:block;"
-                            height="712"
-                            title="Ko-fi donation widget for ${this.kofiId}">
-                    </iframe>
+                    <div class="donation-kofi-wrap">
+                        <iframe class="donation-kofi-iframe" src="https://ko-fi.com/${this.kofiId}/?hidefeed=true&widget=true&embed=true&preview=true"
+                                style="border:none;width:100%;padding:4px;background:#f9f9f9;display:block;"
+                                height="712"
+                                title="Ko-fi donation widget for ${this.kofiId}">
+                        </iframe>
+                    </div>
                 </div>
                 <div style="background:#fff;border-top:1px solid #e5e7eb;padding:1rem;display:flex;flex-direction:column;gap:0.5rem;flex-shrink:0;">
                     <span style="font-size:0.875rem;font-weight:700;color:#4b5563;white-space:nowrap;">Other options:</span>

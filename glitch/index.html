@@ -168,7 +168,6 @@
             top: 0;
             background: var(--bg);
             z-index: 100;
-            backdrop-filter: blur(12px);
         }
 
         .header-inner {
@@ -475,12 +474,14 @@
             border-color: var(--accent);
             color: var(--accent);
             background: rgba(0, 229, 255, 0.05);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.25);
         }
 
         .tag:hover {
             border-color: var(--accent2);
             color: var(--accent2);
             background: rgba(255, 0, 255, 0.05);
+            box-shadow: 0 0 6px rgba(255, 0, 255, 0.15);
         }
 
         /* ── ARTICLE LIST ── */
@@ -985,7 +986,9 @@
         }
 
         .footer-spacer {
-            width: 1.5rem;
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
         }
 
         /* ── GLITCH ANIMATIONS ── */
@@ -1172,15 +1175,6 @@
             animation: flicker 9s infinite;
         }
 
-        /* tag active glow */
-        .tag.active {
-            box-shadow: 0 0 8px rgba(0, 229, 255, 0.25);
-        }
-
-        .tag:hover {
-            box-shadow: 0 0 6px rgba(255, 0, 255, 0.15);
-        }
-
         /* thumbnail overlay on hover */
         .article-thumb::after {
             content: '';
@@ -1253,7 +1247,7 @@
                 </p>
                 <div class="hero-stats">
                     <div class="stat">
-                        <span class="stat-num" id="articleCount">1</span>
+                        <span class="stat-num" id="articleCount">2</span>
                         <span class="stat-label">articles</span>
                     </div>
                     <div class="stat">
@@ -1357,7 +1351,6 @@
                 </div>
             </section>
 
-            <!-- REFERRAL CODES -->
             <section class="referral-section" id="referralSection">
                 <div class="referral-header">
                     <span class="section-title"><span>//</span> 招待コード一覧</span>
@@ -1366,33 +1359,30 @@
 
                 <div class="referral-grid">
 
-                    <!-- Referral: Uber Eats -->
                     <div class="referral-card">
                         <div class="referral-card-header">
                             <span class="referral-service">Uber Eats</span>
-                            <span class="referral-badge">初回割引</span>
+                            <span class="referral-badge">¥3,000</span>
                         </div>
-                        <p class="referral-benefit">初回注文が ¥1,800 割引になる。</p>
+                        <p class="referral-benefit">¥2,000 以上の注文で使える ¥1,500 OFF クーポン2枚。</p>
                         <div class="referral-code-row">
-                            <span class="referral-code" id="code-uber">eats-shinyat22ue</span>
+                            <span class="referral-code" id="code-uber">eats-dg35y9</span>
                             <button class="referral-copy-btn" data-target="code-uber" onclick="copyCode(this)">copy</button>
                         </div>
                     </div>
 
-                    <!-- Referral: みんなの銀行 -->
                     <div class="referral-card">
                         <div class="referral-card-header">
-                            <span class="referral-service">みんなの銀行</span>
-                            <span class="referral-badge">¥1,000</span>
+                            <span class="referral-service">menu</span>
+                            <span class="referral-badge">¥8,000</span>
                         </div>
-                        <p class="referral-benefit">口座開設で紹介者・被紹介者の両方に ¥1,000 がもらえる。</p>
+                        <p class="referral-benefit">¥1,200 OFF クーポン 2枚、¥700 OFF クーポン 8枚がもらえる。</p>
                         <div class="referral-code-row">
-                            <span class="referral-code" id="code-minna">yGaXNbCM</span>
-                            <button class="referral-copy-btn" data-target="code-minna" onclick="copyCode(this)">copy</button>
+                            <span class="referral-code" id="code-menu">f323qr3</span>
+                            <button class="referral-copy-btn" data-target="code-menu" onclick="copyCode(this)">copy</button>
                         </div>
                     </div>
 
-                    <!-- Referral: TikTok Lite -->
                     <div class="referral-card">
                         <div class="referral-card-header">
                             <span class="referral-service">TikTok Lite</span>
@@ -1406,19 +1396,17 @@
                         <a href="https://lite.tiktok.com/t/ZSjVEY6oA/" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
                     </div>
 
-                    <!-- Referral: WINTICKET -->
                     <div class="referral-card">
                         <div class="referral-card-header">
-                            <span class="referral-service">WINTICKET</span>
-                            <span class="referral-badge">¥1,000 相当</span>
+                            <span class="referral-service">メルカリ</span>
+                            <span class="referral-badge">¥500 相当</span>
                         </div>
-                        <p class="referral-benefit">新規登録で ¥1,000 相当のポイントが付与される。</p>
+                        <p class="referral-benefit">新規登録で ¥500 相当のポイントが付与される。</p>
                         <div class="referral-code-row">
-                            <span class="referral-code" id="code-winticket">YUKXGWNF</span>
-                            <button class="referral-copy-btn" data-target="code-winticket" onclick="copyCode(this)">copy</button>
+                            <span class="referral-code" id="code-mercari">XKAXYC</span>
+                            <button class="referral-copy-btn" data-target="code-mercari" onclick="copyCode(this)">copy</button>
                         </div>
                     </div>
-
                 </div>
             </section>
 
@@ -1434,7 +1422,7 @@
                 <div class="footer-center">
                     <p class="footer-copy">© <span id="footerYear"></span> Shinya Takeda — 情報は自己責任でどうぞ。</p>
                 </div>
-                <div class="footer-spacer" style="flex:1; display:flex; justify-content: flex-end;">
+                <div class="footer-spacer">
                     <div id="donation-button-container"></div>
                 </div>
             </div>
@@ -1518,7 +1506,7 @@
                 const dateB = b.dataset.date || '';
                 return order === 'new' ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
             });
-            cardArray.forEach(card => articleGrid.appendChild(card));
+            cardArray.forEach(card => articleGrid.insertBefore(card, noResults));
         }
 
         sortSelect.addEventListener('change', sortArticles);
