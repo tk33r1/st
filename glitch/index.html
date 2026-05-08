@@ -759,6 +759,183 @@
             display: block;
         }
 
+        /* ── REFERRAL CODES ── */
+        .referral-section {
+            padding: 0 0 60px;
+            animation: fadeInUp 0.6s ease both;
+            animation-delay: 0.35s;
+        }
+
+        .referral-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .referral-header .section-title {
+            flex: 1;
+        }
+
+        .referral-desc {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .referral-desc .cmd {
+            color: var(--accent2);
+        }
+
+        .referral-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .referral-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 16px 18px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .referral-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .referral-card:hover {
+            border-color: rgba(0, 229, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.05),
+                        inset 0 0 30px rgba(255, 0, 255, 0.02);
+        }
+
+        .referral-card:hover::before {
+            opacity: 1;
+        }
+
+        .referral-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .referral-service {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-bright);
+            letter-spacing: -0.01em;
+        }
+
+        .referral-badge {
+            font-family: var(--font-mono);
+            font-size: 0.58rem;
+            padding: 2px 7px;
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            border-radius: 1px;
+            color: var(--accent2);
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        .referral-benefit {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .referral-code-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .referral-code {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--accent);
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 2px;
+            letter-spacing: 0.05em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            user-select: all;
+        }
+
+        .referral-copy-btn {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 6px 10px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            letter-spacing: 0.04em;
+        }
+
+        .referral-copy-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        .referral-copy-btn.copied {
+            border-color: var(--accent2);
+            color: var(--accent2);
+            background: rgba(255, 0, 255, 0.08);
+        }
+
+        /* referral link style (for URL-based codes) */
+        .referral-link {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--accent);
+            text-decoration: none;
+            margin-top: 6px;
+            transition: color 0.15s;
+            letter-spacing: 0.02em;
+        }
+
+        .referral-link:hover {
+            color: var(--accent2);
+        }
+
+        .referral-link::before {
+            content: '→ ';
+        }
+
+        @media (max-width: 600px) {
+            .referral-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ── FOOTER ── */
         footer {
             border-top: 1px solid var(--border);
@@ -1180,6 +1357,71 @@
                 </div>
             </section>
 
+            <!-- REFERRAL CODES -->
+            <section class="referral-section" id="referralSection">
+                <div class="referral-header">
+                    <span class="section-title"><span>//</span> 招待コード一覧</span>
+                </div>
+                <p class="referral-desc"><span class="cmd">$</span> 以下のコードを使うと、あなたも筆者も特典がもらえる。Win-Win のグレーではないやつ。</p>
+
+                <div class="referral-grid">
+
+                    <!-- Referral: Uber Eats -->
+                    <div class="referral-card">
+                        <div class="referral-card-header">
+                            <span class="referral-service">Uber Eats</span>
+                            <span class="referral-badge">初回割引</span>
+                        </div>
+                        <p class="referral-benefit">初回注文が ¥1,800 割引になる。</p>
+                        <div class="referral-code-row">
+                            <span class="referral-code" id="code-uber">eats-shinyat22ue</span>
+                            <button class="referral-copy-btn" data-target="code-uber" onclick="copyCode(this)">copy</button>
+                        </div>
+                    </div>
+
+                    <!-- Referral: みんなの銀行 -->
+                    <div class="referral-card">
+                        <div class="referral-card-header">
+                            <span class="referral-service">みんなの銀行</span>
+                            <span class="referral-badge">¥1,000</span>
+                        </div>
+                        <p class="referral-benefit">口座開設で紹介者・被紹介者の両方に ¥1,000 がもらえる。</p>
+                        <div class="referral-code-row">
+                            <span class="referral-code" id="code-minna">yGaXNbCM</span>
+                            <button class="referral-copy-btn" data-target="code-minna" onclick="copyCode(this)">copy</button>
+                        </div>
+                    </div>
+
+                    <!-- Referral: TikTok Lite -->
+                    <div class="referral-card">
+                        <div class="referral-card-header">
+                            <span class="referral-service">TikTok Lite</span>
+                            <span class="referral-badge">¥4,000 相当</span>
+                        </div>
+                        <p class="referral-benefit">アプリ登録 + 10日間チェックインで ¥4,000 相当のポイントがもらえる。</p>
+                        <div class="referral-code-row">
+                            <span class="referral-code" id="code-tiktok">https://lite.tiktok.com/t/ZSjVEY6oA/</span>
+                            <button class="referral-copy-btn" data-target="code-tiktok" onclick="copyCode(this)">copy</button>
+                        </div>
+                        <a href="https://lite.tiktok.com/t/ZSjVEY6oA/" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
+                    </div>
+
+                    <!-- Referral: WINTICKET -->
+                    <div class="referral-card">
+                        <div class="referral-card-header">
+                            <span class="referral-service">WINTICKET</span>
+                            <span class="referral-badge">¥1,000 相当</span>
+                        </div>
+                        <p class="referral-benefit">新規登録で ¥1,000 相当のポイントが付与される。</p>
+                        <div class="referral-code-row">
+                            <span class="referral-code" id="code-winticket">YUKXGWNF</span>
+                            <button class="referral-copy-btn" data-target="code-winticket" onclick="copyCode(this)">copy</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
         </div>
     </main>
 
@@ -1285,6 +1527,22 @@
         // Article count
         const realCards = document.querySelectorAll('.article-card:not([href="#"])');
         document.getElementById('articleCount').textContent = realCards.length;
+
+        // Referral code copy
+        function copyCode(btn) {
+            const targetId = btn.dataset.target;
+            const codeEl = document.getElementById(targetId);
+            if (!codeEl) return;
+            const text = codeEl.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = 'copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
     </script>
 
     <script src="../data/buy-me-a-coffee.js"></script>
