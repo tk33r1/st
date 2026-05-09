@@ -767,6 +767,54 @@
             animation-delay: 0.35s;
         }
 
+        /* ── AFFILIATE LINKS ── */
+        .affiliate-section {
+            padding: 0 0 60px;
+            animation: fadeInUp 0.6s ease both;
+            animation-delay: 0.4s;
+        }
+
+        .affiliate-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .affiliate-header .section-title {
+            flex: 1;
+        }
+
+        .affiliate-desc {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+
+        .affiliate-desc .cmd {
+            color: var(--accent2);
+        }
+
+        .affiliate-open-btn {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--accent);
+            text-decoration: none;
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            border-radius: 2px;
+            padding: 5px 12px;
+            margin-top: auto;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+
+        .affiliate-open-btn:hover {
+            border-color: var(--accent);
+            background: rgba(0, 229, 255, 0.06);
+        }
+
         .referral-header {
             display: flex;
             align-items: center;
@@ -792,6 +840,33 @@
             color: var(--accent2);
         }
 
+        .referral-category {
+            margin-bottom: 28px;
+        }
+
+        .referral-category:last-child {
+            margin-bottom: 0;
+        }
+
+        .referral-category-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .referral-category-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
         .referral-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -806,6 +881,9 @@
             position: relative;
             overflow: hidden;
             transition: border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .referral-card::before {
@@ -834,7 +912,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 0;
         }
 
         .referral-service {
@@ -860,13 +938,24 @@
             font-size: 0.75rem;
             color: var(--text-dim);
             line-height: 1.6;
-            margin-bottom: 12px;
+            margin-bottom: 0;
+        }
+
+        .referral-reason {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            opacity: 0.6;
+            line-height: 1.55;
+            margin-bottom: 0;
+            padding-left: 8px;
+            border-left: 1px solid rgba(0, 229, 255, 0.2);
         }
 
         .referral-code-row {
             display: flex;
             align-items: center;
             gap: 8px;
+            margin-top: auto;
         }
 
         .referral-code {
@@ -1357,57 +1446,176 @@
                 </div>
                 <p class="referral-desc"><span class="cmd">$</span> 以下のコードを使うと、あなたも筆者も特典がもらえる。Win-Win のグレーではないやつ。</p>
 
-                <div class="referral-grid">
+                <div class="referral-category">
+                    <span class="referral-category-label">フードデリバリー</span>
+                    <div class="referral-grid">
 
-                    <div class="referral-card">
-                        <div class="referral-card-header">
-                            <span class="referral-service">Uber Eats</span>
-                            <span class="referral-badge">¥3,000</span>
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">Uber Eats</span>
+                                <span class="referral-badge">¥3,000</span>
+                            </div>
+                            <p class="referral-benefit">¥2,000 以上の注文で使える ¥1,500 OFF クーポン2枚がもらえる。</p>
+                            <p class="referral-reason">Uber One に登録すると、Uber にもお値引きがあり、少しだけプレミアムな移動体験ができる。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-uber">eats-dg35y9</span>
+                                <button class="referral-copy-btn" data-target="code-uber" onclick="copyCode(this)">copy</button>
+                            </div>
                         </div>
-                        <p class="referral-benefit">¥2,000 以上の注文で使える ¥1,500 OFF クーポン2枚。</p>
-                        <div class="referral-code-row">
-                            <span class="referral-code" id="code-uber">eats-dg35y9</span>
-                            <button class="referral-copy-btn" data-target="code-uber" onclick="copyCode(this)">copy</button>
-                        </div>
-                    </div>
 
-                    <div class="referral-card">
-                        <div class="referral-card-header">
-                            <span class="referral-service">menu</span>
-                            <span class="referral-badge">¥8,000</span>
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">menu</span>
+                                <span class="referral-badge">¥8,000</span>
+                            </div>
+                            <p class="referral-benefit">¥1,200 OFF クーポン 2枚、¥700 OFF クーポン 8枚がもらえる。</p>
+                            <p class="referral-reason">サービス料などが最初から込みなので、明瞭会計。Ponta パスに加入していると送料無料でさらにお得。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-menu">f323qr3</span>
+                                <button class="referral-copy-btn" data-target="code-menu" onclick="copyCode(this)">copy</button>
+                            </div>
                         </div>
-                        <p class="referral-benefit">¥1,200 OFF クーポン 2枚、¥700 OFF クーポン 8枚がもらえる。</p>
-                        <div class="referral-code-row">
-                            <span class="referral-code" id="code-menu">f323qr3</span>
-                            <button class="referral-copy-btn" data-target="code-menu" onclick="copyCode(this)">copy</button>
-                        </div>
-                    </div>
 
-                    <div class="referral-card">
-                        <div class="referral-card-header">
-                            <span class="referral-service">TikTok Lite</span>
-                            <span class="referral-badge">¥4,000 相当</span>
-                        </div>
-                        <p class="referral-benefit">アプリ登録 + 10日間チェックインで ¥4,000 相当のポイントがもらえる。</p>
-                        <div class="referral-code-row">
-                            <span class="referral-code" id="code-tiktok">https://lite.tiktok.com/t/ZSjVEY6oA/</span>
-                            <button class="referral-copy-btn" data-target="code-tiktok" onclick="copyCode(this)">copy</button>
-                        </div>
-                        <a href="https://lite.tiktok.com/t/ZSjVEY6oA/" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
-                    </div>
-
-                    <div class="referral-card">
-                        <div class="referral-card-header">
-                            <span class="referral-service">メルカリ</span>
-                            <span class="referral-badge">¥500 相当</span>
-                        </div>
-                        <p class="referral-benefit">新規登録で ¥500 相当のポイントが付与される。</p>
-                        <div class="referral-code-row">
-                            <span class="referral-code" id="code-mercari">XKAXYC</span>
-                            <button class="referral-copy-btn" data-target="code-mercari" onclick="copyCode(this)">copy</button>
-                        </div>
                     </div>
                 </div>
+
+                <div class="referral-category">
+                    <span class="referral-category-label">モビリティ</span>
+                    <div class="referral-grid">
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">GO</span>
+                                <span class="referral-badge">¥2,000</span>
+                            </div>
+                            <p class="referral-benefit">¥2,000 分の利用クーポンがもらえる。</p>
+                            <p class="referral-reason">タクシーアプリで迷ったらこれ。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-go">mf-mhmcxh</span>
+                                <button class="referral-copy-btn" data-target="code-go" onclick="copyCode(this)">copy</button>
+                            </div>
+                        </div>
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">LUUP</span>
+                                <span class="referral-badge">¥600 相当</span>
+                            </div>
+                            <p class="referral-benefit">30 分ライド無料クーポンがもらえる。</p>
+                            <p class="referral-reason">ちょっとした移動や、終電後の移動に便利。有効期限2026年11月迄。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-luup">RFMBS84SI</span>
+                                <button class="referral-copy-btn" data-target="code-luup" onclick="copyCode(this)">copy</button>
+                            </div>
+                        </div>
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">三井のカーシェアーズ</span>
+                                <span class="referral-badge">¥500</span>
+                            </div>
+                            <p class="referral-benefit">¥500 分の利用クーポンがもらえる。</p>
+                            <p class="referral-reason">利用料金は少し高いものの、基本利用料が無料なので、たまにしかカーシェアを使わない人にはお得。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-mitsui">CP578752</span>
+                                <button class="referral-copy-btn" data-target="code-mitsui" onclick="copyCode(this)">copy</button>
+                            </div>
+                        </div>
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">CHARGESPOT</span>
+                                <span class="referral-badge">¥330 相当</span>
+                            </div>
+                            <p class="referral-benefit">1 時間充電無料クーポンがもらえる。</p>
+                            <p class="referral-reason">スマホのバッテリーが切れそうな時のお供。モバイルバッテリーを携帯せず身軽に出かけている時に便利。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-chargespot">FRD63ADA386</span>
+                                <button class="referral-copy-btn" data-target="code-chargespot" onclick="copyCode(this)">copy</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="referral-category">
+                    <span class="referral-category-label">金融 / 決済</span>
+                    <div class="referral-grid">
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">Wise</span>
+                                <span class="referral-badge">¥1,200 相当</span>
+                            </div>
+                            <p class="referral-benefit">5 年間使用可能なデビットカードの発行手数料が無料。</p>
+                            <p class="referral-reason">海外通貨での支払い時の手数料が非常に安い。海外旅行や、海外サイトでのお買い物時の必須サービス。</p>
+                            <a href="https://wise.com/invite/ahpc/shinyat140" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-wise">https://wise.com/invite/ahpc/shinyat140/</span>
+                                <button class="referral-copy-btn" data-target="code-wise" onclick="copyCode(this)">copy</button>
+                            </div>
+                        </div>
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">MEXC</span>
+                                <span class="referral-badge">$60 相当</span>
+                            </div>
+                            <p class="referral-benefit">$60 相当の USDT がもらえる。</p>
+                            <p class="referral-reason">日本の仮想通貨取引所では購入できないアルトコインを購入できる。ただし、資産の保全は自己責任で。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-mexc">3vTbg</span>
+                                <button class="referral-copy-btn" data-target="code-mexc" onclick="copyCode(this)">copy</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="referral-category">
+                    <span class="referral-category-label">Web / ドメイン</span>
+                    <div class="referral-grid">
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">dynadot</span>
+                                <span class="referral-badge">$5</span>
+                            </div>
+                            <p class="referral-benefit">$9.99 以上の購入で使える $5 分の割引クーポンがもらえる。</p>
+                            <p class="referral-reason">ほぼ最安値でドメイン取得ができる。500を超えるドメインを取り扱っているので、珍しいドメインもたいてい見つかる。</p>
+                            <div class="referral-code-row">
+                                <span class="referral-code" id="code-dynadot">U9B808hG7e6A8W</span>
+                                <button class="referral-copy-btn" data-target="code-dynadot" onclick="copyCode(this)">copy</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <section class="affiliate-section" id="affiliateSection">
+                <div class="affiliate-header">
+                    <span class="section-title"><span>//</span> アフィリエイトリンク</span>
+                </div>
+                <p class="affiliate-desc"><span class="cmd">$</span> 実際に使っていておすすめできるサービス。リンク経由で購入すると筆者に報酬が入る。</p>
+
+                <div class="referral-category">
+                    <span class="referral-category-label">カテゴリ名</span>
+                    <div class="referral-grid">
+
+                        <div class="referral-card">
+                            <div class="referral-card-header">
+                                <span class="referral-service">サービス名</span>
+                                <span class="referral-badge">タグ</span>
+                            </div>
+                            <p class="referral-benefit">特典・概要の説明。</p>
+                            <p class="referral-reason">おすすめ理由。</p>
+                            <a href="#" target="_blank" rel="noopener noreferrer" class="affiliate-open-btn">リンクを開く</a>
+                        </div>
+
+                    </div>
+                </div>
+
             </section>
 
         </div>

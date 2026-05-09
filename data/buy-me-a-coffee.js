@@ -128,6 +128,14 @@ class DonationWidget {
                 object-fit: contain;
                 display: block;
             }
+            .donation-kofi-wrap {
+                overflow: hidden;
+            }
+            .donation-kofi-iframe {
+                transform: scale(0.95);
+                transform-origin: top left;
+                width: 105.26%;
+            }
             @media (max-width: 480px) {
                 .donation-options-btns {
                     flex-direction: column !important;
@@ -136,13 +144,15 @@ class DonationWidget {
                     flex: none !important;
                     width: 100% !important;
                 }
-                .donation-kofi-wrap {
-                    overflow: hidden;
-                }
                 .donation-kofi-iframe {
                     transform: scale(0.9);
-                    transform-origin: top left;
                     width: 111.11% !important;
+                }
+                .donation-scroll-container {
+                    overflow: hidden !important;
+                }
+                .donation-kofi-iframe {
+                    height: 100vh !important;
                 }
             }
         `;
@@ -173,7 +183,7 @@ class DonationWidget {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
-                <div style="overflow-y:auto;overflow-x:hidden;width:100%;flex:1 1 auto;background:#f9f9f9;">
+                <div class="donation-scroll-container" style="overflow-y:auto;overflow-x:hidden;width:100%;flex:1 1 auto;background:#f9f9f9;">
                     <h2 id="donation-modal-title" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0;">Buy Me a Coffee</h2>
                     <div class="donation-kofi-wrap">
                         <iframe class="donation-kofi-iframe" src="https://ko-fi.com/${this.kofiId}/?hidefeed=true&widget=true&embed=true&preview=true"
