@@ -137,10 +137,10 @@ class DonationWidget {
                 width: 105.26%;
             }
             @media (max-width: 480px) {
-                .donation-options-btns {
+                .donation-options-btns > div {
                     flex-direction: column !important;
                 }
-                .donation-options-btns > a {
+                .donation-options-btns > div > a {
                     flex: none !important;
                     width: 100% !important;
                 }
@@ -162,7 +162,7 @@ class DonationWidget {
     renderModal() {
         const lightningBtn = this.lightningUrl ? `
             <a href="${this.lightningUrl}" target="_blank" rel="noopener noreferrer"
-               style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#F7931A;color:#fff;font-size:0.8rem;font-weight:500;padding:0.5rem 0.75rem;border-radius:0.5rem;flex:1 1 auto;min-width:0;box-sizing:border-box;text-decoration:none;white-space:nowrap;">
+               style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#F7931A;color:#fff;font-size:0.8rem;font-weight:500;padding:0.5rem 0.75rem;border-radius:0.5rem;flex:1 1 0;min-width:0;box-sizing:border-box;text-decoration:none;white-space:nowrap;">
                 <svg style="width:1.125rem;height:1.125rem;flex-shrink:0;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M14.24 10.56C13.93 11.8 12 11.17 11.4 11L11.95 8.82C12.57 8.99 14.56 9.26 14.24 10.56M11.13 12.12L10.53 14.53C11.29 14.73 13.53 15.43 13.87 14.09C14.21 12.7 11.9 12.32 11.13 12.12M21.7 14.42C20.36 19.78 14.94 23.04 9.58 21.7C4.22 20.36.963 14.94 2.3 9.58C3.64 4.22 9.06.964 14.42 2.3C19.77 3.64 23.03 9.06 21.7 14.42M13.61 8.25L14.05 6.25L12.89 6L12.46 7.97C12.15 7.9 11.83 7.82 11.5 7.75L11.94 5.76L10.78 5.5L10.34 7.5C10.08 7.44 9.83 7.38 9.59 7.31L8 6.92L7.72 8.15C7.72 8.15 8.58 8.35 8.56 8.36C9 8.46 9.07 8.75 9.06 9L8.56 11.1C8.58 11.11 8.62 11.11 8.66 11.13L8.55 11.1L7.85 13.97C7.8 14.12 7.64 14.35 7.3 14.27C7.31 14.28 6.46 14.06 6.46 14.06L5.91 15.37L7.41 15.74C7.7 15.82 7.98 15.9 8.26 15.97L7.82 17.97L8.97 18.24L9.41 16.23C9.73 16.32 10.04 16.4 10.35 16.47L9.91 18.47L11.07 18.74L11.5 16.75C13.6 17.17 15.17 17 15.87 15.08C16.44 13.53 15.82 12.62 14.71 12.04C15.53 11.84 16.15 11.3 16.32 10.27C16.56 8.84 15.46 8.1 13.94 7.68Z"/>
                 </svg>
@@ -195,22 +195,33 @@ class DonationWidget {
                 </div>
                 <div style="background:#fff;border-top:1px solid #e5e7eb;padding:1rem;display:flex;flex-direction:column;gap:0.5rem;flex-shrink:0;">
                     <span style="font-size:0.875rem;font-weight:700;color:#4b5563;white-space:nowrap;">Other options:</span>
-                    <div class="donation-options-btns" style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-                        <a href="${this.githubUrl}" target="_blank" rel="noopener noreferrer"
-                           style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#111827;color:#fff;font-size:0.8rem;font-weight:500;padding:0.5rem 0.75rem;border-radius:0.5rem;flex:1 1 auto;min-width:0;box-sizing:border-box;text-decoration:none;white-space:nowrap;">
-                            <svg style="width:1.125rem;height:1.125rem;flex-shrink:0;" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
-                            </svg>
-                            GitHub Sponsors
-                        </a>
-                        ${lightningBtn}
-                        <a href="https://tk.st/glitch/index.html#referralSection" target="_blank" rel="noopener noreferrer"
-                           style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#00e5ff;color:#09090e;font-size:0.8rem;font-weight:500;padding:0.5rem 0.75rem;border-radius:0.5rem;flex:1 1 auto;min-width:0;box-sizing:border-box;text-decoration:none;white-space:nowrap;">
-                            <svg style="width:1.125rem;height:1.125rem;flex-shrink:0;" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-2-1.46c-1.19.69-2 1.99-2 3.46s.81 2.77 2 3.46V18H4v-2.54c1.19-.69 2-1.99 2-3.46s-.81-2.77-2-3.46V6h16v2.54zM11 15h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2z"/>
-                            </svg>
-                            Invitation Code
-                        </a>
+                    <div class="donation-options-btns" style="display:flex;flex-direction:column;gap:0.5rem;">
+                        <div style="display:flex;gap:0.5rem;">
+                            <a href="${this.githubUrl}" target="_blank" rel="noopener noreferrer"
+                               style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#111827;color:#fff;font-size:0.8rem;font-weight:500;padding:0.5rem 0.75rem;border-radius:0.5rem;flex:1 1 0;min-width:0;box-sizing:border-box;text-decoration:none;white-space:nowrap;">
+                                <svg style="width:1.125rem;height:1.125rem;flex-shrink:0;" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
+                                </svg>
+                                GitHub Sponsors
+                            </a>
+                            ${lightningBtn}
+                        </div>
+                        <div style="display:flex;gap:0.5rem;">
+                            <a href="https://tk.st/glitch/index.html#referralSection" target="_blank" rel="noopener noreferrer"
+                               style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#00e5ff;color:#09090e;font-size:0.8rem;font-weight:500;padding:0.5rem 0.75rem;border-radius:0.5rem;flex:1 1 0;min-width:0;box-sizing:border-box;text-decoration:none;white-space:nowrap;">
+                                <svg style="width:1.125rem;height:1.125rem;flex-shrink:0;" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-2-1.46c-1.19.69-2 1.99-2 3.46s.81 2.77 2 3.46V18H4v-2.54c1.19-.69 2-1.99 2-3.46s-.81-2.77-2-3.46V6h16v2.54zM11 15h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2z"/>
+                                </svg>
+                                Invitation Code
+                            </a>
+                            <a href="https://tk.st/glitch/index.html#affiliateSection" target="_blank" rel="noopener noreferrer"
+                               style="display:flex;align-items:center;justify-content:center;gap:0.5rem;background:#ff00ff;color:#09090e;font-size:0.8rem;font-weight:500;padding:0.5rem 0.75rem;border-radius:0.5rem;flex:1 1 0;min-width:0;box-sizing:border-box;text-decoration:none;white-space:nowrap;">
+                                <svg style="width:1.125rem;height:1.125rem;flex-shrink:0;" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                                </svg>
+                                Affiliate Links
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
