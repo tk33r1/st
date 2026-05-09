@@ -222,6 +222,35 @@
             gap: 12px;
         }
 
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .header-nav-link {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 2px;
+            letter-spacing: 0.04em;
+            transition: color 0.15s, background 0.15s;
+            white-space: nowrap;
+        }
+
+        .header-nav-link:hover {
+            color: var(--accent);
+            background: rgba(0, 229, 255, 0.06);
+        }
+
+        @media (max-width: 600px) {
+            .header-nav {
+                display: none;
+            }
+        }
+
         /* search */
         .search-wrap {
             position: relative;
@@ -876,6 +905,7 @@
             height: 2px;
             background: linear-gradient(90deg, var(--accent), var(--accent2));
             opacity: 0;
+            z-index: 1;
             transition: opacity 0.2s;
         }
 
@@ -902,6 +932,71 @@
             font-weight: 500;
             color: var(--text-bright);
             letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .referral-logo-wrap {
+            width: 20px;
+            height: 20px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .referral-logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .affiliate-img-wrap {
+            width: calc(100% + 36px);
+            margin: -16px -18px 0;
+            aspect-ratio: 3 / 2;
+            background: var(--bg3);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .affiliate-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .affiliate-card {
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .affiliate-card:hover .affiliate-img-wrap img {
+            transform: scale(1.05);
+        }
+
+        .affiliate-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: auto;
+        }
+
+        .affiliate-arrow {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            transition: color 0.15s, transform 0.15s;
+        }
+
+        .affiliate-card:hover .affiliate-arrow {
+            color: var(--accent);
+            transform: translateX(3px);
         }
 
         .referral-badge {
@@ -937,6 +1032,17 @@
             align-items: center;
             gap: 8px;
             margin-top: auto;
+        }
+
+        .referral-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .referral-bottom .referral-code-row {
+            margin-top: 0;
         }
 
         .referral-code {
@@ -1292,6 +1398,11 @@
                 <a href="index.html" class="logo">
                     <span class="slash">/</span>glitch<span class="logo-blink"></span>
                 </a>
+                <nav class="header-nav">
+                    <a href="#articlesSection" class="header-nav-link">記事</a>
+                    <a href="#referralSection" class="header-nav-link">招待コード</a>
+                    <a href="#affiliateSection" class="header-nav-link">おすすめ商品</a>
+                </nav>
                 <div class="header-right">
                     <div class="search-wrap">
                         <span class="search-icon">⌕</span>
@@ -1338,7 +1449,7 @@
             </div>
 
             <!-- ARTICLES -->
-            <section class="articles-section">
+            <section class="articles-section" id="articlesSection">
                 <div class="section-header">
                     <span class="section-title"><span>//</span> 記事一覧</span>
                     <select class="sort-select" id="sortSelect">
@@ -1433,7 +1544,7 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">Uber Eats</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=ubereats.com&sz=32" alt="Uber Eats"></span>Uber Eats</span>
                                 <span class="referral-badge">¥3,000</span>
                             </div>
                             <p class="referral-benefit">¥2,000 以上の注文で使える ¥1,500 OFF クーポン2枚がもらえる。</p>
@@ -1446,7 +1557,7 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">menu</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=menu.jp&sz=32" alt="menu"></span>menu</span>
                                 <span class="referral-badge">¥8,000</span>
                             </div>
                             <p class="referral-benefit">¥1,200 OFF クーポン 2枚、¥700 OFF クーポン 8枚がもらえる。</p>
@@ -1466,7 +1577,7 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">GO</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=go.goinc.jp&sz=32" alt="GO"></span>GO</span>
                                 <span class="referral-badge">¥2,000</span>
                             </div>
                             <p class="referral-benefit">¥2,000 分の利用クーポンがもらえる。</p>
@@ -1479,7 +1590,7 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">LUUP</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=luup.sc&sz=32" alt="LUUP"></span>LUUP</span>
                                 <span class="referral-badge">¥600 相当</span>
                             </div>
                             <p class="referral-benefit">30 分ライド無料クーポンがもらえる。</p>
@@ -1492,7 +1603,7 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">三井のカーシェアーズ</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=carshares.jp&sz=32" alt="三井のカーシェアーズ"></span>三井のカーシェアーズ</span>
                                 <span class="referral-badge">¥500</span>
                             </div>
                             <p class="referral-benefit">¥500 分の利用クーポンがもらえる。</p>
@@ -1505,7 +1616,7 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">CHARGESPOT</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=chargespot.jp&sz=32" alt="CHARGESPOT"></span>CHARGESPOT</span>
                                 <span class="referral-badge">¥330 相当</span>
                             </div>
                             <p class="referral-benefit">1 時間充電無料クーポンがもらえる。</p>
@@ -1525,25 +1636,27 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">Wise</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=wise.com&sz=32" alt="Wise"></span>Wise</span>
                                 <span class="referral-badge">¥1,200 相当</span>
                             </div>
                             <p class="referral-benefit">5 年間使用可能なデビットカードの発行手数料が無料。</p>
                             <p class="referral-reason">海外通貨での支払い時の手数料が非常に安い。海外旅行や、海外サイトでのお買い物時の必須サービス。</p>
-                            <a href="https://wise.com/invite/ahpc/shinyat140" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
-                            <div class="referral-code-row">
-                                <span class="referral-code" id="code-wise">https://wise.com/invite/ahpc/shinyat140/</span>
-                                <button class="referral-copy-btn" data-target="code-wise" onclick="copyCode(this)">copy</button>
+                            <div class="referral-bottom">
+                                <a href="https://wise.com/invite/ahpc/shinyat140" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
+                                <div class="referral-code-row">
+                                    <span class="referral-code" id="code-wise">https://wise.com/invite/ahpc/shinyat140/</span>
+                                    <button class="referral-copy-btn" data-target="code-wise" onclick="copyCode(this)">copy</button>
+                                </div>
                             </div>
                         </div>
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">MEXC</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=mexc.com&sz=32" alt="MEXC"></span>MEXC</span>
                                 <span class="referral-badge">$60 相当</span>
                             </div>
                             <p class="referral-benefit">$60 相当の USDT がもらえる。</p>
-                            <p class="referral-reason">日本の仮想通貨取引所では購入できないアルトコインを購入できる。ただし、資産の保全は自己責任で。</p>
+                            <p class="referral-reason">日本の仮想通貨取引所では購入できないアルトコインを購入できる。ステーキング報酬も国内業者より高い。ただし、金融庁非公認のため、資産の保全は自己責任で。</p>
                             <div class="referral-code-row">
                                 <span class="referral-code" id="code-mexc">3vTbg</span>
                                 <button class="referral-copy-btn" data-target="code-mexc" onclick="copyCode(this)">copy</button>
@@ -1552,15 +1665,17 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">楽天証券</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=rakuten-sec.co.jp&sz=32" alt="楽天証券"></span>楽天証券</span>
                                 <span class="referral-badge">¥600</span>
                             </div>
                             <p class="referral-benefit">3ヶ月以内に総合口座を開設し、¥1,000 以上入金 & NISA口座開設 & iDeCo口座開設で、それぞれ 200 楽天ポイントがもらえる。</p>
                             <p class="referral-reason">楽天・プラスシリーズの管理費用が安い。楽天キャッシュを使って投資信託を購入すると、ポイントの多重取りができる。有効期限2026年5月末迄。</p>
-                            <a href="https://account.rakuten-sec.co.jp/ApplicationTop/introduceFriend.do?introClientCd=S1tPMBzOKCw%3D&hash=db421222b282bb6cfe554b00a45c29fe&introBranchCd=dURxjNkL8nw%3D&routeKey=SEC01001&urlSendDt=r%2B2aDjsN5t4H9UBAaAOoYA%3D%3D&sendSnsKbn=1" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
-                            <div class="referral-code-row">
-                                <span class="referral-code" id="code-rakuten">https://account.rakuten-sec.co.jp/ApplicationTop/introduceFriend.do?introClientCd=S1tPMBzOKCw%3D&hash=db421222b282bb6cfe554b00a45c29fe&introBranchCd=dURxjNkL8nw%3D&routeKey=SEC01001&urlSendDt=r%2B2aDjsN5t4H9UBAaAOoYA%3D%3D&sendSnsKbn=1</span>
-                                <button class="referral-copy-btn" data-target="code-rakuten" onclick="copyCode(this)">copy</button>
+                            <div class="referral-bottom">
+                                <a href="https://account.rakuten-sec.co.jp/ApplicationTop/introduceFriend.do?introClientCd=S1tPMBzOKCw%3D&hash=db421222b282bb6cfe554b00a45c29fe&introBranchCd=dURxjNkL8nw%3D&routeKey=SEC01001&urlSendDt=r%2B2aDjsN5t4H9UBAaAOoYA%3D%3D&sendSnsKbn=1" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
+                                <div class="referral-code-row">
+                                    <span class="referral-code" id="code-rakuten">https://account.rakuten-sec.co.jp/ApplicationTop/introduceFriend.do?introClientCd=S1tPMBzOKCw%3D&hash=db421222b282bb6cfe554b00a45c29fe&introBranchCd=dURxjNkL8nw%3D&routeKey=SEC01001&urlSendDt=r%2B2aDjsN5t4H9UBAaAOoYA%3D%3D&sendSnsKbn=1</span>
+                                    <button class="referral-copy-btn" data-target="code-rakuten" onclick="copyCode(this)">copy</button>
+                                </div>
                             </div>
                         </div>
 
@@ -1573,7 +1688,7 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">dynadot</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=dynadot.com&sz=32" alt="dynadot"></span>dynadot</span>
                                 <span class="referral-badge">$5</span>
                             </div>
                             <p class="referral-benefit">$9.99 以上の購入で使える $5 分の割引クーポンがもらえる。</p>
@@ -1586,15 +1701,17 @@
 
                         <div class="referral-card">
                             <div class="referral-card-header">
-                                <span class="referral-service">弁護士保険ミカタ</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=mikata-ins.co.jp&sz=32" alt="弁護士保険ミカタ"></span>弁護士保険ミカタ</span>
                                 <span class="referral-badge">¥0</span>
                             </div>
                             <p class="referral-benefit">特に招待コードはないが、強くおススメ。弁護士費用を最大9割負担できる、人生最大のお守りです。</p>
                             <p class="referral-reason">私は以前、交通事故に遭いました。保険に入っていたことで、精神的な負荷の大幅な軽減と、賠償金が2倍以上になりました。</p>
-                            <a href="https://mikata-ins.co.jp/person/details/" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
-                            <div class="referral-code-row">
-                                <span class="referral-code" id="code-mikata">https://mikata-ins.co.jp/person/details/</span>
-                                <button class="referral-copy-btn" data-target="code-mikata" onclick="copyCode(this)">copy</button>
+                            <div class="referral-bottom">
+                                <a href="https://mikata-ins.co.jp/person/details/" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
+                                <div class="referral-code-row">
+                                    <span class="referral-code" id="code-mikata">https://mikata-ins.co.jp/person/details/</span>
+                                    <button class="referral-copy-btn" data-target="code-mikata" onclick="copyCode(this)">copy</button>
+                                </div>
                             </div>
                         </div>
 
@@ -1609,17 +1726,178 @@
                 <p class="affiliate-desc"><span class="cmd">$</span> 実際に使っていておすすめできる商品。リンク経由で購入すると筆者に報酬が入る。</p>
 
                 <div class="referral-category">
-                    <span class="referral-category-label">カテゴリ名</span>
+                    <span class="referral-category-label">USB / 充電</span>
                     <div class="referral-grid">
 
-                        <div class="referral-card">
+                        <a href="https://s.click.aliexpress.com/e/_c42PxLnv" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://ae-pic-a1.aliexpress-media.com/kf/S40bfccfe5e2e450c89485c0030e4b682J.jpg_960x960q75.jpg_.avif" alt="AUFU 磁気アダプター USB Type-C"></div>
                             <div class="referral-card-header">
-                                <span class="referral-service">iTunes Gift 500 TRY</span>
-                                <span class="referral-badge">G2A</span>
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=aliexpress.com&sz=32" alt="AliExpress"></span>AUFU 磁気アダプター USB Type-C</span>
+                                <span class="referral-badge">¥800 前後</span>
                             </div>
-                            <p class="referral-benefit">サービス料も含めると大手で最安値で、購入後すぐにチャージできる。Appleアカウントでトルコリラ払いをする時に必須の商品。</p>
-                            <a href="https://www.g2a.com/n/500try" target="_blank" rel="noopener noreferrer" class="referral-link">リンクを開く</a>
-                        </div>
+                            <p class="referral-benefit">USB Type-C ケーブルを、簡単に付け外しできるようにしつつ、充電速度を表示できる。DP Alt Mode にも対応。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://amzn.to/4tW1Cwp" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://m.media-amazon.com/images/I/612Xadd1WML._AC_SL1500_.jpg" alt="NewQ USB Type-C ハブ 6ポート+HDMI"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=amazon.com&sz=32" alt="Amazon"></span>NewQ USB Type-C ハブ 6-in-1</span>
+                                <span class="referral-badge">¥8,000 前後</span>
+                            </div>
+                            <p class="referral-benefit">USB Type-C ハブ。100W 充電、DP Alt Mode、HDMI、SDカード、USB-Aポート等に対応。移動の際の付け外しがこれ一本で完結する。磁気アダプターと組み合わせるとより便利。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://s.click.aliexpress.com/e/_c4NF3fzl" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://ae-pic-a1.aliexpress-media.com/kf/Sf775e448c211481a84468541fb67a8e1y.jpg?has_lang=1&ver=2_220x220q75.jpg_.avif" alt="Toocki USB Type C 100W ディスプレイケーブル"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=aliexpress.com&sz=32" alt="AliExpress"></span>Toocki USB Type C 100W ディスプレイケーブル</span>
+                                <span class="referral-badge">¥600 前後</span>
+                            </div>
+                            <p class="referral-benefit">充電速度が表示できる最大100Wの給電可能な USB Type C ケーブル。Toockiは、深圳の有名メーカーで信頼性もありおススメ。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://s.click.aliexpress.com/e/_c4V7Hq51" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://ae-pic-a1.aliexpress-media.com/kf/S77f19bb02fd846efaca07871c5074340o.jpg_960x960q75.jpg_.avif" alt="Toocki 140W GaN USB Charger 5in1"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=aliexpress.com&sz=32" alt="AliExpress"></span>Toocki 140W GaN USB Charger 5in1</span>
+                                <span class="referral-badge">¥6,000 前後</span>
+                            </div>
+                            <p class="referral-benefit">充電速度が表示できる最大140Wの給電可能な USB 充電器。オフィスのデスクにこれがあれば、1つのコンセントで済ませることができます。Toockiは、深圳の有名メーカーで信頼性もありおススメ。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div class="referral-category">
+                    <span class="referral-category-label">ガジェット</span>
+                    <div class="referral-grid">
+
+                        <a href="https://www.g2a.com/n/500try" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://images.g2a.com/300x400/1x1x1/apple-itunes-gift-card-500-try-itunes-key-turkey-i10000156778201/837a904853ce412db624cde6" alt="iTunes Gift 500 TRY"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=g2a.com&sz=32" alt="G2A"></span>iTunes Gift 500 TRY</span>
+                                <span class="referral-badge">¥2,000 弱</span>
+                            </div>
+                            <p class="referral-benefit">サービス料も含めると大手で最安値。購入後すぐにチャージできる。Appleアカウントでトルコリラ払いをする時に必須。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://amzn.to/3P7lrSw" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://m.media-amazon.com/images/I/71AvF88EBPL._AC_SL1500_.jpg" alt="Amazon Echo Spot"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=amazon.com&sz=32" alt="Amazon"></span>Amazon Echo Spot</span>
+                                <span class="referral-badge">¥11,480</span>
+                            </div>
+                            <p class="referral-benefit">スマートディスプレイ兼スピーカー。情報の表示が必要最小限で、心地よいデザイン。IoT家電とスムーズに接続できて非常に便利。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://s.click.aliexpress.com/e/_c2uA1far" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://ae-pic-a1.aliexpress-media.com/kf/S6e9d53c8c3af479c9d7d16c0de201319z.jpg?has_lang=1&ver=2_960x960q75.jpg_.avif" alt="X8 ブラシレスブロワー"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=aliexpress.com&sz=32" alt="AliExpress"></span>X8 ブラシレスブロワー</span>
+                                <span class="referral-badge">¥2,000 前後</span>
+                            </div>
+                            <p class="referral-benefit">エアダスターのスプレー缶を買うよりずっと経済的。風速が強く、Amazonで買うより安価でオススメです。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://s.click.aliexpress.com/e/_c3Y0qnj1" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://ae-pic-a1.aliexpress-media.com/kf/H828aa6c1c1fa4418a3ee1a0c1e69085aC.jpg?has_lang=1&ver=1_960x960q75.jpg_.avif" alt="XlitET 自転車スマートテールライト"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=aliexpress.com&sz=32" alt="AliExpress"></span>XlitET 自転車スマートテールライト</span>
+                                <span class="referral-badge">¥2,000 前後</span>
+                            </div>
+                            <p class="referral-benefit">サドルのポールに取り付けるため、どんな自転車にもしっかり固定できます。USB Type C で充電でき、光量も強くて、夜間の事故防止に役立ちます。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div class="referral-category">
+                    <span class="referral-category-label">健康 / ウェルネス</span>
+                    <div class="referral-grid">
+
+                        <a href="https://amzn.to/48OK1y2" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://m.media-amazon.com/images/I/81UMgub5K+L._AC_SL1500_.jpg" alt="ペラックT錠a 36錠"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=amazon.com&sz=32" alt="Amazon"></span>ペラックT錠a 36錠</span>
+                                <span class="referral-badge">¥1,000 強</span>
+                            </div>
+                            <p class="referral-benefit">少し喉が痛いという時のお供。総合感冒薬と違い、解熱成分など風邪の初期には不要な成分が入っていないので、安心して服薬できる。Amazonで購入するのが一番安い。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://a.r10.to/hkHMT7" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://shop.r10s.jp/naturein-store/cabinet/naturein/12612851/imgrc0097233266.jpg" alt="Nature In 高濃度ビタミンD3+K2 90日分"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=rakuten.co.jp&sz=32" alt="楽天市場"></span>Nature In 高濃度ビタミンD3+K2 90日分</span>
+                                <span class="referral-badge">¥2,490</span>
+                            </div>
+                            <p class="referral-benefit">数十年の研究のエビデンスがある安定の組み合わせ。有名なアメリカの製品は、厚労省の推奨上限超えているのでこちらがおススメ。株式会社Leepは、比較的大手で自社工場があり信頼性高め。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://a.r10.to/hRrrVV" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://shop.r10s.jp/naturein-store/cabinet/naturein/11448628/imgrc0097236343.jpg" alt="Nature In 高濃度 NMN サプリメント 100日分"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=rakuten.co.jp&sz=32" alt="楽天市場"></span>Nature In 高濃度 NMN サプリメント 100日分</span>
+                                <span class="referral-badge">¥3,990</span>
+                            </div>
+                            <p class="referral-benefit">エビデンスは少なめなものの、直近の研究では効果が高い可能性が示唆されている成分。株式会社Leepは、比較的大手で自社工場があり信頼性高め。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://a.r10.to/hPYA5d" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://shop.r10s.jp/leep/cabinet/roun/imgrc0123171922.jpg" alt="CBD スポーツバーム 15g"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=rakuten.co.jp&sz=32" alt="楽天市場"></span>CBD スポーツバーム 15g</span>
+                                <span class="referral-badge">¥2,990</span>
+                            </div>
+                            <p class="referral-benefit">CBDは筋弛緩作用の効果がある成分。メントールも相まって、肩こりに気持ち良い。株式会社Leepは、比較的大手で自社工場があり信頼性高め。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
+
+                        <a href="https://amzn.to/4uIoVKl" target="_blank" rel="noopener noreferrer" class="referral-card affiliate-card">
+                            <div class="affiliate-img-wrap"><img src="https://m.media-amazon.com/images/I/814OpWk9MeL._SL1500_.jpg" alt="世界最新の太らないカラダ"></div>
+                            <div class="referral-card-header">
+                                <span class="referral-service"><span class="referral-logo-wrap"><img src="https://www.google.com/s2/favicons?domain=amazon.com&sz=32" alt="Amazon"></span>世界最新の太らないカラダ</span>
+                                <span class="referral-badge">¥1,760</span>
+                            </div>
+                            <p class="referral-benefit">現代人は食べ過ぎている。必ずしも朝昼晩きっちりと食べる必要はない。無理しない範囲ならファスティングはとても心地良いと感じられるはず。</p>
+                            <div class="affiliate-footer">
+                                <span class="affiliate-arrow">→</span>
+                            </div>
+                        </a>
 
                     </div>
                 </div>
