@@ -1457,12 +1457,12 @@
                         <span class="stat-label">articles</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-num">∞</span>
-                        <span class="stat-label">exploits</span>
+                        <span class="stat-num" id="codeCount">0</span>
+                        <span class="stat-label">code</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-num">0</span>
-                        <span class="stat-label">liability</span>
+                        <span class="stat-num" id="recommendCount">0</span>
+                        <span class="stat-label">recommend</span>
                     </div>
                 </div>
             </section>
@@ -2082,6 +2082,8 @@
 
         // Article count
         document.getElementById('articleCount').textContent = document.querySelectorAll('.article-card').length;
+        document.getElementById('codeCount').textContent = document.querySelectorAll('.referral-card:not(.affiliate-card)').length;
+        document.getElementById('recommendCount').textContent = document.querySelectorAll('.affiliate-card').length;
 
         // Referral code copy
         function copyCode(btn) {
@@ -2102,6 +2104,17 @@
             });
         }
         window.copyCode = copyCode;
+
+        // 新規タブで #hash 付き URL を開いた際、scroll-padding-top が適用されないブラウザ向けの補正
+        if (window.location.hash) {
+            window.addEventListener('load', () => {
+                const el = document.querySelector(window.location.hash);
+                if (el) {
+                    const y = el.getBoundingClientRect().top + window.scrollY - 56;
+                    window.scrollTo({ top: y, behavior: 'instant' });
+                }
+            });
+        }
     </script>
 
     <script src="../data/buy-me-a-coffee.js"></script>
