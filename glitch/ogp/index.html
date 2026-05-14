@@ -369,7 +369,8 @@
               </div>
             </div>
           </div>
-          <div style={{ flex: 1, position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+            <img src={tweak.imageUrl} crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '180px', background: 'linear-gradient(to right, #0d0d0d, rgba(13,13,13,0))' }}></div>
           </div>
         </div>
@@ -381,7 +382,7 @@
       return (
         <div style={{ position: 'relative', width: 1200, height: 630, background: '#09090e', overflow: 'hidden', display: 'flex', flexDirection: 'column', fontFamily: "'JetBrains Mono',monospace" }}>
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+            <img src={tweak.imageUrl} crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '100px', background: 'linear-gradient(to bottom, transparent, #09090e)' }}></div>
           </div>
           <div style={{ flexShrink: 0, padding: '20px 36px 28px 36px', background: '#09090e', borderLeft: `4px solid ${tweak.accentColor}`, display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -405,7 +406,8 @@
       const tags = [tweak.tag1, tweak.tag2, tweak.tag3].filter(Boolean);
       return (
         <div style={{ position: 'relative', width: 1200, height: 630, background: '#09090e', overflow: 'hidden', display: 'flex', fontFamily: "'JetBrains Mono',monospace" }}>
-          <div style={{ flex: '0 0 876px', position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <div style={{ flex: '0 0 876px', position: 'relative', overflow: 'hidden' }}>
+            <img src={tweak.imageUrl} crossOrigin="anonymous" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '180px', background: 'linear-gradient(to right, rgba(9,9,14,0), #09090e)' }}></div>
           </div>
           <div style={{ flex: 1, background: '#09090e', padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', marginLeft: '-1px', position: 'relative' }}>
