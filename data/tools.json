@@ -7,5 +7,14 @@
     "category": "converter",
     "description": "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
     "tags": ["CSV", "JSON", "変換"]
+  },
+  {
+    "id": 2,
+    "title": "Light SVG - シンプルSVG軽量化ツール",
+    "url": "https://tk.st/tools/light-svg/",
+    "imageUrl": "https://tk.st/images/ogp/light-svg-ogp.png",
+    "category": "optimizer",
+    "description": "面倒な設定なしでSVGファイルを1クリック軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。",
+    "tags": ["SVG", "軽量化", "最適化"]
   }
 ]
