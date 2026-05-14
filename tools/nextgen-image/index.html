@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="画像やHEICをブラウザ上で軽量な次世代フォーマット（WEBP, AVIF）に変換する無料ツールです。メタデータ（Exif等）も自動で削除され、安全・高速に処理されます。">
+  <title>NextGen Image - 次世代画像変換ツール | ST TOOLS</title>
+  <link rel="canonical" href="https://tk.st/tools/nextgen-image/">
+  <link rel="author" href="https://tk.st/">
+  
+  <!-- OGP / Twitter -->
+  <meta property="og:title" content="NextGen Image - 次世代画像変換ツール">
+  <meta property="og:description" content="画像やHEICをブラウザ上で軽量な次世代フォーマット（WEBP, AVIF）に変換する無料ツールです。メタデータ（Exif等）も自動で削除され、安全・高速に処理されます。">
+  <meta property="og:image" content="https://tk.st/images/ogp/nextgen-image-ogp.png">
+  <meta property="og:url" content="https://tk.st/tools/nextgen-image/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NextGen Image - 次世代画像変換ツール">
+  <meta name="twitter:description" content="画像やHEICをブラウザ上で軽量な次世代フォーマット（WEBP, AVIF）に変換する無料ツールです。メタデータ（Exif等）も自動で削除され、安全・高速に処理されます。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/nextgen-image-ogp.png">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
+          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"},
+          {"@type": "ListItem", "position": 3, "name": "NextGen Image", "item": "https://tk.st/tools/nextgen-image/"}
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "NextGen Image",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "description": "画像やHEICをブラウザ上で軽量な次世代フォーマット（WEBP, AVIF）に変換。Exif削除対応の安全なツールです。",
+        "url": "https://tk.st/tools/nextgen-image/",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "JPY"
+        }
+      }
+    ]
+  }
+  </script>
+  
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='100%25' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cg transform='translate(4, 4)' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml">
+  
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      background-color: #f0fdfa;
+      color: #0f172a;
+      font-family: "Inter", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, .font-outfit {
+      font-family: "Outfit", system-ui, sans-serif;
+    }
+
+    /* Animated Background */
+    .bg-mesh {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #f0fdfa;
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(52, 211, 153, 0.05) 0px, transparent 50%);
+      z-index: -1;
+      animation: mesh-pulse 15s ease-in-out infinite alternate;
+    }
+
+    @keyframes mesh-pulse {
+      0% { opacity: 0.8; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .site-header {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .options-panel {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    .dropzone {
+      position: relative;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px dashed rgba(16, 185, 129, 0.3);
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+      transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02);
+    }
+    
+    .dropzone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 300ms ease;
+      pointer-events: none;
+    }
+
+    .dropzone.dragover {
+      border-color: #10b981;
+      background: rgba(255, 255, 255, 0.9);
+      transform: scale(1.02);
+      box-shadow: 0 20px 40px -5px rgba(16, 185, 129, 0.15);
+    }
+
+    .dropzone.dragover::before {
+      opacity: 1;
+    }
+
+    .dropzone:focus-visible {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .dropzone-content {
+      position: relative;
+      z-index: 10;
+    }
+
+    .float-anim {
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .btn-glow {
+      position: relative;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      transition: all 200ms ease;
+    }
+    
+    .btn-glow::before {
+      content: '';
+      position: absolute;
+      top: -2px; left: -2px; right: -2px; bottom: -2px;
+      background: linear-gradient(135deg, #34d399, #60a5fa, #34d399);
+      z-index: -1;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity 200ms ease;
+      filter: blur(8px);
+    }
+
+    .btn-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-glow:hover::before {
+      opacity: 1;
+    }
+
+    .btn-glow:active {
+      transform: translateY(0);
+    }
+    
+    .btn-glow:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-glow:disabled::before {
+      display: none;
+    }
+
+    .result-card {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+    }
+
+    .format-btn {
+      border: 2px solid #e2e8f0;
+      background: white;
+      color: #64748b;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .format-btn.active {
+      border-color: #10b981;
+      background: #ecfdf5;
+      color: #059669;
+      font-weight: 600;
+    }
+
+    /* Range Input Customization */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      margin-top: -6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      cursor: pointer;
+      background: #e2e8f0;
+      border-radius: 2px;
+    }
+
+    .url-input-container {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      padding: 12px;
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .url-input {
+      flex: 1;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .url-input:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .url-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .url-btn:hover {
+      background: #059669;
+    }
+
+    .hidden { display: none !important; }
+    .fade-in { animation: fadeIn 300ms ease-out forwards; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <div class="bg-mesh"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <a href="https://tk.st/tools/" class="flex items-center gap-2.5 text-slate-500 hover:text-emerald-600 transition-colors group">
+          <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+          <span class="text-sm font-medium tracking-wide">ST TOOLS</span>
+        </a>
+        <div class="flex items-center gap-3 relative">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-blue-600 flex items-center justify-center shadow-md">
+            <i data-lucide="image" class="w-4 h-4 text-white"></i>
+          </div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-800 font-outfit">NextGen Image</h1>
+        </div>
+        <div class="w-[84px] hidden sm:block"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-10 lg:py-16 flex flex-col items-center justify-start">
+    
+    <div class="text-center mb-8 max-w-2xl flex flex-col items-center">
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 mb-4 font-outfit leading-normal pb-2">
+        Lighter, Faster<br/>Web Images.
+      </h2>
+      <p class="text-slate-500 text-base sm:text-lg">
+        画像やHEICをWEBP/AVIFに一発変換。<br class="hidden sm:block">次世代フォーマットでウェブサイトを高速化しましょう。
+      </p>
+    </div>
+
+    <!-- Options Panel -->
+    <div class="w-full max-w-2xl options-panel flex flex-col sm:flex-row items-center justify-between gap-6">
+      
+      <!-- Format Selection -->
+      <div class="flex flex-col items-center sm:items-start gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">出力フォーマット</span>
+        <div class="flex gap-2" id="format-selection">
+          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
+          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="avif">AVIF</button>
+        </div>
+      </div>
+
+      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+
+      <!-- Quality Setting -->
+      <div class="flex flex-col items-center sm:items-start gap-2 flex-1 w-full max-w-[200px]">
+        <div class="flex justify-between w-full">
+          <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider">画質品質</label>
+          <span id="quality-val" class="text-xs font-bold text-emerald-600">80%</span>
+        </div>
+        <input type="range" id="opt-quality" min="10" max="100" value="80">
+      </div>
+
+      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+
+      <!-- Metadata Setting -->
+      <div class="flex flex-col items-center sm:items-start gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">メタデータ</span>
+        <label class="flex items-center gap-2 cursor-pointer mt-1">
+          <input type="checkbox" id="opt-metadata" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" checked>
+          <span class="text-sm font-medium text-slate-700">Exif情報を削除</span>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- View 1: Upload Zone -->
+    <div id="view-upload" class="w-full max-w-2xl fade-in mt-4">
+      <div id="dropzone" class="dropzone p-8 sm:p-16 text-center cursor-pointer group" role="button" tabindex="0" aria-label="画像ファイルをドロップまたは選択">
+        <input type="file" id="file-input" accept="image/*,.heic,.heif" class="hidden">
+        
+        <div class="dropzone-content flex flex-col items-center gap-6 pointer-events-none">
+          <div class="relative flex items-center justify-center gap-4">
+            <div class="w-20 h-20 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center float-anim group-hover:bg-emerald-50 transition-colors shadow-sm z-10 relative">
+              <i data-lucide="image-plus" class="w-10 h-10 text-emerald-500"></i>
+            </div>
+            <!-- Behind decoration -->
+            <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 border-2 border-white flex items-center justify-center float-anim shadow-md z-20" style="animation-delay: 0.5s;">
+              <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+            </div>
+          </div>
+          
+          <div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">画像ファイルをドロップ または 貼り付け</h3>
+            <p class="text-slate-500 text-sm">JPG, PNG, HEICなど | クリップボードからペースト(Ctrl+V)も可能</p>
+          </div>
+          
+          <div class="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 font-semibold tracking-wide flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-3 h-3 text-emerald-500"></i>
+            ブラウザ内で処理されるため安全です
+          </div>
+        </div>
+      </div>
+
+      <div class="url-input-container">
+        <i data-lucide="link" class="w-5 h-5 text-slate-400 self-center ml-1"></i>
+        <input type="url" id="url-input" class="url-input" placeholder="画像のURLを貼り付けてインポート...">
+        <button id="url-btn" class="url-btn">インポート</button>
+      </div>
+    </div>
+
+    <!-- View 2: Loading / Processing -->
+    <div id="view-loading" class="w-full max-w-md hidden text-center py-16 mt-4" role="status" aria-live="polite">
+      <div class="inline-block relative w-20 h-20 mb-6">
+        <svg class="animate-spin w-full h-full text-emerald-200" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8">
+          <i data-lucide="loader" class="w-8 h-8 text-emerald-500" style="animation: spin 3s linear infinite reverse;"></i>
+        </div>
+      </div>
+      <h3 id="loading-msg" class="text-xl font-bold text-slate-800">処理中...</h3>
+      <p id="loading-submsg" class="text-slate-500 text-sm mt-2">画像を変換しています</p>
+      <div class="progress-bar-container mt-6">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <div id="progress-text" class="text-xs font-medium text-slate-500 mt-2 text-right">0%</div>
+    </div>
+
+    <!-- View 3: Result -->
+    <div id="view-result" class="w-full max-w-3xl hidden mt-4">
+      <div class="result-card p-6 sm:p-8">
+        
+        <div class="flex flex-col lg:flex-row items-center gap-8 mb-8">
+          <!-- Preview Image -->
+          <div class="w-full lg:w-1/2 flex flex-col items-center">
+            <div class="w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center min-h-[200px] relative">
+              <img id="result-preview" src="" alt="Converted Image" class="max-w-full max-h-[300px] object-contain checkerboard-bg">
+            </div>
+          </div>
+          
+          <!-- Details -->
+          <div class="w-full lg:w-1/2 flex flex-col justify-center">
+            <div class="grid grid-cols-2 gap-4 mb-6">
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">フォーマット</span>
+                <span id="result-format" class="text-xl font-outfit font-extrabold text-slate-700">WEBP</span>
+              </div>
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">ファイルサイズ</span>
+                <span id="result-size" class="text-xl font-outfit font-extrabold text-slate-700">0 KB</span>
+              </div>
+            </div>
+            
+            <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-8 py-4 rounded-xl w-full text-lg shadow-lg">
+              <i data-lucide="download" class="w-6 h-6"></i>
+              画像をダウンロード
+            </button>
+            
+            <button id="btn-reset" class="mt-4 text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors underline-offset-4 hover:underline text-center w-full">
+              別の画像を変換する
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="mt-auto border-t border-slate-200 bg-white/50 backdrop-blur-md">
+    <div class="max-w-4xl mx-auto px-4 py-6 flex items-center justify-center relative">
+      <span class="text-xs sm:text-sm text-slate-400 font-medium tracking-wide">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <div id="donation-button-container" class="absolute right-4 sm:right-6"></div>
+    </div>
+  </footer>
+
+  <script src="../../data/buy-me-a-coffee.js"></script>
+  <script>
+    new DonationWidget({ containerId: 'donation-button-container' }).init();
+    if (window.lucide) lucide.createIcons();
+  </script>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50 pointer-events-none" role="status">
+    <i id="toast-icon-success" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+    <i id="toast-icon-error" data-lucide="alert-circle" class="w-5 h-5 text-rose-400 hidden"></i>
+    <span id="toast-msg" class="text-sm font-medium"></span>
+  </div>
+
+  <style>
+    .checkerboard-bg {
+      background-image: 
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background-color: #f1f5f9;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #3b82f6);
+      width: 0%;
+      transition: width 0.2s ease-out;
+    }
+
+    .progress-bar.indeterminate {
+      width: 40% !important;
+      animation: progress-indeterminate 1.4s ease-in-out infinite;
+    }
+
+    @keyframes progress-indeterminate {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(250%); }
+    }
+  </style>
+
+  <script>
+    lucide.createIcons();
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // Elements
+    const formatBtns = document.querySelectorAll('.format-btn');
+    let selectedFormat = 'webp';
+
+    formatBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        formatBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedFormat = btn.dataset.format;
+      });
+    });
+
+    const optQuality = document.getElementById('opt-quality');
+    const qualityVal = document.getElementById('quality-val');
+    optQuality.addEventListener('input', (e) => {
+      qualityVal.textContent = e.target.value + '%';
+    });
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const viewUpload = document.getElementById('view-upload');
+    const viewLoading = document.getElementById('view-loading');
+    const viewResult = document.getElementById('view-result');
+    
+    const loadingMsg = document.getElementById('loading-msg');
+    const loadingSubmsg = document.getElementById('loading-submsg');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    const resultPreview = document.getElementById('result-preview');
+    const resultFormat = document.getElementById('result-format');
+    const resultSize = document.getElementById('result-size');
+    const btnDownload = document.getElementById('btn-download');
+    const btnReset = document.getElementById('btn-reset');
+    
+    const urlInput = document.getElementById('url-input');
+    const urlBtn = document.getElementById('url-btn');
+
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-msg');
+    const toastIconSuccess = document.getElementById('toast-icon-success');
+    const toastIconError = document.getElementById('toast-icon-error');
+    let toastTimer = null;
+
+    let resultBlobUrl = null;
+    let resultFilename = 'output.webp';
+    let isProcessing = false;
+
+    let ffmpeg = null;
+    let conversionStarted = false;
+    let ffmpegLogBuffer = [];
+
+    function buildFFmpegError(exitCode, hint) {
+      const tail = ffmpegLogBuffer.slice(-15).join('\n');
+      const lower = tail.toLowerCase();
+      let summary = hint;
+      if (!summary) {
+        if (/unknown encoder|encoder .* not found|encoder not found/.test(lower)) {
+          summary = 'このフォーマット用のエンコーダが現在のビルドに含まれていません';
+        } else {
+          const m = tail.match(/error[^\n]*/i);
+          summary = m ? m[0] : `FFmpeg がコード ${exitCode} で終了しました`;
+        }
+      }
+      console.error('[ffmpeg log tail]\n' + tail);
+      return new Error(summary);
+    }
+
+    async function initFFmpeg() {
+      if (ffmpeg) return ffmpeg;
+
+      const { FFmpeg } = FFmpegWASM;
+      const { toBlobURL } = FFmpegUtil;
+      ffmpeg = new FFmpeg();
+
+      ffmpeg.on('log', ({ message }) => {
+        console.log('[ffmpeg]', message);
+        ffmpegLogBuffer.push(message);
+        if (ffmpegLogBuffer.length > 30) ffmpegLogBuffer.shift();
+      });
+
+      ffmpeg.on('progress', ({ progress }) => {
+        if (!conversionStarted) return;
+        const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+        if (progressBar.classList.contains('indeterminate')) {
+          progressBar.classList.remove('indeterminate');
+        }
+        progressBar.style.width = `${pct}%`;
+        progressText.textContent = `${pct}%`;
+      });
+
+      const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
+      const ffmpegBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
+
+      const classWorkerURL = await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript');
+      const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
+      const wasmURL = await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm');
+
+      await ffmpeg.load({ classWorkerURL, coreURL, wasmURL });
+      return ffmpeg;
+    }
+
+    function formatBytes(bytes, decimals = 2) {
+      if (!bytes || bytes <= 0) return '0 B';
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function showToast(message, type = 'success') {
+      toastMsg.textContent = message;
+      if (type === 'error') {
+        toastIconSuccess.classList.add('hidden');
+        toastIconError.classList.remove('hidden');
+      } else {
+        toastIconSuccess.classList.remove('hidden');
+        toastIconError.classList.add('hidden');
+      }
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function switchView(viewId) {
+      viewUpload.classList.add('hidden');
+      viewLoading.classList.add('hidden');
+      viewResult.classList.add('hidden');
+      
+      const target = document.getElementById(viewId);
+      target.classList.remove('hidden');
+      target.classList.add('fade-in');
+    }
+
+    async function processImage(file) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      switchView('view-loading');
+      loadingMsg.textContent = '処理中...';
+      loadingSubmsg.textContent = '画像を変換しています';
+
+      if (resultBlobUrl) {
+        URL.revokeObjectURL(resultBlobUrl);
+        resultBlobUrl = null;
+      }
+
+      try {
+        let processFile = file;
+
+        // HEIC conversion
+        const nameLower = file.name.toLowerCase();
+        const isHeic = nameLower.endsWith('.heic') || nameLower.endsWith('.heif')
+          || file.type === 'image/heic' || file.type === 'image/heif';
+        if (isHeic) {
+          loadingMsg.textContent = 'HEICをデコード中...';
+          loadingSubmsg.textContent = '少し時間がかかる場合があります';
+          const conversionResult = await heic2any({ blob: file, toType: 'image/png' });
+          const blobArr = Array.isArray(conversionResult) ? conversionResult : [conversionResult];
+          processFile = new File(blobArr, file.name.replace(/\.heic$|\.heif$/i, '.png'), { type: 'image/png' });
+        }
+
+        // FFmpeg processing
+        const optMetadata = document.getElementById('opt-metadata');
+        const removeMetadata = optMetadata.checked;
+        const quality = parseInt(optQuality.value);
+        
+        loadingMsg.textContent = 'FFmpeg初期化中...';
+        loadingSubmsg.textContent = 'エンジンを読み込んでいます';
+        progressBar.classList.remove('indeterminate');
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+        
+        const ff = await initFFmpeg();
+        const { fetchFile } = FFmpegUtil;
+
+        loadingMsg.textContent = 'エンコード中...';
+        loadingSubmsg.textContent = selectedFormat === 'avif'
+          ? 'AVIFは品質重視のため時間がかかる場合があります'
+          : `${selectedFormat.toUpperCase()}フォーマットを作成中`;
+
+        const sourceName = processFile.name || 'image.png';
+        const dotIdx = sourceName.lastIndexOf('.');
+        const inputExt = dotIdx >= 0 ? sourceName.slice(dotIdx).toLowerCase().replace(/[^a-z0-9.]/g, '') : '.png';
+        const inputName = 'input_' + Date.now() + inputExt;
+        const outputName = 'output_' + Date.now() + '.' + selectedFormat;
+
+        await ff.writeFile(inputName, await fetchFile(processFile));
+
+        const args = ['-i', inputName];
+        if (removeMetadata) {
+          args.push('-map_metadata', '-1');
+        } else {
+          args.push('-map_metadata', '0'); // Explicitly map global metadata
+        }
+
+        conversionStarted = true;
+        ffmpegLogBuffer = [];
+
+        if (selectedFormat === 'webp') {
+          // libwebp does not emit reliable progress events; show an indeterminate bar instead.
+          progressBar.classList.add('indeterminate');
+          progressText.textContent = '';
+          args.push('-c:v', 'libwebp', '-quality', quality.toString(), outputName);
+        } else if (selectedFormat === 'avif') {
+          const crf = Math.round(63 - (quality / 100) * 63);
+          args.push('-c:v', 'libaom-av1', '-crf', crf.toString(), '-b:v', '0', '-cpu-used', '6', '-row-mt', '1', '-strict', 'experimental', outputName);
+        }
+
+        let exitCode;
+        try {
+          exitCode = await ff.exec(args);
+        } finally {
+          conversionStarted = false;
+        }
+
+        if (exitCode !== 0) throw buildFFmpegError(exitCode);
+
+        const data = await ff.readFile(outputName);
+        const mimeType = `image/${selectedFormat}`;
+        const outputBlob = new Blob([data], { type: mimeType });
+
+        try { await ff.deleteFile(inputName); } catch (_) {}
+        try { await ff.deleteFile(outputName); } catch (_) {}
+
+        // Determine output filename
+        const dot = file.name.lastIndexOf('.');
+        const baseName = dot >= 0 ? file.name.slice(0, dot) : file.name || 'image';
+        resultFilename = `${baseName}.${selectedFormat}`;
+        resultBlobUrl = URL.createObjectURL(outputBlob);
+
+        resultPreview.src = resultBlobUrl;
+        resultFormat.textContent = selectedFormat.toUpperCase();
+        resultSize.textContent = formatBytes(outputBlob.size);
+
+        switchView('view-result');
+        showToast('変換が完了しました！');
+
+      } catch (err) {
+        console.error('Image processing error:', err);
+        showToast('画像の処理中にエラーが発生しました', 'error');
+        switchView('view-upload');
+      } finally {
+        isProcessing = false;
+        fileInput.value = '';
+        progressBar.classList.remove('indeterminate');
+      }
+    }
+
+    function isPrivateHost(hostname) {
+      if (!hostname) return true;
+      const h = hostname.toLowerCase();
+      if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local')) return true;
+      if (h === '127.0.0.1' || h === '0.0.0.0' || h === '::1') return true;
+      if (/^10\./.test(h)) return true;
+      if (/^192\.168\./.test(h)) return true;
+      if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(h)) return true;
+      if (/^169\.254\./.test(h)) return true;
+      if (/^f[cd][0-9a-f]{2}:/i.test(h)) return true;
+      return false;
+    }
+
+    async function loadFromUrl(url) {
+      if (!url) return;
+
+      let urlObj;
+      try {
+        urlObj = new URL(url);
+      } catch (e) {
+        showToast('URLの形式が正しくありません', 'error');
+        return;
+      }
+      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+        showToast('http(s) のURLを指定してください', 'error');
+        return;
+      }
+      if (isPrivateHost(urlObj.hostname)) {
+        showToast('ローカル/プライベートIPのURLは利用できません', 'error');
+        return;
+      }
+
+      switchView('view-loading');
+      loadingMsg.textContent = 'ダウンロード中...';
+      loadingSubmsg.textContent = '画像を取得しています';
+
+      try {
+        let response;
+        let usedProxy = false;
+        try {
+          response = await fetch(url);
+          if (!response.ok) throw new Error('Fetch failed');
+        } catch (e) {
+          // Fallback to CORS proxy if direct fetch fails — notify the user that a third party will see the URL.
+          const ok = window.confirm(
+            '直接の画像取得に失敗しました。\n外部CORSプロキシ (corsproxy.io) 経由で再試行しますか？\n\n注意: プロキシ運営者にURLと画像内容が渡ります。'
+          );
+          if (!ok) throw new Error('User declined proxy');
+          console.warn('Direct fetch failed, trying CORS proxy...');
+          usedProxy = true;
+          response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+          if (!response.ok) throw new Error('Proxy fetch failed');
+        }
+
+        const blob = await response.blob();
+        let filename = 'downloaded_image';
+        const pathParts = urlObj.pathname.split('/');
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart && lastPart.includes('.')) {
+          filename = lastPart;
+        }
+
+        const file = new File([blob], filename, { type: blob.type });
+        if (usedProxy) showToast('プロキシ経由で取得しました');
+        processImage(file);
+      } catch (err) {
+        console.error('URL Load error:', err);
+        showToast('画像の取得に失敗しました。URLを確認してください。', 'error');
+        switchView('view-upload');
+      }
+    }
+
+    // Event Listeners
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) processImage(file);
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        processImage(file);
+      } else if (file && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif'))) {
+        processImage(file);
+      } else {
+        showToast('画像ファイルを選択してください', 'error');
+      }
+    });
+
+    // Paste event handling
+    document.addEventListener('paste', (e) => {
+      // Don't intercept if user is typing in a text input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          if (blob) {
+            const ext = (blob.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '');
+            const file = new File([blob], `pasted_image.${ext}`, { type: blob.type });
+            processImage(file);
+            return;
+          }
+        }
+      }
+    });
+
+    urlBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      if (url) loadFromUrl(url);
+    });
+
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const url = urlInput.value.trim();
+        if (url) loadFromUrl(url);
+      }
+    });
+
+    btnDownload.addEventListener('click', () => {
+      if (!resultBlobUrl) return;
+      const a = document.createElement('a');
+      a.href = resultBlobUrl;
+      a.download = resultFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
+    btnReset.addEventListener('click', () => {
+      switchView('view-upload');
+      if (resultBlobUrl) {
+        URL.revokeObjectURL(resultBlobUrl);
+        resultBlobUrl = null;
+      }
+      resultPreview.removeAttribute('src');
+      urlInput.value = '';
+    });
+
+  </script>
+</body>
+</html>

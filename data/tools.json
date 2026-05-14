@@ -34,5 +34,14 @@
     "category": "converter",
     "description": "PDFファイルをブラウザ上でJPG、PNG、WEBP、AVIF画像に変換。複数ページの場合は画像を分けて、ZIPファイルでダウンロードできます。",
     "tags": ["PDF", "JPG", "PNG", "WEBP", "AVIF", "変換"]
+  },
+  {
+    "id": 5,
+    "title": "NextGen Image - 次世代画像変換ツール",
+    "url": "https://tk.st/tools/nextgen-image/",
+    "imageUrl": "https://tk.st/images/ogp/nextgen-image-ogp.png",
+    "category": "converter",
+    "description": "画像やHEICをブラウザ上で軽量な次世代フォーマット（WEBP, AVIF）に変換。Exif削除も任意で選択できる安全なツールです。",
+    "tags": ["画像", "HEIC", "WEBP", "AVIF", "変換"]
   }
 ]
