@@ -574,12 +574,14 @@
       loadingMsg.textContent = '初期化中...';
       loadingSubmsg.textContent = 'FFmpegエンジンを読み込んでいます';
 
-      const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+      // Use ESM build of core because @ffmpeg/ffmpeg@0.12.10's worker is a module worker
+      // and falls back to `await import(coreURL)`, which requires a default export.
+      const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
       const ffmpegBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
 
       console.log('[init] fetching worker chunk');
       const classWorkerURL = await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript');
-      console.log('[init] fetching core js');
+      console.log('[init] fetching core js (ESM)');
       const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
       console.log('[init] fetching core wasm');
       const wasmURL = await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm');
