@@ -712,13 +712,13 @@
               originalFileSize = new Blob([svgStr]).size;
               processSvgText(svgStr, file.name);
             }, {
-              ltres: 1,
-              qtres: 1,
-              pathomit: 8,
+              ltres: 0.1,
+              qtres: 0.1,
+              pathomit: 0,
               colorsampling: 2,
-              numberofcolors: 16,
-              mincolorratio: 0.02,
-              colorquantcycles: 3,
+              numberofcolors: 256,
+              mincolorratio: 0,
+              colorquantcycles: 8,
               scale: 1
             });
           } catch(err) {
