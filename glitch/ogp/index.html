@@ -284,10 +284,13 @@
       );
     }
 
-    function TweakText({ label, value, placeholder, onChange }) {
+    function TweakText({ label, value, placeholder, onChange, multiline = false }) {
       return (
         <TweakRow label={label}>
-          <input className="twk-field" type="text" value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} />
+          {multiline
+            ? <textarea className="twk-field" value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} style={{ height: '72px', padding: '4px 8px', resize: 'vertical' }} />
+            : <input className="twk-field" type="text" value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} />
+          }
         </TweakRow>
       );
     }
@@ -312,7 +315,7 @@
       tag3: '',
       readTime: '8分',
       title: 'Claude Code を DeepSeek で動かして\nAPI コストを 95% 削る方法',
-      date: '2026.05.01',
+      date: (() => { const d = new Date(); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; })(),
       accentColor: '#00e5ff',
       accent2Color: '#ff00ff',
       imageUrl: PLACEHOLDER_IMG
@@ -475,10 +478,13 @@
             useCORS: true, logging: false
           });
           const mime = fmt === 'png' ? 'image/png' : 'image/webp';
+          const safeNum = String(tweak.articleNum).replace(/[^a-zA-Z0-9\-_]/g, '');
           const a = document.createElement('a');
           a.href = canvas.toDataURL(mime, fmt === 'png' ? undefined : 0.92);
-          a.download = `glitch-${tweak.articleNum}-ogp.${fmt}`;
+          a.download = `glitch-${safeNum}-ogp.${fmt}`;
+          document.body.appendChild(a);
           a.click();
+          document.body.removeChild(a);
         } catch (e) {
           alert('画像生成に失敗しました: ' + e.message);
         } finally {
@@ -527,7 +533,6 @@
           </div>
 
           <TweaksPanel title="Tweaks">
-            <TweakSection label="記事情報" />
             <TweakText label="記事番号" value={tweak.articleNum} onChange={v => setTweak('articleNum', v)} />
             <TweakText label="タグ1" value={tweak.tag1} onChange={v => setTweak('tag1', v)} />
             <TweakText label="タグ2" value={tweak.tag2} onChange={v => setTweak('tag2', v)} />
@@ -535,8 +540,7 @@
             <TweakText label="読了時間" value={tweak.readTime} onChange={v => setTweak('readTime', v)} />
             <TweakText label="日付" value={tweak.date} onChange={v => setTweak('date', v)} />
 
-            <TweakSection label="タイトル" />
-            <TweakText label="タイトル（\nで改行）" value={tweak.title} onChange={v => setTweak('title', v)} />
+            <TweakText label="タイトル（Enterで改行）" value={tweak.title} onChange={v => setTweak('title', v)} multiline />
 
             <TweakSection label="スタイル" />
             <TweakColor label="アクセントカラー 1" value={tweak.accentColor} onChange={v => setTweak('accentColor', v)} />
