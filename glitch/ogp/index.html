@@ -472,10 +472,36 @@
 
         await document.fonts.ready;
         await new Promise(r => setTimeout(r, 300));
+
+        // Pre-bake each <img> at its rendered size with object-fit:cover applied,
+        // so html2canvas only has to blit at 1:1 (avoids scaling/tiling artifacts).
+        await Promise.all([...tmp.querySelectorAll('img')].map(img => new Promise(resolve => {
+          const bake = () => {
+            const w = Math.round(img.getBoundingClientRect().width);
+            const h = Math.round(img.getBoundingClientRect().height);
+            if (!w || !h || !img.naturalWidth) { resolve(); return; }
+            const c = document.createElement('canvas');
+            c.width = w;
+            c.height = h;
+            const ctx = c.getContext('2d');
+            const scale = Math.max(c.width / img.naturalWidth, c.height / img.naturalHeight);
+            const dw = img.naturalWidth * scale;
+            const dh = img.naturalHeight * scale;
+            ctx.drawImage(img, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+            const baked = c.toDataURL('image/png');
+            const onLoad = () => { img.removeEventListener('load', onLoad); resolve(); };
+            img.addEventListener('load', onLoad);
+            img.style.objectFit = 'fill';
+            img.src = baked;
+          };
+          if (img.complete && img.naturalWidth) bake();
+          else { img.addEventListener('load', bake, { once: true }); img.addEventListener('error', resolve, { once: true }); }
+        })));
+
         try {
           const bgMap = { 'Terminal': '#0d0d0d', 'Caption': '#09090e', 'Split': '#09090e' };
           const canvas = await html2canvas(tmp, {
-            width: 1200, height: 630, scale: 2,
+            width: 1200, height: 630, scale: 1,
             backgroundColor: bgMap[tweak.variant],
             useCORS: true, logging: false
           });
