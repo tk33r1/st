@@ -57,8 +57,8 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   
   <!-- ffmpeg.wasm dependencies -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -574,13 +574,19 @@
       loadingMsg.textContent = '初期化中...';
       loadingSubmsg.textContent = 'FFmpegエンジンを読み込んでいます';
 
-      const coreBase = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-      const ffmpegBase = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd';
-      await ffmpeg.load({
-        classWorkerURL: await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript'),
-        coreURL: await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm')
-      });
+      const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+      const ffmpegBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
+
+      console.log('[init] fetching worker chunk');
+      const classWorkerURL = await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript');
+      console.log('[init] fetching core js');
+      const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
+      console.log('[init] fetching core wasm');
+      const wasmURL = await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm');
+      console.log('[init] calling ffmpeg.load');
+
+      await ffmpeg.load({ classWorkerURL, coreURL, wasmURL });
+      console.log('[init] ffmpeg loaded');
 
       return ffmpeg;
     }

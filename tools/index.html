@@ -159,6 +159,8 @@
                   box-shadow 220ms ease,
                   border-color 220ms ease;
       position: relative;
+      text-decoration: none;
+      color: inherit;
     }
 
     /* Blue top accent bar */
@@ -224,23 +226,6 @@
       color: #fff;
       box-shadow: 0 2px 8px rgba(99,102,241,0.4);
     }
-
-    /* ========== Open button ========== */
-    .open-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 600;
-      padding: 8px 18px; border-radius: 8px;
-      background: linear-gradient(135deg, #2563eb, #0ea5e9);
-      color: #fff;
-      text-decoration: none;
-      box-shadow: 0 2px 8px rgba(37,99,235,0.3);
-      transition: filter 150ms ease, transform 100ms ease, box-shadow 150ms ease;
-    }
-    .open-btn:hover {
-      filter: brightness(1.08);
-      box-shadow: 0 4px 16px rgba(37,99,235,0.4);
-    }
-    .open-btn:active { transform: scale(0.97); }
 
     /* ========== Category filter ========== */
     #category-filter {
@@ -312,7 +297,7 @@
 
     /* ========== Page-wide wrench cursor ========== */
     body,
-    a, button, select, label, .filter-chip, .open-btn, #scroll-top-btn {
+    a, button, select, label, .filter-chip, #scroll-top-btn {
       cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 4 4, auto;
     }
     input, textarea {
@@ -480,13 +465,15 @@
     }
 
     function createCard(record) {
-      const card = document.createElement('article');
+      const card = document.createElement('a');
       card.className = 'tool-card fade-up';
+      card.href = record.url;
+      card.target = '_blank';
+      card.rel = 'noopener noreferrer';
 
       const title = escapeHTML(record.title);
       const desc = escapeHTML(record.description || '');
       const category = record.category ? escapeHTML(record.category) : '';
-      const url = escapeHTML(record.url);
       const imgUrl = escapeHTML(record.imageUrl || '');
       const tags = (record.tags || []).map(t => escapeHTML(t));
       const isNew = newIds.has(record.id);
@@ -509,12 +496,6 @@
             <div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:2px">
               ${tags.map(t => `<span class="tag-chip">${t}</span>`).join('')}
             </div>` : ''}
-          <div style="padding-top:12px;margin-top:auto;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end">
-            <a href="${url}" target="_blank" rel="noopener noreferrer" class="open-btn">
-              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-              Open
-            </a>
-          </div>
         </div>
       `;
       return card;
