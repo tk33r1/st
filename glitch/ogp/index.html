@@ -367,7 +367,7 @@
             </div>
           </div>
           <div style={{ flex: 1, position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '60px', background: 'linear-gradient(to right, #0d0d0d, transparent)' }}></div>
+            <div style={{ position: 'absolute', top: 0, left: '-2px', bottom: 0, width: '62px', background: 'linear-gradient(to right, #0d0d0d, transparent)' }}></div>
           </div>
         </div>
       );
@@ -403,7 +403,7 @@
       return (
         <div style={{ position: 'relative', width: 1200, height: 630, background: '#09090e', overflow: 'hidden', display: 'flex', fontFamily: "'JetBrains Mono',monospace" }}>
           <div style={{ flex: '0 0 876px', position: 'relative', backgroundImage: `url(${tweak.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '60px', background: 'linear-gradient(to right, transparent, #09090e)' }}></div>
+            <div style={{ position: 'absolute', top: 0, right: '-2px', bottom: 0, width: '62px', background: 'linear-gradient(to right, transparent, #09090e)' }}></div>
           </div>
           <div style={{ flex: 1, background: '#09090e', padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', marginLeft: '-1px', position: 'relative' }}>
             <div style={{ color: tweak.accentColor, fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em' }}>/glitch</div>
@@ -477,7 +477,7 @@
           const mime = fmt === 'png' ? 'image/png' : 'image/webp';
           const a = document.createElement('a');
           a.href = canvas.toDataURL(mime, fmt === 'png' ? undefined : 0.92);
-          a.download = `ogp-${tweak.articleNum}.${fmt}`;
+          a.download = `glitch-${tweak.articleNum}-ogp.${fmt}`;
           a.click();
         } catch (e) {
           alert('画像生成に失敗しました: ' + e.message);
