@@ -325,11 +325,6 @@
         <input type="checkbox" id="opt-aggressive" class="custom-checkbox">
         <span class="text-sm font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">アグレッシブに圧縮する</span>
       </label>
-      <div class="hidden sm:block w-px h-6 bg-slate-200"></div>
-      <label class="flex items-center gap-2.5 cursor-pointer group">
-        <input type="checkbox" id="opt-datauri" class="custom-checkbox">
-        <span class="text-sm font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">Data URI に変換する</span>
-      </label>
     </div>
 
     <!-- View 1: Upload Zone -->
@@ -405,14 +400,18 @@
           
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl flex-1 max-w-[240px]">
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center flex-wrap">
+          <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl flex-1 min-w-[180px] max-w-[240px]">
             <i data-lucide="download" class="w-5 h-5"></i>
             ダウンロード
           </button>
-          <button id="btn-copy" class="btn-secondary flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl flex-1 max-w-[240px] font-semibold">
-            <i data-lucide="copy" class="w-5 h-5"></i>
-            コードをコピー
+          <button id="btn-copy-svg" class="btn-secondary flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl flex-1 min-w-[180px] max-w-[240px] font-semibold">
+            <i data-lucide="code" class="w-5 h-5"></i>
+            SVGコードをコピー
+          </button>
+          <button id="btn-copy-datauri" class="btn-secondary flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl flex-1 min-w-[180px] max-w-[240px] font-semibold">
+            <i data-lucide="link" class="w-5 h-5"></i>
+            Data URIをコピー
           </button>
         </div>
         
@@ -479,10 +478,10 @@
         
         <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
           <h4 class="font-semibold text-slate-800 mb-1 flex items-center gap-1.5">
-            <i data-lucide="code" class="w-4 h-4 text-slate-500"></i> Data URI 変換について
+            <i data-lucide="link" class="w-4 h-4 text-slate-500"></i> Data URI について
           </h4>
           <p class="text-xs text-slate-500">
-            これをオンにすると、最適化されたSVGを直接CSSの <code>background-image</code> や HTMLの <code>img src</code> に貼り付けられるBase64形式（<code>data:image/svg+xml;base64,...</code>）で出力します。
+            「Data URIをコピー」を押すと、最適化されたSVGを直接CSSの <code>background-image</code> や HTMLの <code>img src</code> に貼り付けられるBase64形式（<code>data:image/svg+xml;base64,...</code>）でクリップボードへコピーします。
           </p>
         </div>
       </div>
@@ -517,11 +516,11 @@
     const progressCircle = document.getElementById('progress-circle');
     
     const btnDownload = document.getElementById('btn-download');
-    const btnCopy = document.getElementById('btn-copy');
+    const btnCopySvg = document.getElementById('btn-copy-svg');
+    const btnCopyDataUri = document.getElementById('btn-copy-datauri');
     const btnReset = document.getElementById('btn-reset');
-    
+
     const optAggressive = document.getElementById('opt-aggressive');
-    const optDataUri = document.getElementById('opt-datauri');
     
     const toast = document.getElementById('toast');
     const toastMsg = document.getElementById('toast-msg');
@@ -615,7 +614,6 @@
         await new Promise(resolve => setTimeout(resolve, 300));
 
         const isAggressive = optAggressive.checked;
-        const isDataUri = optDataUri.checked;
 
         const config = {
           multipass: true,
@@ -630,16 +628,9 @@
         };
 
         const result = optimize(text, config);
-        let finalData = result.data;
+        optimizedSvgData = result.data;
+        currentFileName = currentFileName.replace(/\.svg$/, '') + '.svg';
 
-        if (isDataUri) {
-          finalData = 'data:image/svg+xml;base64,' + svgToBase64(finalData);
-          currentFileName = currentFileName.replace(/\.(svg|txt)$/, '') + '.txt';
-        } else {
-          currentFileName = currentFileName.replace(/\.(svg|txt)$/, '') + '.svg';
-        }
-
-        optimizedSvgData = finalData;
         const optimizedSize = new Blob([optimizedSvgData]).size;
 
         const savings = originalFileSize - optimizedSize;
@@ -747,7 +738,6 @@
     }
 
     optAggressive.addEventListener('change', reprocessIfReady);
-    optDataUri.addEventListener('change', reprocessIfReady);
 
     // Event Listeners
     dropzone.addEventListener('click', () => fileInput.click());
@@ -789,7 +779,7 @@
 
     btnDownload.addEventListener('click', () => {
       if (!optimizedSvgData) return;
-      const blob = new Blob([optimizedSvgData], { type: optDataUri.checked ? 'text/plain' : 'image/svg+xml' });
+      const blob = new Blob([optimizedSvgData], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -800,21 +790,29 @@
       URL.revokeObjectURL(url);
     });
 
-    btnCopy.addEventListener('click', async () => {
-      if (!optimizedSvgData) return;
+    async function copyToClipboard(text, successMsg) {
       try {
-        await navigator.clipboard.writeText(optimizedSvgData);
-        showToast(optDataUri.checked ? 'Data URIをクリップボードにコピーしました' : 'SVGコードをクリップボードにコピーしました');
+        await navigator.clipboard.writeText(text);
       } catch (err) {
-        // Fallback for older browsers
         const textarea = document.createElement('textarea');
-        textarea.value = optimizedSvgData;
+        textarea.value = text;
         document.body.appendChild(textarea);
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        showToast(optDataUri.checked ? 'Data URIをクリップボードにコピーしました' : 'SVGコードをクリップボードにコピーしました');
       }
+      showToast(successMsg);
+    }
+
+    btnCopySvg.addEventListener('click', () => {
+      if (!optimizedSvgData) return;
+      copyToClipboard(optimizedSvgData, 'SVGコードをクリップボードにコピーしました');
+    });
+
+    btnCopyDataUri.addEventListener('click', () => {
+      if (!optimizedSvgData) return;
+      const dataUri = 'data:image/svg+xml;base64,' + svgToBase64(optimizedSvgData);
+      copyToClipboard(dataUri, 'Data URIをクリップボードにコピーしました');
     });
 
     btnReset.addEventListener('click', () => {
