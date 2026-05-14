@@ -19,11 +19,20 @@
   },
   {
     "id": 3,
-    "title": "MP4 to Animation - 動画アニメーション変換ツール",
-    "url": "https://tk.st/tools/mp4-to-animation/",
-    "imageUrl": "https://tk.st/images/ogp/mp4-to-animation-ogp.png",
+    "title": "Video to Animation - 動画アニメーション変換ツール",
+    "url": "https://tk.st/tools/video-to-animation/",
+    "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.png",
     "category": "converter",
-    "description": "MP4動画をブラウザ上でアニメーションGIF、APNG、WEBP、AVIF画像に変換。サーバー送信なしで安全・高速に処理されます。",
-    "tags": ["MP4", "GIF", "APNG", "WEBP", "AVIF", "変換"]
+    "description": "動画をブラウザ上でアニメーションGIF、APNG、WEBP画像に変換。サーバー送信なしで安全・高速に処理されます。",
+    "tags": ["動画", "GIF", "APNG", "WEBP", "変換"]
+  },
+  {
+    "id": 4,
+    "title": "PDF to Image - PDF画像変換ツール",
+    "url": "https://tk.st/tools/pdf-to-image/",
+    "imageUrl": "https://tk.st/images/ogp/pdf-to-image-ogp.png",
+    "category": "converter",
+    "description": "PDFファイルをブラウザ上でJPG、PNG、WEBP、AVIF画像に変換。複数ページの場合は画像を分けて、ZIPファイルでダウンロードできます。",
+    "tags": ["PDF", "JPG", "PNG", "WEBP", "AVIF", "変換"]
   }
 ]
