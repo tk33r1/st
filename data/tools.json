@@ -16,5 +16,14 @@
     "category": "optimizer",
     "description": "面倒な設定なしでSVGファイルを1クリック軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。",
     "tags": ["SVG", "軽量化", "最適化"]
+  },
+  {
+    "id": 3,
+    "title": "MP4 to Animation - 動画アニメーション変換ツール",
+    "url": "https://tk.st/tools/mp4-to-animation/",
+    "imageUrl": "https://tk.st/images/ogp/mp4-to-animation-ogp.png",
+    "category": "converter",
+    "description": "MP4動画をブラウザ上でアニメーションGIF、APNG、WEBP、AVIF画像に変換。サーバー送信なしで安全・高速に処理されます。",
+    "tags": ["MP4", "GIF", "APNG", "WEBP", "AVIF", "変換"]
   }
 ]
