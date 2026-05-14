@@ -555,15 +555,16 @@
 
     async function initFFmpeg() {
       if (ffmpeg) return ffmpeg;
-      
+
       const { FFmpeg } = FFmpegWASM;
+      const { toBlobURL } = FFmpegUtil;
       ffmpeg = new FFmpeg();
-      
+
       ffmpeg.on('log', ({ message }) => {
-        console.log(message);
+        console.log('[ffmpeg]', message);
       });
-      
-      ffmpeg.on('progress', ({ progress, time }) => {
+
+      ffmpeg.on('progress', ({ progress }) => {
         if (!conversionStarted) return;
         const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
         progressBar.style.width = `${pct}%`;
@@ -572,12 +573,13 @@
 
       loadingMsg.textContent = '初期化中...';
       loadingSubmsg.textContent = 'FFmpegエンジンを読み込んでいます';
-      
+
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
       await ffmpeg.load({
-        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-        wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
       });
-      
+
       return ffmpeg;
     }
 
@@ -673,7 +675,8 @@
 
       } catch (err) {
         console.error('Conversion Error:', err);
-        showToast('変換中にエラーが発生しました。', 'error');
+        const detail = err && err.message ? err.message : String(err);
+        showToast(`エラー: ${detail.slice(0, 80)}`, 'error');
         switchView('view-upload');
       } finally {
         conversionStarted = false;
