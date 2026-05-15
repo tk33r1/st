@@ -56,8 +56,7 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -261,6 +260,20 @@
       background: #e2e8f0;
       border-radius: 2px;
     }
+    input[type=range]:disabled {
+      cursor: not-allowed;
+    }
+    input[type=range]:disabled::-webkit-slider-thumb {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    input[type=range]:disabled::-webkit-slider-runnable-track {
+      cursor: not-allowed;
+      background: #f1f5f9;
+    }
+    .quality-disabled { opacity: 0.45; }
+    .quality-disabled label { cursor: not-allowed; }
 
     .url-input-container {
       background: rgba(255, 255, 255, 0.6);
@@ -307,10 +320,165 @@
 
     .hidden { display: none !important; }
     .fade-in { animation: fadeIn 300ms ease-out forwards; }
-    
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      align-items: center;
+      gap: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 14px;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .result-row:hover {
+      box-shadow: 0 6px 16px -4px rgba(0,0,0,0.08);
+    }
+    .result-row.failed {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+    .result-thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #f1f5f9;
+    }
+    .savings-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+    .savings-badge.negative {
+      background: #fef3c7;
+      color: #b45309;
+      border-color: #fde68a;
+    }
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover {
+      border-color: #10b981;
+      color: #10b981;
+      background: #ecfdf5;
+    }
+
+    /* Compare modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-card {
+      background: white;
+      border-radius: 20px;
+      max-width: 1000px;
+      width: 100%;
+      max-height: 92vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .compare-wrap {
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      touch-action: none;
+      background: #f1f5f9;
+      max-height: 70vh;
+    }
+    .compare-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .compare-after-wrap {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      width: 50%;
+    }
+    .compare-after-wrap img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      max-width: none;
+    }
+    .compare-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      background: white;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+      transform: translateX(-50%);
+      cursor: ew-resize;
+    }
+    .compare-handle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .compare-handle::before {
+      content: '⇆';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      color: #475569;
+      z-index: 1;
+      font-weight: 700;
+    }
+    .compare-label {
+      position: absolute;
+      top: 12px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(15,23,42,0.75);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -345,50 +513,57 @@
         Lighter, Faster<br/>Web Images.
       </h2>
       <p class="text-slate-500 text-base sm:text-lg">
-        画像やHEICをWEBP/AVIFに一発変換。<br class="hidden sm:block">次世代フォーマットでウェブサイトを高速化しましょう。
+        画像をWEBP/AVIFに一発変換。<br class="hidden sm:block">次世代フォーマットで美しいまま軽量化！
       </p>
     </div>
 
     <!-- Options Panel -->
-    <div class="w-full max-w-2xl options-panel flex flex-col sm:flex-row items-center justify-between gap-6">
-      
-      <!-- Format Selection -->
-      <div class="flex flex-col items-center sm:items-start gap-2">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">出力フォーマット</span>
-        <div class="flex gap-2" id="format-selection">
-          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
-          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="avif">AVIF</button>
+    <div class="w-full max-w-2xl options-panel flex flex-col gap-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 w-full">
+
+        <!-- Format Selection -->
+        <div class="flex flex-col items-center sm:items-start gap-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">出力フォーマット</span>
+          <div class="flex gap-2" id="format-selection">
+            <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
+            <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="avif">AVIF</button>
+          </div>
+        </div>
+
+        <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+
+        <!-- Quality Setting -->
+        <div id="quality-row" class="flex flex-col items-center sm:items-start gap-2 flex-1 w-full max-w-[240px] transition-opacity">
+          <div class="flex justify-between w-full">
+            <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider">画質品質</label>
+            <span id="quality-val" class="text-xs font-bold text-emerald-600">80%</span>
+          </div>
+          <input type="range" id="opt-quality" min="10" max="100" value="80">
+        </div>
+
+        <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+
+        <!-- Resize -->
+        <div class="flex flex-col items-center sm:items-start gap-2">
+          <label for="opt-resize" class="text-xs font-bold text-slate-400 uppercase tracking-wider">最大幅 (px)</label>
+          <input type="number" id="opt-resize" min="100" max="10000" step="100" placeholder="そのまま"
+            class="w-28 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
         </div>
       </div>
 
-      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
-
-      <!-- Quality Setting -->
-      <div class="flex flex-col items-center sm:items-start gap-2 flex-1 w-full max-w-[200px]">
-        <div class="flex justify-between w-full">
-          <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider">画質品質</label>
-          <span id="quality-val" class="text-xs font-bold text-emerald-600">80%</span>
-        </div>
-        <input type="range" id="opt-quality" min="10" max="100" value="80">
-      </div>
-
-      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
-
-      <!-- Metadata Setting -->
-      <div class="flex flex-col items-center sm:items-start gap-2">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">メタデータ</span>
-        <label class="flex items-center gap-2 cursor-pointer mt-1">
-          <input type="checkbox" id="opt-metadata" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" checked>
-          <span class="text-sm font-medium text-slate-700">Exif情報を削除</span>
+      <!-- Lossless toggle (WEBP only) -->
+      <div id="lossless-row" class="flex items-center justify-center sm:justify-start gap-2 pt-2 border-t border-slate-100">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="opt-lossless" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+          <span class="text-sm font-medium text-slate-700">ロスレス変換（透過PNGに最適）</span>
         </label>
       </div>
-
     </div>
 
     <!-- View 1: Upload Zone -->
     <div id="view-upload" class="w-full max-w-2xl fade-in mt-4">
       <div id="dropzone" class="dropzone p-8 sm:p-16 text-center cursor-pointer group" role="button" tabindex="0" aria-label="画像ファイルをドロップまたは選択">
-        <input type="file" id="file-input" accept="image/*,.heic,.heif" class="hidden">
+        <input type="file" id="file-input" accept="image/*,.heic,.heif" multiple class="hidden">
         
         <div class="dropzone-content flex flex-col items-center gap-6 pointer-events-none">
           <div class="relative flex items-center justify-center gap-4">
@@ -403,7 +578,7 @@
           
           <div>
             <h3 class="text-xl font-bold text-slate-800 mb-2">画像ファイルをドロップ または 貼り付け</h3>
-            <p class="text-slate-500 text-sm">JPG, PNG, HEICなど | クリップボードからペースト(Ctrl+V)も可能</p>
+            <p class="text-slate-500 text-sm">JPG, PNG, HEICなど | 複数選択・Ctrl+V も可能</p>
           </div>
           
           <div class="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 font-semibold tracking-wide flex items-center gap-2">
@@ -436,45 +611,64 @@
       <div class="progress-bar-container mt-6">
         <div id="progress-bar" class="progress-bar"></div>
       </div>
-      <div id="progress-text" class="text-xs font-medium text-slate-500 mt-2 text-right">0%</div>
+      <div id="progress-text" class="text-xs font-medium text-slate-500 mt-2 text-right"></div>
     </div>
 
     <!-- View 3: Result -->
     <div id="view-result" class="w-full max-w-3xl hidden mt-4">
       <div class="result-card p-6 sm:p-8">
-        
-        <div class="flex flex-col lg:flex-row items-center gap-8 mb-8">
-          <!-- Preview Image -->
-          <div class="w-full lg:w-1/2 flex flex-col items-center">
-            <div class="w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center min-h-[200px] relative">
-              <img id="result-preview" src="" alt="Converted Image" class="max-w-full max-h-[300px] object-contain checkerboard-bg">
+
+        <!-- Summary -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+          <div class="text-center sm:text-left">
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">変換結果</div>
+            <div class="text-2xl font-outfit font-extrabold text-slate-800">
+              <span id="summary-original">0</span>
+              <i data-lucide="arrow-right" class="inline w-5 h-5 mx-1 text-slate-400"></i>
+              <span id="summary-output" class="text-emerald-600">0</span>
+            </div>
+            <div class="mt-1 flex items-center gap-2 justify-center sm:justify-start">
+              <span id="summary-badge" class="savings-badge">-0%</span>
+              <span class="text-xs text-slate-500"><span id="summary-count">0</span>件</span>
             </div>
           </div>
-          
-          <!-- Details -->
-          <div class="w-full lg:w-1/2 flex flex-col justify-center">
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">フォーマット</span>
-                <span id="result-format" class="text-xl font-outfit font-extrabold text-slate-700">WEBP</span>
-              </div>
-              <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">ファイルサイズ</span>
-                <span id="result-size" class="text-xl font-outfit font-extrabold text-slate-700">0 KB</span>
-              </div>
-            </div>
-            
-            <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-8 py-4 rounded-xl w-full text-lg shadow-lg">
-              <i data-lucide="download" class="w-6 h-6"></i>
-              画像をダウンロード
-            </button>
-            
-            <button id="btn-reset" class="mt-4 text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors underline-offset-4 hover:underline text-center w-full">
-              別の画像を変換する
-            </button>
-          </div>
+
+          <button id="btn-download-all" class="btn-glow flex items-center justify-center gap-2 px-6 py-3 rounded-xl shadow-lg">
+            <i data-lucide="archive" class="w-5 h-5"></i>
+            <span id="btn-download-all-label">ZIPでダウンロード</span>
+          </button>
         </div>
 
+        <!-- Results list -->
+        <div id="result-list" class="flex flex-col gap-2 mb-4"></div>
+
+        <button id="btn-reset" class="mt-4 text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors underline-offset-4 hover:underline text-center w-full">
+          別の画像を変換する
+        </button>
+      </div>
+    </div>
+
+    <!-- Compare Modal -->
+    <div id="compare-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="modal-card" role="document">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+          <div class="flex flex-col">
+            <span class="text-sm font-bold text-slate-800" id="compare-title">比較</span>
+            <span class="text-xs text-slate-500" id="compare-subtitle"></span>
+          </div>
+          <button id="compare-close" class="icon-btn" aria-label="閉じる">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div id="compare-wrap" class="compare-wrap">
+          <img id="compare-before" alt="Before">
+          <div class="compare-after-wrap" id="compare-after-wrap">
+            <img id="compare-after" alt="After">
+          </div>
+          <div class="compare-handle" id="compare-handle"></div>
+          <span class="compare-label" style="left: 12px;">変換前</span>
+          <span class="compare-label" style="right: 12px;">変換後</span>
+        </div>
       </div>
     </div>
 
@@ -556,27 +750,49 @@
 
     const optQuality = document.getElementById('opt-quality');
     const qualityVal = document.getElementById('quality-val');
+    const optLossless = document.getElementById('opt-lossless');
+    const optResize = document.getElementById('opt-resize');
+    const losslessRow = document.getElementById('lossless-row');
+    const qualityRow = document.getElementById('quality-row');
+
     optQuality.addEventListener('input', (e) => {
       qualityVal.textContent = e.target.value + '%';
     });
+
+    function applyLosslessState() {
+      const disabled = optLossless.checked && selectedFormat === 'webp';
+      optQuality.disabled = disabled;
+      qualityRow.classList.toggle('quality-disabled', disabled);
+    }
+
+    // Lossless is only meaningful for WEBP via canvas.toBlob.
+    function updateLosslessVisibility() {
+      losslessRow.classList.toggle('hidden', selectedFormat !== 'webp');
+      if (selectedFormat !== 'webp') optLossless.checked = false;
+      applyLosslessState();
+    }
+    optLossless.addEventListener('change', applyLosslessState);
 
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
     const viewUpload = document.getElementById('view-upload');
     const viewLoading = document.getElementById('view-loading');
     const viewResult = document.getElementById('view-result');
-    
+
     const loadingMsg = document.getElementById('loading-msg');
     const loadingSubmsg = document.getElementById('loading-submsg');
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
-    
-    const resultPreview = document.getElementById('result-preview');
-    const resultFormat = document.getElementById('result-format');
-    const resultSize = document.getElementById('result-size');
-    const btnDownload = document.getElementById('btn-download');
+
+    const resultList = document.getElementById('result-list');
+    const summaryOriginal = document.getElementById('summary-original');
+    const summaryOutput = document.getElementById('summary-output');
+    const summaryBadge = document.getElementById('summary-badge');
+    const summaryCount = document.getElementById('summary-count');
+    const btnDownloadAll = document.getElementById('btn-download-all');
+    const btnDownloadAllLabel = document.getElementById('btn-download-all-label');
     const btnReset = document.getElementById('btn-reset');
-    
+
     const urlInput = document.getElementById('url-input');
     const urlBtn = document.getElementById('url-btn');
 
@@ -586,63 +802,26 @@
     const toastIconError = document.getElementById('toast-icon-error');
     let toastTimer = null;
 
-    let resultBlobUrl = null;
-    let resultFilename = 'output.webp';
+    // Compare modal
+    const compareModal = document.getElementById('compare-modal');
+    const compareBefore = document.getElementById('compare-before');
+    const compareAfter = document.getElementById('compare-after');
+    const compareAfterWrap = document.getElementById('compare-after-wrap');
+    const compareHandle = document.getElementById('compare-handle');
+    const compareWrap = document.getElementById('compare-wrap');
+    const compareClose = document.getElementById('compare-close');
+    const compareTitle = document.getElementById('compare-title');
+    const compareSubtitle = document.getElementById('compare-subtitle');
+
+    let results = [];        // array of result objects
+    let blobUrls = [];       // all created blob URLs (for cleanup)
     let isProcessing = false;
 
-    let ffmpeg = null;
-    let conversionStarted = false;
-    let ffmpegLogBuffer = [];
-
-    function buildFFmpegError(exitCode, hint) {
-      const tail = ffmpegLogBuffer.slice(-15).join('\n');
-      const lower = tail.toLowerCase();
-      let summary = hint;
-      if (!summary) {
-        if (/unknown encoder|encoder .* not found|encoder not found/.test(lower)) {
-          summary = 'このフォーマット用のエンコーダが現在のビルドに含まれていません';
-        } else {
-          const m = tail.match(/error[^\n]*/i);
-          summary = m ? m[0] : `FFmpeg がコード ${exitCode} で終了しました`;
-        }
-      }
-      console.error('[ffmpeg log tail]\n' + tail);
-      return new Error(summary);
-    }
-
-    async function initFFmpeg() {
-      if (ffmpeg) return ffmpeg;
-
-      const { FFmpeg } = FFmpegWASM;
-      const { toBlobURL } = FFmpegUtil;
-      ffmpeg = new FFmpeg();
-
-      ffmpeg.on('log', ({ message }) => {
-        console.log('[ffmpeg]', message);
-        ffmpegLogBuffer.push(message);
-        if (ffmpegLogBuffer.length > 30) ffmpegLogBuffer.shift();
-      });
-
-      ffmpeg.on('progress', ({ progress }) => {
-        if (!conversionStarted) return;
-        const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
-        if (progressBar.classList.contains('indeterminate')) {
-          progressBar.classList.remove('indeterminate');
-        }
-        progressBar.style.width = `${pct}%`;
-        progressText.textContent = `${pct}%`;
-      });
-
-      const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
-      const ffmpegBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
-
-      const classWorkerURL = await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript');
-      const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
-      const wasmURL = await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm');
-
-      await ffmpeg.load({ classWorkerURL, coreURL, wasmURL });
-      return ffmpeg;
-    }
+    // Update lossless row when format changes
+    formatBtns.forEach(btn => {
+      btn.addEventListener('click', updateLosslessVisibility);
+    });
+    updateLosslessVisibility();
 
     function formatBytes(bytes, decimals = 2) {
       if (!bytes || bytes <= 0) return '0 B';
@@ -679,120 +858,470 @@
       target.classList.add('fade-in');
     }
 
-    async function processImage(file) {
+    function isHeicFile(file) {
+      const n = file.name.toLowerCase();
+      return n.endsWith('.heic') || n.endsWith('.heif')
+        || file.type === 'image/heic' || file.type === 'image/heif';
+    }
+
+    async function decodeToBitmap(file) {
+      if (isHeicFile(file)) {
+        const conversionResult = await heic2any({ blob: file, toType: 'image/png' });
+        const blobArr = Array.isArray(conversionResult) ? conversionResult : [conversionResult];
+        const png = new File(blobArr, file.name.replace(/\.heic$|\.heif$/i, '.png'), { type: 'image/png' });
+        return await createImageBitmap(png);
+      }
+      return await createImageBitmap(file);
+    }
+
+    // Lazily loaded WASM-based AVIF encoder (used when the browser's native canvas.toBlob
+    // does not support image/avif). The module is fetched only when needed.
+    let avifEncoderPromise = null;
+    function loadAvifEncoder() {
+      if (!avifEncoderPromise) {
+        avifEncoderPromise = import('https://esm.sh/@jsquash/avif@2.1.1').then(m => m.encode);
+      }
+      return avifEncoderPromise;
+    }
+
+    async function encodeWithCanvasToBlob(canvas, mimeType, q) {
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob(b => resolve(b), mimeType, q);
+      });
+      console.log('[encode] canvas.toBlob returned:', blob && blob.type, 'size=' + (blob && blob.size));
+      return blob;
+    }
+
+    async function encodeCanvasAsAvif(canvas, quality, statusUpdate) {
+      // 1) Try native canvas.toBlob('image/avif') — fastest when available
+      const native = await encodeWithCanvasToBlob(canvas, 'image/avif', quality);
+      if (native && native.type === 'image/avif') return native;
+
+      // 2) Fall back to WASM encoder (jsquash)
+      statusUpdate && statusUpdate('AVIFエンコーダを読み込み中...');
+      let encode;
+      try {
+        encode = await loadAvifEncoder();
+      } catch (e) {
+        console.error('jsquash AVIF load failed:', e);
+        throw new Error('AVIFエンコーダの読み込みに失敗しました: ' + (e.message || e));
+      }
+      statusUpdate && statusUpdate('AVIFを生成中 (WASM)...');
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const buf = await encode(imageData, { quality: Math.round(quality * 100) });
+      return new Blob([buf], { type: 'image/avif' });
+    }
+
+    async function encodeOne(file, opts, statusUpdate) {
+      const { format, quality, lossless, maxWidth } = opts;
+      const mimeType = `image/${format}`;
+
+      const bitmap = await decodeToBitmap(file);
+
+      let targetW = bitmap.width;
+      let targetH = bitmap.height;
+      if (maxWidth && targetW > maxWidth) {
+        targetH = Math.round((maxWidth / targetW) * targetH);
+        targetW = maxWidth;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+      if (bitmap.close) bitmap.close();
+
+      // Canvas WebP at quality=1.0 is the closest the API allows to lossless.
+      const q = lossless ? 1.0 : (quality / 100);
+
+      let blob;
+      if (format === 'avif') {
+        blob = await encodeCanvasAsAvif(canvas, q, statusUpdate);
+      } else {
+        blob = await encodeWithCanvasToBlob(canvas, mimeType, q);
+        if (!blob) throw new Error('エンコードに失敗しました (toBlob returned null)');
+        if (blob.type !== mimeType) {
+          throw new Error('お使いのブラウザは ' + mimeType + ' のエンコードに対応していません');
+        }
+      }
+
+      if (!blob) throw new Error('エンコードに失敗しました');
+      return { blob, width: targetW, height: targetH };
+    }
+
+    function buildOutputFilename(originalName, format) {
+      const dot = originalName.lastIndexOf('.');
+      const baseName = dot >= 0 ? originalName.slice(0, dot) : (originalName || 'image');
+      return `${baseName}.${format}`;
+    }
+
+    async function processFiles(files) {
       if (isProcessing) return;
+      if (!files || files.length === 0) return;
       isProcessing = true;
 
-      switchView('view-loading');
-      loadingMsg.textContent = '処理中...';
-      loadingSubmsg.textContent = '画像を変換しています';
+      // Cleanup previous results
+      blobUrls.forEach(u => URL.revokeObjectURL(u));
+      blobUrls = [];
+      results = [];
 
-      if (resultBlobUrl) {
-        URL.revokeObjectURL(resultBlobUrl);
-        resultBlobUrl = null;
+      switchView('view-loading');
+      progressBar.classList.remove('indeterminate');
+
+      const opts = {
+        format: selectedFormat,
+        quality: parseInt(optQuality.value, 10),
+        lossless: !!optLossless.checked && selectedFormat === 'webp',
+        maxWidth: parseInt(optResize.value, 10) || 0,
+      };
+
+      const total = files.length;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        loadingMsg.textContent = `変換中 (${i + 1} / ${total})`;
+        loadingSubmsg.textContent = file.name;
+        const pct = Math.round((i / total) * 100);
+        progressBar.style.width = pct + '%';
+        progressText.textContent = `${i} / ${total}`;
+
+        try {
+          const { blob, width, height } = await encodeOne(file, opts, (sub) => {
+            loadingSubmsg.textContent = `${file.name} — ${sub}`;
+          });
+          const outName = buildOutputFilename(file.name, opts.format);
+          const outUrl = URL.createObjectURL(blob);
+          const beforeUrl = URL.createObjectURL(file);
+          blobUrls.push(outUrl, beforeUrl);
+          results.push({
+            ok: true,
+            originalFile: file,
+            originalSize: file.size,
+            outputBlob: blob,
+            outputSize: blob.size,
+            outputName: outName,
+            outputUrl: outUrl,
+            beforeUrl,
+            width, height,
+          });
+        } catch (err) {
+          console.error('Conversion failed for', file.name, err);
+          results.push({
+            ok: false,
+            originalFile: file,
+            originalSize: file.size,
+            error: err.message || '不明なエラー',
+          });
+        }
       }
 
-      try {
-        let processFile = file;
+      progressBar.style.width = '100%';
+      progressText.textContent = `${total} / ${total}`;
 
-        // HEIC conversion
-        const nameLower = file.name.toLowerCase();
-        const isHeic = nameLower.endsWith('.heic') || nameLower.endsWith('.heif')
-          || file.type === 'image/heic' || file.type === 'image/heif';
-        if (isHeic) {
-          loadingMsg.textContent = 'HEICをデコード中...';
-          loadingSubmsg.textContent = '少し時間がかかる場合があります';
-          const conversionResult = await heic2any({ blob: file, toType: 'image/png' });
-          const blobArr = Array.isArray(conversionResult) ? conversionResult : [conversionResult];
-          processFile = new File(blobArr, file.name.replace(/\.heic$|\.heif$/i, '.png'), { type: 'image/png' });
-        }
+      isProcessing = false;
+      fileInput.value = '';
 
-        // FFmpeg processing
-        const optMetadata = document.getElementById('opt-metadata');
-        const removeMetadata = optMetadata.checked;
-        const quality = parseInt(optQuality.value);
-        
-        loadingMsg.textContent = 'FFmpeg初期化中...';
-        loadingSubmsg.textContent = 'エンジンを読み込んでいます';
-        progressBar.classList.remove('indeterminate');
-        progressBar.style.width = '0%';
-        progressText.textContent = '0%';
-        
-        const ff = await initFFmpeg();
-        const { fetchFile } = FFmpegUtil;
-
-        loadingMsg.textContent = 'エンコード中...';
-        loadingSubmsg.textContent = selectedFormat === 'avif'
-          ? 'AVIFは品質重視のため時間がかかる場合があります'
-          : `${selectedFormat.toUpperCase()}フォーマットを作成中`;
-
-        const sourceName = processFile.name || 'image.png';
-        const dotIdx = sourceName.lastIndexOf('.');
-        const inputExt = dotIdx >= 0 ? sourceName.slice(dotIdx).toLowerCase().replace(/[^a-z0-9.]/g, '') : '.png';
-        const inputName = 'input_' + Date.now() + inputExt;
-        const outputName = 'output_' + Date.now() + '.' + selectedFormat;
-
-        await ff.writeFile(inputName, await fetchFile(processFile));
-
-        const args = ['-i', inputName];
-        if (removeMetadata) {
-          args.push('-map_metadata', '-1');
-        } else {
-          args.push('-map_metadata', '0'); // Explicitly map global metadata
-        }
-
-        conversionStarted = true;
-        ffmpegLogBuffer = [];
-
-        if (selectedFormat === 'webp') {
-          // libwebp does not emit reliable progress events; show an indeterminate bar instead.
-          progressBar.classList.add('indeterminate');
-          progressText.textContent = '';
-          args.push('-c:v', 'libwebp', '-quality', quality.toString(), outputName);
-        } else if (selectedFormat === 'avif') {
-          const crf = Math.round(63 - (quality / 100) * 63);
-          args.push('-c:v', 'libaom-av1', '-crf', crf.toString(), '-b:v', '0', '-cpu-used', '6', '-row-mt', '1', '-strict', 'experimental', outputName);
-        }
-
-        let exitCode;
-        try {
-          exitCode = await ff.exec(args);
-        } finally {
-          conversionStarted = false;
-        }
-
-        if (exitCode !== 0) throw buildFFmpegError(exitCode);
-
-        const data = await ff.readFile(outputName);
-        const mimeType = `image/${selectedFormat}`;
-        const outputBlob = new Blob([data], { type: mimeType });
-
-        try { await ff.deleteFile(inputName); } catch (_) {}
-        try { await ff.deleteFile(outputName); } catch (_) {}
-
-        // Determine output filename
-        const dot = file.name.lastIndexOf('.');
-        const baseName = dot >= 0 ? file.name.slice(0, dot) : file.name || 'image';
-        resultFilename = `${baseName}.${selectedFormat}`;
-        resultBlobUrl = URL.createObjectURL(outputBlob);
-
-        resultPreview.src = resultBlobUrl;
-        resultFormat.textContent = selectedFormat.toUpperCase();
-        resultSize.textContent = formatBytes(outputBlob.size);
-
-        switchView('view-result');
-        showToast('変換が完了しました！');
-
-      } catch (err) {
-        console.error('Image processing error:', err);
-        showToast('画像の処理中にエラーが発生しました', 'error');
+      renderResults();
+      const failCount = results.filter(r => !r.ok).length;
+      if (failCount === total) {
+        const firstErr = results[0]?.error || '不明なエラー';
+        const prefix = total === 1 ? '変換失敗' : `全${total}件失敗`;
+        showToast(`${prefix}: ${firstErr}`, 'error');
         switchView('view-upload');
-      } finally {
-        isProcessing = false;
-        fileInput.value = '';
-        progressBar.classList.remove('indeterminate');
+      } else if (failCount > 0) {
+        showToast(`${total - failCount}件成功 / ${failCount}件失敗`, 'error');
+        switchView('view-result');
+      } else {
+        showToast(`${total}件の変換が完了しました`);
+        switchView('view-result');
       }
     }
+
+    function renderResults() {
+      const okResults = results.filter(r => r.ok);
+      const totalOrig = results.reduce((s, r) => s + r.originalSize, 0);
+      const totalOut = okResults.reduce((s, r) => s + r.outputSize, 0);
+      const pct = totalOrig > 0 ? Math.round((1 - totalOut / totalOrig) * 100) : 0;
+
+      summaryOriginal.textContent = formatBytes(totalOrig);
+      summaryOutput.textContent = formatBytes(totalOut);
+      summaryCount.textContent = okResults.length;
+      summaryBadge.textContent = (pct >= 0 ? '-' : '+') + Math.abs(pct) + '%';
+      summaryBadge.classList.toggle('negative', pct < 0);
+
+      btnDownloadAll.disabled = okResults.length === 0;
+      btnDownloadAllLabel.textContent = okResults.length > 1
+        ? `${okResults.length}件をZIPでダウンロード`
+        : '画像をダウンロード';
+
+      resultList.innerHTML = '';
+      results.forEach((r, idx) => {
+        const row = document.createElement('div');
+        row.className = 'result-row' + (r.ok ? '' : ' failed');
+
+        const thumb = document.createElement('img');
+        thumb.className = 'result-thumb';
+        thumb.alt = '';
+        thumb.src = r.ok ? r.outputUrl : (r.beforeUrl || '');
+        row.appendChild(thumb);
+
+        const info = document.createElement('div');
+        info.className = 'min-w-0';
+        const name = document.createElement('div');
+        name.className = 'text-sm font-semibold text-slate-800 truncate';
+        name.title = r.originalFile.name;
+        name.textContent = r.ok ? r.outputName : r.originalFile.name;
+        info.appendChild(name);
+
+        const meta = document.createElement('div');
+        meta.className = 'text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1';
+        if (r.ok) {
+          const rpct = Math.round((1 - r.outputSize / r.originalSize) * 100);
+          const badge = document.createElement('span');
+          badge.className = 'savings-badge' + (rpct < 0 ? ' negative' : '');
+          badge.textContent = (rpct >= 0 ? '-' : '+') + Math.abs(rpct) + '%';
+          meta.appendChild(badge);
+          const sizeSpan = document.createElement('span');
+          sizeSpan.innerHTML = `${formatBytes(r.originalSize)} <span class="text-slate-300">→</span> <span class="text-emerald-600 font-semibold">${formatBytes(r.outputSize)}</span>`;
+          meta.appendChild(sizeSpan);
+          if (r.width && r.height) {
+            const dim = document.createElement('span');
+            dim.className = 'text-slate-400';
+            dim.textContent = `${r.width}×${r.height}`;
+            meta.appendChild(dim);
+          }
+        } else {
+          const err = document.createElement('span');
+          err.className = 'text-rose-600';
+          err.textContent = '失敗: ' + r.error;
+          meta.appendChild(err);
+        }
+        info.appendChild(meta);
+        row.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center gap-1';
+        if (r.ok) {
+          const cmpBtn = document.createElement('button');
+          cmpBtn.className = 'icon-btn';
+          cmpBtn.title = 'Before/After比較';
+          cmpBtn.setAttribute('aria-label', '比較');
+          cmpBtn.innerHTML = '<i data-lucide="git-compare" class="w-4 h-4"></i>';
+          cmpBtn.addEventListener('click', () => openCompare(idx));
+          actions.appendChild(cmpBtn);
+
+          const dlBtn = document.createElement('button');
+          dlBtn.className = 'icon-btn';
+          dlBtn.title = 'ダウンロード';
+          dlBtn.setAttribute('aria-label', 'ダウンロード');
+          dlBtn.innerHTML = '<i data-lucide="download" class="w-4 h-4"></i>';
+          dlBtn.addEventListener('click', () => downloadOne(r));
+          actions.appendChild(dlBtn);
+
+          if (canShareResult()) {
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'icon-btn';
+            shareBtn.title = '共有';
+            shareBtn.setAttribute('aria-label', '共有');
+            shareBtn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4"></i>';
+            shareBtn.addEventListener('click', () => shareOne(r, shareBtn));
+            actions.appendChild(shareBtn);
+          }
+        }
+        row.appendChild(actions);
+        resultList.appendChild(row);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function downloadOne(r) {
+      const a = document.createElement('a');
+      a.href = r.outputUrl;
+      a.download = r.outputName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function canShareResult() {
+      const hasWebShare = typeof navigator.canShare === 'function';
+      const hasClipboardItem = typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined';
+      return hasWebShare || hasClipboardItem;
+    }
+
+    async function shareOne(r, btn) {
+      const file = new File([r.outputBlob], r.outputName, { type: r.outputBlob.type });
+
+      // 1) Web Share API (mobile, Safari, Edge) — shares the actual file
+      if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: r.outputName });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+          // fall through to clipboard fallback
+        }
+      }
+
+      // 2) Clipboard fallback — copies the image (limited to types the browser allows; PNG always, WEBP on modern Chromium)
+      if (typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined') {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ [r.outputBlob.type]: r.outputBlob })]);
+          showToast('画像をクリップボードにコピーしました', 'success');
+          if (btn) flashShareBtn(btn);
+          return;
+        } catch (e) {
+          // Some browsers reject AVIF/WEBP for clipboard. Fall through.
+        }
+      }
+
+      showToast('この環境では共有がサポートされていません', 'error');
+    }
+
+    function flashShareBtn(btn) {
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = original;
+        if (window.lucide) lucide.createIcons();
+      }, 1400);
+    }
+
+    async function downloadAllAsZip() {
+      const okResults = results.filter(r => r.ok);
+      if (okResults.length === 0) return;
+
+      if (okResults.length === 1) {
+        downloadOne(okResults[0]);
+        return;
+      }
+
+      if (typeof JSZip === 'undefined') {
+        showToast('ZIPライブラリの読み込みに失敗しました', 'error');
+        return;
+      }
+
+      const zip = new JSZip();
+      // Avoid filename collisions
+      const used = new Map();
+      okResults.forEach(r => {
+        let name = r.outputName;
+        const seen = used.get(name) || 0;
+        if (seen > 0) {
+          const dot = name.lastIndexOf('.');
+          const base = dot >= 0 ? name.slice(0, dot) : name;
+          const ext = dot >= 0 ? name.slice(dot) : '';
+          name = `${base}_${seen}${ext}`;
+        }
+        used.set(r.outputName, seen + 1);
+        zip.file(name, r.outputBlob);
+      });
+
+      btnDownloadAll.disabled = true;
+      btnDownloadAllLabel.textContent = 'ZIPを生成中...';
+      try {
+        const content = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url;
+        const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
+        a.download = `converted_${ts}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('ZIP creation failed', err);
+        showToast('ZIP生成に失敗しました: ' + (err.message || ''), 'error');
+      } finally {
+        btnDownloadAll.disabled = false;
+        btnDownloadAllLabel.textContent = `${okResults.length}件をZIPでダウンロード`;
+      }
+    }
+
+    // ===== Compare modal =====
+    let compareDragging = false;
+    function syncAfterSize() {
+      // Match the "after" image's rendered size to the "before" image to keep the slider aligned.
+      const r = compareBefore.getBoundingClientRect();
+      compareAfter.style.width = r.width + 'px';
+      compareAfter.style.height = r.height + 'px';
+    }
+    function setComparePosition(clientX) {
+      const rect = compareWrap.getBoundingClientRect();
+      let x = clientX - rect.left;
+      x = Math.max(0, Math.min(rect.width, x));
+      const ratio = (x / rect.width) * 100;
+      compareAfterWrap.style.width = ratio + '%';
+      compareHandle.style.left = ratio + '%';
+      syncAfterSize();
+    }
+
+    function openCompare(idx) {
+      const r = results[idx];
+      if (!r || !r.ok) return;
+      compareBefore.src = r.beforeUrl;
+      compareAfter.src = r.outputUrl;
+      compareTitle.textContent = r.outputName;
+      const rpct = Math.round((1 - r.outputSize / r.originalSize) * 100);
+      compareSubtitle.textContent =
+        `${formatBytes(r.originalSize)} → ${formatBytes(r.outputSize)} (${rpct >= 0 ? '-' : '+'}${Math.abs(rpct)}%)`;
+      compareModal.classList.remove('hidden');
+      // Wait for both images to load, then set initial position to 50%
+      const initPos = () => {
+        const rect = compareWrap.getBoundingClientRect();
+        setComparePosition(rect.left + rect.width / 2);
+      };
+      let loaded = 0;
+      const onload = () => { if (++loaded === 2) initPos(); };
+      compareBefore.onload = onload;
+      compareAfter.onload = onload;
+      if (compareBefore.complete) onload();
+      if (compareAfter.complete) onload();
+    }
+
+    function closeCompare() {
+      compareModal.classList.add('hidden');
+      compareBefore.removeAttribute('src');
+      compareAfter.removeAttribute('src');
+    }
+
+    compareClose.addEventListener('click', closeCompare);
+    compareModal.addEventListener('click', (e) => {
+      if (e.target === compareModal) closeCompare();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !compareModal.classList.contains('hidden')) closeCompare();
+    });
+
+    function startCompareDrag(e) {
+      compareDragging = true;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      setComparePosition(x);
+    }
+    function moveCompareDrag(e) {
+      if (!compareDragging) return;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      setComparePosition(x);
+    }
+    function stopCompareDrag() { compareDragging = false; }
+
+    compareWrap.addEventListener('mousedown', startCompareDrag);
+    window.addEventListener('mousemove', moveCompareDrag);
+    window.addEventListener('mouseup', stopCompareDrag);
+    compareWrap.addEventListener('touchstart', startCompareDrag, { passive: true });
+    window.addEventListener('touchmove', moveCompareDrag, { passive: true });
+    window.addEventListener('touchend', stopCompareDrag);
+    window.addEventListener('resize', () => {
+      if (compareModal.classList.contains('hidden')) return;
+      const rect = compareWrap.getBoundingClientRect();
+      const ratio = parseFloat(compareAfterWrap.style.width) || 50;
+      setComparePosition(rect.left + (rect.width * ratio / 100));
+    });
 
     function isPrivateHost(hostname) {
       if (!hostname) return true;
@@ -833,22 +1362,56 @@
       try {
         let response;
         let usedProxy = false;
+        let directError = null;
         try {
-          response = await fetch(url);
-          if (!response.ok) throw new Error('Fetch failed');
+          response = await fetch(url, { mode: 'cors', credentials: 'omit' });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
         } catch (e) {
-          // Fallback to CORS proxy if direct fetch fails — notify the user that a third party will see the URL.
+          directError = e;
           const ok = window.confirm(
-            '直接の画像取得に失敗しました。\n外部CORSプロキシ (corsproxy.io) 経由で再試行しますか？\n\n注意: プロキシ運営者にURLと画像内容が渡ります。'
+            '直接の画像取得に失敗しました。\n外部プロキシ経由で再試行しますか？\n\n注意: プロキシ運営者にURLと画像内容が渡ります。'
           );
-          if (!ok) throw new Error('User declined proxy');
-          console.warn('Direct fetch failed, trying CORS proxy...');
+          if (!ok) {
+            switchView('view-upload');
+            return;
+          }
+          console.warn('Direct fetch failed:', directError);
           usedProxy = true;
-          response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-          if (!response.ok) throw new Error('Proxy fetch failed');
+
+          // Try image-specialized proxy first (more reliable than generic CORS proxies)
+          const stripped = url.replace(/^https?:\/\//, '');
+          const proxies = [
+            `https://images.weserv.nl/?url=${encodeURIComponent(stripped)}`,
+            `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+          ];
+
+          let lastErr = null;
+          response = null;
+          for (const proxyUrl of proxies) {
+            try {
+              console.log('Trying proxy:', proxyUrl);
+              const r = await fetch(proxyUrl, { mode: 'cors', credentials: 'omit' });
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              response = r;
+              break;
+            } catch (perr) {
+              lastErr = perr;
+              console.warn('Proxy failed:', proxyUrl, perr);
+            }
+          }
+          if (!response) {
+            throw new Error(`すべてのプロキシで失敗 (最後のエラー: ${lastErr?.message || '不明'})`);
+          }
         }
 
+        const contentType = response.headers.get('content-type') || '';
         const blob = await response.blob();
+        const blobType = blob.type || contentType;
+
+        if (blobType && !blobType.startsWith('image/') && blobType !== 'application/octet-stream') {
+          throw new Error(`画像ではないデータを受信しました (${blobType})`);
+        }
+
         let filename = 'downloaded_image';
         const pathParts = urlObj.pathname.split('/');
         const lastPart = pathParts[pathParts.length - 1];
@@ -856,12 +1419,12 @@
           filename = lastPart;
         }
 
-        const file = new File([blob], filename, { type: blob.type });
+        const file = new File([blob], filename, { type: blobType || 'image/png' });
         if (usedProxy) showToast('プロキシ経由で取得しました');
-        processImage(file);
+        processFiles([file]);
       } catch (err) {
         console.error('URL Load error:', err);
-        showToast('画像の取得に失敗しました。URLを確認してください。', 'error');
+        showToast(`取得失敗: ${err.message || 'unknown'}`, 'error');
         switchView('view-upload');
       }
     }
@@ -876,9 +1439,18 @@
       }
     });
 
+    function filterImageFiles(fileList) {
+      return Array.from(fileList || []).filter(f => {
+        if (!f) return false;
+        if (f.type && f.type.startsWith('image/')) return true;
+        const n = (f.name || '').toLowerCase();
+        return n.endsWith('.heic') || n.endsWith('.heif');
+      });
+    }
+
     fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) processImage(file);
+      const files = filterImageFiles(e.target.files);
+      if (files.length) processFiles(files);
     });
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -900,11 +1472,9 @@
     });
 
     dropzone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) {
-        processImage(file);
-      } else if (file && (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif'))) {
-        processImage(file);
+      const files = filterImageFiles(e.dataTransfer.files);
+      if (files.length) {
+        processFiles(files);
       } else {
         showToast('画像ファイルを選択してください', 'error');
       }
@@ -917,17 +1487,17 @@
 
       const items = e.clipboardData && e.clipboardData.items;
       if (!items) return;
+      const pastedFiles = [];
       for (const item of items) {
         if (item.kind === 'file' && item.type.startsWith('image/')) {
           const blob = item.getAsFile();
           if (blob) {
             const ext = (blob.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '');
-            const file = new File([blob], `pasted_image.${ext}`, { type: blob.type });
-            processImage(file);
-            return;
+            pastedFiles.push(new File([blob], `pasted_image_${pastedFiles.length + 1}.${ext}`, { type: blob.type }));
           }
         }
       }
+      if (pastedFiles.length) processFiles(pastedFiles);
     });
 
     urlBtn.addEventListener('click', () => {
@@ -942,23 +1512,16 @@
       }
     });
 
-    btnDownload.addEventListener('click', () => {
-      if (!resultBlobUrl) return;
-      const a = document.createElement('a');
-      a.href = resultBlobUrl;
-      a.download = resultFilename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    btnDownloadAll.addEventListener('click', () => {
+      downloadAllAsZip();
     });
 
     btnReset.addEventListener('click', () => {
       switchView('view-upload');
-      if (resultBlobUrl) {
-        URL.revokeObjectURL(resultBlobUrl);
-        resultBlobUrl = null;
-      }
-      resultPreview.removeAttribute('src');
+      blobUrls.forEach(u => URL.revokeObjectURL(u));
+      blobUrls = [];
+      results = [];
+      resultList.innerHTML = '';
       urlInput.value = '';
     });
 
