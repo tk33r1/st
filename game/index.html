@@ -512,7 +512,13 @@
   </button>
 
   <script src="../data/buy-me-a-coffee.js"></script>
-  <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
+  <script>
+    new DonationWidget({
+      containerId: 'donation-button-container',
+      onOpen : () => { const b = document.getElementById('scroll-top-btn'); if (b) b.style.display = 'none'; },
+      onClose: () => { const b = document.getElementById('scroll-top-btn'); if (b) b.style.display = '';     }
+    }).init();
+  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script>

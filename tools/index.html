@@ -401,7 +401,13 @@
   </button>
 
   <script src="../data/buy-me-a-coffee.js"></script>
-  <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
+  <script>
+    new DonationWidget({
+      containerId: 'donation-button-container',
+      onOpen : () => { const b = document.getElementById('scroll-top-btn'); if (b) b.style.display = 'none'; },
+      onClose: () => { const b = document.getElementById('scroll-top-btn'); if (b) b.style.display = '';     }
+    }).init();
+  </script>
 
   <script>
     let records = [];
