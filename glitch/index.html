@@ -67,6 +67,11 @@
               "@type": "ListItem",
               "position": 3,
               "url": "https://tk.st/glitch/003/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "url": "https://tk.st/glitch/004/"
             }
           ]
         }
@@ -620,6 +625,7 @@
             position: relative;
             overflow: hidden;
             flex-shrink: 0;
+            align-self: start;
         }
 
         .article-thumb img {
@@ -630,6 +636,7 @@
             display: block;
             transition: transform 0.4s ease;
         }
+
 
         .article-card:hover .article-thumb img {
             transform: scale(1.05);
@@ -1534,10 +1541,6 @@
                                     <span class="article-readtime">⏱ 約7分</span>
                                 </div>
                                 <h2 class="article-title">Apple アカウントをトルコで作ってサブスク料金を劇的に下げる方法</h2>
-                                <p class="article-excerpt">
-                                    Apple Music などのサブスクは国や地域によって価格が大きく異なる。
-                                    トルコリラの下落を利用すれば、日本の価格の最大94%オフで使い続けられる。
-                                </p>
                             </div>
                             <div class="article-footer-row">
                                 <span class="article-date">2026.05.15</span>
@@ -1549,7 +1552,7 @@
                     <!-- Article 003 -->
                     <a href="003/index.html" class="article-card" data-tags="DJ,コスト削減" data-date="2026-05-15">
                         <div class="article-thumb">
-                            <img decoding="async" src="../images/ogp/glitch-003-ogp.webp" alt="DJ 音源をトルコ iTunes で1曲4円に削る方法">
+                            <img decoding="async" src="../images/ogp/glitch-003-ogp.webp" alt="DJ 音源集めをトルコ iTunes で 1曲 4円に削る方法">
                         </div>
                         <div class="article-body-wrap">
                             <div>
@@ -1559,11 +1562,29 @@
                                     <span class="article-tag">コスト削減</span>
                                     <span class="article-readtime">⏱ 約5分</span>
                                 </div>
-                                <h2 class="article-title">DJ 音源をトルコ iTunes で1曲4円に削る方法</h2>
-                                <p class="article-excerpt">
-                                    トルコの Apple アカウントを使えば、iTunes Store で楽曲を最安 0.99 TRY（約4円）で購入できる。
-                                    日本価格との差は約97%。セトリ20曲が80円以下で揃う。
-                                </p>
+                                <h2 class="article-title">DJ 音源集めをトルコ iTunes で 1曲 4円に削る方法</h2>
+                            </div>
+                            <div class="article-footer-row">
+                                <span class="article-date">2026.05.15</span>
+                                <span class="article-arrow">→</span>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Article 004 -->
+                    <a href="004/index.html" class="article-card" data-tags="投資,ポイ活" data-date="2026-05-15">
+                        <div class="article-thumb">
+                            <img decoding="async" src="../images/ogp/glitch-004-ogp.webp" alt="NISAで投資しつつ、簡単にポイントを3%弱貯める方法">
+                        </div>
+                        <div class="article-body-wrap">
+                            <div>
+                                <div class="article-meta">
+                                    <span class="article-num">#004</span>
+                                    <span class="article-tag">投資</span>
+                                    <span class="article-tag">ポイ活</span>
+                                    <span class="article-readtime">⏱ 約5分</span>
+                                </div>
+                                <h2 class="article-title">NISAで投資しつつ、簡単にポイントを3%弱貯める方法</h2>
                             </div>
                             <div class="article-footer-row">
                                 <span class="article-date">2026.05.15</span>
@@ -2100,8 +2121,19 @@
             cardArray.forEach(card => articleGrid.insertBefore(card, noResults));
         }
 
-        sortSelect.addEventListener('change', sortArticles);
+        sortSelect.addEventListener('change', () => { sortArticles(); fixThumbWidths(); });
         sortArticles();
+
+        // Thumb width: maintain 1200/630 ratio based on card height
+        function fixThumbWidths() {
+            document.querySelectorAll('.article-card:not(.featured)').forEach(card => {
+                const h = card.offsetHeight;
+                const w = Math.round(h * 1200 / 630);
+                card.style.gridTemplateColumns = w + 'px 1fr';
+            });
+        }
+        window.addEventListener('load', fixThumbWidths);
+        window.addEventListener('resize', fixThumbWidths);
 
         // Article count
         document.getElementById('articleCount').textContent = document.querySelectorAll('.article-card').length;
