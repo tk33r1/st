@@ -584,7 +584,7 @@
             const originalButtonText = buttonElement ? buttonElement.innerHTML : '';
             if (buttonElement) buttonElement.innerHTML = 'AIが思考中... ✨';
             try {
-                const payload = { model: "gemini-3.1-flash-lite-preview", contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
                 const response = await fetch(`${WORKER_URL}/api/gemini`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!response.ok) { const errorData = await response.json(); console.error("Gemini API Error:", errorData);
                     throw new Error(`APIリクエスト失敗 ステータス ${response.status}: ${errorData?.error?.message || response.statusText}`); }

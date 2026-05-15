@@ -483,7 +483,7 @@
     </div>
 
 <script>
-    const apiKey = ""; 
+    const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
     
     // --- Sound System ---
     const SoundManager = {
@@ -986,18 +986,11 @@
         if(sparkle) sparkle.classList.remove('hidden');
         if(box) box.classList.add('ai-thinking');
 
-        if (!apiKey) {
-            aiSay(eventType);
-            if(sparkle) sparkle.classList.add('hidden');
-            if(box) box.classList.remove('ai-thinking');
-            return;
-        }
-
         const role = AI_QUOTES[currentPersona].role;
         const prompt = `Character: ${role} (Masala Tetris). Language: Japanese. Context: ${contextText}. React in 1 short sentence (max 20 chars).`;
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+            const response = await fetch(`${WORKER_URL}/api/gemini`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
