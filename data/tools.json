@@ -6,7 +6,12 @@
     "imageUrl": "https://tk.st/images/ogp/csv-json-ogp.png",
     "category": "converter",
     "description": "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
-    "tags": ["CSV", "JSON", "変換"]
+    "tags": [
+      "CSV",
+      "JSON",
+      "Excel",
+      "変換"
+    ]
   },
   {
     "id": 2,
@@ -14,8 +19,12 @@
     "url": "https://tk.st/tools/light-svg/",
     "imageUrl": "https://tk.st/images/ogp/light-svg-ogp.png",
     "category": "optimizer",
-    "description": "面倒な設定なしでSVGファイルを1クリック軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。",
-    "tags": ["SVG", "軽量化", "最適化"]
+    "description": "日本発。面倒な設定なしで不要な情報を削除し、SVGファイルを1クリックで軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。",
+    "tags": [
+      "SVG",
+      "軽量化",
+      "最適化"
+    ]
   },
   {
     "id": 3,
@@ -23,8 +32,14 @@
     "url": "https://tk.st/tools/video-to-animation/",
     "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.png",
     "category": "converter",
-    "description": "動画をブラウザ上でアニメーションGIF、APNG、WEBP画像に変換。サーバー送信なしで安全・高速に処理されます。",
-    "tags": ["動画", "GIF", "APNG", "WEBP", "変換"]
+    "description": "世界初。サーバーレスで動画からAPNGやWEBPに直接変換。プライバシーも安心。ビットレートの調整も可能。",
+    "tags": [
+      "動画",
+      "アニメーション",
+      "APNG",
+      "WEBP",
+      "変換"
+    ]
   },
   {
     "id": 4,
@@ -32,8 +47,16 @@
     "url": "https://tk.st/tools/pdf-to-image/",
     "imageUrl": "https://tk.st/images/ogp/pdf-to-image-ogp.png",
     "category": "converter",
-    "description": "PDFファイルをブラウザ上でJPG、PNG、WEBP、AVIF画像に変換。複数ページの場合は画像を分けて、ZIPファイルでダウンロードできます。",
-    "tags": ["PDF", "JPG", "PNG", "WEBP", "AVIF", "変換"]
+    "description": "世界初。サーバーレスでPDFからAVIFに直接変換対応。プライバシーも安心。JPG・PNG・WEBP・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。",
+    "tags": [
+      "PDF",
+      "画像",
+      "JPG",
+      "PNG",
+      "WEBP",
+      "AVIF",
+      "変換"
+    ]
   },
   {
     "id": 5,
@@ -41,7 +64,13 @@
     "url": "https://tk.st/tools/nextgen-image/",
     "imageUrl": "https://tk.st/images/ogp/nextgen-image-ogp.png",
     "category": "converter",
-    "description": "画像やHEICをブラウザ上で軽量な次世代フォーマット（WEBP, AVIF）に変換。Exif削除も任意で選択できる安全なツールです。",
-    "tags": ["画像", "HEIC", "WEBP", "AVIF", "変換"]
+    "description": "日本初。ロスレスWebP変換対応。HEICやURL指定、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。",
+    "tags": [
+      "画像",
+      "HEIC",
+      "WEBP",
+      "AVIF",
+      "変換"
+    ]
   }
 ]
