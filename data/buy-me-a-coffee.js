@@ -263,7 +263,8 @@ class DonationWidget {
                 border-width: 0;
             }
             .donation-modal-intro {
-                padding: 1.25rem 1.25rem 0;
+                /* 右パディングは閉じるボタンと重ならないように広めに取る */
+                padding: 1.25rem 3.25rem 0 1.25rem;
                 display: flex;
                 flex-direction: column;
                 gap: 0.5rem;
@@ -451,8 +452,8 @@ class DonationWidget {
                 <div class="donation-scroll-container">
                     <h2 id="${this._titleId}" class="donation-modal-title">Buy Me a Coffee</h2>
                     <div class="donation-modal-intro">
-                        <p>私の提供するコンテンツは、煩わしい広告に依存することなく、<strong>「誰でも無料で自由にアクセスして楽しめること」</strong>を大切にしています。</p>
-                        <p>もし、「使ってみてよかった」「面白かった」「役に立った」と感じていただけたなら、コーヒー1杯分（☕）でもご支援いただけると、活動を続けるための非常に大きなモチベーションになります。</p>
+                        <p>広告に頼らず、<strong>「誰でも無料で楽しめること」</strong>を大切にしています。</p>
+                        <p>お役に立てたなら、コーヒー1杯（☕）のご支援が大きな励みになります。</p>
                     </div>
                     <div class="donation-kofi-wrap">
                         <iframe class="donation-kofi-iframe"
