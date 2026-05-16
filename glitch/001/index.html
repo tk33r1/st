@@ -265,10 +265,20 @@ chmod 600 ~/.config/deepseek/claude-deepseek-settings.json</code></pre>
               <pre><code><span class="kw">source</span> ~/.config/deepseek/key.env && \
 claude --bare --settings ~/.config/deepseek/claude-deepseek-settings.json --model sonnet</code></pre>
             </div>
+
+            <figure style="margin: 32px 0; text-align: center;">
+              <img src="../../images/contents/Claude-Code_deepseek-v4-pro.avif" alt="Claude Code CLI の起動画面。モデル表示が deepseek-v4-pro になっていることが確認できる" style="max-width: 100%; border-radius: 4px; border: 1px solid var(--border);">
+              <figcaption style="margin-top: 10px; font-size: 0.8rem; color: var(--text-dim); font-family: var(--font-mono);">▲ Claude Code CLI の起動画面。モデルが <code>deepseek-v4-pro</code> として立ち上がっていることがわかる。</figcaption>
+            </figure>
           </div>
           <div class="step">
             <p class="step-title">DeepSeek V4 Pro に API が飛ぶか確認する</p>
             <p>起動画面のキャラクター下部に <code>deepseek-v4-pro</code> と表示されていれば設定は成功だ。念のため「こんにちは」などのプロンプトを打ち、DeepSeek の <a href="https://platform.deepseek.com" target="_blank">Usage 画面</a>の Expenses が増加していることを確認する。</p>
+
+            <figure style="margin: 32px 0; text-align: center;">
+              <img src="../../images/contents/deepseek-usage.avif" alt="DeepSeek API の管理画面。deepseek-v4-pro モデルに対してリクエストが飛んでいることが確認できる Usage グラフ" style="max-width: 100%; border-radius: 4px; border: 1px solid var(--border);">
+              <figcaption style="margin-top: 10px; font-size: 0.8rem; color: var(--text-dim); font-family: var(--font-mono);">▲ DeepSeek API の管理画面。<code>deepseek-v4-pro</code> の API が叩かれていることがわかる。なお <code>deepseek-v4-flash</code> 分は別プロジェクト（OpenClaw）からの呼び出し。</figcaption>
+            </figure>
           </div>
         </div>
 
