@@ -103,6 +103,12 @@ header {
   background: rgba(9, 9, 14, 0.88);
   z-index: 100;
   backdrop-filter: blur(12px);
+  transition: transform 0.25s ease;
+  will-change: transform;
+}
+
+body.header-hidden header {
+  transform: translateY(-100%);
 }
 
 .header-inner {
@@ -389,7 +395,11 @@ body.menu-open {
   background: linear-gradient(to right, var(--accent), var(--accent2));
   z-index: 200;
   width: 0%;
-  transition: width 0.1s linear;
+  transition: width 0.1s linear, top 0.25s ease;
+}
+
+body.header-hidden .progress-bar {
+  top: 0;
 }
 
 /* ── ARTICLE HEADER ── */

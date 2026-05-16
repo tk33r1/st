@@ -195,6 +195,12 @@
             right: 0;
             background: var(--bg);
             z-index: 100;
+            transition: transform 0.25s ease;
+            will-change: transform;
+        }
+
+        body.header-hidden header {
+            transform: translateY(-100%);
         }
 
         .header-inner {

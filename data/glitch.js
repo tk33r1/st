@@ -653,10 +653,64 @@
     }
   }
 
+  function initHeaderAutoHide() {
+    const header = document.querySelector('header');
+    if (!header) return;
+    const mql = window.matchMedia('(max-width: 600px)');
+    const DELTA = 6;
+    const TOP_LOCK = 80;
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    function update() {
+      ticking = false;
+      const body = document.body;
+      if (!mql.matches) {
+        body.classList.remove('header-hidden');
+        lastY = window.scrollY;
+        return;
+      }
+      const panel = document.getElementById('menuPanel');
+      if (panel && panel.classList.contains('is-open')) {
+        body.classList.remove('header-hidden');
+        return;
+      }
+      const y = window.scrollY;
+      const dy = y - lastY;
+      if (Math.abs(dy) < DELTA) return;
+      if (y < TOP_LOCK) {
+        body.classList.remove('header-hidden');
+      } else if (dy > 0) {
+        body.classList.add('header-hidden');
+      } else {
+        body.classList.remove('header-hidden');
+      }
+      lastY = y;
+    }
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        window.requestAnimationFrame(update);
+        ticking = true;
+      },
+      { passive: true }
+    );
+
+    const onMqlChange = () => {
+      if (!mql.matches) document.body.classList.remove('header-hidden');
+      lastY = window.scrollY;
+    };
+    if (mql.addEventListener) mql.addEventListener('change', onMqlChange);
+    else if (mql.addListener) mql.addListener(onMqlChange);
+  }
+
   // ─── Bootstrap ───
   function init() {
     setFooterYear();
     initMenu();
+    initHeaderAutoHide();
 
     const script = document.querySelector('script[data-article-id]');
     const articleId = script ? script.dataset.articleId : null;
