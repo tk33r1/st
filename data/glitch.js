@@ -349,10 +349,16 @@
     const noResults = document.getElementById('noResults');
     let activeTag = 'all';
 
+    function getSearchInput() {
+      return (
+        document.getElementById('searchInput') ||
+        document.getElementById('menuSearchInput')
+      );
+    }
+
     function filterArticles() {
-      const query = document
-        .getElementById('searchInput')
-        .value.toLowerCase();
+      const searchEl = getSearchInput();
+      const query = (searchEl ? searchEl.value : '').toLowerCase();
       let visible = 0;
       cards.forEach((card) => {
         const cardTags = card.dataset.tags || '';
@@ -422,14 +428,15 @@
         timer = setTimeout(() => fn.apply(this, args), delay);
       };
     }
-    document
-      .getElementById('searchInput')
-      .addEventListener('input', debounce(filterArticles, 200));
+    const searchEl = getSearchInput();
+    if (searchEl) {
+      searchEl.addEventListener('input', debounce(filterArticles, 200));
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const initialQuery = urlParams.get('q');
-    if (initialQuery) {
-      document.getElementById('searchInput').value = initialQuery;
+    if (initialQuery && searchEl) {
+      searchEl.value = initialQuery;
       filterArticles();
     }
 
@@ -507,9 +514,149 @@
     }
   }
 
+  // ─── ハンバーガーメニュー ───
+  function initMenu() {
+    const isArticlePage = !!document.querySelector('script[data-article-id]');
+    const basePath = isArticlePage ? '../' : '';
+
+    if (!document.getElementById('menuToggle')) {
+      const headerRight = document.querySelector('.header-right');
+      if (!headerRight) return;
+      headerRight.insertAdjacentHTML(
+        'beforeend',
+        '<button type="button" class="menu-toggle" id="menuToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="menuPanel">' +
+          '<span class="menu-toggle-bar"></span>' +
+          '<span class="menu-toggle-bar"></span>' +
+          '<span class="menu-toggle-bar"></span>' +
+          '</button>'
+      );
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<div class="menu-overlay" id="menuOverlay" hidden></div>' +
+          '<aside class="menu-panel" id="menuPanel" hidden aria-hidden="true" aria-label="メニュー">' +
+          '<div class="menu-panel-header">' +
+          '<span class="menu-panel-title">// menu</span>' +
+          '<button type="button" class="menu-panel-close" id="menuPanelClose" aria-label="メニューを閉じる">×</button>' +
+          '</div>' +
+          '<div class="menu-panel-body">' +
+          '<div class="menu-section">' +
+          '<label for="menuSearchInput" class="menu-section-label"><span>//</span> 検索</label>' +
+          '<div class="menu-search-wrap">' +
+          '<span class="search-icon">⌕</span>' +
+          '<input type="text" class="menu-search-input" id="menuSearchInput" placeholder="サイト内を検索..." autocomplete="off">' +
+          '</div></div>' +
+          '<div class="menu-section">' +
+          '<span class="menu-section-label"><span>//</span> 記事</span>' +
+          '<ul class="menu-link-list" id="menuArticleList"></ul>' +
+          '</div>' +
+          '<div class="menu-section">' +
+          '<span class="menu-section-label"><span>//</span> 招待コード</span>' +
+          '<ul class="menu-link-list">' +
+          '<li><a href="' + basePath + 'index.html#referralSection" class="menu-link" data-menu-close><span class="menu-link-text">招待コード一覧へ</span></a></li>' +
+          '</ul></div>' +
+          '<div class="menu-section">' +
+          '<span class="menu-section-label"><span>//</span> おすすめ商品</span>' +
+          '<ul class="menu-link-list">' +
+          '<li><a href="' + basePath + 'index.html#affiliateSection" class="menu-link" data-menu-close><span class="menu-link-text">おすすめ商品一覧へ</span></a></li>' +
+          '</ul></div>' +
+          '</div></aside>'
+      );
+    }
+
+    const toggle = document.getElementById('menuToggle');
+    const panel = document.getElementById('menuPanel');
+    const overlay = document.getElementById('menuOverlay');
+    const closeBtn = document.getElementById('menuPanelClose');
+    const menuSearch = document.getElementById('menuSearchInput');
+    const mainSearch = document.getElementById('searchInput');
+    const articleList = document.getElementById('menuArticleList');
+    if (!toggle || !panel || !overlay) return;
+
+    function openMenu() {
+      panel.hidden = false;
+      overlay.hidden = false;
+      requestAnimationFrame(() => {
+        panel.classList.add('is-open');
+        overlay.classList.add('is-open');
+      });
+      panel.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-label', 'メニューを閉じる');
+      document.body.classList.add('menu-open');
+    }
+
+    function closeMenu() {
+      panel.classList.remove('is-open');
+      overlay.classList.remove('is-open');
+      panel.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'メニューを開く');
+      document.body.classList.remove('menu-open');
+      setTimeout(() => {
+        if (!panel.classList.contains('is-open')) {
+          panel.hidden = true;
+          overlay.hidden = true;
+        }
+      }, 260);
+    }
+
+    toggle.addEventListener('click', () => {
+      if (toggle.getAttribute('aria-expanded') === 'true') closeMenu();
+      else openMenu();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') closeMenu();
+    });
+    panel.addEventListener('click', (e) => {
+      const link = e.target.closest('a[href^="#"], a[data-menu-close]');
+      if (link) closeMenu();
+    });
+
+    if (menuSearch && mainSearch) {
+      menuSearch.addEventListener('input', () => {
+        if (mainSearch.value === menuSearch.value) return;
+        mainSearch.value = menuSearch.value;
+        mainSearch.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      mainSearch.addEventListener('input', () => {
+        if (menuSearch.value !== mainSearch.value) menuSearch.value = mainSearch.value;
+      });
+    } else if (menuSearch && isArticlePage) {
+      menuSearch.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const q = menuSearch.value.trim();
+        window.location.href = basePath + 'index.html' + (q ? '?q=' + encodeURIComponent(q) : '');
+      });
+    }
+
+    if (articleList) {
+      loadData()
+        .then((data) => {
+          if (!data || !data.articles) return;
+          const sorted = data.articles
+            .slice()
+            .sort((a, b) => (b.datePublished || '').localeCompare(a.datePublished || ''));
+          articleList.innerHTML = sorted
+            .map(
+              (a) =>
+                '<li><a class="menu-link" href="' + basePath + escapeHtml(a.id) + '/index.html">' +
+                '<span class="menu-link-num">#' + escapeHtml(a.id) + '</span>' +
+                '<span class="menu-link-text">' + escapeHtml(a.title) + '</span>' +
+                '</a></li>'
+            )
+            .join('');
+        })
+        .catch(() => {});
+    }
+  }
+
   // ─── Bootstrap ───
   function init() {
     setFooterYear();
+    initMenu();
 
     const script = document.querySelector('script[data-article-id]');
     const articleId = script ? script.dataset.articleId : null;

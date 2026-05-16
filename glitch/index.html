@@ -249,65 +249,159 @@
             gap: 12px;
         }
 
-        .header-nav {
-            display: flex;
+
+        /* ── HAMBURGER MENU ── */
+        .menu-toggle {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            cursor: pointer;
+            display: inline-flex;
+            flex-direction: column;
             align-items: center;
-            gap: 2px;
+            justify-content: center;
+            gap: 4px;
+            transition: border-color 0.15s, background 0.15s;
         }
 
-        .header-nav-link {
-            font-family: var(--font-mono);
-            font-size: 0.68rem;
-            color: var(--text-dim);
-            text-decoration: none;
-            padding: 4px 10px;
-            border-radius: 2px;
-            letter-spacing: 0.04em;
-            transition: color 0.15s, background 0.15s;
-            white-space: nowrap;
-        }
-
-        .header-nav-link:hover {
-            color: var(--accent);
+        .menu-toggle:hover,
+        .menu-toggle[aria-expanded="true"] {
+            border-color: var(--accent);
             background: rgba(0, 229, 255, 0.06);
         }
 
-        @media (max-width: 600px) {
-            .header-nav {
-                display: none;
-            }
+        .menu-toggle-bar {
+            display: block;
+            width: 16px;
+            height: 1.5px;
+            background: var(--text-dim);
+            transition: transform 0.2s, opacity 0.2s, background 0.15s;
         }
 
-        /* search */
-        .search-wrap {
+        .menu-toggle:hover .menu-toggle-bar,
+        .menu-toggle[aria-expanded="true"] .menu-toggle-bar {
+            background: var(--accent);
+        }
+
+        .menu-toggle[aria-expanded="true"] .menu-toggle-bar:nth-child(1) {
+            transform: translateY(5.5px) rotate(45deg);
+        }
+
+        .menu-toggle[aria-expanded="true"] .menu-toggle-bar:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-toggle[aria-expanded="true"] .menu-toggle-bar:nth-child(3) {
+            transform: translateY(-5.5px) rotate(-45deg);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+            -webkit-backdrop-filter: blur(2px);
+            backdrop-filter: blur(2px);
+        }
+
+        .menu-overlay.is-open {
+            opacity: 1;
+        }
+
+        .menu-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100dvh;
+            width: min(360px, 88vw);
+            background: var(--bg);
+            border-left: 1px solid var(--border);
+            z-index: 201;
+            transform: translateX(100%);
+            transition: transform 0.25s ease-out;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .menu-panel.is-open {
+            transform: translateX(0);
+        }
+
+        .menu-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            height: 56px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .menu-panel-title {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .menu-panel-close {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            width: 28px;
+            height: 28px;
+            color: var(--text-dim);
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .menu-panel-close:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .menu-panel-body {
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .menu-section-label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .menu-section-label span {
+            color: var(--accent2);
+            margin-right: 4px;
+        }
+
+        .menu-search-wrap {
             position: relative;
             display: flex;
             align-items: center;
         }
 
-        .search-input {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            padding: 6px 12px 6px 32px;
-            border-radius: 3px;
-            outline: none;
-            width: 200px;
-            transition: border-color 0.2s, width 0.3s;
-        }
-
-        .search-input:focus {
-            border-color: var(--accent);
-            width: 260px;
-        }
-
-        .search-input::placeholder {
-            color: var(--text-dim);
-        }
-
-        .search-icon {
+        .menu-search-wrap .search-icon {
             position: absolute;
             left: 10px;
             color: var(--text-dim);
@@ -315,7 +409,70 @@
             pointer-events: none;
         }
 
+        .menu-search-input {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            padding: 8px 12px 8px 32px;
+            border-radius: 3px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
 
+        .menu-search-input:focus {
+            border-color: var(--accent);
+        }
+
+        .menu-search-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .menu-link-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .menu-link {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 8px 10px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 2px;
+            transition: color 0.15s, background 0.15s;
+            line-height: 1.4;
+        }
+
+        .menu-link:hover {
+            color: var(--accent);
+            background: rgba(0, 229, 255, 0.06);
+        }
+
+        .menu-link-num {
+            color: var(--text-dim);
+            font-size: 0.65rem;
+            flex-shrink: 0;
+        }
+
+        .menu-link-text {
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
+        }
+
+        body.menu-open {
+            overflow: hidden;
+        }
 
         /* ── HERO ── */
         .hero {
@@ -1149,7 +1306,7 @@
         /* ── FOOTER ── */
         footer {
             border-top: 1px solid var(--border);
-            padding: 28px 0;
+            padding: 16px 0;
             position: relative;
             z-index: 1;
         }
@@ -1415,14 +1572,6 @@
                 gap: 20px;
             }
 
-            .search-input {
-                width: 140px;
-            }
-
-            .search-input:focus {
-                width: 160px;
-            }
-
             .hero-title {
                 font-size: 2rem;
             }
@@ -1435,10 +1584,14 @@
                 min-width: 0;
             }
 
+            footer {
+                padding: 14px 0;
+            }
+
             .footer-copy {
                 font-size: 0.55rem;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                white-space: normal;
+                line-height: 1.4;
             }
         }
     </style>
@@ -1452,22 +1605,50 @@
                 <a href="index.html" class="logo">
                     <span class="slash">/</span>glitch<span class="logo-blink"></span>
                 </a>
-                <nav class="header-nav">
-                    <a href="#articlesSection" class="header-nav-link">記事</a>
-                    <a href="#referralSection" class="header-nav-link">招待コード</a>
-                    <a href="#affiliateSection" class="header-nav-link">おすすめ商品</a>
-                </nav>
                 <div class="header-right">
-                    <div class="search-wrap">
-                        <label for="searchInput" class="sr-only">サイト内を検索</label>
-                        <span class="search-icon">⌕</span>
-                        <input type="text" class="search-input" id="searchInput" placeholder="サイト内を検索..." autocomplete="off">
-                    </div>
-
+                    <button type="button" class="menu-toggle" id="menuToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="menuPanel">
+                        <span class="menu-toggle-bar"></span>
+                        <span class="menu-toggle-bar"></span>
+                        <span class="menu-toggle-bar"></span>
+                    </button>
                 </div>
             </div>
         </div>
     </header>
+
+    <div class="menu-overlay" id="menuOverlay" hidden></div>
+
+    <aside class="menu-panel" id="menuPanel" hidden aria-hidden="true" aria-label="メニュー">
+        <div class="menu-panel-header">
+            <span class="menu-panel-title">// menu</span>
+            <button type="button" class="menu-panel-close" id="menuPanelClose" aria-label="メニューを閉じる">×</button>
+        </div>
+        <div class="menu-panel-body">
+            <div class="menu-section">
+                <label for="menuSearchInput" class="menu-section-label"><span>//</span> 検索</label>
+                <div class="menu-search-wrap">
+                    <span class="search-icon">⌕</span>
+                    <input type="text" class="menu-search-input" id="menuSearchInput" placeholder="サイト内を検索..." autocomplete="off">
+                </div>
+            </div>
+            <div class="menu-section">
+                <span class="menu-section-label"><span>//</span> 記事</span>
+                <ul class="menu-link-list" id="menuArticleList"></ul>
+            </div>
+            <div class="menu-section">
+                <span class="menu-section-label"><span>//</span> 招待コード</span>
+                <ul class="menu-link-list">
+                    <li><a href="#referralSection" class="menu-link" data-menu-close><span class="menu-link-text">招待コード一覧へ</span></a></li>
+                </ul>
+            </div>
+            <div class="menu-section">
+                <span class="menu-section-label"><span>//</span> おすすめ商品</span>
+                <ul class="menu-link-list">
+                    <li><a href="#affiliateSection" class="menu-link" data-menu-close><span class="menu-link-text">おすすめ商品一覧へ</span></a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
 
     <main>
         <div class="wrap">
