@@ -103,7 +103,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="../article.css">
+  <link rel="stylesheet" href="/data/glitch.css">
 </head>
 
 <body>
@@ -125,25 +125,13 @@
   <main>
     <div class="wrap-narrow">
 
-      <!-- ARTICLE HEADER -->
+      <!-- ARTICLE HEADER (breadcrumb/tags/h1/meta-row/hero-img は /data/glitch.json から /data/glitch.js が描画) -->
       <section class="article-header">
-        <p class="article-breadcrumb">
-          <a href="../index.html">/glitch</a> <span>›</span> #003
-        </p>
-        <div class="article-tags">
-          <span class="article-tag">DJ</span>
-          <span class="article-tag">コスト削減</span>
-        </div>
-        <h1 class="article-h1">DJ 音源集めをトルコ iTunes で 1曲 4円に削る方法</h1>
-        <div class="article-meta-row">
-          <span class="meta-item"><span class="dot">●</span> Shinya Takeda</span>
-          <span class="meta-item"><time datetime="2026-05-15">2026.05.15</time></span>
-          <span class="meta-item">⏱ 約3分</span>
-        </div>
-
-        <div class="article-hero-img">
-          <img src="../../images/ogp/glitch-003-ogp.webp" alt="DJ 音源集めをトルコ iTunes で 1曲 4円に削る方法">
-        </div>
+        <p class="article-breadcrumb"></p>
+        <div class="article-tags"></div>
+        <h1 class="article-h1"></h1>
+        <div class="article-meta-row"></div>
+        <div class="article-hero-img"><img alt=""></div>
 
         <div class="warning-box">
           <strong>⚠ 前提：</strong>
@@ -313,7 +301,7 @@
           <a href="https://tk.st" class="footer-back">&lt;</a>
         </div>
         <div class="footer-center">
-          <p class="footer-copy">© <span id="footerYear"></span> Shinya Takeda — 情報は自己責任でどうぞ。</p>
+          <p class="footer-copy">© <span id="footerYear"></span> Shinya Takeda — 情報は自己責任で</p>
         </div>
         <div class="footer-spacer" style="flex:1; display:flex; justify-content: flex-end;">
           <div id="donation-button-container"></div>
@@ -322,9 +310,9 @@
     </div>
   </footer>
 
-  <script src="../article.js" data-article-id="003"></script>
+  <script src="/data/glitch.js" data-article-id="003" defer></script>
 
-  <script src="../../data/buy-me-a-coffee.js"></script>
+  <script src="/data/buy-me-a-coffee.js"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 </body>
 

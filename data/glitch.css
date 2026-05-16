@@ -805,6 +805,20 @@ footer {
   .article-h1 {
     font-size: 1.5rem;
   }
+
+  .footer-inner {
+    gap: 8px;
+  }
+
+  .footer-center {
+    min-width: 0;
+  }
+
+  .footer-copy {
+    font-size: 0.55rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* ── COMMENTS SECTION ── */

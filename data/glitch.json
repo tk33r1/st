@@ -1,0 +1,53 @@
+{
+  "author": "Shinya Takeda",
+  "articles": [
+    {
+      "id": "001",
+      "title": "Claude Code を DeepSeek API に差し替えて、コストを 95% 削る方法",
+      "titleHtml": "Claude Code を DeepSeek API に差し替えて、<br>コストを 95% 削る方法",
+      "tags": ["AI", "コスト削減"],
+      "excerpt": "Anthropic の Claude Code は有能だが高い。DeepSeek の API を経由させることで、ほぼ同等の体験を激安で再現できる。公式には想定されていない使い方だが、仕組みを理解すれば難しくない。",
+      "datePublished": "2026-05-01",
+      "dateModified": "2026-05-09",
+      "readTime": "約4分",
+      "image": "/images/ogp/glitch-001-ogp.webp",
+      "featured": true
+    },
+    {
+      "id": "002",
+      "title": "Apple アカウントをトルコで作ってサブスク料金を劇的に下げる方法",
+      "titleHtml": "Apple アカウントをトルコで作って<br>サブスク料金を劇的に下げる方法",
+      "tags": ["制度ハック", "コスト削減"],
+      "excerpt": "",
+      "datePublished": "2026-05-10",
+      "dateModified": "2026-05-15",
+      "readTime": "約3分",
+      "image": "/images/ogp/glitch-002-ogp.webp",
+      "featured": false
+    },
+    {
+      "id": "003",
+      "title": "DJ 音源集めをトルコ iTunes で 1曲 4円に削る方法",
+      "titleHtml": "DJ 音源集めをトルコ iTunes で 1曲 4円に削る方法",
+      "tags": ["DJ", "コスト削減"],
+      "excerpt": "",
+      "datePublished": "2026-05-15",
+      "dateModified": "2026-05-15",
+      "readTime": "約3分",
+      "image": "/images/ogp/glitch-003-ogp.webp",
+      "featured": false
+    },
+    {
+      "id": "004",
+      "title": "NISA積立をポイント多重取りで回す — りそなデビット×楽天ペイで3%還元",
+      "titleHtml": "NISA積立をポイント多重取りで回す — りそなデビット×楽天ペイで3%還元",
+      "tags": ["投資", "ポイ活"],
+      "excerpt": "",
+      "datePublished": "2026-05-16",
+      "dateModified": "2026-05-16",
+      "readTime": "約3分",
+      "image": "/images/ogp/glitch-004-ogp.webp",
+      "featured": false
+    }
+  ]
+}
