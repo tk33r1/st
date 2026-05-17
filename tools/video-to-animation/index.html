@@ -274,6 +274,44 @@
       font-weight: 600;
     }
 
+    /* Range Input Customization */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #8b5cf6;
+      cursor: pointer;
+      margin-top: -6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      cursor: pointer;
+      background: #e2e8f0;
+      border-radius: 2px;
+    }
+    input[type=range]:disabled { cursor: not-allowed; }
+    input[type=range]:disabled::-webkit-slider-thumb {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    input[type=range]:disabled::-webkit-slider-runnable-track {
+      cursor: not-allowed;
+      background: #f1f5f9;
+    }
+    .quality-disabled { opacity: 0.45; }
+    .quality-disabled label { cursor: not-allowed; }
+
     .hidden { display: none !important; }
     .fade-in { animation: fadeIn 300ms ease-out forwards; }
     
@@ -319,43 +357,51 @@
     </div>
 
     <!-- Options Panel -->
-    <div class="w-full max-w-2xl options-panel flex flex-col sm:flex-row items-center justify-between gap-6">
-      
-      <!-- Format Selection -->
-      <div class="flex flex-col items-center sm:items-start gap-2">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">変換フォーマット</span>
-        <div class="flex gap-2" id="format-selection">
-          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="apng">APNG</button>
-          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
-          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp-lossless">WEBP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
+    <div class="w-full max-w-2xl options-panel flex flex-col gap-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 w-full">
+
+        <!-- Format Selection -->
+        <div class="flex flex-col items-center sm:items-start gap-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">変換フォーマット</span>
+          <div class="flex gap-2 flex-wrap justify-center" id="format-selection">
+            <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="apng">APNG</button>
+            <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
+            <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp-lossless">WEBP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
+          </div>
+        </div>
+
+        <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+
+        <!-- Optimization Settings -->
+        <div class="flex gap-4">
+          <div class="flex flex-col items-center sm:items-start gap-2">
+            <label for="opt-width" class="text-xs font-bold text-slate-400 uppercase tracking-wider">最大幅</label>
+            <select id="opt-width" class="custom-select w-28">
+              <option value="original">変更なし</option>
+              <option value="800">800px</option>
+              <option value="640" selected>640px</option>
+              <option value="480">480px</option>
+              <option value="320">320px</option>
+            </select>
+          </div>
+          <div class="flex flex-col items-center sm:items-start gap-2">
+            <label for="opt-fps" class="text-xs font-bold text-slate-400 uppercase tracking-wider">FPS</label>
+            <select id="opt-fps" class="custom-select w-28">
+              <option value="original">変更なし</option>
+              <option value="24">24 fps</option>
+              <option value="15" selected>15 fps</option>
+              <option value="10">10 fps</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
-
-      <!-- Optimization Settings -->
-      <div class="flex gap-4">
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <label for="opt-width" class="text-xs font-bold text-slate-400 uppercase tracking-wider">最大幅</label>
-          <select id="opt-width" class="custom-select w-28">
-            <option value="original">変更なし</option>
-            <option value="800">800px</option>
-            <option value="640" selected>640px</option>
-            <option value="480">480px</option>
-            <option value="320">320px</option>
-          </select>
-        </div>
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <label for="opt-fps" class="text-xs font-bold text-slate-400 uppercase tracking-wider">FPS</label>
-          <select id="opt-fps" class="custom-select w-28">
-            <option value="original">変更なし</option>
-            <option value="24">24 fps</option>
-            <option value="15" selected>15 fps</option>
-            <option value="10">10 fps</option>
-          </select>
-        </div>
+      <!-- Quality Setting -->
+      <div id="quality-row" class="flex items-center gap-4 pt-3 border-t border-slate-100 transition-opacity">
+        <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">画質品質</label>
+        <input type="range" id="opt-quality" min="10" max="100" value="80" class="flex-1">
+        <span id="quality-val" class="text-xs font-bold text-violet-600 w-12 text-right">80%</span>
       </div>
-
     </div>
 
     <!-- View 1: Upload Zone -->
@@ -478,6 +524,8 @@
     const formatBtns = document.querySelectorAll('.format-btn');
     let selectedFormat = 'apng';
 
+    const LOSSY_FORMATS = new Set(['webp']);
+
     const formatExtensions = {
       'apng': 'apng',
       'webp': 'webp',
@@ -501,6 +549,7 @@
         formatBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedFormat = btn.dataset.format;
+        applyQualityState();
       });
     });
 
@@ -524,6 +573,20 @@
     
     const optWidth = document.getElementById('opt-width');
     const optFps = document.getElementById('opt-fps');
+    const optQuality = document.getElementById('opt-quality');
+    const qualityVal = document.getElementById('quality-val');
+    const qualityRow = document.getElementById('quality-row');
+
+    optQuality.addEventListener('input', (e) => {
+      qualityVal.textContent = e.target.value + '%';
+    });
+
+    function applyQualityState() {
+      const disabled = !LOSSY_FORMATS.has(selectedFormat);
+      optQuality.disabled = disabled;
+      qualityRow.classList.toggle('quality-disabled', disabled);
+    }
+    applyQualityState();
 
     const toast = document.getElementById('toast');
     const toastMsg = document.getElementById('toast-msg');
@@ -699,7 +762,8 @@
           args.push('-plays', '0', outputName);
         } else if (selectedFormat === 'webp') {
           if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
-          args.push('-c:v', 'libwebp', '-lossless', '0', '-quality', '80', '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
+          const webpQuality = String(parseInt(optQuality.value, 10) || 80);
+          args.push('-c:v', 'libwebp', '-lossless', '0', '-quality', webpQuality, '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
         } else if (selectedFormat === 'webp-lossless') {
           if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
           args.push('-c:v', 'libwebp', '-lossless', '1', '-compression_level', '6', '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
