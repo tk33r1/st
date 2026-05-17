@@ -32,12 +32,13 @@
     "url": "https://tk.st/tools/video-to-animation/",
     "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.png",
     "category": "converter",
-    "description": "世界初。サーバーレスで動画からAPNGやWEBPに直接変換。プライバシーも安心。ビットレートの調整も可能。",
+    "description": "世界初。サーバーレスで動画からAPNGや可逆WebPに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。",
     "tags": [
       "動画",
       "アニメーション",
       "APNG",
       "WEBP",
+      "可逆",
       "変換"
     ]
   },

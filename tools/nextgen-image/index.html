@@ -518,45 +518,27 @@
     </div>
 
     <!-- Options Panel -->
-    <div class="w-full max-w-2xl options-panel flex flex-col gap-4">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 w-full">
+    <div class="w-full max-w-2xl options-panel flex flex-col sm:flex-row items-center justify-between gap-6">
 
-        <!-- Format Selection -->
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">出力フォーマット</span>
-          <div class="flex gap-2" id="format-selection">
-            <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
-            <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="avif">AVIF</button>
-          </div>
-        </div>
-
-        <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
-
-        <!-- Quality Setting -->
-        <div id="quality-row" class="flex flex-col items-center sm:items-start gap-2 flex-1 w-full max-w-[240px] transition-opacity">
-          <div class="flex justify-between w-full">
-            <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider">画質品質</label>
-            <span id="quality-val" class="text-xs font-bold text-emerald-600">80%</span>
-          </div>
-          <input type="range" id="opt-quality" min="10" max="100" value="80">
-        </div>
-
-        <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
-
-        <!-- Resize -->
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <label for="opt-resize" class="text-xs font-bold text-slate-400 uppercase tracking-wider">最大幅 (px)</label>
-          <input type="number" id="opt-resize" min="100" max="10000" step="100" placeholder="そのまま"
-            class="w-28 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+      <!-- Format Selection -->
+      <div class="flex flex-col items-center sm:items-start gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">出力フォーマット</span>
+        <div class="flex gap-2 flex-wrap justify-center" id="format-selection">
+          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
+          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp-lossless">WEBP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
+          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="avif">AVIF</button>
         </div>
       </div>
 
-      <!-- Lossless toggle (WEBP only) -->
-      <div id="lossless-row" class="flex items-center justify-center sm:justify-start gap-2 pt-2 border-t border-slate-100">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" id="opt-lossless" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
-          <span class="text-sm font-medium text-slate-700">ロスレス変換（透過PNGに最適）</span>
-        </label>
+      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+
+      <!-- Quality Setting -->
+      <div id="quality-row" class="flex flex-col items-center sm:items-start gap-2 flex-1 w-full max-w-[260px] transition-opacity">
+        <div class="flex justify-between w-full">
+          <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider">画質品質</label>
+          <span id="quality-val" class="text-xs font-bold text-emerald-600">80%</span>
+        </div>
+        <input type="range" id="opt-quality" min="10" max="100" value="80">
       </div>
     </div>
 
@@ -740,38 +722,41 @@
     const formatBtns = document.querySelectorAll('.format-btn');
     let selectedFormat = 'webp';
 
+    const formatExtensions = {
+      'webp': 'webp',
+      'webp-lossless': 'webp',
+      'avif': 'avif'
+    };
+
+    const formatMimeTypes = {
+      'webp': 'image/webp',
+      'webp-lossless': 'image/webp',
+      'avif': 'image/avif'
+    };
+
     formatBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         formatBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedFormat = btn.dataset.format;
+        applyQualityState();
       });
     });
 
     const optQuality = document.getElementById('opt-quality');
     const qualityVal = document.getElementById('quality-val');
-    const optLossless = document.getElementById('opt-lossless');
-    const optResize = document.getElementById('opt-resize');
-    const losslessRow = document.getElementById('lossless-row');
     const qualityRow = document.getElementById('quality-row');
 
     optQuality.addEventListener('input', (e) => {
       qualityVal.textContent = e.target.value + '%';
     });
 
-    function applyLosslessState() {
-      const disabled = optLossless.checked && selectedFormat === 'webp';
+    function applyQualityState() {
+      const disabled = selectedFormat === 'webp-lossless';
       optQuality.disabled = disabled;
       qualityRow.classList.toggle('quality-disabled', disabled);
     }
-
-    // Lossless is only meaningful for WEBP via canvas.toBlob.
-    function updateLosslessVisibility() {
-      losslessRow.classList.toggle('hidden', selectedFormat !== 'webp');
-      if (selectedFormat !== 'webp') optLossless.checked = false;
-      applyLosslessState();
-    }
-    optLossless.addEventListener('change', applyLosslessState);
+    applyQualityState();
 
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
@@ -816,12 +801,6 @@
     let results = [];        // array of result objects
     let blobUrls = [];       // all created blob URLs (for cleanup)
     let isProcessing = false;
-
-    // Update lossless row when format changes
-    formatBtns.forEach(btn => {
-      btn.addEventListener('click', updateLosslessVisibility);
-    });
-    updateLosslessVisibility();
 
     function formatBytes(bytes, decimals = 2) {
       if (!bytes || bytes <= 0) return '0 B';
@@ -884,6 +863,30 @@
       return avifEncoderPromise;
     }
 
+    let webpEncoderPromise = null;
+    function loadWebpEncoder() {
+      if (!webpEncoderPromise) {
+        webpEncoderPromise = import('https://esm.sh/@jsquash/webp@1.4.0').then(m => m.encode);
+      }
+      return webpEncoderPromise;
+    }
+
+    async function encodeCanvasAsLosslessWebp(canvas, statusUpdate) {
+      statusUpdate && statusUpdate('可逆WebPエンコーダを読み込み中...');
+      let encode;
+      try {
+        encode = await loadWebpEncoder();
+      } catch (e) {
+        console.error('jsquash WebP load failed:', e);
+        throw new Error('WebPエンコーダの読み込みに失敗しました: ' + (e.message || e));
+      }
+      statusUpdate && statusUpdate('可逆WebPを生成中 (WASM)...');
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const buf = await encode(imageData, { lossless: 1, quality: 100, exact: 1 });
+      return new Blob([buf], { type: 'image/webp' });
+    }
+
     async function encodeWithCanvasToBlob(canvas, mimeType, q) {
       const blob = await new Promise((resolve) => {
         canvas.toBlob(b => resolve(b), mimeType, q);
@@ -914,17 +917,13 @@
     }
 
     async function encodeOne(file, opts, statusUpdate) {
-      const { format, quality, lossless, maxWidth } = opts;
-      const mimeType = `image/${format}`;
+      const { format, quality } = opts;
+      const mimeType = formatMimeTypes[format];
 
       const bitmap = await decodeToBitmap(file);
 
-      let targetW = bitmap.width;
-      let targetH = bitmap.height;
-      if (maxWidth && targetW > maxWidth) {
-        targetH = Math.round((maxWidth / targetW) * targetH);
-        targetW = maxWidth;
-      }
+      const targetW = bitmap.width;
+      const targetH = bitmap.height;
 
       const canvas = document.createElement('canvas');
       canvas.width = targetW;
@@ -934,12 +933,13 @@
       ctx.drawImage(bitmap, 0, 0, targetW, targetH);
       if (bitmap.close) bitmap.close();
 
-      // Canvas WebP at quality=1.0 is the closest the API allows to lossless.
-      const q = lossless ? 1.0 : (quality / 100);
+      const q = quality / 100;
 
       let blob;
       if (format === 'avif') {
         blob = await encodeCanvasAsAvif(canvas, q, statusUpdate);
+      } else if (format === 'webp-lossless') {
+        blob = await encodeCanvasAsLosslessWebp(canvas, statusUpdate);
       } else {
         blob = await encodeWithCanvasToBlob(canvas, mimeType, q);
         if (!blob) throw new Error('エンコードに失敗しました (toBlob returned null)');
@@ -955,7 +955,7 @@
     function buildOutputFilename(originalName, format) {
       const dot = originalName.lastIndexOf('.');
       const baseName = dot >= 0 ? originalName.slice(0, dot) : (originalName || 'image');
-      return `${baseName}.${format}`;
+      return `${baseName}.${formatExtensions[format]}`;
     }
 
     async function processFiles(files) {
@@ -974,8 +974,6 @@
       const opts = {
         format: selectedFormat,
         quality: parseInt(optQuality.value, 10),
-        lossless: !!optLossless.checked && selectedFormat === 'webp',
-        maxWidth: parseInt(optResize.value, 10) || 0,
       };
 
       const total = files.length;

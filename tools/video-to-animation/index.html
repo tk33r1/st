@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="世界初。サーバーレスで動画からAPNGやWEBPに直接変換。プライバシーも安心。ビットレートの調整も可能。">
+  <meta name="description" content="世界初。サーバーレスで動画からAPNGや可逆WebPに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。">
   <title>Video to Animation - 動画アニメーション変換ツール | ST TOOLS</title>
   <link rel="canonical" href="https://tk.st/tools/video-to-animation/">
   <link rel="author" href="https://tk.st/">
   
   <!-- OGP / Twitter -->
   <meta property="og:title" content="Video to Animation - 動画アニメーション変換ツール">
-  <meta property="og:description" content="世界初。サーバーレスで動画からAPNGやWEBPに直接変換。プライバシーも安心。ビットレートの調整も可能。">
+  <meta property="og:description" content="世界初。サーバーレスで動画からAPNGや可逆WebPに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。">
   <meta property="og:image" content="https://tk.st/images/ogp/video-to-animation-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/video-to-animation/">
   <meta property="og:type" content="website">
@@ -18,7 +18,7 @@
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Video to Animation - 動画アニメーション変換ツール">
-  <meta name="twitter:description" content="世界初。サーバーレスで動画からAPNGやWEBPに直接変換。プライバシーも安心。ビットレートの調整も可能。">
+  <meta name="twitter:description" content="世界初。サーバーレスで動画からAPNGや可逆WebPに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/video-to-animation-ogp.png">
 
   <!-- JSON-LD -->
@@ -39,7 +39,7 @@
         "name": "Video to Animation",
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
-        "description": "世界初。サーバーレスで動画からAPNGやWEBPに直接変換。プライバシーも安心。ビットレートの調整も可能。",
+        "description": "世界初。サーバーレスで動画からAPNGや可逆WebPに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。",
         "url": "https://tk.st/tools/video-to-animation/",
         "offers": {
           "@type": "Offer",
@@ -325,9 +325,9 @@
       <div class="flex flex-col items-center sm:items-start gap-2">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">変換フォーマット</span>
         <div class="flex gap-2" id="format-selection">
-          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="gif">GIF</button>
-          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="apng">APNG</button>
+          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="apng">APNG</button>
           <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
+          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp-lossless">WEBP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
         </div>
       </div>
 
@@ -429,7 +429,7 @@
             <div class="grid grid-cols-2 gap-4 mb-6">
               <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">フォーマット</span>
-                <span id="result-format" class="text-xl font-outfit font-extrabold text-slate-700">GIF</span>
+                <span id="result-format" class="text-xl font-outfit font-extrabold text-slate-700">APNG</span>
               </div>
               <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">ファイルサイズ</span>
@@ -476,7 +476,25 @@
 
     // Setup format selection
     const formatBtns = document.querySelectorAll('.format-btn');
-    let selectedFormat = 'gif';
+    let selectedFormat = 'apng';
+
+    const formatExtensions = {
+      'apng': 'apng',
+      'webp': 'webp',
+      'webp-lossless': 'webp'
+    };
+
+    const formatMimeTypes = {
+      'apng': 'image/apng',
+      'webp': 'image/webp',
+      'webp-lossless': 'image/webp'
+    };
+
+    const formatLabels = {
+      'apng': 'APNG',
+      'webp': 'WEBP',
+      'webp-lossless': 'WEBP (可逆)'
+    };
 
     formatBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -518,7 +536,7 @@
     let ffmpeg = null;
     let isProcessing = false;
     let resultBlobUrl = null;
-    let resultFilename = 'output.gif';
+    let resultFilename = 'output.apng';
     let conversionStarted = false;
     let ffmpegLogBuffer = [];
 
@@ -651,8 +669,9 @@
         const dot = file.name.lastIndexOf('.');
         const inExt = dot >= 0 ? file.name.slice(dot) : '.mp4';
         const baseName = dot >= 0 ? file.name.slice(0, dot) : file.name;
+        const outExt = formatExtensions[selectedFormat];
         inputName = 'input' + inExt;
-        outputName = 'output.' + selectedFormat;
+        outputName = 'output.' + outExt;
 
         await ff.writeFile(inputName, await fetchFile(file));
 
@@ -675,16 +694,15 @@
         loadingSubmsg.textContent = 'ブラウザが重くなる場合がありますがそのままお待ちください';
         conversionStarted = true;
 
-        if (selectedFormat === 'gif') {
-          let filterGraph = vfFilters.length > 0 ? vfFilters.join(',') + ',' : '';
-          filterGraph += 'split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=5';
-          args.push('-filter_complex', filterGraph, outputName);
-        } else if (selectedFormat === 'apng') {
+        if (selectedFormat === 'apng') {
           if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
           args.push('-plays', '0', outputName);
         } else if (selectedFormat === 'webp') {
           if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
           args.push('-c:v', 'libwebp', '-lossless', '0', '-quality', '80', '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
+        } else if (selectedFormat === 'webp-lossless') {
+          if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
+          args.push('-c:v', 'libwebp', '-lossless', '1', '-compression_level', '6', '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
         }
 
         ffmpegLogBuffer = [];
@@ -695,13 +713,13 @@
         loadingMsg.textContent = '出力ファイルを準備中...';
         const data = await ff.readFile(outputName);
 
-        const mimeType = selectedFormat === 'apng' ? 'image/apng' : `image/${selectedFormat}`;
+        const mimeType = formatMimeTypes[selectedFormat];
         const blob = new Blob([data.buffer], { type: mimeType });
         resultBlobUrl = URL.createObjectURL(blob);
-        resultFilename = baseName + '.' + selectedFormat;
+        resultFilename = baseName + '.' + outExt;
 
         resultPreview.src = resultBlobUrl;
-        resultFormat.textContent = selectedFormat.toUpperCase();
+        resultFormat.textContent = formatLabels[selectedFormat];
         resultSize.textContent = formatBytes(blob.size);
 
         switchView('view-result');
