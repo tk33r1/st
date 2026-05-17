@@ -1154,6 +1154,10 @@ body.lightbox-open {
   transition: opacity 0.18s ease;
 }
 
+.img-lightbox[hidden] {
+  display: none;
+}
+
 .img-lightbox.is-open {
   opacity: 1;
 }

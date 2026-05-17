@@ -47,11 +47,10 @@
     "url": "https://tk.st/tools/pdf-to-image/",
     "imageUrl": "https://tk.st/images/ogp/pdf-to-image-ogp.png",
     "category": "converter",
-    "description": "世界初。サーバーレスでPDFからAVIFに直接変換対応。プライバシーも安心。JPG・PNG・WEBP・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。",
+    "description": "世界初。サーバーレスでPDFからAVIF・可逆WebPに直接変換対応。プライバシーも安心。PNG・WEBP（通常/可逆）・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。",
     "tags": [
       "PDF",
       "画像",
-      "JPG",
       "PNG",
       "WEBP",
       "AVIF",
