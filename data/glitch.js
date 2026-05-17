@@ -66,6 +66,7 @@
     initProgressBar();
     initCopyCode();
     initCopyUrl();
+    initImageLightbox();
 
     loadData().then((data) => {
       const a = data.articles.find((x) => x.id === articleId);
@@ -73,6 +74,83 @@
     });
 
     initComments(articleId);
+  }
+
+  function initImageLightbox() {
+    const body = document.querySelector('.article-body');
+    if (!body) return;
+
+    const imgs = body.querySelectorAll('img');
+    if (!imgs.length) return;
+
+    let overlay = null;
+    let overlayImg = null;
+    let lastFocused = null;
+
+    function ensureOverlay() {
+      if (overlay) return;
+      overlay = document.createElement('div');
+      overlay.className = 'img-lightbox';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-label', '画像の拡大表示');
+      overlay.hidden = true;
+      overlay.innerHTML =
+        '<button type="button" class="img-lightbox-close" aria-label="閉じる">×</button>' +
+        '<img class="img-lightbox-img" alt="">';
+      document.body.appendChild(overlay);
+      overlayImg = overlay.querySelector('.img-lightbox-img');
+
+      const closeBtn = overlay.querySelector('.img-lightbox-close');
+      closeBtn.addEventListener('click', close);
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay || e.target === overlayImg) close();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (!overlay.classList.contains('is-open')) return;
+        if (e.key === 'Escape') close();
+      });
+    }
+
+    function open(img) {
+      ensureOverlay();
+      lastFocused = document.activeElement;
+      overlayImg.src = img.currentSrc || img.src;
+      overlayImg.alt = img.alt || '';
+      overlay.hidden = false;
+      requestAnimationFrame(() => overlay.classList.add('is-open'));
+      document.body.classList.add('lightbox-open');
+      overlay.querySelector('.img-lightbox-close').focus();
+    }
+
+    function close() {
+      if (!overlay) return;
+      overlay.classList.remove('is-open');
+      document.body.classList.remove('lightbox-open');
+      setTimeout(() => {
+        overlay.hidden = true;
+        overlayImg.removeAttribute('src');
+      }, 180);
+      if (lastFocused && typeof lastFocused.focus === 'function') {
+        lastFocused.focus();
+      }
+    }
+
+    imgs.forEach((img) => {
+      img.classList.add('is-zoomable');
+      img.setAttribute('role', 'button');
+      img.setAttribute('tabindex', '0');
+      if (!img.getAttribute('aria-label') && !img.alt) {
+        img.setAttribute('aria-label', '画像を拡大表示');
+      }
+      img.addEventListener('click', () => open(img));
+      img.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open(img);
+        }
+      });
+    });
   }
 
   function initProgressBar() {

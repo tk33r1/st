@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="世界初。サーバーレスでPDFからAVIFに直接変換対応。プライバシーも安心。JPG・PNG・WEBP・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。">
+  <meta name="description" content="世界初。サーバーレスでPDFからAVIF・可逆WebPに直接変換対応。プライバシーも安心。PNG・WEBP（通常/可逆）・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。">
   <title>PDF to Image - PDF画像変換ツール | ST TOOLS</title>
   <link rel="canonical" href="https://tk.st/tools/pdf-to-image/">
   <link rel="author" href="https://tk.st/">
   
   <!-- OGP / Twitter -->
   <meta property="og:title" content="PDF to Image - PDF画像変換ツール">
-  <meta property="og:description" content="世界初。サーバーレスでPDFからAVIFに直接変換対応。プライバシーも安心。JPG・PNG・WEBP・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。">
+  <meta property="og:description" content="世界初。サーバーレスでPDFからAVIF・可逆WebPに直接変換対応。プライバシーも安心。PNG・WEBP（通常/可逆）・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。">
   <meta property="og:image" content="https://tk.st/images/ogp/pdf-to-image-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/pdf-to-image/">
   <meta property="og:type" content="website">
@@ -18,7 +18,7 @@
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PDF to Image - PDF画像変換ツール">
-  <meta name="twitter:description" content="世界初。サーバーレスでPDFからAVIFに直接変換対応。プライバシーも安心。JPG・PNG・WEBP・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。">
+  <meta name="twitter:description" content="世界初。サーバーレスでPDFからAVIF・可逆WebPに直接変換対応。プライバシーも安心。PNG・WEBP（通常/可逆）・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/pdf-to-image-ogp.png">
 
   <!-- JSON-LD -->
@@ -39,7 +39,7 @@
         "name": "PDF to Image",
         "applicationCategory": "UtilitiesApplication",
         "operatingSystem": "Any",
-        "description": "世界初。サーバーレスでPDFからAVIFに直接変換対応。プライバシーも安心。JPG・PNG・WEBP・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。",
+        "description": "世界初。サーバーレスでPDFからAVIF・可逆WebPに直接変換対応。プライバシーも安心。PNG・WEBP（通常/可逆）・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。",
         "url": "https://tk.st/tools/pdf-to-image/",
         "offers": {
           "@type": "Offer",
@@ -325,9 +325,9 @@
       <div class="flex flex-col items-center sm:items-start gap-2">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">変換フォーマット</span>
         <div class="flex gap-2 flex-wrap justify-center" id="format-selection">
-          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="jpg">JPG</button>
-          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="png">PNG</button>
+          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="png">PNG</button>
           <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
+          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp-lossless">WEBP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
           <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="avif">AVIF</button>
         </div>
       </div>
@@ -418,7 +418,7 @@
             <div class="grid grid-cols-2 gap-4 mb-6">
               <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">フォーマット</span>
-                <span id="result-format" class="text-xl font-outfit font-extrabold text-slate-700">JPG</span>
+                <span id="result-format" class="text-xl font-outfit font-extrabold text-slate-700">PNG</span>
               </div>
               <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">合計サイズ</span>
@@ -468,7 +468,7 @@
 
     // Setup format selection
     const formatBtns = document.querySelectorAll('.format-btn');
-    let selectedFormat = 'jpg';
+    let selectedFormat = 'png';
 
     formatBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -479,10 +479,24 @@
     });
 
     const formatMimeTypes = {
-      'jpg': 'image/jpeg',
       'png': 'image/png',
       'webp': 'image/webp',
+      'webp-lossless': 'image/webp',
       'avif': 'image/avif'
+    };
+
+    const formatExtensions = {
+      'png': 'png',
+      'webp': 'webp',
+      'webp-lossless': 'webp',
+      'avif': 'avif'
+    };
+
+    const formatLabels = {
+      'png': 'PNG',
+      'webp': 'WEBP',
+      'webp-lossless': 'WEBP (可逆)',
+      'avif': 'AVIF'
     };
 
     // Elements
@@ -516,7 +530,7 @@
     let isProcessing = false;
     let resultBlobUrl = null;
     let previewBlobUrl = null;
-    let resultFilename = 'output.jpg';
+    let resultFilename = 'output.png';
 
     function formatBytes(bytes, decimals = 2) {
       if (!bytes || bytes <= 0) return '0 B';
@@ -573,6 +587,20 @@
       return new Blob([buffer], { type: 'image/avif' });
     }
 
+    let webpEncodePromise = null;
+    function loadWebpEncoder() {
+      if (!webpEncodePromise) {
+        webpEncodePromise = import('https://esm.sh/@jsquash/webp@1.4.0').then(m => m.encode);
+      }
+      return webpEncodePromise;
+    }
+
+    async function encodeLosslessWebpFromImageData(imageData) {
+      const encode = await loadWebpEncoder();
+      const buffer = await encode(imageData, { lossless: 1, quality: 100, exact: 1 });
+      return new Blob([buffer], { type: 'image/webp' });
+    }
+
     const MAX_FILE_SIZE = 200 * 1024 * 1024;
     const HEAVY_FILE_SIZE = 50 * 1024 * 1024;
     const HEAVY_PAGE_COUNT = 50;
@@ -612,6 +640,8 @@
         const heavy = file.size > HEAVY_FILE_SIZE || numPages > HEAVY_PAGE_COUNT;
         if (selectedFormat === 'avif') {
           loadingSubmsg.textContent = `全${numPages}ページをAVIF変換中（初回はエンコーダのダウンロードが入ります）`;
+        } else if (selectedFormat === 'webp-lossless') {
+          loadingSubmsg.textContent = `全${numPages}ページを可逆WebP変換中（初回はエンコーダのダウンロードが入ります）`;
         } else if (heavy) {
           loadingSubmsg.textContent = `全${numPages}ページを変換中。大きなPDFのためブラウザが一時的に重くなる場合があります`;
         } else {
@@ -627,22 +657,18 @@
         let singleFileBlob = null;
         const baseName = file.name.replace(/\.[^/.]+$/, "");
         const mimeType = formatMimeTypes[selectedFormat];
+        const extension = formatExtensions[selectedFormat];
+        const formatLabel = formatLabels[selectedFormat];
         const quality = 0.9;
 
         for (let i = 1; i <= numPages; i++) {
           const page = await pdfDoc.getPage(i);
           const viewport = page.getViewport({ scale: scale });
-          
+
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
-
-          // Add white background for formats that don't support transparency
-          if (selectedFormat === 'jpg') {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
 
           const renderContext = { canvasContext: ctx, viewport: viewport };
           await page.render(renderContext).promise;
@@ -651,22 +677,25 @@
           if (selectedFormat === 'avif') {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             blob = await encodeAvifFromImageData(imageData, quality);
+          } else if (selectedFormat === 'webp-lossless') {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            blob = await encodeLosslessWebpFromImageData(imageData);
           } else {
             blob = await canvasToBlobAsync(canvas, mimeType, quality);
             if (blob && blob.type !== mimeType) {
-              throw new Error(`ブラウザが ${selectedFormat.toUpperCase()} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
+              throw new Error(`ブラウザが ${formatLabel} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
             }
           }
           if (!blob) {
-            throw new Error(`ブラウザが ${selectedFormat.toUpperCase()} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
+            throw new Error(`ブラウザが ${formatLabel} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
           }
 
           if (numPages === 1) {
             singleFileBlob = blob;
-            resultFilename = `${baseName}.${selectedFormat}`;
+            resultFilename = `${baseName}.${extension}`;
           } else {
             if (i === 1) firstPageBlob = blob;
-            const filename = `${baseName}_${String(i).padStart(3, '0')}.${selectedFormat}`;
+            const filename = `${baseName}_${String(i).padStart(3, '0')}.${extension}`;
             zip.file(filename, blob);
           }
 
@@ -689,7 +718,7 @@
         } else {
           resultBlobUrl = URL.createObjectURL(singleFileBlob);
           resultSize.textContent = formatBytes(singleFileBlob.size);
-          resultFormat.textContent = selectedFormat.toUpperCase();
+          resultFormat.textContent = formatLabel;
 
           resultMultiInfo.classList.add('hidden');
         }

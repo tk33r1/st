@@ -1119,3 +1119,78 @@ footer {
 .savings-desc strong {
   color: var(--text);
 }
+
+/* ─── 記事内画像のライトボックス ─── */
+.article-body img.is-zoomable {
+  cursor: zoom-in;
+  transition: opacity 0.15s ease;
+}
+
+.article-body img.is-zoomable:hover {
+  opacity: 0.88;
+}
+
+.article-body img.is-zoomable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+body.lightbox-open {
+  overflow: hidden;
+}
+
+.img-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5, 5, 10, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.img-lightbox.is-open {
+  opacity: 1;
+}
+
+.img-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 40px rgba(0, 229, 255, 0.12);
+  cursor: zoom-out;
+}
+
+.img-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--text);
+  background: rgba(19, 19, 28, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.img-lightbox-close:hover,
+.img-lightbox-close:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+  outline: none;
+}
