@@ -59,6 +59,7 @@
   <!-- PDF.js and JSZip dependencies -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="../../data/common-ui.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -560,6 +561,8 @@
   </div>
 
   <script>
+    const { formatBytes, showToast, switchView, isPrivateHost, setupDropzone } = window.STCommon;
+
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
@@ -605,10 +608,7 @@
     // Elements
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
-    const viewUpload = document.getElementById('view-upload');
-    const viewLoading = document.getElementById('view-loading');
-    const viewResult = document.getElementById('view-result');
-    
+
     const loadingMsg = document.getElementById('loading-msg');
     const loadingSubmsg = document.getElementById('loading-submsg');
     const progressBar = document.getElementById('progress-bar');
@@ -640,51 +640,10 @@
     }
     applyQualityState();
 
-    const toast = document.getElementById('toast');
-    const toastMsg = document.getElementById('toast-msg');
-    const toastIconSuccess = document.getElementById('toast-icon-success');
-    const toastIconError = document.getElementById('toast-icon-error');
-    let toastTimer = null;
-
     let isProcessing = false;
     let resultBlobUrl = null;
     let previewBlobUrl = null;
     let resultFilename = 'output.png';
-
-    function formatBytes(bytes, decimals = 2) {
-      if (!bytes || bytes <= 0) return '0 B';
-      const k = 1024;
-      const dm = decimals < 0 ? 0 : decimals;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-      const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-
-    function showToast(message, type = 'success') {
-      toastMsg.textContent = message;
-      if (type === 'error') {
-        toastIconSuccess.classList.add('hidden');
-        toastIconError.classList.remove('hidden');
-      } else {
-        toastIconSuccess.classList.remove('hidden');
-        toastIconError.classList.add('hidden');
-      }
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3000);
-    }
-
-    function switchView(viewId) {
-      viewUpload.classList.add('hidden');
-      viewLoading.classList.add('hidden');
-      viewResult.classList.add('hidden');
-      
-      const target = document.getElementById(viewId);
-      target.classList.remove('hidden');
-      target.classList.add('fade-in');
-    }
 
     function canvasToBlobAsync(canvas, mimeType, quality) {
       return new Promise(resolve => {
@@ -695,7 +654,7 @@
     let avifEncodePromise = null;
     function loadAvifEncoder() {
       if (!avifEncodePromise) {
-        avifEncodePromise = import('https://esm.sh/@jsquash/avif@1.3.0').then(m => m.encode);
+        avifEncodePromise = import('https://esm.sh/@jsquash/avif@2.1.1').then(m => m.encode);
       }
       return avifEncodePromise;
     }
@@ -780,47 +739,57 @@
         const formatLabel = formatLabels[selectedFormat];
         const quality = (parseInt(optQuality.value, 10) || 90) / 100;
 
-        for (let i = 1; i <= numPages; i++) {
-          const page = await pdfDoc.getPage(i);
-          const viewport = page.getViewport({ scale: scale });
+        // Reuse a single canvas across pages — at 3x scale on long PDFs
+        // allocating one canvas per page makes the renderer thrash GC.
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
 
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
+        try {
+          for (let i = 1; i <= numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const viewport = page.getViewport({ scale: scale });
 
-          const renderContext = { canvasContext: ctx, viewport: viewport };
-          await page.render(renderContext).promise;
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
 
-          let blob;
-          if (selectedFormat === 'avif') {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            blob = await encodeAvifFromImageData(imageData, quality);
-          } else if (selectedFormat === 'webp-lossless') {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            blob = await encodeLosslessWebpFromImageData(imageData);
-          } else {
-            blob = await canvasToBlobAsync(canvas, mimeType, quality);
-            if (blob && blob.type !== mimeType) {
+            const renderContext = { canvasContext: ctx, viewport: viewport };
+            await page.render(renderContext).promise;
+
+            let blob;
+            if (selectedFormat === 'avif') {
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              blob = await encodeAvifFromImageData(imageData, quality);
+            } else if (selectedFormat === 'webp-lossless') {
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              blob = await encodeLosslessWebpFromImageData(imageData);
+            } else {
+              blob = await canvasToBlobAsync(canvas, mimeType, quality);
+              if (blob && blob.type !== mimeType) {
+                throw new Error(`ブラウザが ${formatLabel} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
+              }
+            }
+            if (!blob) {
               throw new Error(`ブラウザが ${formatLabel} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
             }
-          }
-          if (!blob) {
-            throw new Error(`ブラウザが ${formatLabel} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
-          }
 
-          if (numPages === 1) {
-            singleFileBlob = blob;
-            resultFilename = `${baseName}.${extension}`;
-          } else {
-            if (i === 1) firstPageBlob = blob;
-            const filename = `${baseName}_${String(i).padStart(3, '0')}.${extension}`;
-            zip.file(filename, blob);
-          }
+            if (numPages === 1) {
+              singleFileBlob = blob;
+              resultFilename = `${baseName}.${extension}`;
+            } else {
+              if (i === 1) firstPageBlob = blob;
+              const filename = `${baseName}_${String(i).padStart(3, '0')}.${extension}`;
+              zip.file(filename, blob);
+            }
 
-          const pct = Math.floor((i / numPages) * 100);
-          progressBar.style.width = `${pct}%`;
-          progressText.textContent = `${pct}%`;
+            const pct = Math.floor((i / numPages) * 100);
+            progressBar.style.width = `${pct}%`;
+            progressText.textContent = `${pct}%`;
+          }
+        } finally {
+          // Release the canvas bitmap explicitly — large PDFs keep megabytes
+          // of pixel data pinned to GPU memory until this is cleared.
+          canvas.width = 0;
+          canvas.height = 0;
         }
 
         if (numPages > 1) {
@@ -870,15 +839,11 @@
       }
     }
 
-    // Event Listeners
-    dropzone.addEventListener('click', () => fileInput.click());
-
-    dropzone.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        fileInput.click();
-      }
-    });
+    function isPdfFile(file) {
+      if (!file) return false;
+      if (file.type === 'application/pdf') return true;
+      return /\.pdf$/i.test(file.name || '');
+    }
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -892,51 +857,18 @@
       fileInput.value = '';
     });
 
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, preventDefaults, false);
-      document.body.addEventListener(eventName, preventDefaults, false);
+    setupDropzone({
+      dropzone,
+      fileInput,
+      onFiles: (files) => {
+        const file = files[0];
+        if (isPdfFile(file)) {
+          processPdf(file);
+        } else {
+          showToast('PDFファイルを選択してください。', 'error');
+        }
+      },
     });
-
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-    });
-
-    function isPdfFile(file) {
-      if (!file) return false;
-      if (file.type === 'application/pdf') return true;
-      return /\.pdf$/i.test(file.name || '');
-    }
-
-    dropzone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer.files[0];
-      if (isPdfFile(file)) {
-        processPdf(file);
-      } else {
-        showToast('PDFファイルを選択してください。', 'error');
-      }
-    });
-
-    function isPrivateHost(hostname) {
-      if (!hostname) return true;
-      const h = hostname.toLowerCase();
-      if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local')) return true;
-      if (h === '127.0.0.1' || h === '0.0.0.0' || h === '::1') return true;
-      if (/^10\./.test(h)) return true;
-      if (/^192\.168\./.test(h)) return true;
-      if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(h)) return true;
-      if (/^169\.254\./.test(h)) return true;
-      if (/^f[cd][0-9a-f]{2}:/i.test(h)) return true;
-      return false;
-    }
 
     async function loadFromUrl(url) {
       if (!url || isProcessing) return;
@@ -1002,6 +934,14 @@
           || /\.pdf(?:$|\?)/i.test(urlObj.pathname);
         if (!looksLikePdf) {
           throw new Error(`PDFではないデータを受信しました (${blobType || 'unknown'})`);
+        }
+
+        // Verify the %PDF- magic so a redirected HTML error page can't slip
+        // through octet-stream / .pdf-path heuristics into PDF.js.
+        const head = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
+        const magic = String.fromCharCode.apply(null, head);
+        if (!magic.startsWith('%PDF-')) {
+          throw new Error('受信したデータがPDFではありません (magic number mismatch)');
         }
 
         let filename = 'downloaded.pdf';

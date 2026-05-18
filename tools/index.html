@@ -56,6 +56,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --wrench-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 4 4;
+    }
+
     *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
@@ -127,7 +131,10 @@
     }
 
     .header-select {
-      background: rgba(255,255,255,0.15);
+      background-color: rgba(255,255,255,0.15);
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 8px center;
       border: 1.5px solid rgba(255,255,255,0.3);
       border-radius: 8px;
       color: #fff;
@@ -136,12 +143,8 @@
       padding: 9px 32px 9px 12px;
       cursor: pointer;
       appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      transition: background 150ms ease, border-color 150ms ease;
+      transition: background-color 150ms ease, border-color 150ms ease;
       backdrop-filter: blur(4px);
-      background-color: rgba(255,255,255,0.15);
     }
     .header-select option { background: #1e3a8a; color: #fff; }
     .header-select:focus { outline: none; border-color: rgba(255,255,255,0.65); }
@@ -298,10 +301,10 @@
     /* ========== Page-wide wrench cursor ========== */
     body,
     a, button, select, label, .filter-chip, #scroll-top-btn {
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 4 4, auto;
+      cursor: var(--wrench-cursor), auto;
     }
     input, textarea {
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 4 4, text;
+      cursor: var(--wrench-cursor), text;
     }
 
     /* ========== Header wrench animation ========== */
@@ -427,6 +430,25 @@
       ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])
     );
 
+    const SAME_ORIGIN_HOSTS = new Set(['tk.st', 'www.tk.st', location.hostname]);
+    const safeUrl = (raw) => {
+      if (!raw || raw === '#') return null;
+      try {
+        const u = new URL(raw, location.href);
+        return (u.protocol === 'http:' || u.protocol === 'https:') ? u : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const debounce = (fn, ms) => {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), ms);
+      };
+    };
+
     function showMessage(text, type) {
       if (!text) { messageBar.classList.add('hidden'); messageBar.textContent = ''; return; }
       messageBar.classList.remove('hidden');
@@ -459,8 +481,10 @@
       categoryFilter.innerHTML = '';
       ['all', ...cats].forEach(cat => {
         const btn = document.createElement('button');
-        btn.className = 'filter-chip' + (cat === activeCategory ? ' active' : '');
+        const isActive = cat === activeCategory;
+        btn.className = 'filter-chip' + (isActive ? ' active' : '');
         btn.textContent = cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1);
+        btn.setAttribute('aria-pressed', String(isActive));
         btn.addEventListener('click', () => {
           activeCategory = cat;
           renderCategoryChips();
@@ -470,26 +494,40 @@
       });
     }
 
+    const IMAGE_OFF_SVG = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           class="opacity-40" aria-hidden="true">
+        <line x1="2" y1="2" x2="22" y2="22"/>
+        <path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/>
+        <line x1="13.5" y1="13.5" x2="6" y2="21"/>
+        <line x1="18" y1="12" x2="21" y2="15"/>
+        <path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.05-.22 1.41-.59"/>
+        <path d="M21 15V5a2 2 0 0 0-2-2H9"/>
+      </svg>`;
+
     function createCard(record) {
+      const url = safeUrl(record.url);
+      const imgURL = safeUrl(record.imageUrl);
       const card = document.createElement('a');
       card.className = 'tool-card fade-up';
-      card.href = record.url;
-      card.target = '_blank';
-      card.rel = 'noopener noreferrer';
+      card.href = url ? url.href : '#';
+      if (url && !SAME_ORIGIN_HOSTS.has(url.hostname)) {
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+      }
 
       const title = escapeHTML(record.title);
       const desc = escapeHTML(record.description || '');
       const category = record.category ? escapeHTML(record.category) : '';
-      const imgUrl = escapeHTML(record.imageUrl || '');
       const tags = (record.tags || []).map(t => escapeHTML(t));
       const isNew = newIds.has(record.id);
 
       card.innerHTML = `
         <div class="tool-img-wrap">
-          <img src="${imgUrl}" alt="${title}" loading="lazy" class="tool-img"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="tool-img-fallback">
-            <i data-lucide="image-off" class="w-8 h-8 opacity-40"></i>
+          ${imgURL ? `<img src="${imgURL.href}" alt="${title}" loading="lazy" class="tool-img">` : ''}
+          <div class="tool-img-fallback"${imgURL ? '' : ' style="display:flex"'}>
+            ${IMAGE_OFF_SVG}
             <span>No preview</span>
           </div>
           ${isNew ? `<span class="badge-new">New</span>` : ''}
@@ -504,6 +542,16 @@
             </div>` : ''}
         </div>
       `;
+
+      const img = card.querySelector('img.tool-img');
+      if (img) {
+        const fallback = card.querySelector('.tool-img-fallback');
+        img.addEventListener('error', () => {
+          img.style.display = 'none';
+          if (fallback) fallback.style.display = 'flex';
+        });
+      }
+
       return card;
     }
 
@@ -532,7 +580,6 @@
 
       countEl.textContent = filtered.length;
       emptyState.classList.toggle('hidden', filtered.length > 0);
-      lucide.createIcons();
     }
 
     function updateItemListSchema(tools) {
@@ -543,32 +590,42 @@
         const list = data['@graph'].find(n => n['@type'] === 'ItemList');
         if (!list) return;
         list.itemListElement = tools
-          .filter(t => t.url && t.url !== '#')
-          .map((t, i) => ({ '@type': 'ListItem', 'position': i + 1, 'url': t.url }));
+          .map(t => ({ tool: t, url: safeUrl(t.url) }))
+          .filter(x => x.url)
+          .map((x, i) => ({ '@type': 'ListItem', 'position': i + 1, 'url': x.url.href }));
         script.textContent = JSON.stringify(data);
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Failed to update JSON-LD ItemList:', e);
+      }
     }
+
+    const FALLBACK_RECORDS = [
+      {
+        id: 1,
+        title: "CSV ↔ JSON 相互変換ツール",
+        url: "https://tk.st/tools/csv-json/",
+        imageUrl: "https://tk.st/images/ogp/csv-json-ogp.png",
+        category: "converter",
+        description: "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
+        tags: ["CSV", "JSON"]
+      }
+    ];
 
     async function loadTools() {
       showSkeletons(6);
+      let usedFallback = false;
       try {
-        const res = await fetch('https://tk.st/data/tools.json');
-        if (!res.ok) throw new Error('Network error');
+        const res = await fetch('/data/tools.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         records = await res.json();
-      } catch {
-        showMessage('データの読み込みに失敗しました。', 'error');
-        records = [
-          {
-            id: 1,
-            title: "CSV ↔ JSON 相互変換ツール",
-            url: "https://tk.st/tools/csv-json/",
-            imageUrl: "https://tk.st/images/ogp/csv-json-ogp.png",
-            category: "converter",
-            description: "CSVファイルとJSONファイルを相互変換。Excelからのコピーペーストにも対応しています。",
-            tags: ["CSV", "JSON"]
-          }
-        ];
+      } catch (e) {
+        console.warn('Failed to load tools.json, using fallback:', e);
+        records = FALLBACK_RECORDS;
+        usedFallback = true;
       } finally {
+        if (usedFallback) {
+          showMessage('最新のツール一覧を取得できなかったため、サンプルを表示しています。', 'info');
+        }
         const sorted = [...records].sort((a, b) => b.id - a.id);
         newIds = new Set(sorted.slice(0, 2).map(r => r.id));
         renderCategoryChips();
@@ -584,7 +641,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    searchInput.addEventListener('input', updateView);
+    searchInput.addEventListener('input', debounce(updateView, 150));
     sortSelect.addEventListener('change', updateView);
     lucide.createIcons();
 

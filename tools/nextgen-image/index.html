@@ -57,6 +57,8 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <link rel="stylesheet" href="../../data/common-ui.css">
+  <script src="../../data/common-ui.js"></script>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -327,11 +329,10 @@
     }
 
     .result-row {
-      display: grid;
-      grid-template-columns: 56px 1fr auto;
-      align-items: center;
-      gap: 14px;
-      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
       background: rgba(255,255,255,0.85);
       border: 1px solid rgba(0,0,0,0.06);
       border-radius: 14px;
@@ -343,6 +344,18 @@
     .result-row.failed {
       background: #fef2f2;
       border-color: #fecaca;
+    }
+    .result-row .result-meta-row {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      align-items: center;
+      gap: 12px;
+    }
+    .result-row.failed .result-meta-row {
+      grid-template-columns: 1fr auto;
+    }
+    .result-compare {
+      max-height: 360px;
     }
     .result-thumb {
       width: 56px;
@@ -385,101 +398,6 @@
       background: #ecfdf5;
     }
 
-    /* Compare modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,0.75);
-      backdrop-filter: blur(6px);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .modal-card {
-      background: white;
-      border-radius: 20px;
-      max-width: 1000px;
-      width: 100%;
-      max-height: 92vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    .compare-wrap {
-      position: relative;
-      overflow: hidden;
-      user-select: none;
-      touch-action: none;
-      background: #f1f5f9;
-      max-height: 70vh;
-    }
-    .compare-wrap img {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-height: 70vh;
-      object-fit: contain;
-      pointer-events: none;
-    }
-    .compare-after-wrap {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      width: 50%;
-    }
-    .compare-after-wrap img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      max-width: none;
-    }
-    .compare-handle {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 2px;
-      background: white;
-      box-shadow: 0 0 12px rgba(0,0,0,0.5);
-      transform: translateX(-50%);
-      cursor: ew-resize;
-    }
-    .compare-handle::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    .compare-handle::before {
-      content: '⇆';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 18px;
-      color: #475569;
-      z-index: 1;
-      font-weight: 700;
-    }
-    .compare-label {
-      position: absolute;
-      top: 12px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      background: rgba(15,23,42,0.75);
-      color: white;
-      font-size: 0.7rem;
-      font-weight: 600;
-      pointer-events: none;
-    }
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -630,30 +548,6 @@
       </div>
     </div>
 
-    <!-- Compare Modal -->
-    <div id="compare-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-      <div class="modal-card" role="document">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100">
-          <div class="flex flex-col">
-            <span class="text-sm font-bold text-slate-800" id="compare-title">比較</span>
-            <span class="text-xs text-slate-500" id="compare-subtitle"></span>
-          </div>
-          <button id="compare-close" class="icon-btn" aria-label="閉じる">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-        <div id="compare-wrap" class="compare-wrap">
-          <img id="compare-before" alt="Before">
-          <div class="compare-after-wrap" id="compare-after-wrap">
-            <img id="compare-after" alt="After">
-          </div>
-          <div class="compare-handle" id="compare-handle"></div>
-          <span class="compare-label" style="left: 12px;">変換前</span>
-          <span class="compare-label" style="right: 12px;">変換後</span>
-        </div>
-      </div>
-    </div>
-
   </main>
 
   <footer class="mt-auto border-t border-slate-200 bg-white/50 backdrop-blur-md">
@@ -677,16 +571,6 @@
   </div>
 
   <style>
-    .checkerboard-bg {
-      background-image: 
-        linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
-        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
-        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
-      background-size: 20px 20px;
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    }
-
     .progress-bar-container {
       width: 100%;
       height: 8px;
@@ -715,6 +599,8 @@
   </style>
 
   <script>
+    const { formatBytes, showToast, switchView, isPrivateHost, setupDropzone, setupInlineCompare } = window.STCommon;
+
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
@@ -760,9 +646,6 @@
 
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
-    const viewUpload = document.getElementById('view-upload');
-    const viewLoading = document.getElementById('view-loading');
-    const viewResult = document.getElementById('view-result');
 
     const loadingMsg = document.getElementById('loading-msg');
     const loadingSubmsg = document.getElementById('loading-submsg');
@@ -781,61 +664,12 @@
     const urlInput = document.getElementById('url-input');
     const urlBtn = document.getElementById('url-btn');
 
-    const toast = document.getElementById('toast');
-    const toastMsg = document.getElementById('toast-msg');
-    const toastIconSuccess = document.getElementById('toast-icon-success');
-    const toastIconError = document.getElementById('toast-icon-error');
-    let toastTimer = null;
-
-    // Compare modal
-    const compareModal = document.getElementById('compare-modal');
-    const compareBefore = document.getElementById('compare-before');
-    const compareAfter = document.getElementById('compare-after');
-    const compareAfterWrap = document.getElementById('compare-after-wrap');
-    const compareHandle = document.getElementById('compare-handle');
-    const compareWrap = document.getElementById('compare-wrap');
-    const compareClose = document.getElementById('compare-close');
-    const compareTitle = document.getElementById('compare-title');
-    const compareSubtitle = document.getElementById('compare-subtitle');
-
     let results = [];        // array of result objects
+    // Teardowns for each rendered inline compare slider — replaced wholesale
+    // on every renderResults() so listeners can't accumulate across runs.
+    let compareTeardowns = [];
     let blobUrls = [];       // all created blob URLs (for cleanup)
     let isProcessing = false;
-
-    function formatBytes(bytes, decimals = 2) {
-      if (!bytes || bytes <= 0) return '0 B';
-      const k = 1024;
-      const dm = decimals < 0 ? 0 : decimals;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-      const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-
-    function showToast(message, type = 'success') {
-      toastMsg.textContent = message;
-      if (type === 'error') {
-        toastIconSuccess.classList.add('hidden');
-        toastIconError.classList.remove('hidden');
-      } else {
-        toastIconSuccess.classList.remove('hidden');
-        toastIconError.classList.add('hidden');
-      }
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3000);
-    }
-
-    function switchView(viewId) {
-      viewUpload.classList.add('hidden');
-      viewLoading.classList.add('hidden');
-      viewResult.classList.add('hidden');
-      
-      const target = document.getElementById(viewId);
-      target.classList.remove('hidden');
-      target.classList.add('fade-in');
-    }
 
     function isHeicFile(file) {
       const n = file.name.toLowerCase();
@@ -964,6 +798,7 @@
       isProcessing = true;
 
       // Cleanup previous results
+      teardownCompares();
       blobUrls.forEach(u => URL.revokeObjectURL(u));
       blobUrls = [];
       results = [];
@@ -1054,16 +889,37 @@
         ? `${okResults.length}件をZIPでダウンロード`
         : '画像をダウンロード';
 
+      teardownCompares();
       resultList.innerHTML = '';
-      results.forEach((r, idx) => {
+
+      results.forEach((r) => {
         const row = document.createElement('div');
         row.className = 'result-row' + (r.ok ? '' : ' failed');
 
-        const thumb = document.createElement('img');
-        thumb.className = 'result-thumb';
-        thumb.alt = '';
-        thumb.src = r.ok ? r.outputUrl : (r.beforeUrl || '');
-        row.appendChild(thumb);
+        // Inline Before/After compare lives at the top of every successful
+        // result row — no button press required.
+        if (r.ok) {
+          const compareBox = document.createElement('div');
+          compareBox.className = 'result-compare';
+          row.appendChild(compareBox);
+          const teardown = setupInlineCompare({
+            container: compareBox,
+            beforeUrl: r.beforeUrl,
+            afterUrl: r.outputUrl,
+          });
+          compareTeardowns.push(teardown);
+        }
+
+        const metaRow = document.createElement('div');
+        metaRow.className = 'result-meta-row';
+
+        if (r.ok) {
+          const thumb = document.createElement('img');
+          thumb.className = 'result-thumb';
+          thumb.alt = '';
+          thumb.src = r.outputUrl;
+          metaRow.appendChild(thumb);
+        }
 
         const info = document.createElement('div');
         info.className = 'min-w-0';
@@ -1097,19 +953,11 @@
           meta.appendChild(err);
         }
         info.appendChild(meta);
-        row.appendChild(info);
+        metaRow.appendChild(info);
 
         const actions = document.createElement('div');
         actions.className = 'flex items-center gap-1';
         if (r.ok) {
-          const cmpBtn = document.createElement('button');
-          cmpBtn.className = 'icon-btn';
-          cmpBtn.title = 'Before/After比較';
-          cmpBtn.setAttribute('aria-label', '比較');
-          cmpBtn.innerHTML = '<i data-lucide="git-compare" class="w-4 h-4"></i>';
-          cmpBtn.addEventListener('click', () => openCompare(idx));
-          actions.appendChild(cmpBtn);
-
           const dlBtn = document.createElement('button');
           dlBtn.className = 'icon-btn';
           dlBtn.title = 'ダウンロード';
@@ -1128,7 +976,9 @@
             actions.appendChild(shareBtn);
           }
         }
-        row.appendChild(actions);
+        metaRow.appendChild(actions);
+
+        row.appendChild(metaRow);
         resultList.appendChild(row);
       });
 
@@ -1241,97 +1091,9 @@
       }
     }
 
-    // ===== Compare modal =====
-    let compareDragging = false;
-    function syncAfterSize() {
-      // Match the "after" image's rendered size to the "before" image to keep the slider aligned.
-      const r = compareBefore.getBoundingClientRect();
-      compareAfter.style.width = r.width + 'px';
-      compareAfter.style.height = r.height + 'px';
-    }
-    function setComparePosition(clientX) {
-      const rect = compareWrap.getBoundingClientRect();
-      let x = clientX - rect.left;
-      x = Math.max(0, Math.min(rect.width, x));
-      const ratio = (x / rect.width) * 100;
-      compareAfterWrap.style.width = ratio + '%';
-      compareHandle.style.left = ratio + '%';
-      syncAfterSize();
-    }
-
-    function openCompare(idx) {
-      const r = results[idx];
-      if (!r || !r.ok) return;
-      compareBefore.src = r.beforeUrl;
-      compareAfter.src = r.outputUrl;
-      compareTitle.textContent = r.outputName;
-      const rpct = Math.round((1 - r.outputSize / r.originalSize) * 100);
-      compareSubtitle.textContent =
-        `${formatBytes(r.originalSize)} → ${formatBytes(r.outputSize)} (${rpct >= 0 ? '-' : '+'}${Math.abs(rpct)}%)`;
-      compareModal.classList.remove('hidden');
-      // Wait for both images to load, then set initial position to 50%
-      const initPos = () => {
-        const rect = compareWrap.getBoundingClientRect();
-        setComparePosition(rect.left + rect.width / 2);
-      };
-      let loaded = 0;
-      const onload = () => { if (++loaded === 2) initPos(); };
-      compareBefore.onload = onload;
-      compareAfter.onload = onload;
-      if (compareBefore.complete) onload();
-      if (compareAfter.complete) onload();
-    }
-
-    function closeCompare() {
-      compareModal.classList.add('hidden');
-      compareBefore.removeAttribute('src');
-      compareAfter.removeAttribute('src');
-    }
-
-    compareClose.addEventListener('click', closeCompare);
-    compareModal.addEventListener('click', (e) => {
-      if (e.target === compareModal) closeCompare();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !compareModal.classList.contains('hidden')) closeCompare();
-    });
-
-    function startCompareDrag(e) {
-      compareDragging = true;
-      const x = e.touches ? e.touches[0].clientX : e.clientX;
-      setComparePosition(x);
-    }
-    function moveCompareDrag(e) {
-      if (!compareDragging) return;
-      const x = e.touches ? e.touches[0].clientX : e.clientX;
-      setComparePosition(x);
-    }
-    function stopCompareDrag() { compareDragging = false; }
-
-    compareWrap.addEventListener('mousedown', startCompareDrag);
-    window.addEventListener('mousemove', moveCompareDrag);
-    window.addEventListener('mouseup', stopCompareDrag);
-    compareWrap.addEventListener('touchstart', startCompareDrag, { passive: true });
-    window.addEventListener('touchmove', moveCompareDrag, { passive: true });
-    window.addEventListener('touchend', stopCompareDrag);
-    window.addEventListener('resize', () => {
-      if (compareModal.classList.contains('hidden')) return;
-      const rect = compareWrap.getBoundingClientRect();
-      const ratio = parseFloat(compareAfterWrap.style.width) || 50;
-      setComparePosition(rect.left + (rect.width * ratio / 100));
-    });
-
-    function isPrivateHost(hostname) {
-      if (!hostname) return true;
-      const h = hostname.toLowerCase();
-      if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local')) return true;
-      if (h === '127.0.0.1' || h === '0.0.0.0' || h === '::1') return true;
-      if (/^10\./.test(h)) return true;
-      if (/^192\.168\./.test(h)) return true;
-      if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(h)) return true;
-      if (/^169\.254\./.test(h)) return true;
-      if (/^f[cd][0-9a-f]{2}:/i.test(h)) return true;
-      return false;
+    function teardownCompares() {
+      compareTeardowns.forEach(fn => { try { fn(); } catch (_) {} });
+      compareTeardowns = [];
     }
 
     async function loadFromUrl(url) {
@@ -1384,6 +1146,7 @@
           ];
 
           let lastErr = null;
+          let lastProxyHost = null;
           response = null;
           for (const proxyUrl of proxies) {
             try {
@@ -1394,11 +1157,13 @@
               break;
             } catch (perr) {
               lastErr = perr;
+              try { lastProxyHost = new URL(proxyUrl).host; } catch (_) { lastProxyHost = proxyUrl; }
               console.warn('Proxy failed:', proxyUrl, perr);
             }
           }
           if (!response) {
-            throw new Error(`すべてのプロキシで失敗 (最後のエラー: ${lastErr?.message || '不明'})`);
+            const hostHint = lastProxyHost ? ` (${lastProxyHost})` : '';
+            throw new Error(`すべてのプロキシで失敗${hostHint}: ${lastErr?.message || '不明'}`);
           }
         }
 
@@ -1427,16 +1192,6 @@
       }
     }
 
-    // Event Listeners
-    dropzone.addEventListener('click', () => fileInput.click());
-
-    dropzone.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        fileInput.click();
-      }
-    });
-
     function filterImageFiles(fileList) {
       return Array.from(fileList || []).filter(f => {
         if (!f) return false;
@@ -1451,31 +1206,14 @@
       if (files.length) processFiles(files);
     });
 
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, preventDefaults, false);
-      document.body.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-      const files = filterImageFiles(e.dataTransfer.files);
-      if (files.length) {
-        processFiles(files);
-      } else {
-        showToast('画像ファイルを選択してください', 'error');
-      }
+    setupDropzone({
+      dropzone,
+      fileInput,
+      onFiles: (fileList) => {
+        const files = filterImageFiles(fileList);
+        if (files.length) processFiles(files);
+        else showToast('画像ファイルを選択してください', 'error');
+      },
     });
 
     // Paste event handling
@@ -1516,6 +1254,7 @@
 
     btnReset.addEventListener('click', () => {
       switchView('view-upload');
+      teardownCompares();
       blobUrls.forEach(u => URL.revokeObjectURL(u));
       blobUrls = [];
       results = [];

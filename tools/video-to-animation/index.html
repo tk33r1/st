@@ -59,6 +59,7 @@
   <!-- ffmpeg.wasm dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  <script src="../../data/common-ui.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -517,6 +518,8 @@
   </div>
 
   <script>
+    const { formatBytes, showToast, switchView, setupDropzone } = window.STCommon;
+
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
@@ -556,10 +559,7 @@
     // Elements
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
-    const viewUpload = document.getElementById('view-upload');
-    const viewLoading = document.getElementById('view-loading');
-    const viewResult = document.getElementById('view-result');
-    
+
     const loadingMsg = document.getElementById('loading-msg');
     const loadingSubmsg = document.getElementById('loading-submsg');
     const progressBar = document.getElementById('progress-bar');
@@ -588,13 +588,10 @@
     }
     applyQualityState();
 
-    const toast = document.getElementById('toast');
-    const toastMsg = document.getElementById('toast-msg');
-    const toastIconSuccess = document.getElementById('toast-icon-success');
-    const toastIconError = document.getElementById('toast-icon-error');
-    let toastTimer = null;
-
-    const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+    // ffmpeg.wasm shares the ~2 GB WASM heap with the decoded frame buffer,
+    // so a 500 MB source typically OOMs partway through. 200 MB is a more
+    // honest ceiling for a browser-only encoder.
+    const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 
     let ffmpeg = null;
     let isProcessing = false;
@@ -617,41 +614,6 @@
       }
       console.error('[ffmpeg log tail]\n' + tail);
       return new Error(summary);
-    }
-
-    function formatBytes(bytes, decimals = 2) {
-      if (!bytes || bytes <= 0) return '0 B';
-      const k = 1024;
-      const dm = decimals < 0 ? 0 : decimals;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-      const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-
-    function showToast(message, type = 'success') {
-      toastMsg.textContent = message;
-      if (type === 'error') {
-        toastIconSuccess.classList.add('hidden');
-        toastIconError.classList.remove('hidden');
-      } else {
-        toastIconSuccess.classList.remove('hidden');
-        toastIconError.classList.add('hidden');
-      }
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3000);
-    }
-
-    function switchView(viewId) {
-      viewUpload.classList.add('hidden');
-      viewLoading.classList.add('hidden');
-      viewResult.classList.add('hidden');
-      
-      const target = document.getElementById(viewId);
-      target.classList.remove('hidden');
-      target.classList.add('fade-in');
     }
 
     async function initFFmpeg() {
@@ -757,15 +719,14 @@
         loadingSubmsg.textContent = 'ブラウザが重くなる場合がありますがそのままお待ちください';
         conversionStarted = true;
 
+        if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
+
         if (selectedFormat === 'apng') {
-          if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
           args.push('-plays', '0', outputName);
         } else if (selectedFormat === 'webp') {
-          if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
           const webpQuality = String(parseInt(optQuality.value, 10) || 80);
           args.push('-c:v', 'libwebp', '-lossless', '0', '-quality', webpQuality, '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
         } else if (selectedFormat === 'webp-lossless') {
-          if (vfFilters.length > 0) args.push('-vf', vfFilters.join(','));
           args.push('-c:v', 'libwebp', '-lossless', '1', '-compression_level', '6', '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
         }
 
@@ -809,46 +770,23 @@
     }
 
     // Event Listeners
-    dropzone.addEventListener('click', () => fileInput.click());
-
-    dropzone.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        fileInput.click();
-      }
-    });
-
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) processVideo(file);
-      fileInput.value = ''; 
+      fileInput.value = '';
     });
 
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, preventDefaults, false);
-      document.body.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('video/')) {
-        processVideo(file);
-      } else {
-        showToast('動画ファイル(MP4等)を選択してください。', 'error');
-      }
+    setupDropzone({
+      dropzone,
+      fileInput,
+      onFiles: (files) => {
+        const file = files[0];
+        if (file && file.type.startsWith('video/')) {
+          processVideo(file);
+        } else {
+          showToast('動画ファイル(MP4等)を選択してください。', 'error');
+        }
+      },
     });
 
     btnDownload.addEventListener('click', () => {

@@ -397,7 +397,6 @@
                         while (i < n && s[i] !== delimiter && s[i] !== '\r' && s[i] !== '\n') {
                             field += s[i++];
                         }
-                        field = field.trim();
                     }
                     row.push(field);
                     if (i < n && s[i] === delimiter) { i++; continue; }
@@ -444,8 +443,8 @@
             return result;
         }
 
-        function quoteField(val) {
-            if (val.includes(',') || val.includes('\n') || val.includes('"')) {
+        function quoteField(val, delimiter = ',') {
+            if (val.includes(delimiter) || val.includes('\n') || val.includes('\r') || val.includes('"')) {
                 return '"' + val.replace(/"/g, '""') + '"';
             }
             return val;
@@ -457,14 +456,17 @@
                 throw new Error("有効なJSON配列ではありません。");
             }
             
+            const stringifyValue = (val) => {
+                if (val === null || val === undefined) return '';
+                if (typeof val === 'object') return JSON.stringify(val);
+                return String(val);
+            };
+
             // JSONが二次元配列の場合の処理
             if (Array.isArray(data[0])) {
                 const csvRows = [];
                 for (const row of data) {
-                    const values = row.map(val => {
-                        let v = val === null || val === undefined ? '' : String(val);
-                        return quoteField(v);
-                    });
+                    const values = row.map(val => quoteField(stringifyValue(val)));
                     csvRows.push(values.join(','));
                 }
                 return csvRows.join('\n');
@@ -472,18 +474,13 @@
 
             const headers = Array.from(new Set(data.flatMap(Object.keys)));
             const csvRows = [];
-            
+
             if (hasHeader) {
                 csvRows.push(headers.map(h => quoteField(h)).join(','));
             }
-            
+
             for (const row of data) {
-                const values = headers.map(header => {
-                    let val = row[header];
-                    if (val === null || val === undefined) val = '';
-                    else val = String(val);
-                    return quoteField(val);
-                });
+                const values = headers.map(header => quoteField(stringifyValue(row[header])));
                 csvRows.push(values.join(','));
             }
             return csvRows.join('\n');
@@ -529,18 +526,18 @@
             }
             
             // TSV以外の通常ペースト時も、空の状態へのペーストなら自動変換を試みる
-            if (isEmptyBeforePaste) {
-                setTimeout(() => {
-                    updateCsvStats();
-                    try {
-                        const jsonObj = csvToJson(csvTextarea.value, hasHeaderCheck.checked);
-                        jsonTextarea.value = JSON.stringify(jsonObj, null, 2);
-                        updateJsonStats();
-                        showToast('データをペーストし、自動でJSONに変換しました！');
-                    } catch (err) {
-                        // パース失敗時（CSVフォーマットでない等）は通知しない
-                    }
-                }, 10);
+            if (isEmptyBeforePaste && pasteData) {
+                e.preventDefault();
+                csvTextarea.setRangeText(pasteData, csvTextarea.selectionStart, csvTextarea.selectionEnd, 'end');
+                updateCsvStats();
+                try {
+                    const jsonObj = csvToJson(csvTextarea.value, hasHeaderCheck.checked);
+                    jsonTextarea.value = JSON.stringify(jsonObj, null, 2);
+                    updateJsonStats();
+                    showToast('データをペーストし、自動でJSONに変換しました！');
+                } catch (err) {
+                    // パース失敗時（CSVフォーマットでない等）は通知しない
+                }
             }
         });
 

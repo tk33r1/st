@@ -1,0 +1,110 @@
+/* Shared styles for ST TOOLS pages.
+ * Each tool keeps its own accent palette in its <style> block; this file
+ * is reserved for components that should look identical across tools.
+ */
+
+/* Inline Before/After compare slider.
+ * Markup expected (built by STCommon.setupInlineCompare):
+ *   <div class="compare-inline">
+ *     <img class="compare-before" />
+ *     <div class="compare-after-wrap"><img class="compare-after" /></div>
+ *     <div class="compare-handle"></div>
+ *     <span class="compare-label compare-label-before">変換前</span>
+ *     <span class="compare-label compare-label-after">変換後</span>
+ *   </div>
+ */
+.compare-inline {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  background:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-color: #ffffff;
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  border-radius: 12px;
+  width: 100%;
+  cursor: ew-resize;
+}
+
+.compare-inline .compare-before {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.compare-inline .compare-after-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  width: 50%;
+}
+
+.compare-inline .compare-after-wrap .compare-after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+  object-fit: contain;
+}
+
+.compare-inline .compare-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.compare-inline .compare-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.compare-inline .compare-handle::before {
+  content: '⇆';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  color: #475569;
+  z-index: 1;
+  font-weight: 700;
+}
+
+.compare-inline .compare-label {
+  position: absolute;
+  top: 8px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.72);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 600;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
+.compare-inline .compare-label-before { left: 10px; }
+.compare-inline .compare-label-after { right: 10px; }

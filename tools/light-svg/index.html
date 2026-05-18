@@ -55,7 +55,8 @@
 
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+  <link rel="stylesheet" href="../../data/common-ui.css">
+  <script src="../../data/common-ui.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -372,14 +373,14 @@
     <!-- View 3: Result -->
     <div id="view-result" class="w-full max-w-3xl hidden mt-4">
       <div class="result-card p-6 sm:p-8">
-        
+
         <div class="flex flex-col sm:flex-row items-center justify-between gap-8 mb-8 pb-8 border-b border-slate-100">
-          
+
           <div class="flex-1 flex flex-col items-center">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Original</span>
             <div id="size-original" class="text-2xl sm:text-3xl font-outfit font-extrabold text-slate-700">0 KB</div>
           </div>
-          
+
           <div class="flex flex-col items-center justify-center">
             <div class="relative w-28 h-28 flex items-center justify-center">
               <svg class="progress-ring absolute inset-0 w-full h-full" viewBox="0 0 120 120">
@@ -397,7 +398,17 @@
             <span class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">Optimized</span>
             <div id="size-optimized" class="text-2xl sm:text-3xl font-outfit font-extrabold text-emerald-500">0 KB</div>
           </div>
-          
+
+        </div>
+
+        <!-- Before/After compare (only shown for raster → SVG conversions) -->
+        <div id="compare-section" class="hidden mb-8">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+            <i data-lucide="git-compare" class="w-4 h-4"></i>
+            <span>変換前 / 変換後</span>
+          </div>
+          <div id="compare-container"></div>
+          <p class="text-xs text-slate-400 mt-2 text-center">スライダーをドラッグして比較できます</p>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center flex-wrap">
@@ -437,13 +448,13 @@
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 
   <!-- Info Modal -->
-  <div id="info-modal" class="fixed inset-0 z-[100] hidden items-center justify-center">
+  <div id="info-modal" class="fixed inset-0 z-[100] hidden items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
     <div class="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" id="modal-backdrop"></div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 sm:p-8 transform transition-all fade-in max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2 text-sky-600">
           <i data-lucide="info" class="w-6 h-6"></i>
-          <h3 class="text-xl font-bold text-slate-800">最適化の仕組み</h3>
+          <h3 id="info-modal-title" class="text-xl font-bold text-slate-800">最適化の仕組み</h3>
         </div>
         <button id="modal-close" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -499,6 +510,8 @@
     // Load SVGO from CDN
     import { optimize } from 'https://unpkg.com/svgo@3.2.0/dist/svgo.browser.js';
 
+    const { formatBytes, showToast, switchView, setupDropzone, setupInlineCompare } = window.STCommon;
+
     // Initialize Lucide icons
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
@@ -506,27 +519,18 @@
     // DOM Elements
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
-    const viewUpload = document.getElementById('view-upload');
-    const viewLoading = document.getElementById('view-loading');
-    const viewResult = document.getElementById('view-result');
-    
+
     const sizeOriginal = document.getElementById('size-original');
     const sizeOptimized = document.getElementById('size-optimized');
     const savingsPercent = document.getElementById('savings-percent');
     const progressCircle = document.getElementById('progress-circle');
-    
+
     const btnDownload = document.getElementById('btn-download');
     const btnCopySvg = document.getElementById('btn-copy-svg');
     const btnCopyDataUri = document.getElementById('btn-copy-datauri');
     const btnReset = document.getElementById('btn-reset');
 
     const optAggressive = document.getElementById('opt-aggressive');
-    
-    const toast = document.getElementById('toast');
-    const toastMsg = document.getElementById('toast-msg');
-    const toastIconSuccess = document.getElementById('toast-icon-success');
-    const toastIconError = document.getElementById('toast-icon-error');
-    let toastTimer = null;
 
     const loadingMsg = document.getElementById('loading-msg');
 
@@ -542,53 +546,58 @@
     let currentFileName = 'optimized.svg';
     let isProcessing = false;
     let originalFileSize = 0; // Store the absolute original size
+    let modalOpener = null;
+    // For the inline Before/After compare we keep the raster source URL
+    // only when the input was a raster image (SVG→SVG has no visible delta).
+    let originalRasterUrl = null;
+    let compareTeardown = null;
+
+    const compareSection = document.getElementById('compare-section');
+    const compareContainer = document.getElementById('compare-container');
+
+    function teardownCompare() {
+      if (compareTeardown) {
+        compareTeardown();
+        compareTeardown = null;
+      }
+      if (originalRasterUrl) {
+        URL.revokeObjectURL(originalRasterUrl);
+        originalRasterUrl = null;
+      }
+      compareSection.classList.add('hidden');
+      compareContainer.innerHTML = '';
+    }
+
+    function renderCompare(beforeUrl, svgText) {
+      const afterUrl = 'data:image/svg+xml;base64,' + svgToBase64(svgText);
+      if (compareTeardown) compareTeardown();
+      compareTeardown = setupInlineCompare({
+        container: compareContainer,
+        beforeUrl,
+        afterUrl,
+      });
+      compareSection.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
 
     // Modal logic
-    function openModal() { modal.classList.remove('hidden'); modal.classList.add('flex'); }
-    function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    function openModal() {
+      modalOpener = document.activeElement;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      modalClose.focus();
+    }
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      if (modalOpener && typeof modalOpener.focus === 'function') modalOpener.focus();
+    }
     btnInfo.addEventListener('click', openModal);
     modalClose.addEventListener('click', closeModal);
     modalBackdrop.addEventListener('click', closeModal);
-
-    // Format bytes
-    function formatBytes(bytes, decimals = 2) {
-      if (!bytes || bytes <= 0) return '0 B';
-      const k = 1024;
-      const dm = decimals < 0 ? 0 : decimals;
-      const sizes = ['B', 'KB', 'MB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-
-    function showToast(message, type = 'success') {
-      toastMsg.textContent = message;
-      if (type === 'error') {
-        toastIconSuccess.classList.add('hidden');
-        toastIconError.classList.remove('hidden');
-      } else {
-        toastIconSuccess.classList.remove('hidden');
-        toastIconError.classList.add('hidden');
-      }
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3000);
-    }
-
-    function switchView(viewId) {
-      viewUpload.classList.add('hidden');
-      viewUpload.classList.remove('fade-in');
-      viewLoading.classList.add('hidden');
-      viewResult.classList.add('hidden');
-      viewResult.classList.remove('fade-in');
-      
-      const target = document.getElementById(viewId);
-      target.classList.remove('hidden');
-      if (viewId !== 'view-loading') {
-        target.classList.add('fade-in');
-      }
-    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+    });
 
     function svgToBase64(svgText) {
       const bytes = new TextEncoder().encode(svgText);
@@ -629,7 +638,6 @@
 
         const result = optimize(text, config);
         optimizedSvgData = result.data;
-        currentFileName = currentFileName.replace(/\.svg$/, '') + '.svg';
 
         const optimizedSize = new Blob([optimizedSvgData]).size;
 
@@ -665,6 +673,10 @@
 
         switchView('view-result');
 
+        if (originalRasterUrl) {
+          renderCompare(originalRasterUrl, optimizedSvgData);
+        }
+
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             progressCircle.style.strokeDashoffset = Math.max(0, offset);
@@ -681,6 +693,25 @@
       }
     }
 
+    // ImageTracer is only needed for raster→SVG conversion. Fetch the script
+    // on demand so the SVG-only path stays lean on first paint.
+    let imageTracerPromise = null;
+    function loadImageTracer() {
+      if (imageTracerPromise) return imageTracerPromise;
+      imageTracerPromise = new Promise((resolve, reject) => {
+        if (window.ImageTracer) return resolve(window.ImageTracer);
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js';
+        s.onload = () => resolve(window.ImageTracer);
+        s.onerror = () => {
+          imageTracerPromise = null;
+          reject(new Error('ImageTracer の読み込みに失敗しました'));
+        };
+        document.head.appendChild(s);
+      });
+      return imageTracerPromise;
+    }
+
     async function handleFile(file) {
       if (!file || isProcessing) return;
 
@@ -692,6 +723,8 @@
         return;
       }
 
+      teardownCompare();
+
       switchView('view-loading');
 
       if (isSvg) {
@@ -700,7 +733,20 @@
         const text = await file.text();
         processSvgText(text, file.name);
       } else {
+        // Stash the raster source so the compare slider can show it next to
+        // the traced SVG output. SVG → SVG conversions skip this entirely.
+        originalRasterUrl = URL.createObjectURL(file);
         loadingMsg.textContent = '画像をSVGに変換しています...';
+
+        let ImageTracer;
+        try {
+          ImageTracer = await loadImageTracer();
+        } catch (err) {
+          console.error(err);
+          showToast('画像変換ライブラリの読み込みに失敗しました。', 'error');
+          switchView('view-upload');
+          return;
+        }
 
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -732,7 +778,8 @@
     }
 
     function reprocessIfReady() {
-      if (currentSvgText && viewUpload.classList.contains('hidden')) {
+      const upload = document.getElementById('view-upload');
+      if (currentSvgText && upload.classList.contains('hidden')) {
         processSvgText(currentSvgText);
       }
     }
@@ -740,41 +787,16 @@
     optAggressive.addEventListener('change', reprocessIfReady);
 
     // Event Listeners
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        fileInput.click();
-      }
+    setupDropzone({
+      dropzone,
+      fileInput,
+      onFiles: (files) => { if (files[0]) handleFile(files[0]); },
     });
-    
+
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) handleFile(file);
       fileInput.value = ''; // Reset input
-    });
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, preventDefaults, false);
-      document.body.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-      dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer.files[0];
-      if (file) handleFile(file);
     });
 
     btnDownload.addEventListener('click', () => {
@@ -819,6 +841,7 @@
       currentSvgText = '';
       optimizedSvgData = '';
       progressCircle.style.strokeDashoffset = '339.292'; // Reset circle
+      teardownCompare();
       switchView('view-upload');
     });
 
