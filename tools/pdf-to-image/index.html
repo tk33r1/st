@@ -365,6 +365,64 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Page navigation */
+    .page-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .page-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+      padding: 0;
+    }
+    .page-nav-btn:hover:not(:disabled) {
+      border-color: #e11d48;
+      color: #e11d48;
+      background: #fff1f2;
+    }
+    .page-nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .page-indicator {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+      min-width: 70px;
+      text-align: center;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover {
+      border-color: #e11d48;
+      color: #e11d48;
+      background: #fff1f2;
+    }
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -505,12 +563,16 @@
           <div class="w-full lg:w-1/2 flex flex-col items-center relative group">
             <div class="w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center min-h-[200px] relative">
               <img id="result-preview" src="" alt="Converted Preview" class="max-w-full max-h-[300px] object-contain">
-              
-              <!-- Multi-page overlay -->
-              <div id="result-multi-info" class="hidden absolute bottom-4 right-4 bg-slate-800/80 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-lg">
-                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                <span id="result-page-count">0</span> Pages
-              </div>
+            </div>
+            <!-- Page navigation -->
+            <div id="page-nav" class="page-nav hidden">
+              <button id="btn-prev-page" class="page-nav-btn" aria-label="前のページ" disabled>
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              </button>
+              <span id="page-indicator" class="page-indicator">1 / 1</span>
+              <button id="btn-next-page" class="page-nav-btn" aria-label="次のページ">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
             </div>
           </div>
           
@@ -527,10 +589,15 @@
               </div>
             </div>
             
-            <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-8 py-4 rounded-xl w-full text-lg shadow-lg">
-              <i data-lucide="download" class="w-6 h-6"></i>
-              ダウンロード
-            </button>
+            <div class="flex gap-3 w-full">
+              <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-8 py-4 rounded-xl flex-1 text-lg shadow-lg">
+                <i data-lucide="download" class="w-6 h-6"></i>
+                ダウンロード
+              </button>
+              <button id="btn-share" class="icon-btn !w-14 !h-auto" title="共有" aria-label="共有">
+                <i data-lucide="share-2" class="w-5 h-5"></i>
+              </button>
+            </div>
             
             <button id="btn-reset" class="mt-4 text-sm font-semibold text-slate-500 hover:text-rose-600 transition-colors underline-offset-4 hover:underline text-center w-full">
               別のPDFを変換する
@@ -617,10 +684,13 @@
     const resultPreview = document.getElementById('result-preview');
     const resultFormat = document.getElementById('result-format');
     const resultSize = document.getElementById('result-size');
-    const resultMultiInfo = document.getElementById('result-multi-info');
-    const resultPageCount = document.getElementById('result-page-count');
     const btnDownload = document.getElementById('btn-download');
+    const btnShare = document.getElementById('btn-share');
     const btnReset = document.getElementById('btn-reset');
+    const pageNav = document.getElementById('page-nav');
+    const btnPrevPage = document.getElementById('btn-prev-page');
+    const btnNextPage = document.getElementById('btn-next-page');
+    const pageIndicator = document.getElementById('page-indicator');
     
     const optScale = document.getElementById('opt-scale');
     const urlInput = document.getElementById('url-input');
@@ -642,8 +712,10 @@
 
     let isProcessing = false;
     let resultBlobUrl = null;
-    let previewBlobUrl = null;
     let resultFilename = 'output.png';
+    let pageBlobs = [];        // blob per page (for preview / share)
+    let pageBlobUrls = [];     // object URLs per page
+    let currentPage = 0;       // 0-indexed
 
     function canvasToBlobAsync(canvas, mimeType, quality) {
       return new Promise(resolve => {
@@ -703,10 +775,6 @@
         URL.revokeObjectURL(resultBlobUrl);
         resultBlobUrl = null;
       }
-      if (previewBlobUrl) {
-        URL.revokeObjectURL(previewBlobUrl);
-        previewBlobUrl = null;
-      }
 
       try {
         const buffer = await file.arrayBuffer();
@@ -731,7 +799,11 @@
           zip = new JSZip();
         }
 
-        let firstPageBlob = null;
+        // Cleanup old page blobs
+        pageBlobUrls.forEach(u => URL.revokeObjectURL(u));
+        pageBlobUrls = [];
+        pageBlobs = [];
+
         let singleFileBlob = null;
         const baseName = file.name.replace(/\.[^/.]+$/, "");
         const mimeType = formatMimeTypes[selectedFormat];
@@ -772,11 +844,13 @@
               throw new Error(`ブラウザが ${formatLabel} フォーマットでの出力に対応していません。別のフォーマットを選択してください。`);
             }
 
+            // Store every page blob for preview / sharing
+            pageBlobs.push(blob);
+
             if (numPages === 1) {
               singleFileBlob = blob;
               resultFilename = `${baseName}.${extension}`;
             } else {
-              if (i === 1) firstPageBlob = blob;
               const filename = `${baseName}_${String(i).padStart(3, '0')}.${extension}`;
               zip.file(filename, blob);
             }
@@ -792,6 +866,10 @@
           canvas.height = 0;
         }
 
+        // Build preview blob URLs for every page
+        pageBlobUrls = pageBlobs.map(b => URL.createObjectURL(b));
+        currentPage = 0;
+
         if (numPages > 1) {
           loadingMsg.textContent = 'ZIPファイルを作成中...';
           loadingSubmsg.textContent = '画像ファイルをパッケージ化しています';
@@ -801,22 +879,17 @@
           resultSize.textContent = formatBytes(zipBlob.size);
           resultFormat.textContent = 'ZIP';
           
-          resultMultiInfo.classList.remove('hidden');
-          resultPageCount.textContent = numPages;
+          pageNav.classList.remove('hidden');
+          updatePageNav();
         } else {
           resultBlobUrl = URL.createObjectURL(singleFileBlob);
           resultSize.textContent = formatBytes(singleFileBlob.size);
           resultFormat.textContent = formatLabel;
 
-          resultMultiInfo.classList.add('hidden');
+          pageNav.classList.add('hidden');
         }
 
-        if (numPages === 1) {
-          resultPreview.src = resultBlobUrl;
-        } else {
-          previewBlobUrl = URL.createObjectURL(firstPageBlob);
-          resultPreview.src = previewBlobUrl;
-        }
+        resultPreview.src = pageBlobUrls[0];
 
         switchView('view-result');
         showToast('変換が完了しました！');
@@ -973,6 +1046,93 @@
       }
     });
 
+    // --- Page navigation ---
+    function updatePageNav() {
+      const total = pageBlobUrls.length;
+      pageIndicator.textContent = `${currentPage + 1} / ${total}`;
+      btnPrevPage.disabled = currentPage === 0;
+      btnNextPage.disabled = currentPage >= total - 1;
+    }
+
+    function showPage(idx) {
+      if (idx < 0 || idx >= pageBlobUrls.length) return;
+      currentPage = idx;
+      resultPreview.src = pageBlobUrls[currentPage];
+      updatePageNav();
+    }
+
+    btnPrevPage.addEventListener('click', () => showPage(currentPage - 1));
+    btnNextPage.addEventListener('click', () => showPage(currentPage + 1));
+
+    // --- Sharing ---
+    function canShareResult() {
+      const hasWebShare = typeof navigator.canShare === 'function';
+      const hasClipboardItem = typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined';
+      return hasWebShare || hasClipboardItem;
+    }
+
+    async function shareResult() {
+      // For multi-page: share the ZIP; for single page: share the image
+      const blob = pageBlobs.length === 1 ? pageBlobs[0] : null;
+      const shareFile = blob
+        ? new File([blob], resultFilename, { type: blob.type })
+        : null;
+
+      // For ZIP, try sharing the zip file
+      if (!shareFile && resultBlobUrl) {
+        const resp = await fetch(resultBlobUrl);
+        const zipBlob = await resp.blob();
+        const zipFile = new File([zipBlob], resultFilename, { type: 'application/zip' });
+
+        if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [zipFile] })) {
+          try {
+            await navigator.share({ files: [zipFile], title: resultFilename });
+            return;
+          } catch (e) {
+            if (e && e.name === 'AbortError') return;
+          }
+        }
+        showToast('ZIPファイルの共有はこの環境ではサポートされていません', 'error');
+        return;
+      }
+
+      // Single image share
+      if (shareFile) {
+        if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [shareFile] })) {
+          try {
+            await navigator.share({ files: [shareFile], title: resultFilename });
+            return;
+          } catch (e) {
+            if (e && e.name === 'AbortError') return;
+          }
+        }
+
+        // Clipboard fallback
+        if (typeof navigator.clipboard !== 'undefined' && typeof window.ClipboardItem !== 'undefined') {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+            showToast('画像をクリップボードにコピーしました', 'success');
+            flashShareBtn(btnShare);
+            return;
+          } catch (_) { /* unsupported type */ }
+        }
+      }
+
+      showToast('この環境では共有がサポートされていません', 'error');
+    }
+
+    function flashShareBtn(btn) {
+      const original = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = original;
+        if (window.lucide) lucide.createIcons();
+      }, 1400);
+    }
+
+    btnShare.addEventListener('click', () => shareResult());
+
     btnDownload.addEventListener('click', () => {
       if (!resultBlobUrl) return;
       const a = document.createElement('a');
@@ -989,10 +1149,11 @@
         URL.revokeObjectURL(resultBlobUrl);
         resultBlobUrl = null;
       }
-      if (previewBlobUrl) {
-        URL.revokeObjectURL(previewBlobUrl);
-        previewBlobUrl = null;
-      }
+      pageBlobUrls.forEach(u => URL.revokeObjectURL(u));
+      pageBlobUrls = [];
+      pageBlobs = [];
+      currentPage = 0;
+      pageNav.classList.add('hidden');
       resultPreview.removeAttribute('src');
       urlInput.value = '';
     });

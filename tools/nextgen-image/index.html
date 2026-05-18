@@ -958,14 +958,6 @@
         const actions = document.createElement('div');
         actions.className = 'flex items-center gap-1';
         if (r.ok) {
-          const dlBtn = document.createElement('button');
-          dlBtn.className = 'icon-btn';
-          dlBtn.title = 'ダウンロード';
-          dlBtn.setAttribute('aria-label', 'ダウンロード');
-          dlBtn.innerHTML = '<i data-lucide="download" class="w-4 h-4"></i>';
-          dlBtn.addEventListener('click', () => downloadOne(r));
-          actions.appendChild(dlBtn);
-
           if (canShareResult()) {
             const shareBtn = document.createElement('button');
             shareBtn.className = 'icon-btn';

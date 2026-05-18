@@ -106,16 +106,196 @@
       z-index: 40;
     }
 
-    /* Options Panel */
-    .options-panel {
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(14, 165, 233, 0.15);
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-      padding: 16px 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    /* SVG Before/After compare slider */
+    .svg-compare {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      user-select: none;
+      touch-action: none;
+      cursor: ew-resize;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background:
+        linear-gradient(45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(-45deg, #f1f5f9 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f1f5f9 75%),
+        linear-gradient(-45deg, transparent 75%, #f1f5f9 75%);
+      background-color: #ffffff;
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
     }
+    .svg-compare-before,
+    .svg-compare-after {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .svg-compare-before svg,
+    .svg-compare-after svg {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      display: block;
+      pointer-events: none;
+    }
+    .svg-compare-after-wrap {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      width: 50%;
+      pointer-events: none;
+    }
+    /* The After layer is sized to the full compare container (via JS) so the
+       SVG inside renders identically to the Before layer — the wrap only
+       clips it. Without the explicit pixel size we'd just see a tiny SVG. */
+    .svg-compare-after {
+      width: 100%;
+      height: 100%;
+    }
+    .svg-compare-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      background: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.45);
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 3;
+    }
+    .svg-compare-handle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+    .svg-compare-handle::before {
+      content: '⇆';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 17px;
+      color: #0ea5e9;
+      font-weight: 700;
+      z-index: 1;
+    }
+    .svg-compare-label {
+      position: absolute;
+      top: 10px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.72);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 4;
+    }
+    .svg-compare-label.before { left: 10px; }
+    .svg-compare-label.after { right: 10px; background: rgba(14, 165, 233, 0.85); }
+
+    /* Range slider */
+    .range-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(to right, #0ea5e9 0%, #0ea5e9 var(--val, 0%), #e2e8f0 var(--val, 0%), #e2e8f0 100%);
+      outline: none;
+      cursor: pointer;
+    }
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #0ea5e9;
+      box-shadow: 0 2px 6px rgba(14, 165, 233, 0.25);
+      cursor: grab;
+      transition: transform 120ms ease;
+    }
+    .range-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .range-slider::-webkit-slider-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+    .range-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #0ea5e9;
+      box-shadow: 0 2px 6px rgba(14, 165, 233, 0.25);
+      cursor: grab;
+    }
+
+    /* Aggressive toggle (animated switch) */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 999px;
+      transition: background 200ms ease;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    /* Pulse animation when value changes */
+    @keyframes value-pop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .value-pop { animation: value-pop 240ms ease; }
 
     /* Drag & Drop Zone */
     .dropzone {
@@ -215,6 +395,30 @@
       color: #2563eb;
     }
 
+    /* Icon-only square button — mirrors nextgen-image's .icon-btn pattern. */
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover {
+      border-color: #0ea5e9;
+      color: #0ea5e9;
+      background: #f0f9ff;
+    }
+    .icon-btn:active {
+      transform: scale(0.96);
+    }
+
     /* Result Card */
     .result-card {
       background: rgba(255, 255, 255, 0.85);
@@ -263,6 +467,88 @@
     }
     .custom-checkbox:hover {
       border-color: #94a3b8;
+    }
+
+    /* Overlay Buttons */
+    .icon-btn-overlay {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .icon-btn-overlay:hover {
+      border-color: #0ea5e9;
+      color: #0ea5e9;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+    }
+    .icon-btn-overlay:active {
+      transform: scale(0.94);
+    }
+
+    /* Dropdown animation */
+    .dropdown-enter { animation: dropdownEnter 0.2s ease-out forwards; display: flex !important; }
+    .dropdown-exit { animation: dropdownExit 0.2s ease-in forwards; }
+    @keyframes dropdownEnter {
+      from { opacity: 0; transform: translateY(10px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes dropdownExit {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(10px) scale(0.95); }
+    }
+
+    /* URL Input */
+    .url-input-container {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(14, 165, 233, 0.15);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      padding: 12px;
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .url-input {
+      flex: 1;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .url-input:focus {
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+    }
+
+    .url-btn {
+      background: #0ea5e9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .url-btn:hover {
+      background: #0284c7;
     }
 
     /* Utilities */
@@ -320,14 +606,6 @@
       </div>
     </div>
 
-    <!-- Options Panel (Always visible) -->
-    <div class="w-full max-w-2xl options-panel flex flex-col sm:flex-row items-center justify-center gap-6">
-      <label class="flex items-center gap-2.5 cursor-pointer group">
-        <input type="checkbox" id="opt-aggressive" class="custom-checkbox">
-        <span class="text-sm font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">アグレッシブに圧縮する</span>
-      </label>
-    </div>
-
     <!-- View 1: Upload Zone -->
     <div id="view-upload" class="w-full max-w-2xl fade-in mt-4">
       <div id="dropzone" class="dropzone p-12 sm:p-16 text-center cursor-pointer group" role="button" tabindex="0" aria-label="SVGまたは画像ファイルをドロップまたは選択">
@@ -355,6 +633,11 @@
           </div>
         </div>
       </div>
+      <div class="url-input-container">
+        <i data-lucide="link" class="w-5 h-5 text-slate-400 self-center ml-1"></i>
+        <input type="url" id="url-input" class="url-input" placeholder="画像のURLを貼り付けてインポート...">
+        <button id="url-btn" class="url-btn">インポート</button>
+      </div>
     </div>
 
     <!-- View 2: Loading -->
@@ -370,63 +653,120 @@
       <p class="text-slate-500 text-sm mt-2">最高品質を保ちながら不要なデータを除去します</p>
     </div>
 
-    <!-- View 3: Result -->
-    <div id="view-result" class="w-full max-w-3xl hidden mt-4">
-      <div class="result-card p-6 sm:p-8">
+    <!-- View 3: Result / Live Editor -->
+    <div id="view-result" class="w-full max-w-4xl hidden mt-4">
+      <div class="result-card p-5 sm:p-8">
 
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-8 mb-8 pb-8 border-b border-slate-100">
-
-          <div class="flex-1 flex flex-col items-center">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Original</span>
-            <div id="size-original" class="text-2xl sm:text-3xl font-outfit font-extrabold text-slate-700">0 KB</div>
+        <!-- Stats bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-6 mb-6 pb-6 border-b border-slate-100">
+          <div class="flex-1 flex flex-col items-center sm:items-start">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Original</span>
+            <div id="size-original" class="text-xl sm:text-2xl font-outfit font-extrabold text-slate-700">0 B</div>
           </div>
 
-          <div class="flex flex-col items-center justify-center">
-            <div class="relative w-28 h-28 flex items-center justify-center">
-              <svg class="progress-ring absolute inset-0 w-full h-full" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="54" fill="none" stroke="#f1f5f9" stroke-width="8"></circle>
-                <circle id="progress-circle" class="progress-ring-circle" cx="60" cy="60" r="54" fill="none" stroke="#0ea5e9" stroke-width="8" stroke-dasharray="339.292" stroke-dashoffset="339.292" stroke-linecap="round"></circle>
-              </svg>
-              <div class="flex flex-col items-center text-sky-600">
-                <span class="text-xs font-bold uppercase">Saved</span>
-                <span id="savings-percent" class="text-2xl font-outfit font-black">0%</span>
+          <div class="flex items-center gap-3">
+            <i data-lucide="arrow-right" class="w-5 h-5 text-slate-300 hidden sm:block"></i>
+            <div class="flex flex-col items-center">
+              <span class="text-[10px] font-bold text-sky-600 uppercase tracking-wider">Saved</span>
+              <span id="savings-percent" class="text-3xl font-outfit font-black text-sky-600 leading-none">0%</span>
+              <span id="savings-bytes" class="text-[11px] text-slate-400 font-medium mt-0.5">-</span>
+            </div>
+            <i data-lucide="arrow-right" class="w-5 h-5 text-slate-300 hidden sm:block"></i>
+          </div>
+
+          <div class="flex-1 flex flex-col items-center sm:items-end">
+            <span class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">Optimized</span>
+            <div id="size-optimized" class="text-xl sm:text-2xl font-outfit font-extrabold text-emerald-500">0 B</div>
+          </div>
+        </div>
+
+        <!-- Compare (left, square) + Controls (right) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 mb-6 items-start">
+
+          <!-- Left: Before/After compare slider -->
+          <div>
+            <div class="svg-compare group" id="compare">
+              <span class="svg-compare-label before">Before</span>
+              <span class="svg-compare-label after">After</span>
+              <div class="svg-compare-before" id="compare-before"></div>
+              <div class="svg-compare-after-wrap" id="compare-after-wrap">
+                <div class="svg-compare-after" id="compare-after"></div>
+              </div>
+              <div class="svg-compare-handle" id="compare-handle"></div>
+
+
+            </div>
+            <p class="text-xs text-slate-400 text-center mt-2">ハンドルを左右にドラッグして比較</p>
+          </div>
+
+          <!-- Right: Live controls -->
+          <div class="flex flex-col gap-4">
+            <div class="bg-slate-50/70 border border-slate-100 rounded-2xl p-4 sm:p-5 space-y-5">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label for="slider-number" class="text-sm font-semibold text-slate-700">
+                    座標の精度
+                    <span class="text-xs text-slate-400 font-normal ml-1">小数点以下の桁数（小さいほど軽い）</span>
+                  </label>
+                  <span id="val-number" class="text-sm font-outfit font-bold text-sky-600 tabular-nums">3</span>
+                </div>
+                <input type="range" id="slider-number" class="range-slider" min="0" max="8" step="1" value="3">
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label for="slider-transform" class="text-sm font-semibold text-slate-700">
+                    変形の精度
+                    <span class="text-xs text-slate-400 font-normal ml-1">transform行列の桁数（小さいほど軽い）</span>
+                  </label>
+                  <span id="val-transform" class="text-sm font-outfit font-bold text-sky-600 tabular-nums">5</span>
+                </div>
+                <input type="range" id="slider-transform" class="range-slider" min="0" max="8" step="1" value="5">
+              </div>
+
+              <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-200/70">
+                <div class="flex items-center gap-2.5">
+                  <i data-lucide="zap" class="w-4 h-4 text-sky-500"></i>
+                  <div>
+                    <div class="text-sm font-semibold text-slate-700">アグレッシブに圧縮する</div>
+                    <div class="text-[11px] text-slate-400">viewBox削除など、表示が崩れる可能性あり</div>
+                  </div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="opt-aggressive">
+                  <span class="toggle-slider"></span>
+                </label>
               </div>
             </div>
-          </div>
 
-          <div class="flex-1 flex flex-col items-center">
-            <span class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">Optimized</span>
-            <div id="size-optimized" class="text-2xl sm:text-3xl font-outfit font-extrabold text-emerald-500">0 KB</div>
-          </div>
+            <!-- Actions (Below Settings) -->
+            <div class="flex items-center justify-end gap-2">
+              <button id="btn-download" class="icon-btn-overlay" title="ダウンロード" aria-label="ダウンロード">
+                <i data-lucide="download" class="w-4 h-4"></i>
+              </button>
+              <button id="btn-share" class="icon-btn-overlay" title="共有" aria-label="共有">
+                <i data-lucide="share-2" class="w-4 h-4"></i>
+              </button>
+              
+              <!-- Copy Dropdown -->
+              <div class="relative">
+                <button id="btn-copy-menu" class="icon-btn-overlay" title="コピー" aria-label="コピー">
+                  <i data-lucide="code" class="w-4 h-4"></i>
+                </button>
+                <div id="copy-dropdown" class="absolute bottom-full right-0 mb-2 w-44 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden hidden flex-col z-30">
+                  <button id="btn-copy-svg" class="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-sky-50 hover:text-sky-600 text-left transition-colors border-b border-slate-100">
+                    <i data-lucide="code" class="w-4 h-4 text-sky-500"></i> SVGコード
+                  </button>
+                  <button id="btn-copy-datauri" class="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-sky-50 hover:text-sky-600 text-left transition-colors">
+                    <i data-lucide="link" class="w-4 h-4 text-sky-500"></i> Data URI
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div><!-- /right col -->
+        </div><!-- /grid -->
 
-        </div>
-
-        <!-- Before/After compare (only shown for raster → SVG conversions) -->
-        <div id="compare-section" class="hidden mb-8">
-          <div class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-            <i data-lucide="git-compare" class="w-4 h-4"></i>
-            <span>変換前 / 変換後</span>
-          </div>
-          <div id="compare-container"></div>
-          <p class="text-xs text-slate-400 mt-2 text-center">スライダーをドラッグして比較できます</p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center flex-wrap">
-          <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl flex-1 min-w-[180px] max-w-[240px]">
-            <i data-lucide="download" class="w-5 h-5"></i>
-            ダウンロード
-          </button>
-          <button id="btn-copy-svg" class="btn-secondary flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl flex-1 min-w-[180px] max-w-[240px] font-semibold">
-            <i data-lucide="code" class="w-5 h-5"></i>
-            SVGコードをコピー
-          </button>
-          <button id="btn-copy-datauri" class="btn-secondary flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl flex-1 min-w-[180px] max-w-[240px] font-semibold">
-            <i data-lucide="link" class="w-5 h-5"></i>
-            Data URIをコピー
-          </button>
-        </div>
-        
-        <div class="mt-8 text-center">
+        <div class="mt-4 text-center">
           <button id="btn-reset" class="text-sm font-semibold text-slate-500 hover:text-sky-600 transition-colors underline-offset-4 hover:underline">
             別のファイルを最適化する
           </button>
@@ -492,7 +832,7 @@
             <i data-lucide="link" class="w-4 h-4 text-slate-500"></i> Data URI について
           </h4>
           <p class="text-xs text-slate-500">
-            「Data URIをコピー」を押すと、最適化されたSVGを直接CSSの <code>background-image</code> や HTMLの <code>img src</code> に貼り付けられるBase64形式（<code>data:image/svg+xml;base64,...</code>）でクリップボードへコピーします。
+            「Data URIをコピー」を押すと、最適化されたSVGを直接CSSの <code>background-image</code> や HTMLの <code>img src</code> に貼り付けられる形式（<code>data:image/svg+xml,...</code>）でクリップボードへコピーします。Base64より軽量なURLエンコード形式です。
           </p>
         </div>
       </div>
@@ -507,80 +847,56 @@
   </div>
 
   <script type="module">
-    // Load SVGO from CDN
     import { optimize } from 'https://unpkg.com/svgo@3.2.0/dist/svgo.browser.js';
 
-    const { formatBytes, showToast, switchView, setupDropzone, setupInlineCompare } = window.STCommon;
+    const { formatBytes, showToast, switchView, setupDropzone, isPrivateHost } = window.STCommon;
 
-    // Initialize Lucide icons
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // DOM Elements
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
+    const urlInput = document.getElementById('url-input');
+    const urlBtn = document.getElementById('url-btn');
 
     const sizeOriginal = document.getElementById('size-original');
     const sizeOptimized = document.getElementById('size-optimized');
     const savingsPercent = document.getElementById('savings-percent');
-    const progressCircle = document.getElementById('progress-circle');
+    const savingsBytes = document.getElementById('savings-bytes');
+
+    const compareEl = document.getElementById('compare');
+    const compareBefore = document.getElementById('compare-before');
+    const compareAfter = document.getElementById('compare-after');
+    const compareAfterWrap = document.getElementById('compare-after-wrap');
+    const compareHandle = document.getElementById('compare-handle');
+
+    const sliderNumber = document.getElementById('slider-number');
+    const sliderTransform = document.getElementById('slider-transform');
+    const valNumber = document.getElementById('val-number');
+    const valTransform = document.getElementById('val-transform');
+    const optAggressive = document.getElementById('opt-aggressive');
 
     const btnDownload = document.getElementById('btn-download');
+    const btnShare = document.getElementById('btn-share');
     const btnCopySvg = document.getElementById('btn-copy-svg');
     const btnCopyDataUri = document.getElementById('btn-copy-datauri');
+    const btnCopyMenu = document.getElementById('btn-copy-menu');
+    const copyDropdown = document.getElementById('copy-dropdown');
     const btnReset = document.getElementById('btn-reset');
-
-    const optAggressive = document.getElementById('opt-aggressive');
 
     const loadingMsg = document.getElementById('loading-msg');
 
-    // Modal elements
     const modal = document.getElementById('info-modal');
     const btnInfo = document.getElementById('btn-info');
     const modalClose = document.getElementById('modal-close');
     const modalBackdrop = document.getElementById('modal-backdrop');
 
-    // State
     let currentSvgText = '';
     let optimizedSvgData = '';
     let currentFileName = 'optimized.svg';
-    let isProcessing = false;
-    let originalFileSize = 0; // Store the absolute original size
+    let originalFileSize = 0;
     let modalOpener = null;
-    // For the inline Before/After compare we keep the raster source URL
-    // only when the input was a raster image (SVG→SVG has no visible delta).
-    let originalRasterUrl = null;
-    let compareTeardown = null;
 
-    const compareSection = document.getElementById('compare-section');
-    const compareContainer = document.getElementById('compare-container');
-
-    function teardownCompare() {
-      if (compareTeardown) {
-        compareTeardown();
-        compareTeardown = null;
-      }
-      if (originalRasterUrl) {
-        URL.revokeObjectURL(originalRasterUrl);
-        originalRasterUrl = null;
-      }
-      compareSection.classList.add('hidden');
-      compareContainer.innerHTML = '';
-    }
-
-    function renderCompare(beforeUrl, svgText) {
-      const afterUrl = 'data:image/svg+xml;base64,' + svgToBase64(svgText);
-      if (compareTeardown) compareTeardown();
-      compareTeardown = setupInlineCompare({
-        container: compareContainer,
-        beforeUrl,
-        afterUrl,
-      });
-      compareSection.classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
-    }
-
-    // Modal logic
     function openModal() {
       modalOpener = document.activeElement;
       modal.classList.remove('hidden');
@@ -599,102 +915,173 @@
       if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
     });
 
-    function svgToBase64(svgText) {
-      const bytes = new TextEncoder().encode(svgText);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      return btoa(binary);
+    // URL-encoded data URI. Only escapes characters that actually need it in
+    // a `data:image/svg+xml,...` context, so the output stays well below the
+    // size of a base64 payload while still pasting cleanly into CSS url() and
+    // <img src>. Whitespace runs are also collapsed for a few extra bytes.
+    function svgToUrlEncoded(svgText) {
+      return svgText
+        .replace(/"/g, "'")
+        .replace(/%/g, '%25')
+        .replace(/#/g, '%23')
+        .replace(/\{/g, '%7B')
+        .replace(/\}/g, '%7D')
+        .replace(/</g, '%3C')
+        .replace(/>/g, '%3E')
+        .replace(/\s+/g, ' ');
     }
 
-    async function processSvgText(text, filename) {
-      if (isProcessing) return;
-      isProcessing = true;
-      currentSvgText = text;
-
-      if (filename) {
-        currentFileName = filename.replace(/\.(svg|png|jpg|jpeg)$/i, '') + '.min.svg';
+    // Drop intrinsic width/height so the SVG scales with its flex parent and
+    // the Before / After layers always render at matching dimensions.
+    function injectSvg(host, svgText) {
+      host.innerHTML = svgText;
+      const svg = host.querySelector('svg');
+      if (svg) {
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
       }
+    }
 
-      switchView('view-loading');
+    // The After layer must be sized to the *whole* compare container, not the
+    // clipping wrap — otherwise the SVG inside it would be squashed into the
+    // 50% slice and stop matching the Before. We pin its pixel size here and
+    // refresh it whenever the layout changes.
+    function syncAfterSize() {
+      compareAfter.style.width = compareEl.clientWidth + 'px';
+      compareAfter.style.height = compareEl.clientHeight + 'px';
+    }
 
-      try {
-        await new Promise(resolve => setTimeout(resolve, 300));
+    let comparePercent = 50;
+    function applyComparePercent(p) {
+      comparePercent = Math.max(0, Math.min(100, p));
+      compareAfterWrap.style.width = comparePercent + '%';
+      compareHandle.style.left = comparePercent + '%';
+    }
 
-        const isAggressive = optAggressive.checked;
+    let dragging = false;
+    function setFromClientX(clientX) {
+      const r = compareEl.getBoundingClientRect();
+      if (r.width <= 0) return;
+      applyComparePercent(((clientX - r.left) / r.width) * 100);
+    }
+    compareEl.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      compareEl.setPointerCapture(e.pointerId);
+      setFromClientX(e.clientX);
+    });
+    compareEl.addEventListener('pointermove', (e) => {
+      if (dragging) setFromClientX(e.clientX);
+    });
+    function endDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      if (e.pointerId != null && compareEl.hasPointerCapture(e.pointerId)) {
+        compareEl.releasePointerCapture(e.pointerId);
+      }
+    }
+    compareEl.addEventListener('pointerup', endDrag);
+    compareEl.addEventListener('pointercancel', endDrag);
+    window.addEventListener('resize', syncAfterSize);
 
-        const config = {
-          multipass: true,
-          floatPrecision: isAggressive ? 1 : 3,
-          plugins: [
-            {
-              name: 'preset-default',
-              params: { overrides: { removeViewBox: isAggressive } }
-            },
-            'removeDimensions'
-          ]
-        };
+    function setSliderFill(slider) {
+      const min = parseFloat(slider.min);
+      const max = parseFloat(slider.max);
+      const v = parseFloat(slider.value);
+      const pct = ((v - min) / (max - min)) * 100;
+      slider.style.setProperty('--val', pct + '%');
+    }
 
-        const result = optimize(text, config);
-        optimizedSvgData = result.data;
+    function buildConfig() {
+      const floatPrecision = parseInt(sliderNumber.value, 10);
+      const transformPrecision = parseInt(sliderTransform.value, 10);
+      const isAggressive = optAggressive.checked;
 
-        const optimizedSize = new Blob([optimizedSvgData]).size;
-
-        const savings = originalFileSize - optimizedSize;
-        const percent = originalFileSize > 0 ? (savings / originalFileSize) * 100 : 0;
-
-        sizeOriginal.textContent = formatBytes(originalFileSize);
-        sizeOptimized.textContent = formatBytes(optimizedSize);
-
-        const displayPercent = Math.max(0, percent);
-
-        let startTimestamp = null;
-        const duration = 800;
-        const targetPercent = parseFloat(displayPercent.toFixed(1));
-
-        const step = (timestamp) => {
-          if (!startTimestamp) startTimestamp = timestamp;
-          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-          const easeProgress = 1 - Math.pow(1 - progress, 3);
-          savingsPercent.textContent = (easeProgress * targetPercent).toFixed(1) + '%';
-
-          if (progress < 1) {
-            window.requestAnimationFrame(step);
-          } else {
-            savingsPercent.textContent = targetPercent.toFixed(1) + '%';
+      const plugins = [
+        {
+          name: 'preset-default',
+          params: {
+            overrides: {
+              removeViewBox: isAggressive,
+              convertPathData: { floatPrecision, transformPrecision },
+              convertTransform: { floatPrecision: transformPrecision, transformPrecision },
+              cleanupNumericValues: { floatPrecision },
+            }
           }
-        };
-        window.requestAnimationFrame(step);
+        },
+        'removeDimensions',
+      ];
 
-        const radius = progressCircle.r.baseVal.value;
-        const circumference = radius * 2 * Math.PI;
-        const offset = circumference - (displayPercent / 100) * circumference;
+      // Aggressive only flips `removeViewBox` via the preset override above.
+      // Extras like `reusePaths` can actually *grow* small SVGs (their
+      // <defs>+<use> overhead exceeds the savings), and `removeXMLNS` breaks
+      // downloaded standalone files — both ruled out here.
 
-        switchView('view-result');
+      return {
+        multipass: true,
+        floatPrecision,
+        plugins,
+      };
+    }
 
-        if (originalRasterUrl) {
-          renderCompare(originalRasterUrl, optimizedSvgData);
-        }
+    function popValue(el) {
+      el.classList.remove('value-pop');
+      // Force reflow so the animation re-fires on consecutive changes.
+      void el.offsetWidth;
+      el.classList.add('value-pop');
+    }
 
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            progressCircle.style.strokeDashoffset = Math.max(0, offset);
-          });
-        });
-
+    function runOptimization() {
+      if (!currentSvgText) return;
+      let candidate;
+      try {
+        candidate = optimize(currentSvgText, buildConfig()).data;
       } catch (err) {
         console.error('Optimization error:', err);
-        showToast('最適化中にエラーが発生しました。ファイルが破損している可能性があります。', 'error');
-        switchView('view-upload');
-      } finally {
-        isProcessing = false;
-        loadingMsg.textContent = '最適化しています...';
+        showToast('最適化中にエラーが発生しました。設定を緩めてみてください。', 'error');
+        return;
       }
+
+      // SVGO can occasionally emit *more* bytes than the input — most often on
+      // tiny files where the precision floor or aggressive overrides add more
+      // overhead than they save. In that case, keep the original so the user
+      // never gets a worse download than they uploaded.
+      const candidateSize = new Blob([candidate]).size;
+      if (candidateSize >= originalFileSize) {
+        optimizedSvgData = currentSvgText;
+      } else {
+        optimizedSvgData = candidate;
+      }
+
+      const optimizedSize = new Blob([optimizedSvgData]).size;
+      const savings = Math.max(0, originalFileSize - optimizedSize);
+      const percent = originalFileSize > 0 ? (savings / originalFileSize) * 100 : 0;
+
+      sizeOptimized.textContent = formatBytes(optimizedSize);
+      savingsPercent.textContent = percent.toFixed(1) + '%';
+      savingsBytes.textContent = '-' + formatBytes(savings);
+      popValue(savingsPercent);
+      popValue(sizeOptimized);
+
+      injectSvg(compareAfter, optimizedSvgData);
     }
 
-    // ImageTracer is only needed for raster→SVG conversion. Fetch the script
-    // on demand so the SVG-only path stays lean on first paint.
+    let rerunTimer = null;
+    function scheduleRerun() {
+      if (rerunTimer) clearTimeout(rerunTimer);
+      rerunTimer = setTimeout(runOptimization, 60);
+    }
+
+    function handleSliderInput(slider, label) {
+      label.textContent = slider.value;
+      setSliderFill(slider);
+      scheduleRerun();
+    }
+
+    sliderNumber.addEventListener('input', () => handleSliderInput(sliderNumber, valNumber));
+    sliderTransform.addEventListener('input', () => handleSliderInput(sliderTransform, valTransform));
+    optAggressive.addEventListener('change', scheduleRerun);
+
+    // ImageTracer is only fetched when a raster file is dropped.
     let imageTracerPromise = null;
     function loadImageTracer() {
       if (imageTracerPromise) return imageTracerPromise;
@@ -712,8 +1099,38 @@
       return imageTracerPromise;
     }
 
+    function startEditing(svgText, filename) {
+      currentSvgText = svgText;
+      originalFileSize = new Blob([svgText]).size;
+      if (filename) {
+        currentFileName = filename.replace(/\.(svg|png|jpg|jpeg)$/i, '') + '.min.svg';
+      }
+
+      // Reset controls to sensible defaults so each new upload starts clean.
+      sliderNumber.value = '3';
+      sliderTransform.value = '5';
+      optAggressive.checked = false;
+      valNumber.textContent = '3';
+      valTransform.textContent = '5';
+      setSliderFill(sliderNumber);
+      setSliderFill(sliderTransform);
+
+      sizeOriginal.textContent = formatBytes(originalFileSize);
+      injectSvg(compareBefore, svgText);
+      // Reset slider to centre on each new upload so the user sees both sides.
+      applyComparePercent(50);
+
+      switchView('view-result');
+      // syncAfterSize needs the compare container to be laid out, which only
+      // happens once we leave the (hidden) upload view. Defer one frame.
+      requestAnimationFrame(() => {
+        syncAfterSize();
+        runOptimization();
+      });
+    }
+
     async function handleFile(file) {
-      if (!file || isProcessing) return;
+      if (!file) return;
 
       const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
       const isImage = file.type.startsWith('image/');
@@ -723,70 +1140,50 @@
         return;
       }
 
-      teardownCompare();
-
       switchView('view-loading');
 
       if (isSvg) {
-        loadingMsg.textContent = '最適化しています...';
-        originalFileSize = file.size;
+        loadingMsg.textContent = '読み込んでいます...';
         const text = await file.text();
-        processSvgText(text, file.name);
-      } else {
-        // Stash the raster source so the compare slider can show it next to
-        // the traced SVG output. SVG → SVG conversions skip this entirely.
-        originalRasterUrl = URL.createObjectURL(file);
-        loadingMsg.textContent = '画像をSVGに変換しています...';
+        startEditing(text, file.name);
+        return;
+      }
 
-        let ImageTracer;
+      loadingMsg.textContent = '画像をSVGに変換しています...';
+      let ImageTracer;
+      try {
+        ImageTracer = await loadImageTracer();
+      } catch (err) {
+        console.error(err);
+        showToast('画像変換ライブラリの読み込みに失敗しました。', 'error');
+        switchView('view-upload');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
         try {
-          ImageTracer = await loadImageTracer();
+          ImageTracer.imageToSVG(e.target.result, (svgStr) => {
+            startEditing(svgStr, file.name);
+          }, {
+            ltres: 0.1,
+            qtres: 0.1,
+            pathomit: 0,
+            colorsampling: 2,
+            numberofcolors: 256,
+            mincolorratio: 0,
+            colorquantcycles: 8,
+            scale: 1,
+          });
         } catch (err) {
-          console.error(err);
-          showToast('画像変換ライブラリの読み込みに失敗しました。', 'error');
+          console.error('Tracing error:', err);
+          showToast('画像の変換中にエラーが発生しました。', 'error');
           switchView('view-upload');
-          return;
         }
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const dataUrl = e.target.result;
-          try {
-            ImageTracer.imageToSVG(dataUrl, function(svgStr) {
-              loadingMsg.textContent = '最適化しています...';
-              // Compare against the traced SVG, not the original raster file.
-              originalFileSize = new Blob([svgStr]).size;
-              processSvgText(svgStr, file.name);
-            }, {
-              ltres: 0.1,
-              qtres: 0.1,
-              pathomit: 0,
-              colorsampling: 2,
-              numberofcolors: 256,
-              mincolorratio: 0,
-              colorquantcycles: 8,
-              scale: 1
-            });
-          } catch(err) {
-            console.error('Tracing error:', err);
-            showToast('画像の変換中にエラーが発生しました。', 'error');
-            switchView('view-upload');
-          }
-        };
-        reader.readAsDataURL(file);
-      }
+      };
+      reader.readAsDataURL(file);
     }
 
-    function reprocessIfReady() {
-      const upload = document.getElementById('view-upload');
-      if (currentSvgText && upload.classList.contains('hidden')) {
-        processSvgText(currentSvgText);
-      }
-    }
-
-    optAggressive.addEventListener('change', reprocessIfReady);
-
-    // Event Listeners
     setupDropzone({
       dropzone,
       fileInput,
@@ -796,7 +1193,109 @@
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) handleFile(file);
-      fileInput.value = ''; // Reset input
+      fileInput.value = '';
+    });
+
+    async function loadFromUrl(url) {
+      if (!url) return;
+
+      let urlObj;
+      try {
+        urlObj = new URL(url);
+      } catch (e) {
+        showToast('URLの形式が正しくありません', 'error');
+        return;
+      }
+      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+        showToast('http(s) のURLを指定してください', 'error');
+        return;
+      }
+      if (isPrivateHost && isPrivateHost(urlObj.hostname)) {
+        showToast('ローカル/プライベートIPのURLは利用できません', 'error');
+        return;
+      }
+
+      switchView('view-loading');
+      loadingMsg.textContent = 'ダウンロード中...';
+
+      try {
+        let response;
+        let usedProxy = false;
+        let directError = null;
+        try {
+          response = await fetch(url, { mode: 'cors', credentials: 'omit' });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        } catch (e) {
+          directError = e;
+          const ok = window.confirm(
+            '直接の取得に失敗しました。\n外部プロキシ経由で再試行しますか？\n\n注意: プロキシ運営者にURLが渡ります。'
+          );
+          if (!ok) {
+            switchView('view-upload');
+            return;
+          }
+          console.warn('Direct fetch failed:', directError);
+          usedProxy = true;
+
+          const stripped = url.replace(/^https?:\/\//, '');
+          const proxies = [
+            `https://images.weserv.nl/?url=${encodeURIComponent(stripped)}`,
+            `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+          ];
+
+          let lastErr = null;
+          let lastProxyHost = null;
+          response = null;
+          for (const proxyUrl of proxies) {
+            try {
+              console.log('Trying proxy:', proxyUrl);
+              const r = await fetch(proxyUrl, { mode: 'cors', credentials: 'omit' });
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              response = r;
+              break;
+            } catch (perr) {
+              lastErr = perr;
+              try { lastProxyHost = new URL(proxyUrl).host; } catch (_) { lastProxyHost = proxyUrl; }
+              console.warn('Proxy failed:', proxyUrl, perr);
+            }
+          }
+          if (!response) {
+            const hostHint = lastProxyHost ? ` (${lastProxyHost})` : '';
+            throw new Error(`すべてのプロキシで失敗${hostHint}: ${lastErr?.message || '不明'}`);
+          }
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        const blob = await response.blob();
+        const blobType = blob.type || contentType;
+
+        let filename = 'downloaded_image.svg';
+        const pathParts = urlObj.pathname.split('/');
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart && lastPart.includes('.')) {
+          filename = lastPart;
+        }
+
+        const file = new File([blob], filename, { type: blobType || 'image/svg+xml' });
+        if (usedProxy) showToast('プロキシ経由で取得しました');
+        handleFile(file);
+      } catch (err) {
+        console.error('URL Load error:', err);
+        showToast(`取得失敗: ${err.message || 'unknown'}`, 'error');
+        switchView('view-upload');
+      }
+    }
+
+    urlBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      if (url) loadFromUrl(url);
+    });
+
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const url = urlInput.value.trim();
+        if (url) loadFromUrl(url);
+      }
     });
 
     btnDownload.addEventListener('click', () => {
@@ -811,6 +1310,34 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     });
+
+    // Web Share API only — image/svg+xml on the clipboard isn't accepted by
+    // most browsers, so we don't bother with a ClipboardItem fallback (the
+    // "SVGコードをコピー" button already covers that need).
+    function canShareSvgFile() {
+      if (typeof navigator.canShare !== 'function') return false;
+      try {
+        const probe = new File(['<svg/>'], 't.svg', { type: 'image/svg+xml' });
+        return navigator.canShare({ files: [probe] });
+      } catch {
+        return false;
+      }
+    }
+
+    btnShare.addEventListener('click', async () => {
+      if (!optimizedSvgData) return;
+      const file = new File([optimizedSvgData], currentFileName, { type: 'image/svg+xml' });
+      try {
+        await navigator.share({ files: [file], title: currentFileName });
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+        showToast('共有に失敗しました', 'error');
+      }
+    });
+
+    // Devices without Web Share API for files (most desktop browsers) get the
+    // button removed entirely rather than seeing a dead control.
+    if (!canShareSvgFile()) btnShare.classList.add('hidden');
 
     async function copyToClipboard(text, successMsg) {
       try {
@@ -833,17 +1360,45 @@
 
     btnCopyDataUri.addEventListener('click', () => {
       if (!optimizedSvgData) return;
-      const dataUri = 'data:image/svg+xml;base64,' + svgToBase64(optimizedSvgData);
+      const dataUri = 'data:image/svg+xml,' + svgToUrlEncoded(optimizedSvgData);
       copyToClipboard(dataUri, 'Data URIをクリップボードにコピーしました');
     });
 
     btnReset.addEventListener('click', () => {
       currentSvgText = '';
       optimizedSvgData = '';
-      progressCircle.style.strokeDashoffset = '339.292'; // Reset circle
-      teardownCompare();
       switchView('view-upload');
     });
+
+    btnCopyMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (copyDropdown.classList.contains('hidden')) {
+        copyDropdown.classList.remove('hidden');
+        copyDropdown.classList.add('dropdown-enter');
+        copyDropdown.classList.remove('dropdown-exit');
+      } else {
+        closeCopyDropdown();
+      }
+    });
+
+    function closeCopyDropdown() {
+      if (!copyDropdown.classList.contains('hidden')) {
+        copyDropdown.classList.remove('dropdown-enter');
+        copyDropdown.classList.add('dropdown-exit');
+        setTimeout(() => {
+          copyDropdown.classList.add('hidden');
+          copyDropdown.classList.remove('dropdown-exit');
+        }, 200);
+      }
+    }
+
+    document.addEventListener('click', () => {
+      closeCopyDropdown();
+    });
+
+    // Initialize slider fill on first paint.
+    setSliderFill(sliderNumber);
+    setSliderFill(sliderTransform);
 
   </script>
 </body>
