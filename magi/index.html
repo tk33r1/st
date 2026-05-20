@@ -879,7 +879,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        if (!askRes.ok) throw new Error(`接続エラー: ${askRes.status}`);
+        if (!askRes.ok) {
+          const errBody = await askRes.json().catch(() => ({}));
+          throw new Error(`接続エラー: ${askRes.status}${errBody.error ? ` / ${errBody.error}` : ''}`);
+        }
         const { job_id } = await askRes.json();
 
         document.getElementById('animCode').textContent = `CODE : ${String(job_id).substring(0, 8).toUpperCase()}`;

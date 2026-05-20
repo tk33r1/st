@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(python3 -c ' *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(curl -s -i -X POST https://workers.tk.st/magi -H 'Origin: https://tk.st' -H 'Content-Type: application/json' --data '{\"question\":\"テスト\",\"session_id\":\"DIAG\",\"mode\":\"magi\"}' --max-time 30)",
+      "Bash(curl -s -i -X POST https://magi.tk.st/ask -H 'Content-Type: application/json' --data '{\"question\":\"テスト\",\"session_id\":\"DIAG\",\"mode\":\"magi\"}' --max-time 30)",
+      "Bash(curl -s -i https://magi.tk.st/ --max-time 30)",
+      "Bash(curl -s -o /dev/null -w \"magi.tk.st -> http_code=%{http_code} server_ip=%{remote_ip}\\\\n\" https://magi.tk.st/ --max-time 30)"
     ]
   }
 }
