@@ -6,7 +6,18 @@
       "Bash(curl -s -i -X POST https://workers.tk.st/magi -H 'Origin: https://tk.st' -H 'Content-Type: application/json' --data '{\"question\":\"テスト\",\"session_id\":\"DIAG\",\"mode\":\"magi\"}' --max-time 30)",
       "Bash(curl -s -i -X POST https://magi.tk.st/ask -H 'Content-Type: application/json' --data '{\"question\":\"テスト\",\"session_id\":\"DIAG\",\"mode\":\"magi\"}' --max-time 30)",
       "Bash(curl -s -i https://magi.tk.st/ --max-time 30)",
-      "Bash(curl -s -o /dev/null -w \"magi.tk.st -> http_code=%{http_code} server_ip=%{remote_ip}\\\\n\" https://magi.tk.st/ --max-time 30)"
+      "Bash(curl -s -o /dev/null -w \"magi.tk.st -> http_code=%{http_code} server_ip=%{remote_ip}\\\\n\" https://magi.tk.st/ --max-time 30)",
+      "Bash(curl -s -o /dev/null -w \"GET  /     -> %{http_code}\\\\n\" https://magi.tk.st/ --max-time 30)",
+      "Bash(curl -s -i -X POST https://magi.tk.st/ask -H 'Content-Type: application/json' --data '{\"question\":\"疎通テスト\",\"session_id\":\"DIAG\",\"mode\":\"magi\"}' --max-time 30)",
+      "Bash(curl -s -i -X POST https://workers.tk.st/magi -H 'Origin: https://tk.st' -H 'Content-Type: application/json' --data '{\"question\":\"疎通テスト\",\"session_id\":\"DIAG\",\"mode\":\"magi\"}' --max-time 30)",
+      "Bash(curl -s -i https://workers.tk.st/magi/d5bd45f8-f376-4fb0-ba21-96b3ff274eef -H 'Origin: https://tk.st' --max-time 30)",
+      "Read(//c/c/dev/tk.st/game/**)",
+      "Bash(ls *.html *.md *.json)",
+      "Bash(ls CLAUDE.md)",
+      "Bash(rm -f _check.js _test.js && ls)"
+    ],
+    "additionalDirectories": [
+      "C:\\dev\\tk.st\\game\\masala-tetris-vindaloo"
     ]
   }
 }

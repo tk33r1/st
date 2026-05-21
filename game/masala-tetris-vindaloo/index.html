@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="マサラテトリス VINDALOO。スパイスの役を組んでカレーを完成させる、ローグライト×AI対戦の激辛テトリス。">
+    <title>マサラテトリス VINDALOO</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌶️</text></svg>">
+    <link rel="canonical" href="https://tk.st/game/masala-tetris-vindaloo/">
+    <link rel="author" href="https://tk.st/">
+    <meta property="og:title" content="マサラテトリス VINDALOO | ST GAMES">
+    <meta property="og:description" content="スパイスの役を組んでカレーを完成させる、ローグライト×AI対戦の激辛テトリス">
+    <meta property="og:image" content="https://tk.st/images/ogp/masala-tetris-vindaloo-ogp.png">
+    <meta property="og:url" content="https://tk.st/game/masala-tetris-vindaloo/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ST GAMES">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="マサラテトリス VINDALOO | ST GAMES">
+    <meta name="twitter:description" content="スパイスの役を組んでカレーを完成させる激辛テトリス">
+    <meta name="twitter:image" content="https://tk.st/images/ogp/masala-tetris-vindaloo-ogp.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Sans+JP:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: radial-gradient(circle at center, #3e1f08 0%, #1a0b02 100%);
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+        .font-masala { font-family: 'Cinzel Decorative', cursive; }
+
+        .pattern-bg {
+            background-color: #2a1205;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d97706' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .main-content-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            justify-content: center;
+        }
+
+        .game-container {
+            position: relative;
+            border: 4px solid #d97706;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.5);
+            background: rgba(0, 0, 0, 0.9);
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+        .panel-box {
+            background: linear-gradient(to bottom, #5a2508, #351202);
+            border: 1px solid #b45309;
+            border-radius: 6px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .btn-masala {
+            background: linear-gradient(45deg, #d97706, #b45309);
+            border: 2px solid #fcd34d;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+        }
+        .btn-masala:active { transform: scale(0.95); }
+        .btn-masala:disabled { filter: grayscale(100%); opacity: 0.6; transform: none; }
+
+        .btn-shiva {
+            background: linear-gradient(135deg, #4f46e5, #312e81);
+            border: 2px solid #818cf8;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shiva::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            20% { transform: translateX(100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .maharaja-box { border-left: 4px solid #f59e0b; background: rgba(0, 0, 0, 0.6); }
+        .ai-thinking { animation: pulse-gold 1.5s infinite; border-color: #a855f7; }
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(252, 211, 77, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0); }
+        }
+
+        .flash-text {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #000;
+            pointer-events: none;
+            animation: popUp 1.2s forwards;
+            white-space: nowrap;
+            z-index: 20;
+            width: 100%;
+            text-align: center;
+        }
+        @keyframes popUp {
+            0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+            10% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            90% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -120%) scale(1); }
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(217, 119, 6, 0.5);
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            touch-action: manipulation;
+        }
+        .control-btn:active { background: rgba(245, 158, 11, 0.6); transform: scale(0.95); }
+
+        .input-masala { background: rgba(0,0,0,0.5); border: 1px solid #d97706; color: #fcd34d; text-align: center; }
+
+        /* 難易度ボタン */
+        .diff-btn {
+            border: 2px solid #b45309;
+            background: rgba(0,0,0,0.4);
+            transition: all 0.15s;
+        }
+        .diff-btn.selected { border-color: #fcd34d; background: linear-gradient(45deg, #d97706, #b45309); box-shadow: 0 0 12px rgba(252,211,77,0.5); }
+
+        /* 鍋ゲージ用スパイスチップ */
+        .spice-chip {
+            width: 1rem; height: 1rem; border-radius: 9999px;
+            border: 1px solid rgba(255,255,255,0.4);
+            display: inline-block;
+        }
+
+        /* 画面震え */
+        @keyframes shakeAnim {
+            0%,100% { transform: translate(0,0); }
+            20% { transform: translate(-3px, 2px); }
+            40% { transform: translate(3px, -2px); }
+            60% { transform: translate(-2px, -1px); }
+            80% { transform: translate(2px, 1px); }
+        }
+        .shake { animation: shakeAnim 0.25s; }
+
+        @media (min-width: 768px) {
+            .main-content-wrapper { flex-direction: row; align-items: center; gap: 1.5rem; padding: 1rem; }
+            .game-container { height: 80vh; max-height: 800px; width: auto; aspect-ratio: 10/20; }
+            .mobile-only { display: none !important; }
+            .desktop-only { display: flex !important; }
+            .desktop-sidebar { height: 80vh; max-height: 800px; }
+        }
+        @media (max-width: 767px) {
+            .main-content-wrapper { flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px; }
+            .game-container { width: auto; height: 100%; max-height: calc(100dvh - 320px); aspect-ratio: 10/20; }
+            .desktop-only { display: none !important; }
+            .mobile-only { display: flex !important; }
+        }
+    </style>
+</head>
+<body class="pattern-bg">
+
+    <!-- ヘッダー -->
+    <header class="w-full p-2 flex justify-between items-center bg-black/60 border-b border-amber-800 shrink-0 z-10 h-14">
+        <div class="flex items-center gap-2 overflow-hidden">
+            <button id="mute-btn" class="w-8 h-8 rounded-full bg-amber-900/80 border border-amber-500 flex items-center justify-center text-amber-400 mr-1">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <div class="w-9 h-9 bg-amber-600 rounded-full border-2 border-yellow-400 flex items-center justify-center overflow-hidden shadow-lg shrink-0 relative">
+                <span id="ai-icon" class="text-xl">👳🏾‍♂️</span>
+                <span id="ai-sparkle" class="absolute -top-1 -right-1 text-[10px] hidden animate-spin">✨</span>
+            </div>
+            <div id="maharaja-box" class="maharaja-box px-2 py-1 rounded flex-1 min-w-0 transition-all duration-300">
+                <p id="maharaja-text" class="text-xs text-amber-200 italic truncate">ナマステ！スパイスの準備はいいか？</p>
+            </div>
+        </div>
+        <div class="flex flex-col items-end shrink-0 ml-2">
+            <input type="text" id="player-name" value="匿名マサラ" class="input-masala rounded px-1 py-0.5 text-[10px] w-20 focus:outline-none" placeholder="名前">
+        </div>
+    </header>
+
+    <!-- スマホ用ステータスバー -->
+    <div class="mobile-only w-full px-2 py-1 flex justify-between items-center bg-amber-900/20 shrink-0 gap-2">
+        <div class="panel-box flex-1 flex justify-between px-2 py-1 items-center">
+            <div class="flex flex-col">
+                <span class="text-[8px] text-amber-400">SCORE</span>
+                <span id="mobile-score" class="font-masala text-lg leading-none">0</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-[8px] text-green-400">REN</span>
+                <span id="mobile-ren" class="font-masala text-lg leading-none">0</span>
+            </div>
+            <div class="flex flex-col items-end">
+                <span class="text-[8px] text-red-400">STAGE</span>
+                <span id="mobile-level" class="font-masala text-lg leading-none">1</span>
+            </div>
+        </div>
+        <!-- 鍋ゲージ(スマホ) -->
+        <div class="panel-box w-1/3 px-2 py-1 flex flex-col justify-center">
+            <div class="flex justify-between text-[8px] text-gray-300 mb-0.5"><span>鍋 POT</span></div>
+            <div id="mobile-pot" class="flex gap-0.5 flex-wrap min-h-[1rem]"></div>
+        </div>
+    </div>
+
+    <!-- メイン -->
+    <div class="main-content-wrapper">
+
+        <!-- 左サイドバー(PC) -->
+        <div class="desktop-only desktop-sidebar flex-col gap-2 w-48 shrink-0 justify-between">
+            <div class="flex flex-col gap-2">
+                <div class="panel-box p-3 flex justify-around items-center">
+                    <div class="text-center">
+                        <div class="text-amber-400 text-[10px] font-bold">SCORE</div>
+                        <div id="pc-score" class="text-xl font-masala text-white leading-none">0</div>
+                    </div>
+                    <div class="w-px h-8 bg-amber-800/50"></div>
+                    <div class="text-center">
+                        <div class="text-red-400 text-[10px] font-bold">STAGE</div>
+                        <div id="pc-level" class="text-xl font-masala text-white leading-none">1</div>
+                    </div>
+                </div>
+                <!-- HOLD -->
+                <div class="panel-box p-3 flex flex-col items-center">
+                    <h3 class="font-bold text-amber-400 text-xs mb-2">HOLD</h3>
+                    <div class="w-20 h-20 flex items-center justify-center bg-black/30 rounded border border-amber-900/50">
+                        <canvas id="hold-piece" width="80" height="80"></canvas>
+                    </div>
+                </div>
+                <!-- REN + ルピー -->
+                <div class="panel-box p-3 flex justify-around items-center">
+                    <div class="text-center">
+                        <div class="text-xs text-green-300 mb-1">REN</div>
+                        <div id="pc-ren" class="text-xl font-masala text-green-400 leading-none">0</div>
+                    </div>
+                    <div class="w-px h-8 bg-amber-800/50"></div>
+                    <div class="text-center">
+                        <div class="text-xs text-yellow-300 mb-1">ルピー</div>
+                        <div id="pc-rupees" class="text-xl font-masala text-yellow-300 leading-none">0</div>
+                    </div>
+                </div>
+                <!-- ノルマ進捗 -->
+                <div class="panel-box p-3">
+                    <div class="flex justify-between text-[10px] text-amber-300 mb-1"><span>ノルマ (役完成)</span><span id="pc-quota-text">0/2</span></div>
+                    <div class="w-full bg-black h-2 rounded-full overflow-hidden border border-gray-600">
+                        <div id="pc-quota-bar" class="h-full bg-amber-500 transition-all duration-300" style="width:0%"></div>
+                    </div>
+                    <div id="pc-relics" class="flex gap-1 flex-wrap mt-2 min-h-[1.2rem] text-lg"></div>
+                </div>
+            </div>
+
+            <div class="mt-auto mb-4">
+                <button id="btn-shiva-pc" class="btn-masala btn-shiva w-full py-3 rounded-lg shadow-lg flex flex-row items-center justify-center gap-2 group relative transition-all">
+                    <div class="text-2xl group-active:scale-110 transition-transform">🔱</div>
+                    <span class="font-bold text-sm shiva-label">シヴァ神の力</span>
+                    <div id="shiva-cooldown-pc" class="absolute inset-0 bg-black/80 flex items-center justify-center text-xl font-bold text-white hidden">5</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div class="game-container" id="game-container">
+            <canvas id="tetris"></canvas>
+
+            <!-- START SCREEN -->
+            <div id="start-screen" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20 backdrop-blur-sm px-4">
+                <h1 id="main-title" class="font-masala text-3xl md:text-4xl text-amber-400 mb-1 text-center drop-shadow-lg leading-tight">Masala Tetris<br><span class="text-red-500">VINDALOO</span></h1>
+                <p class="text-amber-100 text-[10px] mb-3 text-center">Spice Combo / Roguelite / AI Versus</p>
+
+                <!-- 難易度選択 -->
+                <div class="w-full max-w-[220px] mb-3">
+                    <h3 class="text-center text-amber-400 font-bold text-xs mb-1">辛さ (難易度)</h3>
+                    <div class="grid grid-cols-3 gap-1 text-center text-[11px]">
+                        <button class="diff-btn rounded py-2" data-diff="mild">マイルド<br><span class="text-[8px] text-gray-300">🌶️</span></button>
+                        <button class="diff-btn rounded py-2 selected" data-diff="hot">ホット<br><span class="text-[8px] text-gray-300">🌶️🌶️</span></button>
+                        <button class="diff-btn rounded py-2" data-diff="vindaloo">激辛<br><span class="text-[8px] text-gray-300">🌶️🌶️🌶️</span></button>
+                    </div>
+                </div>
+
+                <div class="bg-amber-900/30 border border-amber-700 rounded p-2 w-full max-w-[220px] mb-3 text-xs">
+                    <h3 class="text-center text-amber-400 font-bold border-b border-amber-700 mb-1 pb-1">High Scores</h3>
+                    <ul id="ranking-list" class="text-gray-200 space-y-1 h-14 overflow-y-auto">
+                        <li class="text-center text-gray-500">No Data</li>
+                    </ul>
+                </div>
+                <button id="start-btn" class="btn-masala px-8 py-3 rounded-full text-xl font-bold tracking-wider animate-pulse">PLAY</button>
+            </div>
+
+            <!-- GAME OVER / RESULT -->
+            <div id="game-over-screen" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20 hidden px-4">
+                <h2 id="result-title" class="font-masala text-4xl text-red-500 mb-2 text-center leading-tight">GAME OVER</h2>
+                <div class="text-2xl text-white mb-4 font-bold"><span id="final-score">0</span> Score</div>
+                <div class="flex gap-2 mb-6">
+                    <button onclick="shareSNS('x')" class="bg-black border border-white text-white px-3 py-2 rounded text-xs hover:bg-gray-800 flex items-center gap-1"><i class="fab fa-x-twitter"></i> Post</button>
+                    <button onclick="shareSNS('line')" class="bg-[#06C755] text-white px-3 py-2 rounded text-xs hover:opacity-90 flex items-center gap-1"><i class="fab fa-line"></i> LINE</button>
+                </div>
+                <button id="restart-btn" class="btn-masala px-8 py-3 rounded-full text-xl font-bold">RETRY</button>
+            </div>
+
+            <!-- 商人フェーズ (ローグライト) -->
+            <div id="shop-screen" class="absolute inset-0 bg-black/92 flex-col items-center justify-center z-30 hidden px-3 py-4 overflow-y-auto">
+                <div class="text-center mb-2">
+                    <div class="text-4xl mb-1">🧕🏾</div>
+                    <h2 class="font-masala text-2xl text-amber-400">スパイス商人</h2>
+                    <p id="shop-talk" class="text-amber-200 text-[11px] italic mt-1 px-2">どれが要る？ 値は張るが、損はさせんよ。</p>
+                    <div class="mt-1 text-yellow-300 text-sm font-bold">所持: <span id="shop-rupees">0</span> ルピー</div>
+                </div>
+                <div id="shop-offers" class="w-full max-w-[260px] flex flex-col gap-2 mb-3"></div>
+                <button id="shop-skip" class="btn-masala px-6 py-2 rounded-full text-sm font-bold">次のステージへ →</button>
+            </div>
+
+            <!-- 役完成 / STAGE UP MODAL -->
+            <div id="levelup-modal" class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none hidden">
+                <div class="bg-gradient-to-br from-red-900 to-black border-4 border-yellow-500 p-6 rounded-xl text-center shadow-2xl transform modal-celebrate relative overflow-hidden w-4/5">
+                    <h2 id="modal-title" class="font-masala text-3xl text-yellow-400 mb-2 drop-shadow-md">STAGE UP!</h2>
+                    <p id="modal-desc" class="text-white text-lg">Spice up!</p>
+                    <div class="text-6xl mt-2 animate-bounce">🔥</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右サイドバー(PC) -->
+        <div class="desktop-only desktop-sidebar flex-col w-48 shrink-0 gap-3 pt-4">
+            <div class="panel-box p-3 flex flex-col items-center">
+                <h3 class="font-bold text-amber-400 text-xs mb-2">NEXT</h3>
+                <div class="w-20 h-32 flex flex-col items-center justify-start gap-1 bg-black/30 rounded border border-amber-900/50 p-1">
+                    <canvas id="next-piece" width="80" height="180"></canvas>
+                </div>
+            </div>
+
+            <!-- 鍋(POT) -->
+            <div class="panel-box p-3 text-xs text-amber-100">
+                <h3 class="font-bold text-amber-400 border-b border-amber-700 pb-1 mb-2">鍋 POT (役)</h3>
+                <div id="pc-pot" class="flex gap-1 flex-wrap items-center min-h-[1.2rem] mb-2"></div>
+                <div id="pot-hint" class="text-[10px] text-amber-300">スパイスを溜めて役を完成させよ</div>
+            </div>
+
+            <div class="panel-box p-3 text-xs text-amber-100">
+                <h3 class="font-bold text-amber-400 border-b border-amber-700 pb-1 mb-2">Controls</h3>
+                <div class="mb-1">← → : 移動</div>
+                <div class="mb-1">↑ / X : 回転</div>
+                <div class="mb-1">↓ : ソフトドロップ</div>
+                <div class="mb-1">Space : ハードドロップ</div>
+                <div>C / Shift : ホールド</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- スマホ用コントローラー -->
+    <div class="mobile-only w-full pb-2 pt-1 px-2 flex flex-col shrink-0 z-30 bg-gradient-to-t from-black via-black/90 to-transparent fixed bottom-0 left-0">
+        <div class="flex justify-between items-end w-full max-w-md mx-auto relative">
+            <div class="grid grid-cols-3 gap-2 w-40 h-32 mb-2">
+                <div></div>
+                <button id="btn-rotate" class="control-btn w-12 h-12 text-amber-400 mb-[-10px] mx-auto transform translate-y-2"><i class="fas fa-redo text-sm"></i></button>
+                <button id="btn-hold" class="control-btn w-10 h-10 text-amber-300 text-[9px] font-bold self-start ml-auto">HOLD</button>
+                <button id="btn-left" class="control-btn w-12 h-12 text-amber-400 mx-auto"><i class="fas fa-arrow-left text-sm"></i></button>
+                <button id="btn-down" class="control-btn w-12 h-12 text-amber-400 mx-auto"><i class="fas fa-arrow-down text-sm"></i></button>
+                <button id="btn-right" class="control-btn w-12 h-12 text-amber-400 mx-auto"><i class="fas fa-arrow-right text-sm"></i></button>
+            </div>
+            <div class="flex items-end gap-4 mb-3">
+                <button id="btn-drop" class="control-btn w-16 h-16 rounded-full bg-amber-600/40 border-2 border-amber-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(217,119,6,0.4)] active:bg-amber-600 active:scale-95">DROP</button>
+                <button id="btn-shiva-mobile" class="btn-masala btn-shiva w-12 h-12 rounded-full shadow-lg flex items-center justify-center relative transition-all active:scale-90">
+                    <div class="text-xl">🔱</div>
+                    <div id="shiva-cooldown-mobile" class="absolute inset-0 bg-black/80 rounded-full flex items-center justify-center text-sm font-bold text-white hidden">5</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/* =========================================================================
+   マサラテトリス VINDALOO
+   Step 1: 基盤エンジン (SRS / 7-bag / Hold / Ghost / Lock delay / REN / 難易度)
+   スパイス属性は後工程(役・ローグライト)のために最初から各ミノに仕込む。
+   ========================================================================= */
+'use strict';
+
+const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
+
+/* ---------- 盤面定数 ---------- */
+const COLS = 10, ROWS = 20, BLOCK = 24;          // 論理サイズ
+const HIDDEN = 0;                                 // (将来用) 上部バッファ
+
+/* ---------- スパイス定義 (役システムの土台) ---------- */
+// 各テトロミノに1スパイスを紐づける。id は鍋集計のキー。
+const SPICES = {
+    I: { id: 'chili',     name: 'チリ',       icon: '🌶️', color: '#e02424' },
+    O: { id: 'turmeric',  name: 'ターメリック', icon: '🟡', color: '#f5c518' },
+    T: { id: 'garam',     name: 'ガラムマサラ', icon: '🟣', color: '#9333ea' },
+    L: { id: 'cumin',     name: 'クミン',     icon: '🟤', color: '#92531a' },
+    J: { id: 'saffron',   name: 'サフラン',   icon: '🟠', color: '#f59e0b' },
+    S: { id: 'cardamom',  name: 'カルダモン', icon: '🟢', color: '#16a34a' },
+    Z: { id: 'coriander', name: 'コリアンダー', icon: '🫒', color: '#84cc16' },
+};
+const PIECE_TYPES = ['I','O','T','L','J','S','Z'];
+const ALL_SPICE_IDS = PIECE_TYPES.map(t => SPICES[t].id);
+
+/* ---------- 役テーブル (鍋の蓄積スパイスから判定) ----------
+   detect(counts, distinct, total) -> bool。優先度は配列順 (上=強)。
+   mult: 直近消去スコアへの倍率。bonus: 加点。garbage: 対戦お邪魔段(Step4フック)。 */
+const ROLES = [
+    { key:'thali',    name:'ターリー',    icon:'🍽️', mult:5,   bonus:2000, garbage:5,
+      color:'text-yellow-300', detect:(c,d)=> d >= 7 },
+    { key:'vindaloo', name:'ヴィンダルー', icon:'🌶️', mult:3,   bonus:1200, garbage:3,
+      color:'text-red-500',    detect:(c)=> (c['chili']||0) >= 3 },
+    { key:'biryani',  name:'ビリヤニ',    icon:'🍚', mult:3,   bonus:800,  garbage:2,
+      color:'text-amber-300',  detect:(c,d)=> d >= 5 },
+    { key:'spicy',    name:'スパイシー',  icon:'🔥', mult:2,   bonus:300,  garbage:1,
+      color:'text-orange-400', detect:(c)=> Object.values(c).some(n => n >= 3) },
+    { key:'mild',     name:'マイルド',    icon:'🍛', mult:1.5, bonus:100,  garbage:0,
+      color:'text-lime-300',   detect:(c,d)=> d >= 3 },
+];
+
+/* ---------- テトロミノ形状 (SRSスポーン状態) ---------- */
+// 各 4x4 / 3x3 / 2x2 行列。値はピース種インデックス(1〜7)で色引きに使う。
+const PIECE_DATA = {
+    I: { idx: 1, cells: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]] },
+    O: { idx: 2, cells: [[2,2],[2,2]] },
+    T: { idx: 3, cells: [[0,3,0],[3,3,3],[0,0,0]] },
+    L: { idx: 4, cells: [[0,0,4],[4,4,4],[0,0,0]] },
+    J: { idx: 5, cells: [[5,0,0],[5,5,5],[0,0,0]] },
+    S: { idx: 6, cells: [[0,6,6],[6,6,0],[0,0,0]] },
+    Z: { idx: 7, cells: [[7,7,0],[0,7,7],[0,0,0]] },
+};
+// 色: index 0 は空。1=I..7=Z をスパイス色に合わせる。
+const COLORS = [null,
+    SPICES.I.color, SPICES.O.color, SPICES.T.color, SPICES.L.color,
+    SPICES.J.color, SPICES.S.color, SPICES.Z.color];
+const IDX_TO_TYPE = { 1:'I',2:'O',3:'T',4:'L',5:'J',6:'S',7:'Z' };
+
+/* ---------- SRS 壁蹴りテーブル ---------- */
+// 回転状態 0,1,2,3 (スポーン, R, 180, L)。dir+1=CW, dir-1=CCW。
+// JLSTSZ 用キックと I 用キックを分ける。各 [from->to] に5候補のオフセット。
+const KICKS_JLSTZ = {
+    '0>1': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '1>0': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '1>2': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '2>1': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '2>3': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    '3>2': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '3>0': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '0>3': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+};
+const KICKS_I = {
+    '0>1': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '1>0': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+    '1>2': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+    '2>1': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '2>3': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+    '3>2': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '3>0': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '0>3': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+};
+
+/* ---------- レリック (商人フェーズで購入する常時効果) ---------- */
+const RELICS = [
+    { key:'chiliPot',    name:'激辛壺',     icon:'🫕', price:14, desc:'チリを含む消去で連鎖+2' },
+    { key:'secondHand',  name:'第二の手',   icon:'✋', price:12, desc:'ホールドの使用制限を解除' },
+    { key:'goldSpoon',   name:'黄金スプーン', icon:'🥄', price:10, desc:'ソフトドロップ加点が2倍' },
+    { key:'phoenixAsh',  name:'不死鳥の灰', icon:'🔥', price:22, desc:'1回だけゲームオーバーを回避' },
+    { key:'merchantScale',name:'商人の天秤', icon:'⚖️', price:16, desc:'商人の品揃え+1・価格20%引き' },
+    { key:'shivaTrident',name:'シヴァの三叉', icon:'🔱', price:18, desc:'シヴァ神のクールダウン半減' },
+];
+const RELIC_MAP = Object.fromEntries(RELICS.map(r => [r.key, r]));
+
+/* ---------- 難易度 ---------- */
+const DIFFICULTY = {
+    mild:     { label: 'マイルド', gravity: 800, lockDelay: 600, persona: 'buddha',   shivaCD: 18000, baseQuota: 2 },
+    hot:      { label: 'ホット',   gravity: 500, lockDelay: 500, persona: 'maharaja', shivaCD: 25000, baseQuota: 3 },
+    vindaloo: { label: '激辛',     gravity: 220, lockDelay: 350, persona: 'shiva',    shivaCD: 32000, baseQuota: 4 },
+};
+let selectedDiff = 'hot';
+
+/* ---------- AI実況キャラ (DX踏襲・将来Step6でLLM化) ---------- */
+const AI_QUOTES = {
+    maharaja: { icon:"👳🏾‍♂️", start:["ナマステ！スパイスの準備はいいか？","さあ、辛さを極めよ！"],
+        good:["素晴らしい！","エレガントだ！","辛さが効いてきたぞ！"], ren:["連鎖が止まらん！","熱い！"],
+        gameover:["また挑戦するがよい。","良い夢は見れたかな？"] },
+    buddha: { icon:"🧘", start:["安らぎのパズルへようこそ。","焦らず、ありのままに。"],
+        good:["見事な調和です。","善き行いです。"], ren:["心が澄んでいます。","流れに乗っていますね。"],
+        gameover:["終わりは新たな始まり。","諸行無常です。"] },
+    shiva: { icon:"🔱", start:["破壊の舞を踊る覚悟はあるか？","世界を壊し、再生せよ！"],
+        good:["破壊的だ！","カオスこそ至高！"], ren:["連鎖の渦に飲まれろ！","止まるな！"],
+        gameover:["塵に還れ！","再生をやり直せ！"] },
+};
+let currentPersona = 'maharaja';
+
+/* =========================================================================
+   サウンド (DXのWeb Audio合成エンジンを継承)
+   ========================================================================= */
+const SoundManager = {
+    ctx: null, isMuted: false, gainNode: null, bgmTimer: null,
+    init() {
+        if (this.ctx) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+        this.gainNode = this.ctx.createGain();
+        this.gainNode.gain.value = 0.15;
+        this.gainNode.connect(this.ctx.destination);
+    },
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.gainNode) this.gainNode.gain.value = this.isMuted ? 0 : 0.15;
+        const icon = document.querySelector('#mute-btn i');
+        if (icon) icon.className = this.isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+    },
+    playTone(freq, type='sine', duration=0.1, vol=1.0) {
+        if (this.isMuted || !this.ctx) return;
+        const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+        osc.type = type; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(this.gainNode);
+        osc.start(); osc.stop(this.ctx.currentTime + duration);
+    },
+    playSitar(note, length=0.3) {
+        if (this.isMuted || !this.ctx) return;
+        const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), filter = this.ctx.createBiquadFilter();
+        osc.type='sawtooth'; osc.frequency.value=note;
+        filter.type='lowpass'; filter.Q.value=5;
+        filter.frequency.setValueAtTime(note*2, this.ctx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(note, this.ctx.currentTime+length);
+        gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+length);
+        osc.connect(filter); filter.connect(gain); gain.connect(this.gainNode);
+        osc.start(); osc.stop(this.ctx.currentTime+length);
+        const drone = this.ctx.createOscillator(), dg = this.ctx.createGain();
+        drone.type='triangle'; drone.frequency.value=note*1.5;
+        dg.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        dg.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+length);
+        drone.connect(dg); dg.connect(this.gainNode);
+        drone.start(); drone.stop(this.ctx.currentTime+length);
+    },
+    playTabla(type) {
+        if (this.isMuted || !this.ctx) return;
+        if (type==='high') { this.playTone(400,'sine',0.1,0.8); return; }
+        const osc=this.ctx.createOscillator(), gain=this.ctx.createGain();
+        osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime+0.2);
+        gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+0.2);
+        osc.connect(gain); gain.connect(this.gainNode);
+        osc.start(); osc.stop(this.ctx.currentTime+0.2);
+    },
+    playSE(type) {
+        if (!this.ctx) return;
+        switch(type) {
+            case 'move': this.playTabla('high'); break;
+            case 'rotate': this.playSitar(523.25,0.1); break;
+            case 'hold': this.playTone(330,'triangle',0.12,0.5); break;
+            case 'drop': {
+                const osc=this.ctx.createOscillator(), g=this.ctx.createGain();
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime+0.2);
+                g.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime+0.2);
+                osc.connect(g); g.connect(this.gainNode);
+                osc.start(); osc.stop(this.ctx.currentTime+0.2); break;
+            }
+            case 'clear':
+                [261.63,329.63,392.00,523.25,659.25].forEach((f,i)=>setTimeout(()=>this.playSitar(f,0.8), i*50));
+                break;
+            case 'tetris':
+                [261.63,329.63,392.00,523.25,659.25,783.99].forEach((f,i)=>setTimeout(()=>this.playSitar(f,1.0), i*40));
+                break;
+        }
+    },
+    startBGM() {
+        if (this.bgmTimer) clearInterval(this.bgmTimer);
+        if (!this.ctx) return;
+        const scale = [261.63,277.18,329.63,349.23,392.00,415.30,493.88];
+        let step = 0;
+        this.bgmTimer = setInterval(()=>{
+            if (Game.state !== 'playing') return;
+            if (step%4===0) this.playTabla('low');
+            else if (step%2===0) this.playTabla('high');
+            if (Math.random()>0.6) {
+                const note = scale[Math.floor(Math.random()*scale.length)];
+                this.playSitar(note*(Math.random()>0.8?2:1), 0.4);
+            }
+            step++;
+        }, 250);
+    },
+    stopBGM() { if (this.bgmTimer) clearInterval(this.bgmTimer); },
+};
+
+/* =========================================================================
+   ピース生成 (7-bag)
+   ========================================================================= */
+function makePiece(type) {
+    const d = PIECE_DATA[type];
+    return {
+        type,
+        matrix: d.cells.map(r => r.slice()),
+        rot: 0,
+        x: Math.floor(COLS/2) - Math.ceil(d.cells[0].length/2),
+        y: (type === 'I') ? -1 : 0,
+        spice: SPICES[type].id,
+    };
+}
+
+class BagRandomizer {
+    constructor() { this.queue = []; this._refill(); }
+    _refill() {
+        const bag = PIECE_TYPES.slice();
+        for (let i = bag.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [bag[i],bag[j]]=[bag[j],bag[i]]; }
+        this.queue.push(...bag);
+    }
+    next() { if (this.queue.length <= 7) this._refill(); return this.queue.shift(); }
+    peek(n) { while (this.queue.length < n) this._refill(); return this.queue.slice(0, n); }
+}
+
+/* =========================================================================
+   行列ユーティリティ
+   ========================================================================= */
+function rotateMatrix(m, dir) {
+    const N = m.length;
+    const res = Array.from({length:N}, () => new Array(N).fill(0));
+    for (let y=0; y<N; y++) for (let x=0; x<N; x++) {
+        if (dir > 0) res[x][N-1-y] = m[y][x];   // CW
+        else         res[N-1-y][x] = m[y][x];   // CCW
+    }
+    return res;
+}
+
+/* =========================================================================
+   ゲーム本体
+   ========================================================================= */
+const Game = {
+    arena: [],
+    bag: null,
+    piece: null,
+    holdType: null,
+    holdUsed: false,
+    score: 0,
+    level: 1,
+    ren: 0,                 // 連鎖カウンタ
+    lines: 0,
+    pot: [],                // 鍋に溜まったスパイスid
+    pendingGarbage: 0,      // 役で発生したお邪魔段 (Step4 VERSUS用フック)
+    rolesCompleted: 0,      // 完成した役の総数
+    // --- ローグライト ---
+    rupees: 0,              // 買い物通貨 (スコアとは別)
+    relics: null,           // 所持レリックの Set
+    rolesThisStage: 0,      // 現ステージで完成した役数
+    quota: 2,               // 現ステージのノルマ
+    phoenixUsed: false,     // 不死鳥の灰 消費済みか
+    // --- シヴァ神 ---
+    shivaCDMax: 25000,
+    shivaCDLeft: 0,         // 残りクールダウン(ms)
+    state: 'menu',          // menu | playing | shop | over
+    dropCounter: 0,
+    dropInterval: 500,
+    lockDelay: 500,
+    lockTimer: 0,
+    lockResets: 0,
+    onGround: false,
+    lastTime: 0,
+    raf: null,
+
+    reset() {
+        this.arena = Array.from({length:ROWS}, () => new Array(COLS).fill(0));
+        this.bag = new BagRandomizer();
+        this.holdType = null;
+        this.holdUsed = false;
+        this.score = 0; this.level = 1; this.ren = 0; this.lines = 0;
+        this.pot = []; this.pendingGarbage = 0; this.rolesCompleted = 0;
+        this.rupees = 0; this.relics = new Set(); this.rolesThisStage = 0;
+        this.phoenixUsed = false;
+        const cfg = DIFFICULTY[selectedDiff];
+        this.dropInterval = cfg.gravity;
+        this.lockDelay = cfg.lockDelay;
+        this.quota = cfg.baseQuota;
+        this.shivaCDMax = cfg.shivaCD;
+        this.shivaCDLeft = 0;
+        this.dropCounter = 0; this.lockTimer = 0; this.lockResets = 0; this.onGround = false;
+        currentPersona = cfg.persona;
+        document.getElementById('ai-icon').innerText = AI_QUOTES[currentPersona].icon;
+        this.spawn();
+        this.updateUI();
+        this.drawHold();
+        this.drawNext();
+        this.drawPot();
+        this.drawRelics();
+        this.updateShivaUI();
+    },
+
+    spawn() {
+        const type = this.bag.next();
+        this.piece = makePiece(type);
+        this.holdUsed = false;
+        if (this.collides(this.piece.matrix, this.piece.x, this.piece.y)) {
+            this.gameOver();
+        }
+    },
+
+    collides(matrix, px, py) {
+        for (let y=0; y<matrix.length; y++) for (let x=0; x<matrix[y].length; x++) {
+            if (!matrix[y][x]) continue;
+            const ax = px + x, ay = py + y;
+            if (ax < 0 || ax >= COLS || ay >= ROWS) return true;
+            if (ay >= 0 && this.arena[ay][ax]) return true;
+        }
+        return false;
+    },
+
+    move(dir) {
+        if (!this.collides(this.piece.matrix, this.piece.x + dir, this.piece.y)) {
+            this.piece.x += dir;
+            SoundManager.playSE('move');
+            this.touchGroundReset();
+        }
+    },
+
+    rotate(dir) {
+        const p = this.piece;
+        if (p.type === 'O') return;
+        const from = p.rot;
+        const to = (from + (dir>0?1:3)) % 4;
+        const rotated = rotateMatrix(p.matrix, dir);
+        const table = (p.type === 'I') ? KICKS_I : KICKS_JLSTZ;
+        const kicks = table[`${from}>${to}`] || [[0,0]];
+        for (const [kx, ky] of kicks) {
+            // SRS: y軸はテーブルが上方向+。配列は下方向+なので符号反転。
+            const nx = p.x + kx, ny = p.y - ky;
+            if (!this.collides(rotated, nx, ny)) {
+                p.matrix = rotated; p.rot = to; p.x = nx; p.y = ny;
+                SoundManager.playSE('rotate');
+                this.touchGroundReset();
+                return;
+            }
+        }
+    },
+
+    softDrop() {
+        if (!this.collides(this.piece.matrix, this.piece.x, this.piece.y+1)) {
+            this.piece.y++;
+            this.score += this.relics.has('goldSpoon') ? 2 : 1;  // 黄金スプーン
+            this.dropCounter = 0; this.updateUI();
+        }
+    },
+
+    hardDrop() {
+        let dist = 0;
+        while (!this.collides(this.piece.matrix, this.piece.x, this.piece.y+1)) { this.piece.y++; dist++; }
+        this.score += dist * 2;
+        SoundManager.playSE('drop');
+        this.lockPiece();
+    },
+
+    hold() {
+        if (this.holdUsed && !this.relics.has('secondHand')) return;  // 第二の手で制限解除
+        SoundManager.playSE('hold');
+        const cur = this.piece.type;
+        if (this.holdType === null) { this.holdType = cur; this.spawn(); }
+        else { const swap = this.holdType; this.holdType = cur; this.piece = makePiece(swap); }
+        this.holdUsed = true;
+        this.drawHold();
+    },
+
+    touchGroundReset() {
+        // ロックディレイのリセット (置き直しの猶予)。リセット回数に上限。
+        if (this.onGround && this.lockResets < 15) { this.lockTimer = 0; this.lockResets++; }
+    },
+
+    lockPiece() {
+        const p = this.piece;
+        p.matrix.forEach((row, y) => row.forEach((v, x) => {
+            if (v && p.y+y >= 0) this.arena[p.y+y][p.x+x] = v;
+        }));
+        this.onGround = false; this.lockTimer = 0; this.lockResets = 0;
+        this.clearLines();
+        this.spawn();
+        this.drawNext();
+    },
+
+    clearLines() {
+        let cleared = 0;
+        const clearedSpices = [];
+        for (let y = ROWS-1; y >= 0; y--) {
+            if (this.arena[y].every(v => v !== 0)) {
+                // 役システム用: 消えた行のスパイスを鍋へ
+                this.arena[y].forEach(v => { const t = IDX_TO_TYPE[v]; if (t) clearedSpices.push(SPICES[t].id); });
+                this.arena.splice(y, 1);
+                this.arena.unshift(new Array(COLS).fill(0));
+                cleared++; y++;
+            }
+        }
+        if (cleared > 0) {
+            // REN(連鎖)
+            this.ren++;
+            // レリック「激辛壺」: チリを含む消去で連鎖+2
+            if (this.relics.has('chiliPot') && clearedSpices.includes('chili')) {
+                this.ren += 2;
+                showFloatingText('🫕 激辛ブースト!', 'text-red-400');
+            }
+            const lineScore = [0, 100, 300, 500, 800][cleared];
+            const renBonus = Math.max(0, this.ren - 1) * 50;
+            let gain = Math.floor((lineScore + renBonus) * (1 + (this.level-1)*0.1));
+            this.lines += cleared;
+            this.rupees += cleared;   // ライン消去でルピー獲得
+
+            // 鍋にスパイスを蓄積
+            this.pot.push(...clearedSpices);
+
+            // 役判定 → 成立すれば倍率/ボーナスを適用し鍋をリセット
+            const role = this.evaluatePot();
+            if (role) {
+                gain = Math.floor(gain * role.mult) + role.bonus;
+                this.fireRole(role);
+            }
+            this.score += gain;
+            this.drawPot();
+
+            SoundManager.playSE(cleared >= 4 ? 'tetris' : 'clear');
+            if (!role) {
+                if (cleared >= 4) showFloatingText('VINDALOO!!', 'text-red-500');
+                else showFloatingText('+' + gain, 'text-yellow-400');
+            }
+            if (this.ren >= 2) { showFloatingText(this.ren + ' REN!', 'text-green-400'); aiSay('ren'); shakeScreen(); }
+            this.updateUI();
+        } else {
+            this.ren = 0;   // 連鎖途切れ
+            this.updateUI();
+        }
+    },
+
+    // 鍋の中身を役テーブルに照合。最優先で成立した役を返す (なければnull)。
+    evaluatePot() {
+        const counts = {};
+        this.pot.forEach(id => counts[id] = (counts[id]||0)+1);
+        const distinct = Object.keys(counts).length;
+        for (const role of ROLES) {
+            if (role.detect(counts, distinct, this.pot.length)) return role;
+        }
+        return null;
+    },
+
+    // 役完成: 演出・お邪魔蓄積・ルピー獲得・鍋リセット・ノルマ判定
+    fireRole(role) {
+        this.rolesCompleted++;
+        this.rolesThisStage++;
+        this.pendingGarbage += role.garbage;            // Step4 VERSUSで相手へ送る
+        this.rupees += 4 + Math.round(role.bonus / 200); // 役の格に応じてルピー獲得
+        this.pot = [];                                   // 鍋を空にして次の役へ
+        showFloatingText(`${role.icon} ${role.name}！`, role.color);
+        showCurryBurst();
+        shakeScreen();
+        aiSay('good');
+        if (this.rolesThisStage >= this.quota) this.enterShop();
+    },
+
+    /* ----- ローグライト: 商人フェーズ ----- */
+    enterShop() {
+        this.state = 'shop';
+        cancelAnimationFrame(this.raf);
+        SoundManager.playSE('clear');
+        const hasScale = this.relics.has('merchantScale');
+        const offerCount = hasScale ? 4 : 3;
+        // 未所持レリックからランダムに提示
+        const pool = RELICS.filter(r => !this.relics.has(r.key));
+        const offers = [];
+        const shuffled = pool.slice().sort(() => Math.random()-0.5);
+        for (let i=0; i<offerCount && i<shuffled.length; i++) offers.push(shuffled[i]);
+        this.shopDiscount = hasScale ? 0.8 : 1;
+        this.shopOffers = offers;                 // 同じ品揃えを保持 (再描画時に再抽選しない)
+        renderShop(offers, this.shopDiscount);
+        document.getElementById('shop-rupees').innerText = this.rupees;
+        document.getElementById('shop-screen').classList.remove('hidden');
+        document.getElementById('shop-screen').classList.add('flex');
+    },
+
+    buyRelic(key, price) {
+        if (this.relics.has(key) || this.rupees < price) return;
+        this.rupees -= price;
+        this.relics.add(key);
+        if (key === 'shivaTrident') this.shivaCDMax = Math.round(this.shivaCDMax * 0.5);
+        document.getElementById('shop-rupees').innerText = this.rupees;
+        SoundManager.playSE('rotate');
+        // 同じ品揃えのまま再描画 (購入済み・残額で再判定)
+        renderShop(this.shopOffers, this.shopDiscount);
+        this.drawRelics();
+    },
+
+    closeShop() {
+        document.getElementById('shop-screen').classList.add('hidden');
+        document.getElementById('shop-screen').classList.remove('flex');
+        // 次ステージ: 加速・ノルマ増加
+        this.level++;
+        this.rolesThisStage = 0;
+        this.quota = DIFFICULTY[selectedDiff].baseQuota + this.level - 1;
+        this.dropInterval = Math.max(60, this.dropInterval * 0.88);
+        showFloatingText('STAGE ' + this.level, 'text-amber-400');
+        this.state = 'playing';
+        this.updateUI();
+        this.lastTime = performance.now();
+        this.raf = requestAnimationFrame(t => this.tick(t));
+    },
+
+    /* ----- シヴァ神の力 (クールダウン制) ----- */
+    activateShiva() {
+        if (this.state !== 'playing' || this.shivaCDLeft > 0) return;
+        this.shivaCDLeft = this.shivaCDMax;
+        SoundManager.playSE('tetris');
+        shakeScreen();
+        showCurryBurst();
+        // 下2段を浄化し、その分のスパイスを鍋へ
+        const drained = [];
+        for (let k=0; k<2; k++) {
+            const row = this.arena[ROWS-1-k];
+            row.forEach(v => { const t = IDX_TO_TYPE[v]; if (t) drained.push(SPICES[t].id); });
+        }
+        this.arena.splice(ROWS-2, 2);
+        this.arena.unshift(new Array(COLS).fill(0), new Array(COLS).fill(0));
+        this.pot.push(...drained);
+        this.drawPot();
+        showFloatingText('🔱 シヴァ神の浄化！', 'text-purple-400');
+        const role = this.evaluatePot();
+        if (role) { this.score += role.bonus; this.fireRole(role); }
+        this.updateUI();
+    },
+
+    tick(time) {
+        if (this.state !== 'playing') return;
+        const delta = time - this.lastTime;
+        this.lastTime = time;
+        this.dropCounter += delta;
+
+        // シヴァ神クールダウン
+        if (this.shivaCDLeft > 0) { this.shivaCDLeft = Math.max(0, this.shivaCDLeft - delta); this.updateShivaUI(); }
+
+        const grounded = this.collides(this.piece.matrix, this.piece.x, this.piece.y+1);
+        if (grounded) {
+            this.onGround = true;
+            this.lockTimer += delta;
+            if (this.lockTimer >= this.lockDelay) { SoundManager.playSE('drop'); this.lockPiece(); }
+        } else {
+            this.onGround = false; this.lockTimer = 0;
+            if (this.dropCounter > this.dropInterval) { this.piece.y++; this.dropCounter = 0; }
+        }
+
+        this.draw();
+        this.raf = requestAnimationFrame(t => this.tick(t));
+    },
+
+    /* ----- 描画 ----- */
+    draw() {
+        ctx.fillStyle = '#1a0b02';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // グリッド
+        ctx.strokeStyle = 'rgba(217,119,6,0.08)'; ctx.lineWidth = 1;
+        for (let x=0; x<=COLS; x++){ ctx.beginPath(); ctx.moveTo(x*BLOCK,0); ctx.lineTo(x*BLOCK,ROWS*BLOCK); ctx.stroke(); }
+        for (let y=0; y<=ROWS; y++){ ctx.beginPath(); ctx.moveTo(0,y*BLOCK); ctx.lineTo(COLS*BLOCK,y*BLOCK); ctx.stroke(); }
+        // 固定ブロック
+        for (let y=0; y<ROWS; y++) for (let x=0; x<COLS; x++) if (this.arena[y][x]) drawCell(ctx, x, y, this.arena[y][x]);
+        // ゴースト
+        const gy = this.ghostY();
+        this.piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{ if (v && gy+y>=0) drawCell(ctx, this.piece.x+x, gy+y, v, true); }));
+        // 現在ピース
+        this.piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{ if (v && this.piece.y+y>=0) drawCell(ctx, this.piece.x+x, this.piece.y+y, v); }));
+    },
+
+    ghostY() {
+        let gy = this.piece.y;
+        while (!this.collides(this.piece.matrix, this.piece.x, gy+1)) gy++;
+        return gy;
+    },
+
+    drawNext() {
+        nctx.fillStyle = '#1a0b02';
+        nctx.fillRect(0,0,nextCanvas.width,nextCanvas.height);
+        const types = this.bag.peek(3);
+        types.forEach((t, i) => drawMini(nctx, PIECE_DATA[t].cells, 40, 30 + i*60, 14));
+    },
+
+    drawHold() {
+        hctx.fillStyle = '#1a0b02';
+        hctx.fillRect(0,0,holdCanvas.width,holdCanvas.height);
+        if (this.holdType) drawMini(hctx, PIECE_DATA[this.holdType].cells, 40, 40, 16);
+    },
+
+    drawPot() {
+        // 鍋に溜まったスパイスをチップ表示 (Step2で役ハイライト)
+        const counts = {};
+        this.pot.forEach(id => counts[id] = (counts[id]||0)+1);
+        const html = Object.entries(counts).map(([id,n]) => {
+            const sp = Object.values(SPICES).find(s=>s.id===id);
+            return `<span class="spice-chip" style="background:${sp.color}" title="${sp.name}"></span>${n>1?`<span class="text-[9px]">×${n}</span>`:''}`;
+        }).join('');
+        const el1 = document.getElementById('pc-pot'), el2 = document.getElementById('mobile-pot');
+        if (el1) el1.innerHTML = html || '<span class="text-[10px] text-gray-500">空</span>';
+        if (el2) el2.innerHTML = html;
+        // 次に狙える役ヒント (PC)
+        const hint = document.getElementById('pot-hint');
+        if (hint) {
+            const distinct = Object.keys(counts).length;
+            const chili = counts['chili'] || 0;
+            const maxSame = Math.max(0, ...Object.values(counts));
+            let msg = 'スパイスを溜めて役を完成させよ';
+            if (distinct >= 6) msg = `あと${7-distinct}種で🍽️ターリー!`;
+            else if (chili === 2) msg = 'チリあと1つで🌶️ヴィンダルー!';
+            else if (distinct >= 4) msg = 'あと1種で🍚ビリヤニ!';
+            else if (maxSame === 2) msg = '同種あと1つで🔥スパイシー!';
+            hint.innerText = msg;
+        }
+    },
+
+    updateUI() {
+        document.getElementById('pc-score').innerText = this.score;
+        document.getElementById('mobile-score').innerText = this.score;
+        document.getElementById('pc-level').innerText = this.level;
+        document.getElementById('mobile-level').innerText = this.level;
+        document.getElementById('pc-ren').innerText = this.ren;
+        document.getElementById('mobile-ren').innerText = this.ren;
+        const rp = document.getElementById('pc-rupees'); if (rp) rp.innerText = this.rupees;
+        const qt = document.getElementById('pc-quota-text'); if (qt) qt.innerText = `${this.rolesThisStage}/${this.quota}`;
+        const qb = document.getElementById('pc-quota-bar'); if (qb) qb.style.width = Math.min(100, (this.rolesThisStage/this.quota)*100) + '%';
+    },
+
+    drawRelics() {
+        const el = document.getElementById('pc-relics');
+        if (!el) return;
+        el.innerHTML = [...this.relics].map(k => `<span title="${RELIC_MAP[k].name}: ${RELIC_MAP[k].desc}">${RELIC_MAP[k].icon}</span>`).join('');
+    },
+
+    updateShivaUI() {
+        const sec = Math.ceil(this.shivaCDLeft / 1000);
+        ['pc','mobile'].forEach(p => {
+            const ov = document.getElementById(`shiva-cooldown-${p}`);
+            const btn = document.getElementById(`btn-shiva-${p}`);
+            if (!ov || !btn) return;
+            if (this.shivaCDLeft > 0) { ov.classList.remove('hidden'); ov.innerText = sec; btn.disabled = true; }
+            else { ov.classList.add('hidden'); btn.disabled = false; }
+        });
+    },
+
+    gameOver() {
+        // レリック「不死鳥の灰」: 1回だけ復活
+        if (this.relics.has('phoenixAsh') && !this.phoenixUsed) {
+            this.phoenixUsed = true;
+            // 上半分を浄化して立て直す
+            for (let y=0; y<12; y++) this.arena[y] = new Array(COLS).fill(0);
+            this.spawn();
+            showFloatingText('🔥 不死鳥の灰！復活！', 'text-orange-400');
+            shakeScreen();
+            return;
+        }
+        this.state = 'over';
+        SoundManager.stopBGM();
+        cancelAnimationFrame(this.raf);
+        aiSay('gameover');
+        document.getElementById('final-score').innerText = this.score;
+        const t = document.getElementById('result-title');
+        t.innerText = 'GAME OVER'; t.className = 'font-masala text-4xl text-red-500';
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        saveScore();
+    },
+
+    start() {
+        this.state = 'playing';
+        SoundManager.init();
+        this.reset();
+        SoundManager.startBGM();
+        aiSay('start');
+        this.lastTime = performance.now();
+        this.raf = requestAnimationFrame(t => this.tick(t));
+    },
+};
+
+/* ---------- 描画ヘルパ ---------- */
+function drawCell(c, x, y, idx, ghost=false) {
+    const px = x*BLOCK, py = y*BLOCK;
+    if (ghost) {
+        c.fillStyle = 'rgba(255,255,255,0.12)';
+        c.fillRect(px+1, py+1, BLOCK-2, BLOCK-2);
+        c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth=1;
+        c.strokeRect(px+1, py+1, BLOCK-2, BLOCK-2);
+        return;
+    }
+    const color = COLORS[idx];
+    c.fillStyle = color;
+    c.fillRect(px, py, BLOCK, BLOCK);
+    // ハイライト
+    c.fillStyle = 'rgba(255,255,255,0.25)';
+    c.fillRect(px, py, BLOCK, BLOCK*0.25);
+    c.fillStyle = 'rgba(0,0,0,0.25)';
+    c.fillRect(px, py+BLOCK*0.75, BLOCK, BLOCK*0.25);
+    c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth=1;
+    c.strokeRect(px+0.5, py+0.5, BLOCK-1, BLOCK-1);
+}
+
+function drawMini(c, cells, cx, cy, size) {
+    const w = cells[0].length, h = cells.length;
+    const ox = cx - (w*size)/2, oy = cy - (h*size)/2;
+    cells.forEach((row,y)=>row.forEach((v,x)=>{
+        if (!v) return;
+        c.fillStyle = COLORS[v];
+        c.fillRect(ox+x*size, oy+y*size, size-1, size-1);
+        c.fillStyle = 'rgba(255,255,255,0.2)';
+        c.fillRect(ox+x*size, oy+y*size, size-1, (size-1)*0.3);
+    }));
+}
+
+/* ---------- UI演出 ---------- */
+function showFloatingText(text, colorClass) {
+    const el = document.createElement('div');
+    el.className = `flash-text ${colorClass}`;
+    el.innerText = text;
+    document.getElementById('game-container').appendChild(el);
+    setTimeout(()=>el.remove(), 1300);
+}
+function shakeScreen() {
+    const gc = document.getElementById('game-container');
+    gc.classList.remove('shake'); void gc.offsetWidth; gc.classList.add('shake');
+}
+// 役完成の閃光バースト (カレーの飛沫イメージ)
+function showCurryBurst() {
+    const gc = document.getElementById('game-container');
+    const colors = ['#e02424','#f5c518','#f59e0b','#16a34a','#9333ea','#84cc16'];
+    for (let i=0; i<18; i++) {
+        const p = document.createElement('div');
+        const size = 6 + Math.random()*10;
+        p.style.cssText = `position:absolute;left:50%;top:55%;width:${size}px;height:${size}px;border-radius:50%;
+            background:${colors[i%colors.length]};pointer-events:none;z-index:25;box-shadow:0 0 8px ${colors[i%colors.length]};`;
+        gc.appendChild(p);
+        const ang = (Math.PI*2*i)/18 + Math.random()*0.5;
+        const dist = 60 + Math.random()*120;
+        const dx = Math.cos(ang)*dist, dy = Math.sin(ang)*dist;
+        p.animate([
+            { transform:'translate(-50%,-50%) scale(1)', opacity:1 },
+            { transform:`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.2)`, opacity:0 }
+        ], { duration: 700+Math.random()*300, easing:'cubic-bezier(.2,.6,.3,1)' });
+        setTimeout(()=>p.remove(), 1000);
+    }
+}
+
+/* ---------- 商人フェーズ描画 ---------- */
+function renderShop(offers, discount) {
+    const box = document.getElementById('shop-offers');
+    box.innerHTML = '';
+    offers.forEach(r => {
+        const price = Math.round(r.price * discount);
+        const owned = Game.relics.has(r.key);
+        const afford = Game.rupees >= price && !owned;
+        const div = document.createElement('div');
+        div.className = `panel-box p-2 flex items-center gap-2 ${afford?'cursor-pointer hover:brightness-125':'opacity-50'}`;
+        div.innerHTML = `
+            <div class="text-2xl shrink-0">${r.icon}</div>
+            <div class="flex-1 min-w-0">
+                <div class="text-amber-300 font-bold text-xs">${r.name}</div>
+                <div class="text-gray-300 text-[10px] leading-tight">${r.desc}</div>
+            </div>
+            <div class="text-yellow-300 font-bold text-xs shrink-0">${owned?'所持':price+'💰'}</div>`;
+        if (afford) div.addEventListener('click', () => Game.buyRelic(r.key, price));
+        box.appendChild(div);
+    });
+}
+
+/* ---------- AI実況 (Step6でLLM化) ---------- */
+function aiSay(category) {
+    const q = AI_QUOTES[currentPersona][category];
+    if (!q) return;
+    const text = q[Math.floor(Math.random()*q.length)];
+    const el = document.getElementById('maharaja-text');
+    el.style.opacity = 0;
+    setTimeout(()=>{ el.innerText = text; el.style.opacity = 1; }, 150);
+}
+
+/* ---------- ランキング ---------- */
+function saveScore() {
+    const name = document.getElementById('player-name').value || '匿名マサラ';
+    let r = JSON.parse(localStorage.getItem('vindalooRankings')) || [];
+    r.push({ name, score: Game.score, diff: DIFFICULTY[selectedDiff].label });
+    r.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('vindalooRankings', JSON.stringify(r.slice(0,5)));
+    renderRanking();
+}
+function renderRanking() {
+    const list = document.getElementById('ranking-list');
+    const r = JSON.parse(localStorage.getItem('vindalooRankings')) || [];
+    if (!r.length) { list.innerHTML = '<li class="text-center text-gray-500">No Data</li>'; return; }
+    list.innerHTML = r.map((x,i)=>`<li class="flex justify-between border-b border-amber-800/30 pb-0.5"><span>${i+1}. ${x.name}</span><span class="text-amber-400">${x.score}</span></li>`).join('');
+}
+
+window.shareSNS = function(platform) {
+    const text = `マサラテトリス VINDALOO Score:${Game.score} 🌶️🍛 #MasalaTetris`;
+    const url = window.location.href;
+    if (platform==='x') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,'_blank');
+    else if (platform==='line') window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,'_blank');
+};
+
+/* =========================================================================
+   キャンバス初期化
+   ========================================================================= */
+const canvas = document.getElementById('tetris');
+const ctx = canvas.getContext('2d');
+canvas.width = COLS*BLOCK; canvas.height = ROWS*BLOCK;
+const nextCanvas = document.getElementById('next-piece');
+const nctx = nextCanvas.getContext('2d');
+const holdCanvas = document.getElementById('hold-piece');
+const hctx = holdCanvas.getContext('2d');
+
+/* =========================================================================
+   入力
+   ========================================================================= */
+document.addEventListener('keydown', e => {
+    if (Game.state !== 'playing') return;
+    switch(e.code) {
+        case 'ArrowLeft':  Game.move(-1); break;
+        case 'ArrowRight': Game.move(1); break;
+        case 'ArrowDown':  Game.softDrop(); break;
+        case 'ArrowUp': case 'KeyX': Game.rotate(1); break;
+        case 'KeyZ': case 'ControlLeft': Game.rotate(-1); break;
+        case 'Space': e.preventDefault(); Game.hardDrop(); break;
+        case 'KeyC': case 'ShiftLeft': Game.hold(); break;
+    }
+});
+
+function bindTouch(id, action) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const handle = e => { if (e.cancelable) e.preventDefault(); if (Game.state==='playing') action(); };
+    btn.addEventListener('touchstart', handle, {passive:false});
+    btn.addEventListener('mousedown', handle);
+}
+bindTouch('btn-left', ()=>Game.move(-1));
+bindTouch('btn-right', ()=>Game.move(1));
+bindTouch('btn-down', ()=>Game.softDrop());
+bindTouch('btn-rotate', ()=>Game.rotate(1));
+bindTouch('btn-drop', ()=>Game.hardDrop());
+bindTouch('btn-hold', ()=>Game.hold());
+
+/* シヴァ神ボタン */
+document.getElementById('btn-shiva-pc').addEventListener('click', ()=>Game.activateShiva());
+document.getElementById('btn-shiva-mobile').addEventListener('click', ()=>Game.activateShiva());
+
+/* 商人フェーズ: 次のステージへ */
+document.getElementById('shop-skip').addEventListener('click', ()=>Game.closeShop());
+
+/* 難易度選択 */
+document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedDiff = btn.dataset.diff;
+    });
+});
+
+document.getElementById('start-btn').addEventListener('click', ()=>{
+    document.getElementById('start-screen').classList.add('hidden');
+    Game.start();
+});
+document.getElementById('restart-btn').addEventListener('click', ()=>{
+    document.getElementById('game-over-screen').classList.add('hidden');
+    Game.start();
+});
+document.getElementById('mute-btn').addEventListener('click', ()=>SoundManager.toggleMute());
+
+/* 初期描画 */
+renderRanking();
+ctx.fillStyle = '#1a0b02';
+ctx.fillRect(0,0,canvas.width,canvas.height);
+</script>
+</body>
+</html>
