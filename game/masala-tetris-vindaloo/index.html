@@ -19,6 +19,35 @@
     <meta name="twitter:title" content="マサラテトリス VINDALOO | ST GAMES">
     <meta name="twitter:description" content="スパイスの役を組んでカレーを完成させる激辛テトリス">
     <meta name="twitter:image" content="https://tk.st/images/ogp/masala-tetris-vindaloo-ogp.png">
+    <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Shinya Takeda - Terminal Portfolio", "item": "https://tk.st/" },
+          { "@type": "ListItem", "position": 2, "name": "ST GAMES", "item": "https://tk.st/game/" },
+          { "@type": "ListItem", "position": 3, "name": "マサラテトリス VINDALOO", "item": "https://tk.st/game/masala-tetris-vindaloo/" }
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://tk.st/game/masala-tetris-vindaloo/#game",
+        "name": "マサラテトリス VINDALOO",
+        "description": "スパイスの役を組んでカレーを完成させる、ローグライト×AI対戦の激辛テトリス。",
+        "url": "https://tk.st/game/masala-tetris-vindaloo/",
+        "image": "https://tk.st/images/ogp/masala-tetris-vindaloo-ogp.png",
+        "inLanguage": "ja",
+        "playMode": "SinglePlayer",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web Browser",
+        "offers": { "@type": "Offer", "price": 0, "priceCurrency": "JPY" },
+        "publisher": { "@type": "Person", "@id": "https://tk.st/#shitake" }
+      }
+    ]
+  }
+  </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Sans+JP:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
@@ -169,19 +198,39 @@
         }
         .shake { animation: shakeAnim 0.25s; }
 
+        /* 役完成グロー */
+        @keyframes roleGlowAnim {
+            0% { box-shadow: 0 0 20px rgba(217,119,6,0.5); }
+            30% { box-shadow: 0 0 45px 8px rgba(252,211,77,0.9); border-color: #fcd34d; }
+            100% { box-shadow: 0 0 20px rgba(217,119,6,0.5); }
+        }
+        .role-glow { animation: roleGlowAnim 0.7s; }
+
         @media (min-width: 768px) {
             .main-content-wrapper { flex-direction: row; align-items: center; gap: 1.5rem; padding: 1rem; }
             .game-container { height: 80vh; max-height: 800px; width: auto; aspect-ratio: 10/20; }
             .mobile-only { display: none !important; }
             .desktop-only { display: flex !important; }
             .desktop-sidebar { height: 80vh; max-height: 800px; }
+            /* VERSUS: サイドバーを隠して2盤面を並べる */
+            body.versus .desktop-sidebar { display: none !important; }
+            body.versus .game-container, body.versus #ai-container { height: 78vh; max-height: 760px; }
         }
         @media (max-width: 767px) {
             .main-content-wrapper { flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px; }
             .game-container { width: auto; height: 100%; max-height: calc(100dvh - 320px); aspect-ratio: 10/20; }
             .desktop-only { display: none !important; }
             .mobile-only { display: flex !important; }
+            /* VERSUS: AI盤面は右上のミニ表示 */
+            body.versus #ai-container {
+                position: fixed; top: 56px; right: 6px; z-index: 25;
+                height: 30dvh; max-height: 260px; width: auto; aspect-ratio: 10/20;
+                border-width: 2px; box-shadow: 0 0 12px rgba(147,51,234,0.6);
+            }
         }
+        /* AI盤面の枠色 */
+        #ai-container { border-color: #9333ea; box-shadow: 0 0 20px rgba(147,51,234,0.5); }
+        #ai-container.hidden { display: none !important; }
     </style>
 </head>
 <body class="pattern-bg">
@@ -286,11 +335,22 @@
         <!-- ゲーム画面 -->
         <div class="game-container" id="game-container">
             <canvas id="tetris"></canvas>
+            <!-- お邪魔受信インジケータ (VERSUS時) -->
+            <div id="player-incoming" class="absolute top-1 right-1 z-10 hidden text-[10px] text-red-400 bg-black/70 px-1.5 py-0.5 rounded">⚠ <span id="player-incoming-n">0</span></div>
 
             <!-- START SCREEN -->
             <div id="start-screen" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20 backdrop-blur-sm px-4">
                 <h1 id="main-title" class="font-masala text-3xl md:text-4xl text-amber-400 mb-1 text-center drop-shadow-lg leading-tight">Masala Tetris<br><span class="text-red-500">VINDALOO</span></h1>
                 <p class="text-amber-100 text-[10px] mb-3 text-center">Spice Combo / Roguelite / AI Versus</p>
+
+                <!-- モード選択 -->
+                <div class="w-full max-w-[220px] mb-3">
+                    <h3 class="text-center text-amber-400 font-bold text-xs mb-1">モード</h3>
+                    <div class="grid grid-cols-2 gap-1 text-center text-[11px]">
+                        <button class="mode-btn diff-btn rounded py-2 selected" data-mode="solo">🍛 CURRY∞<br><span class="text-[8px] text-gray-300">ローグライト</span></button>
+                        <button class="mode-btn diff-btn rounded py-2" data-mode="versus">⚔️ VERSUS<br><span class="text-[8px] text-gray-300">AI対戦</span></button>
+                    </div>
+                </div>
 
                 <!-- 難易度選択 -->
                 <div class="w-full max-w-[220px] mb-3">
@@ -319,7 +379,10 @@
                     <button onclick="shareSNS('x')" class="bg-black border border-white text-white px-3 py-2 rounded text-xs hover:bg-gray-800 flex items-center gap-1"><i class="fab fa-x-twitter"></i> Post</button>
                     <button onclick="shareSNS('line')" class="bg-[#06C755] text-white px-3 py-2 rounded text-xs hover:opacity-90 flex items-center gap-1"><i class="fab fa-line"></i> LINE</button>
                 </div>
-                <button id="restart-btn" class="btn-masala px-8 py-3 rounded-full text-xl font-bold">RETRY</button>
+                <div class="flex gap-3 items-center">
+                    <button id="restart-btn" class="btn-masala px-8 py-3 rounded-full text-xl font-bold">RETRY</button>
+                    <button id="menu-btn" class="px-5 py-3 rounded-full text-sm font-bold border-2 border-amber-700 text-amber-300 hover:bg-amber-900/40">MENU</button>
+                </div>
             </div>
 
             <!-- 商人フェーズ (ローグライト) -->
@@ -341,6 +404,20 @@
                     <p id="modal-desc" class="text-white text-lg">Spice up!</p>
                     <div class="text-6xl mt-2 animate-bounce">🔥</div>
                 </div>
+            </div>
+        </div>
+
+        <!-- AI対戦盤面 (VERSUS時のみ表示) -->
+        <div id="ai-container" class="game-container hidden">
+            <canvas id="ai-tetris"></canvas>
+            <!-- AIラベル -->
+            <div class="absolute top-0 left-0 right-0 bg-black/70 px-2 py-1 flex justify-between items-center z-10">
+                <span class="text-[10px] text-purple-300"><span id="ai-name">AI</span></span>
+                <span class="text-[10px] text-red-400">送り: <span id="ai-incoming">0</span></span>
+            </div>
+            <!-- KO演出 -->
+            <div id="ai-ko" class="absolute inset-0 bg-black/80 flex items-center justify-center z-20 hidden">
+                <span class="font-masala text-3xl text-yellow-400">K.O.!</span>
             </div>
         </div>
 
@@ -450,8 +527,21 @@ const PIECE_DATA = {
 // 色: index 0 は空。1=I..7=Z をスパイス色に合わせる。
 const COLORS = [null,
     SPICES.I.color, SPICES.O.color, SPICES.T.color, SPICES.L.color,
-    SPICES.J.color, SPICES.S.color, SPICES.Z.color];
+    SPICES.J.color, SPICES.S.color, SPICES.Z.color,
+    '#6b7280'];   // 8 = お邪魔ブロック (灰)
+const GARBAGE = 8;
 const IDX_TO_TYPE = { 1:'I',2:'O',3:'T',4:'L',5:'J',6:'S',7:'Z' };
+
+// 任意のアリーナに対する衝突判定 (AI評価・お邪魔処理で共用)
+function boardCollide(arena, matrix, px, py) {
+    for (let y=0; y<matrix.length; y++) for (let x=0; x<matrix[y].length; x++) {
+        if (!matrix[y][x]) continue;
+        const ax = px + x, ay = py + y;
+        if (ax < 0 || ax >= COLS || ay >= ROWS) return true;
+        if (ay >= 0 && arena[ay][ax]) return true;
+    }
+    return false;
+}
 
 /* ---------- SRS 壁蹴りテーブル ---------- */
 // 回転状態 0,1,2,3 (スポーン, R, 180, L)。dir+1=CW, dir-1=CCW。
@@ -498,17 +588,29 @@ let selectedDiff = 'hot';
 
 /* ---------- AI実況キャラ (DX踏襲・将来Step6でLLM化) ---------- */
 const AI_QUOTES = {
-    maharaja: { icon:"👳🏾‍♂️", start:["ナマステ！スパイスの準備はいいか？","さあ、辛さを極めよ！"],
+    maharaja: { icon:"👳🏾‍♂️", role:"Kingly Maharaja", start:["ナマステ！スパイスの準備はいいか？","さあ、辛さを極めよ！"],
         good:["素晴らしい！","エレガントだ！","辛さが効いてきたぞ！"], ren:["連鎖が止まらん！","熱い！"],
+        shop:["どれが要る？ 損はさせんよ。","良い品を揃えておるぞ。"], win:["見事！真のマサラ王だ！"],
         gameover:["また挑戦するがよい。","良い夢は見れたかな？"] },
-    buddha: { icon:"🧘", start:["安らぎのパズルへようこそ。","焦らず、ありのままに。"],
+    buddha: { icon:"🧘", role:"Calm Buddha", start:["安らぎのパズルへようこそ。","焦らず、ありのままに。"],
         good:["見事な調和です。","善き行いです。"], ren:["心が澄んでいます。","流れに乗っていますね。"],
+        shop:["執着せず、必要な物を。","縁のある品を選びなさい。"], win:["涅槃が見えましたね。"],
         gameover:["終わりは新たな始まり。","諸行無常です。"] },
-    shiva: { icon:"🔱", start:["破壊の舞を踊る覚悟はあるか？","世界を壊し、再生せよ！"],
+    shiva: { icon:"🔱", role:"God Shiva", start:["破壊の舞を踊る覚悟はあるか？","世界を壊し、再生せよ！"],
         good:["破壊的だ！","カオスこそ至高！"], ren:["連鎖の渦に飲まれろ！","止まるな！"],
+        shop:["力が欲しいか？ 代償を払え。","その魂、いくらで売る？"], win:["貴様こそ真の破壊神か！"],
         gameover:["塵に還れ！","再生をやり直せ！"] },
 };
 let currentPersona = 'maharaja';
+
+/* ---------- 対戦AIの性格 (盤面評価の重み) ----------
+   score = height*H + lines*L + holes*O + bump*B。穴・高さ・凸凹は負の重み。
+   stepMs: 1手の操作間隔(小さいほど速い)。miss: 最善手を外す確率。 */
+const AI_PROFILES = {
+    maharaja: { name:'マハラジャ', H:-0.51, L:0.76, O:-0.46, B:-0.28, stepMs:90,  miss:0.10 }, // バランス
+    shiva:    { name:'シヴァ神',   H:-0.34, L:1.30, O:-0.42, B:-0.16, stepMs:60,  miss:0.04 }, // 攻撃(ライン重視)
+    buddha:   { name:'仏陀',       H:-0.66, L:0.45, O:-0.62, B:-0.34, stepMs:140, miss:0.20 }, // 守り
+};
 
 /* =========================================================================
    サウンド (DXのWeb Audio合成エンジンを継承)
@@ -588,6 +690,25 @@ const SoundManager = {
             case 'tetris':
                 [261.63,329.63,392.00,523.25,659.25,783.99].forEach((f,i)=>setTimeout(()=>this.playSitar(f,1.0), i*40));
                 break;
+            case 'levelup':
+                [392.00,523.25,659.25,880.00].forEach((f,i)=>setTimeout(()=>this.playSitar(f,0.5), i*70));
+                break;
+            case 'role':   // 役完成のきらめき
+                [659.25,830.61,987.77].forEach((f,i)=>setTimeout(()=>this.playSitar(f,0.6), i*45));
+                break;
+            case 'shop':
+                this.playSitar(523.25,0.3); setTimeout(()=>this.playSitar(783.99,0.4),120);
+                break;
+            case 'garbage': {  // お邪魔着弾(鈍い太鼓)
+                const osc=this.ctx.createOscillator(), g=this.ctx.createGain();
+                osc.type='square';
+                osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime+0.25);
+                g.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+0.25);
+                osc.connect(g); g.connect(this.gainNode);
+                osc.start(); osc.stop(this.ctx.currentTime+0.25); break;
+            }
         }
     },
     startBGM() {
@@ -662,7 +783,6 @@ const Game = {
     ren: 0,                 // 連鎖カウンタ
     lines: 0,
     pot: [],                // 鍋に溜まったスパイスid
-    pendingGarbage: 0,      // 役で発生したお邪魔段 (Step4 VERSUS用フック)
     rolesCompleted: 0,      // 完成した役の総数
     // --- ローグライト ---
     rupees: 0,              // 買い物通貨 (スコアとは別)
@@ -673,6 +793,10 @@ const Game = {
     // --- シヴァ神 ---
     shivaCDMax: 25000,
     shivaCDLeft: 0,         // 残りクールダウン(ms)
+    // --- VERSUS ---
+    mode: 'solo',           // solo | versus
+    incoming: 0,            // 受信予約お邪魔段 (相殺待ち)
+    attackPending: 0,       // この設置で送る攻撃段
     state: 'menu',          // menu | playing | shop | over
     dropCounter: 0,
     dropInterval: 500,
@@ -689,9 +813,10 @@ const Game = {
         this.holdType = null;
         this.holdUsed = false;
         this.score = 0; this.level = 1; this.ren = 0; this.lines = 0;
-        this.pot = []; this.pendingGarbage = 0; this.rolesCompleted = 0;
+        this.pot = []; this.rolesCompleted = 0;
         this.rupees = 0; this.relics = new Set(); this.rolesThisStage = 0;
         this.phoenixUsed = false;
+        this.incoming = 0; this.attackPending = 0;
         const cfg = DIFFICULTY[selectedDiff];
         this.dropInterval = cfg.gravity;
         this.lockDelay = cfg.lockDelay;
@@ -701,6 +826,7 @@ const Game = {
         this.dropCounter = 0; this.lockTimer = 0; this.lockResets = 0; this.onGround = false;
         currentPersona = cfg.persona;
         document.getElementById('ai-icon').innerText = AI_QUOTES[currentPersona].icon;
+        Particles.clear();
         this.spawn();
         this.updateUI();
         this.drawHold();
@@ -777,8 +903,15 @@ const Game = {
         if (this.holdUsed && !this.relics.has('secondHand')) return;  // 第二の手で制限解除
         SoundManager.playSE('hold');
         const cur = this.piece.type;
-        if (this.holdType === null) { this.holdType = cur; this.spawn(); }
-        else { const swap = this.holdType; this.holdType = cur; this.piece = makePiece(swap); }
+        if (this.holdType === null) {
+            this.holdType = cur;
+            this.spawn();                              // 次のピースを補充 (spawn内でトップアウト判定)
+        } else {
+            const swap = this.holdType;
+            this.holdType = cur;
+            this.piece = makePiece(swap);
+            if (this.collides(this.piece.matrix, this.piece.x, this.piece.y)) this.gameOver();
+        }
         this.holdUsed = true;
         this.drawHold();
     },
@@ -794,9 +927,72 @@ const Game = {
             if (v && p.y+y >= 0) this.arena[p.y+y][p.x+x] = v;
         }));
         this.onGround = false; this.lockTimer = 0; this.lockResets = 0;
+        const before = this.lines;
+        this.attackPending = 0;
         this.clearLines();
+        const cleared = this.lines - before;
+
+        // VERSUS: お邪魔の相殺・送信・受信ダンプ
+        if (this.mode === 'versus') {
+            const atk = this.attackPending;
+            if (atk > 0) {
+                const net = atk - this.incoming;
+                if (net > 0) { this.incoming = 0; AIBoard.receiveAttack(net); }
+                else { this.incoming -= atk; }
+            }
+            if (cleared === 0 && this.incoming > 0) {
+                this.receiveGarbageRows(this.incoming);
+                this.incoming = 0;
+            }
+            this.updateIncomingUI();
+        }
+        if (this.state === 'over') return;   // お邪魔ダンプ等でトップアウト済みなら続行しない
         this.spawn();
         this.drawNext();
+    },
+
+    /* ----- VERSUS: お邪魔の受信 ----- */
+    receiveAttack(n) { this.incoming += n; this.updateIncomingUI(); },
+
+    receiveGarbageRows(n) {
+        SoundManager.playSE('garbage');
+        shakeScreen();
+        const hole = Math.floor(Math.random() * COLS);
+        let buried = false;
+        for (let i=0; i<n; i++) {
+            const top = this.arena.shift();
+            if (top.some(v => v)) buried = true;   // 埋まりきって上があふれた
+            const row = new Array(COLS).fill(GARBAGE);
+            row[hole] = 0;
+            this.arena.push(row);
+        }
+        // ブロックの乗った行が上からあふれたらトップアウト。
+        // (this.piece は直前にマージ済みなので衝突判定には使えない。実際の詰みは次のspawnが検出)
+        if (buried) this.gameOver();
+    },
+
+    updateIncomingUI() {
+        const wrap = document.getElementById('player-incoming');
+        const n = document.getElementById('player-incoming-n');
+        if (!wrap) return;
+        if (this.mode === 'versus' && this.incoming > 0) { wrap.classList.remove('hidden'); n.innerText = this.incoming; }
+        else wrap.classList.add('hidden');
+    },
+
+    versusEnd(playerWon) {
+        this.state = 'over';
+        SoundManager.stopBGM();
+        cancelAnimationFrame(this.raf);
+        if (playerWon) { document.getElementById('ai-ko').classList.remove('hidden'); SoundManager.playSE('tetris'); }
+        aiGenerate(playerWon ? 'win' : 'gameover',
+            playerWon ? `Player defeated ${AIBoard.profile?.name||'the AI'} in versus! Congratulate them.`
+                      : `Player was defeated by ${AIBoard.profile?.name||'the AI'} in versus.`);
+        document.getElementById('final-score').innerText = this.score;
+        const t = document.getElementById('result-title');
+        t.innerText = playerWon ? 'YOU WIN!' : 'YOU LOSE';
+        t.className = playerWon ? 'font-masala text-4xl text-yellow-400 animate-pulse' : 'font-masala text-4xl text-red-500';
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        saveScore();
     },
 
     clearLines() {
@@ -806,6 +1002,7 @@ const Game = {
             if (this.arena[y].every(v => v !== 0)) {
                 // 役システム用: 消えた行のスパイスを鍋へ
                 this.arena[y].forEach(v => { const t = IDX_TO_TYPE[v]; if (t) clearedSpices.push(SPICES[t].id); });
+                Particles.rowBurst(y, this.arena[y]);   // 消去パーティクル
                 this.arena.splice(y, 1);
                 this.arena.unshift(new Array(COLS).fill(0));
                 cleared++; y++;
@@ -837,6 +1034,11 @@ const Game = {
             this.score += gain;
             this.drawPot();
 
+            // VERSUS: この設置で送る攻撃段を算出 (ライン数 + 役のお邪魔)
+            if (this.mode === 'versus') {
+                this.attackPending = [0,0,1,2,4][cleared] + (role ? role.garbage : 0);
+            }
+
             SoundManager.playSE(cleared >= 4 ? 'tetris' : 'clear');
             if (!role) {
                 if (cleared >= 4) showFloatingText('VINDALOO!!', 'text-red-500');
@@ -865,21 +1067,27 @@ const Game = {
     fireRole(role) {
         this.rolesCompleted++;
         this.rolesThisStage++;
-        this.pendingGarbage += role.garbage;            // Step4 VERSUSで相手へ送る
         this.rupees += 4 + Math.round(role.bonus / 200); // 役の格に応じてルピー獲得
         this.pot = [];                                   // 鍋を空にして次の役へ
         showFloatingText(`${role.icon} ${role.name}！`, role.color);
         showCurryBurst();
         shakeScreen();
-        aiSay('good');
-        if (this.rolesThisStage >= this.quota) this.enterShop();
+        roleGlow();
+        SoundManager.playSE('role');
+        // 大役のみLLMで絶賛、それ以外はローカル定型文 (呼び出し回数を抑える)
+        if (role.key === 'vindaloo' || role.key === 'thali') {
+            aiGenerate('good', `Player completed the powerful "${role.name}" curry! Praise them.`);
+        } else {
+            aiSay('good');
+        }
+        if (this.mode !== 'versus' && this.rolesThisStage >= this.quota) this.enterShop();
     },
 
     /* ----- ローグライト: 商人フェーズ ----- */
     enterShop() {
         this.state = 'shop';
         cancelAnimationFrame(this.raf);
-        SoundManager.playSE('clear');
+        SoundManager.playSE('shop');
         const hasScale = this.relics.has('merchantScale');
         const offerCount = hasScale ? 4 : 3;
         // 未所持レリックからランダムに提示
@@ -893,6 +1101,7 @@ const Game = {
         document.getElementById('shop-rupees').innerText = this.rupees;
         document.getElementById('shop-screen').classList.remove('hidden');
         document.getElementById('shop-screen').classList.add('flex');
+        aiGenerate('shop', `The spice merchant offers: ${offers.map(o=>o.name).join(', ')}. Give a tempting one-line sales pitch.`, 'shop-talk');
     },
 
     buyRelic(key, price) {
@@ -915,6 +1124,7 @@ const Game = {
         this.rolesThisStage = 0;
         this.quota = DIFFICULTY[selectedDiff].baseQuota + this.level - 1;
         this.dropInterval = Math.max(60, this.dropInterval * 0.88);
+        SoundManager.playSE('levelup');
         showFloatingText('STAGE ' + this.level, 'text-amber-400');
         this.state = 'playing';
         this.updateUI();
@@ -965,6 +1175,10 @@ const Game = {
         }
 
         this.draw();
+        Particles.update(delta);
+        Particles.draw(ctx);
+        // VERSUS: AI盤面を進行・描画
+        if (this.mode === 'versus' && AIBoard.alive) { AIBoard.update(delta); AIBoard.draw(); }
         this.raf = requestAnimationFrame(t => this.tick(t));
     },
 
@@ -983,6 +1197,17 @@ const Game = {
         this.piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{ if (v && gy+y>=0) drawCell(ctx, this.piece.x+x, gy+y, v, true); }));
         // 現在ピース
         this.piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{ if (v && this.piece.y+y>=0) drawCell(ctx, this.piece.x+x, this.piece.y+y, v); }));
+        // 危険表示: 上部4行に固定ブロックがあると赤くパルス
+        let danger = false;
+        for (let y=0; y<4 && !danger; y++) for (let x=0; x<COLS; x++) if (this.arena[y][x]) { danger = true; break; }
+        if (danger) {
+            const a = 0.18 + 0.12*Math.abs(Math.sin(Date.now()/200));
+            const g = ctx.createLinearGradient(0, 0, 0, 5*BLOCK);
+            g.addColorStop(0, `rgba(220,40,40,${a})`);
+            g.addColorStop(1, 'rgba(220,40,40,0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, canvas.width, 5*BLOCK);
+        }
     },
 
     ghostY() {
@@ -1060,6 +1285,7 @@ const Game = {
     },
 
     gameOver() {
+        if (this.mode === 'versus') { this.versusEnd(false); return; }
         // レリック「不死鳥の灰」: 1回だけ復活
         if (this.relics.has('phoenixAsh') && !this.phoenixUsed) {
             this.phoenixUsed = true;
@@ -1073,7 +1299,7 @@ const Game = {
         this.state = 'over';
         SoundManager.stopBGM();
         cancelAnimationFrame(this.raf);
-        aiSay('gameover');
+        aiGenerate('gameover', `The run ended at stage ${this.level} with score ${this.score}. Give a closing remark.`);
         document.getElementById('final-score').innerText = this.score;
         const t = document.getElementById('result-title');
         t.innerText = 'GAME OVER'; t.className = 'font-masala text-4xl text-red-500';
@@ -1085,10 +1311,224 @@ const Game = {
         this.state = 'playing';
         SoundManager.init();
         this.reset();
+        // VERSUS: AI盤面を起動 / ソロ: 非表示
+        const aiC = document.getElementById('ai-container');
+        if (this.mode === 'versus') {
+            document.body.classList.add('versus');
+            aiC.classList.remove('hidden');
+            document.getElementById('ai-ko').classList.add('hidden');
+            AIBoard.start(currentPersona, DIFFICULTY[selectedDiff]);
+        } else {
+            document.body.classList.remove('versus');
+            aiC.classList.add('hidden');
+        }
         SoundManager.startBGM();
-        aiSay('start');
+        aiGenerate('start', this.mode==='versus' ? `A versus battle vs ${AIBoard.profile?.name||'the AI'} begins.` : 'A roguelite curry run begins. Greet the player.');
         this.lastTime = performance.now();
         this.raf = requestAnimationFrame(t => this.tick(t));
+    },
+};
+
+/* =========================================================================
+   対戦AI (ローカル盤面評価エンジン / El-Tetris系)
+   LLMは使わず、全配置×全回転を評価して最善手を選ぶ。性格=重み。
+   ========================================================================= */
+const AIBoard = {
+    arena: [], bag: null, piece: null,
+    profile: null, incoming: 0, alive: false,
+    plan: null,          // { x, rot } 目標
+    stepTimer: 0, gravTimer: 0, gravInterval: 600,
+
+    start(persona, diff) {
+        this.profile = AI_PROFILES[persona] || AI_PROFILES.maharaja;
+        this.arena = Array.from({length:ROWS}, () => new Array(COLS).fill(0));
+        this.bag = new BagRandomizer();
+        this.incoming = 0; this.alive = true;
+        this.gravInterval = Math.max(120, diff.gravity * 1.1);
+        this.stepTimer = 0; this.gravTimer = 0;
+        document.getElementById('ai-name').innerText = this.profile.name;
+        document.getElementById('ai-incoming').innerText = '0';
+        this.spawn();
+    },
+
+    spawn() {
+        this.piece = makePiece(this.bag.next());
+        this.plan = null;
+        if (boardCollide(this.arena, this.piece.matrix, this.piece.x, this.piece.y)) this.topOut();
+    },
+
+    topOut() { this.alive = false; Game.versusEnd(true); },
+
+    receiveAttack(n) {
+        this.incoming += n;
+        document.getElementById('ai-incoming').innerText = this.incoming;
+    },
+
+    // 盤面の評価指標を計算。
+    // ライン消去の価値を正しく評価するため、満杯行を除いた盤面で高さ/穴/凸凹を測る。
+    features(arena) {
+        let lines = 0;
+        const rows = [];
+        for (let y=0; y<ROWS; y++) {
+            if (arena[y].every(v => v)) lines++;
+            else rows.push(arena[y]);
+        }
+        while (rows.length < ROWS) rows.unshift(new Array(COLS).fill(0)); // 上に空行を補う
+        const heights = new Array(COLS).fill(0);
+        let holes = 0;
+        for (let x=0; x<COLS; x++) {
+            let seen = false;
+            for (let y=0; y<ROWS; y++) {
+                if (rows[y][x]) { if (!seen) { heights[x] = ROWS - y; seen = true; } }
+                else if (seen) holes++;
+            }
+        }
+        let agg = 0, bump = 0;
+        for (let x=0; x<COLS; x++) agg += heights[x];
+        for (let x=0; x<COLS-1; x++) bump += Math.abs(heights[x]-heights[x+1]);
+        return { agg, holes, bump, lines };
+    },
+
+    // 任意のarenaにmatrixを(x)へハードドロップして得る盤面コピー (なければnull)
+    placeOn(arena, matrix, x) {
+        let y = -2;
+        if (boardCollide(arena, matrix, x, y)) return null;
+        while (!boardCollide(arena, matrix, x, y+1)) y++;
+        const copy = arena.map(r => r.slice());
+        let ok = true;
+        matrix.forEach((row, yy) => row.forEach((v, xx) => {
+            if (!v) return;
+            const ay = y+yy, ax = x+xx;
+            if (ay < 0 || ax < 0 || ax >= COLS) { ok = false; return; }
+            copy[ay][ax] = v;
+        }));
+        return ok ? copy : null;
+    },
+
+    // 盤面を性格の重みで採点
+    scoreBoard(board) {
+        const f = this.features(board), P = this.profile;
+        return f.agg*P.H + f.lines*P.L + f.holes*P.O + f.bump*P.B;
+    },
+
+    // 指定タイプを arena に最善配置したときの採点 (2手先読み用)
+    bestScoreOn(arena, type) {
+        let m = PIECE_DATA[type].cells.map(r => r.slice());
+        const rotN = (type === 'O') ? 1 : 4;
+        let best = -Infinity;
+        for (let rot=0; rot<rotN; rot++) {
+            if (rot > 0) m = rotateMatrix(m, 1);
+            for (let x = -2; x < COLS; x++) {
+                const b = this.placeOn(arena, m, x);
+                if (b) { const s = this.scoreBoard(b); if (s > best) best = s; }
+            }
+        }
+        return best === -Infinity ? 0 : best;
+    },
+
+    // 最善手を決定して plan に設定 (2手先読み: 現手＋次ピースの最善応答を割引加算)
+    think() {
+        const P = this.profile;
+        const nextType = this.bag.peek(1)[0];
+        let best = null, bestScore = -Infinity;
+        const candidates = [];
+        let m = this.piece.matrix.map(r => r.slice());
+        const rotN = (this.piece.type === 'O') ? 1 : 4;
+        for (let rot=0; rot<rotN; rot++) {
+            if (rot > 0) m = rotateMatrix(m, 1);
+            for (let x = -2; x < COLS; x++) {
+                const board = this.placeOn(this.arena, m, x);
+                if (!board) continue;
+                const score = this.scoreBoard(board) + 0.7 * this.bestScoreOn(board, nextType);
+                candidates.push({ x, rot, score });
+                if (score > bestScore) { bestScore = score; best = { x, rot }; }
+            }
+        }
+        // ミス: 一定確率で最善以外を選ぶ
+        if (best && Math.random() < P.miss && candidates.length > 1) {
+            best = candidates[Math.floor(Math.random()*candidates.length)];
+        }
+        this.plan = best || { x: this.piece.x, rot: this.piece.rot };
+    },
+
+    update(delta) {
+        if (!this.alive) return;
+        if (!this.plan) this.think();
+        this.stepTimer += delta;
+        this.gravTimer += delta;
+        // 目標へ1手ずつ操作 (回転→水平→ハードドロップ)
+        if (this.stepTimer >= this.profile.stepMs) {
+            this.stepTimer = 0;
+            if (this.piece.rot !== this.plan.rot) {
+                const r = rotateMatrix(this.piece.matrix, 1);
+                this.piece.matrix = r; this.piece.rot = (this.piece.rot+1)%4;
+                if (boardCollide(this.arena, this.piece.matrix, this.piece.x, this.piece.y)) {
+                    // 回転で詰まったら1マス上へ逃がす
+                    if (!boardCollide(this.arena, this.piece.matrix, this.piece.x, this.piece.y-1)) this.piece.y--;
+                }
+            } else if (this.piece.x < this.plan.x) {
+                if (!boardCollide(this.arena, this.piece.matrix, this.piece.x+1, this.piece.y)) this.piece.x++;
+                else this.hardDrop();
+            } else if (this.piece.x > this.plan.x) {
+                if (!boardCollide(this.arena, this.piece.matrix, this.piece.x-1, this.piece.y)) this.piece.x--;
+                else this.hardDrop();
+            } else {
+                this.hardDrop();
+            }
+        }
+        // 重力 (操作が滞っても落ちる)
+        if (this.gravTimer >= this.gravInterval) {
+            this.gravTimer = 0;
+            if (!boardCollide(this.arena, this.piece.matrix, this.piece.x, this.piece.y+1)) this.piece.y++;
+        }
+    },
+
+    hardDrop() {
+        while (!boardCollide(this.arena, this.piece.matrix, this.piece.x, this.piece.y+1)) this.piece.y++;
+        this.lockPiece();
+    },
+
+    lockPiece() {
+        const p = this.piece;
+        p.matrix.forEach((row, y) => row.forEach((v, x) => { if (v && p.y+y >= 0) this.arena[p.y+y][p.x+x] = v; }));
+        // ライン消去
+        let cleared = 0;
+        for (let y = ROWS-1; y >= 0; y--) {
+            if (this.arena[y].every(v => v !== 0)) {
+                this.arena.splice(y, 1); this.arena.unshift(new Array(COLS).fill(0)); cleared++; y++;
+            }
+        }
+        // お邪魔の相殺・送信
+        const atk = [0,0,1,2,4][cleared];
+        if (atk > 0) {
+            const net = atk - this.incoming;
+            if (net > 0) { this.incoming = 0; Game.receiveAttack(net); }
+            else { this.incoming -= atk; }
+            document.getElementById('ai-incoming').innerText = this.incoming;
+        }
+        if (cleared === 0 && this.incoming > 0) { this.receiveGarbageRows(this.incoming); this.incoming = 0; document.getElementById('ai-incoming').innerText = '0'; }
+        if (this.alive) this.spawn();
+    },
+
+    receiveGarbageRows(n) {
+        const hole = Math.floor(Math.random()*COLS);
+        let buried = false;
+        for (let i=0; i<n; i++) {
+            const top = this.arena.shift();
+            if (top.some(v => v)) buried = true;
+            const row = new Array(COLS).fill(GARBAGE); row[hole] = 0;
+            this.arena.push(row);
+        }
+        if (buried) this.topOut();
+    },
+
+    draw() {
+        aiCtx.fillStyle = '#150a14';
+        aiCtx.fillRect(0, 0, aiCanvas.width, aiCanvas.height);
+        for (let y=0; y<ROWS; y++) for (let x=0; x<COLS; x++) if (this.arena[y][x]) drawCell(aiCtx, x, y, this.arena[y][x]);
+        if (this.alive && this.piece) {
+            this.piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{ if (v && this.piece.y+y>=0) drawCell(aiCtx, this.piece.x+x, this.piece.y+y, v); }));
+        }
     },
 };
 
@@ -1126,7 +1566,46 @@ function drawMini(c, cells, cx, cy, size) {
     }));
 }
 
+/* ---------- パーティクル (キャンバス描画) ---------- */
+const Particles = {
+    items: [],
+    burst(cx, cy, color, n=8, power=1) {
+        for (let i=0; i<n; i++) {
+            const a = Math.random()*Math.PI*2;
+            const sp = (1 + Math.random()*3) * power;
+            this.items.push({ x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 1.5, life:1, color, size:2+Math.random()*3 });
+        }
+    },
+    rowBurst(rowY, arenaRow) {
+        for (let x=0; x<COLS; x++) {
+            const v = arenaRow[x]; if (!v) continue;
+            this.burst(x*BLOCK + BLOCK/2, rowY*BLOCK + BLOCK/2, COLORS[v], 5, 1.3);
+        }
+    },
+    update(dt) {
+        const f = dt/16.67;
+        for (let i=this.items.length-1; i>=0; i--) {
+            const p = this.items[i];
+            p.x += p.vx*f; p.y += p.vy*f; p.vy += 0.25*f; p.life -= 0.025*f;
+            if (p.life <= 0) this.items.splice(i, 1);
+        }
+    },
+    draw(c) {
+        this.items.forEach(p => {
+            c.globalAlpha = Math.max(0, p.life);
+            c.fillStyle = p.color;
+            c.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+        });
+        c.globalAlpha = 1;
+    },
+    clear() { this.items.length = 0; },
+};
+
 /* ---------- UI演出 ---------- */
+function roleGlow() {
+    const gc = document.getElementById('game-container');
+    gc.classList.remove('role-glow'); void gc.offsetWidth; gc.classList.add('role-glow');
+}
 function showFloatingText(text, colorClass) {
     const el = document.createElement('div');
     el.className = `flash-text ${colorClass}`;
@@ -1181,29 +1660,66 @@ function renderShop(offers, discount) {
     });
 }
 
-/* ---------- AI実況 (Step6でLLM化) ---------- */
-function aiSay(category) {
+/* ---------- AI実況 ----------
+   頻発イベントはローカル定型文(aiSay)。LLM(Gemini)は"ここぞ"の4箇所だけ非同期で叩く:
+   ①開始 ②商人の口上 ③大役完成(ヴィンダルー/ターリー) ④総括。失敗時はローカルへフォールバック。 */
+function localQuote(category) {
     const q = AI_QUOTES[currentPersona][category];
-    if (!q) return;
-    const text = q[Math.floor(Math.random()*q.length)];
-    const el = document.getElementById('maharaja-text');
+    return q ? q[Math.floor(Math.random()*q.length)] : '';
+}
+function aiAnnounce(text, targetId='maharaja-text') {
+    const el = document.getElementById(targetId);
+    if (!el) return;
     el.style.opacity = 0;
     setTimeout(()=>{ el.innerText = text; el.style.opacity = 1; }, 150);
 }
+function aiSay(category, targetId='maharaja-text') {
+    const t = localQuote(category);
+    if (t) aiAnnounce(t, targetId);
+}
 
-/* ---------- ランキング ---------- */
+// Gemini実況 (非同期・ノンブロッキング)。失敗時は category のローカル定型文に戻す。
+async function aiGenerate(category, contextText, targetId='maharaja-text') {
+    const sparkle = document.getElementById('ai-sparkle');
+    const box = document.getElementById('maharaja-box');
+    if (targetId === 'maharaja-text') { if (sparkle) sparkle.classList.remove('hidden'); if (box) box.classList.add('ai-thinking'); }
+    const roleName = AI_QUOTES[currentPersona].role;
+    const prompt = `You are ${roleName}, the commentator of the spicy Indian puzzle game "Masala Tetris VINDALOO". `
+        + `Language: Japanese. Context: ${contextText}. React in ONE short punchy line (max 24 Japanese chars). No quotes, no emoji.`;
+    try {
+        const res = await fetch(`${WORKER_URL}/api/gemini`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) aiAnnounce(text.replace(/^["「]|["」]$/g,''), targetId);
+        else aiSay(category, targetId);
+    } catch (e) {
+        aiSay(category, targetId);   // オフライン/失敗時フォールバック
+    } finally {
+        if (sparkle) sparkle.classList.add('hidden');
+        if (box) box.classList.remove('ai-thinking');
+    }
+}
+
+/* ---------- ランキング (モード別に保存・表示) ---------- */
+function rankKey(mode) { return `vindalooRankings_${mode || Game.mode}`; }
 function saveScore() {
     const name = document.getElementById('player-name').value || '匿名マサラ';
-    let r = JSON.parse(localStorage.getItem('vindalooRankings')) || [];
+    const key = rankKey();
+    let r = JSON.parse(localStorage.getItem(key)) || [];
     r.push({ name, score: Game.score, diff: DIFFICULTY[selectedDiff].label });
     r.sort((a,b)=>b.score-a.score);
-    localStorage.setItem('vindalooRankings', JSON.stringify(r.slice(0,5)));
+    localStorage.setItem(key, JSON.stringify(r.slice(0,5)));
     renderRanking();
 }
 function renderRanking() {
     const list = document.getElementById('ranking-list');
-    const r = JSON.parse(localStorage.getItem('vindalooRankings')) || [];
-    if (!r.length) { list.innerHTML = '<li class="text-center text-gray-500">No Data</li>'; return; }
+    if (!list) return;
+    const r = JSON.parse(localStorage.getItem(rankKey())) || [];
+    const label = Game.mode === 'versus' ? '⚔️ VERSUS' : '🍛 CURRY∞';
+    if (!r.length) { list.innerHTML = `<li class="text-center text-gray-500">${label} : No Data</li>`; return; }
     list.innerHTML = r.map((x,i)=>`<li class="flex justify-between border-b border-amber-800/30 pb-0.5"><span>${i+1}. ${x.name}</span><span class="text-amber-400">${x.score}</span></li>`).join('');
 }
 
@@ -1224,19 +1740,28 @@ const nextCanvas = document.getElementById('next-piece');
 const nctx = nextCanvas.getContext('2d');
 const holdCanvas = document.getElementById('hold-piece');
 const hctx = holdCanvas.getContext('2d');
+const aiCanvas = document.getElementById('ai-tetris');
+const aiCtx = aiCanvas.getContext('2d');
+aiCanvas.width = COLS*BLOCK; aiCanvas.height = ROWS*BLOCK;
 
 /* =========================================================================
    入力
    ========================================================================= */
+// オートリピートを許すのは横移動とソフトドロップのみ。回転/ハードドロップ/ホールドは1押下1回。
+const NO_REPEAT = new Set(['ArrowUp','KeyX','KeyZ','ControlLeft','Space','KeyC','ShiftLeft']);
+const HANDLED = new Set(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','KeyX','KeyZ','ControlLeft','Space','KeyC','ShiftLeft']);
 document.addEventListener('keydown', e => {
     if (Game.state !== 'playing') return;
+    if (!HANDLED.has(e.code)) return;
+    e.preventDefault();                          // ページスクロール等を抑止
+    if (e.repeat && NO_REPEAT.has(e.code)) return;
     switch(e.code) {
         case 'ArrowLeft':  Game.move(-1); break;
         case 'ArrowRight': Game.move(1); break;
         case 'ArrowDown':  Game.softDrop(); break;
         case 'ArrowUp': case 'KeyX': Game.rotate(1); break;
         case 'KeyZ': case 'ControlLeft': Game.rotate(-1); break;
-        case 'Space': e.preventDefault(); Game.hardDrop(); break;
+        case 'Space': Game.hardDrop(); break;
         case 'KeyC': case 'ShiftLeft': Game.hold(); break;
     }
 });
@@ -1244,7 +1769,14 @@ document.addEventListener('keydown', e => {
 function bindTouch(id, action) {
     const btn = document.getElementById(id);
     if (!btn) return;
-    const handle = e => { if (e.cancelable) e.preventDefault(); if (Game.state==='playing') action(); };
+    let lastTouch = 0;
+    const handle = e => {
+        // touchstart直後に合成されるmousedownを無視 (二重発火防止)
+        if (e.type === 'mousedown' && Date.now() - lastTouch < 600) return;
+        if (e.type === 'touchstart') lastTouch = Date.now();
+        if (e.cancelable) e.preventDefault();
+        if (Game.state === 'playing') action();
+    };
     btn.addEventListener('touchstart', handle, {passive:false});
     btn.addEventListener('mousedown', handle);
 }
@@ -1264,10 +1796,21 @@ document.getElementById('shop-skip').addEventListener('click', ()=>Game.closeSho
 
 /* 難易度選択 */
 document.querySelectorAll('.diff-btn').forEach(btn => {
+    if (!btn.dataset.diff) return;   // モードボタンは除外
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+        document.querySelectorAll('.diff-btn[data-diff]').forEach(b=>b.classList.remove('selected'));
         btn.classList.add('selected');
         selectedDiff = btn.dataset.diff;
+    });
+});
+
+/* モード選択 */
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+        Game.mode = btn.dataset.mode;
+        renderRanking();   // 選択モードのハイスコアを表示
     });
 });
 
@@ -1278,6 +1821,15 @@ document.getElementById('start-btn').addEventListener('click', ()=>{
 document.getElementById('restart-btn').addEventListener('click', ()=>{
     document.getElementById('game-over-screen').classList.add('hidden');
     Game.start();
+});
+document.getElementById('menu-btn').addEventListener('click', ()=>{
+    // メニューに戻ってモード/難易度を選び直す
+    SoundManager.stopBGM();
+    Game.state = 'menu';
+    document.body.classList.remove('versus');
+    document.getElementById('ai-container').classList.add('hidden');
+    document.getElementById('game-over-screen').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
 });
 document.getElementById('mute-btn').addEventListener('click', ()=>SoundManager.toggleMute());
 
