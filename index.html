@@ -316,7 +316,7 @@
     #agentdock { width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; overflow: hidden; }
     #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; }
     #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color); }
-    #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 0; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
+    #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
     .agent-user { display: flex; justify-content: flex-end; }
     .agent-user > span { display: inline-block; max-width: 85%; padding: 0.3rem 0.6rem; border-radius: 8px 8px 2px 8px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; }
     .agent-personas { display: grid; gap: 0.4rem; }
@@ -527,7 +527,7 @@
       <span class="text-[10px] tracking-wider text-primary glow">✦ ST MULTI AGENT</span>
       <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="text-[10px] text-secondary hover:text-primary no-underline" title="Legacy MAGI deliberation (v1)">Legacy MAGI ↗</a>
      </div>
-     <div id="agent-log" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs" aria-live="polite" aria-atomic="false"></div>
+     <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs" aria-live="polite" aria-atomic="false"></div>
      <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
      <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
       <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="Talk to Shinya Takeda..." aria-label="Message ST Multi Agent">
