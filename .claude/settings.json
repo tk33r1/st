@@ -13,7 +13,10 @@
       "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('data/game.json','utf8'\\)\\); console.log\\('game.json valid'\\)\")",
       "Bash(node -e \"import\\('file:///c:/dev/tk.st/workers/magi2/src/index.js'\\).then\\(m=>console.log\\('index.js OK, default export:', typeof m.default\\)\\).catch\\(e=>{console.error\\('ERR', e.message\\); process.exit\\(1\\)}\\)\")",
       "Bash(git check-ignore *)",
-      "Bash(node -e \"import\\('file:///c:/dev/tk.st/workers/magi2/src/index.js'\\).then\\(\\(\\)=>console.log\\('reload OK'\\)\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")"
+      "Bash(node -e \"import\\('file:///c:/dev/tk.st/workers/magi2/src/index.js'\\).then\\(\\(\\)=>console.log\\('reload OK'\\)\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")",
+      "Bash(node --check /tmp/magi2_check.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('index.html','utf8'\\);const m=h.match\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/\\);fs.writeFileSync\\('_check.js',m[1]\\);console.log\\('extracted',m[1].length\\);\")",
+      "Bash(node --check _check.js)"
     ],
     "additionalDirectories": [
       "c:\\Users\\minep\\.claude\\projects\\c--dev-tk-st\\memory"

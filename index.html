@@ -284,6 +284,53 @@
       #sidebar-resizer { display: none; }
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
+    /* right agent dock — ST Multi Agent */
+    #agentdock { width: 22rem; flex-shrink: 0; }
+    #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background 0.15s; z-index: 5; }
+    #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color); }
+    #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
+    .agent-user { display: flex; justify-content: flex-end; }
+    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.3rem 0.6rem; border-radius: 8px 8px 2px 8px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; }
+    .agent-personas { display: grid; gap: 0.4rem; }
+    .persona-card { border: 1px solid var(--border-color); background: var(--surface-alt); padding: 0.4rem 0.5rem; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+    .persona-card.thinking { opacity: 0.5; }
+    .persona-head { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.15rem; }
+    .persona-code { font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); }
+    .persona-name { font-size: 9px; letter-spacing: 0.08em; color: var(--secondary-color); }
+    .persona-text { font-size: 11px; color: var(--text-color); line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
+    .agent-reply { margin-top: 0.4rem; padding: 0.5rem 0.6rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
+    .agent-reply .agent-who { display: block; font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.15rem; }
+    .agent-reply.streaming::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
+    .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.5rem; font-size: 10px; word-break: break-word; }
+    .agent-err .agent-rid { color: var(--secondary-color); }
+    #agent-inputline { gap: 0.4rem; padding: 0.6rem; }
+    #agent-input { background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.4rem 0.6rem; color: var(--text-color); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    #agent-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-bg); }
+    #agent-input:disabled { opacity: 0.5; }
+    #agent-send { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 6px; transition: background-color 0.15s, opacity 0.15s; }
+    #agent-send:hover { background: var(--primary-bg); }
+    /* MAGI splash (empty state) */
+    @keyframes magiPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+    .agent-splash { margin: auto 0; text-align: center; padding: 1rem 0.5rem; }
+    .magi-emblem { width: 96px; height: 96px; display: inline-block; animation: magiPulse calc(240s / var(--bpm)) ease-in-out infinite; }
+    .magi-emblem .hx { fill: var(--primary-bg); stroke: var(--primary-color); stroke-width: 2; }
+    .magi-emblem .hl { stroke: var(--primary-color); stroke-width: 1; opacity: 0.4; }
+    .magi-emblem .hn { fill: var(--primary-color); font-size: 13px; font-weight: 700; }
+    .magi-title { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem 0 0.2rem; }
+    .magi-sub { font-size: 10px; letter-spacing: 0.12em; color: var(--text-color); }
+    .magi-ver { font-size: 10px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.15rem; }
+    .magi-nodes { display: flex; justify-content: center; gap: 0.4rem; margin-top: 0.9rem; flex-wrap: wrap; }
+    .magi-node { font-size: 9px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.15rem 0.55rem; cursor: pointer; transition: color 0.15s, border-color 0.15s, background-color 0.15s; }
+    .magi-node:hover { color: var(--primary-color); border-color: var(--primary-color); }
+    .magi-node.active { color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
+    .magi-desc { margin: 0.7rem auto 0; max-width: 16rem; font-size: 11px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.35rem 0.6rem; background: var(--primary-bg); }
+    .magi-desc-name { display: block; font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
+    @media (min-width: 768px) { #agentdock.collapsed { display: none; } #agentdock-resizer:has(+ #agentdock.collapsed) { display: none; } }
+    @media (max-width: 767px) {
+      #agentdock { position: fixed; top: 0; bottom: 0; right: 0; width: min(88%, 22rem); transform: translateX(110%); transition: transform 0.25s ease; z-index: 50; box-shadow: 0 0 24px rgba(0,0,0,0.35); }
+      #agentdock.open { transform: translateX(0); }
+      #agentdock-resizer { display: none; }
+    }
   </style>
   <script type="application/ld+json">
     {
@@ -326,9 +373,9 @@
     <h3><a href="https://tk.st/tools/">AI coding benchmark: Toolbox</a></h3>
     <h3><a href="https://tk.st/glitch/">Finding the "bugs" that lead to better living.</a></h3>
     <h3><a href="https://tk.st/thought/">A shared margin for contemplating the essence of life.</a></h3>
-    <h2><a href="?cmd=magi">magi</a></h2>
-    <p>Talk to ST multi-agent</p>
-    <a href="https://tk.st/magi/">MAGI System</a>
+    <h2>ST Multi Agent</h2>
+    <p>Chat with my three personas (Enthusiast, Humanist, Strategist), synthesized into one voice. Open the ✦ panel.</p>
+    <a href="https://tk.st/magi/">Legacy MAGI System</a>
     <h2><a href="?cmd=contact">contact</a></h2>
     <p>Contact me</p>
     <a href="https://tk.st/contact/">Contact Page</a>
@@ -379,7 +426,8 @@
      <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
      <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 3-3 3.5-6 4"/></svg><div id="badge-git" class="nav-badge hidden">0</div></button>
      <button class="act-btn" data-act="extensions" title="Extensions" aria-label="Extensions"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><path d="M17.5 1.5l5 5-5 5-5-5z"/></svg><div id="badge-extensions" class="nav-badge hidden">0</div></button>
-     <button class="act-btn mt-auto" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+     <button class="act-btn mt-auto" data-act="agent" title="ST Multi Agent" aria-label="ST Multi Agent"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg></button>
+     <button class="act-btn" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </nav>
     <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
      <div id="view-explorer">
@@ -433,6 +481,19 @@
       </div>
      </div>
     </section>
+    <div id="agentdock-resizer" role="separator" aria-orientation="vertical" aria-label="Resize agent panel" title="Drag to resize"></div>
+    <aside id="agentdock" class="flex flex-col bg-surface border-l border-color" aria-label="ST Multi Agent">
+     <div class="flex items-center justify-between px-3 py-2 border-b border-color bg-surface-alt">
+      <span class="text-[10px] tracking-wider text-primary glow">✦ ST MULTI AGENT</span>
+      <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="text-[10px] text-secondary hover:text-primary no-underline" title="Legacy MAGI deliberation (v1)">Legacy MAGI ↗</a>
+     </div>
+     <div id="agent-log" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs" aria-live="polite" aria-atomic="false"></div>
+     <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
+     <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
+      <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="Talk to Shinya Takeda..." aria-label="Message ST Multi Agent">
+      <button id="agent-send" class="text-primary hover:opacity-70" title="Send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg></button>
+     </div>
+    </aside>
    </div>
 
    <footer id="terminal-footer" class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
@@ -814,7 +875,6 @@
       if (['theme', 'bpm'].includes(cmd)) return 'CSS';
       if (['choreomania', 'matrix', 'meditation'].includes(cmd)) return 'Binary';
       if (cmd === 'destroy') return 'Shell Script';
-      if (cmd === 'magi') return 'AI Model';
       if (cmd === 'contact') return 'Plain Text';
       if (cmd === 'web3') return 'URL';
       const m = FILE_META[cmd];
@@ -949,7 +1009,7 @@
 
     const commands = {
       help: () => {
-        const base = [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['magi', 'Talk to ST multi-agent'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']];
+        const base = [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']];
         const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, (extensionMeta[c] && extensionMeta[c].desc) || CMD_DESC[c] || '']);
         return renderCmdList('Available Commands:', base.concat(installed));
       },
@@ -1235,10 +1295,10 @@
       }
     };
 
-    const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', 'magi': 'https://tk.st/magi/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
+    const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
-        const label = cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : (cmd === 'web3' ? 'Web3 page' : cmd));
+        const label = cmd === 'contact' ? 'contact page' : (cmd === 'web3' ? 'Web3 page' : cmd);
         const win = window.open(url, '_blank', 'noopener,noreferrer');
         let labelHtml = `<span class="text-primary">${esc(label)}</span>`;
         if (cmd === 'web3') labelHtml = '<span class="text-primary">Web3</span> page';
@@ -1421,7 +1481,9 @@
     DOM.app.addEventListener('click', (e) => {
       const sb = document.getElementById('sidebar');
       if (sb && sb.classList.contains('open') && !e.target.closest('#sidebar, #btn-menu')) { sb.classList.remove('open'); return; }
-      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #btn-menu')) DOM.input.focus();
+      const ad = document.getElementById('agentdock');
+      if (isMobile() && ad && ad.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"]')) { closeAgentDock(); return; }
+      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #btn-menu, #agentdock, [data-act="agent"]')) DOM.input.focus();
     });
     setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
@@ -1455,6 +1517,7 @@
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
       document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
+      if (typeof resetAgent === 'function') resetAgent();
       DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
       DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
       document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
@@ -1508,9 +1571,8 @@
     });
 
     // --- Explorer (file tree) ---
-    const sidebarFiles = ['about', 'identify', 'pages', 'magi', 'contact', 'help'];
+    const sidebarFiles = ['about', 'identify', 'pages', 'contact', 'help'];
     const FILE_ICONS = {
-      magi: { name: 'magi.ai', icon: '✦' },
       contact: { name: 'contact.txt', icon: '@' },
       bpm: { name: 'bpm.css', icon: '♥' },
       choreomania: { name: 'choreomania.bin', icon: '∿' },
@@ -1568,7 +1630,7 @@
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
-    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', magi: 'Talk to ST multi-agent', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
     // Build a content index so search matches command output text, not just titles.
     const SEARCH_INDEX = {};
     const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
@@ -1682,6 +1744,26 @@
       }
       sidebarResizer.addEventListener('pointerdown', (e) => startDrag(e, true));
       panelResizer.addEventListener('pointerdown', (e) => startDrag(e, false));
+
+      const agentDock = document.getElementById('agentdock');
+      const agentResizer = document.getElementById('agentdock-resizer');
+      agentResizer.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        document.body.classList.add('resizing-x');
+        agentResizer.classList.add('resizer-active');
+        const move = (ev) => {
+          const w = agentDock.getBoundingClientRect().right - ev.clientX;
+          agentDock.style.width = Math.max(220, Math.min(w, window.innerWidth * 0.6)) + 'px';
+        };
+        const up = () => {
+          document.body.classList.remove('resizing-x');
+          agentResizer.classList.remove('resizer-active');
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+        };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up);
+      });
     })();
 
     // --- Activity bar ---
@@ -1689,6 +1771,7 @@
       const b = e.target.closest('[data-act]'); if (!b) return;
       const act = b.dataset.act;
       if (act === 'settings') { toggleTheme(); return; }
+      if (act === 'agent') { toggleAgentDock(); return; }
       if (!SIDEBAR_VIEWS.includes(act)) return;
       if (currentView() === act && !sidebarHidden()) {
         // Same view already visible: toggle the side bar away.
@@ -1698,8 +1781,174 @@
         if (act === 'search') { renderSearch(searchInput.value); searchInput.focus(); searchInput.select(); }
         else if (act === 'git') { renderGit(); unreadHistoryCount = 0; updateGitBadge(); }
       }
-      document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('#activitybar .act-btn').forEach(x => { if (x.dataset.act !== 'agent') x.classList.toggle('active', x === b); });
     });
+
+    // --- ST Multi Agent (right dock) ---
+    const AGENT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:8787/magi2/chat' : 'https://workers.tk.st/magi2/chat';
+    const AGENT_PERSONAS = [
+      { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', desc: 'カオスな自分。直感で動く衝動的で予測不能なオタク。ハーレー・自作PC・アイドル・ワイン、何より音楽に燃える。' },
+      { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: '博愛的な自分。フロム・ストア派・仏教を血肉化した、詩的で内向的な夢想家。関心の中心はいつも人間。' },
+      { codename: 'CASPER-3', name: 'STRATEGIST', desc: '論理的な自分。データドリブンに最適解を解き続ける参謀。再現性ある施策も新規性も取り込む。' },
+    ];
+    const AGENT_MAX_HISTORY = 12;
+    const AGENT_HINT = '<div class="agent-splash">'
+      + '<svg class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
+      +   '<line class="hl" x1="60" y1="50" x2="35" y2="58"/><line class="hl" x1="60" y1="50" x2="85" y2="58"/><line class="hl" x1="52" y1="78" x2="68" y2="78"/>'
+      +   '<polygon class="hx" points="60,10 77,20 77,40 60,50 43,40 43,20"/>'
+      +   '<polygon class="hx" points="35,58 52,68 52,88 35,98 18,88 18,68"/>'
+      +   '<polygon class="hx" points="85,58 102,68 102,88 85,98 68,88 68,68"/>'
+      +   '<text class="hn" x="60" y="35" text-anchor="middle">1</text>'
+      +   '<text class="hn" x="35" y="83" text-anchor="middle">2</text>'
+      +   '<text class="hn" x="85" y="83" text-anchor="middle">3</text>'
+      + '</svg>'
+      + '<div class="magi-title glow">MAGI</div>'
+      + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
+      + '<div class="magi-ver">ver 2.0</div>'
+      + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('') + '</div>'
+      + '<div class="magi-desc hidden" aria-live="polite"></div>'
+      + '</div>';
+    const agentDockEl = document.getElementById('agentdock');
+    const agentLog = document.getElementById('agent-log');
+    const agentInput = document.getElementById('agent-input');
+    const agentSendBtn = document.getElementById('agent-send');
+    const agentDegraded = document.getElementById('agent-degraded');
+    const agentActBtn = document.querySelector('#activitybar [data-act="agent"]');
+    let agentHistory = [], agentBusy = false, agentDead = false;
+
+    const agentDockOpen = () => isMobile() ? agentDockEl.classList.contains('open') : !agentDockEl.classList.contains('collapsed');
+    function setAgentActive(on) { if (agentActBtn) agentActBtn.classList.toggle('active', on); }
+    function openAgentDock() {
+      if (isMobile()) agentDockEl.classList.add('open'); else agentDockEl.classList.remove('collapsed');
+      setAgentActive(true);
+      if (!agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
+      if (!agentDead) agentInput.focus();
+    }
+    function closeAgentDock() {
+      if (isMobile()) agentDockEl.classList.remove('open'); else agentDockEl.classList.add('collapsed');
+      setAgentActive(false);
+    }
+    function toggleAgentDock() { agentDockOpen() ? closeAgentDock() : openAgentDock(); }
+    // 初期状態：デスクトップは展開、モバイルはオーバーレイなので閉。フォーカスは奪わない。
+    function agentInitialState() {
+      if (isMobile()) { agentDockEl.classList.remove('open'); setAgentActive(false); }
+      else { agentDockEl.classList.remove('collapsed'); setAgentActive(true); }
+      if (agentDockOpen() && !agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
+    }
+    function resetAgent() {
+      agentHistory = []; agentBusy = false; agentDead = false;
+      agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
+      agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
+      agentDockEl.style.removeProperty('width');
+      agentInitialState();
+    }
+    const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
+    function agentDegrade(msg) {
+      agentDead = true;
+      agentDegraded.textContent = msg || 'ST Multi Agent はライブ環境（tk.st）でのみ動作します。Legacy MAGI ↗ は利用できます。';
+      agentDegraded.classList.remove('hidden');
+      agentInput.disabled = true; agentSendBtn.disabled = true;
+    }
+    function renderAgentError(env) {
+      const div = document.createElement('div'); div.className = 'agent-err fade-in';
+      const rid = env && env.request_id ? `<div class="agent-rid">request_id: ${esc(env.request_id)}</div>` : '';
+      div.innerHTML = `⚠ ${esc((env && env.message) || 'エラーが発生しました')}${rid}`;
+      agentLog.appendChild(div);
+      if (env && env.legacy_url) {
+        const a = document.createElement('div'); a.className = 'text-[10px] mt-1';
+        a.innerHTML = `<a href="${esc(env.legacy_url)}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Legacy MAGI を使う ↗</a>`;
+        agentLog.appendChild(a);
+      }
+      agentScroll();
+    }
+    async function parseSSE(body, handlers) {
+      const reader = body.getReader(); const dec = new TextDecoder(); let buf = '';
+      while (true) {
+        const { done, value } = await reader.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, i); buf = buf.slice(i + 2);
+          let ev = 'message', data = '';
+          block.split('\n').forEach(line => {
+            if (line.startsWith('event:')) ev = line.slice(6).trim();
+            else if (line.startsWith('data:')) data += line.slice(5).trim();
+          });
+          if (!data) continue;
+          let parsed; try { parsed = JSON.parse(data); } catch (_) { continue; }
+          if (handlers[ev]) handlers[ev](parsed);
+        }
+      }
+    }
+    async function agentSend() {
+      if (agentBusy || agentDead) return;
+      const text = agentInput.value.trim(); if (!text) return;
+      agentInput.value = '';
+      if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
+      const u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = `<span>${esc(text)}</span>`;
+      agentLog.appendChild(u);
+      const turn = document.createElement('div'); turn.className = 'fade-in';
+      turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
+        <div class="persona-card thinking" data-codename="${p.codename}">
+          <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
+          <div class="persona-text">…</div>
+        </div>`).join('')}</div>`;
+      const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
+      replyEl.innerHTML = `<span class="agent-who">✦ ST</span><span class="agent-reply-body"></span>`;
+      turn.appendChild(replyEl);
+      agentLog.appendChild(turn); agentScroll();
+      const replyBody = replyEl.querySelector('.agent-reply-body');
+
+      agentHistory.push({ role: 'user', content: text });
+      if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
+
+      agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true;
+      let reply = '', errored = false;
+      try {
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: agentHistory }) });
+        if (!res.ok || !res.body) {
+          let env = null; try { env = (await res.json()).error; } catch (_) {}
+          turn.remove(); renderAgentError(env || { message: `HTTP ${res.status}` }); errored = true;
+        } else {
+          await parseSSE(res.body, {
+            persona: (d) => {
+              const card = turn.querySelector(`.persona-card[data-codename="${d.codename}"]`);
+              if (card) { card.classList.remove('thinking'); card.querySelector('.persona-text').textContent = d.text; agentScroll(); }
+            },
+            integrated: (d) => { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
+            error: (d) => { errored = true; replyEl.remove(); renderAgentError(d); },
+            done: () => {},
+          });
+        }
+      } catch (err) {
+        turn.remove(); agentDegrade();
+      } finally {
+        replyEl.classList.remove('streaming');
+        agentBusy = false;
+        if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.focus(); }
+      }
+      if (reply && !errored) {
+        agentHistory.push({ role: 'assistant', content: reply });
+        if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
+      }
+    }
+    agentSendBtn.addEventListener('click', agentSend);
+    agentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
+    // スプラッシュの人格ノードをタップ → その人格の特徴を表示（トグル）
+    agentLog.addEventListener('click', (e) => {
+      const node = e.target.closest('.magi-node'); if (!node) return;
+      const splash = node.closest('.agent-splash'); if (!splash) return;
+      const desc = splash.querySelector('.magi-desc');
+      const wasActive = node.classList.contains('active');
+      splash.querySelectorAll('.magi-node').forEach(n => n.classList.remove('active'));
+      if (wasActive) { desc.classList.add('hidden'); return; }
+      const p = AGENT_PERSONAS.find(x => x.codename === node.dataset.codename);
+      node.classList.add('active');
+      desc.innerHTML = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(p.name)}</span>${esc(p.desc)}`;
+      desc.classList.remove('hidden');
+    });
+    agentInitialState();
 
     boot();
     renderExtensions();
