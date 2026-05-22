@@ -2010,6 +2010,11 @@
 
       agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true;
       let reply = '', errored = false;
+      const debateData = {};
+      AGENT_PERSONAS.forEach(p => {
+        debateData[p.codename] = { round1: '…', round2: '…' };
+      });
+
       try {
         const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: agentHistory }) });
         if (!res.ok || !res.body) {
@@ -2028,6 +2033,14 @@
               if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
               if (d.round === 2) card.classList.remove('thinking');
               agentScroll();
+
+              if (debateData[d.codename]) {
+                if (d.round === 2) {
+                  debateData[d.codename].round2 = d.text;
+                } else {
+                  debateData[d.codename].round1 = d.text;
+                }
+              }
             },
             integrated: (d) => { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
             error: (d) => { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
@@ -2043,7 +2056,7 @@
         if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
       }
       if (reply && !errored) {
-        agentHistory.push({ role: 'assistant', content: reply });
+        agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)) });
         if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
         localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
         updateAgentActionButtons();
@@ -2063,10 +2076,28 @@
           u.innerHTML = `<span>${esc(item.content)}</span>`;
           agentLog.appendChild(u);
         } else {
+          const turn = document.createElement('div');
+          turn.className = 'fade-in';
+
+          if (item.debate) {
+            turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => {
+              const deb = item.debate[p.codename] || { round1: '…', round2: '…' };
+              const r2Hidden = deb.round2 === '…' ? 'hidden' : '';
+              return `
+                <div class="persona-card" data-codename="${p.codename}">
+                  <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
+                  <div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">${esc(deb.round1)}</div></div>
+                  <div class="persona-round" data-round="2" ${r2Hidden}><span class="persona-round-label">After debate</span><div class="persona-text">${esc(deb.round2)}</div></div>
+                </div>`;
+            }).join('')}</div>`;
+          }
+
           const replyEl = document.createElement('div');
           replyEl.className = 'agent-reply';
           replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">${esc(item.content)}</span>`;
-          agentLog.appendChild(replyEl);
+          turn.appendChild(replyEl);
+
+          agentLog.appendChild(turn);
         }
       });
       agentScroll();
@@ -2142,13 +2173,13 @@
       }
 
       listContainer.innerHTML = sessions.map(session => `
-        <div class="flex items-center justify-between p-2 rounded border border-color hover:bg-surface-alt transition-colors group cursor-pointer" data-id="${session.id}">
-          <div class="flex-1 min-w-0 pr-2 btn-load-session" data-id="${session.id}">
+        <div class="flex items-center justify-between p-2 rounded border border-color hover:bg-surface-alt transition-colors group cursor-pointer w-full overflow-hidden" data-id="${session.id}">
+          <div class="flex-1 min-w-0 pr-2 overflow-hidden btn-load-session" data-id="${session.id}">
             <div class="truncate text-xs font-semibold text-text group-hover:text-primary transition-colors">${esc(session.title)}</div>
             <div class="text-[9px] text-secondary mt-0.5">${new Date(session.timestamp).toLocaleString()}</div>
           </div>
-          <button class="text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 btn-delete-session outline-none bg-transparent border-none" data-id="${session.id}" title="Delete chat">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <button class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session outline-none bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${session.id}" title="Delete chat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
       `).join('');
@@ -2221,9 +2252,26 @@
           md += `## 🧑‍💻 User\n${item.content}\n\n`;
         } else {
           md += `## ✦ ST Multi Agent\n${item.content}\n\n`;
+          if (item.debate) {
+            md += `### 🌐 MAGI Deliberation Process\n\n`;
+            AGENT_PERSONAS.forEach(p => {
+              const deb = item.debate[p.codename];
+              if (deb) {
+                md += `#### 🧬 ${p.codename} (${p.name})\n`;
+                if (deb.round1 && deb.round1 !== '…') {
+                  md += `* **Initial View:** ${deb.round1}\n`;
+                }
+                if (deb.round2 && deb.round2 !== '…') {
+                  md += `* **After Debate:** ${deb.round2}\n`;
+                }
+                md += `\n`;
+              }
+            });
+            md += `---\n\n`;
+          }
         }
       });
-      md += `---\n*Generated by ST Multi Agent (tk.st)*\n`;
+      md += `*Generated by ST Multi Agent (tk.st)*\n`;
       return md;
     }
 
