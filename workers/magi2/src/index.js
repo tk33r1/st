@@ -194,7 +194,7 @@ export default {
 
           // --- 統合コール（thinking・stream）---
           const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}\n  討議後: ${o.r2}`).join('\n');
-          const augmented = `${lastUser}\n\n[内部討議メモ：以下は3人格の初回意見と討議後の見解。これらを統合し、私(ST)として一人称で答える。人格名は出さない]\n${memo}`;
+          const augmented = `${lastUser}\n\n[内部討議メモ：以下は3人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
           const synthMessages = [
             { role: 'system', content: SYNTHESIZER.system_prompt },
             ...history,

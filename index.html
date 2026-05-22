@@ -527,7 +527,7 @@
     <div id="agentdock-resizer" role="separator" aria-orientation="vertical" aria-label="Resize agent panel" title="Drag to resize"></div>
     <aside id="agentdock" class="flex flex-col bg-surface border-l border-color" aria-label="ST Multi Agent">
      <div class="flex items-center justify-between px-3 py-2 border-b border-color bg-surface-alt">
-      <span class="text-[10px] tracking-wider text-primary glow">✦ ST MULTI AGENT</span>
+      <button id="btn-reset-agent" class="text-[10px] tracking-wider text-primary glow hover:opacity-80 transition-opacity cursor-pointer outline-none" title="Clear conversation history">✦ ST MULTI AGENT</button>
       <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="text-[10px] text-secondary hover:text-primary no-underline" title="Legacy MAGI deliberation (v1)">Legacy MAGI ↗</a>
      </div>
      <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs" aria-live="polite" aria-atomic="false"></div>
@@ -1949,7 +1949,7 @@
           <div class="persona-round" data-round="2" hidden><span class="persona-round-label">After debate</span><div class="persona-text">…</div></div>
         </div>`).join('')}</div>`;
       const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
-      replyEl.innerHTML = `<span class="agent-who">✦ ST</span><span class="agent-reply-body"></span>`;
+      replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>`;
       turn.appendChild(replyEl);
       agentLog.appendChild(turn); agentScroll();
       const replyBody = replyEl.querySelector('.agent-reply-body');
@@ -1998,6 +1998,7 @@
     }
     agentSendBtn.addEventListener('click', agentSend);
     agentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
+    document.getElementById('btn-reset-agent').addEventListener('click', resetAgent);
     // スプラッシュの人格ノードをタップ → その人格の特徴を表示（トグル）
     agentLog.addEventListener('click', (e) => {
       const node = e.target.closest('.magi-node'); if (!node) return;
