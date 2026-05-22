@@ -316,7 +316,7 @@
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
     /* right agent dock — ST Multi Agent */
-    #agentdock { width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; overflow: hidden; }
+    #agentdock { position: relative; width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; overflow: hidden; }
     #agentdock-header { height: 35px; flex-shrink: 0; }
     #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; touch-action: none; }
     #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color); }
@@ -1938,6 +1938,9 @@
 
       const panel = document.getElementById('agent-history-panel');
       if (panel) panel.remove();
+
+      const infoPanel = document.getElementById('agent-info-panel');
+      if (infoPanel) infoPanel.remove();
     }
     const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
     function agentDegrade(msg) {
