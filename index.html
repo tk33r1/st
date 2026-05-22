@@ -198,10 +198,10 @@
     body.system-destroyed #panel { border: none !important; background: transparent !important; box-shadow: none !important; }
     .rebuilding-element { transition: transform 1s ease-out, opacity 1s ease-out !important; transform: translate(0px, 0px) rotate(0deg) !important; opacity: 1 !important; pointer-events: auto !important; }
     body.choreomania-active { --mouse-x: 0.5; --mouse-y: 0.5; filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5); }
-    body.choreomania-active #app * { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; }
+    body.choreomania-active #app * { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; overflow: visible !important; }
     body.choreomania-active #app .fade-in { opacity: 1 !important; }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
     body.choreomania-active #app span:not(.hidden) { display: inline-block; }
     body.choreomania-active #app span.hidden { display: none !important; }
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
@@ -408,7 +408,7 @@
     <div id="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize side bar" title="Drag to resize"></div>
     <section id="editor-group" class="flex flex-col flex-1">
      <div id="tabbar" class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
-     <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate">tk.st</div>
+     <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate"><span>tk.st</span></div>
      <div id="editor" class="flex-1 p-4 md:p-6 space-y-1 relative" style="scroll-behavior:smooth;">
       <div id="output-area" aria-live="polite" aria-atomic="false"></div>
      </div>
@@ -437,16 +437,16 @@
 
    <footer id="terminal-footer" class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
     <div class="flex items-center gap-3 truncate">
-     <span class="text-primary">⎇ main</span>
-     <span id="status-left">⊘ 0  ⚠ 0</span>
+     <span class="text-primary"><span>⎇</span> <span>main</span></span>
+     <span id="status-left"><span>⊘</span> <span>0</span>  <span>⚠</span> <span>0</span></span>
     </div>
     <div class="flex items-center gap-3 whitespace-nowrap">
-     <span id="status-bpm" title="System BPM">♥ 60</span>
-     <span id="status-pos">Ln 1, Col 1</span>
-     <span id="status-lang" class="text-primary">Shell</span>
+     <span id="status-bpm" title="System BPM"><span>♥</span> <span>60</span></span>
+     <span id="status-pos"><span>Ln 1,</span> <span>Col 1</span></span>
+     <span id="status-lang" class="text-primary"><span>Shell</span></span>
      <span id="status-right"></span>
     </div>
-    <span class="opacity-50 whitespace-nowrap" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">© <span id="copyright-year"></span> Shinya Takeda</span>
+    <span class="opacity-50 whitespace-nowrap" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);"><span>©</span> <span id="copyright-year"></span> <span>Shinya Takeda</span></span>
    </footer>
   </div>
 
@@ -489,7 +489,7 @@
 
     function updateGitBadge() {
       if (DOM.badgeGit) {
-        DOM.badgeGit.textContent = unreadHistoryCount;
+        DOM.badgeGit.innerHTML = `<span>${unreadHistoryCount}</span>`;
         DOM.badgeGit.classList.toggle('hidden', unreadHistoryCount === 0);
       }
     }
@@ -523,8 +523,8 @@
     function recountProblems() {
       errorCount = problems.filter(p => p.sev === 'error').length;
       warnCount = problems.filter(p => p.sev === 'warn').length;
-      if (DOM.statusLeft) DOM.statusLeft.textContent = `⊘ ${errorCount}  ⚠ ${warnCount}`;
-      if (DOM.probBadge) { const n = errorCount + warnCount; DOM.probBadge.textContent = n; DOM.probBadge.classList.toggle('hidden', n === 0); }
+      if (DOM.statusLeft) DOM.statusLeft.innerHTML = `<span>⊘</span> <span>${errorCount}</span>  <span>⚠</span> <span>${warnCount}</span>`;
+      if (DOM.probBadge) { const n = errorCount + warnCount; DOM.probBadge.innerHTML = `<span>${n}</span>`; DOM.probBadge.classList.toggle('hidden', n === 0); }
       if (DOM.panelProblems && !DOM.panelProblems.classList.contains('hidden')) renderProblems();
     }
     function addProblem(sev, msg, opts = {}) {
@@ -603,7 +603,7 @@
       const offset = Math.max(0, DOM.mirror.offsetWidth - DOM.input.scrollLeft);
       DOM.caret.style.transform = `translateX(${offset}px)`;
       const sp = document.getElementById('status-pos');
-      if (sp) sp.textContent = `Ln 1, Col ${pos + 1}`;
+      if (sp) sp.innerHTML = `<span>Ln 1,</span> <span>Col ${pos + 1}</span>`;
     }
     const scrollTerminal = () => { DOM.terminal.scrollTop = DOM.terminal.scrollHeight; };
 
@@ -737,7 +737,7 @@
 
       const badgeExt = document.getElementById('badge-extensions');
       if (badgeExt) {
-        badgeExt.textContent = uninstalledCount;
+        badgeExt.innerHTML = `<span>${uninstalledCount}</span>`;
         badgeExt.classList.toggle('hidden', uninstalledCount === 0);
       }
     }
@@ -767,6 +767,13 @@
         const url = identifyBtn.getAttribute('href');
         if (url) { try { window.history.pushState({}, '', url); } catch (err) {} }
         await executeIdentifyVersion(identifyBtn.dataset.version, identifyBtn.dataset.id);
+      }
+
+      const projectLink = e.target.closest('[data-action="project-link"]');
+      if (projectLink) {
+        e.preventDefault();
+        const cmd = projectLink.dataset.cmd;
+        if (cmd) await handleCommand(cmd);
       }
     });
 
@@ -825,7 +832,7 @@
         const m = FILE_META[c] || { name: c, icon: '•' };
         return `<div class="ed-tab ${c === activeTab ? 'active' : ''}" data-tab="${c}"><span class="text-primary">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="Close">✕</span></div>`;
       }).join('');
-      DOM.breadcrumb.innerHTML = activeTab ? `tk.st <span class="opacity-50">›</span> ${esc(fileLabel(activeTab))}` : 'tk.st';
+      DOM.breadcrumb.innerHTML = activeTab ? `<span>tk.st</span> <span class="opacity-50">›</span> <span>${esc(fileLabel(activeTab))}</span>` : '<span>tk.st</span>';
       const div = document.createElement('div');
       div.className = 'fade-in';
       div.innerHTML = activeTab ? tabState[activeTab] : `<div class="my-3 text-xs text-secondary">No file open. Type a command in the terminal below, or open the <span class="text-normal font-bold">Explorer</span>.</div>`;
@@ -931,8 +938,13 @@
         </div>`;
       
       const container = document.getElementById(`identify-result-${targetId}`);
-      if (container) { container.innerHTML = result; }
-      else { const d = document.createElement('div'); d.className = 'fade-in my-4 w-[90%] max-w-[809px]'; d.innerHTML = result; DOM.output.appendChild(d); }
+      if (container) {
+        container.innerHTML = result;
+        // Persist the rendered profile into the tab's stored HTML so it survives tab switches / re-renders.
+        if (activeTab === 'identify' && tabState.identify !== undefined && DOM.output.firstElementChild) {
+          tabState.identify = DOM.output.firstElementChild.innerHTML;
+        }
+      } else { const d = document.createElement('div'); d.className = 'fade-in my-4 w-[90%] max-w-[809px]'; d.innerHTML = result; DOM.output.appendChild(d); }
     };
 
     const commands = {
@@ -946,6 +958,7 @@
         if (!args || args.length === 0) return `<div class="text-xs my-1 text-red-500">usage: sudo &lt;command&gt;</div>`;
         const targetCmd = args[0].toLowerCase();
         if (targetCmd !== 'akutagawa') {
+          addProblem('error', `${targetCmd} is not allowed to be executed with sudo`, { file: 'terminal' });
           return `<div class="text-xs my-1 text-red-500">${esc(targetCmd)} is not allowed to be executed with sudo.</div>`;
         }
         if (!installedExtensions.has('akutagawa')) {
@@ -971,7 +984,7 @@
       pages: () => wrapCmd(`
           <div class="text-sm font-bold glow mb-2 text-primary">Explore Web2 creations</div>
           <div class="space-y-2">
-            ${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(p.desc)}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}
+            ${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" data-action="project-link" data-cmd="${esc(p.name)}" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(p.desc)}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}
           </div>
         `, 'space-y-2'),
       identify() {
@@ -1023,7 +1036,7 @@
         const newBpm = Math.max(1, Math.min(999, parseInt(args[0], 10)));
         document.documentElement.style.setProperty('--bpm', newBpm);
         const bpmEl = document.getElementById('status-bpm');
-        if (bpmEl) bpmEl.innerHTML = `♥ ${newBpm}`;
+        if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>${newBpm}</span>`;
         return `<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`;
       },
       destroy() {
@@ -1295,7 +1308,6 @@
       historyIndex = -1;
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
       setActiveTree(cmd);
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
       if (isDestroyed && cmd !== 'rebuild') {
         addProblem('warn', 'command rejected — system is destroyed', { file: 'terminal' });
@@ -1393,7 +1405,6 @@
       } else if (e.key === 'Tab') {
         e.preventDefault(); 
         const val = DOM.input.value.toLowerCase(); if (!val) return;
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         let availableCommands = Object.keys(commands);
         availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
         const matches = availableCommands.filter(c => c.startsWith(val));
@@ -1436,7 +1447,7 @@
       document.documentElement.style.removeProperty('--primary-bg-hover');
       document.documentElement.style.removeProperty('--bpm');
       const bpmEl = document.getElementById('status-bpm');
-      if (bpmEl) bpmEl.innerHTML = `♥ 60`;
+      if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>60</span>`;
       setActiveTree(null);
 
       if (document.documentElement.getAttribute('data-theme') === 'dark') applyTheme(false);
@@ -1444,7 +1455,7 @@
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
       document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
-      DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = 'tk.st';
+      DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
       DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
       document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
       if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
@@ -1575,7 +1586,6 @@
     function renderSearch(q) {
       q = (q || '').trim().toLowerCase();
       if (!q) { searchCount.textContent = ''; searchResults.innerHTML = ''; return; }
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const cmds = Object.keys(commands).filter(c => installedExtensions.has(c === 'rebuild' ? 'destroy' : c) || !hiddenCommands.includes(c)).sort();
       const matches = cmds.filter(c => (SEARCH_INDEX[c] || '').includes(q));
       searchCount.textContent = `${matches.length} result${matches.length === 1 ? '' : 's'}`;
