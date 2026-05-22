@@ -549,6 +549,7 @@
      <div id="agentdock-header" class="flex items-center justify-between px-3 border-b border-color bg-surface-alt">
       <button id="btn-reset-agent" class="text-xs tracking-wider text-primary glow hover:opacity-80 transition-opacity cursor-pointer outline-none" title="Clear conversation history"><span class="text-sm inline-block">✦</span> ST MULTI AGENT</button>
       <div class="flex items-center gap-2.5">
+        <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="Privacy & System Information"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
         <button id="btn-history-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="View conversation history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
         <button id="btn-share-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center opacity-30" style="pointer-events: none;" title="Share/Copy conversation"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
         <button id="btn-export-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center opacity-30" style="pointer-events: none;" title="Export conversation as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
@@ -2135,6 +2136,9 @@
     }
 
     function showHistoryPanel() {
+      const infoPanel = document.getElementById('agent-info-panel');
+      if (infoPanel) infoPanel.remove();
+
       let panel = document.getElementById('agent-history-panel');
       if (panel) {
         panel.remove();
@@ -2143,8 +2147,12 @@
       
       panel = document.createElement('div');
       panel.id = 'agent-history-panel';
-      panel.className = 'absolute inset-0 bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
+      panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
+      panel.style.position = 'absolute';
       panel.style.top = '35px';
+      panel.style.bottom = '0';
+      panel.style.left = '0';
+      panel.style.right = '0';
       
       panel.innerHTML = `
         <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
@@ -2222,6 +2230,53 @@
       renderSavedSessionsList();
     }
 
+    function showInfoPanel() {
+      let panel = document.getElementById('agent-info-panel');
+      if (panel) {
+        panel.remove();
+        return;
+      }
+
+      const histPanel = document.getElementById('agent-history-panel');
+      if (histPanel) histPanel.remove();
+
+      panel = document.createElement('div');
+      panel.id = 'agent-info-panel';
+      panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
+      panel.style.position = 'absolute';
+      panel.style.top = '35px';
+      panel.style.bottom = '0';
+      panel.style.left = '0';
+      panel.style.right = '0';
+
+      panel.innerHTML = `
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
+          <span class="font-bold text-[10px] tracking-widest text-primary uppercase">System & Privacy</span>
+          <button id="btn-close-info-panel" class="text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ CLOSE</button>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-text leading-relaxed">
+          <ul class="space-y-1.5 list-disc pl-4 text-secondary">
+            <li>A multi-agent system with 3 debating personas modeled on <strong class="text-text">Shinya Takeda's personality</strong>.</li>
+            <li>Daily usage limit: up to <strong class="text-text">24 requests</strong> per day.</li>
+            <li>Max <strong class="text-text">12 rounds</strong> of conversation per session.</li>
+            <li>Inputs are <strong class="text-text">never saved</strong> on Shinya Takeda's server.</li>
+            <li>Chat history is stored locally in your browser's <strong class="text-text">Local Storage</strong>.</li>
+            <li>Local Storage is not permanent; please <strong class="text-text">export/download</strong> important chats.</li>
+            <li>Powered by <strong class="text-text">DeepSeek API</strong>.</li>
+            <li>Inputs are transmitted to <strong class="text-text">China</strong> and may be used for AI training.</li>
+            <li class="text-red-500 font-semibold">DO NOT input any confidential or personal information.</li>
+          </ul>
+        </div>
+      `;
+
+      document.getElementById('agentdock').appendChild(panel);
+
+      document.getElementById('btn-close-info-panel').addEventListener('click', () => {
+        panel.remove();
+      });
+    }
+
+    document.getElementById('btn-info-agent').addEventListener('click', showInfoPanel);
     document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
 
     // エクスポート＆共有ロジック

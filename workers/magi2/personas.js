@@ -7,7 +7,7 @@ export const DEFAULTS = {
   temperature: 1.0, // DeepSeek 推奨
   top_p: 1.0,       // DeepSeek 推奨
   history_max_messages: 12, // サーバ側の防御的 trim
-  daily_limit: 30,  // IP×日次の上限（メッセージ数）
+  daily_limit: 24,  // IP×日次の上限（メッセージ数）
   timeouts: { persona_ms: 30000, synthesizer_ms: 60000 },
   models: {
     // 3人格：no-think・並列・短文
