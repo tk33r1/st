@@ -10,7 +10,7 @@ routes = [
 [[d1_databases]]
 binding       = "DB"
 database_name = "tk-st-magi2-db"
-database_id   = "REPLACE_AFTER_CREATE"   # `wrangler d1 create tk-st-magi2-db` の出力で差し替え
+database_id   = "4dbc95fd-68c8-4dd4-9278-512630e00b88"
 
 # セットアップ手順:
 #   1) wrangler d1 create tk-st-magi2-db                 # 出力の database_id を上に貼る
