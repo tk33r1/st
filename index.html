@@ -259,7 +259,7 @@
     .ed-tab:hover .tab-close, .ed-tab.active .tab-close { opacity: 0.6; }
     .ed-tab .tab-close:hover { opacity: 1; }
     /* bottom terminal panel */
-    #panel { flex-shrink: 0; height: 38%; min-height: 6rem; }
+    #panel { flex-shrink: 0; height: 28.5%; min-height: 6rem; }
     .panel-tab { padding: 0.35rem 0.75rem; border-bottom: 2px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: color 0.15s; }
     .panel-tab:hover { color: var(--text-color); }
     .panel-tab.active { color: var(--text-color); border-bottom-color: var(--primary-color); }
@@ -280,7 +280,7 @@
     @media (max-width: 767px) {
       #sidebar { position: fixed; top: 0; bottom: 0; left: 3rem; transform: translateX(-130%); transition: transform 0.25s ease; z-index: 50; box-shadow: 0 0 24px rgba(0,0,0,0.35); }
       #sidebar.open { transform: translateX(0); }
-      #panel { height: 45%; }
+      #panel { height: 33.75%; }
       #sidebar-resizer { display: none; }
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
@@ -466,7 +466,13 @@
       statusRight: document.getElementById('status-right'),
 
       mirror: document.getElementById('cmd-mirror'),
-      caret: document.getElementById('custom-caret')
+      caret: document.getElementById('custom-caret'),
+      badgeGit: document.getElementById('badge-git'),
+      statusLeft: document.getElementById('status-left'),
+      probBadge: document.getElementById('panel-problems-badge'),
+      panelProblems: document.getElementById('panel-problems'),
+      panelOutput: document.getElementById('panel-output'),
+      panelPorts: document.getElementById('panel-ports')
     };
     const delay = ms => new Promise(r => setTimeout(r, ms));
     const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
@@ -482,10 +488,9 @@
     let unreadHistoryCount = 0;
 
     function updateGitBadge() {
-      const badgeGit = document.getElementById('badge-git');
-      if (badgeGit) {
-        badgeGit.textContent = unreadHistoryCount;
-        badgeGit.classList.toggle('hidden', unreadHistoryCount === 0);
+      if (DOM.badgeGit) {
+        DOM.badgeGit.textContent = unreadHistoryCount;
+        DOM.badgeGit.classList.toggle('hidden', unreadHistoryCount === 0);
       }
     }
 
@@ -518,19 +523,16 @@
     function recountProblems() {
       errorCount = problems.filter(p => p.sev === 'error').length;
       warnCount = problems.filter(p => p.sev === 'warn').length;
-      const el = document.getElementById('status-left');
-      if (el) el.textContent = `⊘ ${errorCount}  ⚠ ${warnCount}`;
-      const badge = document.getElementById('panel-problems-badge');
-      if (badge) { const n = errorCount + warnCount; badge.textContent = n; badge.classList.toggle('hidden', n === 0); }
-      const pane = document.getElementById('panel-problems');
-      if (pane && !pane.classList.contains('hidden')) renderProblems();
+      if (DOM.statusLeft) DOM.statusLeft.textContent = `⊘ ${errorCount}  ⚠ ${warnCount}`;
+      if (DOM.probBadge) { const n = errorCount + warnCount; DOM.probBadge.textContent = n; DOM.probBadge.classList.toggle('hidden', n === 0); }
+      if (DOM.panelProblems && !DOM.panelProblems.classList.contains('hidden')) renderProblems();
     }
     function addProblem(sev, msg, opts = {}) {
       problems.push({ sev, msg, file: opts.file || 'terminal', line: opts.line || 0, cmd: opts.cmd || FILE_CMD[opts.file] || null });
       recountProblems();
     }
     function renderProblems() {
-      const pane = document.getElementById('panel-problems');
+      const pane = DOM.panelProblems;
       if (!pane) return;
       if (!problems.length) { pane.innerHTML = `<div class="text-secondary opacity-70">No problems have been detected.</div>`; return; }
       pane.innerHTML = problems.map((p, i) => {
@@ -548,7 +550,7 @@
     const systemLog = [{ t: new Date(), channel: 'System', msg: 'boot sequence complete' }];
     let outputChannel = 'All';
     function renderOutput() {
-      const pane = document.getElementById('panel-output');
+      const pane = DOM.panelOutput;
       if (!pane) return;
       const channels = ['All', 'System', 'Extensions', 'Theme'];
       const rows = systemLog.filter(e => outputChannel === 'All' || e.channel === outputChannel);
@@ -572,7 +574,7 @@
       { port: 4040, svc: 'ko-fi / shinyatakeda',    proto: 'http',    state: 'Running',   url: 'https://ko-fi.com/shinyatakeda' }
     ];
     function renderPorts() {
-      const pane = document.getElementById('panel-ports');
+      const pane = DOM.panelPorts;
       if (!pane) return;
       pane.innerHTML =
         `<div class="port-row text-secondary" style="border-bottom-width:2px"><span class="port-num">PORT</span><span class="flex-1">SERVICE</span><span class="whitespace-nowrap">STATE</span><span style="width:3.2rem"></span></div>` +
@@ -1214,9 +1216,15 @@
       commands[cmd] = () => {
         const label = cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : (cmd === 'web3' ? 'Web3 page' : cmd));
         const win = window.open(url, '_blank', 'noopener,noreferrer');
+        let labelHtml = `<span class="text-primary">${esc(label)}</span>`;
+        if (cmd === 'web3') labelHtml = '<span class="text-primary">Web3</span> page';
+        if (cmd === 'contact') labelHtml = '<span class="text-primary">contact</span> page';
+
         // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to a clickable link.
-        if (!win) return `<div class="my-3 text-xs text-primary">Open ${esc(label)}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`;
-        return `<div class="my-3 text-xs text-primary">Opening ${esc(label)}...</div>`;
+        if (!win) {
+          return `<div class="my-3 text-xs text-secondary">Open ${labelHtml}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`;
+        }
+        return `<div class="my-3 text-xs text-secondary">Opening ${labelHtml}...</div>`;
       };
     });
 
@@ -1365,10 +1373,12 @@
         await handleCommand(val); 
       } else if (e.key === 'ArrowUp') { 
         e.preventDefault(); 
-        if (historyIndex < commandHistory.length - 1) { DOM.input.value = commandHistory[++historyIndex]; updateCaret(); }
+        if (historyIndex < commandHistory.length - 1) { DOM.input.value = commandHistory[++historyIndex]; }
+        updateCaret();
       } else if (e.key === 'ArrowDown') { 
         e.preventDefault(); 
-        if (historyIndex > 0) { DOM.input.value = commandHistory[--historyIndex]; updateCaret(); } else { historyIndex = -1; DOM.input.value = ''; updateCaret(); }
+        if (historyIndex > 0) { DOM.input.value = commandHistory[--historyIndex]; } else { historyIndex = -1; DOM.input.value = ''; }
+        updateCaret();
       } else if (e.key === 'Tab') {
         e.preventDefault(); 
         const val = DOM.input.value.toLowerCase(); if (!val) return;
@@ -1486,7 +1496,7 @@
       matrix: { name: 'matrix.bin', icon: '░' },
       meditation: { name: 'meditation.bin', icon: '○' },
       theme: { name: 'theme.css', icon: '#' },
-      web3: { name: 'web3.url', icon: '⬡' }
+      web3: { name: 'web3.html', icon: '⬡' }
     };
     const treeMeta = c => FILE_META[c] || FILE_ICONS[c] || { name: c, icon: '•' };
     const sidebarTree = document.getElementById('sidebar-tree');
