@@ -54,7 +54,8 @@
     <style>
         body {
             font-family: 'Noto Sans JP', sans-serif;
-            background: radial-gradient(circle at center, #3e1f08 0%, #1a0b02 100%);
+            /* ゴアの夜: テラコッタの壁にアズレージョ藍が滲む */
+            background: radial-gradient(circle at 50% 28%, #4a1c0a 0%, #1a0d06 68%, #0c1538 100%);
             color: #fff;
             overflow: hidden;
             touch-action: none;
@@ -68,9 +69,10 @@
         }
         .font-masala { font-family: 'Cinzel Decorative', cursive; }
 
+        /* アズレージョ(ポルトガル藍タイル)模様: 藍の星章 + テラコッタの結節点 */
         .pattern-bg {
             background-color: #2a1205;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d97706' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%233b82f6' stroke-opacity='0.22' stroke-width='1.5'%3E%3Ccircle cx='40' cy='40' r='13'/%3E%3Cpath d='M40 6 L47 33 L74 40 L47 47 L40 74 L33 47 L6 40 L33 33 Z'/%3E%3C/g%3E%3Cg fill='%23f59e0b' fill-opacity='0.13'%3E%3Ccircle cx='40' cy='40' r='3'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='80' cy='0' r='4'/%3E%3Ccircle cx='0' cy='80' r='4'/%3E%3Ccircle cx='80' cy='80' r='4'/%3E%3C/g%3E%3C/svg%3E");
         }
 
         .main-content-wrapper {
@@ -84,36 +86,39 @@
 
         .game-container {
             position: relative;
-            border: 4px solid #d97706;
+            border: 4px solid #2563eb;                 /* アズレージョ藍の枠 */
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(217, 119, 6, 0.5);
-            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 0 2px rgba(254,243,199,0.28), 0 0 24px rgba(37,99,235,0.45);  /* クリームの細線 + 藍グロー */
+            background: rgba(8, 12, 28, 0.92);          /* 釉薬のような深藍黒 */
             margin: 0 auto;
             overflow: hidden;
         }
         canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
 
+        /* 釉薬タイル風パネル: 深藍グラデ + クリーム細線 */
         .panel-box {
-            background: linear-gradient(to bottom, #5a2508, #351202);
-            border: 1px solid #b45309;
+            background: linear-gradient(to bottom, #16306b, #0a1a3e);
+            border: 1px solid #2563eb;
             border-radius: 6px;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.6), 0 0 0 1px rgba(254,243,199,0.12);
         }
 
+        /* 主要CTA: スパイス市場の温色(テラコッタ→チリ赤) + クリーム縁 */
         .btn-masala {
-            background: linear-gradient(45deg, #d97706, #b45309);
-            border: 2px solid #fcd34d;
-            color: white;
+            background: linear-gradient(45deg, #ea580c, #b91c1c);
+            border: 2px solid #fde68a;
+            color: #fff;
             text-shadow: 1px 1px 2px black;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4), 0 0 14px rgba(234,88,12,0.4);
             transition: all 0.1s;
         }
         .btn-masala:active { transform: scale(0.95); }
         .btn-masala:disabled { filter: grayscale(100%); opacity: 0.6; transform: none; }
 
+        /* シヴァ神: 宇宙的なコバルト藍の釉薬 */
         .btn-shiva {
-            background: linear-gradient(135deg, #4f46e5, #312e81);
-            border: 2px solid #818cf8;
+            background: linear-gradient(135deg, #1e3a8a, #312e81);
+            border: 2px solid #93c5fd;
             position: relative;
             overflow: hidden;
         }
@@ -131,7 +136,7 @@
             100% { transform: translateX(100%) rotate(45deg); }
         }
 
-        .maharaja-box { border-left: 4px solid #f59e0b; background: rgba(0, 0, 0, 0.6); }
+        .maharaja-box { border-left: 4px solid #2563eb; background: rgba(8, 16, 40, 0.7); }
         .ai-thinking { animation: pulse-gold 1.5s infinite; border-color: #a855f7; }
         @keyframes pulse-gold {
             0% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4); }
@@ -161,25 +166,25 @@
         }
 
         .control-btn {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(217, 119, 6, 0.5);
+            background: rgba(37, 99, 235, 0.18);
+            border: 1px solid rgba(147, 197, 253, 0.5);
             border-radius: 50%;
             backdrop-filter: blur(4px);
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
             touch-action: manipulation;
         }
-        .control-btn:active { background: rgba(245, 158, 11, 0.6); transform: scale(0.95); }
+        .control-btn:active { background: rgba(37, 99, 235, 0.55); transform: scale(0.95); }
 
-        .input-masala { background: rgba(0,0,0,0.5); border: 1px solid #d97706; color: #fcd34d; text-align: center; }
+        .input-masala { background: rgba(0,0,0,0.5); border: 1px solid #2563eb; color: #fde68a; text-align: center; }
 
-        /* 難易度ボタン */
+        /* 難易度ボタン: 選択時はスパイス温色の釉薬 + 藍グロー */
         .diff-btn {
-            border: 2px solid #b45309;
-            background: rgba(0,0,0,0.4);
+            border: 2px solid #1e3a8a;
+            background: rgba(8,16,40,0.5);
             transition: all 0.15s;
         }
-        .diff-btn.selected { border-color: #fcd34d; background: linear-gradient(45deg, #d97706, #b45309); box-shadow: 0 0 12px rgba(252,211,77,0.5); }
+        .diff-btn.selected { border-color: #fde68a; background: linear-gradient(45deg, #ea580c, #b91c1c); box-shadow: 0 0 14px rgba(37,99,235,0.6); }
 
         /* 鍋ゲージ用スパイスチップ */
         .spice-chip {
@@ -212,9 +217,11 @@
             .mobile-only { display: none !important; }
             .desktop-only { display: flex !important; }
             .desktop-sidebar { height: 80vh; max-height: 800px; }
-            /* VERSUS: サイドバーを隠して2盤面を並べる */
-            body.versus .desktop-sidebar { display: none !important; }
-            body.versus .game-container, body.versus #ai-container { height: 78vh; max-height: 760px; }
+            /* VERSUS: 2盤面を中央に並べつつ、サイドバー(NEXT/HOLD/POT/シヴァ神)は縮めて維持 */
+            body.versus .main-content-wrapper { gap: 0.75rem; }
+            body.versus .desktop-sidebar { width: 9.5rem; height: 74vh; max-height: 700px; }
+            body.versus .game-container, body.versus #ai-container { height: 74vh; max-height: 700px; margin: 0; }
+            body.versus .versus-hide { display: none !important; }
         }
         @media (max-width: 767px) {
             .main-content-wrapper { flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px; }
@@ -225,18 +232,18 @@
             body.versus #ai-container {
                 position: fixed; top: 56px; right: 6px; z-index: 25;
                 height: 30dvh; max-height: 260px; width: auto; aspect-ratio: 10/20;
-                border-width: 2px; box-shadow: 0 0 12px rgba(147,51,234,0.6);
+                border-width: 2px; box-shadow: 0 0 12px rgba(220,38,38,0.6);
             }
         }
-        /* AI盤面の枠色 */
-        #ai-container { border-color: #9333ea; box-shadow: 0 0 20px rgba(147,51,234,0.5); }
+        /* AI盤面の枠色: ライバルの灼熱(チリ赤)。自分の盤面=アズレージョ藍と対比 */
+        #ai-container { border-color: #dc2626; box-shadow: 0 0 20px rgba(220,38,38,0.5); }
         #ai-container.hidden { display: none !important; }
     </style>
 </head>
 <body class="pattern-bg">
 
     <!-- ヘッダー -->
-    <header class="w-full p-2 flex justify-between items-center bg-black/60 border-b border-amber-800 shrink-0 z-10 h-14">
+    <header class="w-full p-2 flex justify-between items-center bg-black/60 border-b-2 border-blue-700 shrink-0 z-10 h-14">
         <div class="flex items-center gap-2 overflow-hidden">
             <button id="mute-btn" class="w-8 h-8 rounded-full bg-amber-900/80 border border-amber-500 flex items-center justify-center text-amber-400 mr-1">
                 <i class="fas fa-volume-up"></i>
@@ -307,14 +314,14 @@
                         <div class="text-xs text-green-300 mb-1">REN</div>
                         <div id="pc-ren" class="text-xl font-masala text-green-400 leading-none">0</div>
                     </div>
-                    <div class="w-px h-8 bg-amber-800/50"></div>
-                    <div class="text-center">
+                    <div class="w-px h-8 bg-amber-800/50 versus-hide"></div>
+                    <div class="text-center versus-hide">
                         <div class="text-xs text-yellow-300 mb-1">ルピー</div>
                         <div id="pc-rupees" class="text-xl font-masala text-yellow-300 leading-none">0</div>
                     </div>
                 </div>
-                <!-- ノルマ進捗 -->
-                <div class="panel-box p-3">
+                <!-- ノルマ進捗 (ローグライト専用) -->
+                <div class="panel-box p-3 versus-hide">
                     <div class="flex justify-between text-[10px] text-amber-300 mb-1"><span>ノルマ (役完成)</span><span id="pc-quota-text">0/2</span></div>
                     <div class="w-full bg-black h-2 rounded-full overflow-hidden border border-gray-600">
                         <div id="pc-quota-bar" class="h-full bg-amber-500 transition-all duration-300" style="width:0%"></div>
@@ -341,7 +348,8 @@
             <!-- START SCREEN -->
             <div id="start-screen" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20 backdrop-blur-sm px-4">
                 <h1 id="main-title" class="font-masala text-3xl md:text-4xl text-amber-400 mb-1 text-center drop-shadow-lg leading-tight">Masala Tetris<br><span class="text-red-500">VINDALOO</span></h1>
-                <p class="text-amber-100 text-[10px] mb-3 text-center">Spice Combo / Roguelite / AI Versus</p>
+                <div class="text-blue-400 text-xs tracking-[0.4em] opacity-80 mb-1" aria-hidden="true">◆&nbsp;✦&nbsp;◆</div>
+                <p class="text-amber-100 text-[10px] mb-3 text-center">Goan Spice Bazaar · Roguelite · AI Versus</p>
 
                 <!-- モード選択 -->
                 <div class="w-full max-w-[220px] mb-3">
@@ -412,7 +420,7 @@
             <canvas id="ai-tetris"></canvas>
             <!-- AIラベル -->
             <div class="absolute top-0 left-0 right-0 bg-black/70 px-2 py-1 flex justify-between items-center z-10">
-                <span class="text-[10px] text-purple-300"><span id="ai-name">AI</span></span>
+                <span class="text-[10px] text-red-300 font-bold"><span id="ai-name">AI</span></span>
                 <span class="text-[10px] text-red-400">送り: <span id="ai-incoming">0</span></span>
             </div>
             <!-- KO演出 -->
@@ -439,9 +447,10 @@
 
             <div class="panel-box p-3 text-xs text-amber-100">
                 <h3 class="font-bold text-amber-400 border-b border-amber-700 pb-1 mb-2">Controls</h3>
-                <div class="mb-1">← → : 移動</div>
-                <div class="mb-1">↑ / X : 回転</div>
-                <div class="mb-1">↓ : ソフトドロップ</div>
+                <div class="mb-1">← → / A D : 移動</div>
+                <div class="mb-1">↑ / W / X : 回転</div>
+                <div class="mb-1">Z / Q : 逆回転</div>
+                <div class="mb-1">↓ / S : ソフトドロップ</div>
                 <div class="mb-1">Space : ハードドロップ</div>
                 <div>C / Shift : ホールド</div>
             </div>
@@ -613,121 +622,281 @@ const AI_PROFILES = {
 };
 
 /* =========================================================================
-   サウンド (DXのWeb Audio合成エンジンを継承)
+   サウンド (Web Audio 合成エンジン / 全面刷新版)
+   音源: プラック・シタール・タブラ・ベル(FM)・ブーム・タンプーラ。
+   マスターはコンプ + 生成IRリバーブ。BGMはctxクロック先読みシーケンサ。
+   旋律はフリギア・ドミナント旋法(0,1,4,5,7,8,10)でマサラ感を出す。
    ========================================================================= */
 const SoundManager = {
-    ctx: null, isMuted: false, gainNode: null, bgmTimer: null,
+    ctx: null, isMuted: false, gainNode: null, comp: null, reverbGain: null,
+    bgmTimer: null, bgmOn: false, drones: [],
+    bpm: 104, step16: 0.144, bgmStep: 0, nextNoteTime: 0,
+
     init() {
         if (this.ctx) return;
         const AC = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AC();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        // マスター: bus(ミュート対象) -> コンプ -> 出力
         this.gainNode = this.ctx.createGain();
-        this.gainNode.gain.value = 0.15;
-        this.gainNode.connect(this.ctx.destination);
+        this.gainNode.gain.value = this.isMuted ? 0 : 0.85;
+        this.comp = this.ctx.createDynamicsCompressor();
+        this.comp.threshold.value = -16; this.comp.knee.value = 22;
+        this.comp.ratio.value = 3; this.comp.attack.value = 0.004; this.comp.release.value = 0.25;
+        this.gainNode.connect(this.comp); this.comp.connect(this.ctx.destination);
+        // リバーブ送り (合成インパルス応答)
+        const rev = this.ctx.createConvolver(); rev.buffer = this._impulse(1.7, 2.6);
+        this.reverbGain = this.ctx.createGain(); this.reverbGain.gain.value = 0.20;
+        this.gainNode.connect(rev); rev.connect(this.reverbGain); this.reverbGain.connect(this.comp);
     },
+
+    _impulse(seconds, decay) {
+        const rate = this.ctx.sampleRate, len = Math.floor(rate * seconds);
+        const buf = this.ctx.createBuffer(2, len, rate);
+        for (let ch = 0; ch < 2; ch++) {
+            const d = buf.getChannelData(ch);
+            for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+        }
+        return buf;
+    },
+
     toggleMute() {
         this.isMuted = !this.isMuted;
-        if (this.gainNode) this.gainNode.gain.value = this.isMuted ? 0 : 0.15;
+        if (this.gainNode) this.gainNode.gain.value = this.isMuted ? 0 : 0.85;
         const icon = document.querySelector('#mute-btn i');
         if (icon) icon.className = this.isMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
     },
-    playTone(freq, type='sine', duration=0.1, vol=1.0) {
-        if (this.isMuted || !this.ctx) return;
-        const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+
+    // フリギア・ドミナント基準のヘルツ (C4=261.63 を基音)
+    hz(semi) { return 261.63 * Math.pow(2, semi / 12); },
+    _t(t) { return t == null ? this.ctx.currentTime : t; },
+
+    /* ---------- 基本ボイス ---------- */
+    playTone(freq, type = 'sine', duration = 0.1, vol = 0.5, t) {
+        if (!this.ctx) return;
+        t = this._t(t);
+        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
         osc.type = type; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-        osc.connect(gain); gain.connect(this.gainNode);
-        osc.start(); osc.stop(this.ctx.currentTime + duration);
+        g.gain.setValueAtTime(Math.max(0.0001, vol), t);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + duration);
+        osc.connect(g); g.connect(this.gainNode);
+        osc.start(t); osc.stop(t + duration + 0.02);
     },
-    playSitar(note, length=0.3) {
-        if (this.isMuted || !this.ctx) return;
-        const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), filter = this.ctx.createBiquadFilter();
-        osc.type='sawtooth'; osc.frequency.value=note;
-        filter.type='lowpass'; filter.Q.value=5;
-        filter.frequency.setValueAtTime(note*2, this.ctx.currentTime);
-        filter.frequency.exponentialRampToValueAtTime(note, this.ctx.currentTime+length);
-        gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+length);
-        osc.connect(filter); filter.connect(gain); gain.connect(this.gainNode);
-        osc.start(); osc.stop(this.ctx.currentTime+length);
-        const drone = this.ctx.createOscillator(), dg = this.ctx.createGain();
-        drone.type='triangle'; drone.frequency.value=note*1.5;
-        dg.gain.setValueAtTime(0.1, this.ctx.currentTime);
-        dg.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+length);
-        drone.connect(dg); dg.connect(this.gainNode);
-        drone.start(); drone.stop(this.ctx.currentTime+length);
+
+    // 撥弦(サントゥール/プラック): デチューン2層 + 閉じるLPF + 速いアタック
+    pluck(freq, t, dur = 0.5, vol = 0.22, bright = 6) {
+        if (!this.ctx) return;
+        const c = this.ctx; t = this._t(t);
+        const o1 = c.createOscillator(), o2 = c.createOscillator();
+        const lp = c.createBiquadFilter(), g = c.createGain();
+        o1.type = 'triangle'; o1.frequency.value = freq;
+        o2.type = 'sawtooth'; o2.frequency.value = freq * 2; o2.detune.value = 6;
+        lp.type = 'lowpass'; lp.Q.value = 1;
+        lp.frequency.setValueAtTime(freq * bright, t);
+        lp.frequency.exponentialRampToValueAtTime(Math.max(160, freq * 1.4), t + dur);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+        const o2g = c.createGain(); o2g.gain.value = 0.35;
+        o1.connect(lp); o2.connect(o2g); o2g.connect(lp); lp.connect(g); g.connect(this.gainNode);
+        o1.start(t); o2.start(t); o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
     },
-    playTabla(type) {
-        if (this.isMuted || !this.ctx) return;
-        if (type==='high') { this.playTone(400,'sine',0.1,0.8); return; }
-        const osc=this.ctx.createOscillator(), gain=this.ctx.createGain();
-        osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime+0.2);
-        gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+0.2);
-        osc.connect(gain); gain.connect(this.gainNode);
-        osc.start(); osc.stop(this.ctx.currentTime+0.2);
+
+    // シタール(主旋律): 鋸波 + 共鳴LPF + ビブラート + 倍音バズ
+    sitar(freq, t, dur = 0.6, vol = 0.2) {
+        if (!this.ctx) return;
+        const c = this.ctx; t = this._t(t);
+        const osc = c.createOscillator(), lp = c.createBiquadFilter(), g = c.createGain();
+        osc.type = 'sawtooth'; osc.frequency.value = freq;
+        lp.type = 'lowpass'; lp.Q.value = 9;
+        lp.frequency.setValueAtTime(freq * 4, t);
+        lp.frequency.exponentialRampToValueAtTime(freq * 1.3, t + dur);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+        // ビブラート
+        const lfo = c.createOscillator(), lg = c.createGain();
+        lfo.frequency.value = 5.5; lg.gain.value = freq * 0.012;
+        lfo.connect(lg); lg.connect(osc.frequency);
+        osc.connect(lp); lp.connect(g); g.connect(this.gainNode);
+        osc.start(t); lfo.start(t); osc.stop(t + dur + 0.05); lfo.stop(t + dur + 0.05);
     },
+    playSitar(note, length = 0.4) { this.sitar(note, null, length, 0.2); },  // 旧API互換
+
+    // タブラ: 'bass'=バヤン(低・グリス) / 'open'=ダヤン共鳴 / 'slap'=鋭打
+    tabla(kind = 'bass', t, vol = 0.5) {
+        if (!this.ctx) return;
+        const c = this.ctx; t = this._t(t);
+        if (kind === 'bass') {
+            const o = c.createOscillator(), g = c.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(200, t);
+            o.frequency.exponentialRampToValueAtTime(72, t + 0.18);
+            g.gain.setValueAtTime(vol, t);
+            g.gain.exponentialRampToValueAtTime(0.0008, t + 0.3);
+            o.connect(g); g.connect(this.gainNode);
+            o.start(t); o.stop(t + 0.32);
+        } else {
+            const freq = kind === 'open' ? 340 : 520, dur = kind === 'open' ? 0.22 : 0.1;
+            const o = c.createOscillator(), g = c.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(freq, t);
+            o.frequency.exponentialRampToValueAtTime(freq * 0.7, t + dur);
+            g.gain.setValueAtTime(vol, t);
+            g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+            o.connect(g); g.connect(this.gainNode);
+            o.start(t); o.stop(t + dur + 0.02);
+        }
+        this._click(t, kind === 'bass' ? 0.18 : 0.3);   // 打面のアタック
+    },
+    _click(t, vol = 0.25) {
+        const c = this.ctx;
+        const len = Math.floor(c.sampleRate * 0.02), b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+        const src = c.createBufferSource(); src.buffer = b;
+        const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+        const g = c.createGain(); g.gain.value = vol;
+        src.connect(hp); hp.connect(g); g.connect(this.gainNode);
+        src.start(t); src.stop(t + 0.03);
+    },
+
+    // ベル(FM): きらめき・ファンファーレ用
+    bell(freq, t, dur = 0.8, vol = 0.18, ratio = 2.0) {
+        if (!this.ctx) return;
+        const c = this.ctx; t = this._t(t);
+        const car = c.createOscillator(), mod = c.createOscillator(), mg = c.createGain(), g = c.createGain();
+        car.type = 'sine'; car.frequency.value = freq;
+        mod.type = 'sine'; mod.frequency.value = freq * ratio;
+        mg.gain.setValueAtTime(freq * 2.5, t);
+        mg.gain.exponentialRampToValueAtTime(0.5, t + dur);
+        mod.connect(mg); mg.connect(car.frequency);
+        g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+        car.connect(g); g.connect(this.gainNode);
+        car.start(t); mod.start(t); car.stop(t + dur + 0.05); mod.stop(t + dur + 0.05);
+    },
+
+    // 低音の轟き
+    boom(t, freq = 110, dur = 0.5, vol = 0.7) {
+        if (!this.ctx) return;
+        const c = this.ctx; t = this._t(t);
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, t);
+        o.frequency.exponentialRampToValueAtTime(freq * 0.4, t + dur);
+        g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+        o.connect(g); g.connect(this.gainNode);
+        o.start(t); o.stop(t + dur + 0.02);
+    },
+
+    /* ---------- 効果音 ---------- */
     playSE(type) {
         if (!this.ctx) return;
-        switch(type) {
-            case 'move': this.playTabla('high'); break;
-            case 'rotate': this.playSitar(523.25,0.1); break;
-            case 'hold': this.playTone(330,'triangle',0.12,0.5); break;
-            case 'drop': {
-                const osc=this.ctx.createOscillator(), g=this.ctx.createGain();
-                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime+0.2);
-                g.gain.setValueAtTime(0.5, this.ctx.currentTime);
-                g.gain.linearRampToValueAtTime(0, this.ctx.currentTime+0.2);
-                osc.connect(g); g.connect(this.gainNode);
-                osc.start(); osc.stop(this.ctx.currentTime+0.2); break;
-            }
+        const S = s => this.hz(s);
+        switch (type) {
+            case 'move': this._click(null, 0.08); break;
+            case 'rotate': this.pluck(S(19), null, 0.12, 0.13, 7); break;
+            case 'hold': this.pluck(S(2), null, 0.2, 0.16, 4); this.tabla('open', null, 0.25); break;
+            case 'drop': this.tabla('bass', null, 0.5); this.boom(null, 95, 0.18, 0.3); break;
             case 'clear':
-                [261.63,329.63,392.00,523.25,659.25].forEach((f,i)=>setTimeout(()=>this.playSitar(f,0.8), i*50));
+                this.tabla('bass', null, 0.4);
+                [0, 4, 7, 8, 12].forEach((s, i) => this.pluck(S(s + 7), this.ctx.currentTime + i * 0.06, 0.5, 0.2));
                 break;
-            case 'tetris':
-                [261.63,329.63,392.00,523.25,659.25,783.99].forEach((f,i)=>setTimeout(()=>this.playSitar(f,1.0), i*40));
+            case 'tetris':   // テトリス / ヴィンダルー大役
+                this.boom(null, 90, 0.6, 0.55); this.tabla('bass', null, 0.6);
+                [0, 1, 4, 5, 7, 8, 10, 12].forEach((s, i) => this.sitar(S(s + 12), this.ctx.currentTime + i * 0.05, 0.5, 0.18));
+                [12, 16, 19].forEach((s, i) => this.bell(S(s + 12), this.ctx.currentTime + 0.42 + i * 0.07, 1.0, 0.16, 2.0));
                 break;
             case 'levelup':
-                [392.00,523.25,659.25,880.00].forEach((f,i)=>setTimeout(()=>this.playSitar(f,0.5), i*70));
+                [0, 4, 7, 12].forEach((s, i) => this.bell(S(s + 7), this.ctx.currentTime + i * 0.09, 0.9, 0.18, 1.5));
+                this.tabla('open', this.ctx.currentTime + 0.36, 0.3);
                 break;
-            case 'role':   // 役完成のきらめき
-                [659.25,830.61,987.77].forEach((f,i)=>setTimeout(()=>this.playSitar(f,0.6), i*45));
+            case 'role':     // 役完成のきらめき
+                [19, 16, 12, 16, 20].forEach((s, i) => this.bell(S(s), this.ctx.currentTime + i * 0.05, 0.7, 0.15, 3.0));
                 break;
             case 'shop':
-                this.playSitar(523.25,0.3); setTimeout(()=>this.playSitar(783.99,0.4),120);
+                this.pluck(S(7), null, 0.6, 0.2, 5);
+                this.pluck(S(12), this.ctx.currentTime + 0.12, 0.7, 0.18, 5);
+                this.bell(S(16), this.ctx.currentTime + 0.24, 0.9, 0.12, 2.0);
                 break;
-            case 'garbage': {  // お邪魔着弾(鈍い太鼓)
-                const osc=this.ctx.createOscillator(), g=this.ctx.createGain();
-                osc.type='square';
-                osc.frequency.setValueAtTime(120, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime+0.25);
-                g.gain.setValueAtTime(0.6, this.ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+0.25);
-                osc.connect(g); g.connect(this.gainNode);
-                osc.start(); osc.stop(this.ctx.currentTime+0.25); break;
-            }
+            case 'garbage':  // お邪魔着弾(重い太鼓)
+                this.boom(null, 70, 0.4, 0.7); this.tabla('bass', null, 0.6); this._click(null, 0.4);
+                break;
         }
     },
+
+    /* ---------- BGM (ctxクロック先読みシーケンサ) ---------- */
     startBGM() {
-        if (this.bgmTimer) clearInterval(this.bgmTimer);
         if (!this.ctx) return;
-        const scale = [261.63,277.18,329.63,349.23,392.00,415.30,493.88];
-        let step = 0;
-        this.bgmTimer = setInterval(()=>{
-            if (Game.state !== 'playing') return;
-            if (step%4===0) this.playTabla('low');
-            else if (step%2===0) this.playTabla('high');
-            if (Math.random()>0.6) {
-                const note = scale[Math.floor(Math.random()*scale.length)];
-                this.playSitar(note*(Math.random()>0.8?2:1), 0.4);
-            }
-            step++;
-        }, 250);
+        this.stopBGM();
+        this.bgmOn = true;
+        const tempos = { maharaja: 104, shiva: 132, buddha: 80 };
+        this.bpm = tempos[typeof currentPersona !== 'undefined' ? currentPersona : 'maharaja'] || 104;
+        this.step16 = (60 / this.bpm) / 4;
+        this._startTanpura();
+        this.bgmStep = 0;
+        this.nextNoteTime = this.ctx.currentTime + 0.1;
+        this.bgmTimer = setInterval(() => this._scheduler(), 25);
     },
-    stopBGM() { if (this.bgmTimer) clearInterval(this.bgmTimer); },
+    _scheduler() {
+        if (!this.ctx || !this.bgmOn) return;
+        while (this.nextNoteTime < this.ctx.currentTime + 0.12) {
+            if (Game.state === 'playing') this._scheduleStep(this.bgmStep, this.nextNoteTime);
+            this.nextNoteTime += this.step16;
+            this.bgmStep = (this.bgmStep + 1) % 32;     // 2小節ループ
+        }
+    },
+    // 32ステップ(16分×2小節)のアレンジ
+    _scheduleStep(s, t) {
+        const S = semi => this.hz(semi);
+        // タブラ・グルーヴ
+        if (s % 8 === 0) this.tabla('bass', t, 0.5);
+        else if (s % 8 === 6) this.tabla('bass', t, 0.34);
+        if (s % 4 === 2) this.tabla('open', t, 0.3);
+        if (s % 4 === 3) this.tabla('slap', t, 0.18);
+        // ベースライン (半小節ごとにコード根: C, F, Db, G)
+        const roots = [0, 5, 1, 7], hb = Math.floor(s / 8) % 4;
+        if (s % 8 === 0) this.pluck(S(roots[hb] - 24), t, 0.55, 0.3, 3);
+        else if (s % 8 === 4) this.pluck(S(roots[hb] - 24 + 7), t, 0.4, 0.22, 3);
+        // 主旋律 (フリギア・ドミナント / restは null)
+        const mel = [
+            12, null, 10, null, 8, 7, null, 8,
+            5, null, 4, null, 5, null, null, null,
+            7, null, 8, 10, null, 8, 7, null,
+            5, 4, null, 1, 0, null, null, null
+        ];
+        if (mel[s] != null) this.sitar(S(mel[s]), t, this.step16 * 3, 0.17);
+    },
+    // タンプーラ・ドローン (Sa / Pa を持続)
+    _startTanpura() {
+        this._stopTanpura();
+        [-24, -17, -12].forEach(semi => {
+            const f = this.hz(semi);
+            [0, 4].forEach(det => {
+                const o = this.ctx.createOscillator(), lp = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+                o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
+                lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.7;
+                g.gain.value = 0.022;
+                // ゆっくり揺らす(タンプーラの胴鳴り)
+                const lfo = this.ctx.createOscillator(), lg = this.ctx.createGain();
+                lfo.frequency.value = 0.15 + Math.random() * 0.1; lg.gain.value = 0.01;
+                lfo.connect(lg); lg.connect(g.gain);
+                o.connect(lp); lp.connect(g); g.connect(this.gainNode);
+                o.start(); lfo.start();
+                this.drones.push(o, lfo);
+            });
+        });
+    },
+    _stopTanpura() {
+        this.drones.forEach(o => { try { o.stop(); } catch (e) {} });
+        this.drones = [];
+    },
+    stopBGM() {
+        this.bgmOn = false;
+        if (this.bgmTimer) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+        this._stopTanpura();
+    },
 };
 
 /* =========================================================================
@@ -980,6 +1149,7 @@ const Game = {
     },
 
     versusEnd(playerWon) {
+        if (this.state === 'over') return;   // 相互トップアウト等での二重発火を防ぐ
         this.state = 'over';
         SoundManager.stopBGM();
         cancelAnimationFrame(this.raf);
@@ -1184,10 +1354,10 @@ const Game = {
 
     /* ----- 描画 ----- */
     draw() {
-        ctx.fillStyle = '#1a0b02';
+        ctx.fillStyle = '#0a1024';                          // 藍ガラスの盤面
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        // グリッド
-        ctx.strokeStyle = 'rgba(217,119,6,0.08)'; ctx.lineWidth = 1;
+        // グリッド (アズレージョ藍)
+        ctx.strokeStyle = 'rgba(59,130,246,0.10)'; ctx.lineWidth = 1;
         for (let x=0; x<=COLS; x++){ ctx.beginPath(); ctx.moveTo(x*BLOCK,0); ctx.lineTo(x*BLOCK,ROWS*BLOCK); ctx.stroke(); }
         for (let y=0; y<=ROWS; y++){ ctx.beginPath(); ctx.moveTo(0,y*BLOCK); ctx.lineTo(COLS*BLOCK,y*BLOCK); ctx.stroke(); }
         // 固定ブロック
@@ -1217,14 +1387,14 @@ const Game = {
     },
 
     drawNext() {
-        nctx.fillStyle = '#1a0b02';
+        nctx.fillStyle = '#0a1024';
         nctx.fillRect(0,0,nextCanvas.width,nextCanvas.height);
         const types = this.bag.peek(3);
         types.forEach((t, i) => drawMini(nctx, PIECE_DATA[t].cells, 40, 30 + i*60, 14));
     },
 
     drawHold() {
-        hctx.fillStyle = '#1a0b02';
+        hctx.fillStyle = '#0a1024';
         hctx.fillRect(0,0,holdCanvas.width,holdCanvas.height);
         if (this.holdType) drawMini(hctx, PIECE_DATA[this.holdType].cells, 40, 40, 16);
     },
@@ -1523,7 +1693,7 @@ const AIBoard = {
     },
 
     draw() {
-        aiCtx.fillStyle = '#150a14';
+        aiCtx.fillStyle = '#1c0a0c';                        // ライバルの赤ガラス盤面
         aiCtx.fillRect(0, 0, aiCanvas.width, aiCanvas.height);
         for (let y=0; y<ROWS; y++) for (let x=0; x<COLS; x++) if (this.arena[y][x]) drawCell(aiCtx, x, y, this.arena[y][x]);
         if (this.alive && this.piece) {
@@ -1704,6 +1874,7 @@ async function aiGenerate(category, contextText, targetId='maharaja-text') {
 }
 
 /* ---------- ランキング (モード別に保存・表示) ---------- */
+const escapeHtml = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function rankKey(mode) { return `vindalooRankings_${mode || Game.mode}`; }
 function saveScore() {
     const name = document.getElementById('player-name').value || '匿名マサラ';
@@ -1720,7 +1891,7 @@ function renderRanking() {
     const r = JSON.parse(localStorage.getItem(rankKey())) || [];
     const label = Game.mode === 'versus' ? '⚔️ VERSUS' : '🍛 CURRY∞';
     if (!r.length) { list.innerHTML = `<li class="text-center text-gray-500">${label} : No Data</li>`; return; }
-    list.innerHTML = r.map((x,i)=>`<li class="flex justify-between border-b border-amber-800/30 pb-0.5"><span>${i+1}. ${x.name}</span><span class="text-amber-400">${x.score}</span></li>`).join('');
+    list.innerHTML = r.map((x,i)=>`<li class="flex justify-between border-b border-amber-800/30 pb-0.5"><span>${i+1}. ${escapeHtml(x.name)}</span><span class="text-amber-400">${x.score}</span></li>`).join('');
 }
 
 window.shareSNS = function(platform) {
@@ -1748,19 +1919,20 @@ aiCanvas.width = COLS*BLOCK; aiCanvas.height = ROWS*BLOCK;
    入力
    ========================================================================= */
 // オートリピートを許すのは横移動とソフトドロップのみ。回転/ハードドロップ/ホールドは1押下1回。
-const NO_REPEAT = new Set(['ArrowUp','KeyX','KeyZ','ControlLeft','Space','KeyC','ShiftLeft']);
-const HANDLED = new Set(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','KeyX','KeyZ','ControlLeft','Space','KeyC','ShiftLeft']);
+// 回転/ハードドロップ/ホールドはオートリピート不可。横移動とソフトドロップ(矢印/WASD)のみ連打可。
+const NO_REPEAT = new Set(['ArrowUp','KeyW','KeyX','KeyZ','KeyQ','ControlLeft','Space','KeyC','ShiftLeft']);
+const HANDLED = new Set(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','KeyA','KeyD','KeyS','KeyW','KeyX','KeyZ','KeyQ','ControlLeft','Space','KeyC','ShiftLeft']);
 document.addEventListener('keydown', e => {
     if (Game.state !== 'playing') return;
     if (!HANDLED.has(e.code)) return;
     e.preventDefault();                          // ページスクロール等を抑止
     if (e.repeat && NO_REPEAT.has(e.code)) return;
     switch(e.code) {
-        case 'ArrowLeft':  Game.move(-1); break;
-        case 'ArrowRight': Game.move(1); break;
-        case 'ArrowDown':  Game.softDrop(); break;
-        case 'ArrowUp': case 'KeyX': Game.rotate(1); break;
-        case 'KeyZ': case 'ControlLeft': Game.rotate(-1); break;
+        case 'ArrowLeft':  case 'KeyA': Game.move(-1); break;
+        case 'ArrowRight': case 'KeyD': Game.move(1); break;
+        case 'ArrowDown':  case 'KeyS': Game.softDrop(); break;
+        case 'ArrowUp': case 'KeyW': case 'KeyX': Game.rotate(1); break;
+        case 'KeyZ': case 'KeyQ': case 'ControlLeft': Game.rotate(-1); break;
         case 'Space': Game.hardDrop(); break;
         case 'KeyC': case 'ShiftLeft': Game.hold(); break;
     }

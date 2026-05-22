@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($f = \"c:\\\\dev\\\\tk.st\\\\index.html\"; \"{0:N1} KB / {1} lines\" -f \\(\\(Get-Item $f\\).Length/1KB\\), \\(Get-Content $f | Measure-Object -Line\\).Lines)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('game/masala-tetris-vindaloo/index.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)].map\\(x=>x[1]\\).join\\('\\\\n;\\\\n'\\);new Function\\(m\\);console.log\\('JS OK'\\);\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\minep\\.claude\\projects\\c--dev-tk-st\\memory"
+    ]
+  }
+}

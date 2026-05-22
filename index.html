@@ -88,6 +88,7 @@
     .gap-1\.5 { gap: 0.375rem; }
     .gap-2 { gap: 0.5rem; }
     .gap-2\.5 { gap: 0.625rem; }
+    .gap-3 { gap: 0.75rem; }
     .gap-1 { gap: 0.25rem; }
     .gap-4 { gap: 1rem; }
     .p-4 { padding: 1rem; }
@@ -98,6 +99,7 @@
     .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
     .pl-3 { padding-left: 0.8125rem; }
     .pt-2 { padding-top: 0.5rem; }
+    .pb-2 { padding-bottom: 0.5rem; }
     .pt-4 { padding-top: 1rem; }
     .m-0 { margin: 0; }
     .mt-4 { margin-top: 1rem; }
@@ -204,12 +206,51 @@
     body.choreomania-active { --mouse-x: 0.5; --mouse-y: 0.5; filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5); }
     body.choreomania-active #app * { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; }
     body.choreomania-active #app .fade-in { opacity: 1 !important; }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #terminal-body, #boot-area, #output-area, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
     body.choreomania-active #app span:not(.hidden) { display: inline-block; }
     body.choreomania-active #app span.hidden { display: none !important; }
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow):not(.theme-switch *) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
     body.choreomania-active #app svg:not(.theme-switch svg) { color: hsl(calc(var(--mouse-y) * 360), 80%, 60%) !important; fill: currentColor; transform: rotate(calc((var(--mouse-x) - 0.5) * 90deg)); }
+
+    /* IDE / code-editor shell */
+    #app { height: 100vh; height: 100dvh; overflow: hidden; }
+    #ide { min-height: 0; }
+    #editor-group { min-width: 0; min-height: 0; }
+    #editor { overflow-y: auto; min-height: 0; }
+    #panel { display: flex; flex-direction: column; }
+    #terminal { overflow-y: auto; min-height: 0; }
+    .border-r { border-right-width: 1px; }
+    /* activity bar */
+    #activitybar { width: 3rem; flex-shrink: 0; }
+    .act-btn { width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; color: var(--secondary-color); border-left: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+    .act-btn:hover { color: var(--text-color); }
+    .act-btn.active { color: var(--primary-color); border-left-color: var(--primary-color); }
+    /* explorer / file tree */
+    #sidebar { width: 14rem; flex-shrink: 0; overflow-y: auto; }
+    .tree-folder { display: flex; align-items: center; gap: 0.35rem; width: 100%; padding: 0.25rem 0.5rem; text-align: left; }
+    .tree-chevron { display: inline-block; transition: transform 0.15s; }
+    .tree-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.2rem 0.75rem 0.2rem 1.5rem; text-align: left; transition: background-color 0.15s, color 0.15s; }
+    .tree-item:hover { background-color: var(--surface-hover); }
+    .tree-item.active { background-color: var(--primary-bg); color: var(--primary-color); }
+    #search-input { width: 100%; padding: 0.35rem 0.5rem; font-size: 0.8125rem; background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 4px; outline: none; color: var(--text-color); }
+    #search-input:focus { border-color: var(--primary-color); }
+    /* editor tabs + breadcrumb */
+    .ed-tab { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; border-right: 1px solid var(--border-color); cursor: pointer; white-space: nowrap; color: var(--secondary-color); }
+    .ed-tab.active { background-color: var(--bg-color); color: var(--text-color); }
+    .ed-tab .tab-close { opacity: 0; transition: opacity 0.15s; }
+    .ed-tab:hover .tab-close, .ed-tab.active .tab-close { opacity: 0.6; }
+    .ed-tab .tab-close:hover { opacity: 1; }
+    /* bottom terminal panel */
+    #panel { flex-shrink: 0; height: 38%; min-height: 6rem; }
+    .panel-tab { padding: 0.35rem 0.75rem; border-bottom: 2px solid transparent; }
+    .panel-tab.active { color: var(--text-color); border-bottom-color: var(--primary-color); }
+    @media (max-width: 767px) {
+      #sidebar { position: fixed; top: 0; bottom: 0; left: 3rem; transform: translateX(-130%); transition: transform 0.25s ease; z-index: 50; box-shadow: 0 0 24px rgba(0,0,0,0.35); }
+      #sidebar.open { transform: translateX(0); }
+      #panel { height: 45%; }
+    }
+    @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } }
   </style>
   <script type="application/ld+json">
     {
@@ -279,8 +320,6 @@
     <p>Merging souls in ecstasy</p>
     <h2><a href="?cmd=destroy">destroy</a></h2>
     <p>And rebuild</p>
-    <h2><a href="?cmd=history">history</a></h2>
-    <p>Show command history</p>
     <h2><a href="?cmd=matrix">matrix</a></h2>
     <p>Enter the Matrix</p>
     <h2><a href="?cmd=meditation">meditation</a></h2>
@@ -291,10 +330,13 @@
 
   <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
    <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
+    <div class="flex items-center gap-4">
+    <button id="btn-menu" class="text-secondary hover:text-primary transition-colors" title="Toggle command explorer" aria-label="Toggle command explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
     <div class="flex gap-2.5" id="window-btns">
      <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg></button>
      <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg></button>
      <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen" aria-label="Toggle Fullscreen"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"><path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/></svg></button>
+    </div>
     </div>
     <div class="flex items-center gap-4">
      <label class="theme-switch" title="Toggle Light/Dark Mode">
@@ -311,34 +353,89 @@
     </div>
    </header>
    
-   <main id="terminal-body" class="flex-1 p-4 md:p-6 space-y-1 relative" style="scroll-behavior:smooth;">
-    <div id="boot-area"></div>
-    <div id="output-area" aria-live="polite" aria-atomic="false"></div>
-    <div class="hidden items-center gap-2 mt-4" id="input-line">
-     <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span> 
-     <div class="relative flex-1 flex items-center overflow-hidden">
-       <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
-       <span id="cmd-mirror" class="text-sm absolute left-0 top-0 h-full flex items-center" style="visibility:hidden; white-space:pre;"></span>
-       <span id="custom-caret" class="bpm-caret" style="display:none;"></span>
+   <div id="ide" class="flex flex-1">
+    <nav id="activitybar" class="flex flex-col items-center bg-surface border-r border-color" aria-label="Activity Bar">
+     <button class="act-btn active" data-act="explorer" title="Explorer" aria-label="Explorer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg></button>
+     <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+     <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 3-3 3.5-6 4"/></svg></button>
+     <button class="act-btn mt-auto" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3 13.09V13a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 3.6 1.65 1.65 0 0 0 10 2.09V2a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 16 3.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.4 8c.13.31.2.65.2 1v.09c0 .35-.07.69-.2 1z"/></svg></button>
+    </nav>
+    <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
+     <div id="view-explorer">
+      <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">EXPLORER</div>
+      <button id="tree-folder" type="button" class="tree-folder text-xs font-bold text-normal"><span class="tree-chevron text-secondary">▾</span><span>tk.st</span></button>
+      <nav id="sidebar-tree" class="text-xs"></nav>
+      <div class="px-3 pt-4 mt-2 border-t border-color text-[10px] text-secondary opacity-70">⎇ <span class="text-primary">main</span></div>
      </div>
+     <div id="view-search" class="hidden">
+      <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">SEARCH</div>
+      <div class="px-3 pb-2"><input type="text" id="search-input" autocomplete="off" spellcheck="false" placeholder="Search commands" aria-label="Search commands"></div>
+      <div id="search-count" class="px-3 pb-1 text-[10px] text-secondary opacity-70"></div>
+      <nav id="search-results" class="text-xs"></nav>
+     </div>
+     <div id="view-git" class="hidden">
+      <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">SOURCE CONTROL</div>
+      <div id="git-count" class="px-3 pb-1 text-[10px] text-secondary opacity-70"></div>
+      <nav id="git-history" class="text-xs"></nav>
+     </div>
+    </aside>
+    <section id="editor-group" class="flex flex-col flex-1">
+     <div id="tabbar" class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
+     <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate">tk.st</div>
+     <div id="editor" class="flex-1 p-4 md:p-6 space-y-1 relative" style="scroll-behavior:smooth;">
+      <div id="output-area" aria-live="polite" aria-atomic="false"></div>
+     </div>
+     <div id="panel" class="flex flex-col border-t border-color bg-surface">
+      <div id="panel-tabs" class="flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
+       <span class="panel-tab active">TERMINAL</span><span class="panel-tab opacity-50">PROBLEMS</span><span class="panel-tab opacity-50">OUTPUT</span><span class="panel-tab opacity-50">PORTS</span>
+      </div>
+      <div id="terminal" class="flex-1 p-3 space-y-1" style="scroll-behavior:smooth;">
+       <div id="terminal-log" aria-live="polite" aria-atomic="false"></div>
+       <div class="hidden items-center gap-2 mt-2" id="input-line">
+        <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span>
+        <div class="relative flex-1 flex items-center overflow-hidden">
+          <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
+          <span id="cmd-mirror" class="text-sm absolute left-0 top-0 h-full flex items-center" style="visibility:hidden; white-space:pre;"></span>
+          <span id="custom-caret" class="bpm-caret" style="display:none;"></span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section>
+   </div>
+
+   <footer id="terminal-footer" class="flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
+    <div class="flex items-center gap-3 truncate">
+     <span class="text-primary">⎇ main</span>
+     <span id="status-left">⊘ 0  ⚠ 0</span>
     </div>
-   </main>
-   
-   <footer id="terminal-footer" class="flex items-center justify-between px-4 py-1.5 text-xs border-t mt-auto bg-surface border-color text-secondary">
-    <span id="status-left">READY</span> <span class="opacity-50">© <span id="copyright-year"></span> Shinya Takeda</span> <span id="status-right"></span>
+    <div class="flex items-center gap-3 whitespace-nowrap">
+     <span id="status-pos">Ln 1, Col 1</span>
+     <span class="opacity-50">Spaces: 2</span>
+     <span class="opacity-50">UTF-8</span>
+     <span class="opacity-50">LF</span>
+     <span id="status-lang" class="text-primary">Shell</span>
+     <span class="opacity-50">© <span id="copyright-year"></span></span>
+     <span id="status-right"></span>
+    </div>
    </footer>
   </div>
 
+
   <script>
     const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Saitama, Japan' };
-    const DOM = { 
-      app: document.getElementById('app'), 
-      output: document.getElementById('output-area'), 
-      input: document.getElementById('cmd-input'), 
-      inputLine: document.getElementById('input-line'), 
-      bootArea: document.getElementById('boot-area'), 
-      statusRight: document.getElementById('status-right'), 
-      themeToggle: document.getElementById('theme-toggle'), 
+    const DOM = {
+      app: document.getElementById('app'),
+      output: document.getElementById('output-area'),
+      editor: document.getElementById('editor'),
+      terminal: document.getElementById('terminal'),
+      terminalLog: document.getElementById('terminal-log'),
+      tabbar: document.getElementById('tabbar'),
+      breadcrumb: document.getElementById('breadcrumb'),
+      input: document.getElementById('cmd-input'),
+      inputLine: document.getElementById('input-line'),
+      statusRight: document.getElementById('status-right'),
+      themeToggle: document.getElementById('theme-toggle'),
 
       mirror: document.getElementById('cmd-mirror'),
       caret: document.getElementById('custom-caret')
@@ -350,12 +447,15 @@
     let commandHistory = [], historyIndex = -1, currentVersion = 1;
     let isDestroyed = false, destroyedElements = [], destroyInterval = null, rebuildInterval = null;
     let isMatrixActive = false, isMeditationActive = false;
+    let matrixTeardown = null, meditationTeardown = null;
 
     function addToHistory(entry) {
       if (commandHistory[0] !== entry) {
         commandHistory.unshift(entry);
         if (commandHistory.length > MAX_HISTORY) commandHistory.pop();
       }
+      const gv = document.getElementById('view-git');
+      if (gv && !gv.classList.contains('hidden')) renderGit();
     }
 
     function updateCaret() {
@@ -364,7 +464,10 @@
       DOM.mirror.textContent = DOM.input.value.substring(0, pos);
       const offset = Math.max(0, DOM.mirror.offsetWidth - DOM.input.scrollLeft);
       DOM.caret.style.transform = `translateX(${offset}px)`;
+      const sp = document.getElementById('status-pos');
+      if (sp) sp.textContent = `Ln 1, Col ${pos + 1}`;
     }
+    const scrollTerminal = () => { DOM.terminal.scrollTop = DOM.terminal.scrollHeight; };
 
     ['input', 'keydown', 'keyup', 'click', 'focus', 'blur', 'scroll'].forEach(ev => {
       DOM.input.addEventListener(ev, () => setTimeout(updateCaret, 0));
@@ -396,7 +499,7 @@
       }
     };
 
-    const hiddenCommands = ['akutagawa', 'bpm', 'choreomania', 'destroy', 'history', 'matrix', 'meditation', 'rebuild', 'secret', 'theme'];
+    const hiddenCommands = ['akutagawa', 'bpm', 'choreomania', 'destroy', 'matrix', 'meditation', 'rebuild', 'secret', 'theme'];
 
     DOM.themeToggle.addEventListener('change', (e) => {
       const isDark = e.target.checked;
@@ -431,16 +534,79 @@
       }
     });
 
-    async function printToOutput(html, ms = 0) {
+    // Transient feedback, echoes and errors go to the bottom TERMINAL panel.
+    async function printToTerminal(html, ms = 0) {
       if (ms > 0) await delay(ms);
-      const div = document.createElement('div'); 
-      div.className = 'fade-in'; 
+      const div = document.createElement('div');
+      div.className = 'fade-in';
       div.innerHTML = html;
-      DOM.output.appendChild(div);
-      DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      DOM.terminalLog.appendChild(div);
+      scrollTerminal();
     }
 
+    // Operation history (shown in the Source Control side-bar view) — typed commands + [SYS] events.
+    function renderGit() {
+      const list = document.getElementById('git-history');
+      const count = document.getElementById('git-count');
+      if (!list) return;
+      count.textContent = `⎇ main · ${commandHistory.length} operation${commandHistory.length === 1 ? '' : 's'}`;
+      list.innerHTML = commandHistory.length
+        ? commandHistory.map(cmd => {
+            const isSys = cmd.startsWith('[SYS]');
+            return `<div class="tree-item ${isSys ? 'text-secondary italic opacity-70' : 'text-normal'} truncate" title="${esc(cmd)}"><span class="text-secondary">${isSys ? '•' : '$'}</span><span class="truncate">${esc(cmd)}</span></div>`;
+          }).join('')
+        : `<div class="px-3 py-2 text-xs text-secondary">No operation history yet.</div>`;
+    }
+
+    // Document-style command results "open" in the EDITOR area as tabs.
+    const docCommands = new Set(['about', 'identify', 'pages', 'bitcoin', 'akutagawa', 'help', 'secret']);
+    const FILE_META = {
+      welcome:  { name: 'welcome',        icon: '★' },
+      about:    { name: 'about.md',       icon: '≡' },
+      identify: { name: 'identify.json',  icon: '{}' },
+      pages:    { name: 'pages.json',     icon: '[]' },
+      bitcoin:  { name: 'bitcoin.rune',   icon: '₿' },
+      akutagawa:{ name: 'letter.txt',     icon: '✉' },
+      help:     { name: 'help.md',        icon: '?' },
+      secret:   { name: '.secrets',       icon: '∗' }
+    };
+    let tabState = {}, tabOrder = [], activeTab = null;
+    const fileLabel = c => (FILE_META[c] || { name: c }).name;
+
+    function renderEditor() {
+      DOM.tabbar.innerHTML = tabOrder.map(c => {
+        const m = FILE_META[c] || { name: c, icon: '•' };
+        return `<div class="ed-tab ${c === activeTab ? 'active' : ''}" data-tab="${c}"><span class="text-primary">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="Close">✕</span></div>`;
+      }).join('');
+      DOM.breadcrumb.innerHTML = activeTab ? `tk.st <span class="opacity-50">›</span> ${esc(fileLabel(activeTab))}` : 'tk.st';
+      const div = document.createElement('div');
+      div.className = 'fade-in';
+      div.innerHTML = activeTab ? tabState[activeTab] : `<div class="my-3 text-xs text-secondary">No file open. Type a command in the terminal below, or open the <span class="text-normal font-bold">Explorer</span>.</div>`;
+      DOM.output.innerHTML = '';
+      DOM.output.appendChild(div);
+      DOM.editor.scrollTop = 0;
+    }
+    function openDoc(cmd, html) {
+      tabState[cmd] = html;
+      if (!tabOrder.includes(cmd)) tabOrder.push(cmd);
+      activeTab = cmd;
+      renderEditor();
+    }
+    function closeTab(cmd) {
+      tabOrder = tabOrder.filter(c => c !== cmd);
+      delete tabState[cmd];
+      if (activeTab === cmd) activeTab = tabOrder[tabOrder.length - 1] || null;
+      renderEditor();
+    }
+    DOM.tabbar.addEventListener('click', (e) => {
+      const close = e.target.closest('[data-close]');
+      if (close) { closeTab(close.dataset.close); return; }
+      const tab = e.target.closest('[data-tab]');
+      if (tab) { activeTab = tab.dataset.tab; setActiveTree(activeTab); renderEditor(); }
+    });
+
     const createMBTIRows = (traits, isVer2) => traits.map(t => {
+      // t.pct is the % toward t.name; flip to show the dominant side in the caption label only.
       const pct = t.pct >= 50 ? t.pct : 100 - t.pct;
       const name = t.pct >= 50 ? t.name : t.opposite;
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
@@ -478,14 +644,14 @@
     const createThemesTable = (themes, isVer2) => themes.map(row => `
       <div class="flex text-xs border-b last:border-0 border-color py-2">
         <div class="w-8" style="color: ${isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)'};">${row.rank}</div>
-        <div class="flex-1 truncate text-normal">${row.theme}</div>
-        <div class="w-56 text-right truncate text-secondary">${row.category}</div>
+        <div class="flex-1 truncate text-normal">${esc(row.theme)}</div>
+        <div class="w-56 text-right truncate text-secondary">${esc(row.category)}</div>
       </div>`).join('');
 
     const renderCmdList = (title, cmdList) => `
       <div class="my-3 space-y-1 w-[90%] max-w-[809px]">
         <div class="glow text-sm font-bold mb-2 text-primary">${title}</div>
-        <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${c[0]}</span><span>- ${c[1]}</span></div>`).join('')}</div>
+        <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${esc(c[0])}</span><span>- ${esc(c[1])}</span></div>`).join('')}</div>
         ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic text-normal">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
       </div>`;
 
@@ -516,13 +682,14 @@
         </div>`;
       
       const container = document.getElementById(`identify-result-${targetId}`);
-      if (container) container.innerHTML = result; else await printToOutput(`<div class="my-4 w-[90%] max-w-[809px]">${result}</div>`);
+      if (container) { container.innerHTML = result; }
+      else { const d = document.createElement('div'); d.className = 'fade-in my-4 w-[90%] max-w-[809px]'; d.innerHTML = result; DOM.output.appendChild(d); }
     };
 
     const commands = {
       help: () => renderCmdList('Available Commands:', [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['bitcoin', 'Enjoy Web3 journey'], ['magi', 'Talk to ST multi-agent'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']]),
-      secret: () => renderCmdList('Hidden Commands:', [['akutagawa', 'A message from the past'], ['bpm', 'Set system heartbeat'], ['choreomania', 'Merging souls in ecstasy'], ['destroy', 'And rebuild'], ['history', 'Show command history'], ['matrix', 'Enter the Matrix'], ['meditation', 'Clear your mind'], ['theme', 'Change terminal color']]),
-      clear: () => { DOM.output.innerHTML = ''; return null; },
+      secret: () => renderCmdList('Hidden Commands:', [['akutagawa', 'A message from the past'], ['bpm', 'Set system heartbeat'], ['choreomania', 'Merging souls in ecstasy'], ['destroy', 'And rebuild'], ['matrix', 'Enter the Matrix'], ['meditation', 'Clear your mind'], ['theme', 'Change terminal color']]),
+      clear: () => { DOM.terminalLog.innerHTML = ''; return null; },
       bitcoin() {
         const uniqueId = 'btc-' + Date.now();
         const tabs = ['earn', 'buy', 'use', 'view'];
@@ -568,20 +735,11 @@
           </div>`;
       },
       async akutagawa() {
-        const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] text-primary'; DOM.output.appendChild(loadingDiv);
+        const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] text-primary'; DOM.terminalLog.appendChild(loadingDiv); scrollTerminal();
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `Loading...  ${spinners[frameIndex++ % 4]}`; }, 300);
         await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
         return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px] border-color bg-surface text-normal">I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.</div>`;
-      },
-      history() {
-        if (commandHistory.length === 0) return `<div class="my-3 text-xs text-secondary">No history available.</div>`;
-        const historyList = commandHistory.slice().reverse().map((cmd, i) => {
-          const isSys = cmd.startsWith('[SYS]');
-          const displayStr = isSys ? `<span class="opacity-50 italic">${esc(cmd)}</span>` : esc(cmd);
-          return `  ${(i+1).toString().padStart(3, ' ')}  ${displayStr}`;
-        }).join('<br>');
-        return `<div class="my-3 text-xs text-normal" style="font-family: monospace;">${historyList}</div>`;
       },
       theme(args) {
         const colors = { green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', orange: '#fb923c', purple: '#c084fc', white: '#ffffff', red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee' };
@@ -595,14 +753,14 @@
       bpm(args) {
         const currentBpm = getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60';
         if (!args || args.length === 0 || isNaN(args[0])) return `<div class="my-3 text-xs text-secondary">Usage: bpm &lt;number&gt;<br>Current BPM: <span class="text-normal font-bold">${currentBpm}</span></div>`;
-        const newBpm = Math.max(1, Math.min(999, parseInt(args[0])));
+        const newBpm = Math.max(1, Math.min(999, parseInt(args[0], 10)));
         document.documentElement.style.setProperty('--bpm', newBpm);
         return `<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`;
       },
       destroy() {
         if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold">System is already destroyed. Waiting for 'rebuild'.</div>`;
         isDestroyed = true; destroyedElements = [];
-        const elements = Array.from(document.querySelectorAll('#app *:not(#app, #terminal-body, #output-area, #input-line, #input-line *)'));
+        const elements = Array.from(document.querySelectorAll('#app *:not(#app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #input-line *)'));
         destroyInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) { clearInterval(destroyInterval); break; }
@@ -710,13 +868,18 @@
               textContainer.style.opacity = '1';
             }
           })();
+          meditationTeardown = () => {
+            isMeditating = false;
+            document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
+            overlay.remove(); isMeditationActive = false; meditationTeardown = null;
+          };
           const exitMeditation = async (e) => {
             if (e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation(); e.preventDefault();
             isMeditating = false;
             overlay.style.opacity = '0';
             document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
-            await delay(4000); overlay.remove(); isMeditationActive = false;
+            await delay(4000); overlay.remove(); isMeditationActive = false; meditationTeardown = null;
             resolve(`<div class="my-3 text-xs text-secondary">Returned to reality.</div>`);
           };
           document.addEventListener('click', exitMeditation); document.addEventListener('keydown', exitMeditation);
@@ -730,9 +893,15 @@
           canvas.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;`;
           document.body.appendChild(canvas);
           const ctx = canvas.getContext('2d');
-          const resizeCanvas = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+          const fontSize = 14, primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
+          let drops = [];
+          const resizeCanvas = () => {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            const columns = Math.floor(canvas.width / fontSize);
+            // Preserve existing column positions; initialize any new columns to the top.
+            drops = Array.from({ length: columns }, (_, i) => drops[i] ?? 1);
+          };
           resizeCanvas(); window.addEventListener('resize', resizeCanvas);
-          const fontSize = 14, columns = canvas.width / fontSize, drops = Array(Math.floor(columns)).fill(1), primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
           const interval = setInterval(() => {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = primaryColor; ctx.font = fontSize + 'px monospace';
@@ -742,16 +911,20 @@
               drops[i]++;
             }
           }, 33);
+          const teardown = () => {
+            clearInterval(interval); canvas.remove();
+            window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix, true); window.removeEventListener('click', endMatrix, true);
+            isMatrixActive = false; matrixTeardown = null;
+          };
+          matrixTeardown = teardown;
           const endMatrix = (e) => {
             if(e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation(); e.preventDefault();
-            clearInterval(interval); canvas.remove();
-            window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix, true); window.removeEventListener('click', endMatrix, true);
-            isMatrixActive = false;
+            teardown();
             resolve(`<div class="text-xs mt-2 text-primary">Matrix simulation ended.</div>`);
           };
           window.addEventListener('keydown', endMatrix, true); window.addEventListener('click', endMatrix, true);
-          printToOutput(`<div class="text-xs mb-2 text-secondary">Entering Matrix... Press ESC or Click to exit.</div>`);
+          printToTerminal(`<div class="text-xs mb-2 text-secondary">Entering Matrix... Press ESC or Click to exit.</div>`);
         });
       }
     };
@@ -759,8 +932,11 @@
     const urlCommands = { '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/glitch': 'https://tk.st/glitch', '/thought': 'https://tk.st/thought', '/tools': 'https://tk.st/tools', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
-        window.open(url, '_blank', 'noopener,noreferrer');
-        return `<div class="my-3 text-xs text-primary">Opening ${cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : cmd)}...</div>`;
+        const label = cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : cmd);
+        const win = window.open(url, '_blank', 'noopener,noreferrer');
+        // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to a clickable link.
+        if (!win) return `<div class="my-3 text-xs text-primary">Open ${esc(label)}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`;
+        return `<div class="my-3 text-xs text-primary">Opening ${esc(label)}...</div>`;
       };
     });
 
@@ -781,51 +957,38 @@
 
     async function handleCommand(input) {
       const trimmed = input.trim(); if (!trimmed) return;
-      const echo = document.createElement('div'); 
-      echo.className = 'text-xs mt-3'; 
-      echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(input)}</span>`; 
-      DOM.output.appendChild(echo);
+      const echo = document.createElement('div');
+      echo.className = 'text-xs mt-2';
+      echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(input)}</span>`;
+      DOM.terminalLog.appendChild(echo); scrollTerminal();
       addToHistory(trimmed);
       historyIndex = -1;
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
+      setActiveTree(cmd);
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      
+
       if (isDestroyed && cmd !== 'rebuild') {
-        await printToOutput(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+        await printToTerminal(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
         return;
       }
-      
+
       if (hiddenCommands.includes(cmd) && !isDark) {
-        await printToOutput(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
+        await printToTerminal(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
         return;
       }
-      
-      if (commands[cmd]) { 
-        const result = await commands[cmd](args); 
-        if (result) await printToOutput(result, 100); 
+
+      if (commands[cmd]) {
+        const result = await commands[cmd](args);
+        if (result) {
+          if (docCommands.has(cmd)) openDoc(cmd, result);
+          else await printToTerminal(result, 100);
+        }
       } else {
-        await printToOutput(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
+        await printToTerminal(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
       }
     }
 
-    async function boot() {
-      const bootMessages = [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }];
-      for (const line of bootMessages) {
-        await delay(line.delay);
-        const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.innerHTML = line.text; DOM.bootArea.appendChild(div);
-      }
-      await delay(200);
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      let targetCmd = urlParams.get('cmd');
-      if (targetCmd) {
-        if (!commands[targetCmd] && commands['/' + targetCmd]) targetCmd = '/' + targetCmd;
-        if (hiddenCommands.includes(targetCmd)) { DOM.themeToggle.checked = true; DOM.themeToggle.dispatchEvent(new Event('change')); }
-      }
-
-      const header = document.createElement('div'); 
-      header.className = 'fade-in my-3 flex items-center gap-4 md:gap-8';
-      header.innerHTML = `<pre class="text-xs md:text-sm glow m-0 leading-tight text-primary">
+    const welcomeHTML = () => `<div class="flex items-center gap-4 md:gap-8"><pre class="text-xs md:text-sm glow m-0 leading-tight text-primary">
 ███████╗████████╗
 ██╔════╝╚══██╔══╝
 ███████╗<span style="opacity:0">╚══</span>██║
@@ -835,9 +998,25 @@
         <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
           <div id="display-name-el" class="text-primary">${esc(config.display_name)}${currentVersion > 1 ? ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>` : ''}</div>
           <div id="header-job-title" class="text-secondary">${esc(config.job_title)}</div>
-          <div class="pt-2 text-secondary">Type <span class="text-normal font-bold">'help'</span> to explore.</div>
-        </div>`;
-      DOM.bootArea.appendChild(header);
+          <div class="pt-2 text-secondary">Type <span class="text-normal font-bold">'help'</span> in the terminal below, or browse the <span class="text-normal font-bold">Explorer</span>.</div>
+        </div></div>`;
+
+    async function boot() {
+      const bootMessages = [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }];
+      for (const line of bootMessages) {
+        await delay(line.delay);
+        const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.innerHTML = line.text; DOM.terminalLog.appendChild(div); scrollTerminal();
+      }
+      await delay(200);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      let targetCmd = urlParams.get('cmd');
+      if (targetCmd) {
+        if (!commands[targetCmd] && commands['/' + targetCmd]) targetCmd = '/' + targetCmd;
+        if (hiddenCommands.includes(targetCmd)) { DOM.themeToggle.checked = true; DOM.themeToggle.dispatchEvent(new Event('change')); }
+      }
+
+      openDoc('welcome', welcomeHTML());
       DOM.inputLine.classList.remove('hidden'); DOM.inputLine.classList.add('flex', 'fade-in');
       DOM.input.focus();
       updateCaret();
@@ -881,13 +1060,17 @@
         if (matches.length === 1) {
           DOM.input.value = matches[0]; updateCaret();
         } else {
-          const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 text-normal'; echo.textContent = matches.join('  '); 
-          DOM.output.appendChild(echo); DOM.inputLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 text-normal'; echo.textContent = matches.join('  ');
+          DOM.terminalLog.appendChild(echo); scrollTerminal();
         }
       }
     });
 
-    DOM.app.addEventListener('click', (e) => { if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch')) DOM.input.focus(); });
+    DOM.app.addEventListener('click', (e) => {
+      const sb = document.getElementById('sidebar');
+      if (sb && sb.classList.contains('open') && !e.target.closest('#sidebar, #btn-menu')) { sb.classList.remove('open'); return; }
+      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch, #sidebar, #btn-menu')) DOM.input.focus();
+    });
     setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
@@ -898,20 +1081,29 @@
       await delay(300);
       
       commandHistory = [];
-      historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 1; isMatrixActive = false; isMeditationActive = false;
+      historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 1;
+      // Tear down any active full-screen effects so their canvas/overlay and timers don't leak across the reload.
+      if (matrixTeardown) matrixTeardown();
+      if (meditationTeardown) meditationTeardown();
+      isMatrixActive = false; isMeditationActive = false;
       
       document.documentElement.style.removeProperty('--primary-color');
       document.documentElement.style.removeProperty('--primary-bg');
       document.documentElement.style.removeProperty('--primary-bg-hover');
       document.documentElement.style.removeProperty('--bpm');
-      
+      setActiveTree(null);
+
       if (DOM.themeToggle.checked) {
         DOM.themeToggle.checked = false;
         document.documentElement.setAttribute('data-theme', 'light');
         config.job_title = 'Technical Marketing Lead';
       }
 
-      DOM.bootArea.innerHTML = ''; DOM.output.innerHTML = ''; DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
+      tabState = {}; tabOrder = []; activeTab = null;
+      showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
+      document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
+      DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = 'tk.st';
+      DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
       document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
       if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
       DOM.app.style.opacity = '1';
@@ -956,10 +1148,99 @@
 
     document.getElementById('btn-maximize').addEventListener('click', () => {
       if (!document.fullscreenElement) { 
-        addToHistory('[SYS] Fullscreen requested'); document.documentElement.requestFullscreen().catch(() => printToOutput(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`)); 
+        addToHistory('[SYS] Fullscreen requested'); document.documentElement.requestFullscreen().catch(() => printToTerminal(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`));
       } else { 
         addToHistory('[SYS] Exit fullscreen requested'); if (document.exitFullscreen) document.exitFullscreen(); 
       }
+    });
+
+    // --- Explorer (file tree) ---
+    const sidebarFiles = ['about', 'identify', 'pages', 'bitcoin', 'magi', 'contact', 'help'];
+    const FILE_ICONS = { magi: { name: 'magi.ai', icon: '✦' }, contact: { name: 'contact.txt', icon: '✉' } };
+    const treeMeta = c => FILE_META[c] || FILE_ICONS[c] || { name: c, icon: '•' };
+    const sidebarTree = document.getElementById('sidebar-tree');
+    const sidebarEl = document.getElementById('sidebar');
+    sidebarTree.innerHTML = sidebarFiles.map(c => {
+      const m = treeMeta(c);
+      return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span class="text-secondary">${m.icon}</span><span>${esc(m.name)}</span></button>`;
+    }).join('');
+    function setActiveTree(cmd) {
+      sidebarTree.querySelectorAll('.tree-item').forEach(el => el.classList.toggle('active', el.dataset.cmd === cmd));
+    }
+    sidebarTree.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-cmd]'); if (!btn) return;
+      sidebarEl.classList.remove('open');
+      if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
+      await handleCommand(btn.dataset.cmd);
+      DOM.input.focus();
+    });
+    document.getElementById('tree-folder').addEventListener('click', (e) => {
+      const collapsed = sidebarTree.classList.toggle('hidden');
+      e.currentTarget.querySelector('.tree-chevron').style.transform = collapsed ? 'rotate(-90deg)' : '';
+    });
+    document.getElementById('btn-menu').addEventListener('click', (e) => { e.stopPropagation(); sidebarEl.classList.toggle('open'); });
+
+    // --- Side bar views (Explorer / Search) ---
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchCount = document.getElementById('search-count');
+    const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
+    const SIDEBAR_VIEWS = ['explorer', 'search', 'git'];
+    const showSidebarView = (name) => SIDEBAR_VIEWS.forEach(v => document.getElementById('view-' + v).classList.toggle('hidden', v !== name));
+    const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
+    const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
+    const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', bitcoin: 'Enjoy Web3 journey', magi: 'Talk to ST multi-agent', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', secret: 'Hidden commands', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color' };
+    // Build a content index so search matches command output text, not just titles.
+    const SEARCH_INDEX = {};
+    const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
+    function buildSearchIndex() {
+      const renderable = ['about', 'pages', 'bitcoin', 'help', 'secret', 'identify']; // pure, side-effect-free string renderers
+      Object.keys(commands).forEach(c => {
+        let text = c + ' ' + (CMD_DESC[c] || '');
+        if (renderable.includes(c)) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) {} }
+        SEARCH_INDEX[c] = text.toLowerCase();
+      });
+      try { SEARCH_INDEX['identify'] += ' ' + JSON.stringify(PROFILE_DATA).toLowerCase(); } catch (err) {}
+      projects.forEach(p => { if (SEARCH_INDEX[p.name] !== undefined) SEARCH_INDEX[p.name] += ' ' + (p.desc + ' ' + p.tech).toLowerCase(); });
+    }
+    buildSearchIndex();
+    function renderSearch(q) {
+      q = (q || '').trim().toLowerCase();
+      if (!q) { searchCount.textContent = ''; searchResults.innerHTML = ''; return; }
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const cmds = Object.keys(commands).filter(c => isDark || !hiddenCommands.includes(c)).sort();
+      const matches = cmds.filter(c => (SEARCH_INDEX[c] || '').includes(q));
+      searchCount.textContent = `${matches.length} result${matches.length === 1 ? '' : 's'}`;
+      searchResults.innerHTML = matches.length
+        ? matches.map(c => `<button type="button" class="tree-item text-xs text-normal" data-cmd="${esc(c)}" title="${esc(CMD_DESC[c] || '')}"><span class="text-secondary">⌕</span><span>${esc(c)}</span></button>`).join('')
+        : `<div class="px-3 py-2 text-xs text-secondary">No results found.</div>`;
+    }
+    searchInput.addEventListener('input', () => renderSearch(searchInput.value));
+    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { searchInput.value = ''; renderSearch(''); } });
+    searchResults.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-cmd]'); if (!btn) return;
+      if (isMobile()) sidebarEl.classList.remove('open');
+      if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
+      await handleCommand(btn.dataset.cmd);
+      DOM.input.focus();
+    });
+
+    // --- Activity bar ---
+    document.getElementById('activitybar').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-act]'); if (!b) return;
+      const act = b.dataset.act;
+      if (act === 'settings') { DOM.themeToggle.click(); return; }
+      if (!SIDEBAR_VIEWS.includes(act)) return;
+      if (currentView() === act && !sidebarHidden()) {
+        // Same view already visible: toggle the side bar away.
+        isMobile() ? sidebarEl.classList.toggle('open') : sidebarEl.classList.toggle('collapsed');
+      } else {
+        showSidebarView(act); ensureSidebarOpen();
+        if (act === 'search') { renderSearch(searchInput.value); searchInput.focus(); searchInput.select(); }
+        else if (act === 'git') { renderGit(); }
+      }
+      document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x === b));
     });
 
     boot();
