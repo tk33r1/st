@@ -194,6 +194,8 @@
     @keyframes rotateSpiral { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes phiRingPulse { 0%, 100% { opacity: 0; transform: scale(0.97); } 50% { opacity: 0.25; transform: scale(1); } }
     .destroyed-element { transition: transform 2s ease-in, opacity 2s ease-in !important; transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important; opacity: 0 !important; pointer-events: none !important; }
+    #terminal-log .destroyed-element { transform: scale(0.5) rotate(var(--deg, 0deg)) !important; }
+    body.system-destroyed #panel { border: none !important; background: transparent !important; box-shadow: none !important; }
     .rebuilding-element { transition: transform 1s ease-out, opacity 1s ease-out !important; transform: translate(0px, 0px) rotate(0deg) !important; opacity: 1 !important; pointer-events: auto !important; }
     body.choreomania-active { --mouse-x: 0.5; --mouse-y: 0.5; filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5); }
     body.choreomania-active #app * { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; }
@@ -215,9 +217,11 @@
     .border-r { border-right-width: 1px; }
     /* activity bar */
     #activitybar { width: 3rem; flex-shrink: 0; }
-    .act-btn { width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; color: var(--secondary-color); border-left: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+    .act-btn { position: relative; width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; color: var(--secondary-color); border-left: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
     .act-btn:hover { color: var(--text-color); }
     .act-btn.active { color: var(--primary-color); border-left-color: var(--primary-color); }
+    .nav-badge { position: absolute; bottom: 8px; right: 8px; background: var(--primary-color); color: var(--bg-color); font-size: 9px; font-weight: bold; padding: 0 4px; border-radius: 9px; line-height: 14px; min-width: 14px; text-align: center; }
+    .nav-badge.hidden { display: none; }
     /* explorer / file tree */
     #sidebar { width: 14rem; flex-shrink: 0; overflow-y: auto; }
     .tree-folder { display: flex; align-items: center; gap: 0.35rem; width: 100%; padding: 0.25rem 0.5rem; text-align: left; }
@@ -341,7 +345,8 @@
     <nav id="activitybar" class="flex flex-col items-center bg-surface border-r border-color" aria-label="Activity Bar">
      <button class="act-btn active" data-act="explorer" title="Explorer" aria-label="Explorer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg></button>
      <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
-     <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 3-3 3.5-6 4"/></svg></button>
+     <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 3-3 3.5-6 4"/></svg><div id="badge-git" class="nav-badge hidden">0</div></button>
+     <button class="act-btn" data-act="extensions" title="Extensions" aria-label="Extensions"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><path d="M17.5 1.5l5 5-5 5-5-5z"/></svg><div id="badge-extensions" class="nav-badge hidden">0</div></button>
      <button class="act-btn mt-auto" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </nav>
     <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
@@ -361,6 +366,10 @@
       <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">SOURCE CONTROL</div>
       <div id="git-count" class="px-3 pb-1 text-[10px] text-secondary opacity-70"></div>
       <nav id="git-history" class="text-xs"></nav>
+     </div>
+     <div id="view-extensions" class="hidden">
+      <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">EXTENSIONS</div>
+      <div id="extensions-list" class="px-3 pb-2 space-y-2"></div>
      </div>
     </aside>
     <section id="editor-group" class="flex flex-col flex-1">
@@ -394,6 +403,7 @@
      <span id="status-left">⊘ 0  ⚠ 0</span>
     </div>
     <div class="flex items-center gap-3 whitespace-nowrap">
+     <span id="status-bpm" title="System BPM">♥ 60</span>
      <span id="status-pos">Ln 1, Col 1</span>
      <span id="status-lang" class="text-primary">Shell</span>
      <span id="status-right"></span>
@@ -430,6 +440,16 @@
     let isMatrixActive = false, isMeditationActive = false;
     let matrixTeardown = null, meditationTeardown = null;
     let errorCount = 0, warnCount = 0;
+    let sudoContext = null, akutagawaSudoValid = false;
+    let unreadHistoryCount = 0;
+
+    function updateGitBadge() {
+      const badgeGit = document.getElementById('badge-git');
+      if (badgeGit) {
+        badgeGit.textContent = unreadHistoryCount;
+        badgeGit.classList.toggle('hidden', unreadHistoryCount === 0);
+      }
+    }
 
     function addToHistory(entry) {
       if (commandHistory[0] !== entry) {
@@ -437,7 +457,13 @@
         if (commandHistory.length > MAX_HISTORY) commandHistory.pop();
       }
       const gv = document.getElementById('view-git');
-      if (gv && !gv.classList.contains('hidden')) renderGit();
+      if (gv && !gv.classList.contains('hidden')) {
+        renderGit();
+        unreadHistoryCount = 0;
+      } else {
+        unreadHistoryCount++;
+      }
+      updateGitBadge();
     }
 
     // PROBLEMS counter shown in the footer (⊘ errors · ⚠ warnings).
@@ -458,8 +484,10 @@
     }
     const scrollTerminal = () => { DOM.terminal.scrollTop = DOM.terminal.scrollHeight; };
 
-    ['input', 'keydown', 'keyup', 'click', 'focus', 'blur', 'scroll'].forEach(ev => {
-      DOM.input.addEventListener(ev, () => setTimeout(updateCaret, 0));
+    ['input', 'selectionchange'].forEach(ev => {
+      (ev === 'selectionchange' ? document : DOM.input).addEventListener(ev, () => {
+        if (document.activeElement === DOM.input) requestAnimationFrame(updateCaret);
+      });
     });
 
     const projects = [
@@ -488,7 +516,56 @@
       }
     };
 
-    const hiddenCommands = ['akutagawa', 'bpm', 'choreomania', 'destroy', 'matrix', 'meditation', 'rebuild', 'secret', 'theme'];
+    const extensionMeta = {
+      akutagawa: { name: 'akutagawa', desc: 'A message from the past', version: '1.0.0', author: 'ST', isHidden: true },
+      bpm: { name: 'bpm', desc: 'Set system heartbeat', version: '1.2.1', author: 'ST', isHidden: true },
+      choreomania: { name: 'choreomania', desc: 'Merging souls in ecstasy', version: '3.0.0', author: 'ST', isHidden: true },
+      destroy: { name: 'destroy', desc: 'And rebuild', version: '0.9.9', author: 'ST', isHidden: true },
+      matrix: { name: 'matrix', desc: 'Enter the Matrix', version: '1.0.1', author: 'ST', isHidden: true },
+      meditation: { name: 'meditation', desc: 'Clear your mind', version: '2.0.0', author: 'ST', isHidden: true },
+      theme: { name: 'theme', desc: 'Change terminal color', version: '1.1.0', author: 'ST', isHidden: true },
+      rebuild: { name: 'rebuild', desc: 'System rebuild', version: '1.0.0', author: 'ST', isHidden: true, hideFromList: true }
+    };
+    const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
+    const installedExtensions = new Set();
+
+    function renderExtensions() {
+      const list = document.getElementById('extensions-list');
+      if (!list) return;
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      
+      let html = '';
+      let uninstalledCount = 0;
+      hiddenCommands.forEach(cmd => {
+        if (cmd === 'rebuild') return;
+        if (cmd === 'akutagawa' && !isDark) return;
+        const meta = extensionMeta[cmd] || { name: cmd, desc: CMD_DESC[cmd] || '', version: '1.0.0', author: 'ST' };
+        const isInstalled = installedExtensions.has(cmd);
+        if (!isInstalled) uninstalledCount++;
+        
+        html += `
+          <div class="flex flex-col gap-1 p-2 border border-color rounded bg-surface-alt">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-normal text-xs">${esc(meta.name)}</span>
+              <span class="text-[10px] text-secondary">v${meta.version}</span>
+            </div>
+            <div class="text-[10px] text-secondary truncate" title="${esc(meta.desc)}">${esc(meta.desc)}</div>
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-[10px] text-secondary">${esc(meta.author)}</span>
+              <button class="ext-install-btn px-2 py-0.5 text-[10px] rounded cursor-pointer ${isInstalled ? 'bg-surface border border-color text-secondary' : 'bg-primary-dim text-primary hover:bg-primary-dim-hover'}" data-ext="${cmd}" ${isInstalled ? 'disabled' : ''}>
+                ${isInstalled ? 'Installed' : 'Install'}
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      list.innerHTML = html;
+      const badgeExt = document.getElementById('badge-extensions');
+      if (badgeExt) {
+        badgeExt.textContent = uninstalledCount;
+        badgeExt.classList.toggle('hidden', uninstalledCount === 0);
+      }
+    }
 
     function applyTheme(isDark) {
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
@@ -500,6 +577,7 @@
       buildSearchIndex();
       const sv = document.getElementById('view-search');
       if (sv && !sv.classList.contains('hidden')) renderSearch(searchInput.value);
+      renderExtensions();
     }
     function toggleTheme() {
       const isDark = document.documentElement.getAttribute('data-theme') !== 'dark';
@@ -554,8 +632,6 @@
         : `<div class="px-3 py-2 text-xs text-secondary">No operation history yet.</div>`;
     }
 
-    // Document-style command results "open" in the EDITOR area as tabs.
-    const docCommands = new Set(['about', 'identify', 'pages', 'bitcoin', 'akutagawa', 'help', 'secret']);
     const FILE_META = {
       welcome:  { name: 'welcome',        icon: '★' },
       about:    { name: 'about.md',       icon: '≡' },
@@ -563,17 +639,26 @@
       pages:    { name: 'pages.json',     icon: '[]' },
       bitcoin:  { name: 'bitcoin.rune',   icon: '₿' },
       akutagawa:{ name: 'letter.txt',     icon: '✉' },
-      help:     { name: 'help.md',        icon: '?' },
-      secret:   { name: '.secrets',       icon: '∗' }
+      help:     { name: 'help.md',        icon: '?' }
     };
-    // Footer language-mode label, driven by the active tab's file type.
-    const LANG_MODE = { welcome: 'Shell', about: 'Markdown', identify: 'JSON', pages: 'JSON', bitcoin: 'Rune', akutagawa: 'Plain Text', help: 'Markdown', secret: 'Shell' };
+    const getLangMode = (cmd) => {
+      if (!cmd) return 'Shell';
+      if (['theme', 'bpm'].includes(cmd)) return 'CSS';
+      if (['choreomania', 'matrix', 'meditation'].includes(cmd)) return 'Binary';
+      if (cmd === 'destroy') return 'Shell Script';
+      if (cmd === 'magi') return 'AI Model';
+      if (cmd === 'contact') return 'Plain Text';
+      const m = FILE_META[cmd];
+      if (!m || !m.name.includes('.')) return 'Shell';
+      return { md: 'Markdown', json: 'JSON', txt: 'Plain Text', rune: 'Rune' }[m.name.split('.').pop()] || 'Shell';
+    };
     let tabState = {}, tabOrder = [], activeTab = null;
     const fileLabel = c => (FILE_META[c] || { name: c }).name;
 
     function renderEditor() {
+      const activeCmd = document.querySelector('.tree-item.active')?.dataset.cmd;
       const langEl = document.getElementById('status-lang');
-      if (langEl) langEl.textContent = (activeTab && LANG_MODE[activeTab]) || 'Shell';
+      if (langEl) langEl.textContent = getLangMode(activeTab || activeCmd);
       DOM.tabbar.innerHTML = tabOrder.map(c => {
         const m = FILE_META[c] || { name: c, icon: '•' };
         return `<div class="ed-tab ${c === activeTab ? 'active' : ''}" data-tab="${c}"><span class="text-primary">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="Close">✕</span></div>`;
@@ -649,12 +734,13 @@
         <div class="w-56 text-right truncate text-secondary">${esc(row.category)}</div>
       </div>`).join('');
 
-    const renderCmdList = (title, cmdList) => `
-      <div class="my-3 space-y-1 w-[90%] max-w-[809px]">
+    const wrapCmd = (content, extraClass = '') => `<div class="my-3 w-[90%] max-w-[809px] ${extraClass}">${content}</div>`;
+
+    const renderCmdList = (title, cmdList) => wrapCmd(`
         <div class="glow text-sm font-bold mb-2 text-primary">${title}</div>
         <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${esc(c[0])}</span><span>- ${esc(c[1])}</span></div>`).join('')}</div>
         ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic text-normal">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
-      </div>`;
+      `);
 
     const executeIdentifyVersion = async (version, targetId) => {
       const isV2 = version === '2.0';
@@ -689,53 +775,68 @@
 
     const commands = {
       help: () => renderCmdList('Available Commands:', [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['bitcoin', 'Enjoy Web3 journey'], ['magi', 'Talk to ST multi-agent'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']]),
-      secret: () => renderCmdList('Hidden Commands:', [['akutagawa', 'A message from the past'], ['bpm', 'Set system heartbeat'], ['choreomania', 'Merging souls in ecstasy'], ['destroy', 'And rebuild'], ['matrix', 'Enter the Matrix'], ['meditation', 'Clear your mind'], ['theme', 'Change terminal color']]),
       clear: () => { DOM.terminalLog.innerHTML = ''; return null; },
+      sudo(args) {
+        if (!args || args.length === 0) return `<div class="text-xs my-1 text-red-500">usage: sudo &lt;command&gt;</div>`;
+        const targetCmd = args[0].toLowerCase();
+        if (targetCmd !== 'akutagawa') {
+          return `<div class="text-xs my-1 text-red-500">${esc(targetCmd)} is not allowed to be executed with sudo.</div>`;
+        }
+        if (!installedExtensions.has('akutagawa')) {
+          bumpProblems({ error: 1 });
+          return cmdNotFoundHTML('akutagawa');
+        }
+        sudoContext = { cmd: targetCmd, args: args.slice(1) };
+        DOM.input.type = 'password';
+        DOM.input.placeholder = '[sudo] password for ST: ';
+        return `<div class="text-xs my-1 text-secondary">Enter password for ST:</div>`;
+      },
       bitcoin() {
         const uniqueId = 'btc-' + Date.now();
         const tabs = ['earn', 'buy', 'use', 'view'];
         const allIds = tabs.map(t => `${t}-opts-${uniqueId}`).join(',');
         const btcData = { earn: [{ i: '🎮', t: 'Play to Earn', s: 'ASCII Roguelike', l: 'https://tk.st/bitcoinyen/ascii-roguelike' }], buy: [{ i: '⚡', t: 'Direct Purchase', s: 'Lightning Network', l: 'https://tk.st/bitcoinyen/ln' }, { i: '🛒', t: 'Marketplace', s: 'UniSat', l: 'https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN' }], use: [{ i: '📨', t: 'Letter to the future', s: 'Bitcoin Bottle Mail', l: 'https://tk.st/bitcoinyen/bbm' }], view: [{ i: '🪙', t: 'Dive into my Bitcoin token', s: 'Bitcoin Mainnet', l: 'https://unisat.io/runes/detail/BITCOINYEN' }, { i: '🌐', t: 'Dive into my Web3 page', s: 'Bitcoin Mainnet', l: 'https://web3.tk.st' }] };
         const renderItems = items => items.map(item => `<a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="text-normal">${item.i} ${item.t}</div><div class="text-xs mt-0.5 text-primary">${item.s}</div></a>`).join('');
-        return `
-          <div class="my-3 w-[90%] max-w-[809px]">
+        return wrapCmd(`
             <div class="text-sm font-bold glow mb-3 text-primary">BITCOIN YEN Ecosystem</div>
             <div class="flex gap-2 flex-wrap">${tabs.map(t => `<button type="button" class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" data-action="toggleBtc" data-target="${t}-opts-${uniqueId}" data-all="${allIds}">${t.charAt(0).toUpperCase() + t.slice(1)}</button>`).join('')}</div>
             ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">${renderItems(btcData[t])}</div>`).join('')}
-          </div>`;
+          `);
       },
       about() {
         const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
         const sns = [['X', '@Tah_Keh', 'https://x.com/Tah_Keh'], ['Instagram', '@dj_hcp', 'https://www.instagram.com/dj_hcp/'], ['LinkedIn', 'shinyatakeda', 'https://www.linkedin.com/in/shinyatakeda/'], ['GitHub', 'tk33r1', 'https://github.com/tk33r1'], ['Mixcloud', 'dj_hcp', 'https://www.mixcloud.com/dj_hcp/'], ['Ko-fi', 'shinyatakeda', 'https://ko-fi.com/shinyatakeda']];
-        return `
-          <div class="my-3 p-4 border rounded w-[90%] max-w-[809px] border-color bg-surface">
+        return wrapCmd(`
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t border-color">${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
             <div class="flex flex-wrap gap-2 pt-4 mt-3 border-t border-color">${sns.map(([platform, , url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[10px] px-3 py-1 border rounded-full border-color text-secondary hover:border-primary hover:text-primary transition-colors no-underline">${platform}</a>`).join('')}</div>
-          </div>`;
+          `, 'p-4 border rounded border-color bg-surface');
       },
-      pages: () => `
-        <div class="my-3 space-y-2 w-[90%] max-w-[809px]">
+      pages: () => wrapCmd(`
           <div class="text-sm font-bold glow mb-2 text-primary">Explore Web2 creations</div>
           <div class="space-y-2">
             ${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(p.desc)}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}
           </div>
-        </div>`,
+        `, 'space-y-2'),
       identify() {
         const uniqueId = 'id-' + Date.now();
         const versions = [['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']];
-        return `
-          <div class="my-3 w-[90%] max-w-[809px]">
+        return wrapCmd(`
             <div class="text-sm font-bold glow mb-3 text-primary">Please select a profile to initialize:</div>
             <div class="space-y-2">
               ${versions.map(v => `<a href="?cmd=identify&v=${v[0]}" class="block p-3 border rounded transition-colors no-underline ${v[4]} ${v[5]}" data-action="identify" data-version="${v[0]}" data-id="${uniqueId}"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold ${v[6]}">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] text-secondary">${v[2]}</span></div><div class="text-xs text-secondary">${v[3]} (MBTI & Strengths)</div></a>`).join('')}
             </div>
             <div id="identify-result-${uniqueId}"></div>
-          </div>`;
+          `);
       },
       async akutagawa() {
+        if (!akutagawaSudoValid) {
+          bumpProblems({ error: 1 });
+          await printToTerminal(`<div class="text-xs my-1 text-red-500">Failed to open 'letter.txt': Insufficient permissions. Try running with 'sudo'.</div>`, 20);
+          return null;
+        }
         const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] text-primary'; DOM.terminalLog.appendChild(loadingDiv); scrollTerminal();
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `Loading...  ${spinners[frameIndex++ % 4]}`; }, 300);
@@ -756,12 +857,26 @@
         if (!args || args.length === 0 || isNaN(args[0])) return `<div class="my-3 text-xs text-secondary">Usage: bpm &lt;number&gt;<br>Current BPM: <span class="text-normal font-bold">${currentBpm}</span></div>`;
         const newBpm = Math.max(1, Math.min(999, parseInt(args[0], 10)));
         document.documentElement.style.setProperty('--bpm', newBpm);
+        const bpmEl = document.getElementById('status-bpm');
+        if (bpmEl) bpmEl.innerHTML = `♥ ${newBpm}`;
         return `<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`;
       },
       destroy() {
         if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold">System is already destroyed. Waiting for 'rebuild'.</div>`;
         isDestroyed = true; destroyedElements = [];
-        const elements = Array.from(document.querySelectorAll('#app *:not(#app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #input-line *)'));
+        document.body.classList.add('system-destroyed');
+        const safeElements = new Set();
+        let curr = document.getElementById('input-line');
+        while (curr && curr.id !== 'app') { safeElements.add(curr); curr = curr.parentElement; }
+        curr = document.getElementById('terminal-log');
+        while (curr && curr.id !== 'app') { safeElements.add(curr); curr = curr.parentElement; }
+        safeElements.add(document.getElementById('app'));
+        
+        const elements = Array.from(document.querySelectorAll('#app *')).filter(el => {
+          if (safeElements.has(el)) return false;
+          if (el.closest('#input-line')) return false;
+          return true;
+        });
         destroyInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) { clearInterval(destroyInterval); break; }
@@ -785,6 +900,7 @@
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) {
               clearInterval(rebuildInterval); rebuildInterval = null; isDestroyed = false; destroyedElements = []; currentVersion++;
+              document.body.classList.remove('system-destroyed');
               const nameEl = document.getElementById('display-name-el');
               if(nameEl) nameEl.innerHTML = `${esc(config.display_name)} <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
               break;
@@ -956,13 +1072,41 @@
     document.addEventListener('mousemove', (e) => handleChoreomaniaMove(e.clientX, e.clientY), { passive: true });
     document.addEventListener('touchmove', (e) => { if (e.touches.length > 0) handleChoreomaniaMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 
-    async function handleCommand(input) {
+    async function handleCommand(input, noEcho = false) {
+      if (sudoContext) {
+        const pwd = input.trim();
+        const ctx = sudoContext;
+        sudoContext = null;
+        DOM.input.type = 'text';
+        DOM.input.placeholder = "type 'help'...";
+        
+        const echo = document.createElement('div');
+        echo.className = 'text-xs mt-2';
+        echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal"></span>`;
+        DOM.terminalLog.appendChild(echo); scrollTerminal();
+        
+        if (pwd === 'oshitanka') {
+          akutagawaSudoValid = true;
+          await handleCommand(ctx.cmd + ' ' + ctx.args.join(' '), true);
+          akutagawaSudoValid = false;
+        } else {
+          bumpProblems({ error: 1 });
+          const errDiv = document.createElement('div');
+          errDiv.innerHTML = `<div class="text-xs my-1 text-red-500">sudo: incorrect password</div>`;
+          DOM.terminalLog.appendChild(errDiv);
+          scrollTerminal();
+        }
+        return;
+      }
+
       const trimmed = input.trim(); if (!trimmed) return;
-      const echo = document.createElement('div');
-      echo.className = 'text-xs mt-2';
-      echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(input)}</span>`;
-      DOM.terminalLog.appendChild(echo); scrollTerminal();
-      addToHistory(trimmed);
+      if (!noEcho) {
+        const echo = document.createElement('div');
+        echo.className = 'text-xs mt-2';
+        echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(input)}</span>`;
+        DOM.terminalLog.appendChild(echo); scrollTerminal();
+        addToHistory(trimmed);
+      }
       historyIndex = -1;
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
       setActiveTree(cmd);
@@ -974,16 +1118,19 @@
         return;
       }
 
-      if (hiddenCommands.includes(cmd) && !isDark) {
-        bumpProblems({ warn: 1 });
-        await printToTerminal(cmdNotFoundHTML(cmd), 50);
-        return;
+      if (hiddenCommands.includes(cmd)) {
+        const requiredExt = cmd === 'rebuild' ? 'destroy' : cmd;
+        if (!installedExtensions.has(requiredExt)) {
+          bumpProblems({ error: 1 });
+          await printToTerminal(cmdNotFoundHTML(cmd), 50);
+          return;
+        }
       }
 
       if (commands[cmd]) {
         const result = await commands[cmd](args);
         if (result) {
-          if (docCommands.has(cmd)) openDoc(cmd, result);
+          if (commands[cmd].isDoc) openDoc(cmd, result);
           else await printToTerminal(result, 100);
         }
       } else {
@@ -1017,7 +1164,10 @@
       let targetCmd = urlParams.get('cmd');
       if (targetCmd) {
         if (!commands[targetCmd] && commands['/' + targetCmd]) targetCmd = '/' + targetCmd;
-        if (hiddenCommands.includes(targetCmd)) applyTheme(true);
+        if (hiddenCommands.includes(targetCmd)) {
+          applyTheme(true);
+          installedExtensions.add(targetCmd);
+        }
       }
 
       openDoc('welcome', welcomeHTML());
@@ -1058,7 +1208,7 @@
         const val = DOM.input.value.toLowerCase(); if (!val) return;
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         let availableCommands = Object.keys(commands);
-        if (!isDark) availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c));
+        availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
         const matches = availableCommands.filter(c => c.startsWith(val));
         if (matches.length === 0) return;
         if (matches.length === 1) {
@@ -1087,6 +1237,8 @@
       commandHistory = [];
       historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 1;
       errorCount = 0; warnCount = 0; bumpProblems();
+      installedExtensions.clear();
+      if (typeof renderExplorerTree === 'function') renderExplorerTree();
       // Tear down any active full-screen effects so their canvas/overlay and timers don't leak across the reload.
       if (matrixTeardown) matrixTeardown();
       if (meditationTeardown) meditationTeardown();
@@ -1096,6 +1248,8 @@
       document.documentElement.style.removeProperty('--primary-bg');
       document.documentElement.style.removeProperty('--primary-bg-hover');
       document.documentElement.style.removeProperty('--bpm');
+      const bpmEl = document.getElementById('status-bpm');
+      if (bpmEl) bpmEl.innerHTML = `♥ 60`;
       setActiveTree(null);
 
       if (document.documentElement.getAttribute('data-theme') === 'dark') applyTheme(false);
@@ -1157,16 +1311,40 @@
 
     // --- Explorer (file tree) ---
     const sidebarFiles = ['about', 'identify', 'pages', 'bitcoin', 'magi', 'contact', 'help'];
-    const FILE_ICONS = { magi: { name: 'magi.ai', icon: '✦' }, contact: { name: 'contact.txt', icon: '✉' } };
+    const FILE_ICONS = { 
+      magi: { name: 'magi.ai', icon: '✦' }, 
+      contact: { name: 'contact.txt', icon: '✉' },
+      bpm: { name: 'bpm.css', icon: '♥' },
+      choreomania: { name: 'choreomania.bin', icon: '♪' },
+      destroy: { name: 'destroy.sh', icon: '⚠' },
+      matrix: { name: 'matrix.bin', icon: '░' },
+      meditation: { name: 'meditation.bin', icon: '○' },
+      theme: { name: 'theme.css', icon: '#' }
+    };
     const treeMeta = c => FILE_META[c] || FILE_ICONS[c] || { name: c, icon: '•' };
     const sidebarTree = document.getElementById('sidebar-tree');
     const sidebarEl = document.getElementById('sidebar');
-    sidebarTree.innerHTML = sidebarFiles.map(c => {
-      const m = treeMeta(c);
-      return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span class="text-secondary">${m.icon}</span><span>${esc(m.name)}</span></button>`;
-    }).join('');
+    function renderExplorerTree() {
+      const files = [...sidebarFiles];
+      if (typeof installedExtensions !== 'undefined') {
+        installedExtensions.forEach(ext => {
+          if (ext !== 'rebuild') files.push(ext);
+        });
+      }
+      sidebarTree.innerHTML = files.map(c => {
+        const m = treeMeta(c);
+        return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span class="text-secondary">${m.icon}</span><span>${esc(m.name)}</span></button>`;
+      }).join('');
+      const activeCmd = document.querySelector('.tree-item.active')?.dataset.cmd;
+      if (activeCmd) setActiveTree(activeCmd);
+    }
+    renderExplorerTree();
     function setActiveTree(cmd) {
       sidebarTree.querySelectorAll('.tree-item').forEach(el => el.classList.toggle('active', el.dataset.cmd === cmd));
+      if (!activeTab) {
+        const langEl = document.getElementById('status-lang');
+        if (langEl) langEl.textContent = getLangMode(cmd);
+      }
     }
     sidebarTree.addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-cmd]'); if (!btn) return;
@@ -1186,17 +1364,17 @@
     const searchResults = document.getElementById('search-results');
     const searchCount = document.getElementById('search-count');
     const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
-    const SIDEBAR_VIEWS = ['explorer', 'search', 'git'];
+    const SIDEBAR_VIEWS = ['explorer', 'search', 'git', 'extensions'];
     const showSidebarView = (name) => SIDEBAR_VIEWS.forEach(v => document.getElementById('view-' + v).classList.toggle('hidden', v !== name));
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
-    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', bitcoin: 'Enjoy Web3 journey', magi: 'Talk to ST multi-agent', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', secret: 'Hidden commands', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color' };
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', bitcoin: 'Enjoy Web3 journey', magi: 'Talk to ST multi-agent', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color' };
     // Build a content index so search matches command output text, not just titles.
     const SEARCH_INDEX = {};
     const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
     function buildSearchIndex() {
-      const renderable = ['about', 'pages', 'bitcoin', 'help', 'secret', 'identify']; // pure, side-effect-free string renderers
+      const renderable = ['about', 'pages', 'bitcoin', 'help', 'identify']; // pure, side-effect-free string renderers
       Object.keys(commands).forEach(c => {
         let text = c + ' ' + (CMD_DESC[c] || '');
         if (renderable.includes(c)) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) {} }
@@ -1210,7 +1388,7 @@
       q = (q || '').trim().toLowerCase();
       if (!q) { searchCount.textContent = ''; searchResults.innerHTML = ''; return; }
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      const cmds = Object.keys(commands).filter(c => isDark || !hiddenCommands.includes(c)).sort();
+      const cmds = Object.keys(commands).filter(c => installedExtensions.has(c === 'rebuild' ? 'destroy' : c) || !hiddenCommands.includes(c)).sort();
       const matches = cmds.filter(c => (SEARCH_INDEX[c] || '').includes(q));
       searchCount.textContent = `${matches.length} result${matches.length === 1 ? '' : 's'}`;
       searchResults.innerHTML = matches.length
@@ -1227,6 +1405,24 @@
       DOM.input.focus();
     });
 
+    document.getElementById('view-extensions').addEventListener('click', (e) => {
+      const btn = e.target.closest('.ext-install-btn');
+      if (btn && !btn.disabled) {
+        const cmd = btn.dataset.ext;
+        btn.textContent = 'Installing...';
+        btn.disabled = true;
+        btn.classList.remove('bg-primary-dim', 'text-primary', 'hover:bg-primary-dim-hover');
+        btn.classList.add('bg-surface', 'border', 'border-color', 'text-secondary');
+        setTimeout(() => {
+          installedExtensions.add(cmd);
+          renderExtensions();
+          if (typeof renderExplorerTree === 'function') renderExplorerTree();
+          addToHistory(`[SYS] Extension '${cmd}' installed`);
+          printToTerminal(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`);
+        }, 800);
+      }
+    });
+
     // --- Activity bar ---
     document.getElementById('activitybar').addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]'); if (!b) return;
@@ -1239,12 +1435,13 @@
       } else {
         showSidebarView(act); ensureSidebarOpen();
         if (act === 'search') { renderSearch(searchInput.value); searchInput.focus(); searchInput.select(); }
-        else if (act === 'git') { renderGit(); }
+        else if (act === 'git') { renderGit(); unreadHistoryCount = 0; updateGitBadge(); }
       }
       document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x === b));
     });
 
     boot();
+    renderExtensions();
   </script>
  </body>
 </html>
