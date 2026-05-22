@@ -69,6 +69,8 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1) {
     if (attempt < 2) continue; // 空応答も1回だけ再試行
     throw stageError('persona_call', 'empty_persona_output', `${p.codename} が空の応答を返しました (finish_reason=${choice.finish_reason})`, { persona: p.codename, round, retryable: true });
   }
+  // ループは attempt=2 で必ず return/throw に到達するためここには来ない（防御的）
+  throw stageError('persona_call', 'unreachable', `${p.codename} の応答取得に失敗しました`, { persona: p.codename, round, retryable: true });
 }
 
 // 指定 ms でアボートするタイマ付き signal
@@ -183,7 +185,7 @@ export default {
             await Promise.all(opinions.map(async (p) => {
               const others = opinions.filter(o => o.codename !== p.codename)
                 .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
-              const dmsg = `${lastUser}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。単なる繰り返しは避ける]\n${others}`;
+              const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。単なる繰り返しは避ける]\n${others}`;
               p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: dmsg }], t2.signal, log, 2);
               send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
             }));
@@ -203,8 +205,9 @@ export default {
           let synthRes;
           try {
             log('synthesizer_call', 'start');
+            // 成功時は reader 完了後に clear。throw 時はここで確実に解除しておく
             synthRes = await callDeepSeek({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal: synthTimer.signal, messages: synthMessages });
-          } finally { /* reader 完了後に clear */ }
+          } catch (e) { synthTimer.clear(); throw e; }
           if (!synthRes.ok) {
             const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
             synthTimer.clear();

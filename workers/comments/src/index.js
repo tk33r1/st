@@ -17,7 +17,12 @@ function json(data, status = 200, extraHeaders = {}) {
 }
 
 function escHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 export default {
@@ -25,14 +30,24 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
     const cors = getCorsHeaders(origin);
+    const fromAllowedOrigin = ALLOWED_ORIGINS.includes(origin);
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: cors });
     }
 
+    // 認証: tk.st のブラウザ → Origin で許可、それ以外 → APIキー必須（magi worker と同方針）
+    if (!fromAllowedOrigin && request.headers.get('x-api-key') !== env.CLIENT_API_KEY) {
+      return json({ error: 'Unauthorized' }, 401, cors);
+    }
+
     // DELETE — コメント削除  /glitch/api/comments/:articleId/:commentId
+    // 管理操作。フロントは使わないため、Origin に関係なく管理キー必須。
     const delMatch = url.pathname.match(/^\/glitch\/api\/comments\/(\d+)\/(\d+)$/);
     if (delMatch && request.method === 'DELETE') {
+      if (!env.ADMIN_KEY || request.headers.get('x-admin-key') !== env.ADMIN_KEY) {
+        return json({ error: 'Forbidden' }, 403, cors);
+      }
       try {
         await env.DB.prepare(
           'DELETE FROM comments WHERE id = ? AND article_id = ?'
@@ -43,7 +58,7 @@ export default {
         ).bind(delMatch[1]).all();
         return json(results, 200, cors);
       } catch (e) {
-        return json({ error: e.message }, 500, cors);
+        return json({ error: 'コメントの削除に失敗しました' }, 500, cors);
       }
     }
 
@@ -62,7 +77,7 @@ export default {
         ).bind(articleId).all();
         return json(results, 200, cors);
       } catch (e) {
-        return json({ error: e.message }, 500, cors);
+        return json({ error: 'コメントの取得に失敗しました' }, 500, cors);
       }
     }
 
@@ -84,7 +99,7 @@ export default {
         ).bind(articleId).all();
         return json(results, 200, cors);
       } catch (e) {
-        return json({ error: e.message }, 500, cors);
+        return json({ error: 'コメントの投稿に失敗しました' }, 500, cors);
       }
     }
 

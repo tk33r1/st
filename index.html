@@ -73,7 +73,6 @@
     .w-56 { width: 14rem; }
     .w-\[90\%\] { width: 90%; }
     .max-w-\[809px\] { max-width: 809px; }
-    .max-w-\[300px\] { max-width: 300px; }
     .max-w-\[400px\] { max-width: 400px; }
     .min-w-\[400px\] { min-width: 400px; }
     .flex { display: flex; }
@@ -101,7 +100,6 @@
     .px-3 { padding-left: 0.8125rem; padding-right: 0.8125rem; }
     .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
     .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-    .pl-3 { padding-left: 0.8125rem; }
     .pt-2 { padding-top: 0.5rem; }
     .pb-2 { padding-bottom: 0.5rem; }
     .pt-4 { padding-top: 1rem; }
@@ -559,6 +557,7 @@
 
   <script>
     const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Saitama, Japan' };
+    const JOB_TITLES = { light: 'Technical Marketing Lead', dark: 'Hacker Poet' };
     const DOM = {
       app: document.getElementById('app'),
       output: document.getElementById('output-area'),
@@ -592,6 +591,12 @@
     let errorCount = 0, warnCount = 0;
     let sudoContext = null, akutagawaSudoValid = false;
     let unreadHistoryCount = 0;
+
+    // Shared helpers (deduped across the script).
+    const verBadge = () => ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
+    const clearCmdParam = () => { if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} } };
+    const clearTransformVars = el => ['--dx', '--dy', '--deg'].forEach(p => el.style.removeProperty(p));
+    const getPrimaryColor = () => getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
 
     function updateGitBadge() {
       if (DOM.badgeGit) {
@@ -850,14 +855,12 @@
 
     function applyTheme(isDark) {
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      config.job_title = isDark ? 'Hacker Poet' : 'Technical Marketing Lead';
+      config.job_title = isDark ? JOB_TITLES.dark : JOB_TITLES.light;
       const headerJobTitle = document.getElementById('header-job-title');
       if (headerJobTitle) headerJobTitle.textContent = config.job_title;
       document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
-      // Hidden commands become searchable in dark mode, and the job title text changes; reindex to match.
-      buildSearchIndex();
-      const sv = document.getElementById('view-search');
-      if (sv && !sv.classList.contains('hidden')) renderSearch(searchInput.value);
+      // The search index is theme-independent (both job-title variants are indexed once
+      // in buildSearchIndex), so no reindex/re-render is needed on theme toggle.
       renderExtensions();
     }
     function toggleTheme() {
@@ -1079,7 +1082,7 @@
         const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
         const sns = [['X', '@Tah_Keh', 'https://x.com/Tah_Keh'], ['Instagram', '@dj_hcp', 'https://www.instagram.com/dj_hcp/'], ['LinkedIn', 'shinyatakeda', 'https://www.linkedin.com/in/shinyatakeda/'], ['GitHub', 'tk33r1', 'https://github.com/tk33r1'], ['Coursera', 'takeda', 'https://www.coursera.org/learner/takeda'], ['Mixcloud', 'dj_hcp', 'https://www.mixcloud.com/dj_hcp/'], ['Ko-fi', 'shinyatakeda', 'https://ko-fi.com/shinyatakeda']];
         return wrapCmd(`
-            <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>` : ''}</span></div>
+            <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t border-color">${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
@@ -1188,15 +1191,15 @@
               if (tabState['about']) tabState['about'] = commands.about();
               document.body.classList.remove('system-destroyed');
               const nameEl = document.getElementById('display-name-el');
-              if(nameEl) nameEl.innerHTML = `${esc(config.display_name)} <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
+              if(nameEl) nameEl.innerHTML = `${esc(config.display_name)}${verBadge()}`;
               const aboutVerEl = document.getElementById('about-version-el');
-              if(aboutVerEl) aboutVerEl.innerHTML = ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
+              if(aboutVerEl) aboutVerEl.innerHTML = verBadge();
               // After the fly-back animations finish, hard-reconcile the layout so nothing is left
               // mid-transform and the input line is re-anchored to the bottom of the terminal.
               setTimeout(() => {
                 document.querySelectorAll('#app .destroyed-element, #app .rebuilding-element').forEach(el => {
                   el.classList.remove('destroyed-element', 'rebuilding-element');
-                  el.style.removeProperty('--dx'); el.style.removeProperty('--dy'); el.style.removeProperty('--deg');
+                  clearTransformVars(el);
                 });
                 renderEditor();
                 scrollTerminal();
@@ -1209,9 +1212,7 @@
               item.element.classList.add('rebuilding-element');
               setTimeout(() => {
                  item.element.classList.remove('rebuilding-element');
-                 item.element.style.removeProperty('--dx');
-                 item.element.style.removeProperty('--dy');
-                 item.element.style.removeProperty('--deg');
+                 clearTransformVars(item.element);
               }, 1000);
             }
           }
@@ -1233,7 +1234,7 @@
         isMeditationActive = true;
         return new Promise(resolve => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
-          const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
+          const primaryColor = getPrimaryColor();
           const overlay = document.createElement('div');
           overlay.className = 'meditation-overlay';
 
@@ -1315,7 +1316,7 @@
           canvas.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;`;
           document.body.appendChild(canvas);
           const ctx = canvas.getContext('2d');
-          const fontSize = 14, primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
+          const fontSize = 14, primaryColor = getPrimaryColor();
           let drops = [];
           const resizeCanvas = () => {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -1460,7 +1461,7 @@
 ███████║<span style="opacity:0">╚══</span>██║
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
-          <div id="display-name-el" class="text-primary">${esc(config.display_name)}${currentVersion > 1 ? ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>` : ''}</div>
+          <div id="display-name-el" class="text-primary">${esc(config.display_name)}${currentVersion > 1 ? verBadge() : ''}</div>
           <div id="header-job-title" class="text-secondary">${esc(config.job_title)}</div>
           <div class="pt-2 text-secondary">Type <span class="text-normal font-bold">'help'</span> in the terminal below, or browse the <span class="text-normal font-bold">Explorer</span>.</div>
         </div></div>`;
@@ -1508,7 +1509,7 @@
       if (e.key === 'Enter') { 
         e.preventDefault(); 
         const val = DOM.input.value; DOM.input.value = ''; updateCaret();
-        if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
+        clearCmdParam();
         await handleCommand(val); 
       } else if (e.key === 'ArrowUp') { 
         e.preventDefault(); 
@@ -1580,7 +1581,7 @@
       DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
       DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
       document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
-      if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
+      clearCmdParam();
       DOM.app.style.opacity = '1';
       boot();
     }
@@ -1669,7 +1670,7 @@
     sidebarTree.addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-cmd]'); if (!btn) return;
       sidebarEl.classList.remove('open');
-      if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
+      clearCmdParam();
       await handleCommand(btn.dataset.cmd);
       DOM.input.focus({ preventScroll: true });
     });
@@ -1702,6 +1703,8 @@
       });
       try { SEARCH_INDEX['identify'] += ' ' + JSON.stringify(PROFILE_DATA).toLowerCase(); } catch (err) {}
       projects.forEach(p => { if (SEARCH_INDEX[p.name] !== undefined) SEARCH_INDEX[p.name] += ' ' + (p.desc + ' ' + p.tech).toLowerCase(); });
+      // Index both light/dark job titles so "about" stays searchable in either theme without reindexing.
+      if (SEARCH_INDEX['about'] !== undefined) SEARCH_INDEX['about'] += ' ' + (JOB_TITLES.light + ' ' + JOB_TITLES.dark).toLowerCase();
     }
     buildSearchIndex();
     function renderSearch(q) {
@@ -1719,7 +1722,7 @@
     searchResults.addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-cmd]'); if (!btn) return;
       if (isMobile()) sidebarEl.classList.remove('open');
-      if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} }
+      clearCmdParam();
       await handleCommand(btn.dataset.cmd);
       DOM.input.focus({ preventScroll: true });
     });
@@ -1773,55 +1776,37 @@
     // --- Drag-to-resize: sidebar width (X) & bottom panel height (Y) ---
     (function setupResizers() {
       const sidebar = document.getElementById('sidebar');
-      const sidebarResizer = document.getElementById('sidebar-resizer');
       const panel = document.getElementById('panel');
-      const panelResizer = document.getElementById('panel-resizer');
       const editorGroup = document.getElementById('editor-group');
-      function startDrag(e, isX) {
-        e.preventDefault();
-        document.body.classList.add(isX ? 'resizing-x' : 'resizing-y');
-        (isX ? sidebarResizer : panelResizer).classList.add('resizer-active');
-        const move = (ev) => {
-          if (isX) {
-            const w = ev.clientX - sidebar.getBoundingClientRect().left;
-            sidebar.style.width = Math.max(140, Math.min(w, window.innerWidth * 0.6)) + 'px';
-          } else {
-            const rect = editorGroup.getBoundingClientRect();
-            const h = rect.bottom - ev.clientY;
-            panel.style.height = Math.max(64, Math.min(h, rect.height - 80)) + 'px';
-          }
-        };
-        const up = () => {
-          document.body.classList.remove('resizing-x', 'resizing-y');
-          sidebarResizer.classList.remove('resizer-active');
-          panelResizer.classList.remove('resizer-active');
-          window.removeEventListener('pointermove', move);
-          window.removeEventListener('pointerup', up);
-        };
-        window.addEventListener('pointermove', move);
-        window.addEventListener('pointerup', up);
-      }
-      sidebarResizer.addEventListener('pointerdown', (e) => startDrag(e, true));
-      panelResizer.addEventListener('pointerdown', (e) => startDrag(e, false));
-
       const agentDock = document.getElementById('agentdock');
-      const agentResizer = document.getElementById('agentdock-resizer');
-      agentResizer.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        document.body.classList.add('resizing-x');
-        agentResizer.classList.add('resizer-active');
-        const move = (ev) => {
-          const w = agentDock.getBoundingClientRect().right - ev.clientX;
-          agentDock.style.width = Math.max(220, Math.min(w, window.innerWidth * 0.6)) + 'px';
-        };
-        const up = () => {
-          document.body.classList.remove('resizing-x');
-          agentResizer.classList.remove('resizer-active');
-          window.removeEventListener('pointermove', move);
-          window.removeEventListener('pointerup', up);
-        };
-        window.addEventListener('pointermove', move);
-        window.addEventListener('pointerup', up);
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+      // Generic drag: bind a handle to an onMove(ev) that sets the target size.
+      function bindResizer(resizer, axisClass, onMove) {
+        resizer.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          document.body.classList.add(axisClass);
+          resizer.classList.add('resizer-active');
+          const up = () => {
+            document.body.classList.remove(axisClass);
+            resizer.classList.remove('resizer-active');
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', up);
+          };
+          window.addEventListener('pointermove', onMove);
+          window.addEventListener('pointerup', up);
+        });
+      }
+      bindResizer(document.getElementById('sidebar-resizer'), 'resizing-x', (ev) => {
+        const w = ev.clientX - sidebar.getBoundingClientRect().left;
+        sidebar.style.width = clamp(w, 140, window.innerWidth * 0.6) + 'px';
+      });
+      bindResizer(document.getElementById('panel-resizer'), 'resizing-y', (ev) => {
+        const rect = editorGroup.getBoundingClientRect();
+        panel.style.height = clamp(rect.bottom - ev.clientY, 64, rect.height - 80) + 'px';
+      });
+      bindResizer(document.getElementById('agentdock-resizer'), 'resizing-x', (ev) => {
+        const w = agentDock.getBoundingClientRect().right - ev.clientX;
+        agentDock.style.width = clamp(w, 220, window.innerWidth * 0.6) + 'px';
       });
     })();
 
@@ -1847,9 +1832,9 @@
     const AGENT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'http://localhost:8787/magi2/chat' : 'https://workers.tk.st/magi2/chat';
     const AGENT_PERSONAS = [
-      { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', desc: 'カオスな自分。直感で動く衝動的で予測不能なオタク。ハーレー・自作PC・アイドル・ワイン、何より音楽に燃える。' },
-      { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: '博愛的な自分。フロム・ストア派・仏教を血肉化した、詩的で内向的な夢想家。関心の中心はいつも人間。' },
-      { codename: 'CASPER-3', name: 'STRATEGIST', desc: '論理的な自分。データドリブンに最適解を解き続ける参謀。再現性ある施策も新規性も取り込む。' },
+      { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', desc: 'The chaotic self. An impulsive, unpredictable geek who runs on instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music.' },
+      { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.' },
+      { codename: 'CASPER-3', name: 'STRATEGIST', desc: 'The logical self. A data-driven strategist relentlessly solving for the optimal answer, embracing both reproducible tactics and novelty.' },
     ];
     const AGENT_MAX_HISTORY = 12;
     const AGENT_HINT = '<div class="agent-splash">'
@@ -1906,7 +1891,7 @@
     const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
     function agentDegrade(msg) {
       agentDead = true;
-      agentDegraded.textContent = msg || 'ST Multi Agent はライブ環境（tk.st）でのみ動作します。Legacy MAGI ↗ は利用できます。';
+      agentDegraded.textContent = msg || 'ST Multi Agent only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.';
       agentDegraded.classList.remove('hidden');
       agentInput.disabled = true; agentSendBtn.disabled = true;
     }
@@ -1917,11 +1902,11 @@
       const lines = [];
       if (meta) lines.push(`<div class="agent-rid">${esc(meta)}</div>`);
       if (env.request_id) lines.push(`<div class="agent-rid">request_id: ${esc(env.request_id)}</div>`);
-      div.innerHTML = `⚠ ${esc(env.message || 'エラーが発生しました')}${lines.join('')}`;
+      div.innerHTML = `⚠ ${esc(env.message || 'An error occurred')}${lines.join('')}`;
       agentLog.appendChild(div);
       if (env.legacy_url) {
         const a = document.createElement('div'); a.className = 'text-[10px] mt-1';
-        a.innerHTML = `<a href="${esc(env.legacy_url)}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Legacy MAGI を使う ↗</a>`;
+        a.innerHTML = `<a href="${esc(env.legacy_url)}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Use Legacy MAGI ↗</a>`;
         agentLog.appendChild(a);
       }
       agentScroll();
@@ -1936,9 +1921,13 @@
           const block = buf.slice(0, i); buf = buf.slice(i + 2);
           let ev = 'message', data = '';
           block.split('\n').forEach(line => {
+            // Per the SSE spec, multiple data: lines in one event are joined with '\n'
+            // (a single leading space after the colon is stripped). Joining without a
+            // separator corrupts payloads the server splits across lines.
             if (line.startsWith('event:')) ev = line.slice(6).trim();
-            else if (line.startsWith('data:')) data += line.slice(5).trim();
+            else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
           });
+          data = data.replace(/\n$/, '');
           if (!data) continue;
           let parsed; try { parsed = JSON.parse(data); } catch (_) { continue; }
           if (handlers[ev]) handlers[ev](parsed);
@@ -1956,8 +1945,8 @@
       turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
         <div class="persona-card thinking" data-codename="${p.codename}">
           <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
-          <div class="persona-round" data-round="1"><span class="persona-round-label">初回</span><div class="persona-text">…</div></div>
-          <div class="persona-round" data-round="2" hidden><span class="persona-round-label">討議後</span><div class="persona-text">…</div></div>
+          <div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">…</div></div>
+          <div class="persona-round" data-round="2" hidden><span class="persona-round-label">After debate</span><div class="persona-text">…</div></div>
         </div>`).join('')}</div>`;
       const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
       replyEl.innerHTML = `<span class="agent-who">✦ ST</span><span class="agent-reply-body"></span>`;
@@ -1981,7 +1970,8 @@
         } else {
           await parseSSE(res.body, {
             persona: (d) => {
-              const card = turn.querySelector(`.persona-card[data-codename="${d.codename}"]`);
+              const cn = (window.CSS && CSS.escape) ? CSS.escape(d.codename) : d.codename;
+              const card = turn.querySelector(`.persona-card[data-codename="${cn}"]`);
               if (!card) return;
               const slot = card.querySelector(`.persona-round[data-round="${d.round || 1}"]`);
               if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
@@ -1989,7 +1979,7 @@
               agentScroll();
             },
             integrated: (d) => { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
-            error: (d) => { errored = true; replyEl.remove(); renderAgentError(d); },
+            error: (d) => { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
             done: () => {},
           });
         }

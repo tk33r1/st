@@ -16,7 +16,13 @@
       "Bash(node -e \"import\\('file:///c:/dev/tk.st/workers/magi2/src/index.js'\\).then\\(\\(\\)=>console.log\\('reload OK'\\)\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")",
       "Bash(node --check /tmp/magi2_check.js)",
       "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('index.html','utf8'\\);const m=h.match\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/\\);fs.writeFileSync\\('_check.js',m[1]\\);console.log\\('extracted',m[1].length\\);\")",
-      "Bash(node --check _check.js)"
+      "Bash(node --check _check.js)",
+      "Bash(node --check workers/magi2/src/index.js)",
+      "Bash(xargs wc -l)",
+      "Bash(node --check workers/comments/src/index.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('index.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];fs.writeFileSync\\('/tmp/_chk.js',m[m.length-1][1]\\);\")",
+      "Bash(node --check /tmp/_chk.js)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const os=require\\('os'\\);const path=require\\('path'\\);const h=fs.readFileSync\\('index.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];const f=path.join\\(os.tmpdir\\(\\),'_chk.js'\\);fs.writeFileSync\\(f,m[m.length-1][1]\\);require\\('child_process'\\).execSync\\('node --check '+JSON.stringify\\(f\\),{stdio:'inherit'}\\);console.log\\('SYNTAX OK'\\);\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\minep\\.claude\\projects\\c--dev-tk-st\\memory"
