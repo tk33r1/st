@@ -11,7 +11,7 @@ export const DEFAULTS = {
   timeouts: { persona_ms: 30000, synthesizer_ms: 60000 },
   models: {
     // 3人格：no-think・並列・短文
-    persona: { model: 'deepseek-v4-flash', thinking_mode: 'non-thinking', max_tokens: 256 },
+    persona: { model: 'deepseek-v4-flash', thinking_mode: 'non-thinking', max_tokens: 512 },
     // 統合：thinking(中)・ストリーミング。max_tokens は思考トークン分の余裕を確保
     synthesizer: { model: 'deepseek-v4-flash', thinking_mode: 'thinking', max_tokens: 1536 },
   },

@@ -313,7 +313,7 @@
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
     /* right agent dock — ST Multi Agent */
-    #agentdock { width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; }
+    #agentdock { width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; overflow: hidden; }
     #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; }
     #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color); }
     #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 0; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
@@ -342,7 +342,7 @@
       from { stroke-dashoffset: 20; }
       to { stroke-dashoffset: 0; }
     }
-    .agent-splash { margin: auto 0; text-align: center; padding: 1rem 0.5rem; }
+    .agent-splash { position: relative; margin: auto 0; text-align: center; padding: 1rem 0.5rem 7.5rem; }
     .magi-emblem { width: 96px; height: 96px; display: inline-block; }
     .magi-emblem .hx { fill: var(--primary-bg); stroke: var(--primary-color); stroke-width: 2; }
     .magi-emblem .hl-bg { stroke: var(--primary-color); stroke-width: 2; opacity: 0.2; }
@@ -363,7 +363,7 @@
     .magi-node { font-size: 9px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.15rem 0.55rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
     .magi-node:hover { color: var(--primary-color); border-color: var(--primary-color); }
     .magi-node.active { color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
-    .magi-desc { margin: 0.7rem auto 0; max-width: 16rem; font-size: 11px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.35rem 0.6rem; background: var(--primary-bg); }
+    .magi-desc { position: absolute; bottom: 0.5rem; left: 50%; transform: translateX(-50%); width: calc(100% - 2rem); margin: 0; max-width: 16rem; font-size: 11px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.35rem 0.6rem; background: var(--primary-bg); box-sizing: border-box; }
     .magi-desc-name { display: block; font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
     @media (min-width: 768px) { #agentdock.collapsed { display: none; } #agentdock-resizer:has(+ #agentdock.collapsed) { display: none; } }
     @media (max-width: 767px) {

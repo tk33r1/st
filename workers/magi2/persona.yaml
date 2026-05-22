@@ -12,7 +12,7 @@ defaults:
     persona_ms: 30000
     synthesizer_ms: 60000
   models:
-    persona:     { model: deepseek-v4-flash, thinking_mode: non-thinking, stream: false, max_tokens: 256  }
+    persona:     { model: deepseek-v4-flash, thinking_mode: non-thinking, stream: false, max_tokens: 512  }
     synthesizer: { model: deepseek-v4-flash, thinking_mode: thinking,     stream: true,  max_tokens: 1536 }
 
 free_personas:
