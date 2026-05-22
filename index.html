@@ -995,7 +995,18 @@
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `Loading...  ${spinners[frameIndex++ % 4]}`; }, 300);
         await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
-        return `<div class="my-3 p-4 border rounded text-xs leading-relaxed w-[90%] max-w-[400px] border-color bg-surface text-normal">I'm sorry for the burden I've placed on you. I realize I don't have the right to be responsible for your life. Even so, I will always be rooting for your health and personal growth.</div>`;
+        return `<div class="my-4 border rounded text-sm bg-[#faf6f0] text-[#2c2b29] relative shadow-md" style="font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important; line-height: 2; border-color: #e3dac9; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; width: fit-content; max-width: 95%; min-width: 280px; padding: 24px 36px; box-sizing: border-box;">
+          <div style="border-bottom: 1px dashed #d1c7bd; padding-bottom: 12px; margin-bottom: 20px; font-weight: bold; font-size: 11px; letter-spacing: 0.1em; color: #8c7e6e; font-family: ui-monospace, SFMono-Regular, monospace !important;">LETTER.TXT</div>
+          <p style="margin: 0 0 24px 0; font-style: italic; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important;">I'm sorry for the burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.</p>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; min-height: 45px;">
+            <pre style="margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 10px; line-height: 1.1; color: #7693b5; text-align: left; opacity: 0.85; font-weight: bold;" title="Forget-me-not (勿忘草)">
+   _
+ _( )_
+(_(*)_)
+  (_)</pre>
+            <div style="text-align: right; font-size: 12px; color: #5c5246; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important; padding-bottom: 4px;">— ST</div>
+          </div>
+        </div>`;
       },
       theme(args) {
         const colors = { green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', orange: '#fb923c', purple: '#c084fc', white: '#ffffff', red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee' };
