@@ -321,7 +321,9 @@
     .agent-user > span { display: inline-block; max-width: 85%; padding: 0.3rem 0.6rem; border-radius: 8px 8px 2px 8px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; }
     .agent-personas { display: grid; gap: 0.4rem; }
     .persona-card { border: 1px solid var(--border-color); background: var(--surface-alt); padding: 0.4rem 0.5rem; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
-    .persona-card.thinking { opacity: 0.5; }
+    .persona-card.thinking { animation: thinkingPulse calc(60s / var(--bpm)) ease-in-out infinite; }
+    .persona-card.thinking .persona-text { color: var(--secondary-color); }
+    @keyframes thinkingPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
     .persona-head { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.15rem; }
     .persona-code { font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); }
     .persona-name { font-size: 9px; letter-spacing: 0.08em; color: var(--secondary-color); }
