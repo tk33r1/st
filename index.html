@@ -285,10 +285,10 @@
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
     /* right agent dock — ST Multi Agent */
-    #agentdock { width: 22rem; flex-shrink: 0; }
+    #agentdock { width: 22rem; flex-shrink: 0; min-height: 0; }
     #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background 0.15s; z-index: 5; }
     #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color); }
-    #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
+    #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 0; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
     .agent-user { display: flex; justify-content: flex-end; }
     .agent-user > span { display: inline-block; max-width: 85%; padding: 0.3rem 0.6rem; border-radius: 8px 8px 2px 8px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; }
     .agent-personas { display: grid; gap: 0.4rem; }
