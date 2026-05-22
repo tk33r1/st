@@ -50,7 +50,7 @@ async function callDeepSeek({ env, messages, cfg, stream, signal }) {
 }
 
 // 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら致命）。
-async function fetchPersonaText(env, p, messages, signal, log) {
+async function fetchPersonaText(env, p, messages, signal, log, round = 1) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     const res = await callDeepSeek({
       env, cfg: DEFAULTS.models.persona, stream: false, signal,
@@ -58,16 +58,16 @@ async function fetchPersonaText(env, p, messages, signal, log) {
     });
     if (!res.ok) {
       const detail = (await res.text().catch(() => '')).slice(0, 200);
-      log('persona_call', p.codename, `HTTP ${res.status}`, `attempt=${attempt}`);
+      log('persona_call', p.codename, `r${round}`, `HTTP ${res.status}`, `attempt=${attempt}`);
       if (res.status >= 500 && attempt < 2) continue; // 一時的なサーバ起因のみ再試行
-      throw stageError('persona_call', `deepseek_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, detail, retryable: res.status >= 500 });
+      throw stageError('persona_call', `deepseek_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
     }
     const choice = (await res.json()).choices?.[0] || {};
     const text = (choice.message?.content || '').trim();
-    log('persona_call', p.codename, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
+    log('persona_call', p.codename, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
     if (text) return text;
     if (attempt < 2) continue; // 空応答も1回だけ再試行
-    throw stageError('persona_call', 'empty_persona_output', `${p.codename} が空の応答を返しました (finish_reason=${choice.finish_reason})`, { persona: p.codename, retryable: true });
+    throw stageError('persona_call', 'empty_persona_output', `${p.codename} が空の応答を返しました (finish_reason=${choice.finish_reason})`, { persona: p.codename, round, retryable: true });
   }
 }
 
@@ -159,24 +159,40 @@ export default {
         const send = (event, data) => { if (closed) return; try { controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch (_) {} };
         const close = () => { if (!closed) { closed = true; try { controller.close(); } catch (_) {} } };
 
-        // 失敗時に進行中の他リクエストもまとめてアボート
-        const batch = withTimeout(DEFAULTS.timeouts.persona_ms);
         try {
-          // --- 3人格を並列。各完了ごとに persona を配信 ---
-          log('persona_call', 'start');
-          const opinions = await Promise.all(PERSONAS.map(async (p) => {
-            const text = await fetchPersonaText(env, p, messages, batch.signal, log);
-            send('persona', { codename: p.codename, name: p.name, text });
-            return { ...p, text };
-          }));
-          batch.clear();
-          log('persona_call', 'ok');
-
-          // --- 統合コール（thinking・stream）---
           const history = messages.slice(0, -1);
           const lastUser = messages[messages.length - 1].content;
-          const memo = opinions.map(o => `- ${o.name}(${o.codename}): ${o.text}`).join('\n');
-          const augmented = `${lastUser}\n\n[内部議論メモ：以下3人格の見解を統合し、私(ST)として一人称で答える。人格名は出さない]\n${memo}`;
+
+          // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
+          log('persona_call', 'round1 start');
+          const t1 = withTimeout(DEFAULTS.timeouts.persona_ms);
+          let opinions;
+          try {
+            opinions = await Promise.all(PERSONAS.map(async (p) => {
+              const text = await fetchPersonaText(env, p, messages, t1.signal, log, 1);
+              send('persona', { round: 1, codename: p.codename, name: p.name, text });
+              return { ...p, r1: text };
+            }));
+          } finally { t1.clear(); }
+          log('persona_call', 'round1 ok');
+
+          // --- R2: 各人格が他2人格のR1意見を踏まえて討議・更新 ---
+          log('persona_call', 'round2 start');
+          const t2 = withTimeout(DEFAULTS.timeouts.persona_ms);
+          try {
+            await Promise.all(opinions.map(async (p) => {
+              const others = opinions.filter(o => o.codename !== p.codename)
+                .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
+              const dmsg = `${lastUser}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。単なる繰り返しは避ける]\n${others}`;
+              p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: dmsg }], t2.signal, log, 2);
+              send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
+            }));
+          } finally { t2.clear(); }
+          log('persona_call', 'round2 ok');
+
+          // --- 統合コール（thinking・stream）---
+          const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}\n  討議後: ${o.r2}`).join('\n');
+          const augmented = `${lastUser}\n\n[内部討議メモ：以下は3人格の初回意見と討議後の見解。これらを統合し、私(ST)として一人称で答える。人格名は出さない]\n${memo}`;
           const synthMessages = [
             { role: 'system', content: SYNTHESIZER.system_prompt },
             ...history,
@@ -222,7 +238,6 @@ export default {
           send('done', { request_id: requestId });
           close();
         } catch (err) {
-          batch.clear();
           // タイムアウト(AbortError)は upstream として表現
           if (err && err.name === 'AbortError') {
             const env2 = stageError('upstream', 'timeout', 'DeepSeek への応答がタイムアウトしました', { retryable: true });

@@ -328,6 +328,9 @@
     .persona-code { font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); }
     .persona-name { font-size: 9px; letter-spacing: 0.08em; color: var(--secondary-color); }
     .persona-text { font-size: 11px; color: var(--text-color); line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
+    .persona-round { margin-top: 0.25rem; }
+    .persona-round[data-round="2"] { border-top: 1px dashed var(--border-color); padding-top: 0.25rem; }
+    .persona-round-label { display: block; font-size: 8px; letter-spacing: 0.1em; color: var(--secondary-color); opacity: 0.65; margin-bottom: 0.1rem; }
     .agent-reply { margin-top: 0.4rem; padding: 0.5rem 0.6rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
     .agent-reply .agent-who { display: block; font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.15rem; }
     .agent-reply.streaming::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
@@ -1953,7 +1956,8 @@
       turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
         <div class="persona-card thinking" data-codename="${p.codename}">
           <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
-          <div class="persona-text">…</div>
+          <div class="persona-round" data-round="1"><span class="persona-round-label">初回</span><div class="persona-text">…</div></div>
+          <div class="persona-round" data-round="2" hidden><span class="persona-round-label">討議後</span><div class="persona-text">…</div></div>
         </div>`).join('')}</div>`;
       const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
       replyEl.innerHTML = `<span class="agent-who">✦ ST</span><span class="agent-reply-body"></span>`;
@@ -1978,7 +1982,11 @@
           await parseSSE(res.body, {
             persona: (d) => {
               const card = turn.querySelector(`.persona-card[data-codename="${d.codename}"]`);
-              if (card) { card.classList.remove('thinking'); card.querySelector('.persona-text').textContent = d.text; agentScroll(); }
+              if (!card) return;
+              const slot = card.querySelector(`.persona-round[data-round="${d.round || 1}"]`);
+              if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
+              if (d.round === 2) card.classList.remove('thinking');
+              agentScroll();
             },
             integrated: (d) => { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
             error: (d) => { errored = true; replyEl.remove(); renderAgentError(d); },
