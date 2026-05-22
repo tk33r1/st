@@ -224,10 +224,10 @@
       animation: choreoBeat calc(60s / var(--bpm)) infinite ease-in-out;
       will-change: transform, filter;
     }
-    body.choreomania-active #app * { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; overflow: visible !important; }
+    body.choreomania-active #app *:not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; overflow: visible !important; }
     body.choreomania-active #app .fade-in { opacity: 1 !important; }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
     body.choreomania-active #app span:not(.hidden) { display: inline-block; }
     body.choreomania-active #app span.hidden { display: none !important; }
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
@@ -251,8 +251,8 @@
     /* explorer / file tree */
     #sidebar { width: 14rem; flex-shrink: 0; overflow-y: auto; }
     /* drag-to-resize handles */
-    #sidebar-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; }
-    #panel-resizer { flex-shrink: 0; height: 5px; margin: -2px 0; cursor: row-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; }
+    #sidebar-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; touch-action: none; }
+    #panel-resizer { flex-shrink: 0; height: 5px; margin: -2px 0; cursor: row-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; touch-action: none; }
     #sidebar-resizer:hover, #panel-resizer:hover, .resizer-active { background: var(--primary-color); }
     body.resizing-x, body.resizing-x * { cursor: col-resize !important; }
     body.resizing-y, body.resizing-y * { cursor: row-resize !important; }
@@ -279,7 +279,8 @@
     .ext-btn:disabled { cursor: default; }
     .ext-installed-tag { font-size: 9px; color: var(--primary-color); display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
     /* editor tabs + breadcrumb */
-    .ed-tab { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; border-right: 1px solid var(--border-color); cursor: pointer; white-space: nowrap; color: var(--secondary-color); }
+    #tabbar { height: 35px; }
+    .ed-tab { height: 100%; display: flex; align-items: center; gap: 0.5rem; padding: 0 0.75rem; border-right: 1px solid var(--border-color); cursor: pointer; white-space: nowrap; color: var(--secondary-color); }
     .ed-tab.active { background-color: var(--bg-color); color: var(--text-color); }
     .ed-tab .tab-close { opacity: 0; transition: opacity var(--duration-fast); }
     .ed-tab:hover .tab-close, .ed-tab.active .tab-close { opacity: 0.6; }
@@ -304,15 +305,20 @@
     .port-open { color: var(--secondary-color); text-decoration: none; flex-shrink: 0; }
     .port-open:hover { color: var(--primary-color); text-decoration: underline; }
     @media (max-width: 767px) {
-      #sidebar { position: fixed; top: 0; bottom: 0; left: 3rem; transform: translateX(-130%); transition: transform var(--duration-normal) ease; z-index: 50; box-shadow: 0 0 24px rgba(0,0,0,0.35); }
+      #ide { position: relative; }
+      #activitybar { position: relative; z-index: 60; }
+      #sidebar { position: absolute; top: 0; bottom: 0; left: 3rem; transform: translateX(-100%); transition: transform var(--duration-normal) ease; z-index: 50; }
       #sidebar.open { transform: translateX(0); }
       #panel { height: 33.75%; }
       #sidebar-resizer { display: none; }
+      #terminal-footer { flex-direction: column; gap: 4px; padding-top: 6px; padding-bottom: 6px; }
+      .copyright-text { position: static !important; transform: none !important; order: -1; text-align: center; width: 100%; display: block; }
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
     /* right agent dock — ST Multi Agent */
     #agentdock { width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; overflow: hidden; }
-    #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; }
+    #agentdock-header { height: 35px; flex-shrink: 0; }
+    #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; touch-action: none; }
     #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color); }
     #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
     .agent-user { display: flex; justify-content: flex-end; }
@@ -368,9 +374,24 @@
     .magi-node.active { color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
     .magi-desc { position: absolute; bottom: 0.5rem; left: 50%; transform: translateX(-50%); width: calc(100% - 1rem); margin: 0; max-width: 16rem; font-size: 11px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.35rem 0.6rem; background: var(--primary-bg); box-sizing: border-box; max-height: 8.8rem; overflow-y: auto; }
     .magi-desc-name { display: block; font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
-    @media (min-width: 768px) { #agentdock.collapsed { display: none; } #agentdock-resizer:has(+ #agentdock.collapsed) { display: none; } }
+    @media (min-width: 768px) {
+      #agentdock {
+        transition: transform var(--duration-normal) ease, width var(--duration-normal) ease;
+      }
+      #agentdock.collapsed {
+        width: 0 !important;
+        transform: translateX(100%);
+      }
+      #agentdock-resizer {
+        transition: opacity var(--duration-normal) ease;
+      }
+      #agentdock-resizer:has(+ #agentdock.collapsed) {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
     @media (max-width: 767px) {
-      #agentdock { position: fixed; top: 0; bottom: 0; right: 0; width: min(88%, calc(14rem * var(--phi))); transform: translateX(110%); transition: transform var(--duration-normal) ease; z-index: 50; box-shadow: 0 0 24px rgba(0,0,0,0.35); }
+      #agentdock { position: absolute; top: 0; bottom: 0; right: 0; width: min(88%, calc(14rem * var(--phi))); transform: translateX(100%); transition: transform var(--duration-normal) ease; z-index: 50; }
       #agentdock.open { transform: translateX(0); }
       #agentdock-resizer { display: none; }
     }
@@ -449,7 +470,6 @@
   <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
    <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
     <div class="flex items-center gap-4">
-    <button id="btn-menu" class="text-secondary hover:text-primary transition-colors" title="Toggle command explorer" aria-label="Toggle command explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
     <div class="flex gap-2.5" id="window-btns">
      <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg></button>
      <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg></button>
@@ -526,9 +546,14 @@
     </section>
     <div id="agentdock-resizer" role="separator" aria-orientation="vertical" aria-label="Resize agent panel" title="Drag to resize"></div>
     <aside id="agentdock" class="flex flex-col bg-surface border-l border-color" aria-label="ST Multi Agent">
-     <div class="flex items-center justify-between px-3 py-2 border-b border-color bg-surface-alt">
+     <div id="agentdock-header" class="flex items-center justify-between px-3 border-b border-color bg-surface-alt">
       <button id="btn-reset-agent" class="text-xs tracking-wider text-primary glow hover:opacity-80 transition-opacity cursor-pointer outline-none" title="Clear conversation history"><span class="text-sm inline-block">✦</span> ST MULTI AGENT</button>
-      <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="text-xs text-secondary hover:text-primary no-underline" title="Legacy MAGI deliberation (v1)">Legacy MAGI <span class="text-sm inline-block ml-0.5">↗</span></a>
+      <div class="flex items-center gap-2.5">
+        <button id="btn-history-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="View conversation history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+        <button id="btn-share-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center opacity-30" style="pointer-events: none;" title="Share/Copy conversation"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
+        <button id="btn-export-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center opacity-30" style="pointer-events: none;" title="Export conversation as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+        <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="text-xs text-secondary hover:text-primary no-underline ml-1" title="Legacy MAGI deliberation (v1)">Legacy MAGI <span class="text-sm inline-block ml-0.5">↗</span></a>
+      </div>
      </div>
      <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs" aria-live="polite" aria-atomic="false"></div>
      <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
@@ -540,17 +565,19 @@
    </div>
 
    <footer id="terminal-footer" class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
-    <div class="flex items-center gap-3 truncate">
-     <span class="text-primary"><span>⎇</span> <span>main</span></span>
-     <span id="status-left"><span>⊘</span> <span>0</span>  <span>⚠</span> <span>0</span></span>
+    <div class="footer-status-row flex items-center justify-between w-full">
+     <div class="flex items-center gap-3 truncate">
+      <span class="text-primary"><span>⎇</span> <span>main</span></span>
+      <span id="status-left"><span>⊘</span> <span>0</span>  <span>⚠</span> <span>0</span></span>
+     </div>
+     <div class="flex items-center gap-3 whitespace-nowrap">
+      <span id="status-bpm" title="System BPM"><span>♥</span> <span>60</span></span>
+      <span id="status-pos"><span>Ln 1,</span> <span>Col 1</span></span>
+      <span id="status-lang" class="text-primary"><span>Shell</span></span>
+      <span id="status-right"></span>
+     </div>
     </div>
-    <div class="flex items-center gap-3 whitespace-nowrap">
-     <span id="status-bpm" title="System BPM"><span>♥</span> <span>60</span></span>
-     <span id="status-pos"><span>Ln 1,</span> <span>Col 1</span></span>
-     <span id="status-lang" class="text-primary"><span>Shell</span></span>
-     <span id="status-right"></span>
-    </div>
-    <span class="opacity-50 whitespace-nowrap" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);"><span>©</span> <span id="copyright-year"></span> <span>Shinya Takeda</span></span>
+    <span class="copyright-text opacity-50 whitespace-nowrap" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);"><span>©</span> <span id="copyright-year"></span> <span>Shinya Takeda</span></span>
    </footer>
   </div>
 
@@ -1537,10 +1564,10 @@
 
     DOM.app.addEventListener('click', (e) => {
       const sb = document.getElementById('sidebar');
-      if (sb && sb.classList.contains('open') && !e.target.closest('#sidebar, #btn-menu')) { sb.classList.remove('open'); return; }
+      if (sb && sb.classList.contains('open') && !e.target.closest('#sidebar, #activitybar')) { sb.classList.remove('open'); return; }
       const ad = document.getElementById('agentdock');
       if (isMobile() && ad && ad.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"]')) { closeAgentDock(); return; }
-      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #btn-menu, #agentdock, [data-act="agent"]')) DOM.input.focus({ preventScroll: true });
+      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #activitybar, #agentdock, [data-act="agent"]')) DOM.input.focus({ preventScroll: true });
     });
     setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
@@ -1678,7 +1705,7 @@
       const collapsed = sidebarTree.classList.toggle('hidden');
       e.currentTarget.querySelector('.tree-chevron').style.transform = collapsed ? 'rotate(-90deg)' : '';
     });
-    document.getElementById('btn-menu').addEventListener('click', (e) => { e.stopPropagation(); sidebarEl.classList.toggle('open'); });
+
 
     // --- Side bar views (Explorer / Search) ---
     const searchInput = document.getElementById('search-input');
@@ -1784,9 +1811,11 @@
       function bindResizer(resizer, axisClass, onMove) {
         resizer.addEventListener('pointerdown', (e) => {
           e.preventDefault();
+          resizer.setPointerCapture(e.pointerId);
           document.body.classList.add(axisClass);
           resizer.classList.add('resizer-active');
-          const up = () => {
+          const up = (ev) => {
+            try { resizer.releasePointerCapture(ev.pointerId); } catch (_) {}
             document.body.classList.remove(axisClass);
             resizer.classList.remove('resizer-active');
             window.removeEventListener('pointermove', onMove);
@@ -1879,14 +1908,35 @@
     function agentInitialState() {
       if (isMobile()) { agentDockEl.classList.remove('open'); setAgentActive(false); }
       else { agentDockEl.classList.remove('collapsed'); setAgentActive(true); }
-      if (agentDockOpen() && !agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
+      
+      const saved = localStorage.getItem('magi_current_history');
+      if (saved) {
+        try {
+          agentHistory = JSON.parse(saved);
+        } catch (_) {
+          agentHistory = [];
+        }
+      }
+
+      if (agentHistory && agentHistory.length > 0) {
+        renderHistoryToLog(agentHistory);
+      } else {
+        if (agentDockOpen() && !agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
+      }
+      updateAgentActionButtons();
     }
     function resetAgent() {
+      archiveCurrentHistory();
       agentHistory = []; agentBusy = false; agentDead = false;
+      localStorage.removeItem('magi_current_history');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
       agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
       agentDockEl.style.removeProperty('width');
       agentInitialState();
+      updateAgentActionButtons();
+
+      const panel = document.getElementById('agent-history-panel');
+      if (panel) panel.remove();
     }
     const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
     function agentDegrade(msg) {
@@ -1956,6 +2006,7 @@
 
       agentHistory.push({ role: 'user', content: text });
       if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
+      localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
 
       agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true;
       let reply = '', errored = false;
@@ -1994,11 +2045,233 @@
       if (reply && !errored) {
         agentHistory.push({ role: 'assistant', content: reply });
         if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
+        localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+        updateAgentActionButtons();
       }
     }
     agentSendBtn.addEventListener('click', agentSend);
     agentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
     document.getElementById('btn-reset-agent').addEventListener('click', resetAgent);
+
+    // --- トーク履歴管理ロジック ---
+    function renderHistoryToLog(history) {
+      agentLog.innerHTML = '';
+      history.forEach(item => {
+        if (item.role === 'user') {
+          const u = document.createElement('div');
+          u.className = 'agent-user fade-in';
+          u.innerHTML = `<span>${esc(item.content)}</span>`;
+          agentLog.appendChild(u);
+        } else {
+          const replyEl = document.createElement('div');
+          replyEl.className = 'agent-reply';
+          replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">${esc(item.content)}</span>`;
+          agentLog.appendChild(replyEl);
+        }
+      });
+      agentScroll();
+    }
+
+    function archiveCurrentHistory() {
+      if (!agentHistory || agentHistory.length === 0) return;
+      
+      const firstUserMsg = agentHistory.find(m => m.role === 'user');
+      if (!firstUserMsg) return;
+
+      const title = firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
+      const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      
+      // 重複アーカイブを避けるため、最後の発言が同一で履歴長が同一のセッションが直近にあればスキップ
+      if (sessions.length > 0) {
+        const lastArchived = sessions[0];
+        if (lastArchived.history.length === agentHistory.length && 
+            lastArchived.history[lastArchived.history.length - 1].content === agentHistory[agentHistory.length - 1].content) {
+          return;
+        }
+      }
+
+      const newSession = {
+        id: 'session_' + Date.now(),
+        timestamp: Date.now(),
+        title: title,
+        history: [...agentHistory]
+      };
+      
+      sessions.unshift(newSession);
+      if (sessions.length > 50) sessions.pop(); // 最大50件
+      
+      localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
+    }
+
+    function showHistoryPanel() {
+      let panel = document.getElementById('agent-history-panel');
+      if (panel) {
+        panel.remove();
+        return;
+      }
+      
+      panel = document.createElement('div');
+      panel.id = 'agent-history-panel';
+      panel.className = 'absolute inset-0 bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
+      panel.style.top = '35px';
+      
+      panel.innerHTML = `
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
+          <span class="font-bold text-[10px] tracking-widest text-primary uppercase">Saved Chats</span>
+          <button id="btn-close-history" class="text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ CLOSE</button>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-1.5 pr-1" id="agent-history-list"></div>
+      `;
+
+      document.getElementById('agentdock').appendChild(panel);
+      renderSavedSessionsList();
+
+      document.getElementById('btn-close-history').addEventListener('click', () => {
+        panel.remove();
+      });
+    }
+
+    function renderSavedSessionsList() {
+      const listContainer = document.getElementById('agent-history-list');
+      if (!listContainer) return;
+
+      const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      if (sessions.length === 0) {
+        listContainer.innerHTML = `<div class="text-center text-secondary py-8">No saved conversations.</div>`;
+        return;
+      }
+
+      listContainer.innerHTML = sessions.map(session => `
+        <div class="flex items-center justify-between p-2 rounded border border-color hover:bg-surface-alt transition-colors group cursor-pointer" data-id="${session.id}">
+          <div class="flex-1 min-w-0 pr-2 btn-load-session" data-id="${session.id}">
+            <div class="truncate text-xs font-semibold text-text group-hover:text-primary transition-colors">${esc(session.title)}</div>
+            <div class="text-[9px] text-secondary mt-0.5">${new Date(session.timestamp).toLocaleString()}</div>
+          </div>
+          <button class="text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 btn-delete-session outline-none bg-transparent border-none" data-id="${session.id}" title="Delete chat">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      `).join('');
+
+      listContainer.querySelectorAll('.btn-load-session').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.dataset.id;
+          loadSavedSession(id);
+          const panel = document.getElementById('agent-history-panel');
+          if (panel) panel.remove();
+        });
+      });
+
+      listContainer.querySelectorAll('.btn-delete-session').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = el.dataset.id;
+          deleteSavedSession(id);
+        });
+      });
+    }
+
+    function loadSavedSession(id) {
+      archiveCurrentHistory(); // 現在の会話を退避
+      
+      const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      const session = sessions.find(s => s.id === id);
+      if (!session) return;
+
+      agentHistory = [...session.history];
+      localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+      renderHistoryToLog(agentHistory);
+      updateAgentActionButtons();
+    }
+
+    function deleteSavedSession(id) {
+      let sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      sessions = sessions.filter(s => s.id !== id);
+      localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
+      renderSavedSessionsList();
+    }
+
+    document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
+
+    // エクスポート＆共有ロジック
+    function updateAgentActionButtons() {
+      const hasHistory = agentHistory && agentHistory.length > 0;
+      const shareBtn = document.getElementById('btn-share-agent');
+      const exportBtn = document.getElementById('btn-export-agent');
+      if (shareBtn && exportBtn) {
+        if (hasHistory) {
+          shareBtn.classList.remove('opacity-30');
+          shareBtn.style.pointerEvents = 'auto';
+          exportBtn.classList.remove('opacity-30');
+          exportBtn.style.pointerEvents = 'auto';
+        } else {
+          shareBtn.classList.add('opacity-30');
+          shareBtn.style.pointerEvents = 'none';
+          exportBtn.classList.add('opacity-30');
+          exportBtn.style.pointerEvents = 'none';
+        }
+      }
+    }
+
+    function getAgentChatMarkdown() {
+      if (!agentHistory || agentHistory.length === 0) return '';
+      let md = `# ST Multi Agent Chat Log\nGenerated on: ${new Date().toLocaleString()}\n\n---\n\n`;
+      agentHistory.forEach(item => {
+        if (item.role === 'user') {
+          md += `## 🧑‍💻 User\n${item.content}\n\n`;
+        } else {
+          md += `## ✦ ST Multi Agent\n${item.content}\n\n`;
+        }
+      });
+      md += `---\n*Generated by ST Multi Agent (tk.st)*\n`;
+      return md;
+    }
+
+    async function shareAgentChat(btn) {
+      const md = getAgentChatMarkdown();
+      if (!md) return;
+      const shareData = { title: 'ST Multi Agent Chat Log', text: md };
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {
+          if (err.name !== 'AbortError') console.error('Share failed', err);
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(md);
+        const originalTitle = btn.getAttribute('title');
+        btn.setAttribute('title', 'Copied to clipboard! ✓');
+        const agentTitleBtn = document.getElementById('btn-reset-agent');
+        const originalText = agentTitleBtn.innerHTML;
+        agentTitleBtn.innerHTML = `<span class="text-sm inline-block">✓</span> COPIED!`;
+        setTimeout(() => {
+          btn.setAttribute('title', originalTitle);
+          agentTitleBtn.innerHTML = originalText;
+        }, 2000);
+      } catch (err) {
+        console.error('Clipboard copy failed', err);
+      }
+    }
+
+    function exportAgentChat() {
+      const md = getAgentChatMarkdown();
+      if (!md) return;
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `magi_chat_${new Date().toISOString().slice(0,10)}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('btn-share-agent').addEventListener('click', (e) => shareAgentChat(e.currentTarget));
+    document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
+
     // スプラッシュの人格ノードをタップ → その人格の特徴を表示（トグル）
     agentLog.addEventListener('click', (e) => {
       const node = e.target.closest('.magi-node'); if (!node) return;
