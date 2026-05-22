@@ -1,0 +1,8 @@
+# ローカル開発用シークレット（このファイルは見本。実値は .dev.vars に書く）
+# 使い方:  cp workers/magi2/.dev.vars.example workers/magi2/.dev.vars  して値を入れる
+# .dev.vars は .gitignore 済みでコミットされない。
+
+DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# 任意: 外部クライアント（tk.st/localhost 以外）から叩く場合のみ
+# CLIENT_API_KEY=

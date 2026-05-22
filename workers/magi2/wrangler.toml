@@ -1,0 +1,20 @@
+name               = "tk-st-magi2-api"
+main               = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# `magi*` ルートとの衝突を避けるため、より具体的な `magi2*` で先取りする。
+routes = [
+  { pattern = "workers.tk.st/magi2*", zone_name = "tk.st" },
+]
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "tk-st-magi2-db"
+database_id   = "REPLACE_AFTER_CREATE"   # `wrangler d1 create tk-st-magi2-db` の出力で差し替え
+
+# セットアップ手順:
+#   1) wrangler d1 create tk-st-magi2-db                 # 出力の database_id を上に貼る
+#   2) wrangler d1 execute tk-st-magi2-db --file workers/magi2/schema.sql --remote
+#   3) wrangler secret put DEEPSEEK_API_KEY --config workers/magi2/wrangler.toml
+#   (任意) 外部クライアント許可用: wrangler secret put CLIENT_API_KEY ...
+#   4) wrangler deploy --config workers/magi2/wrangler.toml

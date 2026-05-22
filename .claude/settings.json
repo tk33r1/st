@@ -10,7 +10,10 @@
       "Bash(ls -d */)",
       "Bash(ls -la game)",
       "Bash(node -e ' *)",
-      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('data/game.json','utf8'\\)\\); console.log\\('game.json valid'\\)\")"
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('data/game.json','utf8'\\)\\); console.log\\('game.json valid'\\)\")",
+      "Bash(node -e \"import\\('file:///c:/dev/tk.st/workers/magi2/src/index.js'\\).then\\(m=>console.log\\('index.js OK, default export:', typeof m.default\\)\\).catch\\(e=>{console.error\\('ERR', e.message\\); process.exit\\(1\\)}\\)\")",
+      "Bash(git check-ignore *)",
+      "Bash(node -e \"import\\('file:///c:/dev/tk.st/workers/magi2/src/index.js'\\).then\\(\\(\\)=>console.log\\('reload OK'\\)\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\minep\\.claude\\projects\\c--dev-tk-st\\memory"

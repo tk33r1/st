@@ -940,7 +940,7 @@
       const container = document.getElementById(`identify-result-${targetId}`);
       if (container) {
         container.innerHTML = result;
-        // Persist the rendered profile into the tab's stored HTML so it survives tab switches / re-renders.
+        // renderEditor rebuilds the tab from tabState, so persist the live result back or it's lost on tab switch.
         if (activeTab === 'identify' && tabState.identify !== undefined && DOM.output.firstElementChild) {
           tabState.identify = DOM.output.firstElementChild.innerHTML;
         }
