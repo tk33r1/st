@@ -7,12 +7,12 @@
 <title>ASCII Roguelike</title>
 <link rel="icon" href="https://tk.st/images/favicons/ascii-roguelike-favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="https://tk.st/images/favicons/ascii-roguelike-favicon.png">
-<link rel="canonical" href="https://tk.st/ascii-roguelike/">
+<link rel="canonical" href="https://tk.st/game/ascii-roguelike/">
 <link rel="author" href="https://tk.st/">
 <meta property="og:title" content="ASCII Roguelike">
 <meta property="og:description" content="ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう">
 <meta property="og:image" content="https://tk.st/images/ogp/ascii-roguelike-ogp.png">
-<meta property="og:url" content="https://tk.st/ascii-roguelike/">
+<meta property="og:url" content="https://tk.st/game/ascii-roguelike/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="tk.st">
 <meta property="og:locale" content="ja_JP">
@@ -38,16 +38,16 @@
             "@type": "ListItem",
             "position": 2,
             "name": "ASCII Roguelike",
-            "item": "https://tk.st/ascii-roguelike/"
+            "item": "https://tk.st/game/ascii-roguelike/"
           }
         ]
       },
       {
         "@type": "SoftwareApplication",
-        "@id": "https://tk.st/ascii-roguelike/#game",
+        "@id": "https://tk.st/game/ascii-roguelike/#game",
         "name": "ASCII Roguelike",
         "description": "ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう",
-        "url": "https://tk.st/ascii-roguelike/",
+        "url": "https://tk.st/game/ascii-roguelike/",
         "image": "https://tk.st/images/ogp/ascii-roguelike-ogp.png",
         "inLanguage": "ja",
         "playMode": "SinglePlayer",
@@ -99,6 +99,7 @@
       height: 100dvh;
       margin: 0;
       overflow: hidden;
+      -webkit-user-select: none;
       user-select: none;
       touch-action: none;
     }
@@ -426,9 +427,9 @@
 
   <div id="overlay">
     <div id="overlay-msg"></div>
-    <button id="submit-score-btn" class="btn" style="display:none; margin-top: 10px;">Submit Score</button>
-    <a href="https://tk.st/bitcoinyen/certification" target="_blank" id="reward-btn" class="btn" style="display:none; margin-top: 20px;">[ Get 1 trillion BITCOIN YEN ]</a>
-    <button id="retry-btn" class="btn" style="display:none; margin-top: 20px;">[ Retry ]</button>
+    <button type="button" id="submit-score-btn" class="btn" style="display:none; margin-top: 10px;">Submit Score</button>
+    <a href="https://tk.st/bitcoinyen/certification" target="_blank" rel="noopener noreferrer" id="reward-btn" class="btn" style="display:none; margin-top: 20px;">[ Get 1 trillion BITCOIN YEN ]</a>
+    <button type="button" id="retry-btn" class="btn" style="display:none; margin-top: 20px;">[ Retry ]</button>
   </div>
 </div>
 
@@ -745,10 +746,10 @@ function openTerminal() {
   inputEl.value = '';
   inputEl.focus();
   
-  if (geminiHistory.length === 0) {
+  const logDiv = document.getElementById('terminal-chat-log');
+  if (logDiv.innerHTML === '') {
     let initMsg = ">> SYSTEM ONLINE... 私はこの地下ネットワークに放棄された旧世代のAIユニットだ。私の稼働にはお前の生体エネルギー(HP)が必要となる。情報を求めるなら、その生命力を対価として支払え。";
     appendChatLog("AI", initMsg);
-    geminiHistory.push({ role: "model", parts: [{ text: initMsg }] });
   }
 }
 

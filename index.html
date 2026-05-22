@@ -224,13 +224,34 @@
     .nav-badge.hidden { display: none; }
     /* explorer / file tree */
     #sidebar { width: 14rem; flex-shrink: 0; overflow-y: auto; }
+    /* drag-to-resize handles */
+    #sidebar-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background 0.15s; z-index: 5; }
+    #panel-resizer { flex-shrink: 0; height: 5px; margin: -2px 0; cursor: row-resize; background: transparent; transition: background 0.15s; z-index: 5; }
+    #sidebar-resizer:hover, #panel-resizer:hover, .resizer-active { background: var(--primary-color); }
+    body.resizing-x, body.resizing-x * { cursor: col-resize !important; }
+    body.resizing-y, body.resizing-y * { cursor: row-resize !important; }
+    body.resizing-x, body.resizing-y { -webkit-user-select: none; user-select: none; }
     .tree-folder { display: flex; align-items: center; gap: 0.35rem; width: 100%; padding: 0.25rem 0.5rem; text-align: left; }
     .tree-chevron { display: inline-block; transition: transform 0.15s; }
     .tree-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.2rem 0.75rem 0.2rem 1.5rem; text-align: left; transition: background-color 0.15s, color 0.15s; }
     .tree-item:hover { background-color: var(--surface-hover); }
     .tree-item.active { background-color: var(--primary-bg); color: var(--primary-color); }
-    #search-input { width: 100%; padding: 0.35rem 0.5rem; font-size: 0.8125rem; background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 4px; outline: none; color: var(--text-color); }
-    #search-input:focus { border-color: var(--primary-color); }
+    #search-input, #ext-search-input { width: 100%; padding: 0.35rem 0.5rem; font-size: 0.8125rem; background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 4px; outline: none; color: var(--text-color); }
+    #search-input:focus, #ext-search-input:focus { border-color: var(--primary-color); }
+    /* extensions view */
+    .ext-card { transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+    .ext-card:hover { border-color: var(--primary-color); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+    .ext-icon { width: 2.25rem; height: 2.25rem; flex-shrink: 0; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; color: #fff; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+    .ext-spinner { width: 0.7rem; height: 0.7rem; border: 1.5px solid currentColor; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.6s linear infinite; vertical-align: -1px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ext-section-label { font-size: 10px; letter-spacing: 0.05em; }
+    .ext-btn { padding: 0.28rem 0.7rem; font-size: 10px; line-height: 1; border-radius: 4px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 700; transition: background-color 0.15s, color 0.15s, border-color 0.15s, filter 0.15s; }
+    .ext-btn-install { background: var(--primary-color); color: var(--bg-color); }
+    .ext-btn-install:hover { filter: brightness(1.12); }
+    .ext-btn-uninstall { background: transparent; border: 1px solid var(--border-color); color: var(--secondary-color); font-weight: 400; }
+    .ext-btn-uninstall:hover { border-color: #ef4444; color: #ef4444; }
+    .ext-btn:disabled { cursor: default; }
+    .ext-installed-tag { font-size: 10px; color: var(--primary-color); display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
     /* editor tabs + breadcrumb */
     .ed-tab { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; border-right: 1px solid var(--border-color); cursor: pointer; white-space: nowrap; color: var(--secondary-color); }
     .ed-tab.active { background-color: var(--bg-color); color: var(--text-color); }
@@ -239,14 +260,30 @@
     .ed-tab .tab-close:hover { opacity: 1; }
     /* bottom terminal panel */
     #panel { flex-shrink: 0; height: 38%; min-height: 6rem; }
-    .panel-tab { padding: 0.35rem 0.75rem; border-bottom: 2px solid transparent; }
+    .panel-tab { padding: 0.35rem 0.75rem; border-bottom: 2px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: color 0.15s; }
+    .panel-tab:hover { color: var(--text-color); }
     .panel-tab.active { color: var(--text-color); border-bottom-color: var(--primary-color); }
+    .panel-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 1rem; height: 1rem; padding: 0 0.25rem; border-radius: 9999px; background: var(--primary-color); color: var(--bg-color); font-size: 9px; font-weight: 700; }
+    .panel-pane { overflow-y: auto; min-height: 0; }
+    .prob-row, .port-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.25rem; border-bottom: 1px solid var(--border-color); }
+    .prob-row.clickable, .port-link { cursor: pointer; }
+    .port-link { color: var(--text-color); }
+    .prob-row.clickable:hover, .port-link:hover { background: var(--surface-hover); }
+    .port-link:hover .port-open { color: var(--primary-color); }
+    .out-line { display: flex; gap: 0.6rem; padding: 0.1rem 0; white-space: pre-wrap; word-break: break-word; }
+    .out-ts { color: var(--secondary-color); flex-shrink: 0; }
+    #output-channel { background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 10px; padding: 0.1rem 0.3rem; outline: none; }
+    .port-num { color: var(--primary-color); font-weight: 700; width: 3rem; flex-shrink: 0; }
+    .port-dot { color: #4ade80; }
+    .port-open { color: var(--secondary-color); text-decoration: none; flex-shrink: 0; }
+    .port-open:hover { color: var(--primary-color); text-decoration: underline; }
     @media (max-width: 767px) {
       #sidebar { position: fixed; top: 0; bottom: 0; left: 3rem; transform: translateX(-130%); transition: transform 0.25s ease; z-index: 50; box-shadow: 0 0 24px rgba(0,0,0,0.35); }
       #sidebar.open { transform: translateX(0); }
       #panel { height: 45%; }
+      #sidebar-resizer { display: none; }
     }
-    @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } }
+    @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
   </style>
   <script type="application/ld+json">
     {
@@ -289,14 +326,6 @@
     <h3><a href="https://tk.st/tools/">AI coding benchmark: Toolbox</a></h3>
     <h3><a href="https://tk.st/glitch/">Finding the "bugs" that lead to better living.</a></h3>
     <h3><a href="https://tk.st/thought/">A shared margin for contemplating the essence of life.</a></h3>
-    <h2><a href="?cmd=bitcoin">bitcoin</a></h2>
-    <p>Enjoy Web3 journey</p>
-    <h3><a href="https://tk.st/bitcoinyen/ascii-roguelike/">Play to Earn: ASCII Roguelike</a></h3>
-    <h3><a href="https://tk.st/bitcoinyen/ln/">Direct Purchase: Lightning Network</a></h3>
-    <h3><a href="https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN">Marketplace: UniSat</a></h3>
-    <h3><a href="https://tk.st/bitcoinyen/bbm/">Letter to the future: Bitcoin Bottle Mail</a></h3>
-    <h3><a href="https://unisat.io/runes/detail/BITCOINYEN/">Dive into my Bitcoin token</a></h3>
-    <h3><a href="https://web3.tk.st/">Dive into my Web3 page</a></h3>
     <h2><a href="?cmd=magi">magi</a></h2>
     <p>Talk to ST multi-agent</p>
     <a href="https://tk.st/magi/">MAGI System</a>
@@ -308,6 +337,9 @@
     <h2><a href="?cmd=help">help</a></h2>
     <p>Show this menu</p>
     <h1>Hidden Commands:</h1>
+    <h2><a href="?cmd=web3">web3</a></h2>
+    <p>Dive into my Web3 page</p>
+    <a href="https://web3.tk.st/">Web3 Page</a>
     <h2><a href="?cmd=akutagawa">akutagawa</a></h2>
     <p>A message from the past</p>
     <h2><a href="?cmd=bpm">bpm</a></h2>
@@ -369,19 +401,25 @@
      </div>
      <div id="view-extensions" class="hidden">
       <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">EXTENSIONS</div>
+      <div class="px-3 pb-2"><input type="text" id="ext-search-input" autocomplete="off" spellcheck="false" placeholder="Search Extensions in Marketplace" aria-label="Search extensions"></div>
       <div id="extensions-list" class="px-3 pb-2 space-y-2"></div>
      </div>
     </aside>
+    <div id="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize side bar" title="Drag to resize"></div>
     <section id="editor-group" class="flex flex-col flex-1">
      <div id="tabbar" class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
      <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate">tk.st</div>
      <div id="editor" class="flex-1 p-4 md:p-6 space-y-1 relative" style="scroll-behavior:smooth;">
       <div id="output-area" aria-live="polite" aria-atomic="false"></div>
      </div>
+     <div id="panel-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize panel" title="Drag to resize"></div>
      <div id="panel" class="flex flex-col border-t border-color bg-surface">
       <div id="panel-tabs" class="flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
-       <span class="panel-tab active">TERMINAL</span><span class="panel-tab opacity-50">PROBLEMS</span><span class="panel-tab opacity-50">OUTPUT</span><span class="panel-tab opacity-50">PORTS</span>
+       <span class="panel-tab active" data-panel="terminal">TERMINAL</span><span class="panel-tab" data-panel="problems">PROBLEMS<span id="panel-problems-badge" class="panel-badge hidden">0</span></span><span class="panel-tab" data-panel="output">OUTPUT</span><span class="panel-tab" data-panel="ports">PORTS</span>
       </div>
+      <div id="panel-problems" class="panel-pane flex-1 p-3 text-xs hidden"></div>
+      <div id="panel-output" class="panel-pane flex-1 p-3 text-xs hidden"></div>
+      <div id="panel-ports" class="panel-pane flex-1 p-3 text-xs hidden"></div>
       <div id="terminal" class="flex-1 p-3 space-y-1" style="scroll-behavior:smooth;">
        <div id="terminal-log" aria-live="polite" aria-atomic="false"></div>
        <div class="hidden items-center gap-2 mt-2" id="input-line">
@@ -464,13 +502,96 @@
         unreadHistoryCount++;
       }
       updateGitBadge();
+      // Mirror system events ([SYS] ...) into the OUTPUT panel log.
+      if (typeof entry === 'string' && entry.startsWith('[SYS]')) {
+        const msg = entry.replace(/^\[SYS\]\s*/, '');
+        const channel = /Extension/i.test(msg) ? 'Extensions' : /Theme/i.test(msg) ? 'Theme' : 'System';
+        systemLog.push({ t: new Date(), channel, msg });
+        if (typeof renderOutput === 'function' && !document.getElementById('panel-output').classList.contains('hidden')) renderOutput();
+      }
     }
 
-    // PROBLEMS counter shown in the footer (⊘ errors · ⚠ warnings).
-    function bumpProblems({ error = 0, warn = 0 } = {}) {
-      errorCount += error; warnCount += warn;
+    // --- PROBLEMS panel (footer ⊘ errors · ⚠ warnings + diagnostics list) ---
+    const FILE_CMD = { 'identify.json': 'identify', 'bpm.css': 'bpm', 'letter.txt': 'akutagawa', 'about.md': 'about', 'help.md': 'help' };
+    // Starts empty: problems are recorded only from real events (unknown commands, sudo failures, etc.).
+    const problems = [];
+    function recountProblems() {
+      errorCount = problems.filter(p => p.sev === 'error').length;
+      warnCount = problems.filter(p => p.sev === 'warn').length;
       const el = document.getElementById('status-left');
       if (el) el.textContent = `⊘ ${errorCount}  ⚠ ${warnCount}`;
+      const badge = document.getElementById('panel-problems-badge');
+      if (badge) { const n = errorCount + warnCount; badge.textContent = n; badge.classList.toggle('hidden', n === 0); }
+      const pane = document.getElementById('panel-problems');
+      if (pane && !pane.classList.contains('hidden')) renderProblems();
+    }
+    function addProblem(sev, msg, opts = {}) {
+      problems.push({ sev, msg, file: opts.file || 'terminal', line: opts.line || 0, cmd: opts.cmd || FILE_CMD[opts.file] || null });
+      recountProblems();
+    }
+    function renderProblems() {
+      const pane = document.getElementById('panel-problems');
+      if (!pane) return;
+      if (!problems.length) { pane.innerHTML = `<div class="text-secondary opacity-70">No problems have been detected.</div>`; return; }
+      pane.innerHTML = problems.map((p, i) => {
+        const icon = p.sev === 'error' ? '<span class="text-red-500">⊘</span>' : '<span style="color:#fbbf24">⚠</span>';
+        const loc = `${esc(p.file)}${p.line ? ':' + p.line : ''}`;
+        return `<div class="prob-row ${p.cmd ? 'clickable' : ''}" data-idx="${i}" ${p.cmd ? `data-cmd="${esc(p.cmd)}"` : ''}>
+          ${icon}
+          <span class="text-normal flex-1">${esc(p.msg)}</span>
+          <span class="text-secondary whitespace-nowrap">${loc}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // --- OUTPUT panel (system event log, channel-filtered) ---
+    const systemLog = [{ t: new Date(), channel: 'System', msg: 'boot sequence complete' }];
+    let outputChannel = 'All';
+    function renderOutput() {
+      const pane = document.getElementById('panel-output');
+      if (!pane) return;
+      const channels = ['All', 'System', 'Extensions', 'Theme'];
+      const rows = systemLog.filter(e => outputChannel === 'All' || e.channel === outputChannel);
+      const fmt = d => d.toTimeString().slice(0, 8);
+      pane.innerHTML =
+        `<div class="flex items-center gap-2 mb-2"><span class="text-secondary">Channel:</span>
+          <select id="output-channel">${channels.map(c => `<option ${c === outputChannel ? 'selected' : ''}>${c}</option>`).join('')}</select></div>` +
+        (rows.length
+          ? rows.map(e => `<div class="out-line"><span class="out-ts">[${fmt(e.t)}]</span><span class="text-normal">${esc(e.msg)}</span></div>`).join('')
+          : `<div class="text-secondary opacity-70">No output for this channel yet.</div>`);
+    }
+
+    // --- PORTS panel (sameAs profiles surfaced as forwarded ports) ---
+    const PORTS = [
+      { port: 22,   svc: 'github / tk33r1',         proto: 'ssh',     state: 'Running',   url: 'https://github.com/tk33r1' },
+      { port: 443,  svc: 'x / Tah_Keh',             proto: 'https',   state: 'Running',   url: 'https://x.com/Tah_Keh' },
+      { port: 1935, svc: 'instagram / dj_hcp',      proto: 'rtmp',    state: 'Streaming', url: 'https://www.instagram.com/dj_hcp/' },
+      { port: 8000, svc: 'mixcloud / dj_hcp',       proto: 'icecast', state: 'Streaming', url: 'https://www.mixcloud.com/dj_hcp/' },
+      { port: 8443, svc: 'linkedin / shinyatakeda', proto: 'https',   state: 'Running',   url: 'https://www.linkedin.com/in/shinyatakeda/' },
+      { port: 8888, svc: 'coursera / takeda',       proto: 'jupyter', state: 'Running',   url: 'https://www.coursera.org/learner/takeda' },
+      { port: 4040, svc: 'ko-fi / shinyatakeda',    proto: 'http',    state: 'Running',   url: 'https://ko-fi.com/shinyatakeda' }
+    ];
+    function renderPorts() {
+      const pane = document.getElementById('panel-ports');
+      if (!pane) return;
+      pane.innerHTML =
+        `<div class="port-row text-secondary" style="border-bottom-width:2px"><span class="port-num">PORT</span><span class="flex-1">SERVICE</span><span class="whitespace-nowrap">STATE</span><span style="width:3.2rem"></span></div>` +
+        PORTS.map(p => `<a class="port-row port-link no-underline" href="${p.url}" target="_blank" rel="noopener noreferrer" title="Open ${esc(p.svc)} in a new tab">
+          <span class="port-num">${p.port}</span>
+          <span class="flex-1 text-normal truncate">${esc(p.svc)} <span class="text-secondary">(${p.proto})</span></span>
+          <span class="whitespace-nowrap text-secondary"><span class="port-dot">●</span> ${p.state}</span>
+          <span class="port-open">open ↗</span>
+        </a>`).join('');
+    }
+
+    // --- Panel tab switching ---
+    const PANEL_PANES = { terminal: 'terminal', problems: 'panel-problems', output: 'panel-output', ports: 'panel-ports' };
+    function showPanel(name) {
+      Object.entries(PANEL_PANES).forEach(([k, id]) => document.getElementById(id).classList.toggle('hidden', k !== name));
+      document.querySelectorAll('#panel-tabs .panel-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === name));
+      if (name === 'problems') renderProblems();
+      else if (name === 'output') renderOutput();
+      else if (name === 'ports') renderPorts();
     }
 
     function updateCaret() {
@@ -491,12 +612,12 @@
     });
 
     const projects = [
-      { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj' },
-      { name: '/job', desc: 'An Optimization and data-driven growth strategy.', tech: 'EC, UIUX, Search Engine, Web ads, GA4, Frontend, Web3, SEO, AIO, AI Agent', link: 'https://tk.st/job' },
-      { name: '/game', desc: 'AI coding benchmark: Game Sandbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/game' },
-      { name: '/tools', desc: 'AI coding benchmark: Toolbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/tools' },
-      { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch' },
-      { name: '/thought', desc: 'A shared margin for contemplating the essence of life.', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/thought' }
+      { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj/' },
+      { name: '/job', desc: 'An Optimization and data-driven growth strategy.', tech: 'EC, UIUX, Search Engine, Web ads, GA4, Frontend, Web3, SEO, AIO, AI Agent', link: 'https://tk.st/job/' },
+      { name: '/game', desc: 'AI coding benchmark: Game Sandbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/game/' },
+      { name: '/tools', desc: 'AI coding benchmark: Toolbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/tools/' },
+      { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch/' },
+      { name: '/thought', desc: 'A shared margin for contemplating the essence of life.', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/thought/' }
     ];
 
     const PROFILE_DATA = {
@@ -524,42 +645,94 @@
       matrix: { name: 'matrix', desc: 'Enter the Matrix', version: '1.0.1', author: 'ST', isHidden: true },
       meditation: { name: 'meditation', desc: 'Clear your mind', version: '2.0.0', author: 'ST', isHidden: true },
       theme: { name: 'theme', desc: 'Change terminal color', version: '1.1.0', author: 'ST', isHidden: true },
+      web3: { name: 'web3', desc: 'Dive into my Web3 page', version: '1.0.0', author: 'ST', isHidden: true },
       rebuild: { name: 'rebuild', desc: 'System rebuild', version: '1.0.0', author: 'ST', isHidden: true, hideFromList: true }
     };
     const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
     const installedExtensions = new Set();
 
+    // Shared file-type color system: the Explorer tree, file tabs, and the
+    // Extensions Marketplace cards all derive their icon colour from here so a
+    // given file/extension looks identical wherever it appears.
+    const FILETYPE_COLOR = {
+      md:   '#4a9ed4', // Markdown   - blue
+      json: '#c9a227', // JSON       - gold
+      txt:  '#8a8f98', // Plain text - gray
+      css:  '#519aba', // Stylesheet - teal-blue
+      sh:   '#6cc04a', // Shell      - green
+      bin:  '#9d7cf0', // Binary     - purple
+      ai:   '#d96fc4', // AI model   - magenta
+    };
+    function fileTypeColor(name) {
+      const ext = (name && name.includes('.')) ? name.split('.').pop() : '';
+      return FILETYPE_COLOR[ext] || '#8a8f98';
+    }
+    // Some glyphs carry a strong conventional color (a heart is red, a warning sign is amber).
+    // These override the file-type color so the icon reads naturally regardless of its extension.
+    const ICON_COLOR = {
+      bpm:     '#e0556b', // ♥ heart   - red/pink
+      destroy: '#e0a93e', // ⚠ warning - amber
+      matrix:  '#4eb85a', // ░ matrix  - green
+    };
+    function iconColor(cmd, name) {
+      return ICON_COLOR[cmd] || fileTypeColor(name);
+    }
+    function extCardHtml({ cmd, meta, isInstalled }) {
+      const tm = (typeof treeMeta === 'function') ? treeMeta(cmd) : { name: meta.name, icon: meta.name[0] };
+      const color = iconColor(cmd, tm.name);
+      return `
+        <div class="ext-card flex gap-2 p-2 border border-color rounded bg-surface-alt">
+          <div class="ext-icon" style="background:linear-gradient(135deg,${color},${color}b3)">${esc(tm.icon)}</div>
+          <div class="flex flex-col gap-1 flex-1 overflow-hidden">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-normal text-xs truncate">${esc(meta.name)}</span>
+              <span class="text-[10px] text-secondary whitespace-nowrap">v${meta.version}</span>
+            </div>
+            <div class="text-[10px] text-secondary truncate" title="${esc(meta.desc)}">${esc(meta.desc)}</div>
+            <div class="flex items-center justify-between gap-2 mt-1">
+              <span class="text-[10px] text-secondary truncate">${esc(meta.author)}</span>
+              <div class="flex items-center gap-1.5 whitespace-nowrap">
+                ${isInstalled
+                  ? `<span class="ext-installed-tag">✓ Installed</span><button class="ext-uninstall-btn ext-btn ext-btn-uninstall" data-ext="${cmd}" title="Uninstall ${esc(meta.name)}">Uninstall</button>`
+                  : `<button class="ext-install-btn ext-btn ext-btn-install" data-ext="${cmd}">↓ Install</button>`}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
     function renderExtensions() {
       const list = document.getElementById('extensions-list');
       if (!list) return;
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      
-      let html = '';
+      const query = (document.getElementById('ext-search-input')?.value || '').trim().toLowerCase();
+
       let uninstalledCount = 0;
+      const installed = [], available = [];
       hiddenCommands.forEach(cmd => {
         if (cmd === 'rebuild') return;
         if (cmd === 'akutagawa' && !isDark) return;
         const meta = extensionMeta[cmd] || { name: cmd, desc: CMD_DESC[cmd] || '', version: '1.0.0', author: 'ST' };
         const isInstalled = installedExtensions.has(cmd);
         if (!isInstalled) uninstalledCount++;
-        
-        html += `
-          <div class="flex flex-col gap-1 p-2 border border-color rounded bg-surface-alt">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-normal text-xs">${esc(meta.name)}</span>
-              <span class="text-[10px] text-secondary">v${meta.version}</span>
-            </div>
-            <div class="text-[10px] text-secondary truncate" title="${esc(meta.desc)}">${esc(meta.desc)}</div>
-            <div class="flex items-center justify-between mt-1">
-              <span class="text-[10px] text-secondary">${esc(meta.author)}</span>
-              <button class="ext-install-btn px-2 py-0.5 text-[10px] rounded cursor-pointer ${isInstalled ? 'bg-surface border border-color text-secondary' : 'bg-primary-dim text-primary hover:bg-primary-dim-hover'}" data-ext="${cmd}" ${isInstalled ? 'disabled' : ''}>
-                ${isInstalled ? 'Installed' : 'Install'}
-              </button>
-            </div>
-          </div>
-        `;
+        if (query && !(meta.name.toLowerCase().includes(query) || (meta.desc || '').toLowerCase().includes(query))) return;
+        (isInstalled ? installed : available).push({ cmd, meta, isInstalled });
       });
+
+      let html = '';
+      if (installed.length) {
+        html += `<div class="ext-section-label text-secondary opacity-70 pt-2 mb-1">INSTALLED — ${installed.length}</div>`;
+        html += installed.map(extCardHtml).join('');
+      }
+      if (available.length) {
+        html += `<div class="ext-section-label text-secondary opacity-70 ${installed.length ? 'pt-2' : ''} mb-1">RECOMMENDED — ${available.length}</div>`;
+        html += available.map(extCardHtml).join('');
+      }
+      if (!installed.length && !available.length) {
+        html = `<div class="text-[10px] text-secondary opacity-70 pt-2">No extensions found matching your search.</div>`;
+      }
       list.innerHTML = html;
+
       const badgeExt = document.getElementById('badge-extensions');
       if (badgeExt) {
         badgeExt.textContent = uninstalledCount;
@@ -586,19 +759,6 @@
     }
 
     DOM.output.addEventListener('click', async (e) => {
-      const toggleBtn = e.target.closest('[data-action="toggleBtc"]');
-      if (toggleBtn) {
-        const targetId = toggleBtn.dataset.target;
-        toggleBtn.dataset.all.split(',').forEach(id => {
-          const el = document.getElementById(id);
-          if (el) {
-            const isTarget = id === targetId;
-            el.classList.toggle('hidden', !isTarget);
-            el.classList.toggle('flex', isTarget);
-          }
-        });
-        return;
-      }
       const identifyBtn = e.target.closest('[data-action="identify"]');
       if (identifyBtn) {
         e.preventDefault();
@@ -637,7 +797,6 @@
       about:    { name: 'about.md',       icon: '≡' },
       identify: { name: 'identify.json',  icon: '{}' },
       pages:    { name: 'pages.json',     icon: '[]' },
-      bitcoin:  { name: 'bitcoin.rune',   icon: '₿' },
       akutagawa:{ name: 'letter.txt',     icon: '✉' },
       help:     { name: 'help.md',        icon: '?' }
     };
@@ -648,9 +807,10 @@
       if (cmd === 'destroy') return 'Shell Script';
       if (cmd === 'magi') return 'AI Model';
       if (cmd === 'contact') return 'Plain Text';
+      if (cmd === 'web3') return 'URL';
       const m = FILE_META[cmd];
       if (!m || !m.name.includes('.')) return 'Shell';
-      return { md: 'Markdown', json: 'JSON', txt: 'Plain Text', rune: 'Rune' }[m.name.split('.').pop()] || 'Shell';
+      return { md: 'Markdown', json: 'JSON', txt: 'Plain Text' }[m.name.split('.').pop()] || 'Shell';
     };
     let tabState = {}, tabOrder = [], activeTab = null;
     const fileLabel = c => (FILE_META[c] || { name: c }).name;
@@ -774,7 +934,11 @@
     };
 
     const commands = {
-      help: () => renderCmdList('Available Commands:', [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['bitcoin', 'Enjoy Web3 journey'], ['magi', 'Talk to ST multi-agent'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']]),
+      help: () => {
+        const base = [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['magi', 'Talk to ST multi-agent'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']];
+        const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, (extensionMeta[c] && extensionMeta[c].desc) || CMD_DESC[c] || '']);
+        return renderCmdList('Available Commands:', base.concat(installed));
+      },
       clear: () => { DOM.terminalLog.innerHTML = ''; return null; },
       sudo(args) {
         if (!args || args.length === 0) return `<div class="text-xs my-1 text-red-500">usage: sudo &lt;command&gt;</div>`;
@@ -783,7 +947,7 @@
           return `<div class="text-xs my-1 text-red-500">${esc(targetCmd)} is not allowed to be executed with sudo.</div>`;
         }
         if (!installedExtensions.has('akutagawa')) {
-          bumpProblems({ error: 1 });
+          addProblem('error', "Command not found: 'akutagawa'", { file: 'terminal' });
           return cmdNotFoundHTML('akutagawa');
         }
         sudoContext = { cmd: targetCmd, args: args.slice(1) };
@@ -791,21 +955,9 @@
         DOM.input.placeholder = '[sudo] password for ST: ';
         return `<div class="text-xs my-1 text-secondary">Enter password for ST:</div>`;
       },
-      bitcoin() {
-        const uniqueId = 'btc-' + Date.now();
-        const tabs = ['earn', 'buy', 'use', 'view'];
-        const allIds = tabs.map(t => `${t}-opts-${uniqueId}`).join(',');
-        const btcData = { earn: [{ i: '🎮', t: 'Play to Earn', s: 'ASCII Roguelike', l: 'https://tk.st/bitcoinyen/ascii-roguelike' }], buy: [{ i: '⚡', t: 'Direct Purchase', s: 'Lightning Network', l: 'https://tk.st/bitcoinyen/ln' }, { i: '🛒', t: 'Marketplace', s: 'UniSat', l: 'https://unisat.io/runes/market?tick=BITCOIN%E2%80%A2YEN' }], use: [{ i: '📨', t: 'Letter to the future', s: 'Bitcoin Bottle Mail', l: 'https://tk.st/bitcoinyen/bbm' }], view: [{ i: '🪙', t: 'Dive into my Bitcoin token', s: 'Bitcoin Mainnet', l: 'https://unisat.io/runes/detail/BITCOINYEN' }, { i: '🌐', t: 'Dive into my Web3 page', s: 'Bitcoin Mainnet', l: 'https://web3.tk.st' }] };
-        const renderItems = items => items.map(item => `<a href="${item.l}" target="_blank" rel="noopener noreferrer" class="block px-3 py-2 border rounded cursor-pointer transition-colors text-xs w-full max-w-[300px] bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="text-normal">${item.i} ${item.t}</div><div class="text-xs mt-0.5 text-primary">${item.s}</div></a>`).join('');
-        return wrapCmd(`
-            <div class="text-sm font-bold glow mb-3 text-primary">BITCOIN YEN Ecosystem</div>
-            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<button type="button" class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" data-action="toggleBtc" data-target="${t}-opts-${uniqueId}" data-all="${allIds}">${t.charAt(0).toUpperCase() + t.slice(1)}</button>`).join('')}</div>
-            ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">${renderItems(btcData[t])}</div>`).join('')}
-          `);
-      },
       about() {
         const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
-        const sns = [['X', '@Tah_Keh', 'https://x.com/Tah_Keh'], ['Instagram', '@dj_hcp', 'https://www.instagram.com/dj_hcp/'], ['LinkedIn', 'shinyatakeda', 'https://www.linkedin.com/in/shinyatakeda/'], ['GitHub', 'tk33r1', 'https://github.com/tk33r1'], ['Mixcloud', 'dj_hcp', 'https://www.mixcloud.com/dj_hcp/'], ['Ko-fi', 'shinyatakeda', 'https://ko-fi.com/shinyatakeda']];
+        const sns = [['X', '@Tah_Keh', 'https://x.com/Tah_Keh'], ['Instagram', '@dj_hcp', 'https://www.instagram.com/dj_hcp/'], ['LinkedIn', 'shinyatakeda', 'https://www.linkedin.com/in/shinyatakeda/'], ['GitHub', 'tk33r1', 'https://github.com/tk33r1'], ['Coursera', 'takeda', 'https://www.coursera.org/learner/takeda'], ['Mixcloud', 'dj_hcp', 'https://www.mixcloud.com/dj_hcp/'], ['Ko-fi', 'shinyatakeda', 'https://ko-fi.com/shinyatakeda']];
         return wrapCmd(`
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
@@ -833,7 +985,7 @@
       },
       async akutagawa() {
         if (!akutagawaSudoValid) {
-          bumpProblems({ error: 1 });
+          addProblem('error', "Failed to open 'letter.txt': insufficient permissions", { file: 'letter.txt' });
           await printToTerminal(`<div class="text-xs my-1 text-red-500">Failed to open 'letter.txt': Insufficient permissions. Try running with 'sudo'.</div>`, 20);
           return null;
         }
@@ -864,6 +1016,7 @@
       destroy() {
         if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold">System is already destroyed. Waiting for 'rebuild'.</div>`;
         isDestroyed = true; destroyedElements = [];
+        addProblem('warn', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...', { file: 'destroy.sh' });
         document.body.classList.add('system-destroyed');
         const safeElements = new Set();
         let curr = document.getElementById('input-line');
@@ -903,6 +1056,16 @@
               document.body.classList.remove('system-destroyed');
               const nameEl = document.getElementById('display-name-el');
               if(nameEl) nameEl.innerHTML = `${esc(config.display_name)} <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
+              // After the fly-back animations finish, hard-reconcile the layout so nothing is left
+              // mid-transform and the input line is re-anchored to the bottom of the terminal.
+              setTimeout(() => {
+                document.querySelectorAll('#app .destroyed-element, #app .rebuilding-element').forEach(el => {
+                  el.classList.remove('destroyed-element', 'rebuilding-element');
+                  el.style.removeProperty('--dx'); el.style.removeProperty('--dy'); el.style.removeProperty('--deg');
+                });
+                renderEditor();
+                scrollTerminal();
+              }, 1100);
               break;
             }
             const item = elements.pop();
@@ -1046,16 +1209,19 @@
       }
     };
 
-    const urlCommands = { '/dj': 'https://tk.st/dj', '/job': 'https://tk.st/job', '/game': 'https://tk.st/game', '/glitch': 'https://tk.st/glitch', '/thought': 'https://tk.st/thought', '/tools': 'https://tk.st/tools', 'magi': 'https://tk.st/magi', 'contact': 'https://tk.st/contact' };
+    const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', 'magi': 'https://tk.st/magi/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
-        const label = cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : cmd);
+        const label = cmd === 'magi' ? 'MAGI system' : (cmd === 'contact' ? 'contact page' : (cmd === 'web3' ? 'Web3 page' : cmd));
         const win = window.open(url, '_blank', 'noopener,noreferrer');
         // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to a clickable link.
         if (!win) return `<div class="my-3 text-xs text-primary">Open ${esc(label)}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`;
         return `<div class="my-3 text-xs text-primary">Opening ${esc(label)}...</div>`;
       };
     });
+
+    // Doc-type commands open as editor tabs (via openDoc); everything else prints to the TERMINAL.
+    ['about', 'identify', 'pages', 'help', 'akutagawa'].forEach(c => { if (commands[c]) commands[c].isDoc = true; });
 
     let choreoTicking = false;
     const handleChoreomaniaMove = (clientX, clientY) => {
@@ -1090,7 +1256,7 @@
           await handleCommand(ctx.cmd + ' ' + ctx.args.join(' '), true);
           akutagawaSudoValid = false;
         } else {
-          bumpProblems({ error: 1 });
+          addProblem('error', 'sudo: incorrect password', { file: 'terminal' });
           const errDiv = document.createElement('div');
           errDiv.innerHTML = `<div class="text-xs my-1 text-red-500">sudo: incorrect password</div>`;
           DOM.terminalLog.appendChild(errDiv);
@@ -1113,7 +1279,7 @@
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
       if (isDestroyed && cmd !== 'rebuild') {
-        bumpProblems({ warn: 1 });
+        addProblem('warn', 'command rejected — system is destroyed', { file: 'terminal' });
         await printToTerminal(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
         return;
       }
@@ -1121,7 +1287,7 @@
       if (hiddenCommands.includes(cmd)) {
         const requiredExt = cmd === 'rebuild' ? 'destroy' : cmd;
         if (!installedExtensions.has(requiredExt)) {
-          bumpProblems({ error: 1 });
+          addProblem('error', `Command not found: '${cmd}'`, { file: 'terminal' });
           await printToTerminal(cmdNotFoundHTML(cmd), 50);
           return;
         }
@@ -1134,7 +1300,7 @@
           else await printToTerminal(result, 100);
         }
       } else {
-        bumpProblems({ error: 1 });
+        addProblem('error', `Command not found: '${cmd}'`, { file: 'terminal' });
         await printToTerminal(cmdNotFoundHTML(cmd), 50);
       }
     }
@@ -1236,7 +1402,7 @@
       
       commandHistory = [];
       historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 1;
-      errorCount = 0; warnCount = 0; bumpProblems();
+      problems.length = 0; recountProblems();
       installedExtensions.clear();
       if (typeof renderExplorerTree === 'function') renderExplorerTree();
       // Tear down any active full-screen effects so their canvas/overlay and timers don't leak across the reload.
@@ -1310,16 +1476,17 @@
     });
 
     // --- Explorer (file tree) ---
-    const sidebarFiles = ['about', 'identify', 'pages', 'bitcoin', 'magi', 'contact', 'help'];
-    const FILE_ICONS = { 
-      magi: { name: 'magi.ai', icon: '✦' }, 
-      contact: { name: 'contact.txt', icon: '✉' },
+    const sidebarFiles = ['about', 'identify', 'pages', 'magi', 'contact', 'help'];
+    const FILE_ICONS = {
+      magi: { name: 'magi.ai', icon: '✦' },
+      contact: { name: 'contact.txt', icon: '@' },
       bpm: { name: 'bpm.css', icon: '♥' },
-      choreomania: { name: 'choreomania.bin', icon: '♪' },
+      choreomania: { name: 'choreomania.bin', icon: '∿' },
       destroy: { name: 'destroy.sh', icon: '⚠' },
       matrix: { name: 'matrix.bin', icon: '░' },
       meditation: { name: 'meditation.bin', icon: '○' },
-      theme: { name: 'theme.css', icon: '#' }
+      theme: { name: 'theme.css', icon: '#' },
+      web3: { name: 'web3.url', icon: '⬡' }
     };
     const treeMeta = c => FILE_META[c] || FILE_ICONS[c] || { name: c, icon: '•' };
     const sidebarTree = document.getElementById('sidebar-tree');
@@ -1333,7 +1500,7 @@
       }
       sidebarTree.innerHTML = files.map(c => {
         const m = treeMeta(c);
-        return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span class="text-secondary">${m.icon}</span><span>${esc(m.name)}</span></button>`;
+        return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span style="color:${iconColor(c, m.name)}">${m.icon}</span><span>${esc(m.name)}</span></button>`;
       }).join('');
       const activeCmd = document.querySelector('.tree-item.active')?.dataset.cmd;
       if (activeCmd) setActiveTree(activeCmd);
@@ -1369,12 +1536,12 @@
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
-    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', bitcoin: 'Enjoy Web3 journey', magi: 'Talk to ST multi-agent', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color' };
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', magi: 'Talk to ST multi-agent', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
     // Build a content index so search matches command output text, not just titles.
     const SEARCH_INDEX = {};
     const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
     function buildSearchIndex() {
-      const renderable = ['about', 'pages', 'bitcoin', 'help', 'identify']; // pure, side-effect-free string renderers
+      const renderable = ['about', 'pages', 'help', 'identify']; // pure, side-effect-free string renderers
       Object.keys(commands).forEach(c => {
         let text = c + ' ' + (CMD_DESC[c] || '');
         if (renderable.includes(c)) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) {} }
@@ -1406,13 +1573,11 @@
     });
 
     document.getElementById('view-extensions').addEventListener('click', (e) => {
-      const btn = e.target.closest('.ext-install-btn');
-      if (btn && !btn.disabled) {
-        const cmd = btn.dataset.ext;
-        btn.textContent = 'Installing...';
-        btn.disabled = true;
-        btn.classList.remove('bg-primary-dim', 'text-primary', 'hover:bg-primary-dim-hover');
-        btn.classList.add('bg-surface', 'border', 'border-color', 'text-secondary');
+      const installBtn = e.target.closest('.ext-install-btn');
+      if (installBtn && !installBtn.disabled) {
+        const cmd = installBtn.dataset.ext;
+        installBtn.innerHTML = '<span class="ext-spinner"></span> Installing';
+        installBtn.disabled = true;
         setTimeout(() => {
           installedExtensions.add(cmd);
           renderExtensions();
@@ -1420,8 +1585,73 @@
           addToHistory(`[SYS] Extension '${cmd}' installed`);
           printToTerminal(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`);
         }, 800);
+        return;
+      }
+      const uninstallBtn = e.target.closest('.ext-uninstall-btn');
+      if (uninstallBtn && !uninstallBtn.disabled) {
+        const cmd = uninstallBtn.dataset.ext;
+        uninstallBtn.innerHTML = '<span class="ext-spinner"></span> Uninstalling';
+        uninstallBtn.disabled = true;
+        setTimeout(() => {
+          installedExtensions.delete(cmd);
+          if (typeof closeTab === 'function' && tabOrder.includes(cmd)) closeTab(cmd);
+          renderExtensions();
+          if (typeof renderExplorerTree === 'function') renderExplorerTree();
+          addToHistory(`[SYS] Extension '${cmd}' uninstalled`);
+          printToTerminal(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.</div>`);
+        }, 600);
       }
     });
+
+    document.getElementById('ext-search-input').addEventListener('input', renderExtensions);
+
+    // --- Bottom panel (TERMINAL / PROBLEMS / OUTPUT / PORTS) ---
+    document.getElementById('panel-tabs').addEventListener('click', (e) => {
+      const t = e.target.closest('.panel-tab'); if (!t) return;
+      showPanel(t.dataset.panel);
+    });
+    document.getElementById('panel-problems').addEventListener('click', (e) => {
+      const row = e.target.closest('.prob-row[data-cmd]'); if (!row) return;
+      handleCommand(row.dataset.cmd); DOM.input.focus();
+    });
+    document.getElementById('panel-output').addEventListener('change', (e) => {
+      if (e.target.id === 'output-channel') { outputChannel = e.target.value; renderOutput(); }
+    });
+
+    // --- Drag-to-resize: sidebar width (X) & bottom panel height (Y) ---
+    (function setupResizers() {
+      const sidebar = document.getElementById('sidebar');
+      const sidebarResizer = document.getElementById('sidebar-resizer');
+      const panel = document.getElementById('panel');
+      const panelResizer = document.getElementById('panel-resizer');
+      const editorGroup = document.getElementById('editor-group');
+      function startDrag(e, isX) {
+        e.preventDefault();
+        document.body.classList.add(isX ? 'resizing-x' : 'resizing-y');
+        (isX ? sidebarResizer : panelResizer).classList.add('resizer-active');
+        const move = (ev) => {
+          if (isX) {
+            const w = ev.clientX - sidebar.getBoundingClientRect().left;
+            sidebar.style.width = Math.max(140, Math.min(w, window.innerWidth * 0.6)) + 'px';
+          } else {
+            const rect = editorGroup.getBoundingClientRect();
+            const h = rect.bottom - ev.clientY;
+            panel.style.height = Math.max(64, Math.min(h, rect.height - 80)) + 'px';
+          }
+        };
+        const up = () => {
+          document.body.classList.remove('resizing-x', 'resizing-y');
+          sidebarResizer.classList.remove('resizer-active');
+          panelResizer.classList.remove('resizer-active');
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+        };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', up);
+      }
+      sidebarResizer.addEventListener('pointerdown', (e) => startDrag(e, true));
+      panelResizer.addEventListener('pointerdown', (e) => startDrag(e, false));
+    })();
 
     // --- Activity bar ---
     document.getElementById('activitybar').addEventListener('click', (e) => {
@@ -1442,6 +1672,7 @@
 
     boot();
     renderExtensions();
+    recountProblems();
   </script>
  </body>
 </html>

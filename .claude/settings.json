@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "PowerShell($f = \"c:\\\\dev\\\\tk.st\\\\index.html\"; \"{0:N1} KB / {1} lines\" -f \\(\\(Get-Item $f\\).Length/1KB\\), \\(Get-Content $f | Measure-Object -Line\\).Lines)",
-      "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('game/masala-tetris-vindaloo/index.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)].map\\(x=>x[1]\\).join\\('\\\\n;\\\\n'\\);new Function\\(m\\);console.log\\('JS OK'\\);\")"
+      "Bash(node -e \"const fs=require\\('fs'\\);const h=fs.readFileSync\\('game/masala-tetris-vindaloo/index.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)].map\\(x=>x[1]\\).join\\('\\\\n;\\\\n'\\);new Function\\(m\\);console.log\\('JS OK'\\);\")",
+      "Bash(awk 'NR>=934 && NR<=1135' \"c:/dev/tk.st/index.html\")",
+      "Bash(node -e \"console.log\\(process.version\\)\")",
+      "Bash(node -e \"try{require.resolve\\('puppeteer'\\);console.log\\('puppeteer yes'\\)}catch\\(e\\){console.log\\('no puppeteer'\\)}\")",
+      "Bash(node -e \"try{require.resolve\\('playwright'\\);console.log\\('playwright yes'\\)}catch\\(e\\){console.log\\('no playwright'\\)}\")",
+      "Bash(ls -d */)",
+      "Bash(ls -la game)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('data/game.json','utf8'\\)\\); console.log\\('game.json valid'\\)\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\minep\\.claude\\projects\\c--dev-tk-st\\memory"
