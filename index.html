@@ -183,14 +183,6 @@
     .window-btn { transition: opacity 0.2s, transform 0.1s; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: opacity, transform; }
     .window-btn:hover { opacity: 0.8; }
     .window-btn:active { transform: scale(0.9); }
-    .theme-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
-    .theme-switch input { display: none; }
-    .theme-switch .track { width: 55px; height: 34px; background-color: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 999px; transition: background-color 0.3s, border-color 0.3s; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
-    .theme-switch .thumb { width: 21px; height: 21px; background-color: #ffffff; border-radius: 50%; position: absolute; top: 5.5px; left: 4px; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 1; }
-    .theme-switch .icon { width: 13px; height: 13px; z-index: 2; color: #9ca3af; transition: color 0.3s; }
-    .theme-switch input:not(:checked) + .track .icon.sun { color: #1f2937; }
-    .theme-switch input:checked + .track .icon.moon { color: #1f2937; }
-    .theme-switch input:checked + .track .thumb { transform: translateX(24px); }
     .mbti-bar-container { position: relative; height: 1rem; width: 100%; border-radius: 9999px; border: 1px solid var(--border-color); background-color: var(--surface-color); }
     .mbti-bar-fill { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--bg-color); z-index: 2; transition: left 0.5s ease; }
     .mbti-bar-bg { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 2px; opacity: 0.3; }
@@ -206,12 +198,12 @@
     body.choreomania-active { --mouse-x: 0.5; --mouse-y: 0.5; filter: hue-rotate(calc(var(--mouse-x) * 360deg)) saturate(1.5); }
     body.choreomania-active #app * { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; }
     body.choreomania-active #app .fade-in { opacity: 1 !important; }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .theme-switch, .theme-switch *) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
     body.choreomania-active #app span:not(.hidden) { display: inline-block; }
     body.choreomania-active #app span.hidden { display: none !important; }
-    body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow):not(.theme-switch *) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
-    body.choreomania-active #app svg:not(.theme-switch svg) { color: hsl(calc(var(--mouse-y) * 360), 80%, 60%) !important; fill: currentColor; transform: rotate(calc((var(--mouse-x) - 0.5) * 90deg)); }
+    body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
+    body.choreomania-active #app svg { color: hsl(calc(var(--mouse-y) * 360), 80%, 60%) !important; fill: currentColor; transform: rotate(calc((var(--mouse-x) - 0.5) * 90deg)); }
 
     /* IDE / code-editor shell */
     #app { height: 100vh; height: 100dvh; overflow: hidden; }
@@ -339,14 +331,6 @@
     </div>
     </div>
     <div class="flex items-center gap-4">
-     <label class="theme-switch" title="Toggle Light/Dark Mode">
-       <input type="checkbox" id="theme-toggle">
-       <div class="track">
-         <svg class="icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-         <svg class="icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-         <div class="thumb"></div>
-       </div>
-     </label>
 <button id="btn-reload" class="flex items-center gap-2 cursor-pointer ml-2 transition-opacity hover:opacity-70" title="Reload Terminal" aria-label="Reload Terminal">
       <span class="text-primary">▸</span> <span id="titlebar-name" class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
      </button>
@@ -358,7 +342,7 @@
      <button class="act-btn active" data-act="explorer" title="Explorer" aria-label="Explorer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg></button>
      <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
      <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7M18 10.5c0 3-3 3.5-6 4"/></svg></button>
-     <button class="act-btn mt-auto" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3 13.09V13a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 3.6 1.65 1.65 0 0 0 10 2.09V2a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 16 3.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.4 8c.13.31.2.65.2 1v.09c0 .35-.07.69-.2 1z"/></svg></button>
+     <button class="act-btn mt-auto" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </nav>
     <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
      <div id="view-explorer">
@@ -404,20 +388,17 @@
     </section>
    </div>
 
-   <footer id="terminal-footer" class="flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
+   <footer id="terminal-footer" class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
     <div class="flex items-center gap-3 truncate">
      <span class="text-primary">⎇ main</span>
      <span id="status-left">⊘ 0  ⚠ 0</span>
     </div>
     <div class="flex items-center gap-3 whitespace-nowrap">
      <span id="status-pos">Ln 1, Col 1</span>
-     <span class="opacity-50">Spaces: 2</span>
-     <span class="opacity-50">UTF-8</span>
-     <span class="opacity-50">LF</span>
      <span id="status-lang" class="text-primary">Shell</span>
-     <span class="opacity-50">© <span id="copyright-year"></span></span>
      <span id="status-right"></span>
     </div>
+    <span class="opacity-50 whitespace-nowrap" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">© <span id="copyright-year"></span> Shinya Takeda</span>
    </footer>
   </div>
 
@@ -435,19 +416,20 @@
       input: document.getElementById('cmd-input'),
       inputLine: document.getElementById('input-line'),
       statusRight: document.getElementById('status-right'),
-      themeToggle: document.getElementById('theme-toggle'),
 
       mirror: document.getElementById('cmd-mirror'),
       caret: document.getElementById('custom-caret')
     };
     const delay = ms => new Promise(r => setTimeout(r, ms));
     const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
+    const cmdNotFoundHTML = cmd => `<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`;
 
     const MAX_HISTORY = 50;
     let commandHistory = [], historyIndex = -1, currentVersion = 1;
     let isDestroyed = false, destroyedElements = [], destroyInterval = null, rebuildInterval = null;
     let isMatrixActive = false, isMeditationActive = false;
     let matrixTeardown = null, meditationTeardown = null;
+    let errorCount = 0, warnCount = 0;
 
     function addToHistory(entry) {
       if (commandHistory[0] !== entry) {
@@ -456,6 +438,13 @@
       }
       const gv = document.getElementById('view-git');
       if (gv && !gv.classList.contains('hidden')) renderGit();
+    }
+
+    // PROBLEMS counter shown in the footer (⊘ errors · ⚠ warnings).
+    function bumpProblems({ error = 0, warn = 0 } = {}) {
+      errorCount += error; warnCount += warn;
+      const el = document.getElementById('status-left');
+      if (el) el.textContent = `⊘ ${errorCount}  ⚠ ${warnCount}`;
     }
 
     function updateCaret() {
@@ -501,15 +490,22 @@
 
     const hiddenCommands = ['akutagawa', 'bpm', 'choreomania', 'destroy', 'matrix', 'meditation', 'rebuild', 'secret', 'theme'];
 
-    DOM.themeToggle.addEventListener('change', (e) => {
-      const isDark = e.target.checked;
+    function applyTheme(isDark) {
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
       config.job_title = isDark ? 'Hacker Poet' : 'Technical Marketing Lead';
       const headerJobTitle = document.getElementById('header-job-title');
       if (headerJobTitle) headerJobTitle.textContent = config.job_title;
       document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
+      // Hidden commands become searchable in dark mode, and the job title text changes; reindex to match.
+      buildSearchIndex();
+      const sv = document.getElementById('view-search');
+      if (sv && !sv.classList.contains('hidden')) renderSearch(searchInput.value);
+    }
+    function toggleTheme() {
+      const isDark = document.documentElement.getAttribute('data-theme') !== 'dark';
+      applyTheme(isDark);
       addToHistory(`[SYS] Theme changed to ${isDark ? 'dark' : 'light'}`);
-    });
+    }
 
     DOM.output.addEventListener('click', async (e) => {
       const toggleBtn = e.target.closest('[data-action="toggleBtc"]');
@@ -570,10 +566,14 @@
       help:     { name: 'help.md',        icon: '?' },
       secret:   { name: '.secrets',       icon: '∗' }
     };
+    // Footer language-mode label, driven by the active tab's file type.
+    const LANG_MODE = { welcome: 'Shell', about: 'Markdown', identify: 'JSON', pages: 'JSON', bitcoin: 'Rune', akutagawa: 'Plain Text', help: 'Markdown', secret: 'Shell' };
     let tabState = {}, tabOrder = [], activeTab = null;
     const fileLabel = c => (FILE_META[c] || { name: c }).name;
 
     function renderEditor() {
+      const langEl = document.getElementById('status-lang');
+      if (langEl) langEl.textContent = (activeTab && LANG_MODE[activeTab]) || 'Shell';
       DOM.tabbar.innerHTML = tabOrder.map(c => {
         const m = FILE_META[c] || { name: c, icon: '•' };
         return `<div class="ed-tab ${c === activeTab ? 'active' : ''}" data-tab="${c}"><span class="text-primary">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="Close">✕</span></div>`;
@@ -618,9 +618,10 @@
         </div>`;
     }).join('');
 
+    let strengthsPatternSeq = 0;
     const createStrengthsHTML = (strengths, isVer2) => {
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
-      const vp = (isVer2 ? 'v2' : 'v1') + Date.now();
+      const vp = (isVer2 ? 'v2' : 'v1') + '-' + (++strengthsPatternSeq);
       const barHTML = `
         <svg width="0" height="0" style="position:absolute;"><defs>
           <pattern id="${vp}-diagonal" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
@@ -699,7 +700,7 @@
         return `
           <div class="my-3 w-[90%] max-w-[809px]">
             <div class="text-sm font-bold glow mb-3 text-primary">BITCOIN YEN Ecosystem</div>
-            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<div class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" data-action="toggleBtc" data-target="${t}-opts-${uniqueId}" data-all="${allIds}">${t.charAt(0).toUpperCase() + t.slice(1)}</div>`).join('')}</div>
+            <div class="flex gap-2 flex-wrap">${tabs.map(t => `<button type="button" class="px-3 py-1.5 border rounded cursor-pointer transition-colors text-xs bg-primary-dim hover:bg-primary-dim-hover border-primary" data-action="toggleBtc" data-target="${t}-opts-${uniqueId}" data-all="${allIds}">${t.charAt(0).toUpperCase() + t.slice(1)}</button>`).join('')}</div>
             ${tabs.map(t => `<div id="${t}-opts-${uniqueId}" class="hidden flex-col mt-3 ml-2 border-l-2 pl-3 space-y-2 border-secondary">${renderItems(btcData[t])}</div>`).join('')}
           </div>`;
       },
@@ -968,12 +969,14 @@
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
       if (isDestroyed && cmd !== 'rebuild') {
+        bumpProblems({ warn: 1 });
         await printToTerminal(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
         return;
       }
 
       if (hiddenCommands.includes(cmd) && !isDark) {
-        await printToTerminal(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
+        bumpProblems({ warn: 1 });
+        await printToTerminal(cmdNotFoundHTML(cmd), 50);
         return;
       }
 
@@ -984,7 +987,8 @@
           else await printToTerminal(result, 100);
         }
       } else {
-        await printToTerminal(`<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`, 50);
+        bumpProblems({ error: 1 });
+        await printToTerminal(cmdNotFoundHTML(cmd), 50);
       }
     }
 
@@ -1013,7 +1017,7 @@
       let targetCmd = urlParams.get('cmd');
       if (targetCmd) {
         if (!commands[targetCmd] && commands['/' + targetCmd]) targetCmd = '/' + targetCmd;
-        if (hiddenCommands.includes(targetCmd)) { DOM.themeToggle.checked = true; DOM.themeToggle.dispatchEvent(new Event('change')); }
+        if (hiddenCommands.includes(targetCmd)) applyTheme(true);
       }
 
       openDoc('welcome', welcomeHTML());
@@ -1069,7 +1073,7 @@
     DOM.app.addEventListener('click', (e) => {
       const sb = document.getElementById('sidebar');
       if (sb && sb.classList.contains('open') && !e.target.closest('#sidebar, #btn-menu')) { sb.classList.remove('open'); return; }
-      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, .theme-switch, #sidebar, #btn-menu')) DOM.input.focus();
+      if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #btn-menu')) DOM.input.focus();
     });
     setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
@@ -1082,6 +1086,7 @@
       
       commandHistory = [];
       historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 1;
+      errorCount = 0; warnCount = 0; bumpProblems();
       // Tear down any active full-screen effects so their canvas/overlay and timers don't leak across the reload.
       if (matrixTeardown) matrixTeardown();
       if (meditationTeardown) meditationTeardown();
@@ -1093,11 +1098,7 @@
       document.documentElement.style.removeProperty('--bpm');
       setActiveTree(null);
 
-      if (DOM.themeToggle.checked) {
-        DOM.themeToggle.checked = false;
-        document.documentElement.setAttribute('data-theme', 'light');
-        config.job_title = 'Technical Marketing Lead';
-      }
+      if (document.documentElement.getAttribute('data-theme') === 'dark') applyTheme(false);
 
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
@@ -1230,7 +1231,7 @@
     document.getElementById('activitybar').addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]'); if (!b) return;
       const act = b.dataset.act;
-      if (act === 'settings') { DOM.themeToggle.click(); return; }
+      if (act === 'settings') { toggleTheme(); return; }
       if (!SIDEBAR_VIEWS.includes(act)) return;
       if (currentView() === act && !sidebarHidden()) {
         // Same view already visible: toggle the side bar away.
