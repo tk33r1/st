@@ -3,6 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f3f4f6">
   <meta name="description" content="Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.">
   <title>Shinya Takeda - Terminal Portfolio</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 210'%3E%3Cpath fill='%234ade80' d='M94 60H33v22h61v81H3v-30h61v-21H3V30h91Zm106-30v30h-31v103h-30V60h-30V30Zm0 0'/%3E%3Cpath fill='%234ade80' d='M100 78H39v-2h2v21h-2v-2h63v86H7v-34h63v2h-2v-22h2v2H7V43h95v35Zm0-5v3h-2V45h2v2H9v-2h2v82H9v-2h63v26H9v-2h2v30H9v-2h91v2h-2V97h2v2H37V73Zm108-28v33h-33v-2h2v105h-34V76h2v2h-33V43h96Zm-4 0h2v2h-92v-2h3v31h-3v-3h33v106h-2v-2h30v2h-2V73h33v3h-2Zm0 0'/%3E%3C/svg%3E">
@@ -553,6 +554,16 @@
     .gs-tip-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.2rem 0; font-size: 0.8125rem; color: var(--secondary-color); }
     .gs-tip-row .gs-keys { width: 9rem; flex-shrink: 0; color: var(--text-color); white-space: nowrap; }
     .gs-kbd { display: inline-block; min-width: 1.2rem; text-align: center; padding: 0 0.35rem; border: 1px solid var(--border-color); border-bottom-width: 2px; border-radius: 4px; font-size: 11px; color: var(--text-color); background: var(--surface-alt); }
+
+    /* --- Respect OS "reduce motion" preference (vestibular safety / power saving) --- */
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
   <script type="application/ld+json">
     {
@@ -631,9 +642,9 @@
    <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
     <div class="flex items-center gap-4">
     <div class="flex gap-2.5" id="window-btns">
-     <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg></button>
-     <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg></button>
-     <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen" aria-label="Toggle Fullscreen"><svg class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"><path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/></svg></button>
+     <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal" aria-label="Close Terminal"><svg aria-hidden="true" class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M25 25 L75 75 M75 25 L25 75"/></svg></button>
+     <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal" aria-label="Minimize Terminal"><svg aria-hidden="true" class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round"><path d="M20 50 L80 50"/></svg></button>
+     <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen" aria-label="Toggle Fullscreen"><svg aria-hidden="true" class="window-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"><path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55"/></svg></button>
     </div>
     </div>
     <div class="flex items-center gap-4">
@@ -645,12 +656,12 @@
    
    <div id="ide" class="choreo-skip flex flex-1">
     <nav id="activitybar" class="choreo-skip flex flex-col items-center bg-surface border-r border-color" aria-label="Activity Bar">
-     <button class="act-btn active" data-act="explorer" title="Explorer" aria-label="Explorer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg></button>
-     <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
-     <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7"/><path d="M18 10.5c0 4-4 5.5-12 5"/></svg><div id="badge-git" class="nav-badge hidden">0</div></button>
-     <button class="act-btn" data-act="extensions" title="Extensions" aria-label="Extensions"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="12.5" width="8" height="8" rx="0.5"/><rect x="12.5" y="12.5" width="8" height="8" rx="0.5"/><rect x="2.5" y="2.5" width="8" height="8" rx="0.5"/><path d="M16.5 2.5l4 4-4 4-4-4z"/></svg><div id="badge-extensions" class="nav-badge hidden">0</div></button>
-     <button class="act-btn mt-auto" data-act="agent" title="MAGI" aria-label="MAGI"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-1c0.5 1.5 1.5 3 2.5 4.5c-3 0-5-1.5-7.5-4.5H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/></svg></button>
-     <button class="act-btn" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+     <button class="act-btn active" data-act="explorer" title="Explorer" aria-label="Explorer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg></button>
+     <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+     <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7"/><path d="M18 10.5c0 4-4 5.5-12 5"/></svg><div id="badge-git" class="nav-badge hidden">0</div></button>
+     <button class="act-btn" data-act="extensions" title="Extensions" aria-label="Extensions"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="12.5" width="8" height="8" rx="0.5"/><rect x="12.5" y="12.5" width="8" height="8" rx="0.5"/><rect x="2.5" y="2.5" width="8" height="8" rx="0.5"/><path d="M16.5 2.5l4 4-4 4-4-4z"/></svg><div id="badge-extensions" class="nav-badge hidden">0</div></button>
+     <button class="act-btn mt-auto" data-act="agent" title="MAGI" aria-label="MAGI"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-1c0.5 1.5 1.5 3 2.5 4.5c-3 0-5-1.5-7.5-4.5H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/></svg></button>
+     <button class="act-btn" data-act="settings" title="Toggle theme" aria-label="Settings"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </nav>
     <aside id="sidebar" class="choreo-skip bg-surface border-r border-color" aria-label="Side Bar">
      <div id="view-explorer">
@@ -690,8 +701,8 @@
      </div>
      <div id="panel-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize panel" title="Drag to resize"></div>
      <div id="panel" class="choreo-skip flex flex-col border-t border-color bg-surface">
-      <div id="panel-tabs" class="choreo-skip flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
-       <span class="panel-tab active" data-panel="terminal">TERMINAL</span><span class="panel-tab" data-panel="problems">PROBLEMS<span id="panel-problems-badge" class="panel-badge hidden">0</span></span><span class="panel-tab" data-panel="output">OUTPUT</span><span class="panel-tab" data-panel="ports">PORTS</span>
+      <div id="panel-tabs" role="tablist" aria-label="Panel" class="choreo-skip flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
+       <span class="panel-tab active" role="tab" tabindex="0" aria-selected="true" data-panel="terminal">TERMINAL</span><span class="panel-tab" role="tab" tabindex="0" aria-selected="false" data-panel="problems">PROBLEMS<span id="panel-problems-badge" class="panel-badge hidden">0</span></span><span class="panel-tab" role="tab" tabindex="0" aria-selected="false" data-panel="output">OUTPUT</span><span class="panel-tab" role="tab" tabindex="0" aria-selected="false" data-panel="ports">PORTS</span>
       </div>
       <div id="panel-problems" class="panel-pane flex-1 p-3 text-xs hidden"></div>
       <div id="panel-output" class="panel-pane flex-1 p-3 text-xs hidden"></div>
@@ -715,37 +726,37 @@
      <div id="agentdock-header" class="flex items-center justify-between px-3 border-b border-color bg-surface-alt">
       <div id="agentdock-title" class="text-xs tracking-wider text-primary glow select-none"><span class="text-sm inline-block">✦</span> MAGI</div>
       <div class="flex items-center gap-2.5">
-        <button id="btn-reset-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="New Conversation"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-        <button id="btn-history-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="View conversation history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+        <button id="btn-reset-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="New Conversation"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button id="btn-history-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="View conversation history"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
         <!-- Kebab Menu (More Options) -->
         <div class="relative inline-block flex items-center justify-center">
           <button id="btn-more-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="More Options">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </button>
           <div id="agent-more-dropdown" class="hidden text-[10px]">
             <button id="btn-share-agent" class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 outline-none border-none bg-transparent cursor-pointer opacity-30 pointer-events-none" title="Share/Copy conversation">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
               <span>Share Log</span>
             </button>
             <button id="btn-export-agent" class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 outline-none border-none bg-transparent cursor-pointer opacity-30 pointer-events-none" title="Export conversation as Markdown">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>Download MD</span>
             </button>
             <hr class="border-t border-color my-1 w-full" />
             <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 no-underline outline-none" title="Legacy MAGI deliberation (v1)">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               <span>Legacy MAGI</span>
             </a>
           </div>
         </div>
-        <button id="btn-close-agent" class="text-secondary hover:text-red-500 transition-colors cursor-pointer outline-none flex items-center justify-center ml-1" title="Close Panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button id="btn-close-agent" class="text-secondary hover:text-red-500 transition-colors cursor-pointer outline-none flex items-center justify-center ml-1" title="Close Panel"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
      </div>
      <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs" aria-live="polite" aria-atomic="false"></div>
      <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
      <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
       <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI">
-      <button id="agent-send" class="text-primary hover:opacity-70" title="Send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg></button>
+      <button id="agent-send" class="text-primary hover:opacity-70" title="Send" aria-label="Send"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg></button>
      </div>
     </aside>
    </div>
@@ -753,7 +764,7 @@
    <footer id="terminal-footer" class="choreo-skip relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
     <div class="footer-status-row flex items-center justify-between w-full">
      <div class="flex items-center gap-3 truncate">
-      <span id="remote-badge" title="Open a Remote Window — Command Palette" aria-label="Remote"><svg class="rb-icon" width="16" height="10.2" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,0 11.5,4 5,8"/><polyline points="17,6 10.5,10 17,14"/></svg></span>
+      <span id="remote-badge" title="Open a Remote Window — Command Palette" aria-label="Remote"><svg aria-hidden="true" class="rb-icon" width="16" height="10.2" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,0 11.5,4 5,8"/><polyline points="17,6 10.5,10 17,14"/></svg></span>
       <span class="text-primary"><span>⎇</span> <span>main</span></span>
       <span id="status-left"><span>⊘</span> <span>0</span>  <span>⚠</span> <span>0</span></span>
      </div>
@@ -761,7 +772,7 @@
       <span id="status-bpm" title="System BPM"><span>♥</span> <span>60</span></span>
       <span id="status-pos"><span>Ln 1,</span> <span>Col 1</span></span>
       <span id="status-lang" class="text-primary"><span>Shell</span></span>
-      <button id="notif-bell" title="No new notifications" aria-label="Notifications"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notif-count" class="hidden">0</span></button>
+      <button id="notif-bell" title="No new notifications" aria-label="Notifications"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notif-count" class="hidden">0</span></button>
      </div>
     </div>
     <span class="copyright-text opacity-50 whitespace-nowrap" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);"><span>©</span> <span id="copyright-year"></span> <span>Shinya Takeda</span></span>
@@ -877,7 +888,7 @@
       pane.innerHTML = problems.map((p, i) => {
         const icon = p.sev === 'error' ? '<span class="text-red-500">⊘</span>' : '<span style="color:#fbbf24">⚠</span>';
         const loc = `${esc(p.file)}${p.line ? ':' + p.line : ''}`;
-        return `<div class="prob-row ${p.cmd ? 'clickable' : ''}" data-idx="${i}" ${p.cmd ? `data-cmd="${esc(p.cmd)}"` : ''}>
+        return `<div class="prob-row ${p.cmd ? 'clickable' : ''}" data-idx="${i}" ${p.cmd ? `data-cmd="${esc(p.cmd)}" role="button" tabindex="0"` : ''}>
           ${icon}
           <span class="text-normal flex-1">${esc(p.msg)}</span>
           <span class="text-secondary whitespace-nowrap">${loc}</span>
@@ -929,7 +940,11 @@
     const PANEL_PANES = { terminal: 'terminal', problems: 'panel-problems', output: 'panel-output', ports: 'panel-ports' };
     function showPanel(name) {
       Object.entries(PANEL_PANES).forEach(([k, id]) => document.getElementById(id).classList.toggle('hidden', k !== name));
-      document.querySelectorAll('#panel-tabs .panel-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === name));
+      document.querySelectorAll('#panel-tabs .panel-tab').forEach(t => {
+        const sel = t.dataset.panel === name;
+        t.classList.toggle('active', sel);
+        t.setAttribute('aria-selected', sel ? 'true' : 'false');
+      });
       if (name === 'problems') renderProblems();
       else if (name === 'output') renderOutput();
       else if (name === 'ports') renderPorts();
@@ -1096,6 +1111,8 @@
       const headerJobTitle = document.getElementById('header-job-title');
       if (headerJobTitle) headerJobTitle.textContent = config.job_title;
       document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
+      const tc = document.querySelector('meta[name="theme-color"]');
+      if (tc) tc.setAttribute('content', isDark ? '#0c0c0c' : '#f3f4f6');
       // The search index is theme-independent (both job-title variants are indexed once
       // in buildSearchIndex), so no reindex/re-render is needed on theme toggle.
       renderExtensions();
@@ -1247,18 +1264,18 @@
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       const vp = (isVer2 ? 'v2' : 'v1') + '-' + (++strengthsPatternSeq);
       const barHTML = `
-        <svg width="0" height="0" style="position:absolute;"><defs>
+        <svg aria-hidden="true" width="0" height="0" style="position:absolute;"><defs>
           <pattern id="${vp}-diagonal" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
           <pattern id="${vp}-grid" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><line x1="3" y1="0" x2="3" y2="6" stroke="var(--bg-color)" stroke-width="1"/><line x1="0" y1="3" x2="6" y2="3" stroke="var(--bg-color)" stroke-width="1"/></pattern>
           <pattern id="${vp}-dots" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="6" height="6" fill="${color}"/><circle cx="3" cy="3" r="1" fill="var(--bg-color)"/></pattern>
         </defs></svg>` + strengths.map(s => `
-        <svg style="display:block; width:${s.pct}%; height:16px;" viewBox="0 0 100 16" preserveAspectRatio="none">
+        <svg aria-hidden="true" style="display:block; width:${s.pct}%; height:16px;" viewBox="0 0 100 16" preserveAspectRatio="none">
           <rect x="0" y="0" width="100" height="16" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/>
         </svg>`).join('');
       const strengthsRows = strengths.map(s => `
         <div class="text-xs flex items-center justify-between text-normal">
           <div class="flex items-center gap-2">
-            <svg width="12" height="12" class="border border-color"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg>
+            <svg aria-hidden="true" width="12" height="12" class="border border-color"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg>
             <span>${esc(s.name)}</span>
           </div>
           <span class="text-secondary">${s.pct.toFixed(1)}%</span>
@@ -1572,7 +1589,7 @@
           const spiralPath = 'M 0 0 A 1 1 0 0 1 1 1 A 1 1 0 0 1 0 2 A 2 2 0 0 1 -2 0 A 3 3 0 0 1 1 -3 A 5 5 0 0 1 6 2 A 8 8 0 0 1 -2 10 A 13 13 0 0 1 -15 -3 A 21 21 0 0 1 6 -24 A 34 34 0 0 1 40 10 A 55 55 0 0 1 -15 65 A 89 89 0 0 1 -104 -24 A 144 144 0 0 1 40 -168 A 233 233 0 0 1 273 65 A 377 377 0 0 1 -104 442 A 610 610 0 0 1 -714 -168 A 987 987 0 0 1 273 -1155';
           const svgWrapper = document.createElement('div');
           svgWrapper.className = 'meditation-spiral-wrapper';
-          svgWrapper.innerHTML = `<svg class="meditation-spiral" viewBox="-1200 -1200 2400 2400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+          svgWrapper.innerHTML = `<svg aria-hidden="true" class="meditation-spiral" viewBox="-1200 -1200 2400 2400" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <radialGradient id="med-fade" cx="50%" cy="50%" r="50%">
                 <stop offset="50%" stop-color="white" stop-opacity="1"/>
@@ -2119,9 +2136,17 @@
       const t = e.target.closest('.panel-tab'); if (!t) return;
       showPanel(t.dataset.panel);
     });
+    document.getElementById('panel-tabs').addEventListener('keydown', (e) => {
+      const t = e.target.closest('.panel-tab'); if (!t) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showPanel(t.dataset.panel); }
+    });
     document.getElementById('panel-problems').addEventListener('click', (e) => {
       const row = e.target.closest('.prob-row[data-cmd]'); if (!row) return;
       handleCommand(row.dataset.cmd); DOM.input.focus({ preventScroll: true });
+    });
+    document.getElementById('panel-problems').addEventListener('keydown', (e) => {
+      const row = e.target.closest('.prob-row[data-cmd]'); if (!row) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCommand(row.dataset.cmd); DOM.input.focus({ preventScroll: true }); }
     });
     document.getElementById('panel-output').addEventListener('change', (e) => {
       if (e.target.id === 'output-channel') { outputChannel = e.target.value; renderOutput(); }
@@ -2190,10 +2215,10 @@
     const REACT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'http://localhost:8787/magi2/react' : 'https://workers.tk.st/magi2/react';
     // リアクションボタンのアイコン（周囲の細線SVGアイコンと世界観を統一）
-    const ICON_COPY = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    const ICON_LIKE = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
+    const ICON_COPY = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    const ICON_LIKE = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
     // React: スマイル＋プラス（キャプチャの「リアクション追加」アイコンに準拠）
-    const ICON_REACT = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.6a9 9 0 1 0 4.9 4.9"/><circle cx="9" cy="10" r="0.6" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="0.6" fill="currentColor" stroke="none"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><line x1="19.5" y1="2.5" x2="19.5" y2="7.5"/><line x1="17" y1="5" x2="22" y2="5"/></svg>`;
+    const ICON_REACT = `<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.6a9 9 0 1 0 4.9 4.9"/><circle cx="9" cy="10" r="0.6" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="0.6" fill="currentColor" stroke="none"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><line x1="19.5" y1="2.5" x2="19.5" y2="7.5"/><line x1="17" y1="5" x2="22" y2="5"/></svg>`;
     // React で選べる厳選リアクション絵文字
     const REACT_EMOJIS = ['👎','❤️','😂','🎉','🔥','👏','🙏','💯','🤔','👀','😮','😢','😍','🤯','🙌','🥳','😎','😅','🤝','💪','✨','💡','✅','🚀','👌','🫡','🤩','😇','🥹','🫶'];
     // 各人格カード / 統合回答に付けるリアクションバー（target = 人格コードネーム or 'integrated'）
@@ -2248,7 +2273,7 @@
     ];
     const AGENT_MAX_HISTORY = 12;
     const AGENT_HINT = '<div class="agent-splash">'
-      + '<svg class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
+      + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       +   '<line class="hl-bg" x1="60" y1="50" x2="35" y2="58"/><line class="hl-bg" x1="85" y1="58" x2="60" y2="50"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
       +   '<line class="hl-flow" x1="60" y1="50" x2="35" y2="58"/><line class="hl-flow" x1="85" y1="58" x2="60" y2="50"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
       +   '<polygon class="hx" points="60,10 77,20 77,40 60,50 43,40 43,20"/>'
@@ -2260,7 +2285,7 @@
       + '</svg>'
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none ml-1 inline-flex items-center justify-center align-middle" title="Privacy & System Information"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none ml-1 inline-flex items-center justify-center align-middle" title="Privacy & System Information"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('') + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
       + '</div>';
@@ -2297,8 +2322,13 @@
     }
     function toggleAgentDock() { agentDockOpen() ? closeAgentDock() : openAgentDock(); }
     // 初期状態：デスクトップは展開、モバイルはオーバーレイなので閉。フォーカスは奪わない。
-    function agentInitialState() {
-      if (isMobile()) { agentDockEl.classList.remove('open'); setAgentActive(false); }
+    function agentInitialState(keepOpen = false) {
+      if (isMobile()) {
+        if (!keepOpen) {
+          agentDockEl.classList.remove('open');
+          setAgentActive(false);
+        }
+      }
       else { agentDockEl.classList.remove('collapsed'); setAgentActive(true); }
       
       agentHistory = safeParse(localStorage.getItem('magi_current_history'), []);
@@ -2312,7 +2342,7 @@
       }
       updateAgentActionButtons();
     }
-    function resetAgent() {
+    function resetAgent(keepOpen = false) {
       archiveCurrentHistory();
       agentHistory = []; agentBusy = false; agentDead = false;
       localStorage.removeItem('magi_current_history');
@@ -2320,7 +2350,7 @@
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
       agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
       agentDockEl.style.removeProperty('width');
-      agentInitialState();
+      agentInitialState(keepOpen);
       updateAgentActionButtons();
 
       const panel = document.getElementById('agent-history-panel');
@@ -2473,7 +2503,7 @@
     }
     agentSendBtn.addEventListener('click', agentSend);
     agentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
-    document.getElementById('btn-reset-agent').addEventListener('click', resetAgent);
+    document.getElementById('btn-reset-agent').addEventListener('click', () => resetAgent(true));
 
     // --- リアクション（コピー / いいね / 絵文字）---
     // リアクション対象の request（直前のユーザー発言）と response（人格 or 統合回答）を DOM から取得
@@ -2767,7 +2797,7 @@
             <div class="text-[9px] text-secondary mt-0.5">${new Date(session.timestamp).toLocaleString()}</div>
           </div>
           <button class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session outline-none bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${session.id}" title="Delete chat">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
       `).join('');
