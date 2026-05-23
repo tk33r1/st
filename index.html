@@ -224,10 +224,12 @@
       animation: choreoBeat calc(60s / var(--bpm)) infinite ease-in-out;
       will-change: transform, filter;
     }
-    body.choreomania-active #app *:not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #editor-scroll, #editor-content, #editor-gutter, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; overflow: visible !important; }
+    /* Structural chrome carries .choreo-skip so it stays put while content dances.
+       (.ed-tab/.tree-item/badges are generated dynamically, so they stay listed.) */
+    body.choreomania-active #app *:not(input, .choreo-skip, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; overflow: visible !important; }
     body.choreomania-active #app .fade-in { opacity: 1 !important; }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #editor-scroll, #editor-content, #editor-gutter, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #editor-scroll, #editor-content, #editor-gutter, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(odd):not(input, .choreo-skip, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(even):not(input, .choreo-skip, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
     body.choreomania-active #app span:not(.hidden) { display: inline-block; }
     body.choreomania-active #app span.hidden { display: none !important; }
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
@@ -545,7 +547,7 @@
         "alternateName": ["武田 伸也", "人類踊狂計画", "Human Choreomania Project", "dj_hcp"],
         "jobTitle": "Technical Marketing Lead",
         "worksFor": { "@type": "Organization", "name": "Nitori" },
-        "homeLocation": { "@type": "Place", "name": "Saitama, Japan" },
+        "homeLocation": { "@type": "Place", "name": "Tokyo, Japan" },
         "description": "Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.",
         "url": "https://tk.st/",
         "sameAs": ["https://x.com/Tah_Keh", "https://www.instagram.com/dj_hcp/", "https://www.linkedin.com/in/shinyatakeda/", "https://github.com/tk33r1", "https://www.coursera.org/learner/takeda", "https://www.mixcloud.com/dj_hcp/", "https://ko-fi.com/shinyatakeda"],
@@ -621,8 +623,8 @@
     </div>
    </header>
    
-   <div id="ide" class="flex flex-1">
-    <nav id="activitybar" class="flex flex-col items-center bg-surface border-r border-color" aria-label="Activity Bar">
+   <div id="ide" class="choreo-skip flex flex-1">
+    <nav id="activitybar" class="choreo-skip flex flex-col items-center bg-surface border-r border-color" aria-label="Activity Bar">
      <button class="act-btn active" data-act="explorer" title="Explorer" aria-label="Explorer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg></button>
      <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
      <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7"/><path d="M18 10.5c0 4-4 5.5-12 5"/></svg><div id="badge-git" class="nav-badge hidden">0</div></button>
@@ -630,7 +632,7 @@
      <button class="act-btn mt-auto" data-act="agent" title="MAGI" aria-label="MAGI"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-1c0.5 1.5 1.5 3 2.5 4.5c-3 0-5-1.5-7.5-4.5H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/></svg></button>
      <button class="act-btn" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </nav>
-    <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
+    <aside id="sidebar" class="choreo-skip bg-surface border-r border-color" aria-label="Side Bar">
      <div id="view-explorer">
       <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">EXPLORER</div>
       <button id="tree-folder" type="button" class="tree-folder text-xs font-bold text-normal"><span class="tree-chevron text-secondary">▾</span><span>tk.st</span></button>
@@ -655,28 +657,28 @@
      </div>
     </aside>
     <div id="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize side bar" title="Drag to resize"></div>
-    <section id="editor-group" class="flex flex-col flex-1">
-     <div id="tabbar" class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
-     <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate"><span>tk.st</span></div>
-     <div id="editor" class="flex-1 relative" style="scroll-behavior:smooth;">
-      <div id="editor-scroll">
-       <div id="editor-gutter" aria-hidden="true"></div>
-       <div id="editor-content" class="flex-1 p-4 md:p-6 space-y-1">
-        <div id="output-area" aria-live="polite" aria-atomic="false"></div>
+    <main id="editor-group" class="choreo-skip flex flex-col flex-1">
+     <div id="tabbar" class="choreo-skip flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
+     <div id="breadcrumb" class="choreo-skip px-4 py-1 text-[10px] text-secondary border-b border-color truncate"><span>tk.st</span></div>
+     <div id="editor" class="choreo-skip flex-1 relative" style="scroll-behavior:smooth;">
+      <div id="editor-scroll" class="choreo-skip">
+       <div id="editor-gutter" class="choreo-skip" aria-hidden="true"></div>
+       <div id="editor-content" class="choreo-skip flex-1 p-4 md:p-6 space-y-1">
+        <div id="output-area" class="choreo-skip" aria-live="polite" aria-atomic="false"></div>
        </div>
       </div>
      </div>
      <div id="panel-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize panel" title="Drag to resize"></div>
-     <div id="panel" class="flex flex-col border-t border-color bg-surface">
-      <div id="panel-tabs" class="flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
+     <div id="panel" class="choreo-skip flex flex-col border-t border-color bg-surface">
+      <div id="panel-tabs" class="choreo-skip flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
        <span class="panel-tab active" data-panel="terminal">TERMINAL</span><span class="panel-tab" data-panel="problems">PROBLEMS<span id="panel-problems-badge" class="panel-badge hidden">0</span></span><span class="panel-tab" data-panel="output">OUTPUT</span><span class="panel-tab" data-panel="ports">PORTS</span>
       </div>
       <div id="panel-problems" class="panel-pane flex-1 p-3 text-xs hidden"></div>
       <div id="panel-output" class="panel-pane flex-1 p-3 text-xs hidden"></div>
       <div id="panel-ports" class="panel-pane flex-1 p-3 text-xs hidden"></div>
-      <div id="terminal" class="flex-1 p-3 space-y-1" style="scroll-behavior:smooth;">
-       <div id="terminal-log" aria-live="polite" aria-atomic="false"></div>
-       <div class="hidden items-center gap-2 mt-2" id="input-line">
+      <div id="terminal" class="choreo-skip flex-1 p-3 space-y-1" style="scroll-behavior:smooth;">
+       <div id="terminal-log" class="choreo-skip" aria-live="polite" aria-atomic="false"></div>
+       <div class="choreo-skip hidden items-center gap-2 mt-2" id="input-line">
         <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span>
         <div class="relative flex-1 flex items-center overflow-hidden">
           <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off" spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
@@ -687,9 +689,9 @@
        </div>
       </div>
      </div>
-    </section>
+    </main>
     <div id="agentdock-resizer" role="separator" aria-orientation="vertical" aria-label="Resize agent panel" title="Drag to resize"></div>
-    <aside id="agentdock" class="flex flex-col bg-surface border-l border-color" aria-label="MAGI">
+    <aside id="agentdock" class="choreo-skip flex flex-col bg-surface border-l border-color" aria-label="MAGI">
      <div id="agentdock-header" class="flex items-center justify-between px-3 border-b border-color bg-surface-alt">
       <div id="agentdock-title" class="text-xs tracking-wider text-primary glow select-none"><span class="text-sm inline-block">✦</span> MAGI</div>
       <div class="flex items-center gap-2.5">
@@ -728,7 +730,7 @@
     </aside>
    </div>
 
-   <footer id="terminal-footer" class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
+   <footer id="terminal-footer" class="choreo-skip relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
     <div class="footer-status-row flex items-center justify-between w-full">
      <div class="flex items-center gap-3 truncate">
       <span id="remote-badge" title="Open a Remote Window — Command Palette" aria-label="Remote"><svg class="rb-icon" width="16" height="10.2" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,0 11.5,4 5,8"/><polyline points="17,6 10.5,10 17,14"/></svg></span>
@@ -760,7 +762,7 @@
   </div>
 
   <script>
-    const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Saitama, Japan' };
+    const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Tokyo, Japan' };
     const JOB_TITLES = { light: 'Technical Marketing Lead', dark: 'Hacker Poet' };
     const DOM = {
       app: document.getElementById('app'),
@@ -971,6 +973,9 @@
     };
     const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
     const installedExtensions = new Set();
+    // A command is usable if it isn't hidden, or its backing extension is installed
+    // (rebuild rides on the 'destroy' extension). Single source for every cmd filter.
+    const isCmdAvailable = c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c);
 
     // Shared file-type color system: the Explorer tree, file tabs, and the
     // Extensions Marketplace cards all derive their icon colour from here so a
@@ -1315,13 +1320,11 @@
       },
       about() {
         const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
-        const sns = [['X', '@Tah_Keh', 'https://x.com/Tah_Keh'], ['Instagram', '@dj_hcp', 'https://www.instagram.com/dj_hcp/'], ['LinkedIn', 'shinyatakeda', 'https://www.linkedin.com/in/shinyatakeda/'], ['GitHub', 'tk33r1', 'https://github.com/tk33r1'], ['Coursera', 'takeda', 'https://www.coursera.org/learner/takeda'], ['Mixcloud', 'dj_hcp', 'https://www.mixcloud.com/dj_hcp/'], ['Ko-fi', 'shinyatakeda', 'https://ko-fi.com/shinyatakeda']];
         return wrapCmd(`
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
-            <div class="space-y-1 pt-2 border-t border-color">${[['📍 Location', config.location_text], ['♉ Zodiac', 'Taurus'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
-            <div class="flex flex-wrap gap-2 pt-4 mt-3 border-t border-color">${sns.map(([platform, , url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[10px] px-3 py-1 border rounded-full border-color text-secondary hover:border-primary hover:text-primary transition-colors no-underline">${platform}</a>`).join('')}</div>
+            <div class="space-y-1 pt-2 border-t border-color">${[['🗼 Origin', config.location_text], ['🧬 Roots', 'Osaka, Japan'], ['📅 Born', '198X'], ['♉ Zodiac', 'Taurus'], ['🚹 Gender', 'Male'], ['💇🏻‍♂️ Hair', 'Curly'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+'], ['👁️ Vision', '1.5 [LASIK]']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
           `, 'p-4 border rounded border-color bg-surface');
       },
       pages: () => wrapCmd(`
@@ -1341,6 +1344,17 @@
           { year: '2019',    cat: 'work', title: 'Technical Marketing Lead', desc: 'I grow CVR and LTV with data-driven growth hacking.' },
           { year: '2018',    cat: 'work', title: 'Data Analyst', desc: 'I build tracking and dashboards with GA4 and Looker.' },
           { year: '2010',    cat: 'work', title: 'Joined the company', desc: 'The start of my career. I kept adding roles from here.' },
+          { year: '2008',    cat: 'life', title: 'Licenses & the Open Road', desc: 'Earned a Class-1 small craft (boat) license and a large motorcycle license, then roamed across Japan on a Honda Magna 250.' },
+          { year: '2007',    cat: 'life', title: 'Easy Rider Encounter', desc: 'Met the film "Easy Rider"—the origin of my fascination with motorcycles, hippie culture, and psytrance.' },
+          { year: '2006.04', cat: 'life', title: 'Aviation Club', desc: 'Joined the aviation club and started flying gliders—a breathtaking passion that quickly left me as a broke college student.' },
+          { year: '2006.03', cat: 'life', title: 'College of Business Admin', desc: 'Passed the entrance exam for the College of Business Administration at Ritsumeikan University via a Center Test-focused admission, which evaluated both my Physics score and a perfect score in Japanese.' },
+          { year: '2005',    cat: 'life', title: 'Gap Year Detour', desc: 'Failed university entrance exams and spent a gap year (ronin)—a challenging year where I struggled to maintain my focus.' },
+          { year: '2003',    cat: 'life', title: 'Computer Research Club', desc: 'Joined the computer research club, creating CG graphics and building custom PCs—marking the definitive origin of my current technical roots.' },
+          { year: '2002',    cat: 'life', title: 'FFXI Addiction', desc: 'Got heavily addicted to Final Fantasy XI, causing my academic deviation value to plummet drastically.' },
+          { year: '2001',    cat: 'life', title: 'Cyber Trance Encounter', desc: 'Discovered "Cyber TRANCE" at an HMV listening station, marking the absolute beginning of my love for electronic dance music (EDM).' },
+          { year: '2000',    cat: 'life', title: 'First Music Purchase', desc: 'Purchased my very first music CD: "Secret of my heart" by Mai Kuraki.' },
+          { year: '199X',    cat: 'life', title: 'Academic Leap', desc: 'Skipped grades in school, achieving a peak academic deviation value exceeding 80.' },
+          { year: '198X',    cat: 'life', title: 'Born', desc: 'Born in Minato-ku, Tokyo, Japan.' },
         ];
         const label = c => c === 'work' ? 'Work' : 'Life';
         const rows = tl.map(e => `
@@ -1630,11 +1644,10 @@
     const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
-        const label = cmd === 'contact' ? 'contact page' : (cmd === 'web3' ? 'Web3 page' : cmd);
         const win = window.open(url, '_blank', 'noopener,noreferrer');
-        let labelHtml = `<span class="text-primary">${esc(label)}</span>`;
-        if (cmd === 'web3') labelHtml = '<span class="text-primary">Web3</span> page';
-        if (cmd === 'contact') labelHtml = '<span class="text-primary">contact</span> page';
+        const labelHtml = cmd === 'web3' ? '<span class="text-primary">Web3</span> page'
+          : cmd === 'contact' ? '<span class="text-primary">contact</span> page'
+          : `<span class="text-primary">${esc(cmd)}</span>`;
 
         // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to a clickable link.
         if (!win) {
@@ -1828,9 +1841,7 @@
       } else if (e.key === 'Tab') {
         e.preventDefault();
         const val = DOM.input.value.toLowerCase(); if (!val) return;
-        let availableCommands = Object.keys(commands);
-        availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
-        const matches = availableCommands.filter(c => c.startsWith(val));
+        const matches = Object.keys(commands).filter(isCmdAvailable).filter(c => c.startsWith(val));
         if (matches.length === 0) return;
         if (matches.length === 1) {
           DOM.input.value = matches[0]; updateCaret(); closeSuggest();
@@ -2005,7 +2016,7 @@
     function renderSearch(q) {
       q = (q || '').trim().toLowerCase();
       if (!q) { searchCount.textContent = ''; searchResults.innerHTML = ''; return; }
-      const cmds = Object.keys(commands).filter(c => installedExtensions.has(c === 'rebuild' ? 'destroy' : c) || !hiddenCommands.includes(c)).sort();
+      const cmds = Object.keys(commands).filter(isCmdAvailable).sort();
       const matches = cmds.filter(c => (SEARCH_INDEX[c] || '').includes(q));
       searchCount.textContent = `${matches.length} result${matches.length === 1 ? '' : 's'}`;
       searchResults.innerHTML = matches.length
@@ -2665,39 +2676,32 @@
       }
     }
 
-    function showHistoryPanel() {
-      const infoPanel = document.getElementById('agent-info-panel');
-      if (infoPanel) infoPanel.remove();
-
-      let panel = document.getElementById('agent-history-panel');
-      if (panel) {
-        panel.remove();
-        return;
-      }
-      
-      panel = document.createElement('div');
-      panel.id = 'agent-history-panel';
+    // MAGIドック内のオーバーレイパネル（履歴 / システム情報）を生成。
+    // 同じ id が既に開いていればトグルで閉じて null を返す。もう一方のパネルは常に閉じる。
+    const AGENT_PANEL_IDS = ['agent-history-panel', 'agent-info-panel'];
+    function makeAgentPanel(id, title, bodyHTML) {
+      if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
+      AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p) p.remove(); });
+      const panel = document.createElement('div');
+      panel.id = id;
       panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
-      panel.style.position = 'absolute';
-      panel.style.top = '35px';
-      panel.style.bottom = '0';
-      panel.style.left = '0';
-      panel.style.right = '0';
-      
+      panel.style.cssText = 'position:absolute;top:35px;bottom:0;left:0;right:0;';
       panel.innerHTML = `
         <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
-          <span class="font-bold text-[10px] tracking-widest text-primary uppercase">Saved Chats</span>
-          <button id="btn-close-history" class="text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ CLOSE</button>
+          <span class="font-bold text-[10px] tracking-widest text-primary uppercase">${title}</span>
+          <button class="agent-panel-close text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ CLOSE</button>
         </div>
-        <div class="flex-1 overflow-y-auto space-y-1.5 pr-1" id="agent-history-list"></div>
-      `;
-
+        ${bodyHTML}`;
       document.getElementById('agentdock').appendChild(panel);
-      renderSavedSessionsList();
+      panel.querySelector('.agent-panel-close').addEventListener('click', () => panel.remove());
+      return panel;
+    }
 
-      document.getElementById('btn-close-history').addEventListener('click', () => {
-        panel.remove();
-      });
+    function showHistoryPanel() {
+      const panel = makeAgentPanel('agent-history-panel', 'Saved Chats',
+        `<div class="flex-1 overflow-y-auto space-y-1.5 pr-1" id="agent-history-list"></div>`);
+      if (!panel) return;
+      renderSavedSessionsList();
     }
 
     function renderSavedSessionsList() {
@@ -2770,29 +2774,7 @@
     }
 
     function showInfoPanel() {
-      let panel = document.getElementById('agent-info-panel');
-      if (panel) {
-        panel.remove();
-        return;
-      }
-
-      const histPanel = document.getElementById('agent-history-panel');
-      if (histPanel) histPanel.remove();
-
-      panel = document.createElement('div');
-      panel.id = 'agent-info-panel';
-      panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
-      panel.style.position = 'absolute';
-      panel.style.top = '35px';
-      panel.style.bottom = '0';
-      panel.style.left = '0';
-      panel.style.right = '0';
-
-      panel.innerHTML = `
-        <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
-          <span class="font-bold text-[10px] tracking-widest text-primary uppercase">System & Privacy</span>
-          <button id="btn-close-info-panel" class="text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ CLOSE</button>
-        </div>
+      makeAgentPanel('agent-info-panel', 'System &amp; Privacy', `
         <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-text leading-relaxed">
           <ul class="space-y-1.5 list-disc pl-4 text-secondary">
             <li>A multi-agent system with 3 debating personas modeled on <strong class="text-text">Shinya Takeda's personality</strong>.</li>
@@ -2806,14 +2788,7 @@
             <li>Inputs are transmitted to <strong class="text-text">China</strong> and may be used for AI training.</li>
             <li class="text-red-500 font-semibold">DO NOT input any confidential or personal information.</li>
           </ul>
-        </div>
-      `;
-
-      document.getElementById('agentdock').appendChild(panel);
-
-      document.getElementById('btn-close-info-panel').addEventListener('click', () => {
-        panel.remove();
-      });
+        </div>`);
     }
 
     document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
@@ -3050,7 +3025,7 @@
       if (DOM.input.type === 'password') { closeSuggest(); return; }
       const val = DOM.input.value.toLowerCase().trim();
       if (!val) { closeSuggest(); return; }
-      const avail = Object.keys(commands).filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
+      const avail = Object.keys(commands).filter(isCmdAvailable);
       suggestItems = avail.filter(c => c.startsWith(val) && c !== val).sort().slice(0, 8);
       suggestSel = -1;
       renderSuggest();
@@ -3091,7 +3066,7 @@
     const paletteCount = document.getElementById('cmd-palette-count');
     let paletteFiltered = [], paletteSel = 0;
 
-    const availableCmdKeys = () => Object.keys(commands).filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
+    const availableCmdKeys = () => Object.keys(commands).filter(isCmdAvailable);
     function runFromPalette(cmd) { clearCmdParam(); handleCommand(cmd); DOM.input.focus({ preventScroll: true }); }
     function paletteSource(mode) {
       if (mode === 'command') {
