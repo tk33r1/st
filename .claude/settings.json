@@ -24,7 +24,12 @@
       "Bash(node --check /tmp/_chk.js)",
       "Bash(node -e \"const fs=require\\('fs'\\);const os=require\\('os'\\);const path=require\\('path'\\);const h=fs.readFileSync\\('index.html','utf8'\\);const m=[...h.matchAll\\(/<script>\\([\\\\s\\\\S]*?\\)<\\\\/script>/g\\)];const f=path.join\\(os.tmpdir\\(\\),'_chk.js'\\);fs.writeFileSync\\(f,m[m.length-1][1]\\);require\\('child_process'\\).execSync\\('node --check '+JSON.stringify\\(f\\),{stdio:'inherit'}\\);console.log\\('SYNTAX OK'\\);\")",
       "Bash(node --check src/index.js)",
-      "Bash(node --check personas.js)"
+      "Bash(node --check personas.js)",
+      "Read(//c/c/dev/tk.st/workers/magi2/**)",
+      "Bash(python -c \"import json,sys; d=json.load\\(open\\('_titletest.json'\\)\\); d['max_tokens']=256; json.dump\\(d,open\\('_titletest2.json','w'\\),ensure_ascii=False\\)\")",
+      "Bash(python -c \"import json,sys; r=json.load\\(sys.stdin\\); c=r['choices'][0]; print\\('finish:',c['finish_reason']\\); print\\('content:',repr\\(c['message']['content']\\)\\); print\\('reasoning:',repr\\(c['message'].get\\('reasoning_content'\\)\\)[:200]\\); print\\('usage:',r['usage']\\)\")",
+      "Bash(python -c \"import json; d=json.load\\(open\\('_titletest.json',encoding='utf-8'\\)\\); d['max_tokens']=256; json.dump\\(d,open\\('_titletest2.json','w',encoding='utf-8'\\),ensure_ascii=False\\)\")",
+      "Bash(python -c \"import json,sys; r=json.load\\(sys.stdin\\); c=r['choices'][0]; print\\('finish:',c['finish_reason']\\); print\\('content:',repr\\(c['message']['content']\\)\\); print\\('reasoning_len:',len\\(c['message'].get\\('reasoning_content'\\) or ''\\)\\); print\\('usage:',r['usage']\\)\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\minep\\.claude\\projects\\c--dev-tk-st\\memory"

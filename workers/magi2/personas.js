@@ -9,13 +9,17 @@ export const DEFAULTS = {
   history_max_messages: 12, // サーバ側の防御的 trim
   daily_limit: 24,  // IP×日次の上限（メッセージ数）
   timeouts: { persona_ms: 30000, synthesizer_ms: 60000 },
+  // 推論制御は公式仕様の thinking.type（enabled|disabled）で行う。
+  // 旧 thinking_mode は API に無視される死にパラメータのため使用しない。
   models: {
-    // 3人格：no-think・並列・短文
-    persona: { model: 'deepseek-v4-flash', thinking_mode: 'non-thinking', max_tokens: 512 },
-    // 統合：thinking(中)・ストリーミング。max_tokens は思考トークン分の余裕を確保
-    synthesizer: { model: 'deepseek-v4-flash', thinking_mode: 'thinking', max_tokens: 1536 },
-    // タイトル要約：no-think・極短文。会話の初回ユーザー発言のみに使用
-    titler: { model: 'deepseek-v4-flash', thinking_mode: 'non-thinking', max_tokens: 32 },
+    // 3人格：non-thinking・並列・短文（推論を無効化し高速・低コストに）
+    persona: { model: 'deepseek-v4-flash', thinking: { type: 'disabled' }, max_tokens: 512 },
+    // 統合：thinking 有効・ストリーミング。max_tokens は思考トークン分の余裕を確保。
+    // reasoning_effort は high|max（既定 high。low/medium は high にマップされる）
+    synthesizer: { model: 'deepseek-v4-flash', thinking: { type: 'enabled' }, reasoning_effort: 'high', max_tokens: 1536 },
+    // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
+    // max_tokens を推論が食い潰して content が空になるため type:'disabled' 必須。
+    titler: { model: 'deepseek-v4-flash', thinking: { type: 'disabled' }, max_tokens: 48 },
   },
 };
 

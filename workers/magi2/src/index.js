@@ -38,7 +38,10 @@ async function callDeepSeek({ env, messages, cfg, stream, signal }) {
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.DEEPSEEK_API_KEY}` },
     body: JSON.stringify({
       model: cfg.model,
-      thinking_mode: cfg.thinking_mode,
+      // 推論制御は公式仕様の thinking.type（enabled|disabled）で行う
+      ...(cfg.thinking ? { thinking: cfg.thinking } : {}),
+      // reasoning_effort は thinking 有効時のみ意味を持つ（high|max）
+      ...(cfg.reasoning_effort ? { reasoning_effort: cfg.reasoning_effort } : {}),
       max_tokens: cfg.max_tokens,
       temperature: DEFAULTS.temperature,
       top_p: DEFAULTS.top_p,

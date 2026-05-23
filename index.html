@@ -311,7 +311,10 @@
       #sidebar.open { transform: translateX(0); }
       #panel { height: 33.75%; }
       #sidebar-resizer { display: none; }
-      #terminal-footer { flex-direction: column; gap: 4px; padding-top: 6px; padding-bottom: 6px; }
+      #terminal-footer { flex-direction: column; gap: 4px; padding-top: 6px; padding-bottom: 0; padding-left: 0; }
+      .footer-status-row { position: relative; padding-top: 2px; padding-bottom: 6px; }
+      #remote-badge { position: absolute; left: 0; top: 0; bottom: 0; width: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+      #terminal-footer .footer-status-row > div:first-child { padding-left: 36px; }
       .copyright-text { position: static !important; transform: none !important; order: -1; text-align: center; width: 100%; display: block; }
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
@@ -704,7 +707,7 @@
    <footer id="terminal-footer" class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
     <div class="footer-status-row flex items-center justify-between w-full">
      <div class="flex items-center gap-3 truncate">
-      <span id="remote-badge" title="Open a Remote Window — Command Palette" aria-label="Remote"><svg class="rb-icon" width="22" height="14" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,1 9,6 4,11"/><polyline points="18,3 13,8 18,13"/></svg></span>
+      <span id="remote-badge" title="Open a Remote Window — Command Palette" aria-label="Remote"><svg class="rb-icon" width="16" height="10.2" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,0 11.5,4 5,8"/><polyline points="17,6 10.5,10 17,14"/></svg></span>
       <span class="text-primary"><span>⎇</span> <span>main</span></span>
       <span id="status-left"><span>⊘</span> <span>0</span>  <span>⚠</span> <span>0</span></span>
      </div>
