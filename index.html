@@ -383,7 +383,9 @@
     .react-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.4rem; height: 1.4rem; padding: 0 0.3rem; font-size: 11px; line-height: 1; color: var(--secondary-color); background: transparent; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; outline: none; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
     .react-btn:hover { color: var(--primary-color); border-color: var(--primary-color); }
     .react-btn.liked, .react-btn.reacted { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
-    .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.05rem; padding: 0.3rem; background: var(--surface); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+    /* リアクション確定後：押した方は操作可（再押下で取り消し）、他方のみ非活性 */
+    .reaction-bar.locked .react-btn[data-act="like"]:not(.liked), .reaction-bar.locked .react-btn[data-act="emoji"]:not(.reacted) { opacity: 0.3; pointer-events: none; }
+    .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.05rem; padding: 0.3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
     .emoji-pop button { font-size: 15px; line-height: 1; width: 1.7rem; height: 1.7rem; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 4px; cursor: pointer; transition: background-color var(--duration-fast); }
     .emoji-pop button:hover { background: var(--primary-bg); }
     .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.5rem; font-size: 10px; word-break: break-word; }
@@ -2138,6 +2140,43 @@
         + `<button type="button" class="react-btn" data-act="emoji" title="React">${ICON_REACT}</button>`
         + `</div>`;
     }
+    // --- リアクション状態の永続化（いいね/絵文字を履歴項目 item.reactions に保存し、復元する）---
+    const pendingReactions = {}; // push 前（ストリーミング中）の一時置き場：mid -> { target: emoji }
+    const genMid = () => 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    // バーが属するアシスタント発言の reactions オブジェクト（target -> emoji）を返す
+    function reactionStoreFor(bar) {
+      const turn = bar.closest('.agent-turn');
+      const mid = turn && turn.dataset.mid;
+      if (!mid) return null;
+      const item = agentHistory.find(it => it.mid === mid);
+      if (item) { if (!item.reactions) item.reactions = {}; return item.reactions; }
+      if (!pendingReactions[mid]) pendingReactions[mid] = {};
+      return pendingReactions[mid];
+    }
+    // item.reactions の変更を localStorage（現在履歴＋保存セッション）へ反映
+    function persistReactions() {
+      localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+      syncCurrentToSaved();
+    }
+    // 復元：保存済み reactions をターン内のバーに反映（いいね or 絵文字＋ロック）
+    function applyReactionsToTurn(turn, reactions) {
+      if (!reactions) return;
+      Object.keys(reactions).forEach(target => {
+        const em = reEmoji(reactions[target]);
+        if (!em) return;
+        const sel = (window.CSS && CSS.escape) ? CSS.escape(target) : target;
+        const bar = turn.querySelector(`.reaction-bar[data-target="${sel}"]`);
+        if (!bar) return;
+        if (em === '👍') {
+          const likeBtn = bar.querySelector('.react-btn[data-act="like"]');
+          if (likeBtn) likeBtn.classList.add('liked');
+        } else {
+          const trigger = bar.querySelector('.react-btn[data-act="emoji"]');
+          if (trigger) { trigger.classList.add('reacted'); trigger.textContent = em; }
+        }
+        bar.classList.add('locked');
+      });
+    }
     const AGENT_PERSONAS = [
       { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', desc: 'The chaotic self. An impulsive, unpredictable geek who runs on instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music.' },
       { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.' },
@@ -2287,6 +2326,8 @@
       const u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = `<span>${esc(text)}</span>`;
       agentLog.appendChild(u);
       const turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
+      // メッセージID：リアクション状態を履歴項目と対応付けるための一意キー
+      const mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
       turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
         <div class="persona-card thinking" data-codename="${p.codename}">
           <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
@@ -2353,7 +2394,9 @@
         if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
       }
       if (reply && !errored) {
-        agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)) });
+        // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
+        agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)), mid, reactions: pendingReactions[mid] || {} });
+        delete pendingReactions[mid];
         if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
         localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
         updateAgentActionButtons();
@@ -2391,17 +2434,51 @@
       btn.innerHTML = sym;
       setTimeout(() => { btn.innerHTML = orig; }, 1200);
     }
-    // いいね/絵文字が付いたら request/response を DB に保存（コピーは保存しない）
-    function sendReaction(target, reaction, request, response) {
-      if (!response) return;
+    // 値の正規化（旧データは絵文字文字列、現行は { em, id }）
+    const reEmoji = (v) => (typeof v === 'string' ? v : (v && v.em) || '');
+    const reId = (v) => (v && typeof v === 'object' ? v.id : undefined);
+    // いいね/絵文字が付いたら request/response を DB に保存（コピーは保存しない）。挿入行の id を返す。
+    async function sendReaction(target, reaction, request, response) {
+      if (!response) return undefined;
+      try {
+        const res = await fetch(REACT_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, reaction, request, response }),
+        });
+        if (!res.ok) return undefined;
+        const j = await res.json().catch(() => null);
+        return j && j.id;
+      } catch (_) { return undefined; }
+    }
+    // 取り消し：登録時に得た行 id で D1 から該当行を削除
+    function deleteReaction(target, id) {
+      if (id == null) return;
       try {
         fetch(REACT_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ target, reaction, request, response }),
+          body: JSON.stringify({ op: 'remove', target, id }),
           keepalive: true,
         }).catch(() => {});
       } catch (_) {}
+    }
+    // リアクション確定：UIロック→保存→返ってきた id を store に記録して永続化
+    function registerReaction(bar, target, em, ctx) {
+      const store = reactionStoreFor(bar);
+      if (store) { store[target] = { em }; persistReactions(); }
+      sendReaction(target, em, ctx.request, ctx.response).then((id) => {
+        if (id != null && store && store[target] && typeof store[target] === 'object') {
+          store[target].id = id; persistReactions();
+        }
+      });
+    }
+    // リアクション取り消し：store から消し、保存済みなら D1 からも削除
+    function unregisterReaction(bar, target) {
+      const store = reactionStoreFor(bar);
+      const id = store ? reId(store[target]) : undefined;
+      if (store) { delete store[target]; persistReactions(); }
+      if (id != null) deleteReaction(target, id);
     }
     agentLog.addEventListener('click', (e) => {
       // 絵文字グリッドから選択
@@ -2414,7 +2491,8 @@
         const trigger = bar.querySelector('.react-btn[data-act="emoji"]');
         if (trigger) { trigger.classList.add('reacted'); trigger.textContent = em; }
         pop.remove();
-        sendReaction(ctx.target, em, ctx.request, ctx.response);
+        bar.classList.add('locked'); // いいね/絵文字は1回のみ：他方を非活性に
+        registerReaction(bar, ctx.target, em, ctx);
         return;
       }
       const btn = e.target.closest('.react-btn');
@@ -2425,9 +2503,25 @@
       if (act === 'copy') {
         navigator.clipboard.writeText(ctx.response || '').then(() => flashReactBtn(btn, '✓')).catch(() => {});
       } else if (act === 'like') {
-        const liked = btn.classList.toggle('liked');
-        if (liked) sendReaction(ctx.target, '👍', ctx.request, ctx.response);
+        if (btn.classList.contains('liked')) { // 取り消し
+          btn.classList.remove('liked');
+          bar.classList.remove('locked');
+          unregisterReaction(bar, ctx.target);
+          return;
+        }
+        if (bar.classList.contains('locked')) return; // 絵文字が選択済み
+        btn.classList.add('liked');
+        bar.classList.add('locked'); // いいね/絵文字は排他：他方を非活性に
+        registerReaction(bar, ctx.target, '👍', ctx);
       } else if (act === 'emoji') {
+        if (btn.classList.contains('reacted')) { // 取り消し（選んだ絵文字ボタンを再押下）
+          btn.classList.remove('reacted');
+          btn.innerHTML = ICON_REACT;
+          bar.classList.remove('locked');
+          unregisterReaction(bar, ctx.target);
+          return;
+        }
+        if (bar.classList.contains('locked')) return; // いいねが選択済み
         const existing = bar.querySelector('.emoji-pop');
         document.querySelectorAll('.emoji-pop').forEach(p => p.remove());
         if (existing) return; // トグルで閉じる
@@ -2454,6 +2548,8 @@
         } else {
           const turn = document.createElement('div');
           turn.className = 'fade-in agent-turn';
+          if (!item.mid) item.mid = genMid(); // 旧データには mid を遅延付与
+          turn.dataset.mid = item.mid;
 
           if (item.debate) {
             turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => {
@@ -2474,6 +2570,7 @@
           replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">${esc(item.content)}</span>${reactionBarHTML('integrated')}`;
           turn.appendChild(replyEl);
 
+          applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
           agentLog.appendChild(turn);
         }
       });

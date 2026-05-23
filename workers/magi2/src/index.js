@@ -126,24 +126,45 @@ export default {
       try { body = await request.json(); }
       catch (_) { return httpError(400, { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors); }
 
+      const op = body.op === 'remove' ? 'remove' : 'add';
       const target = typeof body.target === 'string' ? body.target.slice(0, 40) : '';
+      if (!env.DB) {
+        log('reaction', 'skipped (no DB binding)');
+        return httpError(500, { stage: 'internal', code: 'no_db', message: 'DB binding がありません', retryable: false }, requestId, cors);
+      }
+
+      // 取り消し：登録時に返した行 ID で該当行のみ削除（target を保険のフィルタに）
+      if (op === 'remove') {
+        const id = Number(body.id);
+        if (!target || !Number.isFinite(id)) {
+          return httpError(400, { stage: 'bad_request', code: 'invalid_remove', message: 'target と id（数値）が必要です', retryable: false }, requestId, cors);
+        }
+        try {
+          const res = await env.DB.prepare(`DELETE FROM reactions WHERE id = ?1 AND target = ?2`).bind(id, target).run();
+          const deleted = (res.meta && res.meta.changes) || 0;
+          log('reaction', 'removed', target, id, `changes=${deleted}`);
+          return new Response(JSON.stringify({ ok: true, deleted, request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
+        } catch (err) {
+          log('reaction', 'db_error (remove)', err.message);
+          return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの取り消しに失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
+        }
+      }
+
+      // 登録
       const reaction = typeof body.reaction === 'string' ? body.reaction.slice(0, 64) : '';
       const reqText = typeof body.request === 'string' ? body.request.slice(0, 8000) : '';
       const resText = typeof body.response === 'string' ? body.response.slice(0, 16000) : '';
       if (!target || !reaction || !resText) {
         return httpError(400, { stage: 'bad_request', code: 'invalid_reaction', message: 'target, reaction, response は必須です', retryable: false }, requestId, cors);
       }
-      if (!env.DB) {
-        log('reaction', 'skipped (no DB binding)');
-        return httpError(500, { stage: 'internal', code: 'no_db', message: 'DB binding がありません', retryable: false }, requestId, cors);
-      }
       try {
         const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-        await env.DB.prepare(
+        const res = await env.DB.prepare(
           `INSERT INTO reactions (created_at, ip, target, reaction, request, response) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
         ).bind(new Date().toISOString(), ip, target, reaction, reqText, resText).run();
-        log('reaction', target, reaction);
-        return new Response(JSON.stringify({ ok: true, request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
+        const id = res.meta && res.meta.last_row_id;
+        log('reaction', target, reaction, `id=${id}`);
+        return new Response(JSON.stringify({ ok: true, id, request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
       } catch (err) {
         log('reaction', 'db_error', err.message);
         return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの保存に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
