@@ -112,6 +112,44 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     const url = new URL(request.url);
+
+    // --- リアクション保存: いいね/絵文字が付いたら request/response を DB に記録 ---
+    if (request.method === 'POST' && url.pathname === '/magi2/react') {
+      // chat と同じ認可（tk.st/localhost は Origin 許可、それ以外は x-api-key 必須）
+      if (!isAllowedOrigin(origin)) {
+        if (!env.CLIENT_API_KEY || request.headers.get('x-api-key') !== env.CLIENT_API_KEY) {
+          log('auth', 'rejected (react)', origin);
+          return httpError(401, { stage: 'auth', code: 'unauthorized', message: '許可されていない Origin です', retryable: false }, requestId, cors);
+        }
+      }
+      let body;
+      try { body = await request.json(); }
+      catch (_) { return httpError(400, { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors); }
+
+      const target = typeof body.target === 'string' ? body.target.slice(0, 40) : '';
+      const reaction = typeof body.reaction === 'string' ? body.reaction.slice(0, 64) : '';
+      const reqText = typeof body.request === 'string' ? body.request.slice(0, 8000) : '';
+      const resText = typeof body.response === 'string' ? body.response.slice(0, 16000) : '';
+      if (!target || !reaction || !resText) {
+        return httpError(400, { stage: 'bad_request', code: 'invalid_reaction', message: 'target, reaction, response は必須です', retryable: false }, requestId, cors);
+      }
+      if (!env.DB) {
+        log('reaction', 'skipped (no DB binding)');
+        return httpError(500, { stage: 'internal', code: 'no_db', message: 'DB binding がありません', retryable: false }, requestId, cors);
+      }
+      try {
+        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+        await env.DB.prepare(
+          `INSERT INTO reactions (created_at, ip, target, reaction, request, response) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+        ).bind(new Date().toISOString(), ip, target, reaction, reqText, resText).run();
+        log('reaction', target, reaction);
+        return new Response(JSON.stringify({ ok: true, request_id: requestId }), { status: 200, headers: { 'Content-Type': 'application/json', ...cors } });
+      } catch (err) {
+        log('reaction', 'db_error', err.message);
+        return httpError(500, { stage: 'internal', code: 'reaction_db_error', message: 'リアクションの保存に失敗しました', detail: String(err.message).slice(0, 200), retryable: true }, requestId, cors);
+      }
+    }
+
     if (!(request.method === 'POST' && url.pathname === '/magi2/chat')) {
       return httpError(404, { stage: 'bad_request', code: 'not_found', message: 'Not Found', retryable: false }, requestId, cors);
     }

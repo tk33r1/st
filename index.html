@@ -364,6 +364,15 @@
     .agent-reply { margin-top: 0.4rem; padding: 0.5rem 0.6rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
     .agent-reply .agent-who { display: block; font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.15rem; }
     .agent-reply.streaming::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
+    /* reactions (copy / like / emoji) */
+    .reaction-bar { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.35rem; position: relative; }
+    .react-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.4rem; height: 1.4rem; padding: 0 0.3rem; font-size: 11px; line-height: 1; color: var(--secondary-color); background: transparent; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; outline: none; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
+    .react-btn:hover { color: var(--primary-color); border-color: var(--primary-color); }
+    .react-btn.liked, .react-btn.reacted { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
+    .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; padding: 0.25rem; background: var(--surface); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+    .emoji-pop .emoji-input { width: 13rem; max-width: 60vw; font-size: 14px; padding: 0.3rem 0.45rem; background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); outline: none; }
+    .emoji-pop .emoji-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-bg); }
+    .emoji-pop .emoji-input::placeholder { color: var(--secondary-color); font-size: 10px; }
     .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.5rem; font-size: 10px; word-break: break-word; }
     .agent-err .agent-rid { color: var(--secondary-color); }
     #agent-inputline { gap: 0.4rem; padding: 0.6rem; }
@@ -2047,6 +2056,16 @@
     // --- MAGI (right dock) ---
     const AGENT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'http://localhost:8787/magi2/chat' : 'https://workers.tk.st/magi2/chat';
+    const REACT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:8787/magi2/react' : 'https://workers.tk.st/magi2/react';
+    // 各人格カード / 統合回答に付けるリアクションバー（target = 人格コードネーム or 'integrated'）
+    function reactionBarHTML(target) {
+      return `<div class="reaction-bar" data-target="${esc(target)}">`
+        + `<button type="button" class="react-btn" data-act="copy" title="Copy">📋</button>`
+        + `<button type="button" class="react-btn" data-act="like" title="Like">👍</button>`
+        + `<button type="button" class="react-btn" data-act="emoji" title="React">＋</button>`
+        + `</div>`;
+    }
     const AGENT_PERSONAS = [
       { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', desc: 'The chaotic self. An impulsive, unpredictable geek who runs on instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music.' },
       { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.' },
@@ -2195,15 +2214,16 @@
       if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
       const u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = `<span>${esc(text)}</span>`;
       agentLog.appendChild(u);
-      const turn = document.createElement('div'); turn.className = 'fade-in';
+      const turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
       turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
         <div class="persona-card thinking" data-codename="${p.codename}">
           <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
           <div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">…</div></div>
           <div class="persona-round" data-round="2" hidden><span class="persona-round-label">After debate</span><div class="persona-text">…</div></div>
+          ${reactionBarHTML(p.codename)}
         </div>`).join('')}</div>`;
       const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
-      replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>`;
+      replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>${reactionBarHTML('integrated')}`;
       turn.appendChild(replyEl);
       agentLog.appendChild(turn); agentScroll();
       const replyBody = replyEl.querySelector('.agent-reply-body');
@@ -2272,6 +2292,106 @@
     agentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
     document.getElementById('btn-reset-agent').addEventListener('click', resetAgent);
 
+    // --- リアクション（コピー / いいね / 絵文字）---
+    // リアクション対象の request（直前のユーザー発言）と response（人格 or 統合回答）を DOM から取得
+    function getReactionContext(bar) {
+      const target = bar.getAttribute('data-target');
+      const turn = bar.closest('.agent-turn');
+      const userEl = turn && turn.previousElementSibling;
+      const request = (userEl && userEl.classList.contains('agent-user')) ? userEl.textContent.trim() : '';
+      let response = '';
+      if (target === 'integrated') {
+        const body = turn && turn.querySelector('.agent-reply-body');
+        response = body ? body.textContent.trim() : '';
+      } else {
+        const card = bar.closest('.persona-card');
+        if (card) {
+          const r2 = card.querySelector('.persona-round[data-round="2"]:not([hidden]) .persona-text');
+          const r1 = card.querySelector('.persona-round[data-round="1"] .persona-text');
+          const r2txt = r2 && r2.textContent.trim();
+          response = (r2txt && r2txt !== '…') ? r2txt : (r1 ? r1.textContent.trim() : '');
+        }
+      }
+      return { target, request, response };
+    }
+    function flashReactBtn(btn, sym) {
+      const orig = btn.textContent;
+      btn.textContent = sym;
+      setTimeout(() => { btn.textContent = orig; }, 1200);
+    }
+    // いいね/絵文字が付いたら request/response を DB に保存（コピーは保存しない）
+    function sendReaction(target, reaction, request, response) {
+      if (!response) return;
+      try {
+        fetch(REACT_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, reaction, request, response }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch (_) {}
+    }
+    // 入力文字列の先頭の絵文字を1つ取り出す（ZWJ結合・肌色修飾・異体字セレクタも1グラフェムとして保持）
+    function firstEmoji(str) {
+      if (!str) return '';
+      let graphemes;
+      try {
+        graphemes = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(str)].map(s => s.segment);
+      } catch (_) {
+        graphemes = Array.from(str);
+      }
+      const re = /\p{Extended_Pictographic}/u;
+      for (const g of graphemes) { if (re.test(g)) return g; }
+      return '';
+    }
+    // OS の絵文字キーボードで入力された絵文字を確定し、リアクションとして記録
+    function commitEmojiInput(input) {
+      const em = firstEmoji(input.value);
+      if (!em) return;
+      const pop = input.closest('.emoji-pop');
+      const bar = pop.closest('.reaction-bar');
+      const ctx = getReactionContext(bar);
+      const trigger = bar.querySelector('.react-btn[data-act="emoji"]');
+      if (trigger) { trigger.classList.add('reacted'); trigger.textContent = em; }
+      pop.remove();
+      sendReaction(ctx.target, em, ctx.request, ctx.response);
+    }
+    agentLog.addEventListener('click', (e) => {
+      const btn = e.target.closest('.react-btn');
+      if (!btn) return;
+      const bar = btn.closest('.reaction-bar');
+      const act = btn.getAttribute('data-act');
+      const ctx = getReactionContext(bar);
+      if (act === 'copy') {
+        navigator.clipboard.writeText(ctx.response || '').then(() => flashReactBtn(btn, '✓')).catch(() => {});
+      } else if (act === 'like') {
+        const liked = btn.classList.toggle('liked');
+        if (liked) sendReaction(ctx.target, '👍', ctx.request, ctx.response);
+      } else if (act === 'emoji') {
+        const existing = bar.querySelector('.emoji-pop');
+        document.querySelectorAll('.emoji-pop').forEach(p => p.remove());
+        if (existing) return; // トグルで閉じる
+        const pop = document.createElement('div');
+        pop.className = 'emoji-pop';
+        // OS 標準の絵文字ピッカー（Win + . / ⌃⌘Space / モバイルの絵文字キー）で任意の絵文字を入力
+        pop.innerHTML = `<input type="text" class="emoji-input" placeholder="絵文字を入力 ⌨ (Win + . / ⌃⌘Space)" aria-label="絵文字を入力" autocomplete="off" />`;
+        bar.appendChild(pop);
+        pop.querySelector('.emoji-input').focus();
+      }
+    });
+    // 絵文字入力欄に絵文字が入ったら確定（OSピッカー挿入・貼り付け・手入力すべて input で拾える）
+    agentLog.addEventListener('input', (e) => {
+      const input = e.target.closest('.emoji-input');
+      if (input) commitEmojiInput(input);
+    });
+    agentLog.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { const input = e.target.closest('.emoji-input'); if (input) { e.preventDefault(); commitEmojiInput(input); } }
+    });
+    // 絵文字ポップオーバー外クリックで閉じる
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.reaction-bar')) document.querySelectorAll('.emoji-pop').forEach(p => p.remove());
+    });
+
     // --- トーク履歴管理ロジック ---
     function renderHistoryToLog(history) {
       agentLog.innerHTML = '';
@@ -2283,7 +2403,7 @@
           agentLog.appendChild(u);
         } else {
           const turn = document.createElement('div');
-          turn.className = 'fade-in';
+          turn.className = 'fade-in agent-turn';
 
           if (item.debate) {
             turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => {
@@ -2294,13 +2414,14 @@
                   <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
                   <div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">${esc(deb.round1)}</div></div>
                   <div class="persona-round" data-round="2" ${r2Hidden}><span class="persona-round-label">After debate</span><div class="persona-text">${esc(deb.round2)}</div></div>
+                  ${reactionBarHTML(p.codename)}
                 </div>`;
             }).join('')}</div>`;
           }
 
           const replyEl = document.createElement('div');
           replyEl.className = 'agent-reply';
-          replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">${esc(item.content)}</span>`;
+          replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">${esc(item.content)}</span>${reactionBarHTML('integrated')}`;
           turn.appendChild(replyEl);
 
           agentLog.appendChild(turn);
@@ -2494,6 +2615,7 @@
             <li>Daily usage limit: up to <strong class="text-text">24 requests</strong> per day.</li>
             <li>Max <strong class="text-text">12 rounds</strong> of conversation per session.</li>
             <li>Inputs are <strong class="text-text">never saved</strong> on Shinya Takeda's server.</li>
+            <li>If you <strong class="text-text">react</strong> to a reply (like 👍 or emoji), that request and response are saved to Shinya Takeda's database and used to improve MAGI.</li>
             <li>Chat history is stored locally in your browser's <strong class="text-text">Local Storage</strong>.</li>
             <li>Local Storage is not permanent; please <strong class="text-text">export/download</strong> important chats.</li>
             <li>Powered by <strong class="text-text">DeepSeek API</strong>.</li>
