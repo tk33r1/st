@@ -10,14 +10,14 @@
   <link rel="author" href="https://tk.st/">
   <meta property="og:title" content="Shinya Takeda - Terminal Portfolio">
   <meta property="og:description" content="Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.">
-  <meta property="og:image" content="https://tk.st/images/ogp/root-ogp.png">
+  <meta property="og:image" content="https://tk.st/images/ogp/root-ogp.webp">
   <meta property="og:url" content="https://tk.st/">
   <meta property="og:type" content="website">
-  <meta property="og:locale" content="en_JP">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Shinya Takeda - Terminal Portfolio">
   <meta name="twitter:description" content="Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.">
-  <meta name="twitter:image" content="https://tk.st/images/ogp/root-ogp.png">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/root-ogp.webp">
   
   <style>
     :root {
@@ -436,7 +436,8 @@
     .magi-emblem .hn { fill: var(--primary-color); font-size: 13px; font-weight: 700; }
     .magi-title { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem 0 0.2rem; }
     .magi-sub { font-size: 10px; letter-spacing: 0.12em; color: var(--text-color); }
-    .magi-ver { font-size: 10px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.15rem; }
+    .magi-ver { font-size: 10px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.15rem; display: inline-flex; align-items: center; justify-content: center; }
+    #btn-info-agent { display: inline-flex; align-items: center; justify-content: center; position: relative; top: 0.5px; margin-left: 6px; }
     .magi-nodes { display: flex; justify-content: center; gap: 0.4rem; margin-top: 0.9rem; flex-wrap: wrap; }
     .magi-node { font-size: 9px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.15rem 0.55rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
     .magi-node:hover { color: var(--primary-color); border-color: var(--primary-color); }
@@ -557,20 +558,22 @@
     {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
+      "dateModified": "2026-05-24",
       "mainEntity": {
         "@type": "Person",
         "@id": "https://tk.st/#shitake",
         "name": "Shinya Takeda",
         "alternateName": ["武田 伸也", "人類踊狂計画", "Human Choreomania Project", "dj_hcp"],
         "jobTitle": "Technical Marketing Lead",
-        "worksFor": { "@type": "Organization", "name": "Nitori" },
-        "homeLocation": { "@type": "Place", "name": "Tokyo, Japan" },
+        "worksFor": { "@type": "Organization", "name": "Nitori", "url": "https://www.nitori.co.jp/", "sameAs": "https://ja.wikipedia.org/wiki/%E3%83%8B%E3%83%88%E3%83%AA" },
+        "homeLocation": { "@type": "Place", "name": "Saitama, Japan" },
         "description": "Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.",
         "url": "https://tk.st/",
+        "image": "https://tk.st/images/ogp/root-ogp.webp",
         "sameAs": ["https://x.com/Tah_Keh", "https://www.instagram.com/dj_hcp/", "https://www.linkedin.com/in/shinyatakeda/", "https://github.com/tk33r1", "https://www.coursera.org/learner/takeda", "https://www.mixcloud.com/dj_hcp/", "https://ko-fi.com/shinyatakeda"],
         "knowsAbout": ["Technical Marketing", "Digital Marketing", "Project Management", "Data Analytics", "GA4 Strategy", "A/B Testing", "UI/UX Design", "SEO and AIO", "Management Search Engine", "AI Agent Architecture", "Server-side GTM", "Frontend Development", "Cloudflare Pages", "Web3 & On-chain Systems", "Bitcoin Runes and Ordinals", "DJing", "Full-on Psytrance", "Big Room House", "Melodic Techno", "Philosophy", "Erich Fromm"]
       },
-      "headline": "Shinya Takeda - Terminal Portfolio",
+      "name": "Shinya Takeda - Terminal Portfolio",
       "description": "Portfolio of Shinya Takeda. Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ (Human Choreomania Project). Explore my projects and philosophy through this interactive terminal."
     }
   </script>
@@ -780,7 +783,7 @@
 
   <script>
     const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Tokyo, Japan' };
-    const JOB_TITLES = { light: 'Technical Marketing Lead', dark: 'Hacker Poet' };
+    const JOB_TITLES = { light: 'Technical Marketing Lead', dark: 'Hacky Flâneur' };
     const DOM = {
       app: document.getElementById('app'),
       output: document.getElementById('output-area'),
@@ -806,7 +809,7 @@
     const cmdNotFoundHTML = cmd => `<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`;
 
     const MAX_HISTORY = 50;
-    let commandHistory = [], historyIndex = -1, currentVersion = 1;
+    let commandHistory = [], historyIndex = -1, currentVersion = 2;
     let isDestroyed = false, destroyedElements = [], destroyInterval = null, rebuildInterval = null;
     let isMatrixActive = false, isMeditationActive = false;
     let matrixTeardown = null, meditationTeardown = null;
@@ -1088,6 +1091,8 @@
     function applyTheme(isDark) {
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
       config.job_title = isDark ? JOB_TITLES.dark : JOB_TITLES.light;
+      if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
+      if (tabState['about']) tabState['about'] = commands.about();
       const headerJobTitle = document.getElementById('header-job-title');
       if (headerJobTitle) headerJobTitle.textContent = config.job_title;
       document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
@@ -1336,7 +1341,7 @@
         return `<div class="text-xs my-1 text-secondary">Enter password for ST:</div>`;
       },
       about() {
-        const bioLines = ["The sun for the cyber realm, The moon for music and philosophy.", "I love profound tranquility, laced with a spoonful of madness."];
+        const bioLines = ["The sun for the digital, The moon for music and philosophy.", "Love peace. Love insanity."];
         return wrapCmd(`
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
@@ -1356,21 +1361,28 @@
           { year: '2026',    cat: 'work', title: 'Web3 Explorer', desc: 'I prototype new UX and loyalty ideas using wallet login and tokens.' },
           { year: '2025.08', cat: 'life', title: 'ver 2.0 — Reboot', desc: 'I updated myself after a traffic accident.' },
           { year: '2025.07', cat: 'life', title: 'ver 1.0', desc: 'This was me before the accident.' },
-          { year: '2024',    cat: 'life', title: 'DJ "Human Choreomania Project"', desc: 'I started DJing. Dancing through music and philosophy.' },
-          { year: '2020',    cat: 'work', title: 'UI Designer', desc: 'I design interactions with character and improve UI/UX.' },
+          { year: '2025.04', cat: 'work', title: 'President\'s Silver Award', desc: 'Received the Annual President\'s Silver Award (FY2024) for the AI product content generation project.' },
+          { year: '2024.11', cat: 'work', title: 'President\'s Gold Award (2Q)', desc: 'Received the 2Q President\'s Gold Award (FY2024) for the AI product content generation project.' },
+          { year: '2024.10', cat: 'life', title: 'DJ "Human Choreomania Project"', desc: 'Officially launched the DJ Human Choreomania Project, starting studies in professional DJing at Noah Music School.' },
+          { year: '2024.04', cat: 'life', title: 'MIGMA SHELTER Indefinite Hiatus', desc: 'As the psytrance idol group MIGMA SHELTER went on indefinite hiatus, I was reminded of my long-held love for EDM since 2001.' },
+          { year: '2023.11', cat: 'life', title: 'Discovered MIGMA SHELTER', desc: 'Discovered the psytrance idol group MIGMA SHELTER. One of its members inspired the future concept of the Human Choreomania Project.' },
+          { year: '2023',    cat: 'work', title: 'AI Product Content Generation', desc: 'Pioneered AI-generated product descriptions for e-commerce. The project\'s advanced nature drew recognition from Google and inquiries from Amazon.' },
+          { year: '2022',    cat: 'work', title: 'Logistics Center Project', desc: 'Joined a project to build a new logistics center, defining requirements from an e-commerce perspective.' },
+          { year: '2021',    cat: 'work', title: 'UI Designer', desc: 'Led a collaborative project to adopt Google Material Design and implement A/B testing via Google Optimize.' },
+          { year: '2020',    cat: 'work', title: 'Cross-Border E-Commerce', desc: 'Introduced and implemented a cross-border e-commerce system.' },
           { year: '2019.12', cat: 'work', title: 'Digital Marketer', desc: 'Leveraged on-site retail and e-commerce operations experience to lead technical marketing areas including SEO and online advertising.' },
-          { year: '2019.03', cat: 'work', title: 'GAIQ Certified Data Analyst', desc: 'Earned GAIQ and became the primary lead in charge of GA4, building tracking and dashboards with Looker.' },
+          { year: '2019.03', cat: 'work', title: 'GAIQ Certified Data Analyst', desc: 'Earned GAIQ and became the lead for GA4, building tracking and dashboards with Looker.' },
           { year: '2018.06', cat: 'work', title: 'Transferred to E-Commerce Division', desc: 'Began a new career path as an e-commerce operations specialist.' },
           { year: '2015',    cat: 'work', title: 'Data-Driven Layout Optimization', desc: 'Memorized almost all item-level sales data in the store to optimize layouts based on customer contact frequency, significantly boosting overall sales.' },
           { year: '2011.06', cat: 'work', title: 'Transferred to Retail Store', desc: 'Learned the fundamentals of customer service and store operations management.' },
           { year: '2011.03', cat: 'life', title: 'The Forklift & Wall Incident', desc: 'Accidentally bumped a warehouse wall with a forklift. Although it seemed fine at the time, a subsequent earthquake caused that exact spot to collapse, creating a "well-ventilated" view straight into the neighboring company.' },
           { year: '2010.03', cat: 'work', title: 'Joined NITORI', desc: 'Started my career in the Logistics Division. Having researched its future growth potential in my graduation thesis, I was convinced of its expansion.' },
-          { year: '2009',    cat: 'life', title: 'Domestic Exchange at Bukkyo University', desc: 'Enrolled in Bukkyo University via a domestic exchange program. Although it started due to a credit shortage, it became the very origin of my passion for philosophy.' },
+          { year: '2009',    cat: 'life', title: 'Domestic Exchange at Bukkyo University', desc: 'Although it started due to a credit shortage, this exchange became the very origin of my passion for philosophy.' },
           { year: '2008',    cat: 'life', title: 'Licenses & the Open Road', desc: 'Earned a Class-1 small craft (boat) license and a large motorcycle license, then roamed across Japan on a Honda Magna 250.' },
           { year: '2007',    cat: 'life', title: 'Easy Rider Encounter', desc: 'Met the film "Easy Rider"—the origin of my fascination with motorcycles, hippie culture, and psytrance.' },
-          { year: '2006.04', cat: 'life', title: 'Aviation Club', desc: 'Joined the aviation club and started flying gliders—a breathtaking passion that quickly left me as a broke college student.' },
+          { year: '2006.04', cat: 'life', title: 'Aviation Club', desc: 'Joined the aviation club to fly gliders—a breathtaking passion that quickly left me as a broke college student.' },
           { year: '2006.03', cat: 'life', title: 'College of Business Admin', desc: 'Passed the entrance exam for the College of Business Administration at Ritsumeikan University via a Center Test-focused admission, which evaluated both my Physics score and a perfect score in Japanese.' },
-          { year: '2005',    cat: 'life', title: 'Gap Year Detour', desc: 'Failed university entrance exams and spent a gap year (ronin)—a challenging year where I struggled to maintain my focus.' },
+          { year: '2005',    cat: 'life', title: 'Gap Year Detour', desc: 'Spent a gap year (ronin) after failing university entrance exams—a challenging period struggling to maintain focus.' },
           { year: '2003',    cat: 'life', title: 'Computer Research Club', desc: 'Joined the computer research club, creating CG graphics and building custom PCs—marking the definitive origin of my current technical roots.' },
           { year: '2002',    cat: 'life', title: 'FFXI Addiction', desc: 'Got heavily addicted to Final Fantasy XI, causing my academic deviation value to plummet drastically.' },
           { year: '2001',    cat: 'life', title: 'Cyber Trance Encounter', desc: 'Discovered "Cyber TRANCE" at an HMV listening station, marking the absolute beginning of my love for electronic dance music (EDM).' },
@@ -1635,6 +1647,11 @@
           document.body.appendChild(canvas);
           const ctx = canvas.getContext('2d');
           const fontSize = 14, primaryColor = getPrimaryColor();
+          
+          // Get the current BPM and calculate the speed factor (default to 60 BPM = speed factor of 1)
+          const currentBpm = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10);
+          const speedFactor = currentBpm / 60;
+          
           let drops = [];
           const resizeCanvas = () => {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -1649,7 +1666,7 @@
             for(let i = 0; i < drops.length; i++) {
               ctx.fillText(String.fromCharCode(0x30A0 + Math.random() * 96), i * fontSize, drops[i] * fontSize);
               if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
-              drops[i]++;
+              drops[i] += speedFactor;
             }
           }, 33);
           const teardown = () => {
@@ -1788,8 +1805,8 @@
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="flex flex-col justify-center space-y-1">
           <div id="display-name-el" class="text-lg font-bold glow text-primary">${esc(config.display_name)}${currentVersion > 1 ? verBadge() : ''}</div>
-          <div id="header-job-title" class="text-secondary text-xs">${esc(config.job_title)}</div>
-          <div class="text-secondary text-[10px]">Web2 standalone system · Get Started</div>
+          <div id="header-job-title" class="text-secondary text-xs dynamic-job-title">${esc(config.job_title)}</div>
+          <div class="text-secondary text-[10px]"><span class="text-primary">Web2</span> standalone system · Get Started</div>
         </div>
       </div>
       <div class="gs-tips">
@@ -1799,7 +1816,7 @@
     </div>`;
 
     async function boot() {
-      const bootMessages = [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }];
+      const bootMessages = [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: '', delay: 150 }];
       for (const line of bootMessages) {
         await delay(line.delay);
         const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.innerHTML = line.text; DOM.terminalLog.appendChild(div); scrollTerminal();
@@ -1899,7 +1916,7 @@
       commandHistory = [];
       unreadHistoryCount = 0;
       updateGitBadge();
-      historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 1;
+      historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 2;
       problems.length = 0; recountProblems();
       installedExtensions.clear();
       if (typeof renderExplorerTree === 'function') renderExplorerTree();
@@ -2807,14 +2824,10 @@
         <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-text leading-relaxed">
           <ul class="space-y-1.5 list-disc pl-4 text-secondary">
             <li>A multi-agent system with 3 debating personas modeled on <strong class="text-text">Shinya Takeda's personality</strong>.</li>
-            <li>Daily usage limit: up to <strong class="text-text">24 requests</strong> per day.</li>
-            <li>Max <strong class="text-text">12 rounds</strong> of conversation per session.</li>
-            <li>By default, inputs are <strong class="text-text">not saved</strong> on Shinya Takeda's server.</li>
-            <li><strong class="text-text">Exception:</strong> if you <strong class="text-text">react</strong> to a reply (like 👍 or emoji), that request and response are saved to Shinya Takeda's database and used to improve MAGI.</li>
-            <li>Chat history is stored locally in your browser's <strong class="text-text">Local Storage</strong>.</li>
-            <li>Local Storage is not permanent; please <strong class="text-text">export/download</strong> important chats.</li>
-            <li>Powered by <strong class="text-text">DeepSeek API</strong>.</li>
-            <li>Inputs are transmitted to <strong class="text-text">China</strong> and may be used for AI training.</li>
+            <li>Daily limit: <strong class="text-text">24 requests</strong> (IP addresses stored to enforce limit) and max <strong class="text-text">12 rounds</strong> per session.</li>
+            <li>By default, inputs are <strong class="text-text">not saved</strong> in the database, unless you <strong class="text-text">react</strong> to a reply (👍/emoji) to help improve MAGI.</li>
+            <li>Chat history is stored in your browser's <strong class="text-text">Local Storage</strong> (not permanent; please export important chats).</li>
+            <li>Powered by <strong class="text-text">DeepSeek API</strong> (inputs are sent to China and may be used for AI training).</li>
             <li class="text-red-500 font-semibold">DO NOT input any confidential or personal information.</li>
           </ul>
         </div>`);
