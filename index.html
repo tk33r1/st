@@ -262,6 +262,20 @@
     .tree-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.2rem 0.75rem 0.2rem 1.5rem; text-align: left; transition: background-color var(--duration-fast), color var(--duration-fast); }
     .tree-item:hover { background-color: var(--surface-hover); }
     .tree-item.active { background-color: var(--primary-bg); color: var(--primary-color); }
+    /* timeline */
+    .tl-chip { font-size: 0.6875rem; padding: 0.2rem 0.7rem; border-radius: 9999px; border: 1px solid var(--border-color); color: var(--secondary-color); background: transparent; cursor: pointer; transition: background-color var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast); }
+    .tl-chip:hover { border-color: var(--primary-color); color: var(--primary-color); }
+    .tl-chip.active { background: var(--primary-bg); border-color: var(--primary-color); color: var(--primary-color); }
+    .tl-item { display: flex; gap: 0.75rem; }
+    .tl-year { flex: 0 0 2.6rem; text-align: right; padding-top: 0.4rem; font-size: 0.6875rem; color: var(--secondary-color); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .tl-track { position: relative; border-left: 2px solid var(--border-color); padding-left: 1.25rem; padding-bottom: 0.9rem; flex: 1 1 auto; min-width: 0; }
+    .tl-item:last-child .tl-track { padding-bottom: 0; }
+    .tl-node { position: absolute; left: -0.46rem; top: 0.45rem; width: 0.7rem; height: 0.7rem; border-radius: 9999px; border: 2px solid var(--bg-color); }
+    .tl-node.work { background: var(--primary-color); }
+    .tl-node.life { background: var(--secondary-color); }
+    .tl-badge { font-size: 0.625rem; line-height: 1.4; padding: 0.05rem 0.4rem; border-radius: 9999px; font-weight: 700; white-space: nowrap; border: 1px solid; }
+    .tl-badge.work { color: var(--primary-color); border-color: var(--primary-color); }
+    .tl-badge.life { color: var(--secondary-color); border-color: var(--secondary-color); }
     #search-input, #ext-search-input { width: 100%; padding: 0.35rem 0.5rem; font-size: 0.8125rem; background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 4px; outline: none; color: var(--text-color); }
     #search-input:focus, #ext-search-input:focus { border-color: var(--primary-color); }
     /* extensions view */
@@ -369,10 +383,9 @@
     .react-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.4rem; height: 1.4rem; padding: 0 0.3rem; font-size: 11px; line-height: 1; color: var(--secondary-color); background: transparent; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; outline: none; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
     .react-btn:hover { color: var(--primary-color); border-color: var(--primary-color); }
     .react-btn.liked, .react-btn.reacted { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
-    .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; padding: 0.25rem; background: var(--surface); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
-    .emoji-pop .emoji-input { width: 13rem; max-width: 60vw; font-size: 14px; padding: 0.3rem 0.45rem; background: var(--surface-alt); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); outline: none; }
-    .emoji-pop .emoji-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-bg); }
-    .emoji-pop .emoji-input::placeholder { color: var(--secondary-color); font-size: 10px; }
+    .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.05rem; padding: 0.3rem; background: var(--surface); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+    .emoji-pop button { font-size: 15px; line-height: 1; width: 1.7rem; height: 1.7rem; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 4px; cursor: pointer; transition: background-color var(--duration-fast); }
+    .emoji-pop button:hover { background: var(--primary-bg); }
     .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.5rem; font-size: 10px; word-break: break-word; }
     .agent-err .agent-rid { color: var(--secondary-color); }
     #agent-inputline { gap: 0.4rem; padding: 0.6rem; }
@@ -1074,6 +1087,17 @@
         const cmd = projectLink.dataset.cmd;
         if (cmd) await handleCommand(cmd);
       }
+
+      const tlChip = e.target.closest('[data-action="timeline-filter"]');
+      if (tlChip) {
+        e.preventDefault();
+        const root = tlChip.closest('[data-timeline]');
+        if (root) {
+          const f = tlChip.dataset.filter;
+          root.querySelectorAll('[data-action="timeline-filter"]').forEach(c => c.classList.toggle('active', c === tlChip));
+          root.querySelectorAll('.tl-item').forEach(it => { it.style.display = (f === 'all' || it.dataset.cat === f) ? '' : 'none'; });
+        }
+      }
     });
 
     // Transient feedback, echoes and errors go to the bottom TERMINAL panel.
@@ -1104,6 +1128,7 @@
       welcome:  { name: 'welcome',        icon: '★' },
       about:    { name: 'about.md',       icon: '≡' },
       identify: { name: 'identify.json',  icon: '{}' },
+      timeline: { name: 'timeline.json',  icon: '┃' },
       pages:    { name: 'pages.json',     icon: '[]' },
       akutagawa:{ name: 'letter.txt',     icon: '✉' },
       help:     { name: 'help.md',        icon: '?' }
@@ -1248,7 +1273,7 @@
 
     const commands = {
       help: () => {
-        const base = [['about', 'Learn about me'], ['identify', 'View personality versions'], ['pages', 'Explore Web2 creations'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']];
+        const base = [['about', 'Learn about me'], ['identify', 'View personality versions'], ['timeline', 'Career & life timeline'], ['pages', 'Explore Web2 creations'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']];
         const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, (extensionMeta[c] && extensionMeta[c].desc) || CMD_DESC[c] || '']);
         return renderCmdList('Available Commands:', base.concat(installed));
       },
@@ -1286,6 +1311,46 @@
             ${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" data-action="project-link" data-cmd="${esc(p.name)}" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(p.desc)}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}
           </div>
         `, 'space-y-2'),
+      timeline() {
+        const tl = [
+          { year: '2026',    cat: 'work', title: 'AI Agent Architect', desc: 'I design and build conversational AI agents with character.' },
+          { year: '2026',    cat: 'work', title: 'Web3 Explorer', desc: 'I prototype new UX and loyalty ideas using wallet login and tokens.' },
+          { year: '2025.08', cat: 'life', title: 'ver 2.0 — Reboot', desc: 'I updated myself after a traffic accident.' },
+          { year: '2025.07', cat: 'life', title: 'ver 1.0', desc: 'This was me before the accident.' },
+          { year: '2024',    cat: 'life', title: 'DJ "Human Choreomania Project"', desc: 'I started DJing. Dancing through music and philosophy.' },
+          { year: '2020',    cat: 'work', title: 'UI Designer', desc: 'I design interactions with character and improve UI/UX.' },
+          { year: '2019',    cat: 'work', title: 'Technical Marketing Lead', desc: 'I grow CVR and LTV with data-driven growth hacking.' },
+          { year: '2018',    cat: 'work', title: 'Data Analyst', desc: 'I build tracking and dashboards with GA4 and Looker.' },
+          { year: '2010',    cat: 'work', title: 'Joined the company', desc: 'The start of my career. I kept adding roles from here.' },
+        ];
+        const label = c => c === 'work' ? 'Work' : 'Life';
+        const rows = tl.map(e => `
+            <div class="tl-item" data-cat="${e.cat}">
+              <div class="tl-year">${esc(e.year)}</div>
+              <div class="tl-track">
+                <span class="tl-node ${e.cat}"></span>
+                <div class="border rounded p-3 bg-surface-alt border-color">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="tl-badge ${e.cat}">${label(e.cat)}</span>
+                    <span class="text-sm font-bold text-normal">${esc(e.title)}</span>
+                  </div>
+                  <div class="text-xs leading-relaxed text-secondary">${esc(e.desc)}</div>
+                </div>
+              </div>
+            </div>`).join('');
+        return wrapCmd(`
+            <div data-timeline>
+              <div class="text-sm font-bold glow mb-1 text-primary">Timeline</div>
+              <div class="text-xs mb-3 text-secondary">Career &amp; life — newest first.</div>
+              <div class="flex gap-2 mb-4">
+                <button type="button" class="tl-chip active" data-action="timeline-filter" data-filter="all">All</button>
+                <button type="button" class="tl-chip" data-action="timeline-filter" data-filter="work">Work</button>
+                <button type="button" class="tl-chip" data-action="timeline-filter" data-filter="life">Life</button>
+              </div>
+              <div>${rows}</div>
+            </div>
+          `, 'p-4 border rounded border-color bg-surface');
+      },
       identify() {
         const uniqueId = 'id-' + Date.now();
         const versions = [['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']];
@@ -1561,7 +1626,7 @@
     });
 
     // Doc-type commands open as editor tabs (via openDoc); everything else prints to the TERMINAL.
-    ['about', 'identify', 'pages', 'help', 'akutagawa'].forEach(c => { if (commands[c]) commands[c].isDoc = true; });
+    ['about', 'identify', 'pages', 'timeline', 'help', 'akutagawa'].forEach(c => { if (commands[c]) commands[c].isDoc = true; });
 
     let choreoTicking = false;
     const handleChoreomaniaMove = (clientX, clientY) => {
@@ -1852,7 +1917,7 @@
     });
 
     // --- Explorer (file tree) ---
-    const sidebarFiles = ['about', 'identify', 'pages', 'contact', 'help'];
+    const sidebarFiles = ['about', 'identify', 'timeline', 'pages', 'contact', 'help'];
     const FILE_ICONS = {
       contact: { name: 'contact.txt', icon: '@' },
       bpm: { name: 'bpm.css', icon: '♥' },
@@ -1911,12 +1976,12 @@
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
-    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', pages: 'Explore Web2 creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', timeline: 'Career & life timeline', pages: 'Explore Web2 creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
     // Build a content index so search matches command output text, not just titles.
     const SEARCH_INDEX = {};
     const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
     function buildSearchIndex() {
-      const renderable = ['about', 'pages', 'help', 'identify']; // pure, side-effect-free string renderers
+      const renderable = ['about', 'pages', 'help', 'identify', 'timeline']; // pure, side-effect-free string renderers
       Object.keys(commands).forEach(c => {
         let text = c + ' ' + (CMD_DESC[c] || '');
         if (renderable.includes(c)) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) {} }
@@ -2058,12 +2123,19 @@
       ? 'http://localhost:8787/magi2/chat' : 'https://workers.tk.st/magi2/chat';
     const REACT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'http://localhost:8787/magi2/react' : 'https://workers.tk.st/magi2/react';
+    // リアクションボタンのアイコン（周囲の細線SVGアイコンと世界観を統一）
+    const ICON_COPY = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    const ICON_LIKE = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
+    // React: スマイル＋プラス（キャプチャの「リアクション追加」アイコンに準拠）
+    const ICON_REACT = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.6a9 9 0 1 0 4.9 4.9"/><circle cx="9" cy="10" r="0.6" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="0.6" fill="currentColor" stroke="none"/><path d="M8.5 14.5a4 4 0 0 0 7 0"/><line x1="19.5" y1="2.5" x2="19.5" y2="7.5"/><line x1="17" y1="5" x2="22" y2="5"/></svg>`;
+    // React で選べる厳選リアクション絵文字
+    const REACT_EMOJIS = ['👎','❤️','😂','🎉','🔥','👏','🙏','💯','🤔','👀','😮','😢','😍','🤯','🙌','🥳','😎','😅','🤝','💪','✨','💡','✅','🚀','👌','🫡','🤩','😇','🥹','🫶'];
     // 各人格カード / 統合回答に付けるリアクションバー（target = 人格コードネーム or 'integrated'）
     function reactionBarHTML(target) {
       return `<div class="reaction-bar" data-target="${esc(target)}">`
-        + `<button type="button" class="react-btn" data-act="copy" title="Copy">📋</button>`
-        + `<button type="button" class="react-btn" data-act="like" title="Like">👍</button>`
-        + `<button type="button" class="react-btn" data-act="emoji" title="React">＋</button>`
+        + `<button type="button" class="react-btn" data-act="copy" title="Copy">${ICON_COPY}</button>`
+        + `<button type="button" class="react-btn" data-act="like" title="Like">${ICON_LIKE}</button>`
+        + `<button type="button" class="react-btn" data-act="emoji" title="React">${ICON_REACT}</button>`
         + `</div>`;
     }
     const AGENT_PERSONAS = [
@@ -2315,9 +2387,9 @@
       return { target, request, response };
     }
     function flashReactBtn(btn, sym) {
-      const orig = btn.textContent;
-      btn.textContent = sym;
-      setTimeout(() => { btn.textContent = orig; }, 1200);
+      const orig = btn.innerHTML;
+      btn.innerHTML = sym;
+      setTimeout(() => { btn.innerHTML = orig; }, 1200);
     }
     // いいね/絵文字が付いたら request/response を DB に保存（コピーは保存しない）
     function sendReaction(target, reaction, request, response) {
@@ -2331,32 +2403,20 @@
         }).catch(() => {});
       } catch (_) {}
     }
-    // 入力文字列の先頭の絵文字を1つ取り出す（ZWJ結合・肌色修飾・異体字セレクタも1グラフェムとして保持）
-    function firstEmoji(str) {
-      if (!str) return '';
-      let graphemes;
-      try {
-        graphemes = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(str)].map(s => s.segment);
-      } catch (_) {
-        graphemes = Array.from(str);
-      }
-      const re = /\p{Extended_Pictographic}/u;
-      for (const g of graphemes) { if (re.test(g)) return g; }
-      return '';
-    }
-    // OS の絵文字キーボードで入力された絵文字を確定し、リアクションとして記録
-    function commitEmojiInput(input) {
-      const em = firstEmoji(input.value);
-      if (!em) return;
-      const pop = input.closest('.emoji-pop');
-      const bar = pop.closest('.reaction-bar');
-      const ctx = getReactionContext(bar);
-      const trigger = bar.querySelector('.react-btn[data-act="emoji"]');
-      if (trigger) { trigger.classList.add('reacted'); trigger.textContent = em; }
-      pop.remove();
-      sendReaction(ctx.target, em, ctx.request, ctx.response);
-    }
     agentLog.addEventListener('click', (e) => {
+      // 絵文字グリッドから選択
+      const emo = e.target.closest('.emoji-pop button');
+      if (emo) {
+        const em = emo.getAttribute('data-emoji');
+        const pop = emo.closest('.emoji-pop');
+        const bar = pop.closest('.reaction-bar');
+        const ctx = getReactionContext(bar);
+        const trigger = bar.querySelector('.react-btn[data-act="emoji"]');
+        if (trigger) { trigger.classList.add('reacted'); trigger.textContent = em; }
+        pop.remove();
+        sendReaction(ctx.target, em, ctx.request, ctx.response);
+        return;
+      }
       const btn = e.target.closest('.react-btn');
       if (!btn) return;
       const bar = btn.closest('.reaction-bar');
@@ -2373,19 +2433,9 @@
         if (existing) return; // トグルで閉じる
         const pop = document.createElement('div');
         pop.className = 'emoji-pop';
-        // OS 標準の絵文字ピッカー（Win + . / ⌃⌘Space / モバイルの絵文字キー）で任意の絵文字を入力
-        pop.innerHTML = `<input type="text" class="emoji-input" placeholder="絵文字を入力 ⌨ (Win + . / ⌃⌘Space)" aria-label="絵文字を入力" autocomplete="off" />`;
+        pop.innerHTML = REACT_EMOJIS.map(em => `<button type="button" data-emoji="${em}" title="${em}">${em}</button>`).join('');
         bar.appendChild(pop);
-        pop.querySelector('.emoji-input').focus();
       }
-    });
-    // 絵文字入力欄に絵文字が入ったら確定（OSピッカー挿入・貼り付け・手入力すべて input で拾える）
-    agentLog.addEventListener('input', (e) => {
-      const input = e.target.closest('.emoji-input');
-      if (input) commitEmojiInput(input);
-    });
-    agentLog.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { const input = e.target.closest('.emoji-input'); if (input) { e.preventDefault(); commitEmojiInput(input); } }
     });
     // 絵文字ポップオーバー外クリックで閉じる
     document.addEventListener('click', (e) => {
@@ -2614,8 +2664,8 @@
             <li>A multi-agent system with 3 debating personas modeled on <strong class="text-text">Shinya Takeda's personality</strong>.</li>
             <li>Daily usage limit: up to <strong class="text-text">24 requests</strong> per day.</li>
             <li>Max <strong class="text-text">12 rounds</strong> of conversation per session.</li>
-            <li>Inputs are <strong class="text-text">never saved</strong> on Shinya Takeda's server.</li>
-            <li>If you <strong class="text-text">react</strong> to a reply (like 👍 or emoji), that request and response are saved to Shinya Takeda's database and used to improve MAGI.</li>
+            <li>By default, inputs are <strong class="text-text">not saved</strong> on Shinya Takeda's server.</li>
+            <li><strong class="text-text">Exception:</strong> if you <strong class="text-text">react</strong> to a reply (like 👍 or emoji), that request and response are saved to Shinya Takeda's database and used to improve MAGI.</li>
             <li>Chat history is stored locally in your browser's <strong class="text-text">Local Storage</strong>.</li>
             <li>Local Storage is not permanent; please <strong class="text-text">export/download</strong> important chats.</li>
             <li>Powered by <strong class="text-text">DeepSeek API</strong>.</li>
