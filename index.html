@@ -1637,7 +1637,6 @@
 
     const WELCOME_TIPS = [
       ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">⇧</span> <span class="gs-kbd">P</span>', 'Command Palette — run any command'],
-      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">P</span>', 'Quick Open — jump to a file / page'],
       ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">B</span>', 'Toggle the Explorer side bar'],
       ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">J</span>', 'Toggle the bottom panel'],
       ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">\`</span>', 'Focus the terminal'],
@@ -2230,7 +2229,7 @@
           turn.remove(); renderAgentError(env); errored = true;
         } else {
           await parseSSE(res.body, {
-            title: (d) => { if (d && d.text) setAgentTitle(d.text); },
+            title: (d) => { if (d && d.text) { setAgentTitle(d.text); syncCurrentToSaved(); } },
             persona: (d) => {
               const cn = (window.CSS && CSS.escape) ? CSS.escape(d.codename) : d.codename;
               const card = turn.querySelector(`.persona-card[data-codename="${cn}"]`);
@@ -2266,6 +2265,7 @@
         if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
         localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
         updateAgentActionButtons();
+        syncCurrentToSaved();
       }
     }
     agentSendBtn.addEventListener('click', agentSend);
@@ -2309,36 +2309,55 @@
       agentScroll();
     }
 
+    // 現在のセッションの一意ID（ページロードごとに1つ、New Conversationでリセット）
+    let currentSessionId = localStorage.getItem('magi_current_session_id') || null;
+
     function archiveCurrentHistory() {
+      // syncCurrentToSaved が既にリアルタイム保存しているので、ここでは
+      // currentSessionId をリセットするだけ（次の会話は新しいセッションになる）。
+      currentSessionId = null;
+      localStorage.removeItem('magi_current_session_id');
+    }
+
+    // 現在の会話を Saved Sessions にリアルタイム同期する
+    // （新規ならリストの先頭に追加、既存なら該当セッションを更新して先頭に移動）
+    function syncCurrentToSaved() {
       if (!agentHistory || agentHistory.length === 0) return;
-      
+
       const firstUserMsg = agentHistory.find(m => m.role === 'user');
       if (!firstUserMsg) return;
 
-      // 要約タイトルがあればそれを採用、無ければ従来通り先頭発言を切り出す
       const title = agentTitle || (firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : ''));
-      const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
-      
-      // 重複アーカイブを避けるため、最後の発言が同一で履歴長が同一のセッションが直近にあればスキップ
-      if (sessions.length > 0) {
-        const lastArchived = sessions[0];
-        if (lastArchived.history.length === agentHistory.length && 
-            lastArchived.history[lastArchived.history.length - 1].content === agentHistory[agentHistory.length - 1].content) {
-          return;
-        }
+      let sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+
+      if (currentSessionId) {
+        // 既存セッションを更新：リストから取り除いて先頭に再挿入
+        sessions = sessions.filter(s => s.id !== currentSessionId);
+        sessions.unshift({
+          id: currentSessionId,
+          timestamp: Date.now(),
+          title: title,
+          history: [...agentHistory]
+        });
+      } else {
+        // 新しいセッションを作成
+        currentSessionId = 'session_' + Date.now();
+        localStorage.setItem('magi_current_session_id', currentSessionId);
+        sessions.unshift({
+          id: currentSessionId,
+          timestamp: Date.now(),
+          title: title,
+          history: [...agentHistory]
+        });
       }
 
-      const newSession = {
-        id: 'session_' + Date.now(),
-        timestamp: Date.now(),
-        title: title,
-        history: [...agentHistory]
-      };
-      
-      sessions.unshift(newSession);
-      if (sessions.length > 50) sessions.pop(); // 最大50件
-      
+      if (sessions.length > 50) sessions.pop();
       localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
+
+      // 履歴パネルが開いていればリストを再描画
+      if (document.getElementById('agent-history-panel')) {
+        renderSavedSessionsList();
+      }
     }
 
     function showHistoryPanel() {
@@ -2417,7 +2436,7 @@
     }
 
     function loadSavedSession(id) {
-      archiveCurrentHistory(); // 現在の会話を退避
+      syncCurrentToSaved(); // 現在の会話を保存
       
       const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
       const session = sessions.find(s => s.id === id);
@@ -2426,11 +2445,19 @@
       agentHistory = [...session.history];
       localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
       setAgentTitle(session.title || '');
+      // ロードしたセッションを現在のセッションとして追跡
+      currentSessionId = session.id;
+      localStorage.setItem('magi_current_session_id', currentSessionId);
       renderHistoryToLog(agentHistory);
       updateAgentActionButtons();
     }
 
     function deleteSavedSession(id) {
+      // 削除対象が現在のセッションなら追跡を解除
+      if (currentSessionId === id) {
+        currentSessionId = null;
+        localStorage.removeItem('magi_current_session_id');
+      }
       let sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
       sessions = sessions.filter(s => s.id !== id);
       localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
@@ -2783,6 +2810,7 @@
     function paletteSource(mode) {
       if (mode === 'command') {
         const actions = [
+          { icon: '❐', label: 'File: New Window', run: () => { showToast('Opening new window...', 'info'); window.open(window.location.origin + window.location.pathname, '_blank', 'noopener,noreferrer'); } },
           { icon: '◐', label: 'Preferences: Toggle Color Theme', run: toggleTheme },
           { icon: '▥', label: 'View: Toggle Primary Side Bar', run: toggleSidebar },
           { icon: '▭', label: 'View: Toggle Panel', run: togglePanel },
@@ -2884,7 +2912,6 @@
       }
       if (!paletteEl.classList.contains('hidden')) return; // palette owns its keys
       if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette('>'); return; }
-      if (mod && !e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette(''); return; }
       if (mod && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); toggleSidebar(); return; }
       if (mod && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); togglePanel(); return; }
       if (mod && e.key === '`') { e.preventDefault(); focusTerminal(); return; }
