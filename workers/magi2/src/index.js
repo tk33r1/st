@@ -1,4 +1,4 @@
-import { DEFAULTS, PERSONAS, SYNTHESIZER, TITLER } from '../personas.js';
+import { DEFAULTS, PERSONAS, PERSONA_TEMPERATURE, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 const isAllowedOrigin = (o) => ALLOWED_ORIGINS.includes(o) || /^http:\/\/localhost(:\d+)?$/.test(o);
@@ -32,7 +32,7 @@ function httpError(status, envelope, requestId, cors) {
   });
 }
 
-async function callDeepSeek({ env, messages, cfg, stream, signal }) {
+async function callDeepSeek({ env, messages, cfg, stream, signal, temperature }) {
   return fetch(DEFAULTS.endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.DEEPSEEK_API_KEY}` },
@@ -43,7 +43,7 @@ async function callDeepSeek({ env, messages, cfg, stream, signal }) {
       // reasoning_effort は thinking 有効時のみ意味を持つ（high|max）
       ...(cfg.reasoning_effort ? { reasoning_effort: cfg.reasoning_effort } : {}),
       max_tokens: cfg.max_tokens,
-      temperature: DEFAULTS.temperature,
+      temperature: temperature != null ? temperature : DEFAULTS.temperature,
       top_p: DEFAULTS.top_p,
       stream: !!stream,
       messages,
@@ -53,10 +53,11 @@ async function callDeepSeek({ env, messages, cfg, stream, signal }) {
 }
 
 // 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら致命）。
-async function fetchPersonaText(env, p, messages, signal, log, round = 1) {
+// temperature はテーマ依存の「揺らぎ」（未指定なら DEFAULTS.temperature）。
+async function fetchPersonaText(env, p, messages, signal, log, round = 1, temperature) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     const res = await callDeepSeek({
-      env, cfg: DEFAULTS.models.persona, stream: false, signal,
+      env, cfg: DEFAULTS.models.persona, stream: false, signal, temperature,
       messages: [{ role: 'system', content: p.system_prompt }, ...messages],
     });
     if (!res.ok) {
@@ -189,9 +190,11 @@ export default {
 
     // 2) bad_request: body 検証
     let messages;
+    let theme = null; // 'light' | 'dark'：統合の揺らぎに使用
     try {
       const body = await request.json();
       messages = body && body.messages;
+      theme = (body && (body.theme === 'light' || body.theme === 'dark')) ? body.theme : null;
       if (!Array.isArray(messages) || messages.length === 0) {
         throw stageError('bad_request', 'invalid_messages', 'messages は1件以上の配列が必要です', { retryable: false });
       }
@@ -255,13 +258,17 @@ export default {
               .catch(() => { tt.clear(); });
           }
 
+          // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.3 / dark=1.5、未指定は既定）
+          const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
+          if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
+
           // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
           log('persona_call', 'round1 start');
           const t1 = withTimeout(DEFAULTS.timeouts.persona_ms);
           let opinions;
           try {
             opinions = await Promise.all(PERSONAS.map(async (p) => {
-              const text = await fetchPersonaText(env, p, messages, t1.signal, log, 1);
+              const text = await fetchPersonaText(env, p, messages, t1.signal, log, 1, personaTemp);
               send('persona', { round: 1, codename: p.codename, name: p.name, text });
               return { ...p, r1: text };
             }));
@@ -276,7 +283,7 @@ export default {
               const others = opinions.filter(o => o.codename !== p.codename)
                 .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
               const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。単なる繰り返しは避ける]\n${others}`;
-              p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: dmsg }], t2.signal, log, 2);
+              p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: dmsg }], t2.signal, log, 2, personaTemp);
               send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
             }));
           } finally { t2.clear(); }
@@ -285,8 +292,12 @@ export default {
           // --- 統合コール（thinking・stream）---
           const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}\n  討議後: ${o.r2}`).join('\n');
           const augmented = `${lastUser}\n\n[内部討議メモ：以下は3人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
+          // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
+          const bias = theme ? SYNTH_BIAS[theme] : null;
+          if (bias) log('synthesizer_call', 'bias', theme);
           const synthMessages = [
             { role: 'system', content: SYNTHESIZER.system_prompt },
+            ...(bias ? [{ role: 'system', content: bias }] : []),
             ...history,
             { role: 'user', content: augmented },
           ];

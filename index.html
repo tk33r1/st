@@ -2353,7 +2353,8 @@
       });
 
       try {
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: agentHistory }) });
+        const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: agentHistory, theme }) });
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
           let env = null; try { env = JSON.parse(raw).error; } catch (_) {}
