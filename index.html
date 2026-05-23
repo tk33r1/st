@@ -772,7 +772,6 @@
       breadcrumb: document.getElementById('breadcrumb'),
       input: document.getElementById('cmd-input'),
       inputLine: document.getElementById('input-line'),
-      statusRight: document.getElementById('status-right'),
 
       mirror: document.getElementById('cmd-mirror'),
       caret: document.getElementById('custom-caret'),
@@ -797,6 +796,9 @@
     let unreadHistoryCount = 0;
 
     // Shared helpers (deduped across the script).
+    // Defensive JSON parse for anything read back from localStorage: a corrupted
+    // value (other tab, extension, manual edit) must never throw and brick MAGI.
+    const safeParse = (raw, fallback) => { try { const v = JSON.parse(raw); return v == null ? fallback : v; } catch (_) { return fallback; } };
     const verBadge = () => ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
     const clearCmdParam = () => { if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) {} } };
     const clearTransformVars = el => ['--dx', '--dy', '--deg'].forEach(p => el.style.removeProperty(p));
@@ -954,16 +956,18 @@
       }
     };
 
+    // Descriptions live solely in CMD_DESC (single source of truth); extensionMeta
+    // carries only marketplace metadata (version/author/visibility).
     const extensionMeta = {
-      akutagawa: { name: 'akutagawa', desc: 'A message from the past', version: '1.0.0', author: 'ST', isHidden: true },
-      bpm: { name: 'bpm', desc: 'Set system heartbeat', version: '1.2.1', author: 'ST', isHidden: true },
-      choreomania: { name: 'choreomania', desc: 'Merging souls in ecstasy', version: '3.0.0', author: 'ST', isHidden: true },
-      destroy: { name: 'destroy', desc: 'And rebuild', version: '0.9.9', author: 'ST', isHidden: true },
-      matrix: { name: 'matrix', desc: 'Enter the Matrix', version: '1.0.1', author: 'ST', isHidden: true },
-      meditation: { name: 'meditation', desc: 'Clear your mind', version: '2.0.0', author: 'ST', isHidden: true },
-      theme: { name: 'theme', desc: 'Change terminal color', version: '1.1.0', author: 'ST', isHidden: true },
-      web3: { name: 'web3', desc: 'Dive into my Web3 page', version: '1.0.0', author: 'ST', isHidden: true },
-      rebuild: { name: 'rebuild', desc: 'System rebuild', version: '1.0.0', author: 'ST', isHidden: true, hideFromList: true }
+      akutagawa: { name: 'akutagawa', version: '1.0.0', author: 'ST', isHidden: true },
+      bpm: { name: 'bpm', version: '1.2.1', author: 'ST', isHidden: true },
+      choreomania: { name: 'choreomania', version: '3.0.0', author: 'ST', isHidden: true },
+      destroy: { name: 'destroy', version: '0.9.9', author: 'ST', isHidden: true },
+      matrix: { name: 'matrix', version: '1.0.1', author: 'ST', isHidden: true },
+      meditation: { name: 'meditation', version: '2.0.0', author: 'ST', isHidden: true },
+      theme: { name: 'theme', version: '1.1.0', author: 'ST', isHidden: true },
+      web3: { name: 'web3', version: '1.0.0', author: 'ST', isHidden: true },
+      rebuild: { name: 'rebuild', version: '1.0.0', author: 'ST', isHidden: true, hideFromList: true }
     };
     const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
     const installedExtensions = new Set();
@@ -997,6 +1001,7 @@
     function extCardHtml({ cmd, meta, isInstalled }) {
       const tm = (typeof treeMeta === 'function') ? treeMeta(cmd) : { name: meta.name, icon: meta.name[0] };
       const color = iconColor(cmd, tm.name);
+      const desc = CMD_DESC[cmd] || meta.desc || '';
       return `
         <div class="ext-card flex gap-1.5 p-2 border border-color rounded bg-surface-alt">
           <div class="ext-icon" style="background:linear-gradient(135deg,${color},${color}b3)">${esc(tm.icon)}</div>
@@ -1005,7 +1010,7 @@
               <span class="font-bold text-normal text-xs truncate">${esc(meta.name)}</span>
               <span class="text-[10px] text-secondary whitespace-nowrap">v${meta.version}</span>
             </div>
-            <div class="text-[10px] text-secondary truncate" title="${esc(meta.desc)}">${esc(meta.desc)}</div>
+            <div class="text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
             <div class="flex items-center justify-between gap-2 mt-1">
               <span class="text-[10px] text-secondary truncate">${esc(meta.author)}</span>
               <div class="flex items-center gap-1 whitespace-nowrap">
@@ -1029,10 +1034,11 @@
       hiddenCommands.forEach(cmd => {
         if (cmd === 'rebuild') return;
         if (cmd === 'akutagawa' && !isDark) return;
-        const meta = extensionMeta[cmd] || { name: cmd, desc: CMD_DESC[cmd] || '', version: '1.0.0', author: 'ST' };
+        const meta = extensionMeta[cmd] || { name: cmd, version: '1.0.0', author: 'ST' };
+        const desc = CMD_DESC[cmd] || '';
         const isInstalled = installedExtensions.has(cmd);
         if (!isInstalled) uninstalledCount++;
-        if (query && !(meta.name.toLowerCase().includes(query) || (meta.desc || '').toLowerCase().includes(query))) return;
+        if (query && !(meta.name.toLowerCase().includes(query) || desc.toLowerCase().includes(query))) return;
         (isInstalled ? installed : available).push({ cmd, meta, isInstalled });
       });
 
@@ -1126,14 +1132,25 @@
         : `<div class="px-3 py-2 text-xs text-secondary">No operation history yet.</div>`;
     }
 
+    // File name + icon for every command surfaced as a "file" (Explorer tree, tabs,
+    // IntelliSense, palette). Doc files open as editor tabs; the rest are hidden
+    // extensions that only carry an icon/label.
     const FILE_META = {
-      welcome:  { name: 'welcome',        icon: '★' },
-      about:    { name: 'about.md',       icon: '≡' },
-      identify: { name: 'identify.json',  icon: '{}' },
-      timeline: { name: 'timeline.json',  icon: '┃' },
-      pages:    { name: 'pages.json',     icon: '[]' },
-      akutagawa:{ name: 'letter.txt',     icon: '✉' },
-      help:     { name: 'help.md',        icon: '?' }
+      welcome:     { name: 'welcome',         icon: '★' },
+      about:       { name: 'about.md',        icon: '≡' },
+      identify:    { name: 'identify.json',   icon: '{}' },
+      timeline:    { name: 'timeline.json',   icon: '┃' },
+      pages:       { name: 'pages.json',      icon: '[]' },
+      akutagawa:   { name: 'letter.txt',      icon: '✉' },
+      help:        { name: 'help.md',         icon: '?' },
+      contact:     { name: 'contact.txt',     icon: '@' },
+      bpm:         { name: 'bpm.css',         icon: '♥' },
+      choreomania: { name: 'choreomania.bin', icon: '∿' },
+      destroy:     { name: 'destroy.sh',      icon: '⚠' },
+      matrix:      { name: 'matrix.bin',      icon: '░' },
+      meditation:  { name: 'meditation.bin',  icon: '○' },
+      theme:       { name: 'theme.css',       icon: '#' },
+      web3:        { name: 'web3.html',       icon: '⬡' }
     };
     const getLangMode = (cmd) => {
       if (!cmd) return 'Shell';
@@ -1276,7 +1293,7 @@
     const commands = {
       help: () => {
         const base = [['about', 'Learn about me'], ['identify', 'View personality versions'], ['timeline', 'Career & life timeline'], ['pages', 'Explore Web2 creations'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']];
-        const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, (extensionMeta[c] && extensionMeta[c].desc) || CMD_DESC[c] || '']);
+        const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, CMD_DESC[c] || '']);
         return renderCmdList('Available Commands:', base.concat(installed));
       },
       clear: () => { DOM.terminalLog.innerHTML = ''; return null; },
@@ -1920,17 +1937,7 @@
 
     // --- Explorer (file tree) ---
     const sidebarFiles = ['about', 'identify', 'timeline', 'pages', 'contact', 'help'];
-    const FILE_ICONS = {
-      contact: { name: 'contact.txt', icon: '@' },
-      bpm: { name: 'bpm.css', icon: '♥' },
-      choreomania: { name: 'choreomania.bin', icon: '∿' },
-      destroy: { name: 'destroy.sh', icon: '⚠' },
-      matrix: { name: 'matrix.bin', icon: '░' },
-      meditation: { name: 'meditation.bin', icon: '○' },
-      theme: { name: 'theme.css', icon: '#' },
-      web3: { name: 'web3.html', icon: '⬡' }
-    };
-    const treeMeta = c => FILE_META[c] || FILE_ICONS[c] || { name: c, icon: '•' };
+    const treeMeta = c => FILE_META[c] || { name: c, icon: '•' };
     const sidebarTree = document.getElementById('sidebar-tree');
     const sidebarEl = document.getElementById('sidebar');
     function renderExplorerTree() {
@@ -2237,14 +2244,7 @@
       if (isMobile()) { agentDockEl.classList.remove('open'); setAgentActive(false); }
       else { agentDockEl.classList.remove('collapsed'); setAgentActive(true); }
       
-      const saved = localStorage.getItem('magi_current_history');
-      if (saved) {
-        try {
-          agentHistory = JSON.parse(saved);
-        } catch (_) {
-          agentHistory = [];
-        }
-      }
+      agentHistory = safeParse(localStorage.getItem('magi_current_history'), []);
 
       setAgentTitle(localStorage.getItem('magi_current_title') || '');
 
@@ -2342,19 +2342,25 @@
       const replyBody = replyEl.querySelector('.agent-reply-body');
 
       agentHistory.push({ role: 'user', content: text });
-      if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
       localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
 
       agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true;
-      let reply = '', errored = false;
+      let reply = '', errored = false, timedOut = false;
       const debateData = {};
       AGENT_PERSONAS.forEach(p => {
         debateData[p.codename] = { round1: '…', round2: '…' };
       });
 
+      // Abort only the connection / initial-response phase (30s). Once the stream
+      // starts the debate may legitimately run long, so the timer is cleared below.
+      const ctrl = new AbortController();
+      const connectTimer = setTimeout(() => { timedOut = true; ctrl.abort(); }, 30000);
       try {
         const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: agentHistory, theme }) });
+        // Send only the most recent slice to the API (bounded context/cost); full
+        // history is kept in agentHistory for display, persistence and reactions.
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: agentHistory.slice(-AGENT_MAX_HISTORY), theme }), signal: ctrl.signal });
+        clearTimeout(connectTimer);
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
           let env = null; try { env = JSON.parse(raw).error; } catch (_) {}
@@ -2387,8 +2393,13 @@
           });
         }
       } catch (err) {
+        clearTimeout(connectTimer);
         console.error('[agent] fetch failed', AGENT_API, err);
-        turn.remove(); agentDegrade();
+        turn.remove();
+        // A timeout is transient — show a retryable error rather than permanently
+        // degrading MAGI (which a genuine network/CORS failure does).
+        if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
+        else agentDegrade();
       } finally {
         replyEl.classList.remove('streaming');
         agentBusy = false;
@@ -2398,7 +2409,6 @@
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
         agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)), mid, reactions: pendingReactions[mid] || {} });
         delete pendingReactions[mid];
-        if (agentHistory.length > AGENT_MAX_HISTORY) agentHistory = agentHistory.slice(-AGENT_MAX_HISTORY);
         localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
         updateAgentActionButtons();
         syncCurrentToSaved();
@@ -2467,10 +2477,19 @@
     // リアクション確定：UIロック→保存→返ってきた id を store に記録して永続化
     function registerReaction(bar, target, em, ctx) {
       const store = reactionStoreFor(bar);
-      if (store) { store[target] = { em }; persistReactions(); }
+      // Hold a reference to the exact cell we created so we can detect, when the id
+      // finally arrives, whether the reaction was cancelled/replaced in the meantime.
+      let cell = null;
+      if (store) { cell = { em }; store[target] = cell; persistReactions(); }
       sendReaction(target, em, ctx.request, ctx.response).then((id) => {
-        if (id != null && store && store[target] && typeof store[target] === 'object') {
-          store[target].id = id; persistReactions();
+        if (id == null) return;
+        if (store && store[target] === cell) {
+          // Still the active reaction → record the id for a future undo.
+          cell.id = id; persistReactions();
+        } else {
+          // Cancelled (or replaced) before the id came back: unregister couldn't know
+          // the id yet, so delete the now-orphaned DB row here.
+          deleteReaction(target, id);
         }
       });
     }
@@ -2481,7 +2500,24 @@
       if (store) { delete store[target]; persistReactions(); }
       if (id != null) deleteReaction(target, id);
     }
+    // agent-log 内の全クリックを1つのデリゲーションで処理（リアクション / info / 人格ノード）
     agentLog.addEventListener('click', (e) => {
+      // スプラッシュ：System & Privacy ボタン
+      if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
+      // スプラッシュの人格ノード：特徴をトグル表示
+      const node = e.target.closest('.magi-node');
+      if (node) {
+        const splash = node.closest('.agent-splash'); if (!splash) return;
+        const desc = splash.querySelector('.magi-desc');
+        const wasActive = node.classList.contains('active');
+        splash.querySelectorAll('.magi-node').forEach(n => n.classList.remove('active'));
+        if (wasActive) { desc.classList.add('hidden'); return; }
+        const p = AGENT_PERSONAS.find(x => x.codename === node.dataset.codename);
+        node.classList.add('active');
+        desc.innerHTML = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(p.name)}</span>${esc(p.desc)}`;
+        desc.classList.remove('hidden');
+        return;
+      }
       // 絵文字グリッドから選択
       const emo = e.target.closest('.emoji-pop button');
       if (emo) {
@@ -2597,7 +2633,7 @@
       if (!firstUserMsg) return;
 
       const title = agentTitle || (firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : ''));
-      let sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      let sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
 
       if (currentSessionId) {
         // 既存セッションを更新：リストから取り除いて先頭に再挿入
@@ -2668,7 +2704,7 @@
       const listContainer = document.getElementById('agent-history-list');
       if (!listContainer) return;
 
-      const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      const sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
       if (sessions.length === 0) {
         listContainer.innerHTML = `<div class="text-center text-secondary py-8">No saved conversations.</div>`;
         return;
@@ -2707,7 +2743,7 @@
     function loadSavedSession(id) {
       syncCurrentToSaved(); // 現在の会話を保存
       
-      const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      const sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
       const session = sessions.find(s => s.id === id);
       if (!session) return;
 
@@ -2727,7 +2763,7 @@
         currentSessionId = null;
         localStorage.removeItem('magi_current_session_id');
       }
-      let sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
+      let sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
       sessions = sessions.filter(s => s.id !== id);
       localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
       renderSavedSessionsList();
@@ -2780,13 +2816,6 @@
       });
     }
 
-    agentLog.addEventListener('click', (e) => {
-      const btn = e.target.closest('#btn-info-agent');
-      if (btn) {
-        e.preventDefault();
-        showInfoPanel();
-      }
-    });
     document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
     document.getElementById('btn-close-agent').addEventListener('click', closeAgentDock);
 
@@ -2905,19 +2934,6 @@
     document.getElementById('btn-share-agent').addEventListener('click', (e) => shareAgentChat(e.currentTarget));
     document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
 
-    // スプラッシュの人格ノードをタップ → その人格の特徴を表示（トグル）
-    agentLog.addEventListener('click', (e) => {
-      const node = e.target.closest('.magi-node'); if (!node) return;
-      const splash = node.closest('.agent-splash'); if (!splash) return;
-      const desc = splash.querySelector('.magi-desc');
-      const wasActive = node.classList.contains('active');
-      splash.querySelectorAll('.magi-node').forEach(n => n.classList.remove('active'));
-      if (wasActive) { desc.classList.add('hidden'); return; }
-      const p = AGENT_PERSONAS.find(x => x.codename === node.dataset.codename);
-      node.classList.add('active');
-      desc.innerHTML = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(p.name)}</span>${esc(p.desc)}`;
-      desc.classList.remove('hidden');
-    });
     agentInitialState();
 
     // ============================================================
