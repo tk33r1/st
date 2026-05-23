@@ -1,4 +1,4 @@
-// ST Multi Agent — persona config (chat-only)
+// MAGI — persona config (chat-only)
 // 正本は persona.yaml。Worker はランタイムFSが無いため、この JS を import する。
 // 変更時は persona.yaml と本ファイルを両方更新すること。
 
@@ -14,6 +14,8 @@ export const DEFAULTS = {
     persona: { model: 'deepseek-v4-flash', thinking_mode: 'non-thinking', max_tokens: 512 },
     // 統合：thinking(中)・ストリーミング。max_tokens は思考トークン分の余裕を確保
     synthesizer: { model: 'deepseek-v4-flash', thinking_mode: 'thinking', max_tokens: 1536 },
+    // タイトル要約：no-think・極短文。会話の初回ユーザー発言のみに使用
+    titler: { model: 'deepseek-v4-flash', thinking_mode: 'non-thinking', max_tokens: 32 },
   },
 };
 
@@ -68,5 +70,16 @@ export const SYNTHESIZER = {
     '- 「私は～」「～だと思う」と一人称で、統合された自分の考えとして語る',
     '- 議論から自然に導かれた結論を、自分の思想として述べる',
     '返答はユーザーの入力言語で、200文字以内。',
+  ].join('\n'),
+};
+
+// 会話の初回ユーザー発言を、チャットのタイトル用に極短く要約する。
+export const TITLER = {
+  system_prompt: [
+    'ユーザーのメッセージを、内容が一目で分かる短いタイトルに要約せよ。',
+    '- ユーザーの入力言語で、12文字前後（最大16文字）。',
+    '- 名詞句・体言止めで簡潔に。語尾や助詞は最小限。',
+    '- 句読点・記号・引用符・絵文字・改行を含めない。',
+    '- タイトルだけを出力し、前置きや説明を一切付けない。',
   ].join('\n'),
 };

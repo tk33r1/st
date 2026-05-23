@@ -1,4 +1,4 @@
-import { DEFAULTS, PERSONAS, SYNTHESIZER } from '../personas.js';
+import { DEFAULTS, PERSONAS, SYNTHESIZER, TITLER } from '../personas.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 const isAllowedOrigin = (o) => ALLOWED_ORIGINS.includes(o) || /^http:\/\/localhost(:\d+)?$/.test(o);
@@ -71,6 +71,25 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1) {
   }
   // ループは attempt=2 で必ず return/throw に到達するためここには来ない（防御的）
   throw stageError('persona_call', 'unreachable', `${p.codename} の応答取得に失敗しました`, { persona: p.codename, round, retryable: true });
+}
+
+// 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
+async function fetchTitle(env, lastUser, signal, log) {
+  try {
+    const res = await callDeepSeek({
+      env, cfg: DEFAULTS.models.titler, stream: false, signal,
+      messages: [{ role: 'system', content: TITLER.system_prompt }, { role: 'user', content: lastUser }],
+    });
+    if (!res.ok) { log('title_call', `HTTP ${res.status}`); return null; }
+    const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();
+    // タイトルは1行・記号類を除去し、保険として長さを制限
+    const clean = raw.replace(/[\r\n"'`「」『』]/g, '').trim().slice(0, 24);
+    log('title_call', `len=${clean.length}`);
+    return clean || null;
+  } catch (e) {
+    log('title_call', 'failed', e && e.message);
+    return null;
+  }
 }
 
 // 指定 ms でアボートするタイマ付き signal
@@ -165,6 +184,15 @@ export default {
           const history = messages.slice(0, -1);
           const lastUser = messages[messages.length - 1].content;
 
+          // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
+          let titlePromise = null;
+          if (!history.some(m => m.role === 'assistant')) {
+            const tt = withTimeout(DEFAULTS.timeouts.persona_ms);
+            titlePromise = fetchTitle(env, lastUser, tt.signal, log)
+              .then(t => { tt.clear(); if (t) send('title', { text: t }); })
+              .catch(() => { tt.clear(); });
+          }
+
           // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
           log('persona_call', 'round1 start');
           const t1 = withTimeout(DEFAULTS.timeouts.persona_ms);
@@ -238,6 +266,8 @@ export default {
           }
           synthTimer.clear();
           log('synthesizer_call', 'ok');
+          // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
+          if (titlePromise) { try { await titlePromise; } catch (_) {} }
           send('done', { request_id: requestId });
           close();
         } catch (err) {

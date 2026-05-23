@@ -1,4 +1,4 @@
-# ST Multi Agent — persona config (v2 / chat-only) ※人間用の正本
+# MAGI — persona config (v2 / chat-only) ※人間用の正本
 # 変更時は personas.js も同期すること（Worker はランタイムFSが無いため JS を import する）。
 defaults:
   language: follow_user            # 既定 ja。返答はユーザーの入力言語に合わせる
@@ -14,6 +14,7 @@ defaults:
   models:
     persona:     { model: deepseek-v4-flash, thinking_mode: non-thinking, stream: false, max_tokens: 512  }
     synthesizer: { model: deepseek-v4-flash, thinking_mode: thinking,     stream: true,  max_tokens: 1536 }
+    titler:      { model: deepseek-v4-flash, thinking_mode: non-thinking, stream: false, max_tokens: 32   }   # チャットタイトル要約（初回ユーザー発言のみ）
 
 free_personas:
   - name: Enthusiast
@@ -57,3 +58,12 @@ free_synthesizer:
     - 「私は～」「～だと思う」と一人称で、統合された自分の考えとして語る
     - 議論から自然に導かれた結論を、自分の思想として述べる
     返答はユーザーの入力言語で、200文字以内。
+
+# 会話の初回ユーザー発言を、チャットのタイトル用に極短く要約する
+titler:
+  system_prompt: |
+    ユーザーのメッセージを、内容が一目で分かる短いタイトルに要約せよ。
+    - ユーザーの入力言語で、12文字前後（最大16文字）。
+    - 名詞句・体言止めで簡潔に。語尾や助詞は最小限。
+    - 句読点・記号・引用符・絵文字・改行を含めない。
+    - タイトルだけを出力し、前置きや説明を一切付けない。

@@ -224,10 +224,10 @@
       animation: choreoBeat calc(60s / var(--bpm)) infinite ease-in-out;
       will-change: transform, filter;
     }
-    body.choreomania-active #app *:not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; overflow: visible !important; }
+    body.choreomania-active #app *:not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #editor-scroll, #editor-content, #editor-gutter, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s; animation: none !important; overflow: visible !important; }
     body.choreomania-active #app .fade-in { opacity: 1 !important; }
-    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
-    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(odd):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #editor-scroll, #editor-content, #editor-gutter, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important; will-change: transform; }
+    body.choreomania-active #app *:nth-child(even):not(input, #app, #ide, #activitybar, #sidebar, #agentdock, #editor-group, #tabbar, #breadcrumb, #editor, #editor-scroll, #editor-content, #editor-gutter, #output-area, #panel, #panel-tabs, #terminal, #terminal-log, #input-line, #terminal-footer, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) { transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important; will-change: transform; }
     body.choreomania-active #app span:not(.hidden) { display: inline-block; }
     body.choreomania-active #app span.hidden { display: none !important; }
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) { color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important; text-shadow: 0 0 8px currentColor; }
@@ -315,9 +315,32 @@
       .copyright-text { position: static !important; transform: none !important; order: -1; text-align: center; width: 100%; display: block; }
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
-    /* right agent dock — ST Multi Agent */
+    /* right agent dock — MAGI */
     #agentdock { position: relative; width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; overflow: hidden; }
     #agentdock-header { height: 35px; flex-shrink: 0; }
+    #agent-more-dropdown {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 6px;
+      width: 140px;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      padding: 4px 0;
+    }
+    #agent-more-dropdown.hidden {
+      display: none;
+    }
+    #agent-more-dropdown button, #agent-more-dropdown a {
+      font-size: 12px !important;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+      line-height: 1.5 !important;
+    }
     #agentdock-resizer { flex-shrink: 0; width: 5px; margin: 0 -2px; cursor: col-resize; background: transparent; transition: background var(--duration-fast); z-index: 5; touch-action: none; }
     #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color); }
     #agent-log { scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0); background-size: 18px 18px; }
@@ -395,6 +418,94 @@
       #agentdock.open { transform: translateX(0); }
       #agentdock-resizer { display: none; }
     }
+
+    /* --- Command Palette (Quick Open) --- */
+    #cmd-palette { position: fixed; inset: 0; z-index: 9000; display: flex; justify-content: center; align-items: flex-start; background: rgba(0,0,0,0.35); }
+    #cmd-palette.hidden { display: none; }
+    #cmd-palette-box { margin-top: 8vh; width: min(600px, 92vw); max-height: 62vh; display: flex; flex-direction: column; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); overflow: hidden; }
+    #cmd-palette-input { width: 100%; padding: 0.6rem 0.75rem; font-size: 0.875rem; background: var(--surface-alt); border: none; border-bottom: 1px solid var(--border-color); outline: none; color: var(--text-color); }
+    #cmd-palette-input:focus { border-bottom-color: var(--primary-color); }
+    #cmd-palette-list { overflow-y: auto; min-height: 0; }
+    .cp-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.75rem; cursor: pointer; }
+    .cp-item.active { background: var(--primary-bg); }
+    .cp-icon { width: 1.1rem; text-align: center; flex-shrink: 0; }
+    .cp-label { color: var(--text-color); white-space: nowrap; }
+    .cp-desc { color: var(--secondary-color); font-size: 11px; flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cp-empty { padding: 0.6rem 0.75rem; color: var(--secondary-color); }
+    #cmd-palette-foot { padding: 0.3rem 0.75rem; border-top: 1px solid var(--border-color); background: var(--surface-alt); font-size: 10px; color: var(--secondary-color); display: flex; justify-content: space-between; gap: 1rem; }
+
+    /* --- Inline IntelliSense suggestions --- */
+    #input-line { position: relative; }
+    #cmd-suggest { position: absolute; left: 0; bottom: 100%; margin-bottom: 6px; z-index: 40; width: min(360px, 80vw); max-height: 40vh; overflow-y: auto; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 6px 22px rgba(0,0,0,0.35); }
+    #cmd-suggest.hidden { display: none; }
+    .sg-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8125rem; }
+    .sg-item.active { background: var(--primary-bg); }
+    .sg-icon { width: 1rem; text-align: center; flex-shrink: 0; }
+    .sg-label { color: var(--text-color); }
+    .sg-desc { color: var(--secondary-color); font-size: 10px; flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* --- Editor gutter (line numbers) --- */
+    #editor-scroll { display: flex; align-items: stretch; min-height: 100%; }
+    #editor-gutter { flex-shrink: 0; width: 3rem; padding-top: 1rem; text-align: right; -webkit-user-select: none; user-select: none; color: var(--secondary-color); opacity: 0.5; font-size: 0.8125rem; }
+    @media (min-width: 768px) { #editor-gutter { padding-top: 1.3125rem; } }
+    .ed-ln { height: 20px; line-height: 20px; padding-right: 0.6rem; }
+    .ed-ln.active { color: var(--primary-color); opacity: 1; }
+    #editor-content { min-width: 0; }
+
+    /* --- Toast notifications --- */
+    #toast-container { position: fixed; right: 1rem; bottom: 1rem; z-index: 9500; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; pointer-events: none; }
+    .toast { pointer-events: auto; min-width: 220px; max-width: 320px; display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.6rem 0.7rem; background: var(--surface-color); border: 1px solid var(--border-color); border-left: 3px solid var(--primary-color); border-radius: 6px; box-shadow: 0 6px 22px rgba(0,0,0,0.3); font-size: 0.8125rem; color: var(--text-color); animation: toastIn var(--duration-normal) ease forwards; }
+    .toast.warn { border-left-color: #fbbf24; }
+    .toast.hide { animation: toastOut var(--duration-normal) ease forwards; }
+    .toast-icon { flex-shrink: 0; color: var(--primary-color); }
+    .toast.warn .toast-icon { color: #fbbf24; }
+    .toast-msg { flex: 1; line-height: 1.4; }
+    .toast-close { flex-shrink: 0; color: var(--secondary-color); cursor: pointer; }
+    .toast-close:hover { color: var(--text-color); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(20px); } }
+
+    /* --- Status bar remote badge --- */
+    #remote-badge { display: inline-flex; align-items: center; justify-content: center; padding: 0 0.5rem; background: var(--primary-color); color: var(--bg-color); cursor: pointer; }
+    #remote-badge:hover { filter: brightness(1.1); }
+    #remote-badge .rb-icon { display: block; }
+    /* Flush bottom-left corner + full status-bar height only on desktop. */
+    @media (min-width: 768px) {
+      #terminal-footer { padding-left: 0; }
+      #remote-badge { align-self: stretch; }
+    }
+
+    /* --- Notification bell + center --- */
+    #notif-bell { position: relative; display: inline-flex; align-items: center; cursor: pointer; color: var(--secondary-color); }
+    #notif-bell svg { display: block; }
+    #notif-bell:hover, #notif-bell.has-unread { color: var(--text-color); }
+    #notif-count { position: absolute; top: -6px; right: -7px; min-width: 13px; height: 13px; padding: 0 3px; border-radius: 7px; background: var(--primary-color); color: var(--bg-color); font-size: 9px; font-weight: 700; line-height: 13px; text-align: center; }
+    #notif-count.hidden { display: none; }
+    #notif-center { position: fixed; right: 0.75rem; bottom: 2rem; z-index: 8800; width: min(320px, 90vw); max-height: 50vh; display: flex; flex-direction: column; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); overflow: hidden; }
+    #notif-center.hidden { display: none; }
+    #notif-center-head { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border-color); background: var(--surface-alt); font-size: 10px; letter-spacing: 0.05em; color: var(--secondary-color); }
+    #notif-center-clear { cursor: pointer; }
+    #notif-center-clear:hover { color: var(--text-color); }
+    #notif-center-list { overflow-y: auto; min-height: 0; }
+    .notif-row { display: flex; gap: 0.5rem; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border-color); font-size: 0.8125rem; }
+    .notif-row:last-child { border-bottom: 0; }
+    .notif-ic { flex-shrink: 0; color: var(--primary-color); }
+    .notif-row.warn .notif-ic { color: #fbbf24; }
+    .notif-tx { flex: 1; line-height: 1.4; color: var(--text-color); word-break: break-word; }
+    .notif-tm { flex-shrink: 0; color: var(--secondary-color); font-size: 10px; }
+    .notif-empty { padding: 0.7rem 0.6rem; color: var(--secondary-color); font-size: 0.8125rem; }
+
+    /* --- Bottom panel collapse (Ctrl+J) --- */
+    #panel.collapsed, #panel-resizer.collapsed { display: none; }
+
+    /* --- Welcome / Get Started --- */
+    .gs-wrap { max-width: 760px; }
+    .gs-hero { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .gs-h { font-size: 0.875rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem; }
+    .gs-tips { padding-top: 0.25rem; }
+    .gs-tip-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.2rem 0; font-size: 0.8125rem; color: var(--secondary-color); }
+    .gs-tip-row .gs-keys { width: 9rem; flex-shrink: 0; color: var(--text-color); white-space: nowrap; }
+    .gs-kbd { display: inline-block; min-width: 1.2rem; text-align: center; padding: 0 0.35rem; border: 1px solid var(--border-color); border-bottom-width: 2px; border-radius: 4px; font-size: 11px; color: var(--text-color); background: var(--surface-alt); }
   </style>
   <script type="application/ld+json">
     {
@@ -437,7 +548,7 @@
     <h3><a href="https://tk.st/tools/">AI coding benchmark: Toolbox</a></h3>
     <h3><a href="https://tk.st/glitch/">Finding the "bugs" that lead to better living.</a></h3>
     <h3><a href="https://tk.st/thought/">A shared margin for contemplating the essence of life.</a></h3>
-    <h2>ST Multi Agent</h2>
+    <h2>MAGI</h2>
     <p>Chat with my three personas (Enthusiast, Humanist, Strategist), synthesized into one voice. Open the ✦ panel.</p>
     <a href="https://tk.st/magi/">Legacy MAGI System</a>
     <h2><a href="?cmd=contact">contact</a></h2>
@@ -489,7 +600,7 @@
      <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
      <button class="act-btn" data-act="git" title="Source Control (operation history)" aria-label="Source Control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7"/><path d="M18 10.5c0 4-4 5.5-12 5"/></svg><div id="badge-git" class="nav-badge hidden">0</div></button>
      <button class="act-btn" data-act="extensions" title="Extensions" aria-label="Extensions"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="12.5" width="8" height="8" rx="0.5"/><rect x="12.5" y="12.5" width="8" height="8" rx="0.5"/><rect x="2.5" y="2.5" width="8" height="8" rx="0.5"/><path d="M16.5 2.5l4 4-4 4-4-4z"/></svg><div id="badge-extensions" class="nav-badge hidden">0</div></button>
-     <button class="act-btn mt-auto" data-act="agent" title="ST Multi Agent" aria-label="ST Multi Agent"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-1c0.5 1.5 1.5 3 2.5 4.5c-3 0-5-1.5-7.5-4.5H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/></svg></button>
+     <button class="act-btn mt-auto" data-act="agent" title="MAGI" aria-label="MAGI"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-1c0.5 1.5 1.5 3 2.5 4.5c-3 0-5-1.5-7.5-4.5H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/></svg></button>
      <button class="act-btn" data-act="settings" title="Toggle theme" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </nav>
     <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
@@ -520,8 +631,13 @@
     <section id="editor-group" class="flex flex-col flex-1">
      <div id="tabbar" class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
      <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate"><span>tk.st</span></div>
-     <div id="editor" class="flex-1 p-4 md:p-6 space-y-1 relative" style="scroll-behavior:smooth;">
-      <div id="output-area" aria-live="polite" aria-atomic="false"></div>
+     <div id="editor" class="flex-1 relative" style="scroll-behavior:smooth;">
+      <div id="editor-scroll">
+       <div id="editor-gutter" aria-hidden="true"></div>
+       <div id="editor-content" class="flex-1 p-4 md:p-6 space-y-1">
+        <div id="output-area" aria-live="polite" aria-atomic="false"></div>
+       </div>
+      </div>
      </div>
      <div id="panel-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize panel" title="Drag to resize"></div>
      <div id="panel" class="flex flex-col border-t border-color bg-surface">
@@ -540,26 +656,46 @@
           <span id="cmd-mirror" class="text-sm absolute left-0 top-0 h-full flex items-center" style="visibility:hidden; white-space:pre;"></span>
           <span id="custom-caret" class="bpm-caret" style="display:none;"></span>
         </div>
+        <div id="cmd-suggest" class="hidden"></div>
        </div>
       </div>
      </div>
     </section>
     <div id="agentdock-resizer" role="separator" aria-orientation="vertical" aria-label="Resize agent panel" title="Drag to resize"></div>
-    <aside id="agentdock" class="flex flex-col bg-surface border-l border-color" aria-label="ST Multi Agent">
+    <aside id="agentdock" class="flex flex-col bg-surface border-l border-color" aria-label="MAGI">
      <div id="agentdock-header" class="flex items-center justify-between px-3 border-b border-color bg-surface-alt">
-      <button id="btn-reset-agent" class="text-xs tracking-wider text-primary glow hover:opacity-80 transition-opacity cursor-pointer outline-none" title="Clear conversation history"><span class="text-sm inline-block">✦</span> ST MULTI AGENT</button>
+      <div id="agentdock-title" class="text-xs tracking-wider text-primary glow select-none"><span class="text-sm inline-block">✦</span> MAGI</div>
       <div class="flex items-center gap-2.5">
-        <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="Privacy & System Information"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
+        <button id="btn-reset-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="New Conversation"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <button id="btn-history-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="View conversation history"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
-        <button id="btn-share-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center opacity-30" style="pointer-events: none;" title="Share/Copy conversation"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
-        <button id="btn-export-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center opacity-30" style="pointer-events: none;" title="Export conversation as Markdown"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-        <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="text-xs text-secondary hover:text-primary no-underline ml-1" title="Legacy MAGI deliberation (v1)">Legacy MAGI <span class="text-sm inline-block ml-0.5">↗</span></a>
+        <!-- Kebab Menu (More Options) -->
+        <div class="relative inline-block flex items-center justify-center">
+          <button id="btn-more-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center" title="More Options">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </button>
+          <div id="agent-more-dropdown" class="hidden text-[10px]">
+            <button id="btn-share-agent" class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 outline-none border-none bg-transparent cursor-pointer opacity-30 pointer-events-none" title="Share/Copy conversation">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              <span>Share Log</span>
+            </button>
+            <button id="btn-export-agent" class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 outline-none border-none bg-transparent cursor-pointer opacity-30 pointer-events-none" title="Export conversation as Markdown">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Download MD</span>
+            </button>
+            <hr class="border-t border-color my-1 w-full" />
+            <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer" class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 no-underline outline-none" title="Legacy MAGI deliberation (v1)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              <span>Legacy MAGI</span>
+            </a>
+          </div>
+        </div>
+        <button id="btn-close-agent" class="text-secondary hover:text-red-500 transition-colors cursor-pointer outline-none flex items-center justify-center ml-1" title="Close Panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
      </div>
      <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs" aria-live="polite" aria-atomic="false"></div>
      <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
      <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
-      <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="Ask Shinya Takeda AI..." aria-label="Message ST Multi Agent">
+      <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI">
       <button id="agent-send" class="text-primary hover:opacity-70" title="Send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg></button>
      </div>
     </aside>
@@ -568,6 +704,7 @@
    <footer id="terminal-footer" class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
     <div class="footer-status-row flex items-center justify-between w-full">
      <div class="flex items-center gap-3 truncate">
+      <span id="remote-badge" title="Open a Remote Window — Command Palette" aria-label="Remote"><svg class="rb-icon" width="22" height="14" viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,1 9,6 4,11"/><polyline points="18,3 13,8 18,13"/></svg></span>
       <span class="text-primary"><span>⎇</span> <span>main</span></span>
       <span id="status-left"><span>⊘</span> <span>0</span>  <span>⚠</span> <span>0</span></span>
      </div>
@@ -575,13 +712,25 @@
       <span id="status-bpm" title="System BPM"><span>♥</span> <span>60</span></span>
       <span id="status-pos"><span>Ln 1,</span> <span>Col 1</span></span>
       <span id="status-lang" class="text-primary"><span>Shell</span></span>
-      <span id="status-right"></span>
+      <button id="notif-bell" title="No new notifications" aria-label="Notifications"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notif-count" class="hidden">0</span></button>
      </div>
     </div>
     <span class="copyright-text opacity-50 whitespace-nowrap" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);"><span>©</span> <span id="copyright-year"></span> <span>Shinya Takeda</span></span>
    </footer>
   </div>
 
+  <div id="cmd-palette" class="hidden" role="dialog" aria-modal="true" aria-label="Command Palette">
+   <div id="cmd-palette-box">
+    <input id="cmd-palette-input" type="text" autocomplete="off" spellcheck="false" placeholder="Type '>' for commands, or search files…" aria-label="Command Palette input">
+    <div id="cmd-palette-list"></div>
+    <div id="cmd-palette-foot"><span id="cmd-palette-count"></span><span>↑↓ navigate · ↵ run · esc close</span></div>
+   </div>
+  </div>
+  <div id="toast-container" aria-live="polite"></div>
+  <div id="notif-center" class="hidden" role="dialog" aria-label="Notifications">
+   <div id="notif-center-head"><span>NOTIFICATIONS</span><span id="notif-center-clear" title="Clear all notifications">Clear all</span></div>
+   <div id="notif-center-list"></div>
+  </div>
 
   <script>
     const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Saitama, Japan' };
@@ -895,6 +1044,7 @@
       const isDark = document.documentElement.getAttribute('data-theme') !== 'dark';
       applyTheme(isDark);
       addToHistory(`[SYS] Theme changed to ${isDark ? 'dark' : 'light'}`);
+      showToast(`Color theme switched to ${isDark ? 'Dark' : 'Light'}`);
     }
 
     DOM.output.addEventListener('click', async (e) => {
@@ -975,6 +1125,7 @@
       DOM.output.innerHTML = '';
       DOM.output.appendChild(div);
       DOM.editor.scrollTop = 0;
+      if (typeof updateGutter === 'function') requestAnimationFrame(updateGutter);
     }
     function openDoc(cmd, html) {
       tabState[cmd] = html;
@@ -1481,18 +1632,34 @@
       }
     }
 
-    const welcomeHTML = () => `<div class="flex items-center gap-4 md:gap-8"><pre class="text-xs md:text-sm glow m-0 leading-tight text-primary">
+    const WELCOME_TIPS = [
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">⇧</span> <span class="gs-kbd">P</span>', 'Command Palette — run any command'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">P</span>', 'Quick Open — jump to a file / page'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">B</span>', 'Toggle the Explorer side bar'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">J</span>', 'Toggle the bottom panel'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">\`</span>', 'Focus the terminal'],
+      ['<span class="gs-kbd">Tab</span>', 'Autocomplete / accept suggestion'],
+    ];
+    const welcomeHTML = () => `<div class="gs-wrap fade-in">
+      <div class="gs-hero">
+        <pre class="text-xs md:text-sm glow m-0 leading-tight text-primary">
 ███████╗████████╗
 ██╔════╝╚══██╔══╝
 ███████╗<span style="opacity:0">╚══</span>██║
 ╚════██║<span style="opacity:0">╚══</span>██║
 ███████║<span style="opacity:0">╚══</span>██║
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
-        <div class="text-xs md:text-sm flex flex-col justify-center space-y-1">
-          <div id="display-name-el" class="text-primary">${esc(config.display_name)}${currentVersion > 1 ? verBadge() : ''}</div>
-          <div id="header-job-title" class="text-secondary">${esc(config.job_title)}</div>
-          <div class="pt-2 text-secondary">Type <span class="text-normal font-bold">'help'</span> in the terminal below, or browse the <span class="text-normal font-bold">Explorer</span>.</div>
-        </div></div>`;
+        <div class="flex flex-col justify-center space-y-1">
+          <div id="display-name-el" class="text-lg font-bold glow text-primary">${esc(config.display_name)}${currentVersion > 1 ? verBadge() : ''}</div>
+          <div id="header-job-title" class="text-secondary text-xs">${esc(config.job_title)}</div>
+          <div class="text-secondary text-[10px]">Web2 standalone system · Get Started</div>
+        </div>
+      </div>
+      <div class="gs-tips">
+        <div class="gs-h">Tips</div>
+        ${WELCOME_TIPS.map(([keys, label]) => `<div class="gs-tip-row"><span class="gs-keys">${keys}</span><span>${esc(label)}</span></div>`).join('')}
+      </div>
+    </div>`;
 
     async function boot() {
       const bootMessages = [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: `<span class="text-primary">Web2</span> standalone system ready.`, delay: 300 }, { text: '', delay: 150 }];
@@ -1534,28 +1701,44 @@
 
     DOM.input.addEventListener('keydown', async (e) => {
       if (isMatrixActive || isMeditationActive) return;
-      if (e.key === 'Enter') { 
-        e.preventDefault(); 
+      // While the IntelliSense popup is open it owns navigation/accept.
+      if (suggestOpen) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggest(1); return; }
+        if (e.key === 'ArrowUp') { e.preventDefault(); moveSuggest(-1); return; }
+        if (e.key === 'Escape') { e.preventDefault(); closeSuggest(); return; }
+        if (e.key === 'Tab') { e.preventDefault(); acceptSuggest(suggestSel < 0 ? 0 : suggestSel); return; }
+        if (e.key === 'Enter' && suggestSel >= 0) {
+          e.preventDefault();
+          const chosen = suggestItems[suggestSel];
+          closeSuggest();
+          DOM.input.value = ''; updateCaret(); clearCmdParam();
+          await handleCommand(chosen);
+          return;
+        }
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        closeSuggest();
         const val = DOM.input.value; DOM.input.value = ''; updateCaret();
         clearCmdParam();
-        await handleCommand(val); 
-      } else if (e.key === 'ArrowUp') { 
-        e.preventDefault(); 
+        await handleCommand(val);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
         if (historyIndex < commandHistory.length - 1) { DOM.input.value = commandHistory[++historyIndex]; }
         updateCaret();
-      } else if (e.key === 'ArrowDown') { 
-        e.preventDefault(); 
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
         if (historyIndex > 0) { DOM.input.value = commandHistory[--historyIndex]; } else { historyIndex = -1; DOM.input.value = ''; }
         updateCaret();
       } else if (e.key === 'Tab') {
-        e.preventDefault(); 
+        e.preventDefault();
         const val = DOM.input.value.toLowerCase(); if (!val) return;
         let availableCommands = Object.keys(commands);
         availableCommands = availableCommands.filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
         const matches = availableCommands.filter(c => c.startsWith(val));
         if (matches.length === 0) return;
         if (matches.length === 1) {
-          DOM.input.value = matches[0]; updateCaret();
+          DOM.input.value = matches[0]; updateCaret(); closeSuggest();
         } else {
           const echo = document.createElement('div'); echo.className = 'text-xs mt-2 opacity-70 text-normal'; echo.textContent = matches.join('  ');
           DOM.terminalLog.appendChild(echo); scrollTerminal();
@@ -1567,10 +1750,9 @@
       const sb = document.getElementById('sidebar');
       if (sb && sb.classList.contains('open') && !e.target.closest('#sidebar, #activitybar')) { sb.classList.remove('open'); return; }
       const ad = document.getElementById('agentdock');
-      if (isMobile() && ad && ad.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"]')) { closeAgentDock(); return; }
+      if (isMobile() && ad && ad.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"], [data-act="settings"]')) { closeAgentDock(); return; }
       if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #activitybar, #agentdock, [data-act="agent"]')) DOM.input.focus({ preventScroll: true });
     });
-    setInterval(() => { if (DOM.statusRight) DOM.statusRight.textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
     async function softReload() {
@@ -1766,6 +1948,7 @@
           renderExtensions();
           if (typeof renderExplorerTree === 'function') renderExplorerTree();
           addToHistory(`[SYS] Extension '${cmd}' installed`);
+          showToast(`Extension '${cmd}' installed — type ${cmd} to use it`);
           printToTerminal(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`);
         }, 800);
         return;
@@ -1781,6 +1964,7 @@
           renderExtensions();
           if (typeof renderExplorerTree === 'function') renderExplorerTree();
           addToHistory(`[SYS] Extension '${cmd}' uninstalled`);
+          showToast(`Extension '${cmd}' was uninstalled`, 'warn');
           printToTerminal(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.</div>`);
         }, 600);
       }
@@ -1858,7 +2042,7 @@
       document.querySelectorAll('#activitybar .act-btn').forEach(x => { if (x.dataset.act !== 'agent') x.classList.toggle('active', x === b); });
     });
 
-    // --- ST Multi Agent (right dock) ---
+    // --- MAGI (right dock) ---
     const AGENT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'http://localhost:8787/magi2/chat' : 'https://workers.tk.st/magi2/chat';
     const AGENT_PERSONAS = [
@@ -1880,7 +2064,7 @@
       + '</svg>'
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 2.0</div>'
+      + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none ml-1 inline-flex items-center justify-center align-middle" title="Privacy & System Information"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('') + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
       + '</div>';
@@ -1890,7 +2074,18 @@
     const agentSendBtn = document.getElementById('agent-send');
     const agentDegraded = document.getElementById('agent-degraded');
     const agentActBtn = document.querySelector('#activitybar [data-act="agent"]');
-    let agentHistory = [], agentBusy = false, agentDead = false;
+    const agentTitleEl = document.getElementById('agentdock-title');
+    let agentHistory = [], agentBusy = false, agentDead = false, agentTitle = '';
+
+    // チャットボックスのタイトル（既定「MAGI」）を要約タイトルで差し替え／復元する
+    function setAgentTitle(text) {
+      agentTitle = (text || '').trim();
+      if (agentTitleEl) {
+        agentTitleEl.innerHTML = `<span class="text-sm inline-block">✦</span> ${esc(agentTitle || 'MAGI')}`;
+      }
+      if (agentTitle) localStorage.setItem('magi_current_title', agentTitle);
+      else localStorage.removeItem('magi_current_title');
+    }
 
     const agentDockOpen = () => isMobile() ? agentDockEl.classList.contains('open') : !agentDockEl.classList.contains('collapsed');
     function setAgentActive(on) { if (agentActBtn) agentActBtn.classList.toggle('active', on); }
@@ -1919,6 +2114,8 @@
         }
       }
 
+      setAgentTitle(localStorage.getItem('magi_current_title') || '');
+
       if (agentHistory && agentHistory.length > 0) {
         renderHistoryToLog(agentHistory);
       } else {
@@ -1930,6 +2127,7 @@
       archiveCurrentHistory();
       agentHistory = []; agentBusy = false; agentDead = false;
       localStorage.removeItem('magi_current_history');
+      localStorage.removeItem('magi_current_title');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
       agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
       agentDockEl.style.removeProperty('width');
@@ -1945,7 +2143,7 @@
     const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
     function agentDegrade(msg) {
       agentDead = true;
-      agentDegraded.textContent = msg || 'ST Multi Agent only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.';
+      agentDegraded.textContent = msg || 'MAGI only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.';
       agentDegraded.classList.remove('hidden');
       agentInput.disabled = true; agentSendBtn.disabled = true;
     }
@@ -2029,6 +2227,7 @@
           turn.remove(); renderAgentError(env); errored = true;
         } else {
           await parseSSE(res.body, {
+            title: (d) => { if (d && d.text) setAgentTitle(d.text); },
             persona: (d) => {
               const cn = (window.CSS && CSS.escape) ? CSS.escape(d.codename) : d.codename;
               const card = turn.querySelector(`.persona-card[data-codename="${cn}"]`);
@@ -2113,7 +2312,8 @@
       const firstUserMsg = agentHistory.find(m => m.role === 'user');
       if (!firstUserMsg) return;
 
-      const title = firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
+      // 要約タイトルがあればそれを採用、無ければ従来通り先頭発言を切り出す
+      const title = agentTitle || (firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : ''));
       const sessions = JSON.parse(localStorage.getItem('magi_saved_sessions') || '[]');
       
       // 重複アーカイブを避けるため、最後の発言が同一で履歴長が同一のセッションが直近にあればスキップ
@@ -2222,6 +2422,7 @@
 
       agentHistory = [...session.history];
       localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+      setAgentTitle(session.title || '');
       renderHistoryToLog(agentHistory);
       updateAgentActionButtons();
     }
@@ -2279,8 +2480,34 @@
       });
     }
 
-    document.getElementById('btn-info-agent').addEventListener('click', showInfoPanel);
+    agentLog.addEventListener('click', (e) => {
+      const btn = e.target.closest('#btn-info-agent');
+      if (btn) {
+        e.preventDefault();
+        showInfoPanel();
+      }
+    });
     document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
+    document.getElementById('btn-close-agent').addEventListener('click', closeAgentDock);
+
+    const moreBtn = document.getElementById('btn-more-agent');
+    const moreDropdown = document.getElementById('agent-more-dropdown');
+    if (moreBtn && moreDropdown) {
+      moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        moreDropdown.classList.toggle('hidden');
+      });
+      document.addEventListener('click', (e) => {
+        if (!moreDropdown.classList.contains('hidden') && !e.target.closest('#agent-more-dropdown')) {
+          moreDropdown.classList.add('hidden');
+        }
+      });
+      moreDropdown.querySelectorAll('button, a').forEach(item => {
+        item.addEventListener('click', () => {
+          moreDropdown.classList.add('hidden');
+        });
+      });
+    }
 
     // エクスポート＆共有ロジック
     function updateAgentActionButtons() {
@@ -2304,12 +2531,12 @@
 
     function getAgentChatMarkdown() {
       if (!agentHistory || agentHistory.length === 0) return '';
-      let md = `# ST Multi Agent Chat Log\nGenerated on: ${new Date().toLocaleString()}\n\n---\n\n`;
+      let md = `# MAGI Chat Log\nGenerated on: ${new Date().toLocaleString()}\n\n---\n\n`;
       agentHistory.forEach(item => {
         if (item.role === 'user') {
           md += `## 🧑‍💻 User\n${item.content}\n\n`;
         } else {
-          md += `## ✦ ST Multi Agent\n${item.content}\n\n`;
+          md += `## ✦ MAGI\n${item.content}\n\n`;
           if (item.debate) {
             md += `### 🌐 MAGI Deliberation Process\n\n`;
             AGENT_PERSONAS.forEach(p => {
@@ -2329,14 +2556,14 @@
           }
         }
       });
-      md += `*Generated by ST Multi Agent (tk.st)*\n`;
+      md += `*Generated by MAGI (tk.st)*\n`;
       return md;
     }
 
     async function shareAgentChat(btn) {
       const md = getAgentChatMarkdown();
       if (!md) return;
-      const shareData = { title: 'ST Multi Agent Chat Log', text: md };
+      const shareData = { title: 'MAGI Chat Log', text: md };
       if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
         try {
           await navigator.share(shareData);
@@ -2349,7 +2576,7 @@
         await navigator.clipboard.writeText(md);
         const originalTitle = btn.getAttribute('title');
         btn.setAttribute('title', 'Copied to clipboard! ✓');
-        const agentTitleBtn = document.getElementById('btn-reset-agent');
+        const agentTitleBtn = document.getElementById('agentdock-title');
         const originalText = agentTitleBtn.innerHTML;
         agentTitleBtn.innerHTML = `<span class="text-sm inline-block">✓</span> COPIED!`;
         setTimeout(() => {
@@ -2392,6 +2619,275 @@
       desc.classList.remove('hidden');
     });
     agentInitialState();
+
+    // ============================================================
+    //  IDE fidelity layer: toasts · gutter · IntelliSense ·
+    //  Command Palette · global shortcuts · remote badge
+    // ============================================================
+
+    // --- Toast notifications (bottom-right) + notification center (status-bar bell) ---
+    const notifications = [];        // persisted history, most recent first
+    let unreadNotifications = 0;
+    const notifBell = document.getElementById('notif-bell');
+    const notifCount = document.getElementById('notif-count');
+    const notifCenter = document.getElementById('notif-center');
+    const notifList = document.getElementById('notif-center-list');
+
+    function updateNotifBell() {
+      if (!notifBell || !notifCount) return;
+      notifCount.textContent = unreadNotifications > 99 ? '99+' : String(unreadNotifications);
+      notifCount.classList.toggle('hidden', unreadNotifications === 0);
+      notifBell.classList.toggle('has-unread', unreadNotifications > 0);
+      notifBell.title = unreadNotifications > 0 ? `${unreadNotifications} new notification${unreadNotifications === 1 ? '' : 's'}` : 'No new notifications';
+    }
+    function renderNotifCenter() {
+      if (!notifList) return;
+      const fmt = d => d.toTimeString().slice(0, 5);
+      notifList.innerHTML = notifications.length
+        ? notifications.map(n => `<div class="notif-row ${n.type === 'warn' ? 'warn' : ''}"><span class="notif-ic">${n.type === 'warn' ? '⚠' : '✓'}</span><span class="notif-tx">${esc(n.msg)}</span><span class="notif-tm">${fmt(n.t)}</span></div>`).join('')
+        : `<div class="notif-empty">No notifications yet.</div>`;
+    }
+
+    function showToast(msg, type) {
+      // Record into the notification center first (so the bell reflects it even if the toast is missed).
+      notifications.unshift({ msg, type: type === 'warn' ? 'warn' : 'info', t: new Date() });
+      if (notifications.length > 50) notifications.pop();
+      if (notifCenter && !notifCenter.classList.contains('hidden')) { renderNotifCenter(); }
+      else { unreadNotifications++; updateNotifBell(); }
+
+      const c = document.getElementById('toast-container');
+      if (!c) return;
+      const t = document.createElement('div');
+      t.className = 'toast' + (type === 'warn' ? ' warn' : '');
+      const icon = type === 'warn' ? '⚠' : '✓';
+      t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${esc(msg)}</span><span class="toast-close" title="Dismiss">✕</span>`;
+      c.appendChild(t);
+      const remove = () => { t.classList.add('hide'); setTimeout(() => t.remove(), 300); };
+      t.querySelector('.toast-close').addEventListener('click', remove);
+      setTimeout(remove, 4200);
+    }
+
+    function openNotifCenter() { if (!notifCenter) return; unreadNotifications = 0; updateNotifBell(); renderNotifCenter(); notifCenter.classList.remove('hidden'); }
+    function closeNotifCenter() { if (notifCenter) notifCenter.classList.add('hidden'); }
+    if (notifBell) notifBell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notifCenter.classList.contains('hidden') ? openNotifCenter() : closeNotifCenter();
+    });
+    const notifClear = document.getElementById('notif-center-clear');
+    if (notifClear) notifClear.addEventListener('click', (e) => { e.stopPropagation(); notifications.length = 0; unreadNotifications = 0; updateNotifBell(); renderNotifCenter(); });
+    document.addEventListener('click', (e) => {
+      if (notifCenter && !notifCenter.classList.contains('hidden') && !e.target.closest('#notif-center, #notif-bell')) closeNotifCenter();
+    });
+
+    // --- Editor gutter (line numbers + hover active line) ---
+    function updateGutter() {
+      const gutter = document.getElementById('editor-gutter');
+      const content = document.getElementById('editor-content');
+      const ed = document.getElementById('editor');
+      if (!gutter || !content || !ed) return;
+      const LINE = 20;
+      const h = Math.max(content.scrollHeight, ed.clientHeight);
+      const n = Math.max(1, Math.ceil(h / LINE));
+      let html = '';
+      for (let i = 1; i <= n; i++) html += `<div class="ed-ln">${i}</div>`;
+      gutter.innerHTML = html;
+    }
+    (function setupGutterHover() {
+      const ed = document.getElementById('editor');
+      if (!ed) return;
+      ed.addEventListener('mousemove', (e) => {
+        const gutter = document.getElementById('editor-gutter');
+        const content = document.getElementById('editor-content');
+        if (!gutter || !content) return;
+        const padTop = parseFloat(getComputedStyle(content).paddingTop) || 0;
+        const y = e.clientY - ed.getBoundingClientRect().top + ed.scrollTop - padTop;
+        const idx = Math.floor(y / 20);
+        const lines = gutter.children;
+        for (let i = 0; i < lines.length; i++) lines[i].classList.toggle('active', i === idx);
+      });
+      ed.addEventListener('mouseleave', () => {
+        document.querySelectorAll('#editor-gutter .ed-ln.active').forEach(el => el.classList.remove('active'));
+      });
+      window.addEventListener('resize', updateGutter);
+    })();
+
+    // --- Inline IntelliSense suggestions on the terminal input ---
+    const suggestBox = document.getElementById('cmd-suggest');
+    let suggestItems = [], suggestSel = -1, suggestOpen = false;
+    function renderSuggest() {
+      if (!suggestBox) return;
+      if (!suggestItems.length) { suggestBox.classList.add('hidden'); suggestOpen = false; return; }
+      suggestOpen = true;
+      suggestBox.classList.remove('hidden');
+      suggestBox.innerHTML = suggestItems.map((c, i) => {
+        const m = treeMeta(c);
+        return `<div class="sg-item ${i === suggestSel ? 'active' : ''}" data-i="${i}">
+          <span class="sg-icon" style="color:${iconColor(c, m.name)}">${esc(m.icon || '›')}</span>
+          <span class="sg-label">${esc(c)}</span>
+          <span class="sg-desc">${esc(CMD_DESC[c] || '')}</span></div>`;
+      }).join('');
+    }
+    function closeSuggest() { suggestItems = []; suggestSel = -1; suggestOpen = false; if (suggestBox) suggestBox.classList.add('hidden'); }
+    function moveSuggest(dir) { if (!suggestItems.length) return; suggestSel = (suggestSel + dir + suggestItems.length) % suggestItems.length; renderSuggest(); }
+    function acceptSuggest(i) { const c = suggestItems[i]; if (c == null) return; DOM.input.value = c; updateCaret(); closeSuggest(); DOM.input.focus({ preventScroll: true }); }
+    DOM.input.addEventListener('input', () => {
+      if (DOM.input.type === 'password') { closeSuggest(); return; }
+      const val = DOM.input.value.toLowerCase().trim();
+      if (!val) { closeSuggest(); return; }
+      const avail = Object.keys(commands).filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
+      suggestItems = avail.filter(c => c.startsWith(val) && c !== val).sort().slice(0, 8);
+      suggestSel = -1;
+      renderSuggest();
+    });
+    DOM.input.addEventListener('blur', () => setTimeout(closeSuggest, 120));
+    if (suggestBox) suggestBox.addEventListener('mousedown', (e) => {
+      const it = e.target.closest('.sg-item'); if (!it) return;
+      e.preventDefault();
+      const chosen = suggestItems[+it.dataset.i];
+      closeSuggest();
+      DOM.input.value = ''; updateCaret(); clearCmdParam();
+      handleCommand(chosen);
+    });
+
+    // --- View toggles shared by shortcuts + palette ---
+    function toggleSidebar() {
+      if (sidebarHidden()) ensureSidebarOpen();
+      else isMobile() ? sidebarEl.classList.remove('open') : sidebarEl.classList.add('collapsed');
+    }
+    function togglePanel() {
+      const panel = document.getElementById('panel');
+      const rsz = document.getElementById('panel-resizer');
+      const collapsed = panel.classList.toggle('collapsed');
+      if (rsz) rsz.classList.toggle('collapsed', collapsed);
+    }
+    function focusTerminal() {
+      const panel = document.getElementById('panel');
+      const rsz = document.getElementById('panel-resizer');
+      panel.classList.remove('collapsed'); if (rsz) rsz.classList.remove('collapsed');
+      showPanel('terminal');
+      DOM.input.focus({ preventScroll: true });
+    }
+
+    // --- Command Palette (Quick Open) ---
+    const paletteEl = document.getElementById('cmd-palette');
+    const paletteInput = document.getElementById('cmd-palette-input');
+    const paletteList = document.getElementById('cmd-palette-list');
+    const paletteCount = document.getElementById('cmd-palette-count');
+    let paletteFiltered = [], paletteSel = 0;
+
+    const availableCmdKeys = () => Object.keys(commands).filter(c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c));
+    function runFromPalette(cmd) { clearCmdParam(); handleCommand(cmd); DOM.input.focus({ preventScroll: true }); }
+    function paletteSource(mode) {
+      if (mode === 'command') {
+        const actions = [
+          { icon: '◐', label: 'Preferences: Toggle Color Theme', run: toggleTheme },
+          { icon: '▥', label: 'View: Toggle Primary Side Bar', run: toggleSidebar },
+          { icon: '▭', label: 'View: Toggle Panel', run: togglePanel },
+          { icon: '✦', label: 'View: Toggle ST Multi Agent', run: toggleAgentDock },
+          { icon: '❯', label: 'Terminal: Focus', run: focusTerminal },
+        ];
+        const cmds = availableCmdKeys().sort().map(c => {
+          const m = treeMeta(c);
+          return { icon: m.icon || '›', iconColor: iconColor(c, m.name), label: c, desc: CMD_DESC[c] || '', run: () => runFromPalette(c) };
+        });
+        return actions.concat(cmds);
+      }
+      const files = ['welcome', ...sidebarFiles, ...[...installedExtensions].filter(c => c !== 'rebuild')];
+      const seen = new Set(), items = [];
+      files.forEach(c => {
+        if (seen.has(c)) return; seen.add(c);
+        const m = treeMeta(c);
+        items.push({ icon: m.icon || '•', iconColor: iconColor(c, m.name), label: m.name, desc: CMD_DESC[c] || '', run: () => (c === 'welcome' ? openDoc('welcome', welcomeHTML()) : runFromPalette(c)) });
+      });
+      projects.forEach(p => items.push({ icon: '↗', iconColor: getPrimaryColor(), label: p.name, desc: p.desc, run: () => runFromPalette(p.name) }));
+      return items;
+    }
+    function fuzzyScore(q, text) {
+      text = text.toLowerCase();
+      if (!q) return 0;
+      const idx = text.indexOf(q);
+      if (idx >= 0) return idx;
+      let ti = 0, qi = 0, gaps = 0, last = -1;
+      for (; qi < q.length; qi++) {
+        const f = text.indexOf(q[qi], ti);
+        if (f < 0) return -1;
+        if (last >= 0) gaps += f - last - 1;
+        last = f; ti = f + 1;
+      }
+      return 1000 + gaps;
+    }
+    function renderPalette() {
+      const raw = paletteInput.value;
+      const mode = raw.startsWith('>') ? 'command' : 'file';
+      const q = (mode === 'command' ? raw.slice(1) : raw).trim().toLowerCase();
+      let src = paletteSource(mode);
+      if (q) {
+        src = src.map(it => ({ it, s: fuzzyScore(q, it.label + ' ' + (it.desc || '')) }))
+          .filter(x => x.s >= 0).sort((a, b) => a.s - b.s).map(x => x.it);
+      }
+      paletteFiltered = src;
+      if (paletteSel >= src.length) paletteSel = 0;
+      paletteList.innerHTML = src.length ? src.map((it, i) =>
+        `<div class="cp-item ${i === paletteSel ? 'active' : ''}" data-i="${i}">
+          <span class="cp-icon" style="color:${it.iconColor || 'var(--primary-color)'}">${esc(it.icon || '›')}</span>
+          <span class="cp-label">${esc(it.label)}</span>
+          <span class="cp-desc">${esc(it.desc || '')}</span>
+        </div>`).join('') : `<div class="cp-empty">No matching results</div>`;
+      paletteCount.textContent = `${src.length} result${src.length === 1 ? '' : 's'}`;
+      const active = paletteList.querySelector('.cp-item.active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+    function openPalette(initial) {
+      if (isMatrixActive || isMeditationActive) return;
+      closeSuggest();
+      paletteEl.classList.remove('hidden');
+      paletteSel = 0;
+      paletteInput.value = initial || '';
+      renderPalette();
+      paletteInput.focus();
+      const v = paletteInput.value; paletteInput.value = ''; paletteInput.value = v;
+    }
+    function closePalette() { paletteEl.classList.add('hidden'); paletteInput.value = ''; }
+    function runPaletteSel() { const it = paletteFiltered[paletteSel]; if (!it) return; closePalette(); it.run(); }
+    paletteInput.addEventListener('input', () => { paletteSel = 0; renderPalette(); });
+    paletteInput.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (paletteFiltered.length) { paletteSel = (paletteSel + 1) % paletteFiltered.length; renderPalette(); } }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (paletteFiltered.length) { paletteSel = (paletteSel - 1 + paletteFiltered.length) % paletteFiltered.length; renderPalette(); } }
+      else if (e.key === 'Enter') { e.preventDefault(); runPaletteSel(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closePalette(); DOM.input.focus({ preventScroll: true }); }
+    });
+    paletteList.addEventListener('mousemove', (e) => {
+      const it = e.target.closest('.cp-item'); if (!it) return;
+      const i = +it.dataset.i; if (i !== paletteSel) { paletteSel = i; renderPalette(); }
+    });
+    paletteList.addEventListener('click', (e) => {
+      const it = e.target.closest('.cp-item'); if (!it) return;
+      paletteSel = +it.dataset.i; runPaletteSel();
+    });
+    paletteEl.addEventListener('mousedown', (e) => { if (e.target === paletteEl) closePalette(); });
+
+    // --- Status bar remote badge → opens the palette ---
+    const remoteBadge = document.getElementById('remote-badge');
+    if (remoteBadge) remoteBadge.addEventListener('click', () => openPalette('>'));
+
+    // --- Global keyboard shortcuts ---
+    let chordK = false, chordTimer = null;
+    document.addEventListener('keydown', (e) => {
+      if (isMatrixActive || isMeditationActive) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (chordK) {
+        chordK = false; if (chordTimer) clearTimeout(chordTimer);
+        if (mod && (e.key === 't' || e.key === 'T')) { e.preventDefault(); toggleTheme(); return; }
+      }
+      if (!paletteEl.classList.contains('hidden')) return; // palette owns its keys
+      if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette('>'); return; }
+      if (mod && !e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette(''); return; }
+      if (mod && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); toggleSidebar(); return; }
+      if (mod && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); togglePanel(); return; }
+      if (mod && e.key === '`') { e.preventDefault(); focusTerminal(); return; }
+      if (mod && e.key === ',') { e.preventDefault(); toggleTheme(); return; }
+      if (mod && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); chordK = true; chordTimer = setTimeout(() => { chordK = false; }, 1500); return; }
+    });
 
     boot();
     renderExtensions();
