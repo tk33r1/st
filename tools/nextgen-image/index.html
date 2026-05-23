@@ -320,6 +320,22 @@
       background: #059669;
     }
 
+    .resize-input {
+      width: 72px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.8125rem;
+      color: #334155;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .resize-input:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
     .hidden { display: none !important; }
     .fade-in { animation: fadeIn 300ms ease-out forwards; }
 
@@ -457,6 +473,17 @@
           <span id="quality-val" class="text-xs font-bold text-emerald-600">80%</span>
         </div>
         <input type="range" id="opt-quality" min="10" max="100" value="80">
+      </div>
+
+      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+
+      <!-- Resize (scale down) -->
+      <div class="flex flex-col items-center sm:items-start gap-2">
+        <label for="resize-percent" class="text-xs font-bold text-slate-400 uppercase tracking-wider" title="縦横比を維持して縮小">縮小倍率</label>
+        <div class="flex items-center gap-1">
+          <input type="number" id="resize-percent" min="1" max="100" step="1" value="100" class="resize-input">
+          <span class="text-xs font-semibold text-slate-500">%</span>
+        </div>
       </div>
     </div>
 
@@ -644,6 +671,21 @@
     }
     applyQualityState();
 
+    // Resize control (scale down by percentage, aspect ratio preserved)
+    const resizePercent = document.getElementById('resize-percent');
+
+    // Compute target dimensions from a scale percentage, keeping aspect ratio.
+    // Only shrinks — 100% (or anything >= 100) leaves the image untouched.
+    function computeResizeTarget(w, h, percent) {
+      const p = parseFloat(percent);
+      if (!p || p <= 0 || p >= 100) return { w, h };
+      const scale = p / 100;
+      return {
+        w: Math.max(1, Math.round(w * scale)),
+        h: Math.max(1, Math.round(h * scale)),
+      };
+    }
+
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
 
@@ -756,8 +798,7 @@
 
       const bitmap = await decodeToBitmap(file);
 
-      const targetW = bitmap.width;
-      const targetH = bitmap.height;
+      const { w: targetW, h: targetH } = computeResizeTarget(bitmap.width, bitmap.height, opts.resizePercent);
 
       const canvas = document.createElement('canvas');
       canvas.width = targetW;
@@ -809,6 +850,7 @@
       const opts = {
         format: selectedFormat,
         quality: parseInt(optQuality.value, 10),
+        resizePercent: parseFloat(resizePercent.value),
       };
 
       const total = files.length;

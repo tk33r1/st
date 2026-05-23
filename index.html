@@ -8,13 +8,16 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 210 210'%3E%3Cpath fill='%234ade80' d='M94 60H33v22h61v81H3v-30h61v-21H3V30h91Zm106-30v30h-31v103h-30V60h-30V30Zm0 0'/%3E%3Cpath fill='%234ade80' d='M100 78H39v-2h2v21h-2v-2h63v86H7v-34h63v2h-2v-22h2v2H7V43h95v35Zm0-5v3h-2V45h2v2H9v-2h2v82H9v-2h63v26H9v-2h2v30H9v-2h91v2h-2V97h2v2H37V73Zm108-28v33h-33v-2h2v105h-34V76h2v2h-33V43h96Zm-4 0h2v2h-92v-2h3v31h-3v-3h33v106h-2v-2h30v2h-2V73h33v3h-2Zm0 0'/%3E%3C/svg%3E">
   <link rel="canonical" href="https://tk.st/">
   <link rel="author" href="https://tk.st/">
-  <meta property="og:title" content="ST@portfolio">
+  <meta property="og:title" content="Shinya Takeda - Terminal Portfolio">
   <meta property="og:description" content="Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.">
+  <meta property="og:image" content="https://tk.st/images/ogp/root-ogp.png">
   <meta property="og:url" content="https://tk.st/">
   <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="ST@portfolio">
+  <meta property="og:locale" content="en_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shinya Takeda - Terminal Portfolio">
   <meta name="twitter:description" content="Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/root-ogp.png">
   
   <style>
     :root {
@@ -239,7 +242,7 @@
     #app { height: 100vh; height: 100dvh; overflow: hidden; }
     #ide { min-height: 0; }
     #editor-group { min-width: 0; min-height: 0; }
-    #editor { overflow-y: auto; min-height: 0; }
+    #editor { overflow-y: auto; overflow-x: auto; min-height: 0; }
     #panel { display: flex; flex-direction: column; }
     #terminal { overflow-y: auto; min-height: 0; }
     .border-r { border-right-width: 1px; }
@@ -269,7 +272,7 @@
     .tl-chip:hover { border-color: var(--primary-color); color: var(--primary-color); }
     .tl-chip.active { background: var(--primary-bg); border-color: var(--primary-color); color: var(--primary-color); }
     .tl-item { display: flex; gap: 0.75rem; }
-    .tl-year { flex: 0 0 2.6rem; text-align: right; padding-top: 0.4rem; font-size: 0.6875rem; color: var(--secondary-color); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .tl-year { flex: 0 0 2.2rem; width: 2.2rem; text-align: right; padding-top: 0.4rem; font-size: 0.6875rem; color: var(--secondary-color); font-variant-numeric: tabular-nums; line-height: 1.1; }
     .tl-track { position: relative; border-left: 2px solid var(--border-color); padding-left: 1.25rem; padding-bottom: 0.9rem; flex: 1 1 auto; min-width: 0; }
     .tl-item:last-child .tl-track { padding-bottom: 0; }
     .tl-node { position: absolute; left: -0.46rem; top: 0.45rem; width: 0.7rem; height: 0.7rem; border-radius: 9999px; border: 2px solid var(--bg-color); }
@@ -332,8 +335,22 @@
       #remote-badge { position: absolute; left: 0; top: 0; bottom: 0; width: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
       #terminal-footer .footer-status-row > div:first-child { padding-left: 36px; }
       .copyright-text { position: static !important; transform: none !important; order: -1; text-align: center; width: 100%; display: block; }
+      /* timeline mobile optimization */
+      .tl-item { gap: 0.4rem; }
+      .tl-year { flex: 0 0 1.8rem; width: 1.8rem; font-size: 0.625rem; line-height: 1.1; }
+      .tl-track { padding-left: 0.8rem; }
+      .tl-track > div { padding: 0.625rem !important; }
+      /* hide line-number gutter on mobile and reclaim the space for content */
+      #editor-gutter { display: none; }
+      #editor-content { padding-left: 0.75rem; padding-right: 0.75rem; }
+      /* doc cards are w-[90%] (left-pinned) — span full width so left/right margins are even */
+      #editor-content .w-\[90\%\] { width: 100%; }
     }
     @media (min-width: 768px) { #btn-menu { display: none; } #sidebar.collapsed { display: none; } #sidebar.collapsed + #sidebar-resizer { display: none; } }
+    /* Desktop: fixed 482px editor content, independent of the MAGI dock (horizontal scroll if the column is narrower) */
+    @media (min-width: 768px) {
+      #editor-content .w-\[90\%\] { width: 482px; max-width: none; }
+    }
     /* right agent dock — MAGI */
     #agentdock { position: relative; width: calc(14rem * var(--phi)); flex-shrink: 0; min-height: 0; overflow: hidden; }
     #agentdock-header { height: 35px; flex-shrink: 0; }
@@ -1341,9 +1358,14 @@
           { year: '2025.07', cat: 'life', title: 'ver 1.0', desc: 'This was me before the accident.' },
           { year: '2024',    cat: 'life', title: 'DJ "Human Choreomania Project"', desc: 'I started DJing. Dancing through music and philosophy.' },
           { year: '2020',    cat: 'work', title: 'UI Designer', desc: 'I design interactions with character and improve UI/UX.' },
-          { year: '2019',    cat: 'work', title: 'Technical Marketing Lead', desc: 'I grow CVR and LTV with data-driven growth hacking.' },
-          { year: '2018',    cat: 'work', title: 'Data Analyst', desc: 'I build tracking and dashboards with GA4 and Looker.' },
-          { year: '2010',    cat: 'work', title: 'Joined the company', desc: 'The start of my career. I kept adding roles from here.' },
+          { year: '2019.12', cat: 'work', title: 'Digital Marketer', desc: 'Leveraged on-site retail and e-commerce operations experience to lead technical marketing areas including SEO and online advertising.' },
+          { year: '2019.03', cat: 'work', title: 'GAIQ Certified Data Analyst', desc: 'Earned GAIQ and became the primary lead in charge of GA4, building tracking and dashboards with Looker.' },
+          { year: '2018.06', cat: 'work', title: 'Transferred to E-Commerce Division', desc: 'Began a new career path as an e-commerce operations specialist.' },
+          { year: '2015',    cat: 'work', title: 'Data-Driven Layout Optimization', desc: 'Memorized almost all item-level sales data in the store to optimize layouts based on customer contact frequency, significantly boosting overall sales.' },
+          { year: '2011.06', cat: 'work', title: 'Transferred to Retail Store', desc: 'Learned the fundamentals of customer service and store operations management.' },
+          { year: '2011.03', cat: 'life', title: 'The Forklift & Wall Incident', desc: 'Accidentally bumped a warehouse wall with a forklift. Although it seemed fine at the time, a subsequent earthquake caused that exact spot to collapse, creating a "well-ventilated" view straight into the neighboring company.' },
+          { year: '2010.03', cat: 'work', title: 'Joined NITORI', desc: 'Started my career in the Logistics Division. Having researched its future growth potential in my graduation thesis, I was convinced of its expansion.' },
+          { year: '2009',    cat: 'life', title: 'Domestic Exchange at Bukkyo University', desc: 'Enrolled in Bukkyo University via a domestic exchange program. Although it started due to a credit shortage, it became the very origin of my passion for philosophy.' },
           { year: '2008',    cat: 'life', title: 'Licenses & the Open Road', desc: 'Earned a Class-1 small craft (boat) license and a large motorcycle license, then roamed across Japan on a Honda Magna 250.' },
           { year: '2007',    cat: 'life', title: 'Easy Rider Encounter', desc: 'Met the film "Easy Rider"—the origin of my fascination with motorcycles, hippie culture, and psytrance.' },
           { year: '2006.04', cat: 'life', title: 'Aviation Club', desc: 'Joined the aviation club and started flying gliders—a breathtaking passion that quickly left me as a broke college student.' },
@@ -1357,9 +1379,16 @@
           { year: '198X',    cat: 'life', title: 'Born', desc: 'Born in Minato-ku, Tokyo, Japan.' },
         ];
         const label = c => c === 'work' ? 'Work' : 'Life';
+        const renderYear = y => {
+          if (y.includes('.')) {
+            const parts = y.split('.');
+            return `${esc(parts[0])}<br/><span class="text-[10px] opacity-80">.${esc(parts[1])}</span>`;
+          }
+          return esc(y);
+        };
         const rows = tl.map(e => `
             <div class="tl-item" data-cat="${e.cat}">
-              <div class="tl-year">${esc(e.year)}</div>
+              <div class="tl-year">${renderYear(e.year)}</div>
               <div class="tl-track">
                 <span class="tl-node ${e.cat}"></span>
                 <div class="border rounded p-3 bg-surface-alt border-color">
