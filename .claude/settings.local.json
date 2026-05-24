@@ -27,7 +27,8 @@
       "Bash(awk 'NR>=28 && NR<=2759 && /^$/{c++; if\\(c>=2\\)print NR\": multi-blank\"} !/^$/{c=0}' index.html)",
       "Bash(grep -nE \"^\\\\s*[.#a-zA-Z@][^{};]*\\\\{\\\\s*$\")",
       "Bash(python3 _analyze.py)",
-      "PowerShell(py _analyze.py)"
+      "PowerShell(py _analyze.py)",
+      "Bash(gh release *)"
     ],
     "additionalDirectories": [
       "C:\\dev\\tk.st\\game\\masala-tetris-vindaloo"

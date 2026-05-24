@@ -4,3 +4,6 @@ node_modules/
 # Wrangler
 .wrangler/
 .dev.vars
+
+# Android APK (distributed via GitHub Releases)
+*.apk
