@@ -1,13 +1,13 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <rect width="1024" height="1024" rx="180" fill="#0c0c0c"/>
   <g transform="translate(512,512) scale(7.2) translate(-60,-58)">
-    <line x1="60" y1="50" x2="35" y2="58" stroke="#4ade80" stroke-width="2" opacity="0.25"/>
-    <line x1="85" y1="58" x2="60" y2="50" stroke="#4ade80" stroke-width="2" opacity="0.25"/>
+    <line x1="51.5" y1="49" x2="43.5" y2="63" stroke="#4ade80" stroke-width="2" opacity="0.25"/>
+    <line x1="76.5" y1="63" x2="68.5" y2="49" stroke="#4ade80" stroke-width="2" opacity="0.25"/>
     <line x1="52" y1="78" x2="68" y2="78" stroke="#4ade80" stroke-width="2" opacity="0.25"/>
-    <polygon points="60,10 77,20 77,40 60,50 43,40 43,20" fill="#4ade8026" stroke="#4ade80" stroke-width="2"/>
+    <polygon points="60,14 77,24 77,44 60,54 43,44 43,24" fill="#4ade8026" stroke="#4ade80" stroke-width="2"/>
     <polygon points="35,58 52,68 52,88 35,98 18,88 18,68" fill="#4ade8026" stroke="#4ade80" stroke-width="2"/>
     <polygon points="85,58 102,68 102,88 85,98 68,88 68,68" fill="#4ade8026" stroke="#4ade80" stroke-width="2"/>
-    <text x="60" y="35" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="700" font-family="monospace">1</text>
+    <text x="60" y="39" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="700" font-family="monospace">1</text>
     <text x="35" y="83" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="700" font-family="monospace">2</text>
     <text x="85" y="83" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="700" font-family="monospace">3</text>
   </g>
