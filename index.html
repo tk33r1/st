@@ -214,9 +214,19 @@ to{opacity: 1;transform: translateY(0)}
 @keyframes phiRingPulse{0%, 100%{opacity: 0.05;transform: scale(1)}
 50%{opacity: 0.3;transform: scale(calc(1 / var(--phi)))}
 }
-.destroyed-element{transition: transform 2s ease-in, opacity 2s ease-in !important;transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important;opacity: 0 !important;pointer-events: none !important}
-#terminal-log .destroyed-element{transform: scale(0.5) rotate(var(--deg, 0deg)) !important}
-body.system-destroyed #panel{border: none !important;background: transparent !important;box-shadow: none !important}
+.meltdown-element{transition: transform 2s ease-in, opacity 2s ease-in !important;transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important;opacity: 0 !important;pointer-events: none !important}
+#terminal-log .meltdown-element{transform: scale(0.5) rotate(var(--deg, 0deg)) !important}
+body.system-meltdown #panel{border: none !important;background: transparent !important;box-shadow: none !important}
+body.rampage-active, body.rampage-active *{cursor: crosshair !important}
+body.rampage-active input, body.rampage-active textarea, body.rampage-active [contenteditable]{cursor: text !important}
+@keyframes rampageShake{10%,90%{transform: translate(-1px, 0)}20%,80%{transform: translate(2px, 0)}30%,50%,70%{transform: translate(-3px, 1px)}40%,60%{transform: translate(3px, -1px)}}
+@keyframes rampageShakeHard{10%{transform: translate(-5px, 2px) rotate(-0.3deg)}30%{transform: translate(6px, -3px) rotate(0.4deg)}50%{transform: translate(-7px, 3px) rotate(-0.4deg)}70%{transform: translate(5px, -2px) rotate(0.3deg)}90%{transform: translate(-3px, 1px)}}
+@keyframes rampageShakePunch{8%{transform: translate(-11px, 5px) rotate(-0.7deg)}20%{transform: translate(13px, -7px) rotate(0.8deg)}34%{transform: translate(-14px, 8px) rotate(-0.9deg)}50%{transform: translate(11px, -6px) rotate(0.7deg)}66%{transform: translate(-8px, 4px) rotate(-0.5deg)}82%{transform: translate(5px, -3px) rotate(0.3deg)}94%{transform: translate(-2px, 1px)}}
+body.rampage-shake{animation: rampageShake 0.16s linear}
+body.rampage-shake-hard{animation: rampageShakeHard 0.26s cubic-bezier(0.36, 0.07, 0.19, 0.97)}
+body.rampage-shake-punch{animation: rampageShakePunch 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97)}
+#rampage-canvas{position: fixed;inset: 0;width: 100%;height: 100%;z-index: 9997;pointer-events: none}
+.rampage-stripped{border: none !important;background: transparent !important;box-shadow: none !important}
 .rebuilding-element{transition: transform 1s ease-out, opacity 1s ease-out !important;transform: translate(0px, 0px) rotate(0deg) !important;opacity: 1 !important;pointer-events: auto !important}
 @keyframes choreoBeat{0%, 100%{transform: scale(1);filter: brightness(1) saturate(1.5) hue-rotate(calc(var(--mouse-x) * 360deg))}
 15%{transform: scale(1.006);filter: brightness(1.15) saturate(1.85) hue-rotate(calc(var(--mouse-x) * 360deg))}
@@ -608,18 +618,20 @@ to{opacity: 0;transform: translateX(20px)}
     <p>Set system heartbeat</p>
     <h2><a href="?cmd=choreomania">choreomania</a></h2>
     <p>Merging souls in ecstasy</p>
-    <h2><a href="?cmd=destroy">destroy</a></h2>
+    <h2><a href="?cmd=meltdown">meltdown</a></h2>
     <p>And rebuild</p>
     <h2><a href="?cmd=matrix">matrix</a></h2>
     <p>Enter the Matrix</p>
     <h2><a href="?cmd=meditation">meditation</a></h2>
     <p>Clear your mind</p>
+    <h2><a href="?cmd=rampage">rampage</a></h2>
+    <p>Wreck the screen — pick your weapon</p>
     <h2><a href="?cmd=theme">theme</a></h2>
     <p>Change terminal color</p>
   </div>
 
   <div id="app" class="min-h-screen w-full flex flex-col transition-opacity duration-500">
-    <header class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
+    <header id="titlebar" class="flex items-center justify-between px-4 py-2 border-b bg-surface border-color">
       <div class="flex items-center gap-4">
         <div class="flex gap-2.5" id="window-btns">
           <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal"
@@ -977,9 +989,9 @@ to{opacity: 0;transform: translateX(20px)}
 
     const MAX_HISTORY = 50;
     let commandHistory = [], historyIndex = -1, currentVersion = 2;
-    let isDestroyed = false, destroyedElements = [], destroyInterval = null, rebuildInterval = null;
-    let isMatrixActive = false, isMeditationActive = false;
-    let matrixTeardown = null, meditationTeardown = null;
+    let isMeltdown = false, meltdownElements = [], meltdownInterval = null, rebuildInterval = null;
+    let isMatrixActive = false, isMeditationActive = false, isRampageActive = false;
+    let matrixTeardown = null, meditationTeardown = null, rampageTeardown = null, rampageSetWeapon = null;
     let errorCount = 0, warnCount = 0;
     let sudoContext = null, akutagawaSudoValid = false;
     let unreadHistoryCount = 0;
@@ -1169,9 +1181,10 @@ to{opacity: 0;transform: translateX(20px)}
       akutagawa: { name: 'akutagawa', version: '1.0.0', author: 'ST', isHidden: true },
       bpm: { name: 'bpm', version: '1.2.1', author: 'ST', isHidden: true },
       choreomania: { name: 'choreomania', version: '3.0.0', author: 'ST', isHidden: true },
-      destroy: { name: 'destroy', version: '0.9.9', author: 'ST', isHidden: true },
+      meltdown: { name: 'meltdown', version: '0.9.9', author: 'ST', isHidden: true },
       matrix: { name: 'matrix', version: '1.0.1', author: 'ST', isHidden: true },
       meditation: { name: 'meditation', version: '2.0.0', author: 'ST', isHidden: true },
+      rampage: { name: 'rampage', version: '1.0.0', author: 'ST', isHidden: true },
       theme: { name: 'theme', version: '1.1.0', author: 'ST', isHidden: true },
       web3: { name: 'web3', version: '1.0.0', author: 'ST', isHidden: true },
       rebuild: { name: 'rebuild', version: '1.0.0', author: 'ST', isHidden: true, hideFromList: true }
@@ -1179,8 +1192,8 @@ to{opacity: 0;transform: translateX(20px)}
     const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
     const installedExtensions = new Set();
     // A command is usable if it isn't hidden, or its backing extension is installed
-    // (rebuild rides on the 'destroy' extension). Single source for every cmd filter.
-    const isCmdAvailable = c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'destroy' : c);
+    // (rebuild rides on the 'meltdown' extension). Single source for every cmd filter.
+    const isCmdAvailable = c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'meltdown' : c);
 
     // Shared file-type color system: the Explorer tree, file tabs, and the
     // Extensions Marketplace cards all derive their icon colour from here so a
@@ -1204,9 +1217,10 @@ to{opacity: 0;transform: translateX(20px)}
     // These override the file-type color so the icon reads naturally regardless of its extension.
     const ICON_COLOR = {
       bpm: '#e0556b', // ♥ heart   - red/pink
-      destroy: '#e0a93e', // ⚠ warning - amber
+      meltdown: '#e0a93e', // ⚠ warning - amber
       matrix: '#4eb85a', // ░ matrix  - green
       meditation: '#4eb85a', // ○ meditation - green (same as matrix)
+      rampage: '#e0524e', // ✶ rampage - red
     };
     function iconColor(cmd, name) {
       return ICON_COLOR[cmd] || fileTypeColor(name);
@@ -1372,9 +1386,10 @@ to{opacity: 0;transform: translateX(20px)}
       clear: { name: 'clear.sh', icon: '⌧' },
       bpm: { name: 'bpm.css', icon: '♥' },
       choreomania: { name: 'choreomania.py', icon: '∿' },
-      destroy: { name: 'destroy.sh', icon: '⚠' },
+      meltdown: { name: 'meltdown.sh', icon: '⚠' },
       matrix: { name: 'matrix.bin', icon: '░' },
       meditation: { name: 'meditation.bin', icon: '○' },
+      rampage: { name: 'rampage.exe', icon: '✶' },
       theme: { name: 'theme.css', icon: '#' },
       web3: { name: 'web3.html', icon: '⬡' }
     };
@@ -1382,7 +1397,8 @@ to{opacity: 0;transform: translateX(20px)}
       if (!cmd) return 'Shell';
       if (['theme', 'bpm'].includes(cmd)) return 'CSS';
       if (['matrix', 'meditation'].includes(cmd)) return 'Binary';
-      if (['destroy', 'clear'].includes(cmd)) return 'Shell Script';
+      if (cmd === 'rampage') return 'Executable';
+      if (['meltdown', 'clear'].includes(cmd)) return 'Shell Script';
       if (cmd === 'contact') return 'Plain Text';
       if (cmd === 'web3') return 'URL';
       const m = FILE_META[cmd];
@@ -1683,11 +1699,11 @@ to{opacity: 0;transform: translateX(20px)}
         if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>${newBpm}</span>`;
         return `<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`;
       },
-      destroy() {
-        if (isDestroyed) return `<div class="my-3 text-xs text-red-500 font-bold">System is already destroyed. Waiting for 'rebuild'.</div>`;
-        isDestroyed = true; destroyedElements = [];
-        addProblem('warn', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...', { file: 'destroy.sh' });
-        document.body.classList.add('system-destroyed');
+      meltdown() {
+        if (isMeltdown) return `<div class="my-3 text-xs text-red-500 font-bold">System is already in meltdown. Waiting for 'rebuild'.</div>`;
+        isMeltdown = true; meltdownElements = [];
+        addProblem('warn', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...', { file: 'meltdown.sh' });
+        document.body.classList.add('system-meltdown');
         const safeElements = new Set();
         let curr = document.getElementById('input-line');
         while (curr && curr.id !== 'app') { safeElements.add(curr); curr = curr.parentElement; }
@@ -1700,16 +1716,16 @@ to{opacity: 0;transform: translateX(20px)}
           if (el.closest('#input-line')) return false;
           return true;
         });
-        destroyInterval = setInterval(() => {
+        meltdownInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
-            if (elements.length === 0) { clearInterval(destroyInterval); return; }
+            if (elements.length === 0) { clearInterval(meltdownInterval); return; }
             const el = elements.splice(Math.floor(Math.random() * elements.length), 1)[0];
             if (el && el.style) {
-              destroyedElements.push({ element: el });
+              meltdownElements.push({ element: el });
               el.style.setProperty('--dx', `${(Math.random() - 0.5) * 300}px`);
               el.style.setProperty('--dy', `${window.innerHeight}px`);
               el.style.setProperty('--deg', `${(Math.random() - 0.5) * 360}deg`);
-              el.classList.add('destroyed-element');
+              el.classList.add('meltdown-element');
               el.classList.remove('rebuilding-element');
             }
           }
@@ -1717,15 +1733,15 @@ to{opacity: 0;transform: translateX(20px)}
         return `<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`;
       },
       rebuild() {
-        if (!isDestroyed) return null;
-        clearInterval(destroyInterval); clearInterval(rebuildInterval); let elements = [...destroyedElements];
+        if (!isMeltdown) return null;
+        clearInterval(meltdownInterval); clearInterval(rebuildInterval); let elements = [...meltdownElements];
         rebuildInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) {
-              clearInterval(rebuildInterval); rebuildInterval = null; isDestroyed = false; destroyedElements = []; currentVersion++;
+              clearInterval(rebuildInterval); rebuildInterval = null; isMeltdown = false; meltdownElements = []; currentVersion++;
               if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
               if (tabState['about']) tabState['about'] = commands.about();
-              document.body.classList.remove('system-destroyed');
+              document.body.classList.remove('system-meltdown');
               const nameEl = document.getElementById('display-name-el');
               if (nameEl) nameEl.innerHTML = `${esc(config.display_name)}${verBadge()}`;
               const aboutVerEl = document.getElementById('about-version-el');
@@ -1733,8 +1749,8 @@ to{opacity: 0;transform: translateX(20px)}
               // After the fly-back animations finish, hard-reconcile the layout so nothing is left
               // mid-transform and the input line is re-anchored to the bottom of the terminal.
               setTimeout(() => {
-                document.querySelectorAll('#app .destroyed-element, #app .rebuilding-element').forEach(el => {
-                  el.classList.remove('destroyed-element', 'rebuilding-element');
+                document.querySelectorAll('#app .meltdown-element, #app .rebuilding-element').forEach(el => {
+                  el.classList.remove('meltdown-element', 'rebuilding-element');
                   clearTransformVars(el);
                 });
                 renderEditor();
@@ -1744,7 +1760,7 @@ to{opacity: 0;transform: translateX(20px)}
             }
             const item = elements.pop();
             if (item.element) {
-              item.element.classList.remove('destroyed-element');
+              item.element.classList.remove('meltdown-element');
               item.element.classList.add('rebuilding-element');
               setTimeout(() => {
                 item.element.classList.remove('rebuilding-element');
@@ -1754,6 +1770,406 @@ to{opacity: 0;transform: translateX(20px)}
           }
         }, 30);
         return `<div class="my-3 text-xs text-primary">System rebuild initiated... restoring core components.</div>`;
+      },
+      rampage(args) {
+        // Resolve an optional weapon argument (name / alias / number) to an index.
+        const ALIAS = {
+          mg: 0, machinegun: 0, 'machine-gun': 0, '1': 0,
+          sg: 1, shotgun: 1, '2': 1,
+          sniper: 2, rifle: 2, '3': 2,
+          flame: 3, flamethrower: 3, fire: 3, '4': 3,
+          coin: 4, key: 4, scratch: 4, '5': 4,
+          punch: 5, fist: 5, '6': 5
+        };
+        const argKey = args && args[0] ? String(args[0]).toLowerCase() : null;
+        const initialWeapon = (argKey && ALIAS[argKey] != null) ? ALIAS[argKey] : null;
+
+        // Toggle: a bare second 'rampage' (or ESC) ceases fire. The crack overlay is a
+        // fixed, pointer-events:none canvas, so the whole UI stays clickable and
+        // other commands can still be typed while the screen is being shattered.
+        if (isRampageActive) {
+          if (initialWeapon != null) { // `rampage <weapon>` while armed → just switch
+            if (rampageSetWeapon) rampageSetWeapon(['mg', 'sg', 'sniper', 'flame', 'coin', 'punch'][initialWeapon]);
+            return '';
+          }
+          if (rampageTeardown) rampageTeardown();
+          return `<div class="my-3 text-xs text-secondary">Ceasefire. The screen heals.</div>`;
+        }
+        isRampageActive = true;
+        document.body.classList.add('rampage-active');
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'rampage-canvas';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const resize = () => {
+          const prev = (canvas.width && canvas.height) ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
+          canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
+          canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          if (prev) ctx.putImageData(prev, 0, 0);
+        };
+        resize();
+        window.addEventListener('resize', resize);
+
+        const rnd = (a, b) => a + Math.random() * (b - a);
+
+        // A thin fracture line with a faint dark "depth" shadow underneath, so cracks
+        // read as fine broken glass rather than thick glowing strokes.
+        const stroke = (x1, y1, x2, y2, w, alpha) => {
+          ctx.strokeStyle = `rgba(8,8,12,${alpha * 0.4})`; ctx.lineWidth = w + 0.5;
+          ctx.beginPath(); ctx.moveTo(x1 + 0.4, y1 + 0.4); ctx.lineTo(x2 + 0.4, y2 + 0.4); ctx.stroke();
+          ctx.strokeStyle = `rgba(225,228,235,${alpha})`; ctx.lineWidth = w;
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        };
+
+        // Draws one impact's glass damage and returns the power used (no flash/shake;
+        // see recoil() — kept separate so a shotgun blast kicks once, not per pellet).
+        const drawImpact = (x, y, forcePower, reach = 1) => {
+          // Most shots are small chips; a few are big shatters.
+          const power = forcePower != null ? forcePower : Math.pow(rnd(0, 1), 2.2) * 1.5 + 0.4;
+          const holeR = rnd(1.2, 2.6) * (0.7 + power * 0.4);
+          ctx.save();
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+          // faint pulverized halo around the hit
+          const haloR = holeR * rnd(2.2, 3.8);
+          const halo = ctx.createRadialGradient(x, y, holeR * 0.5, x, y, haloR);
+          halo.addColorStop(0, 'rgba(225,228,235,0.10)');
+          halo.addColorStop(0.6, 'rgba(225,228,235,0.03)');
+          halo.addColorStop(1, 'rgba(225,228,235,0)');
+          ctx.fillStyle = halo;
+          ctx.beginPath(); ctx.arc(x, y, haloR, 0, Math.PI * 2); ctx.fill();
+
+          // unevenly-spaced radial fractures, each a different length
+          const spokes = Math.floor(rnd(5, 8) + power * 2);
+          const angles = [], lens = [];
+          let a0 = rnd(0, Math.PI * 2);
+          for (let i = 0; i < spokes; i++) {
+            a0 += (Math.PI * 2 / spokes) * rnd(0.45, 1.7);
+            angles.push(a0);
+            lens.push(rnd(20, 110) * power * reach * rnd(0.5, 1.3)); // wide spread in length
+          }
+
+          // each fracture: faintly heavier at the hole, tapering to a hairline, jagged + branching
+          angles.forEach((ang, idx) => {
+            const len = lens[idx];
+            const segs = Math.floor(rnd(4, 9));
+            let cx = x + Math.cos(ang) * holeR, cy = y + Math.sin(ang) * holeR, a = ang;
+            let w = rnd(0.7, 1.4) * Math.min(1.3, 0.7 + power * 0.4);
+            for (let s = 0; s < segs; s++) {
+              a += rnd(-0.24, 0.24);
+              const step = len / segs;
+              const nx = cx + Math.cos(a) * step, ny = cy + Math.sin(a) * step;
+              stroke(cx, cy, nx, ny, Math.max(0.3, w), 0.5 - s * 0.05);
+              // splinter branch
+              if (Math.random() > 0.5 && s > 0) {
+                let ba = a + (Math.random() < 0.5 ? 1 : -1) * rnd(0.4, 1.1);
+                let bx = nx, by = ny, bw = w * 0.55;
+                const bsegs = Math.floor(rnd(1, 4));
+                for (let b = 0; b < bsegs; b++) {
+                  ba += rnd(-0.3, 0.3);
+                  const bl = step * rnd(0.4, 1.0);
+                  const ex = bx + Math.cos(ba) * bl, ey = by + Math.sin(ba) * bl;
+                  stroke(bx, by, ex, ey, Math.max(0.25, bw), 0.3);
+                  bx = ex; by = ey; bw *= 0.7;
+                }
+              }
+              cx = nx; cy = ny; w *= 0.72;
+            }
+          });
+
+          // irregular web rings linking adjacent fractures (the connective cracks)
+          const ringCount = Math.floor(rnd(1, 3) + power);
+          for (let r = 1; r <= ringCount; r++) {
+            const frac = r / (ringCount + 1);
+            for (let i = 0; i < angles.length; i++) {
+              const j = (i + 1) % angles.length;
+              const rr1 = holeR + lens[i] * frac * rnd(0.75, 1.15);
+              const rr2 = holeR + lens[j] * frac * rnd(0.75, 1.15);
+              const p1x = x + Math.cos(angles[i]) * rr1, p1y = y + Math.sin(angles[i]) * rr1;
+              const p2x = x + Math.cos(angles[j]) * rr2, p2y = y + Math.sin(angles[j]) * rr2;
+              if (Math.random() > 0.3) stroke(p1x, p1y, p2x, p2y, rnd(0.3, 0.6), 0.2 - r * 0.03);
+            }
+          }
+
+          // the bullet hole: a small jagged shattered polygon, not a clean circle
+          ctx.beginPath();
+          const sides = Math.floor(rnd(7, 12));
+          for (let i = 0; i < sides; i++) {
+            const ha = (i / sides) * Math.PI * 2 + rnd(-0.2, 0.2);
+            const hr = holeR * rnd(0.5, 1.55);
+            const px = x + Math.cos(ha) * hr, py = y + Math.sin(ha) * hr;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fill();
+          ctx.strokeStyle = 'rgba(225,228,235,0.6)'; ctx.lineWidth = 0.7; ctx.stroke();
+          ctx.restore();
+          return power;
+        };
+
+        // muzzle flash + recoil shake, scaled by power; bigger hits kick harder.
+        const recoil = (x, y, power, hot = true) => {
+          const fs = 16 + power * 14;
+          const bg = hot
+            ? 'radial-gradient(circle, rgba(255,245,200,0.9), rgba(255,170,60,0.4) 45%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(235,238,245,0.85), rgba(195,200,210,0.35) 45%, transparent 70%)';
+          const f = document.createElement('div');
+          f.style.cssText = `position:fixed;left:${x - fs / 2}px;top:${y - fs / 2}px;width:${fs}px;height:${fs}px;border-radius:50%;background:${bg};z-index:9998;pointer-events:none;transition:opacity 0.12s, transform 0.12s;`;
+          document.body.appendChild(f);
+          requestAnimationFrame(() => { f.style.opacity = '0'; f.style.transform = 'scale(1.9)'; });
+          setTimeout(() => f.remove(), 140);
+          document.body.classList.remove('rampage-shake', 'rampage-shake-hard');
+          void document.body.offsetWidth;
+          document.body.classList.add(power > 1.2 ? 'rampage-shake-hard' : 'rampage-shake');
+        };
+
+        // --- Per-section HP. Shots damage the section under the pointer; when its HP
+        //     hits 0 the section collapses using the SAME fly-off effect as `meltdown`. ---
+        const SECTION_SEL = ['#titlebar', '#activitybar', '#sidebar', '#editor', '#panel', '#agentdock', '#terminal-footer'];
+        // Elements that live outside a section's box but should collapse with it (e.g. the editor's tab bar + breadcrumb).
+        const SECTION_EXTRA = { '#editor': ['#tabbar', '#breadcrumb'] };
+        const sections = SECTION_SEL.map(sel => {
+          const el = document.querySelector(sel);
+          if (!el) return null;
+          const extras = (SECTION_EXTRA[sel] || []).map(s => document.querySelector(s)).filter(Boolean);
+          return { el, extras, hp: 300, max: 300, dead: false, bar: null };
+        }).filter(Boolean);
+        const flownEls = [], rampageIntervals = [], strippedEls = [];
+
+        const flyOff = (el) => {
+          if (!el || !el.style) return;
+          el.style.setProperty('--dx', `${(Math.random() - 0.5) * 300}px`);
+          el.style.setProperty('--dy', `${window.innerHeight}px`);
+          el.style.setProperty('--deg', `${(Math.random() - 0.5) * 360}deg`);
+          el.classList.remove('rebuilding-element');
+          el.classList.add('meltdown-element');
+          flownEls.push(el);
+        };
+        const collapseSection = (s) => {
+          s.dead = true;
+          if (s.bar) { s.bar.remove(); s.bar = null; }
+          // keep the terminal input usable even if its container collapses
+          const safe = new Set();
+          let c = document.getElementById('input-line');
+          while (c) { safe.add(c); c = c.parentElement; }
+          const els = [s.el, ...s.extras].flatMap(r => [r, ...r.querySelectorAll('*')]).filter(el => !safe.has(el) && !el.closest('#input-line'));
+          // The section box itself can't fly when it holds the protected input (e.g. #panel),
+          // so strip its frame (border/bg/shadow) — otherwise an empty outline lingers.
+          [s.el, ...s.extras].forEach(r => { if (safe.has(r)) { r.classList.add('rampage-stripped'); strippedEls.push(r); } });
+          let i = 0;
+          const iv = setInterval(() => { // staggered fly-off, exactly like meltdown.sh
+            for (let k = 0; k < 6; k++) {
+              if (i >= els.length) { clearInterval(iv); return; }
+              flyOff(els[i++]);
+            }
+          }, 25);
+          rampageIntervals.push(iv);
+          const name = (s.el.id || 'section').toUpperCase();
+          printToTerminal(`<div class="text-xs mt-1 text-red-500 font-bold">✗ ${name} DOWN — structural integrity lost.</div>`);
+          addProblem('error', `${name} DOWN — structural integrity lost`, { file: 'rampage.exe' });
+        };
+
+        const hpColor = (f) => f > 0.5 ? '#4eb85a' : f > 0.25 ? '#e0a93e' : '#e0524e';
+        const updateBar = (s) => {
+          if (s.dead) return;
+          const r = s.el.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2) return;
+          if (!s.bar) { s.bar = document.createElement('div'); s.bar.className = 'rampage-hpbar'; s.bar.innerHTML = '<i></i>'; document.body.appendChild(s.bar); }
+          const f = Math.max(0, s.hp / s.max);
+          s.bar.style.cssText = `position:fixed;left:${r.left + 4}px;top:${r.top + 4}px;width:${Math.min(120, r.width - 8)}px;height:5px;z-index:9998;pointer-events:none;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.25);border-radius:2px;overflow:hidden;`;
+          s.bar.firstChild.style.cssText = `display:block;height:100%;width:${f * 100}%;background:${hpColor(f)};transition:width 0.15s, background 0.15s;`;
+        };
+
+        const damageAt = (x, y, amount) => {
+          // pick the most specific (smallest) non-dead section containing the point
+          let hit = null, best = Infinity;
+          for (const s of sections) {
+            if (s.dead) continue;
+            const r = s.el.getBoundingClientRect();
+            if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+              const area = r.width * r.height;
+              if (area < best) { best = area; hit = s; }
+            }
+          }
+          if (!hit) return;
+          hit.hp -= amount;
+          if (hit.hp <= 0) { hit.hp = 0; collapseSection(hit); }
+          else updateBar(hit);
+        };
+
+        // Arsenal. Switch at will: right-click to cycle, or run `rampage <name>`.
+        const WEAPONS = [
+          { key: 'mg', label: '⇶ MACHINE GUN' },
+          { key: 'sg', label: '✸ SHOTGUN' },
+          { key: 'sniper', label: '✛ SNIPER RIFLE' },
+          { key: 'flame', label: '♨ FLAMETHROWER' },
+          { key: 'coin', label: '◉ COIN' },
+          { key: 'punch', label: '✺ PUNCH' }
+        ];
+        let wIdx = (initialWeapon != null) ? initialWeapon : 0;
+        const weapon = () => WEAPONS[wIdx].key;
+        const announce = () => printToTerminal(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`);
+        const setWeapon = (key) => { const i = WEAPONS.findIndex(w => w.key === key); if (i >= 0 && i !== wIdx) { wIdx = i; announce(); } };
+        rampageSetWeapon = setWeapon;
+
+        // Don't fire when the pointer lands on a real control, so the UI stays usable.
+        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, #cmd-palette, #cmd-palette-box';
+        let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
+        // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
+        const getBpm = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10) || 60;
+        const cadence = (baseMs) => Math.max(16, Math.round(baseMs * 60 / getBpm()));
+
+        // machine gun: a single tight shot (held → rapid fire)
+        const fireMG = (x, y) => { recoil(x, y, drawImpact(x + rnd(-6, 6), y + rnd(-6, 6))); damageAt(x, y, 4); };
+        // shotgun: one blast scattering many pellets in a cone, single hard kick
+        const fireShotgun = (x, y) => {
+          drawImpact(x, y, rnd(0.9, 1.5)); // central concussion
+          const pellets = Math.floor(rnd(10, 18));
+          for (let i = 0; i < pellets; i++) {
+            const ang = rnd(0, Math.PI * 2);
+            const dist = Math.pow(Math.random(), 0.6) * rnd(55, 160);
+            drawImpact(x + Math.cos(ang) * dist, y + Math.sin(ang) * dist, rnd(0.3, 0.85));
+          }
+          recoil(x, y, 1.7); damageAt(x, y, 17); // one big kick for the whole blast
+        };
+        // sniper: one precise hole that throws very long fractures clear across the glass
+        const fireSniper = (x, y) => { recoil(x, y, drawImpact(x, y, rnd(1.3, 1.9), 3.8) + 1.4); damageAt(x, y, 34); };
+        // coin: a fine bright scratch traced along the drag, like keying a car's paint
+        const scratchSeg = (x1, y1, x2, y2) => {
+          const jx = rnd(-1.5, 1.5), jy = rnd(-1.5, 1.5); // hand jitter
+          stroke(x1, y1, x2 + jx, y2 + jy, rnd(0.4, 0.9), 0.65);
+          if (Math.random() > 0.6) { // tiny metal/paint fleck catching the light
+            ctx.save(); ctx.fillStyle = 'rgba(235,238,245,0.7)';
+            ctx.beginPath(); ctx.arc(x2 + rnd(-2, 2), y2 + rnd(-2, 2), rnd(0.4, 1.1), 0, Math.PI * 2); ctx.fill(); ctx.restore();
+          }
+          damageAt(x2, y2, 0.4); // only lightly scratches — barely dents HP
+        };
+        // punch: a blunt fist — a caved-in central dent with four knuckle craters, heavy dusty kick
+        const firePunch = (x, y) => {
+          const ang = rnd(0, Math.PI * 2), px = -Math.sin(ang), py = Math.cos(ang); // knuckle-line direction
+          ctx.save();
+          // concave depression: dark core fading out reads as surface pushed inward
+          const dentR = rnd(34, 50);
+          const dg = ctx.createRadialGradient(x, y, 2, x, y, dentR);
+          dg.addColorStop(0, 'rgba(0,0,0,0.22)');
+          dg.addColorStop(0.4, 'rgba(0,0,0,0.10)');
+          dg.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = dg;
+          ctx.beginPath(); ctx.arc(x, y, dentR, 0, Math.PI * 2); ctx.fill();
+          // light catches the upper raised rim; shadow pools on the lower inner edge → depth
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.arc(x, y, dentR * 0.66, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+          ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.arc(x, y, dentR * 0.66, Math.PI * 0.1, Math.PI * 0.85); ctx.stroke();
+          ctx.restore();
+          // four knuckle craters clustered across the dent — only light cracking; the punch is felt, not shattered
+          for (let i = -1.5; i <= 1.5; i += 1) {
+            drawImpact(x + px * i * 14 + rnd(-3, 3), y + py * i * 14 + rnd(-3, 3), rnd(0.4, 0.8));
+          }
+          drawImpact(x, y, rnd(0.6, 1.0)); // modest central crater
+          recoil(x, y, 1.0, false); damageAt(x, y, 22); // dusty puff (no big flash)
+          // the impact is vibration-led: override with a strong, long screen quake
+          document.body.classList.remove('rampage-shake', 'rampage-shake-hard', 'rampage-shake-punch');
+          void document.body.offsetWidth;
+          document.body.classList.add('rampage-shake-punch');
+        };
+        // flamethrower: continuous charring + heat-stress cracks while held (no recoil shake)
+        const flame = (x, y) => {
+          const cx = x + rnd(-9, 9), cy = y + rnd(-9, 9), r = rnd(10, 26);
+          ctx.save();
+          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          g.addColorStop(0, 'rgba(35,18,8,0.5)');
+          g.addColorStop(0.5, 'rgba(200,90,30,0.22)');
+          g.addColorStop(1, 'rgba(255,160,40,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          if (Math.random() > 0.7) drawImpact(x + rnd(-10, 10), y + rnd(-10, 10), rnd(0.3, 0.6));
+          damageAt(x, y, 2.5); // sustained burn
+          const fs = rnd(22, 42);
+          const f = document.createElement('div');
+          f.style.cssText = `position:fixed;left:${x - fs / 2}px;top:${y - fs / 2}px;width:${fs}px;height:${fs}px;border-radius:50%;background:radial-gradient(circle, rgba(255,220,120,0.7), rgba(255,120,30,0.4) 40%, transparent 70%);z-index:9998;pointer-events:none;transition:opacity 0.18s, transform 0.18s;`;
+          document.body.appendChild(f);
+          requestAnimationFrame(() => { f.style.opacity = '0'; f.style.transform = 'scale(1.6) translateY(-6px)'; });
+          setTimeout(() => f.remove(), 190);
+        };
+
+        const onDown = (e) => {
+          if (e.pointerType === 'mouse' && e.button !== 0) return; // left button fires; right cycles weapon
+          if (e.target.closest && e.target.closest(GUARD)) return;
+          lastX = e.clientX; lastY = e.clientY;
+          const w = weapon();
+          if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
+          if (w === 'mg') {
+            fireMG(lastX, lastY);
+            holdTimer = setInterval(() => fireMG(lastX, lastY), cadence(70)); // rapid-fire while held (BPM-synced)
+          } else if (w === 'sg') {
+            fireShotgun(lastX, lastY);
+          } else if (w === 'sniper') {
+            fireSniper(lastX, lastY);
+          } else if (w === 'flame') {
+            flame(lastX, lastY);
+            holdTimer = setInterval(() => flame(lastX, lastY), cadence(45)); // continuous spray (BPM-synced)
+          } else if (w === 'coin') {
+            scratching = true; slx = lastX; sly = lastY;
+          } else if (w === 'punch') {
+            firePunch(lastX, lastY);
+            holdTimer = setInterval(() => firePunch(lastX, lastY), cadence(300)); // slower, heavier flurry (BPM-synced)
+          }
+        };
+        const onMove = (e) => {
+          if (holdTimer) { lastX = e.clientX; lastY = e.clientY; }
+          if (scratching) { const nx = e.clientX, ny = e.clientY; scratchSeg(slx, sly, nx, ny); slx = nx; sly = ny; }
+        };
+        const stop = () => {
+          if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
+          if (scratching) { scratching = false; }
+        };
+        const onKey = (e) => {
+          if (e.key === 'Escape' && rampageTeardown) {
+            rampageTeardown();
+            printToTerminal(`<div class="my-2 text-xs text-secondary">Ceasefire — RAMPAGE mode disengaged. The screen heals.</div>`);
+          }
+        };
+        // Right-click cycles to the next weapon — works even while the terminal input is focused.
+        const onContext = (e) => {
+          e.preventDefault();
+          wIdx = (wIdx + 1) % WEAPONS.length;
+          announce();
+        };
+        const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
+        document.addEventListener('pointerdown', onDown, true);
+        document.addEventListener('pointermove', onMove, true);
+        document.addEventListener('pointerup', stop, true);
+        document.addEventListener('pointercancel', stop, true);
+        document.addEventListener('contextmenu', onContext, true);
+        window.addEventListener('keydown', onKey, true);
+        window.addEventListener('resize', repositionBars);
+
+        rampageTeardown = () => {
+          stop();
+          rampageIntervals.forEach(clearInterval);
+          document.removeEventListener('pointerdown', onDown, true);
+          document.removeEventListener('pointermove', onMove, true);
+          document.removeEventListener('pointerup', stop, true);
+          document.removeEventListener('pointercancel', stop, true);
+          document.removeEventListener('contextmenu', onContext, true);
+          window.removeEventListener('keydown', onKey, true);
+          window.removeEventListener('resize', resize);
+          window.removeEventListener('resize', repositionBars);
+          canvas.remove();
+          sections.forEach(s => { if (s.bar) s.bar.remove(); });
+          // heal: fly collapsed sections back into place (same vars `meltdown`/`rebuild` use)
+          flownEls.forEach(el => { el.classList.remove('meltdown-element', 'rebuilding-element'); clearTransformVars(el); });
+          strippedEls.forEach(el => el.classList.remove('rampage-stripped'));
+          document.body.classList.remove('rampage-active', 'rampage-shake', 'rampage-shake-hard', 'rampage-shake-punch');
+          isRampageActive = false; rampageTeardown = null; rampageSetWeapon = null;
+        };
+
+        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: <b>right-click</b> to cycle, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · flame · coin · punch. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
@@ -1966,14 +2382,14 @@ to{opacity: 0;transform: translateX(20px)}
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
       setActiveTree(cmd);
 
-      if (isDestroyed && cmd !== 'rebuild') {
-        addProblem('warn', 'command rejected — system is destroyed', { file: 'terminal' });
-        await printToTerminal(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IS DESTROYED. COMMAND REJECTED.</div>`, 50);
+      if (isMeltdown && cmd !== 'rebuild') {
+        addProblem('warn', 'command rejected — system in meltdown', { file: 'terminal' });
+        await printToTerminal(`<div class="text-xs my-1 text-red-500 font-bold">[!] SYSTEM IN MELTDOWN. COMMAND REJECTED.</div>`, 50);
         return;
       }
 
       if (hiddenCommands.includes(cmd)) {
-        const requiredExt = cmd === 'rebuild' ? 'destroy' : cmd;
+        const requiredExt = cmd === 'rebuild' ? 'meltdown' : cmd;
         if (!installedExtensions.has(requiredExt)) {
           addProblem('error', `Command not found: '${cmd}'`, { file: 'terminal' });
           await printToTerminal(cmdNotFoundHTML(cmd), 50);
@@ -2122,7 +2538,7 @@ to{opacity: 0;transform: translateX(20px)}
       commandHistory = [];
       unreadHistoryCount = 0;
       updateGitBadge();
-      historyIndex = -1; isDestroyed = false; destroyedElements = []; if (destroyInterval) clearInterval(destroyInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 2;
+      historyIndex = -1; isMeltdown = false; meltdownElements = []; if (meltdownInterval) clearInterval(meltdownInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 2;
       problems.length = 0; recountProblems();
       installedExtensions.clear();
       if (typeof renderExplorerTree === 'function') renderExplorerTree();
@@ -2130,7 +2546,8 @@ to{opacity: 0;transform: translateX(20px)}
       // Tear down any active full-screen effects so their canvas/overlay and timers don't leak across the reload.
       if (matrixTeardown) matrixTeardown();
       if (meditationTeardown) meditationTeardown();
-      isMatrixActive = false; isMeditationActive = false;
+      if (rampageTeardown) rampageTeardown();
+      isMatrixActive = false; isMeditationActive = false; isRampageActive = false;
 
       document.documentElement.style.removeProperty('--primary-color');
       document.documentElement.style.removeProperty('--primary-bg');
@@ -2249,7 +2666,7 @@ to{opacity: 0;transform: translateX(20px)}
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
-    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', timeline: 'Digital, music & Flânerie timeline', pages: 'Explore Web2 creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', destroy: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', timeline: 'Digital, music & Flânerie timeline', pages: 'Explore Web2 creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', meltdown: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', rampage: 'Wreck the screen — pick your weapon', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
     // Build a content index so search matches command output text, not just titles.
     const SEARCH_INDEX = {};
     const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
