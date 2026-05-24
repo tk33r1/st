@@ -39,7 +39,7 @@
   }
 
   // Assumes #view-upload / #view-loading / #view-result are present.
-  const VIEWS = ['view-upload', 'view-loading', 'view-result'];
+  const VIEWS = ['view-upload', 'view-preview', 'view-loading', 'view-result'];
   function switchView(viewId) {
     VIEWS.forEach(id => {
       const el = document.getElementById(id);

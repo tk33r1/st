@@ -17,7 +17,7 @@
     "id": 2,
     "title": "Light SVG - シンプルSVG軽量化ツール",
     "url": "https://tk.st/tools/light-svg/",
-    "imageUrl": "https://tk.st/images/ogp/light-svg-ogp.png",
+    "imageUrl": "https://tk.st/images/ogp/light-svg-ogp.webp",
     "category": "optimizer",
     "description": "日本発。面倒な設定なしで不要な情報を削除し、SVGファイルを1クリックで軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。",
     "tags": [
@@ -30,7 +30,7 @@
     "id": 3,
     "title": "Video to Animation - 動画アニメーション変換ツール",
     "url": "https://tk.st/tools/video-to-animation/",
-    "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.png",
+    "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.webp",
     "category": "converter",
     "description": "世界初。サーバーレスで動画からAPNGや可逆WebPに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。",
     "tags": [
@@ -46,7 +46,7 @@
     "id": 4,
     "title": "PDF to Image - PDF画像変換ツール",
     "url": "https://tk.st/tools/pdf-to-image/",
-    "imageUrl": "https://tk.st/images/ogp/pdf-to-image-ogp.png",
+    "imageUrl": "https://tk.st/images/ogp/pdf-to-image-ogp.webp",
     "category": "converter",
     "description": "世界初。サーバーレスでPDFからAVIF・可逆WebPに直接変換対応。プライバシーも安心。PNG・WEBP（通常/可逆）・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。",
     "tags": [
@@ -71,6 +71,22 @@
       "WEBP",
       "AVIF",
       "変換"
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Image to Animation - 画像アニメーション変換ツール",
+    "url": "https://tk.st/tools/image-to-animation/",
+    "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.webp",
+    "category": "converter",
+    "description": "複数の画像からAPNGや可逆WebPのアニメーション画像を作成。サーバーレスでプライバシーも安心。FPSやサイズの調整も可能です。",
+    "tags": [
+      "画像",
+      "アニメーション",
+      "APNG",
+      "WEBP",
+      "変換",
+      "パラパラ漫画"
     ]
   }
 ]
