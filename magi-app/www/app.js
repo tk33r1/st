@@ -29,7 +29,7 @@ var AGENT_PERSONAS = [
   { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.' },
   { codename: 'CASPER-3', name: 'STRATEGIST', desc: 'The logical self. A data-driven strategist relentlessly solving for the optimal answer, embracing both reproducible tactics and novelty.' },
 ];
-var REACT_EMOJIS = ['👎','❤️','😂','🎉','🔥','👏','🙏','💯','🤔','👀','😮','😢','😍','🤯','🙌','🥳','😎','😅','🤝','💪','✨','💡','✅','🚀','👌','🫡','🤩','😇','🥹','🫶'];
+var REACT_EMOJIS = ['👎', '❤️', '😂', '🎉', '🔥', '👏', '🙏', '💯', '🤔', '👀', '😮', '😢', '😍', '🤯', '🙌', '🥳', '😎', '😅', '🤝', '💪', '✨', '💡', '✅', '🚀', '👌', '🫡', '🤩', '😇', '🥹', '🫶'];
 
 // ---- DOM / state ------------------------------------------------------------
 var agentLog = document.getElementById('agent-log');
@@ -64,14 +64,14 @@ function reactionBarHTML(target) {
 
 var AGENT_HINT = '<div class="agent-splash">'
   + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
-  +   '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
-  +   '<line class="hl-flow" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-flow" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
-  +   '<polygon class="hx" points="60,14 77,24 77,44 60,54 43,44 43,24"/>'
-  +   '<polygon class="hx" points="35,58 52,68 52,88 35,98 18,88 18,68"/>'
-  +   '<polygon class="hx" points="85,58 102,68 102,88 85,98 68,88 68,68"/>'
-  +   '<text class="hn" x="60" y="39" text-anchor="middle">1</text>'
-  +   '<text class="hn" x="35" y="83" text-anchor="middle">2</text>'
-  +   '<text class="hn" x="85" y="83" text-anchor="middle">3</text>'
+  + '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
+  + '<line class="hl-flow" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-flow" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
+  + '<polygon class="hx" points="60,14 77,24 77,44 60,54 43,44 43,24"/>'
+  + '<polygon class="hx" points="35,58 52,68 52,88 35,98 18,88 18,68"/>'
+  + '<polygon class="hx" points="85,58 102,68 102,88 85,98 68,88 68,68"/>'
+  + '<text class="hn" x="60" y="39" text-anchor="middle">1</text>'
+  + '<text class="hn" x="35" y="83" text-anchor="middle">2</text>'
+  + '<text class="hn" x="85" y="83" text-anchor="middle">3</text>'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
@@ -291,7 +291,7 @@ async function agentSend() {
     clearTimeout(connectTimer);
     if (!res.ok || !res.body) {
       var raw = await res.text().catch(function () { return ''; });
-      var env = null; try { env = JSON.parse(raw).error; } catch (_) {}
+      var env = null; try { env = JSON.parse(raw).error; } catch (_) { }
       if (!env) env = { message: ('HTTP ' + res.status + ' ' + (res.statusText || '')).trim(), code: 'http_' + res.status };
       console.error('[agent] request failed', AGENT_API, res.status, raw.slice(0, 800));
       turn.remove(); renderAgentError(env); errored = true;
@@ -313,7 +313,7 @@ async function agentSend() {
         },
         integrated: function (d) { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
         error: function (d) { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(function (c) { c.classList.remove('thinking'); }); replyEl.remove(); renderAgentError(d); },
-        done: function () {},
+        done: function () { },
       });
     }
   } catch (err) {
@@ -368,7 +368,7 @@ async function sendReaction(target, reaction, request, response) {
 }
 function deleteReaction(target, id) {
   if (id == null) return;
-  try { fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'remove', target: target, id: id }), keepalive: true }).catch(function () {}); } catch (_) {}
+  try { fetch(REACT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'remove', target: target, id: id }), keepalive: true }).catch(function () { }); } catch (_) { }
 }
 function registerReaction(bar, target, em, ctx) {
   var store = reactionStoreFor(bar);
@@ -431,7 +431,7 @@ agentLog.addEventListener('click', function (e) {
   var ctx2 = getReactionContext(bar2);
 
   if (act === 'copy') {
-    if (ctx2.response && navigator.clipboard) navigator.clipboard.writeText(ctx2.response).catch(function () {});
+    if (ctx2.response && navigator.clipboard) navigator.clipboard.writeText(ctx2.response).catch(function () { });
     flashReactBtn(btn, '✓');
     return;
   }
@@ -631,7 +631,7 @@ document.getElementById('btn-theme').addEventListener('click', function () {
 
 // service worker (PWA)
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { }); });
 }
 
 initAgent();
