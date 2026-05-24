@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0c0c0c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>MAGI</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root {
+      --phi: 1.618;
+      --bg-color: #f3f4f6;
+      --surface-color: #ffffff;
+      --surface-alt: #f9fafb;
+      --surface-hover: #e5e7eb;
+      --text-color: #1f2937;
+      --primary-color: #16a34a;
+      --primary-bg: #dcfce7;
+      --primary-bg-hover: #bbf7d0;
+      --secondary-color: #6b7280;
+      --border-color: #d1d5db;
+      --bpm: 60;
+      --duration-fast: calc(0.1s * var(--phi));
+      --duration-normal: calc(0.162s * var(--phi));
+    }
+    [data-theme="dark"] {
+      --bg-color: #0c0c0c;
+      --surface-color: #1a1a1a;
+      --surface-alt: #111111;
+      --surface-hover: #222222;
+      --text-color: #d4d4d4;
+      --primary-color: #4ade80;
+      --primary-bg: #4ade8026;
+      --primary-bg-hover: #4ade8040;
+      --secondary-color: #888888;
+      --border-color: #333333;
+    }
+    *, ::before, ::after { box-sizing: border-box; }
+    html { line-height: var(--phi); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    html, body {
+      margin: 0; height: 100%;
+      background-color: var(--bg-color); color: var(--text-color);
+      overflow: hidden;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      -webkit-tap-highlight-color: transparent;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .glow { text-shadow: 0 0 6px var(--primary-color); }
+    .fade-in { animation: fadeIn var(--duration-normal) ease both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    /* ---- App shell: full-screen column ---- */
+    #app {
+      display: flex; flex-direction: column;
+      height: 100dvh; height: 100vh;
+      background: var(--surface-color);
+    }
+    header#bar {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+      gap: 0.5rem; padding: 0.5rem 0.75rem;
+      padding-top: calc(0.5rem + env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border-color);
+      background: var(--surface-alt);
+    }
+    #bar .title { font-size: 0.95rem; letter-spacing: 0.18em; color: var(--primary-color); }
+    #bar .actions { display: flex; align-items: center; gap: 0.75rem; }
+    .icon-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2rem; height: 2rem; border: none; background: transparent;
+      color: var(--secondary-color); cursor: pointer; border-radius: 6px;
+      transition: color var(--duration-fast), background-color var(--duration-fast);
+    }
+    .icon-btn:hover, .icon-btn:active { color: var(--primary-color); background: var(--primary-bg); }
+
+    #agent-log {
+      flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      display: flex; flex-direction: column; gap: 0.5rem;
+      padding: 0.75rem; font-size: 0.8rem; scroll-behavior: smooth;
+      background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.06) 1px, transparent 0);
+      background-size: 18px 18px;
+    }
+    .agent-user { display: flex; justify-content: flex-end; }
+    .agent-user > span { display: inline-block; max-width: 85%; padding: 0.4rem 0.7rem; border-radius: 8px 8px 2px 8px; background: var(--surface-hover); color: var(--text-color); word-break: break-word; }
+    .agent-personas { display: grid; gap: 0.4rem; }
+    .persona-card { border: 1px solid var(--border-color); background: var(--surface-alt); padding: 0.5rem 0.6rem; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+    .persona-card.thinking { animation: thinkingPulse calc(60s / var(--bpm)) ease-in-out infinite; }
+    .persona-card.thinking .persona-text { color: var(--secondary-color); }
+    @keyframes thinkingPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
+    .persona-head { display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.2rem; }
+    .persona-hex { color: var(--primary-color); }
+    .persona-code { font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); }
+    .persona-name { font-size: 10px; letter-spacing: 0.08em; color: var(--secondary-color); }
+    .persona-text { font-size: 12px; color: var(--text-color); line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
+    .persona-round { margin-top: 0.25rem; }
+    .persona-round[data-round="2"] { border-top: 1px dashed var(--border-color); padding-top: 0.25rem; }
+    .persona-round-label { display: block; font-size: 9px; letter-spacing: 0.1em; color: var(--secondary-color); opacity: 0.65; margin-bottom: 0.1rem; }
+    .agent-reply { margin-top: 0.4rem; padding: 0.6rem 0.7rem; border-left: 2px solid var(--primary-color); background: var(--primary-bg); color: var(--text-color); line-height: var(--phi); word-break: break-word; white-space: pre-wrap; }
+    .agent-reply .agent-who { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
+    .agent-reply.streaming::after { content: '▌'; color: var(--primary-color); animation: blink calc(60s / var(--bpm)) step-end infinite; }
+
+    /* reactions */
+    .reaction-bar { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; position: relative; }
+    .react-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 1.7rem; height: 1.7rem; padding: 0 0.35rem; font-size: 12px; line-height: 1; color: var(--secondary-color); background: transparent; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
+    .react-btn:hover, .react-btn:active { color: var(--primary-color); border-color: var(--primary-color); }
+    .react-btn.liked, .react-btn.reacted { color: var(--primary-color); border-color: var(--primary-color); background: var(--primary-bg); }
+    .reaction-bar.locked .react-btn[data-act="like"]:not(.liked), .reaction-bar.locked .react-btn[data-act="emoji"]:not(.reacted) { opacity: 0.3; pointer-events: none; }
+    .emoji-pop { position: absolute; bottom: 100%; left: 0; margin-bottom: 0.25rem; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.1rem; padding: 0.3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 6px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+    .emoji-pop button { font-size: 17px; line-height: 1; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 4px; cursor: pointer; }
+    .emoji-pop button:hover, .emoji-pop button:active { background: var(--primary-bg); }
+    .agent-err { border: 1px solid #ef4444; color: #ef4444; padding: 0.4rem 0.5rem; font-size: 11px; word-break: break-word; border-radius: 4px; }
+    .agent-err .agent-rid { color: var(--secondary-color); }
+
+    /* input */
+    #agent-inputline {
+      flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.75rem;
+      padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border-color); background: var(--surface-alt);
+    }
+    #agent-input { flex: 1; font-family: inherit; font-size: 16px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.55rem 0.7rem; color: var(--text-color); outline: none; transition: border-color var(--duration-fast), box-shadow var(--duration-fast); }
+    #agent-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-bg); }
+    #agent-input:disabled { opacity: 0.5; }
+    #agent-send { display: flex; align-items: center; justify-content: center; width: 2.6rem; height: 2.6rem; flex-shrink: 0; border-radius: 8px; border: none; background: var(--primary-bg); color: var(--primary-color); cursor: pointer; }
+    #agent-send:active { background: var(--primary-bg-hover); }
+    #agent-send:disabled { opacity: 0.4; }
+    #agent-degraded { flex-shrink: 0; padding: 0.6rem 0.75rem; font-size: 11px; color: var(--secondary-color); border-top: 1px solid var(--border-color); }
+
+    /* splash */
+    @keyframes magiFlow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
+    .agent-splash { position: relative; margin: auto 0; text-align: center; padding: 1rem 0.5rem 9rem; }
+    .magi-emblem { width: 110px; height: 110px; display: inline-block; }
+    .magi-emblem .hx { fill: var(--primary-bg); stroke: var(--primary-color); stroke-width: 2; }
+    .magi-emblem .hl-bg { stroke: var(--primary-color); stroke-width: 2; opacity: 0.2; }
+    .magi-emblem .hl-flow { stroke: var(--primary-color); stroke-width: 1.618; stroke-dasharray: 5 15; stroke-linecap: round; filter: drop-shadow(0 0 2px var(--primary-color)); animation: magiFlow calc(60s / var(--bpm)) linear infinite; will-change: stroke-dashoffset; }
+    .magi-emblem .hn { fill: var(--primary-color); font-size: 13px; font-weight: 700; }
+    .magi-title { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.35em; text-indent: 0.35em; color: var(--primary-color); margin: 0.6rem 0 0.2rem; }
+    .magi-sub { font-size: 11px; letter-spacing: 0.12em; color: var(--text-color); }
+    .magi-ver { font-size: 11px; letter-spacing: 0.18em; color: var(--secondary-color); margin-top: 0.15rem; }
+    .magi-nodes { display: flex; justify-content: center; gap: 0.4rem; margin-top: 1rem; flex-wrap: wrap; }
+    .magi-node { font-size: 10px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.3rem 0.7rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
+    .magi-node:hover, .magi-node:active { color: var(--primary-color); border-color: var(--primary-color); }
+    .magi-node.active { color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
+    .magi-desc { position: absolute; bottom: 0.5rem; left: 50%; transform: translateX(-50%); width: calc(100% - 1rem); max-width: 20rem; font-size: 12px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.4rem 0.7rem; background: var(--primary-bg); box-sizing: border-box; }
+    .magi-desc-name { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header id="bar">
+      <div class="title glow">✦ <span id="bar-title">MAGI</span></div>
+      <div class="actions">
+        <button id="btn-theme" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button id="btn-reset" class="icon-btn" title="New conversation" aria-label="New conversation">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div id="agent-log" aria-live="polite" aria-atomic="false"></div>
+    <div id="agent-degraded" class="hidden"></div>
+
+    <div id="agent-inputline">
+      <input type="text" id="agent-input" autocomplete="off" spellcheck="false" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI" />
+      <button id="agent-send" title="Send" aria-label="Send">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+node_modules/
+ios/
+android/
+www/icon-*.png
+www/apple-splash-*.png
+.DS_Store
+
+# Release signing — secrets, never commit
+*.jks
+*.keystore
+keystore.properties
+android/keystore.properties

@@ -1,0 +1,10 @@
+{
+  "appId": "st.tk.magi",
+  "appName": "MAGI",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "backgroundColor": "#0c0c0c"
+}
