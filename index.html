@@ -37,6 +37,7 @@
   <meta property="og:url" content="https://tk.st/">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Shinya Takeda - Terminal Portfolio">
   <meta name="twitter:description"
@@ -1676,6 +1677,194 @@
             scroll-behavior: auto !important;
         }
     }
+
+    /* --- APK Download Modal --- */
+    #apk-download-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 9500;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        opacity: 0;
+        transition: opacity var(--duration-normal) ease;
+        pointer-events: none;
+    }
+
+    #apk-download-modal.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #apk-download-box {
+        width: min(540px, 94vw);
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+        transform: scale(0.95);
+        transition: transform var(--duration-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #apk-download-modal.active #apk-download-box {
+        transform: scale(1);
+    }
+
+    #apk-download-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: var(--surface-alt);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    #apk-download-title {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        letter-spacing: 0.08em;
+    }
+
+    #apk-download-close {
+        background: transparent;
+        border: none;
+        color: var(--secondary-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color var(--duration-fast), transform var(--duration-fast);
+        outline: none;
+    }
+
+    #apk-download-close:hover {
+        color: var(--text-color);
+        transform: scale(1.1);
+    }
+
+    #apk-download-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .apk-download-intro {
+        font-size: 0.8125rem;
+        color: var(--secondary-color);
+        text-align: center;
+        margin: 0;
+    }
+
+    .apk-download-options {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .apk-option-card {
+        flex: 1;
+        background: var(--surface-alt);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: border-color var(--duration-normal), transform var(--duration-normal), box-shadow var(--duration-normal);
+    }
+
+    .apk-option-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .option-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.02em;
+    }
+
+    .qr-container,
+    .download-container {
+        width: 140px;
+        height: 140px;
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+        padding: 6px;
+        box-sizing: border-box;
+        transition: transform var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast), background-color var(--duration-fast);
+    }
+
+    .qr-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .download-container {
+        color: var(--primary-color);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .download-container:hover {
+        transform: scale(1.05);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 12px var(--primary-bg-hover);
+    }
+
+    .download-container:active {
+        transform: scale(0.98);
+    }
+
+    .option-desc {
+        font-size: 0.75rem;
+        color: var(--secondary-color);
+        line-height: 1.4;
+    }
+
+    @keyframes pulse-slow {
+        0%, 100% { opacity: 0.7; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .animated-pulse-slow {
+        animation: pulse-slow 3s infinite ease-in-out;
+    }
+
+    @media (max-width: 580px) {
+        .apk-download-options {
+            flex-direction: column;
+        }
+        .apk-option-card {
+            padding: 1rem;
+        }
+        .qr-container,
+        .download-container {
+            width: 120px;
+            height: 120px;
+        }
+    }
   </style>
   <script type="application/ld+json">
     {
@@ -2041,6 +2230,37 @@
         placeholder="Type '>' for commands, or search files…" aria-label="Command Palette input">
       <div id="cmd-palette-list"></div>
       <div id="cmd-palette-foot"><span id="cmd-palette-count"></span><span>↑↓ navigate · ↵ run · esc close</span></div>
+    </div>
+  </div>
+  <div id="apk-download-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="apk-download-title">
+    <div id="apk-download-box">
+      <div id="apk-download-head">
+        <span id="apk-download-title" class="glow">✦ MAGI APK DOWNLOAD</span>
+        <button id="apk-download-close" title="Close" aria-label="Close modal">&times;</button>
+      </div>
+      <div id="apk-download-body">
+        <div class="apk-download-options">
+          <div class="apk-option-card qr-card">
+            <div class="option-title">Scan QR Code</div>
+            <div class="qr-container">
+              <img id="apk-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Ftk.st%2Fmagi-app%2Fandroid%2F&color=16a34a&bgcolor=ffffff&qzone=2" alt="QR Code to Download MAGI Android App" loading="lazy" />
+            </div>
+            <div class="option-desc">Scan with your phone's camera to install.</div>
+          </div>
+          
+          <div class="apk-option-card download-card">
+            <div class="option-title">Direct Download</div>
+            <a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" class="download-container" title="Download the APK file directly">
+              <svg aria-hidden="true" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" class="text-primary animated-pulse-slow">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </a>
+            <div class="option-desc">Download the APK file directly to your device.</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <div id="toast-container" aria-live="polite"></div>
@@ -3892,6 +4112,13 @@
     }
     // agent-log 内の全クリックを1つのデリゲーションで処理（リアクション / info / 人格ノード）
     agentLog.addEventListener('click', (e) => {
+      // Android APK Download button
+      const androidLink = e.target.closest('.magi-android:not(.disabled)');
+      if (androidLink) {
+        e.preventDefault();
+        showApkDownloadModal();
+        return;
+      }
       // スプラッシュ：System & Privacy ボタン
       if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
       // スプラッシュの人格ノード：特徴をトグル表示
@@ -4536,6 +4763,39 @@
     // --- Status bar remote badge → opens the palette ---
     const remoteBadge = document.getElementById('remote-badge');
     if (remoteBadge) remoteBadge.addEventListener('click', () => openPalette('>'));
+
+    // --- APK Download Modal Control ---
+    const apkModal = document.getElementById('apk-download-modal');
+    const apkCloseBtn = document.getElementById('apk-download-close');
+
+    function showApkDownloadModal() {
+      if (!apkModal) return;
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const color = isDark ? '4ade80' : '16a34a';
+      const qrImg = document.getElementById('apk-qr-image');
+      if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Ftk.st%2Fmagi-app%2Fandroid%2F&color=${color}&bgcolor=ffffff&qzone=2`;
+      }
+      apkModal.classList.add('active');
+    }
+
+    function closeApkDownloadModal() {
+      if (apkModal) apkModal.classList.remove('active');
+    }
+
+    if (apkCloseBtn) {
+      apkCloseBtn.addEventListener('click', closeApkDownloadModal);
+    }
+    if (apkModal) {
+      apkModal.addEventListener('mousedown', (e) => {
+        if (e.target === apkModal) closeApkDownloadModal();
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && apkModal && apkModal.classList.contains('active')) {
+        closeApkDownloadModal();
+      }
+    });
 
     // --- Global keyboard shortcuts ---
     let chordK = false, chordTimer = null;
