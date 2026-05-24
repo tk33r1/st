@@ -1,7 +1,12 @@
 import { DEFAULTS, PERSONAS, PERSONA_TEMPERATURE, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
-const isAllowedOrigin = (o) => ALLOWED_ORIGINS.includes(o) || /^http:\/\/localhost(:\d+)?$/.test(o);
+// Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
+// origin fixed by the WebView — not spoofable from another web page — so we trust
+// them like tk.st. Covers http/https/capacitor/ionic schemes. The MAGI mobile app
+// (magi-app/) runs on https://localhost (capacitor.config iosScheme/androidScheme).
+const APP_ORIGIN_RE = /^(https?|capacitor|ionic):\/\/localhost(:\d+)?$/;
+const isAllowedOrigin = (o) => ALLOWED_ORIGINS.includes(o) || APP_ORIGIN_RE.test(o);
 
 function corsHeaders(origin) {
   const allow = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];

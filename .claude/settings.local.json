@@ -16,7 +16,11 @@
       "Bash(ls CLAUDE.md)",
       "Bash(rm -f _check.js _test.js && ls)",
       "Bash(git rm *)",
-      "Bash(node -e \"const d=require\\('./data/game.json'\\); console.log\\('valid JSON, '+d.length+' games'\\); console.log\\(d[d.length-1]\\)\")"
+      "Bash(node -e \"const d=require\\('./data/game.json'\\); console.log\\('valid JSON, '+d.length+' games'\\); console.log\\(d[d.length-1]\\)\")",
+      "Bash(node --check www/app.js)",
+      "Bash(node --check www/sw.js)",
+      "Bash(npx wrangler *)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:ANDROID_HOME = \"C:\\\\Users\\\\minep\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; cd C:\\\\dev\\\\tk.st\\\\magi-app\\\\android; .\\\\gradlew.bat assembleDebug --no-daemon 2>&1 | Select-Object -Last 40)"
     ],
     "additionalDirectories": [
       "C:\\dev\\tk.st\\game\\masala-tetris-vindaloo"

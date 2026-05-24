@@ -421,7 +421,7 @@
       from { stroke-dashoffset: 20; }
       to { stroke-dashoffset: 0; }
     }
-    .agent-splash { position: relative; margin: auto 0; text-align: center; padding: 1rem 0.5rem 10rem; }
+    .agent-splash { position: relative; margin: auto 0; text-align: center; padding: 1rem 0.5rem 2rem; }
     .magi-emblem { width: 96px; height: 96px; display: inline-block; }
     .magi-emblem .hx { fill: var(--primary-bg); stroke: var(--primary-color); stroke-width: 2; }
     .magi-emblem .hl-bg { stroke: var(--primary-color); stroke-width: 2; opacity: 0.2; }
@@ -443,7 +443,17 @@
     .magi-node { font-size: 9px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.15rem 0.55rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
     .magi-node:hover { color: var(--primary-color); border-color: var(--primary-color); }
     .magi-node.active { color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
-    .magi-desc { position: absolute; bottom: 0.5rem; left: 50%; transform: translateX(-50%); width: calc(100% - 1rem); margin: 0; max-width: 16rem; font-size: 11px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.35rem 0.6rem; background: var(--primary-bg); box-sizing: border-box; max-height: 8.8rem; overflow-y: auto; }
+    /* MAGI splash: app store badges (icon + two-line label) */
+    .magi-stores { display: flex; justify-content: center; align-items: stretch; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap; }
+    .magi-android { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.45rem 1rem; color: var(--primary-color); text-decoration: none; border: 1px solid var(--primary-color); border-radius: 10px; background: var(--primary-bg); transition: background-color var(--duration-fast), transform var(--duration-fast); }
+    .magi-android:hover { background: var(--primary-bg-hover); transform: translateY(-1px); }
+    .magi-android svg { flex-shrink: 0; align-self: center; }
+    .magi-android.disabled { color: var(--secondary-color); border-color: var(--border-color); background: transparent; cursor: not-allowed; pointer-events: none; opacity: 0.55; }
+    .magi-android.disabled .l1 { color: var(--secondary-color); }
+    .magi-android-text { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.15; }
+    .magi-android-text .l1 { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: var(--primary-color); }
+    .magi-android-text .l2 { font-size: 10px; letter-spacing: 0.08em; color: var(--secondary-color); }
+    .magi-desc { margin: 1rem auto 0; width: calc(100% - 1rem); max-width: 18rem; font-size: 11px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.35rem 0.6rem; background: var(--primary-bg); box-sizing: border-box; }
     .magi-desc-name { display: block; font-size: 9px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
     @media (min-width: 768px) {
       #agentdock {
@@ -867,7 +877,7 @@
     }
 
     // --- PROBLEMS panel (footer ⊘ errors · ⚠ warnings + diagnostics list) ---
-    const FILE_CMD = { 'identify.json': 'identify', 'bpm.css': 'bpm', 'letter.txt': 'akutagawa', 'about.md': 'about', 'help.md': 'help' };
+    const FILE_CMD = { 'identify.yaml': 'identify', 'bpm.css': 'bpm', 'letter.txt': 'akutagawa', 'about.yaml': 'about', 'help.md': 'help' };
     // Starts empty: problems are recorded only from real events (unknown commands, sudo failures, etc.).
     const problems = [];
     function recountProblems() {
@@ -1023,6 +1033,8 @@
       sh:   '#6cc04a', // Shell      - green
       bin:  '#9d7cf0', // Binary     - purple
       ai:   '#d96fc4', // AI model   - magenta
+      yaml: '#a3a0e6', // YAML       - soft blue-violet
+      py:   '#c79ad6', // Python     - soft red-violet
     };
     function fileTypeColor(name) {
       const ext = (name && name.includes('.')) ? name.split('.').pop() : '';
@@ -1034,6 +1046,7 @@
       bpm:     '#e0556b', // ♥ heart   - red/pink
       destroy: '#e0a93e', // ⚠ warning - amber
       matrix:  '#4eb85a', // ░ matrix  - green
+      meditation: '#4eb85a', // ○ meditation - green (same as matrix)
     };
     function iconColor(cmd, name) {
       return ICON_COLOR[cmd] || fileTypeColor(name);
@@ -1181,15 +1194,15 @@
     // extensions that only carry an icon/label.
     const FILE_META = {
       welcome:     { name: 'welcome',         icon: '★' },
-      about:       { name: 'about.md',        icon: '≡' },
-      identify:    { name: 'identify.json',   icon: '{}' },
+      about:       { name: 'about.yaml',      icon: '≡' },
+      identify:    { name: 'identify.yaml',   icon: '⚙' },
       timeline:    { name: 'timeline.json',   icon: '┃' },
       pages:       { name: 'pages.json',      icon: '[]' },
       akutagawa:   { name: 'letter.txt',      icon: '✉' },
       help:        { name: 'help.md',         icon: '?' },
       contact:     { name: 'contact.txt',     icon: '@' },
       bpm:         { name: 'bpm.css',         icon: '♥' },
-      choreomania: { name: 'choreomania.bin', icon: '∿' },
+      choreomania: { name: 'choreomania.py',  icon: '∿' },
       destroy:     { name: 'destroy.sh',      icon: '⚠' },
       matrix:      { name: 'matrix.bin',      icon: '░' },
       meditation:  { name: 'meditation.bin',  icon: '○' },
@@ -1199,13 +1212,13 @@
     const getLangMode = (cmd) => {
       if (!cmd) return 'Shell';
       if (['theme', 'bpm'].includes(cmd)) return 'CSS';
-      if (['choreomania', 'matrix', 'meditation'].includes(cmd)) return 'Binary';
+      if (['matrix', 'meditation'].includes(cmd)) return 'Binary';
       if (cmd === 'destroy') return 'Shell Script';
       if (cmd === 'contact') return 'Plain Text';
       if (cmd === 'web3') return 'URL';
       const m = FILE_META[cmd];
       if (!m || !m.name.includes('.')) return 'Shell';
-      return { md: 'Markdown', json: 'JSON', txt: 'Plain Text' }[m.name.split('.').pop()] || 'Shell';
+      return { md: 'Markdown', json: 'JSON', yaml: 'YAML', py: 'Python', txt: 'Plain Text' }[m.name.split('.').pop()] || 'Shell';
     };
     let tabState = {}, tabOrder = [], activeTab = null;
     const fileLabel = c => (FILE_META[c] || { name: c }).name;
@@ -2288,6 +2301,23 @@
       + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none ml-1 inline-flex items-center justify-center align-middle" title="Privacy & System Information"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('') + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
+      + '<div class="magi-stores">'
+      +   '<a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" class="magi-android" title="Download the MAGI Android app">'
+      +     '<svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+      +       '<line x1="8" y1="7.2" x2="9.7" y2="9.9"/><line x1="16" y1="7.2" x2="14.3" y2="9.9"/>'
+      +       '<path d="M5 16.8a7 7 0 0 1 14 0z"/>'
+      +       '<circle cx="9.5" cy="13.4" r="0.7" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13.4" r="0.7" fill="currentColor" stroke="none"/>'
+      +     '</svg>'
+      +     '<span class="magi-android-text"><span class="l1">Android</span><span class="l2">APK Download</span></span>'
+      +   '</a>'
+      +   '<span class="magi-android disabled" title="iOS app — coming soon" aria-disabled="true">'
+      +     '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">'
+      +       '<path d="M17.05 12.04c-.03-2.5 2.04-3.7 2.13-3.76-1.16-1.7-2.97-1.93-3.61-1.96-1.54-.16-3 .9-3.78.9-.78 0-1.97-.88-3.24-.86-1.67.03-3.21.97-4.07 2.46-1.73 3-.44 7.45 1.24 9.89.82 1.19 1.8 2.53 3.08 2.48 1.24-.05 1.71-.8 3.21-.8 1.49 0 1.92.8 3.23.77 1.33-.02 2.18-1.21 3-2.41.94-1.38 1.33-2.72 1.35-2.79-.03-.01-2.59-1-2.62-3.95z"/>'
+      +       '<path d="M14.6 4.84c.69-.83 1.15-1.99 1.02-3.14-.99.04-2.18.66-2.89 1.49-.64.73-1.2 1.91-1.05 3.03 1.1.09 2.23-.56 2.92-1.38z"/>'
+      +     '</svg>'
+      +     '<span class="magi-android-text"><span class="l1">iOS</span><span class="l2">App Download</span></span>'
+      +   '</span>'
+      + '</div>'
       + '</div>';
     const agentDockEl = document.getElementById('agentdock');
     const agentLog = document.getElementById('agent-log');
