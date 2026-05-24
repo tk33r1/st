@@ -77,7 +77,7 @@
     "id": 6,
     "title": "Image to Animation - 画像アニメーション変換ツール",
     "url": "https://tk.st/tools/image-to-animation/",
-    "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.webp",
+    "imageUrl": "https://tk.st/images/ogp/image-to-animation-ogp.webp",
     "category": "converter",
     "description": "複数の画像からAPNGや可逆WebPのアニメーション画像を作成。サーバーレスでプライバシーも安心。FPSやサイズの調整も可能です。",
     "tags": [
