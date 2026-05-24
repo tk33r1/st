@@ -393,8 +393,7 @@
         pointer-events: none;
     }
 
-    .meditation-spiral { width: 120vmin; height: 120vmin; animation: rotateSpiral calc(8640s / var(--bpm)) linear infinite; }
-    @keyframes rotateSpiral { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .meditation-spiral { width: 120vmin; height: 120vmin; animation: spin calc(8640s / var(--bpm)) linear infinite; }
 
     @keyframes phiRingPulse {
         0%,
@@ -575,6 +574,7 @@
     .tree-item:hover { background-color: var(--surface-hover); }
     .tree-item.active { background-color: var(--primary-bg); color: var(--primary-color); }
 
+
     /* timeline */
     .tl-chip {
         font-size: 0.6875rem;
@@ -590,6 +590,7 @@
     .tl-chip:hover { border-color: var(--primary-color); color: var(--primary-color); }
     .tl-chip.active { background: var(--primary-bg); border-color: var(--primary-color); color: var(--primary-color); }
     .tl-item { display: flex; gap: 0.75rem; }
+    .tl-item.fade-in-active { animation: tl-fade-in var(--duration-normal) ease-out; }
 
     .tl-year {
         flex: 0 0 2.2rem;
@@ -1908,6 +1909,8 @@
     <p>Post-traffic accident (MBTI & Strengths)</p>
     <h3><a href="?cmd=identify&v=1.0">ver.1.0 [ARCHIVED]</a></h3>
     <p>Pre-traffic accident (MBTI & Strengths)</p>
+    <h2><a href="?cmd=timeline">timeline</a></h2>
+    <p>Digital, music &amp; Flânerie timeline. Chronological records of my digital projects, music achievements, and life reflections.</p>
     <h2><a href="?cmd=pages">pages</a></h2>
     <p>Explore Web2 creations</p>
     <h3><a href="https://tk.st/dj/">Overview | DJ Human Choreomania Project</a></h3>
@@ -2543,7 +2546,6 @@
           <div class="flex flex-col gap-1 flex-1" style="min-width: 0;">
             <div class="flex items-center justify-between gap-2">
               <span class="font-bold text-normal text-xs truncate">${esc(meta.name)}</span>
-              <span class="text-[10px] text-secondary whitespace-nowrap">v${meta.version}</span>
             </div>
             <div class="text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
             <div class="flex items-center justify-between gap-2 mt-1">
@@ -2642,7 +2644,16 @@
         if (root) {
           const f = tlChip.dataset.filter;
           root.querySelectorAll('[data-action="timeline-filter"]').forEach(c => c.classList.toggle('active', c === tlChip));
-          root.querySelectorAll('.tl-item').forEach(it => { it.style.display = (f === 'all' || it.dataset.cat === f) ? '' : 'none'; });
+          const items = root.querySelectorAll('.tl-item');
+          items.forEach(it => {
+            const matches = (f === 'all' || it.dataset.cat === f);
+            it.style.display = matches ? '' : 'none';
+            if (matches) {
+              it.classList.remove('fade-in-active');
+              void it.offsetWidth; // trigger reflow to restart animation
+              it.classList.add('fade-in-active');
+            }
+          });
         }
       }
     });
@@ -2683,6 +2694,7 @@
       akutagawa: { name: 'letter.txt', icon: '✉' },
       help: { name: 'help.md', icon: '?' },
       contact: { name: 'contact.txt', icon: '@' },
+      clear: { name: 'clear.sh', icon: '⌧' },
       bpm: { name: 'bpm.css', icon: '♥' },
       choreomania: { name: 'choreomania.py', icon: '∿' },
       destroy: { name: 'destroy.sh', icon: '⚠' },
@@ -2695,12 +2707,12 @@
       if (!cmd) return 'Shell';
       if (['theme', 'bpm'].includes(cmd)) return 'CSS';
       if (['matrix', 'meditation'].includes(cmd)) return 'Binary';
-      if (cmd === 'destroy') return 'Shell Script';
+      if (['destroy', 'clear'].includes(cmd)) return 'Shell Script';
       if (cmd === 'contact') return 'Plain Text';
       if (cmd === 'web3') return 'URL';
       const m = FILE_META[cmd];
       if (!m || !m.name.includes('.')) return 'Shell';
-      return { md: 'Markdown', json: 'JSON', yaml: 'YAML', py: 'Python', txt: 'Plain Text' }[m.name.split('.').pop()] || 'Shell';
+      return { md: 'Markdown', json: 'JSON', yaml: 'YAML', py: 'Python', txt: 'Plain Text', sh: 'Shell Script' }[m.name.split('.').pop()] || 'Shell';
     };
     let tabState = {}, tabOrder = [], activeTab = null;
     const fileLabel = c => (FILE_META[c] || { name: c }).name;
@@ -2870,35 +2882,36 @@
       timeline() {
         const tl = [
           { year: '2026.04', cat: 'digital', title: 'AI Agent Architect — MAGI', desc: 'Released MAGI ver 1.0. Defined three of my distinct personas, building a system where they deliberate in a consensus mechanism to generate a unified response.' },
-          { year: '2026.03', cat: 'digital', title: 'Launch of tk.st', desc: 'Launched tk.st as a fully self-contained, Web3-compatible HTML page to reflect on who I am, permanently stored inside the Witness area of the Bitcoin blockchain.' },
+          { year: '2026.03', cat: 'digital', title: 'Launch of tk.st', desc: 'A fully self-contained, Web3-compatible HTML page reflecting on who I am, permanently stored inside the Witness area of the Bitcoin blockchain.' },
           { year: '2025.10', cat: 'flânerie', title: 'Memento Mori', desc: 'Submitted my will, which I drafted while hospitalized, to the Legal Affairs Bureau. No one can predict when they will die; living with a constant awareness of death is vital.' },
-          { year: '2025.09', cat: 'music', title: 'First Live DJ Gig', desc: 'Made my live debut as a DJ, a gig offered while I was still in the hospital. Afterwards, became a semi-regular DJ at a host club, driving the crowd into a dancing frenzy.' },
+          { year: '2025.09', cat: 'music', title: 'First Live DJ Gig', desc: 'An organizer saw my hospital posts and invited me to perform after my discharge. Playing live at the venue offered practical lessons that could never be learned in a classroom.' },
           { year: '2025.08', cat: 'flânerie', title: 'ver 2.0 — Reboot', desc: 'Discharged after 40 days in the hospital. Through the responsible kindness of the nurses, support from those around me, and books given by friends, my values transformed, starting my second life.' },
           { year: '2025.07', cat: 'flânerie', title: 'Motorcycle Accident', desc: 'On my way home from work, my Harley collided with a right-turning car at an intersection, resulting in memory loss and fractures in my arm and hip.' },
-          { year: '2025.04', cat: 'digital', title: 'President\'s Silver Award', desc: 'Awarded the Annual President\'s Silver Award (FY2024) in recognition of the AI-driven content generation project\'s year-round success.' },
-          { year: '2024.11', cat: 'digital', title: 'President\'s Gold Award (2Q)', desc: 'Won the 2Q President\'s Gold Award (FY2024) for pioneering the AI product content generation initiative.' },
-          { year: '2024.10', cat: 'music', title: 'DJ "Human Choreomania Project"', desc: 'Officially launched the DJ Human Choreomania Project, starting studies in professional DJing at Noah Music School.' },
-          { year: '2023.11', cat: 'music', title: 'Discovered MIGMA SHELTER', desc: 'Discovered the psytrance idol group MIGMA SHELTER. One of its members inspired the future concept of the Human Choreomania Project.' },
+          { year: '2025.04', cat: 'digital', title: 'President\'s Silver Award', desc: 'Recognized for the year-round success of the AI-driven content generation project (FY2024).' },
+          { year: '2024.11', cat: 'digital', title: 'President\'s Gold Award (2Q)', desc: 'Awarded for pioneering the AI product content generation initiative (FY2024).' },
+          { year: '2024.10', cat: 'music', title: 'DJ "Human Choreomania Project"', desc: 'Launched the initiative and began studying professional DJing at Noah Music School.' },
+          { year: '2023.11', cat: 'music', title: 'MIGMA SHELTER Encounter', desc: 'Discovered the psytrance idol group whose member would inspire the future concept of the Human Choreomania Project.' },
           { year: '2023', cat: 'digital', title: 'AI Product Content Generation', desc: 'Pioneered AI-generated product descriptions for e-commerce. The project\'s advanced nature drew recognition from Google and inquiries from Amazon.' },
-          { year: '2022', cat: 'digital', title: 'Logistics Center Project', desc: 'Joined a project to build a new logistics center, defining requirements from an e-commerce perspective.' },
+          { year: '2022', cat: 'digital', title: 'Logistics Center Project', desc: 'Defined operational and business requirements from an e-commerce perspective.' },
           { year: '2021', cat: 'digital', title: 'UI Designer', desc: 'Led a collaborative project to adopt Google Material Design and implement A/B testing via Google Optimize.' },
+          { year: '2020.09', cat: 'flânerie', title: 'Great Acharya Encounter', desc: 'Attended a talk by Great Acharya Ryojun Shionuma, featured on the TV show "Crazy Journey," learning the depth of compassion and self-discipline.' },
           { year: '2019.12', cat: 'digital', title: 'Digital Marketer', desc: 'Led technical marketing, including SEO and online advertising, while successfully launching a cross-border e-commerce system.' },
           { year: '2019.03', cat: 'digital', title: 'GAIQ Certified Data Analyst', desc: 'Earned GAIQ and became the lead for GA4, building tracking and dashboards with Looker.' },
           { year: '2018.06', cat: 'digital', title: 'Transferred to E-Commerce Division', desc: 'Began a new career path as an e-commerce operations specialist.' },
           { year: '2015', cat: 'digital', title: 'Data-Driven Layout Optimization', desc: 'Memorized almost all item-level sales data in the store to optimize layouts based on customer contact frequency, significantly boosting overall sales.' },
-          { year: '2011.06', cat: 'digital', title: 'Transferred to Retail Store', desc: 'Learned the fundamentals of customer service and store operations management.' },
+          { year: '2011.06', cat: 'digital', title: 'From Logistics to Retail Store', desc: 'Managed e-commerce shipping to master the flow of goods, while learning the fundamentals of customer service and store operations.' },
           { year: '2011.03', cat: 'flânerie', title: 'The Forklift & Wall Incident', desc: 'Accidentally bumped a warehouse wall with a forklift. Although it seemed fine at the time, a subsequent earthquake caused that exact spot to collapse, creating a "well-ventilated" view straight into the neighboring company.' },
-          { year: '2010.03', cat: 'digital', title: 'Joined NITORI', desc: 'Started my career in the Logistics Division. Having researched its future growth potential in my graduation thesis, I was convinced of its expansion.' },
-          { year: '2009', cat: 'flânerie', title: 'Exchange at Buddhism Univ', desc: 'Although it started due to a credit shortage, this exchange became the very origin of my passion for philosophy.' },
-          { year: '2007', cat: 'flânerie', title: 'Easy Rider Encounter', desc: 'Met the film "Easy Rider"—the origin of my fascination with motorcycles, hippie culture, and psytrance.' },
+          { year: '2010.03', cat: 'digital', title: 'Joined NITORI', desc: 'For my graduation thesis, I researched high-growth companies and was convinced of Nitori\'s future. Due to the Lehman Brothers shock, this was the only job offer I received — a true tightrope walk.' },
+          { year: '2009', cat: 'flânerie', title: 'Exchange at Buddhism Univ', desc: 'Although born from a lack of academic credits, it became the definitive origin of my passion for philosophy.' },
+          { year: '2007', cat: 'flânerie', title: 'Easy Rider Encounter', desc: 'Discovered the film "Easy Rider" — sparking a lifelong fascination with motorcycles, hippie culture, and psytrance.' },
           { year: '2006.04', cat: 'flânerie', title: 'Entering Ritsumei Univ', desc: 'Entered Ritsumeikan University and joined the aviation club to fly gliders, leaving me inspired but broke.' },
           { year: '2005', cat: 'flânerie', title: 'Gap Year Detour', desc: 'Spent a gap year (ronin) after failing university entrance exams—a challenging period struggling to maintain focus.' },
-          { year: '2003', cat: 'digital', title: 'Computer Research Club', desc: 'Joined the computer research club, creating CG graphics and building custom PCs—marking the definitive origin of my current technical roots.' },
+          { year: '2003', cat: 'digital', title: 'Computer Research Club', desc: 'Created CG graphics and built custom PCs, marking the definitive origin of my current technical roots.' },
           { year: '2002', cat: 'flânerie', title: 'FFXI Addiction', desc: 'Got heavily addicted to Final Fantasy XI, causing my academic deviation value to plummet drastically.' },
           { year: '2001', cat: 'music', title: 'Cyber Trance Encounter', desc: 'Discovered "Cyber TRANCE" at an HMV listening station, marking the absolute beginning of my love for electronic dance music (EDM).' },
           { year: '2000', cat: 'music', title: 'First Music Purchase', desc: 'Purchased my very first music CD: "Secret of my heart" by Mai Kuraki.' },
           { year: '199X', cat: 'flânerie', title: 'Academic Leap', desc: 'Skipped grades in school, achieving a peak academic deviation value exceeding 80.' },
-          { year: '198X', cat: 'flânerie', title: 'Born', desc: 'Born in Minato-ku, Tokyo, Japan.' },
+          { year: '198X', cat: 'flânerie', title: 'Born', desc: 'Born in Minato-ku, Tokyo, with roots in Osaka. Moving so often makes it hard to answer where I am from.' },
         ];
         const cats = [
           { key: 'digital', label: 'Digital' },
@@ -2934,7 +2947,7 @@
         return wrapCmd(`
             <div data-timeline>
               <div class="text-sm font-bold glow mb-1 text-primary">Timeline</div>
-              <div class="text-xs mb-3 text-secondary">Digital, Music &amp; Flânerie — newest first.</div>
+              <div class="text-xs mb-3 text-secondary">Moments and impulses that shaped me.</div>
               <div class="flex gap-2 mb-4">
                 <button type="button" class="tl-chip active" data-action="timeline-filter" data-filter="all">All</button>
                 ${cats.map(c => `<button type="button" class="tl-chip" data-action="timeline-filter" data-filter="${c.key}">${esc(c.label)}</button>`).join('\n                ')}
@@ -3511,7 +3524,7 @@
     });
 
     // --- Explorer (file tree) ---
-    const sidebarFiles = ['about', 'identify', 'timeline', 'pages', 'contact', 'help'];
+    const sidebarFiles = ['about', 'identify', 'timeline', 'pages', 'contact', 'clear', 'help'];
     const treeMeta = c => FILE_META[c] || { name: c, icon: '•' };
     const sidebarTree = document.getElementById('sidebar-tree');
     const sidebarEl = document.getElementById('sidebar');
@@ -3544,6 +3557,7 @@
       await handleCommand(btn.dataset.cmd);
       DOM.input.focus({ preventScroll: true });
     });
+
     document.getElementById('tree-folder').addEventListener('click', (e) => {
       const collapsed = sidebarTree.classList.toggle('hidden');
       e.currentTarget.querySelector('.tree-chevron').style.transform = collapsed ? 'rotate(-90deg)' : '';
