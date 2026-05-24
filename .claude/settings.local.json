@@ -20,7 +20,14 @@
       "Bash(node --check www/app.js)",
       "Bash(node --check www/sw.js)",
       "Bash(npx wrangler *)",
-      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:ANDROID_HOME = \"C:\\\\Users\\\\minep\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; cd C:\\\\dev\\\\tk.st\\\\magi-app\\\\android; .\\\\gradlew.bat assembleDebug --no-daemon 2>&1 | Select-Object -Last 40)"
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; $env:ANDROID_HOME = \"C:\\\\Users\\\\minep\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; cd C:\\\\dev\\\\tk.st\\\\magi-app\\\\android; .\\\\gradlew.bat assembleDebug --no-daemon 2>&1 | Select-Object -Last 40)",
+      "Bash(grep -c \"^$\" index.html)",
+      "Bash(awk 'NR>=28 && NR<=2759' index.html)",
+      "Bash(grep -c \"^$\")",
+      "Bash(awk 'NR>=28 && NR<=2759 && /^$/{c++; if\\(c>=2\\)print NR\": multi-blank\"} !/^$/{c=0}' index.html)",
+      "Bash(grep -nE \"^\\\\s*[.#a-zA-Z@][^{};]*\\\\{\\\\s*$\")",
+      "Bash(python3 _analyze.py)",
+      "PowerShell(py _analyze.py)"
     ],
     "additionalDirectories": [
       "C:\\dev\\tk.st\\game\\masala-tetris-vindaloo"

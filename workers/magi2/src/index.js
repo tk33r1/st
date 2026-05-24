@@ -263,7 +263,7 @@ export default {
               .catch(() => { tt.clear(); });
           }
 
-          // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.3 / dark=1.5、未指定は既定）
+          // 揺らぎ：3人格の temperature を UI テーマで変える（light=1.0 / dark=1.3、未指定は既定）
           const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
           if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
 

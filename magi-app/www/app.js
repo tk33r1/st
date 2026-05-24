@@ -75,7 +75,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 2.1</div>'
+  + '<div class="magi-ver">ver 2.2 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('') + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
   + '</div>';
@@ -98,7 +98,33 @@ function reactionStoreFor(bar) {
   if (!pendingReactions[mid]) pendingReactions[mid] = {};
   return pendingReactions[mid];
 }
-function persistReactions() { localStorage.setItem('magi_current_history', JSON.stringify(agentHistory)); }
+function persistReactions() { localStorage.setItem('magi_current_history', JSON.stringify(agentHistory)); syncCurrentToSaved(); }
+
+// ---- Saved sessions (history) ----------------------------------------------
+// One id per active conversation (reset on New conversation). The current
+// conversation is synced into magi_saved_sessions in real time.
+var currentSessionId = localStorage.getItem('magi_current_session_id') || null;
+function archiveCurrentHistory() {
+  currentSessionId = null;
+  localStorage.removeItem('magi_current_session_id');
+}
+function syncCurrentToSaved() {
+  if (!agentHistory || agentHistory.length === 0) return;
+  var firstUserMsg = agentHistory.find(function (m) { return m.role === 'user'; });
+  if (!firstUserMsg) return;
+  var title = agentTitle || (firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : ''));
+  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  if (currentSessionId) {
+    sessions = sessions.filter(function (s) { return s.id !== currentSessionId; });
+  } else {
+    currentSessionId = 'session_' + Date.now();
+    localStorage.setItem('magi_current_session_id', currentSessionId);
+  }
+  sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice() });
+  if (sessions.length > 50) sessions.pop();
+  localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
+  if (document.getElementById('agent-history-list')) renderSavedSessionsList();
+}
 function applyReactionsToTurn(turn, reactions) {
   if (!reactions) return;
   Object.keys(reactions).forEach(function (target) {
@@ -145,7 +171,8 @@ function renderHistoryToLog(history) {
       agentLog.appendChild(u);
     } else if (item.role === 'assistant') {
       var turn = document.createElement('div'); turn.className = 'agent-turn';
-      if (item.mid) turn.dataset.mid = item.mid;
+      if (!item.mid) item.mid = genMid();
+      turn.dataset.mid = item.mid;
       turn.innerHTML = turnHTML(item);
       agentLog.appendChild(turn);
       applyReactionsToTurn(turn, item.reactions);
@@ -163,16 +190,20 @@ function initAgent() {
   setAgentTitle(localStorage.getItem('magi_current_title') || '');
   if (agentHistory && agentHistory.length > 0) renderHistoryToLog(agentHistory);
   else showSplashIfEmpty();
+  updateAgentActionButtons();
 }
 function resetAgent() {
+  archiveCurrentHistory();
   agentHistory = []; agentBusy = false; agentDead = false;
   localStorage.removeItem('magi_current_history');
   localStorage.removeItem('magi_current_title');
   agentLog.innerHTML = '';
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
+  closeAgentPanels();
   setAgentTitle('');
   showSplashIfEmpty();
+  updateAgentActionButtons();
 }
 function agentDegrade(msg) {
   agentDead = true;
@@ -266,7 +297,7 @@ async function agentSend() {
       turn.remove(); renderAgentError(env); errored = true;
     } else {
       await parseSSE(res.body, {
-        title: function (d) { if (d && d.text) setAgentTitle(d.text); },
+        title: function (d) { if (d && d.text) { setAgentTitle(d.text); syncCurrentToSaved(); } },
         persona: function (d) {
           var cn = (window.CSS && CSS.escape) ? CSS.escape(d.codename) : d.codename;
           var card = turn.querySelector('.persona-card[data-codename="' + cn + '"]');
@@ -300,6 +331,8 @@ async function agentSend() {
     agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)), mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
     localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+    syncCurrentToSaved();
+    updateAgentActionButtons();
   }
 }
 
@@ -361,6 +394,8 @@ function closeEmojiPops() { document.querySelectorAll('.emoji-pop').forEach(func
 
 // ---- Click delegation -------------------------------------------------------
 agentLog.addEventListener('click', function (e) {
+  // splash: System & Privacy info button (next to the version string)
+  if (e.target.closest('#btn-info-agent')) { e.preventDefault(); showInfoPanel(); return; }
   // splash persona node
   var node = e.target.closest('.magi-node');
   if (node) {
@@ -401,13 +436,14 @@ agentLog.addEventListener('click', function (e) {
     return;
   }
   if (act === 'like') {
-    if (btn.classList.contains('liked')) {
+    if (btn.classList.contains('liked')) { // cancel the like
       btn.classList.remove('liked'); bar2.classList.remove('locked');
       unregisterReaction(bar2, ctx2.target);
-    } else {
-      btn.classList.add('liked'); bar2.classList.add('locked');
-      registerReaction(bar2, ctx2.target, '👍', ctx2);
+      return;
     }
+    if (bar2.classList.contains('locked')) return; // an emoji is already selected
+    btn.classList.add('liked'); bar2.classList.add('locked'); // mutually exclusive: disable the other
+    registerReaction(bar2, ctx2.target, '👍', ctx2);
     return;
   }
   if (act === 'emoji') {
@@ -417,6 +453,7 @@ agentLog.addEventListener('click', function (e) {
       unregisterReaction(bar2, ctx2.target);
       return;
     }
+    if (bar2.classList.contains('locked')) return; // a like is already selected
     if (bar2.querySelector('.emoji-pop')) { closeEmojiPops(); return; }
     closeEmojiPops();
     var pop2 = document.createElement('div'); pop2.className = 'emoji-pop';
@@ -427,10 +464,159 @@ agentLog.addEventListener('click', function (e) {
 });
 document.addEventListener('click', function (e) { if (!e.target.closest('.reaction-bar')) closeEmojiPops(); });
 
+// ---- Overlay panels (saved chats / info) -----------------------------------
+var AGENT_PANEL_IDS = ['agent-history-panel', 'agent-info-panel'];
+function closeAgentPanels() { AGENT_PANEL_IDS.forEach(function (id) { var p = document.getElementById(id); if (p) p.remove(); }); }
+function makeAgentPanel(id, title, bodyHTML) {
+  if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
+  closeAgentPanels();
+  var panel = document.createElement('div');
+  panel.id = id; panel.className = 'agent-panel fade-in';
+  panel.innerHTML = '<div class="agent-panel-head"><span class="t">' + title + '</span>'
+    + '<button type="button" class="agent-panel-close">✕ CLOSE</button></div>'
+    + '<div class="agent-panel-body">' + bodyHTML + '</div>';
+  document.getElementById('app').appendChild(panel);
+  panel.querySelector('.agent-panel-close').addEventListener('click', function () { panel.remove(); });
+  return panel;
+}
+function showHistoryPanel() {
+  var panel = makeAgentPanel('agent-history-panel', 'Saved Chats', '<div id="agent-history-list" style="display:flex;flex-direction:column;gap:0.4rem;"></div>');
+  if (!panel) return;
+  renderSavedSessionsList();
+}
+var ICON_TRASH = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+function renderSavedSessionsList() {
+  var list = document.getElementById('agent-history-list');
+  if (!list) return;
+  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  if (!sessions.length) { list.innerHTML = '<div class="agent-panel-empty">No saved conversations.</div>'; return; }
+  list.innerHTML = sessions.map(function (s) {
+    return '<div class="session-item" data-id="' + esc(s.id) + '">'
+      + '<div class="session-load" data-id="' + esc(s.id) + '">'
+      + '<div class="session-title">' + esc(s.title) + '</div>'
+      + '<div class="session-time">' + esc(new Date(s.timestamp).toLocaleString()) + '</div></div>'
+      + '<button type="button" class="session-del" data-id="' + esc(s.id) + '" title="Delete chat">' + ICON_TRASH + '</button>'
+      + '</div>';
+  }).join('');
+  list.querySelectorAll('.session-load').forEach(function (el) {
+    el.addEventListener('click', function () { loadSavedSession(el.dataset.id); closeAgentPanels(); });
+  });
+  list.querySelectorAll('.session-del').forEach(function (el) {
+    el.addEventListener('click', function (e) { e.stopPropagation(); deleteSavedSession(el.dataset.id); });
+  });
+}
+function loadSavedSession(id) {
+  syncCurrentToSaved(); // keep the current conversation before switching
+  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  var session = sessions.find(function (s) { return s.id === id; });
+  if (!session) return;
+  agentHistory = session.history.slice();
+  localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+  setAgentTitle(session.title || '');
+  currentSessionId = session.id;
+  localStorage.setItem('magi_current_session_id', currentSessionId);
+  agentDead = false; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
+  agentInput.disabled = false; agentSendBtn.disabled = false;
+  renderHistoryToLog(agentHistory);
+  updateAgentActionButtons();
+}
+function deleteSavedSession(id) {
+  if (currentSessionId === id) { currentSessionId = null; localStorage.removeItem('magi_current_session_id'); }
+  var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+  sessions = sessions.filter(function (s) { return s.id !== id; });
+  localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
+  renderSavedSessionsList();
+}
+function showInfoPanel() {
+  makeAgentPanel('agent-info-panel', 'System & Privacy',
+    '<ul>'
+    + '<li>A multi-agent system with 3 debating personas modeled on <strong>Shinya Takeda\'s personality</strong>.</li>'
+    + '<li>Daily limit: <strong>24 requests</strong> and max <strong>12 rounds</strong> per session.</li>'
+    + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
+    + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
+    + '<li>Powered by <strong>DeepSeek API</strong> (inputs are sent to China and may be used for AI training).</li>'
+    + '<li class="warn">DO NOT input any confidential or personal information.</li>'
+    + '</ul>');
+}
+
+// ---- Export / share ---------------------------------------------------------
+function updateAgentActionButtons() {
+  var hasHistory = agentHistory && agentHistory.length > 0;
+  var shareBtn = document.getElementById('btn-share-agent');
+  var exportBtn = document.getElementById('btn-export-agent');
+  if (shareBtn) shareBtn.disabled = !hasHistory;
+  if (exportBtn) exportBtn.disabled = !hasHistory;
+}
+function getAgentChatMarkdown() {
+  if (!agentHistory || agentHistory.length === 0) return '';
+  var md = '# MAGI Chat Log\nGenerated on: ' + new Date().toLocaleString() + '\n\n---\n\n';
+  agentHistory.forEach(function (item) {
+    if (item.role === 'user') { md += '## 🧑‍💻 User\n' + item.content + '\n\n'; return; }
+    md += '## ✦ MAGI\n' + item.content + '\n\n';
+    if (item.debate) {
+      md += '### 🌐 MAGI Deliberation Process\n\n';
+      AGENT_PERSONAS.forEach(function (p) {
+        var deb = item.debate[p.codename];
+        if (!deb) return;
+        md += '#### 🧬 ' + p.codename + ' (' + p.name + ')\n';
+        if (deb.round1 && deb.round1 !== '…') md += '* **Initial View:** ' + deb.round1 + '\n';
+        if (deb.round2 && deb.round2 !== '…') md += '* **After Debate:** ' + deb.round2 + '\n';
+        md += '\n';
+      });
+      md += '---\n\n';
+    }
+  });
+  md += '*Generated by MAGI (tk.st)*\n';
+  return md;
+}
+async function shareAgentChat(btn) {
+  var md = getAgentChatMarkdown();
+  if (!md) return;
+  var shareData = { title: 'MAGI Chat Log', text: md };
+  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+    try { await navigator.share(shareData); return; }
+    catch (err) { if (err.name !== 'AbortError') console.error('Share failed', err); }
+  }
+  try {
+    await navigator.clipboard.writeText(md);
+    var orig = barTitle.textContent;
+    barTitle.textContent = 'COPIED!';
+    setTimeout(function () { barTitle.textContent = orig; }, 2000);
+  } catch (err) { console.error('Clipboard copy failed', err); }
+}
+function exportAgentChat() {
+  var md = getAgentChatMarkdown();
+  if (!md) return;
+  var blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'magi_chat_' + new Date().toISOString().slice(0, 10) + '.md';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ---- Wire up ----------------------------------------------------------------
 agentSendBtn.addEventListener('click', agentSend);
 agentInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
 document.getElementById('btn-reset').addEventListener('click', resetAgent);
+document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
+
+// kebab dropdown
+(function () {
+  var moreBtn = document.getElementById('btn-more-agent');
+  var moreDropdown = document.getElementById('agent-more-dropdown');
+  if (!moreBtn || !moreDropdown) return;
+  moreBtn.addEventListener('click', function (e) { e.stopPropagation(); moreDropdown.classList.toggle('hidden'); });
+  document.addEventListener('click', function (e) {
+    if (!moreDropdown.classList.contains('hidden') && !e.target.closest('.kebab-wrap')) moreDropdown.classList.add('hidden');
+  });
+  moreDropdown.querySelectorAll('button, a').forEach(function (item) {
+    item.addEventListener('click', function () { moreDropdown.classList.add('hidden'); });
+  });
+})();
+document.getElementById('btn-share-agent').addEventListener('click', function (e) { shareAgentChat(e.currentTarget); });
+document.getElementById('btn-export-agent').addEventListener('click', exportAgentChat);
+
 document.getElementById('btn-theme').addEventListener('click', function () {
   var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);

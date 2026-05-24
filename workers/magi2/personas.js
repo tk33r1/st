@@ -79,7 +79,7 @@ export const SYNTHESIZER = {
 
 // 3人格リクエストの temperature を UI テーマで変化させる（揺らぎ）。
 // theme 未指定時は DEFAULTS.temperature にフォールバック。
-export const PERSONA_TEMPERATURE = { light: 1.3, dark: 1.5 };
+export const PERSONA_TEMPERATURE = { light: 1.0, dark: 1.3 };
 
 // 統合時の「揺らぎ」：UI テーマに応じて優先する人格をやや強める内部指示。
 // 出力に人格名は出さない（SYNTHESIZER の絶対ルールを維持）。
