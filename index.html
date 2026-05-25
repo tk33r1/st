@@ -217,8 +217,8 @@ to{opacity: 1;transform: translateY(0)}
 .meltdown-element{transition: transform 2s ease-in, opacity 2s ease-in !important;transform: translate(var(--dx, 0), var(--dy, 100vh)) rotate(var(--deg, 0deg)) !important;opacity: 0 !important;pointer-events: none !important}
 #terminal-log .meltdown-element{transform: scale(0.5) rotate(var(--deg, 0deg)) !important}
 body.system-meltdown #panel{border: none !important;background: transparent !important;box-shadow: none !important}
-body.rampage-active, body.rampage-active *{cursor: crosshair !important}
-body.rampage-active input, body.rampage-active textarea, body.rampage-active [contenteditable]{cursor: text !important}
+body.rampage-active, body.rampage-active *{cursor: crosshair !important;touch-action: none !important;user-select: none !important;-webkit-user-select: none !important}
+body.rampage-active input, body.rampage-active textarea, body.rampage-active [contenteditable]{cursor: text !important;touch-action: auto !important;user-select: text !important;-webkit-user-select: text !important}
 @keyframes rampageShake{10%,90%{transform: translate(-1px, 0)}20%,80%{transform: translate(2px, 0)}30%,50%,70%{transform: translate(-3px, 1px)}40%,60%{transform: translate(3px, -1px)}}
 @keyframes rampageShakeHard{10%{transform: translate(-5px, 2px) rotate(-0.3deg)}30%{transform: translate(6px, -3px) rotate(0.4deg)}50%{transform: translate(-7px, 3px) rotate(-0.4deg)}70%{transform: translate(5px, -2px) rotate(0.3deg)}90%{transform: translate(-3px, 1px)}}
 body.rampage-shake{animation: rampageShake 0.16s linear}
@@ -2038,7 +2038,7 @@ to{opacity: 0;transform: translateX(20px)}
         if (typeof renderArsenal === 'function') renderArsenal();
 
         // Don't fire when the pointer lands on a real control, so the UI stays usable.
-        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, .arsenal-item, #sidebar, #activitybar, #cmd-palette, #cmd-palette-box';
+        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, .arsenal-item, #cmd-palette, #cmd-palette-box';
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
         const getBpm = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10) || 60;
@@ -2091,7 +2091,8 @@ to{opacity: 0;transform: translateX(20px)}
 
         const onDown = (e) => {
           if (e.pointerType === 'mouse' && e.button !== 0) return; // left button fires; right cycles weapon
-          if (e.target.closest && e.target.closest(GUARD)) return;
+          // Allow clicks to pass through to underlying controls, but still fire the weapon at the clicked position!
+          // This keeps the UI fully functional (buttons work, text inputs focus) while taking damage simultaneously.
           lastX = e.clientX; lastY = e.clientY;
           const w = weapon();
           if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
