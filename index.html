@@ -883,7 +883,7 @@ to{opacity: 0;transform: translateX(20px)}
         <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
         <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
           <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false"
-            placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI">
+            maxlength="1000" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI">
           <button id="agent-send" class="text-primary hover:opacity-70" title="Send" aria-label="Send"><svg
               aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -3044,7 +3044,7 @@ to{opacity: 0;transform: translateX(20px)}
     }
     async function agentSend() {
       if (agentBusy || agentDead) return;
-      const text = agentInput.value.trim(); if (!text) return;
+      const text = agentInput.value.trim().slice(0, 1000); if (!text) return;
       agentInput.value = '';
       if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
       const u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = `<span>${esc(text)}</span>`;

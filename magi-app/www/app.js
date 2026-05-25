@@ -248,7 +248,7 @@ async function parseSSE(body, handlers) {
 // ---- Send -------------------------------------------------------------------
 async function agentSend() {
   if (agentBusy || agentDead) return;
-  var text = agentInput.value.trim(); if (!text) return;
+  var text = agentInput.value.trim().slice(0, 1000); if (!text) return;
   agentInput.value = '';
   if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
 
