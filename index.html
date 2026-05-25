@@ -227,6 +227,10 @@ body.rampage-shake-hard{animation: rampageShakeHard 0.26s cubic-bezier(0.36, 0.0
 body.rampage-shake-punch{animation: rampageShakePunch 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97)}
 #rampage-canvas{position: fixed;inset: 0;width: 100%;height: 100%;z-index: 9997;pointer-events: none}
 .rampage-stripped{border: none !important;background: transparent !important;box-shadow: none !important}
+#rampage-switch{position: fixed;right: 14px;bottom: 46px;z-index: 9999;display: flex;flex-direction: column;align-items: center;gap: 1px;min-width: 116px;min-height: 46px;padding: 6px 14px;font-family: monospace;color: #e0524e;background: rgba(20, 8, 8, 0.82);border: 1px solid rgba(224, 82, 78, 0.6);border-radius: 8px;box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);cursor: pointer;-webkit-tap-highlight-color: transparent;user-select: none;touch-action: manipulation}
+#rampage-switch:active{transform: scale(0.95);background: rgba(224, 82, 78, 0.25)}
+#rampage-switch .rampage-switch-w{font-size: 12px;font-weight: 700;letter-spacing: 0.5px;white-space: nowrap}
+#rampage-switch .rampage-switch-hint{font-size: 9px;opacity: 0.65;letter-spacing: 1px}
 .rebuilding-element{transition: transform 1s ease-out, opacity 1s ease-out !important;transform: translate(0px, 0px) rotate(0deg) !important;opacity: 1 !important;pointer-events: auto !important}
 @keyframes choreoBeat{0%, 100%{transform: scale(1);filter: brightness(1) saturate(1.5) hue-rotate(calc(var(--mouse-x) * 360deg))}
 15%{transform: scale(1.006);filter: brightness(1.15) saturate(1.85) hue-rotate(calc(var(--mouse-x) * 360deg))}
@@ -2011,12 +2015,25 @@ to{opacity: 0;transform: translateX(20px)}
         ];
         let wIdx = (initialWeapon != null) ? initialWeapon : 0;
         const weapon = () => WEAPONS[wIdx].key;
-        const announce = () => printToTerminal(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`);
+
+        // Tappable on-screen weapon switcher — the primary way to change weapon on touch
+        // devices (no right-click / number keys); doubles as the current-weapon indicator.
+        const switchBtn = document.createElement('button');
+        switchBtn.id = 'rampage-switch';
+        switchBtn.type = 'button';
+        switchBtn.setAttribute('aria-label', 'Switch weapon');
+        document.body.appendChild(switchBtn);
+        const updateSwitch = () => { switchBtn.innerHTML = `<span class="rampage-switch-w">${WEAPONS[wIdx].label}</span><span class="rampage-switch-hint">tap ↻</span>`; };
+
+        const announce = () => { updateSwitch(); printToTerminal(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`); };
         const setWeapon = (key) => { const i = WEAPONS.findIndex(w => w.key === key); if (i >= 0 && i !== wIdx) { wIdx = i; announce(); } };
+        const cycleWeapon = () => { wIdx = (wIdx + 1) % WEAPONS.length; announce(); };
         rampageSetWeapon = setWeapon;
+        updateSwitch();
+        switchBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); cycleWeapon(); });
 
         // Don't fire when the pointer lands on a real control, so the UI stays usable.
-        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, #cmd-palette, #cmd-palette-box';
+        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, #cmd-palette, #cmd-palette-box, #rampage-switch';
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
         const getBpm = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10) || 60;
@@ -2135,11 +2152,7 @@ to{opacity: 0;transform: translateX(20px)}
           }
         };
         // Right-click cycles to the next weapon — works even while the terminal input is focused.
-        const onContext = (e) => {
-          e.preventDefault();
-          wIdx = (wIdx + 1) % WEAPONS.length;
-          announce();
-        };
+        const onContext = (e) => { e.preventDefault(); cycleWeapon(); };
         const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
         document.addEventListener('pointerdown', onDown, true);
         document.addEventListener('pointermove', onMove, true);
@@ -2160,7 +2173,7 @@ to{opacity: 0;transform: translateX(20px)}
           window.removeEventListener('keydown', onKey, true);
           window.removeEventListener('resize', resize);
           window.removeEventListener('resize', repositionBars);
-          canvas.remove();
+          canvas.remove(); switchBtn.remove();
           sections.forEach(s => { if (s.bar) s.bar.remove(); });
           // heal: fly collapsed sections back into place (same vars `meltdown`/`rebuild` use)
           flownEls.forEach(el => { el.classList.remove('meltdown-element', 'rebuilding-element'); clearTransformVars(el); });
@@ -2169,7 +2182,7 @@ to{opacity: 0;transform: translateX(20px)}
           isRampageActive = false; rampageTeardown = null; rampageSetWeapon = null;
         };
 
-        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: <b>right-click</b> to cycle, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · flame · coin · punch. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
+        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: <b>tap the weapon button</b> (bottom-right) or <b>right-click</b> to cycle, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · flame · coin · punch. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
