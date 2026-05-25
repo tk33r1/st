@@ -221,16 +221,13 @@ body.rampage-active, body.rampage-active *{cursor: crosshair !important}
 body.rampage-active input, body.rampage-active textarea, body.rampage-active [contenteditable]{cursor: text !important}
 @keyframes rampageShake{10%,90%{transform: translate(-1px, 0)}20%,80%{transform: translate(2px, 0)}30%,50%,70%{transform: translate(-3px, 1px)}40%,60%{transform: translate(3px, -1px)}}
 @keyframes rampageShakeHard{10%{transform: translate(-5px, 2px) rotate(-0.3deg)}30%{transform: translate(6px, -3px) rotate(0.4deg)}50%{transform: translate(-7px, 3px) rotate(-0.4deg)}70%{transform: translate(5px, -2px) rotate(0.3deg)}90%{transform: translate(-3px, 1px)}}
-@keyframes rampageShakePunch{8%{transform: translate(-11px, 5px) rotate(-0.7deg)}20%{transform: translate(13px, -7px) rotate(0.8deg)}34%{transform: translate(-14px, 8px) rotate(-0.9deg)}50%{transform: translate(11px, -6px) rotate(0.7deg)}66%{transform: translate(-8px, 4px) rotate(-0.5deg)}82%{transform: translate(5px, -3px) rotate(0.3deg)}94%{transform: translate(-2px, 1px)}}
 body.rampage-shake{animation: rampageShake 0.16s linear}
 body.rampage-shake-hard{animation: rampageShakeHard 0.26s cubic-bezier(0.36, 0.07, 0.19, 0.97)}
-body.rampage-shake-punch{animation: rampageShakePunch 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97)}
 #rampage-canvas{position: fixed;inset: 0;width: 100%;height: 100%;z-index: 9997;pointer-events: none}
 .rampage-stripped{border: none !important;background: transparent !important;box-shadow: none !important}
-#rampage-switch{position: fixed;right: 14px;bottom: 46px;z-index: 9999;display: flex;flex-direction: column;align-items: center;gap: 1px;min-width: 116px;min-height: 46px;padding: 6px 14px;font-family: monospace;color: #e0524e;background: rgba(20, 8, 8, 0.82);border: 1px solid rgba(224, 82, 78, 0.6);border-radius: 8px;box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);cursor: pointer;-webkit-tap-highlight-color: transparent;user-select: none;touch-action: manipulation}
-#rampage-switch:active{transform: scale(0.95);background: rgba(224, 82, 78, 0.25)}
-#rampage-switch .rampage-switch-w{font-size: 12px;font-weight: 700;letter-spacing: 0.5px;white-space: nowrap}
-#rampage-switch .rampage-switch-hint{font-size: 9px;opacity: 0.65;letter-spacing: 1px}
+.arsenal-item{display: flex;align-items: center;gap: 8px;width: 100%;padding: 7px 10px;font-family: monospace;color: var(--secondary-color);background: transparent;border: 1px solid var(--border-color);border-radius: 6px;cursor: pointer;text-align: left;transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast)}
+.arsenal-item:hover{color: #e0524e;border-color: rgba(224, 82, 78, 0.6)}
+.arsenal-item.active{color: #e0524e;border-color: #e0524e;background: rgba(224, 82, 78, 0.12)}
 .rebuilding-element{transition: transform 1s ease-out, opacity 1s ease-out !important;transform: translate(0px, 0px) rotate(0deg) !important;opacity: 1 !important;pointer-events: auto !important}
 @keyframes choreoBeat{0%, 100%{transform: scale(1);filter: brightness(1) saturate(1.5) hue-rotate(calc(var(--mouse-x) * 360deg))}
 15%{transform: scale(1.006);filter: brightness(1.15) saturate(1.85) hue-rotate(calc(var(--mouse-x) * 360deg))}
@@ -256,6 +253,7 @@ body.choreomania-active #app svg{color: hsl(calc(var(--mouse-y) * 360), 80%, 60%
 .act-btn{position: relative;width: 3rem;height: 3rem;display: flex;align-items: center;justify-content: center;color: var(--secondary-color);border-left: 2px solid transparent;transition: color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast)}
 .act-btn:hover{color: var(--text-color);transform: scale(calc(1 + (var(--phi) - 1) / 10))}
 .act-btn.active{color: var(--primary-color);border-left-color: var(--primary-color)}
+.act-btn.hidden{display: none}
 .nav-badge{position: absolute;bottom: 8px;right: 8px;background: var(--primary-color);color: var(--bg-color);font-size: 9px;font-weight: bold;padding: 0 4px;border-radius: 9px;line-height: 14px;min-width: 14px;text-align: center}
 .nav-badge.hidden{display: none}
 #sidebar{width: 14rem;flex-shrink: 0;overflow-y: auto}
@@ -700,6 +698,16 @@ to{opacity: 0;transform: translateX(20px)}
           </svg>
           <div id="badge-extensions" class="nav-badge hidden">0</div>
         </button>
+        <button id="act-arsenal" class="act-btn hidden" data-act="arsenal" title="Arsenal — switch weapon"
+          aria-label="Arsenal"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="22" y1="12" x2="18" y2="12" />
+            <line x1="6" y1="12" x2="2" y2="12" />
+            <line x1="12" y1="6" x2="12" y2="2" />
+            <line x1="12" y1="22" x2="12" y2="18" />
+            <circle cx="12" cy="12" r="3" />
+          </svg></button>
         <button class="act-btn mt-auto" data-act="agent" title="MAGI" aria-label="MAGI"><svg aria-hidden="true"
             width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
             stroke-linecap="round" stroke-linejoin="round">
@@ -740,6 +748,10 @@ to{opacity: 0;transform: translateX(20px)}
           <div class="px-3 pb-2"><input type="text" id="ext-search-input" autocomplete="off" spellcheck="false"
               placeholder="Search Extensions in Marketplace" aria-label="Search extensions"></div>
           <div id="extensions-list" class="px-3 pb-2 space-y-2"></div>
+        </div>
+        <div id="view-arsenal" class="hidden">
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">ARSENAL</div>
+          <div id="arsenal-list" class="px-3 pb-2 space-y-2"></div>
         </div>
       </aside>
       <div id="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize side bar"
@@ -996,6 +1008,15 @@ to{opacity: 0;transform: translateX(20px)}
     let isMeltdown = false, meltdownElements = [], meltdownInterval = null, rebuildInterval = null;
     let isMatrixActive = false, isMeditationActive = false, isRampageActive = false;
     let matrixTeardown = null, meditationTeardown = null, rampageTeardown = null, rampageSetWeapon = null;
+    // Rampage arsenal — shared so the Arsenal sidebar view can list/select weapons.
+    const RAMPAGE_WEAPONS = [
+      { key: 'mg', label: '⇶ MACHINE GUN' },
+      { key: 'sg', label: '✸ SHOTGUN' },
+      { key: 'sniper', label: '✛ SNIPER RIFLE' },
+      { key: 'flame', label: '♨ FLAMETHROWER' },
+      { key: 'coin', label: '◉ COIN' }
+    ];
+    let rampageWeaponKey = null; // currently-armed weapon while rampage is active
     let errorCount = 0, warnCount = 0;
     let sudoContext = null, akutagawaSudoValid = false;
     let unreadHistoryCount = 0;
@@ -1782,8 +1803,7 @@ to{opacity: 0;transform: translateX(20px)}
           sg: 1, shotgun: 1, '2': 1,
           sniper: 2, rifle: 2, '3': 2,
           flame: 3, flamethrower: 3, fire: 3, '4': 3,
-          coin: 4, key: 4, scratch: 4, '5': 4,
-          punch: 5, fist: 5, '6': 5
+          coin: 4, key: 4, scratch: 4, '5': 4
         };
         const argKey = args && args[0] ? String(args[0]).toLowerCase() : null;
         const initialWeapon = (argKey && ALIAS[argKey] != null) ? ALIAS[argKey] : null;
@@ -1793,7 +1813,7 @@ to{opacity: 0;transform: translateX(20px)}
         // other commands can still be typed while the screen is being shattered.
         if (isRampageActive) {
           if (initialWeapon != null) { // `rampage <weapon>` while armed → just switch
-            if (rampageSetWeapon) rampageSetWeapon(['mg', 'sg', 'sniper', 'flame', 'coin', 'punch'][initialWeapon]);
+            if (rampageSetWeapon) rampageSetWeapon(['mg', 'sg', 'sniper', 'flame', 'coin'][initialWeapon]);
             return '';
           }
           if (rampageTeardown) rampageTeardown();
@@ -1981,7 +2001,7 @@ to{opacity: 0;transform: translateX(20px)}
           if (s.dead) return;
           const r = s.el.getBoundingClientRect();
           if (r.width < 2 || r.height < 2) return;
-          if (!s.bar) { s.bar = document.createElement('div'); s.bar.className = 'rampage-hpbar'; s.bar.innerHTML = '<i></i>'; document.body.appendChild(s.bar); }
+          if (!s.bar) { s.bar = document.createElement('div'); s.bar.className = 'rampage-hpbar'; s.bar.innerHTML = '<i></i>'; (document.getElementById('app') || document.body).appendChild(s.bar); }
           const f = Math.max(0, s.hp / s.max);
           s.bar.style.cssText = `position:fixed;left:${r.left + 4}px;top:${r.top + 4}px;width:${Math.min(120, r.width - 8)}px;height:5px;z-index:9998;pointer-events:none;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.25);border-radius:2px;overflow:hidden;`;
           s.bar.firstChild.style.cssText = `display:block;height:100%;width:${f * 100}%;background:${hpColor(f)};transition:width 0.15s, background 0.15s;`;
@@ -2004,36 +2024,21 @@ to{opacity: 0;transform: translateX(20px)}
           else updateBar(hit);
         };
 
-        // Arsenal. Switch at will: right-click to cycle, or run `rampage <name>`.
-        const WEAPONS = [
-          { key: 'mg', label: '⇶ MACHINE GUN' },
-          { key: 'sg', label: '✸ SHOTGUN' },
-          { key: 'sniper', label: '✛ SNIPER RIFLE' },
-          { key: 'flame', label: '♨ FLAMETHROWER' },
-          { key: 'coin', label: '◉ COIN' },
-          { key: 'punch', label: '✺ PUNCH' }
-        ];
+        // Arsenal. Switch via the target icon in the activity bar (Arsenal view), or run `rampage <name>`.
+        const WEAPONS = RAMPAGE_WEAPONS;
         let wIdx = (initialWeapon != null) ? initialWeapon : 0;
         const weapon = () => WEAPONS[wIdx].key;
 
-        // Tappable on-screen weapon switcher — the primary way to change weapon on touch
-        // devices (no right-click / number keys); doubles as the current-weapon indicator.
-        const switchBtn = document.createElement('button');
-        switchBtn.id = 'rampage-switch';
-        switchBtn.type = 'button';
-        switchBtn.setAttribute('aria-label', 'Switch weapon');
-        document.body.appendChild(switchBtn);
-        const updateSwitch = () => { switchBtn.innerHTML = `<span class="rampage-switch-w">${WEAPONS[wIdx].label}</span><span class="rampage-switch-hint">tap ↻</span>`; };
-
-        const announce = () => { updateSwitch(); printToTerminal(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`); };
+        const announce = () => { rampageWeaponKey = WEAPONS[wIdx].key; if (typeof renderArsenal === 'function') renderArsenal(); printToTerminal(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`); };
         const setWeapon = (key) => { const i = WEAPONS.findIndex(w => w.key === key); if (i >= 0 && i !== wIdx) { wIdx = i; announce(); } };
-        const cycleWeapon = () => { wIdx = (wIdx + 1) % WEAPONS.length; announce(); };
         rampageSetWeapon = setWeapon;
-        updateSwitch();
-        switchBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); cycleWeapon(); });
+        rampageWeaponKey = WEAPONS[wIdx].key;
+        // Reveal the Arsenal icon in the activity bar and reflect the armed weapon.
+        document.getElementById('act-arsenal').classList.remove('hidden');
+        if (typeof renderArsenal === 'function') renderArsenal();
 
         // Don't fire when the pointer lands on a real control, so the UI stays usable.
-        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, #cmd-palette, #cmd-palette-box, #rampage-switch';
+        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, .arsenal-item, #sidebar, #activitybar, #cmd-palette, #cmd-palette-box';
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
         const getBpm = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10) || 60;
@@ -2063,36 +2068,6 @@ to{opacity: 0;transform: translateX(20px)}
             ctx.beginPath(); ctx.arc(x2 + rnd(-2, 2), y2 + rnd(-2, 2), rnd(0.4, 1.1), 0, Math.PI * 2); ctx.fill(); ctx.restore();
           }
           damageAt(x2, y2, 0.4); // only lightly scratches — barely dents HP
-        };
-        // punch: a blunt fist — a caved-in central dent with four knuckle craters, heavy dusty kick
-        const firePunch = (x, y) => {
-          const ang = rnd(0, Math.PI * 2), px = -Math.sin(ang), py = Math.cos(ang); // knuckle-line direction
-          ctx.save();
-          // concave depression: dark core fading out reads as surface pushed inward
-          const dentR = rnd(34, 50);
-          const dg = ctx.createRadialGradient(x, y, 2, x, y, dentR);
-          dg.addColorStop(0, 'rgba(0,0,0,0.22)');
-          dg.addColorStop(0.4, 'rgba(0,0,0,0.10)');
-          dg.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx.fillStyle = dg;
-          ctx.beginPath(); ctx.arc(x, y, dentR, 0, Math.PI * 2); ctx.fill();
-          // light catches the upper raised rim; shadow pools on the lower inner edge → depth
-          ctx.lineCap = 'round';
-          ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1.2;
-          ctx.beginPath(); ctx.arc(x, y, dentR * 0.66, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
-          ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1.4;
-          ctx.beginPath(); ctx.arc(x, y, dentR * 0.66, Math.PI * 0.1, Math.PI * 0.85); ctx.stroke();
-          ctx.restore();
-          // four knuckle craters clustered across the dent — only light cracking; the punch is felt, not shattered
-          for (let i = -1.5; i <= 1.5; i += 1) {
-            drawImpact(x + px * i * 14 + rnd(-3, 3), y + py * i * 14 + rnd(-3, 3), rnd(0.4, 0.8));
-          }
-          drawImpact(x, y, rnd(0.6, 1.0)); // modest central crater
-          recoil(x, y, 1.0, false); damageAt(x, y, 22); // dusty puff (no big flash)
-          // the impact is vibration-led: override with a strong, long screen quake
-          document.body.classList.remove('rampage-shake', 'rampage-shake-hard', 'rampage-shake-punch');
-          void document.body.offsetWidth;
-          document.body.classList.add('rampage-shake-punch');
         };
         // flamethrower: continuous charring + heat-stress cracks while held (no recoil shake)
         const flame = (x, y) => {
@@ -2132,9 +2107,6 @@ to{opacity: 0;transform: translateX(20px)}
             holdTimer = setInterval(() => flame(lastX, lastY), cadence(45)); // continuous spray (BPM-synced)
           } else if (w === 'coin') {
             scratching = true; slx = lastX; sly = lastY;
-          } else if (w === 'punch') {
-            firePunch(lastX, lastY);
-            holdTimer = setInterval(() => firePunch(lastX, lastY), cadence(300)); // slower, heavier flurry (BPM-synced)
           }
         };
         const onMove = (e) => {
@@ -2151,14 +2123,11 @@ to{opacity: 0;transform: translateX(20px)}
             printToTerminal(`<div class="my-2 text-xs text-secondary">Ceasefire — RAMPAGE mode disengaged. The screen heals.</div>`);
           }
         };
-        // Right-click cycles to the next weapon — works even while the terminal input is focused.
-        const onContext = (e) => { e.preventDefault(); cycleWeapon(); };
         const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
         document.addEventListener('pointerdown', onDown, true);
         document.addEventListener('pointermove', onMove, true);
         document.addEventListener('pointerup', stop, true);
         document.addEventListener('pointercancel', stop, true);
-        document.addEventListener('contextmenu', onContext, true);
         window.addEventListener('keydown', onKey, true);
         window.addEventListener('resize', repositionBars);
 
@@ -2169,20 +2138,26 @@ to{opacity: 0;transform: translateX(20px)}
           document.removeEventListener('pointermove', onMove, true);
           document.removeEventListener('pointerup', stop, true);
           document.removeEventListener('pointercancel', stop, true);
-          document.removeEventListener('contextmenu', onContext, true);
           window.removeEventListener('keydown', onKey, true);
           window.removeEventListener('resize', resize);
           window.removeEventListener('resize', repositionBars);
-          canvas.remove(); switchBtn.remove();
+          canvas.remove();
           sections.forEach(s => { if (s.bar) s.bar.remove(); });
           // heal: fly collapsed sections back into place (same vars `meltdown`/`rebuild` use)
           flownEls.forEach(el => { el.classList.remove('meltdown-element', 'rebuilding-element'); clearTransformVars(el); });
           strippedEls.forEach(el => el.classList.remove('rampage-stripped'));
-          document.body.classList.remove('rampage-active', 'rampage-shake', 'rampage-shake-hard', 'rampage-shake-punch');
-          isRampageActive = false; rampageTeardown = null; rampageSetWeapon = null;
+          document.body.classList.remove('rampage-active', 'rampage-shake', 'rampage-shake-hard');
+          isRampageActive = false; rampageTeardown = null; rampageSetWeapon = null; rampageWeaponKey = null;
+          // Hide the Arsenal icon and leave its view if it was open.
+          document.getElementById('act-arsenal').classList.add('hidden');
+          if (typeof renderArsenal === 'function') renderArsenal();
+          if (typeof currentView === 'function' && currentView() === 'arsenal') {
+            showSidebarView('explorer');
+            document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
+          }
         };
 
-        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: <b>tap the weapon button</b> (bottom-right) or <b>right-click</b> to cycle, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · flame · coin · punch. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
+        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
@@ -2674,7 +2649,20 @@ to{opacity: 0;transform: translateX(20px)}
     const searchResults = document.getElementById('search-results');
     const searchCount = document.getElementById('search-count');
     const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
-    const SIDEBAR_VIEWS = ['explorer', 'search', 'git', 'extensions'];
+    const SIDEBAR_VIEWS = ['explorer', 'search', 'git', 'extensions', 'arsenal'];
+    // Arsenal sidebar view — weapon picker for RAMPAGE mode.
+    function renderArsenal() {
+      const list = document.getElementById('arsenal-list');
+      if (!list) return;
+      if (!isRampageActive) {
+        list.innerHTML = `<div class="px-1 py-2 text-[11px] text-secondary opacity-70 leading-relaxed">No rampage in progress.<br>Run <span class="text-normal font-bold">rampage</span> to arm your arsenal.</div>`;
+        return;
+      }
+      list.innerHTML = RAMPAGE_WEAPONS.map(w => {
+        const on = w.key === rampageWeaponKey;
+        return `<button type="button" class="arsenal-item${on ? ' active' : ''}" data-weapon="${esc(w.key)}" aria-pressed="${on}"><span>${esc(w.label)}</span></button>`;
+      }).join('');
+    }
     const showSidebarView = (name) => SIDEBAR_VIEWS.forEach(v => document.getElementById('view-' + v).classList.toggle('hidden', v !== name));
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
@@ -2751,6 +2739,11 @@ to{opacity: 0;transform: translateX(20px)}
 
     document.getElementById('ext-search-input').addEventListener('input', renderExtensions);
 
+    document.getElementById('view-arsenal').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-weapon]'); if (!btn) return;
+      if (rampageSetWeapon) rampageSetWeapon(btn.dataset.weapon);
+    });
+
     // --- Bottom panel (TERMINAL / PROBLEMS / OUTPUT / PORTS) ---
     document.getElementById('panel-tabs').addEventListener('click', (e) => {
       const t = e.target.closest('.panel-tab'); if (!t) return;
@@ -2825,6 +2818,7 @@ to{opacity: 0;transform: translateX(20px)}
         showSidebarView(act); ensureSidebarOpen();
         if (act === 'search') { renderSearch(searchInput.value); searchInput.focus({ preventScroll: true }); searchInput.select(); }
         else if (act === 'git') { renderGit(); unreadHistoryCount = 0; updateGitBadge(); }
+        else if (act === 'arsenal') { renderArsenal(); }
       }
       document.querySelectorAll('#activitybar .act-btn').forEach(x => { if (x.dataset.act !== 'agent') x.classList.toggle('active', x === b); });
     });
