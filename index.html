@@ -1013,6 +1013,7 @@ to{opacity: 0;transform: translateX(20px)}
       { key: 'mg', label: '⇶ MACHINE GUN' },
       { key: 'sg', label: '✸ SHOTGUN' },
       { key: 'sniper', label: '✛ SNIPER RIFLE' },
+      { key: 'grenade', label: '✦ GRENADE LAUNCHER' },
       { key: 'flame', label: '♨ FLAMETHROWER' },
       { key: 'coin', label: '◉ COIN' }
     ];
@@ -1802,8 +1803,9 @@ to{opacity: 0;transform: translateX(20px)}
           mg: 0, machinegun: 0, 'machine-gun': 0, '1': 0,
           sg: 1, shotgun: 1, '2': 1,
           sniper: 2, rifle: 2, '3': 2,
-          flame: 3, flamethrower: 3, fire: 3, '4': 3,
-          coin: 4, key: 4, scratch: 4, '5': 4
+          grenade: 3, launcher: 3, nade: 3, '4': 3,
+          flame: 4, flamethrower: 4, fire: 4, '5': 4,
+          coin: 5, key: 5, scratch: 5, '6': 5
         };
         const argKey = args && args[0] ? String(args[0]).toLowerCase() : null;
         const initialWeapon = (argKey && ALIAS[argKey] != null) ? ALIAS[argKey] : null;
@@ -1813,7 +1815,7 @@ to{opacity: 0;transform: translateX(20px)}
         // other commands can still be typed while the screen is being shattered.
         if (isRampageActive) {
           if (initialWeapon != null) { // `rampage <weapon>` while armed → just switch
-            if (rampageSetWeapon) rampageSetWeapon(['mg', 'sg', 'sniper', 'flame', 'coin'][initialWeapon]);
+            if (rampageSetWeapon) rampageSetWeapon(['mg', 'sg', 'sniper', 'grenade', 'flame', 'coin'][initialWeapon]);
             return '';
           }
           if (rampageTeardown) rampageTeardown();
@@ -2088,6 +2090,35 @@ to{opacity: 0;transform: translateX(20px)}
           requestAnimationFrame(() => { f.style.opacity = '0'; f.style.transform = 'scale(1.6) translateY(-6px)'; });
           setTimeout(() => f.remove(), 190);
         };
+        // grenade launcher: lob a shell that arcs in from below, then detonates on impact —
+        // a wide blast of fractures and the first weapon to splash AoE damage across sections.
+        const fireGrenade = (tx, ty) => {
+          recoil(tx, ty, 0.4); // soft launch puff at the muzzle/cursor
+          // arcing projectile: rises from the bottom toward the target with a parabolic hop
+          const sx = tx + rnd(-40, 40), sy = window.innerHeight + 30;
+          const shell = document.createElement('div');
+          shell.style.cssText = `position:fixed;left:${sx - 4}px;top:${sy - 4}px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle, #fff, #e0a93e 50%, #8a5a1a 100%);box-shadow:0 0 8px rgba(255,180,80,0.8);z-index:9998;pointer-events:none;transition:transform 0.42s cubic-bezier(0.2,0.7,0.5,1), opacity 0.1s;`;
+          document.body.appendChild(shell);
+          requestAnimationFrame(() => { shell.style.transform = `translate(${tx - sx}px, ${ty - sy}px)`; });
+          setTimeout(() => {
+            shell.remove();
+            // detonation: one hard kick, a dense cluster of impacts, and splash damage
+            recoil(tx, ty, 2.1);
+            drawImpact(tx, ty, rnd(1.4, 2.0), 2.4); // central crater throwing long fractures
+            const frags = Math.floor(rnd(14, 22));
+            for (let i = 0; i < frags; i++) {
+              const ang = rnd(0, Math.PI * 2);
+              const dist = Math.pow(Math.random(), 0.7) * rnd(40, 150);
+              drawImpact(tx + Math.cos(ang) * dist, ty + Math.sin(ang) * dist, rnd(0.4, 1.0));
+            }
+            // AoE: damage the centre plus a ring of offset points so adjacent sections take splash
+            damageAt(tx, ty, 26);
+            for (let i = 0; i < 6; i++) {
+              const ang = (i / 6) * Math.PI * 2;
+              damageAt(tx + Math.cos(ang) * 90, ty + Math.sin(ang) * 90, 9);
+            }
+          }, 420);
+        };
 
         const onDown = (e) => {
           if (e.pointerType === 'mouse' && e.button !== 0) return; // left button fires; right cycles weapon
@@ -2108,6 +2139,8 @@ to{opacity: 0;transform: translateX(20px)}
             holdTimer = setInterval(() => flame(lastX, lastY), cadence(45)); // continuous spray (BPM-synced)
           } else if (w === 'coin') {
             scratching = true; slx = lastX; sly = lastY;
+          } else if (w === 'grenade') {
+            fireGrenade(lastX, lastY);
           }
         };
         const onMove = (e) => {
@@ -2158,7 +2191,7 @@ to{opacity: 0;transform: translateX(20px)}
           }
         };
 
-        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
+        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · grenade · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
