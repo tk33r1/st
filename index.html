@@ -2042,6 +2042,20 @@ to{opacity: 0;transform: translateX(20px)}
         // Don't fire when the pointer lands on a real control, so the UI stays usable.
         const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, .arsenal-item, #cmd-palette, #cmd-palette-box';
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
+        // Two-finger swipe should scroll the page instead of firing. We can't use touch-action
+        // for this (it can't tell 1 finger from 2), so we track touch pointers ourselves: a
+        // second finger flips into scroll mode, and we pan the scrollable element under the touch.
+        let multiTouch = false;
+        const touches = new Map(); // pointerId -> {x, y}
+        const scrollableUnder = (x, y) => {
+          let el = document.elementFromPoint(x, y);
+          while (el && el !== document.body) {
+            const s = getComputedStyle(el);
+            if (/(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight) return el;
+            el = el.parentElement;
+          }
+          return document.scrollingElement || document.documentElement;
+        };
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
         const getBpm = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10) || 60;
         const cadence = (baseMs) => Math.max(16, Math.round(baseMs * 60 / getBpm()));
@@ -2121,6 +2135,15 @@ to{opacity: 0;transform: translateX(20px)}
         };
 
         const onDown = (e) => {
+          if (e.pointerType === 'touch') {
+            touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (touches.size >= 2) { // a second finger means "scroll", not "fire"
+              multiTouch = true;
+              if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
+              scratching = false;
+              return;
+            }
+          }
           if (e.pointerType === 'mouse' && e.button !== 0) return; // left button fires; right cycles weapon
           // Allow clicks to pass through to underlying controls, but still fire the weapon at the clicked position!
           // This keeps the UI fully functional (buttons work, text inputs focus) while taking damage simultaneously.
@@ -2144,10 +2167,24 @@ to{opacity: 0;transform: translateX(20px)}
           }
         };
         const onMove = (e) => {
+          if (e.pointerType === 'touch' && touches.has(e.pointerId)) {
+            const prev = touches.get(e.pointerId);
+            if (multiTouch && e.isPrimary) { // pan the container under the leading finger
+              const tgt = scrollableUnder(e.clientX, e.clientY);
+              tgt.scrollTop += prev.y - e.clientY;
+              tgt.scrollLeft += prev.x - e.clientX;
+            }
+            touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (multiTouch) return; // suppress firing while scrolling
+          }
           if (holdTimer) { lastX = e.clientX; lastY = e.clientY; }
           if (scratching) { const nx = e.clientX, ny = e.clientY; scratchSeg(slx, sly, nx, ny); slx = nx; sly = ny; }
         };
-        const stop = () => {
+        const stop = (e) => {
+          if (e && e.pointerType === 'touch') {
+            touches.delete(e.pointerId);
+            if (touches.size < 2) multiTouch = false;
+          }
           if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
           if (scratching) { scratching = false; }
         };
@@ -2191,7 +2228,7 @@ to{opacity: 0;transform: translateX(20px)}
           }
         };
 
-        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · grenade · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
+        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). <b>Two-finger swipe scrolls</b> the page. Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · grenade · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
