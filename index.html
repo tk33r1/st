@@ -2045,8 +2045,12 @@ to{opacity: 0;transform: translateX(20px)}
         // Two-finger swipe should scroll the page instead of firing. We can't use touch-action
         // for this (it can't tell 1 finger from 2), so we track touch pointers ourselves: a
         // second finger flips into scroll mode, and we pan the scrollable element under the touch.
-        let multiTouch = false;
+        let multiTouch = false, panX = 0, panY = 0;
         const touches = new Map(); // pointerId -> {x, y}
+        const centroid = () => { // average position of all active touch points
+          let sx = 0, sy = 0; touches.forEach(p => { sx += p.x; sy += p.y; });
+          return { x: sx / touches.size, y: sy / touches.size };
+        };
         const scrollableUnder = (x, y) => {
           let el = document.elementFromPoint(x, y);
           while (el && el !== document.body) {
@@ -2139,6 +2143,7 @@ to{opacity: 0;transform: translateX(20px)}
             touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
             if (touches.size >= 2) { // a second finger means "scroll", not "fire"
               multiTouch = true;
+              const c = centroid(); panX = c.x; panY = c.y; // anchor the pan
               if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
               scratching = false;
               return;
@@ -2168,14 +2173,15 @@ to{opacity: 0;transform: translateX(20px)}
         };
         const onMove = (e) => {
           if (e.pointerType === 'touch' && touches.has(e.pointerId)) {
-            const prev = touches.get(e.pointerId);
-            if (multiTouch && e.isPrimary) { // pan the container under the leading finger
-              const tgt = scrollableUnder(e.clientX, e.clientY);
-              tgt.scrollTop += prev.y - e.clientY;
-              tgt.scrollLeft += prev.x - e.clientX;
-            }
             touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            if (multiTouch) return; // suppress firing while scrolling
+            if (multiTouch) { // pan the container under the fingers' centre by the centroid delta
+              const c = centroid();
+              const tgt = scrollableUnder(c.x, c.y);
+              tgt.scrollTop += panY - c.y;
+              tgt.scrollLeft += panX - c.x;
+              panX = c.x; panY = c.y;
+              return; // suppress firing while scrolling
+            }
           }
           if (holdTimer) { lastX = e.clientX; lastY = e.clientY; }
           if (scratching) { const nx = e.clientX, ny = e.clientY; scratchSeg(slx, sly, nx, ny); slx = nx; sly = ny; }
@@ -2184,6 +2190,7 @@ to{opacity: 0;transform: translateX(20px)}
           if (e && e.pointerType === 'touch') {
             touches.delete(e.pointerId);
             if (touches.size < 2) multiTouch = false;
+            else { const c = centroid(); panX = c.x; panY = c.y; } // re-anchor after a finger lifts
           }
           if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
           if (scratching) { scratching = false; }
@@ -2195,6 +2202,11 @@ to{opacity: 0;transform: translateX(20px)}
           }
         };
         const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
+        // Disable browser pinch-zoom while armed, otherwise a two-finger gesture gets claimed as
+        // a zoom and fires pointercancel on our touches — killing the scroll before it starts.
+        const vp = document.querySelector('meta[name="viewport"]');
+        const vpPrev = vp ? vp.getAttribute('content') : null;
+        if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
         document.addEventListener('pointerdown', onDown, true);
         document.addEventListener('pointermove', onMove, true);
         document.addEventListener('pointerup', stop, true);
@@ -2212,6 +2224,7 @@ to{opacity: 0;transform: translateX(20px)}
           window.removeEventListener('keydown', onKey, true);
           window.removeEventListener('resize', resize);
           window.removeEventListener('resize', repositionBars);
+          if (vp && vpPrev != null) vp.setAttribute('content', vpPrev); // restore pinch-zoom
           canvas.remove();
           sections.forEach(s => { if (s.bar) s.bar.remove(); });
           // heal: fly collapsed sections back into place (same vars `meltdown`/`rebuild` use)
