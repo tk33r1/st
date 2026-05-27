@@ -2051,14 +2051,27 @@ to{opacity: 0;transform: translateX(20px)}
           let sx = 0, sy = 0; touches.forEach(p => { sx += p.x; sy += p.y; });
           return { x: sx / touches.size, y: sy / touches.size };
         };
-        const scrollableUnder = (x, y) => {
-          let el = document.elementFromPoint(x, y);
-          while (el && el !== document.body) {
+        // Find the element to scroll for a pan of (dx, dy) under (x, y). Walks up from the touch
+        // point and picks the nearest scrollable ancestor that can still move in the requested
+        // direction — so a finger resting on an inner box (or one already at its limit) chains up
+        // to the editor / page, just like native scroll chaining. Falls back to the main editor
+        // pane (or the first scrollable seen) so a two-finger drag always scrolls *something*.
+        const canScroll = (el, axisAuto, pos, max, delta) =>
+          axisAuto && max > 0 && ((delta < 0 && pos > 0) || (delta > 0 && pos < max - 1));
+        const scrollTargetFor = (x, y, dx, dy) => {
+          let el = document.elementFromPoint(x, y), fallback = null;
+          while (el && el !== document.body && el !== document.documentElement) {
             const s = getComputedStyle(el);
-            if (/(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight) return el;
+            const oy = /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight;
+            const ox = /(auto|scroll)/.test(s.overflowX) && el.scrollWidth > el.clientWidth;
+            if (oy || ox) {
+              if (!fallback) fallback = el;
+              if (canScroll(el, oy, el.scrollTop, el.scrollHeight - el.clientHeight, dy) ||
+                  canScroll(el, ox, el.scrollLeft, el.scrollWidth - el.clientWidth, dx)) return el;
+            }
             el = el.parentElement;
           }
-          return document.scrollingElement || document.documentElement;
+          return fallback || document.getElementById('editor') || document.scrollingElement || document.documentElement;
         };
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
         const getBpm = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10) || 60;
@@ -2176,10 +2189,11 @@ to{opacity: 0;transform: translateX(20px)}
             touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
             if (multiTouch) { // pan the container under the fingers' centre by the centroid delta
               const c = centroid();
-              const tgt = scrollableUnder(c.x, c.y);
+              const dx = panX - c.x, dy = panY - c.y;
+              const tgt = scrollTargetFor(c.x, c.y, dx, dy);
               // behavior:'instant' overrides the panes' CSS scroll-behavior:smooth — otherwise each
               // incremental nudge starts a smooth animation the next one interrupts, and nothing moves.
-              tgt.scrollBy({ top: panY - c.y, left: panX - c.x, behavior: 'instant' });
+              tgt.scrollBy({ top: dy, left: dx, behavior: 'instant' });
               panX = c.x; panY = c.y;
               return; // suppress firing while scrolling
             }
