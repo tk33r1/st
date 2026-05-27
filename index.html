@@ -2042,23 +2042,16 @@ to{opacity: 0;transform: translateX(20px)}
         // Don't fire when the pointer lands on a real control, so the UI stays usable.
         const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, .arsenal-item, #cmd-palette, #cmd-palette-box';
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
-        // Two-finger swipe should scroll instead of firing. touch-action can't tell 1 finger from
-        // 2, so we read TouchEvent.touches.length directly — it is authoritative about how many
-        // fingers are down, unlike a manual pointer-id map which a stray pointercancel can desync
-        // (that happens on real devices when a finger lands on a link / <details> in the editor,
-        // which is why scrolling worked over the plain terminal but the editor just kept firing).
-        // The pan runs from a NON-passive touchmove with preventDefault(), which also overrides any
-        // native gesture the browser tries to start.
+        // Two fingers scroll instead of firing. We count fingers via TouchEvent.touches.length
+        // (authoritative — a pointer-id map desyncs when a stray pointercancel fires over a link)
+        // and pan from a non-passive touchmove + preventDefault().
         let multiTouch = false, panX = 0, panY = 0;
         const touchCentroid = (tl) => {
           let sx = 0, sy = 0; for (let i = 0; i < tl.length; i++) { sx += tl[i].clientX; sy += tl[i].clientY; }
           return { x: sx / tl.length, y: sy / tl.length };
         };
-        // Find the element to scroll for a pan of (dx, dy) under (x, y). Walks up from the touch
-        // point and picks the nearest scrollable ancestor that can still move in the requested
-        // direction — so a finger resting on an inner box (or one already at its limit) chains up
-        // to the editor / page, just like native scroll chaining. Falls back to the main editor
-        // pane (or the first scrollable seen) so a two-finger drag always scrolls *something*.
+        // Element to scroll for a pan of (dx, dy) under (x, y): nearest scrollable ancestor that can
+        // still move that way (chains past inner boxes at their limit, like native scrolling).
         const canScroll = (el, axisAuto, pos, max, delta) =>
           axisAuto && max > 0 && ((delta < 0 && pos > 0) || (delta > 0 && pos < max - 1));
         const scrollTargetFor = (x, y, dx, dy) => {
@@ -2219,11 +2212,6 @@ to{opacity: 0;transform: translateX(20px)}
           }
         };
         const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
-        // Disable browser pinch-zoom while armed, otherwise a two-finger gesture gets claimed as
-        // a zoom and fires pointercancel on our touches — killing the scroll before it starts.
-        const vp = document.querySelector('meta[name="viewport"]');
-        const vpPrev = vp ? vp.getAttribute('content') : null;
-        if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
         document.addEventListener('pointerdown', onDown, true);
         document.addEventListener('pointermove', onMove, true);
         document.addEventListener('pointerup', stop, true);
@@ -2249,7 +2237,6 @@ to{opacity: 0;transform: translateX(20px)}
           window.removeEventListener('keydown', onKey, true);
           window.removeEventListener('resize', resize);
           window.removeEventListener('resize', repositionBars);
-          if (vp && vpPrev != null) vp.setAttribute('content', vpPrev); // restore pinch-zoom
           canvas.remove();
           sections.forEach(s => { if (s.bar) s.bar.remove(); });
           // heal: fly collapsed sections back into place (same vars `meltdown`/`rebuild` use)
@@ -3606,7 +3593,8 @@ to{opacity: 0;transform: translateX(20px)}
         <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-text leading-relaxed">
           <ul class="space-y-1.5 list-disc pl-4 text-secondary">
             <li>A multi-agent system with 3 debating personas modeled on <strong class="text-text">Shinya Takeda's personality</strong>.</li>
-            <li>Daily limit: <strong class="text-text">24 requests</strong> (IP addresses stored to enforce limit) and max <strong class="text-text">12 rounds</strong> per session.</li>
+            <li>This is a <strong class="text-text">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-text">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.</li>
+            <li>Strict limits: max <strong class="text-text">1,000 characters</strong> per input, limited output tokens, <strong class="text-text">24 daily requests</strong>, and <strong class="text-text">12 rounds</strong> per session.</li>
             <li>By default, inputs are <strong class="text-text">not saved</strong> in the database, unless you <strong class="text-text">react</strong> to a reply (👍/emoji) to help improve MAGI.</li>
             <li>Chat history is stored in your browser's <strong class="text-text">Local Storage</strong> (not permanent; please export important chats).</li>
             <li>Powered by <strong class="text-text">DeepSeek API</strong> (inputs are sent to China and may be used for AI training).</li>
