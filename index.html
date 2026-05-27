@@ -637,16 +637,19 @@ to{opacity: 0;transform: translateX(20px)}
       <div class="flex items-center gap-4">
         <div class="flex gap-2.5" id="window-btns">
           <button id="btn-close" class="w-3 h-3 rounded-full window-btn bg-red-400" title="Close Terminal"
+            data-ja-title="ターミナルを閉じる" data-ja-aria="ターミナルを閉じる"
             aria-label="Close Terminal"><svg aria-hidden="true" class="window-icon" viewBox="0 0 100 100" fill="none"
               stroke="currentColor" stroke-width="20" stroke-linecap="round">
               <path d="M25 25 L75 75 M75 25 L25 75" />
             </svg></button>
           <button id="btn-minimize" class="w-3 h-3 rounded-full window-btn bg-yellow-400" title="Minimize Terminal"
+            data-ja-title="ターミナルを最小化" data-ja-aria="ターミナルを最小化"
             aria-label="Minimize Terminal"><svg aria-hidden="true" class="window-icon" viewBox="0 0 100 100" fill="none"
               stroke="currentColor" stroke-width="20" stroke-linecap="round">
               <path d="M20 50 L80 50" />
             </svg></button>
           <button id="btn-maximize" class="w-3 h-3 rounded-full window-btn bg-green-400" title="Toggle Fullscreen"
+            data-ja-title="全画面表示の切替" data-ja-aria="全画面表示の切替"
             aria-label="Toggle Fullscreen"><svg aria-hidden="true" class="window-icon" viewBox="0 0 100 100" fill="none"
               stroke="currentColor" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 40 L20 20 L40 20 M80 60 L80 80 L60 80 M20 20 L45 45 M80 80 L55 55" />
@@ -655,7 +658,7 @@ to{opacity: 0;transform: translateX(20px)}
       </div>
       <div class="flex items-center gap-4">
         <button id="btn-reload" class="flex items-center gap-2 cursor-pointer ml-2 transition-opacity hover:opacity-70"
-          title="Reload Terminal" aria-label="Reload Terminal">
+          title="Reload Terminal" data-ja-title="ターミナルを再読み込み" data-ja-aria="ターミナルを再読み込み" aria-label="Reload Terminal">
           <span class="text-primary">▸</span> <span id="titlebar-name"
             class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
         </button>
@@ -665,19 +668,20 @@ to{opacity: 0;transform: translateX(20px)}
     <div id="ide" class="choreo-skip flex flex-1">
       <nav id="activitybar" class="choreo-skip flex flex-col items-center bg-surface border-r border-color"
         aria-label="Activity Bar">
-        <button class="act-btn active" data-act="explorer" title="Explorer" aria-label="Explorer"><svg
+        <button class="act-btn active" data-act="explorer" title="Explorer" data-ja-title="エクスプローラー" data-ja-aria="エクスプローラー" aria-label="Explorer"><svg
             aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
             <path d="M13 2v7h7" />
           </svg></button>
-        <button class="act-btn" data-act="search" title="Search" aria-label="Search"><svg aria-hidden="true" width="22"
+        <button class="act-btn" data-act="search" title="Search" data-ja-title="検索" data-ja-aria="検索" aria-label="Search"><svg aria-hidden="true" width="22"
             height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
             stroke-linejoin="round">
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
           </svg></button>
         <button class="act-btn" data-act="git" title="Source Control (operation history)"
+          data-ja-title="ソース管理（操作履歴）" data-ja-aria="ソース管理"
           aria-label="Source Control"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="6" cy="6" r="2.5" />
@@ -688,7 +692,7 @@ to{opacity: 0;transform: translateX(20px)}
           </svg>
           <div id="badge-git" class="nav-badge hidden">0</div>
         </button>
-        <button class="act-btn" data-act="extensions" title="Extensions" aria-label="Extensions"><svg aria-hidden="true"
+        <button class="act-btn" data-act="extensions" title="Extensions" data-ja-title="拡張機能" data-ja-aria="拡張機能" aria-label="Extensions"><svg aria-hidden="true"
             width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="2.5" y="12.5" width="8" height="8" rx="0.5" />
@@ -699,6 +703,7 @@ to{opacity: 0;transform: translateX(20px)}
           <div id="badge-extensions" class="nav-badge hidden">0</div>
         </button>
         <button id="act-arsenal" class="act-btn hidden" data-act="arsenal" title="Arsenal — switch weapon"
+          data-ja-title="アーセナル — 武器を切替" data-ja-aria="アーセナル"
           aria-label="Arsenal"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10" />
@@ -714,7 +719,7 @@ to{opacity: 0;transform: translateX(20px)}
             <path
               d="M6 3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-1c0.5 1.5 1.5 3 2.5 4.5c-3 0-5-1.5-7.5-4.5H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z" />
           </svg></button>
-        <button class="act-btn" data-act="settings" title="Toggle theme" aria-label="Settings"><svg aria-hidden="true"
+        <button class="act-btn" data-act="settings" title="Toggle theme" data-ja-title="テーマを切替" data-ja-aria="設定" aria-label="Settings"><svg aria-hidden="true"
             width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
             stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3" />
@@ -724,7 +729,7 @@ to{opacity: 0;transform: translateX(20px)}
       </nav>
       <aside id="sidebar" class="choreo-skip bg-surface border-r border-color" aria-label="Side Bar">
         <div id="view-explorer">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">EXPLORER</div>
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="エクスプローラー">EXPLORER</div>
           <button id="tree-folder" type="button" class="tree-folder text-xs font-bold text-normal"><span
               class="tree-chevron text-secondary">▾</span><span>tk.st</span></button>
           <nav id="sidebar-tree" class="text-xs"></nav>
@@ -732,25 +737,25 @@ to{opacity: 0;transform: translateX(20px)}
               class="text-primary">main</span></div>
         </div>
         <div id="view-search" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">SEARCH</div>
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="検索">SEARCH</div>
           <div class="px-3 pb-2"><input type="text" id="search-input" autocomplete="off" spellcheck="false"
-              placeholder="Search commands" aria-label="Search commands"></div>
+              placeholder="Search commands" data-ja-ph="コマンドを検索" data-ja-aria="コマンドを検索" aria-label="Search commands"></div>
           <div id="search-count" class="px-3 pb-1 text-[10px] text-secondary opacity-70"></div>
           <nav id="search-results" class="text-xs"></nav>
         </div>
         <div id="view-git" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">SOURCE CONTROL</div>
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="ソース管理">SOURCE CONTROL</div>
           <div id="git-count" class="px-3 pb-1 text-[10px] text-secondary opacity-70"></div>
           <nav id="git-history" class="text-xs"></nav>
         </div>
         <div id="view-extensions" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">EXTENSIONS</div>
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="拡張機能">EXTENSIONS</div>
           <div class="px-3 pb-2"><input type="text" id="ext-search-input" autocomplete="off" spellcheck="false"
-              placeholder="Search Extensions in Marketplace" aria-label="Search extensions"></div>
+              placeholder="Search Extensions in Marketplace" data-ja-ph="マーケットプレースで拡張機能を検索" data-ja-aria="拡張機能を検索" aria-label="Search extensions"></div>
           <div id="extensions-list" class="px-3 pb-2 space-y-2"></div>
         </div>
         <div id="view-arsenal" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70">ARSENAL</div>
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="アーセナル">ARSENAL</div>
           <div id="arsenal-list" class="px-3 pb-2 space-y-2"></div>
         </div>
       </aside>
@@ -775,11 +780,11 @@ to{opacity: 0;transform: translateX(20px)}
           <div id="panel-tabs" role="tablist" aria-label="Panel"
             class="choreo-skip flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
             <span class="panel-tab active" role="tab" tabindex="0" aria-selected="true"
-              data-panel="terminal">TERMINAL</span><span class="panel-tab" role="tab" tabindex="0" aria-selected="false"
-              data-panel="problems">PROBLEMS<span id="panel-problems-badge"
+              data-panel="terminal" data-ja="ターミナル">TERMINAL</span><span class="panel-tab" role="tab" tabindex="0" aria-selected="false"
+              data-panel="problems"><span data-ja="問題">PROBLEMS</span><span id="panel-problems-badge"
                 class="panel-badge hidden">0</span></span><span class="panel-tab" role="tab" tabindex="0"
-              aria-selected="false" data-panel="output">OUTPUT</span><span class="panel-tab" role="tab" tabindex="0"
-              aria-selected="false" data-panel="ports">PORTS</span>
+              aria-selected="false" data-panel="output" data-ja="出力">OUTPUT</span><span class="panel-tab" role="tab" tabindex="0"
+              aria-selected="false" data-panel="ports" data-ja="ポート">PORTS</span>
           </div>
           <div id="panel-problems" class="panel-pane flex-1 p-3 text-xs hidden"></div>
           <div id="panel-output" class="panel-pane flex-1 p-3 text-xs hidden"></div>
@@ -790,7 +795,7 @@ to{opacity: 0;transform: translateX(20px)}
               <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span>
               <div class="relative flex-1 flex items-center overflow-hidden">
                 <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off"
-                  spellcheck="false" placeholder="type 'help'..." aria-label="Command input">
+                  spellcheck="false" placeholder="type 'help'..." data-ja-ph="「help」と入力…" data-ja-aria="コマンド入力" aria-label="Command input">
                 <span id="cmd-mirror" class="text-sm absolute left-0 top-0 h-full flex items-center"
                   style="visibility:hidden; white-space:pre;"></span>
                 <span id="custom-caret" class="bpm-caret" style="display:none;"></span>
@@ -809,14 +814,14 @@ to{opacity: 0;transform: translateX(20px)}
           <div class="flex items-center gap-2.5">
             <button id="btn-reset-agent"
               class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center"
-              title="New Conversation"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              title="New Conversation" data-ja-title="新しい会話"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg></button>
             <button id="btn-history-agent"
               class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center"
-              title="View conversation history"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24"
+              title="View conversation history" data-ja-title="会話履歴を表示"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
@@ -825,7 +830,7 @@ to{opacity: 0;transform: translateX(20px)}
             <div class="relative inline-block flex items-center justify-center">
               <button id="btn-more-agent"
                 class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center"
-                title="More Options">
+                title="More Options" data-ja-title="その他の操作">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="1.5" />
@@ -843,7 +848,7 @@ to{opacity: 0;transform: translateX(20px)}
                     <polyline points="16 6 12 2 8 6" />
                     <line x1="12" y1="2" x2="12" y2="15" />
                   </svg>
-                  <span>Share Log</span>
+                  <span data-ja="ログを共有">Share Log</span>
                 </button>
                 <button id="btn-export-agent"
                   class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 outline-none border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
@@ -854,7 +859,7 @@ to{opacity: 0;transform: translateX(20px)}
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  <span>Download MD</span>
+                  <span data-ja="MDをダウンロード">Download MD</span>
                 </button>
                 <hr class="border-t border-color my-1 w-full" />
                 <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer"
@@ -866,13 +871,13 @@ to{opacity: 0;transform: translateX(20px)}
                     <polyline points="15 3 21 3 21 9" />
                     <line x1="10" y1="14" x2="21" y2="3" />
                   </svg>
-                  <span>Legacy MAGI</span>
+                  <span data-ja="旧MAGIシステム">Legacy MAGI</span>
                 </a>
               </div>
             </div>
             <button id="btn-close-agent"
               class="text-secondary hover:text-red-500 transition-colors cursor-pointer outline-none flex items-center justify-center ml-1"
-              title="Close Panel"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              title="Close Panel" data-ja-title="パネルを閉じる"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
@@ -883,8 +888,8 @@ to{opacity: 0;transform: translateX(20px)}
         <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
         <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
           <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false"
-            maxlength="1000" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI">
-          <button id="agent-send" class="text-primary hover:opacity-70" title="Send" aria-label="Send"><svg
+            maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ" aria-label="Message MAGI">
+          <button id="agent-send" class="text-primary hover:opacity-70" title="Send" data-ja-title="送信" data-ja-aria="送信" aria-label="Send"><svg
               aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 2 11 13" />
@@ -898,7 +903,7 @@ to{opacity: 0;transform: translateX(20px)}
       class="choreo-skip relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
       <div class="footer-status-row flex items-center justify-between w-full">
         <div class="flex items-center gap-3 truncate">
-          <span id="remote-badge" title="Open a Remote Window — Command Palette" aria-label="Remote"><svg
+          <span id="remote-badge" title="Open a Remote Window — Command Palette" data-ja-title="リモートウィンドウを開く — コマンドパレット" data-ja-aria="リモート" aria-label="Remote"><svg
               aria-hidden="true" class="rb-icon" width="16" height="10.2" viewBox="0 0 22 14" fill="none"
               stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="5,0 11.5,4 5,8" />
@@ -908,10 +913,10 @@ to{opacity: 0;transform: translateX(20px)}
           <span id="status-left"><span>⊘</span> <span>0</span> <span>⚠</span> <span>0</span></span>
         </div>
         <div class="flex items-center gap-3 whitespace-nowrap">
-          <span id="status-bpm" title="System BPM"><span>♥</span> <span>60</span></span>
+          <span id="status-bpm" title="System BPM" data-ja-title="システムBPM"><span>♥</span> <span>60</span></span>
           <span id="status-pos"><span>Ln 1,</span> <span>Col 1</span></span>
           <span id="status-lang" class="text-primary"><span>Shell</span></span>
-          <button id="notif-bell" title="No new notifications" aria-label="Notifications"><svg aria-hidden="true"
+          <button id="notif-bell" title="No new notifications" data-ja-title="新しい通知はありません" data-ja-aria="通知" aria-label="Notifications"><svg aria-hidden="true"
               width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -928,33 +933,33 @@ to{opacity: 0;transform: translateX(20px)}
   <div id="cmd-palette" class="hidden" role="dialog" aria-modal="true" aria-label="Command Palette">
     <div id="cmd-palette-box">
       <input id="cmd-palette-input" type="text" autocomplete="off" spellcheck="false"
-        placeholder="Type '>' for commands, or search files…" aria-label="Command Palette input">
+        placeholder="Type '>' for commands, or search files…" data-ja-ph="「>」でコマンド、またはファイルを検索…" data-ja-aria="コマンドパレット入力" aria-label="Command Palette input">
       <div id="cmd-palette-list"></div>
-      <div id="cmd-palette-foot"><span id="cmd-palette-count"></span><span>↑↓ navigate · ↵ run · esc close</span></div>
+      <div id="cmd-palette-foot"><span id="cmd-palette-count"></span><span data-ja="↑↓ 移動 · ↵ 実行 · esc 閉じる">↑↓ navigate · ↵ run · esc close</span></div>
     </div>
   </div>
   <div id="apk-download-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="apk-download-title">
     <div id="apk-download-box">
       <div id="apk-download-head">
-        <span id="apk-download-title" class="glow">✦ MAGI APK DOWNLOAD</span>
-        <button id="apk-download-close" title="Close" aria-label="Close modal">&times;</button>
+        <span id="apk-download-title" class="glow" data-ja="✦ MAGI APK ダウンロード">✦ MAGI APK DOWNLOAD</span>
+        <button id="apk-download-close" title="Close" data-ja-title="閉じる" data-ja-aria="モーダルを閉じる" aria-label="Close modal">&times;</button>
       </div>
       <div id="apk-download-body">
         <div class="apk-download-options">
           <div class="apk-option-card qr-card">
-            <div class="option-title">Scan QR Code</div>
+            <div class="option-title" data-ja="QRコードをスキャン">Scan QR Code</div>
             <div class="qr-container">
               <img id="apk-qr-image"
                 src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Ftk.st%2Fmagi-app%2Fandroid%2F&color=16a34a&bgcolor=ffffff&qzone=2"
                 alt="QR Code to Download MAGI Android App" loading="lazy" />
             </div>
-            <div class="option-desc">Scan with your phone's camera to install.</div>
+            <div class="option-desc" data-ja="スマートフォンのカメラで読み取ってインストール。">Scan with your phone's camera to install.</div>
           </div>
 
           <div class="apk-option-card download-card">
-            <div class="option-title">Direct Download</div>
+            <div class="option-title" data-ja="直接ダウンロード">Direct Download</div>
             <a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer"
-              class="download-container" title="Download the APK file directly">
+              class="download-container" title="Download the APK file directly" data-ja-title="APKファイルを直接ダウンロード">
               <svg aria-hidden="true" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"
                 class="text-primary animated-pulse-slow">
@@ -963,7 +968,7 @@ to{opacity: 0;transform: translateX(20px)}
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             </a>
-            <div class="option-desc">Download the APK file directly to your device.</div>
+            <div class="option-desc" data-ja="APKファイルを端末に直接ダウンロード。">Download the APK file directly to your device.</div>
           </div>
         </div>
       </div>
@@ -971,14 +976,33 @@ to{opacity: 0;transform: translateX(20px)}
   </div>
   <div id="toast-container" aria-live="polite"></div>
   <div id="notif-center" class="hidden" role="dialog" aria-label="Notifications">
-    <div id="notif-center-head"><span>NOTIFICATIONS</span><span id="notif-center-clear"
-        title="Clear all notifications">Clear all</span></div>
+    <div id="notif-center-head"><span data-ja="通知">NOTIFICATIONS</span><span id="notif-center-clear"
+        title="Clear all notifications" data-ja-title="すべての通知を消去" data-ja="すべて消去">Clear all</span></div>
     <div id="notif-center-list"></div>
   </div>
 
   <script>
-    const config = { display_name: 'Shinya Takeda', job_title: 'Technical Marketing Lead', location_text: 'Tokyo, Japan' };
-    const JOB_TITLES = { light: 'Technical Marketing Lead', dark: 'Hacky Flâneur' };
+    // --- i18n (English ⇄ Japanese) -------------------------------------------
+    // English is the source language (the UI was built English-first for looks);
+    // the optional 'japanese' extension flips the whole interface + content to
+    // Japanese. Everything is kept inline (no external translation files / fetch)
+    // to preserve the self-contained Bitcoin-inscription constraint. The chosen
+    // language is persisted so a returning visitor keeps it.
+    let currentLang = 'en';
+    try { if (localStorage.getItem('tkst_lang') === 'ja') currentLang = 'ja'; } catch (_) { }
+    // Inline translator: tr('English', '日本語'). Falls back to English when the
+    // Japanese argument is omitted, so partially-translated strings stay safe.
+    const tr = (en, ja) => (currentLang === 'ja' && ja != null) ? ja : en;
+    // Field picker for bilingual data records: pick(obj,'title') returns
+    // obj.title_ja in Japanese mode (when present), else obj.title.
+    const pick = (obj, key) => (currentLang === 'ja' && obj[key + '_ja'] != null) ? obj[key + '_ja'] : obj[key];
+
+    const JOB_TITLES = {
+      light: { en: 'Technical Marketing Lead', ja: 'テクニカルマーケティング・リード' },
+      dark: { en: 'Hacky Flâneur', ja: 'ハッキー・フラヌール' }
+    };
+    const jobTitleFor = isDark => tr(JOB_TITLES[isDark ? 'dark' : 'light'].en, JOB_TITLES[isDark ? 'dark' : 'light'].ja);
+    const config = { display_name: 'Shinya Takeda', job_title: jobTitleFor(false), location_text: 'Tokyo, Japan' };
     const DOM = {
       app: document.getElementById('app'),
       output: document.getElementById('output-area'),
@@ -1001,7 +1025,9 @@ to{opacity: 0;transform: translateX(20px)}
     };
     const delay = ms => new Promise(r => setTimeout(r, ms));
     const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
-    const cmdNotFoundHTML = cmd => `<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`;
+    const cmdNotFoundHTML = cmd => tr(
+      `<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`,
+      `<div class="text-xs my-1 text-red-500">コマンドが見つかりません: '${esc(cmd)}'. 利用可能なコマンドは <span class="text-normal font-bold">help</span> と入力してください。</div>`);
 
     const MAX_HISTORY = 50;
     let commandHistory = [], historyIndex = -1, currentVersion = 2;
@@ -1092,7 +1118,7 @@ to{opacity: 0;transform: translateX(20px)}
     function renderProblems() {
       const pane = DOM.panelProblems;
       if (!pane) return;
-      if (!problems.length) { pane.innerHTML = `<div class="text-secondary opacity-70">No problems have been detected.</div>`; return; }
+      if (!problems.length) { pane.innerHTML = tr(`<div class="text-secondary opacity-70">No problems have been detected.</div>`, `<div class="text-secondary opacity-70">問題は検出されていません。</div>`); return; }
       pane.innerHTML = problems.map((p, i) => {
         const icon = p.sev === 'error' ? '<span class="text-red-500">⊘</span>' : '<span style="color:#fbbf24">⚠</span>';
         const loc = `${esc(p.file)}${p.line ? ':' + p.line : ''}`;
@@ -1176,25 +1202,25 @@ to{opacity: 0;transform: translateX(20px)}
     });
 
     const projects = [
-      { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj/' },
-      { name: '/job', desc: 'An Optimization and data-driven growth strategy.', tech: 'EC, UIUX, Search Engine, Web ads, GA4, Frontend, Web3, SEO, AIO, AI Agent', link: 'https://tk.st/job/' },
-      { name: '/game', desc: 'AI coding benchmark: Game Sandbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/game/' },
-      { name: '/tools', desc: 'AI coding benchmark: Toolbox', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/tools/' },
-      { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch/' },
-      { name: '/thought', desc: 'A shared margin for contemplating the essence of life.', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/thought/' }
+      { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', desc_ja: '概要｜DJ 人類踊狂計画', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj/' },
+      { name: '/job', desc: 'An Optimization and data-driven growth strategy.', desc_ja: '最適化とデータドリブンな成長戦略。', tech: 'EC, UIUX, Search Engine, Web ads, GA4, Frontend, Web3, SEO, AIO, AI Agent', link: 'https://tk.st/job/' },
+      { name: '/game', desc: 'AI coding benchmark: Game Sandbox', desc_ja: 'AIコーディング・ベンチマーク：ゲーム・サンドボックス', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/game/' },
+      { name: '/tools', desc: 'AI coding benchmark: Toolbox', desc_ja: 'AIコーディング・ベンチマーク：ツールボックス', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/tools/' },
+      { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', desc_ja: 'より良く生きるための「バグ」を見つける。', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch/' },
+      { name: '/thought', desc: 'A shared margin for contemplating the essence of life.', desc_ja: '生の本質を思索するための、共有された余白。', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/thought/' }
     ];
 
     const PROFILE_DATA = {
       '2.0': {
-        m: { t: 'MBTI: Campaigner (ENFP-A) 🔗', l: 'https://www.16personalities.com/ja/%E3%83%97%E3%83%AD%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB/ab4556642074a' },
-        s: { t: 'CliftonStrengths: Strategic Thinking 🔗', l: 'https://tk.st/data/st-cliftonstrengths-top5-ver2.pdf' },
+        m: { t: 'MBTI: Campaigner (ENFP-A) 🔗', t_ja: 'MBTI: 運動家 (ENFP-A) 🔗', l: 'https://www.16personalities.com/ja/%E3%83%97%E3%83%AD%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB/ab4556642074a' },
+        s: { t: 'CliftonStrengths: Strategic Thinking 🔗', t_ja: 'クリフトンストレングス: 戦略的思考力 🔗', l: 'https://tk.st/data/st-cliftonstrengths-top5-ver2.pdf' },
         traits: [{ name: 'Extraverted', pct: 54, opposite: 'Introverted' }, { name: 'Intuitive', pct: 94, opposite: 'Observant' }, { name: 'Thinking', pct: 41, opposite: 'Feeling' }, { name: 'Judging', pct: 46, opposite: 'Prospecting' }, { name: 'Assertive', pct: 83, opposite: 'Turbulent' }],
         strengths: [{ name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' }, { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' }, { name: 'Executing', pct: 15.034, pattern: 'dots' }],
         themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Input', category: 'Strategic Thinking' }, { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Individualization', category: 'Relationship Building' }]
       },
       '1.0': {
-        m: { t: 'MBTI: Commander (ENTJ-A)', l: null },
-        s: { t: 'CliftonStrengths: Strategic Thinking', l: null },
+        m: { t: 'MBTI: Commander (ENTJ-A)', t_ja: 'MBTI: 指揮官 (ENTJ-A)', l: null },
+        s: { t: 'CliftonStrengths: Strategic Thinking', t_ja: 'クリフトンストレングス: 戦略的思考力', l: null },
         traits: [{ name: 'Extraverted', pct: 61, opposite: 'Introverted' }, { name: 'Intuitive', pct: 69, opposite: 'Observant' }, { name: 'Thinking', pct: 66, opposite: 'Feeling' }, { name: 'Judging', pct: 61, opposite: 'Prospecting' }, { name: 'Assertive', pct: 78, opposite: 'Turbulent' }],
         strengths: [{ name: 'Strategic Thinking', pct: 48.8783, pattern: 'solid' }, { name: 'Influencing', pct: 22.9577, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 11.6582, pattern: 'grid' }, { name: 'Executing', pct: 16.5057, pattern: 'dots' }],
         themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Learner', category: 'Strategic Thinking' }, { rank: '3', theme: 'Futuristic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Intellection', category: 'Strategic Thinking' }]
@@ -1213,6 +1239,7 @@ to{opacity: 0;transform: translateX(20px)}
       rampage: { name: 'rampage', version: '1.0.0', author: 'ST', isHidden: true },
       theme: { name: 'theme', version: '1.1.0', author: 'ST', isHidden: true },
       web3: { name: 'web3', version: '1.0.0', author: 'ST', isHidden: true },
+      japanese: { name: 'japanese', version: '1.0.0', author: 'ST', isHidden: true },
       rebuild: { name: 'rebuild', version: '1.0.0', author: 'ST', isHidden: true, hideFromList: true }
     };
     const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
@@ -1254,7 +1281,7 @@ to{opacity: 0;transform: translateX(20px)}
     function extCardHtml({ cmd, meta, isInstalled }) {
       const tm = (typeof treeMeta === 'function') ? treeMeta(cmd) : { name: meta.name, icon: meta.name[0] };
       const color = iconColor(cmd, tm.name);
-      const desc = CMD_DESC[cmd] || meta.desc || '';
+      const desc = cdesc(cmd) || meta.desc || '';
       return `
         <div class="ext-card flex gap-1.5 p-2 border border-color rounded bg-surface-alt">
           <div class="ext-icon" style="background:linear-gradient(135deg,${color},${color}b3)">${esc(tm.icon)}</div>
@@ -1287,7 +1314,7 @@ to{opacity: 0;transform: translateX(20px)}
         if (cmd === 'rebuild') return;
         if (cmd === 'akutagawa' && !isDark) return;
         const meta = extensionMeta[cmd] || { name: cmd, version: '1.0.0', author: 'ST' };
-        const desc = CMD_DESC[cmd] || '';
+        const desc = cdesc(cmd);
         const isInstalled = installedExtensions.has(cmd);
         if (!isInstalled) uninstalledCount++;
         if (query && !(meta.name.toLowerCase().includes(query) || desc.toLowerCase().includes(query))) return;
@@ -1296,15 +1323,16 @@ to{opacity: 0;transform: translateX(20px)}
 
       let html = '';
       if (installed.length) {
-        html += `<div class="ext-section-label text-secondary opacity-70 pt-2 mb-1">INSTALLED — ${installed.length}</div>`;
+        html += `<div class="ext-section-label text-secondary opacity-70 pt-2 mb-1">${tr('INSTALLED', 'インストール済み')} — ${installed.length}</div>`;
         html += installed.map(extCardHtml).join('');
       }
       if (available.length) {
-        html += `<div class="ext-section-label text-secondary opacity-70 ${installed.length ? 'pt-2' : ''} mb-1">RECOMMENDED — ${available.length}</div>`;
+        html += `<div class="ext-section-label text-secondary opacity-70 ${installed.length ? 'pt-2' : ''} mb-1">${tr('RECOMMENDED', 'おすすめ')} — ${available.length}</div>`;
         html += available.map(extCardHtml).join('');
       }
       if (!installed.length && !available.length) {
-        html = `<div class="text-[10px] text-secondary opacity-70 pt-2">No extensions found matching your search.</div>`;
+        html = tr(`<div class="text-[10px] text-secondary opacity-70 pt-2">No extensions found matching your search.</div>`,
+          `<div class="text-[10px] text-secondary opacity-70 pt-2">検索に一致する拡張機能は見つかりませんでした。</div>`);
       }
       list.innerHTML = html;
 
@@ -1317,7 +1345,7 @@ to{opacity: 0;transform: translateX(20px)}
 
     function applyTheme(isDark) {
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      config.job_title = isDark ? JOB_TITLES.dark : JOB_TITLES.light;
+      config.job_title = jobTitleFor(isDark);
       if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
       if (tabState['about']) tabState['about'] = commands.about();
       const headerJobTitle = document.getElementById('header-job-title');
@@ -1333,7 +1361,61 @@ to{opacity: 0;transform: translateX(20px)}
       const isDark = document.documentElement.getAttribute('data-theme') !== 'dark';
       applyTheme(isDark);
       addToHistory(`[SYS] Theme changed to ${isDark ? 'dark' : 'light'}`);
-      showToast(`Color theme switched to ${isDark ? 'Dark' : 'Light'}`);
+      showToast(tr(`Color theme switched to ${isDark ? 'Dark' : 'Light'}`, `カラーテーマを${isDark ? 'ダーク' : 'ライト'}に切り替えました`));
+    }
+
+    // --- Language switching ---------------------------------------------------
+    // Translate the static chrome that lives in HTML (not generated by JS). The
+    // English text already in the DOM is the source: we cache it in data-en* on
+    // first run, and swap to the data-ja* value in Japanese mode. Elements opt in
+    // with data-ja (textContent), data-ja-title, data-ja-ph (placeholder) or
+    // data-ja-aria (aria-label), so icons inside buttons are never touched.
+    function applyChrome() {
+      const ja = currentLang === 'ja';
+      document.querySelectorAll('[data-ja]').forEach(el => {
+        if (el.dataset.en == null) el.dataset.en = el.textContent;
+        el.textContent = ja ? el.dataset.ja : el.dataset.en;
+      });
+      // attr swap: selector, dataset key holding JA text, cache key for original EN, DOM attribute.
+      const swapAttr = (sel, jaKey, cacheKey, attr) => document.querySelectorAll(sel).forEach(el => {
+        if (el.dataset[cacheKey] == null) el.dataset[cacheKey] = el.getAttribute(attr) || '';
+        el.setAttribute(attr, ja ? el.dataset[jaKey] : el.dataset[cacheKey]);
+      });
+      swapAttr('[data-ja-title]', 'jaTitle', 'enTitle', 'title');
+      swapAttr('[data-ja-ph]', 'jaPh', 'enPh', 'placeholder');
+      swapAttr('[data-ja-aria]', 'jaAria', 'enAria', 'aria-label');
+    }
+
+    // Doc commands that render into editor tabs and are safe to regenerate on a
+    // language switch (akutagawa is async/animated, so it is intentionally left).
+    const LANG_DOC_TABS = ['about', 'identify', 'timeline', 'pages', 'help'];
+    function applyLang() {
+      document.documentElement.setAttribute('lang', currentLang);
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      config.job_title = jobTitleFor(isDark);
+      const headerJobTitle = document.getElementById('header-job-title');
+      if (headerJobTitle) headerJobTitle.textContent = config.job_title;
+      document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
+      applyChrome();
+      // Regenerate any open document tabs so their content matches the language.
+      if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
+      LANG_DOC_TABS.forEach(c => { if (tabState[c] && commands[c]) { try { tabState[c] = commands[c](); } catch (e) { } } });
+      if (typeof renderEditor === 'function') renderEditor();
+      if (typeof renderExplorerTree === 'function') renderExplorerTree();
+      if (typeof renderExtensions === 'function') renderExtensions();
+      // Rebuild the content search index against the active language.
+      if (typeof buildSearchIndex === 'function') buildSearchIndex();
+      const searchInputEl = document.getElementById('search-input');
+      if (searchInputEl && searchInputEl.value && typeof renderSearch === 'function') renderSearch(searchInputEl.value);
+    }
+    function setLanguage(lang) {
+      const next = lang === 'ja' ? 'ja' : 'en';
+      if (next === currentLang) { applyLang(); return; }
+      currentLang = next;
+      try { localStorage.setItem('tkst_lang', next); } catch (_) { }
+      applyLang();
+      addToHistory(`[SYS] Language changed to ${next === 'ja' ? 'Japanese' : 'English'}`);
+      showToast(next === 'ja' ? '表示言語を日本語に切り替えました' : 'Language switched to English');
     }
 
     DOM.output.addEventListener('click', async (e) => {
@@ -1417,7 +1499,8 @@ to{opacity: 0;transform: translateX(20px)}
       meditation: { name: 'meditation.bin', icon: '○' },
       rampage: { name: 'rampage.exe', icon: '✶' },
       theme: { name: 'theme.css', icon: '#' },
-      web3: { name: 'web3.html', icon: '⬡' }
+      web3: { name: 'web3.html', icon: '⬡' },
+      japanese: { name: 'japanese.lang', icon: '亜' }
     };
     const getLangMode = (cmd) => {
       if (!cmd) return 'Shell';
@@ -1445,7 +1528,8 @@ to{opacity: 0;transform: translateX(20px)}
       DOM.breadcrumb.innerHTML = activeTab ? `<span>tk.st</span> <span class="opacity-50">›</span> <span>${esc(fileLabel(activeTab))}</span>` : '<span>tk.st</span>';
       const div = document.createElement('div');
       div.className = 'fade-in';
-      div.innerHTML = activeTab ? tabState[activeTab] : `<div class="my-3 text-xs text-secondary">No file open. Type a command in the terminal below, or open the <span class="text-normal font-bold">Explorer</span>.</div>`;
+      div.innerHTML = activeTab ? tabState[activeTab] : tr(`<div class="my-3 text-xs text-secondary">No file open. Type a command in the terminal below, or open the <span class="text-normal font-bold">Explorer</span>.</div>`,
+        `<div class="my-3 text-xs text-secondary">開いているファイルはありません。下のターミナルにコマンドを入力するか、<span class="text-normal font-bold">エクスプローラー</span> から開いてください。</div>`);
       DOM.output.innerHTML = '';
       DOM.output.appendChild(div);
       DOM.editor.scrollTop = 0;
@@ -1470,6 +1554,26 @@ to{opacity: 0;transform: translateX(20px)}
       if (tab) { activeTab = tab.dataset.tab; setActiveTree(activeTab); renderEditor(); }
     });
 
+    // Standard Japanese renderings of the 16Personalities traits and the
+    // CliftonStrengths domains / theme names used in PROFILE_DATA. term() returns
+    // the Japanese label in Japanese mode, falling back to the English source.
+    const JA_TERMS = {
+      // MBTI trait poles
+      'Extraverted': '外向型', 'Introverted': '内向型',
+      'Intuitive': '直感型', 'Observant': '観察型',
+      'Thinking': '思考型', 'Feeling': '感情型',
+      'Judging': '計画型', 'Prospecting': '探索型',
+      'Assertive': '自己主張型', 'Turbulent': '神経型',
+      // CliftonStrengths domains
+      'Strategic Thinking': '戦略的思考力', 'Influencing': '影響力',
+      'Relationship Building': '人間関係構築力', 'Executing': '実行力',
+      // CliftonStrengths themes
+      'Maximizer': '最上志向', 'Input': '収集心', 'Strategic': '戦略性',
+      'Ideation': '着想', 'Individualization': '個別化', 'Learner': '学習欲',
+      'Futuristic': '未来志向', 'Intellection': '内省'
+    };
+    const term = en => tr(en, JA_TERMS[en]);
+
     const createMBTIRows = (traits, isVer2) => traits.map(t => {
       // t.pct is the % toward t.name; flip to show the dominant side in the caption label only.
       const pct = t.pct >= 50 ? t.pct : 100 - t.pct;
@@ -1477,9 +1581,9 @@ to{opacity: 0;transform: translateX(20px)}
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       return `
         <div class="text-xs mb-4">
-          <div class="flex items-center justify-between mb-1.5"><span class="text-normal">${esc(t.name)}</span><span class="text-secondary">${esc(t.opposite)}</span></div>
+          <div class="flex items-center justify-between mb-1.5"><span class="text-normal">${esc(term(t.name))}</span><span class="text-secondary">${esc(term(t.opposite))}</span></div>
           <div class="mbti-bar-container" aria-hidden="true"><div class="mbti-bar-fill" style="left:${100 - t.pct}%; background:${color};"></div><div class="mbti-bar-bg" style="width:100%; background:${color};"></div></div>
-          <div class="text-center text-[10px] text-secondary mt-1">${pct}% ${esc(name)}</div>
+          <div class="text-center text-[10px] text-secondary mt-1">${pct}% ${esc(term(name))}</div>
         </div>`;
     }).join('');
 
@@ -1500,7 +1604,7 @@ to{opacity: 0;transform: translateX(20px)}
         <div class="text-xs flex items-center justify-between text-normal">
           <div class="flex items-center gap-2">
             <svg aria-hidden="true" width="12" height="12" class="border border-color"><rect x="0" y="0" width="12" height="12" fill="${s.pattern === 'solid' ? color : `url(#${vp}-${s.pattern})`}"/></svg>
-            <span>${esc(s.name)}</span>
+            <span>${esc(term(s.name))}</span>
           </div>
           <span class="text-secondary">${s.pct.toFixed(1)}%</span>
         </div>`).join('');
@@ -1510,17 +1614,21 @@ to{opacity: 0;transform: translateX(20px)}
     const createThemesTable = (themes, isVer2) => themes.map(row => `
       <div class="flex text-xs border-b last:border-0 border-color py-2">
         <div class="w-8" style="color: ${isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)'};">${row.rank}</div>
-        <div class="flex-1 truncate text-normal">${esc(row.theme)}</div>
-        <div class="w-56 text-right truncate text-secondary">${esc(row.category)}</div>
+        <div class="flex-1 truncate text-normal">${esc(term(row.theme))}</div>
+        <div class="w-56 text-right truncate text-secondary">${esc(term(row.category))}</div>
       </div>`).join('');
 
     const wrapCmd = (content, extraClass = '') => `<div class="my-3 w-[90%] max-w-[809px] ${extraClass}">${content}</div>`;
 
-    const renderCmdList = (title, cmdList) => wrapCmd(`
-        <div class="glow text-sm font-bold mb-2 text-primary">${title}</div>
+    const renderCmdList = (title, cmdList) => {
+      const isMain = title === 'Available Commands:';
+      const shownTitle = isMain ? tr('Available Commands:', '利用可能なコマンド:') : title;
+      return wrapCmd(`
+        <div class="glow text-sm font-bold mb-2 text-primary">${esc(shownTitle)}</div>
         <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${esc(c[0])}</span><span>- ${esc(c[1])}</span></div>`).join('')}</div>
-        ${title === 'Available Commands:' ? `<div class="text-[10px] mt-4 opacity-50 italic text-normal">Tip: Use [Tab] to autocomplete. Some hidden commands may exist...</div>` : ''}
+        ${isMain ? `<div class="text-[10px] mt-4 opacity-50 italic text-normal">${tr('Tip: Use [Tab] to autocomplete. Some hidden commands may exist...', 'ヒント：[Tab] キーで補完できます。隠れたコマンドもあるかも……')}</div>` : ''}
       `);
+    };
 
     const executeIdentifyVersion = async (version, targetId) => {
       const isV2 = version === '2.0';
@@ -1530,8 +1638,9 @@ to{opacity: 0;transform: translateX(20px)}
       const tableRows = createThemesTable(data.themes, isV2);
       const titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
 
-      const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${data.m.t}</a>` : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${data.m.t}</div>`;
-      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${data.s.t}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${data.s.t}</div>`;
+      const mTitle = pick(data.m, 't'), sTitle = pick(data.s, 't');
+      const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${mTitle}</a>` : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${mTitle}</div>`;
+      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${sTitle}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${sTitle}</div>`;
 
       const result = `
         <div class="mt-4 fade-in w-full">
@@ -1542,7 +1651,7 @@ to{opacity: 0;transform: translateX(20px)}
             <div style="width:100%; height:16px; border-radius:2px;" class="mb-3 bg-surface overflow-hidden flex">${barHTML}</div>
             <div class="space-y-2 mb-6">${strengthsRows}</div>
             <div class="mt-4 pt-2 overflow-x-auto">
-              <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};"><div class="w-8">RANK</div><div class="flex-1">THEME</div><div class="w-56 text-right">CATEGORY</div></div>
+              <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};"><div class="w-8">${tr('RANK', '順位')}</div><div class="flex-1">${tr('THEME', '資質')}</div><div class="w-56 text-right">${tr('CATEGORY', '領域')}</div></div>
               <div class="overflow-x-auto border-t border-color min-w-[400px]">${tableRows}</div>
             </div>
           </div>
@@ -1560,8 +1669,8 @@ to{opacity: 0;transform: translateX(20px)}
 
     const commands = {
       help: () => {
-        const base = [['about', 'Learn about me'], ['identify', 'View personality versions'], ['timeline', 'Digital, music & Flânerie timeline'], ['pages', 'Explore Web2 creations'], ['contact', 'Contact me'], ['clear', 'Clear terminal'], ['help', 'Show this menu']];
-        const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, CMD_DESC[c] || '']);
+        const base = [['about', tr('Learn about me', '私について')], ['identify', tr('View personality versions', 'パーソナリティのバージョン')], ['timeline', tr('Digital, music & Flânerie timeline', 'デジタル・音楽・遊歩のタイムライン')], ['pages', tr('Explore Web2 creations', 'Web2の制作物を見る')], ['contact', tr('Contact me', 'コンタクト')], ['clear', tr('Clear terminal', 'ターミナルをクリア')], ['help', tr('Show this menu', 'このメニューを表示')]];
+        const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, cdesc(c)]);
         return renderCmdList('Available Commands:', base.concat(installed));
       },
       clear: () => { DOM.terminalLog.innerHTML = ''; return null; },
@@ -1570,7 +1679,8 @@ to{opacity: 0;transform: translateX(20px)}
         const targetCmd = args[0].toLowerCase();
         if (targetCmd !== 'akutagawa') {
           addProblem('error', `${targetCmd} is not allowed to be executed with sudo`, { file: 'terminal' });
-          return `<div class="text-xs my-1 text-red-500">${esc(targetCmd)} is not allowed to be executed with sudo.</div>`;
+          return tr(`<div class="text-xs my-1 text-red-500">${esc(targetCmd)} is not allowed to be executed with sudo.</div>`,
+            `<div class="text-xs my-1 text-red-500">${esc(targetCmd)} は sudo での実行を許可されていません。</div>`);
         }
         if (!installedExtensions.has('akutagawa')) {
           addProblem('error', "Command not found: 'akutagawa'", { file: 'terminal' });
@@ -1579,61 +1689,76 @@ to{opacity: 0;transform: translateX(20px)}
         sudoContext = { cmd: targetCmd, args: args.slice(1) };
         DOM.input.type = 'password';
         DOM.input.placeholder = '[sudo] password for ST: ';
-        return `<div class="text-xs my-1 text-secondary">Enter password for ST:</div>`;
+        return tr(`<div class="text-xs my-1 text-secondary">Enter password for ST:</div>`,
+          `<div class="text-xs my-1 text-secondary">ST のパスワードを入力してください：</div>`);
       },
       about() {
-        const bioLines = ["The sun for the digital, The moon for music and flânerie.", "Love peace. Love insanity."];
+        const bioLines = tr(
+          ["The sun for the digital, The moon for music and flânerie.", "Love peace. Love insanity."],
+          ["デジタルには太陽を、音楽と遊歩には月を。", "平穏を愛し、狂気を愛す。"]
+        );
+        const rows = [
+          [tr('🗼 Origin', '🗼 出身地'), tr(config.location_text, '東京、日本')],
+          [tr('🧬 Roots', '🧬 ルーツ'), tr('Osaka, Japan', '大阪、日本')],
+          [tr('📅 Born', '📅 生まれ'), '198X'],
+          [tr('♉ Zodiac', '♉ 星座'), tr('Taurus', '牡牛座')],
+          [tr('🚹 Gender', '🚹 性別'), tr('Male', '男性')],
+          [tr('💇🏻‍♂️ Hair', '💇🏻‍♂️ 髪'), tr('Curly', 'くせ毛')],
+          [tr('📏 Height', '📏 身長'), '169.9 cm'],
+          [tr('🩸 Blood', '🩸 血液型'), tr('O Rh+', 'O型 Rh+')],
+          [tr('👁️ Vision', '👁️ 視力'), tr('1.5 [LASIK]', '1.5 [レーシック]')]
+        ];
         return wrapCmd(`
-            <div class="text-lg font-bold glow mb-1 text-primary">${esc(config.display_name)}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
+            <div class="text-lg font-bold glow mb-1 text-primary">${esc(tr(config.display_name, '武田 伸也'))}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
-            <div class="space-y-1 pt-2 border-t border-color">${[['🗼 Origin', config.location_text], ['🧬 Roots', 'Osaka, Japan'], ['📅 Born', '198X'], ['♉ Zodiac', 'Taurus'], ['🚹 Gender', 'Male'], ['💇🏻‍♂️ Hair', 'Curly'], ['📏 Height', '169.9 cm'], ['🩸 Blood', 'O Rh+'], ['👁️ Vision', '1.5 [LASIK]']].map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
+            <div class="space-y-1 pt-2 border-t border-color">${rows.map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
           `, 'p-4 border rounded border-color bg-surface');
       },
       pages: () => wrapCmd(`
-          <div class="text-sm font-bold glow mb-2 text-primary">Explore Web2 creations</div>
+          <div class="text-sm font-bold glow mb-2 text-primary">${tr('Explore Web2 creations', 'Web2の制作物を見る')}</div>
           <div class="space-y-2">
-            ${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" data-action="project-link" data-cmd="${esc(p.name)}" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(p.desc)}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}
+            ${projects.map(p => `<a href="${p.link}" target="_blank" rel="noopener noreferrer" data-action="project-link" data-cmd="${esc(p.name)}" class="block p-3 border rounded cursor-pointer transition-colors bg-surface-alt hover:bg-surface-hover border-color no-underline"><div class="flex items-center justify-between mb-1"><span class="text-sm font-bold text-primary">${esc(p.name)}</span></div><div class="text-xs mb-2 text-normal">${esc(pick(p, 'desc'))}</div><div class="text-[10px] text-secondary">⚙ ${esc(p.tech)}</div></a>`).join('')}
           </div>
         `, 'space-y-2'),
       timeline() {
         const tl = [
-          { year: '2026.04', cat: 'digital', title: 'AI Agent Architect — MAGI', desc: 'Released MAGI ver 1.0. Defined three of my distinct personas, building a system where they deliberate in a consensus mechanism to generate a unified response.' },
-          { year: '2026.03', cat: 'digital', title: 'Launch of tk.st', desc: 'A fully self-contained, Web3-compatible HTML page reflecting on who I am, permanently stored inside the Witness area of the Bitcoin blockchain.' },
-          { year: '2025.10', cat: 'flânerie', title: 'Memento Mori', desc: 'Submitted my will, which I drafted while hospitalized, to the Legal Affairs Bureau. No one can predict when they will die; living with a constant awareness of death is vital.' },
-          { year: '2025.09', cat: 'music', title: 'First Live DJ Gig', desc: 'An organizer saw my hospital posts and invited me to perform after my discharge. Playing live at the venue offered practical lessons that could never be learned in a classroom.' },
-          { year: '2025.08', cat: 'flânerie', title: 'ver 2.0 — Reboot', desc: 'Discharged after 40 days in the hospital. Through the responsible kindness of the nurses, support from those around me, and books given by friends, my values transformed, starting my second life.' },
-          { year: '2025.07', cat: 'flânerie', title: 'Motorcycle Accident', desc: 'On my way home from work, my Harley collided with a right-turning car at an intersection, resulting in memory loss and fractures in my arm and hip.' },
-          { year: '2025.04', cat: 'digital', title: 'President\'s Silver Award', desc: 'Recognized for the year-round success of the AI-driven content generation project (FY2024).' },
-          { year: '2024.11', cat: 'digital', title: 'President\'s Gold Award (2Q)', desc: 'Awarded for pioneering the AI product content generation initiative (FY2024).' },
-          { year: '2024.10', cat: 'music', title: 'DJ "Human Choreomania Project"', desc: 'Launched the initiative and began studying professional DJing at Noah Music School.' },
-          { year: '2023.11', cat: 'music', title: 'MIGMA SHELTER Encounter', desc: 'Discovered the psytrance idol group whose member would inspire the future concept of the Human Choreomania Project.' },
-          { year: '2023', cat: 'digital', title: 'AI Product Content Generation', desc: 'Pioneered AI-generated product descriptions for e-commerce. The project\'s advanced nature drew recognition from Google and inquiries from Amazon.' },
-          { year: '2022', cat: 'digital', title: 'Logistics Center Project', desc: 'Defined operational and business requirements from an e-commerce perspective.' },
-          { year: '2021', cat: 'digital', title: 'UI Designer', desc: 'Led a collaborative project to adopt Google Material Design and implement A/B testing via Google Optimize.' },
-          { year: '2020.09', cat: 'flânerie', title: 'Great Acharya Encounter', desc: 'Attended a talk by Great Acharya Ryojun Shionuma, featured on the TV show "Crazy Journey," learning the depth of compassion and self-discipline.' },
-          { year: '2019.12', cat: 'digital', title: 'Digital Marketer', desc: 'Led technical marketing, including SEO and online advertising, while successfully launching a cross-border e-commerce system.' },
-          { year: '2019.03', cat: 'digital', title: 'GAIQ Certified Data Analyst', desc: 'Earned GAIQ and became the lead for GA4, building tracking and dashboards with Looker.' },
-          { year: '2018.06', cat: 'digital', title: 'Transferred to E-Commerce Division', desc: 'Began a new career path as an e-commerce operations specialist.' },
-          { year: '2015', cat: 'digital', title: 'Data-Driven Layout Optimization', desc: 'Memorized almost all item-level sales data in the store to optimize layouts based on customer contact frequency, significantly boosting overall sales.' },
-          { year: '2011.06', cat: 'digital', title: 'From Logistics to Retail Store', desc: 'Managed e-commerce shipping to master the flow of goods, while learning the fundamentals of customer service and store operations.' },
-          { year: '2011.03', cat: 'flânerie', title: 'The Forklift & Wall Incident', desc: 'Accidentally bumped a warehouse wall with a forklift. Although it seemed fine at the time, a subsequent earthquake caused that exact spot to collapse, creating a "well-ventilated" view straight into the neighboring company.' },
-          { year: '2010.03', cat: 'digital', title: 'Joined NITORI', desc: 'For my graduation thesis, I researched high-growth companies and was convinced of Nitori\'s future. Due to the Lehman Brothers shock, this was the only job offer I received — a true tightrope walk.' },
-          { year: '2009', cat: 'flânerie', title: 'Exchange at Buddhism Univ', desc: 'Although born from a lack of academic credits, it became the definitive origin of my passion for philosophy.' },
-          { year: '2007', cat: 'flânerie', title: 'Easy Rider Encounter', desc: 'Discovered the film "Easy Rider" — sparking a lifelong fascination with motorcycles, hippie culture, and psytrance.' },
-          { year: '2006.04', cat: 'flânerie', title: 'Entering Ritsumei Univ', desc: 'Entered Ritsumeikan University and joined the aviation club to fly gliders, leaving me inspired but broke.' },
-          { year: '2005', cat: 'flânerie', title: 'Gap Year Detour', desc: 'Spent a gap year (ronin) after failing university entrance exams—a challenging period struggling to maintain focus.' },
-          { year: '2003', cat: 'digital', title: 'Computer Research Club', desc: 'Created CG graphics and built custom PCs, marking the definitive origin of my current technical roots.' },
-          { year: '2002', cat: 'flânerie', title: 'FFXI Addiction', desc: 'Got heavily addicted to Final Fantasy XI, causing my academic deviation value to plummet drastically.' },
-          { year: '2001', cat: 'music', title: 'Cyber Trance Encounter', desc: 'Discovered "Cyber TRANCE" at an HMV listening station, marking the absolute beginning of my love for electronic dance music (EDM).' },
-          { year: '2000', cat: 'music', title: 'First Music Purchase', desc: 'Purchased my very first music CD: "Secret of my heart" by Mai Kuraki.' },
-          { year: '199X', cat: 'flânerie', title: 'Academic Leap', desc: 'Skipped grades in school, achieving a peak academic deviation value exceeding 80.' },
-          { year: '198X', cat: 'flânerie', title: 'Born', desc: 'Born in Minato-ku, Tokyo, with roots in Osaka. Moving so often makes it hard to answer where I am from.' },
+          { year: '2026.04', cat: 'digital', title: 'AI Agent Architect — MAGI', title_ja: 'AIエージェント・アーキテクト — MAGI', desc: 'Released MAGI ver 1.0. Defined three of my distinct personas, building a system where they deliberate in a consensus mechanism to generate a unified response.', desc_ja: 'MAGI ver 1.0 をリリース。自分の中の3つの異なる人格を定義し、それらが合議制で熟議して一つの統合された回答を生成するシステムを構築した。' },
+          { year: '2026.03', cat: 'digital', title: 'Launch of tk.st', title_ja: 'tk.st を公開', desc: 'A fully self-contained, Web3-compatible HTML page reflecting on who I am, permanently stored inside the Witness area of the Bitcoin blockchain.', desc_ja: '自分という存在を映し出す、完全に自己完結したWeb3対応のHTMLページ。ビットコインのブロックチェーンのWitness領域に恒久的に刻まれている。' },
+          { year: '2025.10', cat: 'flânerie', title: 'Memento Mori', title_ja: 'メメント・モリ', desc: 'Submitted my will, which I drafted while hospitalized, to the Legal Affairs Bureau. No one can predict when they will die; living with a constant awareness of death is vital.', desc_ja: '入院中に書いた遺言書を法務局に提出した。人はいつ死ぬか分からない。常に死を意識して生きることが大切だ。' },
+          { year: '2025.09', cat: 'music', title: 'First Live DJ Gig', title_ja: '初のDJライブ', desc: 'An organizer saw my hospital posts and invited me to perform after my discharge. Playing live at the venue offered practical lessons that could never be learned in a classroom.', desc_ja: '入院中の投稿を見た主催者が、退院後の出演に誘ってくれた。現場でのライブは、教室では決して学べない実践的な学びを与えてくれた。' },
+          { year: '2025.08', cat: 'flânerie', title: 'ver 2.0 — Reboot', title_ja: 'ver 2.0 — 再起動', desc: 'Discharged after 40 days in the hospital. Through the responsible kindness of the nurses, support from those around me, and books given by friends, my values transformed, starting my second life.', desc_ja: '40日間の入院を経て退院。看護師さんたちの責任ある優しさ、周囲の支え、友人がくれた本を通して価値観が一変し、第二の人生が始まった。' },
+          { year: '2025.07', cat: 'flânerie', title: 'Motorcycle Accident', title_ja: 'バイク事故', desc: 'On my way home from work, my Harley collided with a right-turning car at an intersection, resulting in memory loss and fractures in my arm and hip.', desc_ja: '仕事帰り、交差点で右折車とハーレーが衝突。記憶障害と腕・腰の骨折を負った。' },
+          { year: '2025.04', cat: 'digital', title: 'President\'s Silver Award', title_ja: '社長賞シルバー', desc: 'Recognized for the year-round success of the AI-driven content generation project (FY2024).', desc_ja: 'AIによるコンテンツ生成プロジェクトの通年での成功が評価された（2024年度）。' },
+          { year: '2024.11', cat: 'digital', title: 'President\'s Gold Award (2Q)', title_ja: '社長賞ゴールド（2Q）', desc: 'Awarded for pioneering the AI product content generation initiative (FY2024).', desc_ja: 'AIによる商品コンテンツ生成の先駆的な取り組みが評価された（2024年度）。' },
+          { year: '2024.10', cat: 'music', title: 'DJ "Human Choreomania Project"', title_ja: 'DJ「人類踊狂計画」', desc: 'Launched the initiative and began studying professional DJing at Noah Music School.', desc_ja: 'この活動を立ち上げ、ノアミュージックスクールでプロのDJを学び始めた。' },
+          { year: '2023.11', cat: 'music', title: 'MIGMA SHELTER Encounter', title_ja: 'MIGMA SHELTER との出会い', desc: 'Discovered the psytrance idol group whose member would inspire the future concept of the Human Choreomania Project.', desc_ja: '後に「人類踊狂計画」の構想を着想させてくれることになる、サイケトランス・アイドルグループと出会った。' },
+          { year: '2023', cat: 'digital', title: 'AI Product Content Generation', title_ja: 'AIによる商品コンテンツ生成', desc: 'Pioneered AI-generated product descriptions for e-commerce. The project\'s advanced nature drew recognition from Google and inquiries from Amazon.', desc_ja: 'ECサイト向けのAI生成商品説明文を先駆けて導入。その先進性からGoogleに評価され、Amazonからも問い合わせが来た。' },
+          { year: '2022', cat: 'digital', title: 'Logistics Center Project', title_ja: '物流センター・プロジェクト', desc: 'Defined operational and business requirements from an e-commerce perspective.', desc_ja: 'EC視点から運用要件・業務要件を定義した。' },
+          { year: '2021', cat: 'digital', title: 'UI Designer', title_ja: 'UIデザイナー', desc: 'Led a collaborative project to adopt Google Material Design and implement A/B testing via Google Optimize.', desc_ja: 'Google マテリアルデザインの採用と、Google Optimize によるA/Bテスト導入の協働プロジェクトを主導した。' },
+          { year: '2020.09', cat: 'flânerie', title: 'Great Acharya Encounter', title_ja: '大阿闍梨との出会い', desc: 'Attended a talk by Great Acharya Ryojun Shionuma, featured on the TV show "Crazy Journey," learning the depth of compassion and self-discipline.', desc_ja: 'TV番組「クレイジージャーニー」で取り上げられた塩沼亮潤大阿闍梨の講話を聴き、慈悲と自律の深さを学んだ。' },
+          { year: '2019.12', cat: 'digital', title: 'Digital Marketer', title_ja: 'デジタルマーケター', desc: 'Led technical marketing, including SEO and online advertising, while successfully launching a cross-border e-commerce system.', desc_ja: 'SEOやネット広告を含むテクニカルマーケティングを主導し、越境ECシステムの立ち上げを成功させた。' },
+          { year: '2019.03', cat: 'digital', title: 'GAIQ Certified Data Analyst', title_ja: 'GAIQ認定データアナリスト', desc: 'Earned GAIQ and became the lead for GA4, building tracking and dashboards with Looker.', desc_ja: 'GAIQを取得しGA4の担当リードに。Lookerで計測とダッシュボードを構築した。' },
+          { year: '2018.06', cat: 'digital', title: 'Transferred to E-Commerce Division', title_ja: 'EC事業部へ異動', desc: 'Began a new career path as an e-commerce operations specialist.', desc_ja: 'EC運用のスペシャリストとして、新たなキャリアを歩み始めた。' },
+          { year: '2015', cat: 'digital', title: 'Data-Driven Layout Optimization', title_ja: 'データドリブンな売場最適化', desc: 'Memorized almost all item-level sales data in the store to optimize layouts based on customer contact frequency, significantly boosting overall sales.', desc_ja: '店内のほぼ全商品の売上データを記憶し、顧客の接触頻度に基づいて売場を最適化。全体売上を大きく押し上げた。' },
+          { year: '2011.06', cat: 'digital', title: 'From Logistics to Retail Store', title_ja: '物流から店舗へ', desc: 'Managed e-commerce shipping to master the flow of goods, while learning the fundamentals of customer service and store operations.', desc_ja: 'ECの出荷業務を担当して物の流れを体得しつつ、接客と店舗運営の基礎を学んだ。' },
+          { year: '2011.03', cat: 'flânerie', title: 'The Forklift & Wall Incident', title_ja: 'フォークリフトと壁の事件', desc: 'Accidentally bumped a warehouse wall with a forklift. Although it seemed fine at the time, a subsequent earthquake caused that exact spot to collapse, creating a "well-ventilated" view straight into the neighboring company.', desc_ja: 'フォークリフトで倉庫の壁にうっかりぶつけた。その時は無事に見えたが、後の地震でまさにその箇所が崩れ、隣の会社まで筒抜けの「風通しの良い」眺めができてしまった。' },
+          { year: '2010.03', cat: 'digital', title: 'Joined NITORI', title_ja: 'ニトリ入社', desc: 'For my graduation thesis, I researched high-growth companies and was convinced of Nitori\'s future. Due to the Lehman Brothers shock, this was the only job offer I received — a true tightrope walk.', desc_ja: '卒論で高成長企業を研究し、ニトリの将来性を確信した。リーマンショックの影響で、内定はここ一社のみ。まさに綱渡りだった。' },
+          { year: '2009', cat: 'flânerie', title: 'Exchange at Buddhism Univ', title_ja: '仏教大学への交換留学', desc: 'Although born from a lack of academic credits, it became the definitive origin of my passion for philosophy.', desc_ja: '単位不足がきっかけだったが、これが哲学への情熱の決定的な原点となった。' },
+          { year: '2007', cat: 'flânerie', title: 'Easy Rider Encounter', title_ja: '『イージー・ライダー』との出会い', desc: 'Discovered the film "Easy Rider" — sparking a lifelong fascination with motorcycles, hippie culture, and psytrance.', desc_ja: '映画『イージー・ライダー』に出会い、バイク・ヒッピー文化・サイケトランスへの生涯にわたる傾倒が始まった。' },
+          { year: '2006.04', cat: 'flânerie', title: 'Entering Ritsumei Univ', title_ja: '立命館大学に入学', desc: 'Entered Ritsumeikan University and joined the aviation club to fly gliders, leaving me inspired but broke.', desc_ja: '立命館大学に入学し、航空部でグライダーを操縦。心は満たされたが、財布は空になった。' },
+          { year: '2005', cat: 'flânerie', title: 'Gap Year Detour', title_ja: '浪人という回り道', desc: 'Spent a gap year (ronin) after failing university entrance exams—a challenging period struggling to maintain focus.', desc_ja: '大学受験に失敗し浪人生活を送った。集中力を保つのに苦しんだ、厳しい時期だった。' },
+          { year: '2003', cat: 'digital', title: 'Computer Research Club', title_ja: 'コンピュータ研究部', desc: 'Created CG graphics and built custom PCs, marking the definitive origin of my current technical roots.', desc_ja: 'CGグラフィックスを制作し、自作PCを組み立てた。今の技術的なルーツの決定的な原点となった。' },
+          { year: '2002', cat: 'flânerie', title: 'FFXI Addiction', title_ja: 'FFXIに没頭', desc: 'Got heavily addicted to Final Fantasy XI, causing my academic deviation value to plummet drastically.', desc_ja: 'ファイナルファンタジーXIに激しくのめり込み、偏差値が一気に急落した。' },
+          { year: '2001', cat: 'music', title: 'Cyber Trance Encounter', title_ja: 'サイバートランスとの出会い', desc: 'Discovered "Cyber TRANCE" at an HMV listening station, marking the absolute beginning of my love for electronic dance music (EDM).', desc_ja: 'HMVの試聴コーナーで「Cyber TRANCE」に出会い、EDM（エレクトロニック・ダンス・ミュージック）への愛が始まった。' },
+          { year: '2000', cat: 'music', title: 'First Music Purchase', title_ja: '初めて買った音楽', desc: 'Purchased my very first music CD: "Secret of my heart" by Mai Kuraki.', desc_ja: '人生で初めて買った音楽CDは、倉木麻衣の「Secret of my heart」だった。' },
+          { year: '199X', cat: 'flânerie', title: 'Academic Leap', title_ja: '学業の飛躍', desc: 'Skipped grades in school, achieving a peak academic deviation value exceeding 80.', desc_ja: '学校で飛び級し、偏差値はピーク時に80を超えた。' },
+          { year: '198X', cat: 'flânerie', title: 'Born', title_ja: '誕生', desc: 'Born in Minato-ku, Tokyo, with roots in Osaka. Moving so often makes it hard to answer where I am from.', desc_ja: '東京都港区生まれ、ルーツは大阪。引っ越しが多すぎて、出身地を訊かれると答えに困る。' },
         ];
         const cats = [
-          { key: 'digital', label: 'Digital' },
-          { key: 'music', label: 'Music' },
-          { key: 'flânerie', label: 'Flânerie' },
+          { key: 'digital', label: tr('Digital', 'デジタル') },
+          { key: 'music', label: tr('Music', '音楽') },
+          { key: 'flânerie', label: tr('Flânerie', '遊歩') },
         ];
         const labelMap = Object.fromEntries(cats.map(c => [c.key, c.label]));
         const label = c => labelMap[c] || c;
@@ -1653,20 +1778,20 @@ to{opacity: 0;transform: translateX(20px)}
                    <summary class="tl-summary">
                      <div class="flex items-center gap-2 tl-summary-title pr-2">
                        <span class="tl-badge ${e.cat}">${label(e.cat)}</span>
-                       <span class="text-sm font-bold text-normal">${esc(e.title)}</span>
+                       <span class="text-sm font-bold text-normal">${esc(pick(e, 'title'))}</span>
                      </div>
                      <span class="tl-arrow">▼</span>
                    </summary>
-                   <div class="tl-desc">${esc(e.desc)}</div>
+                   <div class="tl-desc">${esc(pick(e, 'desc'))}</div>
                  </details>
                </div>
              </div>`).join('');
         return wrapCmd(`
             <div data-timeline>
-              <div class="text-sm font-bold glow mb-1 text-primary">Timeline</div>
-              <div class="text-xs mb-3 text-secondary">Moments and impulses that shaped me.</div>
+              <div class="text-sm font-bold glow mb-1 text-primary">${tr('Timeline', 'タイムライン')}</div>
+              <div class="text-xs mb-3 text-secondary">${tr('Moments and impulses that shaped me.', '私を形づくった瞬間と衝動。')}</div>
               <div class="flex gap-2 mb-4">
-                <button type="button" class="tl-chip active" data-action="timeline-filter" data-filter="all">All</button>
+                <button type="button" class="tl-chip active" data-action="timeline-filter" data-filter="all">${tr('All', 'すべて')}</button>
                 ${cats.map(c => `<button type="button" class="tl-chip" data-action="timeline-filter" data-filter="${c.key}">${esc(c.label)}</button>`).join('\n                ')}
               </div>
               <div>${rows}</div>
@@ -1675,11 +1800,12 @@ to{opacity: 0;transform: translateX(20px)}
       },
       identify() {
         const uniqueId = 'id-' + Date.now();
-        const versions = [['2.0', 'ACTIVE', '2025.08.20', 'Post-traffic accident', 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], ['1.0', 'ARCHIVED', '2025.07.10', 'Pre-traffic accident', 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']];
+        const versions = [['2.0', tr('ACTIVE', '稼働中'), '2025.08.20', tr('Post-traffic accident', '交通事故の後'), 'bg-primary-dim hover:bg-primary-dim-hover', 'border-primary', 'text-primary'], ['1.0', tr('ARCHIVED', 'アーカイブ'), '2025.07.10', tr('Pre-traffic accident', '交通事故の前'), 'bg-surface-alt hover:bg-surface-hover', 'border-color', 'text-secondary']];
+        const mbtiSuffix = tr('(MBTI & Strengths)', '（MBTI・ストレングス）');
         return wrapCmd(`
-            <div class="text-sm font-bold glow mb-3 text-primary">Please select a profile to initialize:</div>
+            <div class="text-sm font-bold glow mb-3 text-primary">${tr('Please select a profile to initialize:', '初期化するプロファイルを選択してください：')}</div>
             <div class="space-y-2">
-              ${versions.map(v => `<a href="?cmd=identify&v=${v[0]}" class="block p-3 border rounded transition-colors no-underline ${v[4]} ${v[5]}" data-action="identify" data-version="${v[0]}" data-id="${uniqueId}"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold ${v[6]}">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] text-secondary">${v[2]}</span></div><div class="text-xs text-secondary">${v[3]} (MBTI & Strengths)</div></a>`).join('')}
+              ${versions.map(v => `<a href="?cmd=identify&v=${v[0]}" class="block p-3 border rounded transition-colors no-underline ${v[4]} ${v[5]}" data-action="identify" data-version="${v[0]}" data-id="${uniqueId}"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold ${v[6]}">ver.${v[0]} [${v[1]}]</span><span class="text-[10px] text-secondary">${v[2]}</span></div><div class="text-xs text-secondary">${v[3]} ${mbtiSuffix}</div></a>`).join('')}
             </div>
             <div id="identify-result-${uniqueId}"></div>
           `);
@@ -1687,16 +1813,17 @@ to{opacity: 0;transform: translateX(20px)}
       async akutagawa() {
         if (!akutagawaSudoValid) {
           addProblem('error', "Failed to open 'letter.txt': insufficient permissions", { file: 'letter.txt' });
-          await printToTerminal(`<div class="text-xs my-1 text-red-500">Failed to open 'letter.txt': Insufficient permissions. Try running with 'sudo'.</div>`, 20);
+          await printToTerminal(tr(`<div class="text-xs my-1 text-red-500">Failed to open 'letter.txt': Insufficient permissions. Try running with 'sudo'.</div>`,
+            `<div class="text-xs my-1 text-red-500">'letter.txt' を開けませんでした: 権限が不足しています。'sudo' を付けて実行してみてください。</div>`), 20);
           return null;
         }
         const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] text-primary'; DOM.terminalLog.appendChild(loadingDiv); scrollTerminal();
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
-        const loadingInterval = setInterval(() => { loadingDiv.textContent = `Loading...  ${spinners[frameIndex++ % 4]}`; }, 300);
+        const loadingInterval = setInterval(() => { loadingDiv.textContent = `${tr('Loading', '読み込み中')}...  ${spinners[frameIndex++ % 4]}`; }, 300);
         await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
         return `<div class="my-4 border rounded text-sm bg-[#faf6f0] text-[#2c2b29] relative shadow-md" style="font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important; line-height: 2; border-color: #e3dac9; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; width: fit-content; max-width: 95%; min-width: 280px; padding: 24px 36px; box-sizing: border-box;">
           <div style="border-bottom: 1px dashed #d1c7bd; padding-bottom: 12px; margin-bottom: 20px; font-weight: bold; font-size: 11px; letter-spacing: 0.1em; color: #8c7e6e; font-family: ui-monospace, SFMono-Regular, monospace !important;">LETTER.TXT</div>
-          <p style="margin: 0 0 24px 0; font-style: italic; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important;">I'm sorry for the burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.</p>
+          <p style="margin: 0 0 24px 0; font-style: italic; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important;">${tr(`I'm sorry for the burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.`, `あなたに負担をかけてしまい、ごめんなさい。<br>私にはあなたの人生に責任を持つ資格はないと、わかっています。<br>それでも、あなたの健康と成長を、いつも願っています。`)}</p>
           <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; min-height: 45px;">
             <pre style="margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 10px; line-height: 1.1; color: #7693b5; text-align: left; opacity: 0.85; font-weight: bold;" title="Forget-me-not (勿忘草)">
    _
@@ -1709,24 +1836,41 @@ to{opacity: 0;transform: translateX(20px)}
       },
       theme(args) {
         const colors = { green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', orange: '#fb923c', purple: '#c084fc', white: '#ffffff', red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee' };
-        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return `<div class="my-3 text-xs text-secondary">Usage: theme &lt;color&gt;<br>Available colors: <span class="text-normal">${Object.keys(colors).join(', ')}</span></div>`;
+        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return tr(`<div class="my-3 text-xs text-secondary">Usage: theme &lt;color&gt;<br>Available colors: <span class="text-normal">${Object.keys(colors).join(', ')}</span></div>`,
+          `<div class="my-3 text-xs text-secondary">使い方: theme &lt;color&gt;<br>選べる色: <span class="text-normal">${Object.keys(colors).join(', ')}</span></div>`);
         const newColor = colors[args[0].toLowerCase()];
         document.documentElement.style.setProperty('--primary-color', newColor);
         document.documentElement.style.setProperty('--primary-bg', newColor + '26');
         document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40');
-        return `<div class="my-3 text-xs text-primary">Theme color successfully changed to ${esc(args[0])}.</div>`;
+        return tr(`<div class="my-3 text-xs text-primary">Theme color successfully changed to ${esc(args[0])}.</div>`,
+          `<div class="my-3 text-xs text-primary">テーマカラーを ${esc(args[0])} に変更しました。</div>`);
+      },
+      // The 'japanese' extension flips the entire UI + content between English and
+      // Japanese. With no argument it toggles; `japanese en|ja` forces a direction.
+      japanese(args) {
+        const arg = ((args && args[0]) || '').toLowerCase();
+        const goJa = (arg === 'ja' || arg === 'jp' || arg === 'on') ? true
+          : (arg === 'en' || arg === 'english' || arg === 'off') ? false
+            : currentLang !== 'ja';
+        setLanguage(goJa ? 'ja' : 'en');
+        return goJa
+          ? `<div class="my-3 text-xs text-primary">言語を日本語に切り替えました。<span class="text-secondary">（もう一度 <span class="text-normal font-bold">japanese</span> を実行すると英語に戻ります）</span></div>`
+          : `<div class="my-3 text-xs text-primary">Language switched to English. <span class="text-secondary">(run <span class="text-normal font-bold">japanese</span> again for Japanese)</span></div>`;
       },
       bpm(args) {
         const currentBpm = getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60';
-        if (!args || args.length === 0 || isNaN(args[0])) return `<div class="my-3 text-xs text-secondary">Usage: bpm &lt;number&gt;<br>Current BPM: <span class="text-normal font-bold">${currentBpm}</span></div>`;
+        if (!args || args.length === 0 || isNaN(args[0])) return tr(`<div class="my-3 text-xs text-secondary">Usage: bpm &lt;number&gt;<br>Current BPM: <span class="text-normal font-bold">${currentBpm}</span></div>`,
+          `<div class="my-3 text-xs text-secondary">使い方: bpm &lt;数値&gt;<br>現在のBPM: <span class="text-normal font-bold">${currentBpm}</span></div>`);
         const newBpm = Math.max(1, Math.min(999, parseInt(args[0], 10)));
         document.documentElement.style.setProperty('--bpm', newBpm);
         const bpmEl = document.getElementById('status-bpm');
         if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>${newBpm}</span>`;
-        return `<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`;
+        return tr(`<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`,
+          `<div class="my-3 text-xs text-primary">システムの鼓動を ${newBpm} BPM に同期しました。</div>`);
       },
       meltdown() {
-        if (isMeltdown) return `<div class="my-3 text-xs text-red-500 font-bold">System is already in meltdown. Waiting for 'rebuild'.</div>`;
+        if (isMeltdown) return tr(`<div class="my-3 text-xs text-red-500 font-bold">System is already in meltdown. Waiting for 'rebuild'.</div>`,
+          `<div class="my-3 text-xs text-red-500 font-bold">システムは既にメルトダウン中です。'rebuild' を待っています。</div>`);
         isMeltdown = true; meltdownElements = [];
         addProblem('warn', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...', { file: 'meltdown.sh' });
         document.body.classList.add('system-meltdown');
@@ -1756,7 +1900,8 @@ to{opacity: 0;transform: translateX(20px)}
             }
           }
         }, 30);
-        return `<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`;
+        return tr(`<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`,
+          `<div class="my-3 text-xs text-red-500 font-bold">重大なエラー: システムメルトダウンを開始しました…</div>`);
       },
       rebuild() {
         if (!isMeltdown) return null;
@@ -1795,7 +1940,8 @@ to{opacity: 0;transform: translateX(20px)}
             }
           }
         }, 30);
-        return `<div class="my-3 text-xs text-primary">System rebuild initiated... restoring core components.</div>`;
+        return tr(`<div class="my-3 text-xs text-primary">System rebuild initiated... restoring core components.</div>`,
+          `<div class="my-3 text-xs text-primary">システムの再構築を開始… コアコンポーネントを復旧しています。</div>`);
       },
       rampage(args) {
         // Resolve an optional weapon argument (name / alias / number) to an index.
@@ -2208,7 +2354,8 @@ to{opacity: 0;transform: translateX(20px)}
         const onKey = (e) => {
           if (e.key === 'Escape' && rampageTeardown) {
             rampageTeardown();
-            printToTerminal(`<div class="my-2 text-xs text-secondary">Ceasefire — RAMPAGE mode disengaged. The screen heals.</div>`);
+            printToTerminal(tr(`<div class="my-2 text-xs text-secondary">Ceasefire — RAMPAGE mode disengaged. The screen heals.</div>`,
+              `<div class="my-2 text-xs text-secondary">停戦 — RAMPAGE モードを解除。画面が修復されます。</div>`));
           }
         };
         const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
@@ -2253,7 +2400,8 @@ to{opacity: 0;transform: translateX(20px)}
           }
         };
 
-        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). <b>Two-finger swipe scrolls</b> the page. Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · grenade · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`;
+        return tr(`<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). <b>Two-finger swipe scrolls</b> the page. Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · grenade · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`,
+          `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE モード: 装備完了 &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">クリック / タップ / 長押しで発射（コインはドラッグでスクラッチ）。<b>2本指スワイプ</b>でページをスクロール。武器の切替: 左のアクティビティバーの<b>ターゲットアイコン</b>（拡張機能の下）を開いて<b>アーセナル</b>から選ぶか、<b>rampage &lt;name&gt;</b> を実行 — mg · shotgun · sniper · grenade · flame · coin。各セクションにはHPがあり、<b>0</b>にするとそのセクションが崩壊します。もう一度 'rampage' か ESC で停戦（すべて修復）。</span></div>`);
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
@@ -2304,7 +2452,9 @@ to{opacity: 0;transform: translateX(20px)}
           let isMeditating = true;
           void overlay.offsetWidth;
           overlay.style.opacity = '1';
-          const messages = ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."];
+          const messages = tr(
+            ["Look slightly forward.", "Inhale deeply...", "...and exhale gently.", "Quietly close your eyes.", "Enjoy the feeling of simply being still.", "Feel the weight of your body.", "Notice the sounds around you.", "Let them be.", "Feel your natural breath.", "Let your mind be completely free.", "Bring your awareness back to the present.", "Take a moment to notice how you feel."],
+            ["やや前を見つめて。", "深く息を吸って…", "…そっと吐き出して。", "静かに目を閉じて。", "ただ静止している感覚を味わって。", "身体の重みを感じて。", "周りの音に気づいて。", "そのままにしておいて。", "自然な呼吸を感じて。", "心を完全に自由にして。", "意識を今この瞬間に戻して。", "今の自分の感覚に、少し気づいてみて。"]);
           (async () => {
             await delay(4000);
             for (const msg of messages) {
@@ -2316,7 +2466,7 @@ to{opacity: 0;transform: translateX(20px)}
               await delay(4000);
             }
             if (isMeditating) {
-              textContainer.innerHTML = "Breathe...<br><span style='font-size:10px;opacity:0.3;'>(Press ESC or Click to return)</span>";
+              textContainer.innerHTML = tr("Breathe...<br><span style='font-size:10px;opacity:0.3;'>(Press ESC or Click to return)</span>", "呼吸して…<br><span style='font-size:10px;opacity:0.3;'>（ESC かクリックで戻る）</span>");
               textContainer.style.opacity = '1';
             }
           })();
@@ -2385,10 +2535,12 @@ to{opacity: 0;transform: translateX(20px)}
             if (e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation(); e.preventDefault();
             teardown();
-            resolve(`<div class="text-xs mt-2 text-primary">Matrix simulation ended.</div>`);
+            resolve(tr(`<div class="text-xs mt-2 text-primary">Matrix simulation ended.</div>`,
+              `<div class="text-xs mt-2 text-primary">マトリックスのシミュレーションを終了しました。</div>`));
           };
           window.addEventListener('keydown', endMatrix, true); window.addEventListener('click', endMatrix, true);
-          printToTerminal(`<div class="text-xs mb-2 text-secondary">Entering Matrix... Press ESC or Click to exit.</div>`);
+          printToTerminal(tr(`<div class="text-xs mb-2 text-secondary">Entering Matrix... Press ESC or Click to exit.</div>`,
+            `<div class="text-xs mb-2 text-secondary">マトリックスに入ります… 終了するには ESC かクリック。</div>`));
         });
       }
     };
@@ -2403,9 +2555,11 @@ to{opacity: 0;transform: translateX(20px)}
 
         // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to a clickable link.
         if (!win) {
-          return `<div class="my-3 text-xs text-secondary">Open ${labelHtml}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`;
+          return tr(`<div class="my-3 text-xs text-secondary">Open ${labelHtml}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`,
+            `<div class="my-3 text-xs text-secondary">${labelHtml} を開く: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`);
         }
-        return `<div class="my-3 text-xs text-secondary">Opening ${labelHtml}...</div>`;
+        return tr(`<div class="my-3 text-xs text-secondary">Opening ${labelHtml}...</div>`,
+          `<div class="my-3 text-xs text-secondary">${labelHtml} を開いています…</div>`);
       };
     });
 
@@ -2433,7 +2587,7 @@ to{opacity: 0;transform: translateX(20px)}
         const ctx = sudoContext;
         sudoContext = null;
         DOM.input.type = 'text';
-        DOM.input.placeholder = "type 'help'...";
+        DOM.input.placeholder = tr("type 'help'...", "「help」と入力…");
 
         const echo = document.createElement('div');
         echo.className = 'text-xs mt-2';
@@ -2447,7 +2601,8 @@ to{opacity: 0;transform: translateX(20px)}
         } else {
           addProblem('error', 'sudo: incorrect password', { file: 'terminal' });
           const errDiv = document.createElement('div');
-          errDiv.innerHTML = `<div class="text-xs my-1 text-red-500">sudo: incorrect password</div>`;
+          errDiv.innerHTML = tr(`<div class="text-xs my-1 text-red-500">sudo: incorrect password</div>`,
+            `<div class="text-xs my-1 text-red-500">sudo: パスワードが違います</div>`);
           DOM.terminalLog.appendChild(errDiv);
           scrollTerminal();
         }
@@ -2494,11 +2649,11 @@ to{opacity: 0;transform: translateX(20px)}
     }
 
     const WELCOME_TIPS = [
-      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">⇧</span> <span class="gs-kbd">P</span>', 'Command Palette — run any command'],
-      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">B</span>', 'Toggle the Explorer side bar'],
-      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">J</span>', 'Toggle the bottom panel'],
-      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">\`</span>', 'Focus the terminal'],
-      ['<span class="gs-kbd">Tab</span>', 'Autocomplete / accept suggestion'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">⇧</span> <span class="gs-kbd">P</span>', 'Command Palette — run any command', 'コマンドパレット — 任意のコマンドを実行'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">B</span>', 'Toggle the Explorer side bar', 'エクスプローラーのサイドバーを切替'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">J</span>', 'Toggle the bottom panel', '下部パネルを切替'],
+      ['<span class="gs-kbd">Ctrl</span> <span class="gs-kbd">\`</span>', 'Focus the terminal', 'ターミナルにフォーカス'],
+      ['<span class="gs-kbd">Tab</span>', 'Autocomplete / accept suggestion', '補完 / 候補を確定'],
     ];
     const welcomeHTML = () => `<div class="gs-wrap fade-in">
       <div class="gs-hero">
@@ -2510,19 +2665,23 @@ to{opacity: 0;transform: translateX(20px)}
 ███████║<span style="opacity:0">╚══</span>██║
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="flex flex-col justify-center space-y-1">
-          <div id="display-name-el" class="text-lg font-bold glow text-primary">${esc(config.display_name)}${currentVersion > 1 ? verBadge() : ''}</div>
+          <div id="display-name-el" class="text-lg font-bold glow text-primary">${esc(tr(config.display_name, '武田 伸也'))}${currentVersion > 1 ? verBadge() : ''}</div>
           <div id="header-job-title" class="text-secondary text-xs dynamic-job-title">${esc(config.job_title)}</div>
-          <div class="text-secondary text-[10px]"><span class="text-primary">Web2</span> standalone system · Get Started</div>
+          <div class="text-secondary text-[10px]"><span class="text-primary">Web2</span> ${tr('standalone system · Get Started', '自己完結型システム 起動')}</div>
         </div>
       </div>
       <div class="gs-tips">
-        <div class="gs-h">Tips</div>
-        ${WELCOME_TIPS.map(([keys, label]) => `<div class="gs-tip-row"><span class="gs-keys">${keys}</span><span>${esc(label)}</span></div>`).join('')}
+        <div class="gs-h">${tr('Tips', 'ヒント')}</div>
+        ${WELCOME_TIPS.map(([keys, en, ja]) => `<div class="gs-tip-row"><span class="gs-keys">${keys}</span><span>${esc(tr(en, ja))}</span></div>`).join('')}
       </div>
     </div>`;
 
     async function boot() {
-      const bootMessages = [{ text: 'Initializing terminal...', delay: 250 }, { text: `Loading profile: ${config.display_name}`, delay: 400 }, { text: '', delay: 150 }];
+      // Restore a previously-chosen Japanese UI: install the backing extension so it
+      // appears in the marketplace/Explorer, then translate the chrome once the
+      // welcome tab is open (below).
+      if (currentLang === 'ja') installedExtensions.add('japanese');
+      const bootMessages = [{ text: tr('Initializing terminal...', 'ターミナルを初期化中…'), delay: 250 }, { text: tr(`Loading profile: ${config.display_name}`, `プロファイルを読み込み中: ${config.display_name}`), delay: 400 }, { text: '', delay: 150 }];
       for (const line of bootMessages) {
         await delay(line.delay);
         const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.innerHTML = line.text; DOM.terminalLog.appendChild(div); scrollTerminal();
@@ -2540,6 +2699,9 @@ to{opacity: 0;transform: translateX(20px)}
       }
 
       openDoc('welcome', welcomeHTML());
+      // With a persisted Japanese preference, translate the static chrome and refresh
+      // the Explorer/Extensions/search now that all views exist.
+      if (currentLang === 'ja') applyLang();
       DOM.inputLine.classList.remove('hidden'); DOM.inputLine.classList.add('flex', 'fade-in');
       DOM.input.focus({ preventScroll: true });
       updateCaret();
@@ -2661,7 +2823,8 @@ to{opacity: 0;transform: translateX(20px)}
       DOM.app.style.opacity = '0'; await delay(500);
       const overlay = document.createElement('div'); overlay.id = 'close-overlay';
       overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:var(--bg-color); color:var(--secondary-color); cursor:pointer; z-index:10000;`;
-      overlay.innerHTML = `<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>`;
+      overlay.innerHTML = tr(`<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>`,
+        `<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">接続を終了しました。</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ クリックして再接続 ]</div>`);
       overlay.addEventListener('click', () => { softReload(); });
       document.body.appendChild(overlay);
     });
@@ -2675,7 +2838,8 @@ to{opacity: 0;transform: translateX(20px)}
       let minIcon = document.getElementById('minimized-icon');
       if (!minIcon) {
         minIcon = document.createElement('div'); minIcon.id = 'minimized-icon';
-        minIcon.innerHTML = `<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`;
+        minIcon.innerHTML = tr(`<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`,
+          `<span class="text-primary">▸ ターミナル</span> <span class="text-secondary">[クリックで展開]</span>`);
         minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;`;
         minIcon.addEventListener('click', async () => {
           addToHistory('[SYS] Terminal restored from minimized state');
@@ -2751,7 +2915,8 @@ to{opacity: 0;transform: translateX(20px)}
       const list = document.getElementById('arsenal-list');
       if (!list) return;
       if (!isRampageActive) {
-        list.innerHTML = `<div class="px-1 py-2 text-[11px] text-secondary opacity-70 leading-relaxed">No rampage in progress.<br>Run <span class="text-normal font-bold">rampage</span> to arm your arsenal.</div>`;
+        list.innerHTML = tr(`<div class="px-1 py-2 text-[11px] text-secondary opacity-70 leading-relaxed">No rampage in progress.<br>Run <span class="text-normal font-bold">rampage</span> to arm your arsenal.</div>`,
+          `<div class="px-1 py-2 text-[11px] text-secondary opacity-70 leading-relaxed">進行中のランページはありません。<br><span class="text-normal font-bold">rampage</span> を実行して武器を装備しよう。</div>`);
         return;
       }
       list.innerHTML = RAMPAGE_WEAPONS.map(w => {
@@ -2763,14 +2928,18 @@ to{opacity: 0;transform: translateX(20px)}
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
-    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', timeline: 'Digital, music & Flânerie timeline', pages: 'Explore Web2 creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', meltdown: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', rampage: 'Wreck the screen — pick your weapon', theme: 'Change terminal color', web3: 'Dive into my Web3 page' };
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', timeline: 'Digital, music & Flânerie timeline', pages: 'Explore Web2 creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', meltdown: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', rampage: 'Wreck the screen — pick your weapon', theme: 'Change terminal color', web3: 'Dive into my Web3 page', japanese: 'Switch the interface to Japanese' };
+    // Japanese command descriptions, keyed identically to CMD_DESC. cdesc() returns
+    // the right language; missing keys fall back to the English string.
+    const CMD_DESC_JA = { about: '私について', identify: 'パーソナリティのバージョン', timeline: 'デジタル・音楽・遊歩のタイムライン', pages: 'Web2の制作物を見る', contact: 'コンタクト', clear: 'ターミナルをクリア', help: 'メニューを表示', akutagawa: '過去からのメッセージ', bpm: 'システムの鼓動を設定', choreomania: '恍惚のなかで魂を溶かす', meltdown: 'そして再構築', rebuild: 'システムを復旧する', matrix: 'マトリックスへ', meditation: '心を整える', rampage: '画面を破壊する — 武器を選べ', theme: 'ターミナルの色を変更', web3: 'Web3ページへ', japanese: 'インターフェースを英語に戻す' };
+    const cdesc = c => tr(CMD_DESC[c] || '', CMD_DESC_JA[c]);
     // Build a content index so search matches command output text, not just titles.
     const SEARCH_INDEX = {};
     const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
     function buildSearchIndex() {
       const renderable = ['about', 'pages', 'help', 'identify', 'timeline']; // pure, side-effect-free string renderers
       Object.keys(commands).forEach(c => {
-        let text = c + ' ' + (CMD_DESC[c] || '');
+        let text = c + ' ' + (CMD_DESC[c] || '') + ' ' + (CMD_DESC_JA[c] || '');
         if (renderable.includes(c)) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) { } }
         SEARCH_INDEX[c] = text.toLowerCase();
       });
@@ -2785,10 +2954,10 @@ to{opacity: 0;transform: translateX(20px)}
       if (!q) { searchCount.textContent = ''; searchResults.innerHTML = ''; return; }
       const cmds = Object.keys(commands).filter(isCmdAvailable).sort();
       const matches = cmds.filter(c => (SEARCH_INDEX[c] || '').includes(q));
-      searchCount.textContent = `${matches.length} result${matches.length === 1 ? '' : 's'}`;
+      searchCount.textContent = tr(`${matches.length} result${matches.length === 1 ? '' : 's'}`, `${matches.length} 件`);
       searchResults.innerHTML = matches.length
-        ? matches.map(c => `<button type="button" class="tree-item text-xs text-normal" data-cmd="${esc(c)}" title="${esc(CMD_DESC[c] || '')}"><span class="text-secondary">⌕</span><span>${esc(c)}</span></button>`).join('')
-        : `<div class="px-3 py-2 text-xs text-secondary">No results found.</div>`;
+        ? matches.map(c => `<button type="button" class="tree-item text-xs text-normal" data-cmd="${esc(c)}" title="${esc(cdesc(c))}"><span class="text-secondary">⌕</span><span>${esc(c)}</span></button>`).join('')
+        : tr(`<div class="px-3 py-2 text-xs text-secondary">No results found.</div>`, `<div class="px-3 py-2 text-xs text-secondary">結果が見つかりませんでした。</div>`);
     }
     searchInput.addEventListener('input', () => renderSearch(searchInput.value));
     searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { searchInput.value = ''; renderSearch(''); } });
@@ -2811,8 +2980,9 @@ to{opacity: 0;transform: translateX(20px)}
           renderExtensions();
           if (typeof renderExplorerTree === 'function') renderExplorerTree();
           addToHistory(`[SYS] Extension '${cmd}' installed`);
-          showToast(`Extension '${cmd}' installed — type ${cmd} to use it`);
-          printToTerminal(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`);
+          showToast(tr(`Extension '${cmd}' installed — type ${cmd} to use it`, `拡張機能 '${cmd}' をインストールしました — ${cmd} と入力して使用`));
+          printToTerminal(tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`,
+            `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> のインストールが完了しました。<span class="text-normal font-bold">${cmd}</span> と入力して使用してください。</div>`));
         }, 800);
         return;
       }
@@ -2823,12 +2993,16 @@ to{opacity: 0;transform: translateX(20px)}
         uninstallBtn.disabled = true;
         setTimeout(() => {
           installedExtensions.delete(cmd);
+          // Uninstalling the language pack returns the UI to English so the user is
+          // never stranded in Japanese without the command to switch back.
+          if (cmd === 'japanese' && currentLang === 'ja') setLanguage('en');
           if (typeof closeTab === 'function' && tabOrder.includes(cmd)) closeTab(cmd);
           renderExtensions();
           if (typeof renderExplorerTree === 'function') renderExplorerTree();
           addToHistory(`[SYS] Extension '${cmd}' uninstalled`);
-          showToast(`Extension '${cmd}' was uninstalled`, 'warn');
-          printToTerminal(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.</div>`);
+          showToast(tr(`Extension '${cmd}' was uninstalled`, `拡張機能 '${cmd}' をアンインストールしました`), 'warn');
+          printToTerminal(tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.</div>`,
+            `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> をアンインストールしました。</div>`));
         }, 600);
       }
     });
@@ -2977,12 +3151,12 @@ to{opacity: 0;transform: translateX(20px)}
       });
     }
     const AGENT_PERSONAS = [
-      { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', desc: 'The chaotic self. An impulsive, unpredictable geek who runs on instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music.' },
-      { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.' },
-      { codename: 'CASPER-3', name: 'STRATEGIST', desc: 'The logical self. A data-driven strategist relentlessly solving for the optimal answer, embracing both reproducible tactics and novelty.' },
+      { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', name_ja: '熱狂者', desc: 'The chaotic self. An impulsive, unpredictable geek who runs on instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music.', desc_ja: '混沌の自我。本能で動く、衝動的で予測不能なギーク。ハーレー、自作PC、アイドル、ワイン、そして何より音楽に熱を上げる。' },
+      { codename: 'BALTHASAR-2', name: 'HUMANIST', name_ja: '人間主義者', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.', desc_ja: '慈愛の自我。フロム、ストア哲学、仏教を内面化した、詩的で内向的な夢想家。つねに人間性を中心に据える。' },
+      { codename: 'CASPER-3', name: 'STRATEGIST', name_ja: '戦略家', desc: 'The logical self. A data-driven strategist relentlessly solving for the optimal answer, embracing both reproducible tactics and novelty.', desc_ja: '論理の自我。再現可能な戦術と新規性の双方を取り込み、最適解をひたすら追い求めるデータドリブンな戦略家。' },
     ];
     const AGENT_MAX_HISTORY = 12;
-    const AGENT_HINT = '<div class="agent-splash">'
+    const agentHintHTML = () => '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
       + '<line class="hl-bg" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-bg" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-bg" x1="52" y1="78" x2="68" y2="78"/>'
       + '<line class="hl-flow" x1="51.5" y1="49" x2="43.5" y2="63"/><line class="hl-flow" x1="76.5" y1="63" x2="68.5" y2="49"/><line class="hl-flow" x1="52" y1="78" x2="68" y2="78"/>'
@@ -2995,24 +3169,24 @@ to{opacity: 0;transform: translateX(20px)}
       + '</svg>'
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none ml-1 inline-flex items-center justify-center align-middle" title="Privacy & System Information"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('') + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
       + '<div class="magi-stores">'
-      + '<a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" class="magi-android" title="Download the MAGI Android app">'
+      + '<a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer" class="magi-android" title="' + tr('Download the MAGI Android app', 'MAGI Androidアプリをダウンロード') + '">'
       + '<svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
       + '<line x1="8" y1="7.2" x2="9.7" y2="9.9"/><line x1="16" y1="7.2" x2="14.3" y2="9.9"/>'
       + '<path d="M5 16.8a7 7 0 0 1 14 0z"/>'
       + '<circle cx="9.5" cy="13.4" r="0.7" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13.4" r="0.7" fill="currentColor" stroke="none"/>'
       + '</svg>'
-      + '<span class="magi-android-text"><span class="l1">Android</span><span class="l2">APK Download</span></span>'
+      + '<span class="magi-android-text"><span class="l1">Android</span><span class="l2">' + tr('APK Download', 'APKダウンロード') + '</span></span>'
       + '</a>'
-      + '<span class="magi-android disabled" title="iOS app — coming soon" aria-disabled="true">'
+      + '<span class="magi-android disabled" title="' + tr('iOS app — coming soon', 'iOSアプリ — 近日公開') + '" aria-disabled="true">'
       + '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">'
       + '<path d="M17.05 12.04c-.03-2.5 2.04-3.7 2.13-3.76-1.16-1.7-2.97-1.93-3.61-1.96-1.54-.16-3 .9-3.78.9-.78 0-1.97-.88-3.24-.86-1.67.03-3.21.97-4.07 2.46-1.73 3-.44 7.45 1.24 9.89.82 1.19 1.8 2.53 3.08 2.48 1.24-.05 1.71-.8 3.21-.8 1.49 0 1.92.8 3.23.77 1.33-.02 2.18-1.21 3-2.41.94-1.38 1.33-2.72 1.35-2.79-.03-.01-2.59-1-2.62-3.95z"/>'
       + '<path d="M14.6 4.84c.69-.83 1.15-1.99 1.02-3.14-.99.04-2.18.66-2.89 1.49-.64.73-1.2 1.91-1.05 3.03 1.1.09 2.23-.56 2.92-1.38z"/>'
       + '</svg>'
-      + '<span class="magi-android-text"><span class="l1">iOS</span><span class="l2">App Download</span></span>'
+      + '<span class="magi-android-text"><span class="l1">iOS</span><span class="l2">' + tr('App Download', 'アプリDL') + '</span></span>'
       + '</span>'
       + '</div>'
       + '</div>';
@@ -3040,7 +3214,7 @@ to{opacity: 0;transform: translateX(20px)}
     function openAgentDock() {
       if (isMobile()) agentDockEl.classList.add('open'); else agentDockEl.classList.remove('collapsed');
       setAgentActive(true);
-      if (!agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
+      if (!agentLog.children.length && !agentDead) agentLog.innerHTML = agentHintHTML();
       if (!agentDead) agentInput.focus({ preventScroll: true });
     }
     function closeAgentDock() {
@@ -3065,7 +3239,7 @@ to{opacity: 0;transform: translateX(20px)}
       if (agentHistory && agentHistory.length > 0) {
         renderHistoryToLog(agentHistory);
       } else {
-        if (agentDockOpen() && !agentLog.children.length && !agentDead) agentLog.innerHTML = AGENT_HINT;
+        if (agentDockOpen() && !agentLog.children.length && !agentDead) agentLog.innerHTML = agentHintHTML();
       }
       updateAgentActionButtons();
     }
@@ -3089,7 +3263,7 @@ to{opacity: 0;transform: translateX(20px)}
     const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
     function agentDegrade(msg) {
       agentDead = true;
-      agentDegraded.textContent = msg || 'MAGI only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.';
+      agentDegraded.textContent = msg || tr('MAGI only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.', 'MAGI は本番環境（tk.st）でのみ動作します。旧MAGI ↗ は引き続きご利用いただけます。');
       agentDegraded.classList.remove('hidden');
       agentInput.disabled = true; agentSendBtn.disabled = true;
     }
@@ -3100,11 +3274,11 @@ to{opacity: 0;transform: translateX(20px)}
       const lines = [];
       if (meta) lines.push(`<div class="agent-rid">${esc(meta)}</div>`);
       if (env.request_id) lines.push(`<div class="agent-rid">request_id: ${esc(env.request_id)}</div>`);
-      div.innerHTML = `⚠ ${esc(env.message || 'An error occurred')}${lines.join('')}`;
+      div.innerHTML = `⚠ ${esc(env.message || tr('An error occurred', 'エラーが発生しました'))}${lines.join('')}`;
       agentLog.appendChild(div);
       if (env.legacy_url) {
         const a = document.createElement('div'); a.className = 'text-[10px] mt-1';
-        a.innerHTML = `<a href="${esc(env.legacy_url)}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Use Legacy MAGI ↗</a>`;
+        a.innerHTML = `<a href="${esc(env.legacy_url)}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${tr('Use Legacy MAGI ↗', '旧MAGIを使う ↗')}</a>`;
         agentLog.appendChild(a);
       }
       agentScroll();
@@ -3149,13 +3323,13 @@ to{opacity: 0;transform: translateX(20px)}
       const mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
       turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
         <div class="persona-card thinking" data-codename="${p.codename}">
-          <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
-          <div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">…</div></div>
-          <div class="persona-round" data-round="2" hidden><span class="persona-round-label">After debate</span><div class="persona-text">…</div></div>
+          <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
+          <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">…</div></div>
+          <div class="persona-round" data-round="2" hidden><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">…</div></div>
           ${reactionBarHTML(p.codename)}
         </div>`).join('')}</div>`;
       const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
-      replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body"></span>${reactionBarHTML('integrated')}`;
+      replyEl.innerHTML = `<span class="agent-who">✦ ${tr('Shinya Takeda', '武田 伸也')}</span><span class="agent-reply-body"></span>${reactionBarHTML('integrated')}`;
       turn.appendChild(replyEl);
       agentLog.appendChild(turn); agentScroll();
       const replyBody = replyEl.querySelector('.agent-reply-body');
@@ -3217,7 +3391,7 @@ to{opacity: 0;transform: translateX(20px)}
         turn.remove();
         // A timeout is transient — show a retryable error rather than permanently
         // degrading MAGI (which a genuine network/CORS failure does).
-        if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: 'Request timed out. Please try again.', code: 'timeout' }); }
+        if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
         else agentDegrade();
       } finally {
         replyEl.classList.remove('streaming');
@@ -3340,7 +3514,7 @@ to{opacity: 0;transform: translateX(20px)}
         if (wasActive) { desc.classList.add('hidden'); return; }
         const p = AGENT_PERSONAS.find(x => x.codename === node.dataset.codename);
         node.classList.add('active');
-        desc.innerHTML = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(p.name)}</span>${esc(p.desc)}`;
+        desc.innerHTML = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(pick(p, 'name'))}</span>${esc(pick(p, 'desc'))}`;
         desc.classList.remove('hidden');
         return;
       }
@@ -3420,9 +3594,9 @@ to{opacity: 0;transform: translateX(20px)}
               const r2Hidden = deb.round2 === '…' ? 'hidden' : '';
               return `
                 <div class="persona-card" data-codename="${p.codename}">
-                  <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${p.name}</span></div>
-                  <div class="persona-round" data-round="1"><span class="persona-round-label">Initial</span><div class="persona-text">${esc(deb.round1)}</div></div>
-                  <div class="persona-round" data-round="2" ${r2Hidden}><span class="persona-round-label">After debate</span><div class="persona-text">${esc(deb.round2)}</div></div>
+                  <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
+                  <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">${esc(deb.round1)}</div></div>
+                  <div class="persona-round" data-round="2" ${r2Hidden}><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">${esc(deb.round2)}</div></div>
                   ${reactionBarHTML(p.codename)}
                 </div>`;
             }).join('')}</div>`;
@@ -3430,7 +3604,7 @@ to{opacity: 0;transform: translateX(20px)}
 
           const replyEl = document.createElement('div');
           replyEl.className = 'agent-reply';
-          replyEl.innerHTML = `<span class="agent-who">✦ Shinya Takeda</span><span class="agent-reply-body">${esc(item.content)}</span>${reactionBarHTML('integrated')}`;
+          replyEl.innerHTML = `<span class="agent-who">✦ ${tr('Shinya Takeda', '武田 伸也')}</span><span class="agent-reply-body">${esc(item.content)}</span>${reactionBarHTML('integrated')}`;
           turn.appendChild(replyEl);
 
           applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
@@ -3504,7 +3678,7 @@ to{opacity: 0;transform: translateX(20px)}
       panel.innerHTML = `
         <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
           <span class="font-bold text-[10px] tracking-widest text-primary uppercase">${title}</span>
-          <button class="agent-panel-close text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ CLOSE</button>
+          <button class="agent-panel-close text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ ${tr('CLOSE', '閉じる')}</button>
         </div>
         ${bodyHTML}`;
       document.getElementById('agentdock').appendChild(panel);
@@ -3827,7 +4001,7 @@ to{opacity: 0;transform: translateX(20px)}
         return `<div class="sg-item ${i === suggestSel ? 'active' : ''}" data-i="${i}">
           <span class="sg-icon" style="color:${iconColor(c, m.name)}">${esc(m.icon || '›')}</span>
           <span class="sg-label">${esc(c)}</span>
-          <span class="sg-desc">${esc(CMD_DESC[c] || '')}</span></div>`;
+          <span class="sg-desc">${esc(cdesc(c))}</span></div>`;
       }).join('');
     }
     function closeSuggest() { suggestItems = []; suggestSel = -1; suggestOpen = false; if (suggestBox) suggestBox.classList.add('hidden'); }
@@ -3892,7 +4066,7 @@ to{opacity: 0;transform: translateX(20px)}
         ];
         const cmds = availableCmdKeys().sort().map(c => {
           const m = treeMeta(c);
-          return { icon: m.icon || '›', iconColor: iconColor(c, m.name), label: c, desc: CMD_DESC[c] || '', run: () => runFromPalette(c) };
+          return { icon: m.icon || '›', iconColor: iconColor(c, m.name), label: c, desc: cdesc(c), run: () => runFromPalette(c) };
         });
         return actions.concat(cmds);
       }
@@ -3901,7 +4075,7 @@ to{opacity: 0;transform: translateX(20px)}
       files.forEach(c => {
         if (seen.has(c)) return; seen.add(c);
         const m = treeMeta(c);
-        items.push({ icon: m.icon || '•', iconColor: iconColor(c, m.name), label: m.name, desc: CMD_DESC[c] || '', run: () => (c === 'welcome' ? openDoc('welcome', welcomeHTML()) : runFromPalette(c)) });
+        items.push({ icon: m.icon || '•', iconColor: iconColor(c, m.name), label: m.name, desc: cdesc(c), run: () => (c === 'welcome' ? openDoc('welcome', welcomeHTML()) : runFromPalette(c)) });
       });
       projects.forEach(p => items.push({ icon: '↗', iconColor: getPrimaryColor(), label: p.name, desc: p.desc, run: () => runFromPalette(p.name) }));
       return items;
