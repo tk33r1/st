@@ -2177,8 +2177,9 @@ to{opacity: 0;transform: translateX(20px)}
             if (multiTouch) { // pan the container under the fingers' centre by the centroid delta
               const c = centroid();
               const tgt = scrollableUnder(c.x, c.y);
-              tgt.scrollTop += panY - c.y;
-              tgt.scrollLeft += panX - c.x;
+              // behavior:'instant' overrides the panes' CSS scroll-behavior:smooth — otherwise each
+              // incremental nudge starts a smooth animation the next one interrupts, and nothing moves.
+              tgt.scrollBy({ top: panY - c.y, left: panX - c.x, behavior: 'instant' });
               panX = c.x; panY = c.y;
               return; // suppress firing while scrolling
             }
