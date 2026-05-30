@@ -1037,6 +1037,17 @@
       white-space: nowrap;
     }
 
+    /* Action cluster (Installed tag + Uninstall / Install button). Wraps within the
+       card so longer localized labels (e.g. アンインストール) never overflow its width. */
+    .ext-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.25rem;
+      min-width: 0;
+    }
+
     #tabbar { height: 35px }
 
     .ed-tab {
@@ -2749,7 +2760,7 @@
         </div>
         <div class="flex items-center gap-3 whitespace-nowrap">
           <span id="status-bpm" title="System BPM" data-ja-title="システムBPM"><span>♥</span> <span>60</span></span>
-          <span id="status-pos"><span>Ln 1,</span> <span>Col 1</span></span>
+          <span id="status-pos"><span data-ja="行 1,">Ln 1,</span> <span data-ja="列 1">Col 1</span></span>
           <span id="status-lang" class="text-primary"><span>Shell</span></span>
           <button id="notif-bell" title="No new notifications" data-ja-title="新しい通知はありません" data-ja-aria="通知"
             aria-label="Notifications"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -3030,7 +3041,7 @@
       const offset = Math.max(0, DOM.mirror.offsetWidth - DOM.input.scrollLeft);
       DOM.caret.style.transform = `translateX(${offset}px)`;
       const sp = document.getElementById('status-pos');
-      if (sp) sp.innerHTML = `<span>Ln 1,</span> <span>Col ${pos + 1}</span>`;
+      if (sp) sp.innerHTML = tr(`<span>Ln 1,</span> <span>Col ${pos + 1}</span>`, `<span>行 1,</span> <span>列 ${pos + 1}</span>`);
     }
     const scrollTerminal = () => { DOM.terminal.scrollTop = DOM.terminal.scrollHeight; };
 
@@ -3131,7 +3142,7 @@
             <div class="text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
             <div class="flex items-center justify-between gap-2 mt-1">
               <span class="text-[10px] text-secondary truncate">${esc(meta.author)}</span>
-              <div class="flex items-center gap-1 whitespace-nowrap">
+              <div class="ext-actions">
                 ${isInstalled
           ? `<span class="ext-installed-tag">✓ ${tr('Installed', 'インストール済み')}</span><button class="ext-uninstall-btn ext-btn ext-btn-uninstall" data-ext="${cmd}" title="${tr(`Uninstall ${esc(meta.name)}`, `${esc(meta.name)} をアンインストール`)}">${tr('Uninstall', 'アンインストール')}</button>`
           : `<button class="ext-install-btn ext-btn ext-btn-install" data-ext="${cmd}">↓ ${tr('Install', 'インストール')}</button>`}
@@ -3247,6 +3258,9 @@
       if (typeof renderGit === 'function') renderGit();
       if (typeof renderOutput === 'function') renderOutput();
       if (typeof renderPorts === 'function') renderPorts();
+      // Footer Ln/Col indicator is rewritten by updateCaret(); refresh it so the
+      // 行/列 labels track the active language (it strips its own data-ja markers).
+      if (typeof updateCaret === 'function') updateCaret();
       // Refresh the MAGI agent splash if it is the only thing on screen: its
       // button labels (APK/App Download, etc.) are baked in via tr() at render
       // time, so a one-shot innerHTML never updates on a later language switch.
