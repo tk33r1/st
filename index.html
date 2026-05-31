@@ -950,7 +950,25 @@
     }
 
     #search-input:focus, #ext-search-input:focus { border-color: var(--primary-color) }
-    .ext-card { transition: border-color var(--duration-fast), transform var(--duration-fast), box-shadow var(--duration-fast) }
+    /* 2-column grid: icon + author stack on the left, name/desc + action button on
+       the right. The button's left edge lines up with the title, and the publisher
+       sits at the bottom-left under the icon. */
+    .ext-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        "icon  info"
+        "author action";
+      column-gap: 0.5rem;
+      row-gap: 0.4rem;
+      align-items: start;
+      transition: border-color var(--duration-fast), transform var(--duration-fast), box-shadow var(--duration-fast);
+    }
+
+    .ext-card > .ext-icon { grid-area: icon; }
+    .ext-card-info { grid-area: info; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .ext-card > .ext-author { grid-area: author; align-self: center; justify-self: center; text-align: center; }
+    .ext-card > .ext-btn { grid-area: action; align-self: center; }
 
     .ext-card:hover {
       border-color: var(--primary-color);
@@ -1002,8 +1020,10 @@
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.3rem;
       font-weight: 700;
+      flex-shrink: 0;
       transition: background-color var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast), filter var(--duration-fast);
     }
 
@@ -1028,25 +1048,27 @@
 
     .ext-btn:disabled { cursor: default }
 
+    /* Installed indicator — a small check chip shown next to the extension name. */
     .ext-installed-tag {
-      font-size: 9px;
+      flex-shrink: 0;
+      font-size: 11px;
+      line-height: 1;
       color: var(--primary-color);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.2rem;
-      white-space: nowrap;
     }
 
-    /* Action cluster (Installed tag + Uninstall / Install button). Wraps within the
-       card so longer localized labels (e.g. アンインストール) never overflow its width. */
-    .ext-actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 0.25rem;
+    /* Action button — fills its grid cell (right column) so its left edge aligns
+       with the title; centered label, fixed height across install states. */
+    .ext-btn-block {
+      width: 100%;
       min-width: 0;
+      padding: 0.4rem 0.5rem;
     }
+
+    /* Let the extension name truncate (rather than overflow) inside the info column. */
+    .ext-card-info .truncate { min-width: 0; }
+
+    /* Publisher — bottom-left under the icon, visually subtle. */
+    .ext-author { opacity: 0.7; }
 
     #tabbar { height: 35px }
 
@@ -3133,22 +3155,19 @@
       const color = iconColor(cmd, tm.name);
       const desc = cdesc(cmd) || meta.desc || '';
       return `
-        <div class="ext-card flex gap-1.5 p-2 border border-color rounded bg-surface-alt">
+        <div class="ext-card p-2 border border-color rounded bg-surface-alt">
           <div class="ext-icon" style="background:linear-gradient(135deg,${color},${color}b3)">${esc(tm.icon)}</div>
-          <div class="flex flex-col gap-1 flex-1" style="min-width: 0;">
-            <div class="flex items-center justify-between gap-2">
+          <div class="ext-card-info">
+            <div class="flex items-center" style="min-width: 0; gap: 0.35rem;">
               <span class="font-bold text-normal text-xs truncate">${esc(meta.name)}</span>
+              ${isInstalled ? `<span class="ext-installed-tag" title="${tr('Installed', 'インストール済み')}" aria-label="${tr('Installed', 'インストール済み')}">✓</span>` : ''}
             </div>
-            <div class="text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
-            <div class="flex items-center justify-between gap-2 mt-1">
-              <span class="text-[10px] text-secondary truncate">${esc(meta.author)}</span>
-              <div class="ext-actions">
-                ${isInstalled
-          ? `<span class="ext-installed-tag">✓ ${tr('Installed', 'インストール済み')}</span><button class="ext-uninstall-btn ext-btn ext-btn-uninstall" data-ext="${cmd}" title="${tr(`Uninstall ${esc(meta.name)}`, `${esc(meta.name)} をアンインストール`)}">${tr('Uninstall', 'アンインストール')}</button>`
-          : `<button class="ext-install-btn ext-btn ext-btn-install" data-ext="${cmd}">↓ ${tr('Install', 'インストール')}</button>`}
-              </div>
-            </div>
+            <div class="ext-desc text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
           </div>
+          <div class="ext-author text-[10px] text-secondary truncate">${esc(meta.author)}</div>
+          ${isInstalled
+          ? `<button class="ext-uninstall-btn ext-btn ext-btn-block ext-btn-uninstall" data-ext="${cmd}" title="${tr(`Uninstall ${esc(meta.name)}`, `${esc(meta.name)} をアンインストール`)}">${tr('Uninstall', 'アンインストール')}</button>`
+          : `<button class="ext-install-btn ext-btn ext-btn-block ext-btn-install" data-ext="${cmd}">${tr('Install', 'インストール')}</button>`}
         </div>
       `;
     }
