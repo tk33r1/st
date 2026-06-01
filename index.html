@@ -3212,14 +3212,20 @@
       }
     }
 
-    function applyTheme(isDark) {
-      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    // Recompute the job title for the current theme and push it into every place it
+    // is shown (header + any .dynamic-job-title elements). Shared by theme + language switches.
+    function setJobTitle(isDark) {
       config.job_title = jobTitleFor(isDark);
-      if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
-      if (tabState['about']) tabState['about'] = commands.about();
       const headerJobTitle = document.getElementById('header-job-title');
       if (headerJobTitle) headerJobTitle.textContent = config.job_title;
       document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
+    }
+
+    function applyTheme(isDark) {
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      setJobTitle(isDark);
+      if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
+      if (tabState['about']) tabState['about'] = commands.about();
       const tc = document.querySelector('meta[name="theme-color"]');
       if (tc) tc.setAttribute('content', isDark ? '#0c0c0c' : '#f3f4f6');
       // The search index is theme-independent (both job-title variants are indexed once
@@ -3261,10 +3267,7 @@
     function applyLang() {
       document.documentElement.setAttribute('lang', currentLang);
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      config.job_title = jobTitleFor(isDark);
-      const headerJobTitle = document.getElementById('header-job-title');
-      if (headerJobTitle) headerJobTitle.textContent = config.job_title;
-      document.querySelectorAll('.dynamic-job-title').forEach(el => el.textContent = config.job_title);
+      setJobTitle(isDark);
       applyChrome();
       // Regenerate any open document tabs so their content matches the language.
       if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
@@ -4717,8 +4720,11 @@
       await delay(200);
 
       const urlParams = new URLSearchParams(window.location.search);
+      // Normalize to lowercase so URL commands match handleCommand (which lowercases
+      // internally); otherwise ?cmd=About would silently fail to auto-run.
       let targetCmd = urlParams.get('cmd');
       if (targetCmd) {
+        targetCmd = targetCmd.toLowerCase();
         if (!hasCmd(targetCmd) && hasCmd('/' + targetCmd)) targetCmd = '/' + targetCmd;
         if (hiddenCommands.includes(targetCmd)) {
           applyTheme(true);
