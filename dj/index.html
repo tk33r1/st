@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="ja">
+
 <head>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
 
     gtag('config', 'G-YRM5KPVGX7');
@@ -13,11 +14,14 @@
   <!-- Ahrefs -->
   <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
   <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
+  <script>(function (w, d, s, l, i) {
+      w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+          new Date().getTime(), event: 'gtm.js'
+      }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,7 +80,7 @@
             "@id": "https://tk.st/dj/#musicgroup",
             "name": "人類踊狂計画",
             "alternateName": "Human Choreomania Project",
-            "image": "https://tk.st/images/contents/dj-logo3.png",
+            "image": "https://tk.st/images/contents/dj-logo4.avif",
             "genre": ["Big room House", "Psytrance", "Melodic Techno"],
             "foundingDate": "2024"
           }
@@ -84,7 +88,7 @@
       ]
     }
   </script>
-  
+
   <!-- Google Fonts: Noto Serif JP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -107,7 +111,8 @@
       --accent-red: #ff3333;
     }
 
-    html, body {
+    html,
+    body {
       min-height: 100vh;
       scroll-behavior: smooth;
       overflow-x: hidden;
@@ -157,14 +162,46 @@
     }
 
     @keyframes pulse-reticle {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.3; transform: scale(0.9); }
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.3;
+        transform: scale(0.9);
+      }
     }
 
-    .reticle.top-left { top: 40px; left: 40px; border-right: none; border-bottom: none; }
-    .reticle.top-right { top: 40px; right: 40px; border-left: none; border-bottom: none; }
-    .reticle.bottom-left { bottom: 40px; left: 40px; border-right: none; border-top: none; }
-    .reticle.bottom-right { bottom: 40px; right: 40px; border-left: none; border-top: none; }
+    .reticle.top-left {
+      top: 40px;
+      left: 40px;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .reticle.top-right {
+      top: 40px;
+      right: 40px;
+      border-left: none;
+      border-bottom: none;
+    }
+
+    .reticle.bottom-left {
+      bottom: 40px;
+      left: 40px;
+      border-right: none;
+      border-top: none;
+    }
+
+    .reticle.bottom-right {
+      bottom: 40px;
+      right: 40px;
+      border-left: none;
+      border-top: none;
+    }
 
     .hero-content {
       text-align: center;
@@ -181,7 +218,7 @@
       font-size: clamp(3rem, 10vh, 7rem);
       font-weight: 900;
       letter-spacing: 0.1em;
-      padding-top: 0.1em; 
+      padding-top: 0.1em;
       line-height: 1.1;
       writing-mode: vertical-rl;
       text-orientation: upright;
@@ -189,7 +226,7 @@
       max-height: 85vh;
       white-space: nowrap;
       margin: 0 auto;
-      text-shadow: 2px 2px 0 rgba(0,0,0,0.05);
+      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.05);
     }
 
     .hero-tagline-wrapper {
@@ -200,7 +237,7 @@
       font-size: clamp(0.75rem, 3.5vw, 1.3rem);
       font-weight: 300;
       letter-spacing: 0.15em;
-      padding-left: 0.15em; 
+      padding-left: 0.15em;
       color: var(--black);
       margin-bottom: 20px;
       text-transform: uppercase;
@@ -219,13 +256,25 @@
     }
 
     @keyframes typing {
-      from { width: 0 }
-      to { width: 100% }
+      from {
+        width: 0
+      }
+
+      to {
+        width: 100%
+      }
     }
 
     @keyframes blink-caret {
-      from, to { border-color: transparent }
-      50% { border-color: var(--black); }
+
+      from,
+      to {
+        border-color: transparent
+      }
+
+      50% {
+        border-color: var(--black);
+      }
     }
 
     /* ===== SYNC RATE Progress ===== */
@@ -238,7 +287,7 @@
       background: rgba(0, 0, 0, 0.1);
       z-index: 1000;
     }
-    
+
     .progress-bar {
       height: 100%;
       background: var(--neo-purple);
@@ -246,7 +295,7 @@
       box-shadow: 0 0 10px rgba(156, 122, 247, 0.6);
       transition: width 0.1s ease-out, background 0.3s ease, box-shadow 0.3s ease;
     }
-    
+
     .sync-rate-text {
       position: fixed;
       top: 15px;
@@ -278,7 +327,10 @@
 
     .philosophy-bg {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       opacity: 0.15;
       z-index: 0;
     }
@@ -288,18 +340,25 @@
       width: 300px;
       height: 300px;
       opacity: 0.3;
-      top: 50%; left: 50%;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
     }
 
     .philosophy-octahedron svg {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       animation: rotate-slow 20s linear infinite;
     }
 
     @keyframes rotate-slow {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .philosophy-content {
@@ -318,11 +377,11 @@
       line-height: 1.8;
       color: var(--black);
       letter-spacing: 0.05em;
-      padding-left: 0.05em; 
+      padding-left: 0.05em;
       white-space: nowrap;
     }
 
-    .philosophy-text > div:first-child {
+    .philosophy-text>div:first-child {
       margin-bottom: 40px;
     }
 
@@ -338,7 +397,10 @@
 
     .gear-bg-split {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: linear-gradient(135deg, var(--white) 50%, var(--dark-blue-purple) 50%);
       z-index: 0;
     }
@@ -400,9 +462,11 @@
 
     .at-field {
       position: absolute;
-      top: 50%; left: 50%;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       opacity: 0;
       pointer-events: none;
     }
@@ -413,13 +477,21 @@
     }
 
     @keyframes at-field-pulse {
-      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
-      100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+      0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+      }
     }
 
     .hexagon-layer {
       position: absolute;
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       border: 2px solid var(--neo-purple);
       clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
     }
@@ -430,8 +502,15 @@
     }
 
     @keyframes pulse-layer {
-      0% { transform: scale(0.6); opacity: 0.8; }
-      100% { transform: scale(1.4); opacity: 0; }
+      0% {
+        transform: scale(0.6);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
     }
 
     /* ===== SOUND LOG ===== */
@@ -472,6 +551,7 @@
       text-align: center;
       transition: background 0.3s ease;
     }
+
     .genre-item:hover {
       background: rgba(156, 122, 247, 0.3);
     }
@@ -496,7 +576,7 @@
       max-width: 600px;
       border: none;
       border-radius: 8px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
     /* ===== OPERATION (Calendar & Timeline) ===== */
@@ -577,7 +657,7 @@
       border-radius: 8px;
       width: 100%;
       height: 500px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
       overflow: hidden;
     }
 
@@ -613,7 +693,7 @@
       max-width: 1000px;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
       position: relative;
       aspect-ratio: 16 / 9;
     }
@@ -671,9 +751,9 @@
 
     .logo-hex-border {
       position: absolute;
-      top: 0; 
-      left: 0; 
-      width: 100%; 
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 100%;
       z-index: 1;
     }
@@ -694,7 +774,7 @@
       font-weight: 300;
       letter-spacing: 0.02em;
     }
-    
+
     .contact-message-sub {
       margin-top: 20px;
     }
@@ -734,10 +814,12 @@
       border-color: var(--accent-red);
       text-shadow: 0 0 8px rgba(255, 51, 51, 0.6);
     }
+
     .progress-bar.runaway {
       background: var(--accent-red);
       box-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
     }
+
     .icon-lg {
       width: 28px;
       height: 28px;
@@ -802,6 +884,7 @@
       letter-spacing: 0.12em;
       transition: color 0.3s ease, border-color 0.3s ease;
     }
+
     .site-footer-back:hover {
       color: var(--neo-purple);
       border-color: var(--neo-purple);
@@ -843,7 +926,7 @@
       max-width: 100%;
       max-height: 85vh;
       border-radius: 4px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       border: 1px solid var(--neo-purple);
       object-fit: contain;
     }
@@ -871,11 +954,15 @@
 
     /* ===== REDUCED MOTION ===== */
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
+
+      *,
+      *::before,
+      *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
+
       .reveal {
         opacity: 1;
         transform: none;
@@ -884,31 +971,40 @@
 
     /* ===== MOBILE ADJUSTMENTS ===== */
     @media (max-width: 768px) {
-      .reticle { display: none; }
+      .reticle {
+        display: none;
+      }
+
       .mobile-break {
         display: block;
       }
+
       .contact-section {
         padding: 40px 20px;
       }
+
       .philosophy-section {
         padding: 60px 20px;
         min-height: 50vh;
       }
+
       .philosophy-text {
         font-size: 1.2rem;
         white-space: normal;
       }
+
       .gear-section {
         padding: 60px 20px;
         min-height: auto;
       }
+
       .gear-content {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 15px;
       }
+
       .gear-item {
         width: calc(50% - 7.5px);
         max-width: 220px;
@@ -916,32 +1012,40 @@
         aspect-ratio: 1 / 1;
         margin: 0;
       }
+
       .sound-log-section,
       .operation-section {
         padding: 50px 20px;
       }
+
       .video-section {
         padding: 50px 20px;
         min-height: auto;
       }
+
       .sound-log-header {
         margin-bottom: 40px;
       }
+
       .genre-list {
         margin-bottom: 50px;
         gap: 10px;
       }
+
       .genre-item {
         padding: 15px;
       }
+
       .operation-container {
         grid-template-columns: 1fr;
         gap: 40px;
       }
+
       .hero-content {
         gap: 20px;
         padding: 15px;
       }
+
       .contact-message {
         margin-bottom: 40px;
         font-size: 1rem;
@@ -949,10 +1053,11 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
   <!-- SYNC RATE Meter -->
   <div class="progress-container">
@@ -966,7 +1071,7 @@
     <div class="reticle top-right"></div>
     <div class="reticle bottom-left"></div>
     <div class="reticle bottom-right"></div>
-    
+
     <div class="hero-content">
       <h1 class="hero-title reveal">人類踊狂計画</h1>
       <div class="hero-tagline-wrapper reveal">
@@ -1012,14 +1117,16 @@
     <div class="gear-bg-split"></div>
     <div class="gear-content reveal">
       <div class="gear-item" data-gear="controller">
-        <img src="https://tk.st/images/contents/DJ-Controller-purple.avif" alt="DJ Controller" class="gear-image" loading="lazy">
+        <img src="https://tk.st/images/contents/DJ-Controller-purple.avif" alt="DJ Controller" class="gear-image"
+          loading="lazy">
         <div class="at-field">
           <div class="hexagon-layer"></div>
           <div class="hexagon-layer"></div>
         </div>
       </div>
       <div class="gear-item" data-gear="headphone">
-        <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="Lollipop Headphone" class="gear-image" loading="lazy">
+        <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="Lollipop Headphone" class="gear-image"
+          loading="lazy">
         <div class="at-field">
           <div class="hexagon-layer"></div>
           <div class="hexagon-layer"></div>
@@ -1046,7 +1153,8 @@
     </div>
     <div class="mixcloud-container reveal">
       <div class="mixcloud-label">» Sound Log Database</div>
-      <iframe src="https://embed.beatport.com/?id=5012224&type=release" class="mixcloud-player" scrolling="no" title="Beatport Player" loading="lazy"></iframe>
+      <iframe src="https://embed.beatport.com/?id=5012224&type=release" class="mixcloud-player" scrolling="no"
+        title="Beatport Player" loading="lazy"></iframe>
     </div>
   </section>
 
@@ -1059,7 +1167,8 @@
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
             <div class="timeline-event">
-              <a href="https://tk.st/images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif" target="_blank" rel="noopener noreferrer" class="timeline-link">
+              <a href="https://tk.st/images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif" target="_blank"
+                rel="noopener noreferrer" class="timeline-link">
                 NEXTORM -BASE- #16<br>
                 Ohjo-bldg
               </a>
@@ -1068,7 +1177,8 @@
           <div class="timeline-item">
             <div class="timeline-year">2025</div>
             <div class="timeline-event">
-              <a href="https://tk.st/images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank" rel="noopener noreferrer" class="timeline-link">
+              <a href="https://tk.st/images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank"
+                rel="noopener noreferrer" class="timeline-link">
                 Night-Drip<br>
                 Shinjuku-HEIST.
               </a>
@@ -1086,7 +1196,9 @@
       <div class="reveal">
         <div class="operation-title">📅 Schedule / Future</div>
         <div class="calendar-container">
-          <iframe src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo" scrolling="no" title="Google Calendar" loading="lazy"></iframe>
+          <iframe
+            src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo"
+            scrolling="no" title="Google Calendar" loading="lazy"></iframe>
         </div>
       </div>
     </div>
@@ -1096,7 +1208,8 @@
   <section class="video-section">
     <div class="video-title reveal">🎬 Visual Database</div>
     <div class="video-container reveal">
-      <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no" class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
+      <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no"
+        class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
     </div>
   </section>
 
@@ -1104,29 +1217,34 @@
   <section class="contact-section">
     <div class="contact-bg-decoration">
       <svg viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="50,0 93.3,27.5 93.3,82.5 50,115 6.7,82.5 6.7,27.5" fill="none" stroke="var(--neo-purple)" stroke-width="0.5" />
+        <polygon points="50,0 93.3,27.5 93.3,82.5 50,115 6.7,82.5 6.7,27.5" fill="none" stroke="var(--neo-purple)"
+          stroke-width="0.5" />
       </svg>
     </div>
     <div class="contact-content reveal">
       <div class="contact-logo-space" title="DJ Human Choreomania Project Logo">
         <svg class="logo-hex-border" viewBox="0 0 100 115" preserveAspectRatio="none">
-          <polygon points="50,2 98,27.5 98,87.5 50,113 2,87.5 2,27.5" fill="rgba(156, 122, 247, 0.05)" stroke="var(--neo-purple)" stroke-width="2" stroke-dasharray="4,4" />
+          <polygon points="50,2 98,27.5 98,87.5 50,113 2,87.5 2,27.5" fill="rgba(156, 122, 247, 0.05)"
+            stroke="var(--neo-purple)" stroke-width="2" stroke-dasharray="4,4" />
         </svg>
-        <img src="https://tk.st/images/contents/dj-logo3.png" alt="DJ Logo">
+        <img src="https://tk.st/images/contents/dj-logo4.avif" alt="DJ Logo">
       </div>
-      
+
       <div class="contact-message">
         <div>ボランティアでお手伝いしております。</div>
         <div class="contact-message-sub">ご興味ありましたら、ご連絡ください。</div>
       </div>
       <div class="contact-buttons">
-        <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Instagram" title="Instagram">
+        <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Instagram"
+          title="Instagram">
           <i data-lucide="instagram" class="icon-lg"></i>
         </a>
-        <a href="https://tk.st/tw" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="X / Twitter" title="X / Twitter">
+        <a href="https://tk.st/tw" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="X / Twitter"
+          title="X / Twitter">
           <i data-lucide="twitter" class="icon-lg"></i>
         </a>
-        <a href="https://tk.st/contact" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Email" title="Email">
+        <a href="https://tk.st/contact" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Email"
+          title="Email">
           <i data-lucide="mail" class="icon-lg"></i>
         </a>
       </div>
@@ -1160,12 +1278,12 @@
     const syncRateText = document.getElementById('syncRateText');
     const footer = document.querySelector('.site-footer');
     const backToTopBtn = document.getElementById('backToTop');
-    
+
     // 2. A.T. Field Effect
     const triggerAtField = (item) => {
       const atField = item.querySelector('.at-field');
       if (!atField) return;
-      
+
       atField.classList.add('active');
       setTimeout(() => atField.classList.remove('active'), 600);
     };
@@ -1204,18 +1322,18 @@
       const clientHeight = window.innerHeight;
       const scrollHeight = document.documentElement.scrollHeight;
       const maxScroll = scrollHeight - clientHeight;
-      
+
       let scrollPercent = maxScroll > 0 ? Math.max(0, Math.min(1, scrollTop / maxScroll)) : 0;
-      
+
       if (progressBar && syncRateText && footer) {
         progressBar.style.width = `${scrollPercent * 100}%`;
-        
+
         const footerTopScroll = footer.offsetTop - clientHeight;
         const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
-        
+
         let displayRate = '';
         let isRunaway = false;
-        
+
         if (isAtBottom) {
           displayRate = '∞%';
           isRunaway = true;
@@ -1228,9 +1346,9 @@
           displayRate = `${syncRate.toFixed(2)}%`;
           isRunaway = syncRate > 300;
         }
-        
+
         syncRateText.textContent = `SYNC RATE: ${displayRate}`;
-        
+
         if (isRunaway) {
           syncRateText.classList.add('runaway');
           progressBar.classList.add('runaway');
@@ -1299,4 +1417,5 @@
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
 </body>
+
 </html>
