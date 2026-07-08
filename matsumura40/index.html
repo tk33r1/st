@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【重要】システムアップデートのお知らせ</title>
+  <meta name="description" content="お使いのシステムに重要な更新プログラム v40.0.0 が配信されています。本日中に適用してください。">
+  <meta property="og:title" content="【重要】システムアップデートのお知らせ">
+  <meta property="og:description" content="松村様のシステムに重要な更新プログラム v40.0.0 が配信されています。本日中に適用してください。">
+  <meta property="og:url" content="https://tk.st/matsumura40/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #070a18;
+      --panel: #10152e;
+      --panel-2: #171d3d;
+      --line: #2a3260;
+      --ink: #f2f4ff;
+      --muted: #8b93b8;
+      --pink: #ff4d8d;
+      --gold: #ffd166;
+      --cyan: #55e6ff;
+      --green: #6ef3a5;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    .dot {
+      font-family: 'DotGothic16', monospace;
+    }
+
+    /* ===== BOOT OVERLAY ===== */
+    #boot {
+      position: fixed;
+      inset: 0;
+      background: #04050d;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 8vh 6vw;
+      font-family: 'DotGothic16', monospace;
+      transition: opacity .6s ease;
+      cursor: pointer;
+    }
+
+    #boot.out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #bootLog {
+      font-size: clamp(.8rem, 2.6vw, 1.1rem);
+      color: var(--green);
+      text-shadow: 0 0 6px rgba(110, 243, 165, .45);
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-width: 100%;
+    }
+
+    #bootLog .bl {
+      min-height: 1.7em;
+    }
+
+    #bootLog .hl {
+      color: var(--gold);
+    }
+
+    #bootHint {
+      margin-top: 10px;
+      font-size: .7rem;
+      color: #3a4570;
+    }
+
+    #updateBtn {
+      margin-top: 34px;
+      font-family: 'DotGothic16', monospace;
+      font-size: clamp(1rem, 3.5vw, 1.4rem);
+      color: #04050d;
+      background: var(--green);
+      border: none;
+      padding: 16px 34px;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(110, 243, 165, .6);
+      animation: btn-blink 1s step-end infinite;
+    }
+
+    #updateBtn:hover {
+      background: var(--gold);
+      box-shadow: 0 0 22px rgba(255, 209, 102, .7);
+    }
+
+    @keyframes btn-blink {
+      50% {
+        box-shadow: 0 0 4px rgba(110, 243, 165, .2);
+      }
+    }
+
+    /* ===== FLASH ===== */
+    #flash {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .45s ease;
+    }
+
+    #flash.on {
+      opacity: 1;
+      transition: none;
+    }
+
+    /* ===== SOUND BUTTON ===== */
+    #soundBtn {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 400;
+      font-family: 'DotGothic16', monospace;
+      font-size: .85rem;
+      background: var(--panel);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    #soundBtn.pulse {
+      animation: snd-pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes snd-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 209, 102, .5);
+      }
+
+      50% {
+        box-shadow: 0 0 0 9px rgba(255, 209, 102, 0);
+      }
+    }
+
+    /* ===== LAYOUT ===== */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
+
+    section {
+      margin: 70px 0;
+    }
+
+    .term-head {
+      font-family: 'DotGothic16', monospace;
+      color: var(--cyan);
+      font-size: clamp(.85rem, 2.8vw, 1.05rem);
+      margin-bottom: 18px;
+      word-break: break-all;
+    }
+
+    .term-head::before {
+      content: '$ ';
+      color: var(--muted);
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 26px 24px;
+    }
+
+    /* ===== REVEAL ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity .9s cubic-bezier(.25, 1, .5, 1), transform .9s cubic-bezier(.25, 1, .5, 1);
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 18px;
+      margin: 0;
+    }
+
+    .release-tag {
+      font-family: 'DotGothic16', monospace;
+      font-size: .8rem;
+      color: var(--green);
+      border: 1px solid var(--green);
+      border-radius: 999px;
+      padding: 4px 16px;
+      letter-spacing: .12em;
+    }
+
+    .hero h1 {
+      font-family: 'DotGothic16', monospace;
+      font-size: clamp(2rem, 8.5vw, 4.4rem);
+      line-height: 1.15;
+      background: linear-gradient(90deg, #ff4d8d, #ffd166, #6ef3a5, #55e6ff, #b58dff, #ff4d8d);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: rainbow 5s linear infinite;
+    }
+
+    @keyframes rainbow {
+      to {
+        background-position: 300% 0;
+      }
+    }
+
+    .hero .name {
+      font-size: clamp(2.2rem, 9vw, 4rem);
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-shadow: 0 0 26px rgba(255, 77, 141, .45);
+    }
+
+    .hero .ver {
+      font-family: 'DotGothic16', monospace;
+      color: var(--gold);
+      font-size: clamp(.95rem, 3.4vw, 1.3rem);
+    }
+
+    .hero .sub {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* ===== RELEASE NOTES ===== */
+    .note {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: .95rem;
+    }
+
+    .note:last-child {
+      border-bottom: none;
+    }
+
+    .tag {
+      font-family: 'DotGothic16', monospace;
+      font-size: .7rem;
+      padding: 3px 9px;
+      border-radius: 5px;
+      white-space: nowrap;
+      margin-top: 3px;
+    }
+
+    .tag.new {
+      background: rgba(110, 243, 165, .16);
+      color: var(--green);
+    }
+
+    .tag.imp {
+      background: rgba(85, 230, 255, .14);
+      color: var(--cyan);
+    }
+
+    .tag.fix {
+      background: rgba(255, 209, 102, .15);
+      color: var(--gold);
+    }
+
+    .tag.dep {
+      background: rgba(255, 77, 141, .16);
+      color: var(--pink);
+    }
+
+    .tag.sec {
+      background: rgba(181, 141, 255, .16);
+      color: #b58dff;
+    }
+
+    .tag.bug {
+      background: rgba(139, 147, 184, .18);
+      color: var(--muted);
+    }
+
+    /* ===== METRICS ===== */
+    .svc-status {
+      font-family: 'DotGothic16', monospace;
+      font-size: .9rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+      word-break: break-all;
+    }
+
+    .svc-status .on {
+      color: var(--green);
+    }
+
+    .uptime {
+      text-align: center;
+      padding: 30px 20px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      margin-bottom: 16px;
+    }
+
+    .uptime .label {
+      font-family: 'DotGothic16', monospace;
+      color: var(--muted);
+      font-size: .8rem;
+      letter-spacing: .18em;
+    }
+
+    .uptime .big {
+      font-size: clamp(2.4rem, 9vw, 4rem);
+      font-weight: 900;
+      color: var(--gold);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.25;
+    }
+
+    .uptime .big small {
+      font-size: .45em;
+      font-weight: 700;
+    }
+
+    .uptime .sec {
+      color: var(--cyan);
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(.9rem, 3vw, 1.1rem);
+    }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 14px;
+    }
+
+    .tile {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px 18px;
+    }
+
+    .tile .t-label {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .tile .t-num {
+      font-size: clamp(1.3rem, 4.6vw, 1.7rem);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.3;
+      word-break: break-all;
+    }
+
+    .tile .t-num small {
+      font-size: .62em;
+      font-weight: 700;
+    }
+
+    .tile .t-note {
+      font-size: .7rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .tile:nth-child(1) .t-num {
+      color: var(--pink);
+    }
+
+    .tile:nth-child(2) .t-num {
+      color: var(--cyan);
+    }
+
+    .tile:nth-child(3) .t-num {
+      color: #b58dff;
+    }
+
+    .tile:nth-child(4) .t-num {
+      color: var(--green);
+    }
+
+    /* ===== BUILD INFO 1986 ===== */
+    .binfo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .binfo .card h3 {
+      font-family: 'DotGothic16', monospace;
+      font-size: .95rem;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+
+    .binfo ul {
+      list-style: none;
+      font-size: .88rem;
+    }
+
+    .binfo li {
+      padding: 6px 0 6px 1.2em;
+      position: relative;
+      border-bottom: 1px dashed var(--line);
+    }
+
+    .binfo li:last-child {
+      border-bottom: none;
+    }
+
+    .binfo li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+    }
+
+    .binfo li em {
+      font-style: normal;
+      color: var(--muted);
+      font-size: .8em;
+    }
+
+    /* ===== CAKE GAME ===== */
+    .cake-wrap {
+      text-align: center;
+    }
+
+    .cake-lead {
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: 6px;
+    }
+
+    #candleCount {
+      font-family: 'DotGothic16', monospace;
+      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      color: var(--gold);
+      margin-bottom: 18px;
+    }
+
+    .candles {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 10px;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 0 10px 4px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .candle {
+      width: 22px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 2px 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .candle .flame {
+      display: block;
+      width: 12px;
+      height: 16px;
+      margin: 0 auto 2px;
+      border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+      background: radial-gradient(circle at 50% 78%, rgba(255, 255, 255, .75), transparent 55%),
+        linear-gradient(#ffd166, #ff7b3d);
+      box-shadow: 0 0 10px 3px rgba(255, 190, 80, .55);
+      animation: flick .32s ease-in-out infinite alternate;
+      opacity: 0;
+      transform: scale(.2);
+    }
+
+    .candle.lit .flame {
+      opacity: 1;
+      transform: scale(1);
+      transition: none;
+    }
+
+    .candle:not(.lit) .flame {
+      animation: none;
+      transition: opacity .45s ease, transform .45s ease;
+      opacity: 0;
+      transform: translateY(-10px) scale(.25);
+      box-shadow: none;
+    }
+
+    @keyframes flick {
+      to {
+        transform: scaleY(.86) translateX(1px);
+      }
+    }
+
+    .candle .stick {
+      display: block;
+      width: 8px;
+      height: 28px;
+      margin: 0 auto;
+      border-radius: 3px;
+      background: repeating-linear-gradient(45deg, #fff 0 4px, #ff8fb3 4px 8px);
+    }
+
+    .candle:not(.lit) .stick {
+      filter: grayscale(.6) brightness(.7);
+    }
+
+    .cake-body {
+      max-width: 560px;
+      margin: -4px auto 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tier {
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, .12);
+    }
+
+    .tier.t1 {
+      height: 58px;
+      background: linear-gradient(#ff9dbd, #ff6fa3);
+      width: 88%;
+      margin: 0 auto;
+      border-radius: 16px 16px 6px 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tier.t1::after {
+      content: '';
+      position: absolute;
+      top: -12px;
+      left: 0;
+      right: 0;
+      height: 26px;
+      background: radial-gradient(circle 13px at 13px 0, #fff7ef 98%, transparent) 0 0 / 26px 26px repeat-x;
+    }
+
+    .tier.t2 {
+      height: 64px;
+      background: linear-gradient(#8a5a3b, #6b4128);
+      width: 100%;
+      margin: -6px auto 0;
+      border-radius: 12px;
+    }
+
+    .plate {
+      height: 12px;
+      width: 112%;
+      margin: 4px auto 0;
+      margin-left: -6%;
+      background: linear-gradient(#3a4570, #232a4e);
+      border-radius: 999px;
+    }
+
+    .cake-btns {
+      margin-top: 26px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn {
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      font-weight: 700;
+      font-size: .9rem;
+      background: var(--panel-2);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 12px 22px;
+      cursor: pointer;
+      transition: transform .2s ease, border-color .2s ease;
+    }
+
+    .pill-btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--cyan);
+    }
+
+    #micStatus {
+      margin-top: 12px;
+      font-size: .8rem;
+      color: var(--muted);
+      min-height: 1.4em;
+    }
+
+    #fuwakuMsg {
+      margin: 26px auto 0;
+      max-width: 480px;
+      border: 1px solid var(--gold);
+      border-radius: 14px;
+      padding: 20px;
+      color: var(--gold);
+      background: rgba(255, 209, 102, .07);
+    }
+
+    #fuwakuMsg .dot {
+      font-size: 1.15rem;
+    }
+
+    /* ===== REPLAY ===== */
+    .replay-wrap {
+      text-align: center;
+    }
+
+    #replayBtn {
+      font-family: 'DotGothic16', monospace;
+      font-size: clamp(1rem, 3.6vw, 1.25rem);
+      background: linear-gradient(135deg, var(--pink), #b58dff);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 18px 36px;
+      cursor: pointer;
+      box-shadow: 0 8px 26px rgba(255, 77, 141, .35);
+      transition: transform .2s ease;
+    }
+
+    #replayBtn:hover {
+      transform: scale(1.05);
+    }
+
+    /* ===== CLOSING / FOOTER ===== */
+    .closing {
+      text-align: center;
+      font-size: clamp(1.05rem, 4vw, 1.5rem);
+      font-weight: 700;
+      line-height: 2.1;
+    }
+
+    footer {
+      text-align: center;
+      font-family: 'DotGothic16', monospace;
+      color: var(--muted);
+      font-size: .78rem;
+      padding: 40px 20px 50px;
+      border-top: 1px solid var(--line);
+      line-height: 2;
+    }
+
+    footer .ai {
+      color: var(--cyan);
+    }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed;
+      top: -90px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 950;
+      font-family: 'DotGothic16', monospace;
+      font-size: clamp(.95rem, 3.6vw, 1.2rem);
+      background: #10152e;
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 14px 26px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+      transition: top .5s cubic-bezier(.25, 1, .5, 1);
+      white-space: nowrap;
+    }
+
+    #toast.show {
+      top: 24px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <noscript>
+    <p style="padding:20px">このページの閲覧には JavaScript が必要です。</p>
+  </noscript>
+
+  <!-- BOOT -->
+  <div id="boot">
+    <div id="bootLog" aria-live="polite"></div>
+    <button id="updateBtn" hidden>▶ アップデートを実行</button>
+    <div id="bootHint">tap to skip</div>
+  </div>
+  <div id="flash"></div>
+
+  <button id="soundBtn" class="pulse" hidden aria-label="BGMの再生と停止">♪ SOUND ON?</button>
+
+  <main id="main" hidden>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="release-tag">STABLE RELEASE — 2026.07.09</div>
+      <h1>HAPPY<br>40th BIRTHDAY</h1>
+      <div class="name">松村 康平</div>
+      <div class="ver">v40.0.0 — Anniversary Edition</div>
+      <div class="sub">メジャーアップデートは正常に完了しました 🎉</div>
+    </section>
+
+    <!-- RELEASE NOTES -->
+    <section class="reveal">
+      <div class="term-head dot">cat CHANGELOG_v40.md</div>
+      <div class="card">
+        <div class="note"><span class="tag new">NEW</span><span>「貫禄」モジュールを正式実装しました</span></div>
+        <div class="note"><span class="tag imp">IMPROVE</span><span>経験値バフにより、トラブル対応時の判断速度が大幅に向上しました</span></div>
+        <div class="note"><span class="tag fix">WONTFIX</span><span>徹夜明けの回復に3営業日かかる問題 → 修正不可のため仕様としました</span></div>
+        <div class="note"><span class="tag dep">EOL</span><span>言い訳API「まだ30代です」は本日をもってサポート終了となりました</span></div>
+        <div class="note"><span class="tag sec">SECURITY</span><span>白髪対応パッチを配布中です（適用は任意です）</span></div>
+        <div class="note"><span class="tag bug">KNOWN ISSUE</span><span>「あれ、何しに来たんだっけ？」が稀に発生します（再現手順は不明）</span></div>
+      </div>
+    </section>
+
+    <!-- METRICS -->
+    <section class="reveal">
+      <div class="term-head dot">systemctl status kohei.service</div>
+      <div class="svc-status dot">● kohei.service — <span class="on">active (running)</span> since 1986-07-09</div>
+      <div class="uptime">
+        <div class="label">UPTIME</div>
+        <div class="big"><span id="uDays">--</span><small> 日</small></div>
+        <div class="sec">= <span id="uSec">--</span> 秒（リアルタイム集計中）</div>
+      </div>
+      <div class="tiles">
+        <div class="tile">
+          <div class="t-label">💓 心臓の総拍動数</div>
+          <div class="t-num"><span id="mHeart">--</span><small> 回</small></div>
+          <div class="t-note">※平均72bpmで計算・現在も加算中</div>
+        </div>
+        <div class="tile">
+          <div class="t-label">🌍 地球と一緒に移動した距離</div>
+          <div class="t-num"><span id="mKm">--</span><small> km</small></div>
+          <div class="t-note">※太陽のまわりをちょうど40周</div>
+        </div>
+        <div class="tile">
+          <div class="t-label">😴 累計スリープ時間</div>
+          <div class="t-num"><span id="mSleep">--</span><small> 年</small></div>
+          <div class="t-note">※1日8時間換算</div>
+        </div>
+        <div class="tile">
+          <div class="t-label">🍚 累計食事回数</div>
+          <div class="t-num"><span id="mMeals">--</span><small> 回</small></div>
+          <div class="t-note">※1日3食換算</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BUILD INFO 1986 -->
+    <section class="reveal">
+      <div class="term-head dot">cat BUILD_INFO_1986.log</div>
+      <div class="binfo">
+        <div class="card">
+          <h3>📰 コンパイルされた年の出来事</h3>
+          <ul>
+            <li>ハレー彗星が76年ぶりに地球へ接近</li>
+            <li>『ドラゴンクエスト』第1作が発売 <em>（5月）</em></li>
+            <li>レンズ付きフィルム「写ルンです」発売 <em>（誕生のわずか8日前！）</em></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>🎵 当時のサウンドトラック</h3>
+          <ul>
+            <li>年間シングル1位：石井明美「CHA-CHA-CHA」</li>
+            <li>日本レコード大賞：中森明菜「DESIRE -情熱-」</li>
+            <li>流行語大賞：「新人類」「究極」</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>💰 当時の物価データ</h3>
+          <ul>
+            <li>はがき：30円 <em>（現在は85円）</em></li>
+            <li>週刊少年ジャンプ：170円</li>
+            <li>大卒初任給：約14.5万円</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CAKE GAME -->
+    <section class="reveal cake-wrap">
+      <div class="term-head dot" style="text-align:left">sudo blow-out --candles=40</div>
+      <p class="cake-lead">40歳のケーキは、ろうそくも40本。<strong>正直、多い。</strong><br>タップ連打（またはマイクに息を吹きかけて）全部消してください！</p>
+      <div id="candleCount">🔥 残り 40 本</div>
+      <div class="candles" id="candles"></div>
+      <div class="cake-body">
+        <div class="tier t1"></div>
+        <div class="tier t2"></div>
+        <div class="plate"></div>
+      </div>
+      <div class="cake-btns">
+        <button class="pill-btn" id="micBtn">🎤 マイクで吹き消す（許可が必要）</button>
+      </div>
+      <div id="micStatus"></div>
+      <div id="fuwakuMsg" hidden>
+        <div class="dot">🏆 実績解除「不惑」</div>
+        <div style="font-size:.9rem; margin-top:8px">四十にして惑わず——40本吹き消し達成、おみごとです！</div>
+      </div>
+    </section>
+
+    <!-- REPLAY -->
+    <section class="reveal replay-wrap">
+      <button id="replayBtn">🎆 もう一度祝砲を打ち上げる</button>
+    </section>
+
+    <!-- CLOSING -->
+    <section class="reveal closing">
+      <p>松村さん、40歳のお誕生日<br>おめでとうございます！🎂</p>
+      <p style="font-size:.75em; font-weight:400; color:var(--muted); margin-top:14px">これからも宜しくお願いします 🎉</p>
+    </section>
+
+  </main>
+
+  <footer id="pageFooter" hidden>
+    🤖 This page was generated with <span class="ai">Claude Fable 5</span><br>
+    2026.07.09 — 松村康平 v40.0.0 リリース記念
+  </footer>
+
+  <div id="toast" role="status"></div>
+
+  <script>
+    'use strict';
+    const $ = s => document.querySelector(s);
+    const BIRTH = new Date('1986-07-09T00:00:00+09:00').getTime();
+    const PAL = ['#ff4d8d', '#ffd166', '#6ef3a5', '#55e6ff', '#b58dff', '#ffffff'];
+    const fmt = n => Math.floor(n).toLocaleString('ja-JP');
+
+    /* ===== BOOT SEQUENCE ===== */
+    let skip = false;
+    const bootEl = $('#boot');
+    const logEl = $('#bootLog');
+    bootEl.addEventListener('click', () => { skip = true; });
+
+    const wait = ms => new Promise(r => setTimeout(r, skip ? 0 : ms));
+
+    async function typeLine(text, cls) {
+      const div = document.createElement('div');
+      div.className = 'bl' + (cls ? ' ' + cls : '');
+      logEl.appendChild(div);
+      if (skip) { div.textContent = text; return; }
+      for (const ch of text) {
+        div.textContent += ch;
+        await wait(16);
+      }
+    }
+
+    async function progressLine() {
+      const div = document.createElement('div');
+      div.className = 'bl';
+      logEl.appendChild(div);
+      const W = 14;
+      let p = 0;
+      while (p < 100) {
+        p = Math.min(100, p + Math.floor(Math.random() * 12) + 4);
+        const f = Math.round(p / 100 * W);
+        div.textContent = '  [' + '█'.repeat(f) + '░'.repeat(W - f) + '] ' + p + '%';
+        await wait(130);
+      }
+    }
+
+    async function runBoot() {
+      await typeLine('> BOOTING KOHEI-OS ...');
+      await wait(350);
+      await typeLine('> システムチェック中 ..... OK');
+      await wait(300);
+      await typeLine('> 現在のバージョン: v39.99.9（本日サポート終了）');
+      await wait(500);
+      await typeLine('> 新しいメジャーバージョンが見つかりました:');
+      await typeLine('    松村康平 v40.0.0 "Anniversary Edition"', 'hl');
+      await wait(400);
+      await typeLine('> 更新プログラムをダウンロード中 ...');
+      await progressLine();
+      await wait(300);
+      await typeLine('> インストールの準備が完了しました。');
+      $('#updateBtn').hidden = false;
+      $('#bootHint').hidden = true;
+    }
+    runBoot();
+
+    /* ===== UPDATE! ===== */
+    $('#updateBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const flash = $('#flash');
+      flash.classList.add('on');
+      setTimeout(() => flash.classList.remove('on'), 60);
+      bootEl.classList.add('out');
+      setTimeout(() => bootEl.remove(), 700);
+      $('#main').hidden = false;
+      $('#pageFooter').hidden = false;
+      $('#soundBtn').hidden = false;
+      document.title = '🎉 松村康平 v40.0.0 リリース！';
+      window.scrollTo(0, 0);
+      initReveal();
+      startCounters();
+      fiesta(4500);
+    });
+
+    /* ===== FIREWORKS / CONFETTI ===== */
+    function fiesta(dur = 4000) {
+      if (typeof confetti === 'undefined') return;
+      confetti({ particleCount: 160, spread: 100, startVelocity: 42, origin: { x: .5, y: .55 }, colors: PAL });
+      const end = Date.now() + dur;
+      const iv = setInterval(() => {
+        if (Date.now() > end) { clearInterval(iv); return; }
+        confetti({ particleCount: 45, angle: 60, spread: 58, origin: { x: 0, y: .75 }, colors: PAL });
+        confetti({ particleCount: 45, angle: 120, spread: 58, origin: { x: 1, y: .75 }, colors: PAL });
+        if (Math.random() < .55) {
+          confetti({
+            particleCount: 90, spread: 360, startVelocity: 32, decay: .92, gravity: .9,
+            origin: { x: .2 + Math.random() * .6, y: .18 + Math.random() * .3 },
+            shapes: ['star', 'circle'], colors: PAL, scalar: 1.1
+          });
+        }
+      }, 260);
+    }
+    $('#replayBtn').addEventListener('click', () => fiesta(4000));
+
+    /* ===== REVEAL ON SCROLL ===== */
+    function initReveal() {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(en => {
+          if (en.isIntersecting) { en.target.classList.add('active'); obs.unobserve(en.target); }
+        });
+      }, { threshold: .12 });
+      document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+    }
+
+    /* ===== METRICS ===== */
+    function tickMetrics() {
+      const s = (Date.now() - BIRTH) / 1000;
+      const days = Math.floor(s / 86400);
+      $('#uDays').textContent = fmt(days);
+      $('#uSec').textContent = fmt(s);
+      $('#mHeart').textContent = fmt(s * 1.2);           // 72 bpm
+      $('#mKm').textContent = fmt(s * 29.78);            // 地球の公転速度 29.78 km/s
+      $('#mSleep').textContent = (days / 3 / 365.25).toFixed(1);
+      $('#mMeals').textContent = fmt(days * 3);
+    }
+    function startCounters() {
+      tickMetrics();
+      setInterval(tickMetrics, 1000);
+    }
+
+    /* ===== TOAST ===== */
+    let toastTimer = null;
+    function toast(msg) {
+      const t = $('#toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 4200);
+    }
+
+    /* ===== CANDLE GAME ===== */
+    const TOTAL = 40;
+    let left = TOTAL;
+    const candlesEl = $('#candles');
+    for (let i = 0; i < TOTAL; i++) {
+      const b = document.createElement('button');
+      b.className = 'candle lit';
+      b.setAttribute('aria-label', 'ろうそく');
+      b.innerHTML = '<span class="flame"></span><span class="stick"></span>';
+      b.addEventListener('click', () => extinguish(b));
+      candlesEl.appendChild(b);
+    }
+
+    function extinguish(c) {
+      if (!c || !c.classList.contains('lit')) return;
+      c.classList.remove('lit');
+      left--;
+      $('#candleCount').textContent = left > 0 ? `🔥 残り ${left} 本` : '🎉 全消灯！';
+      if (left === 0) onAllOut();
+    }
+
+    function extinguishOne() {
+      const lit = candlesEl.querySelectorAll('.candle.lit');
+      if (lit.length) extinguish(lit[Math.floor(Math.random() * lit.length)]);
+    }
+
+    function onAllOut() {
+      $('#fuwakuMsg').hidden = false;
+      toast('🏆 実績解除「不惑」');
+      fiesta(3500);
+    }
+
+    /* ===== MIC BLOW DETECTION ===== */
+    let micActive = false;
+    $('#micBtn').addEventListener('click', async () => {
+      if (micActive) return;
+      const status = $('#micStatus');
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        status.textContent = 'このブラウザではマイクが使えません。タップ連打でどうぞ💪';
+        return;
+      }
+      try {
+        status.textContent = 'マイクの許可を確認中…';
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micActive = true;
+        $('#micBtn').textContent = '🎤 マイク ON';
+        status.textContent = 'ふーっ！と息を吹きかけてください！';
+        const mctx = new (window.AudioContext || window.webkitAudioContext)();
+        const src = mctx.createMediaStreamSource(stream);
+        const an = mctx.createAnalyser();
+        an.fftSize = 1024;
+        src.connect(an);
+        const buf = new Float32Array(an.fftSize);
+        let lastBlow = 0;
+        (function poll() {
+          if (left === 0) {
+            stream.getTracks().forEach(t => t.stop());
+            mctx.close();
+            status.textContent = '';
+            return;
+          }
+          an.getFloatTimeDomainData(buf);
+          let sum = 0;
+          for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+          const rms = Math.sqrt(sum / buf.length);
+          const now = performance.now();
+          if (rms > 0.07 && now - lastBlow > 110) {
+            extinguishOne();
+            lastBlow = now;
+          }
+          requestAnimationFrame(poll);
+        })();
+      } catch (err) {
+        status.textContent = 'マイクが使えませんでした。タップ連打でどうぞ💪';
+      }
+    });
+
+    /* ===== CHIPTUNE BGM (initially muted) ===== */
+    const NOTE = { G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99 };
+    // Happy Birthday to You (3/4拍子, [音名, 拍数])
+    const MELODY = [
+      ['G4', .75], ['G4', .25], ['A4', 1], ['G4', 1], ['C5', 1], ['B4', 2],
+      ['G4', .75], ['G4', .25], ['A4', 1], ['G4', 1], ['D5', 1], ['C5', 2],
+      ['G4', .75], ['G4', .25], ['G5', 1], ['E5', 1], ['C5', 1], ['B4', 1], ['A4', 2],
+      ['F5', .75], ['F5', .25], ['E5', 1], ['C5', 1], ['D5', 1], ['C5', 2],
+      [null, 2]
+    ];
+    const BEAT = 0.42;
+    let actx = null, masterGain = null, loopEnd = 0, loopTimer = null, bgmOn = false;
+
+    function playNote(freq, t, dur) {
+      const o = actx.createOscillator();
+      o.type = 'square';
+      o.frequency.value = freq;
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(masterGain);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+      // 1オクターブ下のトライアングルで厚みを足す
+      const o2 = actx.createOscillator();
+      o2.type = 'triangle';
+      o2.frequency.value = freq / 2;
+      const g2 = actx.createGain();
+      g2.gain.setValueAtTime(0.0001, t);
+      g2.gain.exponentialRampToValueAtTime(0.09, t + 0.02);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o2.connect(g2).connect(masterGain);
+      o2.start(t);
+      o2.stop(t + dur + 0.05);
+    }
+
+    function scheduleLoop(t0) {
+      let t = t0;
+      for (const [n, d] of MELODY) {
+        if (n) playNote(NOTE[n], t, d * BEAT * 0.9);
+        t += d * BEAT;
+      }
+      return t;
+    }
+
+    const soundBtn = $('#soundBtn');
+    soundBtn.addEventListener('click', async () => {
+      if (!actx) {
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = actx.createGain();
+        masterGain.gain.value = 0.9;
+        masterGain.connect(actx.destination);
+        loopEnd = scheduleLoop(actx.currentTime + 0.1);
+        loopTimer = setInterval(() => {
+          if (actx.state === 'running' && actx.currentTime > loopEnd - 0.6) {
+            loopEnd = scheduleLoop(loopEnd);
+          }
+        }, 250);
+        bgmOn = true;
+      } else if (bgmOn) {
+        await actx.suspend();
+        bgmOn = false;
+      } else {
+        await actx.resume();
+        bgmOn = true;
+      }
+      soundBtn.textContent = bgmOn ? '🔊 BGM 再生中' : '🔇 BGM 停止中';
+      soundBtn.classList.remove('pulse');
+    });
+  </script>
+</body>
+
+</html>
