@@ -135,7 +135,6 @@
     .justify-between { justify-content: space-between }
     .justify-center { justify-content: center }
     .flex-1 { flex: 1 1 0% }
-    .gap-1\.5 { gap: 0.375rem }
     .gap-2 { gap: 0.5rem }
     .gap-2\.5 { gap: 0.625rem }
     .gap-3 { gap: 0.75rem }
@@ -263,7 +262,6 @@
     .opacity-50 { opacity: 0.5 }
     .opacity-70 { opacity: 0.7 }
     .hover\:underline:hover { text-decoration: underline }
-    .hover\:border-primary:hover { border-color: var(--primary-color) }
     .hover\:text-primary:hover { color: var(--primary-color) }
     .overflow-x-auto { overflow-x: auto }
     .overflow-hidden { overflow: hidden }
@@ -346,7 +344,6 @@
 
     @media (min-width: 768px) {
         .md\:p-6 { padding: 1.3125rem }
-        .md\:gap-8 { gap: 2rem }
 
         .md\:text-sm {
           font-size: 0.875rem;
@@ -677,7 +674,15 @@
       will-change: transform, filter;
     }
 
-    body.choreomania-active #app *:not(input, .choreo-skip, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) {
+    /* Everything inside #app dances — chrome, tabs, panes, the IDE frame itself. Nested
+       transforms compound, so the layout visibly buckles and neighbouring controls drift
+       over each other; that is the point of the command, not a defect. A CSS transform
+       carries its hit area along, so a control is still hittable where you SEE it, though
+       overlapping siblings can steal a click. The only opt-out is the command input, which
+       keeps its own box steady (it still rides its parent) so text stays readable and
+       aimable. If the UI ever gets too wild to click, the Command Palette sits outside
+       #app and never moves: Ctrl+Shift+P → choreomania turns it back off. */
+    body.choreomania-active #app *:not(input) {
       transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.2s;
       animation: none !important;
       overflow: visible !important;
@@ -685,14 +690,23 @@
 
     body.choreomania-active #app .fade-in { opacity: 1 !important }
 
-    body.choreomania-active #app *:nth-child(odd):not(input, .choreo-skip, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) {
+    body.choreomania-active #app *:nth-child(odd):not(input) {
       transform: translate(calc((var(--mouse-x) - 0.5) * 30px), calc((var(--mouse-y) - 0.5) * 20px)) scale(calc(0.95 + var(--mouse-y) * 0.1)) !important;
       will-change: transform;
     }
 
-    body.choreomania-active #app *:nth-child(even):not(input, .choreo-skip, .ed-tab, .tree-item, .nav-badge, .panel-badge, .act-btn, .panel-tab) {
+    body.choreomania-active #app *:nth-child(even):not(input) {
       transform: translate(calc((var(--mouse-x) - 0.5) * -30px), calc((var(--mouse-y) - 0.5) * -20px)) scale(calc(1.05 - var(--mouse-x) * 0.1)) !important;
       will-change: transform;
+    }
+
+    /* The activity bar drifts sideways over the side bar, and since both are transformed
+       (each its own stacking context, both auto z-index) the later sibling wins and its
+       opaque background swallows the clicks — about half the buttons became no-ops. Lift
+       the bar above its neighbour: paint order only, nothing dances any less. */
+    body.choreomania-active #activitybar {
+      position: relative;
+      z-index: 60;
     }
 
     body.choreomania-active #app span:not(.hidden) { display: inline-block }
@@ -731,6 +745,9 @@
     #panel {
       display: flex;
       flex-direction: column;
+      flex-shrink: 0;
+      height: 28.5%;
+      min-height: 6rem;
     }
 
     #terminal {
@@ -1169,12 +1186,6 @@
 
     .ed-tab:hover .tab-close, .ed-tab.active .tab-close { opacity: 0.6 }
     .ed-tab .tab-close:hover { opacity: 1 }
-
-    #panel {
-      flex-shrink: 0;
-      height: 28.5%;
-      min-height: 6rem;
-    }
 
     .panel-tab {
       padding: 0.35rem 0.75rem;
@@ -2522,6 +2533,16 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+  <!-- Icon sprite: only for glyphs used in more than one place. Geometry carries no
+       stroke-width, so each <use> site keeps setting its own on the referencing <svg>. -->
+  <svg class="hidden" aria-hidden="true">
+    <symbol id="ic-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+      stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </symbol>
+  </svg>
   <div class="sr-only">
     <h1>Available Commands:</h1>
     <h2><a href="?cmd=about">about</a></h2>
@@ -2609,8 +2630,8 @@
       </div>
     </header>
 
-    <div id="ide" class="choreo-skip flex flex-1">
-      <nav id="activitybar" class="choreo-skip flex flex-col items-center bg-surface border-r border-color"
+    <div id="ide" class="flex flex-1">
+      <nav id="activitybar" class="flex flex-col items-center bg-surface border-r border-color"
         aria-label="Activity Bar">
         <button class="act-btn active" data-act="explorer" title="Explorer" data-ja-title="エクスプローラー"
           data-ja-aria="エクスプローラー" aria-label="Explorer"><svg aria-hidden="true" width="22" height="22"
@@ -2672,7 +2693,7 @@
               d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg></button>
       </nav>
-      <aside id="sidebar" class="choreo-skip bg-surface border-r border-color" aria-label="Side Bar">
+      <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
         <div id="view-explorer">
           <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="エクスプローラー">EXPLORER
           </div>
@@ -2711,42 +2732,49 @@
       </aside>
       <div id="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize side bar"
         title="Drag to resize"></div>
-      <main id="editor-group" class="choreo-skip flex flex-col flex-1">
-        <div id="tabbar" class="choreo-skip flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
-        <div id="breadcrumb" class="choreo-skip px-4 py-1 text-[10px] text-secondary border-b border-color truncate">
+      <main id="editor-group" class="flex flex-col flex-1">
+        <div id="tabbar" class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
+        <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate">
           <span>tk.st</span>
         </div>
         <!-- Announces just which file opened, instead of re-reading the whole document. -->
         <div id="editor-status" class="sr-only" aria-live="polite"></div>
-        <div id="editor" class="choreo-skip flex-1 relative" style="scroll-behavior:smooth;">
-          <div id="editor-scroll" class="choreo-skip">
-            <div id="editor-gutter" class="choreo-skip" aria-hidden="true"></div>
-            <div id="editor-content" class="choreo-skip flex-1 p-4 md:p-6 space-y-1">
+        <div id="editor" class="flex-1 relative" style="scroll-behavior:smooth;">
+          <div id="editor-scroll">
+            <div id="editor-gutter" aria-hidden="true"></div>
+            <div id="editor-content" class="flex-1 p-4 md:p-6 space-y-1">
               <!-- No aria-live here: an opened document (e.g. `timeline`) can be thousands of
                    words, and announcing the whole editor pane on every tab switch buries the
                    terminal's own live region. The TERMINAL log stays the live region. -->
-              <div id="output-area" class="choreo-skip" role="document" tabindex="-1"></div>
+              <div id="output-area" role="document" tabindex="-1"></div>
             </div>
           </div>
         </div>
         <div id="panel-resizer" role="separator" aria-orientation="horizontal" aria-label="Resize panel"
           title="Drag to resize"></div>
-        <div id="panel" class="choreo-skip flex flex-col border-t border-color bg-surface">
+        <div id="panel" class="flex flex-col border-t border-color bg-surface">
           <div id="panel-tabs" role="tablist" aria-label="Panel"
-            class="choreo-skip flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
-            <span class="panel-tab active" role="tab" tabindex="0" aria-selected="true" data-panel="terminal"
-              data-ja="ターミナル">TERMINAL</span><span class="panel-tab" role="tab" tabindex="0" aria-selected="false"
-              data-panel="problems"><span data-ja="問題">PROBLEMS</span><span id="panel-problems-badge"
+            class="flex items-center border-b border-color text-[10px] tracking-wider text-secondary bg-surface-alt">
+            <!-- Every label sits in its own <span>. .panel-tab is excluded from the choreomania
+                 transform on purpose (it stays a steady click target, like .ed-tab / .tree-item),
+                 so the text needs a child of its own to dance with — PROBLEMS already had one for
+                 its badge, which is why it was the only tab that moved. data-ja moves onto that
+                 child too: applyChrome() assigns textContent, which would wipe the child otherwise. -->
+            <span class="panel-tab active" role="tab" tabindex="0" aria-selected="true"
+              data-panel="terminal"><span data-ja="ターミナル">TERMINAL</span></span><span class="panel-tab" role="tab"
+              tabindex="0" aria-selected="false" data-panel="problems"><span
+                data-ja="問題">PROBLEMS</span><span id="panel-problems-badge"
                 class="panel-badge hidden">0</span></span><span class="panel-tab" role="tab" tabindex="0"
-              aria-selected="false" data-panel="output" data-ja="出力">OUTPUT</span><span class="panel-tab" role="tab"
-              tabindex="0" aria-selected="false" data-panel="ports" data-ja="ポート">PORTS</span>
+              aria-selected="false" data-panel="output"><span data-ja="出力">OUTPUT</span></span><span
+              class="panel-tab" role="tab" tabindex="0" aria-selected="false" data-panel="ports"><span
+                data-ja="ポート">PORTS</span></span>
           </div>
           <div id="panel-problems" class="panel-pane flex-1 p-3 text-xs hidden"></div>
           <div id="panel-output" class="panel-pane flex-1 p-3 text-xs hidden"></div>
           <div id="panel-ports" class="panel-pane flex-1 p-3 text-xs hidden"></div>
-          <div id="terminal" class="choreo-skip flex-1 p-3 space-y-1" style="scroll-behavior:smooth;">
-            <div id="terminal-log" class="choreo-skip" aria-live="polite" aria-atomic="false"></div>
-            <div class="choreo-skip hidden items-center gap-2 mt-2" id="input-line">
+          <div id="terminal" class="flex-1 p-3 space-y-1" style="scroll-behavior:smooth;">
+            <div id="terminal-log" aria-live="polite" aria-atomic="false"></div>
+            <div class="hidden items-center gap-2 mt-2" id="input-line">
               <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span>
               <div class="relative flex-1 flex items-center overflow-hidden">
                 <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off"
@@ -2763,7 +2791,7 @@
       </main>
       <div id="agentdock-resizer" role="separator" aria-orientation="vertical" aria-label="Resize agent panel"
         title="Drag to resize"></div>
-      <aside id="agentdock" class="choreo-skip flex flex-col bg-surface border-l border-color" aria-label="MAGI">
+      <aside id="agentdock" class="flex flex-col bg-surface border-l border-color" aria-label="MAGI">
         <div id="agentdock-header" class="flex items-center justify-between px-3 border-b border-color bg-surface-alt">
           <div id="agentdock-title" class="text-xs tracking-wider text-primary glow select-none"><span
               class="text-sm inline-block">✦</span> MAGI</div>
@@ -2811,11 +2839,8 @@
                 <button id="btn-export-agent"
                   class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
                   title="Export conversation as Markdown">
-                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
+                  <svg aria-hidden="true" width="12" height="12" stroke-width="1.8">
+                    <use href="#ic-download" />
                   </svg>
                   <span data-ja="ダウンロード">Download</span>
                 </button>
@@ -2860,7 +2885,7 @@
     </div>
 
     <footer id="terminal-footer"
-      class="choreo-skip relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
+      class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
       <div class="footer-status-row flex items-center justify-between w-full">
         <div class="flex items-center gap-3 truncate">
           <span id="remote-badge" title="Open a Remote Window — Command Palette" data-ja-title="リモートウィンドウを開く — コマンドパレット"
@@ -2925,12 +2950,9 @@
             <div class="option-title" data-ja="直接ダウンロード">Direct Download</div>
             <a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer"
               class="download-container" title="Download the APK file directly" data-ja-title="APKファイルを直接ダウンロード">
-              <svg aria-hidden="true" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"
+              <svg aria-hidden="true" width="64" height="64" stroke-width="1.2"
                 class="text-primary animated-pulse-slow">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
+                <use href="#ic-download" />
               </svg>
             </a>
             <div class="option-desc" data-ja="APKファイルを端末に直接ダウンロード。">Download the APK file directly to your device.</div>
@@ -3040,7 +3062,18 @@
     };
     const verBadge = () => ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
     const clearCmdParam = () => { if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) { } } };
+    // Randomised fly-off transform, shared by `meltdown` and rampage's section collapse
+    // (the CSS reads --dx/--dy/--deg); clearTransformVars is its inverse.
+    const setTransformVars = el => {
+      el.style.setProperty('--dx', `${(Math.random() - 0.5) * 300}px`);
+      el.style.setProperty('--dy', `${window.innerHeight}px`);
+      el.style.setProperty('--deg', `${(Math.random() - 0.5) * 360}deg`);
+    };
     const clearTransformVars = el => ['--dx', '--dy', '--deg'].forEach(p => el.style.removeProperty(p));
+    // An element plus its ancestors, stopping *before* the one whose id is `stopId`
+    // (omit to walk to the root). Used to shield the terminal input line from the
+    // meltdown / rampage fly-off so the prompt stays usable.
+    const ancestorsOf = (el, stopId) => { const set = new Set(); for (let c = el; c && c.id !== stopId; c = c.parentElement) set.add(c); return set; };
     const getPrimaryColor = () => getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
 
     function updateGitBadge() {
@@ -3068,7 +3101,7 @@
         const msg = entry.replace(/^\[SYS\]\s*/, '');
         const channel = /Extension|拡張機能/i.test(msg) ? 'Extensions' : /Theme|テーマ/i.test(msg) ? 'Theme' : 'System';
         systemLog.push({ t: new Date(), channel, msg });
-        if (typeof renderOutput === 'function' && !document.getElementById('panel-output').classList.contains('hidden')) renderOutput();
+        if (!document.getElementById('panel-output').classList.contains('hidden')) renderOutput();
       }
     }
 
@@ -3256,7 +3289,7 @@
       return ICON_COLOR[cmd] || fileTypeColor(name);
     }
     function extCardHtml({ cmd, meta, isInstalled }) {
-      const tm = (typeof treeMeta === 'function') ? treeMeta(cmd) : { name: meta.name, icon: meta.name[0] };
+      const tm = treeMeta(cmd);
       const color = iconColor(cmd, tm.name);
       const desc = cdesc(cmd) || meta.desc || '';
       return `
@@ -3377,33 +3410,31 @@
       // Regenerate any open document tabs so their content matches the language.
       if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
       LANG_DOC_TABS.forEach(c => { if (tabState[c] && commands[c]) { try { tabState[c] = commands[c](); } catch (e) { } } });
-      if (typeof renderEditor === 'function') renderEditor();
-      if (typeof renderExplorerTree === 'function') renderExplorerTree();
-      if (typeof renderExtensions === 'function') renderExtensions();
+      renderEditor();
+      renderExplorerTree();
+      renderExtensions();
       // Bottom-panel/side-bar views render lazily, so refresh the ones with baked-in
       // labels (Source Control history, OUTPUT log, PORTS) to pick up the new language.
-      if (typeof renderGit === 'function') renderGit();
-      if (typeof renderOutput === 'function') renderOutput();
-      if (typeof renderPorts === 'function') renderPorts();
+      renderGit();
+      renderOutput();
+      renderPorts();
       // Footer Ln/Col indicator is rewritten by updateCaret(); refresh it so the
       // 行/列 labels track the active language (it strips its own data-ja markers).
-      if (typeof updateCaret === 'function') updateCaret();
+      updateCaret();
       // The bell tooltip and the notification-center empty state are written by JS,
       // so applyChrome() alone would leave them in the previous language.
-      if (typeof updateNotifBell === 'function') updateNotifBell();
-      if (typeof renderNotifCenter === 'function') renderNotifCenter();
+      updateNotifBell();
+      renderNotifCenter();
       // Refresh the MAGI agent splash if it is the only thing on screen: its
       // button labels (APK/App Download, etc.) are baked in via tr() at render
       // time, so a one-shot innerHTML never updates on a later language switch.
-      if (typeof agentLog !== 'undefined' && agentLog && agentLog.children.length === 1
-        && agentLog.firstElementChild && agentLog.firstElementChild.classList.contains('agent-splash')
-        && typeof agentHintHTML === 'function') {
+      if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) {
         agentLog.innerHTML = agentHintHTML();
       }
       // Rebuild the content search index against the active language.
-      if (typeof buildSearchIndex === 'function') buildSearchIndex();
+      buildSearchIndex();
       const searchInputEl = document.getElementById('search-input');
-      if (searchInputEl && searchInputEl.value && typeof renderSearch === 'function') renderSearch(searchInputEl.value);
+      if (searchInputEl && searchInputEl.value) renderSearch(searchInputEl.value);
     }
     function setLanguage(lang) {
       const next = lang === 'ja' ? 'ja' : 'en';
@@ -3532,7 +3563,7 @@
       const statusEl = document.getElementById('editor-status');
       if (statusEl) statusEl.textContent = activeTab ? tr(`Opened ${fileLabel(activeTab)}`, `${fileLabel(activeTab)} を開きました`) : '';
       DOM.editor.scrollTop = 0;
-      if (typeof updateGutter === 'function') requestAnimationFrame(updateGutter);
+      requestAnimationFrame(updateGutter);
     }
     function openDoc(cmd, html) {
       tabState[cmd] = html;
@@ -3872,27 +3903,20 @@
         isMeltdown = true; meltdownElements = [];
         addProblem('warn', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...', { file: 'meltdown.sh' });
         document.body.classList.add('system-meltdown');
-        const safeElements = new Set();
-        let curr = document.getElementById('input-line');
-        while (curr && curr.id !== 'app') { safeElements.add(curr); curr = curr.parentElement; }
-        curr = document.getElementById('terminal-log');
-        while (curr && curr.id !== 'app') { safeElements.add(curr); curr = curr.parentElement; }
-        safeElements.add(document.getElementById('app'));
-
-        const elements = Array.from(document.querySelectorAll('#app *')).filter(el => {
-          if (safeElements.has(el)) return false;
-          if (el.closest('#input-line')) return false;
-          return true;
-        });
+        const safeElements = new Set([
+          ...ancestorsOf(document.getElementById('input-line'), 'app'),
+          ...ancestorsOf(document.getElementById('terminal-log'), 'app'),
+          document.getElementById('app')
+        ]);
+        const elements = Array.from(document.querySelectorAll('#app *'))
+          .filter(el => !safeElements.has(el) && !el.closest('#input-line'));
         meltdownInterval = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) { clearInterval(meltdownInterval); return; }
             const el = elements.splice(Math.floor(Math.random() * elements.length), 1)[0];
             if (el && el.style) {
               meltdownElements.push({ element: el });
-              el.style.setProperty('--dx', `${(Math.random() - 0.5) * 300}px`);
-              el.style.setProperty('--dy', `${window.innerHeight}px`);
-              el.style.setProperty('--deg', `${(Math.random() - 0.5) * 360}deg`);
+              setTransformVars(el);
               el.classList.add('meltdown-element');
               el.classList.remove('rebuilding-element');
             }
@@ -4112,9 +4136,7 @@
 
         const flyOff = (el) => {
           if (!el || !el.style) return;
-          el.style.setProperty('--dx', `${(Math.random() - 0.5) * 300}px`);
-          el.style.setProperty('--dy', `${window.innerHeight}px`);
-          el.style.setProperty('--deg', `${(Math.random() - 0.5) * 360}deg`);
+          setTransformVars(el);
           el.classList.remove('rebuilding-element');
           el.classList.add('meltdown-element');
           flownEls.push(el);
@@ -4123,9 +4145,7 @@
           s.dead = true;
           if (s.bar) { s.bar.remove(); s.bar = null; }
           // keep the terminal input usable even if its container collapses
-          const safe = new Set();
-          let c = document.getElementById('input-line');
-          while (c) { safe.add(c); c = c.parentElement; }
+          const safe = ancestorsOf(document.getElementById('input-line'));
           const els = [s.el, ...s.extras].flatMap(r => [r, ...r.querySelectorAll('*')]).filter(el => !safe.has(el) && !el.closest('#input-line'));
           // The section box itself can't fly when it holds the protected input (e.g. #panel),
           // so strip its frame (border/bg/shadow) — otherwise an empty outline lingers.
@@ -4195,13 +4215,13 @@
         let wIdx = (initialWeapon != null) ? initialWeapon : 0;
         const weapon = () => WEAPONS[wIdx].key;
 
-        const announce = () => { rampageWeaponKey = WEAPONS[wIdx].key; if (typeof renderArsenal === 'function') renderArsenal(); printToTerminal(tr(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`, `<div class="text-xs mt-1" style="color:#e0524e;">▸ 装備: <b>${WEAPONS[wIdx].label_ja}</b></div>`)); };
+        const announce = () => { rampageWeaponKey = WEAPONS[wIdx].key; renderArsenal(); printToTerminal(tr(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`, `<div class="text-xs mt-1" style="color:#e0524e;">▸ 装備: <b>${WEAPONS[wIdx].label_ja}</b></div>`)); };
         const setWeapon = (key) => { const i = WEAPONS.findIndex(w => w.key === key); if (i >= 0 && i !== wIdx) { wIdx = i; announce(); } };
         rampageSetWeapon = setWeapon;
         rampageWeaponKey = WEAPONS[wIdx].key;
         // Reveal the Arsenal icon in the activity bar and reflect the armed weapon.
         document.getElementById('act-arsenal').classList.remove('hidden');
-        if (typeof renderArsenal === 'function') renderArsenal();
+        renderArsenal();
 
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
         // Two fingers scroll instead of firing. We count fingers via TouchEvent.touches.length
@@ -4524,8 +4544,8 @@
           isRampageActive = false; rampageTeardown = null; rampageSetWeapon = null; rampageWeaponKey = null;
           // Hide the Arsenal icon and leave its view if it was open.
           document.getElementById('act-arsenal').classList.add('hidden');
-          if (typeof renderArsenal === 'function') renderArsenal();
-          if (typeof currentView === 'function' && currentView() === 'arsenal') {
+          renderArsenal();
+          if (currentView() === 'arsenal') {
             showSidebarView('explorer');
             document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
           }
@@ -4955,8 +4975,8 @@
       historyIndex = -1; isMeltdown = false; meltdownElements = []; if (meltdownInterval) clearInterval(meltdownInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 2;
       problems.length = 0; recountProblems();
       installedExtensions.clear();
-      if (typeof renderExplorerTree === 'function') renderExplorerTree();
-      if (typeof renderExtensions === 'function') renderExtensions();
+      renderExplorerTree();
+      renderExtensions();
       // Tear down any active full-screen effects so their canvas/overlay and timers don't leak across the reload.
       if (matrixTeardown) matrixTeardown();
       if (meditationTeardown) meditationTeardown();
@@ -4976,7 +4996,7 @@
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
       document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
-      if (typeof resetAgent === 'function') resetAgent();
+      resetAgent();
       DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
       DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
       document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
@@ -5037,12 +5057,7 @@
     const sidebarTree = document.getElementById('sidebar-tree');
     const sidebarEl = document.getElementById('sidebar');
     function renderExplorerTree() {
-      const files = [...sidebarFiles];
-      if (typeof installedExtensions !== 'undefined') {
-        installedExtensions.forEach(ext => {
-          if (ext !== 'rebuild') files.push(ext);
-        });
-      }
+      const files = [...sidebarFiles, ...[...installedExtensions].filter(ext => ext !== 'rebuild')];
       sidebarTree.innerHTML = files.map(c => {
         const m = treeMeta(c);
         return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span style="color:${iconColor(c, m.name)}">${m.icon}</span><span>${esc(m.name)}</span></button>`;
@@ -5058,13 +5073,17 @@
         if (langEl) langEl.textContent = getLangMode(cmd);
       }
     }
-    sidebarTree.addEventListener('click', async (e) => {
+    // Explorer and Search results behave identically once a [data-cmd] entry is picked:
+    // close the mobile drawer (a no-op on desktop, where .open is never set), drop the
+    // ?cmd= param so the URL stops replaying, run it, and hand focus back to the prompt.
+    const runFromSidebar = async (e) => {
       const btn = e.target.closest('[data-cmd]'); if (!btn) return;
       sidebarEl.classList.remove('open');
       clearCmdParam();
       await handleCommand(btn.dataset.cmd);
       DOM.input.focus({ preventScroll: true });
-    });
+    };
+    sidebarTree.addEventListener('click', runFromSidebar);
 
     document.getElementById('tree-folder').addEventListener('click', (e) => {
       const collapsed = sidebarTree.classList.toggle('hidden');
@@ -5135,50 +5154,53 @@
     }
     searchInput.addEventListener('input', () => renderSearch(searchInput.value));
     searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { searchInput.value = ''; renderSearch(''); } });
-    searchResults.addEventListener('click', async (e) => {
-      const btn = e.target.closest('[data-cmd]'); if (!btn) return;
-      if (isMobile()) sidebarEl.classList.remove('open');
-      clearCmdParam();
-      await handleCommand(btn.dataset.cmd);
-      DOM.input.focus({ preventScroll: true });
-    });
+    searchResults.addEventListener('click', runFromSidebar);
 
-    document.getElementById('view-extensions').addEventListener('click', (e) => {
-      const installBtn = e.target.closest('.ext-install-btn');
-      if (installBtn && !installBtn.disabled) {
-        const cmd = installBtn.dataset.ext;
-        installBtn.innerHTML = `<span class="ext-spinner"></span> ${tr('Installing', 'インストール中')}`;
-        installBtn.disabled = true;
-        setTimeout(() => {
-          installedExtensions.add(cmd);
-          renderExtensions();
-          if (typeof renderExplorerTree === 'function') renderExplorerTree();
-          addToHistory(tr(`[SYS] Extension '${cmd}' installed`, `[SYS] 拡張機能 '${cmd}' をインストールしました`));
-          showToast(tr(`Extension '${cmd}' installed — type ${cmd} to use it`, `拡張機能 '${cmd}' をインストールしました — ${cmd} と入力して使用`));
-          printToTerminal(tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`,
-            `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> のインストールが完了しました。<span class="text-normal font-bold">${cmd}</span> と入力して使用してください。</div>`));
-        }, 800);
-        return;
-      }
-      const uninstallBtn = e.target.closest('.ext-uninstall-btn');
-      if (uninstallBtn && !uninstallBtn.disabled) {
-        const cmd = uninstallBtn.dataset.ext;
-        uninstallBtn.innerHTML = `<span class="ext-spinner"></span> ${tr('Uninstalling', 'アンインストール中')}`;
-        uninstallBtn.disabled = true;
-        setTimeout(() => {
+    // Install and uninstall are the same marketplace ritual — spinner, disable the button,
+    // a beat of pretend work, mutate the set, re-render, then log to Source Control /
+    // toast / terminal. Only the copy, the delay and the mutation itself differ.
+    const EXT_ACTIONS = {
+      install: {
+        ms: 800,
+        spinner: () => tr('Installing', 'インストール中'),
+        apply: cmd => installedExtensions.add(cmd),
+        history: cmd => tr(`[SYS] Extension '${cmd}' installed`, `[SYS] 拡張機能 '${cmd}' をインストールしました`),
+        toast: cmd => tr(`Extension '${cmd}' installed — type ${cmd} to use it`, `拡張機能 '${cmd}' をインストールしました — ${cmd} と入力して使用`),
+        term: cmd => tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`,
+          `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> のインストールが完了しました。<span class="text-normal font-bold">${cmd}</span> と入力して使用してください。</div>`)
+      },
+      uninstall: {
+        ms: 600,
+        toastType: 'warn',
+        spinner: () => tr('Uninstalling', 'アンインストール中'),
+        apply: cmd => {
           installedExtensions.delete(cmd);
           // Uninstalling the language pack returns the UI to English so the user is
           // never stranded in Japanese without the command to switch back.
           if (cmd === 'japanese' && currentLang === 'ja') setLanguage('en');
-          if (typeof closeTab === 'function' && tabOrder.includes(cmd)) closeTab(cmd);
-          renderExtensions();
-          if (typeof renderExplorerTree === 'function') renderExplorerTree();
-          addToHistory(tr(`[SYS] Extension '${cmd}' uninstalled`, `[SYS] 拡張機能 '${cmd}' をアンインストールしました`));
-          showToast(tr(`Extension '${cmd}' was uninstalled`, `拡張機能 '${cmd}' をアンインストールしました`), 'warn');
-          printToTerminal(tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.</div>`,
-            `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> をアンインストールしました。</div>`));
-        }, 600);
+          if (tabOrder.includes(cmd)) closeTab(cmd);
+        },
+        history: cmd => tr(`[SYS] Extension '${cmd}' uninstalled`, `[SYS] 拡張機能 '${cmd}' をアンインストールしました`),
+        toast: cmd => tr(`Extension '${cmd}' was uninstalled`, `拡張機能 '${cmd}' をアンインストールしました`),
+        term: cmd => tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.</div>`,
+          `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> をアンインストールしました。</div>`)
       }
+    };
+    document.getElementById('view-extensions').addEventListener('click', (e) => {
+      const btn = e.target.closest('.ext-install-btn, .ext-uninstall-btn');
+      if (!btn || btn.disabled) return;
+      const cmd = btn.dataset.ext;
+      const act = EXT_ACTIONS[btn.classList.contains('ext-install-btn') ? 'install' : 'uninstall'];
+      btn.innerHTML = `<span class="ext-spinner"></span> ${act.spinner()}`;
+      btn.disabled = true;
+      setTimeout(() => {
+        act.apply(cmd);
+        renderExtensions();
+        renderExplorerTree();
+        addToHistory(act.history(cmd));
+        showToast(act.toast(cmd), act.toastType);
+        printToTerminal(act.term(cmd));
+      }, act.ms);
     });
 
     document.getElementById('ext-search-input').addEventListener('input', renderExtensions);
@@ -5717,23 +5739,19 @@
       const ctx = getReactionContext(bar);
       if (act === 'copy') {
         navigator.clipboard.writeText(ctx.response || '').then(() => flashReactBtn(btn, '✓')).catch(() => { });
-      } else if (act === 'like') {
-        if (btn.classList.contains('liked')) { // 取り消し
-          btn.classList.remove('liked');
-          bar.classList.remove('locked');
-          unregisterReaction(bar, ctx.target);
-          return;
-        }
+        return;
+      }
+      // 取り消しはいいね/絵文字で共通：ボタン自身の見た目を戻し、バーの排他ロックを解いて登録を取り下げる
+      const undoReaction = (resetBtn) => { resetBtn(); bar.classList.remove('locked'); unregisterReaction(bar, ctx.target); };
+      if (act === 'like') {
+        if (btn.classList.contains('liked')) { undoReaction(() => btn.classList.remove('liked')); return; }
         if (bar.classList.contains('locked')) return; // 絵文字が選択済み
         btn.classList.add('liked');
         bar.classList.add('locked'); // いいね/絵文字は排他：他方を非活性に
         registerReaction(bar, ctx.target, '👍', ctx);
       } else if (act === 'emoji') {
         if (btn.classList.contains('reacted')) { // 取り消し（選んだ絵文字ボタンを再押下）
-          btn.classList.remove('reacted');
-          btn.innerHTML = ICON_REACT;
-          bar.classList.remove('locked');
-          unregisterReaction(bar, ctx.target);
+          undoReaction(() => { btn.classList.remove('reacted'); btn.innerHTML = ICON_REACT; });
           return;
         }
         if (bar.classList.contains('locked')) return; // いいねが選択済み
