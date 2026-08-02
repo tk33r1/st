@@ -48,6 +48,18 @@
       "readTime": "約3分",
       "image": "/images/ogp/glitch-004-ogp.webp",
       "featured": false
+    },
+    {
+      "id": "005",
+      "title": "新電力の落とし穴は「燃料費調整額の上限」— 数少ない上限ありのコスモでんきを選ぶ",
+      "titleHtml": "新電力の落とし穴は「燃料費調整額の上限」<br>— 数少ない上限ありのコスモでんきを選ぶ",
+      "tags": ["制度ハック", "コスト削減"],
+      "excerpt": "",
+      "datePublished": "2026-08-02",
+      "dateModified": "2026-08-02",
+      "readTime": "約5分",
+      "image": "/images/ogp/glitch-005-ogp.webp",
+      "featured": false
     }
   ]
 }
