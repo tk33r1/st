@@ -32,12 +32,13 @@
     "url": "https://tk.st/tools/video-to-animation/",
     "imageUrl": "https://tk.st/images/ogp/video-to-animation-ogp.webp",
     "category": "converter",
-    "description": "世界初。サーバーレスで動画からAPNGや可逆WebPに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。",
+    "description": "世界初。サーバーレスで動画からAPNGや可逆WebP、GIFに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。",
     "tags": [
       "動画",
       "アニメーション",
       "APNG",
       "WEBP",
+      "GIF",
       "可逆",
       "変換"
     ]
@@ -79,12 +80,13 @@
     "url": "https://tk.st/tools/image-to-animation/",
     "imageUrl": "https://tk.st/images/ogp/image-to-animation-ogp.webp",
     "category": "converter",
-    "description": "複数の画像からAPNGや可逆WebPのアニメーション画像を作成。サーバーレスでプライバシーも安心。FPSやサイズの調整も可能です。",
+    "description": "複数の画像からAPNGや可逆WebP、GIFのアニメーション画像を作成。サーバーレスでプライバシーも安心。FPSやサイズの調整も可能です。",
     "tags": [
       "画像",
       "アニメーション",
       "APNG",
       "WEBP",
+      "GIF",
       "変換",
       "パラパラ漫画"
     ]
