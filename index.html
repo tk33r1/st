@@ -267,7 +267,70 @@
     .hover\:text-primary:hover { color: var(--primary-color) }
     .overflow-x-auto { overflow-x: auto }
     .overflow-hidden { overflow: hidden }
+    .overflow-y-auto { overflow-y: auto }
     .no-underline { text-decoration: none }
+    .inline-flex { display: inline-flex }
+    .min-w-0 { min-width: 0 }
+    .flex-shrink-0 { flex-shrink: 0 }
+    .z-40 { z-index: 40 }
+    .border-l { border-left-width: 1px }
+    .border-none { border-width: 0 }
+    .bg-transparent { background-color: transparent }
+    .bg-\[\#faf6f0\] { background-color: #faf6f0 }
+    .text-\[\#2c2b29\] { color: #2c2b29 }
+    .text-\[9px\] { font-size: 9px }
+    .text-\[11px\] { font-size: 11px }
+    .text-left { text-align: left }
+    .align-middle { vertical-align: middle }
+    .font-semibold { font-weight: 600 }
+    .uppercase { text-transform: uppercase }
+    .tracking-widest { letter-spacing: 0.1em }
+    .list-disc { list-style-type: disc }
+    .pointer-events-none { pointer-events: none }
+    .opacity-30 { opacity: 0.3 }
+    .opacity-60 { opacity: 0.6 }
+    .opacity-80 { opacity: 0.8 }
+    .ml-1 { margin-left: 0.25rem }
+    .mt-1 { margin-top: 0.25rem }
+    .pt-3 { padding-top: 0.8125rem }
+    .pb-1 { padding-bottom: 0.25rem }
+    .pb-4 { padding-bottom: 1rem }
+    .pl-4 { padding-left: 1rem }
+    .pr-1 { padding-right: 0.25rem }
+    .pr-2 { padding-right: 0.5rem }
+    .p-1\.5 { padding: 0.375rem }
+
+    .select-none {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .my-2 {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .px-1 {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+    }
+
+    .py-1 {
+      padding-top: 0.25rem;
+      padding-bottom: 0.25rem;
+    }
+
+    .py-8 {
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+
+    .space-y-1\.5> :not([hidden])~ :not([hidden]) { margin-top: 0.375rem }
+    .space-y-2\.5> :not([hidden])~ :not([hidden]) { margin-top: 0.625rem }
+    .hover\:bg-surface-alt:hover { background-color: var(--surface-alt) }
+    .hover\:opacity-100:hover { opacity: 1 }
+    .hover\:text-red-500:hover { color: #ef4444 }
+    .group:hover .group-hover\:text-primary { color: var(--primary-color) }
 
     .sr-only {
       position: absolute;
@@ -304,6 +367,16 @@
     @keyframes blink {
         0%, 100% { opacity: 1 }
         50% { opacity: 0 }
+    }
+
+    /* Width mirror for the custom caret: it must be taken out of flow, otherwise it
+       sits beside the input as a flex item, steals its width, and (once both shrink)
+       reports an offsetWidth narrower than the text — drifting the caret. */
+    #cmd-mirror {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
     }
 
     .bpm-caret {
@@ -1133,6 +1206,10 @@
       font-size: 9px;
       font-weight: 700;
     }
+
+    /* Same specificity as .hidden but declared later, so it would otherwise win and
+       leave a permanent "0" badge on the PROBLEMS tab. Mirrors .nav-badge.hidden. */
+    .panel-badge.hidden { display: none }
 
     .panel-pane {
       overflow-y: auto;
@@ -2354,7 +2431,7 @@
       transition: transform var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast), background-color var(--duration-fast);
     }
 
-    .qr-container img {
+    .qr-container img, .qr-container svg {
       width: 100%;
       height: 100%;
       object-fit: contain;
@@ -2402,6 +2479,17 @@
           height: 120px;
         }
     }
+
+    /* Keyboard focus must stay visible. This lives last in the sheet so it wins by
+       source order over the component-level `outline: none` resets above (those exist
+       to suppress the ring for mouse/touch, which :focus-visible already handles).
+       The terminal input opts out — it draws its own BPM caret instead. */
+    :focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+
+    #cmd-input:focus-visible { outline: none }
   </style>
   <script type="application/ld+json">
     {
@@ -2628,11 +2716,16 @@
         <div id="breadcrumb" class="choreo-skip px-4 py-1 text-[10px] text-secondary border-b border-color truncate">
           <span>tk.st</span>
         </div>
+        <!-- Announces just which file opened, instead of re-reading the whole document. -->
+        <div id="editor-status" class="sr-only" aria-live="polite"></div>
         <div id="editor" class="choreo-skip flex-1 relative" style="scroll-behavior:smooth;">
           <div id="editor-scroll" class="choreo-skip">
             <div id="editor-gutter" class="choreo-skip" aria-hidden="true"></div>
             <div id="editor-content" class="choreo-skip flex-1 p-4 md:p-6 space-y-1">
-              <div id="output-area" class="choreo-skip" aria-live="polite" aria-atomic="false"></div>
+              <!-- No aria-live here: an opened document (e.g. `timeline`) can be thousands of
+                   words, and announcing the whole editor pane on every tab switch buries the
+                   terminal's own live region. The TERMINAL log stays the live region. -->
+              <div id="output-area" class="choreo-skip" role="document" tabindex="-1"></div>
             </div>
           </div>
         </div>
@@ -2659,7 +2752,7 @@
                 <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off"
                   spellcheck="false" placeholder="type 'help'..." data-ja-ph="「help」と入力…" data-ja-aria="コマンド入力"
                   aria-label="Command input">
-                <span id="cmd-mirror" class="text-sm absolute left-0 top-0 h-full flex items-center"
+                <span id="cmd-mirror" class="text-sm flex items-center"
                   style="visibility:hidden; white-space:pre;"></span>
                 <span id="custom-caret" class="bpm-caret" style="display:none;"></span>
               </div>
@@ -2676,7 +2769,7 @@
               class="text-sm inline-block">✦</span> MAGI</div>
           <div class="flex items-center gap-2.5">
             <button id="btn-reset-agent"
-              class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center"
+              class="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center justify-center"
               title="New Conversation" data-ja-title="新しい会話"><svg aria-hidden="true" width="14" height="14"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -2684,7 +2777,7 @@
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg></button>
             <button id="btn-history-agent"
-              class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center"
+              class="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center justify-center"
               title="View conversation history" data-ja-title="会話履歴を表示"><svg aria-hidden="true" width="14" height="14"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -2694,7 +2787,7 @@
             <!-- Kebab Menu (More Options) -->
             <div class="relative inline-block flex items-center justify-center">
               <button id="btn-more-agent"
-                class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none flex items-center justify-center"
+                class="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center justify-center"
                 title="More Options" data-ja-title="その他の操作">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2705,7 +2798,7 @@
               </button>
               <div id="agent-more-dropdown" class="hidden text-[10px]">
                 <button id="btn-share-agent"
-                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 outline-none border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
+                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
                   title="Share/Copy conversation">
                   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2716,7 +2809,7 @@
                   <span data-ja="共有">Share</span>
                 </button>
                 <button id="btn-export-agent"
-                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 outline-none border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
+                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
                   title="Export conversation as Markdown">
                   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2728,7 +2821,7 @@
                 </button>
                 <hr class="border-t border-color my-1 w-full" />
                 <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer"
-                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 no-underline outline-none"
+                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 no-underline"
                   title="Legacy MAGI deliberation (v1)">
                   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2741,7 +2834,7 @@
               </div>
             </div>
             <button id="btn-close-agent"
-              class="text-secondary hover:text-red-500 transition-colors cursor-pointer outline-none flex items-center justify-center ml-1"
+              class="text-secondary hover:text-red-500 transition-colors cursor-pointer flex items-center justify-center ml-1"
               title="Close Panel" data-ja-title="パネルを閉じる"><svg aria-hidden="true" width="14" height="14"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -2820,9 +2913,10 @@
           <div class="apk-option-card qr-card">
             <div class="option-title" data-ja="QRコードをスキャン">Scan QR Code</div>
             <div class="qr-container">
-              <img id="apk-qr-image"
-                src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Ftk.st%2Fmagi-app%2Fandroid%2F&color=16a34a&bgcolor=ffffff&qzone=2"
-                alt="QR Code to Download MAGI Android App" loading="lazy" />
+              <!-- QR for https://tk.st/magi-app/android/ — inlined (byte-mode, ECC M, 29 modules) so the
+                   modal needs no third-party image host. Fill is currentColor, so the theme drives it. -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" id="apk-qr-image" class="text-primary" role="img" aria-label="QR code to download the MAGI Android app" data-ja-aria="MAGI AndroidアプリをダウンロードするQRコード"><rect width="37" height="37" fill="#fff"/><g transform="translate(4 4)" fill="currentColor"><path d="M0 0h7v1h-7zM8 0h4v1h-4zM15 0h5v1h-5zM22 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h2v1h-2zM14 1h2v1h-2zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM12 2h4v1h-4zM18 2h2v1h-2zM22 2h1v1h-1zM24 2h3v1h-3zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h2v1h-2zM16 3h2v1h-2zM20 3h1v1h-1zM22 3h1v1h-1zM24 3h3v1h-3zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h1v1h-1zM11 4h3v1h-3zM17 4h1v1h-1zM19 4h1v1h-1zM22 4h1v1h-1zM24 4h3v1h-3zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM12 5h1v1h-1zM14 5h1v1h-1zM19 5h1v1h-1zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h7v1h-7zM8 7h2v1h-2zM12 7h3v1h-3zM17 7h2v1h-2zM20 7h1v1h-1zM0 8h1v1h-1zM2 8h2v1h-2zM5 8h3v1h-3zM10 8h2v1h-2zM13 8h2v1h-2zM16 8h5v1h-5zM22 8h1v1h-1zM25 8h1v1h-1zM27 8h2v1h-2zM0 9h6v1h-6zM9 9h1v1h-1zM11 9h2v1h-2zM15 9h6v1h-6zM22 9h3v1h-3zM28 9h1v1h-1zM0 10h1v1h-1zM3 10h6v1h-6zM11 10h1v1h-1zM14 10h2v1h-2zM18 10h1v1h-1zM21 10h1v1h-1zM24 10h1v1h-1zM26 10h2v1h-2zM0 11h1v1h-1zM2 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM11 11h5v1h-5zM19 11h1v1h-1zM22 11h1v1h-1zM28 11h1v1h-1zM4 12h6v1h-6zM16 12h2v1h-2zM21 12h1v1h-1zM23 12h1v1h-1zM25 12h2v1h-2zM0 13h1v1h-1zM5 13h1v1h-1zM9 13h1v1h-1zM12 13h2v1h-2zM17 13h1v1h-1zM19 13h1v1h-1zM22 13h1v1h-1zM26 13h3v1h-3zM0 14h1v1h-1zM4 14h1v1h-1zM6 14h2v1h-2zM9 14h2v1h-2zM14 14h1v1h-1zM18 14h4v1h-4zM24 14h1v1h-1zM26 14h3v1h-3zM0 15h2v1h-2zM3 15h1v1h-1zM5 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM18 15h1v1h-1zM20 15h1v1h-1zM22 15h2v1h-2zM27 15h1v1h-1zM1 16h2v1h-2zM4 16h4v1h-4zM10 16h1v1h-1zM12 16h1v1h-1zM18 16h4v1h-4zM23 16h3v1h-3zM27 16h1v1h-1zM2 17h2v1h-2zM8 17h6v1h-6zM18 17h1v1h-1zM25 17h3v1h-3zM0 18h1v1h-1zM2 18h2v1h-2zM6 18h2v1h-2zM17 18h2v1h-2zM20 18h1v1h-1zM22 18h2v1h-2zM26 18h1v1h-1zM2 19h1v1h-1zM7 19h3v1h-3zM11 19h2v1h-2zM15 19h3v1h-3zM20 19h2v1h-2zM23 19h2v1h-2zM26 19h1v1h-1zM1 20h4v1h-4zM6 20h1v1h-1zM9 20h2v1h-2zM13 20h1v1h-1zM15 20h4v1h-4zM20 20h7v1h-7zM8 21h1v1h-1zM12 21h4v1h-4zM17 21h2v1h-2zM20 21h1v1h-1zM24 21h5v1h-5zM0 22h7v1h-7zM8 22h2v1h-2zM11 22h3v1h-3zM16 22h1v1h-1zM18 22h3v1h-3zM22 22h1v1h-1zM24 22h2v1h-2zM27 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM11 23h1v1h-1zM15 23h1v1h-1zM18 23h1v1h-1zM20 23h1v1h-1zM24 23h2v1h-2zM27 23h1v1h-1zM0 24h1v1h-1zM2 24h3v1h-3zM6 24h1v1h-1zM9 24h1v1h-1zM11 24h2v1h-2zM14 24h1v1h-1zM17 24h1v1h-1zM20 24h5v1h-5zM26 24h1v1h-1zM28 24h1v1h-1zM0 25h1v1h-1zM2 25h3v1h-3zM6 25h1v1h-1zM8 25h1v1h-1zM11 25h1v1h-1zM14 25h2v1h-2zM19 25h1v1h-1zM21 25h1v1h-1zM23 25h3v1h-3zM27 25h1v1h-1zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM8 26h1v1h-1zM12 26h1v1h-1zM16 26h1v1h-1zM23 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM9 27h1v1h-1zM11 27h1v1h-1zM13 27h1v1h-1zM15 27h2v1h-2zM20 27h2v1h-2zM24 27h2v1h-2zM27 27h1v1h-1zM0 28h7v1h-7zM8 28h2v1h-2zM11 28h1v1h-1zM18 28h4v1h-4zM25 28h1v1h-1zM27 28h1v1h-1z"/></g></svg>
+
             </div>
             <div class="option-desc" data-ja="スマートフォンのカメラで読み取ってインストール。">Scan with your phone's camera to install.</div>
           </div>
@@ -2923,6 +3017,13 @@
     // Defensive JSON parse for anything read back from localStorage: a corrupted
     // value (other tab, extension, manual edit) must never throw and brick MAGI.
     const safeParse = (raw, fallback) => { try { const v = JSON.parse(raw); return v == null ? fallback : v; } catch (_) { return fallback; } };
+    // Defensive localStorage reads/removes. Touching localStorage *throws* (not
+    // returns null) wherever storage is blocked — a sandboxed iframe, Safari private
+    // mode, third-party-cookie blocking. This file is meant to run from a Bitcoin
+    // inscription inside exactly such an iframe, so an unguarded read at top level
+    // would abort the whole script and leave a blank terminal.
+    const safeGet = key => { try { return localStorage.getItem(key); } catch (_) { return null; } };
+    const safeRemove = key => { try { localStorage.removeItem(key); } catch (_) { } };
     // Defensive localStorage write: if the browser quota is exceeded, trim the
     // oldest saved MAGI sessions and retry once. Silently drops writes only when
     // storage is completely irrecoverable (e.g. private-browsing hard limit).
@@ -2930,7 +3031,7 @@
       const str = typeof val === 'string' ? val : JSON.stringify(val);
       try { localStorage.setItem(key, str); } catch (_) {
         try {
-          const ss = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+          const ss = safeParse(safeGet('magi_saved_sessions'), []);
           while (ss.length > 5) ss.pop();
           localStorage.setItem('magi_saved_sessions', JSON.stringify(ss));
           localStorage.setItem(key, str);
@@ -3100,25 +3201,29 @@
     };
 
     // Descriptions live solely in CMD_DESC (single source of truth); extensionMeta
-    // carries only marketplace metadata (version/author/visibility).
+    // carries only marketplace metadata (author/visibility).
     const extensionMeta = {
-      akutagawa: { name: 'akutagawa', version: '1.0.0', author: 'ST', isHidden: true },
-      bpm: { name: 'bpm', version: '1.2.1', author: 'ST', isHidden: true },
-      choreomania: { name: 'choreomania', version: '3.0.0', author: 'ST', isHidden: true },
-      meltdown: { name: 'meltdown', version: '0.9.9', author: 'ST', isHidden: true },
-      matrix: { name: 'matrix', version: '1.0.1', author: 'ST', isHidden: true },
-      meditation: { name: 'meditation', version: '2.0.0', author: 'ST', isHidden: true },
-      rampage: { name: 'rampage', version: '1.0.0', author: 'ST', isHidden: true },
-      theme: { name: 'theme', version: '1.1.0', author: 'ST', isHidden: true },
-      web3: { name: 'web3', version: '1.0.0', author: 'ST', isHidden: true },
-      japanese: { name: 'japanese', version: '1.0.0', author: 'ST', isHidden: true },
-      rebuild: { name: 'rebuild', version: '1.0.0', author: 'ST', isHidden: true, hideFromList: true }
+      akutagawa: { name: 'akutagawa', author: 'ST', isHidden: true },
+      bpm: { name: 'bpm', author: 'ST', isHidden: true },
+      choreomania: { name: 'choreomania', author: 'ST', isHidden: true },
+      meltdown: { name: 'meltdown', author: 'ST', isHidden: true },
+      matrix: { name: 'matrix', author: 'ST', isHidden: true },
+      meditation: { name: 'meditation', author: 'ST', isHidden: true },
+      rampage: { name: 'rampage', author: 'ST', isHidden: true },
+      theme: { name: 'theme', author: 'ST', isHidden: true },
+      web3: { name: 'web3', author: 'ST', isHidden: true },
+      japanese: { name: 'japanese', author: 'ST', isHidden: true },
+      rebuild: { name: 'rebuild', author: 'ST', isHidden: true, hideFromList: true }
     };
     const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
     const installedExtensions = new Set();
+    // Commands that stay runnable but are never advertised (Tab completion, IntelliSense,
+    // Command Palette, side-bar search). 'sudo' is a hidden mechanic — listing it would
+    // give away the akutagawa easter egg before the letter hints at it.
+    const UNLISTED_CMDS = new Set(['sudo']);
     // A command is usable if it isn't hidden, or its backing extension is installed
     // (rebuild rides on the 'meltdown' extension). Single source for every cmd filter.
-    const isCmdAvailable = c => !hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'meltdown' : c);
+    const isCmdAvailable = c => !UNLISTED_CMDS.has(c) && (!hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'meltdown' : c));
 
     // Shared file-type color system: the Explorer tree, file tabs, and the
     // Extensions Marketplace cards all derive their icon colour from here so a
@@ -3180,9 +3285,9 @@
       let uninstalledCount = 0;
       const installed = [], available = [];
       hiddenCommands.forEach(cmd => {
-        if (cmd === 'rebuild') return;
+        const meta = extensionMeta[cmd] || { name: cmd, author: 'ST' };
+        if (meta.hideFromList) return; // e.g. 'rebuild' — it ships with the meltdown extension
         if (cmd === 'akutagawa' && !isDark) return;
-        const meta = extensionMeta[cmd] || { name: cmd, version: '1.0.0', author: 'ST' };
         const desc = cdesc(cmd);
         const isInstalled = installedExtensions.has(cmd);
         if (!isInstalled) uninstalledCount++;
@@ -3283,6 +3388,10 @@
       // Footer Ln/Col indicator is rewritten by updateCaret(); refresh it so the
       // 行/列 labels track the active language (it strips its own data-ja markers).
       if (typeof updateCaret === 'function') updateCaret();
+      // The bell tooltip and the notification-center empty state are written by JS,
+      // so applyChrome() alone would leave them in the previous language.
+      if (typeof updateNotifBell === 'function') updateNotifBell();
+      if (typeof renderNotifCenter === 'function') renderNotifCenter();
       // Refresh the MAGI agent splash if it is the only thing on screen: its
       // button labels (APK/App Download, etc.) are baked in via tr() at render
       // time, so a one-shot innerHTML never updates on a later language switch.
@@ -3420,6 +3529,8 @@
         `<div class="my-3 text-xs text-secondary">開いているファイルはありません。下のターミナルにコマンドを入力するか、<span class="text-normal font-bold">エクスプローラー</span> から開いてください。</div>`);
       DOM.output.innerHTML = '';
       DOM.output.appendChild(div);
+      const statusEl = document.getElementById('editor-status');
+      if (statusEl) statusEl.textContent = activeTab ? tr(`Opened ${fileLabel(activeTab)}`, `${fileLabel(activeTab)} を開きました`) : '';
       DOM.editor.scrollTop = 0;
       if (typeof updateGutter === 'function') requestAnimationFrame(updateGutter);
     }
@@ -3708,7 +3819,7 @@
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `${tr('Loading', '読み込み中')}...  ${spinners[frameIndex++ % 4]}`; }, 300);
         await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
-        return `<div class="my-4 border rounded text-sm bg-[#faf6f0] text-[#2c2b29] relative shadow-md" style="font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important; line-height: 2; border-color: #e3dac9; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; width: fit-content; max-width: 95%; min-width: 280px; padding: 24px 36px; box-sizing: border-box;">
+        return `<div class="my-4 border rounded text-sm bg-[#faf6f0] text-[#2c2b29] relative" style="font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important; line-height: 2; border-color: #e3dac9; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; width: fit-content; max-width: 95%; min-width: 280px; padding: 24px 36px; box-sizing: border-box;">
           <div style="border-bottom: 1px dashed #d1c7bd; padding-bottom: 12px; margin-bottom: 20px; font-weight: bold; font-size: 11px; letter-spacing: 0.1em; color: #8c7e6e; font-family: ui-monospace, SFMono-Regular, monospace !important;">LETTER.TXT</div>
           <p style="margin: 0 0 24px 0; font-style: italic; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important;">${tr(`I'm sorry for the psychological burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.`, `あなたに心理的な負担をかけてしまって、ごめんなさい。<br>私にはあなたの人生に責任を持つ資格はないと、わかっています。<br>それでも、あなたの健康と成長を、いつも願っています。`)}</p>
           <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; min-height: 45px;">
@@ -4092,8 +4203,6 @@
         document.getElementById('act-arsenal').classList.remove('hidden');
         if (typeof renderArsenal === 'function') renderArsenal();
 
-        // Don't fire when the pointer lands on a real control, so the UI stays usable.
-        const GUARD = 'input, textarea, button, a, select, [contenteditable], .ed-tab, .tree-item, .panel-tab, .act-btn, .arsenal-item, #cmd-palette, #cmd-palette-box';
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
         // Two fingers scroll instead of firing. We count fingers via TouchEvent.touches.length
         // (authoritative — a pointer-id map desyncs when a stray pointercancel fires over a link)
@@ -4501,6 +4610,9 @@
             clearTimeout(timeoutId);
             document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
             overlay.remove(); isMeditationActive = false; meditationTeardown = null;
+            // Settle the promise handleCommand() is awaiting; a bare teardown (softReload)
+            // would otherwise leave that await pending forever. null → no terminal output.
+            resolve(null);
           };
           const exitMeditation = async (e) => {
             if (e.type === 'keydown' && e.key !== 'Escape') return;
@@ -4556,6 +4668,9 @@
             clearInterval(interval); canvas.remove();
             window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix, true); window.removeEventListener('click', endMatrix, true);
             isMatrixActive = false; matrixTeardown = null;
+            // Settle the awaited promise even when torn down externally (softReload);
+            // endMatrix() resolves again with its own message, which is a no-op.
+            resolve(null);
           };
           matrixTeardown = teardown;
           const endMatrix = (e) => {
@@ -4612,7 +4727,23 @@
     document.addEventListener('mousemove', (e) => handleChoreomaniaMove(e.clientX, e.clientY), { passive: true });
     document.addEventListener('touchmove', (e) => { if (e.touches.length > 0) handleChoreomaniaMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 
-    async function handleCommand(input, noEcho = false) {
+    // Cancel a pending `sudo` password prompt and restore the input. Used when a
+    // command arrives from somewhere other than the prompt (Explorer, search, palette,
+    // IntelliSense, PROBLEMS row): those must not be swallowed as a password attempt.
+    function cancelSudo() {
+      if (!sudoContext) return;
+      sudoContext = null;
+      DOM.input.type = 'text';
+      DOM.input.value = '';
+      DOM.input.placeholder = tr("type 'help'...", "「help」と入力…");
+      printToTerminal(tr(`<div class="text-xs my-1 text-secondary">sudo: password prompt cancelled.</div>`,
+        `<div class="text-xs my-1 text-secondary">sudo: パスワード入力をキャンセルしました。</div>`));
+    }
+
+    // `fromPrompt` marks input typed into the terminal itself — the only source allowed
+    // to answer a pending sudo password prompt.
+    async function handleCommand(input, noEcho = false, fromPrompt = false) {
+      if (sudoContext && !fromPrompt) cancelSudo();
       if (sudoContext) {
         const pwd = input.trim();
         const ctx = sudoContext;
@@ -4727,8 +4858,11 @@
         targetCmd = targetCmd.toLowerCase();
         if (!hasCmd(targetCmd) && hasCmd('/' + targetCmd)) targetCmd = '/' + targetCmd;
         if (hiddenCommands.includes(targetCmd)) {
-          applyTheme(true);
+          // Install first: applyTheme() re-renders the marketplace, so adding after it
+          // would leave the extension listed as "RECOMMENDED" (and the badge off by one).
           installedExtensions.add(targetCmd);
+          applyTheme(true);
+          renderExplorerTree(); // surface the extension's file in the Explorer too
         }
       }
 
@@ -4777,7 +4911,7 @@
         closeSuggest();
         const val = DOM.input.value; DOM.input.value = ''; updateCaret();
         clearCmdParam();
-        await handleCommand(val);
+        await handleCommand(val, false, true); // typed at the prompt → may answer sudo
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (historyIndex < commandHistory.length - 1) { DOM.input.value = commandHistory[++historyIndex]; }
@@ -4978,9 +5112,15 @@
         SEARCH_INDEX[c] = text.toLowerCase();
       });
       try { SEARCH_INDEX['identify'] += ' ' + JSON.stringify(PROFILE_DATA).toLowerCase(); } catch (err) { }
-      projects.forEach(p => { if (SEARCH_INDEX[p.name] !== undefined) SEARCH_INDEX[p.name] += ' ' + (p.desc + ' ' + p.tech).toLowerCase(); });
-      // Index both light/dark job titles so "about" stays searchable in either theme without reindexing.
-      if (SEARCH_INDEX['about'] !== undefined) SEARCH_INDEX['about'] += ' ' + (JOB_TITLES.light + ' ' + JOB_TITLES.dark).toLowerCase();
+      // Index both language variants of a project description, so a Japanese query
+      // still finds /dj etc. while the English text stays searchable in either mode.
+      projects.forEach(p => { if (SEARCH_INDEX[p.name] !== undefined) SEARCH_INDEX[p.name] += ' ' + [p.desc, p.desc_ja, p.tech].filter(Boolean).join(' ').toLowerCase(); });
+      // Index both light/dark job titles, in both languages, so "about" stays searchable
+      // in either theme without reindexing. (JOB_TITLES holds {en, ja} objects — concatenating
+      // them directly would index the string "[object Object]".)
+      if (SEARCH_INDEX['about'] !== undefined) {
+        SEARCH_INDEX['about'] += ' ' + Object.values(JOB_TITLES).flatMap(t => [t.en, t.ja]).join(' ').toLowerCase();
+      }
     }
     buildSearchIndex();
     function renderSearch(q) {
@@ -5203,7 +5343,7 @@
       + '</svg>'
       + '<div class="magi-title glow">MAGI</div>'
       + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-      + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer outline-none ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+      + '<div class="magi-ver">ver 2.1 <button id="btn-info-agent" class="text-secondary hover:text-primary transition-colors cursor-pointer ml-1 inline-flex items-center justify-center align-middle" title="' + tr('Privacy & System Information', 'プライバシーとシステム情報') + '"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
       + '<div class="magi-nodes">' + AGENT_PERSONAS.map(p => `<button type="button" class="magi-node" data-codename="${p.codename}">${p.codename.replace('-', '·')}</button>`).join('') + '</div>'
       + '<div class="magi-desc hidden" aria-live="polite"></div>'
       + '<div class="magi-stores">'
@@ -5240,7 +5380,7 @@
         agentTitleEl.innerHTML = `<span class="text-sm inline-block">✦</span> ${esc(agentTitle || 'MAGI')}`;
       }
       if (agentTitle) safeStore('magi_current_title', agentTitle);
-      else localStorage.removeItem('magi_current_title');
+      else safeRemove('magi_current_title');
     }
 
     const agentDockOpen = () => isMobile() ? agentDockEl.classList.contains('open') : !agentDockEl.classList.contains('collapsed');
@@ -5266,9 +5406,9 @@
       }
       else { agentDockEl.classList.remove('collapsed'); setAgentActive(true); }
 
-      agentHistory = safeParse(localStorage.getItem('magi_current_history'), []);
+      agentHistory = safeParse(safeGet('magi_current_history'), []);
 
-      setAgentTitle(localStorage.getItem('magi_current_title') || '');
+      setAgentTitle(safeGet('magi_current_title') || '');
 
       if (agentHistory && agentHistory.length > 0) {
         renderHistoryToLog(agentHistory);
@@ -5280,8 +5420,8 @@
     function resetAgent(keepOpen = false) {
       archiveCurrentHistory();
       agentHistory = []; agentBusy = false; agentDead = false;
-      localStorage.removeItem('magi_current_history');
-      localStorage.removeItem('magi_current_title');
+      safeRemove('magi_current_history');
+      safeRemove('magi_current_title');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
       agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
       agentDockEl.style.removeProperty('width');
@@ -5319,6 +5459,10 @@
     }
     async function parseSSE(body, handlers) {
       const reader = body.getReader(); const dec = new TextDecoder(); let buf = '';
+      // Normalise CRLF/CR to LF up front: the spec allows any of the three as a line
+      // break, and a proxy that rewrites them would otherwise leave '\r' on every
+      // payload and stop '\n\n' from ever matching the event separator.
+      const normalise = s => s.replace(/\r\n?/g, '\n');
       const processBlock = (block) => {
         let ev = 'message', data = '';
         block.split('\n').forEach(line => {
@@ -5335,7 +5479,7 @@
       };
       while (true) {
         const { done, value } = await reader.read(); if (done) break;
-        buf += dec.decode(value, { stream: true });
+        buf += normalise(dec.decode(value, { stream: true }));
         let i;
         while ((i = buf.indexOf('\n\n')) >= 0) {
           processBlock(buf.slice(0, i));
@@ -5649,13 +5793,13 @@
     }
 
     // 現在のセッションの一意ID（ページロードごとに1つ、New Conversationでリセット）
-    let currentSessionId = localStorage.getItem('magi_current_session_id') || null;
+    let currentSessionId = safeGet('magi_current_session_id') || null;
 
     function archiveCurrentHistory() {
       // syncCurrentToSaved が既にリアルタイム保存しているので、ここでは
       // currentSessionId をリセットするだけ（次の会話は新しいセッションになる）。
       currentSessionId = null;
-      localStorage.removeItem('magi_current_session_id');
+      safeRemove('magi_current_session_id');
     }
 
     // 現在の会話を Saved Sessions にリアルタイム同期する
@@ -5667,7 +5811,7 @@
       if (!firstUserMsg) return;
 
       const title = agentTitle || (firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : ''));
-      let sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+      let sessions = safeParse(safeGet('magi_saved_sessions'), []);
 
       if (currentSessionId) {
         // 既存セッションを更新：リストから取り除いて先頭に再挿入
@@ -5712,7 +5856,7 @@
       panel.innerHTML = `
         <div class="flex items-center justify-between mb-3 pb-2 border-b border-color">
           <span class="font-bold text-[10px] tracking-widest text-primary uppercase">${title}</span>
-          <button class="agent-panel-close text-[10px] text-secondary hover:text-primary cursor-pointer outline-none border-none bg-transparent">✕ ${tr('CLOSE', '閉じる')}</button>
+          <button class="agent-panel-close text-[10px] text-secondary hover:text-primary cursor-pointer border-none bg-transparent">✕ ${tr('CLOSE', '閉じる')}</button>
         </div>
         ${bodyHTML}`;
       document.getElementById('agentdock').appendChild(panel);
@@ -5731,7 +5875,7 @@
       const listContainer = document.getElementById('agent-history-list');
       if (!listContainer) return;
 
-      const sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+      const sessions = safeParse(safeGet('magi_saved_sessions'), []);
       if (sessions.length === 0) {
         listContainer.innerHTML = `<div class="text-center text-secondary py-8">${tr('No saved conversations.', '保存されたチャット履歴はありません。')}</div>`;
         return;
@@ -5740,10 +5884,10 @@
       listContainer.innerHTML = sessions.map(session => `
         <div class="flex items-center justify-between p-2 rounded border border-color hover:bg-surface-alt transition-colors group cursor-pointer w-full overflow-hidden" data-id="${session.id}">
           <div class="flex-1 min-w-0 pr-2 overflow-hidden btn-load-session" data-id="${session.id}">
-            <div class="truncate text-xs font-semibold text-text group-hover:text-primary transition-colors">${esc(session.title)}</div>
+            <div class="truncate text-xs font-semibold text-normal group-hover:text-primary transition-colors">${esc(session.title)}</div>
             <div class="text-[9px] text-secondary mt-0.5">${new Date(session.timestamp).toLocaleString()}</div>
           </div>
-          <button class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session outline-none bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${session.id}" title="${tr('Delete chat', 'チャットを削除')}">
+          <button class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${session.id}" title="${tr('Delete chat', 'チャットを削除')}">
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
@@ -5770,7 +5914,7 @@
     function loadSavedSession(id) {
       syncCurrentToSaved(); // 現在の会話を保存
 
-      const sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+      const sessions = safeParse(safeGet('magi_saved_sessions'), []);
       const session = sessions.find(s => s.id === id);
       if (!session) return;
 
@@ -5788,9 +5932,9 @@
       // 削除対象が現在のセッションなら追跡を解除
       if (currentSessionId === id) {
         currentSessionId = null;
-        localStorage.removeItem('magi_current_session_id');
+        safeRemove('magi_current_session_id');
       }
-      let sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+      let sessions = safeParse(safeGet('magi_saved_sessions'), []);
       sessions = sessions.filter(s => s.id !== id);
       safeStore('magi_saved_sessions', sessions);
       renderSavedSessionsList();
@@ -5798,14 +5942,14 @@
 
     function showInfoPanel() {
       makeAgentPanel('agent-info-panel', tr('System & Privacy', 'システムとプライバシー'), `
-        <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-text leading-relaxed">
+        <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 pb-4 text-normal leading-relaxed">
           <ul class="space-y-1.5 list-disc pl-4 text-secondary text-[11px] leading-relaxed">
-            <li>${tr('A multi-agent system with 3 debating personas modeled on <strong class="text-text">Shinya Takeda\'s personality</strong>.', '<strong class="text-text">武田 伸也の人格</strong>をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。')}</li>
-            <li>${tr('This is a <strong class="text-text">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-text">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.', 'これは<strong class="text-text">「新世紀エヴァンゲリオン」</strong>のMAGIシステムにインスパイアされた、<strong class="text-text">パロディ＆実験用システム</strong>です。プログラミングなどの実用的なタスクへの利用は想定されていません。')}</li>
-            <li>${tr('Strict limits: max <strong class="text-text">1,000 characters</strong> per input, limited output tokens, <strong class="text-text">24 daily requests</strong>, and <strong class="text-text">12 rounds</strong> per session.', '利用制限：1回あたりの入力は最大<strong class="text-text">1,000文字</strong>まで、出力トークン数制限あり、1日あたり<strong class="text-text">24回のリクエスト</strong>、1セッションあたり<strong class="text-text">12往復</strong>まで。')}</li>
-            <li>${tr('By default, inputs are <strong class="text-text">not saved</strong> in the database, unless you <strong class="text-text">react</strong> to a reply (👍/emoji) to help improve MAGI.', 'デフォルトでは、MAGI向上のために回答へ<strong class="text-text">リアクション</strong>（👍や絵文字）をしない限り、入力内容はデータベースに<strong class="text-text">保存されません</strong>。')}</li>
-            <li>${tr('Chat history is stored in your browser\'s <strong class="text-text">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-text">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
-            <li>${tr('Powered by <strong class="text-text">DeepSeek API</strong> (inputs are sent to China and may be used for AI training).', '<strong class="text-text">DeepSeek API</strong>を使用しています（入力内容は中国へ送信され、AIの学習に利用される可能性があります）。')}</li>
+            <li>${tr('A multi-agent system with 3 debating personas modeled on <strong class="text-normal">Shinya Takeda\'s personality</strong>.', '<strong class="text-normal">武田 伸也の人格</strong>をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。')}</li>
+            <li>${tr('This is a <strong class="text-normal">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-normal">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.', 'これは<strong class="text-normal">「新世紀エヴァンゲリオン」</strong>のMAGIシステムにインスパイアされた、<strong class="text-normal">パロディ＆実験用システム</strong>です。プログラミングなどの実用的なタスクへの利用は想定されていません。')}</li>
+            <li>${tr('Strict limits: max <strong class="text-normal">1,000 characters</strong> per input, limited output tokens, <strong class="text-normal">24 daily requests</strong>, and <strong class="text-normal">12 rounds</strong> per session.', '利用制限：1回あたりの入力は最大<strong class="text-normal">1,000文字</strong>まで、出力トークン数制限あり、1日あたり<strong class="text-normal">24回のリクエスト</strong>、1セッションあたり<strong class="text-normal">12往復</strong>まで。')}</li>
+            <li>${tr('By default, inputs are <strong class="text-normal">not saved</strong> in the database, unless you <strong class="text-normal">react</strong> to a reply (👍/emoji) to help improve MAGI.', 'デフォルトでは、MAGI向上のために回答へ<strong class="text-normal">リアクション</strong>（👍や絵文字）をしない限り、入力内容はデータベースに<strong class="text-normal">保存されません</strong>。')}</li>
+            <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
+            <li>${tr('Powered by <strong class="text-normal">DeepSeek API</strong> (inputs are sent to China and may be used for AI training).', '<strong class="text-normal">DeepSeek API</strong>を使用しています（入力内容は中国へ送信され、AIの学習に利用される可能性があります）。')}</li>
             <li class="text-red-500 font-semibold">${tr('DO NOT input any confidential or personal information.', '機密情報や個人情報は絶対に入力しないでください。')}</li>
           </ul>
         </div>`);
@@ -5949,14 +6093,20 @@
       notifCount.textContent = unreadNotifications > 99 ? '99+' : String(unreadNotifications);
       notifCount.classList.toggle('hidden', unreadNotifications === 0);
       notifBell.classList.toggle('has-unread', unreadNotifications > 0);
-      notifBell.title = unreadNotifications > 0 ? `${unreadNotifications} new notification${unreadNotifications === 1 ? '' : 's'}` : 'No new notifications';
+      // Write through the data-* cache applyChrome() reads, or a later language switch
+      // would restore the stale title this function just replaced.
+      const title = unreadNotifications > 0
+        ? tr(`${unreadNotifications} new notification${unreadNotifications === 1 ? '' : 's'}`, `新しい通知が ${unreadNotifications} 件あります`)
+        : tr('No new notifications', '新しい通知はありません');
+      notifBell.dataset[currentLang === 'ja' ? 'jaTitle' : 'enTitle'] = title;
+      notifBell.title = title;
     }
     function renderNotifCenter() {
       if (!notifList) return;
       const fmt = d => d.toTimeString().slice(0, 5);
       notifList.innerHTML = notifications.length
         ? notifications.map(n => `<div class="notif-row ${n.type === 'warn' ? 'warn' : ''}"><span class="notif-ic">${n.type === 'warn' ? '⚠' : '✓'}</span><span class="notif-tx">${esc(n.msg)}</span><span class="notif-tm">${fmt(n.t)}</span></div>`).join('')
-        : `<div class="notif-empty">No notifications yet.</div>`;
+        : `<div class="notif-empty">${tr('No notifications yet.', '通知はまだありません。')}</div>`;
     }
 
     function showToast(msg, type) {
@@ -6111,7 +6261,7 @@
         const m = treeMeta(c);
         items.push({ icon: m.icon || '•', iconColor: iconColor(c, m.name), label: m.name, desc: cdesc(c), run: () => (c === 'welcome' ? openDoc('welcome', welcomeHTML()) : runFromPalette(c)) });
       });
-      projects.forEach(p => items.push({ icon: '↗', iconColor: getPrimaryColor(), label: p.name, desc: p.desc, run: () => runFromPalette(p.name) }));
+      projects.forEach(p => items.push({ icon: '↗', iconColor: getPrimaryColor(), label: p.name, desc: pick(p, 'desc'), run: () => runFromPalette(p.name) }));
       return items;
     }
     function fuzzyScore(q, text) {
@@ -6188,12 +6338,8 @@
 
     function showApkDownloadModal() {
       if (!apkModal) return;
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      const color = isDark ? '4ade80' : '16a34a';
-      const qrImg = document.getElementById('apk-qr-image');
-      if (qrImg) {
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Ftk.st%2Fmagi-app%2Fandroid%2F&color=${color}&bgcolor=ffffff&qzone=2`;
-      }
+      // The QR is an inline SVG filled with currentColor via .text-primary, so it tracks
+      // the theme on its own — nothing to rebuild, and no request to a third-party host.
       apkModal.classList.add('active');
     }
 

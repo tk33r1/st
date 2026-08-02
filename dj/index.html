@@ -118,6 +118,11 @@
       overflow-x: hidden;
     }
 
+    /* モーダル表示中にスクロールをロックしてもガター幅が変わらないようにする */
+    html {
+      scrollbar-gutter: stable;
+    }
+
     body {
       background: var(--white);
       color: var(--black);
@@ -896,6 +901,12 @@
 
     /* ===== Image Modal ===== */
     .image-modal {
+      /*
+       * 画像の上限はトラック幅・スライド高に依存させず、ビューポート基準の絶対値で持つ。
+       * .modal-figure は内容に合わせて縮む箱なので、その中で % 指定にすると解決が循環する。
+       */
+      --modal-w: min(90vw, 1000px);
+      --modal-h: 85vh;
       position: fixed;
       top: 0;
       left: 0;
@@ -908,9 +919,14 @@
       justify-content: center;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
+      /*
+       * visibility を「継続する」トランジションにすると開いた直後の計算値が hidden のままになり、
+       * 中の要素にフォーカスできない。表示は即時・非表示はフェード後、と遅延で切り替える。
+       */
+      transition: opacity 0.3s ease, visibility 0s linear 0.3s;
       backdrop-filter: blur(5px);
       cursor: zoom-out;
+      overscroll-behavior: contain;
     }
 
     .image-modal img,
@@ -927,6 +943,7 @@
     .image-modal.active {
       opacity: 1;
       visibility: visible;
+      transition: opacity 0.3s ease, visibility 0s linear 0s;
     }
 
     .image-modal-content {
@@ -938,10 +955,20 @@
       align-items: center;
     }
 
+    /* ‹ › の位置基準。トラック自身は overflow するので基準にできない */
+    .modal-stage {
+      position: relative;
+      display: flex;
+    }
+
+    /*
+     * 注意: overflow-x を auto にすると CSS 仕様上 overflow-y も auto に計算され、
+     * トラックの外側（上下）に置いた要素はクリップされて見えなくなる。
+     * × ボタンを画像の内側に置いているのはこのため。
+     */
     .modal-track {
       display: flex;
-      width: 90vw;
-      max-width: 1000px;
+      width: var(--modal-w);
       overflow-x: auto;
       overscroll-behavior-x: contain;
       scroll-snap-type: x mandatory;
@@ -956,7 +983,6 @@
     }
 
     .modal-slide {
-      --modal-h: 85vh;
       flex: 0 0 100%;
       height: var(--modal-h);
       scroll-snap-align: center;
@@ -969,12 +995,12 @@
     .modal-figure {
       position: relative;
       display: flex;
-      max-width: 100%;
+      max-width: var(--modal-w);
       max-height: var(--modal-h);
     }
 
     .modal-figure img {
-      max-width: 100%;
+      max-width: var(--modal-w);
       max-height: var(--modal-h);
       width: auto;
       height: auto;
@@ -996,7 +1022,8 @@
       font-size: 0.85rem;
       letter-spacing: 0.08em;
       border: 1px dashed var(--neo-purple);
-      padding: 24px 28px;
+      /* 上側は × ボタンのぶんを空ける */
+      padding: 52px 28px 24px;
     }
 
     /* ナビ・ドットは複数枚のときだけ表示 */
@@ -1167,7 +1194,7 @@
         padding: 50px 20px;
       }
 
-      .modal-slide {
+      .image-modal {
         --modal-h: 78vh;
       }
 
@@ -1334,16 +1361,19 @@
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
             <div class="timeline-event">
-              <a href="../images/contents/Live-DJ_Factory.webp"
-                data-images="../images/contents/Live-DJ_Factory.webp,../images/contents/Live-DJ_Factory2.webp"
+              <a href="../images/contents/Live-DJ_Factory.webp" data-images="
+                   ../images/contents/Live-DJ_Factory.webp
+                   ../images/contents/Live-DJ_Factory2.webp"
                 target="_blank" rel="noopener noreferrer" class="timeline-link">
                 Live&amp;DJ Factory<br>
                 R Lounge
               </a>
             </div>
             <div class="timeline-event">
-              <a href="../images/contents/daydream_02-1.avif"
-                data-images="../images/contents/daydream_02-1.avif,../images/contents/daydream_02-2.avif,../images/contents/daydream_02-3.avif"
+              <a href="../images/contents/daydream_02-1.avif" data-images="
+                   ../images/contents/daydream_02-1.avif
+                   ../images/contents/daydream_02-2.avif
+                   ../images/contents/daydream_02-3.avif"
                 target="_blank" rel="noopener noreferrer" class="timeline-link">
                 Daydream #02<br>
                 Lounge bar Krishuna
@@ -1441,11 +1471,13 @@
   </footer>
 
   <!-- Image Modal -->
-  <div class="image-modal" id="imageModal">
+  <div class="image-modal" id="imageModal" role="dialog" aria-modal="true" aria-label="イベントフライヤー">
     <div class="image-modal-content">
-      <div class="modal-track" id="modalTrack"></div>
-      <button class="modal-nav modal-prev" id="modalPrev" aria-label="前の画像">&lsaquo;</button>
-      <button class="modal-nav modal-next" id="modalNext" aria-label="次の画像">&rsaquo;</button>
+      <div class="modal-stage">
+        <div class="modal-track" id="modalTrack"></div>
+        <button class="modal-nav modal-prev" id="modalPrev" aria-label="前の画像">&lsaquo;</button>
+        <button class="modal-nav modal-next" id="modalNext" aria-label="次の画像">&rsaquo;</button>
+      </div>
       <div class="modal-dots" id="modalDots"></div>
     </div>
   </div>
@@ -1563,12 +1595,25 @@
     const timelineLinks = document.querySelectorAll('.timeline-link');
     let slideCount = 0;
     let clearTimer = null;
+    let lastFocused = null;
 
-    // href（1枚）または data-images（カンマ区切りで複数）から画像URLを取り出す
+    // href（1枚）または data-images（複数）から画像URLを取り出す。
+    // URL に生の空白は入り得ないので、空白・改行区切りが最も安全。カンマ区切りも受け付ける。
     const getImages = (link) => {
       const raw = link.dataset.images || link.getAttribute('href') || '';
-      return raw.split(',').map(s => s.trim()).filter(Boolean);
+      return raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
     };
+
+    // 背景ページのスクロールを止める（html が実スクロールコンテナなので両方に効かせる）
+    const setScrollLock = (locked) => {
+      const value = locked ? 'hidden' : '';
+      document.documentElement.style.overflow = value;
+      document.body.style.overflow = value;
+    };
+
+    // モーダル内で今フォーカスできる要素（非表示・inert・disabled を除く）
+    const focusables = () => Array.from(modal.querySelectorAll('button'))
+      .filter(el => !el.disabled && el.offsetParent !== null && !el.closest('[inert]'));
 
     const currentIndex = () => {
       if (!modalTrack.clientWidth) return 0;
@@ -1582,6 +1627,17 @@
       });
       prevBtn.disabled = i <= 0;
       nextBtn.disabled = i >= slideCount - 1;
+
+      // 表示中以外のスライドは inert にして、重複する × をタブ順・支援技術から外す
+      const slides = modalTrack.querySelectorAll('.modal-slide');
+      const hadFocus = modal.contains(document.activeElement);
+      slides.forEach((slide, n) => { slide.inert = n !== i; });
+
+      // inert 化でフォーカスが外れた場合は、表示中スライドの × に移す
+      if (hadFocus && !modal.contains(document.activeElement) && slides[i]) {
+        const close = slides[i].querySelector('.modal-close');
+        if (close) close.focus({ preventScroll: true });
+      }
     };
 
     const goTo = (i) => {
@@ -1623,7 +1679,8 @@
       });
 
       modal.classList.toggle('multi', slideCount > 1);
-      modalTrack.scrollTo({ left: 0, behavior: 'auto' });
+      // CSS の scroll-behavior:smooth を無視して確実に先頭へ戻す
+      modalTrack.scrollTo({ left: 0, behavior: 'instant' });
       syncControls();
     };
 
@@ -1632,13 +1689,22 @@
         e.preventDefault();
         const srcs = getImages(link);
         if (!srcs.length) return;
+        lastFocused = link;
         buildSlides(srcs, link.textContent.trim().replace(/\s+/g, ' '));
         modal.classList.add('active');
+        setScrollLock(true);
+        const first = focusables()[0];
+        if (first) first.focus({ preventScroll: true });
       });
     });
 
     const hideModal = () => {
       modal.classList.remove('active');
+      setScrollLock(false);
+      if (lastFocused) {
+        lastFocused.focus({ preventScroll: true });
+        lastFocused = null;
+      }
       clearTimeout(clearTimer);
       clearTimer = setTimeout(() => {
         modalTrack.innerHTML = '';
@@ -1669,6 +1735,25 @@
         goTo(currentIndex() - 1);
       } else if (e.key === 'ArrowRight') {
         goTo(currentIndex() + 1);
+      } else if (e.key === 'Tab') {
+        // フォーカストラップ：背後のページへ抜けさせない
+        const items = focusables();
+        if (!items.length) {
+          e.preventDefault();
+          return;
+        }
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (!modal.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus({ preventScroll: true });
+        } else if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus({ preventScroll: true });
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus({ preventScroll: true });
+        }
       }
     });
 
