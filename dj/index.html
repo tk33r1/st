@@ -642,6 +642,10 @@
       color: var(--neo-purple);
     }
 
+    .timeline-event+.timeline-event {
+      margin-top: 14px;
+    }
+
     .operation-title {
       font-size: 1.2rem;
       letter-spacing: 0.1em;
@@ -906,6 +910,18 @@
       visibility: hidden;
       transition: opacity 0.3s ease, visibility 0.3s ease;
       backdrop-filter: blur(5px);
+      cursor: zoom-out;
+    }
+
+    .image-modal img,
+    .image-modal button {
+      cursor: default;
+    }
+
+    .image-modal .modal-nav:not([disabled]),
+    .image-modal .modal-dot,
+    .image-modal .modal-close {
+      cursor: pointer;
     }
 
     .image-modal.active {
@@ -922,30 +938,159 @@
       align-items: center;
     }
 
-    .image-modal-content img {
+    .modal-track {
+      display: flex;
+      width: 90vw;
+      max-width: 1000px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-track::-webkit-scrollbar {
+      display: none;
+    }
+
+    .modal-slide {
+      --modal-h: 85vh;
+      flex: 0 0 100%;
+      height: var(--modal-h);
+      scroll-snap-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 画像サイズにぴったり縮む枠。× ボタンの位置基準になる */
+    .modal-figure {
+      position: relative;
+      display: flex;
       max-width: 100%;
-      max-height: 85vh;
+      max-height: var(--modal-h);
+    }
+
+    .modal-figure img {
+      max-width: 100%;
+      max-height: var(--modal-h);
+      width: auto;
+      height: auto;
+      display: block;
       border-radius: 4px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       border: 1px solid var(--neo-purple);
       object-fit: contain;
     }
 
+    /* 読み込み失敗時は壊れた画像アイコンではなくメッセージを出す */
+    .modal-slide.error .modal-figure img {
+      display: none;
+    }
+
+    .modal-slide.error .modal-figure::after {
+      content: '画像を読み込めませんでした';
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      border: 1px dashed var(--neo-purple);
+      padding: 24px 28px;
+    }
+
+    /* ナビ・ドットは複数枚のときだけ表示 */
+    .modal-nav,
+    .modal-dots {
+      display: none;
+    }
+
+    .image-modal.multi .modal-nav {
+      display: flex;
+    }
+
+    .image-modal.multi .modal-dots {
+      display: flex;
+    }
+
+    .modal-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: rgba(10, 10, 20, 0.6);
+      border: 1px solid var(--neo-purple);
+      color: var(--white);
+      font-size: 1.8rem;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 2;
+      transition: background 0.3s ease, opacity 0.3s ease;
+    }
+
+    .modal-nav:hover {
+      background: var(--neo-purple);
+    }
+
+    .modal-nav[disabled] {
+      opacity: 0.25;
+      cursor: default;
+    }
+
+    .modal-prev {
+      left: -22px;
+    }
+
+    .modal-next {
+      right: -22px;
+    }
+
+    .modal-dots {
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .modal-dot {
+      width: 9px;
+      height: 9px;
+      padding: 0;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid var(--neo-purple);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .modal-dot.active {
+      background: var(--neo-purple);
+    }
+
     .modal-close {
       position: absolute;
-      top: -40px;
-      right: 0;
+      top: 8px;
+      right: 8px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: var(--white);
-      background: transparent;
-      border: none;
-      font-size: 2rem;
+      background: rgba(10, 10, 20, 0.6);
+      border: 1px solid var(--neo-purple);
+      border-radius: 50%;
+      font-size: 1.6rem;
       cursor: pointer;
-      transition: color 0.3s ease;
+      transition: background 0.3s ease;
       line-height: 1;
+      z-index: 2;
     }
 
     .modal-close:hover {
-      color: var(--neo-purple);
+      background: var(--neo-purple);
     }
 
     .mobile-break {
@@ -966,6 +1111,10 @@
       .reveal {
         opacity: 1;
         transform: none;
+      }
+
+      .modal-track {
+        scroll-behavior: auto;
       }
     }
 
@@ -1016,6 +1165,24 @@
       .sound-log-section,
       .operation-section {
         padding: 50px 20px;
+      }
+
+      .modal-slide {
+        --modal-h: 78vh;
+      }
+
+      .modal-nav {
+        width: 38px;
+        height: 38px;
+        font-size: 1.5rem;
+      }
+
+      .modal-prev {
+        left: 4px;
+      }
+
+      .modal-next {
+        right: 4px;
       }
 
       .video-section {
@@ -1167,8 +1334,24 @@
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
             <div class="timeline-event">
-              <a href="https://tk.st/images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif" target="_blank"
-                rel="noopener noreferrer" class="timeline-link">
+              <a href="../images/contents/Live-DJ_Factory.webp"
+                data-images="../images/contents/Live-DJ_Factory.webp,../images/contents/Live-DJ_Factory2.webp"
+                target="_blank" rel="noopener noreferrer" class="timeline-link">
+                Live&amp;DJ Factory<br>
+                R Lounge
+              </a>
+            </div>
+            <div class="timeline-event">
+              <a href="../images/contents/daydream_02-1.avif"
+                data-images="../images/contents/daydream_02-1.avif,../images/contents/daydream_02-2.avif,../images/contents/daydream_02-3.avif"
+                target="_blank" rel="noopener noreferrer" class="timeline-link">
+                Daydream #02<br>
+                Lounge bar Krishuna
+              </a>
+            </div>
+            <div class="timeline-event">
+              <a href="../images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif" target="_blank" rel="noopener noreferrer"
+                class="timeline-link">
                 NEXTORM -BASE- #16<br>
                 Ohjo-bldg
               </a>
@@ -1177,8 +1360,8 @@
           <div class="timeline-item">
             <div class="timeline-year">2025</div>
             <div class="timeline-event">
-              <a href="https://tk.st/images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank"
-                rel="noopener noreferrer" class="timeline-link">
+              <a href="../images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank" rel="noopener noreferrer"
+                class="timeline-link">
                 Night-Drip<br>
                 Shinjuku-HEIST.
               </a>
@@ -1260,8 +1443,10 @@
   <!-- Image Modal -->
   <div class="image-modal" id="imageModal">
     <div class="image-modal-content">
-      <button class="modal-close" id="modalClose">&times;</button>
-      <img src="" alt="Event Flyer" id="modalImage">
+      <div class="modal-track" id="modalTrack"></div>
+      <button class="modal-nav modal-prev" id="modalPrev" aria-label="前の画像">&lsaquo;</button>
+      <button class="modal-nav modal-next" id="modalNext" aria-label="次の画像">&rsaquo;</button>
+      <div class="modal-dots" id="modalDots"></div>
     </div>
   </div>
 
@@ -1369,45 +1554,121 @@
       });
     }
 
-    // 5. Image Modal Control
+    // 5. Image Modal Control (scroll-snap carousel)
     const modal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImage');
-    const closeModalBtn = document.getElementById('modalClose');
+    const modalTrack = document.getElementById('modalTrack');
+    const modalDots = document.getElementById('modalDots');
+    const prevBtn = document.getElementById('modalPrev');
+    const nextBtn = document.getElementById('modalNext');
     const timelineLinks = document.querySelectorAll('.timeline-link');
+    let slideCount = 0;
+    let clearTimer = null;
+
+    // href（1枚）または data-images（カンマ区切りで複数）から画像URLを取り出す
+    const getImages = (link) => {
+      const raw = link.dataset.images || link.getAttribute('href') || '';
+      return raw.split(',').map(s => s.trim()).filter(Boolean);
+    };
+
+    const currentIndex = () => {
+      if (!modalTrack.clientWidth) return 0;
+      return Math.round(modalTrack.scrollLeft / modalTrack.clientWidth);
+    };
+
+    const syncControls = () => {
+      const i = currentIndex();
+      modalDots.querySelectorAll('.modal-dot').forEach((dot, n) => {
+        dot.classList.toggle('active', n === i);
+      });
+      prevBtn.disabled = i <= 0;
+      nextBtn.disabled = i >= slideCount - 1;
+    };
+
+    const goTo = (i) => {
+      const target = Math.max(0, Math.min(i, slideCount - 1));
+      modalTrack.scrollTo({ left: modalTrack.clientWidth * target, behavior: 'smooth' });
+    };
+
+    const buildSlides = (srcs, label) => {
+      clearTimeout(clearTimer); // 閉じた直後に開き直しても中身が消されないように
+      modalTrack.innerHTML = '';
+      modalDots.innerHTML = '';
+      slideCount = srcs.length;
+
+      srcs.forEach((src, i) => {
+        const slide = document.createElement('div');
+        slide.className = 'modal-slide';
+        const figure = document.createElement('div');
+        figure.className = 'modal-figure';
+        const img = document.createElement('img');
+        img.addEventListener('error', () => slide.classList.add('error'));
+        img.src = src;
+        img.alt = slideCount > 1 ? `${label} (${i + 1}/${slideCount})` : label;
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'modal-close';
+        close.setAttribute('aria-label', '閉じる');
+        close.innerHTML = '&times;';
+        figure.appendChild(img);
+        figure.appendChild(close);
+        slide.appendChild(figure);
+        modalTrack.appendChild(slide);
+
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'modal-dot';
+        dot.setAttribute('aria-label', `${i + 1}枚目を表示`);
+        dot.addEventListener('click', () => goTo(i));
+        modalDots.appendChild(dot);
+      });
+
+      modal.classList.toggle('multi', slideCount > 1);
+      modalTrack.scrollTo({ left: 0, behavior: 'auto' });
+      syncControls();
+    };
 
     timelineLinks.forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        const imgSrc = link.getAttribute('href');
-        if (imgSrc) {
-          modalImg.src = imgSrc;
-          modal.classList.add('active');
-        }
+        const srcs = getImages(link);
+        if (!srcs.length) return;
+        buildSlides(srcs, link.textContent.trim().replace(/\s+/g, ' '));
+        modal.classList.add('active');
       });
     });
 
     const hideModal = () => {
       modal.classList.remove('active');
-      setTimeout(() => {
-        modalImg.removeAttribute('src');
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => {
+        modalTrack.innerHTML = '';
+        modalDots.innerHTML = '';
+        modal.classList.remove('multi');
+        slideCount = 0;
       }, 300);
     };
 
-    if (closeModalBtn) {
-      closeModalBtn.addEventListener('click', hideModal);
-    }
+    modalTrack.addEventListener('scroll', () => {
+      window.requestAnimationFrame(syncControls);
+    }, { passive: true });
 
-    if (modal) {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          hideModal();
-        }
-      });
-    }
+    prevBtn.addEventListener('click', () => goTo(currentIndex() - 1));
+    nextBtn.addEventListener('click', () => goTo(currentIndex() + 1));
+
+    // 画像・ナビ・ドット以外（余白・トラック・背景・× ボタン）をクリックしたら閉じる
+    modal.addEventListener('click', (e) => {
+      if (e.target.closest('img, .modal-nav, .modal-dot')) return;
+      hideModal();
+    });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal.classList.contains('active')) {
+      if (!modal.classList.contains('active')) return;
+      if (e.key === 'Escape') {
         hideModal();
+      } else if (e.key === 'ArrowLeft') {
+        goTo(currentIndex() - 1);
+      } else if (e.key === 'ArrowRight') {
+        goTo(currentIndex() + 1);
       }
     });
 
