@@ -24,6 +24,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="マサラテトリス VINDALOO。スパイスの役を組んでカレーを完成させる、ローグライト×AI対戦の激辛テトリス。">
+    <meta name="robots" content="max-image-preview:large">
     <title>マサラテトリス VINDALOO</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌶️</text></svg>">
@@ -2123,7 +2124,7 @@
             if (t) aiAnnounce(t, targetId);
         }
 
-        // Gemini実況 (非同期・ノンブロッキング)。失敗時は category のローカル定型文に戻す。
+        // AI実況 (非同期・ノンブロッキング)。失敗時は category のローカル定型文に戻す。
         async function aiGenerate(category, contextText, targetId = 'maharaja-text') {
             const sparkle = document.getElementById('ai-sparkle');
             const box = document.getElementById('maharaja-box');
@@ -2132,12 +2133,12 @@
             const prompt = `You are ${roleName}, the commentator of the spicy Indian puzzle game "Masala Tetris VINDALOO". `
                 + `Language: Japanese. Context: ${contextText}. React in ONE short punchy line (max 24 Japanese chars). No quotes, no emoji.`;
             try {
-                const res = await fetch(`${WORKER_URL}/api/gemini`, {
+                const res = await fetch(`${WORKER_URL}/api/deepseek`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    body: JSON.stringify({ prompt })
                 });
                 const data = await res.json();
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                const text = data?.text?.trim();
                 if (text) aiAnnounce(text.replace(/^["「]|["」]$/g, ''), targetId);
                 else aiSay(category, targetId);
             } catch (e) {

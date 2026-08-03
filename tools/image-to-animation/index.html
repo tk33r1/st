@@ -22,6 +22,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="世界初。サーバーレスで複数の画像からAPNGや可逆WebP、GIFのアニメーションに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。">
+  <meta name="robots" content="max-image-preview:large">
   <title>Image to Animation - 画像アニメーション変換ツール | ST TOOLS</title>
   <link rel="canonical" href="https://tk.st/tools/image-to-animation/">
   <link rel="author" href="https://tk.st/">
@@ -404,6 +405,10 @@
     .preview-item:hover .delete-btn {
       opacity: 1;
     }
+    /* タッチ端末にはホバーが無く、削除ボタンに触れられなくなるので常時表示する。 */
+    @media (hover: none) {
+      .preview-item .delete-btn { opacity: 1; }
+    }
     .preview-item .delete-btn:hover {
       background: rgba(225, 29, 72, 0.9);
     }
@@ -762,10 +767,15 @@
     const MAX_FILES = 300;
     const MAX_TOTAL_SIZE = 200 * 1024 * 1024; // 200MB
 
+    // 正規化時にヒープへ載るのは元ファイルではなく PNG に展開したフレームで、
+    // JPEG 200MB でも PNG では数倍〜十数倍に膨らむ。実際に書き込んだバイト数を
+    // 積算して、OOM でタブごと落ちる前に打ち切る。
+    const MAX_FRAME_BYTES = 512 * 1024 * 1024; // 512MB
+
     let ffmpeg = null;
     let isProcessing = false;
     let resultBlobUrl = null;
-    let resultFilename = 'output.apng';
+    let resultFilename = 'animation.webp';
     let conversionStarted = false;
     let ffmpegLogBuffer = [];
 
@@ -822,25 +832,38 @@
       updateOrderBadges();
     }
 
+    // プレビューに今並んでいる（＝削除されていない）ファイルを表示順で返す。
+    function visibleFiles() {
+      return Array.from(previewGrid.querySelectorAll('.preview-item'))
+        .map(item => currentFiles[parseInt(item.dataset.index, 10)])
+        .filter(Boolean);
+    }
+
+    // 上限は OOM 防止のためのもの。最初の選択だけでなく「画像を追加」でも
+    // 効かせる必要があるので、変換対象になる全ファイルに対して検査する。
+    function withinLimits(files) {
+      if (files.length > MAX_FILES) {
+        showToast(`画像が多すぎます(${files.length}枚 / 上限 ${MAX_FILES}枚)`, 'error');
+        return false;
+      }
+      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+      if (totalSize > MAX_TOTAL_SIZE) {
+        showToast(`合計サイズが大きすぎます(${formatBytes(totalSize)} / 上限 ${formatBytes(MAX_TOTAL_SIZE)})`, 'error');
+        return false;
+      }
+      return true;
+    }
+
     function showPreview(rawFiles) {
       cleanupPreview();
-      
+
       const files = Array.from(rawFiles).filter(f => f.type.startsWith('image/'));
       if (files.length === 0) {
         showToast('画像ファイルを選択してください', 'error');
         return;
       }
 
-      if (files.length > MAX_FILES) {
-        showToast(`画像が多すぎます(${files.length}枚 / 上限 ${MAX_FILES}枚)`, 'error');
-        return;
-      }
-
-      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-      if (totalSize > MAX_TOTAL_SIZE) {
-        showToast(`合計サイズが大きすぎます(${formatBytes(totalSize)} / 上限 ${formatBytes(MAX_TOTAL_SIZE)})`, 'error');
-        return;
-      }
+      if (!withinLimits(files)) return;
 
       // Sort files by name (alphabetically) initially
       files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
@@ -866,20 +889,14 @@
     });
 
     btnStartConversion.addEventListener('click', () => {
-      // Re-order currentFiles based on the DOM order
-      const orderedItems = previewGrid.querySelectorAll('.preview-item');
-      if (orderedItems.length === 0) {
+      // 並べ替え・削除後の DOM の順番がそのまま変換の順番になる。
+      const orderedFiles = visibleFiles();
+      if (orderedFiles.length === 0) {
         showToast('画像がありません', 'error');
         return;
       }
-      
-      const reorderedFiles = [];
-      orderedItems.forEach(item => {
-        const originalIndex = parseInt(item.dataset.index, 10);
-        reorderedFiles.push(currentFiles[originalIndex]);
-      });
 
-      processImages(reorderedFiles);
+      processImages(orderedFiles);
     });
 
     btnAddMore.addEventListener('click', () => {
@@ -888,7 +905,7 @@
     
     fileInputAdd.addEventListener('change', (e) => {
       const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-      if (files.length > 0) {
+      if (files.length > 0 && withinLimits(visibleFiles().concat(files))) {
         appendFilesToPreview(files);
       }
       fileInputAdd.value = '';
@@ -915,15 +932,15 @@
 
       const { FFmpeg } = FFmpegWASM;
       const { toBlobURL } = FFmpegUtil;
-      ffmpeg = new FFmpeg();
+      const instance = new FFmpeg();
 
-      ffmpeg.on('log', ({ message }) => {
+      instance.on('log', ({ message }) => {
         console.log('[ffmpeg]', message);
         ffmpegLogBuffer.push(message);
         if (ffmpegLogBuffer.length > 30) ffmpegLogBuffer.shift();
       });
 
-      ffmpeg.on('progress', ({ progress }) => {
+      instance.on('progress', ({ progress }) => {
         if (!conversionStarted) return;
         const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
         progressBar.style.width = `${pct}%`;
@@ -936,11 +953,19 @@
       const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
       const ffmpegBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
 
-      const classWorkerURL = await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript');
-      const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
-      const wasmURL = await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm');
+      // ロードに成功したインスタンスだけをキャッシュする。途中で失敗したものを
+      // 掴むと、以降ずっと「ffmpeg is not loaded」で復旧できなくなる。
+      try {
+        const classWorkerURL = await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript');
+        const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
+        const wasmURL = await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm');
+        await instance.load({ classWorkerURL, coreURL, wasmURL });
+      } catch (err) {
+        try { instance.terminate(); } catch (_) {}
+        throw err;
+      }
 
-      await ffmpeg.load({ classWorkerURL, coreURL, wasmURL });
+      ffmpeg = instance;
       return ffmpeg;
     }
 
@@ -956,6 +981,203 @@
       };
       img.src = URL.createObjectURL(file);
     });
+
+    // FFmpeg にそのまま渡せるバッチかどうかを判定するため、ヘッダだけを読んで
+    // 実フォーマットと画素サイズを取り出す。拡張子は当てにならないので見ない。
+    // 判定できなかったものは kind:'unknown' / w:0 とし、安全側（正規化）に倒す。
+    async function probeImage(file) {
+      const head = new Uint8Array(await file.slice(0, 131072).arrayBuffer());
+      const dv = new DataView(head.buffer, head.byteOffset, head.byteLength);
+      const ascii = (from, to) => String.fromCharCode.apply(null, head.subarray(from, to));
+      // alpha は「透過を持ち得るか」。GIF の合成方法を決めるのに使う。
+      const unknown = { kind: 'unknown', w: 0, h: 0, alpha: true };
+
+      if (head[0] === 0x89 && ascii(1, 4) === 'PNG') {
+        if (ascii(12, 16) !== 'IHDR') return unknown;
+        const colorType = head[25]; // 4=グレー+α, 6=RGBA, 3=パレット(tRNS があり得る)
+        return {
+          kind: 'png',
+          w: dv.getUint32(16),
+          h: dv.getUint32(20),
+          alpha: colorType === 4 || colorType === 6 || colorType === 3,
+        };
+      }
+
+      if (head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) {
+        // SOF0〜SOF15（DHT/JPG/DAC を除く）にフレームサイズが入っている。
+        let p = 2;
+        while (p + 9 < head.length) {
+          if (head[p] !== 0xff) { p++; continue; }
+          const marker = head[p + 1];
+          if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) { p += 2; continue; }
+          if (marker === 0xda || marker === 0xd9) break; // 圧縮データに到達
+          const isSOF = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+          if (isSOF) return { kind: 'jpeg', w: dv.getUint16(p + 7), h: dv.getUint16(p + 5), alpha: false };
+          p += 2 + dv.getUint16(p + 2);
+        }
+        return { kind: 'jpeg', w: 0, h: 0, alpha: false };
+      }
+
+      if (ascii(0, 4) === 'GIF8') {
+        return { kind: 'gif', w: dv.getUint16(6, true), h: dv.getUint16(8, true), alpha: true };
+      }
+
+      if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') {
+        const chunk = ascii(12, 16);
+        if (chunk === 'VP8X') {
+          const d24 = (o) => head[o] | (head[o + 1] << 8) | (head[o + 2] << 16);
+          return { kind: 'webp', w: d24(24) + 1, h: d24(27) + 1, alpha: !!(head[20] & 0x10) };
+        }
+        if (chunk === 'VP8 ') {
+          return { kind: 'webp', w: dv.getUint16(26, true) & 0x3fff, h: dv.getUint16(28, true) & 0x3fff, alpha: false };
+        }
+        if (chunk === 'VP8L') {
+          const bits = dv.getUint32(21, true);
+          return { kind: 'webp', w: (bits & 0x3fff) + 1, h: ((bits >>> 14) & 0x3fff) + 1, alpha: true };
+        }
+        return unknown;
+      }
+
+      if (ascii(0, 2) === 'BM') {
+        return { kind: 'bmp', w: dv.getInt32(18, true), h: Math.abs(dv.getInt32(22, true)), alpha: false };
+      }
+      // AVIF / HEIC / TIFF などは ffmpeg.wasm のデコーダ事情が読めないため
+      // unknown 扱いにし、ブラウザでのデコードにフォールバックさせる。
+      return unknown;
+    }
+
+    // ブラウザ側でデコードする。createImageBitmap なら EXIF の回転も反映される。
+    async function decodeImage(file) {
+      if (window.createImageBitmap) {
+        try {
+          return await createImageBitmap(file, { imageOrientation: 'from-image' });
+        } catch (_) { /* 未対応ブラウザ / 未対応フォーマットは <img> にフォールバック */ }
+      }
+      return await new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error(`${file.name} を読み込めませんでした`));
+        };
+        img.src = url;
+      });
+    }
+
+    // canvas 上で「アスペクト比を保った縮小 + 中央寄せパディング + 背景色」まで
+    // 済ませた PNG を作る。全フレームが同一コーデック・同一サイズになるので
+    // concat デマクサが確実に全コマをデコードできる。
+    async function renderFrameToPng(file, canvas, ctx, bgColor) {
+      const src = await decodeImage(file);
+      const sw = src.width || src.naturalWidth;
+      const sh = src.height || src.naturalHeight;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (bgColor !== 'black@0') {
+        ctx.fillStyle = bgColor === 'white' ? '#ffffff' : '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      const scale = Math.min(canvas.width / sw, canvas.height / sh);
+      const dw = Math.max(1, Math.round(sw * scale));
+      const dh = Math.max(1, Math.round(sh * scale));
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(src, Math.round((canvas.width - dw) / 2), Math.round((canvas.height - dh) / 2), dw, dh);
+      if (src.close) src.close();
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('フレームの生成に失敗しました')), 'image/png');
+      });
+      return new Uint8Array(await blob.arrayBuffer());
+    }
+
+    // 出力が本当に複数コマになっているかを数える。デコード失敗で1コマだけに
+    // なっていても FFmpeg は成功扱いで返すため、ここで最終確認する。
+    function countOutputFrames(bytes, format) {
+      try {
+        if (format === 'apng') return countApngFrames(bytes);
+        if (format === 'gif') return countGifFrames(bytes);
+        return countWebpFrames(bytes);
+      } catch (_) {
+        return -1;
+      }
+    }
+
+    function countApngFrames(b) {
+      const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+      let off = 8;
+      while (off + 8 <= b.length) {
+        const size = dv.getUint32(off);
+        const type = String.fromCharCode(b[off + 4], b[off + 5], b[off + 6], b[off + 7]);
+        if (type === 'acTL') return dv.getUint32(off + 8);
+        if (type === 'IDAT' || type === 'IEND') break;
+        off += 12 + size;
+      }
+      return 1;
+    }
+
+    function countWebpFrames(b) {
+      const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+      let off = 12;
+      let frames = 0;
+      while (off + 8 <= b.length) {
+        const id = String.fromCharCode(b[off], b[off + 1], b[off + 2], b[off + 3]);
+        const size = dv.getUint32(off + 4, true);
+        if (id === 'ANMF') frames++;
+        off += 8 + size + (size % 2);
+      }
+      return frames || 1;
+    }
+
+    // GIF のブロックを順に歩き、画像記述子ごとに onFrame を呼ぶ。
+    // GCE(0x21 0xF9) を見つけたら onGce にその packed field の位置を渡す。
+    function walkGif(b, onFrame, onGce) {
+      let off = 13;
+      if (b[10] & 0x80) off += 3 * (2 << (b[10] & 0x07)); // グローバルカラーテーブル
+      const skipSubBlocks = () => {
+        while (off < b.length && b[off] !== 0) off += b[off] + 1;
+        off++;
+      };
+      while (off < b.length) {
+        const sep = b[off++];
+        if (sep === 0x2c) { // 画像記述子 = 1コマ
+          if (onFrame) onFrame();
+          const flags = b[off + 8];
+          off += 9;
+          if (flags & 0x80) off += 3 * (2 << (flags & 0x07)); // ローカルカラーテーブル
+          off++; // LZW minimum code size
+          skipSubBlocks();
+        } else if (sep === 0x21) { // 拡張ブロック
+          const label = b[off++];
+          if (label === 0xf9 && onGce) onGce(off + 1); // ブロックサイズの次が packed field
+          skipSubBlocks();
+        } else {
+          break; // 0x3B (trailer) など
+        }
+      }
+    }
+
+    function countGifFrames(b) {
+      let frames = 0;
+      walkGif(b, () => { frames++; });
+      return frames || 1;
+    }
+
+    // GIF は「透明ピクセル = 前のフレームを透かす」仕様なので、余白や元画像の
+    // 透過が残っていると前のコマが重なって見えてしまう。FFmpeg は透過を含まない
+    // フレーム（＝1枚目は必ず全面が埋まる）に破棄方法1「そのまま残す」を付ける
+    // ため、2コマ目以降の余白から1枚目が透けてしまう。全フレームを破棄方法2
+    // 「背景色に戻す」に書き換えて、各コマが独立して表示されるようにする。
+    // ※ 呼び出し側で -gifflags -offsetting-transdiff を指定し、各フレームが
+    //   全画面の完全な絵になっていることが前提。
+    function forceGifFrameDisposal(b) {
+      walkGif(b, null, (packedOff) => {
+        b[packedOff] = (b[packedOff] & ~0x1c) | (2 << 2);
+      });
+      return b;
+    }
 
     async function processImages(files) {
       if (isProcessing) return;
@@ -987,43 +1209,27 @@
         loadingMsg.textContent = '画像を読み込み中...';
         loadingSubmsg.textContent = `${files.length} 枚の画像を処理します`;
 
-        let listTxt = '';
         const fps = Math.max(1, parseInt(optFps.value, 10) || 3);
         const frameDuration = (1.0 / fps).toFixed(5);
         const isPingPong = optPingpong.checked;
+        const bgColor = optBgColor.value || 'black@0';
 
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          // FFmpeg probes by content, so the extension only needs to be valid.
-          // pop() returns the whole name when there is no dot, so guard for that.
-          const dot = file.name.lastIndexOf('.');
-          const ext = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : 'png';
-          const outName = `img_${String(i).padStart(4, '0')}.${ext}`;
-          await ff.writeFile(outName, await fetchFile(file));
-          writtenFiles.push(outName);
+        // 逐次に読む。同時に走らせると先頭 128KB × 枚数がピークで乗ってしまう。
+        const probes = [];
+        for (const file of files) probes.push(await probeImage(file));
 
-          listTxt += `file '${outName}'\n`;
-          listTxt += `duration ${frameDuration}\n`;
+        // Determine size from the first image. EXIF の回転を反映させたいので
+        // まずブラウザに尋ね、表示できない形式ならヘッダの値に退避する。
+        let firstSize;
+        try {
+          firstSize = await getImageSize(files[0]);
+        } catch (_) {
+          firstSize = { w: probes[0].w, h: probes[0].h };
+        }
+        if (!firstSize.w || !firstSize.h) {
+          throw new Error(`${files[0].name} の画像サイズを判定できませんでした`);
         }
 
-        if (isPingPong && files.length > 2) {
-          for (let i = files.length - 2; i >= 1; i--) {
-            const file = files[i];
-            const dot = file.name.lastIndexOf('.');
-            const ext = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : 'png';
-            const outName = `img_${String(i).padStart(4, '0')}.${ext}`;
-            listTxt += `file '${outName}'\n`;
-            listTxt += `duration ${frameDuration}\n`;
-          }
-        }
-
-        // 最終エントリの duration もそのまま反映されるため、末尾のファイルを
-        // 重複させる必要はない（重複させると最後のコマだけ2倍表示されてしまう）。
-        await ff.writeFile('list.txt', new TextEncoder().encode(listTxt));
-        writtenFiles.push('list.txt');
-
-        // Determine size from the first image
-        const firstSize = await getImageSize(files[0]);
         let targetW = firstSize.w;
         let targetH = firstSize.h;
         const widthOpt = optWidth.value;
@@ -1036,19 +1242,100 @@
           }
         }
 
-        // Ensure even dimensions
-        targetW = targetW % 2 === 1 ? targetW + 1 : targetW;
-        targetH = targetH % 2 === 1 ? targetH + 1 : targetH;
+        // APNG / WebP / GIF は偶数サイズを要求しないので丸めない。丸めると
+        // 奇数サイズの画像に 1px の余白が付き、僅かに拡大されるうえ、余白が
+        // できたせいで GIF が差分最適化を使えなくなる。
+
+        // FFmpeg に直接デコードさせられるのは「全ファイルが同一コーデック かつ
+        // 同一サイズ」のときだけ。
+        //   - コーデックが混在: concat デマクサは先頭ファイルのコーデックを全体に
+        //     適用するので、2枚目以降のデコードに失敗する。
+        //   - サイズが混在: フレームごとにフィルタグラフが再構築されるため、
+        //     GIF の palettegen/split が毎回リセットされて1コマしか出ない。
+        // どちらも FFmpeg は終了コード 0 を返すので、静止画のまま「変換完了」に
+        // なってしまう。該当する場合はブラウザ側で PNG に揃えてから渡す。
+        const hasMixedInput = probes.some(p =>
+          p.kind !== probes[0].kind || p.w !== probes[0].w || p.h !== probes[0].h || !p.w || !p.h
+        );
+
+        // 不透明な背景色を選んだのに元画像がアルファを持つ場合も正規化に回す。
+        // 高速パスの pad は余白しか塗らず元画像の透過はそのまま残るため、
+        // 背景色の指定が効かず、GIF では前のコマが透けてしまう。canvas なら
+        // 背景を敷いてから描くので確実に不透明になる。
+        const needsFlatten = bgColor !== 'black@0' && probes.some(p => p.alpha);
+        const needsNormalize = hasMixedInput || needsFlatten;
+
+        // 出力に透明ピクセルが残り得るか。アスペクト比が違って余白が付く場合と、
+        // 元画像自体がアルファを持つ場合。不透明な背景色を選んだときは上の
+        // 正規化で塗り潰されるので透過は残らない。
+        const isLetterboxed = probes.some(p => {
+          if (!p.w || !p.h) return true;
+          const s = Math.min(targetW / p.w, targetH / p.h);
+          return Math.round(p.w * s) !== targetW || Math.round(p.h * s) !== targetH;
+        });
+        const mayHaveAlpha = bgColor === 'black@0' && (isLetterboxed || probes.some(p => p.alpha));
+
+        const frameNames = [];
+        if (needsNormalize) {
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+
+          let frameBytes = 0;
+          for (let i = 0; i < files.length; i++) {
+            loadingSubmsg.textContent = `画像の形式を揃えています (${i + 1}/${files.length})`;
+            const png = await renderFrameToPng(files[i], canvas, ctx, bgColor);
+
+            frameBytes += png.length;
+            if (frameBytes > MAX_FRAME_BYTES) {
+              throw new Error('展開後のデータが大きすぎます。「最大幅」を小さくするか枚数を減らしてください');
+            }
+
+            const outName = `frame_${String(i).padStart(4, '0')}.png`;
+            await ff.writeFile(outName, png);
+            writtenFiles.push(outName);
+            frameNames.push(outName);
+          }
+        } else {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            // FFmpeg probes by content, so the extension only needs to be valid.
+            const outName = `img_${String(i).padStart(4, '0')}.${probes[i].kind}`;
+            await ff.writeFile(outName, await fetchFile(file));
+            writtenFiles.push(outName);
+            frameNames.push(outName);
+          }
+        }
+
+        let listTxt = '';
+        for (const name of frameNames) {
+          listTxt += `file '${name}'\n`;
+          listTxt += `duration ${frameDuration}\n`;
+        }
+
+        if (isPingPong && frameNames.length > 2) {
+          for (let i = frameNames.length - 2; i >= 1; i--) {
+            listTxt += `file '${frameNames[i]}'\n`;
+            listTxt += `duration ${frameDuration}\n`;
+          }
+        }
+
+        // 最終エントリの duration もそのまま反映されるため、末尾のファイルを
+        // 重複させる必要はない（重複させると最後のコマだけ2倍表示されてしまう）。
+        await ff.writeFile('list.txt', new TextEncoder().encode(listTxt));
+        writtenFiles.push('list.txt');
 
         const outExt = formatExtensions[selectedFormat];
         const outputName = 'output.' + outExt;
-        
+
         const args = ['-f', 'concat', '-safe', '0', '-i', 'list.txt'];
 
         // Scale to fit, pad to the exact target size, then force rgba so the
         // transparent pad (and any source alpha) survives into APNG / WebP.
-        const bgColor = optBgColor.value || 'black@0';
-        const vfFilters = [
+        // 正規化済みフレームは canvas 側で拡縮・パディング・背景色まで
+        // 適用済みなので、ピクセルフォーマットの指定だけで足りる。
+        const vfFilters = needsNormalize ? ['format=rgba'] : [
           `scale=${targetW}:${targetH}:force_original_aspect_ratio=decrease`,
           `pad=${targetW}:${targetH}:(ow-iw)/2:(oh-ih)/2:color=${bgColor}`,
           'format=rgba',
@@ -1066,20 +1353,31 @@
             `[0:v]${vfFilters.join(',')},split[s0][s1];` +
             `[s0]palettegen=stats_mode=full:reserve_transparent=1[p];` +
             `[s1][p]paletteuse=dither=sierra2_4a:alpha_threshold=128`);
-        } else if (vfFilters.length > 0) {
+        } else {
           args.push('-vf', vfFilters.join(','));
         }
 
         if (selectedFormat === 'apng') {
-          args.push('-plays', '0', outputName);
-        } else if (selectedFormat === 'gif') {
-          args.push('-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
-        } else if (selectedFormat === 'webp') {
-          const webpQuality = String(parseInt(optQuality.value, 10) || 80);
-          args.push('-c:v', 'libwebp_anim', '-lossless', '0', '-quality', webpQuality, '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
-        } else if (selectedFormat === 'webp-lossless') {
-          args.push('-c:v', 'libwebp_anim', '-lossless', '1', '-compression_level', '6', '-loop', '0', '-an', '-fps_mode', 'passthrough', outputName);
+          // APNG はループ回数を -plays で指定する。
+          args.push('-plays', '0');
+        } else {
+          if (selectedFormat === 'gif') {
+            if (mayHaveAlpha) {
+              // 透過が残る場合は、フレーム間差分（変化した矩形だけを書き出す最適化）を
+              // 切って各コマを全画面の完全な絵にする。これと破棄方法2の組み合わせで
+              // 前のコマが透けなくなる。不透明な背景のときは最適化を効かせたままにする。
+              args.push('-gifflags', '-offsetting-transdiff');
+            }
+          } else if (selectedFormat === 'webp') {
+            const webpQuality = String(parseInt(optQuality.value, 10) || 80);
+            args.push('-c:v', 'libwebp_anim', '-lossless', '0', '-quality', webpQuality);
+          } else if (selectedFormat === 'webp-lossless') {
+            args.push('-c:v', 'libwebp_anim', '-lossless', '1', '-compression_level', '6');
+          }
+          args.push('-loop', '0', '-an', '-fps_mode', 'passthrough');
         }
+
+        args.push(outputName);
 
         ffmpegLogBuffer = [];
         const exitCode = await ff.exec(args);
@@ -1089,6 +1387,17 @@
         loadingMsg.textContent = '出力ファイルを準備中...';
         const data = await ff.readFile(outputName);
         writtenFiles.push(outputName);
+
+        if (selectedFormat === 'gif' && mayHaveAlpha) {
+          forceGifFrameDisposal(data);
+        }
+
+        // 入力が複数枚なのに1コマしか無いなら、どこかでデコードに失敗している。
+        // 静止画を「変換完了」として返さないよう、ここでエラーにする。
+        const outFrames = countOutputFrames(data, selectedFormat);
+        if (frameNames.length > 1 && outFrames === 1) {
+          throw buildFFmpegError(0, '画像を1枚しかデコードできませんでした。別のフォーマットでお試しください');
+        }
 
         const mimeType = formatMimeTypes[selectedFormat];
         const blob = new Blob([data], { type: mimeType });

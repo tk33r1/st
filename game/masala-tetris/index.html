@@ -22,6 +22,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="激辛難易度のインド風テトリス。マサラを集めて高得点を狙え！">
+    <meta name="robots" content="max-image-preview:large">
     <title>マサラテトリス🔱🐘🪷</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -628,29 +629,24 @@
             if (buttonElement) buttonElement.innerHTML = 'AIが思考中... ✨';
 
             try {
-                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-                const payload = { contents: chatHistory };
-                const apiUrl = `${WORKER_URL}/api/gemini`;
+                const apiUrl = `${WORKER_URL}/api/deepseek`;
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ prompt })
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("Gemini API Error:", errorData);
-                    throw new Error(`APIリクエスト失敗 ステータス ${response.status}: ${errorData?.error?.message || response.statusText}`);
+                    console.error("AI API Error:", errorData);
+                    throw new Error(`APIリクエスト失敗 ステータス ${response.status}: ${errorData?.error || response.statusText}`);
                 }
 
                 const result = await response.json();
 
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    outputElement.textContent = text;
+                if (result.text) {
+                    outputElement.textContent = result.text;
                 } else {
                     console.error("予期しないAPI応答構造:", result);
                     outputElement.textContent = 'AIからの応答取得に失敗しました。(応答形式エラー)';

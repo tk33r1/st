@@ -16,6 +16,53 @@ function json(data, status = 200, extraHeaders = {}) {
   });
 }
 
+// ───────────────────────────────────────────────────────────────
+// DeepSeek 呼び出し（全ゲーム共通の実体）
+//
+// モデル・max_tokens・thinking はここで固定する。Origin ヘッダはブラウザ外から
+// 偽装できるので、料金に響くパラメータをクライアントに開けない。
+// ───────────────────────────────────────────────────────────────
+const DEEPSEEK_MODEL = 'deepseek-v4-flash';
+const MAX_HISTORY = 20;      // 会話履歴は際限なく伸びるので直近だけ通す
+const MAX_CHARS = 4000;      // 1メッセージあたり
+
+async function callDeepSeek(env, { system, messages, maxTokens }) {
+  const msgs = [];
+  if (system) msgs.push({ role: 'system', content: String(system).slice(0, MAX_CHARS) });
+
+  for (const m of (Array.isArray(messages) ? messages : []).slice(-MAX_HISTORY)) {
+    // Gemini 系の 'model' も OpenAI の 'assistant' として受け付ける
+    const role = (m?.role === 'assistant' || m?.role === 'model') ? 'assistant' : 'user';
+    const content = String(m?.content ?? '').slice(0, MAX_CHARS);
+    if (content) msgs.push({ role, content });
+  }
+
+  if (!msgs.some(m => m.role !== 'system')) {
+    return { ok: false, status: 400, error: 'no message content' };
+  }
+
+  const res = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.GAME_DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      messages: msgs,
+      // ゲームの一言コメント／短い応答が用途。推論させる意味がないので速さと安さを取る
+      thinking: { type: 'disabled' },
+      max_tokens: Math.min(Number(maxTokens) || 200, 800),
+      stream: false,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) return { ok: false, status: res.status, error: 'upstream', detail: data };
+
+  return { ok: true, status: 200, text: data?.choices?.[0]?.message?.content?.trim() ?? '' };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -32,22 +79,49 @@ export default {
       return new Response('Forbidden', { status: 403 });
     }
 
-    // POST /api/gemini  ─── Gemini API プロキシ（全ゲーム共通）
+    // POST /api/deepseek  ─── 全ゲーム共通のAIエンドポイント
+    // 受ける形は2通り:
+    //   { prompt, system }                       … 1発の問い合わせ
+    //   { messages: [{role, content}], system }   … 会話履歴つき（ascii-roguelike）
+    if (url.pathname === '/api/deepseek' && request.method === 'POST') {
+      try {
+        const { prompt, system, messages, maxTokens } = await request.json();
+        const msgs = Array.isArray(messages) ? [...messages] : [];
+        if (typeof prompt === 'string' && prompt) msgs.push({ role: 'user', content: prompt });
+
+        const r = await callDeepSeek(env, { system, messages: msgs, maxTokens });
+        if (!r.ok) return json({ error: r.error, detail: r.detail }, r.status, cors);
+        return json({ text: r.text }, 200, cors);
+      } catch (e) {
+        return json({ error: e.message }, 500, cors);
+      }
+    }
+
+    // POST /api/gemini  ─── 旧クライアント互換シム
+    //
+    // 中身は DeepSeek。Gemini 形式で受けて Gemini 形式で返すだけの変換層で、
+    // ブラウザにキャッシュされた古いゲームHTMLを壊さないために残してある。
+    // 全ゲームのHTMLが行き渡ったと判断できたら、このブロックごと削除してよい。
     if (url.pathname === '/api/gemini' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${env.GEMINI_API_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          }
-        );
-        const data = await res.json();
-        return json(data, res.status, cors);
+        const pick = (parts) => (parts || []).map(p => p?.text).filter(Boolean).join('\n');
+
+        const messages = (body?.contents || []).map(c => ({
+          role: c?.role === 'model' ? 'assistant' : 'user',
+          content: pick(c?.parts),
+        }));
+        const system = pick(body?.systemInstruction?.parts);
+
+        const r = await callDeepSeek(env, { system, messages, maxTokens: 800 });
+        if (!r.ok) return json({ error: { message: r.error } }, r.status, cors);
+
+        // 旧クライアントがそのまま読めるよう Gemini のレスポンス形に詰め直す
+        return json({
+          candidates: [{ content: { role: 'model', parts: [{ text: r.text }] } }],
+        }, 200, cors);
       } catch (e) {
-        return json({ error: e.message }, 500, cors);
+        return json({ error: { message: e.message } }, 500, cors);
       }
     }
 

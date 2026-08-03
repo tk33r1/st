@@ -22,6 +22,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="激辛難易度のインド風テトリス。マサラを集めて高得点を狙え！">
+    <meta name="robots" content="max-image-preview:large">
     <title>マサラテトリス DX</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍛</text></svg>">
     <link rel="canonical" href="https://tk.st/game/masala-tetris-dx/">
@@ -1001,7 +1002,7 @@
         }
     }
 
-    // --- Gemini / AI ---
+    // --- AI 実況 ---
     async function generateGeminiComment(eventType, contextText) {
         const sparkle = document.getElementById('ai-sparkle');
         const box = document.getElementById('maharaja-box');
@@ -1012,14 +1013,14 @@
         const prompt = `Character: ${role} (Masala Tetris). Language: Japanese. Context: ${contextText}. React in 1 short sentence (max 20 chars).`;
 
         try {
-            const response = await fetch(`${WORKER_URL}/api/gemini`, {
+            const response = await fetch(`${WORKER_URL}/api/deepseek`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                body: JSON.stringify({ prompt })
             });
             const data = await response.json();
-            if (data.candidates && data.candidates[0].content) {
-                aiAnnounce(data.candidates[0].content.parts[0].text);
+            if (data.text) {
+                aiAnnounce(data.text);
             } else {
                 aiSay(eventType);
             }

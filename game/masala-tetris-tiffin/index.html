@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YRM5KPVGX7');
+  </script>
+  <!-- Ahrefs -->
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
+  <!-- End Google Tag Manager -->
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="マサラテトリス TIFFIN。注文を1件ずつこなして弁当を積み、配達する。AI相棒「ダッバーの目」が最善手を教えてくれる、やさしいインド式テトリス。">
+    <meta name="robots" content="max-image-preview:large">
+    <title>マサラテトリス TIFFIN</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍱</text></svg>">
+    <link rel="canonical" href="https://tk.st/game/masala-tetris-tiffin/">
+    <link rel="author" href="https://tk.st/">
+    <meta property="og:title" content="マサラテトリス TIFFIN | ST GAMES">
+    <meta property="og:description" content="注文を1件ずつこなして弁当を積み、配達する。AI相棒が最善手を教えてくれるインド式テトリス">
+    <meta property="og:image" content="https://tk.st/images/ogp/masala-tetris-tiffin-ogp.webp">
+    <meta property="og:url" content="https://tk.st/game/masala-tetris-tiffin/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ST GAMES">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="マサラテトリス TIFFIN | ST GAMES">
+    <meta name="twitter:description" content="AI相棒「ダッバーの目」と積む、やさしいインド式テトリス">
+    <meta name="twitter:image" content="https://tk.st/images/ogp/masala-tetris-tiffin-ogp.webp">
+    <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Shinya Takeda - Terminal Portfolio", "item": "https://tk.st/" },
+          { "@type": "ListItem", "position": 2, "name": "ST GAMES", "item": "https://tk.st/game/" },
+          { "@type": "ListItem", "position": 3, "name": "マサラテトリス TIFFIN", "item": "https://tk.st/game/masala-tetris-tiffin/" }
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://tk.st/game/masala-tetris-tiffin/#game",
+        "name": "マサラテトリス TIFFIN",
+        "description": "注文を1件ずつこなして弁当を積み、配達する。AI相棒「ダッバーの目」が最善手を教えてくれる、やさしいインド式テトリス。",
+        "url": "https://tk.st/game/masala-tetris-tiffin/",
+        "image": "https://tk.st/images/ogp/masala-tetris-tiffin-ogp.webp",
+        "inLanguage": "ja",
+        "playMode": "SinglePlayer",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web Browser",
+        "offers": { "@type": "Offer", "price": 0, "priceCurrency": "JPY" },
+        "publisher": { "@type": "Person", "@id": "https://tk.st/#shitake" }
+      }
+    ]
+  }
+  </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Sans+JP:wght@500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --steel: #9fb3c8;
+            --steel-lt: #dbe4ee;
+            --turmeric: #f0b429;
+            --terracotta: #c2410c;
+            --cloth: #7c2d12;
+            --ink: #f7ede2;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            /* 昼下がりのムンバイ: 陽に焼けたテラコッタの路地 */
+            background: radial-gradient(circle at 50% 16%, #8a5a2b 0%, #4a2c17 46%, #22150e 100%);
+            color: var(--ink);
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .font-tiffin { font-family: 'Cinzel Decorative', cursive; }
+
+        /* 弁当を包む布(ギンガム)のパターン */
+        .cloth-bg {
+            background-color: #3a2114;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(240, 180, 41, .07) 0 14px, transparent 14px 28px),
+                repeating-linear-gradient(90deg, rgba(240, 180, 41, .07) 0 14px, transparent 14px 28px),
+                url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23f0b429' stroke-opacity='0.10' stroke-width='1.2'%3E%3Ccircle cx='28' cy='28' r='9'/%3E%3Cpath d='M28 4v10M28 42v10M4 28h10M42 28h10'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* ---------- レイアウト ---------- */
+        .app { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .topbar {
+            flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(240, 180, 41, .25);
+            background: rgba(34, 21, 14, .55);
+            backdrop-filter: blur(4px);
+        }
+
+        .stage {
+            flex: 1;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 14px;
+            padding: 10px;
+            overflow: hidden;
+            min-height: 0;
+            /* 広い画面でサイドパネルが左右端まで離れないように */
+            width: 100%;
+            max-width: 1040px;
+            margin: 0 auto;
+        }
+
+        .side {
+            width: 190px;
+            flex: 0 0 auto;
+            display: flex; flex-direction: column; gap: 10px;
+            overflow: hidden;
+        }
+
+        #board-wrap {
+            flex: 1 1 auto;
+            min-width: 0; min-height: 0;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        #board {
+            /* ステンレスの弁当箱の縁 */
+            border: 3px solid var(--steel);
+            border-radius: 6px;
+            background: #16100b;
+            box-shadow: 0 0 0 2px rgba(240, 180, 41, .35), 0 8px 30px rgba(0, 0, 0, .6);
+            display: block;
+        }
+
+        .panel {
+            background: rgba(24, 15, 10, .72);
+            border: 1px solid rgba(159, 179, 200, .35);
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+
+        .panel-label {
+            font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+            color: var(--steel); margin-bottom: 4px;
+        }
+
+        /* ---------- 注文票 ---------- */
+        .order-card {
+            background: linear-gradient(180deg, #fdf6e3 0%, #f2e4c9 100%);
+            color: #3a2114;
+            border-radius: 6px;
+            padding: 8px 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, .45);
+            position: relative;
+            /* 伝票の切り取り線風 */
+            border-top: 3px double #a1662f;
+        }
+        .order-card .ttl { font-weight: 700; font-size: 15px; line-height: 1.2; }
+        .order-card .dsc { font-size: 11px; opacity: .78; margin-top: 2px; }
+        .order-dots { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+        .odot {
+            width: 11px; height: 11px; border-radius: 50%;
+            border: 1.5px solid #a1662f; background: transparent;
+        }
+        .odot.on { background: var(--terracotta); border-color: var(--terracotta); }
+        .timebar { height: 3px; background: rgba(161, 102, 47, .3); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+        .timebar > i { display: block; height: 100%; background: var(--terracotta); width: 100%; }
+
+        @keyframes orderPop { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
+        .order-pop { animation: orderPop .45s ease; }
+
+        /* ---------- ティフィン(弁当箱)の段 ---------- */
+        .tiffin { display: flex; flex-direction: column-reverse; align-items: center; gap: 3px; padding: 4px 0; }
+        .tier {
+            width: 74px; height: 17px; border-radius: 3px;
+            border: 1.5px solid rgba(159, 179, 200, .45);
+            background: rgba(159, 179, 200, .10);
+            transition: background .25s, box-shadow .25s, transform .25s;
+        }
+        .tier.on {
+            background: linear-gradient(180deg, #e8eef5, #9fb3c8);
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(219, 228, 238, .55);
+            transform: scaleX(1.04);
+        }
+        /* モバイルの段表示は伝票(クリーム地)の上に乗るので、銀では見分けがつかない */
+        #tiffin-m .tier {
+            border-color: rgba(161, 102, 47, .55);
+            background: rgba(161, 102, 47, .12);
+            box-shadow: none;
+        }
+        #tiffin-m .tier.on {
+            background: linear-gradient(180deg, #e07a3c, #c2410c);
+            border-color: #8a2d08;
+            box-shadow: 0 0 6px rgba(194, 65, 12, .5);
+        }
+
+        .tiffin-lid {
+            width: 84px; height: 8px; border-radius: 4px 4px 2px 2px;
+            background: linear-gradient(180deg, #cbd5e1, #7d90a3);
+            margin-bottom: 2px;
+        }
+
+        /* ---------- ダッバーの目 (ヒント) ---------- */
+        .eye-btn {
+            width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 9px 6px;
+            border-radius: 8px;
+            font-weight: 700; font-size: 13px;
+            background: linear-gradient(180deg, #dbe4ee, #8fa4b8);
+            color: #1f2937;
+            border: 2px solid #fff;
+            box-shadow: 0 3px 0 #5d6f81, 0 0 14px rgba(219, 228, 238, .35);
+            transition: transform .08s, filter .15s;
+        }
+        .eye-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #5d6f81; }
+        .eye-btn:disabled { filter: grayscale(1) brightness(.55); box-shadow: none; }
+        .eye-charges { display: flex; gap: 3px; justify-content: center; margin-top: 5px; }
+        .charge { width: 8px; height: 8px; border-radius: 50%; background: rgba(219,228,238,.22); }
+        .charge.on { background: var(--steel-lt); box-shadow: 0 0 6px rgba(219,228,238,.8); }
+
+        /* ---------- オーバーレイ ---------- */
+        .overlay {
+            position: absolute; inset: 0; z-index: 40;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(20, 12, 8, .90);
+            backdrop-filter: blur(5px);
+            padding: 16px;
+            overflow-y: auto;
+        }
+        /* margin:auto は flex 中央寄せで縦にはみ出したとき上が切れるのを防ぐ */
+        .overlay-inner { width: 100%; max-width: 430px; text-align: center; margin: auto; }
+
+        .btn-main {
+            background: linear-gradient(180deg, var(--turmeric), #c98a12);
+            color: #241005; font-weight: 700;
+            border: 2px solid #ffe7a3;
+            border-radius: 10px;
+            padding: 12px 26px; font-size: 17px;
+            box-shadow: 0 4px 0 #8a5c07;
+            transition: transform .08s;
+        }
+        .btn-main:active { transform: translateY(4px); box-shadow: 0 0 0 #8a5c07; }
+        .btn-sub {
+            background: rgba(159, 179, 200, .16);
+            border: 1px solid rgba(159, 179, 200, .5);
+            border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700;
+        }
+
+        .note-card {
+            background: linear-gradient(180deg, #fdf6e3, #efe0c2);
+            color: #3a2114;
+            border-radius: 8px; padding: 12px 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .5);
+            text-align: left;
+            font-size: 13px; line-height: 1.65;
+            position: relative;
+        }
+        .note-card::after {
+            content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 6px;
+            background: repeating-linear-gradient(90deg, #a1662f 0 7px, transparent 7px 14px);
+            opacity: .35;
+        }
+        .stamp {
+            display: inline-block; border: 2px solid var(--terracotta); color: var(--terracotta);
+            border-radius: 4px; padding: 1px 7px; font-size: 10px; font-weight: 700;
+            transform: rotate(-6deg); letter-spacing: .1em;
+        }
+
+        .thinking::after {
+            content: '…'; animation: dots 1.1s steps(4, end) infinite;
+        }
+        @keyframes dots { 0% { content: ''; } 25% { content: '・'; } 50% { content: '・・'; } 75% { content: '・・・'; } }
+
+        /* ---------- 配達カットシーン ---------- */
+        #delivery-cut {
+            position: absolute; inset: 0; z-index: 35;
+            display: none; align-items: center; justify-content: center;
+            pointer-events: none; overflow: hidden;
+        }
+        #delivery-cut.show { display: flex; }
+        .cut-road {
+            position: absolute; left: 0; right: 0; top: 50%; height: 96px; transform: translateY(-50%);
+            background: linear-gradient(180deg, rgba(240,180,41,.10), rgba(194,65,12,.28), rgba(240,180,41,.10));
+            border-top: 2px solid rgba(240,180,41,.5); border-bottom: 2px solid rgba(240,180,41,.5);
+        }
+        .cut-rider { position: absolute; top: 44%; font-size: 46px; animation: ride 1.5s cubic-bezier(.35,.1,.6,1) forwards; }
+        @keyframes ride {
+            0% { left: -22%; transform: rotate(-3deg); }
+            100% { left: 112%; transform: rotate(2deg); }
+        }
+        .cut-word {
+            position: relative; z-index: 2; text-align: center;
+            animation: cutWord 1.5s ease forwards;
+        }
+        @keyframes cutWord {
+            0% { opacity: 0; transform: scale(.7); }
+            22% { opacity: 1; transform: scale(1); }
+            78% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.08); }
+        }
+
+        /* ---------- トースト ---------- */
+        #toast-layer {
+            position: absolute; left: 0; right: 0; top: 12%; z-index: 30;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(253, 246, 227, .95); color: #3a2114;
+            border-left: 4px solid var(--terracotta);
+            padding: 5px 14px; border-radius: 4px; font-weight: 700; font-size: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,.5);
+            animation: toastIn 1.4s ease forwards;
+        }
+        @keyframes toastIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            18% { opacity: 1; transform: translateY(0); }
+            75% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-14px); }
+        }
+
+        /* ---------- モバイル操作 ---------- */
+        #pad { display: none; flex: 0 0 auto; padding: 6px 10px 10px; }
+        .pad-btn {
+            background: linear-gradient(180deg, rgba(219,228,238,.22), rgba(159,179,200,.14));
+            border: 1.5px solid rgba(219, 228, 238, .45);
+            border-radius: 10px;
+            color: var(--ink);
+            display: flex; align-items: center; justify-content: center;
+            height: 52px; font-size: 19px; font-weight: 700;
+            transition: transform .06s, background .1s;
+        }
+        .pad-btn:active { transform: translateY(2px); background: rgba(240, 180, 41, .3); }
+        .pad-btn.accent {
+            background: linear-gradient(180deg, var(--turmeric), #c98a12);
+            border-color: #ffe7a3; color: #241005;
+        }
+        .pad-btn.eye {
+            background: linear-gradient(180deg, #dbe4ee, #8fa4b8);
+            border-color: #fff; color: #1f2937;
+        }
+        .pad-btn.eye:disabled { filter: grayscale(1) brightness(.6); }
+
+        /* モバイル用の注文バー */
+        #mobile-order { display: none; }
+
+        @media (max-width: 860px) {
+            .side { display: none; }
+            #pad { display: block; }
+            #mobile-order { display: block; }
+            .stage { padding: 6px; gap: 0; }
+            .topbar { padding: 4px 10px; }
+        }
+
+        /* 横向きの狭い画面ではパッドを圧縮 */
+        @media (max-height: 560px) and (max-width: 860px) {
+            .pad-btn { height: 42px; font-size: 16px; }
+        }
+
+        .side canvas { max-width: 100%; display: block; }
+        .hide { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(159,179,200,.4); border-radius: 3px; }
+    </style>
+</head>
+
+<body class="cloth-bg">
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
+            style="display:none;visibility:hidden"></iframe></noscript>
+
+    <div class="app" id="app">
+
+        <!-- ===== 上部バー ===== -->
+        <header class="topbar">
+            <div class="flex items-center gap-3">
+                <span class="font-tiffin text-lg md:text-xl" style="color:var(--turmeric)">TIFFIN</span>
+                <span class="text-[10px] tracking-widest hidden sm:inline" style="color:var(--steel)">MASALA TETRIS</span>
+            </div>
+            <div class="flex items-center gap-3 text-right">
+                <div>
+                    <div class="text-[9px] tracking-widest" style="color:var(--steel)">SCORE</div>
+                    <div id="score" class="font-tiffin text-base leading-none">0</div>
+                </div>
+                <div>
+                    <div class="text-[9px] tracking-widest" style="color:var(--steel)">配達</div>
+                    <div id="deliveries" class="font-tiffin text-base leading-none">0</div>
+                </div>
+                <div>
+                    <div class="text-[9px] tracking-widest" style="color:var(--steel)">倍率</div>
+                    <div id="mult" class="font-tiffin text-base leading-none" style="color:var(--turmeric)">×1.0</div>
+                </div>
+                <button id="pause-btn" class="btn-sub !px-3 !py-1" title="一時停止 (P)"><i class="fas fa-pause"></i></button>
+                <button id="mute-btn" class="btn-sub !px-3 !py-1" title="音"><i class="fas fa-volume-up"></i></button>
+            </div>
+        </header>
+
+        <!-- ===== モバイル: 注文バー ===== -->
+        <div id="mobile-order" class="px-2 pt-2">
+            <div class="order-card" id="order-card-m">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="ttl" id="order-name-m">—</div>
+                        <div class="dsc" id="order-desc-m"></div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 shrink-0 ml-2">
+                        <div class="flex items-center gap-1">
+                            <span class="text-[9px] font-bold" style="color:#a1662f">弁当</span>
+                            <div class="tiffin !flex-row !gap-1 !py-0" id="tiffin-m"></div>
+                        </div>
+                        <div class="order-dots !mt-0 justify-end" id="order-dots-m"></div>
+                    </div>
+                </div>
+                <div class="timebar hide" id="order-time-m"><i></i></div>
+            </div>
+        </div>
+
+        <!-- ===== ゲーム画面 ===== -->
+        <main class="stage">
+            <!-- 左サイド: HOLD / NEXT -->
+            <aside class="side">
+                <div class="panel">
+                    <div class="panel-label">Hold</div>
+                    <canvas id="hold-cv" width="120" height="76"></canvas>
+                </div>
+                <div class="panel">
+                    <div class="panel-label">Next</div>
+                    <canvas id="next-cv" width="120" height="228"></canvas>
+                </div>
+            </aside>
+
+            <!-- 盤面 -->
+            <div id="board-wrap">
+                <canvas id="board"></canvas>
+                <div id="toast-layer"></div>
+                <div id="delivery-cut">
+                    <div class="cut-road"></div>
+                    <div class="cut-rider">🚲</div>
+                    <div class="cut-word">
+                        <div class="font-tiffin text-3xl md:text-4xl" style="color:var(--turmeric)">DELIVERED</div>
+                        <div class="text-sm mt-1" id="cut-sub">配達完了</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右サイド: 注文 / ティフィン / ダッバーの目 -->
+            <aside class="side">
+                <div class="panel">
+                    <div class="panel-label">注文票 / Order</div>
+                    <div class="order-card" id="order-card">
+                        <div class="ttl" id="order-name">—</div>
+                        <div class="dsc" id="order-desc"></div>
+                        <div class="order-dots" id="order-dots"></div>
+                        <div class="timebar hide" id="order-time"><i></i></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-label">ティフィン <span id="tier-count" class="float-right">0/3</span></div>
+                    <div class="tiffin" id="tiffin">
+                        <!-- 段は JS で生成 (下から積む) -->
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-label">ダッバーの目</div>
+                    <button id="eye-btn" class="eye-btn"><i class="fas fa-eye"></i>ヒント <span class="text-[11px] opacity-70">(H)</span></button>
+                    <div class="eye-charges" id="eye-charges"></div>
+                    <div class="text-[10px] text-center mt-2" style="color:var(--steel)">
+                        手仕事ボーナス <span id="handwork" style="color:var(--turmeric)">×1.5</span>
+                    </div>
+                </div>
+
+                <div class="panel text-[10px] leading-relaxed" style="color:var(--steel)">
+                    ← → 移動 / ↑ 回転 / ↓ 下 /<br>
+                    SPACE 落下 / C ホールド / H ヒント
+                </div>
+            </aside>
+        </main>
+
+        <!-- ===== モバイル操作パッド ===== -->
+        <div id="pad">
+            <div class="grid grid-cols-5 gap-2">
+                <button class="pad-btn" id="btn-left"><i class="fas fa-caret-left"></i></button>
+                <button class="pad-btn" id="btn-down"><i class="fas fa-caret-down"></i></button>
+                <button class="pad-btn" id="btn-right"><i class="fas fa-caret-right"></i></button>
+                <button class="pad-btn" id="btn-rotate"><i class="fas fa-rotate-right"></i></button>
+                <button class="pad-btn eye" id="btn-eye"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button class="pad-btn" id="btn-hold">HOLD</button>
+                <button class="pad-btn accent" id="btn-drop">DROP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== タイトル ===== -->
+    <div class="overlay" id="start-overlay">
+        <div class="overlay-inner">
+            <div class="text-5xl mb-1">🍱</div>
+            <h1 class="font-tiffin text-3xl md:text-4xl" style="color:var(--turmeric)">TIFFIN</h1>
+            <p class="text-xs tracking-[.3em] mb-4" style="color:var(--steel)">マサラテトリス</p>
+
+            <div class="note-card mb-4">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-bold" style="color:#a1662f">本日のご注文 — ダッバーワーラーより</span>
+                    <span class="stamp" id="daily-date">—</span>
+                </div>
+                <div id="daily-order" class="thinking">受注中</div>
+            </div>
+
+            <div class="text-left text-[13px] leading-relaxed mb-4 px-1" style="color:var(--steel-lt)">
+                <div><span style="color:var(--turmeric)">①</span> 注文票の指示を1件ずつこなす</div>
+                <div><span style="color:var(--turmeric)">②</span> 3件そろうと弁当が完成 → <b>配達！</b> 倍率アップ</div>
+                <div><span style="color:var(--turmeric)">③</span> 迷ったら AI「<b>ダッバーの目</b>」に置き場所を聞く</div>
+            </div>
+
+            <input id="player-name" maxlength="10" placeholder="配達人の名前"
+                class="w-full mb-3 px-3 py-2 rounded bg-black/40 border border-white/20 text-center text-sm outline-none focus:border-yellow-500">
+
+            <button id="start-btn" class="btn-main w-full mb-4">配達に出る</button>
+
+            <div class="panel text-left">
+                <div class="panel-label">配達記録 / Best</div>
+                <ol id="ranking" class="text-[12px] space-y-1"></ol>
+            </div>
+
+            <a href="https://tk.st/game/" class="inline-block mt-4 text-[11px] underline" style="color:var(--steel)">
+                <i class="fas fa-chevron-left"></i> ST GAMES へ戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== 一時停止 ===== -->
+    <div class="overlay hide" id="pause-overlay">
+        <div class="overlay-inner">
+            <div class="text-4xl mb-3">🫖</div>
+            <h2 class="font-tiffin text-2xl mb-1" style="color:var(--turmeric)">CHAI BREAK</h2>
+            <p class="text-xs mb-6" style="color:var(--steel)">一時停止中</p>
+            <button id="resume-btn" class="btn-main">再開する</button>
+            <div class="mt-3"><button id="quit-btn" class="btn-sub">やめる</button></div>
+        </div>
+    </div>
+
+    <!-- ===== ゲームオーバー: 配達報告書 ===== -->
+    <div class="overlay hide" id="over-overlay">
+        <div class="overlay-inner">
+            <h2 class="font-tiffin text-2xl mb-3" style="color:var(--turmeric)">配達報告書</h2>
+
+            <div class="note-card mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] font-bold" style="color:#a1662f">DELIVERY REPORT</span>
+                    <span class="stamp" id="report-stamp">—</span>
+                </div>
+                <div id="report-text" class="thinking mb-3">集計中</div>
+                <div class="text-2xl text-center" id="report-stars" style="color:#c2410c">☆☆☆</div>
+                <hr class="my-2 border-[#a1662f]/30">
+                <div class="text-[12px] space-y-0.5">
+                    <div class="flex justify-between"><span>お届け（消去ライン）</span><b id="st-lines">0</b></div>
+                    <div class="flex justify-between"><span>配達完了</span><b id="st-deliv">0</b></div>
+                    <div class="flex justify-between"><span>こなした注文</span><b id="st-orders">0</b></div>
+                    <div class="flex justify-between"><span>ヒント使用</span><b id="st-hints">0</b></div>
+                    <hr class="my-1 border-[#a1662f]/30">
+                    <div class="flex justify-between"><span>素点</span><b id="st-raw">0</b></div>
+                    <div class="flex justify-between"><span>手仕事ボーナス</span><b id="st-hw">×1.5</b></div>
+                    <div class="flex justify-between text-base"><span class="font-bold">最終スコア</span><b id="st-final" style="color:#c2410c">0</b></div>
+                </div>
+            </div>
+
+            <button id="retry-btn" class="btn-main w-full mb-3">もう一度配達する</button>
+            <div class="flex gap-2 justify-center">
+                <button id="share-x" class="btn-sub flex-1"><i class="fab fa-x-twitter"></i> ポスト</button>
+                <button id="share-line" class="btn-sub flex-1"><i class="fab fa-line"></i> LINE</button>
+            </div>
+            <div class="mt-3"><button id="title-btn" class="btn-sub">タイトルへ</button></div>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+
+        /* =========================================================================
+           マサラテトリス TIFFIN
+           構成: Sound / Board+Piece(SRS) / Order / Tiffin / Advisor(評価AI) /
+                 Narrator(LLM) / Game
+           ヒント(ダッバーの目)は完全ローカルの評価関数。LLM は開始と終了の2回だけ。
+           ========================================================================= */
+
+        const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
+        const COLS = 10, ROWS = 20;
+
+        /* =========================================================================
+           1. ピース定義 (SRS)
+           ========================================================================= */
+        // 各ミノ = インドの弁当のおかず。色はステンレス銀とスパイスの暖色系で統一。
+        const PIECES = {
+            I: { color: '#9fb3c8', name: 'ステンレス', cells: [[0, 1], [1, 1], [2, 1], [3, 1]], size: 4 },
+            // O は 2×2 枠にしないと回転で位置がずれる (SRS の O は不動)
+            O: { color: '#f0b429', name: 'ターメリック', cells: [[0, 0], [1, 0], [0, 1], [1, 1]], size: 2 },
+            T: { color: '#a855f7', name: 'ベイガン', cells: [[1, 0], [0, 1], [1, 1], [2, 1]], size: 3 },
+            L: { color: '#c2410c', name: 'テラコッタ', cells: [[2, 0], [0, 1], [1, 1], [2, 1]], size: 3 },
+            J: { color: '#0e7490', name: 'アズレージョ', cells: [[0, 0], [0, 1], [1, 1], [2, 1]], size: 3 },
+            S: { color: '#4d9d63', name: 'コリアンダー', cells: [[1, 0], [2, 0], [0, 1], [1, 1]], size: 3 },
+            Z: { color: '#d64545', name: 'トマト', cells: [[0, 0], [1, 0], [1, 1], [2, 1]], size: 3 }
+        };
+        const TYPES = Object.keys(PIECES);
+
+        // 回転状態ごとのセル座標を事前計算 (size×size の枠内で時計回り回転)
+        const SHAPES = {};
+        for (const t of TYPES) {
+            const { cells, size } = PIECES[t];
+            const states = [cells];
+            for (let r = 1; r < 4; r++) {
+                states.push(states[r - 1].map(([x, y]) => [size - 1 - y, x]));
+            }
+            SHAPES[t] = states;
+        }
+
+        // SRS 壁蹴りテーブル (画面座標: dy は下方向が正)
+        const KICK_JLSTZ = {
+            '0>1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+            '1>0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+            '1>2': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+            '2>1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+            '2>3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+            '3>2': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+            '3>0': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+            '0>3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]]
+        };
+        const KICK_I = {
+            '0>1': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
+            '1>0': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
+            '1>2': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+            '2>1': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+            '2>3': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
+            '3>2': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
+            '3>0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+            '0>3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]]
+        };
+        function kicksFor(type, from, to) {
+            if (type === 'O') return [[0, 0]];
+            const tbl = type === 'I' ? KICK_I : KICK_JLSTZ;
+            return tbl[`${from}>${to}`] || [[0, 0]];
+        }
+
+        /* =========================================================================
+           2. サウンド (Web Audio 合成 / 弁当箱の金属音 + 穏やかなラーガ)
+           ========================================================================= */
+        const Sound = {
+            ctx: null, master: null, comp: null, muted: false,
+            bgmTimer: null, bgmStep: 0, nextTime: 0, drones: [],
+
+            init() {
+                if (this.ctx) return;
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return;
+                this.ctx = new AC();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                this.master = this.ctx.createGain();
+                this.master.gain.value = this.muted ? 0 : 0.8;
+                this.comp = this.ctx.createDynamicsCompressor();
+                this.comp.threshold.value = -18; this.comp.ratio.value = 3;
+                this.comp.attack.value = 0.004; this.comp.release.value = 0.25;
+                this.master.connect(this.comp); this.comp.connect(this.ctx.destination);
+                // 路地の残響
+                const rev = this.ctx.createConvolver();
+                rev.buffer = this._impulse(1.4, 2.4);
+                const rg = this.ctx.createGain(); rg.gain.value = 0.16;
+                this.master.connect(rev); rev.connect(rg); rg.connect(this.comp);
+            },
+            _impulse(sec, decay) {
+                const rate = this.ctx.sampleRate, len = Math.floor(rate * sec);
+                const buf = this.ctx.createBuffer(2, len, rate);
+                for (let ch = 0; ch < 2; ch++) {
+                    const d = buf.getChannelData(ch);
+                    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+                }
+                return buf;
+            },
+            toggleMute() {
+                this.muted = !this.muted;
+                if (this.master) this.master.gain.value = this.muted ? 0 : 0.8;
+                const i = document.querySelector('#mute-btn i');
+                if (i) i.className = this.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+            },
+            hz(semi) { return 261.63 * Math.pow(2, semi / 12); },
+            _t(t) { return t == null ? this.ctx.currentTime : t; },
+
+            tone(freq, type, dur, vol, t) {
+                if (!this.ctx) return;
+                t = this._t(t);
+                const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+                o.type = type; o.frequency.value = freq;
+                g.gain.setValueAtTime(Math.max(0.0001, vol), t);
+                g.gain.exponentialRampToValueAtTime(0.0006, t + dur);
+                o.connect(g); g.connect(this.master);
+                o.start(t); o.stop(t + dur + 0.02);
+            },
+
+            // ノイズバースト (金属の擦れ / タブラの皮)
+            noise(dur, vol, freq, q, t) {
+                if (!this.ctx) return;
+                const c = this.ctx; t = this._t(t);
+                const len = Math.max(1, Math.floor(c.sampleRate * dur));
+                const buf = c.createBuffer(1, len, c.sampleRate);
+                const d = buf.getChannelData(0);
+                for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+                const src = c.createBufferSource(); src.buffer = buf;
+                const bp = c.createBiquadFilter(); bp.type = 'bandpass';
+                bp.frequency.value = freq; bp.Q.value = q;
+                const g = c.createGain(); g.gain.value = vol;
+                src.connect(bp); bp.connect(g); g.connect(this.master);
+                src.start(t);
+            },
+
+            // ステンレス弁当箱が噛み合う「カチン」
+            clank(vol = 0.16, pitch = 1) {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.tone(1180 * pitch, 'square', 0.045, vol * 0.5, t);
+                this.tone(1760 * pitch, 'triangle', 0.09, vol * 0.45, t);
+                this.noise(0.06, vol * 0.7, 3200 * pitch, 3, t);
+            },
+
+            // 撥弦 (サントゥール風): 穏やかなメロディ用
+            pluck(freq, t, dur = 0.6, vol = 0.16) {
+                if (!this.ctx) return;
+                const c = this.ctx; t = this._t(t);
+                const o1 = c.createOscillator(), o2 = c.createOscillator();
+                const lp = c.createBiquadFilter(), g = c.createGain(), g2 = c.createGain();
+                o1.type = 'triangle'; o1.frequency.value = freq;
+                o2.type = 'sawtooth'; o2.frequency.value = freq * 2; o2.detune.value = 7;
+                lp.type = 'lowpass'; lp.Q.value = 1;
+                lp.frequency.setValueAtTime(freq * 7, t);
+                lp.frequency.exponentialRampToValueAtTime(Math.max(160, freq * 1.5), t + dur);
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+                g.gain.exponentialRampToValueAtTime(0.0006, t + dur);
+                g2.gain.value = 0.3;
+                o1.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(g); g.connect(this.master);
+                o1.start(t); o2.start(t); o1.stop(t + dur + .05); o2.stop(t + dur + .05);
+            },
+
+            // 自転車のベル (FM ベル)
+            bell(t) {
+                if (!this.ctx) return;
+                const c = this.ctx; t = this._t(t);
+                for (let i = 0; i < 2; i++) {
+                    const car = c.createOscillator(), mod = c.createOscillator();
+                    const mg = c.createGain(), g = c.createGain();
+                    const st = t + i * 0.13;
+                    car.frequency.value = 1560; mod.frequency.value = 2340;
+                    mg.gain.value = 900;
+                    g.gain.setValueAtTime(0.0001, st);
+                    g.gain.exponentialRampToValueAtTime(0.20, st + 0.004);
+                    g.gain.exponentialRampToValueAtTime(0.0006, st + 0.7);
+                    mod.connect(mg); mg.connect(car.frequency);
+                    car.connect(g); g.connect(this.master);
+                    mod.start(st); car.start(st); mod.stop(st + 0.75); car.stop(st + 0.75);
+                }
+            },
+
+            // タブラ (低いドン / 高いティン)
+            tabla(low, t, vol = 0.16) {
+                if (!this.ctx) return;
+                const c = this.ctx; t = this._t(t);
+                const o = c.createOscillator(), g = c.createGain();
+                o.type = 'sine';
+                o.frequency.setValueAtTime(low ? 190 : 420, t);
+                o.frequency.exponentialRampToValueAtTime(low ? 74 : 250, t + 0.16);
+                g.gain.setValueAtTime(vol, t);
+                g.gain.exponentialRampToValueAtTime(0.0006, t + (low ? 0.3 : 0.14));
+                o.connect(g); g.connect(this.master);
+                o.start(t); o.stop(t + 0.35);
+                this.noise(0.05, vol * 0.35, low ? 900 : 2600, 2, t);
+            },
+
+            /* ---- 効果音 ---- */
+            sMove() { this.tone(340, 'square', 0.03, 0.05); },
+            sRotate() { this.tone(520, 'triangle', 0.05, 0.07); },
+            sLock() { this.clank(0.13, 1); },
+            sClear(n) {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.clank(0.2, 1.15);
+                const scale = [0, 2, 4, 7, 9, 12, 14];
+                for (let i = 0; i < n + 1; i++) this.pluck(this.hz(scale[i] + 12), t + i * 0.055, 0.6, 0.15);
+                if (n >= 3) this.tabla(true, t, 0.2);
+            },
+            sHold() { this.tone(300, 'sine', 0.09, 0.08); },
+            sOrder() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                [0, 4, 7].forEach((s, i) => this.pluck(this.hz(s + 12), t + i * 0.06, 0.7, 0.17));
+            },
+            sDeliver() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.bell(t);
+                [0, 4, 7, 12].forEach((s, i) => this.pluck(this.hz(s + 12), t + 0.1 + i * 0.09, 0.9, 0.18));
+                this.tabla(true, t + 0.1, 0.22); this.tabla(false, t + 0.35, 0.16);
+                this.tabla(true, t + 0.55, 0.2); this.tabla(false, t + 0.8, 0.16);
+            },
+            sHint() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.tone(880, 'sine', 0.1, 0.09, t);
+                this.tone(1320, 'sine', 0.16, 0.07, t + 0.06);
+            },
+            sOver() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                [12, 9, 5, 0].forEach((s, i) => this.pluck(this.hz(s), t + i * 0.19, 1.1, 0.19));
+                this.tabla(true, t + 0.76, 0.22);
+            },
+
+            /* ---- BGM: 穏やかなラーガ (ドローン + 5音音階) ---- */
+            startBGM() {
+                if (!this.ctx || this.bgmTimer) return;
+                // タンプーラのドローン (C と G)
+                [0, 7].forEach(s => {
+                    const o = this.ctx.createOscillator(), g = this.ctx.createGain(), lp = this.ctx.createBiquadFilter();
+                    o.type = 'sawtooth'; o.frequency.value = this.hz(s - 24);
+                    lp.type = 'lowpass'; lp.frequency.value = 460;
+                    g.gain.value = 0.035;
+                    o.connect(lp); lp.connect(g); g.connect(this.master);
+                    o.start(); this.drones.push(o);
+                });
+                this.bgmStep = 0;
+                this.nextTime = this.ctx.currentTime + 0.1;
+                this.bgmTimer = setInterval(() => this._schedule(), 40);
+            },
+            stopBGM() {
+                if (this.bgmTimer) { clearInterval(this.bgmTimer); this.bgmTimer = null; }
+                this.drones.forEach(o => { try { o.stop(); } catch (e) { } });
+                this.drones = [];
+            },
+            _schedule() {
+                if (!this.ctx) return;
+                const step = 0.214;   // 約 84BPM の8分
+                // メロディ: 5音音階 (C D E G A) を漂わせるだけの穏やかなフレーズ
+                const PHRASE = [0, null, 2, null, 4, null, 2, null, 9, null, 7, null, 4, null, 2, null];
+                while (this.nextTime < this.ctx.currentTime + 0.2) {
+                    const s = this.bgmStep % 16, t = this.nextTime;
+                    const n = PHRASE[s];
+                    if (n !== null) this.pluck(this.hz(n + 12), t, 0.85, 0.055);
+                    // タブラ: ゆるい8拍
+                    if (s % 8 === 0) this.tabla(true, t, 0.075);
+                    else if (s % 8 === 4) this.tabla(false, t, 0.055);
+                    else if (s % 8 === 6) this.tabla(false, t, 0.035);
+                    this.nextTime += step;
+                    this.bgmStep++;
+                }
+            }
+        };
+
+        /* =========================================================================
+           3. 盤面ユーティリティ
+           ========================================================================= */
+        function emptyGrid() {
+            return Array.from({ length: ROWS }, () => new Array(COLS).fill(null));
+        }
+        function cellsOf(type, rot) { return SHAPES[type][rot & 3]; }
+
+        function collides(grid, type, rot, px, py) {
+            for (const [cx, cy] of cellsOf(type, rot)) {
+                const x = px + cx, y = py + cy;
+                if (x < 0 || x >= COLS || y >= ROWS) return true;
+                if (y >= 0 && grid[y][x]) return true;
+            }
+            return false;
+        }
+        function dropY(grid, type, rot, px, py) {
+            let y = py;
+            while (!collides(grid, type, rot, px, y + 1)) y++;
+            return y;
+        }
+        function countHoles(grid) {
+            let holes = 0;
+            for (let x = 0; x < COLS; x++) {
+                let seen = false;
+                for (let y = 0; y < ROWS; y++) {
+                    if (grid[y][x]) seen = true;
+                    else if (seen) holes++;
+                }
+            }
+            return holes;
+        }
+        function colHeights(grid) {
+            const h = new Array(COLS).fill(0);
+            for (let x = 0; x < COLS; x++) {
+                for (let y = 0; y < ROWS; y++) {
+                    if (grid[y][x]) { h[x] = ROWS - y; break; }
+                }
+            }
+            return h;
+        }
+        function maxHeight(grid) { return Math.max(...colHeights(grid)); }
+
+        /* =========================================================================
+           4. 注文 (オーダー) — 本作で唯一の一捻り
+           ========================================================================= */
+        // test(e) は 加算数 / 'reset' を返す。e はピース設置1回ぶんの結果。
+        const ORDERS = [
+            {
+                id: 'double', name: '二段弁当', desc: '2ライン同時消し', need: 1,
+                test: e => e.lines === 2 ? 1 : 0
+            },
+            {
+                id: 'triple', name: '三段ティフィン', desc: '3ライン同時消し', need: 1,
+                test: e => e.lines >= 3 ? 1 : 0, needsRoom: true
+            },
+            {
+                id: 'express', name: '特急便', desc: '20秒以内にライン消去3回', need: 3, limit: 20000,
+                test: e => e.lines > 0 ? 1 : 0
+            },
+            {
+                id: 'edge', name: '右端まで配達', desc: '右端の列を使ってライン消去', need: 2,
+                test: e => (e.lines > 0 && e.touchedRight) ? 1 : 0
+            },
+            {
+                id: 'neat', name: 'きれいに詰めて', desc: '穴を作らずに6ピース設置', need: 6,
+                test: e => e.holesAdded > 0 ? 'reset' : 1
+            },
+            {
+                // T-spin 一発でも達成できるが、それが出来なくても T ミノを使えば進む。
+                // 「上級者へのご褒美」を、初心者の詰まりどころにしないための二段構え。
+                id: 'tspin', name: 'マサラ増し', desc: 'Tミノでライン消去×2（T-spinなら一発）', need: 2,
+                test: e => e.tspin ? 2 : (e.lines > 0 && e.type === 'T') ? 1 : 0
+            },
+            {
+                id: 'ren', name: 'おかわり', desc: '2連続でライン消去', need: 1,
+                test: e => (e.lines > 0 && e.ren >= 1) ? 1 : 0
+            }
+        ];
+
+        const Order = {
+            cur: null, progress: 0, deadline: 0, lastId: null,
+
+            // 盤面が高いときは難しい注文を出さない (焦らせない設計)
+            pick(grid) {
+                const room = maxHeight(grid) <= 12;
+                let pool = ORDERS.filter(o => (room || !o.needsRoom) && o.id !== this.lastId);
+                if (!pool.length) pool = ORDERS.filter(o => room || !o.needsRoom);
+                if (!pool.length) pool = ORDERS.slice();
+                const o = pool[Math.floor(Math.random() * pool.length)];
+                this.cur = o; this.progress = 0; this.lastId = o.id;
+                this.deadline = o.limit ? performance.now() + o.limit : 0;
+                this.render(true);
+            },
+
+            // 戻り値: 達成したら true
+            apply(e) {
+                if (!this.cur) return false;
+                const r = this.cur.test(e);
+                if (r === 'reset') { this.progress = 0; this.render(); return false; }
+                if (r > 0) {
+                    this.progress += r;
+                    if (this.progress >= this.cur.need) return true;
+                    this.render();
+                }
+                return false;
+            },
+
+            // 制限時間切れは「振り出しに戻るだけ」。ペナルティは無し。
+            tick(now) {
+                if (!this.cur || !this.cur.limit) return;
+                if (now > this.deadline) {
+                    this.progress = 0;
+                    this.deadline = now + this.cur.limit;
+                    this.render();
+                }
+                const left = Math.max(0, (this.deadline - now) / this.cur.limit);
+                document.querySelectorAll('#order-time > i, #order-time-m > i')
+                    .forEach(el => el.style.width = (left * 100) + '%');
+            },
+
+            render(pop) {
+                if (!this.cur) return;
+                const o = this.cur;
+                ['', '-m'].forEach(sfx => {
+                    const nm = document.getElementById('order-name' + sfx);
+                    const ds = document.getElementById('order-desc' + sfx);
+                    const dots = document.getElementById('order-dots' + sfx);
+                    const tm = document.getElementById('order-time' + sfx);
+                    if (!nm) return;
+                    nm.textContent = o.name;
+                    ds.textContent = o.desc;
+                    dots.innerHTML = '';
+                    for (let i = 0; i < o.need; i++) {
+                        const d = document.createElement('div');
+                        d.className = 'odot' + (i < this.progress ? ' on' : '');
+                        dots.appendChild(d);
+                    }
+                    if (tm) tm.classList.toggle('hide', !o.limit);
+                });
+                if (pop) {
+                    document.querySelectorAll('#order-card, #order-card-m').forEach(c => {
+                        c.classList.remove('order-pop'); void c.offsetWidth; c.classList.add('order-pop');
+                    });
+                }
+            }
+        };
+
+        /* =========================================================================
+           5. ダッバーの目 (ローカル評価AI)
+           全回転 × 全X位置を列挙して、穴を最重視した4指標で最善手を選ぶ。
+           API 不要・遅延ゼロ・オフラインでも動く。
+           ========================================================================= */
+        const Advisor = {
+            // 少しだけ保守的な重み: 穴を最も嫌い、ライン消去への欲は控えめ
+            W: { holes: -0.95, height: -0.52, bump: -0.26, lines: 0.68, well: -0.12 },
+
+            evaluate(grid) {
+                const h = colHeights(grid);
+                const agg = h.reduce((a, b) => a + b, 0);
+                let bump = 0;
+                for (let i = 0; i < COLS - 1; i++) bump += Math.abs(h[i] - h[i + 1]);
+                // 深すぎる井戸(1マス幅の谷)を軽く嫌う
+                let well = 0;
+                for (let i = 0; i < COLS; i++) {
+                    const l = i === 0 ? ROWS : h[i - 1], r = i === COLS - 1 ? ROWS : h[i + 1];
+                    const d = Math.min(l, r) - h[i];
+                    if (d >= 3) well += d;
+                }
+                return { agg, bump, holes: countHoles(grid), well };
+            },
+
+            best(grid, type) {
+                let best = null;
+                const rots = type === 'O' ? 1 : (type === 'I' || type === 'S' || type === 'Z') ? 2 : 4;
+                for (let rot = 0; rot < rots; rot++) {
+                    const cells = cellsOf(type, rot);
+                    const minX = Math.min(...cells.map(c => c[0]));
+                    const maxX = Math.max(...cells.map(c => c[0]));
+                    for (let px = -minX; px + maxX < COLS; px++) {
+                        // スポーン位置から素直に落とせるかだけ見る (壁蹴り前提の手は勧めない)
+                        if (collides(grid, type, rot, px, -2)) continue;
+                        const py = dropY(grid, type, rot, px, -2);
+                        // 盤外にはみ出す手は勧めない
+                        if (py + Math.min(...cells.map(c => c[1])) < 0) continue;
+                        // 仮置き
+                        const g = grid.map(r => r.slice());
+                        for (const [cx, cy] of cells) {
+                            const y = py + cy;
+                            if (y >= 0) g[y][px + cx] = PIECES[type].color;
+                        }
+                        let lines = 0;
+                        for (let y = ROWS - 1; y >= 0; y--) {
+                            if (g[y].every(c => c)) { g.splice(y, 1); g.unshift(new Array(COLS).fill(null)); lines++; y++; }
+                        }
+                        const m = this.evaluate(g);
+                        const score = this.W.holes * m.holes + this.W.height * m.agg
+                            + this.W.bump * m.bump + this.W.lines * lines + this.W.well * m.well;
+                        if (!best || score > best.score) best = { score, rot, px, py, cells };
+                    }
+                }
+                return best;
+            }
+        };
+
+        /* =========================================================================
+           6. ナレーター (LLM) — 1プレイ2回だけ。失敗しても必ずゲームは成立する。
+           ========================================================================= */
+        const LOCAL_DAILY = [
+            '雨季だ。濡らさず届けろよ、頼んだぞ',
+            '今日は昼までに三段だ。慌てなくていい、こぼすな',
+            '駅は混む。裏の路地を通れ。弁当は傾けるな',
+            '積むのは急ぐな。落とすほうが遅くなる',
+            '暑い日だ。手が滑る前に、ひと呼吸置け',
+            '注文は一枚ずつ。焦って二枚見るな',
+            '昨日の分は上出来だった。今日も同じ手で頼む'
+        ];
+        const LOCAL_REPORT = {
+            1: ['まあ、初日はこんなものだ。明日また来い', '荷は落としたが、手は悪くない。次だ'],
+            2: ['悪くない配達だった。もう一段いけたな', 'きちんと届いた。あとは速さだけだ'],
+            3: ['見事だ。この路地で一番の手際だった', '完璧な配達だ。おまえに任せてよかった']
+        };
+
+        const Narrator = {
+            // ワーカーの /api/deepseek (DeepSeek V4 Flash) を叩く。
+            // モデル指定と API キーはワーカー側にあり、ここは prompt を渡すだけ。
+            async ask(prompt) {
+                const res = await fetch(`${WORKER_URL}/api/deepseek`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+                const text = data?.text?.trim();
+                if (!text) throw new Error('empty');
+                return text.replace(/^["「]+|["」]+$/g, '').split('\n')[0];
+            },
+
+            // ① 本日のご注文: 日付キーで localStorage にキャッシュ → 同じ日は同じ口上・API は1日1回
+            async daily() {
+                const d = new Date();
+                const key = `tiffinDaily_${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+                const el = document.getElementById('daily-order');
+                document.getElementById('daily-date').textContent =
+                    `${d.getMonth() + 1}月${d.getDate()}日`;
+                const cached = localStorage.getItem(key);
+                if (cached) { el.classList.remove('thinking'); el.textContent = cached; return; }
+                // フォールバックは日付から決めて、その日ずっと同じにする
+                const fb = LOCAL_DAILY[(d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate()) % LOCAL_DAILY.length];
+                try {
+                    const t = await this.ask(
+                        'You are a veteran dabbawala (Mumbai lunchbox courier) who gives the daily order in the Indian puzzle game "Masala Tetris TIFFIN". '
+                        + `Language: Japanese. Today is ${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}. `
+                        + 'Write TODAY\'S delivery instruction as ONE short line (max 30 Japanese characters), warm but gruff, like an old courier talking to his apprentice. '
+                        + 'It is flavor text only - do not invent game rules. No quotes, no emoji.');
+                    el.textContent = t;
+                    localStorage.setItem(key, t);
+                } catch (e) {
+                    el.textContent = fb;
+                } finally {
+                    el.classList.remove('thinking');
+                }
+            },
+
+            // ② 配達報告書: 星はローカル判定。文章だけ LLM に任せる。
+            async report(s) {
+                const el = document.getElementById('report-text');
+                const fbList = LOCAL_REPORT[s.stars] || LOCAL_REPORT[1];
+                const fb = fbList[Math.floor(Math.random() * fbList.length)];
+                try {
+                    const t = await this.ask(
+                        'You are a veteran dabbawala (Mumbai lunchbox courier) reviewing an apprentice\'s shift in the puzzle game "Masala Tetris TIFFIN". '
+                        + 'Language: Japanese. Results: '
+                        + `lines cleared ${s.lines}, deliveries completed ${s.deliveries}, orders finished ${s.orders}, `
+                        + `AI hints used ${s.hints}, survived ${Math.round(s.time)} seconds, rating ${s.stars} of 3 stars. `
+                        + 'Write a debrief of ONE or TWO short Japanese sentences (max 50 Japanese characters total). '
+                        + 'Match the tone to the rating: gruff but encouraging when low, warm praise when high. '
+                        + 'Mention one concrete detail from the results. No quotes, no emoji.');
+                    el.textContent = t;
+                    Game.reportText = t;
+                } catch (e) {
+                    el.textContent = fb;
+                    Game.reportText = fb;
+                } finally {
+                    el.classList.remove('thinking');
+                }
+            }
+        };
+
+        /* =========================================================================
+           7. 描画
+           ========================================================================= */
+        const cv = document.getElementById('board');
+        const cx2 = cv.getContext('2d');
+        const holdCv = document.getElementById('hold-cv'), holdCtx = holdCv.getContext('2d');
+        const nextCv = document.getElementById('next-cv'), nextCtx = nextCv.getContext('2d');
+        let BLOCK = 24;
+
+        function layout() {
+            const wrap = document.getElementById('board-wrap');
+            const r = wrap.getBoundingClientRect();
+            const b = Math.floor(Math.min((r.height - 8) / ROWS, (r.width - 8) / COLS));
+            BLOCK = Math.max(8, b);
+            const dpr = Math.min(2, window.devicePixelRatio || 1);
+            cv.style.width = (BLOCK * COLS) + 'px';
+            cv.style.height = (BLOCK * ROWS) + 'px';
+            cv.width = Math.round(BLOCK * COLS * dpr);
+            cv.height = Math.round(BLOCK * ROWS * dpr);
+            cx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+            draw();
+        }
+
+        // ステンレスの弁当箱らしいベベル付きブロック
+        function block(g, x, y, size, color, alpha = 1) {
+            const px = x * size, py = y * size, s = size;
+            g.save();
+            g.globalAlpha = alpha;
+            const grad = g.createLinearGradient(px, py, px + s, py + s);
+            grad.addColorStop(0, shade(color, 34));
+            grad.addColorStop(0.55, color);
+            grad.addColorStop(1, shade(color, -26));
+            g.fillStyle = grad;
+            g.fillRect(px + 1, py + 1, s - 2, s - 2);
+            // 上と左のハイライト
+            g.fillStyle = 'rgba(255,255,255,.32)';
+            g.fillRect(px + 1, py + 1, s - 2, Math.max(1, s * 0.11));
+            g.fillRect(px + 1, py + 1, Math.max(1, s * 0.11), s - 2);
+            // 下と右の影
+            g.fillStyle = 'rgba(0,0,0,.32)';
+            g.fillRect(px + 1, py + s - Math.max(1, s * 0.13), s - 2, Math.max(1, s * 0.12));
+            g.fillRect(px + s - Math.max(1, s * 0.13), py + 1, Math.max(1, s * 0.12), s - 2);
+            g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1;
+            g.strokeRect(px + .5, py + .5, s - 1, s - 1);
+            g.restore();
+        }
+        function shade(hex, amt) {
+            const n = parseInt(hex.slice(1), 16);
+            const r = Math.min(255, Math.max(0, (n >> 16) + amt));
+            const g = Math.min(255, Math.max(0, ((n >> 8) & 255) + amt));
+            const b = Math.min(255, Math.max(0, (n & 255) + amt));
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function outline(g, cells, px, py, size, color, dash) {
+            g.save();
+            g.strokeStyle = color; g.lineWidth = 2;
+            if (dash) g.setLineDash(dash);
+            for (const [cxx, cyy] of cells) {
+                const x = (px + cxx) * size, y = (py + cyy) * size;
+                if (py + cyy < 0) continue;
+                g.strokeRect(x + 2, y + 2, size - 4, size - 4);
+            }
+            g.restore();
+        }
+
+        function draw() {
+            const g = cx2, W = BLOCK * COLS, H = BLOCK * ROWS;
+            g.clearRect(0, 0, W, H);
+            // 背景: 弁当箱の内側の薄い格子
+            g.fillStyle = '#16100b'; g.fillRect(0, 0, W, H);
+            g.strokeStyle = 'rgba(159,179,200,.07)'; g.lineWidth = 1;
+            for (let x = 1; x < COLS; x++) { g.beginPath(); g.moveTo(x * BLOCK + .5, 0); g.lineTo(x * BLOCK + .5, H); g.stroke(); }
+            for (let y = 1; y < ROWS; y++) { g.beginPath(); g.moveTo(0, y * BLOCK + .5); g.lineTo(W, y * BLOCK + .5); g.stroke(); }
+
+            // 固定ブロック
+            for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+                if (Game.grid[y][x]) block(g, x, y, BLOCK, Game.grid[y][x]);
+            }
+            // 消去中のフラッシュ
+            if (Game.flashRows.length) {
+                g.fillStyle = `rgba(255,255,255,${Game.flashAlpha})`;
+                for (const y of Game.flashRows) g.fillRect(0, y * BLOCK, W, BLOCK);
+            }
+
+            if (Game.cur) {
+                const cells = cellsOf(Game.cur.type, Game.cur.rot);
+                // ゴースト
+                const gy = dropY(Game.grid, Game.cur.type, Game.cur.rot, Game.cur.x, Game.cur.y);
+                outline(g, cells, Game.cur.x, gy, BLOCK, 'rgba(255,255,255,.28)');
+                // ダッバーの目のヒント (銀のゴースト)。本作の主役機能なので、通常の
+                // ゴーストよりはっきり目立たせる: 半透明の銀で塗ってから縁取る。
+                if (Game.hint && Game.hintUntil > performance.now()) {
+                    const h = Game.hint;
+                    const pulse = 0.62 + 0.38 * Math.sin(performance.now() / 160);
+                    g.save();
+                    g.fillStyle = `rgba(219,228,238,${0.22 * pulse})`;
+                    for (const [ccx, ccy] of h.cells) {
+                        if (h.py + ccy < 0) continue;
+                        g.fillRect((h.px + ccx) * BLOCK + 2, (h.py + ccy) * BLOCK + 2, BLOCK - 4, BLOCK - 4);
+                    }
+                    g.shadowColor = '#dbe4ee'; g.shadowBlur = 14;
+                    outline(g, h.cells, h.px, h.py, BLOCK, `rgba(240,248,255,${pulse})`, [5, 3]);
+                    g.restore();
+                    // 目印は実セルの左上に合わせて置き、盤内に収める
+                    const cxs = h.cells.map(c => h.px + c[0]), cys = h.cells.map(c => h.py + c[1]);
+                    const mx = ((Math.min(...cxs) + Math.max(...cxs) + 1) / 2) * BLOCK;
+                    const my = Math.max(BLOCK * 0.9, Math.min(...cys) * BLOCK - BLOCK * 0.15);
+                    g.save();
+                    g.fillStyle = 'rgba(240,248,255,.95)';
+                    g.font = `${Math.max(11, BLOCK * 0.66)}px sans-serif`;
+                    g.textAlign = 'center';
+                    g.shadowColor = '#000'; g.shadowBlur = 4;
+                    g.fillText('👁', mx, my);
+                    g.restore();
+                }
+                // 現在のピース
+                for (const [ccx, ccy] of cells) {
+                    if (Game.cur.y + ccy < 0) continue;
+                    block(g, Game.cur.x + ccx, Game.cur.y + ccy, BLOCK, PIECES[Game.cur.type].color);
+                }
+            }
+
+            // パーティクル (スパイスと湯気)
+            for (const p of Game.parts) {
+                g.save();
+                g.globalAlpha = Math.max(0, p.life);
+                g.fillStyle = p.color;
+                g.fillRect(p.x, p.y, p.s, p.s);
+                g.restore();
+            }
+        }
+
+        function drawMini(g, canvas, type, cx0, cy0, size) {
+            if (!type) return;
+            const cells = cellsOf(type, 0);
+            const xs = cells.map(c => c[0]), ys = cells.map(c => c[1]);
+            const w = Math.max(...xs) - Math.min(...xs) + 1;
+            const h = Math.max(...ys) - Math.min(...ys) + 1;
+            const ox = cx0 - (w * size) / 2 - Math.min(...xs) * size;
+            const oy = cy0 - (h * size) / 2 - Math.min(...ys) * size;
+            for (const [x, y] of cells) {
+                g.save(); g.translate(ox, oy);
+                block(g, x, y, size, PIECES[type].color);
+                g.restore();
+            }
+        }
+        function drawSide() {
+            holdCtx.clearRect(0, 0, holdCv.width, holdCv.height);
+            if (Game.hold) drawMini(holdCtx, holdCv, Game.hold, 60, 38, 17);
+            nextCtx.clearRect(0, 0, nextCv.width, nextCv.height);
+            for (let i = 0; i < 3; i++) {
+                const t = Game.queue[i];
+                if (t) drawMini(nextCtx, nextCv, t, 60, 40 + i * 74, i === 0 ? 18 : 15);
+            }
+        }
+
+        /* =========================================================================
+           8. ゲーム本体
+           ========================================================================= */
+        const HANDWORK = [1.5, 1.3, 1.15, 1.0];   // ヒント使用回数 → 手仕事ボーナス
+        const MAX_HINTS = 5;
+        // 1.5 → "1.5" / 1.15 → "1.15" / 1.0 → "1.0"
+        const fmtMul = v => (Math.round(v * 100) % 10 === 0 ? v.toFixed(1) : v.toFixed(2));
+
+        const Game = {
+            state: 'title',       // title / playing / paused / delivery / over
+            grid: emptyGrid(),
+            cur: null, hold: null, holdUsed: false, queue: [], bag: [],
+            score: 0, lines: 0, deliveries: 0, ordersDone: 0, tiers: 0,
+            mult: 1.0, hints: 3, hintsUsed: 0, hint: null, hintUntil: 0,
+            ren: -1, lastRotate: false, startTime: 0,
+            dropInterval: 900, dropAcc: 0, lockTimer: 0, lockResets: 0, onGround: false,
+            flashRows: [], flashAlpha: 0, parts: [], reportText: '',
+            lastTime: 0, raf: null,
+
+            /* ---- 開始 ---- */
+            start() {
+                this.grid = emptyGrid();
+                this.cur = null; this.hold = null; this.holdUsed = false;
+                this.queue = []; this.bag = [];
+                this.score = 0; this.lines = 0; this.deliveries = 0; this.ordersDone = 0; this.tiers = 0;
+                this.mult = 1.0; this.hints = 3; this.hintsUsed = 0; this.hint = null; this.hintUntil = 0;
+                this.ren = -1; this.lastRotate = false;
+                this.dropInterval = 900; this.dropAcc = 0;
+                this.lockTimer = 0; this.lockResets = 0; this.onGround = false;
+                this.flashRows = []; this.parts = []; this.reportText = '';
+                this.startTime = performance.now();
+                this.refillQueue();
+                Order.lastId = null;
+                Order.pick(this.grid);
+                this.spawn();
+                this.renderHUD();
+                this.state = 'playing';
+                this.lastTime = performance.now();
+                Sound.startBGM();
+                if (!this.raf) this.raf = requestAnimationFrame(t => this.loop(t));
+            },
+
+            refillQueue() {
+                while (this.queue.length < 5) {
+                    if (!this.bag.length) {
+                        this.bag = TYPES.slice();
+                        for (let i = this.bag.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [this.bag[i], this.bag[j]] = [this.bag[j], this.bag[i]];
+                        }
+                    }
+                    this.queue.push(this.bag.pop());
+                }
+            },
+
+            spawn(type) {
+                if (!type) { type = this.queue.shift(); this.refillQueue(); }
+                const size = PIECES[type].size;
+                const x = Math.floor((COLS - size) / 2);
+                // y=-1 でスポーンさせる。y=-2 だとピースが1ティック分だけ画面外で見えない。
+                this.cur = { type, rot: 0, x, y: -1 };
+                this.lastRotate = false;
+                this.onGround = false; this.lockTimer = 0; this.lockResets = 0;
+                this.dropAcc = 0;
+                this.hint = null;
+                // 見えている一番上の段にすら降りられない = 積み上がりきり (block out)
+                if (collides(this.grid, type, 0, x, -1)) { this.gameOver(); return; }
+                drawSide();
+            },
+
+            /* ---- 操作 ---- */
+            move(dx) {
+                if (this.state !== 'playing' || !this.cur) return;
+                if (!collides(this.grid, this.cur.type, this.cur.rot, this.cur.x + dx, this.cur.y)) {
+                    this.cur.x += dx; this.lastRotate = false;
+                    this.resetLock();
+                    Sound.sMove();
+                }
+            },
+            rotate(dir) {
+                if (this.state !== 'playing' || !this.cur) return;
+                const from = this.cur.rot & 3, to = (from + dir + 4) & 3;
+                for (const [kx, ky] of kicksFor(this.cur.type, from, to)) {
+                    if (!collides(this.grid, this.cur.type, to, this.cur.x + kx, this.cur.y + ky)) {
+                        this.cur.rot = to; this.cur.x += kx; this.cur.y += ky;
+                        this.lastRotate = true;
+                        this.resetLock();
+                        Sound.sRotate();
+                        return;
+                    }
+                }
+            },
+            softDrop() {
+                if (this.state !== 'playing' || !this.cur) return;
+                if (!collides(this.grid, this.cur.type, this.cur.rot, this.cur.x, this.cur.y + 1)) {
+                    this.cur.y++; this.score += 1; this.lastRotate = false;
+                    this.dropAcc = 0;
+                    this.renderHUD();
+                }
+            },
+            hardDrop() {
+                if (this.state !== 'playing' || !this.cur) return;
+                const gy = dropY(this.grid, this.cur.type, this.cur.rot, this.cur.x, this.cur.y);
+                this.score += (gy - this.cur.y) * 2;
+                this.cur.y = gy; this.lastRotate = false;
+                this.lock();
+            },
+            holdPiece() {
+                if (this.state !== 'playing' || !this.cur || this.holdUsed) return;
+                const t = this.cur.type;
+                if (this.hold) { const h = this.hold; this.hold = t; this.spawn(h); }
+                else { this.hold = t; this.spawn(); }
+                this.holdUsed = true;
+                Sound.sHold();
+                drawSide();
+            },
+            resetLock() {
+                if (this.onGround && this.lockResets < 15) { this.lockTimer = 0; this.lockResets++; }
+            },
+
+            /* ---- ダッバーの目 ---- */
+            useHint() {
+                if (this.state !== 'playing' || !this.cur) return;
+                if (this.hints <= 0) return;
+                const b = Advisor.best(this.grid, this.cur.type);
+                if (!b) return;
+                this.hints--; this.hintsUsed++;
+                this.hint = { px: b.px, py: b.py, cells: b.cells };
+                this.hintUntil = performance.now() + 3000;
+                Sound.sHint();
+                this.renderHUD();
+            },
+
+            /* ---- 設置 ---- */
+            lock() {
+                const type = this.cur.type, rot = this.cur.rot;
+                const cells = cellsOf(type, rot);
+                const holesBefore = countHoles(this.grid);
+
+                let touchedRight = false;
+                for (const [ccx, ccy] of cells) {
+                    const x = this.cur.x + ccx, y = this.cur.y + ccy;
+                    if (y < 0) { this.gameOver(); return; }
+                    this.grid[y][x] = PIECES[type].color;
+                    if (x === COLS - 1) touchedRight = true;
+                }
+                Sound.sLock();
+
+                // T-spin: 直前の操作が回転で、T の中心の四隅のうち3つ以上が埋まっている
+                let tspin = false;
+                if (type === 'T' && this.lastRotate) {
+                    const c = this._tCenter();
+                    const cxp = this.cur.x + c[0], cyp = this.cur.y + c[1];
+                    let filled = 0;
+                    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+                        const x = cxp + dx, y = cyp + dy;
+                        if (x < 0 || x >= COLS || y >= ROWS || (y >= 0 && this.grid[y][x])) filled++;
+                    }
+                    tspin = filled >= 3;
+                }
+
+                // ライン消去
+                const full = [];
+                for (let y = 0; y < ROWS; y++) if (this.grid[y].every(c => c)) full.push(y);
+
+                if (full.length) {
+                    this.ren++;
+                    this.spawnParticles(full);
+                    this.flashRows = full; this.flashAlpha = 0.85;
+                    Sound.sClear(full.length);
+                } else {
+                    this.ren = -1;
+                }
+
+                const gridAfter = this.grid.map(r => r.slice());
+                for (const y of full) { gridAfter.splice(y, 1); gridAfter.unshift(new Array(COLS).fill(null)); }
+                const holesAfter = countHoles(gridAfter);
+
+                const ev = {
+                    type, lines: full.length, tspin, ren: this.ren,
+                    holesAdded: Math.max(0, holesAfter - holesBefore),
+                    touchedRight
+                };
+
+                // スコア
+                if (full.length) {
+                    const base = [0, 100, 300, 500, 800][full.length];
+                    let add = base;
+                    if (tspin) add += 400 * full.length;
+                    if (this.ren > 0) add += 50 * this.ren;
+                    this.score += Math.round(add * this.mult);
+                    this.lines += full.length;
+                    if (tspin) this.toast('T-SPIN!');
+                    if (full.length === 4) this.toast('四段重ね！');
+                    else if (this.ren >= 2) this.toast(`おかわり ${this.ren}`);
+                }
+
+                // 盤面を確定
+                this.grid = gridAfter;
+
+                // 注文の判定
+                if (Order.apply(ev)) this.completeOrder();
+
+                this.holdUsed = false;
+                this.renderHUD();
+                // 配達カットシーン中でも次のピースは用意しておく (落下はループ側で止まる)
+                if (this.state !== 'over') this.spawn();
+            },
+
+            // T ミノの中心は 3×3 枠の中央で、回転しても変わらない
+            _tCenter() { return [1, 1]; },
+
+            completeOrder() {
+                this.ordersDone++;
+                this.tiers++;
+                this.score += Math.round(200 * this.mult);
+                Sound.sOrder();
+                this.toast(`注文完了！ ${Order.cur.name}`);
+                this.renderHUD();
+                if (this.tiers >= 3) { this.deliver(); }
+                else { Order.pick(this.grid); }
+            },
+
+            deliver() {
+                this.tiers = 0;
+                this.deliveries++;
+                this.mult = Math.round((this.mult + 0.5) * 10) / 10;
+                this.hints = Math.min(MAX_HINTS, this.hints + 1);
+                this.score += Math.round(1000 * this.mult);
+                this.dropInterval = Math.max(110, this.dropInterval - 70);
+                Sound.sDeliver();
+
+                // 1.5秒のカットシーン。この間は落下を止めて一息つかせる。
+                this.state = 'delivery';
+                const cut = document.getElementById('delivery-cut');
+                document.getElementById('cut-sub').textContent =
+                    `${this.deliveries}件目 — 倍率 ×${this.mult.toFixed(1)}`;
+                cut.classList.remove('show'); void cut.offsetWidth; cut.classList.add('show');
+                this.renderHUD();
+                setTimeout(() => {
+                    cut.classList.remove('show');
+                    if (this.state === 'delivery') {
+                        this.state = 'playing';
+                        this.lastTime = performance.now();
+                    }
+                    Order.pick(this.grid);
+                }, 1500);
+            },
+
+            spawnParticles(rows) {
+                const colors = ['#f0b429', '#c2410c', '#dbe4ee', '#4d9d63'];
+                for (const y of rows) {
+                    for (let i = 0; i < 14; i++) {
+                        this.parts.push({
+                            x: Math.random() * BLOCK * COLS,
+                            y: y * BLOCK + Math.random() * BLOCK,
+                            vx: (Math.random() - 0.5) * 2.2,
+                            vy: -Math.random() * 1.8 - 0.4,
+                            s: 2 + Math.random() * 3,
+                            life: 1,
+                            color: colors[Math.floor(Math.random() * colors.length)]
+                        });
+                    }
+                }
+            },
+
+            toast(text) {
+                const layer = document.getElementById('toast-layer');
+                const el = document.createElement('div');
+                el.className = 'toast'; el.textContent = text;
+                layer.appendChild(el);
+                setTimeout(() => el.remove(), 1400);
+            },
+
+            /* ---- HUD ---- */
+            renderHUD() {
+                document.getElementById('score').textContent = this.score.toLocaleString();
+                document.getElementById('deliveries').textContent = this.deliveries;
+                document.getElementById('mult').textContent = '×' + this.mult.toFixed(1);
+                document.getElementById('tier-count').textContent = `${this.tiers}/3`;
+
+                // ティフィンの段
+                ['tiffin', 'tiffin-m'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.innerHTML = '';
+                    for (let i = 0; i < 3; i++) {
+                        const d = document.createElement('div');
+                        d.className = 'tier' + (i < this.tiers ? ' on' : '');
+                        if (id === 'tiffin-m') { d.style.width = '22px'; d.style.height = '13px'; }
+                        el.appendChild(d);
+                    }
+                    // column-reverse なので、蓋は最後に足すと一番上に来る
+                    if (id === 'tiffin') {
+                        const lid = document.createElement('div');
+                        lid.className = 'tiffin-lid';
+                        el.appendChild(lid);
+                    }
+                });
+
+                // ヒント残量
+                const ch = document.getElementById('eye-charges');
+                if (ch) {
+                    ch.innerHTML = '';
+                    for (let i = 0; i < MAX_HINTS; i++) {
+                        const d = document.createElement('div');
+                        d.className = 'charge' + (i < this.hints ? ' on' : '');
+                        ch.appendChild(d);
+                    }
+                }
+                const hw = HANDWORK[Math.min(this.hintsUsed, HANDWORK.length - 1)];
+                const hwEl = document.getElementById('handwork');
+                if (hwEl) hwEl.textContent = '×' + fmtMul(hw);
+                const dis = this.hints <= 0;
+                const eb = document.getElementById('eye-btn'); if (eb) eb.disabled = dis;
+                const em = document.getElementById('btn-eye'); if (em) em.disabled = dis;
+            },
+
+            /* ---- ループ ---- */
+            loop(t) {
+                this.raf = requestAnimationFrame(x => this.loop(x));
+                const dt = Math.min(64, t - this.lastTime);
+                this.lastTime = t;
+
+                // パーティクルとフラッシュは常時更新 (ポーズ中も自然に消える)
+                for (let i = this.parts.length - 1; i >= 0; i--) {
+                    const p = this.parts[i];
+                    p.x += p.vx; p.y += p.vy; p.vy += 0.13; p.life -= 0.022;
+                    if (p.life <= 0) this.parts.splice(i, 1);
+                }
+                if (this.flashAlpha > 0) {
+                    this.flashAlpha -= 0.06;
+                    if (this.flashAlpha <= 0) { this.flashAlpha = 0; this.flashRows = []; }
+                }
+
+                if (this.state === 'playing') {
+                    Order.tick(t);
+                    if (this.hint && t > this.hintUntil) this.hint = null;
+                    this.handleAutoRepeat(t);
+
+                    // 重力
+                    this.dropAcc += dt;
+                    if (this.dropAcc >= this.dropInterval) {
+                        this.dropAcc = 0;
+                        if (!collides(this.grid, this.cur.type, this.cur.rot, this.cur.x, this.cur.y + 1)) {
+                            this.cur.y++; this.lastRotate = false;
+                        }
+                    }
+                    // 接地ロック遅延
+                    const grounded = collides(this.grid, this.cur.type, this.cur.rot, this.cur.x, this.cur.y + 1);
+                    if (grounded) {
+                        if (!this.onGround) { this.onGround = true; this.lockTimer = 0; }
+                        this.lockTimer += dt;
+                        if (this.lockTimer >= 500) this.lock();
+                    } else {
+                        this.onGround = false; this.lockTimer = 0;
+                    }
+                }
+
+                draw();
+            },
+
+            /* ---- キー長押し (DAS/ARR) ---- */
+            keys: {}, dasTimer: {}, DAS: 165, ARR: 42,
+            handleAutoRepeat(t) {
+                const check = (k, fn) => {
+                    if (!this.keys[k]) { this.dasTimer[k] = null; return; }
+                    if (this.dasTimer[k] == null) { this.dasTimer[k] = t + this.DAS; return; }
+                    if (t >= this.dasTimer[k]) { fn(); this.dasTimer[k] = t + this.ARR; }
+                };
+                check('left', () => this.move(-1));
+                check('right', () => this.move(1));
+                check('down', () => this.softDrop());
+            },
+
+            /* ---- 終了 ---- */
+            gameOver() {
+                if (this.state === 'over') return;
+                this.state = 'over';
+                Sound.stopBGM();
+                Sound.sOver();
+
+                const hw = HANDWORK[Math.min(this.hintsUsed, HANDWORK.length - 1)];
+                const raw = this.score;
+                const final = Math.floor(raw * hw);
+                const stars = this.deliveries >= 6 ? 3 : this.deliveries >= 3 ? 2 : 1;
+                this.finalScore = final;
+                this.stars = stars;
+
+                document.getElementById('st-lines').textContent = this.lines;
+                document.getElementById('st-deliv').textContent = this.deliveries;
+                document.getElementById('st-orders').textContent = this.ordersDone;
+                document.getElementById('st-hints').textContent = this.hintsUsed;
+                document.getElementById('st-raw').textContent = raw.toLocaleString();
+                document.getElementById('st-hw').textContent = '×' + fmtMul(hw);
+                document.getElementById('st-final').textContent = final.toLocaleString();
+                document.getElementById('report-stars').textContent =
+                    '★'.repeat(stars) + '☆'.repeat(3 - stars);
+                document.getElementById('report-stamp').textContent =
+                    stars === 3 ? '完璧' : stars === 2 ? '良好' : '要精進';
+                const rt = document.getElementById('report-text');
+                rt.textContent = '集計中'; rt.classList.add('thinking');
+
+                saveScore(final, stars, this.deliveries);
+                document.getElementById('over-overlay').classList.remove('hide');
+
+                Narrator.report({
+                    lines: this.lines, deliveries: this.deliveries, orders: this.ordersDone,
+                    hints: this.hintsUsed, time: (performance.now() - this.startTime) / 1000, stars
+                });
+            },
+
+            pause() {
+                if (this.state !== 'playing') return;
+                this.state = 'paused';
+                Sound.stopBGM();
+                document.getElementById('pause-overlay').classList.remove('hide');
+            },
+            resume() {
+                if (this.state !== 'paused') return;
+                document.getElementById('pause-overlay').classList.add('hide');
+                this.state = 'playing';
+                this.lastTime = performance.now();
+                Sound.startBGM();
+            }
+        };
+
+        /* =========================================================================
+           9. ランキング / シェア
+           ========================================================================= */
+        const esc = s => String(s).replace(/[&<>"']/g, m =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+        function saveScore(score, stars, deliveries) {
+            const name = (document.getElementById('player-name').value || '').trim() || '名無しの配達人';
+            let r = [];
+            try { r = JSON.parse(localStorage.getItem('tiffinRankings')) || []; } catch (e) { r = []; }
+            r.push({ name, score, stars, deliveries });
+            r.sort((a, b) => b.score - a.score);
+            localStorage.setItem('tiffinRankings', JSON.stringify(r.slice(0, 5)));
+            renderRanking();
+        }
+        function renderRanking() {
+            const el = document.getElementById('ranking');
+            let r = [];
+            try { r = JSON.parse(localStorage.getItem('tiffinRankings')) || []; } catch (e) { r = []; }
+            if (!r.length) { el.innerHTML = '<li class="opacity-50">まだ配達記録がありません</li>'; return; }
+            el.innerHTML = r.map((x, i) => `
+                <li class="flex justify-between items-center">
+                    <span><span style="color:var(--turmeric)">${i + 1}.</span> ${esc(x.name)}
+                        <span class="text-[10px] opacity-70">${'★'.repeat(x.stars || 1)}</span></span>
+                    <b>${(x.score || 0).toLocaleString()}</b>
+                </li>`).join('');
+        }
+
+        function shareText() {
+            const t = Game.reportText ? `「${Game.reportText}」` : '';
+            return `マサラテトリス TIFFIN\n最終スコア ${(Game.finalScore || 0).toLocaleString()} / 配達 ${Game.deliveries}件 ${'★'.repeat(Game.stars || 1)}\nダッバーワーラーの講評: ${t}`;
+        }
+        document.getElementById('share-x').addEventListener('click', () => {
+            const url = 'https://tk.st/game/masala-tetris-tiffin/';
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText())}&url=${encodeURIComponent(url)}&hashtags=マサラテトリス,TIFFIN`, '_blank');
+        });
+        document.getElementById('share-line').addEventListener('click', () => {
+            const url = 'https://tk.st/game/masala-tetris-tiffin/';
+            window.open(`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText())}`, '_blank');
+        });
+
+        /* =========================================================================
+           10. 入力
+           ========================================================================= */
+        const KEYMAP = {
+            ArrowLeft: 'left', KeyA: 'left',
+            ArrowRight: 'right', KeyD: 'right',
+            ArrowDown: 'down', KeyS: 'down'
+        };
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT') return;
+            if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', 'Space'].includes(e.code)) e.preventDefault();
+
+            const k = KEYMAP[e.code];
+            if (k) {
+                if (!Game.keys[k]) {
+                    Game.keys[k] = true; Game.dasTimer[k] = null;
+                    if (k === 'left') Game.move(-1);
+                    else if (k === 'right') Game.move(1);
+                    else Game.softDrop();
+                }
+                return;
+            }
+            if (e.repeat) return;
+            switch (e.code) {
+                case 'ArrowUp': case 'KeyW': case 'KeyX': Game.rotate(1); break;
+                case 'KeyZ': case 'KeyQ': case 'ControlLeft': Game.rotate(-1); break;
+                case 'Space': Game.hardDrop(); break;
+                case 'KeyC': case 'ShiftLeft': Game.holdPiece(); break;
+                case 'KeyH': Game.useHint(); break;
+                case 'KeyP': case 'Escape':
+                    if (Game.state === 'playing') Game.pause();
+                    else if (Game.state === 'paused') Game.resume();
+                    break;
+            }
+        });
+        document.addEventListener('keyup', e => {
+            const k = KEYMAP[e.code];
+            if (k) { Game.keys[k] = false; Game.dasTimer[k] = null; }
+        });
+
+        // タッチ: 長押しリピート付き
+        function bindPad(id, action, repeat) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            let timer = null, das = null, lastTouch = 0;
+            const stop = () => { clearInterval(timer); clearTimeout(das); timer = das = null; };
+            const down = e => {
+                if (e.type === 'mousedown' && Date.now() - lastTouch < 600) return;
+                if (e.type === 'touchstart') lastTouch = Date.now();
+                if (e.cancelable) e.preventDefault();
+                if (btn.disabled) return;
+                action();
+                if (repeat) {
+                    stop();
+                    das = setTimeout(() => { timer = setInterval(action, Game.ARR); }, Game.DAS);
+                }
+            };
+            btn.addEventListener('touchstart', down, { passive: false });
+            btn.addEventListener('mousedown', down);
+            ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(ev =>
+                btn.addEventListener(ev, stop));
+        }
+        bindPad('btn-left', () => Game.move(-1), true);
+        bindPad('btn-right', () => Game.move(1), true);
+        bindPad('btn-down', () => Game.softDrop(), true);
+        bindPad('btn-rotate', () => Game.rotate(1), false);
+        bindPad('btn-drop', () => Game.hardDrop(), false);
+        bindPad('btn-hold', () => Game.holdPiece(), false);
+        bindPad('btn-eye', () => Game.useHint(), false);
+
+        document.getElementById('eye-btn').addEventListener('click', () => Game.useHint());
+        document.getElementById('mute-btn').addEventListener('click', () => Sound.toggleMute());
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            if (Game.state === 'playing') Game.pause(); else Game.resume();
+        });
+        document.getElementById('resume-btn').addEventListener('click', () => Game.resume());
+        document.getElementById('quit-btn').addEventListener('click', () => {
+            document.getElementById('pause-overlay').classList.add('hide');
+            Game.state = 'over';
+            Sound.stopBGM();
+            document.getElementById('start-overlay').classList.remove('hide');
+        });
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            Sound.init();
+            localStorage.setItem('tiffinName', document.getElementById('player-name').value || '');
+            document.getElementById('start-overlay').classList.add('hide');
+            layout();
+            Game.start();
+        });
+        document.getElementById('retry-btn').addEventListener('click', () => {
+            document.getElementById('over-overlay').classList.add('hide');
+            layout();
+            Game.start();
+        });
+        document.getElementById('title-btn').addEventListener('click', () => {
+            document.getElementById('over-overlay').classList.add('hide');
+            document.getElementById('start-overlay').classList.remove('hide');
+            Game.state = 'title';
+            renderRanking();
+        });
+
+        window.addEventListener('resize', () => layout());
+        window.addEventListener('orientationchange', () => setTimeout(layout, 200));
+
+        /* =========================================================================
+           11. 起動
+           ========================================================================= */
+        (function boot() {
+            document.getElementById('player-name').value = localStorage.getItem('tiffinName') || '';
+            renderRanking();
+            Order.cur = ORDERS[0]; Order.render();
+            Game.renderHUD();
+            layout();
+            Narrator.daily();
+            // タイトル中も背景で盤面を描いておく
+            draw(); drawSide();
+        })();
+    </script>
+</body>
+
+</html>

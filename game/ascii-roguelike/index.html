@@ -22,6 +22,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="ASCIIアートのローグライクゲーム。ビットコイン円を探してダンジョンを攻略しよう">
+<meta name="robots" content="max-image-preview:large">
 <title>ASCII Roguelike</title>
 <link rel="icon" href="https://tk.st/images/favicons/ascii-roguelike-favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="https://tk.st/images/favicons/ascii-roguelike-favicon.png">
@@ -817,7 +818,7 @@ async function sendToGemini() {
   appendChatLog("SYS", "Processing query...");
 
   try {
-    const url = `${WORKER_URL}/api/gemini`;
+    const url = `${WORKER_URL}/api/deepseek`;
 
     // フロア情報を動的に生成して方角を伝える
     const getDir = (tx, ty) => {
@@ -849,13 +850,12 @@ ${floorInfo}
 ---`;
 
     const payload = {
-      contents: [
+      system: sysPrompt,
+      messages: [
         ...geminiHistory,
-        { role: "user", parts: [{ text: userText }] }
+        { role: "user", content: userText }
       ],
-      systemInstruction: {
-        parts: [{ text: sysPrompt }]
-      }
+      maxTokens: 500
     };
 
     const res = await fetch(url, {
@@ -863,14 +863,12 @@ ${floorInfo}
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    
+
     if (!res.ok) throw new Error(`API response error: ${res.status}`);
     const data = await res.json();
-    
+
     let aiText = "ERROR: Data corrupted.";
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        aiText = data.candidates[0].content.parts[0].text;
-    }
+    if (data.text) aiText = data.text;
 
     const logDiv = document.getElementById('terminal-chat-log');
     if (logDiv.lastChild && logDiv.lastChild.innerText.includes("Processing query")) {
@@ -879,11 +877,11 @@ ${floorInfo}
 
     appendChatLog("AI", aiText);
     
-    geminiHistory.push({ role: "user", parts: [{ text: userText }] });
-    geminiHistory.push({ role: "model", parts: [{ text: aiText }] });
+    geminiHistory.push({ role: "user", content: userText });
+    geminiHistory.push({ role: "assistant", content: aiText });
 
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("AI API Error:", error);
     const logDiv = document.getElementById('terminal-chat-log');
     if (logDiv.lastChild && logDiv.lastChild.innerText && logDiv.lastChild.innerText.includes("Processing query")) {
         logDiv.removeChild(logDiv.lastChild);
