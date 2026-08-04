@@ -54,6 +54,7 @@ class DonationWidget {
         this._isOpen = false;
         this._closeFinishTimer = null;
         this._mobileMql = null;
+        this._shakeObserver = null;
     }
 
     init() {
@@ -63,12 +64,14 @@ class DonationWidget {
         this.renderModal();
         this.renderButton();
         this.bindEvents();
+        this.observeButtonVisibility();
     }
 
     destroy() {
         if (this._isOpen) this._restorePageState();
         clearTimeout(this._closeFinishTimer);
         this._abortController?.abort();
+        this._shakeObserver?.disconnect();
         this.modal?.remove();
         this.openBtnWrapper?.remove();
         const style = document.getElementById('donation-widget-styles');
@@ -77,6 +80,31 @@ class DonationWidget {
         this.openBtnWrapper = null;
         this._inertedNodes = [];
         this._mobileMql = null;
+        this._shakeObserver = null;
+    }
+
+    /**
+     * ボタンが画面に入っている間だけ、数回揺らして止める。
+     * 常時ループさせると視界の端で動き続けて催促のように見えるため、
+     * IntersectionObserver で「入ったら数回」に限定している。
+     * 画面外に出たらクラスを外すので、次に入ってきたときにまた再生される。
+     */
+    observeButtonVisibility() {
+        const target = this.openBtnWrapper?.querySelector('.donation-animate-fuel-shake');
+        if (!target) return;
+
+        // 非対応環境では素直に再生する（数回で止まる点は同じ）
+        if (typeof IntersectionObserver === 'undefined') {
+            target.classList.add('donation-shake-run');
+            return;
+        }
+
+        this._shakeObserver = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                target.classList.toggle('donation-shake-run', entry.isIntersecting);
+            }
+        }, { threshold: 0.5 });
+        this._shakeObserver.observe(this.openBtnWrapper);
     }
 
     // ---- Helpers ----
@@ -99,32 +127,43 @@ class DonationWidget {
     }
 
     /**
-     * ボタン用の携行缶（ガソリン缶）アイコン。
-     * 外部画像に依存しないよう SVG をインラインで持つ。グラデーション ID は
-     * 同一ページに複数インスタンスが載っても衝突しないよう uid を付ける。
+     * ボタン用の給油ポンプアイコン。Google（Noto Color Emoji）の ⛽ を採寸して起こしたもの。
+     * オリジナルで白丸の中に入っている雫（💧）だけをハートマークに差し替えている。
+     * 外部画像に依存しないよう SVG をインラインで持つ。座標はリファレンス画像の
+     * ピクセル空間そのままなので、パーツの比率を直接いじって調整できる。
      */
-    _fuelCanSvg() {
-        const gradId = `donation-oil-grad-${this._uid}`;
+    _fuelPumpSvg() {
+        // 24x24 グリッドのハートを白丸の中に収まるよう拡大配置する
+        const heartPath = 'M12 20.7l-1.45-1.32C5.4 14.74 2 11.66 2 7.88 2 4.8 4.42 2.4 7.5 2.4c1.74 0 3.41.81 4.5 2.09C13.09 3.21 14.76 2.4 16.5 2.4 19.58 2.4 22 4.8 22 7.88c0 3.78-3.4 6.86-8.55 11.51L12 20.7z';
         return `
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-                <defs>
-                    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%"   stop-color="#FBBF24"/>
-                        <stop offset="100%" stop-color="#EA8C0B"/>
-                    </linearGradient>
-                </defs>
-                <!-- 上部ハンドル -->
-                <path d="M7.4 5.6V4.7A1.9 1.9 0 0 1 9.3 2.8h1.8a1.9 1.9 0 0 1 1.9 1.9v.9"
-                      stroke="#9A3412" stroke-width="2" stroke-linecap="round"/>
-                <!-- 注ぎ口 -->
-                <path d="M16 9.4h2.9a1.7 1.7 0 0 0 1.7-1.7V6.1"
-                      stroke="#9A3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <!-- 缶本体 -->
-                <rect x="2.9" y="5.4" width="14.2" height="15.9" rx="2.8"
-                      fill="url(#${gradId})" stroke="#9A3412" stroke-width="1.3"/>
-                <!-- 燃料のしずく -->
-                <path d="M10 10.2c2.15 2.42 3.22 4.02 3.22 5.33a3.22 3.22 0 1 1-6.44 0c0-1.31 1.07-2.91 3.22-5.33Z"
-                      fill="#FFF7E6" opacity="0.95"/>
+            <svg viewBox="20 18 250 262" fill="none" aria-hidden="true" focusable="false">
+                <!--
+                  給油ホース。上端はノズルの持ち手の下に潜り込ませ、下端は台座の内側で
+                  終端させる（本体・台座より先に描いているので、両端とも隠れて繋がって見える）。
+                -->
+                <path d="M192 122C244 156 252 204 216 220C188 232 176 244 176 258"
+                      stroke="#5E5E5E" stroke-width="17" stroke-linecap="round"/>
+                <!-- ノズルの注ぎ口 -->
+                <path d="M230 80L258 46" stroke="#5E5E5E" stroke-width="18" stroke-linecap="round"/>
+                <!-- ノズル本体 -->
+                <rect x="-31" y="-23" width="62" height="46" rx="15"
+                      transform="translate(212 98) rotate(-38)" fill="#EF4B3C"/>
+                <!--
+                  ノズルホルダー。本体の外側に取り付く部品なので、本体より先に描いて
+                  右端(x=176)から外へ出た部分だけを見せる。本体側には食い込ませない。
+                -->
+                <rect x="160" y="62" width="30" height="80" rx="9" fill="#B3DCE8"/>
+                <!-- 台座 -->
+                <rect x="28" y="246" width="155" height="26" rx="8" fill="#D6392D"/>
+                <!-- ポンプ本体 -->
+                <rect x="35" y="28" width="141" height="222" rx="15" fill="#EF4B3C"/>
+                <!-- メーター窓。本体(x=35,w=141)の中心 x=105.5 に左右を揃える -->
+                <rect x="57.5" y="58" width="96" height="70" rx="10" fill="#EAEAEA"/>
+                <rect x="69.5" y="74" width="72" height="13" rx="2" fill="#BDBDBD"/>
+                <rect x="69.5" y="99" width="72" height="13" rx="2" fill="#BDBDBD"/>
+                <!-- ハートマーク（オリジナルは雫） -->
+                <circle cx="105.5" cy="192" r="39" fill="#FFFFFF"/>
+                <path transform="translate(77.9 165.4) scale(2.3)" d="${heartPath}" fill="#37373A"/>
             </svg>
         `;
     }
@@ -136,17 +175,48 @@ class DonationWidget {
         const style = document.createElement('style');
         style.id = 'donation-widget-styles';
         style.textContent = `
-            @keyframes donationPopAndShake {
-                0%,   66.6% { transform: scale(1)    rotate(0deg);  }
-                73.3%       { transform: scale(1.15) rotate(0deg);  }
-                80%         { transform: scale(1.15) rotate(-8deg); }
-                86.6%       { transform: scale(1.15) rotate(8deg);  }
-                93.3%       { transform: scale(1.15) rotate(-8deg); }
-                100%        { transform: scale(1)    rotate(0deg);  }
+            /*
+              静止 → 拡大 → 縦揺れ → 収束 → 縮小 の順に進む4段構成。
+              拡大と揺れは重ねず、拡大しきってから揺れ始める。
+              translateY は % 指定なのでアイコンのサイズが変わっても振れ幅の比率は一定。
+            */
+            @keyframes donationFuelShake {
+                /* 静止 */
+                0%, 67%  { transform: translateY(0)       scale(1);    }
+                /* 拡大（この間は縦に動かさない）: 0.13秒 */
+                69.6%    { transform: translateY(0)       scale(1.15); }
+                /* 溜め: 0.1秒。同じ値を置いて静止させる */
+                71.6%    { transform: translateY(0)       scale(1.15); }
+                /* 縦揺れ（拡大したまま減衰）: 1コマ 0.104秒 */
+                73.68%   { transform: translateY(-6%)     scale(1.15); }
+                75.76%   { transform: translateY(3.5%)    scale(1.15); }
+                77.84%   { transform: translateY(-4.5%)   scale(1.15); }
+                79.92%   { transform: translateY(2.5%)    scale(1.15); }
+                82%      { transform: translateY(-3%)     scale(1.15); }
+                84.08%   { transform: translateY(1.5%)    scale(1.15); }
+                86.16%   { transform: translateY(-1.75%)  scale(1.15); }
+                88.24%   { transform: translateY(0.75%)   scale(1.15); }
+                90.32%   { transform: translateY(-0.75%)  scale(1.15); }
+                /* 収束（揺れが止まる。まだ拡大したまま） */
+                92.4%    { transform: translateY(0)       scale(1.15); }
+                /* 余韻: 0.1秒。縮小前にもう一拍置く */
+                94.4%    { transform: translateY(0)       scale(1.15); }
+                /* 縮小: 0.28秒 */
+                100%     { transform: translateY(0)       scale(1);    }
             }
-            .donation-animate-pop-shake {
-                animation: donationPopAndShake 3s ease-in-out infinite;
+            .donation-animate-fuel-shake {
                 transform-origin: center center;
+            }
+            /*
+              周期は5秒、動く区間はそのうち 1.65 秒(=33%)。内訳は
+              拡大 0.13秒(2.6%) / 溜め 0.1秒(2%) / 縦揺れ 1.04秒(10コマ×0.104秒=20.8%)
+              / 余韻 0.1秒(2%) / 縮小 0.28秒(5.6%)。
+              再生は3回まで。負の delay を入れて、画面に入ってから約0.9秒で1回目が始まるようにしている
+              (delay なしだと最初の動きまで3.4秒かかり、見る前に通り過ぎてしまう)。
+              クラスの付与は observeButtonVisibility() が担当。
+            */
+            .donation-animate-fuel-shake.donation-shake-run {
+                animation: donationFuelShake 5s -2.5s ease-in-out 3;
             }
             .donation-widget-wrapper {
                 position: relative;
@@ -282,29 +352,47 @@ class DonationWidget {
                 flex: 1 1 auto;
                 background: #f9f9f9;
             }
+            /*
+              モーダルの見出し。ボタン（ホバー時のツールチップ）でしか名前を出せていないと
+              タッチ環境では "Buy Me Oil" を一度も見ないままになるため、可視の見出しにする。
+            */
             .donation-modal-title {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                padding: 0;
-                margin: -1px;
-                overflow: hidden;
-                clip: rect(0,0,0,0);
-                white-space: nowrap;
-                border-width: 0;
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                /* 本文どうしの行送りは詰めたまま、見出しと本文の間だけ余白を足す */
+                margin: 0 0 0.35rem;
+                font-size: 1rem;
+                font-weight: 800;
+                letter-spacing: 0.01em;
+                color: #111827;
+            }
+            .donation-modal-title-icon {
+                width: 1.375rem;
+                height: 1.375rem;
+                flex-shrink: 0;
+            }
+            .donation-modal-title-icon svg {
+                width: 100%;
+                height: 100%;
+                display: block;
+                overflow: visible;
             }
             .donation-modal-intro {
                 /* 右パディングは閉じるボタンと重ならないように広めに取る */
-                padding: 1.25rem 3.25rem 0 1.25rem;
+                /* 本文が1行増えても上部が嵩張らないよう、余白と行間は詰めている */
+                padding: 0.875rem 3.25rem 0 1.25rem;
                 display: flex;
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 0.2rem;
             }
             .donation-modal-intro p {
                 margin: 0;
                 font-size: 0.8rem;
-                line-height: 1.7;
+                line-height: 1.5;
                 color: #374151;
+                /* 狭い幅で折り返したとき、末尾の数文字だけが次行に取り残されないよう均等割りする */
+                text-wrap: balance;
             }
 
             /* Ko-fi 埋め込みウィジェットの余白を切り詰めるためのスケール調整 */
@@ -414,7 +502,7 @@ class DonationWidget {
                 .donation-other-options-chevron {
                     transition: none !important;
                 }
-                .donation-animate-pop-shake { animation: none !important; }
+                .donation-animate-fuel-shake { animation: none !important; }
             }
 
             @media (min-width: 481px) {
@@ -481,11 +569,13 @@ class DonationWidget {
                     </svg>
                 </button>
                 <div class="donation-scroll-container">
-                    <h2 id="${this._titleId}" class="donation-modal-title">Buy Me Oil</h2>
                     <div class="donation-modal-intro">
+                        <h2 id="${this._titleId}" class="donation-modal-title">
+                            <span class="donation-modal-title-icon">${this._fuelPumpSvg()}</span>
+                            Buy Me Oil
+                        </h2>
                         <p>広告に頼らず、<strong>「誰でも無料で楽しめること」</strong>を大切にしています。</p>
-                        <p>お役に立てたなら、ガソリン1リットル（⛽）のご支援が大きな励みになります。</p>
-                        <p>ハーレーで風を切って走る時間が、次の制作の燃料です。</p>
+                        <p>お役に立てたなら、ガソリン1Lのご支援が、開発のモチベ支えるハーレーの燃料になります。</p>
                     </div>
                     <div class="donation-kofi-wrap">
                         <iframe class="donation-kofi-iframe"
@@ -567,8 +657,8 @@ class DonationWidget {
                 </div>
                 <button aria-label="Buy Me Oil - 寄付モーダルを開く"
                         class="donation-widget-button" type="button">
-                    <div class="donation-animate-pop-shake" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
-                        ${this._fuelCanSvg()}
+                    <div class="donation-animate-fuel-shake" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                        ${this._fuelPumpSvg()}
                     </div>
                 </button>
             </div>
