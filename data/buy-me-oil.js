@@ -2,7 +2,7 @@
  * Donation Widget Component
  *
  * 使い方:
- * 1. このスクリプトを読み込む ( <script src="buy-me-a-coffee.js"></script> )
+ * 1. このスクリプトを読み込む ( <script src="buy-me-oil.js"></script> )
  * 2. 以下のコードで初期化する（外部CSSへの依存なし。スタイルはすべてインラインで完結）
  *
  * // 最小構成（画面右下に固定表示）
@@ -98,6 +98,37 @@ class DonationWidget {
         return '#';
     }
 
+    /**
+     * ボタン用の携行缶（ガソリン缶）アイコン。
+     * 外部画像に依存しないよう SVG をインラインで持つ。グラデーション ID は
+     * 同一ページに複数インスタンスが載っても衝突しないよう uid を付ける。
+     */
+    _fuelCanSvg() {
+        const gradId = `donation-oil-grad-${this._uid}`;
+        return `
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                <defs>
+                    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stop-color="#FBBF24"/>
+                        <stop offset="100%" stop-color="#EA8C0B"/>
+                    </linearGradient>
+                </defs>
+                <!-- 上部ハンドル -->
+                <path d="M7.4 5.6V4.7A1.9 1.9 0 0 1 9.3 2.8h1.8a1.9 1.9 0 0 1 1.9 1.9v.9"
+                      stroke="#9A3412" stroke-width="2" stroke-linecap="round"/>
+                <!-- 注ぎ口 -->
+                <path d="M16 9.4h2.9a1.7 1.7 0 0 0 1.7-1.7V6.1"
+                      stroke="#9A3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- 缶本体 -->
+                <rect x="2.9" y="5.4" width="14.2" height="15.9" rx="2.8"
+                      fill="url(#${gradId})" stroke="#9A3412" stroke-width="1.3"/>
+                <!-- 燃料のしずく -->
+                <path d="M10 10.2c2.15 2.42 3.22 4.02 3.22 5.33a3.22 3.22 0 1 1-6.44 0c0-1.31 1.07-2.91 3.22-5.33Z"
+                      fill="#FFF7E6" opacity="0.95"/>
+            </svg>
+        `;
+    }
+
     // ---- Styles ----
 
     injectStyles() {
@@ -172,11 +203,11 @@ class DonationWidget {
             .donation-widget-wrapper:hover .donation-widget-button {
                 transform: translateY(-0.5rem);
             }
-            .donation-widget-button img {
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
+            .donation-widget-button svg {
+                width: 100%;
+                height: 100%;
                 display: block;
+                overflow: visible;
             }
 
             /* ---- Modal ---- */
@@ -450,10 +481,11 @@ class DonationWidget {
                     </svg>
                 </button>
                 <div class="donation-scroll-container">
-                    <h2 id="${this._titleId}" class="donation-modal-title">Buy Me a Coffee</h2>
+                    <h2 id="${this._titleId}" class="donation-modal-title">Buy Me Oil</h2>
                     <div class="donation-modal-intro">
                         <p>広告に頼らず、<strong>「誰でも無料で楽しめること」</strong>を大切にしています。</p>
-                        <p>お役に立てたなら、コーヒー1杯（☕）のご支援が大きな励みになります。</p>
+                        <p>お役に立てたなら、ガソリン1リットル（⛽）のご支援が大きな励みになります。</p>
+                        <p>ハーレーで風を切って走る時間が、次の制作の燃料です。</p>
                     </div>
                     <div class="donation-kofi-wrap">
                         <iframe class="donation-kofi-iframe"
@@ -531,12 +563,12 @@ class DonationWidget {
         wrapper.innerHTML = `
             <div class="donation-widget-wrapper">
                 <div class="donation-widget-tooltip" aria-hidden="true">
-                    Buy Me a Coffee
+                    Buy Me Oil
                 </div>
-                <button aria-label="Buy Me a Coffee - 寄付モーダルを開く"
+                <button aria-label="Buy Me Oil - 寄付モーダルを開く"
                         class="donation-widget-button" type="button">
                     <div class="donation-animate-pop-shake" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
-                        <img src="https://storage.ko-fi.com/cdn/logomarkLogo.png" alt="">
+                        ${this._fuelCanSvg()}
                     </div>
                 </button>
             </div>

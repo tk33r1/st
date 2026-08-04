@@ -174,6 +174,100 @@
             color: var(--steel); margin-bottom: 4px;
         }
 
+        /* ---------- タイマー（画面の主役） ---------- */
+        #timer-box { position: relative; text-align: center; flex: 1; }
+        #timer {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 34px; line-height: 1; font-weight: 700;
+            color: var(--steel-lt);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, .7);
+            transition: color .2s;
+        }
+        #timer .unit { font-size: 15px; opacity: .6; margin-left: 2px; }
+        /* 残り10秒: 赤く脈打つ */
+        #timer.danger { color: #ff5f5f; animation: pulseT .5s ease-in-out infinite; }
+        @keyframes pulseT {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(255, 60, 60, .5); }
+            50% { transform: scale(1.11); text-shadow: 0 0 24px rgba(255, 60, 60, .95); }
+        }
+        #timer.gain { color: #7ee0a1; }
+
+        /* 時計が速く進んでいることを必ず見せる。隠すと「理不尽」ではなく「不具合」になる */
+        #noon {
+            font-size: 10px; letter-spacing: .1em; color: var(--steel);
+            margin-top: 1px; transition: color .3s;
+        }
+        #noon b { font-family: 'Cinzel Decorative', cursive; }
+        #noon.hot { color: var(--turmeric); }
+        #noon.blaze { color: #ff8a4c; animation: blaze .8s ease-in-out infinite; }
+        @keyframes blaze { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+
+        /* 秒の増減がタイマーへ吸い込まれる */
+        #time-floats { position: absolute; left: 0; right: 0; top: 0; height: 0; pointer-events: none; }
+        .tfloat {
+            position: absolute; left: 50%; top: 30px;
+            font-family: 'Cinzel Decorative', cursive; font-weight: 700; font-size: 21px;
+            white-space: nowrap; transform: translateX(-50%);
+            animation: tfl 1.05s cubic-bezier(.2, .7, .3, 1) forwards;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, .85);
+        }
+        .tfloat.plus { color: #7ee0a1; }
+        .tfloat.minus { color: #ff6b6b; }
+        @keyframes tfl {
+            0% { opacity: 0; transform: translateX(-50%) translateY(14px) scale(.8); }
+            22% { opacity: 1; transform: translateX(-50%) translateY(4px) scale(1.15); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-26px) scale(.85); }
+        }
+
+        /* 残り10秒で盤面のふちが警告色に */
+        #board.danger {
+            border-color: #ff5f5f;
+            box-shadow: 0 0 0 2px rgba(255, 95, 95, .4), 0 0 26px rgba(255, 60, 60, .5);
+        }
+
+        /* ---------- ムンバイの災難 ---------- */
+        /* 落下中のピースに被らないよう、盤面のごく上端に薄く出す */
+        #disaster-banner {
+            position: absolute; left: 50%; top: 4px; transform: translateX(-50%);
+            z-index: 32; pointer-events: none; display: none;
+            padding: 5px 16px; border-radius: 0 0 8px 8px;
+            font-weight: 700; font-size: 14px; white-space: nowrap;
+            text-align: center; opacity: .94;
+        }
+        #disaster-banner.show { display: block; }
+        /* 予告(1.5秒前): 何が来るか読ませる */
+        #disaster-banner.warn {
+            background: rgba(24, 15, 10, .92);
+            border: 2px dashed var(--turmeric);
+            color: var(--turmeric);
+            animation: warnBlink .38s steps(2) infinite;
+        }
+        @keyframes warnBlink { 0% { opacity: 1; } 100% { opacity: .45; } }
+        /* 発動: 悪い災難 */
+        #disaster-banner.bad {
+            background: linear-gradient(180deg, #d64545, #8a1c1c);
+            border: 2px solid #ffd0d0; color: #fff;
+            animation: hitIn .4s ease;
+        }
+        /* 発動: 良い災難 */
+        #disaster-banner.good {
+            background: linear-gradient(180deg, #f0b429, #b3790a);
+            border: 2px solid #fff3c4; color: #241005;
+            animation: hitIn .4s ease;
+        }
+        @keyframes hitIn {
+            0% { transform: translateX(-50%) scale(.6); opacity: 0; }
+            55% { transform: translateX(-50%) scale(1.12); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+        #disaster-banner .sub { display: block; font-size: 11px; font-weight: 500; opacity: .88; margin-top: 1px; }
+
+        /* 特急ダイヤ中は盤面が光る */
+        #board.rush {
+            border-color: var(--turmeric);
+            box-shadow: 0 0 0 2px rgba(240, 180, 41, .55), 0 0 30px rgba(240, 180, 41, .6);
+        }
+
         /* ---------- 注文票 ---------- */
         .order-card {
             background: linear-gradient(180deg, #fdf6e3 0%, #f2e4c9 100%);
@@ -193,11 +287,35 @@
             border: 1.5px solid #a1662f; background: transparent;
         }
         .odot.on { background: var(--terracotta); border-color: var(--terracotta); }
-        .timebar { height: 3px; background: rgba(161, 102, 47, .3); border-radius: 2px; margin-top: 5px; overflow: hidden; }
-        .timebar > i { display: block; height: 100%; background: var(--terracotta); width: 100%; }
+        .timebar { height: 4px; background: rgba(161, 102, 47, .28); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+        .timebar > i {
+            display: block; height: 100%; width: 100%;
+            background: var(--terracotta);
+            transition: background .2s;
+        }
+        /* 残り3秒を切った注文は赤く点滅して「捨てる判断」を促す */
+        .order-card.urgent { animation: urgent .42s ease-in-out infinite; }
+        .order-card.urgent .timebar > i { background: #d61f1f; }
+        @keyframes urgent {
+            0%, 100% { box-shadow: 0 3px 10px rgba(0, 0, 0, .45); }
+            50% { box-shadow: 0 0 0 3px rgba(214, 31, 31, .75), 0 3px 10px rgba(0, 0, 0, .45); }
+        }
 
         @keyframes orderPop { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
         .order-pop { animation: orderPop .45s ease; }
+
+        /* 注文を落としたとき */
+        @keyframes orderFail {
+            0% { transform: translateX(0); filter: none; }
+            25% { transform: translateX(-6px); filter: grayscale(1) brightness(.7); }
+            75% { transform: translateX(6px); filter: grayscale(1) brightness(.7); }
+            100% { transform: translateX(0); filter: none; }
+        }
+        .order-fail { animation: orderFail .4s ease; }
+
+        .order-card .ttl { font-size: 14px; }
+        .order-card.slot { min-width: 0; }
+        .order-card.slot .dsc { min-height: 1.2em; }
 
         /* ---------- ティフィン(弁当箱)の段 ---------- */
         .tiffin { display: flex; flex-direction: column-reverse; align-items: center; gap: 3px; padding: 4px 0; }
@@ -213,17 +331,9 @@
             box-shadow: 0 0 10px rgba(219, 228, 238, .55);
             transform: scaleX(1.04);
         }
-        /* モバイルの段表示は伝票(クリーム地)の上に乗るので、銀では見分けがつかない */
-        #tiffin-m .tier {
-            border-color: rgba(161, 102, 47, .55);
-            background: rgba(161, 102, 47, .12);
-            box-shadow: none;
-        }
-        #tiffin-m .tier.on {
-            background: linear-gradient(180deg, #e07a3c, #c2410c);
-            border-color: #8a2d08;
-            box-shadow: 0 0 6px rgba(194, 65, 12, .5);
-        }
+        /* モバイルの段表示は布地の上に直接乗るので、銀のままで見える */
+        #tiffin-m { gap: 2px; padding: 0; }
+        #tiffin-m .tier { width: 26px; height: 11px; }
 
         .tiffin-lid {
             width: 84px; height: 8px; border-radius: 4px 4px 2px 2px;
@@ -245,10 +355,11 @@
             transition: transform .08s, filter .15s;
         }
         .eye-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #5d6f81; }
-        .eye-btn:disabled { filter: grayscale(1) brightness(.55); box-shadow: none; }
-        .eye-charges { display: flex; gap: 3px; justify-content: center; margin-top: 5px; }
-        .charge { width: 8px; height: 8px; border-radius: 50%; background: rgba(219,228,238,.22); }
-        .charge.on { background: var(--steel-lt); box-shadow: 0 0 6px rgba(219,228,238,.8); }
+        .eye-btn .cost {
+            font-size: 11px; font-weight: 700; color: #b3311a;
+            background: rgba(194, 65, 12, .16); border-radius: 4px; padding: 1px 5px;
+        }
+        .pad-btn .pad-cost { font-size: 9px; font-weight: 700; margin-left: 3px; opacity: .8; }
 
         /* ---------- オーバーレイ ---------- */
         .overlay {
@@ -382,6 +493,20 @@
             #mobile-order { display: block; }
             .stage { padding: 6px; gap: 0; }
             .topbar { padding: 4px 10px; }
+            /* 注文カードが縦に伸びると盤面を圧迫するので、モバイルでは詰める */
+            #mobile-order { padding-top: 4px; }
+            #mobile-order .order-card { padding: 5px 7px; border-top-width: 2px; }
+            #mobile-order .ttl { font-size: 12.5px; line-height: 1.15; }
+            #mobile-order .dsc {
+                font-size: 9.5px; line-height: 1.25; margin-top: 1px;
+                display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+            #mobile-order .order-dots { margin-top: 3px; gap: 3px; }
+            #mobile-order .odot { width: 9px; height: 9px; }
+            #mobile-order .timebar { margin-top: 3px; height: 3px; }
+            #timer { font-size: 27px; }
+            #noon { font-size: 9px; }
         }
 
         /* 横向きの狭い画面ではパッドを圧縮 */
@@ -408,6 +533,13 @@
                 <span class="font-tiffin text-lg md:text-xl" style="color:var(--turmeric)">TIFFIN</span>
                 <span class="text-[10px] tracking-widest hidden sm:inline" style="color:var(--steel)">MASALA TETRIS</span>
             </div>
+            <!-- タイマーが画面の主役 -->
+            <div id="timer-box">
+                <div id="timer">90<span class="unit">s</span></div>
+                <div id="noon">☀ 昼まで <b id="noon-rate">×1.0</b></div>
+                <div id="time-floats"></div>
+            </div>
+
             <div class="flex items-center gap-3 text-right">
                 <div>
                     <div class="text-[9px] tracking-widest" style="color:var(--steel)">SCORE</div>
@@ -426,23 +558,25 @@
             </div>
         </header>
 
-        <!-- ===== モバイル: 注文バー ===== -->
+        <!-- ===== モバイル: 注文2枚 + 弁当 ===== -->
         <div id="mobile-order" class="px-2 pt-2">
-            <div class="order-card" id="order-card-m">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="ttl" id="order-name-m">—</div>
-                        <div class="dsc" id="order-desc-m"></div>
-                    </div>
-                    <div class="flex flex-col items-end gap-1 shrink-0 ml-2">
-                        <div class="flex items-center gap-1">
-                            <span class="text-[9px] font-bold" style="color:#a1662f">弁当</span>
-                            <div class="tiffin !flex-row !gap-1 !py-0" id="tiffin-m"></div>
-                        </div>
-                        <div class="order-dots !mt-0 justify-end" id="order-dots-m"></div>
-                    </div>
+            <div class="flex items-center gap-1.5">
+                <div class="order-card slot flex-1" data-slot="0">
+                    <div class="ttl">—</div>
+                    <div class="dsc"></div>
+                    <div class="order-dots"></div>
+                    <div class="timebar"><i></i></div>
                 </div>
-                <div class="timebar hide" id="order-time-m"><i></i></div>
+                <div class="order-card slot flex-1" data-slot="1">
+                    <div class="ttl">—</div>
+                    <div class="dsc"></div>
+                    <div class="order-dots"></div>
+                    <div class="timebar"><i></i></div>
+                </div>
+                <div class="flex flex-col items-center gap-0.5 shrink-0 px-1">
+                    <span class="text-[9px] font-bold" style="color:var(--steel)">弁当</span>
+                    <div class="tiffin" id="tiffin-m"></div>
+                </div>
             </div>
         </div>
 
@@ -464,6 +598,8 @@
             <div id="board-wrap">
                 <canvas id="board"></canvas>
                 <div id="toast-layer"></div>
+                <!-- ムンバイの災難: 予告 → 発動 -->
+                <div id="disaster-banner"></div>
                 <div id="delivery-cut">
                     <div class="cut-road"></div>
                     <div class="cut-rider">🚲</div>
@@ -474,20 +610,28 @@
                 </div>
             </div>
 
-            <!-- 右サイド: 注文 / ティフィン / ダッバーの目 -->
+            <!-- 右サイド: 注文2件 / ティフィン / ダッバーの目 -->
             <aside class="side">
                 <div class="panel">
-                    <div class="panel-label">注文票 / Order</div>
-                    <div class="order-card" id="order-card">
-                        <div class="ttl" id="order-name">—</div>
-                        <div class="dsc" id="order-desc"></div>
-                        <div class="order-dots" id="order-dots"></div>
-                        <div class="timebar hide" id="order-time"><i></i></div>
+                    <div class="panel-label">注文票 / Orders</div>
+                    <div class="flex flex-col gap-2">
+                        <div class="order-card slot" data-slot="0">
+                            <div class="ttl">—</div>
+                            <div class="dsc"></div>
+                            <div class="order-dots"></div>
+                            <div class="timebar"><i></i></div>
+                        </div>
+                        <div class="order-card slot" data-slot="1">
+                            <div class="ttl">—</div>
+                            <div class="dsc"></div>
+                            <div class="order-dots"></div>
+                            <div class="timebar"><i></i></div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="panel">
-                    <div class="panel-label">ティフィン <span id="tier-count" class="float-right">0/3</span></div>
+                    <div class="panel-label">ティフィン <span id="tier-count" class="float-right">0/2</span></div>
                     <div class="tiffin" id="tiffin">
                         <!-- 段は JS で生成 (下から積む) -->
                     </div>
@@ -495,10 +639,12 @@
 
                 <div class="panel">
                     <div class="panel-label">ダッバーの目</div>
-                    <button id="eye-btn" class="eye-btn"><i class="fas fa-eye"></i>ヒント <span class="text-[11px] opacity-70">(H)</span></button>
-                    <div class="eye-charges" id="eye-charges"></div>
+                    <button id="eye-btn" class="eye-btn">
+                        <i class="fas fa-eye"></i>ヒント
+                        <span class="cost">−3秒</span>
+                    </button>
                     <div class="text-[10px] text-center mt-2" style="color:var(--steel)">
-                        手仕事ボーナス <span id="handwork" style="color:var(--turmeric)">×1.5</span>
+                        使い放題。ただし<b style="color:var(--turmeric)">時間で払う</b>
                     </div>
                 </div>
 
@@ -516,7 +662,7 @@
                 <button class="pad-btn" id="btn-down"><i class="fas fa-caret-down"></i></button>
                 <button class="pad-btn" id="btn-right"><i class="fas fa-caret-right"></i></button>
                 <button class="pad-btn" id="btn-rotate"><i class="fas fa-rotate-right"></i></button>
-                <button class="pad-btn eye" id="btn-eye"><i class="fas fa-eye"></i></button>
+                <button class="pad-btn eye" id="btn-eye"><i class="fas fa-eye"></i><span class="pad-cost">−3s</span></button>
             </div>
             <div class="grid grid-cols-2 gap-2 mt-2">
                 <button class="pad-btn" id="btn-hold">HOLD</button>
@@ -541,9 +687,13 @@
             </div>
 
             <div class="text-left text-[13px] leading-relaxed mb-4 px-1" style="color:var(--steel-lt)">
-                <div><span style="color:var(--turmeric)">①</span> 注文票の指示を1件ずつこなす</div>
-                <div><span style="color:var(--turmeric)">②</span> 3件そろうと弁当が完成 → <b>配達！</b> 倍率アップ</div>
-                <div><span style="color:var(--turmeric)">③</span> 迷ったら AI「<b>ダッバーの目</b>」に置き場所を聞く</div>
+                <div><span style="color:var(--turmeric)">①</span> 持ち時間は<b>90秒</b>。ゼロで終わり</div>
+                <div><span style="color:var(--turmeric)">②</span> 注文2件のうち<b>間に合う方</b>をこなす（<b style="color:#7ee0a1">+3秒</b> / 落とすと <b style="color:#ff8a8a">−5秒</b>）</div>
+                <div><span style="color:var(--turmeric)">③</span> 2件そろえば<b>配達！ +15秒</b></div>
+                <div><span style="color:var(--turmeric)">④</span> 詰んだら AI「<b>ダッバーの目</b>」に聞く（<b style="color:#ff8a8a">−3秒</b>）</div>
+            </div>
+            <div class="text-[11px] mb-4 px-2 py-2 rounded" style="background:rgba(194,65,12,.18);border:1px solid rgba(194,65,12,.5);color:#f3d3c0">
+                ⚡ 道中は<b>ムンバイの災難</b>が邪魔をする。予告は1.5秒前。
             </div>
 
             <input id="player-name" maxlength="10" placeholder="配達人の名前"
@@ -587,14 +737,14 @@
                 <div class="text-2xl text-center" id="report-stars" style="color:#c2410c">☆☆☆</div>
                 <hr class="my-2 border-[#a1662f]/30">
                 <div class="text-[12px] space-y-0.5">
-                    <div class="flex justify-between"><span>お届け（消去ライン）</span><b id="st-lines">0</b></div>
+                    <div class="flex justify-between"><span>走った時間</span><b id="st-time">0秒</b></div>
                     <div class="flex justify-between"><span>配達完了</span><b id="st-deliv">0</b></div>
                     <div class="flex justify-between"><span>こなした注文</span><b id="st-orders">0</b></div>
+                    <div class="flex justify-between"><span>落とした注文</span><b id="st-failed">0</b></div>
+                    <div class="flex justify-between"><span>お届け（消去ライン）</span><b id="st-lines">0</b></div>
                     <div class="flex justify-between"><span>ヒント使用</span><b id="st-hints">0</b></div>
                     <hr class="my-1 border-[#a1662f]/30">
-                    <div class="flex justify-between"><span>素点</span><b id="st-raw">0</b></div>
-                    <div class="flex justify-between"><span>手仕事ボーナス</span><b id="st-hw">×1.5</b></div>
-                    <div class="flex justify-between text-base"><span class="font-bold">最終スコア</span><b id="st-final" style="color:#c2410c">0</b></div>
+                    <div class="flex justify-between text-base"><span class="font-bold">スコア</span><b id="st-final" style="color:#c2410c">0</b></div>
                 </div>
             </div>
 
@@ -844,6 +994,38 @@
                 [12, 9, 5, 0].forEach((s, i) => this.pluck(this.hz(s), t + i * 0.19, 1.1, 0.19));
                 this.tabla(true, t + 0.76, 0.22);
             },
+            // 時間を得た / 失った
+            sGain() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.tone(760, 'sine', 0.08, 0.10, t);
+                this.tone(1140, 'sine', 0.13, 0.09, t + 0.05);
+            },
+            sLose() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.tone(330, 'sawtooth', 0.14, 0.10, t);
+                this.tone(190, 'sawtooth', 0.20, 0.10, t + 0.08);
+            },
+            // 災難の予告 (不穏なブザー)
+            sWarn() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                for (let i = 0; i < 2; i++) this.tone(440, 'square', 0.10, 0.07, t + i * 0.18);
+            },
+            sGarbage() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.noise(0.22, 0.20, 320, 1.2, t);
+                this.tabla(true, t, 0.22);
+            },
+            sFail() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.tone(300, 'square', 0.10, 0.09, t);
+                this.tone(210, 'square', 0.16, 0.09, t + 0.09);
+                this.noise(0.14, 0.12, 700, 1.5, t);
+            },
 
             /* ---- BGM: 穏やかなラーガ (ドローン + 5音音階) ---- */
             startBGM() {
@@ -868,7 +1050,10 @@
             },
             _schedule() {
                 if (!this.ctx) return;
-                const step = 0.214;   // 約 84BPM の8分
+                // 残り10秒でテンポを上げる (約84BPM → 約118BPM)
+                const hurry = typeof Game !== 'undefined' && Game.state === 'playing'
+                    && Game.timeLeft <= DANGER_MS;
+                const step = hurry ? 0.152 : 0.214;
                 // メロディ: 5音音階 (C D E G A) を漂わせるだけの穏やかなフレーズ
                 const PHRASE = [0, null, 2, null, 4, null, 2, null, 9, null, 7, null, 4, null, 2, null];
                 while (this.nextTime < this.ctx.currentTime + 0.2) {
@@ -888,8 +1073,38 @@
         /* =========================================================================
            3. 盤面ユーティリティ
            ========================================================================= */
+        const rand = (a, b) => a + Math.random() * (b - a);
+
         function emptyGrid() {
             return Array.from({ length: ROWS }, () => new Array(COLS).fill(null));
+        }
+
+        /* 秒の増減をタイマーへ飛ばす。
+           何で得して何で損したかが一目で分かることが、この設計では最重要。 */
+        function floatTime(ms, label) {
+            const layer = document.getElementById('time-floats');
+            if (!layer) return;
+            const el = document.createElement('div');
+            const sec = ms / 1000;
+            el.className = 'tfloat ' + (ms > 0 ? 'plus' : 'minus');
+            el.textContent = (ms > 0 ? '+' : '') + sec.toFixed(0) + 's' + (label ? ' ' + label : '');
+            layer.appendChild(el);
+            setTimeout(() => el.remove(), 1100);
+            const t = document.getElementById('timer');
+            if (t && ms > 0) { t.classList.add('gain'); setTimeout(() => t.classList.remove('gain'), 380); }
+        }
+
+        function showDisaster(d, kind) {
+            const el = document.getElementById('disaster-banner');
+            if (!el) return;
+            el.className = 'show ' + kind;
+            el.innerHTML = (kind === 'warn' ? '⚠ ' : '') + esc(d.name)
+                + '<span class="sub">' + esc(kind === 'warn' ? 'まもなく…' : d.desc) + '</span>';
+            if (kind !== 'warn') setTimeout(() => hideDisaster(), 1400);
+        }
+        function hideDisaster() {
+            const el = document.getElementById('disaster-banner');
+            if (el) el.className = '';
         }
         function cellsOf(type, rot) { return SHAPES[type][rot & 3]; }
 
@@ -929,109 +1144,146 @@
         function maxHeight(grid) { return Math.max(...colHeights(grid)); }
 
         /* =========================================================================
-           4. 注文 (オーダー) — 本作で唯一の一捻り
+           4. 注文 (オーダー) — 常に2件。制限時間つき。落とすと罰。
+           v1 は「1件・無制限・罰なし」で、これが作業感の元凶だった。
+           2件並べると「間に合う方を取り、片方を捨てる」判断が毎秒発生する。
            ========================================================================= */
-        // test(e) は 加算数 / 'reset' を返す。e はピース設置1回ぶんの結果。
+        // test(e) は加算数を返す。e はピース設置1回ぶんの結果。
         const ORDERS = [
             {
-                id: 'double', name: '二段弁当', desc: '2ライン同時消し', need: 1,
+                id: 'double', name: '二段弁当', desc: '2ライン同時消し', need: 1, limit: 18000,
                 test: e => e.lines === 2 ? 1 : 0
             },
             {
-                id: 'triple', name: '三段ティフィン', desc: '3ライン同時消し', need: 1,
+                id: 'triple', name: '大盛り', desc: '3ライン以上まとめて', need: 1, limit: 20000,
                 test: e => e.lines >= 3 ? 1 : 0, needsRoom: true
             },
             {
-                id: 'express', name: '特急便', desc: '20秒以内にライン消去3回', need: 3, limit: 20000,
+                // v1 の「20秒以内に3回」は注文自体の制限時間と二重で分かりにくかった。
+                // 制限時間そのものを短くして「急かされている」ことを表現する。
+                id: 'express', name: '特急便', desc: 'ライン消去2回', need: 2, limit: 12000,
                 test: e => e.lines > 0 ? 1 : 0
             },
             {
-                id: 'edge', name: '右端まで配達', desc: '右端の列を使ってライン消去', need: 2,
-                test: e => (e.lines > 0 && e.touchedRight) ? 1 : 0
-            },
-            {
-                id: 'neat', name: 'きれいに詰めて', desc: '穴を作らずに6ピース設置', need: 6,
-                test: e => e.holesAdded > 0 ? 'reset' : 1
-            },
-            {
-                // T-spin 一発でも達成できるが、それが出来なくても T ミノを使えば進む。
-                // 「上級者へのご褒美」を、初心者の詰まりどころにしないための二段構え。
-                id: 'tspin', name: 'マサラ増し', desc: 'Tミノでライン消去×2（T-spinなら一発）', need: 2,
-                test: e => e.tspin ? 2 : (e.lines > 0 && e.type === 'T') ? 1 : 0
-            },
-            {
-                id: 'ren', name: 'おかわり', desc: '2連続でライン消去', need: 1,
+                id: 'ren', name: 'おかわり', desc: '2連続でライン消去', need: 1, limit: 16000,
                 test: e => (e.lines > 0 && e.ren >= 1) ? 1 : 0
+            },
+            {
+                id: 'edge', name: '端まで配達', desc: '左右どちらかの端を使って消す', need: 1, limit: 16000,
+                test: e => (e.lines > 0 && e.touchedEdge) ? 1 : 0
+            },
+            {
+                id: 'tspin', name: 'マサラ増し', desc: 'Tミノでライン消去', need: 1, limit: 16000,
+                test: e => (e.lines > 0 && e.type === 'T') ? 1 : 0
             }
         ];
+        // v1 の「きれいに詰めて(穴を作らず6ピース)」は削除。
+        // 指示に従うだけで判断が無く、作業感の代表格だった。
 
-        const Order = {
-            cur: null, progress: 0, deadline: 0, lastId: null,
+        const SLOTS = 2;
 
-            // 盤面が高いときは難しい注文を出さない (焦らせない設計)
-            pick(grid) {
+        const Orders = {
+            slots: [null, null],   // { def, progress, endAt }
+
+            reset() { this.slots = [null, null]; },
+
+            // 盤面が高いときは「大盛り」を出さない。もう片方と同じ注文も出さない。
+            pick(i, grid) {
                 const room = maxHeight(grid) <= 12;
-                let pool = ORDERS.filter(o => (room || !o.needsRoom) && o.id !== this.lastId);
-                if (!pool.length) pool = ORDERS.filter(o => room || !o.needsRoom);
+                const other = this.slots[1 - i] && this.slots[1 - i].def.id;
+                let pool = ORDERS.filter(o => (room || !o.needsRoom) && o.id !== other);
+                if (!pool.length) pool = ORDERS.filter(o => o.id !== other);
                 if (!pool.length) pool = ORDERS.slice();
-                const o = pool[Math.floor(Math.random() * pool.length)];
-                this.cur = o; this.progress = 0; this.lastId = o.id;
-                this.deadline = o.limit ? performance.now() + o.limit : 0;
-                this.render(true);
+                const def = pool[Math.floor(Math.random() * pool.length)];
+                this.slots[i] = { def, progress: 0, endAt: performance.now() + def.limit };
+                this.render(i, true);
             },
 
-            // 戻り値: 達成したら true
+            fillAll(grid) { for (let i = 0; i < SLOTS; i++) this.pick(i, grid); },
+
+            // 設置1回の結果を両方の注文に照合。達成したスロット番号の配列を返す。
             apply(e) {
-                if (!this.cur) return false;
-                const r = this.cur.test(e);
-                if (r === 'reset') { this.progress = 0; this.render(); return false; }
-                if (r > 0) {
-                    this.progress += r;
-                    if (this.progress >= this.cur.need) return true;
-                    this.render();
-                }
-                return false;
+                const done = [];
+                this.slots.forEach((s, i) => {
+                    if (!s) return;
+                    const r = s.def.test(e);
+                    if (r > 0) {
+                        s.progress += r;
+                        if (s.progress >= s.def.need) done.push(i);
+                        else this.render(i);
+                    }
+                });
+                return done;
             },
 
-            // 制限時間切れは「振り出しに戻るだけ」。ペナルティは無し。
+            // 時間切れのスロット番号を返す（罰は Game 側で与える）。
             tick(now) {
-                if (!this.cur || !this.cur.limit) return;
-                if (now > this.deadline) {
-                    this.progress = 0;
-                    this.deadline = now + this.cur.limit;
-                    this.render();
-                }
-                const left = Math.max(0, (this.deadline - now) / this.cur.limit);
-                document.querySelectorAll('#order-time > i, #order-time-m > i')
-                    .forEach(el => el.style.width = (left * 100) + '%');
+                const expired = [];
+                this.slots.forEach((s, i) => {
+                    if (!s) return;
+                    const left = s.endAt - now;
+                    if (left <= 0) { expired.push(i); return; }
+                    const ratio = Math.max(0, left / s.def.limit);
+                    this.cards(i).forEach(c => {
+                        const bar = c.querySelector('.timebar > i');
+                        if (bar) bar.style.width = (ratio * 100) + '%';
+                        // 残り3秒で赤く点滅 =「捨てる判断」を促す合図
+                        c.classList.toggle('urgent', left < 3000);
+                    });
+                });
+                return expired;
             },
 
-            render(pop) {
-                if (!this.cur) return;
-                const o = this.cur;
-                ['', '-m'].forEach(sfx => {
-                    const nm = document.getElementById('order-name' + sfx);
-                    const ds = document.getElementById('order-desc' + sfx);
-                    const dots = document.getElementById('order-dots' + sfx);
-                    const tm = document.getElementById('order-time' + sfx);
-                    if (!nm) return;
-                    nm.textContent = o.name;
-                    ds.textContent = o.desc;
+            // 該当スロットのカード要素 (PC / モバイルの2枚)
+            cards(i) { return [...document.querySelectorAll('.order-card.slot[data-slot="' + i + '"]')]; },
+
+            render(i, pop) {
+                const s = this.slots[i];
+                this.cards(i).forEach(c => {
+                    const ttl = c.querySelector('.ttl'), dsc = c.querySelector('.dsc');
+                    const dots = c.querySelector('.order-dots');
+                    if (!ttl) return;
+                    if (!s) { ttl.textContent = '—'; dsc.textContent = ''; dots.innerHTML = ''; return; }
+                    ttl.textContent = s.def.name;
+                    dsc.textContent = s.def.desc;
                     dots.innerHTML = '';
-                    for (let i = 0; i < o.need; i++) {
+                    for (let k = 0; k < s.def.need; k++) {
                         const d = document.createElement('div');
-                        d.className = 'odot' + (i < this.progress ? ' on' : '');
+                        d.className = 'odot' + (k < s.progress ? ' on' : '');
                         dots.appendChild(d);
                     }
-                    if (tm) tm.classList.toggle('hide', !o.limit);
+                    c.classList.remove('urgent');
+                    const bar = c.querySelector('.timebar > i');
+                    if (bar) bar.style.width = '100%';
+                    if (pop) { c.classList.remove('order-pop'); void c.offsetWidth; c.classList.add('order-pop'); }
                 });
-                if (pop) {
-                    document.querySelectorAll('#order-card, #order-card-m').forEach(c => {
-                        c.classList.remove('order-pop'); void c.offsetWidth; c.classList.add('order-pop');
-                    });
-                }
+            },
+
+            flashFail(i) {
+                this.cards(i).forEach(c => {
+                    c.classList.remove('order-fail'); void c.offsetWidth; c.classList.add('order-fail');
+                });
             }
         };
+
+        /* =========================================================================
+           4b. ムンバイの災難 — 理不尽さの主成分
+           作法: ①必ず1.5秒前に予告する（回避不可でも備えはできる）
+                 ②5個に1個は良い災難（予告が「当たりか外れか」の賭けになる）
+                 ③即死級を入れない（積み上がって死ぬのは常に自分の手が原因）
+                 ④残り10秒以内は出さない（最後の見せ場を運で潰さない）
+           ========================================================================= */
+        const WARN_MS = 1500;
+        const DISASTER_MIN = 8000, DISASTER_MAX = 14000;
+        const DISASTERS = [
+            { id: 'train', name: '満員電車', desc: 'お邪魔がせり上がる', good: false },
+            { id: 'monsoon', name: 'モンスーン', desc: 'NEXT が見えない', good: false, dur: 4000 },
+            { id: 'cow', name: '牛が道を塞ぐ', desc: '落下速度が2倍', good: false, dur: 5000 },
+            { id: 'mixup', name: '伝票の取り違え', desc: '注文が差し替わる', good: false },
+            { id: 'rush', name: '特急ダイヤ', desc: '消去と獲得秒が2倍！', good: true, dur: 8000 }
+        ];
+        const BAD_DISASTERS = DISASTERS.filter(d => !d.good);
+        const GOOD_DISASTERS = DISASTERS.filter(d => d.good);
 
         /* =========================================================================
            5. ダッバーの目 (ローカル評価AI)
@@ -1107,6 +1359,12 @@
             2: ['悪くない配達だった。もう一段いけたな', 'きちんと届いた。あとは速さだけだ'],
             3: ['見事だ。この路地で一番の手際だった', '完璧な配達だ。おまえに任せてよかった']
         };
+        // 配達1件以下で終わった日。ダッバーワーラーは口を開かない。
+        const LOCAL_SILENT = [
+            'ダッバーワーラーは何も言わず、次の荷を担いだ。',
+            'ダッバーワーラーは伝票を見て、黙って首を振った。',
+            '返事は無い。自転車の音だけが遠ざかっていく。'
+        ];
 
         const Narrator = {
             // ワーカーの /api/deepseek (DeepSeek V4 Flash) を叩く。
@@ -1148,6 +1406,13 @@
                 }
             },
 
+            // 働きが足りない日はローカル文だけ。LLM を呼ばない = 演出でもありコスト対策でもある。
+            silent() {
+                const t = LOCAL_SILENT[Math.floor(Math.random() * LOCAL_SILENT.length)];
+                Game.reportText = t;
+                return t;
+            },
+
             // ② 配達報告書: 星はローカル判定。文章だけ LLM に任せる。
             async report(s) {
                 const el = document.getElementById('report-text');
@@ -1156,9 +1421,10 @@
                 try {
                     const t = await this.ask(
                         'You are a veteran dabbawala (Mumbai lunchbox courier) reviewing an apprentice\'s shift in the puzzle game "Masala Tetris TIFFIN". '
-                        + 'Language: Japanese. Results: '
-                        + `lines cleared ${s.lines}, deliveries completed ${s.deliveries}, orders finished ${s.orders}, `
-                        + `AI hints used ${s.hints}, survived ${Math.round(s.time)} seconds, rating ${s.stars} of 3 stars. `
+                        + 'The shift is a timed 90-second lunch rush. Language: Japanese. Results: '
+                        + `deliveries completed ${s.deliveries}, orders finished ${s.orders}, orders dropped ${s.failed}, `
+                        + `lines cleared ${s.lines}, AI hints used ${s.hints}, lasted ${Math.round(s.time)} seconds, `
+                        + `ended by ${s.reason === '時間切れ' ? 'running out of time' : 'stacking out'}, rating ${s.stars} of 3 stars. `
                         + 'Write a debrief of ONE or TWO short Japanese sentences (max 50 Japanese characters total). '
                         + 'Match the tone to the rating: gruff but encouraging when low, warm praise when high. '
                         + 'Mention one concrete detail from the results. No quotes, no emoji.');
@@ -1324,6 +1590,19 @@
             holdCtx.clearRect(0, 0, holdCv.width, holdCv.height);
             if (Game.hold) drawMini(holdCtx, holdCv, Game.hold, 60, 38, 17);
             nextCtx.clearRect(0, 0, nextCv.width, nextCv.height);
+            // モンスーン: 伝票が滲んで NEXT が読めない
+            if (Game.effects && Game.effects.monsoon) {
+                nextCtx.save();
+                nextCtx.fillStyle = 'rgba(120,150,190,.18)';
+                nextCtx.fillRect(0, 0, nextCv.width, nextCv.height);
+                nextCtx.fillStyle = 'rgba(219,228,238,.75)';
+                nextCtx.font = '13px sans-serif';
+                nextCtx.textAlign = 'center';
+                nextCtx.fillText('雨で', 60, 100);
+                nextCtx.fillText('読めない', 60, 120);
+                nextCtx.restore();
+                return;
+            }
             for (let i = 0; i < 3; i++) {
                 const t = Game.queue[i];
                 if (t) drawMini(nextCtx, nextCv, t, 60, 40 + i * 74, i === 0 ? 18 : 15);
@@ -1333,20 +1612,41 @@
         /* =========================================================================
            8. ゲーム本体
            ========================================================================= */
-        const HANDWORK = [1.5, 1.3, 1.15, 1.0];   // ヒント使用回数 → 手仕事ボーナス
-        const MAX_HINTS = 5;
-        // 1.5 → "1.5" / 1.15 → "1.15" / 1.0 → "1.0"
-        const fmtMul = v => (Math.round(v * 100) % 10 === 0 ? v.toFixed(1) : v.toFixed(2));
+        /* ---- v2 の時間設計 ----
+           初版は「上限99秒」で貯金を防いだつもりだったが、実測で1プレイ288秒になった。
+           上限が縛るのはバッファだけで、セッション長ではなかった。
+           上手い人は注文を2秒に1件こなすので、注文ボーナスだけで +1.5秒/秒 入る。
+           ドレインが一定なら、延長量をいくら削っても腕前次第で無限に伸びてしまう。
+           → 腕前に依存しない収束装置として「昼が迫る」= 時間の減りが加速する を入れる。 */
+        const TIME_START = 90000;   // 持ち時間
+        const TIME_CAP = 75000;     // バッファ上限
+        const TIME_ORDER = 2000;    // 注文1件 達成
+        const TIME_DELIVER = 10000; // 配達完了
+        const TIME_FAIL = -5000;    // 注文を落とした
+        const TIME_HINT = -3000;    // ダッバーの目
+        const TIERS_NEEDED = 2;     // 配達に必要な注文数 (v1 は 3)
+        const DANGER_MS = 10000;    // ここから赤く脈打つ / 災難を出さない
+        const NOON_SCALE = 30000;   // 30秒ごとに時間の減りが +1倍
+        const NOON_MAX = 8;         // 減速倍率の上限
+
+        // 経過時間に応じて時計が速く進む。これがセッション長の唯一の保証。
+        function noonRate(elapsed) {
+            return Math.min(NOON_MAX, 1 + elapsed / NOON_SCALE);
+        }
 
         const Game = {
-            state: 'title',       // title / playing / paused / delivery / over
+            state: 'title',       // title / playing / paused / over
             grid: emptyGrid(),
             cur: null, hold: null, holdUsed: false, queue: [], bag: [],
-            score: 0, lines: 0, deliveries: 0, ordersDone: 0, tiers: 0,
-            mult: 1.0, hints: 3, hintsUsed: 0, hint: null, hintUntil: 0,
+            score: 0, lines: 0, deliveries: 0, ordersDone: 0, ordersFailed: 0, tiers: 0,
+            mult: 1.0, hintsUsed: 0, hint: null, hintUntil: 0,
             ren: -1, lastRotate: false, startTime: 0,
+            timeLeft: TIME_START, elapsed: 0,
             dropInterval: 900, dropAcc: 0, lockTimer: 0, lockResets: 0, onGround: false,
             flashRows: [], flashAlpha: 0, parts: [], reportText: '',
+            // 災難
+            nextDisaster: 0, pendingDisaster: null, warnUntil: 0,
+            effects: {},          // id -> 終了時刻
             lastTime: 0, raf: null,
 
             /* ---- 開始 ---- */
@@ -1354,22 +1654,37 @@
                 this.grid = emptyGrid();
                 this.cur = null; this.hold = null; this.holdUsed = false;
                 this.queue = []; this.bag = [];
-                this.score = 0; this.lines = 0; this.deliveries = 0; this.ordersDone = 0; this.tiers = 0;
-                this.mult = 1.0; this.hints = 3; this.hintsUsed = 0; this.hint = null; this.hintUntil = 0;
+                this.score = 0; this.lines = 0; this.deliveries = 0;
+                this.ordersDone = 0; this.ordersFailed = 0; this.tiers = 0;
+                this.mult = 1.0; this.hintsUsed = 0; this.hint = null; this.hintUntil = 0;
                 this.ren = -1; this.lastRotate = false;
+                this.timeLeft = TIME_START; this.elapsed = 0;
                 this.dropInterval = 900; this.dropAcc = 0;
                 this.lockTimer = 0; this.lockResets = 0; this.onGround = false;
                 this.flashRows = []; this.parts = []; this.reportText = '';
+                this.effects = {}; this.pendingDisaster = null; this.warnUntil = 0;
+                this.nextDisaster = performance.now() + rand(DISASTER_MIN, DISASTER_MAX);
                 this.startTime = performance.now();
                 this.refillQueue();
-                Order.lastId = null;
-                Order.pick(this.grid);
+                Orders.reset();
+                Orders.fillAll(this.grid);
                 this.spawn();
                 this.renderHUD();
+                hideDisaster();
+                cv.classList.remove('danger', 'rush');
                 this.state = 'playing';
                 this.lastTime = performance.now();
                 Sound.startBGM();
                 if (!this.raf) this.raf = requestAnimationFrame(t => this.loop(t));
+            },
+
+            /* ---- 時間の増減。v2 で最も大事な関数 ---- */
+            addTime(ms, label) {
+                if (ms > 0 && this.effects.rush) ms *= 2;   // 特急ダイヤ
+                this.timeLeft = Math.min(TIME_CAP, this.timeLeft + ms);
+                floatTime(ms, label);
+                if (ms > 0) Sound.sGain(); else Sound.sLose();
+                if (this.timeLeft <= 0) { this.timeLeft = 0; this.timeUp(); }
             },
 
             refillQueue() {
@@ -1450,17 +1765,18 @@
                 if (this.onGround && this.lockResets < 15) { this.lockTimer = 0; this.lockResets++; }
             },
 
-            /* ---- ダッバーの目 ---- */
+            /* ---- ダッバーの目 ----
+               v1 はスコア倍率で払わせたが、プレイ中に痛みを感じない対価だった。
+               v2 は一番貴重な「秒」で払わせる。だから回数制限は要らない。 */
             useHint() {
                 if (this.state !== 'playing' || !this.cur) return;
-                if (this.hints <= 0) return;
                 const b = Advisor.best(this.grid, this.cur.type);
                 if (!b) return;
-                this.hints--; this.hintsUsed++;
+                this.hintsUsed++;
                 this.hint = { px: b.px, py: b.py, cells: b.cells };
                 this.hintUntil = performance.now() + 3000;
                 Sound.sHint();
-                this.renderHUD();
+                this.addTime(TIME_HINT, 'ヒント');
             },
 
             /* ---- 設置 ---- */
@@ -1469,12 +1785,12 @@
                 const cells = cellsOf(type, rot);
                 const holesBefore = countHoles(this.grid);
 
-                let touchedRight = false;
+                let touchedEdge = false;
                 for (const [ccx, ccy] of cells) {
                     const x = this.cur.x + ccx, y = this.cur.y + ccy;
                     if (y < 0) { this.gameOver(); return; }
                     this.grid[y][x] = PIECES[type].color;
-                    if (x === COLS - 1) touchedRight = true;
+                    if (x === 0 || x === COLS - 1) touchedEdge = true;
                 }
                 Sound.sLock();
 
@@ -1511,7 +1827,7 @@
                 const ev = {
                     type, lines: full.length, tspin, ren: this.ren,
                     holesAdded: Math.max(0, holesAfter - holesBefore),
-                    touchedRight
+                    touchedEdge
                 };
 
                 // スコア
@@ -1520,6 +1836,7 @@
                     let add = base;
                     if (tspin) add += 400 * full.length;
                     if (this.ren > 0) add += 50 * this.ren;
+                    if (this.effects.rush) add *= 2;          // 特急ダイヤ
                     this.score += Math.round(add * this.mult);
                     this.lines += full.length;
                     if (tspin) this.toast('T-SPIN!');
@@ -1530,53 +1847,138 @@
                 // 盤面を確定
                 this.grid = gridAfter;
 
-                // 注文の判定
-                if (Order.apply(ev)) this.completeOrder();
+                // 注文の判定 (2件とも照合。同時達成もありうる)
+                const done = Orders.apply(ev);
+                for (const i of done) this.completeOrder(i);
 
                 this.holdUsed = false;
                 this.renderHUD();
-                // 配達カットシーン中でも次のピースは用意しておく (落下はループ側で止まる)
                 if (this.state !== 'over') this.spawn();
             },
 
             // T ミノの中心は 3×3 枠の中央で、回転しても変わらない
             _tCenter() { return [1, 1]; },
 
-            completeOrder() {
+            completeOrder(i) {
+                const name = Orders.slots[i] ? Orders.slots[i].def.name : '';
                 this.ordersDone++;
                 this.tiers++;
                 this.score += Math.round(200 * this.mult);
                 Sound.sOrder();
-                this.toast(`注文完了！ ${Order.cur.name}`);
+                this.toast(`注文完了！ ${name}`);
+                this.addTime(TIME_ORDER, name);
+                Orders.pick(i, this.grid);          // すぐ次の注文を補充（間を空けない）
+                if (this.tiers >= TIERS_NEEDED) this.deliver();
                 this.renderHUD();
-                if (this.tiers >= 3) { this.deliver(); }
-                else { Order.pick(this.grid); }
+            },
+
+            // 注文を落とした = v2 の罰。v1 はここが無かったので緊張が生まれなかった。
+            failOrder(i) {
+                const name = Orders.slots[i] ? Orders.slots[i].def.name : '';
+                this.ordersFailed++;
+                this.tiers = 0;                     // 積みかけの弁当が台無しになる
+                this.mult = 1.0;                    // 倍率リセット
+                Orders.flashFail(i);
+                Sound.sFail();
+                this.toast(`落とした… ${name}`);
+                this.addTime(TIME_FAIL, name);
+                this.addGarbageRow();
+                Orders.pick(i, this.grid);
+                this.renderHUD();
             },
 
             deliver() {
                 this.tiers = 0;
                 this.deliveries++;
                 this.mult = Math.round((this.mult + 0.5) * 10) / 10;
-                this.hints = Math.min(MAX_HINTS, this.hints + 1);
                 this.score += Math.round(1000 * this.mult);
-                this.dropInterval = Math.max(110, this.dropInterval - 70);
+                this.dropInterval = Math.max(110, this.dropInterval - 45);
                 Sound.sDeliver();
+                this.addTime(TIME_DELIVER, '配達完了');
 
-                // 1.5秒のカットシーン。この間は落下を止めて一息つかせる。
-                this.state = 'delivery';
+                // v1 は 1.5秒 操作を止めていた。90秒の勝負では致命的なので
+                // 0.5秒・ノンブロッキングにする（プレイは一切止めない）。
                 const cut = document.getElementById('delivery-cut');
                 document.getElementById('cut-sub').textContent =
                     `${this.deliveries}件目 — 倍率 ×${this.mult.toFixed(1)}`;
                 cut.classList.remove('show'); void cut.offsetWidth; cut.classList.add('show');
-                this.renderHUD();
-                setTimeout(() => {
-                    cut.classList.remove('show');
-                    if (this.state === 'delivery') {
-                        this.state = 'playing';
-                        this.lastTime = performance.now();
+                setTimeout(() => cut.classList.remove('show'), 500);
+            },
+
+            // お邪魔を1段せり上げる (満員電車 / 注文を落とした罰)
+            addGarbageRow() {
+                const hole = Math.floor(Math.random() * COLS);
+                const row = new Array(COLS).fill('#6b7280');
+                row[hole] = null;
+                this.grid.shift();
+                this.grid.push(row);
+                // せり上がりで現在のピースが埋まらないよう1段持ち上げる
+                if (this.cur && collides(this.grid, this.cur.type, this.cur.rot, this.cur.x, this.cur.y)) {
+                    this.cur.y--;
+                }
+            },
+
+            /* ---- ムンバイの災難 ---- */
+            scheduleDisaster(now) {
+                this.nextDisaster = now + rand(DISASTER_MIN, DISASTER_MAX);
+            },
+
+            tickDisaster(now) {
+                // 効果の期限切れ
+                for (const k of Object.keys(this.effects)) {
+                    if (now > this.effects[k]) {
+                        delete this.effects[k];
+                        if (k === 'rush') cv.classList.remove('rush');
+                        drawSide();
                     }
-                    Order.pick(this.grid);
-                }, 1500);
+                }
+                // 最後の見せ場を運で潰さない
+                if (this.timeLeft <= DANGER_MS) return;
+
+                if (this.pendingDisaster) {
+                    if (now >= this.warnUntil) {
+                        const d = this.pendingDisaster;
+                        this.pendingDisaster = null;
+                        this.fireDisaster(d);
+                        this.scheduleDisaster(now);
+                    }
+                    return;
+                }
+                if (now >= this.nextDisaster) {
+                    // 5個に1個は良い災難 → 予告が「当たりか外れか」の賭けになる
+                    const good = Math.random() < 0.2;
+                    const pool = good ? GOOD_DISASTERS : BAD_DISASTERS;
+                    this.pendingDisaster = pool[Math.floor(Math.random() * pool.length)];
+                    this.warnUntil = now + WARN_MS;
+                    showDisaster(this.pendingDisaster, 'warn');
+                    Sound.sWarn();
+                }
+            },
+
+            fireDisaster(d) {
+                showDisaster(d, d.good ? 'good' : 'bad');
+                if (d.dur) this.effects[d.id] = performance.now() + d.dur;
+                switch (d.id) {
+                    case 'train':
+                        this.addGarbageRow();
+                        Sound.sGarbage();
+                        break;
+                    case 'mixup': {
+                        // 進行中の注文1件を別物に差し替える
+                        const i = Math.floor(Math.random() * SLOTS);
+                        Orders.flashFail(i);
+                        Orders.pick(i, this.grid);
+                        Sound.sFail();
+                        break;
+                    }
+                    case 'rush':
+                        cv.classList.add('rush');
+                        Sound.sDeliver();
+                        break;
+                    default:
+                        Sound.sGarbage();
+                }
+                if (d.id === 'monsoon') drawSide();
             },
 
             spawnParticles(rows) {
@@ -1609,17 +2011,16 @@
                 document.getElementById('score').textContent = this.score.toLocaleString();
                 document.getElementById('deliveries').textContent = this.deliveries;
                 document.getElementById('mult').textContent = '×' + this.mult.toFixed(1);
-                document.getElementById('tier-count').textContent = `${this.tiers}/3`;
+                document.getElementById('tier-count').textContent = `${this.tiers}/${TIERS_NEEDED}`;
 
                 // ティフィンの段
                 ['tiffin', 'tiffin-m'].forEach(id => {
                     const el = document.getElementById(id);
                     if (!el) return;
                     el.innerHTML = '';
-                    for (let i = 0; i < 3; i++) {
+                    for (let i = 0; i < TIERS_NEEDED; i++) {
                         const d = document.createElement('div');
                         d.className = 'tier' + (i < this.tiers ? ' on' : '');
-                        if (id === 'tiffin-m') { d.style.width = '22px'; d.style.height = '13px'; }
                         el.appendChild(d);
                     }
                     // column-reverse なので、蓋は最後に足すと一番上に来る
@@ -1629,23 +2030,25 @@
                         el.appendChild(lid);
                     }
                 });
+            },
 
-                // ヒント残量
-                const ch = document.getElementById('eye-charges');
-                if (ch) {
-                    ch.innerHTML = '';
-                    for (let i = 0; i < MAX_HINTS; i++) {
-                        const d = document.createElement('div');
-                        d.className = 'charge' + (i < this.hints ? ' on' : '');
-                        ch.appendChild(d);
-                    }
+            renderTimer() {
+                const el = document.getElementById('timer');
+                if (!el) return;
+                const s = Math.ceil(this.timeLeft / 1000);
+                el.firstChild.nodeValue = String(s);
+                const danger = this.timeLeft <= DANGER_MS && this.state === 'playing';
+                el.classList.toggle('danger', danger);
+                cv.classList.toggle('danger', danger);
+
+                const rate = noonRate(this.elapsed);
+                const nr = document.getElementById('noon-rate');
+                if (nr) nr.textContent = '×' + rate.toFixed(1);
+                const nb = document.getElementById('noon');
+                if (nb) {
+                    nb.classList.toggle('hot', rate >= 2 && rate < 4);
+                    nb.classList.toggle('blaze', rate >= 4);
                 }
-                const hw = HANDWORK[Math.min(this.hintsUsed, HANDWORK.length - 1)];
-                const hwEl = document.getElementById('handwork');
-                if (hwEl) hwEl.textContent = '×' + fmtMul(hw);
-                const dis = this.hints <= 0;
-                const eb = document.getElementById('eye-btn'); if (eb) eb.disabled = dis;
-                const em = document.getElementById('btn-eye'); if (em) em.disabled = dis;
             },
 
             /* ---- ループ ---- */
@@ -1666,13 +2069,25 @@
                 }
 
                 if (this.state === 'playing') {
-                    Order.tick(t);
+                    // 持ち時間が減り続ける。これが v2 の背骨。
+                    // 昼が迫るほど時計は速く進む = 腕前に関わらずいつか必ず終わる。
+                    this.timeLeft -= dt * noonRate(this.elapsed);
+                    this.elapsed += dt;
+                    if (this.timeLeft <= 0) { this.timeLeft = 0; this.renderTimer(); this.timeUp(); return; }
+                    this.renderTimer();
+
+                    // 注文の時間切れ = 罰
+                    for (const i of Orders.tick(t)) this.failOrder(i);
+                    if (this.state !== 'playing') return;
+
+                    this.tickDisaster(t);
                     if (this.hint && t > this.hintUntil) this.hint = null;
                     this.handleAutoRepeat(t);
 
-                    // 重力
+                    // 重力（牛が道を塞ぐ = 2倍速）
+                    const interval = this.effects.cow ? this.dropInterval / 2 : this.dropInterval;
                     this.dropAcc += dt;
-                    if (this.dropAcc >= this.dropInterval) {
+                    if (this.dropAcc >= interval) {
                         this.dropAcc = 0;
                         if (!collides(this.grid, this.cur.type, this.cur.rot, this.cur.x, this.cur.y + 1)) {
                             this.cur.y++; this.lastRotate = false;
@@ -1706,40 +2121,56 @@
             },
 
             /* ---- 終了 ---- */
-            gameOver() {
+            timeUp() { this.finish('時間切れ'); },
+            gameOver() { this.finish('積み上がり'); },
+
+            finish(reason) {
                 if (this.state === 'over') return;
                 this.state = 'over';
                 Sound.stopBGM();
                 Sound.sOver();
+                hideDisaster();
+                cv.classList.remove('danger', 'rush');
+                document.getElementById('timer').classList.remove('danger');
 
-                const hw = HANDWORK[Math.min(this.hintsUsed, HANDWORK.length - 1)];
-                const raw = this.score;
-                const final = Math.floor(raw * hw);
-                const stars = this.deliveries >= 6 ? 3 : this.deliveries >= 3 ? 2 : 1;
-                this.finalScore = final;
+                const secs = Math.round(this.elapsed / 1000);
+                const stars = this.deliveries >= 5 ? 3 : this.deliveries >= 2 ? 2 : 1;
+                this.finalScore = this.score;
                 this.stars = stars;
+                this.endReason = reason;
 
-                document.getElementById('st-lines').textContent = this.lines;
+                const best = bestScore();
+                const isBest = this.score > best;
+
+                document.getElementById('st-time').textContent = secs + '秒';
                 document.getElementById('st-deliv').textContent = this.deliveries;
                 document.getElementById('st-orders').textContent = this.ordersDone;
+                document.getElementById('st-failed').textContent = this.ordersFailed;
+                document.getElementById('st-lines').textContent = this.lines;
                 document.getElementById('st-hints').textContent = this.hintsUsed;
-                document.getElementById('st-raw').textContent = raw.toLocaleString();
-                document.getElementById('st-hw').textContent = '×' + fmtMul(hw);
-                document.getElementById('st-final').textContent = final.toLocaleString();
+                document.getElementById('st-final').textContent = this.score.toLocaleString();
                 document.getElementById('report-stars').textContent =
                     '★'.repeat(stars) + '☆'.repeat(3 - stars);
                 document.getElementById('report-stamp').textContent =
-                    stars === 3 ? '完璧' : stars === 2 ? '良好' : '要精進';
+                    isBest ? '自己ベスト' : reason;
                 const rt = document.getElementById('report-text');
-                rt.textContent = '集計中'; rt.classList.add('thinking');
 
-                saveScore(final, stars, this.deliveries);
+                saveScore(this.score, stars, this.deliveries);
                 document.getElementById('over-overlay').classList.remove('hide');
 
-                Narrator.report({
-                    lines: this.lines, deliveries: this.deliveries, orders: this.ordersDone,
-                    hints: this.hintsUsed, time: (performance.now() - this.startTime) / 1000, stars
-                });
+                // LLM は「ちゃんと働いた日」だけ。短いプレイを繰り返す設計なので、
+                // 毎回叩くと呼び出しがプレイ回数に比例して膨らむ。
+                if (this.deliveries >= 2 || isBest) {
+                    rt.textContent = '集計中'; rt.classList.add('thinking');
+                    Narrator.report({
+                        lines: this.lines, deliveries: this.deliveries, orders: this.ordersDone,
+                        failed: this.ordersFailed, hints: this.hintsUsed, time: secs, stars, reason
+                    });
+                } else {
+                    rt.classList.remove('thinking');
+                    rt.textContent = Narrator.silent();
+                    this.reportText = rt.textContent;
+                }
             },
 
             pause() {
@@ -1762,6 +2193,13 @@
            ========================================================================= */
         const esc = s => String(s).replace(/[&<>"']/g, m =>
             ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+        function bestScore() {
+            try {
+                const r = JSON.parse(localStorage.getItem('tiffinRankings')) || [];
+                return r.length ? Math.max(...r.map(x => x.score || 0)) : 0;
+            } catch (e) { return 0; }
+        }
 
         function saveScore(score, stars, deliveries) {
             const name = (document.getElementById('player-name').value || '').trim() || '名無しの配達人';
@@ -1787,7 +2225,8 @@
 
         function shareText() {
             const t = Game.reportText ? `「${Game.reportText}」` : '';
-            return `マサラテトリス TIFFIN\n最終スコア ${(Game.finalScore || 0).toLocaleString()} / 配達 ${Game.deliveries}件 ${'★'.repeat(Game.stars || 1)}\nダッバーワーラーの講評: ${t}`;
+            const secs = Math.round((Game.elapsed || 0) / 1000);
+            return `マサラテトリス TIFFIN（90秒の配達ラッシュ）\n${secs}秒走って 配達${Game.deliveries}件 / ${(Game.finalScore || 0).toLocaleString()}点 ${'★'.repeat(Game.stars || 1)}\nダッバーワーラー: ${t}`;
         }
         document.getElementById('share-x').addEventListener('click', () => {
             const url = 'https://tk.st/game/masala-tetris-tiffin/';
@@ -1909,8 +2348,9 @@
         (function boot() {
             document.getElementById('player-name').value = localStorage.getItem('tiffinName') || '';
             renderRanking();
-            Order.cur = ORDERS[0]; Order.render();
+            Orders.reset(); Orders.render(0); Orders.render(1);
             Game.renderHUD();
+            Game.renderTimer();
             layout();
             Narrator.daily();
             // タイトル中も背景で盤面を描いておく
