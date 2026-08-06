@@ -849,12 +849,19 @@ async function sendToGemini() {
 ${floorInfo}
 ---`;
 
+    /* やりとりは prompt の本文に埋める。ワーカーは messages（role つきの会話履歴）
+       も受ける作りになっているが、本番に出ているビルドはまだそれを見ておらず、
+       渡しても丸ごと捨てられて「さっき言ったことを覚えていない」状態になる。
+       本文に書けばどちらのビルドでも効く。 */
+    const hist = geminiHistory.slice(-12)
+      .map(m => (m.role === 'user' ? 'USER: ' : 'AI: ') + m.content).join('\n');
+
     const payload = {
       system: sysPrompt,
-      messages: [
-        ...geminiHistory,
-        { role: "user", content: userText }
-      ],
+      prompt: (hist
+        ? `[これまでのやりとり。この続きとして応答し、ここに出てくる固有名詞・数字・約束は必ずそのまま覚えていること]\n${hist}\n\n`
+        : '')
+        + `[USER の新しい発言]\n${userText}`,
       maxTokens: 500
     };
 
@@ -877,8 +884,10 @@ ${floorInfo}
 
     appendChatLog("AI", aiText);
     
-    geminiHistory.push({ role: "user", content: userText });
-    geminiHistory.push({ role: "assistant", content: aiText });
+    geminiHistory.push({ role: "user", content: userText.slice(0, 300) });
+    geminiHistory.push({ role: "assistant", content: aiText.slice(0, 300) });
+    // 際限なく伸びるとプロンプトが膨らむので直近だけ残す
+    if (geminiHistory.length > 20) geminiHistory.splice(0, geminiHistory.length - 20);
 
   } catch (error) {
     console.error("AI API Error:", error);
