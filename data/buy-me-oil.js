@@ -143,11 +143,11 @@ class DonationWidget {
                 -->
                 <path d="M192 122C244 156 252 204 216 220C188 232 176 244 176 258"
                       stroke="#5E5E5E" stroke-width="17" stroke-linecap="round"/>
-                <!-- ノズルの注ぎ口 -->
-                <path d="M230 80L258 46" stroke="#5E5E5E" stroke-width="18" stroke-linecap="round"/>
-                <!-- ノズル本体 -->
+                <!-- ノズルの注ぎ口。取っ手と同じ -50° の軸に乗せて、折れ曲がって見えないようにする -->
+                <path d="M230 80L258.3 46.3" stroke="#5E5E5E" stroke-width="18" stroke-linecap="round"/>
+                <!-- ノズル本体（取っ手）。注ぎ口と平行の -50° -->
                 <rect x="-31" y="-23" width="62" height="46" rx="15"
-                      transform="translate(212 98) rotate(-38)" fill="#EF4B3C"/>
+                      transform="translate(212 98) rotate(-50)" fill="#EF4B3C"/>
                 <!--
                   ノズルホルダー。本体の外側に取り付く部品なので、本体より先に描いて
                   右端(x=176)から外へ出た部分だけを見せる。本体側には食い込ませない。
@@ -182,9 +182,15 @@ class DonationWidget {
             */
             @keyframes donationFuelShake {
                 /* 静止 */
-                0%, 67%  { transform: translateY(0)       scale(1);    }
-                /* 拡大（この間は縦に動かさない）: 0.13秒 */
-                69.6%    { transform: translateY(0)       scale(1.15); }
+                0%, 67%  {
+                    transform: translateY(0) scale(1);
+                    filter: drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06));
+                }
+                /* 拡大（この間は縦に動かさない）: 0.13秒。影を伸ばして浮き上がらせる */
+                69.6%    {
+                    transform: translateY(0) scale(1.15);
+                    filter: drop-shadow(0 12px 10px rgba(0,0,0,0.18)) drop-shadow(0 5px 5px rgba(0,0,0,0.12));
+                }
                 /* 溜め: 0.1秒。同じ値を置いて静止させる */
                 71.6%    { transform: translateY(0)       scale(1.15); }
                 /* 縦揺れ（拡大したまま減衰）: 1コマ 0.104秒 */
@@ -199,13 +205,21 @@ class DonationWidget {
                 90.32%   { transform: translateY(-0.75%)  scale(1.15); }
                 /* 収束（揺れが止まる。まだ拡大したまま） */
                 92.4%    { transform: translateY(0)       scale(1.15); }
-                /* 余韻: 0.1秒。縮小前にもう一拍置く */
-                94.4%    { transform: translateY(0)       scale(1.15); }
-                /* 縮小: 0.28秒 */
-                100%     { transform: translateY(0)       scale(1);    }
+                /* 余韻: 0.1秒。縮小前にもう一拍置く。ここまで浮いた影を保つ */
+                94.4%    {
+                    transform: translateY(0) scale(1.15);
+                    filter: drop-shadow(0 12px 10px rgba(0,0,0,0.18)) drop-shadow(0 5px 5px rgba(0,0,0,0.12));
+                }
+                /* 縮小: 0.28秒。影も静止時の高さに戻す */
+                100%     {
+                    transform: translateY(0) scale(1);
+                    filter: drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06));
+                }
             }
             .donation-animate-fuel-shake {
                 transform-origin: center center;
+                /* 静止時の影。拡大中はキーフレーム側でこれを強めて浮き上がらせる */
+                filter: drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06));
             }
             /*
               周期は5秒、動く区間はそのうち 1.65 秒(=33%)。内訳は
@@ -265,7 +279,7 @@ class DonationWidget {
                 width: 32px;
                 height: 32px;
                 outline: none;
-                filter: drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06));
+                /* 影は拡大に連動させたいので、アニメーション対象の内側の要素に持たせている */
             }
             .donation-widget-button:focus-visible {
                 box-shadow: 0 0 0 3px #fff, 0 0 0 5px #2563eb;
