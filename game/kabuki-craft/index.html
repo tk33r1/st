@@ -79,6 +79,7 @@
   #clock .time{font-size:24px;font-weight:700;letter-spacing:.06em;font-variant-numeric:tabular-nums}
   #clock .day{font-size:10px;opacity:.6;letter-spacing:.16em}
   #clock .zone{margin-top:6px;font-size:13px;font-weight:600;color:var(--cyan)}
+  #clock .st{font-size:10px;opacity:.55;letter-spacing:.06em;margin-top:1px;min-height:13px}
   #clock .own{font-size:10px;opacity:.75;margin-top:2px}
   #mute{position:absolute;top:146px;right:12px;width:36px;height:36px;border-radius:10px;padding:0;
     pointer-events:auto;cursor:pointer;color:#f2eefc;font:inherit;font-size:15px;line-height:1;
@@ -182,23 +183,61 @@
 
   /* ---------- オーバーレイ ---------- */
   .over{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 50% 30%,#1a0a20,#05040a 70%);padding:20px;overflow:auto}
-  .over .box{max-width:600px;width:100%;text-align:center}
+    background:radial-gradient(circle at 50% 26%,#1e0b26,#05040a 68%);padding:20px;overflow:auto}
+  /* 奥に薄いボクセル格子。この街が全部ブロックであることを開始画面から見せる */
+  .over::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);
+    background-size:36px 36px;
+    -webkit-mask-image:radial-gradient(circle at 50% 36%,#000 8%,transparent 74%);
+    mask-image:radial-gradient(circle at 50% 36%,#000 8%,transparent 74%)}
+  .over::after{content:"";position:absolute;left:0;right:0;bottom:0;height:140px;pointer-events:none;
+    background:linear-gradient(0deg,rgba(255,45,120,.16),transparent)}
+  .over .box{max-width:600px;width:100%;text-align:center;position:relative;z-index:1}
   .over h1{font-size:clamp(28px,7vw,46px);margin:0 0 4px;letter-spacing:.1em;font-weight:800;
     background:linear-gradient(180deg,#fff,var(--pink));-webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;filter:drop-shadow(0 0 24px rgba(255,45,120,.45))}
   .over h2{font-size:11px;letter-spacing:.5em;opacity:.5;margin:0 0 22px;font-weight:400}
   .over p{font-size:13px;line-height:1.85;opacity:.8;margin:0 0 14px}
-  .over .r18{display:inline-block;border:2px solid var(--red);color:var(--red);border-radius:8px;
+  .over .r18{display:inline-block;border:2px solid var(--red);color:var(--red);border-radius:6px;
     padding:5px 12px;font-weight:800;letter-spacing:.14em;font-size:13px;margin-bottom:16px}
-  .over .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
-  .over button{font:inherit;font-size:14px;font-weight:700;padding:12px 26px;border-radius:10px;
-    cursor:pointer;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff}
-  .over button.go{background:linear-gradient(135deg,var(--pink),var(--purple));border:0}
-  .over .keys{margin-top:22px;font-size:11px;opacity:.62;line-height:1.95;text-align:left;
-    display:grid;grid-template-columns:auto 1fr;gap:2px 14px}
-  .over .keys b{color:var(--cyan);font-weight:600;text-align:right;white-space:nowrap}
+  .over .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  /* ボタンは「置いたブロック」。上に光、下に厚み */
+  .over button{font:inherit;font-size:14px;font-weight:700;padding:12px 26px;border-radius:5px;
+    cursor:pointer;border:0;letter-spacing:.06em;color:#fff;
+    background:linear-gradient(180deg,#3a3348,#221d2e);
+    box-shadow:inset 0 2px rgba(255,255,255,.20),inset 0 -3px rgba(0,0,0,.35),0 5px 0 #14101c;
+    transition:transform .06s,box-shadow .06s}
+  .over button.go{background:linear-gradient(180deg,#ff4f8f,#c31f68);
+    box-shadow:inset 0 2px rgba(255,255,255,.42),inset 0 -3px rgba(0,0,0,.32),0 5px 0 #6d0f39,
+      0 12px 30px rgba(255,45,120,.32)}
+  .over button:active{transform:translateY(4px);box-shadow:inset 0 2px rgba(255,255,255,.2),inset 0 -3px rgba(0,0,0,.35)}
+  .over .keys{margin-top:22px;font-size:11px;opacity:.72;line-height:2.1;text-align:left;
+    display:grid;grid-template-columns:auto 1fr;gap:3px 14px}
+  /* キーは掘る道具。ブロック状のキーキャップに */
+  .over .keys b{color:var(--cyan);font-weight:700;white-space:nowrap;justify-self:end;
+    padding:1px 8px;border-radius:4px;background:rgba(22,224,255,.10);
+    box-shadow:inset 0 1px rgba(255,255,255,.22),inset 0 -2px rgba(0,0,0,.4),0 2px 0 rgba(22,224,255,.22)}
   .over .note{font-size:10.5px;opacity:.42;line-height:1.7;margin-top:18px}
+
+  /* ---------- 開始画面のブロック演出 ---------- */
+  .cubes{display:flex;justify-content:center;align-items:flex-end;gap:12px;height:78px;margin-bottom:6px}
+  .cube3{position:relative;width:52px;height:60px;animation:bob 2.6s ease-in-out infinite}
+  .cube3 i{position:absolute;inset:0;display:block;background:var(--c)}
+  .cube3 .tp{clip-path:polygon(50% 0,100% 25%,50% 50%,0 25%);filter:brightness(1.35)}
+  .cube3 .lf{clip-path:polygon(0 25%,50% 50%,50% 100%,0 75%);filter:brightness(.55)}
+  .cube3 .rt{clip-path:polygon(50% 50%,100% 25%,100% 75%,50% 100%);filter:brightness(.85)}
+  @keyframes bob{0%,100%{transform:translateY(4px)}50%{transform:translateY(-8px)}}
+  .picks{margin:18px 0 2px}
+  .picks .cap{font-size:9.5px;letter-spacing:.22em;opacity:.42;margin-bottom:8px}
+  .picks .row{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
+  .picks .bs{display:flex;align-items:center;gap:6px;font-size:10.5px;padding:4px 9px 4px 6px;
+    border-radius:4px;background:rgba(255,255,255,.045);
+    box-shadow:inset 0 1px rgba(255,255,255,.10),inset 0 -2px rgba(0,0,0,.35)}
+  .picks .bs i{width:13px;height:13px;border-radius:2px;flex:none;
+    box-shadow:inset 0 2px rgba(255,255,255,.35),inset 0 -3px rgba(0,0,0,.4)}
+  .picks .bs b{font-weight:600;opacity:.85}
+  .picks .bs em{font-style:normal;color:var(--gold);opacity:.8;font-variant-numeric:tabular-nums}
 
   /* ---------- マップ ---------- */
   #map{position:fixed;inset:0;z-index:50;background:rgba(4,3,9,.9);display:none;
@@ -273,6 +312,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="time" id="c-time">20:00</div>
     <div class="day" id="c-day">1 日目</div>
     <div class="zone" id="c-zone">一番街</div>
+    <div class="st" id="c-st">靖国通り</div>
     <div class="own" id="c-own">支配: 紅蓮会</div>
   </div>
   <button id="mute" class="card" type="button" title="音を消す (N)" aria-label="音を消す">♪</button>
@@ -332,11 +372,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div class="over" id="title" style="display:none">
   <div class="box">
+    <div class="cubes" id="t-cubes"></div>
     <h1>歌舞伎クラフト</h1>
     <h2>K A B U K I &nbsp; C R A F T</h2>
     <p>この街は全部ブロックでできている。<br>
       アスファルトも、ビルも、ネオンも、<b style="color:var(--cyan)">全部掘れる</b>。<br>
       掘って、売って、買って、9つのシマを獲れ。</p>
+    <div class="picks">
+      <div class="cap">掘って売れるブロック（1個あたりの値）</div>
+      <div class="row" id="t-blocks"></div>
+    </div>
     <div class="keys">
       <b>W A S D</b><span>移動（W が前）/ Shift で走る</span>
       <b>Space</b><span>ジャンプ</span>
@@ -392,7 +437,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
    ========================================================================= */
 
 const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
-const SAVE_KEY = 'kabukiCraft.v1';
+const SAVE_KEY = 'kabukiCraft.v2';   // v2 で街の形が変わった。v1 のセーブは読まない
 
 /* ============================================================================
    0. 小物
@@ -520,17 +565,48 @@ function groundTop(x, z) {
 
 // 街路: PITCH ごとに ROAD 幅の道路、残りが街区
 const PITCH = 16, ROAD = 5, GRID = 9;            // 9*16 = 144
-const isRoadCell = (x, z) => (x % PITCH) < ROAD || (z % PITCH) < ROAD;
+/* 実在の歌舞伎町に合わせて向きを決める。x は東、z は南（z=0 が北）。
+   格子はそのままに、主要な通りだけ幅を広げて名前を持たせている。
+     z=0-4     職安通り（北の境）      z=48-52   花道通り
+     z=96-100  さくら通り             z=126-134 靖国通り（南の大通り）
+     x=61-71   セントラルロード（シネシティ広場へ突き当たる）
+     x=80-84   一番街（南端にアーチ）  x=96-100  区役所通り   x=112-116 東通り  */
+const YASUKUNI = [126, 134], CENTRAL = [61, 71], CENTRAL_Z = 50;
+const isWideAve = (x, z) =>
+  (z >= YASUKUNI[0] && z <= YASUKUNI[1]) ||
+  (x >= CENTRAL[0] && x <= CENTRAL[1] && z >= CENTRAL_Z);
+const isRoadCell = (x, z) => (x % PITCH) < ROAD || (z % PITCH) < ROAD || isWideAve(x, z);
 const zoneOf = (x, z) => {
   const i = clamp(Math.floor(x / PITCH), 0, GRID - 1), j = clamp(Math.floor(z / PITCH), 0, GRID - 1);
   return clamp(Math.floor(j / 3), 0, 2) * 3 + clamp(Math.floor(i / 3), 0, 2);
 };
 
+// 3×3 のシマ。並びは実際の位置どおり（上が北、右が東）
 const ZONES = [
-  { name: '一番街' }, { name: 'さくら通り' }, { name: '区役所通り' },
-  { name: '花道通り' }, { name: '風林会館前' }, { name: '東通り' },
-  { name: 'ゴールデン街' }, { name: '大久保公園' }, { name: '西武新宿駅前' }
+  { name: '大久保公園' }, { name: '職安通り' }, { name: '東通り' },
+  { name: '花道通り' }, { name: 'シネシティ広場' }, { name: '風林会館前' },
+  { name: '西武新宿駅前' }, { name: '一番街' }, { name: 'ゴールデン街' }
 ];
+const Z_PARK = 0, Z_CINE = 4, Z_STATION = 6, Z_ICHIBAN = 7, Z_GOLDEN = 8;
+// いま立っている通りの名前。交差点は大きい通りを先に返す
+const STREETS = [
+  { n: '靖国通り', x0: 0, x1: 143, z0: 126, z1: 134 },
+  { n: '職安通り', x0: 0, x1: 143, z0: 0, z1: 4 },
+  { n: '花道通り', x0: 0, x1: 143, z0: 48, z1: 52 },
+  { n: 'さくら通り', x0: 0, x1: 143, z0: 96, z1: 100 },
+  { n: 'セントラルロード', x0: 61, x1: 71, z0: 50, z1: 125 },
+  { n: '一番街', x0: 80, x1: 84, z0: 48, z1: 125 },
+  { n: '区役所通り', x0: 96, x1: 100, z0: 5, z1: 125 },
+  { n: '東通り', x0: 112, x1: 116, z0: 5, z1: 125 }
+];
+function streetOf(x, z) {
+  for (const s of STREETS) if (x >= s.x0 && x <= s.x1 && z >= s.z0 && z <= s.z1) return s.n;
+  return '';
+}
+const onMainStreet = (x, z) => {
+  const s = streetOf(x, z);
+  return s === '一番街' || s === 'セントラルロード' || s === '区役所通り' || s === '花道通り';
+};
 const FACTIONS = {
   player: { name: 'あなた', css: '#39ff88' },
   guren: { name: '紅蓮会', css: '#ff3b30' },
@@ -549,6 +625,14 @@ const SHOP_TYPES = [
   { key: 'host', name: 'ホストクラブ', price: 720000, income: 62000, neon: 9, inf: 12 }
 ];
 const SHOP_PREFIX = ['蜃気楼', '夜光', '螢', '無頼', '瑠璃', '花筏', '暁', '奈落', '銀河', '不夜', '朱雀', '月虹', '泥濘', '極彩', '白夜'];
+// シマによって並ぶ店が違う（実際の歌舞伎町のとおり）
+const ZONE_SHOPS = {
+  [Z_GOLDEN]: ['tachinomi', 'bar'],               // ゴールデン街: 小さい飲み屋だけ
+  [Z_ICHIBAN]: ['host', 'cabaret', 'ramen'],      // 一番街
+  [Z_CINE]: ['live', 'bar', 'cabaret'],           // シネシティ広場
+  [Z_STATION]: ['ramen', 'tachinomi', 'bar'],     // 西武新宿駅前
+  [Z_PARK]: ['tachinomi', 'ramen', 'mahjong']     // 大久保公園
+};
 
 const Shops = [];
 
@@ -557,6 +641,18 @@ function fill(x0, y0, z0, x1, y1, z1, id) {
   for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++)
     if (inside(x, y, z)) vox[idx(x, y, z)] = id;
 }
+
+/* 実在の目印を置く街区。街区 (bi,bj) は x=bi*16+5..+15 / z=bj*16+5..+15 */
+const LANDMARKS = {
+  '1,0': 'park',                      // 大久保公園（北西）
+  '3,3': 'toho', '4,3': 'toho',       // TOHOビル。セントラルロードの突き当たり
+  '3,4': 'plaza', '4,4': 'plaza',     // シネシティ広場（トー横）
+  '6,2': 'kuyakusho',                 // 新宿区役所（区役所通り沿い）
+  '6,3': 'furin',                     // 風林会館（花道通り×区役所通り）
+  '0,7': 'station'                    // 西武新宿駅（南西・靖国通り沿い）
+};
+const PLAZA = { x0: 53, x1: 79, z0: 64, z1: 79 };
+const TOHO = { x0: 58, x1: 74, z0: 53, z1: 63, top: 34 };
 
 function genWorld() {
   // 地面
@@ -567,13 +663,29 @@ function genWorld() {
   }
 
   for (let bi = 0; bi < GRID; bi++) for (let bj = 0; bj < GRID; bj++) {
-    const x0 = bi * PITCH + ROAD, z0 = bj * PITCH + ROAD;
-    const x1 = bi * PITCH + PITCH - 1, z1 = bj * PITCH + PITCH - 1;   // 11×11
+    let x0 = bi * PITCH + ROAD, z0 = bj * PITCH + ROAD;
+    let x1 = bi * PITCH + PITCH - 1, z1 = bj * PITCH + PITCH - 1;     // 11×11
+    // 広げた大通りに食い込む分は街区を削る
+    const cx = (x0 + x1) >> 1, cz = (z0 + z1) >> 1;
+    while (x0 <= x1 && isWideAve(x0, cz)) x0++;
+    while (x1 >= x0 && isWideAve(x1, cz)) x1--;
+    while (z0 <= z1 && isWideAve(cx, z0)) z0++;
+    while (z1 >= z0 && isWideAve(cx, z1)) z1--;
     const zi = zoneOf(x0, z0);
     const r = hash2(bi + 31, bj + 17);
 
-    if (zi === 7 && bi === 4 && bj === 7) { genPark(x0, z0, x1, z1); continue; }
-    const golden = (zi === 6);
+    // 実在の目印。どれも街区ひとつぶんを丸ごと使う
+    const land = LANDMARKS[bi + ',' + bj];
+    if (land) {
+      if (land === 'park') genPark(x0, z0, x1, z1);                    // 大久保公園
+      else if (land === 'plaza' && bi === 3) genPlaza();               // シネシティ広場
+      else if (land === 'toho' && bi === 3) genToho();                 // TOHOビル + 怪獣の頭
+      else if (land === 'kuyakusho') genOffice(x0, z0, x1, z1);        // 新宿区役所
+      else if (land === 'furin') genFurin(x0, z0, x1, z1);             // 風林会館
+      else if (land === 'station') genStation(x0, z0, x1, z1);         // 西武新宿駅
+      continue;
+    }
+    const golden = (zi === Z_GOLDEN);      // ゴールデン街は木造の低い飲み屋長屋
 
     // 街区を 1〜4 棟に割る
     const lots = [];
@@ -588,18 +700,23 @@ function genWorld() {
       const hr = hash2(bi * 13 + li, bj * 7 + 3);
       let h;
       if (golden) h = 3 + Math.floor(hr * 2);
-      else if (zi === 0 && bi === 1 && bj === 1 && li === 0) h = 34;      // ランドマーク
       else if (hr > 0.92) h = 20 + Math.floor(hr * 14);
       else if (hr > 0.68) h = 12 + Math.floor(hr * 8);
       else h = 6 + Math.floor(hr * 6);
+      if (zi === Z_CINE || zi === Z_ICHIBAN) h += 4;   // 一番街・広場まわりは背が高い
       genBuilding(lo[0], lo[1], lo[2], lo[3], h, bi, bj, li, golden, zi);
     });
   }
+  genArch();        // 靖国通りに面した一番街のアーチ
 
   // 通りの街灯・自販機
   for (let i = 0; i <= GRID; i++) for (let j = 0; j <= GRID; j++) {
-    const cx = i * PITCH + 1, cz = j * PITCH + 1;
+    let cx = i * PITCH + 1, cz = j * PITCH + 1;
+    // 大通りを広げた分、街灯は新しい歩道の位置まで下げる（車道の真ん中に立たせない）
+    if (cx >= CENTRAL[0] && cx <= CENTRAL[1] && cz >= CENTRAL_Z) cx = CENTRAL[0];
+    if (cz >= YASUKUNI[0] && cz <= YASUKUNI[1]) cz = YASUKUNI[0];
     if (cx >= SX - 1 || cz >= SZ - 1) continue;
+    if (getV(cx, 3, cz) !== AIR) continue;
     fill(cx, 3, cz, cx, 6, cz, 6);
     vox[idx(cx, 7, cz)] = 22;
     if (hash2(i * 3, j * 11) > 0.68 && cx + 2 < SX) {
@@ -645,10 +762,11 @@ function genBuilding(x0, z0, x1, z1, h, bi, bj, li, golden, zi) {
     if (!inside(sd.x, 3, sd.z)) return;
     if (!isRoadCell(sd.x, sd.z)) return;               // 通りに面していない
     const q = hash2(bi * 71 + li * 5 + si, bj * 29 + si * 13);
-    if (q < 0.30) return;
+    const main = onMainStreet(sd.x, sd.z);             // 一番街・セントラルロードは看板だらけ
+    if (q < (main ? 0.05 : 0.30)) return;
     const col = NEON_IDS[Math.floor(q * 97) % NEON_IDS.length];
     const y0 = 4 + Math.floor(q * 3);
-    const len = golden ? 2 : 3 + Math.floor(hash2(si, li) * Math.min(6, h - 2));
+    const len = golden ? 2 : (main ? 2 : 0) + 3 + Math.floor(hash2(si, li) * Math.min(6, h - 2));
     for (let y = y0; y < Math.min(y0 + len, top); y++) {
       if (getV(sd.x, y, sd.z) !== AIR) continue;
       vox[idx(sd.x, y, sd.z)] = col;
@@ -682,12 +800,147 @@ function genPark(x0, z0, x1, z1) {
 }
 function setRaw(x, y, z, id) { if (inside(x, y, z)) vox[idx(x, y, z)] = id; }
 
+/* ---- 目印 --------------------------------------------------------------
+   歌舞伎町の見え方を決めているものだけ、手で置く。                        */
+
+// 窓を外周に散らす。ビル共通
+function windows(x0, z0, x1, z1, top, lit) {
+  for (let y = 5; y < top; y += 2)
+    for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
+      if (x !== x0 && x !== x1 && z !== z0 && z !== z1) continue;
+      if ((x + z) % 2) continue;
+      const q = hash3(x, y, z);
+      if (q < 0.34) continue;
+      vox[idx(x, y, z)] = q > lit ? 8 : 7;
+    }
+}
+
+// シネシティ広場。セントラルロードを北へ詰めると開ける、街で唯一の広い場所
+function genPlaza() {
+  const { x0, x1, z0, z1 } = PLAZA;
+  for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++)
+    vox[idx(x, 2, z)] = ((x + z) % 4 === 0) ? 3 : 4;      // 石畳
+  fill(x0, 3, z0, x1, 3, z0 + 1, 3);                      // 北側の一段
+  for (const x of [x0 + 1, x0 + 9, x1 - 9, x1 - 1]) {     // 広場の街灯
+    fill(x, 3, z1 - 1, x, 7, z1 - 1, 6);
+    setRaw(x, 8, z1 - 1, 22);
+  }
+  for (let k = 0; k < 5; k++) {                           // ベンチ
+    const bx = x0 + 3 + k * 5, bz = z0 + 4 + (k % 2) * 4;
+    fill(bx, 3, bz, bx + 2, 3, bz, 16);
+  }
+  fill(x1 - 1, 3, z0 + 3, x1 - 1, 4, z0 + 4, 23);         // 自販機
+}
+
+// TOHOビル。8階のテラスから怪獣の頭が広場とセントラルロードを見下ろしている
+function genToho() {
+  const { x0, x1, z0, z1, top } = TOHO;
+  fill(x0, 3, z0, x1, top, z1, 3);
+  fill(x0, top, z0, x1, top, z1, 4);
+  fill(x0 + 3, top + 1, z0 + 3, x1 - 3, top + 5, z1 - 3, 6);   // 塔屋
+  windows(x0, z0, x1, z1, top, 0.58);
+  // 冠のネオン。通りの突き当たりだと遠くからでもわかるように
+  for (let x = x0; x <= x1; x++) { setRaw(x, top - 1, z1 + 1, 10); setRaw(x, top - 1, z0 - 1, 10); }
+  for (let z = z0; z <= z1; z++) { setRaw(x0 - 1, top - 1, z, 10); setRaw(x1 + 1, top - 1, z, 10); }
+  fill(x0 + 1, 12, z1 + 1, x0 + 3, top - 3, z1 + 1, 9);        // 南面の縦ネオン（頭の両脇）
+  fill(x1 - 3, 12, z1 + 1, x1 - 1, top - 3, z1 + 1, 12);
+  // 南面（広場側）の低層部。庇とネオンの帯
+  fill(x0 - 1, 3, z1 + 1, x1 + 1, 9, z1 + 1, 15);
+  fill(x0 - 1, 7, z1 + 2, x1 + 1, 7, z1 + 2, 15);
+  for (let x = x0 - 1; x <= x1 + 1; x++) setRaw(x, 8, z1 + 2, x % 3 ? 10 : 9);
+  fill(x0 + 2, 4, z1 + 2, x0 + 5, 6, z1 + 2, 8);               // 光る看板
+  fill(x1 - 5, 4, z1 + 2, x1 - 2, 6, z1 + 2, 8);
+  const mid = Math.floor((x0 + x1) / 2);
+  fill(mid - 1, 3, z1 + 1, mid + 1, 5, z1 + 1, AIR);           // 入口
+  // テラスと怪獣の頭。セントラルロードの正面に来るよう x=66 に置く
+  const ty = 18;
+  fill(x0 + 1, ty - 1, z1 + 1, x1 - 1, ty - 1, z1 + 6, 3);             // 張り出したテラス
+  fill(x0 + 1, ty - 2, z1 + 1, x1 - 1, ty - 2, z1 + 2, 6);             // 受けの梁
+  for (let x = x0 + 1; x <= x1 - 1; x += 2) setRaw(x, ty, z1 + 6, 6);  // テラスの柵
+  genKaiju(66, ty, z1 + 7);
+  // 1階はセントラルロードから花道通りへの通り抜け。人の流れを止めない
+  fill(x0 + 6, 3, z0 - 1, x0 + 10, 5, z1 + 2, AIR);
+  for (let z = z0; z <= z1; z += 3) { setRaw(x0 + 6, 6, z, 8); setRaw(x0 + 10, 6, z, 8); }
+}
+
+/* 怪獣の頭。南（+z）を向く。zf が鼻先で、奥行き 12 ブロック。
+   鼻先を細く、頭蓋を広く取ると、遠くからでも「頭」に見える。 */
+function genKaiju(cx, y0, zf) {
+  const SKIN = 15, EYE = 11, MOUTH = 14, SPINE = 10;
+  fill(cx - 3, y0, zf - 11, cx + 3, y0 + 7, zf - 8, SKIN);        // 首
+  fill(cx - 4, y0 + 4, zf - 10, cx + 4, y0 + 9, zf - 4, SKIN);    // 頭蓋（幅 9）
+  fill(cx - 2, y0 + 5, zf - 8, cx + 2, y0 + 7, zf, SKIN);         // 上あご（幅 5）
+  fill(cx - 2, y0 + 2, zf - 8, cx + 2, y0 + 3, zf - 1, SKIN);     // 下あご
+  fill(cx - 3, y0 + 2, zf - 10, cx + 3, y0 + 3, zf - 7, SKIN);    // あごの付け根
+  fill(cx - 2, y0 + 4, zf - 7, cx + 2, y0 + 4, zf - 1, MOUTH);    // 口の中（光る）
+  fill(cx - 4, y0 + 6, zf - 5, cx - 3, y0 + 7, zf - 4, EYE);      // 目。鼻筋の両脇
+  fill(cx + 3, y0 + 6, zf - 5, cx + 4, y0 + 7, zf - 4, EYE);
+  fill(cx - 4, y0 + 8, zf - 6, cx + 4, y0 + 9, zf - 4, SKIN);     // 眉のひさし
+  for (const dx of [-3, 0, 3])                                    // 角
+    fill(cx + dx, y0 + 10, zf - 9, cx + dx, y0 + 10, zf - 6, SPINE);
+  for (let k = 0; k < 3; k++)                                     // 背びれ
+    fill(cx - 1, y0 + 9 + (k & 1), zf - 11 - k, cx + 1, y0 + 11, zf - 11 - k, SPINE);
+}
+
+// 新宿区役所。ネオンがひとつも無い、この街で一番そっけないビル
+function genOffice(x0, z0, x1, z1) {
+  const top = 20;
+  fill(x0, 3, z0, x1, top, z1, 3);
+  fill(x0, top, z0, x1, top, z1, 4);
+  windows(x0, z0, x1, z1, top, 0.55);
+  fill(x0, 3, z1 + 1, x1, 4, z1 + 1, 4);                 // 車寄せ
+  fill(x0 + 4, 3, z1 + 1, x0 + 5, 4, z1 + 1, AIR);
+  fill(x1 - 1, 3, z0 - 1, x1 - 1, 9, z0 - 1, 6);         // 旗竿
+}
+
+// 風林会館。花道通りと区役所通りの角。上に赤い帯が回っている
+function genFurin(x0, z0, x1, z1) {
+  const top = 16;
+  fill(x0, 3, z0, x1, top, z1, 5);
+  fill(x0, top, z0, x1, top, z1, 4);
+  windows(x0, z0, x1, z1, top, 0.70);
+  for (let x = x0; x <= x1; x++) { setRaw(x, top - 1, z0 - 1, 9); setRaw(x, top - 1, z1 + 1, 9); }
+  for (let z = z0; z <= z1; z++) { setRaw(x0 - 1, top - 1, z, 9); setRaw(x1 + 1, top - 1, z, 9); }
+  fill(x1 + 1, 5, z0 + 1, x1 + 1, top - 3, z0 + 1, 11);  // 角の縦看板
+  fill(x0 - 1, 5, z1 - 1, x0 - 1, top - 3, z1 - 1, 12);
+}
+
+// 西武新宿駅。低くて横に長い、庇の下がいつも人だまりになっている建物
+function genStation(x0, z0, x1, z1) {
+  const top = 9;
+  fill(x0, 3, z0, x1, top, z1, 3);
+  fill(x0, top, z0, x1, top, z1, 4);
+  windows(x0, z0, x1, z1, top, 0.5);
+  fill(x0 - 1, 6, z1 + 1, x1 + 1, 6, z1 + 2, 15);        // 南へ張り出す庇
+  for (let x = x0 - 1; x <= x1 + 1; x += 2) fill(x, 3, z1 + 2, x, 5, z1 + 2, 6);
+  for (let x = x0; x <= x1; x++) setRaw(x, 7, z1 + 1, 10);    // 駅名の帯
+  fill(x0 + 3, 3, z1 + 1, x0 + 5, 5, z1 + 1, AIR);           // 改札口
+}
+
+// 一番街のアーチ。靖国通りから北を向くと、まずこれが目に入る
+function genArch() {
+  const xL = 79, xR = 85, z0 = 124, z1 = 125;
+  fill(xL, 3, z0, xL, 10, z1, 6);
+  fill(xR, 3, z0, xR, 10, z1, 6);
+  fill(xL, 8, z0, xR, 10, z1, 15);                      // 梁と看板の板
+  for (const z of [z0, z1]) {                           // 南北どちらの面も光らせる
+    for (let x = xL; x <= xR; x++) { setRaw(x, 8, z, 9); setRaw(x, 10, z, 9); }
+    for (let y = 8; y <= 10; y++) { setRaw(xL, y, z, 9); setRaw(xR, y, z, 9); }
+    fill(xL + 1, 9, z, xR - 1, 9, z, 11);               // 金の帯＝一番街の看板
+  }
+  for (const x of [xL + 1, xL + 3, xR - 1]) setRaw(x, 7, z1, 17);   // 提灯
+  fill(xL + 1, 3, z0, xR - 1, 7, z1, AIR);              // くぐれるように足元は空ける
+}
+
 let shopSeq = 0;
 function maybeShop(x0, z0, x1, z1, zi, bi, bj, li) {
   const q = hash2(bi * 53 + li * 11, bj * 37 + 7);
   if (q < 0.58) return;
   if (Shops.filter(s => s.zone === zi).length >= 3) return;
-  const type = SHOP_TYPES[Math.floor(hash2(bi + li, bj + 3) * 991) % SHOP_TYPES.length];
+  // シマごとの色。ゴールデン街は小さい飲み屋、一番街はホストとキャバ
+  const pool = ZONE_SHOPS[zi]
+    ? SHOP_TYPES.filter(t => ZONE_SHOPS[zi].includes(t.key)) : SHOP_TYPES;
+  const type = pool[Math.floor(hash2(bi + li, bj + 3) * 991) % pool.length];
   const cands = [
     { x: Math.floor((x0 + x1) / 2), z: z0 - 1, dz: -1, dx: 0 },
     { x: Math.floor((x0 + x1) / 2), z: z1 + 1, dz: 1, dx: 0 },
@@ -754,15 +1007,17 @@ void main(){ vP=aP; gl_Position=vec4(aP,0.9999,1.0); }`,
 precision highp float;
 in vec2 vP; out vec4 fc;
 uniform float uTime; uniform vec3 uTop; uniform vec3 uBot; uniform float uAsp;
+uniform float uStar;   // 星の見え方（昼は 0）
+uniform vec3 uGlow;    // 地平のネオン／朝焼けの色
 float h(vec2 p){ return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5453); }
 void main(){
   float t = clamp(vP.y*0.5+0.5, 0.0, 1.0);
   vec3 c = mix(uBot, uTop, pow(t,0.75));
-  c += vec3(0.55,0.16,0.34)*exp(-max(t-0.02,0.0)*5.0)*0.6;
+  c += uGlow*exp(-max(t-0.02,0.0)*5.0)*0.6;
   vec2 sp = vec2(vP.x*uAsp, vP.y)*46.0;
   float st = h(floor(sp));
-  if (st>0.9955 && t>0.42){
-    c += vec3(0.8,0.85,1.0)*(st-0.9955)*190.0*(0.55+0.45*sin(uTime*2.2+st*90.0));
+  if (st>0.9955 && t>0.42 && uStar>0.01){
+    c += vec3(0.8,0.85,1.0)*(st-0.9955)*190.0*(0.55+0.45*sin(uTime*2.2+st*90.0))*uStar;
   }
   fc = vec4(c,1.0);
 }`);
@@ -779,18 +1034,20 @@ const VOX_FS = `#version 300 es
 precision highp float;
 in vec3 vNor; in vec3 vCol; in float vEm; in float vAO; in vec3 vW;
 uniform vec3 uCam; uniform vec3 uFog; uniform float uFogD; uniform float uTime; uniform float uAmb;
+uniform vec3 uSkyLit;  // 上面に乗る空の色
+uniform float uNeon;   // ネオンの効き（昼は弱まる）
 out vec4 fc;
 void main(){
   vec3 n = normalize(vNor);
   float d = max(dot(n, normalize(vec3(0.35,0.9,0.25))), 0.0);
   vec3 lit = vCol*(uAmb + d*0.34) * vAO;
-  lit += vCol*vec3(0.15,0.13,0.24)*max(n.y,0.0)*vAO;    // 空の色を上面に
-  lit += vCol*vec3(0.30,0.07,0.20)*max(-n.y,0.0)*1.3;   // 下からネオンの照り返し
+  lit += vCol*uSkyLit*max(n.y,0.0)*vAO;                       // 空の色を上面に
+  lit += vCol*vec3(0.30,0.07,0.20)*max(-n.y,0.0)*1.3*uNeon;   // 下からネオンの照り返し
   float dist = length(vW-uCam);
   float fog = 1.0-exp(-dist*uFogD);
   vec3 c = mix(lit, uFog, fog);
   float fl = 0.80+0.20*sin(uTime*(2.0+fract(vW.x*0.09)*7.0)+vW.y*0.6+vW.z*0.3);
-  c += vCol*vEm*fl*(1.0-fog*0.5);
+  c += vCol*vEm*fl*uNeon*(1.0-fog*0.5);
   fc = vec4(c,1.0);
 }`;
 const VOXP = prog(
@@ -1006,9 +1263,10 @@ function addInst(x, y, z, sx, sy, sz, col, rotY, em) {
 /* ============================================================================
    6. プレイヤー（重力とジャンプ）
    ========================================================================= */
-const SPAWN_X = 2.5, SPAWN_Z = 2.5;
+// 靖国通りの歩道。正面に一番街のアーチ、その先に通りが北へ伸びている
+const SPAWN_X = 82.5, SPAWN_Z = 133.5;
 const P = {
-  x: SPAWN_X, y: 3, z: SPAWN_Z, vy: 0, yaw: 0, pitch: -0.05,
+  x: SPAWN_X, y: 3, z: SPAWN_Z, vy: 0, yaw: 0, pitch: 0.10,
   onGround: false, hp: 100, maxhp: 100,
   yen: 120000, inf: 0, rep: 0, wanted: 0, drunk: 0, notoriety: 0,
   crew: [], firstPerson: false, camDist: 5.2, walkPhase: 0,
@@ -1210,27 +1468,39 @@ const ARCH = [
   { k: 'idol', job: '地下アイドル', fac: 'arcadia', col: [.9, .5, .75], hp: 35, hair: [.85, .4, .55],
     persona: 'ライブ終わりの地下アイドル。営業スマイルの下に疲れがある。ファンとカネの区別がついている。', gender: '女' },
   { k: 'ramen', job: 'ラーメン屋の店主', fac: 'local', col: [.35, .3, .25], hp: 70, hair: [.12, .12, .13],
-    persona: '深夜のラーメン屋の店主。愛想はないが情はある。この街の連中を全員食わせてきた。', gender: '男' }
+    persona: '深夜のラーメン屋の店主。愛想はないが情はある。この街の連中を全員食わせてきた。', gender: '男' },
+  // 追加は必ず末尾に。順番が変わるとセーブの子分 id がずれる
+  { k: 'dj', job: 'DJ', fac: 'arcadia', col: [.14, .14, .20], hp: 55, hair: [.10, .10, .13],
+    fixed: '武田 伸也',
+    persona: 'ホストクラブのブースで回している DJ。フロアの温度を読んで曲を差し替え、シャンパンコールを煽る。'
+      + '煽るときは声が上がるが、素に戻ると淡々としている。音楽と、箱の売上の話が好き。', gender: '男' }
 ];
 const SEI = ['佐々木', '黒岩', '桐生', '真壁', '一之瀬', '鮫島', '氷室', '早乙女', '猪熊', '九条', '天堂', '甲斐', '朝倉', '不破', '獅子堂', '苅部'];
 const MEI_M = ['亮', '哲', '龍司', '慎', '拓海', '大河', '晴', '樹', '零', '要', '蓮', '匠'];
 const MEI_F = ['澪', '玲奈', '茜', '沙羅', '瑠衣', '奏', '千夏', '灯', '雫', '真昼', '柚', '有栖'];
 const GENJI = ['RYO', 'KAI', '零夜', '蘭', 'REI', '宵', 'LUKA', '亜蘭', 'SHU', '一夜'];
+// 外国人観光客はアメリカ人。名字＋名前ではなく First Last で出す
+const EN_FIRST = ['Jake', 'Tyler', 'Brandon', 'Kevin', 'Ryan', 'Chad', 'Marcus', 'Scott', 'Derek', 'Cody'];
+const EN_LAST = ['Miller', 'Sullivan', 'Brooks', 'Hayes', 'Carter', 'Reed', 'Walker', 'Foster', 'Bennett', 'Nguyen'];
 
 let npcSeq = 0;
 const NPCs = [];
 const rxRoad = i => i * PITCH + 2;      // 交差点の中心
 function makeNPC(arch, x, z) {
   const male = arch.gender === '男';
-  const name = (arch.k === 'host' || arch.k === 'kyaba' || arch.k === 'idol')
-    ? pick(GENJI) : pick(SEI) + ' ' + pick(male ? MEI_M : MEI_F);
+  const name = arch.fixed ? arch.fixed
+    : arch.k === 'tourist' ? pick(EN_FIRST) + ' ' + pick(EN_LAST)
+    : (arch.k === 'host' || arch.k === 'kyaba' || arch.k === 'idol')
+      ? pick(GENJI) : pick(SEI) + ' ' + pick(male ? MEI_M : MEI_F);
   const n = {
     id: npcSeq++, arch, name, x, z, y: 3, yaw: rnd(0, 6.28),
     hp: arch.hp, maxhp: arch.hp, trust: irnd(15, 45), fear: irnd(0, 15),
     yen: irnd(3, 60) * 1000, state: 'walk', t: 0, spd: rnd(2.2, 3.6),
     ni: 0, nj: 0, tx: x, tz: z, lat: rnd(-1.2, 1.2), phase: rnd(0, 6.28),
     bark: '', barkT: 0, memory: [], crew: false, down: 0, hostile: false,
-    barkCount: 0, lastAI: 0
+    barkCount: 0, lastAI: 0,
+    // 迂回と「追いつけない」の検出用
+    detour: 0, dside: 1, dcool: 0, stuck: 0, px: x, pz: z, pt: 0, far: 0, lost: 0, best: Infinity
   };
   routeNext(n, true);
   return n;
@@ -1248,17 +1518,38 @@ function routeNext(n, init) {
   n.tz = rxRoad(n.nj) + (d[1] ? 0 : n.lat);
 }
 function spawnCrowd() {
+  // dj は 1 人だけ（武田 伸也）。ホストクラブの前に立たせる
   const counts = { host: 6, kyaba: 5, scout: 4, yakuza: 5, hangure: 5, cop: 4, drunk: 6,
-    tout: 4, info: 2, bartender: 2, fortune: 2, busker: 2, tourist: 3, homeless: 3, idol: 2, ramen: 2 };
+    tout: 4, info: 2, bartender: 2, fortune: 2, busker: 2, tourist: 3, homeless: 3, idol: 2,
+    ramen: 2, dj: 1 };
   for (const a of ARCH) {
     for (let i = 0; i < (counts[a.k] || 3); i++) {
-      const x = rxRoad(irnd(0, GRID - 1)) + rnd(-1.2, 1.2);
-      const z = rxRoad(irnd(0, GRID - 1)) + rnd(-1.2, 1.2);
+      let x = 0, z = 0;
+      // 街灯や庇の上に湧くと降りられなくなる。路面が出ている場所を探す
+      for (let k = 0; k < 16; k++) {
+        x = rxRoad(irnd(0, GRID - 1)) + rnd(-1.6, 1.6);
+        z = rxRoad(irnd(0, GRID - 1)) + rnd(-1.6, 1.6);
+        if (groundTop(x, z) <= 3) break;
+      }
+      if (a.k === 'dj') {
+        const club = Shops.find(s => s.type.key === 'host') || Shops.find(s => s.type.key === 'cabaret');
+        if (club) { x = club.x + rnd(-1, 1); z = club.z + rnd(-1, 1); }
+      }
       const n = makeNPC(a, x, z);
       n.y = groundTop(x, z);
       NPCs.push(n);
     }
   }
+}
+// 迷子や高いところに取り残された通行人を、近くの通りへ戻す
+function placeOnRoad(n) {
+  const i = clamp(Math.round((n.x - 2) / PITCH), 0, GRID - 1);
+  const j = clamp(Math.round((n.z - 2) / PITCH), 0, GRID - 1);
+  for (let k = 0; k < 16; k++) {
+    const x = rxRoad(i) + rnd(-1.6, 1.6), z = rxRoad(j) + rnd(-1.6, 1.6);
+    if (groundTop(x, z) <= 3) { n.x = x; n.z = z; n.y = 3; break; }
+  }
+  resetPath(n); routeNext(n, true);
 }
 spawnCrowd();
 
@@ -1397,6 +1688,7 @@ const AI = {
 const OFF_BARK = {
   host: ['今日シャンパン入るらしいぜ', '指名、足りてねぇんだよな', 'その顔、金持ってる顔だ'],
   kyaba: ['同伴、間に合わないかも', 'ねえ、ちょっとだけ', '今日は指名ゼロ'],
+  dj: ['次、上げてくよ', 'この箱、今日は回ってる', 'シャンパン入ったらすぐ曲変える'],
   scout: ['お姉さん、いま時間ある？', '日給、悪くない話あるよ', 'その辺の店より出るって'],
   yakuza: ['……壁削ってんじゃねぇよ', 'ここは紅蓮会のシマだ', '揉めたいなら付き合うぞ'],
   hangure: ['アガリ、まだ来てねぇの？', '兄さん、いい服着てんな', 'なあ、遊ぼうぜ'],
@@ -1407,7 +1699,7 @@ const OFF_BARK = {
   bartender: ['……いらっしゃい', '座れば出すよ', '今夜は静かだ'],
   fortune: ['あなた、街を壊す手をしてる', '手を出しなさい', 'north の月が悪い'],
   busker: ['聴いてってくださいよ', '今日の投げ銭ゼロ', '夢だけは腐らない'],
-  tourist: ['Kabukicho! Amazing!', '写真、いいですか', 'ブロック、ベリークール'],
+  tourist: ['Kabukicho! Amazing!', 'シャシン、OK？', 'ブロック、ベリークール'],
   homeless: ['……', 'この街は変わったよ', '昔はもっと静かだった'],
   idol: ['チェキ、どうですか', '今日20人しか来なかった', 'また来てくださいね'],
   ramen: ['替え玉いるか', 'そこ座んな', '今日はもう仕舞いだ']
@@ -1456,6 +1748,7 @@ function hud() {
   $('c-day').textContent = Clock.day + ' 日目';
   const t = Terr[zoneOf(P.x, P.z)];
   $('c-zone').textContent = t.name;
+  $('c-st').textContent = streetOf(Math.floor(P.x), Math.floor(P.z));
   $('c-own').innerHTML = `支配: <span style="color:${FACTIONS[t.owner].css}">${FACTIONS[t.owner].name}</span> ${Math.round(t.mine)}%`;
   const cb = $('crewbox');
   if (P.crew.length) {
@@ -1490,6 +1783,12 @@ function drawMinimap() {
     mmc.beginPath(); mmc.moveTo(gx, -mm.height); mmc.lineTo(gx, mm.height); mmc.stroke();
     mmc.beginPath(); mmc.moveTo(-mm.width, gz); mmc.lineTo(mm.width, gz); mmc.stroke();
   }
+  // 大通りは太く。靖国通りとセントラルロードで自分の位置がわかる
+  mmc.strokeStyle = 'rgba(215,205,245,.46)'; mmc.lineWidth = 9 * s * 0.9;
+  const yz = (130 - P.z) * s, cxx = (66 - P.x) * s;
+  mmc.beginPath(); mmc.moveTo(-mm.width, yz); mmc.lineTo(mm.width, yz); mmc.stroke();
+  mmc.beginPath();
+  mmc.moveTo(cxx, (CENTRAL_Z - P.z) * s); mmc.lineTo(cxx, (YASUKUNI[1] - P.z) * s); mmc.stroke();
   for (const sh of Shops) {
     const dx = (sh.x - P.x) * s, dz = (sh.z - P.z) * s;
     if (Math.abs(dx) > mm.width / 2 || Math.abs(dz) > mm.height / 2) continue;
@@ -1915,16 +2214,90 @@ function interact() {
 /* ============================================================================
    16. NPC 更新
    ========================================================================= */
+// そこに立てるか。連れは段差の許容を広げる
+// （プレイヤーが登れる段を登れないと、そのまま置いていかれる）
+function walkable(n, x, z) {
+  if (x < 1 || z < 1 || x > SX - 2 || z > SZ - 2) return false;
+  const tol = (n.crew || n.state === 'follow') ? 1.45 : 1.2;
+  return Math.abs(groundTop(x, z) - n.y) <= tol;   // 段差が大きすぎる＝壁か穴
+}
+function npcTry(n, nx, nz) {
+  if (!walkable(n, nx, nz)) return false;
+  n.x = nx; n.z = nz; n.y = groundTop(nx, nz);
+  return true;
+}
 function npcStep(n, tx, tz, spd, dt) {
+  // 1 秒ごとに実際に進めた距離を見る。進めていなければ詰まっている
+  n.pt += dt;
+  if (n.pt >= 1) {
+    n.stuck = Math.hypot(n.x - n.px, n.z - n.pz) < spd * 0.3 ? n.stuck + n.pt : 0;
+    n.px = n.x; n.pz = n.z; n.pt = 0;
+  }
+  if (n.dcool > 0) n.dcool -= dt;
   const dx = tx - n.x, dz = tz - n.z;
   const l = Math.hypot(dx, dz) || 1;
-  const nx = n.x + dx / l * spd * dt, nz = n.z + dz / l * spd * dt;
-  // 掘られた穴に落ちないよう、段差が大きすぎるときは進まない
-  const g = groundTop(nx, nz);
-  if (Math.abs(g - n.y) <= 1.2) { n.x = nx; n.z = nz; n.y = g; }
-  else routeNext(n, true);
+  const st = spd * dt;
+  const ux = dx / l, uz = dz / l;
   n.yaw = Math.atan2(dx, dz);
   n.phase += spd * dt * 2.6;
+
+  // 迂回中。壁に沿って横へ流れ、目標の方向が開けたら直進に戻す。
+  // ここで軸ずらしに落とすと壁の前を行ったり来たりするので、迂回を優先する
+  if (n.detour > 0) {
+    n.detour -= dt;
+    if (walkable(n, n.x + ux * 1.7, n.z + uz * 1.7)) n.detour = 0;
+    else {
+      const px = uz * n.dside, pz = -ux * n.dside;
+      const mx = ux * 0.45 + px, mz = uz * 0.45 + pz, ml = Math.hypot(mx, mz) || 1;
+      if (npcTry(n, n.x + mx / ml * st, n.z + mz / ml * st)) return true;
+      if (npcTry(n, n.x + px * st, n.z + pz * st)) return true;
+      // 壁にへばりついていると横移動にも壁向きの成分が残る。少し離れながら横へ
+      const bx = px - ux * 0.45, bz = pz - uz * 0.45, bl = Math.hypot(bx, bz) || 1;
+      if (npcTry(n, n.x + bx / bl * st, n.z + bz / bl * st)) return true;
+      n.dside = -n.dside;                          // その側も詰まっていた。逆へ
+      return false;
+    }
+  }
+  if (npcTry(n, n.x + ux * st, n.z + uz * st)) return true;
+  // 斜めが駄目なら軸ごとに滑らせる（建物の角で引っかからない）
+  if (Math.abs(ux) > 0.15 && npcTry(n, n.x + ux * st, n.z)) return true;
+  if (Math.abs(uz) > 0.15 && npcTry(n, n.x, n.z + uz * st)) return true;
+  // 正面が壁。空いている側へ回り込む。直後に選び直すと迷うので側は少し固定する
+  if (n.dcool <= 0) {
+    const o = s => walkable(n, n.x + uz * s * 1.8, n.z - ux * s * 1.8);
+    n.dside = o(1) ? 1 : o(-1) ? -1 : (Math.random() < 0.5 ? 1 : -1);
+  }
+  n.dcool = 3; n.detour = 5;
+  return false;
+}
+// どうしても追いつけないとき（屋上・掘った穴の底など）にプレイヤーの後ろへ回り込ませる
+function warpNear(n) {
+  const base = P.yaw + Math.PI;
+  for (let r = 2.4; r <= 7; r += 1.1) {
+    for (let k = 0; k < 8; k++) {
+      const a = base + k * 0.785;
+      const x = clamp(P.x + Math.sin(a) * r, 1, SX - 2), z = clamp(P.z + Math.cos(a) * r, 1, SZ - 2);
+      const g = groundTop(x, z);
+      if (Math.abs(g - P.y) <= 1.5) { n.x = x; n.z = z; n.y = g; resetPath(n); return; }
+    }
+  }
+  n.x = P.x; n.z = P.z; n.y = groundTop(P.x, P.z); resetPath(n);
+}
+function resetPath(n) {
+  n.detour = 0; n.dcool = 0; n.stuck = 0; n.pt = 0; n.px = n.x; n.pz = n.z;
+  n.far = 0; n.lost = 0; n.best = Infinity;
+}
+// 連れ・追従中の共通処理。離されたら走り、詰まったら迂回、それでも駄目なら回り込ませる
+function followPlayer(n, pd, dt, near) {
+  n.yaw = Math.atan2(P.x - n.x, P.z - n.z);
+  if (pd <= near) { resetPath(n); return; }
+  // 走っているプレイヤーにも追いつけるよう、離れているほど速く
+  npcStep(n, P.x, P.z, n.spd * (pd > 25 ? 3.2 : pd > 14 ? 2.3 : pd > 7 ? 1.7 : 1.15), dt);
+  // 迂回できていても距離が縮まらない（袋小路・屋上・池の向こう）なら見失い扱い
+  if (pd < n.best - 0.5) { n.best = pd; n.lost = 0; } else n.lost += dt;
+  n.far = pd > 45 ? n.far + dt : 0;
+  // 回り込ませるのは子分だけ。通りすがりが瞬間移動してくると気味が悪い
+  if (n.crew && (n.stuck > 3 || n.lost > 7 || n.far > 6)) warpNear(n);
 }
 function updateNPCs(dt) {
   const now = performance.now() / 1000;
@@ -1942,9 +2315,8 @@ function updateNPCs(dt) {
       case 'talk': n.yaw = Math.atan2(dx, dz); break;
       case 'follow':
         n.t -= dt;
-        if (pd > 3.0) npcStep(n, P.x, P.z, n.spd * 1.15, dt);
-        n.yaw = Math.atan2(dx, dz);
-        if (n.t <= 0) { n.state = 'walk'; routeNext(n, true); }
+        followPlayer(n, pd, dt, 3.0);
+        if (n.t <= 0) { n.state = 'walk'; resetPath(n); routeNext(n, true); }
         break;
       case 'flee':
         n.t -= dt;
@@ -1970,13 +2342,12 @@ function updateNPCs(dt) {
       }
       case 'down': break;
       default: {
-        if (n.crew) {
-          if (pd > 4.0) npcStep(n, P.x, P.z, n.spd * 1.2, dt);
-          n.yaw = Math.atan2(dx, dz);
-          break;
-        }
+        if (n.crew) { followPlayer(n, pd, dt, 3.4); break; }
         if (Math.hypot(n.tx - n.x, n.tz - n.z) < 1.2) routeNext(n, false);
         npcStep(n, n.tx, n.tz, n.spd, dt);
+        // 通行人が詰まったら次の交差点を引き直し、それでも駄目なら通りへ戻す
+        if (n.stuck > 6) placeOnRoad(n);
+        else if (n.stuck > 2) { resetPath(n); routeNext(n, true); }
         break;
       }
     }
@@ -2197,12 +2568,18 @@ function pushCharacter(n, isPlayer) {
   const dk = [col[0] * .6, col[1] * .6, col[2] * .6];
   addInst(n.x + Math.sin(rot + 1.57) * 0.16, y + 0.42 + swing * 0.08, n.z + Math.cos(rot + 1.57) * 0.16, 0.22, 0.86, 0.24, dk, rot, 0);
   addInst(n.x - Math.sin(rot + 1.57) * 0.16, y + 0.42 - swing * 0.08, n.z - Math.cos(rot + 1.57) * 0.16, 0.22, 0.86, 0.24, dk, rot, 0);
-  addInst(n.x, base + 0.02, n.z, 0.62, 0.86, 0.36, col, rot, isPlayer ? 0 : (a.k === 'host' || a.k === 'idol' ? 0.25 : 0));
+  addInst(n.x, base + 0.02, n.z, 0.62, 0.86, 0.36, col, rot, isPlayer ? 0 : (a.k === 'host' || a.k === 'idol' || a.k === 'dj' ? 0.25 : 0));
   addInst(n.x + Math.sin(rot + 1.57) * 0.40, base + 0.02 - swing * 0.1, n.z + Math.cos(rot + 1.57) * 0.40, 0.17, 0.72, 0.19, col, rot, 0);
   addInst(n.x - Math.sin(rot + 1.57) * 0.40, base + 0.02 + swing * 0.1, n.z - Math.cos(rot + 1.57) * 0.40, 0.17, 0.72, 0.19, col, rot, 0);
   addInst(n.x, base + 0.50, n.z, 0.18, 0.16, 0.18, skin, rot, 0);
   addInst(n.x, base + 0.74, n.z, 0.40, 0.42, 0.38, skin, rot, 0);
   addInst(n.x, base + 0.94, n.z, 0.44, 0.16, 0.42, hair, rot, 0);
+  if (!isPlayer && a.k === 'dj') {                       // ヘッドホン
+    const hp = [0.09, 0.88, 1];
+    addInst(n.x + Math.sin(rot + 1.57) * 0.25, base + 0.76, n.z + Math.cos(rot + 1.57) * 0.25, 0.13, 0.22, 0.18, hp, rot, 0.9);
+    addInst(n.x - Math.sin(rot + 1.57) * 0.25, base + 0.76, n.z - Math.cos(rot + 1.57) * 0.25, 0.13, 0.22, 0.18, hp, rot, 0.9);
+    addInst(n.x, base + 0.94, n.z, 0.50, 0.10, 0.14, hp, rot, 0.9);
+  }
   if (!isPlayer && (n.crew || n.hostile)) {
     const mc = n.crew ? [0.22, 1, .53] : [1, .23, .19];
     addInst(n.x, base + 1.35, n.z, 0.18, 0.18, 0.18, mc, performance.now() / 500, 2.0);
@@ -2219,8 +2596,47 @@ function updateChunkMeshes() {
   }
 }
 
+/* 時刻ごとの空。深夜 → 朝焼け → 昼 → 夕焼け → 夜 を補間で回す。
+   昼はネオンが効かなくなり、星が消え、霧が白く薄くなる。 */
+const SKY_KEYS = [
+  { h: 0,    top: [.020, .014, .055], bot: [.115, .045, .105], fog: [.075, .035, .085],
+    glow: [.55, .16, .34], sky: [.15, .13, .24], amb: .66, star: 1,   neon: 1,   fogD: .0140 },
+  { h: 4.2,  top: [.035, .034, .090], bot: [.160, .085, .140], fog: [.100, .060, .110],
+    glow: [.50, .20, .36], sky: [.17, .17, .28], amb: .70, star: .9,  neon: 1,   fogD: .0138 },
+  { h: 5.5,  top: [.140, .160, .360], bot: [.620, .300, .240], fog: [.340, .200, .240],
+    glow: [.88, .42, .22], sky: [.30, .24, .30], amb: .80, star: .22, neon: .80, fogD: .0130 },
+  { h: 7,    top: [.200, .380, .700], bot: [.600, .700, .840], fog: [.520, .620, .760],
+    glow: [.35, .35, .42], sky: [.30, .36, .46], amb: .95, star: 0,   neon: .45, fogD: .0110 },
+  { h: 12,   top: [.200, .450, .820], bot: [.660, .800, .940], fog: [.620, .740, .880],
+    glow: [.30, .34, .42], sky: [.32, .40, .52], amb: 1.05, star: 0,  neon: .30, fogD: .0090 },
+  { h: 16,   top: [.220, .420, .760], bot: [.720, .720, .820], fog: [.600, .640, .760],
+    glow: [.55, .42, .34], sky: [.33, .36, .46], amb: 1.00, star: 0,  neon: .38, fogD: .0100 },
+  { h: 18,   top: [.200, .160, .380], bot: [.860, .360, .200], fog: [.440, .240, .280],
+    glow: [.95, .40, .18], sky: [.30, .22, .30], amb: .84, star: .15, neon: .65, fogD: .0122 },
+  { h: 19.5, top: [.060, .050, .140], bot: [.320, .120, .180], fog: [.160, .080, .130],
+    glow: [.75, .24, .36], sky: [.20, .16, .26], amb: .72, star: .7,  neon: .95, fogD: .0135 },
+  { h: 21,   top: [.020, .014, .055], bot: [.115, .045, .105], fog: [.075, .035, .085],
+    glow: [.55, .16, .34], sky: [.15, .13, .24], amb: .66, star: 1,   neon: 1,   fogD: .0140 }
+];
+const Sky = { top: [0, 0, 0], bot: [0, 0, 0], fog: [0, 0, 0], glow: [0, 0, 0], sky: [0, 0, 0],
+  amb: 0, star: 0, neon: 0, fogD: 0 };
+function skyNow() {
+  const h = (Clock.min / 60) % 24;
+  let ai = 0;
+  for (let i = 0; i < SKY_KEYS.length; i++) if (SKY_KEYS[i].h <= h) ai = i;
+  const a = SKY_KEYS[ai], b = SKY_KEYS[(ai + 1) % SKY_KEYS.length];
+  const span = ((b.h - a.h) + 24) % 24 || 24;
+  let t = clamp(((h - a.h) + 24) % 24 / span, 0, 1);
+  t = t * t * (3 - 2 * t);
+  for (const k of ['top', 'bot', 'fog', 'glow', 'sky'])
+    for (let i = 0; i < 3; i++) Sky[k][i] = a[k][i] + (b[k][i] - a[k][i]) * t;
+  for (const k of ['amb', 'star', 'neon', 'fogD']) Sky[k] = a[k] + (b[k] - a[k]) * t;
+  return Sky;
+}
+
 function render() {
   const t = performance.now() / 1000;
+  const S = skyNow();
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   gl.depthMask(false);
@@ -2228,12 +2644,14 @@ function render() {
   gl.bindVertexArray(skyVAO);
   gl.uniform1f(SKY.u.uTime, t);
   gl.uniform1f(SKY.u.uAsp, canvas.width / canvas.height);
-  gl.uniform3f(SKY.u.uTop, 0.020, 0.014, 0.055);
-  gl.uniform3f(SKY.u.uBot, 0.115, 0.045, 0.105);
+  gl.uniform3fv(SKY.u.uTop, S.top);
+  gl.uniform3fv(SKY.u.uBot, S.bot);
+  gl.uniform3fv(SKY.u.uGlow, S.glow);
+  gl.uniform1f(SKY.u.uStar, S.star);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   gl.depthMask(true);
 
-  const fog = [0.075, 0.035, 0.085], fogD = 0.014;
+  const fog = S.fog, fogD = S.fogD;
 
   gl.useProgram(VOXP.p);
   gl.uniformMatrix4fv(VOXP.u.uVP, false, vp);
@@ -2241,7 +2659,9 @@ function render() {
   gl.uniform3f(VOXP.u.uFog, fog[0], fog[1], fog[2]);
   gl.uniform1f(VOXP.u.uFogD, fogD);
   gl.uniform1f(VOXP.u.uTime, t);
-  gl.uniform1f(VOXP.u.uAmb, 0.66);
+  gl.uniform1f(VOXP.u.uAmb, S.amb);
+  gl.uniform3fv(VOXP.u.uSkyLit, S.sky);
+  gl.uniform1f(VOXP.u.uNeon, S.neon);
   for (const c of chunks) {
     if (!c.count) continue;
     // チャンクの中心が遠すぎるものは捨てる（霧の向こう）
@@ -2272,7 +2692,9 @@ function render() {
     gl.uniform3f(INST.u.uFog, fog[0], fog[1], fog[2]);
     gl.uniform1f(INST.u.uFogD, fogD);
     gl.uniform1f(INST.u.uTime, t);
-    gl.uniform1f(INST.u.uAmb, 0.72);
+    gl.uniform1f(INST.u.uAmb, S.amb + 0.06);
+    gl.uniform3fv(INST.u.uSkyLit, S.sky);
+    gl.uniform1f(INST.u.uNeon, S.neon);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, instCount);
   }
 
@@ -2489,6 +2911,22 @@ function frame(now) {
 /* ============================================================================
    24. 起動
    ========================================================================= */
+// 開始画面のブロック演出。色も値段も BLOCKS からそのまま持ってくる
+(function buildTitleBlocks() {
+  const cubeIds = [2, 5, 9, 11, 24];
+  $('t-cubes').innerHTML = cubeIds.map((id, i) => {
+    const b = BLOCKS[id], c = css(b.c);
+    const glow = b.em > 0.5 ? `filter:drop-shadow(0 0 14px ${c})` : '';
+    return `<div class="cube3" style="--c:${c};animation-delay:${(i * 0.18).toFixed(2)}s;${glow}" title="${b.n}">`
+      + `<i class="lf"></i><i class="rt"></i><i class="tp"></i></div>`;
+  }).join('');
+  const stripIds = [2, 3, 5, 6, 8, 9, 17, 22, 23, 24];
+  $('t-blocks').innerHTML = stripIds.map(id => {
+    const b = BLOCKS[id];
+    return `<span class="bs"><i style="background:${css(b.c)}"></i><b>${b.n}</b><em>${yen(b.v)}</em></span>`;
+  }).join('');
+})();
+
 $('g-no').onclick = () => { location.href = 'https://tk.st/game/'; };
 $('g-yes').onclick = () => {
   try { localStorage.setItem('kc.r18', '1'); } catch (e) { }
