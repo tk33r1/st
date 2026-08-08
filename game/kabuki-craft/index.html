@@ -71,6 +71,11 @@
   #stats .yen{font-size:21px;font-weight:700;color:var(--gold);letter-spacing:.02em;
     text-shadow:0 0 14px rgba(255,207,63,.45)}
   #stats .sub{font-size:10px;opacity:.55;letter-spacing:.14em;margin-bottom:1px}
+  #stats .who{font-size:12px;font-weight:700;letter-spacing:.04em;margin-bottom:5px;
+    padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,.12)}
+  #stats .who span{font-weight:400;opacity:.5;font-size:10px;margin-left:5px}
+  #stats .who b{display:block;margin-top:2px;font-size:10.5px;font-weight:600;color:var(--green);
+    letter-spacing:.08em}
   .bar{margin-top:7px;font-size:10px;letter-spacing:.06em}
   .bar .t{display:flex;justify-content:space-between;opacity:.75;margin-bottom:2px}
   .bar .g{height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
@@ -81,14 +86,18 @@
   #clock .zone{margin-top:6px;font-size:13px;font-weight:600;color:var(--cyan)}
   #clock .st{font-size:10px;opacity:.55;letter-spacing:.06em;margin-top:1px;min-height:13px}
   #clock .own{font-size:10px;opacity:.75;margin-top:2px}
-  #mute{position:absolute;top:146px;right:12px;width:36px;height:36px;border-radius:10px;padding:0;
+  #clock .left{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.14);
+    font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  #clock .left.warn{color:var(--gold)}
+  #clock .left.hot{color:var(--red);animation:pulse .8s infinite}
+  #mute{position:absolute;top:206px;right:12px;width:36px;height:36px;border-radius:10px;padding:0;
     pointer-events:auto;cursor:pointer;color:#f2eefc;font:inherit;font-size:15px;line-height:1;
     display:flex;align-items:center;justify-content:center}
   #mute.off{color:rgba(255,255,255,.30)}
   #crewbox{position:absolute;top:196px;left:12px;padding:8px 11px;font-size:11px;max-width:220px;display:none}
   #crewbox h4{margin:0 0 4px;font-size:9px;letter-spacing:.18em;opacity:.5;font-weight:600}
 
-  #bag{position:absolute;top:196px;right:12px;padding:8px 11px;font-size:11px;min-width:170px;display:none}
+  #bag{position:absolute;top:256px;right:12px;padding:8px 11px;font-size:11px;min-width:170px;display:none}
   #bag h4{margin:0 0 5px;font-size:9px;letter-spacing:.18em;opacity:.5;font-weight:600}
   #bag .row{display:flex;justify-content:space-between;gap:10px;opacity:.86;line-height:1.6}
   #bag .tot{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.14);
@@ -186,7 +195,9 @@
   #talkhint{font-size:10px;opacity:.42;margin-top:7px;letter-spacing:.03em}
 
   /* ---------- オーバーレイ ---------- */
-  .over{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  /* align-items:center のままだと、中身が画面より高いときに上が切れてスクロールできない。
+     flex-start + margin auto なら、収まるときは中央・あふれるときは上から並ぶ */
+  .over{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;
     background:radial-gradient(circle at 50% 26%,#1e0b26,#05040a 68%);padding:20px;overflow:auto}
   /* 奥に薄いボクセル格子。この街が全部ブロックであることを開始画面から見せる */
   .over::before{content:"";position:absolute;inset:0;pointer-events:none;
@@ -197,7 +208,7 @@
     mask-image:radial-gradient(circle at 50% 36%,#000 8%,transparent 74%)}
   .over::after{content:"";position:absolute;left:0;right:0;bottom:0;height:140px;pointer-events:none;
     background:linear-gradient(0deg,rgba(255,45,120,.16),transparent)}
-  .over .box{max-width:600px;width:100%;text-align:center;position:relative;z-index:1}
+  .over .box{max-width:600px;width:100%;margin:auto 0;text-align:center;position:relative;z-index:1}
   .over h1{font-size:clamp(28px,7vw,46px);margin:0 0 4px;letter-spacing:.1em;font-weight:800;
     background:linear-gradient(180deg,#fff,var(--pink));-webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;filter:drop-shadow(0 0 24px rgba(255,45,120,.45))}
@@ -243,13 +254,160 @@
   .picks .bs b{font-weight:600;opacity:.85}
   .picks .bs em{font-style:normal;color:var(--gold);opacity:.8;font-variant-numeric:tabular-nums}
 
+  /* ---------- 開始画面（マインクラフト寄せ） ----------
+     背景は runtime に canvas で作った 16px の土テクスチャ（--dirt）を敷き詰める。
+     タイトルは背景クリップをやめて、ドット絵の看板のように黒い影を落とす。 */
+  #title{background:#120c14;--dirt:none}
+  #title::before{background-image:var(--dirt);background-size:64px 64px;
+    -webkit-mask-image:none;mask-image:none;opacity:.72;image-rendering:pixelated}
+  #title::after{top:0;height:100%;
+    background:linear-gradient(180deg,rgba(5,4,10,.62),rgba(5,4,10,.20) 40%,rgba(30,6,20,.55) 76%,rgba(5,4,10,.82))}
+  #title .box{max-width:540px}
+  #title h1{font-family:"Courier New","Courier",monospace;font-weight:700;letter-spacing:.02em;
+    background:none;-webkit-text-fill-color:#efe9f6;color:#efe9f6;filter:none;
+    text-shadow:5px 5px 0 #2a0f1e,0 0 26px rgba(255,45,120,.30);margin:0}
+  #title h2{letter-spacing:.42em;opacity:.68;margin:7px 0 0;text-shadow:2px 2px 0 #000}
+  /* 土の上だと細かい文字が沈むので、読むところだけ黒い板を敷く */
+  #title .picks{background:rgba(5,4,10,.62);padding:10px 12px;box-shadow:0 0 0 3px #0d0d12;margin:20px 0 0}
+  #title .picks .cap{opacity:.6}
+  #title .picks .bs{background:rgba(255,255,255,.07)}
+  #title .note{background:rgba(5,4,10,.62);padding:8px 12px;box-shadow:0 0 0 3px #0d0d12;opacity:.8}
+  #splash{display:inline-block;margin:12px 0 2px;color:#ffdc35;font-weight:700;
+    font-family:"Courier New",monospace;font-size:clamp(11px,3vw,14px);
+    text-shadow:2px 2px 0 #3a2a00;animation:splash 1.05s ease-in-out infinite}
+  @keyframes splash{0%,100%{transform:rotate(-14deg) scale(1)}50%{transform:rotate(-14deg) scale(1.10)}}
+  #title .btns{flex-direction:column;align-items:stretch;gap:8px;margin-top:20px}
+  /* ボタンは石ブロック。角は落とさず、内側に立体の縁を描く */
+  #title .btns button{width:100%;border-radius:0;padding:13px 20px;letter-spacing:.12em;
+    font-family:"Courier New",monospace;color:#fff;text-shadow:2px 2px 0 #23232b;
+    background:linear-gradient(180deg,#7c7c86,#5b5b64);
+    box-shadow:inset -3px -3px 0 #313139,inset 3px 3px 0 #a6a6b0,0 0 0 3px #0d0d12}
+  #title .btns button.go{background:linear-gradient(180deg,#c8407a,#8d1f52);
+    box-shadow:inset -3px -3px 0 #5c0f33,inset 3px 3px 0 #ef7aa8,0 0 0 3px #0d0d12}
+  #title .btns button:hover{filter:brightness(1.18)}
+  #title .btns button:active{transform:translateY(2px)}
+  #title .keys{background:rgba(6,4,12,.62);padding:12px 14px;box-shadow:0 0 0 3px #0d0d12}
+  #title .ver{position:absolute;left:10px;bottom:8px;z-index:2;font-size:10px;opacity:.5;
+    font-family:"Courier New",monospace;text-shadow:1px 1px 0 #000}
+
+  /* ---------- 開始画面に置いた歌舞伎町の作り物 ---------- */
+  .kabuki{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  /* 一番街のアーチ。街に入る前にこれを見せておく */
+  .arch{display:inline-block;position:relative;margin:0 auto 18px;padding:7px 26px;
+    border:3px solid var(--gold);border-radius:2px;background:rgba(6,4,12,.62);
+    filter:drop-shadow(0 0 12px rgba(255,207,63,.55))}
+  .arch span{font-size:clamp(12px,3vw,16px);font-weight:800;letter-spacing:.30em;color:var(--gold);
+    text-shadow:0 0 12px rgba(255,207,63,.9)}
+  .arch::before,.arch::after{content:"";position:absolute;top:100%;width:5px;height:15px;
+    background:linear-gradient(180deg,var(--gold),transparent)}
+  .arch::before{left:9px} .arch::after{right:9px}
+  /* 軒に吊るした提灯 */
+  /* 吊り紐のぶんだけ上に余白を取る。0 だと紐が画面外で提灯が半分に切れる */
+  .lant{position:absolute;left:0;right:0;top:0;height:86px;padding-top:26px;
+    display:flex;justify-content:center;align-items:flex-start;gap:min(10vw,92px)}
+  .lant i{position:relative;width:24px;height:32px;border-radius:50%/44%;transform-origin:50% -22px;
+    background:radial-gradient(circle at 38% 28%,#ff9b7c,#e0271a 60%,#7d0f07);
+    box-shadow:0 0 20px rgba(255,60,30,.55),inset 0 -6px 10px rgba(0,0,0,.45);
+    animation:sway 3.6s ease-in-out infinite;animation-delay:var(--d,0s)}
+  .lant i::before{content:"";position:absolute;left:50%;top:-22px;width:1px;height:22px;
+    margin-left:-.5px;background:rgba(255,255,255,.26)}
+  .lant i::after{content:"";position:absolute;left:0;right:0;top:42%;height:5px;
+    background:rgba(255,214,120,.85)}
+  @keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  /* 通りに突き出した縦看板。ちらつく間隔をずらして、全部が同時に消えないようにする */
+  .vsign{position:absolute;writing-mode:vertical-rl;padding:13px 7px;
+    font-size:13px;font-weight:700;letter-spacing:.22em;color:var(--c);
+    border:2px solid var(--c);border-radius:3px;background:rgba(6,4,12,.74);
+    text-shadow:0 0 10px var(--c);filter:drop-shadow(0 0 9px var(--c));
+    animation:flick 5s steps(1,end) infinite;animation-delay:var(--d,0s)}
+  @keyframes flick{0%,84%,88%,93%,100%{opacity:.95}86%,91%{opacity:.22}}
+  /* 靖国通りの路面。中央線だけ見せる */
+  .road{position:absolute;left:0;right:0;bottom:0;height:70px;
+    background:linear-gradient(180deg,transparent,rgba(10,9,14,.92))}
+  .road::before{content:"";position:absolute;left:0;right:0;bottom:26px;height:4px;
+    background:repeating-linear-gradient(90deg,rgba(255,240,200,.42) 0 30px,transparent 30px 62px)}
+  @media (max-width:900px){ .vsign{display:none} .lant{gap:14vw} }
+
+  /* ---------- キャラクター作成 ---------- */
+  #chargen .box{max-width:740px;text-align:left}
+  #chargen h1,#chargen h2{text-align:center}
+  .cgwrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin-top:18px}
+  .cgprev{flex:none;width:172px;display:flex;flex-direction:column;align-items:center;gap:8px;
+    padding:12px 10px;border-radius:10px;background:rgba(255,255,255,.045);
+    box-shadow:inset 0 1px rgba(255,255,255,.10),inset 0 -3px rgba(0,0,0,.35)}
+  /* canvas の既定は全画面固定（#gl 用）。作成画面のプレビューは流し込みに戻す */
+  .cgprev canvas{position:static;image-rendering:pixelated;width:150px;height:200px}
+  .cgprev .nm{font-size:12px;font-weight:700;letter-spacing:.04em}
+  .cgprev .gg{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--green);
+    margin-top:-3px;text-shadow:0 0 8px rgba(57,255,136,.45)}
+  .cgform{flex:1;min-width:250px;display:flex;flex-direction:column;gap:12px}
+  .cgrow{display:flex;flex-direction:column;gap:6px}
+  .cgrow>label{font-size:9.5px;letter-spacing:.2em;opacity:.5}
+  .cgname{display:flex;gap:7px}
+  .cgname input{flex:1;font:inherit;font-size:14px;padding:9px 11px;border-radius:8px;
+    background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);color:#fff;outline:none}
+  .cgname input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(22,224,255,.15)}
+  .cgname button{font:inherit;font-size:14px;padding:0 12px;border-radius:8px;cursor:pointer;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#f2eefc}
+  .opts{display:flex;gap:6px;flex-wrap:wrap}
+  .opts.col{flex-direction:column}
+  .opts button{font:inherit;font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:#f2eefc;text-align:left}
+  .opts button.on{border-color:var(--cyan);background:rgba(22,224,255,.14);box-shadow:0 0 0 1px var(--cyan)}
+  .opts button small{display:block;opacity:.55;font-size:10px;margin-top:3px;line-height:1.5}
+  .sw{display:flex;gap:6px;flex-wrap:wrap}
+  .sw i{display:block;width:26px;height:26px;border-radius:5px;cursor:pointer;
+    box-shadow:inset 0 2px rgba(255,255,255,.32),inset 0 -3px rgba(0,0,0,.42)}
+  .sw i.on{outline:2px solid #fff;outline-offset:2px}
+
+  /* ---------- クラフト ---------- */
+  #craft{position:fixed;inset:0;z-index:52;background:rgba(4,3,9,.92);display:none;
+    align-items:center;justify-content:flex-start;flex-direction:column;padding:20px;overflow:auto;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #craft.show{display:flex}
+  /* 品目が画面より多くなっても上が切れないよう、上下の余白を auto で吸わせる */
+  #craft h3{margin:auto 0 4px;font-size:15px;letter-spacing:.3em;font-weight:600}
+  #craft .sub{font-size:10px;opacity:.5;margin-bottom:14px;letter-spacing:.1em;text-align:center}
+  #craftlist{width:min(580px,94vw);display:flex;flex-direction:column;gap:7px}
+  .rcp{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.10)}
+  .rcp.on{border-color:var(--green);box-shadow:0 0 0 1px rgba(57,255,136,.45)}
+  .rcp .ic{width:34px;height:34px;flex:none;border-radius:6px;
+    box-shadow:inset 0 2px rgba(255,255,255,.30),inset 0 -3px rgba(0,0,0,.42)}
+  .rcp .tx{flex:1;min-width:0}
+  .rcp .tx b{display:block;font-size:13px}
+  .rcp .tx i{display:block;font-style:normal;font-size:10.5px;opacity:.6;line-height:1.5}
+  .rcp .mat{display:flex;gap:9px;flex-wrap:wrap;margin-top:3px;font-size:10.5px;opacity:.85}
+  .rcp .mat span.no{color:#ff6b60;opacity:1}
+  .rcp button{flex:none;font:inherit;font-size:11.5px;padding:7px 13px;border-radius:8px;cursor:pointer;
+    color:#fff;border:0;background:linear-gradient(180deg,#3a3348,#221d2e);
+    box-shadow:inset 0 1px rgba(255,255,255,.20),inset 0 -2px rgba(0,0,0,.40)}
+  .rcp button:disabled{opacity:.28;cursor:default}
+  .rcp button.eq{background:linear-gradient(180deg,#2b6d45,#17452b)}
+  #craft .close{margin:16px 0 auto;font-size:11px;opacity:.5}
+  #craftlist,#craft h3,#craft .sub,#craft .close{flex:none}
+
+  #tool{position:absolute;left:12px;bottom:14px;padding:8px 11px;font-size:11px;min-width:154px}
+  #tool .lb{font-size:9px;letter-spacing:.18em;opacity:.5;margin-bottom:3px}
+  #tool b{font-size:12.5px}
+  #tool .dur{height:4px;margin-top:5px;background:rgba(255,255,255,.14);border-radius:2px;overflow:hidden}
+  #tool .dur i{display:block;height:100%;background:var(--green);border-radius:2px}
+  /* 縦画面ではホットバーと重なる。道具札はログの上へ畳んで置く */
+  @media (max-width:560px){
+    #tool{bottom:262px;min-width:0;padding:6px 9px;font-size:10px}
+    #tool .lb,#tool-d{display:none}
+    #tool b{font-size:11.5px}
+    #log{width:min(300px,44vw);max-height:110px;bottom:104px}
+  }
+
   /* ---------- マップ ---------- */
   #map{position:fixed;inset:0;z-index:50;background:rgba(4,3,9,.9);display:none;
-    align-items:center;justify-content:center;flex-direction:column;padding:20px;
+    align-items:center;justify-content:flex-start;flex-direction:column;padding:20px;
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-  #map.show{display:flex}
-  #map h3{margin:0 0 4px;font-size:15px;letter-spacing:.3em;font-weight:600}
-  #map .sub{font-size:10px;opacity:.5;margin-bottom:16px;letter-spacing:.1em}
+  #map.show{display:flex;overflow:auto}
+  #map h3{margin:auto 0 4px;font-size:15px;letter-spacing:.3em;font-weight:600}
+  #map .sub{font-size:10px;opacity:.5;margin-bottom:16px;letter-spacing:.1em;text-align:center}
+  #map>*{flex:none}
   #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:min(430px,88vw)}
   #grid .z{aspect-ratio:1;border-radius:10px;padding:9px;display:flex;flex-direction:column;
     justify-content:space-between;border:1px solid rgba(255,255,255,.12);
@@ -261,7 +419,7 @@
   #grid .z.here{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 24px rgba(22,224,255,.28)}
   #map .legend{margin-top:16px;font-size:10px;opacity:.6;display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
   #map .legend span i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
-  #map .close{margin-top:20px;font-size:11px;opacity:.5}
+  #map .close{margin:20px 0 auto;font-size:11px;opacity:.5}
   #shoplist{margin-top:14px;font-size:11px;opacity:.75;max-width:430px;line-height:1.7;text-align:center}
 
   /* ---------- モバイル ---------- */
@@ -280,6 +438,7 @@
   #bA{right:112px;bottom:110px;border-color:var(--gold);color:var(--gold)}
   #bB{left:150px;bottom:186px;border-color:var(--red);color:#ff8b85;width:52px;height:52px;font-size:11px}
   #bC{left:150px;bottom:118px;width:52px;height:52px;font-size:11px}
+  #bK{left:150px;bottom:250px;border-color:var(--gold);color:var(--gold);width:52px;height:52px;font-size:11px}
 </style>
 </head>
 <body>
@@ -298,6 +457,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="aibadge">AI 生成中</div>
 
   <div id="stats" class="card">
+    <div class="who" id="s-who">—</div>
     <div class="sub">所持金</div>
     <div class="yen" id="s-yen">¥120,000</div>
     <div class="bar"><div class="t"><span>体力</span><span id="s-hpn">100</span></div>
@@ -318,6 +478,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="zone" id="c-zone">一番街</div>
     <div class="st" id="c-st">靖国通り</div>
     <div class="own" id="c-own">支配: 紅蓮会</div>
+    <div class="own" id="c-win" style="color:var(--green)">制圧 0 / 5</div>
+    <div class="left" id="c-left">残り 24:00</div>
   </div>
   <button id="mute" class="card" type="button" title="音を消す (N)" aria-label="音を消す">♪</button>
 
@@ -325,6 +487,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="tot"><span>換金額</span><span id="bagtot">¥0</span></div></div>
 
   <div id="minimap" class="card"><canvas id="mm" width="276" height="276"></canvas></div>
+  <div id="tool" class="card"><div class="lb">手に持っている道具</div><b id="tool-n">素手</b>
+    <div id="tool-d" style="font-size:10px;opacity:.55;margin-top:2px">固いものは掘れない</div>
+    <div class="dur" id="tool-bar" style="display:none"><i></i></div></div>
   <div id="log"></div>
   <div id="prompt" class="card"></div>
   <div id="selname"></div>
@@ -345,12 +510,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <input id="t-in" type="text" maxlength="120" placeholder="何を言ってもいい。（例: このシマ、俺によこせ）" autocomplete="off">
     <button id="t-send">言う</button>
   </div>
-  <div id="talkhint">Enter で発言 / Esc で立ち去る ── 相手の返答も行動も、その場で生成される</div>
+  <div id="talkhint">Enter で発言 / Esc で立ち去る ── 相手の返答も行動も、その場で生成される（殴るなら会話を閉じて F）</div>
+</div>
+
+<div id="craft">
+  <h3>クラフト</h3>
+  <div class="sub">回収したブロックを道具に組み直す ── 固いブロックは道具がないと歯が立たない</div>
+  <div id="craftlist"></div>
+  <div class="close">Q / Esc で閉じる</div>
 </div>
 
 <div id="map">
   <h3>歌舞伎町 勢力図</h3>
-  <div class="sub">支配率 60% 以上でシマを獲ったことになる</div>
+  <div class="sub">支配率 60% で 1 つのシマ ／ 制限時間内に 9 つ中 5 つ（過半数）を獲れば勝ち</div>
   <div id="grid"></div>
   <div class="legend" id="legend"></div>
   <div id="shoplist"></div>
@@ -375,36 +547,89 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </div>
 
 <div class="over" id="title" style="display:none">
+  <!-- 通りの作り物。提灯・縦看板・靖国通りの路面 -->
+  <div class="kabuki" aria-hidden="true">
+    <div class="lant">
+      <i style="--d:0s"></i><i style="--d:.5s"></i><i style="--d:1s"></i>
+      <i style="--d:1.5s"></i><i style="--d:2s"></i><i style="--d:2.5s"></i>
+    </div>
+    <b class="vsign" style="--c:#ff2d78;left:5%;top:16%">無料案内所</b>
+    <b class="vsign" style="--c:#16e0ff;left:13%;top:41%;--d:.7s">飲み放題</b>
+    <b class="vsign" style="--c:#ffcf3f;left:6%;top:64%;--d:1.4s">両替</b>
+    <b class="vsign" style="--c:#a45cff;right:5%;top:18%;--d:.4s">ホストクラブ</b>
+    <b class="vsign" style="--c:#39ff88;right:13%;top:43%;--d:1.1s">深夜営業</b>
+    <b class="vsign" style="--c:#ff4f12;right:6%;top:66%;--d:1.8s">ラーメン</b>
+    <div class="road"></div>
+  </div>
   <div class="box">
+    <div class="arch"><span>歌舞伎町一番街</span></div>
     <div class="cubes" id="t-cubes"></div>
     <h1>歌舞伎クラフト</h1>
     <h2>K A B U K I &nbsp; C R A F T</h2>
-    <p>この街は全部ブロックでできている。<br>
-      アスファルトも、ビルも、ネオンも、<b style="color:var(--cyan)">全部掘れる</b>。<br>
-      掘って、売って、買って、9つのシマを獲れ。</p>
+    <div><span id="splash">…</span></div>
+    <div class="btns">
+      <button class="go" id="t-start">新しく始める</button>
+      <button id="t-load" style="display:none">続きから</button>
+      <button id="t-keys">操作方法</button>
+    </div>
     <div class="picks">
-      <div class="cap">掘って売れるブロック（1個あたりの値）</div>
+      <div class="cap">ゲーム内の 1 日（現実 24 分）で、9 つのシマのうち 5 つを獲れ</div>
       <div class="row" id="t-blocks"></div>
     </div>
-    <div class="keys">
+    <div class="keys" id="t-keylist" style="display:none">
       <b>W A S D</b><span>移動（W が前）/ Shift で走る</span>
       <b>Space</b><span>ジャンプ</span>
       <b>マウス</b><span>視点（画面クリックで固定）</span>
       <b>左クリック / F</b><span>押しっぱなしでブロックを掘る</span>
+      <b>F</b><span>人の前では「殴る」（F がアクション）</span>
       <b>右クリック / R</b><span>ブロックを置く</span>
       <b>1〜9 / ホイール</b><span>手に持つブロックを選ぶ</span>
+      <b>Q</b><span>クラフト（掘ったブロックで道具を作る）</span>
       <b>G</b><span>回収したブロックを換金（自分の店なら高く売れる）</span>
       <b>E</b><span>話す・店を買う</span>
-      <b>C</b><span>殴る</span>
       <b>Tab / M</b><span>勢力図</span>
       <b>V</b><span>視点切替（三人称／一人称）</span>
       <b>N</b><span>音のオン／オフ</span>
     </div>
-    <div class="btns">
-      <button class="go" id="t-start">street へ</button>
-      <button id="t-load" style="display:none">続きから</button>
-    </div>
     <div class="note" id="aistat">NPC の会話・行動生成: DeepSeek V4-Flash</div>
+  </div>
+  <div class="ver">KABUKI CRAFT ─ 1秒 = ゲーム内 1分 / 持ち時間 1日 = 24分</div>
+</div>
+
+<div class="over" id="chargen" style="display:none">
+  <div class="box">
+    <h1>キャラクター作成</h1>
+    <h2>C H A R A C T E R</h2>
+    <div class="cgwrap">
+      <div class="cgprev">
+        <canvas id="cg-canvas" width="180" height="240"></canvas>
+        <div class="nm" id="cg-nm">—</div>
+        <div class="gg" id="cg-gg">—</div>
+      </div>
+      <div class="cgform">
+        <div class="cgrow"><label>名前</label>
+          <div class="cgname">
+            <input id="cg-name" type="text" maxlength="12" autocomplete="off" placeholder="名前を入れる">
+            <button id="cg-dice" type="button" title="ランダム">🎲</button>
+          </div>
+        </div>
+        <div class="cgrow"><label>シマの名前（勢力図に出る、あなたの一党）</label>
+          <div class="cgname">
+            <input id="cg-gang" type="text" maxlength="10" autocomplete="off" placeholder="組の名を決める">
+            <button id="cg-gdice" type="button" title="ランダム">🎲</button>
+          </div>
+        </div>
+        <div class="cgrow"><label>性別</label><div class="opts" id="cg-gender"></div></div>
+        <div class="cgrow"><label>髪の色</label><div class="sw" id="cg-hair"></div></div>
+        <div class="cgrow"><label>服の色</label><div class="sw" id="cg-body"></div></div>
+        <div class="cgrow"><label>この街に来る前</label><div class="opts col" id="cg-origin"></div></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="go" id="cg-go">この身なりで歌舞伎町へ</button>
+      <button id="cg-back">戻る</button>
+    </div>
+    <div class="note">見た目も名前も、街の連中との会話にそのまま持ち込まれます。</div>
   </div>
 </div>
 
@@ -425,6 +650,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <button class="tbtn" id="bA">話</button>
   <button class="tbtn" id="bB">殴</button>
   <button class="tbtn" id="bC">図</button>
+  <button class="tbtn" id="bK">作</button>
 </div>
 
 <script>
@@ -453,6 +679,9 @@ const irnd = (a, b) => Math.floor(rnd(a, b + 1));
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const yen = n => '¥' + Math.round(n).toLocaleString('ja-JP');
 const $ = id => document.getElementById(id);
+// 名前とシマ名はプレイヤーが打ち込む。そのまま innerHTML に流すと HUD が崩れる
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // 座標から決まる擬似乱数。街を毎回同じ形にする。シフトは論理(>>>)。
 function hash2(x, y) {
@@ -510,37 +739,104 @@ const M4 = {
 /* ============================================================================
    2. ブロック定義
    h = 掘るのにかかる秒数（-1 は壊せない） / v = 1個あたりの換金額
+   t = 必要な道具の等級。素手は 0。t を満たさない道具だと極端に遅くなる
+       （アスファルトやコンクリートは素手ではほとんど剥がせない）
    ========================================================================= */
 const AIR = 0;
 const BLOCKS = [
   null,
-  { n: '岩盤',        c: [.09, .09, .11], h: -1,  v: 0,    em: 0 },     // 1
-  { n: 'アスファルト', c: [.22, .22, .26], h: .50, v: 20,   em: 0 },     // 2
-  { n: 'コンクリート', c: [.52, .50, .55], h: .70, v: 30,   em: 0 },     // 3
-  { n: 'タイル',      c: [.66, .64, .70], h: .60, v: 45,   em: 0 },     // 4
-  { n: 'レンガ',      c: [.58, .31, .25], h: .85, v: 60,   em: 0 },     // 5
-  { n: '鉄骨',        c: [.44, .47, .53], h: 1.5, v: 200,  em: 0 },     // 6
-  { n: '窓ガラス',    c: [.28, .44, .56], h: .25, v: 80,   em: .12 },   // 7
-  { n: '灯った窓',    c: [1, .78, .42],   h: .25, v: 130,  em: .85 },   // 8
-  { n: 'ネオン桃',    c: [1, .18, .47],   h: .35, v: 420,  em: 1.15 },  // 9
-  { n: 'ネオン青',    c: [.09, .88, 1],   h: .35, v: 420,  em: 1.15 },  // 10
-  { n: 'ネオン金',    c: [1, .81, .25],   h: .35, v: 420,  em: 1.15 },  // 11
-  { n: 'ネオン紫',    c: [.64, .36, 1],   h: .35, v: 420,  em: 1.15 },  // 12
-  { n: 'ネオン緑',    c: [.22, 1, .53],   h: .35, v: 420,  em: 1.15 },  // 13
-  { n: 'ネオン橙',    c: [1, .48, .12],   h: .35, v: 420,  em: 1.15 },  // 14
-  { n: '看板',        c: [.16, .14, .20], h: .40, v: 50,   em: 0 },     // 15
-  { n: '木材',        c: [.58, .40, .22], h: .50, v: 40,   em: 0 },     // 16
-  { n: '提灯',        c: [1, .26, .16],   h: .20, v: 260,  em: 1.2 },   // 17
-  { n: '土',          c: [.29, .21, .14], h: .40, v: 5,    em: 0 },     // 18
-  { n: '草',          c: [.21, .43, .19], h: .40, v: 8,    em: 0 },     // 19
-  { n: '幹',          c: [.28, .19, .11], h: .80, v: 35,   em: 0 },     // 20
-  { n: '葉',          c: [.13, .39, .18], h: .20, v: 6,    em: 0 },     // 21
-  { n: '街灯',        c: [1, .86, .60],   h: .50, v: 300,  em: 1.4 },   // 22
-  { n: '自販機',      c: [.10, .55, .85], h: .90, v: 600,  em: .65 },   // 23
-  { n: '金塊',        c: [1, .78, .22],   h: 2.2, v: 5000, em: .25 }    // 24
+  { n: '岩盤',        c: [.09, .09, .11], h: -1,  v: 0,    em: 0,    t: 9 },  // 1
+  { n: 'アスファルト', c: [.22, .22, .26], h: .50, v: 20,   em: 0,    t: 1 },  // 2
+  { n: 'コンクリート', c: [.52, .50, .55], h: .70, v: 30,   em: 0,    t: 1 },  // 3
+  { n: 'タイル',      c: [.66, .64, .70], h: .60, v: 45,   em: 0,    t: 1 },  // 4
+  { n: 'レンガ',      c: [.58, .31, .25], h: .85, v: 60,   em: 0,    t: 1 },  // 5
+  { n: '鉄骨',        c: [.44, .47, .53], h: 1.5, v: 200,  em: 0,    t: 2 },  // 6
+  { n: '窓ガラス',    c: [.28, .44, .56], h: .25, v: 80,   em: .12,  t: 0 },  // 7
+  { n: '灯った窓',    c: [1, .78, .42],   h: .25, v: 130,  em: .85,  t: 0 },  // 8
+  { n: 'ネオン桃',    c: [1, .18, .47],   h: .35, v: 420,  em: 1.15, t: 0 },  // 9
+  { n: 'ネオン青',    c: [.09, .88, 1],   h: .35, v: 420,  em: 1.15, t: 0 },  // 10
+  { n: 'ネオン金',    c: [1, .81, .25],   h: .35, v: 420,  em: 1.15, t: 0 },  // 11
+  { n: 'ネオン紫',    c: [.64, .36, 1],   h: .35, v: 420,  em: 1.15, t: 0 },  // 12
+  { n: 'ネオン緑',    c: [.22, 1, .53],   h: .35, v: 420,  em: 1.15, t: 0 },  // 13
+  { n: 'ネオン橙',    c: [1, .48, .12],   h: .35, v: 420,  em: 1.15, t: 0 },  // 14
+  { n: '看板',        c: [.16, .14, .20], h: .40, v: 50,   em: 0,    t: 0 },  // 15
+  { n: '木材',        c: [.58, .40, .22], h: .50, v: 40,   em: 0,    t: 0 },  // 16
+  { n: '提灯',        c: [1, .26, .16],   h: .20, v: 260,  em: 1.2,  t: 0 },  // 17
+  { n: '土',          c: [.29, .21, .14], h: .40, v: 5,    em: 0,    t: 0 },  // 18
+  { n: '草',          c: [.21, .43, .19], h: .40, v: 8,    em: 0,    t: 0 },  // 19
+  { n: '幹',          c: [.28, .19, .11], h: .80, v: 35,   em: 0,    t: 0 },  // 20
+  { n: '葉',          c: [.13, .39, .18], h: .20, v: 6,    em: 0,    t: 0 },  // 21
+  { n: '街灯',        c: [1, .86, .60],   h: .50, v: 300,  em: 1.4,  t: 1 },  // 22
+  { n: '自販機',      c: [.10, .55, .85], h: .90, v: 600,  em: .65,  t: 2 },  // 23
+  { n: '金塊',        c: [1, .78, .22],   h: 2.2, v: 5000, em: .25,  t: 3 }   // 24
 ];
 const NEON_IDS = [9, 10, 11, 12, 13, 14];
 const css = c => 'rgb(' + c.map(v => Math.round(clamp(v, 0, 1) * 255)).join(',') + ')';
+
+/* ---- 道具 --------------------------------------------------------------
+   tier = 掘れるブロックの上限 / spd = 掘る速さの倍率 / dmg = 殴りの追加ダメージ
+   dur  = 耐久（ブロック 1 個掘るごとに 1 減る。0 で壊れて素手に戻る）        */
+const TOOLS = {
+  hand:  { k: 'hand',  n: '素手',         tier: 0, spd: 1.0, dmg: 0,  dur: 0,   col: [.86, .68, .56],
+    d: 'アスファルトより固いものは、ほとんど剥がせない' },
+  wood:  { k: 'wood',  n: '木のツルハシ', tier: 1, spd: 2.4, dmg: 3,  dur: 150, col: [.58, .40, .22],
+    d: 'アスファルト・コンクリート・レンガ・街灯まで' },
+  stone: { k: 'stone', n: '石のツルハシ', tier: 2, spd: 3.8, dmg: 6,  dur: 320, col: [.52, .50, .55],
+    d: '鉄骨と自販機まで掘れる' },
+  iron:  { k: 'iron',  n: '鉄のツルハシ', tier: 3, spd: 6.0, dmg: 10, dur: 640, col: [.44, .47, .53],
+    d: '金塊まで掘れる。ビルが目に見えて減る' },
+  gold:  { k: 'gold',  n: '金のツルハシ', tier: 4, spd: 9.5, dmg: 12, dur: 900, col: [1, .78, .22], em: .35,
+    d: 'この街で一番速い。ネオンごと持っていける' },
+  pipe:  { k: 'pipe',  n: '鉄パイプ',     tier: 1, spd: 1.3, dmg: 22, dur: 420, col: [.40, .43, .49],
+    d: '掘るのは苦手。人を黙らせるための道具' },
+  neon:  { k: 'neon',  n: 'ネオン管の刀', tier: 2, spd: 1.8, dmg: 40, dur: 520, col: [1, .18, .47], em: 1.1,
+    d: '夜の歌舞伎町でいちばん物騒なもの' }
+};
+const ARMOR = { k: 'helm', n: '鉄のヘルメット', col: [.44, .47, .53], d: '殴られたときのダメージが 25% 減る' };
+// 材料は [ブロックID, 個数]
+const RECIPES = [
+  { out: 'wood',  need: [[16, 3]] },
+  { out: 'stone', need: [[3, 4], [16, 2]] },
+  { out: 'iron',  need: [[6, 3], [16, 2]] },
+  { out: 'gold',  need: [[24, 3], [6, 2]] },
+  { out: 'pipe',  need: [[6, 2]] },
+  { out: 'neon',  need: [[6, 2], [9, 2], [13, 2]] },
+  { out: 'helm',  need: [[6, 4], [4, 2]] }
+];
+const Craft = { tool: 'hand', owned: { hand: true }, dur: {}, armor: false };
+const curTool = () => TOOLS[Craft.tool] || TOOLS.hand;
+
+/* ---- キャラクター作成の選択肢 -------------------------------------------
+   素性の中身（所持金・体力・初期の道具）は性別で変えない。変えるのは呼び名だけ。
+   女を選んで「元ホスト」「解体屋崩れ」が並ぶのはさすがに据わりが悪い。      */
+const GENDERS = ['男', '女'];
+const ORIGINS = [
+  { k: 'nagare', yen: 120000, tool: 'wood', hp: 100, rep: 0,
+    v: {
+      '男': ['流れ者', '何も持たずに来た。カバンに木のツルハシが一本。'],
+      '女': ['流れ者', '何も持たずに来た。カバンに木のツルハシが一本。']
+    } },
+  { k: 'mizu', yen: 260000, tool: 'wood', hp: 85, rep: 8,
+    v: {
+      '男': ['元ホスト', '指名は落ちたが顔はまだ利く。金と口はあるが、体は張れない。'],
+      '女': ['元キャバ嬢', '指名は落ちたが顔はまだ利く。金と口はあるが、体は張れない。']
+    } },
+  { k: 'kaitai', yen: 60000, tool: 'stone', hp: 125, rep: 0,
+    v: {
+      '男': ['解体屋崩れ', '壊すことだけは誰にも負けない。石のツルハシ持ち。金はない。'],
+      '女': ['元大工', '壊すことだけは誰にも負けない。石のツルハシ持ち。金はない。']
+    } }
+];
+// 性別を減らす前のセーブが来ても落ちないよう、知らない性別は男の呼び名に寄せる
+const originVar = (k, g) => {
+  const o = ORIGINS.find(x => x.k === k) || ORIGINS[0];
+  return o.v[g] || o.v['男'];
+};
+const originName = (k, g) => originVar(k, g)[0];
+const HAIR_SW = [[.10, .10, .12], [.34, .20, .12], [.85, .75, .45], [.85, .40, .55],
+  [.25, .70, .95], [.62, .36, 1], [.88, .88, .90], [.92, .38, .16]];
+const BODY_SW = [[.10, .10, .14], [.82, .18, .34], [.14, .30, .55], [.18, .48, .32],
+  [.60, .52, .20], [.48, .20, .62], [.78, .76, .74], [.30, .30, .36]];
 
 /* ============================================================================
    3. ボクセル世界
@@ -627,14 +923,22 @@ const onMainStreet = (x, z) => {
   const s = streetOf(x, z);
   return s === '一番街' || s === 'セントラルロード' || s === '区役所通り' || s === '花道通り';
 };
+// player.name はキャラクター作成で決めたシマの名前に差し替わる（begin で反映）
 const FACTIONS = {
-  player: { name: 'あなた', css: '#39ff88' },
+  player: { name: '無頼会', css: '#39ff88' },
   guren: { name: '紅蓮会', css: '#ff3b30' },
   dragons: { name: 'ドラゴンズ', css: '#a45cff' },
   arcadia: { name: 'アルカディア', css: '#16e0ff' },
   local: { name: '地元の顔役', css: '#ffcf3f' }
 };
 
+/* 持ち時間が 1 日しかないので、店は「1 晩で買える値段」に寄せる。
+   income は元の日商。実際に入るのは 1 ゲーム時間（=現実 1 分）ごとに 1/4。
+   店の元は取れるか取れないかくらい。買う理由は金ではなく支配率のほう。 */
+const SHOP_PRICE_MUL = 0.55;
+const hourlyIncome = s => Math.round(s.income / 4);
+// 店を買ったときに入る支配率。安い立ち飲みと高いホストクラブが同じでは釣り合わない
+const shopControl = s => Math.round(6 + s.type.inf * 1.1);
 const SHOP_TYPES = [
   { key: 'tachinomi', name: '立ち飲み屋', price: 58000, income: 5200, neon: 14, inf: 2 },
   { key: 'bar', name: 'バー', price: 180000, income: 14000, neon: 11, inf: 4 },
@@ -997,7 +1301,7 @@ function maybeShop(x0, z0, x1, z1, zi, bi, bj, li) {
     id: shopSeq++, zone: zi, type,
     x: c.x + 0.5, z: c.z + 0.5, bx: c.x, bz: c.z,
     name: SHOP_PREFIX[Math.floor(hash2(bi * 7 + li, bj * 3) * 883) % SHOP_PREFIX.length],
-    price: Math.round(type.price * mul / 1000) * 1000,
+    price: Math.round(type.price * mul * SHOP_PRICE_MUL / 1000) * 1000,
     income: Math.round(type.income * mul / 100) * 100,
     owner: null
   };
@@ -1313,9 +1617,20 @@ const P = {
   onGround: false, hp: 100, maxhp: 100,
   yen: 120000, inf: 0, rep: 0, wanted: 0, drunk: 0, notoriety: 0,
   crew: [], firstPerson: false, camDist: 5.2, walkPhase: 0,
-  atkCd: 0, moving: false, dug: 0
+  atkCd: 0, moving: false, dug: 0, digVal: 0,
+  // キャラクター作成で決まる見た目と素性
+  name: '名無し', gender: '男', origin: 'nagare', gang: '無頼会',
+  hair: [.10, .10, .12], body: [.10, .10, .14],
+  // 腕の振り。掘っている間と殴った直後だけ 0→1 を往復する
+  arm: 0, armPhase: 0, armT: 0
 };
-const Clock = { min: 20 * 60, day: 1 };
+/* 現実の 1 秒 = ゲーム内の 1 分。
+   持ち時間はゲーム内の 1 日（=1440 分 = 現実 24 分）。
+   その間に 9 つのシマの過半数（5 つ）を獲れば勝ち、間に合わなければ負け。 */
+const MIN_PER_SEC = 1;                 // 現実 1 秒 = ゲーム内 1 分
+const DAY_MIN = 24 * 60;               // ゲーム内 1 日 = 1440 分 = 現実 24 分
+const WIN_ZONES = 5;
+const Clock = { min: 20 * 60, day: 1, elapsed: 0 };
 const PR = 0.30, PH = 1.8, EYE = 1.62;
 
 function boxHits(x, y, z) {
@@ -1425,17 +1740,105 @@ function updateBag() {
   $('bagtot').textContent = yen(bagValue());
 }
 
+/* ---- 道具とクラフト ----------------------------------------------------- */
+// 道具が足りないと極端に遅くなる。足りない等級 1 つごとに、さらに半分以下に落とす
+function digSpeed(def) {
+  const T = curTool();
+  const need = def.t || 0;
+  return T.tier >= need ? T.spd : 0.16 / (need - T.tier);
+}
+function equipTool(k) {
+  if (!Craft.owned[k]) return;
+  Craft.tool = k; updateToolHud(); drawCraft();
+  log(`${TOOLS[k].n} を手に持った。`, '');
+}
+function bestTool() {
+  return Object.keys(Craft.owned).sort((a, b) => TOOLS[b].tier - TOOLS[a].tier)[0] || 'hand';
+}
+function wearTool(n) {
+  const k = Craft.tool;
+  if (k === 'hand') return;
+  Craft.dur[k] = (Craft.dur[k] || 0) - n;
+  if (Craft.dur[k] <= 0) {
+    delete Craft.owned[k]; delete Craft.dur[k];
+    Craft.tool = bestTool();
+    log(`${TOOLS[k].n} が壊れた。`, 'bad'); Snd.lose();
+  }
+  updateToolHud();
+}
+function updateToolHud() {
+  const T = curTool();
+  $('tool-n').textContent = T.n + (Craft.armor ? '　🪖' : '');
+  $('tool-d').textContent = T.d;
+  const bar = $('tool-bar');
+  const max = T.dur, left = Craft.dur[T.k];
+  if (!max || left == null) { bar.style.display = 'none'; return; }
+  bar.style.display = 'block';
+  const r = clamp(left / max, 0, 1);
+  bar.firstElementChild.style.width = (r * 100) + '%';
+  bar.firstElementChild.style.background = r < 0.2 ? '#ff3b30' : r < 0.5 ? '#ffcf3f' : '#39ff88';
+}
+const hasMats = r => r.need.every(([id, k]) => Bag.count[id] >= k);
+function doCraft(r) {
+  if (!hasMats(r)) return;
+  r.need.forEach(([id, k]) => { Bag.count[id] -= k; });
+  if (r.out === 'helm') {
+    Craft.armor = true;
+    log(`${ARMOR.n} を作った。もう少しだけ長く立っていられる。`, 'good');
+  } else {
+    const T = TOOLS[r.out];
+    Craft.owned[T.k] = true;
+    Craft.dur[T.k] = T.dur;                        // 作り直せば耐久も戻る
+    if (TOOLS[Craft.tool].tier <= T.tier || Craft.tool === 'hand') Craft.tool = T.k;
+    log(`${T.n} を作った。`, 'good');
+  }
+  Snd.win();
+  rebuildHotbar(); updateBag(); updateToolHud(); drawCraft();
+}
+function drawCraft() {
+  if (!craftOpen) return;
+  $('craftlist').innerHTML = RECIPES.map((r, i) => {
+    const helm = r.out === 'helm';
+    const T = helm ? ARMOR : TOOLS[r.out];
+    const have = helm ? Craft.armor : !!Craft.owned[r.out];
+    const eq = !helm && Craft.tool === r.out;
+    const ok = hasMats(r);
+    const mats = r.need.map(([id, k]) =>
+      `<span class="${Bag.count[id] >= k ? '' : 'no'}">${BLOCKS[id].n} ${Bag.count[id]}/${k}</span>`).join('');
+    const spec = helm ? '' : `等級 ${T.tier}　掘り速度 ×${T.spd}　殴り +${T.dmg}　耐久 ${T.dur}`;
+    const btn = helm
+      ? `<button data-i="${i}" ${ok && !have ? '' : 'disabled'}>${have ? '装備済' : '作る'}</button>`
+      : eq ? `<button class="eq" disabled>手に持っている</button>`
+        : have ? `<button data-eq="${r.out}">持ち替える</button>`
+          : `<button data-i="${i}" ${ok ? '' : 'disabled'}>作る</button>`;
+    return `<div class="rcp${eq || (helm && have) ? ' on' : ''}">`
+      + `<span class="ic" style="background:${css(T.col)}"></span>`
+      + `<span class="tx"><b>${T.n}</b><i>${T.d}</i>`
+      + (spec ? `<i style="opacity:.42">${spec}</i>` : '')
+      + `<span class="mat">${mats}</span></span>${btn}</div>`;
+  }).join('')
+    + (Craft.owned.hand && Craft.tool !== 'hand'
+      ? `<div class="rcp"><span class="ic" style="background:${css(TOOLS.hand.col)}"></span>`
+      + `<span class="tx"><b>素手</b><i>${TOOLS.hand.d}</i></span>`
+      + `<button data-eq="hand">持ち替える</button></div>` : '');
+}
+$('craftlist').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.eq) equipTool(b.dataset.eq);
+  else if (b.dataset.i !== undefined) doCraft(RECIPES[+b.dataset.i]);
+});
+
 function breakBlock(b) {
   const def = BLOCKS[b.id];
   if (!def || def.h < 0) return;
   setV(b.x, b.y, b.z, AIR);
   Bag.count[b.id]++; Bag.total++;
   P.dug++;
+  wearTool(1);
   Snd.dig(def);
   rebuildHotbar(); updateBag();
-  // 街を壊すと、そのシマの均衡が動く
-  const zi = zoneOf(b.x, b.z);
-  if (P.dug % 12 === 0) addControl(zi, 0.6, '');
+  // 街を壊すと、そのシマの均衡が動く。加算は updateWorld が 3 秒ごとにまとめる
+  P.digVal += def.v;
   if (def.v >= 300) log(`${def.n} を回収（${yen(def.v)}）`, 'dig');
   // 見られていたら手配度
   if (def.v >= 200 || P.dug % 25 === 0) {
@@ -1513,10 +1916,23 @@ const ARCH = [
   { k: 'ramen', job: 'ラーメン屋の店主', fac: 'local', col: [.35, .3, .25], hp: 70, hair: [.12, .12, .13],
     persona: '深夜のラーメン屋の店主。愛想はないが情はある。この街の連中を全員食わせてきた。', gender: '男' },
   // 追加は必ず末尾に。順番が変わるとセーブの子分 id がずれる
+  /* 武田 伸也。tk.st の MAGI（magi2）で定義された人格をそのまま持ってくる。
+     Enthusiast / Humanist / Strategist の 3 人格が統合された一人の人間、という前提。 */
   { k: 'dj', job: 'DJ', fac: 'arcadia', col: [.14, .14, .20], hp: 55, hair: [.10, .10, .13],
     fixed: '武田 伸也',
-    persona: 'ホストクラブのブースで回している DJ。フロアの温度を読んで曲を差し替え、シャンパンコールを煽る。'
-      + '煽るときは声が上がるが、素に戻ると淡々としている。音楽と、箱の売上の話が好き。', gender: '男' }
+    persona: 'ホストクラブのブースで回している DJ。だが本体は「3つの人格が完全に統合された一人の人間」。'
+      + '(1) Enthusiast: 衝動的で直感に正直なオタク。ハーレー・自作PC・アイドル・ワイン、何よりサイケやEDMなど'
+      + '四つ打ちで激しく踊る。人より「事柄」に興味が向き、興味の合う相手には共感的だが閉鎖的な自己中心性と併存。'
+      + '反社会的なことへの抵抗も少ない。'
+      + '(2) Humanist: フロム・ストア派・仏教を血肉化した、詩的で内向的な博愛の夢想家。関心の中心は人間。'
+      + '深く共感的かつ自己犠牲的で、自分の哲学に沿うなら倫理的禁忌も厭わない。'
+      + '(3) Strategist: データドリブンな戦略家。合理性と最適解を追い、再現性ある施策も新規性も取り込む。'
+      + '秀でた人間にのみ興味を持ち、非共感的で組織中心的。'
+      + 'この3つが溶けた結果として、肯定的でエネルギッシュ、知的好奇心と遊び心があり、凡庸を排し本質を鋭く突く。'
+      + '洗練された言葉で簡潔かつ人間味のある表現をする。一人称は「俺」。'
+      + 'フロアの温度を読んで曲を差し替え、煽るときは声が上がるが素に戻ると淡々としている。'
+      + '音楽と箱の売上、そして人間の業の話を好む。'
+      + '人格名（Enthusiast等）やAIであることには絶対に触れず、常に統合された自分の考えとして語る。', gender: '男' }
 ];
 const SEI = ['佐々木', '黒岩', '桐生', '真壁', '一之瀬', '鮫島', '氷室', '早乙女', '猪熊', '九条', '天堂', '甲斐', '朝倉', '不破', '獅子堂', '苅部'];
 const MEI_M = ['亮', '哲', '龍司', '慎', '拓海', '大河', '晴', '樹', '零', '要', '蓮', '匠'];
@@ -1624,7 +2040,9 @@ function recalcInf() {
   P.inf = clamp(Shops.filter(s => s.owner === 'player').reduce((a, s) => a + s.type.inf, 0)
     + P.crew.length * 3 + Terr.filter(t => t.mine >= 60).length * 6 + P.rep, 0, 100);
 }
-function checkWin() { if (Terr.every(t => t.mine >= 60)) endGame(true); }
+const heldZones = () => Terr.filter(t => t.mine >= 60).length;
+// 過半数（9 つ中 5 つ）を握った時点で勝ち。取り返されればまた足りなくなる
+function checkWin() { if (heldZones() >= WIN_ZONES) endGame(true); }
 
 /* ============================================================================
    10. AI（DeepSeek V4-Flash）
@@ -1635,7 +2053,8 @@ const AI = {
   // 肝心の会話が内蔵の応答に落ちる
   calls: { talk: 0, bark: 0 },
   max: { talk: 260, bark: 110 },
-  HIST_MAX: 12,                      // NPC ごとに残す発言数（6 往復）
+  HIST_MAX: 18,                      // NPC ごとに残す発言数（9 往復）
+  HIST_SEND: 14,                     // そのうちプロンプトに載せる数
   sys:
     'あなたは18禁のボクセル・オープンワールドゲーム「歌舞伎クラフト」のNPC演技エンジンです。'
     + '舞台は深夜の新宿・歌舞伎町を模したブロックの街。金と暴力と欲望が渦巻く歓楽街で、'
@@ -1679,10 +2098,12 @@ const AI = {
       return t;
     } finally { clearTimeout(to); }
   },
-  // 会話履歴。role は 'p'（プレイヤー）と 'n'（この NPC）
+  // 会話履歴。role は 'p'（プレイヤー）/ 'n'（この NPC の返答）/ 'b'（この NPC の独り言）
   push(n, role, content) {
     const c = String(content == null ? '' : content).slice(0, 200);
     if (!c) return;
+    const last = n.hist[n.hist.length - 1];
+    if (last && last[0] === role && last[1] === c) return;   // 同じ行の二重記録を防ぐ
     n.hist.push([role, c]);
     if (n.hist.length > this.HIST_MAX) n.hist.splice(0, n.hist.length - this.HIST_MAX);
   },
@@ -1690,12 +2111,17 @@ const AI = {
      も受ける作りになっているが、本番に出ているビルドはまだそれを見ておらず、
      渡しても丸ごと捨てられて「自分の発言を覚えていない」状態になる。
      本文に書けばどちらのビルドでも効く。 */
+  /* 話者の印は【】で囲む。地の文と同じ「プレイヤー:」で始めると、
+     直後に続く街の状況説明が最新の発言に見えて、会話が繋がらなくなる */
   histBlock(n) {
     if (!n.hist.length) return '';
-    const lines = n.hist.slice(-8)
-      .map(([r, c]) => (r === 'p' ? 'プレイヤー: ' : 'あなた: ') + c).join('\n');
-    return '# これまでのやりとり（この続きとして話すこと。'
-      + 'ここに出てくる固有名詞・数字・約束は必ずそのまま覚えていること）\n' + lines + '\n\n';
+    const lines = n.hist.slice(-this.HIST_SEND)
+      .map(([r, c]) => (r === 'p' ? '【相手】' : r === 'b' ? '【あなた・独り言】' : '【あなた】') + c)
+      .join('\n');
+    return '# これまでのやりとり（古い順。この続きとして話すこと。'
+      + '【あなた】はあなた自身が言った台詞なので、言い直しや矛盾をしないこと。'
+      + 'ここに出てくる固有名詞・数字・約束は必ずそのまま覚えていること）\n'
+      + lines + '\n（ここまでが会話。以下は台詞ではない補足情報）\n\n';
   },
   parse(text) {
     let s = text.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -1707,7 +2133,9 @@ const AI = {
   },
   worldCtx() {
     const zi = zoneOf(P.x, P.z), t = Terr[zi];
-    return `時刻 ${clockStr()} / ${Clock.day}日目 / 場所 ${t.name} / `
+    return `目の前にいる相手は ${P.name}（${P.gender}・${originName(P.origin, P.gender)}・`
+      + `手には${curTool().n}）/ この相手が名乗っている一党の名は「${P.gang}」/ `
+      + `時刻 ${clockStr()} / ${Clock.day}日目 / 場所 ${t.name} / `
       + `このシマの支配 ${FACTIONS[t.owner].name} (プレイヤー支配率 ${Math.round(t.mine)}%) / `
       + `プレイヤーの所持金 ${yen(P.yen)} 影響力 ${Math.round(P.inf)} 悪名 ${Math.round(P.notoriety)} `
       + `手配度 ${Math.round(P.wanted)} 酔い ${Math.round(P.drunk)} `
@@ -1753,11 +2181,15 @@ const AI = {
     if (!j || !j.say) throw new Error('bad json');
     return { say: String(j.say).slice(0, 40), act: ['idle', 'follow', 'flee', 'attack'].includes(j.act) ? j.act : 'idle' };
   },
-  async crown() {
+  async crown(win) {
+    const held = heldZones();
     const p = `# 世界\n${this.worldCtx()}\n\n# 指示\n`
-      + `プレイヤーが9つのシマを全て制圧した。街の語り部として、戴冠を告げる短い地の文を`
-      + `120文字以内で書け。ハードボイルドに、祝福も皮肉も込めて。\n`
-      + `次のJSONだけを出力:\n{"say":"本文"}`;
+      + (win
+        ? `プレイヤーが率いる「${P.gang}」が、丸一日で歌舞伎町 9 つのシマのうち ${held} つ、つまり過半数を握った。`
+          + `街の語り部として、戴冠を告げる短い地の文を 120文字以内で書け。ハードボイルドに、祝福も皮肉も込めて。`
+        : `丸一日が過ぎた。プレイヤーは ${held} つのシマしか獲れず、過半数に届かなかった。`
+          + `街の語り部として、負けを告げる短い地の文を 120文字以内で書け。ハードボイルドに、突き放すように。`)
+      + `\n次のJSONだけを出力:\n{"say":"本文"}`;
     const j = this.parse(await this.raw(p, 260));
     return j && j.say ? String(j.say).slice(0, 200) : null;
   }
@@ -1827,7 +2259,17 @@ function hud() {
   const t = Terr[zoneOf(P.x, P.z)];
   $('c-zone').textContent = t.name;
   $('c-st').textContent = streetOf(Math.floor(P.x), Math.floor(P.z));
-  $('c-own').innerHTML = `支配: <span style="color:${FACTIONS[t.owner].css}">${FACTIONS[t.owner].name}</span> ${Math.round(t.mine)}%`;
+  $('c-own').innerHTML = `支配: <span style="color:${FACTIONS[t.owner].css}">${esc(FACTIONS[t.owner].name)}</span> ${Math.round(t.mine)}%`;
+  const held = heldZones();
+  $('c-win').textContent = `制圧 ${held} / ${WIN_ZONES}　(全 9)`;
+  $('c-win').style.color = held >= WIN_ZONES ? '#ffcf3f' : held ? '#39ff88' : 'rgba(255,255,255,.45)';
+  // 残り時間はゲーム内の分 = 現実の秒。プレイヤーが体感するのは現実の時間のほう
+  const left = Math.max(0, DAY_MIN - Clock.elapsed);
+  const el = $('c-left');
+  el.textContent = '残り ' + Math.floor(left / 60) + ':' + String(Math.floor(left % 60)).padStart(2, '0');
+  el.className = 'left' + (left <= 120 ? ' hot' : left <= 360 ? ' warn' : '');
+  $('s-who').innerHTML = `${esc(P.name)}<span>${P.gender}・${originName(P.origin, P.gender)}</span>`
+    + `<b>${esc(P.gang)}</b>`;
   const cb = $('crewbox');
   if (P.crew.length) {
     cb.style.display = 'block';
@@ -1890,7 +2332,7 @@ function drawMinimap() {
 
 function drawMap() {
   $('legend').innerHTML = Object.keys(FACTIONS)
-    .map(k => `<span><i style="background:${FACTIONS[k].css}"></i>${FACTIONS[k].name}</span>`).join('');
+    .map(k => `<span><i style="background:${FACTIONS[k].css}"></i>${esc(FACTIONS[k].name)}</span>`).join('');
   const g = $('grid'); g.innerHTML = '';
   const here = zoneOf(P.x, P.z);
   Terr.forEach((t, i) => {
@@ -1899,12 +2341,12 @@ function drawMap() {
     const c = FACTIONS[t.owner].css;
     d.innerHTML = `<div class="fill" style="height:${t.mine}%;background:${c}"></div>`
       + `<b>${t.name}</b><div class="pc">${Math.round(t.mine)}<span style="font-size:10px">%</span></div>`
-      + `<div class="o" style="color:${c}">${FACTIONS[t.owner].name}</div>`;
+      + `<div class="o" style="color:${c}">${esc(FACTIONS[t.owner].name)}</div>`;
     g.appendChild(d);
   });
   const mineShops = Shops.filter(s => s.owner === 'player');
   $('shoplist').innerHTML = mineShops.length
-    ? `所有店舗 ${mineShops.length} 軒 ／ 日商 ${yen(mineShops.reduce((a, s) => a + s.income, 0))}<br>`
+    ? `所有店舗 ${mineShops.length} 軒 ／ 上がり ${yen(mineShops.reduce((a, s) => a + hourlyIncome(s), 0))}／時<br>`
       + `<span style="opacity:.55;font-size:10px">${mineShops.map(s => s.name).join(' ・ ')}</span>`
     : '<span style="opacity:.5">まだ店を持っていない。ネオンの下がった入口で E。</span>';
 }
@@ -1930,7 +2372,16 @@ const Talk = {
     this.meters(); this.buttons();
     if (document.pointerLockElement) document.exitPointerLock();
     $('tlog').innerHTML = '';
-    if (n.hist.length) this.line('sys', '（このあいだの続き）');
+    // 前の続きなら、直前のやりとりを薄く出しておく。同じ相手に何度も
+    // 声をかけたとき「覚えていない」ように見えるのは、たいてい画面が空だから
+    if (n.hist.length) {
+      this.line('sys', '（このあいだの続き）');
+      for (const [r, c] of n.hist.slice(-4)) {
+        const el = this.line(r === 'p' ? 'me' : '', c);
+        if (r === 'b') el.textContent = '（独り言）' + c;
+        el.style.opacity = r === 'p' ? .4 : .55;
+      }
+    }
     $('t-in').value = '';
     setTimeout(() => $('t-in').focus(), 60);
     this.send('（声をかける）', true);
@@ -1977,7 +2428,7 @@ const Talk = {
       P.notoriety += 1; this.send('（胸ぐらを掴んで凄んだ）');
     });
     if (!n.crew) mk('引き入れる', '', () => this.send('俺の下につけ。損はさせない'));
-    mk('殴る', 'danger', () => { this.close(); setTimeout(() => punch(n), 60); });
+    // 殴るのは会話の選択肢ではなく、街に立ったまま F で出すもの
     mk('立ち去る', '', () => this.close());
   },
   async send(line, isFirst) {
@@ -1993,7 +2444,12 @@ const Talk = {
     try { r = await AI.talk(n, line); }
     catch (e) { offline = true; r = offlineTalk(n, line); }
     finally { AI.busy--; }
-    if (this.gen !== g) { ph.remove(); return; }  // 閉じられた／相手が変わった応答は捨てる
+    /* 履歴は画面を閉じていても必ず残す。ここで捨てると、返答を待たずに
+       立ち去ったぶんの話が丸ごと抜けて、次に声をかけたとき噛み合わなくなる。
+       声かけ（isFirst）はプレイヤーの台詞ではないので記録しない */
+    if (!isFirst) AI.push(n, 'p', AI.clean(line));
+    AI.push(n, 'n', r.say);
+    if (this.gen !== g) { ph.remove(); return; }  // 画面が閉じた／相手が変わった。表示だけ捨てる
     this.busy = false;
     $('aibadge').classList.remove('on');
     $('t-send').disabled = false;
@@ -2003,9 +2459,6 @@ const Talk = {
       this.offlineNoted = true;
       this.line('sys', '（AI に繋がらない。ここから先は内蔵の応答で続く）');
     }
-    // 生成でも内蔵でも履歴には残す。次に繋がったときに話が飛ばない
-    AI.push(n, 'p', AI.clean(line));
-    AI.push(n, 'n', r.say);
     this.apply(n, r);
     this.meters();
   },
@@ -2025,7 +2478,7 @@ const Talk = {
       case 'join':
         if (!n.crew && P.crew.length < 6) {
           n.crew = true; n.hostile = false; P.crew.push(n);
-          P.rep += 1; recalcInf(); addControl(zi, 4, `${n.name}が付いた`);
+          P.rep += 1; recalcInf(); addControl(zi, 7, `${n.name}が付いた`);
           log(`${n.name} が子分になった。`, 'good'); Snd.win();
         }
         break;
@@ -2036,11 +2489,11 @@ const Talk = {
       case 'flee': n.state = 'flee'; n.t = 6; this.close(); break;
       case 'follow': n.state = 'follow'; n.t = 30; break;
       case 'leave': n.state = 'walk'; setTimeout(() => this.close(), 1400); break;
-      case 'deal': if (n.trust > 55) addControl(zi, 1.5, '話がついた'); break;
-      case 'inform': addControl(zi, 0.6, '街の事情を掴んだ'); break;
+      case 'deal': if (n.trust > 55) addControl(zi, 3.5, '話がついた'); break;
+      case 'inform': addControl(zi, 1.4, '街の事情を掴んだ'); break;
     }
-    if (n.trust >= 70) addControl(zi, 0.8, '');
-    if (n.fear >= 70) addControl(zi, 0.6, '');
+    if (n.trust >= 70) addControl(zi, 1.6, '');
+    if (n.fear >= 70) addControl(zi, 1.2, '');
     hud();
   },
   close() {
@@ -2077,9 +2530,10 @@ function dist2(a, b) { const dx = a.x - b.x, dz = a.z - b.z; return dx * dx + dz
 function flash(v) { const f = $('dmgflash'); f.style.opacity = v; setTimeout(() => f.style.opacity = 0, 200); }
 
 function punch(target) {
-  if (P.atkCd > 0 || !started || mapOpen) return;
+  if (P.atkCd > 0 || !started || mapOpen || craftOpen) return;
   if (Talk.open && !target) return;
   P.atkCd = 0.42;
+  P.armT = 0.42; P.armPhase = 0;        // 腕を振り下ろす
   Snd.swing();
   const f = playerFacing();
   let hit = target && dist2(target, P) < 12 ? target : null;
@@ -2094,17 +2548,19 @@ function punch(target) {
     }
   }
   if (!hit) return;
-  hit.hp -= 14 + P.crew.length * 3 + (P.notoriety > 40 ? 4 : 0);
-  hit.fear = clamp(hit.fear + 12, 0, 100);
+  const T = curTool();
+  hit.hp -= 14 + T.dmg + P.crew.length * 3 + (P.notoriety > 40 ? 4 : 0);
+  hit.fear = clamp(hit.fear + 12 + T.dmg * 0.3, 0, 100);
   hit.trust = clamp(hit.trust - 15, 0, 100);
   hit.kb = 1;
+  wearTool(2);                          // 人を殴ると道具は早く傷む
   Snd.hit(); flash(0.25);
   if (hit.hp <= 0) {
     hit.hp = 0; hit.down = 26; hit.hostile = false; hit.state = 'down';
     if (hit.crew) { hit.crew = false; P.crew = P.crew.filter(c => c !== hit); }
     P.notoriety = clamp(P.notoriety + 4, 0, 100);
     P.rep = clamp(P.rep + 1.5, 0, 40); recalcInf();
-    addControl(zoneOf(hit.x, hit.z), hit.arch.k === 'yakuza' || hit.arch.k === 'hangure' ? 3.5 : 1.2, `${hit.name}を潰した`);
+    addControl(zoneOf(hit.x, hit.z), hit.arch.k === 'yakuza' || hit.arch.k === 'hangure' ? 7 : 2.4, `${hit.name}を潰した`);
     log(`${hit.name} を倒した。`, 'bad');
     const loot = Math.round(hit.yen * 0.4);
     if (loot > 0) { P.yen += loot; hit.yen -= loot; log(`${yen(loot)} 奪った`, 'money'); }
@@ -2131,15 +2587,15 @@ function buyShop(sh) {
   if (sh.owner === 'player') return;
   if (P.yen < sh.price) { log(`${yen(sh.price)} 足りない。`, 'bad'); return; }
   P.yen -= sh.price; sh.owner = 'player';
-  recalcInf(); addControl(sh.zone, 9, `${sh.name}を手に入れた`);
-  log(`${sh.type.name}「${sh.name}」を買った。日商 ${yen(sh.income)}`, 'good');
+  recalcInf(); addControl(sh.zone, shopControl(sh), `${sh.name}を手に入れた`);
+  log(`${sh.type.name}「${sh.name}」を買った。上がり ${yen(hourlyIncome(sh))}／時`, 'good');
   Snd.win(); hud();
 }
 function arrest() {
   const fine = Math.round(P.yen * 0.35);
   P.yen -= fine; P.wanted = 0; P.hp = P.maxhp;
   P.notoriety = clamp(P.notoriety + 3, 0, 100);
-  Clock.min += 6 * 60;
+  Clock.min += 120; Clock.elapsed += 120;
   respawn();
   for (const n of NPCs) { n.hostile = false; if (n.state === 'attack') n.state = 'walk'; }
   log(`署に連れて行かれた。${yen(fine)} 消えた。`, 'bad');
@@ -2149,7 +2605,7 @@ function knockedOut() {
   const lost = Math.round(P.yen * 0.25);
   P.yen -= lost; P.hp = P.maxhp * 0.6; P.drunk = 0;
   respawn();
-  Clock.min += 4 * 60;
+  Clock.min += 90; Clock.elapsed += 90;
   for (const n of NPCs) { n.hostile = false; if (n.state === 'attack') n.state = 'walk'; }
   log(`路上で伸びていた。${yen(lost)} 抜かれている。`, 'bad');
   Snd.lose(); hud();
@@ -2161,18 +2617,24 @@ function knockedOut() {
 const keys = {};
 let isTouch = matchMedia('(pointer:coarse)').matches;
 let mapOpen = false;
+let craftOpen = false;
 
 addEventListener('keydown', e => {
   if (Talk.open && document.activeElement === $('t-in')) return;
+  if ($('chargen').style.display === 'flex') return;   // 作成中はゲーム側に流さない
   keys[e.code] = true;
   if (e.code === 'KeyE') interact();
-  if (e.code === 'KeyC') punch(null);
+  // F はアクション。正面に人がいれば殴り、いなければ掘る（updateDig が押しっぱなしを見る）
+  if (e.code === 'KeyF' && punchTarget) punch(punchTarget);
   if (e.code === 'KeyG') sellBag();
   if (e.code === 'KeyV') P.firstPerson = !P.firstPerson;
   if (e.code === 'KeyN') Snd.toggle();
   if (e.code === 'KeyR') Dig.place = true;
+  if (e.code === 'KeyQ') { e.preventDefault(); toggleCraft(); }
   if (e.code === 'Tab' || e.code === 'KeyM') { e.preventDefault(); toggleMap(); }
-  if (e.code === 'Escape') { if (Talk.open) Talk.close(); else if (mapOpen) toggleMap(); }
+  if (e.code === 'Escape') {
+    if (Talk.open) Talk.close(); else if (craftOpen) toggleCraft(); else if (mapOpen) toggleMap();
+  }
   if (/^Digit[1-9]$/.test(e.code)) {
     const i = +e.code.slice(5) - 1;
     if (i < hotbar.length) { hotSel = i; rebuildHotbar(); selName(); }
@@ -2183,7 +2645,7 @@ addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; Dig.active = false; });
 
 canvas.addEventListener('mousedown', e => {
-  if (!started || Talk.open || mapOpen) return;
+  if (!started || Talk.open || mapOpen || craftOpen) return;
   if (!isTouch && !document.pointerLockElement) { canvas.requestPointerLock(); return; }
   if (e.button === 0) Dig.active = true;
   if (e.button === 2) Dig.place = true;
@@ -2196,7 +2658,7 @@ addEventListener('mousemove', e => {
   P.pitch = clamp(P.pitch - e.movementY * 0.0022, -1.5, 1.5);
 });
 addEventListener('wheel', e => {
-  if (!started || Talk.open || mapOpen || !hotbar.length) return;
+  if (!started || Talk.open || mapOpen || craftOpen || !hotbar.length) return;
   hotSel = (hotSel + (e.deltaY > 0 ? 1 : -1) + hotbar.length) % hotbar.length;
   rebuildHotbar(); selName();
 }, { passive: true });
@@ -2206,11 +2668,20 @@ $('hotbar').addEventListener('click', e => {
 });
 
 function toggleMap() {
+  if (craftOpen) return;
   mapOpen = !mapOpen;
   $('map').classList.toggle('show', mapOpen);
   Dig.active = false;
   if (mapOpen) { drawMap(); if (document.pointerLockElement) document.exitPointerLock(); }
   else if (!isTouch && started && canvas.requestPointerLock) canvas.requestPointerLock();
+}
+function toggleCraft() {
+  if (!started || Talk.open || mapOpen) return;
+  craftOpen = !craftOpen;
+  $('craft').classList.toggle('show', craftOpen);
+  Dig.active = false;
+  if (craftOpen) { drawCraft(); if (document.pointerLockElement) document.exitPointerLock(); }
+  else if (!isTouch && canvas.requestPointerLock) canvas.requestPointerLock();
 }
 
 const tState = { mx: 0, mz: 0, run: false, lookId: null, lx: 0, ly: 0, jump: false };
@@ -2254,16 +2725,20 @@ if (isTouch) {
   hold('bPut', () => Dig.place = true);
   hold('bJump', () => tState.jump = true, () => tState.jump = false);
   hold('bA', () => interact());
-  hold('bB', () => punch(null));
+  hold('bB', () => punch(punchTarget || focusNPC));
   hold('bC', () => toggleMap());
+  hold('bK', () => toggleCraft());
 }
 
 /* ============================================================================
    15. インタラクト
    ========================================================================= */
-let focusNPC = null, focusShop = null;
+/* focusNPC は E（話す）の相手。punchTarget は F（殴る）の相手で、
+   もっと近く・もっと正面に限る。通りすがりが視界に入っただけで
+   F が採掘から殴りに切り替わると、人通りの多い道でまともに掘れない */
+let focusNPC = null, focusShop = null, punchTarget = null;
 function findFocus() {
-  focusNPC = null; focusShop = null;
+  focusNPC = null; focusShop = null; punchTarget = null;
   let best = 4.4 * 4.4;
   const f = playerFacing();
   for (const n of NPCs) {
@@ -2274,29 +2749,36 @@ function findFocus() {
     if (((n.x - P.x) / dd) * f.x + ((n.z - P.z) / dd) * f.z < 0.15) continue;
     best = d; focusNPC = n;
   }
+  // 掘りかけの穴があるあいだは殴りに切り替えない（手が止まる）
+  if (focusNPC && Dig.t <= 0) {
+    const d = Math.sqrt(dist2(focusNPC, P)) || 1;
+    const dot = ((focusNPC.x - P.x) / d) * f.x + ((focusNPC.z - P.z) / d) * f.z;
+    if (d < 2.8 && dot > 0.55) punchTarget = focusNPC;
+  }
   let bs = 4 * 4;
   for (const s of Shops) {
     const d = dist2(s, P);
     if (d < bs) { bs = d; focusShop = s; }
   }
   const pr = $('prompt');
-  if (Talk.open || mapOpen) { pr.style.display = 'none'; return; }
+  if (Talk.open || mapOpen || craftOpen) { pr.style.display = 'none'; return; }
   if (focusNPC) {
     pr.style.display = 'block';
-    pr.innerHTML = `<kbd>E</kbd> ${focusNPC.name}（${focusNPC.arch.job}）に話す　　<kbd>C</kbd> 殴る`;
+    pr.innerHTML = `<kbd>E</kbd> ${focusNPC.name}（${focusNPC.arch.job}）に話す`
+      + (punchTarget ? `　　<kbd>F</kbd> 殴る` : `　　<span style="opacity:.45">近づいて F で殴る</span>`);
   } else if (focusShop) {
     pr.style.display = 'block';
     const s = focusShop;
     pr.innerHTML = s.owner === 'player'
-      ? `<kbd>G</kbd> ${s.type.name}「${s.name}」で換金（満額）　日商 ${yen(s.income)}`
-      : `<kbd>E</kbd> ${s.type.name}「${s.name}」を買う ${yen(s.price)}　<span style="opacity:.6">日商 ${yen(s.income)}</span>`;
+      ? `<kbd>G</kbd> ${s.type.name}「${s.name}」で換金（満額）　上がり ${yen(hourlyIncome(s))}／時`
+      : `<kbd>E</kbd> ${s.type.name}「${s.name}」を買う ${yen(s.price)}　<span style="opacity:.6">上がり ${yen(hourlyIncome(s))}／時・支配 +${shopControl(s)}%</span>`;
   } else if (bagValue() > 0) {
     pr.style.display = 'block';
     pr.innerHTML = `<kbd>G</kbd> カバンの ${yen(bagValue())} 相当を換金（自分の店の前なら満額）`;
   } else pr.style.display = 'none';
 }
 function interact() {
-  if (Talk.open || mapOpen || !started) return;
+  if (Talk.open || mapOpen || craftOpen || !started) return;
   if (focusNPC) { Talk.start(focusNPC); return; }
   if (focusShop) {
     if (focusShop.owner === 'player') {
@@ -2443,7 +2925,8 @@ function updateNPCs(dt) {
           n.atk = (n.atk || 0) - dt;
           if (n.atk <= 0) {
             n.atk = 1.15;
-            const dmg = (n.arch.k === 'yakuza' ? 11 : n.arch.k === 'cop' ? 9 : 7) * (1 - P.crew.length * 0.06);
+            const dmg = (n.arch.k === 'yakuza' ? 11 : n.arch.k === 'cop' ? 9 : 7)
+              * (1 - P.crew.length * 0.06) * (Craft.armor ? 0.75 : 1);
             P.hp -= dmg; flash(0.5); Snd.hit();
             if (n.arch.k === 'cop' && P.hp < 35) { arrest(); return; }
             if (P.hp <= 0) { knockedOut(); return; }
@@ -2482,8 +2965,9 @@ function updateNPCs(dt) {
       AI.lastBark = now; n.lastAI = now; n.barkCount++; AI.busy++;
       AI.bark(n).then(r => {
         n.bark = r.say; n.barkT = 6.5;
-        // 独り言も履歴に残す。残さないと、声をかけた直後に自分の一言を覚えていない
-        AI.push(n, 'n', r.say);
+        // 独り言も履歴に残す。残さないと、声をかけた直後に自分の一言を覚えていない。
+        // ただし会話の返答とは別の印にする（往復の一部と誤読されると話が飛ぶ）
+        AI.push(n, 'b', r.say);
         if (r.act === 'attack' && !n.crew) { n.hostile = true; n.state = 'attack'; }
         else if (r.act === 'flee') { n.state = 'flee'; n.t = 4; }
         else if (r.act === 'follow' && !n.crew) { n.state = 'follow'; n.t = 12; }
@@ -2498,22 +2982,41 @@ function updateNPCs(dt) {
    17. 時間・経済
    ========================================================================= */
 let hourMark = 20;
+let demoT = 0;
+/* 街を削ったぶんの支配は 3 秒ごとにまとめて入れる。1 個ずつ加算すると、
+   いいツルハシで秒 10 個掘れるようになった瞬間に壊れる。
+   効くのはブロックの「数」ではなく「値打ち」。ネオンや街灯を落とすほど早く傾く。 */
+const DEMO_WINDOW = 3, DEMO_PER = 1100, DEMO_CAP = 2.0;
 function updateWorld(dt) {
-  Clock.min += dt * 24;
+  Clock.min += dt * MIN_PER_SEC;         // 現実 1 秒 = ゲーム内 1 分
+  Clock.elapsed += dt * MIN_PER_SEC;
   if (Clock.min >= 24 * 60) { Clock.min -= 24 * 60; newDay(); }
   const h = Math.floor(Clock.min / 60);
   if (h !== hourMark) { hourMark = h; hourTick(); }
+
+  demoT += dt;
+  if (demoT >= DEMO_WINDOW) {
+    demoT = 0;
+    if (P.digVal > 0) {
+      addControl(zoneOf(P.x, P.z), clamp(P.digVal / DEMO_PER, 0, DEMO_CAP), '');
+      P.digVal = 0;
+    }
+  }
+
   P.wanted = clamp(P.wanted - dt * 0.9, 0, 100);
   P.drunk = clamp(P.drunk - dt * 1.1, 0, 100);
   P.hp = clamp(P.hp + dt * 0.9, 0, P.maxhp);
+  if (!ended && Clock.elapsed >= DAY_MIN) endGame(heldZones() >= WIN_ZONES);
 }
 function hourTick() {
   for (const t of Terr) {
     const shops = Shops.filter(s => s.zone === t.idx && s.owner === 'player').length;
     const crewHere = P.crew.filter(c => zoneOf(c.x, c.z) === t.idx).length;
-    const push = 0.15 + t.mine * 0.018;
-    let d = shops * 1.0 + crewHere * 0.6 - push;
-    if (t.owner === 'player') d += 0.35;
+    /* 押し返しは「まだ相手のシマ」のあいだだけ強い。獲ったあとも同じ力で
+       削られると、5 つ同時に抱えた瞬間に端から崩れて事実上勝てない */
+    const push = t.owner === 'player' ? 0.10 : 0.20 + t.mine * 0.012;
+    let d = shops * 1.8 + crewHere * 0.9 - push;
+    if (t.owner === 'player') d += 0.5;
     if (d !== 0) {
       const before = t.mine;
       t.mine = clamp(t.mine + d, 0, 100);
@@ -2521,23 +3024,22 @@ function hourTick() {
       if (t.mine < 60 && before >= 60 && t.owner === 'player') { t.owner = pick(['guren', 'dragons', 'arcadia']); log(`【${t.name}】を取り返された。`, 'bad'); }
     }
   }
-  recalcInf(); hud();
-}
-function newDay() {
-  Clock.day++;
+  // 持ち時間が 1 日しかないので、店の上がりは日締めではなく毎時入れる
   const shops = Shops.filter(s => s.owner === 'player');
-  const income = shops.reduce((a, s) => a + s.income, 0);
-  const upkeep = P.crew.length * 12000;
-  const net = income - upkeep;
-  P.yen += net;
-  if (shops.length || P.crew.length)
-    log(`${Clock.day}日目。売上 ${yen(income)} − 人件費 ${yen(upkeep)} = ${net >= 0 ? '' : '−'}${yen(Math.abs(net))}`, net >= 0 ? 'money' : 'bad');
-  else log(`${Clock.day}日目。`, '');
+  const income = shops.reduce((a, s) => a + hourlyIncome(s), 0);
+  const upkeep = Math.round(P.crew.length * 12000 / 24);
+  P.yen += income - upkeep;
   if (P.yen < 0) {
     P.yen = 0;
     if (P.crew.length) { const c = P.crew.pop(); c.crew = false; log(`${c.name} が抜けた。金が回っていない。`, 'bad'); }
   }
+  if (income) log(`店の上がり ${yen(income)}${upkeep ? ` − 人件費 ${yen(upkeep)}` : ''}`, 'money');
+  recalcInf(); hud();
+}
+function newDay() {
+  Clock.day++;
   for (const n of NPCs) n.barkCount = 0;
+  log(`日付が変わった。過半数まであと ${Math.max(0, WIN_ZONES - heldZones())} シマ。`, '');
   save(); hud();
 }
 
@@ -2663,13 +3165,39 @@ function camera() {
   M4.mul(vp, proj, view);
 }
 
+/* 掘る／殴るの腕の振り。掘っている間はゆっくり往復し、殴った直後は速く一往復する */
+function updateArm(dt) {
+  if (P.armT > 0) P.armT -= dt;
+  const digging = Dig.t > 0 && !!Aim.cur;
+  if (digging) P.armPhase += dt * 8.4;
+  else if (P.armT > 0) P.armPhase += dt * 15;
+  else { P.armPhase = 0; P.arm = 0; return; }
+  P.arm = Math.max(0, Math.sin(P.armPhase));
+}
+// 一人称のとき、画面手前に手と道具を出す（掘っているのが自分で見える）
+function pushFirstPersonHand() {
+  const d = lookDir();
+  const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);      // カメラの右方向（水平）
+  const a = P.arm;
+  const dist = 1.05 + a * 0.22;                          // 振ると前へ出る
+  const px = camX + d.x * dist + rx * 0.42;
+  const py = camY + d.y * dist - 0.46 - a * 0.20;
+  const pz = camZ + d.z * dist + rz * 0.42;
+  const rot = P.yaw + Math.PI;
+  addInst(px, py, pz, 0.15, 0.30, 0.15, [0.86, 0.68, 0.56], rot, 0);
+  const T = curTool();
+  if (T.k !== 'hand')
+    addInst(px + d.x * 0.30, py + 0.20 - a * 0.16, pz + d.z * 0.30, 0.10, 0.52, 0.10, T.col, rot, T.em || 0);
+}
+
 function pushCharacter(n, isPlayer) {
   const a = n.arch;
+  if (isPlayer && P.firstPerson) { pushFirstPersonHand(); return; }
   const walking = isPlayer ? P.moving : (n.state !== 'talk' && n.state !== 'down');
   const ph = isPlayer ? P.walkPhase : n.phase;
   const swing = walking ? Math.sin(ph) * 0.45 : 0;
-  const col = isPlayer ? [0.10, 0.10, 0.14] : a.col;
-  const hair = isPlayer ? [0.10, 0.10, 0.12] : a.hair;
+  const col = isPlayer ? P.body : a.col;
+  const hair = isPlayer ? P.hair : a.hair;
   const skin = [0.86, 0.68, 0.56];
   const rot = isPlayer ? P.yaw + Math.PI : n.yaw;
   const y = n.y !== undefined ? n.y : 0;
@@ -2683,8 +3211,21 @@ function pushCharacter(n, isPlayer) {
   addInst(n.x + Math.sin(rot + 1.57) * 0.16, y + 0.42 + swing * 0.08, n.z + Math.cos(rot + 1.57) * 0.16, 0.22, 0.86, 0.24, dk, rot, 0);
   addInst(n.x - Math.sin(rot + 1.57) * 0.16, y + 0.42 - swing * 0.08, n.z - Math.cos(rot + 1.57) * 0.16, 0.22, 0.86, 0.24, dk, rot, 0);
   addInst(n.x, base + 0.02, n.z, 0.62, 0.86, 0.36, col, rot, isPlayer ? 0 : (a.k === 'host' || a.k === 'idol' || a.k === 'dj' ? 0.25 : 0));
-  addInst(n.x + Math.sin(rot + 1.57) * 0.40, base + 0.02 - swing * 0.1, n.z + Math.cos(rot + 1.57) * 0.40, 0.17, 0.72, 0.19, col, rot, 0);
+  // 右腕。プレイヤーが掘る／殴るときだけ前へ突き出して振り下ろす
+  const arm = isPlayer ? P.arm : 0;
+  const fx = Math.sin(rot), fz = Math.cos(rot);              // 向いている方向
+  const ax = n.x + Math.sin(rot + 1.57) * 0.40 + fx * arm * 0.40;
+  const ay = base + 0.02 - swing * 0.1 + arm * 0.30;
+  const az = n.z + Math.cos(rot + 1.57) * 0.40 + fz * arm * 0.40;
+  addInst(ax, ay, az, 0.17, 0.72 - arm * 0.26, 0.19 + arm * 0.46, col, rot, 0);
   addInst(n.x - Math.sin(rot + 1.57) * 0.40, base + 0.02 + swing * 0.1, n.z - Math.cos(rot + 1.57) * 0.40, 0.17, 0.72, 0.19, col, rot, 0);
+  // 手に持っている道具。振っている間は先端が前に出る
+  if (isPlayer) {
+    const T = curTool();
+    if (T.k !== 'hand')
+      addInst(ax + fx * (0.22 + arm * 0.30), ay - 0.28 + arm * 0.24, az + fz * (0.22 + arm * 0.30),
+        0.11, 0.52 - arm * 0.30, 0.11 + arm * 0.34, T.col, rot, T.em || 0);
+  }
   addInst(n.x, base + 0.50, n.z, 0.18, 0.16, 0.18, skin, rot, 0);
   addInst(n.x, base + 0.74, n.z, 0.40, 0.42, 0.38, skin, rot, 0);
   addInst(n.x, base + 0.94, n.z, 0.44, 0.16, 0.42, hair, rot, 0);
@@ -2864,16 +3405,19 @@ function updateTags() {
    20. 採掘の進行
    ========================================================================= */
 const Aim = { cur: null };
+let digHint = 0;
 function updateDig(dt) {
-  Aim.cur = (Talk.open || mapOpen) ? null : aim();
+  Aim.cur = (Talk.open || mapOpen || craftOpen) ? null : aim();
   const bar = $('digbar');
+  if (digHint > 0) digHint -= dt;
   // R を押しっぱなしにするとキーリピートで連射になるので間隔を空ける
   if (Dig.placeCd > 0) Dig.placeCd -= dt;
   if (Dig.place) {
     Dig.place = false;
     if (Aim.cur && Dig.placeCd <= 0) { placeBlock(Aim.cur); Dig.placeCd = 0.18; }
   }
-  const holding = Dig.active || keys.KeyF;
+  // F は「アクション」。人が正面にいるときは掘らずに殴りに回る
+  const holding = Dig.active || (keys.KeyF && !punchTarget);
   if (!holding || !Aim.cur) {
     Dig.t = 0; Dig.tx = -1; bar.style.display = 'none'; return;
   }
@@ -2882,11 +3426,19 @@ function updateDig(dt) {
     Dig.tx = b.x; Dig.ty = b.y; Dig.tz = b.z; Dig.t = 0;
   }
   if (!def || def.h < 0) { bar.style.display = 'none'; return; }
+  const need = def.t || 0, weak = curTool().tier < need;
+  const secs = def.h / digSpeed(def);
   Dig.t += dt;
   if (Dig.t > 0 && Math.floor(Dig.t / 0.14) !== Math.floor((Dig.t - dt) / 0.14)) Snd.tick(def);
+  // 道具が足りていないことは、口で言わないと伝わらない
+  if (weak && digHint <= 0) {
+    digHint = 12;
+    log(`${curTool().n}では${def.n}に歯が立たない。Q でツルハシを作れ。`, 'bad');
+  }
   bar.style.display = 'block';
-  bar.firstElementChild.style.width = clamp(Dig.t / def.h * 100, 0, 100) + '%';
-  if (Dig.t >= def.h) {
+  bar.firstElementChild.style.width = clamp(Dig.t / secs * 100, 0, 100) + '%';
+  bar.firstElementChild.style.background = weak ? '#ff6b60' : '#16e0ff';
+  if (Dig.t >= secs) {
     breakBlock(b);
     Dig.t = 0; Dig.tx = -1;
     bar.style.display = 'none';
@@ -2900,9 +3452,11 @@ function save() {
   if (!started) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      yen: P.yen, rep: P.rep, not: P.notoriety, hp: P.hp, wanted: P.wanted,
+      yen: P.yen, rep: P.rep, not: P.notoriety, hp: P.hp, maxhp: P.maxhp, wanted: P.wanted,
       x: P.x, y: P.y, z: P.z, dug: P.dug,
-      day: Clock.day, min: Clock.min,
+      day: Clock.day, min: Clock.min, el: Clock.elapsed,
+      ch: { name: P.name, gang: P.gang, gender: P.gender, origin: P.origin, hair: P.hair, body: P.body },
+      cr: { tool: Craft.tool, owned: Object.keys(Craft.owned), dur: Craft.dur, armor: Craft.armor },
       bag: Array.from(Bag.count),
       terr: Terr.map(t => ({ o: t.owner, m: t.mine })),
       shops: Shops.filter(s => s.owner === 'player').map(s => s.id),
@@ -2911,7 +3465,7 @@ function save() {
       // これを残さないと同じ id が別人になって話が繋がらない
       npcs: NPCs.map(n => {
         const o = { i: n.id, n: n.name, t: Math.round(n.trust), f: Math.round(n.fear), y: n.yen };
-        if (n.hist.length) o.h = n.hist.slice(-8);
+        if (n.hist.length) o.h = n.hist.slice(-AI.HIST_SEND);
         return o;
       }),
       // 掘った／置いた差分だけを残す。世界そのものは毎回同じ手順で作れる
@@ -2924,10 +3478,24 @@ function load() {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!d) return false;
     P.yen = d.yen; P.rep = d.rep || 0; P.notoriety = d.not || 0;
+    if (d.maxhp) P.maxhp = d.maxhp;
     P.hp = d.hp != null ? d.hp : P.maxhp;
     P.wanted = d.wanted || 0; P.dug = d.dug || 0;
     if (d.x != null) { P.x = d.x; P.y = d.y; P.z = d.z; }
-    Clock.day = d.day; Clock.min = d.min;
+    if (d.ch) {
+      P.name = d.ch.name || P.name; P.gender = d.ch.gender || P.gender;
+      P.origin = d.ch.origin || P.origin; P.gang = d.ch.gang || P.gang;
+      if (Array.isArray(d.ch.hair)) P.hair = d.ch.hair;
+      if (Array.isArray(d.ch.body)) P.body = d.ch.body;
+    }
+    if (d.cr) {
+      Craft.owned = { hand: true };
+      (d.cr.owned || []).forEach(k => { if (TOOLS[k]) Craft.owned[k] = true; });
+      Craft.dur = d.cr.dur || {};
+      Craft.armor = !!d.cr.armor;
+      Craft.tool = Craft.owned[d.cr.tool] ? d.cr.tool : bestTool();
+    }
+    Clock.day = d.day; Clock.min = d.min; Clock.elapsed = d.el || 0;
     hourMark = Math.floor(Clock.min / 60);
     if (d.bag) for (let i = 0; i < Math.min(d.bag.length, Bag.count.length); i++) Bag.count[i] = d.bag[i];
     d.terr.forEach((t, i) => { Terr[i].owner = t.o; Terr[i].mine = t.m; });
@@ -2951,7 +3519,7 @@ function load() {
       const x = key % SX, z = (Math.floor(key / SX)) % SZ, y = Math.floor(key / (SX * SZ));
       vox[idx(x, y, z)] = v; Edits.set(key, v); markDirty(x, z);
     }
-    recalcInf(); rebuildHotbar(); updateBag();
+    recalcInf(); rebuildHotbar(); updateBag(); updateToolHud();
     return true;
   } catch (e) { return false; }
 }
@@ -2968,18 +3536,24 @@ setV = function (x, y, z, id) {
    22. エンディング
    ========================================================================= */
 let ended = false;
-async function endGame() {
+async function endGame(win) {
   if (ended) return;
   ended = true;
+  started = false;                       // 夜が明けたら操作は終わり
   if (document.pointerLockElement) document.exitPointerLock();
-  $('e-title').textContent = '戴冠';
+  const held = heldZones();
+  $('e-title').textContent = win ? '歌舞伎町、制圧' : '時間切れ';
+  $('e-sub').textContent = `${held} / 9  ─  K A B U K I  C R A F T`;
   $('e-text').textContent = '……';
   $('ending').style.display = 'flex';
-  Snd.win();
+  win ? Snd.win() : Snd.lose();
   let txt = null;
-  try { txt = await AI.crown(); } catch (e) { }
-  if (!txt) txt = `ネオンは誰の名前も呼ばない。それでも今夜から、この一帯の上がりはあんたのところへ流れてくる。`
-    + `${Clock.day}日、掘ったブロック ${P.dug} 個。悪くない仕事だ。`;
+  try { txt = await AI.crown(win); } catch (e) { }
+  if (!txt) txt = win
+    ? `ネオンは誰の名前も呼ばない。それでも丸一日を回りきったいま、${held}つのシマの上がりは${P.gang}へ流れてくる。`
+      + `掘ったブロック ${P.dug} 個。歌舞伎町の過半数は、${P.name}のものだ。`
+    : `また同じ時刻の歌舞伎町に、同じ顔で立っている。${P.gang}が獲れたのは ${held} シマ。過半数には足りない。`
+      + `掘ったブロック ${P.dug} 個ぶんの穴だけが残って、街は何事もなかったように次の夜を開けた。`;
   $('e-text').textContent = txt;
 }
 $('e-again').onclick = () => { localStorage.removeItem(SAVE_KEY); location.reload(); };
@@ -2993,7 +3567,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.05);
   last = now;
 
-  if (started && !mapOpen) {
+  if (started && !mapOpen && !craftOpen) {
     let mx = 0, mz = 0;
     if (!Talk.open) {
       if (keys.KeyW || keys.ArrowUp) mz -= 1;
@@ -3026,6 +3600,7 @@ function frame(now) {
 
     if (P.atkCd > 0) P.atkCd -= dt;
     updateDig(dt);
+    updateArm(dt);
     updateNPCs(dt);
     updateWorld(dt);
     if (P.wanted >= 100) arrest();
@@ -3059,6 +3634,34 @@ function frame(now) {
   }).join('');
 })();
 
+/* 16px の土テクスチャを作ってタイトルの背景に敷く。外部画像を持たないので
+   canvas で描いて data URL にする。image-rendering:pixelated で拡大する */
+(function buildDirt() {
+  const pal = ['#6d4a2c', '#7a5433', '#5d3f26', '#84603a', '#553a24', '#6a4f33', '#463020'];
+  const c = document.createElement('canvas'); c.width = c.height = 16;
+  const g = c.getContext('2d');
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    g.fillStyle = pal[Math.floor(hash2(x * 7 + 13, y * 11 + 3) * pal.length) % pal.length];
+    g.fillRect(x, y, 1, 1);
+  }
+  try { $('title').style.setProperty('--dirt', `url(${c.toDataURL()})`); } catch (e) { }
+})();
+
+// マイクラのタイトルにある黄色い一言。開くたびに変わる
+const SPLASHES = [
+  'アスファルトも掘れる！', '100% ボクセル！', 'ネオンは食えない', 'ツルハシを作れ！',
+  '素手じゃ無理だ', 'NPC は DeepSeek 製！', '歌舞伎町を全部いただく', '9つのシマを獲れ',
+  '金塊は地面の下', '終電はとっくにない', '1秒 = 1分', 'シャンパンコール！',
+  '怪獣が見ている', '掘って、売って、買う', 'ここは紅蓮会のシマだ',
+  '24分で過半数を獲れ！', 'ネオンを落とせば街が傾く', '無料案内所には寄るな',
+  'トー横から一番街へ', '始発までに決着を'
+];
+$('splash').textContent = pick(SPLASHES);
+$('t-keys').onclick = () => {
+  const el = $('t-keylist');
+  el.style.display = el.style.display === 'grid' ? 'none' : 'grid';
+};
+
 $('g-no').onclick = () => { location.href = 'https://tk.st/game/'; };
 $('g-yes').onclick = () => {
   try { localStorage.setItem('kc.r18', '1'); } catch (e) { }
@@ -3068,18 +3671,134 @@ $('g-yes').onclick = () => {
 };
 try { if (localStorage.getItem('kc.r18') === '1') $('g-yes').click(); } catch (e) { }
 
+/* ---- キャラクター作成 --------------------------------------------------- */
+const CG = { name: '', gang: '', gender: '男', hair: 0, body: 0, origin: 'nagare' };
+const CG_NAMES_M = ['黒岩 亮', '桐生 慎', '鮫島 龍司', '不破 拓海', '九条 零', '甲斐 蓮'];
+const CG_NAMES_F = ['氷室 澪', '早乙女 茜', '天堂 沙羅', '一之瀬 灯', '真壁 雫', '朝倉 柚'];
+const cgName = () => pick(CG.gender === '女' ? CG_NAMES_F : CG_NAMES_M);
+// 既存の三勢力（紅蓮会・ドラゴンズ・アルカディア）と並べて浮かない名前
+const GANG_NAMES = ['無頼会', '夜叉会', '不夜城会', '零番街', '月虹組', '朱雀連合',
+  '泥濘会', '極彩組', '白夜会', '螢連合', '蜃気楼組', '奈落会'];
+const gangName = () => pick(GANG_NAMES);
+
+function cgDraw() {
+  const c = $('cg-canvas'), g = c.getContext('2d');
+  const hair = css(HAIR_SW[CG.hair]), body = css(BODY_SW[CG.body]);
+  const dark = css(BODY_SW[CG.body].map(v => v * 0.6));
+  const skin = '#dbae8f';
+  g.clearRect(0, 0, c.width, c.height);
+  g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, 0, c.width, c.height);
+  const R = (x, y, w, h, f) => { g.fillStyle = f; g.fillRect(x, y, w, h); };
+  R(66, 148, 22, 62, dark); R(92, 148, 22, 62, dark);          // 脚
+  R(62, 84, 56, 66, body);                                      // 胴
+  R(42, 84, 18, 58, body); R(120, 84, 18, 58, body);            // 腕
+  R(42, 138, 18, 12, skin); R(120, 138, 18, 12, skin);          // 手
+  R(68, 36, 44, 46, skin);                                      // 顔
+  R(64, 26, 52, 16, hair);                                      // 髪
+  R(64, 36, 6, 22, hair); R(110, 36, 6, 22, hair);              // もみあげ
+  R(78, 52, 7, 7, '#1b1420'); R(95, 52, 7, 7, '#1b1420');       // 目
+  R(84, 68, 12, 3, 'rgba(0,0,0,.35)');                          // 口
+  // 右手に持っている道具。出自で変わる
+  const t = TOOLS[(ORIGINS.find(o => o.k === CG.origin) || ORIGINS[0]).tool];
+  R(142, 74, 7, 68, css(TOOLS.wood.col));
+  R(134, 70, 24, 9, css(t.col));
+}
+function cgSync() {
+  $('cg-nm').textContent = CG.name || '名無し';
+  $('cg-gg').textContent = CG.gang || '名無しの一党';
+  $('cg-gender').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === CG.gender));
+  $('cg-hair').querySelectorAll('i').forEach((el, i) => el.classList.toggle('on', i === CG.hair));
+  $('cg-body').querySelectorAll('i').forEach((el, i) => el.classList.toggle('on', i === CG.body));
+  // 素性の呼び名は性別で変わる。選び直すたびに並べ直す
+  $('cg-origin').innerHTML = ORIGINS.map(o => {
+    const [n, d] = originVar(o.k, CG.gender);
+    return `<button type="button" data-v="${o.k}" class="${o.k === CG.origin ? 'on' : ''}">${n}`
+      + `<small>${d}　所持金 ${yen(o.yen)}／体力 ${o.hp}／${TOOLS[o.tool].n}</small></button>`;
+  }).join('');
+  cgDraw();
+}
+(function buildCG() {
+  $('cg-gender').innerHTML = GENDERS
+    .map(v => `<button type="button" data-v="${v}">${v}</button>`).join('');
+  $('cg-hair').innerHTML = HAIR_SW.map(c => `<i style="background:${css(c)}"></i>`).join('');
+  $('cg-body').innerHTML = BODY_SW.map(c => `<i style="background:${css(c)}"></i>`).join('');
+  $('cg-gender').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    CG.gender = b.dataset.v; cgSync();
+  };
+  $('cg-origin').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    CG.origin = b.dataset.v; cgSync();
+  };
+  $('cg-hair').onclick = e => {
+    const i = [...$('cg-hair').children].indexOf(e.target); if (i < 0) return;
+    CG.hair = i; cgSync();
+  };
+  $('cg-body').onclick = e => {
+    const i = [...$('cg-body').children].indexOf(e.target); if (i < 0) return;
+    CG.body = i; cgSync();
+  };
+  for (const [id, key, roll] of [['cg-name', 'name', cgName], ['cg-gang', 'gang', gangName]]) {
+    $(id).addEventListener('input', () => { CG[key] = $(id).value.trim(); cgSync(); });
+    $(id).addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') $('cg-go').click();
+    });
+    $(id === 'cg-name' ? 'cg-dice' : 'cg-gdice').onclick = () => {
+      CG[key] = roll(); $(id).value = CG[key]; cgSync();
+    };
+  }
+  // 名前のサイコロは見た目も振り直す
+  const rollName = $('cg-dice').onclick;
+  $('cg-dice').onclick = () => {
+    CG.hair = irnd(0, HAIR_SW.length - 1); CG.body = irnd(0, BODY_SW.length - 1);
+    rollName();
+  };
+})();
+$('cg-back').onclick = () => { $('chargen').style.display = 'none'; $('title').style.display = 'flex'; };
+$('cg-go').onclick = () => {
+  // セーブを消すのはここ。作成画面から「戻る」で抜けた人の続きを壊さない
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) { }
+  const o = ORIGINS.find(x => x.k === CG.origin) || ORIGINS[0];
+  P.name = CG.name || cgName();
+  P.gang = CG.gang || gangName();
+  P.gender = CG.gender; P.origin = o.k;
+  P.hair = HAIR_SW[CG.hair]; P.body = BODY_SW[CG.body];
+  P.yen = o.yen; P.maxhp = o.hp; P.hp = o.hp; P.rep = o.rep;
+  Craft.owned = { hand: true, [o.tool]: true };
+  Craft.dur = { [o.tool]: TOOLS[o.tool].dur };
+  Craft.tool = o.tool;
+  $('chargen').style.display = 'none';
+  begin();
+};
+
 function begin() {
   $('title').style.display = 'none';
+  $('chargen').style.display = 'none';
   started = true;
+  FACTIONS.player.name = P.gang;        // 勢力図・HUD・NPC への説明が全部これを見る
   P.y = groundTop(P.x, P.z);
   Snd.init();
-  rebuildHotbar(); updateBag(); hud(); drawMinimap();
+  recalcInf();
+  rebuildHotbar(); updateBag(); updateToolHud(); hud(); drawMinimap();
   log('歌舞伎町。この街は全部ブロックでできている。', '');
-  log('左クリック長押しで掘る。G で換金。', 'dig');
+  log(`${curTool().n}を握っている。左クリック / F 長押しで掘る。G で換金。`, 'dig');
+  log('Q でクラフト。固いブロックはツルハシがないと剥がせない。', 'dig');
+  log(`持ち時間はゲーム内の 1 日＝24 分。9 つ中 ${WIN_ZONES} シマ獲れば、この街の過半数はあんたのものだ。`, 'good');
+  log('高いブロック（ネオン・街灯・提灯）を落とすほど、そのシマは早く傾く。', 'dig');
   if (!isTouch && canvas.requestPointerLock) setTimeout(() => canvas.requestPointerLock(), 120);
 }
-$('t-start').onclick = () => { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } begin(); };
-$('t-load').onclick = () => { load(); begin(); };
+function openChargen() {
+  $('title').style.display = 'none';
+  $('chargen').style.display = 'flex';
+  if (!CG.name) { CG.name = cgName(); $('cg-name').value = CG.name; }
+  if (!CG.gang) { CG.gang = gangName(); $('cg-gang').value = CG.gang; }
+  cgSync();
+  setTimeout(() => $('cg-name').focus(), 60);
+}
+$('t-start').onclick = openChargen;
+// 読めなかったセーブで素の状態から始めさせない。作成画面に回す
+$('t-load').onclick = () => { if (load()) begin(); else openChargen(); };
 
 (async () => {
   try {
