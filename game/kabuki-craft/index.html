@@ -103,8 +103,10 @@
   #bag .tot{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.14);
     color:var(--gold);display:flex;justify-content:space-between}
 
-  #minimap{position:absolute;bottom:104px;right:12px;width:150px;height:150px;padding:6px;border-radius:12px}
+  #minimap{position:absolute;bottom:104px;right:12px;width:150px;padding:6px 6px 5px;border-radius:12px}
   #minimap canvas{position:static;width:138px;height:138px;border-radius:8px;background:#07060e}
+  #mmleg{display:flex;gap:9px;justify-content:center;margin-top:4px;font-size:9px;opacity:.65}
+  #mmleg i{display:inline-block;width:6px;height:6px;border-radius:1px;margin-right:3px}
 
   #log{position:absolute;bottom:104px;left:12px;width:min(330px,50vw);max-height:150px;
     overflow:hidden;display:flex;flex-direction:column-reverse;gap:3px;font-size:11px}
@@ -415,6 +417,7 @@
   #grid .z .fill{position:absolute;inset:auto 0 0 0;opacity:.3}
   #grid .z b{font-size:12px;position:relative;line-height:1.3}
   #grid .z .o{font-size:9.5px;opacity:.75;position:relative}
+  #grid .z .sp{font-size:9.5px;position:relative;opacity:.85}
   #grid .z .pc{font-size:17px;font-weight:800;position:relative;font-variant-numeric:tabular-nums}
   #grid .z.here{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 24px rgba(22,224,255,.28)}
   #map .legend{margin-top:16px;font-size:10px;opacity:.6;display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
@@ -486,7 +489,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="bag" class="card"><h4>回収したブロック</h4><div id="baglist"></div>
     <div class="tot"><span>換金額</span><span id="bagtot">¥0</span></div></div>
 
-  <div id="minimap" class="card"><canvas id="mm" width="276" height="276"></canvas></div>
+  <div id="minimap" class="card"><canvas id="mm" width="276" height="276"></canvas>
+    <div id="mmleg"><span><i style="background:#ffcf3f"></i>買える店</span><span><i style="background:#39ff88"></i>自分の店</span></div></div>
   <div id="tool" class="card"><div class="lb">手に持っている道具</div><b id="tool-n">素手</b>
     <div id="tool-d" style="font-size:10px;opacity:.55;margin-top:2px">固いものは掘れない</div>
     <div class="dur" id="tool-bar" style="display:none"><i></i></div></div>
@@ -586,7 +590,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <b>1〜9 / ホイール</b><span>手に持つブロックを選ぶ</span>
       <b>Q</b><span>クラフト（掘ったブロックで道具を作る）</span>
       <b>G</b><span>回収したブロックを換金（自分の店なら高く売れる）</span>
-      <b>E</b><span>話す・店を買う</span>
+      <b>E</b><span>話す・店を買う（<i style="color:#ffcf3f;font-style:normal">金の印</i>が出ている入口が買える店。手に入れると<i style="color:#39ff88;font-style:normal">緑</i>になる）</span>
       <b>Tab / M</b><span>勢力図</span>
       <b>V</b><span>視点切替（三人称／一人称）</span>
       <b>N</b><span>音のオン／オフ</span>
@@ -667,7 +671,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
    ========================================================================= */
 
 const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
-const SAVE_KEY = 'kabukiCraft.v2';   // v2 で街の形が変わった。v1 のセーブは読まない
+/* v4。街の形と地下の階高が変わり、ブロック番号も詰め直した。
+   セーブは座標・ボクセルの差分・カバンの中身をブロック番号のまま持っているので、
+   古いものを読むと地面の中で復活したり、別のブロックに化けたりする。
+   v3 以前は読まない。 */
+const SAVE_KEY = 'kabukiCraft.v4';
 
 /* ============================================================================
    0. 小物
@@ -824,7 +832,7 @@ const ORIGINS = [
   { k: 'kaitai', yen: 60000, tool: 'stone', hp: 125, rep: 0,
     v: {
       '男': ['解体屋崩れ', '壊すことだけは誰にも負けない。石のツルハシ持ち。金はない。'],
-      '女': ['元大工', '壊すことだけは誰にも負けない。石のツルハシ持ち。金はない。']
+      '女': ['元大工', '建てるのも壊すのも現場仕込み。石のツルハシ持ち。金はない。']
     } }
 ];
 // 性別を減らす前のセーブが来ても落ちないよう、知らない性別は男の呼び名に寄せる
@@ -841,7 +849,24 @@ const BODY_SW = [[.10, .10, .14], [.82, .18, .34], [.14, .30, .55], [.18, .48, .
 /* ============================================================================
    3. ボクセル世界
    ========================================================================= */
-const SX = 144, SZ = 144, SY = 48;
+const SX = 144, SZ = 144, SY = 64;
+/* 地面の高さ。地上の街はここから上に建つ。下は掘って降りる 2 層のためにあける。
+   地下はどちらも内寸 4 マス。3 マスだと天井が頭のすぐ上に来て、
+   通路も駐車場も「穴」に見えてしまう。
+     y=0        岩盤（掘れない。ここで行き止まり）
+     y=1        公共地下駐車場の床
+     y=2-5      公共地下駐車場（内寸 4）
+     y=6        スラブ（駐車場の天井 ＝ SUBNADE の床）
+     y=7-10     SUBNADE 地下街（内寸 4）
+     y=11       スラブ（SUBNADE の天井）
+     y=12       土
+     y=13       路面（ROADY）
+     y=14       地上。人が立つ高さ（GY）
+   地上を作るコードは全部この GY からの相対で書く。y を直に書かない。        */
+const GY = 14, ROADY = GY - 1;
+const PARK_Y = 2, PARK_TOP = 5;                  // 公共地下駐車場の床上と天井下
+const SUB_Y = 7, SUB_TOP = 10;                   // SUBNADE の床上と天井下
+const SLAB_MID = PARK_TOP + 1, SLAB_TOP = SUB_TOP + 1;   // それぞれの天井スラブ
 const CH = 16, NCX = SX / CH, NCZ = SZ / CH;     // 9×9 チャンク
 const vox = new Uint8Array(SX * SY * SZ);
 const idx = (x, y, z) => (y * SZ + z) * SX + x;
@@ -876,17 +901,22 @@ function surfaceY(x, z, fromY) {
   }
   return -1;
 }
-// 路面（y=3）が出ていて頭上も空いているか。庇や通り抜けの下も「路面」に数える
-const onOpenRoad = (x, z) => surfaceY(x, z, 3) === 3;
+// 路面（y=GY）が出ていて頭上も空いているか。庇や通り抜けの下も「路面」に数える
+const onOpenRoad = (x, z) => surfaceY(x, z, GY) === GY;
 
-// 街路: PITCH ごとに ROAD 幅の道路、残りが街区
-const PITCH = 16, ROAD = 5, GRID = 9;            // 9*16 = 144
+/* 街路: PITCH ごとに ROAD 幅の道路、残りが街区。
+   ROAD=5 だと街灯と自販機が並んだだけで人とすれ違えなくなるので 7 マスにした。
+   街区は 11×11 から 9×9 に縮む。通りの座標を持つものは全部この値から作る。 */
+const PITCH = 16, ROAD = 7, GRID = 9;            // 9*16 = 144
+const ROAD_MID = (ROAD - 1) >> 1;                // 通りの中心線（NPC の通り道）
+const LANE = ROAD_MID - 0.6;                     // 中心からどれだけ横に散らばれるか
+const rdS = k => k * PITCH, rdE = k => k * PITCH + ROAD - 1;   // k 番目の通りの端
 /* 実在の歌舞伎町に合わせて向きを決める。x は東、z は南（z=0 が北）。
    格子はそのままに、主要な通りだけ幅を広げて名前を持たせている。
-     z=0-4     職安通り（北の境）      z=48-52   花道通り
-     z=96-100  さくら通り             z=126-134 靖国通り（南の大通り）
+     z=0-6     職安通り（北の境）      z=48-54   花道通り
+     z=96-102  さくら通り             z=126-134 靖国通り（南の大通り）
      x=61-71   セントラルロード（シネシティ広場へ突き当たる）
-     x=80-84   一番街（南端にアーチ）  x=96-100  区役所通り   x=112-116 東通り  */
+     x=80-86   一番街（南端にアーチ）  x=96-102  区役所通り   x=112-118 東通り  */
 const YASUKUNI = [126, 134], CENTRAL = [61, 71], CENTRAL_Z = 50;
 const isWideAve = (x, z) =>
   (z >= YASUKUNI[0] && z <= YASUKUNI[1]) ||
@@ -906,18 +936,29 @@ const ZONES = [
 const Z_PARK = 0, Z_CINE = 4, Z_STATION = 6, Z_ICHIBAN = 7, Z_GOLDEN = 8;
 // いま立っている通りの名前。交差点は大きい通りを先に返す
 const STREETS = [
-  { n: '靖国通り', x0: 0, x1: 143, z0: 126, z1: 134 },
-  { n: '職安通り', x0: 0, x1: 143, z0: 0, z1: 4 },
-  { n: '花道通り', x0: 0, x1: 143, z0: 48, z1: 52 },
-  { n: 'さくら通り', x0: 0, x1: 143, z0: 96, z1: 100 },
-  { n: 'セントラルロード', x0: 61, x1: 71, z0: 50, z1: 125 },
-  { n: '一番街', x0: 80, x1: 84, z0: 48, z1: 125 },
-  { n: '区役所通り', x0: 96, x1: 100, z0: 5, z1: 125 },
-  { n: '東通り', x0: 112, x1: 116, z0: 5, z1: 125 }
+  { n: '靖国通り', x0: 0, x1: SX - 1, z0: YASUKUNI[0], z1: YASUKUNI[1] },
+  { n: '職安通り', x0: 0, x1: SX - 1, z0: rdS(0), z1: rdE(0) },
+  { n: '花道通り', x0: 0, x1: SX - 1, z0: rdS(3), z1: rdE(3) },
+  { n: 'さくら通り', x0: 0, x1: SX - 1, z0: rdS(6), z1: rdE(6) },
+  { n: 'セントラルロード', x0: CENTRAL[0], x1: CENTRAL[1], z0: CENTRAL_Z, z1: YASUKUNI[0] - 1 },
+  { n: '一番街', x0: rdS(5), x1: rdE(5), z0: rdS(3), z1: YASUKUNI[0] - 1 },
+  { n: '区役所通り', x0: rdS(6), x1: rdE(6), z0: ROAD, z1: YASUKUNI[0] - 1 },
+  { n: '東通り', x0: rdS(7), x1: rdE(7), z0: ROAD, z1: YASUKUNI[0] - 1 }
 ];
 function streetOf(x, z) {
   for (const s of STREETS) if (x >= s.x0 && x <= s.x1 && z >= s.z0 && z <= s.z1) return s.n;
   return '';
+}
+/* いる階。0=駐車場 1=SUBNADE 2=地上。足元の y から決める。
+   店を掴む・看板を出す・ミニマップを描く、どれもこれで階を揃える */
+const floorOf = y => y < SLAB_MID ? 0 : y < ROADY ? 1 : 2;
+// いま居る場所の名前。地下にいるときは通りではなくフロアの名前を出す
+const FLOOR_PARK = '公共地下駐車場', FLOOR_SUB = 'SUBNADE 地下街';
+function placeName(x, y, z) {
+  if (y <= PARK_TOP) return FLOOR_PARK;
+  if (y <= SUB_TOP) return FLOOR_SUB;
+  if (y < GY) return '地面の下';
+  return streetOf(Math.floor(x), Math.floor(z));
 }
 const onMainStreet = (x, z) => {
   const s = streetOf(x, z);
@@ -975,20 +1016,21 @@ const LANDMARKS = {
   '6,3': 'furin',                     // 風林会館（花道通り×区役所通り）
   '0,7': 'station'                    // 西武新宿駅（南西・靖国通り沿い）
 };
-const PLAZA = { x0: 53, x1: 79, z0: 64, z1: 79 };
-const TOHO = { x0: 58, x1: 74, z0: 53, z1: 63, top: 34 };
+// 広場は街区 (3,4)(4,4) と、その間の通りぶん。西端は街区の始まりに合わせる
+const PLAZA = { x0: 3 * PITCH + ROAD, x1: 79, z0: 64, z1: 79 };
+const TOHO = { x0: 58, x1: 74, z0: 53, z1: 63, top: GY + 31 };
 
 function genWorld() {
   // 地面
   fill(0, 0, 0, SX - 1, 0, SZ - 1, 1);             // 岩盤
-  fill(0, 1, 0, SX - 1, 1, SZ - 1, 18);            // 土
+  fill(0, 1, 0, SX - 1, ROADY - 1, SZ - 1, 18);    // 土（この中を地下 2 層がくり抜く）
   for (let z = 0; z < SZ; z++) for (let x = 0; x < SX; x++) {
-    vox[idx(x, 2, z)] = isRoadCell(x, z) ? 2 : 4;  // 道路 / 街区の土台タイル
+    vox[idx(x, ROADY, z)] = isRoadCell(x, z) ? 2 : 4;  // 道路 / 街区の土台タイル
   }
 
   for (let bi = 0; bi < GRID; bi++) for (let bj = 0; bj < GRID; bj++) {
     let x0 = bi * PITCH + ROAD, z0 = bj * PITCH + ROAD;
-    let x1 = bi * PITCH + PITCH - 1, z1 = bj * PITCH + PITCH - 1;     // 11×11
+    let x1 = bi * PITCH + PITCH - 1, z1 = bj * PITCH + PITCH - 1;     // (PITCH-ROAD)^2
     // 広げた大通りに食い込む分は街区を削る
     const cx = (x0 + x1) >> 1, cz = (z0 + z1) >> 1;
     while (x0 <= x1 && isWideAve(x0, cz)) x0++;
@@ -1036,29 +1078,320 @@ function genWorld() {
 
   // 通りの街灯・自販機
   for (let i = 0; i <= GRID; i++) for (let j = 0; j <= GRID; j++) {
-    let cx = i * PITCH + 1, cz = j * PITCH + 1;
+    let cx = i * PITCH, cz = j * PITCH;
     // 大通りを広げた分、街灯は新しい歩道の位置まで下げる（車道の真ん中に立たせない）
     if (cx >= CENTRAL[0] && cx <= CENTRAL[1] && cz >= CENTRAL_Z) cx = CENTRAL[0];
     if (cz >= YASUKUNI[0] && cz <= YASUKUNI[1]) cz = YASUKUNI[0];
     if (cx >= SX - 1 || cz >= SZ - 1) continue;
-    if (getV(cx, 3, cz) !== AIR) continue;
-    fill(cx, 3, cz, cx, 6, cz, 6);
-    vox[idx(cx, 7, cz)] = 22;
-    if (hash2(i * 3, j * 11) > 0.68 && cx + 2 < SX) {
-      fill(cx + 2, 3, cz, cx + 2, 4, cz, 23);
+    if (getV(cx, GY, cz) !== AIR) continue;
+    fill(cx, GY, cz, cx, GY + 3, cz, 6);
+    vox[idx(cx, GY + 4, cz)] = 22;
+    /* 自販機。交差点の角に置くと四方どこへ抜けるにも邪魔になるので、
+       通りの途中でビルの壁にぴったり寄せる。壁に接していない場所には置かない */
+    if (hash2(i * 3, j * 11) > 0.68) placeVending(i, j);
+  }
+  genUnderground();
+  // 土の中に埋まっている金塊（掘り当てる楽しみ）。地下街を掘ってできた壁からも出る
+  for (let k = 0; k < 260; k++) {
+    const gx = irnd(2, SX - 3), gz = irnd(2, SZ - 3), gy = irnd(1, ROADY - 1);
+    if (getV(gx, gy, gz) === 18) vox[idx(gx, gy, gz)] = 24;
+  }
+}
+
+/* ---- 地下 ---------------------------------------------------------------
+   SUBNADE 地下街と公共地下駐車場。上の通りをそのままなぞる格子にすると
+   ただの「地上のコピー」になって嘘くさいので、実物に合わせて形を変える。
+
+   SUBNADE  : 靖国通りの下を東西に貫く 1 本の長い本通りが背骨。そこから北へ
+              何本かの枝が伸び、駅前と広場の 2 か所だけ大きく開ける。
+              新宿サブナードが「格子」ではなく「1 本の通り」なのと同じ。
+   駐車場   : 街の下に広がる一枚のフロア。柱と白線と車だけ。
+   その下は岩盤で行き止まり。                                               */
+
+// 本通り（靖国通りの下）。SX いっぱいに東西へ通す
+const SUB_MAIN = { x0: 4, x1: SX - 5, z0: 124, z1: 136 };
+// 北へ伸びる枝。長さをそろえないことで格子に見えなくする
+const SUB_BRANCH = [
+  { x0: 62, x1: 70, z0: 52, z1: 124 },     // セントラルロード：一番長い。広場の下まで
+  { x0: 81, x1: 85, z0: 86, z1: 124 },     // 一番街：中くらい
+  { x0: 97, x1: 101, z0: 62, z1: 124 },    // 区役所通り
+  { x0: 113, x1: 117, z0: 104, z1: 124 }   // 東通り：短い行き止まり
+];
+// 広場。本通りが膨らむ 2 か所
+const SUB_HALL = [
+  { x0: 6, x1: 30, z0: 114, z1: 140 },     // 西武新宿駅の下。地下街の西の端
+  { x0: 56, x1: 78, z0: 110, z1: 138 }     // セントラルロードの付け根
+];
+// 公共地下駐車場。街の下に広がる一枚のフロア
+const PARK_AREA = { x0: 22, x1: 122, z0: 30, z1: 134 };
+
+const inBox = (b, x, z) => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1;
+const inEdge = (x, z) => x > 0 && z > 0 && x < SX - 1 && z < SZ - 1;
+const inSub = (x, z) => inEdge(x, z) &&
+  (inBox(SUB_MAIN, x, z) || SUB_BRANCH.some(b => inBox(b, x, z)) || SUB_HALL.some(b => inBox(b, x, z)));
+const inPark = (x, z) => inEdge(x, z) && inBox(PARK_AREA, x, z);
+
+function genUnderground() {
+  for (let z = 0; z < SZ; z++) for (let x = 0; x < SX; x++) {
+    if (inSub(x, z)) {
+      fill(x, SUB_Y, z, x, SUB_TOP, z, AIR);     // 通路
+      setRaw(x, SUB_Y - 1, z, 4);                // タイルの床
+      setRaw(x, SLAB_TOP, z, 3);                 // 天井スラブ
+    }
+    if (inPark(x, z)) {
+      fill(x, PARK_Y, z, x, PARK_TOP, z, AIR);   // フロア
+      setRaw(x, PARK_Y - 1, z, 3);               // 床
+      setRaw(x, SLAB_MID, z, 3);                 // 天井スラブ
     }
   }
-  // どこかに埋まっている金塊（掘り当てる楽しみ）
-  for (let k = 0; k < 140; k++) {
-    const gx = irnd(2, SX - 3), gz = irnd(2, SZ - 3), gy = irnd(1, 2);
-    if (getV(gx, gy, gz) === 18 || getV(gx, gy, gz) === 1 && gy > 0) vox[idx(gx, gy, gz)] = 24;
+  /* 掘り抜いた土がそのまま壁だと穴蔵に見える。面している側に内装を貼る。
+     SUBNADE はタイル、駐車場は打ちっぱなしのコンクリート */
+  for (let z = 0; z < SZ; z++) for (let x = 0; x < SX; x++) {
+    if (!inSub(x, z) && (inSub(x - 1, z) || inSub(x + 1, z) || inSub(x, z - 1) || inSub(x, z + 1)))
+      for (let y = SUB_Y; y <= SUB_TOP; y++) if (getV(x, y, z) === 18) setRaw(x, y, z, 4);
+    if (!inPark(x, z) && (inPark(x - 1, z) || inPark(x + 1, z) || inPark(x, z - 1) || inPark(x, z + 1)))
+      for (let y = PARK_Y; y <= PARK_TOP; y++) if (getV(x, y, z) === 18) setRaw(x, y, z, 3);
+  }
+  genSubnade();
+  genParking();
+  genSubShops();
+  genConnections();
+  genDepot();
+  /* 地下を歩く人のための道しるべ。格子が無いので、床の上を粗く拾って
+     ノードにしておく。通行人はこの点から次の行き先を選ぶ */
+  for (let z = 3; z < SZ - 3; z += 4) for (let x = 3; x < SX - 3; x += 4) {
+    if (inSub(x, z) && surfaceY(x, z, SUB_Y) === SUB_Y) SUB_NODES.push({ x: x + 0.5, z: z + 0.5 });
+    if (inPark(x, z) && surfaceY(x, z, PARK_Y) === PARK_Y) PARK_NODES.push({ x: x + 0.5, z: z + 0.5 });
+  }
+}
+const SUB_NODES = [], PARK_NODES = [];
+const floorNodes = f => f === PARK_Y ? PARK_NODES : SUB_NODES;
+
+/* SUBNADE の中身。天井の蛍光灯、床のタイル割り、壁に並ぶ店の明かりと袖看板。
+   本通りは幅 13 あるので、中央に柱を立てて「広い通り」に見せる。 */
+function genSubnade() {
+  const mz = Math.round((SUB_MAIN.z0 + SUB_MAIN.z1) / 2);
+  for (let z = 1; z < SZ - 1; z++) for (let x = 1; x < SX - 1; x++) {
+    if (inSub(x, z)) {
+      if ((x + z) % 4 === 0) setRaw(x, SLAB_TOP, z, 8);          // 天井の蛍光灯
+      if ((x + z) % 6 === 0) setRaw(x, SUB_Y - 1, z, 3);         // 床のタイル割り
+      // 本通りの中央に柱。広場の中は抜いて、開けた感じを残す
+      if (z === mz && x % 8 === 4 && inBox(SUB_MAIN, x, z) && !SUB_HALL.some(b => inBox(b, x, z)))
+        fill(x, SUB_Y, z, x, SUB_TOP, z, 6);
+      continue;
+    }
+    // 通路に面した壁
+    if (!(inSub(x - 1, z) || inSub(x + 1, z) || inSub(x, z - 1) || inSub(x, z + 1))) continue;
+    const q = hash2(x * 7 + 13, z * 3 + 5);
+    if (q > 0.62) { setRaw(x, SUB_Y + 1, z, 8); setRaw(x, SUB_Y + 2, z, 8); }   // 店の明かり
+    else if (q > 0.46) setRaw(x, SUB_TOP, z, NEON_IDS[Math.floor(q * 601) % NEON_IDS.length]);
+    else if (q < 0.07) fill(x, SUB_Y, z, x, SUB_Y + 1, z, 23);   // 壁ぎわの自販機
+  }
+}
+
+/* 公共地下駐車場。柱と白線だけの、だだっ広いコンクリートの箱。 */
+function genParking() {
+  for (let z = PARK_AREA.z0; z <= PARK_AREA.z1; z++) for (let x = PARK_AREA.x0; x <= PARK_AREA.x1; x++) {
+    if (!inPark(x, z)) continue;
+    if (x % 7 === 2 && z % 7 === 2) { fill(x, PARK_Y, z, x, PARK_TOP, z, 6); continue; }   // 柱
+    if (x % 5 === 0 && z % 5 === 0) setRaw(x, SLAB_MID, z, 8);                             // 天井の照明
+    // 駐車枠の白線。車は置いていないが、枠だけは床に残っている
+    if ((z - PARK_AREA.z0) % 12 === 0 || (z - PARK_AREA.z0) % 12 === 6) setRaw(x, PARK_Y - 1, z, 4);
+  }
+}
+
+/* ---- 上下をつなぐ ---------------------------------------------------------
+   掘らないと入れず掘らないと出られない地下は、一度見たら終わりの場所になる。
+   実物のサブナードも地下駐車場も階段とスロープだらけなので、そこを通す。
+   これで地下が「街を横断できる裏道」になり、上の警察から外れた移動路になる。 */
+
+/* 階段。下の階の床 yLow から上の階の床 yHigh へ 1 マスずつ上がる。
+   (x0,z0) が下の入口で、(dx,dz) の向きへ登る。幅は half*2+1。
+   両脇は壁で囲うので、地上側では階段室の囲いに、地下側では手すりになる。 */
+function genStairs(x0, z0, dx, dz, yLow, yHigh, half) {
+  const px = dz, pz = dx;
+  const R = yHigh - yLow;
+  for (let i = 0; i <= R; i++) for (let k = -half - 1; k <= half + 1; k++) {
+    const x = x0 + dx * i + px * k, z = z0 + dz * i + pz * k;
+    if (!inEdge(x, z)) continue;
+    const step = Math.min(yLow + i, yHigh);
+    /* 側壁は段と一緒にせり上がる。上まで一律に立てると、階段が埋まっている
+       区間でも壁だけが路面から生えて、通りを塞いでしまう */
+    if (Math.abs(k) > half) { fill(x, yLow, z, x, Math.min(yHigh + 1, step + 3), z, 4); continue; }
+    fill(x, yLow - 1, z, x, step - 1, z, 3);       // 踏み面
+    fill(x, step, z, x, step + 2, z, AIR);         // 通れる高さ
+    if (k === 0 && i % 3 === 0 && step + 3 < yHigh) setRaw(x, step + 3, z, 8);   // 段の上の照明
+  }
+  // 降り口の目印。非常口の緑は地下でいちばん目につく。囲いの壁に貼る
+  const ex = x0 + dx * R, ez = z0 + dz * R, o = half + 1;
+  setRaw(ex + px * o, yHigh + 1, ez + pz * o, 13);
+  setRaw(ex - px * o, yHigh + 1, ez - pz * o, 13);
+}
+
+/* 車路スロープ。駐車場から地上へ出る本来の入口。幅 5 で、
+   人の階段より緩く見えるように両脇を鉄骨のガードにする。 */
+function genRamp(x0, z0, dx, dz, yLow, yHigh, half) {
+  genStairs(x0, z0, dx, dz, yLow, yHigh, half);
+  const px = dz, pz = dx;
+  for (let i = 0; i <= yHigh - yLow; i++) {
+    const step = Math.min(yLow + i, yHigh);
+    for (const k of [-half, half]) {
+      const x = x0 + dx * i + px * k, z = z0 + dz * i + pz * k;
+      setRaw(x, step, z, 6);                       // 縁石代わりのガード
+    }
+  }
+}
+
+function genConnections() {
+  const mz = Math.round((SUB_MAIN.z0 + SUB_MAIN.z1) / 2);
+  /* 地上 ⇄ SUBNADE。靖国通りの幅の中に収まる向き（東西）に登らせるので、
+     階段室がビルの 1 階を突き抜けない */
+  for (const x of [20, 66, 110]) genStairs(x, mz, 1, 0, SUB_Y, GY, 1);
+  // SUBNADE ⇄ 駐車場。本通りの床に開いた階段
+  for (const x of [34, 88]) genStairs(x, mz, 1, 0, PARK_Y, SUB_Y, 1);
+  // 車路スロープ。交差点の角に口を開ける
+  genRamp(51, 42, 0, 1, PARK_Y, GY, 2);
+}
+
+/* ---- 駐車場の中身 ---------------------------------------------------------
+   車は置かない（ブロックで車に見せるのは無理がある）。かわりに、
+   地下駐車場の隅に本当に転がっているものを置く ── 資材のパレット、
+   シャッターで閉じた機械室、非常口のサイン。どれも積み方だけで成立する。  */
+function genDepot() {
+  const A = PARK_AREA;
+  for (let z = A.z0 + 4; z <= A.z1 - 4; z += 9) for (let x = A.x0 + 3; x <= A.x1 - 4; x += 7) {
+    const q = hash2(x * 5 + 3, z * 11 + 7);
+    if (q < 0.62) continue;
+    // パレット積み。木材か鉄骨を 2〜3 段。掘れば金になる
+    const id = q > 0.84 ? 6 : 16;
+    const h = 1 + Math.floor(q * 97) % 3;
+    const w = q > 0.74 ? 3 : 2;
+    let free = true;
+    for (let a = 0; a < w && free; a++) for (let b = 0; b < 2; b++)
+      if (!inPark(x + a, z + b) || getV(x + a, PARK_Y, z + b) !== AIR) free = false;
+    if (!free) continue;
+    for (let a = 0; a < w; a++) for (let b = 0; b < 2; b++)
+      fill(x + a, PARK_Y, z + b, x + a, PARK_Y + h - 1, z + b, id);
+  }
+  /* 壁ぎわの機械室。シャッター（看板の板）で閉じてあり、中は電気室。
+     開ければ入れる ── 鉄骨と灯った窓が詰まっている */
+  for (let z = A.z0 + 8; z <= A.z1 - 8; z += 23) for (const x of [A.x0, A.x1]) {
+    const d = x === A.x0 ? 1 : -1;                 // 壁から内側へ
+    for (let k = 0; k < 4; k++) for (let b = -1; b <= 1; b++) {
+      const cx = x - d * k, cz = z + b;
+      if (!inEdge(cx, cz)) continue;
+      fill(cx, PARK_Y, cz, cx, PARK_TOP - 1, cz, k === 0 ? 15 : AIR);   // 手前がシャッター
+      if (k > 0) setRaw(cx, PARK_Y - 1, cz, 3);
+    }
+    setRaw(x - d * 3, PARK_Y + 1, z, 6);           // 中の配電盤
+    setRaw(x - d * 3, PARK_Y + 2, z, 8);
+    setRaw(x, PARK_TOP, z, 13);                    // シャッターの上の緑サイン
+  }
+}
+
+/* SUBNADE の店。地上の店とは業態が違う（夜の商売ではなく、地下街の小さな店）。
+   本通りの南北の壁をくり抜いて、間口 3 マスの店を並べる。
+   買い方・上がり・支配率の扱いは地上の店とまったく同じ。                    */
+const SUB_SHOP_TYPES = [
+  { key: 'kissa', name: '喫茶店', price: 90000, income: 7000, neon: 14, inf: 3 },
+  { key: 'soba', name: '立ち食いそば', price: 70000, income: 6000, neon: 11, inf: 2 },
+  { key: 'kutsu', name: '靴修理', price: 55000, income: 4200, neon: 10, inf: 2 },
+  { key: 'yohin', name: '洋品店', price: 130000, income: 9500, neon: 12, inf: 4 },
+  { key: 'hon', name: '書店', price: 110000, income: 8000, neon: 13, inf: 3 },
+  { key: 'drug', name: 'ドラッグストア', price: 160000, income: 12000, neon: 9, inf: 4 }
+];
+function genSubShops() {
+  const placed = [];
+  const near = (x, z) => placed.some(q => Math.abs(q[0] - x) < 10 && Math.abs(q[1] - z) < 10);
+  /* 通路に面した壁を舐めて、奥に部屋が取れるところへ順に入れていく。
+     本通り・広場・枝、どの壁でも同じ手順で入るので、地下街の形を変えても付いてくる */
+  // z の大きい側＝靖国通りの下の本通りから先に埋める。地下街の主役はこの一本
+  for (let z = SZ - 4; z >= 3; z--) for (let x = 3; x < SX - 3; x++) {
+    if (placed.length >= 16) break;
+    if (inSub(x, z)) continue;
+    // 4 方向のうち 1 つだけが通路＝そこが間口になる壁
+    const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]].filter(([dx, dz]) => inSub(x + dx, z + dz));
+    if (dirs.length !== 1 || near(x, z)) continue;
+    const q = hash2(x * 3 + 17, z * 29 + 4);
+    if (q < 0.5) continue;
+    const [fx, fz] = dirs[0];                       // 通路のある向き。店はその逆へ掘る
+    if (subShop(x, z, -fx, -fz, SUB_SHOP_TYPES[Math.floor(q * 887) % SUB_SHOP_TYPES.length], q))
+      placed.push([x, z]);
+  }
+}
+/* 間口 3・奥行き 4 の店を壁の奥へくり抜く。(dx,dz) は通路から見た奥の向き。
+   掘れる余地が無ければ何もせず false を返す。 */
+function subShop(cx, cz, dx, dz, type, q) {
+  const px = dz, pz = dx;                           // 間口の並ぶ向き（奥行きと直交）
+  const D = 4;
+  for (let d = 0; d <= D; d++) for (let w = -2; w <= 2; w++) {
+    const x = cx + dx * d + px * w, z = cz + dz * d + pz * w;
+    if (!inEdge(x, z) || inSub(x, z)) return false;  // 通路や広場に抜けてしまう
+    const v = getV(x, SUB_Y, z);
+    if (v !== 18 && v !== 4) return false;           // 土か内装壁以外＝すでに何かある
+  }
+  const bx = cx - dx, bz = cz - dz;                  // 客が立つ通路のマス
+  const shop = {
+    id: shopSeq++, zone: zoneOf(cx, cz), type, under: true, y: SUB_Y,
+    x: bx + 0.5, z: bz + 0.5, bx, bz,
+    name: SHOP_PREFIX[Math.floor(q * 719) % SHOP_PREFIX.length],
+    price: Math.round(type.price * SHOP_PRICE_MUL / 1000) * 1000,
+    income: Math.round(type.income / 100) * 100,
+    owner: null
+  };
+  Shops.push(shop);
+  for (let d = 1; d <= D; d++) for (let w = -2; w <= 2; w++) {
+    const x = cx + dx * d + px * w, z = cz + dz * d + pz * w;
+    fill(x, SUB_Y, z, x, SUB_TOP, z, AIR);
+    setRaw(x, SUB_Y - 1, z, 4);                                   // 床
+    setRaw(x, SLAB_TOP, z, ((x + z) % 3 === 0) ? 8 : 3);          // 天井と照明
+    if (d === D) setRaw(x + dx, SUB_Y + 1, z + dz, type.neon);    // 奥の壁が光る
+  }
+  // 間口。中央 3 マスを抜いて、鴨居に業種色の帯、両脇に看板の板
+  for (let w = -1; w <= 1; w++) {
+    const x = cx + px * w, z = cz + pz * w;
+    fill(x, SUB_Y, z, x, SUB_Y + 1, z, AIR);
+    setRaw(x, SUB_TOP, z, type.neon);
+  }
+  setRaw(cx + px * 2, SUB_TOP, cz + pz * 2, 15);
+  setRaw(cx - px * 2, SUB_TOP, cz - pz * 2, 15);
+  // カウンター。いちばん奥の手前に一列、真ん中だけ開ける
+  for (let w = -2; w <= 2; w++) if (w !== 0)
+    setRaw(cx + dx * (D - 1) + px * w, SUB_Y, cz + dz * (D - 1) + pz * w, 16);
+  const rx = [cx + dx, cx + dx * D, cx + px * 2, cx - px * 2];
+  const rz = [cz + dz, cz + dz * D, cz + pz * 2, cz - pz * 2];
+  shop.room = { x0: Math.min(...rx), x1: Math.max(...rx), z0: Math.min(...rz), z1: Math.max(...rz) };
+  return true;
+}
+
+/* 自販機を 1 台置く。i,j 番目の交差点から通りに沿って少し進んだところで、
+   ビルの壁に背を向けられる路面だけを選ぶ。壁が無い（＝通りの真ん中）なら置かない。
+   店の入口の前も避ける。歩ける幅を削らないための置き方。 */
+function placeVending(i, j) {
+  const blocksDoor = (x, z) => Shops.some(s => Math.abs(s.bx - x) <= 1 && Math.abs(s.bz - z) <= 1);
+  const cands = [
+    [rdS(i), rdS(j) + ROAD + 2],          // 南北の通り・西側のビルの壁ぎわ
+    [rdE(i), rdS(j) + ROAD + 4],          // 同じ通りの東側
+    [rdS(i) + ROAD + 2, rdS(j)],          // 東西の通り・北側のビルの壁ぎわ
+    [rdS(i) + ROAD + 4, rdE(j)]           // 同じ通りの南側
+  ];
+  const off = Math.floor(hash2(i * 17 + 5, j * 23 + 9) * 4);
+  for (let k = 0; k < 4; k++) {
+    const [x, z] = cands[(off + k) % 4];
+    if (!inside(x, 4, z)) continue;
+    if (getV(x, GY, z) !== AIR || getV(x, GY + 1, z) !== AIR) continue;
+    if (!onOpenRoad(x, z)) continue;
+    if (!(solid(x - 1, GY, z) || solid(x + 1, GY, z) || solid(x, GY, z - 1) || solid(x, GY, z + 1))) continue;
+    if (blocksDoor(x, z)) continue;
+    fill(x, GY, z, x, GY + 1, z, 23);
+    return;
   }
 }
 
 function genBuilding(x0, z0, x1, z1, h, bi, bj, li, golden, zi) {
-  const top = 2 + h;
+  const top = ROADY + h;
   const wallId = golden ? 16 : (hash2(bi + li, bj) > 0.72 ? 5 : 3);
-  fill(x0, 3, z0, x1, top, z1, wallId);
+  fill(x0, GY, z0, x1, top, z1, wallId);
   // 屋上の縁と塔屋
   fill(x0, top, z0, x1, top, z1, golden ? 16 : 4);
   if (h > 12 && hash2(bi + li * 3, bj + 61) > 0.5) {
@@ -1066,7 +1399,7 @@ function genBuilding(x0, z0, x1, z1, h, bi, bj, li, golden, zi) {
     fill(cx - 1, top + 1, cz - 1, cx + 1, top + 3, cz + 1, 6);
   }
   // 窓（外周だけ）
-  for (let y = 5; y < top; y += 2) {
+  for (let y = GY + 2; y < top; y += 2) {
     for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
       const edge = (x === x0 || x === x1 || z === z0 || z === z1);
       if (!edge) continue;
@@ -1084,13 +1417,13 @@ function genBuilding(x0, z0, x1, z1, h, bi, bj, li, golden, zi) {
     { fx: 1, fz: 0, x: x1 + 1, z: Math.floor((z0 + z1) / 2) }
   ];
   sides.forEach((sd, si) => {
-    if (!inside(sd.x, 3, sd.z)) return;
+    if (!inside(sd.x, GY, sd.z)) return;
     if (!isRoadCell(sd.x, sd.z)) return;               // 通りに面していない
     const q = hash2(bi * 71 + li * 5 + si, bj * 29 + si * 13);
     const main = onMainStreet(sd.x, sd.z);             // 一番街・セントラルロードは看板だらけ
     if (q < (main ? 0.05 : 0.30)) return;
     const col = NEON_IDS[Math.floor(q * 97) % NEON_IDS.length];
-    const y0 = 4 + Math.floor(q * 3);
+    const y0 = GY + 2 + Math.floor(q * 3);     // 頭の高さ（GY+1）には出さない
     const len = golden ? 2 : (main ? 2 : 0) + 3 + Math.floor(hash2(si, li) * Math.min(6, h - 2));
     for (let y = y0; y < Math.min(y0 + len, top); y++) {
       if (getV(sd.x, y, sd.z) !== AIR) continue;
@@ -1101,23 +1434,24 @@ function genBuilding(x0, z0, x1, z1, h, bi, bj, li, golden, zi) {
     }
     if (golden) {
       const ly = y0 - 1;
-      if (ly > 2 && getV(sd.x, ly, sd.z) === AIR) vox[idx(sd.x, ly, sd.z)] = 17;  // 提灯
+      // GY+1 は歩く人の頭の高さ。そこに提灯が下がると通りが通れなくなる
+      if (ly > GY + 1 && getV(sd.x, ly, sd.z) === AIR) vox[idx(sd.x, ly, sd.z)] = 17;  // 提灯
     }
   });
-  maybeShop(x0, z0, x1, z1, zi, bi, bj, li);
+  maybeShop(x0, z0, x1, z1, zi, bi, bj, li, top);
 }
 
 function genPark(x0, z0, x1, z1) {
-  for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) vox[idx(x, 2, z)] = 19;
+  for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) vox[idx(x, ROADY, z)] = 19;
   for (let k = 0; k < 6; k++) {
     const tx = x0 + 1 + Math.floor(hash2(k, 7) * (x1 - x0 - 1));
     const tz = z0 + 1 + Math.floor(hash2(k, 13) * (z1 - z0 - 1));
-    fill(tx, 3, tz, tx, 6, tz, 20);
-    for (let y = 5; y <= 8; y++) {
-      const r = y >= 7 ? 1 : 2;
+    fill(tx, GY, tz, tx, GY + 3, tz, 20);
+    for (let y = GY + 2; y <= GY + 5; y++) {
+      const r = y >= GY + 4 ? 1 : 2;
       for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
         if (Math.abs(dx) + Math.abs(dz) > r + 1) continue;
-        if (dx === 0 && dz === 0 && y <= 6) continue;
+        if (dx === 0 && dz === 0 && y <= GY + 3) continue;
         if (getV(tx + dx, y, tz + dz) === AIR) setRaw(tx + dx, y, tz + dz, 21);
       }
     }
@@ -1130,7 +1464,7 @@ function setRaw(x, y, z, id) { if (inside(x, y, z)) vox[idx(x, y, z)] = id; }
 
 // 窓を外周に散らす。ビル共通
 function windows(x0, z0, x1, z1, top, lit) {
-  for (let y = 5; y < top; y += 2)
+  for (let y = GY + 2; y < top; y += 2)
     for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
       if (x !== x0 && x !== x1 && z !== z0 && z !== z1) continue;
       if ((x + z) % 2) continue;
@@ -1144,53 +1478,54 @@ function windows(x0, z0, x1, z1, top, lit) {
 function genPlaza() {
   const { x0, x1, z0, z1 } = PLAZA;
   for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++)
-    vox[idx(x, 2, z)] = ((x + z) % 4 === 0) ? 3 : 4;      // 石畳
+    vox[idx(x, ROADY, z)] = ((x + z) % 4 === 0) ? 3 : 4;  // 石畳
   // 北側の一段。genPlaza は genToho の後に走るので、TOHO が抜いた入口と
   // 通り抜け（x = TOHO.x0+6 .. +10）だけは埋め戻さない
   for (let z = z0; z <= z0 + 1; z++) for (let x = x0; x <= x1; x++) {
     if (x >= TOHO.x0 + 6 && x <= TOHO.x0 + 10) continue;
-    setRaw(x, 3, z, 3);
+    setRaw(x, GY, z, 3);
   }
   for (const x of [x0 + 1, x0 + 9, x1 - 9, x1 - 1]) {     // 広場の街灯
-    fill(x, 3, z1 - 1, x, 7, z1 - 1, 6);
-    setRaw(x, 8, z1 - 1, 22);
+    fill(x, GY, z1 - 1, x, GY + 4, z1 - 1, 6);
+    setRaw(x, GY + 5, z1 - 1, 22);
   }
   for (let k = 0; k < 5; k++) {                           // ベンチ
     const bx = x0 + 3 + k * 5, bz = z0 + 4 + (k % 2) * 4;
-    fill(bx, 3, bz, bx + 2, 3, bz, 16);
+    if (bx + 2 > x1 - 1) continue;                        // 広場からはみ出す分は置かない
+    fill(bx, GY, bz, bx + 2, GY, bz, 16);
   }
-  fill(x1 - 1, 3, z0 + 3, x1 - 1, 4, z0 + 4, 23);         // 自販機
+  fill(x1 - 1, GY, z0 + 3, x1 - 1, GY + 1, z0 + 4, 23);   // 自販機
 }
 
 // TOHOビル。8階のテラスから怪獣の頭が広場とセントラルロードを見下ろしている
 function genToho() {
   const { x0, x1, z0, z1, top } = TOHO;
-  fill(x0, 3, z0, x1, top, z1, 3);
+  fill(x0, GY, z0, x1, top, z1, 3);
   fill(x0, top, z0, x1, top, z1, 4);
   fill(x0 + 3, top + 1, z0 + 3, x1 - 3, top + 5, z1 - 3, 6);   // 塔屋
   windows(x0, z0, x1, z1, top, 0.58);
   // 冠のネオン。通りの突き当たりだと遠くからでもわかるように
   for (let x = x0; x <= x1; x++) { setRaw(x, top - 1, z1 + 1, 10); setRaw(x, top - 1, z0 - 1, 10); }
   for (let z = z0; z <= z1; z++) { setRaw(x0 - 1, top - 1, z, 10); setRaw(x1 + 1, top - 1, z, 10); }
-  fill(x0 + 1, 12, z1 + 1, x0 + 3, top - 3, z1 + 1, 9);        // 南面の縦ネオン（頭の両脇）
-  fill(x1 - 3, 12, z1 + 1, x1 - 1, top - 3, z1 + 1, 12);
+  fill(x0 + 1, GY + 9, z1 + 1, x0 + 3, top - 3, z1 + 1, 9);    // 南面の縦ネオン（頭の両脇）
+  fill(x1 - 3, GY + 9, z1 + 1, x1 - 1, top - 3, z1 + 1, 12);
   // 南面（広場側）の低層部。庇とネオンの帯
-  fill(x0 - 1, 3, z1 + 1, x1 + 1, 9, z1 + 1, 15);
-  fill(x0 - 1, 7, z1 + 2, x1 + 1, 7, z1 + 2, 15);
-  for (let x = x0 - 1; x <= x1 + 1; x++) setRaw(x, 8, z1 + 2, x % 3 ? 10 : 9);
-  fill(x0 + 2, 4, z1 + 2, x0 + 5, 6, z1 + 2, 8);               // 光る看板
-  fill(x1 - 5, 4, z1 + 2, x1 - 2, 6, z1 + 2, 8);
+  fill(x0 - 1, GY, z1 + 1, x1 + 1, GY + 6, z1 + 1, 15);
+  fill(x0 - 1, GY + 4, z1 + 2, x1 + 1, GY + 4, z1 + 2, 15);
+  for (let x = x0 - 1; x <= x1 + 1; x++) setRaw(x, GY + 5, z1 + 2, x % 3 ? 10 : 9);
+  fill(x0 + 2, GY + 1, z1 + 2, x0 + 5, GY + 3, z1 + 2, 8);     // 光る看板
+  fill(x1 - 5, GY + 1, z1 + 2, x1 - 2, GY + 3, z1 + 2, 8);
   const mid = Math.floor((x0 + x1) / 2);
-  fill(mid - 1, 3, z1 + 1, mid + 1, 5, z1 + 1, AIR);           // 入口
+  fill(mid - 1, GY, z1 + 1, mid + 1, GY + 2, z1 + 1, AIR);     // 入口
   // テラスと怪獣の頭。セントラルロードの正面に来るよう x=66 に置く
-  const ty = 18;
+  const ty = GY + 15;
   fill(x0 + 1, ty - 1, z1 + 1, x1 - 1, ty - 1, z1 + 6, 3);             // 張り出したテラス
   fill(x0 + 1, ty - 2, z1 + 1, x1 - 1, ty - 2, z1 + 2, 6);             // 受けの梁
   for (let x = x0 + 1; x <= x1 - 1; x += 2) setRaw(x, ty, z1 + 6, 6);  // テラスの柵
   genKaiju(66, ty, z1 + 7);
   // 1階はセントラルロードから花道通りへの通り抜け。人の流れを止めない
-  fill(x0 + 6, 3, z0 - 1, x0 + 10, 5, z1 + 2, AIR);
-  for (let z = z0; z <= z1; z += 3) { setRaw(x0 + 6, 6, z, 8); setRaw(x0 + 10, 6, z, 8); }
+  fill(x0 + 6, GY, z0 - 1, x0 + 10, GY + 2, z1 + 2, AIR);
+  for (let z = z0; z <= z1; z += 3) { setRaw(x0 + 6, GY + 3, z, 8); setRaw(x0 + 10, GY + 3, z, 8); }
 }
 
 /* TOHO は街区 (3,3) と (4,3) の二つぶんを占めるが、本体の x1 は 74 で終わる。
@@ -1198,15 +1533,15 @@ function genToho() {
 function genTohoWing(x0, z0, x1, z1) {
   const sx = Math.max(x0, TOHO.x1 + 1);
   if (sx > x1) return;
-  const top = 16;
-  fill(sx, 3, z0, x1, top, z1, 3);
+  const top = GY + 13;
+  fill(sx, GY, z0, x1, top, z1, 3);
   fill(sx, top, z0, x1, top, z1, 4);
   windows(sx, z0, x1, z1, top, 0.60);
   for (let z = z0; z <= z1; z++) setRaw(x1 + 1, top - 1, z, 10);   // 東面の帯
-  fill(x1 + 1, 6, z0 + 2, x1 + 1, top - 4, z0 + 2, 12);            // 縦看板
-  // 花道通り側の庇。板は y=6 だけ。y=3..5 を塞ぐと通りが壁になる
-  fill(sx, 6, z0 - 1, x1, 6, z0 - 1, 15);
-  for (let x = sx + 1; x <= x1; x += 3) fill(x, 3, z0 - 1, x, 5, z0 - 1, 6);
+  fill(x1 + 1, GY + 3, z0 + 2, x1 + 1, top - 4, z0 + 2, 12);       // 縦看板
+  // 花道通り側の庇。板は GY+3 だけ。GY..GY+2 を塞ぐと通りが壁になる
+  fill(sx, GY + 3, z0 - 1, x1, GY + 3, z0 - 1, 15);
+  for (let x = sx + 1; x <= x1; x += 3) fill(x, GY, z0 - 1, x, GY + 2, z0 - 1, 6);
 }
 
 /* 怪獣の頭。南（+z）を向く。zf が鼻先で、奥行き 12 ブロック。
@@ -1230,57 +1565,58 @@ function genKaiju(cx, y0, zf) {
 
 // 新宿区役所。ネオンがひとつも無い、この街で一番そっけないビル
 function genOffice(x0, z0, x1, z1) {
-  const top = 20;
-  fill(x0, 3, z0, x1, top, z1, 3);
+  const top = GY + 17;
+  fill(x0, GY, z0, x1, top, z1, 3);
   fill(x0, top, z0, x1, top, z1, 4);
   windows(x0, z0, x1, z1, top, 0.55);
-  fill(x0, 3, z1 + 1, x1, 4, z1 + 1, 4);                 // 車寄せ
-  fill(x0 + 4, 3, z1 + 1, x0 + 5, 4, z1 + 1, AIR);
-  fill(x1 - 1, 3, z0 - 1, x1 - 1, 9, z0 - 1, 6);         // 旗竿
+  fill(x0, GY, z1 + 1, x1, GY + 1, z1 + 1, 4);           // 車寄せ
+  fill(x0 + 4, GY, z1 + 1, x0 + 5, GY + 1, z1 + 1, AIR);
+  fill(x1 - 1, GY, z0 - 1, x1 - 1, GY + 6, z0 - 1, 6);   // 旗竿
 }
 
 // 風林会館。花道通りと区役所通りの角。上に赤い帯が回っている
 function genFurin(x0, z0, x1, z1) {
-  const top = 16;
-  fill(x0, 3, z0, x1, top, z1, 5);
+  const top = GY + 13;
+  fill(x0, GY, z0, x1, top, z1, 5);
   fill(x0, top, z0, x1, top, z1, 4);
   windows(x0, z0, x1, z1, top, 0.70);
   for (let x = x0; x <= x1; x++) { setRaw(x, top - 1, z0 - 1, 9); setRaw(x, top - 1, z1 + 1, 9); }
   for (let z = z0; z <= z1; z++) { setRaw(x0 - 1, top - 1, z, 9); setRaw(x1 + 1, top - 1, z, 9); }
-  fill(x1 + 1, 5, z0 + 1, x1 + 1, top - 3, z0 + 1, 11);  // 角の縦看板
-  fill(x0 - 1, 5, z1 - 1, x0 - 1, top - 3, z1 - 1, 12);
+  fill(x1 + 1, GY + 2, z0 + 1, x1 + 1, top - 3, z0 + 1, 11);  // 角の縦看板
+  fill(x0 - 1, GY + 2, z1 - 1, x0 - 1, top - 3, z1 - 1, 12);
 }
 
 // 西武新宿駅。低くて横に長い、庇の下がいつも人だまりになっている建物
 function genStation(x0, z0, x1, z1) {
-  const top = 9;
-  fill(x0, 3, z0, x1, top, z1, 3);
+  const top = GY + 6;
+  fill(x0, GY, z0, x1, top, z1, 3);
   fill(x0, top, z0, x1, top, z1, 4);
   windows(x0, z0, x1, z1, top, 0.5);
-  fill(x0 - 1, 6, z1 + 1, x1 + 1, 6, z1 + 2, 15);        // 南へ張り出す庇
-  for (let x = x0 - 1; x <= x1 + 1; x += 2) fill(x, 3, z1 + 2, x, 5, z1 + 2, 6);
-  for (let x = x0; x <= x1; x++) setRaw(x, 7, z1 + 1, 10);    // 駅名の帯
-  fill(x0 + 3, 3, z1 + 1, x0 + 5, 5, z1 + 1, AIR);           // 改札口
+  fill(x0 - 1, GY + 3, z1 + 1, x1 + 1, GY + 3, z1 + 2, 15);  // 南へ張り出す庇
+  for (let x = x0 - 1; x <= x1 + 1; x += 2) fill(x, GY, z1 + 2, x, GY + 2, z1 + 2, 6);
+  for (let x = x0; x <= x1; x++) setRaw(x, GY + 4, z1 + 1, 10);   // 駅名の帯
+  fill(x0 + 3, GY, z1 + 1, x0 + 5, GY + 2, z1 + 1, AIR);         // 改札口
 }
 
 // 一番街のアーチ。靖国通りから北を向くと、まずこれが目に入る
 function genArch() {
-  const xL = 79, xR = 85, z0 = 124, z1 = 125;
-  fill(xL, 3, z0, xL, 10, z1, 6);
-  fill(xR, 3, z0, xR, 10, z1, 6);
-  fill(xL, 8, z0, xR, 10, z1, 15);                      // 梁と看板の板
+  // 柱は一番街（i=5 の通り）を挟む両側のビルの角。通りの幅が変わっても跨げる
+  const xL = rdS(5) - 1, xR = rdE(5) + 1, z0 = 124, z1 = 125;
+  fill(xL, GY, z0, xL, GY + 7, z1, 6);
+  fill(xR, GY, z0, xR, GY + 7, z1, 6);
+  fill(xL, GY + 5, z0, xR, GY + 7, z1, 15);             // 梁と看板の板
   for (const z of [z0, z1]) {                           // 南北どちらの面も光らせる
-    for (let x = xL; x <= xR; x++) { setRaw(x, 8, z, 9); setRaw(x, 10, z, 9); }
-    for (let y = 8; y <= 10; y++) { setRaw(xL, y, z, 9); setRaw(xR, y, z, 9); }
-    fill(xL + 1, 9, z, xR - 1, 9, z, 11);               // 金の帯＝一番街の看板
+    for (let x = xL; x <= xR; x++) { setRaw(x, GY + 5, z, 9); setRaw(x, GY + 7, z, 9); }
+    for (let y = GY + 5; y <= GY + 7; y++) { setRaw(xL, y, z, 9); setRaw(xR, y, z, 9); }
+    fill(xL + 1, GY + 6, z, xR - 1, GY + 6, z, 11);     // 金の帯＝一番街の看板
   }
-  fill(xL + 1, 3, z0, xR - 1, 7, z1, AIR);              // くぐれるように足元は空ける
+  fill(xL + 1, GY, z0, xR - 1, GY + 4, z1, AIR);        // くぐれるように足元は空ける
   // 提灯は足元を抜いたあとに吊るす。先に置くと上の fill に消される
-  for (const x of [xL + 1, xL + 3, xR - 1]) setRaw(x, 7, z1, 17);
+  for (const x of [xL + 1, xL + 3, xR - 1]) setRaw(x, GY + 4, z1, 17);
 }
 
 let shopSeq = 0;
-function maybeShop(x0, z0, x1, z1, zi, bi, bj, li) {
+function maybeShop(x0, z0, x1, z1, zi, bi, bj, li, top) {
   const q = hash2(bi * 53 + li * 11, bj * 37 + 7);
   if (q < 0.58) return;
   if (Shops.filter(s => s.zone === zi).length >= 3) return;
@@ -1293,7 +1629,7 @@ function maybeShop(x0, z0, x1, z1, zi, bi, bj, li) {
     { x: Math.floor((x0 + x1) / 2), z: z1 + 1, dz: 1, dx: 0 },
     { x: x0 - 1, z: Math.floor((z0 + z1) / 2), dx: -1, dz: 0 },
     { x: x1 + 1, z: Math.floor((z0 + z1) / 2), dx: 1, dz: 0 }
-  ].filter(c => inside(c.x, 3, c.z) && isRoadCell(c.x, c.z));
+  ].filter(c => inside(c.x, GY, c.z) && isRoadCell(c.x, c.z));
   if (!cands.length) return;
   const c = cands[Math.floor(q * 977) % cands.length];
   const mul = 0.8 + hash2(bi, bj) * 0.7;
@@ -1306,14 +1642,70 @@ function maybeShop(x0, z0, x1, z1, zi, bi, bj, li) {
     owner: null
   };
   Shops.push(shop);
-  // 入口: 庇とネオンの帯
+  /* 入口。ビルは全部ネオンの縦看板を出しているので、それだけでは
+     どれが「入れる店」なのか分からない。入口の上に出ている看板をいったん消して、
+     庇・ネオンの帯・扉の上の光る看板・扉脇の提灯という同じ形をどの店にも作る。
+     この 4 点セットが「ここは買える店」の記号。 */
   const ix = c.x - c.dx, iz = c.z - c.dz;      // 建物側
+  // ビルが勝手に出している縦看板を入口の上から全部どける。
+  // 途中までしか消さないと、上に切れ端が浮いたまま残る
+  for (let y = GY + 1; y <= GY + 17; y++) {
+    const v = getV(c.x, y, c.z);
+    if (v === 15 || v === 17 || NEON_IDS.indexOf(v) >= 0) setRaw(c.x, y, c.z, AIR);
+  }
   for (let d = -1; d <= 1; d++) {
     const px = c.x + (c.dz ? d : 0), pz = c.z + (c.dx ? d : 0);
-    setRaw(px, 5, pz, 15);
-    setRaw(px, 6, pz, type.neon);
+    setRaw(px, GY + 2, pz, 15);                // 庇
+    setRaw(px, GY + 3, pz, type.neon);         // ネオンの帯（業種の色）
   }
-  setRaw(ix, 3, iz, AIR); setRaw(ix, 4, iz, AIR);   // 扉の穴
+  setRaw(ix, GY, iz, AIR); setRaw(ix, GY + 1, iz, AIR);   // 扉の穴
+  setRaw(ix, GY + 2, iz, type.neon);                     // 扉の上の光る看板
+  // 扉の脇の提灯。壁に埋め込むので通り道は狭くならない
+  for (const d of [-1, 1]) {
+    const px = ix + (c.dz ? d : 0), pz = iz + (c.dx ? d : 0);
+    if (getV(px, GY + 1, pz) !== AIR) setRaw(px, GY + 1, pz, 17);
+  }
+  genShopRoom(shop, x0, z0, x1, z1, c, top);
+}
+
+/* 店の中。扉の奥をくり抜いて、床・天井の照明・奥の壁のネオン・カウンターを置く。
+   外周 1 マスは壁として残すので、外から見たビルの姿は変わらない。
+   ゴールデン街の平屋のように背が足りない建物では、屋根を抜かないよう天井を下げる。
+   区画が細すぎて中が取れないときは、入口だけの店になる。                    */
+function genShopRoom(shop, x0, z0, x1, z1, c, top) {
+  const rx0 = x0 + 1, rz0 = z0 + 1, rx1 = x1 - 1, rz1 = z1 - 1;
+  if (rx1 < rx0 || rz1 < rz0) return;
+  const ceilY = Math.min(GY + 3, top);          // ここが天井。屋根そのものは抜かない
+  if (ceilY - 1 < GY + 1) return;               // 立って入れる高さが取れない
+  shop.room = { x0: rx0, z0: rz0, x1: rx1, z1: rz1, y: GY, top: ceilY - 1 };
+  fill(rx0, GY, rz0, rx1, ceilY - 1, rz1, AIR);
+  // 扉の内側も抜いて、外からまっすぐ入れるようにする
+  const ix = c.x - c.dx, iz = c.z - c.dz;
+  fill(ix, GY, iz, ix, GY + 1, iz, AIR);
+  for (let x = rx0; x <= rx1; x++) for (let z = rz0; z <= rz1; z++) {
+    setRaw(x, ROADY, z, 4);                                     // 床のタイル
+    // 天井の照明。屋根と兼用の高さのときは触らない（外から見た屋根が変わる）
+    if (ceilY < top && (x + z) % 3 === 0) setRaw(x, ceilY, z, 8);
+  }
+  /* 奥の壁（入口の反対側）にネオンの帯。入った正面が光る。
+     壁は 1 マス厚なので、この光は外の通りからも見える＝営業中の店に見える */
+  if (c.dz) {
+    const bz = c.dz < 0 ? rz1 + 1 : rz0 - 1;
+    for (let x = rx0; x <= rx1; x++) setRaw(x, GY + 1, bz, shop.type.neon);
+  } else {
+    const bx = c.dx < 0 ? rx1 + 1 : rx0 - 1;
+    for (let z = rz0; z <= rz1; z++) setRaw(bx, GY + 1, z, shop.type.neon);
+  }
+  // カウンター。奥の壁の手前に、通り抜けられる隙間をひとつ残して並べる
+  const deep = c.dz ? (rz1 - rz0) : (rx1 - rx0);
+  if (deep < 1) return;                          // 奥行きが無いと入口を塞いでしまう
+  if (c.dz) {
+    const cz = c.dz < 0 ? rz1 : rz0;
+    for (let x = rx0; x <= rx1; x++) if (x !== Math.floor((rx0 + rx1) / 2)) setRaw(x, GY, cz, 16);
+  } else {
+    const cx = c.dx < 0 ? rx1 : rx0;
+    for (let z = rz0; z <= rz1; z++) if (z !== Math.floor((rz0 + rz1) / 2)) setRaw(cx, GY, z, 16);
+  }
 }
 
 genWorld();
@@ -1613,7 +2005,7 @@ function addInst(x, y, z, sx, sy, sz, col, rotY, em) {
 // 靖国通りの歩道。正面に一番街のアーチ、その先に通りが北へ伸びている
 const SPAWN_X = 82.5, SPAWN_Z = 133.5;
 const P = {
-  x: SPAWN_X, y: 3, z: SPAWN_Z, vy: 0, yaw: 0, pitch: 0.10,
+  x: SPAWN_X, y: GY, z: SPAWN_Z, vy: 0, yaw: 0, pitch: 0.10,
   onGround: false, hp: 100, maxhp: 100,
   yen: 120000, inf: 0, rep: 0, wanted: 0, drunk: 0, notoriety: 0,
   crew: [], firstPerson: false, camDist: 5.2, walkPhase: 0,
@@ -1643,9 +2035,21 @@ function boxHits(x, y, z) {
         if (solid(xx, yy, zz)) return true;
   return false;
 }
+/* 1 マスの段差は歩いて乗り越える。地下の階段もスロープも 1 段ずつなので、
+   これが無いと一段ごとにジャンプすることになる。NPC は元から段差 1.2 まで
+   登れる（stepY）ので、これで人と同じ足になる。 */
+const STEP_UP = 1.0;
 function movePlayer(dx, dy, dz) {
-  if (dx) { const nx = P.x + dx; if (!boxHits(nx, P.y, P.z)) P.x = nx; }
-  if (dz) { const nz = P.z + dz; if (!boxHits(P.x, P.y, nz)) P.z = nz; }
+  if (dx) {
+    const nx = P.x + dx;
+    if (!boxHits(nx, P.y, P.z)) P.x = nx;
+    else if (P.onGround && !boxHits(nx, P.y + STEP_UP, P.z)) { P.x = nx; P.y = Math.floor(P.y) + 1; }
+  }
+  if (dz) {
+    const nz = P.z + dz;
+    if (!boxHits(P.x, P.y, nz)) P.z = nz;
+    else if (P.onGround && !boxHits(P.x, P.y + STEP_UP, nz)) { P.z = nz; P.y = Math.floor(P.y) + 1; }
+  }
   if (dy) {
     const ny = P.y + dy;
     if (!boxHits(P.x, ny, P.z)) { P.y = ny; if (dy < 0) P.onGround = false; }
@@ -1659,6 +2063,20 @@ function movePlayer(dx, dy, dz) {
 }
 function respawn() {
   P.x = SPAWN_X; P.z = SPAWN_Z; P.y = groundTop(P.x, P.z); P.vy = 0;
+}
+/* 掘って下の階へ抜けたとき、そこが何なのかを一度だけ知らせる。
+   看板の出しようがない場所なので、これが無いと「ただの穴」に見える */
+const FLOOR_NOTE = {
+  [FLOOR_SUB]: '地下街に抜けた。SUBNADE ── 街の下をそのまま通りが走っている。階段で地上へ戻れる。',
+  [FLOOR_PARK]: 'さらに下、公共地下駐車場。積み上げた資材と、柱の陰に立っている連中。'
+    + 'ここまで警察は降りてこない ── 手配度が見る間に冷めていく。'
+};
+const floorSeen = {};
+function noteFloor() {
+  const f = placeName(P.x, P.y, P.z);
+  if (!FLOOR_NOTE[f] || floorSeen[f]) return;
+  floorSeen[f] = 1;
+  log(FLOOR_NOTE[f], 'good');
 }
 
 /* ============================================================================
@@ -1932,7 +2350,26 @@ const ARCH = [
       + '洗練された言葉で簡潔かつ人間味のある表現をする。一人称は「俺」。'
       + 'フロアの温度を読んで曲を差し替え、煽るときは声が上がるが素に戻ると淡々としている。'
       + '音楽と箱の売上、そして人間の業の話を好む。'
-      + '人格名（Enthusiast等）やAIであることには絶対に触れず、常に統合された自分の考えとして語る。', gender: '男' }
+      + '人格名（Enthusiast等）やAIであることには絶対に触れず、常に統合された自分の考えとして語る。', gender: '男' },
+  /* ここから下は SUBNADE 地下街にいる人。floor を持つ者は地上ではなく地下に湧く。
+     地下街は地上と客層がまるで違う ── 夜の商売ではなく、ただの働いている人たち */
+  { k: 'subclerk', job: '地下街の店員', fac: 'local', col: [.30, .34, .42], hp: 45, hair: [.16, .14, .13],
+    persona: 'サブナードの小さな店の店員。閉店間際で気もそぞろ。地上の喧噪には興味がなく、'
+      + '地下街のことだけはやたら詳しい。丁寧だが早く帰りたい。', gender: '女', floor: SUB_Y },
+  { k: 'sweeper', job: '清掃員', fac: 'local', col: [.22, .38, .32], hp: 60, hair: [.32, .30, .28],
+    persona: '地下街の床を磨き続けている清掃員。誰よりも早く騒ぎに気づき、誰にも言わない。'
+      + '短く、ぼそぼそ喋る。この街の汚れ方の変化を年単位で見ている。', gender: '男', floor: SUB_Y },
+  { k: 'guard', job: '地下街の警備員', fac: 'local', col: [.16, .18, .30], hp: 85, hair: [.10, .10, .12],
+    persona: 'サブナードの警備員。地上の揉め事が降りてくるのを何より嫌う。'
+      + '規則の話をしたがるが、本気で止める気はない。事務的で、少し疲れている。', gender: '男', floor: SUB_Y },
+  /* 公共地下駐車場にいる人。警察が降りてこないので、地上でできない話がここで進む。
+     店も客もいない場所にわざわざ居るのは、そういう用があるから */
+  { k: 'lookout', job: '紅蓮会の見張り', fac: 'guren', col: [.14, .12, .16], hp: 120, hair: [.08, .08, .1],
+    persona: '地下駐車場の柱の陰に立っている紅蓮会の見張り。誰が降りてきたかを見ている。'
+      + '用が無いなら帰れ、の一点張り。口数は少なく、値踏みするように喋る。', gender: '男', floor: PARK_Y },
+  { k: 'runner', job: 'ドラゴンズの運び屋', fac: 'dragons', col: [.34, .18, .44], hp: 90, hair: [.55, .2, .3],
+    persona: '地下駐車場で荷物を受け渡している運び屋。落ち着きがなく、常に時間を気にしている。'
+      + '中身のことは絶対に言わないが、金の話には乗ってくる。早口。', gender: '男', floor: PARK_Y }
 ];
 const SEI = ['佐々木', '黒岩', '桐生', '真壁', '一之瀬', '鮫島', '氷室', '早乙女', '猪熊', '九条', '天堂', '甲斐', '朝倉', '不破', '獅子堂', '苅部'];
 const MEI_M = ['亮', '哲', '龍司', '慎', '拓海', '大河', '晴', '樹', '零', '要', '蓮', '匠'];
@@ -1944,7 +2381,7 @@ const EN_LAST = ['Miller', 'Sullivan', 'Brooks', 'Hayes', 'Carter', 'Reed', 'Wal
 
 let npcSeq = 0;
 const NPCs = [];
-const rxRoad = i => i * PITCH + 2;      // 交差点の中心
+const rxRoad = i => i * PITCH + ROAD_MID;   // 交差点の中心
 function makeNPC(arch, x, z) {
   const male = arch.gender === '男';
   const name = arch.fixed ? arch.fixed
@@ -1952,10 +2389,10 @@ function makeNPC(arch, x, z) {
     : (arch.k === 'host' || arch.k === 'kyaba' || arch.k === 'idol')
       ? pick(GENJI) : pick(SEI) + ' ' + pick(male ? MEI_M : MEI_F);
   const n = {
-    id: npcSeq++, arch, name, x, z, y: 3, yaw: rnd(0, 6.28),
+    id: npcSeq++, arch, name, x, z, y: arch.floor || GY, floor: arch.floor || GY, yaw: rnd(0, 6.28),
     hp: arch.hp, maxhp: arch.hp, trust: irnd(15, 45), fear: irnd(0, 15),
     yen: irnd(3, 60) * 1000, state: 'walk', t: 0, spd: rnd(2.2, 3.6),
-    ni: 0, nj: 0, tx: x, tz: z, lat: rnd(-1.2, 1.2), phase: rnd(0, 6.28),
+    ni: 0, nj: 0, tx: x, tz: z, lat: rnd(-LANE, LANE), phase: rnd(0, 6.28),
     bark: '', barkT: 0, hist: [], crew: false, down: 0, hostile: false,
     barkCount: 0, lastAI: 0,
     // 迂回と「追いつけない」の検出用
@@ -1964,13 +2401,27 @@ function makeNPC(arch, x, z) {
   routeNext(n, true);
   return n;
 }
+/* 地下街の道順。地上のような格子が無いので、生成時に拾っておいた通路上の点
+   （SUB_NODES）から次の行き先を選ぶ。1 本道でも枝でも同じ手順で歩ける */
+function routeSub(n, init) {
+  if (init) resetPath(n);
+  const nodes = floorNodes(n.floor);
+  const cands = [];
+  for (const p of nodes) {
+    const d = Math.hypot(p.x - n.x, p.z - n.z);
+    if (d > 5 && d < 30) cands.push(p);
+  }
+  const t = cands.length ? pick(cands) : pick(nodes);
+  n.tx = t.x; n.tz = t.z;
+}
 function routeNext(n, init) {
+  if (n.floor !== GY) return routeSub(n, init);
   if (init) {
     // 歩き直しの起点。古い stuck / lost を持ち越すと、次のフレームで
     // いきなり placeOnRoad や warpNear に飛ばされる
     resetPath(n);
-    n.ni = clamp(Math.round((n.x - 2) / PITCH), 0, GRID);
-    n.nj = clamp(Math.round((n.z - 2) / PITCH), 0, GRID);
+    n.ni = clamp(Math.round((n.x - ROAD_MID) / PITCH), 0, GRID);
+    n.nj = clamp(Math.round((n.z - ROAD_MID) / PITCH), 0, GRID);
   }
   const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(d =>
     n.ni + d[0] >= 0 && n.ni + d[0] <= GRID - 1 && n.nj + d[1] >= 0 && n.nj + d[1] <= GRID - 1);
@@ -1983,35 +2434,49 @@ function spawnCrowd() {
   // dj は 1 人だけ（武田 伸也）。ホストクラブの前に立たせる
   const counts = { host: 6, kyaba: 5, scout: 4, yakuza: 5, hangure: 5, cop: 4, drunk: 6,
     tout: 4, info: 2, bartender: 2, fortune: 2, busker: 2, tourist: 3, homeless: 3, idol: 2,
-    ramen: 2, dj: 1 };
+    ramen: 2, dj: 1, subclerk: 5, sweeper: 3, guard: 3, lookout: 4, runner: 3 };
   for (const a of ARCH) {
     // dj の立ち位置はクラブの前。抽選の「後」で上書きすると看板の上に乗るので先に決める
     const club = a.k === 'dj'
       ? (Shops.find(s => s.type.key === 'host') || Shops.find(s => s.type.key === 'cabaret')) : null;
     for (let i = 0; i < (counts[a.k] || 3); i++) {
       let x = 0, z = 0, ok = false;
-      // 街灯や庇の上に湧くと降りられなくなる。路面が出ている場所を探す
+      const fy = a.floor || GY;
+      // 街灯や庇の上に湧くと降りられなくなる。床が出ている場所を探す
       for (let k = 0; k < 16; k++) {
+        if (fy !== GY) {                       // 地下の住人。その階のノードから選ぶ
+          const t = pick(floorNodes(fy));
+          x = t.x + rnd(-1.2, 1.2); z = t.z + rnd(-1.2, 1.2);
+          if (surfaceY(x, z, fy) === fy) { ok = true; break; }
+          continue;
+        }
         if (club) { x = club.x + rnd(-2.4, 2.4); z = club.z + rnd(-2.4, 2.4); }
         else {
-          x = rxRoad(irnd(0, GRID - 1)) + rnd(-1.6, 1.6);
-          z = rxRoad(irnd(0, GRID - 1)) + rnd(-1.6, 1.6);
+          x = rxRoad(irnd(0, GRID - 1)) + rnd(-LANE, LANE);
+          z = rxRoad(irnd(0, GRID - 1)) + rnd(-LANE, LANE);
         }
         if (onOpenRoad(x, z)) { ok = true; break; }
       }
       const n = makeNPC(a, x, z);
-      n.y = ok ? 3 : groundTop(x, z);
+      n.y = ok ? fy : groundTop(x, z);
       NPCs.push(n);
     }
   }
 }
 // 迷子や高いところに取り残された通行人を、近くの通りへ戻す
 function placeOnRoad(n) {
-  const i = clamp(Math.round((n.x - 2) / PITCH), 0, GRID - 1);
-  const j = clamp(Math.round((n.z - 2) / PITCH), 0, GRID - 1);
+  if (n.floor !== GY) {                          // 地下街の住人は地下へ戻す
+    for (let k = 0; k < 20; k++) {
+      const t = pick(floorNodes(n.floor));
+      if (surfaceY(t.x, t.z, n.floor) === n.floor) { n.x = t.x; n.z = t.z; n.y = n.floor; break; }
+    }
+    routeNext(n, true); return;
+  }
+  const i = clamp(Math.round((n.x - ROAD_MID) / PITCH), 0, GRID - 1);
+  const j = clamp(Math.round((n.z - ROAD_MID) / PITCH), 0, GRID - 1);
   for (let k = 0; k < 16; k++) {
-    const x = rxRoad(i) + rnd(-1.6, 1.6), z = rxRoad(j) + rnd(-1.6, 1.6);
-    if (onOpenRoad(x, z)) { n.x = x; n.z = z; n.y = 3; break; }
+    const x = rxRoad(i) + rnd(-LANE, LANE), z = rxRoad(j) + rnd(-LANE, LANE);
+    if (onOpenRoad(x, z)) { n.x = x; n.z = z; n.y = GY; break; }
   }
   routeNext(n, true);
 }
@@ -2212,7 +2677,12 @@ const OFF_BARK = {
   tourist: ['Kabukicho! Amazing!', 'シャシン、OK？', 'ブロック、ベリークール'],
   homeless: ['……', 'この街は変わったよ', '昔はもっと静かだった'],
   idol: ['チェキ、どうですか', '今日20人しか来なかった', 'また来てくださいね'],
-  ramen: ['替え玉いるか', 'そこ座んな', '今日はもう仕舞いだ']
+  ramen: ['替え玉いるか', 'そこ座んな', '今日はもう仕舞いだ'],
+  subclerk: ['もう閉めますよ', 'その階段、上は靖国通り', '地下は静かでいいでしょ'],
+  sweeper: ['……足元、濡れてるよ', 'ここは毎晩これだ', '上で何かあったな'],
+  guard: ['ここで揉めないでくれ', '壁は壊さないでください', '巡回中です'],
+  lookout: ['……何の用だ', 'ここは通り道じゃねぇぞ', '上へ戻んな'],
+  runner: ['時間が無いんだよ', '見なかったことにしてくれ', '車、遅れてる']
 };
 function offlineTalk(n, line) {
   const l = line || '';
@@ -2258,7 +2728,7 @@ function hud() {
   $('c-day').textContent = Clock.day + ' 日目';
   const t = Terr[zoneOf(P.x, P.z)];
   $('c-zone').textContent = t.name;
-  $('c-st').textContent = streetOf(Math.floor(P.x), Math.floor(P.z));
+  $('c-st').textContent = placeName(P.x, P.y, P.z);
   $('c-own').innerHTML = `支配: <span style="color:${FACTIONS[t.owner].css}">${esc(FACTIONS[t.owner].name)}</span> ${Math.round(t.mine)}%`;
   const held = heldZones();
   $('c-win').textContent = `制圧 ${held} / ${WIN_ZONES}　(全 9)`;
@@ -2297,25 +2767,40 @@ function drawMinimap() {
   mmc.save();
   mmc.translate(mm.width / 2, mm.height / 2);
   mmc.rotate(P.yaw);
-  mmc.strokeStyle = 'rgba(160,150,190,.30)'; mmc.lineWidth = ROAD * s * 0.9;
-  for (let i = 0; i <= GRID; i++) {
-    const gx = (rxRoad(i) - P.x) * s, gz = (rxRoad(i) - P.z) * s;
-    mmc.beginPath(); mmc.moveTo(gx, -mm.height); mmc.lineTo(gx, mm.height); mmc.stroke();
-    mmc.beginPath(); mmc.moveTo(-mm.width, gz); mmc.lineTo(mm.width, gz); mmc.stroke();
+  /* 地上と地下では通っている道がまるで違う。同じ格子を描くと嘘になるので、
+     いる階に合わせて描き分ける */
+  const fl = floorOf(P.y);
+  const box = b => mmc.fillRect((b.x0 - P.x) * s, (b.z0 - P.z) * s,
+    (b.x1 - b.x0 + 1) * s, (b.z1 - b.z0 + 1) * s);
+  if (fl === 2) {
+    mmc.strokeStyle = 'rgba(160,150,190,.30)'; mmc.lineWidth = ROAD * s * 0.9;
+    for (let i = 0; i <= GRID; i++) {
+      const gx = (rxRoad(i) - P.x) * s, gz = (rxRoad(i) - P.z) * s;
+      mmc.beginPath(); mmc.moveTo(gx, -mm.height); mmc.lineTo(gx, mm.height); mmc.stroke();
+      mmc.beginPath(); mmc.moveTo(-mm.width, gz); mmc.lineTo(mm.width, gz); mmc.stroke();
+    }
+    // 大通りは太く。靖国通りとセントラルロードで自分の位置がわかる
+    mmc.strokeStyle = 'rgba(215,205,245,.46)'; mmc.lineWidth = 9 * s * 0.9;
+    const yz = (130 - P.z) * s, cxx = (66 - P.x) * s;
+    mmc.beginPath(); mmc.moveTo(-mm.width, yz); mmc.lineTo(mm.width, yz); mmc.stroke();
+    mmc.beginPath();
+    mmc.moveTo(cxx, (CENTRAL_Z - P.z) * s); mmc.lineTo(cxx, (YASUKUNI[1] - P.z) * s); mmc.stroke();
+  } else if (fl === 1) {
+    mmc.fillStyle = 'rgba(160,150,190,.34)';
+    box(SUB_MAIN); SUB_BRANCH.forEach(box); SUB_HALL.forEach(box);
+  } else {
+    mmc.fillStyle = 'rgba(150,150,165,.34)';
+    box(PARK_AREA);
   }
-  // 大通りは太く。靖国通りとセントラルロードで自分の位置がわかる
-  mmc.strokeStyle = 'rgba(215,205,245,.46)'; mmc.lineWidth = 9 * s * 0.9;
-  const yz = (130 - P.z) * s, cxx = (66 - P.x) * s;
-  mmc.beginPath(); mmc.moveTo(-mm.width, yz); mmc.lineTo(mm.width, yz); mmc.stroke();
-  mmc.beginPath();
-  mmc.moveTo(cxx, (CENTRAL_Z - P.z) * s); mmc.lineTo(cxx, (YASUKUNI[1] - P.z) * s); mmc.stroke();
   for (const sh of Shops) {
+    if (floorOf(sh.y || GY) !== fl) continue;
     const dx = (sh.x - P.x) * s, dz = (sh.z - P.z) * s;
     if (Math.abs(dx) > mm.width / 2 || Math.abs(dz) > mm.height / 2) continue;
     mmc.fillStyle = sh.owner === 'player' ? '#39ff88' : 'rgba(255,207,63,.85)';
     mmc.fillRect(dx - 3, dz - 3, 6, 6);
   }
   for (const n of NPCs) {
+    if (floorOf(n.y) !== fl) continue;
     const dx = (n.x - P.x) * s, dz = (n.z - P.z) * s;
     if (Math.abs(dx) > mm.width / 2 || Math.abs(dz) > mm.height / 2) continue;
     mmc.fillStyle = n.crew ? '#39ff88' : n.hostile ? '#ff3b30' : n.arch.k === 'cop' ? '#16e0ff' : 'rgba(255,255,255,.5)';
@@ -2339,8 +2824,14 @@ function drawMap() {
     const d = document.createElement('div');
     d.className = 'z' + (i === here ? ' here' : '');
     const c = FACTIONS[t.owner].css;
+    // このシマに何軒あって、そのうち何軒がまだ買えるのか
+    const zs = Shops.filter(s => s.zone === i);
+    const buyable = zs.filter(s => s.owner !== 'player').length;
     d.innerHTML = `<div class="fill" style="height:${t.mine}%;background:${c}"></div>`
       + `<b>${t.name}</b><div class="pc">${Math.round(t.mine)}<span style="font-size:10px">%</span></div>`
+      + `<div class="sp">${zs.length ? (buyable
+        ? `<span style="color:#ffcf3f">買える店 ${buyable}</span>` : '<span style="color:#39ff88">全部この手に</span>')
+        : '<span style="opacity:.4">店なし</span>'}</div>`
       + `<div class="o" style="color:${c}">${esc(FACTIONS[t.owner].name)}</div>`;
     g.appendChild(d);
   });
@@ -2348,7 +2839,7 @@ function drawMap() {
   $('shoplist').innerHTML = mineShops.length
     ? `所有店舗 ${mineShops.length} 軒 ／ 上がり ${yen(mineShops.reduce((a, s) => a + hourlyIncome(s), 0))}／時<br>`
       + `<span style="opacity:.55;font-size:10px">${mineShops.map(s => s.name).join(' ・ ')}</span>`
-    : '<span style="opacity:.5">まだ店を持っていない。ネオンの下がった入口で E。</span>';
+    : '<span style="opacity:.5">まだ店を持っていない。金の印が浮いている入口へ行って E。</span>';
 }
 
 /* ============================================================================
@@ -2756,7 +3247,10 @@ function findFocus() {
     if (d < 2.8 && dot > 0.55) punchTarget = focusNPC;
   }
   let bs = 4 * 4;
+  const fl = floorOf(P.y);
   for (const s of Shops) {
+    // 距離は平面で測っているので、階を見ないと真上・真下の店を掴んでしまう
+    if (floorOf(s.y || GY) !== fl) continue;
     const d = dist2(s, P);
     if (d < bs) { bs = d; focusShop = s; }
   }
@@ -2904,7 +3398,9 @@ function updateNPCs(dt) {
     }
     const dx = P.x - n.x, dz = P.z - n.z;
     const pd = Math.hypot(dx, dz);
-    if (n.arch.k === 'cop' && P.wanted >= 45 && pd < 40) { n.hostile = true; n.state = 'attack'; }
+    // 階をまたいだ相手は狙わない。地下へ潜れば地上の警官からは切れる
+    const sameFloor = Math.abs(n.y - P.y) < 4;
+    if (n.arch.k === 'cop' && P.wanted >= 45 && pd < 40 && sameFloor) { n.hostile = true; n.state = 'attack'; }
 
     switch (n.state) {
       case 'talk': n.yaw = Math.atan2(dx, dz); break;
@@ -2933,7 +3429,7 @@ function updateNPCs(dt) {
             hud();
           }
         }
-        if (pd > 38) { n.state = 'walk'; n.hostile = false; routeNext(n, true); }
+        if (pd > 38 || !sameFloor) { n.state = 'walk'; n.hostile = false; routeNext(n, true); }
         break;
       }
       case 'down': break;
@@ -2959,7 +3455,7 @@ function updateNPCs(dt) {
 
   if (started && !Talk.open && now - AI.lastBark > 9 && AI.busy < 1) {
     const cands = NPCs.filter(n => n.down <= 0 && n.barkT <= 0 && n.barkCount < 3
-      && Math.hypot(n.x - P.x, n.z - P.z) < 12 && now - n.lastAI > 40);
+      && Math.hypot(n.x - P.x, n.z - P.z) < 12 && Math.abs(n.y - P.y) < 4 && now - n.lastAI > 40);
     if (cands.length) {
       const n = pick(cands);
       AI.lastBark = now; n.lastAI = now; n.barkCount++; AI.busy++;
@@ -3003,7 +3499,9 @@ function updateWorld(dt) {
     }
   }
 
-  P.wanted = clamp(P.wanted - dt * 0.9, 0, 100);
+  /* 地下にいる間は手配度が速く冷める。警官は地上にしか湧かないので、
+     「追われたら潜る」が成立する。地上に戻れば元の速さに戻る */
+  P.wanted = clamp(P.wanted - dt * (floorOf(P.y) < 2 ? 4.5 : 0.9), 0, 100);
   P.drunk = clamp(P.drunk - dt * 1.1, 0, 100);
   P.hp = clamp(P.hp + dt * 0.9, 0, P.maxhp);
   if (!ended && Clock.elapsed >= DAY_MIN) endGame(heldZones() >= WIN_ZONES);
@@ -3048,6 +3546,7 @@ function newDay() {
    ========================================================================= */
 const Snd = {
   ctx: null, muted: false, master: null, noiseBuf: null, VOL: 0.34,
+  bus: null, pink: null, floor: 2,
   init() {
     if (this.ctx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -3070,8 +3569,12 @@ const Snd = {
     b.textContent = this.muted ? '⁄' : '♪';
     b.title = this.muted ? '音を出す (N)' : '音を消す (N)';
   },
+  /* 環境音は階ごとに 1 本ずつ作って、いま居る階だけを鳴らす。
+     通りのざわめきが地下街でも駐車場でもそのまま聞こえると、
+     天井の下に潜った感じがまるで出ない（外を歩いているようにしか聞こえない）。 */
   ambience() {
     const c = this.ctx;
+    // ピンクノイズ 4 秒。3 つの層でこの 1 本を使い回し、フィルタだけ変える
     const len = c.sampleRate * 4;
     const buf = c.createBuffer(1, len, c.sampleRate);
     const d = buf.getChannelData(0);
@@ -3081,14 +3584,87 @@ const Snd = {
       b0 = 0.997 * b0 + w * 0.029; b1 = 0.985 * b1 + w * 0.074; b2 = 0.95 * b2 + w * 0.15;
       d[i] = (b0 + b1 + b2 + w * 0.02) * 0.22;
     }
-    const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
-    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 780;
-    const g = c.createGain(); g.gain.value = 0.5;
-    src.connect(f); f.connect(g); g.connect(this.master); src.start();
-    const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 46;
-    const of = c.createBiquadFilter(); of.type = 'lowpass'; of.frequency.value = 160;
-    const og = c.createGain(); og.gain.value = 0.06;
-    o.connect(of); of.connect(og); og.connect(this.master); o.start();
+    this.pink = buf;
+    this.floor = floorOf(P.y);
+    // バスの番号は floorOf と揃える。0=駐車場 1=地下街 2=地上
+    this.bus = [0, 1, 2].map(i => {
+      const g = c.createGain();
+      g.gain.value = i === this.floor ? 1 : 0;
+      g.connect(this.master);
+      return g;
+    });
+
+    // 地上。通りのざわめきと、街全体が出している低い底鳴り
+    this.bed(this.bus[2], 'lowpass', 780, 0, 0.5);
+    this.drone(this.bus[2], 'sawtooth', 46, 160, 0.06);
+
+    /* SUBNADE 地下街。コンクリートに囲まれて高い音は全部落ちる。
+       残るのは床越しに届く街の鈍い低音と、空調の風、そして蛍光灯のハム */
+    this.bed(this.bus[1], 'lowpass', 300, 0, 0.40);
+    const air = this.bed(this.bus[1], 'bandpass', 620, 0.8, 0.15);
+    this.swell(air.gain, 0.15, 0.06, 11);           // 風は一定ではなく寄せては返す
+    this.drone(this.bus[1], 'sine', 120, 0, 0.020); // 蛍光灯
+    this.drone(this.bus[1], 'sine', 240, 0, 0.007);
+
+    /* 公共地下駐車場。もっと下、もっと固い箱。街の音はここまで届かない。
+       大きな換気扇がひとつ回っているだけで、あとは水の音がたまに落ちる */
+    this.bed(this.bus[0], 'lowpass', 150, 0, 0.55);
+    const vent = this.bed(this.bus[0], 'bandpass', 250, 1.4, 0.11);
+    this.swell(vent.gain, 0.11, 0.05, 17);
+    // 換気扇。わずかにずらした 2 本が唸り合って、回っているように聞こえる
+    this.drone(this.bus[0], 'sawtooth', 55, 90, 0.05);
+    this.drone(this.bus[0], 'sawtooth', 55.6, 90, 0.045);
+    setInterval(() => this.drip(), 2400);
+  },
+  // ループするノイズ層を 1 本生やす。開始位置をずらして 3 層が同じ形に揃わないようにする
+  bed(dest, type, freq, q, vol) {
+    const c = this.ctx;
+    const s = c.createBufferSource(); s.buffer = this.pink; s.loop = true;
+    const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+    if (q) f.Q.value = q;
+    const g = c.createGain(); g.gain.value = vol;
+    s.connect(f); f.connect(g); g.connect(dest);
+    s.start(c.currentTime, Math.random() * 3);
+    return g;
+  },
+  // 唸り続けるオシレータ（街の底鳴り・換気扇・蛍光灯）
+  drone(dest, type, freq, lp, vol) {
+    const c = this.ctx;
+    const o = c.createOscillator(); o.type = type; o.frequency.value = freq;
+    const g = c.createGain(); g.gain.value = vol;
+    let n = o;
+    if (lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    n.connect(g); g.connect(dest); o.start();
+    return g;
+  },
+  // 空調の風量をゆっくり揺らす。ずっと同じ強さで鳴っていると機械の録音に聞こえる
+  swell(param, base, depth, period) {
+    const c = this.ctx;
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = 1 / period;
+    const g = c.createGain(); g.gain.value = depth;
+    param.value = base;
+    o.connect(g); g.connect(param); o.start();
+  },
+  // 遠くで水が落ちる。駐車場の広さは、音を足すより静けさの中の一滴で出る
+  drip() {
+    if (!this.bus || this.muted || this.floor !== 0 || Math.random() < 0.45) return;
+    const c = this.ctx, t = c.currentTime;
+    const o = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 1100;      // 遠いので高い成分は届かない
+    o.type = 'sine'; o.frequency.setValueAtTime(1300 + Math.random() * 600, t);
+    o.frequency.exponentialRampToValueAtTime(480, t + 0.09);
+    g.gain.setValueAtTime(0.09, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    o.connect(f); f.connect(g); g.connect(this.bus[0]);
+    o.start(t); o.stop(t + 0.25);
+  },
+  /* 階が変わったら 1 秒半ほどかけて入れ替える。階段の途中でぱちりと切り替わるより、
+     降りるにつれて外の音が遠のいていくほうが、潜っている感じになる */
+  setFloor(f) {
+    if (!this.bus || f === this.floor) return;
+    this.floor = f;
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < 3; i++) this.bus[i].gain.setTargetAtTime(i === f ? 1 : 0, t, 0.45);
   },
   blip(freq, dur, type, vol, slide) {
     if (!this.ctx || this.muted) return;
@@ -3150,15 +3726,23 @@ function camera() {
   const cp = Math.cos(py);
   const fx = -Math.sin(yw) * cp, fy = Math.sin(py), fz = -Math.cos(yw) * cp;
   const ey = P.y + EYE + (P.moving && P.onGround ? Math.sin(P.walkPhase * 2) * 0.045 : 0);
+  P.camClose = false;
   if (P.firstPerson) { camX = P.x; camY = ey; camZ = P.z; }
   else {
+    /* 後ろへ 0.25 マス刻みで辿って、最初にぶつかった手前で止める。
+       刻みが粗いと 1 マス厚の壁を跨いでしまい、カメラだけ隣の部屋や
+       ビルの中に置き去りになって画面が真っ暗になる */
     let d = P.camDist;
-    for (let s = 0.2; s <= 1.0; s += 0.1) {
-      const tx = P.x - fx * d * s, ty = ey - fy * d * s, tz = P.z - fz * d * s;
-      if (solid(Math.floor(tx), Math.floor(ty), Math.floor(tz))) { d = d * Math.max(0, s - 0.12); break; }
+    for (let t = 0.35; t <= P.camDist; t += 0.25) {
+      if (solid(Math.floor(P.x - fx * t), Math.floor(ey - fy * t), Math.floor(P.z - fz * t))) {
+        d = t - 0.35; break;
+      }
     }
-    d = Math.max(0.9, d);
-    camX = P.x - fx * d; camY = ey - fy * d; camZ = P.z - fz * d;
+    /* 店の中や地下の通路では引ける余地が無い。中途半端に引くと自分の後頭部で
+       画面が埋まるので、2 マスも下がれないなら目の位置から見る（実質一人称） */
+    P.camClose = d < 2.2;
+    if (P.camClose) { camX = P.x; camY = ey; camZ = P.z; }
+    else { camX = P.x - fx * d; camY = ey - fy * d; camZ = P.z - fz * d; }
   }
   M4.persp(proj, 1.18, canvas.width / canvas.height, 0.08, 400);
   M4.lookAt(view, camX, camY, camZ, camX + fx, camY + fy, camZ + fz);
@@ -3192,7 +3776,7 @@ function pushFirstPersonHand() {
 
 function pushCharacter(n, isPlayer) {
   const a = n.arch;
-  if (isPlayer && P.firstPerson) { pushFirstPersonHand(); return; }
+  if (isPlayer && (P.firstPerson || P.camClose)) { pushFirstPersonHand(); return; }
   const walking = isPlayer ? P.moving : (n.state !== 'talk' && n.state !== 'down');
   const ph = isPlayer ? P.walkPhase : n.phase;
   const swing = walking ? Math.sin(ph) * 0.45 : 0;
@@ -3201,6 +3785,14 @@ function pushCharacter(n, isPlayer) {
   const skin = [0.86, 0.68, 0.56];
   const rot = isPlayer ? P.yaw + Math.PI : n.yaw;
   const y = n.y !== undefined ? n.y : 0;
+  /* 性別で変えるのは見た目だけ。当たり判定も能力もいじらない。
+     女は肩幅と手足を細くして、髪を背中まで伸ばす。NPC は arch の gender を見る */
+  const female = (isPlayer ? P.gender : a.gender) === '女';
+  const sh = female ? 0.50 : 0.62;   // 肩幅
+  const aw = female ? 0.14 : 0.17;   // 腕の太さ
+  const ao = female ? 0.34 : 0.40;   // 腕の左右位置
+  const lw = female ? 0.19 : 0.22;   // 脚の太さ
+  const lo = female ? 0.13 : 0.16;   // 脚の左右位置
   if (!isPlayer && n.down > 0) {
     addInst(n.x, y + 0.28, n.z, 0.5, 0.5, 1.7, col, rot, 0);
     addInst(n.x + Math.sin(rot) * 0.9, y + 0.3, n.z + Math.cos(rot) * 0.9, 0.42, 0.42, 0.42, skin, rot, 0);
@@ -3208,17 +3800,18 @@ function pushCharacter(n, isPlayer) {
   }
   const base = y + 0.94 + (walking ? Math.abs(Math.sin(ph)) * 0.05 : 0);
   const dk = [col[0] * .6, col[1] * .6, col[2] * .6];
-  addInst(n.x + Math.sin(rot + 1.57) * 0.16, y + 0.42 + swing * 0.08, n.z + Math.cos(rot + 1.57) * 0.16, 0.22, 0.86, 0.24, dk, rot, 0);
-  addInst(n.x - Math.sin(rot + 1.57) * 0.16, y + 0.42 - swing * 0.08, n.z - Math.cos(rot + 1.57) * 0.16, 0.22, 0.86, 0.24, dk, rot, 0);
-  addInst(n.x, base + 0.02, n.z, 0.62, 0.86, 0.36, col, rot, isPlayer ? 0 : (a.k === 'host' || a.k === 'idol' || a.k === 'dj' ? 0.25 : 0));
+  addInst(n.x + Math.sin(rot + 1.57) * lo, y + 0.42 + swing * 0.08, n.z + Math.cos(rot + 1.57) * lo, lw, 0.86, lw + 0.02, dk, rot, 0);
+  addInst(n.x - Math.sin(rot + 1.57) * lo, y + 0.42 - swing * 0.08, n.z - Math.cos(rot + 1.57) * lo, lw, 0.86, lw + 0.02, dk, rot, 0);
+  addInst(n.x, base + 0.02, n.z, sh, 0.86, female ? 0.34 : 0.36, col, rot, isPlayer ? 0 : (a.k === 'host' || a.k === 'idol' || a.k === 'dj' ? 0.25 : 0));
+  if (female) addInst(n.x, y + 0.66, n.z, sh + 0.12, 0.34, 0.40, dk, rot, 0);   // 腰から広がる裾
   // 右腕。プレイヤーが掘る／殴るときだけ前へ突き出して振り下ろす
   const arm = isPlayer ? P.arm : 0;
   const fx = Math.sin(rot), fz = Math.cos(rot);              // 向いている方向
-  const ax = n.x + Math.sin(rot + 1.57) * 0.40 + fx * arm * 0.40;
+  const ax = n.x + Math.sin(rot + 1.57) * ao + fx * arm * 0.40;
   const ay = base + 0.02 - swing * 0.1 + arm * 0.30;
-  const az = n.z + Math.cos(rot + 1.57) * 0.40 + fz * arm * 0.40;
-  addInst(ax, ay, az, 0.17, 0.72 - arm * 0.26, 0.19 + arm * 0.46, col, rot, 0);
-  addInst(n.x - Math.sin(rot + 1.57) * 0.40, base + 0.02 + swing * 0.1, n.z - Math.cos(rot + 1.57) * 0.40, 0.17, 0.72, 0.19, col, rot, 0);
+  const az = n.z + Math.cos(rot + 1.57) * ao + fz * arm * 0.40;
+  addInst(ax, ay, az, aw, 0.72 - arm * 0.26, aw + 0.02 + arm * 0.46, col, rot, 0);
+  addInst(n.x - Math.sin(rot + 1.57) * ao, base + 0.02 + swing * 0.1, n.z - Math.cos(rot + 1.57) * ao, aw, 0.72, aw + 0.02, col, rot, 0);
   // 手に持っている道具。振っている間は先端が前に出る
   if (isPlayer) {
     const T = curTool();
@@ -3226,9 +3819,14 @@ function pushCharacter(n, isPlayer) {
       addInst(ax + fx * (0.22 + arm * 0.30), ay - 0.28 + arm * 0.24, az + fz * (0.22 + arm * 0.30),
         0.11, 0.52 - arm * 0.30, 0.11 + arm * 0.34, T.col, rot, T.em || 0);
   }
-  addInst(n.x, base + 0.50, n.z, 0.18, 0.16, 0.18, skin, rot, 0);
-  addInst(n.x, base + 0.74, n.z, 0.40, 0.42, 0.38, skin, rot, 0);
-  addInst(n.x, base + 0.94, n.z, 0.44, 0.16, 0.42, hair, rot, 0);
+  addInst(n.x, base + 0.50, n.z, female ? 0.15 : 0.18, 0.16, female ? 0.15 : 0.18, skin, rot, 0);
+  addInst(n.x, base + 0.74, n.z, female ? 0.38 : 0.40, 0.42, female ? 0.36 : 0.38, skin, rot, 0);
+  addInst(n.x, base + 0.94, n.z, female ? 0.42 : 0.44, 0.16, female ? 0.40 : 0.42, hair, rot, 0);
+  if (female) {                                        // 後ろ髪と、顔の横に落ちる毛束
+    addInst(n.x - fx * 0.18, base + 0.62, n.z - fz * 0.18, 0.42, 0.66, 0.10, hair, rot, 0);
+    addInst(n.x + Math.sin(rot + 1.57) * 0.20, base + 0.70, n.z + Math.cos(rot + 1.57) * 0.20, 0.08, 0.46, 0.34, hair, rot, 0);
+    addInst(n.x - Math.sin(rot + 1.57) * 0.20, base + 0.70, n.z - Math.cos(rot + 1.57) * 0.20, 0.08, 0.46, 0.34, hair, rot, 0);
+  }
   if (!isPlayer && a.k === 'dj') {                       // ヘッドホン
     const hp = [0.09, 0.88, 1];
     addInst(n.x + Math.sin(rot + 1.57) * 0.25, base + 0.76, n.z + Math.cos(rot + 1.57) * 0.25, 0.13, 0.22, 0.18, hp, rot, 0.9);
@@ -3314,7 +3912,10 @@ function render() {
   gl.uniform3f(VOXP.u.uFog, fog[0], fog[1], fog[2]);
   gl.uniform1f(VOXP.u.uFogD, fogD);
   gl.uniform1f(VOXP.u.uTime, t);
-  gl.uniform1f(VOXP.u.uAmb, S.amb);
+  /* 地下は空が無いので、地上と同じ環境光だと床が潰れて何も見えない。
+     蛍光灯とネオンで照らされている体で底上げする（掘った穴の中も同じ） */
+  const under = camY < GY ? 1 : 0;
+  gl.uniform1f(VOXP.u.uAmb, S.amb + under * 0.30);
   gl.uniform3fv(VOXP.u.uSkyLit, S.sky);
   gl.uniform1f(VOXP.u.uNeon, S.neon);
   for (const c of chunks) {
@@ -3332,10 +3933,15 @@ function render() {
     if (Math.abs(n.x - camX) > 70 || Math.abs(n.z - camZ) > 70) continue;
     pushCharacter(n, false);
   }
+  /* 店の目印。自分の店は緑、まだ買えていない店は金。買える店に印が無いと
+     ただのビルと見分けがつかないので、持っていない店にも出す */
   for (const s of Shops) {
-    if (s.owner !== 'player') continue;
     if (Math.abs(s.x - camX) > 70 || Math.abs(s.z - camZ) > 70) continue;
-    addInst(s.x, groundTop(s.x, s.z) + 3.4 + Math.sin(t * 2 + s.id) * 0.14, s.z, 0.42, 0.42, 0.42, [0.22, 1, .53], t * 1.3, 2.2);
+    const mine = s.owner === 'player';
+    // 地下は天井が低い。頭のすぐ上に浮かせる
+    const my = s.under ? SUB_TOP + 0.2 : groundTop(s.x, s.z) + 3.4;
+    addInst(s.x, my + Math.sin(t * 2 + s.id) * 0.14, s.z,
+      0.42, 0.42, 0.42, mine ? [0.22, 1, .53] : [1, .81, .25], t * 1.3, 2.2);
   }
   if (instCount) {
     gl.useProgram(INST.p);
@@ -3347,7 +3953,7 @@ function render() {
     gl.uniform3f(INST.u.uFog, fog[0], fog[1], fog[2]);
     gl.uniform1f(INST.u.uFogD, fogD);
     gl.uniform1f(INST.u.uTime, t);
-    gl.uniform1f(INST.u.uAmb, S.amb + 0.06);
+    gl.uniform1f(INST.u.uAmb, S.amb + 0.06 + (camY < GY ? 0.30 : 0));
     gl.uniform3fv(INST.u.uSkyLit, S.sky);
     gl.uniform1f(INST.u.uNeon, S.neon);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, instCount);
@@ -3367,18 +3973,38 @@ function render() {
   gl.bindVertexArray(null);
 }
 
+/* 人と店で枠を分ける。ひとつの列に混ぜると、店だらけの通りで
+   目の前の人の名前が押し出される */
+const TAG_FAR = 28, TAG_MAX = 12, SHOP_TAG_FAR = 46, SHOP_TAG_MAX = 6;
 function updateTags() {
-  const list = [];
+  const people = [];
+  const pfl = floorOf(P.y);
   for (const n of NPCs) {
+    if (floorOf(n.y) !== pfl) continue;       // 床越しに別の階の名前が浮かないように
     const d = Math.hypot(n.x - camX, n.y + 2 - camY, n.z - camZ);
-    if (d > 28) continue;
-    list.push({ n, d });
+    if (d > TAG_FAR) continue;
+    people.push({ n, d });
   }
-  list.sort((a, b) => a.d - b.d);
-  const show = list.slice(0, 12);
+  /* 店の看板。人より遠くまで出す。どのビルが買える店なのかは、
+     入口の形だけでは通りの端からは読み取れない */
+  const shops = [];
+  // 同じ階の店だけ。地面越しに別の階の看板が浮くと位置が分からなくなる
+  for (const s of Shops) {
+    const sy = s.y || GY;
+    if (floorOf(sy) !== pfl) continue;
+    const d = Math.hypot(s.x - camX, sy - camY, s.z - camZ);
+    if (d > SHOP_TAG_FAR) continue;
+    shops.push({ s, d });
+  }
+  people.sort((a, b) => a.d - b.d);
+  shops.sort((a, b) => a.d - b.d);
+  const show = people.slice(0, TAG_MAX).concat(shops.slice(0, SHOP_TAG_MAX));
   show.forEach((o, i) => {
-    const n = o.n;
-    const wx = n.x, wy = n.y + (n.down > 0 ? 1.0 : 2.28), wz = n.z;
+    const n = o.n, s = o.s;
+    const wx = s ? s.x : n.x;
+    const wy = s ? (s.under ? SUB_TOP - 0.4 : groundTop(s.x, s.z) + 2.5)
+      : n.y + (n.down > 0 ? 1.0 : 2.28);
+    const wz = s ? s.z : n.z;
     const cx = vp[0] * wx + vp[4] * wy + vp[8] * wz + vp[12];
     const cy = vp[1] * wx + vp[5] * wy + vp[9] * wz + vp[13];
     const cw = vp[3] * wx + vp[7] * wy + vp[11] * wz + vp[15];
@@ -3387,9 +4013,18 @@ function updateTags() {
     if (cw <= 0.1) { el.style.opacity = 0; el.style.left = '-9999px'; el.style.top = '0px'; return; }
     el.style.left = (cx / cw * 0.5 + 0.5) * innerWidth + 'px';
     el.style.top = (1 - (cy / cw * 0.5 + 0.5)) * innerHeight + 'px';
-    el.style.opacity = clamp(1.25 - o.d / 28, 0.15, 1);
-    const fc = n.crew ? '#39ff88' : n.hostile ? '#ff6b60' : FACTIONS[n.arch.fac].css;
     const nb = el.children[0], jb = el.children[1], hb = el.children[2], bk = el.children[3];
+    if (s) {
+      el.style.opacity = clamp(1.25 - o.d / SHOP_TAG_FAR, 0.3, 1);
+      const mine = s.owner === 'player';
+      nb.textContent = `${s.type.name}「${s.name}」`;
+      nb.style.color = mine ? '#39ff88' : '#ffcf3f';
+      jb.textContent = mine ? `自分の店・${yen(hourlyIncome(s))}／時` : `${yen(s.price)} で買える`;
+      hb.style.display = 'none'; bk.style.display = 'none';
+      return;
+    }
+    el.style.opacity = clamp(1.25 - o.d / TAG_FAR, 0.15, 1);
+    const fc = n.crew ? '#39ff88' : n.hostile ? '#ff6b60' : FACTIONS[n.arch.fac].css;
     nb.textContent = n.name; nb.style.color = fc;
     jb.textContent = n.arch.job + (n.crew ? '・子分' : '');
     const hurt = n.hp < n.maxhp;
@@ -3597,6 +4232,8 @@ function frame(now) {
     P.vy = Math.max(P.vy - 26 * dt, -40);
     movePlayer(0, P.vy * dt, 0);
     if (P.y < -6) { respawn(); P.hp = Math.max(1, P.hp - 20); flash(0.6); }
+    noteFloor();
+    Snd.setFloor(floorOf(P.y));      // 環境音も階に合わせる（地下で外の音を鳴らさない）
 
     if (P.atkCd > 0) P.atkCd -= dt;
     updateDig(dt);
@@ -3688,20 +4325,35 @@ function cgDraw() {
   const skin = '#dbae8f';
   g.clearRect(0, 0, c.width, c.height);
   g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, 0, c.width, c.height);
-  const R = (x, y, w, h, f) => { g.fillStyle = f; g.fillRect(x, y, w, h); };
-  R(66, 148, 22, 62, dark); R(92, 148, 22, 62, dark);          // 脚
-  R(62, 84, 56, 66, body);                                      // 胴
-  R(42, 84, 18, 58, body); R(120, 84, 18, 58, body);            // 腕
-  R(42, 138, 18, 12, skin); R(120, 138, 18, 12, skin);          // 手
-  R(68, 36, 44, 46, skin);                                      // 顔
-  R(64, 26, 52, 16, hair);                                      // 髪
-  R(64, 36, 6, 22, hair); R(110, 36, 6, 22, hair);              // もみあげ
-  R(78, 52, 7, 7, '#1b1420'); R(95, 52, 7, 7, '#1b1420');       // 目
-  R(84, 68, 12, 3, 'rgba(0,0,0,.35)');                          // 口
+  const R = (x, y, w, h, fl) => { g.fillStyle = fl; g.fillRect(x, y, w, h); };
+  // 3D モデルと同じ描き分け。左右は中心 x=90 で対称に置く
+  const fem = CG.gender === '女';
+  const mir = (x, w) => 180 - x - w;
+  // 後ろ髪は胴で隠れる高さまで。腰まで伸ばすと腕との隙間から覗いて穴に見える
+  if (fem) R(58, 30, 64, 90, hair);
+  const lx = fem ? 73 : 66, lw = fem ? 17 : 22;
+  R(lx, 148, lw, 62, dark); R(mir(lx, lw), 148, lw, 62, dark);   // 脚
+  if (fem) {
+    R(66, 84, 48, 52, body);                                     // 胴（肩は狭い）
+    R(62, 136, 56, 22, dark);                                    // 裾の広がり
+  } else {
+    R(62, 84, 56, 66, body);                                     // 胴
+  }
+  const ax = fem ? 51 : 42, aw = fem ? 15 : 18;
+  R(ax, 84, aw, 58, body); R(mir(ax, aw), 84, aw, 58, body);     // 腕
+  R(ax, 138, aw, 12, skin); R(mir(ax, aw), 138, aw, 12, skin);   // 手
+  R(fem ? 70 : 68, 36, fem ? 40 : 44, 46, skin);                 // 顔
+  R(64, fem ? 24 : 26, 52, fem ? 18 : 16, hair);                 // 髪
+  const sx = fem ? 62 : 64, sw = fem ? 10 : 6, sh = fem ? 54 : 22;
+  R(sx, 36, sw, sh, hair); R(mir(sx, sw), 36, sw, sh, hair);     // もみあげ／横の毛束
+  if (fem) { R(77, 49, 10, 2, '#1b1420'); R(93, 49, 10, 2, '#1b1420'); }   // まつげ
+  R(78, 52, 7, 7, '#1b1420'); R(95, 52, 7, 7, '#1b1420');        // 目
+  R(fem ? 85 : 84, 68, fem ? 10 : 12, 3, fem ? 'rgba(170,40,60,.55)' : 'rgba(0,0,0,.35)');   // 口
   // 右手に持っている道具。出自で変わる
   const t = TOOLS[(ORIGINS.find(o => o.k === CG.origin) || ORIGINS[0]).tool];
-  R(142, 74, 7, 68, css(TOOLS.wood.col));
-  R(134, 70, 24, 9, css(t.col));
+  const hx = mir(ax, aw);                                       // 右手の位置に合わせる
+  R(hx + 22, 74, 7, 68, css(TOOLS.wood.col));
+  R(hx + 14, 70, 24, 9, css(t.col));
 }
 function cgSync() {
   $('cg-nm').textContent = CG.name || '名無し';
