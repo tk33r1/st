@@ -160,11 +160,6 @@
       padding-bottom: 0.5rem;
     }
 
-    .py-1\.5 {
-      padding-top: 0.375rem;
-      padding-bottom: 0.375rem;
-    }
-
     .pt-2 { padding-top: 0.5rem }
     .pb-2 { padding-bottom: 0.5rem }
     .pt-4 { padding-top: 1rem }
@@ -279,14 +274,11 @@
     .text-\[\#2c2b29\] { color: #2c2b29 }
     .text-\[9px\] { font-size: 9px }
     .text-\[11px\] { font-size: 11px }
-    .text-left { text-align: left }
     .align-middle { vertical-align: middle }
     .font-semibold { font-weight: 600 }
     .uppercase { text-transform: uppercase }
     .tracking-widest { letter-spacing: 0.1em }
     .list-disc { list-style-type: disc }
-    .pointer-events-none { pointer-events: none }
-    .opacity-30 { opacity: 0.3 }
     .opacity-60 { opacity: 0.6 }
     .opacity-80 { opacity: 0.8 }
     .ml-1 { margin-left: 0.25rem }
@@ -810,7 +802,9 @@
       overflow-y: auto;
     }
 
-    #sidebar-resizer {
+    /* The two vertical drag handles (side bar / MAGI dock) are the same control,
+       so they share one rule — the horizontal one below differs by axis only. */
+    #sidebar-resizer, #agentdock-resizer {
       flex-shrink: 0;
       width: 5px;
       margin: 0 -2px;
@@ -832,7 +826,9 @@
       touch-action: none;
     }
 
-    #sidebar-resizer:hover, #panel-resizer:hover, .resizer-active { background: var(--primary-color) }
+    /* .resizer-active is set by bindResizer() on whichever handle is being dragged,
+       so it covers all three without needing per-id variants. */
+    #sidebar-resizer:hover, #panel-resizer:hover, #agentdock-resizer:hover, .resizer-active { background: var(--primary-color) }
     body.resizing-x, body.resizing-x * { cursor: col-resize !important }
     body.resizing-y, body.resizing-y * { cursor: row-resize !important }
 
@@ -1364,12 +1360,9 @@
     }
 
     @media (min-width: 768px) {
-        #btn-menu { display: none }
         #sidebar.collapsed { display: none }
         #sidebar.collapsed+#sidebar-resizer { display: none }
-    }
 
-    @media (min-width: 768px) {
         #editor-content .w-\[90\%\] {
           width: 482px;
           max-width: none;
@@ -1387,6 +1380,47 @@
     #agentdock-header {
       height: 35px;
       flex-shrink: 0;
+    }
+
+    /* The MAGI dock header's icon buttons (new / history / kebab). Same idiom as
+       .act-btn and .ext-btn: one component class instead of repeating the six
+       utilities on every button. #btn-close-agent keeps its own red hover. */
+    .dock-icon-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--secondary-color);
+      transition: color var(--duration-fast);
+    }
+
+    .dock-icon-btn:hover { color: var(--primary-color) }
+
+    /* Rows inside the kebab dropdown — buttons and the Legacy MAGI link alike. */
+    .dock-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.375rem 0.8125rem;
+      text-align: left;
+      background: transparent;
+      border-width: 0;
+      text-decoration: none;
+      cursor: pointer;
+      color: var(--secondary-color);
+      transition: color var(--duration-fast), background-color var(--duration-fast);
+    }
+
+    .dock-menu-item:hover {
+      color: var(--primary-color);
+      background-color: var(--surface-hover);
+    }
+
+    /* Share / Download are placeholders until the feature lands. */
+    .dock-menu-item.disabled {
+      opacity: 0.3;
+      pointer-events: none;
     }
 
     #agent-more-dropdown {
@@ -1413,18 +1447,7 @@
       line-height: 1.5 !important;
     }
 
-    #agentdock-resizer {
-      flex-shrink: 0;
-      width: 5px;
-      margin: 0 -2px;
-      cursor: col-resize;
-      background: transparent;
-      transition: background var(--duration-fast);
-      z-index: 5;
-      touch-action: none;
-    }
-
-    #agentdock-resizer:hover, #agentdock-resizer.resizer-active { background: var(--primary-color) }
+    /* #agentdock-resizer geometry + :hover live with #sidebar-resizer (same control). */
 
     #agent-log {
       scroll-behavior: smooth;
@@ -2797,16 +2820,14 @@
           <div id="agentdock-title" class="text-xs tracking-wider text-primary glow select-none"><span
               class="text-sm inline-block">✦</span> MAGI</div>
           <div class="flex items-center gap-2.5">
-            <button id="btn-reset-agent"
-              class="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center justify-center"
+            <button id="btn-reset-agent" class="dock-icon-btn"
               title="New Conversation" data-ja-title="新しい会話"><svg aria-hidden="true" width="14" height="14"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                 stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg></button>
-            <button id="btn-history-agent"
-              class="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center justify-center"
+            <button id="btn-history-agent" class="dock-icon-btn"
               title="View conversation history" data-ja-title="会話履歴を表示"><svg aria-hidden="true" width="14" height="14"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                 stroke-linejoin="round">
@@ -2815,8 +2836,7 @@
               </svg></button>
             <!-- Kebab Menu (More Options) -->
             <div class="relative inline-block flex items-center justify-center">
-              <button id="btn-more-agent"
-                class="text-secondary hover:text-primary transition-colors cursor-pointer flex items-center justify-center"
+              <button id="btn-more-agent" class="dock-icon-btn"
                 title="More Options" data-ja-title="その他の操作">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2826,8 +2846,7 @@
                 </svg>
               </button>
               <div id="agent-more-dropdown" class="hidden text-[10px]">
-                <button id="btn-share-agent"
-                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
+                <button id="btn-share-agent" class="dock-menu-item disabled"
                   title="Share/Copy conversation">
                   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2837,8 +2856,7 @@
                   </svg>
                   <span data-ja="共有">Share</span>
                 </button>
-                <button id="btn-export-agent"
-                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 border-none bg-transparent cursor-pointer opacity-30 pointer-events-none"
+                <button id="btn-export-agent" class="dock-menu-item disabled"
                   title="Export conversation as Markdown">
                   <svg aria-hidden="true" width="12" height="12" stroke-width="1.8">
                     <use href="#ic-download" />
@@ -2847,8 +2865,7 @@
                 </button>
                 <hr class="border-t border-color my-1 w-full" />
                 <a href="https://tk.st/magi/" target="_blank" rel="noopener noreferrer"
-                  class="w-full text-left px-3 py-1.5 hover:bg-surface-hover text-secondary hover:text-primary transition-colors flex items-center gap-2 no-underline"
-                  title="Legacy MAGI deliberation (v1)">
+                  class="dock-menu-item" title="Legacy MAGI deliberation (v1)">
                   <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -3075,7 +3092,14 @@
     // (omit to walk to the root). Used to shield the terminal input line from the
     // meltdown / rampage fly-off so the prompt stays usable.
     const ancestorsOf = (el, stopId) => { const set = new Set(); for (let c = el; c && c.id !== stopId; c = c.parentElement) set.add(c); return set; };
-    const getPrimaryColor = () => getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4ade80';
+    // Live value of a root custom property. Read (not cached) on purpose: `theme`
+    // and `bpm` rewrite these at runtime, so callers must see the current value.
+    const cssVar = (name, fallback) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+    const getPrimaryColor = () => cssVar('--primary-color', '#4ade80');
+    const getBpm = () => parseInt(cssVar('--bpm', '60'), 10) || 60;
+    // CSS.escape is unavailable in older WebViews; the raw value is a safe enough
+    // fallback because every selector built with this is an internal id/codename.
+    const cssEsc = v => (window.CSS && CSS.escape) ? CSS.escape(v) : v;
 
     function updateGitBadge() {
       if (DOM.badgeGit) {
@@ -3441,7 +3465,7 @@
       const next = lang === 'ja' ? 'ja' : 'en';
       if (next === currentLang) { applyLang(); return; }
       currentLang = next;
-      try { localStorage.setItem('tkst_lang', next); } catch (_) { }
+      safeStore('tkst_lang', next);
       applyLang();
       addToHistory(tr(`[SYS] Language changed to ${next === 'ja' ? 'Japanese' : 'English'}`, `[SYS] 表示言語を${next === 'ja' ? '日本語' : '英語'}に変更しました`));
       showToast(next === 'ja' ? '表示言語を日本語に切り替えました' : 'Language switched to English');
@@ -3888,7 +3912,7 @@
           : `<div class="my-3 text-xs text-primary">Language switched to English. <span class="text-secondary">(run <span class="text-normal font-bold">japanese</span> again for Japanese)</span></div>`;
       },
       bpm(args) {
-        const currentBpm = getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60';
+        const currentBpm = cssVar('--bpm', '60');
         if (!args || args.length === 0 || isNaN(args[0])) return tr(`<div class="my-3 text-xs text-secondary">Usage: bpm &lt;number&gt;<br>Current BPM: <span class="text-normal font-bold">${currentBpm}</span></div>`,
           `<div class="my-3 text-xs text-secondary">使い方: bpm &lt;数値&gt;<br>現在のBPM: <span class="text-normal font-bold">${currentBpm}</span></div>`);
         const newBpm = Math.max(1, Math.min(999, parseInt(args[0], 10)));
@@ -4253,7 +4277,6 @@
           return fallback || document.getElementById('editor') || document.scrollingElement || document.documentElement;
         };
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
-        const getBpm = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10) || 60;
         const cadence = (baseMs) => Math.max(16, Math.round(baseMs * 60 / getBpm()));
 
         // machine gun: a single tight shot (held → rapid fire)
@@ -4548,7 +4571,7 @@
           renderArsenal();
           if (currentView() === 'arsenal') {
             showSidebarView('explorer');
-            document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
+            setActiveActBtn('explorer');
           }
         };
 
@@ -4665,8 +4688,7 @@
           const fontSize = 14, primaryColor = getPrimaryColor();
 
           // Get the current BPM and calculate the speed factor (default to 60 BPM = speed factor of 1)
-          const currentBpm = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bpm').trim() || '60', 10);
-          const speedFactor = currentBpm / 60;
+          const speedFactor = getBpm() / 60;
 
           let drops = [];
           const resizeCanvas = () => {
@@ -4996,7 +5018,7 @@
 
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
-      document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === 'explorer'));
+      setActiveActBtn('explorer');
       resetAgent();
       DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
       DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
@@ -5113,6 +5135,11 @@
       }).join('');
     }
     const showSidebarView = (name) => SIDEBAR_VIEWS.forEach(v => document.getElementById('view-' + v).classList.toggle('hidden', v !== name));
+    // Mark one activity-bar icon as the active view. Note the click handler below
+    // uses its own variant that leaves the MAGI button alone (the dock's open state
+    // owns that one); this form is for resetting the bar back to a known view.
+    const setActiveActBtn = (act) =>
+      document.querySelectorAll('#activitybar .act-btn').forEach(x => x.classList.toggle('active', x.dataset.act === act));
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
@@ -5291,10 +5318,11 @@
     });
 
     // --- MAGI (right dock) ---
-    const AGENT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? 'http://localhost:8787/magi2/chat' : 'https://workers.tk.st/magi2/chat';
-    const REACT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? 'http://localhost:8787/magi2/react' : 'https://workers.tk.st/magi2/react';
+    // Point at a locally-run worker during development, at the deployed one otherwise.
+    const MAGI_ORIGIN = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:8787' : 'https://workers.tk.st';
+    const AGENT_API = MAGI_ORIGIN + '/magi2/chat';
+    const REACT_API = MAGI_ORIGIN + '/magi2/react';
     // リアクションボタンのアイコン（周囲の細線SVGアイコンと世界観を統一）
     const ICON_COPY = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
     const ICON_LIKE = `<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
@@ -5334,8 +5362,7 @@
       Object.keys(reactions).forEach(target => {
         const em = reEmoji(reactions[target]);
         if (!em) return;
-        const sel = (window.CSS && CSS.escape) ? CSS.escape(target) : target;
-        const bar = turn.querySelector(`.reaction-bar[data-target="${sel}"]`);
+        const bar = turn.querySelector(`.reaction-bar[data-target="${cssEsc(target)}"]`);
         if (!bar) return;
         if (em === '👍') {
           const likeBtn = bar.querySelector('.react-btn[data-act="like"]');
@@ -5565,8 +5592,7 @@
           await parseSSE(res.body, {
             title: (d) => { if (d && d.text) { setAgentTitle(d.text); syncCurrentToSaved(); } },
             persona: (d) => {
-              const cn = (window.CSS && CSS.escape) ? CSS.escape(d.codename) : d.codename;
-              const card = turn.querySelector(`.persona-card[data-codename="${cn}"]`);
+              const card = turn.querySelector(`.persona-card[data-codename="${cssEsc(d.codename)}"]`);
               if (!card) return;
               const slot = card.querySelector(`.persona-round[data-round="${d.round || 1}"]`);
               if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
@@ -5833,25 +5859,20 @@
       let sessions = safeParse(safeGet('magi_saved_sessions'), []);
 
       if (currentSessionId) {
-        // 既存セッションを更新：リストから取り除いて先頭に再挿入
+        // 既存セッションを更新：一旦リストから取り除く（このあと先頭に再挿入）
         sessions = sessions.filter(s => s.id !== currentSessionId);
-        sessions.unshift({
-          id: currentSessionId,
-          timestamp: Date.now(),
-          title: title,
-          history: [...agentHistory]
-        });
       } else {
         // 新しいセッションを作成
         currentSessionId = 'session_' + Date.now();
         safeStore('magi_current_session_id', currentSessionId);
-        sessions.unshift({
-          id: currentSessionId,
-          timestamp: Date.now(),
-          title: title,
-          history: [...agentHistory]
-        });
       }
+      // 新規・既存どちらも「先頭に積む」のは同じ
+      sessions.unshift({
+        id: currentSessionId,
+        timestamp: Date.now(),
+        title: title,
+        history: [...agentHistory]
+      });
 
       if (sessions.length > 50) sessions.pop();
       safeStore('magi_saved_sessions', sessions);
@@ -5999,21 +6020,12 @@
     // エクスポート＆共有ロジック
     function updateAgentActionButtons() {
       const hasHistory = agentHistory && agentHistory.length > 0;
-      const shareBtn = document.getElementById('btn-share-agent');
-      const exportBtn = document.getElementById('btn-export-agent');
-      if (shareBtn && exportBtn) {
-        if (hasHistory) {
-          shareBtn.classList.remove('opacity-30');
-          shareBtn.style.pointerEvents = 'auto';
-          exportBtn.classList.remove('opacity-30');
-          exportBtn.style.pointerEvents = 'auto';
-        } else {
-          shareBtn.classList.add('opacity-30');
-          shareBtn.style.pointerEvents = 'none';
-          exportBtn.classList.add('opacity-30');
-          exportBtn.style.pointerEvents = 'none';
-        }
-      }
+      // .dock-menu-item.disabled carries both the dimming and the pointer-events
+      // block, so the state lives in one place instead of a class plus inline style.
+      ['btn-share-agent', 'btn-export-agent'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.toggle('disabled', !hasHistory);
+      });
     }
 
     function getAgentChatMarkdown() {
