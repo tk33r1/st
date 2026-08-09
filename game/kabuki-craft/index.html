@@ -52,8 +52,10 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05040a;
     color:#f2eefc;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
-    user-select:none;-webkit-user-select:none}
-  canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
+    user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+  /* touch-action を切らないと、視点のドラッグがページのスクロールや引っ張り更新に
+     取られる。iOS Safari では指を離すまでカメラが戻ってこない */
+  canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:none}
   #tags{position:fixed;inset:0;pointer-events:none;overflow:hidden}
   .tag{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;
     font-size:11px;line-height:1.35;text-align:center;text-shadow:0 0 6px #000,0 1px 2px #000;
@@ -93,6 +95,12 @@
     font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
   #clock .left.warn{color:var(--gold)}
   #clock .left.hot{color:var(--red);animation:pulse .8s infinite}
+  /* 次の一手。起動時のログは数分で流れてしまうので、詰まったときの逃げ場をここに置く */
+  #clock .obj{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.14);
+    font-size:10.5px;line-height:1.5;max-width:190px;color:var(--mine)}
+  #clock .obj kbd{font:inherit;font-size:9.5px;padding:0 4px;margin:0 1px;border-radius:4px;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff}
+  #clock .obj.hot{color:var(--red);animation:pulse .9s infinite}
   #mute{position:absolute;top:206px;right:12px;width:36px;height:36px;border-radius:10px;padding:0;
     pointer-events:auto;cursor:pointer;color:#f2eefc;font:inherit;font-size:15px;line-height:1;
     display:flex;align-items:center;justify-content:center}
@@ -192,10 +200,28 @@
   #acts button:hover{background:rgba(255,255,255,.15)}
   #acts button.danger{border-color:rgba(255,59,48,.55);color:#ff9f99}
   #acts button.money{border-color:rgba(255,207,63,.5);color:var(--gold)}
+  /* おごる。額は打ち込む ── 相場も、足りない額も、出しすぎた額も、
+     受け取り方を決めるのは相手のほうなので、こちらは数字を渡すだけにする */
+  /* 折り返しを許す。狭い画面では相場の注記が次の行へ落ちるだけで、欄は使える */
+  #moneyrow{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:0 0 8px;font-size:11.5px}
+  #moneyrow .lb{opacity:.6;letter-spacing:.06em}
+  #moneyrow .cur{color:var(--gold);font-weight:700;margin-left:2px}
+  #moneyrow input{width:120px;font:inherit;font-size:13px;padding:6px 9px;border-radius:8px;
+    background:rgba(0,0,0,.45);border:1px solid rgba(255,207,63,.35);color:var(--gold);
+    outline:none;font-variant-numeric:tabular-nums;text-align:right}
+  #moneyrow input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,207,63,.15)}
+  /* 数字入力の上下の矢印は要らない（幅を食うし、億の桁を矢印で作る人はいない） */
+  #moneyrow input::-webkit-outer-spin-button,
+  #moneyrow input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  #moneyrow input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  #moneyrow button{pointer-events:auto;font:inherit;font-size:11.5px;padding:6px 14px;border-radius:20px;
+    background:rgba(255,207,63,.14);color:var(--gold);border:1px solid rgba(255,207,63,.5);cursor:pointer}
+  #moneyrow button:hover{background:rgba(255,207,63,.24)}
+  #moneyrow button:disabled{opacity:.35;cursor:default}
+  #moneyrow .mkt{font-size:10px;opacity:.45;letter-spacing:.03em}
   #inrow{display:flex;gap:8px}
   #inrow input{flex:1;font:inherit;font-size:14px;padding:9px 12px;border-radius:10px;
     background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);color:#fff;outline:none}
-  #inrow input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(22,224,255,.15)}
   #inrow button{font:inherit;font-size:13px;padding:9px 16px;border-radius:10px;cursor:pointer;
     background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;border:0;font-weight:700}
   #talkhint{font-size:10px;opacity:.42;margin-top:7px;letter-spacing:.03em}
@@ -352,7 +378,7 @@
   .cgname{display:flex;gap:7px}
   .cgname input{flex:1;font:inherit;font-size:14px;padding:9px 11px;border-radius:8px;
     background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);color:#fff;outline:none}
-  .cgname input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(22,224,255,.15)}
+  #inrow input:focus,.cgname input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(22,224,255,.15)}
   .cgname button{font:inherit;font-size:14px;padding:0 12px;border-radius:8px;cursor:pointer;
     background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#f2eefc}
   .opts{display:flex;gap:6px;flex-wrap:wrap}
@@ -366,15 +392,26 @@
     box-shadow:inset 0 2px rgba(255,255,255,.32),inset 0 -3px rgba(0,0,0,.42)}
   .sw i.on{outline:2px solid #fff;outline-offset:2px}
 
-  /* ---------- クラフト ---------- */
-  #craft{position:fixed;inset:0;z-index:52;background:rgba(4,3,9,.92);display:none;
-    align-items:center;justify-content:flex-start;flex-direction:column;padding:20px;overflow:auto;
+  /* ---------- 全画面パネル（クラフトと勢力図で同じ枠を使う） ---------- */
+  #craft,#map{position:fixed;inset:0;background:rgba(4,3,9,.92);display:none;overflow:auto;
+    align-items:center;justify-content:flex-start;flex-direction:column;padding:20px;
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-  #craft.show{display:flex}
-  /* 品目が画面より多くなっても上が切れないよう、上下の余白を auto で吸わせる */
-  #craft h3{margin:auto 0 4px;font-size:15px;letter-spacing:.3em;font-weight:600}
-  #craft .sub{font-size:10px;opacity:.5;margin-bottom:14px;letter-spacing:.1em;text-align:center}
-  #craftlist{width:min(580px,94vw);display:flex;flex-direction:column;gap:7px}
+  #craft.show,#map.show{display:flex}
+  /* 品目が画面より多くなっても上が切れないよう、上下の余白を auto で吸わせる。
+     そのためには中身が伸びないこと（伸びると auto マージンが潰れて上が切れる） */
+  #craft>*,#map>*{flex:none}
+  #craft h3,#map h3{margin:auto 0 4px;font-size:15px;letter-spacing:.3em;font-weight:600}
+  #craft .sub,#map .sub{font-size:10px;opacity:.5;margin-bottom:14px;letter-spacing:.1em;text-align:center}
+  /* 閉じる。指で遊んでいると、開いた瞬間に道具のボタンがこの板の下へ隠れるので、
+     これが押せないと出られない（キーが無い）。文字ではなく押せるものにしておく */
+  #craft .close,#map .close{margin:16px 0 auto;font-size:11px;opacity:.5;
+    pointer-events:auto;cursor:pointer;padding:10px 20px;border-radius:10px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:inherit;font:inherit}
+  #craft .close:active,#map .close:active{background:rgba(255,255,255,.14)}
+
+  /* ---------- クラフト ---------- */
+  #craft{z-index:52}
+  #craftlist,#buildlist,#uplist{width:min(580px,94vw);display:flex;flex-direction:column;gap:7px}
   .rcp{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;
     background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.10)}
   .rcp.on{border-color:var(--green);box-shadow:0 0 0 1px rgba(57,255,136,.45)}
@@ -390,11 +427,8 @@
     box-shadow:inset 0 1px rgba(255,255,255,.20),inset 0 -2px rgba(0,0,0,.40)}
   .rcp button:disabled{opacity:.28;cursor:default}
   .rcp button.eq{background:linear-gradient(180deg,#2b6d45,#17452b)}
-  #craft .close{margin:16px 0 auto;font-size:11px;opacity:.5}
-  #buildlist{width:min(580px,94vw);display:flex;flex-direction:column;gap:7px}
-  #buildhead{width:min(580px,94vw);font-size:10.5px;letter-spacing:.08em;
+  #buildhead,#uphead{width:min(580px,94vw);font-size:10.5px;letter-spacing:.08em;
     margin:20px 0 8px;text-align:center;line-height:1.6}
-  #craftlist,#buildlist,#buildhead,#craft h3,#craft .sub,#craft .close{flex:none}
 
   #tool{position:absolute;left:12px;bottom:14px;padding:8px 11px;font-size:11px;min-width:154px}
   #tool .lb{font-size:9px;letter-spacing:.18em;opacity:.5;margin-bottom:3px}
@@ -410,13 +444,8 @@
   }
 
   /* ---------- マップ ---------- */
-  #map{position:fixed;inset:0;z-index:50;background:rgba(4,3,9,.9);display:none;
-    align-items:center;justify-content:flex-start;flex-direction:column;padding:20px;
-    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-  #map.show{display:flex;overflow:auto}
-  #map h3{margin:auto 0 4px;font-size:15px;letter-spacing:.3em;font-weight:600}
-  #map .sub{font-size:10px;opacity:.5;margin-bottom:16px;letter-spacing:.1em;text-align:center}
-  #map>*{flex:none}
+  #map{z-index:50}
+  #map .sub{margin-bottom:16px}
   #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:min(430px,88vw)}
   #grid .z{aspect-ratio:1;border-radius:10px;padding:9px;display:flex;flex-direction:column;
     justify-content:space-between;border:1px solid rgba(255,255,255,.12);
@@ -444,11 +473,11 @@
   #grid .z.here{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 24px rgba(22,224,255,.28)}
   #map .legend{margin-top:16px;font-size:10px;opacity:.6;display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
   #map .legend span i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
-  #map .close{margin:20px 0 auto;font-size:11px;opacity:.5}
+  #map .close{margin-top:20px}
   #shoplist{margin-top:14px;font-size:11px;opacity:.75;max-width:430px;line-height:1.7;text-align:center}
 
   /* ---------- モバイル ---------- */
-  #touch{position:fixed;inset:0;z-index:20;display:none;pointer-events:none}
+  #touch{position:fixed;inset:0;z-index:20;display:none;pointer-events:none;touch-action:none}
   #touch.on{display:block}
   #stick{position:absolute;left:20px;bottom:96px;width:118px;height:118px;border-radius:50%;
     background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);pointer-events:auto}
@@ -464,6 +493,8 @@
   #bB{left:150px;bottom:186px;border-color:var(--red);color:#ff8b85;width:52px;height:52px;font-size:11px}
   #bC{left:150px;bottom:118px;width:52px;height:52px;font-size:11px}
   #bK{left:150px;bottom:250px;border-color:var(--gold);color:var(--gold);width:52px;height:52px;font-size:11px}
+  /* 換金。これが無いと指では掘る→売るが繋がらないので、掘・置と同じ側に置く */
+  #bY{right:110px;bottom:256px;border-color:var(--gold);color:var(--gold);width:52px;height:52px;font-size:11px}
 </style>
 </head>
 <body>
@@ -484,18 +515,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="stats" class="card">
     <div class="who" id="s-who">—</div>
     <div class="sub">所持金</div>
-    <div class="yen" id="s-yen">¥120,000</div>
+    <div class="yen" id="s-yen">¥800,000</div>
     <div class="bar"><div class="t"><span>体力</span><span id="s-hpn">100</span></div>
       <div class="g"><i id="s-hp" style="width:100%;background:#ff3b30"></i></div></div>
-    <div class="bar"><div class="t"><span>影響力</span><span id="s-infn">0</span></div>
+    <div class="bar"><div class="t"><span id="s-inflb">影響力</span><span id="s-infn">0</span></div>
       <div class="g"><i id="s-inf" style="width:0%;background:#ffcf3f"></i></div></div>
     <div class="bar"><div class="t"><span>手配度</span><span id="s-wan">0</span></div>
       <div class="g"><i id="s-wanb" style="width:0%;background:#16e0ff"></i></div></div>
-    <div class="bar"><div class="t"><span>酔い</span><span id="s-drn">0</span></div>
-      <div class="g"><i id="s-drnb" style="width:0%;background:#a45cff"></i></div></div>
   </div>
 
-  <div id="crewbox" class="card"><h4>連れているやつ</h4><div id="crewlist"></div></div>
+  <div id="crewbox" class="card"><h4 id="crewhd">連れているやつ</h4><div id="crewlist"></div></div>
 
   <div id="clock" class="card">
     <div class="time" id="c-time">20:00</div>
@@ -505,11 +534,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="own" id="c-own">支配: 紅蓮会</div>
     <div class="own" id="c-win" style="color:var(--green)">制圧 0 / 9</div>
     <div class="left" id="c-left">街全体 0%</div>
+    <div class="obj" id="c-obj"></div>
   </div>
   <button id="mute" class="card" type="button" title="音を消す (N)" aria-label="音を消す">♪</button>
 
   <div id="bag" class="card"><h4>回収したブロック</h4><div id="baglist"></div>
-    <div class="tot"><span>換金額</span><span id="bagtot">¥0</span></div></div>
+    <div class="tot"><span id="bagn">0 / 0</span><span id="bagtot">¥0</span></div></div>
 
   <div id="minimap" class="card"><canvas id="mm" width="276" height="276"></canvas>
     <div id="mmleg"><span><i id="mmleg-mine" style="background:#39ff88"></i>自分の店</span><span><i style="background:linear-gradient(135deg,#ff3b30,#a45cff,#16e0ff,#ffcf3f)"></i>勢力の店</span><span><i style="background:#fff"></i>独立</span></div>
@@ -533,11 +563,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
   <div id="tlog"></div>
   <div id="acts"></div>
+  <!-- おごる。額は自由。いくら出したかを相手がどう受け取るかは、その場で生成される -->
+  <div id="moneyrow">
+    <span class="lb">おごる</span>
+    <span class="cur">¥</span>
+    <input id="t-yen" type="number" min="0" step="1000" inputmode="numeric" autocomplete="off">
+    <button id="t-treat" type="button">出す</button>
+    <span class="mkt" id="t-mkt"></span>
+  </div>
   <div id="inrow">
     <input id="t-in" type="text" maxlength="120" placeholder="何を言ってもいい。（例: このシマ、俺によこせ）" autocomplete="off">
     <button id="t-send">言う</button>
   </div>
-  <div id="talkhint">Enter で発言 / Esc で立ち去る ── 相手の返答も行動も、その場で生成される（殴るなら会話を閉じて F）</div>
+  <div id="talkhint">Enter で発言 / Esc で立ち去る ── 返答も行動も、好感と畏怖の振れ幅も、その場で生成される。おごる額は自由で、相場との開きを相手がどう取るかも相手が決める（殴るなら会話を閉じて F）</div>
 </div>
 
 <div id="craft">
@@ -546,7 +584,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="craftlist"></div>
   <div id="buildhead"></div>
   <div id="buildlist"></div>
-  <div class="close">Q / Esc で閉じる</div>
+  <div id="uphead"></div>
+  <div id="uplist"></div>
+  <button class="close" id="craft-x" type="button">Q / Esc で閉じる</button>
 </div>
 
 <div id="map">
@@ -556,7 +596,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="facs"></div>
   <div class="legend" id="legend"></div>
   <div id="shoplist"></div>
-  <div class="close">Tab / M で閉じる</div>
+  <button class="close" id="map-x" type="button">Tab / M で閉じる</button>
 </div>
 
 <div class="over" id="gate">
@@ -614,8 +654,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <b>F</b><span>人の前では「殴る」（F がアクション）</span>
       <b>右クリック / R</b><span>ブロックを置く</span>
       <b>1〜9 / ホイール</b><span>手に持つブロックを選ぶ</span>
-      <b>Q</b><span>クラフト／出店（道具を作る・壁を見ながら開けば資材でそこに店を建てる）</span>
-      <b>G</b><span>回収したブロックを換金（自分の店なら高く売れる）</span>
+      <b>Q</b><span>クラフト／出店／格上げ（道具を作る・壁を見ながら開けば資材でそこに店を建てる・自分の店の前で開けば金と資材で格を上げる）</span>
+      <b>G</b><span>回収したブロックを換金（自分の店なら高く売れる）。カバンは 320 個まで</span>
       <b>E</b><span>話す・店を買う（入口に浮く印の色が持ち主。<i style="color:#fff;font-style:normal">白</i>は独立、勢力の色はその傘下、<i id="hlp-mine" style="color:#39ff88;font-style:normal">この色</i>は自分の店）</span>
       <b>Tab / M</b><span>勢力図</span>
       <b>V</b><span>視点切替（三人称／一人称）</span>
@@ -680,6 +720,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <button class="tbtn" id="bDig">掘</button>
   <button class="tbtn" id="bPut">置</button>
   <button class="tbtn" id="bJump">跳</button>
+  <button class="tbtn" id="bY">換</button>
   <button class="tbtn" id="bA">話</button>
   <button class="tbtn" id="bB">殴</button>
   <button class="tbtn" id="bC">図</button>
@@ -706,33 +747,56 @@ const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
    v3 以前は読まない。 */
 // v5: シマの保存形式が {o,m} から {s,b}（取り分と地力）へ変わった。v4 を読むと
 // 制圧済みのシマだけが黙って消えるので、キーごと切ってやり直させる
-const SAVE_KEY = 'kabukiCraft.v5';
+/* v6: 金の桁が変わった。店の値段を歌舞伎町の権利相場（数百万〜億）に合わせ、
+   ブロックの元値と元手もそれに揃えた。v5 は所持金も、建てた店に焼き付いている
+   上がりも 100 分の 1 のままなので、読むと一文無しで一生上がりの来ない店だけが
+   残る。数字を書き換えて済む話ではないので、キーごと切る。 */
+/* v7: 勢力との間柄が「敵対度（0=平穏）」から「見込み（0=全面抗争 / 100=傘下）」へ
+   裏返った。v6 をそのまま読むと、平穏だった相手が全員いきなり全面抗争になる。
+   酔いと悪名も無くなっている（読み飛ばすだけなので害は無い）。キーごと切る。 */
+const SAVE_KEY = 'kabukiCraft.v7';
 
 /* ============================================================================
    0. 小物
    ========================================================================= */
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const lerp = (a, b, t) => a + (b - a) * t;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const irnd = (a, b) => Math.floor(rnd(a, b + 1));
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-const yen = n => '¥' + Math.round(n).toLocaleString('ja-JP');
+/* 金額。歌舞伎町の店の権利は数百万から億なので、桁を並べただけでは読めない
+   （¥180,000,000 は目で数えることになる）。100万 を超えたら万・億で出す。
+   それ未満はそのまま ── おごる ¥3,000 を ¥0.3万 と書いても伝わらない。 */
+function yen(n) {
+  const v = Math.round(n) || 0;
+  const a = Math.abs(v), sign = v < 0 ? '-' : '';
+  if (a < 1000000) return sign + '¥' + a.toLocaleString('ja-JP');
+  const oku = Math.floor(a / 100000000), man = Math.floor((a % 100000000) / 10000);
+  return sign + '¥' + (oku
+    ? oku.toLocaleString('ja-JP') + '億' + (man ? man.toLocaleString('ja-JP') + '万' : '')
+    : man.toLocaleString('ja-JP') + '万');
+}
 const $ = id => document.getElementById(id);
 // 名前とシマ名はプレイヤーが打ち込む。そのまま innerHTML に流すと HUD が崩れる
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
   c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// 指で遊んでいるか。視点の掴み方と、画面に出すキーの表記がこれで変わる
+const isTouch = matchMedia('(pointer:coarse)').matches;
+/* 操作の案内。タッチにはキーボードが無いので、同じ操作を出しているボタンの文字へ
+   読み替える ──「G で換金」と書かれても、指で押せるものが画面に無い。
+   kb は HTML（<kbd>）、kbT は log や textContent に流す素の文字を返す */
+const TOUCH_KEY = { E: '話', F: '殴', G: '換', Q: '作', R: '置', Tab: '図', M: '図' };
+const kbT = k => isTouch ? (TOUCH_KEY[k] || k) : k;
+const kb = k => `<kbd>${kbT(k)}</kbd>`;
+
 // 座標から決まる擬似乱数。街を毎回同じ形にする。シフトは論理(>>>)。
-function hash2(x, y) {
-  let h = (x * 374761393 + y * 668265263) | 0;
-  h = (h ^ (h >>> 13)) * 1274126177; h = h | 0;
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
 function hash3(x, y, z) {
   let h = (x * 374761393 + y * 668265263 + z * 2246822519) | 0;
   h = (h ^ (h >>> 13)) * 1274126177; h = h | 0;
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
+// 平面版。z=0 の hash3 と同じ値になる（街の形を変えないための取り決め）
+const hash2 = (x, y) => hash3(x, y, 0);
 
 /* ============================================================================
    1. 行列
@@ -781,33 +845,38 @@ const M4 = {
    t = 必要な道具の等級。素手は 0。t を満たさない道具だと極端に遅くなる
        （アスファルトやコンクリートは素手ではほとんど剥がせない）
    ========================================================================= */
+/* v は 1 個（1 立方メートルぶんの資材）を故買屋に流したときの元値。
+   スクラップと中古の買取相場に寄せてある ── 剥がした先が数百万から億の
+   店の権利なので、ここが数十円のままでは掘る手が店に届かない。
+   剥がして金になるのは、路盤材にも建材にもならない「光り物」のほう。 */
 const AIR = 0;
 const BLOCKS = [
   null,
-  { n: '岩盤',        c: [.09, .09, .11], h: -1,  v: 0,    em: 0,    t: 9 },  // 1
-  { n: 'アスファルト', c: [.22, .22, .26], h: .50, v: 20,   em: 0,    t: 1 },  // 2
-  { n: 'コンクリート', c: [.52, .50, .55], h: .70, v: 30,   em: 0,    t: 1 },  // 3
-  { n: 'タイル',      c: [.66, .64, .70], h: .60, v: 45,   em: 0,    t: 1 },  // 4
-  { n: 'レンガ',      c: [.58, .31, .25], h: .85, v: 60,   em: 0,    t: 1 },  // 5
-  { n: '鉄骨',        c: [.44, .47, .53], h: 1.5, v: 200,  em: 0,    t: 2 },  // 6
-  { n: '窓ガラス',    c: [.28, .44, .56], h: .25, v: 80,   em: .12,  t: 0 },  // 7
-  { n: '灯った窓',    c: [1, .78, .42],   h: .25, v: 130,  em: .85,  t: 0 },  // 8
-  { n: 'ネオン桃',    c: [1, .18, .47],   h: .35, v: 420,  em: 1.15, t: 0 },  // 9
-  { n: 'ネオン青',    c: [.09, .88, 1],   h: .35, v: 420,  em: 1.15, t: 0 },  // 10
-  { n: 'ネオン金',    c: [1, .81, .25],   h: .35, v: 420,  em: 1.15, t: 0 },  // 11
-  { n: 'ネオン紫',    c: [.64, .36, 1],   h: .35, v: 420,  em: 1.15, t: 0 },  // 12
-  { n: 'ネオン緑',    c: [.22, 1, .53],   h: .35, v: 420,  em: 1.15, t: 0 },  // 13
-  { n: 'ネオン橙',    c: [1, .48, .12],   h: .35, v: 420,  em: 1.15, t: 0 },  // 14
-  { n: '看板',        c: [.16, .14, .20], h: .40, v: 50,   em: 0,    t: 0 },  // 15
-  { n: '木材',        c: [.58, .40, .22], h: .50, v: 40,   em: 0,    t: 0 },  // 16
-  { n: '提灯',        c: [1, .26, .16],   h: .20, v: 260,  em: 1.2,  t: 0 },  // 17
-  { n: '土',          c: [.29, .21, .14], h: .40, v: 5,    em: 0,    t: 0 },  // 18
-  { n: '草',          c: [.21, .43, .19], h: .40, v: 8,    em: 0,    t: 0 },  // 19
-  { n: '幹',          c: [.28, .19, .11], h: .80, v: 35,   em: 0,    t: 0 },  // 20
-  { n: '葉',          c: [.13, .39, .18], h: .20, v: 6,    em: 0,    t: 0 },  // 21
-  { n: '街灯',        c: [1, .86, .60],   h: .50, v: 300,  em: 1.4,  t: 1 },  // 22
-  { n: '自販機',      c: [.10, .55, .85], h: .90, v: 600,  em: .65,  t: 2 },  // 23
-  { n: '金塊',        c: [1, .78, .22],   h: 2.2, v: 5000, em: .25,  t: 3 }   // 24
+  { n: '岩盤',        c: [.09, .09, .11], h: -1,  v: 0,      em: 0,    t: 9 },  // 1
+  { n: 'アスファルト', c: [.22, .22, .26], h: .50, v: 800,    em: 0,    t: 1 },  // 2
+  { n: 'コンクリート', c: [.52, .50, .55], h: .70, v: 1200,   em: 0,    t: 1 },  // 3
+  { n: 'タイル',      c: [.66, .64, .70], h: .60, v: 2600,   em: 0,    t: 1 },  // 4
+  { n: 'レンガ',      c: [.58, .31, .25], h: .85, v: 3800,   em: 0,    t: 1 },  // 5
+  { n: '鉄骨',        c: [.44, .47, .53], h: 1.5, v: 32000,  em: 0,    t: 2 },  // 6
+  { n: '窓ガラス',    c: [.28, .44, .56], h: .25, v: 3000,   em: .12,  t: 0 },  // 7
+  { n: '灯った窓',    c: [1, .78, .42],   h: .25, v: 5200,   em: .85,  t: 0 },  // 8
+  { n: 'ネオン桃',    c: [1, .18, .47],   h: .35, v: 18000,  em: 1.15, t: 0 },  // 9
+  { n: 'ネオン青',    c: [.09, .88, 1],   h: .35, v: 18000,  em: 1.15, t: 0 },  // 10
+  { n: 'ネオン金',    c: [1, .81, .25],   h: .35, v: 18000,  em: 1.15, t: 0 },  // 11
+  { n: 'ネオン紫',    c: [.64, .36, 1],   h: .35, v: 18000,  em: 1.15, t: 0 },  // 12
+  { n: 'ネオン緑',    c: [.22, 1, .53],   h: .35, v: 18000,  em: 1.15, t: 0 },  // 13
+  { n: 'ネオン橙',    c: [1, .48, .12],   h: .35, v: 18000,  em: 1.15, t: 0 },  // 14
+  { n: '看板',        c: [.16, .14, .20], h: .40, v: 4200,   em: 0,    t: 0 },  // 15
+  { n: '木材',        c: [.58, .40, .22], h: .50, v: 2000,   em: 0,    t: 0 },  // 16
+  { n: '提灯',        c: [1, .26, .16],   h: .20, v: 9000,   em: 1.2,  t: 0 },  // 17
+  { n: '土',          c: [.29, .21, .14], h: .40, v: 100,    em: 0,    t: 0 },  // 18
+  { n: '草',          c: [.21, .43, .19], h: .40, v: 200,    em: 0,    t: 0 },  // 19
+  { n: '幹',          c: [.28, .19, .11], h: .80, v: 1600,   em: 0,    t: 0 },  // 20
+  { n: '葉',          c: [.13, .39, .18], h: .20, v: 150,    em: 0,    t: 0 },  // 21
+  { n: '街灯',        c: [1, .86, .60],   h: .50, v: 26000,  em: 1.4,  t: 1 },  // 22
+  { n: '自販機',      c: [.10, .55, .85], h: .90, v: 58000,  em: .65,  t: 2 },  // 23
+  // 街に 163 個しかない。地下の保管庫を見つけた夜が、この街でいちばん大きい当たり
+  { n: '金塊',        c: [1, .78, .22],   h: 2.2, v: 450000, em: .25,  t: 3 }   // 24
 ];
 const NEON_IDS = [9, 10, 11, 12, 13, 14];
 const css = c => 'rgb(' + c.map(v => Math.round(clamp(v, 0, 1) * 255)).join(',') + ')';
@@ -829,7 +898,11 @@ const TOOLS = {
   pipe:  { k: 'pipe',  n: '鉄パイプ',     tier: 1, spd: 1.3, dmg: 22, dur: 420, col: [.40, .43, .49],
     d: '掘るのは苦手。人を黙らせるための道具' },
   neon:  { k: 'neon',  n: 'ネオン管の刀', tier: 2, spd: 1.8, dmg: 40, dur: 520, col: [1, .18, .47], em: 1.1,
-    d: '夜の歌舞伎町でいちばん物騒なもの' }
+    d: '夜の歌舞伎町でいちばん物騒なもの' },
+  /* 拳銃は作れない。持っている相手（警官と紅蓮会）から奪う以外に手に入らない。
+     dur は残弾。撃てば当たらなくても一発減り、街中が銃声に気づく。 */
+  gun:   { k: 'gun',   n: '拳銃',         tier: 0, spd: 0.4, dmg: 30, dur: 24, col: [.20, .20, .24],
+    d: '離れていても届く。撃てば通りの端まで聞こえる', gun: true, reach: 22 }
 };
 const ARMOR = { k: 'helm', n: '鉄のヘルメット', col: [.44, .47, .53], d: '殴られたときのダメージが 25% 減る' };
 // 材料は [ブロックID, 個数]
@@ -849,18 +922,21 @@ const curTool = () => TOOLS[Craft.tool] || TOOLS.hand;
    素性の中身（所持金・体力・初期の道具）は性別で変えない。変えるのは呼び名だけ。
    女を選んで「元ホスト」「解体屋崩れ」が並ぶのはさすがに据わりが悪い。      */
 const GENDERS = ['男', '女'];
+/* 元手。この街の一番安い権利は地下街で 280 万、地上の立ち飲み屋で 500 万ほど。
+   元ホストだけは最初から地上の一軒に手が届き、あとの二人は掘るか建てるかから
+   始まる ── 買うのが先か腕が先か、素性の選択がそのままそこになるようにしてある */
 const ORIGINS = [
-  { k: 'nagare', yen: 120000, tool: 'wood', hp: 100, rep: 0,
+  { k: 'nagare', yen: 800000, tool: 'wood', hp: 100, rep: 0,
     v: {
       '男': ['流れ者', '何も持たずに来た。カバンに木のツルハシが一本。'],
       '女': ['流れ者', '何も持たずに来た。カバンに木のツルハシが一本。']
     } },
-  { k: 'mizu', yen: 260000, tool: 'wood', hp: 85, rep: 8,
+  { k: 'mizu', yen: 6400000, tool: 'wood', hp: 85, rep: 8,
     v: {
       '男': ['元ホスト', '指名は落ちたが顔はまだ利く。金と口はあるが、体は張れない。'],
       '女': ['元キャバ嬢', '指名は落ちたが顔はまだ利く。金と口はあるが、体は張れない。']
     } },
-  { k: 'kaitai', yen: 60000, tool: 'stone', hp: 125, rep: 0,
+  { k: 'kaitai', yen: 100000, tool: 'stone', hp: 125, rep: 0,
     v: {
       '男': ['解体屋崩れ', '壊すことだけは誰にも負けない。石のツルハシ持ち。金はない。'],
       '女': ['元大工', '建てるのも壊すのも現場仕込み。石のツルハシ持ち。金はない。']
@@ -996,13 +1072,25 @@ const onMainStreet = (x, z) => {
   return s === '一番街' || s === 'セントラルロード' || s === '区役所通り' || s === '花道通り';
 };
 // player.name はキャラクター作成で決めたシマの名前に差し替わる（begin で反映）
+/* シマを取り合う 5 者に加えて、どこにも属していない「流れ者」がいる。
+   none は FAC_KEYS に入っていない ── シマの取り分も、見込みも、抗争も持たない。
+   観光客や酔った会社員のように、この街を通り過ぎるだけの人間の置き場所。 */
 const FACTIONS = {
   player: { name: '無頼会', css: '#39ff88' },
   guren: { name: '紅蓮会', css: '#ff3b30' },
   dragons: { name: 'ドラゴンズ', css: '#a45cff' },
   arcadia: { name: 'アルカディア', css: '#16e0ff' },
-  local: { name: '地元の顔役', css: '#ffcf3f' }
+  local: { name: '商店組合', css: '#ffcf3f' },
+  none: { name: '流れ者', css: '#8f96a3' }
 };
+/* 3D 側で使う勢力の色。値を書き写すと、キャラクター作成で選んだ自分の色が
+   ミニマップ（FACTIONS を見る）と印（書き写した色）でずれる。ここで CSS から作る */
+const facColCache = {};
+function facCol(k) {
+  const hex = (FACTIONS[k] || FACTIONS.local).css;
+  return facColCache[hex] ||
+    (facColCache[hex] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255));
+}
 /* 自分のシマの色。キャラクター作成で選ぶ。既存四勢力（赤・紫・水・金）と地図の上で
    取り違えない色相だけを並べてある。独立の店に使う白も避ける */
 const GANG_SW = [
@@ -1011,6 +1099,9 @@ const GANG_SW = [
 ];
 const FAC_KEYS = ['player', 'guren', 'dragons', 'arcadia', 'local'];
 const RIVALS = ['guren', 'dragons', 'arcadia', 'local'];
+/* シマの 100% を分け合っている側か。流れ者（none）はここに入らないので、
+   取り分も地力も持たない ── 倒しても勝っても、シマは 1% も動かない */
+const hasShare = k => FAC_KEYS.indexOf(k) >= 0;
 // シマは 100% を 5 勢力で分け合う。過半数の 50% を握った勢力のシマになる
 const HOLD_PC = 50;
 // 過半数のシマ。獲っても終わりではない ── ここから先も街は動き続ける
@@ -1018,15 +1109,27 @@ const WIN_ZONES = 5;
 // このシマの地元がどこか。店の元の持ち主も、地力の配り方もここに揃える
 const zoneLead = i => RIVALS[i % 4];
 
-/* 店は「一晩で買える値段」に寄せる。income は元の日商。
-   実際に入るのは 1 ゲーム時間（=現実 1 分）ごとに 1/4。
-   店の元は取れるか取れないかくらい。買う理由は金ではなく支配率のほう。 */
-const SHOP_PRICE_MUL = 0.55;
-const hourlyIncome = s => Math.round(s.income / 4);
+/* 店を買うというのは、この街では建物を買うことではなく「権利を買う」こと。
+   値段は 保証金（家賃の 10 ヶ月ぶん）＋造作譲渡料＋権利金 の合計で、歌舞伎町の
+   相場では小箱の飲み屋で数百万、大箱のホストクラブで億に届く。price はその取得費。
+   実際の売値には物件ごとの当たり外れ（0.8〜1.5 倍）が乗り、どこかの勢力の
+   傘下ならみかじめのぶん 1.35 倍。
+   income は元の日商。買う理由は金ではなく支配率のほうで、億を積んでも
+   元が取れるまでには何日もかかる。                                          */
+/* 上がりは 1 ゲーム時間（=現実 1 分）ごとに入る。日商のまま渡すと億の店は
+   何年経っても元が取れないので、1 時間で日商 1.5 日ぶんの早さにしてある ──
+   それでも立ち飲み屋で 1.5 日、ホストクラブで 2 日以上かかる。 */
+const INCOME_RATE = 1.5;
+const hourlyIncome = s => Math.round(s.income * INCOME_RATE);
+// 子分の食い扶持。月 60 万ほど＝日 2 万を、上がりと同じ早さで出していく
+const CREW_DAILY = 20000;
 // 店を買ったときに動く支配率。安い立ち飲みと高いホストクラブが同じでは釣り合わない
 const shopControl = s => Math.round(6 + s.type.inf * 1.1);
 // どこかの勢力の傘下の店は、みかじめのぶんだけ高く付く
 const shopPrice = s => s.owner && s.owner !== 'player' ? Math.round(s.price * 1.35 / 1000) * 1000 : s.price;
+/* 実際に払う額。傘下の店はみかじめのぶん高く、こちらの顔が利くぶん安くなる。
+   影響力 100 で三割引 ── 店を並べて名前が通れば、次の物件はその名前で安く回ってくる */
+const shopCost = s => Math.round(shopPrice(s) * (1 - infDiscount()) / 10000) * 10000;
 /* 店の元の持ち主。4 割ほどは独立、残りはどこかの勢力の傘下。
    傘下の店を買い取ると、その勢力が握っていた支配率がそのままこちらへ移る */
 function shopOwnerFor(zi, q) {
@@ -1034,14 +1137,23 @@ function shopOwnerFor(zi, q) {
   if (r < 0.42) return null;
   return r < 0.74 ? zoneLead(zi) : RIVALS[Math.floor(r * 991) % 4];
 }
+/* 並び順は変えないこと。maybeShop はこの配列を座標から引いた番号で選ぶので、
+   入れ替えると街に並ぶ店の顔ぶれが丸ごと変わる（格の順は BUILD が持っている） */
 const SHOP_TYPES = [
-  { key: 'tachinomi', name: '立ち飲み屋', price: 58000, income: 5200, neon: 14, inf: 2 },
-  { key: 'bar', name: 'バー', price: 180000, income: 14000, neon: 11, inf: 4 },
-  { key: 'ramen', name: 'ラーメン屋', price: 120000, income: 9000, neon: 14, inf: 3 },
-  { key: 'mahjong', name: '雀荘', price: 260000, income: 21000, neon: 13, inf: 6 },
-  { key: 'live', name: 'ライブハウス', price: 300000, income: 19000, neon: 10, inf: 7 },
-  { key: 'cabaret', name: 'キャバクラ', price: 560000, income: 47000, neon: 12, inf: 10 },
-  { key: 'host', name: 'ホストクラブ', price: 720000, income: 62000, neon: 9, inf: 12 }
+  // 5〜8坪。雑居ビルの一階か路地の奥。造作をそのまま引き継いで開ける一番下の箱
+  { key: 'tachinomi', name: '立ち飲み屋', price: 4800000, income: 90000, neon: 14, inf: 2 },
+  // 10〜15坪の小箱。ゴールデン街のカウンターもこの値段
+  { key: 'bar', name: 'バー', price: 12000000, income: 220000, neon: 11, inf: 4 },
+  // 8〜12坪＋厨房設備。深夜営業の看板ごと
+  { key: 'ramen', name: 'ラーメン屋', price: 8500000, income: 160000, neon: 14, inf: 3 },
+  // 20〜30坪、二階以上。卓と空調でこの額になる
+  { key: 'mahjong', name: '雀荘', price: 24000000, income: 300000, neon: 13, inf: 6 },
+  // 地下。防音と音響で造作が重い。上がりは設備に見合わない
+  { key: 'live', name: 'ライブハウス', price: 32000000, income: 400000, neon: 10, inf: 7 },
+  // 30〜50坪。内装とボックスに金がかかっている
+  { key: 'cabaret', name: 'キャバクラ', price: 95000000, income: 1200000, neon: 12, inf: 10 },
+  // 40〜80坪の大箱。この街でいちばん高い看板
+  { key: 'host', name: 'ホストクラブ', price: 180000000, income: 2200000, neon: 9, inf: 12 }
 ];
 const SHOP_PREFIX = ['蜃気楼', '夜光', '螢', '無頼', '瑠璃', '花筏', '暁', '奈落', '銀河', '不夜', '朱雀', '月虹', '泥濘', '極彩', '白夜'];
 // シマによって並ぶ店が違う（実際の歌舞伎町のとおり）
@@ -1346,13 +1458,15 @@ function genDepot() {
 /* SUBNADE の店。地上の店とは業態が違う（夜の商売ではなく、地下街の小さな店）。
    本通りの南北の壁をくり抜いて、間口 3 マスの店を並べる。
    買い方・上がり・支配率の扱いは地上の店とまったく同じ。                    */
+/* 地下街の店。家賃も権利も地上よりずっと安い ── 夜の商売ではないし、
+   通りに面していないぶん、そもそも取り合いになっていない */
 const SUB_SHOP_TYPES = [
-  { key: 'kissa', name: '喫茶店', price: 90000, income: 7000, neon: 14, inf: 3 },
-  { key: 'soba', name: '立ち食いそば', price: 70000, income: 6000, neon: 11, inf: 2 },
-  { key: 'kutsu', name: '靴修理', price: 55000, income: 4200, neon: 10, inf: 2 },
-  { key: 'yohin', name: '洋品店', price: 130000, income: 9500, neon: 12, inf: 4 },
-  { key: 'hon', name: '書店', price: 110000, income: 8000, neon: 13, inf: 3 },
-  { key: 'drug', name: 'ドラッグストア', price: 160000, income: 12000, neon: 9, inf: 4 }
+  { key: 'kissa', name: '喫茶店', price: 6200000, income: 120000, neon: 14, inf: 3 },
+  { key: 'soba', name: '立ち食いそば', price: 4500000, income: 110000, neon: 11, inf: 2 },
+  { key: 'kutsu', name: '靴修理', price: 2800000, income: 45000, neon: 10, inf: 2 },
+  { key: 'yohin', name: '洋品店', price: 7000000, income: 95000, neon: 12, inf: 4 },
+  { key: 'hon', name: '書店', price: 5800000, income: 80000, neon: 13, inf: 3 },
+  { key: 'drug', name: 'ドラッグストア', price: 11000000, income: 260000, neon: 9, inf: 4 }
 ];
 function genSubShops() {
   const placed = [];
@@ -1389,8 +1503,8 @@ function subShop(cx, cz, dx, dz, type, q) {
     id: shopSeq++, zone: zoneOf(cx, cz), type, under: true, y: SUB_Y,
     x: bx + 0.5, z: bz + 0.5, bx, bz,
     name: SHOP_PREFIX[Math.floor(q * 719) % SHOP_PREFIX.length],
-    price: Math.round(type.price * SHOP_PRICE_MUL / 1000) * 1000,
-    income: Math.round(type.income / 100) * 100,
+    price: Math.round(type.price / 10000) * 10000,
+    income: Math.round(type.income / 1000) * 1000,
     owner: shopOwnerFor(zoneOf(cx, cz), q)
   };
   Shops.push(shop);
@@ -1452,17 +1566,7 @@ function genBuilding(x0, z0, x1, z1, h, bi, bj, li, golden, zi) {
     const cx = Math.floor((x0 + x1) / 2), cz = Math.floor((z0 + z1) / 2);
     fill(cx - 1, top + 1, cz - 1, cx + 1, top + 3, cz + 1, 6);
   }
-  // 窓（外周だけ）
-  for (let y = GY + 2; y < top; y += 2) {
-    for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
-      const edge = (x === x0 || x === x1 || z === z0 || z === z1);
-      if (!edge) continue;
-      if ((x + z) % 2) continue;
-      const q = hash3(x, y, z);
-      if (q < 0.42) continue;
-      vox[idx(x, y, z)] = q > 0.80 ? 8 : 7;
-    }
-  }
+  windows(x0, z0, x1, z1, top, 0.80, 0.42);   // 窓（外周だけ）
   // ネオンの縦看板を通りに面した壁に貼る
   const sides = [
     { fx: 0, fz: -1, x: Math.floor((x0 + x1) / 2), z: z0 - 1 },
@@ -1516,14 +1620,17 @@ function setRaw(x, y, z, id) { if (inside(x, y, z)) vox[idx(x, y, z)] = id; }
 /* ---- 目印 --------------------------------------------------------------
    歌舞伎町の見え方を決めているものだけ、手で置く。                        */
 
-// 窓を外周に散らす。ビル共通
-function windows(x0, z0, x1, z1, top, lit) {
+/* 窓を外周に散らす。ビル共通。
+   lit  = これを超えた窓は灯る（小さいほど明るいビル）
+   dens = これ未満は窓にしない（大きいほど窓の少ないビル）        */
+function windows(x0, z0, x1, z1, top, lit, dens) {
+  const d = dens || 0.34;
   for (let y = GY + 2; y < top; y += 2)
     for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
       if (x !== x0 && x !== x1 && z !== z0 && z !== z1) continue;
       if ((x + z) % 2) continue;
       const q = hash3(x, y, z);
-      if (q < 0.34) continue;
+      if (q < d) continue;
       vox[idx(x, y, z)] = q > lit ? 8 : 7;
     }
 }
@@ -1690,9 +1797,11 @@ function maybeShop(x0, z0, x1, z1, zi, bi, bj, li, top) {
   const shop = {
     id: shopSeq++, zone: zi, type,
     x: c.x + 0.5, z: c.z + 0.5, bx: c.x, bz: c.z,
+    // 扉が向いている向き。格上げのときに入口を塗り替えるのに要る
+    dx: c.dx, dz: c.dz,
     name: SHOP_PREFIX[Math.floor(hash2(bi * 7 + li, bj * 3) * 883) % SHOP_PREFIX.length],
-    price: Math.round(type.price * mul * SHOP_PRICE_MUL / 1000) * 1000,
-    income: Math.round(type.income * mul / 100) * 100,
+    price: Math.round(type.price * mul / 10000) * 10000,
+    income: Math.round(type.income * mul / 1000) * 1000,
     owner: shopOwnerFor(zi, q)
   };
   Shops.push(shop);
@@ -2067,7 +2176,7 @@ const SPAWN_X = 82.5, SPAWN_Z = 133.5;
 const P = {
   x: SPAWN_X, y: GY, z: SPAWN_Z, vy: 0, yaw: 0, pitch: 0.10,
   onGround: false, hp: 100, maxhp: 100,
-  yen: 120000, inf: 0, rep: 0, wanted: 0, drunk: 0, notoriety: 0,
+  yen: 800000, inf: 0, rep: 0, wanted: 0,
   crew: [], firstPerson: false, camDist: 5.2, walkPhase: 0,
   atkCd: 0, moving: false, dug: 0,
   // キャラクター作成で決まる見た目と素性
@@ -2082,13 +2191,20 @@ const MIN_PER_SEC = 1;                 // 現実 1 秒 = ゲーム内 1 分
 const Clock = { min: 20 * 60, day: 1, elapsed: 0 };
 const PR = 0.30, PH = 1.8, EYE = 1.62;
 
+/* 体が占めているブロックの範囲。当たり判定と「自分の中にブロックを置けない」で
+   同じ箱を見る。毎フレーム何度も呼ぶので、使い回しの 1 個を書き換えて返す */
+const _body = { x0: 0, x1: 0, y0: 0, y1: 0, z0: 0, z1: 0 };
+function bodyBox(x, y, z) {
+  _body.x0 = Math.floor(x - PR); _body.x1 = Math.floor(x + PR);
+  _body.y0 = Math.floor(y); _body.y1 = Math.floor(y + PH - 0.001);
+  _body.z0 = Math.floor(z - PR); _body.z1 = Math.floor(z + PR);
+  return _body;
+}
 function boxHits(x, y, z) {
-  const x0 = Math.floor(x - PR), x1 = Math.floor(x + PR);
-  const z0 = Math.floor(z - PR), z1 = Math.floor(z + PR);
-  const y0 = Math.floor(y), y1 = Math.floor(y + PH - 0.001);
-  for (let yy = y0; yy <= y1; yy++)
-    for (let zz = z0; zz <= z1; zz++)
-      for (let xx = x0; xx <= x1; xx++)
+  const b = bodyBox(x, y, z);
+  for (let yy = b.y0; yy <= b.y1; yy++)
+    for (let zz = b.z0; zz <= b.z1; zz++)
+      for (let xx = b.x0; xx <= b.x1; xx++)
         if (solid(xx, yy, zz)) return true;
   return false;
 }
@@ -2168,7 +2284,13 @@ function aim() {
   return raycast(P.x, P.y + EYE, P.z, d.x, d.y, d.z, 6.5);
 }
 
-const Bag = { count: new Int32Array(BLOCKS.length), total: 0 };
+/* カバンの容量。無制限だと「掘り切ってから一度に売る」が常に最善で、
+   六掛けと満額の使い分けも、地下から地上へ戻る往復も意味を持たなくなる。
+   金塊 3 個でツルハシが作れる程度には広く、街を空にはできない程度に狭く */
+const BAG_MAX = 320;
+const Bag = { count: new Int32Array(BLOCKS.length) };
+const bagCount = () => Bag.count.reduce((a, b) => a + b, 0);
+const bagFull = () => bagCount() >= BAG_MAX;
 const Dig = { t: 0, tx: -1, ty: -1, tz: -1, active: false, place: false, placeCd: 0 };
 let hotbar = [], hotSel = 0;
 
@@ -2208,11 +2330,25 @@ function updateBag() {
   for (let i = 1; i < BLOCKS.length; i++) if (Bag.count[i] > 0)
     rows.push(`<div class="row"><span>${BLOCKS[i].n}</span><span>×${Bag.count[i]}</span></div>`);
   const box = $('bag');
+  // 容量は箱を隠す前に書く。隠れているあいだ古い数字が残っていると、
+  // 次に開いた瞬間だけ嘘の数が見える
+  const n = bagCount(), bn = $('bagn');
+  bn.textContent = `${n} / ${BAG_MAX}`;
+  bn.style.color = n >= BAG_MAX ? '#ff3b30' : n > BAG_MAX * 0.85 ? '#ffcf3f' : 'rgba(255,255,255,.55)';
   if (!rows.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   $('baglist').innerHTML = rows.slice(0, 8).join('')
     + (rows.length > 8 ? `<div class="row" style="opacity:.5"><span>ほか ${rows.length - 8} 種</span><span></span></div>` : '');
   $('bagtot').textContent = yen(bagValue());
+}
+/* 満杯の知らせ。掘るたびに出すと流れてしまうので間隔を空ける */
+let bagWarnT = -9999;
+function warnBagFull() {
+  const now = performance.now();
+  if (now - bagWarnT < 5000) return;
+  bagWarnT = now;
+  log(`カバンがいっぱいだ（${BAG_MAX}個）。${kbT('G')} で換金してから掘れ。`, 'bad');
+  Snd.lose();
 }
 
 /* ---- 道具とクラフト ----------------------------------------------------- */
@@ -2237,7 +2373,9 @@ function wearTool(n) {
   if (Craft.dur[k] <= 0) {
     delete Craft.owned[k]; delete Craft.dur[k];
     Craft.tool = bestTool();
-    log(`${TOOLS[k].n} が壊れた。`, 'bad'); Snd.lose();
+    // 拳銃は壊れるのではなく弾が尽きる。空の銃は置いていく
+    log(TOOLS[k].gun ? '弾が切れた。空の拳銃は捨てた。' : `${TOOLS[k].n} が壊れた。`, 'bad');
+    Snd.lose();
   }
   updateToolHud();
 }
@@ -2292,11 +2430,21 @@ function drawCraft() {
       + (spec ? `<i style="opacity:.42">${spec}</i>` : '')
       + `<span class="mat">${mats}</span></span>${btn}</div>`;
   }).join('')
-    + (Craft.owned.hand && Craft.tool !== 'hand'
-      ? `<div class="rcp"><span class="ic" style="background:${css(TOOLS.hand.col)}"></span>`
-      + `<span class="tx"><b>素手</b><i>${TOOLS.hand.d}</i></span>`
-      + `<button data-eq="hand">持ち替える</button></div>` : '');
+    /* レシピの無い持ち物 ── 素手と、奪ってきた拳銃。作れないので上の一覧には
+       出てこないが、持っているなら持ち替えの行だけ並べる */
+    + ['hand'].concat(Object.keys(Craft.owned)
+      .filter(k => k !== 'hand' && TOOLS[k] && !RECIPES.some(r => r.out === k)))
+      .filter(k => Craft.tool !== k)
+      .map(k => {
+        const T = TOOLS[k];
+        const left = Craft.dur[k];
+        return `<div class="rcp"><span class="ic" style="background:${css(T.col)}"></span>`
+          + `<span class="tx"><b>${T.n}</b><i>${T.d}</i>`
+          + (T.gun && left != null ? `<i style="opacity:.42">残弾 ${left} / ${T.dur}　殴り +${T.dmg}</i>` : '')
+          + `</span><button data-eq="${k}">持ち替える</button></div>`;
+      }).join('');
   drawBuild();
+  drawUp();
 }
 $('craftlist').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -2384,13 +2532,14 @@ function doBuild(bd) {
   const shop = {
     id: shopSeq++, zone: sp.zi, type,
     x: sp.c.x + 0.5, z: sp.c.z + 0.5, bx: sp.c.x, bz: sp.c.z,
+    dx: sp.c.dx, dz: sp.c.dz,
     name: pick(SHOP_PREFIX),
-    price: Math.round(type.price * SHOP_PRICE_MUL / 1000) * 1000,
-    income: Math.round(type.income * 0.9 / 100) * 100,
+    price: Math.round(type.price / 10000) * 10000,
+    income: Math.round(type.income * 0.9 / 1000) * 1000,
     owner: 'player', built: true
   };
   Shops.push(shop);
-  shopFront(shop, sp.c, (x, y, z, id) => setV(x, y, z, id));
+  shopFront(shop, sp.c, setV);
   builtRoom(shop, sp.c);
   recalcInf();
   // 自分で出した店は買った店より重い。誰の看板も掛かっていなかった場所だから
@@ -2414,7 +2563,7 @@ function drawBuild() {
     return `<div class="rcp">`
       + `<span class="ic" style="background:${css(BLOCKS[type.neon].c)}"></span>`
       + `<span class="tx"><b>${type.name}</b>`
-      + `<i>上がり ${yen(Math.round(type.income * 0.9 / 4))}／時　支配 +${shopControl({ type }) + 2}%</i>`
+      + `<i>上がり ${yen(hourlyIncome({ income: type.income * 0.9 }))}／時　支配 +${shopControl({ type }) + 2}%</i>`
       + `<span class="mat">${mats}</span></span>`
       + `<button data-b="${i}" ${ok && enough ? '' : 'disabled'}>建てる</button></div>`;
   }).join('');
@@ -2424,11 +2573,87 @@ $('buildlist').addEventListener('click', e => {
   if (b.dataset.b !== undefined) doBuild(BUILD[+b.dataset.b]);
 });
 
+/* ---- 格上げ --------------------------------------------------------------
+   買った店も建てた店も、金と資材を積めば一段上の格に変えられる。上がりが増え、
+   その店がシマに効かせる支配率も上がる。店を並べるだけでは毎時の上がりが
+   複利で膨らむだけになるので、増えた金の行き先をここに作る。
+   BUILD の並びがそのまま格の順。地下街の店（別の業種表）は上げられない。 */
+const UP_MUL = 0.55;                     // 次の格を建てるのに必要な資材のうち、積む割合
+// 相手は「いま目の前にある自分の店」。どの店を上げたのか分からなくならないように
+const upNear = () => Shops.find(s => s.owner === 'player' && !s.under
+  && Math.hypot(s.x - P.x, s.z - P.z) < 6);
+function upgradeOf(s) {
+  if (!s || s.owner !== 'player' || s.under) return null;
+  const i = BUILD.findIndex(b => b.key === s.type.key);
+  if (i < 0 || i + 1 >= BUILD.length) return null;
+  const bd = BUILD[i + 1];
+  const to = SHOP_TYPES.find(t => t.key === bd.key);
+  if (!to) return null;
+  return {
+    shop: s, from: s.type, to,
+    need: bd.need.map(([id, k]) => [id, Math.max(1, Math.round(k * UP_MUL))]),
+    cost: Math.round((to.price - s.type.price) / 10000) * 10000
+  };
+}
+function doUpgrade() {
+  const u = upgradeOf(upNear());
+  if (!u) { log('格上げできる自分の店の前ではない。', 'bad'); return; }
+  if (P.yen < u.cost) { log(`${yen(u.cost - P.yen)} 足りない。`, 'bad'); return; }
+  if (!u.need.every(([id, k]) => matHave(id) >= k)) { log('資材が足りない。もっと剥がしてこい。', 'bad'); return; }
+  const s = u.shop, was = u.from;
+  P.yen -= u.cost;
+  u.need.forEach(([id, k]) => matPay(id, k));
+  s.type = u.to;
+  s.up = true;                          // セーブが「生成時の格ではない」と分かるように
+  // 上がりは元の店の当たり外れ（生成時の倍率）を保ったまま、格の比で伸ばす
+  s.income = Math.round(s.income * (u.to.income / was.income) / 1000) * 1000;
+  s.price = Math.round(u.to.price / 10000) * 10000;
+  // 入口を新しい業種の色に塗り替える。看板が前の格のままでは格上げが街に見えない
+  if (s.dx !== undefined) shopFront(s, { x: s.bx, z: s.bz, dx: s.dx, dz: s.dz }, setV);
+  shiftControl(s.zone, Math.max(1, shopControl(s) - shopControl({ type: was })),
+    `${s.name}を${u.to.name}にした`);
+  recalcInf();
+  log(`「${s.name}」を ${was.name} から ${u.to.name} へ格上げした。上がり ${yen(hourlyIncome(s))}／時`, 'good');
+  Snd.win();
+  rebuildHotbar(); updateBag(); drawCraft(); hud();
+}
+function drawUp() {
+  const u = upgradeOf(upNear());
+  const head = $('uphead'), list = $('uplist');
+  if (!u) {
+    head.innerHTML = '格上げ ── 自分の店の前に立って開くと、一段上の格に変えられる';
+    head.style.opacity = .45;
+    list.innerHTML = '';
+    return;
+  }
+  head.style.opacity = 1;
+  head.innerHTML = `格上げ ── <span style="color:#39ff88">${esc(u.shop.name)}</span>`
+    + `（${u.from.name}・${Terr[u.shop.zone].name}）`;
+  const enough = u.need.every(([id, k]) => matHave(id) >= k) && P.yen >= u.cost;
+  const mats = u.need.map(([id, k]) =>
+    `<span class="${matHave(id) >= k ? '' : 'no'}">${matName(id)} ${matHave(id)}/${k}</span>`).join('')
+    + `<span class="${P.yen >= u.cost ? '' : 'no'}">${yen(u.cost)}</span>`;
+  const gain = hourlyIncome({ income: Math.round(u.shop.income * (u.to.income / u.from.income) / 1000) * 1000 })
+    - hourlyIncome(u.shop);
+  list.innerHTML = `<div class="rcp">`
+    + `<span class="ic" style="background:${css(BLOCKS[u.to.neon].c)}"></span>`
+    + `<span class="tx"><b>${u.to.name} にする</b>`
+    + `<i>上がり +${yen(gain)}／時　支配 +${Math.max(1, shopControl({ type: u.to }) - shopControl({ type: u.from }))}%</i>`
+    + `<span class="mat">${mats}</span></span>`
+    + `<button data-up="1" ${enough ? '' : 'disabled'}>格上げ</button></div>`;
+}
+$('uplist').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.up) doUpgrade();
+});
+
 function breakBlock(b) {
   const def = BLOCKS[b.id];
   if (!def || def.h < 0) return;
+  // 満杯なら壊さない。持って帰れないものを消しても、街が減るだけで何も残らない
+  if (bagFull()) { warnBagFull(); return; }
   setV(b.x, b.y, b.z, AIR);
-  Bag.count[b.id]++; Bag.total++;
+  Bag.count[b.id]++;
   P.dug++;
   wearTool(1);
   Snd.dig(def);
@@ -2453,10 +2678,8 @@ function placeBlock(b) {
   const px = b.x + b.nx, py = b.y + b.ny, pz = b.z + b.nz;
   if (!inside(px, py, pz) || vox[idx(px, py, pz)] !== AIR) return;
   // 自分の体と重なる場所には置けない
-  const x0 = Math.floor(P.x - PR), x1 = Math.floor(P.x + PR);
-  const z0 = Math.floor(P.z - PR), z1 = Math.floor(P.z + PR);
-  const y0 = Math.floor(P.y), y1 = Math.floor(P.y + PH - 0.001);
-  if (px >= x0 && px <= x1 && pz >= z0 && pz <= z1 && py >= y0 && py <= y1) return;
+  const bb = bodyBox(P.x, P.y, P.z);
+  if (px >= bb.x0 && px <= bb.x1 && pz >= bb.z0 && pz <= bb.z1 && py >= bb.y0 && py <= bb.y1) return;
   setV(px, py, pz, id);
   Bag.count[id]--;
   Snd.place();
@@ -2469,7 +2692,7 @@ function sellBag() {
   const rate = near ? 1 : 0.6;
   const got = Math.round(v * rate);
   P.yen += got;
-  Bag.count.fill(0); Bag.total = 0;
+  Bag.count.fill(0);
   rebuildHotbar(); updateBag(); hud();
   Snd.coin();
   log(near ? `${near.name} で ${yen(got)} に換えた。` : `故買屋に流した。${yen(got)}（六掛け）`, 'money');
@@ -2489,9 +2712,9 @@ const ARCH = [
     persona: '紅蓮会の若い衆。シマの銭勘定にうるさく、舐められることを何より嫌う。低い声で短く喋る。', gender: '男' },
   { k: 'hangure', job: '半グレ', fac: 'dragons', col: [.5, .2, .6], hp: 100, hair: [.6, .2, .3],
     persona: 'ドラゴンズの若い半グレ。上下関係が薄く、その場のノリで動く。挑発的で軽い。', gender: '男' },
-  { k: 'cop', job: '新宿署の警官', fac: 'local', col: [.14, .18, .35], hp: 110, hair: [.1, .1, .12],
+  { k: 'cop', job: '新宿署の警官', fac: 'none', col: [.14, .18, .35], hp: 110, hair: [.1, .1, .12],
     persona: '深夜のパトロールに出ている警官。疲れていて事務的だが、揉め事の匂いには敏感。', gender: '男' },
-  { k: 'drunk', job: '酔った会社員', fac: 'local', col: [.28, .3, .38], hp: 40, hair: [.12, .1, .09],
+  { k: 'drunk', job: '酔った会社員', fac: 'none', col: [.28, .3, .38], hp: 40, hair: [.12, .1, .09],
     persona: '終電を逃した会社員。呂律が回らず、話が飛ぶ。金払いはいいが記憶は曖昧。', gender: '男' },
   { k: 'tout', job: '客引き', fac: 'local', col: [.4, .32, .2], hp: 55, hair: [.15, .12, .1],
     persona: '居酒屋の客引き。誰にでも声をかけ、断られ慣れている。街の噂には妙に詳しい。', gender: '男' },
@@ -2499,13 +2722,13 @@ const ARCH = [
     persona: '街のことなら何でも知っている情報屋。金額を先に言わせる。もったいぶった喋り方。', gender: '男' },
   { k: 'bartender', job: 'バーテン', fac: 'local', col: [.2, .2, .24], hp: 60, hair: [.1, .1, .12],
     persona: 'ゴールデン街の古いバーのバーテン。無駄口は叩かないが、客の話は全部聞いている。', gender: '男' },
-  { k: 'fortune', job: '路上占い師', fac: 'local', col: [.35, .2, .45], hp: 35, hair: [.2, .15, .2],
+  { k: 'fortune', job: '路上占い師', fac: 'arcadia', col: [.35, .2, .45], hp: 35, hair: [.2, .15, .2],
     persona: '路上に座る占い師。抽象的で不吉なことを言う。当たっているのかはわからない。', gender: '女' },
-  { k: 'busker', job: 'バンドマン', fac: 'local', col: [.25, .3, .4], hp: 45, hair: [.4, .15, .2],
+  { k: 'busker', job: 'バンドマン', fac: 'arcadia', col: [.25, .3, .4], hp: 45, hair: [.4, .15, .2],
     persona: '路上ライブ中の売れないバンドマン。夢の話と金の無さを交互に喋る。', gender: '男' },
-  { k: 'tourist', job: '外国人観光客', fac: 'local', col: [.5, .5, .55], hp: 40, hair: [.6, .5, .3],
+  { k: 'tourist', job: '外国人観光客', fac: 'none', col: [.5, .5, .55], hp: 40, hair: [.6, .5, .3],
     persona: 'ネオンを撮りに来た観光客。片言の日本語と英語が混ざる。警戒心が薄い。', gender: '男' },
-  { k: 'homeless', job: '路上生活者', fac: 'local', col: [.3, .28, .22], hp: 45, hair: [.35, .33, .3],
+  { k: 'homeless', job: '路上生活者', fac: 'none', col: [.3, .28, .22], hp: 45, hair: [.35, .33, .3],
     persona: 'この街に何年もいる路上生活者。街の力関係を上から見ている。ぼそぼそ喋る。', gender: '男' },
   { k: 'idol', job: '地下アイドル', fac: 'arcadia', col: [.9, .5, .75], hp: 35, hair: [.85, .4, .55],
     persona: 'ライブ終わりの地下アイドル。営業スマイルの下に疲れがある。ファンとカネの区別がついている。', gender: '女' },
@@ -2550,6 +2773,24 @@ const ARCH = [
     persona: '地下駐車場で荷物を受け渡している運び屋。落ち着きがなく、常に時間を気にしている。'
       + '中身のことは絶対に言わないが、金の話には乗ってくる。早口。', gender: '男', floor: PARK_Y }
 ];
+/* おごるときの相場。役どころで違う ── 路上生活者への五万は効きすぎるし、
+   ホストクラブのブースでシャンパンも入れずに三千円では話にならない。
+   ここは「普通に一杯」の額で、いくら出すかを決めるのはプレイヤー。相場との
+   開きをどう受け取るか（喜ぶか、侮辱と取るか、裏を疑うか）は相手が決める ──
+   AI にはこの額を物差しとして渡し、繋がらないときは treatStep が段に落とす。
+   その人が普段いくら動かしているかの目安でもあって、懐（n.yen）もここから決める。 */
+const TREAT = {
+  homeless: 1000, busker: 1000, sweeper: 2000, subclerk: 2000, tourist: 3000, drunk: 3000,
+  fortune: 3000, ramen: 3000, guard: 4000, tout: 4000, scout: 5000, bartender: 5000,
+  idol: 8000, runner: 10000, hangure: 15000, lookout: 15000, kyaba: 20000, dj: 20000,
+  cop: 30000, yakuza: 30000, host: 50000, info: 50000
+};
+const treatYen = a => TREAT[a.k] || 5000;
+/* 懐の中身の目安。ふだん動かしている額（TREAT）と、その人が持ち歩いている現金は
+   別もの ── 警官や地下街の店員は、袖の下の相場ほど現金を持っていない。
+   書いていない役どころは TREAT のまま（現金商売の連中はだいたいそれで合う） */
+const PURSE = { cop: 4000, guard: 3000, subclerk: 3000, info: 30000 };
+const purseYen = a => PURSE[a.k] || treatYen(a);
 const SEI = ['佐々木', '黒岩', '桐生', '真壁', '一之瀬', '鮫島', '氷室', '早乙女', '猪熊', '九条', '天堂', '甲斐', '朝倉', '不破', '獅子堂', '苅部'];
 const MEI_M = ['亮', '哲', '龍司', '慎', '拓海', '大河', '晴', '樹', '零', '要', '蓮', '匠'];
 const MEI_F = ['澪', '玲奈', '茜', '沙羅', '瑠衣', '奏', '千夏', '灯', '雫', '真昼', '柚', '有栖'];
@@ -2570,7 +2811,8 @@ function makeNPC(arch, x, z) {
   const n = {
     id: npcSeq++, arch, name, x, z, y: arch.floor || GY, floor: arch.floor || GY, yaw: rnd(0, 6.28),
     hp: arch.hp, maxhp: arch.hp, trust: irnd(15, 45), fear: irnd(0, 15),
-    yen: irnd(3, 60) * 1000, state: 'walk', t: 0, spd: rnd(2.2, 3.6),
+    // 懐の中身。役どころの相場（TREAT）の 2〜20 倍。ホストは持っているし、路上生活者は持っていない
+    yen: purseYen(arch) * irnd(2, 20), state: 'walk', t: 0, spd: rnd(2.2, 3.6),
     ni: 0, nj: 0, tx: x, tz: z, lat: rnd(-LANE, LANE), phase: rnd(0, 6.28),
     bark: '', barkT: 0, hist: [], crew: false, down: 0, hostile: false,
     barkCount: 0, lastAI: 0,
@@ -2713,7 +2955,7 @@ function shiftControl(zi, v, why, from) {
       if (g <= 0) return;
       t.share[k] -= g; t.share.player += g; need -= g;
     };
-    if (from && from !== 'player') take(from, need);
+    if (from && from !== 'player' && isRival(from)) take(from, need);
     const pool = RIVALS.reduce((a, k) => a + t.share[k], 0);
     if (need > 0 && pool > 0) {
       const want = need;
@@ -2755,41 +2997,96 @@ function recalcInf() {
 const heldZones = () => Terr.filter(t => t.held).length;
 const cityShare = () => Terr.reduce((a, t) => a + t.share.player, 0) / Terr.length;
 
-/* ---- 勢力との関係 --------------------------------------------------------
-   敵対度 0 = 平穏 / 100 = 全面抗争。50 を超えると敵対で、その勢力は
-   もう傘下に入らない ── 力ずくで削るか、頭を下げて手打ちにするかの二択。 */
-const HOSTILE = 50, VASSAL_CREW = 3;
-const Rel = { guren: 0, dragons: 0, arcadia: 0, local: 0 };
+/* ---- 影響力の効き --------------------------------------------------------
+   顔が利くというのは、この街では二つのことを意味する ──
+   物件を相場より安く回してもらえることと、後ろに人を置けることの二つ。      */
+// 店の言い値の値引き。影響力 100 で三割。誰も知らない人間には誰も安くしない
+const INF_DISCOUNT_MAX = 0.30;
+const infDiscount = () => clamp(P.inf, 0, 100) / 100 * INF_DISCOUNT_MAX;
+// 連れて歩ける頭数。顔が利かないうちは 3 人まで
+const crewMax = () => clamp(3 + Math.floor(P.inf / 12), 3, 10);
+
+/* ---- 引き入れ ------------------------------------------------------------
+   慕われて付いてくるか、逆らえなくて付いてくるか。人が動く理由はどちらでもいいが、
+   両方を中途半端に持っている相手より、どちらか一方が振り切れている相手のほうが落ちる。
+   ── 高いほうを丸ごと、低いほうを半分だけ数えた％で決まる。                */
+function joinChance(n) {
+  if (!n) return 0;
+  const hi = Math.max(n.trust, n.fear), lo = Math.min(n.trust, n.fear);
+  return clamp(hi + lo * 0.5, 0, 100);
+}
+// 子分に加える。上限は影響力しだい。加われば、その勢力の見込みもそのぶん動く
+function joinCrew(n) {
+  if (n.crew) return false;
+  if (P.crew.length >= crewMax()) {
+    log(`もう ${crewMax()} 人で手一杯だ。影響力を上げないと増やせない。`, 'bad');
+    return false;
+  }
+  n.crew = true; n.hostile = false; P.crew.push(n);
+  P.rep += 1; recalcInf();
+  const f = n.arch.fac;
+  log(`${n.name} が子分になった。（${P.crew.length}/${crewMax()}）`, 'good');
+  Snd.win();
+  // 看板を背負っている人間を抜いたほうが、その組の見込みは大きく動く
+  addFav(f, isHeavy(n) ? 14 : 8, `${n.name}を引き抜いた`);
+  return true;
+}
+
+/* 潰されるとシマが大きく動く役どころ。組の看板を背負って立っている連中 */
+const HEAVY_K = ['yakuza', 'hangure', 'lookout', 'runner'];
+const isHeavy = n => HEAVY_K.includes(n.arch.k);
+/* 地力の上げ下げ。傘下を呑んだ勢力は上限を超えていることがあるので、
+   Math.min だけで書くと勝った側がかえって痩せる。下限は 1（足場は消えない） */
+const BASE_CAP = 24;
+const raiseBase = (t, k, v) => { if (t.base[k] < BASE_CAP) t.base[k] = Math.min(BASE_CAP, t.base[k] + v); };
+const dropBase = (t, k, v) => { t.base[k] = Math.max(1, t.base[k] - v); };
+// 殴りかかっていた者を落ち着かせる。手入れ・伸びた・傘下入り、どれも同じ収め方
+function calm(n) { n.hostile = false; if (n.state === 'attack') n.state = 'walk'; }
+// 子分から外す。倒れた・潰された、どの経路でも後始末は同じ。外したら true
+function dropCrew(n) {
+  if (!n.crew) return false;
+  n.crew = false;
+  P.crew = P.crew.filter(c => c !== n);
+  recalcInf();
+  return true;
+}
+
+/* ---- 勢力との間柄 --------------------------------------------------------
+   勢力ごとに「見込み」を一本だけ持つ。0 = 全面抗争 / 100 = 傘下入り。
+   50 から始まって、子分を引き抜けば上がり、身内を潰せば下がる。
+   ここが 100 まで届けばその勢力を丸ごと呑めるし、0 まで落とせば
+   看板を街から消すまで襲われ続ける ── 中を歩くか、どちらかへ振り切るか。 */
+const FAV_ABSORB = 100, FAV_WAR = 0;
+/* 勢力ごとの出発点。放っておけばここへ戻る「素の見方」でもある ──
+   ドラゴンズは最初から突っかかってくるし、アルカディアは話を聞く耳がある。
+   商店組合は看板を出す相手には甘く、紅蓮会は値踏みから始める。 */
+const FAV_BASE = { guren: 50, dragons: 35, arcadia: 60, local: 55 };
+const HOSTILE = 50;                      // 勢力どうしが路上でやり合う温度（Feud の目盛り）
+const Fav = { ...FAV_BASE };
 const Vassal = { guren: false, dragons: false, arcadia: false, local: false };
-const isEnemy = f => (Rel[f] || 0) >= HOSTILE;
-/* 「地元の顔役」は組ではなく受け皿で、警官も通行人も観光客もここに入っている。
-   そのまま数えると、通りすがりを 3 人スカウトしただけで街が丸ごと転がり込む。
-   看板を背負っていると言える商売の人間だけを、傘下の頭数として勘定する */
-const FAC_CORE = { local: ['tout', 'info', 'bartender', 'ramen', 'fortune'] };
-const isCore = c => !FAC_CORE[c.arch.fac] || FAC_CORE[c.arch.fac].includes(c.arch.k);
-const crewOf = f => P.crew.filter(c => c.arch.fac === f && isCore(c)).length;
-function addRel(f, v, why) {
-  if (!FACTIONS[f] || f === 'player' || Vassal[f]) return;
-  const was = Rel[f];
-  Rel[f] = clamp(Rel[f] + v, 0, 100);
-  if (was < HOSTILE && Rel[f] >= HOSTILE)
-    log(`${FACTIONS[f].name} と手切れだ。もうこっちの傘下には入らない。`, 'bad');
-  else if (was >= HOSTILE && Rel[f] < HOSTILE)
-    log(`${FACTIONS[f].name} と手打ちがついた。`, 'good');
-  else if (why && Math.abs(v) >= 4)
-    log(`${FACTIONS[f].name} 敵対 ${v > 0 ? '+' : ''}${Math.round(v)}（${why}）`, v > 0 ? 'bad' : 'good');
+const War = { guren: false, dragons: false, arcadia: false, local: false };
+// シマの取り合いに加わっている勢力か。流れ者（none）はここに入らない
+const isRival = f => RIVALS.indexOf(f) >= 0;
+const isEnemy = f => !!War[f];
+
+function addFav(f, v, why) {
+  if (!isRival(f) || Vassal[f] || !v) return;
+  /* 抗争が始まったら見込みでは戻せない。頭を下げて済む段は過ぎている ──
+     解くのはシマのほうで、その勢力の看板が街から消えたときだけ（checkWarEnd） */
+  if (War[f] && v > 0) return;
+  Fav[f] = clamp(Fav[f] + v, 0, 100);
+  if (why && Math.abs(v) >= 3)
+    log(`${FACTIONS[f].name} 見込み ${v > 0 ? '+' : ''}${Math.round(v)}%（${why}）`, v > 0 ? 'good' : 'bad');
+  if (Fav[f] >= FAV_ABSORB) { absorb(f); return; }
+  if (Fav[f] <= FAV_WAR) startWar(f);
   facsUI();
 }
-/* 同じ勢力から子分を一定数引き抜くと、その勢力ごとこちらの傘下に入る。
-   敵対している相手には効かない ── 殴られた側が頭を下げることはない。 */
-function checkVassal(f, quiet) {
-  if (!FACTIONS[f] || f === 'player' || Vassal[f]) return;
-  if (crewOf(f) < VASSAL_CREW) return;
-  if (isEnemy(f)) {
-    if (!quiet) log(`${FACTIONS[f].name} は敵対中だ。子分が何人いても頭は下げない。`, 'bad');
-    return;
-  }
-  Vassal[f] = true; Rel[f] = 0;
+
+/* 見込みが 100 に届いた。その勢力を丸ごと呑む ── シマの取り分も地力も店も、
+   そこに属している人間の腹も、まとめてこちら側になる。 */
+function absorb(f) {
+  if (!isRival(f) || Vassal[f]) return;
+  Vassal[f] = true; Fav[f] = 100; War[f] = false;
   let moved = 0;
   for (const t of Terr) {
     moved += t.share[f];
@@ -2799,39 +3096,255 @@ function checkVassal(f, quiet) {
   }
   const took = Shops.filter(s => s.owner === f);
   took.forEach(s => s.owner = 'player');
-  for (const n of NPCs) if (n.arch.fac === f) {
-    n.hostile = false; if (n.state === 'attack') n.state = 'walk';
-  }
+  for (const n of NPCs) if (n.arch.fac === f) calm(n);
   log(`${FACTIONS[f].name} が ${P.gang} の傘下に入った。`, 'good');
   log(`シマの取り分 ${Math.round(moved / Terr.length)}%／店 ${took.length} 軒が丸ごと転がり込んだ。`, 'good');
-  Snd.win(); recalcInf(); facsUI(); hud();
+  Snd.win(); recalcInf(); hud();
+  /* 呑んだ相手と反目していた勢力から見れば、こちらがその看板を背負ったのと同じ。
+     因縁が深いほど大きく落ちる ── 順に呑んでいくだけでは街は取れない */
+  for (const g of RIVALS) {
+    if (g === f || Vassal[g]) continue;
+    const h = Feud[feudKey(f, g)] || 0;
+    if (h < 20) continue;
+    addFav(g, -Math.round(h * 0.45), `${FACTIONS[f].name}を呑んだ`);
+  }
+  facsUI();
+  checkCrown();                          // 四勢力を呑み切ったなら、ここが最後の段
+}
+
+/* 見込みが 0 まで落ちた。全面抗争 ── その勢力の人間は路上で見つけ次第かかってくる。
+   頭を下げる段は過ぎているので、収める道はひとつだけ：街からその看板を消すこと。 */
+function startWar(f) {
+  if (!isRival(f) || Vassal[f] || War[f]) return;
+  War[f] = true; Fav[f] = 0;
+  for (const n of NPCs) if (n.arch.fac === f && !n.crew) n.hostile = true;
+  log(`${FACTIONS[f].name} と全面抗争だ。もう話は通らない。`, 'bad');
+  log(`収めるには ${FACTIONS[f].name} が押さえているシマを、全部こちらのものにするしかない。`, 'bad');
+  Snd.lose(); facsUI();
+}
+// その勢力が顔になっているシマが一つも無くなったら、抗争は終わる（降りたほうが折れる）
+function checkWarEnd(f) {
+  if (!War[f] || Terr.some(t => t.owner === f)) return;
+  War[f] = false; Fav[f] = Math.round(FAV_BASE[f] / 2);
+  for (const n of NPCs) if (n.arch.fac === f) calm(n);
+  log(`${FACTIONS[f].name} は街に顔を出せなくなった。抗争は終わりだ。`, 'good');
+  Snd.win(); facsUI();
 }
 
 /* ---- 勢力どうしの間柄 ----------------------------------------------------
-   プレイヤーとの敵対度（Rel）と同じ目盛り。50 以上なら、路上で出くわした
-   構成員どうしが殴り合う。そうでなければ立ち話になる。 */
+   50 以上なら、路上で出くわした構成員どうしがその場で殴り合う。
+   紅蓮会とドラゴンズ、ドラゴンズと商店組合 ── この街の火種はその二本。
+   アルカディアはどの組とも事を構えない。かわりに手入れに来る警官とだけ折り合わない。 */
 const feudKey = (a, b) => a < b ? a + '|' + b : b + '|' + a;
 const Feud = {
-  'dragons|guren': 76,     // 古いヤクザと半グレ。いちばん血の気が多い
-  'arcadia|dragons': 58,   // 客とキャストの取り合いで年中揉めている
-  'arcadia|guren': 34,     // みかじめを払う側と取る側。表向きは静か
-  'guren|local': 24,
-  'dragons|local': 30,
-  'arcadia|local': 8
+  'dragons|guren': 82,     // 倒す相手と、落とし前をつけさせる相手。いちばん血の気が多い
+  'dragons|local': 74,     // 呑みたい側と、突っ込まれている側。シャッターの前で揉める
+  'arcadia|dragons': 34,   // 呑みたい側と、乗らない側。突っかかられても手は出さない
+  'guren|local': 18,       // 納めさせる側と納める側。上下が決まっているので静か
+  'arcadia|guren': 10,     // 払うものは払う。それ以上の付き合いが無い
+  'arcadia|local': 6       // 同じ通りの隣人
 };
+/* 警官に手を出すのはアルカディアだけ。どの組とも揉めないかわりに、
+   店へ踏み込んでくる側とは折り合わない ── この勢力の火種はここ一本 */
+const COP_FOE = 'arcadia';
+
+/* ---- 誰が誰の上に立っているか --------------------------------------------
+   路上の立ち話に出るのは、殴り合いの温度（Feud）ではなくこちらの上下と思惑。
+   拳が出ない相手どうしにも力関係はあって、それは口の利き方に出る。
+
+     公権力 → 紅蓮会 → 商店組合     縦に締まっている一本の線
+     ドラゴンズ                     その線ぜんぶに逆らう。紅蓮会は倒す相手、
+                                    アルカディアと商店組合は呑む相手
+     アルカディア                   どこにも属さず、誰とも揉めない。
+                                    ただし踏み込んでくる公権力にだけは折れない
+
+   警官は勢力ではないが「公権力」というひとつの側として喋る。それ以外の
+   流れ者は通りすがりなので、力関係の外側にいる。                          */
+const stanceSide = n => n.arch.k === 'cop' ? 'cops' : n.arch.fac;
+const STANCE = {
+  cops: {
+    guren: '長年締め上げてきた相手。手綱は自分が握っていると思っていて、逆らわれる想定が無い',
+    dragons: '話の通らない若造。目障りだが、本気で潰すほどの相手とは見ていない',
+    arcadia: '踏み込むたびに噛みついてくる相手。法令を盾に押し切ろうとしている',
+    local: '守ってやっている側。届け出と苦情を持ってくる相手',
+    player: '新しく看板を出した顔。まだ様子を見ている',
+    none: '通行人。関わる用が無い'
+  },
+  guren: {
+    cops: '頭の上がらない相手。逆らえないので従うが、腹の底では舌を出している',
+    dragons: '礼儀を知らない若造。いずれ落とし前をつけさせる相手',
+    arcadia: '金にはなるが読めない相手。深入りはしない',
+    local: '面倒を見てやっている側。納めるものを納めさせている',
+    player: 'シマを荒らしに来た新顔。値踏みしている',
+    none: '通行人'
+  },
+  dragons: {
+    cops: '飾りだと思っている。捕まらなければ何をしてもいいという口の利き方をする',
+    guren: '倒す相手。時代はもう終わったと思っていて、面と向かって煽る',
+    arcadia: '呑みたい相手。箱と人を欲しがっていて、断られても引かない',
+    local: '呑みたい相手。上がりを吸える先だと思っていて、露骨に手を伸ばす',
+    player: '同じ穴の狢か、邪魔者か。どちらでも構わないという態度',
+    none: '通行人'
+  },
+  arcadia: {
+    cops: '営業の邪魔をしてくる側。ここだけは折れず、言うことは言う',
+    guren: '納めるものは納める。それ以上の付き合いはしない',
+    dragons: '突っかかってくるが、乗らない。喧嘩は商売にならないと分かっている',
+    local: '同じ通りで商売している隣人。揉める理由が無い',
+    player: '客になるのか面倒になるのか、見極めている',
+    none: '客'
+  },
+  local: {
+    cops: '頼りたいが、来るのがいつも遅い相手',
+    guren: '納めるものを納めている相手。逆らえない',
+    dragons: 'いちばん怖い連中。シノギに手を突っ込んでくる',
+    arcadia: '同じ通りの隣人。上手くやっている',
+    player: '新しく看板を出した相手。まだ測っている',
+    none: '客'
+  },
+  none: {
+    cops: '関わりたくない相手', guren: '目を合わせない相手', dragons: '避けたい相手',
+    arcadia: '夜の店の人', local: '街の商売人', player: '見かける顔', none: '同じ流れ者'
+  }
+};
+const stanceOf = (a, b) => (STANCE[stanceSide(a)] || STANCE.none)[stanceSide(b)] || '通りすがり';
 // 揉めれば熱くなり、放っておけば元の温度へ戻る。ゼロにはならない
 const FEUD_BASE = { ...Feud };
 // その人がいま名乗っている側。子分と、傘下に入った勢力の者はこちら側
 const sideOf = n => (n.crew || Vassal[n.arch.fac]) ? 'player' : n.arch.fac;
+/* プレイヤー側との温度。見込みをそのまま裏返すと、様子見の 50% で
+   街中の構成員が子分に殴りかかってきて、話をする余地が無くなる。
+   熱くなるのは店を狙われ始める線（RAID_FAV）を越えてから ── 抗争と同じ入り口。 */
+const playerHeat = f => War[f] ? 100
+  : Fav[f] > RAID_FAV ? Math.round((100 - Fav[f]) * 0.45)
+    : 60 + Math.round((RAID_FAV - Fav[f]) * 2);
 function hostility(a, b) {
   if (a === b) return 0;
-  if (a === 'player') return Rel[b] || 0;
-  if (b === 'player') return Rel[a] || 0;
+  if (a === 'player') return isRival(b) ? playerHeat(b) : 0;
+  if (b === 'player') return isRival(a) ? playerHeat(a) : 0;
   return Feud[feudKey(a, b)] || 0;
 }
+/* 路上で出くわした二人が殴り合うか。勢力どうしの温度に、警官まわりの例外を足す。
+   警官は本来どことも殴り合わない（止める側）が、アルカディアだけは手を出す。
+   流れ者（none）はどの表にも載っていないので温度 0 ── 立ち話しかしない。 */
+function npcHostility(n, m) {
+  const a = sideOf(n), b = sideOf(m);
+  if (a === b) return 0;                                 // 同じ側の人間は殴り合わない
+  const nCop = n.arch.k === 'cop', mCop = m.arch.k === 'cop';
+  if (nCop || mCop) {
+    if (nCop && mCop) return 0;
+    return (nCop ? m : n).arch.fac === COP_FOE ? 88 : 0;
+  }
+  return hostility(a, b);
+}
+/* ---- カチコミ ------------------------------------------------------------
+   見込みを落とした勢力は、こちらの店を黙って見ていない。夜のうちに人を出してくる。
+   放っておけば看板を掛け替えられ、駆けつけて全員伸ばせば守れる ── これが入って
+   はじめて、見込みが「呑めなくなる錠」ではなく賭け金になる。
+   同時に走るのは一件だけ。街のどこで何が起きているのか分からなくなるより、
+   一晩に一度、行くか捨てるかを選ばせるほうが出来事として残る。                */
+const Raid = { on: false, zi: -1, fac: null, shop: null, t: 0, men: [] };
+const RAID_SEC = 300;                  // 現実 5 分（ゲーム内 5 時間）で看板が変わる
+const RAID_CHANCE = 0.2;               // 1 ゲーム時間あたり（全面抗争中は 2.5 倍）
+const RAID_FAV = 20;                   // 見込みがここを切ると店を突かれ始める
+/* 押し込んでくる顔ぶれ。勢力ごとに、地上に立っている役どころだけを並べる ──
+   見張りや運び屋（arch.floor を持つ者）は地下に湧く決まりなので、名前で呼んでも
+   店の前には来ない。2 人にしてあるのは、3 人だと逃げ道なしで殴り殺されるから。 */
+const RAID_K = { guren: ['yakuza', 'yakuza'], dragons: ['hangure', 'scout'],
+  arcadia: ['host', 'host'], local: ['tout', 'info'] };
+function maybeRaid() {
+  if (Raid.on || !started) return;
+  /* 見込みが RAID_FAV を切った勢力は、こちらの店を黙って見ていない。
+     全面抗争（見込み 0）に落ちれば頻度が上がる ── 突かれ始めるのが先で、
+     殴り込みが止まらなくなるのが後、という順にしてある */
+  const cands = [];
+  let war = false;
+  for (const s of Shops) {
+    if (s.owner !== 'player' || s.under) continue;
+    for (const f of RIVALS) {
+      if (Vassal[f] || Fav[f] > RAID_FAV) continue;
+      if (Terr[s.zone].share[f] < 4) continue;    // そのシマに足場が無い勢力は来ない
+      cands.push({ s, f });
+      if (War[f]) war = true;
+    }
+  }
+  if (!cands.length || Math.random() > (war ? RAID_CHANCE * 2.5 : RAID_CHANCE)) return;
+  const { s, f } = pick(cands);
+  const men = [];
+  for (const k of RAID_K[f] || ['yakuza']) {
+    const arch = ARCH.find(a => a.k === k);
+    if (!arch || arch.floor || arch.fixed) continue;   // 地下の住人と一点物は出さない
+    /* 店の前の「通り」に立たせる。ここを groundTop まかせにすると、店の脇が
+       ビルだったときに屋上へ乗ってしまい、殴りに行けないカチコミになる。
+       前が詰まっていたら、そのシマの通りのどこかへ回す（時間切れは同じに来る） */
+    let n = null;
+    for (let k2 = 0; k2 < 12 && !n; k2++) {
+      const x = s.x + rnd(-3.2, 3.2), z = s.z + rnd(-3.2, 3.2);
+      if (!onOpenRoad(x, z)) continue;
+      n = makeNPC(arch, x, z);
+      n.y = GY;
+      NPCs.push(n);
+    }
+    if (!n) { n = spawnNPC(arch, null); placeOnRoad(n); }
+    n.hostile = true; n.state = 'attack'; n.raid = true;
+    n.fear = 0; n.trust = 0;
+    say(n, pick(['看板を降ろしに来た', 'この店はもう終いだ', '出てこいよ']), 5);
+    men.push(n);
+  }
+  if (!men.length) return;
+  Raid.on = true; Raid.zi = s.zone; Raid.fac = f; Raid.shop = s; Raid.t = RAID_SEC; Raid.men = men;
+  log(`カチコミだ。${FACTIONS[f].name} が【${Terr[s.zone].name}】の「${s.name}」に ${men.length} 人。`, 'bad');
+  log(`${Math.round(RAID_SEC / 60)} 分のうちに全員伸ばさないと、その店は取られる。`, 'bad');
+  Snd.lose();
+  hud();
+}
+// 押し込んできた連中を引き上げさせる。守り切っても取られても、後始末は同じ
+function raidEnd() {
+  for (const n of Raid.men) {
+    if (n.dead || n.down > 0) continue;
+    n.raid = false; calm(n); n.state = 'flee'; n.t = 6;
+  }
+  Raid.on = false; Raid.men = []; Raid.shop = null; Raid.fac = null; Raid.zi = -1;
+  hud();
+}
+function updateRaid(dt) {
+  if (!Raid.on) return;
+  const s = Raid.shop, f = Raid.fac;
+  // 途中で傘下に入った／店を手放したなら、話はそこで終わる
+  if (!s || s.owner !== 'player' || Vassal[f]) { raidEnd(); return; }
+  if (Raid.men.every(n => n.dead || n.down > 0)) {
+    const t = Terr[Raid.zi];
+    dropBase(t, f, 1.2); raiseBase(t, 'player', 0.6);
+    shiftControl(Raid.zi, 3, `${FACTIONS[f].name}のカチコミを叩き返した`, f);
+    log(`カチコミを叩き返した。「${s.name}」は守った。`, 'good');
+    Snd.win();
+    raidEnd();
+    return;
+  }
+  /* 押し手はプレイヤーを見つけたら掛かってくる。'attack' は相手が 38 マス離れると
+     ひとりでに解けるので、近づき直したら掛け直してやる ── そうしないと
+     「一度離れて時間切れを待つ」だけでカチコミが痛くも何ともなくなる */
+  for (const n of Raid.men) {
+    if (n.dead || n.down > 0 || n.state === 'attack' || n.state === 'brawl') continue;
+    if (Math.hypot(n.x - P.x, n.z - P.z) < 24 && Math.abs(n.y - P.y) < 4) {
+      n.hostile = true; n.state = 'attack';
+    }
+  }
+  Raid.t -= dt;
+  if (Raid.t > 0) return;
+  // 時間切れ。看板が掛け替わる。支配率はその勢力へそのまま移る
+  s.owner = f;
+  moveShare(Raid.zi, 'player', f, shopControl(s));
+  recalcInf();
+  log(`「${s.name}」の看板が ${FACTIONS[f].name} に掛け替わった。`, 'bad');
+  Snd.lose();
+  raidEnd();
+}
+
 // 勢力から勢力へ、シマの取り分をそのまま移す（合計は動かない）
 function moveShare(zi, from, to, amt) {
-  if (from === to) return 0;
+  // 取り分を持っていない側（流れ者）は、勝っても負けてもシマを動かさない
+  if (from === to || !hasShare(from) || !hasShare(to)) return 0;
   const t = Terr[zi];
   const g = Math.min(t.share[from], amt);
   if (g <= 0) return 0;
@@ -2930,21 +3443,35 @@ const AI = {
   worldCtx() {
     const zi = zoneOf(P.x, P.z), t = Terr[zi];
     const rel = RIVALS.map(f => `${FACTIONS[f].name}=`
-      + (Vassal[f] ? '傘下' : isEnemy(f) ? '敵対' : `敵対度${Math.round(Rel[f])}`)).join(' ');
+      + (Vassal[f] ? '傘下' : War[f] ? '全面抗争' : `見込み${Math.round(Fav[f])}%`)).join(' ');
     return `目の前にいる相手は ${P.name}（${P.gender}・${originName(P.origin, P.gender)}・`
       + `手には${curTool().n}）/ この相手が名乗っている一党の名は「${P.gang}」/ `
       + `時刻 ${clockStr()} / ${Clock.day}日目 / 場所 ${t.name} / `
       + `このシマの支配 ${FACTIONS[t.owner].name} (プレイヤーの取り分 ${Math.round(t.share.player)}%) / `
-      + `プレイヤーの所持金 ${yen(P.yen)} 影響力 ${Math.round(P.inf)} 悪名 ${Math.round(P.notoriety)} `
-      + `手配度 ${Math.round(P.wanted)} 酔い ${Math.round(P.drunk)} `
+      + `プレイヤーの所持金 ${yen(P.yen)} 影響力 ${Math.round(P.inf)} `
+      + `手配度 ${Math.round(P.wanted)} `
       + `過半数を握ったシマ ${heldZones()}/9 連れ ${P.crew.length}人 / 勢力との関係 ${rel} / `
-      + `これまでに掘ったブロック ${P.dug}個（今カバンの中身は ${yen(bagValue())} 相当）`;
+      + `これまでに掘ったブロック ${P.dug}個（今カバンの中身は ${yen(bagValue())} 相当）`
+      + (Raid.on ? ` / いま ${Terr[Raid.zi].name} で ${FACTIONS[Raid.fac].name} が`
+        + `プレイヤーの店「${Raid.shop.name}」にカチコミをかけている` : '');
+  },
+  /* 立ち話の二人に渡すのは街の空気だけ。プレイヤーの所持金や手配度まで載せると、
+     そこにいない人間の話を始めるうえに、bark の予算を無駄に食う */
+  streetCtx() {
+    const t = Terr[zoneOf(P.x, P.z)];
+    return `時刻 ${clockStr()} / ${Clock.day}日目 / 場所 ${t.name} / `
+      + `このシマの支配 ${FACTIONS[t.owner].name} ${Math.round(t.share[t.owner])}%`
+      + (Raid.on && Raid.zi === t.idx ? ` / このシマで ${FACTIONS[Raid.fac].name} がカチコミ中` : '');
   },
   npcCtx(n) {
     return `名前: ${n.name}\n職業: ${n.arch.job}\n所属: ${FACTIONS[n.arch.fac].name}\n`
       + `性格: ${n.arch.persona}\n性別: ${n.arch.gender}\n`
       + `プレイヤーへの好感度: ${Math.round(n.trust)}/100\nプレイヤーへの畏怖: ${Math.round(n.fear)}/100\n`
       + `所持金: ${yen(n.yen)}\n体力: ${Math.round(n.hp)}/${n.maxhp}${n.crew ? '\n※すでにプレイヤーの子分' : ''}\n`
+      /* おごられ慣れている額。金を渡されたときに、それが多いのか少ないのかを
+         judge する物差しがないと、路上生活者への一万円もホストへの一万円も
+         同じ「一万円」として扱われてしまう */
+      + `あなたに一杯おごるときの相場: ${yen(treatYen(n.arch))}\n`
       + (n.hist.length ? '' : '※このプレイヤーとは初対面');
   },
   async talk(n, playerLine) {
@@ -2954,21 +3481,33 @@ const AI = {
       + `# 指示\n${n.name}として反応せよ。上のやりとりの続きとして、話をつなげること。`
       + `自分が直前に言ったことと矛盾させない。好感度と畏怖に応じて態度を変えること。`
       + `街を掘り崩して回っていることに触れてもよい。`
-      + `act の意味: join=自分の勢力を離れてプレイヤーの子分になる（同じ勢力から3人でその勢力ごと傘下入り）、`
+      /* 金を渡されたときの読み方。額そのものではなく、相場と懐との比で受け取らせる。
+         ここを書かないと、路上生活者への一万円とホストへの一万円が同じ扱いになる。
+         出しすぎた額に fear を混ぜられるようにしてあるのが要点で、
+         「金を積めば必ず好かれる」という一本道にしないため */
+      + `金を渡された場合は、その額を上の「一杯おごるときの相場」と自分の所持金・立場に`
+      + `照らして受け取れ。相場を大きく下回る額は侮辱で trust を下げる。`
+      + `相場どおりなら素直に受け取る。相場の何倍もの額なら trust は大きく動くが、`
+      + `度を越していれば裏を疑う気味悪さや警戒として fear も上がる。`
+      + `金で態度が変わったことを、額に触れずに台詞へにじませること。\n`
+      + `act の意味: join=自分の勢力を離れてプレイヤーの子分になる（あなたの側の見込みも上がる）、`
       + `deal=自分の勢力とプレイヤーの間の角が取れる手打ち、inform=噂を渡すだけ。`
       + `act は毎回動かす必要はない。話が煮詰まったときだけ idle 以外を選べ。\n`
+      + `trust と fear は遠慮なく振れ。心が動いたなら 30〜50、腹の底から動いたなら`
+      + `その上限まで使ってよい。何も起きていないときだけ 0 付近にせよ。\n`
       + `次のJSONだけを出力:\n`
       + `{"say":"セリフ 70文字以内","act":"idle|follow|flee|attack|join|deal|inform|leave",`
-      + `"trust":-25〜25の整数,"fear":-25〜25の整数,"yen":NPCがプレイヤーに渡す金額(奪われるならマイナス、無ければ0),`
+      + `"trust":-50〜50の整数,"fear":-50〜50の整数,"yen":NPCがプレイヤーに渡す金額(奪われるならマイナス、無ければ0),`
       + `"info":"街の噂を一言、無ければ空文字"}`;
     const j = this.parse(await this.raw(p, 260));
     if (!j || !j.say) throw new Error('bad json');
     return {
       say: String(j.say).slice(0, 140),
       act: ['idle', 'follow', 'flee', 'attack', 'join', 'deal', 'inform', 'leave'].includes(j.act) ? j.act : 'idle',
-      trust: clamp(Number(j.trust) || 0, -25, 25),
-      fear: clamp(Number(j.fear) || 0, -25, 25),
-      yen: clamp(Number(j.yen) || 0, -200000, 200000),
+      // 振れ幅は ±50。会話 2〜3 往復で相手の腹が決まるくらいには動いてほしい
+      trust: clamp(Number(j.trust) || 0, -50, 50),
+      fear: clamp(Number(j.fear) || 0, -50, 50),
+      yen: clamp(Number(j.yen) || 0, -2000000, 2000000),
       info: typeof j.info === 'string' ? j.info.slice(0, 60) : ''
     };
   },
@@ -2987,18 +3526,25 @@ const AI = {
     const p = `# 話す二人\n`
       + `A: ${a.name}（${a.arch.job}／${FACTIONS[a.arch.fac].name}）性格: ${a.arch.persona}\n`
       + `B: ${b.name}（${b.arch.job}／${FACTIONS[b.arch.fac].name}）性格: ${b.arch.persona}\n\n`
-      + `# いまの街\n${this.worldCtx()}\n\n`
+      + `# いまの街\n${this.streetCtx()}\n\n`
+      /* 立ち話でいちばん効くのは、拳が出ない相手どうしの上下関係。
+         これを渡さないと、締められている側と締めている側が対等に喋ってしまう */
+      + `# 二人の間柄\n`
+      + `A が B をどう見ているか: ${stanceOf(a, b)}\n`
+      + `B が A をどう見ているか: ${stanceOf(b, a)}\n\n`
       + `# 指示\n深夜の路上でこの二人が出くわした。A→B→A→B の順に一言ずつ、それぞれ24文字以内。`
-      + `互いの立場と間柄がにじむ短い立ち話にせよ。プレイヤーには話しかけない（そこにいるが、通りすがりだ）。\n`
+      + `上の「間柄」をそのまま口の利き方に出すこと ── 上に立っている側は当たり前のように`
+      + `振る舞い、下の側は逆らわない（腹の底は別でよい）。呑みたい相手には露骨に手を伸ばし、`
+      + `逆らう側は面と向かって煽る。互いの立場がにじむ短い立ち話にせよ。`
+      + `プレイヤーには話しかけない（そこにいるが、通りすがりだ）。\n`
       + `次のJSONだけを出力:\n{"l":["Aの一言","Bの一言","Aの一言","Bの一言"]}`;
     const j = this.parse(await this.raw(p, 200, { kind: 'bark' }));
     if (!j || !Array.isArray(j.l) || j.l.length < 2) throw new Error('bad json');
     return j.l.slice(0, 4).map(s => this.clean(s).slice(0, 34)).filter(Boolean);
   },
-  async crown() {
-    const held = heldZones();
+  async crown(tell) {
     const p = `# 世界\n${this.worldCtx()}\n\n# 指示\n`
-      + `プレイヤーが率いる「${P.gang}」が、歌舞伎町 9 つのシマのうち ${held} つ、つまり過半数を握った。`
+      + `プレイヤーが率いる「${P.gang}」が、${tell}。`
       + `ただし夜は終わらず、街はこのあとも続く。`
       + `街の語り部として、戴冠を告げる短い地の文を 120文字以内で書け。`
       + `ハードボイルドに、祝福も皮肉も、そして「まだ続く」という気配も込めて。`
@@ -3032,21 +3578,64 @@ const OFF_BARK = {
   lookout: ['……何の用だ', 'ここは通り道じゃねぇぞ', '上へ戻んな'],
   runner: ['時間が無いんだよ', '見なかったことにしてくれ', '車、遅れてる']
 };
-function offlineTalk(n, line) {
+/* AI に繋がらないときの応答。言葉尻の正規表現だけで決めると、それまで積み上げた
+   好感度と畏怖がまるごと無かったことになる ── 何度もおごった相手が初対面の口を
+   きくのが、オフラインでいちばん白ける瞬間なので、態度は trust / fear で分ける。 */
+const OFF_SAY = {
+  attack: { hi: ['……本気か。表へ出るか', 'あんたにだけは言われたくねぇな'],
+    lo: ['舐めた口きくじゃねぇか', 'てめぇ、いま何つった'] },
+  flee: { hi: ['よしてくれ、あんたとは揉めたくねぇ', '……冗談だろ、なあ'],
+    lo: ['……勘弁してくれ', 'なんもしてねぇって！'] },
+  join: { hi: ['……いいぜ、乗った', 'あんたに賭けるよ'], lo: ['考えとくよ', 'まだ早いって'] },
+  deal: { hi: ['あんたの金なら受け取るよ', '話が早いのは好きだ'],
+    lo: ['金の話なら早いな', 'いくら出す？'] },
+  inform: { hi: ['あんたにだから言うけどな', 'ここだけの話だ'],
+    lo: ['この先のシマ、揉めてるらしいぜ', '紅蓮会が場所を探してるとよ'] },
+  idle: { hi: ['また来たのか。座れよ', '景気はどうだい'], lo: [] },
+  /* おごられたときの返し。額が相場の何倍かで段を選ぶ（treatStep が決める） */
+  treat: {
+    insult: ['これで足りると思ってんのか', '……舐めてんのか、あんた'],
+    thin: ['……まあ、貰っとくよ', '足りてねぇが、気持ちは受け取る'],
+    fair: ['お、悪いな。いただくよ', 'ちょうどいい。付き合うよ'],
+    rich: ['……こんなに出すのか', 'あんた、気前がいいな'],
+    scary: ['なんの礼だ、これは', '……何させる気だ、この額で']
+  }
+};
+/* おごられた額を相場と比べて段に落とす。値の動きは AI と同じ幅（±50）に合わせる。
+   出しすぎには畏怖が混じる ── 金を積めば必ず好かれる、という一本道にしないため */
+function treatStep(n, amount) {
+  const r = amount / treatYen(n.arch);
+  if (r < 0.35) return { key: 'insult', trust: -24, fear: 0 };
+  if (r < 0.8) return { key: 'thin', trust: 4, fear: 0 };   // 足りないが、気持ちは受け取る
+  if (r < 1.5) return { key: 'fair', trust: 14, fear: 0 };
+  if (r < 5) return { key: 'rich', trust: 34, fear: 0 };
+  if (r < 20) return { key: 'rich', trust: 46, fear: 8 };
+  return { key: 'scary', trust: 30, fear: 30 };             // 額が過ぎれば裏を疑われる
+}
+function offlineTalk(n, line, meta) {
   const l = line || '';
-  let trust = 0, fear = 0, act = 'idle', say;
-  if (/殴|ぶっ|殺|潰|舐め/.test(l)) { fear = 14; trust = -18; act = pick(['attack', 'flee']); }
-  else if (/金|カネ|銭|万|円/.test(l)) { trust = 4; act = 'deal'; }
-  else if (/仲間|来い|一緒|子分|組|手を貸/.test(l)) { trust = 6; act = n.trust > 60 ? 'join' : 'idle'; }
-  else if (/噂|情報|教え|どこ|誰/.test(l)) { act = 'inform'; }
-  else trust = irnd(-2, 5);
-  const base = OFF_BARK[n.arch.k] || ['……'];
-  if (act === 'attack') say = pick(['舐めた口きくじゃねぇか', 'てめぇ、いま何つった']);
-  else if (act === 'flee') say = pick(['……勘弁してくれ', 'なんもしてねぇって！']);
-  else if (act === 'join') say = pick(['……いいぜ、乗った', 'あんたに賭けるよ']);
-  else if (act === 'deal') say = pick(['金の話なら早いな', 'いくら出す？']);
-  else if (act === 'inform') say = pick(['この先のシマ、揉めてるらしいぜ', '紅蓮会が場所を探してるとよ']);
-  else say = pick(base);
+  // 慣れた相手か、怖がられているか。この二つで同じ言葉への返り方が変わる
+  const warm = n.trust >= 60, scared = n.fear >= 55;
+  let trust = 0, fear = 0, act = 'idle';
+  // おごられた。額そのものが用件なので、言葉尻より先に見る
+  if (meta && meta.treat > 0) {
+    const st = treatStep(n, meta.treat);
+    return { say: pick(OFF_SAY.treat[st.key]), act: 'idle', trust: st.trust, fear: st.fear, yen: 0, info: '' };
+  }
+  if (/殴|ぶっ|殺|潰|舐め/.test(l)) {
+    fear = 28; trust = -36;
+    // 畏怖が先に立っている相手は逆らわない。慣れた相手は裏切られたと受け取る
+    act = scared ? 'flee' : warm ? 'attack' : pick(['attack', 'flee']);
+  } else if (/金|カネ|銭|万|円/.test(l)) { trust = warm ? 12 : 8; act = 'deal'; }
+  else if (/仲間|来い|一緒|子分|組|手を貸/.test(l)) {
+    trust = 12;
+    // 好かれているか、怖がられているか。どちらかが要る ── 中途半端では動かない
+    act = (n.trust > 60 || n.fear > 70) ? 'join' : 'idle';
+  } else if (/噂|情報|教え|どこ|誰/.test(l)) { act = 'inform'; }
+  else trust = warm ? irnd(0, 12) : scared ? irnd(-8, 4) : irnd(-4, 10);
+  const bank = OFF_SAY[act] || OFF_SAY.idle;
+  const pool = (warm && bank.hi.length) ? bank.hi : bank.lo;
+  const say = pool.length ? pick(pool) : pick(OFF_BARK[n.arch.k] || ['……']);
   return { say, act, trust, fear, yen: 0, info: '' };
 }
 
@@ -3065,13 +3654,60 @@ function log(t, cls) {
   while (logEl.children.length > 7) logEl.removeChild(logEl.lastChild);
   setTimeout(() => { if (p.parentNode) { p.style.opacity = '0'; p.style.transition = 'opacity .6s'; setTimeout(() => p.remove(), 600); } }, 9000);
 }
+/* 次の一手。持ち物と街の状態から、いま一番効く手をひとつだけ選んで出す。
+   起動時に流したログは数分で見えなくなるので、詰まったときの逃げ場をここに置く。
+   上から順に、急ぐものが先。<kbd> を含むので innerHTML で流す。            */
+function nextStep() {
+  if (Raid.on) return { hot: true,
+    t: `カチコミ ── ${Terr[Raid.zi].name}「${esc(Raid.shop.name)}」を守れ（残り ${Math.ceil(Raid.t)}秒）` };
+  if (P.wanted >= 70) return { hot: true, t: '手配度が高い。地下へ潜れば早く冷める' };
+  if (bagFull()) return { hot: true, t: `カバンが満杯。${kb('G')} で換金してから掘る` };
+  // まだ持っていない道具のうち、いちばん下の等級。足りない材料を名前で出す
+  const r = RECIPES.find(r => r.out !== 'helm' && !Craft.owned[r.out]);
+  if (r) {
+    const miss = r.need.filter(([id, k]) => Bag.count[id] < k);
+    return { t: miss.length
+      ? `${miss.map(([id, k]) => `${BLOCKS[id].n}あと${k - Bag.count[id]}`).join('・')} で ${TOOLS[r.out].n}`
+      : `${kb('Q')} で ${TOOLS[r.out].n} を作れる` };
+  }
+  if (!Shops.some(s => s.owner === 'player')) {
+    const miss = BUILD[0].need.filter(([id, k]) => matHave(id) < k);
+    return { t: miss.length
+      ? `立ち飲み屋まで ${miss.map(([id, k]) =>
+        `${id === NEON_ANY ? 'ネオン' : BLOCKS[id].n}あと${k - matHave(id)}`).join('・')}`
+      : `通りの壁を見ながら ${kb('Q')} ── 店を建てられる` };
+  }
+  // 抗争を抱えているなら、そこから片付けるしかない
+  const w = RIVALS.find(f => War[f]);
+  if (w) return { hot: true,
+    t: `${FACTIONS[w].name} と全面抗争 ── 押さえているシマを全部獲るまで終わらない` };
+  // 呑めそうな勢力があるなら、それがいちばん大きく動く手
+  const near = RIVALS.filter(f => !Vassal[f]).sort((a, b) => Fav[b] - Fav[a])[0];
+  if (near && Fav[near] >= 70)
+    return { t: `${FACTIONS[near].name} はあと ${Math.round(100 - Fav[near])}% で丸ごと傘下に入る` };
+  if (P.crew.length >= crewMax())
+    return { t: `子分は ${crewMax()} 人で手一杯。店を増やせば影響力が上がって枠も増える` };
+  const u = upgradeOf(upNear());
+  if (u && P.yen >= u.cost)
+    return { t: `${kb('Q')} で「${esc(u.shop.name)}」を ${u.to.name} へ格上げできる` };
+  const held = heldZones();
+  if (held < 9) {
+    // いちばん近づいている、まだ獲れていないシマ
+    const t = Terr.filter(z => !z.held).sort((a, b) => b.share.player - a.share.player)[0];
+    if (t) return { t: `${t.name} は自分 ${Math.round(t.share.player)}%（${HOLD_PC}% で獲れる）` };
+  }
+  const rank = nextRank();
+  return { t: rank ? rank.hint() : '歌舞伎町はもう自分のものだ。' };
+}
+
 function hud() {
   $('s-yen').textContent = yen(P.yen);
   $('s-hp').style.width = (P.hp / P.maxhp * 100) + '%'; $('s-hpn').textContent = Math.round(P.hp);
   $('s-inf').style.width = clamp(P.inf, 0, 100) + '%'; $('s-infn').textContent = Math.round(P.inf);
+  // 影響力が何を買っているのかを見出しに出す（店が安くなる／子分の枠が増える）
+  $('s-inflb').textContent = `影響力　店 -${Math.round(infDiscount() * 100)}%・連れ ${crewMax()}人`;
   $('s-wanb').style.width = P.wanted + '%'; $('s-wan').textContent = Math.round(P.wanted);
   $('s-wanb').style.background = P.wanted > 60 ? '#ff3b30' : '#16e0ff';
-  $('s-drnb').style.width = P.drunk + '%'; $('s-drn').textContent = Math.round(P.drunk);
   $('c-time').textContent = clockStr();
   $('c-day').textContent = Clock.day + ' 日目';
   const t = Terr[zoneOf(P.x, P.z)];
@@ -3087,11 +3723,16 @@ function hud() {
   const el = $('c-left');
   el.textContent = `街全体 ${Math.round(cityShare())}%`;
   el.className = 'left';
+  const step = nextStep(), ob = $('c-obj');
+  ob.innerHTML = step.t;
+  ob.className = 'obj' + (step.hot ? ' hot' : '');
   $('s-who').innerHTML = `${esc(P.name)}<span>${P.gender}・${originName(P.origin, P.gender)}</span>`
     + `<b>${esc(P.gang)}</b>`;
   const cb = $('crewbox');
   if (P.crew.length) {
     cb.style.display = 'block';
+    // 枠は影響力しだいで増える。何人まで置けるのかを見せておく
+    $('crewhd').textContent = `連れているやつ ${P.crew.length}/${crewMax()}`;
     $('crewlist').innerHTML = P.crew.map(c => `${c.name} <span style="opacity:.5">${c.arch.job}</span>`).join('<br>');
   } else cb.style.display = 'none';
 }
@@ -3191,17 +3832,23 @@ function drawMinimap() {
    「殴って獲る」と「引き抜いて丸ごと呑む」がぶつかり合うのがここに出る */
 function facsUI() {
   const box = $('facs'); if (!box) return;
-  box.innerHTML = RIVALS.map(f => {
-    const st = Vassal[f] ? `<b style="color:${FACTIONS.player.css}">傘下</b>`
-      : isEnemy(f) ? '<b style="color:#ff3b30">敵対</b>' : '<b style="opacity:.6">中立</b>';
-    const c = crewOf(f);
-    const note = Vassal[f] ? '呑んだ'
-      : isEnemy(f) ? '傘下にはできない'
-        : `子分 ${c}/${VASSAL_CREW}`;
-    return `<div class="fac"><i style="background:${FACTIONS[f].css}"></i>`
-      + `<span>${esc(FACTIONS[f].name)}</span>${st}<em>${note}</em>`
-      + `<div class="rb"><i style="width:${Math.round(Rel[f])}%"></i></div></div>`;
-  }).join('')
+  box.innerHTML = '<div class="fh">勢力への見込み（100% で丸ごと呑む／0% で全面抗争）</div>'
+    + RIVALS.map(f => {
+      const v = Math.round(Fav[f]);
+      const st = Vassal[f] ? `<b style="color:${FACTIONS.player.css}">傘下</b>`
+        : War[f] ? '<b style="color:#ff3b30">全面抗争</b>'
+          : v >= 75 ? '<b style="color:#39ff88">あと一押し</b>'
+            : v <= RAID_FAV ? '<b style="color:#ff9b60">店を狙われている</b>'
+              : '<b style="opacity:.6">様子見</b>';
+      const note = Vassal[f] ? '呑んだ'
+        : War[f] ? 'シマを全部獲るまで終わらない'
+          : `あと ${100 - v}% で傘下`;
+      // 帯の色は見込みの向き。呑めそうなら自分の色、抗争が近いなら赤
+      const col = Vassal[f] ? FACTIONS.player.css : v <= RAID_FAV ? '#ff3b30' : v >= 75 ? '#39ff88' : '#ffcf3f';
+      return `<div class="fac"><i style="background:${FACTIONS[f].css}"></i>`
+        + `<span>${esc(FACTIONS[f].name)}</span>${st}<em>${note}</em>`
+        + `<div class="rb"><i style="width:${v}%;background:${col}"></i></div></div>`;
+    }).join('')
     /* 勢力どうしの熱。50 を超えている組は、路上で出くわせばその場で殴り合う。
        プレイヤーが手を出さなくてもシマが動くのはこれのせい */
     + '<div class="fh">勢力どうしの抗争（50 を超えると路上でやり合う）</div>'
@@ -3217,7 +3864,7 @@ function facsUI() {
     }).join('');
 }
 function drawMap() {
-  $('legend').innerHTML = Object.keys(FACTIONS)
+  $('legend').innerHTML = FAC_KEYS
     .map(k => `<span><i style="background:${FACTIONS[k].css}"></i>${esc(FACTIONS[k].name)}</span>`).join('');
   const g = $('grid'); g.innerHTML = '';
   const here = zoneOf(P.x, P.z);
@@ -3247,7 +3894,8 @@ function drawMap() {
   $('shoplist').innerHTML = mineShops.length
     ? `所有店舗 ${mineShops.length} 軒 ／ 上がり ${yen(mineShops.reduce((a, s) => a + hourlyIncome(s), 0))}／時<br>`
       + `<span style="opacity:.55;font-size:10px">${mineShops.map(s => s.name).join(' ・ ')}</span>`
-    : '<span style="opacity:.5">まだ店を持っていない。印の浮いている入口へ行って E で買うか、Q で建てる。</span>';
+    : `<span style="opacity:.5">まだ店を持っていない。印の浮いている入口へ行って`
+      + ` ${kbT('E')} で買うか、${kbT('Q')} で建てる。</span>`;
 }
 
 /* ============================================================================
@@ -3312,28 +3960,66 @@ const Talk = {
       b.textContent = label; if (cls) b.className = cls;
       b.onclick = fn; box.appendChild(b);
     };
-    mk('おごる ¥3,000', 'money', () => {
-      if (P.yen < 3000) return log('金が足りない。', 'bad');
-      P.yen -= 3000; n.trust = clamp(n.trust + 8, 0, 100); P.drunk = clamp(P.drunk + 6, 0, 100);
-      Snd.coin(); this.send('（酒をおごった。¥3,000）');
-    });
-    mk('カネを掴ませる ¥30,000', 'money', () => {
-      if (P.yen < 30000) return log('金が足りない。', 'bad');
-      P.yen -= 30000; n.yen += 30000; n.trust = clamp(n.trust + 20, 0, 100);
-      Snd.coin(); this.send('（黙って三万を握らせた）');
-    });
     if (bagValue() > 0) mk('掘ったブロックを見せる', '', () =>
       this.send(`（カバンから剥がしてきたブロックを出した。${yen(bagValue())}相当）`));
     mk('シマの話をする', '', () => this.send('この街、そろそろ主が変わる時期だと思わないか'));
-    mk('脅す', 'danger', () => {
-      n.fear = clamp(n.fear + 14, 0, 100); n.trust = clamp(n.trust - 8, 0, 100);
-      P.notoriety += 1; this.send('（胸ぐらを掴んで凄んだ）');
-    });
-    if (!n.crew) mk('引き入れる', '', () => this.send('俺の下につけ。損はさせない'));
+    // 成否は好感と畏怖で決まる。何割で通るのかは押す前に見せる ── 賭けだと分かるように
+    if (!n.crew) mk(`引き入れる（${Math.round(joinChance(n))}%）`, 'money', () => this.recruit());
     // 殴るのは会話の選択肢ではなく、街に立ったまま F で出すもの
     mk('立ち去る', '', () => this.close());
+    this.money();
   },
-  async send(line, isFirst) {
+  /* 引き入れる。頷けば子分、断られれば積み上げたものが半分になるか、手が出る。
+     押した時点で賽は投げられているので、結果を先に決めてから台詞を生成させる */
+  recruit() {
+    const n = this.npc;
+    if (!n || this.busy || n.crew) return;
+    const pc = joinChance(n);
+    if (Math.random() * 100 < pc) {
+      joinCrew(n);
+      this.send('俺の下につけ。損はさせない', false, { join: 'ok' });
+      return;
+    }
+    // 断られた。顔を潰したぶんは returned ── 積み上げが半分になるか、殴りかかられる
+    if (Math.random() < 0.35) {
+      n.trust = Math.round(n.trust / 2); n.fear = Math.round(n.fear / 2);
+      n.hostile = true; n.state = 'attack';
+      log(`${n.name} に断られた。そのうえ手が出た。`, 'bad');
+      Snd.hit(); flash(0.3);
+      this.send('俺の下につけ。損はさせない', false, { join: 'hit' });
+      setTimeout(() => this.close(), 1600);
+    } else {
+      n.trust = Math.round(n.trust / 2); n.fear = Math.round(n.fear / 2);
+      log(`${n.name} に断られた。積み上げたものが半分になった。`, 'bad');
+      Snd.lose();
+      this.send('俺の下につけ。損はさせない', false, { join: 'no' });
+    }
+    this.meters();
+  },
+  /* おごる欄。相場を初期値に入れておくが、額は打ち込むもの。
+     こちらでは好感も畏怖も動かさない ── 出した額をどう受け取るかは相手が決める */
+  money() {
+    const n = this.npc; if (!n) return;
+    const mkt = treatYen(n.arch);
+    const el = $('t-yen');
+    el.value = Math.min(mkt, P.yen);
+    el.max = P.yen;
+    $('t-mkt').textContent = `この相手の相場は ${yen(mkt)}`;
+    $('t-treat').disabled = false;
+  },
+  treat() {
+    const n = this.npc;
+    if (!n || this.busy) return;
+    const v = Math.max(0, Math.floor(Number($('t-yen').value) || 0));
+    if (v <= 0) { log('いくら出すか決めてくれ。', 'bad'); return; }
+    if (v > P.yen) { log(`${yen(v - P.yen)} 足りない。`, 'bad'); return; }
+    P.yen -= v; n.yen += v;
+    Snd.coin(); hud();
+    /* 額は台詞に書いて渡す。相場との比べ方は AI 側の指示と npcCtx が持っている。
+       meta は AI に繋がらなかったときのために添える（内蔵の応答も額で判断する） */
+    this.send(`（${yen(v)} 出して、おごった）`, false, { treat: v });
+  },
+  async send(line, isFirst, meta) {
     if (this.busy || !this.npc) return;
     const n = this.npc, g = this.gen;
     this.busy = true;
@@ -3341,10 +4027,11 @@ const Talk = {
     const ph = this.line('think', isFirst ? `${n.name} がこちらを見た……` : '……');
     $('aibadge').classList.add('on');
     $('t-send').disabled = true;
+    $('t-treat').disabled = true;
     let r, offline = false;
     AI.busy++;                          // 会話中に独り言の生成を割り込ませない
     try { r = await AI.talk(n, line); }
-    catch (e) { offline = true; r = offlineTalk(n, line); }
+    catch (e) { offline = true; r = offlineTalk(n, line, meta); }
     finally { AI.busy--; }
     /* 履歴は画面を閉じていても必ず残す。ここで捨てると、返答を待たずに
        立ち去ったぶんの話が丸ごと抜けて、次に声をかけたとき噛み合わなくなる。
@@ -3363,6 +4050,7 @@ const Talk = {
     }
     this.apply(n, r);
     this.meters();
+    this.money();                       // 残りの金が変わっているので、おごる欄も入れ直す
   },
   apply(n, r) {
     n.trust = clamp(n.trust + r.trust, 0, 100);
@@ -3375,32 +4063,25 @@ const Talk = {
       if (v > 0) { P.yen -= v; n.yen += v; log(`${n.name} に ${yen(v)} 渡した`, 'money'); }
     }
     if (r.info) log(`噂: ${r.info}`, 'ai');
-    /* 会話でシマは動かない。動くのは「相手の勢力との間柄」のほう ──
-       敵対を冷ませば傘下に呑む目が出るし、拗らせれば店を買うしかなくなる */
+    /* 会話でシマは動かない。動くのは「その勢力への見込み」のほう ──
+       積めば丸ごと呑む目が出るし、落とせば店を突かれ、0 で全面抗争になる */
     const f = n.arch.fac;
     switch (r.act) {
-      case 'join':
-        if (!n.crew && P.crew.length < 6) {
-          n.crew = true; n.hostile = false; P.crew.push(n);
-          P.rep += 1; recalcInf();
-          log(`${n.name} が子分になった。（${FACTIONS[f].name} から ${crewOf(f)}人目）`, 'good'); Snd.win();
-          addRel(f, -4, '');
-          checkVassal(f);
-        }
-        break;
+      // 自分から言い出した join には賽を振らない（断る道理がないので）
+      case 'join': joinCrew(n); break;
       case 'attack':
         n.hostile = true; n.state = 'attack';
-        addRel(f, 6, '');
+        addFav(f, -6, '');
         log(`${n.name} が殴りかかってきた！`, 'bad'); this.close(); Snd.hit();
         break;
       case 'flee': n.state = 'flee'; n.t = 6; this.close(); break;
       case 'follow': n.state = 'follow'; n.t = 30; break;
       case 'leave': n.state = 'walk'; setTimeout(() => this.close(), 1400); break;
-      case 'deal': if (n.trust > 55) addRel(f, -7, '話がついた'); break;
-      case 'inform': addRel(f, -1, ''); break;
+      case 'deal': if (n.trust > 55) addFav(f, 7, '話がついた'); break;
+      case 'inform': addFav(f, 1, ''); break;
     }
-    if (n.trust >= 70) addRel(f, -2, '');
-    if (n.fear >= 70) addRel(f, 2, '');
+    if (n.trust >= 70) addFav(f, 2, '');
+    if (n.fear >= 70) addFav(f, -2, '');
     hud();
   },
   close() {
@@ -3409,12 +4090,12 @@ const Talk = {
     $('talk').classList.remove('show');
     $('aibadge').classList.remove('on');
     $('t-send').disabled = false;
+    $('t-treat').disabled = false;
     const n = this.npc;
     if (n && n.state === 'talk') { n.state = 'walk'; routeNext(n, true); }
     this.npc = null;
-    $('t-in').blur();
-    if (!isTouch && canvas.requestPointerLock)
-      setTimeout(() => { if (!Talk.open && !mapOpen && started) canvas.requestPointerLock(); }, 40);
+    $('t-in').blur(); $('t-yen').blur();
+    relock(40);
   }
 };
 $('t-send').onclick = () => {
@@ -3423,15 +4104,63 @@ $('t-send').onclick = () => {
   $('t-in').value = '';
   Talk.send(v);
 };
+$('t-treat').onclick = () => Talk.treat();
 $('t-in').addEventListener('keydown', e => {
   e.stopPropagation();
   if (e.key === 'Enter') $('t-send').click();
   if (e.key === 'Escape') Talk.close();
 });
+// 金額欄。ここで止めないと打った数字が持ち替え（1〜9）に流れる
+$('t-yen').addEventListener('keydown', e => {
+  e.stopPropagation();
+  if (e.key === 'Enter') Talk.treat();
+  if (e.key === 'Escape') Talk.close();
+});
+/* 触ったら中身を選ぶ。相場を初期値に入れてあるので、選ばないと打った数字が
+   その後ろに足されて（相場 4000 に 123 と打って 4000123 になる）意図しない額が出る */
+$('t-yen').addEventListener('focus', () => $('t-yen').select());
 
 /* ============================================================================
    13. 戦闘・物件・警察
    ========================================================================= */
+/* ---- 街に出ている武器 ----------------------------------------------------
+   警官と紅蓮会は拳銃を持っている。離れていても届き、そのぶん間合いを取っても
+   逃げ切れない ── かわりに遠いほど当たらず、次の一発までが長い。
+   ドラゴンズは鉄パイプ。届く距離は素手と同じだが、一発が重い。
+   ここに載っていない役どころは素手（7）。                                  */
+const NPC_ARM = {
+  cop:     { n: '拳銃', gun: true, dmg: 15, reach: 15, cd: 2.0 },
+  yakuza:  { n: '拳銃', gun: true, dmg: 17, reach: 14, cd: 2.1 },
+  lookout: { n: '拳銃', gun: true, dmg: 16, reach: 13, cd: 2.2 },
+  hangure: { n: '鉄パイプ', dmg: 15, reach: 1.9, cd: 1.15 },
+  scout:   { n: '鉄パイプ', dmg: 12, reach: 1.9, cd: 1.15 },
+  runner:  { n: '鉄パイプ', dmg: 13, reach: 1.9, cd: 1.15 }
+};
+const armOf = n => NPC_ARM[n.arch.k] || null;
+/* 目と目のあいだに壁があるか。弾はブロックを抜けないので、撃つ側も撃たれる側も見る。
+   raycast は当たったブロックだけを返して距離を返さないので、そのブロックの中心までの
+   長さで測る ── 1 マスぶんの誤差は弾道には効かない。 */
+function clearShot(ox, oy, oz, tx, ty, tz) {
+  const dx = tx - ox, dy = ty - oy, dz = tz - oz;
+  const d = Math.hypot(dx, dy, dz);
+  if (d < 0.6) return true;
+  const b = raycast(ox, oy, oz, dx / d, dy / d, dz / d, d);
+  if (!b) return true;
+  return Math.hypot(b.x + 0.5 - ox, b.y + 0.5 - oy, b.z + 0.5 - oz) >= d - 0.7;
+}
+/* 銃声は当たっても外れても街に響く。手配度が跳ね、警官はこちらを向き、
+   腕の立たない連中は一斉に散る ── 拳銃を抜くのは、それだけで事件になる */
+function gunHeard() {
+  P.wanted = clamp(P.wanted + 34, 0, 100);
+  for (const n of NPCs) {
+    if (n.down > 0) continue;
+    if (Math.hypot(n.x - P.x, n.z - P.z) > 30 || Math.abs(n.y - P.y) > 5) continue;
+    n.fear = clamp(n.fear + 10, 0, 100);
+    if (n.arch.k === 'cop') { n.hostile = true; n.state = 'attack'; }
+    else if (!n.crew && n.arch.hp < 70) { n.state = 'flee'; n.t = 7; }
+  }
+  hud();
+}
 function playerFacing() { return { x: -Math.sin(P.yaw), z: -Math.cos(P.yaw) }; }
 function dist2(a, b) { const dx = a.x - b.x, dz = a.z - b.z; return dx * dx + dz * dz; }
 function flash(v) { const f = $('dmgflash'); f.style.opacity = v; setTimeout(() => f.style.opacity = 0, 200); }
@@ -3439,52 +4168,72 @@ function flash(v) { const f = $('dmgflash'); f.style.opacity = v; setTimeout(() 
 function punch(target) {
   if (P.atkCd > 0 || !started || mapOpen || craftOpen) return;
   if (Talk.open && !target) return;
-  P.atkCd = 0.42;
-  P.armT = 0.42; P.armPhase = 0;        // 腕を振り下ろす
-  Snd.swing();
+  const T = curTool();
+  const gun = !!T.gun;
+  if (gun && !(Craft.dur.gun > 0)) { log('弾が無い。', 'bad'); P.atkCd = 0.5; return; }
+  P.atkCd = gun ? 0.85 : 0.42;
+  P.armT = 0.42; P.armPhase = 0;        // 腕を振り下ろす（拳銃なら構えて撃つ）
+  if (gun) Snd.shot(); else Snd.swing();
   const f = playerFacing();
-  let hit = target && dist2(target, P) < 12 ? target : null;
+  /* 拳銃は遠くまで届くが、狙いはずっと狭い（正面 15 度ほど）。
+     壁越しには当たらないので、間に何か挟まっていれば通らない */
+  const reach = gun ? T.reach : 2.9, cone = gun ? 0.97 : 0.4;
+  const canShoot = n => !gun || clearShot(P.x, P.y + EYE, P.z, n.x, n.y + 1.2, n.z);
+  let hit = null;
+  if (target && !target.dead && target.down <= 0
+    && Math.hypot(target.x - P.x, target.z - P.z) <= reach && canShoot(target)) hit = target;
   if (!hit) {
-    let best = 99;
+    let best = Infinity;
     for (const n of NPCs) {
       if (n.down > 0) continue;
       const dx = n.x - P.x, dz = n.z - P.z, d = Math.hypot(dx, dz);
-      if (d > 2.9 || Math.abs(n.y - P.y) > 2.5) continue;
-      if ((dx / d) * f.x + (dz / d) * f.z < 0.4) continue;
+      if (d > reach || Math.abs(n.y - P.y) > (gun ? 4 : 2.5)) continue;
+      if ((dx / d) * f.x + (dz / d) * f.z < cone) continue;
+      if (!canShoot(n)) continue;
       if (d < best) { best = d; hit = n; }
     }
   }
+  // 一発は一発。外しても弾は減り、銃声は街に響く
+  if (gun) { wearTool(1); gunHeard(); }
   if (!hit) return;
-  const T = curTool();
-  hit.hp -= 14 + T.dmg + P.crew.length * 3 + (P.notoriety > 40 ? 4 : 0);
-  hit.fear = clamp(hit.fear + 12 + T.dmg * 0.3, 0, 100);
-  hit.trust = clamp(hit.trust - 15, 0, 100);
+  hit.hp -= 14 + T.dmg + P.crew.length * 3;
+  // 一発で腹が決まるくらい動かす。殴られた相手が中途半端に構えていることはない
+  hit.fear = clamp(hit.fear + 24 + T.dmg * 0.6, 0, 100);
+  hit.trust = clamp(hit.trust - 30, 0, 100);
   hit.kb = 1; hit.kbx = hit.x - P.x; hit.kbz = hit.z - P.z;   // 殴った側から離れる向き
-  wearTool(2);                          // 人を殴ると道具は早く傷む
-  Snd.hit(); flash(0.25);
+  if (!gun) { wearTool(2); Snd.hit(); }  // 人を殴ると道具は早く傷む（弾はもう減らしてある）
+  flash(0.25);
   if (hit.hp <= 0) {
     hit.hp = 0; hit.down = 26; hit.hostile = false; hit.state = 'down';
-    const wasCrew = hit.crew;
-    if (hit.crew) { hit.crew = false; P.crew = P.crew.filter(c => c !== hit); }
-    P.notoriety = clamp(P.notoriety + 4, 0, 100);
+    const wasCrew = dropCrew(hit);
     P.rep = clamp(P.rep + 1.5, 0, 40); recalcInf();
     log(`${hit.name} を倒した。`, 'bad');
     /* 潰した相手の勢力から、そのシマの取り分をもぎ取る。そのぶん仲は確実に壊れる。
-       身内を殴ってもシマは動かない ── 自分の子分を的にすれば無限に稼げてしまう */
+       身内を殴ってもシマは動かない ── 自分の子分を的にすれば無限に稼げてしまう。
+       流れ者（none）は誰の看板も背負っていないので、倒してもシマは 1% も動かない */
     const f = hit.arch.fac, zi = zoneOf(hit.x, hit.z), t = Terr[zi];
-    const heavy = ['yakuza', 'hangure', 'lookout', 'runner'].includes(hit.arch.k);
-    if (f !== 'player' && !Vassal[f] && !wasCrew) {
+    const heavy = isHeavy(hit);
+    if (isRival(f) && !Vassal[f] && !wasCrew) {
       /* 倒した相手は二度と起き上がらないので、同じ人間を殴り直して積み上げることは
          できない。地力が動くのは一人につきこの一度きり */
-      t.base[f] = Math.max(1, t.base[f] - (heavy ? 1.5 : 0.4));
-      // 傘下を呑んで 24 を超えている場合がある。Math.min だけだと逆に削れてしまう
-      if (t.base.player < 24)
-        t.base.player = Math.min(24, t.base.player + (heavy ? 0.8 : 0.2));
+      dropBase(t, f, heavy ? 1.5 : 0.4);
+      raiseBase(t, 'player', heavy ? 0.8 : 0.2);
       shiftControl(zi, heavy ? 6 : 2, `${hit.name}を潰した`, f);
-      addRel(f, heavy ? 20 : 7, '身内を潰された');
+      addFav(f, heavy ? -20 : -7, '身内を潰された');
     }
     const loot = Math.round(hit.yen * 0.4);
     if (loot > 0) { P.yen += loot; hit.yen -= loot; log(`${yen(loot)} 奪った`, 'money'); }
+    /* 拳銃はクラフトできない。持っている相手を倒して抜き取る以外に手に入らない ──
+       つまり警官か紅蓮会を潰すのが唯一の入手経路で、そのぶん代償が付いてくる */
+    const arm = armOf(hit);
+    if (arm && arm.gun && Math.random() < 0.5) {
+      const had = !!Craft.owned.gun;
+      Craft.owned.gun = true;
+      Craft.dur.gun = Math.min((Craft.dur.gun || 0) + irnd(4, 8), TOOLS.gun.dur);
+      log(had ? `${hit.name} の拳銃から弾を抜いた。残弾 ${Craft.dur.gun}。`
+        : `${hit.name} の拳銃を奪った。残弾 ${Craft.dur.gun}。${kbT('Q')} で持ち替えられる。`, 'good');
+      Snd.win(); updateToolHud(); drawCraft();
+    }
   } else if (!hit.crew) {
     hit.hostile = true;
     hit.state = hit.arch.hp < 55 ? 'flee' : 'attack';
@@ -3507,7 +4256,7 @@ function witness(victim) {
 function buyShop(sh) {
   if (sh.owner === 'player') return;
   const from = sh.owner;                       // どこかの傘下の店なら、その勢力から削る
-  const price = shopPrice(sh);
+  const price = shopCost(sh);
   if (P.yen < price) { log(`${yen(price)} 足りない。`, 'bad'); return; }
   P.yen -= price; sh.owner = 'player';
   recalcInf();
@@ -3515,7 +4264,7 @@ function buyShop(sh) {
   if (from) {
     // 看板を掛け替えられた側は黙っていない。買収も立派な仕掛けのうち
     log(`${FACTIONS[from].name} の${sh.type.name}「${sh.name}」を買い取った。`, 'good');
-    addRel(from, 12, '傘下の店を抜かれた');
+    addFav(from, -12, '傘下の店を抜かれた');
   } else log(`${sh.type.name}「${sh.name}」を買った。上がり ${yen(hourlyIncome(sh))}／時`, 'good');
   Snd.win(); hud();
 }
@@ -3523,24 +4272,23 @@ function arrest() {
   const zi = zoneOf(P.x, P.z);
   const fine = Math.round(P.yen * 0.35);
   P.yen -= fine; P.wanted = 0; P.hp = P.maxhp;
-  P.notoriety = clamp(P.notoriety + 3, 0, 100);
   Clock.min += 120; Clock.elapsed += 120;
   // 挙げられた通りでの顔は落ちる。空いた隙間は他所が埋める
   shiftControl(zi, -3, '手入れが入った');
   respawn();
-  for (const n of NPCs) { n.hostile = false; if (n.state === 'attack') n.state = 'walk'; }
+  NPCs.forEach(calm);
   log(`署に連れて行かれた。${yen(fine)} 消えた。`, 'bad');
   Snd.lose(); hud();
 }
 function knockedOut() {
   const zi = zoneOf(P.x, P.z);
   const lost = Math.round(P.yen * 0.25);
-  P.yen -= lost; P.hp = P.maxhp * 0.6; P.drunk = 0;
+  P.yen -= lost; P.hp = P.maxhp * 0.6;
   // 路上で伸びている姿を見られたシマは、そのぶん他所へ流れる
   shiftControl(zi, -5, '路上で伸びていた');
   respawn();
   Clock.min += 90; Clock.elapsed += 90;
-  for (const n of NPCs) { n.hostile = false; if (n.state === 'attack') n.state = 'walk'; }
+  NPCs.forEach(calm);
   log(`路上で伸びていた。${yen(lost)} 抜かれている。`, 'bad');
   Snd.lose(); hud();
 }
@@ -3549,17 +4297,26 @@ function knockedOut() {
    14. 入力
    ========================================================================= */
 const keys = {};
-let isTouch = matchMedia('(pointer:coarse)').matches;
 let mapOpen = false;
 let craftOpen = false;
 
 addEventListener('keydown', e => {
-  if (Talk.open && document.activeElement === $('t-in')) return;
+  // 会話画面の入力欄（台詞・金額）に打っている最中は、ゲーム側のキーに流さない
+  if (Talk.open && (document.activeElement === $('t-in') || document.activeElement === $('t-yen'))) return;
   if ($('chargen').style.display === 'flex') return;   // 作成中はゲーム側に流さない
   keys[e.code] = true;
+  /* 押しっぱなしのキーリピートで通していいのは、移動と採掘（keys を見るもの）だけ。
+     ここで止めないと Q・Tab・M・N・V のトグルが毎リピート反転してちらつき、
+     G は空振りの換金ログを積み続ける */
+  if (e.repeat) {
+    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'].includes(e.code)) e.preventDefault();
+    return;
+  }
   if (e.code === 'KeyE') interact();
-  // F はアクション。正面に人がいれば殴り、いなければ掘る（updateDig が押しっぱなしを見る）
-  if (e.code === 'KeyF' && punchTarget) punch(punchTarget);
+  /* F はアクション。拳銃を握っているなら、目の前に誰も居なくても撃つ ──
+     近くの相手しか punchTarget に入らないので、これが無いと遠くの敵に撃てない。
+     素手や道具なら、正面に人がいれば殴り、いなければ掘る（updateDig が押しっぱなしを見る） */
+  if (e.code === 'KeyF' && (punchTarget || curTool().gun)) punch(punchTarget);
   if (e.code === 'KeyG') sellBag();
   if (e.code === 'KeyV') P.firstPerson = !P.firstPerson;
   if (e.code === 'KeyN') Snd.toggle();
@@ -3601,24 +4358,36 @@ $('hotbar').addEventListener('click', e => {
   hotSel = +s.dataset.i; rebuildHotbar(); selName();
 });
 
+/* 視点をカメラに返す。どの画面から戻るときも条件は同じ ── タッチでないこと、
+   ゲームが動いていること、そして掴み直す瞬間にどの画面も開いていないこと。
+   delay を渡すと少し待ってから見る（閉じ切る前に掴むと弾かれる） */
+function relock(delay) {
+  if (isTouch || !canvas.requestPointerLock) return;
+  const go = () => { if (started && !Talk.open && !mapOpen && !craftOpen) canvas.requestPointerLock(); };
+  delay ? setTimeout(go, delay) : go();
+}
 function toggleMap() {
   if (craftOpen) return;
   mapOpen = !mapOpen;
   $('map').classList.toggle('show', mapOpen);
   Dig.active = false;
   if (mapOpen) { drawMap(); if (document.pointerLockElement) document.exitPointerLock(); }
-  else if (!isTouch && started && canvas.requestPointerLock) canvas.requestPointerLock();
+  else relock();
 }
+/* 閉じるボタン。指では板の下に道具のボタンが隠れてしまうので、これが唯一の出口。
+   キーで開けた人にも同じものが効く */
+$('craft-x').onclick = () => { if (craftOpen) toggleCraft(); };
+$('map-x').onclick = () => { if (mapOpen) toggleMap(); };
 function toggleCraft() {
   if (!started || Talk.open || mapOpen) return;
   craftOpen = !craftOpen;
   $('craft').classList.toggle('show', craftOpen);
   Dig.active = false;
   if (craftOpen) { drawCraft(); if (document.pointerLockElement) document.exitPointerLock(); }
-  else if (!isTouch && canvas.requestPointerLock) canvas.requestPointerLock();
+  else relock();
 }
 
-const tState = { mx: 0, mz: 0, run: false, lookId: null, lx: 0, ly: 0, jump: false };
+const tState = { mx: 0, mz: 0, lookId: null, lx: 0, ly: 0, jump: false };
 if (isTouch) {
   $('touch').classList.add('on');
   const stick = $('stick'), knob = stick.querySelector('i');
@@ -3628,17 +4397,23 @@ if (isTouch) {
     const r = stick.getBoundingClientRect(); sx0 = r.left + r.width / 2; sy0 = r.top + r.height / 2;
   }, { passive: false });
   addEventListener('touchmove', e => {
+    let mine = false;
     for (const t of e.changedTouches) {
       if (t.identifier === sid) {
         const dx = clamp((t.clientX - sx0) / 44, -1, 1), dy = clamp((t.clientY - sy0) / 44, -1, 1);
         tState.mx = dx; tState.mz = dy;
         knob.style.transform = `translate(${dx * 32}px,${dy * 32}px)`;
+        mine = true;
       } else if (t.identifier === tState.lookId) {
         P.yaw -= (t.clientX - tState.lx) * 0.006;
         P.pitch = clamp(P.pitch - (t.clientY - tState.ly) * 0.005, -1.5, 1.5);
         tState.lx = t.clientX; tState.ly = t.clientY;
+        mine = true;
       }
     }
+    /* こちらが使った指のぶんだけ既定の動きを止める。全部止めると会話ログや
+       クラフトの一覧を指でスクロールできなくなる（あれは掴んでいない指） */
+    if (mine) e.preventDefault();
   }, { passive: false });
   addEventListener('touchend', e => {
     for (const t of e.changedTouches) {
@@ -3646,7 +4421,10 @@ if (isTouch) {
       if (t.identifier === tState.lookId) tState.lookId = null;
     }
   });
+  /* 視点を掴むのは最初の一本だけ。上書きしていると、ドラッグ中に別の指が画面に
+     触れた瞬間に基準点が入れ替わって、カメラが跳ねる */
   canvas.addEventListener('touchstart', e => {
+    if (tState.lookId !== null) return;
     const t = e.changedTouches[0];
     tState.lookId = t.identifier; tState.lx = t.clientX; tState.ly = t.clientY;
   }, { passive: true });
@@ -3662,6 +4440,29 @@ if (isTouch) {
   hold('bB', () => punch(punchTarget || focusNPC));
   hold('bC', () => toggleMap());
   hold('bK', () => toggleCraft());
+  // 換金。これが無いと、指では掘る → 売る → 道具 の輪が最初から閉じている
+  hold('bY', () => sellBag());
+  // キーボードが無いので、案内も画面にあるものの言い方に直す
+  $('talkhint').textContent = '「言う」で発言 / 「立ち去る」で閉じる ── 返答も行動も、'
+    + '好感と畏怖の振れ幅も、その場で生成される。おごる額は自由（殴るなら閉じて 殴）';
+  $('craft-x').textContent = '閉じる';
+  $('map-x').textContent = '閉じる';
+  // 遊び方もキーではなくボタンで説明する。キー表はここでは読めても押せない
+  $('t-keylist').innerHTML = [
+    ['スティック', '移動'],
+    ['画面をなぞる', '視点'],
+    ['跳', 'ジャンプ'],
+    ['掘', '押しっぱなしでブロックを掘る'],
+    ['殴', '目の前の人を殴る'],
+    ['置', '手に持っているブロックを置く'],
+    ['画面下の枠', '手に持つブロックを選ぶ（触れて切り替え）'],
+    ['作', `クラフト／出店／格上げ（道具・壁を見ながらで出店・自分の店の前で格上げ）`],
+    ['換', `回収したブロックを換金（自分の店なら高く売れる）。カバンは ${BAG_MAX} 個まで`],
+    // 印の色見本は applyGangColor が id で塗る。この <i> を落とすと色が配れない
+    ['話', '話す・店を買う（入口に浮く印の色が持ち主。<i style="color:#fff;font-style:normal">白</i>は独立、'
+      + '勢力の色はその傘下、<i id="hlp-mine" style="color:#39ff88;font-style:normal">この色</i>は自分の店）'],
+    ['図', '勢力図']
+  ].map(([k, d]) => `<b>${k}</b><span>${d}</span>`).join('');
 }
 
 /* ============================================================================
@@ -3701,19 +4502,26 @@ function findFocus() {
   if (Talk.open || mapOpen || craftOpen) { pr.style.display = 'none'; return; }
   if (focusNPC) {
     pr.style.display = 'block';
-    pr.innerHTML = `<kbd>E</kbd> ${focusNPC.name}（${focusNPC.arch.job}）に話す`
-      + (punchTarget ? `　　<kbd>F</kbd> 殴る` : `　　<span style="opacity:.45">近づいて F で殴る</span>`);
+    const g = curTool().gun;
+    pr.innerHTML = `${kb('E')} ${focusNPC.name}（${focusNPC.arch.job}）に話す`
+      + (g ? `　　${kb('F')} 撃つ（残弾 ${Craft.dur.gun || 0}）`
+        : punchTarget ? `　　${kb('F')} 殴る`
+          : `　　<span style="opacity:.45">近づいて ${kbT('F')} で殴る</span>`);
   } else if (focusShop) {
     pr.style.display = 'block';
     const s = focusShop;
+    const up = upgradeOf(s);
     pr.innerHTML = s.owner === 'player'
-      ? `<kbd>G</kbd> ${s.type.name}「${s.name}」で換金（満額）　上がり ${yen(hourlyIncome(s))}／時`
-      : `<kbd>E</kbd> ${s.type.name}「${s.name}」を買う ${yen(shopPrice(s))}`
+      ? `${kb('G')} ${s.type.name}「${s.name}」で換金（満額）　上がり ${yen(hourlyIncome(s))}／時`
+      + (up ? `　　${kb('Q')} ${up.to.name} へ格上げ ${yen(up.cost)}＋資材` : '')
+      : `${kb('E')} ${s.type.name}「${s.name}」を買う ${yen(shopCost(s))}`
+      + (infDiscount() > 0.01 ? `<span style="color:#39ff88">（顔が利くぶん -${Math.round(infDiscount() * 100)}%）</span>` : '')
       + (s.owner ? `　<span style="color:${FACTIONS[s.owner].css}">${esc(FACTIONS[s.owner].name)}の店</span>` : '　<span style="opacity:.6">独立</span>')
       + `　<span style="opacity:.6">上がり ${yen(hourlyIncome(s))}／時・支配 ${s.owner ? FACTIONS[s.owner].name + 'から' : ''} +${shopControl(s)}%</span>`;
   } else if (bagValue() > 0) {
     pr.style.display = 'block';
-    pr.innerHTML = `<kbd>G</kbd> カバンの ${yen(bagValue())} 相当を換金（自分の店の前なら満額）`;
+    pr.innerHTML = `${kb('G')} カバンの ${yen(bagValue())} 相当を換金（自分の店の前なら満額）`
+      + `　<span style="opacity:.5">${bagCount()} / ${BAG_MAX} 個</span>`;
   } else pr.style.display = 'none';
 }
 function interact() {
@@ -3721,7 +4529,6 @@ function interact() {
   if (focusNPC) { Talk.start(focusNPC); return; }
   if (focusShop) {
     if (focusShop.owner === 'player') {
-      P.drunk = clamp(P.drunk + 12, 0, 100);
       P.hp = clamp(P.hp + 18, 0, P.maxhp);
       log(`${focusShop.name} で一杯やった。`, 'good'); Snd.coin(); hud();
     } else buyShop(focusShop);
@@ -3847,12 +4654,22 @@ const socIdle = n => n.down <= 0 && !n.hostile && n.soc <= 0
 const facName = s => s === 'player' ? P.gang : FACTIONS[s].name;
 function say(n, text, t) { n.bark = text; n.barkT = t || 4.2; }
 const countState = s => NPCs.reduce((a, n) => a + (n.state === s ? 1 : 0), 0);
+/* 絡みから抜けて歩きに戻す。相手を離し、振り上げた腕を下ろし、道順を引き直す。
+   soc は次に誰かと絡むまでの間 ── 決着の付き方で長さが変わる */
+function toWalk(n, soc) {
+  n.state = 'walk'; n.foe = null; n.arm = 0; n.armT = 0;
+  n.soc = soc != null ? soc : rnd(25, 60);
+  routeNext(n, true);
+}
 
 const BRAWL_OPEN = {
+  // 警官はここだけ別。勢力ではないので sideOf は none に落ちる（cop で先に引く）
+  cop: ['署まで来てもらう', '手を離せと言った', 'そこまでだ'],
   guren: ['ここは紅蓮会のシマだ', '誰に断って立ってる', 'その面、覚えたぞ'],
   dragons: ['邪魔なんだよジジイ', 'いつまで昭和やってんだ', 'やんのか？'],
   arcadia: ['うちの客に手ぇ出すな', 'ふざけんじゃねぇ', '表出ろよ'],
   local: ['いい加減にしろって', 'ここでやるな', 'あんたら毎晩かよ'],
+  none: ['……なんだよ', '関係ねぇだろ', 'やめとけって'],
   player: ['うちの若いのに何した', 'そこ、どけ', '話は終わりだ']
 };
 const BRAWL_WIN = ['……次はねぇぞ', '寝てろ', 'これで分かったか', '持って帰れ、その面'];
@@ -3874,6 +4691,68 @@ const CHAT_SCRIPTS = [
   ['新しい顔が増えた', '掘ってる連中だろ', 'あれは客じゃない', '客じゃないのが一番怖い'],
   ['腹減った', 'まだ開いてる', '奢れ', '寝言だな']
 ];
+/* 力関係が出る立ち話。鍵は「A>B」で、先に口を開くのは A のほう ──
+   締めている側から始まる台本と、逆らう側から始まる台本を分けてある。
+   AI に繋がっていればこちらは使われないが、繋がらない夜でも上下は見えるべき。 */
+const CHAT_PAIR = {
+  // 公権力 → 紅蓮会。手綱を握っているという口の利き方
+  'cops>guren': [
+    ['また事務所に顔を出すぞ', '……勘弁してくださいよ', '勘弁は毎回聞いた', 'ええ、毎回言ってます'],
+    ['最近、若いのが騒がしいな', 'こちらで締めておきます', '締める前に一報を入れろ', '……はい'],
+    ['名簿は増えてないだろうな', '減る一方ですよ', 'それでいい', '……ええ、それで']
+  ],
+  // 紅蓮会 → 商店組合。面倒を見ている／納めさせている
+  'guren>local': [
+    ['今月ぶん、揃ってるか', '……あと少しだけ待ってください', '待つのは今夜までだ', 'はい'],
+    ['店、綺麗にしてるな', 'おかげさまで', 'おかげが分かってるならいい', '……ええ'],
+    ['この通り、誰が静かにしてると思ってる', '……分かっています', 'なら話は早い', 'はい']
+  ],
+  // ドラゴンズ → 紅蓮会。倒す相手として面と向かって煽る
+  'dragons>guren': [
+    ['まだそのバッジ着けてんのか', '……口の利き方を覚えろ', '覚える気はねぇよ', 'その面、覚えたぞ'],
+    ['そっちの若い衆、うちに来たがってたぜ', '寝言は寝て言え', '寝てるのはあんたらだろ', '……表へ出るか']
+  ],
+  // ドラゴンズ → アルカディア／商店組合。呑みたい相手に露骨に手を伸ばす
+  'dragons>arcadia': [
+    ['その箱、うちで回さねぇか', '結構です', '結構じゃ済まなくなるぞ', 'それでも結構です'],
+    ['キャストごと預かってやるよ', 'うちの子はうちで見ます', '強がるなよ', '強がってません']
+  ],
+  'dragons>local': [
+    ['シャッター、うちが見てやるよ', '間に合ってます', '間に合わなくなる日が来る', '……お引き取りを'],
+    ['上がりの半分でいい', '半分も残りません', 'なら全部でもいいぜ', '……勘弁してください']
+  ],
+  // ドラゴンズ → 公権力。捕まらなければ何をしてもいいという態度
+  'dragons>cops': [
+    ['何も持ってねぇよ', '手を出して', '令状は？', '……次は用意してくる'],
+    ['また職質か', '名前と住所', '言う義務あんの？', 'その口の利き方が理由だ']
+  ],
+  // アルカディア → 公権力。喧嘩はしないが、ここだけは折れない
+  'arcadia>cops': [
+    ['営業妨害ですよ、それ', '中を見せてもらう', '令状を見せてください', '……そう来るか'],
+    ['何度目ですか、今月', '苦情が出ている', '出させてる人がいるんでしょう', '……余計な口を叩くな']
+  ],
+  // アルカディア → 商店組合。隣人として静か
+  'arcadia>local': [
+    ['今日は静かですね', 'おかげさまで', 'こっちの客も回しますよ', '助かる'],
+    ['表の看板、直しました？', '直した。あんたに言われてな', '目立ってますよ', 'それが狙いだ']
+  ],
+  // アルカディア → 紅蓮会。払うものは払う、それ以上は付き合わない
+  'arcadia>guren': [
+    ['今月ぶんです', '……ああ', 'それでは', '愛想がねぇな']
+  ],
+  // 商店組合 → 公権力。頼りたいが遅い
+  'local>cops': [
+    ['昨日の件、来てくれました？', '記録は取った', '記録じゃ直らないんですよ', '……順番がある']
+  ]
+};
+/* その二人に合う台本を選ぶ。向きが逆なら swap を立てて、先に喋る側を入れ替える */
+function pairScript(a, b) {
+  const sa = stanceSide(a), sb = stanceSide(b);
+  const fwd = CHAT_PAIR[sa + '>' + sb], rev = CHAT_PAIR[sb + '>' + sa];
+  if (fwd && (!rev || Math.random() < 0.5)) return { script: pick(fwd), swap: false };
+  if (rev) return { script: pick(rev), swap: true };
+  return { script: pick(CHAT_SCRIPTS), swap: false };
+}
 let socT = 0, lastDuo = 0;
 function startBrawl(a, b) {
   const sa = sideOf(a), sb = sideOf(b);
@@ -3882,7 +4761,8 @@ function startBrawl(a, b) {
   a.atk = rnd(0.2, 0.7); b.atk = rnd(0.5, 1.1);
   a.brawlT = b.brawlT = 16;
   a.soc = b.soc = 999;                       // 決着がつくまで別の絡みに入らない
-  say(a, pick(BRAWL_OPEN[sa] || BRAWL_OPEN.local), 3.4);
+  // 口火は「その人の側」の言い方で。警官だけは役どころのほうを先に引く
+  say(a, pick(BRAWL_OPEN[a.arch.k === 'cop' ? 'cop' : sa] || BRAWL_OPEN.none), 3.4);
   if (canHear(a)) {
     log(`${facName(sa)}の${a.name}と${facName(sb)}の${b.name}が殴り合いを始めた。`, 'bad');
     Snd.swing();
@@ -3892,22 +4772,19 @@ function startBrawl(a, b) {
 function winBrawl(w, l) {
   const fw = sideOf(w), fl = sideOf(l);
   l.hp = 0; l.down = 24; l.state = 'down'; l.foe = null; l.bark = ''; l.barkT = 0;
-  if (l.crew) { l.crew = false; P.crew = P.crew.filter(c => c !== l); recalcInf(); }
-  w.state = 'walk'; w.foe = null; w.soc = rnd(40, 90); w.arm = 0; w.armT = 0;
-  routeNext(w, true);
+  dropCrew(l);
+  toWalk(w, rnd(40, 90));
   say(w, pick(BRAWL_WIN), 3.2);
   const zi = zoneOf(l.x, l.z), t = Terr[zi];
-  const heavy = ['yakuza', 'hangure', 'lookout', 'runner'].includes(w.arch.k);
-  const got = moveShare(zi, fl, fw, heavy ? 2.6 : 1.2);
+  const got = moveShare(zi, fl, fw, isHeavy(w) ? 2.6 : 1.2);
   // 一度やり合えば次はもっと早い。勢力どうしの熱はここで上がる
   if (fw !== 'player' && fl !== 'player') {
     const k = feudKey(fw, fl);
     Feud[k] = clamp((Feud[k] || 0) + 2, 0, 100);
-  } else addRel(fw === 'player' ? fl : fw, 3, '');
+  } else addFav(fw === 'player' ? fl : fw, -3, '');
   // 地力も少しだけ動く。同じ通りで勝ち続ければ、その勢力の足場そのものが太る
-  t.base[fl] = Math.max(1, t.base[fl] - 0.25);
-  // 傘下を呑んだ勢力は 24 を超えていることがある。Math.min だけだと勝った側が痩せる
-  if (t.base[fw] < 24) t.base[fw] = Math.min(24, t.base[fw] + 0.15);
+  if (hasShare(fl)) dropBase(t, fl, 0.25);
+  if (hasShare(fw)) raiseBase(t, fw, 0.15);
   if (canHear(l) && got >= 0.2)
     log(`【${t.name}】${facName(fw)} が ${facName(fl)} を潰した。支配 ${Math.round(got * 10) / 10}% が動いた。`,
       fw === 'player' ? 'good' : 'bad');
@@ -3915,13 +4792,8 @@ function winBrawl(w, l) {
 }
 function endBrawl(n, scatter) {
   const m = n.foe;
-  n.state = 'walk'; n.foe = null; n.soc = rnd(25, 60); n.arm = 0; n.armT = 0;
-  routeNext(n, true);
-  if (m && m.foe === n) {
-    m.state = scatter ? 'flee' : 'walk'; m.t = 4; m.foe = null; m.soc = rnd(25, 60);
-    m.arm = 0; m.armT = 0;
-    if (!scatter) routeNext(m, true);
-  }
+  toWalk(n);
+  if (m && m.foe === n) { toWalk(m); if (scatter) { m.state = 'flee'; m.t = 4; } }
   if (scatter) { n.state = 'flee'; n.t = 4; }
 }
 function startChat(a, b) {
@@ -3929,9 +4801,13 @@ function startChat(a, b) {
   a.foe = b; b.foe = a;
   a.soc = b.soc = 999;
   a.chatT = 0.35; b.chatT = 99;              // 交互に喋る。まずは A から
-  const script = pick(CHAT_SCRIPTS);
-  a.chatQ = script.filter((_, i) => i % 2 === 0);
-  b.chatQ = script.filter((_, i) => i % 2 === 1);
+  /* 力関係のある二人なら、その台本を使う。締めている側が先に口を開く向きが
+     決まっているので、逆なら A/B のどちらが先かを入れ替える */
+  const { script, swap } = pairScript(a, b);
+  const first = swap ? b : a, second = swap ? a : b;
+  first.chatQ = script.filter((_, i) => i % 2 === 0);
+  second.chatQ = script.filter((_, i) => i % 2 === 1);
+  if (swap) { a.chatT = 99; b.chatT = 0.35; }
   a.yaw = Math.atan2(b.x - a.x, b.z - a.z);
   b.yaw = Math.atan2(a.x - b.x, a.z - b.z);
   // 立ち話は頭の上の吹き出しで見せるもの。ログは声が聞こえる距離だけにする
@@ -3951,8 +4827,8 @@ function startChat(a, b) {
 }
 function endChat(n) {
   const m = n.foe;
-  n.state = 'walk'; n.foe = null; n.chatQ = null; n.soc = rnd(35, 90); routeNext(n, true);
-  if (m && m.foe === n) { m.state = 'walk'; m.foe = null; m.chatQ = null; m.soc = rnd(35, 90); routeNext(m, true); }
+  n.chatQ = null; toWalk(n, rnd(35, 90));
+  if (m && m.foe === n) { m.chatQ = null; toWalk(m, rnd(35, 90)); }
 }
 /* 絡みの相手を探す。0.5 秒に一度だけ、しかもプレイヤーの近くだけを見る */
 function updateSocial(dt) {
@@ -3962,6 +4838,8 @@ function updateSocial(dt) {
   // 警官が来たら殴り合いは散る。地上の抑止力はこれだけ
   for (const n of NPCs) {
     if (n.state !== 'brawl') continue;
+    // 当人が警官の揉め事（アルカディア × 警官）は、その場に警官が居るのが前提なので散らない
+    if (n.arch.k === 'cop' || (n.foe && n.foe.arch.k === 'cop')) continue;
     const cop = NPCs.some(c => c.arch.k === 'cop' && c.down <= 0
       && Math.abs(c.y - n.y) < 4 && Math.hypot(c.x - n.x, c.z - n.z) < 11);
     if (cop) {
@@ -3980,9 +4858,8 @@ function updateSocial(dt) {
       if (d < best) { best = d; m = o; }
     }
     if (!m) continue;
-    // 警官は殴り合いには加わらない（そもそも止める側）。立ち話はする
-    const cop = n.arch.k === 'cop' || m.arch.k === 'cop';
-    const h = cop ? 0 : hostility(sideOf(n), sideOf(m));
+    // 警官まわりの例外は npcHostility が持っている（アルカディアだけは手を出す）
+    const h = npcHostility(n, m);
     if (h >= HOSTILE) {
       if (brawls >= MAX_BRAWL) continue;
       brawls++; startBrawl(n, m);
@@ -4003,8 +4880,7 @@ function killNPC(n) {
   if (n.dead) return;
   n.dead = true;
   // 倒された時点で子分からは外れているのが普通。ここは取りこぼしの受け皿
-  const wasCrew = n.crew;
-  if (n.crew) { n.crew = false; P.crew = P.crew.filter(c => c !== n); recalcInf(); }
+  const wasCrew = dropCrew(n);
   if (Talk.open && Talk.npc === n) Talk.close();
   // 見えないところの退場までは流さない。ただし自分の子分が欠けたのは必ず知らせる
   if (wasCrew || canHear(n)) log(`${n.name} は運ばれていった。もうこの街にはいない。`, 'bad');
@@ -4017,10 +4893,7 @@ function reapNPCs() {
     if (!n.dead) continue;
     NPCs.splice(i, 1);
     // 消えた相手を掴んだままだと、空を相手に殴り合い・立ち話を続けてしまう
-    for (const m of NPCs) if (m.foe === n) {
-      m.foe = null; m.state = 'walk'; m.soc = rnd(25, 60); m.arm = 0; m.armT = 0;
-      routeNext(m, true);
-    }
+    for (const m of NPCs) if (m.foe === n) toWalk(m);
     if (!n.arch.fixed) spawnNPC(n.arch);
   }
 }
@@ -4041,6 +4914,9 @@ function updateNPCs(dt) {
     // 階をまたいだ相手は狙わない。地下へ潜れば地上の警官からは切れる
     const sameFloor = Math.abs(n.y - P.y) < 4;
     if (n.arch.k === 'cop' && P.wanted >= 45 && pd < 40 && sameFloor) { n.hostile = true; n.state = 'attack'; }
+    /* 全面抗争中の勢力の人間は、路上で見つけ次第かかってくる。26 マスにしてあるのは、
+       走れば振り切れる距離を残すため ── 逃げ場が無いと、抗争が始まった瞬間に詰む */
+    if (War[n.arch.fac] && !n.crew && pd < 26 && sameFloor) { n.hostile = true; n.state = 'attack'; }
 
     switch (n.state) {
       case 'talk': n.yaw = Math.atan2(dx, dz); break;
@@ -4056,17 +4932,30 @@ function updateNPCs(dt) {
         break;
       case 'attack': {
         n.yaw = Math.atan2(dx, dz);
-        if (pd > 1.8) npcStep(n, P.x, P.z, n.spd * 1.25, dt);
+        const arm = armOf(n);
+        const gun = !!(arm && arm.gun);
+        const reach = arm ? arm.reach : 1.8;
+        /* 拳銃持ちは、届く距離に入って壁が無くなった時点で足を止めて撃つ。
+           間合いを取っても逃げ切れないのがこの武器の恐さで、そのぶん外れる */
+        const ready = pd <= reach && (!gun || clearShot(n.x, n.y + 1.4, n.z, P.x, P.y + EYE, P.z));
+        if (!ready) npcStep(n, P.x, P.z, n.spd * 1.25, dt);
         else {
           n.atk = (n.atk || 0) - dt;
           if (n.atk <= 0) {
-            n.atk = 1.15;
-            const dmg = (n.arch.k === 'yakuza' ? 11 : n.arch.k === 'cop' ? 9 : 7)
-              * (1 - P.crew.length * 0.06) * (Craft.armor ? 0.75 : 1);
-            P.hp -= dmg; flash(0.5); Snd.hit();
-            if (n.arch.k === 'cop' && P.hp < 35) { arrest(); return; }
-            if (P.hp <= 0) { knockedOut(); return; }
-            hud();
+            n.atk = arm ? arm.cd : 1.15;
+            if (gun) { if (canHear(n)) Snd.shot(); }
+            else { n.armT = 0.4; n.armPhase = 0; }
+            // 遠いほど当たらない。至近距離ではまず外さない
+            const landed = !gun || Math.random() < clamp(1.05 - pd / 26, 0.35, 1);
+            if (landed) {
+              P.hp -= (arm ? arm.dmg : 7)
+                * (1 - P.crew.length * 0.06) * (Craft.armor ? 0.75 : 1);
+              flash(0.5);
+              if (!gun) Snd.hit();
+              if (n.arch.k === 'cop' && P.hp < 35) { arrest(); return; }
+              if (P.hp <= 0) { knockedOut(); return; }
+              hud();
+            }
           }
         }
         if (pd > 38 || !sameFloor) { n.state = 'walk'; n.hostile = false; routeNext(n, true); }
@@ -4086,13 +4975,17 @@ function updateNPCs(dt) {
         else {
           n.atk = (n.atk || 0) - dt;
           if (n.atk <= 0) {
+            const barm = armOf(n);
             n.atk = rnd(0.75, 1.25);
             n.armT = 0.4; n.armPhase = 0;              // 腕を振る（プレイヤーと同じ動き）
-            m.hp -= (n.arch.k === 'yakuza' ? 13 : n.arch.k === 'hangure' ? 11 : 7) * rnd(0.7, 1.3);
+            /* 手に持っているもので一発の重さが変わる。組同士のもみ合いは
+               間合いが詰まっているので、拳銃も殴りと同じ距離で使われる */
+            m.hp -= (barm ? barm.dmg : 7) * rnd(0.7, 1.3);
+            if (barm && barm.gun && canHear(n)) Snd.shot();
             // 吹き飛ぶ向きは殴った n から見て外側。プレイヤーの位置とは関係ない
             m.kb = 0.5; m.kbx = m.x - n.x; m.kbz = m.z - n.z;
             m.fear = clamp(m.fear + 4, 0, 100);
-            if (canHear(n)) Snd.hit();
+            if (!(barm && barm.gun) && canHear(n)) Snd.hit();
             if (m.hp <= 0) { winBrawl(n, m); break; }
           }
         }
@@ -4174,36 +5067,46 @@ function updateWorld(dt) {
   /* 地下にいる間は手配度が速く冷める。警官は地上にしか湧かないので、
      「追われたら潜る」が成立する。地上に戻れば元の速さに戻る */
   P.wanted = clamp(P.wanted - dt * (floorOf(P.y) < 2 ? 4.5 : 0.9), 0, 100);
-  P.drunk = clamp(P.drunk - dt * 1.1, 0, 100);
   P.hp = clamp(P.hp + dt * 0.9, 0, P.maxhp);
+  updateRaid(dt);
 }
 function hourTick() {
   for (const t of Terr) hourTerr(t);
-  // 揉め事の熱は放っておけば冷める。手を出さない相手とはいずれ元に戻る
+  /* 見込みは放っておけば真ん中（50）へ戻る。手を出さなければ角も取れるし、
+     顔を出さなければ忘れられる ── どちらへ振り切るにも、こちらが動き続ける必要がある。
+     全面抗争に入った相手は戻らない。解けるのはシマのほうだけ（checkWarEnd） */
   for (const f of RIVALS) {
-    if (Vassal[f]) continue;
-    if (Rel[f] > 0) Rel[f] = Math.max(0, Rel[f] - 1.5);
-    // 敵対が冷めた頃に、すでに人数の揃っている勢力を呑む
-    checkVassal(f, true);
+    if (Vassal[f] || War[f]) continue;
+    Fav[f] += (FAV_BASE[f] - Fav[f]) * 0.06;
   }
+  // 抗争は、その勢力の看板が街から消えたときに終わる
+  for (const f of RIVALS) checkWarEnd(f);
   // 勢力どうしの熱も元の温度へ戻る。積年の因縁までは消えない
   for (const k in Feud) Feud[k] += (FEUD_BASE[k] - Feud[k]) * 0.15;
   facsUI();
   // 店の上がりは日締めではなく毎時入れる
   const shops = Shops.filter(s => s.owner === 'player');
   const income = shops.reduce((a, s) => a + hourlyIncome(s), 0);
-  const upkeep = Math.round(P.crew.length * 12000 / 24);
+  const upkeep = Math.round(P.crew.length * CREW_DAILY * INCOME_RATE);
   P.yen += income - upkeep;
   if (P.yen < 0) {
     P.yen = 0;
     if (P.crew.length) { const c = P.crew.pop(); c.crew = false; log(`${c.name} が抜けた。金が回っていない。`, 'bad'); }
   }
   if (income) log(`店の上がり ${yen(income)}${upkeep ? ` − 人件費 ${yen(upkeep)}` : ''}`, 'money');
+  maybeRaid();
   recalcInf(); hud();
+  // 段が溜まっていたら（読んでいる最中に次を満たしたときなど）ここで拾う
+  checkCrown();
 }
 function newDay() {
   Clock.day++;
   for (const n of NPCs) n.barkCount = 0;
+  // 生成の枠は一晩ぶん。日付が変わったら戻る（リロードでは戻らない ── セーブが持つ）
+  const spent = AI.calls.talk + AI.calls.bark;
+  AI.calls.talk = 0; AI.calls.bark = 0;
+  if (AI.capped) { AI.capped = false; log('夜が明けた。AI の枠が戻った。', 'ai'); }
+  else if (spent > 0) log(`昨夜の生成 ${spent} 回。枠は戻った。`, 'ai');
   const held = heldZones();
   log(held >= WIN_ZONES
     ? `日付が変わった。${held} シマを抱えている。落とさないほうが難しい。`
@@ -4360,6 +5263,13 @@ const Snd = {
   },
   hit() { this.noise(0.16, 0.5, 260); this.blip(150, 0.1, 'square', 0.16, 0.4); },
   swing() { this.noise(0.09, 0.14, 2200); },
+  /* 銃声。硬い破裂音のあとに、ビルの壁で跳ね返った低い残響が残る。
+     この街の路地は狭いので、一発鳴れば通りの端まで届く */
+  shot() {
+    this.noise(0.045, 0.85, 2100);
+    this.noise(0.34, 0.26, 380);
+    this.blip(140, 0.13, 'square', 0.24, 0.22);
+  },
   step() { this.noise(0.05, 0.05, 520); },
   // 掘る音はブロックの硬さで高さを変える
   tick(def) { this.noise(0.045, 0.10, 700 + (1 - clamp(def.h, 0, 2) / 2) * 1400); },
@@ -4390,9 +5300,7 @@ gl.cullFace(gl.BACK);
 gl.clearColor(0.02, 0.015, 0.04, 1);
 
 function camera() {
-  const wob = P.drunk * 0.0016, t = performance.now() / 1000;
-  const py = P.pitch + Math.sin(t * 1.3) * wob;
-  const yw = P.yaw + Math.sin(t * 0.9) * wob * 1.6;
+  const py = P.pitch, yw = P.yaw;
   const cp = Math.cos(py);
   const fx = -Math.sin(yw) * cp, fy = Math.sin(py), fz = -Math.cos(yw) * cp;
   const ey = P.y + EYE + (P.moving && P.onGround ? Math.sin(P.walkPhase * 2) * 0.045 : 0);
@@ -4504,7 +5412,7 @@ function pushCharacter(n, isPlayer) {
     addInst(n.x, base + 0.94, n.z, 0.50, 0.10, 0.14, hp, rot, 0.9);
   }
   if (!isPlayer && (n.crew || n.hostile || n.state === 'brawl')) {
-    const mc = n.state === 'brawl' ? [1, .45, .10] : n.crew ? [0.22, 1, .53] : [1, .23, .19];
+    const mc = n.state === 'brawl' ? [1, .45, .10] : n.crew ? facCol('player') : [1, .23, .19];
     // 抗争中の印は速く回す。遠くからでも「揉めている」と分かる
     addInst(n.x, base + 1.35, n.z, 0.18, 0.18, 0.18, mc,
       performance.now() / (n.state === 'brawl' ? 130 : 500), 2.0);
@@ -4612,10 +5520,7 @@ function render() {
     // 地下は天井が低い。頭のすぐ上に浮かせる
     const my = s.under ? SUB_TOP + 0.2 : groundTop(s.x, s.z) + 3.4;
     // 印の色は持ち主の色。どの勢力の店なのかが通りから見て分かる
-    const col = s.owner === 'player' ? [0.22, 1, .53]
-      : s.owner === 'guren' ? [1, .23, .19]
-        : s.owner === 'dragons' ? [.64, .36, 1]
-          : s.owner === 'arcadia' ? [.09, .88, 1] : [1, .81, .25];
+    const col = facCol(s.owner);
     addInst(s.x, my + Math.sin(t * 2 + s.id) * 0.14, s.z,
       0.42, 0.42, 0.42, col, t * 1.3, 2.2);
   }
@@ -4694,10 +5599,10 @@ function updateTags() {
       el.style.opacity = clamp(1.25 - o.d / SHOP_TAG_FAR, 0.3, 1);
       const mine = s.owner === 'player';
       nb.textContent = `${s.type.name}「${s.name}」`;
-      // 独立は白。金は「地元の顔役」の色なので、独立と見分けがつかなくなる
+      // 独立は白。金は「商店組合」の色なので、独立と見分けがつかなくなる
       nb.style.color = s.owner ? FACTIONS[s.owner].css : '#fff';
       jb.textContent = mine ? `自分の店・${yen(hourlyIncome(s))}／時`
-        : `${yen(shopPrice(s))} で買える` + (s.owner ? `・${FACTIONS[s.owner].name}の店` : '・独立');
+        : `${yen(shopCost(s))} で買える` + (s.owner ? `・${FACTIONS[s.owner].name}の店` : '・独立');
       hb.style.display = 'none'; bk.style.display = 'none';
       return;
     }
@@ -4708,7 +5613,8 @@ function updateTags() {
     jb.textContent = n.state === 'brawl'
       ? `抗争中 ── ${facName(sideOf(n))} 対 ${n.foe ? facName(sideOf(n.foe)) : '？'}`
       : n.state === 'chat' ? `${n.arch.job}・立ち話`
-        : n.arch.job + (n.crew ? '・子分' : '');
+        // 手に持っているものは名札に出す。誰が撃ってくるのかは、近づく前に分かるべき
+        : n.arch.job + (n.crew ? '・子分' : '') + (armOf(n) ? '・' + armOf(n).n : '');
     const hurt = n.hp < n.maxhp;
     hb.style.display = hurt ? 'block' : 'none';
     if (hurt) hb.firstChild.style.width = (n.hp / n.maxhp * 100) + '%';
@@ -4734,7 +5640,7 @@ function updateDig(dt) {
     if (Aim.cur && Dig.placeCd <= 0) { placeBlock(Aim.cur); Dig.placeCd = 0.18; }
   }
   // F は「アクション」。人が正面にいるときは掘らずに殴りに回る
-  const holding = Dig.active || (keys.KeyF && !punchTarget);
+  const holding = Dig.active || (keys.KeyF && !punchTarget && !curTool().gun);
   if (!holding || !Aim.cur) {
     Dig.t = 0; Dig.tx = -1; bar.style.display = 'none'; return;
   }
@@ -4743,6 +5649,8 @@ function updateDig(dt) {
     Dig.tx = b.x; Dig.ty = b.y; Dig.tz = b.z; Dig.t = 0;
   }
   if (!def || def.h < 0) { bar.style.display = 'none'; return; }
+  // 満杯のあいだは掘り進めない。ゲージだけ溜まって何も起きないのが一番わからない
+  if (bagFull()) { warnBagFull(); Dig.t = 0; bar.style.display = 'none'; return; }
   const need = def.t || 0, weak = curTool().tier < need;
   const secs = def.h / digSpeed(def);
   Dig.t += dt;
@@ -4750,7 +5658,7 @@ function updateDig(dt) {
   // 道具が足りていないことは、口で言わないと伝わらない
   if (weak && digHint <= 0) {
     digHint = 12;
-    log(`${curTool().n}では${def.n}に歯が立たない。Q でツルハシを作れ。`, 'bad');
+    log(`${curTool().n}では${def.n}に歯が立たない。${kbT('Q')} でツルハシを作れ。`, 'bad');
   }
   bar.style.display = 'block';
   bar.firstElementChild.style.width = clamp(Dig.t / secs * 100, 0, 100) + '%';
@@ -4769,7 +5677,7 @@ function save() {
   if (!started) return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      yen: P.yen, rep: P.rep, not: P.notoriety, hp: P.hp, maxhp: P.maxhp, wanted: P.wanted,
+      yen: P.yen, rep: P.rep, hp: P.hp, maxhp: P.maxhp, wanted: P.wanted,
       x: P.x, y: P.y, z: P.z, dug: P.dug,
       day: Clock.day, min: Clock.min, el: Clock.elapsed,
       ch: { name: P.name, gang: P.gang, gender: P.gender, origin: P.origin, hair: P.hair, body: P.body,
@@ -4777,14 +5685,25 @@ function save() {
       cr: { tool: Craft.tool, owned: Object.keys(Craft.owned), dur: Craft.dur, armor: Craft.armor },
       bag: Array.from(Bag.count),
       terr: Terr.map(t => ({ s: t.share, b: t.base })),
-      rel: Rel, vas: Vassal, feud: Feud, crown: crowned,
+      fav: Fav, war: War, vas: Vassal, feud: Feud, crown: crownRank,
+      /* 使った生成の回数。ここに残さないと、タブを開き直すだけで枠が満タンに戻る
+         ── ワーカー側の呼び出しが実質無制限になってしまう */
+      ai: { t: AI.calls.talk, b: AI.calls.bark },
+      /* 走っているカチコミ。残さないと、読み直しただけで押し込まれていた連中が
+         ただの通行人に戻る ── 店を取られる前にリロードすれば助かってしまう。
+         押し手は id で引き当てる（住人そのものは npcs が持っている） */
+      raid: Raid.on ? { z: Raid.zi, f: Raid.fac, s: Raid.shop.id, t: Math.round(Raid.t),
+        men: Raid.men.filter(n => !n.dead).map(n => n.id) } : null,
       // 誰の店かは勢力ごとに変わる。自分のぶんだけでは勢力図が復元できない
       sown: Shops.filter(s => s.owner).map(s => [s.id, s.owner]),
       // 自分で建てた店はワールド生成では出てこない。実体ごと残す
       built: Shops.filter(s => s.built).map(s => ({
         i: s.id, z: s.zone, k: s.type.key, x: s.x, sz: s.z, bx: s.bx, bz: s.bz,
-        n: s.name, p: s.price, in: s.income
+        dx: s.dx, dz: s.dz, n: s.name, p: s.price, in: s.income
       })),
+      /* 格上げした店。ワールド生成はいつも同じ格で店を出すので、上げたものだけ
+         業種と上がりを書き戻す（built はまるごと保存しているので要らない） */
+      up: Shops.filter(s => s.up && !s.built).map(s => [s.id, s.type.key, s.income, s.price]),
       crew: P.crew.map(c => c.id),
       /* 街の顔ぶれそのもの。倒れた者はこの名簿から消えていて、代わりに湧いた
          別人が入っている ── 生成し直すと、倒したはずの人間が名前ごと戻ってくる。
@@ -4808,7 +5727,7 @@ function load() {
   try {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!d) return false;
-    P.yen = d.yen; P.rep = d.rep || 0; P.notoriety = d.not || 0;
+    P.yen = d.yen; P.rep = d.rep || 0;
     if (d.maxhp) P.maxhp = d.maxhp;
     P.hp = d.hp != null ? d.hp : P.maxhp;
     P.wanted = d.wanted || 0; P.dug = d.dug || 0;
@@ -4842,21 +5761,32 @@ function load() {
       Terr[i].held = Terr[i].share.player >= HOLD_PC;
     });
     RIVALS.forEach(f => {
-      if (d.rel && typeof d.rel[f] === 'number') Rel[f] = d.rel[f];
+      if (d.fav && typeof d.fav[f] === 'number') Fav[f] = clamp(d.fav[f], 0, 100);
+      if (d.war) War[f] = !!d.war[f];
       if (d.vas) Vassal[f] = !!d.vas[f];
     });
     if (d.feud) for (const k in Feud) if (typeof d.feud[k] === 'number') Feud[k] = d.feud[k];
-    crowned = !!d.crown;
+    // v5 の途中までは真偽値だった（一段だけ）。数に読み替えて段位に繋ぐ
+    crownRank = typeof d.crown === 'number' ? d.crown : (d.crown ? 1 : 0);
+    if (d.ai) { AI.calls.talk = d.ai.t || 0; AI.calls.bark = d.ai.b || 0; }
     /* 建てた店を先に戻す。ブロックのほうは edits に残っているので彫り直さない。
        id はセーブ時のものをそのまま使い、以後の採番がぶつからないよう進めておく */
     (d.built || []).forEach(o => {
       const type = SHOP_TYPES.find(t => t.key === o.k);
       if (!type || Shops.some(s => s.id === o.i)) return;
       Shops.push({
-        id: o.i, zone: o.z, type, x: o.x, z: o.sz, bx: o.bx, bz: o.bz,
+        id: o.i, zone: o.z, type, x: o.x, z: o.sz, bx: o.bx, bz: o.bz, dx: o.dx, dz: o.dz,
         name: o.n, price: o.p, income: o.in, owner: 'player', built: true
       });
       shopSeq = Math.max(shopSeq, o.i + 1);
+    });
+    // 格上げした店を上げ直す。入口のブロックは edits に残っているので彫り直さない
+    (d.up || []).forEach(([id, k, inc, pr]) => {
+      const s = Shops.find(x => x.id === id), type = SHOP_TYPES.find(t => t.key === k);
+      if (!s || !type) return;
+      s.type = type; s.up = true;
+      if (inc) s.income = inc;
+      if (pr) s.price = pr;
     });
     if (d.sown) {
       Shops.forEach(s => s.owner = null);
@@ -4888,6 +5818,16 @@ function load() {
       const n = NPCs.find(x => x.id === id);
       if (n) { n.crew = true; n.hostile = false; P.crew.push(n); }
     });
+    // 走っていたカチコミ。押し手が一人も残っていなければ、その話は終わっている
+    if (d.raid && d.raid.men) {
+      const shop = Shops.find(s => s.id === d.raid.s);
+      const men = d.raid.men.map(id => NPCs.find(n => n.id === id)).filter(n => n && n.down <= 0);
+      if (shop && shop.owner === 'player' && FACTIONS[d.raid.f] && men.length) {
+        men.forEach(n => { n.raid = true; n.hostile = true; n.state = 'attack'; });
+        Raid.on = true; Raid.zi = d.raid.z; Raid.fac = d.raid.f; Raid.shop = shop;
+        Raid.t = d.raid.t || RAID_SEC; Raid.men = men;
+      }
+    }
     for (const [k, v] of (d.edits || [])) {
       const key = +k;
       const x = key % SX, z = (Math.floor(key / SX)) % SZ, y = Math.floor(key / (SX * SZ));
@@ -4910,31 +5850,60 @@ setV = function (x, y, z, id) {
 /* ============================================================================
    22. 戴冠 ── 終わりではなく、通過点
    ========================================================================= */
-/* 期限も敗北も無い。過半数を握った夜に一度だけ street が名前を呼び、
-   そのあとは同じ街がそのまま続く（獲ったシマは取り返されうる）。 */
-let crowned = false;
+/* 期限も敗北も無い。街が名前を呼ぶ夜は三度ある ── 過半数、九つ全部、そして
+   四勢力を残らず呑んだとき。どれも終わりではなく、そのあとも同じ街が続く
+   （獲ったシマは取り返されうるし、看板はカチコミで掛け替わる）。            */
+const RANKS = [
+  { title: '歌舞伎町、制圧',
+    sub: () => `${heldZones()} / 9  ─  過半数`,
+    hint: () => `過半数まであと ${WIN_ZONES - heldZones()} シマ`,
+    ok: () => heldZones() >= WIN_ZONES,
+    tell: () => `歌舞伎町 9 つのシマのうち ${heldZones()} つ、つまり過半数を握った`,
+    off: () => `ネオンは誰の名前も呼ばない。それでも今夜、${heldZones()}つのシマの上がりは${P.gang}へ流れてくる。`
+      + `歌舞伎町の過半数は ${P.name} のものだ ── 明日もそうだとは、誰も言っていない。` },
+  { title: '歌舞伎町、完全制圧',
+    sub: () => '9 / 9  ─  一つ残らず',
+    hint: () => `九つ全部まであと ${9 - heldZones()} シマ`,
+    ok: () => heldZones() >= 9,
+    tell: () => '歌舞伎町 9 つのシマを、一つ残らず握った',
+    off: () => `九つ。端から端まで、この街の通りは全部${P.gang}の通りになった。`
+      + `掘ったブロック ${P.dug} 個ぶんの穴が、その値段だ ── まだ夜は明けない。` },
+  { title: '不夜城の主',
+    sub: () => '四勢力、すべて傘下',
+    hint: () => {
+      const left = RIVALS.filter(f => !Vassal[f]);
+      return `残る勢力 ${left.map(f => FACTIONS[f].name).join('・')} を傘下に`;
+    },
+    ok: () => RIVALS.every(f => Vassal[f]),
+    tell: () => '紅蓮会・ドラゴンズ・アルカディア・商店組合、四勢力すべてが傘下に入った',
+    off: () => `頭を下げる相手がもういない。${P.gang} の下に、この街の全部がぶら下がっている。`
+      + `${P.name} は不夜城の主だ ── 主になった者から先に、この街は食い始める。` }
+];
+let crownRank = 0;                       // ここまでに街が名前を呼んだ回数
+// まだ呼ばれていない次の段。目標行がこれを読む
+const nextRank = () => crownRank < RANKS.length ? RANKS[crownRank] : null;
 async function checkCrown() {
-  if (crowned || heldZones() < WIN_ZONES) return;
-  crowned = true;
+  // 読んでいる最中は次の段を出さない。二段いっぺんに満たしても、字が上書きされない
+  if (!started) return;
+  const r = nextRank();
+  if (!r || !r.ok()) return;
+  crownRank++;
   started = false;                       // 読んでいるあいだは手を止める
   if (document.pointerLockElement) document.exitPointerLock();
-  const held = heldZones();
-  $('e-title').textContent = '歌舞伎町、制圧';
-  $('e-sub').textContent = `${held} / 9  ─  K A B U K I  C R A F T`;
+  $('e-title').textContent = r.title;
+  $('e-sub').textContent = `${r.sub()}  ─  K A B U K I  C R A F T`;
   $('e-text').textContent = '……';
   $('ending').style.display = 'flex';
   Snd.win();
   let txt = null;
-  try { txt = await AI.crown(); } catch (e) { }
-  if (!txt) txt = `ネオンは誰の名前も呼ばない。それでも今夜、${held}つのシマの上がりは${P.gang}へ流れてくる。`
-    + `掘ったブロック ${P.dug} 個。歌舞伎町の過半数は ${P.name} のものだ ── 明日もそうだとは、誰も言っていない。`;
-  $('e-text').textContent = txt;
+  try { txt = await AI.crown(r.tell()); } catch (e) { }
+  $('e-text').textContent = txt || r.off();
 }
 $('e-cont').onclick = () => {
   $('ending').style.display = 'none';
   started = true;
   hud();
-  if (!isTouch && canvas.requestPointerLock) canvas.requestPointerLock();
+  relock();
 };
 $('e-again').onclick = () => { localStorage.removeItem(SAVE_KEY); location.reload(); };
 $('mute').onclick = e => { e.preventDefault(); Snd.toggle(); $('mute').blur(); };
@@ -4961,14 +5930,13 @@ function frame(now) {
     P.curSpd = 0;
     if (P.moving) {
       mx /= l; mz /= l;
-      const run = (keys.ShiftLeft || keys.ShiftRight || tState.run) ? 1.75 : 1;
-      const spd = 5.0 * run * (1 - P.drunk * 0.0022);
+      const run = (keys.ShiftLeft || keys.ShiftRight) ? 1.75 : 1;
+      const spd = 5.0 * run;
       P.curSpd = spd;                 // 子分の追走速度の基準（followPlayer が読む）
       const s = Math.sin(P.yaw), c = Math.cos(P.yaw);
       // W(mz=-1) は視線方向 (-sin,-cos) へ。前後成分の符号を間違えると W/S が入れ替わる
       const wx = mx * c + mz * s, wz = -mx * s + mz * c;
-      const drift = P.drunk * 0.004 * Math.sin(now / 420);
-      movePlayer((wx + drift) * spd * dt, 0, (wz + drift) * spd * dt);
+      movePlayer(wx * spd * dt, 0, wz * spd * dt);
       P.walkPhase += spd * dt * 1.5;
       if (P.onGround && Math.sin(P.walkPhase) > 0.97) Snd.step();
     }
@@ -5037,7 +6005,8 @@ const SPLASHES = [
   '金塊は地面の下', '終電はとっくにない', '1秒 = 1分', 'シャンパンコール！',
   '怪獣が見ている', '掘って、売って、建てる', 'ここは紅蓮会のシマだ',
   '期限は無い', '資材で店が建つ', '無料案内所には寄るな',
-  'トー横から一番街へ', '子分3人で勢力ごと呑む'
+  'トー横から一番街へ', '子分3人で勢力ごと呑む',
+  'カチコミが来るぞ', '立ち飲みからホストクラブへ', 'カバンには限りがある', '段位は三つ'
 ];
 $('splash').textContent = pick(SPLASHES);
 $('t-keys').onclick = () => {
@@ -5193,8 +6162,10 @@ function applyGangColor() {
   const c = P.color || GANG_SW[0].c;
   FACTIONS.player.css = c;
   document.documentElement.style.setProperty('--mine', c);
-  $('mmleg-mine').style.background = c;
-  $('hlp-mine').style.color = c;
+  // 見本は組み替えられることがある（タッチでは遊び方の表を作り直す）。無ければ飛ばす
+  const leg = $('mmleg-mine'), hlp = $('hlp-mine');
+  if (leg) leg.style.background = c;
+  if (hlp) hlp.style.color = c;
 }
 function begin() {
   $('title').style.display = 'none';
@@ -5207,12 +6178,18 @@ function begin() {
   recalcInf();
   rebuildHotbar(); updateBag(); updateToolHud(); hud(); drawMinimap();
   log('歌舞伎町。この街は全部ブロックでできている。', '');
-  log(`${curTool().n}を握っている。左クリック / F 長押しで掘る。G で換金。`, 'dig');
-  log('Q でクラフト。壁を見ながら開けば、剥がした資材でそこに店を建てられる。', 'dig');
+  log(isTouch
+    ? `${curTool().n}を握っている。「掘」で掘る。「換」で換金。カバンは ${BAG_MAX} 個まで。`
+    : `${curTool().n}を握っている。左クリック / F 長押しで掘る。G で換金。カバンは ${BAG_MAX} 個まで。`, 'dig');
+  log(`${kbT('Q')} でクラフト。壁を見ながら開けば、剥がした資材でそこに店を建てられる。`
+    + '自分の店の前で開けば、金と資材で格を上げられる。', 'dig');
   log(`シマは 9 つ。支配率 ${HOLD_PC}% を握ったシマが自分のものになる。期限は無い。`, 'good');
   log('シマを動かすのは店と子分と腕っぷし。掘るのは、その元手を作る手だ。', 'good');
-  log(`同じ勢力から子分を ${VASSAL_CREW} 人引き抜けば、その勢力ごと傘下に入る（敵対した相手は除く）。`, 'good');
-  if (!isTouch && canvas.requestPointerLock) setTimeout(() => canvas.requestPointerLock(), 120);
+  log(`勢力ごとに「見込み」がある。100% まで積めばその勢力ごと丸ごと傘下に入る。`, 'good');
+  log(`0% まで落とすと全面抗争だ。そうなったら、そいつのシマを全部獲るまで終わらない。`, 'bad');
+  log(`子分は ${crewMax()} 人まで。影響力が上がれば枠も増え、店の言い値も下がる。`, 'good');
+  log('手切れになった勢力は、こちらの店にカチコミをかけてくる。獲るだけでは終わらない。', 'bad');
+  relock(120);
 }
 function openChargen() {
   $('title').style.display = 'none';
