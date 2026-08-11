@@ -111,6 +111,10 @@
   #bag .row{display:flex;justify-content:space-between;gap:10px;opacity:.86;line-height:1.6}
   #bag .tot{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.14);
     color:var(--gold);display:flex;justify-content:space-between}
+  /* 元値ではなく「いま売ったらいくらになるか」。掛け値はその晩の流した量で下がる */
+  #bag .fee{margin-top:3px;font-size:9.5px;line-height:1.5;opacity:.62;letter-spacing:.02em}
+  #bag .fee b{color:var(--gold);font-weight:600}
+  #bag .fee em{font-style:normal;color:var(--green)}
 
   #minimap{position:absolute;bottom:104px;right:12px;width:150px;padding:6px 6px 5px;border-radius:12px}
   #minimap canvas{position:static;width:138px;height:138px;border-radius:8px;background:#07060e}
@@ -144,6 +148,31 @@
     transform:translateX(-50%);font-size:11.5px;letter-spacing:.05em;opacity:0;
     transition:opacity .3s;text-shadow:0 1px 4px #000;white-space:nowrap}
   #selname.on{opacity:.9}
+
+  /* ---------- 申し入れ ----------
+     殴られるのとは別の圧力。返事をするまで画面の真ん中に居座る ── ログに流すと
+     見落としたまま期限が切れて、見込みだけが黙って落ちることになる */
+  #demand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(420px,92vw);padding:14px 16px;display:none;pointer-events:auto;
+    /* 指の操作ボタン(#touch, 20)より上、会話(30)・勢力図(50)・クラフト(52)より下 */
+    z-index:25;border-color:rgba(255,255,255,.20)}
+  #demand.show{display:block;animation:up .18s ease}
+  #demand .hd{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  #demand .fc{font-size:11px;font-weight:700;letter-spacing:.10em;padding:2px 9px;border-radius:20px;
+    border:1px solid currentColor}
+  #demand .ttl{font-size:10px;letter-spacing:.18em;opacity:.5}
+  #demand .tm{margin-left:auto;font-size:11px;opacity:.6;font-variant-numeric:tabular-nums}
+  #demand .bd{font-size:13px;line-height:1.65;margin-bottom:4px}
+  #demand .bd .q{display:block;margin-bottom:6px;color:var(--gold);font-size:12.5px}
+  #demand .note{font-size:10.5px;line-height:1.55;opacity:.6;margin-bottom:10px}
+  #demand .bt{display:flex;gap:8px}
+  #demand .bt button{flex:1;padding:9px 0;border-radius:9px;font:inherit;font-size:12.5px;
+    font-weight:600;letter-spacing:.06em;cursor:pointer;color:#f2eefc;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22)}
+  #demand .bt button:hover{background:rgba(255,255,255,.13)}
+  #demand .bt button:disabled{opacity:.35;cursor:default}
+  #demand .bt #d-yes{border-color:var(--green);color:var(--green)}
+  #demand .bt #d-no{border-color:var(--red);color:var(--red)}
 
   #prompt{position:absolute;left:50%;bottom:calc(14px + clamp(34px,9.4vw,48px) + 40px);
     transform:translateX(-50%);padding:8px 16px;font-size:13px;letter-spacing:.04em;display:none;white-space:nowrap}
@@ -449,9 +478,26 @@
   .pal i{width:18px;height:18px;flex:none;border-radius:4px;
     box-shadow:inset 0 2px rgba(255,255,255,.30),inset 0 -3px rgba(0,0,0,.42)}
   .pal em{font-style:normal;opacity:.5;font-size:10px}
-  #palhead,#shophead{width:min(580px,94vw);font-size:10.5px;letter-spacing:.08em;
+  #palhead,#shophead,#sellhead{width:min(580px,94vw);font-size:10.5px;letter-spacing:.08em;
     margin:0 0 10px;text-align:center;line-height:1.6;opacity:.65}
   #shophead{margin:22px 0 8px;opacity:1}
+  /* 換金。キーひとつの粗い売り方（G）とは別に、種類を選んで売る場所をここに置く ──
+     指で遊んでいる人にはここが唯一の「全部売る」でもある。
+     棚（.pal）と同じ「ブロック名 ×個数」の丸ボタンが縦に並ぶので、見た目は必ず
+     分けること ── 押し間違いが「持ち替え」ではなく「売り払う」に化ける。      */
+  #sellhead{margin:22px 0 8px;opacity:1;padding-top:16px;
+    border-top:1px solid rgba(255,255,255,.10)}
+  #sellrow{width:min(580px,94vw);display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  #sellrow button{font:inherit;font-size:11px;letter-spacing:.04em;padding:7px 12px;
+    border-radius:20px;cursor:pointer;pointer-events:auto;color:var(--gold);
+    background:rgba(255,207,63,.06);border:1px dashed rgba(255,207,63,.34)}
+  #sellrow button:hover{background:rgba(255,207,63,.15)}
+  #sellrow button:disabled{opacity:.3;cursor:default}
+  /* まとめ売りの二つだけは実線で、種類ごとの一覧より強く見せる */
+  #sellrow button.gold{border-style:solid;border-color:var(--gold);color:var(--gold)}
+  #sellrow button.warn{border-style:solid;border-color:var(--red);color:var(--red);
+    background:rgba(255,59,48,.07)}
+  #sellrow button em{font-style:normal;opacity:.55;margin-left:6px;font-size:10px}
   /* 持っている店と、そこに置いた子分 */
   #shopmine{width:min(580px,94vw);display:flex;flex-direction:column;gap:7px}
   .srow{padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.045);
@@ -606,7 +652,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <button id="mute" class="card" type="button" title="音を消す (N)" aria-label="音を消す">♪</button>
 
   <div id="bag" class="card"><h4>回収したブロック</h4><div id="baglist"></div>
-    <div class="tot"><span id="bagn">0 / 0</span><span id="bagtot">0渋沢</span></div></div>
+    <div class="tot"><span id="bagn">0 / 0</span><span id="bagtot">0渋沢</span></div>
+    <div class="fee" id="bagfee"></div></div>
 
   <div id="minimap" class="card"><canvas id="mm" width="276" height="276"></canvas>
     <div id="mmleg"><span><i id="mmleg-mine" style="background:#39ff88"></i>自分の店</span><span><i style="background:linear-gradient(135deg,#ff3b30,#a45cff,#16e0ff,#ffcf3f)"></i>勢力の店</span><span><i style="background:#fff"></i>独立</span></div>
@@ -615,6 +662,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div id="tool-d" style="font-size:10px;opacity:.55;margin-top:2px">固いものは掘れない</div>
     <div class="dur" id="tool-bar" style="display:none"><i></i></div></div>
   <div id="log"></div>
+  <div id="demand" class="card">
+    <div class="hd"><span class="fc" id="d-fac">—</span><span class="ttl">申し入れ</span>
+      <span class="tm" id="d-t"></span></div>
+    <div class="bd" id="d-body"></div>
+    <div class="note" id="d-note"></div>
+    <div class="bt"><button id="d-yes" type="button">呑む</button>
+      <button id="d-no" type="button">蹴る</button></div>
+  </div>
   <div id="prompt" class="card"></div>
   <div id="selname"></div>
   <div id="hotbar" class="card"></div>
@@ -654,6 +709,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="craftlist"></div>
   <div id="palhead"></div>
   <div id="palette"></div>
+  <!-- 換金はパレットの下。上に置くと palhead の「押すと N 番の枠に入る」が
+       売りボタンの見出しに読めて、持ち替えるつもりで身ぐるみ流すことになる -->
+  <div id="sellhead"></div>
+  <div id="sellrow"></div>
   <div id="buildhead"></div>
   <div id="buildlist"></div>
   <div id="shophead"></div>
@@ -669,7 +728,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <h3>歌舞伎町 勢力図</h3>
   <div class="sub">支配率は 9 つのシマの取り合い ／ 過半数の 50% を握ったシマが自分のものになる ── 期限は無い<br>
     <span style="opacity:.6">動かす手は四つ ── 店を持つ・子分を置く・その通りで潰し合う・通りそのものを削る。
-    伸ばされれば同じだけ削られる</span></div>
+    伸ばされれば同じだけ削られる。<br>
+    ただし通りを削って伸ばせる取り分は 35% まで ── 相手の足場は確かに痩せるが、
+    穴の跡に自分の看板が立つわけではない。最後の 15% は店か、人か、話で取る</span></div>
   <div id="grid"></div>
   <div id="facs"></div>
   <div class="legend" id="legend"></div>
@@ -725,15 +786,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="row" id="t-blocks"></div>
     </div>
     <div class="keys" id="t-keylist" style="display:none">
-      <b>W A S D</b><span>移動（W が前）/ Shift で走る</span>
+      <b>W A S D / ↑↓←→</b><span>移動（W が前）/ Shift で走る</span>
       <b>Space</b><span>ジャンプ</span>
       <b>マウス</b><span>視点（画面クリックで固定）</span>
       <b>左クリック / F</b><span>押しっぱなしでブロックを掘る（据えた TNT に向ければ、火を点ける）</span>
       <b>F</b><span>人の前では「殴る」（F がアクション）。拳銃を持っていれば撃つ</span>
       <b>右クリック / R</b><span>ブロックを置く</span>
-      <b>1〜9 / ホイール</b><span>手に持つブロックを選ぶ（枠の中身は Q の「持ち物」で好きに入れ替えられる）</span>
+      <b>1〜9 / Z X / ホイール</b><span>手に持つブロックを選ぶ（Z と X は前の枠・次の枠。画面下のホットバーは直に押しても選べる。枠の中身は Q の「持ち物」で好きに入れ替えられる）</span>
+      <b>Q →「持ち物」</b><span>ブロックを押すと、いま選んでいる枠に入る。<b>道具（ツルハシ・武器）の持ち替えは、この画面の「持ち替える」だけ</b> ── 1〜9 はブロック専用</span>
       <b>Q</b><span>クラフト（ツルハシ／武器・防具／建材／持ち物／出店・店／アジト のタブ）。作業台を組む → 据える → その前で道具と建材を作る。壁・天井・扉・ネオン・什器を組んで囲えば、その部屋を店として開ける。開けた店には子分を入れて働かせられる。囲った部屋はアジトにもできる（一つだけ）</span>
-      <b>G</b><span>回収したブロックを換金（自分の店なら高く売れる）。カバンは 320 個まで</span>
+      <b>G</b><span>光り物（ネオン・街灯・自販機）を換金。<b>Shift + G</b> でカバンの中身を全部売る（建材が混じっていれば一度止まる）。種類を選んで売るなら Q の「持ち物」。故買屋は一晩に捌ける量が決まっていて、流すほど買い叩かれる ── 自分の店の前で売れば、その店の買取枠のぶんは満額。カバンは 320 個まで</span>
       <b>E</b><span>話す・店を買う・アジトのベッドで眠る・チェストを開く（入口に浮く印の色が持ち主。<i style="color:#fff;font-style:normal">白</i>は独立、勢力の色はその傘下、<i id="hlp-mine" style="color:#39ff88;font-style:normal">この色</i>は自分の店）</span>
       <b>Tab / M</b><span>勢力図</span>
       <b>V</b><span>視点切替（三人称／一人称）</span>
@@ -942,13 +1004,18 @@ const BLOCKS = [
   { n: 'レンガ',      c: [.58, .31, .25], h: .85, v: 40000,   em: 0,    t: 1 },  // 5
   { n: '鉄骨',        c: [.44, .47, .53], h: 1.5, v: 320000,  em: 0,    t: 2 },  // 6
   { n: '窓ガラス',    c: [.28, .44, .56], h: .25, v: 30000,   em: .12,  t: 0 },  // 7
-  { n: '灯った窓',    c: [1, .78, .42],   h: .25, v: 50000,   em: .85,  t: 0 },  // 8
-  { n: 'ネオン桃',    c: [1, .18, .47],   h: .35, v: 180000,  em: 1.15, t: 0 },  // 9
-  { n: 'ネオン青',    c: [.09, .88, 1],   h: .35, v: 180000,  em: 1.15, t: 0 },  // 10
-  { n: 'ネオン金',    c: [1, .81, .25],   h: .35, v: 180000,  em: 1.15, t: 0 },  // 11
-  { n: 'ネオン紫',    c: [.64, .36, 1],   h: .35, v: 180000,  em: 1.15, t: 0 },  // 12
-  { n: 'ネオン緑',    c: [.22, 1, .53],   h: .35, v: 180000,  em: 1.15, t: 0 },  // 13
-  { n: 'ネオン橙',    c: [1, .48, .12],   h: .35, v: 180000,  em: 1.15, t: 0 },  // 14
+  /* 光り物の等級 ── 値打ちのあるものほど道具が要る。ここを全部 t:0 にしておくと、
+     素手のまま低層階の窓とネオンを剥がすだけで金もシマも足りてしまい、
+     ツルハシの段（素手→石→鉄→金）が街の稼ぎと何の関係も無くなる。
+     素手で剥がせる灯りは 窓ガラス・提灯・看板 の三つだけ残してある ──
+     最初の店の「灯」はそこから作れるので、序盤の道は塞がらない。            */
+  { n: '灯った窓',    c: [1, .78, .42],   h: .25, v: 50000,   em: .85,  t: 1 },  // 8
+  { n: 'ネオン桃',    c: [1, .18, .47],   h: .35, v: 180000,  em: 1.15, t: 2 },  // 9
+  { n: 'ネオン青',    c: [.09, .88, 1],   h: .35, v: 180000,  em: 1.15, t: 2 },  // 10
+  { n: 'ネオン金',    c: [1, .81, .25],   h: .35, v: 180000,  em: 1.15, t: 2 },  // 11
+  { n: 'ネオン紫',    c: [.64, .36, 1],   h: .35, v: 180000,  em: 1.15, t: 2 },  // 12
+  { n: 'ネオン緑',    c: [.22, 1, .53],   h: .35, v: 180000,  em: 1.15, t: 2 },  // 13
+  { n: 'ネオン橙',    c: [1, .48, .12],   h: .35, v: 180000,  em: 1.15, t: 2 },  // 14
   { n: '看板',        c: [.16, .14, .20], h: .40, v: 40000,   em: 0,    t: 0 },  // 15
   { n: '木材',        c: [.58, .40, .22], h: .50, v: 20000,   em: 0,    t: 0 },  // 16
   { n: '提灯',        c: [1, .26, .16],   h: .20, v: 90000,   em: 1.2,  t: 0 },  // 17
@@ -964,9 +1031,20 @@ const BLOCKS = [
   { n: '金塊',        c: [1, .78, .22],   h: 2.2, v: 4500000, em: .25,  t: 3 },  // 24
   /* 25・26 は道具を作るための台。街には一つも置かれていない ── 自分で組んで、
      自分で据える。どちらも素手で剥がして持ち歩けるので、掘った先に広げられる。
-     売っても二束三文で、値打ちは「その前に立てること」のほうにある。          */
-  { n: '作業台',      c: [.52, .35, .18], h: .70, v: 40000,   em: 0,    t: 0 },  // 25
-  { n: '溶接台',      c: [.40, .43, .50], h: 1.2, v: 260000,  em: .30,  t: 0 },  // 26
+     売っても二束三文で、値打ちは「その前に立てること」のほうにある。
+
+     この二つだけは top / tem で天板を別に塗る ── body の色だけで置くと
+     作業台は木材と、溶接台は鉄骨と見分けが付かず、掘った現場に据えたはずの台を
+     壁の中から探すことになる。天板が灯っているものは「その前に立てる台」、
+     灯っていないものはただの建材、という読み方をここで作る。
+
+     body の色は「他のどのブロックからも遠いこと」で選んである ── この街の
+     ブロックどうしの色の隔たりは中央値で 0.14 しかないので、木材や鉄骨の
+     隣に置いた値を選ぶと、天板を見ない角度から一瞬で紛れる。               */
+  { n: '作業台',      c: [.36, .28, .26], h: .70, v: 40000,   em: .10,  t: 0,     // 25
+    top: [.97, .68, .26], tem: .75 },
+  { n: '溶接台',      c: [.24, .34, .44], h: 1.2, v: 260000,  em: .16,  t: 0,     // 26
+    top: [.58, .95, 1],   tem: 1.45 },
   /* 扉。壁として立っているのに、人だけは素通りする（solid が false を返す）。
      店の判定では壁と同じ「閉じているもの」として数えるので、扉を入れた部屋は
      囲われたまま出入りできる ── 中と外の境目は、この一枚で決まる。          */
@@ -975,13 +1053,24 @@ const BLOCKS = [
      故買屋は火薬を買わないので値は付かない（下限の 1 渋沢だけ）。 */
   { n: 'TNT',         c: [.78, .16, .14], h: .30, v: 10000,   em: .12,  t: 0 },  // 28
   /* アジトの設え。据えるだけなら街のどこでもいいが、効くのは自分のアジトの中だけ ──
-     ベッドは寝て体を戻す場所、チェストはカバンから溢れたぶんの置き場。 */
-  { n: 'ベッド',      c: [.74, .22, .26], h: .40, v: 20000,   em: 0,    t: 0 },  // 29
-  { n: 'チェスト',    c: [.52, .36, .18], h: .50, v: 30000,   em: 0,    t: 0 }   // 30
+     ベッドは寝て体を戻す場所、チェストはカバンから溢れたぶんの置き場。
+     天板は塗り分けるが灯さない（tem なし）── 光っているのは台の二つだけ、
+     という区別を崩さない。チェストは元の色が作業台と同値で、並べると
+     どちらを掘ればいいのか分からなくなっていた。                            */
+  { n: 'ベッド',      c: [.74, .22, .26], h: .40, v: 20000,   em: 0,    t: 0,     // 29
+    top: [.92, .90, .86] },
+  { n: 'チェスト',    c: [.52, .36, .18], h: .50, v: 30000,   em: 0,    t: 0,     // 30
+    top: [.28, .25, .23] }
 ];
 const B_BENCH = 25, B_WELD = 26, B_DOOR = 27, B_TNT = 28, B_BED = 29, B_CHEST = 30;
 const NEON_IDS = [9, 10, 11, 12, 13, 14];
+/* 「ネオンならどの色でもいい」を表す擬似 ID。ネオンは 6 色あって、どの色が何本
+   貼ってあるかは通りしだい ── ここで色を指定すると、最上級の一式が運任せになる。
+   材料の数え方と払い方だけ needHave / payMats が肩代わりする。            */
+const N_ANY = -1;
 const css = c => 'rgb(' + c.map(v => Math.round(clamp(v, 0, 1) * 255)).join(',') + ')';
+// '#39ff88' を [r,g,b]（0〜1）へ。ネオン系はシマの色（P.color）で灯るのでその変換用
+const hexRGB = h => [1, 3, 5].map(i => parseInt(String(h).substr(i, 2), 16) / 255);
 
 /* ---- 道具 --------------------------------------------------------------
    tier = 掘れるブロックの上限 / spd = 掘る速さの倍率 / dmg = 殴りの追加ダメージ
@@ -992,14 +1081,25 @@ const TOOLS = {
   /* ツルハシは石から。木のツルハシは無い ── 一本目で街の骨（コンクリート）に
      手が届かないと、道具を作るための道具を作るだけの段が一つ増える。
      素手でも固いものは剥がせる（極端に遅いだけ）ので、石までは素手で届く。 */
-  stone: { k: 'stone', n: '石のツルハシ', tier: 2, spd: 3.8, dmg: 6,  dur: 150, col: [.52, .50, .55],
+  /* 耐久は石を一目盛り（320）にして、その倍数で並べる ── 鉄が四目盛りでいちばん
+     長く保ち、金は二目盛り。速さの代わりに保ちを払う、という関係をここで作る */
+  stone: { k: 'stone', n: '石のツルハシ', tier: 2, spd: 3.8, dmg: 6,  dur: 320, col: [.52, .50, .55],
     d: '鉄骨と自販機まで掘れる。最初の一本' },
-  iron:  { k: 'iron',  n: '鉄のツルハシ', tier: 3, spd: 6.0, dmg: 10, dur: 420, col: [.44, .47, .53],
-    d: '金塊まで掘れる。ビルが目に見えて減る' },
+  iron:  { k: 'iron',  n: '鉄のツルハシ', tier: 3, spd: 6.0, dmg: 10, dur: 1280, col: [.44, .47, .53],
+    d: '金塊まで掘れる。ビルが目に見えて減る。この街でいちばん長く保つ' },
   /* 金は速いが柔らかい。鉄より保たないのは、速さの代わりに払うもの ──
      一番いい道具を「使いどころのある道具」にしておくための取り決め */
-  gold:  { k: 'gold',  n: '金のツルハシ', tier: 4, spd: 9.5, dmg: 12, dur: 240, col: [1, .78, .22], em: .35,
-    d: 'この街で一番速い。ただし柔らかく、鉄より早く駄目になる' },
+  gold:  { k: 'gold',  n: '金のツルハシ', tier: 4, spd: 9.5, dmg: 12, dur: 640, col: [1, .78, .22], em: .35,
+    d: '速いが柔らかい。鉄より早く駄目になる' },
+  /* ---- ネオン系 ------------------------------------------------------------
+     最上級の装備。街から剥がしたネオン管を金塊で焼き直して打つ、この街でしか
+     作れない一式 ── 色は持ち主のシマの色に灯る（toolCol が P.color を読む）。
+     ただの上位互換にはしない。速さも硬さも頭一つ抜けているかわりに、
+     光る道具を握って掘っているのは遠くからでも見える（loud）── 巡回が気づく
+     距離が伸びる。速いが、目立つ。それがこの一式の値段。                    */
+  neon:  { k: 'neon',  n: 'ネオンのツルハシ', tier: 5, spd: 13.0, dmg: 18, dur: 960,
+    col: [.09, .88, 1], em: 1.25, mine: true, glow: true, loud: true,
+    d: 'この街で一番速く、一番よく保つ。ただし光る ── 掘っている姿が遠くからでも見える' },
   /* ---- 武器 ----
      殴りの段は 酒瓶 → 鉄パイプ。その筋とは別にあるのが、奪うしかない拳銃と、
      置いて点ける TNT（ブロックのほう）。 */
@@ -1007,6 +1107,12 @@ const TOOLS = {
     d: '割れたところが刃になる。すぐ駄目になるが、ガラス二枚で何本でも作り直せる' },
   pipe:  { k: 'pipe',  n: '鉄パイプ',     tier: 1, spd: 1.3, dmg: 22, dur: 300, col: [.40, .43, .49],
     d: '掘るのは苦手。人を黙らせるための道具' },
+  /* ネオン刀。看板から抜いた管を束ねて研ぎ、電を通したまま握る。振れば光の帯が
+     一本走るので、殴られる側より先に通りのほうが気づく ──
+     拳銃を除けば街で一番重い一発。材料の「ネオン管」とは別物なので名前を分ける */
+  ntube: { k: 'ntube', n: 'ネオン刀',     tier: 0, spd: 0.6, dmg: 26, dur: 240,
+    col: [1, .18, .47], em: 1.25, mine: true, glow: true, loud: true,
+    d: '灯ったまま振り抜く。鉄パイプより重い一発。ただし光る ── 振れば通りが気づく' },
   /* 拳銃は作れない。持っている相手（警官と紅蓮会）から奪う以外に手に入らない。
      dur は残弾。撃てば当たらなくても一発減り、街中が銃声に気づく。 */
   gun:   { k: 'gun',   n: '拳銃',         tier: 0, spd: 0.4, dmg: 30, dur: 24, col: [.20, .20, .24],
@@ -1022,9 +1128,16 @@ const ARMORS = {
   helm: { k: 'helm', n: 'フルフェイスヘルメット', red: .22, col: [.16, .17, .22],
     d: '顔ごと覆う。バイクのものと同じで、殴られても顎が残る' },
   vest: { k: 'vest', n: '防弾チョッキ', red: .30, col: [.24, .26, .32],
-    d: 'この街でいちばん硬い一枚。鉄パイプも、撃たれた弾も抜けにくくなる' }
+    d: '硬い一枚。鉄パイプも、撃たれた弾も抜けにくくなる' },
+  /* ネオン系の一枚。ネオン管をチョッキの上から巻いて、そのまま灯す ──
+     着ているだけで自分のシマの色に光るので、通りの端からでも誰だか分かる。
+     この街で身に着けられる最後の一枚で、これを重ねると ARMOR_CAP に届く。 */
+  nsuit: { k: 'nsuit', n: 'ネオンの装束', red: .34, col: [.09, .88, 1], mine: true,
+    d: 'この街でいちばん硬い一枚。自分のシマの色に灯り、通りの端からでも誰だか分かる' }
 };
-// 上限。三枚とも着ても届かないが、何を着ても殴られれば減る、という頭は止めておく
+/* 上限。サラシ・ヘルメット・チョッキの三枚では届かない（合計 -50%）── ここへ
+   最後に届かせるのがネオンの装束で、四枚そろえて初めて頭を打つ。
+   打ったあとも、何を着ても殴られれば減るという手触りは最後まで残す。       */
 const ARMOR_CAP = 0.55;
 // 身に着けているぶんの軽減率。掛け算で積んで、上限で止める
 function armorRed() {
@@ -1076,18 +1189,37 @@ const RECIPES = [
   { out: 'stone', cat: 'tool', at: 'bench', need: [[3, 6], [16, 3]] },
   { out: 'iron', cat: 'tool', at: 'weld', need: [[6, 6], [16, 4]] },
   { out: 'gold', cat: 'tool', at: 'weld', need: [[24, 4], [6, 6], [16, 4]] },
+  /* ネオン系はここから。金塊がもう一掴み要るので、地下の保管庫を見つけていないと
+     手が届かない ── 金のツルハシの次に来る段であって、飛び越えては来られない。
+     ツルハシは武器より先に並べておくこと（nextStep がこの順で次の一手を選ぶ） */
+  { out: 'neon', cat: 'tool', at: 'weld', need: [[N_ANY, 10], [24, 3], [6, 8]] },
   // ---- 武器 ----
   // 溶接台の前に立てなくても持てる武器。ガラスは素手でも剥がせる
   { out: 'bottle', cat: 'arms', at: 'bench', need: [[7, 2]] },
   { out: 'pipe', cat: 'arms', at: 'weld', need: [[6, 3]] },
+  { out: 'ntube', cat: 'arms', at: 'weld', need: [[N_ANY, 4], [6, 2]] },
   // TNT は道具ではなくブロック。カバンに入れて運び、置いて、殴って点火する
   { out: 'tnt', kind: 'block', id: B_TNT, n: 2, cat: 'arms', at: 'weld', need: [[6, 1], [16, 2], [18, 4]] },
   // ---- 防具（作れば着る。重ねたぶんだけ効く） ----
   { out: 'sarashi', kind: 'armor', cat: 'arms', at: 'bench', need: [[15, 3]] },
   { out: 'helm', kind: 'armor', cat: 'arms', at: 'weld', need: [[6, 5], [4, 2]] },
-  { out: 'vest', kind: 'armor', cat: 'arms', at: 'weld', need: [[6, 8], [4, 4], [7, 2]] }
+  { out: 'vest', kind: 'armor', cat: 'arms', at: 'weld', need: [[6, 8], [4, 4], [7, 2]] },
+  // ネオン系の一枚。チョッキの上から巻くものなので、材料もその続きにしてある
+  { out: 'nsuit', kind: 'armor', cat: 'arms', at: 'weld', need: [[N_ANY, 8], [6, 4], [7, 4]] }
 ];
 const AT_NAME = { bench: '作業台', weld: '溶接台' };
+/* 街のどこで剥がせるか。「木材あと4」とだけ出しても、木材がどこから来るのかを
+   知らなければ手は止まったままになる ── 詰まりのほとんどは材料の数ではなく、
+   その材料が街のどの面に貼ってあるかを知らないことのほうで起きる。         */
+const WHERE = {
+  [N_ANY]: '通りに面したビルのネオン看板（色は問わない）',
+  2: '通りの舗装', 3: 'ビルの壁', 4: 'ビルの屋上の天端とシネシティ広場の石畳',
+  5: '古いビルの壁', 6: 'ビルの屋上の塔屋と高架', 7: 'ビルの窓',
+  8: 'ビルの窓（灯りのついたほう）', 15: '店の庇と、ネオンの裏板',
+  16: 'ゴールデン街の木造の壁', 17: 'ゴールデン街の軒先', 18: '足元を掘れば出る',
+  19: '大久保公園の芝', 20: '大久保公園の木', 21: '大久保公園の木',
+  22: '通りの街灯', 23: '通りの自販機', 24: '地下の保管庫'
+};
 /* 建材の一行説明。ブロックの名前だけでは「何に使うのか」が分からない ──
    店を開けるのに要るのは 広さ・灯・什器 の三つで、どれがどれなのかをここで結ぶ */
 const BUILD_DESC = {
@@ -1124,6 +1256,10 @@ const CRAFT_TABS = [
 let craftTab = 'tool', craftTabPicked = false;
 const Craft = { tool: 'hand', owned: { hand: true }, dur: {}, armors: {} };
 const curTool = () => TOOLS[Craft.tool] || TOOLS.hand;
+/* 見た目の色。mine が立っているもの（ネオン系）は、持ち主のシマの色に灯る ──
+   最上級の一式が自分の看板を名乗る、というのがこの装備の値打ちの半分。
+   キャラクター作成の前に呼ばれることもあるので、色が無いときは既定の一色へ落とす。 */
+const gearCol = T => T.mine ? hexRGB(P && P.color ? P.color : GANG_SW[0].c) : T.col;
 
 /* ---- キャラクター作成の選択肢 -------------------------------------------
    素性の中身（所持金・体力・初期の道具）は性別で変えない。変えるのは呼び名だけ。
@@ -1358,6 +1494,43 @@ const shopPrice = s => s.owner && s.owner !== 'player' ? sen(s.price * 1.35) : s
 /* 実際に払う額。傘下の店はみかじめのぶん高く、こちらの顔が利くぶん安くなる。
    影響力 100 で三割引 ── 店を並べて名前が通れば、次の物件はその名前で安く回ってくる */
 const shopCost = s => sen(shopPrice(s) * (1 - infDiscount()));
+
+/* ---- 剥がしたものを金に換える道 ------------------------------------------
+   道は二つある ── 故買屋に流すか、自分の店を通すか。
+   故買屋が一晩に捌ける量には限りがあって、流し込むほど買い叩かれる。
+   ここに底を作らないと、ビルの低層階を一周するだけで札束になり、
+   店も子分も会話も「金の面では要らないもの」になってしまう。
+   店を通したぶんは満額。そのかわり店ごとに一晩の枠があり、枠は箱の格で決まる ──
+   大箱を持つほど太く捌ける。掘った先が金に届くのは、看板を持っている者だけ。 */
+/* 傾きの決め方 ── カバン一杯（ネオン 320 個 ≒ 5,760 渋沢）を流したところで
+   実効 4.5 掛けあたり。一杯目は今までとほとんど変わらず、二杯目から目に見えて
+   痩せ、四杯目で底に着く。掘り始めた夜を痛くせず、掘りだけで回そうとした夜を
+   痛くする、という順にしてある。                                            */
+const FENCE_BASE = 0.60;               // 一杯目の掛け値（六掛け）
+const FENCE_SOFT = 80000000;           // これだけ流すごとに掛け値が半分へ寄る
+const FENCE_FLOOR = 0.20;              // 底。ここより下には買い叩かれない
+const Fence = { today: 0 };            // その晩、故買屋に流した元値の合計（日付で戻る）
+// いまこの瞬間の掛け値。画面に出す「今夜の相場」はこれ
+const fenceRate = () => Math.max(FENCE_BASE / (1 + Fence.today / FENCE_SOFT), FENCE_FLOOR);
+/* 実際の払い。掛け値は流した量で下がるので、一回の取引の中でも下がっていく ──
+   売り始める前の掛け値で一律に払うと、一晩ぶんを一度に流し込むのがいちばん得になり、
+   逓減そのものが効かなくなる。曲線の下の面積を素直に積んで払う。
+   底（FENCE_FLOOR）に達したあとは一律。                                     */
+function fencePay(amount) {
+  if (amount <= 0) return 0;
+  const T = Fence.today, S = FENCE_SOFT, B = FENCE_BASE;
+  const xEnd = S * (B / FENCE_FLOOR - 1);          // 掛け値が底を打つ量
+  const a = Math.min(T, xEnd), b = Math.min(T + amount, xEnd);
+  const curve = b > a ? B * S * Math.log((1 + b / S) / (1 + a / S)) : 0;
+  const flat = Math.max(0, (T + amount) - Math.max(T, xEnd)) * FENCE_FLOOR;
+  return curve + flat;
+}
+/* 店の一晩の買取枠。日商の 50 倍 ── 立ち飲み屋で 450 渋沢、ホストクラブで 1.1 万渋沢。
+   上がりそのものより一桁大きく取ってある。店を買う理由が「上がり」だけでは
+   掘る手に釣り合わないので、ここを店のいちばん太い効き目にする。            */
+const WASH_PER_INCOME = 50;
+const washMax = s => sen(s.income * WASH_PER_INCOME);
+const washLeft = s => Math.max(0, washMax(s) - (s.wash || 0));
 /* 店の元の持ち主。4 割ほどは独立、残りはどこかの勢力の傘下。
    傘下の店を買い取ると、その勢力が握っていた支配率がそのままこちらへ移る */
 function shopOwnerFor(zi, q) {
@@ -2647,8 +2820,13 @@ function meshChunk(c) {
           const nx = x + n[0], ny = y + n[1], nz = z + n[2];
           if (ny >= 0 && solid(nx, ny, nz)) continue;
           if (ny < 0) continue;                       // 世界の底の面は要らない
+          /* 天板だけ別に塗れる（top / tem）。F6[2] が +Y ── 据えるものは、
+             そこが何なのかが上から一目で分かる必要がある。body の色だけでは
+             作業台は木材に、溶接台は鉄骨に紛れて、置いた場所を見失う。      */
+          const tf = f === 2 && b.top;
+          const fc = tf ? b.top : b.c, fem = tf ? (b.tem || 0) : b.em;
           const sh2 = F.s * tint;
-          const col = [b.c[0] * sh2, b.c[1] * sh2, b.c[2] * sh2];
+          const col = [fc[0] * sh2, fc[1] * sh2, fc[2] * sh2];
           const u = F.u, v = F.v;
           const cx = x + 0.5 + n[0] * 0.5, cy = y + 0.5 + n[1] * 0.5, cz = z + 0.5 + n[2] * 0.5;
           const P = [], A = [];
@@ -2669,7 +2847,7 @@ function meshChunk(c) {
           const tri = flip ? [1, 2, 3, 1, 3, 0] : [0, 1, 2, 0, 2, 3];
           for (let t = 0; t < 6; t++) {
             const k = tri[t];
-            mpush(P[k][0], P[k][1], P[k][2], n, col, b.em, A[k]);
+            mpush(P[k][0], P[k][1], P[k][2], n, col, fem, A[k]);
           }
         }
       }
@@ -2960,6 +3138,13 @@ const Dig = { t: 0, tx: -1, ty: -1, tz: -1, active: false, place: false, placeCd
 const HOT_N = 9;
 let hotbar = new Array(HOT_N).fill(0), hotSel = 0;
 const heldBlock = () => hotbar[hotSel] || 0;
+/* 持ち物の色見本。天板を持つもの（台・寝床・チェスト）は上のぶんをその色で塗る ──
+   街に据えたときと手の中とで別の顔をしていたら、結局どれがどれか分からない。
+   光るのは台の二つだけなので、見本の光り方もそれに合わせる。               */
+const swatchBg = b => b.top
+  ? `linear-gradient(180deg,${css(b.top)} 0 40%,${css(b.c)} 40%)` : css(b.c);
+const swatchLit = b => Math.max(b.em || 0, b.tem || 0) > 0.5;
+const swatchGlow = b => css(b.tem > 0.5 ? b.top : b.c);
 // 手で枠に入れる。すでに別の枠に載っているなら、そちらと入れ替える（取りこぼさない）
 function assignHot(slot, id) {
   const at = hotbar.indexOf(id);
@@ -2990,8 +3175,8 @@ function rebuildHotbar() {
       + `<span class="k">${i + 1}</span></div>`;
     return `<div class="slot${on}" data-i="${i}">`
       + `<span class="k">${i + 1}</span>`
-      + `<span class="cube" style="background:${css(BLOCKS[id].c)};`
-      + `box-shadow:0 0 ${BLOCKS[id].em > 0.5 ? 12 : 0}px ${css(BLOCKS[id].c)}"></span>`
+      + `<span class="cube" style="background:${swatchBg(BLOCKS[id])};`
+      + `box-shadow:0 0 ${swatchLit(BLOCKS[id]) ? 12 : 0}px ${swatchGlow(BLOCKS[id])}"></span>`
       + `<span class="n">${Bag.count[id]}</span></div>`;
   }).join('') || '<div class="slot" style="opacity:.35"></div>';
   el.style.display = 'flex';
@@ -3025,6 +3210,15 @@ function updateBag() {
   $('baglist').innerHTML = rows.slice(0, 8).join('')
     + (rows.length > 8 ? `<div class="row" style="opacity:.5"><span>ほか ${rows.length - 8} 種</span><span></span></div>` : '');
   $('bagtot').textContent = yen(bagValue());
+  /* 元値の下に「いま売ったらいくらか」を出す。故買屋の掛け値はその晩流したぶんだけ
+     下がり、自分の店の前ならその枠のぶんは満額 ── どちらもここを見ないと分からない */
+  const q = sellQuote(Array.from(SELL_FACE));
+  const fee = $('bagfee');
+  fee.innerHTML = q.n <= 0
+    ? `<span style="opacity:.7">光り物はまだ無い（${kbT('G')} で売れるのはネオン・街灯・自販機）</span>`
+    : `${kbT('G')} で光り物 ${q.n} 個 → <b>${yen(q.got)}</b><br>`
+    + (q.wash > 0 ? `<em>「${esc(q.shop.name)}」の枠で ${yen(q.wash)} は満額</em>　` : '')
+    + (q.rest > 0 ? `故買屋 ${kake(q.rate)}` : '');
 }
 /* 満杯の知らせ。掘るたびに出すと流れてしまうので間隔を空ける */
 let bagWarnT = -9999;
@@ -3067,7 +3261,12 @@ function wearTool(n) {
 function updateToolHud() {
   const T = curTool();
   const red = armorRed();
-  $('tool-n').textContent = T.n + (red > 0 ? `　🪖 -${Math.round(red * 100)}%` : '');
+  const n = $('tool-n');
+  n.textContent = T.n + (red > 0 ? `　🪖 -${Math.round(red * 100)}%` : '');
+  /* ネオン系はシマの色で灯る。HUD の名前も同じ色に染めておかないと、
+     手元の見た目と字が別のものを指しているように見える */
+  n.style.color = T.mine ? css(gearCol(T)) : '';
+  n.style.textShadow = T.mine ? `0 0 12px ${css(gearCol(T))}` : '';
   $('tool-d').textContent = T.d;
   const bar = $('tool-bar');
   const max = T.dur, left = Craft.dur[T.k];
@@ -3077,8 +3276,24 @@ function updateToolHud() {
   bar.firstElementChild.style.width = (r * 100) + '%';
   bar.firstElementChild.style.background = r < 0.2 ? '#ff3b30' : r < 0.5 ? '#ffcf3f' : '#39ff88';
 }
-const hasMats = need => need.every(([id, k]) => Bag.count[id] >= k);
-const payMats = need => need.forEach(([id, k]) => { Bag.count[id] -= k; });
+/* 材料の名前と、いま持っている数。N_ANY（色を問わないネオン）だけは 6 色の合計で
+   数える ── 材料を見るところは全部ここを通すこと。直接 Bag.count[id] を引くと、
+   擬似 ID のところで undefined になって「作れない」が黙って居座る。         */
+const needName = id => id === N_ANY ? 'ネオン管' : BLOCKS[id].n;
+const needHave = id => id === N_ANY
+  ? NEON_IDS.reduce((a, i) => a + Bag.count[i], 0) : Bag.count[id];
+const hasMats = need => need.every(([id, k]) => needHave(id) >= k);
+/* 払う。色を問わないぶんは、持っている数の多い色から先に減らす ──
+   一本しか残っていない色を先に取ると、壁に貼る用の色が真っ先に消える */
+const payMats = need => need.forEach(([id, k]) => {
+  if (id !== N_ANY) { Bag.count[id] -= k; return; }
+  let left = k;
+  for (const i of NEON_IDS.slice().sort((a, b) => Bag.count[b] - Bag.count[a])) {
+    const t = Math.min(left, Bag.count[i]);
+    Bag.count[i] -= t; left -= t;
+    if (left <= 0) break;
+  }
+});
 /* いま立っている場所が仕事場かどうか。手の届くところ（前後 3・上下 2）に台が
    置いてあれば、そこで作れる。溶接台は作業台の仕事も兼ねる ── 台は素手で
    剥がして持ち歩けるので、掘っている現場にそのまま広げればいい。            */
@@ -3146,7 +3361,8 @@ function craftRow(r, i, st) {
   const here = canMake(r, st);
   const ok = hasMats(r.need) && here;
   const mats = r.need.map(([id, k]) =>
-    `<span class="${Bag.count[id] >= k ? '' : 'no'}">${BLOCKS[id].n} ${Bag.count[id]}/${k}</span>`).join('')
+    `<span class="${needHave(id) >= k ? '' : 'no'}">${needName(id)} ${needHave(id)}/${k}`
+    + `${id === N_ANY ? '<em style="font-style:normal;opacity:.55">（色は問わない）</em>' : ''}</span>`).join('')
     + (here ? '' : `<span class="no">${AT_NAME[r.at]}が要る</span>`);
   const desc = blk ? (BUILD_DESC[r.out] || '') : T.d;
   /* 諸元。掘る道具と殴る道具と防具では、見るところがそれぞれ違う ──
@@ -3172,11 +3388,11 @@ function craftRow(r, i, st) {
   // 研ぎ直しは材料の欄も半分の値に差し替える（何を積めばいいのかが変わる）
   const fixRow = fix
     ? fixMats(r).map(([id, k]) =>
-      `<span class="${Bag.count[id] >= k ? '' : 'no'}">${BLOCKS[id].n} ${Bag.count[id]}/${k}</span>`).join('')
+      `<span class="${needHave(id) >= k ? '' : 'no'}">${needName(id)} ${needHave(id)}/${k}</span>`).join('')
     + `<span style="opacity:.55">耐久 ${Craft.dur[r.out]} / ${T.dur}</span>`
     : mats;
   return `<div class="rcp${eq || (arm && have) ? ' on' : ''}">`
-    + `<span class="ic" style="background:${css(T.col)}"></span>`
+    + `<span class="ic" style="background:${css(gearCol(T))}${T.mine ? ';box-shadow:0 0 10px ' + css(gearCol(T)) : ''}"></span>`
     + `<span class="tx"><b>${T.n}</b><i>${desc}</i>`
     + (spec ? `<i style="opacity:.42">${spec}</i>` : '')
     + `<span class="mat">${fixRow}</span></span>${btn}</div>`;
@@ -3190,7 +3406,7 @@ function equipRows() {
     .map(k => {
       const T = TOOLS[k];
       const left = Craft.dur[k];
-      return `<div class="rcp"><span class="ic" style="background:${css(T.col)}"></span>`
+      return `<div class="rcp"><span class="ic" style="background:${css(gearCol(T))}"></span>`
         + `<span class="tx"><b>${T.n}</b><i>${T.d}</i>`
         + (T.gun && left != null ? `<i style="opacity:.42">残弾 ${left} / ${T.dur}　殴り +${T.dmg}</i>` : '')
         + `</span><button data-eq="${k}">持ち替える</button></div>`;
@@ -3206,17 +3422,61 @@ function drawPalette() {
     const b = BLOCKS[id];
     const on = hotbar.indexOf(id);
     rows.push(`<button class="pal${on === hotSel ? ' on' : ''}" data-blk="${id}">`
-      + `<i style="background:${css(b.c)};box-shadow:0 0 ${b.em > 0.5 ? 10 : 0}px ${css(b.c)},`
+      + `<i style="background:${swatchBg(b)};box-shadow:0 0 ${swatchLit(b) ? 10 : 0}px ${swatchGlow(b)},`
       + `inset 0 2px rgba(255,255,255,.30),inset 0 -3px rgba(0,0,0,.42)"></i>`
       + `<span>${b.n}</span><em>×${Bag.count[id]}${on >= 0 ? `　${on + 1}枠` : ''}</em></button>`);
   }
   $('palhead').innerHTML = rows.length
-    ? `押すと <b>${hotSel + 1}</b> 番の枠に入る ── 枠は 1〜9 キー／ホイールで選ぶ。`
+    ? `下のブロックを押すと <b>${hotSel + 1}</b> 番の枠に入る ── 枠は 1〜9 キー／`
+    + `${kbT('Z')} ${kbT('X')}（前・次）／ホイール／画面下のホットバーを直に押しても選べる。`
     + `いま握っているのは <b>${heldBlock() ? BLOCKS[heldBlock()].n : '（空）'}</b>。`
     + `${kbT('R')} で目の前に置ける`
     : 'カバンが空だ。街を掘れば、剥がしたものがここに並ぶ';
   $('palette').innerHTML = rows.join('');
+  drawSell();
 }
+/* 換金の棚。G は光り物をまとめて売るだけの粗い口なので、種類を選んで売る場所を
+   ここに置く ── 指で遊んでいる人にとっては、ここが唯一の「全部売る」でもある。
+   店の前に立っていればその枠のぶんは満額。故買屋の掛け値はその晩の流した量で下がる。 */
+function drawSell() {
+  const shop = nearOwnShop();
+  const rate = fenceRate();
+  // 「ここから下は売り払う口」と最初に言う。上の棚（持ち替え）と地続きに読ませない
+  $('sellhead').innerHTML = '<b style="color:var(--gold)">── ここから下は換金。押したぶんは手元から消える ──</b><br>'
+    + (shop ? `<b style="color:var(--green)">「${esc(shop.name)}」の前</b>。`
+      + `今夜の買取枠は残り <b style="color:var(--gold)">${yen(washLeft(shop))}</b>（一晩 ${yen(washMax(shop))}）。`
+      + `枠のぶんは満額、はみ出たぶんは故買屋の ${kake(rate)}`
+      : `<b style="color:#ff9b60">自分の店の前ではない</b>。`
+      + `故買屋は今夜 <b style="color:var(--gold)">${kake(rate)}</b>`
+      + `（流すほど下がり、${kake(FENCE_FLOOR)} が底。日付が変われば戻る）`)
+    + '<br><span style="opacity:.6">大きい箱ほど太く捌ける ── 掘ったものを金に換える速さは、'
+    + '持っている看板で決まる</span>';
+  const btn = [];
+  const face = sellQuote(Array.from(SELL_FACE));
+  btn.push(`<button class="gold" data-sell="face" ${face.n ? '' : 'disabled'}>`
+    + `光り物をまとめて売る<em>${face.n} 個 → ${yen(face.got)}</em></button>`);
+  for (let id = 1; id < BLOCKS.length; id++) {
+    if (Bag.count[id] <= 0 || BLOCKS[id].v <= 0) continue;
+    const q = sellQuote([id]);
+    // 「売る」まで書く。棚の側と同じ「名前 ×個数」で終わらせない
+    btn.push(`<button data-sell="${id}">${BLOCKS[id].n} ×${Bag.count[id]} を売る`
+      + `<em>${yen(q.got)}</em></button>`);
+  }
+  const allIds = [];
+  for (let id = 1; id < BLOCKS.length; id++) if (Bag.count[id] > 0) allIds.push(id);
+  const all = sellQuote(allIds);
+  btn.push(`<button class="warn" data-sell="all" ${all.n ? '' : 'disabled'}>`
+    + `全部売る<em>${all.n} 個 → ${yen(all.got)}</em></button>`);
+  $('sellrow').innerHTML = btn.join('');
+}
+$('sellrow').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !b.dataset.sell) return;
+  const k = b.dataset.sell;
+  // 描き直しは doSell が持っている。ここで重ねると、売れなかったときだけ二度描く
+  if (k === 'face') sellFace();
+  else if (k === 'all') sellAll();
+  else doSell([+k], false);
+});
 /* 持っている店と、そこに入れた子分。連れて歩くだけの子分は食い扶持を食うだけで、
    店に付ければその食い扶持が上がりに変わる ── ここがその付け替え場。 */
 function drawShops() {
@@ -3225,8 +3485,15 @@ function drawShops() {
   $('shophead').innerHTML = mine.length
     ? `持っている店 ${mine.length} 軒 ── 子分を入れると一人につき上がり `
     + `+${Math.round(STAFF_GAIN * 100)}%。そのぶん手元から離れるので、`
-    + `殴り合いの頭数（いま ${guardCount()} 人）からは抜ける`
-    : '<span style="opacity:.6">まだ一軒も無い。上の「出店」で開けるか、街の店を買う</span>';
+    + `殴り合いの頭数（いま ${guardCount()} 人）からは抜ける<br>`
+    /* 店番はカチコミに出ていく（shopFoe）。実装はあるのに画面に出ていないと、
+       子分を店に入れる理由が「上がり」だけに見えてしまう */
+    + `<span style="opacity:.62">店番はカチコミにも出ていく ── 入れておけば、`
+    + `駆けつけられない夜でも看板が守れることがある。`
+    + `今夜この街の故買屋は ${kake(fenceRate())}、店を通せば枠のぶんは満額</span>`
+    : '<span style="opacity:.6">まだ一軒も無い。上の「出店」で開けるか、街の店を買う<br>'
+    + '店は上がりのためだけのものではない ── 掘ったものを満額で捌けるのは、'
+    + '自分の看板を通したぶんだけだ</span>';
   $('shopmine').innerHTML = mine.map(s => {
     const cap = staffMax(s), now = staffOf(s);
     const seats = (s.staff || []).map(c =>
@@ -3241,7 +3508,8 @@ function drawShops() {
       + `<span class="ic" style="background:${css(BLOCKS[s.type.neon].c)}"></span>`
       + `<span class="tx"><b>${esc(s.type.name)}「${esc(s.name)}」</b>`
       + `<i>${esc(Terr[s.zone].name)}${s.under ? '（地下街）' : ''}　`
-      + `上がり ${yen(hourlyIncome(s))}／時　店番 ${now}/${cap}</i></span></div>`
+      + `上がり ${yen(hourlyIncome(s))}／時　店番 ${now}/${cap}<br>`
+      + `買取枠 ${yen(washLeft(s))} / ${yen(washMax(s))}（一晩。この店の前で ${kbT('G')}）</i></span></div>`
       + `<div class="who">${seats}${add}</div></div>`;
   }).join('') || '';
 }
@@ -3333,6 +3601,8 @@ function drawCraft() {
   show('crafthere', tab === 'tool' || tab === 'arms' || tab === 'build');
   show('palhead', tab === 'bag');
   show('palette', tab === 'bag');
+  show('sellhead', tab === 'bag');
+  show('sellrow', tab === 'bag');
   show('buildhead', tab === 'shop');
   show('buildlist', tab === 'shop');
   show('shophead', tab === 'shop');
@@ -3696,7 +3966,9 @@ function drawBuild() {
       + `<span class="ic" style="background:${css(BLOCKS[type.neon].c)}"></span>`
       + `<span class="tx"><b>${type.name}</b>`
       + `<i>上がり ${yen(hourlyIncome({ income: type.income * 0.9 }))}／時　支配 +${shopControl({ type }) + 2}%`
-      + `　店番 ${staffMax({ type })}人まで</i>`
+      + `　店番 ${staffMax({ type })}人まで<br>`
+      // 買取枠が、店を出す一番大きい理由になる。上がりより一桁大きいので先に見せる
+      + `買取枠 ${yen(washMax({ income: sen(type.income * 0.9) }))}／晩</i>`
       + `<span class="mat">${cell(r.area, q.area, '広さ')}${cell(r.neon, q.neon, '灯')}`
       + `${cell(r.seat, q.seat, '什器')}</span></span>`
       + `<button data-b="${i}" ${ok ? '' : 'disabled'}>開ける</button></div>`;
@@ -3722,8 +3994,16 @@ const digWeight = id => DIG_FACE.has(id) ? 3 : 1;
 /* 爆風で崩したぶんの目減り。一発で数十マス持っていくので、掘るのと同じ目盛りで
    数えると TNT ひとつでシマが傾く。手で剥がすより効かないかわりに、一度に広い */
 const BLAST_DIG = 0.3;
+/* 壊すだけでは看板は立たない ── 掘って伸ばせる自分の取り分はここまで。
+   HOLD_PC(50) に届かない値にしてあるので、シマを「獲る」には最後に
+   店・子分・話のどれかが要る。相手の足場（base）を削るぶんはここで止めない ──
+   通りの顔を剥がせば仕切っている側の地力は確かに痩せる、という筋は残す。   */
+const DIG_SHARE_CAP = 35;
+let digCapNoted = 0;                    // 頭打ちの知らせ。掘るたびに出すと流れる
 function zoneDug(x, z, w) {
   const zi = zoneOf(x, z), t = Terr[zi];
+  // 掘らないと約束したシマに手を付けた。約束はその一撃で切れる
+  if (DigBan.on && DigBan.zi === zi) breakDigBan();
   t.dug = (t.dug || 0) + w;
   while (t.dug >= DIG_STEP) {
     t.dug -= DIG_STEP;
@@ -3732,9 +4012,21 @@ function zoneDug(x, z, w) {
       dropBase(t, 'player', DIG_BASE_DROP);
       shiftControl(zi, -DIG_PC, '自分の通りを掘り返した');
     } else {
+      // 相手の足場はここで止めない ── 通りの顔を剥がせば、仕切っている側は確かに痩せる
       dropBase(t, own, DIG_BASE_DROP);
-      raiseBase(t, 'player', DIG_BASE_GAIN);
-      shiftControl(zi, DIG_PC, `${FACTIONS[own].name}の通りを削った`, own);
+      if (t.share.player < DIG_SHARE_CAP) {
+        /* こちらの地力が伸びるのも頭打ちまで。base を止めずに share だけ止めると、
+           hourTerr が base の比率へ share を寄せる経路で上限を回り込んでしまう
+           （facPower は base を数える）── 勢力店の薄いシマなら、掘るだけで
+           HOLD_PC を越えてしまい、上限を置いた意味そのものが無くなる。       */
+        raiseBase(t, 'player', DIG_BASE_GAIN);
+        shiftControl(zi, Math.min(DIG_PC, DIG_SHARE_CAP - t.share.player),
+          `${FACTIONS[own].name}の通りを削った`, own);
+      } else if (performance.now() - digCapNoted > 20000) {
+        digCapNoted = performance.now();
+        log(`${t.name} は掘るだけでは ${DIG_SHARE_CAP}% で頭打ちだ。`
+          + '穴の跡には看板が立たない ── 店を出すか、子分を置くか、話を付けろ。', 'bad');
+      }
     }
   }
 }
@@ -3755,11 +4047,12 @@ function breakBlock(b) {
   // 元からそこにあったものを剥がしたぶんだけ、その通りの足場が動く
   if (virgin) zoneDug(b.x, b.z, digWeight(b.id));
   if (def.v >= 3000) log(`${def.n} を回収（${yen(def.v)}）`, 'dig');
-  // 見られていたら手配度
+  // 見られていたら手配度。光る道具（ネオン系）を握っていると、気づかれる距離が伸びる
   if (def.v >= 2000 || P.dug % 25 === 0) {
+    const seen = curTool().loud ? 22 : 12;
     for (const n of NPCs) {
       if (n.down > 0) continue;
-      if (Math.hypot(n.x - P.x, n.z - P.z) < 12 && n.arch.k === 'cop') {
+      if (Math.hypot(n.x - P.x, n.z - P.z) < seen && n.arch.k === 'cop') {
         P.wanted = clamp(P.wanted + 6, 0, 100);
         break;
       }
@@ -3783,18 +4076,97 @@ function placeBlock(b) {
    同じ「店の前に立っている」という条件なので、一つの物差しから引く */
 const nearOwnShop = () => Shops.find(s => s.owner === 'player'
   && Math.abs((s.y != null ? s.y : GY) - P.y) < 4 && Math.hypot(s.x - P.x, s.z - P.z) < 6);
-function sellBag() {
-  const v = bagValue();
-  if (v <= 0) { log('売るものがない。', ''); return; }
-  const near = nearOwnShop();
-  const rate = near ? 1 : 0.6;
-  const got = sen(v * rate);
-  P.yen += got;
-  Bag.count.fill(0);
-  rebuildHotbar(); updateBag(); hud();
-  Snd.coin();
-  log(near ? `${near.name} で ${yen(got)} に換えた。` : `故買屋に流した。${yen(got)}（六掛け）`, 'money');
+/* 台の前で材料になるブロック。RECIPES から機械的に引くので、レシピを足し引きしても
+   取りこぼさない ── 全部売り（Shift+G）の前に一度止めるのは、この顔ぶれが
+   混じっているとき。N_ANY はネオン 6 色に開いて数える。                    */
+const CRAFT_MATS = (() => {
+  const s = new Set();
+  for (const r of RECIPES) for (const [id] of r.need) {
+    if (id === N_ANY) NEON_IDS.forEach(i => s.add(i)); else s.add(id);
+  }
+  return s;
+})();
+/* 「剥がして金になるのは、路盤材にも建材にもならない光り物のほう」── BLOCKS の頭に
+   書いてある取り決めが、そのままこの顔ぶれになる。G で売るのはこれだけ ──
+   店を建てるために担いできた木材やタイル、金のツルハシに要る金塊まで、
+   換金のひと押しで消えるのがいちばん取り返しのつかない事故になる。
+   全部売るなら Shift+G（建材が混じっていれば一度止まる）。
+
+   ネオンだけは両掛けで、ネオン系（最上級の装備）の材料でもある。それでも
+   ここに残してあるのは、掘って金にするための本命がこれだからで、
+   売るか打つかを選ぶのはプレイヤーの側 ── doSell が一度だけそれを知らせる。 */
+const SELL_FACE = new Set([...NEON_IDS, 22, 23]);   // ネオン6色・街灯・自販機
+/* 換金の見積り。自分の店の買取枠から先に埋めて、はみ出たぶんを故買屋へ流す ──
+   同じカバンでも、店の前に立っているかどうかで手取りが変わる。
+   故買屋の掛け値はその晩どれだけ流したかで下がっていく（fenceRate）。      */
+function sellQuote(ids) {
+  let gross = 0, n = 0;
+  for (const id of ids) {
+    const c = Bag.count[id];
+    if (c > 0) { gross += c * BLOCKS[id].v; n += c; }
+  }
+  const shop = nearOwnShop();
+  const wash = shop ? Math.min(gross, washLeft(shop)) : 0;
+  const rest = gross - wash;
+  const pay = fencePay(rest);
+  // rate はこの取引で実際に付いた掛け値（売り切るまでに下がったぶんを均したもの）
+  return { gross, n, shop, wash, rest, pay, rate: rest > 0 ? pay / rest : fenceRate(),
+    got: sen(wash + pay) };
 }
+const kake = r => (r * 10).toFixed(1) + '掛け';
+function doSell(ids, face) {
+  const q = sellQuote(ids);
+  if (q.n <= 0) {
+    log(face ? `売れる光り物がない（G で売れるのは ${[...SELL_FACE].map(i => BLOCKS[i].n).join('・')}）。`
+      : '売るものがない。', '');
+    return;
+  }
+  P.yen += q.got;
+  if (q.wash > 0) q.shop.wash = (q.shop.wash || 0) + q.wash;
+  if (q.rest > 0) Fence.today += q.rest;
+  // 何本流したのかは、カバンを空にする前にしか数えられない
+  const had = {};
+  for (const id of ids) { had[id] = Bag.count[id]; Bag.count[id] = 0; }
+  rebuildHotbar(); updateBag(); hud(); drawCraft();
+  Snd.coin();
+  const parts = [];
+  if (q.wash > 0) parts.push(`「${q.shop.name}」を通して ${yen(q.wash)}（満額・残り枠 ${yen(washLeft(q.shop))}）`);
+  if (q.rest > 0) parts.push(`故買屋へ ${yen(sen(q.pay))}（${kake(q.rate)}）`);
+  log(`${q.n} 個 ── ${parts.join(' ／ ')}　計 ${yen(q.got)}`, 'money');
+  // 買い叩かれ始めたことは、口で言わないと数字の中に埋もれる
+  if (q.rest > 0 && q.rate < FENCE_BASE - 0.03)
+    log(q.shop ? `「${q.shop.name}」の枠を使い切った。はみ出たぶんは ${kake(q.rate)} だ。`
+      : `故買屋が買い叩き始めた（${kake(q.rate)}）。自分の店を通せば満額で捌ける。`, 'bad');
+  /* ネオンは金にもなるが、ネオン系（最上級の装備）の材料でもある。溶接台まで
+     辿り着いていて、まだ一つも打っていないうちは、売った本数を一度だけ知らせる ──
+     気づかないまま最後の一式を故買屋に流すのが、この街でいちばん惜しい失敗になる */
+  const neonSold = ids.reduce((a, i) => a + (NEON_IDS.indexOf(i) >= 0 ? had[i] : 0), 0);
+  if (neonSold > 0 && Craft.owned.iron && !neonKitDone() && !doSell.noted) {
+    doSell.noted = true;
+    log(`ネオンを ${neonSold} 本流した。ネオン系（${TOOLS.neon.n}・${TOOLS.ntube.n}・`
+      + `${ARMORS.nsuit.n}）はこれで打つ ── 売る前に ${kbT('Q')} で見ておくこと。`, 'ai');
+  }
+}
+// ネオン系を打ち終えているか。三つとも手にしたら、もう知らせる必要はない
+const neonKitDone = () => !!(Craft.owned.neon && Craft.owned.ntube && Craft.armors.nsuit);
+const sellFace = () => doSell(Array.from(SELL_FACE), true);
+let sellAllT = 0;                       // 全部売りの確認。二度押しで通す
+function sellAll() {
+  const ids = [];
+  for (let id = 1; id < BLOCKS.length; id++) if (Bag.count[id] > 0) ids.push(id);
+  const mats = ids.filter(id => CRAFT_MATS.has(id));
+  const now = performance.now();
+  if (mats.length && now - sellAllT > 4000) {
+    sellAllT = now;
+    log(`建材が混じっている ── ${mats.map(id => `${BLOCKS[id].n}×${Bag.count[id]}`).join('・')}。`
+      + 'それでも全部売るなら、もう一度。', 'bad');
+    return;
+  }
+  sellAllT = 0;
+  doSell(ids, false);
+}
+// 触りのボタンと、外から呼ばれる既定の換金。粗い側（光り物だけ）に寄せてある
+function sellBag() { sellFace(); }
 
 /* ============================================================================
    8. NPC
@@ -4442,11 +4814,21 @@ const Feud = {
   'arcadia|dragons': 34,   // 呑みたい側と、乗らない側。突っかかられても手は出さない
   'guren|local': 18,       // 納めさせる側と納める側。上下が決まっているので静か
   'arcadia|guren': 10,     // 払うものは払う。それ以上の付き合いが無い
-  'arcadia|local': 6       // 同じ通りの隣人
+  'arcadia|local': 6,      // 同じ通りの隣人
+  /* 踏み込む側と、営業を守る側。この街で唯一、警官が絡む因縁 ──
+     ただし HOSTILE(50) の下から始める。顔を合わせた瞬間に殴り合いが始まるのは、
+     令状の話をする相手どうしの揉め方ではない。まず口で始まり、
+     やりとりのたびに温度が上がって、越えたところで初めて手が出る（chatHeat）。
+     放っておけば hourTick が この値まで冷ます。                            */
+  'arcadia|cops': 26
 };
 /* 警官に手を出すのはアルカディアだけ。どの組とも揉めないかわりに、
    店へ踏み込んでくる側とは折り合わない ── この勢力の火種はここ一本 */
 const COP_FOE = 'arcadia';
+const COP_KEY = 'arcadia|cops';
+/* 一度の口論で上がる温度。26 から始めて、二〜三度言い合えば HOSTILE を越える ──
+   「今夜はもう三度目だ」という積み重ねが、手が出る理由になる */
+const COP_HEAT = [7, 15];
 
 /* ---- 誰が誰の上に立っているか --------------------------------------------
    路上の立ち話に出るのは、殴り合いの温度（Feud）ではなくこちらの上下と思惑。
@@ -4525,7 +4907,9 @@ function hostility(a, b) {
   return Feud[feudKey(a, b)] || 0;
 }
 /* 路上で出くわした二人が殴り合うか。勢力どうしの温度に、警官まわりの例外を足す。
-   警官は本来どことも殴り合わない（止める側）が、アルカディアだけは手を出す。
+   警官は本来どことも殴り合わない（止める側）で、アルカディアとだけ折り合わない ──
+   ただしその折り合いの悪さは固定値ではなく、Feud['arcadia|cops'] の温度で持つ。
+   最初は HOSTILE の下にあるので、出くわしても始まるのは立ち話（言い合い）のほう。
    流れ者（none）はどの表にも載っていないので温度 0 ── 立ち話しかしない。 */
 function npcHostility(n, m) {
   const a = sideOf(n), b = sideOf(m);
@@ -4533,7 +4917,7 @@ function npcHostility(n, m) {
   const nCop = n.arch.k === 'cop', mCop = m.arch.k === 'cop';
   if (nCop || mCop) {
     if (nCop && mCop) return 0;
-    return (nCop ? m : n).arch.fac === COP_FOE ? 88 : 0;
+    return (nCop ? m : n).arch.fac === COP_FOE ? (Feud[COP_KEY] || 0) : 0;
   }
   return hostility(a, b);
 }
@@ -4595,6 +4979,12 @@ function maybeRaid() {
   Raid.on = true; Raid.zi = s.zone; Raid.fac = f; Raid.shop = s; Raid.t = RAID_SEC; Raid.men = men;
   log(`カチコミだ。${FACTIONS[f].name} が【${Terr[s.zone].name}】の「${s.name}」に ${men.length} 人。`, 'bad');
   log(`${Math.round(RAID_SEC / 60)} 分のうちに全員伸ばさないと、その店は取られる。`, 'bad');
+  /* 店番は自分の店の周りの揉め事に出ていく（shopFoe）ので、入れてあれば留守でも
+     守り切ることがある ── 実装はしてあるのに画面のどこにも出ていないと、
+     子分を店に入れる理由が「上がり +30%」だけに見えてしまう */
+  const on = staffOf(s);
+  log(on ? `「${s.name}」には店番が ${on} 人いる。持ちこたえれば、駆けつけなくても守れる。`
+    : '店番を入れておけば、留守でも押し手に出ていく。いまは誰も立っていない。', on ? '' : 'bad');
   Snd.lose();
   hud();
 }
@@ -4643,6 +5033,158 @@ function updateRaid(dt) {
   Snd.lose();
   raidEnd();
 }
+
+/* ---- 申し入れ ------------------------------------------------------------
+   カチコミが来るのは見込みを落とした相手からだけ（RAID_FAV）。裏を返すと、
+   話の分かる相手ばかり作って回ると、この街には守るものが一つも無くなる ──
+   呑む側の遊び方だけ摩擦がゼロなのは、抗争を選んだ側と釣り合わない。
+   顔の利く勢力は、殴る代わりに筋を通せと言ってくる。呑めば見込みが上がり、
+   蹴れば下がる ── 全面抗争への入り口は、殴られる側にも呑まされる側にも開いている。
+   三つある ── みかじめ（金）・掘るなの申し合わせ（手）・引き抜き（人）。
+   どれも「持っているもの」を差し出させる話なので、持っていない相手には来ない。 */
+const Demand = { on: false, fac: '', kind: '', t: 0, yen: 0, zi: -1, crew: null };
+const DEMAND_SEC = 120;                // 返事の期限。現実 2 分（ゲーム内 2 時間）
+const DEMAND_CHANCE = 0.16;            // 1 ゲーム時間あたり
+const DIGBAN_HOURS = 6;                // 掘るなの申し合わせが効いているゲーム時間
+/* 効いている申し合わせ。until はゲーム内の通算分（Clock.elapsed）で持つ ──
+   日付をまたいでも数え直さなくていい */
+const DigBan = { on: false, zi: -1, until: 0, fac: '' };
+// その勢力が足場を持っているシマにある自分の店。みかじめを言ってこられる筋のもの
+const shopsUnder = f => Shops.filter(s => s.owner === 'player' && Terr[s.zone].share[f] >= 8);
+
+function demandUI() {
+  const el = $('demand');
+  if (!Demand.on) { el.classList.remove('show'); return; }
+  const F = FACTIONS[Demand.fac];
+  const fc = $('d-fac');
+  fc.textContent = F.name; fc.style.color = F.css;
+  $('d-t').textContent = `返事まで ${Math.max(0, Math.ceil(Demand.t))} 秒`;
+  const yes = $('d-yes'), no = $('d-no');
+  let body = '', note = '', yesLb = '呑む', noLb = '蹴る';
+  if (Demand.kind === 'mikajime') {
+    body = `<span class="q">「今月ぶんだ。${yen(Demand.yen)}、揃えてもらおうか」</span>`
+      + `${shopsUnder(Demand.fac).length} 軒ぶんのみかじめ。払えば筋は通る。`;
+    note = `呑む → ${yen(Demand.yen)} 払って 見込み +8　／　蹴る → 見込み -16（0 で全面抗争）`;
+    yesLb = `払う（${yen(Demand.yen)}）`; noLb = '払わない';
+    yes.disabled = P.yen < Demand.yen;
+  } else if (Demand.kind === 'digban') {
+    body = `<span class="q">「【${esc(Terr[Demand.zi].name)}】は掘るな。通りが穴だらけだ」</span>`
+      + `${DIGBAN_HOURS} 時間、そのシマの元からあるブロックに手を付けない約束。`;
+    note = `呑む → 見込み +6、守り切れば さらに +8　／　破れば -22　／　蹴る → 見込み -12`;
+    yesLb = '約束する'; noLb = '断る';
+    yes.disabled = false;
+  } else {
+    const n = Demand.crew;
+    body = `<span class="q">「${esc(n.name)}は元はうちの人間だ。返してもらう」</span>`
+      + `渡せば角は立たない。抱えたままなら、こちらの顔を潰したことになる。`;
+    note = `渡す → ${esc(n.name)} が抜けて 見込み +12　／　断る → 見込み -12`;
+    yesLb = '渡す'; noLb = '渡さない';
+    yes.disabled = false;
+  }
+  $('d-body').innerHTML = body;
+  $('d-note').textContent = note;
+  yes.textContent = yesLb; no.textContent = noLb;
+  el.classList.add('show');
+}
+function demandEnd() {
+  Demand.on = false; Demand.crew = null;
+  demandUI(); hud();
+}
+/* 申し入れを一つ立てる。持っていないものは要求されない ── 店が無ければみかじめは
+   来ないし、その勢力から引き抜いた子分が居なければ返せとも言われない */
+function maybeDemand() {
+  if (Demand.on || Raid.on || !started) return;
+  /* 画面を塞ぐものが開いているあいだは使いを出さない ── 出しても panel の下で、
+     開いたことにすら気づけない。次の時間まで待つ（updateWorld の時計止めと対） */
+  if (Talk.open || mapOpen || craftOpen) return;
+  // 立てる前に振る。八割方は捨てる目なので、候補を組み立てるのはそのあと
+  if (Math.random() > DEMAND_CHANCE) return;
+  const cands = [];
+  for (const f of RIVALS) {
+    if (Vassal[f] || War[f] || Fav[f] <= RAID_FAV) continue;
+    const under = shopsUnder(f);
+    if (under.length) {
+      const base = under.reduce((a, s) => a + hourlyIncome(s), 0) * 8;
+      cands.push({ f, kind: 'mikajime', yen: Math.max(sen(base), 2000000) });
+    }
+    // 自分の取り分が伸びてきているシマほど、掘るなと言われる筋が立つ
+    const zs = Terr.filter(t => t.owner === f && t.share.player >= 8);
+    if (zs.length) cands.push({ f, kind: 'digban', zi: pick(zs).idx });
+    const men = P.crew.filter(c => c.arch.fac === f);
+    if (men.length) cands.push({ f, kind: 'poach', crew: pick(men) });
+  }
+  if (!cands.length) return;
+  const c = pick(cands);
+  Demand.on = true; Demand.fac = c.f; Demand.kind = c.kind; Demand.t = DEMAND_SEC;
+  Demand.yen = c.yen || 0; Demand.zi = c.zi != null ? c.zi : -1; Demand.crew = c.crew || null;
+  log(`${FACTIONS[c.f].name} から使いが来た。返事は ${Math.round(DEMAND_SEC / 60)} 分以内だ。`, 'bad');
+  Snd.coin();
+  // 押せないボタンを出しても仕方がない。返事のあいだだけ視点を返す（relock で戻る）
+  if (document.pointerLockElement) document.exitPointerLock();
+  demandUI(); hud();
+}
+function demandAccept() {
+  if (!Demand.on) return;
+  const f = Demand.fac;
+  if (Demand.kind === 'mikajime') {
+    if (P.yen < Demand.yen) { log('金が足りない。', 'bad'); return; }
+    P.yen -= Demand.yen;
+    log(`${FACTIONS[f].name} に ${yen(Demand.yen)} 納めた。`, 'money');
+    addFav(f, 8, 'みかじめを納めた');
+  } else if (Demand.kind === 'digban') {
+    DigBan.on = true; DigBan.zi = Demand.zi; DigBan.fac = f;
+    DigBan.until = Clock.elapsed + DIGBAN_HOURS * 60;
+    log(`【${Terr[Demand.zi].name}】は ${DIGBAN_HOURS} 時間、掘らないと約束した。`, '');
+    addFav(f, 6, '掘らないと約束した');
+  } else {
+    const n = Demand.crew;
+    if (n) {
+      dropCrew(n); calm(n);
+      log(`${n.name} を ${FACTIONS[f].name} へ返した。`, '');
+      addFav(f, 12, `${n.name}を返した`);
+    }
+  }
+  demandEnd(); recalcInf(); hud(); drawCraft();
+}
+/* silent は「返事をしなかった」ほう。期限切れで落ちたときは口を利いていないので、
+   蹴ったときの台詞をそのまま出すと、押していないボタンを押したことになる ──
+   見込みの落ち幅は同じでも、何が起きたのかは別のことばで言う。               */
+function demandRefuse(silent) {
+  if (!Demand.on) return;
+  const f = Demand.fac, F = FACTIONS[f].name;
+  if (silent) log(`${F} への返事をしなかった。黙っているのは、蹴ったのと同じだ。`, 'bad');
+  if (Demand.kind === 'mikajime') {
+    if (!silent) log(`${F} のみかじめを蹴った。`, 'bad');
+    addFav(f, -16, silent ? 'みかじめに返事をしなかった' : 'みかじめを蹴った');
+  } else if (Demand.kind === 'digban') {
+    if (!silent) log(`${F} の申し合わせを断った。`, 'bad');
+    addFav(f, -12, silent ? '掘るなに返事をしなかった' : '掘るなを断った');
+  } else {
+    const n = Demand.crew;
+    if (n) n.trust = clamp(n.trust - 10, 0, 100);   // 引き止められた側も落ち着かない
+    if (!silent) log(`${n ? n.name : '身内'} は渡さないと言った。`, 'bad');
+    addFav(f, -12, silent ? '身内の話に返事をしなかった' : '身内を渡さなかった');
+  }
+  demandEnd();
+}
+// 約束を破った。掘った瞬間に効く ── 見込みは、殴られるより先にここで落ちる
+function breakDigBan() {
+  const f = DigBan.fac, t = Terr[DigBan.zi];
+  DigBan.on = false;
+  log(`【${t.name}】を掘った。${FACTIONS[f].name} との約束は切れた。`, 'bad');
+  addFav(f, -22, '掘らない約束を破った');
+  Snd.lose();
+}
+// 期限まで守り切った。破ったときと同じだけの重みを、こちら側にも返す
+function digBanTick() {
+  if (!DigBan.on || Clock.elapsed < DigBan.until) return;
+  const f = DigBan.fac;
+  DigBan.on = false;
+  log(`【${Terr[DigBan.zi].name}】の申し合わせを守り切った。`, 'good');
+  addFav(f, 8, '約束を守った');
+}
+$('d-yes').onclick = () => { demandAccept(); relock(40); };
+$('d-no').onclick = () => { demandRefuse(false); relock(40); };
 
 // 勢力から勢力へ、シマの取り分をそのまま移す（合計は動かない）
 function moveShare(zi, from, to, amt) {
@@ -4975,21 +5517,50 @@ function log(t, cls) {
    起動時に流したログは数分で見えなくなるので、詰まったときの逃げ場をここに置く。
    上から順に、急ぐものが先。<kbd> を含むので innerHTML で流す。            */
 function nextStep() {
-  if (Raid.on) return { hot: true,
-    t: `カチコミ ── ${Terr[Raid.zi].name}「${esc(Raid.shop.name)}」を守れ（残り ${Math.ceil(Raid.t)}秒）` };
+  if (Demand.on) return { hot: true,
+    t: `${FACTIONS[Demand.fac].name} から申し入れ ── 画面の真ん中で返事をしろ`
+      + `（残り ${Math.max(0, Math.ceil(Demand.t))}秒）` };
+  if (Raid.on) {
+    const on = staffOf(Raid.shop);
+    const far = Math.hypot(Raid.shop.x - P.x, Raid.shop.z - P.z) > 40;
+    return { hot: true,
+      t: `カチコミ ── ${Terr[Raid.zi].name}「${esc(Raid.shop.name)}」を守れ（残り ${Math.ceil(Raid.t)}秒）`
+        + (far && on ? `<br>店番 ${on} 人が出ている。持ちこたえれば守り切れる` : '') };
+  }
   if (P.wanted >= 70) return { hot: true, t: '手配度が高い。地下へ潜れば早く冷める' };
-  if (bagFull()) return { hot: true, t: `カバンが満杯。${kb('G')} で換金してから掘る` };
+  if (bagFull()) {
+    const q = sellQuote(Array.from(SELL_FACE));
+    // 満杯のときに要るのは「売れ」ではなく「どこで売れば損をしないか」のほう
+    return { hot: true, t: `カバンが満杯。${kb('G')} で光り物を換金`
+      + (q.shop ? `（いま「${esc(q.shop.name)}」の枠で ${yen(q.wash)} は満額）`
+        : q.rate < FENCE_BASE - 0.03
+          ? `<br>故買屋は ${kake(q.rate)} まで落ちている ── 自分の店の前まで運べば満額だ`
+          : '') };
+  }
   /* 道具の段。まず台、次に道具。台の話を先に出さないと、材料が揃っているのに
      何も作れない理由が分からないまま詰まる */
-  const short = need => need.filter(([id, k]) => Bag.count[id] < k)
-    .map(([id, k]) => `${BLOCKS[id].n}あと${k - Bag.count[id]}`).join('・');
+  const short = need => need.filter(([id, k]) => needHave(id) < k)
+    .map(([id, k]) => `${needName(id)}あと${k - needHave(id)}`).join('・');
+  /* 足りない材料の出どころ。先頭の一つだけ出す（全部並べると一行に収まらない）──
+     街のどの面に貼ってあるか、あるいは何から組めるか。ここまで言って初めて、
+     「木材あと4」が手の動く指示になる */
+  const from = need => {
+    const m = need.find(([id, k]) => needHave(id) < k);
+    if (!m) return '';
+    const id = m[0], r = RECIPES.find(x => x.kind === 'block' && x.id === id);
+    const made = r ? `${r.need.map(([ni, nk]) => `${needName(ni)}${nk}`).join('＋')}`
+      + ` から ${needName(id)}${r.n || 1}` : '';
+    const w = WHERE[id];
+    if (!w && !made) return '';
+    return `<br>${needName(id)}は ${w || ''}${w && made ? '、または ' : ''}${made}`;
+  };
   const st = nearStation();
   const bench = RECIPES.find(r => r.out === 'bench'), weld = RECIPES.find(r => r.out === 'weld');
   if (!st) {
     if (Bag.count[B_BENCH] || Bag.count[B_WELD])
       return { t: `${kb('R')} で台を据える ── その前に立ってはじめて道具が作れる` };
     const miss = short(bench.need);
-    return { t: miss ? `${miss} で作業台が組める（素手で組める唯一のもの）`
+    return { t: miss ? `${miss} で作業台が組める（素手で組める唯一のもの）${from(bench.need)}`
       : `${kb('Q')} で作業台を組んで、${kbT('R')} で据える ── 道具はその前でしか作れない` };
   }
   /* 次に上げる道具。いま持っているものより上の等級だけを見る。ツルハシは
@@ -5002,11 +5573,11 @@ function nextStep() {
     const T = TOOLS[r.out];
     if (!canMake(r, st)) {
       const miss = short(weld.need);
-      return { t: miss ? `${miss} で溶接台 ── ${T.n} はその前でしか打てない`
+      return { t: miss ? `${miss} で溶接台 ── ${T.n} はその前でしか打てない${from(weld.need)}`
         : `${kb('Q')} で溶接台を組んで据える ── ${T.n} はその前で打つ` };
     }
     const miss = short(r.need);
-    return { t: miss ? `${miss} で ${T.n}` : `${kb('Q')} で ${T.n} を作れる` };
+    return { t: miss ? `${miss} で ${T.n}${from(r.need)}` : `${kb('Q')} で ${T.n} を作れる` };
   }
   /* まだ一軒も持っていない。買うより建てるほうが安いので、部屋の作り方を出す ──
      いま立っている部屋の何が足りないかは、その場で測って言う */
@@ -5039,11 +5610,20 @@ function nextStep() {
       + `子分に話しかけて入れれば、上がりが一人 +${Math.round(STAFF_GAIN * 100)}%` };
   if (P.crew.length >= crewMax())
     return { t: `子分は ${crewMax()} 人で手一杯。店を増やせば影響力が上がって枠も増える` };
+  // 守り切ると決めた約束は、切れる前に一度だけ思い出させる
+  if (DigBan.on) return { t: `【${Terr[DigBan.zi].name}】は掘らない約束 ── `
+    + `あと ${Math.max(0, Math.ceil((DigBan.until - Clock.elapsed) / 60))} 時間。守り切れば`
+    + ` ${FACTIONS[DigBan.fac].name} の見込みが上がる` };
   const held = heldZones();
   if (held < 9) {
     // いちばん近づいている、まだ獲れていないシマ
     const t = Terr.filter(z => !z.held).sort((a, b) => b.share.player - a.share.player)[0];
-    if (t) return { t: `${t.name} は自分 ${Math.round(t.share.player)}%（${HOLD_PC}% で獲れる）` };
+    if (t) return { t: `${t.name} は自分 ${Math.round(t.share.player)}%（${HOLD_PC}% で獲れる）`
+      /* 掘りだけで来た人はここで必ず頭を打つ。壁の名前と、そこから先の手を出す ──
+         この一行が無いと「掘っても増えない」だけが残る */
+      + (t.share.player >= DIG_SHARE_CAP - 1
+        ? `<br>掘りで動くのは ${DIG_SHARE_CAP}% まで。ここから先は 店を出す・子分を置く・潰す`
+        : '') };
   }
   const rank = nextRank();
   return { t: rank ? rank.hint() : '歌舞伎町はもう自分のものだ。' };
@@ -5211,9 +5791,12 @@ function facsUI() {
       const [a, b] = k.split('|');
       if (Vassal[a] && Vassal[b]) return '';
       const v = Feud[k], hot = v >= HOSTILE;
-      return `<div class="fac"><i style="background:${FACTIONS[a].css}"></i>`
-        + `<i style="background:${FACTIONS[b].css}"></i>`
-        + `<span style="min-width:150px">${esc(FACTIONS[a].name)} × ${esc(FACTIONS[b].name)}</span>`
+      // 警官は勢力ではないので FACTIONS に居ない。ここだけ公権力として並べる
+      const F = s => FACTIONS[s] || (s === 'cops' ? { name: '新宿署', css: '#5b7cff' } : null);
+      if (!F(a) || !F(b)) return '';                 // 表に無い組み合わせは並べない
+      return `<div class="fac"><i style="background:${F(a).css}"></i>`
+        + `<i style="background:${F(b).css}"></i>`
+        + `<span style="min-width:150px">${esc(F(a).name)} × ${esc(F(b).name)}</span>`
         + `<b style="color:${hot ? '#ff3b30' : 'rgba(255,255,255,.5)'}">${hot ? '抗争' : '小競り合い'}</b>`
         + `<div class="rb"><i style="width:${Math.round(v)}%;background:${hot ? '#ff3b30' : '#ffcf3f'}"></i></div></div>`;
     }).join('');
@@ -5539,13 +6122,16 @@ function clearShot(ox, oy, oz, tx, ty, tz) {
 /* 大きな音は当たっても外れても街に響く。手配度が跳ね、警官はこちらを向き、
    腕の立たない連中は一斉に散る ── 拳銃も爆薬も、抜いた時点で事件になる。
    鳴った場所で数えるので、離れたところで爆ぜても、その周りの人間が散る */
-function loudHeard(x, z, y, wanted, radius, fear) {
+/* soft を立てると、警官は気づくが飛びかかっては来ない ── 銃声や爆発と、
+   光る得物を一振りしたのとを同じ扱いにすると、ネオン刀を持った瞬間に
+   街じゅうの巡回が敵になる。手配度と怯えだけが動く。                       */
+function loudHeard(x, z, y, wanted, radius, fear, soft) {
   P.wanted = clamp(P.wanted + wanted, 0, 100);
   for (const n of NPCs) {
     if (n.down > 0) continue;
     if (Math.hypot(n.x - x, n.z - z) > radius || Math.abs(n.y - y) > 5) continue;
     n.fear = clamp(n.fear + fear, 0, 100);
-    if (n.arch.k === 'cop') { n.hostile = true; n.state = 'attack'; }
+    if (n.arch.k === 'cop') { if (!soft) { n.hostile = true; n.state = 'attack'; } }
     else if (!n.crew && n.arch.hp < 70) { n.state = 'flee'; n.t = 7; }
   }
   hud();
@@ -5658,6 +6244,9 @@ function punch(target) {
   }
   // 一発は一発。外しても弾は減り、銃声は街に響く
   if (gun) { wearTool(1); gunHeard(); }
+  /* 光る得物（ネオン刀）を振れば、当たっても外れても通りが気づく ── 銃声ほどでは
+     ないが、暗がりで殴っているつもりにはなれない。それがこの一発の重さの値段 */
+  else if (T.loud) loudHeard(P.x, P.z, P.y, 7, 16, 6, true);
   if (!hit) return;
   // 後ろに立っている頭数のぶんだけ拳が重い。店に出した者は勘定に入らない
   hit.hp -= 14 + T.dmg + guardCount() * 3;
@@ -5798,7 +6387,10 @@ addEventListener('keydown', e => {
      近くの相手しか punchTarget に入らないので、これが無いと遠くの敵に撃てない。
      素手や道具なら、正面に人がいれば殴り、いなければ掘る（updateDig が押しっぱなしを見る） */
   if (e.code === 'KeyF' && (punchTarget || curTool().gun)) punch(punchTarget);
-  if (e.code === 'KeyG') sellBag();
+  /* G は光り物（ネオン・街灯・自販機）だけを売る。Shift+G で全部 ── 建材が
+     混じっていれば一度止まって、もう一度押すまで動かない。店を建てるために
+     担いできた木材とタイルが、換金のひと押しで消えるのを止めるため */
+  if (e.code === 'KeyG') { if (e.shiftKey) sellAll(); else sellFace(); }
   if (e.code === 'KeyV') P.firstPerson = !P.firstPerson;
   if (e.code === 'KeyN') Snd.toggle();
   if (e.code === 'KeyR') Dig.place = true;
@@ -5807,17 +6399,24 @@ addEventListener('keydown', e => {
   if (e.code === 'Escape') {
     if (Talk.open) Talk.close(); else if (craftOpen) toggleCraft(); else if (mapOpen) toggleMap();
   }
-  if (/^Digit[1-9]$/.test(e.code)) {
-    hotSel = +e.code.slice(5) - 1;
-    rebuildHotbar(); selName();
+  // 枠を直に選ぶ。テンキーも拾う ── 数字は数字で、上段かテンキーかは押す側の都合
+  const dg = /^(Digit|Numpad)([1-9])$/.exec(e.code);
+  if (dg) {
+    hotSel = +dg[2] - 1;
+    hotChanged();
   }
+  /* Z / X は前の枠・次の枠。矢印キーは WASD と並ぶ移動なので取れない ──
+     ホイールの無い環境と、数字まで指を伸ばしたくない手のための口 */
+  if (e.code === 'KeyZ') stepHot(-1);
+  if (e.code === 'KeyX') stepHot(1);
   if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'].includes(e.code)) e.preventDefault();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; Dig.active = false; });
 
 canvas.addEventListener('mousedown', e => {
-  if (!started || Talk.open || mapOpen || craftOpen) return;
+  // 申し入れの返事待ちは会話と同じ扱い。ここで視点を掴み直すと、出したボタンが押せない
+  if (!started || Talk.open || mapOpen || craftOpen || Demand.on) return;
   if (!isTouch && !document.pointerLockElement) { canvas.requestPointerLock(); return; }
   if (e.button === 0) Dig.active = true;
   if (e.button === 2) Dig.place = true;
@@ -5829,23 +6428,33 @@ addEventListener('mousemove', e => {
   P.yaw -= e.movementX * 0.0026;
   P.pitch = clamp(P.pitch - e.movementY * 0.0022, -1.5, 1.5);
 });
-addEventListener('wheel', e => {
-  if (!started || Talk.open || mapOpen || craftOpen) return;
-  /* 空き枠は飛ばす。枠は 9 つ固定なので、飛ばさないと持ち物 2 種のときに
-     何も握っていない枠を 7 回めくることになる。全部空なら動かさない */
+/* 枠を一つ隣へ。ホイールと Z / X が同じものを呼ぶ ── 数字を押しに指を動かさずに
+   持ち替えられる口がないと、掘りながらの建て替えが「一度手を止める作業」になる。
+   空き枠は飛ばす。枠は 9 つ固定なので、飛ばさないと持ち物 2 種のときに
+   何も握っていない枠を 7 回めくることになる。全部空なら動かさない。         */
+function stepHot(d) {
   const has = hotbar.some(id => id);
-  const d = e.deltaY > 0 ? 1 : -1;
   let i = hotSel;
   for (let k = 0; k < HOT_N; k++) {
     i = (i + d + HOT_N) % HOT_N;
     if (!has || hotbar[i]) break;
   }
   hotSel = i;
+  hotChanged();
+}
+/* 枠が動いたあとの後始末。「持ち物」を開いたまま動かしたときは棚も描き直す ──
+   palhead の「押すと N 番の枠に入る」と .pal.on が、選んでいる枠を指したままになる */
+function hotChanged() {
   rebuildHotbar(); selName();
+  if (craftOpen && craftTab === 'bag') drawPalette();
+}
+addEventListener('wheel', e => {
+  if (!started || Talk.open || mapOpen || craftOpen) return;
+  stepHot(e.deltaY > 0 ? 1 : -1);
 }, { passive: true });
 $('hotbar').addEventListener('click', e => {
   const s = e.target.closest('.slot'); if (!s || s.dataset.i === undefined) return;
-  hotSel = +s.dataset.i; rebuildHotbar(); selName();
+  hotSel = +s.dataset.i; hotChanged();
 });
 
 /* 視点をカメラに返す。どの画面から戻るときも条件は同じ ── タッチでないこと、
@@ -5853,7 +6462,9 @@ $('hotbar').addEventListener('click', e => {
    delay を渡すと少し待ってから見る（閉じ切る前に掴むと弾かれる） */
 function relock(delay) {
   if (isTouch || !canvas.requestPointerLock) return;
-  const go = () => { if (started && !Talk.open && !mapOpen && !craftOpen) canvas.requestPointerLock(); };
+  const go = () => {
+    if (started && !Talk.open && !mapOpen && !craftOpen && !Demand.on) canvas.requestPointerLock();
+  };
   delay ? setTimeout(go, delay) : go();
 }
 function toggleMap() {
@@ -5949,7 +6560,9 @@ if (isTouch) {
     ['作', 'クラフト（ツルハシ／武器・防具／建材／持ち物／出店・店／アジト）。作業台を組んで置き、'
       + 'その前で道具と建材を作る。囲った部屋の中で開けば店になり、子分を入れて働かせられる。'
       + '囲った部屋はアジトにもできる（一つだけ。広いほど影響力が上がる）'],
-    ['換', `回収したブロックを換金（自分の店なら高く売れる）。カバンは ${BAG_MAX} 個まで`],
+    ['換', '光り物（ネオン・街灯・自販機）を換金。種類を選んで売る／全部売るのは「作」の「持ち物」。'
+      + `故買屋は一晩に捌ける量が決まっていて、流すほど買い叩かれる ── 自分の店の前なら、`
+      + `その店の買取枠のぶんは満額。カバンは ${BAG_MAX} 個まで`],
     // 印の色見本は applyGangColor が id で塗る。この <i> を落とすと色が配れない
     ['話', '話す・店を買う・アジトのベッドで眠る・チェストを開く（入口に浮く印の色が持ち主。<i style="color:#fff;font-style:normal">白</i>は独立、'
       + '勢力の色はその傘下、<i id="hlp-mine" style="color:#39ff88;font-style:normal">この色</i>は自分の店）'],
@@ -6005,12 +6618,24 @@ function findFocus() {
     pr.style.display = 'block';
     const s = focusShop;
     pr.innerHTML = s.owner === 'player'
-      ? `${kb('G')} ${s.type.name}「${s.name}」で換金（満額）　上がり ${yen(hourlyIncome(s))}／時`
-      + `　<span style="opacity:.6">店番 ${staffOf(s)}/${staffMax(s)} 人（子分に話しかけて入れる）</span>`
+      ? `${kb('G')} ${s.type.name}「${s.name}」を通して換金　`
+      + `<span style="color:${washLeft(s) > 0 ? '#39ff88' : '#ff9b60'}">買取枠 ${yen(washLeft(s))} 残り</span>`
+      + `（枠のぶんは満額・以降は故買屋の ${kake(fenceRate())}）`
+      + `　<span style="opacity:.6">上がり ${yen(hourlyIncome(s))}／時・店番 ${staffOf(s)}/${staffMax(s)} 人</span>`
       : `${kb('E')} ${s.type.name}「${s.name}」を買う ${yen(shopCost(s))}`
       + (infDiscount() > 0.01 ? `<span style="color:#39ff88">（顔が利くぶん -${Math.round(infDiscount() * 100)}%）</span>` : '')
       + (s.owner ? `　<span style="color:${FACTIONS[s.owner].css}">${esc(FACTIONS[s.owner].name)}の店</span>` : '　<span style="opacity:.6">独立</span>')
       + `　<span style="opacity:.6">上がり ${yen(hourlyIncome(s))}／時・支配 ${s.owner ? FACTIONS[s.owner].name + 'から' : ''} +${shopControl(s)}%</span>`;
+  } else if (Aim.cur && (Aim.cur.id === B_BENCH || Aim.cur.id === B_WELD)) {
+    /* 据えた台。天板が灯っているのが目印だが、向いたときは名前でも言う ──
+       溶接台は作業台を兼ねるので、その前に立っているなら何が打てるかまで出す */
+    pr.style.display = 'block';
+    const weld = Aim.cur.id === B_WELD;
+    pr.innerHTML = `<span style="color:${weld ? '#8ef0ff' : '#ffcf3f'}">`
+      + `${weld ? '溶接台' : '作業台'}</span> ── ${kb('Q')} でこの前で作れる`
+      + (weld ? '（鉄・金・ネオンのツルハシ、武器・防具、TNT。作業台の仕事も兼ねる）'
+        : '（石のツルハシ、建材、出店の什器。鉄から先は溶接台が要る）')
+      + `　<span style="opacity:.5">素手で剥がして持ち歩ける</span>`;
   } else if (Aim.cur && (Aim.cur.id === B_BED || Aim.cur.id === B_CHEST)) {
     // アジトの設え。据えただけでは効かないので、外で向いたときはその理由を出す
     pr.style.display = 'block';
@@ -6022,7 +6647,13 @@ function findFocus() {
       + `（${kbT('Q')} の「アジト」で、囲った部屋を決める）</span>`;
   } else if (bagValue() > 0) {
     pr.style.display = 'block';
-    pr.innerHTML = `${kb('G')} カバンの ${yen(bagValue())} 相当を換金（自分の店の前なら満額）`
+    const q = sellQuote(Array.from(SELL_FACE));
+    // 元値ではなく手取りを出す。掛け値はその晩どれだけ流したかで動く
+    pr.innerHTML = q.n > 0
+      ? `${kb('G')} 光り物 ${q.n} 個を換金 ${yen(q.got)}（故買屋 ${kake(q.rate)}）`
+      + `　<span style="opacity:.5">${bagCount()} / ${BAG_MAX} 個・Shift+G で全部</span>`
+      : `<span style="opacity:.6">カバンの ${yen(bagValue())} 相当は建材だ ── `
+      + `${kbT('Q')} の「持ち物」で種類を選んで売れる</span>`
       + `　<span style="opacity:.5">${bagCount()} / ${BAG_MAX} 個</span>`;
   } else pr.style.display = 'none';
 }
@@ -6239,9 +6870,15 @@ const CHAT_PAIR = {
     ['また職質か', '名前と住所', '言う義務あんの？', 'その口の利き方が理由だ']
   ],
   // アルカディア → 公権力。喧嘩はしないが、ここだけは折れない
+  /* 手は出さないが、口は出す ── この二者は顔を合わせるたびに言い合う。
+     何度も繰り返せば温度が上がって、最後には手が出る（chatHeat）。
+     後ろの台本ほど角が立つように並べてある */
   'arcadia>cops': [
     ['営業妨害ですよ、それ', '中を見せてもらう', '令状を見せてください', '……そう来るか'],
-    ['何度目ですか、今月', '苦情が出ている', '出させてる人がいるんでしょう', '……余計な口を叩くな']
+    ['何度目ですか、今月', '苦情が出ている', '出させてる人がいるんでしょう', '……余計な口を叩くな'],
+    ['また来たんですか', '通報があった', '誰からです', '答える義務は無い'],
+    ['うちの子に声かけないでください', '任意で聞いてるだけだ', '任意なら断ります', '……そういう店か'],
+    ['その手をどけてもらえますか', '触ってない', '触りました', '言葉には気をつけろよ']
   ],
   // アルカディア → 商店組合。隣人として静か
   'arcadia>local': [
@@ -6294,8 +6931,13 @@ function winBrawl(w, l) {
   const got = moveShare(zi, fl, fw, (isHeavy(w) ? 2.6 : 1.2) * (pInv ? 2.5 : 1));
   // 一度やり合えば次はもっと早い。勢力どうしの熱はここで上がる
   if (fw !== 'player' && fl !== 'player') {
-    const k = feudKey(fw, fl);
-    Feud[k] = clamp((Feud[k] || 0) + 2, 0, 100);
+    /* 鍵は stanceSide で引く ── 警官は勢力ではないので sideOf では 'none' に落ちて、
+       表に無い組み合わせ（arcadia|none）の鍵ができてしまう。その鍵は FEUD_BASE に
+       無いので、hourTick の冷まし（FEUD_BASE[k] - Feud[k]）が undefined を掴んで
+       NaN になり、以後その因縁の温度が二度と数字に戻らない。
+       表に載っている組み合わせだけを温める。                                */
+    const k = feudKey(stanceSide(w), stanceSide(l));
+    if (FEUD_BASE[k] != null) Feud[k] = clamp((Feud[k] || 0) + 2, 0, 100);
   } else addFav(fw === 'player' ? fl : fw, -3, '');
   // 地力も動く。同じ通りで勝ち続ければ、その勢力の足場そのものが太る
   if (hasShare(fl)) dropBase(t, fl, pInv ? 1.1 : 0.25);
@@ -6341,9 +6983,36 @@ function startChat(a, b) {
     }).catch(() => { }).finally(() => { AI.busy--; });
   }
 }
+/* 言い合いの後始末。アルカディアと警官のやりとりだけは、話が済むたびに温度が上がる ──
+   踏み込む側と営業を守る側の話は一度で終わらない。HOSTILE を越えたところで、
+   その場の口論がそのまま殴り合いに変わる。「会話しだいで手が出る」のはこの一段で、
+   越えていないうちは何度でも言い合って別れる。放っておけば hourTick が冷ます。 */
+function chatHeat(a, b) {
+  const sa = stanceSide(a), sb = stanceSide(b);
+  if (!((sa === 'cops' && sb === COP_FOE) || (sb === 'cops' && sa === COP_FOE))) return false;
+  const was = Feud[COP_KEY] || 0;
+  Feud[COP_KEY] = clamp(was + rnd(COP_HEAT[0], COP_HEAT[1]), 0, 100);
+  if (Feud[COP_KEY] < HOSTILE) {
+    if (canHear(a))
+      log(`${a.name}と${b.name}が言い合っている。まだ手は出ていない。`, '');
+    return false;
+  }
+  if (canHear(a))
+    log(`${a.name}と${b.name}の話がこじれた。${FACTIONS[COP_FOE].name}と新宿署は、`
+      + 'いま路上でやり合う温度にある。', 'bad');
+  return true;
+}
 function endChat(n) {
   const m = n.foe;
-  n.chatQ = null; toWalk(n, rnd(35, 90));
+  n.chatQ = null;
+  /* 話が煮詰まったなら、離れる前にそのまま殴り合いへ。ここで toWalk を通すと
+     二人とも道順を引き直して歩き出してしまい、こじれた話が無かったことになる */
+  if (m && m.foe === n && m.state === 'chat' && chatHeat(n, m)) {
+    m.chatQ = null;
+    startBrawl(n, m);
+    return;
+  }
+  toWalk(n, rnd(35, 90));
   if (m && m.foe === n) { m.chatQ = null; toWalk(m, rnd(35, 90)); }
 }
 /* 絡みの相手を探す。0.5 秒に一度だけ、しかもプレイヤーの近くだけを見る */
@@ -6645,13 +7314,65 @@ function updateWorld(dt) {
   P.hp = clamp(P.hp + dt * 0.9, 0, P.maxhp);
   weatherEase(dt);                       // 空は切り替わるのではなく、寄っていく
   updateRaid(dt);
+  /* 申し入れの返事の期限。黙っていれば蹴ったのと同じ ── ただし相手が傘下に入った／
+     抗争に落ちたなら、その話はもう流れている */
+  if (Demand.on) {
+    /* 話が流れる条件 ── 相手が傘下に入った／抗争に落ちた、返せと言われた身内が
+       もう手元にいない、みかじめを言われた店が一軒も残っていない。
+       どれも「差し出すものが無くなった」ので、返事を待つ意味がない */
+    const gone = Demand.kind === 'poach'
+      ? (!Demand.crew || !Demand.crew.crew || Demand.crew.dead)
+      : Demand.kind === 'mikajime' ? !shopsUnder(Demand.fac).length : false;
+    if (Vassal[Demand.fac] || War[Demand.fac] || gone) demandEnd();
+    else {
+      /* みかじめの「払う」は、金ができたら押せるようにする ── 返事待ちのあいだも
+         G で換金できるので、ここを立てたままにすると「払えるのに蹴った」になる */
+      if (Demand.kind === 'mikajime') $('d-yes').disabled = P.yen < Demand.yen;
+      /* 画面を塞ぐものが開いているあいだは時計を止める。#demand は会話(30)・
+         勢力図(50)・クラフト(52) より下にあるので、開かれると返事の窓が見えない ──
+         見えていないものの期限が切れて無返事になるのが、いちばん理不尽な負け方になる。
+         金を作りに Q を開くのは、まさにこの申し入れが取らせる行動でもある。      */
+      if (!(Talk.open || mapOpen || craftOpen)) {
+        Demand.t -= dt;
+        $('d-t').textContent = `返事まで ${Math.max(0, Math.ceil(Demand.t))} 秒`;
+        if (Demand.t <= 0) demandRefuse(true);
+      }
+    }
+  }
   /* アジトを測り直す。壁を足しても掘っても広さが付いてくる ── 毎フレームやる
      ほどのものではないので、1 秒ごとに一度だけ回す */
   if (Hide.on) { Hide.t -= dt; if (Hide.t <= 0) { Hide.t = 1.0; refreshHide(); } }
 }
+/* 視界の外で起きたこと。勢力どうしの絡みはプレイヤーの近く（SOC_NEAR）でしか
+   起こさないので、そこを離れると九つのシマは数字でしか動かなくなる ── ここで
+   増やすのは新しいシミュレーションではなく、hourTerr がすでに動かしたぶんの
+   言い方だけ。一番大きく動いたシマを一つ拾って、噂として一行流す。          */
+const NEWS_MIN = 1.2;                  // これ未満の動きは噂にならない
+function cityNews(before) {
+  let best = null, bd = NEWS_MIN;
+  for (const t of Terr) {
+    for (const k of RIVALS) {
+      const d = t.share[k] - before[t.idx][k];
+      if (d > bd) { bd = d; best = { t, k, d }; }
+    }
+  }
+  if (!best) return;
+  const { t, k } = best;
+  // 自分が顔をしているシマで他所が伸びたなら、それは噂ではなく知らせになる
+  const mine = t.share.player >= HOLD_PC;
+  const line = pick([
+    `${FACTIONS[k].name} が【${t.name}】で伸びている。看板が一枚、掛け替わったらしい`,
+    `【${t.name}】── ${FACTIONS[k].name}の若いのが増えたと、通りの誰かが言っていた`,
+    `【${t.name}】の上がりが ${FACTIONS[k].name} へ流れ始めている`,
+    `${FACTIONS[k].name} が【${t.name}】で人を集めている`
+  ]);
+  log(`噂: ${line}。`, mine ? 'bad' : 'ai');
+}
 function hourTick() {
   weatherTick();                         // 空が動くのは 1 時間に一度まで
+  const before = Terr.map(t => ({ ...t.share }));
   for (const t of Terr) hourTerr(t);
+  cityNews(before);
   /* 見込みは放っておけば真ん中（50）へ戻る。手を出さなければ角も取れるし、
      顔を出さなければ忘れられる ── どちらへ振り切るにも、こちらが動き続ける必要がある。
      全面抗争に入った相手は戻らない。解けるのはシマのほうだけ（checkWarEnd） */
@@ -6661,8 +7382,9 @@ function hourTick() {
   }
   // 抗争は、その勢力の看板が街から消えたときに終わる
   for (const f of RIVALS) checkWarEnd(f);
-  // 勢力どうしの熱も元の温度へ戻る。積年の因縁までは消えない
-  for (const k in Feud) Feud[k] += (FEUD_BASE[k] - Feud[k]) * 0.15;
+  // 勢力どうしの熱も元の温度へ戻る。積年の因縁までは消えない。
+  // 表に無い鍵が紛れ込んでも NaN にしない（戻る先が無いものは、そのまま置く）
+  for (const k in Feud) if (FEUD_BASE[k] != null) Feud[k] += (FEUD_BASE[k] - Feud[k]) * 0.15;
   facsUI();
   // 店の上がりは日締めではなく毎時入れる
   const shops = Shops.filter(s => s.owner === 'player');
@@ -6681,7 +7403,11 @@ function hourTick() {
     log(`店の上がり ${yen(income)}${on ? `（店番 ${on} 人ぶん込み）` : ''}`
       + `${upkeep ? ` − 人件費 ${yen(upkeep)}` : ''}`, 'money');
   }
+  digBanTick();                          // 守り切った約束はここで満了する
   maybeRaid();
+  /* 殴り込みが立たなかった時間にだけ、話のほうを出す ── カチコミと申し入れが
+     同じ夜に重なると、どちらも「一つの出来事」として見えなくなる */
+  if (!Raid.on) maybeDemand();
   recalcInf(); hud();
   // 段が溜まっていたら（読んでいる最中に次を満たしたときなど）ここで拾う
   checkCrown();
@@ -6689,6 +7415,12 @@ function hourTick() {
 function newDay() {
   Clock.day++;
   for (const n of NPCs) n.barkCount = 0;
+  /* 買取の枠は一晩ぶん。故買屋の懐も、店を通せる量も、日付が変わればまた開く ──
+     掘り溜めたぶんを一晩で全部は捌けない、というのがこの街の速度になっている */
+  const flowed = Fence.today;
+  Fence.today = 0;
+  for (const s of Shops) s.wash = 0;
+  if (flowed > 0) log(`故買屋の相場が戻った（昨夜は ${yen(flowed)} ぶん流した）。`, 'money');
   // 生成の枠は一晩ぶん。日付が変わったら戻る（リロードでは戻らない ── セーブが持つ）
   const spent = AI.calls.talk + AI.calls.bark;
   AI.calls.talk = 0; AI.calls.bark = 0;
@@ -7130,8 +7862,16 @@ function pushFirstPersonHand() {
   const rot = P.yaw + Math.PI;
   addInst(px, py, pz, 0.15, 0.30, 0.15, [0.86, 0.68, 0.56], rot, 0);
   const T = curTool();
-  if (T.k !== 'hand')
-    addInst(px + d.x * 0.30, py + 0.20 - a * 0.16, pz + d.z * 0.30, 0.10, 0.52, 0.10, T.col, rot, T.em || 0);
+  if (T.k !== 'hand') {
+    const tc = gearCol(T);
+    addInst(px + d.x * 0.30, py + 0.20 - a * 0.16, pz + d.z * 0.30, 0.10, 0.52, 0.10, tc, rot, T.em || 0);
+    /* ネオン系は柄の先に管が一本走る。色だけ変えても一人称では細い棒のままなので、
+       輪郭そのものを変えて「別の道具を握っている」ことが分かるようにする */
+    if (T.glow) {
+      addInst(px + d.x * 0.30, py + 0.46 - a * 0.16, pz + d.z * 0.30, 0.055, 0.34, 0.055, [1, 1, 1], rot, 1.5);
+      addInst(px + d.x * 0.52, py + 0.40 - a * 0.16, pz + d.z * 0.52, 0.30, 0.055, 0.055, tc, rot, 1.4);
+    }
+  }
 }
 
 function pushCharacter(n, isPlayer) {
@@ -7175,9 +7915,29 @@ function pushCharacter(n, isPlayer) {
   // 手に持っている道具。振っている間は先端が前に出る
   if (isPlayer) {
     const T = curTool();
-    if (T.k !== 'hand')
-      addInst(ax + fx * (0.22 + arm * 0.30), ay - 0.28 + arm * 0.24, az + fz * (0.22 + arm * 0.30),
-        0.11, 0.52 - arm * 0.30, 0.11 + arm * 0.34, T.col, rot, T.em || 0);
+    if (T.k !== 'hand') {
+      const tc = gearCol(T);
+      const hx = ax + fx * (0.22 + arm * 0.30), hy = ay - 0.28 + arm * 0.24,
+        hz = az + fz * (0.22 + arm * 0.30);
+      addInst(hx, hy, hz, 0.11, 0.52 - arm * 0.30, 0.11 + arm * 0.34, tc, rot, T.em || 0);
+      // ネオン系。柄の先の管と、その先端に灯る玉。振ると一緒に前へ流れる
+      if (T.glow) {
+        addInst(hx, hy + 0.30 - arm * 0.18, hz + fz * arm * 0.22, 0.06, 0.34, 0.06 + arm * 0.22,
+          [1, 1, 1], rot, 1.5);
+        addInst(hx + fx * 0.20, hy + 0.26 - arm * 0.16, hz + fz * 0.20, 0.13, 0.13, 0.13, tc, rot, 1.6);
+      }
+    }
+    /* ネオンの装束。防具はこれまで見た目に出ていなかったが、この一枚だけは
+       「着ているのが通りから分かる」ことそのものが値打ちなので、胴に帯を回す */
+    if (Craft.armors.nsuit) {
+      const nc = gearCol(ARMORS.nsuit);
+      addInst(n.x, base - 0.10, n.z, sh + 0.04, 0.07, (female ? 0.34 : 0.36) + 0.04, nc, rot, 1.35);
+      addInst(n.x, base + 0.22, n.z, sh + 0.04, 0.07, (female ? 0.34 : 0.36) + 0.04, nc, rot, 1.35);
+      addInst(n.x + Math.sin(rot + 1.57) * (sh * 0.5 + 0.02), base + 0.06, n.z + Math.cos(rot + 1.57) * (sh * 0.5 + 0.02),
+        0.05, 0.42, 0.05, nc, rot, 1.35);
+      addInst(n.x - Math.sin(rot + 1.57) * (sh * 0.5 + 0.02), base + 0.06, n.z - Math.cos(rot + 1.57) * (sh * 0.5 + 0.02),
+        0.05, 0.42, 0.05, nc, rot, 1.35);
+    }
   }
   addInst(n.x, base + 0.50, n.z, female ? 0.15 : 0.18, 0.16, female ? 0.15 : 0.18, skin, rot, 0);
   addInst(n.x, base + 0.74, n.z, female ? 0.38 : 0.40, 0.42, female ? 0.36 : 0.38, skin, rot, 0);
@@ -7528,6 +8288,15 @@ function save() {
          押し手は id で引き当てる（住人そのものは npcs が持っている） */
       raid: Raid.on ? { z: Raid.zi, f: Raid.fac, s: Raid.shop.id, t: Math.round(Raid.t),
         men: Raid.men.filter(n => !n.dead).map(n => n.id) } : null,
+      /* 買取の枠。残さないと、タブを開き直すだけで故買屋の相場も店の枠も満タンに戻り、
+         「一晩に捌ける量」という縛りが実質無くなる ── AI の枠と同じ理屈 */
+      fence: Fence.today,
+      wash: Shops.filter(s => s.wash > 0).map(s => [s.id, s.wash]),
+      /* 返事待ちの申し入れと、効いている掘るなの約束。どちらも残さないと、
+         読み直すだけで無かったことにできる ── 期限のあるものは全部ここに置く */
+      dem: Demand.on ? { f: Demand.fac, k: Demand.kind, t: Math.round(Demand.t),
+        y: Demand.yen, z: Demand.zi, c: Demand.crew ? Demand.crew.id : null } : null,
+      ban: DigBan.on ? { z: DigBan.zi, f: DigBan.fac, u: Math.round(DigBan.until) } : null,
       // 誰の店かは勢力ごとに変わる。自分のぶんだけでは勢力図が復元できない
       sown: Shops.filter(s => s.owner).map(s => [s.id, s.owner]),
       // 自分で建てた店はワールド生成では出てこない。実体ごと残す
@@ -7682,6 +8451,25 @@ function load() {
         Raid.t = d.raid.t || RAID_SEC; Raid.men = men;
       }
     }
+    /* 買取の枠。店の枠は id で引き当てる（建てた店も買った店も、ここまでで揃っている） */
+    Fence.today = d.fence || 0;
+    Shops.forEach(s => s.wash = 0);
+    (d.wash || []).forEach(([id, v]) => { const s = Shops.find(x => x.id === id); if (s) s.wash = v; });
+    /* 返事待ちの申し入れ。相手がもう傘下なら、あるいは返せと言われた子分が
+       すでに手元にいないなら、その話は流れている */
+    Demand.on = false; Demand.crew = null;
+    if (d.dem && FACTIONS[d.dem.f] && !Vassal[d.dem.f] && !War[d.dem.f]) {
+      const c = d.dem.c != null ? NPCs.find(n => n.id === d.dem.c) : null;
+      if (d.dem.k !== 'poach' || (c && c.crew)) {
+        Demand.on = true; Demand.fac = d.dem.f; Demand.kind = d.dem.k;
+        Demand.t = d.dem.t || DEMAND_SEC; Demand.yen = sen(d.dem.y || 0);
+        Demand.zi = d.dem.z != null ? d.dem.z : -1; Demand.crew = c;
+      }
+    }
+    DigBan.on = false;
+    if (d.ban && FACTIONS[d.ban.f] && d.ban.u > Clock.elapsed) {
+      DigBan.on = true; DigBan.zi = d.ban.z; DigBan.fac = d.ban.f; DigBan.until = d.ban.u;
+    }
     for (const [k, v] of (d.edits || [])) {
       const key = +k;
       const x = key % SX, z = (Math.floor(key / SX)) % SZ, y = Math.floor(key / (SX * SZ));
@@ -7690,7 +8478,7 @@ function load() {
     Terr.forEach(syncOwner);
     // 囲いを彫り直したあとで測る。ここより前だと、まだ壁が戻っていない
     refreshHide(true);
-    recalcInf(); rebuildHotbar(); updateBag(); updateToolHud(); facsUI();
+    recalcInf(); rebuildHotbar(); updateBag(); updateToolHud(); facsUI(); demandUI();
     return true;
   } catch (e) { return false; }
 }
@@ -8047,19 +8835,28 @@ function begin() {
   const hand0 = Craft.tool === 'hand' ? '道具は持っていない。素手で剥がせるのは木と土くらいだ。'
     : `${curTool().n}を握っている。`;
   log(isTouch
-    ? `${hand0}「掘」で掘る。「換」で換金。カバンは ${BAG_MAX} 個まで。`
-    : `${hand0}左クリック / F 長押しで掘る。G で換金。カバンは ${BAG_MAX} 個まで。`, 'dig');
+    ? `${hand0}「掘」で掘る。「換」で光り物を換金。カバンは ${BAG_MAX} 個まで。`
+    : `${hand0}左クリック / F 長押しで掘る。G で光り物を換金（Shift+G で全部）。`
+    + `カバンは ${BAG_MAX} 個まで。`, 'dig');
+  log('故買屋が一晩に捌ける量は決まっている。流すほど買い叩かれる ── '
+    + '掘ったものを満額で金に換えられるのは、自分の看板を通したぶんだけだ。', 'money');
   log(`${kbT('Q')} でクラフト。まず木材を集めて作業台を組み、${kbT('R')} で据える ──`
     + '道具はその前でしか作れない。鉄と金のツルハシは、さらに溶接台が要る。', 'dig');
   log('道具は使うたび減って、いつかは壊れる。台の前なら、壊れる前に研ぎ直せる。', 'dig');
+  log(`道具の段は 素手 → 石 → 鉄 → 金 → ${TOOLS.neon.n}。最後の一段は街から剥がした`
+    + 'ネオン管と金塊で打つ ── 自分のシマの色に灯る、この街でしか作れない一式だ。', 'good');
   log(`店は自分で建てる。壁を積み、天井を張り、扉を入れ、ネオンと什器を置いて、`
     + `その部屋の中で ${kbT('Q')} ── 体裁が付いていれば、そのまま看板を出せる。`, 'dig');
   log(`シマは 9 つ。支配率 ${HOLD_PC}% を握ったシマが自分のものになる。期限は無い。`, 'good');
-  log('シマを動かすのは店と子分と腕っぷし。掘るのは、その元手を作る手だ。', 'good');
+  log(`シマを動かすのは店と子分と腕っぷし。通りを削れば相手の足場は痩せるが、`
+    + `掘りだけで伸ばせる取り分は ${DIG_SHARE_CAP}% までだ ── 穴の跡に看板は立たない。`, 'good');
   log(`勢力ごとに「見込み」がある。100% まで積めばその勢力ごと丸ごと傘下に入る。`, 'good');
   log(`0% まで落とすと全面抗争だ。そうなったら、そいつのシマを全部獲るまで終わらない。`, 'bad');
   log(`子分は ${crewMax()} 人まで。影響力が上がれば枠も増え、店の言い値も下がる。`, 'good');
-  log('手切れになった勢力は、こちらの店にカチコミをかけてくる。獲るだけでは終わらない。', 'bad');
+  log('手切れになった勢力は、こちらの店にカチコミをかけてくる。獲るだけでは終わらない。'
+    + '店番を入れておけば、駆けつけられない夜でも看板が守れる。', 'bad');
+  log('話の分かる相手も黙ってはいない ── みかじめ、掘るなの申し合わせ、身内の引き抜き。'
+    + '呑めば見込みが上がり、蹴れば落ちる。返事をしなければ、蹴ったのと同じだ。', 'bad');
   relock(120);
 }
 function openChargen() {
