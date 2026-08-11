@@ -597,6 +597,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="day" id="c-day">1 日目</div>
     <div class="zone" id="c-zone">一番街</div>
     <div class="st" id="c-st">靖国通り</div>
+    <div class="st" id="c-wx">晴れ</div>
     <div class="own" id="c-own">支配: 紅蓮会</div>
     <div class="own" id="c-win" style="color:var(--green)">制圧 0 / 9</div>
     <div class="left" id="c-left">街全体 0%</div>
@@ -666,7 +667,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div id="map">
   <h3>歌舞伎町 勢力図</h3>
-  <div class="sub">支配率は 9 つのシマの取り合い ／ 過半数の 50% を握ったシマが自分のものになる ── 期限は無い</div>
+  <div class="sub">支配率は 9 つのシマの取り合い ／ 過半数の 50% を握ったシマが自分のものになる ── 期限は無い<br>
+    <span style="opacity:.6">動かす手は四つ ── 店を持つ・子分を置く・その通りで潰し合う・通りそのものを削る。
+    伸ばされれば同じだけ削られる</span></div>
   <div id="grid"></div>
   <div id="facs"></div>
   <div class="legend" id="legend"></div>
@@ -816,19 +819,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
    ========================================================================= */
 
 const WORKER_URL = 'https://st-games-api.tk33r1.workers.dev';
-/* v4。街の形と地下の階高が変わり、ブロック番号も詰め直した。
-   セーブは座標・ボクセルの差分・カバンの中身をブロック番号のまま持っているので、
-   古いものを読むと地面の中で復活したり、別のブロックに化けたりする。
-   v3 以前は読まない。 */
-// v5: シマの保存形式が {o,m} から {s,b}（取り分と地力）へ変わった。v4 を読むと
-// 制圧済みのシマだけが黙って消えるので、キーごと切ってやり直させる
-/* v6: 金の桁が変わった。店の値段を歌舞伎町の権利相場（数百万〜億）に合わせ、
-   ブロックの元値と元手もそれに揃えた。v5 は所持金も、建てた店に焼き付いている
-   上がりも 100 分の 1 のままなので、読むと一文無しで一生上がりの来ない店だけが
-   残る。数字を書き換えて済む話ではないので、キーごと切る。 */
-/* v7: 勢力との間柄が「敵対度（0=平穏）」から「見込み（0=全面抗争 / 100=傘下）」へ
-   裏返った。v6 をそのまま読むと、平穏だった相手が全員いきなり全面抗争になる。
-   酔いと悪名も無くなっている（読み飛ばすだけなので害は無い）。キーごと切る。 */
+/* セーブの形が変わったら、この数字を上げて古いものは読ませない。
+   β のあいだは移行を書かない ── 前の形を読むためのコードを load に足していくと、
+   もう誰も持っていない形のための分岐だけが残り続ける。切って作り直させるほうが早い。 */
 const SAVE_KEY = 'kabukiCraft.v7';
 
 /* ============================================================================
@@ -856,10 +849,11 @@ function yen(n) {
    相手（プレイヤー）への呼びかけ。どちらもキャラクター作成で選んだ性別で決まる。 */
 const MEWORD = { '男': '俺', '女': 'あたし' };
 const YOUWORD = { '男': ['兄さん', 'お兄さん'], '女': ['姉さん', 'お姉さん'] };
-const meWord = () => MEWORD[P.gender] || MEWORD['男'];
+// P.gender は GENDERS の二つしか取らない（作成画面で選び、load が入り口で正す）
+const meWord = () => MEWORD[P.gender];
 function voice(s) {
   if (!s || s.indexOf('{') < 0) return s;
-  const y = YOUWORD[P.gender] || YOUWORD['男'];
+  const y = YOUWORD[P.gender];
   return s.replace(/\{俺\}/g, meWord()).replace(/\{お兄\}/g, y[1]).replace(/\{兄\}/g, y[0]);
 }
 const $ = id => document.getElementById(id);
@@ -1007,16 +1001,12 @@ const TOOLS = {
   gold:  { k: 'gold',  n: '金のツルハシ', tier: 4, spd: 9.5, dmg: 12, dur: 240, col: [1, .78, .22], em: .35,
     d: 'この街で一番速い。ただし柔らかく、鉄より早く駄目になる' },
   /* ---- 武器 ----
-     殴りの段は 酒瓶 → 鉄パイプ。そのどちらとも別の筋にあるのが、
-     殺さないスタンガンと、置いて点けるTNT（ブロックのほう）。 */
+     殴りの段は 酒瓶 → 鉄パイプ。その筋とは別にあるのが、奪うしかない拳銃と、
+     置いて点ける TNT（ブロックのほう）。 */
   bottle: { k: 'bottle', n: '酒瓶', tier: 0, spd: 0.5, dmg: 14, dur: 60, col: [.20, .46, .30],
     d: '割れたところが刃になる。すぐ駄目になるが、ガラス二枚で何本でも作り直せる' },
   pipe:  { k: 'pipe',  n: '鉄パイプ',     tier: 1, spd: 1.3, dmg: 22, dur: 300, col: [.40, .43, .49],
     d: '掘るのは苦手。人を黙らせるための道具' },
-  /* 殺さない武器。畏怖だけを跳ね上げるので、引き入れ（joinChance）が一気に通る ──
-     潰してしまえばシマは動くが、その相手はもう子分にはならない。その裏返し。 */
-  stun:  { k: 'stun',  n: 'スタンガン',   tier: 0, spd: 0.5, dmg: 5,  dur: 60,  col: [.30, .85, 1], em: .55,
-    stun: true, d: '殺さずに畏れさせる。当てた相手は引き入れが通りやすくなる' },
   /* 拳銃は作れない。持っている相手（警官と紅蓮会）から奪う以外に手に入らない。
      dur は残弾。撃てば当たらなくても一発減り、街中が銃声に気づく。 */
   gun:   { k: 'gun',   n: '拳銃',         tier: 0, spd: 0.4, dmg: 30, dur: 24, col: [.20, .20, .24],
@@ -1090,7 +1080,6 @@ const RECIPES = [
   // 溶接台の前に立てなくても持てる武器。ガラスは素手でも剥がせる
   { out: 'bottle', cat: 'arms', at: 'bench', need: [[7, 2]] },
   { out: 'pipe', cat: 'arms', at: 'weld', need: [[6, 3]] },
-  { out: 'stun', cat: 'arms', at: 'weld', need: [[6, 1], [10, 1], [7, 2]] },
   // TNT は道具ではなくブロック。カバンに入れて運び、置いて、殴って点火する
   { out: 'tnt', kind: 'block', id: B_TNT, n: 2, cat: 'arms', at: 'weld', need: [[6, 1], [16, 2], [18, 4]] },
   // ---- 防具（作れば着る。重ねたぶんだけ効く） ----
@@ -1165,10 +1154,9 @@ const ORIGINS = [
       '女': ['トラガール', '長距離を回してきた運転手。現場も積み降ろしも体で覚えている。鉄のツルハシと作業台を積んできた。金はない。']
     } }
 ];
-// 性別を減らす前のセーブが来ても落ちないよう、知らない性別は男の呼び名に寄せる
 const originVar = (k, g) => {
   const o = ORIGINS.find(x => x.k === k) || ORIGINS[0];
-  return o.v[g] || o.v['男'];
+  return o.v[g];
 };
 const originName = (k, g) => originVar(k, g)[0];
 const HAIR_SW = [[.10, .10, .12], [.34, .20, .12], [.85, .75, .45], [.85, .40, .55],
@@ -2732,7 +2720,9 @@ function sbuf(loc, data, size) {
   gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
 }
 sbuf(0, cube.p, 3); sbuf(1, cube.n, 3);
-const MAX_INST = 900;
+/* 人と店の印に加えて、雨粒もこの箱に積む。雨は人を押しのけて描くものではないので
+   枠を広げてある（1 粒あたり 44 バイト、増やしたぶんで 13KB ほど） */
+const MAX_INST = 1200;
 const instData = new Float32Array(MAX_INST * 11);
 const instBuf = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, instBuf);
@@ -2775,6 +2765,79 @@ const P = {
    期限も勝敗判定も無く、シマの取り合いだけがずっと続く。 */
 const MIN_PER_SEC = 1;                 // 現実 1 秒 = ゲーム内 1 分
 const Clock = { min: 20 * 60, day: 1, elapsed: 0 };
+
+/* ---- 天気 ------------------------------------------------------------------
+   歌舞伎町の天気は、まず耳に来る。庇とネオンの下を歩く街なので空はほとんど
+   見えないが、雨が降れば通りのざわめきが引っ込んで、代わりにアスファルトを
+   叩く音と、庇から落ちる雫が前に出る ── だからこの街の天気は、見るものより
+   聞くもののほうが本体になっている。
+
+   crowd = 通りの人出（ざわめきの残り具合）。雨脚が強いほど通りから人が消える。
+   rain/wind = 音の層の強さ。star/neon/amb/fogD は空の見え方に掛ける倍率。      */
+const WEATHER = {
+  clear:   { n: '晴れ',   rain: 0,    wind: 0.10, crowd: 1.00, thunder: 0,
+    star: 1.00, neon: 1.00, amb: 1.00, fogD: 1.00, gray: 0 },
+  cloud:   { n: '曇り',   rain: 0,    wind: 0.26, crowd: 0.94, thunder: 0,
+    star: 0.30, neon: 1.02, amb: 0.94, fogD: 1.18, gray: 0.18 },
+  drizzle: { n: '小雨',   rain: 0.30, wind: 0.22, crowd: 0.74, thunder: 0,
+    star: 0.06, neon: 1.10, amb: 0.90, fogD: 1.34, gray: 0.28 },
+  rain:    { n: '雨',     rain: 0.70, wind: 0.40, crowd: 0.46, thunder: 0,
+    star: 0,    neon: 1.16, amb: 0.84, fogD: 1.62, gray: 0.40 },
+  storm:   { n: '雷雨',   rain: 1.00, wind: 0.72, crowd: 0.24, thunder: 1,
+    star: 0,    neon: 1.20, amb: 0.78, fogD: 1.90, gray: 0.52 },
+  fog:     { n: '霧',     rain: 0,    wind: 0.14, crowd: 0.72, thunder: 0,
+    star: 0.02, neon: 1.24, amb: 0.92, fogD: 2.30, gray: 0.34 }
+};
+/* 次に来る天気の目。隣り合うものにしか動かない ── 晴れからいきなり土砂降りには
+   ならないし、雷雨が一時間で晴れることもない。自分自身の目を重くしてあるので、
+   放っておけば同じ空がしばらく続く。 */
+const WEATHER_NEXT = {
+  clear:   { clear: 8,  cloud: 5,  fog: 1 },
+  cloud:   { cloud: 6,  clear: 5,  drizzle: 4, fog: 1.5 },
+  drizzle: { drizzle: 4, cloud: 5, rain: 3 },
+  rain:    { rain: 4,   drizzle: 5, storm: 2.5, cloud: 1 },
+  storm:   { storm: 2.5, rain: 6,  drizzle: 2 },
+  fog:     { fog: 4,    cloud: 6,  clear: 2 }
+};
+/* k = いまの空 / t = 次に目を振るまでのゲーム時間。
+   now = 画面と音に実際に効いている値で、切り替えた瞬間ではなくゆっくりそこへ寄る
+   （空がぱちりと入れ替わると、天気ではなく照明の切り替えに見える） */
+const Weather = { k: 'clear', t: 3, now: { ...WEATHER.clear } };
+// いまの空。ラベルの投影と移動に wx というローカルが居るので、名前を分けてある
+const wxNow = () => WEATHER[Weather.k] || WEATHER.clear;
+// いまの空の下で、屋根の外に立っているか。庇の下に入れば雨音は遠のく
+const WX_ROOF = 14;
+function underRoof(x, y, z) {
+  if (floorOf(y) !== 2) return true;                  // 地下はそもそも外ではない
+  const bx = Math.floor(x), bz = Math.floor(z), by = Math.floor(y);
+  for (let k = 2; k <= WX_ROOF; k++) if (solid(bx, by + k, bz)) return true;
+  return false;
+}
+function setWeather(k, quiet) {
+  if (!WEATHER[k] || k === Weather.k) return;
+  const was = wxNow().n;
+  Weather.k = k;
+  Weather.t = irnd(2, 6);                             // 次に目を振るまでのゲーム時間
+  if (!quiet) log(`空が変わった。${was} から ${wxNow().n} へ。`, '');
+  if (Snd.ctx) Snd.weather();
+}
+// 1 ゲーム時間ごとに一度。目を振るのは t が切れたときだけ
+function weatherTick() {
+  if (--Weather.t > 0) return;
+  Weather.t = irnd(2, 6);                // 同じ空が続いたときの持ち時間
+  const w = WEATHER_NEXT[Weather.k] || WEATHER_NEXT.clear;
+  let tot = 0;
+  for (const k in w) tot += w[k];
+  let r = Math.random() * tot;
+  for (const k in w) { r -= w[k]; if (r <= 0) { setWeather(k); return; } }
+}
+/* 画面に効く値を、いまの空へゆっくり寄せる。音のほうは Snd 側が
+   setTargetAtTime で寄せるので、ここで見ているのは目に映るぶんだけ */
+function weatherEase(dt) {
+  const w = wxNow(), r = Math.min(1, dt * 0.35);
+  for (const k of ['star', 'neon', 'amb', 'fogD', 'gray', 'rain', 'wind', 'crowd'])
+    Weather.now[k] += (w[k] - Weather.now[k]) * r;
+}
 const PR = 0.30, PH = 1.8, EYE = 1.62;
 
 /* 体が占めているブロックの範囲。当たり判定と「自分の中にブロックを置けない」で
@@ -3092,8 +3155,7 @@ function craftRow(r, i, st) {
     ? `1個 ${yen(BLOCKS[r.id].v)}　持っている数 ${Bag.count[r.id]}`
     : arm ? `受けるダメージ -${Math.round(T.red * 100)}%`
       + (have ? `　<span style="opacity:.7">合計 -${Math.round(armorRed() * 100)}%</span>` : '')
-      : T.stun ? `畏怖 +55　相手は死なない　耐久 ${T.dur}`
-        : `等級 ${T.tier}　掘り速度 ×${T.spd}　殴り +${T.dmg}　耐久 ${T.dur}`;
+      : `等級 ${T.tier}　掘り速度 ×${T.spd}　殴り +${T.dmg}　耐久 ${T.dur}`;
   // 減った道具は研ぎ直せる。作り直しより安いので、持っている道具はこちらを先に出す
   const fix = !blk && !arm && fixable(r.out);
   const fixOk = fix && here && hasMats(fixMats(r));
@@ -3645,19 +3707,53 @@ $('buildlist').addEventListener('click', e => {
   if (b.dataset.b !== undefined) doOpen(SHOP_TYPES[+b.dataset.b].key);
 });
 
+/* ---- 街を削る ------------------------------------------------------------
+   通りを掘り返すのは、その通りの顔をしている勢力の足場を崩すこと。掘った量は
+   シマごとに溜まり、一定量ごとに地力と取り分が動く ── 相手のシマなら削り取り、
+   自分が顔になっているシマなら、痩せるのはこちらの足場のほう。
+   自分で置いたブロックは数えない（置いて掘るを繰り返すだけで積み上がってしまう）。 */
+const DIG_STEP = 25;            // これだけ溜まるごとに一度動く
+const DIG_PC = 1.5;             // 一度に動く支配率
+const DIG_BASE_DROP = 0.6, DIG_BASE_GAIN = 0.45;
+/* 通りの顔そのものにあたるもの ── ネオン・提灯・看板・街灯・自販機・灯った窓。
+   コンクリートを 25 個剥がすより、この手のものを 8 個落とすほうがこたえる */
+const DIG_FACE = new Set([8, 9, 10, 11, 12, 13, 14, 15, 17, 22, 23]);
+const digWeight = id => DIG_FACE.has(id) ? 3 : 1;
+/* 爆風で崩したぶんの目減り。一発で数十マス持っていくので、掘るのと同じ目盛りで
+   数えると TNT ひとつでシマが傾く。手で剥がすより効かないかわりに、一度に広い */
+const BLAST_DIG = 0.3;
+function zoneDug(x, z, w) {
+  const zi = zoneOf(x, z), t = Terr[zi];
+  t.dug = (t.dug || 0) + w;
+  while (t.dug >= DIG_STEP) {
+    t.dug -= DIG_STEP;
+    const own = t.owner;
+    if (own === 'player') {
+      dropBase(t, 'player', DIG_BASE_DROP);
+      shiftControl(zi, -DIG_PC, '自分の通りを掘り返した');
+    } else {
+      dropBase(t, own, DIG_BASE_DROP);
+      raiseBase(t, 'player', DIG_BASE_GAIN);
+      shiftControl(zi, DIG_PC, `${FACTIONS[own].name}の通りを削った`, own);
+    }
+  }
+}
 function breakBlock(b) {
   const def = BLOCKS[b.id];
   if (!def || def.h < 0) return;
   // 満杯なら壊さない。持って帰れないものを消しても、街が減るだけで何も残らない
   if (bagFull()) { warnBagFull(); return; }
+  /* 元から街にあったブロックか。Edits に入っているのは自分が触れたマスだけなので、
+     ここを setV の前に見ておかないと、いま掘ったぶんで必ず偽になる */
+  const virgin = !Edits.has(idx(b.x, b.y, b.z));
   setV(b.x, b.y, b.z, AIR);
   Bag.count[b.id]++;
   P.dug++;
   wearTool(1);
   Snd.dig(def);
   rebuildHotbar(); updateBag();
-  /* 壊してもシマは動かない。資材は金と、自分の店を建てるための材料になる ──
-     街を削る手はシマの取り合いそのものではなく、その元手のほう */
+  // 元からそこにあったものを剥がしたぶんだけ、その通りの足場が動く
+  if (virgin) zoneDug(b.x, b.z, digWeight(b.id));
   if (def.v >= 3000) log(`${def.n} を回収（${yen(def.v)}）`, 'dig');
   // 見られていたら手配度
   if (def.v >= 2000 || P.dug % 25 === 0) {
@@ -3703,6 +3799,16 @@ function sellBag() {
 /* ============================================================================
    8. NPC
    ========================================================================= */
+/* 出没する場所が決まっている者の縄張り。通りの格子の番号（rxRoad の i,j）で囲む ──
+   持ち場（spot）が「部屋の中」なのに対して、こちらは「その一帯の通り」。
+   トー横も大久保公園も、そこに居ることそのものがその人の説明になっている。 */
+const HAUNTS = {
+  // TOHOビルの北面（花道通り）からシネシティ広場まで。いわゆるトー横
+  toyoko: { i0: 3, i1: 4, j0: 3, j1: 4 },
+  // 大久保公園の周り。職安通り側の縁が立ち位置
+  okubo: { i0: 1, i1: 2, j0: 0, j1: 1 }
+};
+const hauntOf = a => (a && a.haunt && HAUNTS[a.haunt]) || null;
 const ARCH = [
   { k: 'host', job: 'ホスト', fac: 'arcadia', col: [.95, .25, .55], hp: 60, hair: [.85, .75, .45],
     persona: 'シャンパンで生きている売れっ子ホスト。ナルシストで押しが強く、金の話には目がない。軽薄なタメ口。', gender: '男' },
@@ -3736,6 +3842,43 @@ const ARCH = [
     persona: 'ライブ終わりの地下アイドル。営業スマイルの下に疲れがある。ファンとカネの区別がついている。', gender: '女' },
   { k: 'ramen', job: 'ラーメン屋の店主', fac: 'local', col: [.35, .3, .25], hp: 70, hair: [.12, .12, .13],
     persona: '深夜のラーメン屋の店主。愛想はないが情はある。この街の連中を全員食わせてきた。', gender: '男' },
+  /* ドラゴンズの銭の出どころ。表の棚と奥の棚があって、稼いでいるのは奥のほう */
+  { k: 'kusuri', job: '薬屋', fac: 'dragons', col: [.24, .40, .30], hp: 80, hair: [.14, .12, .12],
+    persona: '表向きはサプリと海外の頭痛薬を並べた小さな薬屋。だが稼ぎは奥の棚のほうで、'
+      + 'ドラゴンズの銭はここから出ている。相手が客か、警察か、同業かをまず値踏みする。'
+      + '低い声で遠回しな言い方しかせず、扱っているものは「あれ」「例のやつ」としか呼ばない。'
+      + '合法の棚の話だけは、やたら愛想よく喋る。', gender: '男' },
+  /* アルカディアの中では異物。箱も客も持たず、卓だけを渡り歩いている */
+  { k: 'shoubushi', job: '勝負師', fac: 'arcadia', col: [.55, .44, .16], hp: 65, hair: [.20, .17, .15],
+    near: ['mahjong', 'live'],
+    persona: '賭け事に命を賭けている男。雀荘から賭場へ、この街の卓を端から渡り歩いている。'
+      + '勝った負けたの話しかせず、金は入った端から出ていく。人のことも勝率で測る癖があって、'
+      + '何を話していても倍率と目の話に戻ってくる。負けが込んでいるときほど機嫌がいい。'
+      + '所持金は聞かれるたびに変わっているような口ぶり。', gender: '男' },
+  /* トー横。TOHOビルの脇に座り込んでいる子どもたち。帰る場所が無いことと、
+     ここが居場所になっていること ── この役どころはその二つでできている */
+  { k: 'toyokoB', job: '家出少年', fac: 'none', col: [.22, .24, .32], hp: 30, hair: [.13, .11, .14],
+    haunt: 'toyoko',
+    persona: 'TOHOビルの脇に座り込んでいる家出中の少年。学校にも家にも戻っていない。'
+      + '同じ場所にいる仲間だけが居場所で、そこを離れる話にはならない。'
+      + 'エナジードリンクと徹夜と、誰が来なくなったかの話をする。'
+      + '大人には壁を作っていて、最初は短い返事しか返さない。慣れると急に喋る。',
+    gender: '男' },
+  { k: 'toyokoG', job: '家出少女', fac: 'none', col: [.34, .22, .36], hp: 30, hair: [.58, .34, .48],
+    haunt: 'toyoko',
+    persona: 'TOHOビルの脇に座り込んでいる家出中の少女。家には帰らないと決めている。'
+      + 'ここに来れば誰かがいる、というだけの理由で毎晩ここにいる。'
+      + '推しの話と、金が無い話と、昨日いた子の話を行き来する。'
+      + '大人の親切をまず疑うが、突き放されるのは慣れていない。',
+    gender: '女' },
+  /* 大久保公園。この街でいちばん人目に立つ商売の場所。毎晩そこに立っている、
+     というのがこの役どころのすべて */
+  { k: 'tsujigimi', job: '辻君', fac: 'none', col: [.46, .18, .28], hp: 40, hair: [.50, .30, .26],
+    haunt: 'okubo',
+    persona: '大久保公園の脇に立って客を待っている路上の女。事務的で、値踏みが早い。'
+      + '警察が回ってきた話と、天気と、抱えている支払いの話をする。'
+      + '身の上を聞かれても軽く流し、同情には一番冷たい。'
+      + 'この街の力関係を、立っている場所から毎晩見ている。', gender: '女' },
   /* 追加はどこでもよいが、k（役どころの鍵）は変えないこと。セーブは住人を k で
      引き当てて並べ直すので、k が変わるとその役どころが丸ごと街から欠ける */
   /* 武田 伸也。tk.st の MAGI（magi2）で定義された人格をそのまま持ってくる。
@@ -3800,14 +3943,19 @@ const TREAT = {
   drunk: 30000, fortune: 30000, ramen: 30000, ekiin: 30000, shukuchoku: 30000,
   guard: 40000, tout: 40000, scout: 50000, bartender: 50000,
   idol: 80000, runner: 100000, hangure: 150000, lookout: 150000, kyaba: 200000, dj: 200000,
-  cop: 300000, yakuza: 300000, host: 500000, info: 500000
+  cop: 300000, yakuza: 300000, host: 500000, info: 500000,
+  /* トー横の子はそもそも金を持っていない ── 相場は一杯ではなく一食のほう。
+     辻君は現金商売、薬屋と勝負師はこの街でいちばん現金が動く役どころ */
+  toyokoB: 10000, toyokoG: 10000, tsujigimi: 40000, shoubushi: 150000, kusuri: 200000
 };
 const treatYen = a => TREAT[a.k] || 50000;
 /* 懐の中身の目安。ふだん動かしている額（TREAT）と、その人が持ち歩いている現金は
    別もの ── 警官や地下街の店員は、袖の下の相場ほど現金を持っていない。
    書いていない役どころは TREAT のまま（現金商売の連中はだいたいそれで合う） */
 const PURSE = { cop: 40000, guard: 30000, subclerk: 30000, info: 300000,
-  ekiin: 30000, shukuchoku: 20000, usher: 20000 };
+  ekiin: 30000, shukuchoku: 20000, usher: 20000,
+  // 家出中の子の懐は本当に空。辻君と薬屋はその晩の売上をそのまま持って立っている
+  toyokoB: 3000, toyokoG: 3000, tsujigimi: 120000, kusuri: 400000 };
 const purseYen = a => PURSE[a.k] || treatYen(a);
 const SEI = ['佐々木', '黒岩', '桐生', '真壁', '一之瀬', '鮫島', '氷室', '早乙女', '猪熊', '九条', '天堂', '甲斐', '朝倉', '不破', '獅子堂', '苅部'];
 const MEI_M = ['亮', '哲', '龍司', '慎', '拓海', '大河', '晴', '樹', '零', '要', '蓮', '匠'];
@@ -3842,7 +3990,7 @@ function makeNPC(arch, x, z) {
     barkCount: 0, lastAI: 0,
     // 街の連中どうしの絡み。soc は次に誰かと絡むまでの間
     soc: rnd(3, 25), foe: null, chatQ: null, chatT: 0, brawlT: 0,
-    arm: 0, armPhase: 0, armT: 0,
+    arm: 0, armPhase: 0, armT: 0, giveup: 0,
     // 迂回と「追いつけない」の検出用
     detour: 0, dside: 1, dcool: 0, stuck: 0, px: x, pz: z, pt: 0, far: 0, lost: 0, best: Infinity, bt: 0
   };
@@ -3870,15 +4018,21 @@ function routeNext(n, init) {
     n.tx = t.x; n.tz = t.z; return;
   }
   if (n.floor !== GY) return routeSub(n, init);
+  /* 縄張りのある者は、その中の交差点だけを行き来する。歩ける先を絞るだけなので、
+     迂回も詰まりの検出も通行人とまったく同じ手順で動く */
+  const h = hauntOf(n.arch);
+  const i0 = h ? h.i0 : 0, i1 = h ? h.i1 : GRID - 1;
+  const j0 = h ? h.j0 : 0, j1 = h ? h.j1 : GRID - 1;
   if (init) {
     // 歩き直しの起点。古い stuck / lost を持ち越すと、次のフレームで
     // いきなり placeOnRoad や warpNear に飛ばされる
     resetPath(n);
-    n.ni = clamp(Math.round((n.x - ROAD_MID) / PITCH), 0, GRID);
-    n.nj = clamp(Math.round((n.z - ROAD_MID) / PITCH), 0, GRID);
+    // 縄張りの外に流れていたら、まず縁へ引き戻す（clamp がその役をする）
+    n.ni = clamp(Math.round((n.x - ROAD_MID) / PITCH), i0, i1);
+    n.nj = clamp(Math.round((n.z - ROAD_MID) / PITCH), j0, j1);
   }
   const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(d =>
-    n.ni + d[0] >= 0 && n.ni + d[0] <= GRID - 1 && n.nj + d[1] >= 0 && n.nj + d[1] <= GRID - 1);
+    n.ni + d[0] >= i0 && n.ni + d[0] <= i1 && n.nj + d[1] >= j0 && n.nj + d[1] <= j1);
   const d = dirs.length ? pick(dirs) : [0, 0];
   n.ni += d[0]; n.nj += d[1];
   n.tx = rxRoad(n.ni) + (d[0] ? 0 : n.lat);
@@ -3903,7 +4057,11 @@ function npcSpot(arch, club) {
       if (surfaceY(x, z, fy) === fy) return { x, z, y: fy };
       continue;
     }
-    if (club) { x = club.x + rnd(-2.4, 2.4); z = club.z + rnd(-2.4, 2.4); }
+    const h = hauntOf(arch);
+    if (h) {                               // 縄張りのある者は、その一帯にしか湧かない
+      x = rxRoad(irnd(h.i0, h.i1)) + rnd(-LANE, LANE);
+      z = rxRoad(irnd(h.j0, h.j1)) + rnd(-LANE, LANE);
+    } else if (club) { x = club.x + rnd(-2.4, 2.4); z = club.z + rnd(-2.4, 2.4); }
     else {
       x = rxRoad(irnd(0, GRID - 1)) + rnd(-LANE, LANE);
       z = rxRoad(irnd(0, GRID - 1)) + rnd(-LANE, LANE);
@@ -3924,11 +4082,16 @@ function spawnCrowd() {
   const counts = { host: 6, kyaba: 5, scout: 4, yakuza: 5, hangure: 5, cop: 4, drunk: 6,
     tout: 4, info: 2, bartender: 2, fortune: 2, busker: 2, tourist: 3, homeless: 3, idol: 2,
     ramen: 2, dj: 1, subclerk: 5, sweeper: 3, guard: 3, lookout: 4, runner: 3,
-    ekiin: 2, shukuchoku: 2, usher: 2 };
+    ekiin: 2, shukuchoku: 2, usher: 2,
+    // 一帯に固まって立つ役どころ。散らばらないぶん、少なくても目に入る
+    kusuri: 3, shoubushi: 3, toyokoB: 2, toyokoG: 2, tsujigimi: 3 };
   for (const a of ARCH) {
-    // dj の立ち位置はクラブの前。抽選の「後」で上書きすると看板の上に乗るので先に決める
+    /* 店先に立たせる者は、抽選の「後」で上書きすると看板の上に乗るので先に店を引く ──
+       DJ はホストクラブ（無ければキャバクラ）の前、勝負師は雀荘（無ければライブハウス）の前。
+       どれも見つからなければ、ただの通行人と同じ抽選になる */
     const club = a.k === 'dj'
-      ? (Shops.find(s => s.type.key === 'host') || Shops.find(s => s.type.key === 'cabaret')) : null;
+      ? (Shops.find(s => s.type.key === 'host') || Shops.find(s => s.type.key === 'cabaret'))
+      : a.near ? a.near.reduce((f, k) => f || Shops.find(s => s.type.key === k), null) : null;
     for (let i = 0; i < (counts[a.k] || 3); i++) spawnNPC(a, club);
   }
 }
@@ -3946,8 +4109,10 @@ function placeOnRoad(n) {
     }
     routeNext(n, true); return;
   }
-  const i = clamp(Math.round((n.x - ROAD_MID) / PITCH), 0, GRID - 1);
-  const j = clamp(Math.round((n.z - ROAD_MID) / PITCH), 0, GRID - 1);
+  // 縄張りのある者は近くの通りではなく、自分の一帯へ戻す
+  const h = hauntOf(n.arch);
+  const i = clamp(Math.round((n.x - ROAD_MID) / PITCH), h ? h.i0 : 0, h ? h.i1 : GRID - 1);
+  const j = clamp(Math.round((n.z - ROAD_MID) / PITCH), h ? h.j0 : 0, h ? h.j1 : GRID - 1);
   for (let k = 0; k < 16; k++) {
     const x = rxRoad(i) + rnd(-LANE, LANE), z = rxRoad(j) + rnd(-LANE, LANE);
     if (onOpenRoad(x, z)) { n.x = x; n.z = z; n.y = GY; break; }
@@ -4456,11 +4621,13 @@ function updateRaid(dt) {
     raidEnd();
     return;
   }
-  /* 押し手はプレイヤーを見つけたら掛かってくる。'attack' は相手が 38 マス離れると
-     ひとりでに解けるので、近づき直したら掛け直してやる ── そうしないと
-     「一度離れて時間切れを待つ」だけでカチコミが痛くも何ともなくなる */
+  /* 押し手はプレイヤーを見つけたら掛かってくる。'attack' は振り切られると解けるので、
+     近づき直したら掛け直してやる ── そうしないと「一度離れて時間切れを待つ」だけで
+     カチコミが痛くも何ともなくなる。ただし諦めている間は掛け直さない（撒いてから
+     間合いを取り直す、という戦い方はここでも残す） */
   for (const n of Raid.men) {
     if (n.dead || n.down > 0 || n.state === 'attack' || n.state === 'brawl') continue;
+    if (n.giveup > 0) continue;
     if (Math.hypot(n.x - P.x, n.z - P.z) < 24 && Math.abs(n.y - P.y) < 4) {
       n.hostile = true; n.state = 'attack';
     }
@@ -4580,11 +4747,11 @@ const AI = {
     const zi = zoneOf(P.x, P.z), t = Terr[zi];
     const rel = RIVALS.map(f => `${FACTIONS[f].name}=`
       + (Vassal[f] ? '傘下' : War[f] ? '全面抗争' : `見込み${Math.round(Fav[f])}%`)).join(' ');
-    const y = YOUWORD[P.gender] || YOUWORD['男'];
+    const y = YOUWORD[P.gender];
     return `目の前にいる相手は ${P.name}（${P.gender}・${originName(P.origin, P.gender)}・`
       + `手には${curTool().n}／一人称は「${meWord()}」、呼びかけるなら「${y[1]}」）/ `
       + `この相手が名乗っている一党の名は「${P.gang}」/ `
-      + `時刻 ${clockStr()} / ${Clock.day}日目 / 場所 ${t.name} / `
+      + `時刻 ${clockStr()} / ${Clock.day}日目 / 天気 ${wxNow().n} / 場所 ${t.name} / `
       + `このシマの支配 ${FACTIONS[t.owner].name} (プレイヤーの取り分 ${Math.round(t.share.player)}%) / `
       + `プレイヤーの所持金 ${yen(P.yen)} 影響力 ${Math.round(P.inf)} `
       + `手配度 ${Math.round(P.wanted)} `
@@ -4597,7 +4764,7 @@ const AI = {
      そこにいない人間の話を始めるうえに、bark の予算を無駄に食う */
   streetCtx() {
     const t = Terr[zoneOf(P.x, P.z)];
-    return `時刻 ${clockStr()} / ${Clock.day}日目 / 場所 ${t.name} / `
+    return `時刻 ${clockStr()} / ${Clock.day}日目 / 天気 ${wxNow().n} / 場所 ${t.name} / `
       + `このシマの支配 ${FACTIONS[t.owner].name} ${Math.round(t.share[t.owner])}%`
       + (Raid.on && Raid.zi === t.idx ? ` / このシマで ${FACTIONS[Raid.fac].name} がカチコミ中` : '');
   },
@@ -4720,7 +4887,13 @@ const OFF_BARK = {
   sweeper: ['……足元、濡れてるよ', 'ここは毎晩これだ', '上で何かあったな'],
   guard: ['ここで揉めないでくれ', '壁は壊さないでください', '巡回中です'],
   lookout: ['……何の用だ', 'ここは通り道じゃねぇぞ', '上へ戻んな'],
-  runner: ['時間が無いんだよ', '見なかったことにしてくれ', '車、遅れてる']
+  runner: ['時間が無いんだよ', '見なかったことにしてくれ', '車、遅れてる'],
+  // 表の棚の話だけは大声で言う。奥の棚のことは、この通りでは口に出さない
+  kusuri: ['サプリ、置いてるよ', '……表の用？ それとも', '効くやつは奥にある'],
+  shoubushi: ['次で取り返す', '半か、丁か', '今日は目が来てる', '入った端から出ていくのさ'],
+  toyokoB: ['……別に', '今日どこ泊まる？', '家？ 帰るわけないじゃん'],
+  toyokoG: ['昨日いた子、来てない', '……なに、大人？', 'ここにいれば誰かいるし'],
+  tsujigimi: ['……今夜は静かだね', 'さっきパトカーが回ってった', '立ってるだけだよ']
 };
 /* AI に繋がらないときの応答。言葉尻の正規表現だけで決めると、それまで積み上げた
    好感度と畏怖がまるごと無かったことになる ── 何度もおごった相手が初対面の口を
@@ -4889,6 +5062,8 @@ function hud() {
   const t = Terr[zoneOf(P.x, P.z)];
   $('c-zone').textContent = t.name;
   $('c-st').textContent = placeName(P.x, P.y, P.z);
+  // 地下では空は見えない。見えないものを表示しても、それは天気ではなく数値になる
+  $('c-wx').textContent = floorOf(P.y) === 2 ? wxNow().n : '';
   $('c-own').innerHTML = `支配: <span style="color:${FACTIONS[t.owner].css}">${esc(FACTIONS[t.owner].name)}</span>`
     + ` ${Math.round(t.share[t.owner])}%`
     + (t.owner === 'player' ? '' : `<span style="opacity:.55"> ／ 自分 ${Math.round(t.share.player)}%</span>`);
@@ -5283,7 +5458,7 @@ const Talk = {
       // 自分から言い出した join には賽を振らない（断る道理がないので）
       case 'join': joinCrew(n); break;
       case 'attack':
-        n.hostile = true; n.state = 'attack';
+        n.hostile = true; n.giveup = 0; n.state = 'attack';
         addFav(f, -6, '');
         log(`${n.name} が殴りかかってきた！`, 'bad'); this.close(); Snd.hit();
         break;
@@ -5407,6 +5582,7 @@ function blast(x, y, z, r, dmg) {
   Snd.boom();
   flash(0.55);
   const R = Math.ceil(r), bx0 = Math.floor(x), by0 = Math.floor(y), bz0 = Math.floor(z);
+  let dug = 0;                                             // 崩したうち、元から街にあったぶん
   for (let dy = -R; dy <= R; dy++) for (let dz = -R; dz <= R; dz++) for (let dx = -R; dx <= R; dx++) {
     const d = Math.hypot(dx, dy, dz);
     if (d > r) continue;
@@ -5420,8 +5596,11 @@ function blast(x, y, z, r, dmg) {
     if (d > r * 0.62 && Math.random() < def.h * 0.6) continue;
     // 隣の TNT は少し遅れて誘爆する
     if (id === B_TNT) { primeTNT(bx, by, bz); Bombs[Bombs.length - 1].t = rnd(0.15, 0.5); continue; }
+    if (!Edits.has(idx(bx, by, bz))) dug += digWeight(id) * BLAST_DIG;
     setV(bx, by, bz, AIR);
   }
+  // 通りに開けた穴のぶん、そのシマの足場が動く（掘るのと同じ勘定）
+  if (dug > 0) zoneDug(x, z, dug);
   const far = r + 1.8;
   for (const n of NPCs) {
     if (n.down > 0) continue;
@@ -5480,20 +5659,6 @@ function punch(target) {
   // 一発は一発。外しても弾は減り、銃声は街に響く
   if (gun) { wearTool(1); gunHeard(); }
   if (!hit) return;
-  /* スタンガンは別筋。潰さずに畏れだけを跳ね上げるので、そのぶん恨みは残さない ──
-     倒してしまえばシマは動くが、その相手はもう子分にはならない。その裏返しの道具 */
-  if (T.stun) {
-    hit.hp = Math.max(1, hit.hp - T.dmg);          // これでは死なない
-    hit.fear = clamp(hit.fear + 55, 0, 100);
-    hit.trust = clamp(hit.trust - 8, 0, 100);
-    hit.kb = 0.8; hit.kbx = hit.x - P.x; hit.kbz = hit.z - P.z;
-    if (!hit.crew) { hit.hostile = false; hit.state = 'flee'; hit.t = 8; }
-    say(hit, pick(['……ッ', 'なんだ今の', 'やめろって']), 3);
-    wearTool(2); Snd.hit(); flash(0.2);
-    log(`${hit.name} に当てた。畏怖 ${Math.round(hit.fear)}`, '');
-    witness(hit); hud();
-    return;
-  }
   // 後ろに立っている頭数のぶんだけ拳が重い。店に出した者は勘定に入らない
   hit.hp -= 14 + T.dmg + guardCount() * 3;
   // 一発で腹が決まるくらい動かす。殴られた相手が中途半端に構えていることはない
@@ -5504,7 +5669,8 @@ function punch(target) {
   flash(0.25);
   if (hit.hp <= 0) defeatNPC(hit);
   else if (!hit.crew) {
-    hit.hostile = true;
+    // 殴られた相手は諦めているどころではない。撒いたぶんの猶予はここで消える
+    hit.hostile = true; hit.giveup = 0;
     hit.state = hit.arch.hp < 55 ? 'flee' : 'attack';
   }
   witness(hit);
@@ -5526,9 +5692,12 @@ function defeatNPC(hit) {
   if (isRival(f) && !Vassal[f] && !wasCrew) {
     /* 倒した相手は二度と起き上がらないので、同じ人間を殴り直して積み上げることは
        できない。地力が動くのは一人につきこの一度きり */
-    dropBase(t, f, heavy ? 1.5 : 0.4);
-    raiseBase(t, 'player', heavy ? 0.8 : 0.2);
-    shiftControl(zi, heavy ? 6 : 2, `${hit.name}を潰した`, f);
+    /* 恒久のぶん（地力）を厚く、その場のぶん（取り分）はほどほどに。
+       殴って奪った取り分はドリフトで戻るが、削った足場は戻らない ──
+       同じ通りで潰し続ければ、その勢力はその通りに立てなくなる */
+    dropBase(t, f, heavy ? 3.0 : 0.8);
+    raiseBase(t, 'player', heavy ? 2.0 : 0.5);
+    shiftControl(zi, heavy ? 9 : 3, `${hit.name}を潰した`, f);
     addFav(f, heavy ? -20 : -7, '身内を潰された');
   }
   const loot = sen(hit.yen * 0.4);
@@ -5551,7 +5720,10 @@ function witness(victim) {
     if (n === victim || n.down > 0) continue;
     if (Math.hypot(n.x - P.x, n.z - P.z) < 16) {
       seen++;
-      if (n.arch.k === 'cop') { P.wanted = clamp(P.wanted + 26, 0, 100); n.hostile = true; n.state = 'attack'; }
+      if (n.arch.k === 'cop') {
+        P.wanted = clamp(P.wanted + 26, 0, 100);
+        n.hostile = true; n.giveup = 0; n.state = 'attack';   // 目の前で見た警官は諦めていない
+      }
       else if (n.arch.hp < 60 && Math.random() < 0.4) { n.state = 'flee'; n.t = 5; }
     }
   }
@@ -5585,11 +5757,16 @@ function arrest() {
   Snd.lose(); hud();
 }
 function knockedOut() {
-  const zi = zoneOf(P.x, P.z);
+  const zi = zoneOf(P.x, P.z), t = Terr[zi];
   const lost = sen(P.yen * 0.25);
   P.yen -= lost; P.hp = P.maxhp * 0.6;
-  // 路上で伸びている姿を見られたシマは、そのぶん他所へ流れる
-  shiftControl(zi, -5, '路上で伸びていた');
+  /* 路上で伸びている姿を見られたシマは、そのぶん他所へ流れる。取り分だけでなく
+     足場そのものが痩せ、空いたところは一番大きい顔をしている勢力が埋める ──
+     潰す側の得が恒久なら、潰される側の損も恒久でなければ釣り合わない */
+  dropBase(t, 'player', 1.6);
+  const up = RIVALS.filter(k => !Vassal[k]).sort((a, b) => t.share[b] - t.share[a])[0];
+  if (up) raiseBase(t, up, 1.0);
+  shiftControl(zi, -11, '路上で伸びていた');
   respawn();
   Clock.min += 90; Clock.elapsed += 90;
   NPCs.forEach(calm);
@@ -5822,10 +5999,8 @@ function findFocus() {
     pr.innerHTML = `${kb('E')} ${focusNPC.name}（${focusNPC.arch.job}）に話す`
       + (focusNPC.crew ? `　　<span style="opacity:.6">子分（話して解散できる）</span>`
         : T.gun ? `　　${kb('F')} 撃つ（残弾 ${Craft.dur.gun || 0}）`
-          : T.stun ? (punchTarget ? `　　${kb('F')} 当てる（殺さずに畏れさせる）`
-              : `　　<span style="opacity:.45">近づいて ${kbT('F')} で当てる</span>`)
-              : punchTarget ? `　　${kb('F')} 殴る`
-                : `　　<span style="opacity:.45">近づいて ${kbT('F')} で殴る</span>`);
+          : punchTarget ? `　　${kb('F')} 殴る`
+            : `　　<span style="opacity:.45">近づいて ${kbT('F')} で殴る</span>`);
   } else if (focusShop) {
     pr.style.display = 'block';
     const s = focusShop;
@@ -6113,16 +6288,20 @@ function winBrawl(w, l) {
   toWalk(w, rnd(40, 90));
   say(w, pick(BRAWL_WIN), 3.2);
   const zi = zoneOf(l.x, l.z), t = Terr[zi];
-  const got = moveShare(zi, fl, fw, isHeavy(w) ? 2.6 : 1.2);
+  /* こちらの身内が絡んだ喧嘩は重い。街の連中どうしの小競り合いと同じ目盛りで数えると、
+     子分を一人潰されてもシマがほとんど動かず、路上の勝ち負けが飾りになる */
+  const pInv = fw === 'player' || fl === 'player';
+  const got = moveShare(zi, fl, fw, (isHeavy(w) ? 2.6 : 1.2) * (pInv ? 2.5 : 1));
   // 一度やり合えば次はもっと早い。勢力どうしの熱はここで上がる
   if (fw !== 'player' && fl !== 'player') {
     const k = feudKey(fw, fl);
     Feud[k] = clamp((Feud[k] || 0) + 2, 0, 100);
   } else addFav(fw === 'player' ? fl : fw, -3, '');
-  // 地力も少しだけ動く。同じ通りで勝ち続ければ、その勢力の足場そのものが太る
-  if (hasShare(fl)) dropBase(t, fl, 0.25);
-  if (hasShare(fw)) raiseBase(t, fw, 0.15);
-  if (canHear(l) && got >= 0.2)
+  // 地力も動く。同じ通りで勝ち続ければ、その勢力の足場そのものが太る
+  if (hasShare(fl)) dropBase(t, fl, pInv ? 1.1 : 0.25);
+  if (hasShare(fw)) raiseBase(t, fw, pInv ? 0.8 : 0.15);
+  // 身内の勝ち負けは離れていても耳に入る（子分が潰されたことに気づけないと理不尽になる）
+  if ((pInv || canHear(l)) && got >= 0.2)
     log(`【${t.name}】${facName(fw)} が ${facName(fl)} を潰した。支配 ${Math.round(got * 10) / 10}% が動いた。`,
       fw === 'player' ? 'good' : 'bad');
   if (fw === 'player' || fl === 'player') hud();
@@ -6234,6 +6413,10 @@ function reapNPCs() {
     if (!n.arch.fixed) spawnNPC(n.arch);
   }
 }
+/* 追うのをやめる距離と、諦めている時間。この街の連中は執念深くない ──
+   路地を二本折れて撒かれたら、そこで舌打ちして自分の通りへ帰る。
+   走って逃げ切るという手を、どの相手に対しても残しておくための取り決め。 */
+const CHASE_MAX = 30, GIVEUP_SEC = 30;
 function updateNPCs(dt) {
   const now = performance.now() / 1000;
   // 壁の内側に入っているか。全員ぶん同じ答えなので、頭で一度だけ引く
@@ -6246,6 +6429,7 @@ function updateNPCs(dt) {
     }
     if (n.soc > 0) n.soc -= dt;
     if (n.guard > 0) n.guard -= dt;              // 子分が次に割って入るまでの間
+    if (n.giveup > 0) n.giveup -= dt;            // 振り切られて、しばらく寄ってこない間
     // 殴った腕の振り。プレイヤーの P.arm と同じ作り
     if (n.armT > 0) { n.armT -= dt; n.armPhase += dt * 15; n.arm = Math.max(0, Math.sin(n.armPhase)); }
     else if (n.arm) { n.arm = 0; n.armPhase = 0; }
@@ -6253,7 +6437,9 @@ function updateNPCs(dt) {
     const pd = Math.hypot(dx, dz);
     // 階をまたいだ相手は狙わない。地下へ潜れば地上の警官からは切れる
     const sameFloor = Math.abs(n.y - P.y) < 4;
-    if (n.arch.k === 'cop' && P.wanted >= 45 && pd < 40 && sameFloor) { n.hostile = true; n.state = 'attack'; }
+    if (n.arch.k === 'cop' && P.wanted >= 45 && pd < 40 && sameFloor && !(n.giveup > 0)) {
+      n.hostile = true; n.state = 'attack';
+    }
     /* アジトの中まで追ってくる者はいない ── 警察を除いて。組の連中は壁の内側に
        入られた時点で引き上げるが、令状はドアで止まらない。囲いが破れているあいだは
        ここも効かない（inHideout が偽を返す）── 守っているのは壁のほうだから */
@@ -6263,8 +6449,11 @@ function updateNPCs(dt) {
       continue;
     }
     /* 全面抗争中の勢力の人間は、路上で見つけ次第かかってくる。26 マスにしてあるのは、
-       走れば振り切れる距離を残すため ── 逃げ場が無いと、抗争が始まった瞬間に詰む */
-    if (!safe && War[n.arch.fac] && !n.crew && pd < 26 && sameFloor) { n.hostile = true; n.state = 'attack'; }
+       走れば振り切れる距離を残すため ── 逃げ場が無いと、抗争が始まった瞬間に詰む。
+       一度振り切られた者は諦めている間そこを見ない（でないと撒いた端から掛かり直す） */
+    if (!safe && War[n.arch.fac] && !n.crew && pd < 26 && sameFloor && !(n.giveup > 0)) {
+      n.hostile = true; n.state = 'attack';
+    }
 
     switch (n.state) {
       case 'talk': n.yaw = Math.atan2(dx, dz); break;
@@ -6306,7 +6495,13 @@ function updateNPCs(dt) {
             }
           }
         }
-        if (pd > 38 || !sameFloor) { n.state = 'walk'; n.hostile = false; routeNext(n, true); }
+        /* 追うのをやめる。ここで諦めた時間を持たせないと、離れて解けた次の瞬間に
+           上の見つけ次第（抗争・手配）が掛かり直して、走って撒くという手が消える */
+        if (pd > CHASE_MAX || !sameFloor) {
+          n.state = 'walk'; n.hostile = false; n.giveup = GIVEUP_SEC;
+          routeNext(n, true);
+          if (canHear(n)) say(n, pick(['……見失った', 'どこ行きやがった', 'もういい']), 2.8);
+        }
         break;
       }
       case 'brawl': {
@@ -6448,12 +6643,14 @@ function updateWorld(dt) {
      「追われたら潜る」が成立する。地上に戻れば元の速さに戻る */
   P.wanted = clamp(P.wanted - dt * (floorOf(P.y) < 2 ? 4.5 : 0.9), 0, 100);
   P.hp = clamp(P.hp + dt * 0.9, 0, P.maxhp);
+  weatherEase(dt);                       // 空は切り替わるのではなく、寄っていく
   updateRaid(dt);
   /* アジトを測り直す。壁を足しても掘っても広さが付いてくる ── 毎フレームやる
      ほどのものではないので、1 秒ごとに一度だけ回す */
   if (Hide.on) { Hide.t -= dt; if (Hide.t <= 0) { Hide.t = 1.0; refreshHide(); } }
 }
 function hourTick() {
+  weatherTick();                         // 空が動くのは 1 時間に一度まで
   for (const t of Terr) hourTerr(t);
   /* 見込みは放っておけば真ん中（50）へ戻る。手を出さなければ角も取れるし、
      顔を出さなければ忘れられる ── どちらへ振り切るにも、こちらが動き続ける必要がある。
@@ -6548,6 +6745,14 @@ const Snd = {
       d[i] = (b0 + b1 + b2 + w * 0.02) * 0.22;
     }
     this.pink = buf;
+    /* 雨と風には白いノイズを別に用意する。ピンクは低いほうへ寄せて作ってあるので、
+       高いところを抜くと何も残らない ── 雨のあの「シャー」は高域そのものなので、
+       同じ 1 本を使い回すと、どれだけ音量を上げても砂の音にしかならない。
+       長さを 4 秒に揃えてあるのは、短いループだと周期が耳につくから */
+    const wbuf = c.createBuffer(1, len, c.sampleRate);
+    const wd = wbuf.getChannelData(0);
+    for (let i = 0; i < len; i++) wd[i] = Math.random() * 2 - 1;
+    this.white = wbuf;
     this.floor = floorOf(P.y);
     // バスの番号は floorOf と揃える。0=駐車場 1=地下街 2=地上
     this.bus = [0, 1, 2].map(i => {
@@ -6557,9 +6762,22 @@ const Snd = {
       return g;
     });
 
-    // 地上。通りのざわめきと、街全体が出している低い底鳴り
-    this.bed(this.bus[2], 'lowpass', 780, 0, 0.5);
+    /* 地上。通りのざわめきと、街全体が出している低い底鳴り。
+       ざわめきのつまみは天気が握る ── 雨脚が強いほど通りから人が消える */
+    this.street = this.bed(this.bus[2], 'lowpass', 780, 0, 0.5);
+    this.streetVol = 0.5;
     this.drone(this.bus[2], 'sawtooth', 46, 160, 0.06);
+
+    /* ---- 天気の層 --------------------------------------------------------
+       雨は 2 枚で作る。アスファルトを叩く高い帯（近くの雨）と、通り全体から
+       返ってくる鈍い帯（遠くの雨）── 高いほうだけだと砂嵐にしか聞こえない。
+       風は帯域を絞ったノイズをゆっくり膨らませたもの。どれも鳴りっぱなしにして
+       おいて、天気が変わったら音量だけを寄せる（作り直すとぶつ切りになる） */
+    this.rainHi = this.bed(this.bus[2], 'highpass', 1600, 0.5, 0, this.white);
+    this.rainLo = this.bed(this.bus[2], 'lowpass', 700, 0, 0, this.white);
+    this.wind = this.bed(this.bus[2], 'bandpass', 480, 1.2, 0, this.white);
+    this.windSw = this.swell(this.wind.gain, 0, 0, 13);   // 風は寄せては返す（深さは天気しだい）
+    this.weather();
 
     /* SUBNADE 地下街。コンクリートに囲まれて高い音は全部落ちる。
        残るのは床越しに届く街の鈍い低音と、空調の風、そして蛍光灯のハム。
@@ -6584,10 +6802,11 @@ const Snd = {
     this.drone(this.bus[0], 'sawtooth', 55.6, 90, 0.030);
     setInterval(() => this.underNoise(), 2400);
   },
-  // ループするノイズ層を 1 本生やす。開始位置をずらして 3 層が同じ形に揃わないようにする
-  bed(dest, type, freq, q, vol) {
+  /* ループするノイズ層を 1 本生やす。開始位置をずらして層が同じ形に揃わないようにする。
+     buf を渡さなければピンク（街の底鳴り側）、渡せばそのノイズ（雨と風は白いほう） */
+  bed(dest, type, freq, q, vol, buf) {
     const c = this.ctx;
-    const s = c.createBufferSource(); s.buffer = this.pink; s.loop = true;
+    const s = c.createBufferSource(); s.buffer = buf || this.pink; s.loop = true;
     const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq;
     if (q) f.Q.value = q;
     const g = c.createGain(); g.gain.value = vol;
@@ -6605,13 +6824,70 @@ const Snd = {
     n.connect(g); g.connect(dest); o.start();
     return g;
   },
-  // 空調の風量をゆっくり揺らす。ずっと同じ強さで鳴っていると機械の録音に聞こえる
+  /* 空調の風量をゆっくり揺らす。ずっと同じ強さで鳴っていると機械の録音に聞こえる。
+     返すのは揺れの深さのつまみ ── 風のように、あとから深さを変えたいものがある */
   swell(param, base, depth, period) {
     const c = this.ctx;
     const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = 1 / period;
     const g = c.createGain(); g.gain.value = depth;
     param.value = base;
     o.connect(g); g.connect(param); o.start();
+    return g;
+  },
+  /* ---- 天気 ----------------------------------------------------------------
+     層は作りっぱなしにしておいて、音量だけを寄せる。空が変わるたびに音源を
+     作り直すと、切り替わりがぶつ切りになって「切り替えた」ことのほうが聞こえる。
+     庇の下（roofed）では雨音が遠のき、通りのざわめきはそのまま残る ──
+     雨宿りをしている、という手触りはこの差だけで出る。                        */
+  roofed: false,
+  weather() {
+    if (!this.bus || !this.ctx || !this.rainHi) return;
+    const w = wxNow(), t = this.ctx.currentTime, T = 2.2;     // 空が入れ替わる速さ
+    const duck = this.roofed ? 0.30 : 1;
+    /* 音量の目安。ここが天気の効き具合そのものなので、うるさい／聞こえないの
+       調整はこの 4 本だけを触ればいい（RAIN_HI が雨のシャー、RAIN_LO がその胴） */
+    this.rainHi.gain.setTargetAtTime(w.rain * 0.10 * duck, t, T);
+    this.rainLo.gain.setTargetAtTime(w.rain * 0.22 * duck, t, T);
+    this.wind.gain.setTargetAtTime(w.wind * 0.16 * duck, t, T);
+    this.windSw.gain.setTargetAtTime(w.wind * 0.10 * duck, t, T);
+    // 雨脚が強いほど通りから人が消える。ざわめきが引くぶん、雨がよく聞こえる
+    this.street.gain.setTargetAtTime(this.streetVol * w.crowd, t, T);
+  },
+  // 屋根の下に入った／出た。天気の層を鳴らし直すのはここだけ
+  setRoof(on) {
+    if (!this.bus || on === this.roofed) return;
+    this.roofed = on;
+    this.weather();
+  },
+  /* 地上の物音。天気が出す出来事はここに落とす ── 鳴りっぱなしの層だけだと、
+     雨は「砂嵐が鳴っている」で終わってしまう。落ちる雫と、水を跳ねて通る車と、
+     遠くで転がる雷。この三つで、通りに雨が降っていることになる */
+  skyNoise() {
+    const w = wxNow(), r = Math.random();
+    if (w.thunder && r < 0.16) return this.thunder();
+    if (w.rain >= 0.6 && r < 0.26) return this.splash();
+    if (w.rain > 0 && r < 0.54) return this.eaves();
+  },
+  /* 雷。近いものは硬い音が先に来てから腹に響き、遠いものは低い音だけが
+     長く転がってくる。光らせていないので、鳴り方の違いが距離の全部になる */
+  thunder() {
+    const t = this.ctx.currentTime, far = Math.random() < 0.55;
+    if (!far) this.hitAt(this.bus[2], t, 0.55, 0.30, 340, 0.7);
+    const d = far ? 0.12 : 0.02;
+    this.swellAt(this.bus[2], t + d, far ? 3.6 : 2.4, far ? 0.10 : 0.22, far ? 90 : 140, 0.6, 9);
+    this.tone(this.bus[2], t + d, far ? 2.8 : 1.8, far ? 0.05 : 0.09, far ? 42 : 58);
+  },
+  // 庇とネオンの縁から落ちる雫。雨そのものより、これが鳴ると軒下に立っている気がする
+  eaves() {
+    const t = this.ctx.currentTime, n = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++)
+      this.drip(this.bus[2], 0.05, t + Math.random() * 1.8);
+  },
+  // 水たまりを跳ねて通り過ぎる車。雨の通りでいちばん大きい音はこれ
+  splash() {
+    const t = this.ctx.currentTime, d = 1.5 + Math.random();
+    this.swellAt(this.bus[2], t, d, 0.09, 1800, 0.5);
+    this.swellAt(this.bus[2], t, d, 0.05, 520, 0.8);
   },
   /* ---- 地下の物音 ----------------------------------------------------------
      鳴りっぱなしの層だけだと、地下はどちらも「無人の録音」になる。
@@ -6619,6 +6895,8 @@ const Snd = {
      いる階のものしか鳴らさない ── 聞こえない音を作っても音源が増えるだけ。   */
   underNoise() {
     if (!this.bus || this.muted || !this.ctx) return;
+    // 地上に立っているなら、落とすのは天気の出来事のほう
+    if (this.floor === 2) return this.skyNoise();
     const r = Math.random();
     // 地下街は数を多く。賑やかさは音量ではなく、起きている出来事の数で出る
     if (this.floor === 1) {
@@ -6715,15 +6993,17 @@ const Snd = {
     if (Math.random() < 0.4) this.tone(this.bus[0], t + dur * 0.9, 0.5, 0.05, 420);
   },
   // 遠くで水が落ちる。駐車場の広さは、音を足すより静けさの中の一滴で出る
-  drip() {
-    const c = this.ctx, t = c.currentTime;
+  /* 鳴らす先と音量と時刻を渡せるようにしてある ── 同じ一滴が地上でも要るから
+     （雨の夜、庇とネオンの縁から落ちてくるぶん）。既定は駐車場の天井 */
+  drip(dest, vol, at) {
+    const c = this.ctx, t = at || c.currentTime;
     const o = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter();
     f.type = 'lowpass'; f.frequency.value = 1100;      // 遠いので高い成分は届かない
     o.type = 'sine'; o.frequency.setValueAtTime(1300 + Math.random() * 600, t);
     o.frequency.exponentialRampToValueAtTime(480, t + 0.09);
-    g.gain.setValueAtTime(0.09, t);
+    g.gain.setValueAtTime(vol || 0.09, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-    o.connect(f); f.connect(g); g.connect(this.bus[0]);
+    o.connect(f); f.connect(g); g.connect(dest || this.bus[0]);
     o.start(t); o.stop(t + 0.25);
   },
   /* 階が変わったら 1 秒半ほどかけて入れ替える。階段の途中でぱちりと切り替わるより、
@@ -6968,6 +7248,18 @@ function skyNow() {
   for (const k of ['top', 'bot', 'fog', 'glow', 'sky'])
     for (let i = 0; i < 3; i++) Sky[k][i] = a[k][i] + (b[k][i] - a[k][i]) * t;
   for (const k of ['amb', 'star', 'neon', 'fogD']) Sky[k] = a[k] + (b[k] - a[k]) * t;
+  /* 天気を掛ける。時刻の表を書き換えるのではなく、出来上がった空に掛けるだけ ──
+     こうしておけば、どの時刻でも同じ「曇っている」が乗る。
+     gray は色から鮮やかさを抜く量。雨の夜は空も霧も灰色に寄って、そのぶん
+     ネオンだけが残る（この街が雨の日にいちばんネオンの街に見えるのはそのため） */
+  const w = Weather.now;
+  Sky.star *= w.star; Sky.neon *= w.neon; Sky.amb *= w.amb; Sky.fogD *= w.fogD;
+  if (w.gray > 0.002) {
+    for (const k of ['top', 'bot', 'fog', 'glow']) {
+      const c = Sky[k], m = (c[0] + c[1] + c[2]) / 3;
+      for (let i = 0; i < 3; i++) c[i] += (m - c[i]) * w.gray;
+    }
+  }
   return Sky;
 }
 
@@ -7027,6 +7319,28 @@ function render() {
     const col = facCol(s.owner);
     addInst(s.x, my + Math.sin(t * 2 + s.id) * 0.14, s.z,
       0.42, 0.42, 0.42, col, t * 1.3, 2.2);
+  }
+  /* 雨。街ぜんぶに降らせても、見えるのはカメラの周りの十数メートルぶんだけなので、
+     その筒の中にだけ湧かせて落とす。位置は番号から引いた乱数なので粒は毎フレーム
+     同じ筋を落ち続け、ちらつかない。人と店の印を積んだ「あと」に置いてあるので、
+     通りが混んでいる夜は雨のほうから先に間引かれる ── 順番はこのままにすること。 */
+  if (Weather.now.rain > 0.02 && floorOf(camY) === 2 && instCount < MAX_INST) {
+    const frac = v => v - Math.floor(v);
+    const hash = v => frac(Math.sin(v) * 43758.5453);
+    const n = Math.min(Math.round(Weather.now.rain * 260), MAX_INST - instCount);
+    const col = [.66, .72, .84], R = 15;
+    for (let i = 0; i < n; i++) {
+      const rx = camX + (hash(i * 12.9898) - 0.5) * R * 2;
+      const rz = camZ + (hash(i * 78.233) - 0.5) * R * 2;
+      // 落ちる速さは粒ごとに少し違う。全部が同じ速さだと簾のように見える
+      const sp = 0.55 + hash(i * 5.317) * 0.35;
+      const ry = camY + 8 - frac(t * sp + hash(i * 3.71)) * 17;
+      /* 壁の中と、屋根の下には降らせない。真上の 1 マスを見るだけで、
+         庇の下とビルの中はだいたい落ちる（全部の高さを見に行くと重い） */
+      const bx = Math.floor(rx), by = Math.floor(ry), bz = Math.floor(rz);
+      if (solid(bx, by, bz) || solid(bx, by + 3, bz)) continue;
+      addInst(rx, ry, rz, 0.03, 0.55 + Weather.now.rain * 0.35, 0.03, col, 0, 0.30);
+    }
   }
   if (instCount) {
     gl.useProgram(INST.p);
@@ -7192,6 +7506,7 @@ function save() {
       yen: P.yen, rep: P.rep, hp: P.hp, maxhp: P.maxhp, wanted: P.wanted,
       x: P.x, y: P.y, z: P.z, dug: P.dug,
       day: Clock.day, min: Clock.min, el: Clock.elapsed,
+      wx: { k: Weather.k, t: Weather.t },
       ch: { name: P.name, gang: P.gang, gender: P.gender, origin: P.origin, hair: P.hair, body: P.body,
         col: P.color },
       cr: { tool: Craft.tool, owned: Object.keys(Craft.owned), dur: Craft.dur,
@@ -7245,14 +7560,17 @@ function load() {
   try {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (!d) return false;
-    // 刻みが変わる前のセーブが来ても、端数を持ち越さない
     P.yen = sen(d.yen); P.rep = d.rep || 0;
     if (d.maxhp) P.maxhp = d.maxhp;
     P.hp = d.hp != null ? d.hp : P.maxhp;
     P.wanted = d.wanted || 0; P.dug = d.dug || 0;
     if (d.x != null) { P.x = d.x; P.y = d.y; P.z = d.z; }
     if (d.ch) {
-      P.name = d.ch.name || P.name; P.gender = d.ch.gender || P.gender;
+      P.name = d.ch.name || P.name;
+      /* 性別はここで正す。読んだ値をそのまま入れると、知らない字が来たときに
+         呼び名・見た目・NPC へ渡す文脈の全部でそれを庇うことになる ──
+         外から来た値を直すのは、入り口の一か所だけにしておく */
+      P.gender = d.ch.gender === '女' ? '女' : '男';
       P.origin = d.ch.origin || P.origin; P.gang = d.ch.gang || P.gang;
       if (Array.isArray(d.ch.hair)) P.hair = d.ch.hair;
       if (Array.isArray(d.ch.body)) P.body = d.ch.body;
@@ -7263,16 +7581,21 @@ function load() {
       Craft.owned = { hand: true };
       (d.cr.owned || []).forEach(k => { if (TOOLS[k]) Craft.owned[k] = true; });
       Craft.dur = d.cr.dur || {};
-      /* 防具は一枚（真偽値）から複数枚（名前の並び）へ変わった。
-         古いセーブの true は、その頃の唯一の一枚＝ヘルメットとして戻す。
-         いま無い名前（作り替えで消えた防具）は ARMORS に無いので黙って落ちる */
+      // いま無い名前（作り替えで消えた防具）は ARMORS に無いので黙って落ちる
       Craft.armors = {};
       if (Array.isArray(d.cr.armors)) d.cr.armors.forEach(k => { if (ARMORS[k]) Craft.armors[k] = true; });
-      else if (d.cr.armor) Craft.armors.helm = true;
       Craft.tool = Craft.owned[d.cr.tool] ? d.cr.tool : bestTool();
     }
     Clock.day = d.day; Clock.min = d.min; Clock.elapsed = d.el || 0;
     hourMark = Math.floor(Clock.min / 60);
+    /* 続きから始めたときの空。寄せる余地を残さず今の値に置いてしまう ──
+       読み込んだ直後に「晴れから雷雨へ移り変わる」のを見せられても、それは
+       天気ではなく読み込みの演出になる */
+    if (d.wx && WEATHER[d.wx.k]) {
+      Weather.k = d.wx.k; Weather.t = d.wx.t || 3;
+      Weather.now = { ...WEATHER[d.wx.k] };
+      if (Snd.ctx) Snd.weather();
+    }
     if (d.bag) for (let i = 0; i < Math.min(d.bag.length, Bag.count.length); i++) Bag.count[i] = d.bag[i];
     Store.count.fill(0);
     if (d.store) for (let i = 0; i < Math.min(d.store.length, Store.count.length); i++) Store.count[i] = d.store[i];
@@ -7298,8 +7621,7 @@ function load() {
       if (d.vas) Vassal[f] = !!d.vas[f];
     });
     if (d.feud) for (const k in Feud) if (typeof d.feud[k] === 'number') Feud[k] = d.feud[k];
-    // v5 の途中までは真偽値だった（一段だけ）。数に読み替えて段位に繋ぐ
-    crownRank = typeof d.crown === 'number' ? d.crown : (d.crown ? 1 : 0);
+    crownRank = d.crown || 0;
     if (d.ai) { AI.calls.talk = d.ai.t || 0; AI.calls.bark = d.ai.b || 0; }
     /* 建てた店を先に戻す。ブロックのほうは edits に残っているので彫り直さない。
        id はセーブ時のものをそのまま使い、以後の採番がぶつからないよう進めておく */
@@ -7312,20 +7634,9 @@ function load() {
       });
       shopSeq = Math.max(shopSeq, o.i + 1);
     });
-    /* 格上げは無くなったが、その頃のセーブは残っている。上げた店だけは
-       業種と上がりを書き戻す ── 積んだ金と資材が黙って消えるほうが酷い。
-       新しいセーブに up は書かないので、これは読むだけの後始末 */
-    (d.up || []).forEach(([id, k, inc, pr]) => {
-      const s = Shops.find(x => x.id === id), type = SHOP_TYPES.find(t => t.key === k);
-      if (!s || !type) return;
-      s.type = type;
-      if (inc) s.income = inc;
-      if (pr) s.price = pr;
-    });
-    if (d.sown) {
-      Shops.forEach(s => s.owner = null);
-      d.sown.forEach(([id, o]) => { const s = Shops.find(x => x.id === id); if (s) s.owner = o; });
-    } else (d.shops || []).forEach(id => { const s = Shops.find(x => x.id === id); if (s) s.owner = 'player'; });
+    // 看板の持ち主。街の生成が配った持ち主は捨てて、名簿のとおりに掛け直す
+    Shops.forEach(s => s.owner = null);
+    (d.sown || []).forEach(([id, o]) => { const s = Shops.find(x => x.id === id); if (s) s.owner = o; });
     /* 住人はワールド生成で湧いた顔ぶれを捨て、名簿のとおりに並べ直す。
        倒れた者は名簿にいないので戻らないし、代わりに湧いた別人もそのまま復元される */
     if (d.npcs && d.npcs.length) {
@@ -7492,6 +7803,7 @@ function frame(now) {
     if (P.y < -6) { respawn(); P.hp = Math.max(1, P.hp - 20); flash(0.6); }
     noteFloor();
     Snd.setFloor(floorOf(P.y));      // 環境音も階に合わせる（地下で外の音を鳴らさない）
+    Snd.setRoof(underRoof(P.x, P.y, P.z));   // 庇の下に入れば雨音は遠のく
 
     if (P.atkCd > 0) P.atkCd -= dt;
     updateDig(dt);
