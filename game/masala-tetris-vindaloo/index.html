@@ -2133,7 +2133,7 @@
             const prompt = `You are ${roleName}, the commentator of the spicy Indian puzzle game "Masala Tetris VINDALOO". `
                 + `Language: Japanese. Context: ${contextText}. React in ONE short punchy line (max 24 Japanese chars). No quotes, no emoji.`;
             try {
-                const res = await fetch(`${WORKER_URL}/api/deepseek`, {
+                const res = await fetch(`${WORKER_URL}/api/gpt`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt })
                 });

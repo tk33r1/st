@@ -607,7 +607,7 @@
             const originalButtonText = buttonElement ? buttonElement.innerHTML : '';
             if (buttonElement) buttonElement.innerHTML = 'AIが思考中... ✨';
             try {
-                const response = await fetch(`${WORKER_URL}/api/deepseek`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+                const response = await fetch(`${WORKER_URL}/api/gpt`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
                 if (!response.ok) { const errorData = await response.json(); console.error("AI API Error:", errorData);
                     throw new Error(`APIリクエスト失敗 ステータス ${response.status}: ${errorData?.error || response.statusText}`); }
                 const result = await response.json();

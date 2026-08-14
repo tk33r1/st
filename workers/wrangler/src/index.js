@@ -17,16 +17,16 @@ function json(data, status = 200, extraHeaders = {}) {
 }
 
 // ───────────────────────────────────────────────────────────────
-// DeepSeek 呼び出し（全ゲーム共通の実体）
+// GPT 呼び出し（全ゲーム共通の実体）
 //
-// モデル・max_tokens・thinking はここで固定する。Origin ヘッダはブラウザ外から
-// 偽装できるので、料金に響くパラメータをクライアントに開けない。
+// モデル・max_completion_tokens・reasoning_effort はここで固定する。Origin ヘッダは
+// ブラウザ外から偽装できるので、料金に響くパラメータをクライアントに開けない。
 // ───────────────────────────────────────────────────────────────
-const DEEPSEEK_MODEL = 'deepseek-v4-flash';
+const GPT_MODEL = 'gpt-5.6-luna';
 const MAX_HISTORY = 20;      // 会話履歴は際限なく伸びるので直近だけ通す
 const MAX_CHARS = 4000;      // 1メッセージあたり
 
-async function callDeepSeek(env, { system, messages, maxTokens }) {
+async function callGPT(env, { system, messages, maxTokens }) {
   const msgs = [];
   if (system) msgs.push({ role: 'system', content: String(system).slice(0, MAX_CHARS) });
 
@@ -41,18 +41,19 @@ async function callDeepSeek(env, { system, messages, maxTokens }) {
     return { ok: false, status: 400, error: 'no message content' };
   }
 
-  const res = await fetch('https://api.deepseek.com/chat/completions', {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.GAME_DEEPSEEK_API_KEY}`,
+      Authorization: `Bearer ${env.GAME_OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
+      model: GPT_MODEL,
       messages: msgs,
-      // ゲームの一言コメント／短い応答が用途。推論させる意味がないので速さと安さを取る
-      thinking: { type: 'disabled' },
-      max_tokens: Math.min(Number(maxTokens) || 200, 800),
+      // ゲームの一言コメント／短い応答が用途。推論させる意味がないので速さと安さを取る。
+      // gpt-5.6 の既定は medium なので、省略すると黙って推論トークンを課金される
+      reasoning_effort: 'none',
+      max_completion_tokens: Math.min(Number(maxTokens) || 200, 800),
       stream: false,
     }),
   });
@@ -79,17 +80,20 @@ export default {
       return new Response('Forbidden', { status: 403 });
     }
 
-    // POST /api/deepseek  ─── 全ゲーム共通のAIエンドポイント
+    // POST /api/gpt  ─── 全ゲーム共通のAIエンドポイント
     // 受ける形は2通り:
     //   { prompt, system }                       … 1発の問い合わせ
     //   { messages: [{role, content}], system }   … 会話履歴つき（ascii-roguelike）
-    if (url.pathname === '/api/deepseek' && request.method === 'POST') {
+    //
+    // /api/deepseek は旧パスの別名。中身は GPT で、ブラウザにキャッシュされた
+    // 古いゲームHTMLを壊さないために残してある（/api/gemini と同じ扱い）。
+    if ((url.pathname === '/api/gpt' || url.pathname === '/api/deepseek') && request.method === 'POST') {
       try {
         const { prompt, system, messages, maxTokens } = await request.json();
         const msgs = Array.isArray(messages) ? [...messages] : [];
         if (typeof prompt === 'string' && prompt) msgs.push({ role: 'user', content: prompt });
 
-        const r = await callDeepSeek(env, { system, messages: msgs, maxTokens });
+        const r = await callGPT(env, { system, messages: msgs, maxTokens });
         if (!r.ok) return json({ error: r.error, detail: r.detail }, r.status, cors);
         return json({ text: r.text }, 200, cors);
       } catch (e) {
@@ -99,7 +103,7 @@ export default {
 
     // POST /api/gemini  ─── 旧クライアント互換シム
     //
-    // 中身は DeepSeek。Gemini 形式で受けて Gemini 形式で返すだけの変換層で、
+    // 中身は GPT。Gemini 形式で受けて Gemini 形式で返すだけの変換層で、
     // ブラウザにキャッシュされた古いゲームHTMLを壊さないために残してある。
     // 全ゲームのHTMLが行き渡ったと判断できたら、このブロックごと削除してよい。
     if (url.pathname === '/api/gemini' && request.method === 'POST') {
@@ -113,7 +117,7 @@ export default {
         }));
         const system = pick(body?.systemInstruction?.parts);
 
-        const r = await callDeepSeek(env, { system, messages, maxTokens: 800 });
+        const r = await callGPT(env, { system, messages, maxTokens: 800 });
         if (!r.ok) return json({ error: { message: r.error } }, r.status, cors);
 
         // 旧クライアントがそのまま読めるよう Gemini のレスポンス形に詰め直す

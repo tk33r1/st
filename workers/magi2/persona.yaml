@@ -5,18 +5,18 @@ defaults:
   history_max_messages: 12
   daily_limit: 24                  # IP×日次の上限（メッセージ数）
   api:
-    endpoint: https://api.deepseek.com/v1/chat/completions   # OpenAI 互換
-    temperature: 1.0               # DeepSeek 推奨
-    top_p: 1.0                     # DeepSeek 推奨
+    endpoint: https://api.openai.com/v1/chat/completions
+    temperature: 1.0               # reasoning_effort:none のときだけ送れる
+    top_p: 1.0                     # 同上
   timeouts:
     persona_ms: 30000
     synthesizer_ms: 60000
-  # 推論制御は公式仕様の thinking.type（enabled|disabled）。旧 thinking_mode は API に無視されるため不使用
+  # 推論制御は reasoning_effort（none|low|medium|high|xhigh|max）。省略すると medium で推論するため全モデルで明示する
   models:
-    persona:     { model: deepseek-v4-flash, thinking: { type: disabled }, stream: false, max_tokens: 512  }   # 3人格：non-thinking・並列・短文
-    synthesizer: { model: deepseek-v4-flash, thinking: { type: enabled  }, reasoning_effort: high, stream: true, max_tokens: 1536 }   # 統合：thinking 有効・ストリーミング（reasoning_effort 既定 high）
-    # チャットタイトル要約（初回ユーザー発言のみ）。推論を無効化しないと max_tokens を推論が食い潰し空になる
-    titler:      { model: deepseek-v4-flash, thinking: { type: disabled }, stream: false, max_tokens: 48   }
+    persona:     { model: gpt-5.6-luna, reasoning_effort: none, stream: false, max_completion_tokens: 512  }   # 3人格：非推論・並列・短文
+    synthesizer: { model: gpt-5.6-luna, reasoning_effort: high, stream: true,  max_completion_tokens: 1536 }   # 統合：推論あり・ストリーミング（temperature/top_p は送らない）
+    # チャットタイトル要約（初回ユーザー発言のみ）。推論を無効化しないと max_completion_tokens を推論が食い潰し空になる
+    titler:      { model: gpt-5.6-luna, reasoning_effort: none, stream: false, max_completion_tokens: 48   }
 
 free_personas:
   - name: Enthusiast

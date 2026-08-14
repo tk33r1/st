@@ -629,7 +629,7 @@
             if (buttonElement) buttonElement.innerHTML = 'AIが思考中... ✨';
 
             try {
-                const apiUrl = `${WORKER_URL}/api/deepseek`;
+                const apiUrl = `${WORKER_URL}/api/gpt`;
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',

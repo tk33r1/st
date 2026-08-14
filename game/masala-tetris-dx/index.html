@@ -1013,7 +1013,7 @@
         const prompt = `Character: ${role} (Masala Tetris). Language: Japanese. Context: ${contextText}. React in 1 short sentence (max 20 chars).`;
 
         try {
-            const response = await fetch(`${WORKER_URL}/api/deepseek`, {
+            const response = await fetch(`${WORKER_URL}/api/gpt`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ prompt })

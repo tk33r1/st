@@ -37,19 +37,21 @@ function httpError(status, envelope, requestId, cors) {
   });
 }
 
-async function callDeepSeek({ env, messages, cfg, stream, signal, temperature }) {
+async function callGPT({ env, messages, cfg, stream, signal, temperature }) {
+  // temperature / top_p は非推論モード（reasoning_effort:'none'）でのみ受け付けられる。
+  // 推論を有効にしたまま送ると "Unsupported value" で 400 になるので、統合人格では落とす。
+  const sampling = cfg.reasoning_effort === 'none'
+    ? { temperature: temperature != null ? temperature : DEFAULTS.temperature, top_p: DEFAULTS.top_p }
+    : {};
   return fetch(DEFAULTS.endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.DEEPSEEK_API_KEY}` },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.MAGI_OPENAI_API_KEY}` },
     body: JSON.stringify({
       model: cfg.model,
-      // 推論制御は公式仕様の thinking.type（enabled|disabled）で行う
-      ...(cfg.thinking ? { thinking: cfg.thinking } : {}),
-      // reasoning_effort は thinking 有効時のみ意味を持つ（high|max）
-      ...(cfg.reasoning_effort ? { reasoning_effort: cfg.reasoning_effort } : {}),
-      max_tokens: cfg.max_tokens,
-      temperature: temperature != null ? temperature : DEFAULTS.temperature,
-      top_p: DEFAULTS.top_p,
+      // 省略時の既定は medium。非推論にしたい呼び出しでも必ず明示する
+      reasoning_effort: cfg.reasoning_effort,
+      max_completion_tokens: cfg.max_completion_tokens,
+      ...sampling,
       stream: !!stream,
       messages,
     }),
@@ -61,7 +63,7 @@ async function callDeepSeek({ env, messages, cfg, stream, signal, temperature })
 // temperature はテーマ依存の「揺らぎ」（未指定なら DEFAULTS.temperature）。
 async function fetchPersonaText(env, p, messages, signal, log, round = 1, temperature) {
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const res = await callDeepSeek({
+    const res = await callGPT({
       env, cfg: DEFAULTS.models.persona, stream: false, signal, temperature,
       messages: [{ role: 'system', content: p.system_prompt }, ...messages],
     });
@@ -69,7 +71,7 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
       const detail = (await res.text().catch(() => '')).slice(0, 200);
       log('persona_call', p.codename, `r${round}`, `HTTP ${res.status}`, `attempt=${attempt}`);
       if (res.status >= 500 && attempt < 2) continue; // 一時的なサーバ起因のみ再試行
-      throw stageError('persona_call', `deepseek_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
+      throw stageError('persona_call', `gpt_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
     }
     const choice = (await res.json()).choices?.[0] || {};
     const text = (choice.message?.content || '').trim();
@@ -85,7 +87,7 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
 // 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
 async function fetchTitle(env, lastUser, signal, log) {
   try {
-    const res = await callDeepSeek({
+    const res = await callGPT({
       env, cfg: DEFAULTS.models.titler, stream: false, signal,
       messages: [{ role: 'system', content: TITLER.system_prompt }, { role: 'user', content: lastUser }],
     });
@@ -294,7 +296,7 @@ export default {
           } finally { t2.clear(); }
           log('persona_call', 'round2 ok');
 
-          // --- 統合コール（thinking・stream）---
+          // --- 統合コール（推論あり・stream）---
           const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}\n  討議後: ${o.r2}`).join('\n');
           const augmented = `${lastUser}\n\n[内部討議メモ：以下は3人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
           // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
@@ -312,15 +314,15 @@ export default {
           try {
             log('synthesizer_call', 'start');
             // 成功時は reader 完了後に clear。throw 時はここで確実に解除しておく
-            synthRes = await callDeepSeek({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal: synthTimer.signal, messages: synthMessages });
+            synthRes = await callGPT({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal: synthTimer.signal, messages: synthMessages });
           } catch (e) { synthTimer.clear(); throw e; }
           if (!synthRes.ok) {
             const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
             synthTimer.clear();
-            throw stageError('synthesizer_call', `deepseek_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
+            throw stageError('synthesizer_call', `gpt_http_${synthRes.status}`, `統合人格の呼び出しが失敗しました (HTTP ${synthRes.status})`, { detail, retryable: synthRes.status >= 500 });
           }
 
-          // DeepSeek の SSE をパースし、delta.content のみ中継（reasoning は出さない）
+          // OpenAI の SSE をパースし、delta.content のみ中継（reasoning は出さない）
           const reader = synthRes.body.getReader();
           const dec = new TextDecoder();
           let buf = '';
@@ -351,7 +353,7 @@ export default {
         } catch (err) {
           // タイムアウト(AbortError)は upstream として表現
           if (err && err.name === 'AbortError') {
-            const env2 = stageError('upstream', 'timeout', 'DeepSeek への応答がタイムアウトしました', { retryable: true });
+            const env2 = stageError('upstream', 'timeout', 'GPT への応答がタイムアウトしました', { retryable: true });
             log('error', 'upstream', 'timeout');
             send('error', toEnvelope(env2, requestId));
           } else {

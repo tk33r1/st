@@ -818,7 +818,7 @@ async function sendToGemini() {
   appendChatLog("SYS", "Processing query...");
 
   try {
-    const url = `${WORKER_URL}/api/deepseek`;
+    const url = `${WORKER_URL}/api/gpt`;
 
     // フロア情報を動的に生成して方角を伝える
     const getDir = (tx, ty) => {

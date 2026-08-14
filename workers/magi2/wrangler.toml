@@ -15,6 +15,7 @@ database_id   = "4dbc95fd-68c8-4dd4-9278-512630e00b88"
 # セットアップ手順:
 #   1) wrangler d1 create tk-st-magi2-db                 # 出力の database_id を上に貼る
 #   2) wrangler d1 execute tk-st-magi2-db --file workers/magi2/schema.sql --remote
-#   3) wrangler secret put DEEPSEEK_API_KEY --config workers/magi2/wrangler.toml
+#   3) wrangler secret put MAGI_OPENAI_API_KEY --config workers/magi2/wrangler.toml
 #   (任意) 外部クライアント許可用: wrangler secret put CLIENT_API_KEY ...
+#   ※ MAGI_DEEPSEEK_API_KEY は現在未使用。DeepSeek に戻す場合に備えた保持のみ
 #   4) wrangler deploy --config workers/magi2/wrangler.toml

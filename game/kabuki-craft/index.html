@@ -801,7 +801,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <b>V</b><span>視点切替（三人称／一人称）</span>
       <b>N</b><span>音のオン／オフ</span>
     </div>
-    <div class="note" id="aistat">NPC の会話・行動生成: DeepSeek V4-Flash</div>
+    <div class="note" id="aistat">NPC の会話・行動生成: GPT-5.6 Luna</div>
   </div>
   <div class="ver">KABUKI CRAFT ─ 1秒 = ゲーム内 1分 / 持ち時間 1日 = 24分</div>
 </div>
@@ -874,7 +874,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
    単一HTML・外部ライブラリなしのボクセル・オープンワールド。
    構成: M4(行列) / Vox(ボクセル world) / Mesher(チャンク面生成+AO) /
          GL(自前WebGL2) / Ray(DDA) / Dig(採掘と設置) / Bag(インベントリ) /
-         Player(重力とジャンプ) / NPC / AI(DeepSeek V4-Flash) / Terr(シマ) /
+         Player(重力とジャンプ) / NPC / AI(GPT-5.6 Luna) / Terr(シマ) /
          UI / Audio / Loop
    街は 144×144×48 の Uint8Array。16×16 のチャンクに切って面だけメッシュ化し、
    壊すたびに該当チャンク（と境界なら隣）だけ張り直す。
@@ -5578,7 +5578,7 @@ function moveShare(zi, from, to, amt) {
 }
 
 /* ============================================================================
-   10. AI（DeepSeek V4-Flash）
+   10. AI（GPT-5.6 Luna）
    ========================================================================= */
 const AI = {
   busy: 0, capped: false, lastBark: 0,
@@ -5619,7 +5619,7 @@ const AI = {
     const ctrl = new AbortController();
     const to = setTimeout(() => ctrl.abort(), 14000);
     try {
-      const res = await fetch(WORKER_URL + '/api/deepseek', {
+      const res = await fetch(WORKER_URL + '/api/gpt', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
         body: JSON.stringify({ system: this.sys, prompt, maxTokens: maxTokens || 220 })
       });
@@ -9146,7 +9146,7 @@ function frame(now) {
 // マイクラのタイトルにある黄色い一言。開くたびに変わる
 const SPLASHES = [
   'アスファルトも掘れる！', '100% ボクセル！', 'ネオンは食えない', 'ツルハシを作れ！',
-  '素手じゃ無理だ', 'NPC は DeepSeek 製！', '歌舞伎町を全部いただく', '9つのシマを獲れ',
+  '素手じゃ無理だ', 'NPC は GPT 製！', '歌舞伎町を全部いただく', '9つのシマを獲れ',
   '金塊は地面の下', '終電はとっくにない', '1秒 = 1分', 'シャンパンコール！',
   '怪獣が見ている', '掘って、売って、建てる', 'ここは紅蓮一家のシマだ',
   '期限は無い', '資材で店が建つ', '無料案内所には寄るな',
@@ -9373,7 +9373,7 @@ $('t-load').onclick = () => { if (load()) begin(); else openChargen(); };
 (async () => {
   try {
     await AI.raw('{"ping":1} と出力せよ。JSONのみ。', 24);
-    $('aistat').innerHTML = 'NPC の会話・行動生成: <b style="color:#39ff88">DeepSeek V4-Flash 接続済み</b>';
+    $('aistat').innerHTML = 'NPC の会話・行動生成: <b style="color:#39ff88">GPT-5.6 Luna 接続済み</b>';
   } catch (e) {
     $('aistat').innerHTML = 'NPC の会話・行動生成: <b style="color:#ffcf3f">オフライン（内蔵の応答で動作します）</b>';
   }

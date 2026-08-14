@@ -535,7 +535,7 @@ function showInfoPanel() {
     + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>24 daily requests</strong>, and <strong>12 rounds</strong> per session.</li>'
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
-    + '<li>Powered by <strong>DeepSeek API</strong> (inputs are sent to China and may be used for AI training).</li>'
+    + '<li>Powered by <strong>OpenAI API</strong> (inputs are sent to OpenAI in the US and retained up to 30 days for abuse monitoring; API inputs are not used for AI training by default).</li>'
     + '<li class="warn">DO NOT input any confidential or personal information.</li>'
     + '</ul>');
 }

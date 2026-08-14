@@ -3,23 +3,24 @@
 // 変更時は persona.yaml と本ファイルを両方更新すること。
 
 export const DEFAULTS = {
-  endpoint: 'https://api.deepseek.com/v1/chat/completions', // OpenAI 互換
-  temperature: 1.0, // DeepSeek 推奨
-  top_p: 1.0,       // DeepSeek 推奨
+  endpoint: 'https://api.openai.com/v1/chat/completions',
+  temperature: 1.0,
+  top_p: 1.0,
   history_max_messages: 12, // サーバ側の防御的 trim
   daily_limit: 24,  // IP×日次の上限（メッセージ数）
   timeouts: { persona_ms: 30000, synthesizer_ms: 60000 },
-  // 推論制御は公式仕様の thinking.type（enabled|disabled）で行う。
-  // 旧 thinking_mode は API に無視される死にパラメータのため使用しない。
+  // 推論制御は reasoning_effort（none|low|medium|high|xhigh|max）で行う。
+  // 省略すると gpt-5.6 は medium で推論するため、全モデルで明示すること。
+  // temperature / top_p は reasoning_effort:'none' のときだけ受け付けられる（→ src/index.js）。
   models: {
-    // 3人格：non-thinking・並列・短文（推論を無効化し高速・低コストに）
-    persona: { model: 'deepseek-v4-flash', thinking: { type: 'disabled' }, max_tokens: 512 },
-    // 統合：thinking 有効・ストリーミング。max_tokens は思考トークン分の余裕を確保。
-    // reasoning_effort は high|max（既定 high。low/medium は high にマップされる）
-    synthesizer: { model: 'deepseek-v4-flash', thinking: { type: 'enabled' }, reasoning_effort: 'high', max_tokens: 1536 },
+    // 3人格：非推論・並列・短文（高速・低コスト。temperature の揺らぎもここで効く）
+    persona: { model: 'gpt-5.6-luna', reasoning_effort: 'none', max_completion_tokens: 512 },
+    // 統合：推論あり・ストリーミング。max_completion_tokens は推論トークン分の余裕を確保。
+    // 推論ありのため temperature / top_p は送れない（送ると 400）。
+    synthesizer: { model: 'gpt-5.6-luna', reasoning_effort: 'high', max_completion_tokens: 1536 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
-    // max_tokens を推論が食い潰して content が空になるため type:'disabled' 必須。
-    titler: { model: 'deepseek-v4-flash', thinking: { type: 'disabled' }, max_tokens: 48 },
+    // max_completion_tokens を推論が食い潰して content が空になるため 'none' 必須。
+    titler: { model: 'gpt-5.6-luna', reasoning_effort: 'none', max_completion_tokens: 48 },
   },
 };
 
