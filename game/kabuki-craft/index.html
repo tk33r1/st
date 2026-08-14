@@ -644,7 +644,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="zone" id="c-zone">一番街</div>
     <div class="st" id="c-st">靖国通り</div>
     <div class="st" id="c-wx">晴れ</div>
-    <div class="own" id="c-own">支配: 紅蓮会</div>
+    <div class="own" id="c-own">支配: 紅蓮一家</div>
     <div class="own" id="c-win" style="color:var(--green)">制圧 0 / 9</div>
     <div class="left" id="c-left">街全体 0%</div>
     <div class="obj" id="c-obj"></div>
@@ -1113,7 +1113,7 @@ const TOOLS = {
   ntube: { k: 'ntube', n: 'ネオン刀',     tier: 0, spd: 0.6, dmg: 26, dur: 240,
     col: [1, .18, .47], em: 1.25, mine: true, glow: true, loud: true,
     d: '灯ったまま振り抜く。鉄パイプより重い一発。ただし光る ── 振れば通りが気づく' },
-  /* 拳銃は作れない。持っている相手（警官と紅蓮会）から奪う以外に手に入らない。
+  /* 拳銃は作れない。持っている相手（警官と紅蓮一家）から奪う以外に手に入らない。
      dur は残弾。撃てば当たらなくても一発減り、街中が銃声に気づく。 */
   gun:   { k: 'gun',   n: '拳銃',         tier: 0, spd: 0.4, dmg: 30, dur: 24, col: [.20, .20, .24],
     d: '離れていても届く。撃てば通りの端まで聞こえる', gun: true, reach: 22 }
@@ -1428,7 +1428,7 @@ const onMainStreet = (x, z) => {
    観光客や酔った会社員のように、この街を通り過ぎるだけの人間の置き場所。 */
 const FACTIONS = {
   player: { name: '無頼会', css: '#39ff88' },
-  guren: { name: '紅蓮会', css: '#ff3b30' },
+  guren: { name: '紅蓮一家', css: '#ff3b30' },
   dragons: { name: 'ドラゴンズ', css: '#a45cff' },
   arcadia: { name: 'アルカディア', css: '#16e0ff' },
   local: { name: '商店組合', css: '#ffcf3f' },
@@ -1723,6 +1723,10 @@ function genUnderground() {
   genParking();
   genSubShops();
   genConnections();
+  /* 地下街の中身は、店と階段が出来てからでないと置けない ── 間口の前と
+     降り口を空けたいので、そこに何が入ったかを見てから壁を埋める */
+  genSubFurnish();
+  genSubHalls();
   genDepot();
   /* 地下を歩く人のための道しるべ。格子が無いので、床の上を粗く拾って
      ノードにしておく。通行人はこの点から次の行き先を選ぶ */
@@ -1734,14 +1738,35 @@ function genUnderground() {
 const SUB_NODES = [], PARK_NODES = [];
 const floorNodes = f => f === PARK_Y ? PARK_NODES : SUB_NODES;
 
+/* いま立っているのがどの通路か。広場は「通路」ではないので外す ──
+   天井の蛍光灯も床のタイル割りも、実物の地下街では必ず通路の向きに走る線で、
+   (x+z)%n の網目に散らすと、自分がどっちを向いて歩いているのか分からなくなる。
+   線が一方向に伸びていること自体が、地下で方角を保つための手がかりになっている。 */
+function subLane(x, z) {
+  if (SUB_HALL.some(b => inBox(b, x, z))) return null;         // 広場は向きを持たない
+  for (const b of SUB_BRANCH) if (inBox(b, x, z)) return { b, ew: false };
+  if (inBox(SUB_MAIN, x, z)) return { b: SUB_MAIN, ew: true };
+  return null;
+}
 /* SUBNADE の中身。天井の蛍光灯、床のタイル割り、壁に並ぶ店の明かりと袖看板。
    本通りは幅 13 あるので、中央に柱を立てて「広い通り」に見せる。 */
 function genSubnade() {
   const mz = Math.round((SUB_MAIN.z0 + SUB_MAIN.z1) / 2);
   for (let z = 1; z < SZ - 1; z++) for (let x = 1; x < SX - 1; x++) {
     if (inSub(x, z)) {
-      if ((x + z) % 4 === 0) setRaw(x, SLAB_TOP, z, 8);          // 天井の蛍光灯
-      if ((x + z) % 6 === 0) setRaw(x, SUB_Y - 1, z, 3);         // 床のタイル割り
+      const lane = subLane(x, z);
+      if (lane) {
+        // 通路の向きに沿って、蛍光灯を二本と、床の帯を三本（両脇と中央）通す
+        const a = lane.ew ? z : x;
+        const a0 = lane.ew ? lane.b.z0 : lane.b.x0, a1 = lane.ew ? lane.b.z1 : lane.b.x1;
+        const mid = Math.round((a0 + a1) / 2), li = Math.max(1, Math.floor((a1 - a0) / 2) - 2);
+        if (a === mid - li || a === mid + li) setRaw(x, SLAB_TOP, z, 8);
+        if (a === a0 || a === a1 || a === mid) setRaw(x, SUB_Y - 1, z, 3);
+      } else {
+        // 広場は向きが無いので、天井の灯りも床の目地も散らしたままにする
+        if ((x + z) % 5 === 0) setRaw(x, SLAB_TOP, z, 8);
+        if ((x + z) % 7 === 0) setRaw(x, SUB_Y - 1, z, 3);
+      }
       // 本通りの中央に柱。広場の中は抜いて、開けた感じを残す
       if (z === mz && x % 8 === 4 && inBox(SUB_MAIN, x, z) && !SUB_HALL.some(b => inBox(b, x, z)))
         fill(x, SUB_Y, z, x, SUB_TOP, z, 6);
@@ -1749,10 +1774,186 @@ function genSubnade() {
     }
     // 通路に面した壁
     if (!(inSub(x - 1, z) || inSub(x + 1, z) || inSub(x, z - 1) || inSub(x, z + 1))) continue;
+    /* 壁の地の色。地下街の灯りは蛍光灯と店の明かりが主で、ネオンはほとんど無い ──
+       ここを歓楽街と同じ配分で光らせると、靖国通りの下がもう一本の一番街になる。
+       袖看板（光らない板）を挟むことで、明かりの無い区間にも「店の並び」が出る */
     const q = hash2(x * 7 + 13, z * 3 + 5);
     if (q > 0.62) { setRaw(x, SUB_Y + 1, z, 8); setRaw(x, SUB_Y + 2, z, 8); }   // 店の明かり
-    else if (q > 0.46) setRaw(x, SUB_TOP, z, NEON_IDS[Math.floor(q * 601) % NEON_IDS.length]);
+    else if (q > 0.50) setRaw(x, SUB_TOP, z, 15);                              // 袖看板
+    else if (q > 0.44) setRaw(x, SUB_TOP, z, NEON_IDS[Math.floor(q * 601) % NEON_IDS.length]);
     else if (q < 0.07) fill(x, SUB_Y, z, x, SUB_Y + 1, z, 23);   // 壁ぎわの自販機
+  }
+}
+
+/* ---- 地下街の中身 --------------------------------------------------------
+   店を並べただけでは実物の地下街にならない。サブナードを歩いていて目に入るのは、
+   店の間口よりむしろ「店ではないもの」のほうだ ── コインロッカーの列、
+   三台並んだ自販機、シャッターの下りた空き区画、背中合わせのベンチと観葉植物、
+   化粧室の緑サイン、分岐ごとに天井から下がった出口案内。
+   何も無い直線が続くと、そこは地下街ではなくただの掘った穴に見える。
+
+   置き方は「壁づたいに一定の間隔で必ず何かを置く」── 通路がどれだけ長くても
+   空白が残らないので、枝を伸ばしても形を変えても、そのぶん中身が付いてくる。 */
+
+// 壁づたいの走査線。箱の四方の壁をそれぞれ一本の線として舐める
+function subWallRuns() {
+  const runs = [];
+  for (const b of [SUB_MAIN, ...SUB_BRANCH, ...SUB_HALL]) {
+    runs.push({ ew: true, a0: b.x0, a1: b.x1, c: b.z0 - 1, into: 1 });
+    runs.push({ ew: true, a0: b.x0, a1: b.x1, c: b.z1 + 1, into: -1 });
+    runs.push({ ew: false, a0: b.z0, a1: b.z1, c: b.x0 - 1, into: 1 });
+    runs.push({ ew: false, a0: b.z0, a1: b.z1, c: b.x1 + 1, into: -1 });
+  }
+  return runs;
+}
+/* 走査線の上の一点。d=0 が壁の面、d=1 が通路側の一マス目、d が負なら壁の奥。
+   東西の壁と南北の壁を同じ式で扱えるので、置き物のほうは向きを知らなくていい */
+const runCell = (r, a, d) => r.ew
+  ? [a, r.c + r.into * d] : [r.c + r.into * d, a];
+/* 壁ぎわに置けるか。壁が本当に壁で、通路に面していて、まだ何も入っていないこと。
+   店の間口の前と、階段の降り口のまわりは空けておく（塞ぐと入れなくなる） */
+function subWallFree(r, a, w) {
+  for (let i = 0; i < w; i++) {
+    const [wx, wz] = runCell(r, a + i, 0), [cx, cz] = runCell(r, a + i, 1);
+    if (!inEdge(wx, wz) || inSub(wx, wz) || !inSub(cx, cz)) return false;
+    const v = getV(wx, SUB_Y, wz);
+    if (v !== 4 && v !== 18) return false;                  // すでに何かが入っている壁
+    if (getV(cx, SUB_Y, cz) !== AIR) return false;          // 通路側が塞がっている
+    if (Shops.some(s => s.under && Math.abs(s.bx - wx) <= 2 && Math.abs(s.bz - wz) <= 2)) return false;
+  }
+  return true;
+}
+/* 壁の奥へ掘れるか（化粧室用）。抜けた先が別の通路だと、地下街に穴が開く */
+function subDeepFree(r, a, w, dep) {
+  for (let i = -1; i <= w; i++) for (let d = 0; d >= -dep; d--) {
+    const [x, z] = runCell(r, a + i, d);
+    if (!inEdge(x, z) || inSub(x, z)) return false;
+    const v = getV(x, SUB_Y, z);
+    if (v !== 4 && v !== 18) return false;
+  }
+  return true;
+}
+/* 壁ぎわに並ぶもの。幅は通路に沿った長さ。重みは「実物の地下街で目に入る頻度」で、
+   いちばん多いのはロッカーでも店でもなく、シャッターの下りた区画のほう */
+const SUB_FIT = [
+  { k: 'locker', w: 4, n: 3 }, { k: 'shutter', w: 4, n: 4 }, { k: 'vend', w: 3, n: 3 },
+  { k: 'bench', w: 3, n: 3 }, { k: 'toilet', w: 3, n: 1 }, { k: 'board', w: 1, n: 2 },
+  { k: 'plant', w: 1, n: 2 }, { k: 'poster', w: 2, n: 3 }
+];
+const SUB_FIT_BAG = SUB_FIT.flatMap(f => Array(f.n).fill(f));
+function subPlaceFit(r, a, f) {
+  const wall = i => runCell(r, a + i, 0), aisle = i => runCell(r, a + i, 1);
+  switch (f.k) {
+    case 'locker':                                   // コインロッカー。壁を背にした鉄の箱
+      for (let i = 0; i < f.w; i++) {
+        const [x, z] = aisle(i), [wx, wz] = wall(i);
+        fill(x, SUB_Y, z, x, SUB_Y + 1, z, 6);
+        setRaw(wx, SUB_Y + 2, wz, 15);               // 上に貼られた料金の札
+      }
+      break;
+    case 'vend':                                     // 自販機のコーナー。地下街は必ず三台並ぶ
+      for (let i = 0; i < f.w; i++) {
+        const [x, z] = aisle(i), [wx, wz] = wall(i);
+        fill(x, SUB_Y, z, x, SUB_Y + 1, z, 23);
+        setRaw(wx, SUB_Y + 2, wz, 8);
+      }
+      break;
+    case 'bench':                                    // ベンチと、その背中の広告
+      for (let i = 0; i < f.w; i++) {
+        const [x, z] = aisle(i), [wx, wz] = wall(i);
+        setRaw(x, SUB_Y, z, 16);
+        setRaw(wx, SUB_Y + 1, wz, 15); setRaw(wx, SUB_Y + 2, wz, 8);
+      }
+      break;
+    case 'plant': {                                  // 観葉植物。鉢は置けないので幹と葉だけ
+      const [x, z] = aisle(0);
+      setRaw(x, SUB_Y, z, 20); setRaw(x, SUB_Y + 1, z, 21);
+      break;
+    }
+    case 'shutter':                                  // シャッターの下りた空き区画。灯りは点かない
+      for (let i = 0; i < f.w; i++) {
+        const [wx, wz] = wall(i);
+        fill(wx, SUB_Y, wz, wx, SUB_TOP, wz, 15);
+      }
+      break;
+    case 'board': {                                  // 出口案内。地下でいちばん探されている板
+      const [wx, wz] = wall(0);
+      setRaw(wx, SUB_Y + 1, wz, 15); setRaw(wx, SUB_Y + 2, wz, 13);
+      break;
+    }
+    case 'poster':                                   // 壁の広告。光る面と光らない面を重ねる
+      for (let i = 0; i < f.w; i++) {
+        const [wx, wz] = wall(i);
+        setRaw(wx, SUB_Y + 1, wz, 15);
+        setRaw(wx, SUB_Y + 2, wz, NEON_IDS[(Math.abs(wx * 7 + wz * 3)) % NEON_IDS.length]);
+      }
+      break;
+    case 'toilet': {                                 // 化粧室。壁の奥へ引っ込んだ 3×3
+      const D = 2;
+      for (let i = 0; i < f.w; i++) for (let d = 0; d >= -D; d--) {
+        const [x, z] = runCell(r, a + i, d);
+        fill(x, SUB_Y, z, x, SUB_TOP, z, AIR);
+        setRaw(x, SUB_Y - 1, z, 4); setRaw(x, SLAB_TOP, z, 3);
+      }
+      // 三方の壁をタイルで貼る。奥と、両脇
+      for (let i = -1; i <= f.w; i++) for (let d = 0; d >= -D - 1; d--) {
+        if (i >= 0 && i < f.w && d > -D - 1) continue;
+        const [x, z] = runCell(r, a + i, d);
+        if (inEdge(x, z)) fill(x, SUB_Y, z, x, SUB_TOP, z, 4);
+      }
+      const [sx, sz] = runCell(r, a + 1, 0);
+      setRaw(sx, SUB_TOP, sz, 13);                   // 入口の上の緑サイン
+      const [lx, lz] = runCell(r, a + 1, -D);
+      setRaw(lx, SUB_TOP, lz, 8);                    // 中の灯り
+      break;
+    }
+  }
+}
+/* 壁づたいに端から埋めていく。置けたら幅ぶんと間合いを飛ばし、置けなければ
+   一マスずらして次を試す ── こうすると「置けるところには必ず何かある」になる */
+const SUB_FIT_GAP = 3;
+function genSubFurnish() {
+  for (const r of subWallRuns()) {
+    let a = r.a0;
+    while (a <= r.a1) {
+      const q = hash2(r.ew ? a * 13 + 7 : r.c * 13 + 7, r.ew ? r.c * 5 + 11 : a * 5 + 11);
+      const f = SUB_FIT_BAG[Math.floor(q * 977) % SUB_FIT_BAG.length];
+      if (a + f.w - 1 > r.a1 || !subWallFree(r, a, f.w)
+        || (f.k === 'toilet' && !subDeepFree(r, a, f.w, 3))) { a++; continue; }
+      subPlaceFit(r, a, f);
+      a += f.w + SUB_FIT_GAP;
+    }
+  }
+  /* 枝の入口に下がる案内。本通りから見上げたときに、その枝がどこへ抜けるのかが
+     分かる ── 実物の地下街で、分岐に必ず一枚ぶら下がっているあれ */
+  for (const b of SUB_BRANCH) {
+    const mid = Math.round((b.x0 + b.x1) / 2), z = b.z1 - 2;
+    for (let x = b.x0; x <= b.x1; x++)
+      if (inSub(x, z) && getV(x, SUB_TOP, z) === AIR) setRaw(x, SUB_TOP, z, x === mid ? 13 : 15);
+  }
+}
+/* 広場。地下街の広場にあるのは店ではなく、待ち合わせのための場所 ──
+   背中合わせのベンチ、その間の植え込み、天井から下がった案内板。
+   いちばん広いところがいちばん何も無い場所になっていると、地下街は嘘に見える。 */
+function genSubHalls() {
+  for (const b of SUB_HALL) {
+    const mx = Math.round((b.x0 + b.x1) / 2), mz = Math.round((b.z0 + b.z1) / 2);
+    const free = (x, z) => inSub(x, z) && getV(x, SUB_Y, z) === AIR
+      && !SUB_BRANCH.some(q => inBox(q, x, z));
+    for (const [ox, oz] of [[0, 0], [0, 5], [0, -5], [7, 0], [-7, 0], [7, 5], [-7, 5]]) {
+      const cx = mx + ox, cz = mz + oz;
+      let ok = true;
+      for (let w = -2; w <= 2 && ok; w++) for (const d of [-2, 0, 2]) if (!free(cx + w, cz + d)) ok = false;
+      if (!ok) continue;
+      for (let w = -2; w <= 2; w++) {
+        // 植え込み。幹に葉を載せただけの、地下街の観葉植物
+        if (w % 2 === 0) { setRaw(cx + w, SUB_Y, cz, 20); setRaw(cx + w, SUB_Y + 1, cz, 21); }
+        for (const d of [-2, 2]) setRaw(cx + w, SUB_Y, cz + d, 16);   // 背中合わせのベンチ
+        // 天井から下がる案内板。真ん中だけが緑（出口）
+        if (getV(cx + w, SUB_TOP, cz) === AIR) setRaw(cx + w, SUB_TOP, cz, w === 0 ? 13 : 15);
+      }
+      break;
+    }
   }
 }
 
@@ -1872,6 +2073,22 @@ const SUB_SHOP_TYPES = [
   { key: 'hon', name: '書店', price: 5800000, income: 80000, neon: 13, inf: 3 },
   { key: 'drug', name: 'ドラッグストア', price: 11000000, income: 260000, neon: 9, inf: 4 }
 ];
+/* 地下街の店の元の持ち主。ここに組は入っていない ── この階に居るのが
+   商店組合・アルカディア・流れ者の三者だけである以上、紅蓮一家やドラゴンズの
+   看板が掛かっていると、その看板を守る人間が一人も居ないことになる。
+   主は組合（この街で商売してきた側）、次がアルカディア（夜の店の側が押さえている
+   区画 ── 美容室やドラッグストアがそれ）、残りは無所属のまま何十年もやっている店。 */
+function subShopOwnerFor(q) {
+  /* 掛ける数を 23 にしてあるのは、q が 0.5 以上しか来ない（genSubShops の足切り）
+     せいで刻み方が偏るから ── ここを地上と同じ 37 にすると、実際に並ぶ十数軒が
+     独立ばかりになって「組合の地下街」に見えなくなる */
+  const r = (q * 23) % 1;
+  if (r < 0.34) return null;                        // 無所属。独立のまま続いている店
+  return r < 0.78 ? 'local' : 'arcadia';
+}
+/* 並べる軒数。地上の通りより疎にしてある ── 実物の地下街も、店の間は
+   ロッカーとシャッターと壁のほうが長い。空いた壁は genSubFurnish が埋める */
+const SUB_SHOP_MAX = 11;
 function genSubShops() {
   const placed = [];
   const near = (x, z) => placed.some(q => Math.abs(q[0] - x) < 10 && Math.abs(q[1] - z) < 10);
@@ -1879,7 +2096,7 @@ function genSubShops() {
      本通り・広場・枝、どの壁でも同じ手順で入るので、地下街の形を変えても付いてくる */
   // z の大きい側＝靖国通りの下の本通りから先に埋める。地下街の主役はこの一本
   for (let z = SZ - 4; z >= 3; z--) for (let x = 3; x < SX - 3; x++) {
-    if (placed.length >= 16) break;
+    if (placed.length >= SUB_SHOP_MAX) break;
     if (inSub(x, z)) continue;
     // 4 方向のうち 1 つだけが通路＝そこが間口になる壁
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]].filter(([dx, dz]) => inSub(x + dx, z + dz));
@@ -1909,7 +2126,7 @@ function subShop(cx, cz, dx, dz, type, q) {
     name: SHOP_PREFIX[Math.floor(q * 719) % SHOP_PREFIX.length],
     price: sen(type.price),
     income: sen(type.income),
-    owner: shopOwnerFor(zoneOf(cx, cz), q)
+    owner: subShopOwnerFor(q)
   };
   Shops.push(shop);
   for (let d = 1; d <= D; d++) for (let w = -2; w <= 2; w++) {
@@ -3067,8 +3284,10 @@ function respawn() {
 /* 掘って下の階へ抜けたとき、そこが何なのかを一度だけ知らせる。
    看板の出しようがない場所なので、これが無いと「ただの穴」に見える */
 const FLOOR_NOTE = {
-  [FLOOR_SUB]: '地下街に抜けた。SUBNADE ── 街の下をそのまま通りが走っている。階段で地上へ戻れる。',
+  [FLOOR_SUB]: '地下街に抜けた。SUBNADE ── 街の下をそのまま通りが走っている。'
+    + 'コインロッカーと自販機と、シャッターの下りた区画。組の人間は降りてこない。階段で地上へ戻れる。',
   [FLOOR_PARK]: 'さらに下、公共地下駐車場。積み上げた資材と、柱の陰に立っている連中。'
+    + 'ここに居るのは紅蓮一家とドラゴンズだけで、その二つは顔を合わせれば必ず揉める。'
     + 'ここまで警察は降りてこない ── 手配度が見る間に冷めていく。',
   // 中に入れる建物。初めて足を踏み入れた一度だけ出る
   [INDOOR_NAMES.toho[0]]: 'TOHOビルの中。通り抜けの脇にロビーが開いていて、'
@@ -4188,8 +4407,8 @@ const ARCH = [
     persona: '売上に追われるキャバ嬢。人当たりは良いが本音は醒めている。相手を値踏みしながら甘い言葉を使う。', gender: '女' },
   { k: 'scout', job: 'スカウト', fac: 'dragons', col: [.35, .35, .42], hp: 70, hair: [.1, .1, .12],
     persona: '路上で声をかけて店に流す男。話が早く、いつも金額から入る。歩きながら喋る。', gender: '男' },
-  { k: 'yakuza', job: '紅蓮会の構成員', fac: 'guren', col: [.12, .12, .16], hp: 130, hair: [.08, .08, .1],
-    persona: '紅蓮会の若い衆。シマの銭勘定にうるさく、舐められることを何より嫌う。低い声で短く喋る。', gender: '男' },
+  { k: 'yakuza', job: '紅蓮一家の構成員', fac: 'guren', col: [.12, .12, .16], hp: 130, hair: [.08, .08, .1],
+    persona: '紅蓮一家の若い衆。シマの銭勘定にうるさく、舐められることを何より嫌う。低い声で短く喋る。', gender: '男' },
   { k: 'hangure', job: '半グレ', fac: 'dragons', col: [.5, .2, .6], hp: 100, hair: [.6, .2, .3],
     persona: 'ドラゴンズの若い半グレ。上下関係が薄く、その場のノリで動く。挑発的で軽い。', gender: '男' },
   { k: 'cop', job: '新宿署の警官', fac: 'none', col: [.14, .18, .35], hp: 110, hair: [.1, .1, .12],
@@ -4271,7 +4490,11 @@ const ARCH = [
       + '音楽と箱の売上、そして人間の業の話を好む。'
       + '人格名（Enthusiast等）やAIであることには絶対に触れず、常に統合された自分の考えとして語る。', gender: '男' },
   /* ここから下は SUBNADE 地下街にいる人。floor を持つ者は地上ではなく地下に湧く。
-     地下街は地上と客層がまるで違う ── 夜の商売ではなく、ただの働いている人たち */
+     地下街は地上と客層がまるで違う ── 夜の商売ではなく、ただの働いている人たち。
+     ここの主は 商店組合（店を回している側）／アルカディア（地上の箱へ通う側）／
+     流れ者（ただ通り抜けるだけの人）の三つで、組の人間は降りてこない。
+     揉めない三者を同じ床に集めてあるので、地下街は静かなまま ── 血の気は
+     一枚下の駐車場に置いてある。降りるほど剣呑になる、という段の付け方。 */
   { k: 'subclerk', job: '地下街の店員', fac: 'local', col: [.30, .34, .42], hp: 45, hair: [.16, .14, .13],
     persona: 'サブナードの小さな店の店員。閉店間際で気もそぞろ。地上の喧噪には興味がなく、'
       + '地下街のことだけはやたら詳しい。丁寧だが早く帰りたい。', gender: '女', floor: SUB_Y },
@@ -4281,14 +4504,85 @@ const ARCH = [
   { k: 'guard', job: '地下街の警備員', fac: 'local', col: [.16, .18, .30], hp: 85, hair: [.10, .10, .12],
     persona: 'サブナードの警備員。地上の揉め事が降りてくるのを何より嫌う。'
       + '規則の話をしたがるが、本気で止める気はない。事務的で、少し疲れている。', gender: '男', floor: SUB_Y },
+  { k: 'subkissa', job: '喫茶店のマスター', fac: 'local', col: [.34, .28, .22], hp: 55, hair: [.30, .28, .26],
+    persona: 'サブナードの奥で何十年も同じ喫茶店を開けているマスター。'
+      + '地下街の店がいくつ入れ替わったかを全部覚えていて、閉まった区画の話をよくする。'
+      + '客の顔と注文は忘れないが、名前は聞かない。落ち着いた低い声で、'
+      + '急かされることを嫌う。地上の勢力争いには興味が無く、組合の寄合にだけは出る。', gender: '男', floor: SUB_Y },
+  /* アルカディアはこの階では「働いている人」ではなく「通っている人」── 地上の箱へ
+     出るのに、雨にも警察にも会わずに済む道がここしかない */
+  { k: 'submise', job: '地下街の美容師', fac: 'arcadia', col: [.62, .30, .58], hp: 45, hair: [.72, .34, .46],
+    persona: '地下街の小さな美容室で、夜の店のキャストの髪だけをやっている美容師。'
+      + '開くのが夕方で、閉めるのが始発前。客の口から店の内情が全部入ってくるので、'
+      + 'この街の誰が上がって誰が飛んだかをいちばん早く知っている。'
+      + '喋りは軽いが、聞いた話をどこで止めるかの線ははっきりしている。', gender: '女', floor: SUB_Y },
+  { k: 'subcast', job: '出勤前のキャスト', fac: 'arcadia', col: [.88, .40, .70], hp: 40, hair: [.80, .52, .40],
+    persona: '地上の箱へ出る前に、地下街を通って歩いているキャスト。'
+      + '雨の日も職質も避けられるので、この道しか使わない。'
+      + '同伴の時間を気にしていて、話しながらずっと携帯を見ている。'
+      + '愛想はいいが、足は止めない。売上と、指名と、辞めた子の話をする。', gender: '女', floor: SUB_Y },
+  /* 流れ者。この階でいちばん多いのは、組でも店でもない ただの通行人 ──
+     地下街は結局、上の街を素通りするための通路として使われている */
+  { k: 'subrush', job: '終電に急ぐ勤め人', fac: 'none', col: [.26, .28, .36], hp: 40, hair: [.14, .12, .11],
+    persona: '西武新宿駅へ急いでいる勤め人。地上を歩くより地下のほうが早いと知っている。'
+      + '早口で、返事が短い。時計と改札の話しかせず、'
+      + '呼び止められると露骨に迷惑そうな顔をする。悪い人間ではない。', gender: '男', floor: SUB_Y },
+  { k: 'submachi', job: '待ち合わせの人', fac: 'none', col: [.34, .36, .40], hp: 40, hair: [.20, .16, .14],
+    persona: '地下街の広場で人を待っている。もう一時間になる。'
+      + '手持ち無沙汰で、話しかけられると意外なほど付き合いがいい。'
+      + '待っている相手のことは詳しく言わない。地下街の店の入れ替わりに妙に詳しい。', gender: '女', floor: SUB_Y },
+  { k: 'subbench', job: 'ベンチの老人', fac: 'none', col: [.30, .30, .28], hp: 35, hair: [.62, .60, .58],
+    persona: '地下街のベンチに毎晩座っている老人。行くあてがあるようには見えない。'
+      + '地上より暖かくて、雨が降らなくて、誰にも追われない ── それだけの理由でここにいる。'
+      + 'この街が何度作り直されたかを見てきていて、聞けばいくらでも喋る。'
+      + 'ぼそぼそとした、ゆっくりした話し方。', gender: '男', floor: SUB_Y },
   /* 公共地下駐車場にいる人。警察が降りてこないので、地上でできない話がここで進む。
-     店も客もいない場所にわざわざ居るのは、そういう用があるから */
-  { k: 'lookout', job: '紅蓮会の見張り', fac: 'guren', col: [.14, .12, .16], hp: 120, hair: [.08, .08, .1],
-    persona: '地下駐車場の柱の陰に立っている紅蓮会の見張り。誰が降りてきたかを見ている。'
+     店も客もいない場所にわざわざ居るのは、そういう用があるから。
+     この床にいるのは紅蓮一家とドラゴンズだけ ── 堅気は用が無いし、
+     用がある人間は二つの看板のどちらかを背負っている。 */
+  { k: 'lookout', job: '紅蓮一家の見張り', fac: 'guren', col: [.14, .12, .16], hp: 120, hair: [.08, .08, .1],
+    persona: '地下駐車場の柱の陰に立っている紅蓮一家の見張り。誰が降りてきたかを見ている。'
       + '用が無いなら帰れ、の一点張り。口数は少なく、値踏みするように喋る。', gender: '男', floor: PARK_Y },
   { k: 'runner', job: 'ドラゴンズの運び屋', fac: 'dragons', col: [.34, .18, .44], hp: 90, hair: [.55, .2, .3],
     persona: '地下駐車場で荷物を受け渡している運び屋。落ち着きがなく、常に時間を気にしている。'
       + '中身のことは絶対に言わないが、金の話には乗ってくる。早口。', gender: '男', floor: PARK_Y },
+  { k: 'wakagashira', job: '紅蓮一家の若頭', fac: 'guren', col: [.13, .11, .15], hp: 190, hair: [.07, .07, .09],
+    persona: '紅蓮一家の若頭。組長のすぐ下にいて、若い衆の始末を全部引き受けている男。'
+      + '地下駐車場では組長の斜め後ろに立っていて、話を通すならまずこの人間を通る。'
+      + '丁寧な言葉を使うが、中身は一つも譲っていない。'
+      + '組長の名前を軽く出す相手にだけ、はっきりと機嫌を悪くする。'
+      + 'ドラゴンズの若いのを「躾のなってない犬」と呼ぶ。', gender: '男', floor: PARK_Y },
+  { k: 'driver', job: 'ドラゴンズの運転手', fac: 'dragons', col: [.38, .16, .48], hp: 120, hair: [.62, .55, .18],
+    persona: 'ドラゴンズの車を回している運転手。地下駐車場に停めたまま、'
+      + 'エンジンを切らずに人と荷物を待っている。頭の行き先を全部知っている唯一の人間で、'
+      + 'そのことを聞かれるのを一番嫌がる。無駄口は叩かないが、車の話だけは長い。'
+      + '揉め事が始まれば真っ先に降りてくる。', gender: '男', floor: PARK_Y },
+  /* 二人の頭。名前を背負った一点物（fixed）なので、倒れたらその席ごと空く ──
+     地上には出てこない。事務所でも店でもなく、この街でいちばん人目が無くて
+     いちばん逃げ道が多い場所に立っている。
+     home はその立ち位置、court はそこから離れられる半径 ── 頭が地下を
+     うろうろ歩き回っていると、探しに行く相手ではなく通行人になってしまう。
+     加藤は車路スロープの正面（降りてくる者が最初に目に入る場所）、
+     王は東の隅（車を停めたまま人を待てる場所）。二人の円は重なっていないので、
+     顔を合わせるとしたら、どちらかの若い衆がもう一方を引っぱってきたとき。 */
+  { k: 'gurenBoss', job: '紅蓮一家の組長', fac: 'guren', col: [.16, .10, .12], hp: 300, hair: [.06, .06, .07],
+    fixed: '加藤 蓮司', home: { x: 56, z: 46 }, court: 9,
+    persona: '紅蓮一家の組長。この街のシマを親の代から預かってきた男で、'
+      + '柱の陰ではなく、車路スロープの正面にひとりで立っている ── 逃げる算段をしていない人間の立ち方。'
+      + '声を張らない。凄むこともしない。用件と金額と落とし前、その三つ以外は喋らない。'
+      + '筋を通す相手には一度だけ譲るが、二度目は無いと最初に言う。'
+      + '若い衆のことは「うちの者」としか呼ばず、その始末は自分でつけると決めている。'
+      + 'ドラゴンズのことは組でも敵でもなく「片付けていない仕事」として話す。'
+      + '一人称は「わし」。相手を値踏みし終えるまで、目を逸らさない。', gender: '男', floor: PARK_Y },
+  { k: 'dragonsBoss', job: 'ドラゴンズの頭', fac: 'dragons', col: [.42, .14, .50], hp: 270, hair: [.74, .64, .16],
+    fixed: '王 南', home: { x: 106, z: 112 }, court: 9,
+    persona: 'ドラゴンズの頭。歌舞伎町の裏で育った男で、盃も代紋も持たないまま人と金だけを集めた。'
+      + '地下駐車場を溜まり場にしていて、車のボンネットに腰かけたまま話す。'
+      + '軽い口調で、笑いながら一番きついことを言う。数字と速さの話が好きで、'
+      + '義理や筋という言葉が出てくると露骨に退屈そうにする。'
+      + '紅蓮一家のことは「終わった商売」と言い切り、加藤の名前を出されると急に静かになる。'
+      + '日本語は流暢だが、苛立つと中国語が一言だけ混ざる。'
+      + '一人称は「俺」。相手が誰であっても敬語は使わない。', gender: '男', floor: PARK_Y },
   /* ここから下は建物の中で働いている人。spot（持ち場）を持つ者は通りの格子ではなく
      その部屋の中だけを歩く。夜の商売の連中とは違って、ここで働いているだけの人たち */
   { k: 'ekiin', job: '駅員', fac: 'local', col: [.18, .22, .38], hp: 60, hair: [.12, .12, .13],
@@ -4318,7 +4612,11 @@ const TREAT = {
   cop: 300000, yakuza: 300000, host: 500000, info: 500000,
   /* トー横の子はそもそも金を持っていない ── 相場は一杯ではなく一食のほう。
      辻君は現金商売、薬屋と勝負師はこの街でいちばん現金が動く役どころ */
-  toyokoB: 10000, toyokoG: 10000, tsujigimi: 40000, shoubushi: 150000, kusuri: 200000
+  toyokoB: 10000, toyokoG: 10000, tsujigimi: 40000, shoubushi: 150000, kusuri: 200000,
+  // 地下街の面々。地上の夜の商売とは桁がひとつ違う ── ここは通勤路と職場
+  subkissa: 20000, submise: 60000, subcast: 120000, subrush: 20000, submachi: 20000, subbench: 10000,
+  // 頭ふたりと、そのすぐ下。この街でいちばん高い相場で、一杯おごって済む相手ではない
+  gurenBoss: 1000000, dragonsBoss: 800000, wakagashira: 400000, driver: 120000
 };
 const treatYen = a => TREAT[a.k] || 50000;
 /* 懐の中身の目安。ふだん動かしている額（TREAT）と、その人が持ち歩いている現金は
@@ -4327,7 +4625,12 @@ const treatYen = a => TREAT[a.k] || 50000;
 const PURSE = { cop: 40000, guard: 30000, subclerk: 30000, info: 300000,
   ekiin: 30000, shukuchoku: 20000, usher: 20000,
   // 家出中の子の懐は本当に空。辻君と薬屋はその晩の売上をそのまま持って立っている
-  toyokoB: 3000, toyokoG: 3000, tsujigimi: 120000, kusuri: 400000 };
+  toyokoB: 3000, toyokoG: 3000, tsujigimi: 120000, kusuri: 400000,
+  // 地下街は現金商売の場所ではない。老人の懐はこの街でいちばん軽い
+  subkissa: 40000, submise: 50000, subcast: 60000, subrush: 25000, submachi: 15000, subbench: 2000,
+  /* 頭は現金を持ち歩かない。動かす額と、その場で抜ける額はまるで別もの ──
+     倒しても懐から出てくるのは知れている。値打ちはシマのほうにある */
+  gurenBoss: 300000, dragonsBoss: 250000 };
 const purseYen = a => PURSE[a.k] || treatYen(a);
 const SEI = ['佐々木', '黒岩', '桐生', '真壁', '一之瀬', '鮫島', '氷室', '早乙女', '猪熊', '九条', '天堂', '甲斐', '朝倉', '不破', '獅子堂', '苅部'];
 const MEI_M = ['亮', '哲', '龍司', '慎', '拓海', '大河', '晴', '樹', '零', '要', '蓮', '匠'];
@@ -4361,8 +4664,13 @@ function makeNPC(arch, x, z) {
     bark: '', barkT: 0, hist: [], crew: false, work: null, down: 0, hostile: false,
     barkCount: 0, lastAI: 0,
     // 街の連中どうしの絡み。soc は次に誰かと絡むまでの間
-    soc: rnd(3, 25), foe: null, chatQ: null, chatT: 0, brawlT: 0,
+    // assist は加勢に入った側の印。相手の foe にはならないまま殴りかかっている状態
+    soc: rnd(3, 25), foe: null, chatQ: null, chatT: 0, brawlT: 0, assist: false,
     arm: 0, armPhase: 0, armT: 0, giveup: 0,
+    /* 縄張りの中心と、そこから離れられる半径。court が 0 なら縛りなし ──
+       ふつうの通行人は街のどこへでも流れていく。頭（と、その周りを固める者）だけが
+       この円を持っていて、道順も追いかけも、円の外へは出ない */
+    hx: arch.home ? arch.home.x : x, hz: arch.home ? arch.home.z : z, court: arch.court || 0,
     // 迂回と「追いつけない」の検出用
     detour: 0, dside: 1, dcool: 0, stuck: 0, px: x, pz: z, pt: 0, far: 0, lost: 0, best: Infinity, bt: 0
   };
@@ -4373,13 +4681,18 @@ function makeNPC(arch, x, z) {
    （SUB_NODES）から次の行き先を選ぶ。1 本道でも枝でも同じ手順で歩ける */
 function routeSub(n, init) {
   if (init) resetPath(n);
-  const nodes = floorNodes(n.floor);
+  const all = floorNodes(n.floor);
+  /* 縄張りを持つ者は、その円の中の点しか行き先に選ばない ── 頭が地下じゅうを
+     歩き回っていると、探しに行く相手ではなくただの通行人になってしまう。
+     円が狭いぶん次の行き先も近いので、遠くを選ぶ足切り（d > 5）も緩める */
+  const nodes = n.court > 0
+    ? all.filter(p => Math.hypot(p.x - n.hx, p.z - n.hz) <= n.court) : all;
   const cands = [];
   for (const p of nodes) {
     const d = Math.hypot(p.x - n.x, p.z - n.z);
-    if (d > 5 && d < 30) cands.push(p);
+    if (d > (n.court > 0 ? 1.5 : 5) && d < 30) cands.push(p);
   }
-  const t = cands.length ? pick(cands) : pick(nodes);
+  const t = cands.length ? pick(cands) : (nodes.length ? pick(nodes) : pick(all));
   n.tx = t.x; n.tz = t.z;
 }
 function routeNext(n, init) {
@@ -4422,6 +4735,14 @@ function npcSpot(arch, club) {
     }
     return { x: (arch.spot.x0 + arch.spot.x1 + 1) / 2, z: (arch.spot.z0 + arch.spot.z1 + 1) / 2, y: fy };
   }
+  /* 立ち位置が決まっている者（頭）。柱やパレットに当たらない床を、その一点の
+     まわりで探す。見つからなければ下の抽選に落ちるので、地形を変えても湧かなくならない */
+  if (arch.home) {
+    for (let k = 0; k < 40; k++) {
+      x = arch.home.x + rnd(-2.5, 2.5); z = arch.home.z + rnd(-2.5, 2.5);
+      if (surfaceY(x, z, fy) === fy) return { x, z, y: fy };
+    }
+  }
   for (let k = 0; k < 16; k++) {
     if (fy !== GY) {                       // 地下の住人。その階のノードから選ぶ
       const t = pick(floorNodes(fy));
@@ -4453,7 +4774,14 @@ function spawnCrowd() {
   // dj は 1 人だけ（武田 伸也）。ホストクラブの前に立たせる
   const counts = { host: 6, kyaba: 5, scout: 4, yakuza: 5, hangure: 5, cop: 4, drunk: 6,
     tout: 4, info: 2, bartender: 2, fortune: 2, busker: 2, tourist: 3, homeless: 3, idol: 2,
-    ramen: 2, dj: 1, subclerk: 5, sweeper: 3, guard: 3, lookout: 4, runner: 3,
+    ramen: 2, dj: 1, subclerk: 5, sweeper: 3, guard: 3, lookout: 8, runner: 6,
+    /* 地下街は 商店組合・アルカディア・流れ者 の三者で埋める。地上より人数が多いのは
+       ここが通路だから ── 誰も留まらないが、誰もが通る */
+    subkissa: 2, submise: 2, subcast: 3, subrush: 4, submachi: 3, subbench: 2,
+    /* 駐車場は紅蓮一家とドラゴンズだけ。地下街より人数を厚くしてある ── 二つの組が
+       同じ床を使っていて、そのうち半分近くは頭の周りを固めているので、
+       通路を流している頭数は見た目ほど多くない。頭はそれぞれ一人（fixed なので補充されない） */
+    wakagashira: 3, driver: 3, gurenBoss: 1, dragonsBoss: 1,
     ekiin: 2, shukuchoku: 2, usher: 2,
     // 一帯に固まって立つ役どころ。散らばらないぶん、少なくても目に入る
     kusuri: 3, shoubushi: 3, toyokoB: 2, toyokoG: 2, tsujigimi: 3 };
@@ -4466,6 +4794,53 @@ function spawnCrowd() {
       : a.near ? a.near.reduce((f, k) => f || Shops.find(s => s.type.key === k), null) : null;
     for (let i = 0; i < (counts[a.k] || 3); i++) spawnNPC(a, club);
   }
+  ringBosses(true);
+}
+/* ---- 頭を囲む -------------------------------------------------------------
+   組の看板が一人で立っていることはない。湧かせたあとで、同じ床にいる同じ組の者を
+   何人か頭の周りへ並べ直し、頭と同じ縄張り（court）を持たせる ── 以後その連中は
+   頭の円から出ないので、地下駐車場は「二つの人だかりと、その間を流している連中」
+   という見え方になる。囲いに取られなかったぶんが、フロアを歩き回る側。
+   place を落として呼ぶと立ち位置は動かさない（読み込み直後の付け直し用）。      */
+const GUARD_N = 4;                       // 頭ひとりに付ける人数
+function ringBosses(place) {
+  for (const b of NPCs) {
+    if (!b.arch.court || !b.arch.fixed || b.dead) continue;       // 頭だけ
+    /* すでに付いている頭数を数えてから足りないぶんだけ足す ── 数えずに毎回
+       GUARD_N 人を足すと、呼び直すたび（読み込み・補充）に囲いが厚くなっていく */
+    const have = NPCs.filter(n => n !== b && !n.dead && n.court > 0
+      && n.hx === b.hx && n.hz === b.hz).length;
+    if (have >= GUARD_N) continue;
+    /* 近い者から取る。遠くの一人を呼び寄せると、そいつが居たあたりが
+       ぽっかり空いて、フロアの人の散り方が偏る */
+    const men = NPCs.filter(n => n !== b && !n.court && !n.crew && !n.dead
+      && n.floor === b.floor && n.arch.fac === b.arch.fac && !n.arch.fixed)
+      .sort((p, q) => dist2(p, b) - dist2(q, b));
+    for (let i = have; i < Math.min(GUARD_N, have + men.length); i++) {
+      const n = men[i - have];
+      n.hx = b.hx; n.hz = b.hz; n.court = b.court + 2.5;
+      if (place) {
+        /* 頭を中心にした円。半径を二段にして、前と後ろの二重に立たせる。
+           柱・パレット・スロープに当たったら、角度を回してから半径を広げる ──
+           先に半径だけ伸ばすと、柱の裏に一人だけ遠く弾き出される */
+        const ang0 = i / GUARD_N * Math.PI * 2 + 0.4, r0 = 2.6 + (i % 2) * 1.5;
+        let put = false;
+        for (let ri = 0; ri < 10 && !put; ri++) for (let ai = 0; ai < 16 && !put; ai++) {
+          /* 本来の向きから左右へ交互に振り、それでも駄目なら半径を広げる ──
+             先に半径だけ伸ばすと、柱の裏へ一人だけ遠くに弾き出される。
+             いちばん外まで行っても court(11.5) の内側に収まる */
+          const ang = ang0 + (ai % 2 ? 1 : -1) * Math.ceil(ai / 2) * 0.39;
+          const r = r0 + ri * 0.7;
+          const px = b.x + Math.cos(ang) * r, pz = b.z + Math.sin(ang) * r;
+          if (surfaceY(px, pz, b.floor) !== b.floor) continue;
+          n.x = px; n.z = pz; n.y = b.y;
+          n.yaw = Math.atan2(b.x - n.x, b.z - n.z);               // 頭のほうを向いて立つ
+          put = true;
+        }
+      }
+      routeNext(n, true);
+    }
+  }
 }
 // 迷子や高いところに取り残された通行人を、近くの通りへ戻す
 function placeOnRoad(n) {
@@ -4475,8 +4850,10 @@ function placeOnRoad(n) {
     routeNext(n, true); return;
   }
   if (n.floor !== GY) {                          // 地下街の住人は地下へ戻す
-    for (let k = 0; k < 20; k++) {
+    for (let k = 0; k < 24; k++) {
       const t = pick(floorNodes(n.floor));
+      // 縄張りを持つ者はその円の中へ。16 回まで粘って、駄目なら円は諦める
+      if (k < 16 && n.court > 0 && Math.hypot(t.x - n.hx, t.z - n.hz) > n.court) continue;
       if (surfaceY(t.x, t.z, n.floor) === n.floor) { n.x = t.x; n.z = t.z; n.y = n.floor; break; }
     }
     routeNext(n, true); return;
@@ -4613,8 +4990,10 @@ function joinCrew(n) {
   return true;
 }
 
-/* 潰されるとシマが大きく動く役どころ。組の看板を背負って立っている連中 */
-const HEAVY_K = ['yakuza', 'hangure', 'lookout', 'runner'];
+/* 潰されるとシマが大きく動く役どころ。組の看板を背負って立っている連中 ──
+   頭ふたりはその看板そのものなので、当然ここに入る */
+const HEAVY_K = ['yakuza', 'hangure', 'lookout', 'runner', 'gurenBoss', 'dragonsBoss',
+  'wakagashira', 'driver'];
 const isHeavy = n => HEAVY_K.includes(n.arch.k);
 /* 地力の上げ下げ。傘下を呑んだ勢力は上限を超えていることがあるので、
    Math.min だけで書くと勝った側がかえって痩せる。下限は 1（足場は消えない） */
@@ -4731,7 +5110,7 @@ function crewFoe(n) {
 const FAV_ABSORB = 100, FAV_WAR = 0;
 /* 勢力ごとの出発点。放っておけばここへ戻る「素の見方」でもある ──
    ドラゴンズは最初から突っかかってくるし、アルカディアは話を聞く耳がある。
-   商店組合は看板を出す相手には甘く、紅蓮会は値踏みから始める。 */
+   商店組合は看板を出す相手には甘く、紅蓮一家は値踏みから始める。 */
 const FAV_BASE = { guren: 50, dragons: 35, arcadia: 60, local: 55 };
 const HOSTILE = 50;                      // 勢力どうしが路上でやり合う温度（Feud の目盛り）
 const Fav = { ...FAV_BASE };
@@ -4805,7 +5184,7 @@ function checkWarEnd(f) {
 
 /* ---- 勢力どうしの間柄 ----------------------------------------------------
    50 以上なら、路上で出くわした構成員どうしがその場で殴り合う。
-   紅蓮会とドラゴンズ、ドラゴンズと商店組合 ── この街の火種はその二本。
+   紅蓮一家とドラゴンズ、ドラゴンズと商店組合 ── この街の火種はその二本。
    アルカディアはどの組とも事を構えない。かわりに手入れに来る警官とだけ折り合わない。 */
 const feudKey = (a, b) => a < b ? a + '|' + b : b + '|' + a;
 const Feud = {
@@ -4834,8 +5213,8 @@ const COP_HEAT = [7, 15];
    路上の立ち話に出るのは、殴り合いの温度（Feud）ではなくこちらの上下と思惑。
    拳が出ない相手どうしにも力関係はあって、それは口の利き方に出る。
 
-     公権力 → 紅蓮会 → 商店組合     縦に締まっている一本の線
-     ドラゴンズ                     その線ぜんぶに逆らう。紅蓮会は倒す相手、
+     公権力 → 紅蓮一家 → 商店組合     縦に締まっている一本の線
+     ドラゴンズ                     その線ぜんぶに逆らう。紅蓮一家は倒す相手、
                                     アルカディアと商店組合は呑む相手
      アルカディア                   どこにも属さず、誰とも揉めない。
                                     ただし踏み込んでくる公権力にだけは折れない
@@ -5412,7 +5791,7 @@ const OFF_BARK = {
   kyaba: ['同伴、間に合わないかも', 'ねえ、ちょっとだけ', '今日は指名ゼロ'],
   dj: ['次、上げてくよ', 'この箱、今日は回ってる', 'シャンパン入ったらすぐ曲変える'],
   scout: ['{お兄}、いま時間ある？', '日給、悪くない話あるよ', 'その辺の店より出るって'],
-  yakuza: ['……壁削ってんじゃねぇよ', 'ここは紅蓮会のシマだ', '揉めたいなら付き合うぞ'],
+  yakuza: ['……壁削ってんじゃねぇよ', 'ここは紅蓮一家のシマだ', '揉めたいなら付き合うぞ'],
   hangure: ['アガリ、まだ来てねぇの？', '{兄}、いい服着てんな', 'なあ、遊ぼうぜ'],
   cop: ['ここで立ち止まらないで', '器物損壊、見てるからな', '身分証、持ってる？'],
   drunk: ['もう一軒……もう一軒だけ', '終電？とっくにねぇよ', 'なあ、聞いてくれよ'],
@@ -5430,6 +5809,18 @@ const OFF_BARK = {
   guard: ['ここで揉めないでくれ', '壁は壊さないでください', '巡回中です'],
   lookout: ['……何の用だ', 'ここは通り道じゃねぇぞ', '上へ戻んな'],
   runner: ['時間が無いんだよ', '見なかったことにしてくれ', '車、遅れてる'],
+  // 頭ふたり。声を張る必要が無い側と、張らずに笑う側
+  gurenBoss: ['……用件を言え', 'ここまで降りてきた理由があるんだろう', 'わしに会いに来たか'],
+  dragonsBoss: ['なんだ、迷子か？', '面白ぇ顔してんな、あんた', '金の話なら聞くぜ'],
+  wakagashira: ['……どちらさんで', '話は俺が聞きます', '親父に会う気ですか'],
+  driver: ['エンジンは切らねぇよ', 'ここ、停めていい場所じゃねぇぞ', '……乗るのか、乗らねぇのか'],
+  // 地下街。地上の呼び込みとは声の張り方が違う ── ここは誰も客を探していない
+  subkissa: ['……もう仕舞いだよ', '座るかい', 'この区画も、また一軒閉まった'],
+  submise: ['予約？ 今日はもう埋まってる', '……その髪、誰にやらせたの', '出勤前でしょ、急ぐ？'],
+  subcast: ['ごめん、時間なくて', '同伴、間に合わないかも', 'この道が一番早いんだよね'],
+  subrush: ['……すみません、急いでて', '終電、あと何分だ', 'そこ、通してください'],
+  submachi: ['もう一時間待ってる', '……来ないな', 'ここ、待ち合わせしやすいでしょ'],
+  subbench: ['……', '上より暖かいんだよ', 'ここは雨が降らない'],
   // 表の棚の話だけは大声で言う。奥の棚のことは、この通りでは口に出さない
   kusuri: ['サプリ、置いてるよ', '……表の用？ それとも', '効くやつは奥にある'],
   shoubushi: ['次で取り返す', '半か、丁か', '今日は目が来てる', '入った端から出ていくのさ'],
@@ -5449,7 +5840,7 @@ const OFF_SAY = {
   deal: { hi: ['あんたの金なら受け取るよ', '話が早いのは好きだ'],
     lo: ['金の話なら早いな', 'いくら出す？'] },
   inform: { hi: ['あんたにだから言うけどな', 'ここだけの話だ'],
-    lo: ['この先のシマ、揉めてるらしいぜ', '紅蓮会が場所を探してるとよ'] },
+    lo: ['この先のシマ、揉めてるらしいぜ', '紅蓮一家が場所を探してるとよ'] },
   idle: { hi: ['また来たのか。座れよ', '景気はどうだい'], lo: [] },
   /* おごられたときの返し。額が相場の何倍かで段を選ぶ（treatStep が決める） */
   treat: {
@@ -6095,7 +6486,7 @@ $('t-yen').addEventListener('focus', () => $('t-yen').select());
    13. 戦闘・物件・警察
    ========================================================================= */
 /* ---- 街に出ている武器 ----------------------------------------------------
-   警官と紅蓮会は拳銃を持っている。離れていても届き、そのぶん間合いを取っても
+   警官と紅蓮一家は拳銃を持っている。離れていても届き、そのぶん間合いを取っても
    逃げ切れない ── かわりに遠いほど当たらず、次の一発までが長い。
    ドラゴンズは鉄パイプ。届く距離は素手と同じだが、一発が重い。
    ここに載っていない役どころは素手（7）。                                  */
@@ -6105,7 +6496,13 @@ const NPC_ARM = {
   lookout: { n: '拳銃', gun: true, dmg: 16, reach: 13, cd: 2.2 },
   hangure: { n: '鉄パイプ', dmg: 15, reach: 1.9, cd: 1.15 },
   scout:   { n: '鉄パイプ', dmg: 12, reach: 1.9, cd: 1.15 },
-  runner:  { n: '鉄パイプ', dmg: 13, reach: 1.9, cd: 1.15 }
+  runner:  { n: '鉄パイプ', dmg: 13, reach: 1.9, cd: 1.15 },
+  /* 頭の得物。組長は拳銃、ドラゴンズの頭は匕首 ── 撃たれる怖さと、
+     間合いに入られる怖さで、二人の詰め方が変わる */
+  gurenBoss:   { n: '拳銃', gun: true, dmg: 22, reach: 16, cd: 1.8 },
+  dragonsBoss: { n: '匕首', dmg: 20, reach: 2.1, cd: 0.95 },
+  wakagashira: { n: '拳銃', gun: true, dmg: 18, reach: 14, cd: 2.0 },
+  driver:      { n: '鉄パイプ', dmg: 16, reach: 1.9, cd: 1.1 }
 };
 const armOf = n => NPC_ARM[n.arch.k] || null;
 /* 目と目のあいだに壁があるか。弾はブロックを抜けないので、撃つ側も撃たれる側も見る。
@@ -6292,7 +6689,7 @@ function defeatNPC(hit) {
   const loot = sen(hit.yen * 0.4);
   if (loot > 0) { P.yen += loot; hit.yen -= loot; log(`${yen(loot)} 奪った`, 'money'); }
   /* 拳銃はクラフトできない。持っている相手を倒して抜き取る以外に手に入らない ──
-     つまり警官か紅蓮会を潰すのが唯一の入手経路で、そのぶん代償が付いてくる */
+     つまり警官か紅蓮一家を潰すのが唯一の入手経路で、そのぶん代償が付いてくる */
   const arm = armOf(hit);
   if (arm && arm.gun && Math.random() < 0.5) {
     const had = !!Craft.owned.gun;
@@ -6305,6 +6702,9 @@ function defeatNPC(hit) {
 }
 function witness(victim) {
   let seen = 0;
+  // 殴られたのが誰の側の人間か。看板を背負っている側なら、見ていた身内が加勢に入る
+  const vs = victim ? sideOf(victim) : null;
+  const aided = vs && vs !== 'player' && isRival(vs);
   for (const n of NPCs) {
     if (n === victim || n.down > 0) continue;
     if (Math.hypot(n.x - P.x, n.z - P.z) < 16) {
@@ -6312,6 +6712,14 @@ function witness(victim) {
       if (n.arch.k === 'cop') {
         P.wanted = clamp(P.wanted + 26, 0, 100);
         n.hostile = true; n.giveup = 0; n.state = 'attack';   // 目の前で見た警官は諦めていない
+      }
+      /* 身内が殴られるところを目の前で見た構成員は、そのまま加勢に入る ──
+         腕の立たない役どころは寄らずに散る。流れ者には庇う相手という概念が無い */
+      else if (aided && !n.crew && sideOf(n) === vs && Math.abs(n.y - P.y) < 4) {
+        n.hostile = true; n.giveup = 0;
+        n.state = n.arch.hp < 60 ? 'flee' : 'attack';
+        if (n.state === 'flee') n.t = 5;
+        else if (n.barkT <= 0) say(n, pick(AID_CALL[vs] || AID_CALL.none), 3.2);
       }
       else if (n.arch.hp < 60 && Math.random() < 0.4) { n.state = 'flee'; n.t = 5; }
     }
@@ -6800,7 +7208,7 @@ const countState = s => NPCs.reduce((a, n) => a + (n.state === s ? 1 : 0), 0);
 /* 絡みから抜けて歩きに戻す。相手を離し、振り上げた腕を下ろし、道順を引き直す。
    soc は次に誰かと絡むまでの間 ── 決着の付き方で長さが変わる */
 function toWalk(n, soc) {
-  n.state = 'walk'; n.foe = null; n.arm = 0; n.armT = 0;
+  n.state = 'walk'; n.foe = null; n.arm = 0; n.armT = 0; n.assist = false;
   n.soc = soc != null ? soc : rnd(25, 60);
   routeNext(n, true);
 }
@@ -6808,7 +7216,7 @@ function toWalk(n, soc) {
 const BRAWL_OPEN = {
   // 警官はここだけ別。勢力ではないので sideOf は none に落ちる（cop で先に引く）
   cop: ['署まで来てもらう', '手を離せと言った', 'そこまでだ'],
-  guren: ['ここは紅蓮会のシマだ', '誰に断って立ってる', 'その面、覚えたぞ'],
+  guren: ['ここは紅蓮一家のシマだ', '誰に断って立ってる', 'その面、覚えたぞ'],
   dragons: ['邪魔なんだよジジイ', 'いつまで昭和やってんだ', 'やんのか？'],
   arcadia: ['うちの客に手ぇ出すな', 'ふざけんじゃねぇ', '表出ろよ'],
   local: ['いい加減にしろって', 'ここでやるな', 'あんたら毎晩かよ'],
@@ -6838,19 +7246,19 @@ const CHAT_SCRIPTS = [
    締めている側から始まる台本と、逆らう側から始まる台本を分けてある。
    AI に繋がっていればこちらは使われないが、繋がらない夜でも上下は見えるべき。 */
 const CHAT_PAIR = {
-  // 公権力 → 紅蓮会。手綱を握っているという口の利き方
+  // 公権力 → 紅蓮一家。手綱を握っているという口の利き方
   'cops>guren': [
     ['また事務所に顔を出すぞ', '……勘弁してくださいよ', '勘弁は毎回聞いた', 'ええ、毎回言ってます'],
     ['最近、若いのが騒がしいな', 'こちらで締めておきます', '締める前に一報を入れろ', '……はい'],
     ['名簿は増えてないだろうな', '減る一方ですよ', 'それでいい', '……ええ、それで']
   ],
-  // 紅蓮会 → 商店組合。面倒を見ている／納めさせている
+  // 紅蓮一家 → 商店組合。面倒を見ている／納めさせている
   'guren>local': [
     ['今月ぶん、揃ってるか', '……あと少しだけ待ってください', '待つのは今夜までだ', 'はい'],
     ['店、綺麗にしてるな', 'おかげさまで', 'おかげが分かってるならいい', '……ええ'],
     ['この通り、誰が静かにしてると思ってる', '……分かっています', 'なら話は早い', 'はい']
   ],
-  // ドラゴンズ → 紅蓮会。倒す相手として面と向かって煽る
+  // ドラゴンズ → 紅蓮一家。倒す相手として面と向かって煽る
   'dragons>guren': [
     ['まだそのバッジ着けてんのか', '……口の利き方を覚えろ', '覚える気はねぇよ', 'その面、覚えたぞ'],
     ['そっちの若い衆、うちに来たがってたぜ', '寝言は寝て言え', '寝てるのはあんたらだろ', '……表へ出るか']
@@ -6885,7 +7293,7 @@ const CHAT_PAIR = {
     ['今日は静かですね', 'おかげさまで', 'こっちの客も回しますよ', '助かる'],
     ['表の看板、直しました？', '直した。あんたに言われてな', '目立ってますよ', 'それが狙いだ']
   ],
-  // アルカディア → 紅蓮会。払うものは払う、それ以上は付き合わない
+  // アルカディア → 紅蓮一家。払うものは払う、それ以上は付き合わない
   'arcadia>guren': [
     ['今月ぶんです', '……ああ', 'それでは', '愛想がねぇな']
   ],
@@ -6903,17 +7311,19 @@ function pairScript(a, b) {
   return { script: pick(CHAT_SCRIPTS), swap: false };
 }
 let socT = 0, lastDuo = 0;
-function startBrawl(a, b) {
+// quiet を立てるのは加勢で増えた組。一つの喧嘩の広がりを何行にも分けて流さない
+function startBrawl(a, b, quiet) {
   const sa = sideOf(a), sb = sideOf(b);
   a.state = b.state = 'brawl';
   a.foe = b; b.foe = a;
+  a.assist = b.assist = false;               // 一対一で始まる。加勢はここから広がる
   a.atk = rnd(0.2, 0.7); b.atk = rnd(0.5, 1.1);
   a.brawlT = b.brawlT = 16;
   a.soc = b.soc = 999;                       // 決着がつくまで別の絡みに入らない
   // 口火は「その人の側」の言い方で。警官だけは役どころのほうを先に引く
   say(a, pick(BRAWL_OPEN[a.arch.k === 'cop' ? 'cop' : sa] || BRAWL_OPEN.none), 3.4);
   if (canHear(a)) {
-    log(`${facName(sa)}の${a.name}と${facName(sb)}の${b.name}が殴り合いを始めた。`, 'bad');
+    if (!quiet) log(`${facName(sa)}の${a.name}と${facName(sb)}の${b.name}が殴り合いを始めた。`, 'bad');
     Snd.swing();
   }
 }
@@ -6949,10 +7359,83 @@ function winBrawl(w, l) {
   if (fw === 'player' || fl === 'player') hud();
 }
 function endBrawl(n, scatter) {
-  const m = n.foe;
+  const m = n.foe, wasAid = n.assist;
   toWalk(n);
   if (m && m.foe === n) { toWalk(m); if (scatter) { m.state = 'flee'; m.t = 4; } }
   if (scatter) { n.state = 'flee'; n.t = 4; }
+  if (wasAid) return;              // 横から入っていた者が抜けただけ。当人たちは続けている
+  /* 加勢の側は相手の foe になっていないので、当人たちが離れても殴る相手を掴んだまま
+     になる。この喧嘩に寄っていたぶんは、ここで一緒に解く */
+  for (const o of NPCs) {
+    if (!o.assist || o.state !== 'brawl' || (o.foe !== n && o.foe !== m)) continue;
+    toWalk(o);
+    if (scatter) { o.state = 'flee'; o.t = 4; }
+  }
+}
+/* ---- 加勢 ----------------------------------------------------------------
+   目の前で身内が殴られているのに素通りする構成員はいない。殴り合いが始まると、
+   見えている範囲にいる同じ側の人間が寄ってくる ── 相手側にも手の空いた者がいれば
+   その二人でもう一組の殴り合いになり、居なければ寄ってたかって一人を囲む。
+   一対一の組（foe が互いを指し合っている）は崩さず、余ったほうは assist として
+   横から殴る ── 決着の付き方（winBrawl）も離れ方（endBrawl）も今までと変わらない。
+   広がるのはプレイヤーに見えている喧嘩だけ。見えないところで人数が増えても、
+   ログに数字が流れるだけの出来事になってしまう。                              */
+const AID_NEAR = 20;         // 加勢に入る距離。喧嘩の真ん中から測る
+const AID_MAX = 8;           // 一つの喧嘩に集まる頭数の上限（当事者ふたりを含む）
+const AID_ODDS = 0.5;        // 0.5 秒ごとの判定。全員が一斉に走り出さないように
+/* 加勢に入れる身か。立ち話の間合い（soc）だけは見ない ── 身内が殴られているのに
+   「まだ人と絡む番じゃない」で素通りするのは、この街の構成員の振る舞いではない。
+   持ち場のある者（店番・駅員）が動かないのは socIdle と同じ */
+const aidIdle = n => n.down <= 0 && !n.hostile && (!n.arch.spot || n.crew)
+  && (n.state === 'walk' || n.state === 'follow');
+const AID_CALL = {
+  guren: ['うちの者に何してる', 'そこどけ、わしがやる', '囲め'],
+  dragons: ['おい、こっち来い', 'やんならこっちもやんぞ', '一人でやらせんな'],
+  arcadia: ['うちの子に手ぇ出すな', 'そこまでにしとけ'],
+  local: ['この通りでやるな', 'いい加減にしろって'],
+  none: ['……見てられねぇな', 'やめとけって'],
+  player: ['{兄}に手ぇ出したな', '加勢するぞ', 'こっちも行く']
+};
+/* 横から入る側。相手の foe は掴まない ── 掴み返させると、いま殴り合っている
+   当人の組が解けて、囲んだはずの喧嘩が一対一に戻ってしまう */
+function joinAid(n, tgt) {
+  n.state = 'brawl'; n.assist = true; n.foe = tgt;
+  n.atk = rnd(0.3, 0.9); n.brawlT = 14; n.soc = 999;
+  say(n, pick(AID_CALL[sideOf(n)] || AID_CALL.none), 3.2);
+}
+function aidBrawls() {
+  for (const a of NPCs) {
+    const b = a.foe;
+    // 一対一で成立している組だけを「喧嘩」として数える（加勢の側は指し返されない）
+    if (a.state !== 'brawl' || a.assist || !b || b.foe !== a || b.state !== 'brawl') continue;
+    if (a.id > b.id) continue;                                 // 一組を二度見ない
+    if (a.arch.k === 'cop' || b.arch.k === 'cop') continue;    // 手入れは加勢の話ではない
+    if (!inSight(a) && !inSight(b)) continue;
+    const cx = (a.x + b.x) / 2, cz = (a.z + b.z) / 2;
+    const near = o => Math.abs(o.y - a.y) < 2.5
+      && (o.x - cx) * (o.x - cx) + (o.z - cz) * (o.z - cz) < AID_NEAR * AID_NEAR;
+    let head = 0;
+    for (const o of NPCs) if (o.state === 'brawl' && near(o)) head++;
+    if (head >= AID_MAX) continue;
+    const sa = sideOf(a), sb = sideOf(b);
+    const mine = [], theirs = [];
+    for (const o of NPCs) {
+      if (o === a || o === b || o.arch.k === 'cop' || !aidIdle(o) || !near(o)) continue;
+      if (Math.random() > AID_ODDS) continue;
+      const so = sideOf(o);
+      if (so === sa && npcHostility(o, b) >= HOSTILE) mine.push(o);
+      else if (so === sb && npcHostility(o, a) >= HOSTILE) theirs.push(o);
+    }
+    let joined = 0;
+    while (head < AID_MAX && (mine.length || theirs.length)) {
+      const x = mine.shift(), y = theirs.shift();
+      // 双方に手の空いた者がいれば、その二人でもう一組。片方だけなら横から入る
+      if (x && y) { startBrawl(x, y, true); head += 2; joined += 2; }
+      else { joinAid(x || y, x ? b : a); head++; joined++; }
+    }
+    if (joined && canHear(a))
+      log(`${joined} 人が加勢に入った。${facName(sa)}と${facName(sb)}の喧嘩が広がっている。`, 'bad');
+  }
 }
 function startChat(a, b) {
   a.state = b.state = 'chat';
@@ -7033,6 +7516,8 @@ function updateSocial(dt) {
     }
   }
   if (!started) return;
+  // 始まっている喧嘩に人が寄る。新しい喧嘩を探すより先に見る
+  aidBrawls();
   let brawls = countState('brawl') / 2, chats = countState('chat') / 2;
   for (const n of NPCs) {
     if (!socIdle(n) || !inSight(n)) continue;
@@ -7080,6 +7565,9 @@ function reapNPCs() {
     // 消えた相手を掴んだままだと、空を相手に殴り合い・立ち話を続けてしまう
     for (const m of NPCs) if (m.foe === n) toWalk(m);
     if (!n.arch.fixed) spawnNPC(n.arch);
+    /* 囲いの一人が欠けたなら、代わりの者に付き直させる。立ち位置は動かさない ──
+       目の前で人が入れ替わって見えるより、湧いた先から歩いて寄ってくるほうがいい */
+    if (n.court > 0) ringBosses(false);
   }
 }
 /* 追うのをやめる距離と、諦めている時間。この街の連中は執念深くない ──
@@ -7165,8 +7653,11 @@ function updateNPCs(dt) {
           }
         }
         /* 追うのをやめる。ここで諦めた時間を持たせないと、離れて解けた次の瞬間に
-           上の見つけ次第（抗争・手配）が掛かり直して、走って撒くという手が消える */
-        if (pd > CHASE_MAX || !sameFloor) {
+           上の見つけ次第（抗争・手配）が掛かり直して、走って撒くという手が消える。
+           縄張りを持つ者は距離ではなく円で切る ── 頭は自分から追いかけない。
+           逃げるなら逃がす、そのかわり降りてくればいつでもそこに立っている */
+        if (pd > CHASE_MAX || !sameFloor
+          || (n.court > 0 && Math.hypot(n.x - n.hx, n.z - n.hz) > n.court + 3)) {
           n.state = 'walk'; n.hostile = false; n.giveup = GIVEUP_SEC;
           routeNext(n, true);
           if (canHear(n)) say(n, pick(['……見失った', 'どこ行きやがった', 'もういい']), 2.8);
@@ -7175,7 +7666,11 @@ function updateNPCs(dt) {
       }
       case 'brawl': {
         const m = n.foe;
-        if (!m || m.down > 0 || m.foe !== n || m.state !== 'brawl') { endBrawl(n); break; }
+        /* 加勢に入った側は相手の foe ではない。向こうが誰かと殴り合っている限り、
+           横から殴り続ける ── その組が離れるか、どちらかが伸びたところで終わる */
+        const live = m && m.down <= 0 && m.state === 'brawl'
+          && (n.assist || m.foe === n);
+        if (!live) { endBrawl(n); break; }
         n.brawlT -= dt;
         if (n.brawlT <= 0) {
           if (canHear(n)) log(`${n.name} と ${m.name} は、殴り合ったまま離れた。`, '');
@@ -8441,6 +8936,10 @@ function load() {
       s.staff.forEach(n => { n.work = s; n.state = 'work'; });
     });
     syncStaff();
+    /* 頭の囲いを付け直す。縄張り（court）は住人そのものではなく並べ方の話なので
+       セーブには持たせていない ── 読み込んだ顔ぶれから、その場で組み直す。
+       立ち位置には触らない（残っている座標のほうが正しい） */
+    ringBosses(false);
     // 走っていたカチコミ。押し手が一人も残っていなければ、その話は終わっている
     if (d.raid && d.raid.men) {
       const shop = Shops.find(s => s.id === d.raid.s);
@@ -8519,7 +9018,7 @@ const RANKS = [
       return `残る勢力 ${left.map(f => FACTIONS[f].name).join('・')} を傘下に`;
     },
     ok: () => RIVALS.every(f => Vassal[f]),
-    tell: () => '紅蓮会・ドラゴンズ・アルカディア・商店組合、四勢力すべてが傘下に入った',
+    tell: () => '紅蓮一家・ドラゴンズ・アルカディア・商店組合、四勢力すべてが傘下に入った',
     off: () => `頭を下げる相手がもういない。${P.gang} の下に、この街の全部がぶら下がっている。`
       + `${P.name} は不夜城の主だ ── 主になった者から先に、この街は食い始める。` }
 ];
@@ -8649,7 +9148,7 @@ const SPLASHES = [
   'アスファルトも掘れる！', '100% ボクセル！', 'ネオンは食えない', 'ツルハシを作れ！',
   '素手じゃ無理だ', 'NPC は DeepSeek 製！', '歌舞伎町を全部いただく', '9つのシマを獲れ',
   '金塊は地面の下', '終電はとっくにない', '1秒 = 1分', 'シャンパンコール！',
-  '怪獣が見ている', '掘って、売って、建てる', 'ここは紅蓮会のシマだ',
+  '怪獣が見ている', '掘って、売って、建てる', 'ここは紅蓮一家のシマだ',
   '期限は無い', '資材で店が建つ', '無料案内所には寄るな',
   'トー横から一番街へ', '子分3人で勢力ごと呑む',
   'カチコミが来るぞ', '立ち飲みからホストクラブへ', 'カバンには限りがある', '段位は三つ'
@@ -8674,7 +9173,7 @@ const CG = { name: '', gang: '', gender: '男', hair: 0, body: 0, color: 0, orig
 const CG_NAMES_M = ['黒岩 亮', '桐生 慎', '鮫島 龍司', '不破 拓海', '九条 零', '甲斐 蓮'];
 const CG_NAMES_F = ['氷室 澪', '早乙女 茜', '天堂 沙羅', '一之瀬 灯', '真壁 雫', '朝倉 柚'];
 const cgName = () => pick(CG.gender === '女' ? CG_NAMES_F : CG_NAMES_M);
-// 既存の三勢力（紅蓮会・ドラゴンズ・アルカディア）と並べて浮かない名前
+// 既存の三勢力（紅蓮一家・ドラゴンズ・アルカディア）と並べて浮かない名前
 const GANG_NAMES = ['無頼会', '夜叉会', '不夜城会', '零番街', '月虹組', '朱雀連合',
   '泥濘会', '極彩組', '白夜会', '螢連合', '蜃気楼組', '奈落会'];
 const gangName = () => pick(GANG_NAMES);
