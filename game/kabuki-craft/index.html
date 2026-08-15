@@ -1579,7 +1579,8 @@ const LANDMARKS = {
   '1,0': 'park',                      // 大久保公園（北西）
   '3,3': 'toho', '4,3': 'toho',       // TOHOビル。セントラルロードの突き当たり
   '3,4': 'plaza', '4,4': 'plaza',     // シネシティ広場（トー横）
-  '6,2': 'kuyakusho',                 // 新宿区役所（区役所通り沿い）
+  // 新宿区役所。街区二つぶんと、その間の通りを丸ごと使う（建てるのは 6,2 の側）
+  '6,1': 'kuyakusho', '6,2': 'kuyakusho',
   '6,3': 'furin',                     // 風林会館（花道通り×区役所通り）
   '0,7': 'station'                    // 西武新宿駅（南西・靖国通り沿い）
 };
@@ -1614,8 +1615,9 @@ function genWorld() {
       else if (land === 'plaza' && bi === 3) genPlaza();               // シネシティ広場
       else if (land === 'toho' && bi === 3) genToho();                 // TOHOビル + 怪獣の頭
       else if (land === 'toho' && bi === 4) genTohoWing(x0, z0, x1, z1); // TOHO の東に余る区画
-      else if (land === 'kuyakusho') genOffice();                      // 新宿区役所
-      else if (land === 'furin') genFurin(x0, z0, x1, z1);             // 風林会館
+      // 北の街区（6,1）は素通り。建物そのものは 6,2 の側から二つぶんまとめて建てる
+      else if (land === 'kuyakusho' && bj === 2) genOffice();          // 新宿区役所
+      else if (land === 'furin') genFurin();                           // 風林会館
       else if (land === 'station') genStation();                       // 西武新宿駅
       continue;
     }
@@ -2018,6 +2020,11 @@ function genConnections() {
   /* 地上 ⇄ SUBNADE。靖国通りの幅の中に収まる向き（東西）に登らせるので、
      階段室がビルの 1 階を突き抜けない。セントラルロードの足元に一つだけ */
   genStairs(66, mz, 1, 0, SUB_Y, GY, 1);
+  /* 西武新宿駅 ⇄ SUBNADE。地下街の西の端（SUB_HALL[0]）がちょうど駅の真下に
+     あるので、改札階から直に降ろす ── 実物のサブナードもここで終わっている。
+     北向きに上げるのは、コンコースの奥行き 8 に 7 段がちょうど収まるから。
+     側壁は x=4（駅の西の外壁）と x=8 に立つので、通れるのは x 5..7 の三列 */
+  genStairs(6, STATION.z1 - 1, 0, -1, SUB_Y, GY, 1);
   // SUBNADE ⇄ 駐車場。本通りの床に開いた階段
   genStairs(88, mz, 1, 0, PARK_Y, SUB_Y, 1);
   // 車路スロープ。交差点の角に口を開ける。地上から駐車場へ直に降りられる唯一の道
@@ -2476,7 +2483,17 @@ function genKaiju(cx, y0, zf) {
    まわりの雑居ビル（高くて 20 前後）を頭ひとつ抜いて、TOHO には届かない背丈。
    階高は 5（内寸 4 ＋ スラブ 1）。内寸 3 だと、机や壇に乗った拍子に頭が
    天井につく ── 役所の中は人が並んで待つ場所なので、そこは詰めない。       */
-const OFFICE = { x0: 103, x1: 111, z0: 39, z1: 47, top: GY + 29 };
+/* 街区ひとつでは足りないので、北隣の街区と、その間の通りごと呑んで一棟にしてある
+   （LANDMARKS が '6,1' と '6,2' の二つをこの建物に割り当てている）── 段を 2 列で
+   折り返すには、その 2 組ぶんの奥行きが要る。潰した通りは 1 階を東西に貫く
+   通り抜けで返す。実物の本庁舎も、この一帯では飛び抜けて大きい。            */
+const OFFICE = { x0: 103, x1: 111, z0: 33, z1: 47, top: GY + 29 };
+/* 1 階の通り抜け。潰した通りの中心（z=35）を跨ぐ 3 列。ここに段も什器も置かない */
+const OFF_PASS0 = 34, OFF_PASS1 = 36;
+/* 段の走る範囲。通り抜けより南に寄せてあるので、東西の行き来と喧嘩しない。
+   偶数階は西寄りの 2 列を北から南へ、奇数階は東寄りの 2 列を南から北へ ──
+   列を替えるのは、上の便の踏み面が下の便の頭上を塞がないようにするため。 */
+const OFF_ST0 = 38, OFF_ST1 = 43;
 const OFFICE_FLOORS = [GY, GY + 5, GY + 10, GY + 15, GY + 20, GY + 25];
 function genOffice() {
   const { x0, x1, z0, z1, top } = OFFICE;
@@ -2499,22 +2516,29 @@ function genOffice() {
    上の段の裏側が下の段の頭のすぐ上に来て、登っている間だけ天井が 2 マスに
    なってしまう ── 交互なら同じ列の段どうしが 10 マス離れる。               */
 function genOfficeInside(x0, z0, x1, z1, top) {
-  const rx0 = x0 + 1, rx1 = x1 - 1, rz0 = z0 + 1, rz1 = z1 - 1;   // 104..110 / 40..46
-  const st = rx1 - 1;                                    // 109。階段は 109..110 の 2 列
-  const rm1 = st - 1;                                    // 108。部屋の東端
+  const rx0 = x0 + 1, rx1 = x1 - 1, rz0 = z0 + 1, rz1 = z1 - 1;   // 104..110 / 34..46
+  const stA = rx1 - 3, stB = rx1 - 1;                    // 107 と 109。段はこの 2 列ずつ
+  const rm1 = stA - 1;                                   // 106。什器を置ける東端
   const roof = top + 1;                                  // 屋上を歩く高さ
+  const hz = OFF_ST0;                                    // 38。最後の便が着く列
 
   const last = OFFICE_FLOORS.length - 1;
   OFFICE_FLOORS.forEach((y, f) => {
-    // 内寸 4。天井は蛍光灯で埋まっていて、ネオンは一つも無い
+    /* 内寸 4。天井は蛍光灯で埋まっていて、ネオンは一つも無い。
+       階段室は別に囲わない ── 一室のまま、段だけが床から生えている */
     const ct = genRoom(rx0, y, rz0, rx1, rz1, 4, 3);
-    setRaw(st, ct, rz0 + 1, 13);                         // 階段の上の非常口サイン
+    setRaw(rx1, ct, hz, 13);                             // 階段の上の非常口サイン
     if (f === 0) {
       fill(x0 + 4, y, z1, x0 + 5, y + 2, z1, AIR);       // 車寄せからの入口
+      /* 東西の通り抜け。この建物が街区ひとつぶんの通りを潰して建っているので、
+         塞いだままだと東西の行き来がここで途切れる（TOHO と同じ作法）。
+         段は南（OFF_ST0 から）なので、この 3 列は端から端まで素通しになる */
+      fill(x0, y, OFF_PASS0, x0, y + 2, OFF_PASS1, AIR);
+      fill(x1, y, OFF_PASS0, x1, y + 2, OFF_PASS1, AIR);
       for (let x = rx0; x <= rm1; x++)                   // 窓口のカウンター
-        if (x !== rx0 + 2) setRaw(x, y, rz0 + 3, 16);
+        if (x !== rx0 + 2) setRaw(x, y, rz1 - 3, 16);
       // 窓口の上の案内。天井の段に貼る（低いと、中に立つ職員の頭に当たる）
-      for (let x = rx0; x <= rm1; x++) setRaw(x, ct, rz0 + 2, 8);
+      for (let x = rx0; x <= rm1; x++) setRaw(x, ct, rz1 - 2, 8);
       fill(rx0, y, rz1 - 1, rx0 + 2, y, rz1 - 1, 16);    // 待合のベンチ
       fill(rx0, y, rz1, rx0, y + 1, rz1, 23);            // 発券機
     } else if (f === 3) {
@@ -2524,7 +2548,7 @@ function genOfficeInside(x0, z0, x1, z1, top) {
         for (let x = rx0; x <= rm1; x++) if (x !== rx0 + 2) setRaw(x, y, z, 16);
     } else if (f === last) {
       /* いちばん上は職員食堂。配膳台は背が高いので西の壁ぎわへ寄せる ──
-         階段の上がり口（東の端）の前に置くと、そこから先へ行けなくなる */
+         階段の上がり口の前に置くと、そこから先へ行けなくなる */
       fill(rx0, y, rz0, rx0 + 1, y + 1, rz0 + 2, 6);
       for (let z = rz0 + 1; z <= rz1 - 1; z += 2)         // 卓
         fill(rx0 + 3, y, z, rx0 + 4, y, z, 16);
@@ -2538,32 +2562,45 @@ function genOfficeInside(x0, z0, x1, z1, top) {
   });
   /* 階段は全部の階を抜いたあとに通す。階ごとに通すと、次の階の床張りが
      抜いたばかりの穴をタイルで塞いでしまう。最後の一本はそのまま屋上へ抜ける。
-     偶数の階は西の列を南へ、奇数の階は東の列を北へ ── 段の突き当たりが
-     次の段の上がり口になるので、踊り場を別に取らなくても折り返せる */
+     どの便も 2 列 ── 1 列だと当たり判定（幅 0.6）が中心から少しずれただけで
+     隣にめり込んで進めなくなり、踏み外して落ちる。そのうえで階ごとに列を替える
+     のは、genSteps が踏み面を yLow-1 から上へ埋めるからで、同じ列に重ねると
+     上の便の踏み面が下の便の頭上を塞いで、途中までしか登れない階段になる。 */
   OFFICE_FLOORS.forEach((y, f) => {
     const to = f === last ? roof : y + 5;
-    if (f % 2) genSteps(rx1, rz1 - 1, 0, -1, y, to, 1);
-    else genSteps(st, rz0 + 1, 0, 1, y, to, 1);
+    if (f % 2) genSteps(stB, OFF_ST1, 0, -1, y, to, 2);
+    else genSteps(stA, OFF_ST0, 0, 1, y, to, 2);
   });
 
   /* 屋上。歌舞伎町を上から見下ろせる場所は、この街ではここと TOHO しかない。
      階段の抜けたところに塔屋を建てて、屋上の縁には落ちないよう腰壁を回す */
   for (let x = x0; x <= x1; x++) { setRaw(x, roof, z0, 3); setRaw(x, roof, z1, 3); }
   for (let z = z0; z <= z1; z++) { setRaw(x0, roof, z, 3); setRaw(x1, roof, z, 3); }
-  /* 塔屋。最後の段は東の列を北へ登って rz0+1 に着くので、その口を囲う */
-  fill(rm1, roof, rz0, x1, roof + 3, rz1 - 1, 3);
-  fill(st, roof, rz0 + 1, rx1, roof + 2, rz1 - 2, AIR);
-  fill(rm1, roof + 4, rz0, x1, roof + 4, rz1 - 1, 4);
-  fill(rm1, roof, rz0 + 1, rm1, roof + 2, rz0 + 2, AIR); // 塔屋の扉。高さ 3
-  setRaw(rm1 - 1, roof + 1, rz0 + 1, 13);
+  /* 塔屋。最後の便は東の 2 列を南から北へ登って hz に着くので、その口を囲う。
+     南の縁は hz + 1 まで ── ここを hz + 2 まで伸ばすと、塔屋の壁が最後の一段の
+     頭上に張り出して、登りきる手前で頭がつかえる（屋上へ出られなくなる）。
+     西の壁は stA。扉はその一列を抜いて、そのまま屋上へ出る               */
+  fill(stA, roof, hz - 2, x1, roof + 3, hz + 1, 3);
+  fill(stB, roof, hz - 1, rx1, roof + 2, hz + 1, AIR);
+  fill(stA, roof + 4, hz - 2, x1, roof + 4, hz + 1, 4);
+  fill(stA, roof, hz, stA + 1, roof + 2, hz, AIR);       // 塔屋の扉。高さ 3
+  /* 非常口の緑は塔屋の壁に埋める。扉の正面（屋上側）に浮かせると、
+     そのマスが頭の高さを塞いで、出た一歩目で立てなくなる */
+  setRaw(stA, roof + 1, hz - 1, 13);
   fill(rx0, roof, rz0, rx0 + 2, roof + 2, rz0 + 2, 6);   // 高置水槽
   setRaw(rx0 + 1, roof + 3, rz0 + 1, 9);                 // 航空障害灯
   for (let x = rx0 + 1; x <= rm1 - 2; x += 2) setRaw(x, roof, rz1 - 2, 6);   // 室外機
 }
 
-// 風林会館。花道通りと区役所通りの角。上に赤い帯が回っている
-function genFurin(x0, z0, x1, z1) {
-  const top = GY + 13;
+/* 風林会館。花道通りと区役所通りの角に建っている、この街でいちばん名の通った雑居ビル。
+   上に赤い帯が回っている。実物は一つの建物の中に飲食・雀荘・サウナ・事務所が
+   縦に積み上がっていて、その積み方そのものが歌舞伎町の雑居ビルの見本になっている ──
+   中に入れるようにしたのはそのためで、階ごとに入っているものを変えてある。
+   階高は 5（内寸 4 ＋ スラブ 1）で 5 層。TOHO と区役所には届かない背丈。       */
+const FURIN = { x0: 103, x1: 111, z0: 55, z1: 63, top: GY + 24 };
+const FURIN_FLOORS = [GY, GY + 5, GY + 10, GY + 15, GY + 20];
+function genFurin() {
+  const { x0, x1, z0, z1, top } = FURIN;
   fill(x0, GY, z0, x1, top, z1, 5);
   fill(x0, top, z0, x1, top, z1, 4);
   windows(x0, z0, x1, z1, top, 0.70);
@@ -2571,30 +2608,124 @@ function genFurin(x0, z0, x1, z1) {
   for (let z = z0; z <= z1; z++) { setRaw(x0 - 1, top - 1, z, 9); setRaw(x1 + 1, top - 1, z, 9); }
   fill(x1 + 1, GY + 2, z0 + 1, x1 + 1, top - 3, z0 + 1, 11);  // 角の縦看板
   fill(x0 - 1, GY + 2, z1 - 1, x0 - 1, top - 3, z1 - 1, 12);
+  // 花道通りに面した庇。板は GY+3 の一枚だけ（GY..GY+2 を塞ぐと通りが壁になる）
+  fill(x0, GY + 3, z0 - 1, x1, GY + 3, z0 - 1, 15);
+  // 庇の柱は両端だけ。中ほどに立てると、正面の入口を自分で塞ぐことになる
+  for (const x of [x0, x1]) fill(x, GY, z0 - 1, x, GY + 2, z0 - 1, 6);
+  genFurinInside();
 }
 
-/* 西武新宿駅。靖国通りに面した庇の下が改札で、その上がホーム。
-   頭端式なので線路は東の車止めで終わり、西へは壁を抜けて高架で通りをまたぎ、
-   街の外へ出ていく。
-   実物の西武新宿駅はホテルの足元にあって、ホームの上に二十階を超える塔が
-   そのまま載っている ── ここでもホームの上屋（GY+14）から上を塔にして、
-   この一帯でいちばん高い建物にしてある。中に入れるのは駅の部分だけ。       */
-const STATION = { x0: 7, x1: 15, z0: 119, z1: 125, top: GY + 30 };
+/* 風林会館の中。下から 飲食街 / 雀荘 / サウナ / 中華料理店 / 事務所。
+
+   階段は東の 4 列を、2 列ずつ交互に使って折り返す。
+   段を 2 列で通すのは、1 列だと当たり判定（幅 0.6）が中心から少しずれただけで
+   隣の列にめり込んで進めなくなり、踏み外して落ちるから。
+   そのうえで階ごとに列を替えるのは、genSteps が踏み面を yLow-1 から上へ
+   埋めていくため ── 同じ列に重ねると、上の便の踏み面が下の便の頭上を塞いで、
+   途中までしか登れない階段になる（区役所が 1 列ずつ交互にしているのと同じ理由）。
+   2 列で折り返すには、そのぶん 4 列要る。                                   */
+const FURIN_NAMES = ['風林会館 1階', '風林会館 雀荘', '風林会館 サウナ',
+  '風林会館 中華料理店', '風林会館 事務所'];
+function genFurinInside() {
+  const { x0, x1, z0, z1 } = FURIN;
+  const rx0 = x0 + 1, rx1 = x1 - 1, rz0 = z0 + 1, rz1 = z1 - 1;   // 104..110 / 56..62
+  const core = rx1 - 3;                                 // 107。階段室は 107..110 の 4 列
+  const rm1 = core - 1;                                 // 106。主室の東端（104..106）
+  const last = FURIN_FLOORS.length - 1;
+
+  FURIN_FLOORS.forEach((y, f) => {
+    // サウナの階だけ天井の灯りを入れない。薄暗いのがあの階の顔になっている
+    const ct = genRoom(rx0, y, rz0, rm1, rz1, 4, f === 2 ? 0 : 3);
+    genRoom(core, y, rz0, rx1, rz1, 4, 4);              // 階段室（4 列ぶん）
+    setRaw(rx1, ct, rz0, 13);                           // 各階の非常口サイン
+    if (f === 0) {
+      // 花道通りからの入口。主室の幅ぶん開ける
+      fill(rx0, y, z0, rm1, y + 2, z0, AIR);
+      for (let x = rx0; x <= rm1; x++) setRaw(x, ct, rz0, 8);
+      fill(rx0, y, rz1, rx0 + 1, y, rz1, 16);           // 立ち食いのカウンター
+      fill(rm1, y, rz1 - 1, rm1, y + 1, rz1, 23);       // 自販機
+      // 階ごとの店を並べた袖看板。実物のあれが、この建物のいちばんの顔
+      for (let z = rz0 + 1; z <= rz1 - 1; z++)
+        setRaw(rx0 - 1, y + 2, z, NEON_IDS[z % NEON_IDS.length]);
+    } else if (f === 1) {
+      for (let z = rz0 + 1; z <= rz1 - 1; z += 2) setRaw(rx0 + 1, y, z, 16);   // 雀卓
+      setRaw(rx0, y + 2, rz0, 9);                       // 卓の上の灯り
+    } else if (f === 2) {
+      for (let x = rx0; x <= rm1; x++) for (let z = rz0; z <= rz1; z++)
+        if ((x + z) % 2 === 0) setRaw(x, y - 1, z, 4);  // タイルの床
+      for (const z of [rz0, rz1]) fill(rx0, y, z, rm1, y, z, 16);   // 壁ぎわのベンチ
+      setRaw(rx0 + 1, y + 3, rz0 + 3, 17);              // 蒸気の中の提灯ひとつ
+    } else if (f === 3) {
+      fill(rx0, y, rz0, rm1, y, rz0, 16);               // 厨房のカウンター
+      for (let z = rz0 + 2; z <= rz1; z += 2) setRaw(rx0 + 1, y, z, 16);   // 卓
+      for (let x = rx0; x <= rm1; x += 2) setRaw(x, y + 2, rz0 - 1, 14);   // 赤い品書き
+    } else {
+      for (let z = rz0 + 1; z <= rz1 - 1; z += 2) {     // 事務机
+        setRaw(rx0, y, z, 16); setRaw(rm1, y, z, 16);
+      }
+      setRaw(rx0 + 1, y, rz1, 6);                       // 隅の書棚
+    }
+  });
+  /* 段は全部の階を抜いたあとにまとめて通す ── 階ごとに通すと、次の階の床張りが
+     抜いたばかりの穴をそのまま塞ぐ（区役所と西武新宿駅で踏んだのと同じ罠）。
+     偶数階は西寄りの 2 列を北から南へ、奇数階は東寄りの 2 列を南から北へ ──
+     列を替えるので、上の便の踏み面が下の便の頭上に落ちてこない。
+     突き当たりが次の便の上がり口になるので、踊り場を別に取らなくても折り返せる */
+  FURIN_FLOORS.forEach((y, f) => {
+    if (f === last) return;
+    if (f % 2) genSteps(core + 2, rz1 - 1, 0, -1, y, y + 5, 2);
+    else genSteps(core, rz0 + 1, 0, 1, y, y + 5, 2);
+  });
+}
+
+/* 西武新宿駅。実物に合わせて組み直してある。
+     ・駅の上にそのまま新宿プリンスホテルの塔が載っている（別棟ではない）
+     ・ホームは 2 階、改札はその下の 1 階。靖国通りに面した庇の下が入口
+     ・2面3線の頭端式。線路は南の車止めで終わり、北は坑口へ吸い込まれる
+     ・ホームは駅ビルより北へはみ出していて、その下を通りが抜けている
+     ・改札からサブナードへ直に降りられる（地下街の西の端がこの真下）
+   街の外へ西向きに伸びていた高架は落とした ── 実物の西武新宿線は駅を出て
+   すぐ北の掘割へ潜る。歌舞伎町の上を跨いで西へ抜ける線路はどこにも無い。   */
+const STATION = { x0: 4, x1: 17, z0: 116, z1: 125, top: GY + 34 };
 const ST_TRACK = GY + 5, ST_PLAT = GY + 6;     // 線路の高さと、ホームを歩く高さ
 const ST_SHED = GY + 14;                       // ホームの上屋（ここから上がホテル）
+const ST_LOBBY = ST_SHED + 1;                  // 新宿プリンスホテルのロビー階
+/* ホームの北端。躯体（z0=119）より手前で終わらせず、通りをまたいで北へ張り出す ──
+   実物もホームは駅ビルからはみ出していて、その下を人が歩いている。
+   ここで止めるのは、これ以上北へ伸ばすと街区(0,6)のビルを縦に割ってしまうから。 */
+const ST_DECK_Z0 = 112;
+/* 2面3線。西から 1番線・ホームA・2番線・ホームB・3番線 と並べる
+   （実物と同じで、ホームBが 2番線と 3番線の島式になる）。
+   線路は 2 列、ホームは 3 列 ── ホームを 3 列取るのは、上下の段に 2 列使っても
+   歩ける列が 1 本残るようにするため。段を 1 列で作ると、プレイヤーの当たり判定
+   （幅 0.6）が中心から少しずれただけで隣の列にめり込んで進めなくなり、
+   踏み外せば落ちる。段は必ず 2 列以上で通すこと。
+   合計 12 列。躯体の内寸を x 5..16 に広げて、ちょうど埋まるようにしてある。 */
+const ST_LINES = [[5, 6], [10, 11], [15, 16]];     // 線路
+const ST_PLATS = [[7, 9], [12, 14]];               // ホーム（3 列）
 function genStation() {
   const { x0, x1, z0, z1, top } = STATION;
   fill(x0, GY, z0, x1, top, z1, 3);
   fill(x0, top, z0, x1, top, z1, 4);
   fill(x0 + 3, top + 1, z0 + 2, x1 - 3, top + 4, z1 - 2, 6);     // 塔屋
-  windows(x0, z0, x1, z1, ST_SHED, 0.5);                        // 駅の部分の窓
+  windows(x0, z0, x1, z1, ST_SHED, 0.5);                        // 駅・ペペの部分の窓
+  /* ホームの高架。駅ビルの北へ、通りをまたいで張り出す ── 実物もホームは
+     駅ビルからはみ出していて、その下を人が歩いている。下は通りなので、
+     頭上 4 マス（GY..GY+3）を残して橋脚で受ける。桁は線路の 1 段下 */
+  fill(x0, ST_TRACK - 1, ST_DECK_Z0, x1, ST_TRACK - 1, z0 - 1, 3);
+  for (let z = ST_DECK_Z0; z < z0; z += 3) for (const x of [x0, x1])
+    fill(x, GY, z, x, ST_TRACK - 2, z, 6);                      // 橋脚
+  for (const x of [x0, x1])                                     // 高架の側壁
+    fill(x, ST_TRACK, ST_DECK_Z0, x, ST_SHED, z0 - 1, 3);
+  fill(x0, ST_SHED, ST_DECK_Z0, x1, ST_SHED, z0 - 1, 4);        // 上屋
+  fill(x0, ST_TRACK, ST_DECK_Z0, x1, ST_SHED - 1, ST_DECK_Z0, 3);   // 北の妻壁。裏が坑口
   /* ホテルの窓。上は同じ形の客室が並ぶので、下の雑居ビルのようにばらけさせず、
      三階ごとに横一列で揃える ── 並びが揃っているだけで「客室」に見える */
   const room = (x, y, z) => {
     if ((x + y + z) % 2) return;
     setRaw(x, y, z, hash3(x, y, z) > 0.42 ? 8 : 7);
   };
-  for (let y = ST_SHED + 3; y < top - 2; y += 3) {
+  for (let y = ST_LOBBY + 5; y < top - 2; y += 3) {
     for (let x = x0; x <= x1; x++) { room(x, y, z0); room(x, y, z1); }
     for (let z = z0; z <= z1; z++) { room(x0, y, z); room(x1, y, z); }
   }
@@ -2603,89 +2734,110 @@ function genStation() {
   fill(x0 - 1, GY + 3, z1 + 1, x1 + 1, GY + 3, z1 + 2, 15);  // 南へ張り出す庇
   for (let x = x0 - 1; x <= x1 + 1; x += 2) fill(x, GY, z1 + 2, x, GY + 2, z1 + 2, 6);
   for (let x = x0; x <= x1; x++) setRaw(x, GY + 4, z1 + 1, 10);   // 駅名の帯
+  // ロビー階の帯。ホテルがどこから始まっているのかが、通りから読める
+  for (let x = x0; x <= x1; x++) setRaw(x, ST_LOBBY + 3, z1 + 1, 9);
   genStationInside();
 }
 
 function genStationInside() {
-  const { x0, x1, z0, z1, top } = STATION;
-  const rx0 = x0 + 1, rx1 = x1 - 1, rz0 = z0 + 1, rz1 = z1 - 1;   // 8..14 / 120..124
-  const mid = Math.floor((x0 + x1) / 2);          // 11。入口と改札の中心
-  const tz0 = rz0 + 1, tz1 = rz1 - 1;             // 線路の幅 121..123
+  const { x0, x1, z0, z1 } = STATION;
+  const rx0 = x0 + 1, rx1 = x1 - 1, rz0 = z0 + 1, rz1 = z1 - 1;   // 5..14 / 117..124
+  const dz0 = ST_DECK_Z0;
+  const mid = Math.floor((x0 + x1) / 2);          // 9。入口の中心
+  const tz1 = rz1 - 2;                            // 線路の南端。ここから先は横断通路
 
-  /* 改札階。入口を入ると券売機と路線図があって、正面が改札。
-     抜けた先の北側に、ホームへ上がる階段が east へ伸びている */
+  /* ---- 1階 コンコース ----
+     靖国通りから入って、すぐ改札。奥行きは 8 しか無いので、縦に置けるものは
+     ひと並びだけ ── 改札を入口のすぐ内側（rz1）に寄せて、残りを階段に空ける。
+     ホームへ上がる段と、サブナードへ降りる段が並んで立っている
+     （地下の段は genConnections が通す。ここではまだ地下が掘られていない）。 */
   genRoom(rx0, GY, rz0, rx1, rz1, 4, 3);
   fill(mid - 1, GY, z1, mid + 1, GY + 2, z1, AIR);              // 靖国通りからの入口
-  const gate = rz1 - 2;                                         // 改札の列 z=122
+  const gate = rz1;                                             // 改札の列 z=124
   for (let x = rx0; x <= rx1; x += 2) fill(x, GY, gate, x, GY + 1, gate, 6);
   /* 通れるのは機械の間だけ。緑が通れる口、赤ひとつは閉めてある。
      灯は天井の段（GY+3）に付ける ── 頭のすぐ上に置くと、改札を抜ける一瞬だけ
      天井が下がったように見える */
   for (let x = rx0 + 1; x < rx1; x += 2) setRaw(x, GY + 3, gate, x === rx1 - 1 ? 9 : 13);
-  fill(rx0, GY, rz1 - 1, rx0, GY + 1, rz1, 23);                 // 券売機
-  fill(rx1, GY, rz1 - 1, rx1, GY + 2, rz1, 15);                 // 路線図
-  setRaw(rx1, GY + 1, rz1, 10);
-
-  /* ホーム階。線路は 121..123 の 3 列で、床は改札の天井スラブのまま。
-     ホームは線路より 1 段高い ── 電車の床とホームが同じ高さになる。
-     天井は上屋まで（その上はホテルの躯体なので抜かない） */
-  genRoom(rx0, ST_TRACK, rz0, rx1, rz1, ST_SHED - ST_TRACK, 4);
-  for (let x = rx0 + 1; x < rx1; x += 3)                        // 上屋を受ける梁
-    fill(x, ST_SHED - 1, rz0, x, ST_SHED - 1, rz1, 6);
-  for (const z of [rz0, rz1]) fill(rx0, ST_TRACK, z, rx1, ST_TRACK, z, 4);   // 南北のホーム
-  fill(rx1, ST_TRACK, rz0, rx1, ST_TRACK, rz1, 4);                          // 頭端側のホーム
-  for (let z = tz0; z <= tz1; z++) setRaw(rx1, ST_PLAT, z, 6);              // 車止め
-  setRaw(rx1, ST_PLAT + 1, tz0 + 1, 14);
-  /* ホームの駅名標。ベンチの真上に吊ると腰掛けた高さで頭がつかえるので位置をずらし、
-     高さもホームから 3 マス上げてある（2 マスだと、下を通るだけで頭に当たる） */
-  for (const x of [rx0 + 1, rx0 + 3]) {
-    setRaw(x, ST_PLAT + 3, rz1, 15); setRaw(x, ST_PLAT + 4, rz1, 10);
+  fill(rx1, GY, rz1 - 1, rx1, GY + 2, rz1 - 1, 15);             // 路線図
+  setRaw(rx1, GY + 1, rz1 - 1, 10);
+  /* ---- 2階 ホーム（2面3線・頭端式） ----
+     床は改札の天井スラブ（ST_TRACK-1）そのまま。ホームは線路より 1 段高く、
+     電車の床とホームが同じ高さになる。天井は上屋まで（その上はホテルの躯体）。 */
+  genRoom(rx0, ST_TRACK, dz0 + 1, rx1, rz1, ST_SHED - ST_TRACK, 4);
+  for (const [a, b] of ST_PLATS)
+    fill(a, ST_TRACK, dz0 + 1, b, ST_TRACK, rz1, 4);            // ホームの床
+  /* 頭端側の横断通路。線路の南の端に蓋をして、三本ぶんを歩いて渡れるようにする ──
+     行き止まりの駅で二つのホームが繋がるのは、必ずこの車止めの側 */
+  fill(rx0, ST_TRACK, tz1 + 1, rx1, ST_TRACK, rz1, 4);
+  for (let z = dz0 + 3; z <= rz1; z += 4)                       // 上屋を受ける梁
+    fill(rx0, ST_SHED - 1, z, rx1, ST_SHED - 1, z, 6);
+  for (const [a, b] of ST_LINES) {                              // 車止め
+    fill(a, ST_PLAT, tz1, b, ST_PLAT + 1, tz1, 6);
+    setRaw(a, ST_PLAT + 1, tz1 - 1, 14);
   }
-  fill(rx0 + 4, ST_PLAT, rz1, rx0 + 5, ST_PLAT, rz1, 16);       // ホームのベンチ
-  /* 改札からホームへ上がる階段。北のホームを喰うが、頭端側から回れば
-     南のホームへ抜けられる ── 実際の頭端駅もこの回り方をする */
-  genSteps(rx0, rz0, 1, 0, GY, ST_PLAT, 1);
+  /* 坑口。線路は北の妻壁を抜けて掘割へ潜る ── 実物も駅を出てすぐ地下に入る。
+     抜けた先は岩盤で塞ぐ。塞がないと、掘って線路の宙ぶらりんな先端へ出られる */
+  for (const [a, b] of ST_LINES) {
+    fill(a, ST_TRACK, dz0, b, ST_TRACK + 3, dz0, AIR);
+    fill(a, ST_TRACK - 1, dz0 - 2, b, ST_TRACK + 4, dz0 - 1, 1);
+    setRaw(a, ST_TRACK + 4, dz0, 9);                            // 坑口の上の赤
+  }
+  /* 駅名標はホームA、ベンチはホームB。同じホームに重ねると、腰掛けた高さで
+     駅名標に頭がつかえる（高さもホームから 3 マス上げてある） */
+  for (let z = dz0 + 4; z <= tz1 - 2; z += 5) {
+    setRaw(ST_PLATS[0][0], ST_PLAT + 3, z, 15);
+    setRaw(ST_PLATS[0][0], ST_PLAT + 4, z, 10);
+    setRaw(ST_PLATS[1][0], ST_PLAT, z, 16);
+  }
 
-  // 線路。西の壁を抜けて高架へ出る
-  fill(x0, ST_TRACK, tz0, x0, ST_TRACK + 4, tz1, AIR);          // 壁を抜ける口
-  genViaduct();
-  genTrain(3, rx1 - 1);
+  /* ---- 新宿プリンスホテル ----
+     上屋のすぐ上がロビー。ホームA の東側の一列（x=8）を階段にして上げてある ──
+     上がり口はホームB の東側の一列（x=12）── 頭端側の横断通路で二つのホームは
+     繋がっているので、どちらに降りてもロビーには行ける。
+     改札を出ずにホテルへ上がれるのは実物どおりで、駅とホテルは同じ建物。 */
+  genRoom(rx0, ST_LOBBY, rz0, rx1, rz1, 4, 3);
+  fill(rx0 + 1, ST_LOBBY, rz0, rx0 + 4, ST_LOBBY, rz0, 16);     // フロント
+  // 窓ぎわのソファ。西の隅へ寄せる ── 段の上がり口（x 13,14）の正面に置くと、
+  // 上りきった一歩目でソファに乗り上げることになる
+  fill(rx0, ST_LOBBY, rz1, rx0 + 3, ST_LOBBY, rz1, 16);
+  setRaw(rx1, ST_LOBBY + 1, rz0, 13);
+
+  /* ---- 段は最後にまとめて通す ----
+     区役所と同じ理由 ── 階ごとに通すと、次の階の床張りが抜いたばかりの穴を
+     そのまま塞いでしまう。ここではホームの床（ST_TRACK と その下のスラブ）が
+     改札からの段の天井を埋めていた。段はどれも z に沿って上げること ──
+     x に沿って上げると、三本の線路を横切る羽根になる。 */
+  // 改札 → ホームA。ホームの東寄り 2 列を使い、西の 1 列（x=7）は歩けるまま残す
+  genSteps(ST_PLATS[0][0] + 1, rz1 - 1, 0, -1, GY, ST_PLAT, 2);
+  /* ホームB → ロビー。9 段ぶん要るのでホームの北の端から登り始め、南へ上がって
+     ロビー（駅ビルの中）へ着かせる ── 逆向きだと上りきったところが上屋の外側で、
+     屋根を突き破って空へ出てしまう（ロビーは躯体の z 117..124 にしか無い）。
+     こちらも東寄り 2 列で、西の 1 列（x=12）は島式ホームとして残す */
+  genSteps(ST_PLATS[1][0] + 1, ST_DECK_Z0 + 2, 0, 1, ST_PLAT, ST_LOBBY, 2);
+
+  genTrain();
 }
 
-/* 高架。駅の西の壁から出て、通りをまたいで街の外へ抜ける。
-   下は通りなので、桁の下に人が通れる高さ（4 マス）を残して橋脚を立てる。 */
-function genViaduct() {
-  const { x0, z0, z1 } = STATION;
-  const dz0 = z0 + 1, dz1 = z1 - 1;
-  fill(1, ST_TRACK - 1, dz0, x0 - 1, ST_TRACK - 1, dz1, 3);     // 桁
-  for (const z of [dz0, dz1]) {
-    fill(1, ST_TRACK, z, x0 - 1, ST_TRACK, z, 6);               // 縁の鋼材
-    for (const x of [2, x0 - 1]) fill(x, GY, z, x, ST_TRACK - 2, z, 6);   // 橋脚
+/* 電車。2番線に入ってきて止まっている 1 両。床はホームと同じ高さで、
+   ホームA に面した側に扉が開いている。
+   線路の幅は 2 列しか無いので、中は抜いていない ── 抜くと側壁の残らない
+   「屋根の付いた通路」になって、電車には見えなくなる。窓と扉と前面の顔で、
+   外から見て電車だと分かることのほうを取った。 */
+function genTrain() {
+  const [a, b] = ST_LINES[1];                                   // 2番線
+  const zf = ST_DECK_Z0 + 3, zr = STATION.z1 - 5;               // 前面 115 / 後端 120
+  fill(a, ST_TRACK, zf, b, ST_TRACK, zr, 6);                    // 台枠
+  fill(a, ST_PLAT, zf, b, ST_PLAT + 3, zr, 6);                  // 車体
+  for (let z = zf; z <= zr; z++) {
+    if (z % 3 === 0) { setRaw(a, ST_PLAT + 1, z, 8); setRaw(b, ST_PLAT + 1, z, 8); }  // 窓
+    if (z % 4 === 2) setRaw(a, ST_PLAT + 3, z, 8);              // 屋根の段に埋めた室内灯
   }
-  for (let x = 1; x < x0; x++) {                                // レールと枕木
-    setRaw(x, ST_TRACK, dz0 + 1, 6); setRaw(x, ST_TRACK, dz1 - 1, 6);
-    if (x % 2) setRaw(x, ST_TRACK, dz0 + 2, 16);
-  }
-}
-
-/* 電車。ホームに入ってきて止まっている 1 両。床はホームと同じ高さで、
-   南側の扉が開いている ── 中に入って、街を出ていく側の窓から外を見られる。 */
-function genTrain(x0, x1) {
-  const { z0, z1 } = STATION;
-  const zw0 = z0 + 2, zw1 = z1 - 2;                             // 車体の側面 121..123
-  fill(x0, ST_TRACK, zw0, x1, ST_TRACK, zw1, 6);                // 台枠
-  fill(x0, ST_PLAT, zw0, x1, ST_PLAT + 3, zw1, 6);              // 車体
-  fill(x0, ST_PLAT, zw0 + 1, x1, ST_PLAT + 2, zw1 - 1, AIR);    // 車内
-  for (let x = x0; x <= x1; x++) {
-    if (x % 3 === 0) { setRaw(x, ST_PLAT + 1, zw0, 8); setRaw(x, ST_PLAT + 1, zw1, 8); }  // 窓
-    // 車内の照明は屋根の段に埋める。天井の一番下に下げると、中が立って 2 マスになる
-    if (x % 4 === 2) setRaw(x, ST_PLAT + 3, zw0 + 1, 8);
-  }
-  // 扉はホームに面した側だけ。高架に出ている側に開けても降りる場所が無い
-  for (const x of [x1 - 2, x1 - 5]) fill(x, ST_PLAT, zw1, x, ST_PLAT + 2, zw1, AIR);
-  fill(x1, ST_PLAT, zw0, x1, ST_PLAT + 3, zw1, 15);             // 前面
-  setRaw(x1, ST_PLAT + 1, zw0 + 1, 10);                         // 行先表示
-  setRaw(x1, ST_PLAT, zw0, 8); setRaw(x1, ST_PLAT, zw1, 8);     // 前照灯
+  // 扉はホームA に面した側（西）だけ。反対側は 3番線で、降りる場所が無い
+  for (const z of [zf + 2, zf + 4]) fill(a, ST_PLAT, z, a, ST_PLAT + 2, z, 15);
+  fill(a, ST_PLAT, zf, b, ST_PLAT + 3, zf, 15);                 // 前面
+  setRaw(a, ST_PLAT + 2, zf, 10);                               // 行先表示
+  setRaw(a, ST_PLAT, zf, 8); setRaw(b, ST_PLAT, zf, 8);         // 前照灯
 }
 
 /* 中に入れる建物の、いる場所の名前。placeName は通りの名前より先にここを見る ──
@@ -2712,10 +2864,16 @@ const INDOORS = [
     x0: OFFICE.x0, x1: OFFICE.x1, z0: OFFICE.z0, z1: OFFICE.z1 },
   { n: '西武新宿駅 改札', y0: GY, y1: GY + 4,
     x0: STATION.x0 + 1, x1: STATION.x1 - 1, z0: STATION.z0 + 1, z1: STATION.z1 - 1 },
+  /* ホームは駅ビルより北へはみ出している（高架の上）ので、z は妻壁から取る ──
+     躯体の z0 から取ると、通りの上に出ているぶんが名前を持たない */
   { n: '西武新宿駅 ホーム', y0: ST_TRACK, y1: ST_SHED - 1,
+    x0: STATION.x0 + 1, x1: STATION.x1 - 1, z0: ST_DECK_Z0, z1: STATION.z1 - 1 },
+  { n: '新宿プリンスホテル ロビー', y0: ST_LOBBY, y1: ST_LOBBY + 4,
     x0: STATION.x0 + 1, x1: STATION.x1 - 1, z0: STATION.z0 + 1, z1: STATION.z1 - 1 },
-  { n: '西武新宿線の高架', y0: ST_TRACK, y1: ST_TRACK + 5,
-    x0: 1, x1: STATION.x0, z0: STATION.z0 + 1, z1: STATION.z1 - 1 }
+  ...FURIN_FLOORS.map((y, f) => ({
+    n: FURIN_NAMES[f], y0: y, y1: y + 4,
+    x0: FURIN.x0 + 1, x1: FURIN.x1 - 1, z0: FURIN.z0 + 1, z1: FURIN.z1 - 1
+  }))
 ];
 function indoorName(x, y, z) {
   for (const b of INDOORS)
@@ -3298,9 +3456,18 @@ const FLOOR_NOTE = {
   [INDOOR_NAMES.office[0]]: '新宿区役所。蛍光灯とタイルだけの、ネオンがひとつも無い建物。'
     + '階段を上がりきると屋上に出る。',
   '新宿区役所の屋上': '区役所の屋上。手すりの向こうに、歌舞伎町のネオンが全部並んでいる。',
-  '西武新宿駅 改札': '西武新宿駅。改札の向こうの階段を上がると、ホームに電車が入っている。',
-  '西武新宿駅 ホーム': 'ホーム。線路は西の壁を抜けて高架になり、街の外へ出ていく。'
-    + '扉が開いたままの車内にも入れる。'
+  '西武新宿駅 改札': '西武新宿駅。改札の向こうの階段を上がるとホーム、'
+    + '手前の階段はそのままサブナードへ降りている ── 地下街の西の端はこの真下だ。',
+  '西武新宿駅 ホーム': '2面3線の頭端式。線路は南の車止めで終わり、'
+    + '北は坑口へ吸い込まれていく。ホームは駅ビルからはみ出していて、下は通りだ。'
+    + '車止めの側で二つのホームは繋がっている。',
+  [FURIN_NAMES[0]]: '風林会館。一つの建物に飲食街・雀荘・サウナ・中華・事務所が'
+    + '縦に積み上がっている ── 歌舞伎町の雑居ビルの、いちばん名の通った見本だ。'
+    + '東の階段室が上へ続いている。',
+  [FURIN_NAMES[2]]: 'サウナ。天井の灯りが入っていないので、蒸気の中に提灯がひとつ。'
+    + 'この階だけ、外の音がまるで聞こえない。',
+  '新宿プリンスホテル ロビー': 'ホームの上屋のすぐ上が、新宿プリンスホテルのロビー。'
+    + '駅とホテルは同じ建物で、改札を出ないままここまで上がってこられる。'
 };
 const floorSeen = {};
 function noteFloor() {
@@ -4266,11 +4433,14 @@ function breakBlock(b) {
   // 元からそこにあったものを剥がしたぶんだけ、その通りの足場が動く
   if (virgin) zoneDug(b.x, b.z, digWeight(b.id));
   if (def.v >= 3000) log(`${def.n} を回収（${yen(def.v)}）`, 'dig');
-  // 見られていたら手配度。光る道具（ネオン系）を握っていると、気づかれる距離が伸びる
+  /* 見られていたら手配度。光る道具（ネオン系）を握っていると、気づかれる距離が伸びる。
+     階を見るのを忘れないこと ── 警官は地上（GY）にしか湧かないので、平面距離だけで
+     数えると、地下街や駐車場で掘っているだけで真上の通りの巡回に見つかる。
+     それでは「追われたら潜る」が成立しない（loudHeard も同じ理由で階を見ている）。 */
   if (def.v >= 2000 || P.dug % 25 === 0) {
     const seen = curTool().loud ? 22 : 12;
     for (const n of NPCs) {
-      if (n.down > 0) continue;
+      if (n.down > 0 || Math.abs(n.y - P.y) >= 4) continue;
       if (Math.hypot(n.x - P.x, n.z - P.z) < seen && n.arch.k === 'cop') {
         P.wanted = clamp(P.wanted + 6, 0, 100);
         break;
@@ -6076,6 +6246,82 @@ function getTag(i) {
 }
 
 const mm = $('mm'), mmc = mm.getContext('2d');
+/* ---- 方位 ------------------------------------------------------------------
+   ミニマップは進む向きが上（heading-up）で回るので、北がどちらかは自分の向き
+   しだいで変わる。上が北で固定の地図なら要らないが、回る地図で方位記号が無いと、
+   東通りと区役所通りのように同じ形の縦の通りが並んだところで、自分が北へ歩いて
+   いるのか南へ歩いているのかが分からなくなる ── 通りの走っている向きだけが
+   手がかりでは、街の縦横を覚えている人間にしか読めない地図になる。
+
+   街は z=0 が北、x が東（genWorld と STREETS がその向きで組んである）。   */
+/* 字ではなく爪で出す。138px の地図に字を置くと、読ませるために字のほうを
+   大きくするしかなく、そのぶん通りと人の点を覆ってしまう ── 記号なら小さいまま
+   向きだけが残る。北だけ長く色を付けて、四つのうちどれが北かを一目で決める。 */
+const COMPASS = [
+  { ux: 0, uz: -1, n: true }, { ux: 1, uz: 0 }, { ux: 0, uz: 1 }, { ux: -1, uz: 0 }
+];
+function drawCompass() {
+  const cx = mm.width / 2, cy = mm.height / 2, edge = cx - 3;
+  const s = Math.sin(P.yaw), c = Math.cos(P.yaw);
+  mmc.save();
+  for (const d of COMPASS) {
+    /* drawMinimap の rotate(P.yaw) と同じ回転を手で掛ける（こちらは地図を戻した
+       あとに描くので、ctx の回転には乗っていない）── 北(0,-1) は (sin,-cos)、
+       東(1,0) は (cos,sin) に落ちる。真北を向いていれば北が真上に来る */
+    const ox = d.ux * c - d.uz * s, oy = d.ux * s + d.uz * c;   // 外を向く単位ベクトル
+    const qx = -oy, qy = ox;                                    // その直交（爪の底辺）
+    const len = d.n ? 26 : 14, w = d.n ? 9 : 5;
+    const bx = cx + ox * (edge - len), by = cy + oy * (edge - len);
+    mmc.beginPath();
+    mmc.moveTo(cx + ox * edge, cy + oy * edge);                 // 縁を向いた爪の先
+    mmc.lineTo(bx + qx * w, by + qy * w);
+    mmc.lineTo(bx - qx * w, by - qy * w);
+    mmc.closePath();
+    mmc.fillStyle = d.n ? '#ff2d78' : 'rgba(255,255,255,.55)';
+    mmc.fill();
+    // 縁を暗く取る。下地のシマの色に同系色が来ても、爪の形は消えない
+    mmc.strokeStyle = 'rgba(6,4,14,.85)'; mmc.lineWidth = 2; mmc.stroke();
+  }
+  mmc.restore();
+}
+
+/* ---- 目印 ------------------------------------------------------------------
+   通りの格子だけの地図では、どのビルも同じ大きさの隙間にしか見えない ── 街の中で
+   自分がどこに居るかを、人は結局この数か所からの距離で測っている。実在の目印だけは
+   輪郭と字を出す。
+   箱は地図と一緒に回し、字だけは回さない（回る字は読めない）。
+   位置は生成側の箱からそのまま引く ── 街の形を直したら、地図も黙って付いてくる。 */
+const MM_MARKS = [
+  { t: '園', x0: 23, x1: 31, z0: 7, z1: 15, f: 2 },                 // 大久保公園（街区 1,0）
+  { t: '区', b: OFFICE, f: 2 },                                     // 新宿区役所
+  { t: '風', b: FURIN, f: 2 },                                      // 風林会館
+  { t: '映', b: TOHO, f: 2 },                                       // TOHOビル
+  { t: '広', b: PLAZA, f: 2 },                                      // シネシティ広場
+  { t: '駅', b: STATION, f: 2 },                                    // 西武新宿駅
+  { t: '門', x0: 79, x1: 87, z0: 124, z1: 125, f: 2 }               // 一番街のアーチ
+].map(m => ({ ...m, ...(m.b ? { x0: m.b.x0, x1: m.b.x1, z0: m.b.z0, z1: m.b.z1 } : {}) }));
+/* 目印の字。箱は地図と一緒に回っているので、字はこちらで立て直す。
+   地図を戻したあと（画面の座標）に、drawCompass と同じ回転を手で掛けて置く。 */
+function drawMarkLabels(sc, fl) {
+  const cx = mm.width / 2, cy = mm.height / 2;
+  const s = Math.sin(P.yaw), c = Math.cos(P.yaw);
+  mmc.save();
+  mmc.textAlign = 'center'; mmc.textBaseline = 'middle';
+  mmc.font = 'bold 19px "Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif';
+  for (const m of MM_MARKS) {
+    if (m.f !== fl) continue;
+    const u = ((m.x0 + m.x1 + 1) / 2 - P.x) * sc, v = ((m.z0 + m.z1 + 1) / 2 - P.z) * sc;
+    const px = cx + u * c - v * s, py = cy + u * s + v * c;
+    // 縁からはみ出す字は描かない。半分だけ見える字は、読めないうえに何かの点に見える
+    if (px < 15 || px > mm.width - 15 || py < 15 || py > mm.height - 15) continue;
+    mmc.beginPath(); mmc.arc(px, py, 13, 0, 6.29);
+    mmc.fillStyle = 'rgba(6,4,14,.82)'; mmc.fill();
+    mmc.strokeStyle = 'rgba(255,255,255,.50)'; mmc.lineWidth = 1.5; mmc.stroke();
+    mmc.fillStyle = '#fff';
+    mmc.fillText(m.t, px, py + 1);
+  }
+  mmc.restore();
+}
 function drawMinimap() {
   const R = 34, s = mm.width / (R * 2);
   mmc.clearRect(0, 0, mm.width, mm.height);
@@ -6126,6 +6372,16 @@ function drawMinimap() {
     mmc.fillStyle = 'rgba(150,150,165,.34)';
     box(PARK_AREA);
   }
+  /* 目印の輪郭。通りの上、店と人の下に敷く ── 目印はそこへ行くための地形であって、
+     いま起きていること（店・揉め事）より前には出ない */
+  for (const m of MM_MARKS) {
+    if (m.f !== fl) continue;
+    mmc.fillStyle = 'rgba(255,255,255,.12)';
+    box(m);
+    mmc.strokeStyle = 'rgba(255,255,255,.46)'; mmc.lineWidth = 1.5;
+    mmc.strokeRect((m.x0 - P.x) * s, (m.z0 - P.z) * s,
+      (m.x1 - m.x0 + 1) * s, (m.z1 - m.z0 + 1) * s);
+  }
   for (const sh of Shops) {
     if (floorOf(sh.y || GY) !== fl) continue;
     const dx = (sh.x - P.x) * s, dz = (sh.z - P.z) * s;
@@ -6152,6 +6408,8 @@ function drawMinimap() {
   mmc.lineTo(mm.width / 2 - 5, mm.height / 2 + 5);
   mmc.lineTo(mm.width / 2 + 5, mm.height / 2 + 5);
   mmc.closePath(); mmc.fill();
+  drawMarkLabels(s, fl);
+  drawCompass();                                 // 方位は最後。人と店の点の上に出す
 }
 
 /* 勢力ごとの間柄。敵対度の帯と、あと何人引き抜けば傘下に入るか。
@@ -6284,6 +6542,10 @@ const Talk = {
   },
   buttons() {
     const n = this.npc, box = $('acts'); box.innerHTML = '';
+    /* apply() が attack / flee を受け取った直後は、ここへ来る前に close() が走って
+       相手が外れている。守らないと引き入れの行（n.crew）で落ちる ── 内蔵の応答は
+       「殴る」と言われれば必ずそのどちらかを返すので、オフラインでは毎回通る道 */
+    if (!n) return;
     const mk = (label, cls, fn) => {
       const b = document.createElement('button');
       b.textContent = label; if (cls) b.className = cls;
@@ -6577,8 +6839,13 @@ function blast(x, y, z, r, dmg) {
     if (!def || def.h < 0) continue;                       // 岩盤は残る
     // 端は固いものほど残る。切り口が球にならないので、穴が穴らしく見える
     if (d > r * 0.62 && Math.random() < def.h * 0.6) continue;
-    // 隣の TNT は少し遅れて誘爆する
-    if (id === B_TNT) { primeTNT(bx, by, bz); Bombs[Bombs.length - 1].t = rnd(0.15, 0.5); continue; }
+    /* 隣の TNT は少し遅れて誘爆する。戻り値を必ず見ること ── すでに火の点いている
+       ものに primeTNT は何も積まないので、見ずに末尾を書き換えると、街の別の場所に
+       据えた無関係な一本の導火線を 0.15 秒に縮めてしまう */
+    if (id === B_TNT) {
+      if (primeTNT(bx, by, bz)) Bombs[Bombs.length - 1].t = rnd(0.15, 0.5);
+      continue;
+    }
     if (!Edits.has(idx(bx, by, bz))) dug += digWeight(id) * BLAST_DIG;
     setV(bx, by, bz, AIR);
   }
@@ -6707,6 +6974,9 @@ function witness(victim) {
   const aided = vs && vs !== 'player' && isRival(vs);
   for (const n of NPCs) {
     if (n === victim || n.down > 0) continue;
+    /* 階を見るのは breakBlock と同じ理由 ── 警官は地上にしか湧かないので、
+       ここを平面距離だけで見ると、地下で殴っただけで真上の巡回に手配度を付けられる */
+    if (Math.abs(n.y - P.y) >= 4) continue;
     if (Math.hypot(n.x - P.x, n.z - P.z) < 16) {
       seen++;
       if (n.arch.k === 'cop') {
@@ -6715,7 +6985,7 @@ function witness(victim) {
       }
       /* 身内が殴られるところを目の前で見た構成員は、そのまま加勢に入る ──
          腕の立たない役どころは寄らずに散る。流れ者には庇う相手という概念が無い */
-      else if (aided && !n.crew && sideOf(n) === vs && Math.abs(n.y - P.y) < 4) {
+      else if (aided && !n.crew && sideOf(n) === vs) {
         n.hostile = true; n.giveup = 0;
         n.state = n.arch.hp < 60 ? 'flee' : 'attack';
         if (n.state === 'flee') n.t = 5;
@@ -8570,8 +8840,11 @@ function render() {
     if (Math.abs(s.x - camX) > 70 || Math.abs(s.z - camZ) > 70) continue;
     // 地下は天井が低い。頭のすぐ上に浮かせる
     const my = s.under ? SUB_TOP + 0.2 : groundTop(s.x, s.z) + 3.4;
-    // 印の色は持ち主の色。どの勢力の店なのかが通りから見て分かる
-    const col = facCol(s.owner);
+    /* 印の色は持ち主の色。どの勢力の店なのかが通りから見て分かる。
+       持ち主のいない独立の店は白 ── facCol は勢力の鍵を色に直すものなので、
+       owner が null だと商店組合（金）へ落ちる。名札もミニマップも遊び方の表も
+       独立を白で描いているので、ここだけ金にすると独立店が組合の店に見える */
+    const col = s.owner ? facCol(s.owner) : [1, 1, 1];
     addInst(s.x, my + Math.sin(t * 2 + s.id) * 0.14, s.z,
       0.42, 0.42, 0.42, col, t * 1.3, 2.2);
   }
@@ -8818,7 +9091,17 @@ function save() {
       // 掘った／置いた差分だけを残す。世界そのものは毎回同じ手順で作れる
       edits: Array.from(Edits.entries())
     }));
-  } catch (e) { }
+    save.warned = false;                 // 書けた。次に落ちたらまた言う
+  } catch (e) {
+    /* 保存領域が尽きた（edits は掘るたび・置くたびに増える一方なので、長い夜ほど
+       太る）。黙って失敗し続けると、リロードして初めて全部消えたことを知ることに
+       なる ── 続きが残らないことだけは、その場で口に出す */
+    if (!save.warned) {
+      save.warned = true;
+      log('セーブできない ── ブラウザの保存領域がいっぱいだ。'
+        + 'このまま閉じると、ここから先は残らない。', 'bad');
+    }
+  }
 }
 function load() {
   try {
