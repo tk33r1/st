@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://tk.st/</loc>
-<lastmod>2026-08-15T08:37:23+09:00</lastmod>
+<lastmod>2026-08-18T21:48:05+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/data/st-cliftonstrengths-top5-ver2.pdf</loc>
@@ -98,7 +98,7 @@
 </url>
 <url>
 <loc>https://tk.st/magi-app/www/</loc>
-<lastmod>2026-05-26T07:37:11+09:00</lastmod>
+<lastmod>2026-08-18T21:48:05+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/tools/csv-json/</loc>
@@ -117,8 +117,12 @@
 <lastmod>2026-08-05T06:22:29+09:00</lastmod>
 </url>
 <url>
+<loc>https://tk.st/tools/pdf-studio/</loc>
+<lastmod>2026-08-18T21:48:05+09:00</lastmod>
+</url>
+<url>
 <loc>https://tk.st/tools/pdf-to-image/</loc>
-<lastmod>2026-08-05T06:22:29+09:00</lastmod>
+<lastmod>2026-08-18T21:48:05+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/tools/video-to-animation/</loc>
