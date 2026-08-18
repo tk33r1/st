@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YRM5KPVGX7');
+  </script>
+  <!-- Ahrefs -->
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
+  <!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="アップロード不要のPDF編集ツール。回転・結合・分割・並べ替えを1画面で。片面スキャンの奇数偶数交互結合、2in1・中綴じ小冊子の面付け、本当に消える墨消し、ローカル圧縮に対応。PDFをPNG・JPEG・WebP（通常/可逆）・AVIF画像に変換してZIPで一括ダウンロードもできます。ファイルはサーバーに送信されません。">
+  <meta name="robots" content="max-image-preview:large">
+  <title>PDF Studio - サーバーレスPDF編集ツール | ST TOOLS</title>
+  <link rel="canonical" href="https://tk.st/tools/pdf-studio/">
+  <link rel="author" href="https://tk.st/">
+
+  <!-- OGP / Twitter -->
+  <meta property="og:title" content="PDF Studio - サーバーレスPDF編集ツール">
+  <meta property="og:description" content="アップロード不要のPDF編集ツール。回転・結合・分割・並べ替えを1画面で。奇数偶数交互結合、2in1・中綴じ面付け、本当に消える墨消し、ローカル圧縮に対応。PNG・JPEG・WebP（通常/可逆）・AVIFへの画像変換もできます。">
+  <meta property="og:image" content="https://tk.st/images/ogp/pdf-studio-ogp.png">
+  <meta property="og:url" content="https://tk.st/tools/pdf-studio/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PDF Studio - サーバーレスPDF編集ツール">
+  <meta name="twitter:description" content="アップロード不要のPDF編集ツール。回転・結合・分割・並べ替えを1画面で。奇数偶数交互結合、2in1・中綴じ面付け、墨消し、ローカル圧縮、PNG・WebP可逆・AVIFへの画像変換に対応。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/pdf-studio-ogp.png">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
+          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"},
+          {"@type": "ListItem", "position": 3, "name": "PDF Studio", "item": "https://tk.st/tools/pdf-studio/"}
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "PDF Studio",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "description": "ブラウザ内で完結するPDF編集ツール。回転・結合・分割・並べ替え・奇数偶数交互結合・面付け・墨消し・圧縮・画像変換に対応。",
+        "url": "https://tk.st/tools/pdf-studio/",
+        "featureList": [
+          "ページの回転・削除・並べ替え",
+          "複数PDFの結合",
+          "PDFの分割",
+          "奇数ページ・偶数ページの交互結合",
+          "2in1・中綴じ小冊子の面付け",
+          "墨消し（塗りつぶし領域の実削除）",
+          "ローカル完結のPDF圧縮",
+          "PNG / JPEG / WebP / 可逆WebP / AVIF への画像変換",
+          "URLを指定してPDFを読み込み",
+          "メタデータの削除"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "JPY"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "PDFファイルはサーバーにアップロードされますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "いいえ。PDF Studio の編集処理はすべてブラウザ内（JavaScript）で実行されます。読み込んだPDFがネットワークに送信されることはありません。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "墨消しをすると本当に文字は消えますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "はい。黒い四角を上に重ねるだけの方法とは異なり、墨消しを指定したページは画像として描き直されるため、下にあったテキストはPDFから完全に失われます。コピーや検索で復元することはできません。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "PDFを画像に変換できますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "はい。ページごとにPNG・JPEG・WebP（通常/可逆）・AVIFへ変換し、ZIPで一括ダウンロードできます。解像度は1倍から4倍まで選べます。編集した状態のまま書き出せるので、不要ページを削除したり回転を直してから画像化できます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "パスワード付きPDFは編集できますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "閲覧パスワードが設定されたPDFは読み込めません。あらかじめパスワードを解除したファイルをご利用ください。"
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%23a855f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cg transform='translate(6, 6)' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V5z'/%3E%3Cpolyline points='12 2 12 5 15 5'/%3E%3Cpath d='M8 9v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1z' fill='url(%23g)'/%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml">
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+  <!-- PDF.js (render) / pdf-lib (write) / JSZip (bundle) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="../../data/tools-ui.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      background-color: #eef2ff;
+      color: #0f172a;
+      font-family: "Inter", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, .font-outfit { font-family: "Outfit", system-ui, sans-serif; }
+
+    /* ===== Animated background ===== */
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      background-color: #eef2ff;
+      background-image:
+        radial-gradient(at 12% 18%, rgba(99, 102, 241, 0.10) 0px, transparent 50%),
+        radial-gradient(at 88% 82%, rgba(168, 85, 247, 0.07) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(79, 70, 229, 0.05) 0px, transparent 50%);
+      z-index: -1;
+      animation: mesh-pulse 15s ease-in-out infinite alternate;
+    }
+    @keyframes mesh-pulse {
+      0%   { opacity: 0.8; transform: scale(1); }
+      100% { opacity: 1;   transform: scale(1.05); }
+    }
+
+    .site-header {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .fade-in { animation: fadeIn 320ms ease both; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Dropzone ===== */
+    .dropzone {
+      position: relative;
+      background: rgba(255, 255, 255, 0.7);
+      border: 2px dashed rgba(99, 102, 241, 0.32);
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+      transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02);
+    }
+    .dropzone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 300ms ease;
+      pointer-events: none;
+    }
+    .dropzone.dragover {
+      border-color: #4f46e5;
+      background: rgba(255, 255, 255, 0.92);
+      transform: scale(1.02);
+      box-shadow: 0 20px 40px -5px rgba(99, 102, 241, 0.18);
+    }
+    .dropzone.dragover::before { opacity: 1; }
+    .dropzone:focus-visible {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    }
+    .dropzone-content { position: relative; z-index: 10; }
+
+    .float-anim { animation: float 6s ease-in-out infinite; }
+    @keyframes float {
+      0%   { transform: translateY(0px); }
+      50%  { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    /* ===== Buttons ===== */
+    .btn-glow {
+      position: relative;
+      background: linear-gradient(135deg, #4f46e5, #a855f7);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      transition: all 200ms ease;
+    }
+    .btn-glow:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    }
+    .btn-glow:active:not(:disabled) { transform: translateY(0); }
+    .btn-glow:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-tool {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 150ms ease;
+    }
+    .btn-tool:hover:not(:disabled) {
+      border-color: #a5b4fc;
+      color: #4f46e5;
+      background: #eef2ff;
+    }
+    .btn-tool:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-tool.accent {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-color: transparent;
+      color: #fff;
+    }
+    .btn-tool.accent:hover:not(:disabled) {
+      color: #fff;
+      box-shadow: 0 6px 16px -4px rgba(99, 102, 241, 0.5);
+    }
+    .btn-tool.danger:hover:not(:disabled) {
+      border-color: #fecaca;
+      color: #dc2626;
+      background: #fef2f2;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+    .icon-btn:hover:not(:disabled) { border-color: #a5b4fc; color: #4f46e5; background: #eef2ff; }
+    .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ===== Toolbar ===== */
+    .toolbar {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(99, 102, 241, 0.16);
+      border-radius: 16px;
+      padding: 10px 14px;
+      box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.06);
+      position: sticky;
+      top: 76px;
+      z-index: 30;
+    }
+    .toolbar-sep { width: 1px; align-self: stretch; background: #e2e8f0; margin: 0 2px; }
+
+    /* ===== Page grid ===== */
+    #page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+    }
+
+    .page-card {
+      position: relative;
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 8px 8px 30px;
+      cursor: pointer;
+      transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+      user-select: none;
+    }
+    .page-card:hover { border-color: #a5b4fc; box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.25); }
+    .page-card.selected {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+    }
+    .page-card.dragging { opacity: 0.35; }
+    .page-card.drop-before { box-shadow: -3px 0 0 0 #4f46e5; }
+    .page-card.drop-after  { box-shadow:  3px 0 0 0 #4f46e5; }
+
+    .page-thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1.35;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .page-thumb {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+    }
+    .thumb-skeleton {
+      width: 70%; height: 80%;
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .page-num {
+      position: absolute;
+      bottom: 7px; left: 0; right: 0;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+    .page-badge {
+      position: absolute;
+      top: 12px; left: 12px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 6px;
+      border-radius: 99px;
+      background: rgba(15, 23, 42, 0.72);
+      color: #fff;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .page-badge.redacted { background: #dc2626; left: auto; right: 12px; }
+
+    .page-actions {
+      position: absolute;
+      top: 12px; right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 150ms ease;
+    }
+    .page-card:hover .page-actions,
+    .page-card:focus-within .page-actions { opacity: 1; }
+    .page-actions.has-redaction { top: 34px; }
+    .page-act {
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+      transition: all 130ms ease;
+    }
+    .page-act:hover { color: #4f46e5; border-color: #a5b4fc; }
+    .page-act.danger:hover { color: #dc2626; border-color: #fecaca; }
+
+    /* Reorder handle. Touch drags have to start here: making the whole card
+       draggable would leave no way to scroll the grid with a finger. */
+    .page-grip {
+      position: absolute;
+      bottom: 3px; left: 5px;
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      color: #cbd5e1;
+      border-radius: 7px;
+      cursor: grab;
+      touch-action: none;
+      transition: color 130ms ease, background 130ms ease;
+    }
+    .page-card:hover .page-grip { color: #6366f1; background: #eef2ff; }
+    body.dragging-page, body.dragging-page * { cursor: grabbing !important; }
+
+    /* No hover on a touch screen, so the per-page actions have to stay put. */
+    @media (hover: none) {
+      .page-actions { opacity: 1; }
+      .page-grip { color: #94a3b8; background: #f8fafc; }
+    }
+
+    /* ===== Panels / modal ===== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-card {
+      background: #fff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 560px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.4);
+      animation: modalIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .modal-card.wide { max-width: 940px; }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .custom-select, .text-input {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      color: #0f172a;
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+    .custom-select:focus, .text-input:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .seg {
+      display: flex;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      flex-wrap: wrap;
+    }
+    .seg-btn {
+      flex: 1;
+      min-width: 78px;
+      padding: 7px 10px;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+    .seg-btn:hover { color: #4f46e5; }
+    .seg-btn.active {
+      background: #fff;
+      color: #4f46e5;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 99px;
+      background: #e2e8f0;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #4f46e5;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #4f46e5;
+      cursor: pointer;
+      border: 2px solid #fff;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .check-row input[type="checkbox"] {
+      accent-color: #4f46e5;
+      width: 15px; height: 15px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .note {
+      font-size: 12px;
+      line-height: 1.65;
+      color: #64748b;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .note.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+    /* ===== Redaction canvas ===== */
+    #redact-stage {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+      cursor: crosshair;
+      touch-action: none;
+      box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.3);
+    }
+    #redact-canvas { display: block; max-width: 100%; height: auto; }
+    #redact-overlay { position: absolute; inset: 0; }
+    .redact-rect {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid #dc2626;
+    }
+    .redact-rect > button {
+      position: absolute;
+      top: -9px; right: -9px;
+      width: 19px; height: 19px;
+      border-radius: 50%;
+      background: #dc2626;
+      color: #fff;
+      border: 2px solid #fff;
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+    }
+    #redact-live {
+      position: absolute;
+      background: rgba(220, 38, 38, 0.28);
+      border: 1.5px dashed #dc2626;
+      pointer-events: none;
+      display: none;
+    }
+
+    /* ===== Progress ===== */
+    .progress-bar-container {
+      width: 100%;
+      height: 7px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4f46e5, #a855f7);
+      border-radius: 99px;
+      transition: width 200ms ease;
+    }
+
+    .result-card {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(99, 102, 241, 0.16);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.15);
+    }
+
+    #result-compare {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #047857;
+    }
+    #result-compare.compare-bad {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+
+    /* ===== URL import ===== */
+    .url-input-container {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      padding: 12px;
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .url-input {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      min-width: 0;
+    }
+    .url-input:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+    .url-btn {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      white-space: nowrap;
+    }
+    .url-btn:hover:not(:disabled) { background: #4338ca; }
+    .url-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(99, 102, 241, 0.14);
+      border-radius: 14px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ===== SEO copy ===== */
+    .prose-tool h3 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 22px 0 6px; }
+    .prose-tool p  { font-size: 13px; line-height: 1.85; color: #64748b; margin: 0 0 6px; }
+    .prose-tool ul { margin: 0 0 6px; padding-left: 18px; }
+    .prose-tool li { font-size: 13px; line-height: 1.85; color: #64748b; }
+  </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <div class="bg-mesh"></div>
+
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <a href="https://tk.st/tools/" class="flex items-center gap-2.5 text-slate-500 hover:text-indigo-600 transition-colors group">
+          <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+          <span class="text-sm font-medium tracking-wide">ST TOOLS</span>
+        </a>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-md">
+            <i data-lucide="layers" class="w-4 h-4 text-white"></i>
+          </div>
+          <h1 class="text-xl font-bold tracking-tight text-slate-800 font-outfit">PDF Studio</h1>
+        </div>
+        <div class="w-[84px] hidden sm:block"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Main ===== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-10 lg:py-14 flex flex-col items-center justify-start">
+
+    <!-- Hero (upload view only) -->
+    <div id="hero" class="text-center mb-8 max-w-2xl flex flex-col items-center">
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 mb-4 font-outfit leading-[1.2] pb-2">
+        Edit PDF,<br/>Upload Nothing.
+      </h2>
+      <p class="text-slate-500 text-base sm:text-lg">
+        回転・結合・分割・並べ替えを1画面で。ファイルはブラウザの外に出ません。
+      </p>
+    </div>
+
+    <!-- ===== View 1: Upload ===== -->
+    <div id="view-upload" class="w-full max-w-3xl fade-in">
+      <div id="dropzone" class="dropzone p-12 sm:p-16 text-center cursor-pointer group" role="button" tabindex="0" aria-label="PDFファイルをドロップまたは選択">
+        <input type="file" id="file-input" accept="application/pdf" class="hidden" multiple>
+
+        <div class="dropzone-content flex flex-col items-center gap-6 pointer-events-none">
+          <div class="relative flex items-center justify-center">
+            <div class="w-20 h-20 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center float-anim group-hover:bg-indigo-50 transition-colors shadow-sm z-10 relative">
+              <i data-lucide="file-text" class="w-10 h-10 text-indigo-500"></i>
+            </div>
+            <div class="absolute -bottom-2 -right-3 w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 border-2 border-white flex items-center justify-center float-anim shadow-md z-20" style="animation-delay: 0.5s;">
+              <i data-lucide="wand-2" class="w-4 h-4 text-white"></i>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">PDFファイルをドロップ</h3>
+            <p class="text-slate-500 text-sm">複数まとめて選択すると、そのまま結合できます</p>
+          </div>
+
+          <div class="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 font-semibold tracking-wide flex items-center gap-2">
+            <i data-lucide="lock" class="w-3 h-3 text-emerald-500"></i>
+            データはサーバーに送信されず、ブラウザ内で安全に処理されます
+          </div>
+        </div>
+      </div>
+
+      <div class="url-input-container">
+        <i data-lucide="link" class="w-5 h-5 text-slate-400 self-center ml-1"></i>
+        <input type="url" id="url-input" class="url-input" placeholder="PDFのURLを貼り付けてインポート...">
+        <button id="url-btn" class="url-btn" type="button">インポート</button>
+      </div>
+
+      <!-- Feature highlights -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-8">
+        <div class="feature-card">
+          <div class="flex items-center gap-2 mb-1.5">
+            <i data-lucide="shuffle" class="w-4 h-4 text-indigo-500"></i>
+            <span class="text-sm font-bold text-slate-700">奇数偶数の交互結合</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">片面スキャナで表面・裏面を別々に取り込んだ2ファイルを、正しいページ順に組み直します。</p>
+        </div>
+        <div class="feature-card">
+          <div class="flex items-center gap-2 mb-1.5">
+            <i data-lucide="book-open" class="w-4 h-4 text-indigo-500"></i>
+            <span class="text-sm font-bold text-slate-700">2in1・中綴じ面付け</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">2ページを1枚に並べたり、印刷して折るだけで冊子になる並び順に組み替えます。</p>
+        </div>
+        <div class="feature-card">
+          <div class="flex items-center gap-2 mb-1.5">
+            <i data-lucide="eraser" class="w-4 h-4 text-indigo-500"></i>
+            <span class="text-sm font-bold text-slate-700">本当に消える墨消し</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">黒い四角を重ねるだけではなく、下のテキストごとPDFから削除します。</p>
+        </div>
+        <div class="feature-card">
+          <div class="flex items-center gap-2 mb-1.5">
+            <i data-lucide="minimize-2" class="w-4 h-4 text-indigo-500"></i>
+            <span class="text-sm font-bold text-slate-700">ローカル圧縮</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">解像度と画質を選んでファイルサイズを削減。サーバーを介しません。</p>
+        </div>
+        <div class="feature-card">
+          <div class="flex items-center gap-2 mb-1.5">
+            <i data-lucide="scissors" class="w-4 h-4 text-indigo-500"></i>
+            <span class="text-sm font-bold text-slate-700">分割・抽出</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">1ページずつ、N枚ずつ、選択したページだけ。ZIPでまとめて受け取れます。</p>
+        </div>
+        <div class="feature-card">
+          <div class="flex items-center gap-2 mb-1.5">
+            <i data-lucide="image" class="w-4 h-4 text-indigo-500"></i>
+            <span class="text-sm font-bold text-slate-700">AVIF・可逆WebP変換</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">編集後の状態のまま PNG / JPEG / WebP / 可逆WebP / AVIF へ。解像度も指定できます。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== View 2: Editor ===== -->
+    <div id="view-preview" class="w-full hidden">
+
+      <div class="toolbar flex flex-wrap items-center gap-2 mb-6">
+        <div class="flex items-center gap-2 mr-1">
+          <i data-lucide="layers" class="w-4 h-4 text-indigo-500"></i>
+          <span class="text-sm font-bold text-slate-700"><span id="page-count">0</span> ページ</span>
+          <span id="sel-count" class="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full hidden"></span>
+        </div>
+
+        <div class="toolbar-sep hidden sm:block"></div>
+
+        <button id="btn-select-all" class="btn-tool" type="button">
+          <i data-lucide="check-square" class="w-3.5 h-3.5"></i>全選択
+        </button>
+        <button id="btn-select-none" class="btn-tool" type="button" disabled>
+          <i data-lucide="square" class="w-3.5 h-3.5"></i>解除
+        </button>
+
+        <div class="toolbar-sep hidden sm:block"></div>
+
+        <button id="btn-rot-left" class="btn-tool" type="button" title="左に90°回転">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>左回転
+        </button>
+        <button id="btn-rot-right" class="btn-tool" type="button" title="右に90°回転">
+          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>右回転
+        </button>
+        <button id="btn-delete" class="btn-tool danger" type="button" title="選択したページを削除">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>削除
+        </button>
+
+        <div class="toolbar-sep hidden sm:block"></div>
+
+        <button id="btn-add-file" class="btn-tool" type="button" title="PDFを追加して結合">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>PDFを追加
+        </button>
+        <button id="btn-interleave" class="btn-tool" type="button" title="奇数ページと偶数ページを交互に結合">
+          <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>交互結合
+        </button>
+        <button id="btn-undo" class="btn-tool" type="button" title="元に戻す (Ctrl+Z)" disabled>
+          <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>戻す
+        </button>
+
+        <div class="flex-1"></div>
+
+        <button id="btn-export" class="btn-tool accent" type="button">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>書き出し
+        </button>
+        <button id="btn-restart" class="icon-btn" type="button" title="最初からやり直す" aria-label="最初からやり直す">
+          <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 mb-4 flex items-center gap-1.5 flex-wrap">
+        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+        クリックで選択 / Shift+クリックで範囲選択 / 左下のハンドルをドラッグで並べ替え。
+        キーボードは ←→↑↓ で移動、Space で選択、Alt+←→ で並べ替え、R で回転、M で墨消し、Delete で削除。
+      </p>
+
+      <div id="page-grid" role="listbox" aria-multiselectable="true" aria-label="ページ一覧"></div>
+    </div>
+
+    <!-- ===== View 3: Loading ===== -->
+    <div id="view-loading" class="w-full max-w-md hidden text-center py-16">
+      <div class="inline-block relative w-20 h-20 mb-6">
+        <svg class="animate-spin w-full h-full text-indigo-200" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <i data-lucide="layers" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-indigo-500"></i>
+      </div>
+      <h3 id="loading-msg" class="text-xl font-bold text-slate-800">処理中...</h3>
+      <p id="loading-submsg" class="text-slate-500 text-sm mt-2">ブラウザ内で処理しています</p>
+
+      <div class="progress-bar-container mt-6">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <div id="progress-text" class="text-xs font-medium text-slate-500 mt-2 text-right">0%</div>
+
+      <button id="btn-cancel-export" class="btn-tool danger mx-auto mt-6 hidden" type="button">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>中止する
+      </button>
+    </div>
+
+    <!-- ===== View 4: Result ===== -->
+    <div id="view-result" class="w-full max-w-xl hidden">
+      <div class="result-card p-6 sm:p-8 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mx-auto mb-5 shadow-lg">
+          <i data-lucide="check" class="w-8 h-8 text-white"></i>
+        </div>
+        <h3 class="text-2xl font-extrabold text-slate-800 font-outfit mb-1">書き出しが完了しました</h3>
+        <p id="result-name" class="text-sm text-slate-500 mb-6 break-all"></p>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">形式</span>
+            <span id="result-format" class="text-lg font-outfit font-extrabold text-slate-700">PDF</span>
+          </div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">サイズ</span>
+            <span id="result-size" class="text-lg font-outfit font-extrabold text-slate-700">0 KB</span>
+          </div>
+        </div>
+
+        <div id="result-compare" class="hidden mb-6 text-sm font-semibold rounded-xl px-4 py-3 leading-relaxed"></div>
+
+        <button id="btn-download" class="btn-glow w-full flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-lg shadow-lg">
+          <i data-lucide="download" class="w-6 h-6"></i>
+          ダウンロード
+        </button>
+        <button id="btn-back-editor" class="mt-4 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors underline-offset-4 hover:underline">
+          編集画面に戻る
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== SEO copy ===== -->
+    <section id="tool-copy" class="w-full max-w-3xl mt-16 prose-tool">
+      <h2 class="text-xl font-bold text-slate-800 font-outfit mb-2">PDF Studio について</h2>
+      <p>PDF Studio は、PDFの回転・結合・分割・並べ替えを1つの画面でまとめて行える無料のPDF編集ツールです。一般的なオンラインPDFツールと違い、ファイルをサーバーにアップロードしません。処理はすべてブラウザ内のJavaScriptで完結するため、契約書・請求書・社内資料のような外部に出したくないPDFでも安心して扱えます。オフラインでも動作します。</p>
+
+      <h3>1画面で完結する編集</h3>
+      <p>多くのオンラインツールは「回転」「結合」「分割」がそれぞれ別ページに分かれており、回転したあとに分割したい場合は一度ダウンロードして再アップロードする必要があります。PDF Studio はサムネイル一覧の上で回転・削除・並べ替え・他PDFの挿入をすべて行い、最後に1度だけ書き出します。アップロードの往復が不要なので、ページ数が多いPDFほど速く終わります。</p>
+
+      <h3>片面スキャンの奇数偶数交互結合</h3>
+      <p>両面原稿を片面スキャナで取り込むと、「奇数ページだけのPDF」と「偶数ページだけのPDF」の2ファイルに分かれてしまいます。交互結合を使うと、この2つを1・2・3・4…と正しい順序に組み直せます。裏面を逆順に読み取ってしまった場合のために、偶数ページ側を逆順にするオプションも用意しています。</p>
+
+      <h3>2in1・中綴じ小冊子の面付け</h3>
+      <p>2ページ分を1枚に並べる2in1（N-up）と、印刷して二つ折りにするだけで冊子になる中綴じ面付けに対応しています。中綴じでは総ページ数を自動的に4の倍数に調整し、白紙を補います。左綴じ（横書き）と右綴じ（縦書き・和書）を切り替えられます。面付けはページを画像化せずベクターのまま配置するため、文字は鮮明なまま、テキスト検索もそのまま使えます。</p>
+
+      <h3>本当に消える墨消し（黒塗り）</h3>
+      <p>PDFに黒い四角形を描くだけの「黒塗り」は、下にある文字がPDFの中に残ったままです。テキストをコピーしたり検索したりすれば、隠したはずの内容が読めてしまいます。PDF Studio の墨消しは、指定した領域を塗りつぶしたうえでそのページを画像として描き直すため、元のテキストデータがPDFから消えます。復元はできません。</p>
+
+      <h3>ローカル完結のPDF圧縮</h3>
+      <p>PDFの圧縮はサーバー側の処理に頼るサービスがほとんどですが、PDF Studio は解像度（DPI）と画質を指定してブラウザ内で再構成します。写真やスキャン画像が中心のPDFで特に効果があります。圧縮したPDFはページが画像になるため、テキストの選択・検索はできなくなります。文字の鮮明さを保ちたい場合は圧縮なしで書き出してください。</p>
+
+      <h3>PDFを画像に変換する（AVIF・可逆WebP対応）</h3>
+      <p>編集した状態のまま、ページごとに画像へ書き出せます。PNG・JPEG・WebPに加えて、次世代フォーマットの<strong>AVIF</strong>と<strong>可逆（ロスレス）WebP</strong>にも対応しています。AVIFはPNGと比べて大幅に軽く、可逆WebPは画質を一切落とさずにPNGより小さくできるため、資料をWebサイトに載せる用途に向いています。解像度は1倍から4倍まで選べ、複数ページはZIPでまとめてダウンロードされます。</p>
+      <p>AVIFと可逆WebPはブラウザ標準の機能では出力できないため、初回だけエンコーダ（WebAssembly）を読み込みます。読み込み後はオフラインでも変換できます。この変換もサーバーを使わず、端末の中だけで完結します。</p>
+
+      <h3>URLからPDFを読み込む</h3>
+      <p>手元にファイルがなくても、PDFのURLを貼り付ければ直接読み込めます。取得先がCORSを許可していない場合は、外部プロキシ経由での再試行を確認したうえで行います（プロキシを使う場合のみ、その運営者にURLとPDFの内容が渡ります）。</p>
+
+      <h3>対応している操作</h3>
+      <ul>
+        <li>ページの回転（90°単位）・削除・ドラッグでの並べ替え</li>
+        <li>複数PDFの結合、URLからのPDF読み込み</li>
+        <li>分割（1ページずつ / N枚ずつ / 選択したページのみ）、ZIP一括ダウンロード</li>
+        <li>奇数ページ・偶数ページの交互結合（裏面の逆順に対応）</li>
+        <li>2in1・中綴じ小冊子の面付け（左綴じ / 右綴じ）</li>
+        <li>墨消し（領域指定・実削除）</li>
+        <li>PDF圧縮（DPI・画質指定）</li>
+        <li>PNG / JPEG / WebP / 可逆WebP / AVIF への画像変換</li>
+        <li>作成者名などメタデータの削除</li>
+      </ul>
+
+      <h3>ご利用上の注意</h3>
+      <ul>
+        <li>閲覧パスワードが設定されたPDFは読み込めません。事前にパスワードを解除してください。</li>
+        <li>すべての処理を端末のメモリ上で行うため、非常に大きなPDF（数百MB規模）や数千ページのPDFはスマートフォンでは処理しきれない場合があります。</li>
+        <li>入力フォーム・注釈・電子署名は、圧縮や墨消しを適用したページでは失われます。</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer class="mt-auto border-t border-slate-200 bg-white/50 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-center relative">
+      <span class="text-xs sm:text-sm text-slate-400 font-medium tracking-wide">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <div id="donation-button-container" class="absolute right-4 sm:right-6"></div>
+    </div>
+  </footer>
+
+  <script src="../../data/buy-me-oil.js"></script>
+  <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-[70] pointer-events-none" role="status">
+    <i id="toast-icon-success" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+    <i id="toast-icon-error" data-lucide="alert-circle" class="w-5 h-5 text-rose-400 hidden"></i>
+    <span id="toast-msg" class="text-sm font-medium"></span>
+  </div>
+
+  <!-- ===== Modal: Interleave ===== -->
+  <div id="modal-interleave" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="il-title">
+    <div class="modal-card p-6 sm:p-7">
+      <div class="flex items-start justify-between gap-4 mb-5">
+        <div>
+          <h3 id="il-title" class="text-lg font-bold text-slate-800 font-outfit">奇数偶数の交互結合</h3>
+          <p class="text-xs text-slate-500 mt-1">片面スキャンで分かれた表面／裏面を1つに組み直します</p>
+        </div>
+        <button class="icon-btn shrink-0" data-close="modal-interleave" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="field-label" for="il-odd">奇数ページ側（表面）</label>
+          <select id="il-odd" class="custom-select"></select>
+        </div>
+        <div>
+          <label class="field-label" for="il-even">偶数ページ側（裏面）</label>
+          <select id="il-even" class="custom-select"></select>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="il-reverse" checked>
+          <span>裏面を逆順に読み込む<br><span class="text-slate-400">原稿の束をひっくり返してスキャンした場合はこちら（多くのシートフィード機で必要）</span></span>
+        </label>
+        <div class="note">結合後は現在のページ構成が置き換わります。ページ数が合わない場合は、余ったページを末尾にそのまま追加します。</div>
+      </div>
+
+      <div class="flex gap-2 mt-6">
+        <button class="btn-tool flex-1 justify-center" data-close="modal-interleave" type="button">キャンセル</button>
+        <button id="il-apply" class="btn-tool accent flex-1 justify-center" type="button">
+          <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>交互結合する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: Redact ===== -->
+  <div id="modal-redact" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="redact-title">
+    <div class="modal-card wide p-6 sm:p-7">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 id="redact-title" class="text-lg font-bold text-slate-800 font-outfit">墨消し <span id="redact-page-label" class="text-sm font-semibold text-indigo-600"></span></h3>
+          <p class="text-xs text-slate-500 mt-1">ドラッグして隠す範囲を指定します。書き出し時、その下のテキストはPDFから削除されます。</p>
+        </div>
+        <button class="icon-btn shrink-0" data-close="modal-redact" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="bg-slate-100 rounded-xl p-4 flex items-center justify-center overflow-auto" style="max-height:60vh">
+        <div id="redact-stage">
+          <canvas id="redact-canvas"></canvas>
+          <div id="redact-overlay"></div>
+          <div id="redact-live"></div>
+        </div>
+      </div>
+
+      <div class="note warn mt-4">墨消しを適用したページは 300dpi の画像に変換されます。そのページのテキスト選択・検索はできなくなります。</div>
+
+      <label class="check-row mt-3"><input type="checkbox" id="redact-all-pages"><span>この範囲をすべてのページに適用する（ヘッダーや個人情報の一括処理向け。位置はページの縦横比に対する割合で揃えます）</span></label>
+
+      <div class="flex flex-wrap gap-2 mt-5">
+        <button id="redact-clear" class="btn-tool danger" type="button">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>すべて解除
+        </button>
+        <div class="flex-1"></div>
+        <button class="btn-tool" data-close="modal-redact" type="button">キャンセル</button>
+        <button id="redact-apply" class="btn-tool accent" type="button">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>確定
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: Export ===== -->
+  <div id="modal-export" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ex-title">
+    <div class="modal-card p-6 sm:p-7">
+      <div class="flex items-start justify-between gap-4 mb-5">
+        <div>
+          <h3 id="ex-title" class="text-lg font-bold text-slate-800 font-outfit">書き出し</h3>
+          <p class="text-xs text-slate-500 mt-1">現在の <span id="ex-page-count" class="font-semibold text-indigo-600">0</span> ページを出力します</p>
+        </div>
+        <button class="icon-btn shrink-0" data-close="modal-export" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="seg mb-5" id="ex-mode">
+        <button class="seg-btn active" data-mode="pdf" type="button">PDF</button>
+        <button class="seg-btn" data-mode="split" type="button">分割</button>
+        <button class="seg-btn" data-mode="impose" type="button">面付け</button>
+        <button class="seg-btn" data-mode="image" type="button">画像</button>
+      </div>
+
+      <!-- PDF -->
+      <div class="ex-panel flex flex-col gap-4" data-panel="pdf">
+        <div>
+          <span class="field-label">圧縮</span>
+          <div class="seg" id="ex-compress">
+            <button class="seg-btn active" data-v="off" type="button">圧縮なし</button>
+            <button class="seg-btn" data-v="on" type="button">圧縮する</button>
+          </div>
+        </div>
+        <div id="ex-compress-opts" class="hidden flex-col gap-4">
+          <div>
+            <label class="field-label" for="ex-dpi">解像度</label>
+            <select id="ex-dpi" class="custom-select">
+              <option value="96">96 dpi（画面表示・最小）</option>
+              <option value="150" selected>150 dpi（標準）</option>
+              <option value="200">200 dpi（きれい）</option>
+              <option value="300">300 dpi（印刷向け）</option>
+            </select>
+          </div>
+          <div>
+            <div class="flex justify-between items-baseline">
+              <label class="field-label" for="ex-quality">画質</label>
+              <span id="ex-quality-val" class="text-xs font-bold text-indigo-600">80%</span>
+            </div>
+            <input type="range" id="ex-quality" min="30" max="95" value="80">
+          </div>
+          <div class="note warn">圧縮するとページが画像に変換され、テキストの選択・検索ができなくなります。</div>
+        </div>
+        <label class="check-row"><input type="checkbox" id="ex-strip-meta" checked><span>メタデータ（作成者・作成ソフト・日時）を削除する</span></label>
+      </div>
+
+      <!-- Split -->
+      <div class="ex-panel hidden flex-col gap-4" data-panel="split">
+        <div>
+          <span class="field-label">分割方法</span>
+          <div class="seg" id="ex-split-mode">
+            <button class="seg-btn active" data-v="each" type="button">1ページずつ</button>
+            <button class="seg-btn" data-v="every" type="button">N枚ずつ</button>
+            <button class="seg-btn" data-v="selected" type="button">選択のみ</button>
+          </div>
+        </div>
+        <div id="ex-split-every-wrap" class="hidden">
+          <label class="field-label" for="ex-split-n">1ファイルあたりのページ数</label>
+          <input type="number" id="ex-split-n" class="text-input" min="1" max="9999" value="10">
+        </div>
+        <div class="note" id="ex-split-note">各ページを個別のPDFにして、ZIPでまとめてダウンロードします。</div>
+        <label class="check-row"><input type="checkbox" id="ex-split-strip-meta" checked><span>メタデータを削除する</span></label>
+      </div>
+
+      <!-- Impose -->
+      <div class="ex-panel hidden flex-col gap-4" data-panel="impose">
+        <div>
+          <span class="field-label">面付け方式</span>
+          <div class="seg" id="ex-impose-mode">
+            <button class="seg-btn active" data-v="nup" type="button">2in1</button>
+            <button class="seg-btn" data-v="booklet" type="button">中綴じ小冊子</button>
+          </div>
+        </div>
+        <div>
+          <span class="field-label">綴じ方向</span>
+          <div class="seg" id="ex-bind">
+            <button class="seg-btn active" data-v="left" type="button">左綴じ（横書き）</button>
+            <button class="seg-btn" data-v="right" type="button">右綴じ（縦書き）</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label" for="ex-sheet">用紙サイズ</label>
+          <select id="ex-sheet" class="custom-select">
+            <option value="auto" selected>元のページに合わせる</option>
+            <option value="a4">A4 横（297 × 210 mm）</option>
+            <option value="a3">A3 横（420 × 297 mm）</option>
+            <option value="b5">B5 横（257 × 182 mm）</option>
+            <option value="letter">Letter 横（11 × 8.5 in）</option>
+          </select>
+        </div>
+        <div>
+          <div class="flex justify-between items-baseline">
+            <label class="field-label" for="ex-gutter">余白</label>
+            <span id="ex-gutter-val" class="text-xs font-bold text-indigo-600">0 mm</span>
+          </div>
+          <input type="range" id="ex-gutter" min="0" max="20" value="0">
+        </div>
+        <div class="note" id="ex-impose-note">2ページ分を1枚に並べます。文字は画像化せずベクターのまま配置されます。</div>
+      </div>
+
+      <!-- Image -->
+      <div class="ex-panel hidden flex-col gap-4" data-panel="image">
+        <div>
+          <span class="field-label">形式</span>
+          <div class="seg" id="ex-img-format">
+            <button class="seg-btn active" data-v="png" type="button">PNG</button>
+            <button class="seg-btn" data-v="jpeg" type="button">JPEG</button>
+            <button class="seg-btn" data-v="webp" type="button">WebP</button>
+            <button class="seg-btn" data-v="webp-lossless" type="button">WebP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
+            <button class="seg-btn" data-v="avif" type="button">AVIF</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label" for="ex-img-scale">解像度</label>
+          <select id="ex-img-scale" class="custom-select">
+            <option value="1">標準 (1x / 72dpi)</option>
+            <option value="2" selected>高画質 (2x / 144dpi)</option>
+            <option value="3">最高画質 (3x / 216dpi)</option>
+            <option value="4">超高画質 (4x / 288dpi)</option>
+          </select>
+        </div>
+        <div id="ex-img-quality-wrap" class="hidden">
+          <div class="flex justify-between items-baseline">
+            <label class="field-label" for="ex-img-quality">画質</label>
+            <span id="ex-img-quality-val" class="text-xs font-bold text-indigo-600">90%</span>
+          </div>
+          <input type="range" id="ex-img-quality" min="30" max="100" value="90">
+        </div>
+        <div class="note" id="ex-img-note">全ページを画像にしてZIPでまとめます。1ページだけの場合は画像ファイルを直接ダウンロードします。</div>
+      </div>
+
+      <div>
+        <label class="field-label mt-5" for="ex-filename">ファイル名</label>
+        <input type="text" id="ex-filename" class="text-input" placeholder="edited">
+      </div>
+
+      <div class="flex gap-2 mt-6">
+        <button class="btn-tool flex-1 justify-center" data-close="modal-export" type="button">キャンセル</button>
+        <button id="ex-run" class="btn-tool accent flex-1 justify-center" type="button">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>書き出す
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

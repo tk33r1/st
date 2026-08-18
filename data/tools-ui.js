@@ -1,6 +1,6 @@
 /* Shared UI helpers for ST TOOLS pages.
  * Exposes `window.STCommon` with utilities that the tool pages
- * (light-svg, nextgen-image, pdf-to-image, video-to-animation, ...)
+ * (light-svg, nextgen-image, pdf-studio, video-to-animation, ...)
  * all reach for. Each page should still own its tool-specific logic.
  */
 (function (global) {

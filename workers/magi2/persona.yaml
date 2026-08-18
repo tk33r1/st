@@ -10,7 +10,13 @@ defaults:
     top_p: 1.0                     # 同上
   timeouts:
     persona_ms: 30000
+    persona_vision_ms: 45000         # 画像付きメッセージのときの人格タイムアウト
     synthesizer_ms: 60000
+  # マルチモーダル入力（画像）。data: URL のみ許可（外部 URL は不可）
+  vision:
+    max_images_per_message: 4
+    max_images_total: 8              # 1リクエスト（履歴全体）あたり
+    max_image_bytes: 5242880         # base64 デコード後の1枚あたり上限（5MB）
   # 推論制御は reasoning_effort（none|low|medium|high|xhigh|max）。省略すると medium で推論するため全モデルで明示する
   models:
     persona:     { model: gpt-5.6-luna, reasoning_effort: none, stream: false, max_completion_tokens: 512  }   # 3人格：非推論・並列・短文

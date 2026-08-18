@@ -1,6 +1,6 @@
 /* MAGI PWA service worker — cache the app shell only.
  * API calls (/magi2/*) are always network: never cache streamed responses. */
-var CACHE = 'magi-shell-v2';
+var CACHE = 'magi-shell-v3';
 // Core files that must exist. Icons are cached opportunistically (they may not be
 // generated yet) so a missing icon never fails the whole install.
 var CORE = ['./', './index.html', './app.js', './manifest.webmanifest'];

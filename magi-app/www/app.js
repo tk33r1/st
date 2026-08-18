@@ -47,6 +47,18 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 function safeParse(raw, fallback) { try { return raw ? JSON.parse(raw) : fallback; } catch (_) { return fallback; } }
+// 画像サムネを持つ履歴は容量を食う。あふれたら古い保存セッションを捨てて1回だけ再試行する。
+function safeStore(key, val) {
+  var str = typeof val === 'string' ? val : JSON.stringify(val);
+  try { localStorage.setItem(key, str); } catch (_) {
+    try {
+      var ss = safeParse(localStorage.getItem('magi_saved_sessions'), []);
+      while (ss.length > 5) ss.pop();
+      localStorage.setItem('magi_saved_sessions', JSON.stringify(ss));
+      localStorage.setItem(key, str);
+    } catch (__) { /* どうにもならない場合は黙って諦める */ }
+  }
+}
 var genMid = function () { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); };
 var agentScroll = function () { agentLog.scrollTop = agentLog.scrollHeight; };
 
@@ -98,7 +110,7 @@ function reactionStoreFor(bar) {
   if (!pendingReactions[mid]) pendingReactions[mid] = {};
   return pendingReactions[mid];
 }
-function persistReactions() { localStorage.setItem('magi_current_history', JSON.stringify(agentHistory)); syncCurrentToSaved(); }
+function persistReactions() { safeStore('magi_current_history', agentHistory); syncCurrentToSaved(); }
 
 // ---- Saved sessions (history) ----------------------------------------------
 // One id per active conversation (reset on New conversation). The current
@@ -112,7 +124,8 @@ function syncCurrentToSaved() {
   if (!agentHistory || agentHistory.length === 0) return;
   var firstUserMsg = agentHistory.find(function (m) { return m.role === 'user'; });
   if (!firstUserMsg) return;
-  var title = agentTitle || (firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : ''));
+  var firstText = contentText(firstUserMsg.content) || 'Image';
+  var title = agentTitle || (firstText.slice(0, 30) + (firstText.length > 30 ? '...' : ''));
   var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
   if (currentSessionId) {
     sessions = sessions.filter(function (s) { return s.id !== currentSessionId; });
@@ -122,7 +135,7 @@ function syncCurrentToSaved() {
   }
   sessions.unshift({ id: currentSessionId, timestamp: Date.now(), title: title, history: agentHistory.slice() });
   if (sessions.length > 50) sessions.pop();
-  localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
+  safeStore('magi_saved_sessions', sessions);
   if (document.getElementById('agent-history-list')) renderSavedSessionsList();
 }
 function applyReactionsToTurn(turn, reactions) {
@@ -167,7 +180,7 @@ function renderHistoryToLog(history) {
   history.forEach(function (item) {
     if (item.role === 'user') {
       var u = document.createElement('div'); u.className = 'agent-user';
-      u.innerHTML = '<span>' + esc(item.content) + '</span>';
+      u.innerHTML = '<span>' + userContentHTML(item.content) + '</span>';
       agentLog.appendChild(u);
     } else if (item.role === 'assistant') {
       var turn = document.createElement('div'); turn.className = 'agent-turn';
@@ -200,6 +213,7 @@ function resetAgent() {
   agentLog.innerHTML = '';
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
   agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
+  attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
   closeAgentPanels();
   setAgentTitle('');
   showSplashIfEmpty();
@@ -209,7 +223,7 @@ function agentDegrade(msg) {
   agentDead = true;
   agentDegraded.textContent = msg || 'MAGI is currently unreachable. Check your connection and try again.';
   agentDegraded.classList.remove('hidden');
-  agentInput.disabled = true; agentSendBtn.disabled = true;
+  agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
 }
 function renderAgentError(env) {
   env = env || {};
@@ -245,14 +259,125 @@ async function parseSSE(body, handlers) {
   }
 }
 
+// ---- 画像添付（マルチモーダル入力）------------------------------------------
+// 画像は data URL のまま Worker → OpenAI へ送る。送信用（長辺1024）と保存用
+// サムネ（長辺320）を分けて作り、localStorage には軽いサムネだけを残す。
+var ATTACH_MAX = 4;
+var ATTACH_SEND_DIM = 1024;
+var ATTACH_THUMB_DIM = 320;
+// 受け入れは MIME で絞らず「ブラウザがデコードできる画像か」で判断する。
+// どの形式でも送信前に JPEG へ再エンコードするので、iOS の HEIC も WebView が
+// 読めればそのまま通る（読めなければ addAttachments の catch で弾かれる）。
+function isImageFile(f) { return !!f && /^image\//.test(f.type || ''); }
+var attachTray = document.getElementById('agent-attach-tray');
+var attachBtn = document.getElementById('agent-attach');
+var attachFile = document.getElementById('agent-file');
+var attachments = [];
+var attachNotice = '';
+
+// content（文字列 or パート配列）からテキスト / 画像を取り出す
+function contentText(c) {
+  if (typeof c === 'string') return c;
+  return c.filter(function (p) { return p.type === 'text'; }).map(function (p) { return p.text; }).join('\n');
+}
+function contentImages(c) {
+  return typeof c === 'string' ? [] : c.filter(function (p) { return p.type === 'image_url'; });
+}
+function downscaleImage(img, max, quality) {
+  var scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  var w = Math.max(1, Math.round(img.naturalWidth * scale));
+  var h = Math.max(1, Math.round(img.naturalHeight * scale));
+  var cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  var cx = cv.getContext('2d');
+  cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, w, h);
+  cx.drawImage(img, 0, 0, w, h);
+  return cv.toDataURL('image/jpeg', quality);
+}
+function loadImageFile(file) {
+  return new Promise(function (resolve, reject) {
+    var fr = new FileReader();
+    fr.onerror = function () { reject(new Error('read failed')); };
+    fr.onload = function () {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('decode failed')); };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function renderAttachTray() {
+  if (!attachments.length && !attachNotice) { attachTray.classList.add('hidden'); attachTray.innerHTML = ''; return; }
+  attachTray.classList.remove('hidden');
+  attachTray.innerHTML = attachments.map(function (a, i) {
+    return '<span class="attach-chip"><img src="' + a.thumb + '" alt="">'
+      + '<button type="button" class="attach-x" data-i="' + i + '" aria-label="Remove attachment">×</button></span>';
+  }).join('') + (attachNotice ? '<span class="attach-note">' + esc(attachNotice) + '</span>' : '');
+}
+function noticeAttach(msg) {
+  attachNotice = msg; renderAttachTray();
+  setTimeout(function () { attachNotice = ''; renderAttachTray(); }, 2500);
+}
+async function addAttachments(files) {
+  if (agentDead) return;
+  var list = Array.prototype.slice.call(files || []).filter(isImageFile);
+  if (!list.length) return;
+  for (var i = 0; i < list.length; i++) {
+    if (attachments.length >= ATTACH_MAX) { noticeAttach('Up to ' + ATTACH_MAX + ' images'); break; }
+    try {
+      var img = await loadImageFile(list[i]);
+      attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7) });
+      renderAttachTray();
+    } catch (_) { noticeAttach('Could not read that image'); }
+  }
+}
+// ユーザー発言の吹き出し中身（サムネ＋本文）
+function userContentHTML(content) {
+  if (typeof content === 'string') return esc(content);
+  var imgs = contentImages(content).map(function (p) {
+    return '<img src="' + p.image_url.url + '" alt="Attached image" loading="lazy">';
+  }).join('');
+  return (imgs ? '<span class="agent-imgs">' + imgs + '</span>' : '') + esc(contentText(content));
+}
+
+attachBtn.addEventListener('click', function () { attachFile.click(); });
+attachFile.addEventListener('change', function () { addAttachments(attachFile.files); attachFile.value = ''; });
+attachTray.addEventListener('click', function (e) {
+  var x = e.target.closest('.attach-x'); if (!x) return;
+  attachments.splice(Number(x.dataset.i), 1); renderAttachTray();
+});
+// 画像はクリップボードからの貼り付けでも添付できる
+agentInput.addEventListener('paste', function (e) {
+  var files = Array.prototype.slice.call((e.clipboardData && e.clipboardData.files) || []);
+  if (!files.length) return;
+  e.preventDefault(); addAttachments(files);
+});
+// 送信済みサムネはタップで拡大／縮小
+agentLog.addEventListener('click', function (e) {
+  var img = e.target.closest('.agent-imgs img');
+  if (img) img.classList.toggle('expanded');
+});
+
 // ---- Send -------------------------------------------------------------------
 async function agentSend() {
   if (agentBusy || agentDead) return;
-  var text = agentInput.value.trim().slice(0, 1000); if (!text) return;
+  var text = agentInput.value.trim().slice(0, 1000);
+  var atts = attachments.slice();
+  if (!text && !atts.length) return;
   agentInput.value = '';
+  attachments = []; renderAttachTray();
+  // 送信は長辺1024、履歴に残すのはサムネ（端末のストレージを食い潰さないため）
+  var partsOf = function (key) {
+    return (text ? [{ type: 'text', text: text }] : []).concat(atts.map(function (a) {
+      return { type: 'image_url', image_url: { url: a[key] } };
+    }));
+  };
+  var sendContent = atts.length ? partsOf('url') : text;
+  var storeContent = atts.length ? partsOf('thumb') : text;
   if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
 
-  var u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = '<span>' + esc(text) + '</span>';
+  var u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = '<span>' + userContentHTML(storeContent) + '</span>';
   agentLog.appendChild(u);
 
   var turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
@@ -271,10 +396,10 @@ async function agentSend() {
   agentLog.appendChild(turn); agentScroll();
   var replyBody = replyEl.querySelector('.agent-reply-body');
 
-  agentHistory.push({ role: 'user', content: text });
-  localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+  agentHistory.push({ role: 'user', content: storeContent });
+  safeStore('magi_current_history', agentHistory);
 
-  agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true;
+  agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
   var reply = '', errored = false, timedOut = false;
   var debateData = {};
   AGENT_PERSONAS.forEach(function (p) { debateData[p.codename] = { round1: '…', round2: '…' }; });
@@ -283,9 +408,12 @@ async function agentSend() {
   var connectTimer = setTimeout(function () { timedOut = true; ctrl.abort(); }, 30000);
   try {
     var theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var outbound = agentHistory.slice(-AGENT_MAX_HISTORY);
+    // 直近の発言だけ送信用の解像度に差し替える（過去ターンはサムネのままで十分）
+    if (atts.length) outbound[outbound.length - 1] = { role: 'user', content: sendContent };
     var res = await fetch(AGENT_API, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: agentHistory.slice(-AGENT_MAX_HISTORY), theme }),
+      body: JSON.stringify({ messages: outbound, theme }),
       signal: ctrl.signal,
     });
     clearTimeout(connectTimer);
@@ -325,12 +453,12 @@ async function agentSend() {
   } finally {
     replyEl.classList.remove('streaming');
     agentBusy = false;
-    if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
+    if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
   }
   if (reply && !errored) {
     agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)), mid: mid, reactions: pendingReactions[mid] || {} });
     delete pendingReactions[mid];
-    localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+    safeStore('magi_current_history', agentHistory);
     syncCurrentToSaved();
     updateAgentActionButtons();
   }
@@ -511,12 +639,12 @@ function loadSavedSession(id) {
   var session = sessions.find(function (s) { return s.id === id; });
   if (!session) return;
   agentHistory = session.history.slice();
-  localStorage.setItem('magi_current_history', JSON.stringify(agentHistory));
+  safeStore('magi_current_history', agentHistory);
   setAgentTitle(session.title || '');
   currentSessionId = session.id;
   localStorage.setItem('magi_current_session_id', currentSessionId);
   agentDead = false; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
-  agentInput.disabled = false; agentSendBtn.disabled = false;
+  agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false;
   renderHistoryToLog(agentHistory);
   updateAgentActionButtons();
 }
@@ -524,7 +652,7 @@ function deleteSavedSession(id) {
   if (currentSessionId === id) { currentSessionId = null; localStorage.removeItem('magi_current_session_id'); }
   var sessions = safeParse(localStorage.getItem('magi_saved_sessions'), []);
   sessions = sessions.filter(function (s) { return s.id !== id; });
-  localStorage.setItem('magi_saved_sessions', JSON.stringify(sessions));
+  safeStore('magi_saved_sessions', sessions);
   renderSavedSessionsList();
 }
 function showInfoPanel() {
@@ -533,6 +661,7 @@ function showInfoPanel() {
     + '<li>A multi-agent system with 3 debating personas modeled on <strong>Shinya Takeda\'s personality</strong>.</li>'
     + '<li>This is a <strong>parody &amp; experimental system</strong> inspired by the MAGI system from <strong>Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.</li>'
     + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>24 daily requests</strong>, and <strong>12 rounds</strong> per session.</li>'
+    + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
     + '<li>Powered by <strong>OpenAI API</strong> (inputs are sent to OpenAI in the US and retained up to 30 days for abuse monitoring; API inputs are not used for AI training by default).</li>'
@@ -552,7 +681,12 @@ function getAgentChatMarkdown() {
   if (!agentHistory || agentHistory.length === 0) return '';
   var md = '# MAGI Chat Log\nGenerated on: ' + new Date().toLocaleString() + '\n\n---\n\n';
   agentHistory.forEach(function (item) {
-    if (item.role === 'user') { md += '## 🧑‍💻 User\n' + item.content + '\n\n'; return; }
+    if (item.role === 'user') {
+      // 画像はサムネの data URL なので本文に埋め込まず、枚数だけ残す
+      var n = contentImages(item.content).length;
+      md += '## 🧑‍💻 User\n' + contentText(item.content) + (n ? '\n\n(' + n + ' image attachment' + (n > 1 ? 's' : '') + ')' : '') + '\n\n';
+      return;
+    }
     md += '## ✦ MAGI\n' + item.content + '\n\n';
     if (item.debate) {
       md += '### 🌐 MAGI Deliberation Process\n\n';

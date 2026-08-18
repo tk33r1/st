@@ -8,7 +8,15 @@ export const DEFAULTS = {
   top_p: 1.0,
   history_max_messages: 12, // サーバ側の防御的 trim
   daily_limit: 24,  // IP×日次の上限（メッセージ数）
-  timeouts: { persona_ms: 30000, synthesizer_ms: 60000 },
+  // 画像付きは前処理（デコード・タイル化）のぶん遅くなるので人格側の猶予を広げる
+  timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000 },
+  // マルチモーダル入力（画像）の受け入れ条件。data: URL のみ許可する
+  // （外部 URL を許すと Worker 経由の任意フェッチになるため受け付けない）。
+  vision: {
+    max_images_per_message: 4,        // 1メッセージあたり
+    max_images_total: 8,              // 1リクエスト（履歴全体）あたり
+    max_image_bytes: 5 * 1024 * 1024, // base64 デコード後の1枚あたり上限
+  },
   // 推論制御は reasoning_effort（none|low|medium|high|xhigh|max）で行う。
   // 省略すると gpt-5.6 は medium で推論するため、全モデルで明示すること。
   // temperature / top_p は reasoning_effort:'none' のときだけ受け付けられる（→ src/index.js）。

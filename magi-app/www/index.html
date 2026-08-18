@@ -195,6 +195,19 @@
     #agent-send { display: flex; align-items: center; justify-content: center; width: 2.6rem; height: 2.6rem; flex-shrink: 0; border-radius: 8px; border: none; background: var(--primary-bg); color: var(--primary-color); cursor: pointer; }
     #agent-send:active { background: var(--primary-bg-hover); }
     #agent-send:disabled { opacity: 0.4; }
+    /* 画像添付（マルチモーダル入力） */
+    #agent-attach { display: flex; align-items: center; justify-content: center; width: 2.3rem; height: 2.3rem; flex-shrink: 0; border-radius: 8px; border: none; background: transparent; color: var(--secondary-color); cursor: pointer; }
+    #agent-attach:active { background: var(--surface-hover); }
+    #agent-attach:disabled { opacity: 0.4; }
+    #agent-attach-tray { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem 0; background: var(--surface-alt); border-top: 1px solid var(--border-color); }
+    #agent-attach-tray.hidden { display: none; }
+    .attach-chip { position: relative; width: 48px; height: 48px; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--surface-color); }
+    .attach-chip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .attach-chip .attach-x { position: absolute; top: 0; right: 0; width: 18px; height: 18px; line-height: 17px; font-size: 12px; text-align: center; color: #fff; background: rgba(0,0,0,0.6); border: none; border-bottom-left-radius: 5px; padding: 0; cursor: pointer; }
+    .attach-note { font-size: 11px; color: var(--secondary-color); }
+    .agent-imgs { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.3rem; }
+    .agent-imgs img { max-width: 140px; max-height: 140px; border-radius: 6px; display: block; }
+    .agent-imgs img.expanded { max-width: 100%; max-height: none; }
     #agent-degraded { flex-shrink: 0; padding: 0.6rem 0.75rem; font-size: 11px; color: var(--secondary-color); border-top: 1px solid var(--border-color); }
 
     /* splash */
@@ -262,7 +275,12 @@
     <div id="agent-log" aria-live="polite" aria-atomic="false"></div>
     <div id="agent-degraded" class="hidden"></div>
 
+    <div id="agent-attach-tray" class="hidden"></div>
     <div id="agent-inputline">
+      <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true" tabindex="-1" />
+      <button id="agent-attach" title="Attach an image" aria-label="Attach an image">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
       <input type="text" id="agent-input" autocomplete="off" spellcheck="false" maxlength="1000" placeholder="Ask Shinya Takeda AI..." aria-label="Message MAGI" />
       <button id="agent-send" title="Send" aria-label="Send">
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>

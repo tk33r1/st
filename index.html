@@ -1670,6 +1670,76 @@
 
     #agent-input:disabled { opacity: 0.5 }
 
+    /* --- 画像添付（マルチモーダル入力）--- */
+    #agent-attach {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      flex-shrink: 0;
+      border-radius: 6px;
+      color: var(--secondary-color);
+      transition: background-color var(--duration-fast), color var(--duration-fast);
+    }
+
+    #agent-attach:hover { background: var(--primary-bg); color: var(--primary-color) }
+    #agent-attach:disabled { opacity: 0.4; pointer-events: none }
+
+    #agent-attach-tray {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 0.6rem 0;
+    }
+
+    #agent-attach-tray.hidden { display: none }
+
+    .attach-chip {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--surface-alt);
+    }
+
+    .attach-chip img { width: 100%; height: 100%; object-fit: cover; display: block }
+
+    .attach-chip .attach-x {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 15px;
+      height: 15px;
+      line-height: 14px;
+      font-size: 10px;
+      text-align: center;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.6);
+      border-bottom-left-radius: 4px;
+    }
+
+    .attach-note { font-size: 10px; color: var(--secondary-color) }
+
+    /* ドラッグ＆ドロップ受け入れ中のドック */
+    #agentdock.dragging { outline: 1px dashed var(--primary-color); outline-offset: -4px }
+
+    /* 送信済みメッセージ内のサムネイル（クリックで拡大） */
+    .agent-imgs { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.25rem }
+
+    .agent-imgs img {
+      max-width: 110px;
+      max-height: 110px;
+      border-radius: 4px;
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .agent-imgs img.expanded { max-width: 100%; max-height: none; cursor: zoom-out }
+
     #agent-send {
       display: flex;
       align-items: center;
@@ -2888,7 +2958,15 @@
         </div>
         <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs" aria-live="polite" aria-atomic="false"></div>
         <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
+        <div id="agent-attach-tray" class="hidden border-t border-color"></div>
         <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
+          <input type="file" id="agent-file" class="hidden" accept="image/*" multiple aria-hidden="true"
+            tabindex="-1">
+          <button id="agent-attach" title="Attach an image" data-ja-title="画像を添付" data-ja-aria="画像を添付"
+            aria-label="Attach an image"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg></button>
           <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false"
             maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
             aria-label="Message MAGI">
@@ -5474,6 +5552,7 @@
       safeRemove('magi_current_title');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
       agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
+      attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
       agentDockEl.style.removeProperty('width');
       agentInitialState(keepOpen);
       updateAgentActionButtons();
@@ -5489,7 +5568,7 @@
       agentDead = true;
       agentDegraded.textContent = msg || tr('MAGI only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.', 'MAGI は本番環境（tk.st）でのみ動作します。旧MAGI ↗ は引き続きご利用いただけます。');
       agentDegraded.classList.remove('hidden');
-      agentInput.disabled = true; agentSendBtn.disabled = true;
+      agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
     }
     function renderAgentError(env) {
       env = env || {};
@@ -5539,12 +5618,125 @@
       // Process any remaining buffer after the stream closes (server may omit trailing \n\n)
       if (buf.trim()) processBlock(buf);
     }
+    // --- マルチモーダル入力（画像添付）---
+    // 画像は data URL のまま Worker → OpenAI へ渡す。アップロード先を持たない
+    // インスクリプションなので、外部ストレージには一切依存させない。
+    const ATTACH_MAX = 4;         // 1メッセージあたりの枚数（Worker 側の上限と一致）
+    const ATTACH_SEND_DIM = 1024; // 送信用の長辺 px（認識精度とトークン量の折り合い）
+    const ATTACH_THUMB_DIM = 320; // 履歴に残すサムネの長辺 px（localStorage 節約）
+    // 受け入れは MIME で絞らず「ブラウザがデコードできる画像か」で判断する。
+    // どの形式でも送信前に JPEG へ再エンコードするので、iPhone の HEIC でも
+    // Safari が読めればそのまま通る（読めなければ下の catch で弾かれる）。
+    const isImageFile = (f) => !!f && /^image\//.test(f.type || '');
+    const attachTray = document.getElementById('agent-attach-tray');
+    const attachBtn = document.getElementById('agent-attach');
+    const attachFile = document.getElementById('agent-file');
+    let attachments = [];   // { url: 送信用 data URL, thumb: 保存・表示用 data URL }
+    let attachNotice = '';  // トレイに一時表示する注意書き
+
+    // content（文字列 or パート配列）からテキスト / 画像枚数を取り出す
+    const contentText = (c) => typeof c === 'string' ? c : c.filter(p => p.type === 'text').map(p => p.text).join('\n');
+    const contentImageCount = (c) => typeof c === 'string' ? 0 : c.filter(p => p.type === 'image_url').length;
+
+    // 長辺 max px 以内に縮小して JPEG data URL 化する。原寸のままだと1枚で数MB になり、
+    // localStorage の上限にも当たる。透過は白で塗る（スクリーンショット主体の用途に合わせる）。
+    function downscaleImage(img, max, quality) {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const cx = cv.getContext('2d');
+      cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, w, h);
+      cx.drawImage(img, 0, 0, w, h);
+      return cv.toDataURL('image/jpeg', quality);
+    }
+    const loadImageFile = (file) => new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onerror = () => reject(new Error('read failed'));
+      fr.onload = () => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('decode failed'));
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+    function renderAttachTray() {
+      if (!attachments.length && !attachNotice) { attachTray.classList.add('hidden'); attachTray.innerHTML = ''; return; }
+      attachTray.classList.remove('hidden');
+      attachTray.innerHTML = attachments.map((a, i) => `<span class="attach-chip"><img src="${a.thumb}" alt="">`
+        + `<button type="button" class="attach-x" data-i="${i}" title="${tr('Remove', '削除')}" aria-label="${tr('Remove attachment', '添付を削除')}">×</button></span>`).join('')
+        + (attachNotice ? `<span class="attach-note">${esc(attachNotice)}</span>` : '');
+    }
+    function noticeAttach(msg) {
+      attachNotice = msg; renderAttachTray();
+      setTimeout(() => { attachNotice = ''; renderAttachTray(); }, 2500);
+    }
+    async function addAttachments(files) {
+      if (agentDead) return;
+      const list = Array.from(files || []).filter(isImageFile);
+      if (!list.length) return;
+      for (const f of list) {
+        if (attachments.length >= ATTACH_MAX) { noticeAttach(tr(`Up to ${ATTACH_MAX} images`, `画像は最大${ATTACH_MAX}枚まで`)); break; }
+        try {
+          const img = await loadImageFile(f);
+          attachments.push({ url: downscaleImage(img, ATTACH_SEND_DIM, 0.82), thumb: downscaleImage(img, ATTACH_THUMB_DIM, 0.7) });
+          renderAttachTray();
+        } catch (_) { noticeAttach(tr('Could not read that image', '画像を読み込めませんでした')); }
+      }
+    }
+    // ユーザー発言の吹き出し中身（サムネ＋本文）
+    function userContentHTML(content) {
+      if (typeof content === 'string') return esc(content);
+      const imgs = content.filter(p => p.type === 'image_url')
+        .map(p => `<img src="${p.image_url.url}" alt="${tr('Attached image', '添付画像')}" loading="lazy">`).join('');
+      return (imgs ? `<span class="agent-imgs">${imgs}</span>` : '') + esc(contentText(content));
+    }
+
+    attachBtn.addEventListener('click', () => attachFile.click());
+    attachFile.addEventListener('change', () => { addAttachments(attachFile.files); attachFile.value = ''; });
+    attachTray.addEventListener('click', (e) => {
+      const x = e.target.closest('.attach-x'); if (!x) return;
+      attachments.splice(Number(x.dataset.i), 1); renderAttachTray();
+    });
+    // 画像はクリップボードから貼り付けても添付できる（テキスト貼り付けは既定動作のまま）
+    agentInput.addEventListener('paste', (e) => {
+      const files = Array.from((e.clipboardData && e.clipboardData.files) || []);
+      if (!files.length) return;
+      e.preventDefault(); addAttachments(files);
+    });
+    // ドックへのドラッグ＆ドロップ
+    const dragHasFiles = (e) => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+    agentDockEl.addEventListener('dragover', (e) => { if (!dragHasFiles(e) || agentDead) return; e.preventDefault(); agentDockEl.classList.add('dragging'); });
+    agentDockEl.addEventListener('dragleave', (e) => { if (e.relatedTarget && agentDockEl.contains(e.relatedTarget)) return; agentDockEl.classList.remove('dragging'); });
+    agentDockEl.addEventListener('drop', (e) => {
+      if (!dragHasFiles(e) || agentDead) return;
+      e.preventDefault(); agentDockEl.classList.remove('dragging'); addAttachments(e.dataTransfer.files);
+    });
+    // 送信済みサムネはクリックで拡大／縮小
+    agentLog.addEventListener('click', (e) => {
+      const img = e.target.closest('.agent-imgs img');
+      if (img) img.classList.toggle('expanded');
+    });
+
     async function agentSend() {
       if (agentBusy || agentDead) return;
-      const text = agentInput.value.trim().slice(0, 1000); if (!text) return;
+      const text = agentInput.value.trim().slice(0, 1000);
+      const atts = attachments.slice();
+      if (!text && !atts.length) return;
       agentInput.value = '';
+      attachments = []; renderAttachTray();
+      // 送信は長辺1024の画像、履歴に残すのはサムネ。原寸を履歴に持つと
+      // localStorage をすぐ食い潰すので、保存用と送信用で解像度を分ける。
+      const partsOf = (key) => [
+        ...(text ? [{ type: 'text', text }] : []),
+        ...atts.map(a => ({ type: 'image_url', image_url: { url: a[key] } })),
+      ];
+      const sendContent = atts.length ? partsOf('url') : text;
+      const storeContent = atts.length ? partsOf('thumb') : text;
       if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
-      const u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = `<span>${esc(text)}</span>`;
+      const u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = `<span>${userContentHTML(storeContent)}</span>`;
       agentLog.appendChild(u);
       const turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
       // メッセージID：リアクション状態を履歴項目と対応付けるための一意キー
@@ -5562,10 +5754,10 @@
       agentLog.appendChild(turn); agentScroll();
       const replyBody = replyEl.querySelector('.agent-reply-body');
 
-      agentHistory.push({ role: 'user', content: text });
+      agentHistory.push({ role: 'user', content: storeContent });
       safeStore('magi_current_history', agentHistory);
 
-      agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true;
+      agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
       let reply = '', errored = false, timedOut = false;
       const debateData = {};
       AGENT_PERSONAS.forEach(p => {
@@ -5580,7 +5772,10 @@
         const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: agentHistory.slice(-AGENT_MAX_HISTORY), theme }), signal: ctrl.signal });
+        const outbound = agentHistory.slice(-AGENT_MAX_HISTORY);
+        // 直近の発言だけ送信用の解像度に差し替える（過去ターンはサムネのままで十分）
+        if (atts.length) outbound[outbound.length - 1] = { role: 'user', content: sendContent };
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme }), signal: ctrl.signal });
         clearTimeout(connectTimer);
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
@@ -5623,7 +5818,7 @@
       } finally {
         replyEl.classList.remove('streaming');
         agentBusy = false;
-        if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
+        if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
       }
       if (reply && !errored) {
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
@@ -5803,7 +5998,7 @@
         if (item.role === 'user') {
           const u = document.createElement('div');
           u.className = 'agent-user fade-in';
-          u.innerHTML = `<span>${esc(item.content)}</span>`;
+          u.innerHTML = `<span>${userContentHTML(item.content)}</span>`;
           agentLog.appendChild(u);
         } else {
           const turn = document.createElement('div');
@@ -5855,7 +6050,8 @@
       const firstUserMsg = agentHistory.find(m => m.role === 'user');
       if (!firstUserMsg) return;
 
-      const title = agentTitle || (firstUserMsg.content.slice(0, 30) + (firstUserMsg.content.length > 30 ? '...' : ''));
+      const firstText = contentText(firstUserMsg.content) || tr('Image', '画像');
+      const title = agentTitle || (firstText.slice(0, 30) + (firstText.length > 30 ? '...' : ''));
       let sessions = safeParse(safeGet('magi_saved_sessions'), []);
 
       if (currentSessionId) {
@@ -5987,6 +6183,7 @@
             <li>${tr('A multi-agent system with 3 debating personas modeled on <strong class="text-normal">Shinya Takeda\'s personality</strong>.', '<strong class="text-normal">武田 伸也の人格</strong>をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。')}</li>
             <li>${tr('This is a <strong class="text-normal">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-normal">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.', 'これは<strong class="text-normal">「新世紀エヴァンゲリオン」</strong>のMAGIシステムにインスパイアされた、<strong class="text-normal">パロディ＆実験用システム</strong>です。プログラミングなどの実用的なタスクへの利用は想定されていません。')}</li>
             <li>${tr('Strict limits: max <strong class="text-normal">1,000 characters</strong> per input, limited output tokens, <strong class="text-normal">24 daily requests</strong>, and <strong class="text-normal">12 rounds</strong> per session.', '利用制限：1回あたりの入力は最大<strong class="text-normal">1,000文字</strong>まで、出力トークン数制限あり、1日あたり<strong class="text-normal">24回のリクエスト</strong>、1セッションあたり<strong class="text-normal">12往復</strong>まで。')}</li>
+            <li>${tr('Images can be attached (up to <strong class="text-normal">4 per message</strong>, resized in your browser before sending) and are sent to the API just like text.', '画像も添付できます（1メッセージ<strong class="text-normal">最大4枚</strong>。送信前にブラウザ側で縮小されます）。テキスト同様に API へ送信されます。')}</li>
             <li>${tr('By default, inputs are <strong class="text-normal">not saved</strong> in the database, unless you <strong class="text-normal">react</strong> to a reply (👍/emoji) to help improve MAGI.', 'デフォルトでは、MAGI向上のために回答へ<strong class="text-normal">リアクション</strong>（👍や絵文字）をしない限り、入力内容はデータベースに<strong class="text-normal">保存されません</strong>。')}</li>
             <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
             <li>${tr('Powered by <strong class="text-normal">OpenAI API</strong> (inputs are sent to OpenAI in the US and retained up to 30 days for abuse monitoring; API inputs are not used for AI training by default).', '<strong class="text-normal">OpenAI API</strong>を使用しています（入力内容は米国の OpenAI へ送信され、不正利用監視のため最大30日間保持されます。API 経由の入力は既定ではAIの学習に利用されません）。')}</li>
@@ -6033,7 +6230,9 @@
       let md = `# MAGI Chat Log\nGenerated on: ${new Date().toLocaleString()}\n\n---\n\n`;
       agentHistory.forEach(item => {
         if (item.role === 'user') {
-          md += `## 🧑‍💻 User\n${item.content}\n\n`;
+          // 画像はサムネの data URL なので本文には埋め込まず、枚数だけ残す
+          const imgs = contentImageCount(item.content);
+          md += `## 🧑‍💻 User\n${contentText(item.content)}${imgs ? `\n\n(${imgs} image attachment${imgs > 1 ? 's' : ''})` : ''}\n\n`;
         } else {
           md += `## ✦ MAGI\n${item.content}\n\n`;
           if (item.debate) {

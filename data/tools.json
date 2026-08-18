@@ -44,22 +44,6 @@
     ]
   },
   {
-    "id": 4,
-    "title": "PDF to Image - PDF画像変換ツール",
-    "url": "https://tk.st/tools/pdf-to-image/",
-    "imageUrl": "https://tk.st/images/ogp/pdf-to-image-ogp.webp",
-    "category": "converter",
-    "description": "世界初。サーバーレスでPDFからAVIF・可逆WebPに直接変換対応。プライバシーも安心。PNG・WEBP（通常/可逆）・AVIF画像に変換。PDFはページごとに画像を分割し、ZIPファイルでダウンロードできます。",
-    "tags": [
-      "PDF",
-      "画像",
-      "PNG",
-      "WEBP",
-      "AVIF",
-      "変換"
-    ]
-  },
-  {
     "id": 5,
     "title": "NextGen Image - 次世代画像変換ツール",
     "url": "https://tk.st/tools/nextgen-image/",
@@ -89,6 +73,28 @@
       "GIF",
       "変換",
       "パラパラ漫画"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "PDF Studio - サーバーレスPDF編集ツール",
+    "url": "https://tk.st/tools/pdf-studio/",
+    "imageUrl": "https://tk.st/images/ogp/pdf-studio-ogp.png",
+    "category": "editor",
+    "description": "アップロード不要。回転・結合・分割・並べ替えを1画面で完結。片面スキャンの奇数偶数交互結合、2in1・中綴じ小冊子の面付け、下のテキストごと消える墨消し、ローカル圧縮に対応。PDFをPNG・WEBP（通常/可逆）・AVIF画像に変換してZIPで一括ダウンロードもできます。",
+    "tags": [
+      "PDF",
+      "編集",
+      "結合",
+      "分割",
+      "回転",
+      "面付け",
+      "墨消し",
+      "圧縮",
+      "画像",
+      "AVIF",
+      "WEBP",
+      "変換"
     ]
   }
 ]

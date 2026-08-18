@@ -37,6 +37,62 @@ function httpError(status, envelope, requestId, cors) {
   });
 }
 
+// --- マルチモーダル入力（画像）---
+// message.content は文字列のほか、OpenAI 互換のパート配列
+// [{type:'text',text}, {type:'image_url',image_url:{url}}] を受け付ける。
+// 画像は data: URL のみ許可する（外部 URL を許すと Worker を踏み台にした
+// 任意フェッチになるため）。許容 MIME は正規表現側で固定。
+const DATA_IMAGE_RE = /^data:image\/(?:png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})$/;
+const b64Bytes = (b64) => Math.floor(b64.length * 3 / 4);
+
+function normaliseImagePart(part, counters) {
+  const url = part && part.image_url && typeof part.image_url.url === 'string' ? part.image_url.url.trim() : '';
+  const m = DATA_IMAGE_RE.exec(url);
+  if (!m) throw stageError('bad_request', 'invalid_image', '画像は data:image/(png|jpeg|webp|gif);base64,… 形式のみ受け付けます', { retryable: false });
+  if (b64Bytes(m[1]) > DEFAULTS.vision.max_image_bytes) {
+    throw stageError('bad_request', 'image_too_large', `画像は1枚あたり ${Math.round(DEFAULTS.vision.max_image_bytes / 1048576)}MB までです`, { retryable: false });
+  }
+  if (++counters.total > DEFAULTS.vision.max_images_total) {
+    throw stageError('bad_request', 'too_many_images', `画像は1リクエストあたり ${DEFAULTS.vision.max_images_total} 枚までです`, { retryable: false });
+  }
+  return { type: 'image_url', image_url: { url } };
+}
+
+// 1メッセージを検証し {role, content} だけに正規化する。
+// クライアントは表示用の付加キー（mid / debate / reactions）を持つ履歴をそのまま
+// 送ってくるので、上流へ渡す前にここで落とす。
+function normaliseMessage(m, counters) {
+  if (!m || (m.role !== 'user' && m.role !== 'assistant')) {
+    throw stageError('bad_request', 'invalid_message_shape', '各 message は role:"user"|"assistant" が必要です', { retryable: false });
+  }
+  if (typeof m.content === 'string') return { role: m.role, content: m.content };
+  // 画像を含められるのは user メッセージのみ
+  if (m.role !== 'user' || !Array.isArray(m.content) || m.content.length === 0) {
+    throw stageError('bad_request', 'invalid_message_shape', '各 message の content は文字列、または user のパート配列が必要です', { retryable: false });
+  }
+  let images = 0;
+  const parts = m.content.map((part) => {
+    if (part && part.type === 'text' && typeof part.text === 'string') return { type: 'text', text: part.text };
+    if (part && part.type === 'image_url') {
+      if (++images > DEFAULTS.vision.max_images_per_message) {
+        throw stageError('bad_request', 'too_many_images', `画像は1メッセージあたり ${DEFAULTS.vision.max_images_per_message} 枚までです`, { retryable: false });
+      }
+      return normaliseImagePart(part, counters);
+    }
+    throw stageError('bad_request', 'invalid_part', 'content のパートは {type:"text"} か {type:"image_url"} のみです', { retryable: false });
+  });
+  if (!images && !parts.some(p => p.type === 'text' && p.text.trim())) {
+    throw stageError('bad_request', 'empty_content', 'メッセージが空です', { retryable: false });
+  }
+  return { role: m.role, content: parts };
+}
+
+// パート配列から本文テキスト / 画像パートだけを取り出す
+const contentText = (c) => typeof c === 'string' ? c : c.filter(p => p.type === 'text').map(p => p.text).join('\n').trim();
+const contentImages = (c) => typeof c === 'string' ? [] : c.filter(p => p.type === 'image_url');
+// 画像があれば「画像＋テキスト」のパート配列を、無ければ素の文字列を返す
+const withImages = (text, images) => images.length ? [...images, { type: 'text', text }] : text;
+
 async function callGPT({ env, messages, cfg, stream, signal, temperature }) {
   // temperature / top_p は非推論モード（reasoning_effort:'none'）でのみ受け付けられる。
   // 推論を有効にしたまま送ると "Unsupported value" で 400 になるので、統合人格では落とす。
@@ -85,11 +141,12 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
 }
 
 // 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
-async function fetchTitle(env, lastUser, signal, log) {
+async function fetchTitle(env, lastContent, signal, log) {
   try {
     const res = await callGPT({
       env, cfg: DEFAULTS.models.titler, stream: false, signal,
-      messages: [{ role: 'system', content: TITLER.system_prompt }, { role: 'user', content: lastUser }],
+      // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる
+      messages: [{ role: 'system', content: TITLER.system_prompt }, { role: 'user', content: lastContent }],
     });
     if (!res.ok) { log('title_call', `HTTP ${res.status}`); return null; }
     const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();
@@ -205,8 +262,11 @@ export default {
       if (!Array.isArray(messages) || messages.length === 0) {
         throw stageError('bad_request', 'invalid_messages', 'messages は1件以上の配列が必要です', { retryable: false });
       }
-      const ok = messages.every(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
-      if (!ok) throw stageError('bad_request', 'invalid_message_shape', '各 message は {role:"user"|"assistant", content:string} 形式が必要です', { retryable: false });
+      // 検証の前に trim する（画像枚数の上限は実際に上流へ送るぶんに対して数える）
+      if (messages.length > DEFAULTS.history_max_messages) messages = messages.slice(-DEFAULTS.history_max_messages);
+      // content は文字列 or パート配列。ここで {role, content} だけに正規化される
+      const counters = { total: 0 };
+      messages = messages.map(m => normaliseMessage(m, counters));
       if (messages[messages.length - 1].role !== 'user') {
         throw stageError('bad_request', 'last_not_user', '最後の message は role:"user" である必要があります', { retryable: false });
       }
@@ -214,8 +274,6 @@ export default {
       if (err.envelope) return httpError(400, err.envelope, requestId, cors);
       return httpError(400, { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors);
     }
-    // サーバ側でも防御的に trim
-    if (messages.length > DEFAULTS.history_max_messages) messages = messages.slice(-DEFAULTS.history_max_messages);
 
     // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
     if (env.DB) {
@@ -254,13 +312,20 @@ export default {
 
         try {
           const history = messages.slice(0, -1);
-          const lastUser = messages[messages.length - 1].content;
+          const lastContent = messages[messages.length - 1].content;
+          // 討議メモ・統合プロンプトに埋め込むのは本文テキストのみ。画像はパートとして
+          // R2 / 統合にも同じものを添え直す（人格が途中で画像を見失わないように）。
+          const lastUser = contentText(lastContent);
+          const lastImages = contentImages(lastContent);
+          if (lastImages.length) log('vision', `images=${lastImages.length}`);
+          // 画像付きは上流の処理が重くなるぶん、人格側のタイムアウトを広げる
+          const personaTimeoutMs = lastImages.length ? DEFAULTS.timeouts.persona_vision_ms : DEFAULTS.timeouts.persona_ms;
 
           // --- タイトル要約：会話の初回ユーザー発言時のみ、本流と並列で生成 ---
           let titlePromise = null;
           if (!history.some(m => m.role === 'assistant')) {
-            const tt = withTimeout(DEFAULTS.timeouts.persona_ms);
-            titlePromise = fetchTitle(env, lastUser, tt.signal, log)
+            const tt = withTimeout(personaTimeoutMs);
+            titlePromise = fetchTitle(env, lastContent, tt.signal, log)
               .then(t => { tt.clear(); if (t) send('title', { text: t }); })
               .catch(() => { tt.clear(); });
           }
@@ -271,7 +336,7 @@ export default {
 
           // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
           log('persona_call', 'round1 start');
-          const t1 = withTimeout(DEFAULTS.timeouts.persona_ms);
+          const t1 = withTimeout(personaTimeoutMs);
           let opinions;
           try {
             opinions = await Promise.all(PERSONAS.map(async (p) => {
@@ -284,13 +349,13 @@ export default {
 
           // --- R2: 各人格が他2人格のR1意見を踏まえて討議・更新 ---
           log('persona_call', 'round2 start');
-          const t2 = withTimeout(DEFAULTS.timeouts.persona_ms);
+          const t2 = withTimeout(personaTimeoutMs);
           try {
             await Promise.all(opinions.map(async (p) => {
               const others = opinions.filter(o => o.codename !== p.codename)
                 .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
               const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。単なる繰り返しは避ける]\n${others}`;
-              p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: dmsg }], t2.signal, log, 2, personaTemp);
+              p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: withImages(dmsg, lastImages) }], t2.signal, log, 2, personaTemp);
               send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
             }));
           } finally { t2.clear(); }
@@ -306,7 +371,7 @@ export default {
             { role: 'system', content: SYNTHESIZER.system_prompt },
             ...(bias ? [{ role: 'system', content: bias }] : []),
             ...history,
-            { role: 'user', content: augmented },
+            { role: 'user', content: withImages(augmented, lastImages) },
           ];
 
           const synthTimer = withTimeout(DEFAULTS.timeouts.synthesizer_ms);
