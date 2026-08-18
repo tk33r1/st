@@ -11,7 +11,7 @@
   'use strict';
 
   const { formatBytes, showToast, switchView, setupDropzone, isPrivateHost } = window.STCommon;
-  const { PDFDocument, degrees } = PDFLib;
+  const { PDFDocument, StandardFonts, degrees, rgb } = PDFLib;
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -24,6 +24,15 @@
   const HISTORY_LIMIT = 30;
   const MM_TO_PT = 72 / 25.4;
   const REDACTION_DPI = 300;
+  // Text is positioned by the top of its box; PDF positions it by the baseline.
+  // One ratio for both the preview and the output keeps them in agreement.
+  const TEXT_ASCENT = 0.8;
+  const JP_FONT_FAMILY = 'PdfStudioJP';
+  const JP_FONT_URL = 'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.ttf';
+  const STAMP_MAX_SIDE = 2000;
+  // Past this many pages, measuring the compressed size stops feeling instant,
+  // so it waits to be asked instead of running on every slider nudge.
+  const AUTO_SIZE_PAGE_LIMIT = 40;
   const DRAG_THRESHOLD = 6;
   // Browsers cap both the side length and the total pixel count of a <canvas>.
   // Past either one the context comes back blank rather than throwing, so the
@@ -43,7 +52,7 @@
 
   /** @type {Map<number, {id:number,name:string,bytes:Uint8Array,pdfjs:any,pdflib:any}>} */
   const docs = new Map();
-  /** @type {Array<{uid:number,docId:number,src:number,rot:number,redactions:Array}>} */
+  /** @type {Array<{uid:number,docId:number,src:number,rot:number,redactions:Array,stamps:Array,texts:Array}>} */
   let pages = [];
   const selection = new Set();
   const history = [];
@@ -59,6 +68,10 @@
   let busy = false;
   let exportAbort = false;
   let scaleWasClamped = false;
+
+  /** Uploaded stamp images, shared by every page that uses them. */
+  const stampAssets = new Map();
+  let stampSeq = 0;
 
   // ---------------------------------------------------------------- helpers
 
@@ -83,13 +96,16 @@
   // Let the browser paint the progress bar between heavy synchronous chunks.
   const yieldToPaint = () => new Promise((r) => setTimeout(r, 0));
 
-  /** The same breather, but it also lets the cancel button take effect. */
-  async function yieldExport() {
-    await yieldToPaint();
-    if (!exportAbort) return;
+  function abortError() {
     const err = new Error('cancelled by user');
     err.name = 'AbortByUser';
-    throw err;
+    return err;
+  }
+
+  /** The same breather, but it also lets a cancel request take effect. */
+  async function breathe(check) {
+    await yieldToPaint();
+    if (check && check()) throw abortError();
   }
 
   function setCancellable(on) {
@@ -168,7 +184,14 @@
   // ---------------------------------------------------------------- history
 
   function snapshot() {
-    history.push(pages.map((p) => ({ ...p, redactions: p.redactions.map((r) => ({ ...r })) })));
+    // Every annotation list needs its own copy — a spread would share the array
+    // with the live page and let later edits rewrite the undo history.
+    history.push(pages.map((p) => ({
+      ...p,
+      redactions: p.redactions.map((r) => ({ ...r })),
+      stamps: p.stamps.map((r) => ({ ...r })),
+      texts: p.texts.map((r) => ({ ...r })),
+    })));
     if (history.length > HISTORY_LIMIT) {
       history.shift();
       pruneDocs();
@@ -274,7 +297,7 @@
 
     const count = pdflib.getPageCount();
     for (let i = 0; i < count; i++) {
-      pages.push({ uid: ++pageSeq, docId: id, src: i, rot: 0, redactions: [] });
+      pages.push({ uid: ++pageSeq, docId: id, src: i, rot: 0, redactions: [], stamps: [], texts: [] });
     }
     return count;
   }
@@ -425,6 +448,24 @@
       : { width: height, height: width };
   }
 
+  /**
+   * Map a point given in the page as the reader sees it — origin bottom-left of
+   * the *rotated* page, y up, in points — onto the PDF's own user space, where
+   * /Rotate has not been applied and the crop box may not start at zero.
+   *
+   * Content drawn at the returned point and turned counter-clockwise by the
+   * page's rotation ends up upright and in the right place for the reader.
+   */
+  function visualPointToUser(cropBox, rotationCw, visW, visH, vx, vy) {
+    const { x: cx, y: cy } = cropBox;
+    switch (rotationCw) {
+      case 90:  return { x: cx + (visH - vy), y: cy + vx };
+      case 180: return { x: cx + (visW - vx), y: cy + (visH - vy) };
+      case 270: return { x: cx + vy,          y: cy + (visW - vx) };
+      default:  return { x: cx + vx,          y: cy + vy };
+    }
+  }
+
   // ---------------------------------------------------------------- rendering
 
   /**
@@ -466,22 +507,78 @@
 
     await pdfPage.render({ canvasContext: ctx, viewport }).promise;
 
-    if (!settings.skipRedactions && page.redactions.length) {
-      ctx.fillStyle = '#000000';
-      page.redactions.forEach((r) => {
-        ctx.fillRect(r.x * canvas.width, r.y * canvas.height, r.w * canvas.width, r.h * canvas.height);
-      });
-    }
+    if (!settings.skipAnnotations) drawAnnotationsOnCanvas(ctx, page, canvas.width, canvas.height);
 
     return canvas;
+  }
+
+  /**
+   * Paint texts, stamps and redactions onto a rendered page, in that order:
+   * redactions go last because they are meant to hide whatever is under them.
+   * Shared by thumbnails, the editing preview and every raster export.
+   */
+  function drawAnnotationsOnCanvas(ctx, page, w, h) {
+    page.texts.forEach((t) => {
+      const px = t.h * h;
+      ctx.fillStyle = t.color || '#dc2626';
+      ctx.font = `${px}px "${JP_FONT_FAMILY}", system-ui, sans-serif`;
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(t.text, t.x * w, t.y * h + px * TEXT_ASCENT);
+    });
+
+    page.stamps.forEach((st) => {
+      const asset = stampAssets.get(st.assetId);
+      if (!asset || !asset.img.complete) return;
+      ctx.drawImage(asset.img, st.x * w, st.y * h, st.w * w, st.h * h);
+    });
+
+    if (page.redactions.length) {
+      ctx.fillStyle = '#000000';
+      page.redactions.forEach((r) => {
+        ctx.fillRect(r.x * w, r.y * h, r.w * w, r.h * h);
+      });
+    }
+  }
+
+  /** Everything about a page that changes how it looks, as one string. */
+  function pageSignature(page) {
+    const num = (v) => Number(v).toFixed(4);
+    const boxes = page.redactions.map((r) => `${num(r.x)},${num(r.y)},${num(r.w)},${num(r.h)}`).join(';');
+    const stamps = page.stamps.map((r) => `${r.assetId}@${num(r.x)},${num(r.y)},${num(r.w)},${num(r.h)}`).join(';');
+    const texts = page.texts.map((t) => `${num(t.x)},${num(t.y)},${num(t.h)},${t.color},${t.text}`).join(';');
+    return `${page.docId}|${page.src}|${totalRotation(page)}|${boxes}|${stamps}|${texts}`;
   }
 
   const thumbQueue = [];
   let thumbActive = 0;
 
+  function showThumb(imgEl, url) {
+    imgEl.src = url;
+    imgEl.classList.remove('hidden');
+    const skeleton = imgEl.previousElementSibling;
+    if (skeleton && skeleton.classList.contains('thumb-skeleton')) skeleton.remove();
+  }
+
   function queueThumb(page, imgEl) {
+    // Straight from the cache when we can. Queuing it would run renderThumb to
+    // completion synchronously, before the freshly built card has been put in
+    // the document — and its isConnected guard would then discard the result,
+    // which is what used to leave the skeleton spinning after a 360° rotation
+    // or any other re-render of already-rendered pages.
+    const cached = thumbCache.get(thumbKey(page));
+    if (cached) {
+      touchThumbCache(thumbKey(page), cached);
+      showThumb(imgEl, cached);
+      return;
+    }
     thumbQueue.push({ page, imgEl });
     pumpThumbQueue();
+  }
+
+  /** Re-insert on use, so the eviction order is least-recently-used. */
+  function touchThumbCache(key, url) {
+    thumbCache.delete(key);
+    thumbCache.set(key, url);
   }
 
   function pumpThumbQueue() {
@@ -496,16 +593,10 @@
   }
 
   /**
-   * Cache identity for a thumbnail: everything that changes how it looks. The
-   * boxes have to be spelled out — moving a redaction without changing how many
-   * there are still changes the picture.
+   * Cache identity for a thumbnail. Annotations have to be spelled out in full:
+   * moving one without changing how many there are still changes the picture.
    */
-  function thumbKey(page) {
-    const boxes = page.redactions
-      .map((r) => `${r.x.toFixed(4)},${r.y.toFixed(4)},${r.w.toFixed(4)},${r.h.toFixed(4)}`)
-      .join(';');
-    return `${page.docId}|${page.src}|${totalRotation(page)}|${boxes}`;
-  }
+  const thumbKey = pageSignature;
 
   async function renderThumb(page, imgEl) {
     const key = thumbKey(page);
@@ -528,12 +619,10 @@
         return;
       }
     }
-    // The grid may have been rebuilt while this job was queued.
+    // This path always awaited a render, so the card is in the document by now
+    // unless the grid was rebuilt underneath us — in which case drop the result.
     if (!imgEl.isConnected) return;
-    imgEl.src = url;
-    imgEl.classList.remove('hidden');
-    const skeleton = imgEl.previousElementSibling;
-    if (skeleton && skeleton.classList.contains('thumb-skeleton')) skeleton.remove();
+    showThumb(imgEl, url);
   }
 
   // ---------------------------------------------------------------- grid
@@ -594,12 +683,14 @@
     card.setAttribute('aria-selected', String(selection.has(page.uid)));
 
     const hasRedaction = page.redactions.length > 0;
+    const hasMark = page.stamps.length > 0 || page.texts.length > 0;
     const sourceName = showSource ? docs.get(page.docId).name : '';
     // Without this the card announces as a bare "1" — the thumbnail carries no
     // text and the page number is the only thing in it.
     card.setAttribute('aria-label', `${index + 1}ページ目`
       + (sourceName ? `（${sourceName}）` : '')
-      + (hasRedaction ? '、墨消しあり' : ''));
+      + (hasRedaction ? '、墨消しあり' : '')
+      + (hasMark ? '、注釈あり' : ''));
 
     card.innerHTML = `
       <div class="page-thumb-wrap">
@@ -607,11 +698,13 @@
         <img class="page-thumb hidden" alt="">
       </div>
       ${sourceName ? `<span class="page-badge" title="${escapeAttr(sourceName)}">${escapeHtml(sourceName)}</span>` : ''}
-      ${hasRedaction ? '<span class="page-badge redacted">墨消し</span>' : ''}
-      <div class="page-actions${hasRedaction ? ' has-redaction' : ''}">
+      ${hasRedaction || hasMark
+        ? `<span class="page-badge redacted">${hasRedaction ? '墨消し' : '注釈'}</span>`
+        : ''}
+      <div class="page-actions${hasRedaction || hasMark ? ' has-redaction' : ''}">
         <button class="page-act" data-act="ccw" title="左に90°回転" aria-label="左に90°回転">${ICON.rotCcw}</button>
         <button class="page-act" data-act="cw" title="右に90°回転" aria-label="右に90°回転">${ICON.rotCw}</button>
-        <button class="page-act" data-act="redact" title="墨消し" aria-label="墨消し">${ICON.eraser}</button>
+        <button class="page-act" data-act="redact" title="墨消し・スタンプ・テキスト" aria-label="墨消し・スタンプ・テキスト">${ICON.eraser}</button>
         <button class="page-act danger" data-act="del" title="このページを削除" aria-label="このページを削除">${ICON.trash}</button>
       </div>
       <span class="page-grip" title="ドラッグして並べ替え" aria-hidden="true">${ICON.grip}</span>
@@ -774,18 +867,172 @@
     showToast(`${merged.length} ページを交互に組み直しました`);
   }
 
-  // ---------------------------------------------------------------- redaction
+  // ---------------------------------------------------------------- annotations
 
   let redactTarget = null;
-  let redactRects = [];
+  let anTool = 'redact';
+  let anDraft = { redactions: [], stamps: [], texts: [] };
   let redactDrag = null;
+  let activeStampId = null;
 
-  async function openRedact(uid) {
+  const anEmpty = () =>
+    anDraft.redactions.length + anDraft.stamps.length + anDraft.texts.length === 0;
+
+  // -------------------------------------------------- stamp library
+
+  async function addStampFiles(fileList) {
+    const files = Array.from(fileList).filter((f) => /^image\//.test(f.type));
+    if (!files.length) {
+      showToast('画像ファイルを選択してください。', 'error');
+      return;
+    }
+    for (const file of files) {
+      try {
+        await addStampAsset(file);
+      } catch (err) {
+        console.warn('stamp load failed', err);
+        showToast(`${file.name} を読み込めませんでした`, 'error');
+      }
+    }
+    renderStampTray();
+  }
+
+  /**
+   * Normalise every upload to something pdf-lib can embed. WebP and anything
+   * oversized gets redrawn as PNG, which also keeps transparency intact.
+   */
+  async function addStampAsset(file) {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, STAMP_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const embeddable = /^image\/(png|jpeg)$/.test(file.type);
+
+    let bytes;
+    let mime;
+    if (scale < 1 || !embeddable) {
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const blob = await canvasToBlob(canvas, 'image/png');
+      bytes = new Uint8Array(await blob.arrayBuffer());
+      mime = 'image/png';
+    } else {
+      bytes = new Uint8Array(await file.arrayBuffer());
+      mime = file.type;
+    }
+    bitmap.close();
+
+    const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+
+    const id = ++stampSeq;
+    stampAssets.set(id, { id, name: file.name, bytes, mime, url, img });
+    activeStampId = id;
+    return id;
+  }
+
+  function stampUsageCount(assetId) {
+    return pages.reduce((total, page) =>
+      total + page.stamps.filter((st) => st.assetId === assetId).length, 0);
+  }
+
+  function removeStampAsset(assetId) {
+    const used = stampUsageCount(assetId);
+    if (used && !confirm(`このスタンプは ${used} 箇所で使われています。まとめて削除しますか？`)) return;
+    if (used) {
+      snapshot();
+      pages.forEach((page) => { page.stamps = page.stamps.filter((st) => st.assetId !== assetId); });
+      renderGrid();
+    }
+    anDraft.stamps = anDraft.stamps.filter((st) => st.assetId !== assetId);
+    const asset = stampAssets.get(assetId);
+    if (asset) URL.revokeObjectURL(asset.url);
+    stampAssets.delete(assetId);
+    if (activeStampId === assetId) {
+      activeStampId = stampAssets.size ? stampAssets.keys().next().value : null;
+    }
+    renderStampTray();
+    drawAnnotationOverlay();
+  }
+
+  function renderStampTray() {
+    const tray = $('stamp-tray');
+    const addBtn = $('stamp-add');
+    tray.querySelectorAll('.stamp-chip').forEach((el) => el.remove());
+    stampAssets.forEach((asset) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'stamp-chip' + (asset.id === activeStampId ? ' active' : '');
+      chip.style.setProperty('--thumb', `url("${asset.url}")`);
+      chip.title = asset.name;
+      chip.setAttribute('aria-label', asset.name);
+      chip.innerHTML = '<span aria-hidden="true" title="このスタンプを削除">&times;</span>';
+      chip.addEventListener('click', (e) => {
+        if (e.target.closest('span')) {
+          e.stopPropagation();
+          removeStampAsset(asset.id);
+          return;
+        }
+        activeStampId = asset.id;
+        renderStampTray();
+      });
+      tray.insertBefore(chip, addBtn);
+    });
+    updateAnnotationHints();
+  }
+
+  // -------------------------------------------------- Japanese font, loaded on demand
+
+  let jpFontPromise = null;
+
+  function loadJpFont() {
+    if (!jpFontPromise) {
+      jpFontPromise = (async () => {
+        const fontkit = (await import('https://esm.sh/@pdf-lib/fontkit@1.1.1')).default;
+        const res = await fetch(JP_FONT_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buffer = await res.arrayBuffer();
+        // The same face backs the on-screen preview, so what gets dragged into
+        // place is what comes out in the PDF.
+        const face = new FontFace(JP_FONT_FAMILY, buffer.slice(0));
+        await face.load();
+        document.fonts.add(face);
+        return { fontkit, bytes: new Uint8Array(buffer) };
+      })().catch((err) => {
+        jpFontPromise = null;   // let a later attempt retry the download
+        console.warn('Japanese font failed to load', err);
+        throw new Error('日本語フォントを読み込めませんでした（オフラインの可能性があります）');
+      });
+    }
+    return jpFontPromise;
+  }
+
+  async function ensureTextFontReady() {
+    const note = $('an-text-note');
+    const original = note.textContent;
+    note.textContent = '日本語フォント（約2.3MB）を読み込んでいます...';
+    try {
+      await loadJpFont();
+      note.textContent = original;
+    } catch (err) {
+      note.textContent = err.message + ' 英数字のみであればこのまま追加できます。';
+    }
+  }
+
+  // -------------------------------------------------- dialog
+
+  async function openAnnotate(uid) {
     const page = pages.find((p) => p.uid === uid);
     if (!page) return;
 
     redactTarget = page;
-    redactRects = page.redactions.map((r) => ({ ...r }));
+    anDraft = {
+      redactions: page.redactions.map((r) => ({ ...r })),
+      stamps: page.stamps.map((r) => ({ ...r })),
+      texts: page.texts.map((r) => ({ ...r })),
+    };
     $('redact-all-pages').checked = false;
     $('redact-page-label').textContent = `（${pages.indexOf(page) + 1} ページ目）`;
 
@@ -793,21 +1040,81 @@
     const pdfPage = await doc.pdfjs.getPage(page.src + 1);
     const base = pdfPage.getViewport({ scale: 1, rotation: totalRotation(page) });
     const scale = Math.min(2, Math.max(0.5, 900 / base.width));
-    const canvas = await renderPageToCanvas(page, scale, { skipRedactions: true });
+    const canvas = await renderPageToCanvas(page, scale, { skipAnnotations: true });
 
     const target = $('redact-canvas');
     target.width = canvas.width;
     target.height = canvas.height;
     target.getContext('2d').drawImage(canvas, 0, 0);
 
-    drawRedactOverlay();
+    renderStampTray();
+    drawAnnotationOverlay();
     openModal('modal-redact');
   }
 
-  function drawRedactOverlay() {
+  const measureCtx = document.createElement('canvas').getContext('2d');
+
+  function drawAnnotationOverlay() {
     const overlay = $('redact-overlay');
+    const stage = $('redact-stage').getBoundingClientRect();
     overlay.replaceChildren();
-    redactRects.forEach((rect, i) => {
+
+    const remove = (list, index) => (e) => {
+      e.stopPropagation();
+      list.splice(index, 1);
+      drawAnnotationOverlay();
+      updateAnnotationHints();
+    };
+
+    anDraft.texts.forEach((t, i) => {
+      const px = t.h * stage.height;
+      measureCtx.font = `${px}px "${JP_FONT_FAMILY}", system-ui, sans-serif`;
+      const width = measureCtx.measureText(t.text).width;
+      const el = document.createElement('div');
+      el.className = 'an-item text';
+      el.style.left = t.x * 100 + '%';
+      el.style.top = t.y * 100 + '%';
+      el.style.width = (stage.width ? (width / stage.width) * 100 : 0) + '%';
+      el.style.height = t.h * 100 + '%';
+      const label = document.createElement('span');
+      label.className = 'an-label';
+      label.style.font = `${px}px "${JP_FONT_FAMILY}", system-ui, sans-serif`;
+      label.style.color = t.color;
+      label.textContent = t.text;
+      el.appendChild(label);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'このテキストを削除');
+      btn.innerHTML = '&times;';
+      btn.addEventListener('click', remove(anDraft.texts, i));
+      el.appendChild(btn);
+      overlay.appendChild(el);
+    });
+
+    anDraft.stamps.forEach((st, i) => {
+      const asset = stampAssets.get(st.assetId);
+      const el = document.createElement('div');
+      el.className = 'an-item stamp';
+      el.style.left = st.x * 100 + '%';
+      el.style.top = st.y * 100 + '%';
+      el.style.width = st.w * 100 + '%';
+      el.style.height = st.h * 100 + '%';
+      if (asset) {
+        const img = document.createElement('img');
+        img.src = asset.url;
+        img.alt = '';
+        el.appendChild(img);
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'このスタンプを削除');
+      btn.innerHTML = '&times;';
+      btn.addEventListener('click', remove(anDraft.stamps, i));
+      el.appendChild(btn);
+      overlay.appendChild(el);
+    });
+
+    anDraft.redactions.forEach((rect, i) => {
       const el = document.createElement('div');
       el.className = 'redact-rect';
       el.style.left = rect.x * 100 + '%';
@@ -815,13 +1122,24 @@
       el.style.width = rect.w * 100 + '%';
       el.style.height = rect.h * 100 + '%';
       el.innerHTML = '<button type="button" aria-label="この墨消しを削除">&times;</button>';
-      el.querySelector('button').addEventListener('click', (e) => {
-        e.stopPropagation();
-        redactRects.splice(i, 1);
-        drawRedactOverlay();
-      });
+      el.querySelector('button').addEventListener('click', remove(anDraft.redactions, i));
       overlay.appendChild(el);
     });
+  }
+
+  function setAnnotationTool(tool) {
+    anTool = tool;
+    $('an-opts-stamp').classList.toggle('hidden', tool !== 'stamp');
+    $('an-opts-text').classList.toggle('hidden', tool !== 'text');
+    $('redact-stage').classList.remove('tool-redact', 'tool-stamp', 'tool-text');
+    $('redact-stage').classList.add('tool-' + tool);
+    $('an-warn').classList.toggle('hidden', tool !== 'redact');
+    if (tool === 'text') ensureTextFontReady();
+    updateAnnotationHints();
+  }
+
+  function updateAnnotationHints() {
+    $('redact-clear').disabled = anEmpty();
   }
 
   function setupRedactDrawing() {
@@ -837,7 +1155,15 @@
     };
 
     stage.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.redact-rect')) return;
+      if (e.target.closest('.redact-rect') || e.target.closest('.an-item')) return;
+      if (anTool === 'stamp' && !stampAssets.get(activeStampId)) {
+        showToast('先にスタンプ画像を追加してください。', 'error');
+        return;
+      }
+      if (anTool === 'text' && !$('an-text-value').value.trim()) {
+        showToast('先に追加する文字を入力してください。', 'error');
+        return;
+      }
       redactDrag = pointFrom(e);
       stage.setPointerCapture(e.pointerId);
       live.style.display = 'block';
@@ -867,43 +1193,176 @@
       };
       redactDrag = null;
       live.style.display = 'none';
-      // Ignore stray clicks — a redaction has to actually cover something.
-      if (rect.w > 0.004 && rect.h > 0.004) {
-        redactRects.push(rect);
-        drawRedactOverlay();
-      }
+      // Ignore stray clicks — an annotation has to actually cover something.
+      if (rect.w <= 0.004 || rect.h <= 0.004) return;
+
+      if (anTool === 'stamp') addStampAt(rect);
+      else if (anTool === 'text') addTextAt(rect);
+      else anDraft.redactions.push(rect);
+
+      drawAnnotationOverlay();
+      updateAnnotationHints();
     };
 
     stage.addEventListener('pointerup', finish);
     stage.addEventListener('pointercancel', () => { redactDrag = null; live.style.display = 'none'; });
+
+    // The preview font size is in pixels, so a resized window has to redraw it.
+    window.addEventListener('resize', () => {
+      if (!$('modal-redact').classList.contains('hidden')) drawAnnotationOverlay();
+    });
   }
 
-  function applyRedaction() {
+  /** Fit the stamp inside the dragged box without distorting it. */
+  function addStampAt(box) {
+    const asset = stampAssets.get(activeStampId);
+    if (!asset) return;
+    const stage = $('redact-stage').getBoundingClientRect();
+    if (!stage.width || !stage.height) return;
+
+    // Normalised units are not square, so the fit has to happen in pixels.
+    const scale = Math.min(
+      (box.w * stage.width) / asset.img.naturalWidth,
+      (box.h * stage.height) / asset.img.naturalHeight
+    );
+    const w = (asset.img.naturalWidth * scale) / stage.width;
+    const h = (asset.img.naturalHeight * scale) / stage.height;
+    anDraft.stamps.push({
+      assetId: asset.id,
+      x: box.x + (box.w - w) / 2,
+      y: box.y + (box.h - h) / 2,
+      w,
+      h,
+    });
+  }
+
+  /** The dragged box's height becomes the font size. */
+  function addTextAt(box) {
+    const text = $('an-text-value').value.trim();
+    if (!text) return;
+    anDraft.texts.push({
+      x: box.x,
+      y: box.y,
+      h: box.h,
+      text,
+      color: $('an-text-color').value || '#dc2626',
+    });
+  }
+
+  function applyAnnotations() {
     if (!redactTarget) return;
     const everyPage = $('redact-all-pages').checked;
-    const copy = () => redactRects.map((r) => ({ ...r }));
+    const clone = () => ({
+      redactions: anDraft.redactions.map((r) => ({ ...r })),
+      stamps: anDraft.stamps.map((r) => ({ ...r })),
+      texts: anDraft.texts.map((r) => ({ ...r })),
+    });
 
     snapshot();
     if (everyPage) {
-      // The rectangles are stored as fractions of the page, so the same band
-      // lands in the same relative spot whatever the page size is.
-      pages.forEach((p) => { p.redactions = copy(); });
+      // Everything is stored as fractions of the page, so the same mark lands
+      // in the same relative spot whatever the page size is.
+      pages.forEach((page) => Object.assign(page, clone()));
       renderGrid();
     } else {
-      redactTarget.redactions = copy();
+      Object.assign(redactTarget, clone());
       refreshCard(redactTarget.uid);
     }
     updateToolbar();
     closeModal('modal-redact');
 
-    if (!redactRects.length) {
-      showToast(everyPage ? 'すべてのページの墨消しを解除しました' : '墨消しを解除しました');
+    const parts = [];
+    if (anDraft.redactions.length) parts.push(`墨消し ${anDraft.redactions.length} 箇所`);
+    if (anDraft.stamps.length) parts.push(`スタンプ ${anDraft.stamps.length} 個`);
+    if (anDraft.texts.length) parts.push(`テキスト ${anDraft.texts.length} 件`);
+
+    if (!parts.length) {
+      showToast(everyPage ? 'すべてのページの注釈を解除しました' : '注釈を解除しました');
     } else if (everyPage) {
-      showToast(`${pages.length} ページすべてに ${redactRects.length} 箇所の墨消しを設定しました`);
+      showToast(`${pages.length} ページすべてに ${parts.join('・')} を設定しました`);
     } else {
-      showToast(`${redactRects.length} 箇所を墨消しに設定しました（書き出し時に適用）`);
+      showToast(`${parts.join('・')} を設定しました（書き出し時に適用）`);
     }
     redactTarget = null;
+  }
+
+  // -------------------------------------------------- vector output
+
+  function hexToRgb(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+    if (!m) return rgb(0.86, 0.15, 0.15);
+    const value = parseInt(m[1], 16);
+    return rgb(((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255);
+  }
+
+  /**
+   * Embed the fonts and images the vector pages need, once per output document.
+   * The Japanese face is only fetched if some text actually needs it — a label
+   * in ASCII rides on a standard font and downloads nothing.
+   */
+  async function prepareAnnotationResources(out, list) {
+    const resources = { font: null, images: new Map() };
+
+    const texts = list.flatMap((page) => page.texts);
+    if (texts.length) {
+      if (texts.some((t) => /[^\x00-\x7F]/.test(t.text))) {
+        const { fontkit, bytes } = await loadJpFont();
+        out.registerFontkit(fontkit);
+        resources.font = await out.embedFont(bytes, { subset: true });
+      } else {
+        resources.font = await out.embedFont(StandardFonts.Helvetica);
+      }
+    }
+
+    const assetIds = new Set(list.flatMap((page) => page.stamps.map((st) => st.assetId)));
+    for (const id of assetIds) {
+      const asset = stampAssets.get(id);
+      if (!asset) continue;
+      resources.images.set(id, asset.mime === 'image/jpeg'
+        ? await out.embedJpg(asset.bytes)
+        : await out.embedPng(asset.bytes));
+    }
+    return resources;
+  }
+
+  /** Draw a page's stamps and texts as real PDF content — no rasterising. */
+  function drawPageAnnotations(target, page, resources) {
+    if (!page.stamps.length && !page.texts.length) return;
+
+    const cropBox = target.getCropBox();
+    const rotationCw = norm360(target.getRotation().angle);
+    const flat = rotationCw % 180 === 0;
+    const visW = flat ? cropBox.width : cropBox.height;
+    const visH = flat ? cropBox.height : cropBox.width;
+    const place = (vx, vy) => visualPointToUser(cropBox, rotationCw, visW, visH, vx, vy);
+
+    if (resources.font) {
+      page.texts.forEach((t) => {
+        const size = t.h * visH;
+        // Stored y is the top of the text box, measured downwards; PDF wants
+        // the baseline, measured up from the bottom.
+        const at = place(t.x * visW, visH - (t.y * visH + size * TEXT_ASCENT));
+        target.drawText(t.text, {
+          x: at.x,
+          y: at.y,
+          size,
+          font: resources.font,
+          color: hexToRgb(t.color),
+          rotate: degrees(rotationCw),
+        });
+      });
+    }
+
+    page.stamps.forEach((st) => {
+      const image = resources.images.get(st.assetId);
+      if (!image) return;
+      const width = st.w * visW;
+      const height = st.h * visH;
+      const at = place(st.x * visW, visH - (st.y * visH + height));
+      target.drawImage(image, {
+        x: at.x, y: at.y, width, height, rotate: degrees(rotationCw),
+      });
+    });
   }
 
   // ---------------------------------------------------------------- building
@@ -932,17 +1391,22 @@
       items.forEach((it, k) => { copies[it.i] = copied[k]; });
     }
 
+    // Pages that stay vector still need their stamps and text drawn on; the
+    // rasterised ones already carry them, burned into the bitmap.
+    const resources = await prepareAnnotationResources(out, list.filter((pg) => !needsRaster(pg)));
+
     for (let i = 0; i < list.length; i++) {
       const page = list[i];
       if (copies[i]) {
         const copied = copies[i];
         copied.setRotation(degrees(norm360(copied.getRotation().angle + page.rot)));
         out.addPage(copied);
+        drawPageAnnotations(copied, page, resources);
       } else {
         await drawRasterPage(out, page, settings);
       }
       if (onProgress) onProgress((i + 1) / list.length);
-      if (i % 4 === 3) await yieldExport();
+      if (i % 4 === 3) await breathe(settings.abortCheck || (() => exportAbort));
     }
 
     if (settings.stripMetadata !== false) applyCleanMetadata(out);
@@ -1108,7 +1572,7 @@
       }
 
       if (onProgress) onProgress(0.5 + ((i + 1) / pairs.length) * 0.5);
-      if (i % 4 === 3) await yieldExport();
+      if (i % 4 === 3) await breathe(opts.abortCheck || (() => exportAbort));
     }
 
     if (opts.stripMetadata !== false) applyCleanMetadata(out);
@@ -1134,6 +1598,146 @@
   }
 
   // ---------------------------------------------------------------- export
+
+  // ---------------------------------------------------------------- size preview
+
+  // Both figures come from actually building the file, never from a sample:
+  // page weight varies far too much for an extrapolation to be worth showing.
+  let sizeToken = 0;
+  let plainSizeCache = null;                 // { key, bytes }
+  const compressedSizeCache = new Map();     // key -> bytes
+
+  function docSignature() {
+    return pages.map(pageSignature).join('~');
+  }
+
+  async function buildPlainSize(check) {
+    const out = await buildPdf(pages, {
+      stripMetadata: $('ex-strip-meta').checked,
+      abortCheck: check,
+    });
+    return (await out.save()).length;
+  }
+
+  async function measurePlainSize(check) {
+    const key = docSignature() + '|' + $('ex-strip-meta').checked;
+    if (plainSizeCache && plainSizeCache.key === key) return plainSizeCache.bytes;
+    const bytes = await buildPlainSize(check);
+    plainSizeCache = { key, bytes };
+    return bytes;
+  }
+
+  async function measureCompressedSize(opts, check, onProgress) {
+    const key = [docSignature(), opts.dpi, opts.quality, opts.stripMetadata].join('|');
+    if (compressedSizeCache.has(key)) return compressedSizeCache.get(key);
+    const out = await buildPdf(pages, {
+      compress: true,
+      dpi: opts.dpi,
+      quality: opts.quality,
+      stripMetadata: opts.stripMetadata,
+      abortCheck: check,
+    }, onProgress);
+    const bytes = (await out.save()).length;
+    compressedSizeCache.set(key, bytes);
+    return bytes;
+  }
+
+  function setSizeText(id, text, pending) {
+    const el = $(id);
+    el.textContent = text;
+    el.classList.toggle('pending', !!pending);
+  }
+
+  function showSizeDelta(plain, compressed) {
+    const delta = $('size-delta');
+    if (!plain || !compressed) {
+      delta.classList.add('hidden');
+      return;
+    }
+    const ratio = 1 - compressed / plain;
+    delta.classList.remove('hidden');
+    delta.classList.toggle('bad', ratio <= 0);
+    delta.textContent = ratio > 0
+      ? `-${Math.round(ratio * 100)}%`
+      : `+${Math.round(-ratio * 100)}%`;
+  }
+
+  /**
+   * Refresh the two figures in the export dialog. Large documents wait to be
+   * asked, because measuring them honestly means rendering every page.
+   */
+  async function refreshSizes(force) {
+    if (!pages.length || $('modal-export').classList.contains('hidden')) return;
+    const token = ++sizeToken;
+    const stale = () => token !== sizeToken;
+    const opts = readExportOptions();
+    const measureBtn = $('size-measure');
+
+    setSizeText('size-plain', '計測中...', true);
+    $('size-delta').classList.add('hidden');
+
+    let plain;
+    try {
+      plain = await measurePlainSize(stale);
+    } catch (err) {
+      if (err && err.name === 'AbortByUser') return;
+      console.warn('plain size failed', err);
+      setSizeText('size-plain', '計測できません', true);
+      return;
+    }
+    if (stale()) return;
+    setSizeText('size-plain', formatBytes(plain), false);
+
+    if (!opts.compress) {
+      setSizeText('size-compressed', '圧縮なし', true);
+      measureBtn.classList.add('hidden');
+      $('size-note').textContent = 'ページを削除・追加・回転すると、この数値も更新されます。';
+      return;
+    }
+
+    const key = [docSignature(), opts.dpi, opts.quality, opts.stripMetadata].join('|');
+    const known = compressedSizeCache.get(key);
+    if (known != null) {
+      setSizeText('size-compressed', formatBytes(known), false);
+      showSizeDelta(plain, known);
+      measureBtn.classList.add('hidden');
+      $('size-note').textContent = '実際に書き出して測った値です。推定ではありません。';
+      return;
+    }
+
+    if (pages.length > AUTO_SIZE_PAGE_LIMIT && !force) {
+      setSizeText('size-compressed', '未計測', true);
+      measureBtn.classList.remove('hidden');
+      $('size-note').textContent =
+        `${pages.length} ページあるため自動計測は行いません。ボタンを押すと全ページを実際に圧縮して測ります。`;
+      return;
+    }
+
+    measureBtn.classList.add('hidden');
+    setSizeText('size-compressed', '計測中... 0%', true);
+    $('size-note').textContent = '全ページを実際に圧縮して測っています。';
+    try {
+      const bytes = await measureCompressedSize(opts, stale, (r) => {
+        if (!stale()) setSizeText('size-compressed', `計測中... ${Math.round(r * 100)}%`, true);
+      });
+      if (stale()) return;
+      setSizeText('size-compressed', formatBytes(bytes), false);
+      showSizeDelta(plain, bytes);
+      $('size-note').textContent = '実際に書き出して測った値です。推定ではありません。';
+    } catch (err) {
+      if (err && err.name === 'AbortByUser') return;
+      console.warn('compressed size failed', err);
+      setSizeText('size-compressed', '計測できません', true);
+      measureBtn.classList.remove('hidden');
+    }
+  }
+
+  let sizeDebounce = 0;
+  function scheduleSizeRefresh() {
+    clearTimeout(sizeDebounce);
+    sizeToken++;                     // drop whatever is already running
+    sizeDebounce = setTimeout(() => refreshSizes(false), 250);
+  }
 
   function readExportOptions() {
     return {
@@ -1209,16 +1813,20 @@
 
     const compare = $('result-compare');
     compare.classList.remove('hidden', 'compare-bad');
+    // The baseline is the same page set written out uncompressed, so the figure
+    // reflects what compression did — not what deleting pages did.
     if (!compareBase || compareBase <= 0) {
       compare.classList.add('hidden');
     } else if (blob.size < compareBase) {
       const saved = Math.round((1 - blob.size / compareBase) * 100);
-      compare.textContent = `元のファイルより ${saved}% 小さくなりました（${formatBytes(compareBase)} → ${formatBytes(blob.size)}）`;
+      compare.textContent = `圧縮なしで書き出した場合より ${saved}% 小さくなりました`
+        + `（${formatBytes(compareBase)} → ${formatBytes(blob.size)}）`;
     } else {
       // Rasterising a text/vector PDF reliably makes it bigger. Say so rather
       // than quietly handing back a worse file than the one they started with.
       compare.classList.add('compare-bad');
-      compare.textContent = `元のファイルより大きくなりました（${formatBytes(compareBase)} → ${formatBytes(blob.size)}）。`
+      compare.textContent = `圧縮なしで書き出した場合より大きくなりました`
+        + `（${formatBytes(compareBase)} → ${formatBytes(blob.size)}）。`
         + '文字や図形が中心のPDFは画像化すると増えます。圧縮なしで書き出し直すことをおすすめします。';
     }
 
@@ -1231,9 +1839,22 @@
     setProgress(0, 'PDFを作成しています...', opts.compress ? 'ページを再構成しています' : 'ページをコピーしています');
     const out = await buildPdf(pages, opts, (r) => setProgress(r * 0.95));
     const bytes = await out.save();
+
+    // Comparing against the uncompressed build of the *same* pages keeps the
+    // saving attributable to compression rather than to deleted pages.
+    let baseline = 0;
+    if (opts.compress) {
+      try {
+        baseline = await measurePlainSize(() => exportAbort);
+      } catch (err) {
+        if (err && err.name === 'AbortByUser') throw err;
+        console.warn('baseline measurement failed', err);
+      }
+    }
+
     setProgress(1);
     const blob = new Blob([bytes], { type: 'application/pdf' });
-    showResult(blob, `${opts.filename}.pdf`, 'PDF', opts.compress ? currentOriginalBytes() : 0);
+    showResult(blob, `${opts.filename}.pdf`, 'PDF', baseline);
   }
 
   async function exportSplit(opts) {
@@ -1256,7 +1877,7 @@
       setProgress(i / chunks.length, '分割しています...', `${i + 1} / ${chunks.length} ファイル`);
       const out = await buildPdf(chunks[i].list, { stripMetadata: opts.splitStripMetadata });
       zip.file(`${opts.filename}-${chunks[i].label}.pdf`, await out.save());
-      await yieldExport();
+      await breathe(() => exportAbort);
     }
 
     setProgress(0.97, 'ZIPにまとめています...', `${chunks.length} ファイル`);
@@ -1325,7 +1946,7 @@
       const canvas = await renderPageToCanvas(pages[i], opts.imageScale);
       const blob = await encodeCanvas(canvas, opts.imageFormat, opts.imageQuality);
       zip.file(`${opts.filename}-${pad(i + 1)}.${spec.ext}`, blob);
-      await yieldExport();
+      await breathe(() => exportAbort);
     }
 
     setProgress(0.97, 'ZIPにまとめています...', `${pages.length} ファイル`);
@@ -1381,7 +2002,7 @@
         if (act === 'cw') rotatePages([page], 90);
         else if (act === 'ccw') rotatePages([page], -90);
         else if (act === 'del') deletePages([page]);
-        else if (act === 'redact') openRedact(uid);
+        else if (act === 'redact') openAnnotate(uid);
         return;
       }
       if (suppressClick) return;
@@ -1454,7 +2075,7 @@
         setActiveCard(uid, true);
       } else if (k === 'm') {
         e.preventDefault();
-        openRedact(uid);
+        openAnnotate(uid);
       }
     });
   }
@@ -1639,6 +2260,10 @@
     history.length = 0;
     thumbCache.clear();
     thumbQueue.length = 0;
+    plainSizeCache = null;
+    compressedSizeCache.clear();
+    stampAssets.forEach((asset) => URL.revokeObjectURL(asset.url));
+    stampAssets.clear();
     lastBlob = null;
     lastAnchor = null;
     activeUid = null;
@@ -1651,6 +2276,7 @@
     $('ex-page-count').textContent = String(pages.length);
     if (!$('ex-filename').value) $('ex-filename').value = defaultFilename();
     openModal('modal-export');
+    refreshSizes(false);
   }
 
   function initExportPanel() {
@@ -1660,13 +2286,21 @@
         panel.classList.toggle('hidden', !on);
         panel.classList.toggle('flex', on);
       });
+      if (mode === 'pdf') scheduleSizeRefresh();
+      else sizeToken++;              // stop measuring for a mode that ignores it
     });
 
     bindSegmented('ex-compress', 'v', (v) => {
       const wrap = $('ex-compress-opts');
       wrap.classList.toggle('hidden', v !== 'on');
       wrap.classList.toggle('flex', v === 'on');
+      scheduleSizeRefresh();
     });
+
+    $('ex-dpi').addEventListener('change', scheduleSizeRefresh);
+    $('ex-quality').addEventListener('change', scheduleSizeRefresh);
+    $('ex-strip-meta').addEventListener('change', scheduleSizeRefresh);
+    $('size-measure').addEventListener('click', () => refreshSizes(true));
 
     bindSegmented('ex-split-mode', 'v', (v) => {
       $('ex-split-every-wrap').classList.toggle('hidden', v !== 'every');
@@ -1737,11 +2371,20 @@
     document.addEventListener('keydown', trapFocus);
 
     $('il-apply').addEventListener('click', applyInterleave);
-    $('redact-apply').addEventListener('click', applyRedaction);
+    $('redact-apply').addEventListener('click', applyAnnotations);
     $('redact-clear').addEventListener('click', () => {
-      redactRects = [];
-      drawRedactOverlay();
+      anDraft = { redactions: [], stamps: [], texts: [] };
+      drawAnnotationOverlay();
+      updateAnnotationHints();
     });
+
+    bindSegmented('an-tool', 'v', setAnnotationTool);
+    $('stamp-add').addEventListener('click', () => $('stamp-file').click());
+    $('stamp-file').addEventListener('change', (e) => {
+      if (e.target.files.length) addStampFiles(e.target.files);
+      e.target.value = '';
+    });
+
     setupRedactDrawing();
   }
 

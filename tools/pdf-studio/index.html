@@ -576,7 +576,13 @@
     }
     .note.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
 
-    /* ===== Redaction canvas ===== */
+    /* ===== Annotation canvas ===== */
+    #an-stage-wrap { max-height: 60vh; }
+    /* The dialog gained a tool switcher and a stamp tray, so on a short screen
+       the canvas has to give up some height or it ends up scrolled out of view. */
+    @media (max-height: 760px) { #an-stage-wrap { max-height: 44vh; } }
+    @media (max-height: 560px) { #an-stage-wrap { max-height: 34vh; } }
+
     #redact-stage {
       position: relative;
       display: inline-block;
@@ -613,6 +619,91 @@
       pointer-events: none;
       display: none;
     }
+    #redact-stage.tool-stamp #redact-live { background: rgba(37, 99, 235, 0.22); border-color: #2563eb; }
+    #redact-stage.tool-text  #redact-live { background: rgba(5, 150, 105, 0.18); border-color: #059669; }
+
+    /* ===== Stamp / text annotations on the editing stage ===== */
+    .an-item {
+      position: absolute;
+      border: 1px dashed transparent;
+    }
+    .an-item.stamp { border-color: #2563eb; background: rgba(37, 99, 235, 0.08); }
+    .an-item.text  { border-color: #059669; }
+    .an-item > img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .an-item > .an-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-start;
+      white-space: pre;
+      line-height: 1;
+      overflow: visible;
+    }
+    .an-item > button {
+      position: absolute;
+      top: -9px; right: -9px;
+      width: 19px; height: 19px;
+      border-radius: 50%;
+      background: #334155;
+      color: #fff;
+      border: 2px solid #fff;
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+    }
+
+    /* ===== Stamp library ===== */
+    .stamp-tray { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .stamp-chip {
+      width: 62px; height: 62px;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      background: #fff center/contain no-repeat;
+      background-image: var(--thumb);
+      cursor: pointer;
+      position: relative;
+      padding: 0;
+    }
+    .stamp-chip.active { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18); }
+    .stamp-chip > span {
+      position: absolute;
+      top: -7px; right: -7px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #dc2626; color: #fff;
+      border: 2px solid #fff;
+      font-size: 10px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stamp-add {
+      width: 62px; height: 62px;
+      border-radius: 10px;
+      border: 2px dashed #cbd5e1;
+      background: #f8fafc;
+      color: #64748b;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stamp-add:hover { border-color: #a5b4fc; color: #4f46e5; }
+
+    /* ===== Size readout in the export dialog ===== */
+    .size-panel {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .size-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .size-row > span:first-child { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.04em; }
+    .size-value { font-family: "Outfit", system-ui, sans-serif; font-weight: 800; font-size: 1.05rem; color: #0f172a; }
+    .size-value.pending { color: #94a3b8; font-weight: 600; font-size: 0.85rem; }
+    .size-delta { font-size: 11px; font-weight: 700; color: #059669; }
+    .size-delta.bad { color: #b45309; }
 
     /* ===== Progress ===== */
     .progress-bar-container {
@@ -1052,13 +1143,44 @@
     <div class="modal-card wide p-6 sm:p-7">
       <div class="flex items-start justify-between gap-4 mb-4">
         <div>
-          <h3 id="redact-title" class="text-lg font-bold text-slate-800 font-outfit">墨消し <span id="redact-page-label" class="text-sm font-semibold text-indigo-600"></span></h3>
-          <p class="text-xs text-slate-500 mt-1">ドラッグして隠す範囲を指定します。書き出し時、その下のテキストはPDFから削除されます。</p>
+          <h3 id="redact-title" class="text-lg font-bold text-slate-800 font-outfit">ページを編集 <span id="redact-page-label" class="text-sm font-semibold text-indigo-600"></span></h3>
+          <p class="text-xs text-slate-500 mt-1">ページ上をドラッグして範囲を指定します。</p>
         </div>
         <button class="icon-btn shrink-0" data-close="modal-redact" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <div class="bg-slate-100 rounded-xl p-4 flex items-center justify-center overflow-auto" style="max-height:60vh">
+      <div class="seg mb-4" id="an-tool">
+        <button class="seg-btn active" data-v="redact" type="button">墨消し</button>
+        <button class="seg-btn" data-v="stamp" type="button">スタンプ</button>
+        <button class="seg-btn" data-v="text" type="button">テキスト</button>
+      </div>
+
+      <div id="an-opts-stamp" class="hidden mb-4">
+        <span class="field-label">押す画像</span>
+        <div class="stamp-tray" id="stamp-tray">
+          <button class="stamp-add" id="stamp-add" type="button" aria-label="スタンプ画像を追加">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <input type="file" id="stamp-file" accept="image/png,image/jpeg,image/webp" class="hidden" multiple>
+        <div class="note mt-2">PNG・JPEG・WebP を読み込めます。透過PNGなら背景が抜けた印影のまま押せます。画像はページ上にドラッグした枠へ、縦横比を保って収まります。</div>
+      </div>
+
+      <div id="an-opts-text" class="hidden mb-4 flex flex-col gap-3">
+        <div>
+          <label class="field-label" for="an-text-value">追加する文字</label>
+          <input type="text" id="an-text-value" class="text-input" placeholder="例）社外秘" maxlength="120">
+        </div>
+        <div class="flex flex-wrap items-end gap-4">
+          <div>
+            <label class="field-label" for="an-text-color">色</label>
+            <input type="color" id="an-text-color" value="#dc2626" class="h-9 w-16 rounded-lg border border-slate-200 bg-white p-1">
+          </div>
+          <div class="note flex-1" id="an-text-note">ドラッグした枠の高さが文字サイズになります。文字は画像化されず、選択・検索できる状態でPDFに入ります。</div>
+        </div>
+      </div>
+
+      <div id="an-stage-wrap" class="bg-slate-100 rounded-xl p-4 flex items-center justify-center overflow-auto">
         <div id="redact-stage">
           <canvas id="redact-canvas"></canvas>
           <div id="redact-overlay"></div>
@@ -1066,13 +1188,13 @@
         </div>
       </div>
 
-      <div class="note warn mt-4">墨消しを適用したページは 300dpi の画像に変換されます。そのページのテキスト選択・検索はできなくなります。</div>
+      <div class="note warn mt-4" id="an-warn">墨消しを適用したページは 300dpi の画像に変換されます。そのページのテキスト選択・検索はできなくなります。</div>
 
-      <label class="check-row mt-3"><input type="checkbox" id="redact-all-pages"><span>この範囲をすべてのページに適用する（ヘッダーや個人情報の一括処理向け。位置はページの縦横比に対する割合で揃えます）</span></label>
+      <label class="check-row mt-3"><input type="checkbox" id="redact-all-pages"><span>この内容をすべてのページに適用する（ヘッダーや押印の一括処理向け。位置はページの縦横比に対する割合で揃えます）</span></label>
 
       <div class="flex flex-wrap gap-2 mt-5">
         <button id="redact-clear" class="btn-tool danger" type="button">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>すべて解除
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>このページの注釈をすべて解除
         </button>
         <div class="flex-1"></div>
         <button class="btn-tool" data-close="modal-redact" type="button">キャンセル</button>
@@ -1129,6 +1251,25 @@
           </div>
           <div class="note warn">圧縮するとページが画像に変換され、テキストの選択・検索ができなくなります。</div>
         </div>
+
+        <div class="size-panel">
+          <div class="size-row">
+            <span>現在の構成をそのまま書き出した場合</span>
+            <span id="size-plain" class="size-value pending">計測中...</span>
+          </div>
+          <div class="size-row" id="size-compressed-row">
+            <span>この設定で圧縮した場合</span>
+            <span class="flex items-baseline gap-2">
+              <span id="size-delta" class="size-delta hidden"></span>
+              <span id="size-compressed" class="size-value pending">圧縮なし</span>
+            </span>
+          </div>
+          <button id="size-measure" class="btn-tool hidden self-start" type="button">
+            <i data-lucide="calculator" class="w-3.5 h-3.5"></i>圧縮後のサイズを試算する
+          </button>
+          <div class="note" id="size-note">ページを削除・追加すると、この数値も更新されます。</div>
+        </div>
+
         <label class="check-row"><input type="checkbox" id="ex-strip-meta" checked><span>メタデータ（作成者・作成ソフト・日時）を削除する</span></label>
       </div>
 
