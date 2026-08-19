@@ -29,6 +29,10 @@
   const TEXT_ASCENT = 0.8;
   const JP_FONT_FAMILY = 'PdfStudioJP';
   const JP_FONT_URL = 'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.ttf';
+  // ASCII-only labels are embedded as Helvetica, so the fallbacks after the
+  // Japanese face have to be the same metrics — otherwise the preview and the
+  // exported page disagree about how wide the text is.
+  const textFont = (px) => `${px}px "${JP_FONT_FAMILY}", Helvetica, Arial, sans-serif`;
   const STAMP_MAX_SIDE = 2000;
   // Past this many pages, measuring the compressed size stops feeling instant,
   // so it waits to be asked instead of running on every slider nudge.
@@ -68,6 +72,9 @@
   let busy = false;
   let exportAbort = false;
   let scaleWasClamped = false;
+  // Size measurements build the whole document too. Their clamping says nothing
+  // about the file the user is actually getting, so it must not raise the flag.
+  let measuringDepth = 0;
 
   /** Uploaded stamp images, shared by every page that uses them. */
   const stampAssets = new Map();
@@ -127,6 +134,10 @@
 
   function closeModal(id) {
     const modal = $(id);
+    // A size measurement builds the whole document. Nobody is looking at the
+    // result once the dialog is gone, and letting it run on competes with the
+    // export the user just started.
+    if (id === 'modal-export') sizeToken++;
     // Focus has to leave before the dialog is hidden. An element inside a
     // hidden subtree still holds document.activeElement, which strands the
     // keyboard on a control nobody can see.
@@ -193,8 +204,11 @@
       texts: p.texts.map((r) => ({ ...r })),
     })));
     if (history.length > HISTORY_LIMIT) {
+      // The dropped snapshot may have been the last thing holding a deleted
+      // stamp's bitmap alive.
       history.shift();
       pruneDocs();
+      refreshStampAssets();
     }
     $('btn-undo').disabled = false;
   }
@@ -206,6 +220,7 @@
     [...selection].forEach((uid) => { if (!alive.has(uid)) selection.delete(uid); });
     $('btn-undo').disabled = history.length === 0;
     pruneDocs();
+    refreshStampAssets();
     renderGrid();
   }
 
@@ -484,7 +499,7 @@
       Math.sqrt(MAX_CANVAS_AREA / (base.width * base.height))
     );
     if (scale <= limit) return scale;
-    scaleWasClamped = true;
+    if (!measuringDepth) scaleWasClamped = true;
     return limit;
   }
 
@@ -521,7 +536,7 @@
     page.texts.forEach((t) => {
       const px = t.h * h;
       ctx.fillStyle = t.color || '#dc2626';
-      ctx.font = `${px}px "${JP_FONT_FAMILY}", system-ui, sans-serif`;
+      ctx.font = textFont(px);
       ctx.textBaseline = 'alphabetic';
       ctx.fillText(t.text, t.x * w, t.y * h + px * TEXT_ASCENT);
     });
@@ -898,26 +913,67 @@
   }
 
   /**
-   * Normalise every upload to something pdf-lib can embed. WebP and anything
-   * oversized gets redrawn as PNG, which also keeps transparency intact.
+   * Read the EXIF orientation tag out of a JPEG, or 1 when there is none.
+   * pdf-lib embeds the JPEG bytes untouched and ignores EXIF, so a tagged file
+   * has to be spotted here and redrawn with the rotation baked in.
+   */
+  function jpegOrientation(bytes) {
+    try {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      if (view.getUint16(0) !== 0xffd8) return 1;
+      let off = 2;
+      while (off + 4 <= view.byteLength) {
+        const marker = view.getUint16(off);
+        if ((marker & 0xff00) !== 0xff00) return 1;
+        if (marker === 0xffda || marker === 0xffd9) return 1;   // image data starts
+        const len = view.getUint16(off + 2);
+        if (marker === 0xffe1 && view.getUint32(off + 4) === 0x45786966) {   // "Exif"
+          const tiff = off + 10;
+          const little = view.getUint16(tiff) === 0x4949;
+          const ifd = tiff + view.getUint32(tiff + 4, little);
+          const count = view.getUint16(ifd, little);
+          for (let i = 0; i < count; i++) {
+            const entry = ifd + 2 + i * 12;
+            if (view.getUint16(entry, little) === 0x0112) {
+              return view.getUint16(entry + 8, little) || 1;
+            }
+          }
+          return 1;
+        }
+        off += 2 + len;
+      }
+    } catch (err) {
+      // A truncated or unusual header just means "assume upright".
+    }
+    return 1;
+  }
+
+  /**
+   * Normalise every upload to something pdf-lib can embed. WebP, anything
+   * oversized and anything rotated by an EXIF tag gets redrawn; JPEG stays
+   * JPEG so photos keep their compression, everything else becomes PNG so
+   * transparency survives.
    */
   async function addStampAsset(file) {
-    const bitmap = await createImageBitmap(file);
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
     const scale = Math.min(1, STAMP_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const source = new Uint8Array(await file.arrayBuffer());
     const embeddable = /^image\/(png|jpeg)$/.test(file.type);
+    const isJpeg = file.type === 'image/jpeg';
+    const rotatedByExif = isJpeg && jpegOrientation(source) > 1;
 
     let bytes;
     let mime;
-    if (scale < 1 || !embeddable) {
+    if (scale < 1 || !embeddable || rotatedByExif) {
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(bitmap.width * scale));
       canvas.height = Math.max(1, Math.round(bitmap.height * scale));
       canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      const blob = await canvasToBlob(canvas, 'image/png');
+      mime = isJpeg ? 'image/jpeg' : 'image/png';
+      const blob = await canvasToBlob(canvas, mime, isJpeg ? 0.92 : undefined);
       bytes = new Uint8Array(await blob.arrayBuffer());
-      mime = 'image/png';
     } else {
-      bytes = new Uint8Array(await file.arrayBuffer());
+      bytes = source;
       mime = file.type;
     }
     bitmap.close();
@@ -938,6 +994,53 @@
       total + page.stamps.filter((st) => st.assetId === assetId).length, 0);
   }
 
+  /** Undo can bring a deleted stamp back, so history counts as a reference. */
+  function stampInHistory(assetId) {
+    return history.some((snap) =>
+      snap.some((page) => page.stamps.some((st) => st.assetId === assetId)));
+  }
+
+  function firstLiveStampId() {
+    for (const asset of stampAssets.values()) if (!asset.retired) return asset.id;
+    return null;
+  }
+
+  /**
+   * Drop an asset the tray no longer shows. Its bitmap has to outlive the
+   * deletion whenever undo can still put the stamp back — freeing it here
+   * would leave the restored stamp pointing at nothing, and it would silently
+   * vanish from the thumbnails and the export.
+   */
+  function releaseStampAsset(assetId) {
+    const asset = stampAssets.get(assetId);
+    if (!asset) return;
+    if (stampInHistory(assetId) || stampUsageCount(assetId)) {
+      asset.retired = true;
+      return;
+    }
+    URL.revokeObjectURL(asset.url);
+    stampAssets.delete(assetId);
+  }
+
+  /** Undo may have restored stamps, so retired assets get a second look. */
+  function refreshStampAssets() {
+    let changed = false;
+    [...stampAssets.values()].forEach((asset) => {
+      if (!asset.retired) return;
+      if (stampUsageCount(asset.id)) {
+        asset.retired = false;
+        changed = true;
+      } else if (!stampInHistory(asset.id)) {
+        URL.revokeObjectURL(asset.url);
+        stampAssets.delete(asset.id);
+        changed = true;
+      }
+    });
+    if (!changed) return;
+    if (activeStampId === null) activeStampId = firstLiveStampId();
+    renderStampTray();
+  }
+
   function removeStampAsset(assetId) {
     const used = stampUsageCount(assetId);
     if (used && !confirm(`このスタンプは ${used} 箇所で使われています。まとめて削除しますか？`)) return;
@@ -947,12 +1050,8 @@
       renderGrid();
     }
     anDraft.stamps = anDraft.stamps.filter((st) => st.assetId !== assetId);
-    const asset = stampAssets.get(assetId);
-    if (asset) URL.revokeObjectURL(asset.url);
-    stampAssets.delete(assetId);
-    if (activeStampId === assetId) {
-      activeStampId = stampAssets.size ? stampAssets.keys().next().value : null;
-    }
+    releaseStampAsset(assetId);
+    if (activeStampId === assetId) activeStampId = firstLiveStampId();
     renderStampTray();
     drawAnnotationOverlay();
   }
@@ -962,6 +1061,8 @@
     const addBtn = $('stamp-add');
     tray.querySelectorAll('.stamp-chip').forEach((el) => el.remove());
     stampAssets.forEach((asset) => {
+      // Retired assets are only still here so undo can restore their stamps.
+      if (asset.retired) return;
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'stamp-chip' + (asset.id === activeStampId ? ' active' : '');
@@ -986,6 +1087,7 @@
   // -------------------------------------------------- Japanese font, loaded on demand
 
   let jpFontPromise = null;
+  let jpFontReady = false;
 
   function loadJpFont() {
     if (!jpFontPromise) {
@@ -999,6 +1101,7 @@
         const face = new FontFace(JP_FONT_FAMILY, buffer.slice(0));
         await face.load();
         document.fonts.add(face);
+        jpFontReady = true;
         return { fontkit, bytes: new Uint8Array(buffer) };
       })().catch((err) => {
         jpFontPromise = null;   // let a later attempt retry the download
@@ -1009,13 +1112,17 @@
     return jpFontPromise;
   }
 
+  // Captured once: after a failed attempt the note holds an error message, and
+  // restoring *that* on a later success would make the failure permanent.
+  let textNoteDefault = null;
+
   async function ensureTextFontReady() {
     const note = $('an-text-note');
-    const original = note.textContent;
+    if (textNoteDefault === null) textNoteDefault = note.textContent;
     note.textContent = '日本語フォント（約2.3MB）を読み込んでいます...';
     try {
       await loadJpFont();
-      note.textContent = original;
+      note.textContent = textNoteDefault;
     } catch (err) {
       note.textContent = err.message + ' 英数字のみであればこのまま追加できます。';
     }
@@ -1048,8 +1155,10 @@
     target.getContext('2d').drawImage(canvas, 0, 0);
 
     renderStampTray();
-    drawAnnotationOverlay();
+    // The overlay sizes text in pixels off the stage, which has no box until
+    // the dialog is on screen — drawn any earlier, every label comes out 0px.
     openModal('modal-redact');
+    drawAnnotationOverlay();
   }
 
   const measureCtx = document.createElement('canvas').getContext('2d');
@@ -1068,7 +1177,7 @@
 
     anDraft.texts.forEach((t, i) => {
       const px = t.h * stage.height;
-      measureCtx.font = `${px}px "${JP_FONT_FAMILY}", system-ui, sans-serif`;
+      measureCtx.font = textFont(px);
       const width = measureCtx.measureText(t.text).width;
       const el = document.createElement('div');
       el.className = 'an-item text';
@@ -1078,7 +1187,7 @@
       el.style.height = t.h * 100 + '%';
       const label = document.createElement('span');
       label.className = 'an-label';
-      label.style.font = `${px}px "${JP_FONT_FAMILY}", system-ui, sans-serif`;
+      label.style.font = textFont(px);
       label.style.color = t.color;
       label.textContent = t.text;
       el.appendChild(label);
@@ -1249,12 +1358,31 @@
     });
   }
 
+  /**
+   * A stamp's w/h are fractions of the page it was fitted on, so copying them
+   * onto a page of a different shape stretches the image. Re-fit it inside the
+   * same fractional box on the target page instead, keeping its centre.
+   */
+  function refitStamp(st, target) {
+    const asset = stampAssets.get(st.assetId);
+    const size = visualSize(target);
+    if (!asset || !asset.img.naturalWidth || !size.width || !size.height) return { ...st };
+
+    const scale = Math.min(
+      (st.w * size.width) / asset.img.naturalWidth,
+      (st.h * size.height) / asset.img.naturalHeight
+    );
+    const w = (asset.img.naturalWidth * scale) / size.width;
+    const h = (asset.img.naturalHeight * scale) / size.height;
+    return { ...st, x: st.x + (st.w - w) / 2, y: st.y + (st.h - h) / 2, w, h };
+  }
+
   function applyAnnotations() {
     if (!redactTarget) return;
     const everyPage = $('redact-all-pages').checked;
-    const clone = () => ({
+    const clone = (page) => ({
       redactions: anDraft.redactions.map((r) => ({ ...r })),
-      stamps: anDraft.stamps.map((r) => ({ ...r })),
+      stamps: anDraft.stamps.map((st) => (page === redactTarget ? { ...st } : refitStamp(st, page))),
       texts: anDraft.texts.map((r) => ({ ...r })),
     });
 
@@ -1262,10 +1390,10 @@
     if (everyPage) {
       // Everything is stored as fractions of the page, so the same mark lands
       // in the same relative spot whatever the page size is.
-      pages.forEach((page) => Object.assign(page, clone()));
+      pages.forEach((page) => Object.assign(page, clone(page)));
       renderGrid();
     } else {
-      Object.assign(redactTarget, clone());
+      Object.assign(redactTarget, clone(redactTarget));
       refreshCard(redactTarget.uid);
     }
     updateToolbar();
@@ -1298,14 +1426,16 @@
   /**
    * Embed the fonts and images the vector pages need, once per output document.
    * The Japanese face is only fetched if some text actually needs it — a label
-   * in ASCII rides on a standard font and downloads nothing.
+   * in ASCII rides on a standard font and downloads nothing. Once the face is
+   * loaded it is used for ASCII too, so that the vector pages, the rasterised
+   * ones and the on-screen preview all measure the text the same way.
    */
   async function prepareAnnotationResources(out, list) {
     const resources = { font: null, images: new Map() };
 
     const texts = list.flatMap((page) => page.texts);
     if (texts.length) {
-      if (texts.some((t) => /[^\x00-\x7F]/.test(t.text))) {
+      if (jpFontReady || texts.some((t) => /[^\x00-\x7F]/.test(t.text))) {
         const { fontkit, bytes } = await loadJpFont();
         out.registerFontkit(fontkit);
         resources.font = await out.embedFont(bytes, { subset: true });
@@ -1605,38 +1735,77 @@
   // page weight varies far too much for an extrapolation to be worth showing.
   let sizeToken = 0;
   let plainSizeCache = null;                 // { key, bytes }
+  let plainSizeInflight = null;              // { key, promise, checks:Set }
   const compressedSizeCache = new Map();     // key -> bytes
 
   function docSignature() {
     return pages.map(pageSignature).join('~');
   }
 
-  async function buildPlainSize(check) {
-    const out = await buildPdf(pages, {
-      stripMetadata: $('ex-strip-meta').checked,
-      abortCheck: check,
-    });
-    return (await out.save()).length;
+  function plainSizeKey() {
+    return docSignature() + '|' + $('ex-strip-meta').checked;
   }
 
+  /** A plain build is only slow when pages have to be rasterised for redaction. */
+  function plainSizeIsSlow() {
+    return pages.length > AUTO_SIZE_PAGE_LIMIT || pages.some((p) => p.redactions.length > 0);
+  }
+
+  async function buildPlainSize(check) {
+    measuringDepth++;
+    try {
+      const out = await buildPdf(pages, {
+        stripMetadata: $('ex-strip-meta').checked,
+        abortCheck: check,
+      });
+      return (await out.save()).length;
+    } finally {
+      measuringDepth--;
+    }
+  }
+
+  /**
+   * The dialog and the export's own baseline ask for the same number, so the
+   * *promise* is shared, not just the finished value — otherwise the identical
+   * build runs twice at once. A shared build only gives up once every waiter
+   * has lost interest, so a stale dialog cannot cancel the export's baseline.
+   */
   async function measurePlainSize(check) {
-    const key = docSignature() + '|' + $('ex-strip-meta').checked;
+    const key = plainSizeKey();
     if (plainSizeCache && plainSizeCache.key === key) return plainSizeCache.bytes;
-    const bytes = await buildPlainSize(check);
-    plainSizeCache = { key, bytes };
-    return bytes;
+    if (plainSizeInflight && plainSizeInflight.key === key) {
+      plainSizeInflight.checks.add(check);
+      return plainSizeInflight.promise;
+    }
+
+    const checks = new Set([check]);
+    const shared = () => exportAbort || [...checks].every((fn) => fn());
+    const promise = buildPlainSize(shared).then((bytes) => {
+      plainSizeCache = { key, bytes };
+      return bytes;
+    }).finally(() => {
+      if (plainSizeInflight && plainSizeInflight.promise === promise) plainSizeInflight = null;
+    });
+    plainSizeInflight = { key, promise, checks };
+    return promise;
   }
 
   async function measureCompressedSize(opts, check, onProgress) {
     const key = [docSignature(), opts.dpi, opts.quality, opts.stripMetadata].join('|');
     if (compressedSizeCache.has(key)) return compressedSizeCache.get(key);
-    const out = await buildPdf(pages, {
-      compress: true,
-      dpi: opts.dpi,
-      quality: opts.quality,
-      stripMetadata: opts.stripMetadata,
-      abortCheck: check,
-    }, onProgress);
+    measuringDepth++;
+    let out;
+    try {
+      out = await buildPdf(pages, {
+        compress: true,
+        dpi: opts.dpi,
+        quality: opts.quality,
+        stripMetadata: opts.stripMetadata,
+        abortCheck: check,
+      }, onProgress);
+    } finally {
+      measuringDepth--;
+    }
     const bytes = (await out.save()).length;
     compressedSizeCache.set(key, bytes);
     return bytes;
@@ -1672,9 +1841,28 @@
     const stale = () => token !== sizeToken;
     const opts = readExportOptions();
     const measureBtn = $('size-measure');
+    // The panel belongs to the PDF mode; the others ignore these figures and
+    // must not pay for a full build just because the dialog opened.
+    if (opts.mode !== 'pdf') return;
+
+    $('size-delta').classList.add('hidden');
+
+    // Redacted pages are rasterised at 300 DPI even without compression, so
+    // the plain figure is no cheaper than the compressed one — it waits to be
+    // asked for as well, rather than starting the moment the dialog opens.
+    const cachedKey = plainSizeKey();
+    const cachedPlain = plainSizeCache && plainSizeCache.key === cachedKey ? plainSizeCache.bytes : null;
+    if (cachedPlain == null && plainSizeIsSlow() && !force) {
+      setSizeText('size-plain', '未計測', true);
+      setSizeText('size-compressed', opts.compress ? '未計測' : '圧縮なし', true);
+      measureBtn.classList.remove('hidden');
+      $('size-note').textContent = pages.length > AUTO_SIZE_PAGE_LIMIT
+        ? `${pages.length} ページあるため自動計測は行いません。ボタンを押すと実際に書き出して測ります。`
+        : '墨消しのあるページは画像化して書き出すため、自動計測は行いません。ボタンを押すと実際に書き出して測ります。';
+      return;
+    }
 
     setSizeText('size-plain', '計測中...', true);
-    $('size-delta').classList.add('hidden');
 
     let plain;
     try {
@@ -1847,7 +2035,9 @@
       try {
         baseline = await measurePlainSize(() => exportAbort);
       } catch (err) {
-        if (err && err.name === 'AbortByUser') throw err;
+        // A measurement started for the dialog may already have been abandoned
+        // when this joined it. Only a real cancel stops the export.
+        if (err && err.name === 'AbortByUser' && exportAbort) throw err;
         console.warn('baseline measurement failed', err);
       }
     }
@@ -2260,7 +2450,9 @@
     history.length = 0;
     thumbCache.clear();
     thumbQueue.length = 0;
+    sizeToken++;                 // abandon anything still measuring
     plainSizeCache = null;
+    plainSizeInflight = null;
     compressedSizeCache.clear();
     stampAssets.forEach((asset) => URL.revokeObjectURL(asset.url));
     stampAssets.clear();
