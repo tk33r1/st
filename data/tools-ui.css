@@ -260,7 +260,9 @@
 /* Breadcrumb. One element says where you are and how to get back up, in the
    same shape on every page — the app bar used to carry a back link, a centred
    title and a path line, which is three answers to the same question.
-   The trail matches the BreadcrumbList in each page's JSON-LD. */
+   The trail mirrors the BreadcrumbList in each page's JSON-LD level for level.
+   Only the root's label differs on purpose: the bar shows the domain "tk.st",
+   while the structured data names the person, "Shinya Takeda". */
 .st-theme .crumb { min-width: 0; }
 .st-theme .crumb ol {
   list-style: none;

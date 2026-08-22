@@ -310,6 +310,7 @@
       ? 'パスワードで保護されているため読み込めません。先にパスワードを解除してください。'
       : 'PDFとして読み込めませんでした。ファイルが壊れている可能性があります。';
     const prefix = failures.length > 1 ? `${failures.length} 個のファイルを読み込めませんでした: ` : `${first.name}: `;
+    setStatus('load failed', 'err');
     showToast(prefix + reason, 'error');
   }
 
@@ -401,11 +402,12 @@
       $('url-input').value = '';
       await addFiles([file]);
     } catch (err) {
+      setView(fallbackView);
       if (!err || err.name !== 'AbortByUser') {
         console.error('URL load failed', err);
+        setStatus('fetch failed', 'err');
         showToast(`取得失敗: ${err && err.message ? err.message : 'unknown'}`, 'error');
       }
-      setView(fallbackView);
     } finally {
       urlLoading = false;
       $('url-btn').disabled = false;
@@ -2000,6 +2002,7 @@
         showToast('書き出しを中止しました');
       } else {
         console.error(err);
+        setStatus('export failed', 'err');
         showToast(`書き出しに失敗しました: ${err && err.message ? err.message : '不明なエラー'}`, 'error');
       }
     } finally {

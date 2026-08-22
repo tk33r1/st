@@ -386,7 +386,8 @@
     (function () {
       const KEY = 'st-theme';
       const root = document.documentElement;
-      const saved = localStorage.getItem(KEY);
+      let saved = null;
+      try { saved = localStorage.getItem(KEY); } catch (e) { /* site data blocked */ }
       if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
 
       document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -394,7 +395,7 @@
         const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
         const next = current === 'dark' ? 'light' : 'dark';
         root.setAttribute('data-theme', next);
-        localStorage.setItem(KEY, next);
+        try { localStorage.setItem(KEY, next); } catch (e) { /* site data blocked */ }
       });
     })();
   </script>
@@ -1172,3 +1173,4 @@
 
   </script>
 </body>
+</html>

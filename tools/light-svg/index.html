@@ -789,7 +789,16 @@
       return 60000 / (bpm > 0 ? bpm : 60);
     }
 
+    // The count-up owns the readout for a whole beat and its final write is the
+    // value it started with. Dragging a slider inside that second would be
+    // overwritten by a stale number, so any new write cancels the run first.
+    let countRaf = null;
+    function stopCount() {
+      if (countRaf !== null) { cancelAnimationFrame(countRaf); countRaf = null; }
+    }
+
     function animateCount(el, to, render) {
+      stopCount();
       if (prefersReducedMotion()) { el.textContent = render(to); return; }
       const duration = beatMs();
       const start = performance.now();
@@ -797,10 +806,10 @@
         const t = Math.min(1, (now - start) / duration);
         const eased = 1 - Math.pow(1 - t, 3);
         el.textContent = render(to * eased);
-        if (t < 1) requestAnimationFrame(frame);
-        else el.textContent = render(to);
+        if (t < 1) { countRaf = requestAnimationFrame(frame); }
+        else { countRaf = null; el.textContent = render(to); }
       }
-      requestAnimationFrame(frame);
+      countRaf = requestAnimationFrame(frame);
     }
 
     // Read the artwork's own dimensions for the drawing's dimension line.
@@ -1031,6 +1040,7 @@
       if (animate) {
         animateCount(savingsPercent, percent, v => v.toFixed(1) + '%');
       } else {
+        stopCount();
         savingsPercent.textContent = percent.toFixed(1) + '%';
         popValue(savingsPercent);
       }
@@ -1064,7 +1074,7 @@
     let rerunTimer = null;
     function scheduleRerun() {
       if (rerunTimer) clearTimeout(rerunTimer);
-      rerunTimer = setTimeout(runOptimization, 60);
+      rerunTimer = setTimeout(() => runOptimization(false), 60);
     }
 
     function handleSliderInput(slider, label) {
@@ -1418,3 +1428,4 @@
 
   </script>
 </body>
+</html>

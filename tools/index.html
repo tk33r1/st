@@ -217,6 +217,14 @@
     .icon-btn:active { transform: translateY(2px); }
     .icon-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
+    /* Lucide stamps 24x24 onto every icon it injects. Tailwind used to
+       override that; this page no longer loads it, so the sizes live here. */
+    #theme-toggle svg,
+    #scroll-top-btn svg,
+    .search-wrap svg { width: 16px; height: 16px; }
+    #empty-state .box svg { width: 22px; height: 22px; }
+    .tool-img-fallback svg { width: 30px; height: 30px; opacity: .45; }
+
     #theme-toggle .to-dark { display: inline-flex; }
     #theme-toggle .to-light { display: none; }
     :root[data-theme="dark"] #theme-toggle .to-dark { display: none; }
@@ -543,8 +551,8 @@
         </nav>
         <span class="mast-issue lbl">NO. <span id="tool-count">0</span></span>
         <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
-          <i data-lucide="moon" class="to-dark w-4 h-4"></i>
-          <i data-lucide="sun" class="to-light w-4 h-4"></i>
+          <i data-lucide="moon" class="to-dark"></i>
+          <i data-lucide="sun" class="to-light"></i>
         </button>
       </div>
 
@@ -557,7 +565,7 @@
           </p>
           <div class="mast-controls">
             <div class="search-wrap">
-              <i data-lucide="search" class="w-4 h-4"></i>
+              <i data-lucide="search"></i>
               <input type="text" id="search-input" placeholder="道具を探す" autocomplete="off" aria-label="ツールを検索">
             </div>
             <select id="sort-select" aria-label="並び替え">
@@ -580,7 +588,7 @@
     <div id="category-filter"></div>
 
     <div id="empty-state" class="hidden">
-      <div class="box"><i data-lucide="search-x" class="w-6 h-6"></i></div>
+      <div class="box"><i data-lucide="search-x"></i></div>
       <p>該当する道具がありません。</p>
     </div>
 
@@ -598,7 +606,7 @@
   </footer>
 
   <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
-    <i data-lucide="chevron-up" class="w-4 h-4"></i>
+    <i data-lucide="chevron-up"></i>
   </button>
 
   <script src="../data/buy-me-oil.js"></script>
@@ -723,7 +731,7 @@
     const IMAGE_OFF_SVG = `
       <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-           class="opacity-40" aria-hidden="true">
+           aria-hidden="true">
         <line x1="2" y1="2" x2="22" y2="22"/>
         <path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/>
         <line x1="13.5" y1="13.5" x2="6" y2="21"/>
