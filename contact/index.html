@@ -23,6 +23,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>認証にご協力ください</title>
+    <!-- The ST mark, same asset the page already shows as its logo. No
+         apple-touch-icon: iOS ignores SVG there, so declaring one would only
+         point at something it cannot use. -->
+    <link rel="icon" href="https://tk.st/images/favicons/st-favicon.svg" type="image/svg+xml">
     <!-- Turnstile API: 読み込み完了後に onloadTurnstileCallback を実行し、明示的にレンダリングする -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit" async defer></script>
     <style>
@@ -115,7 +119,7 @@
   <!-- End Google Tag Manager (noscript) -->
     <div class="container" id="main-container">
         <!-- ロゴ画像 (80x80) -->
-        <img src="https://tk.st/images/favicons/st-favicon.png" alt="Site Logo" class="site-logo" width="80" height="80" onerror="this.style.display='none'">
+        <img src="https://tk.st/images/favicons/st-favicon.svg" alt="Site Logo" class="site-logo" width="80" height="80" onerror="this.style.display='none'">
         
         <!-- 区切り線 -->
         <hr class="separator">
@@ -185,7 +189,7 @@
             if (window.hasOpenedMail) return;
             window.hasOpenedMail = true;
 
-            var logoUrl = "https://tk.st/images/favicons/st-favicon.png";
+            var logoUrl = "https://tk.st/images/favicons/st-favicon.svg";
             var user = "hi";
             var domain = "tk.st";
             var email = user + "@" + domain;
