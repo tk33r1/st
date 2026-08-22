@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" class="st-theme">
 
 <head>
   <!-- Google tag (gtag.js) -->
@@ -91,668 +91,371 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap"
     rel="stylesheet">
 
+  <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
+       visitor gets a white flash while the rest of the page loads. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('st-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode — fall back to the system setting */ }
+    })();
+  </script>
+
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
+    /* ------------------------------------------------------------------
+       NextGen Image — the Instrument shell comes from data/tools-ui.css.
+       This block holds only what belongs to this tool: its accent, the
+       Darkroom result canvas, and the result rows.
+       ------------------------------------------------------------------ */
+
+    :root {
+      --accent: #0E9F6E;
+      --accent-ink: #FFFFFF;
+      --accent-soft: #E7F6F0;
     }
-
-    html,
-    body {
-      min-height: 100%;
-      margin: 0;
-      background-color: #f0fdfa;
-      color: #0f172a;
-      font-family: "Inter", system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-
-    h1,
-    h2,
-    h3,
-    .font-outfit {
-      font-family: "Outfit", system-ui, sans-serif;
-    }
-
-    /* Animated Background */
-    .bg-mesh {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #f0fdfa;
-      background-image:
-        radial-gradient(at 10% 20%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
-        radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(52, 211, 153, 0.05) 0px, transparent 50%);
-      z-index: -1;
-      animation: mesh-pulse 15s ease-in-out infinite alternate;
-    }
-
-    @keyframes mesh-pulse {
-      0% {
-        opacity: 0.8;
-        transform: scale(1);
-      }
-
-      100% {
-        opacity: 1;
-        transform: scale(1.05);
+    @media (prefers-color-scheme: dark) {
+      :root.st-theme:not([data-theme="light"]) {
+        --accent: #17B37E;
+        --accent-ink: #042016;
+        --accent-soft: #12261F;
       }
     }
-
-    .site-header {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      position: sticky;
-      top: 0;
-      z-index: 40;
+    :root.st-theme[data-theme="dark"] {
+      --accent: #17B37E;
+      --accent-ink: #042016;
+      --accent-soft: #12261F;
     }
 
-    .options-panel {
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(16, 185, 129, 0.15);
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-      padding: 16px 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-    }
+    .st-theme { --shell: 900px; }
 
-    .dropzone {
-      position: relative;
-      background: rgba(255, 255, 255, 0.7);
-      border: 2px dashed rgba(16, 185, 129, 0.3);
-      border-radius: 24px;
-      backdrop-filter: blur(10px);
-      transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02);
-    }
+    /* ---- toolbar extras ---- */
+    .format-btn .sub { font-size: 9px; opacity: 0.75; margin-left: 3px; }
+    #quality-val { min-width: 34px; }
 
-    .dropzone::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 300ms ease;
-      pointer-events: none;
-    }
-
-    .dropzone.dragover {
-      border-color: #10b981;
-      background: rgba(255, 255, 255, 0.9);
-      transform: scale(1.02);
-      box-shadow: 0 20px 40px -5px rgba(16, 185, 129, 0.15);
-    }
-
-    .dropzone.dragover::before {
-      opacity: 1;
-    }
-
-    .dropzone:focus-visible {
-      outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
-    }
-
-    .dropzone-content {
-      position: relative;
-      z-index: 10;
-    }
-
-    .float-anim {
-      animation: float 6s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0% {
-        transform: translateY(0px);
-      }
-
-      50% {
-        transform: translateY(-10px);
-      }
-
-      100% {
-        transform: translateY(0px);
-      }
-    }
-
-    .btn-glow {
-      position: relative;
-      background: linear-gradient(135deg, #10b981, #3b82f6);
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      transition: all 200ms ease;
-    }
-
-    .btn-glow::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(135deg, #34d399, #60a5fa, #34d399);
-      z-index: -1;
-      border-radius: inherit;
-      opacity: 0;
-      transition: opacity 200ms ease;
-      filter: blur(8px);
-    }
-
-    .btn-glow:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
-    }
-
-    .btn-glow:hover::before {
-      opacity: 1;
-    }
-
-    .btn-glow:active {
-      transform: translateY(0);
-    }
-
-    .btn-glow:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .btn-glow:disabled::before {
-      display: none;
-    }
-
-    .result-card {
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      border-radius: 20px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
-    }
-
-    .format-btn {
-      border: 2px solid #e2e8f0;
-      background: white;
-      color: #64748b;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-
-    .format-btn.active {
-      border-color: #10b981;
-      background: #ecfdf5;
-      color: #059669;
-      font-weight: 600;
-    }
-
-    /* Range Input Customization */
-    input[type=range] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      background: transparent;
-    }
-
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      height: 16px;
-      width: 16px;
-      border-radius: 50%;
-      background: #10b981;
-      cursor: pointer;
-      margin-top: -6px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    input[type=range]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 4px;
-      cursor: pointer;
-      background: #e2e8f0;
-      border-radius: 2px;
-    }
-
-    input[type=range]:disabled {
-      cursor: not-allowed;
-    }
-
-    input[type=range]:disabled::-webkit-slider-thumb {
-      background: #cbd5e1;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    input[type=range]:disabled::-webkit-slider-runnable-track {
-      cursor: not-allowed;
-      background: #f1f5f9;
-    }
-
-    .quality-disabled {
-      opacity: 0.45;
-    }
-
-    .quality-disabled label {
-      cursor: not-allowed;
-    }
-
-    .url-input-container {
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(16, 185, 129, 0.15);
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-      padding: 12px;
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .url-input {
-      flex: 1;
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .url-input:focus {
-      border-color: #10b981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-    }
-
-    .url-btn {
-      background: #10b981;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .url-btn:hover {
-      background: #059669;
-    }
-
-    .resize-input {
-      width: 72px;
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 0.8125rem;
-      color: #334155;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .resize-input:focus {
-      border-color: #10b981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .fade-in {
-      animation: fadeIn 300ms ease-out forwards;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    /* ---- result ---- */
+    #btn-download-all { width: 100%; }
+    #result-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+    #btn-reset { width: 100%; margin-top: 14px; }
 
     .result-row {
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      overflow: hidden;
+    }
+    .result-row.failed { border-color: var(--err); }
+
+    /* Darkroom: the user's image sits on the darkest surface on the page,
+       in both themes, so it is always the brightest thing in view. The
+       checkerboard tokens are inherited by the compare slider inside. */
+    .result-canvas {
+      --check-bg: #14181B;
+      --check-fg: #23292E;
+      background: var(--canvas);
+      border-bottom: 1px solid var(--rule);
+      padding: 10px;
+    }
+    .result-compare { border-radius: 4px; }
+
+    .result-meta-row {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 14px;
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
-    }
-
-    .result-row:hover {
-      box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.08);
-    }
-
-    .result-row.failed {
-      background: #fef2f2;
-      border-color: #fecaca;
-    }
-
-    .result-row .result-meta-row {
-      display: grid;
-      grid-template-columns: 56px 1fr auto;
       align-items: center;
-      gap: 12px;
+      gap: 11px;
+      padding: 10px 12px;
     }
-
-    .result-row.failed .result-meta-row {
-      grid-template-columns: 1fr auto;
-    }
-
-    .result-compare {
-      max-height: 360px;
-    }
-
     .result-thumb {
-      width: 56px;
-      height: 56px;
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
       object-fit: cover;
-      background: #f1f5f9;
+      border-radius: 4px;
+      border: 1px solid var(--rule);
+      background: var(--canvas);
+      flex: none;
     }
-
-    .savings-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      background: #ecfdf5;
-      color: #059669;
-      border: 1px solid #a7f3d0;
+    .r-info { min-width: 0; flex: 1; }
+    .r-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-
-    .savings-badge.negative {
-      background: #fef3c7;
-      color: #b45309;
-      border-color: #fde68a;
-    }
-
-    .icon-btn {
-      display: inline-flex;
+    .r-meta {
+      display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
-      background: white;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.15s;
+      gap: 4px 9px;
+      margin-top: 2px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-2);
     }
+    .r-arrow { color: var(--ink-3); }
+    .r-out { color: var(--accent); font-weight: 700; }
+    .r-dim { color: var(--ink-3); }
+    .r-err { color: var(--err); font-family: var(--font-ui); }
 
-    .icon-btn:hover {
-      border-color: #10b981;
-      color: #10b981;
-      background: #ecfdf5;
+    /* Per-row badge — small and quiet, the opposite of the gauge. */
+    .savings-badge {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid transparent;
     }
+    .savings-badge.negative { background: transparent; color: var(--warn); border-color: var(--warn); }
+
+    /* The summary badge is the gauge, so it overrides the small-badge look. */
+    #summary-badge {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(48px, 13vw, 68px);
+      font-weight: 700;
+      line-height: 0.85;
+      letter-spacing: -0.05em;
+      color: var(--accent);
+      background: none;
+      border: 0;
+      padding: 0;
+    }
+    #summary-badge.negative { color: var(--warn); background: none; }
   </style>
 </head>
 
-<body class="flex flex-col min-h-screen">
+<body>
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
-  <div class="bg-mesh"></div>
+  <!-- ===================== app bar ===================== -->
+  <header class="app-bar">
+    <div class="bar-in">
+      <a class="back" href="https://tk.st/tools/">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><span>ST TOOLS</span>
+      </a>
 
-  <!-- Header -->
-  <header class="site-header">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="https://tk.st/tools/"
-          class="flex items-center gap-2.5 text-slate-500 hover:text-emerald-600 transition-colors group">
-          <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
-          <span class="text-sm font-medium tracking-wide">ST TOOLS</span>
-        </a>
-        <div class="flex items-center gap-3 relative">
-          <div
-            class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-blue-600 flex items-center justify-center shadow-md">
-            <i data-lucide="image" class="w-4 h-4 text-white"></i>
-          </div>
-          <h1 class="text-xl font-bold tracking-tight text-slate-800 font-outfit">NextGen Image</h1>
-        </div>
-        <div class="w-[84px] hidden sm:block"></div>
+      <div class="bar-title">
+        <h1>NextGen Image</h1>
+        <span class="bar-path">tk.st/tools/nextgen-image</span>
       </div>
+
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+        <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+        <i data-lucide="sun" class="to-light w-4 h-4"></i>
+      </button>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-10 lg:py-16 flex flex-col items-center justify-start">
-
-    <div class="text-center mb-8 max-w-2xl flex flex-col items-center">
-      <h2
-        class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-emerald-600 mb-4 font-outfit leading-normal pb-2">
-        Lighter, Faster<br />Web Images.
-      </h2>
-      <p class="text-slate-500 text-base sm:text-lg">
-        画像をWEBP/AVIFに一発変換。<br class="hidden sm:block">次世代フォーマットで美しいまま軽量化！
-      </p>
-    </div>
-
-    <!-- Options Panel -->
-    <div class="w-full max-w-2xl options-panel flex flex-col sm:flex-row items-center justify-between gap-6">
-
-      <!-- Format Selection -->
-      <div class="flex flex-col items-center sm:items-start gap-2">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">出力フォーマット</span>
-        <div class="flex gap-2 flex-wrap justify-center" id="format-selection">
-          <button class="format-btn active px-4 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
-          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="webp-lossless">WEBP<span
-              class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
-          <button class="format-btn px-4 py-1.5 rounded-lg text-sm" data-format="avif">AVIF</button>
+  <!-- ===================== toolbar ===================== -->
+  <div class="toolbar">
+    <div class="tb-in">
+      <div class="tb-group">
+        <span class="st-lbl">format</span>
+        <div class="st-seg" id="format-selection">
+          <button class="format-btn active" type="button" data-format="webp">WEBP</button>
+          <button class="format-btn" type="button" data-format="webp-lossless">WEBP<span class="sub">可逆</span></button>
+          <button class="format-btn" type="button" data-format="avif">AVIF</button>
         </div>
       </div>
 
-      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+      <div class="tb-sep"></div>
 
-      <!-- Quality Setting -->
-      <div id="quality-row"
-        class="flex flex-col items-center sm:items-start gap-2 flex-1 w-full max-w-[260px] transition-opacity">
-        <div class="flex justify-between w-full">
-          <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider">画質品質</label>
-          <span id="quality-val" class="text-xs font-bold text-emerald-600">80%</span>
-        </div>
-        <input type="range" id="opt-quality" min="10" max="100" value="80">
+      <div class="tb-group" id="quality-row">
+        <label class="st-lbl" for="opt-quality">quality</label>
+        <input type="range" id="opt-quality" style="width:96px" min="10" max="100" value="80">
+        <span id="quality-val" class="tb-val">80%</span>
       </div>
 
-      <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
+      <div class="tb-sep"></div>
 
-      <!-- Resize (scale down) -->
-      <div class="flex flex-col items-center sm:items-start gap-2">
-        <label for="resize-percent" class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-          title="縦横比を維持して縮小">縮小倍率</label>
-        <div class="flex items-center gap-1">
-          <input type="number" id="resize-percent" min="1" max="100" step="1" value="100" class="resize-input">
-          <span class="text-xs font-semibold text-slate-500">%</span>
-        </div>
+      <div class="tb-group">
+        <label class="st-lbl" for="resize-percent" title="縦横比を維持して縮小">scale</label>
+        <input type="number" id="resize-percent" class="tb-input" style="width:54px" min="1" max="100" step="1" value="100">
+        <span class="unit">%</span>
       </div>
     </div>
+  </div>
 
-    <!-- View 1: Upload Zone -->
-    <div id="view-upload" class="w-full max-w-2xl fade-in mt-4">
-      <div id="dropzone" class="dropzone p-8 sm:p-16 text-center cursor-pointer group" role="button" tabindex="0"
-        aria-label="画像ファイルをドロップまたは選択">
+  <main>
+
+    <!-- ===================== view 1 : upload ===================== -->
+    <div id="view-upload" class="fade-in">
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="画像ファイルをドロップまたは選択">
         <input type="file" id="file-input" accept="image/*,.heic,.heif" multiple class="hidden">
-
-        <div class="dropzone-content flex flex-col items-center gap-6 pointer-events-none">
-          <div class="relative flex items-center justify-center gap-4">
-            <div
-              class="w-20 h-20 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center float-anim group-hover:bg-emerald-50 transition-colors shadow-sm z-10 relative">
-              <i data-lucide="image-plus" class="w-10 h-10 text-emerald-500"></i>
-            </div>
-            <!-- Behind decoration -->
-            <div
-              class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 border-2 border-white flex items-center justify-center float-anim shadow-md z-20"
-              style="animation-delay: 0.5s;">
-              <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">画像ファイルをドロップ または 貼り付け</h3>
-            <p class="text-slate-500 text-sm">JPG, PNG, HEICなど | 複数選択・Ctrl+V も可能</p>
-          </div>
-
-          <div
-            class="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 font-semibold tracking-wide flex items-center gap-2">
-            <i data-lucide="shield-check" class="w-3 h-3 text-emerald-500"></i>
-            ブラウザ内で処理されるため安全です
-          </div>
+        <div class="dz-in">
+          <span class="dz-mark">+</span>
+          <b>画像をドロップ</b>
+          <span class="dz-sub">JPG / PNG / HEIC ・ 複数まとめて可 ・ Ctrl+V で貼り付けも</span>
         </div>
       </div>
 
-      <div class="url-input-container">
-        <i data-lucide="link" class="w-5 h-5 text-slate-400 self-center ml-1"></i>
-        <input type="url" id="url-input" class="url-input" placeholder="画像のURLを貼り付けてインポート...">
-        <button id="url-btn" class="url-btn">インポート</button>
+      <div class="url-row">
+        <span class="st-lbl">url</span>
+        <input type="url" id="url-input" placeholder="画像のURLを貼り付けてインポート">
+        <button id="url-btn" class="st-btn-quiet" type="button">インポート</button>
+      </div>
+
+      <p class="note">変換はすべてブラウザ内で行われます。画像がサーバーに送られることはありません。</p>
+    </div>
+
+    <!-- ===================== view 2 : processing ===================== -->
+    <div id="view-loading" class="hidden" role="status" aria-live="polite">
+      <div class="console" id="console">
+        <div class="cl hi"><span class="pr">$</span> <span id="loading-msg">convert</span></div>
+        <div class="cl" id="loading-submsg"></div>
+        <div id="log-stream"></div>
+        <div class="cl"><span class="pr">$</span> <span class="st-caret"></span></div>
+      </div>
+
+      <div class="pbar"><div id="progress-bar"></div></div>
+      <div class="pmeta">
+        <span class="st-lbl">progress</span>
+        <span id="progress-text" class="num"></span>
       </div>
     </div>
 
-    <!-- View 2: Loading / Processing -->
-    <div id="view-loading" class="w-full max-w-md hidden text-center py-16 mt-4" role="status" aria-live="polite">
-      <div class="inline-block relative w-20 h-20 mb-6">
-        <svg class="animate-spin w-full h-full text-emerald-200" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-          <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-          </path>
-        </svg>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8">
-          <i data-lucide="loader" class="w-8 h-8 text-emerald-500"
-            style="animation: spin 3s linear infinite reverse;"></i>
+    <!-- ===================== view 3 : result ===================== -->
+    <div id="view-result" class="hidden">
+      <div class="readout">
+        <div class="gauge">
+          <span id="summary-badge" class="savings-badge">-0%</span>
+          <span class="gauge-cap">
+            <span class="st-lbl">saved</span>
+            <span class="st-lbl"><span id="summary-count">0</span> files</span>
+          </span>
         </div>
-      </div>
-      <h3 id="loading-msg" class="text-xl font-bold text-slate-800">処理中...</h3>
-      <p id="loading-submsg" class="text-slate-500 text-sm mt-2">画像を変換しています</p>
-      <div class="progress-bar-container mt-6">
-        <div id="progress-bar" class="progress-bar"></div>
-      </div>
-      <div id="progress-text" class="text-xs font-medium text-slate-500 mt-2 text-right"></div>
-    </div>
 
-    <!-- View 3: Result -->
-    <div id="view-result" class="w-full max-w-3xl hidden mt-4">
-      <div class="result-card p-6 sm:p-8">
-
-        <!-- Summary -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
-          <div class="text-center sm:text-left">
-            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">変換結果</div>
-            <div class="text-2xl font-outfit font-extrabold text-slate-800">
-              <span id="summary-original">0</span>
-              <i data-lucide="arrow-right" class="inline w-5 h-5 mx-1 text-slate-400"></i>
-              <span id="summary-output" class="text-emerald-600">0</span>
-            </div>
-            <div class="mt-1 flex items-center gap-2 justify-center sm:justify-start">
-              <span id="summary-badge" class="savings-badge">-0%</span>
-              <span class="text-xs text-slate-500"><span id="summary-count">0</span>件</span>
-            </div>
+        <div class="bars">
+          <div class="barrow">
+            <span class="st-lbl">before</span>
+            <span class="bar"><i class="before" style="width:100%"></i></span>
+            <span id="summary-original" class="num">0</span>
           </div>
-
-          <button id="btn-download-all"
-            class="btn-glow flex items-center justify-center gap-2 px-6 py-3 rounded-xl shadow-lg">
-            <i data-lucide="archive" class="w-5 h-5"></i>
-            <span id="btn-download-all-label">ZIPでダウンロード</span>
-          </button>
+          <div class="barrow">
+            <span class="st-lbl">after</span>
+            <span class="bar"><i id="bar-after" class="after"></i></span>
+            <span id="summary-output" class="num">0</span>
+          </div>
         </div>
 
-        <!-- Results list -->
-        <div id="result-list" class="flex flex-col gap-2 mb-4"></div>
-
-        <button id="btn-reset"
-          class="mt-4 text-sm font-semibold text-slate-500 hover:text-emerald-600 transition-colors underline-offset-4 hover:underline text-center w-full">
-          別の画像を変換する
+        <button id="btn-download-all" class="st-btn" type="button">
+          <span id="btn-download-all-label">ZIPでダウンロード</span>
         </button>
       </div>
+
+      <div id="result-list"></div>
+
+      <button id="btn-reset" class="st-btn-quiet" type="button">別の画像を変換する</button>
     </div>
 
   </main>
 
-  <footer class="mt-auto border-t border-slate-200 bg-white/50 backdrop-blur-md">
-    <div class="max-w-4xl mx-auto px-4 py-6 flex items-center justify-center relative">
-      <span class="text-xs sm:text-sm text-slate-400 font-medium tracking-wide">&copy; <span id="currentYear"></span>
-        Shinya Takeda</span>
-      <div id="donation-button-container" class="absolute right-4 sm:right-6"></div>
+  <!-- ===================== status bar ===================== -->
+  <footer class="status-bar">
+    <div class="sb-in">
+      <span class="sb-item"><span id="status-led" class="st-led idle"></span><span id="status-text">ready</span></span>
+      <span class="sb-item sb-hide">local only</span>
+      <span class="sb-item sb-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <div id="donation-button-container"></div>
     </div>
   </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="translate-y-20 opacity-0" role="status">
+    <i id="toast-icon-success" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
+    <i id="toast-icon-error" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
+    <span id="toast-msg"></span>
+  </div>
 
   <script src="../../data/buy-me-oil.js"></script>
   <script>
     new DonationWidget({ containerId: 'donation-button-container' }).init();
-    if (window.lucide) lucide.createIcons();
   </script>
 
-  <!-- Notification Toast -->
-  <div id="toast"
-    class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50 pointer-events-none"
-    role="status">
-    <i id="toast-icon-success" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
-    <i id="toast-icon-error" data-lucide="alert-circle" class="w-5 h-5 text-rose-400 hidden"></i>
-    <span id="toast-msg" class="text-sm font-medium"></span>
-  </div>
+  <script>
+    /* Theme: system by default, explicit choice remembered. The stamp on
+       <html> is what data/tools-ui.css keys its dark tokens off. */
+    (function () {
+      const KEY = 'st-theme';
+      const root = document.documentElement;
+      const saved = localStorage.getItem(KEY);
+      if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
 
-  <style>
-    .progress-bar-container {
-      width: 100%;
-      height: 8px;
-      background-color: #f1f5f9;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 12px;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #10b981, #3b82f6);
-      width: 0%;
-      transition: width 0.2s ease-out;
-    }
-
-    .progress-bar.indeterminate {
-      width: 40% !important;
-      animation: progress-indeterminate 1.4s ease-in-out infinite;
-    }
-
-    @keyframes progress-indeterminate {
-      0% {
-        transform: translateX(-100%);
-      }
-
-      100% {
-        transform: translateX(250%);
-      }
-    }
-  </style>
+      document.getElementById('theme-toggle').addEventListener('click', () => {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        localStorage.setItem(KEY, next);
+      });
+    })();
+  </script>
 
   <script>
     const { formatBytes, showToast, switchView, isPrivateHost, setupDropzone, setupInlineCompare } = window.STCommon;
 
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // ---- Console -------------------------------------------------------
+    // The processing view narrates the real pipeline rather than spinning.
+    // Every line here corresponds to work that actually happened.
+    const consoleBox = document.getElementById('console');
+    const logStream = document.getElementById('log-stream');
+    const statusLed = document.getElementById('status-led');
+    const statusText = document.getElementById('status-text');
+
+    function logLine(text, cls) {
+      const el = document.createElement('div');
+      el.className = 'cl' + (cls ? ' ' + cls : '');
+      el.textContent = text;
+      logStream.appendChild(el);
+      consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    function clearLog() { logStream.innerHTML = ''; }
+
+    // state: '' (working, pulsing), 'idle', 'err'
+    function setStatus(text, state) {
+      statusText.textContent = text;
+      statusLed.className = 'st-led' + (state ? ' ' + state : '');
+    }
+
+    const prefersReducedMotion = () =>
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---- Gauge ---------------------------------------------------------
+    // The result number counts up over exactly one beat, so the payoff lands
+    // on the same pulse the caret and the status LED run at.
+    function beatMs() {
+      const bpm = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--bpm')
+      );
+      return 60000 / (bpm > 0 ? bpm : 60);
+    }
+
+    function animateCount(el, to, render) {
+      if (prefersReducedMotion()) { el.textContent = render(to); return; }
+      const duration = beatMs();
+      const start = performance.now();
+      function frame(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = render(to * eased);
+        if (t < 1) requestAnimationFrame(frame);
+        else el.textContent = render(to);
+      }
+      requestAnimationFrame(frame);
+    }
 
     // Elements
     const formatBtns = document.querySelectorAll('.format-btn');
@@ -969,6 +672,8 @@
 
       switchView('view-loading');
       progressBar.classList.remove('indeterminate');
+      clearLog();
+      setStatus('working');
 
       const opts = {
         format: selectedFormat,
@@ -977,18 +682,33 @@
       };
 
       const total = files.length;
+
+      // The command line the user effectively just typed.
+      loadingMsg.textContent =
+        `convert ${total} file${total > 1 ? 's' : ''} --to ${opts.format}`
+        + (opts.format === 'webp-lossless' ? '' : ` --quality ${opts.quality}`)
+        + (opts.resizePercent < 100 ? ` --scale ${opts.resizePercent}%` : '');
+      loadingSubmsg.textContent = '';
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        loadingMsg.textContent = `変換中 (${i + 1} / ${total})`;
         loadingSubmsg.textContent = file.name;
         const pct = Math.round((i / total) * 100);
         progressBar.style.width = pct + '%';
         progressText.textContent = `${i} / ${total}`;
 
+        const startedAt = performance.now();
         try {
           const { blob, width, height } = await encodeOne(file, opts, (sub) => {
             loadingSubmsg.textContent = `${file.name} — ${sub}`;
           });
+          const elapsed = Math.round(performance.now() - startedAt);
+          const savedPct = Math.round((1 - blob.size / file.size) * 100);
+          logLine(
+            `✓ ${file.name}  ${formatBytes(file.size)} → ${formatBytes(blob.size)}`
+            + `  ${savedPct >= 0 ? '-' : '+'}${Math.abs(savedPct)}%  ${width}×${height}  ${elapsed}ms`,
+            'ok'
+          );
           const outName = buildOutputFilename(file.name, opts.format);
           const outUrl = URL.createObjectURL(blob);
           const beforeUrl = URL.createObjectURL(file);
@@ -1006,6 +726,7 @@
           });
         } catch (err) {
           console.error('Conversion failed for', file.name, err);
+          logLine(`✗ ${file.name}  ${err.message || '不明なエラー'}`, 'err');
           results.push({
             ok: false,
             originalFile: file,
@@ -1026,12 +747,15 @@
       if (failCount === total) {
         const firstErr = results[0]?.error || '不明なエラー';
         const prefix = total === 1 ? '変換失敗' : `全${total}件失敗`;
+        setStatus('failed', 'err');
         showToast(`${prefix}: ${firstErr}`, 'error');
         switchView('view-upload');
       } else if (failCount > 0) {
+        setStatus(`${total - failCount} ok / ${failCount} failed`, 'err');
         showToast(`${total - failCount}件成功 / ${failCount}件失敗`, 'error');
         switchView('view-result');
       } else {
+        setStatus(`${total} file${total > 1 ? 's' : ''} done`, 'idle');
         showToast(`${total}件の変換が完了しました`);
         switchView('view-result');
       }
@@ -1046,8 +770,25 @@
       summaryOriginal.textContent = formatBytes(totalOrig);
       summaryOutput.textContent = formatBytes(totalOut);
       summaryCount.textContent = okResults.length;
-      summaryBadge.textContent = (pct >= 0 ? '-' : '+') + Math.abs(pct) + '%';
       summaryBadge.classList.toggle('negative', pct < 0);
+      animateCount(summaryBadge, pct, v =>
+        (pct >= 0 ? '-' : '+') + Math.abs(Math.round(v)) + '%'
+      );
+
+      // The bar is only meaningful next to a visible baseline, so it grows
+      // from zero once the result view is actually on screen — a transition
+      // on a display:none element never runs.
+      // Both bars are scaled against the larger of the two, so a file that
+      // grew shows a longer "after" bar instead of both pinning at full.
+      const barAfter = document.getElementById('bar-after');
+      const barBefore = document.querySelector('.bar i.before');
+      const barMax = Math.max(totalOrig, totalOut, 1);
+      barBefore.style.width = Math.max(1, Math.round((totalOrig / barMax) * 100)) + '%';
+      const barTarget = Math.max(1, Math.round((totalOut / barMax) * 100));
+      barAfter.style.width = '0%';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        barAfter.style.width = barTarget + '%';
+      }));
 
       btnDownloadAll.disabled = okResults.length === 0;
       btnDownloadAllLabel.textContent = okResults.length > 1
@@ -1064,9 +805,15 @@
         // Inline Before/After compare lives at the top of every successful
         // result row — no button press required.
         if (r.ok) {
+          // setupInlineCompare adds .compare-inline to the element it is given,
+          // so the darkroom frame has to be a wrapper — styling the same node
+          // would override the slider's own checkerboard background.
+          const canvasWrap = document.createElement('div');
+          canvasWrap.className = 'result-canvas';
           const compareBox = document.createElement('div');
           compareBox.className = 'result-compare';
-          row.appendChild(compareBox);
+          canvasWrap.appendChild(compareBox);
+          row.appendChild(canvasWrap);
           const teardown = setupInlineCompare({
             container: compareBox,
             beforeUrl: r.beforeUrl,
@@ -1087,15 +834,15 @@
         }
 
         const info = document.createElement('div');
-        info.className = 'min-w-0';
+        info.className = 'r-info';
         const name = document.createElement('div');
-        name.className = 'text-sm font-semibold text-slate-800 truncate';
+        name.className = 'r-name';
         name.title = r.originalFile.name;
         name.textContent = r.ok ? r.outputName : r.originalFile.name;
         info.appendChild(name);
 
         const meta = document.createElement('div');
-        meta.className = 'text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1';
+        meta.className = 'r-meta';
         if (r.ok) {
           const rpct = Math.round((1 - r.outputSize / r.originalSize) * 100);
           const badge = document.createElement('span');
@@ -1103,17 +850,17 @@
           badge.textContent = (rpct >= 0 ? '-' : '+') + Math.abs(rpct) + '%';
           meta.appendChild(badge);
           const sizeSpan = document.createElement('span');
-          sizeSpan.innerHTML = `${formatBytes(r.originalSize)} <span class="text-slate-300">→</span> <span class="text-emerald-600 font-semibold">${formatBytes(r.outputSize)}</span>`;
+          sizeSpan.innerHTML = `${formatBytes(r.originalSize)} <span class="r-arrow">→</span> <span class="r-out">${formatBytes(r.outputSize)}</span>`;
           meta.appendChild(sizeSpan);
           if (r.width && r.height) {
             const dim = document.createElement('span');
-            dim.className = 'text-slate-400';
+            dim.className = 'r-dim';
             dim.textContent = `${r.width}×${r.height}`;
             meta.appendChild(dim);
           }
         } else {
           const err = document.createElement('span');
-          err.className = 'text-rose-600';
+          err.className = 'r-err';
           err.textContent = '失敗: ' + r.error;
           meta.appendChild(err);
         }
@@ -1273,8 +1020,10 @@
       }
 
       switchView('view-loading');
-      loadingMsg.textContent = 'ダウンロード中...';
-      loadingSubmsg.textContent = '画像を取得しています';
+      clearLog();
+      setStatus('fetching');
+      loadingMsg.textContent = `fetch ${urlObj.href}`;
+      loadingSubmsg.textContent = '画像を取得しています…';
 
       try {
         let response;
@@ -1344,6 +1093,7 @@
         processFiles([file]);
       } catch (err) {
         console.error('URL Load error:', err);
+        setStatus('fetch failed', 'err');
         showToast(`取得失敗: ${err.message || 'unknown'}`, 'error');
         switchView('view-upload');
       }
@@ -1417,9 +1167,9 @@
       results = [];
       resultList.innerHTML = '';
       urlInput.value = '';
+      clearLog();
+      setStatus('ready', 'idle');
     });
 
   </script>
 </body>
-
-</html>

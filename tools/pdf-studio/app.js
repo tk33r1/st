@@ -90,6 +90,23 @@
     const isLanding = id === 'view-upload';
     $('hero').classList.toggle('hidden', !isLanding);
     $('tool-copy').classList.toggle('hidden', !isLanding);
+    // The page tools only mean anything with pages loaded, so the toolbar
+    // rides with the editor rather than sitting there inert.
+    $('toolbar').classList.toggle('hidden', id !== 'view-preview');
+    setStatus(
+      id === 'view-preview' ? 'editing' :
+      id === 'view-loading' ? 'working' :
+      id === 'view-result' ? 'done' : 'ready',
+      id === 'view-loading' ? '' : 'idle'
+    );
+  }
+
+  // state: '' (working, pulsing), 'idle', 'err'
+  function setStatus(text, state) {
+    const t = $('status-text');
+    const led = $('status-led');
+    if (t) t.textContent = text;
+    if (led) led.className = 'st-led' + (state ? ' ' + state : '');
   }
 
   function setProgress(ratio, msg, submsg) {
@@ -1997,7 +2014,11 @@
     lastFilename = filename;
     $('result-name').textContent = filename;
     $('result-format').textContent = formatLabel;
-    $('result-size').textContent = formatBytes(blob.size);
+    // The gauge shows the figure and its unit in two sizes, so the formatted
+    // string has to be split rather than dropped in whole.
+    const sizeParts = formatBytes(blob.size).split(' ');
+    $('result-size').textContent = sizeParts[0];
+    $('result-unit').textContent = sizeParts[1] || 'B';
 
     const compare = $('result-compare');
     compare.classList.remove('hidden', 'compare-bad');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="st-theme">
 <head>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
@@ -150,164 +150,438 @@
             }
         }
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../data/tools-ui.css">
+
+    <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
+         visitor gets a white flash while the rest of the page loads. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('st-theme');
+          if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+        } catch (e) { /* private mode — fall back to the system setting */ }
+      })();
+    </script>
+
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/encoding-japanese@2/encoding.min.js"></script>
     <style>
-        textarea::-webkit-scrollbar { width: 8px; height: 8px; }
-        textarea::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* ドラッグオーバー時のパネル全体のスタイル */
-        .drag-over { 
-            box-shadow: 0 0 0 2px rgb(0, 158, 150), 0 1px 3px 0 rgb(0 0 0 / 0.1) !important; 
-            background-color: #f8fafc !important; 
+        /* ------------------------------------------------------------------
+           CSV ↔ JSON — Dual-pane. The Instrument shell comes from
+           data/tools-ui.css; this block holds the two facing editors, the
+           swap column between them and the per-pane chrome.
+           ------------------------------------------------------------------ */
+
+        :root {
+            --accent: #0D9488;
+            --accent-ink: #FFFFFF;
+            --accent-soft: #E3F5F2;
         }
-        /* スクロールバー非表示（横スクロール用） */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media (prefers-color-scheme: dark) {
+            :root.st-theme:not([data-theme="light"]) {
+                --accent: #2DD4BF;
+                --accent-ink: #06241F;
+                --accent-soft: #102723;
+            }
+        }
+        :root.st-theme[data-theme="dark"] {
+            --accent: #2DD4BF;
+            --accent-ink: #06241F;
+            --accent-soft: #102723;
+        }
+
+        /* A facing-page editor wants the whole window, not a reading column. */
+        .st-theme { --shell: 1440px; }
+        .st-theme main {
+            max-width: 1440px;
+            padding: 14px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        /* ===== dual pane ===== */
+        .dual {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            gap: 12px;
+            min-height: 0;
+        }
+        @media (max-width: 900px) {
+            .dual {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: minmax(300px, 1fr) auto minmax(300px, 1fr);
+            }
+        }
+
+        .pane {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            border: 1px solid var(--rule);
+            border-radius: var(--r-1);
+            background: var(--panel);
+            overflow: hidden;
+            transition: border-color 160ms ease;
+        }
+        .pane.drag-over { border-color: var(--accent); }
+        /* The pane that just received a conversion gets one beat of accent, so
+           you can see where the result landed without hunting for it. */
+        .pane.landed { animation: pane-land calc(60s / var(--bpm)) ease-out; }
+        @keyframes pane-land {
+            0%   { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+            100% { border-color: var(--rule); box-shadow: none; }
+        }
+
+        .pane-head {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 9px;
+            background: var(--panel-2);
+            border-bottom: 1px solid var(--rule);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .pane-head::-webkit-scrollbar { display: none; }
+        .pane-name {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            color: var(--ink);
+            padding: 0 4px;
+            white-space: nowrap;
+        }
+        .pane-head .spacer { flex: 1; min-width: 8px; }
+
+        .pane-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--font-ui);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 9px;
+            border: 1px solid var(--rule);
+            border-radius: var(--r-1);
+            background: var(--panel);
+            color: var(--ink-2);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 120ms ease, color 120ms ease, transform 60ms ease;
+        }
+        .pane-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .pane-btn:active { transform: translateY(2px); }
+        .pane-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .pane-btn.icon { padding: 4px 6px; }
+        .pane-btn.icon.danger:hover { border-color: var(--err); color: var(--err); }
+
+        .pane-body { position: relative; flex: 1; min-height: 0; }
+        .pane-body textarea {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: 14px;
+            border: 0;
+            outline: none;
+            resize: none;
+            background: transparent;
+            color: var(--ink);
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            line-height: 1.75;
+            white-space: pre;
+            tab-size: 2;
+            z-index: 2;
+            transition: opacity 200ms ease;
+        }
+        .pane-body textarea::placeholder { color: var(--ink-3); }
+
+        /* Watermark behind an empty pane, doubling as the drop target hint. */
+        .pane-ghost {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            pointer-events: none;
+            opacity: 0;
+            color: var(--ink-3);
+            transition: opacity 200ms ease, color 200ms ease;
+            z-index: 1;
+        }
+        .pane-ghost span {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+        }
+        .pane-body textarea:placeholder-shown ~ .pane-ghost { opacity: 0.4; }
+        .pane.drag-over .pane-ghost { opacity: 1; color: var(--accent); }
+        .pane.drag-over .pane-body textarea { opacity: 0.2; }
+
+        .pane-foot {
+            padding: 5px 10px;
+            border-top: 1px solid var(--rule);
+            background: var(--panel-2);
+        }
+        .pane-foot span {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 10.5px;
+            color: var(--ink-3);
+        }
+
+        /* ===== swap column ===== */
+        .swap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        @media (max-width: 900px) { .swap { flex-direction: row; } }
+
+        .swap-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-width: 92px;
+            padding: 10px 14px;
+            border: 1px solid var(--accent);
+            border-radius: var(--r-1);
+            background: var(--accent);
+            color: var(--accent-ink);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: filter 120ms ease, transform 60ms ease;
+        }
+        .swap-btn:hover { filter: brightness(1.08); }
+        .swap-btn:active { transform: translateY(2px); }
+        .swap-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .swap-btn.quiet {
+            background: var(--panel);
+            color: var(--ink-2);
+            border-color: var(--rule);
+        }
+        .swap-btn.quiet:hover { border-color: var(--accent); color: var(--accent); filter: none; }
+
+        /* ===== toast (this tool predates the shared helper) ===== */
+        #toast {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: calc(100vw - 40px);
+            padding: 10px 16px;
+            border: 1px solid var(--canvas-rule);
+            border-radius: var(--r-1);
+            background: var(--canvas);
+            color: var(--canvas-ink);
+            font-size: 13px;
+            box-shadow: var(--shadow-1);
+            z-index: 120;
+            pointer-events: none;
+            transition: opacity 220ms ease, transform 220ms ease;
+        }
+        #toast.hide { transform: translate(-50%, 80px); opacity: 0; }
+        #toast .t-ok { color: var(--accent); }
+        #toast .t-err { color: #F87171; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+
+<body>
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
-    <div class="max-w-7xl mx-auto flex flex-col h-full md:h-[calc(100vh-4rem)]">
-        <header class="mb-5 text-center md:text-left shrink-0">
-            <h1 class="text-2xl font-bold text-slate-800 flex items-center justify-center md:justify-start gap-3">
-                <i data-lucide="arrow-right-left" class="w-7 h-7 text-nitori"></i>
-                CSV ↔ JSON 相互変換ツール
-            </h1>
-            <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-md text-xs font-medium border border-slate-200 shadow-sm">
-                <i data-lucide="shield-check" class="w-4 h-4 text-nitori"></i>
-                入力データはブラウザ内で処理され、外部サーバーには送信・保存されません。
+    <!-- ===================== app bar ===================== -->
+    <header class="app-bar">
+        <div class="bar-in">
+            <a class="back" href="https://tk.st/tools/">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><span>ST TOOLS</span>
+            </a>
+            <div class="bar-title">
+                <h1>CSV ↔ JSON</h1>
+                <span class="bar-path">tk.st/tools/csv-json</span>
             </div>
-        </header>
-
-        <div class="flex flex-col lg:flex-row gap-4 flex-grow min-h-[600px] lg:min-h-0">
-            <!-- 左パネル: CSV -->
-            <div id="csvPanel" class="group/dropzone flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-w-0 overflow-hidden transition-all duration-200">
-                <div class="p-2.5 bg-slate-100 border-b border-slate-200 flex justify-between items-center gap-2 shrink-0 overflow-x-auto no-scrollbar">
-                    <div class="flex items-center gap-1.5 sm:gap-2 min-w-max">
-                        <span class="font-bold text-slate-700 flex items-center gap-1.5 mx-1 sm:mx-2">
-                            <i data-lucide="table" class="w-4 h-4 text-csvcolor"></i> CSV
-                        </span>
-                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
-                        <button id="csvUploadBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors">
-                            <i data-lucide="folder-open" class="w-4 h-4 text-nitori"></i><span class="hidden xl:inline">開く</span>
-                        </button>
-                        <button id="csvDownloadBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors">
-                            <i data-lucide="save" class="w-4 h-4 text-nitori"></i><span class="hidden xl:inline">保存</span>
-                        </button>
-                        <select id="csvEncoding" class="text-xs border border-slate-300 rounded-md px-1.5 py-1.5 bg-white text-slate-700 cursor-pointer outline-none hover:border-nitori transition-colors">
-                            <option value="utf-8">UTF-8</option>
-                            <option value="utf-8-bom">UTF-8 (BOM)</option>
-                            <option value="shift-jis">Shift-JIS</option>
-                        </select>
-                        <label class="flex items-center gap-1.5 ml-1 sm:ml-2 text-xs font-medium text-slate-600 cursor-pointer select-none">
-                            <input type="checkbox" id="hasHeaderCheck" class="w-4 h-4 cursor-pointer accent-[rgb(0,158,150)]" checked>
-                            <span class="whitespace-nowrap">ヘッダーあり</span>
-                        </label>
-                    </div>
-                    <div class="flex items-center gap-1 mr-1 min-w-max">
-                        <button id="csvCopyBtn" class="p-1.5 text-slate-500 hover:text-csvcolor hover:bg-csvcolor-50 rounded-md transition-colors"><i data-lucide="copy" class="w-4 h-4"></i></button>
-                        <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                        <button id="csvClearBtn" class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-                <div class="flex-grow relative bg-white z-0 overflow-hidden">
-                    <textarea id="csvTextarea" class="peer absolute inset-0 w-full h-full p-4 outline-none font-mono text-sm resize-none whitespace-pre bg-transparent border-none z-10 transition-opacity duration-300 group-[.drag-over]/dropzone:opacity-30" placeholder="（エクセルからのコピーペーストにも対応しています）&#13;&#10;&#13;&#10;例:&#13;&#10;id,sku,product_name&#13;&#10;1,1234567,サンプル商品&#13;&#10;2,9876543,サンプル商品2&#13;&#10;3,1234567-9876543,サンプル商品3"></textarea>
-                    
-                    <!-- ドロップエリアの背景アイコン -->
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 transition-opacity duration-300 opacity-0 peer-placeholder-shown:opacity-100 group-[.drag-over]/dropzone:!opacity-100">
-                        <div class="flex flex-col items-center justify-center text-slate-300 opacity-40 transition-all duration-300 group-[.drag-over]/dropzone:opacity-80 group-[.drag-over]/dropzone:scale-110 group-[.drag-over]/dropzone:text-nitori">
-                            <i data-lucide="folder-open" class="w-20 h-20 sm:w-28 sm:h-28 mb-2 sm:mb-3"></i>
-                            <span class="text-sm sm:text-base font-bold tracking-widest">DROP FILE</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="px-3 py-1 border-t border-slate-100 bg-slate-50 shrink-0 select-none">
-                    <span id="csvStats" class="text-xs text-slate-400"></span>
-                </div>
-            </div>
-
-            <!-- 中央パネル: 変換コントロール -->
-            <div class="flex lg:flex-col justify-center items-center gap-3 py-1 lg:py-0 shrink-0">
-                <button id="toJsonBtn" class="group flex items-center justify-center gap-2 flex-1 lg:flex-none px-4 py-3 lg:p-4 bg-csvcolor hover:bg-csvcolor-700 text-white rounded-xl lg:rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
-                    <span class="font-bold hidden lg:block tracking-wider">CSV</span>
-                    <i data-lucide="arrow-right" class="w-5 h-5 hidden lg:block group-hover:translate-x-1 transition-transform"></i>
-                    <i data-lucide="arrow-down" class="w-5 h-5 lg:hidden"></i>
-                    <span class="font-bold lg:hidden">JSONへ</span>
-                    <span class="font-bold hidden lg:block tracking-wider">JSON</span>
+            <div class="bar-actions">
+                <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+                    <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+                    <i data-lucide="sun" class="to-light w-4 h-4"></i>
                 </button>
-                <button id="toCsvBtn" class="group flex items-center justify-center gap-2 flex-1 lg:flex-none px-4 py-3 lg:p-4 bg-jsoncolor hover:bg-jsoncolor-700 text-white rounded-xl lg:rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
-                    <span class="font-bold hidden lg:block tracking-wider">JSON</span>
-                    <i data-lucide="arrow-left" class="w-5 h-5 hidden lg:block group-hover:-translate-x-1 transition-transform"></i>
-                    <i data-lucide="arrow-up" class="w-5 h-5 lg:hidden"></i>
-                    <span class="font-bold lg:hidden">CSVへ</span>
-                    <span class="font-bold hidden lg:block tracking-wider">CSV</span>
-                </button>
-            </div>
-
-            <!-- 右パネル: JSON -->
-            <div id="jsonPanel" class="group/dropzone flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-w-0 overflow-hidden transition-all duration-200">
-                <div class="p-2.5 bg-slate-100 border-b border-slate-200 flex justify-between items-center gap-2 shrink-0 overflow-x-auto no-scrollbar">
-                    <div class="flex items-center gap-1.5 sm:gap-2 min-w-max">
-                        <span class="font-bold text-slate-700 flex items-center gap-1.5 mx-1 sm:mx-2">
-                            <i data-lucide="code" class="w-4 h-4 text-jsoncolor"></i> JSON
-                        </span>
-                        <input type="file" id="jsonFileInput" accept=".json" class="hidden">
-                        <button id="jsonUploadBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors">
-                            <i data-lucide="folder-open" class="w-4 h-4 text-nitori"></i><span class="hidden xl:inline">開く</span>
-                        </button>
-                        <button id="jsonDownloadBtn" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-nitori-50 hover:text-nitori-700 hover:border-nitori-300 text-sm font-medium text-slate-700 shadow-sm transition-colors">
-                            <i data-lucide="save" class="w-4 h-4 text-nitori"></i><span class="hidden xl:inline">保存</span>
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-1 mr-1 min-w-max">
-                        <button id="jsonCopyBtn" class="p-1.5 text-slate-500 hover:text-jsoncolor hover:bg-jsoncolor-50 rounded-md transition-colors"><i data-lucide="copy" class="w-4 h-4"></i></button>
-                        <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                        <button id="jsonClearBtn" class="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-                <div class="flex-grow relative bg-white z-0 overflow-hidden">
-                    <textarea id="jsonTextarea" class="peer absolute inset-0 w-full h-full p-4 outline-none font-mono text-sm resize-none whitespace-pre bg-transparent border-none z-10 transition-opacity duration-300 group-[.drag-over]/dropzone:opacity-30" placeholder='例:&#13;&#10;[&#13;&#10;  {&#13;&#10;    "id": "1",&#13;&#10;    "sku": "1234567",&#13;&#10;    "product_name": "サンプル商品"&#13;&#10;  },&#13;&#10;  {&#13;&#10;    "id": "2",&#13;&#10;    "sku": "9876543",&#13;&#10;    "product_name": "サンプル商品2"&#13;&#10;  },&#13;&#10;  {&#13;&#10;    "id": "3",&#13;&#10;    "sku": "1234567-9876543",&#13;&#10;    "product_name": "サンプル商品3"&#13;&#10;  }&#13;&#10;]'></textarea>
-                    
-                    <!-- ドロップエリアの背景アイコン -->
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 transition-opacity duration-300 opacity-0 peer-placeholder-shown:opacity-100 group-[.drag-over]/dropzone:!opacity-100">
-                        <div class="flex flex-col items-center justify-center text-slate-300 opacity-40 transition-all duration-300 group-[.drag-over]/dropzone:opacity-80 group-[.drag-over]/dropzone:scale-110 group-[.drag-over]/dropzone:text-nitori">
-                            <i data-lucide="folder-open" class="w-20 h-20 sm:w-28 sm:h-28 mb-2 sm:mb-3"></i>
-                            <span class="text-sm sm:text-base font-bold tracking-widest">DROP FILE</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="px-3 py-1 border-t border-slate-100 bg-slate-50 shrink-0 select-none">
-                    <span id="jsonStats" class="text-xs text-slate-400"></span>
-                </div>
             </div>
         </div>
-        
-        <!-- フッター -->
-        <footer class="mt-2 text-xs text-slate-400 shrink-0 flex items-center">
-            <div class="flex-1 flex items-center">
-                <a href="https://tk.st/tools/" class="flex items-center gap-1 transition-colors duration-200 hover:text-[#009E96]" style="color:inherit;text-decoration:none;" aria-label="ST TOOLS へ戻る">&lt; <span class="hidden sm:inline">ST TOOLS</span></a>
+    </header>
+
+    <!-- ===================== toolbar ===================== -->
+    <div class="toolbar">
+        <div class="tb-in">
+            <div class="tb-group">
+                <input type="checkbox" id="hasHeaderCheck" class="tb-check" checked>
+                <label class="st-lbl" for="hasHeaderCheck" style="cursor:pointer">1行目はヘッダー</label>
             </div>
-            <span>&copy; <span id="currentYear"></span> Shinya Takeda</span>
-            <div class="flex-1 flex justify-end items-center">
-                <div id="donation-button-container"></div>
+
+            <div class="tb-sep"></div>
+
+            <div class="tb-group">
+                <label class="st-lbl" for="csvEncoding">encoding</label>
+                <select id="csvEncoding" class="tb-select">
+                    <option value="utf-8">UTF-8</option>
+                    <option value="utf-8-bom">UTF-8 (BOM)</option>
+                    <option value="shift-jis">Shift-JIS</option>
+                </select>
             </div>
-        </footer>
+
+            <div class="tb-sep"></div>
+
+            <span class="st-lbl">ファイルをドロップ、または Excel からそのまま貼り付けできます</span>
+        </div>
     </div>
 
-    <!-- トースト通知 -->
-    <div id="toast" class="fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-10 opacity-0 flex items-center gap-2 z-50 pointer-events-none">
-        <i id="toastIconSuccess" data-lucide="check-circle" class="w-5 h-5 text-green-400"></i>
-        <i id="toastIconError" data-lucide="alert-circle" class="w-5 h-5 hidden"></i>
-        <span id="toastMessage" class="font-medium"></span>
+    <main>
+        <div class="dual">
+
+            <!-- ===== left: CSV ===== -->
+            <div id="csvPanel" class="pane">
+                <div class="pane-head">
+                    <span class="pane-name">CSV</span>
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                    <button id="csvUploadBtn" class="pane-btn" type="button">
+                        <i data-lucide="folder-open" class="w-3.5 h-3.5"></i>開く
+                    </button>
+                    <button id="csvDownloadBtn" class="pane-btn" type="button">
+                        <i data-lucide="save" class="w-3.5 h-3.5"></i>保存
+                    </button>
+                    <span class="spacer"></span>
+                    <button id="csvCopyBtn" class="pane-btn icon" type="button" title="コピー" aria-label="CSVをコピー">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button id="csvClearBtn" class="pane-btn icon danger" type="button" title="消去" aria-label="CSVを消去">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <div class="pane-body">
+                    <textarea id="csvTextarea" spellcheck="false" placeholder="id,sku,product_name&#13;&#10;1,1234567,サンプル商品&#13;&#10;2,9876543,サンプル商品2&#13;&#10;3,1234567-9876543,サンプル商品3"></textarea>
+                    <div class="pane-ghost">
+                        <i data-lucide="table" class="w-9 h-9"></i>
+                        <span>DROP CSV</span>
+                    </div>
+                </div>
+
+                <div class="pane-foot"><span id="csvStats"></span></div>
+            </div>
+
+            <!-- ===== centre: direction ===== -->
+            <div class="swap">
+                <button id="toJsonBtn" class="swap-btn" type="button" title="CSV を JSON に変換">
+                    <span>CSV</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 swap-h"></i>
+                    <i data-lucide="arrow-down" class="w-4 h-4 swap-v hidden"></i>
+                    <span>JSON</span>
+                </button>
+                <button id="toCsvBtn" class="swap-btn quiet" type="button" title="JSON を CSV に変換">
+                    <span>JSON</span>
+                    <i data-lucide="arrow-left" class="w-4 h-4 swap-h"></i>
+                    <i data-lucide="arrow-up" class="w-4 h-4 swap-v hidden"></i>
+                    <span>CSV</span>
+                </button>
+            </div>
+
+            <!-- ===== right: JSON ===== -->
+            <div id="jsonPanel" class="pane">
+                <div class="pane-head">
+                    <span class="pane-name">JSON</span>
+                    <input type="file" id="jsonFileInput" accept=".json" class="hidden">
+                    <button id="jsonUploadBtn" class="pane-btn" type="button">
+                        <i data-lucide="folder-open" class="w-3.5 h-3.5"></i>開く
+                    </button>
+                    <button id="jsonDownloadBtn" class="pane-btn" type="button">
+                        <i data-lucide="save" class="w-3.5 h-3.5"></i>保存
+                    </button>
+                    <span class="spacer"></span>
+                    <button id="jsonCopyBtn" class="pane-btn icon" type="button" title="コピー" aria-label="JSONをコピー">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button id="jsonClearBtn" class="pane-btn icon danger" type="button" title="消去" aria-label="JSONを消去">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <div class="pane-body">
+                    <textarea id="jsonTextarea" spellcheck="false" placeholder='[&#13;&#10;  {&#13;&#10;    "id": "1",&#13;&#10;    "sku": "1234567",&#13;&#10;    "product_name": "サンプル商品"&#13;&#10;  }&#13;&#10;]'></textarea>
+                    <div class="pane-ghost">
+                        <i data-lucide="code" class="w-9 h-9"></i>
+                        <span>DROP JSON</span>
+                    </div>
+                </div>
+
+                <div class="pane-foot"><span id="jsonStats"></span></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ===================== status bar ===================== -->
+    <footer class="status-bar">
+        <div class="sb-in">
+            <span class="sb-item"><span id="status-led" class="st-led idle"></span><span id="status-text">ready</span></span>
+            <span class="sb-item sb-hide">local only</span>
+            <span class="sb-item sb-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+            <div id="donation-button-container"></div>
+        </div>
+    </footer>
+
+    <!-- ===================== toast ===================== -->
+    <div id="toast" class="hide" role="status" aria-live="polite">
+        <i id="toastIconSuccess" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
+        <i id="toastIconError" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
+        <span id="toastMessage"></span>
     </div>
 
     <script>
+        /* Theme: system by default, explicit choice remembered. */
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const root = document.documentElement;
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+            const next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem('st-theme', next); } catch (e) { }
+        });
+
+        /* The swap column turns horizontal on a narrow screen, so the arrows
+           have to turn with it. */
+        (function () {
+            const mq = window.matchMedia('(max-width: 900px)');
+            const sync = () => {
+                document.querySelectorAll('.swap-h').forEach(el => el.classList.toggle('hidden', mq.matches));
+                document.querySelectorAll('.swap-v').forEach(el => el.classList.toggle('hidden', !mq.matches));
+            };
+            mq.addEventListener('change', sync);
+            sync();
+        })();
+    </script>
+
+        <script>
         lucide.createIcons();
 
         // DOM要素の取得
@@ -341,14 +615,42 @@
         function showToast(message, type = 'success') {
             const isSuccess = type === 'success';
             toastMessage.textContent = message;
-            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center gap-2 z-50 ${isSuccess ? 'bg-slate-800' : 'bg-red-600'} text-white translate-y-0 opacity-100`;
+            toast.classList.remove('hide');
             toastIconSuccess.classList.toggle('hidden', !isSuccess);
             toastIconError.classList.toggle('hidden', isSuccess);
             if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
-            }, 3000);
+            toastTimeout = setTimeout(() => toast.classList.add('hide'), 3000);
+        }
+
+        // ---- status bar ------------------------------------------------
+        const statusLed = document.getElementById('status-led');
+        const statusText = document.getElementById('status-text');
+        // state: '' (working, pulsing), 'idle', 'err'
+        function setStatus(text, state) {
+            statusText.textContent = text;
+            statusLed.className = 'st-led' + (state ? ' ' + state : '');
+        }
+
+        // One beat of accent on the pane that just received a conversion, so
+        // the result is easy to find on a two-column screen.
+        function markLanded(panel) {
+            panel.classList.remove('landed');
+            void panel.offsetWidth;
+            panel.classList.add('landed');
+        }
+
+        // Line splitting has to cope with CRLF, LF and lone CR alike.
+        const NEWLINE_RE = /\r\n|\r|\n/;
+
+        // JSON.parse reports a character offset; a line number is what the
+        // person editing the left-hand pane can actually act on.
+        function jsonErrorWithLine(err, text) {
+            const msg = err && err.message ? err.message : String(err);
+            const m = /position (\d+)/.exec(msg);
+            if (!m) return msg;
+            const pos = Math.min(parseInt(m[1], 10), text.length);
+            const line = text.slice(0, pos).split(NEWLINE_RE).length;
+            return `${line} 行目付近で JSON を解析できませんでした`;
         }
 
         // ステータスバー更新
@@ -571,8 +873,11 @@
                 const jsonObj = csvToJson(csvTextarea.value, hasHeaderCheck.checked);
                 jsonTextarea.value = JSON.stringify(jsonObj, null, 2);
                 updateJsonStats();
+                markLanded(jsonPanel);
+                setStatus(`csv → json  ${Array.isArray(jsonObj) ? jsonObj.length : 1} 件`, 'idle');
                 showToast('JSON形式に変換しました！');
             } catch (error) {
+                setStatus('csv → json 失敗', 'err');
                 showToast(error.message || 'CSVの変換に失敗しました。', 'error');
             }
         });
@@ -584,9 +889,15 @@
                 const csvStr = jsonToCsv(jsonTextarea.value, hasHeaderCheck.checked);
                 csvTextarea.value = csvStr;
                 updateCsvStats();
+                markLanded(csvPanel);
+                setStatus(`json → csv  ${csvStr.split(NEWLINE_RE).length} 行`, 'idle');
                 showToast('CSV形式に変換しました！');
             } catch (error) {
-                showToast(error.message || 'JSONの変換に失敗しました。フォーマットを確認してください。', 'error');
+                // The offending line lives in the pane the reader is editing,
+                // so name it there rather than reporting a raw character offset.
+                const msg = jsonErrorWithLine(error, jsonTextarea.value);
+                setStatus('json → csv 失敗', 'err');
+                showToast(msg, 'error');
             }
         });
 

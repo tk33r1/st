@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" class="st-theme">
 <head>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
@@ -78,480 +78,356 @@
   <!-- ffmpeg.wasm dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css">
   <script src="../../data/tools-ui.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
+       visitor gets a white flash while the rest of the page loads. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('st-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode — fall back to the system setting */ }
+    })();
+  </script>
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    
-    html, body {
-      min-height: 100%;
-      margin: 0;
-      background-color: #faf5ff;
-      color: #0f172a;
-      font-family: "Inter", system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
+    /* ------------------------------------------------------------------
+       Video to Animation — Instrument chrome (data/tools-ui.css),
+       Darkroom canvas, Console voice. Only what is specific to this tool
+       lives here; the shell comes from the shared stylesheet.
+       ------------------------------------------------------------------ */
+
+    :root {
+      --accent: #E11D48;
+      --accent-ink: #FFFFFF;
+      --accent-soft: #FDE9EE;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root.st-theme:not([data-theme="light"]) {
+        --accent: #FB7185;
+        --accent-ink: #2A0A12;
+        --accent-soft: #2B1219;
+      }
+    }
+    :root.st-theme[data-theme="dark"] {
+      --accent: #FB7185;
+      --accent-ink: #2A0A12;
+      --accent-soft: #2B1219;
     }
 
-    h1, h2, h3, .font-outfit {
-      font-family: "Outfit", system-ui, sans-serif;
+    .st-theme { --shell: 860px; }
+
+    /* ---- Darkroom: the generated animation is the brightest thing here ---- */
+    .result-canvas {
+      margin-top: 16px;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background-color: #0F1315;
+      background-image:
+        linear-gradient(45deg, #191E22 25%, transparent 25%),
+        linear-gradient(-45deg, #191E22 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #191E22 75%),
+        linear-gradient(-45deg, transparent 75%, #191E22 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+    }
+    #result-preview {
+      max-width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      display: block;
     }
 
-    /* Animated Background */
-    .bg-mesh {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #faf5ff;
-      background-image: 
-        radial-gradient(at 10% 20%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
-        radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
-      z-index: -1;
-      animation: mesh-pulse 15s ease-in-out infinite alternate;
+    /* ---- action rows ---- */
+    /* The unit sits on the baseline of the big number, at label size. */
+    .gauge-unit {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-left: -4px;
     }
 
-    @keyframes mesh-pulse {
-      0% { opacity: 0.8; transform: scale(1); }
-      100% { opacity: 1; transform: scale(1.05); }
-    }
+    .actions-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .actions-row .spacer { flex: 1; }
+    .actions-row .st-btn { flex: 1; min-width: 160px; }
 
-    .site-header {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-
-    .options-panel {
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(139, 92, 246, 0.15);
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-      padding: 16px 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-    }
-
-    .dropzone {
-      position: relative;
-      background: rgba(255, 255, 255, 0.7);
-      border: 2px dashed rgba(139, 92, 246, 0.3);
-      border-radius: 24px;
-      backdrop-filter: blur(10px);
-      transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02);
-    }
-    
-    .dropzone::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 300ms ease;
-      pointer-events: none;
-    }
-
-    .dropzone.dragover {
-      border-color: #8b5cf6;
-      background: rgba(255, 255, 255, 0.9);
-      transform: scale(1.02);
-      box-shadow: 0 20px 40px -5px rgba(139, 92, 246, 0.15);
-    }
-
-    .dropzone.dragover::before {
-      opacity: 1;
-    }
-
-    .dropzone:focus-visible {
-      outline: none;
-      border-color: #8b5cf6;
-      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
-    }
-
-    .dropzone-content {
-      position: relative;
-      z-index: 10;
-    }
-
-    .float-anim {
-      animation: float 6s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-      100% { transform: translateY(0px); }
-    }
-
-    .btn-glow {
-      position: relative;
-      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      transition: all 200ms ease;
-    }
-    
-    .btn-glow::before {
-      content: '';
-      position: absolute;
-      top: -2px; left: -2px; right: -2px; bottom: -2px;
-      background: linear-gradient(135deg, #a78bfa, #60a5fa, #a78bfa);
-      z-index: -1;
-      border-radius: inherit;
-      opacity: 0;
-      transition: opacity 200ms ease;
-      filter: blur(8px);
-    }
-
-    .btn-glow:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
-    }
-    
-    .btn-glow:hover::before {
-      opacity: 1;
-    }
-
-    .btn-glow:active {
-      transform: translateY(0);
-    }
-    
-    .btn-glow:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-    .btn-glow:disabled::before {
-      display: none;
-    }
-
-    .result-card {
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-      border-radius: 20px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
-    }
-
-    .progress-bar-container {
-      width: 100%;
-      height: 8px;
-      background-color: #f1f5f9;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 12px;
-    }
-    
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #8b5cf6, #3b82f6);
-      width: 0%;
-      transition: width 0.2s ease-out;
-    }
-
-    /* Custom Radio & Select */
-    .custom-select {
-      appearance: none;
-      background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      padding: 0.5rem 2.5rem 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      color: #334155;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.5rem center;
-      background-size: 1.5em 1.5em;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .custom-select:focus {
-      border-color: #8b5cf6;
-      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
-    }
-
-    .format-btn {
-      border: 2px solid #e2e8f0;
-      background: white;
-      color: #64748b;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-    .format-btn.active {
-      border-color: #8b5cf6;
-      background: #f5f3ff;
-      color: #7c3aed;
-      font-weight: 600;
-    }
-
-    /* Range Input Customization */
-    input[type=range] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      background: transparent;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      height: 16px;
-      width: 16px;
-      border-radius: 50%;
-      background: #8b5cf6;
-      cursor: pointer;
-      margin-top: -6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    input[type=range]::-webkit-slider-runnable-track {
-      width: 100%;
-      height: 4px;
-      cursor: pointer;
-      background: #e2e8f0;
-      border-radius: 2px;
-    }
-    input[type=range]:disabled { cursor: not-allowed; }
-    input[type=range]:disabled::-webkit-slider-thumb {
-      background: #cbd5e1;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    input[type=range]:disabled::-webkit-slider-runnable-track {
-      cursor: not-allowed;
-      background: #f1f5f9;
-    }
-    .quality-disabled { opacity: 0.45; }
-    .quality-disabled label { cursor: not-allowed; }
-
-    .hidden { display: none !important; }
-    .fade-in { animation: fadeIn 300ms ease-out forwards; }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    #btn-reset { width: 100%; margin-top: 16px; }
   </style>
 </head>
-<body class="flex flex-col min-h-screen">
+
+<body>
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
-  <div class="bg-mesh"></div>
-
-  <!-- Header -->
-  <header class="site-header">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="https://tk.st/tools/" class="flex items-center gap-2.5 text-slate-500 hover:text-violet-600 transition-colors group">
-          <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
-          <span class="text-sm font-medium tracking-wide">ST TOOLS</span>
-        </a>
-        <div class="flex items-center gap-3 relative">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-400 to-blue-600 flex items-center justify-center shadow-md">
-            <i data-lucide="video" class="w-4 h-4 text-white"></i>
-          </div>
-          <h1 class="text-xl font-bold tracking-tight text-slate-800 font-outfit">Video to Animation</h1>
-        </div>
-        <div class="w-[84px] hidden sm:block"></div>
+  <!-- ===================== app bar ===================== -->
+  <header class="app-bar">
+    <div class="bar-in">
+      <a class="back" href="https://tk.st/tools/">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><span>ST TOOLS</span>
+      </a>
+      <div class="bar-title">
+        <h1>Video to Animation</h1>
+        <span class="bar-path">tk.st/tools/video-to-animation</span>
+      </div>
+      <div class="bar-actions">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+          <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+          <i data-lucide="sun" class="to-light w-4 h-4"></i>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-10 lg:py-16 flex flex-col items-center justify-start">
-    
-    <div class="text-center mb-8 max-w-2xl flex flex-col items-center">
-      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-blue-600 to-violet-600 mb-4 font-outfit leading-tight">
-        Drop Video,<br/>Get Animations.
-      </h2>
-      <p class="text-slate-500 text-base sm:text-lg">
-        動画から、表示の速いアニメーション画像を作成して共有しよう！
-      </p>
-    </div>
-
-    <!-- Options Panel -->
-    <div class="w-full max-w-2xl options-panel flex flex-col gap-4">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 w-full">
-
-        <!-- Format Selection -->
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">変換フォーマット</span>
-          <div class="flex gap-2 flex-wrap justify-center" id="format-selection">
-            <button class="format-btn active px-3 py-1.5 rounded-lg text-sm" data-format="webp">WEBP</button>
-            <button class="format-btn px-3 py-1.5 rounded-lg text-sm" data-format="webp-lossless">WEBP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
-            <button class="format-btn px-3 py-1.5 rounded-lg text-sm" data-format="apng">APNG</button>
-            <button class="format-btn px-3 py-1.5 rounded-lg text-sm" data-format="gif">GIF</button>
-          </div>
-        </div>
-
-        <div class="hidden sm:block w-px h-10 bg-slate-200"></div>
-
-        <!-- Optimization Settings -->
-        <div class="flex gap-4">
-          <div class="flex flex-col items-center sm:items-start gap-2">
-            <label for="opt-width" class="text-xs font-bold text-slate-400 uppercase tracking-wider">最大幅</label>
-            <select id="opt-width" class="custom-select w-28">
-              <option value="original">変更なし</option>
-              <option value="800">800px</option>
-              <option value="640" selected>640px</option>
-              <option value="480">480px</option>
-              <option value="320">320px</option>
-            </select>
-          </div>
-          <div class="flex flex-col items-center sm:items-start gap-2">
-            <label for="opt-fps" class="text-xs font-bold text-slate-400 uppercase tracking-wider">FPS</label>
-            <select id="opt-fps" class="custom-select w-28">
-              <option value="original">変更なし</option>
-              <option value="24">24 fps</option>
-              <option value="15" selected>15 fps</option>
-              <option value="10">10 fps</option>
-            </select>
-          </div>
+  <!-- ===================== toolbar ===================== -->
+  <div class="toolbar">
+    <div class="tb-in">
+      <div class="tb-group">
+        <span class="st-lbl">format</span>
+        <div class="st-seg" id="format-selection">
+          <button class="format-btn active" type="button" data-format="webp">WEBP</button>
+          <button class="format-btn" type="button" data-format="webp-lossless">WEBP<span class="sub">可逆</span></button>
+          <button class="format-btn" type="button" data-format="apng">APNG</button>
+          <button class="format-btn" type="button" data-format="gif">GIF</button>
         </div>
       </div>
 
-      <!-- Quality Setting -->
-      <div id="quality-row" class="flex items-center gap-4 pt-3 border-t border-slate-100 transition-opacity">
-        <label for="opt-quality" class="text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">画質品質</label>
-        <input type="range" id="opt-quality" min="10" max="100" value="80" class="flex-1">
-        <span id="quality-val" class="text-xs font-bold text-violet-600 w-12 text-right">80%</span>
+      <div class="tb-sep"></div>
+
+      <div class="tb-group" id="quality-row">
+        <label class="st-lbl" for="opt-quality">quality</label>
+        <input type="range" id="opt-quality" style="width:88px" min="10" max="100" value="80">
+        <span id="quality-val" class="tb-val" style="min-width:34px">80%</span>
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <div class="tb-group">
+        <label class="st-lbl" for="opt-width">width</label>
+        <select id="opt-width" class="tb-select">
+          <option value="original">変更なし</option>
+          <option value="800">800px</option>
+          <option value="640" selected>640px</option>
+          <option value="480">480px</option>
+          <option value="320">320px</option>
+        </select>
+      </div>
+
+      <div class="tb-group">
+        <label class="st-lbl" for="opt-fps">fps</label>
+        <select id="opt-fps" class="tb-select">
+          <option value="original">変更なし</option>
+          <option value="24">24</option>
+          <option value="15" selected>15</option>
+          <option value="10">10</option>
+        </select>
       </div>
     </div>
+  </div>
 
-    <!-- View 1: Upload Zone -->
-    <div id="view-upload" class="w-full max-w-2xl fade-in mt-4">
-      <div id="dropzone" class="dropzone p-12 sm:p-16 text-center cursor-pointer group" role="button" tabindex="0" aria-label="動画ファイルをドロップまたは選択">
+  <main>
+
+    <!-- ===================== view 1 : upload ===================== -->
+    <div id="view-upload" class="fade-in">
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="動画ファイルをドロップまたは選択">
         <input type="file" id="file-input" accept="video/*" class="hidden">
-        
-        <div class="dropzone-content flex flex-col items-center gap-6 pointer-events-none">
-          <div class="relative flex items-center justify-center gap-4">
-            <div class="w-20 h-20 rounded-2xl bg-violet-100 border border-violet-200 flex items-center justify-center float-anim group-hover:bg-violet-50 transition-colors shadow-sm z-10 relative">
-              <i data-lucide="video" class="w-10 h-10 text-violet-500"></i>
-            </div>
-            <!-- Behind decoration -->
-            <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 border-2 border-white flex items-center justify-center float-anim shadow-md z-20" style="animation-delay: 0.5s;">
-              <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-            </div>
-          </div>
-          
-          <div>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">動画ファイルをドロップ</h3>
-            <p class="text-slate-500 text-sm">MP4, WebM, MOV など | またはクリックして選択</p>
-          </div>
-          
-          <div class="px-4 py-2 rounded-full bg-amber-50 border border-amber-100 text-xs text-amber-600 font-semibold tracking-wide flex items-center gap-2">
-            <i data-lucide="info" class="w-3 h-3 text-amber-500"></i>
-            ブラウザで変換するため、長時間の動画は処理に時間がかかります
-          </div>
-
-          <div class="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 font-semibold tracking-wide flex items-center gap-2">
-            <i data-lucide="lock" class="w-3 h-3 text-emerald-500"></i>
-            データはサーバーに送信されず、ブラウザ内で完結します
-          </div>
+        <div class="dz-in">
+          <span class="dz-mark">+</span>
+          <b>動画をドロップ</b>
+          <span class="dz-sub">MP4 / WebM / MOV ・ クリックで選択もできます</span>
         </div>
+      </div>
+
+      <p class="note">変換はすべてブラウザ内で行われます。動画がサーバーに送られることはありません。</p>
+      <p class="note warn">ブラウザ内で処理するため、長い動画ほど時間がかかります。</p>
+    </div>
+
+    <!-- ===================== view 2 : processing ===================== -->
+    <div id="view-loading" class="hidden" role="status" aria-live="polite">
+      <div class="console" id="console">
+        <div class="cl hi"><span>$</span> <span id="loading-msg">encode</span></div>
+        <div class="cl" id="loading-submsg"></div>
+        <div id="log-stream"></div>
+        <div class="cl"><span>$</span> <span class="st-caret"></span></div>
+      </div>
+
+      <div class="pbar"><div id="progress-bar"></div></div>
+      <div class="pmeta">
+        <span class="st-lbl">progress</span>
+        <span id="progress-text" class="num">0%</span>
       </div>
     </div>
 
-    <!-- View 2: Loading / Processing -->
-    <div id="view-loading" class="w-full max-w-md hidden text-center py-16 mt-4">
-      <div class="inline-block relative w-20 h-20 mb-6">
-        <svg class="animate-spin w-full h-full text-violet-200" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8">
-          <i data-lucide="cog" class="w-8 h-8 text-violet-500" style="animation: spin 3s linear infinite reverse;"></i>
+    <!-- ===================== view 3 : result ===================== -->
+    <div id="view-result" class="hidden">
+      <div class="readout">
+        <div class="gauge">
+          <span id="result-savings" class="gauge-num">0</span>
+          <span id="result-unit" class="gauge-unit">B</span>
+          <span class="gauge-cap">
+            <span class="st-lbl">output</span>
+            <span class="gauge-sub"><span id="result-format">WEBP</span> · <span id="result-size">0 KB</span></span>
+          </span>
         </div>
-      </div>
-      <h3 id="loading-msg" class="text-xl font-bold text-slate-800">FFmpegをロード中...</h3>
-      <p id="loading-submsg" class="text-slate-500 text-sm mt-2">初回は少し時間がかかります</p>
-      
-      <div class="progress-bar-container mt-6">
-        <div id="progress-bar" class="progress-bar"></div>
-      </div>
-      <div id="progress-text" class="text-xs font-medium text-slate-500 mt-2 text-right">0%</div>
-    </div>
 
-    <!-- View 3: Result -->
-    <div id="view-result" class="w-full max-w-3xl hidden mt-4">
-      <div class="result-card p-6 sm:p-8">
-        
-        <div class="flex flex-col lg:flex-row items-center gap-8 mb-8">
-          <!-- Preview Image -->
-          <div class="w-full lg:w-1/2 flex flex-col items-center">
-            <div class="w-full bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center min-h-[200px]">
-              <img id="result-preview" src="" alt="Converted Image" class="max-w-full max-h-[300px] object-contain">
-            </div>
+        <div class="bars">
+          <div class="barrow">
+            <span class="st-lbl">source</span>
+            <span class="bar"><i class="before" style="width:100%"></i></span>
+            <span id="src-size" class="num">0 B</span>
           </div>
-          
-          <!-- Details -->
-          <div class="w-full lg:w-1/2 flex flex-col justify-center">
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">フォーマット</span>
-                <span id="result-format" class="text-xl font-outfit font-extrabold text-slate-700">APNG</span>
-              </div>
-              <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">ファイルサイズ</span>
-                <span id="result-size" class="text-xl font-outfit font-extrabold text-slate-700">0 KB</span>
-              </div>
-            </div>
-            
-            <div class="flex gap-3 w-full">
-              <button id="btn-download" class="btn-glow flex items-center justify-center gap-2 px-4 py-4 rounded-xl flex-1 text-base sm:text-lg shadow-lg">
-                <i data-lucide="download" class="w-5 h-5"></i>
-                ダウンロード
-              </button>
-              <button id="btn-share" class="bg-white border-2 border-slate-200 text-slate-700 hover:border-violet-400 hover:text-violet-600 flex items-center justify-center gap-2 px-4 py-4 rounded-xl flex-1 text-base sm:text-lg shadow-sm font-semibold transition-colors hidden">
-                <i data-lucide="share-2" class="w-5 h-5"></i>
-                シェア
-              </button>
-            </div>
-            
-            <button id="btn-reset" class="mt-4 text-sm font-semibold text-slate-500 hover:text-violet-600 transition-colors underline-offset-4 hover:underline text-center w-full">
-              別の動画を変換する
-            </button>
+          <div class="barrow">
+            <span class="st-lbl">output</span>
+            <span class="bar"><i id="bar-after" class="after"></i></span>
+            <span id="out-size" class="num">0 B</span>
           </div>
         </div>
 
+        <div class="actions-row">
+          <button id="btn-download" class="st-btn" type="button">ダウンロード</button>
+          <button id="btn-share" class="st-btn-quiet hidden" type="button">シェア</button>
+        </div>
       </div>
+
+      <div class="result-canvas">
+        <img id="result-preview" src="" alt="生成されたアニメーション">
+      </div>
+
+      <button id="btn-reset" class="st-btn-quiet" type="button">別の動画を変換する</button>
     </div>
 
   </main>
 
-  <footer class="mt-auto border-t border-slate-200 bg-white/50 backdrop-blur-md">
-    <div class="max-w-4xl mx-auto px-4 py-6 flex items-center justify-center relative">
-      <span class="text-xs sm:text-sm text-slate-400 font-medium tracking-wide">&copy; <span id="currentYear"></span> Shinya Takeda</span>
-      <div id="donation-button-container" class="absolute right-4 sm:right-6"></div>
+  <!-- ===================== status bar ===================== -->
+  <footer class="status-bar">
+    <div class="sb-in">
+      <span class="sb-item"><span id="status-led" class="st-led idle"></span><span id="status-text">ready</span></span>
+      <span class="sb-item sb-hide">local only</span>
+      <span class="sb-item sb-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <div id="donation-button-container"></div>
     </div>
   </footer>
 
+  <!-- ===================== toast ===================== -->
+  <div id="toast" class="translate-y-20 opacity-0" role="status" aria-live="polite">
+    <i id="toast-icon-success" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
+    <i id="toast-icon-error" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
+    <span id="toast-msg"></span>
+  </div>
+
   <script src="../../data/buy-me-oil.js"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
-
-  <!-- Notification Toast -->
-  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50 pointer-events-none" role="status">
-    <i id="toast-icon-success" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
-    <i id="toast-icon-error" data-lucide="alert-circle" class="w-5 h-5 text-rose-400 hidden"></i>
-    <span id="toast-msg" class="text-sm font-medium"></span>
-  </div>
 
   <script>
     const { formatBytes, showToast, switchView, setupDropzone } = window.STCommon;
 
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // ---- Theme ---------------------------------------------------------
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const root = document.documentElement;
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+      const next = current === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('st-theme', next); } catch (e) { }
+    });
+
+    // ---- Console -------------------------------------------------------
+    // FFmpeg genuinely goes through stages; the log says which one is running
+    // instead of spinning a wheel that means nothing.
+    const consoleBox = document.getElementById('console');
+    const logStream = document.getElementById('log-stream');
+    const statusLed = document.getElementById('status-led');
+    const statusText = document.getElementById('status-text');
+
+    function logLine(text, cls) {
+      const el = document.createElement('div');
+      el.className = 'cl' + (cls ? ' ' + cls : '');
+      el.textContent = text;
+      logStream.appendChild(el);
+      consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+    function clearLog() { logStream.innerHTML = ''; }
+
+    // state: '' (working, pulsing), 'idle', 'err'
+    function setStatus(text, state) {
+      statusText.textContent = text;
+      statusLed.className = 'st-led' + (state ? ' ' + state : '');
+    }
+
+    // ---- Gauge ---------------------------------------------------------
+    function beatMs() {
+      const bpm = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--bpm')
+      );
+      return 60000 / (bpm > 0 ? bpm : 60);
+    }
+    function animateCount(el, to, render) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.textContent = render(to);
+        return;
+      }
+      const duration = beatMs();
+      const start = performance.now();
+      function frame(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = render(to * eased);
+        if (t < 1) requestAnimationFrame(frame);
+        else el.textContent = render(to);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    const resultSavings = document.getElementById('result-savings');
+    const srcSizeEl = document.getElementById('src-size');
+    const outSizeEl = document.getElementById('out-size');
+    const barAfter = document.getElementById('bar-after');
+    const barBefore = document.querySelector('.bar i.before');
+
+    const resultUnit = document.getElementById('result-unit');
+
+    // A video codec almost always beats an animation format on bytes, so a
+    // "saved %" headline here would report a loss on a perfectly good result.
+    // What actually matters when you are about to share an animation is how
+    // big it ended up, so that is the number that gets the big type. The two
+    // bars still show the honest comparison underneath.
+    function renderGauge(sourceBytes, outputBytes) {
+      const parts = formatBytes(outputBytes).split(' ');
+      const value = parseFloat(parts[0]) || 0;
+      resultUnit.textContent = parts[1] || 'B';
+      const decimals = value < 100 ? 1 : 0;
+      animateCount(resultSavings, value, v => v.toFixed(decimals));
+
+      srcSizeEl.textContent = formatBytes(sourceBytes);
+      outSizeEl.textContent = formatBytes(outputBytes);
+
+      // Both bars are scaled against the larger of the two, so "the animation
+      // came out bigger" is visible instead of both bars pinning at full.
+      const max = Math.max(sourceBytes, outputBytes, 1);
+      const srcPct = Math.max(1, Math.round((sourceBytes / max) * 100));
+      const outPct = Math.max(1, Math.round((outputBytes / max) * 100));
+      barBefore.style.width = srcPct + '%';
+      barAfter.style.width = '0%';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        barAfter.style.width = outPct + '%';
+      }));
+    }
 
     // Setup format selection
     const formatBtns = document.querySelectorAll('.format-btn');
@@ -670,8 +546,8 @@
         progressText.textContent = `${pct}%`;
       });
 
-      loadingMsg.textContent = '初期化中...';
-      loadingSubmsg.textContent = 'FFmpegエンジンを読み込んでいます';
+      // The caller already wrote the command line; don't clobber it here.
+      loadingSubmsg.textContent = 'FFmpeg エンジンを読み込んでいます…';
 
       // Use ESM build of core because @ffmpeg/ffmpeg@0.12.10's worker is a module worker
       // and falls back to `await import(coreURL)`, which requires a default export.
@@ -704,8 +580,13 @@
       conversionStarted = false;
 
       switchView('view-loading');
-      loadingMsg.textContent = '初期化中...';
-      loadingSubmsg.textContent = 'FFmpegエンジンを読み込んでいます';
+      clearLog();
+      setStatus('working');
+      loadingMsg.textContent =
+        `encode ${file.name} --to ${selectedFormat}`
+        + (optFps.value !== 'original' ? ` --fps ${optFps.value}` : '')
+        + (optWidth.value !== 'original' ? ` --width ${optWidth.value}` : '');
+      loadingSubmsg.textContent = 'FFmpeg エンジンを読み込んでいます…';
       progressBar.style.width = '0%';
       progressText.textContent = '0%';
 
@@ -722,8 +603,8 @@
         ff = await initFFmpeg();
         const { fetchFile } = FFmpegUtil;
 
-        loadingMsg.textContent = 'ファイルを読み込み中...';
-        loadingSubmsg.textContent = '';
+        logLine('> ffmpeg ready');
+        loadingSubmsg.textContent = `reading  ${formatBytes(file.size)}`;
 
         const dot = file.name.lastIndexOf('.');
         const inExt = dot >= 0 ? file.name.slice(dot) : '.mp4';
@@ -749,8 +630,8 @@
           vfFilters.push(`scale=${width}:-2:flags=lanczos`);
         }
 
-        loadingMsg.textContent = '変換中...';
-        loadingSubmsg.textContent = 'ブラウザが重くなる場合がありますがそのままお待ちください';
+        logLine(`> input loaded  ${formatBytes(file.size)}`);
+        loadingSubmsg.textContent = 'encoding — ブラウザが重くなることがあります';
         conversionStarted = true;
 
         if (selectedFormat === 'gif') {
@@ -782,7 +663,7 @@
         conversionStarted = false;
         if (exitCode !== 0) throw buildFFmpegError(exitCode);
 
-        loadingMsg.textContent = '出力ファイルを準備中...';
+        loadingSubmsg.textContent = 'muxing output …';
         const data = await ff.readFile(outputName);
 
         const mimeType = formatMimeTypes[selectedFormat];
@@ -790,9 +671,16 @@
         resultBlobUrl = URL.createObjectURL(blob);
         resultFilename = baseName + '.' + outExt;
 
+        logLine(
+          `✓ ${resultFilename}  ${formatBytes(file.size)} → ${formatBytes(blob.size)}`,
+          'ok'
+        );
+
         resultPreview.src = resultBlobUrl;
         resultFormat.textContent = formatLabels[selectedFormat];
         resultSize.textContent = formatBytes(blob.size);
+        renderGauge(file.size, blob.size);
+        setStatus('done', 'idle');
 
         switchView('view-result');
         showToast('変換が完了しました！');
@@ -800,6 +688,8 @@
       } catch (err) {
         console.error('Conversion Error:', err);
         const detail = err && err.message ? err.message : String(err);
+        logLine('✗ ' + detail, 'err');
+        setStatus('failed', 'err');
         showToast(`エラー: ${detail.slice(0, 80)}`, 'error');
         switchView('view-upload');
       } finally {
@@ -904,6 +794,8 @@
         resultBlobUrl = null;
       }
       resultPreview.removeAttribute('src');
+      clearLog();
+      setStatus('ready', 'idle');
     });
 
   </script>

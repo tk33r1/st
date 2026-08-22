@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" class="st-theme">
 <head>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
@@ -128,216 +128,133 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css">
   <script src="../../data/tools-ui.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
+       visitor gets a white flash while the rest of the page loads. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('st-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode — fall back to the system setting */ }
+    })();
+  </script>
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
+    /* ------------------------------------------------------------------
+       PDF Studio — Workbench. The Instrument shell comes from
+       data/tools-ui.css; this block holds the persistent toolbar, the dark
+       page canvas, the modals and the annotation stage.
+       ------------------------------------------------------------------ */
 
-    html, body {
-      min-height: 100%;
-      margin: 0;
-      background-color: #eef2ff;
-      color: #0f172a;
-      font-family: "Inter", system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
+    :root {
+      --accent: #4F46E5;
+      --accent-ink: #FFFFFF;
+      --accent-soft: #EEF0FE;
     }
-
-    h1, h2, h3, .font-outfit { font-family: "Outfit", system-ui, sans-serif; }
-
-    /* ===== Animated background ===== */
-    .bg-mesh {
-      position: fixed;
-      inset: 0;
-      background-color: #eef2ff;
-      background-image:
-        radial-gradient(at 12% 18%, rgba(99, 102, 241, 0.10) 0px, transparent 50%),
-        radial-gradient(at 88% 82%, rgba(168, 85, 247, 0.07) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(79, 70, 229, 0.05) 0px, transparent 50%);
-      z-index: -1;
-      animation: mesh-pulse 15s ease-in-out infinite alternate;
+    @media (prefers-color-scheme: dark) {
+      :root.st-theme:not([data-theme="light"]) {
+        --accent: #818CF8;
+        --accent-ink: #14153A;
+        --accent-soft: #1A1B36;
+      }
     }
-    @keyframes mesh-pulse {
-      0%   { opacity: 0.8; transform: scale(1); }
-      100% { opacity: 1;   transform: scale(1.05); }
+    :root.st-theme[data-theme="dark"] {
+      --accent: #818CF8;
+      --accent-ink: #14153A;
+      --accent-soft: #1A1B36;
     }
 
-    .site-header {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
+    /* A workbench uses the whole desk. */
+    .st-theme { --shell: 1280px; }
+    .st-theme main { max-width: 1280px; }
+    .st-theme #view-upload,
+    .st-theme #view-loading,
+    .st-theme #view-result,
+    .st-theme #hero,
+    .st-theme #tool-copy { max-width: 760px; margin-left: auto; margin-right: auto; }
 
-    .fade-in { animation: fadeIn 320ms ease both; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ===== Dropzone ===== */
-    .dropzone {
-      position: relative;
-      background: rgba(255, 255, 255, 0.7);
-      border: 2px dashed rgba(99, 102, 241, 0.32);
-      border-radius: 24px;
-      backdrop-filter: blur(10px);
-      transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02);
-    }
-    .dropzone::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 300ms ease;
-      pointer-events: none;
-    }
-    .dropzone.dragover {
-      border-color: #4f46e5;
-      background: rgba(255, 255, 255, 0.92);
-      transform: scale(1.02);
-      box-shadow: 0 20px 40px -5px rgba(99, 102, 241, 0.18);
-    }
-    .dropzone.dragover::before { opacity: 1; }
-    .dropzone:focus-visible {
-      outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-    }
-    .dropzone-content { position: relative; z-index: 10; }
-
-    .float-anim { animation: float 6s ease-in-out infinite; }
-    @keyframes float {
-      0%   { transform: translateY(0px); }
-      50%  { transform: translateY(-10px); }
-      100% { transform: translateY(0px); }
-    }
-
-    /* ===== Buttons ===== */
-    .btn-glow {
-      position: relative;
-      background: linear-gradient(135deg, #4f46e5, #a855f7);
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      transition: all 200ms ease;
-    }
-    .btn-glow:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
-    }
-    .btn-glow:active:not(:disabled) { transform: translateY(0); }
-    .btn-glow:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
+    /* ===== toolbar buttons ===== */
     .btn-tool {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 7px 12px;
-      border-radius: 10px;
-      font-size: 13px;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
       font-weight: 600;
-      color: #475569;
-      background: #fff;
-      border: 1px solid #e2e8f0;
+      padding: 6px 11px;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      color: var(--ink-2);
       cursor: pointer;
       white-space: nowrap;
-      transition: all 150ms ease;
+      transition: border-color 120ms ease, color 120ms ease, background 120ms ease, transform 60ms ease;
     }
-    .btn-tool:hover:not(:disabled) {
-      border-color: #a5b4fc;
-      color: #4f46e5;
-      background: #eef2ff;
-    }
+    .btn-tool:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-tool:active:not(:disabled) { transform: translateY(2px); }
     .btn-tool:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-tool:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn-tool.danger:hover:not(:disabled) { border-color: var(--err); color: var(--err); }
     .btn-tool.accent {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      border-color: transparent;
-      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
     }
-    .btn-tool.accent:hover:not(:disabled) {
-      color: #fff;
-      box-shadow: 0 6px 16px -4px rgba(99, 102, 241, 0.5);
-    }
-    .btn-tool.danger:hover:not(:disabled) {
-      border-color: #fecaca;
-      color: #dc2626;
-      background: #fef2f2;
-    }
+    .btn-tool.accent:hover:not(:disabled) { filter: brightness(1.06); color: var(--accent-ink); }
 
-    .icon-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 38px; height: 38px;
-      border-radius: 10px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      color: #64748b;
-      cursor: pointer;
-      transition: all 150ms ease;
-    }
-    .icon-btn:hover:not(:disabled) { border-color: #a5b4fc; color: #4f46e5; background: #eef2ff; }
-    .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .toolbar-sep { width: 1px; align-self: stretch; background: var(--rule); margin: 0 2px; }
+    @media (max-width: 780px) { .toolbar-sep { display: none; } }
 
-    /* ===== Toolbar ===== */
-    .toolbar {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(99, 102, 241, 0.16);
-      border-radius: 16px;
-      padding: 10px 14px;
-      box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.06);
-      position: sticky;
-      top: 76px;
-      z-index: 30;
+    /* ===== page canvas (Workbench + Darkroom) =====
+       PDF pages are white, so they only read as pages against a dark desk. */
+    .workbench {
+      background: var(--canvas);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      padding: 16px;
+      min-height: 320px;
     }
-    .toolbar-sep { width: 1px; align-self: stretch; background: #e2e8f0; margin: 0 2px; }
-
-    /* ===== Page grid ===== */
     #page-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+      gap: 14px;
     }
 
     .page-card {
       position: relative;
-      background: #fff;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 8px 8px 30px;
+      background: var(--canvas-2);
+      border: 1px solid var(--canvas-rule);
+      border-radius: var(--r-1);
+      padding: 8px 8px 28px;
       cursor: pointer;
-      transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
       user-select: none;
+      transition: border-color 130ms ease, background 130ms ease, opacity 130ms ease;
     }
-    .page-card:hover { border-color: #a5b4fc; box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.25); }
+    .page-card:hover { border-color: #3C4650; }
     .page-card.selected {
-      border-color: #4f46e5;
-      background: #eef2ff;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+      border-color: var(--accent);
+      background: #1B1D3A;
+      box-shadow: inset 0 0 0 1px var(--accent);
     }
-    .page-card.dragging { opacity: 0.35; }
-    .page-card.drop-before { box-shadow: -3px 0 0 0 #4f46e5; }
-    .page-card.drop-after  { box-shadow:  3px 0 0 0 #4f46e5; }
+    .page-card.dragging { opacity: 0.3; }
+    .page-card.drop-before { box-shadow: inset 3px 0 0 0 var(--accent); }
+    .page-card.drop-after { box-shadow: inset -3px 0 0 0 var(--accent); }
+    .page-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .page-thumb-wrap {
       position: relative;
       width: 100%;
       aspect-ratio: 1 / 1.35;
-      background: #f8fafc;
-      border: 1px solid #f1f5f9;
-      border-radius: 6px;
+      background: #0B0E10;
+      border-radius: 3px;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -348,14 +265,14 @@
       max-height: 100%;
       object-fit: contain;
       display: block;
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
     }
     .thumb-skeleton {
-      width: 70%; height: 80%;
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      width: 70%;
+      height: 80%;
+      background: linear-gradient(90deg, #1A1F23 25%, #262C31 50%, #1A1F23 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
-      border-radius: 4px;
+      border-radius: 3px;
     }
     @keyframes shimmer {
       0%   { background-position: 200% 0; }
@@ -364,86 +281,146 @@
 
     .page-num {
       position: absolute;
-      bottom: 7px; left: 0; right: 0;
+      bottom: 6px;
+      left: 0;
+      right: 0;
       text-align: center;
-      font-size: 11px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 10.5px;
       font-weight: 700;
-      color: #94a3b8;
-      letter-spacing: 0.04em;
+      color: var(--canvas-ink-2);
+      letter-spacing: 0.06em;
       pointer-events: none;
     }
+    .page-card.selected .page-num { color: var(--accent); }
+
     .page-badge {
       position: absolute;
-      top: 12px; left: 12px;
+      top: 12px;
+      left: 12px;
+      font-family: var(--font-mono);
       font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       padding: 2px 6px;
-      border-radius: 99px;
-      background: rgba(15, 23, 42, 0.72);
-      color: #fff;
+      border-radius: 3px;
+      background: rgb(10 13 16 / .85);
+      color: #C9D0D6;
       pointer-events: none;
       max-width: calc(100% - 24px);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .page-badge.redacted { background: #dc2626; left: auto; right: 12px; }
+    .page-badge.redacted { background: var(--err); color: #fff; left: auto; right: 12px; }
 
     .page-actions {
       position: absolute;
-      top: 12px; right: 12px;
+      top: 12px;
+      right: 12px;
       display: flex;
       flex-direction: column;
       gap: 4px;
       opacity: 0;
-      transition: opacity 150ms ease;
+      transition: opacity 130ms ease;
     }
     .page-card:hover .page-actions,
     .page-card:focus-within .page-actions { opacity: 1; }
     .page-actions.has-redaction { top: 34px; }
     .page-act {
-      width: 26px; height: 26px;
-      border-radius: 7px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid #e2e8f0;
-      color: #64748b;
-      display: flex; align-items: center; justify-content: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 4px;
+      background: rgb(20 24 27 / .92);
+      border: 1px solid #333B42;
+      color: #A5AEB5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
-      transition: all 130ms ease;
+      transition: color 120ms ease, border-color 120ms ease;
     }
-    .page-act:hover { color: #4f46e5; border-color: #a5b4fc; }
-    .page-act.danger:hover { color: #dc2626; border-color: #fecaca; }
+    .page-act:hover { color: var(--accent); border-color: var(--accent); }
+    .page-act.danger:hover { color: #F87171; border-color: #F87171; }
 
     /* Reorder handle. Touch drags have to start here: making the whole card
        draggable would leave no way to scroll the grid with a finger. */
     .page-grip {
       position: absolute;
-      bottom: 3px; left: 5px;
-      width: 26px; height: 26px;
-      display: flex; align-items: center; justify-content: center;
-      color: #cbd5e1;
-      border-radius: 7px;
+      bottom: 2px;
+      left: 4px;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4C555C;
+      border-radius: 4px;
       cursor: grab;
       touch-action: none;
-      transition: color 130ms ease, background 130ms ease;
+      transition: color 120ms ease, background 120ms ease;
     }
-    .page-card:hover .page-grip { color: #6366f1; background: #eef2ff; }
+    .page-card:hover .page-grip { color: var(--accent); background: rgb(255 255 255 / .05); }
     body.dragging-page, body.dragging-page * { cursor: grabbing !important; }
 
     /* No hover on a touch screen, so the per-page actions have to stay put. */
     @media (hover: none) {
       .page-actions { opacity: 1; }
-      .page-grip { color: #94a3b8; background: #f8fafc; }
+      .page-grip { color: #6C767D; }
     }
 
-    /* ===== Panels / modal ===== */
+    /* ===== upload extras ===== */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--rule);
+      border: 1px solid var(--rule);
+      margin-top: 22px;
+    }
+    .feature-card {
+      background: var(--panel);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .feature-card b { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .feature-card p { margin: 0; font-size: 12px; line-height: 1.7; color: var(--ink-3); }
+
+    /* ===== result ===== */
+    .gauge-unit {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-left: -4px;
+    }
+    #result-name {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--ink-2);
+      overflow-wrap: anywhere;
+    }
+    #result-compare {
+      font-size: 12.5px;
+      line-height: 1.7;
+      border-radius: var(--r-1);
+      border: 1px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--ink);
+      padding: 10px 12px;
+    }
+    #result-compare.compare-bad { border-color: var(--warn); background: transparent; color: var(--warn); }
+    #btn-download { width: 100%; }
+    #btn-back-editor { width: 100%; margin-top: 12px; }
+
+    /* ===== modals ===== */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.55);
-      backdrop-filter: blur(4px);
+      background: rgb(8 12 16 / .6);
       z-index: 60;
       display: flex;
       align-items: center;
@@ -451,102 +428,68 @@
       padding: 16px;
     }
     .modal-card {
-      background: #fff;
-      border-radius: 18px;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-2);
       width: 100%;
       max-width: 560px;
       max-height: calc(100vh - 32px);
       overflow-y: auto;
-      box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.4);
-      animation: modalIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      box-shadow: var(--shadow-1);
+      animation: modalIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
     }
     .modal-card.wide { max-width: 940px; }
     @keyframes modalIn {
-      from { opacity: 0; transform: translateY(14px) scale(0.97); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
     }
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .modal-head h3 { font-size: 16px; font-weight: 700; }
+    .modal-head p { margin: 3px 0 0; font-size: 12px; color: var(--ink-3); }
 
     .field-label {
-      font-size: 11px;
+      font-family: var(--font-mono);
+      font-size: 10px;
       font-weight: 700;
-      color: #94a3b8;
+      color: var(--ink-3);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.14em;
       display: block;
       margin-bottom: 6px;
     }
     .custom-select, .text-input {
       width: 100%;
-      padding: 9px 12px;
-      border-radius: 10px;
-      border: 1.5px solid #e2e8f0;
-      background: #fff;
-      color: #0f172a;
-      font-family: inherit;
-      font-size: 14px;
-      transition: border-color 150ms ease, box-shadow 150ms ease;
+      padding: 8px 11px;
+      border-radius: var(--r-1);
+      border: 1px solid var(--rule);
+      background: var(--panel);
+      color: var(--ink);
+      font-family: var(--font-ui);
+      font-size: 13.5px;
+      transition: border-color 120ms ease;
     }
-    .custom-select:focus, .text-input:focus {
-      outline: none;
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    }
+    .custom-select:focus, .text-input:focus { outline: none; border-color: var(--accent); }
 
-    .seg {
-      display: flex;
-      gap: 4px;
-      background: #f1f5f9;
-      padding: 4px;
-      border-radius: 12px;
-      flex-wrap: wrap;
-    }
+    /* Segmented control — same idea as .st-seg, but app.js drives .seg-btn. */
+    .seg { display: flex; border: 1px solid var(--rule); border-radius: var(--r-1); overflow: hidden; flex-wrap: wrap; }
     .seg-btn {
       flex: 1;
-      min-width: 78px;
-      padding: 7px 10px;
-      border-radius: 9px;
-      border: none;
-      background: transparent;
-      color: #64748b;
-      font-size: 13px;
+      min-width: 74px;
+      padding: 6px 10px;
+      border: 0;
+      border-left: 1px solid var(--rule);
+      background: var(--panel);
+      color: var(--ink-2);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
       font-weight: 600;
-      font-family: inherit;
       cursor: pointer;
-      transition: all 150ms ease;
+      transition: background 120ms ease, color 120ms ease;
     }
-    .seg-btn:hover { color: #4f46e5; }
-    .seg-btn.active {
-      background: #fff;
-      color: #4f46e5;
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
-    }
-
-    input[type="range"] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 5px;
-      border-radius: 99px;
-      background: #e2e8f0;
-      outline: none;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: #4f46e5;
-      cursor: pointer;
-      border: 2px solid #fff;
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
-    }
-    input[type="range"]::-moz-range-thumb {
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: #4f46e5;
-      cursor: pointer;
-      border: 2px solid #fff;
-    }
+    .seg-btn:first-child { border-left: 0; }
+    .seg-btn:hover:not(.active) { background: var(--panel-2); color: var(--ink); }
+    .seg-btn.active { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+    .seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
     .check-row {
       display: flex;
@@ -554,30 +497,45 @@
       gap: 9px;
       cursor: pointer;
       font-size: 13px;
-      color: #475569;
-      line-height: 1.5;
+      color: var(--ink-2);
+      line-height: 1.6;
     }
     .check-row input[type="checkbox"] {
-      accent-color: #4f46e5;
-      width: 15px; height: 15px;
-      margin-top: 2px;
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+      margin-top: 3px;
       flex-shrink: 0;
       cursor: pointer;
     }
 
-    .note {
+    /* Named .hint, not .note: the shared chrome already owns .note. */
+    .hint {
       font-size: 12px;
-      line-height: 1.65;
-      color: #64748b;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 10px 12px;
+      line-height: 1.7;
+      color: var(--ink-2);
+      background: var(--panel-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      padding: 9px 11px;
     }
-    .note.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+    .hint.warn { border-color: var(--warn); color: var(--warn); background: transparent; }
 
-    /* ===== Annotation canvas ===== */
-    #an-stage-wrap { max-height: 60vh; }
+    .ex-panel { display: flex; }
+    .ex-panel.hidden { display: none; }
+
+    /* ===== annotation stage ===== */
+    #an-stage-wrap {
+      max-height: 60vh;
+      background: var(--canvas);
+      border: 1px solid var(--canvas-rule);
+      border-radius: var(--r-1);
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+    }
     /* The dialog gained a tool switcher and a stamp tray, so on a short screen
        the canvas has to give up some height or it ends up scrolled out of view. */
     @media (max-height: 760px) { #an-stage-wrap { max-height: 44vh; } }
@@ -589,46 +547,45 @@
       line-height: 0;
       cursor: crosshair;
       touch-action: none;
-      box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.3);
     }
     #redact-canvas { display: block; max-width: 100%; height: auto; }
     #redact-overlay { position: absolute; inset: 0; }
     .redact-rect {
       position: absolute;
-      background: rgba(15, 23, 42, 0.82);
-      border: 1px solid #dc2626;
+      background: rgb(10 13 16 / .85);
+      border: 1px solid var(--err);
     }
     .redact-rect > button {
       position: absolute;
-      top: -9px; right: -9px;
-      width: 19px; height: 19px;
+      top: -9px;
+      right: -9px;
+      width: 19px;
+      height: 19px;
       border-radius: 50%;
-      background: #dc2626;
+      background: var(--err);
       color: #fff;
       border: 2px solid #fff;
       font-size: 11px;
       line-height: 1;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 0;
     }
     #redact-live {
       position: absolute;
-      background: rgba(220, 38, 38, 0.28);
-      border: 1.5px dashed #dc2626;
+      background: rgb(220 38 38 / .28);
+      border: 1.5px dashed var(--err);
       pointer-events: none;
       display: none;
     }
-    #redact-stage.tool-stamp #redact-live { background: rgba(37, 99, 235, 0.22); border-color: #2563eb; }
-    #redact-stage.tool-text  #redact-live { background: rgba(5, 150, 105, 0.18); border-color: #059669; }
+    #redact-stage.tool-stamp #redact-live { background: rgb(37 99 235 / .22); border-color: #2563EB; }
+    #redact-stage.tool-text  #redact-live { background: rgb(5 150 105 / .18); border-color: #059669; }
 
-    /* ===== Stamp / text annotations on the editing stage ===== */
-    .an-item {
-      position: absolute;
-      border: 1px dashed transparent;
-    }
-    .an-item.stamp { border-color: #2563eb; background: rgba(37, 99, 235, 0.08); }
-    .an-item.text  { border-color: #059669; }
+    .an-item { position: absolute; border: 1px dashed transparent; }
+    .an-item.stamp { border-color: #2563EB; background: rgb(37 99 235 / .08); }
+    .an-item.text { border-color: #059669; }
     .an-item > img { width: 100%; height: 100%; object-fit: contain; display: block; }
     .an-item > .an-label {
       position: absolute;
@@ -641,8 +598,10 @@
     }
     .an-item > button {
       position: absolute;
-      top: -9px; right: -9px;
-      width: 19px; height: 19px;
+      top: -9px;
+      right: -9px;
+      width: 19px;
+      height: 19px;
       border-radius: 50%;
       background: #334155;
       color: #fff;
@@ -650,394 +609,273 @@
       font-size: 11px;
       line-height: 1;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 0;
     }
 
-    /* ===== Stamp library ===== */
+    /* ===== stamp library ===== */
     .stamp-tray { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .stamp-chip {
-      width: 62px; height: 62px;
-      border-radius: 10px;
-      border: 2px solid #e2e8f0;
-      background: #fff center/contain no-repeat;
+      width: 58px;
+      height: 58px;
+      border-radius: var(--r-1);
+      border: 1px solid var(--rule);
+      background: var(--panel) center/contain no-repeat;
       background-image: var(--thumb);
       cursor: pointer;
       position: relative;
       padding: 0;
     }
-    .stamp-chip.active { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18); }
+    .stamp-chip.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
     .stamp-chip > span {
       position: absolute;
-      top: -7px; right: -7px;
-      width: 18px; height: 18px;
+      top: -7px;
+      right: -7px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: #dc2626; color: #fff;
-      border: 2px solid #fff;
-      font-size: 10px; line-height: 1;
-      display: flex; align-items: center; justify-content: center;
+      background: var(--err);
+      color: #fff;
+      border: 2px solid var(--panel);
+      font-size: 10px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .stamp-add {
-      width: 62px; height: 62px;
-      border-radius: 10px;
-      border: 2px dashed #cbd5e1;
-      background: #f8fafc;
-      color: #64748b;
+      width: 58px;
+      height: 58px;
+      border-radius: var(--r-1);
+      border: 1px dashed var(--rule-strong);
+      background: var(--panel-2);
+      color: var(--ink-3);
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .stamp-add:hover { border-color: #a5b4fc; color: #4f46e5; }
+    .stamp-add:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ===== Size readout in the export dialog ===== */
+    /* ===== size readout in the export dialog ===== */
     .size-panel {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
       padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
     .size-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-    .size-row > span:first-child { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.04em; }
-    .size-value { font-family: "Outfit", system-ui, sans-serif; font-weight: 800; font-size: 1.05rem; color: #0f172a; }
-    .size-value.pending { color: #94a3b8; font-weight: 600; font-size: 0.85rem; }
-    .size-delta { font-size: 11px; font-weight: 700; color: #059669; }
-    .size-delta.bad { color: #b45309; }
-
-    /* ===== Progress ===== */
-    .progress-bar-container {
-      width: 100%;
-      height: 7px;
-      background: #e2e8f0;
-      border-radius: 99px;
-      overflow: hidden;
+    .size-row > span:first-child {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--ink-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #4f46e5, #a855f7);
-      border-radius: 99px;
-      transition: width 200ms ease;
+    .size-value {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
     }
-
-    .result-card {
-      background: rgba(255, 255, 255, 0.88);
-      border: 1px solid rgba(99, 102, 241, 0.16);
-      border-radius: 20px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.15);
-    }
-
-    #result-compare {
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      color: #047857;
-    }
-    #result-compare.compare-bad {
-      background: #fffbeb;
-      border-color: #fde68a;
-      color: #92400e;
-    }
-
-    /* ===== URL import ===== */
-    .url-input-container {
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(99, 102, 241, 0.15);
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-      padding: 12px;
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-    }
-    .url-input {
-      flex: 1;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-family: inherit;
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      min-width: 0;
-    }
-    .url-input:focus {
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-    }
-    .url-btn {
-      background: #4f46e5;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-family: inherit;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: background 0.2s, opacity 0.2s;
-      white-space: nowrap;
-    }
-    .url-btn:hover:not(:disabled) { background: #4338ca; }
-    .url-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .feature-card {
-      background: rgba(255, 255, 255, 0.65);
-      border: 1px solid rgba(99, 102, 241, 0.14);
-      border-radius: 14px;
-      padding: 16px;
-      backdrop-filter: blur(8px);
-    }
+    .size-value.pending { color: var(--ink-3); font-weight: 400; font-size: 12px; }
+    .size-delta { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--accent); }
+    .size-delta.bad { color: var(--warn); }
 
     /* ===== SEO copy ===== */
-    .prose-tool h3 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 22px 0 6px; }
-    .prose-tool p  { font-size: 13px; line-height: 1.85; color: #64748b; margin: 0 0 6px; }
+    .prose-tool h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .prose-tool h3 { font-size: 14px; font-weight: 700; color: var(--ink); margin: 22px 0 6px; }
+    .prose-tool p { font-size: 13px; line-height: 1.9; color: var(--ink-2); margin: 0 0 6px; }
     .prose-tool ul { margin: 0 0 6px; padding-left: 18px; }
-    .prose-tool li { font-size: 13px; line-height: 1.85; color: #64748b; }
+    .prose-tool li { font-size: 13px; line-height: 1.9; color: var(--ink-2); }
+    .prose-tool strong { color: var(--ink); }
   </style>
 </head>
 
-<body class="flex flex-col min-h-screen">
+<body>
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
-  <div class="bg-mesh"></div>
-
-  <!-- ===== Header ===== -->
-  <header class="site-header">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="https://tk.st/tools/" class="flex items-center gap-2.5 text-slate-500 hover:text-indigo-600 transition-colors group">
-          <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
-          <span class="text-sm font-medium tracking-wide">ST TOOLS</span>
-        </a>
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-md">
-            <i data-lucide="layers" class="w-4 h-4 text-white"></i>
-          </div>
-          <h1 class="text-xl font-bold tracking-tight text-slate-800 font-outfit">PDF Studio</h1>
-        </div>
-        <div class="w-[84px] hidden sm:block"></div>
+  <!-- ===================== app bar ===================== -->
+  <header class="app-bar">
+    <div class="bar-in">
+      <a class="back" href="https://tk.st/tools/">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><span>ST TOOLS</span>
+      </a>
+      <div class="bar-title">
+        <h1>PDF Studio</h1>
+        <span class="bar-path">tk.st/tools/pdf-studio</span>
+      </div>
+      <div class="bar-actions">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+          <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+          <i data-lucide="sun" class="to-light w-4 h-4"></i>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- ===== Main ===== -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-10 lg:py-14 flex flex-col items-center justify-start">
+  <!-- ===================== toolbar (editor only) ===================== -->
+  <div class="toolbar hidden" id="toolbar">
+    <div class="tb-in">
+      <button id="btn-select-all" class="btn-tool" type="button">
+        <i data-lucide="check-square" class="w-3.5 h-3.5"></i>全選択
+      </button>
+      <button id="btn-select-none" class="btn-tool" type="button" disabled>
+        <i data-lucide="square" class="w-3.5 h-3.5"></i>解除
+      </button>
+
+      <div class="toolbar-sep"></div>
+
+      <button id="btn-rot-left" class="btn-tool" type="button" title="左に90°回転">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>左回転
+      </button>
+      <button id="btn-rot-right" class="btn-tool" type="button" title="右に90°回転">
+        <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>右回転
+      </button>
+      <button id="btn-delete" class="btn-tool danger" type="button" title="選択したページを削除">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>削除
+      </button>
+
+      <div class="toolbar-sep"></div>
+
+      <button id="btn-add-file" class="btn-tool" type="button" title="PDFを追加して結合">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i>PDFを追加
+      </button>
+      <button id="btn-interleave" class="btn-tool" type="button" title="奇数ページと偶数ページを交互に結合">
+        <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>交互結合
+      </button>
+      <button id="btn-undo" class="btn-tool" type="button" title="元に戻す (Ctrl+Z)" disabled>
+        <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>戻す
+      </button>
+
+      <span style="flex:1"></span>
+
+      <button id="btn-export" class="btn-tool accent" type="button">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>書き出し
+      </button>
+      <button id="btn-restart" class="icon-btn" type="button" title="最初からやり直す" aria-label="最初からやり直す">
+        <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <main>
 
     <!-- Hero (upload view only) -->
-    <div id="hero" class="text-center mb-8 max-w-2xl flex flex-col items-center">
-      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 mb-4 font-outfit leading-[1.2] pb-2">
-        Edit PDF,<br/>Upload Nothing.
-      </h2>
-      <p class="text-slate-500 text-base sm:text-lg">
-        回転・結合・分割・並べ替えを1画面で。ファイルはブラウザの外に出ません。
-      </p>
+    <div id="hero" style="margin-bottom:22px">
+      <p class="note">回転・結合・分割・面付け・墨消しを1画面で。ファイルはブラウザの外に出ません。</p>
     </div>
 
-    <!-- ===== View 1: Upload ===== -->
-    <div id="view-upload" class="w-full max-w-3xl fade-in">
-      <div id="dropzone" class="dropzone p-12 sm:p-16 text-center cursor-pointer group" role="button" tabindex="0" aria-label="PDFファイルをドロップまたは選択">
+    <!-- ===================== view 1 : upload ===================== -->
+    <div id="view-upload" class="fade-in">
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="PDFファイルをドロップまたは選択">
         <input type="file" id="file-input" accept="application/pdf" class="hidden" multiple>
-
-        <div class="dropzone-content flex flex-col items-center gap-6 pointer-events-none">
-          <div class="relative flex items-center justify-center">
-            <div class="w-20 h-20 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center float-anim group-hover:bg-indigo-50 transition-colors shadow-sm z-10 relative">
-              <i data-lucide="file-text" class="w-10 h-10 text-indigo-500"></i>
-            </div>
-            <div class="absolute -bottom-2 -right-3 w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 border-2 border-white flex items-center justify-center float-anim shadow-md z-20" style="animation-delay: 0.5s;">
-              <i data-lucide="wand-2" class="w-4 h-4 text-white"></i>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">PDFファイルをドロップ</h3>
-            <p class="text-slate-500 text-sm">複数まとめて選択すると、そのまま結合できます</p>
-          </div>
-
-          <div class="px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 font-semibold tracking-wide flex items-center gap-2">
-            <i data-lucide="lock" class="w-3 h-3 text-emerald-500"></i>
-            データはサーバーに送信されず、ブラウザ内で安全に処理されます
-          </div>
+        <div class="dz-in">
+          <span class="dz-mark">+</span>
+          <b>PDF をドロップ</b>
+          <span class="dz-sub">複数まとめて選択すると、そのまま結合できます</span>
         </div>
       </div>
 
-      <div class="url-input-container">
-        <i data-lucide="link" class="w-5 h-5 text-slate-400 self-center ml-1"></i>
-        <input type="url" id="url-input" class="url-input" placeholder="PDFのURLを貼り付けてインポート...">
-        <button id="url-btn" class="url-btn" type="button">インポート</button>
+      <div class="url-row">
+        <span class="st-lbl">url</span>
+        <input type="url" id="url-input" placeholder="PDFのURLを貼り付けてインポート">
+        <button id="url-btn" class="st-btn-quiet" type="button">インポート</button>
       </div>
 
-      <!-- Feature highlights -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-8">
+      <div class="feature-grid">
         <div class="feature-card">
-          <div class="flex items-center gap-2 mb-1.5">
-            <i data-lucide="shuffle" class="w-4 h-4 text-indigo-500"></i>
-            <span class="text-sm font-bold text-slate-700">奇数偶数の交互結合</span>
-          </div>
-          <p class="text-xs text-slate-500 leading-relaxed">片面スキャナで表面・裏面を別々に取り込んだ2ファイルを、正しいページ順に組み直します。</p>
+          <b>奇数偶数の交互結合</b>
+          <p>片面スキャナで表面・裏面を別々に取り込んだ2ファイルを、正しいページ順に組み直します。</p>
         </div>
         <div class="feature-card">
-          <div class="flex items-center gap-2 mb-1.5">
-            <i data-lucide="book-open" class="w-4 h-4 text-indigo-500"></i>
-            <span class="text-sm font-bold text-slate-700">2in1・中綴じ面付け</span>
-          </div>
-          <p class="text-xs text-slate-500 leading-relaxed">2ページを1枚に並べたり、印刷して折るだけで冊子になる並び順に組み替えます。</p>
+          <b>2in1・中綴じ面付け</b>
+          <p>2ページを1枚に並べたり、印刷して折るだけで冊子になる並び順に組み替えます。</p>
         </div>
         <div class="feature-card">
-          <div class="flex items-center gap-2 mb-1.5">
-            <i data-lucide="eraser" class="w-4 h-4 text-indigo-500"></i>
-            <span class="text-sm font-bold text-slate-700">本当に消える墨消し</span>
-          </div>
-          <p class="text-xs text-slate-500 leading-relaxed">黒い四角を重ねるだけではなく、下のテキストごとPDFから削除します。</p>
+          <b>本当に消える墨消し</b>
+          <p>黒い四角を重ねるだけではなく、下のテキストごと PDF から削除します。</p>
         </div>
         <div class="feature-card">
-          <div class="flex items-center gap-2 mb-1.5">
-            <i data-lucide="minimize-2" class="w-4 h-4 text-indigo-500"></i>
-            <span class="text-sm font-bold text-slate-700">ローカル圧縮</span>
-          </div>
-          <p class="text-xs text-slate-500 leading-relaxed">解像度と画質を選んでファイルサイズを削減。サーバーを介しません。</p>
+          <b>ローカル圧縮</b>
+          <p>解像度と画質を選んでファイルサイズを削減。サーバーを介しません。</p>
         </div>
         <div class="feature-card">
-          <div class="flex items-center gap-2 mb-1.5">
-            <i data-lucide="scissors" class="w-4 h-4 text-indigo-500"></i>
-            <span class="text-sm font-bold text-slate-700">分割・抽出</span>
-          </div>
-          <p class="text-xs text-slate-500 leading-relaxed">1ページずつ、N枚ずつ、選択したページだけ。ZIPでまとめて受け取れます。</p>
+          <b>分割・抽出</b>
+          <p>1ページずつ、N枚ずつ、選択したページだけ。ZIP でまとめて受け取れます。</p>
         </div>
         <div class="feature-card">
-          <div class="flex items-center gap-2 mb-1.5">
-            <i data-lucide="image" class="w-4 h-4 text-indigo-500"></i>
-            <span class="text-sm font-bold text-slate-700">AVIF・可逆WebP変換</span>
-          </div>
-          <p class="text-xs text-slate-500 leading-relaxed">編集後の状態のまま PNG / JPEG / WebP / 可逆WebP / AVIF へ。解像度も指定できます。</p>
+          <b>AVIF・可逆WebP変換</b>
+          <p>編集後の状態のまま PNG / JPEG / WebP / 可逆WebP / AVIF へ。解像度も指定できます。</p>
         </div>
       </div>
     </div>
 
-    <!-- ===== View 2: Editor ===== -->
-    <div id="view-preview" class="w-full hidden">
-
-      <div class="toolbar flex flex-wrap items-center gap-2 mb-6">
-        <div class="flex items-center gap-2 mr-1">
-          <i data-lucide="layers" class="w-4 h-4 text-indigo-500"></i>
-          <span class="text-sm font-bold text-slate-700"><span id="page-count">0</span> ページ</span>
-          <span id="sel-count" class="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full hidden"></span>
-        </div>
-
-        <div class="toolbar-sep hidden sm:block"></div>
-
-        <button id="btn-select-all" class="btn-tool" type="button">
-          <i data-lucide="check-square" class="w-3.5 h-3.5"></i>全選択
-        </button>
-        <button id="btn-select-none" class="btn-tool" type="button" disabled>
-          <i data-lucide="square" class="w-3.5 h-3.5"></i>解除
-        </button>
-
-        <div class="toolbar-sep hidden sm:block"></div>
-
-        <button id="btn-rot-left" class="btn-tool" type="button" title="左に90°回転">
-          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>左回転
-        </button>
-        <button id="btn-rot-right" class="btn-tool" type="button" title="右に90°回転">
-          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>右回転
-        </button>
-        <button id="btn-delete" class="btn-tool danger" type="button" title="選択したページを削除">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>削除
-        </button>
-
-        <div class="toolbar-sep hidden sm:block"></div>
-
-        <button id="btn-add-file" class="btn-tool" type="button" title="PDFを追加して結合">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>PDFを追加
-        </button>
-        <button id="btn-interleave" class="btn-tool" type="button" title="奇数ページと偶数ページを交互に結合">
-          <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>交互結合
-        </button>
-        <button id="btn-undo" class="btn-tool" type="button" title="元に戻す (Ctrl+Z)" disabled>
-          <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>戻す
-        </button>
-
-        <div class="flex-1"></div>
-
-        <button id="btn-export" class="btn-tool accent" type="button">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i>書き出し
-        </button>
-        <button id="btn-restart" class="icon-btn" type="button" title="最初からやり直す" aria-label="最初からやり直す">
-          <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <p class="text-xs text-slate-400 mb-4 flex items-center gap-1.5 flex-wrap">
-        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+    <!-- ===================== view 2 : editor ===================== -->
+    <div id="view-preview" class="hidden">
+      <p class="note" style="margin-bottom:12px">
         クリックで選択 / Shift+クリックで範囲選択 / 左下のハンドルをドラッグで並べ替え。
         キーボードは ←→↑↓ で移動、Space で選択、Alt+←→ で並べ替え、R で回転、M で墨消し、Delete で削除。
       </p>
 
-      <div id="page-grid" role="listbox" aria-multiselectable="true" aria-label="ページ一覧"></div>
+      <div class="workbench">
+        <div id="page-grid" role="listbox" aria-multiselectable="true" aria-label="ページ一覧"></div>
+      </div>
     </div>
 
-    <!-- ===== View 3: Loading ===== -->
-    <div id="view-loading" class="w-full max-w-md hidden text-center py-16">
-      <div class="inline-block relative w-20 h-20 mb-6">
-        <svg class="animate-spin w-full h-full text-indigo-200" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <i data-lucide="layers" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-indigo-500"></i>
+    <!-- ===================== view 3 : processing ===================== -->
+    <div id="view-loading" class="hidden" role="status" aria-live="polite">
+      <div class="console" id="console">
+        <div class="cl hi"><span>$</span> <span id="loading-msg">処理中</span></div>
+        <div class="cl" id="loading-submsg"></div>
+        <div class="cl"><span>$</span> <span class="st-caret"></span></div>
       </div>
-      <h3 id="loading-msg" class="text-xl font-bold text-slate-800">処理中...</h3>
-      <p id="loading-submsg" class="text-slate-500 text-sm mt-2">ブラウザ内で処理しています</p>
 
-      <div class="progress-bar-container mt-6">
-        <div id="progress-bar" class="progress-bar"></div>
+      <div class="pbar"><div id="progress-bar"></div></div>
+      <div class="pmeta">
+        <span class="st-lbl">progress</span>
+        <span id="progress-text" class="num">0%</span>
       </div>
-      <div id="progress-text" class="text-xs font-medium text-slate-500 mt-2 text-right">0%</div>
 
-      <button id="btn-cancel-export" class="btn-tool danger mx-auto mt-6 hidden" type="button">
+      <button id="btn-cancel-export" class="btn-tool danger hidden" type="button" style="margin:16px auto 0">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>中止する
       </button>
     </div>
 
-    <!-- ===== View 4: Result ===== -->
-    <div id="view-result" class="w-full max-w-xl hidden">
-      <div class="result-card p-6 sm:p-8 text-center">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mx-auto mb-5 shadow-lg">
-          <i data-lucide="check" class="w-8 h-8 text-white"></i>
-        </div>
-        <h3 class="text-2xl font-extrabold text-slate-800 font-outfit mb-1">書き出しが完了しました</h3>
-        <p id="result-name" class="text-sm text-slate-500 mb-6 break-all"></p>
-
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">形式</span>
-            <span id="result-format" class="text-lg font-outfit font-extrabold text-slate-700">PDF</span>
-          </div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">サイズ</span>
-            <span id="result-size" class="text-lg font-outfit font-extrabold text-slate-700">0 KB</span>
-          </div>
+    <!-- ===================== view 4 : result ===================== -->
+    <div id="view-result" class="hidden">
+      <div class="readout">
+        <div class="gauge">
+          <span id="result-size" class="gauge-num">0</span>
+          <span id="result-unit" class="gauge-unit">B</span>
+          <span class="gauge-cap">
+            <span class="st-lbl">output</span>
+            <span class="gauge-sub" id="result-format">PDF</span>
+          </span>
         </div>
 
-        <div id="result-compare" class="hidden mb-6 text-sm font-semibold rounded-xl px-4 py-3 leading-relaxed"></div>
+        <div id="result-name"></div>
+        <div id="result-compare" class="hidden"></div>
 
-        <button id="btn-download" class="btn-glow w-full flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-lg shadow-lg">
-          <i data-lucide="download" class="w-6 h-6"></i>
-          ダウンロード
-        </button>
-        <button id="btn-back-editor" class="mt-4 text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors underline-offset-4 hover:underline">
-          編集画面に戻る
-        </button>
+        <button id="btn-download" class="st-btn" type="button">ダウンロード</button>
       </div>
+
+      <button id="btn-back-editor" class="st-btn-quiet" type="button">編集画面に戻る</button>
     </div>
 
-    <!-- ===== SEO copy ===== -->
-    <section id="tool-copy" class="w-full max-w-3xl mt-16 prose-tool">
-      <h2 class="text-xl font-bold text-slate-800 font-outfit mb-2">PDF Studio について</h2>
+    <!-- ===================== SEO copy ===================== -->
+    <section id="tool-copy" class="prose-tool" style="margin-top:56px">
+      <h2>PDF Studio について</h2>
       <p>PDF Studio は、PDFの回転・結合・分割・並べ替えを1つの画面でまとめて行える無料のPDF編集ツールです。一般的なオンラインPDFツールと違い、ファイルをサーバーにアップロードしません。処理はすべてブラウザ内のJavaScriptで完結するため、契約書・請求書・社内資料のような外部に出したくないPDFでも安心して扱えます。オフラインでも動作します。</p>
 
       <h3>1画面で完結する編集</h3>
@@ -1085,35 +923,52 @@
 
   </main>
 
-  <footer class="mt-auto border-t border-slate-200 bg-white/50 backdrop-blur-md">
-    <div class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-center relative">
-      <span class="text-xs sm:text-sm text-slate-400 font-medium tracking-wide">&copy; <span id="currentYear"></span> Shinya Takeda</span>
-      <div id="donation-button-container" class="absolute right-4 sm:right-6"></div>
+  <!-- ===================== status bar ===================== -->
+  <footer class="status-bar">
+    <div class="sb-in">
+      <span class="sb-item"><span id="status-led" class="st-led idle"></span><span id="status-text">ready</span></span>
+      <span class="sb-item"><span id="page-count">0</span> pages</span>
+      <span class="sb-item hidden" id="sel-count"></span>
+      <span class="sb-item sb-hide">local only</span>
+      <span class="sb-item sb-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <div id="donation-button-container"></div>
     </div>
   </footer>
+
+  <!-- ===================== toast ===================== -->
+  <div id="toast" class="translate-y-20 opacity-0" role="status">
+    <i id="toast-icon-success" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
+    <i id="toast-icon-error" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
+    <span id="toast-msg"></span>
+  </div>
 
   <script src="../../data/buy-me-oil.js"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 
-  <!-- Notification Toast -->
-  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-[70] pointer-events-none" role="status">
-    <i id="toast-icon-success" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
-    <i id="toast-icon-error" data-lucide="alert-circle" class="w-5 h-5 text-rose-400 hidden"></i>
-    <span id="toast-msg" class="text-sm font-medium"></span>
-  </div>
+  <script>
+    /* Theme: system by default, explicit choice remembered. */
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const root = document.documentElement;
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+      const next = current === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('st-theme', next); } catch (e) { }
+    });
+  </script>
 
   <!-- ===== Modal: Interleave ===== -->
   <div id="modal-interleave" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="il-title">
-    <div class="modal-card p-6 sm:p-7">
-      <div class="flex items-start justify-between gap-4 mb-5">
+    <div class="modal-card" style="padding:22px 24px 24px">
+      <div class="modal-head">
         <div>
-          <h3 id="il-title" class="text-lg font-bold text-slate-800 font-outfit">奇数偶数の交互結合</h3>
-          <p class="text-xs text-slate-500 mt-1">片面スキャンで分かれた表面／裏面を1つに組み直します</p>
+          <h3 id="il-title">奇数偶数の交互結合</h3>
+          <p>片面スキャンで分かれた表面／裏面を1つに組み直します</p>
         </div>
-        <button class="icon-btn shrink-0" data-close="modal-interleave" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button class="icon-btn" data-close="modal-interleave" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <div class="flex flex-col gap-4">
+      <div style="display:flex;flex-direction:column;gap:16px">
         <div>
           <label class="field-label" for="il-odd">奇数ページ側（表面）</label>
           <select id="il-odd" class="custom-select"></select>
@@ -1124,14 +979,14 @@
         </div>
         <label class="check-row">
           <input type="checkbox" id="il-reverse" checked>
-          <span>裏面を逆順に読み込む<br><span class="text-slate-400">原稿の束をひっくり返してスキャンした場合はこちら（多くのシートフィード機で必要）</span></span>
+          <span>裏面を逆順に読み込む<br><span style="color:var(--ink-3)">原稿の束をひっくり返してスキャンした場合はこちら（多くのシートフィード機で必要）</span></span>
         </label>
-        <div class="note">結合後は現在のページ構成が置き換わります。ページ数が合わない場合は、余ったページを末尾にそのまま追加します。</div>
+        <div class="hint">結合後は現在のページ構成が置き換わります。ページ数が合わない場合は、余ったページを末尾にそのまま追加します。</div>
       </div>
 
-      <div class="flex gap-2 mt-6">
-        <button class="btn-tool flex-1 justify-center" data-close="modal-interleave" type="button">キャンセル</button>
-        <button id="il-apply" class="btn-tool accent flex-1 justify-center" type="button">
+      <div style="display:flex;gap:8px;margin-top:22px">
+        <button class="btn-tool" data-close="modal-interleave" type="button" style="flex:1;justify-content:center">キャンセル</button>
+        <button id="il-apply" class="btn-tool accent" type="button" style="flex:1;justify-content:center">
           <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>交互結合する
         </button>
       </div>
@@ -1140,22 +995,22 @@
 
   <!-- ===== Modal: Redact ===== -->
   <div id="modal-redact" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="redact-title">
-    <div class="modal-card wide p-6 sm:p-7">
-      <div class="flex items-start justify-between gap-4 mb-4">
+    <div class="modal-card wide" style="padding:22px 24px 24px">
+      <div class="modal-head">
         <div>
-          <h3 id="redact-title" class="text-lg font-bold text-slate-800 font-outfit">ページを編集 <span id="redact-page-label" class="text-sm font-semibold text-indigo-600"></span></h3>
-          <p class="text-xs text-slate-500 mt-1">ページ上をドラッグして範囲を指定します。</p>
+          <h3 id="redact-title">ページを編集 <span id="redact-page-label" style="color:var(--accent);font-family:var(--font-mono);font-size:13px"></span></h3>
+          <p>ページ上をドラッグして範囲を指定します。</p>
         </div>
-        <button class="icon-btn shrink-0" data-close="modal-redact" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button class="icon-btn" data-close="modal-redact" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <div class="seg mb-4" id="an-tool">
+      <div class="seg" id="an-tool" style="margin-bottom:16px">
         <button class="seg-btn active" data-v="redact" type="button">墨消し</button>
         <button class="seg-btn" data-v="stamp" type="button">スタンプ</button>
         <button class="seg-btn" data-v="text" type="button">テキスト</button>
       </div>
 
-      <div id="an-opts-stamp" class="hidden mb-4">
+      <div id="an-opts-stamp" class="hidden" style="margin-bottom:16px">
         <span class="field-label">押す画像</span>
         <div class="stamp-tray" id="stamp-tray">
           <button class="stamp-add" id="stamp-add" type="button" aria-label="スタンプ画像を追加">
@@ -1163,24 +1018,24 @@
           </button>
         </div>
         <input type="file" id="stamp-file" accept="image/png,image/jpeg,image/webp" class="hidden" multiple>
-        <div class="note mt-2">PNG・JPEG・WebP を読み込めます。透過PNGなら背景が抜けた印影のまま押せます。画像はページ上にドラッグした枠へ、縦横比を保って収まります。</div>
+        <div class="hint" style="margin-top:10px">PNG・JPEG・WebP を読み込めます。透過PNGなら背景が抜けた印影のまま押せます。画像はページ上にドラッグした枠へ、縦横比を保って収まります。</div>
       </div>
 
-      <div id="an-opts-text" class="hidden mb-4 flex flex-col gap-3">
+      <div id="an-opts-text" class="hidden" style="margin-bottom:16px;display:flex;flex-direction:column;gap:12px">
         <div>
           <label class="field-label" for="an-text-value">追加する文字</label>
           <input type="text" id="an-text-value" class="text-input" placeholder="例）社外秘" maxlength="120">
         </div>
-        <div class="flex flex-wrap items-end gap-4">
+        <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px">
           <div>
             <label class="field-label" for="an-text-color">色</label>
-            <input type="color" id="an-text-color" value="#dc2626" class="h-9 w-16 rounded-lg border border-slate-200 bg-white p-1">
+            <input type="color" id="an-text-color" value="#dc2626" style="height:34px;width:60px;border-radius:var(--r-1);border:1px solid var(--rule);background:var(--panel);padding:3px">
           </div>
-          <div class="note flex-1" id="an-text-note">ドラッグした枠の高さが文字サイズになります。文字は画像化されず、選択・検索できる状態でPDFに入ります。</div>
+          <div class="hint" id="an-text-note" style="flex:1">ドラッグした枠の高さが文字サイズになります。文字は画像化されず、選択・検索できる状態でPDFに入ります。</div>
         </div>
       </div>
 
-      <div id="an-stage-wrap" class="bg-slate-100 rounded-xl p-4 flex items-center justify-center overflow-auto">
+      <div id="an-stage-wrap">
         <div id="redact-stage">
           <canvas id="redact-canvas"></canvas>
           <div id="redact-overlay"></div>
@@ -1188,15 +1043,15 @@
         </div>
       </div>
 
-      <div class="note warn mt-4" id="an-warn">墨消しを適用したページは 300dpi の画像に変換されます。そのページのテキスト選択・検索はできなくなります。</div>
+      <div class="hint warn" id="an-warn" style="margin-top:16px">墨消しを適用したページは 300dpi の画像に変換されます。そのページのテキスト選択・検索はできなくなります。</div>
 
-      <label class="check-row mt-3"><input type="checkbox" id="redact-all-pages"><span>この内容をすべてのページに適用する（ヘッダーや押印の一括処理向け。位置はページの縦横比に対する割合で揃えます）</span></label>
+      <label class="check-row" style="margin-top:12px"><input type="checkbox" id="redact-all-pages"><span>この内容をすべてのページに適用する（ヘッダーや押印の一括処理向け。位置はページの縦横比に対する割合で揃えます）</span></label>
 
-      <div class="flex flex-wrap gap-2 mt-5">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:20px">
         <button id="redact-clear" class="btn-tool danger" type="button">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>このページの注釈をすべて解除
         </button>
-        <div class="flex-1"></div>
+        <span style="flex:1"></span>
         <button class="btn-tool" data-close="modal-redact" type="button">キャンセル</button>
         <button id="redact-apply" class="btn-tool accent" type="button">
           <i data-lucide="check" class="w-3.5 h-3.5"></i>確定
@@ -1207,16 +1062,16 @@
 
   <!-- ===== Modal: Export ===== -->
   <div id="modal-export" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ex-title">
-    <div class="modal-card p-6 sm:p-7">
-      <div class="flex items-start justify-between gap-4 mb-5">
+    <div class="modal-card" style="padding:22px 24px 24px">
+      <div class="modal-head">
         <div>
-          <h3 id="ex-title" class="text-lg font-bold text-slate-800 font-outfit">書き出し</h3>
-          <p class="text-xs text-slate-500 mt-1">現在の <span id="ex-page-count" class="font-semibold text-indigo-600">0</span> ページを出力します</p>
+          <h3 id="ex-title">書き出し</h3>
+          <p>現在の <span id="ex-page-count" style="color:var(--accent);font-weight:700">0</span> ページを出力します</p>
         </div>
-        <button class="icon-btn shrink-0" data-close="modal-export" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button class="icon-btn" data-close="modal-export" aria-label="閉じる"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <div class="seg mb-5" id="ex-mode">
+      <div class="seg" id="ex-mode" style="margin-bottom:20px">
         <button class="seg-btn active" data-mode="pdf" type="button">PDF</button>
         <button class="seg-btn" data-mode="split" type="button">分割</button>
         <button class="seg-btn" data-mode="impose" type="button">面付け</button>
@@ -1224,7 +1079,7 @@
       </div>
 
       <!-- PDF -->
-      <div class="ex-panel flex flex-col gap-4" data-panel="pdf">
+      <div class="ex-panel" data-panel="pdf" style="flex-direction:column;gap:16px">
         <div>
           <span class="field-label">圧縮</span>
           <div class="seg" id="ex-compress">
@@ -1232,7 +1087,7 @@
             <button class="seg-btn" data-v="on" type="button">圧縮する</button>
           </div>
         </div>
-        <div id="ex-compress-opts" class="hidden flex-col gap-4">
+        <div id="ex-compress-opts" class="hidden" style="flex-direction:column;gap:16px">
           <div>
             <label class="field-label" for="ex-dpi">解像度</label>
             <select id="ex-dpi" class="custom-select">
@@ -1243,38 +1098,38 @@
             </select>
           </div>
           <div>
-            <div class="flex justify-between items-baseline">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
               <label class="field-label" for="ex-quality">画質</label>
-              <span id="ex-quality-val" class="text-xs font-bold text-indigo-600">80%</span>
+              <span id="ex-quality-val" class="tb-val">80%</span>
             </div>
-            <input type="range" id="ex-quality" min="30" max="95" value="80">
+            <input type="range" id="ex-quality" style="width:100%" min="30" max="95" value="80">
           </div>
-          <div class="note warn">圧縮するとページが画像に変換され、テキストの選択・検索ができなくなります。</div>
+          <div class="hint warn">圧縮するとページが画像に変換され、テキストの選択・検索ができなくなります。</div>
         </div>
 
         <div class="size-panel">
           <div class="size-row">
-            <span>現在の構成をそのまま書き出した場合</span>
+            <span>そのまま書き出した場合</span>
             <span id="size-plain" class="size-value pending">計測中...</span>
           </div>
           <div class="size-row" id="size-compressed-row">
             <span>この設定で圧縮した場合</span>
-            <span class="flex items-baseline gap-2">
+            <span style="display:flex;align-items:baseline;gap:8px">
               <span id="size-delta" class="size-delta hidden"></span>
               <span id="size-compressed" class="size-value pending">圧縮なし</span>
             </span>
           </div>
-          <button id="size-measure" class="btn-tool hidden self-start" type="button">
+          <button id="size-measure" class="btn-tool hidden" type="button" style="align-self:flex-start">
             <i data-lucide="calculator" class="w-3.5 h-3.5"></i>圧縮後のサイズを試算する
           </button>
-          <div class="note" id="size-note">ページを削除・追加すると、この数値も更新されます。</div>
+          <div class="hint" id="size-note">ページを削除・追加すると、この数値も更新されます。</div>
         </div>
 
         <label class="check-row"><input type="checkbox" id="ex-strip-meta" checked><span>メタデータ（作成者・作成ソフト・日時）を削除する</span></label>
       </div>
 
       <!-- Split -->
-      <div class="ex-panel hidden flex-col gap-4" data-panel="split">
+      <div class="ex-panel hidden" data-panel="split" style="flex-direction:column;gap:16px">
         <div>
           <span class="field-label">分割方法</span>
           <div class="seg" id="ex-split-mode">
@@ -1287,12 +1142,12 @@
           <label class="field-label" for="ex-split-n">1ファイルあたりのページ数</label>
           <input type="number" id="ex-split-n" class="text-input" min="1" max="9999" value="10">
         </div>
-        <div class="note" id="ex-split-note">各ページを個別のPDFにして、ZIPでまとめてダウンロードします。</div>
+        <div class="hint" id="ex-split-note">各ページを個別のPDFにして、ZIPでまとめてダウンロードします。</div>
         <label class="check-row"><input type="checkbox" id="ex-split-strip-meta" checked><span>メタデータを削除する</span></label>
       </div>
 
       <!-- Impose -->
-      <div class="ex-panel hidden flex-col gap-4" data-panel="impose">
+      <div class="ex-panel hidden" data-panel="impose" style="flex-direction:column;gap:16px">
         <div>
           <span class="field-label">面付け方式</span>
           <div class="seg" id="ex-impose-mode">
@@ -1318,24 +1173,24 @@
           </select>
         </div>
         <div>
-          <div class="flex justify-between items-baseline">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
             <label class="field-label" for="ex-gutter">余白</label>
-            <span id="ex-gutter-val" class="text-xs font-bold text-indigo-600">0 mm</span>
+            <span id="ex-gutter-val" class="tb-val">0 mm</span>
           </div>
-          <input type="range" id="ex-gutter" min="0" max="20" value="0">
+          <input type="range" id="ex-gutter" style="width:100%" min="0" max="20" value="0">
         </div>
-        <div class="note" id="ex-impose-note">2ページ分を1枚に並べます。文字は画像化せずベクターのまま配置されます。</div>
+        <div class="hint" id="ex-impose-note">2ページ分を1枚に並べます。文字は画像化せずベクターのまま配置されます。</div>
       </div>
 
       <!-- Image -->
-      <div class="ex-panel hidden flex-col gap-4" data-panel="image">
+      <div class="ex-panel hidden" data-panel="image" style="flex-direction:column;gap:16px">
         <div>
           <span class="field-label">形式</span>
           <div class="seg" id="ex-img-format">
             <button class="seg-btn active" data-v="png" type="button">PNG</button>
             <button class="seg-btn" data-v="jpeg" type="button">JPEG</button>
             <button class="seg-btn" data-v="webp" type="button">WebP</button>
-            <button class="seg-btn" data-v="webp-lossless" type="button">WebP<span class="ml-1 text-[10px] font-bold opacity-70">可逆</span></button>
+            <button class="seg-btn" data-v="webp-lossless" type="button">WebP 可逆</button>
             <button class="seg-btn" data-v="avif" type="button">AVIF</button>
           </div>
         </div>
@@ -1349,23 +1204,23 @@
           </select>
         </div>
         <div id="ex-img-quality-wrap" class="hidden">
-          <div class="flex justify-between items-baseline">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
             <label class="field-label" for="ex-img-quality">画質</label>
-            <span id="ex-img-quality-val" class="text-xs font-bold text-indigo-600">90%</span>
+            <span id="ex-img-quality-val" class="tb-val">90%</span>
           </div>
-          <input type="range" id="ex-img-quality" min="30" max="100" value="90">
+          <input type="range" id="ex-img-quality" style="width:100%" min="30" max="100" value="90">
         </div>
-        <div class="note" id="ex-img-note">全ページを画像にしてZIPでまとめます。1ページだけの場合は画像ファイルを直接ダウンロードします。</div>
+        <div class="hint" id="ex-img-note">全ページを画像にしてZIPでまとめます。1ページだけの場合は画像ファイルを直接ダウンロードします。</div>
       </div>
 
-      <div>
-        <label class="field-label mt-5" for="ex-filename">ファイル名</label>
+      <div style="margin-top:20px">
+        <label class="field-label" for="ex-filename">ファイル名</label>
         <input type="text" id="ex-filename" class="text-input" placeholder="edited">
       </div>
 
-      <div class="flex gap-2 mt-6">
-        <button class="btn-tool flex-1 justify-center" data-close="modal-export" type="button">キャンセル</button>
-        <button id="ex-run" class="btn-tool accent flex-1 justify-center" type="button">
+      <div style="display:flex;gap:8px;margin-top:22px">
+        <button class="btn-tool" data-close="modal-export" type="button" style="flex:1;justify-content:center">キャンセル</button>
+        <button id="ex-run" class="btn-tool accent" type="button" style="flex:1;justify-content:center">
           <i data-lucide="download" class="w-3.5 h-3.5"></i>書き出す
         </button>
       </div>

@@ -68,361 +68,512 @@
   }
   </script>
 
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../data/tools-ui.css">
+
+  <!-- Stamp the remembered theme before first paint. The tools write the same
+       key, so a choice made there carries over to the index. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('st-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode — fall back to the system setting */ }
+    })();
+  </script>
 
   <style>
+    /* ------------------------------------------------------------------
+       ST TOOLS index — the Print Shop. This is the one page in the set
+       that is read rather than operated, so it is allowed to be loud: ink
+       rules, hard shadows, uppercase mono. The tools themselves stay quiet.
+
+       data/tools-ui.css is linked for its tokens only — <html> deliberately
+       has no .st-theme, so none of the Instrument chrome applies here.
+       ------------------------------------------------------------------ */
+
     :root {
-      --wrench-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cg transform='translate(24,0) scale(-1,1)'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 4 4;
+      --paper: #F1EFE9;
+      --paper-2: #FFFFFF;
+      --ink: #17160F;
+      --ink-2: #5B594E;
+      --ink-3: #8B887B;
+      --rule: #17160F;
+      --hair: #D6D2C6;
+      --shadow-ink: rgba(23, 22, 15, 0.9);
+      --bpm: 60;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --paper: #131208;
+        --paper-2: #1C1B12;
+        --ink: #EFEBDD;
+        --ink-2: #A8A493;
+        --ink-3: #7A776A;
+        --rule: #EFEBDD;
+        --hair: #35332A;
+        --shadow-ink: rgba(239, 235, 221, 0.55);
+      }
+    }
+    :root[data-theme="dark"] {
+      --paper: #131208;
+      --paper-2: #1C1B12;
+      --ink: #EFEBDD;
+      --ink-2: #A8A493;
+      --ink-3: #7A776A;
+      --rule: #EFEBDD;
+      --hair: #35332A;
+      --shadow-ink: rgba(239, 235, 221, 0.55);
     }
 
     *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
-      min-height: 100%;
       margin: 0;
-      background-color: #f0f9ff;
-      color: #0f172a;
+      min-height: 100%;
+      background: var(--paper);
+      color: var(--ink);
       font-family: "Inter", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.75;
       -webkit-font-smoothing: antialiased;
     }
+    body { display: flex; flex-direction: column; min-height: 100vh; }
 
-    /* ========== Hero Header ========== */
-    .site-header {
-      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #0284c7 100%);
-      background-size: 200% 200%;
-      animation: gradient-drift 10s ease infinite;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      overflow: hidden;
+    .hidden { display: none !important; }
+
+    .mono {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    .lbl {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
     }
 
-    @keyframes gradient-drift {
-      0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    /* ===== masthead ===== */
+    .masthead { border-bottom: 2px solid var(--rule); }
+    .mast-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+
+    .mast-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--hair);
+    }
+    .mast-back {
+      color: var(--ink-2);
+      text-decoration: none;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+      transition: color 120ms ease;
+    }
+    .mast-back:hover { color: var(--ink); }
+    .mast-issue { margin-left: auto; color: var(--ink-2); }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid var(--rule);
+      background: var(--paper-2);
+      color: var(--ink);
+      cursor: pointer;
+      flex: none;
+      border-radius: 2px;
+      transition: transform 60ms ease;
+    }
+    .icon-btn:active { transform: translateY(2px); }
+    .icon-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+    #theme-toggle .to-dark { display: inline-flex; }
+    #theme-toggle .to-light { display: none; }
+    :root[data-theme="dark"] #theme-toggle .to-dark { display: none; }
+    :root[data-theme="dark"] #theme-toggle .to-light { display: inline-flex; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) #theme-toggle .to-dark { display: none; }
+      :root:not([data-theme="light"]) #theme-toggle .to-light { display: inline-flex; }
     }
 
-    /* Dot pattern */
-    .site-header::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
-      background-size: 22px 22px;
-      pointer-events: none;
+    .mast-main {
+      display: grid;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+      gap: 8px 40px;
+      align-items: end;
+      padding: 26px 0 22px;
+    }
+    @media (max-width: 780px) { .mast-main { grid-template-columns: 1fr; gap: 14px; } }
+
+    .mast-title {
+      font-family: "Archivo", "Inter", sans-serif;
+      font-weight: 800;
+      font-size: clamp(52px, 12vw, 116px);
+      line-height: 0.82;
+      letter-spacing: -0.055em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+    .mast-side { display: flex; flex-direction: column; gap: 14px; padding-bottom: 6px; }
+    .mast-lede {
+      margin: 0;
+      font-size: 14.5px;
+      color: var(--ink-2);
+      max-width: 38ch;
+      /* Japanese has no spaces to break on, so without this the last clause
+         happily leaves a one-character orphan on its own line. */
+      text-wrap: pretty;
+      line-break: strict;
     }
 
-    /* Light orb */
-    .site-header::after {
-      content: '';
-      position: absolute;
-      top: -60%;
-      right: -10%;
-      width: 480px;
-      height: 480px;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 65%);
-      pointer-events: none;
-    }
-
-    /* Search input inside the blue header */
-    .header-search {
-      background: rgba(255,255,255,0.15);
-      border: 1.5px solid rgba(255,255,255,0.3);
-      border-radius: 8px;
-      color: #fff;
-      font-family: inherit;
-      font-size: 14px;
-      padding: 9px 12px 9px 36px;
+    .mast-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 190px; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ink-3); }
+    #search-input {
       width: 100%;
-      transition: background 150ms ease, border-color 150ms ease;
-      backdrop-filter: blur(4px);
+      border: 1.5px solid var(--rule);
+      background: var(--paper-2);
+      color: var(--ink);
+      border-radius: 2px;
+      padding: 8px 12px 8px 32px;
+      font-family: "Inter", sans-serif;
+      font-size: 13.5px;
     }
-    .header-search::placeholder { color: rgba(255,255,255,0.6); }
-    .header-search:focus {
-      outline: none;
-      background: rgba(255,255,255,0.22);
-      border-color: rgba(255,255,255,0.65);
-    }
+    #search-input::placeholder { color: var(--ink-3); }
+    #search-input:focus { outline: none; box-shadow: 3px 3px 0 var(--shadow-ink); }
 
-    .header-select {
-      background-color: rgba(255,255,255,0.15);
-      background-image: url('data:image/svg+xml;utf8,<svg fill="%23ffffff" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      border: 1.5px solid rgba(255,255,255,0.3);
-      border-radius: 8px;
-      color: #fff;
-      font-family: inherit;
-      font-size: 14px;
-      padding: 9px 32px 9px 12px;
+    #sort-select {
+      border: 1.5px solid var(--rule);
+      background: var(--paper-2);
+      color: var(--ink);
+      border-radius: 2px;
+      padding: 8px 28px 8px 11px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       cursor: pointer;
       appearance: none;
-      transition: background-color 150ms ease, border-color 150ms ease;
-      backdrop-filter: blur(4px);
+      background-image:
+        linear-gradient(45deg, transparent 50%, currentColor 50%),
+        linear-gradient(135deg, currentColor 50%, transparent 50%);
+      background-position: right 13px center, right 9px center;
+      background-size: 4px 4px, 4px 4px;
+      background-repeat: no-repeat;
     }
-    .header-select option { background: #1e3a8a; color: #fff; }
-    .header-select:focus { outline: none; border-color: rgba(255,255,255,0.65); }
+    #sort-select:focus { outline: none; box-shadow: 3px 3px 0 var(--shadow-ink); }
 
-    /* ========== Card ========== */
+    /* A printer's rule: the page is set on a press, not a canvas. */
+    .press-rule {
+      height: 7px;
+      background-image: repeating-linear-gradient(90deg, var(--rule) 0 2px, transparent 2px 9px);
+    }
+
+    /* ===== main ===== */
+    main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 26px 22px 64px; }
+
+    #message-bar {
+      border: 1.5px solid var(--rule);
+      background: var(--paper-2);
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      box-shadow: 3px 3px 0 var(--shadow-ink);
+    }
+    #message-bar.msg-error { border-color: #C0392B; color: #C0392B; box-shadow: 3px 3px 0 #C0392B; }
+
+    #category-filter { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 22px; }
+    .filter-chip {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 13px;
+      border: 1.5px solid var(--rule);
+      border-radius: 2px;
+      background: var(--paper-2);
+      color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 60ms ease;
+    }
+    .filter-chip:active { transform: translateY(2px); }
+    .filter-chip.active { background: var(--ink); color: var(--paper); }
+    .filter-chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+    #tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+      gap: 26px 22px;
+    }
+
+    /* ===== card ===== */
     .tool-card {
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      overflow: hidden;
+      --card-accent: var(--ink);
       display: flex;
       flex-direction: column;
-      box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 4px 14px rgba(15,23,42,0.05);
-      transition: transform 220ms cubic-bezier(0.175,0.885,0.32,1.1),
-                  box-shadow 220ms ease,
-                  border-color 220ms ease;
-      position: relative;
-      text-decoration: none;
+      border: 2px solid var(--rule);
+      border-radius: 2px;
+      background: var(--paper-2);
       color: inherit;
+      text-decoration: none;
+      overflow: hidden;
+      box-shadow: 5px 5px 0 var(--shadow-ink);
+      transition: transform 130ms ease, box-shadow 130ms ease;
     }
-
-    /* Blue top accent bar */
-    .tool-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #2563eb, #0ea5e9);
-      opacity: 0;
-      transition: opacity 220ms ease;
-      z-index: 1;
-    }
-
     .tool-card:hover {
-      transform: translateY(-5px);
-      border-color: #bfdbfe;
-      box-shadow: 0 16px 40px rgba(37,99,235,0.14), 0 4px 16px rgba(37,99,235,0.08);
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0 var(--card-accent);
     }
-    .tool-card:hover::before { opacity: 1; }
+    .tool-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--card-accent); }
+    .tool-card:focus-visible { outline: 2px solid var(--card-accent); outline-offset: 3px; }
 
     .tool-img-wrap {
       position: relative;
       aspect-ratio: 1200 / 630;
-      background: #f1f5f9;
+      background: var(--paper);
+      border-bottom: 2px solid var(--rule);
       overflow: hidden;
     }
-    .tool-img {
-      width: 100%; height: 100%;
-      object-fit: cover; display: block;
-      transition: transform 400ms ease;
-    }
-    .tool-card:hover .tool-img { transform: scale(1.03); }
+    .tool-img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .tool-img-fallback {
-      position: absolute; inset: 0;
+      position: absolute;
+      inset: 0;
       display: none;
-      flex-direction: column; align-items: center; justify-content: center;
-      gap: 8px; color: #94a3b8; font-size: 12px;
-    }
-
-    /* ========== Badges ========== */
-    .category-badge {
-      display: inline-flex; align-items: center;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.05em; text-transform: uppercase;
-      padding: 3px 9px; border-radius: 99px;
-      background: #eff6ff;
-      color: #2563eb;
-      border: 1px solid #bfdbfe;
-    }
-    .tag-chip {
-      font-size: 11px; padding: 2px 8px; border-radius: 99px;
-      background: #f8fafc;
-      color: #64748b;
-      border: 1px solid #e2e8f0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--ink-3);
+      font-size: 11px;
     }
     .badge-new {
-      position: absolute; top: 10px; left: 10px; z-index: 2;
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 3px 8px; border-radius: 99px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      position: absolute;
+      top: 0;
+      left: 0;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      padding: 3px 9px;
+      background: var(--card-accent);
       color: #fff;
-      box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+      border-right: 2px solid var(--rule);
+      border-bottom: 2px solid var(--rule);
     }
 
-    /* ========== Category filter ========== */
-    #category-filter {
-      display: none;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 24px;
-    }
-    #category-filter.visible { display: flex; }
+    .tool-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
 
-    .filter-chip {
-      font-size: 13px; font-weight: 500;
-      padding: 6px 16px; border-radius: 99px;
-      border: 1.5px solid #e2e8f0;
-      background: #fff;
-      color: #64748b;
-      cursor: pointer; white-space: nowrap;
-      transition: border-color 150ms ease, background 150ms ease, color 150ms ease, box-shadow 150ms ease;
-      box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+    .category-badge {
+      display: inline-block;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--card-accent);
+      border-bottom: 2px solid var(--card-accent);
+      padding-bottom: 2px;
+      align-self: flex-start;
     }
-    .filter-chip:hover {
-      border-color: #93c5fd;
-      color: #2563eb;
-      background: #eff6ff;
+    .tool-title {
+      font-family: "Archivo", "Inter", sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--ink);
     }
-    .filter-chip.active {
-      border-color: #2563eb;
-      background: #2563eb;
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    .tool-desc { font-size: 13px; line-height: 1.75; color: var(--ink-2); margin: 0; flex: 1; }
+    .tool-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag-chip {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--ink-2);
+      border: 1px solid var(--hair);
+      border-radius: 2px;
+      padding: 1px 6px;
     }
 
-    /* ========== Skeleton ========== */
+    /* ===== skeleton ===== */
     .skeleton {
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background: linear-gradient(90deg, var(--hair) 25%, var(--paper) 50%, var(--hair) 75%);
       background-size: 200% 100%;
       animation: shimmer 1.6s infinite;
-      border-radius: 6px;
     }
     @keyframes shimmer {
       0%   { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
+    .sk-line { height: 12px; }
+    .sk-line.w25 { width: 25%; }
+    .sk-line.w75 { width: 75%; }
+    .sk-line.w100 { width: 100%; }
+    .sk-line.w60 { width: 60%; }
 
-    /* ========== Scroll-to-top ========== */
+    /* ===== empty ===== */
+    #empty-state { text-align: center; padding: 72px 0; }
+    #empty-state .box {
+      width: 56px;
+      height: 56px;
+      border: 2px solid var(--rule);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      box-shadow: 4px 4px 0 var(--shadow-ink);
+    }
+    #empty-state p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+
+    /* ===== footer ===== */
+    footer { margin-top: auto; border-top: 2px solid var(--rule); }
+    .foot-in {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--ink-2);
+    }
+    .foot-in a { color: inherit; text-decoration: none; }
+    .foot-in a:hover { color: var(--ink); }
+    .foot-copy { margin-left: auto; }
+    @media (max-width: 560px) { .foot-copy { display: none; } }
+
+    /* ===== scroll to top ===== */
     #scroll-top-btn {
-      position: fixed; bottom: 24px; right: 24px; z-index: 100;
-      width: 40px; height: 40px; border-radius: 10px;
-      background: #fff;
-      border: 1.5px solid #e2e8f0;
-      color: #64748b;
-      display: flex; align-items: center; justify-content: center;
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border: 2px solid var(--rule);
+      border-radius: 2px;
+      background: var(--paper-2);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(15,23,42,0.1);
-      opacity: 0; pointer-events: none;
-      transition: opacity 250ms ease, transform 250ms ease, border-color 150ms ease, color 150ms ease;
-      transform: translateY(8px);
+      box-shadow: 4px 4px 0 var(--shadow-ink);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(6px);
+      transition: opacity 200ms ease, transform 200ms ease;
+      z-index: 40;
     }
-    #scroll-top-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
-    #scroll-top-btn:hover { border-color: #93c5fd; color: #2563eb; }
+    #scroll-top-btn.visible { opacity: 1; pointer-events: auto; transform: none; }
+    #scroll-top-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--shadow-ink); }
 
-    /* ========== Message bar ========== */
-    .msg-error {
-      background: #fff1f2; border-color: #fecdd3; color: #be123c;
+    /* The whole site breathes on one variable; the entrance is no exception. */
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ink);
+      display: inline-block;
+      animation: hub-pulse calc(60s / var(--bpm)) ease-in-out infinite;
     }
-    .msg-info {
-      background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8;
-    }
+    @keyframes hub-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
 
-    /* ========== Page-wide wrench cursor ========== */
-    body,
-    a, button, select, label, .filter-chip, #scroll-top-btn {
-      cursor: var(--wrench-cursor), auto;
-    }
-    input, textarea {
-      cursor: var(--wrench-cursor), text;
-    }
-
-    /* ========== Header wrench animation ========== */
-    #header-wrench {
-      animation: wrench-ratchet 2.4s ease-in-out infinite;
-      transform-origin: center;
-    }
-    @keyframes wrench-ratchet {
-      0%   { transform: scaleX(-1) rotate(0deg); }
-      18%  { transform: scaleX(-1) rotate(38deg); }
-      32%  { transform: scaleX(-1) rotate(0deg); }
-      50%  { transform: scaleX(-1) rotate(38deg); }
-      64%  { transform: scaleX(-1) rotate(0deg); }
-      100% { transform: scaleX(-1) rotate(0deg); }
-    }
-
-    /* ========== Fade-up ========== */
-    .fade-up { animation: fadeUp 380ms ease both; }
+    .fade-up { animation: fadeUp 320ms ease both; }
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: none; }
     }
 
-    /* ========== Section divider wave ========== */
-    .wave-divider {
-      display: block;
-      width: 100%;
-      height: 24px;
-      margin-bottom: -2px;
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 
-<body class="flex flex-col min-h-screen">
+<body>
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
-  <!-- ===== Hero Header ===== -->
-  <header class="site-header">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-3 relative z-10">
+  <!-- ===================== masthead ===================== -->
+  <header class="masthead">
+    <div class="mast-in">
 
-      <div class="flex items-center gap-3">
-        <i data-lucide="wrench" id="header-wrench" class="w-6 h-6 text-white/90 shrink-0"></i>
-        <h1 class="text-white font-extrabold tracking-tight shrink-0" style="font-size:18px;letter-spacing:-0.02em">ST TOOLS</h1>
-        <span class="text-sm font-medium px-2.5 py-0.5 rounded-full shrink-0"
-              style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(4px);font-size:12px">
-          <span id="tool-count">0</span> tools
-        </span>
-        <div class="flex items-center gap-2 flex-1 justify-end">
-          <div class="relative w-48 sm:w-64">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60"></i>
-            <input type="text" id="search-input" placeholder="Search tools..."
-                   class="header-search" autocomplete="off" aria-label="Search tools">
+      <div class="mast-row">
+        <a class="mast-back" href="https://tk.st/">&lt; TK.ST</a>
+        <span class="mast-issue lbl">NO. <span id="tool-count">0</span></span>
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+          <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+          <i data-lucide="sun" class="to-light w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="mast-main">
+        <h1 class="mast-title">ST<br>Tools</h1>
+
+        <div class="mast-side">
+          <p class="mast-lede">
+            ブラウザの中だけで動く道具。ファイルはサーバーに送られず、端末から出ません。
+          </p>
+          <div class="mast-controls">
+            <div class="search-wrap">
+              <i data-lucide="search" class="w-4 h-4"></i>
+              <input type="text" id="search-input" placeholder="道具を探す" autocomplete="off" aria-label="ツールを検索">
+            </div>
+            <select id="sort-select" aria-label="並び替え">
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="title">Title</option>
+            </select>
           </div>
-          <select id="sort-select" class="header-select shrink-0" aria-label="Sort tools">
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="title">Title</option>
-          </select>
         </div>
       </div>
 
     </div>
-
-    <!-- Wave separator -->
-    <svg class="wave-divider" viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z" fill="#f0f9ff"/>
-    </svg>
   </header>
 
-  <!-- ===== Main ===== -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-10 py-8">
+  <div class="press-rule"></div>
 
-    <div id="message-bar" class="hidden mb-5 px-4 py-3 rounded-lg border text-sm"></div>
+  <!-- ===================== main ===================== -->
+  <main>
+    <div id="message-bar" class="hidden"></div>
     <div id="category-filter"></div>
 
-    <div id="empty-state" class="hidden text-center py-24">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-blue-100 shadow-sm mb-4">
-        <i data-lucide="search-x" class="w-7 h-7 text-blue-300"></i>
-      </div>
-      <p class="text-slate-500 text-sm font-medium">No tools found.</p>
+    <div id="empty-state" class="hidden">
+      <div class="box"><i data-lucide="search-x" class="w-6 h-6"></i></div>
+      <p>該当する道具がありません。</p>
     </div>
 
-    <div id="tool-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+    <div id="tool-grid"></div>
   </main>
 
-  <!-- ===== Footer ===== -->
-  <footer class="border-t mt-auto" style="background:#fff;border-color:#e2e8f0">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-5 flex items-center justify-center relative">
-      <a href="https://tk.st/" class="absolute left-4 sm:left-6 lg:left-10 flex items-center gap-1 transition-colors duration-200 hover:text-[#2563eb]" style="font-size:13px;color:#94a3b8;text-decoration:none;font-family:'Inter',sans-serif;letter-spacing:0.04em;" aria-label="tk.st へ戻る">&lt; <span class="hidden sm:inline">tk.st</span></a>
-      <span style="font-size:13px;color:#94a3b8">&copy; <span id="currentYear"></span> Shinya Takeda</span>
-      <div id="donation-button-container" class="absolute right-4 sm:right-6 lg:right-10"></div>
+  <!-- ===================== footer ===================== -->
+  <footer>
+    <div class="foot-in">
+      <span class="pulse-dot" aria-hidden="true"></span>
+      <a href="https://tk.st/">TK.ST</a>
+      <span class="foot-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <div id="donation-button-container"></div>
     </div>
   </footer>
 
-  <!-- Scroll-to-top -->
-  <button id="scroll-top-btn" aria-label="Scroll to top">
+  <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
     <i data-lucide="chevron-up" class="w-4 h-4"></i>
   </button>
 
@@ -433,6 +584,19 @@
       onOpen : () => { const b = document.getElementById('scroll-top-btn'); if (b) b.style.display = 'none'; },
       onClose: () => { const b = document.getElementById('scroll-top-btn'); if (b) b.style.display = '';     }
     }).init();
+  </script>
+
+  <script>
+    /* Theme: system by default, explicit choice remembered — the same key the
+       tools use, so the choice carries across the whole site. */
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const root = document.documentElement;
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+      const next = current === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('st-theme', next); } catch (e) { }
+    });
   </script>
 
   <script>
@@ -474,9 +638,24 @@
 
     function showMessage(text, type) {
       if (!text) { messageBar.classList.add('hidden'); messageBar.textContent = ''; return; }
-      messageBar.classList.remove('hidden');
       messageBar.textContent = text;
-      messageBar.className = `mb-5 px-4 py-3 rounded-lg border text-sm ${type === 'error' ? 'msg-error' : 'msg-info'}`;
+      messageBar.className = type === 'error' ? 'msg-error' : '';
+    }
+
+    // Each card carries the accent of the tool it opens, so the index and the
+    // tool read as one object rather than two unrelated pages.
+    const TOOL_ACCENTS = {
+      'nextgen-image':      '#0E9F6E',
+      'light-svg':          '#0284C7',
+      'image-to-animation': '#7C3AED',
+      'video-to-animation': '#E11D48',
+      'pdf-studio':         '#4F46E5',
+      'csv-json':           '#0D9488',
+    };
+    function accentFor(url) {
+      if (!url) return null;
+      const slug = url.pathname.replace(/\/+$/, '').split('/').pop();
+      return TOOL_ACCENTS[slug] || null;
     }
 
     function showSkeletons(count = 6) {
@@ -486,11 +665,11 @@
         sk.className = 'tool-card';
         sk.innerHTML = `
           <div class="skeleton" style="aspect-ratio:1200/630"></div>
-          <div class="p-4 flex flex-col gap-3">
-            <div class="skeleton h-4 w-1/4"></div>
-            <div class="skeleton h-5 w-3/4"></div>
-            <div class="skeleton h-3 w-full"></div>
-            <div class="skeleton h-3 w-5/6"></div>
+          <div class="tool-body">
+            <div class="skeleton sk-line w25"></div>
+            <div class="skeleton sk-line w75"></div>
+            <div class="skeleton sk-line w100"></div>
+            <div class="skeleton sk-line w60"></div>
           </div>
         `;
         grid.appendChild(sk);
@@ -546,6 +725,9 @@
       const tags = (record.tags || []).map(t => escapeHTML(t));
       const isNew = newIds.has(record.id);
 
+      const accent = accentFor(url);
+      if (accent) card.style.setProperty('--card-accent', accent);
+
       card.innerHTML = `
         <div class="tool-img-wrap">
           ${imgURL ? `<img src="${imgURL.href}" alt="${title}" loading="lazy" class="tool-img">` : ''}
@@ -555,12 +737,12 @@
           </div>
           ${isNew ? `<span class="badge-new">New</span>` : ''}
         </div>
-        <div class="p-4 flex flex-col gap-2.5 flex-grow">
-          ${category ? `<div><span class="category-badge">${category}</span></div>` : ''}
-          <h3 style="font-size:15px;font-weight:600;line-height:1.45;color:#0f172a;margin:0">${title}</h3>
-          <p style="font-size:13px;line-height:1.65;color:#64748b;flex-grow:1;margin:0">${desc}</p>
+        <div class="tool-body">
+          ${category ? `<span class="category-badge">${category}</span>` : ''}
+          <h3 class="tool-title">${title}</h3>
+          <p class="tool-desc">${desc}</p>
           ${tags.length ? `
-            <div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:2px">
+            <div class="tool-tags">
               ${tags.map(t => `<span class="tag-chip">${t}</span>`).join('')}
             </div>` : ''}
         </div>

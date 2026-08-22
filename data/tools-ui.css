@@ -1,7 +1,727 @@
 /* Shared styles for ST TOOLS pages.
- * Each tool keeps its own accent palette in its <style> block; this file
- * is reserved for components that should look identical across tools.
+ *
+ * Layer 1 — design tokens. Every tool reads its surfaces, ink and geometry
+ *           from here and declares only its own --accent trio.
+ * Layer 2 — primitives (st-* classes) and the shared page chrome.
+ * Layer 3 — components that must look identical everywhere (compare slider).
+ *
+ * Tools still on the old palette are unaffected: nothing below applies until
+ * a page actually references a token or an st-* class.
  */
+
+/* ==========================================================================
+   Layer 1 — tokens
+   ========================================================================== */
+:root {
+  /* ground / surface — neutrals biased very slightly cool, never pure grey */
+  --bg: #F7F8F9;
+  --panel: #FFFFFF;
+  --panel-2: #F1F3F5;
+  --rule: #E3E7EA;
+  --rule-strong: #C6CCD1;
+
+  --ink: #15191D;
+  --ink-2: #5C666E;
+  --ink-3: #8C949B;
+
+  /* canvas — the user's own content sits here, and it stays dark in both
+     themes so the artwork is always the brightest thing on screen */
+  --canvas: #0F1315;
+  --canvas-2: #161A1D;
+  --canvas-rule: #242A2E;
+  --canvas-ink: #E6E9EB;
+  --canvas-ink-2: #7C868D;
+
+  /* checkerboard behind transparent images (compare slider, previews) */
+  --check-bg: #FFFFFF;
+  --check-fg: #E2E8F0;
+
+  /* semantic — deliberately separate from --accent; never mix the two */
+  --ok: #0E9F6E;
+  --warn: #B45309;
+  --err: #DC2626;
+
+  /* geometry & depth — one shadow step only; hierarchy comes from hairlines */
+  --r-1: 6px;
+  --r-2: 10px;
+  --shadow-1: 0 1px 2px rgb(15 25 35 / .06), 0 8px 24px rgb(15 25 35 / .05);
+
+  /* type */
+  --font-ui: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* pulse — tk.st drives every animation off this single variable, so the
+     tools breathe at the same rate as the terminal on the front page */
+  --bpm: 60;
+  --beat: calc(60s / var(--bpm));
+
+  /* accent — each tool overrides these three and nothing else */
+  --accent: #0E9F6E;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E7F6F0;
+}
+
+/* Dark: redefine tokens only. Components never name a colour directly, so
+   they follow automatically. The :not() guard lets an explicit light choice
+   win over a dark OS setting.
+   Both blocks require .st-theme on <html>: tools still running their old
+   hard-coded light palette must not have half their surfaces flip to dark. */
+@media (prefers-color-scheme: dark) {
+  :root.st-theme:not([data-theme="light"]) {
+    --bg: #0F1317;
+    --panel: #171C21;
+    --panel-2: #1D2329;
+    --rule: #2A3138;
+    --rule-strong: #3A434B;
+
+    --ink: #E5E9ED;
+    --ink-2: #98A2AB;
+    --ink-3: #6D777F;
+
+    --check-bg: #14181B;
+    --check-fg: #23292E;
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / .4), 0 10px 30px rgb(0 0 0 / .3);
+  }
+}
+
+:root.st-theme[data-theme="dark"] {
+  --bg: #0F1317;
+  --panel: #171C21;
+  --panel-2: #1D2329;
+  --rule: #2A3138;
+  --rule-strong: #3A434B;
+
+  --ink: #E5E9ED;
+  --ink-2: #98A2AB;
+  --ink-3: #6D777F;
+
+  --check-bg: #14181B;
+  --check-fg: #23292E;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / .4), 0 10px 30px rgb(0 0 0 / .3);
+}
+
+/* ==========================================================================
+   Layer 2 — primitives
+   ========================================================================== */
+
+/* Uppercase mono label used for every control caption and status field. */
+.st-lbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Primary action. Depth is position, not shadow — it sinks 2px when pressed. */
+.st-btn {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  border-radius: var(--r-1);
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 120ms ease, transform 60ms ease;
+}
+.st-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.st-btn:active:not(:disabled) { transform: translateY(2px); }
+.st-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Quiet secondary action — hairline box, accent only on hover. */
+.st-btn-quiet {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--panel);
+  color: var(--ink-2);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, transform 60ms ease;
+}
+.st-btn-quiet:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.st-btn-quiet:active:not(:disabled) { transform: translateY(2px); }
+
+/* Segmented control: one row of exclusive options, accent marks the live one. */
+.st-seg { display: flex; border: 1px solid var(--rule); border-radius: var(--r-1); overflow: hidden; }
+.st-seg > * {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 11px;
+  background: var(--panel);
+  color: var(--ink-2);
+  border: 0;
+  border-left: 1px solid var(--rule);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.st-seg > *:first-child { border-left: 0; }
+.st-seg > *:hover:not(.active):not(:disabled) { background: var(--panel-2); color: var(--ink); }
+.st-seg > *.active { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+
+/* Terminal caret and status LED, both on the shared pulse. */
+.st-caret {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--accent);
+  vertical-align: -2px;
+  animation: st-blink var(--beat) step-end infinite;
+}
+.st-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+  animation: st-pulse var(--beat) ease-in-out infinite;
+}
+.st-led.idle { background: var(--ink-3); animation: none; }
+.st-led.err { background: var(--err); animation: none; }
+
+@keyframes st-blink { 0%, 100% { opacity: 1 } 50% { opacity: 0 } }
+@keyframes st-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .3 } }
+
+/* Focus is always visible and always the accent. */
+.st-btn:focus-visible,
+.st-btn-quiet:focus-visible,
+.st-seg > *:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Anyone who asked for less motion gets none of it. */
+@media (prefers-reduced-motion: reduce) {
+  .st-caret, .st-led { animation: none !important; }
+}
+
+/* ==========================================================================
+   Layer 2b — page chrome
+   The Instrument shell every migrated tool wears: app bar, toolbar, dropzone,
+   console, gauge, status bar, toast. Scoped to .st-theme so a page that has
+   not been migrated yet never picks any of it up.
+   Tools override only what is genuinely theirs (canvas treatment, controls).
+   ========================================================================== */
+
+.st-theme,
+.st-theme body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+.st-theme body { display: flex; flex-direction: column; min-height: 100vh; }
+.st-theme *, .st-theme *::before, .st-theme *::after { box-sizing: border-box; }
+.st-theme h1, .st-theme h2, .st-theme h3, .st-theme h4 { margin: 0; letter-spacing: -0.02em; }
+
+.st-theme .hidden { display: none !important; }
+.st-theme .num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.st-theme .fade-in { animation: st-fade-in 220ms ease both; }
+@keyframes st-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---- app bar ---- */
+.st-theme { --bar-h: 52px; --shell: 900px; }
+
+.st-theme .app-bar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.st-theme .bar-in {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 20px;
+  height: var(--bar-h);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.st-theme .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 120ms ease;
+}
+.st-theme .back:hover { color: var(--accent); }
+.st-theme .bar-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  min-width: 0;
+}
+.st-theme .bar-title h1 { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.st-theme .bar-path {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.st-theme .bar-actions { display: flex; align-items: center; gap: 7px; }
+@media (max-width: 780px) { .st-theme .bar-path { display: none; } }
+
+.st-theme .icon-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--panel);
+  color: var(--ink-2);
+  cursor: pointer;
+  flex: none;
+  transition: border-color 120ms ease, color 120ms ease, transform 60ms ease;
+}
+.st-theme .icon-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.st-theme .icon-btn:active:not(:disabled) { transform: translateY(2px); }
+.st-theme .icon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.st-theme .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The toggle shows the theme it switches *to*, in all three theme states. */
+.st-theme #theme-toggle .to-dark { display: inline-flex; }
+.st-theme #theme-toggle .to-light { display: none; }
+.st-theme[data-theme="dark"] #theme-toggle .to-dark { display: none; }
+.st-theme[data-theme="dark"] #theme-toggle .to-light { display: inline-flex; }
+@media (prefers-color-scheme: dark) {
+  .st-theme:not([data-theme="light"]) #theme-toggle .to-dark { display: none; }
+  .st-theme:not([data-theme="light"]) #theme-toggle .to-light { display: inline-flex; }
+}
+
+/* ---- toolbar ---- */
+.st-theme .toolbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: var(--bar-h);
+  z-index: 25;
+}
+.st-theme .tb-in {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 9px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.st-theme .tb-group { display: flex; align-items: center; gap: 9px; }
+.st-theme .tb-sep { width: 1px; align-self: stretch; background: var(--rule); }
+@media (max-width: 780px) { .st-theme .tb-sep { display: none; } }
+.st-theme .tb-val {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 12px;
+  text-align: right;
+}
+.st-theme .tb-group.disabled,
+.st-theme .quality-disabled { opacity: 0.4; pointer-events: none; }
+
+/* Inputs inside the toolbar */
+.st-theme input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--rule-strong);
+  outline: none;
+  cursor: pointer;
+}
+.st-theme input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  cursor: pointer;
+}
+.st-theme input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--panel);
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+.st-theme input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.st-theme .tb-input,
+.st-theme .tb-select {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--panel);
+  color: var(--ink);
+}
+.st-theme .tb-input { text-align: right; }
+.st-theme .tb-select { cursor: pointer; padding-right: 22px; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 10px center, right 6px center;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+.st-theme .tb-input:focus,
+.st-theme .tb-select:focus { outline: none; border-color: var(--accent); }
+.st-theme .unit { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+
+/* Checkbox that reads as a control, not a browser default */
+.st-theme .tb-check {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  background: var(--panel);
+  cursor: pointer;
+  position: relative;
+  flex: none;
+}
+.st-theme .tb-check:checked { background: var(--accent); border-color: var(--accent); }
+.st-theme .tb-check:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--accent-ink);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.st-theme .tb-check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- shell ---- */
+.st-theme main {
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+
+/* ---- dropzone ---- */
+.st-theme .dropzone {
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--r-1);
+  background: var(--panel);
+  padding: 52px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.st-theme .dropzone:hover { border-color: var(--accent); }
+.st-theme .dropzone:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.st-theme .dropzone.dragover {
+  border-style: solid;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.st-theme .dz-in { display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+.st-theme .dz-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-1);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  line-height: 1;
+  background: var(--bg);
+}
+.st-theme .dropzone.dragover .dz-mark { border-color: var(--accent); color: var(--accent); background: var(--panel); }
+.st-theme .dz-in b { font-size: 15px; font-weight: 700; }
+.st-theme .dz-sub { font-size: 12.5px; color: var(--ink-3); }
+
+.st-theme .url-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--panel);
+}
+.st-theme .url-row input[type="url"] {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  padding: 4px 0;
+}
+.st-theme .url-row input[type="url"]:focus { outline: none; }
+.st-theme .url-row input[type="url"]::placeholder { color: var(--ink-3); }
+
+.st-theme .note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.st-theme .note::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+.st-theme .note.warn::before { background: var(--warn); }
+
+/* ---- console ---- */
+.st-theme .console {
+  background: var(--canvas);
+  border: 1px solid var(--canvas-rule);
+  border-radius: var(--r-1);
+  padding: 13px 15px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.85;
+  color: var(--canvas-ink-2);
+  overflow-x: auto;
+  overflow-wrap: anywhere;
+}
+.st-theme #view-loading .console { max-height: 260px; overflow-y: auto; }
+.st-theme .cl { white-space: pre-wrap; }
+.st-theme .cl.hi { color: var(--canvas-ink); }
+.st-theme .cl.ok { color: var(--accent); }
+.st-theme .cl.err { color: #F87171; }
+.st-theme .cl .dim { color: #59636A; }
+.st-theme .console .st-caret { height: 12px; }
+
+.st-theme .pbar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--rule);
+  overflow: hidden;
+  margin-top: 14px;
+}
+.st-theme .pbar > div {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 200ms ease-out;
+}
+.st-theme .pbar > div.indeterminate {
+  width: 40% !important;
+  animation: st-indeterminate 1.4s ease-in-out infinite;
+}
+@keyframes st-indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.st-theme .pmeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 7px;
+}
+.st-theme .pmeta .num { font-size: 11px; color: var(--ink-2); }
+
+/* ---- readout / gauge ---- */
+.st-theme .readout {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--panel);
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.st-theme .gauge { display: flex; align-items: flex-end; gap: 14px; }
+/* The payoff: the biggest thing on the page is the user's own number. */
+.st-theme .gauge-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(44px, 12vw, 64px);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+}
+.st-theme .gauge-num.negative { color: var(--warn); }
+.st-theme .gauge-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 3px;
+  margin-left: auto;
+  text-align: right;
+}
+.st-theme .gauge-sub { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+
+.st-theme .bars { display: flex; flex-direction: column; gap: 7px; }
+.st-theme .barrow { display: flex; align-items: center; gap: 10px; }
+.st-theme .barrow .st-lbl { width: 78px; flex: none; }
+.st-theme .bar {
+  flex: 1;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+.st-theme .bar i { display: block; height: 100%; border-radius: 2px; }
+.st-theme .bar i.before { background: var(--rule-strong); width: 100%; }
+.st-theme .bar i.after { background: var(--accent); width: 0%; transition: width 550ms cubic-bezier(.2,.7,.3,1); }
+.st-theme .barrow .num { font-size: 11.5px; color: var(--ink); min-width: 72px; text-align: right; }
+
+@keyframes st-value-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.st-theme .value-pop { animation: st-value-pop 240ms ease; transform-origin: left center; }
+
+/* ---- panel ---- */
+.st-theme .panel {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--panel);
+}
+.st-theme .panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.st-theme .panel-head .name {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
+.st-theme .panel-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ---- status bar ---- */
+.st-theme .status-bar {
+  margin-top: auto;
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+}
+.st-theme .sb-in {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.st-theme .sb-item { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.st-theme .sb-copy { margin-left: auto; text-transform: none; letter-spacing: 0.02em; }
+.st-theme #donation-button-container { flex: none; margin-left: auto; }
+
+/* The bar holds live state (page counts, selection) on some tools, and every
+   item is nowrap, so the narrow-screen rule is to drop the decorative items
+   before anything can push the donation button off the edge. The bar itself
+   must not clip: the donation tooltip pops upward out of it. */
+@media (max-width: 620px) { .st-theme .sb-copy { display: none; } }
+@media (max-width: 560px) { .st-theme .sb-hide { display: none; } }
+
+/* The donation widget centres its tooltip over the button. At the right edge
+   of a narrow screen that pushes the page sideways, so anchor it to the
+   button's right edge instead of its centre. */
+@media (max-width: 700px) {
+  .st-theme #donation-button-container .donation-widget-tooltip { left: auto; right: 0; }
+  .st-theme #donation-button-container .donation-widget-tooltip::after {
+    left: auto;
+    right: 12px;
+    transform: none;
+  }
+}
+
+/* ---- toast ---- */
+.st-theme #toast {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 16px;
+  border: 1px solid var(--canvas-rule);
+  border-radius: var(--r-1);
+  background: var(--canvas);
+  color: var(--canvas-ink);
+  font-size: 13px;
+  box-shadow: var(--shadow-1);
+  z-index: 120;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.st-theme #toast.translate-y-20 { transform: translate(-50%, 80px); }
+.st-theme #toast.opacity-0 { opacity: 0; }
+.st-theme #toast .t-ok { color: var(--accent); }
+.st-theme #toast .t-err { color: #F87171; }
+
+@media (prefers-reduced-motion: reduce) {
+  .st-theme *, .st-theme *::before, .st-theme *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   Layer 3 — components
+   ========================================================================== */
 
 /* Inline Before/After compare slider.
  * Markup expected (built by STCommon.setupInlineCompare):
@@ -19,11 +739,11 @@
   user-select: none;
   touch-action: none;
   background:
-    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
-    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
-    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
-  background-color: #ffffff;
+    linear-gradient(45deg, var(--check-fg) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--check-fg) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--check-fg) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--check-fg) 75%);
+  background-color: var(--check-bg);
   background-size: 16px 16px;
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
   border-radius: 12px;
