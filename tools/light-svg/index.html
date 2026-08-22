@@ -485,14 +485,13 @@
   <!-- ===================== app bar ===================== -->
   <header class="app-bar">
     <div class="bar-in">
-      <a class="back" href="https://tk.st/tools/">
-        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><span>ST TOOLS</span>
-      </a>
-
-      <div class="bar-title">
-        <h1>Light SVG</h1>
-        <span class="bar-path">tk.st/tools/light-svg</span>
-      </div>
+      <nav class="crumb" aria-label="パンくずリスト">
+        <ol>
+          <li class="crumb-root"><a href="https://tk.st/">tk.st</a></li>
+          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
+          <li><h1 aria-current="page">Light SVG</h1></li>
+        </ol>
+      </nav>
 
       <div class="bar-actions">
         <button id="btn-info" class="icon-btn" type="button" aria-label="最適化の仕組み" title="最適化の仕組み">

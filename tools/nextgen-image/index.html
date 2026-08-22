@@ -239,19 +239,20 @@
   <!-- ===================== app bar ===================== -->
   <header class="app-bar">
     <div class="bar-in">
-      <a class="back" href="https://tk.st/tools/">
-        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><span>ST TOOLS</span>
-      </a>
+      <nav class="crumb" aria-label="パンくずリスト">
+        <ol>
+          <li class="crumb-root"><a href="https://tk.st/">tk.st</a></li>
+          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
+          <li><h1 aria-current="page">NextGen Image</h1></li>
+        </ol>
+      </nav>
 
-      <div class="bar-title">
-        <h1>NextGen Image</h1>
-        <span class="bar-path">tk.st/tools/nextgen-image</span>
+      <div class="bar-actions">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+          <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+          <i data-lucide="sun" class="to-light w-4 h-4"></i>
+        </button>
       </div>
-
-      <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
-        <i data-lucide="moon" class="to-dark w-4 h-4"></i>
-        <i data-lucide="sun" class="to-light w-4 h-4"></i>
-      </button>
     </div>
   </header>
 

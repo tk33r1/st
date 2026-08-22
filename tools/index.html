@@ -46,7 +46,7 @@
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          {"@type": "ListItem", "position": 1, "name": "Shinya Takeda - Terminal Portfolio", "item": "https://tk.st/"},
+          {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
           {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"}
         ]
       },
@@ -169,16 +169,35 @@
       padding: 11px 0;
       border-bottom: 1px solid var(--hair);
     }
-    .mast-back {
-      color: var(--ink-2);
-      text-decoration: none;
+    /* Breadcrumb — same trail and same markup as the tools, set in the index's
+       own ink rather than the Instrument tokens. */
+    .crumb ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 9px;
       font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 11px;
-      letter-spacing: 0.12em;
+      font-size: 11.5px;
+      letter-spacing: 0.1em;
       white-space: nowrap;
-      transition: color 120ms ease;
     }
-    .mast-back:hover { color: var(--ink); }
+    .crumb li { display: flex; align-items: baseline; gap: 9px; }
+    .crumb li + li::before { content: "/"; color: var(--hair); }
+    .crumb a { color: var(--ink-2); text-decoration: none; transition: color 120ms ease; }
+    .crumb a:hover { color: var(--ink); }
+    .crumb a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    .crumb [aria-current="page"] {
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: 0.14em;
+    }
+    @media (max-width: 640px) {
+      .crumb .crumb-root { display: none; }
+      .crumb .crumb-root + li::before { content: none; }
+    }
+
     .mast-issue { margin-left: auto; color: var(--ink-2); }
 
     .icon-btn {
@@ -516,7 +535,12 @@
     <div class="mast-in">
 
       <div class="mast-row">
-        <a class="mast-back" href="https://tk.st/">&lt; TK.ST</a>
+        <nav class="crumb" aria-label="パンくずリスト">
+          <ol>
+            <li class="crumb-root"><a href="https://tk.st/">tk.st</a></li>
+            <li><span aria-current="page">ST TOOLS</span></li>
+          </ol>
+        </nav>
         <span class="mast-issue lbl">NO. <span id="tool-count">0</span></span>
         <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
           <i data-lucide="moon" class="to-dark w-4 h-4"></i>
