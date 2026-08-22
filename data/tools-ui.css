@@ -264,6 +264,17 @@
    Only the root's label differs on purpose: the bar shows the domain "tk.st",
    while the structured data names the person, "Shinya Takeda". */
 .st-theme .crumb { min-width: 0; }
+
+/* The tool's own mark, sitting at the end of the trail. Its image is read from
+   the page's <link rel="icon"> at runtime rather than pasted in again, so the
+   bar and the browser tab can never end up showing different icons. */
+.st-theme .crumb-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex: none;
+  background: center / contain no-repeat;
+}
 .st-theme .crumb ol {
   list-style: none;
   margin: 0;
@@ -662,47 +673,80 @@
 }
 .st-theme .panel-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
 
-/* ---- status bar ---- */
-.st-theme .status-bar {
+/* ---- footer ----
+   Three fixed slots on every page: the support widget, the notice, and the
+   way back up. A grid rather than flex, so the notice sits on the page's
+   centre line however wide the two sides happen to be. */
+.st-theme .site-foot {
   margin-top: auto;
   border-top: 1px solid var(--rule);
   background: var(--panel);
 }
-.st-theme .sb-in {
+.st-theme .foot-in {
   max-width: var(--shell);
   margin: 0 auto;
-  padding: 0 20px;
-  height: 38px;
-  display: flex;
+  padding: 6px 20px;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+.st-theme #donation-button-container { justify-self: start; }
+.st-theme .foot-copy {
+  justify-self: center;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.st-theme .foot-top {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 120ms ease;
 }
-.st-theme .sb-item { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
-.st-theme .sb-copy { margin-left: auto; text-transform: none; letter-spacing: 0.02em; }
-.st-theme #donation-button-container { flex: none; margin-left: auto; }
+.st-theme .foot-top:hover { color: var(--accent); }
+.st-theme .foot-top:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
-/* The bar holds live state (page counts, selection) on some tools, and every
-   item is nowrap, so the narrow-screen rule is to drop the decorative items
-   before anything can push the donation button off the edge. The bar itself
-   must not clip: the donation tooltip pops upward out of it. */
-@media (max-width: 620px) { .st-theme .sb-copy { display: none; } }
-@media (max-width: 560px) { .st-theme .sb-hide { display: none; } }
+/* ---- live state, in the app bar ----
+   State belongs with the tool's chrome, not in the footer: the footer now
+   holds the same three things on every page. */
+.st-theme .bar-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+@media (max-width: 700px) { .st-theme .bar-status #status-text { display: none; } }
 
-/* The donation widget centres its tooltip over the button. At the right edge
-   of a narrow screen that pushes the page sideways, so anchor it to the
-   button's right edge instead of its centre. */
-@media (max-width: 700px) {
-  .st-theme #donation-button-container .donation-widget-tooltip { left: auto; right: 0; }
-  .st-theme #donation-button-container .donation-widget-tooltip::after {
-    left: auto;
-    right: 12px;
-    transform: none;
-  }
+/* The anchor is a real link, so honour the reader's motion preference. */
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+/* The donation widget centres its tooltip over its button. The widget now
+   sits in the footer's left slot on every page, so a centred tooltip hangs
+   off the left edge and gets clipped — anchor it to the button's left edge
+   instead. Unscoped on purpose: the index links this file but carries no
+   .st-theme, and its widget sits in the same slot. */
+#donation-button-container .donation-widget-tooltip { left: 0; right: auto; }
+#donation-button-container .donation-widget-tooltip::after {
+  left: 12px;
+  right: auto;
+  transform: none;
 }
 
 /* ---- toast ---- */

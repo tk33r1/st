@@ -221,6 +221,10 @@
 </head>
 
 <body>
+  <!-- Anchor target for the footer link. It cannot sit on the app bar:
+       that bar is sticky, so once the page scrolls it is already at the
+       top of the viewport and the browser would scroll nowhere. -->
+  <span id="top" tabindex="-1"></span>
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -236,7 +240,11 @@
           <li><h1 aria-current="page">Image to Animation</h1></li>
         </ol>
       </nav>
+      <span class="crumb-mark" aria-hidden="true"></span>
       <div class="bar-actions">
+        <span class="bar-status">
+          <span id="status-led" class="st-led idle"></span><span id="status-text">ready</span>
+        </span>
         <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
           <i data-lucide="moon" class="to-dark w-4 h-4"></i>
           <i data-lucide="sun" class="to-light w-4 h-4"></i>
@@ -395,12 +403,13 @@
   </main>
 
   <!-- ===================== status bar ===================== -->
-  <footer class="status-bar">
-    <div class="sb-in">
-      <span class="sb-item"><span id="status-led" class="st-led idle"></span><span id="status-text">ready</span></span>
-      <span class="sb-item sb-hide">local only</span>
-      <span class="sb-item sb-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+  <footer class="site-foot">
+    <div class="foot-in">
       <div id="donation-button-container"></div>
+      <span class="foot-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+      <a class="foot-top" href="#top">
+        <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>ページ先頭へ
+      </a>
     </div>
   </footer>
 
@@ -1361,6 +1370,13 @@
       setStatus('ready', 'idle');
     });
 
+    /* The mark beside the trail is this page's own favicon, read from
+       the <link>, so the bar and the browser tab cannot drift apart. */
+    (function () {
+      var icon = document.querySelector('link[rel="icon"]');
+      var mark = document.querySelector('.crumb-mark');
+      if (icon && mark) mark.style.backgroundImage = 'url("' + icon.href + '")';
+    })();
   </script>
 </body>
 </html>
