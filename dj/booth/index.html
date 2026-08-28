@@ -133,7 +133,16 @@
       font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--accent);
       border: 1px solid var(--accent-dim); border-radius: 4px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px;
     }
-    .meta { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
+    .meta { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 4px; }
+
+    /* 繋ぎの判断材料。暗所で一瞥して拾えるよう、等幅で1行に並べる */
+    .specs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .spec {
+      font-family: var(--mono); font-size: 11.5px; font-variant-numeric: tabular-nums;
+      color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px;
+    }
+    .spec.hi { color: var(--accent); border-color: var(--accent-dim); }
+    .spec.ex { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
     .flag {
       display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--warn);
       border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line)); border-radius: 4px; padding: 1px 7px; margin-top: 5px;
@@ -310,9 +319,20 @@
         ? '<div class="art"><img src="' + esc(s.artwork) + '" alt="" loading="lazy"></div>'
         : '<div class="art none" aria-hidden="true">⚠</div>';
       const variant = s.variant ? '<span class="variant">' + esc(s.variant) + '</span>' : '';
+      // BPM とキーは取得できたときだけ出す。無い値を空欄で見せない。
+      const chip = (v, cls) => v ? '<span class="spec' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span>' : '';
+      const specs = '<div class="specs">' +
+        chip(mmss(s.durationMs)) +
+        chip(s.genre) +
+        chip(s.releaseYear || '') +
+        (s.explicitness === 'explicit' ? '<span class="spec ex">EXPLICIT</span>'
+          : s.explicitness === 'cleaned' ? '<span class="spec">CLEAN</span>' : '') +
+        (s.bpm ? chip(Math.round(s.bpm) + ' BPM', 'hi') : '') +
+        chip([s.camelot, s.songKey].filter(Boolean).join(' · '), 'hi') +
+        '</div>';
       const line = s.isFree
         ? '<div class="flag">⚠ カタログ外 — 本人の自由入力</div>'
-        : '<div class="meta">' + esc(s.album) + ' · ' + mmss(s.durationMs) + ' · ' + esc(ago(s.createdAt)) + '</div>';
+        : specs + '<div class="meta">' + esc(s.album) + ' · ' + esc(ago(s.createdAt)) + '</div>';
 
       const voices = (s.voices || []).filter((v) => v.message || v.name)
         .map((v) => '<div class="msg">' + (v.message ? esc(v.message) : '') +

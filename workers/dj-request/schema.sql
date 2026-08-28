@@ -34,6 +34,15 @@ CREATE TABLE IF NOT EXISTS songs (
   apple_url   TEXT NOT NULL DEFAULT '',   -- trackViewUrl。booth は music:// に変えて開く
   preview_url TEXT NOT NULL DEFAULT '',
   is_free     INTEGER NOT NULL DEFAULT 0, -- 1 = 自由入力（曲を特定できていない）
+
+  -- 繋ぎの判断材料。ジャンル/年/explicit は iTunes の応答にそのまま入っている。
+  genre        TEXT    NOT NULL DEFAULT '',
+  release_year INTEGER NOT NULL DEFAULT 0,
+  explicitness TEXT    NOT NULL DEFAULT '', -- explicit | cleaned | notExplicit
+  -- BPM とキーは外部サービスから後で埋める。取れないことも多いので NULL 許容。
+  bpm          REAL,
+  song_key     TEXT,   -- "F#m" のような表記
+  camelot      TEXT,   -- "11A" のようなキャメロット表記
   votes       INTEGER NOT NULL DEFAULT 0,
   status      TEXT NOT NULL DEFAULT 'pending', -- pending | queued | played | skipped
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,

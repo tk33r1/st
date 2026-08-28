@@ -138,8 +138,9 @@ async function postRequest(request, env, cors) {
     const res = await env.DB.prepare(
       `INSERT INTO songs
          (event_code, dedupe_key, track_id, title, artist, artist_en, variant, album,
-          duration_ms, artwork, apple_url, preview_url, is_free, votes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+          duration_ms, artwork, apple_url, preview_url, is_free,
+          genre, release_year, explicitness, votes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
     ).bind(
       ev.code, key,
       track.trackId ? String(track.trackId) : null,
@@ -152,7 +153,10 @@ async function postRequest(request, env, cors) {
       clean(track.artwork, LIMITS.url),
       clean(track.appleUrl, LIMITS.url),
       clean(track.previewUrl, LIMITS.url),
-      isFree ? 1 : 0
+      isFree ? 1 : 0,
+      clean(track.genre, 60),
+      Number(track.releaseYear) || 0,
+      clean(track.explicitness, 20)
     ).run();
     song = { id: res.meta.last_row_id };
   }
@@ -267,6 +271,12 @@ async function adminSongs(env, cors) {
       appleUrl: s.apple_url,
       previewUrl: s.preview_url,
       isFree: !!s.is_free,
+      genre: s.genre || '',
+      releaseYear: s.release_year || 0,
+      explicitness: s.explicitness || '',
+      bpm: s.bpm,
+      songKey: s.song_key || '',
+      camelot: s.camelot || '',
       votes: s.votes,
       status: s.status,
       createdAt: s.created_at,

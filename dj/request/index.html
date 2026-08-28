@@ -405,6 +405,10 @@
         kept.push({
           trackId: r.trackId, artist: r.artistName || '', title: base, variant,
           album: r.collectionName || '', durationMs: r.trackTimeMillis || 0,
+          // 繋ぎの判断材料。iTunes の応答にそのまま入っているので拾うだけ
+          genre: r.primaryGenreName || '',
+          releaseYear: Number(String(r.releaseDate || '').slice(0, 4)) || 0,
+          explicitness: r.trackExplicitness || '',   // explicit | cleaned | notExplicit
           artwork: bigArt(r.artworkUrl100), appleUrl: r.trackViewUrl || '',
           previewUrl: r.previewUrl || '',
           key: norm(r.artistName) + '|' + norm(base),
@@ -643,6 +647,7 @@
           artistEn: artistEn || picked.artist, variant: picked.variant, album: picked.album,
           durationMs: picked.durationMs, artwork: picked.artwork,
           appleUrl: picked.appleUrl, previewUrl: picked.previewUrl,
+          genre: picked.genre, releaseYear: picked.releaseYear, explicitness: picked.explicitness,
         },
         name: $('#name').value, message: $('#msg').value,
       }, $('#send'), $('#sendErr'),
