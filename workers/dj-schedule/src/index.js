@@ -1,5 +1,5 @@
 // 白昼夢スケジュール調整 API
-// route: tk.st/dj/api/*
+// route: tk.st/dj/api/schedule/*
 //
 // 白昼夢は毎月1回・日曜開催なので「月」がそのままイベント。
 // 候補日は月から機械的に導けるため DB には持たず、回答とメモだけを保存する。
@@ -9,6 +9,9 @@
 // 同一オリジンの GET は Origin ヘッダが飛ばないため、Origin 空も許可する。
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
+
+// wrangler.toml の routes と対になるパスの接頭辞。ルートを変えたらここも変える
+const BASE_PATH = '/dj/api/schedule';
 
 const MAX_RESPONSES = 60;
 const ANSWERS = new Set(['o', 't', 'x']); // ○ △ ×
@@ -158,11 +161,16 @@ export default {
       return json({ error: 'Unauthorized' }, 401, cors);
     }
 
+    // wrangler.toml のルート（tk.st/dj/api/schedule/*）に合わせてプレフィックスを剥がす
     const path = url.pathname.replace(/\/+$/, '');
+    if (!path.startsWith(BASE_PATH)) {
+      return new Response('Not Found', { status: 404, headers: cors });
+    }
+    const route = path.slice(BASE_PATH.length) || '/';
 
     try {
       // ---- 回答が入っている月の一覧（画面のショートカット用）----
-      if (path === '/dj/api/months') {
+      if (route === '/months') {
         if (request.method !== 'GET') {
           return new Response('Method Not Allowed', { status: 405, headers: cors });
         }
@@ -173,8 +181,8 @@ export default {
         return json(results || [], 200, cors);
       }
 
-      // ---- /dj/api/months/:ym ----
-      const monthMatch = path.match(/^\/dj\/api\/months\/(\d{4}-\d{2})$/);
+      // ---- /months/:ym ----
+      const monthMatch = route.match(/^\/months\/(\d{4}-\d{2})$/);
       if (monthMatch) {
         const ym = monthMatch[1];
         if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
@@ -185,8 +193,8 @@ export default {
         return new Response('Method Not Allowed', { status: 405, headers: cors });
       }
 
-      // ---- /dj/api/months/:ym/memo ----
-      const memoMatch = path.match(/^\/dj\/api\/months\/(\d{4}-\d{2})\/memo$/);
+      // ---- /months/:ym/memo ----
+      const memoMatch = route.match(/^\/months\/(\d{4}-\d{2})\/memo$/);
       if (memoMatch && request.method === 'PUT') {
         const ym = memoMatch[1];
         if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
@@ -203,8 +211,8 @@ export default {
         return json(await loadMonth(env, ym), 200, cors);
       }
 
-      // ---- /dj/api/months/:ym/status ---- 確定した開催日と開催不可日
-      const statusMatch = path.match(/^\/dj\/api\/months\/(\d{4}-\d{2})\/status$/);
+      // ---- /months/:ym/status ---- 確定した開催日と開催不可日
+      const statusMatch = route.match(/^\/months\/(\d{4}-\d{2})\/status$/);
       if (statusMatch && request.method === 'PUT') {
         const ym = statusMatch[1];
         if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
@@ -227,8 +235,8 @@ export default {
         return json(await loadMonth(env, ym), 200, cors);
       }
 
-      // ---- /dj/api/months/:ym/responses ----
-      const responsesMatch = path.match(/^\/dj\/api\/months\/(\d{4}-\d{2})\/responses$/);
+      // ---- /months/:ym/responses ----
+      const responsesMatch = route.match(/^\/months\/(\d{4}-\d{2})\/responses$/);
       if (responsesMatch && request.method === 'POST') {
         const ym = responsesMatch[1];
         if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
@@ -265,8 +273,8 @@ export default {
         return json(await loadMonth(env, ym), 200, cors);
       }
 
-      // ---- /dj/api/months/:ym/responses/:responseId ----
-      const oneResponse = path.match(/^\/dj\/api\/months\/(\d{4}-\d{2})\/responses\/(\d+)$/);
+      // ---- /months/:ym/responses/:responseId ----
+      const oneResponse = route.match(/^\/months\/(\d{4}-\d{2})\/responses\/(\d+)$/);
       if (oneResponse && request.method === 'DELETE') {
         const [, ym, responseId] = oneResponse;
         if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
