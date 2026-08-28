@@ -8,5 +8,5 @@ database_name = "dj-schedule-db"
 database_id   = "2305f1b6-824e-48ca-b53f-67d89a602cda"
 
 [[routes]]
-pattern   = "tk.st/dj/api/*"
+pattern   = "tk.st/dj/api/schedule/*"
 zone_name = "tk.st"

@@ -1,0 +1,18 @@
+name               = "tk-st-dj-request"
+main               = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "dj-request-db"
+database_id   = "a2dad8cb-040e-4ef9-96cc-2659e7a83bd2"
+
+# dj-schedule が tk.st/dj/api/schedule/* を使うので、こちらは req/* に固定する。
+# Cloudflare は route の重複を許さないため、両者は必ず別の接頭辞にすること。
+[[routes]]
+pattern   = "tk.st/dj/api/req/*"
+zone_name = "tk.st"
+
+# secret は wrangler secret put で設定する（コミットしない）:
+#   wrangler secret put ADMIN_KEY   … ブースコンソールの管理操作キー
+#   wrangler secret put IP_SALT     … IP ハッシュのソルト

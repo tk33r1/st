@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="人類踊狂計画のイベントで、かけてほしい曲をリクエストするページ。">
+  <!-- イベント用の実務ページなので検索結果には出さない。
+       noindex を入れておけば sitemap 生成からも自動で除外される。 -->
+  <meta name="robots" content="noindex">
+  <title>リクエスト - 人類踊狂計画</title>
+  <link rel="icon" href="https://tk.st/images/favicons/dj-favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://tk.st/images/favicons/dj-favicon.png">
+  <link rel="canonical" href="https://tk.st/dj/request/">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- 会場の回線が細いことがあるので、外部への接続はフォントと
+       iTunes Search API だけに絞っている（解析タグは載せない）。 -->
+  <link rel="preconnect" href="https://itunes.apple.com">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=Noto+Serif+JP:wght@900&display=swap">
+
+  <style>
+    :root {
+      --ink: #0D0A14;
+      --panel: #16111F;
+      --card: #1D1729;
+      --card-hi: #251D34;
+      --line: #2E2440;
+      --text: #EDE8F5;
+      --muted: #9A8FB0;
+      --faint: #6B6180;
+      --accent: #9C7AF7;
+      --accent-dim: #6E52C4;
+      --go: #3FD68C;
+      --warn: #FFB84D;
+      --stop: #FF5C5C;
+
+      --sans: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+      --mono: 'IBM Plex Mono', ui-monospace, monospace;
+      --serif: 'Noto Serif JP', Georgia, serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      background: var(--ink);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+    .stage { padding: 26px 16px 60px; display: flex; justify-content: center; }
+    .sheet {
+      width: 100%; max-width: 430px;
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 26px; overflow: hidden;
+    }
+    @media (max-width: 480px) {
+      .stage { padding: 0 0 40px; }
+      .sheet { border-radius: 0; border-left: 0; border-right: 0; border-top: 0; min-height: 100vh; }
+    }
+
+    .top { padding: 20px 20px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+    .top h1 { font-family: var(--serif); font-weight: 900; font-size: 17px; margin: 0; flex: 1; line-height: 1.3; }
+    .badge {
+      font-size: 11.5px; font-weight: 600; color: var(--go);
+      border: 1px solid color-mix(in srgb, var(--go) 45%, var(--line));
+      border-radius: 999px; padding: 3px 11px;
+      display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--go); box-shadow: 0 0 7px var(--go); }
+    .badge.shut { color: var(--faint); border-color: var(--line); }
+    .badge.shut::before { background: var(--faint); box-shadow: none; }
+
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+    .tabs button {
+      padding: 13px 8px; font-size: 13.5px; font-weight: 600; color: var(--faint);
+      border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
+    }
+    .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+
+    .pane { padding: 20px; display: none; flex-direction: column; gap: 16px; }
+    .pane.on { display: flex; }
+
+    .lede { font-size: 14px; color: var(--muted); margin: 0; }
+    .lede b { color: var(--text); font-weight: 600; }
+
+    .field { position: relative; }
+    .field input {
+      width: 100%; font: inherit; font-size: 16px;
+      background: var(--ink); color: var(--text);
+      border: 1px solid var(--line); border-radius: 12px; padding: 15px 44px 15px 15px;
+    }
+    .field input::placeholder { color: var(--faint); }
+    .field input:focus { border-color: var(--accent-dim); outline: none; }
+    .field .clear {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 34px; height: 34px; border-radius: 50%; color: var(--faint); font-size: 17px;
+      display: none; align-items: center; justify-content: center;
+    }
+    .field.filled .clear { display: flex; }
+
+    .hint { font-size: 12px; color: var(--faint); margin: -6px 0 0; }
+
+    .loading { display: flex; align-items: center; gap: 10px; color: var(--faint); font-size: 13px; padding: 8px 0; }
+    .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .cands { display: flex; flex-direction: column; gap: 8px; }
+    .cand {
+      display: grid; grid-template-columns: 56px minmax(0, 1fr) 18px; gap: 13px; align-items: center;
+      width: 100%; text-align: left;
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
+    }
+    .cand:hover { background: var(--card-hi); border-color: var(--accent-dim); }
+    .cand img { width: 56px; height: 56px; border-radius: 7px; display: block; background: var(--ink); }
+    .cand .t { font-size: 14.5px; font-weight: 600; line-height: 1.35; }
+    .cand .a { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+    .cand .d { font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
+    .cand .chev { color: var(--faint); font-size: 15px; }
+
+    .trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* グリッド内の span は inline のままだと縦に積まれず truncate も効かない */
+    .cand .t, .cand .a, .cand .d,
+    .row .t, .row .a, .row .by,
+    .now .t, .now .a { display: block; }
+
+    details.alts { margin: -2px 0 2px 69px; }
+    details.alts summary { font-size: 12px; color: var(--accent); cursor: pointer; list-style: none; padding: 3px 0; }
+    details.alts summary::-webkit-details-marker { display: none; }
+    details.alts summary::before { content: '▸ '; }
+    details.alts[open] summary::before { content: '▾ '; }
+    .alt {
+      display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+      font-size: 12.5px; color: var(--muted); padding: 8px 11px;
+      border: 1px solid var(--line); border-radius: 9px; margin-top: 5px;
+    }
+    .alt .v { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+    .alt .len { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+    .nomatch { border: 1px dashed var(--line); border-radius: 12px; padding: 22px 18px; text-align: center; color: var(--faint); font-size: 13px; }
+    .linkbtn { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 14px; font-size: 13.5px; color: var(--muted); }
+    .linkbtn:hover { color: var(--text); border-color: var(--accent-dim); background: var(--card); }
+
+    .hero { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+    .hero img { width: 200px; height: 200px; border-radius: 14px; display: block; background: var(--card); }
+    .hero .ph {
+      width: 200px; height: 200px; border-radius: 14px; display: grid; place-items: center;
+      background: repeating-linear-gradient(45deg, #241B33 0 8px, #1D1729 8px 16px);
+      color: var(--warn); font-size: 40px;
+    }
+    .hero h2 { font-size: 20px; font-weight: 700; margin: 0; line-height: 1.35; text-wrap: balance; }
+    .hero .a { color: var(--muted); font-size: 14px; }
+    .hero .d { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .vtag {
+      font-family: var(--mono); font-size: 11.5px; color: var(--accent);
+      border: 1px solid var(--accent-dim); border-radius: 5px; padding: 1px 7px; margin-left: 7px; vertical-align: 2px;
+    }
+
+    .player { display: flex; align-items: center; gap: 12px; width: 100%; }
+    .player button {
+      width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+      border: 1px solid var(--accent-dim); color: var(--accent); font-size: 15px;
+      display: grid; place-items: center;
+    }
+    .player .bar { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+    .player .bar b { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
+    .player .lab { font-family: var(--mono); font-size: 11px; color: var(--faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    label.f { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    label.f .req { color: var(--faint); font-size: 11.5px; }
+    textarea, input.txt {
+      font: inherit; font-size: 16px; width: 100%;
+      background: var(--ink); color: var(--text);
+      border: 1px solid var(--line); border-radius: 11px; padding: 13px;
+    }
+    textarea { resize: vertical; min-height: 84px; }
+    textarea:focus, input.txt:focus { border-color: var(--accent-dim); outline: none; }
+    .count { font-family: var(--mono); font-size: 11px; color: var(--faint); text-align: right; font-variant-numeric: tabular-nums; }
+    .count.over { color: var(--warn); }
+
+    .send {
+      width: 100%; background: var(--accent); color: #14091F;
+      font-size: 15.5px; font-weight: 700; border-radius: 12px; padding: 17px;
+    }
+    .send:hover { background: #B195FA; }
+    .send:disabled { background: var(--card); color: var(--faint); cursor: not-allowed; }
+
+    .back { align-self: flex-start; font-size: 13px; color: var(--muted); padding: 6px 0; }
+
+    .err {
+      background: color-mix(in srgb, var(--stop) 15%, var(--ink));
+      border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
+      color: #FFC9C9; border-radius: 11px; padding: 12px 14px; font-size: 13px;
+    }
+
+    .done { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0 4px; }
+    .tick { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--go); color: var(--go); font-size: 27px; }
+    .done h2 { font-size: 19px; margin: 0; font-weight: 700; }
+    .done .what { font-size: 14px; color: var(--muted); }
+    .done .what b { color: var(--text); font-weight: 600; }
+    .note { font-size: 12.5px; color: var(--faint); line-height: 1.7; border-top: 1px solid var(--line); padding-top: 14px; width: 100%; margin: 0; }
+    .queuepos { font-family: var(--mono); font-size: 12.5px; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 999px; padding: 5px 14px; }
+
+    .shutbox { text-align: center; color: var(--faint); padding: 40px 10px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    .shutbox .big { font-size: 15px; color: var(--muted); }
+
+    .boardhead { display: flex; align-items: baseline; gap: 10px; }
+    .boardhead h2 { font-size: 11.5px; font-family: var(--mono); letter-spacing: .13em; color: var(--faint); margin: 0; font-weight: 500; flex: 1; }
+    .fresh { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+
+    .now {
+      display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: center;
+      background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 17%, var(--card)), var(--card));
+      border: 1px solid var(--accent-dim); border-radius: 14px; padding: 14px;
+    }
+    .now img { width: 72px; height: 72px; border-radius: 8px; display: block; }
+    .now .lab { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--accent); display: flex; align-items: center; gap: 7px; }
+    .now .t { font-size: 15.5px; font-weight: 700; line-height: 1.35; margin-top: 4px; }
+    .now .a { font-size: 12.5px; color: var(--muted); }
+
+    .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
+    .eq i { width: 2.5px; background: var(--accent); border-radius: 1px; animation: bounce .9s ease-in-out infinite; }
+    .eq i:nth-child(1) { height: 40%; animation-delay: -.5s; }
+    .eq i:nth-child(2) { height: 100%; animation-delay: -.2s; }
+    .eq i:nth-child(3) { height: 65%; animation-delay: -.7s; }
+    .eq i:nth-child(4) { height: 85%; }
+    @keyframes bounce { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+
+    .rows { display: flex; flex-direction: column; gap: 7px; }
+    .row {
+      display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+      background: var(--card); border: 1px solid var(--line); border-radius: 11px; padding: 9px 12px;
+    }
+    .row.mine { border-color: var(--accent-dim); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+    .row img { width: 44px; height: 44px; border-radius: 6px; display: block; }
+    .row .ph, .cand .ph {
+      width: 44px; height: 44px; border-radius: 6px; display: grid; place-items: center;
+      background: repeating-linear-gradient(45deg, #241B33 0 5px, #1D1729 5px 10px);
+      color: var(--warn); font-size: 15px;
+    }
+    .cand .ph { width: 56px; height: 56px; border-radius: 7px; font-size: 20px; }
+    .row .t { font-size: 13.5px; font-weight: 600; }
+    .row .a { font-size: 11.5px; color: var(--muted); }
+    .row .by { font-size: 11px; color: var(--faint); }
+    .row.played .t, .row.played .a { color: var(--faint); }
+    .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .state { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 9px; white-space: nowrap; color: var(--faint); border: 1px solid var(--line); }
+    .state.done { color: var(--go); border-color: color-mix(in srgb, var(--go) 45%, var(--line)); }
+    .at { font-family: var(--mono); font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .mytag { font-size: 10px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 4px; padding: 0 5px; }
+    .heart { font-family: var(--mono); font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .blank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 18px 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage">
+    <div class="sheet">
+      <div class="top">
+        <h1 id="evTitle">リクエスト</h1>
+        <span class="badge" id="badge">確認中</span>
+      </div>
+
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="search" aria-selected="true">リクエストする</button>
+        <button role="tab" data-tab="board" aria-selected="false">みんなのリクエスト</button>
+      </nav>
+
+      <!-- 検索 -->
+      <section class="pane on" id="pane-search">
+        <p class="lede">今夜かけてほしい曲を <b>リクエスト</b> できます。<br>曲名かアーティスト名を入れてください。</p>
+        <div class="field" id="field">
+          <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="曲名 / アーティスト名"
+            aria-label="曲名かアーティスト名">
+          <button class="clear" id="clear" aria-label="入力を消す">✕</button>
+        </div>
+        <p class="hint">アーティスト名は英語で入れると見つかりやすいです</p>
+        <div id="results"></div>
+      </section>
+
+      <!-- 確認 -->
+      <section class="pane" id="pane-confirm">
+        <button class="back" id="back">← 選び直す</button>
+        <div class="hero" id="hero"></div>
+        <div class="player" id="player">
+          <button id="play" aria-label="30秒プレビューを再生">▶</button>
+          <div class="bar"><b id="bar"></b></div>
+          <span class="lab" id="ptime">0:30</span>
+        </div>
+        <label class="f">ひとこと <span class="req">任意・DJ だけが読みます</span>
+          <textarea id="msg" maxlength="140" placeholder="この曲にまつわる話や、かけてほしいタイミングなど"></textarea>
+          <span class="count" id="msgCount">0 / 140</span>
+        </label>
+        <label class="f">お名前 <span class="req">任意・ニックネームで大丈夫です</span>
+          <input class="txt" id="name" maxlength="20">
+        </label>
+        <div class="err" id="sendErr" hidden></div>
+        <button class="send" id="send">この曲をリクエストする</button>
+      </section>
+
+      <!-- 自由入力 -->
+      <section class="pane" id="pane-free">
+        <button class="back" id="back2">← 検索に戻る</button>
+        <p class="lede">一覧に無い曲でも大丈夫です。<br>分かる範囲で書いてください。</p>
+        <label class="f">曲名・アーティスト名など
+          <textarea id="freeText" maxlength="140" placeholder="例: たしかCMで流れてた、女の人が歌うEDM"></textarea>
+          <span class="count" id="freeCount">0 / 140</span>
+        </label>
+        <label class="f">お名前 <span class="req">任意</span>
+          <input class="txt" id="freeName" maxlength="20">
+        </label>
+        <div class="err" id="freeErr" hidden></div>
+        <button class="send" id="freeSend" disabled>この内容でリクエストする</button>
+        <p class="hint">曲を特定できない場合はかけられないことがあります。</p>
+      </section>
+
+      <!-- 完了 -->
+      <section class="pane" id="pane-done">
+        <div class="done">
+          <div class="tick">✓</div>
+          <h2>受け付けました</h2>
+          <div class="what" id="doneWhat"></div>
+          <span class="queuepos" id="donePos"></span>
+          <p class="note">
+            リクエストは DJ が順番に確認しています。<br>
+            流れの都合で <b>かけられないこともあります</b>。あらかじめご了承ください。
+          </p>
+          <button class="linkbtn" id="toBoard">みんなのリクエストを見る →</button>
+          <button class="linkbtn" id="again">もう1曲リクエストする</button>
+        </div>
+      </section>
+
+      <!-- 一覧 -->
+      <section class="pane" id="pane-board">
+        <div id="nowBox"></div>
+        <div class="boardhead">
+          <h2>再生済</h2><span class="fresh" id="fresh"></span>
+        </div>
+        <div class="rows" id="playedRows"></div>
+        <div class="boardhead"><h2>受付済</h2></div>
+        <div class="rows" id="waitingRows"></div>
+        <p class="note">並び順は DJ が実際にかけた順です。受付済の曲は、流れの都合でかけられないこともあります。</p>
+      </section>
+
+      <!-- 受付停止中 -->
+      <section class="pane" id="pane-shut">
+        <div class="shutbox">
+          <div style="font-size:34px">🎧</div>
+          <div class="big">ただいまリクエストの受付時間外です</div>
+          <div style="font-size:13px">「みんなのリクエスト」から今夜かかった曲を見られます。</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const API = '/dj/api/req';
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const mmss = (sec) => sec ? Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') : '';
+
+    /* ── iTunes Search API の結果を整える ───────────────
+       同じ曲の DJ ミックス収録版が1曲につき10件以上返ってくるので、
+       まず落とし、次にバージョン違いを畳んで、原曲を代表に押し上げる。 */
+    const MIXED = /[(\[]\s*(mixed|continuous mix)\s*[)\]]/i;
+    const DJMIX = /\(dj mix\)|\bdj mix\b/i;
+    const SUFFIX = /\s*[(\[]([^)\]]*)[)\]]\s*$/;
+    const FEAT = /\s*[(\[]?\bfeat\.?\s[^)\]]*[)\]]?/i;
+
+    const norm = (s) => String(s || '').replace(FEAT, '')
+      .replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    function splitVariant(name) {
+      const parts = [];
+      let s = name;
+      for (;;) {
+        const m = SUFFIX.exec(s);
+        if (!m) break;
+        parts.unshift(m[1].trim());
+        s = s.slice(0, m.index);
+      }
+      return { base: s.trim(), variant: parts.join(' / ') };
+    }
+
+    const bigArt = (u) => String(u || '').replace(/\/\d+x\d+bb\.jpg$/, '/240x240bb.webp');
+
+    function refine(results) {
+      const kept = [];
+      for (const r of results) {
+        if (MIXED.test(r.trackName || '') || DJMIX.test(r.collectionName || '')) continue;
+        const { base, variant } = splitVariant(r.trackName || '');
+        kept.push({
+          trackId: r.trackId, artist: r.artistName || '', title: base, variant,
+          album: r.collectionName || '', durationMs: r.trackTimeMillis || 0,
+          artwork: bigArt(r.artworkUrl100), appleUrl: r.trackViewUrl || '',
+          previewUrl: r.previewUrl || '',
+          key: norm(r.artistName) + '|' + norm(base),
+        });
+      }
+
+      const groups = new Map();
+      for (const t of kept) {
+        if (!groups.has(t.key)) groups.set(t.key, []);
+        const g = groups.get(t.key);
+        // 同じバージョンで尺もほぼ同じなら同一音源とみなして畳む
+        const half = Math.round(t.durationMs / 2000);
+        if (g.some((x) => x.variant.toLowerCase() === t.variant.toLowerCase()
+          && Math.abs(Math.round(x.durationMs / 2000) - half) <= 1)) continue;
+        g.push(t);
+      }
+
+      const out = [];
+      for (const g of groups.values()) {
+        // 代表は「バージョン表記なし」→「Single/EP 収録」→「尺が長い」→「trackId が古い」
+        g.sort((a, b) =>
+          (a.variant ? 1 : 0) - (b.variant ? 1 : 0) ||
+          (/-\s*(single|ep)$/i.test(a.album) ? 0 : 1) - (/-\s*(single|ep)$/i.test(b.album) ? 0 : 1) ||
+          b.durationMs - a.durationMs ||
+          a.trackId - b.trackId);
+        out.push({ rep: g[0], alts: g.slice(1, 6) });
+      }
+      return out.slice(0, 5);
+    }
+
+    /* ── 画面遷移 ─────────────────────────── */
+    let flowPane = 'search';
+    let eventOpen = false;
+
+    function show(pane) {
+      document.querySelectorAll('.pane').forEach((p) => p.classList.remove('on'));
+      $('#pane-' + pane).classList.add('on');
+      if (pane !== 'board') flowPane = pane;
+      document.querySelectorAll('.tabs button').forEach((b) =>
+        b.setAttribute('aria-selected', String((b.dataset.tab === 'board') === (pane === 'board'))));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ── 検索 ─────────────────────────────── */
+    let searchTimer = null, searchAbort = null, groupsCache = [];
+
+    function candHTML(g, i) {
+      const t = g.rep;
+      const art = t.artwork
+        ? '<img src="' + esc(t.artwork) + '" alt="" loading="lazy">'
+        : '<span class="ph">♪</span>';
+      const v = t.variant ? '<span class="vtag">' + esc(t.variant) + '</span>' : '';
+      let html = '<button class="cand" data-g="' + i + '">' + art +
+        '<span><span class="t trunc">' + esc(t.title) + v + '</span>' +
+        '<span class="a trunc">' + esc(t.artist) + '</span>' +
+        // 尺は曲を選ぶ判断材料なので、長いアルバム名に押し出されないよう先頭に置く
+        '<span class="d trunc">' + mmss(Math.round(t.durationMs / 1000)) + ' · ' + esc(t.album) + '</span></span>' +
+        '<span class="chev">›</span></button>';
+      if (g.alts.length) {
+        html += '<details class="alts"><summary>他のバージョン (' + g.alts.length + ')</summary>' +
+          g.alts.map((a, ai) => '<button class="alt" data-g="' + i + '" data-a="' + ai + '">' +
+            '<span class="v">' + esc(a.variant || '別バージョン') + '</span>' +
+            '<span class="len">' + mmss(Math.round(a.durationMs / 1000)) + '</span></button>').join('') +
+          '</details>';
+      }
+      return html;
+    }
+
+    async function doSearch(q) {
+      const box = $('#results');
+      if (q.trim().length < 2) { box.innerHTML = ''; return; }
+      box.innerHTML = '<div class="loading"><span class="spin"></span>検索中…</div>';
+
+      if (searchAbort) searchAbort.abort();
+      searchAbort = new AbortController();
+      const url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) +
+        '&entity=song&limit=50&country=JP';
+      try {
+        const res = await fetch(url, { signal: searchAbort.signal });
+        const data = await res.json();
+        groupsCache = refine(data.results || []);
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+        box.innerHTML = '<div class="nomatch">検索に失敗しました。電波の良い場所で試してみてください。</div>';
+        return;
+      }
+      if (!groupsCache.length) {
+        box.innerHTML = '<div class="nomatch">「' + esc(q) + '」に合う曲が見つかりませんでした</div>' +
+          '<div style="height:10px"></div>' +
+          '<button class="linkbtn" id="toFree">一覧に無い曲をリクエストする →</button>';
+        return;
+      }
+      box.innerHTML = '<div class="cands">' + groupsCache.map(candHTML).join('') + '</div>' +
+        '<div style="height:12px"></div>' +
+        '<button class="linkbtn" id="toFree">この中に無い曲をリクエストする →</button>';
+    }
+
+    $('#q').addEventListener('input', (e) => {
+      $('#field').classList.toggle('filled', !!e.target.value);
+      clearTimeout(searchTimer);
+      const v = e.target.value;
+      searchTimer = setTimeout(() => doSearch(v), 300);   // 打鍵ごとに叩かない
+    });
+    $('#clear').addEventListener('click', () => {
+      $('#q').value = ''; $('#field').classList.remove('filled');
+      $('#results').innerHTML = ''; $('#q').focus();
+    });
+
+    /* ── 確認画面 ─────────────────────────── */
+    let picked = null;
+    let audio = null, audioTimer = null;
+
+    function stopAudio() {
+      if (audio) { audio.pause(); audio = null; }
+      clearInterval(audioTimer);
+      $('#bar').style.width = '0';
+      $('#play').textContent = '▶';
+      $('#ptime').textContent = '0:30';
+    }
+
+    function toConfirm(track, artFallback) {
+      picked = Object.assign({}, track);
+      if (!picked.artwork && artFallback) picked.artwork = artFallback;
+      const v = picked.variant ? '<span class="vtag">' + esc(picked.variant) + '</span>' : '';
+      $('#hero').innerHTML =
+        (picked.artwork ? '<img src="' + esc(picked.artwork) + '" alt="">' : '<div class="ph">♪</div>') +
+        '<h2>' + esc(picked.title) + v + '</h2>' +
+        '<div class="a">' + esc(picked.artist) + '</div>' +
+        '<div class="d">' + esc(picked.album) + ' · ' + mmss(Math.round(picked.durationMs / 1000)) + '</div>';
+      stopAudio();
+      $('#player').style.display = picked.previewUrl ? 'flex' : 'none';
+      $('#sendErr').hidden = true;
+      show('confirm');
+    }
+
+    $('#results').addEventListener('click', (e) => {
+      if (e.target.closest('#toFree')) { show('free'); return; }
+      const alt = e.target.closest('.alt');
+      if (alt) {
+        const g = groupsCache[+alt.dataset.g];
+        toConfirm(g.alts[+alt.dataset.a], g.rep.artwork);
+        return;
+      }
+      const c = e.target.closest('.cand');
+      if (c) toConfirm(groupsCache[+c.dataset.g].rep);
+    });
+
+    // プレビューは必ずタップ起点で鳴らす（iOS は自動再生を許さない）
+    $('#play').addEventListener('click', () => {
+      if (audio) { stopAudio(); return; }
+      audio = new Audio(picked.previewUrl);
+      audio.play().then(() => {
+        $('#play').textContent = '❚❚';
+        audioTimer = setInterval(() => {
+          if (!audio) return;
+          const left = Math.max(0, Math.round((audio.duration || 30) - audio.currentTime));
+          $('#bar').style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
+          $('#ptime').textContent = '0:' + String(left).padStart(2, '0');
+        }, 200);
+        audio.addEventListener('ended', stopAudio);
+      }).catch(() => { stopAudio(); });
+    });
+
+    $('#back').addEventListener('click', () => { stopAudio(); show('search'); });
+    $('#back2').addEventListener('click', () => show('search'));
+
+    function bindCount(input, out, max, onInput) {
+      input.addEventListener('input', () => {
+        out.textContent = input.value.length + ' / ' + max;
+        out.classList.toggle('over', input.value.length >= max);
+        if (onInput) onInput();
+      });
+    }
+    bindCount($('#msg'), $('#msgCount'), 140);
+    bindCount($('#freeText'), $('#freeCount'), 140, () => {
+      $('#freeSend').disabled = $('#freeText').value.trim().length < 2;
+    });
+
+    /* ── 送信 ─────────────────────────────── */
+    const MINE_KEY = 'tkdj.mine';
+    const mine = () => { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch { return []; } };
+    const remember = (id) => { try { localStorage.setItem(MINE_KEY, JSON.stringify([...new Set([...mine(), id])])); } catch {} };
+
+    /** rekordbox の検索で当たりやすいラテン表記を US ストアフロントから取る。
+        trackId はストアフロント共通なので同じ曲を引ける。失敗しても送信は続ける。 */
+    async function latinArtist(trackId) {
+      if (!trackId) return '';
+      try {
+        const ac = new AbortController();
+        const to = setTimeout(() => ac.abort(), 2500);
+        const r = await fetch('https://itunes.apple.com/lookup?id=' + trackId + '&country=US', { signal: ac.signal });
+        clearTimeout(to);
+        const d = await r.json();
+        return (d.results && d.results[0] && d.results[0].artistName) || '';
+      } catch { return ''; }
+    }
+
+    async function submit(payload, btn, errBox, whatHTML) {
+      btn.disabled = true;                       // 二重送信を止める
+      const label = btn.textContent;
+      btn.textContent = '送信中…';
+      errBox.hidden = true;
+      try {
+        const res = await fetch(API + '/requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errBox.textContent = data.message || '送信できませんでした。もう一度お試しください。';
+          errBox.hidden = false;
+          return;
+        }
+        remember(data.songId);
+        $('#doneWhat').innerHTML = whatHTML;
+        $('#donePos').textContent = data.duplicate
+          ? 'すでに受け付けている曲です'
+          : '今夜 ' + data.position + ' 件目のリクエストです';
+        stopAudio();
+        show('done');
+      } catch {
+        errBox.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
+        errBox.hidden = false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    }
+
+    $('#send').addEventListener('click', async () => {
+      const artistEn = await latinArtist(picked.trackId);
+      submit({
+        track: {
+          trackId: picked.trackId, title: picked.title, artist: picked.artist,
+          artistEn: artistEn || picked.artist, variant: picked.variant, album: picked.album,
+          durationMs: picked.durationMs, artwork: picked.artwork,
+          appleUrl: picked.appleUrl, previewUrl: picked.previewUrl,
+        },
+        name: $('#name').value, message: $('#msg').value,
+      }, $('#send'), $('#sendErr'),
+        '<b>' + esc(picked.title) + '</b><br>' + esc(picked.artist));
+    });
+
+    $('#freeSend').addEventListener('click', () => {
+      const text = $('#freeText').value.trim();
+      submit({ free: text, name: $('#freeName').value }, $('#freeSend'), $('#freeErr'),
+        '<b>' + esc(text) + '</b>');
+    });
+
+    $('#again').addEventListener('click', () => {
+      $('#q').value = ''; $('#field').classList.remove('filled');
+      $('#results').innerHTML = '';
+      $('#msg').value = ''; $('#msgCount').textContent = '0 / 140';
+      $('#freeText').value = ''; $('#freeCount').textContent = '0 / 140'; $('#freeSend').disabled = true;
+      show(eventOpen ? 'search' : 'shut');
+    });
+
+    /* ── みんなのリクエスト ─────────────────── */
+    let boardTimer = null, lastFetch = 0;
+
+    function rowHTML(s, isMine) {
+      const art = s.artwork
+        ? '<img src="' + esc(s.artwork) + '" alt="" loading="lazy">'
+        : '<span class="ph">♪</span>';
+      const played = !!s.playedAt;
+      const at = played && s.playedAt ? String(s.playedAt).slice(11, 16) : '';
+      return '<div class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') + '">' + art +
+        '<span><span class="t trunc">' + esc(s.title) + '</span>' +
+        '<span class="a trunc">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</span>' +
+        (s.by ? '<span class="by trunc">— ' + esc(s.by) + '</span>' : '') + '</span>' +
+        '<span class="right">' +
+        (isMine ? '<span class="mytag">あなた</span>' : '') +
+        '<span class="state' + (played ? ' done' : '') + '">' + (played ? '✓ 再生済' : '受付済') + '</span>' +
+        (played ? '<span class="at">' + esc(at) + '</span>'
+          : (s.votes > 1 ? '<span class="heart">♥ ' + s.votes + '</span>' : '')) +
+        '</span></div>';
+    }
+
+    async function loadBoard() {
+      try {
+        const res = await fetch(API + '/board');
+        const d = await res.json();
+        const ids = new Set(mine());
+
+        $('#nowBox').innerHTML = d.now
+          ? '<div class="now">' +
+          (d.now.artwork ? '<img src="' + esc(d.now.artwork) + '" alt="">' : '<span class="ph">♪</span>') +
+          '<span><span class="lab"><span class="eq"><i></i><i></i><i></i><i></i></span>NOW PLAYING</span>' +
+          '<span class="t trunc">' + esc(d.now.title) + '</span>' +
+          '<span class="a trunc">' + esc(d.now.artist) + '</span></span></div>'
+          : '';
+
+        $('#playedRows').innerHTML = d.played.length
+          ? d.played.map((s) => rowHTML(s, ids.has(s.id))).join('')
+          : '<div class="blank">まだ1曲もかかっていません</div>';
+        $('#waitingRows').innerHTML = d.waiting.length
+          ? d.waiting.map((s) => rowHTML(s, ids.has(s.id))).join('')
+          : '<div class="blank">リクエストはまだありません</div>';
+
+        lastFetch = Date.now();
+        $('#fresh').textContent = 'たった今更新';
+      } catch {
+        $('#fresh').textContent = '更新できません';
+      }
+    }
+
+    document.querySelector('.tabs').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.tab === 'board') {
+        show('board');
+        loadBoard();
+        clearInterval(boardTimer);
+        boardTimer = setInterval(() => {
+          if ($('#pane-board').classList.contains('on')) loadBoard();
+          else clearInterval(boardTimer);
+        }, 15000);
+      } else {
+        clearInterval(boardTimer);
+        show(flowPane);
+      }
+    });
+    $('#toBoard').addEventListener('click', () => document.querySelector('.tabs button[data-tab="board"]').click());
+
+    setInterval(() => {
+      if (!lastFetch || !$('#pane-board').classList.contains('on')) return;
+      const s = Math.round((Date.now() - lastFetch) / 1000);
+      $('#fresh').textContent = s < 10 ? 'たった今更新' : s + ' 秒前に更新';
+    }, 1000);
+
+    /* ── 起動 ─────────────────────────────── */
+    (async function boot() {
+      try {
+        const res = await fetch(API + '/event');
+        const ev = await res.json();
+        eventOpen = !!ev.open;
+        if (ev.open) {
+          $('#evTitle').textContent = ev.title;
+          $('#badge').textContent = '受付中';
+          $('#badge').classList.remove('shut');
+          show('search');
+        } else {
+          $('#badge').textContent = '受付停止中';
+          $('#badge').classList.add('shut');
+          show('shut');
+        }
+      } catch {
+        $('#badge').textContent = 'オフライン';
+        $('#badge').classList.add('shut');
+        show('shut');
+      }
+    })();
+  </script>
+</body>
+
+</html>

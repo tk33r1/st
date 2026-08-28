@@ -1,0 +1,63 @@
+-- 曲リクエスト受付 D1 スキーマ
+-- wrangler d1 execute dj-request-db --file=./schema.sql --remote
+
+-- ── イベント ───────────────────────────────
+-- QR は https://tk.st/dj/request/ 固定で、どのイベントに投稿されるかは
+-- サーバが「いま open のイベント」を解決して決める。
+CREATE TABLE IF NOT EXISTS events (
+  code       TEXT PRIMARY KEY,            -- 6文字。DJ が口頭で伝えられる長さ
+  title      TEXT NOT NULL,
+  status     TEXT NOT NULL DEFAULT 'open',-- open | closed
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  closed_at  DATETIME
+);
+
+-- open は常に 0 件か 1 件。アプリ側のバグで二重に開くのを DB で防ぐ。
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_single_open
+  ON events(status) WHERE status = 'open';
+
+-- ── 曲（集約行） ───────────────────────────
+-- 同じ曲が複数人から来ても行は増やさず votes を積む。
+-- DJ の一覧が同じ曲で埋まらず、人気曲が浮かび上がる。
+CREATE TABLE IF NOT EXISTS songs (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_code  TEXT NOT NULL,
+  dedupe_key  TEXT NOT NULL,              -- Apple の trackId、無ければ正規化した artist|title
+  track_id    TEXT,                       -- カタログ外リクエストは NULL
+  title       TEXT NOT NULL,
+  artist      TEXT NOT NULL DEFAULT '',   -- 表示用（JP ストアフロントの表記）
+  artist_en   TEXT NOT NULL DEFAULT '',   -- コピー用（rekordbox 検索で当たりやすい）
+  variant     TEXT NOT NULL DEFAULT '',   -- "Radio Edit" など
+  album       TEXT NOT NULL DEFAULT '',
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  artwork     TEXT NOT NULL DEFAULT '',   -- 240x240bb.webp に差し替え済みの URL
+  apple_url   TEXT NOT NULL DEFAULT '',   -- trackViewUrl。booth は music:// に変えて開く
+  preview_url TEXT NOT NULL DEFAULT '',
+  is_free     INTEGER NOT NULL DEFAULT 0, -- 1 = 自由入力（曲を特定できていない）
+  votes       INTEGER NOT NULL DEFAULT 0,
+  status      TEXT NOT NULL DEFAULT 'pending', -- pending | queued | played | skipped
+  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+  played_at   DATETIME                    -- 「今かかっている曲」の判定と再生済の並び順に使う
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_songs_dedupe ON songs(event_code, dedupe_key);
+CREATE INDEX IF NOT EXISTS idx_songs_event  ON songs(event_code, status);
+CREATE INDEX IF NOT EXISTS idx_songs_played ON songs(event_code, played_at DESC);
+
+-- ── 投稿（1人1件） ─────────────────────────
+-- 名前とひとことは投稿ごとに持つ。ひとことは DJ だけが読むもので、
+-- 公開用の /board では一切返さない。
+CREATE TABLE IF NOT EXISTS requests (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  song_id    INTEGER NOT NULL,
+  event_code TEXT NOT NULL,
+  from_name  TEXT NOT NULL DEFAULT '',
+  message    TEXT NOT NULL DEFAULT '',
+  ip_hash    TEXT NOT NULL DEFAULT '',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 同じ人が同じ曲を連打しても票は 1 のまま
+CREATE UNIQUE INDEX IF NOT EXISTS idx_requests_once ON requests(song_id, ip_hash);
+CREATE INDEX IF NOT EXISTS idx_requests_song ON requests(song_id);
+CREATE INDEX IF NOT EXISTS idx_requests_rate ON requests(ip_hash, created_at DESC);
