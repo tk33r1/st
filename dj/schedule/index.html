@@ -3,19 +3,19 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- 身内専用ページ。検索結果には一切出さない -->
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
   <meta name="googlebot" content="noindex, nofollow">
   <meta name="bingbot" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
-  <meta name="theme-color" content="#1a0843">
+  <meta name="theme-color" content="#0a0a0c">
   <title>白昼夢 スケジュール調整</title>
   <link rel="icon" href="https://tk.st/images/favicons/dj-favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="https://tk.st/images/favicons/dj-favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap" rel="stylesheet">
 
   <style>
     * {
@@ -24,19 +24,22 @@
       box-sizing: border-box;
     }
 
-    /* 美術紫水（shisui-tea.jp）のカラースキームとタイポグラフィに合わせている */
+    /* 美術紫水（bijutsushisui.com）のテーマ変数をそのまま持ってきている */
     :root {
-      --indigo: #1a0843;
-      --indigo-soft: #241056;
-      --pink: #fdd4c9;
-      --pink-dim: rgba(253, 212, 201, 0.75);
-      --pink-line: rgba(253, 212, 201, 0.3);
-      --pink-faint: rgba(253, 212, 201, 0.08);
-      --mint: #62febd;
-      --yellow: #faf5b6;
-      --coral: #f8724e;
-      --magenta: #6f0366;
-      --pop: 'Mochiy Pop P One', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif;
+      --bg: #0a0a0c;
+      --bg-elevated: #121216;
+      --fg: #ececec;
+      --fg-dim: #9a9aa0;
+      --heart-primary: #ff2f6e;
+      --heart-secondary: #37f2e6;
+      --glitch-accent: #ffe14d;
+      --border: rgba(255, 255, 255, 0.14);
+      --header-bg: rgba(10, 10, 12, 0.92);
+
+      --f-display: 'Share Tech Mono', ui-monospace, monospace;
+      --f-dot: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+      --f-body: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+
       color-scheme: dark;
     }
 
@@ -47,52 +50,89 @@
 
     body {
       min-height: 100vh;
-      background: var(--indigo);
-      color: var(--pink-dim);
-      font-family: var(--pop);
-      font-weight: 400;
-      font-size: 1rem;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--f-body);
+      font-size: 0.9375rem;
       line-height: 1.9;
-      letter-spacing: 0.03em;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    .wrap {
-      max-width: 880px;
-      margin: 0 auto;
-      padding: 0 0 80px;
+    /* VHS のスキャンライン。本家と同じ 1px / 3px */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      background: repeating-linear-gradient(to bottom,
+          rgba(255, 255, 255, 0.03) 0px,
+          rgba(255, 255, 255, 0.03) 1px,
+          transparent 1px,
+          transparent 3px);
     }
 
     /* ===== HEADER ===== */
     .site-head {
-      background: var(--pink);
-      color: var(--indigo);
-      padding: 20px 24px;
-      margin-bottom: 34px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--header-bg);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding-top: env(safe-area-inset-top);
     }
 
-    .site-head h1 {
-      max-width: 880px;
+    .site-head__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      max-width: 860px;
       margin: 0 auto;
-      font-size: clamp(1.15rem, 4.6vw, 1.6rem);
+      padding: 14px calc(20px + env(safe-area-inset-right)) 14px calc(20px + env(safe-area-inset-left));
+    }
+
+    .logo {
+      font-family: var(--f-dot);
+      font-size: 0.9375rem;
       font-weight: 400;
-      letter-spacing: 0.04em;
-      line-height: 1.4;
+      letter-spacing: 0.06em;
     }
 
-    .inner {
-      padding: 0 20px;
+    .eyebrow {
+      font-family: var(--f-display);
+      font-size: 0.625rem;
+      letter-spacing: 0.3em;
+      color: var(--glitch-accent);
     }
 
-    /* ===== SECTION ===== */
+    /* ===== LAYOUT ===== */
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 calc(20px + env(safe-area-inset-right)) calc(16vh + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+    }
+
+    .hero {
+      padding: 7vh 0 4vh;
+    }
+
     .section {
-      margin-bottom: 40px;
+      margin-bottom: 8vh;
     }
 
     .section-title {
-      font-size: 1.05rem;
-      color: var(--pink);
-      letter-spacing: 0.08em;
-      margin-bottom: 16px;
+      font-family: var(--f-dot);
+      font-size: 0.9375rem;
+      font-weight: 400;
+      letter-spacing: 0.14em;
+      color: var(--heart-secondary);
+      margin-bottom: 18px;
     }
 
     /* ===== MONTH ===== */
@@ -101,7 +141,6 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      flex-wrap: nowrap;
     }
 
     .month-now {
@@ -112,36 +151,37 @@
 
     .month-now .no {
       display: block;
-      font-size: clamp(1.5rem, 7vw, 2.4rem);
-      color: var(--pink);
-      letter-spacing: 0.06em;
-      line-height: 1.3;
+      font-family: var(--f-dot);
+      font-size: clamp(1.875rem, 7vw, 3.375rem);
+      line-height: 1.35;
+      letter-spacing: 0.04em;
     }
 
     .month-now .sub {
       display: block;
-      font-size: 0.78rem;
-      color: var(--pink-dim);
-      letter-spacing: 0.1em;
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.22em;
+      color: var(--fg-dim);
     }
 
     .nav-btn {
       flex: 0 0 auto;
-      font-family: inherit;
-      font-size: 0.8rem;
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.1em;
       padding: 10px 12px;
-      border: 1px solid var(--pink-line);
+      border: 1px solid var(--border);
       background: transparent;
-      color: var(--pink-dim);
+      color: var(--fg-dim);
       cursor: pointer;
       white-space: nowrap;
-      transition: color 0.2s ease, border-color 0.2s ease;
+      transition: color 0.2s, border-color 0.2s;
     }
 
     .nav-btn:hover {
-      color: var(--indigo);
-      background: var(--pink);
-      border-color: var(--pink);
+      color: var(--heart-secondary);
+      border-color: var(--heart-secondary);
     }
 
     .month-tools {
@@ -149,12 +189,12 @@
       gap: 10px;
       align-items: center;
       flex-wrap: wrap;
-      margin-top: 20px;
+      margin-top: 26px;
     }
 
     .month-tools select {
-      flex: 1 1 230px;
-      max-width: 300px;
+      flex: 1 1 220px;
+      max-width: 290px;
     }
 
     .quick-months {
@@ -163,62 +203,63 @@
       flex-wrap: wrap;
       align-items: center;
       margin-top: 14px;
-      font-size: 0.8rem;
     }
 
     .quick {
-      font-family: inherit;
-      font-size: 0.78rem;
-      padding: 4px 10px;
-      border: 1px solid var(--pink-line);
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
       background: transparent;
-      color: var(--pink-dim);
+      color: var(--fg-dim);
       cursor: pointer;
-      transition: color 0.2s ease, border-color 0.2s ease;
+      transition: color 0.2s, border-color 0.2s;
     }
 
     .quick:hover {
-      color: var(--mint);
-      border-color: var(--mint);
+      color: var(--heart-primary);
+      border-color: var(--heart-primary);
     }
 
     /* ===== FORM ===== */
     .field-label {
       display: block;
-      font-size: 0.8rem;
-      color: var(--pink-dim);
-      letter-spacing: 0.06em;
-      margin-bottom: 6px;
+      font-family: var(--f-display);
+      font-size: 0.625rem;
+      letter-spacing: 0.2em;
+      color: var(--fg-dim);
+      margin-bottom: 8px;
     }
 
     input[type="text"],
     select,
     textarea {
       width: 100%;
-      font-family: inherit;
-      font-size: 0.95rem;
-      color: var(--pink);
-      background: transparent;
-      border: 1px solid var(--pink-line);
-      border-radius: 0;
+      font-family: var(--f-body);
+      font-size: 0.875rem;
+      color: var(--fg);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 2px;
       padding: 11px 12px;
-      transition: border-color 0.2s ease;
+      transition: border-color 0.2s;
     }
 
     input::placeholder,
     textarea::placeholder {
-      color: rgba(253, 212, 201, 0.4);
+      color: rgba(154, 154, 160, 0.6);
     }
 
     input[type="text"]:focus,
     select:focus,
     textarea:focus {
       outline: none;
-      border-color: var(--mint);
+      border-color: var(--heart-secondary);
     }
 
     textarea {
-      min-height: 90px;
+      min-height: 96px;
       resize: vertical;
       line-height: 1.8;
     }
@@ -236,58 +277,59 @@
 
     /* ===== BUTTONS ===== */
     .btn {
-      font-family: inherit;
-      font-size: 0.88rem;
-      letter-spacing: 0.08em;
-      padding: 12px 24px;
-      border: 1px solid var(--pink);
+      font-family: var(--f-dot);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      padding: 12px 26px;
+      border: 1px solid var(--heart-secondary);
       background: transparent;
-      color: var(--pink);
+      color: var(--heart-secondary);
       cursor: pointer;
-      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
 
     .btn:hover {
-      background: var(--pink);
-      color: var(--indigo);
+      background: var(--heart-secondary);
+      color: var(--bg);
     }
 
     .btn.primary {
-      background: var(--pink);
-      color: var(--indigo);
+      background: var(--heart-secondary);
+      color: var(--bg);
     }
 
     .btn.primary:hover {
-      background: var(--mint);
-      border-color: var(--mint);
+      background: var(--fg);
+      border-color: var(--fg);
     }
 
     .btn.small {
-      font-size: 0.78rem;
+      font-size: 0.6875rem;
       padding: 8px 14px;
-      letter-spacing: 0.04em;
-      border-color: var(--pink-line);
-      color: var(--pink-dim);
+      letter-spacing: 0.08em;
+      border-color: var(--border);
+      color: var(--fg-dim);
     }
 
     .btn.small:hover {
-      background: var(--pink);
-      border-color: var(--pink);
-      color: var(--indigo);
+      background: transparent;
+      border-color: var(--heart-secondary);
+      color: var(--heart-secondary);
     }
 
     .btn.danger {
-      border-color: var(--coral);
-      color: var(--coral);
+      border-color: var(--heart-primary);
+      color: var(--heart-primary);
     }
 
     .btn.danger:hover {
-      background: var(--coral);
-      color: var(--indigo);
+      border-color: var(--heart-primary);
+      background: var(--heart-primary);
+      color: var(--bg);
     }
 
     .btn:disabled {
-      opacity: 0.4;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
@@ -296,37 +338,43 @@
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
-      margin-top: 18px;
+      margin-top: 22px;
     }
 
     /* ===== TABLE ===== */
     .table-scroll {
       overflow-x: auto;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     table.grid {
       border-collapse: collapse;
       width: 100%;
-      min-width: 440px;
+      min-width: 420px;
     }
 
     table.grid th,
     table.grid td {
-      border: 1px solid var(--pink-line);
-      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      padding: 11px 12px;
       text-align: center;
-      font-size: 0.86rem;
       font-weight: 400;
       white-space: nowrap;
     }
 
+    /* 日曜日 と ○ / △ / × を直接書き出す行なので Latin のみの Share Tech Mono は使えない */
     table.grid thead th {
-      background: var(--pink);
-      color: var(--indigo);
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-      border-color: var(--pink);
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      color: var(--fg-dim);
+      padding-bottom: 10px;
+    }
+
+    table.grid tbody td,
+    table.grid tfoot td {
+      font-family: var(--f-dot);
+      font-size: 0.8125rem;
     }
 
     table.grid th.date-cell,
@@ -335,99 +383,104 @@
       position: sticky;
       left: 0;
       z-index: 1;
-      background: var(--indigo);
-      color: var(--pink);
+      background: var(--bg);
+      border-right: 1px solid var(--border);
     }
 
-    table.grid thead th.date-cell {
-      background: var(--pink);
-      color: var(--indigo);
+    /* ○△× は Share Tech Mono に無く × だけ字面が変わるので、3つとも DotGothic16 で揃える */
+    .tally {
+      font-family: var(--f-dot);
+      font-size: 0.8125rem;
+      letter-spacing: 0.06em;
     }
 
     tr.best td {
-      background: rgba(98, 254, 189, 0.14);
+      background: rgba(55, 242, 230, 0.08);
     }
 
     tr.best td.date-cell {
-      background: #2a2b53;
-      color: var(--mint);
+      background: #0e1a1c;
+      color: var(--heart-secondary);
     }
 
-    /* 開催日が確定した行 */
-    tr.decided td {
-      background: var(--yellow);
-      color: var(--indigo);
-      border-color: rgba(26, 8, 67, 0.25);
-    }
-
+    /* 開催日が確定した行。白昼夢のアクセント色で塗る */
+    tr.decided td,
     tr.decided td.date-cell {
-      background: var(--yellow);
-      color: var(--indigo);
+      background: var(--glitch-accent);
+      color: var(--bg);
+      border-bottom-color: var(--glitch-accent);
     }
 
     tr.decided .mark-o,
     tr.decided .mark-t,
     tr.decided .mark-x,
     tr.decided .mark-none {
-      color: var(--indigo);
+      color: var(--bg);
     }
 
     tr.decided td.date-cell::after {
       content: ' 開催';
-      font-size: 0.72rem;
+      font-size: 0.625rem;
     }
 
-    /* 開催できない日 */
+    /* 開催できない日。本家の売り切れ行と同じ扱い。
+       opacity だと sticky の日付列まで透けて横スクロール中に裏のセルが見えるので、色を落として表現する */
     tr.blocked td {
-      opacity: 0.35;
+      color: rgba(154, 154, 160, 0.55);
+    }
+
+    tr.blocked .mark-o,
+    tr.blocked .mark-t,
+    tr.blocked .mark-x,
+    tr.blocked .mark-none {
+      color: rgba(154, 154, 160, 0.45);
     }
 
     tr.blocked td.date-cell {
       text-decoration: line-through;
     }
 
-    .tally {
-      font-size: 0.82rem;
-      letter-spacing: 0.04em;
-    }
-
     .mark-o {
-      color: var(--mint);
+      color: var(--heart-secondary);
     }
 
     .mark-t {
-      color: var(--yellow);
+      color: var(--glitch-accent);
     }
 
     .mark-x {
-      color: var(--coral);
+      color: var(--heart-primary);
     }
 
     .mark-none {
-      color: rgba(253, 212, 201, 0.3);
+      color: rgba(154, 154, 160, 0.4);
     }
 
     .name-btn {
-      font-family: inherit;
-      font-size: 0.8rem;
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
       background: none;
       border: none;
-      border-bottom: 1px solid var(--indigo);
-      color: var(--indigo);
+      border-bottom: 1px solid var(--border);
+      color: var(--fg);
       cursor: pointer;
-      padding: 0 2px;
+      padding: 0 2px 2px;
+      transition: color 0.2s, border-color 0.2s;
     }
 
     .name-btn:hover {
-      border-bottom-color: var(--magenta);
-      color: var(--magenta);
+      color: var(--heart-secondary);
+      border-bottom-color: var(--heart-secondary);
     }
 
-    .comment-cell {
+    table.grid tfoot td.comment-cell {
       white-space: normal;
-      font-size: 0.78rem;
+      font-family: var(--f-body);
+      font-size: 0.75rem;
+      color: var(--fg-dim);
       max-width: 170px;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     /* ===== ANSWER PICKER ===== */
@@ -435,75 +488,33 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin-bottom: 4px;
     }
 
     .answer-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      border: 1px solid var(--pink-line);
-      padding: 10px 12px;
       flex-wrap: wrap;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
+      padding: 11px 14px;
+      transition: border-color 0.25s;
     }
 
     .answer-row .d {
-      font-size: 0.9rem;
-      color: var(--pink);
-      letter-spacing: 0.04em;
       flex: 1 1 130px;
-    }
-
-    .seg {
-      display: flex;
-    }
-
-    .seg button {
-      font-family: inherit;
-      font-size: 1.05rem;
-      width: 50px;
-      height: 42px;
-      border: 1px solid var(--pink-line);
-      margin-left: -1px;
-      background: transparent;
-      color: rgba(253, 212, 201, 0.35);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .seg button:first-child {
-      margin-left: 0;
-    }
-
-    .seg button:hover {
-      color: var(--pink);
-    }
-
-    .seg button[aria-pressed="true"] {
-      color: var(--indigo);
-    }
-
-    .seg button[aria-pressed="true"][data-v="o"] {
-      background: var(--mint);
-      border-color: var(--mint);
-    }
-
-    .seg button[aria-pressed="true"][data-v="t"] {
-      background: var(--yellow);
-      border-color: var(--yellow);
-    }
-
-    .seg button[aria-pressed="true"][data-v="x"] {
-      background: var(--coral);
-      border-color: var(--coral);
+      font-family: var(--f-dot);
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
     }
 
     .answer-row.is-decided {
-      border-color: var(--yellow);
+      border-color: var(--glitch-accent);
     }
 
     .answer-row.is-decided .d {
-      color: var(--yellow);
+      color: var(--glitch-accent);
     }
 
     .answer-row.is-blocked {
@@ -515,38 +526,93 @@
     }
 
     .answer-row .tag {
-      font-size: 0.72rem;
-      letter-spacing: 0.06em;
+      font-family: var(--f-dot);
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
       padding: 2px 8px;
       border: 1px solid currentColor;
     }
 
     .answer-row .tag.decided {
-      color: var(--yellow);
+      color: var(--glitch-accent);
     }
 
     .answer-row .tag.blocked {
-      color: var(--pink-dim);
+      color: var(--heart-primary);
+    }
+
+    .seg {
+      display: flex;
+    }
+
+    .seg button {
+      font-family: var(--f-dot);
+      font-size: 1rem;
+      width: 50px;
+      height: 42px;
+      border: 1px solid var(--border);
+      margin-left: -1px;
+      background: transparent;
+      color: var(--fg-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .seg button:first-child {
+      margin-left: 0;
+    }
+
+    .seg button:hover:not(:disabled):not([aria-pressed="true"]) {
+      color: var(--fg);
+      border-color: var(--fg-dim);
+    }
+
+    .seg button[aria-pressed="true"] {
+      color: var(--bg);
+    }
+
+    .seg button[aria-pressed="true"][data-v="o"] {
+      background: var(--heart-secondary);
+      border-color: var(--heart-secondary);
+    }
+
+    .seg button[aria-pressed="true"][data-v="t"] {
+      background: var(--glitch-accent);
+      border-color: var(--glitch-accent);
+    }
+
+    .seg button[aria-pressed="true"][data-v="x"] {
+      background: var(--heart-primary);
+      border-color: var(--heart-primary);
     }
 
     .seg button:disabled {
       cursor: not-allowed;
-      color: rgba(253, 212, 201, 0.2);
+      color: rgba(154, 154, 160, 0.3);
     }
 
     /* 開催不可日は押せないので、選択済みの塗りも外して無効に見せる */
     .seg button:disabled[aria-pressed="true"] {
       background: transparent;
-      border-color: var(--pink-line);
-      color: rgba(253, 212, 201, 0.35);
+      border-color: var(--border);
+      color: rgba(154, 154, 160, 0.35);
     }
 
-    /* ===== 開催日の設定 ===== */
+    .bulk {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    /* ===== 開催日 ===== */
     .status-line {
-      font-size: 0.95rem;
-      color: var(--yellow);
-      letter-spacing: 0.04em;
-      margin-bottom: 16px;
+      font-family: var(--f-dot);
+      font-size: 0.875rem;
+      letter-spacing: 0.06em;
+      color: var(--glitch-accent);
+      margin-bottom: 14px;
     }
 
     .block-chips {
@@ -557,86 +623,90 @@
     }
 
     .block-chip {
-      font-family: inherit;
-      font-size: 0.82rem;
-      padding: 7px 12px;
-      border: 1px solid var(--pink-line);
+      font-family: var(--f-dot);
+      font-size: 0.75rem;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
       background: transparent;
-      color: var(--pink-dim);
+      color: var(--fg-dim);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.15s;
     }
 
     .block-chip:hover {
-      border-color: var(--pink);
-      color: var(--pink);
+      color: var(--fg);
+      border-color: var(--fg-dim);
     }
 
     .block-chip[aria-pressed="true"] {
-      background: rgba(253, 212, 201, 0.14);
-      border-color: transparent;
-      color: rgba(253, 212, 201, 0.45);
+      color: var(--heart-primary);
+      border-color: var(--heart-primary);
       text-decoration: line-through;
-    }
-
-    .bulk {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 16px;
-      font-size: 0.8rem;
+      opacity: 0.75;
     }
 
     /* ===== MEMO ===== */
     .memo-view {
-      font-size: 0.92rem;
-      color: var(--pink);
+      font-family: var(--f-body);
+      font-size: 0.875rem;
       white-space: pre-wrap;
-      border-left: 2px solid var(--pink-line);
-      padding-left: 14px;
+      border-left: 1px solid var(--heart-secondary);
+      padding-left: 16px;
     }
 
     /* ===== MISC ===== */
     .notice {
-      font-size: 0.86rem;
+      font-family: var(--f-body);
+      font-size: 0.8125rem;
       padding: 12px 16px;
-      border-left: 3px solid var(--mint);
-      background: var(--pink-faint);
-      color: var(--pink);
-      margin-bottom: 26px;
+      border: 1px solid var(--heart-secondary);
+      border-radius: 2px;
+      background: var(--bg-elevated);
+      color: var(--fg);
+      margin-top: 18px;
     }
 
     .notice.error {
-      border-left-color: var(--coral);
+      border-color: var(--heart-primary);
     }
 
     .muted {
-      color: rgba(253, 212, 201, 0.55);
-      font-size: 0.78rem;
+      font-family: var(--f-body);
+      font-size: 0.75rem;
+      color: var(--fg-dim);
     }
 
     .best-line {
-      font-size: 0.88rem;
-      color: var(--mint);
+      font-family: var(--f-body);
+      font-size: 0.8125rem;
+      color: var(--heart-secondary);
       margin-bottom: 16px;
-      letter-spacing: 0.04em;
     }
 
     .best-line.quiet {
-      color: rgba(253, 212, 201, 0.55);
+      color: var(--fg-dim);
     }
 
     .site-foot {
-      margin-top: 56px;
-      font-size: 0.76rem;
+      border-top: 1px solid var(--border);
+      margin-top: 10vh;
+      padding-top: 30px;
+      font-family: var(--f-display);
+      font-size: 0.6875rem;
       letter-spacing: 0.1em;
-      color: rgba(253, 212, 201, 0.5);
+      color: var(--fg-dim);
       text-align: center;
     }
 
     .site-foot a {
       color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .site-foot a:hover {
+      color: var(--heart-secondary);
+      border-bottom-color: var(--heart-secondary);
     }
 
     [hidden] {
@@ -645,150 +715,155 @@
 
     @media (max-width: 560px) {
       body {
-        font-size: 0.94rem;
-        line-height: 1.8;
+        font-size: 0.875rem;
       }
 
-      .site-head {
-        padding: 16px 16px;
-        margin-bottom: 26px;
+      .site-head__inner {
+        padding: 14px calc(14px + env(safe-area-inset-right)) 14px calc(14px + env(safe-area-inset-left));
       }
 
-      .inner {
-        padding: 0 14px;
+      .wrap {
+        padding: 0 calc(14px + env(safe-area-inset-right)) calc(14vh + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
       }
 
       .section {
-        margin-bottom: 32px;
+        margin-bottom: 6vh;
       }
 
       .nav-btn {
         padding: 9px 8px;
-        font-size: 0.72rem;
+        font-size: 0.625rem;
       }
 
       .seg button {
         width: 44px;
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scanlines {
+        display: none;
+      }
+    }
   </style>
 </head>
 
 <body>
+  <div class="scanlines" aria-hidden="true"></div>
+
   <header class="site-head">
-    <h1>白昼夢 スケジュール調整</h1>
+    <div class="site-head__inner">
+      <h1 class="logo">白昼夢 スケジュール調整</h1>
+      <span class="eyebrow">HAKUCHUMU</span>
+    </div>
   </header>
 
-  <div class="wrap">
-    <div class="inner">
-      <div id="globalNotice" class="notice error" hidden></div>
-
-      <!-- ===== 月 ===== -->
-      <section class="section">
-        <div class="month-bar">
-          <button class="nav-btn" id="prevMonth" type="button">←</button>
-          <div class="month-now">
-            <span class="no" id="monthLabel">—</span>
-            <span class="sub" id="monthSub"></span>
-          </div>
-          <button class="nav-btn" id="nextMonth" type="button">→</button>
+  <main class="wrap">
+    <!-- ===== 月 ===== -->
+    <section class="hero">
+      <div class="month-bar">
+        <button class="nav-btn" id="prevMonth" type="button">←</button>
+        <div class="month-now">
+          <span class="no" id="monthLabel">—</span>
+          <span class="sub" id="monthSub"></span>
         </div>
-        <div class="month-tools">
-          <select id="monthJump" aria-label="月を選ぶ"></select>
-          <button class="btn small" id="thisMonth" type="button">今月</button>
-          <button class="btn small" id="copyUrl" type="button">URLをコピー</button>
-          <button class="btn small" id="reload" type="button">更新</button>
-        </div>
-        <div class="quick-months" id="quickMonths" hidden></div>
-      </section>
+        <button class="nav-btn" id="nextMonth" type="button">→</button>
+      </div>
+      <div class="month-tools">
+        <select id="monthJump" aria-label="月を選ぶ"></select>
+        <button class="btn small" id="thisMonth" type="button">今月</button>
+        <button class="btn small" id="copyUrl" type="button">URLをコピー</button>
+        <button class="btn small" id="reload" type="button">更新</button>
+      </div>
+      <div class="quick-months" id="quickMonths" hidden></div>
+      <div id="globalNotice" class="notice error" role="status" hidden></div>
+    </section>
 
-      <!-- ===== 集計 ===== -->
-      <section class="section">
-        <h2 class="section-title">集計</h2>
-        <p class="status-line" id="statusLine" hidden></p>
-        <p class="best-line" id="bestLine"></p>
-        <div class="table-scroll">
-          <table class="grid" id="grid"></table>
-        </div>
-        <p class="muted">名前をタップすると修正できます</p>
-      </section>
+    <!-- ===== 集計 ===== -->
+    <section class="section">
+      <h2 class="section-title">集計</h2>
+      <p class="status-line" id="statusLine" hidden></p>
+      <p class="best-line" id="bestLine"></p>
+      <div class="table-scroll">
+        <table class="grid" id="grid"></table>
+      </div>
+      <p class="muted">名前をタップすると修正できます</p>
+    </section>
 
-      <!-- ===== 開催日の設定 ===== -->
-      <section class="section">
-        <h2 class="section-title">開催日</h2>
+    <!-- ===== 開催日の設定 ===== -->
+    <section class="section">
+      <h2 class="section-title">開催日</h2>
 
-        <div style="margin-bottom:18px">
-          <span class="field-label">確定した日</span>
-          <select id="decidedSelect"></select>
-        </div>
+      <div style="margin-bottom:22px">
+        <label class="field-label" for="decidedSelect">FIXED</label>
+        <select id="decidedSelect"></select>
+      </div>
 
-        <div>
-          <span class="field-label">開催できない日</span>
-          <div class="block-chips" id="blockChips"></div>
-        </div>
+      <div>
+        <span class="field-label">BLOCKED</span>
+        <div class="block-chips" id="blockChips"></div>
+      </div>
 
+      <div class="btn-row">
+        <button class="btn small" id="saveStatus" type="button">保存</button>
+      </div>
+    </section>
+
+    <!-- ===== 回答 ===== -->
+    <section class="section">
+      <h2 class="section-title" id="answerTitle">出欠を入れる</h2>
+
+      <div class="row" style="margin-bottom:22px">
+        <label>
+          <span class="field-label">NAME</span>
+          <select id="ansName"></select>
+        </label>
+        <label id="customNameField" hidden>
+          <span class="field-label">FREE INPUT</span>
+          <input type="text" id="ansCustomName" maxlength="20" placeholder="お名前">
+        </label>
+      </div>
+
+      <div class="bulk">
+        <button class="btn small" data-fill="o" type="button">全部 ○</button>
+        <button class="btn small" data-fill="t" type="button">全部 △</button>
+        <button class="btn small" data-fill="x" type="button">全部 ×</button>
+      </div>
+
+      <div class="answer-list" id="ansList"></div>
+
+      <div style="margin-top:22px">
+        <label class="field-label" for="ansComment">COMMENT</label>
+        <input type="text" id="ansComment" maxlength="200" placeholder="ひとこと（任意）">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="submitAnswer">登録する</button>
+        <button class="btn small danger" id="deleteAnswer" hidden>削除</button>
+        <button class="btn small" id="resetAnswer" hidden>クリア</button>
+      </div>
+    </section>
+
+    <!-- ===== メモ ===== -->
+    <section class="section">
+      <h2 class="section-title" id="memoTitle">メモ</h2>
+      <p class="memo-view" id="memoView"></p>
+      <div id="memoEditor" hidden>
+        <textarea id="memoInput" maxlength="500" placeholder="会場・集合時間など"></textarea>
         <div class="btn-row">
-          <button class="btn small" id="saveStatus" type="button">保存</button>
+          <button class="btn small" id="saveMemo" type="button">保存</button>
+          <button class="btn small" id="cancelMemo" type="button">やめる</button>
         </div>
-      </section>
+      </div>
+      <div class="btn-row" id="memoActions">
+        <button class="btn small" id="editMemo" type="button">メモを書く</button>
+      </div>
+    </section>
 
-      <!-- ===== 回答 ===== -->
-      <section class="section">
-        <h2 class="section-title" id="answerTitle">出欠を入れる</h2>
-
-        <div class="row" style="margin-bottom:18px">
-          <label>
-            <span class="field-label">名前</span>
-            <select id="ansName"></select>
-          </label>
-          <label id="customNameField" hidden>
-            <span class="field-label">名前を入力</span>
-            <input type="text" id="ansCustomName" maxlength="20" placeholder="お名前">
-          </label>
-        </div>
-
-        <div class="bulk">
-          <span class="muted">一括</span>
-          <button class="btn small" data-fill="o" type="button">全部 ○</button>
-          <button class="btn small" data-fill="t" type="button">全部 △</button>
-          <button class="btn small" data-fill="x" type="button">全部 ×</button>
-        </div>
-
-        <div class="answer-list" id="ansList"></div>
-
-        <div style="margin-top:18px">
-          <span class="field-label">ひとこと</span>
-          <input type="text" id="ansComment" maxlength="200" placeholder="任意">
-        </div>
-
-        <div class="btn-row">
-          <button class="btn primary" id="submitAnswer">登録する</button>
-          <button class="btn small danger" id="deleteAnswer" hidden>削除</button>
-          <button class="btn small" id="resetAnswer" hidden>クリア</button>
-        </div>
-      </section>
-
-      <!-- ===== メモ ===== -->
-      <section class="section">
-        <h2 class="section-title" id="memoTitle">メモ</h2>
-        <p class="memo-view" id="memoView"></p>
-        <div id="memoEditor" hidden>
-          <textarea id="memoInput" maxlength="500" placeholder="会場・集合時間など"></textarea>
-          <div class="btn-row">
-            <button class="btn small" id="saveMemo" type="button">保存</button>
-            <button class="btn small" id="cancelMemo" type="button">やめる</button>
-          </div>
-        </div>
-        <div class="btn-row" id="memoActions">
-          <button class="btn small" id="editMemo" type="button">メモを書く</button>
-        </div>
-      </section>
-
-      <footer class="site-foot">
-        <p><a href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer">美術紫水</a> / 人類踊狂計画</p>
-      </footer>
-    </div>
-  </div>
+    <footer class="site-foot">
+      <p><a href="https://bijutsushisui.com/" target="_blank" rel="noopener noreferrer">BIJUTSU SHISUI</a> / HAKUCHUMU</p>
+    </footer>
+  </main>
 
   <script>
     (function () {
@@ -821,6 +896,8 @@
         el.textContent = message;
         el.className = 'notice' + (isError === false ? '' : ' error');
         el.hidden = false;
+        // 通知はページ上部にあるので、下のセクションから呼ばれても見える位置まで戻す
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
       function toDate(iso) { return new Date(iso + 'T00:00:00'); }
