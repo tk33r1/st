@@ -434,6 +434,131 @@
     }
 
     .glow { text-shadow: 0 0 8px currentColor }
+
+    /* --- bpm: tap-tempo checker printed by the `bpm` command ---------------- */
+    .bpm-tap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 0.75rem 0;
+      padding: 0.875rem 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: var(--surface-alt);
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .bpm-pad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      width: 88px;
+      height: 88px;
+      flex-shrink: 0;
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      background-color: var(--surface-color);
+      color: #e0556b;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      /* Kills the 300ms double-tap-zoom delay so touch taps time accurately. */
+      touch-action: manipulation;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .bpm-pad:hover, .bpm-pad:focus-visible {
+      outline: none;
+      border-color: #e0556b;
+      box-shadow: 0 0 0 3px rgba(224, 85, 107, 0.15);
+    }
+
+    .bpm-pad-heart {
+      font-size: 1.75rem;
+      line-height: 1;
+      animation: heartbeat calc(60s / var(--bpm)) infinite ease-in-out;
+      will-change: transform, filter;
+    }
+
+    .bpm-pad-label {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--secondary-color);
+    }
+
+    /* Re-triggered per tap by removing/re-adding .hit (see registerBpmTap). */
+    .bpm-pad.hit { animation: bpmHit 240ms ease-out }
+
+    @keyframes bpmHit {
+        from {
+          transform: scale(0.9);
+          box-shadow: 0 0 0 0 rgba(224, 85, 107, 0.55);
+        }
+        to {
+          transform: scale(1);
+          box-shadow: 0 0 0 14px rgba(224, 85, 107, 0);
+        }
+    }
+
+    .bpm-meter {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      /* Shrinks (wrapping its own hint text) before the pad is pushed onto its
+         own line, which keeps the widget compact on a phone-width terminal. */
+      flex: 1 1 160px;
+      min-width: 0;
+    }
+
+    .bpm-line {
+      display: flex;
+      align-items: baseline;
+      gap: 0.375rem;
+    }
+
+    .bpm-value {
+      font-size: 1.75rem;
+      font-weight: bold;
+      line-height: 1;
+      color: var(--primary-color);
+    }
+
+    .bpm-unit {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--secondary-color);
+    }
+
+    .bpm-hint {
+      font-size: 10px;
+      color: var(--secondary-color);
+    }
+
+    .bpm-ctl {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .bpm-ctl button {
+      font: inherit;
+      font-size: 10px;
+      padding: 3px 7px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      background-color: var(--surface-color);
+      color: var(--text-color);
+      cursor: pointer;
+    }
+
+    .bpm-ctl button:hover {
+      border-color: var(--primary-color);
+      background-color: var(--surface-hover);
+    }
     ::-webkit-scrollbar { width: 6px }
     ::-webkit-scrollbar-track { background: var(--bg-color) }
 
@@ -2676,7 +2801,7 @@
     <h2><a href="?cmd=akutagawa">akutagawa</a></h2>
     <p>A message from the past</p>
     <h2><a href="?cmd=bpm">bpm</a></h2>
-    <p>Set system heartbeat</p>
+    <p>Tap out the system heartbeat</p>
     <h2><a href="?cmd=choreomania">choreomania</a></h2>
     <p>Merging souls in ecstasy</p>
     <h2><a href="?cmd=meltdown">meltdown</a></h2>
@@ -3800,6 +3925,84 @@
       } else { const d = document.createElement('div'); d.className = 'fade-in my-4 w-[90%] max-w-[809px]'; d.innerHTML = result; DOM.output.appendChild(d); }
     };
 
+    // --- bpm: tap-tempo checker ---------------------------------------------
+    // `bpm` prints a heart pad that is tapped in time with whatever is playing;
+    // the rolling average of the recent taps drives --bpm live, so every
+    // beat-synced animation (caret blink, status heart, choreomania) follows.
+    const BPM_TAP_WINDOW = 8;   // taps kept in the rolling average
+    const BPM_TAP_RESET = 2500; // ms of silence that starts a fresh measurement
+    // Repaint of everything showing the tempo. Split out of setBpm() so `rebuild`,
+    // which clears the inline property rather than writing one, can reuse it.
+    function syncBpmUI(bpm) {
+      const bpmEl = document.getElementById('status-bpm');
+      if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>${bpm}</span>`;
+      document.querySelectorAll('.bpm-value').forEach(el => { el.textContent = bpm; });
+    }
+    function setBpm(value) {
+      const bpm = Math.max(1, Math.min(999, Math.round(value)));
+      document.documentElement.style.setProperty('--bpm', bpm);
+      syncBpmUI(bpm);
+      return bpm;
+    }
+    const bpmTapHTML = () => `<div class="bpm-tap" role="group" aria-live="off" aria-label="${tr('Tap tempo', 'タップテンポ')}">
+        <button type="button" class="bpm-pad" data-bpm-tap aria-label="${tr('Tap to set the BPM', 'タップしてBPMを設定')}">
+          <span class="bpm-pad-heart">♥</span>
+          <span class="bpm-pad-label">TAP</span>
+        </button>
+        <div class="bpm-meter">
+          <div class="bpm-line"><span class="bpm-value">${getBpm()}</span><span class="bpm-unit">BPM</span></div>
+          <div class="bpm-hint" data-bpm-status>${tr('Tap the heart in time with the beat.', 'ビートに合わせてハートをタップ。')}</div>
+          <div class="bpm-ctl">
+            <button type="button" data-bpm-adj="-5">−5</button>
+            <button type="button" data-bpm-adj="-1">−1</button>
+            <button type="button" data-bpm-adj="1">+1</button>
+            <button type="button" data-bpm-adj="5">+5</button>
+            <button type="button" data-bpm-adj="reset">${tr('reset', 'リセット')}</button>
+          </div>
+          <div class="bpm-hint">${tr('Space / Enter taps too · <span class="text-normal">bpm 128</span> sets it directly.', 'Space / Enter でもタップ可 ・ <span class="text-normal">bpm 128</span> で直接指定。')}</div>
+        </div>
+      </div>`;
+    function setBpmStatus(root, count) {
+      const status = root && root.querySelector('[data-bpm-status]');
+      if (!status) return;
+      status.textContent = count < 2
+        ? tr('Keep tapping to the beat…', 'ビートに合わせてタップを続けてください…')
+        : tr(`Averaging the last ${count} taps.`, `直近 ${count} タップの平均です。`);
+    }
+    function registerBpmTap(root) {
+      if (!root) return;
+      const now = performance.now();
+      const taps = root._bpmTaps || (root._bpmTaps = []);
+      if (taps.length && now - taps[taps.length - 1] > BPM_TAP_RESET) taps.length = 0;
+      taps.push(now);
+      if (taps.length > BPM_TAP_WINDOW) taps.shift();
+      const pad = root.querySelector('.bpm-pad');
+      if (pad) { pad.classList.remove('hit'); void pad.offsetWidth; pad.classList.add('hit'); }
+      // Average interval across the window, so a single sloppy tap barely moves it.
+      if (taps.length >= 2) setBpm(60000 * (taps.length - 1) / (taps[taps.length - 1] - taps[0]));
+      setBpmStatus(root, taps.length);
+    }
+    // pointerdown (not click) because the tap must be timed on finger/button down.
+    DOM.terminalLog.addEventListener('pointerdown', (e) => {
+      const pad = e.target.closest('[data-bpm-tap]');
+      if (pad) registerBpmTap(pad.closest('.bpm-tap'));
+    });
+    DOM.terminalLog.addEventListener('keydown', (e) => {
+      const pad = e.target.closest('[data-bpm-tap]');
+      if (!pad || (e.key !== ' ' && e.key !== 'Enter')) return;
+      e.preventDefault(); // stops the button firing a synthetic click that double-counts
+      registerBpmTap(pad.closest('.bpm-tap'));
+    });
+    DOM.terminalLog.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-bpm-adj]');
+      if (!btn) return;
+      const root = btn.closest('.bpm-tap');
+      if (root && root._bpmTaps) root._bpmTaps.length = 0; // a manual nudge ends the tap run
+      const step = btn.dataset.bpmAdj;
+      setBpm(step === 'reset' ? 60 : getBpm() + Number(step));
+      setBpmStatus(root, 0);
+    });
+
     const commands = {
       help: () => {
         const base = [['about', tr('Learn about me', '私について')], ['identify', tr('View personality versions', '人格のバージョン')], ['timeline', tr('Trace my life events', '人生の出来事を辿る')], ['pages', tr('Explore my creations', '制作物を見る')], ['contact', tr('Contact me', '連絡先')], ['clear', tr('Clear terminal', 'ターミナルをクリア')], ['help', tr('Show this menu', 'このメニューを表示')]];
@@ -3990,15 +4193,14 @@
           : `<div class="my-3 text-xs text-primary">Language switched to English. <span class="text-secondary">(run <span class="text-normal font-bold">japanese</span> again for Japanese)</span></div>`;
       },
       bpm(args) {
-        const currentBpm = cssVar('--bpm', '60');
-        if (!args || args.length === 0 || isNaN(args[0])) return tr(`<div class="my-3 text-xs text-secondary">Usage: bpm &lt;number&gt;<br>Current BPM: <span class="text-normal font-bold">${currentBpm}</span></div>`,
-          `<div class="my-3 text-xs text-secondary">使い方: bpm &lt;数値&gt;<br>現在のBPM: <span class="text-normal font-bold">${currentBpm}</span></div>`);
-        const newBpm = Math.max(1, Math.min(999, parseInt(args[0], 10)));
-        document.documentElement.style.setProperty('--bpm', newBpm);
-        const bpmEl = document.getElementById('status-bpm');
-        if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>${newBpm}</span>`;
-        return tr(`<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`,
-          `<div class="my-3 text-xs text-primary">システムの鼓動を ${newBpm} BPM に同期しました。</div>`);
+        const arg = args && args[0];
+        // A number still sets the tempo outright; anything else opens the tap checker.
+        if (arg !== undefined && arg !== "" && !isNaN(arg)) {
+          const newBpm = setBpm(parseFloat(arg));
+          return tr(`<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`,
+            `<div class="my-3 text-xs text-primary">システムの鼓動を ${newBpm} BPM に同期しました。</div>`);
+        }
+        return bpmTapHTML();
       },
       meltdown() {
         if (isMeltdown) return tr(`<div class="my-3 text-xs text-red-500 font-bold">System is already in meltdown. Waiting for 'rebuild'.</div>`,
@@ -5088,8 +5290,7 @@
       document.documentElement.style.removeProperty('--primary-bg');
       document.documentElement.style.removeProperty('--primary-bg-hover');
       document.documentElement.style.removeProperty('--bpm');
-      const bpmEl = document.getElementById('status-bpm');
-      if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>60</span>`;
+      syncBpmUI(60);
       setActiveTree(null);
 
       if (document.documentElement.getAttribute('data-theme') === 'dark') applyTheme(false);
@@ -5221,10 +5422,10 @@
     const currentView = () => SIDEBAR_VIEWS.find(v => !document.getElementById('view-' + v).classList.contains('hidden')) || 'explorer';
     const ensureSidebarOpen = () => { isMobile() ? sidebarEl.classList.add('open') : sidebarEl.classList.remove('collapsed'); };
     const sidebarHidden = () => isMobile() ? !sidebarEl.classList.contains('open') : sidebarEl.classList.contains('collapsed');
-    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', timeline: 'Trace my life events', pages: 'Explore my creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Set system heartbeat', choreomania: 'Merging souls in ecstasy', meltdown: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', rampage: 'Wreck the screen', theme: 'Change terminal color', web3: 'Dive into my Web3 page', japanese: 'Switch to Japanese' };
+    const CMD_DESC = { about: 'Learn about me', identify: 'View personality versions', timeline: 'Trace my life events', pages: 'Explore my creations', contact: 'Contact me', clear: 'Clear terminal', help: 'Show menu', akutagawa: 'A message from the past', bpm: 'Tap out the system heartbeat', choreomania: 'Merging souls in ecstasy', meltdown: 'And rebuild', rebuild: 'Restore the system', matrix: 'Enter the Matrix', meditation: 'Clear your mind', rampage: 'Wreck the screen', theme: 'Change terminal color', web3: 'Dive into my Web3 page', japanese: 'Switch to Japanese' };
     // Japanese command descriptions, keyed identically to CMD_DESC. cdesc() returns
     // the right language; missing keys fall back to the English string.
-    const CMD_DESC_JA = { about: '私について', identify: '人格のバージョン', timeline: '人生の出来事を辿る', pages: '制作物を見る', contact: '連絡先', clear: 'ターミナルをクリア', help: 'メニューを表示', akutagawa: '過去からのメッセージ', bpm: 'システムの鼓動を設定', choreomania: '心の壁を溶かすエクスタシー', meltdown: 'そしてrebuild', rebuild: 'システムを復旧する', matrix: 'マトリックスへ', meditation: '心を整える', rampage: '画面を破壊', theme: 'ターミナルの色を変更', web3: 'Web3ページへ', japanese: '英語に切り替え' };
+    const CMD_DESC_JA = { about: '私について', identify: '人格のバージョン', timeline: '人生の出来事を辿る', pages: '制作物を見る', contact: '連絡先', clear: 'ターミナルをクリア', help: 'メニューを表示', akutagawa: '過去からのメッセージ', bpm: 'システムの鼓動をタップで設定', choreomania: '心の壁を溶かすエクスタシー', meltdown: 'そしてrebuild', rebuild: 'システムを復旧する', matrix: 'マトリックスへ', meditation: '心を整える', rampage: '画面を破壊', theme: 'ターミナルの色を変更', web3: 'Web3ページへ', japanese: '英語に切り替え' };
     const cdesc = c => tr(CMD_DESC[c] || '', CMD_DESC_JA[c]);
     // Build a content index so search matches command output text, not just titles.
     const SEARCH_INDEX = {};

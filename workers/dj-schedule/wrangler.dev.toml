@@ -1,0 +1,8 @@
+name               = "tk-st-dj-schedule-dev"
+main               = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "dj-schedule-db"
+database_id   = "00000000-0000-4000-8000-000000000000"

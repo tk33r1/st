@@ -1,0 +1,1456 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 身内専用ページ。検索結果には一切出さない -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="bingbot" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#1a0843">
+  <title>白昼夢 スケジュール調整</title>
+  <link rel="icon" href="https://tk.st/images/favicons/dj-favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="https://tk.st/images/favicons/dj-favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* 美術紫水（shisui-tea.jp）のカラースキームとタイポグラフィに合わせている */
+    :root {
+      --indigo: #1a0843;
+      --indigo-soft: #241056;
+      --pink: #fdd4c9;
+      --pink-dim: rgba(253, 212, 201, 0.75);
+      --pink-line: rgba(253, 212, 201, 0.3);
+      --pink-faint: rgba(253, 212, 201, 0.08);
+      --mint: #62febd;
+      --yellow: #faf5b6;
+      --coral: #f8724e;
+      --magenta: #6f0366;
+      --pop: 'Mochiy Pop P One', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif;
+      color-scheme: dark;
+    }
+
+    html {
+      scrollbar-gutter: stable;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--indigo);
+      color: var(--pink-dim);
+      font-family: var(--pop);
+      font-weight: 400;
+      font-size: 1rem;
+      line-height: 1.9;
+      letter-spacing: 0.03em;
+    }
+
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 0 80px;
+    }
+
+    /* ===== HEADER ===== */
+    .site-head {
+      background: var(--pink);
+      color: var(--indigo);
+      padding: 20px 24px;
+      margin-bottom: 34px;
+    }
+
+    .site-head h1 {
+      max-width: 880px;
+      margin: 0 auto;
+      font-size: clamp(1.15rem, 4.6vw, 1.6rem);
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 1.4;
+    }
+
+    .inner {
+      padding: 0 20px;
+    }
+
+    /* ===== SECTION ===== */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      color: var(--pink);
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    /* ===== MONTH ===== */
+    .month-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: nowrap;
+    }
+
+    .month-now {
+      flex: 1 1 auto;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .month-now .no {
+      display: block;
+      font-size: clamp(1.5rem, 7vw, 2.4rem);
+      color: var(--pink);
+      letter-spacing: 0.06em;
+      line-height: 1.3;
+    }
+
+    .month-now .sub {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--pink-dim);
+      letter-spacing: 0.1em;
+    }
+
+    .nav-btn {
+      flex: 0 0 auto;
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--pink-line);
+      background: transparent;
+      color: var(--pink-dim);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      color: var(--indigo);
+      background: var(--pink);
+      border-color: var(--pink);
+    }
+
+    .month-tools {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .month-tools select {
+      flex: 1 1 230px;
+      max-width: 300px;
+    }
+
+    .quick-months {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+      font-size: 0.8rem;
+    }
+
+    .quick {
+      font-family: inherit;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border: 1px solid var(--pink-line);
+      background: transparent;
+      color: var(--pink-dim);
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .quick:hover {
+      color: var(--mint);
+      border-color: var(--mint);
+    }
+
+    /* ===== FORM ===== */
+    .field-label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--pink-dim);
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: var(--pink);
+      background: transparent;
+      border: 1px solid var(--pink-line);
+      border-radius: 0;
+      padding: 11px 12px;
+      transition: border-color 0.2s ease;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: rgba(253, 212, 201, 0.4);
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--mint);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+      line-height: 1.8;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .row>* {
+      flex: 1 1 180px;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      font-family: inherit;
+      font-size: 0.88rem;
+      letter-spacing: 0.08em;
+      padding: 12px 24px;
+      border: 1px solid var(--pink);
+      background: transparent;
+      color: var(--pink);
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn:hover {
+      background: var(--pink);
+      color: var(--indigo);
+    }
+
+    .btn.primary {
+      background: var(--pink);
+      color: var(--indigo);
+    }
+
+    .btn.primary:hover {
+      background: var(--mint);
+      border-color: var(--mint);
+    }
+
+    .btn.small {
+      font-size: 0.78rem;
+      padding: 8px 14px;
+      letter-spacing: 0.04em;
+      border-color: var(--pink-line);
+      color: var(--pink-dim);
+    }
+
+    .btn.small:hover {
+      background: var(--pink);
+      border-color: var(--pink);
+      color: var(--indigo);
+    }
+
+    .btn.danger {
+      border-color: var(--coral);
+      color: var(--coral);
+    }
+
+    .btn.danger:hover {
+      background: var(--coral);
+      color: var(--indigo);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    /* ===== TABLE ===== */
+    .table-scroll {
+      overflow-x: auto;
+      margin-bottom: 12px;
+    }
+
+    table.grid {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 440px;
+    }
+
+    table.grid th,
+    table.grid td {
+      border: 1px solid var(--pink-line);
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 0.86rem;
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    table.grid thead th {
+      background: var(--pink);
+      color: var(--indigo);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      border-color: var(--pink);
+    }
+
+    table.grid th.date-cell,
+    table.grid td.date-cell {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: var(--indigo);
+      color: var(--pink);
+    }
+
+    table.grid thead th.date-cell {
+      background: var(--pink);
+      color: var(--indigo);
+    }
+
+    tr.best td {
+      background: rgba(98, 254, 189, 0.14);
+    }
+
+    tr.best td.date-cell {
+      background: #2a2b53;
+      color: var(--mint);
+    }
+
+    /* 開催日が確定した行 */
+    tr.decided td {
+      background: var(--yellow);
+      color: var(--indigo);
+      border-color: rgba(26, 8, 67, 0.25);
+    }
+
+    tr.decided td.date-cell {
+      background: var(--yellow);
+      color: var(--indigo);
+    }
+
+    tr.decided .mark-o,
+    tr.decided .mark-t,
+    tr.decided .mark-x,
+    tr.decided .mark-none {
+      color: var(--indigo);
+    }
+
+    tr.decided td.date-cell::after {
+      content: ' 開催';
+      font-size: 0.72rem;
+    }
+
+    /* 開催できない日 */
+    tr.blocked td {
+      opacity: 0.35;
+    }
+
+    tr.blocked td.date-cell {
+      text-decoration: line-through;
+    }
+
+    .tally {
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+    }
+
+    .mark-o {
+      color: var(--mint);
+    }
+
+    .mark-t {
+      color: var(--yellow);
+    }
+
+    .mark-x {
+      color: var(--coral);
+    }
+
+    .mark-none {
+      color: rgba(253, 212, 201, 0.3);
+    }
+
+    .name-btn {
+      font-family: inherit;
+      font-size: 0.8rem;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--indigo);
+      color: var(--indigo);
+      cursor: pointer;
+      padding: 0 2px;
+    }
+
+    .name-btn:hover {
+      border-bottom-color: var(--magenta);
+      color: var(--magenta);
+    }
+
+    .comment-cell {
+      white-space: normal;
+      font-size: 0.78rem;
+      max-width: 170px;
+      line-height: 1.6;
+    }
+
+    /* ===== ANSWER PICKER ===== */
+    .answer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .answer-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--pink-line);
+      padding: 10px 12px;
+      flex-wrap: wrap;
+    }
+
+    .answer-row .d {
+      font-size: 0.9rem;
+      color: var(--pink);
+      letter-spacing: 0.04em;
+      flex: 1 1 130px;
+    }
+
+    .seg {
+      display: flex;
+    }
+
+    .seg button {
+      font-family: inherit;
+      font-size: 1.05rem;
+      width: 50px;
+      height: 42px;
+      border: 1px solid var(--pink-line);
+      margin-left: -1px;
+      background: transparent;
+      color: rgba(253, 212, 201, 0.35);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .seg button:first-child {
+      margin-left: 0;
+    }
+
+    .seg button:hover {
+      color: var(--pink);
+    }
+
+    .seg button[aria-pressed="true"] {
+      color: var(--indigo);
+    }
+
+    .seg button[aria-pressed="true"][data-v="o"] {
+      background: var(--mint);
+      border-color: var(--mint);
+    }
+
+    .seg button[aria-pressed="true"][data-v="t"] {
+      background: var(--yellow);
+      border-color: var(--yellow);
+    }
+
+    .seg button[aria-pressed="true"][data-v="x"] {
+      background: var(--coral);
+      border-color: var(--coral);
+    }
+
+    .answer-row.is-decided {
+      border-color: var(--yellow);
+    }
+
+    .answer-row.is-decided .d {
+      color: var(--yellow);
+    }
+
+    .answer-row.is-blocked {
+      opacity: 0.4;
+    }
+
+    .answer-row.is-blocked .d {
+      text-decoration: line-through;
+    }
+
+    .answer-row .tag {
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      padding: 2px 8px;
+      border: 1px solid currentColor;
+    }
+
+    .answer-row .tag.decided {
+      color: var(--yellow);
+    }
+
+    .answer-row .tag.blocked {
+      color: var(--pink-dim);
+    }
+
+    .seg button:disabled {
+      cursor: not-allowed;
+      color: rgba(253, 212, 201, 0.2);
+    }
+
+    /* 開催不可日は押せないので、選択済みの塗りも外して無効に見せる */
+    .seg button:disabled[aria-pressed="true"] {
+      background: transparent;
+      border-color: var(--pink-line);
+      color: rgba(253, 212, 201, 0.35);
+    }
+
+    /* ===== 開催日の設定 ===== */
+    .status-line {
+      font-size: 0.95rem;
+      color: var(--yellow);
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+
+    .block-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .block-chip {
+      font-family: inherit;
+      font-size: 0.82rem;
+      padding: 7px 12px;
+      border: 1px solid var(--pink-line);
+      background: transparent;
+      color: var(--pink-dim);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .block-chip:hover {
+      border-color: var(--pink);
+      color: var(--pink);
+    }
+
+    .block-chip[aria-pressed="true"] {
+      background: rgba(253, 212, 201, 0.14);
+      border-color: transparent;
+      color: rgba(253, 212, 201, 0.45);
+      text-decoration: line-through;
+    }
+
+    .bulk {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 0.8rem;
+    }
+
+    /* ===== MEMO ===== */
+    .memo-view {
+      font-size: 0.92rem;
+      color: var(--pink);
+      white-space: pre-wrap;
+      border-left: 2px solid var(--pink-line);
+      padding-left: 14px;
+    }
+
+    /* ===== MISC ===== */
+    .notice {
+      font-size: 0.86rem;
+      padding: 12px 16px;
+      border-left: 3px solid var(--mint);
+      background: var(--pink-faint);
+      color: var(--pink);
+      margin-bottom: 26px;
+    }
+
+    .notice.error {
+      border-left-color: var(--coral);
+    }
+
+    .muted {
+      color: rgba(253, 212, 201, 0.55);
+      font-size: 0.78rem;
+    }
+
+    .best-line {
+      font-size: 0.88rem;
+      color: var(--mint);
+      margin-bottom: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    .best-line.quiet {
+      color: rgba(253, 212, 201, 0.55);
+    }
+
+    .site-foot {
+      margin-top: 56px;
+      font-size: 0.76rem;
+      letter-spacing: 0.1em;
+      color: rgba(253, 212, 201, 0.5);
+      text-align: center;
+    }
+
+    .site-foot a {
+      color: inherit;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 560px) {
+      body {
+        font-size: 0.94rem;
+        line-height: 1.8;
+      }
+
+      .site-head {
+        padding: 16px 16px;
+        margin-bottom: 26px;
+      }
+
+      .inner {
+        padding: 0 14px;
+      }
+
+      .section {
+        margin-bottom: 32px;
+      }
+
+      .nav-btn {
+        padding: 9px 8px;
+        font-size: 0.72rem;
+      }
+
+      .seg button {
+        width: 44px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-head">
+    <h1>白昼夢 スケジュール調整</h1>
+  </header>
+
+  <div class="wrap">
+    <div class="inner">
+      <div id="globalNotice" class="notice error" hidden></div>
+
+      <!-- ===== 月 ===== -->
+      <section class="section">
+        <div class="month-bar">
+          <button class="nav-btn" id="prevMonth" type="button">←</button>
+          <div class="month-now">
+            <span class="no" id="monthLabel">—</span>
+            <span class="sub" id="monthSub"></span>
+          </div>
+          <button class="nav-btn" id="nextMonth" type="button">→</button>
+        </div>
+        <div class="month-tools">
+          <select id="monthJump" aria-label="月を選ぶ"></select>
+          <button class="btn small" id="thisMonth" type="button">今月</button>
+          <button class="btn small" id="copyUrl" type="button">URLをコピー</button>
+          <button class="btn small" id="reload" type="button">更新</button>
+        </div>
+        <div class="quick-months" id="quickMonths" hidden></div>
+      </section>
+
+      <!-- ===== 集計 ===== -->
+      <section class="section">
+        <h2 class="section-title">集計</h2>
+        <p class="status-line" id="statusLine" hidden></p>
+        <p class="best-line" id="bestLine"></p>
+        <div class="table-scroll">
+          <table class="grid" id="grid"></table>
+        </div>
+        <p class="muted">名前をタップすると修正できます</p>
+      </section>
+
+      <!-- ===== 開催日の設定 ===== -->
+      <section class="section">
+        <h2 class="section-title">開催日</h2>
+
+        <div style="margin-bottom:18px">
+          <span class="field-label">確定した日</span>
+          <select id="decidedSelect"></select>
+        </div>
+
+        <div>
+          <span class="field-label">開催できない日</span>
+          <div class="block-chips" id="blockChips"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn small" id="saveStatus" type="button">保存</button>
+        </div>
+      </section>
+
+      <!-- ===== 回答 ===== -->
+      <section class="section">
+        <h2 class="section-title" id="answerTitle">出欠を入れる</h2>
+
+        <div class="row" style="margin-bottom:18px">
+          <label>
+            <span class="field-label">名前</span>
+            <select id="ansName"></select>
+          </label>
+          <label id="customNameField" hidden>
+            <span class="field-label">名前を入力</span>
+            <input type="text" id="ansCustomName" maxlength="20" placeholder="お名前">
+          </label>
+        </div>
+
+        <div class="bulk">
+          <span class="muted">一括</span>
+          <button class="btn small" data-fill="o" type="button">全部 ○</button>
+          <button class="btn small" data-fill="t" type="button">全部 △</button>
+          <button class="btn small" data-fill="x" type="button">全部 ×</button>
+        </div>
+
+        <div class="answer-list" id="ansList"></div>
+
+        <div style="margin-top:18px">
+          <span class="field-label">ひとこと</span>
+          <input type="text" id="ansComment" maxlength="200" placeholder="任意">
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="submitAnswer">登録する</button>
+          <button class="btn small danger" id="deleteAnswer" hidden>削除</button>
+          <button class="btn small" id="resetAnswer" hidden>クリア</button>
+        </div>
+      </section>
+
+      <!-- ===== メモ ===== -->
+      <section class="section">
+        <h2 class="section-title" id="memoTitle">メモ</h2>
+        <p class="memo-view" id="memoView"></p>
+        <div id="memoEditor" hidden>
+          <textarea id="memoInput" maxlength="500" placeholder="会場・集合時間など"></textarea>
+          <div class="btn-row">
+            <button class="btn small" id="saveMemo" type="button">保存</button>
+            <button class="btn small" id="cancelMemo" type="button">やめる</button>
+          </div>
+        </div>
+        <div class="btn-row" id="memoActions">
+          <button class="btn small" id="editMemo" type="button">メモを書く</button>
+        </div>
+      </section>
+
+      <footer class="site-foot">
+        <p><a href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer">美術紫水</a> / 人類踊狂計画</p>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ===== 設定 =====
+      // メンバーは五十音順。末尾の「その他」で自由入力。
+      var MEMBERS = ['アヤ', 'かずき', 'クロトラ', 'たけ', 'マメピー', 'ミツキ'];
+      var OTHER = '__other__';
+      var API_BASE = '/dj/api'; // tk.st 上の Worker ルート（同一オリジン）
+      var STORE_KEY = 'dj-schedule-name';
+      var WDAY = ['日', '月', '火', '水', '木', '金', '土'];
+      var MARKS = { o: '○', t: '△', x: '×' };
+      var JUMP_BACK = 3;    // 月セレクトで遡れる月数
+      var JUMP_AHEAD = 12;  // 月セレクトで先に進める月数
+      var SERIES_START = '2026-06'; // 2026年6月＝白昼夢①。毎月1回なので月がそのまま回数になる
+
+      // ===== 状態 =====
+      var month = '';        // 表示中の月 "YYYY-MM"
+      var data = null;       // サーバーから取得した月データ
+      var answers = {};      // { 'YYYY-MM-DD': 'o'|'t'|'x' }
+      var editingId = null;  // 修正中の回答 id
+
+      // ===== ユーティリティ =====
+      function $(id) { return document.getElementById(id); }
+
+      function notice(message, isError) {
+        var el = $('globalNotice');
+        if (!message) { el.hidden = true; return; }
+        el.textContent = message;
+        el.className = 'notice' + (isError === false ? '' : ' error');
+        el.hidden = false;
+      }
+
+      function toDate(iso) { return new Date(iso + 'T00:00:00'); }
+
+      function fmtDate(iso) {
+        var d = toDate(iso);
+        return (d.getMonth() + 1) + '/' + d.getDate() + '(' + WDAY[d.getDay()] + ')';
+      }
+
+      function fmtDateLong(iso) {
+        var d = toDate(iso);
+        return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日(' + WDAY[d.getDay()] + ')';
+      }
+
+      function fmtMonth(ym) {
+        return Number(ym.slice(0, 4)) + '年' + Number(ym.slice(5, 7)) + '月';
+      }
+
+      // 白昼夢の通し回数。起点より前の月は番号なし
+      function eventNo(ym) {
+        var months = (Number(ym.slice(0, 4)) - Number(SERIES_START.slice(0, 4))) * 12
+          + (Number(ym.slice(5, 7)) - Number(SERIES_START.slice(5, 7)));
+        return months >= 0 ? months + 1 : null;
+      }
+
+      // ①〜㊿。それ以降は素直に数字で出す
+      function circled(n) {
+        if (n >= 1 && n <= 20) return String.fromCharCode(0x2460 + n - 1);
+        if (n >= 21 && n <= 35) return String.fromCharCode(0x3251 + n - 21);
+        if (n >= 36 && n <= 50) return String.fromCharCode(0x32b1 + n - 36);
+        return '(' + n + ')';
+      }
+
+      // 「白昼夢③」。起点より前は月表記にフォールバック
+      function eventLabel(ym) {
+        var no = eventNo(ym);
+        return no ? '白昼夢' + circled(no) : fmtMonth(ym);
+      }
+
+      function ymOf(date) {
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+      }
+
+      function shiftMonth(ym, delta) {
+        var d = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1 + delta, 1);
+        return ymOf(d);
+      }
+
+      function isMonth(ym) {
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(ym || '')) return false;
+        var year = Number(ym.slice(0, 4));
+        return year >= 2020 && year <= 2099;
+      }
+
+      function api(path, options) {
+        var opts = options || {};
+        return fetch(API_BASE + path, {
+          method: opts.method || 'GET',
+          headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
+          body: opts.body ? JSON.stringify(opts.body) : undefined,
+          cache: 'no-store'
+        }).then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (payload) {
+            if (!res.ok) throw new Error(payload.error || ('通信に失敗しました (' + res.status + ')'));
+            return payload;
+          });
+        }).catch(function (err) {
+          if (err instanceof TypeError) {
+            throw new Error('サーバーに接続できませんでした');
+          }
+          throw err;
+        });
+      }
+
+      // ===== ルーティング =====
+      function monthFromUrl() {
+        var m = new URLSearchParams(location.search).get('m');
+        return isMonth(m) ? m : ymOf(new Date());
+      }
+
+      function goto(ym, replace) {
+        history[replace ? 'replaceState' : 'pushState']({ m: ym }, '', location.pathname + '?m=' + ym);
+        load(ym);
+      }
+
+      // ===== 読み込み =====
+      function load(ym) {
+        month = ym;
+        notice('');
+        renderMonthBar();
+        api('/months/' + ym).then(function (payload) {
+          data = payload;
+          resetAnswerForm(true);
+          renderAll();
+        }).catch(function (err) {
+          notice(err.message);
+        });
+        loadQuickMonths();
+      }
+
+      function loadQuickMonths() {
+        api('/months').then(function (list) {
+          var box = $('quickMonths');
+          box.textContent = '';
+          var others = list.filter(function (row) { return row.ym !== month; }).slice(0, 8);
+          if (!others.length) { box.hidden = true; return; }
+          box.hidden = false;
+          var lbl = document.createElement('span');
+          lbl.className = 'muted';
+          lbl.textContent = '回答あり';
+          box.appendChild(lbl);
+          others.forEach(function (row) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'quick';
+            b.textContent = eventLabel(row.ym) + ' ' + row.response_count;
+            b.addEventListener('click', function () { goto(row.ym); });
+            box.appendChild(b);
+          });
+        }).catch(function () { /* 一覧が出せなくても本体は使える */ });
+      }
+
+      function renderAll() {
+        document.title = eventLabel(month) + ' スケジュール調整';
+        renderMonthBar();
+        renderTable();
+        renderBest();
+        renderStatusEditor();
+        renderNameSelect();
+        autoLoadOwnResponse();
+        renderAnswerRows();
+        renderMemo();
+      }
+
+      // ===== 月バー =====
+      function jumpLabel(ym) {
+        var no = eventNo(ym);
+        return no ? '白昼夢' + circled(no) + '（' + fmtMonth(ym) + '）' : fmtMonth(ym);
+      }
+
+      function renderMonthBar() {
+        $('monthLabel').textContent = eventLabel(month);
+        var count = data && data.month === month ? data.dates.length : 0;
+        $('monthSub').textContent = fmtMonth(month) + (count ? ' / 日曜 ' + count + '回' : '');
+        $('prevMonth').textContent = '← ' + eventLabel(shiftMonth(month, -1));
+        $('nextMonth').textContent = eventLabel(shiftMonth(month, 1)) + ' →';
+
+        var sel = $('monthJump');
+        sel.textContent = '';
+        var base = ymOf(new Date());
+        for (var i = -JUMP_BACK; i <= JUMP_AHEAD; i++) {
+          var ym = shiftMonth(base, i);
+          var opt = document.createElement('option');
+          opt.value = ym;
+          opt.textContent = jumpLabel(ym);
+          sel.appendChild(opt);
+        }
+        // 範囲外の月を直接開いた場合も選択肢に出す
+        if (!Array.prototype.some.call(sel.options, function (o) { return o.value === month; })) {
+          var extra = document.createElement('option');
+          extra.value = month;
+          extra.textContent = jumpLabel(month);
+          sel.insertBefore(extra, sel.firstChild);
+        }
+        sel.value = month;
+      }
+
+      // ===== 集計表 =====
+      function tallyOf(iso) {
+        var t = { o: 0, t: 0, x: 0 };
+        data.responses.forEach(function (r) {
+          var v = r.answers[iso];
+          if (v && t[v] !== undefined) t[v] += 1;
+        });
+        return t;
+      }
+
+      function isBlocked(iso) {
+        return data.blocked.indexOf(iso) !== -1;
+      }
+
+      // ○=2点 / △=1点 で最高スコアの日を拾う（× が付いた日と開催不可日は除外）
+      function bestDates() {
+        if (!data.responses.length) return [];
+        var top = -1;
+        var winners = [];
+        data.dates.forEach(function (iso) {
+          if (isBlocked(iso)) return;
+          var t = tallyOf(iso);
+          if (t.x > 0) return;
+          var score = t.o * 2 + t.t;
+          if (score > top) { top = score; winners = [iso]; }
+          else if (score === top) { winners.push(iso); }
+        });
+        return top > 0 ? winners : [];
+      }
+
+      function renderTable() {
+        var table = $('grid');
+        table.textContent = '';
+
+        var thead = document.createElement('thead');
+        var hr = document.createElement('tr');
+        var thDate = document.createElement('th');
+        thDate.className = 'date-cell';
+        thDate.textContent = '日曜日';
+        hr.appendChild(thDate);
+        var thTally = document.createElement('th');
+        thTally.textContent = '○ / △ / ×';
+        hr.appendChild(thTally);
+        data.responses.forEach(function (r) {
+          var th = document.createElement('th');
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'name-btn';
+          btn.textContent = r.name;
+          btn.title = r.name + ' の回答を読み込む';
+          btn.addEventListener('click', function () { loadResponseIntoForm(r); });
+          th.appendChild(btn);
+          hr.appendChild(th);
+        });
+        thead.appendChild(hr);
+        table.appendChild(thead);
+
+        // 確定してしまえば有力候補のハイライトは意味がないので出さない
+        var best = data.decided ? [] : bestDates();
+        var tbody = document.createElement('tbody');
+        data.dates.forEach(function (iso) {
+          var tr = document.createElement('tr');
+          // 確定日 > 開催不可 > 有力候補 の順で見た目を決める
+          if (iso === data.decided) tr.className = 'decided';
+          else if (isBlocked(iso)) tr.className = 'blocked';
+          else if (best.indexOf(iso) !== -1) tr.className = 'best';
+
+          var dateTd = document.createElement('td');
+          dateTd.className = 'date-cell';
+          dateTd.textContent = fmtDate(iso);
+          tr.appendChild(dateTd);
+
+          var t = tallyOf(iso);
+          var tallyTd = document.createElement('td');
+          tallyTd.className = 'tally';
+          [['o', t.o], ['t', t.t], ['x', t.x]].forEach(function (pair, i) {
+            if (i > 0) tallyTd.appendChild(document.createTextNode(' / '));
+            var span = document.createElement('span');
+            span.className = 'mark-' + pair[0];
+            span.textContent = MARKS[pair[0]] + pair[1];
+            tallyTd.appendChild(span);
+          });
+          tr.appendChild(tallyTd);
+
+          data.responses.forEach(function (r) {
+            var td = document.createElement('td');
+            var v = r.answers[iso];
+            td.className = v ? 'mark-' + v : 'mark-none';
+            td.textContent = v ? MARKS[v] : '－';
+            tr.appendChild(td);
+          });
+
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        if (data.responses.length) {
+          var tfoot = document.createElement('tfoot');
+          var fr = document.createElement('tr');
+          var label = document.createElement('td');
+          label.className = 'date-cell';
+          label.textContent = 'ひとこと';
+          fr.appendChild(label);
+          fr.appendChild(document.createElement('td'));
+          data.responses.forEach(function (r) {
+            var td = document.createElement('td');
+            td.className = 'comment-cell';
+            td.textContent = r.comment || '－';
+            fr.appendChild(td);
+          });
+          tfoot.appendChild(fr);
+          table.appendChild(tfoot);
+        }
+      }
+
+      function renderBest() {
+        var status = $('statusLine');
+        status.hidden = !data.decided;
+        if (data.decided) status.textContent = '開催日 ' + fmtDateLong(data.decided);
+
+        var el = $('bestLine');
+        el.className = 'best-line quiet';
+
+        // 確定済みなら有力候補は出さず、回答数だけ添える
+        if (data.decided) {
+          el.textContent = data.responses.length ? '回答 ' + data.responses.length + '人' : 'まだ回答がありません';
+          return;
+        }
+        if (!data.responses.length) {
+          el.textContent = 'まだ回答がありません';
+          return;
+        }
+        var best = bestDates();
+        if (!best.length) {
+          el.textContent = '全員が空いている日はまだありません';
+          return;
+        }
+        el.className = 'best-line';
+        el.textContent = '有力候補 ' + best.map(fmtDateLong).join(' ／ ')
+          + '（回答 ' + data.responses.length + '人）';
+      }
+
+      // ===== 開催日の設定 =====
+      function renderStatusEditor() {
+        var sel = $('decidedSelect');
+        sel.textContent = '';
+        var none = document.createElement('option');
+        none.value = '';
+        none.textContent = '未定';
+        sel.appendChild(none);
+        data.dates.forEach(function (iso) {
+          var opt = document.createElement('option');
+          opt.value = iso;
+          opt.textContent = fmtDateLong(iso);
+          sel.appendChild(opt);
+        });
+        sel.value = data.decided || '';
+
+        var box = $('blockChips');
+        box.textContent = '';
+        data.dates.forEach(function (iso) {
+          var chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'block-chip';
+          chip.dataset.iso = iso;
+          chip.textContent = fmtDate(iso);
+          chip.setAttribute('aria-pressed', isBlocked(iso) ? 'true' : 'false');
+          chip.addEventListener('click', function () {
+            var on = chip.getAttribute('aria-pressed') === 'true';
+            chip.setAttribute('aria-pressed', on ? 'false' : 'true');
+          });
+          box.appendChild(chip);
+        });
+      }
+
+      // ===== 回答フォーム =====
+      function renderNameSelect() {
+        var sel = $('ansName');
+        var stored = '';
+        try { stored = localStorage.getItem(STORE_KEY) || ''; } catch (e) { /* プライベートモード等 */ }
+        var saved = editingId ? sel.value : stored;
+        sel.textContent = '';
+
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '選んでください';
+        sel.appendChild(placeholder);
+
+        MEMBERS.forEach(function (name) {
+          var opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          sel.appendChild(opt);
+        });
+
+        var other = document.createElement('option');
+        other.value = OTHER;
+        other.textContent = 'その他（自由入力）';
+        sel.appendChild(other);
+
+        if (saved === OTHER) {
+          sel.value = OTHER;
+        } else if (saved && MEMBERS.indexOf(saved) !== -1) {
+          sel.value = saved;
+        } else if (saved) {
+          // 自由入力で登録した名前を復元する
+          sel.value = OTHER;
+          if (!$('ansCustomName').value) $('ansCustomName').value = saved;
+        }
+        syncCustomNameField();
+      }
+
+      function syncCustomNameField() {
+        $('customNameField').hidden = $('ansName').value !== OTHER;
+      }
+
+      function selectedName() {
+        var v = $('ansName').value;
+        if (v === OTHER) return $('ansCustomName').value.trim();
+        return v;
+      }
+
+      function renderAnswerRows() {
+        var list = $('ansList');
+        list.textContent = '';
+        if (!data) return;
+        data.dates.forEach(function (iso) {
+          var blocked = isBlocked(iso);
+          var decided = iso === data.decided;
+
+          var row = document.createElement('div');
+          row.className = 'answer-row' + (decided ? ' is-decided' : '') + (blocked ? ' is-blocked' : '');
+
+          var d = document.createElement('span');
+          d.className = 'd';
+          d.textContent = fmtDateLong(iso);
+          row.appendChild(d);
+
+          if (decided || blocked) {
+            var tag = document.createElement('span');
+            tag.className = 'tag ' + (decided ? 'decided' : 'blocked');
+            tag.textContent = decided ? '開催' : '開催不可';
+            row.appendChild(tag);
+          }
+
+          var seg = document.createElement('div');
+          seg.className = 'seg';
+          ['o', 't', 'x'].forEach(function (v) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.dataset.v = v;
+            b.textContent = MARKS[v];
+            b.disabled = blocked;
+            b.setAttribute('aria-label', fmtDateLong(iso) + ' ' + MARKS[v]);
+            b.setAttribute('aria-pressed', answers[iso] === v ? 'true' : 'false');
+            b.addEventListener('click', function () {
+              answers[iso] = (answers[iso] === v) ? undefined : v;
+              if (!answers[iso]) delete answers[iso];
+              Array.prototype.forEach.call(seg.children, function (child) {
+                child.setAttribute('aria-pressed', answers[iso] === child.dataset.v ? 'true' : 'false');
+              });
+            });
+            seg.appendChild(b);
+          });
+          row.appendChild(seg);
+          list.appendChild(row);
+        });
+      }
+
+      // 前回この端末で登録した名前に回答があれば、開いた時点で読み込んでおく
+      function autoLoadOwnResponse() {
+        if (editingId) return;
+        var name = selectedName();
+        if (!name) return;
+        var mine = data.responses.filter(function (r) { return r.name === name; })[0];
+        if (mine) loadResponseIntoForm(mine, { scroll: false, rerender: false });
+      }
+
+      function loadResponseIntoForm(r, options) {
+        var opts = options || {};
+        editingId = r.id;
+        answers = Object.assign({}, r.answers);
+        if (MEMBERS.indexOf(r.name) !== -1) {
+          $('ansName').value = r.name;
+        } else {
+          $('ansName').value = OTHER;
+          $('ansCustomName').value = r.name;
+        }
+        syncCustomNameField();
+        $('ansComment').value = r.comment || '';
+        $('answerTitle').textContent = r.name + ' の回答を修正';
+        $('submitAnswer').textContent = '更新する';
+        $('deleteAnswer').hidden = false;
+        $('resetAnswer').hidden = false;
+        if (opts.rerender !== false) renderAnswerRows();
+        if (opts.scroll !== false) $('ansList').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      function resetAnswerForm(skipRender) {
+        editingId = null;
+        answers = {};
+        $('ansComment').value = '';
+        $('answerTitle').textContent = '出欠を入れる';
+        $('submitAnswer').textContent = '登録する';
+        $('deleteAnswer').hidden = true;
+        $('resetAnswer').hidden = true;
+        if (!skipRender) renderAnswerRows();
+      }
+
+      // 名前を選び直したとき、その人の既存回答があれば読み込む
+      function onNameChanged() {
+        syncCustomNameField();
+        var name = selectedName();
+        if (!name) return;
+        var existing = data.responses.filter(function (r) { return r.name === name; })[0];
+        if (existing) {
+          loadResponseIntoForm(existing);
+        } else if (editingId) {
+          resetAnswerForm();
+        }
+      }
+
+      // ===== メモ =====
+      function renderMemo() {
+        var hasMemo = !!data.memo;
+        $('memoTitle').textContent = eventLabel(month) + ' のメモ';
+        $('memoView').textContent = data.memo || '';
+        $('memoView').hidden = !hasMemo;
+        $('memoEditor').hidden = true;
+        $('memoActions').hidden = false;
+        $('editMemo').textContent = hasMemo ? 'メモを編集' : 'メモを書く';
+      }
+
+      // ===== イベントハンドラ =====
+      $('prevMonth').addEventListener('click', function () { goto(shiftMonth(month, -1)); });
+      $('nextMonth').addEventListener('click', function () { goto(shiftMonth(month, 1)); });
+      $('thisMonth').addEventListener('click', function () { goto(ymOf(new Date())); });
+      $('monthJump').addEventListener('change', function () { goto(this.value); });
+      $('reload').addEventListener('click', function () { load(month); });
+
+      $('ansName').addEventListener('change', onNameChanged);
+      $('ansCustomName').addEventListener('blur', onNameChanged);
+      $('resetAnswer').addEventListener('click', function () { resetAnswerForm(); });
+
+      Array.prototype.forEach.call(document.querySelectorAll('[data-fill]'), function (btn) {
+        btn.addEventListener('click', function () {
+          if (!data) return;
+          var v = btn.dataset.fill;
+          // 開催不可の日は一括入力の対象外
+          data.dates.forEach(function (iso) { if (!isBlocked(iso)) answers[iso] = v; });
+          renderAnswerRows();
+        });
+      });
+
+      $('submitAnswer').addEventListener('click', function () {
+        var name = selectedName();
+        if (!name) { notice('名前を選んでください'); return; }
+        if (!Object.keys(answers).length) { notice('○ △ × をひとつ以上選んでください'); return; }
+
+        var btn = this;
+        btn.disabled = true;
+        api('/months/' + month + '/responses', {
+          method: 'POST',
+          body: { name: name, answers: answers, comment: $('ansComment').value.trim() }
+        }).then(function (payload) {
+          btn.disabled = false;
+          data = payload;
+          try { localStorage.setItem(STORE_KEY, name); } catch (e) { /* noop */ }
+          resetAnswerForm(true);
+          renderAll();
+          loadQuickMonths();
+          notice(eventLabel(month) + ' の ' + name + ' の回答を保存しました', false);
+        }).catch(function (err) {
+          btn.disabled = false;
+          notice(err.message);
+        });
+      });
+
+      $('deleteAnswer').addEventListener('click', function () {
+        if (!editingId) return;
+        if (!confirm('この回答を削除します。よろしいですか？')) return;
+        var btn = this;
+        btn.disabled = true;
+        api('/months/' + month + '/responses/' + editingId, { method: 'DELETE' })
+          .then(function (payload) {
+            btn.disabled = false;
+            data = payload;
+            resetAnswerForm(true);
+            renderAll();
+            loadQuickMonths();
+            notice('回答を削除しました', false);
+          }).catch(function (err) {
+            btn.disabled = false;
+            notice(err.message);
+          });
+      });
+
+      $('saveStatus').addEventListener('click', function () {
+        var decided = $('decidedSelect').value || null;
+        var blocked = Array.prototype.filter.call(
+          $('blockChips').children,
+          function (chip) { return chip.getAttribute('aria-pressed') === 'true'; }
+        ).map(function (chip) { return chip.dataset.iso; });
+
+        var btn = this;
+        btn.disabled = true;
+        api('/months/' + month + '/status', {
+          method: 'PUT',
+          body: { decided: decided, blocked: blocked }
+        }).then(function (payload) {
+          btn.disabled = false;
+          data = payload;
+          renderAll();
+          notice(data.decided ? '開催日を ' + fmtDateLong(data.decided) + ' に設定しました' : '開催日の設定を保存しました', false);
+        }).catch(function (err) {
+          btn.disabled = false;
+          notice(err.message);
+        });
+      });
+
+      $('editMemo').addEventListener('click', function () {
+        $('memoInput').value = data.memo || '';
+        $('memoEditor').hidden = false;
+        $('memoActions').hidden = true;
+        $('memoInput').focus();
+      });
+
+      $('cancelMemo').addEventListener('click', renderMemo);
+
+      $('saveMemo').addEventListener('click', function () {
+        var btn = this;
+        btn.disabled = true;
+        api('/months/' + month + '/memo', { method: 'PUT', body: { memo: $('memoInput').value } })
+          .then(function (payload) {
+            btn.disabled = false;
+            data = payload;
+            renderMemo();
+            notice('メモを保存しました', false);
+          }).catch(function (err) {
+            btn.disabled = false;
+            notice(err.message);
+          });
+      });
+
+      $('copyUrl').addEventListener('click', function () {
+        var text = location.origin + location.pathname + '?m=' + month;
+        var btn = this;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            btn.textContent = 'コピーしました';
+            setTimeout(function () { btn.textContent = 'URLをコピー'; }, 1600);
+          }).catch(function () { notice('コピーできませんでした'); });
+        } else {
+          notice('このブラウザでは自動コピーができません');
+        }
+      });
+
+      window.addEventListener('popstate', function () { load(monthFromUrl()); });
+
+      // ===== 起動 =====
+      goto(monthFromUrl(), true);
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+name               = "tk-st-dj-schedule"
+main               = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding       = "DB"
+database_name = "dj-schedule-db"
+database_id   = "2305f1b6-824e-48ca-b53f-67d89a602cda"
+
+[[routes]]
+pattern   = "tk.st/dj/api/*"
+zone_name = "tk.st"

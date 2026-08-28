@@ -96,5 +96,22 @@
       "WEBP",
       "変換"
     ]
+  },
+  {
+    "id": 8,
+    "title": "Tap BPM - タップ式BPM計測・ディレイタイム計算ツール",
+    "url": "https://tk.st/tools/tap-bpm/",
+    "imageUrl": "https://tk.st/images/ogp/tap-bpm-ogp.png",
+    "category": "audio",
+    "description": "タップするだけでBPMを計測。最小二乗法による推定で叩き間違いを自動除外し、拍を飛ばしても補正します。ディレイタイム表・フレーム換算・DJのピッチ範囲まで一度に算出。",
+    "tags": [
+      "BPM",
+      "タップテンポ",
+      "テンポ",
+      "ディレイタイム",
+      "DTM",
+      "DJ",
+      "音楽"
+    ]
   }
 ]
