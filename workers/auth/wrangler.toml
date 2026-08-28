@@ -6,9 +6,8 @@ compatibility_date = "2025-01-01"
 # パターンの書き方: https://developers.cloudflare.com/workers/configuration/routing/routes/
 routes = [
   { pattern = "tk.st/bitcoinyen/bbm/*", zone_name = "tk.st" },
-  # DJ ブースコンソール。ページ自体をベーシック認証で守る
-  # （API 側は別途 x-admin-key を要求する二重構え）
-  { pattern = "tk.st/dj/booth/*", zone_name = "tk.st" },
+  # dj/booth はベーシック認証を掛けない。ページは誰でも開けるが、
+  # 中身の取得も操作も x-admin-key が要るので、鍵なしでは何も見えない。
   # 追加したいページがあれば下に行を足してください
   # { pattern = "example.tk.st/secret/*", zone_name = "tk.st" },
 ]

@@ -6,7 +6,7 @@
  *   POST /dj/api/req/requests   リクエスト投稿
  *   GET  /dj/api/req/board      みんなのリクエスト（再生済かどうかだけ見せる）
  *
- * 管理API（x-admin-key 必須）
+ * ブースAPI（鍵なしの公開。ページをどこからもリンクしないことで運用上隠す）
  *   GET   /dj/api/req/admin/songs        全件（ひとこと・内部ステータス込み）
  *   PATCH /dj/api/req/admin/songs/:id    ステータス更新
  *   POST  /dj/api/req/admin/event        新しいイベントを開始
@@ -14,6 +14,9 @@
  *
  * 文字列は素のまま保存し、エスケープは表示側で行う。DB に HTML エスケープ済みの
  * 文字列を入れると、DJ がコピーする曲名に &amp; が混ざって検索が外れるため。
+ *
+ * ひとことは /board では返さないが /admin/songs では返る。鍵が無い以上これは
+ * 実質公開情報なので、来場者ページの文言もそれに合わせてある。
  */
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
@@ -30,7 +33,7 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key',
+    'Access-Control-Allow-Headers': 'Content-Type',
     'Vary': 'Origin',
   };
 }
@@ -77,9 +80,6 @@ function newEventCode() {
   const r = crypto.getRandomValues(new Uint8Array(6));
   return [...r].map((n) => A[n % A.length]).join('');
 }
-
-const isAdmin = (req, env) =>
-  !!env.ADMIN_KEY && req.headers.get('x-admin-key') === env.ADMIN_KEY;
 
 async function openEvent(env) {
   return env.DB.prepare(
@@ -345,12 +345,9 @@ export default {
 
     if (method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
-    const admin = path.startsWith('/dj/api/req/admin');
-
-    // 管理系は Origin に関係なくキー必須。公開系は tk.st からのみ。
-    if (admin) {
-      if (!isAdmin(request, env)) return json({ error: 'forbidden' }, 403, cors);
-    } else if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    // ブースコンソールは公開運用。鍵は掛けない（noindex で、どこからもリンクしない）。
+    // 他サイトのページから叩かれるのだけ Origin で弾く。
+    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
       return json({ error: 'forbidden' }, 403, cors);
     }
 

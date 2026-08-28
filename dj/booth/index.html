@@ -209,12 +209,6 @@
     .toast > span { min-width: 0; word-break: break-all; }
     .toast button { color: var(--accent); font-weight: 600; font-size: 13px; padding: 4px 8px; border-radius: 6px; }
 
-    .gate { max-width: 420px; margin: 80px auto; display: flex; flex-direction: column; gap: 14px; }
-    .gate h2 { font-family: var(--serif); font-size: 19px; margin: 0; }
-    .gate p { margin: 0; font-size: 13px; color: var(--muted); }
-    .gate input { font: inherit; font-size: 15px; background: var(--ink); color: var(--text); border: 1px solid var(--line); border-radius: var(--r); padding: 13px; }
-    .gate button { background: var(--accent); color: #14091F; font-weight: 700; border-radius: var(--r); padding: 14px; }
-
     [hidden] { display: none !important; }
 
     @media (prefers-reduced-motion: reduce) {
@@ -224,17 +218,7 @@
 </head>
 
 <body>
-  <!-- 管理キー入力。ページ自体は tk-st-auth のベーシック認証で守られているが、
-       API 側は別に x-admin-key を要求するので、ここで一度だけ預かる。 -->
-  <div class="gate" id="gate" hidden>
-    <h2>ブースコンソール</h2>
-    <p>管理キーを入力してください。この端末にのみ保存されます。</p>
-    <input id="key" type="password" autocomplete="off" placeholder="ADMIN_KEY">
-    <button id="keyGo">開く</button>
-    <p id="keyErr" style="color:var(--stop)" hidden>キーが違うようです。</p>
-  </div>
-
-  <div class="wrap" id="app" hidden>
+  <div class="wrap" id="app">
     <header class="rig">
       <div class="brand">
         <h1 id="evTitle">—</h1>
@@ -289,7 +273,6 @@
 
   <script>
     const API = '/dj/api/req';
-    const KEY_STORE = 'tkdj.adminKey';
     const $ = (s) => document.querySelector(s);
     const $$ = (s) => Array.from(document.querySelectorAll(s));
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
@@ -306,16 +289,14 @@
       return Math.floor(m / 60) + '時間前';
     }
 
-    let adminKey = '';
     let songs = [], ev = null;
     let filter = 'pending', sort = 'new', sel = null, undoStack = null;
     let audio = null, playingId = null, audioTimer = null;
     let seen = new Set();
     const inflight = new Map();   // 書き込み中の id -> status
 
-    const api = (path, opts = {}) => fetch(API + path, Object.assign({}, opts, {
-      headers: Object.assign({ 'x-admin-key': adminKey }, opts.headers || {}),
-    }));
+    // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
+    const api = (path, opts = {}) => fetch(API + path, opts);
 
     /* ── 描画 ─────────────────────────────── */
     function counts() {
@@ -391,9 +372,7 @@
     /* ── 通信 ─────────────────────────────── */
     async function load(first) {
       try {
-        const res = await api('/admin/songs');
-        if (res.status === 403) { gate(true); return; }
-        const d = await res.json();
+        const d = await (await api('/admin/songs')).json();
         ev = d.event;
         if (ev) {
           $('#evTitle').textContent = ev.title;
@@ -585,33 +564,8 @@
     });
 
     /* ── 起動 ─────────────────────────────── */
-    function gate(err) {
-      $('#gate').hidden = false;
-      $('#app').hidden = true;
-      $('#keyErr').hidden = !err;
-    }
-
-    async function start(key) {
-      adminKey = key;
-      const res = await api('/admin/songs');
-      if (!res.ok) { gate(true); return false; }
-      try { localStorage.setItem(KEY_STORE, key); } catch {}
-      $('#gate').hidden = true;
-      $('#app').hidden = false;
-      await load(true);
-      setInterval(() => load(false), 5000);
-      return true;
-    }
-
-    $('#keyGo').addEventListener('click', () => start($('#key').value.trim()));
-    $('#key').addEventListener('keydown', (e) => { if (e.key === 'Enter') start($('#key').value.trim()); });
-
-    (function boot() {
-      let saved = '';
-      try { saved = localStorage.getItem(KEY_STORE) || ''; } catch {}
-      if (saved) start(saved).then((ok) => { if (!ok) gate(false); });
-      else gate(false);
-    })();
+    load(true);
+    setInterval(() => load(false), 5000);
   </script>
 </body>
 
