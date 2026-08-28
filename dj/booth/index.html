@@ -333,13 +333,22 @@
       const variant = s.variant ? '<span class="variant">' + esc(s.variant) + '</span>' : '';
       // BPM とキーは取得できたときだけ出す。無い値を空欄で見せない。
       const chip = (v, cls) => v ? '<span class="spec' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span>' : '';
+
+      // GetSongBPM はハーフタイム表記を返すことがある（HUMBLE. が 76、
+      // Don't Stop Me Now が 80）。rekordbox は倍の値を出すので、
+      // 見比べて戸惑わないよう 90 未満のときは倍も添える。
+      const bpmChip = (raw) => {
+        if (!raw) return '';
+        const b = Math.round(raw);
+        return chip(b < 90 ? b + ' BPM (×2 ' + (b * 2) + ')' : b + ' BPM', 'hi');
+      };
       const specs = '<div class="specs">' +
         chip(mmss(s.durationMs)) +
         chip(s.genre) +
         chip(s.releaseYear || '') +
         (s.explicitness === 'explicit' ? '<span class="spec ex">EXPLICIT</span>'
           : s.explicitness === 'cleaned' ? '<span class="spec">CLEAN</span>' : '') +
-        (s.bpm ? chip(Math.round(s.bpm) + ' BPM', 'hi') : '') +
+        bpmChip(s.bpm) +
         chip([s.camelot, s.songKey].filter(Boolean).join(' · '), 'hi') +
         '</div>';
       const line = s.isFree
