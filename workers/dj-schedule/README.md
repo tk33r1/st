@@ -29,15 +29,23 @@ npx wrangler d1 create dj-schedule-db
 # 2. テーブルを作る
 npx wrangler d1 execute dj-schedule-db --remote --file=./schema.sql
 
-# 3. curl 等からの直叩きを弾くキー（ブラウザからは Origin で通る）
-npx wrangler secret put CLIENT_API_KEY
-
-# 4. デプロイ
+# 3. デプロイ
 npx wrangler deploy
 ```
 
-`CLIENT_API_KEY` を設定しないと `env.CLIENT_API_KEY` が undefined になり、
-キー無しの直叩きが素通りしてしまうので必ず入れること。
+## アクセス制限について
+
+**実質かかっていない。** このページを守っているのは URL の非公開性と `noindex` だけ。
+
+コードに `CLIENT_API_KEY` を見る分岐があるが、**設定しても挙動は変わらない**ので不要。
+理由は、同一オリジンの GET に `Origin` ヘッダが飛ばないため `origin === ''` を許可しており、
+ヘッダーを付けない curl も同じ条件で素通りするから。キーが効くのは
+「`Origin` 付きで tk.st 以外から来たリクエスト」だけだが、それは JSON POST なら
+プリフライトの時点でブラウザが弾く。
+
+本当に絞るなら、書き込み系（POST/PUT/DELETE）で `Origin` を必須にする（curl のヘッダー無しを弾ける。
+ただし `-H 'Origin: https://tk.st'` で迂回できるので気休め）か、合言葉／ログインを足すことになる。
+後者は「ログイン不要」という運用方針と衝突する。
 
 ### 確定日・開催不可日の追加（既存 DB のみ）
 
