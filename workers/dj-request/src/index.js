@@ -87,6 +87,87 @@ async function openEvent(env) {
   ).first();
 }
 
+/* ── BPM とキーの取得 ─────────────────────────
+   GetSongBPM は type=both（曲名＋アーティスト名）でのみ引く。
+   曲名だけで引くと 15曲中12曲で別アーティストの曲が返ることを実測したため、
+   フォールバックは絶対に入れない。見つからなければ黙って諦める。
+   BPM だけは Deezer で補完する（再生時間で照合を検証できるので比較的安全）。 */
+
+const GSB_BASE = 'https://api.getsong.co';
+
+/** lookup はフィールド内の空白が +、フィールド間の区切りが空白。 */
+const gsbField = (s) => encodeURIComponent(String(s || '').trim()).replace(/%20/g, '+');
+
+/** Open Key (Traktor) 表記を Camelot に直す。 2m -> 9A / 3d -> 10B */
+function toCamelot(openKey) {
+  const m = /^(\d{1,2})([md])$/.exec(String(openKey || '').trim());
+  if (!m) return '';
+  const n = ((Number(m[1]) + 6) % 12) + 1;
+  return n + (m[2] === 'm' ? 'A' : 'B');
+}
+
+async function fetchJson(url, ms) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms || 6000);
+  try {
+    const r = await fetch(url, { headers: { Accept: 'application/json' }, signal: ac.signal });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fromGetSongBpm(env, artist, title) {
+  if (!env.SONGBPM_KEY || !artist || !title) return null;
+  const url = GSB_BASE + '/search/?api_key=' + env.SONGBPM_KEY +
+    '&type=both&lookup=song:' + gsbField(title) + '%20artist:' + gsbField(artist);
+  const d = await fetchJson(url);
+  const hit = d && Array.isArray(d.search) ? d.search[0] : null;
+  if (!hit) return null;
+  const bpm = Number(hit.tempo);
+  return {
+    bpm: Number.isFinite(bpm) && bpm > 0 ? bpm : null,
+    songKey: hit.key_of || '',
+    camelot: toCamelot(hit.open_key),
+  };
+}
+
+async function bpmFromDeezer(artist, title, durationMs) {
+  if (!artist || !title) return null;
+  const sec = Math.round((durationMs || 0) / 1000);
+  const q = 'artist:"' + artist.replace(/"/g, '') + '" track:"' + title.replace(/"/g, '') + '"';
+  const d = await fetchJson('https://api.deezer.com/search?limit=10&q=' + encodeURIComponent(q));
+  const list = (d && d.data) || [];
+  // 再生時間が合うものだけ採用する。曲名が同じ別録音を掴まないための検証。
+  const cand = sec ? list.find((x) => Math.abs(x.duration - sec) <= 3) : list[0];
+  if (!cand) return null;
+  const full = await fetchJson('https://api.deezer.com/track/' + cand.id);
+  const bpm = full && Number(full.bpm);
+  return Number.isFinite(bpm) && bpm > 0 ? bpm : null;
+}
+
+/** 投稿のレスポンスを待たせないよう ctx.waitUntil から呼ぶ。失敗しても何も壊さない。 */
+async function enrichSong(env, songId, artist, title, durationMs) {
+  try {
+    const gsb = await fromGetSongBpm(env, artist, title);
+    if (gsb && (gsb.bpm || gsb.songKey)) {
+      await env.DB.prepare(
+        'UPDATE songs SET bpm = ?, song_key = ?, camelot = ? WHERE id = ?'
+      ).bind(gsb.bpm, gsb.songKey, gsb.camelot, songId).run();
+      return;
+    }
+    const bpm = await bpmFromDeezer(artist, title, durationMs);
+    if (bpm) {
+      await env.DB.prepare('UPDATE songs SET bpm = ? WHERE id = ?').bind(bpm, songId).run();
+    }
+  } catch {
+    // 付帯情報が付かないだけなので握りつぶす
+  }
+}
+
 /* ── 公開: 現在のイベント ───────────────── */
 async function getEvent(env, cors) {
   const ev = await openEvent(env);
@@ -94,7 +175,7 @@ async function getEvent(env, cors) {
 }
 
 /* ── 公開: 投稿 ─────────────────────────── */
-async function postRequest(request, env, cors) {
+async function postRequest(request, env, cors, ctx) {
   const ev = await openEvent(env);
   if (!ev) return json({ error: 'closed', message: 'ただいまリクエストの受付時間外です' }, 409, cors);
 
@@ -130,6 +211,7 @@ async function postRequest(request, env, cors) {
   const key = dedupeKey(isFree ? { title } : track);
 
   // 既にある曲なら行を作らず votes を積む
+  let isNewSong = false;
   let song = await env.DB.prepare(
     `SELECT id FROM songs WHERE event_code = ? AND dedupe_key = ?`
   ).bind(ev.code, key).first();
@@ -159,6 +241,7 @@ async function postRequest(request, env, cors) {
       clean(track.explicitness, 20)
     ).run();
     song = { id: res.meta.last_row_id };
+    isNewSong = true;
   }
 
   // 同じ人が同じ曲を再送しても票は増えない（UNIQUE(song_id, ip_hash)）
@@ -175,6 +258,13 @@ async function postRequest(request, env, cors) {
   const total = await env.DB.prepare(
     `SELECT COUNT(*) AS n FROM requests WHERE event_code = ?`
   ).bind(ev.code).first();
+
+  // BPM とキーの取得はここまでの D1 操作が終わってから始める。
+  // 本体の書き込みと並行させると D1 が競合してタイムアウトする。
+  if (isNewSong && !isFree && ctx) {
+    const artistForLookup = clean(track.artistEn, LIMITS.artist) || clean(track.artist, LIMITS.artist);
+    ctx.waitUntil(enrichSong(env, song.id, artistForLookup, title, Number(track.durationMs) || 0));
+  }
 
   return json({ ok: true, songId: song.id, duplicate: !added, position: total ? total.n : 0 }, 200, cors);
 }
@@ -344,9 +434,32 @@ async function adminToggleEvent(request, env, cors) {
   return json({ ok: true, open: true, code: last.code }, 200, cors);
 }
 
+/** BPM が空の曲をまとめて引き直す。API が落ちていた時の取りこぼし回収用。 */
+async function adminEnrich(env, cors, ctx) {
+  const ev = await openEvent(env) || await env.DB.prepare(
+    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
+  ).first();
+  if (!ev) return json({ ok: true, queued: 0 }, 200, cors);
+
+  const { results } = await env.DB.prepare(
+    `SELECT id, artist, artist_en, title, duration_ms FROM songs
+      WHERE event_code = ? AND is_free = 0 AND bpm IS NULL LIMIT 30`
+  ).bind(ev.code).all();
+
+  // 同時に大量の UPDATE を投げると D1 が詰まるので直列に流す
+  if (ctx) {
+    ctx.waitUntil((async () => {
+      for (const r of results) {
+        await enrichSong(env, r.id, r.artist_en || r.artist, r.title, r.duration_ms);
+      }
+    })());
+  }
+  return json({ ok: true, queued: results.length }, 200, cors);
+}
+
 /* ── ルーティング ───────────────────────── */
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
     const cors = corsHeaders(origin);
@@ -364,9 +477,10 @@ export default {
     try {
       if (path === '/dj/api/req/event' && method === 'GET')     return await getEvent(env, cors);
       if (path === '/dj/api/req/board' && method === 'GET')     return await getBoard(env, cors);
-      if (path === '/dj/api/req/requests' && method === 'POST') return await postRequest(request, env, cors);
+      if (path === '/dj/api/req/requests' && method === 'POST') return await postRequest(request, env, cors, ctx);
 
       if (path === '/dj/api/req/admin/songs' && method === 'GET')    return await adminSongs(env, cors);
+      if (path === '/dj/api/req/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);
       if (path === '/dj/api/req/admin/event' && method === 'POST')   return await adminNewEvent(request, env, cors);
       if (path === '/dj/api/req/admin/event' && method === 'PATCH')  return await adminToggleEvent(request, env, cors);
 
