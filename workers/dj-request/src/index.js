@@ -397,7 +397,7 @@ async function adminPatchSong(id, request, env, cors) {
 async function adminNewEvent(request, env, cors) {
   let body;
   try { body = await request.json(); } catch { body = {}; }
-  const title = clean(body.title, 60) || '今夜のリクエスト';
+  const title = clean(body.title, 60) || '今回のリクエスト';
   const code = newEventCode();
   // 「閉じてから開く」を1バッチで。部分ユニークインデックスがあるので
   // 順序が崩れると open が2件になって弾かれる。

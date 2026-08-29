@@ -900,6 +900,55 @@
       border-color: var(--neo-purple);
     }
 
+    .site-crumb {
+      margin-bottom: 10px;
+    }
+
+    .site-crumb ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+
+    .site-crumb li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-crumb li + li::before {
+      content: "/";
+      color: rgba(255, 255, 255, 0.25);
+    }
+
+    .site-crumb a {
+      color: rgba(156, 122, 247, 0.75);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .site-crumb a:hover {
+      color: var(--neo-purple);
+    }
+
+    .site-crumb [aria-current="page"] {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* 「<」ボタンとパンくずが重ならないよう、狭い画面では左右を空ける */
+    @media (max-width: 480px) {
+      .site-footer {
+        padding-left: 64px;
+        padding-right: 64px;
+      }
+    }
+
     /* ===== Image Modal ===== */
     .image-modal {
       /*
@@ -1471,6 +1520,12 @@
   <!-- FOOTER -->
   <footer class="site-footer">
     <a href="https://tk.st/" class="site-footer-back" aria-label="tk.st へ戻る">&lt;</a>
+    <nav class="site-crumb" aria-label="パンくずリスト">
+      <ol>
+        <li><a href="https://tk.st/">tk.st</a></li>
+        <li><span aria-current="page">人類踊狂計画</span></li>
+      </ol>
+    </nav>
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
