@@ -311,8 +311,9 @@
   min-width: 0;
 }
 /* On a narrow screen the trail keeps its immediate parent and drops the root
-   rather than collapsing into a bare back arrow. */
-@media (max-width: 640px) {
+   rather than collapsing into a bare back arrow. ルート表記が「⌂ Shinya Takeda」に
+   伸びたぶん、畳む幅を広めに取ってページ名が潰れないようにしている。 */
+@media (max-width: 820px) {
   .st-theme .crumb .crumb-root { display: none; }
   .st-theme .crumb .crumb-root + li::before { content: none; }
 }
