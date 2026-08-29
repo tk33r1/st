@@ -1,0 +1,29 @@
+name: Update Oil Price
+
+on:
+  schedule:
+    # 資源エネルギー庁の週次調査は毎週水曜の午後に公表される。
+    # 余裕をみて 16:00 JST（07:00 UTC）に取りにいく。
+    - cron: '0 7 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  oil-price:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Fetch Tokyo premium gasoline price
+      run: python .github/scripts/fetch-oil-price.py
+
+    - name: Commit and Push
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add data/oil-price.json
+        git commit -m "Update oil price" || exit 0
+        git push

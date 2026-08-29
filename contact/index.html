@@ -190,7 +190,10 @@
             window.hasOpenedMail = true;
 
             var logoUrl = "https://tk.st/images/favicons/st-favicon.svg";
-            var user = "hi";
+            // 宛先は ?to= のキーから引く。アドレスそのものをURLにもHTMLにも書かない
+            var boxes = { dj: "dj" };
+            var key = new URLSearchParams(location.search).get("to");
+            var user = boxes[key] || "hi";
             var domain = "tk.st";
             var email = user + "@" + domain;
 

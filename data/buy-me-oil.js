@@ -30,23 +30,36 @@ const DONATION_FOCUSABLE_SELECTOR = [
     '[tabindex]:not([tabindex="-1"])'
 ].join(',');
 
+/*
+ * oil-price.json は buy-me-oil.js と同じ data/ に置いている。読み込み側が
+ * /data/buy-me-oil.js だったり ../../data/buy-me-oil.js だったりページごとに
+ * まちまちなので、固定パスではなく自分の src から相対で解決する。
+ */
+const DONATION_SCRIPT_SRC = typeof document !== 'undefined' ? document.currentScript?.src : null;
+
 class DonationWidget {
     constructor(config = {}) {
         this.kofiId = config.kofiId || 'shinyatakeda';
         this.githubUrl = config.githubUrl || 'https://github.com/sponsors/tk33r1';
         this.lightningUrl = config.lightningUrl || 'https://tk.st/ln_100y';
         this.containerId = config.containerId || null;
+        // null を渡すと価格の表示だけを止められる
+        this.oilPriceUrl = config.oilPriceUrl !== undefined
+            ? config.oilPriceUrl
+            : (DONATION_SCRIPT_SRC ? new URL('oil-price.json', DONATION_SCRIPT_SRC).href : null);
         this.onOpen = typeof config.onOpen === 'function' ? config.onOpen : null;
         this.onClose = typeof config.onClose === 'function' ? config.onClose : null;
 
         this._uid = ++_donationInstanceCounter;
         this._titleId = `donation-modal-title-${this._uid}`;
         this._closeBtnId = `donation-close-btn-${this._uid}`;
+        this._oilPriceId = `donation-oil-price-${this._uid}`;
 
         this.modal = null;
         this.openBtnWrapper = null;
         this.closeBtn = null;
         this._abortController = null;
+        this._oilPriceAbort = null;
         this._prevOverflow = '';
         this._lastFocused = null;
         this._inertedNodes = [];
@@ -65,12 +78,39 @@ class DonationWidget {
         this.renderButton();
         this.bindEvents();
         this.observeButtonVisibility();
+        this.loadOilPrice();
+    }
+
+    /**
+     * 「ガソリン1L」に、そのときの東京都のハイオク実売価格を添える。
+     * data/oil-price.json は資源エネルギー庁の週次調査から GitHub Actions が
+     * 更新している（.github/scripts/fetch-oil-price.py）。
+     * 取れなくても文言は「ガソリン1L」のままで成立するので、失敗しても黙って諦める。
+     */
+    async loadOilPrice() {
+        if (!this.oilPriceUrl) return;
+        const el = this.modal?.querySelector(`#${this._oilPriceId}`);
+        if (!el) return;
+
+        this._oilPriceAbort = new AbortController();
+        try {
+            const res = await fetch(this.oilPriceUrl, { signal: this._oilPriceAbort.signal });
+            if (!res.ok) return;
+
+            const data = await res.json();
+            const price = Number(data?.price);
+            if (!Number.isFinite(price) || price <= 0) return;
+
+            el.textContent = `（東京のハイオク ¥${Math.round(price)}）`;
+            if (data.surveyedOn) el.title = `${data.surveyedOn} 資源エネルギー庁調査`;
+        } catch { /* 価格が出ないだけなので握りつぶす */ }
     }
 
     destroy() {
         if (this._isOpen) this._restorePageState();
         clearTimeout(this._closeFinishTimer);
         this._abortController?.abort();
+        this._oilPriceAbort?.abort();
         this._shakeObserver?.disconnect();
         this.modal?.remove();
         this.openBtnWrapper?.remove();
@@ -81,6 +121,7 @@ class DonationWidget {
         this._inertedNodes = [];
         this._mobileMql = null;
         this._shakeObserver = null;
+        this._oilPriceAbort = null;
     }
 
     /**
@@ -408,6 +449,11 @@ class DonationWidget {
                 /* 狭い幅で折り返したとき、末尾の数文字だけが次行に取り残されないよう均等割りする */
                 text-wrap: balance;
             }
+            /* 価格は括弧ごと途中で折り返さない。取得前は空なので何も占有しない */
+            .donation-oil-price {
+                white-space: nowrap;
+                color: #6b7280;
+            }
 
             /* Ko-fi 埋め込みウィジェットの余白を切り詰めるためのスケール調整 */
             .donation-kofi-wrap { overflow: hidden; }
@@ -589,7 +635,7 @@ class DonationWidget {
                             Buy Me Oil
                         </h2>
                         <p>広告に頼らず、<strong>「誰でも無料で楽しめること」</strong>を大切にしています。</p>
-                        <p>お役に立てたなら、ガソリン1Lのご支援が、開発のモチベ支えるハーレーの燃料になります。</p>
+                        <p>お役に立てたなら、ガソリン1L<span id="${this._oilPriceId}" class="donation-oil-price"></span>のご支援が、開発のモチベ支えるハーレーの燃料になります。</p>
                     </div>
                     <div class="donation-kofi-wrap">
                         <iframe class="donation-kofi-iframe"

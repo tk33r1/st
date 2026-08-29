@@ -199,12 +199,6 @@
 
     .trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .roles { margin: 30px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
-    .roles > div { background: var(--panel); padding: 14px 16px; display: flex; flex-direction: column; gap: 5px; }
-    .roles dt { font-size: 13px; font-weight: 600; color: var(--accent); }
-    .roles dd { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
-    .roles code { font-family: var(--mono); font-size: 11.5px; color: var(--text); background: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
-
     .keys { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; gap: 20px; flex-wrap: wrap; font-family: var(--mono); font-size: 11.5px; color: var(--faint); }
     .keys span { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -353,11 +347,6 @@
         <ol id="railList"></ol>
       </aside>
     </div>
-
-    <dl class="roles">
-      <div><dt>⧉ コピー</dt><dd>今すぐかける — rekordbox の Apple Music 検索欄に貼る</dd></div>
-      <div><dt>Music.app で開く</dt><dd>確認と仕込み — <code>music://</code> で Music.app が起動。trackId で一意に開くので検索いらず</dd></div>
-    </dl>
 
     <div class="keys">
       <span><b class="kbd">J</b> <b class="kbd">K</b> 移動</span>

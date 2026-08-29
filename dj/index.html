@@ -83,7 +83,13 @@
             "alternateName": "Human Choreomania Project",
             "image": "https://tk.st/images/contents/dj-logo4.avif",
             "genre": ["Big room House", "Psytrance", "Melodic Techno"],
-            "foundingDate": "2024"
+            "foundingDate": "2024",
+            "memberOf": {
+              "@type": "Organization",
+              "name": "美術紫水",
+              "url": "https://shisui-tea.jp/",
+              "logo": "https://tk.st/images/contents/shisui-logo.png"
+            }
           }
         }
       ]
@@ -782,6 +788,83 @@
       max-width: 600px;
     }
 
+    /* ===== ABOUT ===== */
+    .about-title {
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 40px;
+      color: var(--black);
+      text-transform: uppercase;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .about-unit {
+      max-width: 520px;
+      margin: 0 auto 45px auto;
+      padding: 28px 0;
+      border-top: 1px solid rgba(156, 122, 247, 0.3);
+      border-bottom: 1px solid rgba(156, 122, 247, 0.3);
+    }
+
+    .about-unit + .about-unit {
+      margin-top: -45px;
+      border-top: none;
+    }
+
+    .about-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--black);
+      transition: all 0.3s ease;
+    }
+
+    .about-brand:hover {
+      color: var(--neo-purple);
+      transform: translateY(-2px);
+    }
+
+    .about-brand img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .about-name {
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    .about-unit p {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      line-height: 1.9;
+      font-weight: 300;
+      color: var(--black);
+      letter-spacing: 0.02em;
+      text-wrap: balance;
+    }
+
+    .about-unit a:not(.about-brand) {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dashed var(--neo-purple);
+      transition: color 0.3s ease;
+    }
+
+    .about-unit a:not(.about-brand):hover {
+      color: var(--neo-purple);
+    }
+
+    .about-note {
+      font-size: 0.85rem;
+      color: rgba(26, 26, 26, 0.7);
+    }
+
     .contact-logo-space {
       position: relative;
       width: 130px;
@@ -818,13 +901,13 @@
       font-size: clamp(1.2rem, 3vw, 2rem);
       line-height: 1.8;
       color: var(--black);
-      margin-bottom: 60px;
+      margin-bottom: 45px;
       font-weight: 300;
       letter-spacing: 0.02em;
     }
 
-    .contact-message-sub {
-      margin-top: 20px;
+    .contact-cta {
+      margin-bottom: 60px;
     }
 
     .contact-buttons {
@@ -871,6 +954,12 @@
     .icon-lg {
       width: 28px;
       height: 28px;
+    }
+
+    /* 横長ロゴなので幅で合わせる。高さは viewBox の比率任せ */
+    .icon-mixcloud {
+      width: 32px;
+      height: auto;
     }
 
     /* ===== Back to Top Button ===== */
@@ -1327,6 +1416,24 @@
         margin-bottom: 40px;
         font-size: 1rem;
       }
+
+      .about-title {
+        margin-bottom: 30px;
+      }
+
+      .about-unit {
+        padding: 24px 0;
+        margin-bottom: 35px;
+      }
+
+      .about-name {
+        font-size: 1.2rem;
+      }
+
+      .about-unit p {
+        font-size: 0.9rem;
+        line-height: 1.9;
+      }
     }
   </style>
 </head>
@@ -1425,8 +1532,8 @@
     <div class="genre-list reveal">
       <div class="genre-item">BIG ROOM HOUSE</div>
       <div class="genre-item">PSYTRANCE</div>
-      <div class="genre-item">DANCE POP</div>
       <div class="genre-item">PARA PARA</div>
+      <div class="genre-item">LO-FI HIPHOP</div>
     </div>
     <div class="mixcloud-container reveal">
       <div class="mixcloud-label">» Sound Log Database</div>
@@ -1541,18 +1648,28 @@
       </svg>
     </div>
     <div class="contact-content reveal">
-      <div class="contact-logo-space" title="DJ Human Choreomania Project Logo">
-        <svg class="logo-hex-border" viewBox="0 0 100 115" preserveAspectRatio="none">
-          <polygon points="50,2 98,27.5 98,87.5 50,113 2,87.5 2,27.5" fill="rgba(156, 122, 247, 0.05)"
-            stroke="var(--neo-purple)" stroke-width="2" stroke-dasharray="4,4" />
-        </svg>
-        <img src="https://tk.st/images/contents/dj-logo4.avif" alt="DJ Logo">
+      <div class="about-title">🤝 About Me</div>
+
+      <div class="about-unit">
+        <a class="about-brand" href="https://tk.st/contact?to=dj" target="_blank" rel="noopener noreferrer"
+          title="お問い合わせ">
+          <img src="https://tk.st/images/contents/dj-logo4.avif" alt="人類踊狂計画 ロゴ" width="36" height="36" loading="lazy">
+          <span class="about-name">人類踊狂計画</span>
+        </a>
+        <p>人と人との垣根をなくし、踊り狂わせるボランティア。</p>
+        <p>チルからアッパーまで、あなたのバイブスに合わせます。</p>
       </div>
 
-      <div class="contact-message">
-        <div>ボランティアでお手伝いしております。</div>
-        <div class="contact-message-sub">ご興味ありましたら、ご連絡ください。</div>
+      <div class="about-unit">
+        <a class="about-brand" href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer">
+          <img src="../images/contents/shisui-logo.png" alt="美術紫水 ロゴ" width="36" height="36" loading="lazy">
+          <span class="about-name">美術紫水</span>
+        </a>
+        <p>絵描きからDJ、調香師まで。多種多様なアーティストが集う団体。</p>
+        <p>毎月1回新宿ゴールデン街でイベント<a href="https://bijutsushisui.com/" target="_blank"
+            rel="noopener noreferrer">「白昼夢」</a>を主宰。</p>
       </div>
+
       <div class="contact-buttons">
         <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Instagram"
           title="Instagram">
@@ -1562,9 +1679,13 @@
           title="X / Twitter">
           <i data-lucide="twitter" class="icon-lg"></i>
         </a>
-        <a href="https://tk.st/contact" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Email"
-          title="Email">
-          <i data-lucide="mail" class="icon-lg"></i>
+        <a href="https://www.mixcloud.com/dj_hcp/" target="_blank" rel="noopener noreferrer" class="hex-button"
+          aria-label="Mixcloud" title="Mixcloud">
+          <!-- Mixcloud のロゴは横長のモノグラム。ロゴ本体の帯だけを viewBox で切り出して中央に置く -->
+          <svg class="icon-mixcloud" viewBox="0 8.596 24 6.808" fill="currentColor" aria-hidden="true">
+            <path
+              d="M2.462 8.596l1.372 6.49h.319l1.372-6.49h2.462v6.808H6.742v-5.68l.232-.81h-.402l-1.43 6.49H2.854l-1.44-6.49h-.391l.222.81v5.68H0V8.596zM24 8.63v1.429L21.257 12 24 13.941v1.43l-3.235-2.329h-.348l-3.226 2.329v-1.43l2.734-1.94-2.733-1.942V8.63l3.225 2.338h.348zm-7.869 2.75v1.24H9.304v-1.24z" />
+          </svg>
         </a>
       </div>
     </div>
