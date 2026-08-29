@@ -1118,16 +1118,27 @@
       }
 
       // ===== 集計表 =====
-      // フォームの初期状態が全部○なので、集計側も無回答の日は○として数える。
-      // 開催不可日も同じ扱い（フォームで入力できないぶん必ず未回答になるが、そこだけ － にはしない）
+      // フォームの初期状態が全部○なので、集計側も無回答は○として数える。
+      // 回答そのものを出していないメンバーも同じく○（誰も答えていない月は全員○から始まる）
       function answerOf(r, iso) {
-        return r.answers[iso] || 'o';
+        return (r && r.answers[iso]) || 'o';
+      }
+
+      // 集計の母数はメンバー全員＋自由入力で回答した人
+      function tallyNames() {
+        var names = MEMBERS.slice();
+        data.responses.forEach(function (r) {
+          if (names.indexOf(r.name) === -1) names.push(r.name);
+        });
+        return names;
       }
 
       function tallyOf(iso) {
         var t = { o: 0, t: 0, x: 0 };
-        data.responses.forEach(function (r) {
-          t[answerOf(r, iso)] += 1;
+        var byName = {};
+        data.responses.forEach(function (r) { byName[r.name] = r; });
+        tallyNames().forEach(function (name) {
+          t[answerOf(byName[name], iso)] += 1;
         });
         return t;
       }
