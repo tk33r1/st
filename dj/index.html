@@ -636,7 +636,8 @@
       line-height: 1.6;
     }
 
-    .timeline-link {
+    .timeline-link,
+    .timeline-extlink {
       color: inherit;
       text-decoration: none;
       border-bottom: 1px dashed var(--neo-purple);
@@ -644,12 +645,49 @@
       display: inline-block;
     }
 
-    .timeline-link:hover {
+    .timeline-link:hover,
+    .timeline-extlink:hover {
       color: var(--neo-purple);
     }
 
     .timeline-event+.timeline-event {
       margin-top: 14px;
+    }
+
+    .timeline-archive {
+      margin-top: 10px;
+    }
+
+    .timeline-archive>summary {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--neo-purple);
+      cursor: pointer;
+      list-style: none;
+      padding: 6px 0;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+    }
+
+    .timeline-archive>summary:hover {
+      opacity: 1;
+    }
+
+    .timeline-archive>summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .timeline-archive>summary::before {
+      content: '\25B8\00a0';
+    }
+
+    .timeline-archive[open]>summary {
+      margin-bottom: 30px;
+    }
+
+    .timeline-archive[open]>summary::before {
+      content: '\25BE\00a0';
     }
 
     .operation-title {
@@ -919,6 +957,25 @@
 
     .site-crumb [aria-current="page"] {
       color: rgba(26, 26, 26, 0.55);
+    }
+
+    .request-cta {
+      background: var(--white);
+      padding: 24px 40px 0;
+      text-align: right;
+    }
+
+    .request-cta a {
+      color: #7b55d6;
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      border-bottom: 1px dashed var(--neo-purple);
+      transition: color 0.3s ease;
+    }
+
+    .request-cta a:hover {
+      color: var(--neo-purple);
     }
 
     /* ===== Image Modal ===== */
@@ -1387,6 +1444,15 @@
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
             <div class="timeline-event">
+              <a href="../images/contents/daydream_03-01.avif" data-images="
+                   ../images/contents/daydream_03-01.avif
+                   ../images/contents/daydream_03-02.avif"
+                target="_blank" rel="noopener noreferrer" class="timeline-link">
+                Daydream #03<br>
+                Lounge bar Krishuna
+              </a>
+            </div>
+            <div class="timeline-event">
               <a href="../images/contents/Live-DJ_Factory.webp" data-images="
                    ../images/contents/Live-DJ_Factory.webp
                    ../images/contents/Live-DJ_Factory2.webp"
@@ -1412,28 +1478,38 @@
                 Ohjo-bldg
               </a>
             </div>
-          </div>
-          <div class="timeline-item">
-            <div class="timeline-year">2025</div>
             <div class="timeline-event">
-              <a href="../images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank" rel="noopener noreferrer"
-                class="timeline-link">
-                Night-Drip<br>
-                Shinjuku-HEIST.
+              <a href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer"
+                class="timeline-extlink">
+                Join<br>
+                美術紫水 Member
               </a>
             </div>
-            <div class="timeline-event">
-              Host club<br>
-              Princess
-            </div>
           </div>
-          <div class="timeline-item">
-            <div class="timeline-year">2024</div>
-            <div class="timeline-event">
-              Project Launch<br>
-              人類踊狂計画 Initiation
+          <details class="timeline-archive">
+            <summary>2025 - Archive</summary>
+            <div class="timeline-item">
+              <div class="timeline-year">2025</div>
+              <div class="timeline-event">
+                <a href="../images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank" rel="noopener noreferrer"
+                  class="timeline-link">
+                  Night-Drip<br>
+                  Shinjuku-HEIST.
+                </a>
+              </div>
+              <div class="timeline-event">
+                Host club<br>
+                Princess
+              </div>
             </div>
-          </div>
+            <div class="timeline-item">
+              <div class="timeline-year">2024</div>
+              <div class="timeline-event">
+                Project Launch<br>
+                人類踊狂計画 Initiation
+              </div>
+            </div>
+          </details>
         </div>
       </div>
       <div class="reveal">
@@ -1478,9 +1554,6 @@
         <div class="contact-message-sub">ご興味ありましたら、ご連絡ください。</div>
       </div>
       <div class="contact-buttons">
-        <a href="request/" class="hex-button" aria-label="曲リクエスト" title="曲リクエスト">
-          <i data-lucide="music" class="icon-lg"></i>
-        </a>
         <a href="https://tk.st/in" target="_blank" rel="noopener noreferrer" class="hex-button" aria-label="Instagram"
           title="Instagram">
           <i data-lucide="instagram" class="icon-lg"></i>
@@ -1496,6 +1569,11 @@
       </div>
     </div>
   </section>
+
+  <!-- SONG REQUEST -->
+  <div class="request-cta">
+    <a href="request/">♪ 曲リクエスト</a>
+  </div>
 
   <!-- BREADCRUMB -->
   <nav class="site-crumb" aria-label="パンくずリスト">
