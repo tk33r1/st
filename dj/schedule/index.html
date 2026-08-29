@@ -168,31 +168,6 @@
       border-color: var(--heart-secondary);
     }
 
-    .quick-months {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 26px;
-    }
-
-    .quick {
-      font-family: var(--f-dot);
-      font-size: 0.6875rem;
-      letter-spacing: 0.06em;
-      padding: 5px 10px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--fg-dim);
-      cursor: pointer;
-      transition: color 0.2s, border-color 0.2s;
-    }
-
-    .quick:hover {
-      color: var(--heart-primary);
-      border-color: var(--heart-primary);
-    }
-
     /* ===== FORM ===== */
     .field-label {
       display: block;
@@ -342,6 +317,24 @@
       padding-bottom: 10px;
     }
 
+    table.grid thead th .name-btn {
+      font: inherit;
+      color: inherit;
+      letter-spacing: inherit;
+      padding: 0;
+      border: 0;
+      border-bottom: 1px dotted var(--border);
+      background: transparent;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    table.grid thead th .name-btn:hover,
+    table.grid thead th .name-btn:focus-visible {
+      color: var(--heart-primary);
+      border-bottom-color: var(--heart-primary);
+    }
+
     table.grid tbody td,
     table.grid tfoot td {
       font-family: var(--f-dot);
@@ -384,8 +377,7 @@
 
     tr.decided .mark-o,
     tr.decided .mark-t,
-    tr.decided .mark-x,
-    tr.decided .mark-none {
+    tr.decided .mark-x {
       color: var(--bg);
     }
 
@@ -402,8 +394,7 @@
 
     tr.blocked .mark-o,
     tr.blocked .mark-t,
-    tr.blocked .mark-x,
-    tr.blocked .mark-none {
+    tr.blocked .mark-x {
       color: rgba(154, 154, 160, 0.45);
     }
 
@@ -421,10 +412,6 @@
 
     .mark-x {
       color: var(--heart-primary);
-    }
-
-    .mark-none {
-      color: rgba(154, 154, 160, 0.4);
     }
 
     table.grid tfoot td.comment-cell {
@@ -708,7 +695,6 @@
         </div>
         <button class="nav-btn" id="nextMonth" type="button">→</button>
       </div>
-      <div class="quick-months" id="quickMonths" hidden></div>
       <div id="globalNotice" class="notice error" role="status" hidden></div>
     </section>
 
@@ -755,7 +741,7 @@
       <div class="table-scroll">
         <table class="grid" id="grid"></table>
       </div>
-      <p class="muted">修正する場合は上の「出欠」で自分の名前を選んでください</p>
+      <p class="muted">修正する場合は表の自分の名前をタップしてください</p>
     </section>
 
     <!-- ===== 開催日の設定 ===== -->
@@ -1109,29 +1095,6 @@
         }).catch(function (err) {
           notice(err.message);
         });
-        loadQuickMonths();
-      }
-
-      function loadQuickMonths() {
-        api('/months').then(function (list) {
-          var box = $('quickMonths');
-          box.textContent = '';
-          var others = list.filter(function (row) { return row.ym !== month; }).slice(0, 8);
-          if (!others.length) { box.hidden = true; return; }
-          box.hidden = false;
-          var lbl = document.createElement('span');
-          lbl.className = 'muted';
-          lbl.textContent = '回答あり';
-          box.appendChild(lbl);
-          others.forEach(function (row) {
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'quick';
-            b.textContent = eventLabel(row.ym) + ' ' + row.response_count;
-            b.addEventListener('click', function () { goto(row.ym); });
-            box.appendChild(b);
-          });
-        }).catch(function () { /* 一覧が出せなくても本体は使える */ });
       }
 
       function renderAll() {
@@ -1156,17 +1119,15 @@
 
       // ===== 集計表 =====
       // フォームの初期状態が全部○なので、集計側も無回答の日は○として数える。
-      // ただし開催不可日はフォーム側で入力できず必ず未回答になるので、○に寄せず未回答のまま扱う
+      // 開催不可日も同じ扱い（フォームで入力できないぶん必ず未回答になるが、そこだけ － にはしない）
       function answerOf(r, iso) {
-        if (r.answers[iso]) return r.answers[iso];
-        return isBlocked(iso) ? null : 'o';
+        return r.answers[iso] || 'o';
       }
 
       function tallyOf(iso) {
         var t = { o: 0, t: 0, x: 0 };
         data.responses.forEach(function (r) {
-          var v = answerOf(r, iso);
-          if (v) t[v] += 1;
+          t[answerOf(r, iso)] += 1;
         });
         return t;
       }
@@ -1206,7 +1167,14 @@
         hr.appendChild(thTally);
         data.responses.forEach(function (r) {
           var th = document.createElement('th');
-          th.textContent = r.name;
+          // フリー入力の名前でも、ここを押せばその回答を修正できる
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'name-btn';
+          btn.textContent = r.name;
+          btn.setAttribute('aria-label', r.name + ' の回答を修正');
+          btn.addEventListener('click', function () { loadResponseIntoForm(r); });
+          th.appendChild(btn);
           hr.appendChild(th);
         });
         thead.appendChild(hr);
@@ -1242,8 +1210,8 @@
           data.responses.forEach(function (r) {
             var td = document.createElement('td');
             var v = answerOf(r, iso);
-            td.className = v ? 'mark-' + v : 'mark-none';
-            td.textContent = v ? MARKS[v] : '－';
+            td.className = 'mark-' + v;
+            td.textContent = MARKS[v];
             tr.appendChild(td);
           });
 
@@ -1538,7 +1506,6 @@
           try { localStorage.setItem(STORE_KEY, name); } catch (e) { /* noop */ }
           resetAnswerForm(true);
           renderAll();
-          loadQuickMonths();
           notice(eventLabel(month) + ' の ' + name + ' の回答を保存しました', false);
         }).catch(function (err) {
           btn.disabled = false;
@@ -1557,7 +1524,6 @@
             data = payload;
             resetAnswerForm(true);
             renderAll();
-            loadQuickMonths();
             notice('回答を削除しました', false);
           }).catch(function (err) {
             btn.disabled = false;

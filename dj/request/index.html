@@ -514,7 +514,6 @@
         </div>
         <p class="hint">アーティスト名は英語で入れると見つかりやすいです</p>
         <div id="results"></div>
-        <button class="linkbtn" id="toConsultFromSearch">曲が決まっていない → AI に相談する</button>
       </section>
 
       <!-- 確認 -->
@@ -1270,7 +1269,6 @@
       clearInterval(boardTimer);
       show('consult');
     }
-    $('#toConsultFromSearch').addEventListener('click', openConsult);
     $('#toConsultFromFree').addEventListener('click', openConsult);
 
     /* ── 起動 ─────────────────────────────── */
@@ -1278,7 +1276,6 @@
     function hideConsultTab() {
       document.querySelector('.tabs button[data-tab="consult"]').hidden = true;
       document.querySelector('.tabs').classList.add('two');
-      $('#toConsultFromSearch').hidden = true;
       $('#toConsultFromFree').hidden = true;
     }
 
