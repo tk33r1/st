@@ -58,27 +58,24 @@
       overflow-x: hidden;
     }
 
-    /* 本家（bijutsushisui.com）と同じテイクオーバー背景。ドットのハートが漂うキャンバス */
-    #bs-takeover-canvas {
+    #bs-takeover-canvas,
+    #celebrate-canvas {
       position: fixed;
       inset: 0;
+    }
+
+    /* 本家（bijutsushisui.com）と同じテイクオーバー背景。ドットのハートが漂うキャンバス */
+    #bs-takeover-canvas {
       z-index: 0;
-      width: 100vw;
-      height: 100vh;
-      display: block;
       /* このページはフォーム主体で文字量が多いので、本家がイベントページで
          行っているのと同じく背景の主張を抑える */
       opacity: 0.35;
     }
 
-    /* 開催日が決まったときのクラッカー。走査線やビネットより手前で弾けさせる */
+    /* 開催日が決まったときのクラッカー。走査線やビネットより手前で弾けさせる。
+       display は触らない。弾けていない間は hidden 属性で丸ごと畳んでおく */
     #celebrate-canvas {
-      position: fixed;
-      inset: 0;
       z-index: 41;
-      width: 100vw;
-      height: 100vh;
-      display: block;
       pointer-events: none;
     }
 
@@ -689,10 +686,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      #bs-takeover-canvas {
-        display: none;
-      }
-
+      #bs-takeover-canvas,
       #celebrate-canvas {
         display: none;
       }
@@ -706,7 +700,7 @@
 
 <body>
   <canvas id="bs-takeover-canvas" aria-hidden="true"></canvas>
-  <canvas id="celebrate-canvas" aria-hidden="true"></canvas>
+  <canvas id="celebrate-canvas" aria-hidden="true" hidden></canvas>
   <div class="vignette" aria-hidden="true"></div>
   <div class="scanlines" aria-hidden="true"></div>
 
@@ -789,6 +783,36 @@
     </footer>
   </main>
 
+  <!-- 背景キャンバスとクラッカーで共有するもの。
+       どちらのスクリプトも prefers-reduced-motion で即 return するので、
+       共有物はその手前のこの一枚に置く -->
+  <script>
+    (function () {
+      'use strict';
+      var rootStyle = getComputedStyle(document.documentElement);
+      window.DJ_ART = {
+        // ドット絵のハート。'1' の升目だけ塗る
+        HEART: ['0110110', '1111111', '1111111', '0111110', '0011100', '0001000'],
+        // ドットの隙間。これがないと升目が繋がってドット絵に見えない
+        DOT: 0.92,
+        bg: rootStyle.getPropertyValue('--bg').trim() || '#0a0a0c',
+        pink: rootStyle.getPropertyValue('--heart-primary').trim() || '#ff2f6e',
+        cyan: rootStyle.getPropertyValue('--heart-secondary').trim() || '#37f2e6',
+        // 画面いっぱいのキャンバスを DPR ぶん解像度を上げて張る
+        fitCanvas: function (canvas, ctx) {
+          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          var w = window.innerWidth, h = window.innerHeight;
+          canvas.width = w * dpr;
+          canvas.height = h * dpr;
+          canvas.style.width = w + 'px';
+          canvas.style.height = h + 'px';
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          return { W: w, H: h, DPR: dpr };
+        }
+      };
+    })();
+  </script>
+
   <!-- 本家（bijutsushisui.com）のテイクオーバー背景をそのまま移植。
        ドットのハートが漂い、たまに走査帯ズレ・RGB色収差でグリッチする -->
   <script>
@@ -801,11 +825,11 @@
       if (!canvas) return;
       var ctx = canvas.getContext('2d');
 
-      var rootStyle = getComputedStyle(document.documentElement);
+      var art = window.DJ_ART;
       var settings = {
-        bgColor: rootStyle.getPropertyValue('--bg').trim() || '#0a0a0c',
-        heartPrimary: rootStyle.getPropertyValue('--heart-primary').trim() || '#ff2f6e',
-        heartSecondary: rootStyle.getPropertyValue('--heart-secondary').trim() || '#37f2e6',
+        bgColor: art.bg,
+        heartPrimary: art.pink,
+        heartSecondary: art.cyan,
         heartCount: 42,
         glitchFrequency: 0.02,
         motionStyle: 'breath'
@@ -822,12 +846,8 @@
 
       var W, H, DPR;
       function resize() {
-        DPR = Math.min(window.devicePixelRatio || 1, 2);
-        W = window.innerWidth;
-        H = window.innerHeight;
-        canvas.width = W * DPR; canvas.height = H * DPR;
-        canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        var fit = art.fitCanvas(canvas, ctx);
+        W = fit.W; H = fit.H; DPR = fit.DPR;
 
         [scene, rC, gC, bC, burn].forEach(function (cv) {
           cv.width = W; cv.height = H;
@@ -839,7 +859,7 @@
       resize();
 
       // ---- ハートのドット絵形状 ----
-      var HEART_GRID = ['0110110', '1111111', '1111111', '0111110', '0011100', '0001000'];
+      var HEART_GRID = art.HEART;
 
       function drawHeartTile(g, cx, cy, size, angleRad, color, alpha) {
         var rows = HEART_GRID.length, cols = HEART_GRID[0].length;
@@ -852,7 +872,7 @@
         for (var r = 0; r < rows; r++) {
           for (var c = 0; c < cols; c++) {
             if (HEART_GRID[r][c] === '1') {
-              g.fillRect((c - cols / 2) * cell, (r - rows / 2) * cell, cell * 0.92, cell * 0.92);
+              g.fillRect((c - cols / 2) * cell, (r - rows / 2) * cell, cell * art.DOT, cell * art.DOT);
             }
           }
         }
@@ -997,23 +1017,17 @@
     (function () {
       'use strict';
 
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
       var canvas = document.getElementById('celebrate-canvas');
       if (!canvas) return;
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        window.djCelebrate = function () { /* 動きを抑える設定では鳴らさない */ };
-        return;
-      }
 
+      var art = window.DJ_ART;
       var ctx = canvas.getContext('2d');
-      // 背景キャンバスと同じドット絵のハート
-      var HEART = ['0110110', '1111111', '1111111', '0111110', '0011100', '0001000'];
       var TILE = 64;
+      var FADE = 0.28;   // 寿命の最後のこの割合をかけて消える
 
-      var rootStyle = getComputedStyle(document.documentElement);
-      var PINK = rootStyle.getPropertyValue('--heart-primary').trim() || '#ff2f6e';
-      var CYAN = rootStyle.getPropertyValue('--heart-secondary').trim() || '#37f2e6';
-
-      var W = 0, H = 0, DPR = 1;
+      var W = 0, H = 0;
       var pieces = [];
       var tiles = null;
       var running = false;
@@ -1026,7 +1040,7 @@
         c.width = TILE;
         c.height = TILE;
         var g = c.getContext('2d');
-        var rows = HEART.length, cols = HEART[0].length;
+        var rows = art.HEART.length, cols = art.HEART[0].length;
         var cell = (TILE * 0.72) / cols;
         var ox = (TILE - cell * cols) / 2;
         var oy = (TILE - cell * rows) / 2;
@@ -1035,8 +1049,8 @@
         g.fillStyle = color;
         for (var r = 0; r < rows; r++) {
           for (var i = 0; i < cols; i++) {
-            if (HEART[r][i] === '1') {
-              g.fillRect(ox + i * cell, oy + r * cell, cell * 0.92, cell * 0.92);
+            if (art.HEART[r][i] === '1') {
+              g.fillRect(ox + i * cell, oy + r * cell, cell * art.DOT, cell * art.DOT);
             }
           }
         }
@@ -1044,14 +1058,9 @@
       }
 
       function resize() {
-        DPR = Math.min(window.devicePixelRatio || 1, 2);
-        W = window.innerWidth;
-        H = window.innerHeight;
-        canvas.width = W * DPR;
-        canvas.height = H * DPR;
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
-        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        var fit = art.fitCanvas(canvas, ctx);
+        W = fit.W;
+        H = fit.H;
       }
 
       // クラッカー1発ぶん。aim の向きへ扇状に飛ばす
@@ -1063,7 +1072,7 @@
             x: x, y: y,
             vx: Math.cos(aim + spread) * speed,
             vy: Math.sin(aim + spread) * speed,
-            size: 12 + Math.random() * 18,
+            size: (12 + Math.random() * 18) * 1.4,   // タイルの余白ぶん大きめに描く
             tile: Math.random() > 0.5 ? tiles.pink : tiles.cyan,
             angle: Math.random() * Math.PI * 2,
             spin: (Math.random() - 0.5) * 9,
@@ -1079,6 +1088,7 @@
 
       function frame(now) {
         var dt = Math.min((now - last) / 1000, 0.05);
+        var damp = Math.pow(0.28, dt);
         last = now;
         ctx.clearRect(0, 0, W, H);
 
@@ -1089,21 +1099,19 @@
           if (p.life >= p.span) continue;
           alive++;
           // 飛び出しの勢いを一気に殺してから落とすと、クラッカーらしい弧になる
-          p.vx *= Math.pow(0.28, dt);
-          p.vy *= Math.pow(0.28, dt);
+          p.vx *= damp;
+          p.vy *= damp;
           p.vy += 900 * dt;
           if (p.vy > p.fall) p.vy = p.fall;
           p.x += (p.vx + Math.sin(p.life * 5 + p.phase) * p.sway) * dt;
           p.y += p.vy * dt;
           p.angle += p.spin * dt;
 
-          var t = p.life / p.span;
-          var d = p.size * 1.4;
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.angle);
-          ctx.globalAlpha = t > 0.72 ? 1 - (t - 0.72) / 0.28 : 1;
-          ctx.drawImage(p.tile, -d / 2, -d / 2, d, d);
+          ctx.globalAlpha = Math.min(1, (1 - p.life / p.span) / FADE);
+          ctx.drawImage(p.tile, -p.size / 2, -p.size / 2, p.size, p.size);
           ctx.restore();
         }
 
@@ -1112,12 +1120,14 @@
         } else {
           running = false;
           pieces = [];
-          ctx.clearRect(0, 0, W, H);
+          canvas.hidden = true;
+          canvas.width = canvas.height = 0;
         }
       }
 
       window.djCelebrate = function () {
-        if (!tiles) tiles = { pink: makeTile(PINK), cyan: makeTile(CYAN) };
+        if (!tiles) tiles = { pink: makeTile(art.pink), cyan: makeTile(art.cyan) };
+        canvas.hidden = false;
         resize();
         pieces = [];
         // 左下・右下から内向きに2発、真ん中から真上に1発
@@ -1142,6 +1152,7 @@
       // ===== 設定 =====
       // メンバーは五十音順。末尾の「その他」で自由入力。
       var MEMBERS = ['かずき', 'たけ', 'マメピー', 'ミツキ'];
+      function isMember(name) { return MEMBERS.indexOf(name) !== -1; }
       var OTHER = '__other__';
       var API_BASE = '/dj/api/schedule'; // tk.st 上の Worker ルート（同一オリジン）
       var STORE_KEY = 'dj-schedule-name';
@@ -1251,12 +1262,22 @@
         load(ym);
       }
 
+      // 同じ月への書き込み結果を反映する。開催日が新しく決まった瞬間の検出はここ1箇所だけ
+      function applyData(payload, resetForm) {
+        var prevDecided = data ? data.decided : null;
+        data = payload;
+        if (resetForm) resetAnswerForm(true);
+        renderAll();
+        if (data.decided && data.decided !== prevDecided && window.djCelebrate) window.djCelebrate();
+      }
+
       // ===== 読み込み =====
       function load(ym) {
         month = ym;
         notice('');
         renderMonthBar();
         api('/months/' + ym).then(function (payload) {
+          // ここは月の切り替え。前の月の開催日と比べても意味がないので applyData は通さない
           data = payload;
           resetAnswerForm(true);
           renderAll();
@@ -1492,7 +1513,6 @@
 
       // 開催日 / 開催不可日を変更した時点で即保存する
       function saveStatus() {
-        var prevDecided = data ? data.decided : null;
         var decided = $('decidedSelect').value || null;
         var blocked = Array.prototype.filter.call(
           $('blockChips').children,
@@ -1503,10 +1523,7 @@
           method: 'PUT',
           body: { decided: decided, blocked: blocked }
         }).then(function (payload) {
-          data = payload;
-          renderAll();
-          // 新しく開催日が決まったときだけ祝う（同じ日の保存や解除では鳴らさない）
-          if (data.decided && data.decided !== prevDecided && window.djCelebrate) window.djCelebrate();
+          applyData(payload);
           notice(data.decided ? '開催日を ' + fmtDateLong(data.decided) + ' に設定しました' : '開催日の設定を保存しました', false);
         }).catch(function (err) {
           notice(err.message);
@@ -1540,7 +1557,7 @@
 
         if (saved === OTHER) {
           sel.value = OTHER;
-        } else if (saved && MEMBERS.indexOf(saved) !== -1) {
+        } else if (saved && isMember(saved)) {
           sel.value = saved;
         } else if (saved) {
           // 自由入力で登録した名前を復元する
@@ -1622,7 +1639,7 @@
         var opts = options || {};
         editingId = r.id;
         answers = Object.assign({}, r.answers);
-        if (MEMBERS.indexOf(r.name) !== -1) {
+        if (isMember(r.name)) {
           $('ansName').value = r.name;
         } else {
           $('ansName').value = OTHER;
@@ -1642,9 +1659,9 @@
         var existing = responsesByName()[name];
         if (existing) { loadResponseIntoForm(existing); return; }
         resetAnswerForm(true);
-        var isMember = MEMBERS.indexOf(name) !== -1;
-        $('ansName').value = isMember ? name : OTHER;
-        if (!isMember) $('ansCustomName').value = name;
+        var member = isMember(name);
+        $('ansName').value = member ? name : OTHER;
+        if (!member) $('ansCustomName').value = name;
         syncCustomNameField();
         $('answerTitle').textContent = name + ' の出欠を入れる';
         renderAnswerRows();
@@ -1707,10 +1724,8 @@
           body: { name: name, answers: answers, comment: $('ansComment').value.trim() }
         }).then(function (payload) {
           btn.disabled = false;
-          data = payload;
           try { localStorage.setItem(STORE_KEY, name); } catch (e) { /* noop */ }
-          resetAnswerForm(true);
-          renderAll();
+          applyData(payload, true);
           notice(eventLabel(month) + ' の ' + name + ' の回答を保存しました', false);
         }).catch(function (err) {
           btn.disabled = false;
@@ -1720,16 +1735,18 @@
 
       $('deleteAnswer').addEventListener('click', function () {
         if (!editingId) return;
-        var target = selectedName();
-        if (!confirm(target + ' の回答を削除します。全部○の状態に戻ります。よろしいですか？')) return;
+        // 名前の選択欄は途中で変えられるので、消す相手は editingId が指す回答から取る
+        var target = data.responses.filter(function (r) { return r.id === editingId; })[0];
+        if (!target) { resetAnswerForm(); return; }
+        // メンバーは回答が消えても列が残って全部○に戻るが、自由入力の人は列ごと集計から消える
+        var member = isMember(target.name);
+        if (!confirm(target.name + ' の回答を削除します。' + (member ? '全部○の状態に戻ります。' : '集計からも消えます。') + 'よろしいですか？')) return;
         var btn = this;
         btn.disabled = true;
         api('/months/' + month + '/responses/' + editingId, { method: 'DELETE' })
           .then(function (payload) {
             btn.disabled = false;
-            data = payload;
-            resetAnswerForm(true);
-            renderAll();
+            applyData(payload, true);
             notice('回答を削除しました', false);
           }).catch(function (err) {
             btn.disabled = false;
