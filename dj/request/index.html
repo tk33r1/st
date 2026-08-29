@@ -330,6 +330,7 @@
     }
     .send:hover { background: #B195FA; }
     .send:disabled { background: var(--card); color: var(--faint); cursor: not-allowed; }
+    .again { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
 
     .back { align-self: flex-start; font-size: 13px; color: var(--muted); padding: 6px 0; }
 
@@ -572,7 +573,7 @@
             <div class="ms">Shinya Takeda AI — 選曲相談</div>
           </div>
         </div>
-        <p class="lede">曲名が決まっていなくても大丈夫。<br>気分やシーンを話しかけると、<b>DJ 本人の思考を模した AI</b> が曲を挙げてくれます。</p>
+        <p class="lede">曲名が決まっていなくても大丈夫。<br>気分やシーンを話しかけると、<b>DJ 本人の思考を模した 3つの AI</b> が合議して、曲を挙げてくれます。</p>
         <div class="seeds" id="seeds">
           <button class="seed">とにかく上がる曲がかけてほしい</button>
           <button class="seed">みんなで踊れる定番は？</button>
@@ -585,7 +586,7 @@
           <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
           <button id="chatSend" disabled>送信</button>
         </div>
-        <p class="hint">提案された曲は、そのままタップして検索・リクエストできます。<br>AI の提案なので実在しない曲を挙げることもあります。相談は1日の利用回数に上限があります。</p>
+        <p class="hint">提案された曲は、そのままタップして検索・リクエストできます。<br>AI の提案なので実在しない曲を挙げることもあります。</p>
       </section>
 
       <!-- 完了 -->
@@ -599,8 +600,7 @@
             リクエストは DJ が順番に確認しています。<br>
             流れの都合で <b>かけられないこともあります</b>。あらかじめご了承ください。
           </p>
-          <button class="linkbtn" id="toBoard">みんなのリクエストを見る →</button>
-          <button class="linkbtn" id="again">もう1曲リクエストする</button>
+          <button class="send again" id="again">＋ もう1曲リクエストする</button>
 
           <!-- 投げ銭。ボタンとモーダルは data/buy-me-oil.js が描画する -->
           <div class="tipbox" id="tipbox">
@@ -1019,7 +1019,6 @@
         show(flowPane);
       }
     });
-    $('#toBoard').addEventListener('click', () => document.querySelector('.tabs button[data-tab="board"]').click());
 
     setInterval(() => {
       if (!lastFetch || !$('#pane-board').classList.contains('on')) return;

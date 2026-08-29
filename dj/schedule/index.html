@@ -329,6 +329,11 @@
       transition: color 0.2s, border-color 0.2s;
     }
 
+    table.grid thead th .name-btn.is-empty {
+      color: rgba(154, 154, 160, 0.6);
+      border-bottom-style: dashed;
+    }
+
     table.grid thead th .name-btn:hover,
     table.grid thead th .name-btn:focus-visible {
       color: var(--heart-primary);
@@ -394,7 +399,8 @@
 
     tr.blocked .mark-o,
     tr.blocked .mark-t,
-    tr.blocked .mark-x {
+    tr.blocked .mark-x,
+    tr.blocked .mark-none {
       color: rgba(154, 154, 160, 0.45);
     }
 
@@ -412,6 +418,10 @@
 
     .mark-x {
       color: var(--heart-primary);
+    }
+
+    .mark-none {
+      color: rgba(154, 154, 160, 0.4);
     }
 
     table.grid tfoot td.comment-cell {
@@ -741,7 +751,7 @@
       <div class="table-scroll">
         <table class="grid" id="grid"></table>
       </div>
-      <p class="muted">修正する場合は表の自分の名前をタップしてください</p>
+      <p class="muted">全員○が初期状態です。予定がある日だけ、表の自分の名前をタップして△か×に変えてください</p>
     </section>
 
     <!-- ===== 開催日の設定 ===== -->
@@ -1119,12 +1129,16 @@
 
       // ===== 集計表 =====
       // フォームの初期状態が全部○なので、集計側も無回答は○として数える。
-      // 回答そのものを出していないメンバーも同じく○（誰も答えていない月は全員○から始まる）
+      // 回答そのものを出していないメンバーも同じく○（誰も答えていない月は全員○から始まる）。
+      // 開催不可日だけは誰も入力できないので、一律「－」にして集計からも外す。
+      // 元の回答はサーバーに残したままなので、開催不可を解除すれば前回の ○/△/× がそのまま戻る
       function answerOf(r, iso) {
+        if (isBlocked(iso)) return null;
         return (r && r.answers[iso]) || 'o';
       }
 
-      // 集計の母数はメンバー全員＋自由入力で回答した人
+      // 集計に並べるのはメンバー全員＋自由入力で回答した人。
+      // 未登録の人も列を持ち、予定を入れていない日は○として扱う
       function tallyNames() {
         var names = MEMBERS.slice();
         data.responses.forEach(function (r) {
@@ -1133,12 +1147,18 @@
         return names;
       }
 
-      function tallyOf(iso) {
-        var t = { o: 0, t: 0, x: 0 };
+      function responsesByName() {
         var byName = {};
         data.responses.forEach(function (r) { byName[r.name] = r; });
+        return byName;
+      }
+
+      function tallyOf(iso) {
+        var t = { o: 0, t: 0, x: 0 };
+        var byName = responsesByName();
         tallyNames().forEach(function (name) {
-          t[answerOf(byName[name], iso)] += 1;
+          var v = answerOf(byName[name], iso);
+          if (v) t[v] += 1;
         });
         return t;
       }
@@ -1176,15 +1196,17 @@
         var thTally = document.createElement('th');
         thTally.textContent = '○ / △ / ×';
         hr.appendChild(thTally);
-        data.responses.forEach(function (r) {
+        var names = tallyNames();
+        var byName = responsesByName();
+        names.forEach(function (name) {
           var th = document.createElement('th');
-          // フリー入力の名前でも、ここを押せばその回答を修正できる
+          // 未登録の人もフリー入力の人も、ここを押せばその人の入力を始められる
           var btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = 'name-btn';
-          btn.textContent = r.name;
-          btn.setAttribute('aria-label', r.name + ' の回答を修正');
-          btn.addEventListener('click', function () { loadResponseIntoForm(r); });
+          btn.className = 'name-btn' + (byName[name] ? '' : ' is-empty');
+          btn.textContent = name;
+          btn.setAttribute('aria-label', name + ' の出欠を入力');
+          btn.addEventListener('click', function () { answerAs(name); });
           th.appendChild(btn);
           hr.appendChild(th);
         });
@@ -1218,11 +1240,11 @@
           });
           tr.appendChild(tallyTd);
 
-          data.responses.forEach(function (r) {
+          names.forEach(function (name) {
             var td = document.createElement('td');
-            var v = answerOf(r, iso);
-            td.className = 'mark-' + v;
-            td.textContent = MARKS[v];
+            var v = answerOf(byName[name], iso);
+            td.className = v ? 'mark-' + v : 'mark-none';
+            td.textContent = v ? MARKS[v] : '－';
             tr.appendChild(td);
           });
 
@@ -1238,10 +1260,10 @@
           label.textContent = 'ひとこと';
           fr.appendChild(label);
           fr.appendChild(document.createElement('td'));
-          data.responses.forEach(function (r) {
+          names.forEach(function (name) {
             var td = document.createElement('td');
             td.className = 'comment-cell';
-            td.textContent = r.comment || '－';
+            td.textContent = (byName[name] && byName[name].comment) || '－';
             fr.appendChild(td);
           });
           tfoot.appendChild(fr);
@@ -1453,6 +1475,20 @@
         $('resetAnswer').hidden = false;
         if (opts.rerender !== false) renderAnswerRows();
         if (opts.scroll !== false) $('ansList').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // 表の名前をタップしたとき。登録済みなら修正、未登録なら全部○の状態で入力を始める
+      function answerAs(name) {
+        var existing = responsesByName()[name];
+        if (existing) { loadResponseIntoForm(existing); return; }
+        resetAnswerForm(true);
+        var isMember = MEMBERS.indexOf(name) !== -1;
+        $('ansName').value = isMember ? name : OTHER;
+        if (!isMember) $('ansCustomName').value = name;
+        syncCustomNameField();
+        $('answerTitle').textContent = name + ' の出欠を入れる';
+        renderAnswerRows();
+        $('ansList').scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
       function resetAnswerForm(skipRender) {
