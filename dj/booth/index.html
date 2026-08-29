@@ -336,7 +336,9 @@
       <div class="sort">
         <span class="lbl">SORT</span>
         <button data-s="new" aria-pressed="true">新着順</button>
-        <button data-s="hot" aria-pressed="false">人気順</button>
+        <button data-s="genre" aria-pressed="false">ジャンル順</button>
+        <button data-s="bpm" aria-pressed="false">BPM順</button>
+        <button data-s="key" aria-pressed="false">キー順</button>
       </div>
     </nav>
 
@@ -403,6 +405,23 @@
       return Math.floor(m / 60) + '時間前';
     }
 
+    /* GetSongBPM はハーフタイム表記を返すことがある（HUMBLE. が 76、
+       Don't Stop Me Now が 80）。rekordbox は倍の値を出すので、90 未満は
+       倍に読み替える。カードの「×2」表記と BPM 順の基準をここで揃える。 */
+    const effBpm = (raw) => {
+      const b = Math.round(raw || 0);
+      return b && b < 90 ? b * 2 : b;
+    };
+
+    /* キャメロット（"11A"）は文字列のままだと 10A → 11A → 1A と並ぶ。
+       数字→文字の順に直すとホイールの並びになり、隣り合うキーが近くに来る。 */
+    const camelotRank = (c) => {
+      const t = String(c || '').trim().toUpperCase();
+      const n = parseInt(t, 10), ab = t.slice(-1);
+      if (!(n >= 1 && n <= 12) || (ab !== 'A' && ab !== 'B')) return null;
+      return n * 2 + (ab === 'B' ? 1 : 0);
+    };
+
     let songs = [], ev = null;
     let filter = 'pending', sort = 'new', sel = null, undoStack = null;
     let audio = null, playingId = null, audioTimer = null;
@@ -427,13 +446,11 @@
       // BPM とキーは取得できたときだけ出す。無い値を空欄で見せない。
       const chip = (v, cls) => v ? '<span class="spec' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span>' : '';
 
-      // GetSongBPM はハーフタイム表記を返すことがある（HUMBLE. が 76、
-      // Don't Stop Me Now が 80）。rekordbox は倍の値を出すので、
-      // 見比べて戸惑わないよう 90 未満のときは倍も添える。
+      // 見比べて戸惑わないよう、ハーフタイム表記のときは倍も添える（effBpm 参照）。
       const bpmChip = (raw) => {
         if (!raw) return '';
         const b = Math.round(raw);
-        return chip(b < 90 ? b + ' BPM (×2 ' + (b * 2) + ')' : b + ' BPM', 'hi');
+        return chip(b < 90 ? b + ' BPM (×2 ' + effBpm(raw) + ')' : b + ' BPM', 'hi');
       };
       const specs = '<div class="specs">' +
         chip(mmss(s.durationMs)) +
@@ -475,9 +492,25 @@
         '</div></div></article>';
     }
 
+    /* 値が取れていない曲は末尾へ送る。BPM もキーも外部サービス頼みで
+       欠けるほうが普通なので、0 扱いで先頭に固めない。
+       ソートは安定なので、同値どうしの並びは新着順のまま残る。 */
+    const byKey = (keyOf, cmp) => (a, b) => {
+      const x = keyOf(a), y = keyOf(b);
+      if (x == null || x === '') return (y == null || y === '') ? 0 : 1;
+      if (y == null || y === '') return -1;
+      return cmp(x, y);
+    };
+    const SORTS = {
+      genre: byKey((s) => s.genre, (x, y) => x.localeCompare(y, 'ja')),
+      bpm: byKey((s) => effBpm(s.bpm) || null, (x, y) => x - y),
+      key: byKey((s) => camelotRank(s.camelot), (x, y) => x - y),
+    };
+
     const visible = () => {
       const list = songs.filter((s) => s.status === filter);
-      return sort === 'hot' ? list.slice().sort((a, b) => b.votes - a.votes) : list;
+      const cmp = SORTS[sort];
+      return cmp ? list.slice().sort(cmp) : list;
     };
 
     function render() {
