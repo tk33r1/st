@@ -2,6 +2,8 @@
 <html lang="en">
 
 <head>
+  <meta charset="UTF-8">
+  <!-- ^ Keep first: ignored unless it lands within the first 1024 bytes (→ mojibake). -->
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
   <script>
@@ -23,7 +25,6 @@
           'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f3f4f6">
   <meta name="description"
@@ -2546,13 +2547,19 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       opacity: 0;
-      transition: opacity var(--duration-normal) ease;
+      /* visibility, not just opacity: an opacity:0 overlay stays focusable and announced.
+         It is discrete, so a *duration* would flip it halfway through the fade — hence 0s,
+         delayed on the way out until the opacity transition has finished. */
+      visibility: hidden;
+      transition: opacity var(--duration-normal) ease, visibility 0s linear var(--duration-normal);
       pointer-events: none;
     }
 
     #apk-download-modal.active {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
+      transition-delay: 0s; /* opening: visible on frame one, so focus() can land */
     }
 
     #apk-download-box {
@@ -2726,7 +2733,7 @@
       "@context": "https://schema.org",
       "@type": "ProfilePage",
       "dateCreated": "2026-03-26T12:00:00+09:00",
-      "dateModified": "2026-05-24T16:26:40+09:00",
+      "dateModified": "2026-08-29T17:44:53+09:00",
       "mainEntity": {
         "@type": "Person",
         "@id": "https://tk.st/#shitake",
@@ -2744,6 +2751,28 @@
       "name": "Shinya Takeda - Terminal Portfolio",
       "description": "Portfolio of Shinya Takeda. Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ (Human Choreomania Project). Explore my projects and philosophy through this interactive terminal."
     }
+  </script>
+  <script>
+    // Theme has to be resolved before the first paint or a visitor on dark sees a flash
+    // of the light palette — which is why this lives up here and cannot use the helpers
+    // in the main script below. It publishes them instead, so the storage key, the
+    // stored-choice-beats-OS rule and the two theme-color hexes have exactly one home.
+    (function () {
+      var T = window.TK = {
+        pref: function () {
+          var t = null;
+          try { t = localStorage.getItem('tkst_theme'); } catch (_) { }
+          return (t === 'dark' || t === 'light') ? t
+            : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        },
+        paint: function (t) {
+          document.documentElement.setAttribute('data-theme', t);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', t === 'dark' ? '#0c0c0c' : '#f3f4f6');
+        }
+      };
+      T.paint(T.pref());
+    })();
   </script>
 </head>
 
@@ -3147,7 +3176,7 @@
           · ↵ run · esc close</span></div>
     </div>
   </div>
-  <div id="apk-download-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="apk-download-title">
+  <div id="apk-download-modal" role="dialog" aria-modal="true" aria-labelledby="apk-download-title">
     <div id="apk-download-box">
       <div id="apk-download-head">
         <span id="apk-download-title" class="glow" data-ja="✦ MAGI APK ダウンロード">✦ MAGI APK DOWNLOAD</span>
@@ -3210,7 +3239,11 @@
       dark: { en: 'Hacky Flâneur', ja: 'ハッキー・フラヌール' }
     };
     const jobTitleFor = isDark => tr(JOB_TITLES[isDark ? 'dark' : 'light'].en, JOB_TITLES[isDark ? 'dark' : 'light'].ja);
-    const config = { display_name: 'Shinya Takeda', job_title: jobTitleFor(false), location_text: 'Tokyo, Japan' };
+    // The head script has already resolved the theme (stored choice, else the OS), so
+    // seed the job title from the live attribute — hard-coding light would show the
+    // wrong title until the first manual toggle.
+    const isDarkNow = () => document.documentElement.getAttribute('data-theme') === 'dark';
+    const config = { display_name: 'Shinya Takeda', job_title: jobTitleFor(isDarkNow()), location_text: 'Tokyo, Japan' };
     const DOM = {
       app: document.getElementById('app'),
       output: document.getElementById('output-area'),
@@ -3238,7 +3271,9 @@
       `<div class="text-xs my-1 text-red-500">コマンドが見つかりません: '${esc(cmd)}'. 利用可能なコマンドは <span class="text-normal font-bold">help</span> と入力してください。</div>`);
 
     const MAX_HISTORY = 50;
-    let commandHistory = [], historyIndex = -1, currentVersion = 2;
+    // Split on purpose: commandHistory is the Source Control log (it carries [SYS]
+    // events too), inputHistory is only what was typed, so ↑/↓ never recall a [SYS] line.
+    let commandHistory = [], inputHistory = [], historyIndex = -1, currentVersion = 2;
     let isMeltdown = false, meltdownElements = [], meltdownInterval = null, rebuildInterval = null;
     let isMatrixActive = false, isMeditationActive = false, isRampageActive = false;
     let matrixTeardown = null, meditationTeardown = null, rampageTeardown = null, rampageSetWeapon = null;
@@ -3268,18 +3303,26 @@
     const safeGet = key => { try { return localStorage.getItem(key); } catch (_) { return null; } };
     const safeRemove = key => { try { localStorage.removeItem(key); } catch (_) { } };
     // Defensive localStorage write: if the browser quota is exceeded, trim the
-    // oldest saved MAGI sessions and retry once. Silently drops writes only when
+    // oldest saved MAGI sessions and retry. Silently drops writes only when
     // storage is completely irrecoverable (e.g. private-browsing hard limit).
     const safeStore = (key, val) => {
-      const str = typeof val === 'string' ? val : JSON.stringify(val);
-      try { localStorage.setItem(key, str); } catch (_) {
-        try {
-          const ss = safeParse(safeGet('magi_saved_sessions'), []);
-          while (ss.length > 5) ss.pop();
-          localStorage.setItem('magi_saved_sessions', JSON.stringify(ss));
-          localStorage.setItem(key, str);
-        } catch (__) { /* storage is irrecoverable — silently drop */ }
+      const put = v => { try { localStorage.setItem(key, typeof v === 'string' ? v : JSON.stringify(v)); return true; } catch (_) { return false; } };
+      if (put(val)) return;
+      // Over quota. When the oversized value *is* the session list, the value itself has
+      // to shrink: trimming what is already in storage and then writing the original list
+      // back would just throw again, leaving the visitor with neither the old sessions nor
+      // the new one. Attachments are data URLs, so a single session can be megabytes —
+      // hence the descending retries rather than one fixed cut.
+      if (key === 'magi_saved_sessions' && Array.isArray(val)) {
+        for (const n of [5, 2, 1]) if (n < val.length && put(val.slice(0, n))) return;
+        return;
       }
+      try {
+        const ss = safeParse(safeGet('magi_saved_sessions'), []);
+        while (ss.length > 5) ss.pop();
+        localStorage.setItem('magi_saved_sessions', JSON.stringify(ss));
+      } catch (__) { return; /* storage is irrecoverable — silently drop */ }
+      put(val);
     };
     const verBadge = () => ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
     const clearCmdParam = () => { if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) { } } };
@@ -3311,16 +3354,22 @@
       }
     }
 
+    // Prepend to a capped, consecutive-duplicate-free log. Returns whether it actually
+    // grew, so callers don't count a suppressed repeat as new activity.
+    function pushCapped(list, entry) {
+      if (list[0] === entry) return false;
+      list.unshift(entry);
+      if (list.length > MAX_HISTORY) list.pop();
+      return true;
+    }
+
     function addToHistory(entry) {
-      if (commandHistory[0] !== entry) {
-        commandHistory.unshift(entry);
-        if (commandHistory.length > MAX_HISTORY) commandHistory.pop();
-      }
+      const added = pushCapped(commandHistory, entry);
       const gv = document.getElementById('view-git');
       if (gv && !gv.classList.contains('hidden')) {
         renderGit();
         unreadHistoryCount = 0;
-      } else {
+      } else if (added) { // a suppressed repeat added nothing, so it is not unread either
         unreadHistoryCount++;
       }
       updateGitBadge();
@@ -3540,7 +3589,7 @@
     function renderExtensions() {
       const list = document.getElementById('extensions-list');
       if (!list) return;
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const isDark = isDarkNow();
       const query = (document.getElementById('ext-search-input')?.value || '').trim().toLowerCase();
 
       let uninstalledCount = 0;
@@ -3588,21 +3637,31 @@
     }
 
     function applyTheme(isDark) {
-      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      TK.paint(isDark ? 'dark' : 'light'); // data-theme + theme-color, defined in the head script
       setJobTitle(isDark);
       if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
       if (tabState['about']) tabState['about'] = commands.about();
-      const tc = document.querySelector('meta[name="theme-color"]');
-      if (tc) tc.setAttribute('content', isDark ? '#0c0c0c' : '#f3f4f6');
       // The search index is theme-independent (both job-title variants are indexed once
       // in buildSearchIndex), so no reindex/re-render is needed on theme toggle.
       renderExtensions();
     }
+    // Only an explicit toggle persists: applyTheme() is also driven by `softReload` and
+    // by the URL easter eggs (which force dark), and neither should overwrite the
+    // visitor's own choice — or pin them to a theme they never picked.
     function toggleTheme() {
-      const isDark = document.documentElement.getAttribute('data-theme') !== 'dark';
+      const isDark = !isDarkNow();
       applyTheme(isDark);
+      safeStore('tkst_theme', isDark ? 'dark' : 'light');
       addToHistory(tr(`[SYS] Theme changed to ${isDark ? 'dark' : 'light'}`, `[SYS] テーマを${isDark ? 'ダーク' : 'ライト'}に変更しました`));
       showToast(tr(`Color theme switched to ${isDark ? 'Dark' : 'Light'}`, `カラーテーマを${isDark ? 'ダーク' : 'ライト'}に切り替えました`));
+    }
+    // Track later OS changes, but only while the visitor has expressed no preference.
+    if (window.matchMedia) {
+      try {
+        matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          if (!safeGet('tkst_theme')) applyTheme(e.matches);
+        });
+      } catch (_) { /* older WebViews: no addEventListener on MediaQueryList */ }
     }
 
     // --- Language switching ---------------------------------------------------
@@ -3632,7 +3691,7 @@
     const LANG_DOC_TABS = ['about', 'identify', 'timeline', 'pages', 'help'];
     function applyLang() {
       document.documentElement.setAttribute('lang', currentLang);
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const isDark = isDarkNow();
       setJobTitle(isDark);
       applyChrome();
       // Regenerate any open document tabs so their content matches the language.
@@ -3800,9 +3859,13 @@
       renderEditor();
     }
     function closeTab(cmd) {
+      const idx = tabOrder.indexOf(cmd);
       tabOrder = tabOrder.filter(c => c !== cmd);
       delete tabState[cmd];
-      if (activeTab === cmd) activeTab = tabOrder[tabOrder.length - 1] || null;
+      // Focus the neighbour, like VS Code: the tab that slid into the closed slot, or
+      // the one before it when the last tab went. Jumping to whichever tab happens to
+      // be last throws the visitor across the tab bar.
+      if (activeTab === cmd) activeTab = tabOrder[Math.min(idx, tabOrder.length - 1)] || null;
       renderEditor();
     }
     DOM.tabbar.addEventListener('click', (e) => {
@@ -4968,9 +5031,6 @@
           const ctx = canvas.getContext('2d');
           const fontSize = 14, primaryColor = getPrimaryColor();
 
-          // Get the current BPM and calculate the speed factor (default to 60 BPM = speed factor of 1)
-          const speedFactor = getBpm() / 60;
-
           let drops = [];
           const resizeCanvas = () => {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -4980,6 +5040,7 @@
           };
           resizeCanvas(); window.addEventListener('resize', resizeCanvas);
           const interval = setInterval(() => {
+            const speedFactor = getBpm() / 60; // per frame, so `bpm` retunes the rain live (60 = ×1)
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = primaryColor; ctx.font = fontSize + 'px monospace';
             for (let i = 0; i < drops.length; i++) {
@@ -5102,6 +5163,7 @@
         echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(input)}</span>`;
         DOM.terminalLog.appendChild(echo); scrollTerminal();
         addToHistory(trimmed);
+        pushCapped(inputHistory, trimmed); // recallable with ↑/↓ at the prompt
       }
       historyIndex = -1;
       const parts = trimmed.split(/\s+/), cmd = parts[0].toLowerCase(), args = parts.slice(1);
@@ -5238,11 +5300,11 @@
         await handleCommand(val, false, true); // typed at the prompt → may answer sudo
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        if (historyIndex < commandHistory.length - 1) { DOM.input.value = commandHistory[++historyIndex]; }
+        if (historyIndex < inputHistory.length - 1) { DOM.input.value = inputHistory[++historyIndex]; }
         updateCaret();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (historyIndex > 0) { DOM.input.value = commandHistory[--historyIndex]; } else { historyIndex = -1; DOM.input.value = ''; }
+        if (historyIndex > 0) { DOM.input.value = inputHistory[--historyIndex]; } else { historyIndex = -1; DOM.input.value = ''; }
         updateCaret();
       } else if (e.key === 'Tab') {
         e.preventDefault();
@@ -5274,6 +5336,7 @@
       await delay(300);
 
       commandHistory = [];
+      inputHistory = [];
       unreadHistoryCount = 0;
       updateGitBadge();
       historyIndex = -1; isMeltdown = false; meltdownElements = []; if (meltdownInterval) clearInterval(meltdownInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 2;
@@ -5294,7 +5357,9 @@
       syncBpmUI(60);
       setActiveTree(null);
 
-      if (document.documentElement.getAttribute('data-theme') === 'dark') applyTheme(false);
+      // Back to the starting theme (stored choice, else the OS) — not unconditionally
+      // light, which would undo a persisted preference on every reload.
+      applyTheme(TK.pref() === 'dark');
 
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
@@ -5867,7 +5932,7 @@
     function renderAttachTray() {
       if (!attachments.length && !attachNotice) { attachTray.classList.add('hidden'); attachTray.innerHTML = ''; return; }
       attachTray.classList.remove('hidden');
-      attachTray.innerHTML = attachments.map((a, i) => `<span class="attach-chip"><img src="${a.thumb}" alt="">`
+      attachTray.innerHTML = attachments.map((a, i) => `<span class="attach-chip"><img src="${esc(a.thumb)}" alt="">`
         + `<button type="button" class="attach-x" data-i="${i}" title="${tr('Remove', '削除')}" aria-label="${tr('Remove attachment', '添付を削除')}">×</button></span>`).join('')
         + (attachNotice ? `<span class="attach-note">${esc(attachNotice)}</span>` : '');
     }
@@ -5891,8 +5956,10 @@
     // ユーザー発言の吹き出し中身（サムネ＋本文）
     function userContentHTML(content) {
       if (typeof content === 'string') return esc(content);
+      // The url is escaped even though it is a canvas-produced data URL: this path also
+      // replays content restored from localStorage, which is not guaranteed to be ours.
       const imgs = content.filter(p => p.type === 'image_url')
-        .map(p => `<img src="${p.image_url.url}" alt="${tr('Attached image', '添付画像')}" loading="lazy">`).join('');
+        .map(p => `<img src="${esc(p.image_url.url)}" alt="${tr('Attached image', '添付画像')}" loading="lazy">`).join('');
       return (imgs ? `<span class="agent-imgs">${imgs}</span>` : '') + esc(contentText(content));
     }
 
@@ -5971,7 +6038,7 @@
       const ctrl = new AbortController();
       const connectTimer = setTimeout(() => { timedOut = true; ctrl.abort(); }, 30000);
       try {
-        const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const theme = isDarkNow() ? 'dark' : 'light';
         // Send only the most recent slice to the API (bounded context/cost); full
         // history is kept in agentHistory for display, persistence and reactions.
         const outbound = agentHistory.slice(-AGENT_MAX_HISTORY);
@@ -6768,15 +6835,37 @@
     const apkModal = document.getElementById('apk-download-modal');
     const apkCloseBtn = document.getElementById('apk-download-close');
 
+    // Everything the dialog offers, in tab order. The content is fixed (close button +
+    // the download link), so no visibility filtering is needed.
+    const apkFocusables = () => Array.from(apkModal.querySelectorAll('a[href], button:not([disabled])'));
+    const apkOpen = () => !!apkModal && apkModal.classList.contains('active');
+    // "Some dialog owns the keyboard." Both of these are aria-modal, so the global
+    // shortcuts must stand down for either — otherwise Ctrl+Shift+P opens the palette
+    // *underneath* the APK dialog. Each dialog keeps its own hide mechanism; only this
+    // predicate knows about both, so the shortcut layer no longer reads their classes.
+    const modalOpen = () => apkOpen() || !paletteEl.classList.contains('hidden');
+    let apkLastFocus = null;
+
     function showApkDownloadModal() {
       if (!apkModal) return;
       // The QR is an inline SVG filled with currentColor via .text-primary, so it tracks
       // the theme on its own — nothing to rebuild, and no request to a third-party host.
+      apkLastFocus = document.activeElement;
       apkModal.classList.add('active');
+      // Flush the style change before focusing, or the dialog is still computed as
+      // visibility:hidden and focus() is a silent no-op. Reading `visibility` forces a
+      // style recalc only; the usual `void offsetWidth` idiom would force a full layout.
+      void getComputedStyle(apkModal).visibility;
+      if (apkCloseBtn) apkCloseBtn.focus();
     }
 
     function closeApkDownloadModal() {
-      if (apkModal) apkModal.classList.remove('active');
+      if (!apkOpen()) return;
+      apkModal.classList.remove('active');
+      // Hand focus back to whatever opened the dialog (the MAGI splash's Android button),
+      // instead of dropping it on <body> where the next Tab restarts from the top.
+      if (apkLastFocus && document.contains(apkLastFocus)) apkLastFocus.focus({ preventScroll: true });
+      apkLastFocus = null;
     }
 
     if (apkCloseBtn) {
@@ -6788,9 +6877,17 @@
       });
     }
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && apkModal && apkModal.classList.contains('active')) {
-        closeApkDownloadModal();
-      }
+      // Key check first: this fires on every keystroke, and typing is the whole page.
+      if (e.key !== 'Escape' && e.key !== 'Tab') return;
+      if (!apkOpen()) return;
+      if (e.key === 'Escape') { closeApkDownloadModal(); return; }
+      // aria-modal="true" promises the dialog is the only reachable content, so Tab has
+      // to wrap inside it rather than walking off into the terminal behind the overlay.
+      const f = apkFocusables();
+      const first = f[0], last = f[f.length - 1];
+      if (!apkModal.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
 
     // --- Global keyboard shortcuts ---
@@ -6802,7 +6899,7 @@
         chordK = false; if (chordTimer) clearTimeout(chordTimer);
         if (mod && (e.key === 't' || e.key === 'T')) { e.preventDefault(); toggleTheme(); return; }
       }
-      if (!paletteEl.classList.contains('hidden')) return; // palette owns its keys
+      if (modalOpen()) return; // an open dialog owns the keyboard
       if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette('>'); return; }
       if (mod && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); toggleSidebar(); return; }
       if (mod && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); togglePanel(); return; }

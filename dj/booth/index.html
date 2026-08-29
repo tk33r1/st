@@ -95,7 +95,7 @@
     .tab .n { font-family: var(--mono); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--faint); background: var(--ink); border-radius: 999px; padding: 1px 7px; }
     .tab[aria-selected="true"] .n { color: var(--accent); }
 
-    .sort { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+    .sort { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; min-width: 0; }
     .sort .lbl { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: .1em; margin-right: 8px; }
     .sort button { padding: 6px 12px; font-size: 13px; color: var(--muted); border-radius: 7px; }
     .sort button[aria-pressed="true"] { background: var(--card-hi); color: var(--text); }
@@ -422,6 +422,29 @@
       return n * 2 + (ab === 'B' ? 1 : 0);
     };
 
+    /* camelot が空で songKey（"F#m"）だけ届くことがある。カードはキーを
+       出しているのに末尾へ落ちる、という食い違いを避けるため五度圏から
+       番号を割り出す。C=8B を起点に完全五度ごとに +1 で回るので
+       (pc * 7 + 7) % 12 + 1。短調は平行長調（+3 半音）の番号を借りる。 */
+    const PITCH = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    const keyRank = (k) => {
+      const m = /^([A-Ga-g])([#b♯♭]?)(m|min|minor)?$/.exec(String(k || '').trim());
+      if (!m) return null;
+      const minor = !!m[3];
+      let pc = PITCH[m[1].toUpperCase()];
+      if (m[2] === '#' || m[2] === '♯') pc += 1;
+      else if (m[2]) pc -= 1;
+      if (minor) pc += 3;
+      const n = (((pc * 7 + 7) % 12) + 12) % 12 + 1;
+      return n * 2 + (minor ? 0 : 1);
+    };
+
+    /* 表示が camelot と songKey の両方を見せている以上、並びも両方見る。 */
+    const songKeyRank = (s) => {
+      const r = camelotRank(s.camelot);
+      return r === null ? keyRank(s.songKey) : r;
+    };
+
     let songs = [], ev = null;
     let filter = 'pending', sort = 'new', sel = null, undoStack = null;
     let audio = null, playingId = null, audioTimer = null;
@@ -504,7 +527,7 @@
     const SORTS = {
       genre: byKey((s) => s.genre, (x, y) => x.localeCompare(y, 'ja')),
       bpm: byKey((s) => effBpm(s.bpm) || null, (x, y) => x - y),
-      key: byKey((s) => camelotRank(s.camelot), (x, y) => x - y),
+      key: byKey(songKeyRank, (x, y) => x - y),
     };
 
     const visible = () => {

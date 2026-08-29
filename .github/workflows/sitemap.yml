@@ -4,6 +4,14 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
+env:
+  # commit する identity と、update-modified.py が「bot のコミット」を判定する値の
+  # 唯一の定義。ここを変えれば両方に効く。
+  BOT_EMAIL: "github-actions[bot]@users.noreply.github.com"
+
 jobs:
   sitemap:
     runs-on: ubuntu-latest
@@ -11,17 +19,29 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
+        # 全履歴が要る。sitemap の lastmod も dateModified も git のコミット日時から引く。
         fetch-depth: 0
+
+    # sitemap より前に走らせる（生成物が同じチェックアウトを見るように）。
+    # なお lastmod と dateModified は完全には一致しない: generate-sitemap は生の git
+    # 日時を使うのに対し、こちらは bot のコミットを除外するので、下の commit が HTML を
+    # 触った次回以降は lastmod のほうが新しくなる。ズレは bot コミット1つ分。
+    - name: Sync JSON-LD dateModified with commit dates
+      run: python .github/scripts/update-modified.py
 
     - name: Generate Sitemap
       uses: cicirello/generate-sitemap@v1
       with:
         base-url-path: https://tk.st/
 
-    - name: Commit and Push Sitemap
+    - name: Commit and Push
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.email "$BOT_EMAIL"
         git add sitemap.xml robots.txt
-        git commit -m "Auto-generated sitemap" || exit 0
+        git add -u   # update-modified.py が書き換えた HTML
+        # [skip ci]: この push で自分自身を再実行させない。スクリプト自体も bot の
+        # コミットを無視して冪等なので、仮にこの印が外れてもループはしない（2周目が
+        # 同じ値を書く → 差分なし → commit が空振りして exit 0）。
+        git commit -m "Auto-generated sitemap + dateModified [skip ci]" || exit 0
         git push
