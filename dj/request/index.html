@@ -215,12 +215,14 @@
     .badge.shut { color: var(--faint); border-color: var(--line); }
     .badge.shut::before { background: var(--faint); box-shadow: none; }
 
-    .tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
     .tabs button {
-      padding: 13px 8px; font-size: 13.5px; font-weight: 600; color: var(--faint);
+      padding: 13px 4px; font-size: 12.5px; font-weight: 600; color: var(--faint);
       border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
     }
     .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+    .tabs.two { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 380px) { .tabs button { font-size: 11.5px; letter-spacing: -.02em; } }
 
     .pane { padding: 20px; display: none; flex-direction: column; gap: 16px; }
     .pane.on { display: flex; }
@@ -395,6 +397,89 @@
     .heart { font-family: var(--mono); font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
     .blank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 18px 0; }
 
+    /* ===== 投げ銭（Buy Me Oil）===== */
+    .tipbox {
+      width: 100%; padding: 18px 16px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 11px;
+      cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .tipbox:hover { background: var(--card-hi); border-color: var(--accent-dim); }
+    .tipbox .tiplede { font-size: 12.5px; color: var(--muted); }
+    .tipbox .tipnote { font-size: 11.5px; color: var(--faint); line-height: 1.75; }
+    .tipbox .tipnote b { display: block; color: var(--accent); font-weight: 600; letter-spacing: .06em; font-family: var(--mono); }
+    /* ウィジェット既定の 32px は指で狙うには小さいので、この画面だけ大きくする */
+    .tipbox .donation-widget-button { width: 46px; height: 46px; }
+
+    /* ===== MAGI 相談 ===== */
+    .magi-head { display: flex; align-items: center; gap: 12px; }
+    .magi-head .emblem { width: 44px; height: 44px; flex-shrink: 0; }
+    .magi-head .emblem .hx { fill: none; stroke: var(--accent-dim); stroke-width: 3.5; }
+    .magi-head .emblem .hl { stroke: var(--accent-dim); stroke-width: 2.5; }
+    .magi-head .emblem .hn { fill: var(--accent); font-family: var(--mono); font-size: 17px; }
+    .magi-head .mt { font-family: var(--mono); font-size: 15px; letter-spacing: .24em; color: var(--accent); line-height: 1.2; }
+    .magi-head .ms { font-size: 11.5px; color: var(--faint); letter-spacing: .04em; margin-top: 3px; }
+
+    .seeds { display: flex; flex-wrap: wrap; gap: 7px; }
+    .seeds[hidden] { display: none; }
+    .seed {
+      font-size: 12px; color: var(--muted); background: var(--card);
+      border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; text-align: left;
+    }
+    .seed:hover { color: var(--text); border-color: var(--accent-dim); }
+
+    .chatlog { display: flex; flex-direction: column; gap: 15px; }
+    .chatlog:empty { display: none; }
+    .bubble {
+      align-self: flex-end; max-width: 85%; font-size: 14px;
+      background: var(--card-hi); border: 1px solid var(--line);
+      border-radius: 14px 14px 4px 14px; padding: 10px 13px;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+    }
+    .turn { display: flex; flex-direction: column; gap: 10px; }
+
+    details.debate { border: 1px solid var(--line); border-radius: 11px; background: var(--card); }
+    details.debate summary {
+      list-style: none; cursor: pointer; padding: 9px 12px;
+      font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--faint);
+      display: flex; align-items: center; gap: 8px;
+    }
+    details.debate summary::-webkit-details-marker { display: none; }
+    details.debate summary::after { content: '▾'; margin-left: auto; }
+    details.debate:not([open]) summary::after { content: '▸'; }
+    .pcards { display: flex; flex-direction: column; gap: 9px; padding: 2px 12px 12px; }
+    .pcard .cn { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--accent); }
+    .pcard .px { font-size: 12px; color: var(--muted); line-height: 1.65; margin-top: 2px; overflow-wrap: anywhere; }
+    .pcard.thinking .px { color: var(--faint); }
+
+    .answer { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
+    .answer .av {
+      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-dim);
+      color: var(--accent); font-family: var(--mono); font-size: 11px; display: grid; place-items: center;
+    }
+    .answer .who { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--faint); margin-bottom: 4px; }
+    .answer .ab { font-size: 14.5px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .answer.streaming .ab::after { content: '▍'; color: var(--accent); animation: blink 1s steps(2) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .picks { display: flex; flex-wrap: wrap; gap: 7px; margin-left: 38px; }
+    .pick {
+      font-size: 12.5px; color: var(--text); background: var(--card);
+      border: 1px solid var(--accent-dim); border-radius: 999px; padding: 7px 13px;
+      display: inline-flex; align-items: center; gap: 6px; text-align: left;
+    }
+    .pick::after { content: '↗'; color: var(--accent); font-size: 11px; }
+    .pick:hover { background: var(--card-hi); }
+    .picklede { font-size: 11.5px; color: var(--faint); margin: 2px 0 0 38px; }
+
+    .composer { display: flex; gap: 8px; align-items: flex-end; }
+    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 12px; padding: 13px; }
+    .composer button {
+      flex-shrink: 0; height: 48px; padding: 0 16px; border-radius: 12px;
+      background: var(--accent); color: #14091F; font-size: 13.5px; font-weight: 700;
+    }
+    .composer button:disabled { background: var(--card); color: var(--faint); cursor: not-allowed; }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
     }
@@ -415,6 +500,7 @@
 
       <nav class="tabs" role="tablist">
         <button role="tab" data-tab="search" aria-selected="true">リクエストする</button>
+        <button role="tab" data-tab="consult" aria-selected="false">AIに相談</button>
         <button role="tab" data-tab="board" aria-selected="false">みんなのリクエスト</button>
       </nav>
 
@@ -428,6 +514,7 @@
         </div>
         <p class="hint">アーティスト名は英語で入れると見つかりやすいです</p>
         <div id="results"></div>
+        <button class="linkbtn" id="toConsultFromSearch">曲が決まっていない → AI に相談する</button>
       </section>
 
       <!-- 確認 -->
@@ -464,6 +551,42 @@
         <div class="err" id="freeErr" hidden></div>
         <button class="send" id="freeSend" disabled>この内容でリクエストする</button>
         <p class="hint">曲を特定できない場合はかけられないことがあります。</p>
+        <button class="linkbtn" id="toConsultFromFree">AI と一緒に曲を思い出す →</button>
+      </section>
+
+      <!-- AI 相談 -->
+      <section class="pane" id="pane-consult">
+        <div class="magi-head">
+          <svg class="emblem" viewBox="0 0 120 120" aria-hidden="true">
+            <line class="hl" x1="51.5" y1="49" x2="43.5" y2="63" />
+            <line class="hl" x1="76.5" y1="63" x2="68.5" y2="49" />
+            <line class="hl" x1="52" y1="78" x2="68" y2="78" />
+            <polygon class="hx" points="60,14 77,24 77,44 60,54 43,44 43,24" />
+            <polygon class="hx" points="35,58 52,68 52,88 35,98 18,88 18,68" />
+            <polygon class="hx" points="85,58 102,68 102,88 85,98 68,88 68,68" />
+            <text class="hn" x="60" y="40" text-anchor="middle">1</text>
+            <text class="hn" x="35" y="84" text-anchor="middle">2</text>
+            <text class="hn" x="85" y="84" text-anchor="middle">3</text>
+          </svg>
+          <div>
+            <div class="mt">MAGI</div>
+            <div class="ms">Shinya Takeda AI — 選曲相談</div>
+          </div>
+        </div>
+        <p class="lede">曲名が決まっていなくても大丈夫。<br>気分やシーンを話しかけると、<b>DJ 本人の思考を模した AI</b> が曲を挙げてくれます。</p>
+        <div class="seeds" id="seeds">
+          <button class="seed">とにかく上がる曲がかけてほしい</button>
+          <button class="seed">みんなで踊れる定番は？</button>
+          <button class="seed">名前は忘れたけど、CMで聴いたEDM</button>
+          <button class="seed">最後を締めくくる一曲を選んで</button>
+        </div>
+        <div class="chatlog" id="chatLog"></div>
+        <div class="err" id="chatErr" hidden></div>
+        <div class="composer">
+          <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
+          <button id="chatSend" disabled>送信</button>
+        </div>
+        <p class="hint">提案された曲は、そのままタップして検索・リクエストできます。<br>AI の提案なので実在しない曲を挙げることもあります。相談は1日の利用回数に上限があります。</p>
       </section>
 
       <!-- 完了 -->
@@ -479,6 +602,13 @@
           </p>
           <button class="linkbtn" id="toBoard">みんなのリクエストを見る →</button>
           <button class="linkbtn" id="again">もう1曲リクエストする</button>
+
+          <!-- 投げ銭。ボタンとモーダルは data/buy-me-oil.js が描画する -->
+          <div class="tipbox" id="tipbox">
+            <span class="tiplede">人類踊狂計画はボランティアで活動しています</span>
+            <div id="donation-button-container"></div>
+            <span class="tipnote">よければ、次の現場までのガソリン代を<b>Buy Me Oil</b></span>
+          </div>
         </div>
       </section>
 
@@ -596,13 +726,15 @@
     /* ── 画面遷移 ─────────────────────────── */
     let flowPane = 'search';
     let eventOpen = false;
+    const TAB_OF = { consult: 'consult', board: 'board' };
 
     function show(pane) {
       document.querySelectorAll('.pane').forEach((p) => p.classList.remove('on'));
       $('#pane-' + pane).classList.add('on');
-      if (pane !== 'board') flowPane = pane;
+      if (pane !== 'board' && pane !== 'consult') flowPane = pane;
+      const tab = TAB_OF[pane] || 'search';   // 確認・自由入力・完了はすべて「リクエストする」の中
       document.querySelectorAll('.tabs button').forEach((b) =>
-        b.setAttribute('aria-selected', String((b.dataset.tab === 'board') === (pane === 'board'))));
+        b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -874,6 +1006,7 @@
     document.querySelector('.tabs').addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b) return;
+      if (b.dataset.tab === 'consult') { clearInterval(boardTimer); show('consult'); return; }
       if (b.dataset.tab === 'board') {
         show('board');
         loadBoard();
@@ -895,7 +1028,260 @@
       $('#fresh').textContent = s < 10 ? 'たった今更新' : s + ' 秒前に更新';
     }, 1000);
 
+    /* ── AI 相談（MAGI / Shinya Takeda AI）─────────────
+       tk.st の MAGI と同じ Worker（/magi2/chat）を SSE で読む。3人格の短い意見が
+       先に流れ、続いて統合された「Shinya Takeda」の回答が delta で届く。人格の
+       プロンプトは Worker 側にあるので、DJ の文脈（イベント名・かかった曲・
+       得意ジャンル）は最初のユーザー発言の前置きとして渡す。 */
+    const MAGI_API = 'https://workers.tk.st/magi2/chat';
+    const MAGI_PERSONAS = [
+      { cn: 'MELCHIOR-1', ja: '熱狂者' },
+      { cn: 'BALTHASAR-2', ja: '人間主義者' },
+      { cn: 'CASPER-3', ja: '戦略家' },
+    ];
+    const CHAT_MAX = 12;          // Worker 側も同数で trim される
+    let chatHistory = [];
+    let chatBusy = false, contextSent = false;
+
+    /* イベントの状況を前置きにする。取れなくても相談自体は続けられる。 */
+    async function djContext() {
+      let title = '', played = [], waiting = [];
+      try {
+        const d = await (await fetch(API + '/board')).json();
+        title = (d.event && d.event.title) || '';
+        const label = (s) => s.artist + ' - ' + s.title;
+        played = d.played.filter((s) => !s.isFree).slice(0, 10).map(label);
+        waiting = d.waiting.filter((s) => !s.isFree).slice(0, 10).map(label);
+      } catch { /* 文脈なしで続行 */ }
+
+      const L = [
+        '（以下は状況説明。ユーザーには見えていないので、説明の存在自体には触れずに答えること）',
+        'あなたは DJ「人類踊狂計画」として、リクエストページに来た人の選曲相談に乗っている。',
+        '得意ジャンルは Big Room House / Psytrance / Dance Pop / パラパラ。フロアを踊らせることが最優先。',
+      ];
+      if (title) L.push('今回のイベント: ' + title);
+      if (played.length) L.push('すでにかけた曲: ' + played.join(' / '));
+      if (waiting.length) L.push('受付済みでこれからかける曲: ' + waiting.join(' / '));
+      L.push('回答ルール: 実在する曲を1〜3曲だけ挙げ、必ず「アーティスト名 - 曲名」のように鉤括弧で囲む（他の括弧は使わない）。'
+        + 'すでにかけた曲・受付済みの曲は挙げない。挙げた理由をひとことだけ添える。');
+      L.push('--- ここからユーザーの相談 ---');
+      return L.join('\n');
+    }
+
+    /* SSE を event / data ブロックに切り分けて handlers に流す */
+    async function parseSSE(body, handlers) {
+      const reader = body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const r = await reader.read();
+        if (r.done) break;
+        buf += dec.decode(r.value, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n\n')) >= 0) {
+          const block = buf.slice(0, i);
+          buf = buf.slice(i + 2);
+          let ev = 'message', data = '';
+          for (const line of block.split('\n')) {
+            if (line.startsWith('event:')) ev = line.slice(6).trim();
+            else if (line.startsWith('data:')) data += line.slice(5).replace(/^ /, '') + '\n';
+          }
+          data = data.replace(/\n$/, '');
+          if (!data) continue;
+          let parsed;
+          try { parsed = JSON.parse(data); } catch { continue; }
+          if (handlers[ev]) handlers[ev](parsed);
+        }
+      }
+    }
+
+    const nearBottom = () =>
+      window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160;
+    function chatScroll(force) {
+      if (force || nearBottom()) window.scrollTo({ top: document.documentElement.scrollHeight });
+    }
+
+    function chatTurn(text) {
+      const log = $('#chatLog');
+      const me = document.createElement('div');
+      me.className = 'bubble';
+      me.textContent = text;
+      log.appendChild(me);
+
+      const turn = document.createElement('div');
+      turn.className = 'turn';
+      turn.innerHTML =
+        '<details class="debate" open><summary>3つの人格が考えています…</summary><div class="pcards">' +
+        MAGI_PERSONAS.map((p) => '<div class="pcard thinking" data-cn="' + p.cn + '">' +
+          '<span class="cn">' + p.cn + ' / ' + p.ja + '</span>' +
+          '<span class="px">…</span></div>').join('') +
+        '</div></details>' +
+        '<div class="answer streaming"><span class="av">ST</span>' +
+        '<div><div class="who">Shinya Takeda</div><div class="ab"></div></div></div>';
+      log.appendChild(turn);
+      return turn;
+    }
+
+    /* 統合回答から括弧の中身を拾って検索語にする。回答のたびに鉤括弧・隅付き
+       括弧・引用符のどれで囲まれるかが変わるので、いずれも受け取る。 */
+    function pickSongs(text) {
+      const out = [];
+      const re = /[「『【〔"“]([^「」『』【】〔〕"”\n]{2,60})[」』】〕"”]/g;
+      let m;
+      while ((m = re.exec(text))) {
+        const s = m[1].trim().replace(/\s+/g, ' ');
+        if (s.length < 2 || /[。、！？!?]/.test(s) || out.includes(s)) continue;
+        out.push(s);
+      }
+      return out.slice(0, 4);
+    }
+
+    function renderPicks(turn, text) {
+      const songs = pickSongs(text);
+      if (!songs.length) return;
+      const wrap = document.createElement('div');
+      wrap.innerHTML = '<p class="picklede">タップすると検索してリクエストできます</p>' +
+        '<div class="picks">' + songs.map((s) =>
+          '<button class="pick" data-q="' + esc(s) + '">' + esc(s) + '</button>').join('') + '</div>';
+      turn.appendChild(wrap);
+    }
+
+    async function sendConsult(text) {
+      if (chatBusy) return;
+      text = String(text || '').trim().slice(0, 300);
+      if (text.length < 2) return;
+
+      chatBusy = true;
+      $('#chatSend').disabled = true;
+      $('#chatInput').disabled = true;
+      $('#chatErr').hidden = true;
+      $('#seeds').hidden = true;
+      $('#chatInput').value = '';
+      growInput();
+
+      const turn = chatTurn(text);
+      chatScroll(true);
+
+      // 文脈は初回だけ。以降は履歴に残るので毎回は送らない
+      const outbound = contextSent ? text : (await djContext()) + '\n' + text;
+      contextSent = true;
+      chatHistory.push({ role: 'user', content: outbound });
+
+      const ctrl = new AbortController();
+      let timedOut = false;
+      const to = setTimeout(() => { timedOut = true; ctrl.abort(); }, 45000);
+      const ans = turn.querySelector('.answer');
+      const bodyEl = turn.querySelector('.ab');
+      let reply = '', failure = null;
+
+      try {
+        const res = await fetch(MAGI_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: chatHistory.slice(-CHAT_MAX), theme: 'dark' }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
+        if (!res.ok || !res.body) {
+          let env = null;
+          try { env = (await res.json()).error; } catch { /* 本文が JSON でない */ }
+          failure = (env && env.message) || '相談できませんでした（HTTP ' + res.status + '）。';
+        } else {
+          await parseSSE(res.body, {
+            persona: (d) => {
+              const card = turn.querySelector('.pcard[data-cn="' + String(d.codename || '').replace(/"/g, '') + '"]');
+              if (!card) return;
+              card.querySelector('.px').textContent = d.text || '';
+              if (d.round === 2) card.classList.remove('thinking');
+              chatScroll();
+            },
+            integrated: (d) => { reply += d.delta || ''; bodyEl.textContent = reply; chatScroll(); },
+            error: (d) => { failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
+            done: () => { },
+          });
+        }
+      } catch (e) {
+        clearTimeout(to);
+        failure = (timedOut || e.name === 'AbortError')
+          ? '時間内に返事が来ませんでした。もう一度お試しください。'
+          : '通信に失敗しました。電波の良い場所でもう一度お試しください。';
+      } finally {
+        ans.classList.remove('streaming');
+        turn.querySelectorAll('.pcard.thinking').forEach((c) => c.classList.remove('thinking'));
+        const det = turn.querySelector('details.debate');
+        det.open = false;
+        det.querySelector('summary').textContent = '3つの人格の議論';
+        chatBusy = false;
+        $('#chatInput').disabled = false;
+        $('#chatSend').disabled = $('#chatInput').value.trim().length < 2;
+      }
+
+      if (reply && !failure) {
+        chatHistory.push({ role: 'assistant', content: reply });
+        renderPicks(turn, reply);
+        chatScroll();
+        return;
+      }
+      // 失敗したターンは履歴から外す（次の送信で壊れた文脈を引きずらない）
+      chatHistory.pop();
+      if (!chatHistory.length) contextSent = false;
+      turn.remove();
+      $('#chatErr').textContent = failure || '返事を受け取れませんでした。もう一度お試しください。';
+      $('#chatErr').hidden = false;
+      chatScroll();
+    }
+
+    /* 入力欄：内容に合わせて伸ばし、2文字以上で送信可に */
+    function growInput() {
+      const ta = $('#chatInput');
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(150, ta.scrollHeight) + 'px';
+    }
+    $('#chatInput').addEventListener('input', () => {
+      growInput();
+      $('#chatSend').disabled = chatBusy || $('#chatInput').value.trim().length < 2;
+    });
+    // 物理キーボードのある環境だけ Enter 送信（スマホでは改行のまま）
+    $('#chatInput').addEventListener('keydown', (e) => {
+      const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+      if (e.key === 'Enter' && !e.shiftKey && (fine || e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        sendConsult($('#chatInput').value);
+      }
+    });
+    $('#chatSend').addEventListener('click', () => sendConsult($('#chatInput').value));
+    $('#seeds').addEventListener('click', (e) => {
+      const b = e.target.closest('.seed');
+      if (b) sendConsult(b.textContent);
+    });
+
+    // 提案された曲をそのまま検索へ渡す（区切りのハイフンは検索の邪魔なので落とす）
+    $('#chatLog').addEventListener('click', (e) => {
+      const b = e.target.closest('.pick');
+      if (!b) return;
+      const q = b.dataset.q.replace(/\s*[-–—・]\s*/g, ' ').trim();
+      $('#q').value = q;
+      $('#field').classList.add('filled');
+      show('search');
+      doSearch(q);
+    });
+
+    function openConsult() {
+      clearInterval(boardTimer);
+      show('consult');
+    }
+    $('#toConsultFromSearch').addEventListener('click', openConsult);
+    $('#toConsultFromFree').addEventListener('click', openConsult);
+
     /* ── 起動 ─────────────────────────────── */
+    // 受付していないときは相談だけできても行き止まりなので、導線ごと隠す
+    function hideConsultTab() {
+      document.querySelector('.tabs button[data-tab="consult"]').hidden = true;
+      document.querySelector('.tabs').classList.add('two');
+      $('#toConsultFromSearch').hidden = true;
+      $('#toConsultFromFree').hidden = true;
+    }
+
     (async function boot() {
       try {
         const res = await fetch(API + '/event');
@@ -910,16 +1296,36 @@
         } else {
           $('#badge').textContent = '受付停止中';
           $('#badge').classList.add('shut');
+          hideConsultTab();
           show('shut');
         }
       } catch {
         $('#badge').textContent = 'オフライン';
         $('#badge').classList.add('shut');
+        hideConsultTab();
         show('shut');
       }
     })();
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
+  </script>
+
+  <script src="/data/buy-me-oil.js"></script>
+  <script>
+    // 完了画面に置くので、リクエストを送り終えた人にだけ見える。
+    // ペインが表示された時点で給油ポンプが数回揺れる（IntersectionObserver 任せ）。
+    try {
+      if (typeof DonationWidget !== 'undefined') {
+        new DonationWidget({ containerId: 'donation-button-container' }).init();
+      }
+    } catch (e) { /* 投げ銭が出せなくてもリクエスト機能は動かす */ }
+
+    // カードのどこを押しても開くようにする（32px のアイコンだけだと指で狙いにくい）
+    document.getElementById('tipbox').addEventListener('click', (e) => {
+      if (e.target.closest('.donation-widget-wrapper')) return;   // 本体のボタンは二重発火させない
+      const btn = document.querySelector('#donation-button-container .donation-widget-button');
+      if (btn) btn.click();
+    });
   </script>
 </body>
 

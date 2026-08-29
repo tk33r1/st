@@ -427,24 +427,6 @@
       color: rgba(154, 154, 160, 0.4);
     }
 
-    .name-btn {
-      font-family: var(--f-dot);
-      font-size: 0.6875rem;
-      letter-spacing: 0.06em;
-      background: none;
-      border: none;
-      border-bottom: 1px solid var(--border);
-      color: var(--fg);
-      cursor: pointer;
-      padding: 0 2px 2px;
-      transition: color 0.2s, border-color 0.2s;
-    }
-
-    .name-btn:hover {
-      color: var(--heart-secondary);
-      border-bottom-color: var(--heart-secondary);
-    }
-
     table.grid tfoot td.comment-cell {
       white-space: normal;
       font-family: var(--f-body);
@@ -773,7 +755,7 @@
       <div class="table-scroll">
         <table class="grid" id="grid"></table>
       </div>
-      <p class="muted">名前をタップすると修正できます</p>
+      <p class="muted">修正する場合は上の「出欠」で自分の名前を選んでください</p>
     </section>
 
     <!-- ===== 開催日の設定 ===== -->
@@ -1173,11 +1155,18 @@
       }
 
       // ===== 集計表 =====
+      // フォームの初期状態が全部○なので、集計側も無回答の日は○として数える。
+      // ただし開催不可日はフォーム側で入力できず必ず未回答になるので、○に寄せず未回答のまま扱う
+      function answerOf(r, iso) {
+        if (r.answers[iso]) return r.answers[iso];
+        return isBlocked(iso) ? null : 'o';
+      }
+
       function tallyOf(iso) {
         var t = { o: 0, t: 0, x: 0 };
         data.responses.forEach(function (r) {
-          var v = r.answers[iso];
-          if (v && t[v] !== undefined) t[v] += 1;
+          var v = answerOf(r, iso);
+          if (v) t[v] += 1;
         });
         return t;
       }
@@ -1217,13 +1206,7 @@
         hr.appendChild(thTally);
         data.responses.forEach(function (r) {
           var th = document.createElement('th');
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'name-btn';
-          btn.textContent = r.name;
-          btn.title = r.name + ' の回答を読み込む';
-          btn.addEventListener('click', function () { loadResponseIntoForm(r); });
-          th.appendChild(btn);
+          th.textContent = r.name;
           hr.appendChild(th);
         });
         thead.appendChild(hr);
@@ -1258,7 +1241,7 @@
 
           data.responses.forEach(function (r) {
             var td = document.createElement('td');
-            var v = r.answers[iso];
+            var v = answerOf(r, iso);
             td.className = v ? 'mark-' + v : 'mark-none';
             td.textContent = v ? MARKS[v] : '－';
             tr.appendChild(td);
@@ -1447,10 +1430,12 @@
             b.textContent = MARKS[v];
             b.disabled = blocked;
             b.setAttribute('aria-label', fmtDateLong(iso) + ' ' + MARKS[v]);
-            b.setAttribute('aria-pressed', answers[iso] === v ? 'true' : 'false');
+            // 未回答は集計側と同じく○扱いにする
+            // 開催不可日は入力できないので選択済みにはしない
+            b.setAttribute('aria-pressed', (answers[iso] || (blocked ? '' : 'o')) === v ? 'true' : 'false');
             b.addEventListener('click', function () {
-              answers[iso] = (answers[iso] === v) ? undefined : v;
-              if (!answers[iso]) delete answers[iso];
+              // ○/△/× は常にどれか一つが選ばれている状態にする（未回答には戻さない）
+              answers[iso] = v;
               Array.prototype.forEach.call(seg.children, function (child) {
                 child.setAttribute('aria-pressed', answers[iso] === child.dataset.v ? 'true' : 'false');
               });
