@@ -215,42 +215,22 @@
       background: #2d1b4e;
       color: rgba(255, 255, 255, 0.5);
       text-align: center;
-      position: relative;
       font-size: 0.8rem;
       letter-spacing: 0.05em;
     }
 
-    .site-footer-back {
-      position: absolute;
-      left: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(156, 122, 247, 0.6);
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.85rem;
-      text-decoration: none;
-      border: 1px solid rgba(156, 122, 247, 0.25);
-      padding: 4px 10px;
-      letter-spacing: 0.12em;
-      transition: color 0.3s ease, border-color 0.3s ease;
-    }
-
-    .site-footer-back:hover {
-      color: var(--accent);
-      border-color: var(--accent);
-    }
-
     .site-crumb {
-      margin-bottom: 10px;
+      background: var(--ink);
+      padding: 8px 20px 24px;
     }
 
     .site-crumb ol {
       list-style: none;
-      margin: 0;
+      margin: 0 auto;
       padding: 0;
+      max-width: 1180px;
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       align-items: center;
       gap: 8px;
       font-size: 0.75rem;
@@ -281,17 +261,42 @@
       color: rgba(255, 255, 255, 0.6);
     }
 
-    /* 「<」ボタンとパンくずが重ならないよう、狭い画面では左右を空ける */
-    @media (max-width: 480px) {
-      .site-footer {
-        padding-left: 64px;
-        padding-right: 64px;
-      }
+    .crumb-info {
+      appearance: none;
+      width: 17px; height: 17px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(156, 122, 247, 0.35);
+      border-radius: 50%;
+      background: none;
+      color: rgba(156, 122, 247, 0.85);
+      font: 600 11px/1 var(--sans);
+      cursor: pointer;
+      transition: color .2s ease, border-color .2s ease, background .2s ease;
     }
 
-    .site-footer-credit { margin-bottom: 8px; font-size: 0.75rem; }
-    .site-footer-credit a { color: rgba(156, 122, 247, 0.85); text-decoration: none; border-bottom: 1px solid rgba(156, 122, 247, 0.35); }
-    .site-footer-credit a:hover { color: #B195FA; border-bottom-color: #B195FA; }
+    .crumb-info:hover,
+    .crumb-info[aria-expanded="true"] {
+      color: #B195FA;
+      border-color: #B195FA;
+      background: rgba(156, 122, 247, 0.12);
+    }
+
+    .crumb-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .crumb-note {
+      max-width: 1180px;
+      margin: 10px auto 0;
+      padding: 11px 13px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .crumb-note a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-dim); }
+    .crumb-note a:hover { color: #B195FA; border-bottom-color: #B195FA; }
 
     .toast {
       position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 20px);
@@ -365,20 +370,26 @@
     </div>
   </div>
 
+  <!-- BREADCRUMB -->
+  <nav class="site-crumb" aria-label="パンくずリスト">
+    <ol>
+      <li><a href="https://tk.st/">tk.st</a></li>
+      <li><a href="https://tk.st/dj/">人類踊狂計画</a></li>
+      <li>
+        <span aria-current="page">ブースコンソール</span>
+        <button type="button" class="crumb-info" id="crumbInfo" aria-expanded="false" aria-controls="crumbNote"
+          aria-label="BPM とキーのデータ提供元について">i</button>
+      </li>
+    </ol>
+    <p class="crumb-note" id="crumbNote" hidden>
+      カードに出る BPM とキーは
+      <a href="https://getsongbpm.com/" target="_blank" rel="noopener noreferrer">GetSongBPM</a>
+      のデータベースから取得しています。曲によっては値が無いことがあります。
+    </p>
+  </nav>
+
   <!-- FOOTER -->
   <footer class="site-footer">
-    <a href="https://tk.st/" class="site-footer-back" aria-label="tk.st へ戻る">&lt;</a>
-    <nav class="site-crumb" aria-label="パンくずリスト">
-      <ol>
-        <li><a href="https://tk.st/">tk.st</a></li>
-        <li><a href="https://tk.st/dj/">人類踊狂計画</a></li>
-        <li><span aria-current="page">ブースコンソール</span></li>
-      </ol>
-    </nav>
-    <div class="site-footer-credit">
-      BPM とキーのデータ提供:
-      <a href="https://getsongbpm.com/" target="_blank" rel="noopener noreferrer">GetSongBPM</a>
-    </div>
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
@@ -674,6 +685,7 @@
     document.addEventListener('keydown', (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      if (e.target.closest && e.target.closest('.site-crumb')) return;
       const list = visible(); if (!list.length) return;
       let i = list.findIndex((s) => s.id === sel);
       const k = e.key.toLowerCase();
@@ -695,6 +707,22 @@
       else if (k === '3') act(s, 'skipped');
       else if (k === 'z') { if (undoStack) undoStack(); }
     });
+
+    /* ── データ提供元の説明 ───────────────── */
+    (() => {
+      const btn = $('#crumbInfo'), note = $('#crumbNote');
+      const setOpen = (open) => {
+        note.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+      };
+      btn.addEventListener('click', (e) => { e.stopPropagation(); setOpen(note.hidden); });
+      document.addEventListener('click', (e) => {
+        if (!note.hidden && !note.contains(e.target)) setOpen(false);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !note.hidden) { setOpen(false); btn.focus(); }
+      });
+    })();
 
     /* ── 起動 ─────────────────────────────── */
     load(true);

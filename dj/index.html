@@ -875,42 +875,22 @@
       background: var(--dark-blue-purple);
       color: rgba(255, 255, 255, 0.5);
       text-align: center;
-      position: relative;
       font-size: 0.8rem;
       letter-spacing: 0.05em;
     }
 
-    .site-footer-back {
-      position: absolute;
-      left: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(156, 122, 247, 0.6);
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.85rem;
-      text-decoration: none;
-      border: 1px solid rgba(156, 122, 247, 0.25);
-      padding: 4px 10px;
-      letter-spacing: 0.12em;
-      transition: color 0.3s ease, border-color 0.3s ease;
-    }
-
-    .site-footer-back:hover {
-      color: var(--neo-purple);
-      border-color: var(--neo-purple);
-    }
-
     .site-crumb {
-      margin-bottom: 10px;
+      background: var(--white);
+      padding: 20px 40px 26px;
     }
 
     .site-crumb ol {
       list-style: none;
-      margin: 0;
+      margin: 0 auto;
       padding: 0;
+      max-width: none;
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       align-items: center;
       gap: 8px;
       font-size: 0.75rem;
@@ -924,11 +904,11 @@
 
     .site-crumb li + li::before {
       content: "/";
-      color: rgba(255, 255, 255, 0.25);
+      color: rgba(26, 26, 26, 0.25);
     }
 
     .site-crumb a {
-      color: rgba(156, 122, 247, 0.75);
+      color: #7b55d6;
       text-decoration: none;
       transition: color 0.3s ease;
     }
@@ -938,15 +918,7 @@
     }
 
     .site-crumb [aria-current="page"] {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    /* 「<」ボタンとパンくずが重ならないよう、狭い画面では左右を空ける */
-    @media (max-width: 480px) {
-      .site-footer {
-        padding-left: 64px;
-        padding-right: 64px;
-      }
+      color: rgba(26, 26, 26, 0.55);
     }
 
     /* ===== Image Modal ===== */
@@ -1207,6 +1179,10 @@
 
       .contact-section {
         padding: 40px 20px;
+      }
+
+      .site-crumb {
+        padding: 16px 20px 22px;
       }
 
       .philosophy-section {
@@ -1517,15 +1493,16 @@
     </div>
   </section>
 
+  <!-- BREADCRUMB -->
+  <nav class="site-crumb" aria-label="パンくずリスト">
+    <ol>
+      <li><a href="https://tk.st/">tk.st</a></li>
+      <li><span aria-current="page">人類踊狂計画</span></li>
+    </ol>
+  </nav>
+
   <!-- FOOTER -->
   <footer class="site-footer">
-    <a href="https://tk.st/" class="site-footer-back" aria-label="tk.st へ戻る">&lt;</a>
-    <nav class="site-crumb" aria-label="パンくずリスト">
-      <ol>
-        <li><a href="https://tk.st/">tk.st</a></li>
-        <li><span aria-current="page">人類踊狂計画</span></li>
-      </ol>
-    </nav>
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
