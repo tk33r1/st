@@ -102,13 +102,6 @@
       letter-spacing: 0.06em;
     }
 
-    .eyebrow {
-      font-family: var(--f-display);
-      font-size: 0.625rem;
-      letter-spacing: 0.3em;
-      color: var(--glitch-accent);
-    }
-
     /* ===== LAYOUT ===== */
     .wrap {
       position: relative;
@@ -184,25 +177,12 @@
       border-color: var(--heart-secondary);
     }
 
-    .month-tools {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 26px;
-    }
-
-    .month-tools select {
-      flex: 1 1 220px;
-      max-width: 290px;
-    }
-
     .quick-months {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       align-items: center;
-      margin-top: 14px;
+      margin-top: 26px;
     }
 
     .quick {
@@ -645,15 +625,6 @@
       opacity: 0.75;
     }
 
-    /* ===== MEMO ===== */
-    .memo-view {
-      font-family: var(--f-body);
-      font-size: 0.875rem;
-      white-space: pre-wrap;
-      border-left: 1px solid var(--heart-secondary);
-      padding-left: 16px;
-    }
-
     /* ===== MISC ===== */
     .notice {
       font-family: var(--f-body);
@@ -754,7 +725,6 @@
   <header class="site-head">
     <div class="site-head__inner">
       <h1 class="logo">白昼夢 スケジュール調整</h1>
-      <span class="eyebrow">HAKUCHUMU</span>
     </div>
   </header>
 
@@ -769,44 +739,8 @@
         </div>
         <button class="nav-btn" id="nextMonth" type="button">→</button>
       </div>
-      <div class="month-tools">
-        <select id="monthJump" aria-label="月を選ぶ"></select>
-        <button class="btn small" id="thisMonth" type="button">今月</button>
-        <button class="btn small" id="copyUrl" type="button">URLをコピー</button>
-        <button class="btn small" id="reload" type="button">更新</button>
-      </div>
       <div class="quick-months" id="quickMonths" hidden></div>
       <div id="globalNotice" class="notice error" role="status" hidden></div>
-    </section>
-
-    <!-- ===== 集計 ===== -->
-    <section class="section">
-      <h2 class="section-title">集計</h2>
-      <p class="status-line" id="statusLine" hidden></p>
-      <p class="best-line" id="bestLine"></p>
-      <div class="table-scroll">
-        <table class="grid" id="grid"></table>
-      </div>
-      <p class="muted">名前をタップすると修正できます</p>
-    </section>
-
-    <!-- ===== 開催日の設定 ===== -->
-    <section class="section">
-      <h2 class="section-title">開催日</h2>
-
-      <div style="margin-bottom:22px">
-        <label class="field-label" for="decidedSelect">FIXED</label>
-        <select id="decidedSelect"></select>
-      </div>
-
-      <div>
-        <span class="field-label">BLOCKED</span>
-        <div class="block-chips" id="blockChips"></div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn small" id="saveStatus" type="button">保存</button>
-      </div>
     </section>
 
     <!-- ===== 回答 ===== -->
@@ -844,19 +778,33 @@
       </div>
     </section>
 
-    <!-- ===== メモ ===== -->
+    <!-- ===== 集計 ===== -->
     <section class="section">
-      <h2 class="section-title" id="memoTitle">メモ</h2>
-      <p class="memo-view" id="memoView"></p>
-      <div id="memoEditor" hidden>
-        <textarea id="memoInput" maxlength="500" placeholder="会場・集合時間など"></textarea>
-        <div class="btn-row">
-          <button class="btn small" id="saveMemo" type="button">保存</button>
-          <button class="btn small" id="cancelMemo" type="button">やめる</button>
-        </div>
+      <h2 class="section-title">集計</h2>
+      <p class="status-line" id="statusLine" hidden></p>
+      <p class="best-line" id="bestLine"></p>
+      <div class="table-scroll">
+        <table class="grid" id="grid"></table>
       </div>
-      <div class="btn-row" id="memoActions">
-        <button class="btn small" id="editMemo" type="button">メモを書く</button>
+      <p class="muted">名前をタップすると修正できます</p>
+    </section>
+
+    <!-- ===== 開催日の設定 ===== -->
+    <section class="section">
+      <h2 class="section-title">開催日</h2>
+
+      <div style="margin-bottom:22px">
+        <label class="field-label" for="decidedSelect">FIXED</label>
+        <select id="decidedSelect"></select>
+      </div>
+
+      <div>
+        <span class="field-label">BLOCKED</span>
+        <div class="block-chips" id="blockChips"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn small" id="saveStatus" type="button">保存</button>
       </div>
     </section>
 
@@ -877,8 +825,6 @@
       var STORE_KEY = 'dj-schedule-name';
       var WDAY = ['日', '月', '火', '水', '木', '金', '土'];
       var MARKS = { o: '○', t: '△', x: '×' };
-      var JUMP_BACK = 3;    // 月セレクトで遡れる月数
-      var JUMP_AHEAD = 12;  // 月セレクトで先に進める月数
       var SERIES_START = '2026-06'; // 2026年6月＝白昼夢①。毎月1回なので月がそのまま回数になる
 
       // ===== 状態 =====
@@ -1029,40 +975,15 @@
         renderNameSelect();
         autoLoadOwnResponse();
         renderAnswerRows();
-        renderMemo();
       }
 
       // ===== 月バー =====
-      function jumpLabel(ym) {
-        var no = eventNo(ym);
-        return no ? '白昼夢' + circled(no) + '（' + fmtMonth(ym) + '）' : fmtMonth(ym);
-      }
-
       function renderMonthBar() {
         $('monthLabel').textContent = eventLabel(month);
         var count = data && data.month === month ? data.dates.length : 0;
         $('monthSub').textContent = fmtMonth(month) + (count ? ' / 日曜 ' + count + '回' : '');
         $('prevMonth').textContent = '← ' + eventLabel(shiftMonth(month, -1));
         $('nextMonth').textContent = eventLabel(shiftMonth(month, 1)) + ' →';
-
-        var sel = $('monthJump');
-        sel.textContent = '';
-        var base = ymOf(new Date());
-        for (var i = -JUMP_BACK; i <= JUMP_AHEAD; i++) {
-          var ym = shiftMonth(base, i);
-          var opt = document.createElement('option');
-          opt.value = ym;
-          opt.textContent = jumpLabel(ym);
-          sel.appendChild(opt);
-        }
-        // 範囲外の月を直接開いた場合も選択肢に出す
-        if (!Array.prototype.some.call(sel.options, function (o) { return o.value === month; })) {
-          var extra = document.createElement('option');
-          extra.value = month;
-          extra.textContent = jumpLabel(month);
-          sel.insertBefore(extra, sel.firstChild);
-        }
-        sel.value = month;
       }
 
       // ===== 集計表 =====
@@ -1387,23 +1308,9 @@
         }
       }
 
-      // ===== メモ =====
-      function renderMemo() {
-        var hasMemo = !!data.memo;
-        $('memoTitle').textContent = eventLabel(month) + ' のメモ';
-        $('memoView').textContent = data.memo || '';
-        $('memoView').hidden = !hasMemo;
-        $('memoEditor').hidden = true;
-        $('memoActions').hidden = false;
-        $('editMemo').textContent = hasMemo ? 'メモを編集' : 'メモを書く';
-      }
-
       // ===== イベントハンドラ =====
       $('prevMonth').addEventListener('click', function () { goto(shiftMonth(month, -1)); });
       $('nextMonth').addEventListener('click', function () { goto(shiftMonth(month, 1)); });
-      $('thisMonth').addEventListener('click', function () { goto(ymOf(new Date())); });
-      $('monthJump').addEventListener('change', function () { goto(this.value); });
-      $('reload').addEventListener('click', function () { load(month); });
 
       $('ansName').addEventListener('change', onNameChanged);
       $('ansCustomName').addEventListener('blur', onNameChanged);
@@ -1485,47 +1392,11 @@
         });
       });
 
-      $('editMemo').addEventListener('click', function () {
-        $('memoInput').value = data.memo || '';
-        $('memoEditor').hidden = false;
-        $('memoActions').hidden = true;
-        $('memoInput').focus();
-      });
-
-      $('cancelMemo').addEventListener('click', renderMemo);
-
-      $('saveMemo').addEventListener('click', function () {
-        var btn = this;
-        btn.disabled = true;
-        api('/months/' + month + '/memo', { method: 'PUT', body: { memo: $('memoInput').value } })
-          .then(function (payload) {
-            btn.disabled = false;
-            data = payload;
-            renderMemo();
-            notice('メモを保存しました', false);
-          }).catch(function (err) {
-            btn.disabled = false;
-            notice(err.message);
-          });
-      });
-
-      $('copyUrl').addEventListener('click', function () {
-        var text = location.origin + location.pathname + '?m=' + month;
-        var btn = this;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () {
-            btn.textContent = 'コピーしました';
-            setTimeout(function () { btn.textContent = 'URLをコピー'; }, 1600);
-          }).catch(function () { notice('コピーできませんでした'); });
-        } else {
-          notice('このブラウザでは自動コピーができません');
-        }
-      });
-
       window.addEventListener('popstate', function () { load(monthFromUrl()); });
 
       // ===== 起動 =====
-      goto(monthFromUrl(), true);
+      // 常に当月を開く（URL の m パラメータは月移動時の履歴用としてのみ使う）
+      goto(ymOf(new Date()), true);
     })();
   </script>
 </body>
