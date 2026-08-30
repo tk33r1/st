@@ -378,6 +378,7 @@
     .done .what { font-size: 14px; color: var(--muted); }
     .done .what b { color: var(--text); font-weight: 600; }
     .note { font-size: 12.5px; color: var(--faint); line-height: 1.7; border-top: 1px solid var(--line); padding-top: 14px; width: 100%; margin: 0; }
+    #pane-board .note { border-top: none; padding-top: 4px; }
     .queuepos { font-family: var(--mono); font-size: 12.5px; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 2px; padding: 5px 14px; }
 
     .shutbox { text-align: center; color: var(--faint); padding: 40px 10px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
@@ -1074,6 +1075,16 @@
       color: var(--heart-secondary);
     }
 
+    .boardhead h3 {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 0.9375rem;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin: 0;
+      flex: 1;
+    }
+
     .fresh {
       font-size: 0.625rem;
       letter-spacing: 0.1em;
@@ -1430,7 +1441,7 @@
         <div class="rows" id="playedRows"></div>
         <div class="boardhead"><h2>まだかかっていない曲</h2></div>
         <div class="rows" id="waitingRows"></div>
-        <div class="boardhead"><h2>ごあんない</h2></div>
+        <div class="boardhead"><h3>ごあんない</h3></div>
         <p class="note">受付した曲は、流れの都合でかけられないこともあります。<br>
           自分のリクエストかつ、確認前の曲に限り、内容の変更が可能です。<br>
           ♥ は1曲につき1回まで押せ、数が多いものが優先的にかけられます。</p>
