@@ -208,16 +208,29 @@
     .msg .who { color: var(--faint); font-size: 12px; margin-left: 8px; }
 
     /* 繋ぐ位置を探すのに一番使うので、鳴らしていなくても最初から出しておく。
-       見た目は 3px の細線のまま。負のマージンで、当たり判定だけ上下の隙間へはみ出す */
+       再生ボタン・バー・残り時間を1行に並べ、伸び縮みするのはバーだけ */
+    .player { display: flex; align-items: center; gap: 12px; }
+    .pbtn {
+      width: 38px; height: 38px; flex: none; border-radius: var(--r);
+      border: 1px solid var(--accent-dim); color: var(--accent);
+      display: grid; place-items: center; font-size: 13px; line-height: 1;
+    }
+    .pbtn:hover { background: var(--accent); color: var(--ink); }
+    /* 見た目は 3px の細線のまま。padding で当たり判定だけ上下へ広げる */
     .prev {
-      height: 3px; box-sizing: content-box; padding: 8px 0; margin: -8px 0; cursor: pointer;
+      flex: 1; min-width: 0;
+      height: 3px; box-sizing: content-box; padding: 10px 0; cursor: pointer;
       background-color: var(--line); background-clip: content-box; border-radius: 2px;
       overflow: hidden; display: block;
     }
     /* 鳴っていないバーは沈めておく。いまどのカードを試聴中かは一目で分かるように */
     .prev:not(.on) { opacity: .5; }
-    .prev:hover { opacity: 1; }
+    .player:hover .prev { opacity: 1; }
     .prev b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width .2s linear; }
+    .ptime {
+      flex: none; font-family: var(--mono); font-size: 11px; color: var(--faint);
+      white-space: nowrap; font-variant-numeric: tabular-nums;
+    }
 
     .acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .act {
@@ -710,6 +723,16 @@
       color: var(--fg-dim);
     }
 
+    .pbtn {
+      border-color: var(--heart-secondary);
+      color: var(--heart-secondary);
+    }
+
+    .pbtn:hover {
+      background: var(--heart-secondary);
+      color: var(--bg);
+    }
+
     /* background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
     .prev {
       background-color: var(--border);
@@ -717,6 +740,13 @@
 
     .prev b {
       background: var(--heart-secondary);
+    }
+
+    .ptime {
+      font-family: var(--f-display);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      color: var(--fg-dim);
     }
 
     /* ===== ACTIONS ===== */
@@ -1113,6 +1143,22 @@
       });
     }
 
+    /* 再生ボタン・バー・残り時間の1行。状態はボタンの記号が出すので、
+       暗所で読ませる文字は増やさない（読み上げには aria-label で渡す） */
+    function playerHTML(s) {
+      const live = playingId === s.id && !!audio;
+      const label = live
+        ? (audio.paused ? 'プレビューを再開' : 'プレビューを一時停止')
+        : '30秒プレビューを再生';
+      return '<div class="player">' +
+        '<button class="pbtn" data-do="prev" aria-label="' + label + '">' +
+        (live && !audio.paused ? '❚❚' : '▶') + '</button>' +
+        '<div class="prev' + (playingId === s.id ? ' on' : '') +
+        '" title="押した位置から試聴"><b id="prevbar-' + s.id + '"></b></div>' +
+        '<span class="ptime" id="ptime-' + s.id + '">0:30</span>' +
+        '</div>';
+    }
+
     function cardHTML(s) {
       const art = s.artwork
         ? '<div class="art"><img src="' + esc(s.artwork) + '" alt="" loading="lazy"></div>'
@@ -1150,12 +1196,8 @@
       const primary = s.status === 'pending'
         ? '<button class="act primary" data-do="copy">⧉ コピーして採用 <span class="kbd">C</span></button>'
         : '<button class="act" data-do="copy">⧉ もう一度コピー</button>';
-      const links = s.isFree
-        ? '<button class="act" data-do="apple">Music.app で検索</button>'
-        : (s.previewUrl ? '<button class="act" data-do="prev">' +
-          (playingId === s.id ? (audio && !audio.paused ? '❚❚ 一時停止' : '▶ 再開') : '▶ プレビュー') +
-          '</button>' : '') +
-        '<button class="act" data-do="apple">Music.app で開く</button>';
+      const links = '<button class="act" data-do="apple">' +
+        (s.isFree ? 'Music.app で検索' : 'Music.app で開く') + '</button>';
 
       return '<article class="card' + (sel === s.id ? ' sel' : '') + (s.isNew ? ' fresh' : '') +
         '" data-id="' + s.id + '" data-status="' + s.status + '">' + art +
@@ -1167,10 +1209,7 @@
         '<div class="votes likes' + (s.likes >= 3 ? ' hot' : '') + '"><b>' + (s.likes || 0) + '</b><span>LIKE</span></div>' +
         '</div></div>' +
         voices +
-        (s.previewUrl
-          ? '<div class="prev' + (playingId === s.id ? ' on' : '') +
-            '" title="押した位置から試聴"><b id="prevbar-' + s.id + '"></b></div>'
-          : '') +
+        (s.previewUrl ? playerHTML(s) : '') +
         '<div class="acts">' + primary + links +
         '<span class="spacer"></span>' +
         '<button class="act done" data-do="played">再生済</button>' +
@@ -1323,11 +1362,19 @@
       render();
     }
 
-    // render() で作り直された直後のバーに、鳴っている位置を戻す
+    const left = (sec) => {
+      const s = Math.max(0, Math.round(sec));
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    };
+
+    // render() で作り直された直後のバーと残り時間に、鳴っている位置を戻す
     function paintPrevBar() {
       if (!audio || playingId == null) return;
+      const dur = audio.duration || 30;
       const bar = document.getElementById('prevbar-' + playingId);
-      if (bar) bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
+      if (bar) bar.style.width = (audio.currentTime / dur * 100) + '%';
+      const t = document.getElementById('ptime-' + playingId);
+      if (t) t.textContent = left(dur - audio.currentTime);
     }
 
     // 読み込む前は duration が出ていないので、メタデータが来てから飛ばす
@@ -1349,7 +1396,7 @@
       audio.addEventListener('ended', stopAudio);
       if (ratio) seekAudio(ratio);
       // play() を先に。paused が倒れてからでないとボタンが「再開」に見える
-      audio.play().then(() => trackAudio(s.id)).catch(() => stopAudio());
+      audio.play().then(trackAudio).catch(() => stopAudio());
       render();
     }
 
@@ -1363,12 +1410,9 @@
       else startPreview(s, ratio);
     }
 
-    function trackAudio(id) {
+    function trackAudio() {
       clearInterval(audioTimer);
-      audioTimer = setInterval(() => {
-        const bar = document.getElementById('prevbar-' + id);
-        if (bar && audio) bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
-      }, 200);
+      audioTimer = setInterval(paintPrevBar, 200);
     }
 
     function act(s, what) {
@@ -1390,7 +1434,7 @@
         // 鳴らしている最中の同じ曲なら、頭に戻さず一時停止と再開を往復する
         if (playingId === s.id && audio) {
           if (audio.paused) {
-            audio.play().then(() => { trackAudio(s.id); render(); }).catch(() => stopAudio());
+            audio.play().then(() => { trackAudio(); render(); }).catch(() => stopAudio());
           } else {
             audio.pause();
             clearInterval(audioTimer); audioTimer = null;
