@@ -86,7 +86,9 @@
     }
     .gauge.off .dot { background: var(--stop); box-shadow: 0 0 8px var(--stop); animation: none; }
 
-    /* 受付・通知はトグルスイッチ。今どちらに倒れているかを形で見せる */
+    .switches { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+    /* 受付・通知はトグルスイッチ。状態はノブの位置と色が出すので、ラベルは名前で固定 */
     .accept {
       display: inline-flex; align-items: center; gap: 9px;
       padding: 5px 2px; font-size: 13.5px; font-weight: 600; color: var(--faint);
@@ -930,9 +932,12 @@
         <span class="code" id="evCode"></span>
       </div>
       <div class="gauge" id="conn"><span class="dot"></span><span id="connTxt">接続中</span></div>
-      <button class="accept" id="accept" role="switch" aria-checked="true" data-on="true"><span class="track"><span class="knob"></span></span><span id="acceptTxt">受付中</span></button>
-      <button class="accept" id="notify" role="switch" aria-checked="false" data-on="false" hidden><span class="track"><span class="knob"></span></span><span id="notifyTxt">通知オフ</span></button>
-      <button class="ghostbtn" id="newEvent">新しいイベントを開始</button>
+      <!-- スイッチと操作ボタンをひとまとめにして、折り返しても同じ行に残す -->
+      <div class="switches">
+        <button class="accept" id="accept" role="switch" aria-checked="true" data-on="true"><span class="track"><span class="knob"></span></span><span>受付</span></button>
+        <button class="accept" id="notify" role="switch" aria-checked="false" data-on="false" hidden><span class="track"><span class="knob"></span></span><span>通知</span></button>
+        <button class="ghostbtn" id="newEvent">新しいイベントを開始</button>
+      </div>
     </header>
 
     <div class="offline" id="offline">
@@ -1195,7 +1200,6 @@
     function paintAccept(on) {
       $('#accept').dataset.on = String(on);
       $('#accept').setAttribute('aria-checked', String(on));
-      $('#acceptTxt').textContent = on ? '受付中' : '停止中';
     }
 
     async function load(first) {
@@ -1440,7 +1444,6 @@
       const b = $('#notify');
       b.dataset.on = String(notifyOn);
       b.setAttribute('aria-checked', String(notifyOn));
-      $('#notifyTxt').textContent = notifyOn ? '通知オン' : '通知オフ';
     }
 
     /* tag を固定して差し替えにする。1曲ごとに積み上げると、

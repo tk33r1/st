@@ -392,6 +392,8 @@ async function getSong(id, request, env, cors) {
       explicitness: s.explicitness,
       votes: s.votes,
       playedAt: s.played_at,
+      // /board と同じ。DJ が触ったかどうかだけで、採用か見送りかは出さない。
+      seen: s.status !== 'pending',
       by: names ? names.from_name : '',
     },
     // queued か skipped かは外に出さない。畳んだ理由だけ closed / moved で伝える。
@@ -465,8 +467,10 @@ async function deleteMine(id, request, env, cors) {
 }
 
 /* ── 公開: みんなのリクエスト ───────────────
-   DJ の判断（queued / skipped）は外に出さない。played か否かだけ。
-   ひとことも返さない。UI で隠すのではなく、ここで返さないのが要点。 */
+   DJ の判断（queued / skipped）は外に出さない。played か否かと、
+   DJ がもう触ったか（seen）だけ。seen は「まだ直せるか」を示すためのもので、
+   採用か見送りかは区別できない。ひとことも返さない。UI で隠すのではなく、
+   ここで返さないのが要点。 */
 async function getBoard(env, cors) {
   const ev = await openEvent(env);
   const latest = ev || await env.DB.prepare(
@@ -474,7 +478,7 @@ async function getBoard(env, cors) {
   ).first();
   if (!latest) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
 
-  const cols = `id, title, artist, variant, artwork, is_free, votes, played_at`;
+  const cols = `id, title, artist, variant, artwork, is_free, votes, played_at, status`;
 
   const played = await env.DB.prepare(
     `SELECT ${cols} FROM songs
@@ -506,6 +510,8 @@ async function getBoard(env, cors) {
     isFree: !!s.is_free,
     votes: s.votes,
     playedAt: s.played_at,
+    // 採用も見送りも同じ true。リクエストした側には「もう直せない」だけが伝わる。
+    seen: s.status !== 'pending',
     by: firstName.get(s.id) || '',
   });
 

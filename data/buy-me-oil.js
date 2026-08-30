@@ -119,10 +119,40 @@ class DonationWidget {
             valueEl.textContent = `${grade}ガソリン ¥${Math.round(price)}/L`;
 
             if (note) {
+                const noteId = `${this._oilPriceId}-note`;
+
+                // 価格の右横の i マーク。押すと下に根拠が展開される（既定は閉じる）
+                const infoBtn = document.createElement('button');
+                infoBtn.type = 'button';
+                infoBtn.className = 'donation-oil-price-info';
+                infoBtn.setAttribute('aria-expanded', 'false');
+                infoBtn.setAttribute('aria-controls', noteId);
+                infoBtn.setAttribute('aria-label', '価格の根拠を表示');
+                infoBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="12" cy="7.75" r="1.15" fill="currentColor"/>
+                    </svg>`;
+
                 const noteEl = document.createElement('span');
                 noteEl.className = 'donation-oil-price-note';
+                noteEl.id = noteId;
                 noteEl.textContent = note;
-                el.replaceChildren(valueEl, noteEl);
+                noteEl.hidden = true;
+
+                infoBtn.addEventListener('click', () => {
+                    const willOpen = infoBtn.getAttribute('aria-expanded') !== 'true';
+                    infoBtn.setAttribute('aria-expanded', String(willOpen));
+                    infoBtn.setAttribute('aria-label', willOpen ? '価格の根拠を隠す' : '価格の根拠を表示');
+                    noteEl.hidden = !willOpen;
+                }, { signal: this._abortController?.signal });
+
+                const rowEl = document.createElement('span');
+                rowEl.className = 'donation-oil-price-row';
+                rowEl.append(valueEl, infoBtn);
+
+                el.replaceChildren(rowEl, noteEl);
             } else {
                 el.replaceChildren(valueEl);
             }
@@ -415,7 +445,7 @@ class DonationWidget {
                 background: #fff;
                 border: 1px solid #e5e7eb;
                 border-radius: 9999px;
-                padding: 0.4rem;
+                padding: 0.3rem;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
@@ -429,7 +459,8 @@ class DonationWidget {
                 outline: 2px solid #2563eb;
                 outline-offset: 2px;
             }
-            .donation-close-icon { width: 1.5rem; height: 1.5rem; }
+            /* 本文（特に強調句）が1行目でボタンに食い込まない程度まで小さくする */
+            .donation-close-icon { width: 1.125rem; height: 1.125rem; }
 
             .donation-scroll-container {
                 overflow-y: auto;
@@ -484,6 +515,8 @@ class DonationWidget {
                 /* 長い段落は均等割りして、1行目が閉じるボタンに届く前に折り返させる */
                 text-wrap: balance;
             }
+            /* 強調句は途中で改行させない（「誰でも無料で楽 / しめること」を防ぐ） */
+            .donation-modal-intro p strong { white-space: nowrap; }
             /* 本文の下に添えるハイオク価格の但し書き。取得できるまでは hidden で何も占有しない */
             .donation-modal-intro .donation-oil-price {
                 margin: 0;
@@ -491,9 +524,45 @@ class DonationWidget {
                 font-size: 0.7rem;
                 line-height: 1.45;
             }
+            /* 価格と i マークを同じ行に並べる */
+            .donation-oil-price-row {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+            }
             .donation-oil-price-value { font-weight: 700; }
-            /* 「いつ・どこの」は価格の下の行へ落とす */
-            .donation-oil-price-note { display: block; }
+            /* 価格の根拠を開閉する i ボタン。既定は閉じている */
+            .donation-oil-price-info {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                border: none;
+                background: none;
+                color: #9ca3af;
+                cursor: pointer;
+                line-height: 0;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .donation-oil-price-info svg {
+                width: 0.9rem;
+                height: 0.9rem;
+                display: block;
+            }
+            .donation-oil-price-info:hover,
+            .donation-oil-price-info[aria-expanded="true"] { color: #6b7280; }
+            .donation-oil-price-info:focus-visible {
+                outline: 2px solid #2563eb;
+                outline-offset: 2px;
+                border-radius: 9999px;
+            }
+            /* 「いつ・どこの」は価格の下の行へ落とす。開くまでは hidden */
+            .donation-oil-price-note {
+                display: block;
+                margin-top: 0.2rem;
+            }
+            /* display 指定があると hidden 属性が効かなくなるので明示的に打ち消す */
+            .donation-oil-price-note[hidden] { display: none; }
 
             /* Ko-fi 埋め込みウィジェットの余白を切り詰めるためのスケール調整 */
             .donation-kofi-wrap { overflow: hidden; }

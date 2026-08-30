@@ -417,6 +417,8 @@
     .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .state { font-size: 11px; font-weight: 600; border-radius: 2px; padding: 2px 9px; white-space: nowrap; color: var(--faint); border: 1px solid var(--line); }
     .state.done { color: var(--go); border-color: color-mix(in srgb, var(--go) 45%, var(--line)); }
+    /* 受付＝まだ直せる／確認済＝DJ が目を通したあと。文字だけでなく色でも分ける */
+    .state.seen { color: var(--text); border-color: var(--faint); background: color-mix(in srgb, var(--faint) 14%, transparent); }
     .at { font-family: var(--mono); font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
     .mytag { font-size: 10px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 2px; padding: 0 5px; }
     .heart { font-family: var(--mono); font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
@@ -1355,9 +1357,10 @@
           <h2>再生済</h2><span class="fresh" id="fresh"></span>
         </div>
         <div class="rows" id="playedRows"></div>
-        <div class="boardhead"><h2>受付済</h2></div>
+        <div class="boardhead"><h2>まだかかっていない曲</h2></div>
         <div class="rows" id="waitingRows"></div>
-        <p class="note">並び順は DJ が実際にかけた順です。受付済の曲は、流れの都合でかけられないこともあります。<br>
+        <p class="note">並び順は DJ が実際にかけた順です。受付した曲は、流れの都合でかけられないこともあります。<br>
+          「受付」はまだ内容を直せます。「確認済」は DJ が目を通したあとなので、変更・取り下げはできません。<br>
           曲をタップすると、試聴や自分の投稿の手直しができます。</p>
       </section>
 
@@ -1381,7 +1384,7 @@
             <input class="txt" id="mineName" maxlength="20">
           </label>
           <div class="err" id="mineErr" hidden></div>
-          <button class="send" id="mineSave">この内容に変更する</button>
+          <button class="send" id="mineSave" disabled>この内容に変更する</button>
           <button class="linkbtn drop" id="mineDrop">リクエストを取り下げる</button>
         </div>
 
@@ -1798,6 +1801,9 @@
         : '<span class="ph">♪</span>';
       const played = !!s.playedAt;
       const at = played && s.playedAt ? String(s.playedAt).slice(11, 16) : '';
+      // 「受付」はまだ直せる、「確認済」は DJ が目を通したあとで直せない。
+      // 採用か見送りかはサーバも返さないので、ここでは区別しない。
+      const seen = played || !!s.seen;
       return '<button type="button" class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') +
         '" data-song="' + s.id + '">' + art +
         '<span><span class="t trunc">' + esc(s.title) + '</span>' +
@@ -1805,7 +1811,8 @@
         (s.by ? '<span class="by trunc">— ' + esc(s.by) + '</span>' : '') + '</span>' +
         '<span class="right">' +
         (isMine ? '<span class="mytag">あなた</span>' : '') +
-        '<span class="state' + (played ? ' done' : '') + '">' + (played ? '✓ 再生済' : '受付済') + '</span>' +
+        '<span class="state' + (played ? ' done' : (seen ? ' seen' : '')) + '">' +
+        (played ? '✓ 再生済' : seen ? '確認済' : '受付') + '</span>' +
         (played ? '<span class="at">' + esc(at) + '</span>'
           : (s.votes > 1 ? '<span class="heart">♥ ' + s.votes + '</span>' : '')) +
         '</span></button>';
@@ -1869,10 +1876,24 @@
 
     bindPlayer('#songPlay', '#songBar', '#songTime', () => detail && detail.song.previewUrl);
 
+    /* 中身が元のままなら「この内容に変更する」は押させない。
+       サーバは前後の空白を落として保存するので、比べるときも trim をそろえる。 */
+    function mineDirty() {
+      if (!detail || !detail.mine) return false;
+      const same = (a, b) => String(a || '').trim() === String(b || '').trim();
+      return !same($('#mineMsg').value, detail.mine.message)
+        || !same($('#mineName').value, detail.mine.name);
+    }
+
+    function syncMineSave() {
+      $('#mineSave').disabled = !mineDirty();
+    }
+
     function renderSong() {
       const s = detail.song;
       const played = !!s.playedAt;
       const at = played ? String(s.playedAt).slice(11, 16) : '';
+      const seen = played || !!s.seen;
       const v = s.variant ? '<span class="vtag">' + esc(s.variant) + '</span>' : '';
 
       $('#songHero').innerHTML =
@@ -1881,8 +1902,8 @@
         '<div class="a">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</div>' +
         (s.isFree ? '' : '<div class="d">' + esc(s.album) + ' · ' + mmss(Math.round(s.durationMs / 1000)) + '</div>') +
         '<div class="songstate">' +
-        '<span class="state' + (played ? ' done' : '') + '">' +
-        (played ? '✓ 再生済 ' + esc(at) : '受付済') + '</span>' +
+        '<span class="state' + (played ? ' done' : (seen ? ' seen' : '')) + '">' +
+        (played ? '✓ 再生済 ' + esc(at) : seen ? '確認済' : '受付') + '</span>' +
         (s.votes > 1 ? '<span class="heart">♥ ' + s.votes + '</span>' : '') +
         '</div>';
 
@@ -1895,6 +1916,7 @@
         $('#mineMsg').value = detail.mine.message || '';
         $('#mineName').value = detail.mine.name || '';
         $('#mineMsgCount').textContent = $('#mineMsg').value.length + ' / 140';
+        syncMineSave();
       }
 
       const note = !detail.mine
@@ -1936,6 +1958,8 @@
     $('#songBack').addEventListener('click', openBoard);
 
     bindCount($('#mineMsg'), $('#mineMsgCount'), 140);
+    $('#mineMsg').addEventListener('input', syncMineSave);
+    $('#mineName').addEventListener('input', syncMineSave);
 
     /* ラベルは最初の文言を覚えておく。「送信中…」に差し替えるので、
        btn.textContent から取ると押すたびにラベルが上書きされてしまう。 */
@@ -1988,8 +2012,8 @@
         err.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
         err.hidden = false;
       } finally {
-        btn.disabled = false;
         btn.textContent = SAVE_LABEL;
+        syncMineSave();   // 保存できたなら中身は元に戻ったので、また非活性になる
       }
     });
 
