@@ -332,8 +332,12 @@
       border: 1px solid var(--accent-dim); color: var(--accent); font-size: 15px;
       display: grid; place-items: center;
     }
-    .player .bar { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
-    .player .bar b { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
+    /* 見た目は 4px の細線のまま。指で押せるよう、上下に当たり判定だけ足す */
+    .player .bar {
+      flex: 1; height: 4px; box-sizing: content-box; padding: 11px 0; cursor: pointer;
+      background-color: var(--line); background-clip: content-box; border-radius: 2px; overflow: hidden;
+    }
+    .player .bar b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width .2s linear; }
     .player .lab { font-family: var(--mono); font-size: 11px; color: var(--faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
     .f { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--muted); }
@@ -795,6 +799,14 @@
       color: var(--heart-secondary);
     }
 
+    a.linkbtn {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+    }
+
+    a.linkbtn[hidden] { display: none; }
+
     /* 取り下げ。押し間違えたときの被害が大きいので、白昼夢のピンクで警告色にする */
     .linkbtn.drop {
       color: var(--heart-primary);
@@ -998,8 +1010,9 @@
       color: var(--bg);
     }
 
+    /* background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
     .player .bar {
-      background: var(--border);
+      background-color: var(--border);
     }
 
     .player .bar b {
@@ -1453,6 +1466,9 @@
           </div>
         </div>
 
+        <!-- 曲そのものへは、受付・確認済・再生済のどの状態からでも飛べる -->
+        <a class="linkbtn apple" id="songApple" target="_blank" rel="noopener noreferrer" hidden>Apple Music で聴く</a>
+
         <p class="note" id="songNote" hidden></p>
       </section>
 
@@ -1647,40 +1663,95 @@
 
     /* ── 確認画面 ─────────────────────────── */
     let picked = null;
-    let audio = null, audioTimer = null;
+    let audio = null, audioTimer = null, audioUi = null, audioUrl = '';
 
     // 確認画面と曲の詳細で1つずつ。鳴らせるのは常にどちらか片方だけ
     const players = [];
 
+    // 頭出しまで戻す停止。画面を離れるときはこちら
     function stopAudio() {
       if (audio) { audio.pause(); audio = null; }
-      clearInterval(audioTimer);
+      clearInterval(audioTimer); audioTimer = null;
+      audioUi = null; audioUrl = '';
       for (const ui of players) {
         ui.bar.style.width = '0';
         ui.play.textContent = '▶';
+        ui.play.setAttribute('aria-label', '30秒プレビューを再生');
         ui.time.textContent = '0:30';
       }
     }
 
+    function tickAudio(ui) {
+      if (!audio) return;
+      const left = Math.max(0, Math.round((audio.duration || 30) - audio.currentTime));
+      ui.bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
+      ui.time.textContent = '0:' + String(left).padStart(2, '0');
+    }
+
+    function runAudio(ui) {
+      return audio.play().then(() => {
+        ui.play.textContent = '❚❚';
+        ui.play.setAttribute('aria-label', 'プレビューを一時停止');
+        clearInterval(audioTimer);
+        audioTimer = setInterval(() => tickAudio(ui), 200);
+      });
+    }
+
+    // 読み込む前は duration が出ていないので、メタデータが来てから飛ばす
+    function seekAudio(ui, ratio) {
+      const apply = () => {
+        const dur = audio.duration || 30;
+        audio.currentTime = Math.max(0, Math.min(dur - 0.05, dur * ratio));
+        tickAudio(ui);
+      };
+      if (audio.readyState > 0) apply();
+      else audio.addEventListener('loadedmetadata', apply, { once: true });
+    }
+
+    function startAudio(ui, url, ratio) {
+      stopAudio();
+      audio = new Audio(url); audioUi = ui; audioUrl = url;
+      audio.addEventListener('ended', stopAudio);
+      if (ratio) seekAudio(ui, ratio);
+      return runAudio(ui).catch(() => { stopAudio(); });
+    }
+
+    // いま鳴らしている（あるいは一時停止している）のがこのプレイヤーのこの曲か
+    const holding = (ui, url) => !!audio && audioUi === ui && audioUrl === url;
+
     // プレビューは必ずタップ起点で鳴らす（iOS は自動再生を許さない）
     function bindPlayer(playSel, barSel, timeSel, urlOf) {
       const ui = { play: $(playSel), bar: $(barSel), time: $(timeSel) };
+      ui.track = ui.bar.parentElement;
       players.push(ui);
+
       ui.play.addEventListener('click', () => {
-        if (audio) { stopAudio(); return; }
         const url = urlOf();
         if (!url) return;
-        audio = new Audio(url);
-        audio.play().then(() => {
-          ui.play.textContent = '❚❚';
-          audioTimer = setInterval(() => {
-            if (!audio) return;
-            const left = Math.max(0, Math.round((audio.duration || 30) - audio.currentTime));
-            ui.bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
-            ui.time.textContent = '0:' + String(left).padStart(2, '0');
-          }, 200);
-          audio.addEventListener('ended', stopAudio);
-        }).catch(() => { stopAudio(); });
+        // 鳴らしている最中の同じ曲なら、頭に戻さず一時停止と再開を往復する
+        if (holding(ui, url)) {
+          if (audio.paused) runAudio(ui).catch(() => stopAudio());
+          else {
+            audio.pause();
+            clearInterval(audioTimer); audioTimer = null;
+            ui.play.textContent = '▶';
+            ui.play.setAttribute('aria-label', 'プレビューを再開');
+          }
+          return;
+        }
+        startAudio(ui, url, 0);
+      });
+
+      /* バーを押したら、その位置へ。まだ鳴らしていなければそこから鳴らしはじめ、
+         自分で止めている最中なら位置だけ動かして止めたままにしておく。 */
+      ui.track.addEventListener('click', (e) => {
+        const url = urlOf();
+        if (!url) return;
+        const r = ui.track.getBoundingClientRect();
+        if (!r.width) return;
+        const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+        if (holding(ui, url)) seekAudio(ui, ratio);
+        else startAudio(ui, url, ratio);
       });
     }
 
@@ -2047,6 +2118,17 @@
       $('#mineSave').disabled = mineSaving || !dirty;
     }
 
+    /* appleUrl は投稿時にブラウザから届く値で、サーバは長さと制御文字しか見ていない。
+       href に入れる前に、Apple Music の https URL であることをこちら側で確かめる。 */
+    function appleHref(url) {
+      try {
+        const u = new URL(String(url || ''));
+        if (u.protocol !== 'https:') return '';
+        const h = u.hostname.toLowerCase();
+        return (h === 'music.apple.com' || h === 'itunes.apple.com') ? u.href : '';
+      } catch { return ''; }
+    }
+
     /* 空欄のときは灰色の言い換えを置く。空の枠だけが並ぶと消えたように見える */
     function fillRO(el, value, empty) {
       const v = String(value || '').trim();
@@ -2097,6 +2179,11 @@
           : 'DJ がすでに確認しているため、変更・取り下げはできません。';
       $('#songNote').textContent = note;
       $('#songNote').hidden = !note;
+
+      // 曲名だけの依頼は Apple Music の URL を持たないので、そのときだけ引っ込める
+      const apple = $('#songApple'), href = appleHref(s.appleUrl);
+      if (href) apple.href = href; else apple.removeAttribute('href');
+      apple.hidden = !href;
     }
 
     async function openSong(id) {
@@ -2107,6 +2194,7 @@
       $('#songPlayer').style.display = 'none';
       $('#songEdit').hidden = true;
       $('#mineView').hidden = true;
+      $('#songApple').hidden = true;
       $('#songNote').hidden = true;
       show('song');
       try {

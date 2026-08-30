@@ -207,9 +207,14 @@
     .msg + .msg { margin-top: 6px; }
     .msg .who { color: var(--faint); font-size: 12px; margin-left: 8px; }
 
-    .prev { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; display: none; }
-    .prev.on { display: block; }
-    .prev b { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
+    /* 見た目は 3px の細線のまま。負のマージンで、当たり判定だけ上下の隙間へはみ出す */
+    .prev {
+      height: 3px; box-sizing: content-box; padding: 8px 0; margin: -8px 0;
+      background-color: var(--line); background-clip: content-box; border-radius: 2px;
+      overflow: hidden; display: none;
+    }
+    .prev.on { display: block; cursor: pointer; }
+    .prev b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width .2s linear; }
 
     .acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .act {
@@ -702,8 +707,9 @@
       color: var(--fg-dim);
     }
 
+    /* background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
     .prev {
-      background: var(--border);
+      background-color: var(--border);
     }
 
     .prev b {
@@ -1143,7 +1149,9 @@
         : '<button class="act" data-do="copy">⧉ もう一度コピー</button>';
       const links = s.isFree
         ? '<button class="act" data-do="apple">Music.app で検索</button>'
-        : (s.previewUrl ? '<button class="act" data-do="prev">▶ プレビュー</button>' : '') +
+        : (s.previewUrl ? '<button class="act" data-do="prev">' +
+          (playingId === s.id ? (audio && !audio.paused ? '❚❚ 一時停止' : '▶ 再開') : '▶ プレビュー') +
+          '</button>' : '') +
         '<button class="act" data-do="apple">Music.app で開く</button>';
 
       return '<article class="card' + (sel === s.id ? ' sel' : '') + (s.isNew ? ' fresh' : '') +
@@ -1209,6 +1217,7 @@
 
       counts();
       songs.forEach((s) => { delete s.isNew; });
+      paintPrevBar();
       paintTap();
     }
 
@@ -1300,11 +1309,44 @@
       }
     }
 
+    // 頭出しまで戻す停止。別の曲に移るときと鳴り終わったときはこちら
     function stopAudio() {
       if (audio) { audio.pause(); audio = null; }
-      clearInterval(audioTimer);
+      clearInterval(audioTimer); audioTimer = null;
       playingId = null;
       render();
+    }
+
+    // render() で作り直された直後のバーに、鳴っている位置を戻す
+    function paintPrevBar() {
+      if (!audio || playingId == null) return;
+      const bar = document.getElementById('prevbar-' + playingId);
+      if (bar) bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
+    }
+
+    /* バーを押したら、その位置へ。バーが出ているのは鳴らしている曲だけなので
+       対象は常にいまのプレビュー。自分で止めている最中は、止めたまま位置だけ動かす。 */
+    function seekPrev(s, bar, e) {
+      if (playingId !== s.id || !audio) return;
+      const r = bar.getBoundingClientRect();
+      if (!r.width) return;
+      const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      // 読み込む前は duration が出ていないので、メタデータが来てから飛ばす
+      const apply = () => {
+        const dur = audio.duration || 30;
+        audio.currentTime = Math.max(0, Math.min(dur - 0.05, dur * ratio));
+        paintPrevBar();
+      };
+      if (audio.readyState > 0) apply();
+      else audio.addEventListener('loadedmetadata', apply, { once: true });
+    }
+
+    function trackAudio(id) {
+      clearInterval(audioTimer);
+      audioTimer = setInterval(() => {
+        const bar = document.getElementById('prevbar-' + id);
+        if (bar && audio) bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
+      }, 200);
     }
 
     function act(s, what) {
@@ -1323,19 +1365,25 @@
         return;
       }
       if (what === 'prev') {
-        if (playingId === s.id) { stopAudio(); return; }
+        // 鳴らしている最中の同じ曲なら、頭に戻さず一時停止と再開を往復する
+        if (playingId === s.id && audio) {
+          if (audio.paused) {
+            audio.play().then(() => { trackAudio(s.id); render(); }).catch(() => stopAudio());
+          } else {
+            audio.pause();
+            clearInterval(audioTimer); audioTimer = null;
+            render();
+          }
+          return;
+        }
         stopAudio();
         if (!s.previewUrl) return;
         audio = new Audio(s.previewUrl);
         playingId = s.id;
+        audio.addEventListener('ended', stopAudio);
+        // play() を先に。paused が倒れてからでないとボタンが「再開」に見える
+        audio.play().then(() => trackAudio(s.id)).catch(() => stopAudio());
         render();
-        audio.play().then(() => {
-          audioTimer = setInterval(() => {
-            const bar = document.getElementById('prevbar-' + s.id);
-            if (bar && audio) bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
-          }, 200);
-          audio.addEventListener('ended', stopAudio);
-        }).catch(() => stopAudio());
         return;
       }
       if (what === 'played') { setStatus(s.id, 'played', '再生済にしました'); return; }
@@ -1346,6 +1394,9 @@
     $('#feed').addEventListener('click', (e) => {
       const card = e.target.closest('.card'); if (!card) return;
       const s = songs.find((x) => x.id === Number(card.dataset.id)); if (!s) return;
+      // render() で作り直す前に、いま画面にあるバーから位置を採る
+      const bar = e.target.closest('.prev');
+      if (bar) { seekPrev(s, bar, e); sel = s.id; render(); return; }
       const btn = e.target.closest('[data-do]');
       sel = s.id;
       if (btn) act(s, btn.dataset.do); else render();
