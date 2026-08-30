@@ -704,25 +704,43 @@
       -webkit-user-select: text !important;
     }
 
+    /* --kick scales every shake, so a graze and a direct hit no longer rattle the
+       screen by the same amount; recoil() sets it per shot. */
     @keyframes rampageShake {
-        10%, 90% { transform: translate(-1px, 0) }
-        20%, 80% { transform: translate(2px, 0) }
-        30%, 50%, 70% { transform: translate(-3px, 1px) }
-        40%, 60% { transform: translate(3px, -1px) }
+        10%, 90% { transform: translate(calc(-1px * var(--kick,1)), 0) }
+        20%, 80% { transform: translate(calc(2px * var(--kick,1)), 0) }
+        30%, 50%, 70% { transform: translate(calc(-3px * var(--kick,1)), calc(1px * var(--kick,1))) }
+        40%, 60% { transform: translate(calc(3px * var(--kick,1)), calc(-1px * var(--kick,1))) }
     }
 
     @keyframes rampageShakeHard {
-        10% { transform: translate(-5px, 2px) rotate(-0.3deg) }
-        30% { transform: translate(6px, -3px) rotate(0.4deg) }
-        50% { transform: translate(-7px, 3px) rotate(-0.4deg) }
-        70% { transform: translate(5px, -2px) rotate(0.3deg) }
-        90% { transform: translate(-3px, 1px) }
+        10% { transform: translate(calc(-5px * var(--kick,1)), calc(2px * var(--kick,1))) rotate(calc(-0.3deg * var(--kick,1))) }
+        30% { transform: translate(calc(6px * var(--kick,1)), calc(-3px * var(--kick,1))) rotate(calc(0.4deg * var(--kick,1))) }
+        50% { transform: translate(calc(-7px * var(--kick,1)), calc(3px * var(--kick,1))) rotate(calc(-0.4deg * var(--kick,1))) }
+        70% { transform: translate(calc(5px * var(--kick,1)), calc(-2px * var(--kick,1))) rotate(calc(0.3deg * var(--kick,1))) }
+        90% { transform: translate(calc(-3px * var(--kick,1)), calc(1px * var(--kick,1))) }
+    }
+
+    /* A grenade hit is a single hard slam that rings down, not a buzz — the amplitude
+       decays across the whole animation so the screen settles instead of stopping dead. */
+    @keyframes rampageShakeBlast {
+        0% { transform: translate(0, 0) }
+        6% { transform: translate(-11px, 6px) rotate(-0.7deg) }
+        14% { transform: translate(12px, -7px) rotate(0.8deg) }
+        24% { transform: translate(-9px, 5px) rotate(-0.5deg) }
+        36% { transform: translate(7px, -4px) rotate(0.4deg) }
+        50% { transform: translate(-5px, 3px) rotate(-0.25deg) }
+        64% { transform: translate(4px, -2px) rotate(0.18deg) }
+        78% { transform: translate(-2px, 1px) }
+        90% { transform: translate(1px, -1px) }
+        100% { transform: translate(0, 0) }
     }
 
     body.rampage-shake { animation: rampageShake 0.16s linear }
     body.rampage-shake-hard { animation: rampageShakeHard 0.26s cubic-bezier(0.36, 0.07, 0.19, 0.97) }
+    body.rampage-shake-blast { animation: rampageShakeBlast 0.62s cubic-bezier(0.2, 0.8, 0.3, 1) }
 
-    #rampage-canvas {
+    #rampage-canvas, #rampage-fx {
       position: fixed;
       inset: 0;
       width: 100%;
@@ -730,6 +748,17 @@
       z-index: 9997;
       pointer-events: none;
     }
+
+    /* moving effects (fire, smoke, embers) sit above the permanent damage */
+    #rampage-fx { z-index: 9998; }
+
+    @keyframes rampageMend {
+        0% { box-shadow: inset 0 0 0 rgba(78, 184, 90, 0) }
+        22% { box-shadow: inset 0 0 60px rgba(78, 184, 90, 0.38) }
+        100% { box-shadow: inset 0 0 0 rgba(78, 184, 90, 0) }
+    }
+
+    .rampage-mended { animation: rampageMend 0.9s ease-out }
 
     .rampage-stripped {
       border: none !important;
@@ -3281,12 +3310,17 @@
     const RAMPAGE_WEAPONS = [
       { key: 'mg', label: '⇶ MACHINE GUN', label_ja: '⇶ マシンガン' },
       { key: 'sg', label: '✸ SHOTGUN', label_ja: '✸ ショットガン' },
-      { key: 'sniper', label: '✛ SNIPER RIFLE', label_ja: '✛ スナイパーライフル' },
       { key: 'grenade', label: '✦ GRENADE LAUNCHER', label_ja: '✦ グレネードランチャー' },
       { key: 'flame', label: '♨ FLAMETHROWER', label_ja: '♨ 火炎放射器' },
-      { key: 'coin', label: '◉ COIN', label_ja: '◉ コイン' }
+      { key: 'hammer', label: '⚒ HAMMER', label_ja: '⚒ ハンマー' },
+      { key: 'coin', label: '◉ COIN', label_ja: '◉ コイン' },
+      { key: 'shock', label: '⊚ SHOCK CANNON', label_ja: '⊚ ショックカノン' },
+      { key: 'repair', label: '✚ NANO REPAIR', label_ja: '✚ ナノリペア' }
     ];
     let rampageWeaponKey = null; // currently-armed weapon while rampage is active
+    // When the shock cannon's reserve finishes filling. Module-scope because the Arsenal
+    // view renders the countdown, and it outlives any single charge.
+    let shockReadyAt = 0;
     let errorCount = 0, warnCount = 0;
     let sudoContext = null, akutagawaSudoValid = false;
     let unreadHistoryCount = 0;
@@ -4339,10 +4373,12 @@
         const ALIAS = {
           mg: 0, machinegun: 0, 'machine-gun': 0, '1': 0,
           sg: 1, shotgun: 1, '2': 1,
-          sniper: 2, rifle: 2, '3': 2,
-          grenade: 3, launcher: 3, nade: 3, '4': 3,
-          flame: 4, flamethrower: 4, fire: 4, '5': 4,
-          coin: 5, key: 5, scratch: 5, '6': 5
+          grenade: 2, launcher: 2, nade: 2, '3': 2,
+          flame: 3, flamethrower: 3, fire: 3, '4': 3,
+          hammer: 4, sledge: 4, melee: 4, '5': 4,
+          coin: 5, key: 5, scratch: 5, '6': 5,
+          shock: 6, cannon: 6, wave: 6, '7': 6,
+          repair: 7, heal: 7, fix: 7, nano: 7, '8': 7
         };
         const argKey = args && args[0] ? String(args[0]).toLowerCase() : null;
         const initialWeapon = (argKey && ALIAS[argKey] != null) ? ALIAS[argKey] : null;
@@ -4352,7 +4388,7 @@
         // other commands can still be typed while the screen is being shattered.
         if (isRampageActive) {
           if (initialWeapon != null) { // `rampage <weapon>` while armed → just switch
-            if (rampageSetWeapon) rampageSetWeapon(['mg', 'sg', 'sniper', 'grenade', 'flame', 'coin'][initialWeapon]);
+            if (rampageSetWeapon) rampageSetWeapon(RAMPAGE_WEAPONS[initialWeapon].key);
             return '';
           }
           if (rampageTeardown) rampageTeardown();
@@ -4366,19 +4402,161 @@
         canvas.id = 'rampage-canvas';
         document.body.appendChild(canvas);
         const ctx = canvas.getContext('2d');
+        // A second, transient layer: fire, smoke, embers and the shell in flight are redrawn
+        // from scratch every frame here, so moving effects never stain the permanent damage.
+        const fxc = document.createElement('canvas');
+        fxc.id = 'rampage-fx';
+        document.body.appendChild(fxc);
+        const fx = fxc.getContext('2d');
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const resize = () => {
           const prev = (canvas.width && canvas.height) ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null;
           canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
           canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          fxc.width = window.innerWidth * dpr; fxc.height = window.innerHeight * dpr;
+          fxc.style.width = window.innerWidth + 'px'; fxc.style.height = window.innerHeight + 'px';
+          fx.setTransform(dpr, 0, 0, dpr, 0, 0);
           if (prev) ctx.putImageData(prev, 0, 0);
         };
-        resize();
-        window.addEventListener('resize', resize);
+        resize(); // re-bound with everything else in LISTENERS, below
 
         const rnd = (a, b) => a + Math.random() * (b - a);
 
+        // --- Transient FX layer -------------------------------------------------------
+        // Fire, smoke, embers and the shell in flight are simulated here and redrawn each
+        // frame on #rampage-fx. Particles carry their own step/draw; additive ones (fire,
+        // sparks, the pressure front) composite with 'lighter' so overlaps read as heat.
+        // The loop schedules itself only while something is alive, so an idle rampage costs
+        // nothing.
+        const parts = [];
+        let fxRaf = null, fxPrev = 0;
+        const fxFrame = (t) => {
+          const dt = Math.min(0.05, (t - fxPrev) / 1000); fxPrev = t;
+          fx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+          for (let i = parts.length - 1; i >= 0; i--) {
+            const p = parts[i];
+            p.age += dt;
+            if (p.age >= p.ttl) { parts.splice(i, 1); if (p.end) p.end(p); continue; }
+            p.step(p, dt);
+            fx.globalCompositeOperation = p.add ? 'lighter' : 'source-over';
+            p.draw(p, p.age / p.ttl);
+          }
+          fx.globalCompositeOperation = 'source-over';
+          fxRaf = parts.length ? requestAnimationFrame(fxFrame) : null;
+        };
+        const emit = (p) => {
+          p.age = 0; parts.push(p);
+          if (fxRaf == null) { fxPrev = performance.now(); fxRaf = requestAnimationFrame(fxFrame); }
+          return p;
+        };
+
+        // Smoke: a puff that billows outward, is dragged to a stop by the air and then keeps
+        // drifting up on its own heat. `tint` warms it toward brown for fresh, fire-lit smoke.
+        const puff = (x, y, r, ttl, vx, vy, alpha, tint) => emit({
+          x, y, vx, vy, r, ttl, alpha, tint: tint || 0,
+          rot: rnd(0, Math.PI * 2), spin: rnd(-0.9, 0.9), sq: rnd(0.72, 1), grow: rnd(24, 58),
+          step(p, dt) {
+            p.vx *= (1 - 1.7 * dt); p.vy = p.vy * (1 - 1.7 * dt) - 32 * dt; // drag + buoyancy
+            p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.grow * dt; p.rot += p.spin * dt;
+          },
+          draw(p, k) {
+            const a = p.alpha * (k < 0.14 ? k / 0.14 : 1 - (k - 0.14) / 0.86); // quick bloom, slow fade
+            if (a <= 0.002) return;
+            const w = p.tint * (1 - k);
+            const c = `${Math.round(48 + w * 130)},${Math.round(45 + w * 62)},${Math.round(43 + w * 28)}`;
+            fx.save(); fx.translate(p.x, p.y); fx.rotate(p.rot); fx.scale(1, p.sq);
+            const g = fx.createRadialGradient(0, 0, 0, 0, 0, p.r);
+            g.addColorStop(0, `rgba(${c},${a})`);
+            g.addColorStop(0.55, `rgba(${c},${a * 0.45})`);
+            g.addColorStop(1, `rgba(${c},0)`);
+            fx.fillStyle = g; fx.beginPath(); fx.arc(0, 0, p.r, 0, Math.PI * 2); fx.fill(); fx.restore();
+          }
+        });
+        // Fire: a hot lobe that expands fast, decelerates, and cools white -> amber -> deep
+        // red as it dies; most lobes hand off to a smoke puff at the end, the way a real
+        // fireball collapses into a smoke column.
+        const fire = (x, y, r, ttl, vx, vy, force) => emit({
+          x, y, vx, vy, r, ttl, add: true, grow: rnd(90, 190) * force,
+          step(p, dt) {
+            p.vx *= (1 - 2.4 * dt); p.vy = p.vy * (1 - 2.4 * dt) - 58 * dt;
+            p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.grow * dt; p.grow *= (1 - 2.1 * dt);
+          },
+          draw(p, k) {
+            const a = (1 - k) * (1 - k);
+            const g = fx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+            g.addColorStop(0, `rgba(255,${Math.round(250 - 130 * k)},${Math.round(215 - 195 * k)},${0.85 * a})`);
+            g.addColorStop(0.42, `rgba(255,${Math.round(172 - 92 * k)},${Math.round(62 - 42 * k)},${0.55 * a})`);
+            g.addColorStop(0.78, `rgba(${Math.round(185 - 70 * k)},48,12,${0.26 * a})`);
+            g.addColorStop(1, 'rgba(120,30,8,0)');
+            fx.fillStyle = g; fx.beginPath(); fx.arc(p.x, p.y, p.r, 0, Math.PI * 2); fx.fill();
+          },
+          end(p) {
+            if (Math.random() > 0.35) puff(p.x, p.y, p.r * 0.7, rnd(1.1, 2.3), p.vx * 0.25, p.vy * 0.25 - rnd(10, 34), rnd(0.16, 0.3), 0.4);
+          }
+        });
+        // Ember: a fragment of burning material thrown clear, arcing under gravity and drawn
+        // as the short streak it traced since the last frame, so it reads as speed.
+        // `cool` swaps the burning ramp for the blue-white of vapourised metal (the shock cannon).
+        const ember = (x, y, vx, vy, cool, mark) => emit({
+          x, y, vx, vy, cool, mark, px: x, py: y, ttl: rnd(0.5, 1.5), add: true, w: rnd(0.8, 2),
+          end(p) { // burning debris scorches wherever it comes to rest
+            if (!p.mark || p.cool) return;
+            ctx.save();
+            const r = rnd(2, 6), g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+            g.addColorStop(0, 'rgba(10,7,5,0.45)'); g.addColorStop(1, 'rgba(10,7,5,0)');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+          },
+          step(p, dt) {
+            p.px = p.x; p.py = p.y;
+            p.vy += 640 * dt; p.vx *= (1 - 1.1 * dt); p.vy *= (1 - 0.5 * dt);
+            p.x += p.vx * dt; p.y += p.vy * dt;
+          },
+          draw(p, k) {
+            const a = (1 - k) * (0.6 + Math.random() * 0.4); // flicker as it tumbles
+            fx.strokeStyle = p.cool
+              ? `rgba(${Math.round(215 - 75 * k)},${Math.round(238 - 40 * k)},255,${a})`
+              : `rgba(255,${Math.round(205 - 95 * k)},${Math.round(125 - 105 * k)},${a})`;
+            fx.lineWidth = p.w * (1 - k * 0.55); fx.lineCap = 'round';
+            fx.beginPath(); fx.moveTo(p.px, p.py); fx.lineTo(p.x, p.y); fx.stroke();
+          }
+        });
+        // Every ring in here is the same animation: a circle sweeping from one radius to
+        // another as it thins and fades. `ease` bends the sweep (>1 decelerates), `col`
+        // gives each its own colour and falloff — that is the whole difference between a
+        // pressure front, a contact flash and the repair pulse.
+        const ringFx = (x, y, r0, r1, ttl, w, ease, col) => emit({
+          x, y, ttl, add: true, step() { },
+          draw(p, k) {
+            const e = ease === 1 ? k : 1 - Math.pow(1 - k, ease);
+            fx.strokeStyle = col(k);
+            fx.lineWidth = Math.max(0.4, w * (1 - k));
+            fx.beginPath(); fx.arc(p.x, p.y, r0 + (r1 - r0) * e, 0, Math.PI * 2); fx.stroke();
+          }
+        });
+        // The pressure front, always outrunning the fireball — which is what sells the scale.
+        const shockRing = (x, y, reach, ttl, w, alpha) =>
+          ringFx(x, y, 6, 6 + reach, ttl, w, 2.4, k => `rgba(255,232,198,${alpha * (1 - k) * (1 - k)})`);
+        // Overpressure: the whole pane whites out for a single blink at detonation.
+        const blastFlash = (alpha, ttl) => emit({
+          ttl, add: true, step() { },
+          draw(p, k) {
+            fx.fillStyle = `rgba(255,244,222,${alpha * (1 - k) * (1 - k)})`;
+            fx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+          }
+        });
+        // A closed, irregular polygon — the shape a punched hole and a blown crater mouth
+        // both want. Drawn into whichever context is passed, so it serves both layers.
+        const jaggedPath = (g, x, y, r, sides, jit) => {
+          g.beginPath();
+          for (let i = 0; i < sides; i++) {
+            const a = (i / sides) * Math.PI * 2 + rnd(-jit, jit), rr = r * rnd(0.5, 1.55);
+            const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+            i === 0 ? g.moveTo(px, py) : g.lineTo(px, py);
+          }
+          g.closePath();
+        };
         // A thin fracture line with a faint dark "depth" shadow underneath, so cracks
         // read as fine broken glass rather than thick glowing strokes.
         const stroke = (x1, y1, x2, y2, w, alpha) => {
@@ -4459,36 +4637,53 @@
           }
 
           // the bullet hole: a small jagged shattered polygon, not a clean circle
-          ctx.beginPath();
-          const sides = Math.floor(rnd(7, 12));
-          for (let i = 0; i < sides; i++) {
-            const ha = (i / sides) * Math.PI * 2 + rnd(-0.2, 0.2);
-            const hr = holeR * rnd(0.5, 1.55);
-            const px = x + Math.cos(ha) * hr, py = y + Math.sin(ha) * hr;
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-          }
-          ctx.closePath();
+          jaggedPath(ctx, x, y, holeR, Math.floor(rnd(7, 12)), 0.2);
           ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fill();
           ctx.strokeStyle = 'rgba(225,228,235,0.6)'; ctx.lineWidth = 0.7; ctx.stroke();
           ctx.restore();
           return power;
         };
 
-        // muzzle flash + recoil shake, scaled by power; bigger hits kick harder.
-        const recoil = (x, y, power, hot = true) => {
-          const fs = 16 + power * 14;
-          const bg = hot
-            ? 'radial-gradient(circle, rgba(255,245,200,0.9), rgba(255,170,60,0.4) 45%, transparent 70%)'
-            : 'radial-gradient(circle, rgba(235,238,245,0.85), rgba(195,200,210,0.35) 45%, transparent 70%)';
-          const f = document.createElement('div');
-          f.style.cssText = `position:fixed;left:${x - fs / 2}px;top:${y - fs / 2}px;width:${fs}px;height:${fs}px;border-radius:50%;background:${bg};z-index:9998;pointer-events:none;transition:opacity 0.12s, transform 0.12s;`;
-          document.body.appendChild(f);
-          requestAnimationFrame(() => { f.style.opacity = '0'; f.style.transform = 'scale(1.9)'; });
-          setTimeout(() => f.remove(), 140);
-          document.body.classList.remove('rampage-shake', 'rampage-shake-hard');
+        // One shake, its amplitude scaled continuously by power through --kick, so a graze
+        // and a direct hit no longer rattle the screen by the same amount.
+        const kick = (power, blast) => {
+          const hard = power > 1.2;
+          document.body.style.setProperty('--kick', (blast ? power : hard ? power / 1.6 : Math.max(0.35, power)).toFixed(2));
+          document.body.classList.remove('rampage-shake', 'rampage-shake-hard', 'rampage-shake-blast');
           void document.body.offsetWidth;
-          document.body.classList.add(power > 1.2 ? 'rampage-shake-hard' : 'rampage-shake');
+          document.body.classList.add(blast ? 'rampage-shake-blast' : hard ? 'rampage-shake-hard' : 'rampage-shake');
         };
+        // Muzzle flash + kick, scaled by power. The flash is a ragged STAR on the FX layer —
+        // a plain round glow reads as an explosion, not a muzzle — and as a particle it costs
+        // nothing to fire fifteen a second (the old one built and tore down a DOM node a shot).
+        const recoil = (x, y, power, hot = true) => {
+          const spikes = Math.floor(rnd(5, 8)), R = 10 + power * 16, rot = rnd(0, Math.PI * 2), lens = [];
+          for (let i = 0; i < spikes * 2; i++) lens.push(i % 2 ? rnd(0.22, 0.38) : rnd(0.7, 1.25));
+          emit({
+            x, y, ttl: 0.12 + power * 0.03, add: true, step() { },
+            draw(p, k) {
+              const a = (1 - k) * (1 - k), s = 0.6 + 1.5 * k; // punches outward, then dies
+              const core = hot ? `rgba(255,246,214,${0.9 * a})` : `rgba(240,244,252,${0.85 * a})`;
+              const edge = hot ? `rgba(255,168,54,${0.45 * a})` : `rgba(196,206,224,${0.35 * a})`;
+              const g = fx.createRadialGradient(p.x, p.y, 0, p.x, p.y, R * s * 0.8);
+              g.addColorStop(0, core); g.addColorStop(0.45, edge);
+              g.addColorStop(1, hot ? 'rgba(255,150,40,0)' : 'rgba(190,200,220,0)');
+              fx.fillStyle = g; fx.beginPath(); fx.arc(p.x, p.y, R * s * 0.8, 0, Math.PI * 2); fx.fill();
+              fx.fillStyle = core; fx.beginPath();
+              lens.forEach((l, i) => {
+                const ang = rot + (i / lens.length) * Math.PI * 2, rr = R * l * s;
+                const qx = p.x + Math.cos(ang) * rr, qy = p.y + Math.sin(ang) * rr;
+                i === 0 ? fx.moveTo(qx, qy) : fx.lineTo(qx, qy);
+              });
+              fx.closePath(); fx.fill();
+            }
+          });
+          kick(power);
+        };
+        // The instant of contact: a hot ring flaring out and gone in a breath, so a hit
+        // registers at once instead of waiting for the eye to find the new scar.
+        const hitFlash = (x, y, power, hot = true) => ringFx(x, y, 3, 12 + power * 15, 0.13, 1.4 + power, 2,
+          k => hot ? `rgba(255,214,150,${0.5 * (1 - k) * (1 - k)})` : `rgba(214,228,255,${0.45 * (1 - k) * (1 - k)})`);
 
         // --- Per-section HP. Shots damage the section under the pointer; when its HP
         //     hits 0 the section collapses using the SAME fly-off effect as `meltdown`. ---
@@ -4501,42 +4696,54 @@
           const extras = (SECTION_EXTRA[sel] || []).map(s => document.querySelector(s)).filter(Boolean);
           return { el, extras, hp: 300, max: 300, dead: false, bar: null };
         }).filter(Boolean);
-        const flownEls = [], rampageIntervals = [], strippedEls = [];
+        const flownEls = [], rampageIntervals = [], strippedEls = [], rampageTimers = [];
+        // Staged effects (a blast settling over ~half a second) run on timers; a ceasefire
+        // in the middle of one must not keep painting a canvas that is already gone.
+        const later = (ms, fn) => rampageTimers.push(setTimeout(() => { if (isRampageActive) fn(); }, ms));
 
-        const flyOff = (el) => {
+        // `bucket` records the section's own debris as well, so nano repair can fly back
+        // exactly what this collapse threw off (flownEls stays the catch-all for teardown).
+        const flyOff = (el, bucket) => {
           if (!el || !el.style) return;
           setTransformVars(el);
           el.classList.remove('rebuilding-element');
           el.classList.add('meltdown-element');
           flownEls.push(el);
+          if (bucket) bucket.push(el);
         };
+        const SECTION_JA = {
+          'TITLEBAR': 'タイトルバー',
+          'ACTIVITYBAR': 'アクティビティバー',
+          'SIDEBAR': 'サイドバー',
+          'EDITOR': 'エディター',
+          'PANEL': 'パネル',
+          'AGENTDOCK': 'エージェントドック',
+          'TERMINAL-FOOTER': 'ターミナルフッター'
+        };
+        const nameOf = (s) => { const en = (s.el.id || 'section').toUpperCase(); return { en, ja: SECTION_JA[en] || 'セクション' }; };
         const collapseSection = (s) => {
           s.dead = true;
+          // Once it has flown off, the element's own rect is meaningless — remember the
+          // footprint it left behind so nano repair has something to aim at.
+          s.rect = s.el.getBoundingClientRect();
+          s.flown = []; s.stripped = [];
           if (s.bar) { s.bar.remove(); s.bar = null; }
           // keep the terminal input usable even if its container collapses
           const safe = ancestorsOf(document.getElementById('input-line'));
           const els = [s.el, ...s.extras].flatMap(r => [r, ...r.querySelectorAll('*')]).filter(el => !safe.has(el) && !el.closest('#input-line'));
           // The section box itself can't fly when it holds the protected input (e.g. #panel),
           // so strip its frame (border/bg/shadow) — otherwise an empty outline lingers.
-          [s.el, ...s.extras].forEach(r => { if (safe.has(r)) { r.classList.add('rampage-stripped'); strippedEls.push(r); } });
+          [s.el, ...s.extras].forEach(r => { if (safe.has(r)) { r.classList.add('rampage-stripped'); strippedEls.push(r); s.stripped.push(r); } });
           let i = 0;
           const iv = setInterval(() => { // staggered fly-off, exactly like meltdown.sh
             for (let k = 0; k < 6; k++) {
               if (i >= els.length) { clearInterval(iv); return; }
-              flyOff(els[i++]);
+              flyOff(els[i++], s.flown);
             }
           }, 25);
+          s.iv = iv;
           rampageIntervals.push(iv);
-          const nameEn = (s.el.id || 'section').toUpperCase();
-          const nameJa = {
-            'TITLEBAR': 'タイトルバー',
-            'ACTIVITYBAR': 'アクティビティバー',
-            'SIDEBAR': 'サイドバー',
-            'EDITOR': 'エディター',
-            'PANEL': 'パネル',
-            'AGENTDOCK': 'エージェントドック',
-            'TERMINAL-FOOTER': 'ターミナルフッター'
-          }[nameEn] || 'セクション';
+          const { en: nameEn, ja: nameJa } = nameOf(s);
 
           const termMsg = tr(
             `✗ ${nameEn} DOWN — structural integrity lost.`,
@@ -4579,6 +4786,49 @@
           else updateBar(hit);
         };
 
+        // Bring a collapsed section back: stop whatever is still flying off, un-strip the
+        // frame, and run the same restore `rebuild` uses — a 1s ease back to transform:none.
+        const reviveSection = (s) => {
+          s.dead = false;
+          if (s.iv) { clearInterval(s.iv); s.iv = null; }
+          s.stripped.forEach(el => el.classList.remove('rampage-stripped'));
+          s.flown.forEach(el => {
+            el.classList.remove('meltdown-element');
+            el.classList.add('rebuilding-element');
+            later(1000, () => { el.classList.remove('rebuilding-element'); clearTransformVars(el); });
+          });
+          s.flown = []; s.stripped = []; s.rect = null;
+          const { en, ja } = nameOf(s);
+          printToTerminal(`<div class="text-xs mt-1 font-bold" style="color:#4eb85a;">${tr(`✓ ${en} RESTORED — structural integrity recovered.`, `✓ ${ja} 復旧 — 構造的整合性を回復しました。`)}</div>`);
+          // the collapse filed a diagnostic; mending the section is what resolves it
+          const pi = problems.findIndex(p => p.file === 'rampage.exe' && (p.msg.startsWith(en) || p.msg.startsWith(ja)));
+          if (pi >= 0) { problems.splice(pi, 1); recountProblems(); }
+          later(1050, () => { // the bar can only be placed once it has flown home
+            updateBar(s);
+            s.el.classList.add('rampage-mended'); // one green pulse through the mended section
+            later(1000, () => s.el.classList.remove('rampage-mended'));
+          });
+        };
+
+        // The inverse of damageAt: put HP back into the section under the cursor. A live
+        // section that still has damage wins; otherwise a collapsed one whose old footprint
+        // the cursor is over, which comes back once it is 40% mended.
+        const healAt = (x, y, amount) => {
+          let live = null, best = Infinity, dead = null;
+          for (const s of sections) {
+            const r = s.dead ? s.rect : s.el.getBoundingClientRect();
+            if (!r || x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+            if (s.dead) { if (!dead) dead = s; continue; }
+            const area = r.width * r.height;
+            if (area < best) { best = area; live = s; }
+          }
+          const s = (live && live.hp < live.max) ? live : (dead || live);
+          if (!s || s.hp >= s.max) return;
+          s.hp = Math.min(s.max, s.hp + amount);
+          if (s.dead) { if (s.hp >= s.max * 0.4) reviveSection(s); }
+          else updateBar(s);
+        };
+
         // Arsenal. Switch via the target icon in the activity bar (Arsenal view), or run `rampage <name>`.
         const WEAPONS = RAMPAGE_WEAPONS;
         let wIdx = (initialWeapon != null) ? initialWeapon : 0;
@@ -4590,9 +4840,25 @@
         rampageWeaponKey = WEAPONS[wIdx].key;
         // Reveal the Arsenal icon in the activity bar and reflect the armed weapon.
         document.getElementById('act-arsenal').classList.remove('hidden');
+        // The shock cannon is not there for the taking: its reserve starts empty and fills
+        // while you fight with everything else. The Arsenal ticks it down, and it says so
+        // when it is ready — whichever weapon happens to be in hand.
+        shockReadyAt = performance.now() + 18000;
+        let shockWasReady = false;
+        rampageIntervals.push(setInterval(() => {
+          const ready = performance.now() >= shockReadyAt;
+          if (ready && !shockWasReady) {
+            printToTerminal(tr(`<div class="text-xs mt-1" style="color:#7fd4ff;">▸ SHOCK CANNON: energy charge complete. Hold to charge, release at 120% to fire.</div>`,
+              `<div class="text-xs mt-1" style="color:#7fd4ff;">▸ ショックカノン: エネルギー充填完了。長押しで充填し、120%で手を離すと発射。</div>`));
+          }
+          shockWasReady = ready;
+          renderArsenal(); // cheap, and it keeps the countdown honest even when the view is closed
+        }, 1000));
         renderArsenal();
 
         let holdTimer = null, lastX = 0, lastY = 0, scratching = false, slx = 0, sly = 0;
+        // The nozzle direction: whichever way the cursor was last sweeping (up, when still).
+        let aimDX = 0, aimDY = -1;
         // Two fingers scroll instead of firing. We count fingers via TouchEvent.touches.length
         // (authoritative — a pointer-id map desyncs when a stray pointercancel fires over a link)
         // and pan from a non-passive touchmove + preventDefault().
@@ -4623,88 +4889,149 @@
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
         const cadence = (baseMs) => Math.max(16, Math.round(baseMs * 60 / getBpm()));
 
-        // machine gun: a single tight shot (held → rapid fire)
-        const fireMG = (x, y) => { recoil(x, y, drawImpact(x + rnd(-6, 6), y + rnd(-6, 6))); damageAt(x, y, 4); };
-        // shotgun: one blast scattering many pellets in a cone, single hard kick
+        // A spent case kicked clear of the breech, tumbling and glinting as it falls. `hull`
+        // is a shotgun's plastic shell — fatter, red, with a brass head.
+        const CASE = [
+          { w: 6.4, h: 3, dark: '118,86,30', lit: '228,184,88' },         // rifle brass
+          { w: 9, h: 4, dark: '96,20,18', lit: '196,58,48', head: true }  // shotgun hull, brass-headed
+        ];
+        // Brass, shotgun hulls and glass shards all fall the same way — gravity, a little
+        // drag, a tumble, and one clatter off the bottom of the frame. Only the drawing of
+        // them differs, so that is the only thing each caller supplies.
+        const tumble = (x, y, vx, vy, ttl, g, draw) => emit({
+          x, y, vx, vy, ttl, g, draw, rot: rnd(0, Math.PI * 2), spin: rnd(-16, 16), bounced: false,
+          step(p, dt) {
+            p.vy += p.g * dt; p.vx *= (1 - 0.55 * dt);
+            p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.spin * dt;
+            if (!p.bounced && p.vy > 0 && p.y > window.innerHeight - 3) { // one clatter off the bottom
+              p.bounced = true; p.y = window.innerHeight - 3; p.vy *= -0.33; p.vx *= 0.62; p.spin *= 0.5;
+            }
+          }
+        });
+        const casing = (x, y, hull) => {
+          const c = CASE[hull ? 1 : 0];
+          return tumble(x, y, rnd(90, 230) * (hull ? 0.8 : 1), -rnd(40, 160), rnd(0.55, 1), 1400, (p, k) => {
+            const a = 1 - k * k, glint = 0.65 + 0.35 * Math.abs(Math.cos(p.rot)); // catching the light as it turns
+            fx.save(); fx.translate(p.x, p.y); fx.rotate(p.rot);
+            const g = fx.createLinearGradient(0, -c.h / 2, 0, c.h / 2);
+            g.addColorStop(0, `rgba(${c.dark},${a})`);
+            g.addColorStop(0.45, `rgba(${c.lit},${a * glint})`);
+            g.addColorStop(1, `rgba(${c.dark},${a})`);
+            fx.fillStyle = g; fx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+            if (c.head) { fx.fillStyle = `rgba(214,172,80,${a * glint})`; fx.fillRect(-c.w / 2, -c.h / 2, c.w * 0.35, c.h); }
+            fx.restore();
+          });
+        };
+        // machine gun: a single tight shot (held → rapid fire). Sustained fire CLIMBS, throws
+        // brass and hazes the air with powder smoke — the tells of a gun being emptied.
+        let mgClimb = 0;
+        const fireMG = (x, y) => {
+          mgClimb = Math.min(17, mgClimb + 1.4); // the muzzle walks up the longer you hold
+          const ax = x + rnd(-6, 6), ay = y - mgClimb + rnd(-6, 6);
+          const power = drawImpact(ax, ay);
+          hitFlash(ax, ay, power);
+          recoil(x, y - mgClimb * 0.6, power);
+          casing(x + rnd(3, 12), y - mgClimb * 0.6 + rnd(-5, 5));
+          if (Math.random() > 0.55) puff(x + rnd(-9, 9), y - mgClimb * 0.6 - rnd(0, 8), rnd(4, 9), rnd(0.7, 1.4), rnd(-34, 34), -rnd(20, 60), rnd(0.05, 0.11), 0.2);
+          damageAt(ax, ay, 4);
+        };
+        // shotgun: one blast throwing a cone of pellets. They do NOT all land at once — the
+        // farther a pellet flies the later it bites, so the spread visibly opens outward.
         const fireShotgun = (x, y) => {
           drawImpact(x, y, rnd(0.9, 1.5)); // central concussion
+          hitFlash(x, y, 1.8);
           const pellets = Math.floor(rnd(10, 18));
           for (let i = 0; i < pellets; i++) {
             const ang = rnd(0, Math.PI * 2);
             const dist = Math.pow(Math.random(), 0.6) * rnd(55, 160);
-            drawImpact(x + Math.cos(ang) * dist, y + Math.sin(ang) * dist, rnd(0.3, 0.85));
+            later(dist * 0.34, () => drawImpact(x + Math.cos(ang) * dist, y + Math.sin(ang) * dist, rnd(0.3, 0.85)));
           }
+          for (let i = 0; i < 7; i++) { // the cone of smoke the muzzle dumps out with it
+            const a = rnd(0, Math.PI * 2), s = rnd(60, 200);
+            puff(x + rnd(-8, 8), y + rnd(-8, 8), rnd(8, 18), rnd(0.7, 1.5), Math.cos(a) * s, Math.sin(a) * s * 0.9 - 30, rnd(0.07, 0.15), 0.3);
+          }
+          casing(x + rnd(6, 16), y + rnd(-6, 6), true); // the hull kicked clear
           recoil(x, y, 1.7); damageAt(x, y, 17); // one big kick for the whole blast
         };
-        // sniper: one precise hole that throws very long fractures clear across the glass
-        const fireSniper = (x, y) => { recoil(x, y, drawImpact(x, y, rnd(1.3, 1.9), 3.8) + 1.4); damageAt(x, y, 34); };
-        // coin: a fine bright scratch traced along the drag, like keying a car's paint
+        // coin: a fine bright scratch traced along the drag, like keying a car's paint.
+        // Pressure follows speed — drag it slowly and it bites deep and bright; whip it
+        // across and it barely marks, exactly as a hand does.
         const scratchSeg = (x1, y1, x2, y2) => {
+          const d = Math.hypot(x2 - x1, y2 - y1);
+          const bite = Math.max(0.15, Math.min(1, 26 / (d + 8)));
           const jx = rnd(-1.5, 1.5), jy = rnd(-1.5, 1.5); // hand jitter
-          stroke(x1, y1, x2 + jx, y2 + jy, rnd(0.4, 0.9), 0.65);
-          if (Math.random() > 0.6) { // tiny metal/paint fleck catching the light
-            ctx.save(); ctx.fillStyle = 'rgba(235,238,245,0.7)';
+          stroke(x1, y1, x2 + jx, y2 + jy, rnd(0.3, 0.6) + bite * 0.6, 0.25 + bite * 0.5);
+          if (Math.random() > 0.75 - bite * 0.3) { // tiny metal/paint fleck catching the light
+            ctx.save(); ctx.fillStyle = `rgba(235,238,245,${0.4 + bite * 0.4})`;
             ctx.beginPath(); ctx.arc(x2 + rnd(-2, 2), y2 + rnd(-2, 2), rnd(0.4, 1.1), 0, Math.PI * 2); ctx.fill(); ctx.restore();
           }
-          damageAt(x2, y2, 0.4); // only lightly scratches — barely dents HP
+          if (Math.random() > 0.84 - bite * 0.24) { // a spark struck off the surface
+            const a = Math.atan2(y2 - y1, x2 - x1) + rnd(-2.4, 2.4), sp = rnd(40, 160);
+            ember(x2, y2, Math.cos(a) * sp, Math.sin(a) * sp - rnd(10, 70), true);
+          }
+          if (Math.random() > 0.82) puff(x2, y2, rnd(2, 5), rnd(0.5, 0.9), rnd(-22, 22), -rnd(5, 26), 0.07, 0); // ground-off powder
+          damageAt(x2, y2, 0.4 * (0.5 + bite)); // only lightly scratches — barely dents HP
         };
-        // flamethrower: continuous charring + heat-stress cracks while held (no recoil shake)
+        // Heat leaves nothing like a bullet does: there is no entry point, so no hole and no
+        // radial star. A thermal crack WANDERS — it opens somewhere inside the burn, drifts
+        // as the stress front moves, and forks at shallow angles. Alongside it the char
+        // blisters, lifting in little arcs off the surface.
+        const heatCrack = (x, y) => {
+          let cx = x + rnd(-15, 15), cy = y + rnd(-15, 15), a = rnd(0, Math.PI * 2), w = rnd(0.5, 0.9);
+          const segs = Math.floor(rnd(4, 9));
+          ctx.save(); ctx.lineCap = 'round';
+          for (let i = 0; i < segs; i++) {
+            a += rnd(-0.55, 0.55); // no straight runs: the split follows the heat
+            const len = rnd(4, 11), nx = cx + Math.cos(a) * len, ny = cy + Math.sin(a) * len;
+            stroke(cx, cy, nx, ny, Math.max(0.25, w), 0.38 - i * 0.025);
+            if (Math.random() > 0.82) { // an occasional shallow fork
+              const ba = a + (Math.random() < 0.5 ? 1 : -1) * rnd(0.3, 0.8);
+              stroke(nx, ny, nx + Math.cos(ba) * len * 0.7, ny + Math.sin(ba) * len * 0.7, Math.max(0.22, w * 0.6), 0.2);
+            }
+            cx = nx; cy = ny; w *= 0.9;
+          }
+          ctx.restore();
+        };
+        const blister = (x, y) => {
+          const bx = x + rnd(-16, 16), by = y + rnd(-16, 16), r = rnd(1.5, 4), a0 = rnd(0, Math.PI * 2);
+          ctx.save();
+          ctx.strokeStyle = `rgba(18,11,7,${rnd(0.2, 0.45)})`; ctx.lineWidth = rnd(0.5, 1.1);
+          ctx.beginPath(); ctx.arc(bx, by, r, a0, a0 + rnd(2.2, 5.2)); ctx.stroke(); // the lifted rim
+          ctx.strokeStyle = `rgba(232,212,182,${rnd(0.06, 0.16)})`; ctx.lineWidth = 0.6;
+          ctx.beginPath(); ctx.arc(bx - 0.5, by - 0.5, r * 0.8, a0 + 3.4, a0 + 5); ctx.stroke(); // a highlight on the bubble
+          ctx.restore();
+        };
+        // flamethrower: a jet of burning fuel while held. The stream follows the direction the
+        // cursor is sweeping, so it reads as a nozzle rather than a puddle of light; the fire
+        // rolls out, rises and cools into smoke on its own, and the surface chars underneath.
         const flame = (x, y) => {
           const cx = x + rnd(-9, 9), cy = y + rnd(-9, 9), r = rnd(10, 26);
-          ctx.save();
+          ctx.save(); // the char that stays on the glass
           const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-          g.addColorStop(0, 'rgba(35,18,8,0.5)');
-          g.addColorStop(0.5, 'rgba(200,90,30,0.22)');
+          g.addColorStop(0, 'rgba(12,7,4,0.6)');    // burnt through to black at the core
+          g.addColorStop(0.32, 'rgba(45,22,9,0.42)');
+          g.addColorStop(0.62, 'rgba(190,84,28,0.2)'); // still glowing brown at the edge of the burn
           g.addColorStop(1, 'rgba(255,160,40,0)');
           ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
-          if (Math.random() > 0.7) drawImpact(x + rnd(-10, 10), y + rnd(-10, 10), rnd(0.3, 0.6));
+          // soot laid down in feathered patches, the same deposit a blast leaves — this is
+          // what makes a burn read as burnt once the flame has moved on
+          if (Math.random() > 0.45) sootPatch(x + rnd(-15, 15), y + rnd(-15, 15), rnd(9, 21), rnd(0.05, 0.15));
+          if (Math.random() > 0.8) heatCrack(x, y); // the surface splitting under the heat
+          if (Math.random() > 0.8) blister(x, y);     // char bubbling up off it
           damageAt(x, y, 2.5); // sustained burn
-          const fs = rnd(22, 42);
-          const f = document.createElement('div');
-          f.style.cssText = `position:fixed;left:${x - fs / 2}px;top:${y - fs / 2}px;width:${fs}px;height:${fs}px;border-radius:50%;background:radial-gradient(circle, rgba(255,220,120,0.7), rgba(255,120,30,0.4) 40%, transparent 70%);z-index:9998;pointer-events:none;transition:opacity 0.18s, transform 0.18s;`;
-          document.body.appendChild(f);
-          requestAnimationFrame(() => { f.style.opacity = '0'; f.style.transform = 'scale(1.6) translateY(-6px)'; });
-          setTimeout(() => f.remove(), 190);
+          const sp = rnd(120, 330), spread = rnd(-0.5, 0.5); // fuel thrown along the sweep, fanning out
+          const dx = aimDX * Math.cos(spread) - aimDY * Math.sin(spread);
+          const dy = aimDX * Math.sin(spread) + aimDY * Math.cos(spread);
+          fire(x + rnd(-6, 6), y + rnd(-6, 6), rnd(7, 15), rnd(0.26, 0.46), dx * sp, dy * sp - 30, 0.55);
+          if (Math.random() > 0.55) ember(x, y, dx * sp * 0.6 + rnd(-40, 40), dy * sp * 0.6 - rnd(60, 180), false, true);
+          if (Math.random() > 0.7) puff(x + rnd(-10, 10), y + rnd(-10, 10), rnd(6, 14), rnd(0.9, 1.7), dx * 40, dy * 40 - rnd(20, 50), rnd(0.08, 0.16), 0.35);
         };
         // grenade launcher: lob a shell that arcs in from below, then detonates on impact.
         // Unlike the shotgun (scattered round pellet holes), a frag blast leaves a distinct
         // signature: a scorched, soot-blackened crater with a residual heat burn, and straight
         // shrapnel GOUGES carved radially outward — fragments tearing the surface, not chipping it.
 
-        // A few short, faint hairline cracks splaying from where a fragment bit in — the
-        // brittle surface stressing around the embed. Kept small and sparse, NOT a fracture star.
-        const fineCracks = (x, y, scale) => {
-          const n = Math.floor(rnd(3, 6)); let a = rnd(0, Math.PI * 2);
-          ctx.save(); ctx.lineCap = 'round';
-          for (let i = 0; i < n; i++) {
-            a += (Math.PI * 2 / n) * rnd(0.5, 1.5);
-            const segs = Math.floor(rnd(1, 3));
-            let cx = x, cy = y, ca = a, len = rnd(6, 16) * scale, w = rnd(0.4, 0.7);
-            for (let s = 0; s < segs; s++) {
-              ca += rnd(-0.3, 0.3);
-              const step = len / segs, nx = cx + Math.cos(ca) * step, ny = cy + Math.sin(ca) * step;
-              stroke(cx, cy, nx, ny, Math.max(0.25, w), 0.28 - s * 0.06);
-              cx = nx; cy = ny; w *= 0.7;
-            }
-          }
-          ctx.restore();
-        };
-        // Where a fragment finally bites in: a small irregular dark chip with a faint torn
-        // lip and a few hairline cracks around it — NOT a fracture star (a frag embed, not a blast).
-        const embed = (x, y, r) => {
-          ctx.save(); ctx.beginPath();
-          const n = Math.floor(rnd(5, 8)); let a = rnd(0, Math.PI * 2);
-          for (let i = 0; i < n; i++) {
-            a += (Math.PI * 2 / n) * rnd(0.6, 1.4);
-            const rr = r * rnd(0.55, 1.35), px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-          }
-          ctx.closePath(); ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fill();
-          ctx.strokeStyle = 'rgba(225,228,235,0.45)'; ctx.lineWidth = 0.6; ctx.stroke();
-          ctx.restore();
-          fineCracks(x, y, r / 2.4);
-        };
         // A carved shrapnel gouge: a dark groove with a thin torn-up bright lip, tapering as
         // the fragment loses energy; sometimes a small embed-chip where it finally bites in.
         const gouge = (x, y, ang, len, w0) => {
@@ -4721,7 +5048,6 @@
             cx = nx; cy = ny; w *= 0.8;
           }
           ctx.restore();
-          if (Math.random() > 0.75) embed(cx, cy, rnd(1.6, 3.2)); // ~25%: fragment bites in, with hairline cracks
         };
         // One soft, irregular soot patch: an elliptical, feathered smudge — never a clean
         // circle, so the deposit reads as organic carbon rather than painted dots.
@@ -4749,68 +5075,438 @@
           ctx.fillStyle = e; ctx.beginPath(); ctx.arc(x, y, R * 0.42, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         };
-        // The instant of detonation (transient DOM): a bright expanding fireball and an
-        // outward shock ring — sells the blast in motion before the scar settles on the glass.
-        const grenadeBurst = (x, y) => {
-          const fb = document.createElement('div'), s = 34;
-          fb.style.cssText = `position:fixed;left:${x - s / 2}px;top:${y - s / 2}px;width:${s}px;height:${s}px;border-radius:50%;background:radial-gradient(circle, rgba(255,250,225,0.95), rgba(255,170,60,0.7) 35%, rgba(200,70,20,0.4) 60%, transparent 75%);z-index:9998;pointer-events:none;transition:transform 0.34s cubic-bezier(0.15,0.7,0.4,1), opacity 0.34s ease-out;`;
-          document.body.appendChild(fb);
-          requestAnimationFrame(() => { fb.style.transform = 'scale(7)'; fb.style.opacity = '0'; });
-          setTimeout(() => fb.remove(), 360);
-          const ring = document.createElement('div');
-          ring.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:0;height:0;border-radius:50%;border:2px solid rgba(255,220,170,0.6);z-index:9998;pointer-events:none;transform:translate(-50%,-50%);transition:width 0.4s ease-out, height 0.4s ease-out, opacity 0.4s ease-out;`;
-          document.body.appendChild(ring);
-          requestAnimationFrame(() => { ring.style.width = '340px'; ring.style.height = '340px'; ring.style.opacity = '0'; });
-          setTimeout(() => ring.remove(), 420);
+        // The shell in flight: a true ballistic arc, solved so a shot launched from off-screen
+        // below lands exactly on the target after T seconds under gravity. It tumbles end over
+        // end and feathers a thin smoke trail behind it.
+        const lobShell = (tx, ty, onImpact) => {
+          const sx = tx + rnd(-70, 70), sy = window.innerHeight + 30, T = rnd(0.44, 0.58), G = 2400;
+          recoil(sx, window.innerHeight - 4, 0.7); // launcher blooms at the muzzle, below frame
+          puff(sx, window.innerHeight - 6, rnd(10, 18), rnd(0.8, 1.4), rnd(-20, 20), -rnd(30, 70), 0.28, 0.3);
+          emit({
+            x: sx, y: sy, ttl: T, px: sx, py: sy, rot: rnd(0, Math.PI * 2), spin: rnd(-18, 18), trail: 0,
+            vx: (tx - sx) / T, vy: (ty - sy) / T - 0.5 * G * T,
+            step(p, dt) {
+              p.px = p.x; p.py = p.y;
+              p.vy += G * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.spin * dt;
+              p.trail -= dt;
+              if (p.trail <= 0) { p.trail = 0.02; puff(p.x, p.y, rnd(1.5, 3.2), rnd(0.4, 0.8), rnd(-12, 12), rnd(-8, 8), rnd(0.09, 0.18), 0.25); }
+            },
+            draw(p) {
+              fx.save(); fx.translate(p.x, p.y);
+              fx.globalCompositeOperation = 'lighter'; // burning propellant at the tail
+              const g = fx.createRadialGradient(0, 0, 0, 0, 0, 11);
+              g.addColorStop(0, 'rgba(255,236,190,0.9)');
+              g.addColorStop(0.4, 'rgba(255,150,50,0.45)');
+              g.addColorStop(1, 'rgba(255,120,30,0)');
+              fx.fillStyle = g; fx.beginPath(); fx.arc(0, 0, 11, 0, Math.PI * 2); fx.fill();
+              fx.globalCompositeOperation = 'source-over';
+              fx.rotate(p.rot); // the body, tumbling
+              fx.fillStyle = '#3a3226'; fx.strokeStyle = 'rgba(230,200,140,0.65)'; fx.lineWidth = 0.8;
+              fx.beginPath(); fx.ellipse(0, 0, 5, 2.6, 0, 0, Math.PI * 2); fx.fill(); fx.stroke();
+              fx.restore();
+            },
+            end: onImpact
+          });
+        };
+        // The detonation, staged the way a real one reads rather than all in one frame: flash
+        // and pressure front first, the fireball blooming a beat behind them, shrapnel spraying
+        // out under the fire, and only afterwards the soot, the fallout and the smoke that keeps
+        // lifting off the crater for seconds. Everything that moves is a particle; everything
+        // that lasts is painted onto the damage canvas underneath.
+        const detonate = (x, y) => {
+          const R = rnd(150, 185);
+
+          // --- t=0: overpressure, pressure front, fireball, embers ---
+          blastFlash(0.17, 0.09);
+          shockRing(x, y, R * 1.95, 0.30, 2.6, 0.55);
+          shockRing(x, y, R * 1.25, 0.46, 1.3, 0.28);
+          fire(x, y, 26, 0.36, 0, -24, 1.5); // core
+          for (let i = 0; i < 9; i++) {      // lobes punched outward, unevenly
+            const a = rnd(0, Math.PI * 2), sp = rnd(120, 430);
+            fire(x + Math.cos(a) * rnd(0, 18), y + Math.sin(a) * rnd(0, 18), rnd(13, 30), rnd(0.3, 0.64),
+              Math.cos(a) * sp, Math.sin(a) * sp * 0.8 - 40, 1);
+          }
+          for (let i = 0; i < 34; i++) {     // embers thrown clear of the blast
+            const a = rnd(0, Math.PI * 2), sp = rnd(160, 780);
+            ember(x, y, Math.cos(a) * sp, Math.sin(a) * sp - rnd(40, 170), false, true);
+          }
+          for (let i = 0; i < 10; i++) {     // the dust ring rolling out behind the front
+            const a = rnd(0, Math.PI * 2), sp = rnd(170, 350);
+            puff(x + Math.cos(a) * 20, y + Math.sin(a) * 20, rnd(15, 30), rnd(0.9, 1.9),
+              Math.cos(a) * sp, Math.sin(a) * sp * 0.85, rnd(0.11, 0.22), 0.18);
+          }
+          // the crater smoulders: smoke keeps venting long after the fire is out
+          emit({
+            x, y, ttl: 2.8, next: 0, draw() { },
+            step(p, dt) {
+              p.next -= dt;
+              if (p.next > 0) return;
+              p.next = rnd(0.1, 0.24);
+              puff(x + rnd(-18, 18), y + rnd(-12, 12), rnd(8, 18), rnd(1.2, 2.5),
+                rnd(-16, 16), -rnd(18, 48), rnd(0.07, 0.16) * (1 - p.age / p.ttl), 0.12);
+            }
+          });
+          for (let i = 0; i < 4; i++) {      // residual flame licking at the crater
+            later(rnd(120, 700), () => fire(x + rnd(-22, 22), y + rnd(-16, 16), rnd(6, 13), rnd(0.3, 0.6), rnd(-20, 20), -rnd(20, 60), 0.35));
+          }
+          kick(1, true); // one hard slam, ringing down
+
+          // permanent: the deep central crater and its long fractures (hidden by the flash)
+          drawImpact(x, y, rnd(1.8, 2.4), 2.0);
+
+          // --- t=90ms: the scorch settles onto the glass while the fireball still covers it ---
+          later(90, () => {
+            drawSoot(x, y, R);
+            ctx.save(); // blackened crater mouth over the impact hole
+            jaggedPath(ctx, x, y, 12, Math.floor(rnd(9, 13)), 0.25);
+            ctx.fillStyle = 'rgba(0,0,0,0.92)'; ctx.fill();
+            ctx.strokeStyle = 'rgba(200,205,214,0.5)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+          });
+
+          // --- t=120..250ms: shrapnel gouges carved outward, in waves under the fire ---
+          const shards = Math.floor(rnd(20, 30));
+          const angles = [];
+          let ga = rnd(0, Math.PI * 2);
+          for (let i = 0; i < shards; i++) { ga += (Math.PI * 2 / shards) * rnd(0.5, 1.6); angles.push(ga); } // uneven spread
+          for (let w = 0; w < 4; w++) {
+            later(120 + w * 42, () => {
+              for (let i = w; i < angles.length; i += 4) {
+                const a = angles[i];
+                gouge(x + Math.cos(a) * rnd(6, 14), y + Math.sin(a) * rnd(6, 14), a, rnd(70, 200), rnd(0.9, 1.8));
+              }
+            });
+          }
+
+          // AoE, falling off with distance: the seat of the blast takes the worst of it and
+          // neighbouring sections catch the splash.
+          damageAt(x, y, 26);
+          [[60, 6], [130, 3]].forEach(([dist, amt]) => {
+            for (let i = 0; i < 6; i++) {
+              const a = (i / 6) * Math.PI * 2 + (dist > 100 ? 0.5 : 0);
+              damageAt(x + Math.cos(a) * dist, y + Math.sin(a) * dist, amt);
+            }
+          });
         };
         const fireGrenade = (tx, ty) => {
-          recoil(tx, ty, 0.4); // soft launch puff at the muzzle/cursor
-          // arcing projectile: rises from the bottom toward the target with a parabolic hop
-          const sx = tx + rnd(-40, 40), sy = window.innerHeight + 30;
-          const shell = document.createElement('div');
-          shell.style.cssText = `position:fixed;left:${sx - 4}px;top:${sy - 4}px;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle, #fff, #e0a93e 50%, #8a5a1a 100%);box-shadow:0 0 8px rgba(255,180,80,0.8);z-index:9998;pointer-events:none;transition:transform 0.42s cubic-bezier(0.2,0.7,0.5,1), opacity 0.1s;`;
-          document.body.appendChild(shell);
-          requestAnimationFrame(() => { shell.style.transform = `translate(${tx - sx}px, ${ty - sy}px)`; });
-          setTimeout(() => {
-            shell.remove();
-            // --- detonation ---
-            grenadeBurst(tx, ty); // transient fireball + shock ring
-            recoil(tx, ty, 2.3);  // hard screen kick
-            const R = rnd(150, 185);
-            drawSoot(tx, ty, R);  // scorched, soot-blackened blast seat
-            ctx.save(); ctx.lineCap = 'round'; // shockwave: a faint ring of pressure cracks
-            const ringR = R * 0.62;
-            for (let i = 0; i < 48; i++) {
-              const a = (i / 48) * Math.PI * 2, a2 = a + Math.PI * 2 / 48;
-              stroke(tx + Math.cos(a) * ringR * rnd(0.9, 1.1), ty + Math.sin(a) * ringR * rnd(0.9, 1.1),
-                tx + Math.cos(a2) * ringR * rnd(0.9, 1.1), ty + Math.sin(a2) * ringR * rnd(0.9, 1.1), rnd(0.3, 0.6), rnd(0.06, 0.16));
+          // Lob first, detonate on arrival — and never paint into a canvas a ceasefire removed.
+          lobShell(tx, ty, () => { if (isRampageActive) detonate(tx, ty); });
+        };
+        // --- Shock cannon ---------------------------------------------------------------
+        // The ship's gun, and nothing like the rest of the arsenal. It runs off a reserve
+        // that must fill before the weapon will even spin up, one discharge empties it
+        // again, and it fires ONLY at a full charge — let go early and the energy is dumped.
+        // What comes out is fired straight ahead, into the screen: it punches through where
+        // you aimed and takes everything around that point with it, in one pass.
+        const SHOCK_MS = 10000;      // hold this long to reach a full charge
+        const SHOCK_RELOAD = 24000;  // and this long before the reserve will take another
+        let shockStart = 0, shockFx = null, shockNagAt = 0;
+        const shockCharge = () => Math.max(0, Math.min(1, (performance.now() - shockStart) / SHOCK_MS));
+        const shockLeft = () => Math.ceil((shockReadyAt - performance.now()) / 1000);
+        // The charge: streaks of air rushing INWARD to a core that tightens and brightens as
+        // it fills — the inverse of every muzzle flash in here — and everything else dimming
+        // as the room gives up its light to the shot.
+        const startCharge = () => {
+          releaseCharge(false); // a second press while charging replaces the charge, never stacks it
+          if (shockLeft() > 0) { // the reserve is still filling; it will not even spin up
+            if (performance.now() > shockNagAt) {
+              shockNagAt = performance.now() + 2000; // one warning, not one per click
+              printToTerminal(tr(`<div class="text-xs my-1" style="color:#7fb4d8;">▸ SHOCK CANNON: reserve still charging — <b>${shockLeft()}s</b> remaining.</div>`,
+                `<div class="text-xs my-1" style="color:#7fb4d8;">▸ ショックカノン: エネルギー充填中 — 残り <b>${shockLeft()}秒</b>。</div>`));
             }
+            return;
+          }
+          shockStart = performance.now();
+          shockFx = emit({
+            // ttl is only a backstop — the charge normally ends on release, not on a timer
+            x: lastX, y: lastY, ttl: 600, add: true, full: false,
+            step(p) { p.x = lastX; p.y = lastY; }, // the charge follows the cursor
+            draw(p) {
+              const c = shockCharge(), t = performance.now();
+              // The room gives up its light to the shot. One non-additive pass first, so it
+              // lies under everything the charge draws — no second particle needed for it.
+              fx.globalCompositeOperation = 'source-over';
+              fx.fillStyle = `rgba(2,4,12,${0.34 * c * c})`;
+              fx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+              fx.globalCompositeOperation = 'lighter';
+              for (let i = 0; i < 14; i++) {
+                const a = (i / 14) * Math.PI * 2 + t / 260 + c * 2;
+                const d0 = 150 * (1 - c) + 34, d1 = d0 - 14 - 26 * c;
+                fx.strokeStyle = `rgba(190,225,255,${0.12 + 0.4 * c})`;
+                fx.lineWidth = 0.6 + c * 1.6; fx.lineCap = 'round';
+                fx.beginPath();
+                fx.moveTo(p.x + Math.cos(a) * d0, p.y + Math.sin(a) * d0);
+                fx.lineTo(p.x + Math.cos(a) * d1, p.y + Math.sin(a) * d1);
+                fx.stroke();
+              }
+              const r = (4 + 13 * c + (c >= 1 ? Math.sin(t / 38) * 2.4 : 0)) * 3.2; // core, jittering once full
+              const g = fx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+              g.addColorStop(0, `rgba(255,255,255,${0.45 + 0.5 * c})`);
+              g.addColorStop(0.3, `rgba(150,205,255,${0.1 + 0.5 * c})`);
+              g.addColorStop(1, 'rgba(90,150,255,0)');
+              fx.fillStyle = g; fx.beginPath(); fx.arc(p.x, p.y, r, 0, Math.PI * 2); fx.fill();
+              if (Math.random() > 0.45) { // loose dust dragged in out of the surrounding air
+                const a = rnd(0, Math.PI * 2), d = rnd(90, 260) * (1.1 - c * 0.5);
+                mote(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d, p.x + rnd(-10, 10), p.y + rnd(-10, 10), true);
+              }
+              fx.font = '600 12px ui-monospace, SFMono-Regular, Menlo, monospace';
+              fx.textAlign = 'center';
+              fx.fillStyle = `rgba(200,235,255,${0.45 + 0.55 * c})`;
+              fx.fillText(Math.round(c * 120) + '%', p.x, p.y - 88); // the gauge, in the ship's units
+              fx.strokeStyle = `rgba(150,210,255,${0.25 + 0.4 * c})`; fx.lineWidth = 2;
+              fx.beginPath(); fx.arc(p.x, p.y, 72, -Math.PI / 2, -Math.PI / 2 + c * Math.PI * 2); fx.stroke();
+              if (c >= 1) { // charged: a crisp containment ring, and it starts shedding sparks
+                fx.strokeStyle = `rgba(220,240,255,${0.4 + Math.sin(t / 60) * 0.22})`;
+                fx.lineWidth = 1.6; fx.beginPath(); fx.arc(p.x, p.y, 30, 0, Math.PI * 2); fx.stroke();
+                if (Math.random() > 0.6) { const a = rnd(0, Math.PI * 2); ember(p.x, p.y, Math.cos(a) * rnd(80, 240), Math.sin(a) * rnd(80, 240), true); }
+                if (!p.full) {
+                  p.full = true;
+                  printToTerminal(tr(`<div class="text-xs mt-1" style="color:#7fd4ff;">▸ Energy charge <b>120%</b> — release to fire.</div>`,
+                    `<div class="text-xs mt-1" style="color:#7fd4ff;">▸ エネルギー充填 <b>120%</b> — 手を離して発射。</div>`));
+                }
+              }
+            }
+          });
+        };
+        // The discharge is fired STRAIGHT AHEAD — away from whoever is sitting in front of
+        // the screen — so it is drawn in perspective rather than across the glass: the aim
+        // point is the vanishing point, and everything streams INTO it and shrinks. Energy
+        // flowing away from the viewer converges; only the debris it tears loose comes back
+        // out at them. A beam drawn from edge to edge would read as a broadside instead.
+        const fireShock = (tx, ty) => {
+          const T = 1.25;
+          const far = Math.hypot(window.innerWidth, window.innerHeight) * 1.1; // past every corner
+          const R_BURN = 300, R_KILL = 470;
+
+          printToTerminal(tr(`<div class="my-1 text-xs font-bold" style="color:#7fd4ff;">▸ SHOCK CANNON — FIRE.</div>`,
+            `<div class="my-1 text-xs font-bold" style="color:#7fd4ff;">▸ ショックカノン — 発射。</div>`));
+          blastFlash(0.55, 0.25);
+          for (let i = 0; i < 9; i++) later(i * 120, () => kick(1.15 + rnd(-0.2, 0.2), true)); // the hull rides it out
+          for (let i = 0; i < 60; i++) { // matter torn off the bore and thrown back at the viewer
+            const a = rnd(0, Math.PI * 2), sp = rnd(200, 820);
+            ember(tx + Math.cos(a) * rnd(10, 60), ty + Math.sin(a) * rnd(10, 60), Math.cos(a) * sp, Math.sin(a) * sp, true);
+          }
+
+          emit({
+            ttl: T, add: true, step() { },
+            draw(p, k) {
+              const t = performance.now() / 1000;
+              const open = Math.min(1, k / 0.09);
+              const fade = k < 0.66 ? 1 : 1 - (k - 0.66) / 0.34;
+              // the room lit by what is leaving it
+              fx.fillStyle = `rgba(80,145,255,${0.15 * fade * open})`;
+              fx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+              // the bore: streaks running from the near field INTO the vanishing point. They
+              // shrink as they go, which is what says "away from you" and not "across you".
+              for (let i = 0; i < 26; i++) {
+                const a = (i / 26) * Math.PI * 2 + Math.sin(i * 12.9) * 0.07;
+                const ph = (t * 1.9 + i * 0.137) % 1, u = 1 - ph; // travelling inward
+                const r1 = far * (0.06 + u * 0.98), r0 = r1 * 0.55;
+                fx.strokeStyle = `rgba(170,215,255,${0.5 * ph * fade * open})`;
+                fx.lineWidth = Math.max(0.5, (1.5 + 15 * u) * fade); // wider in the near field
+                fx.lineCap = 'butt';
+                fx.beginPath();
+                fx.moveTo(tx + Math.cos(a) * r1, ty + Math.sin(a) * r1);
+                fx.lineTo(tx + Math.cos(a) * r0, ty + Math.sin(a) * r0);
+                fx.stroke();
+              }
+              for (let s = 0; s < 2; s++) { // the helix seen end-on: two arms winding into the bore
+                fx.strokeStyle = `rgba(215,240,255,${0.4 * fade * open})`;
+                fx.lineWidth = Math.max(0.5, 3.5 * fade); fx.lineCap = 'round';
+                fx.beginPath();
+                for (let u = 0.05; u <= 1; u += 0.02) {
+                  const a = s * Math.PI + u * 7 - t * 5.5, rr = far * u * 0.95;
+                  const qx = tx + Math.cos(a) * rr, qy = ty + Math.sin(a) * rr;
+                  u <= 0.06 ? fx.moveTo(qx, qy) : fx.lineTo(qx, qy);
+                }
+                fx.stroke();
+              }
+              for (let i = 0; i < 3; i++) { // pressure rings collapsing into the distance
+                const ph = (t * 1.25 + i / 3) % 1, rr = far * (1 - ph) * 0.92;
+                fx.strokeStyle = `rgba(255,255,255,${0.32 * ph * fade * open})`;
+                fx.lineWidth = Math.max(0.5, (1 + 6 * (1 - ph)) * fade);
+                fx.beginPath(); fx.arc(tx, ty, rr, 0, Math.PI * 2); fx.stroke();
+              }
+              const cr = (30 + 66 * open) * (0.92 + Math.sin(t * 42) * 0.08); // the bore itself
+              const g = fx.createRadialGradient(tx, ty, 0, tx, ty, cr * 2.6);
+              g.addColorStop(0, `rgba(255,255,255,${0.98 * fade})`);
+              g.addColorStop(0.22, `rgba(215,242,255,${0.85 * fade})`);
+              g.addColorStop(0.55, `rgba(90,165,255,${0.35 * fade})`);
+              g.addColorStop(1, 'rgba(60,120,255,0)');
+              fx.fillStyle = g; fx.beginPath(); fx.arc(tx, ty, cr * 2.6, 0, Math.PI * 2); fx.fill();
+            }
+          });
+
+          // --- what it leaves: a hole punched clean through, and everything around it torn ---
+          later(140, () => {
+            ctx.save();
+            const g = ctx.createRadialGradient(tx, ty, 0, tx, ty, R_BURN);
+            g.addColorStop(0, 'rgba(2,3,7,0.9)');
+            g.addColorStop(0.45, 'rgba(6,8,14,0.62)');
+            g.addColorStop(0.8, 'rgba(12,14,22,0.3)');
+            g.addColorStop(1, 'rgba(12,14,22,0)');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(tx, ty, R_BURN, 0, Math.PI * 2); ctx.fill();
             ctx.restore();
-            drawImpact(tx, ty, rnd(1.8, 2.4), 2.0); // deep central crater throwing long fractures
-            // shrapnel gouges carved straight outward — the explosion's signature
-            const shards = Math.floor(rnd(20, 30));
+            for (let i = 0; i < 26; i++) { // soot banked around the bore
+              const a = rnd(0, Math.PI * 2), d = Math.pow(Math.random(), 0.5) * R_BURN;
+              sootPatch(tx + Math.cos(a) * d, ty + Math.sin(a) * d, rnd(24, 60), rnd(0.05, 0.14));
+            }
             let ga = rnd(0, Math.PI * 2);
-            for (let i = 0; i < shards; i++) {
-              ga += (Math.PI * 2 / shards) * rnd(0.5, 1.6); // uneven spread
-              gouge(tx + Math.cos(ga) * rnd(6, 14), ty + Math.sin(ga) * rnd(6, 14), ga, rnd(70, 200), rnd(0.9, 1.8));
+            for (let i = 0; i < 34; i++) { // the surface dragged outward off the hole
+              ga += (Math.PI * 2 / 34) * rnd(0.5, 1.6);
+              gouge(tx + Math.cos(ga) * R_BURN * 0.5, ty + Math.sin(ga) * R_BURN * 0.5, ga, rnd(120, 420), rnd(1.2, 2.6));
             }
-            // a blackened crater mouth seated over the impact hole
-            ctx.save(); ctx.beginPath();
-            const sides = Math.floor(rnd(9, 13));
-            for (let i = 0; i < sides; i++) {
-              const ha = (i / sides) * Math.PI * 2 + rnd(-0.25, 0.25), hr = rnd(8, 16);
-              const px = tx + Math.cos(ha) * hr, py = ty + Math.sin(ha) * hr;
-              i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            for (let i = 0; i < 16; i++) { // the rim giving way
+              const a = (i / 16) * Math.PI * 2 + rnd(-0.1, 0.1), d = R_BURN * rnd(0.85, 1.15);
+              const qx = tx + Math.cos(a) * d, qy = ty + Math.sin(a) * d;
+              if (qx < -40 || qy < -40 || qx > window.innerWidth + 40 || qy > window.innerHeight + 40) continue;
+              drawImpact(qx, qy, rnd(1.1, 1.9), 2.2);
             }
-            ctx.closePath(); ctx.fillStyle = 'rgba(0,0,0,0.92)'; ctx.fill();
-            ctx.strokeStyle = 'rgba(200,205,214,0.5)'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
-            // AoE: damage the centre plus a ring of offset points so adjacent sections take splash
-            damageAt(tx, ty, 26);
-            for (let i = 0; i < 6; i++) {
-              const ang = (i / 6) * Math.PI * 2;
-              damageAt(tx + Math.cos(ang) * 90, ty + Math.sin(ang) * 90, 9);
+          });
+
+          // --- one shot, and everything near the bore goes with it, nearest first ---
+          sections.filter(s => !s.dead).map(s => {
+            const r = s.el.getBoundingClientRect();
+            const gx = Math.max(r.left - tx, 0, tx - r.right), gy = Math.max(r.top - ty, 0, ty - r.bottom);
+            return { s, d: Math.hypot(gx, gy) }; // nearest point of the box to the bore
+          }).filter(o => o.d < R_KILL).sort((a, b) => a.d - b.d)
+            .forEach((o, i) => later(180 + i * 130, () => { if (!o.s.dead) { o.s.hp = 0; collapseSection(o.s); } }));
+
+          for (let i = 0; i < 26; i++) { // the wound smoking afterwards
+            const a = rnd(0, Math.PI * 2), d = Math.pow(Math.random(), 0.6) * R_BURN;
+            const qx = tx + Math.cos(a) * d, qy = ty + Math.sin(a) * d;
+            later(rnd(200, 1400), () => puff(qx, qy, rnd(14, 34), rnd(1.4, 2.8), rnd(-30, 30), -rnd(20, 70), rnd(0.08, 0.18), 0.2));
+          }
+        };
+        // Release. The cannon fires only at a full charge: anything less is vented, because
+        // a shot that big is all-or-nothing. Firing empties the reserve for SHOCK_RELOAD.
+        const releaseCharge = (shoot) => {
+          if (!shockFx) return;
+          const c = shockCharge();
+          shockFx.age = shockFx.ttl + 1; // let the FX loop drop it on the next frame
+          shockFx = null;
+          if (!shoot) return;
+          if (c < 1) {
+            for (let i = 0; i < 16; i++) { const a = rnd(0, Math.PI * 2); ember(lastX, lastY, Math.cos(a) * rnd(60, 280), Math.sin(a) * rnd(60, 280), true); }
+            printToTerminal(tr(`<div class="text-xs my-1 text-secondary">Charge vented at ${Math.round(c * 120)}% — the shock cannon will not fire short.</div>`,
+              `<div class="text-xs my-1 text-secondary">充填 ${Math.round(c * 120)}% で放電 — 未充填では発射できません。</div>`));
+            return;
+          }
+          shockReadyAt = performance.now() + SHOCK_RELOAD; // one discharge empties the reserve
+          renderArsenal();
+          fireShock(lastX, lastY);
+        };
+        // --- Nano repair --------------------------------------------------------------
+        // The one weapon that runs the machine backwards: it erases damage from the glass
+        // (destination-out with a soft edge, so cracks fade out rather than being punched
+        // out) and pours HP back in. Hold it over a collapsed section's footprint and the
+        // section flies home.
+        const mote = (x, y, tx, ty, blue) => emit({
+          x, y, tx, ty, blue, px: x, py: y, ttl: rnd(0.26, 0.46), add: true, w: rnd(0.7, 1.6),
+          step(p, dt) {
+            p.px = p.x; p.py = p.y;
+            const e = 0.3 + Math.pow(p.age / p.ttl, 2); // accelerates as it closes in
+            p.x += (p.tx - p.x) * Math.min(1, 9 * dt * e);
+            p.y += (p.ty - p.y) * Math.min(1, 9 * dt * e);
+          },
+          draw(p, k) {
+            fx.strokeStyle = p.blue
+              ? `rgba(${Math.round(180 - 30 * k)},${Math.round(215 - 20 * k)},255,${0.8 * (1 - k * 0.4)})`
+              : `rgba(${Math.round(150 - 40 * k)},${Math.round(240 - 10 * k)},210,${0.8 * (1 - k * 0.4)})`;
+            fx.lineWidth = p.w; fx.lineCap = 'round';
+            fx.beginPath(); fx.moveTo(p.px, p.py); fx.lineTo(p.x, p.y); fx.stroke();
+          }
+        });
+        // A ring that closes inward — the blast's shock front played backwards.
+        const healRing = (x, y) => ringFx(x, y, 66, 4, 0.5, 1.2, 1, k => `rgba(120,240,200,${0.32 * (1 - k)})`);
+        const mend = (x, y) => {
+          ctx.save(); // lift the damage off the glass, softly, so it heals rather than cuts
+          ctx.globalCompositeOperation = 'destination-out';
+          const R = 46, g = ctx.createRadialGradient(x, y, 0, x, y, R);
+          g.addColorStop(0, 'rgba(0,0,0,0.34)'); g.addColorStop(0.6, 'rgba(0,0,0,0.13)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          healAt(x, y, 3);
+          for (let i = 0; i < 3; i++) { // nanites drawn in out of the surrounding damage
+            const a = rnd(0, Math.PI * 2), d = rnd(40, 115);
+            mote(x + Math.cos(a) * d, y + Math.sin(a) * d, x + rnd(-6, 6), y + rnd(-6, 6));
+          }
+          if (Math.random() > 0.72) healRing(x, y);
+        };
+        // --- Hammer -------------------------------------------------------------------
+        // The melee piece: no projectile, no beam, and nothing drawn swinging — the blow
+        // simply lands. The signature is BLUNT: glass is ground to white powder and crazed
+        // with tight concentric rings rather than punched through, and chips of it break
+        // loose and fall. Slow, too — heavy single hits, never a stream.
+        // A chip of glass knocked out of the surface, tumbling as it falls away.
+        const chip = (x, y, vx, vy) => {
+          const r = rnd(2.5, 7), a0 = rnd(0, Math.PI * 2);
+          const pts = [0, 1, 2].map(i => { // a lopsided triangle: at this size, nothing else reads
+            const a = a0 + i * 2.1 + rnd(-0.4, 0.4), rr = r * rnd(0.6, 1.2);
+            return [Math.cos(a) * rr, Math.sin(a) * rr];
+          });
+          return tumble(x, y, vx, vy, rnd(0.7, 1.5), 1500, (p, k) => {
+            const al = 1 - k * k;
+            fx.save(); fx.translate(p.x, p.y); fx.rotate(p.rot);
+            fx.beginPath();
+            pts.forEach((q, i) => i === 0 ? fx.moveTo(q[0], q[1]) : fx.lineTo(q[0], q[1]));
+            fx.closePath();
+            fx.fillStyle = `rgba(16,18,24,${0.65 * al})`; fx.fill();
+            fx.strokeStyle = `rgba(225,232,245,${(0.35 + 0.45 * Math.abs(Math.cos(p.rot))) * al})`; // glinting as it turns
+            fx.lineWidth = 0.7; fx.stroke();
+            fx.restore();
+          });
+        };
+        let hammerNext = 0;
+        const hammerHit = (x, y) => {
+          // Heavy: the head still has to be hauled back up, so click-spam cannot outrun it.
+          if (performance.now() < hammerNext) return;
+          hammerNext = performance.now() + cadence(240);
+          recoil(x, y, 2, false);
+          kick(1.1, true); // the heaviest single hit in the arsenal
+          shockRing(x, y, 130, 0.26, 2.2, 0.26);
+          drawImpact(x, y, rnd(1.5, 2.1), 1.7); // the long radial fractures, as any hard hit throws
+
+          // Blunt force crazes glass in CONCENTRIC rings — tighter and far denser than the
+          // sparse web a bullet leaves, and the giveaway that this was struck, not shot.
+          ctx.save(); ctx.lineCap = 'round';
+          for (let r = 1; r <= 5; r++) {
+            const rr = 14 + r * rnd(13, 22), seg = 22 + r * 4;
+            let prev = null;
+            for (let i = 0; i <= seg; i++) {
+              const a = (i / seg) * Math.PI * 2, d = rr * rnd(0.86, 1.14);
+              const cur = [x + Math.cos(a) * d, y + Math.sin(a) * d];
+              if (prev && Math.random() > 0.12) stroke(prev[0], prev[1], cur[0], cur[1], rnd(0.3, 0.8), 0.34 - r * 0.04);
+              prev = cur;
             }
-          }, 420);
+          }
+          ctx.restore();
+
+          // The pulverised core: powdered glass catching the light. Painted OVER the dark
+          // hole the impact left, so the crush reads as white grit with depth beneath it.
+          ctx.save();
+          const R = rnd(17, 26);
+          const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+          g.addColorStop(0, 'rgba(238,242,250,0.7)');
+          g.addColorStop(0.6, 'rgba(225,232,245,0.32)');
+          g.addColorStop(1, 'rgba(225,232,245,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+          for (let i = 0; i < 70; i++) {
+            const a = rnd(0, Math.PI * 2), d = Math.pow(Math.random(), 0.6) * R * 1.15;
+            ctx.fillStyle = `rgba(240,244,252,${rnd(0.15, 0.7)})`;
+            ctx.beginPath(); ctx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, rnd(0.4, 1.5), 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.restore();
+
+          for (let i = 0; i < 16; i++) { // chips knocked loose, thrown up and out
+            const a = rnd(0, Math.PI * 2), sp = rnd(60, 340);
+            chip(x + rnd(-10, 10), y + rnd(-10, 10), Math.cos(a) * sp, Math.sin(a) * sp - rnd(80, 260));
+          }
+          for (let i = 0; i < 5; i++) { // the dust the crushing throws up
+            const a = rnd(0, Math.PI * 2);
+            puff(x + Math.cos(a) * rnd(0, 20), y + Math.sin(a) * rnd(0, 20), rnd(10, 20), rnd(0.7, 1.4),
+              Math.cos(a) * rnd(60, 150), Math.sin(a) * rnd(40, 110), rnd(0.1, 0.2), 0);
+          }
+          damageAt(x, y, 45); // one section, hit hard — no splash, all of it lands where it fell
         };
         const onDown = (e) => {
           if (multiTouch) return; // a two-finger scroll is in progress — don't fire
@@ -4825,8 +5521,9 @@
             holdTimer = setInterval(() => fireMG(lastX, lastY), cadence(70)); // rapid-fire while held (BPM-synced)
           } else if (w === 'sg') {
             fireShotgun(lastX, lastY);
-          } else if (w === 'sniper') {
-            fireSniper(lastX, lastY);
+          } else if (w === 'hammer') {
+            hammerHit(lastX, lastY);
+            holdTimer = setInterval(() => hammerHit(lastX, lastY), cadence(700)); // slow, heavy repeats
           } else if (w === 'flame') {
             flame(lastX, lastY);
             holdTimer = setInterval(() => flame(lastX, lastY), cadence(45)); // continuous spray (BPM-synced)
@@ -4834,11 +5531,20 @@
             scratching = true; slx = lastX; sly = lastY;
           } else if (w === 'grenade') {
             fireGrenade(lastX, lastY);
+          } else if (w === 'shock') {
+            startCharge(); // only ever fires on release, and only at a full charge
+          } else if (w === 'repair') {
+            mend(lastX, lastY);
+            holdTimer = setInterval(() => mend(lastX, lastY), cadence(60)); // continuous mend (BPM-synced)
           }
         };
         const onMove = (e) => {
           if (multiTouch) return; // two-finger scroll is handled by the touch listeners below
-          if (holdTimer) { lastX = e.clientX; lastY = e.clientY; }
+          if (holdTimer || shockFx) { // a held charge (and the flame jet) tracks the cursor
+            const dx = e.clientX - lastX, dy = e.clientY - lastY, l = Math.hypot(dx, dy);
+            if (l > 0.5) { aimDX = dx / l; aimDY = dy / l; }
+            lastX = e.clientX; lastY = e.clientY;
+          }
           if (scratching) { const nx = e.clientX, ny = e.clientY; scratchSeg(slx, sly, nx, ny); slx = nx; sly = ny; }
         };
         // Multi-touch scroll, driven by TouchEvent.touches (the authoritative finger count).
@@ -4846,6 +5552,7 @@
           if (e.touches.length >= 2) {
             multiTouch = true;
             if (holdTimer) { clearInterval(holdTimer); holdTimer = null; } // stop any fire that the 1st finger began
+            releaseCharge(false); // a second finger means 'scroll', not 'shoot'
             scratching = false;
             const c = touchCentroid(e.touches); panX = c.x; panY = c.y;
           }
@@ -4868,8 +5575,13 @@
         };
         const stop = () => {
           if (holdTimer) { clearInterval(holdTimer); holdTimer = null; }
+          mgClimb = 0; // let go and the muzzle settles back down
           if (scratching) { scratching = false; }
         };
+        // Lifting the pointer fires the shock cannon; a cancelled pointer (or a ceasefire, which
+        // calls stop() on its own) throws the charge away instead.
+        const onUp = () => { releaseCharge(true); stop(); };
+        const onCancel = () => { releaseCharge(false); stop(); };
         const onKey = (e) => {
           if (e.key === 'Escape' && rampageTeardown) {
             rampageTeardown();
@@ -4878,37 +5590,40 @@
           }
         };
         const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
-        document.addEventListener('pointerdown', onDown, true);
-        document.addEventListener('pointermove', onMove, true);
-        document.addEventListener('pointerup', stop, true);
-        document.addEventListener('pointercancel', stop, true);
-        document.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
-        document.addEventListener('touchmove', onTouchMove, { capture: true, passive: false }); // passive:false → preventDefault works
-        document.addEventListener('touchend', onTouchEnd, true);
-        document.addEventListener('touchcancel', onTouchEnd, true);
-        window.addEventListener('keydown', onKey, true);
-        window.addEventListener('resize', repositionBars);
+        // Registered from a table, so a ceasefire cannot drift out of sync with setup —
+        // the same list is walked in reverse to tear it all down.
+        const LISTENERS = [
+          [document, 'pointerdown', onDown, true],
+          [document, 'pointermove', onMove, true],
+          [document, 'pointerup', onUp, true],
+          [document, 'pointercancel', onCancel, true],
+          [document, 'touchstart', onTouchStart, { capture: true, passive: true }],
+          [document, 'touchmove', onTouchMove, { capture: true, passive: false }], // passive:false → preventDefault works
+          [document, 'touchend', onTouchEnd, true],
+          [document, 'touchcancel', onTouchEnd, true],
+          [window, 'keydown', onKey, true],
+          [window, 'resize', resize],
+          [window, 'resize', repositionBars]
+        ];
+        LISTENERS.forEach(([t, ev, fn, o]) => t.addEventListener(ev, fn, o));
 
         rampageTeardown = () => {
+          releaseCharge(false); // a ceasefire mid-charge must not let one last shot off
           stop();
           rampageIntervals.forEach(clearInterval);
-          document.removeEventListener('pointerdown', onDown, true);
-          document.removeEventListener('pointermove', onMove, true);
-          document.removeEventListener('pointerup', stop, true);
-          document.removeEventListener('pointercancel', stop, true);
-          document.removeEventListener('touchstart', onTouchStart, { capture: true });
-          document.removeEventListener('touchmove', onTouchMove, { capture: true });
-          document.removeEventListener('touchend', onTouchEnd, true);
-          document.removeEventListener('touchcancel', onTouchEnd, true);
-          window.removeEventListener('keydown', onKey, true);
-          window.removeEventListener('resize', resize);
-          window.removeEventListener('resize', repositionBars);
+          rampageTimers.forEach(clearTimeout);
+          if (fxRaf != null) { cancelAnimationFrame(fxRaf); fxRaf = null; }
+          parts.length = 0;
+          LISTENERS.forEach(([t, ev, fn, o]) => t.removeEventListener(ev, fn, o));
           canvas.remove();
+          fxc.remove();
           sections.forEach(s => { if (s.bar) s.bar.remove(); });
           // heal: fly collapsed sections back into place (same vars `meltdown`/`rebuild` use)
           flownEls.forEach(el => { el.classList.remove('meltdown-element', 'rebuilding-element'); clearTransformVars(el); });
           strippedEls.forEach(el => el.classList.remove('rampage-stripped'));
-          document.body.classList.remove('rampage-active', 'rampage-shake', 'rampage-shake-hard');
+          document.body.classList.remove('rampage-active', 'rampage-shake', 'rampage-shake-hard', 'rampage-shake-blast');
+          document.body.style.removeProperty('--kick');
+          sections.forEach(sec => sec.el.classList.remove('rampage-mended'));
           isRampageActive = false; rampageTeardown = null; rampageSetWeapon = null; rampageWeaponKey = null;
           // Hide the Arsenal icon and leave its view if it was open.
           document.getElementById('act-arsenal').classList.add('hidden');
@@ -4919,8 +5634,8 @@
           }
         };
 
-        return tr(`<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire (drag to scratch with the coin). <b>Two-finger swipe scrolls</b> the page. Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · sniper · grenade · flame · coin. Each screen section has HP — drain it to <b>0</b> and the section collapses. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`,
-          `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE モード: 装備 &nbsp;·&nbsp; ${WEAPONS[wIdx].label_ja}<br><span class="text-secondary" style="font-weight:normal;">クリック / タップ / 長押しで発射（コインはドラッグでスクラッチ）。<b>2本指スワイプ</b>でページをスクロール。武器の切替: 左のアクティビティバーの<b>ターゲットアイコン</b>（拡張機能の下）を開いて<b>アーセナル</b>から選ぶか、<b>rampage &lt;name&gt;</b> を実行 — mg · shotgun · sniper · grenade · flame · coin。各セクションにはHPがあり、<b>0</b>にするとそのセクションが崩壊します。もう一度 'rampage' か ESC で停戦（すべて修復）。</span></div>`);
+        return tr(`<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire — drag to scratch with the coin, the <b>hammer</b> lands one heavy swing at a time, the <b>shock cannon</b> must be <b>held until its charge reads 120%</b> — release early and it vents — hold nano repair over damage to mend it. <b>Two-finger swipe scrolls</b> the page. Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · grenade · flame · hammer · coin · shock · repair. Each screen section has HP — drain it to <b>0</b> and the section collapses; the <b>shock cannon</b> runs off a reserve that has to fill before it will fire, and one discharge — fired straight ahead, taking out everything around the point you aimed at — empties it again; <b>nano repair</b> puts HP back, and holding it over a collapsed section brings that section home. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`,
+          `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE モード: 装備 &nbsp;·&nbsp; ${WEAPONS[wIdx].label_ja}<br><span class="text-secondary" style="font-weight:normal;">クリック / タップ / 長押しで発射 — コインはドラッグでスクラッチ、<b>ハンマー</b>は一撃ずつ重く振り下ろし、<b>ショックカノン</b>は<b>充填120%まで長押し</b>（途中で離すと放電して不発）、ナノリペアは傷の上で長押しして修復。<b>2本指スワイプ</b>でページをスクロール。武器の切替: 左のアクティビティバーの<b>ターゲットアイコン</b>（拡張機能の下）を開いて<b>アーセナル</b>から選ぶか、<b>rampage &lt;name&gt;</b> を実行 — mg · shotgun · grenade · flame · hammer · coin · shock · repair。各セクションにはHPがあり、<b>0</b>にするとそのセクションが崩壊します。<b>ショックカノン</b>はエネルギーが充填されるまで撃てず、一射（正面へ発射し、狙点の周囲を消し飛ばす）ごとに空になります。<b>ナノリペア</b>はHPを回復し、崩壊したセクションの跡地で長押しすると元に戻せます。もう一度 'rampage' か ESC で停戦（すべて修復）。</span></div>`);
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
@@ -5474,9 +6189,16 @@
           `<div class="px-1 py-2 text-[11px] text-secondary opacity-70 leading-relaxed">進行中のランページはありません。<br><span class="text-normal font-bold">rampage</span> を実行して武器を装備しよう。</div>`);
         return;
       }
+      const wait = Math.ceil((shockReadyAt - performance.now()) / 1000);
       list.innerHTML = RAMPAGE_WEAPONS.map(w => {
         const on = w.key === rampageWeaponKey;
-        return `<button type="button" class="arsenal-item${on ? ' active' : ''}" data-weapon="${esc(w.key)}" aria-pressed="${on}"><span>${esc(tr(w.label, w.label_ja))}</span></button>`;
+        // the shock cannon is the one weapon that is not always available: show its reserve
+        // a bare countdown, not a word: the row is too narrow to take one without wrapping
+        const tag = w.key !== 'shock' ? ''
+          : wait > 0
+            ? `<span style="margin-left:auto;font-size:10px;opacity:0.6;">${wait}s</span>`
+            : `<span style="margin-left:auto;font-size:10px;color:#4eb85a;">${tr('READY', '充填完了')}</span>`;
+        return `<button type="button" class="arsenal-item${on ? ' active' : ''}" data-weapon="${esc(w.key)}" aria-pressed="${on}"><span style="white-space:nowrap;">${esc(tr(w.label, w.label_ja))}</span>${tag}</button>`;
       }).join('');
     }
     const showSidebarView = (name) => SIDEBAR_VIEWS.forEach(v => document.getElementById('view-' + v).classList.toggle('hidden', v !== name));
