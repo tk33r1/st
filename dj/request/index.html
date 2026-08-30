@@ -1647,8 +1647,24 @@
     const mine = () => { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch { return []; } };
     const remember = (id) => { try { localStorage.setItem(MINE_KEY, JSON.stringify([...new Set([...mine(), id])])); } catch {} };
 
+    /* この端末を見分ける鍵。連打の抑止と「この曲はもう自分が送ったか」の判定に使う。
+       会場の Wi-Fi では全員の IP が同じに見えるので、IP ではこれができない。
+       localStorage が使えないときは空のまま送り、サーバ側で使い捨ての値になる。 */
+    const DEVICE_KEY = 'tkdj.device';
+    const deviceKey = (() => {
+      try {
+        let v = localStorage.getItem(DEVICE_KEY);
+        if (!v) {
+          v = [...crypto.getRandomValues(new Uint8Array(16))]
+            .map((n) => n.toString(16).padStart(2, '0')).join('');
+          localStorage.setItem(DEVICE_KEY, v);
+        }
+        return v;
+      } catch { return ''; }
+    })();
+
     /* あとで自分の投稿を直す／取り下げるための鍵。サーバはこれでしか本人と認めない。
-       会場の Wi-Fi では全員の IP が同じに見えるので、IP は本人確認に使えない。 */
+       クエリには載せない（アクセスログや Referer に残るため）。 */
     const TOKEN_KEY = 'tkdj.tokens';
     const tokens = () => { try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || '{}'); } catch { return {}; } };
     const tokenOf = (id) => tokens()[id] || '';
@@ -1656,6 +1672,7 @@
       if (!token) return;
       try { const m = tokens(); m[id] = token; localStorage.setItem(TOKEN_KEY, JSON.stringify(m)); } catch {}
     };
+    const authHeader = (token) => (token ? { Authorization: 'Bearer ' + token } : {});
     const forgetSong = (id) => {
       try {
         localStorage.setItem(MINE_KEY, JSON.stringify(mine().filter((x) => x !== id)));
@@ -1686,7 +1703,7 @@
         const res = await fetch(API + '/requests', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, device: deviceKey }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -1851,7 +1868,10 @@
 
       const note = !detail.mine
         ? 'ひとことの変更や取り下げは、リクエストを送信したブラウザからのみ行えます。'
-        : (detail.editable ? '' : 'DJ がすでに確認しているため、変更・取り下げはできません。');
+        : detail.editable ? ''
+        : detail.lock === 'closed'
+          ? 'この回の受付は終了しているため、変更・取り下げはできません。'
+          : 'DJ がすでに確認しているため、変更・取り下げはできません。';
       $('#songNote').textContent = note;
       $('#songNote').hidden = !note;
     }
@@ -1867,7 +1887,7 @@
       show('song');
       try {
         const token = tokenOf(id);
-        const res = await fetch(API + '/songs/' + id + (token ? '?token=' + encodeURIComponent(token) : ''));
+        const res = await fetch(API + '/songs/' + id, { headers: authHeader(token) });
         const d = await res.json();
         if (!res.ok) throw new Error(d.message || '');
         detail = d;
@@ -1886,28 +1906,37 @@
 
     bindCount($('#mineMsg'), $('#mineMsgCount'), 140);
 
+    /* ラベルは最初の文言を覚えておく。btn.textContent から取ると、「変更しました」の
+       表示中にもう一度押されたときにそれを平常時のラベルとして固定してしまう。 */
+    const SAVE_LABEL = $('#mineSave').textContent;
+    let saveTimer = 0;
+
     $('#mineSave').addEventListener('click', async () => {
       const btn = $('#mineSave');
       const err = $('#mineErr');
       btn.disabled = true;
-      const label = btn.textContent;
+      clearTimeout(saveTimer);
       btn.textContent = '送信中…';
       err.hidden = true;
       try {
         const res = await fetch(API + '/songs/' + detail.song.id + '/mine', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeader(tokenOf(detail.song.id)) },
           body: JSON.stringify({
-            token: tokenOf(detail.song.id),
             name: $('#mineName').value,
             message: $('#mineMsg').value,
           }),
         });
         const d = await res.json();
         if (!res.ok) {
-          // DJ が動かしたあとなら編集欄ごと畳む。理由は #songNote が出す
-          // （エラー欄は編集欄の中なので、畳んだあとでは読めない）
-          if (res.status === 409) { detail.editable = false; renderSong(); return; }
+          // DJ が動かしたあと・受付が終わったあとなら編集欄ごと畳む。理由は
+          // #songNote が出す（エラー欄は編集欄の中なので、畳んだあとでは読めない）
+          if (res.status === 409) {
+            detail.editable = false;
+            detail.lock = d.error === 'closed' ? 'closed' : 'moved';
+            renderSong();
+            return;
+          }
           err.textContent = d.message || '変更できませんでした。もう一度お試しください。';
           err.hidden = false;
           return;
@@ -1917,14 +1946,14 @@
         $('#mineName').value = d.mine.name;
         $('#mineMsgCount').textContent = d.mine.message.length + ' / 140';
         btn.textContent = '変更しました';
-        setTimeout(() => { btn.textContent = label; }, 1600);
+        saveTimer = setTimeout(() => { btn.textContent = SAVE_LABEL; }, 1600);
         return;
       } catch {
         err.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
         err.hidden = false;
       } finally {
         btn.disabled = false;
-        if (btn.textContent === '送信中…') btn.textContent = label;
+        if (btn.textContent === '送信中…') btn.textContent = SAVE_LABEL;
       }
     });
 
@@ -1937,12 +1966,16 @@
       try {
         const res = await fetch(API + '/songs/' + detail.song.id + '/mine', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: tokenOf(detail.song.id) }),
+          headers: authHeader(tokenOf(detail.song.id)),
         });
         const d = await res.json();
         if (!res.ok) {
-          if (res.status === 409) { detail.editable = false; renderSong(); return; }
+          if (res.status === 409) {
+            detail.editable = false;
+            detail.lock = d.error === 'closed' ? 'closed' : 'moved';
+            renderSong();
+            return;
+          }
           err.textContent = d.message || '取り下げられませんでした。もう一度お試しください。';
           err.hidden = false;
           return;

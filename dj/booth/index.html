@@ -85,6 +85,8 @@
       border-radius: 2px; padding: 7px 15px 7px 12px; font-size: 13.5px; font-weight: 600;
     }
     .accept .led { width: 9px; height: 9px; border-radius: 50%; }
+    /* .accept が display を指定しているので、hidden だけでは消えない */
+    .accept[hidden] { display: none; }
     .accept[data-on="true"] { color: var(--go); border-color: color-mix(in srgb, var(--go) 45%, var(--line)); }
     .accept[data-on="true"] .led { background: var(--go); box-shadow: 0 0 10px var(--go); }
     .accept[data-on="false"] { color: var(--faint); }
@@ -214,6 +216,25 @@
     /* 空表示はグリッドの1列目(15px)に入ると1文字ずつ折り返すので、行ごと通常フローに戻す */
     .rail li.blank { display: block; color: var(--faint); font-size: 12.5px; }
 
+
+    /* 暗いブースで狙って叩ける大きさを最優先。押した瞬間だけ枠が光る */
+    .tapbox { display: flex; flex-direction: column; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+    .tappad {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      border: 1px solid var(--line); border-radius: var(--r); background: var(--card);
+      padding: 13px 10px 11px; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    }
+    .tappad:hover { border-color: var(--accent-dim); }
+    .tappad.hit { border-color: var(--accent); background: var(--card-hi); }
+    .tappad .val { font-family: var(--mono); font-size: 29px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
+    .tappad .val.idle { color: var(--faint); }
+    .tappad .hint { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--faint); }
+    .taprow { display: flex; gap: 6px; }
+    .taprow .act { flex: 1; justify-content: center; padding: 6px 0; font-size: 12px; }
+    .act.wide { justify-content: center; }
+    .act[disabled] { opacity: .38; cursor: default; }
+    .act[disabled]:hover { background: none; color: var(--muted); border-color: var(--line); }
+    .taptgt { margin: 0; font-family: var(--mono); font-size: 10.5px; line-height: 1.5; color: var(--faint); }
     .trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .keys { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; gap: 20px; flex-wrap: wrap; font-family: var(--mono); font-size: 11.5px; color: var(--faint); }
@@ -745,6 +766,28 @@
       color: var(--fg-dim);
     }
 
+
+    /* ===== TAP BPM ===== */
+    .tapbox { border-bottom-color: var(--border); }
+
+    .tappad {
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    .tappad.hit {
+      background: var(--bg-elevated);
+      border-color: var(--heart-secondary);
+    }
+
+    .tappad .val { color: var(--heart-secondary); }
+    .tappad .val.idle { color: var(--fg-dim); }
+
+    .tappad .hint,
+    .taptgt {
+      font-family: var(--f-display);
+      color: var(--fg-dim);
+    }
     .keys {
       font-family: var(--f-display);
       font-size: 0.6875rem;
@@ -863,6 +906,7 @@
       </div>
       <div class="gauge" id="conn"><span class="dot"></span><span id="connTxt">接続中</span></div>
       <button class="accept" id="accept" data-on="true"><span class="led"></span><span id="acceptTxt">受付中</span></button>
+      <button class="accept" id="notify" data-on="false" aria-pressed="false" hidden><span class="led"></span><span id="notifyTxt">通知オフ</span></button>
       <button class="ghostbtn" id="newEvent">新しいイベントを開始</button>
     </header>
 
@@ -887,6 +931,20 @@
     <div class="grid">
       <section class="feed" id="feed"></section>
       <aside class="rail">
+        <section class="tapbox">
+          <h2>TAP BPM</h2>
+          <button type="button" class="tappad" id="tapPad">
+            <span class="val idle" id="tapVal">— — —</span>
+            <span class="hint" id="tapHint">叩く / <b class="kbd">T</b></span>
+          </button>
+          <div class="taprow">
+            <button type="button" class="act" id="tapHalf" disabled>÷2</button>
+            <button type="button" class="act" id="tapDouble" disabled>×2</button>
+            <button type="button" class="act" id="tapReset" disabled>やり直す</button>
+          </div>
+          <button type="button" class="act wide" id="tapApply" disabled>この曲に入れる</button>
+          <p class="taptgt" id="tapTgt">プレビュー中か選択中の曲に入ります</p>
+        </section>
         <h2>次にかける — 採用済</h2>
         <ol id="railList"></ol>
       </aside>
@@ -900,6 +958,7 @@
       <span><b class="kbd">2</b> 再生済</span>
       <span><b class="kbd">3</b> 見送り</span>
       <span><b class="kbd">Z</b> 取り消し</span>
+      <span><b class="kbd">T</b> BPMを叩いて測る</span>
     </div>
   </div>
 
@@ -991,6 +1050,7 @@
     let filter = 'pending', sort = 'new', sel = null, undoStack = null;
     let audio = null, playingId = null, audioTimer = null;
     let seen = new Set();
+    let votes = new Map();   // id -> 直近に見たリクエスト数（追加投票の検知用）
     const inflight = new Map();   // 書き込み中の id -> status
 
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
@@ -1011,11 +1071,13 @@
       // BPM とキーは取得できたときだけ出す。無い値を空欄で見せない。
       const chip = (v, cls) => v ? '<span class="spec' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span>' : '';
 
-      // 見比べて戸惑わないよう、ハーフタイム表記のときは倍も添える（effBpm 参照）。
-      const bpmChip = (raw) => {
-        if (!raw) return '';
-        const b = Math.round(raw);
-        return chip(b < 90 ? b + ' BPM (×2 ' + effBpm(raw) + ')' : b + ' BPM', 'hi');
+      /* 見比べて戸惑わないよう、ハーフタイム表記のときは倍も添える（effBpm 参照）。
+         タップで手入れした値だけは読み替えない。半分で取ったのが本人の判断のことがある。 */
+      const bpmChip = (s) => {
+        if (s.bpmTapped) return chip(s.bpm.toFixed(1) + ' BPM · TAP', 'hi');
+        if (!s.bpm) return '';
+        const b = Math.round(s.bpm);
+        return chip(b < 90 ? b + ' BPM (×2 ' + effBpm(s.bpm) + ')' : b + ' BPM', 'hi');
       };
       const specs = '<div class="specs">' +
         chip(mmss(s.durationMs)) +
@@ -1023,11 +1085,12 @@
         chip(s.releaseYear || '') +
         (s.explicitness === 'explicit' ? '<span class="spec ex">EXPLICIT</span>'
           : s.explicitness === 'cleaned' ? '<span class="spec">CLEAN</span>' : '') +
-        bpmChip(s.bpm) +
+        bpmChip(s) +
         chip([s.camelot, s.songKey].filter(Boolean).join(' · '), 'hi') +
         '</div>';
       const line = s.isFree
-        ? '<div class="flag">⚠ カタログ外 — 本人の自由入力</div>'
+        ? '<div class="flag">⚠ カタログ外 — 本人の自由入力</div>' +
+          (s.bpmTapped ? '<div class="specs">' + bpmChip(s) + '</div>' : '')
         : specs + '<div class="meta">' + esc(s.album) + ' · ' + esc(ago(s.createdAt)) + '</div>';
 
       const voices = (s.voices || []).filter((v) => v.message || v.name)
@@ -1068,7 +1131,7 @@
     };
     const SORTS = {
       genre: byKey((s) => s.genre, (x, y) => x.localeCompare(y, 'ja')),
-      bpm: byKey((s) => effBpm(s.bpm) || null, (x, y) => x - y),
+      bpm: byKey((s) => (s.bpmTapped ? s.bpm : effBpm(s.bpm)) || null, (x, y) => x - y),
       key: byKey(songKeyRank, (x, y) => x - y),
     };
 
@@ -1099,6 +1162,7 @@
 
       counts();
       songs.forEach((s) => { delete s.isNew; });
+      paintTap();
     }
 
     /* ── 通信 ─────────────────────────────── */
@@ -1111,16 +1175,27 @@
           $('#evCode').textContent = ev.code;
           $('#accept').dataset.on = String(!!ev.open);
           $('#acceptTxt').textContent = ev.open ? '受付中' : '停止中';
+          if (tapCode !== ev.code) { tapCode = ev.code; tapMap = tapLoad(ev.code); }
         }
-        // 前回の取得に無かった id を新着として光らせる
-        const prev = seen;
+        /* 前回の取得に無かった id を新着として光らせる。
+           既にある曲への追加投票（同じ曲をもう一人が送った）も
+           リクエストが1件入ったことに変わりはないので拾う。 */
+        const prev = seen, prevVotes = votes;
         seen = new Set(d.songs.map((s) => s.id));
-        if (!first) d.songs.forEach((s) => { if (!prev.has(s.id)) s.isNew = true; });
+        votes = new Map(d.songs.map((s) => [s.id, s.votes]));
+        const fresh = [], again = [];
+        if (!first) d.songs.forEach((s) => {
+          if (!prev.has(s.id)) { s.isNew = true; fresh.push(s); }
+          else if (s.status === 'pending' && s.votes > (prevVotes.get(s.id) ?? s.votes)) again.push(s);
+        });
         // 書き込み中の曲はサーバの古い値で上書きしない
         d.songs.forEach((s) => { if (inflight.has(s.id)) s.status = inflight.get(s.id); });
+        // タップで測った BPM も同じく手元を優先する（サーバは値を持っていない）
+        d.songs.forEach((s) => { if (tapMap.has(s.id)) { s.bpm = tapMap.get(s.id); s.bpmTapped = true; } });
         songs = d.songs;
         online(true);
         render();
+        announce(fresh, again);
       } catch {
         online(false);
       }
@@ -1274,6 +1349,10 @@
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
       if (e.target.closest && e.target.closest('.site-crumb')) return;
+      // パッドに触れている間は Space/Enter を素の打鍵として通す
+      if (e.target.closest && e.target.closest('.tapbox')) return;
+      // T はカードが1枚も無くても効くよう、一覧を見る前に処理する
+      if (e.key.toLowerCase() === 't') { e.preventDefault(); tap(); return; }
       const list = visible(); if (!list.length) return;
       let i = list.findIndex((s) => s.id === sel);
       const k = e.key.toLowerCase();
@@ -1311,6 +1390,185 @@
         if (e.key === 'Escape' && !note.hidden) { setOpen(false); btn.focus(); }
       });
     })();
+
+    /* ── 新着通知 ─────────────────────────
+       ブースは別画面に置きっぱなしになりがちで、カードの点灯とトーストだけでは
+       気づけない。権限はユーザー操作の中でしか要求できないので、
+       requestPermission はトグルの click からだけ呼ぶ。
+       手元でページを見ている間（フォーカスがある間）は画面上の演出で足りるので
+       通知は出さない。裏に回っている・別モニタにいるときだけ鳴る。 */
+    const NOTIFY_KEY = 'dj.booth.notify';
+    const canNotify = 'Notification' in window && typeof Notification.requestPermission === 'function';
+    let notifyOn = false;
+    let lastNotified = null;   // 通知をクリックしたときに開く曲
+
+    // プライベートモードなどで localStorage が投げても通知機能ごと落とさない
+    const remember = (v) => { try { localStorage.setItem(NOTIFY_KEY, v ? '1' : '0'); } catch {} };
+    const remembered = () => { try { return localStorage.getItem(NOTIFY_KEY) === '1'; } catch { return false; } };
+
+    function paintNotify() {
+      const b = $('#notify');
+      b.dataset.on = String(notifyOn);
+      b.setAttribute('aria-pressed', String(notifyOn));
+      $('#notifyTxt').textContent = notifyOn ? '通知オン' : '通知オフ';
+    }
+
+    /* tag を固定して差し替えにする。1曲ごとに積み上げると、
+       混んだ時間帯に通知センターが埋まって逆に読めなくなる。 */
+    function fire(title, body, icon) {
+      try {
+        const n = new Notification(title, {
+          body: body,
+          tag: 'dj-request',
+          renotify: true,
+          icon: icon || undefined,
+        });
+        n.onclick = () => { window.focus(); openPending(lastNotified); n.close(); };
+        setTimeout(() => n.close(), 20000);
+      } catch { /* 環境によっては new Notification 自体が投げる */ }
+    }
+
+    function openPending(id) {
+      const tab = $('.tab[data-f="pending"]');
+      if (tab) tab.click();          // filter の切り替えとタブの見た目をまとめて任せる
+      if (id == null) return;
+      sel = id; render();
+      const el = $('.card.sel'); if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+
+    const songLabel = (s) => (s.artist ? s.artist + ' — ' : '') + s.title;
+
+    function announce(fresh, again) {
+      if (!notifyOn) return;
+      if (Notification.permission !== 'granted') {   // 設定から後で取り消されることがある
+        notifyOn = false; remember(false); paintNotify(); return;
+      }
+      if (document.hasFocus()) return;
+      const all = fresh.concat(again);
+      if (!all.length) return;
+
+      lastNotified = all[0].id;
+      const title = all.length > 1 ? all.length + '件の新しいリクエスト'
+        : fresh.length ? '新しいリクエスト' : '同じ曲にもう1票';
+      const body = all.length > 1
+        ? all.slice(0, 3).map(songLabel).join('\n') + (all.length > 3 ? '\nほか' + (all.length - 3) + '件' : '')
+        : songLabel(all[0]);
+      fire(title, body, all[0].artwork);
+    }
+
+    if (canNotify) {
+      $('#notify').hidden = false;
+      notifyOn = remembered() && Notification.permission === 'granted';
+      paintNotify();
+      $('#notify').addEventListener('click', async () => {
+        if (notifyOn) {
+          notifyOn = false; remember(false); paintNotify();
+          toast('新着リクエストの通知を切りました');
+          return;
+        }
+        let perm = Notification.permission;
+        if (perm === 'default') {
+          try { perm = await Notification.requestPermission(); } catch { perm = 'denied'; }
+        }
+        if (perm !== 'granted') {
+          toast('ブラウザ側で通知がブロックされています。アドレスバーの錠アイコンから許可してください');
+          return;
+        }
+        notifyOn = true; remember(true); paintNotify();
+        toast('新着リクエストを通知します（このページを見ている間は出ません）');
+        lastNotified = null;
+        fire('通知をオンにしました', '新しいリクエストが届くとここに出ます');
+      });
+    }
+
+    /* ── タップBPM ─────────────────────────
+       GetSongBPM が値を返さない曲は珍しくない。プレビューを鳴らしながら
+       T を叩けば、繋げるかどうかの当たりは付く。
+       打った間隔の単純平均。直近 TAP_WINDOW 打だけ見て、
+       走り出しのばらつきが最後まで残らないようにする。 */
+    const TAP_KEY = 'dj.booth.tapbpm';
+    const TAP_GAP = 2500;    // これだけ空いたら別の曲として測り直す
+    const TAP_WINDOW = 12;   // 平均に使う打数の上限
+
+    let taps = [];           // 現在の計測のタップ時刻
+    let tapMul = 1;          // ÷2 / ×2 の倍率
+    let tapMap = new Map();  // id -> 手で入れた BPM。5秒ポーリングの上書きから守る
+    let tapCode = null;      // 保存を紐づけるイベントコード
+
+    // イベントが変われば前回の実測値は無関係になるので、コードごと持って捨てる
+    function tapLoad(code) {
+      try {
+        const d = JSON.parse(localStorage.getItem(TAP_KEY) || 'null');
+        if (!d || d.code !== code) { localStorage.removeItem(TAP_KEY); return new Map(); }
+        return new Map(Object.keys(d.map).map((k) => [Number(k), d.map[k]]));
+      } catch { return new Map(); }
+    }
+    function tapSave() {
+      try {
+        localStorage.setItem(TAP_KEY, JSON.stringify({ code: tapCode, map: Object.fromEntries(tapMap) }));
+      } catch {}
+    }
+
+    /* 端から端までの経過を打数で割る。1打ごとの差を平均するのと同値だが、
+       手が滑って1打ずれても効きが薄い。 */
+    function tapValue() {
+      if (taps.length < 2) return null;
+      const w = taps.slice(-TAP_WINDOW);
+      const span = w[w.length - 1] - w[0];
+      if (span <= 0) return null;
+      return 60000 * (w.length - 1) / span * tapMul;
+    }
+
+    const tapSong = () => {
+      const id = playingId != null ? playingId : sel;
+      return id == null ? null : songs.find((s) => s.id === id) || null;
+    };
+
+    function paintTap() {
+      const v = tapValue(), s = tapSong();
+      $('#tapVal').textContent = v ? v.toFixed(1) : '— — —';
+      $('#tapVal').classList.toggle('idle', !v);
+      $('#tapHint').textContent = v ? taps.length + ' 打 · 叩くほど落ち着きます' : '叩く / T';
+      ['#tapHalf', '#tapDouble', '#tapReset'].forEach((q) => { $(q).disabled = !v; });
+      $('#tapApply').disabled = !v || !s;
+      $('#tapTgt').textContent = s
+        ? (playingId != null ? '▶ ' : '→ ') + (s.artist ? s.artist + ' — ' : '') + s.title
+        : 'プレビュー中か選択中の曲に入ります';
+    }
+
+    function tap() {
+      const now = performance.now();
+      if (taps.length && now - taps[taps.length - 1] > TAP_GAP) { taps = []; tapMul = 1; }
+      taps.push(now);
+      const pad = $('#tapPad');
+      pad.classList.add('hit');
+      clearTimeout(tap._t);
+      tap._t = setTimeout(() => pad.classList.remove('hit'), 90);
+      paintTap();
+    }
+
+    function tapApply() {
+      const v = tapValue(), s = tapSong();
+      if (!v || !s) return;
+      const bpm = Math.round(v * 10) / 10;
+      tapMap.set(s.id, bpm);
+      s.bpm = bpm; s.bpmTapped = true;
+      tapSave();
+      render();
+      toast('「' + s.title + '」に ' + bpm.toFixed(1) + ' BPM を入れました', () => {
+        tapMap.delete(s.id);
+        tapSave();
+        load(false);          // サーバが持っている値に戻す
+        toast('取り消しました');
+      });
+    }
+
+    $('#tapPad').addEventListener('click', tap);
+    $('#tapHalf').addEventListener('click', () => { tapMul /= 2; paintTap(); });
+    $('#tapDouble').addEventListener('click', () => { tapMul *= 2; paintTap(); });
+    $('#tapReset').addEventListener('click', () => { taps = []; tapMul = 1; paintTap(); });
+    $('#tapApply').addEventListener('click', tapApply);
+    paintTap();
 
     /* ── 起動 ─────────────────────────────── */
     load(true);
