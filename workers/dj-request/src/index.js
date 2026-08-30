@@ -2,9 +2,12 @@
  * 曲リクエスト受付 Worker  —  tk.st/dj/api/req/*
  *
  * 公開API（Origin 制限のみ）
- *   GET  /dj/api/req/event      いま受付中のイベント
- *   POST /dj/api/req/requests   リクエスト投稿
- *   GET  /dj/api/req/board      みんなのリクエスト（再生済かどうかだけ見せる）
+ *   GET    /dj/api/req/event           いま受付中のイベント
+ *   POST   /dj/api/req/requests        リクエスト投稿
+ *   GET    /dj/api/req/board           みんなのリクエスト（再生済かどうかだけ見せる）
+ *   GET    /dj/api/req/songs/:id       曲の詳細（?token= を添えると自分の投稿も返る）
+ *   PATCH  /dj/api/req/songs/:id/mine  自分の投稿のひとこと・名前を直す
+ *   DELETE /dj/api/req/songs/:id/mine  自分の投稿を取り下げる
  *
  * ブースAPI（鍵なしの公開。ページをどこからもリンクしないことで運用上隠す）
  *   GET   /dj/api/req/admin/songs        全件（ひとこと・内部ステータス込み）
@@ -17,6 +20,10 @@
  *
  * ひとことは /board では返さないが /admin/songs では返る。鍵が無い以上これは
  * 実質公開情報なので、来場者ページの文言もそれに合わせてある。
+ *
+ * 投稿の修正・取り下げは edit_token でしか通さない。ip_hash は本人確認に使えない
+ * （会場の Wi-Fi では全員が同じ IP に見える）。また DJ が採用・見送り・再生済の
+ * どれかに動かした曲は触らせない。並べ替えたあとで足元の内容が変わると困るため。
  */
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
@@ -32,7 +39,7 @@ function corsHeaders(origin) {
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allow,
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Vary': 'Origin',
   };
@@ -72,6 +79,12 @@ async function hashIp(ip, eventCode, salt) {
   const data = new TextEncoder().encode(`${salt || 'tk.st'}|${eventCode}|${ip}`);
   const buf = await crypto.subtle.digest('SHA-256', data);
   return [...new Uint8Array(buf)].slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** 投稿の修正・取り下げに使う鍵。当てずっぽうで通らない長さがあればよい。 */
+function newEditToken() {
+  const r = crypto.getRandomValues(new Uint8Array(16));
+  return [...r].map((n) => n.toString(16).padStart(2, '0')).join('');
 }
 
 /** 紛らわしい文字（0/O/1/I）を除いた6文字。口頭で伝えられるように。 */
@@ -245,14 +258,28 @@ async function postRequest(request, env, cors, ctx) {
   }
 
   // 同じ人が同じ曲を再送しても票は増えない（UNIQUE(song_id, ip_hash)）
+  let editToken = newEditToken();
   const ins = await env.DB.prepare(
-    `INSERT OR IGNORE INTO requests (song_id, event_code, from_name, message, ip_hash)
-     VALUES (?, ?, ?, ?, ?)`
-  ).bind(song.id, ev.code, clean(body.name, LIMITS.name), clean(body.message, LIMITS.message), ipHash).run();
+    `INSERT OR IGNORE INTO requests (song_id, event_code, from_name, message, ip_hash, edit_token)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(
+    song.id, ev.code, clean(body.name, LIMITS.name), clean(body.message, LIMITS.message), ipHash, editToken
+  ).run();
 
   const added = ins.meta.changes > 0;
   if (added) {
     await env.DB.prepare(`UPDATE songs SET votes = votes + 1 WHERE id = ?`).bind(song.id).run();
+  } else {
+    // 弾かれた＝この端末はもう投稿済み。あとで直せるよう既存の鍵を返す。
+    // 古い行には鍵が無いので、その場で発行して埋める。
+    const row = await env.DB.prepare(
+      `SELECT id, edit_token FROM requests WHERE song_id = ? AND ip_hash = ?`
+    ).bind(song.id, ipHash).first();
+    if (row && row.edit_token) {
+      editToken = row.edit_token;
+    } else if (row) {
+      await env.DB.prepare(`UPDATE requests SET edit_token = ? WHERE id = ?`).bind(editToken, row.id).run();
+    }
   }
 
   const total = await env.DB.prepare(
@@ -266,7 +293,118 @@ async function postRequest(request, env, cors, ctx) {
     ctx.waitUntil(enrichSong(env, song.id, artistForLookup, title, Number(track.durationMs) || 0));
   }
 
-  return json({ ok: true, songId: song.id, duplicate: !added, position: total ? total.n : 0 }, 200, cors);
+  return json({
+    ok: true, songId: song.id, duplicate: !added,
+    position: total ? total.n : 0, editToken,
+  }, 200, cors);
+}
+
+/* ── 公開: 曲の詳細 ─────────────────────────
+   token を添えると、その鍵が指す自分の投稿だけが一緒に返る。
+   他人のひとことは誰が見ても返さない（/board と同じ方針）。 */
+async function getSong(id, url, env, cors) {
+  const s = await env.DB.prepare(
+    `SELECT id, title, artist, variant, album, duration_ms, artwork, apple_url, preview_url,
+            is_free, genre, release_year, explicitness, votes, status, played_at
+       FROM songs WHERE id = ?`
+  ).bind(id).first();
+  if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
+
+  const names = await env.DB.prepare(
+    `SELECT from_name FROM requests
+      WHERE song_id = ? AND from_name <> '' ORDER BY id ASC LIMIT 1`
+  ).bind(id).first();
+
+  const token = clean(url.searchParams.get('token'), 64);
+  const own = token
+    ? await env.DB.prepare(
+        `SELECT from_name, message, created_at FROM requests WHERE song_id = ? AND edit_token = ?`
+      ).bind(id, token).first()
+    : null;
+
+  return json({
+    song: {
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      variant: s.variant,
+      album: s.album,
+      durationMs: s.duration_ms,
+      artwork: s.artwork,
+      appleUrl: s.apple_url,
+      previewUrl: s.preview_url,
+      isFree: !!s.is_free,
+      genre: s.genre,
+      releaseYear: s.release_year,
+      explicitness: s.explicitness,
+      votes: s.votes,
+      playedAt: s.played_at,
+      by: names ? names.from_name : '',
+    },
+    // DJ がまだ触っていない曲だけ直せる。queued か skipped かは外に出さない。
+    editable: s.status === 'pending',
+    mine: own ? { name: own.from_name, message: own.message, at: own.created_at } : null,
+  }, 200, cors);
+}
+
+const NOT_YOURS = ['forbidden', 'この投稿は、送信したブラウザからのみ変更できます', 403];
+
+/** 修正・取り下げの共通チェック。曲・自分の投稿・DJ の進捗をまとめて見る。 */
+async function ownRequest(id, token, env) {
+  if (!token) return { error: NOT_YOURS };
+  const s = await env.DB.prepare(`SELECT id, status FROM songs WHERE id = ?`).bind(id).first();
+  if (!s) return { error: ['not_found', 'この曲は見つかりませんでした', 404] };
+  const row = await env.DB.prepare(
+    `SELECT id, event_code FROM requests WHERE song_id = ? AND edit_token = ?`
+  ).bind(id, token).first();
+  if (!row) return { error: NOT_YOURS };
+  if (s.status !== 'pending') {
+    return { error: ['locked', 'DJ がすでに確認しているため、変更・取り下げはできません', 409] };
+  }
+  return { song: s, row };
+}
+
+/* ── 公開: 自分の投稿を直す ───────────────── */
+async function patchMine(id, request, env, cors) {
+  let body;
+  try { body = await request.json(); } catch { body = {}; }
+
+  const got = await ownRequest(id, clean(body.token, 64), env);
+  if (got.error) return json({ error: got.error[0], message: got.error[1] }, got.error[2], cors);
+
+  const name = clean(body.name, LIMITS.name);
+  const message = clean(body.message, LIMITS.message);
+  await env.DB.prepare(
+    `UPDATE requests SET from_name = ?, message = ? WHERE id = ?`
+  ).bind(name, message, got.row.id).run();
+
+  return json({ ok: true, mine: { name, message } }, 200, cors);
+}
+
+/* ── 公開: 自分の投稿を取り下げる ───────────
+   取り下げるのは自分の1票だけ。同じ曲を他の人も送っていれば曲は残る。 */
+async function deleteMine(id, request, env, cors) {
+  let body;
+  try { body = await request.json(); } catch { body = {}; }
+
+  const got = await ownRequest(id, clean(body.token, 64), env);
+  if (got.error) return json({ error: got.error[0], message: got.error[1] }, got.error[2], cors);
+
+  await env.DB.prepare(`DELETE FROM requests WHERE id = ?`).bind(got.row.id).run();
+
+  // votes は requests の件数そのもの。引き算ではなく数え直して合わせる。
+  const left = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM requests WHERE song_id = ?`
+  ).bind(id).first();
+  const votes = left ? left.n : 0;
+
+  if (votes === 0) {
+    await env.DB.prepare(`DELETE FROM songs WHERE id = ?`).bind(id).run();
+  } else {
+    await env.DB.prepare(`UPDATE songs SET votes = ? WHERE id = ?`).bind(votes, id).run();
+  }
+
+  return json({ ok: true, votes, songRemoved: votes === 0 }, 200, cors);
 }
 
 /* ── 公開: みんなのリクエスト ───────────────
@@ -478,6 +616,13 @@ export default {
       if (path === '/dj/api/req/event' && method === 'GET')     return await getEvent(env, cors);
       if (path === '/dj/api/req/board' && method === 'GET')     return await getBoard(env, cors);
       if (path === '/dj/api/req/requests' && method === 'POST') return await postRequest(request, env, cors, ctx);
+
+      const song = path.match(/^\/dj\/api\/req\/songs\/(\d+)$/);
+      if (song && method === 'GET') return await getSong(Number(song[1]), url, env, cors);
+
+      const own = path.match(/^\/dj\/api\/req\/songs\/(\d+)\/mine$/);
+      if (own && method === 'PATCH')  return await patchMine(Number(own[1]), request, env, cors);
+      if (own && method === 'DELETE') return await deleteMine(Number(own[1]), request, env, cors);
 
       if (path === '/dj/api/req/admin/songs' && method === 'GET')    return await adminSongs(env, cors);
       if (path === '/dj/api/req/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);

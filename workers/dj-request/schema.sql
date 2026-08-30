@@ -63,6 +63,9 @@ CREATE TABLE IF NOT EXISTS requests (
   from_name  TEXT NOT NULL DEFAULT '',
   message    TEXT NOT NULL DEFAULT '',
   ip_hash    TEXT NOT NULL DEFAULT '',
+  -- 投稿者が自分の投稿を後から直す／取り下げるための鍵。投稿時に発行して
+  -- ブラウザにだけ渡す。ip_hash は会場の Wi-Fi で全員同じになるので使えない。
+  edit_token TEXT NOT NULL DEFAULT '',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -70,3 +73,4 @@ CREATE TABLE IF NOT EXISTS requests (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_requests_once ON requests(song_id, ip_hash);
 CREATE INDEX IF NOT EXISTS idx_requests_song ON requests(song_id);
 CREATE INDEX IF NOT EXISTS idx_requests_rate ON requests(ip_hash, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_requests_token ON requests(song_id, edit_token);

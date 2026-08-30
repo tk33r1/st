@@ -525,6 +525,15 @@
       opacity: 0.35;
     }
 
+    /* リクエストが通ったときのクラッカー。走査線やビネットより手前で弾けさせる。
+       display は触らない。弾けていない間は hidden 属性で丸ごと畳んでおく */
+    #celebrate-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 41;
+      pointer-events: none;
+    }
+
     .vignette {
       position: fixed;
       inset: 0;
@@ -743,6 +752,43 @@
 
     .back:hover {
       color: var(--heart-secondary);
+    }
+
+    /* 取り下げ。押し間違えたときの被害が大きいので、白昼夢のピンクで警告色にする */
+    .linkbtn.drop {
+      color: var(--heart-primary);
+      border-color: rgba(255, 47, 110, 0.5);
+    }
+
+    .linkbtn.drop:hover {
+      background: var(--heart-primary);
+      border-color: var(--heart-primary);
+      color: var(--bg);
+    }
+
+    /* ===== 曲の詳細 ===== */
+    #songEdit {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .songstate {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    /* 一覧の行はタップして詳細に入る。button なので既定の中央寄せを戻す */
+    button.row {
+      width: 100%;
+      text-align: left;
+      font: inherit;
+    }
+
+    button.row:hover {
+      border-color: var(--heart-secondary);
     }
 
     /* ===== 候補 / 一覧 ===== */
@@ -1156,6 +1202,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       #bs-takeover-canvas,
+      #celebrate-canvas,
       .scanlines {
         display: none;
       }
@@ -1169,6 +1216,7 @@
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
   <canvas id="bs-takeover-canvas" aria-hidden="true"></canvas>
+  <canvas id="celebrate-canvas" aria-hidden="true" hidden></canvas>
   <div class="vignette" aria-hidden="true"></div>
   <div class="scanlines" aria-hidden="true"></div>
 
@@ -1300,7 +1348,35 @@
         <div class="rows" id="playedRows"></div>
         <div class="boardhead"><h2>受付済</h2></div>
         <div class="rows" id="waitingRows"></div>
-        <p class="note">並び順は DJ が実際にかけた順です。受付済の曲は、流れの都合でかけられないこともあります。</p>
+        <p class="note">並び順は DJ が実際にかけた順です。受付済の曲は、流れの都合でかけられないこともあります。<br>
+          曲をタップすると、試聴や自分の投稿の手直しができます。</p>
+      </section>
+
+      <!-- 曲の詳細 -->
+      <section class="pane" id="pane-song">
+        <button class="back" id="songBack">← みんなのリクエストに戻る</button>
+        <div class="hero" id="songHero"></div>
+        <div class="player" id="songPlayer">
+          <button id="songPlay" aria-label="30秒プレビューを再生">▶</button>
+          <div class="bar"><b id="songBar"></b></div>
+          <span class="lab" id="songTime">0:30</span>
+        </div>
+
+        <!-- 自分が送った投稿で、まだ DJ が触っていないときだけ開く -->
+        <div id="songEdit" hidden>
+          <label class="f">ひとこと <span class="req">任意・ブースの画面に表示されます</span>
+            <textarea id="mineMsg" maxlength="140" placeholder="この曲にまつわる話や、かけてほしいタイミングなど"></textarea>
+            <span class="count" id="mineMsgCount">0 / 140</span>
+          </label>
+          <label class="f">お名前 <span class="req">任意・ニックネームで大丈夫です</span>
+            <input class="txt" id="mineName" maxlength="20">
+          </label>
+          <div class="err" id="mineErr" hidden></div>
+          <button class="send" id="mineSave">この内容に変更する</button>
+          <button class="linkbtn drop" id="mineDrop">リクエストを取り下げる</button>
+        </div>
+
+        <p class="note" id="songNote" hidden></p>
       </section>
 
       <!-- 受付停止中 -->
@@ -1405,12 +1481,13 @@
     /* ── 画面遷移 ─────────────────────────── */
     let flowPane = 'search';
     let eventOpen = false;
-    const TAB_OF = { consult: 'consult', board: 'board' };
+    const TAB_OF = { consult: 'consult', board: 'board', song: 'board' };
 
     function show(pane) {
       document.querySelectorAll('.pane').forEach((p) => p.classList.remove('on'));
       $('#pane-' + pane).classList.add('on');
-      if (pane !== 'board' && pane !== 'consult') flowPane = pane;
+      // 曲の詳細は一覧から入るので、リクエストの流れの戻り先には数えない
+      if (!TAB_OF[pane]) flowPane = pane;
       const tab = TAB_OF[pane] || 'search';   // 確認・自由入力・完了はすべて「リクエストする」の中
       document.querySelectorAll('.tabs button').forEach((b) =>
         b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
@@ -1486,12 +1563,39 @@
     let picked = null;
     let audio = null, audioTimer = null;
 
+    // 確認画面と曲の詳細で1つずつ。鳴らせるのは常にどちらか片方だけ
+    const players = [];
+
     function stopAudio() {
       if (audio) { audio.pause(); audio = null; }
       clearInterval(audioTimer);
-      $('#bar').style.width = '0';
-      $('#play').textContent = '▶';
-      $('#ptime').textContent = '0:30';
+      for (const ui of players) {
+        ui.bar.style.width = '0';
+        ui.play.textContent = '▶';
+        ui.time.textContent = '0:30';
+      }
+    }
+
+    // プレビューは必ずタップ起点で鳴らす（iOS は自動再生を許さない）
+    function bindPlayer(playSel, barSel, timeSel, urlOf) {
+      const ui = { play: $(playSel), bar: $(barSel), time: $(timeSel) };
+      players.push(ui);
+      ui.play.addEventListener('click', () => {
+        if (audio) { stopAudio(); return; }
+        const url = urlOf();
+        if (!url) return;
+        audio = new Audio(url);
+        audio.play().then(() => {
+          ui.play.textContent = '❚❚';
+          audioTimer = setInterval(() => {
+            if (!audio) return;
+            const left = Math.max(0, Math.round((audio.duration || 30) - audio.currentTime));
+            ui.bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
+            ui.time.textContent = '0:' + String(left).padStart(2, '0');
+          }, 200);
+          audio.addEventListener('ended', stopAudio);
+        }).catch(() => { stopAudio(); });
+      });
     }
 
     function toConfirm(track, artFallback) {
@@ -1521,21 +1625,7 @@
       if (c) toConfirm(groupsCache[+c.dataset.g].rep);
     });
 
-    // プレビューは必ずタップ起点で鳴らす（iOS は自動再生を許さない）
-    $('#play').addEventListener('click', () => {
-      if (audio) { stopAudio(); return; }
-      audio = new Audio(picked.previewUrl);
-      audio.play().then(() => {
-        $('#play').textContent = '❚❚';
-        audioTimer = setInterval(() => {
-          if (!audio) return;
-          const left = Math.max(0, Math.round((audio.duration || 30) - audio.currentTime));
-          $('#bar').style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
-          $('#ptime').textContent = '0:' + String(left).padStart(2, '0');
-        }, 200);
-        audio.addEventListener('ended', stopAudio);
-      }).catch(() => { stopAudio(); });
-    });
+    bindPlayer('#play', '#bar', '#ptime', () => picked && picked.previewUrl);
 
     $('#back').addEventListener('click', () => { stopAudio(); show('search'); });
     $('#back2').addEventListener('click', () => show('search'));
@@ -1556,6 +1646,22 @@
     const MINE_KEY = 'tkdj.mine';
     const mine = () => { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch { return []; } };
     const remember = (id) => { try { localStorage.setItem(MINE_KEY, JSON.stringify([...new Set([...mine(), id])])); } catch {} };
+
+    /* あとで自分の投稿を直す／取り下げるための鍵。サーバはこれでしか本人と認めない。
+       会場の Wi-Fi では全員の IP が同じに見えるので、IP は本人確認に使えない。 */
+    const TOKEN_KEY = 'tkdj.tokens';
+    const tokens = () => { try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || '{}'); } catch { return {}; } };
+    const tokenOf = (id) => tokens()[id] || '';
+    const rememberToken = (id, token) => {
+      if (!token) return;
+      try { const m = tokens(); m[id] = token; localStorage.setItem(TOKEN_KEY, JSON.stringify(m)); } catch {}
+    };
+    const forgetSong = (id) => {
+      try {
+        localStorage.setItem(MINE_KEY, JSON.stringify(mine().filter((x) => x !== id)));
+        const m = tokens(); delete m[id]; localStorage.setItem(TOKEN_KEY, JSON.stringify(m));
+      } catch {}
+    };
 
     /** rekordbox の検索で当たりやすいラテン表記を US ストアフロントから取る。
         trackId はストアフロント共通なので同じ曲を引ける。失敗しても送信は続ける。 */
@@ -1589,12 +1695,14 @@
           return;
         }
         remember(data.songId);
+        rememberToken(data.songId, data.editToken);
         $('#doneWhat').innerHTML = whatHTML;
         $('#donePos').textContent = data.duplicate
           ? 'すでに受け付けている曲です'
           : '今回 ' + data.position + ' 件目のリクエストです';
         stopAudio();
         show('done');
+        if (window.djCelebrate) window.djCelebrate();
       } catch {
         errBox.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
         errBox.hidden = false;
@@ -1642,7 +1750,8 @@
         : '<span class="ph">♪</span>';
       const played = !!s.playedAt;
       const at = played && s.playedAt ? String(s.playedAt).slice(11, 16) : '';
-      return '<div class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') + '">' + art +
+      return '<button type="button" class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') +
+        '" data-song="' + s.id + '">' + art +
         '<span><span class="t trunc">' + esc(s.title) + '</span>' +
         '<span class="a trunc">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</span>' +
         (s.by ? '<span class="by trunc">— ' + esc(s.by) + '</span>' : '') + '</span>' +
@@ -1651,7 +1760,7 @@
         '<span class="state' + (played ? ' done' : '') + '">' + (played ? '✓ 再生済' : '受付済') + '</span>' +
         (played ? '<span class="at">' + esc(at) + '</span>'
           : (s.votes > 1 ? '<span class="heart">♥ ' + s.votes + '</span>' : '')) +
-        '</span></div>';
+        '</span></button>';
     }
 
     async function loadBoard() {
@@ -1682,21 +1791,169 @@
       }
     }
 
+    function openBoard() {
+      stopAudio();
+      show('board');
+      loadBoard();
+      clearInterval(boardTimer);
+      boardTimer = setInterval(() => {
+        if ($('#pane-board').classList.contains('on')) loadBoard();
+        else clearInterval(boardTimer);
+      }, 15000);
+    }
+
     document.querySelector('.tabs').addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (!b) return;
       if (b.dataset.tab === 'consult') { clearInterval(boardTimer); show('consult'); return; }
       if (b.dataset.tab === 'board') {
-        show('board');
-        loadBoard();
-        clearInterval(boardTimer);
-        boardTimer = setInterval(() => {
-          if ($('#pane-board').classList.contains('on')) loadBoard();
-          else clearInterval(boardTimer);
-        }, 15000);
+        openBoard();
       } else {
         clearInterval(boardTimer);
         show(flowPane);
+      }
+    });
+
+    /* ── 曲の詳細 ───────────────────────────
+       一覧の行をタップして入る。試聴はここでもできる。
+       自分が送った投稿は、DJ がまだ触っていない間だけ直せる・取り下げられる。 */
+    let detail = null;   // { song, editable, mine }
+
+    bindPlayer('#songPlay', '#songBar', '#songTime', () => detail && detail.song.previewUrl);
+
+    function renderSong() {
+      const s = detail.song;
+      const played = !!s.playedAt;
+      const at = played ? String(s.playedAt).slice(11, 16) : '';
+      const v = s.variant ? '<span class="vtag">' + esc(s.variant) + '</span>' : '';
+
+      $('#songHero').innerHTML =
+        (s.artwork ? '<img src="' + esc(s.artwork) + '" alt="">' : '<div class="ph">♪</div>') +
+        '<h2>' + esc(s.title) + v + '</h2>' +
+        '<div class="a">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</div>' +
+        (s.isFree ? '' : '<div class="d">' + esc(s.album) + ' · ' + mmss(Math.round(s.durationMs / 1000)) + '</div>') +
+        '<div class="songstate">' +
+        '<span class="state' + (played ? ' done' : '') + '">' +
+        (played ? '✓ 再生済 ' + esc(at) : '受付済') + '</span>' +
+        (s.votes > 1 ? '<span class="heart">♥ ' + s.votes + '</span>' : '') +
+        '</div>';
+
+      $('#songPlayer').style.display = s.previewUrl ? 'flex' : 'none';
+
+      const canEdit = !!detail.mine && detail.editable;
+      $('#songEdit').hidden = !canEdit;
+      $('#mineErr').hidden = true;
+      if (canEdit) {
+        $('#mineMsg').value = detail.mine.message || '';
+        $('#mineName').value = detail.mine.name || '';
+        $('#mineMsgCount').textContent = $('#mineMsg').value.length + ' / 140';
+      }
+
+      const note = !detail.mine
+        ? 'ひとことの変更や取り下げは、リクエストを送信したブラウザからのみ行えます。'
+        : (detail.editable ? '' : 'DJ がすでに確認しているため、変更・取り下げはできません。');
+      $('#songNote').textContent = note;
+      $('#songNote').hidden = !note;
+    }
+
+    async function openSong(id) {
+      clearInterval(boardTimer);
+      stopAudio();
+      detail = null;
+      $('#songHero').innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
+      $('#songPlayer').style.display = 'none';
+      $('#songEdit').hidden = true;
+      $('#songNote').hidden = true;
+      show('song');
+      try {
+        const token = tokenOf(id);
+        const res = await fetch(API + '/songs/' + id + (token ? '?token=' + encodeURIComponent(token) : ''));
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.message || '');
+        detail = d;
+        renderSong();
+      } catch {
+        $('#songHero').innerHTML = '<div class="nomatch">この曲を読み込めませんでした</div>';
+      }
+    }
+
+    $('#pane-board').addEventListener('click', (e) => {
+      const row = e.target.closest('.row[data-song]');
+      if (row) openSong(Number(row.dataset.song));
+    });
+
+    $('#songBack').addEventListener('click', openBoard);
+
+    bindCount($('#mineMsg'), $('#mineMsgCount'), 140);
+
+    $('#mineSave').addEventListener('click', async () => {
+      const btn = $('#mineSave');
+      const err = $('#mineErr');
+      btn.disabled = true;
+      const label = btn.textContent;
+      btn.textContent = '送信中…';
+      err.hidden = true;
+      try {
+        const res = await fetch(API + '/songs/' + detail.song.id + '/mine', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: tokenOf(detail.song.id),
+            name: $('#mineName').value,
+            message: $('#mineMsg').value,
+          }),
+        });
+        const d = await res.json();
+        if (!res.ok) {
+          // DJ が動かしたあとなら編集欄ごと畳む。理由は #songNote が出す
+          // （エラー欄は編集欄の中なので、畳んだあとでは読めない）
+          if (res.status === 409) { detail.editable = false; renderSong(); return; }
+          err.textContent = d.message || '変更できませんでした。もう一度お試しください。';
+          err.hidden = false;
+          return;
+        }
+        detail.mine = d.mine;
+        $('#mineMsg').value = d.mine.message;
+        $('#mineName').value = d.mine.name;
+        $('#mineMsgCount').textContent = d.mine.message.length + ' / 140';
+        btn.textContent = '変更しました';
+        setTimeout(() => { btn.textContent = label; }, 1600);
+        return;
+      } catch {
+        err.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
+        err.hidden = false;
+      } finally {
+        btn.disabled = false;
+        if (btn.textContent === '送信中…') btn.textContent = label;
+      }
+    });
+
+    $('#mineDrop').addEventListener('click', async () => {
+      if (!confirm('このリクエストを取り下げます。よろしいですか？')) return;
+      const btn = $('#mineDrop');
+      const err = $('#mineErr');
+      btn.disabled = true;
+      err.hidden = true;
+      try {
+        const res = await fetch(API + '/songs/' + detail.song.id + '/mine', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: tokenOf(detail.song.id) }),
+        });
+        const d = await res.json();
+        if (!res.ok) {
+          if (res.status === 409) { detail.editable = false; renderSong(); return; }
+          err.textContent = d.message || '取り下げられませんでした。もう一度お試しください。';
+          err.hidden = false;
+          return;
+        }
+        forgetSong(detail.song.id);
+        openBoard();
+      } catch {
+        err.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
+        err.hidden = false;
+      } finally {
+        btn.disabled = false;
       }
     });
 
@@ -2003,8 +2260,9 @@
       if (btn) btn.click();
     });
   </script>
-  <!-- 背景キャンバスで使う共有物。スクリプトは prefers-reduced-motion で
-       即 return するので、共有物はその手前のこの一枚に置く -->
+  <!-- 背景キャンバスとクラッカーで共有するもの。
+       どちらのスクリプトも prefers-reduced-motion で即 return するので、
+       共有物はその手前のこの一枚に置く -->
   <script>
     (function () {
       'use strict';
@@ -2228,6 +2486,140 @@
       }
 
       requestAnimationFrame(frame);
+    })();
+  </script>
+
+
+  <!-- リクエストが通ったときのクラッカー。背景と同じドット絵のハートを左右から弾けさせる -->
+  <script>
+    (function () {
+      'use strict';
+
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      var canvas = document.getElementById('celebrate-canvas');
+      if (!canvas) return;
+
+      var art = window.DJ_ART;
+      var ctx = canvas.getContext('2d');
+      var TILE = 64;
+      var FADE = 0.28;   // 寿命の最後のこの割合をかけて消える
+
+      var W = 0, H = 0;
+      var pieces = [];
+      var tiles = null;
+      var running = false;
+      var last = 0;
+
+      // ハートは 1 色 1 枚だけ焼いて使い回す。
+      // 1粒ごとに 42 個の矩形を塗るより軽いうえ、薄いグローも一緒に焼き込める
+      function makeTile(color) {
+        var c = document.createElement('canvas');
+        c.width = TILE;
+        c.height = TILE;
+        var g = c.getContext('2d');
+        var rows = art.HEART.length, cols = art.HEART[0].length;
+        var cell = (TILE * 0.72) / cols;
+        var ox = (TILE - cell * cols) / 2;
+        var oy = (TILE - cell * rows) / 2;
+        g.shadowColor = color;
+        g.shadowBlur = TILE * 0.16;
+        g.fillStyle = color;
+        for (var r = 0; r < rows; r++) {
+          for (var i = 0; i < cols; i++) {
+            if (art.HEART[r][i] === '1') {
+              g.fillRect(ox + i * cell, oy + r * cell, cell * art.DOT, cell * art.DOT);
+            }
+          }
+        }
+        return c;
+      }
+
+      function resize() {
+        var fit = art.fitCanvas(canvas, ctx);
+        W = fit.W;
+        H = fit.H;
+      }
+
+      // クラッカー1発ぶん。aim の向きへ扇状に飛ばす
+      function popper(x, y, aim, count, power) {
+        for (var i = 0; i < count; i++) {
+          var spread = (Math.random() - 0.5) * 1.15;
+          var speed = power * (0.45 + Math.random() * 0.75);
+          pieces.push({
+            x: x, y: y,
+            vx: Math.cos(aim + spread) * speed,
+            vy: Math.sin(aim + spread) * speed,
+            size: (12 + Math.random() * 18) * 1.4,   // タイルの余白ぶん大きめに描く
+            tile: Math.random() > 0.5 ? tiles.pink : tiles.cyan,
+            angle: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 9,
+            // 落下速度の頭打ち。紙吹雪のようにゆっくり降らせる
+            fall: 95 + Math.random() * 140,
+            sway: 20 + Math.random() * 30,
+            phase: Math.random() * Math.PI * 2,
+            life: 0,
+            span: 2.8 + Math.random() * 1.8
+          });
+        }
+      }
+
+      function frame(now) {
+        var dt = Math.min((now - last) / 1000, 0.05);
+        var damp = Math.pow(0.28, dt);
+        last = now;
+        ctx.clearRect(0, 0, W, H);
+
+        var alive = 0;
+        for (var i = 0; i < pieces.length; i++) {
+          var p = pieces[i];
+          p.life += dt;
+          if (p.life >= p.span) continue;
+          alive++;
+          // 飛び出しの勢いを一気に殺してから落とすと、クラッカーらしい弧になる
+          p.vx *= damp;
+          p.vy *= damp;
+          p.vy += 900 * dt;
+          if (p.vy > p.fall) p.vy = p.fall;
+          p.x += (p.vx + Math.sin(p.life * 5 + p.phase) * p.sway) * dt;
+          p.y += p.vy * dt;
+          p.angle += p.spin * dt;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.globalAlpha = Math.min(1, (1 - p.life / p.span) / FADE);
+          ctx.drawImage(p.tile, -p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        }
+
+        if (alive) {
+          requestAnimationFrame(frame);
+        } else {
+          running = false;
+          pieces = [];
+          canvas.hidden = true;
+          canvas.width = canvas.height = 0;
+        }
+      }
+
+      window.djCelebrate = function () {
+        if (!tiles) tiles = { pink: makeTile(art.pink), cyan: makeTile(art.cyan) };
+        canvas.hidden = false;
+        resize();
+        pieces = [];
+        // 左下・右下から内向きに2発、真ん中から真上に1発
+        popper(-14, H * 0.84, -Math.PI / 3.6, 84, 1400);
+        popper(W + 14, H * 0.84, -Math.PI + Math.PI / 3.6, 84, 1400);
+        popper(W / 2, H * 1.04, -Math.PI / 2, 64, 1650);
+        if (!running) {
+          running = true;
+          last = performance.now();
+          requestAnimationFrame(frame);
+        }
+      };
+
+      window.addEventListener('resize', function () { if (running) resize(); });
     })();
   </script>
 
