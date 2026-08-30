@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0D0A14">
+  <meta name="theme-color" content="#0a0a0c">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
   <script>
@@ -30,7 +30,7 @@
   <meta name="description" content="人類踊狂計画のイベントで、かけてほしい曲をリクエストするページ。">
   <meta name="robots" content="max-image-preview:large">
   <title>リクエスト - 人類踊狂計画</title>
-  <link rel="icon" href="https://tk.st/images/favicons/dj-favicon.png" type="image/png">
+  <link rel="icon" href="https://tk.st/images/favicons/dj-favicon2.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="https://tk.st/images/favicons/dj-favicon.png">
   <link rel="canonical" href="https://tk.st/dj/request/">
   <link rel="author" href="https://tk.st/">
@@ -100,27 +100,45 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://itunes.apple.com">
   <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=Noto+Serif+JP:wght@900&display=swap">
+    href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
   <style>
+    /* /dj/schedule/ と同じ白昼夢テーマの変数。
+       旧パレット名はエイリアスとして残し、既存の指定をそのまま生かす */
     :root {
-      --ink: #0D0A14;
-      --panel: #16111F;
-      --card: #1D1729;
-      --card-hi: #251D34;
-      --line: #2E2440;
-      --text: #EDE8F5;
-      --muted: #9A8FB0;
-      --faint: #6B6180;
-      --accent: #9C7AF7;
-      --accent-dim: #6E52C4;
-      --go: #3FD68C;
-      --warn: #FFB84D;
-      --stop: #FF5C5C;
+      --bg: #0a0a0c;
+      --bg-elevated: #121216;
+      --fg: #ececec;
+      --fg-dim: #9a9aa0;
+      --heart-primary: #ff2f6e;
+      --heart-secondary: #37f2e6;
+      --glitch-accent: #ffe14d;
+      --border: rgba(255, 255, 255, 0.14);
 
-      --sans: 'IBM Plex Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-      --mono: 'IBM Plex Mono', ui-monospace, monospace;
-      --serif: 'Noto Serif JP', Georgia, serif;
+      --f-display: 'Share Tech Mono', ui-monospace, monospace;
+      --f-dot: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+      --f-body: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+
+      --ink: var(--bg);
+      --panel: var(--bg-elevated);
+      --card: var(--bg-elevated);
+      --card-hi: #1b1b21;
+      --line: var(--border);
+      --text: var(--fg);
+      --muted: var(--fg-dim);
+      --faint: rgba(154, 154, 160, 0.62);
+      --accent: var(--heart-secondary);
+      --accent-dim: rgba(55, 242, 230, 0.45);
+      --go: var(--heart-secondary);
+      --warn: var(--glitch-accent);
+      --stop: var(--heart-primary);
+
+      --sans: var(--f-body);
+      --mono: var(--f-display);
+      --serif: var(--f-dot);
+      --r: 2px;
+
+      color-scheme: dark;
     }
 
     * { box-sizing: border-box; }
@@ -135,7 +153,7 @@
     }
 
     button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 
     .stage { padding: 26px 16px 60px; display: flex; justify-content: center; }
 
@@ -194,7 +212,7 @@
     .sheet {
       width: 100%; max-width: 430px;
       background: var(--panel); border: 1px solid var(--line);
-      border-radius: 26px; overflow: hidden;
+      border-radius: 2px; overflow: hidden;
     }
     @media (max-width: 480px) {
       .stage { padding: 0 0 40px; }
@@ -208,7 +226,7 @@
     .badge {
       font-size: 11.5px; font-weight: 600; color: var(--go);
       border: 1px solid color-mix(in srgb, var(--go) 45%, var(--line));
-      border-radius: 999px; padding: 3px 11px;
+      border-radius: 2px; padding: 3px 11px;
       display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
     }
     .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--go); box-shadow: 0 0 7px var(--go); }
@@ -234,7 +252,7 @@
     .field input {
       width: 100%; font: inherit; font-size: 16px;
       background: var(--ink); color: var(--text);
-      border: 1px solid var(--line); border-radius: 12px; padding: 15px 44px 15px 15px;
+      border: 1px solid var(--line); border-radius: 2px; padding: 15px 44px 15px 15px;
     }
     .field input::placeholder { color: var(--faint); }
     .field input:focus { border-color: var(--accent-dim); outline: none; }
@@ -255,10 +273,10 @@
     .cand {
       display: grid; grid-template-columns: 56px minmax(0, 1fr) 18px; gap: 13px; align-items: center;
       width: 100%; text-align: left;
-      background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 11px 13px;
     }
     .cand:hover { background: var(--card-hi); border-color: var(--accent-dim); }
-    .cand img { width: 56px; height: 56px; border-radius: 7px; display: block; background: var(--ink); }
+    .cand img { width: 56px; height: 56px; border-radius: 2px; display: block; background: var(--ink); }
     .cand .t { font-size: 14.5px; font-weight: 600; line-height: 1.35; }
     .cand .a { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
     .cand .d { font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
@@ -278,19 +296,19 @@
     .alt {
       display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
       font-size: 12.5px; color: var(--muted); padding: 8px 11px;
-      border: 1px solid var(--line); border-radius: 9px; margin-top: 5px;
+      border: 1px solid var(--line); border-radius: 2px; margin-top: 5px;
     }
     .alt .v { font-family: var(--mono); font-size: 11px; color: var(--accent); }
     .alt .len { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
 
-    .nomatch { border: 1px dashed var(--line); border-radius: 12px; padding: 22px 18px; text-align: center; color: var(--faint); font-size: 13px; }
-    .linkbtn { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 14px; font-size: 13.5px; color: var(--muted); }
+    .nomatch { border: 1px dashed var(--line); border-radius: 2px; padding: 22px 18px; text-align: center; color: var(--faint); font-size: 13px; }
+    .linkbtn { width: 100%; border: 1px solid var(--line); border-radius: 2px; padding: 14px; font-size: 13.5px; color: var(--muted); }
     .linkbtn:hover { color: var(--text); border-color: var(--accent-dim); background: var(--card); }
 
     .hero { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
-    .hero img { width: 200px; height: 200px; border-radius: 14px; display: block; background: var(--card); }
+    .hero img { width: 200px; height: 200px; border-radius: 2px; display: block; background: var(--card); }
     .hero .ph {
-      width: 200px; height: 200px; border-radius: 14px; display: grid; place-items: center;
+      width: 200px; height: 200px; border-radius: 2px; display: grid; place-items: center;
       background: repeating-linear-gradient(45deg, #241B33 0 8px, #1D1729 8px 16px);
       color: var(--warn); font-size: 40px;
     }
@@ -299,7 +317,7 @@
     .hero .d { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
     .vtag {
       font-family: var(--mono); font-size: 11.5px; color: var(--accent);
-      border: 1px solid var(--accent-dim); border-radius: 5px; padding: 1px 7px; margin-left: 7px; vertical-align: 2px;
+      border: 1px solid var(--accent-dim); border-radius: 2px; padding: 1px 7px; margin-left: 7px; vertical-align: 2px;
     }
 
     .player { display: flex; align-items: center; gap: 12px; width: 100%; }
@@ -317,7 +335,7 @@
     textarea, input.txt {
       font: inherit; font-size: 16px; width: 100%;
       background: var(--ink); color: var(--text);
-      border: 1px solid var(--line); border-radius: 11px; padding: 13px;
+      border: 1px solid var(--line); border-radius: 2px; padding: 13px;
     }
     textarea { resize: vertical; min-height: 84px; }
     textarea:focus, input.txt:focus { border-color: var(--accent-dim); outline: none; }
@@ -326,7 +344,7 @@
 
     .send {
       width: 100%; background: var(--accent); color: #14091F;
-      font-size: 15.5px; font-weight: 700; border-radius: 12px; padding: 17px;
+      font-size: 15.5px; font-weight: 700; border-radius: 2px; padding: 17px;
     }
     .send:hover { background: #B195FA; }
     .send:disabled { background: var(--card); color: var(--faint); cursor: not-allowed; }
@@ -337,7 +355,7 @@
     .err {
       background: color-mix(in srgb, var(--stop) 15%, var(--ink));
       border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
-      color: #FFC9C9; border-radius: 11px; padding: 12px 14px; font-size: 13px;
+      color: #FFC9C9; border-radius: 2px; padding: 12px 14px; font-size: 13px;
     }
 
     .done { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0 4px; }
@@ -346,7 +364,7 @@
     .done .what { font-size: 14px; color: var(--muted); }
     .done .what b { color: var(--text); font-weight: 600; }
     .note { font-size: 12.5px; color: var(--faint); line-height: 1.7; border-top: 1px solid var(--line); padding-top: 14px; width: 100%; margin: 0; }
-    .queuepos { font-family: var(--mono); font-size: 12.5px; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 999px; padding: 5px 14px; }
+    .queuepos { font-family: var(--mono); font-size: 12.5px; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 2px; padding: 5px 14px; }
 
     .shutbox { text-align: center; color: var(--faint); padding: 40px 10px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
     .shutbox .big { font-size: 15px; color: var(--muted); }
@@ -358,15 +376,15 @@
     .now {
       display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: center;
       background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 17%, var(--card)), var(--card));
-      border: 1px solid var(--accent-dim); border-radius: 14px; padding: 14px;
+      border: 1px solid var(--accent-dim); border-radius: 2px; padding: 14px;
     }
-    .now img { width: 72px; height: 72px; border-radius: 8px; display: block; }
+    .now img { width: 72px; height: 72px; border-radius: 2px; display: block; }
     .now .lab { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--accent); display: flex; align-items: center; gap: 7px; }
     .now .t { font-size: 15.5px; font-weight: 700; line-height: 1.35; margin-top: 4px; }
     .now .a { font-size: 12.5px; color: var(--muted); }
 
     .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
-    .eq i { width: 2.5px; background: var(--accent); border-radius: 1px; animation: bounce .9s ease-in-out infinite; }
+    .eq i { width: 2.5px; background: var(--accent); border-radius: 2px; animation: bounce .9s ease-in-out infinite; }
     .eq i:nth-child(1) { height: 40%; animation-delay: -.5s; }
     .eq i:nth-child(2) { height: 100%; animation-delay: -.2s; }
     .eq i:nth-child(3) { height: 65%; animation-delay: -.7s; }
@@ -376,32 +394,32 @@
     .rows { display: flex; flex-direction: column; gap: 7px; }
     .row {
       display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center;
-      background: var(--card); border: 1px solid var(--line); border-radius: 11px; padding: 9px 12px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 9px 12px;
     }
     .row.mine { border-color: var(--accent-dim); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
-    .row img { width: 44px; height: 44px; border-radius: 6px; display: block; }
+    .row img { width: 44px; height: 44px; border-radius: 2px; display: block; }
     .row .ph, .cand .ph {
-      width: 44px; height: 44px; border-radius: 6px; display: grid; place-items: center;
+      width: 44px; height: 44px; border-radius: 2px; display: grid; place-items: center;
       background: repeating-linear-gradient(45deg, #241B33 0 5px, #1D1729 5px 10px);
       color: var(--warn); font-size: 15px;
     }
-    .cand .ph { width: 56px; height: 56px; border-radius: 7px; font-size: 20px; }
+    .cand .ph { width: 56px; height: 56px; border-radius: 2px; font-size: 20px; }
     .row .t { font-size: 13.5px; font-weight: 600; }
     .row .a { font-size: 11.5px; color: var(--muted); }
     .row .by { font-size: 11px; color: var(--faint); }
     .row.played .t, .row.played .a { color: var(--faint); }
     .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-    .state { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 9px; white-space: nowrap; color: var(--faint); border: 1px solid var(--line); }
+    .state { font-size: 11px; font-weight: 600; border-radius: 2px; padding: 2px 9px; white-space: nowrap; color: var(--faint); border: 1px solid var(--line); }
     .state.done { color: var(--go); border-color: color-mix(in srgb, var(--go) 45%, var(--line)); }
     .at { font-family: var(--mono); font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
-    .mytag { font-size: 10px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 4px; padding: 0 5px; }
+    .mytag { font-size: 10px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 2px; padding: 0 5px; }
     .heart { font-family: var(--mono); font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
     .blank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 18px 0; }
 
     /* ===== 投げ銭（Buy Me Oil）===== */
     .tipbox {
       width: 100%; padding: 18px 16px;
-      background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 2px;
       display: flex; flex-direction: column; align-items: center; gap: 11px;
       cursor: pointer; transition: border-color .15s, background .15s;
     }
@@ -425,7 +443,7 @@
     .seeds[hidden] { display: none; }
     .seed {
       font-size: 12px; color: var(--muted); background: var(--card);
-      border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; text-align: left;
+      border: 1px solid var(--line); border-radius: 2px; padding: 7px 12px; text-align: left;
     }
     .seed:hover { color: var(--text); border-color: var(--accent-dim); }
 
@@ -434,12 +452,12 @@
     .bubble {
       align-self: flex-end; max-width: 85%; font-size: 14px;
       background: var(--card-hi); border: 1px solid var(--line);
-      border-radius: 14px 14px 4px 14px; padding: 10px 13px;
+      border-radius: 2px; padding: 10px 13px;
       white-space: pre-wrap; overflow-wrap: anywhere;
     }
     .turn { display: flex; flex-direction: column; gap: 10px; }
 
-    details.debate { border: 1px solid var(--line); border-radius: 11px; background: var(--card); }
+    details.debate { border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
     details.debate summary {
       list-style: none; cursor: pointer; padding: 9px 12px;
       font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--faint);
@@ -466,7 +484,7 @@
     .picks { display: flex; flex-wrap: wrap; gap: 7px; margin-left: 38px; }
     .pick {
       font-size: 12.5px; color: var(--text); background: var(--card);
-      border: 1px solid var(--accent-dim); border-radius: 999px; padding: 7px 13px;
+      border: 1px solid var(--accent-dim); border-radius: 2px; padding: 7px 13px;
       display: inline-flex; align-items: center; gap: 6px; text-align: left;
     }
     .pick::after { content: '↗'; color: var(--accent); font-size: 11px; }
@@ -474,15 +492,673 @@
     .picklede { font-size: 11.5px; color: var(--faint); margin: 2px 0 0 38px; }
 
     .composer { display: flex; gap: 8px; align-items: flex-end; }
-    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 12px; padding: 13px; }
+    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px; }
     .composer button {
-      flex-shrink: 0; height: 48px; padding: 0 16px; border-radius: 12px;
+      flex-shrink: 0; height: 48px; padding: 0 16px; border-radius: 2px;
       background: var(--accent); color: #14091F; font-size: 13.5px; font-weight: 700;
     }
     .composer button:disabled { background: var(--card); color: var(--faint); cursor: not-allowed; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+
+    /* ===== ここから下は /dj/schedule/ と同じ見え方に寄せるための上書き ===== */
+    html {
+      scrollbar-gutter: stable;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      font-size: 0.9375rem;
+      line-height: 1.9;
+      overflow-x: hidden;
+    }
+
+    /* 本家（bijutsushisui.com）と同じテイクオーバー背景。
+       このページは文字量が多いので、スケジュール表と同じく主張を抑える */
+    #bs-takeover-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.35;
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+    }
+
+    /* VHS のスキャンライン。本家と同じ 1px / 3px */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      background: repeating-linear-gradient(to bottom,
+          rgba(255, 255, 255, 0.03) 0px,
+          rgba(255, 255, 255, 0.03) 1px,
+          transparent 1px,
+          transparent 3px);
+    }
+
+    /* シートの箱を外して、スケジュール表と同じ「背景の上に直接組む」形にする */
+    .stage {
+      position: relative;
+      z-index: 1;
+      padding: 0 calc(20px + env(safe-area-inset-right)) 8vh calc(20px + env(safe-area-inset-left));
+    }
+
+    .sheet {
+      max-width: 480px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      overflow: visible;
+      min-height: 0;
+    }
+
+    @media (max-width: 480px) {
+      .stage {
+        padding: 0 calc(14px + env(safe-area-inset-right)) 6vh calc(14px + env(safe-area-inset-left));
+      }
+
+      .sheet {
+        border: 0;
+        min-height: 0;
+      }
+    }
+
+    .top {
+      padding: 7vh 0 18px;
+      border-bottom-color: var(--border);
+    }
+
+    .top h1 {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: clamp(1.25rem, 5.5vw, 1.75rem);
+      letter-spacing: 0.04em;
+      line-height: 1.35;
+    }
+
+    .badge {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      color: var(--heart-secondary);
+      border-color: currentColor;
+      padding: 3px 9px;
+    }
+
+    .badge::before {
+      background: currentColor;
+      box-shadow: none;
+    }
+
+    .badge.shut {
+      color: var(--fg-dim);
+      border-color: var(--border);
+    }
+
+    .tabs button {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 0.6875rem;
+      letter-spacing: 0.1em;
+      color: var(--fg-dim);
+    }
+
+    .tabs button[aria-selected="true"] {
+      color: var(--heart-secondary);
+      border-bottom-color: var(--heart-secondary);
+    }
+
+    .pane {
+      padding: 24px 0 0;
+      gap: 18px;
+    }
+
+    .lede {
+      font-family: var(--f-body);
+      font-size: 0.8125rem;
+      line-height: 1.9;
+    }
+
+    .lede b,
+    .done .what b,
+    .note b {
+      color: var(--heart-secondary);
+      font-weight: 400;
+    }
+
+    .hint,
+    .note,
+    .blank,
+    .picklede,
+    .nomatch {
+      font-family: var(--f-body);
+    }
+
+    /* ===== FORM ===== */
+    label.f {
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.12em;
+      color: var(--fg-dim);
+      gap: 8px;
+    }
+
+    label.f .req {
+      font-family: var(--f-body);
+      font-size: 0.6875rem;
+      letter-spacing: 0;
+      color: rgba(154, 154, 160, 0.62);
+    }
+
+    .field input,
+    textarea,
+    input.txt {
+      font-family: var(--f-body);
+      background: var(--bg-elevated);
+      border-color: var(--border);
+    }
+
+    .field input:focus,
+    textarea:focus,
+    input.txt:focus {
+      border-color: var(--heart-secondary);
+    }
+
+    .field input::placeholder,
+    textarea::placeholder,
+    input.txt::placeholder {
+      color: rgba(154, 154, 160, 0.6);
+    }
+
+    .count {
+      font-family: var(--f-display);
+    }
+
+    .count.over {
+      color: var(--glitch-accent);
+    }
+
+    /* ===== BUTTONS ===== */
+    .send {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 0.8125rem;
+      letter-spacing: 0.12em;
+      background: var(--heart-secondary);
+      border: 1px solid var(--heart-secondary);
+      color: var(--bg);
+      border-radius: 0;
+      padding: 14px;
+    }
+
+    .send:hover {
+      background: var(--fg);
+      border-color: var(--fg);
+      color: var(--bg);
+    }
+
+    .send:disabled {
+      background: transparent;
+      border-color: var(--border);
+      color: rgba(154, 154, 160, 0.45);
+    }
+
+    .again {
+      box-shadow: none;
+    }
+
+    .linkbtn {
+      font-family: var(--f-dot);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      border-radius: 0;
+      color: var(--fg-dim);
+      padding: 13px;
+    }
+
+    .linkbtn:hover {
+      background: transparent;
+      border-color: var(--heart-secondary);
+      color: var(--heart-secondary);
+    }
+
+    .back {
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      color: var(--fg-dim);
+    }
+
+    .back:hover {
+      color: var(--heart-secondary);
+    }
+
+    /* ===== 候補 / 一覧 ===== */
+    .spin {
+      border-color: var(--border);
+      border-top-color: var(--heart-secondary);
+    }
+
+    .loading {
+      font-family: var(--f-body);
+    }
+
+    .cand,
+    .row {
+      background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
+      border-color: var(--border);
+    }
+
+    .cand:hover {
+      background: var(--card-hi);
+      border-color: var(--heart-secondary);
+    }
+
+    .cand .t,
+    .row .t,
+    .now .t,
+    .hero h2,
+    .done h2 {
+      font-weight: 400;
+    }
+
+    .cand .t {
+      font-family: var(--f-body);
+      font-size: 0.875rem;
+    }
+
+    .cand .a,
+    .row .a,
+    .now .a,
+    .alt {
+      font-family: var(--f-body);
+    }
+
+    .cand .d,
+    .row .by,
+    .at,
+    .heart,
+    .fresh,
+    .alt .v,
+    .alt .len,
+    .hero .d {
+      font-family: var(--f-display);
+    }
+
+    .cand img,
+    .row img,
+    .now img,
+    .hero img {
+      border-radius: 2px;
+    }
+
+    .row .ph,
+    .cand .ph,
+    .hero .ph {
+      background: repeating-linear-gradient(45deg, #17171d 0 6px, #121216 6px 12px);
+      color: var(--glitch-accent);
+    }
+
+    .row.mine {
+      border-color: var(--heart-secondary);
+      background: rgba(55, 242, 230, 0.08);
+    }
+
+    .row.played .t,
+    .row.played .a {
+      color: rgba(154, 154, 160, 0.5);
+    }
+
+    details.alts summary {
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      color: var(--heart-secondary);
+    }
+
+    .alt:hover {
+      border-color: var(--heart-secondary);
+    }
+
+    /* ===== 確認 ===== */
+    .hero h2 {
+      font-family: var(--f-dot);
+      font-size: 1.125rem;
+      letter-spacing: 0.03em;
+      line-height: 1.5;
+    }
+
+    .hero .a {
+      font-family: var(--f-body);
+    }
+
+    .vtag,
+    .mytag,
+    .state,
+    .queuepos {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      border-radius: 0;
+    }
+
+    .vtag,
+    .mytag {
+      color: var(--heart-secondary);
+      border-color: var(--heart-secondary);
+    }
+
+    .state {
+      border-color: var(--border);
+      color: var(--fg-dim);
+    }
+
+    .state.done {
+      color: var(--heart-secondary);
+      border-color: var(--heart-secondary);
+    }
+
+    .queuepos {
+      color: var(--glitch-accent);
+      border-color: var(--glitch-accent);
+      padding: 4px 12px;
+    }
+
+    .player button {
+      width: 44px;
+      height: 44px;
+      border-radius: 0;
+      border-color: var(--heart-secondary);
+      color: var(--heart-secondary);
+    }
+
+    .player button:hover {
+      background: var(--heart-secondary);
+      color: var(--bg);
+    }
+
+    .player .bar {
+      background: var(--border);
+    }
+
+    .player .bar b {
+      background: var(--heart-secondary);
+    }
+
+    .player .lab {
+      font-family: var(--f-display);
+    }
+
+    .err {
+      background: var(--bg-elevated);
+      border: 1px solid var(--heart-primary);
+      color: var(--fg);
+      font-family: var(--f-body);
+    }
+
+    /* ===== 完了 ===== */
+    .tick {
+      border-radius: 0;
+      border-color: var(--heart-secondary);
+      color: var(--heart-secondary);
+    }
+
+    .done h2 {
+      font-family: var(--f-dot);
+      font-size: 1.125rem;
+      letter-spacing: 0.08em;
+    }
+
+    .done .what {
+      font-family: var(--f-body);
+    }
+
+    .note {
+      border-top-color: var(--border);
+    }
+
+    .shutbox {
+      font-family: var(--f-body);
+    }
+
+    .shutbox .big {
+      font-family: var(--f-dot);
+      letter-spacing: 0.08em;
+      color: var(--fg);
+    }
+
+    /* ===== 一覧見出し。スケジュール表の .section-title に合わせる ===== */
+    .boardhead h2 {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 0.9375rem;
+      letter-spacing: 0.14em;
+      color: var(--heart-secondary);
+    }
+
+    .fresh {
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      color: var(--fg-dim);
+    }
+
+    .now {
+      border-color: var(--heart-secondary);
+      background: rgba(55, 242, 230, 0.07);
+    }
+
+    .now .lab {
+      font-family: var(--f-display);
+      color: var(--heart-secondary);
+    }
+
+    .now .t {
+      font-family: var(--f-dot);
+      letter-spacing: 0.02em;
+    }
+
+    .eq i {
+      background: var(--heart-secondary);
+    }
+
+    /* ===== 投げ銭 ===== */
+    .tipbox {
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    .tipbox:hover {
+      background: var(--bg-elevated);
+      border-color: var(--heart-secondary);
+    }
+
+    .tipbox .tiplede,
+    .tipbox .tipnote {
+      font-family: var(--f-body);
+    }
+
+    .tipbox .tipnote b {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--heart-secondary);
+    }
+
+    /* ===== MAGI 相談 ===== */
+    .magi-head .emblem .hx,
+    .magi-head .emblem .hl {
+      stroke: rgba(55, 242, 230, 0.45);
+    }
+
+    .magi-head .emblem .hn {
+      font-family: var(--f-display);
+      fill: var(--heart-secondary);
+    }
+
+    .magi-head .mt {
+      font-family: var(--f-display);
+      color: var(--heart-secondary);
+    }
+
+    .magi-head .ms {
+      font-family: var(--f-body);
+      color: var(--fg-dim);
+    }
+
+    .seed,
+    .pick {
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      background: transparent;
+      border-color: var(--border);
+      color: var(--fg-dim);
+      border-radius: 0;
+    }
+
+    .seed:hover,
+    .pick:hover {
+      background: transparent;
+      border-color: var(--heart-secondary);
+      color: var(--heart-secondary);
+    }
+
+    .pick::after {
+      color: var(--heart-secondary);
+    }
+
+    .bubble {
+      font-family: var(--f-body);
+      background: var(--bg-elevated);
+      border-color: var(--border);
+      border-radius: 2px;
+    }
+
+    details.debate {
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    details.debate summary {
+      font-family: var(--f-display);
+      color: var(--fg-dim);
+    }
+
+    .pcard .cn {
+      font-family: var(--f-display);
+      color: var(--heart-secondary);
+    }
+
+    .pcard .px {
+      font-family: var(--f-body);
+    }
+
+    .answer .av {
+      border-radius: 0;
+      border-color: var(--heart-secondary);
+      color: var(--heart-secondary);
+      font-family: var(--f-display);
+    }
+
+    .answer .who {
+      font-family: var(--f-display);
+    }
+
+    .answer .ab {
+      font-family: var(--f-body);
+    }
+
+    .answer.streaming .ab::after {
+      color: var(--heart-secondary);
+    }
+
+    .composer button {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      border: 1px solid var(--heart-secondary);
+      border-radius: 0;
+      background: var(--heart-secondary);
+      color: var(--bg);
+    }
+
+    .composer button:hover:not(:disabled) {
+      background: var(--fg);
+      border-color: var(--fg);
+    }
+
+    .composer button:disabled {
+      background: transparent;
+      border-color: var(--border);
+      color: rgba(154, 154, 160, 0.45);
+    }
+
+    /* ===== パンくず / フッター ===== */
+    .site-crumb {
+      position: relative;
+      z-index: 1;
+      background: transparent;
+      padding: 0 calc(20px + env(safe-area-inset-right)) 26px calc(20px + env(safe-area-inset-left));
+    }
+
+    .site-crumb ol {
+      max-width: 480px;
+      font-family: var(--f-display);
+      font-size: 0.6875rem;
+      letter-spacing: 0.1em;
+    }
+
+    .site-crumb a {
+      color: var(--fg-dim);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .site-crumb a:hover {
+      color: var(--heart-secondary);
+      border-bottom-color: var(--heart-secondary);
+    }
+
+    .site-crumb [aria-current="page"] {
+      color: var(--fg-dim);
+    }
+
+    .site-footer {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 30px 20px calc(30px + env(safe-area-inset-bottom));
+      background: transparent;
+      border-top: 1px solid var(--border);
+      font-family: var(--f-display);
+      font-size: 0.6875rem;
+      letter-spacing: 0.1em;
+      color: var(--fg-dim);
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #bs-takeover-canvas,
+      .scanlines {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -492,6 +1168,10 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+  <canvas id="bs-takeover-canvas" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
   <div class="stage">
     <div class="sheet">
       <div class="top">
@@ -1323,6 +2003,234 @@
       if (btn) btn.click();
     });
   </script>
+  <!-- 背景キャンバスで使う共有物。スクリプトは prefers-reduced-motion で
+       即 return するので、共有物はその手前のこの一枚に置く -->
+  <script>
+    (function () {
+      'use strict';
+      var rootStyle = getComputedStyle(document.documentElement);
+      window.DJ_ART = {
+        // ドット絵のハート。'1' の升目だけ塗る
+        HEART: ['0110110', '1111111', '1111111', '0111110', '0011100', '0001000'],
+        // ドットの隙間。これがないと升目が繋がってドット絵に見えない
+        DOT: 0.92,
+        bg: rootStyle.getPropertyValue('--bg').trim() || '#0a0a0c',
+        pink: rootStyle.getPropertyValue('--heart-primary').trim() || '#ff2f6e',
+        cyan: rootStyle.getPropertyValue('--heart-secondary').trim() || '#37f2e6',
+        // 画面いっぱいのキャンバスを DPR ぶん解像度を上げて張る
+        fitCanvas: function (canvas, ctx) {
+          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          var w = window.innerWidth, h = window.innerHeight;
+          canvas.width = w * dpr;
+          canvas.height = h * dpr;
+          canvas.style.width = w + 'px';
+          canvas.style.height = h + 'px';
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          return { W: w, H: h, DPR: dpr };
+        }
+      };
+    })();
+  </script>
+
+  <!-- 本家（bijutsushisui.com）のテイクオーバー背景をそのまま移植。
+       ドットのハートが漂い、たまに走査帯ズレ・RGB色収差でグリッチする -->
+  <script>
+    (function () {
+      'use strict';
+
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      var canvas = document.getElementById('bs-takeover-canvas');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+
+      var art = window.DJ_ART;
+      var settings = {
+        bgColor: art.bg,
+        heartPrimary: art.pink,
+        heartSecondary: art.cyan,
+        heartCount: 42,
+        glitchFrequency: 0.02,
+        motionStyle: 'breath'
+      };
+
+      // オフスクリーン: シーン本体 / R・G・B分離用 / 焼き付き用
+      var scene = document.createElement('canvas');
+      var sceneCtx = scene.getContext('2d');
+      var rC = document.createElement('canvas'), rCtx = rC.getContext('2d');
+      var gC = document.createElement('canvas'), gCtx = gC.getContext('2d');
+      var bC = document.createElement('canvas'), bCtx = bC.getContext('2d');
+      var burn = document.createElement('canvas'); // 残像焼き付きレイヤー
+      var burnCtx = burn.getContext('2d');
+
+      var W, H, DPR;
+      function resize() {
+        var fit = art.fitCanvas(canvas, ctx);
+        W = fit.W; H = fit.H; DPR = fit.DPR;
+
+        [scene, rC, gC, bC, burn].forEach(function (cv) {
+          cv.width = W; cv.height = H;
+        });
+        burnCtx.fillStyle = settings.bgColor;
+        burnCtx.fillRect(0, 0, W, H);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // ---- ハートのドット絵形状 ----
+      var HEART_GRID = art.HEART;
+
+      function drawHeartTile(g, cx, cy, size, angleRad, color, alpha) {
+        var rows = HEART_GRID.length, cols = HEART_GRID[0].length;
+        var cell = size / cols;
+        g.save();
+        g.translate(cx, cy);
+        g.rotate(angleRad);
+        g.globalAlpha = alpha;
+        g.fillStyle = color;
+        for (var r = 0; r < rows; r++) {
+          for (var c = 0; c < cols; c++) {
+            if (HEART_GRID[r][c] === '1') {
+              g.fillRect((c - cols / 2) * cell, (r - rows / 2) * cell, cell * art.DOT, cell * art.DOT);
+            }
+          }
+        }
+        g.restore();
+      }
+
+      function makeHearts(count) {
+        var hearts = [];
+        for (var i = 0; i < count; i++) {
+          hearts.push({
+            x: Math.random(), y: Math.random(),
+            size: 14 + Math.random() * 22,
+            color: Math.random() > 0.5 ? settings.heartPrimary : settings.heartSecondary,
+            phase: Math.random() * Math.PI * 2,
+            period: 3 + Math.random() * 5,
+            angularVelocity: (Math.random() - 0.5) * 1.2,
+            baseAlpha: 0.35 + Math.random() * 0.35
+          });
+        }
+        return hearts;
+      }
+      var hearts = makeHearts(settings.heartCount);
+
+      // ---- グリッチ状態 ----
+      var glitchUntil = 0;
+      var BANDS = 32;
+      var bandShift = [];
+      var charFlashUntil = 0;
+      var CORRUPT_CHARS = ['0', '1', 'ｱ', 'ｶ', 'ﾀ', 'ﾅ', '■', 'ﾊ', 'ﾏ', 'ﾔ', 'ﾝ'];
+
+      function triggerGlitch(now) {
+        glitchUntil = now + 140 + Math.random() * 180;
+        bandShift = [];
+        for (var b = 0; b < BANDS; b++) {
+          var big = Math.random() < 0.06;
+          bandShift.push((Math.random() - 0.5) * (big ? 36 : 5));
+        }
+        if (Math.random() < 0.6) {
+          charFlashUntil = now + 300 + Math.random() * 200;
+        }
+      }
+
+      function maybeTriggerGlitch(now) {
+        if (now > glitchUntil && Math.random() < settings.glitchFrequency * 0.5) {
+          triggerGlitch(now);
+        }
+      }
+
+      function makeChannel(canvasEl, ctxEl, source, color) {
+        ctxEl.clearRect(0, 0, W, H);
+        ctxEl.drawImage(source, 0, 0);
+        ctxEl.globalCompositeOperation = 'multiply';
+        ctxEl.fillStyle = color;
+        ctxEl.fillRect(0, 0, W, H);
+        ctxEl.globalCompositeOperation = 'source-over';
+      }
+
+      function hexToRgb(hex) {
+        hex = hex.replace('#', '');
+        var r = parseInt(hex.substring(0, 2), 16);
+        var g = parseInt(hex.substring(2, 4), 16);
+        var b = parseInt(hex.substring(4, 6), 16);
+        return r + ',' + g + ',' + b;
+      }
+
+      var start = performance.now();
+
+      function frame(now) {
+        var t = now - start;
+        maybeTriggerGlitch(now);
+        var glitching = now < glitchUntil;
+
+        // --- シーン本体を描画（背景は塗らず、ハートのみ透明背景に描く） ---
+        sceneCtx.clearRect(0, 0, W, H);
+        for (var i = 0; i < hearts.length; i++) {
+          var h = hearts[i];
+          var angle;
+          if (settings.motionStyle === 'flutter') {
+            angle = (t / 1000) * h.angularVelocity;
+          } else {
+            var speed = Math.sin((t / 1000 / h.period) * Math.PI * 2 + h.phase);
+            angle = speed * Math.PI * 0.9;
+          }
+          drawHeartTile(sceneCtx, h.x * W, h.y * H, h.size, angle, h.color, h.baseAlpha);
+        }
+
+        // --- 残像焼き付き ---
+        burnCtx.fillStyle = 'rgba(' + hexToRgb(settings.bgColor) + ',0.14)';
+        burnCtx.fillRect(0, 0, W, H);
+        burnCtx.drawImage(scene, 0, 0);
+
+        // --- RGB色収差（常時わずか、グリッチ中は強める） ---
+        makeChannel(rC, rCtx, burn, '#ff0000');
+        makeChannel(gC, gCtx, burn, '#00ff00');
+        makeChannel(bC, bCtx, burn, '#0000ff');
+        var ab = glitching ? 6 : 1.2;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = settings.bgColor;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.drawImage(rC, -ab, 0);
+        ctx.drawImage(gC, 0, 0);
+        ctx.drawImage(bC, ab, 0);
+        ctx.globalCompositeOperation = 'source-over';
+
+        // --- 走査帯ズレ（グリッチ中のみ） ---
+        if (glitching) {
+          var snap = document.createElement('canvas');
+          snap.width = W; snap.height = H;
+          snap.getContext('2d').drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, W, H);
+          var bh = H / BANDS;
+          for (var b = 0; b < BANDS; b++) {
+            var sx = bandShift[b] || 0;
+            ctx.drawImage(snap, 0, b * bh, W, bh + 1, sx, b * bh, W, bh + 1);
+          }
+        }
+
+        // --- 文字化けフラッシュ（グリッチ中のみ） ---
+        if (now < charFlashUntil && Math.random() < 0.6) {
+          ctx.font = '11px monospace';
+          ctx.fillStyle = '#ffe14d';
+          for (var c2 = 0; c2 < 6; c2++) {
+            ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+            ctx.fillText(
+              CORRUPT_CHARS[Math.floor(Math.random() * CORRUPT_CHARS.length)],
+              Math.random() * W, Math.random() * H
+            );
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+    })();
+  </script>
+
 </body>
 
 </html>
