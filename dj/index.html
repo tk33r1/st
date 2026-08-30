@@ -2,6 +2,9 @@
 <html lang="ja">
 
 <head>
+  <!-- 文字エンコーディング宣言は先頭 1024 バイト以内に収める必要がある。計測タグより前に置くこと -->
+  <meta charset="UTF-8">
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
   <script>
@@ -23,7 +26,6 @@
           'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="DJのポートフォリオページ。ボランティアで活動しております。">
   <meta name="robots" content="max-image-preview:large">
@@ -99,7 +101,7 @@
   <!-- Google Fonts: Noto Serif JP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;600;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;600;700;900&display=swap" rel="stylesheet">
 
   <style>
     /* ===== RESET & BASE ===== */
@@ -107,6 +109,13 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+    }
+
+    /* 見出しは意味づけのみ。体裁はすべてクラス側で決める（h2 化で見た目が変わらないように） */
+    h1,
+    h2 {
+      font-size: inherit;
+      font-weight: inherit;
     }
 
     :root {
@@ -443,7 +452,6 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       overflow: hidden;
-      cursor: pointer;
       transition: all 0.3s ease;
     }
 
@@ -485,7 +493,7 @@
 
     .at-field.active {
       opacity: 1;
-      animation: at-field-pulse 0.6s ease-out;
+      animation: at-field-pulse 0.6s ease-out forwards;
     }
 
     @keyframes at-field-pulse {
@@ -509,8 +517,15 @@
     }
 
     .hexagon-layer:nth-child(2) {
-      animation: pulse-layer 0.6s ease-out;
       border-color: var(--accent-red);
+    }
+
+    /*
+     * 親が .active になったときだけ再生する。無条件に animation を置くと
+     * .at-field が opacity:0 のまま読み込み時に一度きり走って終わり、二度と見えない。
+     */
+    .at-field.active .hexagon-layer:nth-child(2) {
+      animation: pulse-layer 0.6s ease-out forwards;
     }
 
     @keyframes pulse-layer {
@@ -568,13 +583,13 @@
       background: rgba(156, 122, 247, 0.3);
     }
 
-    .mixcloud-container {
+    .sound-log-embed {
       max-width: 600px;
       margin: 0 auto;
       text-align: center;
     }
 
-    .mixcloud-label {
+    .sound-log-embed-label {
       font-size: 0.85rem;
       letter-spacing: 0.15em;
       margin-bottom: 20px;
@@ -582,7 +597,7 @@
       text-transform: uppercase;
     }
 
-    .mixcloud-player {
+    .sound-log-embed iframe {
       width: 100%;
       height: 362px;
       max-width: 600px;
@@ -1443,7 +1458,56 @@
         line-height: 1.9;
       }
     }
+
+    /*
+     * ビューポート基準の高さを、対応ブラウザではまとめて dvh に差し替える
+     * （モバイルのアドレスバー伸縮でガタつかせないため）。非対応ブラウザは上の vh のまま。
+     * 宣言ごとの vh/dvh 二重指定にしないのは、--modal-h のようなカスタムプロパティが
+     * 値を検証せず、非対応ブラウザで var() の解決先が不正になってしまうから。
+     */
+    @supports (height: 1dvh) {
+
+      html,
+      body,
+      .hero-section,
+      .philosophy-section,
+      .gear-section,
+      .sound-log-section,
+      .operation-section,
+      .video-section,
+      .contact-section {
+        min-height: 100dvh;
+      }
+
+      .hero-title {
+        max-height: 85dvh;
+      }
+
+      .image-modal-content {
+        max-height: 90dvh;
+      }
+
+      .image-modal {
+        --modal-h: 85dvh;
+      }
+
+      @media (max-width: 768px) {
+        .image-modal {
+          --modal-h: 78dvh;
+        }
+      }
+    }
   </style>
+
+  <!-- JS が無効・失敗しても本文が消えないようにする（.reveal は既定で opacity:0） -->
+  <noscript>
+    <style>
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    </style>
+  </noscript>
 </head>
 
 <body>
@@ -1508,7 +1572,7 @@
   <section class="gear-section">
     <div class="gear-bg-split"></div>
     <div class="gear-content reveal">
-      <div class="gear-item" data-gear="controller">
+      <div class="gear-item">
         <img src="https://tk.st/images/contents/DJ-Controller-purple.avif" alt="DJ Controller" class="gear-image"
           loading="lazy">
         <div class="at-field">
@@ -1516,7 +1580,7 @@
           <div class="hexagon-layer"></div>
         </div>
       </div>
-      <div class="gear-item" data-gear="headphone">
+      <div class="gear-item">
         <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="Lollipop Headphone" class="gear-image"
           loading="lazy">
         <div class="at-field">
@@ -1524,7 +1588,7 @@
           <div class="hexagon-layer"></div>
         </div>
       </div>
-      <div class="gear-item" data-gear="turntable">
+      <div class="gear-item">
         <img src="https://tk.st/images/contents/happy-death.avif" alt="Turntable" class="gear-image" loading="lazy">
         <div class="at-field">
           <div class="hexagon-layer"></div>
@@ -1536,16 +1600,16 @@
 
   <!-- SOUND LOG -->
   <section class="sound-log-section">
-    <div class="sound-log-header reveal">🔊 Audio Stream: Active</div>
+    <h2 class="sound-log-header reveal">🔊 Audio Stream: Active</h2>
     <div class="genre-list reveal">
       <div class="genre-item">BIG ROOM HOUSE</div>
       <div class="genre-item">PSYTRANCE</div>
       <div class="genre-item">PARA PARA</div>
       <div class="genre-item">LO-FI HIPHOP</div>
     </div>
-    <div class="mixcloud-container reveal">
-      <div class="mixcloud-label">» Sound Log Database</div>
-      <iframe src="https://embed.beatport.com/?id=5012224&type=release" class="mixcloud-player" scrolling="no"
+    <div class="sound-log-embed reveal">
+      <div class="sound-log-embed-label">» Sound Log Database</div>
+      <iframe src="https://embed.beatport.com/?id=5012224&type=release" scrolling="no"
         title="Beatport Player" loading="lazy"></iframe>
     </div>
   </section>
@@ -1554,7 +1618,7 @@
   <section class="operation-section">
     <div class="operation-container">
       <div class="reveal">
-        <div class="operation-title">📊 Archive / Past</div>
+        <h2 class="operation-title">📊 Archive / Past</h2>
         <div class="timeline">
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
@@ -1627,7 +1691,7 @@
         </div>
       </div>
       <div class="reveal">
-        <div class="operation-title">📅 Schedule / Future</div>
+        <h2 class="operation-title">📅 Schedule / Future</h2>
         <div class="calendar-container">
           <iframe
             src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo"
@@ -1639,7 +1703,7 @@
 
   <!-- VIDEO -->
   <section class="video-section">
-    <div class="video-title reveal">🎬 Visual Database</div>
+    <h2 class="video-title reveal">🎬 Visual Database</h2>
     <div class="video-container reveal">
       <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no"
         class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
@@ -1655,7 +1719,7 @@
       </svg>
     </div>
     <div class="contact-content reveal">
-      <div class="about-title">🤝 About Me</div>
+      <h2 class="about-title">🤝 About Me</h2>
 
       <div class="about-unit">
         <div class="about-label">活動名義</div>
@@ -1671,7 +1735,7 @@
       <div class="about-unit">
         <div class="about-label">所属団体</div>
         <a class="about-brand" href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer">
-          <img src="../images/contents/shisui-logo.png" alt="美術紫水 ロゴ" width="36" height="36" loading="lazy">
+          <img src="https://tk.st/images/contents/shisui-logo.png" alt="美術紫水 ロゴ" width="36" height="36" loading="lazy">
           <span class="about-name">美術紫水</span>
         </a>
         <p>絵描きからDJ、調香師まで。多種多様なアーティストが集う団体。</p>
@@ -1731,13 +1795,13 @@
   </div>
 
   <!-- Back to Top Button -->
-  <button class="back-to-top" id="backToTop" title="トップへ戻る">
+  <button class="back-to-top" id="backToTop" type="button" aria-label="トップへ戻る" title="トップへ戻る">
     <i data-lucide="chevron-up" class="icon-lg"></i>
   </button>
 
   <!-- Lucide Icons -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <script defer>
+  <script>
     // 1. DOM Elements Cache
     const progressBar = document.getElementById('progressBar');
     const syncRateText = document.getElementById('syncRateText');
@@ -1745,17 +1809,25 @@
     const backToTopBtn = document.getElementById('backToTop');
 
     // 2. A.T. Field Effect
-    const triggerAtField = (item) => {
-      const atField = item.querySelector('.at-field');
-      if (!atField) return;
-
+    // 再生中に再度呼ばれても頭から流し直す。class を付け直すだけでは CSS アニメーションは再起動しない
+    const triggerAtField = (atField) => {
+      atField.classList.remove('active');
+      void atField.offsetWidth; // reflow を挟んでアニメーションを確実に巻き戻す
       atField.classList.add('active');
-      setTimeout(() => atField.classList.remove('active'), 600);
     };
 
     document.querySelectorAll('.gear-item').forEach(item => {
-      item.addEventListener('mouseenter', () => triggerAtField(item));
-      item.addEventListener('touchstart', () => triggerAtField(item), { passive: true });
+      const atField = item.querySelector('.at-field');
+      if (!atField) return;
+
+      // 終了イベントで外す（setTimeout だと CSS 側の 0.6s を JS に二重管理させることになる）。
+      // 子の .hexagon-layer からも animationend が上がってくるので発生源を絞る
+      atField.addEventListener('animationend', (e) => {
+        if (e.target === atField) atField.classList.remove('active');
+      });
+
+      // pointerenter ならマウスとタッチが 1 本にまとまる（mouseenter + touchstart だと合成イベントで二重発火する）
+      item.addEventListener('pointerenter', () => triggerAtField(atField));
     });
 
     // 3. Scroll Reveal Animation
@@ -1782,18 +1854,20 @@
     });
 
     // 4. SYNC RATE & Back to Top (Scroll Progress)
-    window.addEventListener('scroll', () => {
+    // scrollHeight / offsetTop の読み取りは強制同期レイアウトを起こすので、
+    // スクロール中は測らずキャッシュを使い、寸法が変わったときだけ measure() し直す。
+    let scrollHeight = 0;
+    let footerTopScroll = 0;
+
+    const updateScrollUi = () => {
       const scrollTop = window.scrollY;
       const clientHeight = window.innerHeight;
-      const scrollHeight = document.documentElement.scrollHeight;
       const maxScroll = scrollHeight - clientHeight;
-
-      let scrollPercent = maxScroll > 0 ? Math.max(0, Math.min(1, scrollTop / maxScroll)) : 0;
+      const scrollPercent = maxScroll > 0 ? Math.max(0, Math.min(1, scrollTop / maxScroll)) : 0;
 
       if (progressBar && syncRateText && footer) {
         progressBar.style.width = `${scrollPercent * 100}%`;
 
-        const footerTopScroll = footer.offsetTop - clientHeight;
         const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
 
         let displayRate = '';
@@ -1813,20 +1887,36 @@
         }
 
         syncRateText.textContent = `SYNC RATE: ${displayRate}`;
-
-        if (isRunaway) {
-          syncRateText.classList.add('runaway');
-          progressBar.classList.add('runaway');
-        } else {
-          syncRateText.classList.remove('runaway');
-          progressBar.classList.remove('runaway');
-        }
+        syncRateText.classList.toggle('runaway', isRunaway);
+        progressBar.classList.toggle('runaway', isRunaway);
       }
 
       if (backToTopBtn) {
         backToTopBtn.classList.toggle('visible', scrollTop > 300);
       }
+    };
+
+    let scrollTicking = false;
+    window.addEventListener('scroll', () => {
+      if (scrollTicking) return;
+      scrollTicking = true;
+      requestAnimationFrame(() => {
+        scrollTicking = false;
+        updateScrollUi();
+      });
     }, { passive: true });
+
+    const remeasure = () => {
+      scrollHeight = document.documentElement.scrollHeight;
+      footerTopScroll = footer ? footer.offsetTop - window.innerHeight : 0;
+      updateScrollUi();
+    };
+
+    // resize は innerHeight だけが変わる場合（モバイルのアドレスバー）を拾い、
+    // ResizeObserver は遅延読み込みでページ高が伸びた場合を拾う。役割が違うので両方必要。
+    window.addEventListener('resize', remeasure, { passive: true });
+    new ResizeObserver(remeasure).observe(document.body);
+    remeasure();
 
     if (backToTopBtn) {
       backToTopBtn.addEventListener('click', () => {
@@ -1934,6 +2024,8 @@
 
     timelineLinks.forEach(link => {
       link.addEventListener('click', (e) => {
+        // target="_blank" を付けているので、修飾キー／中クリックは新規タブで開く既定動作に任せる
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
         e.preventDefault();
         const srcs = getImages(link);
         if (!srcs.length) return;
@@ -2008,7 +2100,14 @@
     // 6. Initialize Lucide Icons
     lucide.createIcons();
 
-    document.getElementById('copyright-year').textContent = new Date().getFullYear();
+    // 開始年はマークアップ（JS 無効時にそのまま表示されるフォールバックでもある）を唯一の情報源にし、
+    // 終了年だけ現在年に更新する。年をまたいでもソースの書き換えは不要。
+    const yearEl = document.getElementById('copyright-year');
+    if (yearEl) {
+      const since = yearEl.textContent.trim().slice(0, 4);
+      const now = String(new Date().getFullYear());
+      yearEl.textContent = now === since ? since : `${since}-${now}`;
+    }
   </script>
 </body>
 

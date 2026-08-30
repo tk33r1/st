@@ -2782,18 +2782,14 @@
     }
   </script>
   <script>
-    // Theme has to be resolved before the first paint or a visitor on dark sees a flash
-    // of the light palette — which is why this lives up here and cannot use the helpers
-    // in the main script below. It publishes them instead, so the storage key, the
-    // stored-choice-beats-OS rule and the two theme-color hexes have exactly one home.
+    // Theme is painted before first paint so there is never a flash of the wrong palette.
+    // This lives up here and cannot use the helpers in the main script below; it publishes
+    // paint() instead, so the two theme-color hexes have exactly one home.
     (function () {
       var T = window.TK = {
-        pref: function () {
-          var t = null;
-          try { t = localStorage.getItem('tkst_theme'); } catch (_) { }
-          return (t === 'dark' || t === 'light') ? t
-            : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-        },
+        // Light is the standard theme. Nothing is persisted and the OS
+        // `prefers-color-scheme` is deliberately ignored — every load starts here.
+        pref: function () { return 'light'; },
         paint: function (t) {
           document.documentElement.setAttribute('data-theme', t);
           var m = document.querySelector('meta[name="theme-color"]');
@@ -3252,10 +3248,9 @@
     // English is the source language (the UI was built English-first for looks);
     // the optional 'japanese' extension flips the whole interface + content to
     // Japanese. Everything is kept inline (no external translation files / fetch)
-    // to preserve the self-contained Bitcoin-inscription constraint. The chosen
-    // language is persisted so a returning visitor keeps it.
+    // to preserve the self-contained Bitcoin-inscription constraint. English is the
+    // standard; the choice is session-only and is not persisted across loads.
     let currentLang = 'en';
-    try { if (localStorage.getItem('tkst_lang') === 'ja') currentLang = 'ja'; } catch (_) { }
     // Inline translator: tr('English', '日本語'). Falls back to English when the
     // Japanese argument is omitted, so partially-translated strings stay safe.
     const tr = (en, ja) => (currentLang === 'ja' && ja != null) ? ja : en;
@@ -3679,23 +3674,13 @@
       // in buildSearchIndex), so no reindex/re-render is needed on theme toggle.
       renderExtensions();
     }
-    // Only an explicit toggle persists: applyTheme() is also driven by `softReload` and
-    // by the URL easter eggs (which force dark), and neither should overwrite the
-    // visitor's own choice — or pin them to a theme they never picked.
+    // The toggle only affects the current session — nothing is persisted, so a reload
+    // (and `softReload`, and the URL easter eggs that force dark) starts from light again.
     function toggleTheme() {
       const isDark = !isDarkNow();
       applyTheme(isDark);
-      safeStore('tkst_theme', isDark ? 'dark' : 'light');
       addToHistory(tr(`[SYS] Theme changed to ${isDark ? 'dark' : 'light'}`, `[SYS] テーマを${isDark ? 'ダーク' : 'ライト'}に変更しました`));
       showToast(tr(`Color theme switched to ${isDark ? 'Dark' : 'Light'}`, `カラーテーマを${isDark ? 'ダーク' : 'ライト'}に切り替えました`));
-    }
-    // Track later OS changes, but only while the visitor has expressed no preference.
-    if (window.matchMedia) {
-      try {
-        matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-          if (!safeGet('tkst_theme')) applyTheme(e.matches);
-        });
-      } catch (_) { /* older WebViews: no addEventListener on MediaQueryList */ }
     }
 
     // --- Language switching ---------------------------------------------------
@@ -3761,7 +3746,6 @@
       const next = lang === 'ja' ? 'ja' : 'en';
       if (next === currentLang) { applyLang(); return; }
       currentLang = next;
-      safeStore('tkst_lang', next);
       applyLang();
       addToHistory(tr(`[SYS] Language changed to ${next === 'ja' ? 'Japanese' : 'English'}`, `[SYS] 表示言語を${next === 'ja' ? '日本語' : '英語'}に変更しました`));
       showToast(next === 'ja' ? '表示言語を日本語に切り替えました' : 'Language switched to English');
@@ -6072,8 +6056,7 @@
       syncBpmUI(60);
       setActiveTree(null);
 
-      // Back to the starting theme (stored choice, else the OS) — not unconditionally
-      // light, which would undo a persisted preference on every reload.
+      // Back to the standard theme (light); nothing is persisted to restore.
       applyTheme(TK.pref() === 'dark');
 
       tabState = {}; tabOrder = []; activeTab = null;
