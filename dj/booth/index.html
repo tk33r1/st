@@ -207,13 +207,16 @@
     .msg + .msg { margin-top: 6px; }
     .msg .who { color: var(--faint); font-size: 12px; margin-left: 8px; }
 
-    /* 見た目は 3px の細線のまま。負のマージンで、当たり判定だけ上下の隙間へはみ出す */
+    /* 繋ぐ位置を探すのに一番使うので、鳴らしていなくても最初から出しておく。
+       見た目は 3px の細線のまま。負のマージンで、当たり判定だけ上下の隙間へはみ出す */
     .prev {
-      height: 3px; box-sizing: content-box; padding: 8px 0; margin: -8px 0;
+      height: 3px; box-sizing: content-box; padding: 8px 0; margin: -8px 0; cursor: pointer;
       background-color: var(--line); background-clip: content-box; border-radius: 2px;
-      overflow: hidden; display: none;
+      overflow: hidden; display: block;
     }
-    .prev.on { display: block; cursor: pointer; }
+    /* 鳴っていないバーは沈めておく。いまどのカードを試聴中かは一目で分かるように */
+    .prev:not(.on) { opacity: .5; }
+    .prev:hover { opacity: 1; }
     .prev b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width .2s linear; }
 
     .acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -1164,7 +1167,10 @@
         '<div class="votes likes' + (s.likes >= 3 ? ' hot' : '') + '"><b>' + (s.likes || 0) + '</b><span>LIKE</span></div>' +
         '</div></div>' +
         voices +
-        '<div class="prev' + (playingId === s.id ? ' on' : '') + '"><b id="prevbar-' + s.id + '"></b></div>' +
+        (s.previewUrl
+          ? '<div class="prev' + (playingId === s.id ? ' on' : '') +
+            '" title="押した位置から試聴"><b id="prevbar-' + s.id + '"></b></div>'
+          : '') +
         '<div class="acts">' + primary + links +
         '<span class="spacer"></span>' +
         '<button class="act done" data-do="played">再生済</button>' +
@@ -1324,14 +1330,8 @@
       if (bar) bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
     }
 
-    /* バーを押したら、その位置へ。バーが出ているのは鳴らしている曲だけなので
-       対象は常にいまのプレビュー。自分で止めている最中は、止めたまま位置だけ動かす。 */
-    function seekPrev(s, bar, e) {
-      if (playingId !== s.id || !audio) return;
-      const r = bar.getBoundingClientRect();
-      if (!r.width) return;
-      const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      // 読み込む前は duration が出ていないので、メタデータが来てから飛ばす
+    // 読み込む前は duration が出ていないので、メタデータが来てから飛ばす
+    function seekAudio(ratio) {
       const apply = () => {
         const dur = audio.duration || 30;
         audio.currentTime = Math.max(0, Math.min(dur - 0.05, dur * ratio));
@@ -1339,6 +1339,28 @@
       };
       if (audio.readyState > 0) apply();
       else audio.addEventListener('loadedmetadata', apply, { once: true });
+    }
+
+    function startPreview(s, ratio) {
+      stopAudio();
+      if (!s.previewUrl) return;
+      audio = new Audio(s.previewUrl);
+      playingId = s.id;
+      audio.addEventListener('ended', stopAudio);
+      if (ratio) seekAudio(ratio);
+      // play() を先に。paused が倒れてからでないとボタンが「再開」に見える
+      audio.play().then(() => trackAudio(s.id)).catch(() => stopAudio());
+      render();
+    }
+
+    /* バーを押したら、その位置へ。鳴らしていない曲ならそこから鳴らしはじめ、
+       自分で止めている最中なら位置だけ動かして止めたままにしておく。 */
+    function seekPrev(s, bar, e) {
+      const r = bar.getBoundingClientRect();
+      if (!r.width) return;
+      const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      if (playingId === s.id && audio) seekAudio(ratio);
+      else startPreview(s, ratio);
     }
 
     function trackAudio(id) {
@@ -1376,14 +1398,7 @@
           }
           return;
         }
-        stopAudio();
-        if (!s.previewUrl) return;
-        audio = new Audio(s.previewUrl);
-        playingId = s.id;
-        audio.addEventListener('ended', stopAudio);
-        // play() を先に。paused が倒れてからでないとボタンが「再開」に見える
-        audio.play().then(() => trackAudio(s.id)).catch(() => stopAudio());
-        render();
+        startPreview(s, 0);
         return;
       }
       if (what === 'played') { setStatus(s.id, 'played', '再生済にしました'); return; }
@@ -1396,7 +1411,7 @@
       const s = songs.find((x) => x.id === Number(card.dataset.id)); if (!s) return;
       // render() で作り直す前に、いま画面にあるバーから位置を採る
       const bar = e.target.closest('.prev');
-      if (bar) { seekPrev(s, bar, e); sel = s.id; render(); return; }
+      if (bar) { sel = s.id; seekPrev(s, bar, e); render(); return; }
       const btn = e.target.closest('[data-do]');
       sel = s.id;
       if (btn) act(s, btn.dataset.do); else render();
