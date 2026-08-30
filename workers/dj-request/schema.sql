@@ -62,15 +62,33 @@ CREATE TABLE IF NOT EXISTS requests (
   event_code TEXT NOT NULL,
   from_name  TEXT NOT NULL DEFAULT '',
   message    TEXT NOT NULL DEFAULT '',
+  -- あとから荒らしを追うための手掛かり。会場の Wi-Fi では全員同じ値になるので、
+  -- 「同じ人か」の判定にも連投の判定にも使ってはいけない。
   ip_hash    TEXT NOT NULL DEFAULT '',
+  -- 端末を見分ける鍵。ブラウザの localStorage が持つ値をそのまま受け取る。
+  -- 作り直せば別端末として扱われるが、止めたいのは面白半分の連打なので足りる。
+  device_key TEXT NOT NULL DEFAULT '',
   -- 投稿者が自分の投稿を後から直す／取り下げるための鍵。投稿時に発行して
   -- ブラウザにだけ渡す。ip_hash は会場の Wi-Fi で全員同じになるので使えない。
   edit_token TEXT NOT NULL DEFAULT '',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 同じ人が同じ曲を連打しても票は 1 のまま
-CREATE UNIQUE INDEX IF NOT EXISTS idx_requests_once ON requests(song_id, ip_hash);
+-- 同じ端末が同じ曲を連打しても票は 1 のまま。
+-- 別の人が同じ曲を送るのは歓迎（票が積まれ、ひとことも人数分残る）。
+CREATE UNIQUE INDEX IF NOT EXISTS idx_requests_once ON requests(song_id, device_key);
 CREATE INDEX IF NOT EXISTS idx_requests_song ON requests(song_id);
-CREATE INDEX IF NOT EXISTS idx_requests_rate ON requests(ip_hash, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_requests_token ON requests(song_id, edit_token);
+
+-- ── 連打カウンタの元帳 ─────────────────────
+-- 投稿が通るたびに1行増やす。requests とは別に持つのが要点で、requests は
+-- 取り下げると行ごと消えるため、それを数えると投稿→取り下げの繰り返しで
+-- 上限がいくらでも戻ってしまう。判定に要らなくなった行は投稿のたびに捨てる。
+CREATE TABLE IF NOT EXISTS post_log (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  device_key TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_post_log_rate ON post_log(device_key, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_post_log_age  ON post_log(created_at);

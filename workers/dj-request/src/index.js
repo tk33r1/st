@@ -5,7 +5,7 @@
  *   GET    /dj/api/req/event           いま受付中のイベント
  *   POST   /dj/api/req/requests        リクエスト投稿
  *   GET    /dj/api/req/board           みんなのリクエスト（再生済かどうかだけ見せる）
- *   GET    /dj/api/req/songs/:id       曲の詳細（?token= を添えると自分の投稿も返る）
+ *   GET    /dj/api/req/songs/:id       曲の詳細（Authorization: Bearer <鍵> で自分の投稿も返る）
  *   PATCH  /dj/api/req/songs/:id/mine  自分の投稿のひとこと・名前を直す
  *   DELETE /dj/api/req/songs/:id/mine  自分の投稿を取り下げる
  *
@@ -21,16 +21,25 @@
  * ひとことは /board では返さないが /admin/songs では返る。鍵が無い以上これは
  * 実質公開情報なので、来場者ページの文言もそれに合わせてある。
  *
- * 投稿の修正・取り下げは edit_token でしか通さない。ip_hash は本人確認に使えない
- * （会場の Wi-Fi では全員が同じ IP に見える）。また DJ が採用・見送り・再生済の
- * どれかに動かした曲は触らせない。並べ替えたあとで足元の内容が変わると困るため。
+ * 投稿の修正・取り下げは edit_token でしか通さない。鍵はヘッダでだけ受け取る。
+ * クエリに載せるとアクセスログや Referer に残り、そのまま使い回されるため。
+ * また DJ が採用・見送り・再生済のどれかに動かした曲と、受付が終わった回の曲は
+ * 触らせない。並べ替えたあとで足元の内容が変わると困るため。
+ *
+ * ip_hash は保存するだけで、判定には一切使わない。会場の Wi-Fi では来場者全員が
+ * 同じ値になるので、本人確認にも連投の判定にも使えない。「同じ人か」はブラウザが
+ * 持つ device_key で見る。連打の判定は requests ではなく post_log で数える
+ * （requests は取り下げで消えるため、数えると上限がすり抜けられる）。
  */
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 
-// 荒らし対策のしきい値
-const RATE_WINDOW_MIN = 10;   // 直近この分数で
-const RATE_MAX        = 3;    // 1つの IP から投稿できる件数
+// 連打の抑止。IP ではなく端末単位で数える（会場の Wi-Fi では IP が全員同じ）。
+// 鍵はブラウザが持つので作り直せば逃げられるが、止めたいのは面白半分の連打で、
+// そこは端末単位で十分に効く。どんどん送ってほしいので枠は広めに取る。
+const RATE_WINDOW_MIN = 1;    // 直近この分数で
+const RATE_MAX        = 6;    // 1つの端末から投稿できる件数
+const RATE_KEEP_MIN   = 60;   // 元帳をこの分数だけ残す（端末の鍵を持ち続けない）
 const BOARD_WAITING   = 10;   // 公開一覧に出す「受付済」の件数
 
 const LIMITS = { title: 200, artist: 200, album: 200, name: 20, message: 140, url: 500 };
@@ -40,7 +49,10 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    // Authorization を許すと GET にも preflight が付く。会場の回線で毎回
+    // 往復させたくないので、プリフライトはブラウザに1日持たせる。
+    'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   };
 }
@@ -85,6 +97,12 @@ async function hashIp(ip, eventCode, salt) {
 function newEditToken() {
   const r = crypto.getRandomValues(new Uint8Array(16));
   return [...r].map((n) => n.toString(16).padStart(2, '0')).join('');
+}
+
+/** Authorization: Bearer <edit_token> を取り出す。クエリでは受け取らない。 */
+function bearer(request) {
+  const m = /^Bearer\s+(\S+)$/i.exec((request.headers.get('Authorization') || '').trim());
+  return m ? clean(m[1], 64) : '';
 }
 
 /** 紛らわしい文字（0/O/1/I）を除いた6文字。口頭で伝えられるように。 */
@@ -206,20 +224,32 @@ async function postRequest(request, env, cors, ctx) {
     return json({ error: 'bad_request', message: '曲名を入力してください' }, 400, cors);
   }
 
+  // 記録するだけ。荒らしを後から追う手掛かりで、判定には使わない。
   const ip = request.headers.get('CF-Connecting-IP') || '';
   const ipHash = await hashIp(ip, ev.code, env.IP_SALT);
 
-  // 直近の投稿数で足切り。連投とスパムをここで止める。
+  // 端末の鍵はブラウザが作る。古いキャッシュのページから鍵なしで来たときは
+  // その場で使い捨ての値を作って投稿自体は通す（空文字のままだと
+  // UNIQUE(song_id, device_key) が別人の行と衝突して、投稿が黙って消える）。
+  const deviceKey = clean(body.device, 64) || newEditToken();
+
+  // 直近の投稿数で足切り。連打をここで止める。
+  // 数えるのは requests ではなく post_log。requests は取り下げると行ごと消えるので、
+  // それを数えると投稿→取り下げを繰り返すだけで上限がいくらでも戻ってしまう。
   const recent = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM requests
-      WHERE ip_hash = ? AND created_at > datetime('now', ?)`
-  ).bind(ipHash, `-${RATE_WINDOW_MIN} minutes`).first();
+    `SELECT COUNT(*) AS n FROM post_log
+      WHERE device_key = ? AND created_at > datetime('now', ?)`
+  ).bind(deviceKey, `-${RATE_WINDOW_MIN} minutes`).first();
   if (recent && recent.n >= RATE_MAX) {
     return json({
       error: 'rate_limited',
       message: `リクエストは${RATE_WINDOW_MIN}分に${RATE_MAX}曲までです。少し時間をおいてください`,
     }, 429, cors);
   }
+
+  // 上限を通った時点で1件記録する。この先の結果（新規・重複・失敗）に関わらず
+  // 「1回叩いた」ことは数える。取り下げてもこの行は残る。
+  await env.DB.prepare(`INSERT INTO post_log (device_key) VALUES (?)`).bind(deviceKey).run();
 
   const key = dedupeKey(isFree ? { title } : track);
 
@@ -257,28 +287,35 @@ async function postRequest(request, env, cors, ctx) {
     isNewSong = true;
   }
 
-  // 同じ人が同じ曲を再送しても票は増えない（UNIQUE(song_id, ip_hash)）
+  // 同じ端末が同じ曲を再送しても票は増えない（UNIQUE(song_id, device_key)）。
+  // 別の人が同じ曲を送るのは弾かない。票が積まれ、ひとことも人数分残る。
   let editToken = newEditToken();
   const ins = await env.DB.prepare(
-    `INSERT OR IGNORE INTO requests (song_id, event_code, from_name, message, ip_hash, edit_token)
-     VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT OR IGNORE INTO requests (song_id, event_code, from_name, message, ip_hash, device_key, edit_token)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
   ).bind(
-    song.id, ev.code, clean(body.name, LIMITS.name), clean(body.message, LIMITS.message), ipHash, editToken
+    song.id, ev.code, clean(body.name, LIMITS.name), clean(body.message, LIMITS.message),
+    ipHash, deviceKey, editToken
   ).run();
 
   const added = ins.meta.changes > 0;
   if (added) {
     await env.DB.prepare(`UPDATE songs SET votes = votes + 1 WHERE id = ?`).bind(song.id).run();
   } else {
-    // 弾かれた＝この端末はもう投稿済み。あとで直せるよう既存の鍵を返す。
-    // 古い行には鍵が無いので、その場で発行して埋める。
+    // 弾かれた＝この端末はもうこの曲を送っている。あとで直せるよう既存の鍵を返す。
+    // 引くのは必ず device_key。ip_hash で引くと、同じ Wi-Fi にいる別人の行を掴んで
+    // その人の鍵を渡してしまう（＝隣の人のひとことを読み書きできてしまう）。
     const row = await env.DB.prepare(
-      `SELECT id, edit_token FROM requests WHERE song_id = ? AND ip_hash = ?`
-    ).bind(song.id, ipHash).first();
+      `SELECT id, edit_token FROM requests WHERE song_id = ? AND device_key = ?`
+    ).bind(song.id, deviceKey).first();
     if (row && row.edit_token) {
       editToken = row.edit_token;
     } else if (row) {
+      // 鍵を持たない古い行。自分の行だと確かめられたので、ここで発行して埋める。
       await env.DB.prepare(`UPDATE requests SET edit_token = ? WHERE id = ?`).bind(editToken, row.id).run();
+    } else {
+      // 自分の行が無いのに弾かれた＝想定外。誰の鍵も渡さない。
+      editToken = '';
     }
   }
 
@@ -286,11 +323,19 @@ async function postRequest(request, env, cors, ctx) {
     `SELECT COUNT(*) AS n FROM requests WHERE event_code = ?`
   ).bind(ev.code).first();
 
-  // BPM とキーの取得はここまでの D1 操作が終わってから始める。
-  // 本体の書き込みと並行させると D1 が競合してタイムアウトする。
-  if (isNewSong && !isFree && ctx) {
+  // 後始末はここまでの D1 操作が終わってから始める。本体の書き込みと並行させると
+  // D1 が競合してタイムアウトするので、後始末どうしも直列に流す。
+  if (ctx) {
     const artistForLookup = clean(track.artistEn, LIMITS.artist) || clean(track.artist, LIMITS.artist);
-    ctx.waitUntil(enrichSong(env, song.id, artistForLookup, title, Number(track.durationMs) || 0));
+    ctx.waitUntil((async () => {
+      // 連打の判定に効かなくなった元帳は捨てる。端末の鍵を必要以上に持たない。
+      await env.DB.prepare(
+        `DELETE FROM post_log WHERE created_at < datetime('now', ?)`
+      ).bind(`-${RATE_KEEP_MIN} minutes`).run();
+      if (isNewSong && !isFree) {
+        await enrichSong(env, song.id, artistForLookup, title, Number(track.durationMs) || 0);
+      }
+    })());
   }
 
   return json({
@@ -300,11 +345,11 @@ async function postRequest(request, env, cors, ctx) {
 }
 
 /* ── 公開: 曲の詳細 ─────────────────────────
-   token を添えると、その鍵が指す自分の投稿だけが一緒に返る。
+   Authorization に鍵を添えると、その鍵が指す自分の投稿だけが一緒に返る。
    他人のひとことは誰が見ても返さない（/board と同じ方針）。 */
-async function getSong(id, url, env, cors) {
+async function getSong(id, request, env, cors) {
   const s = await env.DB.prepare(
-    `SELECT id, title, artist, variant, album, duration_ms, artwork, apple_url, preview_url,
+    `SELECT id, event_code, title, artist, variant, album, duration_ms, artwork, apple_url, preview_url,
             is_free, genre, release_year, explicitness, votes, status, played_at
        FROM songs WHERE id = ?`
   ).bind(id).first();
@@ -315,12 +360,20 @@ async function getSong(id, url, env, cors) {
       WHERE song_id = ? AND from_name <> '' ORDER BY id ASC LIMIT 1`
   ).bind(id).first();
 
-  const token = clean(url.searchParams.get('token'), 64);
+  // 鍵はヘッダでだけ受け取る。クエリに載せるとアクセスログや Referer に残り、
+  // 拾った側がそのまま PATCH / DELETE に使い回せてしまう。
+  const token = bearer(request);
   const own = token
     ? await env.DB.prepare(
         `SELECT from_name, message, created_at FROM requests WHERE song_id = ? AND edit_token = ?`
       ).bind(id, token).first()
     : null;
+
+  // 直せるのは「いま受付中の回」の「DJ がまだ触っていない」曲だけ。
+  // 前回の鍵がブラウザに残っていても編集欄は出さない（ownRequest と同じ条件）。
+  const ev = await openEvent(env);
+  const live = !!ev && s.event_code === ev.code;
+  const editable = live && s.status === 'pending';
 
   return json({
     song: {
@@ -341,8 +394,9 @@ async function getSong(id, url, env, cors) {
       playedAt: s.played_at,
       by: names ? names.from_name : '',
     },
-    // DJ がまだ触っていない曲だけ直せる。queued か skipped かは外に出さない。
-    editable: s.status === 'pending',
+    // queued か skipped かは外に出さない。畳んだ理由だけ closed / moved で伝える。
+    editable,
+    lock: editable ? '' : (live ? 'moved' : 'closed'),
     mine: own ? { name: own.from_name, message: own.message, at: own.created_at } : null,
   }, 200, cors);
 }
@@ -358,6 +412,12 @@ async function ownRequest(id, token, env) {
     `SELECT id, event_code FROM requests WHERE song_id = ? AND edit_token = ?`
   ).bind(id, token).first();
   if (!row) return { error: NOT_YOURS };
+  // 前回の鍵がブラウザに残っていても、終わった回には触らせない。
+  // 履歴が後から書き換わったり、取り下げで曲ごと消えたりするのを防ぐ。
+  const ev = await openEvent(env);
+  if (!ev || row.event_code !== ev.code) {
+    return { error: ['closed', 'この回の受付は終了しているため、変更・取り下げはできません', 409] };
+  }
   if (s.status !== 'pending') {
     return { error: ['locked', 'DJ がすでに確認しているため、変更・取り下げはできません', 409] };
   }
@@ -369,7 +429,7 @@ async function patchMine(id, request, env, cors) {
   let body;
   try { body = await request.json(); } catch { body = {}; }
 
-  const got = await ownRequest(id, clean(body.token, 64), env);
+  const got = await ownRequest(id, bearer(request), env);
   if (got.error) return json({ error: got.error[0], message: got.error[1] }, got.error[2], cors);
 
   const name = clean(body.name, LIMITS.name);
@@ -384,10 +444,7 @@ async function patchMine(id, request, env, cors) {
 /* ── 公開: 自分の投稿を取り下げる ───────────
    取り下げるのは自分の1票だけ。同じ曲を他の人も送っていれば曲は残る。 */
 async function deleteMine(id, request, env, cors) {
-  let body;
-  try { body = await request.json(); } catch { body = {}; }
-
-  const got = await ownRequest(id, clean(body.token, 64), env);
+  const got = await ownRequest(id, bearer(request), env);
   if (got.error) return json({ error: got.error[0], message: got.error[1] }, got.error[2], cors);
 
   await env.DB.prepare(`DELETE FROM requests WHERE id = ?`).bind(got.row.id).run();
@@ -618,7 +675,7 @@ export default {
       if (path === '/dj/api/req/requests' && method === 'POST') return await postRequest(request, env, cors, ctx);
 
       const song = path.match(/^\/dj\/api\/req\/songs\/(\d+)$/);
-      if (song && method === 'GET') return await getSong(Number(song[1]), url, env, cors);
+      if (song && method === 'GET') return await getSong(Number(song[1]), request, env, cors);
 
       const own = path.match(/^\/dj\/api\/req\/songs\/(\d+)\/mine$/);
       if (own && method === 'PATCH')  return await patchMine(Number(own[1]), request, env, cors);
