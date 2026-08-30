@@ -897,11 +897,12 @@
       align-items: flex-start;
       justify-content: center;
       /*
-       * 上余白は 0。紫が VIDEO から繋がって見えているので、ここでも余白を取ると
-       * 「動画の下の紫」だけが VIDEO の padding-bottom と二重になり、上より広くなる。
-       * 見出しまでの間隔は VIDEO セクションの padding-bottom が担う。
+       * 上余白は他セクションと同じ 80px。VIDEO の padding-bottom 80px と合わせて
+       * セクション間 160px になり、ページ全体のリズムに揃う。
+       * ここを増やしすぎると見出しが --about-band(150px) の紫から外れて白文字が消えるので、
+       * 上余白 + 見出しの高さ < --about-band を守ること。
        */
-      padding: 0 40px 60px;
+      padding: 80px 40px 60px;
       position: relative;
       overflow: hidden;
     }
@@ -1707,7 +1708,7 @@
       }
 
       .contact-section {
-        padding: 0 20px var(--section-pad-y);
+        padding: var(--section-pad-y) 20px;
       }
 
       .site-crumb {
