@@ -75,22 +75,40 @@
     .brand h1 { font-family: var(--serif); font-weight: 900; font-size: 21px; letter-spacing: .02em; margin: 0; line-height: 1.2; }
     .brand .code { font-family: var(--mono); font-size: 11.5px; color: var(--faint); letter-spacing: .12em; border: 1px solid var(--line); padding: 2px 7px; border-radius: 2px; }
 
-    .gauge { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
-    .gauge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--go); box-shadow: 0 0 8px var(--go); }
-    .gauge.off .dot { background: var(--stop); box-shadow: 0 0 8px var(--stop); }
+    /* ポーリングが通っている間だけ明滅させる。止まった＝切断なので点きっぱなし */
+    @keyframes blip { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
 
+    .gauge { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .gauge .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--go); box-shadow: 0 0 8px var(--go);
+      animation: blip 1.6s ease-in-out infinite;
+    }
+    .gauge.off .dot { background: var(--stop); box-shadow: 0 0 8px var(--stop); animation: none; }
+
+    /* 受付・通知はトグルスイッチ。今どちらに倒れているかを形で見せる */
     .accept {
       display: inline-flex; align-items: center; gap: 9px;
-      border: 1px solid var(--line); background: var(--panel);
-      border-radius: 2px; padding: 7px 15px 7px 12px; font-size: 13.5px; font-weight: 600;
+      padding: 5px 2px; font-size: 13.5px; font-weight: 600; color: var(--faint);
     }
-    .accept .led { width: 9px; height: 9px; border-radius: 50%; }
     /* .accept が display を指定しているので、hidden だけでは消えない */
     .accept[hidden] { display: none; }
-    .accept[data-on="true"] { color: var(--go); border-color: color-mix(in srgb, var(--go) 45%, var(--line)); }
-    .accept[data-on="true"] .led { background: var(--go); box-shadow: 0 0 10px var(--go); }
-    .accept[data-on="false"] { color: var(--faint); }
-    .accept[data-on="false"] .led { background: var(--faint); }
+    .accept .track {
+      position: relative; flex: none; width: 30px; height: 16px;
+      border: 1px solid var(--line); border-radius: 999px; background: var(--ink);
+      transition: background .18s ease, border-color .18s ease;
+    }
+    .accept .knob {
+      position: absolute; top: 50%; left: 2px; margin-top: -5px;
+      width: 10px; height: 10px; border-radius: 50%; background: var(--faint);
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .accept[data-on="true"] { color: var(--go); }
+    .accept[data-on="true"] .track {
+      border-color: color-mix(in srgb, var(--go) 55%, var(--line));
+      background: color-mix(in srgb, var(--go) 18%, var(--ink));
+    }
+    .accept[data-on="true"] .knob { transform: translateX(14px); background: var(--go); box-shadow: 0 0 10px var(--go); }
 
     .ghostbtn { border: 1px solid var(--line); border-radius: var(--r); padding: 7px 14px; font-size: 13px; color: var(--muted); }
     .ghostbtn:hover { background: var(--card); color: var(--text); border-color: var(--accent-dim); }
@@ -441,27 +459,30 @@
       font-weight: 400;
       font-size: 0.75rem;
       letter-spacing: 0.1em;
-      background: transparent;
-      padding: 8px 14px;
+      color: var(--fg-dim);
+    }
+
+    .accept .track {
+      border-color: var(--border);
+      background: var(--bg-elevated);
+    }
+
+    .accept .knob {
+      background: var(--fg-dim);
     }
 
     .accept[data-on="true"] {
       color: var(--heart-secondary);
-      border-color: var(--heart-secondary);
     }
 
-    .accept[data-on="true"] .led {
+    .accept[data-on="true"] .track {
+      border-color: var(--heart-secondary);
+      background: color-mix(in srgb, var(--heart-secondary) 20%, transparent);
+    }
+
+    .accept[data-on="true"] .knob {
       background: var(--heart-secondary);
       box-shadow: 0 0 10px var(--heart-secondary);
-    }
-
-    .accept[data-on="false"] {
-      color: var(--fg-dim);
-      border-color: var(--border);
-    }
-
-    .accept[data-on="false"] .led {
-      background: var(--fg-dim);
     }
 
     .ghostbtn {
@@ -889,6 +910,10 @@
       .scanlines {
         display: none;
       }
+
+      .gauge .dot { animation: none; }
+      .accept .track,
+      .accept .knob { transition: none; }
     }
   </style>
 </head>
@@ -905,8 +930,8 @@
         <span class="code" id="evCode"></span>
       </div>
       <div class="gauge" id="conn"><span class="dot"></span><span id="connTxt">接続中</span></div>
-      <button class="accept" id="accept" data-on="true"><span class="led"></span><span id="acceptTxt">受付中</span></button>
-      <button class="accept" id="notify" data-on="false" aria-pressed="false" hidden><span class="led"></span><span id="notifyTxt">通知オフ</span></button>
+      <button class="accept" id="accept" role="switch" aria-checked="true" data-on="true"><span class="track"><span class="knob"></span></span><span id="acceptTxt">受付中</span></button>
+      <button class="accept" id="notify" role="switch" aria-checked="false" data-on="false" hidden><span class="track"><span class="knob"></span></span><span id="notifyTxt">通知オフ</span></button>
       <button class="ghostbtn" id="newEvent">新しいイベントを開始</button>
     </header>
 
@@ -1166,6 +1191,13 @@
     }
 
     /* ── 通信 ─────────────────────────────── */
+    /* トグルなので data-on（見た目）と aria-checked（読み上げ）は必ず一緒に動かす */
+    function paintAccept(on) {
+      $('#accept').dataset.on = String(on);
+      $('#accept').setAttribute('aria-checked', String(on));
+      $('#acceptTxt').textContent = on ? '受付中' : '停止中';
+    }
+
     async function load(first) {
       try {
         const d = await (await api('/admin/songs')).json();
@@ -1173,8 +1205,7 @@
         if (ev) {
           $('#evTitle').textContent = ev.title;
           $('#evCode').textContent = ev.code;
-          $('#accept').dataset.on = String(!!ev.open);
-          $('#acceptTxt').textContent = ev.open ? '受付中' : '停止中';
+          paintAccept(!!ev.open);
           if (tapCode !== ev.code) { tapCode = ev.code; tapMap = tapLoad(ev.code); }
         }
         /* 前回の取得に無かった id を新着として光らせる。
@@ -1319,8 +1350,7 @@
         });
         const d = await res.json();
         if (!res.ok) { toast(d.message || '切り替えられませんでした'); return; }
-        $('#accept').dataset.on = String(!!d.open);
-        $('#acceptTxt').textContent = d.open ? '受付中' : '停止中';
+        paintAccept(!!d.open);
         toast(d.open ? 'リクエストの受付を再開しました' : 'リクエストの受付を停止しました');
       } catch { toast('切り替えられませんでした'); }
     });
@@ -1409,7 +1439,7 @@
     function paintNotify() {
       const b = $('#notify');
       b.dataset.on = String(notifyOn);
-      b.setAttribute('aria-pressed', String(notifyOn));
+      b.setAttribute('aria-checked', String(notifyOn));
       $('#notifyTxt').textContent = notifyOn ? '通知オン' : '通知オフ';
     }
 

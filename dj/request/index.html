@@ -229,9 +229,15 @@
       border-radius: 2px; padding: 3px 11px;
       display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
     }
-    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--go); box-shadow: 0 0 7px var(--go); }
+    /* 受付が開いている間だけ明滅させる。停止中とオフラインは点きっぱなし */
+    @keyframes badge-blip { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
+    .badge::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--go); box-shadow: 0 0 7px var(--go);
+      animation: badge-blip 1.6s ease-in-out infinite;
+    }
     .badge.shut { color: var(--faint); border-color: var(--line); }
-    .badge.shut::before { background: var(--faint); box-shadow: none; }
+    .badge.shut::before { background: var(--faint); box-shadow: none; animation: none; }
 
     .tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
     .tabs button {
@@ -1206,6 +1212,8 @@
       .scanlines {
         display: none;
       }
+
+      .badge::before { animation: none; }
     }
   </style>
 </head>
@@ -1329,6 +1337,7 @@
             流れの都合で <b>かけられないこともあります</b>。あらかじめご了承ください。
           </p>
           <button class="send again" id="again">＋ もう1曲リクエストする</button>
+          <button class="linkbtn" id="doneEdit">リクエスト内容を修正する</button>
 
           <!-- 投げ銭。ボタンとモーダルは data/buy-me-oil.js が描画する -->
           <div class="tipbox" id="tipbox">
@@ -1696,15 +1705,23 @@
 
     /* 完了画面。受付と変更で見出しと添え書きだけ差し替える。
        紙吹雪は新しく受け付けたときだけで、内容の変更では出さない。 */
-    function showDone({ title, whatHTML, pos, celebrate }) {
+    let doneSongId = 0;   // 「リクエスト内容を修正する」の飛び先
+
+    function showDone({ songId, title, whatHTML, pos, celebrate }) {
+      doneSongId = songId;
       $('#doneTitle').textContent = title;
       $('#doneWhat').innerHTML = whatHTML;
       $('#donePos').textContent = pos || '';
       $('#donePos').hidden = !pos;
+      $('#doneEdit').hidden = !songId;
       stopAudio();
       show('done');
       if (celebrate && window.djCelebrate) window.djCelebrate();
     }
+
+    $('#doneEdit').addEventListener('click', () => {
+      if (doneSongId) openSong(doneSongId);
+    });
 
     async function submit(payload, btn, errBox, whatHTML) {
       btn.disabled = true;                       // 二重送信を止める
@@ -1726,6 +1743,7 @@
         remember(data.songId);
         rememberToken(data.songId, data.editToken);
         showDone({
+          songId: data.songId,
           title: '受け付けました',
           whatHTML,
           pos: data.duplicate
@@ -1959,6 +1977,7 @@
         // 受付と同じ完了画面へ。ここから続けてもう1曲リクエストできる
         const s = detail.song;
         showDone({
+          songId: s.id,
           title: '変更しました',
           whatHTML: '<b>' + esc(s.title) + '</b>' + (s.isFree ? '' : '<br>' + esc(s.artist)),
           pos: '',
