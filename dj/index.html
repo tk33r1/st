@@ -129,6 +129,15 @@
       --white: #ffffff;
       --black: #1a1a1a;
       --accent-red: #ff3333;
+      /*
+       * VIDEO 下端の斜め。GEAR の linear-gradient(135deg) と同じ 45° なので
+       * --video-slope が斜辺の落差と水平走行距離を兼ねる。
+       * --about-band は右端（斜めが終わったあと）でも紫を ABOUT ME に食い込ませる量。
+       * これが無いと画面幅によって見出しが紫から外れ、白文字が白背景に乗って消える。
+       * 紫の最深部（左端）は band + slope。
+       */
+      --video-slope: 30vw;
+      --about-band: 150px;
     }
 
     html,
@@ -606,12 +615,17 @@
       color: var(--white);
     }
 
+    /*
+     * 見出しの大きさ・字間・太さは .operation-title に揃える。
+     * opacity は持たせない（.reveal.active の opacity:1 に負けて表示後は効かない上、
+     * .reveal の初期値 0 と同詳細度で後勝ちするため、フェードインの開始値まで書き換えてしまう）。
+     */
     .sound-log-header {
-      font-size: 1rem;
-      letter-spacing: 0.2em;
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      font-weight: 600;
       text-transform: uppercase;
       margin-bottom: 60px;
-      opacity: 0.7;
       text-align: center;
     }
 
@@ -795,8 +809,11 @@
 
     /* ===== VIDEO ===== */
     .video-section {
+      /* 紫の下端を右上がりの斜めに切る。形は :root の --video-slope / --about-band */
       min-height: 100vh;
-      background: var(--dark-blue-purple);
+      position: relative;
+      /* はみ出した背景を次セクションより上に載せる */
+      z-index: 1;
       padding: 80px 40px;
       display: flex;
       flex-direction: column;
@@ -804,12 +821,46 @@
       justify-content: center;
     }
 
+    /* clip-path をセクション自体に掛けると中身まで切れるので、背景だけ疑似要素に持たせる */
+    .video-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      /*
+       * 斜めの分だけ下のセクションへはみ出させる。こうすると余白は VIDEO セクション本来の
+       * padding だけで決まり、「斜めが切れた位置から更に余白」という二重取りにならない。
+       */
+      bottom: calc(-1 * (var(--about-band) + var(--video-slope)));
+      background: var(--dark-blue-purple);
+      /* はみ出した先（ABOUT ME）のリンクを塞がないようにする */
+      pointer-events: none;
+      /*
+       * PC は左右の端を水平にして中央だけ 45° で落とす。
+       * GEAR の斜め線がセクションの上下端を突き抜けて、左右の端では水平に見えるのと同じ形。
+       */
+      clip-path: polygon(0 0,
+          100% 0,
+          100% calc(100% - var(--video-slope)),
+          calc(50% + var(--video-slope) / 2) calc(100% - var(--video-slope)),
+          calc(50% - var(--video-slope) / 2) 100%,
+          0 100%);
+      z-index: 0;
+    }
+
+    .video-section>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 大きさ・字間・太さは .operation-title に揃える。opacity を持たせない理由は .sound-log-header と同じ */
     .video-title {
-      font-size: 1rem;
-      letter-spacing: 0.2em;
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      font-weight: 600;
       text-transform: uppercase;
       margin-bottom: 40px;
-      opacity: 0.7;
       text-align: center;
       color: var(--white);
     }
@@ -835,12 +886,22 @@
 
     /* ===== CONTACT ===== */
     .contact-section {
-      min-height: 100vh;
+      /*
+       * 上端起点にしたので 100vh だと下に白が余る。
+       * 必要なのは「はみ出してくる紫を必ずこのセクション内で終わらせる」高さなので、その分だけ確保する。
+       */
+      min-height: calc(var(--about-band) + var(--video-slope) + 120px);
       background: var(--white);
       display: flex;
-      align-items: center;
+      /* 見出しを紫の帯（--about-band）の中に必ず収めたいので、中央寄せではなく上端起点にする */
+      align-items: flex-start;
       justify-content: center;
-      padding: 60px 40px;
+      /*
+       * 上余白は 0。紫が VIDEO から繋がって見えているので、ここでも余白を取ると
+       * 「動画の下の紫」だけが VIDEO の padding-bottom と二重になり、上より広くなる。
+       * 見出しまでの間隔は VIDEO セクションの padding-bottom が担う。
+       */
+      padding: 0 40px 60px;
       position: relative;
       overflow: hidden;
     }
@@ -857,7 +918,8 @@
     .contact-content {
       text-align: center;
       z-index: 10;
-      max-width: 600px;
+      /* 便箋を 2 段組みにするので 600px では足りない */
+      max-width: 880px;
     }
 
     /* ===== ABOUT ===== */
@@ -865,23 +927,60 @@
       font-size: 1.2rem;
       letter-spacing: 0.1em;
       margin-bottom: 40px;
-      color: var(--black);
+      /* VIDEO から伸びてきた紫の帯の上に乗る位置なので白 */
+      color: var(--white);
       text-transform: uppercase;
       font-weight: 600;
       text-align: center;
     }
 
-    .about-unit {
-      max-width: 520px;
-      margin: 0 auto 45px auto;
-      padding: 28px 0;
-      border-top: 1px solid rgba(156, 122, 247, 0.3);
-      border-bottom: 1px solid rgba(156, 122, 247, 0.3);
+    /*
+     * 紫の三角が背後に食い込む位置なので、白地のままだと本文が潰れる。
+     * 便箋（右下を折り返した紙）1 枚に活動名義と所属団体を並べて、白背景が乗っていても不自然にしない。
+     * 切り欠きの形は .gear-modal-panel と同じ造形に合わせている。
+     */
+    .about-letter {
+      --fold: 22px;
+      position: relative;
+      display: grid;
+      /* PC は左=活動名義 / 右=所属団体。行の高さは grid の stretch で揃うので仕切り線が通る */
+      grid-template-columns: 1fr 1fr;
+      margin: 0 auto 40px auto;
+      background: var(--white);
+      border: 1px solid rgba(156, 122, 247, 0.45);
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
+      /* clip-path は box-shadow も切るので、影は切り抜いた形に沿う drop-shadow で出す */
+      filter: drop-shadow(0 14px 28px rgba(45, 27, 78, 0.22));
     }
 
-    .about-unit+.about-unit {
-      margin-top: -45px;
-      border-top: none;
+    /* 折り返した紙の裏側。切り欠きで残る側（左上半分）を陰にする */
+    .about-letter::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: var(--fold);
+      height: var(--fold);
+      background: linear-gradient(135deg, rgba(156, 122, 247, 0.28) 50%, transparent 50%);
+    }
+
+    .about-unit {
+      position: relative;
+      padding: 30px 28px 28px;
+    }
+
+    /*
+     * 便箋の折り目。PC は縦、SP は横。
+     * border だと紙の端まで届いて「2枚並べた」ように見えるので、両端を空けた擬似要素で引く。
+     */
+    .about-unit+.about-unit::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      bottom: 28px;
+      left: 0;
+      width: 1px;
+      background: rgba(156, 122, 247, 0.3);
     }
 
     .about-brand {
@@ -1603,10 +1702,12 @@
        */
       :root {
         --section-pad-y: 80px;
+        /* 幅いっぱいに 45° を通すと落差は幅と同値。GEAR と同じ深さになる */
+        --video-slope: 100vw;
       }
 
       .contact-section {
-        padding: var(--section-pad-y) 20px;
+        padding: 0 20px var(--section-pad-y);
       }
 
       .site-crumb {
@@ -1718,6 +1819,10 @@
         min-height: auto;
       }
 
+      .video-section::before {
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--video-slope)), 0 100%);
+      }
+
       .video-title {
         margin-bottom: 30px;
       }
@@ -1754,9 +1859,23 @@
         margin-bottom: 30px;
       }
 
-      .about-unit {
-        padding: 24px 0;
+      .about-letter {
+        /* SP は上=活動名義 / 下=所属団体 */
+        grid-template-columns: 1fr;
         margin-bottom: 35px;
+      }
+
+      .about-unit {
+        padding: 26px 22px;
+      }
+
+      .about-unit+.about-unit::before {
+        top: 0;
+        bottom: auto;
+        left: 28px;
+        right: 28px;
+        width: auto;
+        height: 1px;
       }
 
       .about-name {
@@ -1784,8 +1903,7 @@
       .gear-section,
       .sound-log-section,
       .operation-section,
-      .video-section,
-      .contact-section {
+      .video-section {
         min-height: 100dvh;
       }
 
@@ -2013,7 +2131,7 @@
 
   <!-- SOUND LOG -->
   <section class="sound-log-section">
-    <h2 class="sound-log-header reveal">🔊 Audio Stream: Active</h2>
+    <h2 class="sound-log-header reveal">🔊 Audio Stream</h2>
     <div class="genre-list reveal">
       <div class="genre-item">BIG ROOM HOUSE</div>
       <div class="genre-item">PSYTRANCE</div>
@@ -2134,26 +2252,31 @@
     <div class="contact-content reveal">
       <h2 class="about-title">🤝 About Me</h2>
 
-      <div class="about-unit">
-        <div class="about-label">活動名義</div>
-        <a class="about-brand" href="https://tk.st/contact?to=dj" target="_blank" rel="noopener noreferrer"
-          title="お問い合わせ">
-          <img src="https://tk.st/images/contents/dj-logo4.avif" alt="人類踊狂計画 ロゴ" width="36" height="36" loading="lazy">
-          <span class="about-name">人類踊狂計画</span>
-        </a>
-        <p>人と人との垣根をなくし、踊り狂わせるボランティアDJ。</p>
-        <p>チルからアッパーまで、あなたのバイブスに合わせます。</p>
-      </div>
+      <div class="about-letter">
+        <div class="about-unit">
+          <div class="about-label">活動名義</div>
+          <a class="about-brand" href="https://tk.st/contact?to=dj" target="_blank" rel="noopener noreferrer"
+            title="お問い合わせ">
+            <img src="https://tk.st/images/contents/dj-logo4.avif" alt="人類踊狂計画 ロゴ" width="36" height="36"
+              loading="lazy">
+            <span class="about-name">人類踊狂計画</span>
+          </a>
+          <p>人と人との垣根をなくし、踊り狂わせるボランティアDJ。</p>
+          <p>チルからアッパーまで、あなたのバイブスに合わせます。</p>
+        </div>
 
-      <div class="about-unit">
-        <div class="about-label">所属団体</div>
-        <a class="about-brand" href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer">
-          <img src="https://tk.st/images/contents/shisui-logo.png" alt="美術紫水 ロゴ" width="36" height="36" loading="lazy">
-          <span class="about-name">美術紫水</span>
-        </a>
-        <p>絵描きからDJ、調香師まで。多種多様なアーティストが集う団体。</p>
-        <p>毎月1回新宿ゴールデン街でイベント<a href="https://bijutsushisui.com/" target="_blank" rel="noopener noreferrer">「白昼夢」</a>を主宰。
-        </p>
+        <div class="about-unit">
+          <div class="about-label">所属団体</div>
+          <a class="about-brand" href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer">
+            <img src="https://tk.st/images/contents/shisui-logo.png" alt="美術紫水 ロゴ" width="36" height="36"
+              loading="lazy">
+            <span class="about-name">美術紫水</span>
+          </a>
+          <p>絵描きからDJ、調香師まで。多種多様なアーティストが集う団体。</p>
+          <p>毎月1回新宿ゴールデン街でイベント<a href="https://bijutsushisui.com/" target="_blank"
+              rel="noopener noreferrer">「白昼夢」</a>を主宰。
+          </p>
+        </div>
       </div>
 
       <div class="contact-buttons">
