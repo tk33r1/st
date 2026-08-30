@@ -82,10 +82,10 @@ class DonationWidget {
     }
 
     /**
-     * 「ガソリン1L」に、そのときの東京都のハイオク実売価格を添える。
+     * 本文の下に、ハイオクの実売価格と「いつ・どこの調査か」を小さく添える。
      * data/oil-price.json は資源エネルギー庁の週次調査から GitHub Actions が
      * 更新している（.github/scripts/fetch-oil-price.py）。
-     * 取れなくても文言は「ガソリン1L」のままで成立するので、失敗しても黙って諦める。
+     * 取れなくても本文だけで成立するので、失敗したら要素は hidden のままにする。
      */
     async loadOilPrice() {
         if (!this.oilPriceUrl) return;
@@ -101,9 +101,40 @@ class DonationWidget {
             const price = Number(data?.price);
             if (!Number.isFinite(price) || price <= 0) return;
 
-            el.textContent = `（東京のハイオク ¥${Math.round(price)}）`;
-            if (data.surveyedOn) el.title = `${data.surveyedOn} 資源エネルギー庁調査`;
+            const grade = (typeof data.grade === 'string' && data.grade) || 'ハイオク';
+            const place = (typeof data.prefecture === 'string' && data.prefecture) || '';
+            const when = this._formatSurveyedDate(data.surveyedOn);
+            // 「資源エネルギー庁 石油製品価格調査」は長いので調査主体だけに詰める
+            const source = ((typeof data.source === 'string' && data.source) || '').split(/[\s　]/)[0];
+
+            // 「いつ取得した」＝調査日、「どこの」＝都道府県。両方欠けたら但し書きは省く。
+            let note = '';
+            if (when && place) note = `${when}時点の${place}の価格`;
+            else if (when) note = `${when}時点の価格`;
+            else if (place) note = `${place}の価格`;
+            if (source) note = note ? `${note}（${source}調べ）` : `${source}調べ`;
+
+            const valueEl = document.createElement('span');
+            valueEl.className = 'donation-oil-price-value';
+            valueEl.textContent = `${grade}ガソリン ¥${Math.round(price)}/L`;
+
+            if (note) {
+                const noteEl = document.createElement('span');
+                noteEl.className = 'donation-oil-price-note';
+                noteEl.textContent = note;
+                el.replaceChildren(valueEl, noteEl);
+            } else {
+                el.replaceChildren(valueEl);
+            }
+            el.hidden = false;
         } catch { /* 価格が出ないだけなので握りつぶす */ }
+    }
+
+    /** "2026-08-24" → "2026年8月24日"。想定外の形式なら空文字。 */
+    _formatSurveyedDate(iso) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso ?? ''));
+        if (!m) return '';
+        return `${Number(m[1])}年${Number(m[2])}月${Number(m[3])}日`;
     }
 
     destroy() {
@@ -434,9 +465,13 @@ class DonationWidget {
                 overflow: visible;
             }
             .donation-modal-intro {
-                /* 右パディングは閉じるボタンと重ならないように広めに取る */
-                /* 本文が1行増えても上部が嵩張らないよう、余白と行間は詰めている */
-                padding: 0.875rem 3.25rem 0 1.25rem;
+                /*
+                  パディングは左右対称。以前は閉じるボタンを避けるため右を広く取っていたが、
+                  ボタンから離れた行まで右端が大きく余って見えた。1行目がボタンに被らないのは
+                  下の text-wrap: balance が長い段落の1行目を短く畳んでくれることに任せる。
+                  本文が1行増えても上部が嵩張らないよう、余白と行間は詰めている。
+                */
+                padding: 0.875rem 1.25rem 0;
                 display: flex;
                 flex-direction: column;
                 gap: 0.2rem;
@@ -446,14 +481,19 @@ class DonationWidget {
                 font-size: 0.8rem;
                 line-height: 1.5;
                 color: #374151;
-                /* 狭い幅で折り返したとき、末尾の数文字だけが次行に取り残されないよう均等割りする */
+                /* 長い段落は均等割りして、1行目が閉じるボタンに届く前に折り返させる */
                 text-wrap: balance;
             }
-            /* 価格は括弧ごと途中で折り返さない。取得前は空なので何も占有しない */
-            .donation-oil-price {
-                white-space: nowrap;
-                color: #6b7280;
+            /* 本文の下に添えるハイオク価格の但し書き。取得できるまでは hidden で何も占有しない */
+            .donation-modal-intro .donation-oil-price {
+                margin: 0;
+                color: #9ca3af;
+                font-size: 0.7rem;
+                line-height: 1.45;
             }
+            .donation-oil-price-value { font-weight: 700; }
+            /* 「いつ・どこの」は価格の下の行へ落とす */
+            .donation-oil-price-note { display: block; }
 
             /* Ko-fi 埋め込みウィジェットの余白を切り詰めるためのスケール調整 */
             .donation-kofi-wrap { overflow: hidden; }
@@ -635,7 +675,8 @@ class DonationWidget {
                             Buy Me Oil
                         </h2>
                         <p>広告に頼らず、<strong>「誰でも無料で楽しめること」</strong>を大切にしています。</p>
-                        <p>お役に立てたなら、ガソリン1L<span id="${this._oilPriceId}" class="donation-oil-price"></span>のご支援が、開発のモチベ支えるハーレーの燃料になります。</p>
+                        <p>お役に立てたなら、ガソリン1Lのご支援が、私のモチベを支えるハーレーの燃料になります。</p>
+                        <p id="${this._oilPriceId}" class="donation-oil-price" hidden></p>
                     </div>
                     <div class="donation-kofi-wrap">
                         <iframe class="donation-kofi-iframe"

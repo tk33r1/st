@@ -1321,9 +1321,9 @@
       <section class="pane" id="pane-done">
         <div class="done">
           <div class="tick">✓</div>
-          <h2>受け付けました</h2>
+          <h2 id="doneTitle">受け付けました</h2>
           <div class="what" id="doneWhat"></div>
-          <span class="queuepos" id="donePos"></span>
+          <span class="queuepos" id="donePos" hidden></span>
           <p class="note">
             リクエストは DJ が順番に確認しています。<br>
             流れの都合で <b>かけられないこともあります</b>。あらかじめご了承ください。
@@ -1694,6 +1694,18 @@
       } catch { return ''; }
     }
 
+    /* 完了画面。受付と変更で見出しと添え書きだけ差し替える。
+       紙吹雪は新しく受け付けたときだけで、内容の変更では出さない。 */
+    function showDone({ title, whatHTML, pos, celebrate }) {
+      $('#doneTitle').textContent = title;
+      $('#doneWhat').innerHTML = whatHTML;
+      $('#donePos').textContent = pos || '';
+      $('#donePos').hidden = !pos;
+      stopAudio();
+      show('done');
+      if (celebrate && window.djCelebrate) window.djCelebrate();
+    }
+
     async function submit(payload, btn, errBox, whatHTML) {
       btn.disabled = true;                       // 二重送信を止める
       const label = btn.textContent;
@@ -1713,13 +1725,14 @@
         }
         remember(data.songId);
         rememberToken(data.songId, data.editToken);
-        $('#doneWhat').innerHTML = whatHTML;
-        $('#donePos').textContent = data.duplicate
-          ? 'すでに受け付けている曲です'
-          : '今回 ' + data.position + ' 件目のリクエストです';
-        stopAudio();
-        show('done');
-        if (window.djCelebrate) window.djCelebrate();
+        showDone({
+          title: '受け付けました',
+          whatHTML,
+          pos: data.duplicate
+            ? 'すでに受け付けている曲です'
+            : '今回 ' + data.position + ' 件目のリクエストです',
+          celebrate: true,
+        });
       } catch {
         errBox.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
         errBox.hidden = false;
@@ -1906,16 +1919,14 @@
 
     bindCount($('#mineMsg'), $('#mineMsgCount'), 140);
 
-    /* ラベルは最初の文言を覚えておく。btn.textContent から取ると、「変更しました」の
-       表示中にもう一度押されたときにそれを平常時のラベルとして固定してしまう。 */
+    /* ラベルは最初の文言を覚えておく。「送信中…」に差し替えるので、
+       btn.textContent から取ると押すたびにラベルが上書きされてしまう。 */
     const SAVE_LABEL = $('#mineSave').textContent;
-    let saveTimer = 0;
 
     $('#mineSave').addEventListener('click', async () => {
       const btn = $('#mineSave');
       const err = $('#mineErr');
       btn.disabled = true;
-      clearTimeout(saveTimer);
       btn.textContent = '送信中…';
       err.hidden = true;
       try {
@@ -1945,15 +1956,21 @@
         $('#mineMsg').value = d.mine.message;
         $('#mineName').value = d.mine.name;
         $('#mineMsgCount').textContent = d.mine.message.length + ' / 140';
-        btn.textContent = '変更しました';
-        saveTimer = setTimeout(() => { btn.textContent = SAVE_LABEL; }, 1600);
+        // 受付と同じ完了画面へ。ここから続けてもう1曲リクエストできる
+        const s = detail.song;
+        showDone({
+          title: '変更しました',
+          whatHTML: '<b>' + esc(s.title) + '</b>' + (s.isFree ? '' : '<br>' + esc(s.artist)),
+          pos: '',
+          celebrate: false,
+        });
         return;
       } catch {
         err.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
         err.hidden = false;
       } finally {
         btn.disabled = false;
-        if (btn.textContent === '送信中…') btn.textContent = SAVE_LABEL;
+        btn.textContent = SAVE_LABEL;
       }
     });
 
