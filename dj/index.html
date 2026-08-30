@@ -138,6 +138,11 @@
        */
       --video-slope: 30vw;
       --about-band: 150px;
+      /*
+       * セクションの上下余白。ここ 1 か所で決めてページ全体のリズムを揃える。
+       * 詰めすぎるとセクションの切れ目が読めず、情報量の多いページほど窮屈に見える。
+       */
+      --section-pad-y: 80px;
     }
 
     html,
@@ -611,7 +616,7 @@
       min-height: 100vh;
       background: var(--dark-blue-purple);
       position: relative;
-      padding: 80px 40px;
+      padding: var(--section-pad-y) 40px;
       color: var(--white);
     }
 
@@ -681,7 +686,7 @@
     .operation-section {
       min-height: 100vh;
       background: var(--white);
-      padding: 80px 40px;
+      padding: var(--section-pad-y) 40px;
       position: relative;
     }
 
@@ -814,7 +819,7 @@
       position: relative;
       /* はみ出した背景を次セクションより上に載せる */
       z-index: 1;
-      padding: 80px 40px;
+      padding: var(--section-pad-y) 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -897,12 +902,12 @@
       align-items: flex-start;
       justify-content: center;
       /*
-       * 上余白は他セクションと同じ 80px。VIDEO の padding-bottom 80px と合わせて
-       * セクション間 160px になり、ページ全体のリズムに揃う。
-       * ここを増やしすぎると見出しが --about-band(150px) の紫から外れて白文字が消えるので、
-       * 上余白 + 見出しの高さ < --about-band を守ること。
+       * 上余白は他セクションと同じ --section-pad-y。
+       * 増やしすぎると見出しが --about-band の紫から外れて白文字が消えるので、
+       * 「上余白 + 見出しの高さ < --about-band」を守ること
+       * （見出しは水平中央にあり、そこは斜めの分だけ紫が深い。この式は右端＝最も浅い位置での最悪ケース）。
        */
-      padding: 80px 40px 60px;
+      padding: var(--section-pad-y) 40px 60px;
       position: relative;
       overflow: hidden;
     }
@@ -1697,12 +1702,7 @@
         display: block;
       }
 
-      /*
-       * モバイルのセクション上下余白は 1 か所で決めてリズムを揃える。
-       * 詰めすぎるとセクションの切れ目が読めず、情報量の多いページほど窮屈に見える。
-       */
       :root {
-        --section-pad-y: 80px;
         /* 幅いっぱいに 45° を通すと落差は幅と同値。GEAR と同じ深さになる */
         --video-slope: 100vw;
       }

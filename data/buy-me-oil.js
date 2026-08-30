@@ -82,7 +82,8 @@ class DonationWidget {
     }
 
     /**
-     * 本文の下に、ハイオクの実売価格と「いつ・どこの調査か」を小さく添える。
+     * 本文の下に「最新の◯◯県のハイオクガソリン価格」を小さく添える。
+     * i マークを押すと、いつ時点・誰の調査か（と出典 URL）が下に開く。
      * data/oil-price.json は資源エネルギー庁の週次調査から GitHub Actions が
      * 更新している（.github/scripts/fetch-oil-price.py）。
      * 取れなくても本文だけで成立するので、失敗したら要素は hidden のままにする。
@@ -107,18 +108,24 @@ class DonationWidget {
             // 「資源エネルギー庁 石油製品価格調査」は長いので調査主体だけに詰める
             const source = ((typeof data.source === 'string' && data.source) || '').split(/[\s　]/)[0];
 
-            // 「いつ取得した」＝調査日、「どこの」＝都道府県。両方欠けたら但し書きは省く。
+            // 出典リンクは https のものだけ通す（json が壊れても変なスキームを踏まないように）
+            const sourceUrl = typeof data.sourceUrl === 'string' && data.sourceUrl.startsWith('https://')
+                ? data.sourceUrl
+                : '';
+
+            // i マークを開いたときの根拠。「いつの調査か」と「誰の調査か」。
             let note = '';
-            if (when && place) note = `${when}時点の${place}の価格`;
-            else if (when) note = `${when}時点の価格`;
-            else if (place) note = `${place}の価格`;
-            if (source) note = note ? `${note}（${source}調べ）` : `${source}調べ`;
+            if (when && source) note = `${when}時点（${source}調べ）`;
+            else if (when) note = `${when}時点`;
+            else if (source) note = `${source}調べ`;
 
             const valueEl = document.createElement('span');
             valueEl.className = 'donation-oil-price-value';
-            valueEl.textContent = `${grade}ガソリン ¥${Math.round(price)}/L`;
+            valueEl.textContent = place
+                ? `最新の${place}の${grade}ガソリン価格 ¥${Math.round(price)}/L`
+                : `最新の${grade}ガソリン価格 ¥${Math.round(price)}/L`;
 
-            if (note) {
+            if (note || sourceUrl) {
                 const noteId = `${this._oilPriceId}-note`;
 
                 // 価格の右横の i マーク。押すと下に根拠が展開される（既定は閉じる）
@@ -138,8 +145,18 @@ class DonationWidget {
                 const noteEl = document.createElement('span');
                 noteEl.className = 'donation-oil-price-note';
                 noteEl.id = noteId;
-                noteEl.textContent = note;
                 noteEl.hidden = true;
+                if (note) noteEl.append(note);
+                if (sourceUrl) {
+                    // 根拠にあたる出典ページをそのまま見に行けるよう URL を丸ごと出す
+                    const linkEl = document.createElement('a');
+                    linkEl.className = 'donation-oil-price-source';
+                    linkEl.href = sourceUrl;
+                    linkEl.target = '_blank';
+                    linkEl.rel = 'noopener noreferrer';
+                    linkEl.textContent = sourceUrl;
+                    noteEl.append(linkEl);
+                }
 
                 // 開閉は noteEl.hidden ひとつで持ち、aria-expanded はその写し。
                 // 開いているか閉じているかは aria-expanded が読み上げるので、ラベルは固定でよい。
@@ -567,6 +584,13 @@ class DonationWidget {
             .donation-oil-price-note:not([hidden]) {
                 display: block;
                 margin-top: 0.2rem;
+            }
+            /* 出典 URL は長いので、どこでも折り返して横に溢れさせない */
+            .donation-oil-price-source {
+                display: block;
+                margin-top: 0.15rem;
+                color: inherit;
+                overflow-wrap: anywhere;
             }
 
             /* Ko-fi 埋め込みウィジェットの余白を切り詰めるためのスケール調整 */

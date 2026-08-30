@@ -16,59 +16,11 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
+  <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
+
   <style>
-    /* 暗いブース前提。ライトテーマは用意しない（rekordbox と同じ判断）。
-       配色と書体は /dj/schedule/ と同じ白昼夢テーマを引く。
-       旧パレット名はエイリアスとして残し、既存の指定をそのまま生かす */
-    :root {
-      --bg: #0a0a0c;
-      --bg-elevated: #121216;
-      --fg: #ececec;
-      --fg-dim: #9a9aa0;
-      --heart-primary: #ff2f6e;
-      --heart-secondary: #37f2e6;
-      --glitch-accent: #ffe14d;
-      --border: rgba(255, 255, 255, 0.14);
-
-      --f-display: 'Share Tech Mono', ui-monospace, monospace;
-      --f-dot: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-      --f-body: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-
-      --ink: var(--bg);
-      --panel: var(--bg-elevated);
-      --card: var(--bg-elevated);
-      --card-hi: #1b1b21;
-      --line: var(--border);
-      --text: var(--fg);
-      --muted: var(--fg-dim);
-      --faint: rgba(154, 154, 160, 0.62);
-      --accent: var(--heart-secondary);
-      --accent-dim: rgba(55, 242, 230, 0.45);
-      --go: var(--heart-secondary);
-      --warn: var(--glitch-accent);
-      --stop: var(--heart-primary);
-
-      --sans: var(--f-body);
-      --mono: var(--f-display);
-      --serif: var(--f-dot);
-      --r: 2px;
-
-      color-scheme: dark;
-    }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
-
-    body {
-      background: var(--ink); color: var(--text);
-      font-family: var(--sans); font-size: 15px; line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
-
-    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 64px; }
+    .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto;
+            padding: 0 calc(20px + env(safe-area-inset-right)) 64px calc(20px + env(safe-area-inset-left)); }
 
     .rig { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 20px 0 18px; border-bottom: 1px solid var(--line); }
     .brand { display: flex; align-items: baseline; gap: 12px; margin-right: auto; }
@@ -304,64 +256,12 @@
     .act[disabled] { opacity: .38; cursor: default; }
     .act[disabled]:hover { background: none; color: var(--muted); border-color: var(--line); }
     .taptgt { margin: 0; font-family: var(--mono); font-size: 10.5px; line-height: 1.5; color: var(--faint); }
-    .trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .keys { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; gap: 20px; flex-wrap: wrap; font-family: var(--mono); font-size: 11.5px; color: var(--faint); }
     .keys span { display: inline-flex; align-items: center; gap: 6px; }
 
     /* GetSongBPM は利用条件として表示リンクを求めているので、隠さず出す */
-    /* ===== FOOTER ===== */
-    .site-footer {
-      padding: 30px 20px;
-      background: #2d1b4e;
-      color: rgba(255, 255, 255, 0.5);
-      text-align: center;
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-    }
-
-    .site-crumb {
-      background: var(--ink);
-      padding: 8px 20px 24px;
-    }
-
-    .site-crumb ol {
-      list-style: none;
-      margin: 0 auto;
-      padding: 0;
-      max-width: 1180px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.75rem;
-    }
-
-    .site-crumb li {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .site-crumb li + li::before {
-      content: "/";
-      color: rgba(255, 255, 255, 0.25);
-    }
-
-    .site-crumb a {
-      color: rgba(156, 122, 247, 0.75);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-
-    .site-crumb a:hover {
-      color: var(--accent);
-    }
-
-    .site-crumb [aria-current="page"] {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
+    /* ===== パンくずの補足ボタン（土台は data/bijutsu-shisui.css）===== */
     .crumb-info {
       appearance: none;
       width: 17px; height: 17px; padding: 0;
@@ -385,7 +285,7 @@
     .crumb-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .crumb-note {
-      max-width: 1180px;
+      max-width: var(--page-max);
       margin: 10px auto 0;
       padding: 11px 13px;
       background: var(--card);
@@ -411,61 +311,9 @@
     .toast > span { min-width: 0; word-break: break-all; }
     .toast button { color: var(--accent); font-weight: 600; font-size: 13px; padding: 4px 8px; border-radius: 2px; }
 
-    [hidden] { display: none !important; }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
-    }
-
-    /* ===== ここから下は /dj/schedule/ と同じ見え方に寄せるための上書き ===== */
-    html {
-      scrollbar-gutter: stable;
-      -webkit-text-size-adjust: 100%;
-    }
-
-    body {
-      min-height: 100vh;
-      font-size: 0.9375rem;
-      line-height: 1.9;
-      overflow-x: hidden;
-    }
-
-    /* 本家（bijutsushisui.com）と同じテイクオーバー背景。
-       コンソールは一覧を読む画面なので、スケジュール表より更に主張を落とす */
-    #bs-takeover-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      opacity: 0.22;
-    }
-
-    .vignette {
-      position: fixed;
-      inset: 0;
-      z-index: 39;
-      pointer-events: none;
-      background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
-    }
-
-    /* VHS のスキャンライン。本家と同じ 1px / 3px */
-    .scanlines {
-      position: fixed;
-      inset: 0;
-      z-index: 40;
-      pointer-events: none;
-      mix-blend-mode: overlay;
-      background: repeating-linear-gradient(to bottom,
-          rgba(255, 255, 255, 0.03) 0px,
-          rgba(255, 255, 255, 0.03) 1px,
-          transparent 1px,
-          transparent 3px);
-    }
-
-    .wrap {
-      position: relative;
-      z-index: 1;
-      padding: 0 calc(20px + env(safe-area-inset-right)) 64px calc(20px + env(safe-area-inset-left));
-    }
+    /* ===== ここから下は /dj/schedule/ と同じ見え方に寄せるための上書き =====
+       土台（変数・リセット・背景演出・パンくず・フッター）は
+       data/bijutsu-shisui.css にある */
 
     /* ===== HEADER ===== */
     .rig {
@@ -861,7 +709,6 @@
       color: var(--fg-dim);
     }
 
-
     /* ===== TAP BPM ===== */
     .tapbox { border-bottom-color: var(--border); }
 
@@ -891,34 +738,7 @@
       color: var(--fg-dim);
     }
 
-    /* ===== パンくず / フッター ===== */
-    .site-crumb {
-      position: relative;
-      z-index: 1;
-      background: transparent;
-      padding: 8px calc(20px + env(safe-area-inset-right)) 24px calc(20px + env(safe-area-inset-left));
-    }
-
-    .site-crumb ol {
-      font-family: var(--f-display);
-      font-size: 0.6875rem;
-      letter-spacing: 0.1em;
-    }
-
-    .site-crumb a {
-      color: var(--fg-dim);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .site-crumb a:hover {
-      color: var(--heart-secondary);
-      border-bottom-color: var(--heart-secondary);
-    }
-
-    .site-crumb [aria-current="page"] {
-      color: var(--fg-dim);
-    }
-
+    /* ===== パンくずの補足ボタン ===== */
     .crumb-info {
       border-color: var(--border);
       color: var(--fg-dim);
@@ -949,20 +769,6 @@
       border-bottom-color: var(--fg);
     }
 
-    .site-footer {
-      position: relative;
-      z-index: 1;
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 30px 20px calc(30px + env(safe-area-inset-bottom));
-      background: transparent;
-      border-top: 1px solid var(--border);
-      font-family: var(--f-display);
-      font-size: 0.6875rem;
-      letter-spacing: 0.1em;
-      color: var(--fg-dim);
-    }
-
     /* ===== TOAST ===== */
     .toast {
       font-family: var(--f-body);
@@ -980,11 +786,6 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      #bs-takeover-canvas,
-      .scanlines {
-        display: none;
-      }
-
       .gauge .dot { animation: none; }
       .accept .track,
       .accept .knob { transition: none; }

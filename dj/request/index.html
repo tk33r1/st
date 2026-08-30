@@ -102,123 +102,23 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
+  <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
+
   <style>
-    /* /dj/schedule/ と同じ白昼夢テーマの変数。
-       旧パレット名はエイリアスとして残し、既存の指定をそのまま生かす */
-    :root {
-      --bg: #0a0a0c;
-      --bg-elevated: #121216;
-      --fg: #ececec;
-      --fg-dim: #9a9aa0;
-      --heart-primary: #ff2f6e;
-      --heart-secondary: #37f2e6;
-      --glitch-accent: #ffe14d;
-      --border: rgba(255, 255, 255, 0.14);
-
-      --f-display: 'Share Tech Mono', ui-monospace, monospace;
-      --f-dot: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-      --f-body: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-
-      --ink: var(--bg);
-      --panel: var(--bg-elevated);
-      --card: var(--bg-elevated);
-      --card-hi: #1b1b21;
-      --line: var(--border);
-      --text: var(--fg);
-      --muted: var(--fg-dim);
-      --faint: rgba(154, 154, 160, 0.62);
-      --accent: var(--heart-secondary);
-      --accent-dim: rgba(55, 242, 230, 0.45);
-      --go: var(--heart-secondary);
-      --warn: var(--glitch-accent);
-      --stop: var(--heart-primary);
-
-      --sans: var(--f-body);
-      --mono: var(--f-display);
-      --serif: var(--f-dot);
-      --r: 2px;
-
-      color-scheme: dark;
-    }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
-
-    body {
-      background: var(--ink);
-      color: var(--text);
-      font-family: var(--sans);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+    /* パンくずとフッターの横幅。このページは細い1カラム。
+       他の変数とリセットは data/bijutsu-shisui.css */
+    :root { --page-max: 480px; }
 
     .stage { padding: 26px 16px 60px; display: flex; justify-content: center; }
 
-    /* ===== FOOTER ===== */
-    .site-footer {
-      padding: 30px 20px;
-      background: #2d1b4e;
-      color: rgba(255, 255, 255, 0.5);
-      text-align: center;
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-    }
-
-    .site-crumb {
-      background: var(--ink);
-      padding: 0 16px 26px;
-    }
-
-    .site-crumb ol {
-      list-style: none;
-      margin: 0 auto;
-      padding: 0;
-      max-width: 430px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.75rem;
-    }
-
-    .site-crumb li {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .site-crumb li + li::before {
-      content: "/";
-      color: rgba(255, 255, 255, 0.25);
-    }
-
-    .site-crumb a {
-      color: rgba(156, 122, 247, 0.75);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-
-    .site-crumb a:hover {
-      color: var(--accent);
-    }
-
-    .site-crumb [aria-current="page"] {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
     .sheet {
-      width: 100%; max-width: 430px;
+      width: 100%; max-width: var(--page-max);
       background: var(--panel); border: 1px solid var(--line);
       border-radius: 2px; overflow: hidden;
     }
     @media (max-width: 480px) {
       .stage { padding: 0 0 40px; }
       .sheet { border-radius: 0; border-left: 0; border-right: 0; border-top: 0; min-height: 100vh; }
-      /* シート内の余白に合わせる */
-      .site-crumb { padding: 0 20px 26px; }
     }
 
     .top { padding: 20px 20px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
@@ -288,7 +188,6 @@
     .cand .d { font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
     .cand .chev { color: var(--faint); font-size: 15px; }
 
-    .trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     /* グリッド内の span は inline のままだと縦に積まれず truncate も効かない */
     .cand .t, .cand .a, .cand .d,
     .row .t, .row .a, .row .by,
@@ -549,62 +448,9 @@
     }
     .composer button:disabled { background: var(--card); color: var(--faint); cursor: not-allowed; }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
-    }
-
-    /* ===== ここから下は /dj/schedule/ と同じ見え方に寄せるための上書き ===== */
-    html {
-      scrollbar-gutter: stable;
-      -webkit-text-size-adjust: 100%;
-    }
-
-    body {
-      min-height: 100vh;
-      font-size: 0.9375rem;
-      line-height: 1.9;
-      overflow-x: hidden;
-    }
-
-    /* 本家（bijutsushisui.com）と同じテイクオーバー背景。
-       このページは文字量が多いので、スケジュール表と同じく主張を抑える */
-    #bs-takeover-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      opacity: 0.35;
-    }
-
-    /* リクエストが通ったときのクラッカー。走査線やビネットより手前で弾けさせる。
-       display は触らない。弾けていない間は hidden 属性で丸ごと畳んでおく */
-    #celebrate-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 41;
-      pointer-events: none;
-    }
-
-    .vignette {
-      position: fixed;
-      inset: 0;
-      z-index: 39;
-      pointer-events: none;
-      background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
-    }
-
-    /* VHS のスキャンライン。本家と同じ 1px / 3px */
-    .scanlines {
-      position: fixed;
-      inset: 0;
-      z-index: 40;
-      pointer-events: none;
-      mix-blend-mode: overlay;
-      background: repeating-linear-gradient(to bottom,
-          rgba(255, 255, 255, 0.03) 0px,
-          rgba(255, 255, 255, 0.03) 1px,
-          transparent 1px,
-          transparent 3px);
-    }
+    /* ===== ここから下は /dj/schedule/ と同じ見え方に寄せるための上書き =====
+       土台（変数・リセット・背景演出・パンくず・フッター）は
+       data/bijutsu-shisui.css にある */
 
     /* シートの箱を外して、スケジュール表と同じ「背景の上に直接組む」形にする */
     .stage {
@@ -614,7 +460,7 @@
     }
 
     .sheet {
-      max-width: 480px;
+      max-width: var(--page-max);
       background: transparent;
       border: 0;
       border-radius: 0;
@@ -1243,60 +1089,7 @@
       color: rgba(154, 154, 160, 0.45);
     }
 
-    /* ===== パンくず / フッター ===== */
-    .site-crumb {
-      position: relative;
-      z-index: 1;
-      background: transparent;
-      padding: 0 calc(20px + env(safe-area-inset-right)) 26px calc(20px + env(safe-area-inset-left));
-    }
-
-    .site-crumb ol {
-      max-width: 480px;
-      font-family: var(--f-display);
-      font-size: 0.6875rem;
-      letter-spacing: 0.1em;
-    }
-
-    .site-crumb a {
-      color: var(--fg-dim);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .site-crumb a:hover {
-      color: var(--heart-secondary);
-      border-bottom-color: var(--heart-secondary);
-    }
-
-    .site-crumb [aria-current="page"] {
-      color: var(--fg-dim);
-    }
-
-    .site-footer {
-      position: relative;
-      z-index: 1;
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 30px 20px calc(30px + env(safe-area-inset-bottom));
-      background: transparent;
-      border-top: 1px solid var(--border);
-      font-family: var(--f-display);
-      font-size: 0.6875rem;
-      letter-spacing: 0.1em;
-      color: var(--fg-dim);
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
     @media (prefers-reduced-motion: reduce) {
-      #bs-takeover-canvas,
-      #celebrate-canvas,
-      .scanlines {
-        display: none;
-      }
-
       .badge::before { animation: none; }
     }
   </style>

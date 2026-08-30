@@ -17,90 +17,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
+
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    /* 美術紫水（bijutsushisui.com）のテーマ変数をそのまま持ってきている */
-    :root {
-      --bg: #0a0a0c;
-      --bg-elevated: #121216;
-      --fg: #ececec;
-      --fg-dim: #9a9aa0;
-      --heart-primary: #ff2f6e;
-      --heart-secondary: #37f2e6;
-      --glitch-accent: #ffe14d;
-      --border: rgba(255, 255, 255, 0.14);
-
-      --f-display: 'Share Tech Mono', ui-monospace, monospace;
-      --f-dot: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-      --f-body: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-
-      color-scheme: dark;
-    }
-
-    html {
-      scrollbar-gutter: stable;
-      -webkit-text-size-adjust: 100%;
-    }
-
-    body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: var(--f-body);
-      font-size: 0.9375rem;
-      line-height: 1.9;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-
-    #bs-takeover-canvas,
-    #celebrate-canvas {
-      position: fixed;
-      inset: 0;
-    }
-
-    /* 本家（bijutsushisui.com）と同じテイクオーバー背景。ドットのハートが漂うキャンバス */
-    #bs-takeover-canvas {
-      z-index: 0;
-      /* このページはフォーム主体で文字量が多いので、本家がイベントページで
-         行っているのと同じく背景の主張を抑える */
-      opacity: 0.35;
-    }
-
-    /* 開催日が決まったときのクラッカー。走査線やビネットより手前で弾けさせる。
-       display は触らない。弾けていない間は hidden 属性で丸ごと畳んでおく */
-    #celebrate-canvas {
-      z-index: 41;
-      pointer-events: none;
-    }
-
-    .vignette {
-      position: fixed;
-      inset: 0;
-      z-index: 39;
-      pointer-events: none;
-      background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
-    }
-
-    /* VHS のスキャンライン。本家と同じ 1px / 3px */
-    .scanlines {
-      position: fixed;
-      inset: 0;
-      z-index: 40;
-      pointer-events: none;
-      mix-blend-mode: overlay;
-      background: repeating-linear-gradient(to bottom,
-          rgba(255, 255, 255, 0.03) 0px,
-          rgba(255, 255, 255, 0.03) 1px,
-          transparent 1px,
-          transparent 3px);
-    }
-
     /* ===== LAYOUT ===== */
     .wrap {
       position: relative;
@@ -636,37 +555,14 @@
       color: var(--fg-dim);
     }
 
-    .site-foot {
-      border-top: 1px solid var(--border);
+    /* フッターの見た目は data/bijutsu-shisui.css。このページだけ本文カラムの
+       中に置くので、横幅を .wrap に合わせて、上の余白だけ足す */
+    .site-footer {
+      --page-max: 860px;
       margin-top: 10vh;
-      padding-top: 30px;
-      font-family: var(--f-display);
-      font-size: 0.6875rem;
-      letter-spacing: 0.1em;
-      color: var(--fg-dim);
-      text-align: center;
-    }
-
-    .site-foot a {
-      color: inherit;
-      text-decoration: none;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .site-foot a:hover {
-      color: var(--heart-secondary);
-      border-bottom-color: var(--heart-secondary);
-    }
-
-    [hidden] {
-      display: none !important;
     }
 
     @media (max-width: 560px) {
-      body {
-        font-size: 0.875rem;
-      }
-
       .wrap {
         padding: 0 calc(14px + env(safe-area-inset-right)) calc(14vh + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
       }
@@ -682,17 +578,6 @@
 
       .seg button {
         width: 44px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #bs-takeover-canvas,
-      #celebrate-canvas {
-        display: none;
-      }
-
-      .scanlines {
-        display: none;
       }
     }
   </style>
@@ -778,7 +663,7 @@
       </div>
     </section>
 
-    <footer class="site-foot">
+    <footer class="site-footer">
       <p>© 2026 Shinya Takeda | <a href="https://bijutsushisui.com/" target="_blank" rel="noopener noreferrer">BIJUTSU SHISUI</a></p>
     </footer>
   </main>

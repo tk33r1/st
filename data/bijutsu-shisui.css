@@ -1,0 +1,251 @@
+/* ===========================================================================
+   bijutsu-shisui.css — 美術紫水（bijutsushisui.com）由来の「白昼夢」テーマ
+
+   /dj/schedule/（日程調整）・/dj/request/（曲リクエスト）・/dj/booth/（ブース
+   コンソール）の3ページが共有する土台。各ページに散らばっていた同じ指定を
+   ここへ集約し、微妙にずれていた値は一本化してある。
+
+   ここに置くもの : テーマ変数 / リセット / 背景演出（テイクオーバー・走査線・
+                    ビネット）/ パンくず・フッター / 縮小時の基準文字サイズ
+   ここに置かないもの : 各ページ固有のコンポーネント（表・カード・フォーム等）
+
+   ページ側で調整できるつまみ:
+     --page-max … パンくずとフッターの横幅。本文カラムに合わせて上書きする
+                  （booth = 1180px / request = 480px）
+
+   使い方:
+     <link rel="stylesheet" href="/data/bijutsu-shisui.css?v=YYYYMMDD">
+     ＋ Google Fonts（DotGothic16 / Share Tech Mono / Shippori Mincho）
+   =========================================================================== */
+
+/* ===== TOKENS ===== */
+:root {
+  --bg: #0a0a0c;
+  --bg-elevated: #121216;
+  --fg: #ececec;
+  --fg-dim: #9a9aa0;
+  --heart-primary: #ff2f6e;
+  --heart-secondary: #37f2e6;
+  --glitch-accent: #ffe14d;
+  --border: rgba(255, 255, 255, 0.14);
+
+  --f-display: 'Share Tech Mono', ui-monospace, monospace;
+  --f-dot: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  --f-body: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+
+  /* 旧パレット名のエイリアス。テーマ導入前から使われている指定を生かすためのもの。
+     新しく書くときは上の変数を直接使う */
+  --ink: var(--bg);
+  --panel: var(--bg-elevated);
+  --card: var(--bg-elevated);
+  --card-hi: #1b1b21;
+  --line: var(--border);
+  --text: var(--fg);
+  --muted: var(--fg-dim);
+  --faint: rgba(154, 154, 160, 0.62);
+  --accent: var(--heart-secondary);
+  --accent-dim: rgba(55, 242, 230, 0.45);
+  --go: var(--heart-secondary);
+  --warn: var(--glitch-accent);
+  --stop: var(--heart-primary);
+  --sans: var(--f-body);
+  --mono: var(--f-display);
+  --serif: var(--f-dot);
+  --r: 2px;
+
+  /* パンくず・フッターの横幅。既定はブースコンソールの広いカラム */
+  --page-max: 1180px;
+
+  color-scheme: dark;
+}
+
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 0.9375rem;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ボタンは本文の書体・行送りをそのまま継ぐ。高さは各ページが padding で決める */
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--heart-secondary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.trunc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== 背景演出 =====
+   本家（bijutsushisui.com）と同じ、ドットのハートが漂うテイクオーバー背景と
+   VHS の走査線。canvas の中身は各ページの JS が描く */
+#bs-takeover-canvas,
+#celebrate-canvas {
+  position: fixed;
+  inset: 0;
+}
+
+/* どのページも文字を読ませる画面なので、本家がイベントページで行っているのと
+   同じく背景の主張は抑える */
+#bs-takeover-canvas {
+  z-index: 0;
+  opacity: 0.35;
+}
+
+/* 決まったとき / 通ったときのクラッカー。走査線やビネットより手前で弾けさせる。
+   display は触らない。弾けていない間は hidden 属性で丸ごと畳んでおく */
+#celebrate-canvas {
+  z-index: 41;
+  pointer-events: none;
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* 本家と同じ 1px / 3px */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background: repeating-linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px,
+      transparent 3px);
+}
+
+/* ===== パンくず / フッター ===== */
+.site-crumb {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  padding: 8px calc(20px + env(safe-area-inset-right)) 24px calc(20px + env(safe-area-inset-left));
+}
+
+.site-crumb ol {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: var(--page-max);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-display);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+}
+
+.site-crumb li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-crumb li + li::before {
+  content: "/";
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.site-crumb a {
+  color: var(--fg-dim);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.site-crumb a:hover {
+  color: var(--heart-secondary);
+  border-bottom-color: var(--heart-secondary);
+}
+
+.site-crumb [aria-current="page"] {
+  color: var(--fg-dim);
+}
+
+.site-footer {
+  position: relative;
+  z-index: 1;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 30px 20px calc(30px + env(safe-area-inset-bottom));
+  background: transparent;
+  border-top: 1px solid var(--border);
+  font-family: var(--f-display);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  color: var(--fg-dim);
+  text-align: center;
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-footer a:hover {
+  color: var(--heart-secondary);
+  border-bottom-color: var(--heart-secondary);
+}
+
+/* ===== 縮小時 ===== */
+@media (max-width: 560px) {
+  body {
+    font-size: 0.875rem;
+  }
+}
+
+/* 動きを減らす設定なら、漂う背景と走査線は出さず、動きも実質止める */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  #bs-takeover-canvas,
+  #celebrate-canvas,
+  .scanlines {
+    display: none;
+  }
+}
