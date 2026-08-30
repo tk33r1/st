@@ -1420,10 +1420,10 @@
 
     .gear-modal-figure {
       width: 100%;
-      height: 190px;
+      height: 160px;
       object-fit: cover;
       display: block;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
       clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
     }
 
@@ -1440,15 +1440,100 @@
       font-size: 1.5rem;
       font-weight: 600;
       letter-spacing: 0.1em;
-      margin: 8px 0 18px;
-      padding-bottom: 14px;
+      margin: 8px 0 16px;
+      padding-bottom: 12px;
       border-bottom: 1px solid rgba(156, 122, 247, 0.4);
     }
 
-    .gear-modal-body {
+    /* 説明文だけの回（シンボル・フェス）はこのクラスで受ける */
+    .gear-modal-text {
+      margin: 0;
       font-size: 0.95rem;
       line-height: 2;
-      white-space: pre-line;
+    }
+
+    /* 説明文のあとにスペック表が続く回（シンボル）の間隔 */
+    .gear-modal-text+.spec-list {
+      margin-top: 20px;
+    }
+
+    /* 本文中に差すリンクは inline-flex だと行送りが崩れるので素の inline に戻す */
+    .gear-modal-text .spec-link {
+      display: inline;
+    }
+
+    .gear-modal-text .spec-link::after {
+      margin-left: 4px;
+    }
+
+    /* 機材スペックの読み取り表。NERV 端末風に、ラベルは等幅・値は本文書体で並べる */
+    .spec-list {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .spec-row dt {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.68rem;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--neo-purple);
+      margin-bottom: 6px;
+    }
+
+    .spec-row dt::before {
+      content: "";
+      width: 3px;
+      height: 0.85em;
+      background: var(--neo-purple);
+    }
+
+    .spec-row dd {
+      margin: 0;
+      font-size: 0.98rem;
+      line-height: 1.75;
+      color: var(--dark-blue-purple);
+    }
+
+    .spec-note {
+      display: block;
+      margin-top: 4px;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+      font-size: 0.82rem;
+      color: rgba(45, 27, 78, 0.62);
+    }
+
+    .spec-link {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      color: var(--dark-blue-purple);
+      text-decoration: none;
+      border-bottom: 1px solid var(--neo-purple);
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .spec-link::after {
+      content: "\2197";
+      /* ↗ */
+      font-size: 0.82em;
+      color: var(--neo-purple);
+      transition: transform 0.2s ease;
+    }
+
+    .spec-link:hover {
+      color: var(--neo-purple);
+    }
+
+    .spec-link:hover::after {
+      transform: translate(2px, -2px);
     }
 
     .gear-modal-close {
@@ -1588,17 +1673,21 @@
       }
 
       .gear-modal-figure {
-        height: 150px;
-        margin-bottom: 18px;
+        height: 130px;
+        margin-bottom: 16px;
       }
 
       .gear-modal-title {
         font-size: 1.25rem;
       }
 
-      .gear-modal-body {
+      .gear-modal-text {
         font-size: 0.9rem;
         line-height: 1.9;
+      }
+
+      .spec-row dd {
+        font-size: 0.92rem;
       }
 
       .sound-log-section,
@@ -1807,9 +1896,9 @@
   <section class="gear-section">
     <div class="gear-bg-split"></div>
     <div class="gear-content reveal">
-      <!-- data-gear-body は仮テキスト。差し替えはこの属性だけでよい -->
+      <!-- 詳細は data-detail が指す <template> の中身。差し替えはそのテンプレートだけでよい -->
       <button class="gear-item" type="button" data-gear-tag="EQUIPMENT" data-gear-title="使用機材"
-        data-gear-body="4ch オールインワン型の DJ システムを主機として運用。デッキ・ミキサー・エフェクトが一体化しているため、現場の広さや電源事情に左右されず、どこでも同じ精度でフロアと同期できる。搬入からサウンドチェックまでを一人で完結できることも、ボランティア出演を続けるうえでの決め手になっている。">
+        data-detail="gearDetailEquipment">
         <img src="https://tk.st/images/contents/OPUS-QUAD.avif" alt="" class="gear-image" loading="lazy">
         <span class="gear-label">
           <span class="gear-label-text">使用機材</span>
@@ -1820,11 +1909,11 @@
           <span class="hexagon-layer"></span>
         </span>
       </button>
-      <button class="gear-item" type="button" data-gear-tag="TRADEMARK" data-gear-title="トレードマーク"
-        data-gear-body="ヘッドホンとロリポップ。人類踊狂計画のシンボルであり、初期装備でもある。甘いものを咥えたまま繋ぐ癖がそのまま目印になった。会場でこれを見かけたら、それが本人。">
+      <button class="gear-item" type="button" data-gear-tag="SYMBOL" data-gear-title="シンボル"
+        data-detail="gearDetailSymbol">
         <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="" class="gear-image" loading="lazy">
         <span class="gear-label">
-          <span class="gear-label-text">トレードマーク</span>
+          <span class="gear-label-text">シンボル</span>
           <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
         </span>
         <span class="at-field">
@@ -1833,7 +1922,7 @@
         </span>
       </button>
       <button class="gear-item" type="button" data-gear-tag="FESTIVAL" data-gear-title="フェス"
-        data-gear-body="野外フェスや地域イベントを中心に出演。ジャンルも年齢層も読めない場所ほど選曲は自由になる。人がまばらな時間帯から少しずつ密度を上げていく組み立てが持ち味で、終わる頃には知らない人同士が並んで踊っている、という状態を目標にしている。">
+        data-detail="gearDetailFestival">
         <img src="https://tk.st/images/contents/happy-death.avif" alt="" class="gear-image" loading="lazy">
         <span class="gear-label">
           <span class="gear-label-text">フェス</span>
@@ -1845,6 +1934,81 @@
         </span>
       </button>
     </div>
+
+    <!-- ギア詳細モーダルの中身（非表示。開いたときに複製して差し込む） -->
+    <template id="gearDetailEquipment">
+      <p class="gear-modal-text">4ch オールインワン型の DJ システム。クラブ標準と配置が異なるものの、利用頻度の低い機能を削減・集約することは、自身の理念にも近く、愛機として運用。</p>
+      <dl class="spec-list">
+        <div class="spec-row">
+          <dt>DJ機材</dt>
+          <dd>
+            <a class="spec-link"
+              href="https://downloads.support.alphatheta.com/manuals/all-in-one-dj-systems/OPUS-QUAD/OPUS-QUAD_DRJ1091D_manual?page=139"
+              target="_blank" rel="noopener noreferrer">Pioneer DJ OPUS-QUAD</a>
+          </dd>
+        </div>
+        <div class="spec-row">
+          <dt>スピーカー</dt>
+          <dd>
+            <a class="spec-link"
+              href="https://downloads.support.alphatheta.com/manuals/portable-dj-speakers/WAVE-EIGHT/WAVE-EIGHT_DRI1871A_manual?page=30"
+              target="_blank" rel="noopener noreferrer">AlphaTheta WAVE-EIGHT</a>
+            × 2台
+          </dd>
+        </div>
+        <div class="spec-row">
+          <dt>出力端子</dt>
+          <dd>MASTER OUT（XLR / RCA）／ BOOTH OUT（TRS）</dd>
+        </div>
+        <div class="spec-row">
+          <dt>マイク入力</dt>
+          <dd>2系統（XLR / 標準フォーン）</dd>
+        </div>
+        <div class="spec-row">
+          <dt>電源</dt>
+          <dd>
+            AC100V 1口（消費電力 60&nbsp;W）
+            <span class="spec-note">※ スピーカーはバッテリー内蔵。フル充電で約 8 時間、AC電源なしでも運用可</span>
+          </dd>
+        </div>
+        <div class="spec-row">
+          <dt>必要設置スペース</dt>
+          <dd>
+            930 × 500&nbsp;mm
+            <span class="spec-note">※ DJ-CDL スタンド利用時：700 × 300&nbsp;mm</span>
+          </dd>
+        </div>
+      </dl>
+    </template>
+    <template id="gearDetailSymbol">
+      <p class="gear-modal-text">人類踊狂計画のトレードマーク。赤い受話器型の、ロリポップヘッドホン。通常の両耳のヘッドホンだと、次の曲で踊り狂い、今流れている曲に集中できなかったため、オーダー。映画マトリックスの、真実・非日常との行き来をインスパイア。</p>
+      <dl class="spec-list">
+        <div class="spec-row">
+          <dt>スピーカー</dt>
+          <dd>Pioneer HDJ-X7</dd>
+        </div>
+        <div class="spec-row">
+          <dt>制作元</dt>
+          <dd>
+            <a class="spec-link" href="https://www.acou-sticks.com/" target="_blank" rel="noopener noreferrer">AcouSticks</a>
+          </dd>
+        </div>
+      </dl>
+    </template>
+    <template id="gearDetailFestival">
+      <p class="gear-modal-text">日本最大のサイケデリックトランスフェス、<a class="spec-link"
+          href="https://gaia.dmt-ent.com/" target="_blank" rel="noopener noreferrer">GAIA</a>。5大エレメント（地・水・風・火・空）構成で、テーマが「宇宙全体への愛と感謝」。2024年から毎年参加。2026年からはスタッフとして支えている。自然の中で寝泊まりしながら、24時間音に浸る。焚き火を見つめる。自我の境界が溶けていく。明るく前向きな死。人類踊狂計画の理念を体現した場所。</p>
+      <dl class="spec-list">
+        <div class="spec-row">
+          <dt>開催地</dt>
+          <dd>関西の温泉地</dd>
+        </div>
+        <div class="spec-row">
+          <dt>時期</dt>
+          <dd>毎年9月ごろ・3日間</dd>
+        </div>
+      </dl>
+    </template>
   </section>
 
   <!-- SOUND LOG -->
@@ -2049,7 +2213,7 @@
       <img class="gear-modal-figure" id="gearModalImage" src="" alt="">
       <span class="gear-modal-tag" id="gearModalTag"></span>
       <h2 class="gear-modal-title" id="gearModalTitle"></h2>
-      <p class="gear-modal-body" id="gearModalBody"></p>
+      <div class="gear-modal-body" id="gearModalBody"></div>
       <button class="gear-modal-close" id="gearModalClose" type="button" aria-label="閉じる">&times;</button>
     </div>
   </div>
@@ -2366,13 +2530,19 @@
     const gearModalClose = document.getElementById('gearModalClose');
     let gearLastFocused = null;
 
+    // モーダル内でフォーカスできる要素（本文中のリンク＋×）
+    const gearFocusables = () => Array.from(gearModal.querySelectorAll('a[href], button'))
+      .filter(el => !el.disabled && el.offsetParent !== null);
+
     const openGearModal = (item) => {
       const image = item.querySelector('.gear-image');
       gearModalImage.src = image ? image.currentSrc || image.src : '';
       gearModalTag.textContent = item.dataset.gearTag || '';
       gearModalTitle.textContent = item.dataset.gearTitle || '';
-      gearModalBody.textContent = item.dataset.gearBody || '';
       gearModalImage.alt = item.dataset.gearTitle || '';
+
+      const tpl = item.dataset.detail && document.getElementById(item.dataset.detail);
+      gearModalBody.replaceChildren(tpl ? tpl.content.cloneNode(true) : '');
 
       gearLastFocused = item;
       gearModal.classList.add('active');
@@ -2405,9 +2575,24 @@
       if (e.key === 'Escape') {
         hideGearModal();
       } else if (e.key === 'Tab') {
-        // フォーカス可能なのは × だけなので、Tab はそこへ固定して背後のページに抜けさせない
-        e.preventDefault();
-        gearModalClose.focus({ preventScroll: true });
+        // フォーカストラップ：背後のページへ抜けさせない
+        const items = gearFocusables();
+        if (!items.length) {
+          e.preventDefault();
+          return;
+        }
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (!gearModal.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus({ preventScroll: true });
+        } else if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus({ preventScroll: true });
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus({ preventScroll: true });
+        }
       }
     });
 
