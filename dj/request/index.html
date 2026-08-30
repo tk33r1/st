@@ -336,8 +336,8 @@
     .player .bar b { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
     .player .lab { font-family: var(--mono); font-size: 11px; color: var(--faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-    label.f { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--muted); }
-    label.f .req { color: var(--faint); font-size: 11.5px; }
+    .f { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--muted); }
+    .f .req { color: var(--faint); font-size: 11.5px; }
     textarea, input.txt {
       font: inherit; font-size: 16px; width: 100%;
       background: var(--ink); color: var(--text);
@@ -398,9 +398,16 @@
     @keyframes bounce { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
 
     .rows { display: flex; flex-direction: column; gap: 7px; }
+    /* 行そのものは器。button の中に button は置けないので、曲を開くボタンと
+       いいねボタンを分けて持つ。いいねは状態バッジの下に積む——横に並べると
+       320px 幅の端末で曲名の居場所が無くなるが、縦なら行の高さはほぼ変わらない。 */
     .row {
-      display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center;
       background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 9px 12px;
+    }
+    .rowopen {
+      display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: center;
+      min-width: 0; width: 100%; padding: 0; text-align: left;
     }
     .row.mine { border-color: var(--accent-dim); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
     .row img { width: 44px; height: 44px; border-radius: 2px; display: block; }
@@ -417,11 +424,37 @@
     .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .state { font-size: 11px; font-weight: 600; border-radius: 2px; padding: 2px 9px; white-space: nowrap; color: var(--faint); border: 1px solid var(--line); }
     .state.done { color: var(--go); border-color: color-mix(in srgb, var(--go) 45%, var(--line)); }
-    /* 受付＝まだ直せる／確認済＝DJ が目を通したあと。文字だけでなく色でも分ける */
-    .state.seen { color: var(--text); border-color: var(--faint); background: color-mix(in srgb, var(--faint) 14%, transparent); }
+    /* 受付＝まだ直せる／確認済＝DJ が目を通したあと。
+       直せるほうを点灯させ、直せないほうを沈める。色の濃さと明るさで
+       「こちらはまだ触れる」と分かるようにする（文言だけに頼らない）。 */
+    .state.open { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); background: color-mix(in srgb, var(--warn) 13%, transparent); }
+    /* 受付中バッジ（画面上部）と同じ「灯った丸」で、まだ動かせることを示す */
+    .state.open::before {
+      content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--warn); box-shadow: 0 0 6px var(--warn); margin-right: 6px; vertical-align: middle;
+    }
+    .state.seen { color: var(--faint); border-color: var(--line); background: transparent; }
     .at { font-family: var(--mono); font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
     .mytag { font-size: 10px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 2px; padding: 0 5px; }
-    .heart { font-family: var(--mono); font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+    /* いいね。押した本人だけがピンクに灯る。指で狙える大きさを最優先にする */
+    .like {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0;
+      font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums;
+      color: var(--faint); border: 1px solid var(--line); border-radius: 999px;
+      padding: 7px 13px; line-height: 1; transition: color .15s, border-color .15s, background .15s;
+    }
+    /* 行の中では状態バッジと横幅をそろえる。ばらばらの幅が縦に積まれると散らかる */
+    .right .like { align-self: stretch; margin-top: 1px; }
+    .like:hover { color: var(--stop); border-color: color-mix(in srgb, var(--stop) 45%, var(--line)); }
+    .like.on {
+      color: var(--stop); border-color: color-mix(in srgb, var(--stop) 55%, var(--line));
+      background: color-mix(in srgb, var(--stop) 13%, transparent);
+    }
+    .like .hh { font-size: 13px; }
+    /* 押した瞬間だけ跳ねる。反応があると分かるのが目的なので短く */
+    .like.just .hh { animation: likepop .3s ease-out; }
+    @keyframes likepop { 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
     .blank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 18px 0; }
 
     /* ===== 投げ銭（Buy Me Oil）===== */
@@ -664,7 +697,7 @@
     }
 
     /* ===== FORM ===== */
-    label.f {
+    .f {
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       letter-spacing: 0.12em;
@@ -672,7 +705,7 @@
       gap: 8px;
     }
 
-    label.f .req {
+    .f .req {
       font-family: var(--f-body);
       font-size: 0.6875rem;
       letter-spacing: 0;
@@ -781,6 +814,29 @@
       gap: 16px;
     }
 
+    /* 直せなくなったあとも、自分が何を書いたかは読めるようにしておく */
+    #mineView {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ro {
+      margin: 0;
+      font-family: var(--f-body);
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      padding: 13px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .ro.none { color: var(--faint); }
+
     .songstate {
       display: flex;
       align-items: center;
@@ -788,14 +844,12 @@
       margin-top: 4px;
     }
 
-    /* 一覧の行はタップして詳細に入る。button なので既定の中央寄せを戻す */
-    button.row {
-      width: 100%;
-      text-align: left;
+    /* 行の左半分はタップして詳細に入る。button なので既定の中央寄せを戻す */
+    .rowopen {
       font: inherit;
     }
 
-    button.row:hover {
+    .row:hover {
       border-color: var(--heart-secondary);
     }
 
@@ -843,7 +897,7 @@
     .cand .d,
     .row .by,
     .at,
-    .heart,
+    .like,
     .fresh,
     .alt .v,
     .alt .len,
@@ -1360,7 +1414,8 @@
         <div class="boardhead"><h2>まだかかっていない曲</h2></div>
         <div class="rows" id="waitingRows"></div>
         <p class="note">並び順は DJ が実際にかけた順です。受付した曲は、流れの都合でかけられないこともあります。<br>
-          「受付」はまだ内容を直せます。「確認済」は DJ が目を通したあとなので、変更・取り下げはできません。<br>
+          黄色く灯っている「受付」はまだ内容を直せます。灰色の「確認済」は DJ が目を通したあとなので、変更・取り下げはできません。<br>
+          ♥ は「いいね」です。1曲につき1回まで、リクエストしていない曲にも押せます。<br>
           曲をタップすると、試聴や自分の投稿の手直しができます。</p>
       </section>
 
@@ -1386,6 +1441,16 @@
           <div class="err" id="mineErr" hidden></div>
           <button class="send" id="mineSave" disabled>この内容に変更する</button>
           <button class="linkbtn drop" id="mineDrop">リクエストを取り下げる</button>
+        </div>
+
+        <!-- 直せなくなったあと。編集欄の代わりに、送った内容をそのまま見せる -->
+        <div id="mineView" hidden>
+          <div class="f">送ったひとこと
+            <p class="ro" id="mineViewMsg"></p>
+          </div>
+          <div class="f">送ったお名前
+            <p class="ro" id="mineViewName"></p>
+          </div>
         </div>
 
         <p class="note" id="songNote" hidden></p>
@@ -1422,6 +1487,15 @@
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const mmss = (sec) => sec ? Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') : '';
+
+    /* 状態バッジ。「受付」はまだ直せる、「確認済」は DJ が目を通したあとで直せない。
+       採用か見送りかはサーバも返さないので、ここでは区別しない。
+       一覧と詳細で文言がずれないよう、組み立てるのはこの一か所だけ。 */
+    function stateChip(s, suffix) {
+      if (s.playedAt) return '<span class="state done">✓ 再生済' + suffix + '</span>';
+      if (s.seen) return '<span class="state seen" title="DJ が確認したので変更できません">確認済</span>';
+      return '<span class="state open" title="まだ変更できます">受付</span>';
+    }
 
     /* ── iTunes Search API の結果を整える ───────────────
        同じ曲の DJ ミックス収録版が1曲につき10件以上返ってくるので、
@@ -1685,6 +1759,20 @@
       try { const m = tokens(); m[id] = token; localStorage.setItem(TOKEN_KEY, JSON.stringify(m)); } catch {}
     };
     const authHeader = (token) => (token ? { Authorization: 'Bearer ' + token } : {});
+
+    /* いいねを押した曲。1曲1回はサーバが device_key で担保するので、ここは
+       ハートを灯すための控え。localStorage を消せば device_key も一緒に消え、
+       サーバから見ても別端末になるので、両者の食い違いは起きない。 */
+    const LIKE_KEY = 'tkdj.likes';
+    const likedIds = () => { try { return JSON.parse(localStorage.getItem(LIKE_KEY) || '[]'); } catch { return []; } };
+    const liked = (id) => likedIds().includes(id);
+    const setLiked = (id, on) => {
+      try {
+        const set = new Set(likedIds());
+        if (on) set.add(id); else set.delete(id);
+        localStorage.setItem(LIKE_KEY, JSON.stringify([...set]));
+      } catch {}
+    };
     const forgetSong = (id) => {
       try {
         localStorage.setItem(MINE_KEY, JSON.stringify(mine().filter((x) => x !== id)));
@@ -1792,6 +1880,80 @@
       show(eventOpen ? 'search' : 'shut');
     });
 
+    /* ── いいね ─────────────────────────────
+       押した直後の数を覚えておく。一覧は15秒ごとに読み直すので、書き込みが
+       届く前の応答が返ると数がいったん戻って見える。サーバ側が自分の操作を
+       反映したら控えを捨て、他の人のいいねが載るようにする。 */
+    const likeFresh = new Map();   // id -> 自分の操作を反映した数
+    const likeBusy = new Set();
+
+    function likeCount(s) {
+      const n = likeFresh.get(s.id);
+      const server = s.likes || 0;
+      if (n === undefined) return server;
+      if (liked(s.id) ? server >= n : server <= n) { likeFresh.delete(s.id); return server; }
+      return n;
+    }
+
+    function likeHTML(s) {
+      const on = liked(s.id);
+      return '<button type="button" class="like' + (on ? ' on' : '') + '" data-like="' + s.id +
+        '" aria-pressed="' + on + '" aria-label="いいね"' +
+        ' title="' + (on ? 'いいねを取り消す' : 'いいねする') + '">' +
+        '<span class="hh" aria-hidden="true">♥</span><span class="n">' + likeCount(s) + '</span></button>';
+    }
+
+    /* 一覧と曲の詳細で同じ曲が同時に出ることはないが、どちらから押しても
+       同じ道を通るよう、data-like が同じボタンはまとめて塗り替える。 */
+    function paintLike(id, on, n) {
+      document.querySelectorAll('.like[data-like="' + id + '"]').forEach((b) => {
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+        b.title = on ? 'いいねを取り消す' : 'いいねする';
+        b.querySelector('.n').textContent = n;
+        if (on) {
+          b.classList.remove('just');
+          void b.offsetWidth;   // 連続で押しても跳ねるよう、アニメを巻き戻す
+          b.classList.add('just');
+        }
+      });
+    }
+
+    /* 先に画面を動かしてから送る。会場の回線は詰まりやすく、往復を待たせると
+       押せていないように見えて連打を誘う。失敗したら押す前の状態に戻す。 */
+    async function toggleLike(id) {
+      if (likeBusy.has(id)) return;
+      const cell = document.querySelector('.like[data-like="' + id + '"] .n');
+      const before = Number(cell && cell.textContent) || 0;
+      const on = !liked(id);
+      const next = Math.max(0, before + (on ? 1 : -1));
+
+      likeBusy.add(id);
+      setLiked(id, on);
+      likeFresh.set(id, next);
+      paintLike(id, on, next);
+
+      try {
+        const res = await fetch(API + '/songs/' + id + '/like', {
+          method: on ? 'POST' : 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device: deviceKey }),
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.message || '');
+        setLiked(id, !!d.liked);
+        likeFresh.set(id, d.likes);
+        paintLike(id, !!d.liked, d.likes);
+      } catch {
+        // 押す前に戻す。数が合わないままにするより、押し直せるほうがよい
+        setLiked(id, !on);
+        likeFresh.delete(id);
+        paintLike(id, !on, before);
+      } finally {
+        likeBusy.delete(id);
+      }
+    }
+
     /* ── みんなのリクエスト ─────────────────── */
     let boardTimer = null, lastFetch = 0;
 
@@ -1801,21 +1963,17 @@
         : '<span class="ph">♪</span>';
       const played = !!s.playedAt;
       const at = played && s.playedAt ? String(s.playedAt).slice(11, 16) : '';
-      // 「受付」はまだ直せる、「確認済」は DJ が目を通したあとで直せない。
-      // 採用か見送りかはサーバも返さないので、ここでは区別しない。
-      const seen = played || !!s.seen;
-      return '<button type="button" class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') +
-        '" data-song="' + s.id + '">' + art +
+      return '<div class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') + '">' +
+        '<button type="button" class="rowopen" data-song="' + s.id + '">' + art +
         '<span><span class="t trunc">' + esc(s.title) + '</span>' +
         '<span class="a trunc">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</span>' +
-        (s.by ? '<span class="by trunc">— ' + esc(s.by) + '</span>' : '') + '</span>' +
+        (s.by ? '<span class="by trunc">— ' + esc(s.by) + '</span>' : '') + '</span></button>' +
         '<span class="right">' +
         (isMine ? '<span class="mytag">あなた</span>' : '') +
-        '<span class="state' + (played ? ' done' : (seen ? ' seen' : '')) + '">' +
-        (played ? '✓ 再生済' : seen ? '確認済' : '受付') + '</span>' +
-        (played ? '<span class="at">' + esc(at) + '</span>'
-          : (s.votes > 1 ? '<span class="heart">♥ ' + s.votes + '</span>' : '')) +
-        '</span></button>';
+        stateChip(s, '') +
+        (played ? '<span class="at">' + esc(at) + '</span>' : '') +
+        likeHTML(s) +
+        '</span></div>';
     }
 
     async function loadBoard() {
@@ -1876,24 +2034,30 @@
 
     bindPlayer('#songPlay', '#songBar', '#songTime', () => detail && detail.song.previewUrl);
 
-    /* 中身が元のままなら「この内容に変更する」は押させない。
+    /* 「この内容に変更する」を押せるのは、中身が元と違っていて、送信中でないときだけ。
+       disabled を書くのはこの関数だけにして、入力からも送信からもここを通す。
        サーバは前後の空白を落として保存するので、比べるときも trim をそろえる。 */
-    function mineDirty() {
-      if (!detail || !detail.mine) return false;
-      const same = (a, b) => String(a || '').trim() === String(b || '').trim();
-      return !same($('#mineMsg').value, detail.mine.message)
-        || !same($('#mineName').value, detail.mine.name);
-    }
+    let mineSaving = false;
 
     function syncMineSave() {
-      $('#mineSave').disabled = !mineDirty();
+      const same = (a, b) => String(a || '').trim() === String(b || '').trim();
+      const dirty = !!detail && !!detail.mine
+        && (!same($('#mineMsg').value, detail.mine.message)
+          || !same($('#mineName').value, detail.mine.name));
+      $('#mineSave').disabled = mineSaving || !dirty;
+    }
+
+    /* 空欄のときは灰色の言い換えを置く。空の枠だけが並ぶと消えたように見える */
+    function fillRO(el, value, empty) {
+      const v = String(value || '').trim();
+      el.textContent = v || empty;
+      el.classList.toggle('none', !v);
     }
 
     function renderSong() {
       const s = detail.song;
       const played = !!s.playedAt;
       const at = played ? String(s.playedAt).slice(11, 16) : '';
-      const seen = played || !!s.seen;
       const v = s.variant ? '<span class="vtag">' + esc(s.variant) + '</span>' : '';
 
       $('#songHero').innerHTML =
@@ -1902,9 +2066,8 @@
         '<div class="a">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</div>' +
         (s.isFree ? '' : '<div class="d">' + esc(s.album) + ' · ' + mmss(Math.round(s.durationMs / 1000)) + '</div>') +
         '<div class="songstate">' +
-        '<span class="state' + (played ? ' done' : (seen ? ' seen' : '')) + '">' +
-        (played ? '✓ 再生済 ' + esc(at) : seen ? '確認済' : '受付') + '</span>' +
-        (s.votes > 1 ? '<span class="heart">♥ ' + s.votes + '</span>' : '') +
+        stateChip(s, ' ' + esc(at)) +
+        likeHTML(s) +
         '</div>';
 
       $('#songPlayer').style.display = s.previewUrl ? 'flex' : 'none';
@@ -1917,6 +2080,13 @@
         $('#mineName').value = detail.mine.name || '';
         $('#mineMsgCount').textContent = $('#mineMsg').value.length + ' / 140';
         syncMineSave();
+      }
+
+      // 直せなくなっても、自分が送った内容は読めるように差し替えて残す
+      $('#mineView').hidden = !detail.mine || canEdit;
+      if (detail.mine && !canEdit) {
+        fillRO($('#mineViewMsg'), detail.mine.message, '（ひとことなし）');
+        fillRO($('#mineViewName'), detail.mine.name, '（お名前なし）');
       }
 
       const note = !detail.mine
@@ -1936,6 +2106,7 @@
       $('#songHero').innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
       $('#songPlayer').style.display = 'none';
       $('#songEdit').hidden = true;
+      $('#mineView').hidden = true;
       $('#songNote').hidden = true;
       show('song');
       try {
@@ -1951,15 +2122,21 @@
     }
 
     $('#pane-board').addEventListener('click', (e) => {
-      const row = e.target.closest('.row[data-song]');
+      const like = e.target.closest('.like[data-like]');
+      if (like) { toggleLike(Number(like.dataset.like)); return; }
+      const row = e.target.closest('.rowopen[data-song]');
       if (row) openSong(Number(row.dataset.song));
     });
 
     $('#songBack').addEventListener('click', openBoard);
 
-    bindCount($('#mineMsg'), $('#mineMsgCount'), 140);
-    $('#mineMsg').addEventListener('input', syncMineSave);
-    $('#mineName').addEventListener('input', syncMineSave);
+    $('#pane-song').addEventListener('click', (e) => {
+      const like = e.target.closest('.like[data-like]');
+      if (like) toggleLike(Number(like.dataset.like));
+    });
+
+    bindCount($('#mineMsg'), $('#mineMsgCount'), 140, syncMineSave);
+    $('#mineName').addEventListener('input', syncMineSave);   // 名前欄は文字数カウンタが無いので直に
 
     /* ラベルは最初の文言を覚えておく。「送信中…」に差し替えるので、
        btn.textContent から取ると押すたびにラベルが上書きされてしまう。 */
@@ -1968,7 +2145,8 @@
     $('#mineSave').addEventListener('click', async () => {
       const btn = $('#mineSave');
       const err = $('#mineErr');
-      btn.disabled = true;
+      mineSaving = true;
+      syncMineSave();
       btn.textContent = '送信中…';
       err.hidden = true;
       try {
@@ -2012,6 +2190,7 @@
         err.textContent = '通信に失敗しました。電波の良い場所でもう一度お試しください。';
         err.hidden = false;
       } finally {
+        mineSaving = false;
         btn.textContent = SAVE_LABEL;
         syncMineSave();   // 保存できたなら中身は元に戻ったので、また非活性になる
       }

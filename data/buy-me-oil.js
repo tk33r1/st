@@ -127,7 +127,7 @@ class DonationWidget {
                 infoBtn.className = 'donation-oil-price-info';
                 infoBtn.setAttribute('aria-expanded', 'false');
                 infoBtn.setAttribute('aria-controls', noteId);
-                infoBtn.setAttribute('aria-label', '価格の根拠を表示');
+                infoBtn.setAttribute('aria-label', '価格の根拠');
                 infoBtn.innerHTML = `
                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
                         <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
@@ -141,10 +141,11 @@ class DonationWidget {
                 noteEl.textContent = note;
                 noteEl.hidden = true;
 
+                // 開閉は noteEl.hidden ひとつで持ち、aria-expanded はその写し。
+                // 開いているか閉じているかは aria-expanded が読み上げるので、ラベルは固定でよい。
                 infoBtn.addEventListener('click', () => {
-                    const willOpen = infoBtn.getAttribute('aria-expanded') !== 'true';
+                    const willOpen = noteEl.hidden;
                     infoBtn.setAttribute('aria-expanded', String(willOpen));
-                    infoBtn.setAttribute('aria-label', willOpen ? '価格の根拠を隠す' : '価格の根拠を表示');
                     noteEl.hidden = !willOpen;
                 }, { signal: this._abortController?.signal });
 
@@ -515,8 +516,10 @@ class DonationWidget {
                 /* 長い段落は均等割りして、1行目が閉じるボタンに届く前に折り返させる */
                 text-wrap: balance;
             }
-            /* 強調句は途中で改行させない（「誰でも無料で楽 / しめること」を防ぐ） */
-            .donation-modal-intro p strong { white-space: nowrap; }
+            /* 意味が切れる位置で折り返させたくない句にだけ付ける
+               （「誰でも無料で楽 / しめること」を防ぐ）。strong 全部にかけると、
+               長い強調句が overflow-x: hidden の内側で切れて読めなくなる。 */
+            .donation-modal-intro .donation-nobr { white-space: nowrap; }
             /* 本文の下に添えるハイオク価格の但し書き。取得できるまでは hidden で何も占有しない */
             .donation-modal-intro .donation-oil-price {
                 margin: 0;
@@ -536,7 +539,10 @@ class DonationWidget {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                padding: 0;
+                /* アイコンのままだと指で押す的が 14px しかない。padding で的を広げ、
+                   同じ幅の負マージンで打ち消して、見た目の行の詰まりは変えない */
+                padding: 0.35rem;
+                margin: -0.35rem;
                 border: none;
                 background: none;
                 color: #9ca3af;
@@ -556,13 +562,12 @@ class DonationWidget {
                 outline-offset: 2px;
                 border-radius: 9999px;
             }
-            /* 「いつ・どこの」は価格の下の行へ落とす。開くまでは hidden */
-            .donation-oil-price-note {
+            /* 「いつ・どこの」は価格の下の行へ落とす。開くまでは hidden 属性で消える。
+               :not([hidden]) で書かないと、display 指定が hidden を打ち消してしまう。 */
+            .donation-oil-price-note:not([hidden]) {
                 display: block;
                 margin-top: 0.2rem;
             }
-            /* display 指定があると hidden 属性が効かなくなるので明示的に打ち消す */
-            .donation-oil-price-note[hidden] { display: none; }
 
             /* Ko-fi 埋め込みウィジェットの余白を切り詰めるためのスケール調整 */
             .donation-kofi-wrap { overflow: hidden; }
@@ -743,7 +748,7 @@ class DonationWidget {
                             <span class="donation-modal-title-icon">${this._fuelPumpSvg()}</span>
                             Buy Me Oil
                         </h2>
-                        <p>広告に頼らず、<strong>「誰でも無料で楽しめること」</strong>を大切にしています。</p>
+                        <p>広告に頼らず、<strong class="donation-nobr">「誰でも無料で楽しめること」</strong>を大切にしています。</p>
                         <p>お役に立てたなら、ガソリン1Lのご支援が、私のモチベを支えるハーレーの燃料になります。</p>
                         <p id="${this._oilPriceId}" class="donation-oil-price" hidden></p>
                     </div>

@@ -8,6 +8,8 @@
  *   GET    /dj/api/req/songs/:id       曲の詳細（Authorization: Bearer <鍵> で自分の投稿も返る）
  *   PATCH  /dj/api/req/songs/:id/mine  自分の投稿のひとこと・名前を直す
  *   DELETE /dj/api/req/songs/:id/mine  自分の投稿を取り下げる
+ *   POST   /dj/api/req/songs/:id/like  いいねを押す（1端末1曲1回）
+ *   DELETE /dj/api/req/songs/:id/like  いいねを取り消す
  *
  * ブースAPI（鍵なしの公開。ページをどこからもリンクしないことで運用上隠す）
  *   GET   /dj/api/req/admin/songs        全件（ひとこと・内部ステータス込み）
@@ -25,6 +27,10 @@
  * クエリに載せるとアクセスログや Referer に残り、そのまま使い回されるため。
  * また DJ が採用・見送り・再生済のどれかに動かした曲と、受付が終わった回の曲は
  * 触らせない。並べ替えたあとで足元の内容が変わると困るため。
+ *
+ * いいねは votes とは別物。votes は「リクエストした人数」で投稿しないと増えないが、
+ * いいねは曲を送っていない人でも押せる。ブースは REQ と LIKE を並べて出し、
+ * 人気順は LIKE で並べる。どちらも同じ端末からは1曲につき1回しか増えない。
  *
  * ip_hash は保存するだけで、判定には一切使わない。会場の Wi-Fi では来場者全員が
  * 同じ値になるので、本人確認にも連投の判定にも使えない。「同じ人か」はブラウザが
@@ -350,7 +356,7 @@ async function postRequest(request, env, cors, ctx) {
 async function getSong(id, request, env, cors) {
   const s = await env.DB.prepare(
     `SELECT id, event_code, title, artist, variant, album, duration_ms, artwork, apple_url, preview_url,
-            is_free, genre, release_year, explicitness, votes, status, played_at
+            is_free, genre, release_year, explicitness, votes, likes, status, played_at
        FROM songs WHERE id = ?`
   ).bind(id).first();
   if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
@@ -373,7 +379,8 @@ async function getSong(id, request, env, cors) {
   // 前回の鍵がブラウザに残っていても編集欄は出さない（ownRequest と同じ条件）。
   const ev = await openEvent(env);
   const live = !!ev && s.event_code === ev.code;
-  const editable = live && s.status === 'pending';
+  const pending = s.status === 'pending';
+  const editable = live && pending;
 
   return json({
     song: {
@@ -391,9 +398,10 @@ async function getSong(id, request, env, cors) {
       releaseYear: s.release_year,
       explicitness: s.explicitness,
       votes: s.votes,
+      likes: s.likes || 0,
       playedAt: s.played_at,
       // /board と同じ。DJ が触ったかどうかだけで、採用か見送りかは出さない。
-      seen: s.status !== 'pending',
+      seen: !pending,
       by: names ? names.from_name : '',
     },
     // queued か skipped かは外に出さない。畳んだ理由だけ closed / moved で伝える。
@@ -458,12 +466,58 @@ async function deleteMine(id, request, env, cors) {
   const votes = left ? left.n : 0;
 
   if (votes === 0) {
+    // 曲の行が消えるので、その曲に付いたいいねも道連れにする（孤児を残さない）
+    await env.DB.prepare(`DELETE FROM likes WHERE song_id = ?`).bind(id).run();
     await env.DB.prepare(`DELETE FROM songs WHERE id = ?`).bind(id).run();
   } else {
     await env.DB.prepare(`UPDATE songs SET votes = ? WHERE id = ?`).bind(votes, id).run();
   }
 
   return json({ ok: true, votes, songRemoved: votes === 0 }, 200, cors);
+}
+
+/* ── 公開: いいね ───────────────────────────
+   誰の票かは device_key で見る。ブラウザが作る値なので作り直せば増やせるが、
+   止めたいのは面白半分の連打で、そこは端末単位で十分に効く（votes と同じ考え）。
+
+   押せるのは「いちばん新しい回」の曲だけ。受付が終わったあとも会場は続くので
+   open は条件にしないが、前の回の記録が後から動くのは防ぐ。
+
+   合計は songs.likes に持つ。引き算ではなく likes を数え直して書き戻すので、
+   途中で失敗して値がずれても、次に誰かが押した時点で正しい数に戻る。 */
+async function setLike(id, on, request, env, cors) {
+  let body;
+  try { body = await request.json(); } catch { body = {}; }
+  const deviceKey = clean(body.device, 64);
+  if (!deviceKey) {
+    return json({ error: 'no_device', message: 'この端末ではいいねを押せません' }, 400, cors);
+  }
+
+  const s = await env.DB.prepare(`SELECT id, event_code FROM songs WHERE id = ?`).bind(id).first();
+  if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
+
+  const latest = await openEvent(env) || await env.DB.prepare(
+    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
+  ).first();
+  if (!latest || s.event_code !== latest.code) {
+    return json({ error: 'closed', message: 'この回はもう終わっています' }, 409, cors);
+  }
+
+  if (on) {
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO likes (song_id, event_code, device_key) VALUES (?, ?, ?)`
+    ).bind(id, s.event_code, deviceKey).run();
+  } else {
+    await env.DB.prepare(
+      `DELETE FROM likes WHERE song_id = ? AND device_key = ?`
+    ).bind(id, deviceKey).run();
+  }
+
+  const n = await env.DB.prepare(`SELECT COUNT(*) AS n FROM likes WHERE song_id = ?`).bind(id).first();
+  const likes = n ? n.n : 0;
+  await env.DB.prepare(`UPDATE songs SET likes = ? WHERE id = ?`).bind(likes, id).run();
+
+  return json({ ok: true, likes, liked: !!on }, 200, cors);
 }
 
 /* ── 公開: みんなのリクエスト ───────────────
@@ -478,7 +532,7 @@ async function getBoard(env, cors) {
   ).first();
   if (!latest) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
 
-  const cols = `id, title, artist, variant, artwork, is_free, votes, played_at, status`;
+  const cols = `id, title, artist, variant, artwork, is_free, votes, likes, played_at, status`;
 
   const played = await env.DB.prepare(
     `SELECT ${cols} FROM songs
@@ -509,6 +563,7 @@ async function getBoard(env, cors) {
     artwork: s.artwork,
     isFree: !!s.is_free,
     votes: s.votes,
+    likes: s.likes || 0,
     playedAt: s.played_at,
     // 採用も見送りも同じ true。リクエストした側には「もう直せない」だけが伝わる。
     seen: s.status !== 'pending',
@@ -569,6 +624,7 @@ async function adminSongs(env, cors) {
       songKey: s.song_key || '',
       camelot: s.camelot || '',
       votes: s.votes,
+      likes: s.likes || 0,
       status: s.status,
       createdAt: s.created_at,
       playedAt: s.played_at,
@@ -686,6 +742,10 @@ export default {
       const own = path.match(/^\/dj\/api\/req\/songs\/(\d+)\/mine$/);
       if (own && method === 'PATCH')  return await patchMine(Number(own[1]), request, env, cors);
       if (own && method === 'DELETE') return await deleteMine(Number(own[1]), request, env, cors);
+
+      const like = path.match(/^\/dj\/api\/req\/songs\/(\d+)\/like$/);
+      if (like && method === 'POST')   return await setLike(Number(like[1]), true, request, env, cors);
+      if (like && method === 'DELETE') return await setLike(Number(like[1]), false, request, env, cors);
 
       if (path === '/dj/api/req/admin/songs' && method === 'GET')    return await adminSongs(env, cors);
       if (path === '/dj/api/req/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);

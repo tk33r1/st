@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS songs (
   bpm          REAL,
   song_key     TEXT,   -- "F#m" のような表記
   camelot      TEXT,   -- "11A" のようなキャメロット表記
-  votes       INTEGER NOT NULL DEFAULT 0,
+  votes       INTEGER NOT NULL DEFAULT 0,  -- リクエストした人数（投稿しないと増えない）
+  likes       INTEGER NOT NULL DEFAULT 0,  -- いいねの数（曲を送っていない人も押せる）
   status      TEXT NOT NULL DEFAULT 'pending', -- pending | queued | played | skipped
   created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
   played_at   DATETIME                    -- 「今かかっている曲」の判定と再生済の並び順に使う
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS songs (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_songs_dedupe ON songs(event_code, dedupe_key);
 CREATE INDEX IF NOT EXISTS idx_songs_event  ON songs(event_code, status);
 CREATE INDEX IF NOT EXISTS idx_songs_played ON songs(event_code, played_at DESC);
+CREATE INDEX IF NOT EXISTS idx_songs_likes  ON songs(event_code, likes DESC);
 
 -- ── 投稿（1人1件） ─────────────────────────
 -- 名前とひとことは投稿ごとに持つ。ひとことは DJ だけが読むもので、
@@ -79,6 +81,22 @@ CREATE TABLE IF NOT EXISTS requests (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_requests_once ON requests(song_id, device_key);
 CREATE INDEX IF NOT EXISTS idx_requests_song ON requests(song_id);
 CREATE INDEX IF NOT EXISTS idx_requests_token ON requests(song_id, edit_token);
+
+-- ── いいね（1人1曲1回） ───────────────────
+-- votes とは別物。votes は「リクエストした人数」で投稿しないと増えないが、
+-- いいねは曲を送っていない人でも押せる。人気の目安はこちらで見る。
+-- 誰が押したかは requests と同じく device_key で見る（IP は会場で全員同じ）。
+CREATE TABLE IF NOT EXISTS likes (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  song_id    INTEGER NOT NULL,
+  event_code TEXT NOT NULL,
+  device_key TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 連打しても2票目は入らない
+CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_once ON likes(song_id, device_key);
+CREATE INDEX IF NOT EXISTS idx_likes_song ON likes(song_id);
 
 -- ── 連打カウンタの元帳 ─────────────────────
 -- 投稿が通るたびに1行増やす。requests とは別に持つのが要点で、requests は

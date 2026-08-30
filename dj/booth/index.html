@@ -86,9 +86,11 @@
     }
     .gauge.off .dot { background: var(--stop); box-shadow: 0 0 8px var(--stop); animation: none; }
 
-    .switches { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    /* スイッチと操作ボタンの入れ物。スイッチ以外も入るので名前は「操作群」 */
+    .rigctl { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 
-    /* 受付・通知はトグルスイッチ。状態はノブの位置と色が出すので、ラベルは名前で固定 */
+    /* 受付・通知はトグルスイッチ。状態はノブの位置と色が出すので、ラベルは名前で固定。
+       倒れている向きは aria-checked ひとつで持ち、見た目もそれを見て切り替える */
     .accept {
       display: inline-flex; align-items: center; gap: 9px;
       padding: 5px 2px; font-size: 13.5px; font-weight: 600; color: var(--faint);
@@ -105,12 +107,12 @@
       width: 10px; height: 10px; border-radius: 50%; background: var(--faint);
       transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
     }
-    .accept[data-on="true"] { color: var(--go); }
-    .accept[data-on="true"] .track {
+    .accept[aria-checked="true"] { color: var(--go); }
+    .accept[aria-checked="true"] .track {
       border-color: color-mix(in srgb, var(--go) 55%, var(--line));
       background: color-mix(in srgb, var(--go) 18%, var(--ink));
     }
-    .accept[data-on="true"] .knob { transform: translateX(14px); background: var(--go); box-shadow: 0 0 10px var(--go); }
+    .accept[aria-checked="true"] .knob { transform: translateX(14px); background: var(--go); box-shadow: 0 0 10px var(--go); }
 
     .ghostbtn { border: 1px solid var(--line); border-radius: var(--r); padding: 7px 14px; font-size: 13px; color: var(--muted); }
     .ghostbtn:hover { background: var(--card); color: var(--text); border-color: var(--accent-dim); }
@@ -189,6 +191,8 @@
       border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line)); border-radius: 2px; padding: 1px 7px; margin-top: 5px;
     }
 
+    /* REQ = リクエストした人数、LIKE = 来場者が押したいいね。別物なので並べて出す */
+    .counts { display: flex; gap: 6px; flex-shrink: 0; }
     .votes {
       display: flex; flex-direction: column; align-items: center; gap: 1px;
       font-family: var(--mono); font-variant-numeric: tabular-nums;
@@ -197,6 +201,7 @@
     .votes b { font-size: 17px; font-weight: 600; line-height: 1; }
     .votes span { font-size: 9.5px; color: var(--faint); letter-spacing: .08em; }
     .votes.hot { border-color: var(--accent-dim); color: var(--accent); }
+    .votes.likes.hot { color: var(--stop); border-color: color-mix(in srgb, var(--stop) 50%, var(--line)); }
 
     .msg { border-left: 2px solid var(--line); padding: 2px 0 2px 12px; font-size: 13.5px; color: #CFC6DF; }
     .msg + .msg { margin-top: 6px; }
@@ -473,16 +478,16 @@
       background: var(--fg-dim);
     }
 
-    .accept[data-on="true"] {
+    .accept[aria-checked="true"] {
       color: var(--heart-secondary);
     }
 
-    .accept[data-on="true"] .track {
+    .accept[aria-checked="true"] .track {
       border-color: var(--heart-secondary);
       background: color-mix(in srgb, var(--heart-secondary) 20%, transparent);
     }
 
-    .accept[data-on="true"] .knob {
+    .accept[aria-checked="true"] .knob {
       background: var(--heart-secondary);
       box-shadow: 0 0 10px var(--heart-secondary);
     }
@@ -677,6 +682,11 @@
     .votes.hot {
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
+    }
+
+    .votes.likes.hot {
+      color: var(--heart-primary);
+      border-color: var(--heart-primary);
     }
 
     .msg {
@@ -933,9 +943,9 @@
       </div>
       <div class="gauge" id="conn"><span class="dot"></span><span id="connTxt">接続中</span></div>
       <!-- スイッチと操作ボタンをひとまとめにして、折り返しても同じ行に残す -->
-      <div class="switches">
-        <button class="accept" id="accept" role="switch" aria-checked="true" data-on="true"><span class="track"><span class="knob"></span></span><span>受付</span></button>
-        <button class="accept" id="notify" role="switch" aria-checked="false" data-on="false" hidden><span class="track"><span class="knob"></span></span><span>通知</span></button>
+      <div class="rigctl">
+        <button class="accept" id="accept" role="switch" aria-checked="true"><span class="track"><span class="knob"></span></span><span>受付</span></button>
+        <button class="accept" id="notify" role="switch" aria-checked="false" hidden><span class="track"><span class="knob"></span></span><span>通知</span></button>
         <button class="ghostbtn" id="newEvent">新しいイベントを開始</button>
       </div>
     </header>
@@ -952,6 +962,7 @@
       <div class="sort">
         <span class="lbl">SORT</span>
         <button data-s="new" aria-pressed="true">新着順</button>
+        <button data-s="pop" aria-pressed="false">人気順</button>
         <button data-s="genre" aria-pressed="false">ジャンル順</button>
         <button data-s="bpm" aria-pressed="false">BPM順</button>
         <button data-s="key" aria-pressed="false">キー順</button>
@@ -1140,7 +1151,10 @@
         '<div class="body"><div class="head"><div class="names">' +
         (s.artist ? '<div class="artist">' + esc(s.artist) + '</div>' : '') +
         '<div class="title">' + esc(s.title) + variant + '</div>' + line +
-        '</div><div class="votes' + (s.votes >= 3 ? ' hot' : '') + '"><b>' + s.votes + '</b><span>REQ</span></div></div>' +
+        '</div><div class="counts">' +
+        '<div class="votes' + (s.votes >= 3 ? ' hot' : '') + '"><b>' + s.votes + '</b><span>REQ</span></div>' +
+        '<div class="votes likes' + (s.likes >= 3 ? ' hot' : '') + '"><b>' + (s.likes || 0) + '</b><span>LIKE</span></div>' +
+        '</div></div>' +
         voices +
         '<div class="prev' + (playingId === s.id ? ' on' : '') + '"><b id="prevbar-' + s.id + '"></b></div>' +
         '<div class="acts">' + primary + links +
@@ -1160,6 +1174,9 @@
       return cmp(x, y);
     };
     const SORTS = {
+      // 人気順はいいねの多い順。同数なら、リクエストした人数が多いほうを先に出す。
+      // どちらも同じなら安定ソートなので新着順のまま残る。
+      pop: (a, b) => (b.likes || 0) - (a.likes || 0) || (b.votes || 0) - (a.votes || 0),
       genre: byKey((s) => s.genre, (x, y) => x.localeCompare(y, 'ja')),
       bpm: byKey((s) => (s.bpmTapped ? s.bpm : effBpm(s.bpm)) || null, (x, y) => x - y),
       key: byKey(songKeyRank, (x, y) => x - y),
@@ -1196,10 +1213,10 @@
     }
 
     /* ── 通信 ─────────────────────────────── */
-    /* トグルなので data-on（見た目）と aria-checked（読み上げ）は必ず一緒に動かす */
-    function paintAccept(on) {
-      $('#accept').dataset.on = String(on);
-      $('#accept').setAttribute('aria-checked', String(on));
+    /* 受付も通知も同じトグル。倒れている向きは aria-checked ひとつが持ち、
+       読み上げも CSS（.accept[aria-checked="true"]）もそれだけを見る */
+    function paintSwitch(sel, on) {
+      $(sel).setAttribute('aria-checked', String(on));
     }
 
     async function load(first) {
@@ -1209,7 +1226,7 @@
         if (ev) {
           $('#evTitle').textContent = ev.title;
           $('#evCode').textContent = ev.code;
-          paintAccept(!!ev.open);
+          paintSwitch('#accept', !!ev.open);
           if (tapCode !== ev.code) { tapCode = ev.code; tapMap = tapLoad(ev.code); }
         }
         /* 前回の取得に無かった id を新着として光らせる。
@@ -1354,7 +1371,7 @@
         });
         const d = await res.json();
         if (!res.ok) { toast(d.message || '切り替えられませんでした'); return; }
-        paintAccept(!!d.open);
+        paintSwitch('#accept', !!d.open);
         toast(d.open ? 'リクエストの受付を再開しました' : 'リクエストの受付を停止しました');
       } catch { toast('切り替えられませんでした'); }
     });
@@ -1440,12 +1457,6 @@
     const remember = (v) => { try { localStorage.setItem(NOTIFY_KEY, v ? '1' : '0'); } catch {} };
     const remembered = () => { try { return localStorage.getItem(NOTIFY_KEY) === '1'; } catch { return false; } };
 
-    function paintNotify() {
-      const b = $('#notify');
-      b.dataset.on = String(notifyOn);
-      b.setAttribute('aria-checked', String(notifyOn));
-    }
-
     /* tag を固定して差し替えにする。1曲ごとに積み上げると、
        混んだ時間帯に通知センターが埋まって逆に読めなくなる。 */
     function fire(title, body, icon) {
@@ -1474,7 +1485,7 @@
     function announce(fresh, again) {
       if (!notifyOn) return;
       if (Notification.permission !== 'granted') {   // 設定から後で取り消されることがある
-        notifyOn = false; remember(false); paintNotify(); return;
+        notifyOn = false; remember(false); paintSwitch('#notify', notifyOn); return;
       }
       if (document.hasFocus()) return;
       const all = fresh.concat(again);
@@ -1492,10 +1503,10 @@
     if (canNotify) {
       $('#notify').hidden = false;
       notifyOn = remembered() && Notification.permission === 'granted';
-      paintNotify();
+      paintSwitch('#notify', notifyOn);
       $('#notify').addEventListener('click', async () => {
         if (notifyOn) {
-          notifyOn = false; remember(false); paintNotify();
+          notifyOn = false; remember(false); paintSwitch('#notify', notifyOn);
           toast('新着リクエストの通知を切りました');
           return;
         }
@@ -1507,7 +1518,7 @@
           toast('ブラウザ側で通知がブロックされています。アドレスバーの錠アイコンから許可してください');
           return;
         }
-        notifyOn = true; remember(true); paintNotify();
+        notifyOn = true; remember(true); paintSwitch('#notify', notifyOn);
         toast('新着リクエストを通知します（このページを見ている間は出ません）');
         lastNotified = null;
         fire('通知をオンにしました', '新しいリクエストが届くとここに出ます');
