@@ -457,6 +457,13 @@
       letter-spacing: 0.1em;
       overflow: hidden;
       transition: all 0.3s ease;
+      /* button 要素なので UA 既定の枠・余白・フォントを打ち消す */
+      border: 0;
+      padding: 0;
+      font-family: inherit;
+      appearance: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .gear-item:nth-child(odd) {
@@ -482,6 +489,52 @@
 
     .gear-item:hover .gear-image {
       transform: scale(1.1);
+    }
+
+    /*
+     * ラベル：PC はホバー／キーボードフォーカスで全面オーバーレイ。
+     * SP（ホバーが無い環境）は下部グラデーションで常時表示に切り替える。
+     */
+    .gear-label {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(45, 27, 78, 0.78);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .gear-item:hover .gear-label,
+    .gear-item:focus-visible .gear-label {
+      opacity: 1;
+    }
+
+    .gear-label-text {
+      font-size: 1.15rem;
+      color: var(--white);
+      letter-spacing: 0.18em;
+      text-shadow: 0 0 12px rgba(156, 122, 247, 0.9);
+    }
+
+    .gear-label-hint {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      color: var(--neo-purple);
+      border-top: 1px solid rgba(156, 122, 247, 0.6);
+      padding-top: 6px;
+    }
+
+    /* clip-path で outline が切られるので、フォーカスの合図は拡大とラベル表示で出す */
+    .gear-item:focus-visible {
+      outline: none;
+      transform: scale(1.05);
     }
 
     .at-field {
@@ -1315,6 +1368,115 @@
       background: var(--neo-purple);
     }
 
+    /* ===== Gear Modal ===== */
+    .gear-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(10, 5, 25, 0.85);
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      visibility: hidden;
+      /* 画像モーダルと同じ理由で、表示は即時・非表示はフェード後に切り替える */
+      transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+      overscroll-behavior: contain;
+      cursor: zoom-out;
+    }
+
+    .gear-modal.active {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.3s ease, visibility 0s linear 0s;
+    }
+
+    .gear-modal-panel {
+      position: relative;
+      width: min(560px, 100%);
+      max-height: 82vh;
+      overflow-y: auto;
+      padding: 34px 30px 30px;
+      background: var(--white);
+      color: var(--dark-blue-purple);
+      border: 2px solid var(--neo-purple);
+      box-shadow: 0 0 40px rgba(156, 122, 247, 0.45);
+      /* 右下だけを落とした端末パネル風の切り欠き。× を置く右上は削らない */
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 26px), calc(100% - 26px) 100%, 0 100%);
+      transform: translateY(24px);
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      cursor: default;
+      text-align: left;
+    }
+
+    .gear-modal.active .gear-modal-panel {
+      transform: none;
+    }
+
+    .gear-modal-figure {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      display: block;
+      margin-bottom: 22px;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+    }
+
+    .gear-modal-tag {
+      display: block;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.72rem;
+      font-weight: bold;
+      letter-spacing: 0.22em;
+      color: var(--neo-purple);
+    }
+
+    .gear-modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      margin: 8px 0 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(156, 122, 247, 0.4);
+    }
+
+    .gear-modal-body {
+      font-size: 0.95rem;
+      line-height: 2;
+      white-space: pre-line;
+    }
+
+    .gear-modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--dark-blue-purple);
+      /* 画像の上に重なるので、下地が暗くても × が読めるよう白を敷く */
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--neo-purple);
+      border-radius: 50%;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .gear-modal-close:hover {
+      background: var(--neo-purple);
+      color: var(--white);
+    }
+
     .mobile-break {
       display: none;
     }
@@ -1350,8 +1512,16 @@
         display: block;
       }
 
+      /*
+       * モバイルのセクション上下余白は 1 か所で決めてリズムを揃える。
+       * 詰めすぎるとセクションの切れ目が読めず、情報量の多いページほど窮屈に見える。
+       */
+      :root {
+        --section-pad-y: 80px;
+      }
+
       .contact-section {
-        padding: 40px 20px;
+        padding: var(--section-pad-y) 20px;
       }
 
       .site-crumb {
@@ -1359,7 +1529,7 @@
       }
 
       .philosophy-section {
-        padding: 60px 20px;
+        padding: var(--section-pad-y) 20px;
         min-height: 50vh;
       }
 
@@ -1369,7 +1539,7 @@
       }
 
       .gear-section {
-        padding: 60px 20px;
+        padding: var(--section-pad-y) 20px;
         min-height: auto;
       }
 
@@ -1377,20 +1547,63 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 15px;
+        gap: 20px;
       }
 
       .gear-item {
-        width: calc(50% - 7.5px);
+        /* gap の半分を引く。.gear-content の gap を変えたらここも合わせること */
+        width: calc(50% - 10px);
         max-width: 220px;
         height: auto;
         aspect-ratio: 1 / 1;
         margin: 0;
       }
 
+      /* ホバーが無いのでラベルは常時表示。画像を潰さないよう下側のグラデーションに置く */
+      .gear-label {
+        opacity: 1;
+        justify-content: flex-end;
+        padding-bottom: 14%;
+        gap: 4px;
+        background: linear-gradient(to top, rgba(45, 27, 78, 0.9) 0%, rgba(45, 27, 78, 0.5) 45%, transparent 75%);
+      }
+
+      .gear-label-text {
+        font-size: 0.9rem;
+        letter-spacing: 0.12em;
+      }
+
+      .gear-label-hint {
+        font-size: 0.55rem;
+        letter-spacing: 0.15em;
+        padding-top: 4px;
+      }
+
+      .gear-modal {
+        padding: 20px 16px;
+      }
+
+      .gear-modal-panel {
+        padding: 28px 22px 24px;
+      }
+
+      .gear-modal-figure {
+        height: 150px;
+        margin-bottom: 18px;
+      }
+
+      .gear-modal-title {
+        font-size: 1.25rem;
+      }
+
+      .gear-modal-body {
+        font-size: 0.9rem;
+        line-height: 1.9;
+      }
+
       .sound-log-section,
       .operation-section {
-        padding: 50px 20px;
+        padding: var(--section-pad-y) 20px;
       }
 
       .image-modal {
@@ -1412,8 +1625,12 @@
       }
 
       .video-section {
-        padding: 50px 20px;
+        padding: var(--section-pad-y) 20px;
         min-height: auto;
+      }
+
+      .video-title {
+        margin-bottom: 30px;
       }
 
       .sound-log-header {
@@ -1499,6 +1716,20 @@
         .image-modal {
           --modal-h: 78dvh;
         }
+
+        /*
+         * この @supports は上の @media (max-width: 768px) より後ろにあるため、
+         * ここで打ち消さないと 100dvh がモバイル用の min-height を上書きしてしまい、
+         * 中身の少ないセクションに巨大な上下余白ができる。
+         */
+        .philosophy-section {
+          min-height: 50dvh;
+        }
+
+        .gear-section,
+        .video-section {
+          min-height: auto;
+        }
       }
     }
   </style>
@@ -1576,29 +1807,43 @@
   <section class="gear-section">
     <div class="gear-bg-split"></div>
     <div class="gear-content reveal">
-      <div class="gear-item">
-        <img src="https://tk.st/images/contents/OPUS-QUAD.avif" alt="DJ Controller" class="gear-image"
-          loading="lazy">
-        <div class="at-field">
-          <div class="hexagon-layer"></div>
-          <div class="hexagon-layer"></div>
-        </div>
-      </div>
-      <div class="gear-item">
-        <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="Lollipop Headphone" class="gear-image"
-          loading="lazy">
-        <div class="at-field">
-          <div class="hexagon-layer"></div>
-          <div class="hexagon-layer"></div>
-        </div>
-      </div>
-      <div class="gear-item">
-        <img src="https://tk.st/images/contents/happy-death.avif" alt="Turntable" class="gear-image" loading="lazy">
-        <div class="at-field">
-          <div class="hexagon-layer"></div>
-          <div class="hexagon-layer"></div>
-        </div>
-      </div>
+      <!-- data-gear-body は仮テキスト。差し替えはこの属性だけでよい -->
+      <button class="gear-item" type="button" data-gear-tag="EQUIPMENT" data-gear-title="使用機材"
+        data-gear-body="4ch オールインワン型の DJ システムを主機として運用。デッキ・ミキサー・エフェクトが一体化しているため、現場の広さや電源事情に左右されず、どこでも同じ精度でフロアと同期できる。搬入からサウンドチェックまでを一人で完結できることも、ボランティア出演を続けるうえでの決め手になっている。">
+        <img src="https://tk.st/images/contents/OPUS-QUAD.avif" alt="" class="gear-image" loading="lazy">
+        <span class="gear-label">
+          <span class="gear-label-text">使用機材</span>
+          <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
+        </span>
+        <span class="at-field">
+          <span class="hexagon-layer"></span>
+          <span class="hexagon-layer"></span>
+        </span>
+      </button>
+      <button class="gear-item" type="button" data-gear-tag="TRADEMARK" data-gear-title="トレードマーク"
+        data-gear-body="ヘッドホンとロリポップ。人類踊狂計画のシンボルであり、初期装備でもある。甘いものを咥えたまま繋ぐ癖がそのまま目印になった。会場でこれを見かけたら、それが本人。">
+        <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="" class="gear-image" loading="lazy">
+        <span class="gear-label">
+          <span class="gear-label-text">トレードマーク</span>
+          <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
+        </span>
+        <span class="at-field">
+          <span class="hexagon-layer"></span>
+          <span class="hexagon-layer"></span>
+        </span>
+      </button>
+      <button class="gear-item" type="button" data-gear-tag="FESTIVAL" data-gear-title="フェス"
+        data-gear-body="野外フェスや地域イベントを中心に出演。ジャンルも年齢層も読めない場所ほど選曲は自由になる。人がまばらな時間帯から少しずつ密度を上げていく組み立てが持ち味で、終わる頃には知らない人同士が並んで踊っている、という状態を目標にしている。">
+        <img src="https://tk.st/images/contents/happy-death.avif" alt="" class="gear-image" loading="lazy">
+        <span class="gear-label">
+          <span class="gear-label-text">フェス</span>
+          <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
+        </span>
+        <span class="at-field">
+          <span class="hexagon-layer"></span>
+          <span class="hexagon-layer"></span>
+        </span>
+      </button>
     </div>
   </section>
 
@@ -1795,6 +2040,17 @@
         <button class="modal-nav modal-next" id="modalNext" aria-label="次の画像">&rsaquo;</button>
       </div>
       <div class="modal-dots" id="modalDots"></div>
+    </div>
+  </div>
+
+  <!-- Gear Modal -->
+  <div class="gear-modal" id="gearModal" role="dialog" aria-modal="true" aria-labelledby="gearModalTitle">
+    <div class="gear-modal-panel">
+      <img class="gear-modal-figure" id="gearModalImage" src="" alt="">
+      <span class="gear-modal-tag" id="gearModalTag"></span>
+      <h2 class="gear-modal-title" id="gearModalTitle"></h2>
+      <p class="gear-modal-body" id="gearModalBody"></p>
+      <button class="gear-modal-close" id="gearModalClose" type="button" aria-label="閉じる">&times;</button>
     </div>
   </div>
 
@@ -2098,6 +2354,60 @@
           e.preventDefault();
           first.focus({ preventScroll: true });
         }
+      }
+    });
+
+    // 5.5. Gear Modal Control
+    const gearModal = document.getElementById('gearModal');
+    const gearModalImage = document.getElementById('gearModalImage');
+    const gearModalTag = document.getElementById('gearModalTag');
+    const gearModalTitle = document.getElementById('gearModalTitle');
+    const gearModalBody = document.getElementById('gearModalBody');
+    const gearModalClose = document.getElementById('gearModalClose');
+    let gearLastFocused = null;
+
+    const openGearModal = (item) => {
+      const image = item.querySelector('.gear-image');
+      gearModalImage.src = image ? image.currentSrc || image.src : '';
+      gearModalTag.textContent = item.dataset.gearTag || '';
+      gearModalTitle.textContent = item.dataset.gearTitle || '';
+      gearModalBody.textContent = item.dataset.gearBody || '';
+      gearModalImage.alt = item.dataset.gearTitle || '';
+
+      gearLastFocused = item;
+      gearModal.classList.add('active');
+      setScrollLock(true);
+      gearModalClose.focus({ preventScroll: true });
+    };
+
+    const hideGearModal = () => {
+      if (!gearModal.classList.contains('active')) return;
+      gearModal.classList.remove('active');
+      setScrollLock(false);
+      if (gearLastFocused) {
+        gearLastFocused.focus({ preventScroll: true });
+        gearLastFocused = null;
+      }
+    };
+
+    document.querySelectorAll('.gear-item').forEach(item => {
+      item.addEventListener('click', () => openGearModal(item));
+    });
+
+    // パネル内（テキスト選択など）以外をクリックしたら閉じる。× もパネル内なので個別に拾う
+    gearModal.addEventListener('click', (e) => {
+      if (e.target.closest('.gear-modal-panel') && !e.target.closest('.gear-modal-close')) return;
+      hideGearModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!gearModal.classList.contains('active')) return;
+      if (e.key === 'Escape') {
+        hideGearModal();
+      } else if (e.key === 'Tab') {
+        // フォーカス可能なのは × だけなので、Tab はそこへ固定して背後のページに抜けさせない
+        e.preventDefault();
+        gearModalClose.focus({ preventScroll: true });
       }
     });
 
