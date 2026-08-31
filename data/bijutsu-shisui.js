@@ -78,13 +78,18 @@
   var bC = document.createElement('canvas'), bCtx = bC.getContext('2d');
   var burn = document.createElement('canvas'); // 残像焼き付きレイヤー
   var burnCtx = burn.getContext('2d');
+  // 走査帯ズレ用のスナップショット。グリッチ中は毎フレーム使うので使い回す
+  var snap = document.createElement('canvas');
+  var snapCtx = snap.getContext('2d');
+  // 毎フレーム同じ文字列を組み直さないよう、先に1回だけ作っておく
+  var BURN_FADE = 'rgba(' + hexToRgb(settings.bgColor) + ',0.14)';
 
   var W, H, DPR;
   function resize() {
     var fit = art.fitCanvas(canvas, ctx);
     W = fit.W; H = fit.H; DPR = fit.DPR;
 
-    [scene, rC, gC, bC, burn].forEach(function (cv) {
+    [scene, rC, gC, bC, burn, snap].forEach(function (cv) {
       cv.width = W; cv.height = H;
     });
     burnCtx.fillStyle = settings.bgColor;
@@ -195,7 +200,7 @@
     }
 
     // --- 残像焼き付き ---
-    burnCtx.fillStyle = 'rgba(' + hexToRgb(settings.bgColor) + ',0.14)';
+    burnCtx.fillStyle = BURN_FADE;
     burnCtx.fillRect(0, 0, W, H);
     burnCtx.drawImage(scene, 0, 0);
 
@@ -216,9 +221,7 @@
 
     // --- 走査帯ズレ（グリッチ中のみ） ---
     if (glitching) {
-      var snap = document.createElement('canvas');
-      snap.width = W; snap.height = H;
-      snap.getContext('2d').drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, W, H);
+      snapCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, W, H);
       var bh = H / BANDS;
       for (var b = 0; b < BANDS; b++) {
         var sx = bandShift[b] || 0;
