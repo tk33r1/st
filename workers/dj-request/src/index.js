@@ -5,6 +5,8 @@
  *   GET    /dj/api/req/event           いま受付中のイベント
  *   POST   /dj/api/req/requests        リクエスト投稿
  *   GET    /dj/api/req/board           みんなのリクエスト（再生済かどうかだけ見せる）
+ *   GET    /dj/api/req/events          過去のイベント一覧（曲がかかった回だけ）
+ *   GET    /dj/api/req/events/:code    その回でかかった曲
  *   GET    /dj/api/req/songs/:id       曲の詳細（Authorization: Bearer <鍵> で自分の投稿も返る）
  *   PATCH  /dj/api/req/songs/:id/mine  自分の投稿のひとこと・名前を直す
  *   DELETE /dj/api/req/songs/:id/mine  自分の投稿を取り下げる
@@ -47,6 +49,7 @@ const RATE_WINDOW_MIN = 1;    // 直近この分数で
 const RATE_MAX        = 6;    // 1つの端末から投稿できる件数
 const RATE_KEEP_MIN   = 60;   // 元帳をこの分数だけ残す（端末の鍵を持ち続けない）
 const BOARD_WAITING   = 10;   // 公開一覧に出す「受付済」の件数
+const PAST_EVENTS     = 20;   // 「過去のイベント」に並べる回の数
 
 const LIMITS = { title: 200, artist: 200, album: 200, name: 20, message: 140, url: 500 };
 
@@ -382,6 +385,13 @@ async function getSong(id, request, env, cors) {
   const pending = s.status === 'pending';
   const editable = live && pending;
 
+  // 終わった回の曲か。いいねを押せるのは「いちばん新しい回」だけなので
+  // （setLike と同じ条件）、ボタンを出すかどうかの判断にそのまま使える。
+  const latest = ev || await env.DB.prepare(
+    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
+  ).first();
+  const past = !latest || s.event_code !== latest.code;
+
   return json({
     song: {
       id: s.id,
@@ -406,6 +416,7 @@ async function getSong(id, request, env, cors) {
     },
     // queued か skipped かは外に出さない。畳んだ理由だけ closed / moved で伝える。
     editable,
+    past,
     lock: editable ? '' : (live ? 'moved' : 'closed'),
     mine: own ? { name: own.from_name, message: own.message, at: own.created_at } : null,
   }, 200, cors);
@@ -525,6 +536,36 @@ async function setLike(id, on, request, env, cors) {
    DJ がもう触ったか（seen）だけ。seen は「まだ直せるか」を示すためのもので、
    採用か見送りかは区別できない。ひとことも返さない。UI で隠すのではなく、
    ここで返さないのが要点。 */
+
+const BOARD_COLS = `id, title, artist, variant, artwork, is_free, votes, likes, played_at, status`;
+
+/** 曲ごとの「最初に送った人」。名前を書かなかった投稿は数えない。 */
+async function firstNames(code, env) {
+  const rows = await env.DB.prepare(
+    `SELECT song_id, from_name FROM requests
+      WHERE event_code = ? AND from_name <> '' ORDER BY id ASC`
+  ).bind(code).all();
+  const m = new Map();
+  for (const r of rows.results) if (!m.has(r.song_id)) m.set(r.song_id, r.from_name);
+  return m;
+}
+
+/** 一覧に出す形。いまの回でも過去の回でも同じ形にそろえる。 */
+const shapeSong = (s, firstName) => ({
+  id: s.id,
+  title: s.title,
+  artist: s.artist,
+  variant: s.variant,
+  artwork: s.artwork,
+  isFree: !!s.is_free,
+  votes: s.votes,
+  likes: s.likes || 0,
+  playedAt: s.played_at,
+  // 採用も見送りも同じ true。リクエストした側には「もう直せない」だけが伝わる。
+  seen: s.status !== 'pending',
+  by: firstName.get(s.id) || '',
+});
+
 async function getBoard(env, cors) {
   const ev = await openEvent(env);
   const latest = ev || await env.DB.prepare(
@@ -532,43 +573,20 @@ async function getBoard(env, cors) {
   ).first();
   if (!latest) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
 
-  const cols = `id, title, artist, variant, artwork, is_free, votes, likes, played_at, status`;
-
   const played = await env.DB.prepare(
-    `SELECT ${cols} FROM songs
+    `SELECT ${BOARD_COLS} FROM songs
       WHERE event_code = ? AND status = 'played'
       ORDER BY played_at DESC, id DESC`
   ).bind(latest.code).all();
 
   const waiting = await env.DB.prepare(
-    `SELECT ${cols} FROM songs
+    `SELECT ${BOARD_COLS} FROM songs
       WHERE event_code = ? AND status <> 'played'
       ORDER BY votes DESC, id ASC LIMIT ?`
   ).bind(latest.code, BOARD_WAITING).all();
 
-  const names = await env.DB.prepare(
-    `SELECT song_id, from_name FROM requests
-      WHERE event_code = ? AND from_name <> '' ORDER BY id ASC`
-  ).bind(latest.code).all();
-
-  // 曲ごとの「最初に送った人」だけ添える
-  const firstName = new Map();
-  for (const r of names.results) if (!firstName.has(r.song_id)) firstName.set(r.song_id, r.from_name);
-
-  const shape = (s) => ({
-    id: s.id,
-    title: s.title,
-    artist: s.artist,
-    variant: s.variant,
-    artwork: s.artwork,
-    isFree: !!s.is_free,
-    votes: s.votes,
-    likes: s.likes || 0,
-    playedAt: s.played_at,
-    // 採用も見送りも同じ true。リクエストした側には「もう直せない」だけが伝わる。
-    seen: s.status !== 'pending',
-    by: firstName.get(s.id) || '',
-  });
+  const firstName = await firstNames(latest.code, env);
+  const shape = (s) => shapeSong(s, firstName);
 
   const p = played.results.map(shape);
   return json({
@@ -576,6 +594,59 @@ async function getBoard(env, cors) {
     now: p[0] || null,
     played: p,
     waiting: waiting.results.map(shape),
+  }, 200, cors);
+}
+
+/* ── 公開: 過去のイベント ───────────────────
+   /board が返す「いまの回」は除く。曲が1曲もかかっていない回も出さない
+   （中身が空の回を開かせても、来場者には何も分からないため）。 */
+async function getPastEvents(env, cors) {
+  const latest = await openEvent(env) || await env.DB.prepare(
+    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
+  ).first();
+
+  const rows = await env.DB.prepare(
+    `SELECT e.code, e.title, e.created_at, COUNT(s.id) AS played
+       FROM events e
+       JOIN songs s ON s.event_code = e.code AND s.status = 'played'
+      WHERE e.code <> ?
+      GROUP BY e.code, e.title, e.created_at
+      ORDER BY e.created_at DESC
+      LIMIT ?`
+  ).bind(latest ? latest.code : '', PAST_EVENTS).all();
+
+  return json({
+    events: rows.results.map((e) => ({
+      code: e.code,
+      title: e.title,
+      // 日付は「開いた日」。終了時刻を使うと、日付をまたいだ回が翌日の
+      // イベントとして並んでしまう（現場は深夜に終わることのほうが多い）。
+      at: e.created_at,
+      played: e.played,
+    })),
+  }, 200, cors);
+}
+
+/* ── 公開: 過去の回でかかった曲 ─────────────
+   出すのは played だけ。受付済みのまま終わった曲は「かからなかった曲」で、
+   終わったあとに並べて見せるものではない。
+   並びは古い順。終わった回はセットリストとして読めるほうがよい。 */
+async function getPastBoard(code, env, cors) {
+  const ev = await env.DB.prepare(
+    `SELECT code, title, created_at FROM events WHERE code = ?`
+  ).bind(code).first();
+  if (!ev) return json({ error: 'not_found', message: 'この回は見つかりませんでした' }, 404, cors);
+
+  const played = await env.DB.prepare(
+    `SELECT ${BOARD_COLS} FROM songs
+      WHERE event_code = ? AND status = 'played'
+      ORDER BY played_at ASC, id ASC`
+  ).bind(code).all();
+
+  const firstName = await firstNames(code, env);
+  return json({
+    event: { code: ev.code, title: ev.title, at: ev.created_at },
+    played: played.results.map((s) => shapeSong(s, firstName)),
   }, 200, cors);
 }
 
@@ -734,6 +805,11 @@ export default {
     try {
       if (path === '/dj/api/req/event' && method === 'GET')     return await getEvent(env, cors);
       if (path === '/dj/api/req/board' && method === 'GET')     return await getBoard(env, cors);
+      if (path === '/dj/api/req/events' && method === 'GET')    return await getPastEvents(env, cors);
+
+      const past = path.match(/^\/dj\/api\/req\/events\/([0-9A-Za-z]{1,12})$/);
+      if (past && method === 'GET') return await getPastBoard(past[1].toUpperCase(), env, cors);
+
       if (path === '/dj/api/req/requests' && method === 'POST') return await postRequest(request, env, cors, ctx);
 
       const song = path.match(/^\/dj\/api\/req\/songs\/(\d+)$/);

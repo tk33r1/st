@@ -365,6 +365,29 @@
     @keyframes likepop { 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
     .blank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 18px 0; }
 
+    /* ===== 過去のイベント ===== */
+    /* 曲の行（.row）と同じ器に見せる。中身は曲ではなく回なので、
+       ジャケットの代わりに曲数を置いて、行の高さを1段ぶん低くする。 */
+    .evrow {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; gap: 12px; align-items: center;
+      width: 100%; text-align: left;
+      background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 11px 13px;
+    }
+    .evrow:hover { background: var(--card-hi); border-color: var(--accent-dim); }
+    .evrow .t { display: block; font-size: 13.5px; font-weight: 600; }
+    .evrow .d { display: block; font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
+    .evrow .n { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .evrow .chev { color: var(--faint); font-size: 15px; }
+
+    .pasthead { display: flex; align-items: baseline; gap: 10px; }
+    .pasthead h2 { font-family: var(--serif); font-weight: 900; font-size: 16px; margin: 0; flex: 1; line-height: 1.35; }
+
+    /* 終わった回はもう押せない。枠を外して、押せる場所と見間違えないようにする。
+       自分が押した曲は当時のまま灯したままにする（記録として読めるほうがよい）。 */
+    .like.static {
+      pointer-events: none; border-color: transparent; background: none; padding: 7px 2px;
+    }
+
     /* ===== 投げ銭（Buy Me Oil）===== */
     .tipbox {
       width: 100%; padding: 18px 16px;
@@ -956,6 +979,32 @@
       background: var(--heart-secondary);
     }
 
+    /* ===== 過去のイベント ===== */
+    .evrow {
+      background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
+      border-color: var(--border);
+      font-family: var(--f-body);
+    }
+
+    .evrow:hover {
+      background: var(--card-hi);
+      border-color: var(--heart-secondary);
+    }
+
+    .evrow .t { font-weight: 400; }
+
+    .evrow .d,
+    .evrow .n {
+      font-family: var(--f-display);
+    }
+
+    .pasthead h2 {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      font-size: 1.0625rem;
+      letter-spacing: 0.03em;
+    }
+
     /* ===== 投げ銭 ===== */
     .tipbox {
       background: transparent;
@@ -1143,7 +1192,7 @@
           <textarea id="msg" class="one" rows="1" maxlength="50" placeholder="かけてほしいタイミングなど"></textarea>
           <span class="count" id="msgCount">0 / 50</span>
         </label>
-        <label class="f"><span class="fh">お名前 <span class="req">(任意)</span></span>
+        <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
           <input class="txt" id="name" maxlength="20">
         </label>
         <div class="err" id="sendErr" hidden></div>
@@ -1158,7 +1207,7 @@
           <textarea id="freeText" maxlength="140" placeholder="例: たしかCMで流れてた、女の人が歌うEDM"></textarea>
           <span class="count" id="freeCount">0 / 140</span>
         </label>
-        <label class="f"><span class="fh">お名前 <span class="req">(任意)</span></span>
+        <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
           <input class="txt" id="freeName" maxlength="20">
         </label>
         <div class="err" id="freeErr" hidden></div>
@@ -1234,10 +1283,23 @@
         <div class="rows" id="playedRows"></div>
         <div class="boardhead"><h2>まだかかっていない曲</h2></div>
         <div class="rows" id="waitingRows"></div>
+        <div class="boardhead"><h2>過去のイベント</h2></div>
+        <div class="rows" id="pastEvents"></div>
         <div class="boardhead"><h3>ごあんない</h3></div>
         <p class="note">受付した曲は、流れの都合でかけられないこともあります。<br>
           ♥ は1曲につき1回まで押せ、数が多いものが優先的にかけられます。<br>
           自分のリクエストかつ、確認前の曲に限り、内容の変更が可能です。</p>
+      </section>
+
+      <!-- 過去の回でかかった曲 -->
+      <section class="pane" id="pane-past">
+        <button class="back" id="pastBack">← みんなのリクエストに戻る</button>
+        <div class="pasthead">
+          <h2 id="pastTitle"></h2>
+          <span class="at" id="pastDate"></span>
+        </div>
+        <div class="rows" id="pastRows"></div>
+        <p class="note" id="pastNote"></p>
       </section>
 
       <!-- 曲の詳細 -->
@@ -1256,7 +1318,7 @@
             <textarea id="mineMsg" class="one" rows="1" maxlength="50" placeholder="かけてほしいタイミングなど"></textarea>
             <span class="count" id="mineMsgCount">0 / 50</span>
           </label>
-          <label class="f"><span class="fh">お名前 <span class="req">(任意)</span></span>
+          <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
             <input class="txt" id="mineName" maxlength="20">
           </label>
           <div class="err" id="mineErr" hidden></div>
@@ -1269,7 +1331,7 @@
           <div class="f">送ったひとこと
             <p class="ro" id="mineViewMsg"></p>
           </div>
-          <div class="f">送ったお名前
+          <div class="f">送ったニックネーム
             <p class="ro" id="mineViewName"></p>
           </div>
         </div>
@@ -1311,6 +1373,18 @@
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const mmss = (sec) => sec ? Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') : '';
+
+    /* D1 が入れる時刻は UTC の "YYYY-MM-DD HH:MM:SS"。文字列から切り出すと
+       時差のぶんだけずれるので、必ず Date に通してから端末の時計で出す。 */
+    function asDate(v) {
+      const t = String(v || '').trim();
+      if (!t) return null;
+      const ms = Date.parse(/[Zz]$|[+-]\d{2}:?\d{2}$/.test(t) ? t : t.replace(' ', 'T') + 'Z');
+      return Number.isFinite(ms) ? new Date(ms) : null;
+    }
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const hhmm = (v) => { const d = asDate(v); return d ? pad2(d.getHours()) + ':' + pad2(d.getMinutes()) : ''; };
+    const ymd = (v) => { const d = asDate(v); return d ? d.getFullYear() + '.' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()) : ''; };
 
     /* 状態バッジ。「受付」はまだ直せる、「確認済」は DJ が目を通したあとで直せない。
        採用か見送りかはサーバも返さないので、ここでは区別しない。
@@ -1391,7 +1465,7 @@
     /* ── 画面遷移 ─────────────────────────── */
     let flowPane = 'search';
     let eventOpen = false;
-    const TAB_OF = { consult: 'consult', board: 'board', song: 'board' };
+    const TAB_OF = { consult: 'consult', board: 'board', past: 'board', song: 'board' };
 
     function show(pane) {
       document.querySelectorAll('.pane').forEach((p) => p.classList.remove('on'));
@@ -1797,6 +1871,16 @@
         '<span class="hh" aria-hidden="true">♥</span><span class="n">' + likeCount(s) + '</span></button>';
     }
 
+    /* 終わった回のいいねは押せない（サーバも受け付けない）ので、ボタンではなく
+       数字だけ置く。0 のときは何も出さない——増えようのない 0 を並べても
+       読む側には何も伝わらないため。 */
+    function likeStatic(s) {
+      const n = likeCount(s);
+      if (!n) return '';
+      return '<span class="like static' + (liked(s.id) ? ' on' : '') + '">' +
+        '<span class="hh" aria-hidden="true">♥</span><span class="n">' + n + '</span></span>';
+    }
+
     /* 一覧と曲の詳細で同じ曲が同時に出ることはないが、どちらから押しても
        同じ道を通るよう、data-like が同じボタンはまとめて塗り替える。 */
     function paintLike(id, on, n) {
@@ -1851,12 +1935,12 @@
     /* ── みんなのリクエスト ─────────────────── */
     let boardTimer = null, lastFetch = 0;
 
-    function rowHTML(s, isMine) {
+    function rowHTML(s, isMine, past) {
       const art = s.artwork
         ? '<img src="' + esc(s.artwork) + '" alt="" loading="lazy">'
         : '<span class="ph">♪</span>';
       const played = !!s.playedAt;
-      const at = played && s.playedAt ? String(s.playedAt).slice(11, 16) : '';
+      const at = played ? hhmm(s.playedAt) : '';
       return '<div class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') + '">' +
         '<button type="button" class="rowopen" data-song="' + s.id + '">' + art +
         '<span><span class="t trunc">' + esc(s.title) + '</span>' +
@@ -1866,7 +1950,7 @@
         (isMine ? '<span class="mytag">あなた</span>' : '') +
         stateChip(s, '') +
         (played ? '<span class="at">' + esc(at) + '</span>' : '') +
-        likeHTML(s) +
+        (past ? likeStatic(s) : likeHTML(s)) +
         '</span></div>';
     }
 
@@ -1891,10 +1975,76 @@
           ? d.waiting.map((s) => rowHTML(s, ids.has(s.id))).join('')
           : '<div class="blank">リクエストはまだありません</div>';
 
+        // DJ が新しい回を開くと、いまの回だった回が過去に移る。
+        // 一覧を開いたままでも入れ替わるよう、回が変わったら引き直す。
+        const code = (d.event && d.event.code) || '';
+        if (code !== boardEvent) { boardEvent = code; pastLoaded = false; }
+        loadPastEvents();
+
         lastFetch = Date.now();
         $('#fresh').textContent = 'たった今更新';
       } catch {
         $('#fresh').textContent = '更新できません';
+      }
+    }
+
+    /* ── 過去のイベント ─────────────────────
+       いまの回の下に置く。終わった回は中身が動かないので、一覧も中身も
+       一度読めば足りる（15秒ごとの更新には乗せない）。 */
+    let boardEvent = '', pastLoaded = false;
+
+    function evrowHTML(e) {
+      return '<button type="button" class="evrow" data-ev="' + esc(e.code) + '">' +
+        '<span><span class="t trunc">' + esc(e.title) + '</span>' +
+        '<span class="d">' + esc(ymd(e.at)) + '</span></span>' +
+        '<span class="n">' + e.played + ' 曲</span>' +
+        '<span class="chev">›</span></button>';
+    }
+
+    async function loadPastEvents() {
+      if (pastLoaded) return;
+      const box = $('#pastEvents');
+      // 読めるまで15秒ごとに試すので、すでに何か出ているときは差し替えない。
+      // 毎回スピナーに戻すと、通じない場所でずっと点滅し続けることになる。
+      if (!box.firstChild) box.innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
+      try {
+        const d = await (await fetch(API + '/events')).json();
+        pastLoaded = true;   // 読めたときだけ立てる。失敗したら次の更新でまた試す
+        box.innerHTML = d.events.length
+          ? d.events.map(evrowHTML).join('')
+          : '<div class="blank">過去のイベントはまだありません</div>';
+      } catch {
+        box.innerHTML = '<div class="blank">過去のイベントを読み込めませんでした</div>';
+      }
+    }
+
+    async function openPast(code) {
+      clearInterval(boardTimer);
+      stopAudio();
+      // 曲の詳細から戻ってくるときの行き先。読み込みに失敗しても残す
+      $('#pastRows').dataset.ev = code;
+      $('#pastTitle').textContent = '読み込んでいます';
+      $('#pastDate').textContent = '';
+      $('#pastNote').hidden = true;
+      $('#pastRows').innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
+      show('past');
+      try {
+        const res = await fetch(API + '/events/' + encodeURIComponent(code));
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.message || '');
+        const ids = new Set(mine());
+        $('#pastTitle').textContent = d.event.title;
+        $('#pastDate').textContent = ymd(d.event.at);
+        $('#pastRows').innerHTML = d.played.length
+          ? d.played.map((x) => rowHTML(x, ids.has(x.id), true)).join('')
+          : '<div class="blank">この回でかかった曲はありません</div>';
+        $('#pastNote').textContent =
+          'この回でかかった曲を、かかった順に並べています。'
+          + '終わった回なので、♥ や内容の変更はできません。';
+        $('#pastNote').hidden = false;
+      } catch {
+        $('#pastTitle').textContent = '読み込めませんでした';
+        $('#pastRows').innerHTML = '<div class="blank">この回を読み込めませんでした</div>';
       }
     }
 
@@ -1924,7 +2074,11 @@
     /* ── 曲の詳細 ───────────────────────────
        一覧の行をタップして入る。試聴はここでもできる。
        自分が送った投稿は、DJ がまだ触っていない間だけ直せる・取り下げられる。 */
-    let detail = null;   // { song, editable, mine }
+    let detail = null;   // { song, editable, past, mine }
+
+    /* 曲の詳細には一覧からも過去の回からも入る。戻り先を取り違えると、
+       過去の回を見ていた人がいまの回に放り出されるので、入口を覚えておく。 */
+    let songFrom = '';   // '' = みんなのリクエスト / 回のコード = その過去の回
 
     bindPlayer('#songPlay', '#songBar', '#songTime', () => detail && detail.song.previewUrl);
 
@@ -1962,7 +2116,7 @@
     function renderSong() {
       const s = detail.song;
       const played = !!s.playedAt;
-      const at = played ? String(s.playedAt).slice(11, 16) : '';
+      const at = played ? hhmm(s.playedAt) : '';
       const v = s.variant ? '<span class="vtag">' + esc(s.variant) + '</span>' : '';
 
       $('#songHero').innerHTML =
@@ -1972,7 +2126,7 @@
         (s.isFree ? '' : '<div class="d">' + esc(s.album) + ' · ' + mmss(Math.round(s.durationMs / 1000)) + '</div>') +
         '<div class="songstate">' +
         stateChip(s, ' ' + esc(at)) +
-        likeHTML(s) +
+        (detail.past ? likeStatic(s) : likeHTML(s)) +
         '</div>';
 
       $('#songPlayer').style.display = s.previewUrl ? 'flex' : 'none';
@@ -1992,7 +2146,7 @@
       $('#mineView').hidden = !detail.mine || canEdit;
       if (detail.mine && !canEdit) {
         fillRO($('#mineViewMsg'), detail.mine.message, '（ひとことなし）');
-        fillRO($('#mineViewName'), detail.mine.name, '（お名前なし）');
+        fillRO($('#mineViewName'), detail.mine.name, '（ニックネームなし）');
       }
 
       const note = !detail.mine
@@ -2010,9 +2164,11 @@
       apple.hidden = !href;
     }
 
-    async function openSong(id) {
+    async function openSong(id, from) {
       clearInterval(boardTimer);
       stopAudio();
+      songFrom = from || '';
+      $('#songBack').textContent = songFrom ? '← この回の一覧に戻る' : '← みんなのリクエストに戻る';
       detail = null;
       $('#songHero').innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
       $('#songPlayer').style.display = 'none';
@@ -2036,11 +2192,23 @@
     $('#pane-board').addEventListener('click', (e) => {
       const like = e.target.closest('.like[data-like]');
       if (like) { toggleLike(Number(like.dataset.like)); return; }
+      const ev = e.target.closest('.evrow[data-ev]');
+      if (ev) { openPast(ev.dataset.ev); return; }
       const row = e.target.closest('.rowopen[data-song]');
       if (row) openSong(Number(row.dataset.song));
     });
 
-    $('#songBack').addEventListener('click', openBoard);
+    /* 過去の回の行も同じように開く。いいねは出していないので曲だけ見る。 */
+    $('#pane-past').addEventListener('click', (e) => {
+      const row = e.target.closest('.rowopen[data-song]');
+      if (row) openSong(Number(row.dataset.song), $('#pastRows').dataset.ev || '');
+    });
+
+    $('#pastBack').addEventListener('click', openBoard);
+
+    $('#songBack').addEventListener('click', () => {
+      if (songFrom) openPast(songFrom); else openBoard();
+    });
 
     $('#pane-song').addEventListener('click', (e) => {
       const like = e.target.closest('.like[data-like]');
