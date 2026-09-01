@@ -308,8 +308,43 @@
       max-width: calc(100vw - 32px);
     }
     .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+
     .toast > span { min-width: 0; word-break: break-all; }
     .toast button { color: var(--accent); font-weight: 600; font-size: 13px; padding: 4px 8px; border-radius: 2px; }
+
+    /* ===== 過去のイベント（削除ダイアログ）===== */
+    #evDlg {
+      /* 土台の CSS が余白を全部落とすので、中央寄せは自分で戻す */
+      margin: auto; overflow: auto;
+      width: min(560px, calc(100vw - 32px)); max-height: min(80vh, 720px);
+      background: var(--panel); color: var(--text);
+      border: 1px solid var(--line); border-radius: var(--r);
+      padding: 20px; box-shadow: 0 30px 70px -20px #000;
+    }
+    #evDlg::backdrop { background: rgba(0, 0, 0, .68); }
+    .evhead { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; }
+    .evhead h2 { font-family: var(--serif); font-size: 16px; margin: 0; flex: 1; }
+    #evList { display: flex; flex-direction: column; gap: 8px; }
+
+    /* 1行に「どの回か」と「何が消えるか」を並べる。数を見ないと消してよいか
+       決められないので、件数は削除ボタンの隣に置く。 */
+    .evrow {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center;
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 11px 13px;
+    }
+    .evrow .t { font-size: 13.5px; font-weight: 600; }
+    .evrow .m { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 3px; letter-spacing: .06em; }
+    .evrow.cur { border-color: var(--accent-dim); background: var(--card-hi); }
+    .evrow .now { font-family: var(--mono); font-size: 11px; color: var(--accent); white-space: nowrap; }
+    .evdel {
+      font-size: 12.5px; white-space: nowrap; padding: 7px 13px; border-radius: var(--r);
+      color: var(--stop); border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
+    }
+    .evdel:hover { background: color-mix(in srgb, var(--stop) 16%, var(--ink)); color: #FFC9C9; }
+    .evdel:disabled { opacity: .45; cursor: not-allowed; }
+    .evnote { font-size: 12px; color: var(--faint); line-height: 1.8; margin: 16px 0 0; }
+    .evnote strong { color: var(--stop); font-weight: 600; }
+    .evblank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 20px 0; }
 
     /* ===== ここから下は /dj/schedule/ と同じ見え方に寄せるための上書き =====
        土台（変数・リセット・背景演出・パンくず・フッター）は
@@ -769,6 +804,35 @@
       border-bottom-color: var(--fg);
     }
 
+    /* ===== 過去のイベント ===== */
+    #evDlg {
+      background: var(--bg-elevated);
+      border-color: var(--border);
+      font-family: var(--f-body);
+    }
+
+    .evhead h2 {
+      font-family: var(--f-dot);
+      font-weight: 400;
+      letter-spacing: 0.1em;
+    }
+
+    .evrow {
+      background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
+      border-color: var(--border);
+    }
+
+    .evrow .t { font-weight: 400; }
+
+    .evrow .m,
+    .evrow .now,
+    .evdel {
+      font-family: var(--f-display);
+    }
+
+    .evrow.cur { border-color: var(--heart-secondary); }
+    .evrow .now { color: var(--heart-secondary); }
+
     /* ===== TOAST ===== */
     .toast {
       font-family: var(--f-body);
@@ -809,6 +873,7 @@
       <div class="rigctl">
         <button class="accept" id="accept" role="switch" aria-checked="true"><span class="track"><span class="knob"></span></span><span>受付</span></button>
         <button class="accept" id="notify" role="switch" aria-checked="false" hidden><span class="track"><span class="knob"></span></span><span>通知</span></button>
+        <button class="ghostbtn" id="pastEvents">過去のイベント</button>
         <button class="ghostbtn" id="newEvent">新しいイベントを開始</button>
       </div>
     </header>
@@ -889,6 +954,19 @@
   <footer class="site-footer">
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
+
+  <!-- 過去のイベント。削除は取り消せないので、消える中身を数で見せてから訊く -->
+  <dialog id="evDlg">
+    <form method="dialog" class="evhead">
+      <h2>過去のイベント</h2>
+      <button class="ghostbtn" value="close">閉じる</button>
+    </form>
+    <div id="evList"></div>
+    <p class="evnote">
+      削除すると、その回の曲・リクエスト・いいねが DB から消えます。<strong>取り消せません。</strong><br>
+      開催中の回は削除できません。新しいイベントを開始してから消してください。
+    </p>
+  </dialog>
 
   <div class="toast" id="toast"><span id="toastTxt"></span><button id="toastUndo">取り消す</button></div>
 
@@ -1329,11 +1407,90 @@
       } catch { toast('作成できませんでした'); }
     });
 
+    /* ── 過去のイベントの削除 ───────────────────
+       消せるかどうかはサーバが current で答える。ここはその答えを描くだけ。
+       取り消せる操作ではないので、確認は「はい/いいえ」ではなく回のコードを
+       打たせる。押し間違いで一晩の記録が消えるほうが、ひと手間より高くつく。 */
+    const ADMIN_KEY = 'tkdj.adminKey';
+    const adminKey = () => { try { return localStorage.getItem(ADMIN_KEY) || ''; } catch { return ''; } };
+
+    function evrowHTML(e) {
+      const day = String(e.at || '').slice(0, 10).replace(/-/g, '.');
+      const meta = [e.code, day, e.songs + '曲', e.requests + '件'].join(' · ');
+      return '<div class="evrow' + (e.current ? ' cur' : '') + '">' +
+        '<div><div class="t">' + esc(e.title) + '</div><div class="m">' + esc(meta) + '</div></div>' +
+        (e.current
+          ? '<span class="now">' + (e.open ? '受付中' : '最新の回') + '</span>'
+          : '<button type="button" class="evdel" data-del="' + esc(e.code) + '">削除</button>') +
+        '</div>';
+    }
+
+    async function loadEvents() {
+      const box = $('#evList');
+      box.innerHTML = '<div class="evblank">読み込んでいます…</div>';
+      try {
+        const d = await (await api('/admin/events')).json();
+        box.innerHTML = d.events.length
+          ? d.events.map(evrowHTML).join('')
+          : '<div class="evblank">イベントがありません</div>';
+      } catch {
+        box.innerHTML = '<div class="evblank">読み込めませんでした</div>';
+      }
+    }
+
+    async function deleteEvent(code, btn) {
+      const row = btn.closest('.evrow');
+      const title = row.querySelector('.t').textContent;
+      const meta = row.querySelector('.m').textContent;
+      const typed = prompt([
+        '「' + title + '」を削除します。',
+        meta + ' が DB から消え、元に戻せません。',
+        '',
+        '消してよければ、この回のコード ' + code + ' を入力してください。',
+      ].join(String.fromCharCode(10)));
+      if (typed === null) return;
+      if (typed.trim().toUpperCase() !== code) { toast('コードが違うので中止しました'); return; }
+
+      btn.disabled = true;
+      try {
+        let res = await api('/admin/events/' + encodeURIComponent(code), {
+          method: 'DELETE',
+          headers: adminKey() ? { Authorization: 'Bearer ' + adminKey() } : {},
+        });
+        // ADMIN_KEY を後から設定した場合。一度だけ訊いて、次からは黙って通す
+        if (res.status === 401) {
+          const key = prompt('管理キーを入力してください');
+          if (key === null) { btn.disabled = false; return; }
+          try { localStorage.setItem(ADMIN_KEY, key.trim()); } catch {}
+          res = await api('/admin/events/' + encodeURIComponent(code), {
+            method: 'DELETE', headers: { Authorization: 'Bearer ' + key.trim() },
+          });
+        }
+        const d = await res.json();
+        if (!res.ok) { btn.disabled = false; toast(d.message || '削除できませんでした'); return; }
+        toast('「' + d.title + '」を削除しました（' + d.songs + '曲 / ' + d.requests + '件）');
+        await loadEvents();
+      } catch {
+        btn.disabled = false;
+        toast('削除できませんでした');
+      }
+    }
+
+    $('#pastEvents').addEventListener('click', () => { $('#evDlg').showModal(); loadEvents(); });
+
+    $('#evList').addEventListener('click', (e) => {
+      const b = e.target.closest('.evdel[data-del]');
+      if (b) deleteEvent(b.dataset.del, b);
+    });
+
     $('#toastUndo').addEventListener('click', () => { if (undoStack) undoStack(); });
 
     document.addEventListener('keydown', (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      // ダイアログを開いている間はカードを触らせない。焦点はダイアログの中に
+      // あるので、素通しすると 1/2/3 が裏の曲のステータスを動かしてしまう。
+      if ($('#evDlg').open) return;
       if (e.target.closest && e.target.closest('.site-crumb')) return;
       // パッドに触れている間は Space/Enter を素の打鍵として通す
       if (e.target.closest && e.target.closest('.tapbox')) return;
@@ -1556,7 +1713,7 @@
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
   <!-- 背景のテイクオーバー。中身は data/bijutsu-shisui.js -->
-  <script src="../../data/bijutsu-shisui.js?v=20260831"></script>
+  <script src="../../data/bijutsu-shisui.js?v=20260902"></script>
 
 </body>
 

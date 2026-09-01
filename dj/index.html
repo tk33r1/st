@@ -29,6 +29,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="DJのポートフォリオページ。ボランティアで活動しております。">
   <meta name="robots" content="max-image-preview:large">
+  <!-- ページ上端はヒーローの白。アドレスバーを地続きに見せる -->
+  <meta name="theme-color" content="#ffffff">
   <title>人類踊狂計画 - DJ Human Choreomania Project</title>
   <link rel="icon" href="https://tk.st/images/favicons/dj-favicon2.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="https://tk.st/images/favicons/dj-favicon.png">
@@ -37,6 +39,9 @@
   <meta property="og:title" content="人類踊狂計画 - DJ Human Choreomania Project">
   <meta property="og:description" content="DJのポートフォリオページ。ボランティアで活動しております。">
   <meta property="og:image" content="https://tk.st/images/ogp/dj-ogp.png">
+  <meta property="og:image:width" content="2160">
+  <meta property="og:image:height" content="1134">
+  <meta property="og:image:alt" content="人類踊狂計画 - DJ Human Choreomania Project">
   <meta property="og:url" content="https://tk.st/dj/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="人類踊狂計画 - DJ Human Choreomania Project">
@@ -45,6 +50,7 @@
   <meta name="twitter:title" content="人類踊狂計画 - DJ Human Choreomania Project">
   <meta name="twitter:description" content="DJのポートフォリオページ。ボランティアで活動しております。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/dj-ogp.png">
+  <meta name="twitter:image:alt" content="人類踊狂計画 - DJ Human Choreomania Project">
 
   <script type="application/ld+json">
     {
@@ -84,7 +90,7 @@
             "name": "人類踊狂計画",
             "alternateName": "Human Choreomania Project",
             "image": "https://tk.st/images/contents/dj-logo4.avif",
-            "genre": ["Big room House", "Psytrance", "Melodic Techno", "lo-fi HipHop"],
+            "genre": ["Big room House", "Psytrance", "Para Para", "lo-fi HipHop"],
             "foundingDate": "2024",
             "member": { "@id": "https://tk.st/#shitake" },
             "memberOf": {
@@ -1239,6 +1245,11 @@
       text-align: right;
     }
 
+    /*
+     * 受付していないときは控えめなテキストリンクのまま。
+     * 会場では QR でリクエストページへ直接降りてくるので、
+     * ここを常時目立たせても押しどころの無いボタンが増えるだけになる。
+     */
     .request-cta a {
       color: #7b55d6;
       text-decoration: none;
@@ -1250,6 +1261,54 @@
 
     .request-cta a:hover {
       color: var(--neo-purple);
+    }
+
+    /*
+     * 受付中だけ赤の実ボタンに変わる（.live は JS が付ける）。
+     * 赤（--accent-red）はロリポップヘッドホンと同じ色で、受付中の帯とここにしか出さない。
+     * 切り欠きの形は .about-letter / .gear-modal-panel と同じ造形。
+     */
+    .request-cta.live a {
+      --fold: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 24px;
+      background: var(--accent-red);
+      color: var(--white);
+      border-bottom: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+
+    .request-cta.live a:hover {
+      background: #d92626;
+      color: var(--white);
+      transform: translateY(-3px);
+    }
+
+    /* display:none なので、受付していない間は読み上げにも出てこない */
+    .request-cta-badge {
+      display: none;
+    }
+
+    .request-cta.live .request-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding-right: 12px;
+      border-right: 1px solid rgba(255, 255, 255, 0.45);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+    }
+
+    .request-cta .live-dot {
+      width: 7px;
+      height: 7px;
     }
 
     /* ===== Image Modal ===== */
@@ -1672,6 +1731,344 @@
     }
 
     /* ===== REDUCED MOTION ===== */
+    /* 見た目には出さないが読み上げには残す（::after の data-label は読まれない環境がある） */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ===== SECTION HEADING ICON ===== */
+    /*
+     * 見出しの記号。絵文字は書体もサイズも OS 任せで、
+     * 六角形・レティクル・A.T.フィールドの直線的な造形から浮くため lucide の線画に統一する。
+     * 大きさは em 基準にして、見出しのフォントサイズを変えれば追従するようにしてある。
+     */
+    .sound-log-header,
+    .video-title,
+    .about-title,
+    .operation-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+    }
+
+    /* .operation-title だけは左寄せ（2 カラムの見出しなので中央に置くと軸がずれる） */
+    .sound-log-header,
+    .video-title,
+    .about-title {
+      justify-content: center;
+    }
+
+    .section-icon {
+      width: 1.15em;
+      height: 1.15em;
+      flex: none;
+      stroke-width: 1.5;
+      color: var(--neo-purple);
+    }
+
+    /* 紫地に乗る見出しは紫のアイコンだと沈むので白に寄せる */
+    .sound-log-header .section-icon,
+    .video-title .section-icon,
+    .about-title .section-icon {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* ===== HERO SCROLL CUE ===== */
+    /*
+     * 100vh のヒーローは「これで終わり」に見えてしまうので、続きがある合図を置く。
+     * 少しでもスクロールしたら用済みなので消す（.hidden は JS が付け外しする）。
+     */
+    .hero-scroll-cue {
+      position: absolute;
+      bottom: 34px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--black);
+      text-decoration: none;
+      opacity: 0.55;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .hero-scroll-cue:hover {
+      opacity: 1;
+    }
+
+    .hero-scroll-cue.hidden {
+      opacity: 0;
+      /* 消えたあとに透明なまま当たり判定が残らないようにする */
+      pointer-events: none;
+      transform: translateX(-50%) translateY(10px);
+    }
+
+    .hero-scroll-label {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      /* letter-spacing は最後の字の右にも入る。その分だけ戻して中央に見せる */
+      padding-left: 0.3em;
+    }
+
+    .hero-scroll-cue svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.5;
+      animation: scroll-cue 2s ease-in-out infinite;
+    }
+
+    @keyframes scroll-cue {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(5px);
+      }
+    }
+
+    /* ===== SECTION NAV ===== */
+    /*
+     * SYNC RATE は進捗しか示さないので、現在地と全体像を出す。
+     * ラベルはホバー時だけドットの左に開く（右端に固定なので右へは出せない）。
+     */
+    .section-nav {
+      position: fixed;
+      top: 50%;
+      right: 22px;
+      transform: translateY(-50%);
+      z-index: 900;
+    }
+
+    .section-nav ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .section-nav a {
+      display: block;
+      /* 見た目は 8px の点だが、当たり判定は指で押せる大きさを確保する */
+      padding: 6px;
+      position: relative;
+    }
+
+    .section-nav a::before {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      border: 1px solid rgba(156, 122, 247, 0.75);
+      background: transparent;
+      transform: rotate(45deg);
+      transition: background 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .section-nav a[aria-current="true"]::before {
+      background: var(--neo-purple);
+      transform: rotate(45deg) scale(1.35);
+    }
+
+    .section-nav a::after {
+      content: attr(data-label);
+      position: absolute;
+      right: calc(100% + 4px);
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--white);
+      background: var(--dark-blue-purple);
+      padding: 3px 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .section-nav a:hover::after,
+    .section-nav a:focus-visible::after {
+      opacity: 1;
+    }
+
+    /* ===== TIMELINE LINK MARKER ===== */
+    /*
+     * フライヤーが無い回はリンクにしていない。マーカーが無い＝押しても何も出ない、を見た目で分ける
+     * （ホバーしないと分からないのは、そもそもホバーが無いモバイルで破綻する）。
+     */
+    .timeline-icon {
+      width: 0.95em;
+      height: 0.95em;
+      stroke-width: 1.75;
+      margin-left: 6px;
+      vertical-align: -0.15em;
+      color: var(--neo-purple);
+      opacity: 0.75;
+    }
+
+    .timeline-link:hover .timeline-icon,
+    .timeline-extlink:hover .timeline-icon {
+      opacity: 1;
+    }
+
+    /* ===== EMBED FACADE ===== */
+    /*
+     * Beatport / Google カレンダー / Wistia は、それぞれ独自の見た目と読み込みを持ち込む。
+     * 押されるまでは自前の枠だけを出して、3 つの体裁を揃えつつ、
+     * 見ない人のところに第三者のスクリプトと Cookie を落とさないようにする。
+     * JS が無い環境では head の <noscript> がこれを隠し、素の <iframe> がそのまま出る。
+     */
+    .embed-facade {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      background: var(--dark-blue-purple-light);
+      border: 1px solid rgba(156, 122, 247, 0.45);
+      color: rgba(255, 255, 255, 0.85);
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .embed-facade:hover {
+      background: #4b3673;
+      border-color: var(--neo-purple);
+    }
+
+    .embed-facade svg {
+      width: 34px;
+      height: 34px;
+      stroke-width: 1.25;
+      /* --neo-purple のままだと紫地に沈む。白へ寄せた紫にする */
+      color: #c4aeff;
+    }
+
+    .embed-facade-title {
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .embed-facade-note {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      opacity: 0.6;
+    }
+
+    /* 枠の丸みと影は元の iframe 側の指定に合わせる。差し替え後も見た目が動かない */
+    .sound-log-embed .embed-facade {
+      height: 362px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* 親が overflow:hidden + 角丸なので、こちらは面を敷くだけでよい */
+    .video-container .embed-facade {
+      position: absolute;
+      inset: 0;
+      border: none;
+    }
+
+    .calendar-container .embed-facade {
+      border-radius: 4px;
+    }
+
+    /* ===== LIVE BANNER ===== */
+    /*
+     * 受付中のときだけ JS が hidden を外す。閉じている間は何も出さないので、
+     * 普段のページは今までどおり HERO から PHILOSOPHY へ続く。
+     */
+    .live-banner {
+      background: var(--accent-red);
+      color: var(--white);
+    }
+
+    .live-banner-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 40px;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--white);
+      flex: none;
+      animation: live-pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes live-pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+      }
+
+      70% {
+        opacity: 0.7;
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+      }
+    }
+
+    .live-banner-label {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      opacity: 0.85;
+      display: block;
+    }
+
+    .live-banner-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .live-banner-cta {
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      padding: 7px 16px;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .live-banner-link:hover .live-banner-cta {
+      background: var(--white);
+      color: var(--accent-red);
+    }
+
     @media (prefers-reduced-motion: reduce) {
 
       *,
@@ -1689,6 +2086,11 @@
 
       .modal-track {
         scroll-behavior: auto;
+      }
+
+      /* 上の一括指定は duration しか潰せない。位置が動くものは transform ごと止める */
+      .hero-scroll-cue svg {
+        animation: none;
       }
     }
 
@@ -1713,6 +2115,25 @@
 
       .site-crumb {
         padding: 16px 20px 22px;
+      }
+
+      /* 右端 22px はサムの通り道。ラベルも開けないので出さない */
+      .section-nav {
+        display: none;
+      }
+
+      .live-banner-link {
+        padding: 14px 20px;
+      }
+
+      /* テキストリンクのままなら元の右寄せでよい。ボタンのときだけ中央に置く */
+      .request-cta.live {
+        padding: 28px 20px 0;
+        text-align: center;
+      }
+
+      .hero-scroll-cue {
+        bottom: 20px;
       }
 
       .philosophy-section {
@@ -1949,6 +2370,13 @@
         opacity: 1;
         transform: none;
       }
+
+      /* ファサードは押しても何も起きないので隠し、各枠に置いた素の <iframe> に任せる */
+      .embed-facade,
+      .hero-scroll-cue,
+      .section-nav {
+        display: none;
+      }
     </style>
   </noscript>
 </head>
@@ -1959,13 +2387,27 @@
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
   <!-- SYNC RATE Meter -->
-  <div class="progress-container">
+  <div class="progress-container" aria-hidden="true">
     <div class="progress-bar" id="progressBar"></div>
   </div>
-  <div class="sync-rate-text" id="syncRateText">SYNC RATE: 0.00%</div>
+  <!-- 演出であって進捗の読み上げではない。支援技術には渡さない -->
+  <div class="sync-rate-text" id="syncRateText" aria-hidden="true" lang="en">SYNC RATE: 0.00%</div>
+
+  <!-- SECTION NAV -->
+  <nav class="section-nav" id="sectionNav" aria-label="セクション">
+    <ol>
+      <li><a href="#hero" data-label="TOP"><span class="sr-only">トップ</span></a></li>
+      <li><a href="#philosophy" data-label="PHILOSOPHY"><span class="sr-only">理念</span></a></li>
+      <li><a href="#gear" data-label="GEAR"><span class="sr-only">機材</span></a></li>
+      <li><a href="#sound" data-label="SOUND"><span class="sr-only">音源</span></a></li>
+      <li><a href="#archive" data-label="ARCHIVE"><span class="sr-only">実績とスケジュール</span></a></li>
+      <li><a href="#visual" data-label="VISUAL"><span class="sr-only">映像</span></a></li>
+      <li><a href="#about" data-label="ABOUT"><span class="sr-only">プロフィール</span></a></li>
+    </ol>
+  </nav>
 
   <!-- HERO -->
-  <section class="hero-section">
+  <section class="hero-section" id="hero">
     <div class="reticle top-left"></div>
     <div class="reticle top-right"></div>
     <div class="reticle bottom-left"></div>
@@ -1974,13 +2416,30 @@
     <div class="hero-content">
       <h1 class="hero-title reveal">人類踊狂計画</h1>
       <div class="hero-tagline-wrapper reveal">
-        <div class="hero-tagline typewriter-text">DJ HUMAN CHOREOMANIA PROJECT</div>
+        <div class="hero-tagline typewriter-text" lang="en">DJ HUMAN CHOREOMANIA PROJECT</div>
       </div>
     </div>
+
+    <a class="hero-scroll-cue" id="heroScrollCue" href="#philosophy">
+      <span class="hero-scroll-label" lang="en">SCROLL</span>
+      <i data-lucide="chevron-down" aria-hidden="true"></i>
+    </a>
   </section>
 
+  <!-- LIVE BANNER: 受付中の回があるときだけ JS が出す -->
+  <aside class="live-banner" id="liveBanner" hidden>
+    <a class="live-banner-link" href="request/">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="live-banner-text">
+        <span class="live-banner-label" lang="en">NOW ACCEPTING</span>
+        <span class="live-banner-title" id="liveBannerTitle"></span>
+      </span>
+      <span class="live-banner-cta">♪ 曲をリクエスト</span>
+    </a>
+  </aside>
+
   <!-- PHILOSOPHY -->
-  <section class="philosophy-section">
+  <section class="philosophy-section" id="philosophy">
     <div class="philosophy-bg">
       <div class="philosophy-octahedron">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -2012,7 +2471,7 @@
   </section>
 
   <!-- GEAR -->
-  <section class="gear-section">
+  <section class="gear-section" id="gear">
     <div class="gear-bg-split"></div>
     <div class="gear-content reveal">
       <!-- 詳細は data-detail が指す <template> の中身。差し替えはそのテンプレートだけでよい -->
@@ -2131,26 +2590,34 @@
   </section>
 
   <!-- SOUND LOG -->
-  <section class="sound-log-section">
-    <h2 class="sound-log-header reveal">🔊 Audio Stream</h2>
+  <section class="sound-log-section" id="sound">
+    <h2 class="sound-log-header reveal"><i data-lucide="volume-2" class="section-icon" aria-hidden="true"></i><span lang="en">Audio Stream</span></h2>
     <div class="genre-list reveal">
-      <div class="genre-item">BIG ROOM HOUSE</div>
-      <div class="genre-item">PSYTRANCE</div>
-      <div class="genre-item">PARA PARA</div>
-      <div class="genre-item">LO-FI HIPHOP</div>
+      <div class="genre-item" lang="en">BIG ROOM HOUSE</div>
+      <div class="genre-item" lang="en">PSYTRANCE</div>
+      <div class="genre-item" lang="en">PARA PARA</div>
+      <div class="genre-item" lang="en">LO-FI HIPHOP</div>
     </div>
     <div class="sound-log-embed reveal">
-      <div class="sound-log-embed-label">» Sound Log Database</div>
-      <iframe src="https://embed.beatport.com/?id=5012224&type=release" scrolling="no" title="Beatport Player"
-        loading="lazy"></iframe>
+      <div class="sound-log-embed-label" lang="en">» Sound Log Database</div>
+      <button class="embed-facade" type="button" data-embed-src="https://embed.beatport.com/?id=5012224&amp;type=release"
+        data-embed-title="Beatport Player">
+        <i data-lucide="disc" aria-hidden="true"></i>
+        <span class="embed-facade-title">Beatport</span>
+        <span class="embed-facade-note">タップして読み込む</span>
+      </button>
+      <noscript>
+        <iframe src="https://embed.beatport.com/?id=5012224&amp;type=release" scrolling="no" title="Beatport Player"
+          loading="lazy"></iframe>
+      </noscript>
     </div>
   </section>
 
   <!-- OPERATION -->
-  <section class="operation-section">
+  <section class="operation-section" id="archive">
     <div class="operation-container">
       <div class="reveal">
-        <h2 class="operation-title">📊 Archive / Past</h2>
+        <h2 class="operation-title"><i data-lucide="archive" class="section-icon" aria-hidden="true"></i><span lang="en">Archive / Past</span></h2>
         <div class="timeline">
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
@@ -2161,6 +2628,7 @@
                 class="timeline-link">
                 Daydream #03<br>
                 Lounge bar Krishuna
+                <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
               </a>
             </div>
             <div class="timeline-event">
@@ -2170,6 +2638,7 @@
                 class="timeline-link">
                 Live&amp;DJ Factory<br>
                 R Lounge
+                <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
               </a>
             </div>
             <div class="timeline-event">
@@ -2180,12 +2649,14 @@
                 class="timeline-link">
                 Daydream #02<br>
                 Lounge bar Krishuna
+                <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
               </a>
             </div>
             <div class="timeline-event">
               <a href="https://shisui-tea.jp/" target="_blank" rel="noopener noreferrer" class="timeline-extlink">
                 Join<br>
                 美術紫水 Member
+                <i data-lucide="external-link" class="timeline-icon" aria-hidden="true"></i>
               </a>
             </div>
             <div class="timeline-event">
@@ -2193,6 +2664,7 @@
                 class="timeline-link">
                 NEXTORM -BASE- #16<br>
                 Ohjo-bldg
+                <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
               </a>
             </div>
           </div>
@@ -2205,6 +2677,7 @@
                   class="timeline-link">
                   Night-Drip<br>
                   Shinjuku-HEIST.
+                  <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
                 </a>
               </div>
               <div class="timeline-event">
@@ -2223,27 +2696,45 @@
         </div>
       </div>
       <div class="reveal">
-        <h2 class="operation-title">📅 Schedule / Future</h2>
+        <h2 class="operation-title"><i data-lucide="calendar" class="section-icon" aria-hidden="true"></i><span lang="en">Schedule / Future</span></h2>
         <div class="calendar-container">
-          <iframe
-            src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&ctz=Asia%2FTokyo"
-            scrolling="no" title="Google Calendar" loading="lazy"></iframe>
+          <button class="embed-facade" type="button"
+            data-embed-src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&amp;ctz=Asia%2FTokyo"
+            data-embed-title="Google Calendar">
+            <i data-lucide="calendar" aria-hidden="true"></i>
+            <span class="embed-facade-title">出演スケジュール</span>
+            <span class="embed-facade-note">タップして読み込む</span>
+          </button>
+          <noscript>
+            <iframe
+              src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&amp;ctz=Asia%2FTokyo"
+              scrolling="no" title="Google Calendar" loading="lazy"></iframe>
+          </noscript>
         </div>
       </div>
     </div>
   </section>
 
   <!-- VIDEO -->
-  <section class="video-section">
-    <h2 class="video-title reveal">🎬 Visual Database</h2>
+  <section class="video-section" id="visual">
+    <h2 class="video-title reveal"><i data-lucide="film" class="section-icon" aria-hidden="true"></i><span lang="en">Visual Database</span></h2>
     <div class="video-container reveal">
-      <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no"
-        class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
+      <button class="embed-facade" type="button" data-embed-src="https://fast.wistia.net/embed/iframe/8jg7134pce"
+        data-embed-title="Video Content" data-embed-class="wistia_embed" data-embed-name="wistia_embed"
+        data-embed-allowfullscreen="1">
+        <i data-lucide="play-circle" aria-hidden="true"></i>
+        <span class="embed-facade-title">Visual Database</span>
+        <span class="embed-facade-note">タップして再生</span>
+      </button>
+      <noscript>
+        <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no"
+          class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
+      </noscript>
     </div>
   </section>
 
   <!-- CONTACT -->
-  <section class="contact-section">
+  <section class="contact-section" id="about">
     <div class="contact-bg-decoration">
       <svg viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg">
         <polygon points="50,0 93.3,27.5 93.3,82.5 50,115 6.7,82.5 6.7,27.5" fill="none" stroke="var(--neo-purple)"
@@ -2251,7 +2742,7 @@
       </svg>
     </div>
     <div class="contact-content reveal">
-      <h2 class="about-title">🤝 About Me</h2>
+      <h2 class="about-title"><i data-lucide="users" class="section-icon" aria-hidden="true"></i><span lang="en">About Me</span></h2>
 
       <div class="about-letter">
         <div class="about-unit">
@@ -2302,8 +2793,12 @@
   </section>
 
   <!-- SONG REQUEST -->
-  <div class="request-cta">
-    <a href="request/">♪ 曲リクエスト</a>
+  <!-- 受付中は JS が .live を付け、バッジ付きの赤いボタンになる -->
+  <div class="request-cta" id="requestCta">
+    <a href="request/">
+      <span class="request-cta-badge"><span class="live-dot" aria-hidden="true"></span>受付中</span>
+      <span>♪ 曲リクエスト</span>
+    </a>
   </div>
 
   <!-- BREADCRUMB -->
@@ -2355,6 +2850,7 @@
     const syncRateText = document.getElementById('syncRateText');
     const footer = document.querySelector('.site-footer');
     const backToTopBtn = document.getElementById('backToTop');
+    const heroScrollCue = document.getElementById('heroScrollCue');
 
     // 2. A.T. Field Effect
     // 再生中に再度呼ばれても頭から流し直す。class を付け直すだけでは CSS アニメーションは再起動しない
@@ -2441,6 +2937,11 @@
 
       if (backToTopBtn) {
         backToTopBtn.classList.toggle('visible', scrollTop > 300);
+      }
+
+      // 「続きがある」の合図なので、動き出した時点で役目が終わる
+      if (heroScrollCue) {
+        heroScrollCue.classList.toggle('hidden', scrollTop > 60);
       }
     };
 
@@ -2720,7 +3221,84 @@
       }
     });
 
-    // 6. Initialize Lucide Icons
+    // 6. Section Nav (現在地)
+    // 見えている中でいちばん上のセクションを現在地とする。スクロール量では、
+    // セクションごとに高さが違うぶん境目がずれるので、交差そのものを見る。
+    const sectionNav = document.getElementById('sectionNav');
+    if (sectionNav) {
+      const navLinks = Array.from(sectionNav.querySelectorAll('a'));
+      const sections = navLinks
+        .map(a => document.querySelector(a.getAttribute('href')))
+        .filter(Boolean);
+      const visible = new Set();
+
+      const markCurrent = () => {
+        // sections は文書順。先頭から探せば「見えている中の最上部」になる
+        const current = sections.find(sec => visible.has(sec)) || sections[0];
+        navLinks.forEach((a, i) => {
+          if (sections[i] === current) {
+            a.setAttribute('aria-current', 'true');
+          } else {
+            a.removeAttribute('aria-current');
+          }
+        });
+      };
+
+      const navObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            visible.add(entry.target);
+          } else {
+            visible.delete(entry.target);
+          }
+        });
+        markCurrent();
+      }, {
+        // 上下端の 40% を無視して、画面の真ん中に入ったものだけを現在地にする
+        rootMargin: '-40% 0px -40% 0px',
+        threshold: 0
+      });
+
+      sections.forEach(sec => navObserver.observe(sec));
+      markCurrent();
+    }
+
+    // 7. Embed Facade
+    // 押されるまで第三者の iframe を作らない。属性はファサードの data-* に持たせてあるので、
+    // 埋め込み先を差し替えるときも触るのは HTML だけでよい。
+    document.querySelectorAll('.embed-facade').forEach(facade => {
+      facade.addEventListener('click', () => {
+        const iframe = document.createElement('iframe');
+        iframe.src = facade.dataset.embedSrc;
+        iframe.title = facade.dataset.embedTitle || '';
+        iframe.setAttribute('scrolling', 'no');
+        if (facade.dataset.embedClass) iframe.className = facade.dataset.embedClass;
+        if (facade.dataset.embedName) iframe.name = facade.dataset.embedName;
+        if (facade.dataset.embedAllowfullscreen) iframe.allowFullscreen = true;
+        facade.replaceWith(iframe);
+      }, { once: true });
+    });
+
+    // 8. Live Banner
+    // 受付中の回があるときだけ出す。取れなくても黙って何もしない
+    //（このページの主題はポートフォリオで、リクエストは付随機能）。
+    const liveBanner = document.getElementById('liveBanner');
+    const requestCta = document.getElementById('requestCta');
+    if (liveBanner) {
+      fetch('/dj/api/req/event', { headers: { Accept: 'application/json' } })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data || !data.open) return;
+          // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる
+          document.getElementById('liveBannerTitle').textContent = data.title || '';
+          liveBanner.hidden = false;
+          // 受付中のあいだだけ、下端の導線もテキストリンクからボタンに変える
+          if (requestCta) requestCta.classList.add('live');
+        })
+        .catch(() => { });
+    }
+
+    // 9. Initialize Lucide Icons
     lucide.createIcons();
 
     // 開始年はマークアップ（JS 無効時にそのまま表示されるフォールバックでもある）を唯一の情報源にし、

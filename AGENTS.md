@@ -26,7 +26,8 @@
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
 | `dj/` | DJ 関連。`schedule/`（日程調整）、`request/`（曲リクエスト）、`booth/`（ブースコンソール） |
-| `magi/`, `matsumura40/`, `contact/`, `job/`, `thought/` | 個別ページ |
+| `magi/`, `contact/`, `job/`, `thought/` | 個別ページ |
+| `anniversary/` | 記念日ページ。`matsumura40/`（旧 `/matsumura40/`。`_redirects` で 301 済み） |
 | `images/` | `common/`, `contents/`, `favicons/`, `ogp/` |
 | `workers/` | Cloudflare Workers（下表参照） |
 | `magi-app/` | MAGI モバイルアプリ（PWA + Capacitor 6）。`www/` が出荷物 |
@@ -65,7 +66,8 @@
 ## デプロイ
 
 - **静的サイト**: `main` への push で Cloudflare 側に反映される前提（リポジトリ内に
-  Pages 設定ファイルはない。`_headers` / `_redirects` も未使用）。
+  Pages 設定ファイルはない。`_headers` は未使用、`_redirects` はルートに置いて
+  旧 URL の 301 リダイレクトのみ定義している）。
 - **Workers**: 手動デプロイ。各ディレクトリで `npx wrangler deploy`
   （ルートから `npx wrangler deploy --config workers/<name>/wrangler.toml` でも可）。
 - **シークレット**: `wrangler secret put <NAME> --config workers/<name>/wrangler.toml` で設定。

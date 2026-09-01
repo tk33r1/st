@@ -1,0 +1,5 @@
+# 旧 URL → 新 URL の恒久リダイレクト（301）
+# 移動: 2026-09-02  tk.st/matsumura40/ → tk.st/anniversary/matsumura40/
+/matsumura40      /anniversary/matsumura40/  301
+/matsumura40/     /anniversary/matsumura40/  301
+/matsumura40/*    /anniversary/matsumura40/:splat  301

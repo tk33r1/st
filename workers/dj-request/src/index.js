@@ -18,6 +18,8 @@
  *   PATCH /dj/api/req/admin/songs/:id    ステータス更新
  *   POST  /dj/api/req/admin/event        新しいイベントを開始
  *   PATCH /dj/api/req/admin/event        受付の開始／停止
+ *   GET   /dj/api/req/admin/events       全イベント（削除の対象を選ぶための一覧）
+ *   DELETE /dj/api/req/admin/events/:code 過去の回を曲・投稿・いいねごと消す
  *
  * 文字列は素のまま保存し、エスケープは表示側で行う。DB に HTML エスケープ済みの
  * 文字列を入れると、DJ がコピーする曲名に &amp; が混ざって検索が外れるため。
@@ -650,6 +652,88 @@ async function getPastBoard(code, env, cors) {
   }, 200, cors);
 }
 
+/* ── 管理: イベントの一覧 ───────────────────
+   削除する回を選ぶための一覧。曲が1件も無い回も、いまの回も返す。
+   公開側の /events とは別物で、あちらは「来場者に見せられる回」だけを返す。 */
+async function adminEvents(env, cors) {
+  const cur = await openEvent(env) || await env.DB.prepare(
+    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
+  ).first();
+
+  const rows = await env.DB.prepare(
+    `SELECT e.code, e.title, e.status, e.created_at, e.closed_at,
+            (SELECT COUNT(*) FROM songs s    WHERE s.event_code = e.code) AS songs,
+            (SELECT COUNT(*) FROM songs s    WHERE s.event_code = e.code AND s.status = 'played') AS played,
+            (SELECT COUNT(*) FROM requests r WHERE r.event_code = e.code) AS requests
+       FROM events e
+      ORDER BY e.created_at DESC`
+  ).all();
+
+  return json({
+    events: rows.results.map((e) => ({
+      code: e.code,
+      title: e.title,
+      open: e.status === 'open',
+      at: e.created_at,
+      closedAt: e.closed_at,
+      songs: e.songs,
+      played: e.played,
+      requests: e.requests,
+      // 消せるかどうかを決めるのはサーバ。ブースはこの答えをそのまま出すので、
+      // 同じ規則が2か所に散らばらない。
+      current: !!cur && e.code === cur.code,
+    })),
+  }, 200, cors);
+}
+
+/* ── 管理: 過去の回を消す ───────────────────
+   曲・投稿・いいねをまとめて落とす。取り消せる操作ではないので、消せるのは
+   終わった回だけにする。いまの回（受付中か、/board が映している最新の回）は
+   対象外。開催中の記録が足元から消えると、来場者の画面もブースも破綻する。
+
+   ブースAPI は他が鍵なしの公開だが、それは戻せる操作しか無かったから。
+   これは戻せないので、ADMIN_KEY を設定してあるときだけ鍵を要求する
+   （設定していなければ今までどおり通る）。掛けたい人が掛けられる錠。 */
+async function adminDeleteEvent(code, request, env, cors) {
+  if (env.ADMIN_KEY && bearer(request) !== env.ADMIN_KEY) {
+    return json({ error: 'unauthorized', message: '管理キーが必要です' }, 401, cors);
+  }
+
+  const ev = await env.DB.prepare(
+    `SELECT code, title FROM events WHERE code = ?`
+  ).bind(code).first();
+  if (!ev) return json({ error: 'not_found', message: 'この回は見つかりませんでした' }, 404, cors);
+
+  const cur = await openEvent(env) || await env.DB.prepare(
+    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
+  ).first();
+  if (cur && cur.code === code) {
+    return json({
+      error: 'current',
+      message: 'いまの回は削除できません。新しい回を開始してから消してください',
+    }, 409, cors);
+  }
+
+  // 消した件数は取り消しの代わりにならないが、何が落ちたかは伝える
+  const n = await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM songs    WHERE event_code = ?) AS songs,
+            (SELECT COUNT(*) FROM requests WHERE event_code = ?) AS requests`
+  ).bind(code, code).first();
+
+  // likes → requests → songs → events の順。曲の行より先に子を落とす
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM likes    WHERE event_code = ?`).bind(code),
+    env.DB.prepare(`DELETE FROM requests WHERE event_code = ?`).bind(code),
+    env.DB.prepare(`DELETE FROM songs    WHERE event_code = ?`).bind(code),
+    env.DB.prepare(`DELETE FROM events   WHERE code = ?`).bind(code),
+  ]);
+
+  return json({
+    ok: true, code, title: ev.title,
+    songs: n ? n.songs : 0, requests: n ? n.requests : 0,
+  }, 200, cors);
+}
+
 /* ── 管理 ───────────────────────────────── */
 async function adminSongs(env, cors) {
   const ev = await openEvent(env) || await env.DB.prepare(
@@ -827,6 +911,12 @@ export default {
       if (path === '/dj/api/req/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);
       if (path === '/dj/api/req/admin/event' && method === 'POST')   return await adminNewEvent(request, env, cors);
       if (path === '/dj/api/req/admin/event' && method === 'PATCH')  return await adminToggleEvent(request, env, cors);
+      if (path === '/dj/api/req/admin/events' && method === 'GET')   return await adminEvents(env, cors);
+
+      const adminEv = path.match(/^\/dj\/api\/req\/admin\/events\/([0-9A-Za-z]{1,12})$/);
+      if (adminEv && method === 'DELETE') {
+        return await adminDeleteEvent(adminEv[1].toUpperCase(), request, env, cors);
+      }
 
       const m = path.match(/^\/dj\/api\/req\/admin\/songs\/(\d+)$/);
       if (m && method === 'PATCH') return await adminPatchSong(Number(m[1]), request, env, cors);

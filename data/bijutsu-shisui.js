@@ -330,12 +330,14 @@
     last = now;
     ctx.clearRect(0, 0, W, H);
 
-    var alive = 0;
+    // 寿命の来た粒は alive に積み直さないので、そのまま配列から落ちる。
+    // 連打で何発も重なっても、走査するのは生きている粒だけで済む
+    var alive = [];
     for (var i = 0; i < pieces.length; i++) {
       var p = pieces[i];
       p.life += dt;
       if (p.life >= p.span) continue;
-      alive++;
+      alive.push(p);
       // 飛び出しの勢いを一気に殺してから落とすと、クラッカーらしい弧になる
       p.vx *= damp;
       p.vy *= damp;
@@ -353,11 +355,12 @@
       ctx.restore();
     }
 
-    if (alive) {
+    pieces = alive;
+
+    if (pieces.length) {
       requestAnimationFrame(frame);
     } else {
       running = false;
-      pieces = [];
       canvas.hidden = true;
       canvas.width = canvas.height = 0;
     }
@@ -366,8 +369,9 @@
   window.djCelebrate = function () {
     if (!tiles) tiles = { pink: makeTile(art.pink), cyan: makeTile(art.cyan) };
     canvas.hidden = false;
-    resize();
-    pieces = [];
+    // 走っている最中に呼ばれたら、いま飛んでいる粒は消さずに新しい1発を足す。
+    // 連打ぶんが重なって鳴る。canvas を張り直すのは畳んである（幅0の）ときだけ
+    if (!running) resize();
     // 左下・右下から内向きに2発、真ん中から真上に1発
     popper(-14, H * 0.84, -Math.PI / 3.6, 84, 1400);
     popper(W + 14, H * 0.84, -Math.PI + Math.PI / 3.6, 84, 1400);

@@ -1188,12 +1188,12 @@
           <div class="bar"><b id="bar"></b></div>
           <span class="lab" id="ptime">0:30</span>
         </div>
+        <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
+          <input class="txt" id="name" maxlength="20">
+        </label>
         <label class="f"><span class="fh">ひとこと <span class="req">(任意)</span></span>
           <textarea id="msg" class="one" rows="1" maxlength="50" placeholder="かけてほしいタイミングなど"></textarea>
           <span class="count" id="msgCount">0 / 50</span>
-        </label>
-        <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
-          <input class="txt" id="name" maxlength="20">
         </label>
         <div class="err" id="sendErr" hidden></div>
         <button class="send" id="send">この曲をリクエストする</button>
@@ -1314,12 +1314,12 @@
 
         <!-- 自分が送った投稿で、まだ DJ が触っていないときだけ開く -->
         <div id="songEdit" hidden>
+          <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
+            <input class="txt" id="mineName" maxlength="20">
+          </label>
           <label class="f"><span class="fh">ひとこと <span class="req">(任意)</span></span>
             <textarea id="mineMsg" class="one" rows="1" maxlength="50" placeholder="かけてほしいタイミングなど"></textarea>
             <span class="count" id="mineMsgCount">0 / 50</span>
-          </label>
-          <label class="f"><span class="fh">ニックネーム <span class="req">(任意)</span></span>
-            <input class="txt" id="mineName" maxlength="20">
           </label>
           <div class="err" id="mineErr" hidden></div>
           <button class="send" id="mineSave" disabled>この内容に変更する</button>
@@ -1328,11 +1328,11 @@
 
         <!-- 直せなくなったあと。編集欄の代わりに、送った内容をそのまま見せる -->
         <div id="mineView" hidden>
-          <div class="f">送ったひとこと
-            <p class="ro" id="mineViewMsg"></p>
-          </div>
           <div class="f">送ったニックネーム
             <p class="ro" id="mineViewName"></p>
+          </div>
+          <div class="f">送ったひとこと
+            <p class="ro" id="mineViewMsg"></p>
           </div>
         </div>
 
@@ -2615,7 +2615,7 @@
   </script>
   <!-- 背景のテイクオーバーとクラッカー。中身は data/bijutsu-shisui.js。
        djCelebrate() を上のスクリプトから呼ぶので defer は付けない -->
-  <script src="../../data/bijutsu-shisui.js?v=20260831"></script>
+  <script src="../../data/bijutsu-shisui.js?v=20260902"></script>
 
 </body>
 
