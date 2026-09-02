@@ -683,7 +683,6 @@
       width: 100%;
       height: 362px;
       max-width: 600px;
-      border: none;
       border-radius: 8px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
@@ -1264,30 +1263,14 @@
     }
 
     /*
-     * 受付中だけ赤の実ボタンに変わる（.live は JS が付ける）。
-     * 赤（--accent-red）はロリポップヘッドホンと同じ色で、受付中の帯とここにしか出さない。
-     * 切り欠きの形は .about-letter / .gear-modal-panel と同じ造形。
+     * 受付中は赤い点と「受付中」を添えるだけ。ページ下端の補助導線なので、
+     * ボタンに化けさせるとポップアップと二重に主張してうるさくなる。
      */
     .request-cta.live a {
-      --fold: 10px;
       display: inline-flex;
       align-items: center;
-      gap: 12px;
-      padding: 13px 24px;
-      background: var(--accent-red);
-      color: var(--white);
+      /* 下線はリンク本文だけに引きたいので、親からは外す */
       border-bottom: none;
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
-      transition: background 0.3s ease, transform 0.3s ease;
-    }
-
-    .request-cta.live a:hover {
-      background: #d92626;
-      color: var(--white);
-      transform: translateY(-3px);
     }
 
     /* display:none なので、受付していない間は読み上げにも出てこない */
@@ -1298,17 +1281,21 @@
     .request-cta.live .request-cta-badge {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding-right: 12px;
-      border-right: 1px solid rgba(255, 255, 255, 0.45);
+      gap: 6px;
+      margin-right: 10px;
+      color: var(--accent-red);
       font-family: 'Courier New', Courier, monospace;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       letter-spacing: 0.12em;
     }
 
+    .request-cta.live a > span:last-child {
+      border-bottom: 1px dashed var(--neo-purple);
+    }
+
     .request-cta .live-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
     }
 
     /* ===== Image Modal ===== */
@@ -1798,11 +1785,20 @@
       gap: 4px;
       color: var(--black);
       text-decoration: none;
-      opacity: 0.55;
-      transition: opacity 0.4s ease, transform 0.4s ease;
+      /* 既定は伏せておき、タイトルのタイピングが終わってから .ready で出す */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease, transform 0.4s ease;
     }
 
-    .hero-scroll-cue:hover {
+    .hero-scroll-cue.ready {
+      opacity: 0.55;
+      pointer-events: auto;
+    }
+
+    /* :not(.hidden) を挟まないと、ホバー中はスクロールしても消えない
+       （.ready:hover のほうが .hidden より詳細度が高いため） */
+    .hero-scroll-cue.ready:not(.hidden):hover {
       opacity: 1;
     }
 
@@ -1928,102 +1924,109 @@
       opacity: 1;
     }
 
-    /* ===== EMBED FACADE ===== */
+    /* ===== EMBED FRAME ===== */
     /*
-     * Beatport / Google カレンダー / Wistia は、それぞれ独自の見た目と読み込みを持ち込む。
-     * 押されるまでは自前の枠だけを出して、3 つの体裁を揃えつつ、
-     * 見ない人のところに第三者のスクリプトと Cookie を落とさないようにする。
-     * JS が無い環境では head の <noscript> がこれを隠し、素の <iframe> がそのまま出る。
+     * Beatport / Google カレンダー / Wistia は、それぞれ独自の見た目を持ち込む。
+     * 中身までは揃えられないので、せめて外周の罫線を共通にして 3 つを 1 組に見せる。
+     * どれも loading="lazy" 付きで、初期表示のまま中身が見える。
      */
-    .embed-facade {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      height: 100%;
-      padding: 20px;
-      background: var(--dark-blue-purple-light);
+    .sound-log-embed iframe,
+    .calendar-container,
+    .video-container {
       border: 1px solid rgba(156, 122, 247, 0.45);
-      color: rgba(255, 255, 255, 0.85);
-      font-family: inherit;
-      cursor: pointer;
-      transition: background 0.3s ease, border-color 0.3s ease;
     }
 
-    .embed-facade:hover {
-      background: #4b3673;
-      border-color: var(--neo-purple);
+    /* ===== LIVE POPUP ===== */
+    /*
+     * 受付中だけ出す隅のカード。会場では QR からリクエストページへ直接降りてくるので、
+     * ここは「今やっている」と気づかせるだけでよく、面で塗って主張する必要がない。
+     * 赤は点と「受付中」の 3 文字だけに使い、地は他セクションと同じ白のまま。
+     */
+    .live-pop {
+      --fold: 14px;
+      position: fixed;
+      left: 24px;
+      bottom: 24px;
+      z-index: 950;
+      width: min(290px, calc(100vw - 48px));
+      padding: 15px 17px 17px;
+      background: var(--white);
+      border: 1px solid rgba(156, 122, 247, 0.5);
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
+      /* clip-path は box-shadow も切るので、影は切り抜いた形に沿う drop-shadow で出す */
+      filter: drop-shadow(0 12px 26px rgba(45, 27, 78, 0.22));
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
 
-    .embed-facade svg {
-      width: 34px;
-      height: 34px;
-      stroke-width: 1.25;
-      /* --neo-purple のままだと紫地に沈む。白へ寄せた紫にする */
-      color: #c4aeff;
+    .live-pop.show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    .embed-facade-title {
-      font-size: 0.95rem;
-      letter-spacing: 0.08em;
-      font-weight: 600;
-    }
-
-    .embed-facade-note {
+    .live-pop-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
       font-family: 'Courier New', Courier, monospace;
       font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      opacity: 0.6;
+      letter-spacing: 0.14em;
+      color: var(--accent-red);
     }
 
-    /* 枠の丸みと影は元の iframe 側の指定に合わせる。差し替え後も見た目が動かない */
-    .sound-log-embed .embed-facade {
-      height: 362px;
-      border-radius: 8px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    .live-pop-title {
+      margin-top: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: var(--black);
+      /* 会場名まで入った長い回名でもカードを縦に伸ばさない */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    /* 親が overflow:hidden + 角丸なので、こちらは面を敷くだけでよい */
-    .video-container .embed-facade {
-      position: absolute;
-      inset: 0;
-      border: none;
-    }
-
-    .calendar-container .embed-facade {
-      border-radius: 4px;
-    }
-
-    /* ===== LIVE BANNER ===== */
-    /*
-     * 受付中のときだけ JS が hidden を外す。閉じている間は何も出さないので、
-     * 普段のページは今までどおり HERO から PHILOSOPHY へ続く。
-     */
-    .live-banner {
-      background: var(--accent-red);
-      color: var(--white);
-    }
-
-    .live-banner-link {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px 18px;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 16px 40px;
-      color: inherit;
+    .live-pop-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      color: #7b55d6;
       text-decoration: none;
+      border-bottom: 1px dashed var(--neo-purple);
+      transition: color 0.3s ease;
     }
 
+    .live-pop-link:hover {
+      color: var(--neo-purple);
+    }
+
+    .live-pop-close {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      background: none;
+      border: none;
+      color: rgba(26, 26, 26, 0.35);
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .live-pop-close:hover {
+      color: var(--black);
+    }
+
+    /* 受付中の目印。白地に置くので赤。パルスも同じ赤で広がる */
     .live-dot {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: var(--white);
+      background: var(--accent-red);
       flex: none;
       animation: live-pulse 1.6s ease-in-out infinite;
     }
@@ -2033,40 +2036,13 @@
       0%,
       100% {
         opacity: 1;
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6);
+        box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.55);
       }
 
       70% {
         opacity: 0.7;
-        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+        box-shadow: 0 0 0 7px rgba(255, 51, 51, 0);
       }
-    }
-
-    .live-banner-label {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      opacity: 0.85;
-      display: block;
-    }
-
-    .live-banner-title {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-
-    .live-banner-cta {
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      padding: 7px 16px;
-      font-size: 0.85rem;
-      letter-spacing: 0.05em;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-
-    .live-banner-link:hover .live-banner-cta {
-      background: var(--white);
-      color: var(--accent-red);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2122,14 +2098,22 @@
         display: none;
       }
 
-      .live-banner-link {
-        padding: 14px 20px;
+      /* 画面幅いっぱいに寄せる。左右 16px は back-to-top と同じ余白感 */
+      .live-pop {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        width: auto;
       }
 
-      /* テキストリンクのままなら元の右寄せでよい。ボタンのときだけ中央に置く */
-      .request-cta.live {
-        padding: 28px 20px 0;
-        text-align: center;
+      /*
+       * SP ではポップアップが SCROLL と同じ下端を取り合い、カードが矢印に被さる。
+       * 受付中の告知のほうが優先なので、出ているあいだ矢印は引っ込める
+       * （PC はカードが左下・矢印が中央なので、この打ち消しは要らない）。
+       */
+      body.live-pop-open .hero-scroll-cue {
+        opacity: 0;
+        pointer-events: none;
       }
 
       .hero-scroll-cue {
@@ -2371,8 +2355,7 @@
         transform: none;
       }
 
-      /* ファサードは押しても何も起きないので隠し、各枠に置いた素の <iframe> に任せる */
-      .embed-facade,
+      /* JS でしか動かない飾りは、押しても何も起きないので出さない */
       .hero-scroll-cue,
       .section-nav {
         display: none;
@@ -2425,18 +2408,6 @@
       <i data-lucide="chevron-down" aria-hidden="true"></i>
     </a>
   </section>
-
-  <!-- LIVE BANNER: 受付中の回があるときだけ JS が出す -->
-  <aside class="live-banner" id="liveBanner" hidden>
-    <a class="live-banner-link" href="request/">
-      <span class="live-dot" aria-hidden="true"></span>
-      <span class="live-banner-text">
-        <span class="live-banner-label" lang="en">NOW ACCEPTING</span>
-        <span class="live-banner-title" id="liveBannerTitle"></span>
-      </span>
-      <span class="live-banner-cta">♪ 曲をリクエスト</span>
-    </a>
-  </aside>
 
   <!-- PHILOSOPHY -->
   <section class="philosophy-section" id="philosophy">
@@ -2600,16 +2571,8 @@
     </div>
     <div class="sound-log-embed reveal">
       <div class="sound-log-embed-label" lang="en">» Sound Log Database</div>
-      <button class="embed-facade" type="button" data-embed-src="https://embed.beatport.com/?id=5012224&amp;type=release"
-        data-embed-title="Beatport Player">
-        <i data-lucide="disc" aria-hidden="true"></i>
-        <span class="embed-facade-title">Beatport</span>
-        <span class="embed-facade-note">タップして読み込む</span>
-      </button>
-      <noscript>
-        <iframe src="https://embed.beatport.com/?id=5012224&amp;type=release" scrolling="no" title="Beatport Player"
-          loading="lazy"></iframe>
-      </noscript>
+      <iframe src="https://embed.beatport.com/?id=5012224&amp;type=release" scrolling="no" title="Beatport Player"
+        loading="lazy"></iframe>
     </div>
   </section>
 
@@ -2624,7 +2587,9 @@
             <div class="timeline-event">
               <a href="../images/contents/daydream_03-01.avif" data-images="
                    ../images/contents/daydream_03-01.avif
-                   ../images/contents/daydream_03-02.avif" target="_blank" rel="noopener noreferrer"
+                   ../images/contents/daydream_03-02.avif" data-alts="
+                   白昼夢 vol.03 の出演者フライヤー。赤地にドット絵のハート柄。MAIN DJ は DJ ポー、ほかに Myxri・DJ SUGAR・人類踊狂計画・MAMEPY・Alulage、VJ に Mitsuki Oboro と KUROTORA、PAINT に Aya
+                   |白昼夢 vol.03 のタイムテーブル。12 時のフリーブースから 19 時半まで、20 時撤収完了。人類踊狂計画は 14 時と 15 時半の 2 枠" target="_blank" rel="noopener noreferrer"
                 class="timeline-link">
                 Daydream #03<br>
                 Lounge bar Krishuna
@@ -2634,7 +2599,9 @@
             <div class="timeline-event">
               <a href="../images/contents/Live-DJ_Factory.webp" data-images="
                    ../images/contents/Live-DJ_Factory.webp
-                   ../images/contents/Live-DJ_Factory2.webp" target="_blank" rel="noopener noreferrer"
+                   ../images/contents/Live-DJ_Factory2.webp" data-alts="
+                   Live&amp;Dj Factory のフライヤー。7 月 26 日（日）15 時開演、渋谷 R Lounge 6F、入場 2,700 円 + 1 ドリンク。ライブに雨音とアプローズ・#03-USHIMITU-・HELLZAPOPPIN'、DJ に彼方玲・ハシバタカナリ・zensen・Alulage・人類踊狂計画
+                   |Live&amp;Dj Factory のタイムテーブル。14 時 40 分開場から 21 時終演まで。人類踊狂計画は 18 時 15 分から踊れるアイドル楽曲セット" target="_blank" rel="noopener noreferrer"
                 class="timeline-link">
                 Live&amp;DJ Factory<br>
                 R Lounge
@@ -2645,7 +2612,10 @@
               <a href="../images/contents/daydream_02-1.avif" data-images="
                    ../images/contents/daydream_02-1.avif
                    ../images/contents/daydream_02-2.avif
-                   ../images/contents/daydream_02-3.avif" target="_blank" rel="noopener noreferrer"
+                   ../images/contents/daydream_02-3.avif" data-alts="
+                   白昼夢 #02 のメインビジュアル。朱色の地に緑と薄紫で刷った花木と、下部に筆文字の「白昼夢」
+                   |白昼夢 #02 のタイムテーブル。12 時のフリーブースから 19 時半まで、20 時撤収完了。DJ 体験コーナーを挟みつつ いろはす・omeme_gangimari・m changm・ブラジル・MAMEPY が回す
+                   |白昼夢 #02 の告知。2026 年 7 月 12 日（日）12 時開場〜19 時半終演、新宿ゴールデン街 Lounge bar Krishuna、3,500 円。DJ にブラジル・omeme_gangimari・MAMEPY・いろはす・m changm、VJ に KUROTORA、ボディペイントに Amy Yokomatsu、ライブペイントにノゾミ。「健やかに狂え。夢のような真昼のクラブ」" target="_blank" rel="noopener noreferrer"
                 class="timeline-link">
                 Daydream #02<br>
                 Lounge bar Krishuna
@@ -2660,7 +2630,8 @@
               </a>
             </div>
             <div class="timeline-event">
-              <a href="../images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif" target="_blank" rel="noopener noreferrer"
+              <a href="../images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif" data-alts="
+                   NEXTORM -BASE- #16 のフライヤー。2026 年 1 月 12 日（月）、ハウス・テクノとクロスオーバーサウンド。NØEL と MARU、WELRY・AKIAMA・TAKEDA が出演。青と緑の流体を横帯に切り分けた暗いビジュアル" target="_blank" rel="noopener noreferrer"
                 class="timeline-link">
                 NEXTORM -BASE- #16<br>
                 Ohjo-bldg
@@ -2673,7 +2644,8 @@
             <div class="timeline-item">
               <div class="timeline-year">2025</div>
               <div class="timeline-event">
-                <a href="../images/contents/Night-Drip_Shinjuku-HEIST.jpg" target="_blank" rel="noopener noreferrer"
+                <a href="../images/contents/Night-Drip_Shinjuku-HEIST.jpg" data-alts="
+                     Night Drip のフライヤー。10 月 24 日（金）23 時から新宿 HEIST、クロスオーバーテクノとサイケデリックトランス。早川あおせのモジュラーシンセライブ、PARTY FISH・DonChim・ila・PoyoTaro・Alulage・人類踊狂計画、VJ サイコ。入場 2,500 円 + 1 ドリンク。水滴が落ちて波紋が広がるビジュアル" target="_blank" rel="noopener noreferrer"
                   class="timeline-link">
                   Night-Drip<br>
                   Shinjuku-HEIST.
@@ -2698,18 +2670,9 @@
       <div class="reveal">
         <h2 class="operation-title"><i data-lucide="calendar" class="section-icon" aria-hidden="true"></i><span lang="en">Schedule / Future</span></h2>
         <div class="calendar-container">
-          <button class="embed-facade" type="button"
-            data-embed-src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&amp;ctz=Asia%2FTokyo"
-            data-embed-title="Google Calendar">
-            <i data-lucide="calendar" aria-hidden="true"></i>
-            <span class="embed-facade-title">出演スケジュール</span>
-            <span class="embed-facade-note">タップして読み込む</span>
-          </button>
-          <noscript>
-            <iframe
-              src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&amp;ctz=Asia%2FTokyo"
-              scrolling="no" title="Google Calendar" loading="lazy"></iframe>
-          </noscript>
+          <iframe
+            src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&amp;ctz=Asia%2FTokyo"
+            scrolling="no" title="Google Calendar" loading="lazy"></iframe>
         </div>
       </div>
     </div>
@@ -2719,17 +2682,8 @@
   <section class="video-section" id="visual">
     <h2 class="video-title reveal"><i data-lucide="film" class="section-icon" aria-hidden="true"></i><span lang="en">Visual Database</span></h2>
     <div class="video-container reveal">
-      <button class="embed-facade" type="button" data-embed-src="https://fast.wistia.net/embed/iframe/8jg7134pce"
-        data-embed-title="Video Content" data-embed-class="wistia_embed" data-embed-name="wistia_embed"
-        data-embed-allowfullscreen="1">
-        <i data-lucide="play-circle" aria-hidden="true"></i>
-        <span class="embed-facade-title">Visual Database</span>
-        <span class="embed-facade-note">タップして再生</span>
-      </button>
-      <noscript>
-        <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no"
-          class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
-      </noscript>
+      <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no"
+        class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
     </div>
   </section>
 
@@ -2837,6 +2791,14 @@
     </div>
   </div>
 
+  <!-- Live Popup: 受付中の回があるときだけ JS が出す -->
+  <aside class="live-pop" id="livePop" hidden>
+    <p class="live-pop-status"><span class="live-dot" aria-hidden="true"></span>受付中</p>
+    <p class="live-pop-title" id="livePopTitle"></p>
+    <a class="live-pop-link" href="request/">かけてほしい曲を送る</a>
+    <button class="live-pop-close" id="livePopClose" type="button" aria-label="閉じる">&times;</button>
+  </aside>
+
   <!-- Back to Top Button -->
   <button class="back-to-top" id="backToTop" type="button" aria-label="トップへ戻る" title="トップへ戻る">
     <i data-lucide="chevron-up" class="icon-lg"></i>
@@ -2873,6 +2835,21 @@
       // pointerenter ならマウスとタッチが 1 本にまとまる（mouseenter + touchstart だと合成イベントで二重発火する）
       item.addEventListener('pointerenter', () => triggerAtField(atField));
     });
+
+    // 2.5. Scroll Cue
+    // タイトルのタイピングが終わってから出す。blink-caret は infinite で animationend が
+    // 上がらないので、typing だけを名前で拾う。
+    // 何かの理由でイベントが来なくても出ないままにはしないよう、保険のタイマーを添える。
+    if (heroScrollCue) {
+      const tagline = document.querySelector('.hero-tagline.typewriter-text');
+      const showCue = () => heroScrollCue.classList.add('ready');
+      if (tagline) {
+        tagline.addEventListener('animationend', (e) => {
+          if (e.animationName === 'typing') showCue();
+        });
+      }
+      setTimeout(showCue, 3600);
+    }
 
     // 3. Scroll Reveal Animation
     const revealElements = document.querySelectorAll('.reveal');
@@ -2991,6 +2968,11 @@
       return raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
     };
 
+    // data-alts は | 区切りで data-images と同じ並び。属性内の改行・字下げは 1 個の空白に潰す。
+    // 足りない分は呼び出し側でイベント名にフォールバックする（画像だけ足したときに落ちないように）
+    const getAlts = (link) => (link.dataset.alts || '')
+      .split('|').map(t => t.replace(/\s+/g, ' ').trim());
+
     // 背景ページのスクロールを止める（html が実スクロールコンテナなので両方に効かせる）
     const setScrollLock = (locked) => {
       const value = locked ? 'hidden' : '';
@@ -3032,7 +3014,7 @@
       modalTrack.scrollTo({ left: modalTrack.clientWidth * target, behavior: 'smooth' });
     };
 
-    const buildSlides = (srcs, label) => {
+    const buildSlides = (srcs, alts, label) => {
       clearTimeout(clearTimer); // 閉じた直後に開き直しても中身が消されないように
       modalTrack.innerHTML = '';
       modalDots.innerHTML = '';
@@ -3046,7 +3028,9 @@
         const img = document.createElement('img');
         img.addEventListener('error', () => slide.classList.add('error'));
         img.src = src;
-        img.alt = slideCount > 1 ? `${label} (${i + 1}/${slideCount})` : label;
+        // フライヤーは中身が情報そのものなので、書いてあれば画像ごとの説明を使う
+        const described = alts[i];
+        img.alt = described || (slideCount > 1 ? `${label} (${i + 1}/${slideCount})` : label);
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'modal-close';
@@ -3079,7 +3063,7 @@
         const srcs = getImages(link);
         if (!srcs.length) return;
         lastFocused = link;
-        buildSlides(srcs, link.textContent.trim().replace(/\s+/g, ' '));
+        buildSlides(srcs, getAlts(link), link.textContent.trim().replace(/\s+/g, ' '));
         modal.classList.add('active');
         setScrollLock(true);
         const first = focusables()[0];
@@ -3263,42 +3247,53 @@
       markCurrent();
     }
 
-    // 7. Embed Facade
-    // 押されるまで第三者の iframe を作らない。属性はファサードの data-* に持たせてあるので、
-    // 埋め込み先を差し替えるときも触るのは HTML だけでよい。
-    document.querySelectorAll('.embed-facade').forEach(facade => {
-      facade.addEventListener('click', () => {
-        const iframe = document.createElement('iframe');
-        iframe.src = facade.dataset.embedSrc;
-        iframe.title = facade.dataset.embedTitle || '';
-        iframe.setAttribute('scrolling', 'no');
-        if (facade.dataset.embedClass) iframe.className = facade.dataset.embedClass;
-        if (facade.dataset.embedName) iframe.name = facade.dataset.embedName;
-        if (facade.dataset.embedAllowfullscreen) iframe.allowFullscreen = true;
-        facade.replaceWith(iframe);
-      }, { once: true });
-    });
-
-    // 8. Live Banner
+    // 7. Live Popup
     // 受付中の回があるときだけ出す。取れなくても黙って何もしない
     //（このページの主題はポートフォリオで、リクエストは付随機能）。
-    const liveBanner = document.getElementById('liveBanner');
+    const livePop = document.getElementById('livePop');
     const requestCta = document.getElementById('requestCta');
-    if (liveBanner) {
+    // 閉じたことはタブを閉じるまで覚える。回が変われば（code が変われば）また出す
+    const DISMISS_KEY = 'dj-live-pop-dismissed';
+    const dismissed = (code) => {
+      try {
+        return sessionStorage.getItem(DISMISS_KEY) === code;
+      } catch {
+        // プライベートウィンドウなどで sessionStorage が触れないことがある。出す側に倒す
+        return false;
+      }
+    };
+
+    if (livePop) {
       fetch('/dj/api/req/event', { headers: { Accept: 'application/json' } })
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (!data || !data.open) return;
-          // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる
-          document.getElementById('liveBannerTitle').textContent = data.title || '';
-          liveBanner.hidden = false;
-          // 受付中のあいだだけ、下端の導線もテキストリンクからボタンに変える
+          // 受付中のあいだは、下端の導線にも赤い点と「受付中」を添える
           if (requestCta) requestCta.classList.add('live');
+          if (dismissed(data.code)) return;
+
+          // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる
+          const title = document.getElementById('livePopTitle');
+          title.textContent = data.title || '';
+          title.hidden = !data.title;
+          livePop.hidden = false;
+          document.body.classList.add('live-pop-open');
+          // hidden を外した直後だと display の変化と同じフレームになり transition が乗らない
+          requestAnimationFrame(() => livePop.classList.add('show'));
+
+          document.getElementById('livePopClose').addEventListener('click', () => {
+            livePop.classList.remove('show');
+            document.body.classList.remove('live-pop-open');
+            setTimeout(() => { livePop.hidden = true; }, 500);
+            try {
+              sessionStorage.setItem(DISMISS_KEY, data.code || '1');
+            } catch { /* 保存できなくても閉じる動作自体は成立する */ }
+          });
         })
         .catch(() => { });
     }
 
-    // 9. Initialize Lucide Icons
+    // 8. Initialize Lucide Icons
     lucide.createIcons();
 
     // 開始年はマークアップ（JS 無効時にそのまま表示されるフォールバックでもある）を唯一の情報源にし、

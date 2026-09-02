@@ -145,7 +145,6 @@
       border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
     }
     .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
-    .tabs.two { grid-template-columns: 1fr 1fr; }
     @media (max-width: 380px) { .tabs button { font-size: 11.5px; letter-spacing: -.02em; } }
 
     .pane { padding: 20px; display: none; flex-direction: column; gap: 16px; }
@@ -282,6 +281,9 @@
 
     .shutbox { text-align: center; color: var(--faint); padding: 40px 10px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
     .shutbox .big { font-size: 15px; color: var(--muted); }
+
+    /* ここから下は過ぎた回。いまの回と地続きに見えないよう線で切る */
+    .pastsep { border: none; border-top: 1px solid var(--line); margin: 6px 0 0; width: 100%; }
 
     .boardhead { display: flex; align-items: baseline; gap: 10px; }
     .boardhead h2 { font-size: 11.5px; font-family: var(--mono); letter-spacing: .13em; color: var(--faint); margin: 0; font-weight: 500; flex: 1; }
@@ -463,7 +465,15 @@
     .pick:hover { background: var(--card-hi); }
     .picklede { font-size: 11.5px; color: var(--faint); margin: 2px 0 0 38px; }
 
+    /* 受付時間外・オフラインのときに composer の代わりに出す。
+       できない理由だけ伝えて、相談そのものは塞ぐ */
+    .chatlock {
+      border: 1px dashed var(--line); border-radius: 2px; padding: 15px 14px;
+      text-align: center; font-size: 12.5px; color: var(--faint); line-height: 1.7;
+    }
+
     .composer { display: flex; gap: 8px; align-items: flex-end; }
+    .composer[hidden] { display: none; }
     .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px; }
     .composer button {
       flex-shrink: 0; height: 48px; padding: 0 16px; border-radius: 2px;
@@ -944,6 +954,12 @@
       color: var(--heart-secondary);
     }
 
+    /* 過去の見出しだけ寒色から外す。いまの回の見出し（シアン）と並べたとき、
+       線だけでなく色でも「ここから下は終わった回」と分かるように */
+    .boardhead.past h2 {
+      color: color-mix(in srgb, var(--glitch-accent) 72%, var(--fg-dim));
+    }
+
     .boardhead h3 {
       font-family: var(--f-dot);
       font-weight: 400;
@@ -1244,11 +1260,12 @@
         </div>
         <div class="chatlog" id="chatLog"></div>
         <div class="err" id="chatErr" hidden></div>
-        <div class="composer">
+        <div class="chatlock" id="chatLock" hidden></div>
+        <div class="composer" id="composer">
           <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
           <button id="chatSend" disabled>送信</button>
         </div>
-        <p class="hint">AI の提案のため、実在しない曲を挙げることがあります。</p>
+        <p class="hint" id="chatHint">AI の提案のため、実在しない曲を挙げることがあります。</p>
       </section>
 
       <!-- 完了 -->
@@ -1283,12 +1300,13 @@
         <div class="rows" id="playedRows"></div>
         <div class="boardhead"><h2>まだかかっていない曲</h2></div>
         <div class="rows" id="waitingRows"></div>
-        <div class="boardhead"><h2>過去のイベント</h2></div>
-        <div class="rows" id="pastEvents"></div>
         <div class="boardhead"><h3>ごあんない</h3></div>
         <p class="note">受付した曲は、流れの都合でかけられないこともあります。<br>
           ♥ は1曲につき1回まで押せ、数が多いものが優先的にかけられます。<br>
           自分のリクエストかつ、確認前の曲に限り、内容の変更が可能です。</p>
+        <hr class="pastsep">
+        <div class="boardhead past"><h2>過去のイベント</h2></div>
+        <div class="rows" id="pastEvents"></div>
       </section>
 
       <!-- 過去の回でかかった曲 -->
@@ -1465,6 +1483,7 @@
     /* ── 画面遷移 ─────────────────────────── */
     let flowPane = 'search';
     let eventOpen = false;
+    let consultLocked = false;   // 受付時間外・オフライン時は相談を止める
     const TAB_OF = { consult: 'consult', board: 'board', past: 'board', song: 'board' };
 
     function show(pane) {
@@ -2435,7 +2454,7 @@
     }
 
     async function sendConsult(text) {
-      if (chatBusy) return;
+      if (chatBusy || consultLocked) return;
       text = String(text || '').trim().slice(0, 300);
       if (text.length < 2) return;
 
@@ -2561,10 +2580,18 @@
     $('#toConsultFromFree').addEventListener('click', openConsult);
 
     /* ── 起動 ─────────────────────────────── */
-    // 受付していないときは相談だけできても行き止まりなので、導線ごと隠す
-    function hideConsultTab() {
-      document.querySelector('.tabs button[data-tab="consult"]').hidden = true;
-      document.querySelector('.tabs').classList.add('two');
+    // 受付していないときも、こういう相談相手がいること自体は見てほしい。
+    // タブと中身は残したまま、投げられないように入力だけ塞ぐ
+    function lockConsult(why) {
+      consultLocked = true;
+      $('#chatLock').textContent = why;
+      $('#chatLock').hidden = false;
+      $('#seeds').hidden = true;
+      $('#chatInput').disabled = true;
+      $('#chatInput').placeholder = 'いまは相談できません';
+      $('#chatSend').disabled = true;
+      $('#composer').hidden = true;
+      $('#chatHint').hidden = true;
       $('#toConsultFromFree').hidden = true;
     }
 
@@ -2582,13 +2609,13 @@
         } else {
           $('#badge').textContent = '受付停止中';
           $('#badge').classList.add('shut');
-          hideConsultTab();
+          lockConsult('いまはリクエストの受付時間外のため、相談はお休みしています。次回の受付までお待ちください。');
           show('shut');
         }
       } catch {
         $('#badge').textContent = 'オフライン';
         $('#badge').classList.add('shut');
-        hideConsultTab();
+        lockConsult('サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。');
         show('shut');
       }
     })();

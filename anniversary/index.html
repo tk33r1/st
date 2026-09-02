@@ -1,0 +1,1661 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="bingbot" content="noindex, nofollow">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#140a20">
+  <title>おめでとう。 — ANNIVERSARY</title>
+  <meta name="description" content="めでたい日のためのページ。">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎉</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@400;700;900&family=Shippori+Mincho:wght@500;700;800&display=swap">
+
+  <style>
+    /* =====================================================================
+       /anniversary/ — 記念日ページの親階層。
+       子ページ（matsumura40 / mitsuki32 …）へは意図的にリンクしない。
+       最下部のトップページ導線だけを置く「お祝いそのもの」のページ。
+       このリポジトリの習慣どおり CSS/JS はすべてこのファイルに内包する。
+       ===================================================================== */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-0: #0b0512;
+      --bg-1: #180a26;
+      --bg-2: #2a0f31;
+      --bg-3: #3a1230;
+      --gold: #ffd76a;
+      --gold-hi: #fff6cf;
+      --rose: #ff6fa5;
+      --violet: #c9a2ff;
+      --ink: #fdf6ec;
+      --muted: #c3b0c8;
+      --f-disp: 'Cinzel', 'Shippori Mincho', serif;
+      --f-min: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      --f-round: 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', sans-serif;
+      --page-max: 860px;
+      color-scheme: dark;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100%;
+      background: var(--bg-0);
+      color: var(--ink);
+      font-family: var(--f-round);
+      line-height: 1.9;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ===== 背景：ゆっくり回るオーロラと薄明かり ===== */
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(120% 90% at 50% 0%, var(--bg-3) 0%, transparent 60%),
+        radial-gradient(90% 70% at 12% 22%, rgba(255, 111, 165, .22) 0%, transparent 62%),
+        radial-gradient(80% 70% at 88% 34%, rgba(201, 162, 255, .20) 0%, transparent 62%),
+        radial-gradient(120% 80% at 50% 100%, rgba(255, 215, 106, .16) 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 55%, var(--bg-2) 100%);
+    }
+
+    .bg::after {
+      content: '';
+      position: absolute;
+      inset: -30%;
+      background:
+        conic-gradient(from 0deg at 50% 50%,
+          rgba(255, 215, 106, .10), rgba(255, 111, 165, .10), rgba(154, 217, 255, .09),
+          rgba(201, 162, 255, .10), rgba(255, 215, 106, .10));
+      filter: blur(70px);
+      opacity: .8;
+      animation: swirl 46s linear infinite;
+    }
+
+    @keyframes swirl {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* 走査するきらめきの帯 */
+    .sheen {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      background: linear-gradient(105deg, transparent 38%, rgba(255, 246, 207, .10) 47%,
+          rgba(255, 255, 255, .18) 50%, rgba(255, 246, 207, .10) 53%, transparent 62%);
+      background-size: 260% 100%;
+      animation: sheenMove 9s ease-in-out infinite;
+    }
+
+    @keyframes sheenMove {
+
+      0%,
+      100% {
+        background-position: 160% 0;
+      }
+
+      50% {
+        background-position: -60% 0;
+      }
+    }
+
+    /* ===== 風船 ===== */
+    .balloons {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .balloon {
+      position: absolute;
+      bottom: -22vh;
+      width: 46px;
+      animation: rise linear infinite;
+    }
+
+    .balloon i {
+      position: relative;
+      display: block;
+      width: 46px;
+      height: 58px;
+      border-radius: 50% 50% 48% 48%;
+      transform-origin: 50% 130%;
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .85) 0 6%, transparent 34%),
+        radial-gradient(circle at 60% 70%, rgba(0, 0, 0, .22), transparent 60%),
+        var(--c, var(--rose));
+      box-shadow: 0 0 26px -4px var(--c, var(--rose));
+      animation: sway 4.6s ease-in-out infinite;
+    }
+
+    .balloon i::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 57px;
+      width: 1px;
+      height: 46px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, rgba(255, 246, 207, .7), transparent);
+    }
+
+    @keyframes rise {
+      from {
+        transform: translateY(0);
+      }
+
+      to {
+        transform: translateY(-135vh);
+      }
+    }
+
+    @keyframes sway {
+
+      0%,
+      100% {
+        transform: rotate(-7deg);
+      }
+
+      50% {
+        transform: rotate(7deg);
+      }
+    }
+
+    /* ===== 粒子キャンバス（ひらひら・きらめき・紙吹雪・花火） ===== */
+    #fx {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* ===== 開幕の緞帳 ===== */
+    #curtain {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    #curtain.open .drape {
+      transition: transform 1.5s cubic-bezier(.7, 0, .2, 1);
+    }
+
+    #curtain.open .drape.l {
+      transform: translateX(-101%);
+    }
+
+    #curtain.open .drape.r {
+      transform: translateX(101%);
+    }
+
+    #curtain.open .knock {
+      opacity: 0;
+      transform: scale(1.35);
+      transition: opacity .5s ease, transform .8s ease;
+    }
+
+    #curtain.done {
+      display: none;
+    }
+
+    .drape {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 51%;
+      background: repeating-linear-gradient(90deg,
+          #5d0f22 0 14px, #7d1730 14px 26px, #40091a 26px 40px);
+      box-shadow: inset 0 0 120px rgba(0, 0, 0, .75);
+    }
+
+    .drape.l {
+      left: 0;
+    }
+
+    .drape.r {
+      right: 0;
+    }
+
+    .drape::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 215, 106, .28), transparent 18%);
+    }
+
+    .knock {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      font-family: var(--f-min);
+      pointer-events: none;
+    }
+
+    .knock .k1 {
+      font-family: var(--f-disp);
+      letter-spacing: .34em;
+      font-size: clamp(.7rem, 2.4vw, .9rem);
+      color: var(--gold);
+      opacity: .85;
+    }
+
+    .knock .k2 {
+      margin: 10px 0 18px;
+      font-size: clamp(1.5rem, 6vw, 2.4rem);
+      font-weight: 800;
+      color: var(--gold-hi);
+      text-shadow: 0 0 26px rgba(255, 215, 106, .6);
+    }
+
+    .knock .k3 {
+      font-family: var(--f-round);
+      font-size: .85rem;
+      color: #ffe9c7;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .25;
+      }
+    }
+
+    /* ===== 共通 ===== */
+    main {
+      position: relative;
+      z-index: 4;
+    }
+
+    .wrap {
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+
+    .gold {
+      background: linear-gradient(100deg,
+          #8a5a12 0%, #e8b93f 16%, #fff6cf 30%, #ffd76a 42%,
+          #a9741d 56%, #ffe9a8 72%, #e8b93f 86%, #8a5a12 100%);
+      background-size: 280% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 7s linear infinite;
+    }
+
+    @keyframes shimmer {
+      to {
+        background-position: -280% 0;
+      }
+    }
+
+    /* ===== ヒーロー ===== */
+    .hero {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12vh 22px 8vh;
+    }
+
+    .seal {
+      width: 108px;
+      height: 108px;
+      margin: 0 auto 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: var(--f-min);
+      font-weight: 800;
+      font-size: 3.2rem;
+      color: #fff4f4;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, .4);
+      background: radial-gradient(circle at 34% 28%, #ff5f7e, #c3123c 62%, #8c0326);
+      box-shadow:
+        0 0 0 3px rgba(255, 215, 106, .55),
+        0 0 44px rgba(255, 63, 106, .55),
+        inset 0 -8px 22px rgba(0, 0, 0, .35);
+      animation: sealIn 1.1s cubic-bezier(.2, 1.6, .4, 1) .1s both,
+        sealPulse 3.4s ease-in-out 1.2s infinite;
+    }
+
+    @keyframes sealIn {
+      from {
+        transform: scale(0) rotate(-140deg);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes sealPulse {
+
+      0%,
+      100% {
+        transform: scale(1) rotate(0);
+      }
+
+      50% {
+        transform: scale(1.07) rotate(3deg);
+      }
+    }
+
+    /* 一文字ずつ span に割るので、幅が足りないと語中で折り返してしまう。
+       nowrap で一行に固定し、字面が収まる vw を選ぶ */
+    .title {
+      font-family: var(--f-disp);
+      font-weight: 900;
+      font-size: clamp(1.5rem, 7.4vw, 5.2rem);
+      letter-spacing: .1em;
+      line-height: 1.05;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      filter: drop-shadow(0 0 34px rgba(255, 215, 106, .45));
+    }
+
+    /* fill-mode は backwards。both だと終了後も transform が残って
+       スタッキングコンテキストが生まれ、親の background-clip:text の
+       金グラデーションが文字に乗らず透明のまま消える */
+    .title span {
+      display: inline-block;
+      animation: letterDrop .8s cubic-bezier(.2, 1.5, .35, 1) backwards;
+    }
+
+    @keyframes letterDrop {
+      from {
+        transform: translateY(-70px) rotate(-24deg) scale(.5);
+        opacity: 0;
+      }
+
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
+
+    .title-ja {
+      font-family: var(--f-min);
+      font-weight: 800;
+      font-size: clamp(1.9rem, 10.2vw, 4.6rem);
+      letter-spacing: .16em;
+      margin: 18px 0 4px;
+      white-space: nowrap;
+      animation: popIn 1s cubic-bezier(.2, 1.5, .35, 1) 1.1s both;
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(.5);
+        opacity: 0;
+        filter: blur(10px);
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+        filter: none;
+      }
+    }
+
+    .lead {
+      font-family: var(--f-min);
+      color: var(--muted);
+      font-size: clamp(.92rem, 3.4vw, 1.1rem);
+      letter-spacing: .08em;
+      animation: fadeUp 1s ease 1.6s both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(16px);
+        opacity: 0;
+      }
+
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
+
+    .ribbon {
+      display: inline-block;
+      margin-top: 34px;
+      padding: 11px 46px;
+      font-family: var(--f-min);
+      font-weight: 700;
+      font-size: clamp(.85rem, 3.2vw, 1.05rem);
+      letter-spacing: .12em;
+      white-space: nowrap;
+      color: #3a0d17;
+      background: linear-gradient(180deg, #ffe9a8, #ffd76a 45%, #e0a72e);
+      clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%);
+      box-shadow: 0 10px 30px -10px rgba(255, 215, 106, .8);
+      animation: fadeUp 1s ease 1.9s both, ribbonFloat 4.2s ease-in-out 2.9s infinite;
+    }
+
+    @keyframes ribbonFloat {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(-.8deg);
+      }
+
+      50% {
+        transform: translateY(-9px) rotate(.8deg);
+      }
+    }
+
+    .scroll-hint {
+      margin-top: 46px;
+      font-family: var(--f-disp);
+      font-size: .68rem;
+      letter-spacing: .3em;
+      color: rgba(255, 233, 199, .55);
+      animation: fadeUp 1s ease 2.2s both;
+    }
+
+    .scroll-hint i {
+      display: block;
+      margin: 8px auto 0;
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid var(--gold);
+      border-bottom: 2px solid var(--gold);
+      transform: rotate(45deg);
+      animation: chev 1.7s ease-in-out infinite;
+    }
+
+    @keyframes chev {
+
+      0%,
+      100% {
+        transform: rotate(45deg) translate(0, 0);
+        opacity: .3;
+      }
+
+      50% {
+        transform: rotate(45deg) translate(5px, 5px);
+        opacity: 1;
+      }
+    }
+
+    /* ===== セクション ===== */
+    section.block {
+      padding: 9vh 0;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(38px);
+      transition: opacity .9s ease, transform .9s cubic-bezier(.2, .9, .3, 1);
+    }
+
+    .reveal.in {
+      opacity: 1;
+      transform: none;
+    }
+
+    .kicker {
+      font-family: var(--f-disp);
+      font-size: .68rem;
+      letter-spacing: .34em;
+      color: var(--gold);
+      opacity: .8;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-family: var(--f-min);
+      font-weight: 800;
+      font-size: clamp(1.35rem, 5.4vw, 2.1rem);
+      letter-spacing: .09em;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 26px;
+    }
+
+    .panel {
+      position: relative;
+      padding: 34px 26px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, rgba(255, 246, 207, .07), rgba(255, 111, 165, .05));
+      border: 1px solid rgba(255, 215, 106, .28);
+      box-shadow: 0 24px 70px -34px rgba(255, 215, 106, .5),
+        inset 0 0 60px rgba(255, 215, 106, .05);
+    }
+
+    /* 四隅の飾り金具 */
+    .panel span.corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--gold);
+      opacity: .75;
+    }
+
+    .panel span.corner.tl {
+      top: -1px;
+      left: -1px;
+      border-right: 0;
+      border-bottom: 0;
+    }
+
+    .panel span.corner.tr {
+      top: -1px;
+      right: -1px;
+      border-left: 0;
+      border-bottom: 0;
+    }
+
+    .panel span.corner.bl {
+      bottom: -1px;
+      left: -1px;
+      border-right: 0;
+      border-top: 0;
+    }
+
+    .panel span.corner.br {
+      bottom: -1px;
+      right: -1px;
+      border-left: 0;
+      border-top: 0;
+    }
+
+    .panel p {
+      font-family: var(--f-min);
+      font-size: clamp(.95rem, 3.6vw, 1.08rem);
+      letter-spacing: .06em;
+      text-align: center;
+      color: #f6e8dc;
+    }
+
+    .panel p+p {
+      margin-top: 1.1em;
+    }
+
+    .panel em {
+      font-style: normal;
+      font-weight: 800;
+      color: var(--gold-hi);
+      text-shadow: 0 0 18px rgba(255, 215, 106, .55);
+    }
+
+    /* ===== ケーキ ===== */
+    .cake-stage {
+      display: grid;
+      place-items: center;
+      gap: 22px;
+    }
+
+    .cake {
+      position: relative;
+      width: 250px;
+      height: 200px;
+      animation: cakeBob 5s ease-in-out infinite;
+    }
+
+    @keyframes cakeBob {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    .cake .plate {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 250px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #fff6cf, #b98a2a);
+      box-shadow: 0 14px 34px -12px rgba(255, 215, 106, .8);
+    }
+
+    .cake .tier {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 8px 8px 6px 6px;
+      background: linear-gradient(180deg, #ffd7e4 0 34%, #f3a7c2 34% 100%);
+      box-shadow: inset 0 -10px 20px rgba(0, 0, 0, .12), 0 6px 18px -8px rgba(0, 0, 0, .5);
+    }
+
+    .cake .t1 {
+      width: 210px;
+      height: 66px;
+      bottom: 12px;
+    }
+
+    .cake .t2 {
+      width: 154px;
+      height: 56px;
+      bottom: 74px;
+      background: linear-gradient(180deg, #fff1d6 0 34%, #f7cf9a 34% 100%);
+    }
+
+    /* 垂れたクリーム */
+    .cake .drip {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 22px;
+      background:
+        radial-gradient(10px 16px at 12% 0, #fff6ea 98%, transparent 100%),
+        radial-gradient(10px 22px at 32% 0, #fff6ea 98%, transparent 100%),
+        radial-gradient(10px 12px at 52% 0, #fff6ea 98%, transparent 100%),
+        radial-gradient(10px 20px at 72% 0, #fff6ea 98%, transparent 100%),
+        radial-gradient(10px 14px at 90% 0, #fff6ea 98%, transparent 100%);
+    }
+
+    .cake .d1 {
+      width: 210px;
+      bottom: 56px;
+    }
+
+    .cake .d2 {
+      width: 154px;
+      bottom: 112px;
+    }
+
+    .candles {
+      position: absolute;
+      left: 50%;
+      bottom: 128px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 17px;
+      align-items: flex-end;
+      z-index: 2;
+    }
+
+    .candle {
+      position: relative;
+      width: 10px;
+      height: 40px;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      border-radius: 3px;
+      background: repeating-linear-gradient(45deg, #fff 0 5px, #ff8fb0 5px 10px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+      transition: filter .2s ease;
+    }
+
+    .candle:hover,
+    .candle:focus-visible {
+      filter: brightness(1.2);
+      outline: none;
+    }
+
+    .candle .flame {
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      width: 14px;
+      height: 22px;
+      margin-bottom: 2px;
+      transform: translateX(-50%);
+      transform-origin: 50% 100%;
+      border-radius: 50% 50% 46% 46%;
+      background: radial-gradient(circle at 50% 74%, #fff 0 16%, #ffe066 34%, #ff9a24 66%, rgba(255, 90, 0, 0) 78%);
+      box-shadow: 0 0 22px 6px rgba(255, 170, 40, .55);
+      animation: flicker .32s ease-in-out infinite alternate;
+    }
+
+    @keyframes flicker {
+      from {
+        transform: translateX(-50%) scale(1) rotate(-4deg);
+        opacity: .92;
+      }
+
+      to {
+        transform: translateX(-50%) scale(1.16, 1.08) rotate(4deg);
+        opacity: 1;
+      }
+    }
+
+    .candle.out .flame {
+      animation: puff .5s ease forwards;
+    }
+
+    @keyframes puff {
+      to {
+        transform: translateX(-50%) translateY(-26px) scale(2.2);
+        opacity: 0;
+        filter: blur(7px);
+      }
+    }
+
+    .cake-note {
+      min-height: 1.9em;
+      font-size: .86rem;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: .06em;
+    }
+
+    .cake-note.win {
+      color: var(--gold-hi);
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-shadow: 0 0 20px rgba(255, 215, 106, .6);
+      animation: popIn .7s cubic-bezier(.2, 1.6, .4, 1) both;
+    }
+
+    /* ===== 拍手 ===== */
+    .clap-stage {
+      display: grid;
+      place-items: center;
+      gap: 18px;
+    }
+
+    .clap {
+      width: 132px;
+      height: 132px;
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 3rem;
+      line-height: 1;
+      color: #43121f;
+      background: radial-gradient(circle at 34% 28%, #fff6cf, #ffd76a 52%, #d9a02c);
+      transition: transform .12s ease;
+      animation: clapIdle 2.6s ease-in-out infinite;
+    }
+
+    @keyframes clapIdle {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 4px rgba(255, 246, 207, .22), 0 18px 50px -16px rgba(255, 215, 106, .9);
+      }
+
+      50% {
+        box-shadow: 0 0 0 12px rgba(255, 246, 207, .06), 0 18px 62px -14px rgba(255, 215, 106, 1);
+      }
+    }
+
+    .clap:active {
+      transform: scale(.9);
+    }
+
+    .clap-count {
+      font-family: var(--f-disp);
+      font-weight: 700;
+      font-size: clamp(1.6rem, 7vw, 2.6rem);
+      letter-spacing: .06em;
+    }
+
+    .clap-count.bump {
+      animation: bump .32s cubic-bezier(.2, 1.8, .4, 1);
+    }
+
+    @keyframes bump {
+      50% {
+        transform: scale(1.28);
+      }
+    }
+
+    .clap-label {
+      font-size: .8rem;
+      color: var(--muted);
+      letter-spacing: .14em;
+    }
+
+    /* 拍手で飛ぶ絵文字 */
+    .fly {
+      position: fixed;
+      z-index: 6;
+      pointer-events: none;
+      font-size: 1.5rem;
+      animation: fly 1.5s cubic-bezier(.2, .7, .3, 1) forwards;
+    }
+
+    @keyframes fly {
+      from {
+        transform: translate(-50%, -50%) scale(.4) rotate(0);
+        opacity: 1;
+      }
+
+      to {
+        transform: translate(calc(-50% + var(--dx)), calc(-50% - 190px)) scale(1.5) rotate(var(--dr));
+        opacity: 0;
+      }
+    }
+
+    /* ===== 締め ===== */
+    .finale {
+      text-align: center;
+      padding: 12vh 0 8vh;
+    }
+
+    .finale .big {
+      font-family: var(--f-min);
+      font-weight: 800;
+      font-size: clamp(1.5rem, 7vw, 2.8rem);
+      letter-spacing: .14em;
+      line-height: 1.8;
+    }
+
+    .finale .sub {
+      margin-top: 18px;
+      font-family: var(--f-min);
+      color: var(--muted);
+      letter-spacing: .1em;
+    }
+
+    /* ===== 常設のクラッカーボタン ===== */
+    .popper {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 20;
+      padding: 11px 18px;
+      border: 1px solid rgba(255, 215, 106, .5);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: var(--f-round);
+      font-weight: 700;
+      font-size: .82rem;
+      letter-spacing: .06em;
+      color: #2f0c18;
+      background: linear-gradient(180deg, #ffe9a8, #ffd76a 55%, #e6ae33);
+      box-shadow: 0 12px 34px -12px rgba(255, 215, 106, .95);
+      transition: transform .12s ease;
+    }
+
+    .popper:active {
+      transform: scale(.92);
+    }
+
+    /* ===== フッター（唯一の導線＝トップページ） ===== */
+    .site-foot {
+      position: relative;
+      z-index: 4;
+      text-align: center;
+      padding: 8vh 22px 12vh;
+      border-top: 1px solid rgba(255, 215, 106, .2);
+      background: linear-gradient(180deg, transparent, rgba(255, 215, 106, .05));
+    }
+
+    .home {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 34px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--gold-hi);
+      border: 1px solid rgba(255, 215, 106, .55);
+      background: rgba(255, 215, 106, .07);
+      transition: background .25s ease, transform .25s ease, box-shadow .25s ease;
+    }
+
+    .home:hover,
+    .home:focus-visible {
+      background: rgba(255, 215, 106, .18);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px -18px rgba(255, 215, 106, .9);
+      outline: none;
+    }
+
+    .home .arw {
+      animation: arwUp 1.6s ease-in-out infinite;
+    }
+
+    @keyframes arwUp {
+
+      0%,
+      100% {
+        transform: translateY(0);
+        opacity: .6;
+      }
+
+      50% {
+        transform: translateY(-5px);
+        opacity: 1;
+      }
+    }
+
+    .sig {
+      margin-top: 26px;
+      font-family: var(--f-disp);
+      font-size: .64rem;
+      letter-spacing: .22em;
+      color: rgba(195, 176, 200, .7);
+      line-height: 2.2;
+    }
+
+    .sig .ai {
+      color: var(--gold);
+    }
+
+    /* ===== narrow ===== */
+    @media (max-width: 430px) {
+      .ribbon {
+        padding: 10px 26px;
+        font-size: .78rem;
+        letter-spacing: .05em;
+        clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%);
+      }
+
+      .title-ja {
+        letter-spacing: .1em;
+      }
+
+      .seal {
+        width: 88px;
+        height: 88px;
+        font-size: 2.6rem;
+        margin-bottom: 22px;
+      }
+
+      .cake {
+        transform-origin: 50% 100%;
+        scale: .88;
+      }
+    }
+
+    /* ===== 動きを減らす設定への配慮 ===== */
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+
+      .balloons,
+      .sheen {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <noscript>
+    <p style="padding:20px">このページの演出には JavaScript が必要です。</p>
+  </noscript>
+
+  <div class="bg" aria-hidden="true"></div>
+  <div class="balloons" id="balloons" aria-hidden="true"></div>
+  <div class="sheen" aria-hidden="true"></div>
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <!-- 開幕の緞帳。クリックで開く -->
+  <div id="curtain" role="button" tabindex="0" aria-label="開演する">
+    <div class="drape l" aria-hidden="true"></div>
+    <div class="drape r" aria-hidden="true"></div>
+    <div class="knock">
+      <div class="k1">TK.ST ANNIVERSARY</div>
+      <div class="k2">本日、めでたい日につき</div>
+      <div class="k3">▶ タップして開演</div>
+    </div>
+  </div>
+
+  <main>
+    <!-- ===== ヒーロー ===== -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="seal" aria-hidden="true">祝</div>
+        <h1 class="title gold" id="title">ANNIVERSARY</h1>
+        <p class="title-ja gold">おめでとう。</p>
+        <p class="lead">今日という日が、いちばん華やかでありますように。</p>
+        <div class="ribbon">🎊 CONGRATULATIONS 🎊</div>
+        <div class="scroll-hint">SCROLL<i aria-hidden="true"></i></div>
+      </div>
+    </header>
+
+    <!-- ===== 祝辞 ===== -->
+    <section class="block">
+      <div class="wrap reveal">
+        <div class="kicker">CELEBRATION</div>
+        <h2 class="gold">記念日は、<br>祝われた回数だけ強くなる。</h2>
+        <div class="panel">
+          <span class="corner tl"></span><span class="corner tr"></span>
+          <span class="corner bl"></span><span class="corner br"></span>
+          <p>一年に一度しか来ない日が、たしかにあります。</p>
+          <p>その日をわざわざ覚えていて、<br>わざわざ紙吹雪を降らせにくる人がいる。<br>
+            それだけで、その日は<em>特別</em>になります。</p>
+          <p>ここは、そういう日のための場所です。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ケーキ ===== -->
+    <section class="block">
+      <div class="wrap reveal">
+        <div class="kicker">MAKE A WISH</div>
+        <h2 class="gold">ろうそくを、消してください。</h2>
+        <div class="cake-stage">
+          <div class="cake">
+            <div class="candles" id="candles"></div>
+            <div class="tier t2" aria-hidden="true"></div>
+            <div class="drip d2" aria-hidden="true"></div>
+            <div class="tier t1" aria-hidden="true"></div>
+            <div class="drip d1" aria-hidden="true"></div>
+            <div class="plate" aria-hidden="true"></div>
+          </div>
+          <p class="cake-note" id="cakeNote" aria-live="polite">ろうそくをひとつずつタップ。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 拍手 ===== -->
+    <section class="block">
+      <div class="wrap reveal">
+        <div class="kicker">APPLAUSE</div>
+        <h2 class="gold">惜しみない拍手を。</h2>
+        <div class="clap-stage">
+          <button class="clap" id="clapBtn" type="button" aria-label="拍手する">👏</button>
+          <div class="clap-count gold" id="clapCount">0</div>
+          <div class="clap-label">CLAPS</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 締め ===== -->
+    <section class="block finale">
+      <div class="wrap reveal">
+        <p class="big gold">本日は、<br>まことにおめでとうございます。</p>
+        <p class="sub">またいつか、めでたい日に。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <a class="home" href="/">
+      <span class="arw" aria-hidden="true">↑</span>
+      <span>トップページへ</span>
+    </a>
+    <p class="sig">
+      tk.st — ANNIVERSARY<br>
+      GENERATED WITH <span class="ai">CLAUDE OPUS 5</span>
+    </p>
+  </footer>
+
+  <button class="popper" id="popper" type="button">🎉 クラッカーを鳴らす</button>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var PAL = ['#ffd76a', '#ff6fa5', '#fff6cf', '#9ad9ff', '#ffffff', '#ff9f4d', '#c9a2ff', '#8dffc4'];
+      var rnd = function (a, b) { return a + Math.random() * (b - a); };
+      var pick = function (arr) { return arr[(Math.random() * arr.length) | 0]; };
+
+      /* ==================================================================
+         キャンバス。ひらひら・きらめき・紙吹雪・花火をひとつの RAF で回す
+         ================================================================== */
+      var cv = document.getElementById('fx');
+      var ctx = cv.getContext('2d');
+      var W = 0, H = 0;
+
+      function resize() {
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        W = window.innerWidth;
+        H = window.innerHeight;
+        cv.width = Math.round(W * dpr);
+        cv.height = Math.round(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      resize();
+
+      /* ---- 舞う紙片の形 ---- */
+      function shapePetal(s) {
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.bezierCurveTo(s * 0.85, -s * 0.55, s * 0.7, s * 0.6, 0, s);
+        ctx.bezierCurveTo(-s * 0.7, s * 0.6, -s * 0.85, -s * 0.55, 0, -s);
+        ctx.fill();
+      }
+      function shapeRibbon(s) {
+        ctx.fillRect(-s * 0.36, -s * 1.15, s * 0.72, s * 2.3);
+      }
+      function shapeSquare(s) {
+        ctx.fillRect(-s * 0.8, -s * 0.8, s * 1.6, s * 1.6);
+      }
+      function shapeStar(s) {
+        ctx.beginPath();
+        for (var i = 0; i < 10; i++) {
+          var r = (i % 2 === 0) ? s * 1.15 : s * 0.46;
+          var a = Math.PI * i / 5 - Math.PI / 2;
+          if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+          else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+      var SHAPES = [shapePetal, shapeRibbon, shapeSquare, shapeStar];
+
+      /* ---- 常時降ってくる「ひらひら」 ---- */
+      var petals = [];
+
+      function seedPetal(p, fromTop) {
+        p.x = rnd(-30, W + 30);
+        p.y = fromTop ? rnd(-H * 0.2, -20) : rnd(-20, H);
+        p.size = rnd(4, 10);
+        p.vy = rnd(26, 78);
+        p.vx = rnd(-16, 16);
+        p.sway = rnd(10, 34);
+        p.rot = rnd(0, 6.28);
+        p.rotSp = rnd(-1.6, 1.6);
+        p.phase = rnd(0, 6.28);
+        p.phaseSp = rnd(1.4, 3.6);
+        p.color = pick(PAL);
+        p.alpha = rnd(0.5, 1);
+        p.shape = pick(SHAPES);
+        return p;
+      }
+
+      function petalTarget() {
+        if (reduce) return 0;
+        return Math.max(28, Math.min(170, Math.round(W * H / 7000)));
+      }
+
+      function syncPetals() {
+        var t = petalTarget();
+        while (petals.length < t) petals.push(seedPetal({}, false));
+        while (petals.length > t) petals.pop();
+      }
+      syncPetals();
+
+      window.addEventListener('resize', function () { resize(); syncPetals(); });
+
+      function updatePetals(dt) {
+        for (var i = 0; i < petals.length; i++) {
+          var p = petals[i];
+          p.phase += p.phaseSp * dt;
+          p.rot += p.rotSp * dt;
+          p.x += (p.vx + Math.sin(p.phase * 0.65) * p.sway) * dt;
+          p.y += p.vy * dt;
+          if (p.y > H + 40) seedPetal(p, true);
+          if (p.x < -50) p.x = W + 50;
+          else if (p.x > W + 50) p.x = -50;
+        }
+      }
+
+      function drawPetals() {
+        for (var i = 0; i < petals.length; i++) {
+          var p = petals[i];
+          // cos で横幅を潰すと、紙が裏返りながら舞う「ひらひら」になる
+          var flip = Math.abs(Math.cos(p.phase));
+          var sx = flip < 0.08 ? 0.08 : flip;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.scale(sx, 1);
+          ctx.globalAlpha = p.alpha * (0.55 + 0.45 * sx);
+          ctx.fillStyle = p.color;
+          p.shape(p.size);
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      /* ---- きらめき（四芒星のグリント） ---- */
+      var glints = [];
+      var glintTimer = 0;
+
+      function updateGlints(dt) {
+        if (!reduce) {
+          glintTimer -= dt;
+          if (glintTimer <= 0) {
+            glintTimer = rnd(0.03, 0.13);
+            glints.push({
+              x: rnd(0, W), y: rnd(0, H),
+              r: rnd(7, 26), life: 0, max: rnd(0.5, 1.2),
+              color: pick(['#fff6cf', '#ffd76a', '#ffffff', '#9ad9ff', '#ff6fa5'])
+            });
+          }
+        }
+        for (var i = glints.length - 1; i >= 0; i--) {
+          glints[i].life += dt;
+          if (glints[i].life >= glints[i].max) glints.splice(i, 1);
+        }
+      }
+
+      function drawGlints() {
+        ctx.globalCompositeOperation = 'lighter';
+        for (var i = 0; i < glints.length; i++) {
+          var g = glints[i];
+          var a = Math.sin(Math.PI * (g.life / g.max));
+          var r = g.r * (0.35 + 0.65 * a);
+          ctx.save();
+          ctx.translate(g.x, g.y);
+          ctx.fillStyle = g.color;
+          ctx.globalAlpha = a;
+          ctx.beginPath();
+          ctx.moveTo(0, -r);
+          ctx.quadraticCurveTo(r * 0.14, -r * 0.14, r, 0);
+          ctx.quadraticCurveTo(r * 0.14, r * 0.14, 0, r);
+          ctx.quadraticCurveTo(-r * 0.14, r * 0.14, -r, 0);
+          ctx.quadraticCurveTo(-r * 0.14, -r * 0.14, 0, -r);
+          ctx.fill();
+          ctx.globalAlpha = a * 0.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.2, 0, 6.2832);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+      }
+
+      /* ---- 紙吹雪の噴出 ---- */
+      var confetti = [];
+
+      function burst(x, y, count, spread, angle, power) {
+        if (reduce) return;
+        count = Math.min(count, 220);
+        for (var i = 0; i < count; i++) {
+          var a = angle + rnd(-spread, spread);
+          var v = power * rnd(0.55, 1.25);
+          confetti.push({
+            x: x, y: y,
+            vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+            size: rnd(4, 10),
+            rot: rnd(0, 6.28), rotSp: rnd(-9, 9),
+            phase: rnd(0, 6.28), phaseSp: rnd(4, 9),
+            color: pick(PAL),
+            life: 0, max: rnd(1.8, 3.4),
+            shape: pick(SHAPES)
+          });
+        }
+        if (confetti.length > 1400) confetti.splice(0, confetti.length - 1400);
+      }
+
+      function updateConfetti(dt) {
+        for (var i = confetti.length - 1; i >= 0; i--) {
+          var c = confetti[i];
+          c.life += dt;
+          if (c.life >= c.max) { confetti.splice(i, 1); continue; }
+          c.vy += 420 * dt;          // 重力
+          c.vx *= (1 - 1.1 * dt);    // 空気抵抗
+          c.vy *= (1 - 0.5 * dt);
+          c.phase += c.phaseSp * dt;
+          c.rot += c.rotSp * dt;
+          c.x += (c.vx + Math.sin(c.phase) * 34) * dt;
+          c.y += c.vy * dt;
+        }
+      }
+
+      function drawConfetti() {
+        for (var i = 0; i < confetti.length; i++) {
+          var c = confetti[i];
+          var t = c.life / c.max;
+          var flip = Math.abs(Math.cos(c.phase));
+          var sx = flip < 0.08 ? 0.08 : flip;
+          ctx.save();
+          ctx.translate(c.x, c.y);
+          ctx.rotate(c.rot);
+          ctx.scale(sx, 1);
+          ctx.globalAlpha = t > 0.72 ? (1 - t) / 0.28 : 1;
+          ctx.fillStyle = c.color;
+          c.shape(c.size);
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      /* ---- 花火 ---- */
+      var shells = [];
+      var sparks = [];
+
+      function launchFirework(x, topY, color) {
+        if (reduce) return;
+        shells.push({
+          x: x === undefined ? rnd(W * 0.15, W * 0.85) : x,
+          y: H + 10,
+          vy: -rnd(430, 620),
+          target: topY === undefined ? rnd(H * 0.12, H * 0.45) : topY,
+          color: color || pick(PAL)
+        });
+      }
+
+      function explode(x, y, color) {
+        var n = 74;
+        var ring = rnd(150, 250);
+        for (var i = 0; i < n; i++) {
+          var a = (Math.PI * 2 * i) / n + rnd(-0.05, 0.05);
+          var v = ring * rnd(0.55, 1.1);
+          sparks.push({
+            x: x, y: y,
+            vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+            color: Math.random() < 0.22 ? '#ffffff' : color,
+            life: 0, max: rnd(0.9, 1.8), size: rnd(1.4, 3.2)
+          });
+        }
+        burst(x, y, 26, 3.14, 0, 200);
+      }
+
+      function updateFireworks(dt) {
+        for (var i = shells.length - 1; i >= 0; i--) {
+          var s = shells[i];
+          s.vy += 300 * dt;
+          s.y += s.vy * dt;
+          sparks.push({
+            x: s.x + rnd(-2, 2), y: s.y, vx: rnd(-14, 14), vy: rnd(0, 40),
+            color: '#ffe9a8', life: 0, max: 0.35, size: 1.6
+          });
+          if (s.y <= s.target || s.vy >= 0) {
+            explode(s.x, s.y, s.color);
+            shells.splice(i, 1);
+          }
+        }
+        for (var j = sparks.length - 1; j >= 0; j--) {
+          var p = sparks[j];
+          p.life += dt;
+          if (p.life >= p.max) { sparks.splice(j, 1); continue; }
+          p.vy += 130 * dt;
+          p.vx *= (1 - 1.5 * dt);
+          p.vy *= (1 - 1.5 * dt);
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+        }
+        if (sparks.length > 2600) sparks.splice(0, sparks.length - 2600);
+      }
+
+      function drawFireworks() {
+        ctx.globalCompositeOperation = 'lighter';
+        for (var i = 0; i < sparks.length; i++) {
+          var p = sparks[i];
+          var a = 1 - p.life / p.max;
+          ctx.globalAlpha = a * a;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * (0.5 + a * 0.9), 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        for (var k = 0; k < shells.length; k++) {
+          ctx.fillStyle = shells[k].color;
+          ctx.beginPath();
+          ctx.arc(shells[k].x, shells[k].y, 2.6, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      /* ---- ループ ---- */
+      var last = performance.now();
+      function frame(now) {
+        var dt = Math.min((now - last) / 1000, 0.05);
+        last = now;
+        ctx.clearRect(0, 0, W, H);
+        updatePetals(dt); drawPetals();
+        updateGlints(dt); drawGlints();
+        updateConfetti(dt); drawConfetti();
+        updateFireworks(dt); drawFireworks();
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+
+      /* 両サイドから紙吹雪を撃つ「クラッカー」 */
+      function popCannons() {
+        burst(0, H * 0.72, 110, 0.55, -Math.PI / 3.4, 760);
+        burst(W, H * 0.72, 110, 0.55, -Math.PI + Math.PI / 3.4, 760);
+      }
+
+      /* 総仕上げ：花火と紙吹雪をまとめて */
+      function grandFinale() {
+        popCannons();
+        [0, 260, 520, 760, 1040, 1320, 1600, 1900].forEach(function (d) {
+          setTimeout(function () { launchFirework(); }, d);
+        });
+        setTimeout(popCannons, 1200);
+        var t = 0;
+        var rain = setInterval(function () {
+          for (var i = 0; i < 3; i++) burst(rnd(0, W), -20, 12, 0.6, Math.PI / 2, 90);
+          if (++t > 26) clearInterval(rain);
+        }, 110);
+      }
+
+      /* ==================================================================
+         風船
+         ================================================================== */
+      (function balloons() {
+        if (reduce) return;
+        var host = document.getElementById('balloons');
+        var colors = ['#ff6fa5', '#ffd76a', '#9ad9ff', '#c9a2ff', '#8dffc4', '#ff9f4d'];
+        for (var i = 0; i < 14; i++) {
+          var b = document.createElement('div');
+          b.className = 'balloon';
+          b.style.left = (Math.random() * 100) + '%';
+          b.style.animationDuration = rnd(16, 34) + 's';
+          b.style.animationDelay = (-rnd(0, 34)) + 's';
+          b.style.opacity = rnd(0.35, 0.8).toFixed(2);
+          var inner = document.createElement('i');
+          inner.style.setProperty('--c', colors[i % colors.length]);
+          inner.style.animationDuration = rnd(3.4, 6.2) + 's';
+          inner.style.animationDelay = (-rnd(0, 5)) + 's';
+          b.appendChild(inner);
+          host.appendChild(b);
+        }
+      })();
+
+      /* ==================================================================
+         タイトルを一文字ずつ落とす
+         ================================================================== */
+      (function splitTitle() {
+        var el = document.getElementById('title');
+        var text = el.textContent.trim();
+        el.setAttribute('aria-label', text);
+        el.textContent = '';
+        for (var i = 0; i < text.length; i++) {
+          var s = document.createElement('span');
+          s.setAttribute('aria-hidden', 'true');
+          s.textContent = text.charAt(i);
+          s.style.animationDelay = (0.35 + i * 0.06) + 's';
+          el.appendChild(s);
+        }
+      })();
+
+      /* ==================================================================
+         開幕
+         ================================================================== */
+      var curtain = document.getElementById('curtain');
+      var opened = false;
+
+      function openCurtain() {
+        if (opened) return;
+        opened = true;
+        curtain.classList.add('open');
+        popCannons();
+        setTimeout(function () { launchFirework(); }, 500);
+        setTimeout(function () { launchFirework(); }, 900);
+        setTimeout(function () { curtain.classList.add('done'); }, 1700);
+      }
+      curtain.addEventListener('click', openCurtain);
+      curtain.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCurtain(); }
+      });
+
+      /* ==================================================================
+         スクロール連動の出現
+         ================================================================== */
+      (function reveal() {
+        var items = document.querySelectorAll('.reveal');
+        var i;
+        if (!('IntersectionObserver' in window)) {
+          for (i = 0; i < items.length; i++) items[i].classList.add('in');
+          return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) {
+              en.target.classList.add('in');
+              io.unobserve(en.target);
+            }
+          });
+        }, { threshold: 0.18 });
+        for (i = 0; i < items.length; i++) io.observe(items[i]);
+      })();
+
+      /* ==================================================================
+         ケーキのろうそく
+         ================================================================== */
+      (function cake() {
+        var host = document.getElementById('candles');
+        var note = document.getElementById('cakeNote');
+        var TOTAL = 5;
+        var out = 0;
+        var i;
+
+        for (i = 0; i < TOTAL; i++) {
+          var c = document.createElement('button');
+          c.className = 'candle';
+          c.type = 'button';
+          c.setAttribute('aria-label', (i + 1) + '本目のろうそくを消す');
+          var f = document.createElement('span');
+          f.className = 'flame';
+          f.style.animationDelay = (-Math.random()).toFixed(2) + 's';
+          c.appendChild(f);
+          host.appendChild(c);
+        }
+
+        host.addEventListener('click', function (e) {
+          var btn = e.target.closest('.candle');
+          if (!btn || btn.classList.contains('out')) return;
+          btn.classList.add('out');
+          btn.disabled = true;
+          out++;
+
+          var r = btn.getBoundingClientRect();
+          burst(r.left + r.width / 2, r.top, 22, 1.0, -Math.PI / 2, 260);
+
+          if (out < TOTAL) {
+            note.textContent = 'あと ' + (TOTAL - out) + ' 本。';
+          } else {
+            note.textContent = '🎂 願いごとは、ちゃんと届きました。';
+            note.classList.add('win');
+            grandFinale();
+          }
+        });
+      })();
+
+      /* ==================================================================
+         拍手
+         ================================================================== */
+      (function applause() {
+        var btn = document.getElementById('clapBtn');
+        var out = document.getElementById('clapCount');
+        var EMOJI = ['👏', '🎉', '✨', '🎊', '💐', '🥂', '🌸', '⭐'];
+        var n = 0;
+
+        try {
+          var saved = parseInt(localStorage.getItem('tkst-anniv-claps') || '0', 10);
+          if (isFinite(saved) && saved > 0) n = saved;
+        } catch (err) { /* 保存できない環境では 0 から数える */ }
+        out.textContent = n;
+
+        btn.addEventListener('click', function () {
+          n++;
+          out.textContent = n;
+          out.classList.remove('bump');
+          void out.offsetWidth;
+          out.classList.add('bump');
+          try { localStorage.setItem('tkst-anniv-claps', String(n)); } catch (err) { }
+
+          var r = btn.getBoundingClientRect();
+          var cx = r.left + r.width / 2;
+          var cy = r.top + r.height / 2;
+          burst(cx, cy, 26, 1.2, -Math.PI / 2, 300);
+
+          for (var i = 0; i < 3; i++) {
+            var f = document.createElement('span');
+            f.className = 'fly';
+            f.textContent = pick(EMOJI);
+            f.style.left = (cx + rnd(-26, 26)) + 'px';
+            f.style.top = cy + 'px';
+            f.style.setProperty('--dx', rnd(-70, 70).toFixed(0) + 'px');
+            f.style.setProperty('--dr', rnd(-180, 180).toFixed(0) + 'deg');
+            document.body.appendChild(f);
+            (function (el) {
+              setTimeout(function () { el.remove(); }, 1600);
+            })(f);
+          }
+
+          // 節目にはご褒美
+          if (n % 25 === 0) grandFinale();
+          else if (n % 10 === 0) launchFirework();
+        });
+      })();
+
+      /* ==================================================================
+         常設のクラッカーボタン／余白のタップでも少し弾ける
+         ================================================================== */
+      document.getElementById('popper').addEventListener('click', function (e) {
+        e.stopPropagation();
+        popCannons();
+        launchFirework();
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!opened) return;
+        if (e.target.closest('button, a')) return;
+        burst(e.clientX, e.clientY, 16, 3.14, 0, 220);
+      });
+    })();
+  </script>
+</body>
+
+</html>
