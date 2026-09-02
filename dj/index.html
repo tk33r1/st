@@ -1278,24 +1278,42 @@
       display: none;
     }
 
+    /*
+     * ポップアップのバッジと同じ組み立て（DotGothic16 / 0.625rem / 字間 .1em /
+     * 角 2px / 1px の罫 / 明滅する丸）。1 ページに 2 つ出る「受付中」なので、
+     * 形も色相もそろえる。
+     *
+     * 色だけは白地用に落としてある。テーマの --heart-secondary #37f2e6 は
+     * 暗い地の上で使う想定の明るさで、白地に置くと 1.40:1 しか出ず読めない。
+     * 色相 176 度・彩度はそのままに明度を 26% まで下げた #087d75 なら 5.00:1。
+     */
     .request-cta.live .request-cta-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       margin-right: 10px;
-      color: var(--accent-red);
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      font-family: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+      font-size: 0.625rem;
+      line-height: 1.7;
+      letter-spacing: 0.1em;
+      color: #087d75;
+      border: 1px solid currentColor;
+      border-radius: 2px;
+    }
+
+    /* 灯った丸。明滅はポップアップと同じ badge-blip */
+    .request-cta.live .request-cta-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: badge-blip 1.6s ease-in-out infinite;
     }
 
     .request-cta.live a > span:last-child {
       border-bottom: 1px dashed var(--neo-purple);
-    }
-
-    .request-cta .live-dot {
-      width: 6px;
-      height: 6px;
     }
 
     /* ===== Image Modal ===== */
@@ -1938,23 +1956,37 @@
 
     /* ===== LIVE POPUP ===== */
     /*
-     * 受付中だけ出す隅のカード。会場では QR からリクエストページへ直接降りてくるので、
-     * ここは「今やっている」と気づかせるだけでよく、面で塗って主張する必要がない。
-     * 赤は点と「受付中」の 3 文字だけに使い、地は他セクションと同じ白のまま。
+     * 受付中だけ出す隅のカード。飛び先の /dj/request/ は美術紫水（白昼夢）の暗いテーマなので、
+     * このカードだけそちらの見た目を借りて「向こう側をのぞく窓」にしている。
+     * 配色・罫線・走査線・ドット絵のハートは data/bijutsu-shisui.css / .js と同じ値。
+     *
+     * 白は使わない。会場では QR からリクエストページへ直接降りてくるので、
+     * ここは気づかせるだけでよく、面積も主張も小さいままにする。
      */
     .live-pop {
-      --fold: 14px;
+      /* 白昼夢テーマの値はこのカードの中だけに閉じる（ページ本体の :root とは別系統） */
+      --bs-bg: #121216;
+      --bs-fg: #ececec;
+      --bs-fg-dim: #9a9aa0;
+      --bs-pink: #ff2f6e;
+      --bs-cyan: #37f2e6;
+      --bs-border: rgba(255, 255, 255, 0.14);
+
       position: fixed;
       left: 24px;
       bottom: 24px;
       z-index: 950;
-      width: min(290px, calc(100vw - 48px));
-      padding: 15px 17px 17px;
-      background: var(--white);
-      border: 1px solid rgba(156, 122, 247, 0.5);
-      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
-      /* clip-path は box-shadow も切るので、影は切り抜いた形に沿う drop-shadow で出す */
-      filter: drop-shadow(0 12px 26px rgba(45, 27, 78, 0.22));
+      width: min(300px, calc(100vw - 48px));
+      padding: 14px 16px 16px;
+      /* 左にハートの標、右に文字。ハートは 3 行ぶんを貫く */
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      column-gap: 11px;
+      background: var(--bs-bg);
+      border: 1px solid var(--bs-border);
+      /* 向こうのテーマは --r: 2px。角は落とさない */
+      border-radius: 2px;
+      box-shadow: 0 14px 30px rgba(10, 10, 12, 0.35);
       opacity: 0;
       transform: translateY(12px);
       transition: opacity 0.5s ease, transform 0.5s ease;
@@ -1965,84 +1997,123 @@
       transform: translateY(0);
     }
 
+    /* VHS の走査線。本家と同じ 1px / 3px。
+       親が transform で重ね合わせの文脈を作るので、混色はカードの中で閉じる */
+    .live-pop::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      background: repeating-linear-gradient(to bottom,
+          rgba(255, 255, 255, 0.03) 0px,
+          rgba(255, 255, 255, 0.03) 1px,
+          transparent 1px,
+          transparent 3px);
+    }
+
+    /* ドット絵のハート。升目と隙間は DJ_ART.HEART / DOT と同じ */
+    .live-pop-heart {
+      grid-column: 1;
+      grid-row: 1 / span 3;
+      align-self: start;
+      margin-top: 3px;
+      width: 17px;
+      height: auto;
+      color: var(--bs-pink);
+      /* 升目の境目を補間させない。ぼけるとドット絵に見えない */
+      shape-rendering: crispEdges;
+    }
+
+    /* /dj/request/ の受付中バッジと同じ組み立て（DotGothic16 / 0.625rem / 字間 .1em / 角 2px） */
     .live-pop-status {
-      display: flex;
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: start;
+      display: inline-flex;
       align-items: center;
-      gap: 7px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.14em;
-      color: var(--accent-red);
+      gap: 6px;
+      padding: 3px 9px;
+      font-family: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+      font-size: 0.625rem;
+      line-height: 1.7;
+      letter-spacing: 0.1em;
+      color: var(--bs-cyan);
+      border: 1px solid currentColor;
+      border-radius: 2px;
+    }
+
+    /* 灯った丸。向こうと同じ明滅で「いま開いている」を示す */
+    .live-pop-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: badge-blip 1.6s ease-in-out infinite;
+    }
+
+    @keyframes badge-blip {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.2;
+      }
     }
 
     .live-pop-title {
-      margin-top: 6px;
+      grid-column: 2;
+      grid-row: 2;
+      margin-top: 9px;
       font-size: 0.95rem;
       font-weight: 700;
       letter-spacing: 0.03em;
-      color: var(--black);
+      color: var(--bs-fg);
       /* 会場名まで入った長い回名でもカードを縦に伸ばさない */
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
+    /* 向こうのパンくずと同じ「くすんだ罫線 → ホバーでシアン」 */
     .live-pop-link {
-      display: inline-block;
-      margin-top: 10px;
+      grid-column: 2;
+      grid-row: 3;
+      justify-self: start;
+      margin-top: 9px;
       font-size: 0.8rem;
       letter-spacing: 0.05em;
-      color: #7b55d6;
+      color: var(--bs-cyan);
       text-decoration: none;
-      border-bottom: 1px dashed var(--neo-purple);
-      transition: color 0.3s ease;
+      border-bottom: 1px solid var(--bs-border);
+      transition: border-color 0.3s ease;
     }
 
     .live-pop-link:hover {
-      color: var(--neo-purple);
+      border-bottom-color: var(--bs-cyan);
     }
 
     .live-pop-close {
       position: absolute;
-      top: 4px;
-      right: 6px;
+      top: 2px;
+      right: 4px;
       width: 26px;
       height: 26px;
       background: none;
       border: none;
-      color: rgba(26, 26, 26, 0.35);
-      font-size: 1.2rem;
+      color: var(--bs-fg-dim);
+      font-size: 1.1rem;
       line-height: 1;
       cursor: pointer;
       transition: color 0.3s ease;
     }
 
     .live-pop-close:hover {
-      color: var(--black);
-    }
-
-    /* 受付中の目印。白地に置くので赤。パルスも同じ赤で広がる */
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent-red);
-      flex: none;
-      animation: live-pulse 1.6s ease-in-out infinite;
-    }
-
-    @keyframes live-pulse {
-
-      0%,
-      100% {
-        opacity: 1;
-        box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.55);
-      }
-
-      70% {
-        opacity: 0.7;
-        box-shadow: 0 0 0 7px rgba(255, 51, 51, 0);
-      }
+      color: var(--bs-fg);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2062,6 +2133,11 @@
 
       .modal-track {
         scroll-behavior: auto;
+      }
+
+      /* data/bijutsu-shisui.css と同じ扱い。動きを減らす設定では走査線を出さない */
+      .live-pop::after {
+        display: none;
       }
 
       /* 上の一括指定は duration しか潰せない。位置が動くものは transform ごと止める */
@@ -2750,7 +2826,7 @@
   <!-- 受付中は JS が .live を付け、バッジ付きの赤いボタンになる -->
   <div class="request-cta" id="requestCta">
     <a href="request/">
-      <span class="request-cta-badge"><span class="live-dot" aria-hidden="true"></span>受付中</span>
+      <span class="request-cta-badge">受付中</span>
       <span>♪ 曲リクエスト</span>
     </a>
   </div>
@@ -2793,7 +2869,18 @@
 
   <!-- Live Popup: 受付中の回があるときだけ JS が出す -->
   <aside class="live-pop" id="livePop" hidden>
-    <p class="live-pop-status"><span class="live-dot" aria-hidden="true"></span>受付中</p>
+    <!--
+      ドット絵のハート。升目は data/bijutsu-shisui.js の DJ_ART.HEART（7x6）、
+      1 升 0.92 の隙間も同じ。隙間を詰めると升目が繋がってドット絵に見えなくなる。
+    -->
+    <svg class="live-pop-heart" viewBox="0 0 7 6" fill="currentColor" aria-hidden="true">
+      <rect x="1" y="0" width="0.92" height="0.92"/><rect x="2" y="0" width="0.92" height="0.92"/><rect x="4" y="0" width="0.92" height="0.92"/><rect x="5" y="0" width="0.92" height="0.92"/><rect x="0" y="1" width="0.92" height="0.92"/><rect x="1" y="1" width="0.92" height="0.92"/>
+      <rect x="2" y="1" width="0.92" height="0.92"/><rect x="3" y="1" width="0.92" height="0.92"/><rect x="4" y="1" width="0.92" height="0.92"/><rect x="5" y="1" width="0.92" height="0.92"/><rect x="6" y="1" width="0.92" height="0.92"/><rect x="0" y="2" width="0.92" height="0.92"/>
+      <rect x="1" y="2" width="0.92" height="0.92"/><rect x="2" y="2" width="0.92" height="0.92"/><rect x="3" y="2" width="0.92" height="0.92"/><rect x="4" y="2" width="0.92" height="0.92"/><rect x="5" y="2" width="0.92" height="0.92"/><rect x="6" y="2" width="0.92" height="0.92"/>
+      <rect x="1" y="3" width="0.92" height="0.92"/><rect x="2" y="3" width="0.92" height="0.92"/><rect x="3" y="3" width="0.92" height="0.92"/><rect x="4" y="3" width="0.92" height="0.92"/><rect x="5" y="3" width="0.92" height="0.92"/><rect x="2" y="4" width="0.92" height="0.92"/>
+      <rect x="3" y="4" width="0.92" height="0.92"/><rect x="4" y="4" width="0.92" height="0.92"/><rect x="3" y="5" width="0.92" height="0.92"/>
+    </svg>
+    <p class="live-pop-status">受付中</p>
     <p class="live-pop-title" id="livePopTitle"></p>
     <a class="live-pop-link" href="request/">かけてほしい曲を送る</a>
     <button class="live-pop-close" id="livePopClose" type="button" aria-label="閉じる">&times;</button>
@@ -3270,6 +3357,14 @@
           if (!data || !data.open) return;
           // 受付中のあいだは、下端の導線にも赤い点と「受付中」を添える
           if (requestCta) requestCta.classList.add('live');
+          // バッジの DotGothic16（/dj/request/ と同じ書体）は受付中のときしか使わない。
+          // head に置くと hidden のままでも subset が落ちてくるので、ここで読む。
+          // ポップアップを閉じていても下端のバッジでは要るので、dismissed の判定より前に置く。
+          const dot = document.createElement('link');
+          dot.rel = 'stylesheet';
+          dot.href = 'https://fonts.googleapis.com/css2?family=DotGothic16&display=swap';
+          document.head.appendChild(dot);
+
           if (dismissed(data.code)) return;
 
           // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる

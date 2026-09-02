@@ -28,9 +28,10 @@ function segmenter(granularity) {
 /**
  * @param {string} text
  * @param {'char'|'word'|'sentence'|'line'} mode
+ * @param {RegExp|null} atomRe 割ってはいけない語。char / word 粒度で効く（下の注記参照）
  * @returns {{v:string,i:number}[]} v=原文のまま / i=開始オフセット
  */
-export function tokenize(text, mode = 'char') {
+export function tokenize(text, mode = 'char', atomRe = null) {
   if (!text) return [];
 
   if (mode === 'line' || mode === 'sentence') {
@@ -50,10 +51,32 @@ export function tokenize(text, mode = 'char') {
   // char は書記素クラスタ単位。絵文字・結合文字・異体字セレクタが割れない。
   const granularity = mode === 'word' ? 'word' : 'grapheme';
   const out = [];
-  for (const s of segmenter(granularity).segment(text)) {
-    out.push({ v: s.segment, i: s.index });
+
+  // Intl.Segmenter は「行なう」を 行/な/う、「下さい」を 下/さい のように割る。
+  // 割れたトークンには送り仮名の表が当たらないため、正規化したい語だけは先に
+  // 切り出して1トークンにまとめる。v は原文のままなので、chunkText と
+  // applyChunks が返す文字列は影響を受けない。
+  if (atomRe) {
+    let last = 0;
+    let m;
+    atomRe.lastIndex = 0;
+    while ((m = atomRe.exec(text)) !== null) {
+      if (m.index > last) segmentInto(out, text.slice(last, m.index), granularity, last);
+      out.push({ v: m[0], i: m.index });
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) segmentInto(out, text.slice(last), granularity, last);
+    return out;
   }
+
+  segmentInto(out, text, granularity, 0);
   return out;
+}
+
+function segmentInto(out, text, granularity, offset) {
+  for (const s of segmenter(granularity).segment(text)) {
+    out.push({ v: s.segment, i: offset + s.index });
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -94,6 +117,22 @@ const OKURIGANA_CANON = new Map(Object.entries({
   '出来る': 'できる', '出来ます': 'できます',
   '下さい': 'ください', '致します': 'いたします', '頂く': 'いただく',
 }));
+
+// 上の表を、長いものから順に試す1本の正規表現に畳む。tokenize に渡して
+// 「行なう」「下さい」が語の途中で割れないようにするために使う。
+//
+// 表記ゆれ側（キー）だけでなく正規形（値）も入れること。片側だけを1トークンに
+// まとめても、もう片方は Segmenter が割ってしまい、両者のトークン列が揃わない。
+// 「行なっ」を1つにまとめるなら「行っ」も1つにまとめる必要がある。
+let okuriganaAtomRe = null;
+function okuriganaAtoms() {
+  if (!okuriganaAtomRe) {
+    const words = [...new Set([...OKURIGANA_CANON.keys(), ...OKURIGANA_CANON.values()])]
+      .sort((a, b) => b.length - a.length);
+    okuriganaAtomRe = new RegExp(words.join('|'), 'g');
+  }
+  return okuriganaAtomRe;
+}
 
 const WS_RE = /[\s　​﻿]/g;
 
@@ -302,8 +341,9 @@ function buildChunks(aLen, bLen, sa, sb, ops) {
  */
 export function diff(before, after, opts = {}) {
   const mode = opts.mode || 'char';
-  const a = tokenize(before, mode);
-  const b = tokenize(after, mode);
+  const atomRe = opts.ignoreOkurigana ? okuriganaAtoms() : null;
+  const a = tokenize(before, mode, atomRe);
+  const b = tokenize(after, mode, atomRe);
 
   const sa = buildSeq(a, opts);
   const sb = buildSeq(b, opts);

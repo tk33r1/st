@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="ja" class="st-theme">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YRM5KPVGX7');
+  </script>
+  <!-- Ahrefs -->
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
+  <!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックに対応。ブラウザ内で完結します。">
+  <meta name="robots" content="max-image-preview:large">
+  <title>CSV文字コード一括変換ツール</title>
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23D97706'/%3E%3Crect x='5' y='10' width='9' height='12' rx='1.5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M17 16h9m-3-3 3 3-3 3' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="canonical" href="https://tk.st/tools/csv-encoding/">
+  <link rel="author" href="https://tk.st/">
+  <meta property="og:title" content="CSV文字コード一括変換ツール">
+  <meta property="og:description" content="CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックに対応。">
+  <meta property="og:image" content="https://tk.st/images/ogp/csv-encoding-ogp.png">
+  <meta property="og:url" content="https://tk.st/tools/csv-encoding/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CSV文字コード一括変換ツール">
+  <meta name="twitter:description" content="CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。変換できない文字も事前にチェックできます。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/csv-encoding-ogp.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://tk.st/tools/csv-encoding/#webapp",
+        "name": "CSV文字コード一括変換ツール",
+        "description": "CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックに対応。",
+        "url": "https://tk.st/tools/csv-encoding/",
+        "inLanguage": "ja",
+        "publisher": {
+          "@type": "Person",
+          "@id": "https://tk.st/#shitake"
+        },
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": {
+          "@type": "Offer",
+          "price": 0,
+          "priceCurrency": "JPY"
+        },
+        "browserRequirements": "Requires JavaScript",
+        "featureList": "文字コードの自動判別, 一括変換, Shift_JIS / UTF-8 / EUC-JP / ISO-2022-JP / UTF-16 対応, BOMの付け外し, 改行コードの統一, 変換できない文字の検出, ZIP一括ダウンロード, サーバーへの送信なし"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Shinya Takeda",
+            "item": "https://tk.st/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "ST TOOLS",
+            "item": "https://tk.st/tools/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "CSV文字コード変換",
+            "item": "https://tk.st/tools/csv-encoding/"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://tk.st/tools/csv-encoding/#faq",
+        "isPartOf": {
+          "@id": "https://tk.st/tools/csv-encoding/#webapp"
+        },
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "文字コードはどうやって判別していますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "BOM、ISO-2022-JPのエスケープシーケンス、UTF-8として妥当なバイト列かどうかを順に確認し、それでも決まらない場合はShift_JISとEUC-JPのバイト構造と日本語の出現頻度から推定します。推定結果はファイルごとに手動で上書きできます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "アップロードしたCSVはサーバーに送られますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "いいえ。判別も変換もすべてブラウザ内で完結し、ファイルがサーバーへ送信・保存されることはありません。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Excelで文字化けしない文字コードはどれですか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "「UTF-8 (BOM付き)」または「Shift_JIS」を選んでください。BOMなしのUTF-8はExcelがShift_JISとして開いてしまい、文字化けの原因になります。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Shift_JISに変換できない文字が含まれていたらどうなりますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "変換前に該当する文字と出現回数を一覧表示します。置き換え方法は「?」に置換、数値文字参照に置換、削除の3種類から選べます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "何ファイルまで一度に変換できますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "件数の上限は設けていません。ブラウザのメモリが許す限りまとめて変換でき、2件以上ならZIPでダウンロードできます。"
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <!-- encoding-japanese: ブラウザ標準の TextDecoder は「読む」ことしかできない。
+       Shift_JIS / EUC-JP / ISO-2022-JP へ「書き出す」ところだけこれに任せる。 -->
+  <script src="https://cdn.jsdelivr.net/npm/encoding-japanese@2/encoding.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
+  <script src="../../data/tools-ui.js?v=20260823"></script>
+
+  <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
+       visitor gets a white flash while the rest of the page loads. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('st-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode — fall back to the system setting */ }
+    })();
+  </script>
+
+  <style>
+    /* ------------------------------------------------------------------
+       CSV文字コード一括変換 — 外枠は data/tools-ui.css。ここが持つのは
+       ファイルカード（判別結果 → 変換先の流れ、プレビュー、警告）だけ。
+       ------------------------------------------------------------------ */
+    :root {
+      --accent: #C2410C;
+      --accent-ink: #FFFFFF;
+      --accent-soft: #FCECE2;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root.st-theme:not([data-theme="light"]) {
+        --accent: #FB923C;
+        --accent-ink: #2A1405;
+        --accent-soft: #2C1B0D;
+      }
+    }
+    :root.st-theme[data-theme="dark"] {
+      --accent: #FB923C;
+      --accent-ink: #2A1405;
+      --accent-soft: #2C1B0D;
+    }
+
+    .st-theme { --shell: 1080px; }
+    .st-theme main { max-width: 1080px; }
+
+    /* ---- 結果ビュー上部のまとめ ---- */
+    #summary { flex-wrap: wrap; gap: 18px 26px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 9px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--ink-2);
+      background: var(--panel-2);
+      white-space: nowrap;
+    }
+    .chip b { color: var(--ink); font-weight: 700; }
+    .chip.alert { border-color: var(--warn); color: var(--warn); background: transparent; }
+
+    /* ---- ファイルカード ---- */
+    .f-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+    .f-card {
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-2);
+      padding: 12px 14px;
+    }
+    .f-card.bad { border-color: var(--err); }
+
+    .f-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .f-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .f-size { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); flex: none; }
+    .f-head .spacer { flex: 1 1 auto; }
+    .f-x {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      color: var(--ink-3);
+      cursor: pointer;
+    }
+    .f-x:hover { border-color: var(--err); color: var(--err); }
+    .f-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* 「今なにで、なにになるのか」がこのツールの主役。一行で読み切れる形に。 */
+    .f-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 11px; }
+    .enc {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: var(--r-1);
+      border: 1px solid var(--rule-strong);
+      color: var(--ink);
+      background: var(--panel-2);
+      white-space: nowrap;
+    }
+    .enc.dst { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    .enc.unknown { border-color: var(--err); color: var(--err); background: transparent; }
+    .f-flow .arrow { color: var(--ink-3); display: inline-flex; }
+    .conf {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: var(--panel-2);
+      color: var(--ink-3);
+      border: 1px solid var(--rule);
+      white-space: nowrap;
+    }
+    /* 判別の確度は「良し悪し」であって強調点ではないので、意味色 --ok を使う。
+       アクセントは変換先バッジ一つに取っておく。 */
+    .conf.sure { color: var(--ok); border-color: var(--ok); }
+
+    .f-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 14px;
+      margin-top: 9px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-2);
+    }
+    .f-meta .k { color: var(--ink-3); }
+
+    /* 上書き指定。自動判別が外れたときの逃げ道なので、畳まず常に見せる。 */
+    .f-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 11px; }
+    .f-ctl .spacer { flex: 1 1 auto; }
+
+    /* 中身は利用者のもの。tools-ui のキャンバス側トークンに載せる。 */
+    .f-prev {
+      margin-top: 11px;
+      padding: 9px 11px;
+      background: var(--canvas);
+      border: 1px solid var(--canvas-rule);
+      border-radius: var(--r-1);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.7;
+      color: var(--canvas-ink);
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+    .f-prev .lineno { color: var(--canvas-ink-2); user-select: none; }
+    .f-prev .repl { background: var(--err); color: #FFFFFF; border-radius: 2px; }
+    .f-prev .empty { color: var(--canvas-ink-2); }
+
+    .f-note {
+      margin-top: 11px;
+      padding: 8px 11px;
+      border-radius: var(--r-1);
+      background: var(--panel-2);
+      border-left: 3px solid var(--warn);
+      font-size: 12px;
+      line-height: 1.75;
+      color: var(--ink-2);
+    }
+    .f-note.err { border-left-color: var(--err); }
+    .f-note b { color: var(--ink); }
+    .f-note .bad-ch {
+      font-family: var(--font-mono);
+      display: inline-block;
+      padding: 0 5px;
+      margin: 2px 3px 0 0;
+      border: 1px solid var(--rule-strong);
+      border-radius: 3px;
+      background: var(--panel);
+      color: var(--ink);
+    }
+
+    .foot-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    @media (max-width: 620px) {
+      .f-meta { font-size: 10.5px; }
+      .f-ctl .st-btn-quiet { flex: 1 1 auto; justify-content: center; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- ===================== app bar ===================== -->
+  <header class="app-bar">
+    <div class="bar-in">
+      <nav class="crumb" aria-label="パンくずリスト">
+        <ol>
+          <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
+          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
+          <li><h1 aria-current="page">CSV文字コード変換</h1></li>
+        </ol>
+      </nav>
+      <span class="crumb-mark" aria-hidden="true"></span>
+
+      <div class="bar-actions">
+        <span class="bar-status">
+          <span id="status-led" class="st-led idle"></span><span id="status-text">ready</span>
+        </span>
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+          <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+          <i data-lucide="sun" class="to-light w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== toolbar ===================== -->
+  <div class="toolbar">
+    <div class="tb-in">
+      <div class="tb-group">
+        <label class="st-lbl" for="opt-target">変換先</label>
+        <select id="opt-target" class="tb-select">
+          <option value="UTF8BOM">UTF-8 (BOM付き)</option>
+          <option value="UTF8">UTF-8</option>
+          <option value="SJIS">Shift_JIS</option>
+          <option value="EUCJP">EUC-JP</option>
+          <option value="JIS">ISO-2022-JP</option>
+          <option value="UTF16LE">UTF-16 LE (BOM付き)</option>
+        </select>
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <div class="tb-group">
+        <label class="st-lbl" for="opt-eol">改行</label>
+        <select id="opt-eol" class="tb-select">
+          <option value="keep">そのまま</option>
+          <option value="crlf">CRLF (Windows)</option>
+          <option value="lf">LF (macOS / Linux)</option>
+        </select>
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <div class="tb-group" id="fallback-group">
+        <label class="st-lbl" for="opt-fallback" title="変換先の文字コードで表現できない文字の扱い">変換不可文字</label>
+        <select id="opt-fallback" class="tb-select">
+          <option value="question">? に置換</option>
+          <option value="html-entity">数値文字参照に置換</option>
+          <option value="ignore">削除</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ===================== view 1 : upload ===================== -->
+    <div id="view-upload" class="fade-in">
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="CSVファイルをドロップまたは選択">
+        <input type="file" id="file-input" accept=".csv,.tsv,.txt,.tab,.dat,text/csv,text/plain" multiple class="hidden">
+        <div class="dz-in">
+          <span class="dz-mark">+</span>
+          <b>CSVをドロップ</b>
+          <span class="dz-sub">複数まとめて可 ・ .csv / .tsv / .txt ・ 文字コードは自動で判別します</span>
+        </div>
+      </div>
+
+      <p class="note">判別も変換もすべてブラウザ内で完結します。ファイルがサーバーに送られることはありません。</p>
+      <p class="note">ExcelでそのままCSVを開くなら「UTF-8 (BOM付き)」か「Shift_JIS」。BOMなしのUTF-8はExcelが文字化けさせます。</p>
+    </div>
+
+    <!-- ===================== view 2 : reading ===================== -->
+    <div id="view-loading" class="hidden" role="status" aria-live="polite">
+      <div class="console" id="console">
+        <div class="cl hi"><span class="pr">$</span> <span id="loading-msg">detect encoding</span></div>
+        <div id="log-stream"></div>
+        <div class="cl"><span class="pr">$</span> <span class="st-caret"></span></div>
+      </div>
+
+      <div class="pbar"><div id="progress-bar"></div></div>
+      <div class="pmeta">
+        <span class="st-lbl">progress</span>
+        <span id="progress-text" class="num"></span>
+      </div>
+    </div>
+
+    <!-- ===================== view 3 : result ===================== -->
+    <div id="view-result" class="hidden">
+      <div class="readout" id="summary">
+        <div class="gauge">
+          <span id="sum-count" class="gauge-num">0</span>
+          <span class="gauge-cap">
+            <span class="st-lbl">files</span>
+            <span class="st-lbl" id="sum-target">to utf-8</span>
+          </span>
+        </div>
+
+        <div class="chips" id="sum-chips"></div>
+
+        <button id="btn-download-all" class="st-btn" type="button">
+          <span id="btn-download-all-label">ダウンロード</span>
+        </button>
+      </div>
+
+      <div id="file-list" class="f-list"></div>
+
+      <div class="foot-actions">
+        <button id="btn-add" class="st-btn-quiet" type="button">ファイルを追加</button>
+        <button id="btn-reset" class="st-btn-quiet" type="button">最初からやり直す</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===================== status bar ===================== -->
+  <footer class="site-foot">
+    <div class="foot-in">
+      <div id="donation-button-container"></div>
+      <span class="foot-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="translate-y-20 opacity-0" role="status">
+    <i id="toast-icon-success" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
+    <i id="toast-icon-error" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
+    <span id="toast-msg"></span>
+  </div>
+
+  <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
+    <i data-lucide="arrow-up"></i>
+  </button>
+  <script src="../../data/buy-me-oil.js"></script>
+  <script>
+    new DonationWidget({ containerId: 'donation-button-container' }).init();
+  </script>
+
+  <script>
+    /* Theme: system by default, explicit choice remembered. The stamp on
+       <html> is what data/tools-ui.css keys its dark tokens off. */
+    (function () {
+      const KEY = 'st-theme';
+      const root = document.documentElement;
+      let saved = null;
+      try { saved = localStorage.getItem(KEY); } catch (e) { /* site data blocked */ }
+      if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+
+      document.getElementById('theme-toggle').addEventListener('click', () => {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) { /* site data blocked */ }
+      });
+    })();
+
+    /* The mark beside the trail is this page's own favicon, read from the
+       <link>, so the bar and the browser tab cannot drift apart. */
+    (function () {
+      var icon = document.querySelector('link[rel="icon"]');
+      var mark = document.querySelector('.crumb-mark');
+      if (icon && mark) mark.style.backgroundImage = 'url("' + icon.href + '")';
+    })();
+
+    /* The way back up follows the reader: it appears only once there is
+       something to scroll back over. */
+    (function () {
+      var btn = document.getElementById('scroll-top-btn');
+      if (!btn) return;
+      window.addEventListener('scroll', function () {
+        btn.classList.toggle('visible', window.scrollY > 300);
+      }, { passive: true });
+      btn.addEventListener('click', function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      });
+    })();
+  </script>
+
+  <script>
+    const { formatBytes, showToast, switchView, setupDropzone } = window.STCommon;
+
+    lucide.createIcons();
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // 制御文字はエスケープ表記が化けやすいので、必ずコードポイントから作る。
+    const CR = String.fromCharCode(13);
+    const LF = String.fromCharCode(10);
+    const CRLF = CR + LF;
+    const TAB = String.fromCharCode(9);
+    const REPL = String.fromCharCode(0xFFFD);   // 復号に失敗した箇所に入る文字
+    const ESC = 27;
+
+    const eolSplit = new RegExp(CRLF + '|' + CR + '|' + LF);
+    const eolAll = new RegExp(CRLF + '|' + CR + '|' + LF, 'g');
+
+    // ---- 文字コード表 ---------------------------------------------------
+    // decoder は Encoding Standard のラベル。復号は全部ブラウザ任せでよい。
+    const SRC = {
+      UTF8:    { label: 'UTF-8',           decoder: 'utf-8' },
+      UTF8BOM: { label: 'UTF-8 (BOM付き)', decoder: 'utf-8' },
+      ASCII:   { label: 'ASCII',           decoder: 'utf-8' },
+      SJIS:    { label: 'Shift_JIS',       decoder: 'shift_jis' },
+      EUCJP:   { label: 'EUC-JP',          decoder: 'euc-jp' },
+      JIS:     { label: 'ISO-2022-JP',     decoder: 'iso-2022-jp' },
+      UTF16LE: { label: 'UTF-16 LE',       decoder: 'utf-16le' },
+      UTF16BE: { label: 'UTF-16 BE',       decoder: 'utf-16be' },
+      UNKNOWN: { label: '判別不能',        decoder: 'utf-8' }
+    };
+    // 手動で選べる読み込み文字コード（ASCII と UNKNOWN は選ばせない）。
+    const SRC_CHOICES = ['UTF8', 'UTF8BOM', 'SJIS', 'EUCJP', 'JIS', 'UTF16LE', 'UTF16BE'];
+
+    // jp は encoding-japanese 側の名前。null ならブラウザ標準だけで書ける。
+    const DST = {
+      UTF8:    { label: 'UTF-8',              jp: null, bom: false },
+      UTF8BOM: { label: 'UTF-8 (BOM付き)',    jp: null, bom: true },
+      SJIS:    { label: 'Shift_JIS',          jp: 'SJIS' },
+      EUCJP:   { label: 'EUC-JP',             jp: 'EUCJP' },
+      JIS:     { label: 'ISO-2022-JP',        jp: 'JIS' },
+      UTF16LE: { label: 'UTF-16 LE (BOM付き)', jp: null, utf16le: true }
+    };
+
+    const hasEncodingLib = typeof Encoding !== 'undefined';
+
+    // ---- コンソール / ステータス ---------------------------------------
+    const consoleBox = document.getElementById('console');
+    const logStream = document.getElementById('log-stream');
+    const statusLed = document.getElementById('status-led');
+    const statusText = document.getElementById('status-text');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+
+    function logLine(text, cls) {
+      const el = document.createElement('div');
+      el.className = 'cl' + (cls ? ' ' + cls : '');
+      el.textContent = text;
+      logStream.appendChild(el);
+      consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+    function clearLog() { logStream.innerHTML = ''; }
+
+    // state: '' (working, pulsing), 'idle', 'err'
+    function setStatus(text, state) {
+      statusText.textContent = text;
+      statusLed.className = 'st-led' + (state ? ' ' + state : '');
+    }
+
+    function setProgress(done, total) {
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      progressBar.style.width = pct + '%';
+      progressText.textContent = done + ' / ' + total;
+    }
+
+    const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+    // ==================================================================
+    //  判別
+    // ==================================================================
+
+    // UTF-8 として厳密に妥当か。過長符号化とサロゲート域も弾く（弾かないと
+    // Shift_JIS のバイト列がまぐれで通ってしまう）。
+    function checkUtf8(b, n, truncated) {
+      let multibyte = false;
+      let i = 0;
+      while (i < n) {
+        const c = b[i];
+        if (c < 0x80) { i++; continue; }
+        let len;
+        if (c >= 0xC2 && c <= 0xDF) len = 2;
+        else if (c >= 0xE0 && c <= 0xEF) len = 3;
+        else if (c >= 0xF0 && c <= 0xF4) len = 4;
+        else return { valid: false, multibyte };
+        if (i + len > n) return { valid: !!truncated, multibyte };
+        const b1 = b[i + 1];
+        if (b1 < 0x80 || b1 > 0xBF) return { valid: false, multibyte };
+        if (len === 3) {
+          if (c === 0xE0 && b1 < 0xA0) return { valid: false, multibyte };
+          if (c === 0xED && b1 > 0x9F) return { valid: false, multibyte };
+        }
+        if (len === 4) {
+          if (c === 0xF0 && b1 < 0x90) return { valid: false, multibyte };
+          if (c === 0xF4 && b1 > 0x8F) return { valid: false, multibyte };
+        }
+        for (let k = 2; k < len; k++) {
+          const bk = b[i + k];
+          if (bk < 0x80 || bk > 0xBF) return { valid: false, multibyte };
+        }
+        multibyte = true;
+        i += len;
+      }
+      return { valid: true, multibyte };
+    }
+
+    // Shift_JIS としてのバイト構造。壊れていれば -1、通れば「日本語らしさ」の点数。
+    function scoreSjis(b, n) {
+      let score = 0;
+      let i = 0;
+      while (i < n) {
+        const c = b[i];
+        if (c <= 0x7F) { i++; continue; }
+        if (c >= 0xA1 && c <= 0xDF) { score += 1; i++; continue; } // 半角カナ
+        if ((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)) {
+          if (i + 1 >= n) break; // 末尾の切れは判定材料にしない
+          const d = b[i + 1];
+          if (d < 0x40 || d === 0x7F || d > 0xFC) return -1;
+          if (c === 0x82 && d >= 0x9F && d <= 0xF1) score += 4;        // ひらがな
+          else if (c === 0x83 && d >= 0x40 && d <= 0x96) score += 3;   // カタカナ
+          else if (c >= 0x88 && c <= 0x9F) score += 2;                 // 第一水準
+          else if (c >= 0xE0 && c <= 0xEA) score += 1;                 // 第二水準
+          i += 2;
+          continue;
+        }
+        return -1; // 0x80 / 0xA0 / 0xFD-0xFF は Shift_JIS に現れない
+      }
+      return score;
+    }
+
+    // EUC-JP も同じ要領で。
+    function scoreEucjp(b, n) {
+      let score = 0;
+      let i = 0;
+      while (i < n) {
+        const c = b[i];
+        if (c <= 0x7F) { i++; continue; }
+        if (c === 0x8E) { // 半角カナ
+          if (i + 1 >= n) break;
+          const d = b[i + 1];
+          if (d < 0xA1 || d > 0xDF) return -1;
+          score += 1; i += 2; continue;
+        }
+        if (c === 0x8F) { // 補助漢字
+          if (i + 2 >= n) break;
+          const d = b[i + 1], e = b[i + 2];
+          if (d < 0xA1 || d > 0xFE || e < 0xA1 || e > 0xFE) return -1;
+          i += 3; continue;
+        }
+        if (c >= 0xA1 && c <= 0xFE) {
+          if (i + 1 >= n) break;
+          const d = b[i + 1];
+          if (d < 0xA1 || d > 0xFE) return -1;
+          if (c === 0xA4) score += 4;                       // ひらがな
+          else if (c === 0xA5) score += 3;                  // カタカナ
+          else if (c >= 0xB0 && c <= 0xCF) score += 2;      // 第一水準
+          else if (c >= 0xD0 && c <= 0xF4) score += 1;      // 第二水準
+          i += 2;
+          continue;
+        }
+        return -1; // 0x80-0x8D / 0x90-0xA0 / 0xFF
+      }
+      return score;
+    }
+
+    // ISO-2022-JP はエスケープシーケンスが出れば確定してよい。
+    function hasJisEscape(b, n) {
+      for (let i = 0; i + 2 < n; i++) {
+        if (b[i] !== ESC) continue;
+        const c1 = b[i + 1], c2 = b[i + 2];
+        if (c1 === 0x24 && (c2 === 0x40 || c2 === 0x42)) return true; // ESC $ @ / ESC $ B
+        if (c1 === 0x28 && (c2 === 0x42 || c2 === 0x4A || c2 === 0x49)) return true; // ESC ( B / J / I
+      }
+      return false;
+    }
+
+    const DETECT_SAMPLE = 1024 * 1024; // 1MB も見れば判別には十分
+
+    function detectEncoding(bytes) {
+      const n = bytes.length;
+      if (n === 0) return { id: 'UTF8', sure: true, why: '空ファイル' };
+
+      if (n >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+        return { id: 'UTF8BOM', sure: true, why: 'BOM' };
+      }
+      if (n >= 4 && bytes[0] === 0xFF && bytes[1] === 0xFE && bytes[2] === 0x00 && bytes[3] === 0x00) {
+        return { id: 'UNKNOWN', sure: false, why: 'UTF-32 LE は未対応' };
+      }
+      if (n >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) return { id: 'UTF16LE', sure: true, why: 'BOM' };
+      if (n >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) return { id: 'UTF16BE', sure: true, why: 'BOM' };
+
+      const len = Math.min(n, DETECT_SAMPLE);
+      const truncated = len < n;
+
+      if (hasJisEscape(bytes, len)) return { id: 'JIS', sure: true, why: 'エスケープシーケンス' };
+
+      // BOMなし UTF-16 は 1バイトおきの 0x00 で見分ける（ASCII主体のCSV前提）。
+      let zeroEven = 0, zeroOdd = 0;
+      const probe = Math.min(len, 4096);
+      for (let i = 0; i < probe; i++) {
+        if (bytes[i] === 0x00) { if (i % 2 === 0) zeroEven++; else zeroOdd++; }
+      }
+      if (probe >= 16 && zeroEven + zeroOdd > probe * 0.25) {
+        if (zeroOdd > zeroEven * 4) return { id: 'UTF16LE', sure: false, why: 'NULバイトの並び' };
+        if (zeroEven > zeroOdd * 4) return { id: 'UTF16BE', sure: false, why: 'NULバイトの並び' };
+      }
+
+      const utf8 = checkUtf8(bytes, len, truncated);
+      if (utf8.valid && utf8.multibyte) return { id: 'UTF8', sure: true, why: 'UTF-8として妥当' };
+
+      const sjis = scoreSjis(bytes, len);
+      const eucjp = scoreEucjp(bytes, len);
+
+      if (utf8.valid) {
+        // 多バイト文字が一つもない＝ASCII。どの文字コードで開いても同じ。
+        return { id: 'ASCII', sure: true, why: 'ASCIIのみ' };
+      }
+      if (sjis >= 0 && eucjp < 0) return { id: 'SJIS', sure: false, why: 'バイト構造' };
+      if (eucjp >= 0 && sjis < 0) return { id: 'EUCJP', sure: false, why: 'バイト構造' };
+      if (sjis >= 0 && eucjp >= 0) {
+        // どちらでも読めてしまう場合は、ひらがな・漢字の出やすさで決める。
+        if (eucjp > sjis) return { id: 'EUCJP', sure: false, why: '文字の出現傾向' };
+        return { id: 'SJIS', sure: false, why: '文字の出現傾向' };
+      }
+      return { id: 'UNKNOWN', sure: false, why: 'どの文字コードにも当てはまらない' };
+    }
+
+    function decodeBytes(bytes, encId) {
+      const spec = SRC[encId] || SRC.UTF8;
+      let dec;
+      try {
+        dec = new TextDecoder(spec.decoder);
+      } catch (e) {
+        // iso-2022-jp を持たないブラウザ向けの保険。
+        if (hasEncodingLib) {
+          return Encoding.convert(bytes, { to: 'UNICODE', from: 'JIS', type: 'string' });
+        }
+        dec = new TextDecoder('utf-8');
+      }
+      return dec.decode(bytes);
+    }
+
+    function detectEol(text) {
+      let crlf = 0, lf = 0, cr = 0;
+      for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        if (c === 13) {
+          if (text.charCodeAt(i + 1) === 10) { crlf++; i++; } else { cr++; }
+        } else if (c === 10) { lf++; }
+      }
+      const kinds = (crlf > 0 ? 1 : 0) + (lf > 0 ? 1 : 0) + (cr > 0 ? 1 : 0);
+      if (kinds === 0) return 'なし';
+      if (kinds > 1) return '混在';
+      if (crlf > 0) return 'CRLF';
+      if (lf > 0) return 'LF';
+      return 'CR';
+    }
+
+    function countLines(text) {
+      if (!text) return 0;
+      let n = 1;
+      for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        if (c === 13) { n++; if (text.charCodeAt(i + 1) === 10) i++; }
+        else if (c === 10) { n++; }
+      }
+      // 末尾の改行で1行増えて見えるのを戻す
+      const last = text.charCodeAt(text.length - 1);
+      if (last === 10 || last === 13) n--;
+      return n;
+    }
+
+    // ==================================================================
+    //  書き出し
+    // ==================================================================
+
+    function applyEol(text, mode) {
+      if (mode === 'crlf') return text.replace(eolAll, CRLF);
+      if (mode === 'lf') return text.replace(eolAll, LF);
+      return text;
+    }
+
+    function encodeText(text, dstId, fallbackMode) {
+      const d = DST[dstId];
+      if (d.utf16le) {
+        const out = new Uint8Array(2 + text.length * 2);
+        out[0] = 0xFF; out[1] = 0xFE;
+        for (let i = 0; i < text.length; i++) {
+          const c = text.charCodeAt(i);
+          out[2 + i * 2] = c & 0xFF;
+          out[3 + i * 2] = (c >> 8) & 0xFF;
+        }
+        return out;
+      }
+      if (!d.jp) {
+        const body = new TextEncoder().encode(text);
+        if (!d.bom) return body;
+        const out = new Uint8Array(body.length + 3);
+        out[0] = 0xEF; out[1] = 0xBB; out[2] = 0xBF;
+        out.set(body, 3);
+        return out;
+      }
+      const opts = { to: d.jp, from: 'UNICODE' };
+      // 既定（fallback 無指定）が「? に置換」なので、そこだけ何も渡さない。
+      if (fallbackMode === 'html-entity' || fallbackMode === 'ignore') opts.fallback = fallbackMode;
+      return new Uint8Array(Encoding.convert(Encoding.stringToCode(text), opts));
+    }
+
+    // 変換先で表現できない文字を、変換する前に洗い出す。往復させて元に戻らな
+    // ければ落ちる文字、という単純な判定で十分に拾える。
+    const mapCache = new Map(); // key: jpName + char
+    // 巨大なファイルで画面が固まらないよう、走査はここまで。打ち切ったことは
+    // 警告文に出して、黙って見落とさせない。
+    const SCAN_LIMIT = 5000000;
+    function scanUnmappable(text, jpName) {
+      const counts = new Map();
+      counts.clipped = text.length > SCAN_LIMIT;
+      if (!jpName || !hasEncodingLib) return counts;
+      const target = counts.clipped ? text.slice(0, SCAN_LIMIT) : text;
+      for (const ch of target) {
+        if (ch.codePointAt(0) < 0x80) continue;
+        const key = jpName + ch;
+        let ok = mapCache.get(key);
+        if (ok === undefined) {
+          try {
+            const code = Encoding.stringToCode(ch);
+            const enc = Encoding.convert(code, { to: jpName, from: 'UNICODE' });
+            const back = Encoding.convert(enc, { to: 'UNICODE', from: jpName });
+            ok = Encoding.codeToString(back) === ch;
+          } catch (e) {
+            ok = false;
+          }
+          mapCache.set(key, ok);
+        }
+        if (!ok) counts.set(ch, (counts.get(ch) || 0) + 1);
+      }
+      return counts;
+    }
+
+    // ==================================================================
+    //  状態
+    // ==================================================================
+
+    let items = [];
+    let seq = 0;
+
+    const targetSel = document.getElementById('opt-target');
+    const eolSel = document.getElementById('opt-eol');
+    const fallbackSel = document.getElementById('opt-fallback');
+    const fallbackGroup = document.getElementById('fallback-group');
+    const fileInput = document.getElementById('file-input');
+    const listEl = document.getElementById('file-list');
+    const sumCount = document.getElementById('sum-count');
+    const sumTarget = document.getElementById('sum-target');
+    const sumChips = document.getElementById('sum-chips');
+    const btnDownloadAll = document.getElementById('btn-download-all');
+    const btnDownloadAllLabel = document.getElementById('btn-download-all-label');
+
+    const targetId = () => targetSel.value;
+    const eolMode = () => eolSel.value;
+    const fallbackMode = () => fallbackSel.value;
+
+    let busy = false;
+    async function addFiles(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+      // 読み込み中にさらにドロップされても、状態が二重に進まないようにする。
+      if (busy) { showToast('読み込み中です。少し待ってからもう一度お試しください', 'error'); return; }
+      busy = true;
+
+      switchView('view-loading');
+      clearLog();
+      setStatus('reading', '');
+      setProgress(0, files.length);
+
+      let added = 0;
+      try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        logLine('> ' + file.name);
+        await nextFrame();
+        try {
+          const buf = await file.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          const det = detectEncoding(bytes);
+          const item = {
+            id: ++seq,
+            name: file.name,
+            size: file.size,
+            bytes: bytes,
+            detected: det,
+            override: null   // 利用者が読み込み文字コードを指定したらここに入る
+          };
+          decodeItem(item);
+          items.push(item);
+          added++;
+          logLine('  ' + SRC[det.id].label + '  (' + det.why + ')', det.id === 'UNKNOWN' ? 'err' : 'ok');
+        } catch (err) {
+          console.error(err);
+          logLine('  読み込みに失敗しました: ' + (err && err.message ? err.message : ''), 'err');
+        }
+        setProgress(i + 1, files.length);
+      }
+
+      if (!items.length) {
+        setStatus('error', 'err');
+        showToast('ファイルを読み込めませんでした', 'error');
+        switchView('view-upload');
+        return;
+      }
+      if (added) showToast(added + '件を読み込みました');
+      render();
+      } finally {
+        busy = false;
+      }
+    }
+
+    // 読み込み文字コードが決まっている前提で、本文と付随情報を作り直す。
+    function decodeItem(item) {
+      const encId = item.override || item.detected.id;
+      item.srcId = encId;
+      item.text = decodeBytes(item.bytes, encId);
+      item.broken = item.text.indexOf(REPL) >= 0;
+      item.eol = detectEol(item.text);
+      item.lines = countLines(item.text);
+    }
+
+    function srcLabel(item) {
+      return SRC[item.srcId] ? SRC[item.srcId].label : item.srcId;
+    }
+
+    // ==================================================================
+    //  描画
+    // ==================================================================
+
+    function render() {
+      setStatus('checking', '');
+      listEl.innerHTML = '';
+
+      const dst = DST[targetId()];
+      const jp = dst.jp;
+      const counts = new Map();
+      let alertFiles = 0;
+
+      items.forEach(item => {
+        item.unmappable = scanUnmappable(item.text, jp);
+        if (item.unmappable.size > 0 || item.broken) alertFiles++;
+        const key = srcLabel(item);
+        counts.set(key, (counts.get(key) || 0) + 1);
+        listEl.appendChild(buildCard(item));
+      });
+
+      sumCount.textContent = String(items.length);
+      sumTarget.textContent = 'to ' + dst.label;
+
+      sumChips.innerHTML = '';
+      Array.from(counts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([label, n]) => {
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.innerHTML = '<b></b> × <span></span>';
+          chip.querySelector('b').textContent = label;
+          chip.querySelector('span').textContent = String(n);
+          sumChips.appendChild(chip);
+        });
+      if (alertFiles > 0) {
+        const chip = document.createElement('span');
+        chip.className = 'chip alert';
+        chip.textContent = '要確認 ' + alertFiles + '件';
+        sumChips.appendChild(chip);
+      }
+
+      btnDownloadAllLabel.textContent = items.length > 1
+        ? items.length + '件をZIPでダウンロード'
+        : 'ダウンロード';
+      btnDownloadAll.disabled = items.length === 0;
+
+      // 変換不可文字の設定は、レガシー文字コードに書き出すときだけ効く。
+      fallbackGroup.classList.toggle('disabled', !jp);
+
+      lucide.createIcons();
+      switchView('view-result');
+      setStatus('ready', 'idle');
+    }
+
+    function el(tag, cls, text) {
+      const node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+
+    function buildCard(item) {
+      const card = el('div', 'f-card');
+      if (item.detected.id === 'UNKNOWN' || item.broken) card.classList.add('bad');
+
+      // --- 見出し ---
+      const head = el('div', 'f-head');
+      head.appendChild(el('span', 'f-name', item.name));
+      head.appendChild(el('span', 'f-size', formatBytes(item.size)));
+      head.appendChild(el('span', 'spacer'));
+      const x = el('button', 'f-x');
+      x.type = 'button';
+      x.title = 'この一覧から外す';
+      x.setAttribute('aria-label', item.name + ' を一覧から外す');
+      x.innerHTML = '<i data-lucide="x" class="w-4 h-4"></i>';
+      x.addEventListener('click', () => removeItem(item.id));
+      head.appendChild(x);
+      card.appendChild(head);
+
+      // --- 現状の文字コード → 変換先 ---
+      const flow = el('div', 'f-flow');
+      const src = el('span', 'enc', srcLabel(item));
+      if (item.detected.id === 'UNKNOWN') src.classList.add('unknown');
+      src.title = item.override
+        ? '手動で指定した文字コードで読み込んでいます'
+        : (item.detected.sure ? '確定' : '推定') + ' — 判別の根拠: ' + item.detected.why;
+      flow.appendChild(src);
+
+      // 確たる判別に印は要らない。目を引くべきは外れうる「推定」のほうだけ。
+      // 根拠は上の title に持たせてあるので、確定側は黙らせる。
+      if (item.override) {
+        flow.appendChild(el('span', 'conf sure', '手動指定'));
+      } else if (!item.detected.sure) {
+        flow.appendChild(el('span', 'conf', '推定 / ' + item.detected.why));
+      }
+
+      const arrow = el('span', 'arrow');
+      arrow.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i>';
+      flow.appendChild(arrow);
+      flow.appendChild(el('span', 'enc dst', DST[targetId()].label));
+      card.appendChild(flow);
+
+      // --- 付随情報 ---
+      const meta = el('div', 'f-meta');
+      const eolOut = eolMode() === 'keep' ? item.eol : (eolMode() === 'crlf' ? 'CRLF' : 'LF');
+      const addMeta = (k, v) => {
+        const wrap = el('span');
+        wrap.appendChild(el('span', 'k', k + ' '));
+        wrap.appendChild(document.createTextNode(v));
+        meta.appendChild(wrap);
+      };
+      addMeta('改行', item.eol === eolOut ? item.eol : item.eol + ' → ' + eolOut);
+      addMeta('BOM', bomLabel(item));
+      addMeta('行', item.lines.toLocaleString());
+      addMeta('文字', item.text.length.toLocaleString());
+      card.appendChild(meta);
+
+      // --- 読み込み文字コードの上書き ---
+      const ctl = el('div', 'f-ctl');
+      const lbl = el('label', 'st-lbl', '読み込み');
+      lbl.htmlFor = 'src-' + item.id;
+      ctl.appendChild(lbl);
+
+      const sel = el('select', 'tb-select');
+      sel.id = 'src-' + item.id;
+      const auto = el('option', null, '自動判別 (' + SRC[item.detected.id].label + ')');
+      auto.value = '';
+      sel.appendChild(auto);
+      SRC_CHOICES.forEach(id => {
+        const opt = el('option', null, SRC[id].label);
+        opt.value = id;
+        sel.appendChild(opt);
+      });
+      sel.value = item.override || '';
+      sel.addEventListener('change', () => {
+        item.override = sel.value || null;
+        decodeItem(item);
+        render();
+      });
+      ctl.appendChild(sel);
+      ctl.appendChild(el('span', 'spacer'));
+
+      const dl = el('button', 'st-btn-quiet', null);
+      dl.type = 'button';
+      dl.textContent = 'このファイルを保存';
+      dl.addEventListener('click', () => downloadOne(item));
+      ctl.appendChild(dl);
+      card.appendChild(ctl);
+
+      // --- 中身のプレビュー ---
+      card.appendChild(buildPreview(item));
+
+      // --- 警告 ---
+      if (item.broken) {
+        const note = el('div', 'f-note err');
+        note.innerHTML = '<b>読み込めないバイト列があります。</b>「' + escapeText(srcLabel(item))
+          + '」では正しく開けていません。上の「読み込み」で別の文字コードを指定してください。';
+        card.appendChild(note);
+      }
+      if (item.unmappable && item.unmappable.size > 0) {
+        card.appendChild(buildUnmappableNote(item));
+      }
+
+      return card;
+    }
+
+    function bomLabel(item) {
+      const had = item.srcId === 'UTF8BOM' || item.srcId === 'UTF16LE' || item.srcId === 'UTF16BE';
+      const dst = DST[targetId()];
+      const will = !!(dst.bom || dst.utf16le);
+      const y = 'あり', n = 'なし';
+      if (had === will) return had ? y : n;
+      return (had ? y : n) + ' → ' + (will ? y : n);
+    }
+
+    function escapeText(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    const PREVIEW_LINES = 6;
+    const PREVIEW_COLS = 200;
+
+    function buildPreview(item) {
+      const box = el('div', 'f-prev');
+      if (!item.text.length) {
+        box.appendChild(el('span', 'empty', '(空のファイル)'));
+        return box;
+      }
+      const head = item.text.slice(0, PREVIEW_LINES * (PREVIEW_COLS + 2) + 64);
+      const lines = head.split(eolSplit).slice(0, PREVIEW_LINES);
+      // 末尾の改行が空行に見えるのを落とす（行数カウントと食い違うため）
+      if (lines.length > 1 && lines[lines.length - 1] === '' && lines.length > item.lines) lines.pop();
+      lines.forEach((line, i) => {
+        const row = el('div');
+        const no = String(i + 1).padStart(2, ' ') + ' ';
+        row.appendChild(el('span', 'lineno', no));
+        let shown = line.replace(/\t/g, '    ');
+        let clipped = false;
+        if (shown.length > PREVIEW_COLS) { shown = shown.slice(0, PREVIEW_COLS); clipped = true; }
+        // 復号に失敗した箇所は赤で潰して、目で文字化けを見つけられるようにする。
+        shown.split(REPL).forEach((part, k) => {
+          if (k > 0) row.appendChild(el('span', 'repl', REPL));
+          if (part) row.appendChild(document.createTextNode(part));
+        });
+        if (clipped) row.appendChild(el('span', 'lineno', ' …'));
+        box.appendChild(row);
+      });
+      if (item.lines > PREVIEW_LINES) {
+        box.appendChild(el('div', 'lineno', '   … 他 ' + (item.lines - PREVIEW_LINES).toLocaleString() + ' 行'));
+      }
+      return box;
+    }
+
+    function buildUnmappableNote(item) {
+      const entries = Array.from(item.unmappable.entries()).sort((a, b) => b[1] - a[1]);
+      let total = 0;
+      entries.forEach(([, n]) => { total += n; });
+
+      const note = el('div', 'f-note');
+      const head = el('div');
+      head.appendChild(el('b', null, DST[targetId()].label + 'で表現できない文字が '
+        + entries.length + '種 / ' + total + '個 あります。'));
+      const how = fallbackMode() === 'ignore' ? '削除されます'
+        : (fallbackMode() === 'html-entity' ? '数値文字参照に置き換わります' : '「?」に置き換わります');
+      head.appendChild(document.createTextNode(' このまま変換すると' + how + '。'
+        + (item.unmappable.clipped ? ' （先頭 ' + SCAN_LIMIT.toLocaleString() + ' 文字までを確認）' : '')));
+      note.appendChild(head);
+
+      const row = el('div');
+      entries.slice(0, 24).forEach(([ch, n]) => {
+        const cp = ch.codePointAt(0).toString(16).toUpperCase();
+        const tag = el('span', 'bad-ch', ch + ' ×' + n);
+        tag.title = 'U+' + (cp.length < 4 ? '0000'.slice(cp.length) + cp : cp);
+        row.appendChild(tag);
+      });
+      if (entries.length > 24) row.appendChild(el('span', 'bad-ch', '他 ' + (entries.length - 24) + '種'));
+      note.appendChild(row);
+      return note;
+    }
+
+    function removeItem(id) {
+      items = items.filter(it => it.id !== id);
+      if (!items.length) {
+        switchView('view-upload');
+        setStatus('ready', 'idle');
+        return;
+      }
+      render();
+    }
+
+    // ==================================================================
+    //  ダウンロード
+    // ==================================================================
+
+    function outputBytes(item) {
+      const text = applyEol(item.text, eolMode());
+      return encodeText(text, targetId(), fallbackMode());
+    }
+
+    function saveBlob(blob, name) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function downloadOne(item) {
+      try {
+        const bytes = outputBytes(item);
+        saveBlob(new Blob([bytes], { type: 'text/csv' }), item.name);
+        showToast(item.name + ' を ' + DST[targetId()].label + ' で保存しました');
+      } catch (err) {
+        console.error(err);
+        showToast('変換に失敗しました: ' + (err && err.message ? err.message : ''), 'error');
+      }
+    }
+
+    async function downloadAll() {
+      if (!items.length) return;
+      if (items.length === 1) { downloadOne(items[0]); return; }
+
+      if (typeof JSZip === 'undefined') {
+        showToast('ZIPライブラリの読み込みに失敗しました', 'error');
+        return;
+      }
+
+      btnDownloadAll.disabled = true;
+      btnDownloadAllLabel.textContent = 'ZIPを生成中...';
+      setStatus('packing', '');
+      try {
+        const zip = new JSZip();
+        const used = new Map();
+        items.forEach(item => {
+          let name = item.name;
+          const seen = used.get(item.name) || 0;
+          if (seen > 0) {
+            const dot = name.lastIndexOf('.');
+            const base = dot > 0 ? name.slice(0, dot) : name;
+            const ext = dot > 0 ? name.slice(dot) : '';
+            name = base + '_' + seen + ext;
+          }
+          used.set(item.name, seen + 1);
+          zip.file(name, outputBytes(item));
+        });
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16);
+        saveBlob(blob, 'csv-' + targetId().toLowerCase() + '-' + ts + '.zip');
+        showToast(items.length + '件を ' + DST[targetId()].label + ' で保存しました');
+      } catch (err) {
+        console.error(err);
+        showToast('ZIP生成に失敗しました: ' + (err && err.message ? err.message : ''), 'error');
+        setStatus('error', 'err');
+      } finally {
+        btnDownloadAll.disabled = false;
+        btnDownloadAllLabel.textContent = items.length > 1
+          ? items.length + '件をZIPでダウンロード'
+          : 'ダウンロード';
+        setStatus('ready', 'idle');
+      }
+    }
+
+    // ==================================================================
+    //  入力
+    // ==================================================================
+
+    const dropzone = document.getElementById('dropzone');
+    // クリックとキーボードだけ共通実装に任せる。ドロップ自体は下の capture
+    // 側で拾う（setupDropzone が body で stopPropagation するため、bubble で
+    // 待っていると結果ビューへのドロップが死ぬ）。
+    setupDropzone({ dropzone: dropzone, fileInput: fileInput });
+
+    document.addEventListener('dragover', (e) => {
+      if (e.dataTransfer) e.preventDefault();
+    }, true);
+    document.addEventListener('drop', (e) => {
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      addFiles(e.dataTransfer.files);
+    }, true);
+
+    fileInput.addEventListener('change', () => {
+      addFiles(fileInput.files);
+      fileInput.value = '';
+    });
+
+    document.getElementById('btn-add').addEventListener('click', () => fileInput.click());
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      items = [];
+      listEl.innerHTML = '';
+      switchView('view-upload');
+      setStatus('ready', 'idle');
+    });
+    btnDownloadAll.addEventListener('click', downloadAll);
+
+    [targetSel, eolSel, fallbackSel].forEach(sel => {
+      sel.addEventListener('change', () => { if (items.length) render(); });
+    });
+
+    // encoding-japanese が落ちていると和文レガシーへは書けない。黙って壊れる
+    // より、選べなくして理由を出す。
+    if (!hasEncodingLib) {
+      ['SJIS', 'EUCJP', 'JIS'].forEach(id => {
+        const opt = targetSel.querySelector('option[value="' + id + '"]');
+        if (opt) opt.disabled = true;
+      });
+      showToast('文字コードライブラリを読み込めず、Shift_JIS等への変換は使えません', 'error');
+    }
+
+    setStatus('ready', 'idle');
+  </script>
+</body>
+</html>

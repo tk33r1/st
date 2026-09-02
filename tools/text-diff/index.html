@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="ja" class="st-theme">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YRM5KPVGX7');
+  </script>
+  <!-- Ahrefs -->
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
+  <!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="2つの文章の違いを1文字単位で色分け表示するテキスト差分ツール。全角半角・空白・記号・送り仮名の表記ゆれを無視して比較でき、変更を1箇所ずつ採用／却下して最終稿を組み立てられます。文字数カウント、X・meta descriptionなど媒体別の文字数制限チェック、AI検索に引用されやすいかのローカル採点つき。文章はサーバーに送信されません。">
+  <meta name="robots" content="max-image-preview:large">
+  <title>Diff Studio - テキスト差分比較・文字数カウントツール | ST TOOLS</title>
+  <link rel="canonical" href="https://tk.st/tools/text-diff/">
+  <link rel="author" href="https://tk.st/">
+
+  <!-- OGP / Twitter -->
+  <meta property="og:title" content="Diff Studio - テキスト差分比較・文字数カウントツール">
+  <meta property="og:description" content="2つの文章の違いを1文字単位で色分け。表記ゆれを無視した比較、変更の採用／却下、文字数カウント、媒体別の文字数制限チェックまで1画面で。文章はブラウザの外に出ません。">
+  <meta property="og:image" content="https://tk.st/images/ogp/text-diff-ogp.png">
+  <meta property="og:url" content="https://tk.st/tools/text-diff/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Diff Studio - テキスト差分比較・文字数カウントツール">
+  <meta name="twitter:description" content="2つの文章の違いを1文字単位で色分け。表記ゆれを無視した比較、変更の採用／却下、文字数カウント、媒体別の文字数制限チェックまで1画面で。">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/text-diff-ogp.png">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
+          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"},
+          {"@type": "ListItem", "position": 3, "name": "Diff Studio", "item": "https://tk.st/tools/text-diff/"}
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Diff Studio",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "description": "ブラウザ内で完結するテキスト差分ツール。文字・単語・文・行の粒度で比較し、表記ゆれを無視した比較、変更の採用／却下、文字数カウント、媒体別の文字数制限チェックに対応。",
+        "url": "https://tk.st/tools/text-diff/",
+        "featureList": [
+          "文字・単語・文・行の粒度で差分表示",
+          "全角半角・空白・記号・大文字小文字・送り仮名の表記ゆれを無視した比較",
+          "変更を1箇所ずつ採用／却下して最終稿を生成",
+          "並べて表示とインライン表示の切り替え",
+          "空白・改行の可視化",
+          "文字数・バイト数・行数・原稿用紙換算のカウント",
+          "X / meta description / OGP など媒体別の文字数制限チェック",
+          "AI検索に引用されやすいかのローカル採点"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "JPY"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "入力した文章はサーバーに送信されますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "いいえ。比較・カウント・採点のすべてがブラウザ内のJavaScriptで実行されます。入力した文章がネットワークに送信されることはありません。読み込みが終わればオフラインでも動作します。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "「行なう」と「行う」のような送り仮名の違いを差分から外せますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "はい。「送り仮名」を無視する設定にすると、行なう／行う、問合せ／問い合わせ、下さい／ください といった実務で頻出する表記ゆれを同じ語として扱い、差分に出しません。全角半角、空白、記号、英字の大文字小文字についても個別に無視を指定できます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "変更のうち一部だけを採用できますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "はい。色が付いた変更箇所をクリックすると、その1箇所だけを却下（変更前のまま）に切り替えられます。採用した変更だけを反映した文章が「結果」に組み上がるので、そのままコピーして使えます。校正者の赤字を1つずつ判断して取り込む用途を想定しています。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "文字数はどの数え方ですか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "用途によって正解が違うため、複数の数え方を同時に表示します。見た目どおりの文字数（書記素単位。絵文字を1文字と数える）、JavaScriptのlengthやデータベースの文字数制限に対応するUTF-16単位、空白を除いた数、全角と半角の内訳、UTF-8バイト数、Shift_JISバイト数、行数、段落数、文数、400字詰原稿用紙の枚数を出します。"
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237C3AED'/%3E%3Crect x='15' y='6' width='2' height='20' fill='%23fff' opacity='.42'/%3E%3Crect x='5' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='19' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='22' y='12' width='2' height='8' rx='1' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
+  <script src="../../data/tools-ui.js?v=20260823"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
+       visitor gets a white flash while the rest of the page loads. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('st-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode — fall back to the system setting */ }
+    })();
+  </script>
+
+  <style>
+    /* ------------------------------------------------------------------
+       Diff Studio. The Instrument shell comes from data/tools-ui.css;
+       this block holds the two editors, the diff panes, and the two
+       measurement panels (counts / AIO).
+       ------------------------------------------------------------------ */
+
+    :root {
+      --accent: #7C3AED;
+      --accent-ink: #FFFFFF;
+      --accent-soft: #F1ECFE;
+      /* Diff colours are semantic, not accent — red and green must survive
+         both themes, so they are stated as tints laid over the panel. */
+      --del-bg: rgb(220 38 38 / .18);
+      --del-line: rgb(220 38 38 / .6);
+      --ins-bg: rgb(14 159 110 / .22);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root.st-theme:not([data-theme="light"]) {
+        --accent: #A78BFA;
+        --accent-ink: #1E1B4B;
+        --accent-soft: #221E3D;
+        --del-bg: rgb(248 113 113 / .24);
+        --del-line: rgb(248 113 113 / .65);
+        --ins-bg: rgb(52 211 153 / .24);
+      }
+    }
+    :root.st-theme[data-theme="dark"] {
+      --accent: #A78BFA;
+      --accent-ink: #1E1B4B;
+      --accent-soft: #221E3D;
+      --del-bg: rgb(248 113 113 / .24);
+      --del-line: rgb(248 113 113 / .65);
+      --ins-bg: rgb(52 211 153 / .24);
+    }
+
+    /* Two documents side by side need the whole desk. */
+    .st-theme { --shell: 1180px; }
+    .st-theme main { max-width: 1180px; }
+    .st-theme #hero, .st-theme #tool-copy { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+    /* ===== toolbar ===== */
+    .opt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-2);
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .opt:hover { color: var(--ink); }
+    .opt.unavailable { opacity: .4; cursor: not-allowed; }
+    .tb-stat {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .tb-stat .add { color: var(--ok); }
+    .tb-stat .del { color: var(--err); }
+    .tb-stat .same { color: var(--ink-3); font-weight: 400; }
+
+    .btn-mini {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      color: var(--ink-2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 120ms ease, color 120ms ease, transform 60ms ease;
+    }
+    .btn-mini:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-mini:active:not(:disabled) { transform: translateY(2px); }
+    .btn-mini:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-mini:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ===== tabs ===== */
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--rule); margin-bottom: 18px; }
+    .tab {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 9px 14px;
+      background: none;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      color: var(--ink-3);
+      cursor: pointer;
+      transition: color 120ms ease, border-color 120ms ease;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+    /* ===== editors ===== */
+    .io-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .io-pane {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      overflow: hidden;
+      transition: border-color 120ms ease;
+    }
+    .io-pane:focus-within { border-color: var(--accent); }
+    .io-pane.dragover { border-color: var(--accent); background: var(--accent-soft); }
+    .io-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--rule);
+      background: var(--panel-2);
+    }
+    .io-head .st-lbl { flex: 1; }
+    .io-pane textarea {
+      width: 100%;
+      min-height: 190px;
+      resize: vertical;
+      border: 0;
+      outline: none;
+      padding: 12px;
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.9;
+    }
+    .io-pane textarea::placeholder { color: var(--ink-3); }
+
+    .swap-row { display: flex; justify-content: center; margin-top: 10px; }
+
+    /* ===== diff panes ===== */
+    .diff-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .diff-view {
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      padding: 13px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.95;
+      color: var(--ink);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      overflow: auto;
+      max-height: 56vh;
+      min-height: 130px;
+    }
+    .diff-view .placeholder { color: var(--ink-3); font-size: 12.5px; }
+
+    /* A change is one clickable unit — that is also the accept/reject unit. */
+    .chunk {
+      border-radius: 3px;
+      cursor: pointer;
+      transition: box-shadow 100ms ease;
+    }
+    .chunk:hover { box-shadow: 0 0 0 2px var(--accent); }
+    .chunk:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .d-del { background: var(--del-bg); text-decoration: line-through; text-decoration-color: var(--del-line); }
+    .d-ins { background: var(--ins-bg); }
+    .chunk.rejected .d-ins { opacity: .34; text-decoration: line-through; text-decoration-color: var(--ink-3); }
+    .chunk.rejected .d-del { background: rgb(127 127 127 / .12); text-decoration: none; }
+    .ws { font-style: normal; color: var(--ink-3); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 12px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-3); }
+    .legend i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; font-style: normal; }
+    .legend i.del { background: var(--del-bg); }
+    .legend i.ins { background: var(--ins-bg); }
+
+    /* ===== result ===== */
+    .result-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .result-head .st-lbl { flex: 1; }
+    #result-text {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.9;
+      outline: none;
+    }
+
+    /* ===== counts ===== */
+    .gauge-row { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; margin-bottom: 20px; }
+    .big-num {
+      font-family: var(--font-mono);
+      font-size: 46px;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+    }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 10px; }
+    .metric {
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      padding: 10px 12px;
+    }
+    .metric b {
+      display: block;
+      margin-top: 3px;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+    .metric small { display: block; margin-top: 2px; font-size: 11px; color: var(--ink-3); }
+
+    .lim-row {
+      display: grid;
+      grid-template-columns: 200px 1fr 120px;
+      gap: 12px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--rule);
+    }
+    .lim-name { font-size: 12.5px; color: var(--ink); }
+    .lim-name small { display: block; font-size: 11px; color: var(--ink-3); }
+    .lim-bar { height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
+    .lim-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width 240ms ease; }
+    .lim-num { font-family: var(--font-mono); font-size: 12px; text-align: right; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+    .lim-row.over .lim-bar i { background: var(--err); }
+    .lim-row.over .lim-num { color: var(--err); font-weight: 700; }
+    @media (max-width: 640px) {
+      .lim-row { grid-template-columns: 1fr 100px; }
+      .lim-row .lim-bar { grid-column: 1 / -1; }
+    }
+
+    /* ===== AIO ===== */
+    .check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed var(--rule); }
+    .check .mark { flex: none; width: 15px; height: 15px; margin-top: 2px; }
+    .check.ok .mark { color: var(--ok); }
+    .check.ng .mark { color: var(--warn); }
+    .check .body { flex: 1; min-width: 0; }
+    .check .body b { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .check .body p { margin: 2px 0 0; font-size: 12px; line-height: 1.7; color: var(--ink-2); }
+    .check .w { flex: none; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+    .check.ok .body b { color: var(--ink-2); font-weight: 600; }
+
+    .panel-note { font-size: 12px; line-height: 1.8; color: var(--ink-3); margin-top: 14px; }
+
+    .sub-head { display: flex; align-items: center; gap: 10px; margin: 26px 0 10px; }
+    .sub-head .st-lbl { flex: none; }
+    .sub-head hr { flex: 1; border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+    @media (max-width: 860px) {
+      .io-grid, .diff-cols { grid-template-columns: 1fr; }
+      .big-num { font-size: 38px; }
+    }
+    @media (max-width: 640px) {
+      /* The caption would otherwise be squeezed into a three-line column
+         beside the buttons. */
+      .result-head { flex-wrap: wrap; }
+      .result-head .st-lbl { flex: 1 0 100%; }
+    }
+
+    /* ===== SEO copy ===== */
+    .prose-tool h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .prose-tool h3 { font-size: 14px; font-weight: 700; color: var(--ink); margin: 22px 0 6px; }
+    .prose-tool p { font-size: 13px; line-height: 1.9; color: var(--ink-2); margin: 0 0 6px; }
+    .prose-tool ul { margin: 0 0 6px; padding-left: 18px; }
+    .prose-tool li { font-size: 13px; line-height: 1.9; color: var(--ink-2); }
+    .prose-tool strong { color: var(--ink); }
+
+    /* Where the other side gained or lost text there is nothing to highlight,
+       so the position itself is marked — otherwise a pure insertion is
+       invisible on the left and the two panes stop lining up in the reader's
+       head. */
+    .d-gap {
+      display: inline-block;
+      width: 2px;
+      height: 1.05em;
+      vertical-align: -0.2em;
+      border-radius: 1px;
+      background: var(--accent);
+      opacity: .55;
+    }
+    .check .mark {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- ===================== app bar ===================== -->
+  <header class="app-bar">
+    <div class="bar-in">
+      <nav class="crumb" aria-label="パンくずリスト">
+        <ol>
+          <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
+          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
+          <li><h1 aria-current="page">Diff Studio</h1></li>
+        </ol>
+      </nav>
+      <span class="crumb-mark" aria-hidden="true"></span>
+      <div class="bar-actions">
+        <span class="bar-status">
+          <span id="status-led" class="st-led idle"></span><span id="status-text">ready</span>
+        </span>
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
+          <i data-lucide="moon" class="to-dark w-4 h-4"></i>
+          <i data-lucide="sun" class="to-light w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== toolbar ===================== -->
+  <div class="toolbar" id="toolbar">
+    <div class="tb-in">
+      <span class="st-lbl">粒度</span>
+      <div class="st-seg" id="seg-mode" role="group" aria-label="比較の粒度">
+        <button type="button" data-mode="char" class="active">文字</button>
+        <button type="button" data-mode="word">単語</button>
+        <button type="button" data-mode="sentence">文</button>
+        <button type="button" data-mode="line">行</button>
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <span class="st-lbl">無視</span>
+      <label class="opt"><input type="checkbox" class="tb-check" id="op-width">全角半角</label>
+      <label class="opt"><input type="checkbox" class="tb-check" id="op-space">空白</label>
+      <label class="opt"><input type="checkbox" class="tb-check" id="op-punct">記号</label>
+      <label class="opt"><input type="checkbox" class="tb-check" id="op-case">大小文字</label>
+      <label class="opt"><input type="checkbox" class="tb-check" id="op-okuri">送り仮名</label>
+
+      <div class="tb-sep"></div>
+
+      <div class="st-seg" id="seg-view" role="group" aria-label="差分の表示方法">
+        <button type="button" data-view="side" class="active">並べて</button>
+        <button type="button" data-view="inline">インライン</button>
+      </div>
+      <label class="opt"><input type="checkbox" class="tb-check" id="op-ws">空白を可視化</label>
+
+      <span style="flex:1"></span>
+
+      <span class="tb-stat" id="tb-stat" aria-live="polite">
+        <span class="add" id="stat-add">+0</span>
+        <span class="del" id="stat-del">-0</span>
+        <span class="same" id="stat-same">0 一致</span>
+      </span>
+    </div>
+  </div>
+
+  <main>
+
+    <div id="hero" style="margin-bottom:22px">
+      <p class="note">2つの文章の違いを1文字単位で色分け。変更は1箇所ずつ採用／却下できます。文章はブラウザの外に出ません。</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="表示するパネル">
+      <button class="tab active" type="button" role="tab" id="tab-diff" aria-controls="panel-diff" aria-selected="true" data-panel="panel-diff">差分</button>
+      <button class="tab" type="button" role="tab" id="tab-count" aria-controls="panel-count" aria-selected="false" data-panel="panel-count">文字数</button>
+      <button class="tab" type="button" role="tab" id="tab-aio" aria-controls="panel-aio" aria-selected="false" data-panel="panel-aio">AIO スコア</button>
+    </div>
+
+    <!-- ===================== panel : diff ===================== -->
+    <section id="panel-diff" role="tabpanel" aria-labelledby="tab-diff">
+
+      <div class="io-grid">
+        <div class="io-pane" id="pane-a">
+          <div class="io-head">
+            <span class="st-lbl">変更前 / A</span>
+            <button class="btn-mini" type="button" id="btn-file-a">ファイル</button>
+            <button class="btn-mini" type="button" id="btn-clear-a">クリア</button>
+            <input type="file" id="file-a" class="hidden" accept=".txt,.md,.markdown,.csv,.tsv,.json,.html,.css,.js,.log,.srt,.vtt,text/*">
+          </div>
+          <textarea id="text-a" spellcheck="false" aria-label="変更前のテキスト" placeholder="元の文章を貼り付け（テキストファイルのドロップも可）"></textarea>
+        </div>
+
+        <div class="io-pane" id="pane-b">
+          <div class="io-head">
+            <span class="st-lbl">変更後 / B</span>
+            <button class="btn-mini" type="button" id="btn-file-b">ファイル</button>
+            <button class="btn-mini" type="button" id="btn-clear-b">クリア</button>
+            <input type="file" id="file-b" class="hidden" accept=".txt,.md,.markdown,.csv,.tsv,.json,.html,.css,.js,.log,.srt,.vtt,text/*">
+          </div>
+          <textarea id="text-b" spellcheck="false" aria-label="変更後のテキスト" placeholder="修正後の文章を貼り付け"></textarea>
+        </div>
+      </div>
+
+      <div class="swap-row" style="gap:8px">
+        <button class="btn-mini" type="button" id="btn-swap">A と B を入れ替える</button>
+        <button class="btn-mini" type="button" id="btn-sample">サンプルを入れる</button>
+      </div>
+
+      <div class="sub-head"><span class="st-lbl">差分</span><hr></div>
+
+      <div class="diff-cols" id="diff-side">
+        <div class="diff-view" id="view-a" aria-label="変更前の差分表示"></div>
+        <div class="diff-view" id="view-b" aria-label="変更後の差分表示"></div>
+      </div>
+      <div id="diff-inline" class="hidden">
+        <div class="diff-view" id="view-inline" aria-label="インラインの差分表示"></div>
+      </div>
+
+      <div class="legend">
+        <span><i class="del"></i>削除</span>
+        <span><i class="ins"></i>追加</span>
+        <span>色の付いた箇所をクリックすると、その変更だけを却下できます</span>
+      </div>
+      <p class="note warn hidden" id="mode-note"></p>
+
+      <div class="sub-head"><span class="st-lbl">結果</span><hr></div>
+      <div class="result-head">
+        <span class="st-lbl">採用した変更だけを反映した文章</span>
+        <button class="btn-mini" type="button" id="btn-accept-all">すべて採用</button>
+        <button class="btn-mini" type="button" id="btn-reject-all">すべて却下</button>
+        <button class="btn-mini" type="button" id="btn-copy">コピー</button>
+        <button class="btn-mini" type="button" id="btn-download">.txt で保存</button>
+      </div>
+      <textarea id="result-text" readonly aria-label="結果のテキスト"></textarea>
+    </section>
+
+    <!-- ===================== panel : counts ===================== -->
+    <section id="panel-count" class="hidden" role="tabpanel" aria-labelledby="tab-count">
+      <div class="sub-head">
+        <span class="st-lbl">対象</span>
+        <div class="st-seg" id="seg-target-count" role="group" aria-label="カウントの対象">
+          <button type="button" data-target="b" class="active">変更後 / B</button>
+          <button type="button" data-target="a">変更前 / A</button>
+        </div>
+        <hr>
+      </div>
+
+      <div class="gauge-row">
+        <div>
+          <span class="st-lbl">文字数（見た目）</span>
+          <div class="big-num" id="c-grapheme">0</div>
+        </div>
+        <div>
+          <span class="st-lbl">原稿用紙</span>
+          <div class="big-num" style="font-size:26px" id="c-genko">0.00 枚</div>
+        </div>
+        <div>
+          <span class="st-lbl">黙読 400字/分</span>
+          <div class="big-num" style="font-size:26px" id="c-read">0:00</div>
+        </div>
+        <div>
+          <span class="st-lbl">読み上げ 300字/分</span>
+          <div class="big-num" style="font-size:26px" id="c-speak">0:00</div>
+        </div>
+      </div>
+
+      <div class="metrics-grid" id="metrics-grid"></div>
+
+      <div class="sub-head"><span class="st-lbl">媒体別の文字数制限</span><hr></div>
+      <div id="limit-list"></div>
+      <p class="panel-note">X（Twitter）は全角を2・半角を1で数える重み付き280が上限で、URLは長さにかかわらず23として扱われます。他の欄は見た目どおりの文字数で判定しています。</p>
+    </section>
+
+    <!-- ===================== panel : AIO ===================== -->
+    <section id="panel-aio" class="hidden" role="tabpanel" aria-labelledby="tab-aio">
+      <div class="sub-head">
+        <span class="st-lbl">対象</span>
+        <div class="st-seg" id="seg-target-aio" role="group" aria-label="採点の対象">
+          <button type="button" data-target="b" class="active">変更後 / B</button>
+          <button type="button" data-target="a">変更前 / A</button>
+        </div>
+        <hr>
+      </div>
+
+      <div class="gauge-row">
+        <div>
+          <span class="st-lbl">AIO スコア</span>
+          <div class="big-num" id="aio-score">0</div>
+        </div>
+        <div style="flex:1; min-width:220px">
+          <div class="lim-bar" style="height:8px"><i id="aio-bar" style="width:0%"></i></div>
+          <p class="panel-note" style="margin-top:9px">AI検索（ChatGPT / Perplexity / AI Overviews）に引用されやすい書き方かを、ブラウザ内の規則だけで採点します。外部APIは使いません。</p>
+        </div>
+      </div>
+
+      <div id="aio-checks"></div>
+
+      <div class="result-head" style="margin-top:18px">
+        <span class="st-lbl">減点項目だけを書き換え指示にまとめます</span>
+        <button class="btn-mini" type="button" id="btn-copy-aio">改善指示をコピー</button>
+      </div>
+    </section>
+
+    <!-- ===================== SEO copy ===================== -->
+    <section id="tool-copy" class="prose-tool" style="margin-top:56px">
+      <h2>Diff Studio について</h2>
+      <p>Diff Studio は、2つの文章の違いを1文字単位で色分けして見せる無料のテキスト差分ツールです。処理はすべてブラウザ内のJavaScriptで完結し、入力した文章がサーバーに送信されることはありません。契約書の修正案、校正者からの赤字、AIに書き直させた原稿など、外に出したくない文章でもそのまま貼り付けて比較できます。読み込みが終わればオフラインでも動作します。</p>
+
+      <h3>日本語のための差分</h3>
+      <p>英語向けの差分ツールをそのまま日本語に使うと、絵文字や結合文字が途中で割れたり、単語の切れ目が滅茶苦茶になったりします。Diff Studio はブラウザ標準の <strong>Intl.Segmenter</strong> で日本語として分割するため、文字の粒度では絵文字を1文字として扱い、単語の粒度では「差分」「比較」のような語のまとまりで区切ります。文・行の粒度も選べるので、細かい推敲を見たいときは文字、構成の入れ替えを見たいときは文や行、と切り替えられます。</p>
+
+      <h3>表記ゆれを差分から外す</h3>
+      <p>「行なう」と「行う」、「問合せ」と「お問い合わせ」、「下さい」と「ください」。意味は同じでも文字が違えば差分は出ます。本当に見たい変更が、こうした表記ゆれに埋もれてしまうのが日本語の文章比較で一番つらいところです。Diff Studio は次の5つを個別に「無視」できます。</p>
+      <ul>
+        <li><strong>全角半角</strong> — ＡＢＣ と ABC、１２３ と 123、半角カナと全角カナ</li>
+        <li><strong>空白</strong> — 半角スペース・全角スペース・タブ・改行・ゼロ幅スペース</li>
+        <li><strong>記号</strong> — 、と ，、。と ．、「」と ""、（）と ()、‐ と − と ー</li>
+        <li><strong>大小文字</strong> — 英字の大文字と小文字</li>
+        <li><strong>送り仮名</strong> — 行なう／行う、申込／申し込み、売上げ／売上 など実務で頻出する表記ゆれ</li>
+      </ul>
+      <p>無視に指定した違いは色が付かないだけでなく、差分の集計からも外れます。「+0 -0」になれば、その観点では2つの文章は同じだと判断できます。逆にいうと、無視した違いは変更として扱われないので、「すべて却下」しても結果には変更後の表記が残ります。送り仮名の無視は語のまとまりを見る必要があるため、「文字」と「単語」の粒度でのみ働きます。</p>
+
+      <h3>変更を1箇所ずつ採用・却下する</h3>
+      <p>差分を見るだけのツールは多くありますが、実務で本当に必要なのは「どれを取り込むか決める」作業です。Diff Studio では色の付いた箇所をクリックすると、その変更だけを却下（＝変更前のまま）に切り替えられます。採用した変更だけを反映した文章が下の「結果」に組み上がるので、そのままコピーして最終稿にできます。校正者の赤字やAIの書き換え提案から、必要なものだけを選んで取り込む用途を想定しています。</p>
+
+      <h3>文字数は1つに丸めない</h3>
+      <p>「この文章は何文字ですか」という問いに正解が1つしかない場面はほとんどありません。絵文字を1文字と数えるのか、データベースの制限に引っかからないかを見たいのか、印刷の分量を知りたいのか。Diff Studio は用途ごとに違う数え方をまとめて表示します。</p>
+      <ul>
+        <li><strong>見た目の文字数</strong>（書記素単位）— 絵文字も結合文字も1文字。人が数えたときの結果に一致します</li>
+        <li><strong>UTF-16 単位</strong> — JavaScript の <code>length</code> やデータベースの文字数制限が使う数え方。絵文字は2になります</li>
+        <li><strong>コードポイント数</strong>、<strong>空白を除いた数</strong>、<strong>改行を除いた数</strong></li>
+        <li><strong>全角／半角の内訳</strong>、<strong>UTF-8 バイト数</strong>、<strong>Shift_JIS バイト数</strong>（表現できない文字数も表示）</li>
+        <li><strong>行数・段落数・文数</strong>、<strong>400字詰原稿用紙の枚数</strong>、黙読と読み上げの所要時間</li>
+      </ul>
+
+      <h3>媒体別の文字数制限チェック</h3>
+      <p>X（Twitter）の280、meta description の120字、title タグの32字、OGP description の100字といった、媒体ごとの上限に対する残り文字数を一覧で確認できます。Xについては実際の仕様に合わせ、全角を2・半角を1で数える重み付きの長さで判定し、URLは長さにかかわらず23として扱います。超過した欄は赤で表示されます。</p>
+
+      <h3>AIO（AI検索最適化）スコア</h3>
+      <p>ChatGPT や Perplexity、Google の AI Overviews に引用されやすい文章には共通した特徴があります。冒頭に結論があること、一文が短いこと、指示語が少ないこと、時期や数値が具体的であること、見出しで構造化されていること。Diff Studio はこれらを規則ベースで採点し、減点項目を一覧で示します。採点はブラウザ内で完結するため、AIに文章を渡す前の下読みとして使えます。減点項目は「改善指示」としてコピーでき、そのまま生成AIへのプロンプトに貼り付けられます。</p>
+
+      <h3>使い方のヒント</h3>
+      <ul>
+        <li>テキストファイル（.txt / .md / .csv / .json など）は入力欄にドラッグ＆ドロップでも読み込めます</li>
+        <li>差分が大きすぎる場合は自動的に行単位の比較に切り替わります。その旨は差分の下に表示されます</li>
+        <li>「空白を可視化」を有効にすると、半角スペースは <code>·</code>、全角スペースは <code>□</code>、タブは <code>→</code>、改行は <code>¶</code> で表示されます。行末の余計な空白を探すときに使ってください</li>
+        <li>設定（粒度・無視・表示）はこのブラウザに記憶されます。文章そのものは保存されません</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- ===================== status bar ===================== -->
+  <footer class="site-foot">
+    <div class="foot-in">
+      <div id="donation-button-container"></div>
+      <span class="foot-copy">&copy; <span id="currentYear"></span> Shinya Takeda</span>
+    </div>
+  </footer>
+
+  <!-- ===================== toast ===================== -->
+  <div id="toast" class="translate-y-20 opacity-0" role="status">
+    <i id="toast-icon-success" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
+    <i id="toast-icon-error" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
+    <span id="toast-msg"></span>
+  </div>
+
+  <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
+    <i data-lucide="arrow-up"></i>
+  </button>
+
+  <script src="../../data/buy-me-oil.js"></script>
+  <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
+
+  <script>
+    /* Theme: system by default, explicit choice remembered. */
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const root = document.documentElement;
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+      const next = current === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('st-theme', next); } catch (e) { }
+    });
+    /* The mark beside the trail is this page's own favicon, read from
+       the <link>, so the bar and the browser tab cannot drift apart. */
+    (function () {
+      var icon = document.querySelector('link[rel="icon"]');
+      var mark = document.querySelector('.crumb-mark');
+      if (icon && mark) mark.style.backgroundImage = 'url("' + icon.href + '")';
+    })();
+    /* The way back up follows the reader: it appears only once there is
+       something to scroll back over. */
+    (function () {
+      var btn = document.getElementById('scroll-top-btn');
+      if (!btn) return;
+      window.addEventListener('scroll', function () {
+        btn.classList.toggle('visible', window.scrollY > 300);
+      }, { passive: true });
+      btn.addEventListener('click', function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      });
+    })();
+    lucide.createIcons();
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+  </script>
+
+  <!-- ===================== tool ===================== -->
+  <script type="module">
+    import { diff, chunkText, applyChunks } from './diff-engine.js?v=20260903';
+    import { count, LIMIT_PRESETS, checkLimit, scoreAIO, aioInstructions } from './metrics.js?v=20260903';
+
+    const $ = (id) => document.getElementById(id);
+    const toast = (m, t) => window.STCommon.showToast(m, t);
+
+    const taA = $('text-a');
+    const taB = $('text-b');
+    const viewA = $('view-a');
+    const viewB = $('view-b');
+    const viewInline = $('view-inline');
+    const resultText = $('result-text');
+    const modeNote = $('mode-note');
+    const led = $('status-led');
+    const statusText = $('status-text');
+
+    const OPTS_KEY = 'st-diff-opts';
+
+    const state = {
+      mode: 'char',
+      view: 'side',
+      ws: false,
+      ignoreWidth: false,
+      ignoreSpace: false,
+      ignorePunct: false,
+      ignoreCase: false,
+      ignoreOkurigana: false,
+      target: 'b',
+      result: null,
+      rejected: new Set(),
+    };
+
+    /* ---------------- options: remembered, but never the text itself ------- */
+
+    const OPT_INPUTS = {
+      ignoreWidth: 'op-width',
+      ignoreSpace: 'op-space',
+      ignorePunct: 'op-punct',
+      ignoreCase: 'op-case',
+      ignoreOkurigana: 'op-okuri',
+      ws: 'op-ws',
+    };
+
+    function loadOpts() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(OPTS_KEY) || 'null'); } catch (e) { /* private mode */ }
+      if (saved && typeof saved === 'object') {
+        for (const k of Object.keys(OPT_INPUTS)) if (typeof saved[k] === 'boolean') state[k] = saved[k];
+        if (['char', 'word', 'sentence', 'line'].includes(saved.mode)) state.mode = saved.mode;
+        if (['side', 'inline'].includes(saved.view)) state.view = saved.view;
+      }
+      for (const [k, id] of Object.entries(OPT_INPUTS)) $(id).checked = state[k];
+      syncSeg('seg-mode', 'mode', state.mode);
+      syncSeg('seg-view', 'view', state.view);
+      applyView();
+      syncOkurigana();
+    }
+
+    // The okurigana table matches words, so it needs tokens that are words or
+    // smaller. At the sentence and line granularities a token is a whole
+    // sentence and the table can never fire — say so rather than offering a
+    // switch that does nothing.
+    function syncOkurigana() {
+      const input = $('op-okuri');
+      const label = input.closest('.opt');
+      const usable = state.mode === 'char' || state.mode === 'word';
+      input.disabled = !usable;
+      label.classList.toggle('unavailable', !usable);
+      label.title = usable ? '' : '送り仮名の無視は「文字」「単語」の粒度でのみ効きます';
+    }
+
+    function saveOpts() {
+      const out = { mode: state.mode, view: state.view };
+      for (const k of Object.keys(OPT_INPUTS)) out[k] = state[k];
+      try { localStorage.setItem(OPTS_KEY, JSON.stringify(out)); } catch (e) { /* private mode */ }
+    }
+
+    function syncSeg(segId, attr, value) {
+      for (const b of $(segId).children) b.classList.toggle('active', b.dataset[attr] === value);
+    }
+
+    /* ---------------- rendering ------------------------------------------- */
+
+    // Whitespace is invisible until it matters, and then it matters a lot —
+    // a trailing space is a real diff the reader cannot see.
+    const SPACE_FULL = String.fromCharCode(0x3000);
+    const WS_MARK = { ' ': '·', '\t': '→', '\n': '¶\n' };
+    WS_MARK[SPACE_FULL] = '□';
+
+    function appendText(parent, text) {
+      if (!state.ws) { parent.appendChild(document.createTextNode(text)); return; }
+      let buf = '';
+      for (const ch of text) {
+        const mark = WS_MARK[ch];
+        if (mark === undefined) { buf += ch; continue; }
+        if (buf) { parent.appendChild(document.createTextNode(buf)); buf = ''; }
+        const i = document.createElement('i');
+        i.className = 'ws';
+        i.textContent = mark;
+        parent.appendChild(i);
+      }
+      if (buf) parent.appendChild(document.createTextNode(buf));
+    }
+
+    function plain(text) {
+      const s = document.createElement('span');
+      appendText(s, text);
+      return s;
+    }
+
+    // One change = one clickable element = one accept/reject decision.
+    function chunkEl(index, parts) {
+      const el = document.createElement('span');
+      const rejected = state.rejected.has(index);
+      el.className = rejected ? 'chunk rejected' : 'chunk';
+      el.dataset.chunk = String(index);
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-pressed', rejected ? 'true' : 'false');
+      el.title = rejected ? 'クリックでこの変更を採用に戻す' : 'クリックでこの変更を却下する';
+      let any = false;
+      for (const [cls, text] of parts) {
+        if (!text) continue;
+        const s = document.createElement('span');
+        s.className = cls;
+        appendText(s, text);
+        el.appendChild(s);
+        any = true;
+      }
+      if (!any) {
+        // Pure insertion seen from the left (or pure deletion from the right).
+        const gap = document.createElement('i');
+        gap.className = 'd-gap';
+        el.appendChild(gap);
+      }
+      return el;
+    }
+
+    function placeholder(container, message) {
+      container.textContent = '';
+      const p = document.createElement('span');
+      p.className = 'placeholder';
+      p.textContent = message;
+      container.appendChild(p);
+    }
+
+    function renderDiff() {
+      const res = state.result;
+      if (!res) {
+        placeholder(viewA, '左に元の文章、右に修正後の文章を貼り付けてください。');
+        placeholder(viewB, '差分はここに表示されます。');
+        placeholder(viewInline, '差分はここに表示されます。');
+        return;
+      }
+
+      const fragA = document.createDocumentFragment();
+      const fragB = document.createDocumentFragment();
+      const fragI = document.createDocumentFragment();
+
+      res.chunks.forEach((c, i) => {
+        const aText = chunkText(res.a, c.a);
+        const bText = chunkText(res.b, c.b);
+        if (c.type === 'eq') {
+          if (aText) fragA.appendChild(plain(aText));
+          if (bText) fragB.appendChild(plain(bText));
+          if (bText) fragI.appendChild(plain(bText));
+          return;
+        }
+        fragA.appendChild(chunkEl(i, [['d-del', aText]]));
+        fragB.appendChild(chunkEl(i, [['d-ins', bText]]));
+        fragI.appendChild(chunkEl(i, [['d-del', aText], ['d-ins', bText]]));
+      });
+
+      viewA.textContent = '';
+      viewA.appendChild(fragA);
+      viewB.textContent = '';
+      viewB.appendChild(fragB);
+      viewInline.textContent = '';
+      viewInline.appendChild(fragI);
+    }
+
+    function updateStats() {
+      const s = state.result ? state.result.stats : { added: 0, removed: 0, unchanged: 0 };
+      $('stat-add').textContent = '+' + s.added;
+      $('stat-del').textContent = '-' + s.removed;
+      $('stat-same').textContent = s.unchanged + ' 一致';
+    }
+
+    function updateResult() {
+      resultText.value = state.result ? applyChunks(state.result, state.rejected) : '';
+    }
+
+    function changeCount() {
+      if (!state.result) return 0;
+      return state.result.chunks.filter((c) => c.type !== 'eq').length;
+    }
+
+    /* ---------------- compute --------------------------------------------- */
+
+    let timer = null;
+
+    function setBusy(busy) {
+      led.classList.toggle('idle', !busy);
+      statusText.textContent = busy ? 'diffing' : 'ready';
+    }
+
+    function scheduleCompute() {
+      clearTimeout(timer);
+      setBusy(true);
+      // Long documents cost more per keystroke, so they wait longer for a pause.
+      const wait = taA.value.length + taB.value.length > 40000 ? 500 : 180;
+      timer = setTimeout(compute, wait);
+    }
+
+    function compute() {
+      const a = taA.value;
+      const b = taB.value;
+      state.rejected = new Set();
+
+      if (!a && !b) {
+        state.result = null;
+      } else {
+        try {
+          state.result = diff(a, b, {
+            mode: state.mode,
+            ignoreWidth: state.ignoreWidth,
+            ignoreSpace: state.ignoreSpace,
+            ignorePunct: state.ignorePunct,
+            ignoreCase: state.ignoreCase,
+            ignoreOkurigana: state.ignoreOkurigana,
+          });
+        } catch (e) {
+          console.error(e);
+          state.result = null;
+          toast('比較に失敗しました。文章が大きすぎる可能性があります。', 'error');
+        }
+      }
+
+      // diff() drops to line granularity by itself when the edit script gets
+      // too long; say so rather than letting the toolbar quietly lie.
+      const fellBack = state.result && state.result.mode !== state.mode;
+      modeNote.classList.toggle('hidden', !fellBack);
+      if (fellBack) modeNote.textContent = '差分が大きいため、行単位の比較に切り替えました。粒度を「行」以外に戻すには、比較する範囲を狭めてください。';
+
+      renderDiff();
+      updateStats();
+      updateResult();
+      renderCount();
+      renderAIO();
+      setBusy(false);
+    }
+
+    /* ---------------- counts ---------------------------------------------- */
+
+    function targetText() {
+      return state.target === 'a' ? taA.value : taB.value;
+    }
+
+    function mmss(seconds) {
+      const s = Math.round(seconds);
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function metricCard(label, value, note) {
+      const el = document.createElement('div');
+      el.className = 'metric';
+      const l = document.createElement('span');
+      l.className = 'st-lbl';
+      l.textContent = label;
+      const b = document.createElement('b');
+      b.textContent = typeof value === 'number' ? value.toLocaleString('ja-JP') : value;
+      el.appendChild(l);
+      el.appendChild(b);
+      if (note) {
+        const s = document.createElement('small');
+        s.textContent = note;
+        el.appendChild(s);
+      }
+      return el;
+    }
+
+    function renderCount() {
+      const text = targetText();
+      const c = count(text);
+
+      $('c-grapheme').textContent = c.grapheme.toLocaleString('ja-JP');
+      $('c-genko').textContent = c.manuscriptSheets.toFixed(2) + ' 枚';
+      $('c-read').textContent = mmss(c.readingSeconds);
+      $('c-speak').textContent = mmss(c.speakingSeconds);
+
+      const grid = $('metrics-grid');
+      grid.textContent = '';
+      const cards = [
+        ['UTF-16 単位', c.utf16, 'JS の length / DB の文字数制限'],
+        ['コードポイント', c.codepoint, ''],
+        ['空白を除く', c.noSpace, ''],
+        ['改行を除く', c.noNewline, ''],
+        ['全角', c.fullWidth, ''],
+        ['半角', c.halfWidth, ''],
+        ['UTF-8 バイト', c.utf8Bytes, ''],
+        ['Shift_JIS バイト', c.sjisBytes, c.sjisUnsupported ? c.sjisUnsupported + ' 文字が表現不可' : ''],
+        ['X 重み付き', c.xWeighted, '全角2 / 半角1 / URL 23'],
+        ['行', c.lines, ''],
+        ['段落', c.paragraphs, ''],
+        ['文', c.sentences, ''],
+      ];
+      for (const [label, value, note] of cards) grid.appendChild(metricCard(label, value, note));
+
+      const list = $('limit-list');
+      list.textContent = '';
+      for (const preset of LIMIT_PRESETS) {
+        const r = checkLimit(text, preset);
+        const row = document.createElement('div');
+        row.className = r.over > 0 ? 'lim-row over' : 'lim-row';
+
+        const name = document.createElement('div');
+        name.className = 'lim-name';
+        name.textContent = preset.label;
+        if (preset.note) {
+          const s = document.createElement('small');
+          s.textContent = preset.note;
+          name.appendChild(s);
+        }
+
+        const bar = document.createElement('div');
+        bar.className = 'lim-bar';
+        const fill = document.createElement('i');
+        fill.style.width = Math.min(100, r.ratio * 100) + '%';
+        bar.appendChild(fill);
+
+        const num = document.createElement('div');
+        num.className = 'lim-num';
+        num.textContent = r.over > 0
+          ? r.over.toLocaleString('ja-JP') + ' 超過'
+          : r.used.toLocaleString('ja-JP') + ' / ' + r.limit.toLocaleString('ja-JP');
+
+        row.appendChild(name);
+        row.appendChild(bar);
+        row.appendChild(num);
+        list.appendChild(row);
+      }
+    }
+
+    /* ---------------- AIO -------------------------------------------------- */
+
+    let aioResult = null;
+
+    function renderAIO() {
+      const text = targetText();
+      aioResult = scoreAIO(text);
+
+      $('aio-score').textContent = String(aioResult.score);
+      $('aio-bar').style.width = aioResult.score + '%';
+
+      const box = $('aio-checks');
+      box.textContent = '';
+      for (const k of aioResult.checks) {
+        const row = document.createElement('div');
+        row.className = k.ok ? 'check ok' : 'check ng';
+
+        const mark = document.createElement('span');
+        mark.className = 'mark';
+        mark.textContent = k.ok ? '✓' : '!';
+        mark.setAttribute('aria-label', k.ok ? '達成' : '未達成');
+
+        const body = document.createElement('div');
+        body.className = 'body';
+        const b = document.createElement('b');
+        b.textContent = k.label;
+        body.appendChild(b);
+        const detail = [];
+        if (k.detail) detail.push(k.detail);
+        if (k.hits && k.hits.length) detail.push(k.hits.length + ' 箇所');
+        if (detail.length && !k.ok) {
+          const p = document.createElement('p');
+          p.textContent = detail.join(' / ');
+          body.appendChild(p);
+        }
+
+        const w = document.createElement('span');
+        w.className = 'w';
+        w.textContent = k.weight + ' 点';
+
+        row.appendChild(mark);
+        row.appendChild(body);
+        row.appendChild(w);
+        box.appendChild(row);
+      }
+    }
+
+    /* ---------------- interactions ---------------------------------------- */
+
+    function toggleChunk(index) {
+      if (state.rejected.has(index)) state.rejected.delete(index);
+      else state.rejected.add(index);
+      renderDiff();
+      updateResult();
+    }
+
+    for (const view of [viewA, viewB, viewInline]) {
+      view.addEventListener('click', (e) => {
+        const el = e.target.closest('.chunk');
+        if (el) toggleChunk(Number(el.dataset.chunk));
+      });
+      view.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const el = e.target.closest('.chunk');
+        if (!el) return;
+        e.preventDefault();
+        toggleChunk(Number(el.dataset.chunk));
+      });
+    }
+
+    // The two panes are one document read twice, so they scroll as one.
+    let syncing = false;
+    function linkScroll(from, to) {
+      from.addEventListener('scroll', () => {
+        if (syncing) return;
+        syncing = true;
+        to.scrollTop = from.scrollTop;
+        requestAnimationFrame(() => { syncing = false; });
+      });
+    }
+    linkScroll(viewA, viewB);
+    linkScroll(viewB, viewA);
+
+    taA.addEventListener('input', scheduleCompute);
+    taB.addEventListener('input', scheduleCompute);
+
+    $('seg-mode').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      state.mode = btn.dataset.mode;
+      syncSeg('seg-mode', 'mode', state.mode);
+      syncOkurigana();
+      saveOpts();
+      scheduleCompute();
+    });
+
+    function applyView() {
+      $('diff-side').classList.toggle('hidden', state.view !== 'side');
+      $('diff-inline').classList.toggle('hidden', state.view !== 'inline');
+    }
+
+    $('seg-view').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      state.view = btn.dataset.view;
+      syncSeg('seg-view', 'view', state.view);
+      applyView();
+      saveOpts();
+    });
+
+    for (const [key, id] of Object.entries(OPT_INPUTS)) {
+      $(id).addEventListener('change', (e) => {
+        state[key] = e.target.checked;
+        saveOpts();
+        if (key === 'ws') { renderDiff(); return; }
+        scheduleCompute();
+      });
+    }
+
+    for (const segId of ['seg-target-count', 'seg-target-aio']) {
+      $(segId).addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        state.target = btn.dataset.target;
+        syncSeg('seg-target-count', 'target', state.target);
+        syncSeg('seg-target-aio', 'target', state.target);
+        renderCount();
+        renderAIO();
+      });
+    }
+
+    document.querySelector('.tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      for (const t of document.querySelectorAll('.tab')) {
+        const on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        $(t.dataset.panel).classList.toggle('hidden', !on);
+      }
+    });
+
+    $('btn-swap').addEventListener('click', () => {
+      const tmp = taA.value;
+      taA.value = taB.value;
+      taB.value = tmp;
+      compute();
+    });
+
+    $('btn-accept-all').addEventListener('click', () => {
+      state.rejected.clear();
+      renderDiff();
+      updateResult();
+    });
+
+    $('btn-reject-all').addEventListener('click', () => {
+      state.rejected = new Set();
+      if (state.result) {
+        state.result.chunks.forEach((c, i) => { if (c.type !== 'eq') state.rejected.add(i); });
+      }
+      renderDiff();
+      updateResult();
+    });
+
+    $('btn-copy').addEventListener('click', async () => {
+      if (!resultText.value) { toast('コピーする文章がありません', 'error'); return; }
+      try {
+        await navigator.clipboard.writeText(resultText.value);
+        toast('結果をコピーしました');
+      } catch (e) {
+        resultText.select();
+        document.execCommand('copy');
+        toast('結果をコピーしました');
+      }
+    });
+
+    $('btn-download').addEventListener('click', () => {
+      if (!resultText.value) { toast('保存する文章がありません', 'error'); return; }
+      const blob = new Blob([resultText.value], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'diff-result.txt';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast('diff-result.txt を保存しました');
+    });
+
+    $('btn-copy-aio').addEventListener('click', async () => {
+      if (!aioResult || !targetText().trim()) { toast('採点する文章がありません', 'error'); return; }
+      const body = aioInstructions(aioResult);
+      if (!body) { toast('減点項目はありません'); return; }
+      const prompt = '次の文章を、以下の点を直して書き直してください。内容は変えないでください。\n\n' + body;
+      try {
+        await navigator.clipboard.writeText(prompt);
+        toast('改善指示をコピーしました');
+      } catch (e) {
+        toast('コピーできませんでした', 'error');
+      }
+    });
+
+    /* ---------------- files ------------------------------------------------ */
+
+    function readInto(textarea, file) {
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast('5MB を超えるファイルは読み込めません', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        textarea.value = String(reader.result);
+        compute();
+        toast(file.name + ' を読み込みました');
+      };
+      reader.onerror = () => toast('ファイルを読み込めませんでした', 'error');
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    // Only the panes claim the drop. Cancelling the default on window keeps the
+    // browser from navigating away when a file lands beside them, without
+    // stopping propagation — that is what would kill the panes' own handlers.
+    for (const name of ['dragover', 'drop']) {
+      window.addEventListener(name, (e) => e.preventDefault());
+    }
+
+    function wirePane(paneId, textarea, fileInputId, fileBtnId, clearBtnId) {
+      const pane = $(paneId);
+      const input = $(fileInputId);
+
+      $(fileBtnId).addEventListener('click', () => input.click());
+      input.addEventListener('change', () => {
+        readInto(textarea, input.files[0]);
+        input.value = '';
+      });
+      $(clearBtnId).addEventListener('click', () => {
+        textarea.value = '';
+        textarea.focus();
+        compute();
+      });
+
+      pane.addEventListener('dragenter', () => pane.classList.add('dragover'));
+      pane.addEventListener('dragover', (e) => { e.preventDefault(); pane.classList.add('dragover'); });
+      pane.addEventListener('dragleave', (e) => {
+        if (!pane.contains(e.relatedTarget)) pane.classList.remove('dragover');
+      });
+      pane.addEventListener('drop', (e) => {
+        e.preventDefault();
+        pane.classList.remove('dragover');
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) readInto(textarea, file);
+      });
+    }
+
+    wirePane('pane-a', taA, 'file-a', 'btn-file-a', 'btn-clear-a');
+    wirePane('pane-b', taB, 'file-b', 'btn-file-b', 'btn-clear-b');
+
+    /* ---------------- sample ----------------------------------------------- */
+
+    const SAMPLE_A = [
+      '弊社では、2026年4月より新しい問合せ窓口を開設致します。',
+      'お問合せは平日９時から１８時までの間に行なって下さい。',
+      '',
+      'なお、受付けの状況によってはご返答までにお時間を頂く場合がございます。',
+      'ご不明な点がございましたら、担当までご連絡下さい。',
+    ].join('\n');
+
+    const SAMPLE_B = [
+      '弊社では、2026年4月1日より新しいお問い合わせ窓口を開設します。',
+      'お問い合わせは平日9時から18時までの間に行ってください。',
+      '',
+      '受付の状況によっては、回答まで3営業日ほどいただく場合があります。',
+      'ご不明な点は担当までご連絡ください。',
+    ].join('\n');
+
+    $('btn-sample').addEventListener('click', () => {
+      taA.value = SAMPLE_A;
+      taB.value = SAMPLE_B;
+      compute();
+      toast('サンプルを読み込みました。「送り仮名」や「全角半角」を無視にすると違いが分かります');
+    });
+
+    /* ---------------- boot -------------------------------------------------- */
+
+    loadOpts();
+    compute();
+  </script>
+</body>
+</html>

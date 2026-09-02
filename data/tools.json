@@ -96,5 +96,56 @@
       "WEBP",
       "変換"
     ]
+  },
+  {
+    "id": 8,
+    "title": "CSV文字コード一括変換ツール",
+    "url": "https://tk.st/tools/csv-encoding/",
+    "imageUrl": "https://tk.st/images/ogp/csv-encoding-ogp.png",
+    "category": "converter",
+    "description": "アップロードしたCSVが今なんの文字コードで保存されているかを自動判別して表示し、UTF-8やShift_JISへまとめて変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックにも対応しています。",
+    "tags": [
+      "CSV",
+      "文字コード",
+      "Shift_JIS",
+      "UTF-8",
+      "EUC-JP",
+      "BOM",
+      "文字化け",
+      "一括",
+      "変換"
+    ]
+  },
+  {
+    "id": 9,
+    "title": "Diff Studio - テキスト差分比較・文字数カウントツール",
+    "url": "https://tk.st/tools/text-diff/",
+    "imageUrl": "https://tk.st/images/ogp/text-diff-ogp.png",
+    "category": "editor",
+    "description": "2つの文章の違いを1文字単位で色分け。送り仮名や全角半角などの表記ゆれを無視した比較ができ、変更は1箇所ずつ採用／却下できます。文字数カウントと媒体別の文字数制限チェックつき。",
+    "tags": [
+      "テキスト",
+      "差分",
+      "比較",
+      "diff",
+      "文字数カウント",
+      "校正"
+    ]
+  },
+  {
+    "id": 8,
+    "title": "QR Studio - おしゃれなQRコード作成ツール",
+    "url": "https://tk.st/tools/qr-studio/",
+    "imageUrl": "https://tk.st/images/ogp/qr-studio-ogp.png",
+    "category": "generator",
+    "description": "セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインできるQRコード作成ツール。短縮URLを挟まないので広告も有効期限もなく、書き出す絵をその場でデコードして読み取りを確認します。PNGとSVGで保存できます。",
+    "tags": [
+      "QRコード",
+      "作成",
+      "デザイン",
+      "ロゴ",
+      "SVG",
+      "無料"
+    ]
   }
 ]
