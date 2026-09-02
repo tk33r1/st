@@ -10,7 +10,7 @@
 </url>
 <url>
 <loc>https://tk.st/dj/</loc>
-<lastmod>2026-09-03T02:12:09+09:00</lastmod>
+<lastmod>2026-09-03T08:15:32+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/game/</loc>
@@ -34,7 +34,7 @@
 </url>
 <url>
 <loc>https://tk.st/tools/</loc>
-<lastmod>2026-08-29T09:27:23+09:00</lastmod>
+<lastmod>2026-09-03T08:15:32+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/anniversary/matsumura40/</loc>
@@ -109,6 +109,10 @@
 <lastmod>2026-08-18T21:48:05+09:00</lastmod>
 </url>
 <url>
+<loc>https://tk.st/tools/csv-encoding/</loc>
+<lastmod>2026-09-03T08:15:32+09:00</lastmod>
+</url>
+<url>
 <loc>https://tk.st/tools/csv-json/</loc>
 <lastmod>2026-08-29T09:27:23+09:00</lastmod>
 </url>
@@ -131,6 +135,14 @@
 <url>
 <loc>https://tk.st/tools/pdf-to-image/</loc>
 <lastmod>2026-08-23T01:32:48+09:00</lastmod>
+</url>
+<url>
+<loc>https://tk.st/tools/qr-studio/</loc>
+<lastmod>2026-09-03T08:15:32+09:00</lastmod>
+</url>
+<url>
+<loc>https://tk.st/tools/text-diff/</loc>
+<lastmod>2026-09-03T08:15:32+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/tools/video-to-animation/</loc>
