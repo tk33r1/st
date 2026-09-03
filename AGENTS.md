@@ -15,6 +15,7 @@
 - **MAGI アプリ** (`magi-app/`): MAGI チャットのモバイル版。PWA + Capacitor で
   iOS/Android にパッケージングする唯一の npm 管理サブプロジェクト。
 - **GitHub Actions** (`.github/`): サイトマップ生成とガソリン価格 JSON の週次更新。
+  `.github/scripts/ogp/` は CI ではなく手元で叩く OGP カード生成（`README.md` 参照）。
 
 ## ディレクトリ構成
 
@@ -22,7 +23,8 @@
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
 | `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新） |
-| `tools/` | ブラウザ内完結のツール群（csv-json, light-svg, pdf-studio 等）。`tools-ui.js` を共有 |
+| `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` 由来（`data/tools-ui.css` の `--cat-*`）で、ツール個別には持たない |
+| `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
 | `dj/` | DJ 関連。`schedule/`（日程調整）、`request/`（曲リクエスト）、`booth/`（ブースコンソール） |

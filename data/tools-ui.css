@@ -64,12 +64,12 @@
      is. Four cool hues in hue order (optimizer → converter → editor →
      generator) so the family reads as one ramp. Deliberately clear of
      --ok / --warn / --err above: a category must never look like a state. */
-  --cat-optimizer:      #0F766E;
+  --cat-optimizer:      #0369A1;
   --cat-optimizer-ink:  #FFFFFF;
-  --cat-optimizer-soft: #E3F2F0;
-  --cat-converter:      #0369A1;
+  --cat-optimizer-soft: #E6F1FA;
+  --cat-converter:      #0F766E;
   --cat-converter-ink:  #FFFFFF;
-  --cat-converter-soft: #E6F1FA;
+  --cat-converter-soft: #E3F2F0;
   --cat-editor:         #4F46E5;
   --cat-editor-ink:     #FFFFFF;
   --cat-editor-soft:    #EEF0FE;
@@ -101,12 +101,12 @@
     --shadow-1: 0 1px 2px rgb(0 0 0 / .4), 0 10px 30px rgb(0 0 0 / .3);
 
     /* category accents — same four hues, lifted for a dark ground. */
-    --cat-optimizer:      #2DD4BF;
-    --cat-optimizer-ink:  #052E2B;
-    --cat-optimizer-soft: #0C2A28;
-    --cat-converter:      #38BDF8;
-    --cat-converter-ink:  #06283A;
-    --cat-converter-soft: #0D2534;
+    --cat-optimizer:      #38BDF8;
+    --cat-optimizer-ink:  #06283A;
+    --cat-optimizer-soft: #0D2534;
+    --cat-converter:      #2DD4BF;
+    --cat-converter-ink:  #052E2B;
+    --cat-converter-soft: #0C2A28;
     --cat-editor:         #818CF8;
     --cat-editor-ink:     #14153A;
     --cat-editor-soft:    #1A1B36;
@@ -133,12 +133,12 @@
   --shadow-1: 0 1px 2px rgb(0 0 0 / .4), 0 10px 30px rgb(0 0 0 / .3);
 
   /* category accents — same four hues, lifted for a dark ground. */
-  --cat-optimizer:      #2DD4BF;
-  --cat-optimizer-ink:  #052E2B;
-  --cat-optimizer-soft: #0C2A28;
-  --cat-converter:      #38BDF8;
-  --cat-converter-ink:  #06283A;
-  --cat-converter-soft: #0D2534;
+  --cat-optimizer:      #38BDF8;
+  --cat-optimizer-ink:  #06283A;
+  --cat-optimizer-soft: #0D2534;
+  --cat-converter:      #2DD4BF;
+  --cat-converter-ink:  #052E2B;
+  --cat-converter-soft: #0C2A28;
   --cat-editor:         #818CF8;
   --cat-editor-ink:     #14153A;
   --cat-editor-soft:    #1A1B36;

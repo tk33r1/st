@@ -3,3 +3,17 @@
 /matsumura40      /anniversary/matsumura40/  301
 /matsumura40/     /anniversary/matsumura40/  301
 /matsumura40/*    /anniversary/matsumura40/:splat  301
+
+# 改名: 2026-09-04  CSV ↔ JSON 相互変換ツール → CSV JSON Bridge
+# どちらも sitemap 掲載済み＝インデックス済みなので、OGP 画像にも 301 を張る
+# （共有済みリンクのプレビューが 404 で崩れないように）。
+/tools/csv-json      /tools/csv-json-bridge/  301
+/tools/csv-json/     /tools/csv-json-bridge/  301
+/tools/csv-json/*    /tools/csv-json-bridge/:splat  301
+/images/ogp/csv-json-ogp.png   /images/ogp/csv-json-bridge-ogp.png  301
+
+# 改名: 2026-09-04  CSV文字コード一括変換ツール → Charset Converter
+/tools/csv-encoding      /tools/charset-converter/  301
+/tools/csv-encoding/     /tools/charset-converter/  301
+/tools/csv-encoding/*    /tools/charset-converter/:splat  301
+/images/ogp/csv-encoding-ogp.png   /images/ogp/charset-converter-ogp.png  301
