@@ -23,7 +23,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="アップロード不要のPDF編集ツール。回転・結合・分割・並べ替えを1画面で。片面スキャンの奇数偶数交互結合、2in1・中綴じ小冊子の面付け、本当に消える墨消し、ローカル圧縮に対応。PDFをPNG・JPEG・WebP（通常/可逆）・AVIF画像に変換してZIPで一括ダウンロードもできます。ファイルはサーバーに送信されません。">
   <meta name="robots" content="max-image-preview:large">
-  <title>PDF Studio - サーバーレスPDF編集ツール | ST TOOLS</title>
+  <title>PDF Studio - サーバーレスPDF編集ツール | SAFE TOOLS</title>
   <link rel="canonical" href="https://tk.st/tools/pdf-studio/">
   <link rel="author" href="https://tk.st/">
 
@@ -33,7 +33,7 @@
   <meta property="og:image" content="https://tk.st/images/ogp/pdf-studio-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/pdf-studio/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:site_name" content="SAFE TOOLS">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PDF Studio - サーバーレスPDF編集ツール">
@@ -49,7 +49,7 @@
         "@type": "BreadcrumbList",
         "itemListElement": [
           {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
-          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"},
+          {"@type": "ListItem", "position": 2, "name": "SAFE TOOLS", "item": "https://tk.st/tools/"},
           {"@type": "ListItem", "position": 3, "name": "PDF Studio", "item": "https://tk.st/tools/pdf-studio/"}
         ]
       },
@@ -154,21 +154,9 @@
        ------------------------------------------------------------------ */
 
     :root {
-      --accent: #4F46E5;
-      --accent-ink: #FFFFFF;
-      --accent-soft: #EEF0FE;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root.st-theme:not([data-theme="light"]) {
-        --accent: #818CF8;
-        --accent-ink: #14153A;
-        --accent-soft: #1A1B36;
-      }
-    }
-    :root.st-theme[data-theme="dark"] {
-      --accent: #818CF8;
-      --accent-ink: #14153A;
-      --accent-soft: #1A1B36;
+      --accent: var(--cat-editor);
+      --accent-ink: var(--cat-editor-ink);
+      --accent-soft: var(--cat-editor-soft);
     }
 
     /* A workbench uses the whole desk. */
@@ -727,7 +715,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
+          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">PDF Studio</h1></li>
         </ol>
       </nav>

@@ -23,22 +23,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックに対応。ブラウザ内で完結します。">
   <meta name="robots" content="max-image-preview:large">
-  <title>CSV文字コード一括変換ツール</title>
+  <title>Charset Converter - CSV文字コード一括変換ツール | SAFE TOOLS</title>
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23D97706'/%3E%3Crect x='5' y='10' width='9' height='12' rx='1.5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M17 16h9m-3-3 3 3-3 3' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
-  <link rel="canonical" href="https://tk.st/tools/csv-encoding/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230369A1'/%3E%3Crect x='5' y='10' width='9' height='12' rx='1.5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3Cpath d='M17 16h9m-3-3 3 3-3 3' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="canonical" href="https://tk.st/tools/charset-converter/">
   <link rel="author" href="https://tk.st/">
-  <meta property="og:title" content="CSV文字コード一括変換ツール">
+  <meta property="og:title" content="Charset Converter - CSV文字コード一括変換ツール">
   <meta property="og:description" content="CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックに対応。">
-  <meta property="og:image" content="https://tk.st/images/ogp/csv-encoding-ogp.png">
-  <meta property="og:url" content="https://tk.st/tools/csv-encoding/">
+  <meta property="og:image" content="https://tk.st/images/ogp/charset-converter-ogp.png">
+  <meta property="og:url" content="https://tk.st/tools/charset-converter/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:site_name" content="SAFE TOOLS">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="CSV文字コード一括変換ツール">
+  <meta name="twitter:title" content="Charset Converter - CSV文字コード一括変換ツール">
   <meta name="twitter:description" content="CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。変換できない文字も事前にチェックできます。">
-  <meta name="twitter:image" content="https://tk.st/images/ogp/csv-encoding-ogp.png">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/charset-converter-ogp.png">
 
   <script type="application/ld+json">
   {
@@ -46,10 +46,10 @@
     "@graph": [
       {
         "@type": "SoftwareApplication",
-        "@id": "https://tk.st/tools/csv-encoding/#webapp",
-        "name": "CSV文字コード一括変換ツール",
+        "@id": "https://tk.st/tools/charset-converter/#webapp",
+        "name": "Charset Converter",
         "description": "CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックに対応。",
-        "url": "https://tk.st/tools/csv-encoding/",
+        "url": "https://tk.st/tools/charset-converter/",
         "inLanguage": "ja",
         "publisher": {
           "@type": "Person",
@@ -77,22 +77,22 @@
           {
             "@type": "ListItem",
             "position": 2,
-            "name": "ST TOOLS",
+            "name": "SAFE TOOLS",
             "item": "https://tk.st/tools/"
           },
           {
             "@type": "ListItem",
             "position": 3,
-            "name": "CSV文字コード変換",
-            "item": "https://tk.st/tools/csv-encoding/"
+            "name": "Charset Converter",
+            "item": "https://tk.st/tools/charset-converter/"
           }
         ]
       },
       {
         "@type": "FAQPage",
-        "@id": "https://tk.st/tools/csv-encoding/#faq",
+        "@id": "https://tk.st/tools/charset-converter/#faq",
         "isPartOf": {
-          "@id": "https://tk.st/tools/csv-encoding/#webapp"
+          "@id": "https://tk.st/tools/charset-converter/#webapp"
         },
         "mainEntity": [
           {
@@ -167,25 +167,13 @@
 
   <style>
     /* ------------------------------------------------------------------
-       CSV文字コード一括変換 — 外枠は data/tools-ui.css。ここが持つのは
+       Charset Converter — 外枠は data/tools-ui.css。ここが持つのは
        ファイルカード（判別結果 → 変換先の流れ、プレビュー、警告）だけ。
        ------------------------------------------------------------------ */
     :root {
-      --accent: #C2410C;
-      --accent-ink: #FFFFFF;
-      --accent-soft: #FCECE2;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root.st-theme:not([data-theme="light"]) {
-        --accent: #FB923C;
-        --accent-ink: #2A1405;
-        --accent-soft: #2C1B0D;
-      }
-    }
-    :root.st-theme[data-theme="dark"] {
-      --accent: #FB923C;
-      --accent-ink: #2A1405;
-      --accent-soft: #2C1B0D;
+      --accent: var(--cat-converter);
+      --accent-ink: var(--cat-converter-ink);
+      --accent-soft: var(--cat-converter-soft);
     }
 
     .st-theme { --shell: 1080px; }
@@ -354,8 +342,8 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
-          <li><h1 aria-current="page">CSV文字コード変換</h1></li>
+          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
+          <li><h1 aria-current="page">Charset Converter</h1></li>
         </ol>
       </nav>
       <span class="crumb-mark" aria-hidden="true"></span>

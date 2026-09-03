@@ -99,9 +99,9 @@
   },
   {
     "id": 8,
-    "title": "CSV文字コード一括変換ツール",
-    "url": "https://tk.st/tools/csv-encoding/",
-    "imageUrl": "https://tk.st/images/ogp/csv-encoding-ogp.png",
+    "title": "Charset Converter - CSV文字コード一括変換ツール",
+    "url": "https://tk.st/tools/charset-converter/",
+    "imageUrl": "https://tk.st/images/ogp/charset-converter-ogp.png",
     "category": "converter",
     "description": "アップロードしたCSVが今なんの文字コードで保存されているかを自動判別して表示し、UTF-8やShift_JISへまとめて変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックにも対応しています。",
     "tags": [
@@ -133,10 +133,10 @@
     ]
   },
   {
-    "id": 8,
-    "title": "QR Studio - おしゃれなQRコード作成ツール",
-    "url": "https://tk.st/tools/qr-studio/",
-    "imageUrl": "https://tk.st/images/ogp/qr-studio-ogp.png",
+    "id": 10,
+    "title": "QR Atelier - おしゃれなQRコード作成ツール",
+    "url": "https://tk.st/tools/qr-atelier/",
+    "imageUrl": "https://tk.st/images/ogp/qr-atelier-ogp.png",
     "category": "generator",
     "description": "セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインできるQRコード作成ツール。短縮URLを挟まないので広告も有効期限もなく、書き出す絵をその場でデコードして読み取りを確認します。PNGとSVGで保存できます。",
     "tags": [

@@ -23,7 +23,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="2つの文章の違いを1文字単位で色分け表示するテキスト差分ツール。全角半角・空白・記号・送り仮名の表記ゆれを無視して比較でき、変更を1箇所ずつ採用／却下して最終稿を組み立てられます。文字数カウント、X・meta descriptionなど媒体別の文字数制限チェック、AI検索に引用されやすいかのローカル採点つき。文章はサーバーに送信されません。">
   <meta name="robots" content="max-image-preview:large">
-  <title>Diff Studio - テキスト差分比較・文字数カウントツール | ST TOOLS</title>
+  <title>Diff Studio - テキスト差分比較・文字数カウントツール | SAFE TOOLS</title>
   <link rel="canonical" href="https://tk.st/tools/text-diff/">
   <link rel="author" href="https://tk.st/">
 
@@ -33,7 +33,7 @@
   <meta property="og:image" content="https://tk.st/images/ogp/text-diff-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/text-diff/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:site_name" content="SAFE TOOLS">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Diff Studio - テキスト差分比較・文字数カウントツール">
@@ -49,7 +49,7 @@
         "@type": "BreadcrumbList",
         "itemListElement": [
           {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
-          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"},
+          {"@type": "ListItem", "position": 2, "name": "SAFE TOOLS", "item": "https://tk.st/tools/"},
           {"@type": "ListItem", "position": 3, "name": "Diff Studio", "item": "https://tk.st/tools/text-diff/"}
         ]
       },
@@ -117,7 +117,7 @@
   }
   </script>
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237C3AED'/%3E%3Crect x='15' y='6' width='2' height='20' fill='%23fff' opacity='.42'/%3E%3Crect x='5' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='19' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='22' y='12' width='2' height='8' rx='1' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234F46E5'/%3E%3Crect x='15' y='6' width='2' height='20' fill='%23fff' opacity='.42'/%3E%3Crect x='5' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='19' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='22' y='12' width='2' height='8' rx='1' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
 
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
@@ -148,9 +148,9 @@
        ------------------------------------------------------------------ */
 
     :root {
-      --accent: #7C3AED;
-      --accent-ink: #FFFFFF;
-      --accent-soft: #F1ECFE;
+      --accent: var(--cat-editor);
+      --accent-ink: var(--cat-editor-ink);
+      --accent-soft: var(--cat-editor-soft);
       /* Diff colours are semantic, not accent — red and green must survive
          both themes, so they are stated as tints laid over the panel. */
       --del-bg: rgb(220 38 38 / .18);
@@ -159,18 +159,12 @@
     }
     @media (prefers-color-scheme: dark) {
       :root.st-theme:not([data-theme="light"]) {
-        --accent: #A78BFA;
-        --accent-ink: #1E1B4B;
-        --accent-soft: #221E3D;
         --del-bg: rgb(248 113 113 / .24);
         --del-line: rgb(248 113 113 / .65);
         --ins-bg: rgb(52 211 153 / .24);
       }
     }
     :root.st-theme[data-theme="dark"] {
-      --accent: #A78BFA;
-      --accent-ink: #1E1B4B;
-      --accent-soft: #221E3D;
       --del-bg: rgb(248 113 113 / .24);
       --del-line: rgb(248 113 113 / .65);
       --ins-bg: rgb(52 211 153 / .24);
@@ -464,7 +458,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
+          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">Diff Studio</h1></li>
         </ol>
       </nav>

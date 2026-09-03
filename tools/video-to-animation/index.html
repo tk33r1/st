@@ -23,7 +23,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="世界初。サーバーレスで動画からAPNGや可逆WebP、GIFに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。">
   <meta name="robots" content="max-image-preview:large">
-  <title>Video to Animation - 動画アニメーション変換ツール | ST TOOLS</title>
+  <title>Video to Animation - 動画アニメーション変換ツール | SAFE TOOLS</title>
   <link rel="canonical" href="https://tk.st/tools/video-to-animation/">
   <link rel="author" href="https://tk.st/">
   
@@ -33,7 +33,7 @@
   <meta property="og:image" content="https://tk.st/images/ogp/video-to-animation-ogp.webp">
   <meta property="og:url" content="https://tk.st/tools/video-to-animation/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:site_name" content="SAFE TOOLS">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Video to Animation - 動画アニメーション変換ツール">
@@ -49,7 +49,7 @@
         "@type": "BreadcrumbList",
         "itemListElement": [
           {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
-          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"},
+          {"@type": "ListItem", "position": 2, "name": "SAFE TOOLS", "item": "https://tk.st/tools/"},
           {"@type": "ListItem", "position": 3, "name": "Video to Animation", "item": "https://tk.st/tools/video-to-animation/"}
         ]
       },
@@ -70,7 +70,7 @@
   }
   </script>
   
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23E11D48'/%3E%3Cpath d='M13 9.5 24 16 13 22.5 Z' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230369A1'/%3E%3Cpath d='M13 9.5 24 16 13 22.5 Z' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
   
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
@@ -104,21 +104,9 @@
        ------------------------------------------------------------------ */
 
     :root {
-      --accent: #E11D48;
-      --accent-ink: #FFFFFF;
-      --accent-soft: #FDE9EE;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root.st-theme:not([data-theme="light"]) {
-        --accent: #FB7185;
-        --accent-ink: #2A0A12;
-        --accent-soft: #2B1219;
-      }
-    }
-    :root.st-theme[data-theme="dark"] {
-      --accent: #FB7185;
-      --accent-ink: #2A0A12;
-      --accent-soft: #2B1219;
+      --accent: var(--cat-converter);
+      --accent-ink: var(--cat-converter-ink);
+      --accent-soft: var(--cat-converter-soft);
     }
 
     .st-theme { --shell: 860px; }
@@ -179,7 +167,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">ST TOOLS</a></li>
+          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">Video to Animation</h1></li>
         </ol>
       </nav>

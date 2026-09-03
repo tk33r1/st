@@ -1,4 +1,4 @@
-/* QR Studio — 見た目の素材（アイコン・配色・プリセット）
+/* QR Atelier — 見た目の素材（アイコン・配色・プリセット）
  *
  * ロジックを持たない純粋なデータ。index.html はここを読んで
  * スウォッチやプリセットのボタンを組み立てる。
@@ -161,9 +161,9 @@
       }
     },
     {
-      name: 'フルイド',
+      name: '雫',
       style: {
-        cell: 'fluid', cellScale: 1, markerFrame: 'xrounded', markerEye: 'rounded',
+        cell: 'classy2', cellScale: 1, markerFrame: 'xrounded', markerEye: 'rounded',
         fg: { type: 'solid', color: '#0F172A' }, bg: { type: 'solid', color: '#F8FAFC' },
         markerFrameColor: '', markerEyeColor: '', radius: 4
       }
@@ -180,7 +180,7 @@
     {
       name: 'サンセット',
       style: {
-        cell: 'fluid', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
+        cell: 'classy', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
         fg: { type: 'linear', from: '#E03131', to: '#E8590C', angle: 60 },
         bg: { type: 'solid', color: '#FFF8F0' },
         markerFrameColor: '', markerEyeColor: '#C2410C', radius: 4
@@ -197,7 +197,7 @@
     {
       name: 'ポップ',
       style: {
-        cell: 'sparkle', cellScale: 1.05, markerFrame: 'xrounded', markerEye: 'circle',
+        cell: 'heart', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
         fg: { type: 'linear', from: '#7048E8', to: '#E64980', angle: 30 },
         bg: { type: 'solid', color: '#FFFFFF' },
         markerFrameColor: '#1971C2', markerEyeColor: '#7048E8', radius: 5
@@ -253,13 +253,13 @@
     { id: 'square',  name: '四角' },
     { id: 'rounded', name: '角丸' },
     { id: 'dot',     name: 'ドット' },
-    { id: 'fluid',   name: '連結' },
-    { id: 'classy',  name: 'クラシー' },
-    { id: 'classy2', name: 'クラシー角丸' },
+    { id: 'classy',  name: 'リーフ' },
+    { id: 'classy2', name: '雫' },
     { id: 'diamond', name: 'ひし形' },
     { id: 'star',    name: '星' },
-    { id: 'sparkle', name: 'きらめき' },
+    { id: 'heart',   name: 'ハート' },
     { id: 'plus',    name: '十字' },
+    { id: 'xmark',   name: 'ばってん' },
     { id: 'vbar',    name: '縦ライン' },
     { id: 'hbar',    name: '横ライン' }
   ];
@@ -269,9 +269,10 @@
     { id: 'rounded',  name: '角丸' },
     { id: 'xrounded', name: '丸み強' },
     { id: 'circle',   name: 'まる' },
-    { id: 'leaf',     name: '葉' },
-    { id: 'leaf2',    name: '葉（逆）' },
-    { id: 'cut',      name: '一角落とし' },
+    { id: 'leaf',     name: 'リーフ' },
+    { id: 'leaf2',    name: 'リーフ（逆）' },
+    { id: 'cut',      name: '雫' },
+    { id: 'cut2',     name: '雫（逆）' },
     { id: 'dots',     name: 'ドット枠' }
   ];
 
@@ -279,9 +280,11 @@
     { id: 'square',  name: '四角' },
     { id: 'rounded', name: '角丸' },
     { id: 'circle',  name: 'まる' },
-    { id: 'leaf',    name: '葉' },
-    { id: 'leaf2',   name: '葉（逆）' },
-    { id: 'cut',     name: '一角落とし' }
+    { id: 'leaf',    name: 'リーフ' },
+    { id: 'leaf2',   name: 'リーフ（逆）' },
+    { id: 'cut',     name: '雫' },
+    { id: 'cut2',    name: '雫（逆）' },
+    { id: 'xmark',   name: 'ばってん' }
   ];
 
   const FRAMES = [

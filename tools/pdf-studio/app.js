@@ -1,4 +1,4 @@
-/* PDF Studio — client-side PDF editor for ST TOOLS.
+/* PDF Studio — client-side PDF editor for SAFE TOOLS.
  *
  * Everything happens in the browser: pdf.js renders (thumbnails, rasterisation)
  * and pdf-lib writes. No bytes ever leave the page.

@@ -1,4 +1,4 @@
-/* QR Studio — 画面まわり
+/* QR Atelier — 画面まわり
  *
  * qr-core.js（符号化）と qr-style.js（描画）をつなぎ、入力・デザイン操作・
  * 書き出しを受け持つ。ページの外へ出ていく通信はひとつもない。
@@ -53,7 +53,7 @@
     {
       id: 'url', name: 'URL', hint: 'URL',
       fields: [{ k: 'url', label: 'リンク先URL', type: 'url', ph: 'https://tk.st/' }],
-      init: { url: 'https://tk.st/tools/qr-studio/' },
+      init: { url: 'https://tk.st/tools/qr-atelier/' },
       build: f => normalizeUrl(f.url)
     },
     {
@@ -164,7 +164,7 @@
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
 
-  const STORE_KEY = 'qr-studio-v1';
+  const STORE_KEY = 'qr-atelier-v1';
 
   function save() {
     try {
@@ -681,8 +681,11 @@
   }
 
   // 生成した絵をそのままデコードし直して、本当に読めるか確かめる。
-  // 実機のカメラに近い解像度（1モジュール4〜9px）で試すのがコツで、
-  // 解像度を上げすぎるとデコーダ側の二値化がかえって不安定になる。
+  // 実機のカメラに近い解像度（1モジュール3〜9px）で何段か試す。解像度を
+  // 上げすぎるとデコーダ側の二値化がかえって不安定になり、逆に特定の倍率
+  // だけ取りこぼすこともあるので、1つでも通れば「読める」と判断する。
+  const VERIFY_SCALES = [4, 3, 6, 7, 9];
+
   function moduleWidth(svg) {
     const m = svg.match(/viewBox="0 0 ([0-9.]+) /);
     return m ? parseFloat(m[1]) : 41;
@@ -698,7 +701,7 @@
     const W = moduleWidth(svg);
     let sawSomething = false;
     try {
-      for (const k of [4, 6, 9]) {
+      for (const k of VERIFY_SCALES) {
         const canvas = await rasterize(svg, Math.round(W * k), '#FFFFFF');
         const decoded = await decodeCanvas(canvas);
         if (seq !== verifySeq) return;

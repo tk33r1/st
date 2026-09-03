@@ -21,7 +21,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（ST TOOLS 共通 UI、`window.STCommon`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新） |
 | `tools/` | ブラウザ内完結のツール群（csv-json, light-svg, pdf-studio 等）。`tools-ui.js` を共有 |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |

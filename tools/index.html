@@ -21,23 +21,23 @@
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="開発・業務で使えるWebツール集">
+  <meta name="description" content="ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集">
   <meta name="robots" content="max-image-preview:large">
-  <title>ST TOOLS</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F1EFE9'/%3E%3Crect x='12' y='12' width='13' height='13' rx='1.5' fill='%2317160F'/%3E%3Crect x='7.25' y='7.25' width='13' height='13' rx='1.5' fill='%23F1EFE9' stroke='%2317160F' stroke-width='2.5'/%3E%3C/svg%3E" type="image/svg+xml">
+  <title>SAFE TOOLS</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F1EFE9'/%3E%3Cpath d='M16 4.6 6.4 8.3v7.4c0 5.9 4 9.9 9.6 11.7 5.6-1.8 9.6-5.8 9.6-11.7V8.3Z' fill='%2317160F'/%3E%3Cpath d='m11.5 16.1 3.3 3.4 6-6.4' fill='none' stroke='%23F1EFE9' stroke-width='2.8' stroke-linecap='square'/%3E%3C/svg%3E" type="image/svg+xml">
   <link rel="canonical" href="https://tk.st/tools/">
   <link rel="author" href="https://tk.st/">
-  <meta property="og:title" content="ST TOOLS">
-  <meta property="og:description" content="開発・業務で使えるWebツール集">
-  <meta property="og:image" content="https://tk.st/images/ogp/st-tools-ogp.png">
+  <meta property="og:title" content="SAFE TOOLS">
+  <meta property="og:description" content="ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集">
+  <meta property="og:image" content="https://tk.st/images/ogp/safe-tools-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ST TOOLS">
+  <meta property="og:site_name" content="SAFE TOOLS">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="ST TOOLS">
-  <meta name="twitter:description" content="開発・業務で使えるWebツール集">
-  <meta name="twitter:image" content="https://tk.st/images/ogp/st-tools-ogp.png">
+  <meta name="twitter:title" content="SAFE TOOLS">
+  <meta name="twitter:description" content="ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/safe-tools-ogp.png">
 
   <script type="application/ld+json">
   {
@@ -47,14 +47,14 @@
         "@type": "BreadcrumbList",
         "itemListElement": [
           {"@type": "ListItem", "position": 1, "name": "Shinya Takeda", "item": "https://tk.st/"},
-          {"@type": "ListItem", "position": 2, "name": "ST TOOLS", "item": "https://tk.st/tools/"}
+          {"@type": "ListItem", "position": 2, "name": "SAFE TOOLS", "item": "https://tk.st/tools/"}
         ]
       },
       {
         "@type": "ItemList",
         "@id": "https://tk.st/tools/#list",
-        "name": "ST TOOLS",
-        "description": "開発・業務で使えるWebツール集",
+        "name": "SAFE TOOLS",
+        "description": "ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集",
         "url": "https://tk.st/tools/",
         "itemListElement": [
           {
@@ -87,7 +87,7 @@
 
   <style>
     /* ------------------------------------------------------------------
-       ST TOOLS index — the Print Shop. This is the one page in the set
+       SAFE TOOLS index — the Print Shop. This is the one page in the set
        that is read rather than operated, so it is allowed to be loud: ink
        rules, hard shadows, uppercase mono. The tools themselves stay quiet.
 
@@ -117,6 +117,12 @@
         --rule: #EFEBDD;
         --hair: #35332A;
         --shadow-ink: rgba(239, 235, 221, 0.55);
+      /* Category accents. The light values come from data/tools-ui.css;
+         its dark block is gated on .st-theme, which this page has not. */
+      --cat-optimizer: #2DD4BF;  --cat-optimizer-ink: #052E2B;
+      --cat-converter: #38BDF8;  --cat-converter-ink: #06283A;
+      --cat-editor:    #818CF8;  --cat-editor-ink:    #14153A;
+      --cat-generator: #E879F9;  --cat-generator-ink: #2A0D31;
       }
     }
     :root[data-theme="dark"] {
@@ -128,6 +134,12 @@
       --rule: #EFEBDD;
       --hair: #35332A;
       --shadow-ink: rgba(239, 235, 221, 0.55);
+      /* Category accents. The light values come from data/tools-ui.css;
+         its dark block is gated on .st-theme, which this page has not. */
+      --cat-optimizer: #2DD4BF;  --cat-optimizer-ink: #052E2B;
+      --cat-converter: #38BDF8;  --cat-converter-ink: #06283A;
+      --cat-editor:    #818CF8;  --cat-editor-ink:    #14153A;
+      --cat-generator: #E879F9;  --cat-generator-ink: #2A0D31;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -359,8 +371,16 @@
     }
 
     /* ===== card ===== */
+    /* A card wears the colour of what its tool does, so the index card, the
+       category badge and the tool page it opens all agree. */
+    .tool-card[data-category="optimizer"] { --card-accent: var(--cat-optimizer); --card-accent-ink: var(--cat-optimizer-ink); }
+    .tool-card[data-category="converter"] { --card-accent: var(--cat-converter); --card-accent-ink: var(--cat-converter-ink); }
+    .tool-card[data-category="editor"]    { --card-accent: var(--cat-editor);    --card-accent-ink: var(--cat-editor-ink); }
+    .tool-card[data-category="generator"] { --card-accent: var(--cat-generator); --card-accent-ink: var(--cat-generator-ink); }
+
     .tool-card {
       --card-accent: var(--ink);
+      --card-accent-ink: var(--paper);
       display: flex;
       flex-direction: column;
       border: 2px solid var(--rule);
@@ -408,7 +428,7 @@
       letter-spacing: 0.16em;
       padding: 3px 9px;
       background: var(--card-accent);
-      color: #fff;
+      color: var(--card-accent-ink);
       border-right: 2px solid var(--rule);
       border-bottom: 2px solid var(--rule);
     }
@@ -555,7 +575,7 @@
         <nav class="crumb" aria-label="パンくずリスト">
           <ol>
             <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-            <li><span aria-current="page">ST TOOLS</span></li>
+            <li><span aria-current="page">SAFE TOOLS</span></li>
           </ol>
         </nav>
         <span class="crumb-mark" aria-hidden="true"></span>
@@ -567,7 +587,7 @@
       </div>
 
       <div class="mast-main">
-        <h1 class="mast-title">ST<br>Tools</h1>
+        <h1 class="mast-title">Safe<br>Tools</h1>
 
         <div class="mast-side">
           <p class="mast-lede">
@@ -697,23 +717,6 @@
       messageBar.className = type === 'error' ? 'msg-error' : '';
     }
 
-    // Each card carries the accent of the tool it opens, so the index and the
-    // tool read as one object rather than two unrelated pages.
-    const TOOL_ACCENTS = {
-      'nextgen-image':      '#0E9F6E',
-      'light-svg':          '#0284C7',
-      'image-to-animation': '#7C3AED',
-      'video-to-animation': '#E11D48',
-      'pdf-studio':         '#4F46E5',
-      'csv-json':           '#0D9488',
-      'qr-studio':          '#C026D3',
-    };
-    function accentFor(url) {
-      if (!url) return null;
-      const slug = url.pathname.replace(/\/+$/, '').split('/').pop();
-      return TOOL_ACCENTS[slug] || null;
-    }
-
     function showSkeletons(count = 6) {
       grid.innerHTML = '';
       for (let i = 0; i < count; i++) {
@@ -781,8 +784,7 @@
       const tags = (record.tags || []).map(t => escapeHTML(t));
       const isNew = newIds.has(record.id);
 
-      const accent = accentFor(url);
-      if (accent) card.style.setProperty('--card-accent', accent);
+      if (record.category) card.dataset.category = record.category;
 
       card.innerHTML = `
         <div class="tool-img-wrap">

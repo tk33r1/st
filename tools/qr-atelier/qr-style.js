@@ -1,4 +1,4 @@
-/* QR Studio — マス目を SVG に起こす描画エンジン
+/* QR Atelier — マス目を SVG に起こす描画エンジン
  *
  * QRCore が返したモジュール配列を受け取り、セル形状・マーカー・配色・
  * ロゴ・外枠をのせた SVG 文字列を組み立てる。座標系は「1モジュール = 1」で、
@@ -107,7 +107,7 @@
   // パス生成のプリミティブ
   // ------------------------------------------------------------------
 
-  // 角ごとに「1=丸める / 0=直角 / -1=えぐる」を指定できる矩形パス。
+  // 角ごとに「1=丸める / 0=直角」を指定できる矩形パス。
   // 角は時計回りに TL, TR, BR, BL の順。
   function boxPath(x0, y0, x1, y1, radii, kinds) {
     const r = radii;
@@ -115,7 +115,7 @@
     const rr = [0, 1, 2, 3].map(i => (k[i] === 0 ? 0 : r[i]));
     const arc = (i, x, y) => {
       if (rr[i] === 0) return 'L' + n(x) + ' ' + n(y);
-      return 'A' + n(rr[i]) + ' ' + n(rr[i]) + ' 0 0 ' + (k[i] === -1 ? '0' : '1') + ' ' + n(x) + ' ' + n(y);
+      return 'A' + n(rr[i]) + ' ' + n(rr[i]) + ' 0 0 1 ' + n(x) + ' ' + n(y);
     };
     let d = 'M' + n(x0 + rr[0]) + ' ' + n(y0);
     d += 'L' + n(x1 - rr[1]) + ' ' + n(y0);
@@ -156,16 +156,44 @@
     return polyPath(pts);
   }
 
-  // 4方向がへこんだ、きらめき（4条星）。制御点を中心まで引くとやせすぎるので、
-  // 中心と角の間に置いてふくらみを残す。
-  function sparklePath(cx, cy, r) {
-    const k = r * 0.5;
-    const p = (dx, dy) => n(cx + dx) + ' ' + n(cy + dy);
-    return 'M' + p(0, -r) +
-      'Q' + p(k, -k) + ' ' + p(r, 0) +
-      'Q' + p(k, k) + ' ' + p(0, r) +
-      'Q' + p(-k, k) + ' ' + p(-r, 0) +
-      'Q' + p(-k, -k) + ' ' + p(0, -r) + 'Z';
+  // ハート。単位正方形の上に置いた輪郭を、セルの大きさへ写して描く。
+  // 先頭が始点、以降は3次ベジェの制御点2つと終点。
+  const HEART = [
+    [0.5, 1],
+    [0.14, 0.72, 0, 0.5, 0, 0.33],
+    [0, 0.14, 0.15, 0, 0.32, 0],
+    [0.4, 0, 0.46, 0.04, 0.5, 0.1],
+    [0.54, 0.04, 0.6, 0, 0.68, 0],
+    [0.85, 0, 1, 0.14, 1, 0.33],
+    [1, 0.5, 0.86, 0.72, 0.5, 1]
+  ];
+  function heartPath(cx, cy, r) {
+    const X = v => n(cx + (v - 0.5) * 2 * r);
+    const Y = v => n(cy + (v - 0.5) * 2 * r);
+    let d = 'M' + X(HEART[0][0]) + ' ' + Y(HEART[0][1]);
+    for (let i = 1; i < HEART.length; i++) {
+      const c = HEART[i];
+      d += 'C' + X(c[0]) + ' ' + Y(c[1]) + ' ' + X(c[2]) + ' ' + Y(c[3]) + ' ' + X(c[4]) + ' ' + Y(c[5]);
+    }
+    return d + 'Z';
+  }
+
+  // ばってん：太さ 2t の帯を2本、斜めに交差させた×印。先端は半円で丸い。
+  // 半円は sweep=0 側でないと内側にえぐれてしまい、2本の重なりが nonzero で
+  // 打ち消し合って穴が空く。
+  function crossPath(cx, cy, r, t) {
+    const k = Math.SQRT1_2;
+    return [[k, k], [k, -k]].map(u => {
+      const nx = -u[1] * t, ny = u[0] * t;
+      const ax = cx - u[0] * r, ay = cy - u[1] * r;
+      const bx = cx + u[0] * r, by = cy + u[1] * r;
+      const arc = (x, y) => 'A' + n(t) + ' ' + n(t) + ' 0 0 0 ' + n(x) + ' ' + n(y);
+      return 'M' + n(ax + nx) + ' ' + n(ay + ny) +
+        'L' + n(bx + nx) + ' ' + n(by + ny) +
+        arc(bx - nx, by - ny) +
+        'L' + n(ax - nx) + ' ' + n(ay - ny) +
+        arc(ax + nx, ay + ny) + 'Z';
+    }).join('');
   }
 
   // 腕の長さ r、腕の太さ 2t の十字
@@ -215,7 +243,7 @@
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         if (!dark(x, y)) continue;
-        const s = shape === 'fluid' ? 1 : Math.max(0.3, Math.min(1.15, scale));
+        const s = Math.max(0.3, Math.min(1.15, scale));
         const inset = (1 - s) / 2;
         const x0 = ox + x + inset, y0 = oy + y + inset;
         const x1 = x0 + s, y1 = y0 + s;
@@ -239,33 +267,23 @@
           case 'star':
             parts.push(starPath(cx, cy, s * 0.72, s * 0.44, 5));
             break;
-          case 'sparkle':
-            parts.push(sparklePath(cx, cy, s * 0.72));
+          case 'heart':
+            parts.push(heartPath(cx, cy, s * 0.62));
             break;
           case 'plus':
             parts.push(plusPath(cx, cy, s * 0.68, s * 0.3));
             break;
+          case 'xmark':
+            parts.push(crossPath(cx, cy, s * 0.46, s * 0.2));
+            break;
           case 'classy':
+            // リーフ：向かい合う2つの角だけ落とす
             parts.push(boxPath(x0, y0, x1, y1, [s / 2, 0, s / 2, 0], [1, 0, 1, 0]));
             break;
           case 'classy2':
-            parts.push(boxPath(x0, y0, x1, y1, [s / 2, s / 2, 0, s / 2], [1, 1, 0, 1]));
+            // 雫：左上だけ角を残して、あとは丸める
+            parts.push(boxPath(x0, y0, x1, y1, [0, s / 2, s / 2, s / 2], [0, 1, 1, 1]));
             break;
-          case 'fluid': {
-            const U = dark(x, y - 1), D = dark(x, y + 1), L = dark(x - 1, y), R = dark(x + 1, y);
-            const kind = (s1, s2, diag) => (!s1 && !s2) ? 1 : (s1 && s2 && !diag) ? -1 : 0;
-            const kinds = [
-              kind(U, L, dark(x - 1, y - 1)),
-              kind(U, R, dark(x + 1, y - 1)),
-              kind(D, R, dark(x + 1, y + 1)),
-              kind(D, L, dark(x - 1, y + 1))
-            ];
-            // 出っ張りは半マス、へこみは1/4マス。へこみを半マスにすると、
-            // 3マスが集まる角のまわりが白く抜けすぎて読み取りが不安定になる。
-            const radii = kinds.map(k => (k === -1 ? 0.26 : 0.5));
-            parts.push(boxPath(x0, y0, x1, y1, radii, kinds));
-            break;
-          }
           default:
             parts.push(rectPath(x0, y0, s, s, s * 0.3));
         }
@@ -285,11 +303,12 @@
     switch (style) {
       case 'square':   return boxPath(x, y, x1, y1, r(0), [0, 0, 0, 0]);
       case 'rounded':  return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
-      case 'xrounded': return boxPath(x, y, x1, y1, r(s * 0.3), [1, 1, 1, 1]);
-      case 'circle':   return boxPath(x, y, x1, y1, r(s * 0.38), [1, 1, 1, 1]);
+      case 'xrounded': return boxPath(x, y, x1, y1, r(s * 0.26), [1, 1, 1, 1]);
+      case 'circle':   return boxPath(x, y, x1, y1, r(s * 0.34), [1, 1, 1, 1]);
       case 'leaf':     return boxPath(x, y, x1, y1, [s * 0.36, 0, s * 0.36, 0], [1, 0, 1, 0]);
       case 'leaf2':    return boxPath(x, y, x1, y1, [0, s * 0.36, 0, s * 0.36], [0, 1, 0, 1]);
       case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.34, s * 0.34, s * 0.34], [0, 1, 1, 1]);
+      case 'cut2':     return boxPath(x, y, x1, y1, [s * 0.34, s * 0.34, 0, s * 0.34], [1, 1, 0, 1]);
       default:         return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
     }
   }
@@ -327,6 +346,8 @@
       case 'leaf':    return boxPath(x, y, x1, y1, [EYE_R, 0, EYE_R, 0], [1, 0, 1, 0]);
       case 'leaf2':   return boxPath(x, y, x1, y1, [0, EYE_R, 0, EYE_R], [0, 1, 0, 1]);
       case 'cut':     return boxPath(x, y, x1, y1, [0, s * 0.45, s * 0.45, s * 0.45], [0, 1, 1, 1]);
+      case 'cut2':    return boxPath(x, y, x1, y1, [s * 0.45, s * 0.45, 0, s * 0.45], [1, 1, 0, 1]);
+      case 'xmark':   return crossPath(x + s / 2, y + s / 2, 1.2, 0.75);
       case 'rounded':
       default:        return boxPath(x, y, x1, y1, [s * 0.3, s * 0.3, s * 0.3, s * 0.3], [1, 1, 1, 1]);
     }
