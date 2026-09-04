@@ -73,10 +73,12 @@ function buildHtml(card) {
  * card would advertise a colour the tool page does not use. */
 function checkCategories() {
   const tools = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tools.json'), 'utf8'));
+  const problems = checkToolRecords(tools);
+  if (problems.length) return problems;
+
   const bySlug = new Map(
     tools.map((t) => [t.url.replace(/.*\/tools\//, '').replace(/\/$/, ''), t])
   );
-  const problems = [];
   for (const card of CARDS) {
     const tool = bySlug.get(card.slug);
     if (!tool) { problems.push(card.slug + ': not in data/tools.json'); continue; }
@@ -91,6 +93,61 @@ function checkCategories() {
   for (const [slug] of bySlug) {
     if (!CARDS.some((c) => c.slug === slug)) problems.push(slug + ': in tools.json but has no card here');
   }
+  problems.push(...checkShelfSchema(tools));
+  return problems;
+}
+
+/* tools/index.html carries the same list a second time, as a static JSON-LD
+ * ItemList, so a crawler that runs no JavaScript still sees the whole shelf.
+ * Nothing at runtime can catch that copy going stale — the page overwrites it
+ * from tools.json on load, which is exactly why a drifted entry stays invisible
+ * until it turns up in a search result. So it is checked here instead.
+ */
+function checkShelfSchema(tools) {
+  const file = path.join(ROOT, 'tools/index.html');
+  const html = fs.readFileSync(file, 'utf8');
+  const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  if (!block) return ['tools/index.html: no JSON-LD block found'];
+
+  let list;
+  try {
+    list = JSON.parse(block[1])['@graph'].find((n) => n['@type'] === 'ItemList');
+  } catch (e) {
+    return ['tools/index.html: JSON-LD does not parse — ' + e.message];
+  }
+  if (!list) return ['tools/index.html: JSON-LD has no ItemList'];
+
+  const want = tools.map((t, i) => ({ position: i + 1, name: t.title, url: t.url }));
+  const got = (list.itemListElement || []).map((e) => ({ position: e.position, name: e.name, url: e.url }));
+  if (JSON.stringify(want) === JSON.stringify(got)) return [];
+
+  const problems = [];
+  if (want.length !== got.length) {
+    problems.push('tools/index.html ItemList has ' + got.length + ' entries, tools.json has ' + want.length);
+  }
+  for (let i = 0; i < Math.max(want.length, got.length); i++) {
+    const w = want[i], g = got[i];
+    if (!w) { problems.push('tools/index.html ItemList has an extra entry: ' + g.url); continue; }
+    if (!g) { problems.push('tools/index.html ItemList is missing: ' + w.url); continue; }
+    for (const k of ['position', 'name', 'url']) {
+      if (w[k] !== g[k]) {
+        problems.push('tools/index.html ItemList #' + (i + 1) + ' ' + k + ': has ' + JSON.stringify(g[k]) + ', tools.json says ' + JSON.stringify(w[k]));
+      }
+    }
+  }
+  return problems;
+}
+
+/* The shelf is rendered from these three fields, so a record missing one drops
+ * out of the page with only a console warning the author will never see. */
+function checkToolRecords(tools) {
+  const problems = [];
+  tools.forEach((t, i) => {
+    const at = 'data/tools.json[' + i + ']';
+    if (!Number.isFinite(Number(t.id))) problems.push(at + ': id is not a number');
+    if (typeof t.title !== 'string' || !t.title.trim()) problems.push(at + ': title is missing');
+    if (!/^https?:\/\//.test(t.url || '')) problems.push(at + ': url is not an absolute http(s) URL');
+  });
   return problems;
 }
 
@@ -105,7 +162,7 @@ function checkCategories() {
     for (const p of problems) console.error('  - ' + p);
     process.exit(1);
   }
-  console.log('categories and image paths agree with data/tools.json');
+  console.log('categories, image paths and the tools/index.html ItemList agree with data/tools.json');
   if (checkOnly) return;
 
   const targets = only.length ? CARDS.filter((c) => only.includes(c.slug)) : CARDS;

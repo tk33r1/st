@@ -199,6 +199,9 @@
       if (state.style.markerEye && !A.MARKER_EYES.some(e => e.id === state.style.markerEye)) {
         state.style.markerEye = window.QRStyle.DEFAULTS.markerEye;
       }
+      if (state.style.frame && state.style.frame.type && !A.FRAMES.some(f => f.id === state.style.frame.type)) {
+        state.style.frame.type = 'none';
+      }
       if (state.style.logo.type === 'icon' && state.style.logo.icon) {
         state.style.logo.iconData = A.ICONS.find(i => i.id === state.style.logo.icon) || null;
       }
@@ -588,8 +591,6 @@
     } else {
       $('frame-text').parentElement.classList.remove('hidden');
     }
-
-    $('hint-adv').textContent = '余白' + s.margin + ' / ' + state.ec;
   }
 
   // ------------------------------------------------------------------
@@ -598,13 +599,22 @@
   let lastSvg = '';
   let lastPayload = '';
   let renderTimer = null;
+  let verifyTimer = null;
 
   function scheduleUpdate() {
     if (renderTimer) clearTimeout(renderTimer);
     renderTimer = setTimeout(update, 90);
   }
 
-  function update() {
+  function scheduleVerify(svg, text, heavy, delay) {
+    if (verifyTimer) clearTimeout(verifyTimer);
+    verifyTimer = setTimeout(() => {
+      verifyTimer = null;
+      verify(svg, text, heavy);
+    }, delay || 180);
+  }
+
+  function update(opts) {
     if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
     save();
 
@@ -617,6 +627,7 @@
     meta.innerHTML = '';
 
     if (!text) {
+      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
       $('preview').innerHTML = '';
       lastSvg = '';
       setVerdict('na', '待機中', '内容を入力するとここに出ます', []);
@@ -629,6 +640,7 @@
     try {
       qr = window.QRCore.encode(text, { ec: state.ec, minVersion: state.minVersion });
     } catch (e) {
+      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
       $('preview').innerHTML = '';
       lastSvg = '';
       setVerdict('ng', '入りきりません', '文字数を減らすか、誤り訂正レベルを下げてください', []);
@@ -651,7 +663,12 @@
     out.warnings.forEach(w => pushAlert(w.level, w.text));
     setStatus('v' + qr.version + ' / ' + qr.ec, 'idle');
 
-    verify(out.svg, text, false);
+    if (opts && opts.debounceVerify) {
+      scheduleVerify(out.svg, text, false, 180);
+    } else {
+      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
+      verify(out.svg, text, false);
+    }
   }
 
   function pushAlert(level, text) {
@@ -694,10 +711,11 @@
     return m ? parseFloat(m[1]) : 41;
   }
 
-  // 足りない余白を補うときの色。グラデーションは中間色で代表させる。
+  // 足りない余白を補うときの色。透明のときは白、単色のときはその色。
   function padColor() {
     const bg = state.style.bg;
-    if (bg.type !== 'gradient') return bg.color;
+    if (bg.type === 'none') return '#FFFFFF';
+    if (bg.type === 'solid') return bg.color;
     const mix = (a, b) => {
       const n = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
       const x = n(a), y = n(b);
@@ -954,7 +972,14 @@
       $(labelId).textContent = format(v);
       apply(v);
       state.presetName = '';
-      update();
+      update({ debounceVerify: true });
+    });
+    input.addEventListener('change', () => {
+      if (verifyTimer) {
+        clearTimeout(verifyTimer);
+        verifyTimer = null;
+        if (lastSvg && lastPayload) verify(lastSvg, lastPayload, false);
+      }
     });
   }
 

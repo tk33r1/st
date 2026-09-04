@@ -186,8 +186,14 @@
       .layout { grid-template-columns: minmax(0, 1fr); }
     }
 
+    .app-bar.static-bar {
+      position: static;
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
+    }
+
     /* ---- プレビュー ---- */
-    .stage { position: sticky; top: calc(var(--bar-h) + 62px); display: flex; flex-direction: column; gap: 12px; }
+    .stage { position: sticky; top: 66px; display: flex; flex-direction: column; gap: 12px; }
     @media (max-width: 940px) { .stage { position: static; } }
 
     .canvas-card {
@@ -210,38 +216,82 @@
     #preview { width: 100%; max-width: 340px; }
     #preview svg { width: 100%; height: auto; display: block; border-radius: 4px; }
 
-
-    .verdict {
-      display: flex; flex-direction: column; gap: 7px;
-      font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.02em;
-      padding: 9px 12px; border: 1px solid var(--rule); border-radius: var(--r-1);
+    /* ---- スクロール追従バー（読み取り判定） ---- */
+    .verdict-bar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
       background: var(--panel);
+      border-bottom: 1px solid var(--rule);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
     }
-    .verdict-head { display: flex; align-items: center; gap: 8px; }
-    .verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
+    .verdict-bar .bar-in {
+      min-height: 50px;
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+    }
+    .verdict {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+    }
+    .verdict-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+    .verdict .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--ink-3);
+      flex: none;
+    }
     .verdict.ok .dot { background: var(--ok); }
     .verdict.fair .dot { background: var(--warn); }
     .verdict.ng .dot { background: var(--err); }
     .verdict.na .dot { background: var(--ink-3); }
-    .verdict b { font-weight: 700; color: var(--ink); flex: none; }
-    #verdict-note { color: var(--ink-2); line-height: 1.65; }
+    .verdict b { font-weight: 700; color: var(--ink); flex: none; font-size: 12.5px; }
+    #verdict-note { color: var(--ink-2); line-height: 1.4; font-size: 11px; }
     #verdict-note:empty { display: none; }
+    .verdict-side {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      flex: none;
+    }
     .verdict-time {
-      margin-left: auto; flex: none;
-      font-size: 10px; letter-spacing: 0.06em; color: var(--ink-3);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--ink-3);
     }
     .verdict-more {
-      margin-left: 8px; flex: none; cursor: pointer;
-      font-family: inherit; font-size: 10.5px; color: var(--ink-2);
-      padding: 3px 8px; border: 1px solid var(--rule); border-radius: var(--r-1);
-      background: transparent;
+      flex: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 10.5px;
+      color: var(--ink-2);
+      padding: 3px 8px;
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel-2);
+      transition: all 120ms ease;
     }
-    .verdict-more:hover { color: var(--ink); border-color: var(--ink-3); }
+    .verdict-more:hover { color: var(--ink); border-color: var(--ink-3); background: var(--panel); }
     .verdict-more[disabled] { opacity: 0.5; cursor: default; }
     .verdict.flash { animation: verdict-flash 460ms ease-out; }
     @keyframes verdict-flash {
-      0%   { border-color: var(--accent); background: var(--panel-2); }
-      100% { border-color: var(--rule); background: var(--panel); }
+      0%   { background: var(--panel-2); }
+      100% { background: transparent; }
     }
     @media (prefers-reduced-motion: reduce) { .verdict.flash { animation: none; } }
 
@@ -257,6 +307,42 @@
     .eng.partial i, .eng.mismatch i { background: var(--warn); }
     .eng.unavailable { opacity: 0.6; }
     .eng.unavailable i { background: var(--ink-3); }
+
+    @media (max-width: 768px) {
+      .verdict-bar .bar-in { padding: 8px 16px; min-height: auto; }
+      .verdict { flex-wrap: wrap; gap: 6px; }
+      .verdict-side { width: 100%; justify-content: space-between; margin-left: 0; }
+    }
+
+    .save-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .save-opt-group {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      padding: 5px 9px;
+    }
+    .save-opt-group .st-lbl { font-size: 11px; white-space: nowrap; flex: none; }
+    .save-opt-group .tb-select { flex: 1; min-width: 0; padding: 4px 6px; font-size: 12px; }
+
+    .preset-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .preset-actions button {
+      flex: 1;
+      justify-content: center;
+      text-align: center;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
 
     .alerts { display: flex; flex-direction: column; gap: 6px; }
     .alert {
@@ -444,8 +530,8 @@
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
-  <!-- ===================== app bar ===================== -->
-  <header class="app-bar">
+  <!-- ===================== サイトヘッダー（静的） ===================== -->
+  <header class="app-bar static-bar">
     <div class="bar-in">
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
@@ -468,36 +554,20 @@
     </div>
   </header>
 
-  <!-- ===================== toolbar ===================== -->
-  <div class="toolbar">
-    <div class="tb-in">
-      <div class="tb-group">
-        <label class="st-lbl" for="opt-ec" title="欠けや汚れをどれだけ復元できるか。ロゴを置くならHが安全">誤り訂正</label>
-        <select id="opt-ec" class="tb-select">
-          <option value="L">L（7%）</option>
-          <option value="M">M（15%）</option>
-          <option value="Q">Q（25%）</option>
-          <option value="H" selected>H（30%・推奨）</option>
-        </select>
-      </div>
-
-      <div class="tb-sep"></div>
-
-      <div class="tb-group">
-        <label class="st-lbl" for="opt-size">書き出しサイズ</label>
-        <select id="opt-size" class="tb-select">
-          <option value="512">512 px</option>
-          <option value="1024" selected>1024 px</option>
-          <option value="2048">2048 px</option>
-          <option value="4096">4096 px</option>
-        </select>
-      </div>
-
-      <div class="tb-sep"></div>
-
-      <div class="tb-group">
-        <button id="btn-shuffle" class="st-btn-quiet" type="button" title="配色と形をランダムに組み替える">おまかせデザイン</button>
-        <button id="btn-reset" class="st-btn-quiet" type="button">デザインを初期化</button>
+  <!-- ===================== スクロール追従ヘッダー（読み取り判定） ===================== -->
+  <div class="verdict-bar">
+    <div class="bar-in">
+      <div id="verdict" class="verdict na">
+        <div class="verdict-head">
+          <span class="dot"></span>
+          <b id="verdict-title">待機中</b>
+          <span id="verdict-note">内容を入力するとここに出ます</span>
+        </div>
+        <div class="verdict-side">
+          <div class="verdict-engines" id="verdict-engines"></div>
+          <span id="verdict-time" class="verdict-time"></span>
+          <button id="btn-verify" class="verdict-more" type="button">詳しく検査</button>
+        </div>
       </div>
     </div>
   </div>
@@ -513,19 +583,29 @@
           <div id="preview" aria-label="QRコードのプレビュー"></div>
         </div>
 
-        <div id="verdict" class="verdict na">
-          <div class="verdict-head">
-            <span class="dot"></span>
-            <b id="verdict-title">待機中</b>
-            <span id="verdict-time" class="verdict-time"></span>
-            <button id="btn-verify" class="verdict-more" type="button">詳しく検査</button>
-          </div>
-          <div id="verdict-note">内容を入力するとここに出ます</div>
-          <div class="verdict-engines" id="verdict-engines"></div>
-        </div>
-
         <div class="meta-row" id="meta-row"></div>
         <div class="alerts" id="alerts"></div>
+
+        <div class="save-controls">
+          <div class="save-opt-group">
+            <label class="st-lbl" for="opt-size">サイズ</label>
+            <select id="opt-size" class="tb-select">
+              <option value="512">512 px</option>
+              <option value="1024" selected>1024 px</option>
+              <option value="2048">2048 px</option>
+              <option value="4096">4096 px</option>
+            </select>
+          </div>
+          <div class="save-opt-group">
+            <label class="st-lbl" for="opt-ec" title="欠けや汚れをどれだけ復元できるか。ロゴを置くならHが安全">誤り訂正</label>
+            <select id="opt-ec" class="tb-select">
+              <option value="L">L（7%）</option>
+              <option value="M">M（15%）</option>
+              <option value="Q">Q（25%）</option>
+              <option value="H" selected>H（30%・推奨）</option>
+            </select>
+          </div>
+        </div>
 
         <div class="out-grid">
           <button id="btn-png" class="st-btn" type="button">PNGで保存</button>
@@ -562,6 +642,10 @@
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
+            <div class="preset-actions">
+              <button id="btn-shuffle" class="st-btn-quiet" type="button" title="配色と形をランダムに組み替える">おまかせデザイン</button>
+              <button id="btn-reset" class="st-btn-quiet" type="button">デザインを初期化</button>
+            </div>
             <div class="preset-grid" id="preset-grid"></div>
           </div>
         </details>
@@ -588,6 +672,12 @@
               <input type="range" id="opt-celljitter" min="0" max="1" step="0.05" value="0">
               <span class="val" id="val-celljitter">0%</span>
             </div>
+            <div class="slider-row">
+              <span class="st-lbl">セルの密度</span>
+              <input type="range" id="opt-minver" min="1" max="14" step="1" value="1">
+              <span class="val" id="val-minver">自動</span>
+            </div>
+            <p class="note" style="margin-top:-4px;margin-bottom:12px">密度を上げるとマス目が細かくなります。デザインの都合で細かくしたいときだけ動かしてください（読み取りやすさは下がります）。</p>
             <div class="field">
               <label>マーカーの枠</label>
               <div class="shape-grid" id="frame-grid"></div>
@@ -774,18 +864,7 @@
                 </div>
               </div>
             </div>
-          </div>
-        </details>
-
-        <!-- 詳細 -->
-        <details class="sec">
-          <summary>
-            <span class="st-lbl">詳細設定</span>
-            <span class="hint" id="hint-adv">標準</span>
-            <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
-          </summary>
-          <div class="sec-body">
-            <div class="slider-row">
+            <div class="slider-row" style="margin-top:4px">
               <span class="st-lbl">余白</span>
               <input type="range" id="opt-margin" min="0" max="8" step="1" value="4">
               <span class="val" id="val-margin">4</span>
@@ -795,12 +874,6 @@
               <input type="range" id="opt-radius" min="0" max="10" step="0.5" value="2">
               <span class="val" id="val-radius">2</span>
             </div>
-            <div class="slider-row">
-              <span class="st-lbl">密度</span>
-              <input type="range" id="opt-minver" min="1" max="14" step="1" value="1">
-              <span class="val" id="val-minver">自動</span>
-            </div>
-            <p class="note">密度を上げるとマス目が細かくなります。デザインの都合で「もう少し細かくしたい」ときだけ動かしてください。読み取りやすさは下がります。</p>
           </div>
         </details>
 
@@ -823,11 +896,11 @@
 
       <h3>デザインでいじれるところ</h3>
       <ul>
-        <li>セル（データの点）12種類 — 四角・角丸・ドット・リーフ・雫・ひし形・星・ハート・十字・ばってん・縦横ライン</li>
-        <li>マーカー（三隅の目印）— 枠9種類 × 目8種類、色も枠と目で別々に指定できます</li>
+        <li>セル（データの点）16種類 — 四角・角丸・ドット・六角形・八角形・フラワー・リーフ・雫・ひし形・星・ハート・十字・ばってん・縦横ライン</li>
+        <li>マーカー（三隅の目印）— 枠9種類 × 目16種類、色も枠と目で別々に指定できます</li>
         <li>色 — 単色スウォッチ68色、グラデーション14種、角度指定つきの線形／放射グラデーション</li>
         <li>中央のロゴ — SNSアイコン19種、汎用アイコン24種、手持ちの画像、絵文字や文字</li>
-        <li>フレーム — 枠線・ラベル・吹き出し・チケットの4種類に、好きな一言を添えられます</li>
+        <li>フレーム — 枠線・ラベルの2種類に、好きな一言を添えられます</li>
         <li>書き出し — PNG / JPEG / WebP（最大4096px）と、印刷に強いSVG</li>
       </ul>
 
@@ -945,9 +1018,9 @@
   </script>
 
   <script src="qr-core.js?v=20260903"></script>
-  <script src="qr-style.js?v=20260903"></script>
-  <script src="qr-assets.js?v=20260903"></script>
+  <script src="qr-style.js?v=20260905"></script>
+  <script src="qr-assets.js?v=20260904_2"></script>
   <script src="qr-verify.js?v=20260904"></script>
-  <script src="app.js?v=20260903"></script>
+  <script src="app.js?v=20260905"></script>
 </body>
 </html>

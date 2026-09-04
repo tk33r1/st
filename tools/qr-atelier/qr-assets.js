@@ -254,6 +254,9 @@
     { id: 'rounded',  name: '角丸' },
     { id: 'xrounded', name: '丸み強' },
     { id: 'dot',      name: 'ドット' },
+    { id: 'hexagon',  name: '六角形' },
+    { id: 'octagon',  name: '八角形' },
+    { id: 'flower',   name: 'フラワー' },
     { id: 'classy',  name: 'リーフ' },
     { id: 'classy2', name: '雫' },
     { id: 'diamond', name: 'ひし形' },
@@ -270,6 +273,8 @@
     { id: 'rounded',  name: '角丸' },
     { id: 'xrounded', name: '丸み強' },
     { id: 'circle',   name: 'まる' },
+    { id: 'octagon',  name: '八角形' },
+    { id: 'flower',   name: 'フラワー' },
     { id: 'leaf',     name: 'リーフ' },
     { id: 'cut',      name: '雫' },
     { id: 'dots',     name: 'ドット枠' }
@@ -280,6 +285,9 @@
     { id: 'rounded',  name: '角丸' },
     { id: 'xrounded', name: '丸み強' },
     { id: 'circle',   name: 'まる' },
+    { id: 'hexagon',  name: '六角形' },
+    { id: 'octagon',  name: '八角形' },
+    { id: 'flower',   name: 'フラワー' },
     { id: 'leaf',     name: 'リーフ' },
     { id: 'cut',      name: '雫' },
     { id: 'diamond',  name: 'ひし型' },
@@ -294,9 +302,7 @@
   const FRAMES = [
     { id: 'none',   name: 'なし' },
     { id: 'line',   name: '枠線' },
-    { id: 'label',  name: 'ラベル' },
-    { id: 'bubble', name: '吹き出し' },
-    { id: 'ticket', name: 'チケット' }
+    { id: 'label',  name: 'ラベル' }
   ];
 
   global.QRAssets = {

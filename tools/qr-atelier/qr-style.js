@@ -36,9 +36,7 @@
   const FRAME_METRICS = {
     none:   { pad: 0,   label: 0,   stroke: 0 },
     line:   { pad: 1.6, label: 0,   stroke: 0.7 },
-    label:  { pad: 1.8, label: 5.6, stroke: 0 },
-    bubble: { pad: 2.2, label: 6.2, stroke: 0 },
-    ticket: { pad: 1.8, label: 5.6, stroke: 0 }
+    label:  { pad: 1.8, label: 5.6, stroke: 0 }
   };
 
   // ------------------------------------------------------------------
@@ -200,10 +198,55 @@
   // 腕の長さ r、腕の太さ 2t の十字
   function plusPath(cx, cy, r, t) {
     return polyPath([
-      [cx - t, cy - r], [cx + t, cy - r], [cx + t, cy - t], [cx + r, cy - t],
-      [cx + r, cy + t], [cx + t, cy + t], [cx + t, cy + r], [cx - t, cy + r],
-      [cx - t, cy + t], [cx - r, cy + t], [cx - r, cy - t], [cx - t, cy - t]
+      [cx - t, cy - r], [cx + t, cy - r],
+      [cx + t, cy - t], [cx + r, cy - t],
+      [cx + r, cy + t], [cx + t, cy + t],
+      [cx + t, cy + r], [cx - t, cy + r],
+      [cx - t, cy + t], [cx - r, cy + t],
+      [cx - r, cy - t], [cx - t, cy - t]
     ]);
+  }
+
+  // 上下が尖った正六角形
+  function hexagonPath(cx, cy, r) {
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const ang = -Math.PI / 2 + (i * Math.PI) / 3;
+      pts.push([cx + Math.cos(ang) * r, cy + Math.sin(ang) * r]);
+    }
+    return polyPath(pts);
+  }
+
+  // 四隅を斜めにカットした八角形（面取り幅 c）
+  function octagonPath(x0, y0, s, c) {
+    const x1 = x0 + s, y1 = y0 + s;
+    return polyPath([
+      [x0 + c, y0],
+      [x1 - c, y0],
+      [x1, y0 + c],
+      [x1, y1 - c],
+      [x1 - c, y1],
+      [x0 + c, y1],
+      [x0, y1 - c],
+      [x0, y0 + c]
+    ]);
+  }
+
+  // 5枚の花びらを持つフラワー
+  function flowerPath(cx, cy, r) {
+    const d = r * 0.28;
+    const rad = r * 0.4;
+    const pts = [];
+    for (let i = 0; i < 5; i++) {
+      const ang = -Math.PI / 2 - Math.PI / 5 + (i * 2 * Math.PI) / 5;
+      pts.push([cx + Math.cos(ang) * d, cy + Math.sin(ang) * d]);
+    }
+    let res = 'M' + n(pts[0][0]) + ' ' + n(pts[0][1]);
+    for (let i = 0; i < 5; i++) {
+      const next = pts[(i + 1) % 5];
+      res += 'A' + n(rad) + ' ' + n(rad) + ' 0 1 1 ' + n(next[0]) + ' ' + n(next[1]);
+    }
+    return res + 'Z';
   }
 
   // ------------------------------------------------------------------
@@ -299,6 +342,15 @@
           case 'xmark':
             parts.push(crossPath(cx, cy, s * 0.46, s * 0.2));
             break;
+          case 'hexagon':
+            parts.push(hexagonPath(cx, cy, s * 0.58));
+            break;
+          case 'octagon':
+            parts.push(octagonPath(x0, y0, s, s * 0.28));
+            break;
+          case 'flower':
+            parts.push(flowerPath(cx, cy, s * 0.54));
+            break;
           case 'classy':
             // リーフ：向かい合う2つの角だけ落とす
             parts.push(boxPath(x0, y0, x1, y1, [s / 2, 0, s / 2, 0], [1, 0, 1, 0]));
@@ -328,10 +380,26 @@
       case 'rounded':  return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
       case 'xrounded': return boxPath(x, y, x1, y1, r(s * 0.34), [1, 1, 1, 1]);
       case 'circle':   return boxPath(x, y, x1, y1, r(s * 0.42), [1, 1, 1, 1]);
+      case 'octagon':  return octagonPath(x, y, s, s * 0.26);
       case 'leaf':     return boxPath(x, y, x1, y1, [s * 0.36, 0, s * 0.36, 0], [1, 0, 1, 0]);
       case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.34, s * 0.34, s * 0.34], [0, 1, 1, 1]);
       default:         return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
     }
+  }
+
+  // スカラップ（花型）の外周パス
+  function scallopFramePath(fx, fy) {
+    const p = (x, y) => n(fx + x) + ' ' + n(fy + y);
+    const R = 2.8;
+    const arc = (x, y) => 'A' + n(R) + ' ' + n(R) + ' 0 0 1 ' + p(x, y);
+    const cr = 1.0;
+    const corner = (x, y) => 'A' + n(cr) + ' ' + n(cr) + ' 0 0 1 ' + p(x, y);
+
+    return 'M' + p(1, 0) +
+      arc(3.5, 0) + arc(6, 0) + corner(7, 1) +
+      arc(7, 3.5) + arc(7, 6) + corner(6, 7) +
+      arc(3.5, 7) + arc(1, 7) + corner(0, 6) +
+      arc(0, 3.5) + arc(0, 1) + corner(1, 0) + 'Z';
   }
 
   // 外周リング（7x7 から 5x5 を抜く）
@@ -345,6 +413,11 @@
         }
       }
       return parts.join('');
+    }
+    if (style === 'flower') {
+      const outer = scallopFramePath(fx, fy);
+      const hole = boxPath(fx + 1, fy + 1, fx + 6, fy + 6, [1.4, 1.4, 1.4, 1.4], [1, 1, 1, 1]);
+      return outer + hole;
     }
     const outer = frameShape(fx, fy, 7, style);
     const hole = frameShape(fx + 1, fy + 1, 5, style);
@@ -365,6 +438,9 @@
       case 'rounded':  return boxPath(x, y, x1, y1, [s * 0.16, s * 0.16, s * 0.16, s * 0.16], [1, 1, 1, 1]);
       case 'xrounded': return boxPath(x, y, x1, y1, [s * 0.34, s * 0.34, s * 0.34, s * 0.34], [1, 1, 1, 1]);
       case 'circle':   return boxPath(x, y, x1, y1, [EYE_R, EYE_R, EYE_R, EYE_R], [1, 1, 1, 1]);
+      case 'hexagon':  return hexagonPath(cx, cy, 1.6);
+      case 'octagon':  return octagonPath(x, y, s, 0.78);
+      case 'flower':   return flowerPath(cx, cy, 1.55);
       case 'leaf':     return boxPath(x, y, x1, y1, [EYE_R, 0, EYE_R, 0], [1, 0, 1, 0]);
       case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.45, s * 0.45, s * 0.45], [0, 1, 1, 1]);
       case 'diamond':  return polyPath([[cx, cy - 1.65], [cx + 1.65, cy], [cx, cy + 1.65], [cx - 1.65, cy]]);
@@ -513,21 +589,9 @@
     let body = '';
 
     // 外枠の地
-    if (st.frame.type === 'label' || st.frame.type === 'bubble' || st.frame.type === 'ticket') {
-      const fr = st.frame.type === 'bubble' ? st.frame.radius + 2 : st.frame.radius;
+    if (st.frame.type === 'label') {
+      const fr = st.frame.radius;
       body += '<path d="' + rectPath(0, 0, W, H, fr) + '" fill="' + esc(st.frame.color) + '"/>';
-      if (st.frame.type === 'bubble') {
-        // 下向きの小さな尻尾
-        const tw = 3.2, th = 2.4;
-        body += '<path d="' + polyPath([[W / 2 - tw / 2, H - 0.2], [W / 2 + tw / 2, H - 0.2], [W / 2, H + th]]) +
-          '" fill="' + esc(st.frame.color) + '"/>';
-      }
-      if (st.frame.type === 'ticket') {
-        // ラベルとの境目にミシン目と切り込み
-        const ly = pad + inner + 0.6;
-        body += '<line x1="' + n(1.6) + '" y1="' + n(ly) + '" x2="' + n(W - 1.6) + '" y2="' + n(ly) +
-          '" stroke="' + esc(st.frame.textColor) + '" stroke-width="0.28" stroke-dasharray="1 1" opacity="0.65"/>';
-      }
       // QRブロックの下地
       body += '<path d="' + rectPath(bx, by, inner, inner, radius) + '" fill="' +
         (st.bg.type === 'none' ? '#FFFFFF' : bgRef) + '"/>';
@@ -577,7 +641,7 @@
         units += text.charCodeAt(i) > 0x2E80 ? 1 : 0.56;
       }
       const fs = Math.max(1.6, Math.min(3.4, units ? avail / units : 3.4));
-      const ty = pad + inner + labelH / 2 + (st.frame.type === 'ticket' ? 0.5 : 0);
+      const ty = pad + inner + labelH / 2;
       body += '<text x="' + n(W / 2) + '" y="' + n(ty) + '" font-size="' + n(fs) +
         '" font-weight="700" fill="' + esc(st.frame.textColor) +
         '" text-anchor="middle" dominant-baseline="central" letter-spacing="' + n(fs * 0.02) +
@@ -585,9 +649,8 @@
         esc(text) + '</text>';
     }
 
-    const totalH = st.frame.type === 'bubble' ? H + 2.6 : H;
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + n(W) + ' ' + n(totalH) +
-      '" width="' + n(W) + '" height="' + n(totalH) + '" shape-rendering="geometricPrecision">' +
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + n(W) + ' ' + n(H) +
+      '" width="' + n(W) + '" height="' + n(H) + '" shape-rendering="geometricPrecision">' +
       (defs ? '<defs>' + defs + '</defs>' : '') + body + '</svg>';
 
     // ---- 読み取りへの注意 ---------------------------------------------
@@ -627,7 +690,7 @@
     return {
       svg: svg,
       width: W,
-      height: totalH,
+      height: H,
       contrast: ratio,
       coverage: coverage,
       warnings: warnings
@@ -640,7 +703,7 @@
     if (!m) return svg;
     const w = parseFloat(m[1]), h = parseFloat(m[2]);
     const height = Math.round((px * h) / w);
-    return svg.replace(/width="[^"]*" height="[^"]*"/, 'width="' + px + '" height="' + height + '"');
+    return svg.replace(/(<svg\b[^>]*?)\bwidth="[^"]*"\s+height="[^"]*"/, '$1width="' + px + '" height="' + height + '"');
   }
 
   // ------------------------------------------------------------------

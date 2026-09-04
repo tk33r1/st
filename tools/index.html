@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="ja" class="st-theme">
 <head>
+  <!-- The character set has to land inside the first 1024 bytes, so it goes
+       ahead of the analytics tags rather than after them. -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
   <script>
@@ -19,8 +23,6 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集">
   <meta name="robots" content="max-image-preview:large">
   <title>SAFE TOOLS</title>
@@ -59,19 +61,24 @@
         "name": "SAFE TOOLS",
         "description": "ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集",
         "url": "https://tk.st/tools/",
+        "//": "data/tools.json のミラー。ツールを追加したら両方を更新すること（node .github/scripts/ogp/generate.js --check で検証）",
         "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "url": "https://tk.st/tools/csv-json-bridge/"
-          }
+          {"@type": "ListItem", "position": 1, "name": "CSV JSON Bridge - CSV ↔ JSON 相互変換ツール", "url": "https://tk.st/tools/csv-json-bridge/"},
+          {"@type": "ListItem", "position": 2, "name": "Light SVG - シンプルSVG軽量化ツール", "url": "https://tk.st/tools/light-svg/"},
+          {"@type": "ListItem", "position": 3, "name": "Video to Animation - 動画アニメーション変換ツール", "url": "https://tk.st/tools/video-to-animation/"},
+          {"@type": "ListItem", "position": 4, "name": "NextGen Image - 次世代画像変換ツール", "url": "https://tk.st/tools/nextgen-image/"},
+          {"@type": "ListItem", "position": 5, "name": "Image to Animation - 画像アニメーション変換ツール", "url": "https://tk.st/tools/image-to-animation/"},
+          {"@type": "ListItem", "position": 6, "name": "PDF Studio - サーバーレスPDF編集ツール", "url": "https://tk.st/tools/pdf-studio/"},
+          {"@type": "ListItem", "position": 7, "name": "CSV Charset Converter - CSV文字コード一括変換ツール", "url": "https://tk.st/tools/csv-charset-converter/"},
+          {"@type": "ListItem", "position": 8, "name": "Diff Studio - テキスト差分比較・文字数カウントツール", "url": "https://tk.st/tools/text-diff/"},
+          {"@type": "ListItem", "position": 9, "name": "QR Atelier - おしゃれなQRコード作成ツール", "url": "https://tk.st/tools/qr-atelier/"}
         ]
       }
     ]
   }
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -239,7 +246,6 @@
       font-size: 12.5px;
       color: var(--ink-2);
     }
-    #message-bar.msg-error { border-left-color: var(--err); color: var(--err); }
 
     /* ===== shelf ===== */
     #tool-grid {
@@ -404,10 +410,6 @@
       .fact { border: 0; background: none; padding: 0; font-size: 10px; }
       #tool-grid { grid-template-columns: 1fr; }
     }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation: none !important; transition: none !important; }
-    }
   </style>
 </head>
 
@@ -440,7 +442,7 @@
       </span>
 
       <div class="bar-actions">
-        <span class="bar-status">
+        <span class="bar-status" aria-live="polite">
           <span class="st-led"></span><span id="tool-count" class="num">0</span> tools
         </span>
         <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
@@ -487,7 +489,7 @@
 
   <!-- ===================== main ===================== -->
   <main>
-    <div id="message-bar" class="hidden"></div>
+    <div id="message-bar" class="hidden" role="status"></div>
 
     <div id="empty-state" class="hidden">
       <div class="box"><i data-lucide="search-x"></i></div>
@@ -543,6 +545,7 @@
     let records = [];
     let newIds = new Set();
     let activeCategory = 'all';
+    let firstRender = true;
 
     const grid = document.getElementById('tool-grid');
     const emptyState = document.getElementById('empty-state');
@@ -576,10 +579,40 @@
       };
     };
 
-    function showMessage(text, type) {
-      if (!text) { messageBar.classList.add('hidden'); messageBar.textContent = ''; return; }
+    /* One caller: the fallback notice below. It never comes back down. */
+    function showMessage(text) {
       messageBar.textContent = text;
-      messageBar.className = type === 'error' ? 'msg-error' : '';
+      messageBar.classList.remove('hidden');
+    }
+
+    /* tools.json is edited by hand, so a record only earns a card once it has
+       the three things a card cannot be drawn without: an id to sort by, a
+       title to show and a URL that resolves. Anything short of that is dropped
+       with a note in the console instead of taking the whole shelf down.
+
+       This is the only place a record is inspected, so everything downstream is
+       free to trust these fields: the URLs are resolved and the search text is
+       built here rather than again on every keystroke. */
+    function normalizeRecords(raw) {
+      if (!Array.isArray(raw)) throw new Error('tools.json is not an array');
+      return raw.reduce((keep, r) => {
+        const url = safeUrl(r && r.url);
+        const title = r && typeof r.title === 'string' ? r.title.trim() : '';
+        const id = Number(r && r.id);
+        if (!url || !title || !Number.isFinite(id)) {
+          console.warn('Skipping malformed tool record:', r);
+          return keep;
+        }
+        const imageUrl = safeUrl(r.imageUrl);
+        keep.push({
+          ...r, id, title,
+          url: url.href,
+          external: !SAME_ORIGIN_HOSTS.has(url.hostname),
+          imageUrl: imageUrl ? imageUrl.href : '',
+          haystack: `${title} ${r.description || ''} ${r.category || ''} ${(r.tags || []).join(' ')}`.toLowerCase()
+        });
+        return keep;
+      }, []);
     }
 
     function showSkeletons(count = 6) {
@@ -616,7 +649,11 @@
         btn.setAttribute('aria-pressed', String(isActive));
         btn.addEventListener('click', () => {
           activeCategory = cat;
-          renderCategoryChips();
+          categoryFilter.querySelectorAll('.filter-chip').forEach(el => {
+            const on = el.dataset.cat === cat;
+            el.classList.toggle('active', on);
+            el.setAttribute('aria-pressed', String(on));
+          });
           updateView();
         });
         categoryFilter.appendChild(btn);
@@ -636,12 +673,10 @@
       </svg>`;
 
     function createCard(record) {
-      const url = safeUrl(record.url);
-      const imgURL = safeUrl(record.imageUrl);
       const card = document.createElement('a');
-      card.className = 'tool-card fade-up';
-      card.href = url ? url.href : '#';
-      if (url && !SAME_ORIGIN_HOSTS.has(url.hostname)) {
+      card.className = 'tool-card';
+      card.href = record.url;
+      if (record.external) {
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
       }
@@ -656,8 +691,8 @@
 
       card.innerHTML = `
         <div class="tool-img-wrap">
-          ${imgURL ? `<img src="${imgURL.href}" alt="${title}" loading="lazy" class="tool-img">` : ''}
-          <div class="tool-img-fallback"${imgURL ? '' : ' style="display:flex"'}>
+          ${record.imageUrl ? `<img src="${record.imageUrl}" alt="" loading="lazy" class="tool-img">` : ''}
+          <div class="tool-img-fallback"${record.imageUrl ? '' : ' style="display:flex"'}>
             ${IMAGE_OFF_SVG}
             <span>No preview</span>
           </div>
@@ -665,7 +700,7 @@
         </div>
         <div class="tool-body">
           ${category ? `<span class="category-badge">${category}</span>` : ''}
-          <h3 class="tool-title">${title}</h3>
+          <h2 class="tool-title">${title}</h2>
           <p class="tool-desc">${desc}</p>
           ${tags.length ? `
             <div class="tool-tags">
@@ -691,7 +726,7 @@
       const sortType = sortSelect.value;
 
       let filtered = records.filter(r => {
-        const matchSearch = `${r.title} ${r.description || ''} ${r.category || ''} ${(r.tags || []).join(' ')}`.toLowerCase().includes(term);
+        const matchSearch = r.haystack.includes(term);
         const matchCat = activeCategory === 'all' || r.category === activeCategory;
         return matchSearch && matchCat;
       });
@@ -705,10 +740,17 @@
       grid.innerHTML = '';
       filtered.forEach((record, i) => {
         const card = createCard(record);
-        card.style.animationDelay = `${i * 40}ms`;
+        /* Replaying the stagger on every keystroke would turn filtering into a
+           wait, so it runs on the first paint only — and caps, so a long shelf
+           does not take seconds to finish arriving. */
+        if (firstRender) {
+          card.classList.add('fade-up');
+          card.style.animationDelay = `${Math.min(i * 40, 240)}ms`;
+        }
         grid.appendChild(card);
       });
 
+      firstRender = false;
       countEl.textContent = filtered.length;
       emptyState.classList.toggle('hidden', filtered.length > 0);
     }
@@ -720,10 +762,9 @@
         const data = JSON.parse(script.textContent);
         const list = data['@graph'].find(n => n['@type'] === 'ItemList');
         if (!list) return;
-        list.itemListElement = tools
-          .map(t => ({ tool: t, url: safeUrl(t.url) }))
-          .filter(x => x.url)
-          .map((x, i) => ({ '@type': 'ListItem', 'position': i + 1, 'url': x.url.href }));
+        list.itemListElement = tools.map((t, i) => (
+          { '@type': 'ListItem', 'position': i + 1, 'name': t.title, 'url': t.url }
+        ));
         script.textContent = JSON.stringify(data);
       } catch (e) {
         console.warn('Failed to update JSON-LD ItemList:', e);
@@ -744,31 +785,36 @@
 
     async function loadTools() {
       showSkeletons(6);
-      let usedFallback = false;
       try {
-        const res = await fetch('/data/tools.json');
+        /* Relative, like the stylesheet on this page. The host serves data/
+           with max-age=0, must-revalidate, so freshness is already settled at
+           the header level and needs no cache option here. */
+        const res = await fetch('../data/tools.json');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        records = await res.json();
+        records = normalizeRecords(await res.json());
       } catch (e) {
         console.warn('Failed to load tools.json, using fallback:', e);
-        records = FALLBACK_RECORDS;
-        usedFallback = true;
-      } finally {
-        if (usedFallback) {
-          showMessage('最新のツール一覧を取得できなかったため、サンプルを表示しています。', 'info');
-        }
-        const sorted = [...records].sort((a, b) => b.id - a.id);
-        newIds = new Set(sorted.slice(0, 2).map(r => r.id));
-        renderCategoryChips();
-        updateView();
-        updateItemListSchema(records);
+        records = normalizeRecords(FALLBACK_RECORDS);
+        showMessage('最新のツール一覧を取得できなかったため、サンプルを表示しています。');
       }
+
+      const sorted = [...records].sort((a, b) => b.id - a.id);
+      newIds = new Set(sorted.slice(0, 2).map(r => r.id));
+      renderCategoryChips();
+      updateView();
+      updateItemListSchema(records);
     }
 
 
     searchInput.addEventListener('input', debounce(updateView, 150));
     sortSelect.addEventListener('change', updateView);
-    lucide.createIcons();
+
+    /* The icons ride a CDN, so they are treated as decoration that may not
+       turn up: the shelf itself must never depend on them loading. The script
+       is deferred, which puts it ahead of DOMContentLoaded and behind this. */
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+    });
 
     const urlParams = new URLSearchParams(window.location.search);
     const initialQuery = urlParams.get('q');
