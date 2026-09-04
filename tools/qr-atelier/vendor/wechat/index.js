@@ -1,5 +1,9 @@
+// tk.st: 読み込みに失敗したモジュールはブラウザのモジュールマップに残り、
+// 同じ URL では二度と読み直せない。再試行時に親へ付けたクエリを子にも渡して、
+// キャッシュを外せるようにしている（元は import('./wasm.mjs')）。
+const __q = new URL(import.meta.url).search;
 async function importOpenCV() {
-  const cv = await import('./wasm.js').then((r) => r.cv);
+  const cv = await import('./wasm.js' + __q).then((r) => r.cv);
   await cv.ready;
   const qrcode_detector = await loadModels(cv);
   return {
@@ -43,7 +47,7 @@ async function scan(input, options = {}) {
   };
 }
 async function loadModels(cv) {
-  const models = await import('./wasm.js');
+  const models = await import('./wasm.js' + __q);
   cv.FS_createDataFile("/", "detect.prototxt", models.detect_prototxt, true, false, false);
   cv.FS_createDataFile("/", "detect.caffemodel", models.detect_caffemodel, true, false, false);
   cv.FS_createDataFile("/", "sr.prototxt", models.sr_prototxt, true, false, false);

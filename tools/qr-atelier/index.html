@@ -219,21 +219,32 @@
     }
     .verdict-head { display: flex; align-items: center; gap: 8px; }
     .verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
-    .verdict.best .dot, .verdict.good .dot { background: var(--ok); }
+    .verdict.ok .dot { background: var(--ok); }
     .verdict.fair .dot { background: var(--warn); }
     .verdict.ng .dot { background: var(--err); }
     .verdict.na .dot { background: var(--ink-3); }
     .verdict b { font-weight: 700; color: var(--ink); flex: none; }
     #verdict-note { color: var(--ink-2); line-height: 1.65; }
     #verdict-note:empty { display: none; }
+    .verdict-time {
+      margin-left: auto; flex: none;
+      font-size: 10px; letter-spacing: 0.06em; color: var(--ink-3);
+    }
     .verdict-more {
-      margin-left: auto; flex: none; cursor: pointer;
+      margin-left: 8px; flex: none; cursor: pointer;
       font-family: inherit; font-size: 10.5px; color: var(--ink-2);
       padding: 3px 8px; border: 1px solid var(--rule); border-radius: var(--r-1);
       background: transparent;
     }
     .verdict-more:hover { color: var(--ink); border-color: var(--ink-3); }
     .verdict-more[disabled] { opacity: 0.5; cursor: default; }
+    .verdict.flash { animation: verdict-flash 460ms ease-out; }
+    @keyframes verdict-flash {
+      0%   { border-color: var(--accent); background: var(--panel-2); }
+      100% { border-color: var(--rule); background: var(--panel); }
+    }
+    @media (prefers-reduced-motion: reduce) { .verdict.flash { animation: none; } }
+
     .verdict-engines { display: flex; flex-wrap: wrap; gap: 5px; }
     .verdict-engines:empty { display: none; }
     .eng {
@@ -243,7 +254,9 @@
     }
     .eng i { width: 5px; height: 5px; border-radius: 50%; background: var(--err); font-style: normal; flex: none; }
     .eng.ok i { background: var(--ok); }
-    .eng.mismatch i { background: var(--warn); }
+    .eng.partial i, .eng.mismatch i { background: var(--warn); }
+    .eng.unavailable { opacity: 0.6; }
+    .eng.unavailable i { background: var(--ink-3); }
 
     .alerts { display: flex; flex-direction: column; gap: 6px; }
     .alert {
@@ -504,6 +517,7 @@
           <div class="verdict-head">
             <span class="dot"></span>
             <b id="verdict-title">待機中</b>
+            <span id="verdict-time" class="verdict-time"></span>
             <button id="btn-verify" class="verdict-more" type="button">詳しく検査</button>
           </div>
           <div id="verdict-note">内容を入力するとここに出ます</div>
@@ -827,10 +841,15 @@
         このとき使うデコーダは1つではありません。読み取りソフトには寛容さの差が大きく、
         素朴なものが落とす絵をスマホのカメラは平気で読む、ということが普通に起こります。
         そこで「詳しく検査」を押すと、厳しいもの（jsQR）、多くのスキャナアプリと同じ系統のもの（ZXing）、
-        検出に機械学習を使うもの（OpenCV WeChat）の3つに読ませて、いくつ通ったかを出します。
-        3つとも通れば、どんな読み取り環境でもまず大丈夫。2つなら、実機のカメラでは読めるけれど
-        簡素なアプリでは落ちることがある、という意味です。デコーダはすべてこのページに同梱していて、
-        検査のために画像が外部へ送られることはありません。
+        検出に機械学習を使うもの（OpenCV WeChat）の3つに読ませます。
+      </p>
+      <p>
+        しかも、1モジュールを4ピクセルで描いたものから24ピクセルで描いたものまで、
+        解像度を変えて何段も試します。カメラで小さく写したときだけ読めて、
+        書き出した画像を等倍で読ませると失敗する、というデザインが実際にあるためです
+        （マーカーの目を縦ラインや横ラインにすると起きやすい）。全段で読めたときだけ「読み取りOK」、
+        一部の解像度でしか読めないときは、その旨をはっきり出します。
+        デコーダはすべてこのページに同梱していて、検査のために画像が外部へ送られることはありません。
       </p>
 
       <div class="qa">

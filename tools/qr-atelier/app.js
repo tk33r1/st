@@ -620,6 +620,7 @@
       $('preview').innerHTML = '';
       lastSvg = '';
       setVerdict('na', '待機中', '内容を入力するとここに出ます', []);
+      syncVerifyButton(false);
       setStatus('ready', 'idle');
       return;
     }
@@ -631,6 +632,7 @@
       $('preview').innerHTML = '';
       lastSvg = '';
       setVerdict('ng', '入りきりません', '文字数を減らすか、誤り訂正レベルを下げてください', []);
+      syncVerifyButton(false);
       pushAlert('error', 'この内容はQRコードの上限（バージョン40）を超えています。文字数を減らしてください。');
       setStatus('too long', 'err');
       return;
@@ -662,12 +664,13 @@
   // 読み取りテスト
   // ------------------------------------------------------------------
   // 判定は qr-verify.js に任せて、ここは表示だけ。ひとつのデコーダの失敗を
-  // 「読めません」と断定しないのが肝で、通ったデコーダの寛容さの段に応じて
-  // 「どこまでの環境で読めるか」を出す。
-  const VERDICTS = {
-    best: ['ok', '読み取りOK', 'どの読み取り環境でも読めます'],
-    good: ['ok', '読み取りOK', '実機のカメラでもアプリでも読めます'],
-    fair: ['fair', '読めます（機種による）', '実機のカメラなら読めますが、簡素なアプリでは失敗することがあります']
+  // 「読めません」と断定しないのが肝。デコーダの寛容さは一直線には並ばない
+  // （jsQR だけ落ちる形と、ZXing だけ落ちる形の両方がある）ので、通った数では
+  // なく「落ちたもののうちいちばん深刻なもの」で言い方を決める。
+  const PARTIAL = {
+    1: '読めます（機種による）',
+    2: '読めます（一部アプリで注意）',
+    3: '読めない環境がありそうです'
   };
 
   function setVerdict(kind, title, note, engines) {
@@ -677,9 +680,11 @@
     const box = $('verdict-engines');
     box.innerHTML = '';
     (engines || []).forEach(e => {
-      const chip = el('span', { class: 'eng ' + e.state, title: e.note });
+      const out = e.state === 'unavailable';
+      const chip = el('span', { class: 'eng ' + e.state,
+        title: out ? '読み込めなかったため、このデコーダでは確かめられていません' : e.note });
       chip.appendChild(el('i'));
-      chip.appendChild(el('span', null, e.name));
+      chip.appendChild(el('span', null, e.name + (out ? '（読み込めず）' : '')));
       box.appendChild(chip);
     });
   }
@@ -701,6 +706,36 @@
     return mix(bg.from, bg.to);
   }
 
+  // デコーダを読み込んだあとの検査は数十msで終わる。結果が前と同じだと画面が
+  // まったく動かず、走ったのかどうか分からないので、終わるたびに枠を短く光らせ、
+  // 時刻を出す。検査そのものは引き延ばさない。
+  function markChecked() {
+    const v = $('verdict');
+    const d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    $('verdict-time').textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+    v.classList.remove('flash');
+    void v.offsetWidth;               // アニメーションを毎回やり直させる
+    v.classList.add('flash');
+  }
+
+  // 検査するものが無いときは押せないようにしておく。押しても何も起きない
+  // ボタンは、壊れているのか押せていないのか区別がつかない。
+  // ボタンは重いデコーダを取りに行くためだけのもの。一度読み込めば以後は
+  // 自動チェックに混ざるので、押し直す意味がない。読み込み済みなら消す。
+  // 直近の検査で読み込めなかったデコーダの名前
+  let missingNames = [];
+
+  // 読み込めなかったデコーダがあるあいだはボタンを残す。qr-verify 側が
+  // 壊れたデコーダの読み込みキャッシュを捨てるので、押せば再試行になる。
+  function syncVerifyButton(enabled) {
+    const btn = $('btn-verify');
+    btn.hidden = !!(window.QRVerify && window.QRVerify.heavyLoaded());
+    btn.disabled = !enabled;
+    btn.textContent = missingNames.length ? 'もう一度読み込む' : '詳しく検査';
+    if (!enabled) $('verdict-time').textContent = '';
+  }
+
   async function verify(svg, expect, heavy) {
     if (!window.QRVerify) {
       setVerdict('na', '読み取りテスト非対応', 'この環境では自動チェックできません', []);
@@ -708,8 +743,9 @@
     }
     const pad = padColor();
     setVerdict('na', 'チェック中…', '', []);
+    syncVerifyButton(true);
     try {
-      const r = await window.QRVerify.run({
+      const run = window.QRVerify.run({
         render: px => rasterize(svg, px, pad),
         expect: expect,
         moduleWidth: moduleWidth(svg),
@@ -718,11 +754,19 @@
         heavy: heavy,
         onProgress: t => setVerdict('na', t, '', [])
       });
+      const r = await run;
       if (!r) return;                       // 新しい検査に追い越された
-      $('btn-verify').textContent = window.QRVerify.heavyLoaded() ? '再検査' : '詳しく検査';
+      // 読み込めなかったデコーダは「読めなかった」ではない。確かめられていない
+      // だけなので、判定の分母から外したうえで、その旨をはっきり添える。
+      missingNames = r.engines.filter(e => e.state === 'unavailable').map(e => e.name);
+      const missing = missingNames.length
+        ? '（' + missingNames.join('と') + 'は読み込めず、確認できていません）' : '';
+      syncVerifyButton(true);
 
       if (!r.ran) {
-        setVerdict('na', 'チェックできません', 'この環境ではデコーダを読み込めませんでした', []);
+        setVerdict('na', 'チェックできません',
+          'デコーダを読み込めませんでした。通信状態を確かめて、もう一度お試しください',
+          r.engines);
       } else if (r.level === 'ng' && !window.QRVerify.heavyLoaded()) {
         // 軽いデコーダしか動いていない段階での失敗は、証拠として弱い。jsQR は
         // 装飾に厳しく、そこで落ちても実機では読めることが多い。断定せずに
@@ -733,11 +777,38 @@
         setVerdict('ng', r.mismatch ? '内容がずれています' : '読み取れませんでした',
           r.mismatch ? '別の内容として読まれています。ロゴや装飾を控えめにしてください'
                      : 'コントラスト・ロゴの大きさ・余白を見直してください', r.engines);
+      } else if (r.level === 'best') {
+        setVerdict('ok', '読み取りOK',
+          (r.ran > 1 ? r.ran + 'つのデコーダすべてが' : '') + '全解像度で成功。' +
+          (missing ? '確かめられた範囲では問題ありません' + missing
+                   : 'どの読み取り環境でも読めます'), r.engines);
       } else {
-        const v = VERDICTS[r.level];
-        setVerdict(v[0], v[1],
-          (r.ran > 1 ? r.passed + '/' + r.ran + 'のデコーダで成功。' : '') + v[2], r.engines);
+        const bad = r.engines.filter(e => e.state !== 'ok' && e.state !== 'unavailable')
+          .sort((a, b) => b.severity - a.severity);
+        const worst = bad[0];
+        // 実機系（severity 3）とアプリ系（2）が全部通っているなら、残りは jsQR の
+        // 苦手な形というだけ。これで警告を出すと形の半分以上が黄色になり、直した
+        // はずの偽陰性が戻ってくる。緑のまま、事実だけ添える。
+        const strong = r.engines.filter(e => e.severity >= 2 && e.state !== 'unavailable');
+        if (strong.length && strong.every(e => e.state === 'ok')) {
+          setVerdict('ok', '読み取りOK',
+            '実機のカメラでもスキャナアプリでも読めます。' + worst.name +
+            'のような簡素なデコーダだけが苦手な形です' + missing, r.engines);
+        } else if (worst.severity >= 3 && worst.state === 'partial') {
+          // 実機系までもが「一部の解像度でしか読めない」＝解像度依存。書き出した
+          // 画像をそのまま読ませると失敗するので、そこを名指しで言う。
+          setVerdict('fair', '解像度によって読めません',
+            '小さく写したときは読めますが、拡大すると読めなくなります。' +
+            '書き出した画像をそのまま読ませると失敗する可能性が高いので、' +
+            'マーカーの目や太さのバラつきを控えめにしてください' + missing, r.engines);
+        } else {
+          setVerdict('fair', PARTIAL[worst.severity],
+            r.passed + '/' + r.ran + 'のデコーダで安定。' + worst.name +
+            (worst.state === 'partial' ? 'は一部の解像度でしか読めず、' : 'では読めず、') +
+            worst.onFail + missing, r.engines);
+        }
       }
+      markChecked();   // setVerdict が class を書き換えるので、必ずその後で
     } catch (e) {
       setVerdict('na', 'チェックできず', '', []);
     }

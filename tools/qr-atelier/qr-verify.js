@@ -5,9 +5,13 @@
  * ファインダを走査線の 1:1:3:1:1 比で探すので、凝ったマーカー枠で落ちやすい。
  * 実機のカメラはそこがずっと寛容なので、jsQR の失敗＝読めない、にはならない。
  *
- * そこで「寛容さの違う複数のデコーダに読ませて、何個が通ったか」を出す。
- * ENGINES は厳しい順に並べていて、通った数がそのまま
- * 「どの程度ゆるい読み取り環境まで耐えるか」の目盛りになる。
+ * そこで「性格の違う複数のデコーダに読ませて、どれが通ったか」を出す。
+ *
+ * 注意: 寛容さは一直線には並ばない。114通りのスタイルで測ったところ、
+ * jsQR だけ落ちる組み合わせ（星・ひし形などの目）と、ZXing だけ落ちる
+ * 組み合わせ（横ラインの目）の両方があった。なので「何個通ったか」で
+ * 順位づけせず、落ちたデコーダが何を意味するかで文面を決める。
+ * severity は、そのデコーダが落ちたときの深刻さ。
  *
  *   window.QRVerify.run({ render, expect, moduleWidth, margin, padColor })
  *     → { engines: [{id,name,state}], ran, passed, level, mismatch }
@@ -40,8 +44,11 @@
     let p = null;
     const wrapped = () => (p || (p = fn().catch(e => { p = null; throw e; })));
     wrapped.loaded = () => p !== null;
+    wrapped.reset = () => { p = null; };   // 壊れていたら次回また取りに行かせる
     return wrapped;
   }
+
+  let wechatTries = 0;
 
   // ------------------------------------------------------------------
   // デコーダ（寛容さの順：厳しい → 寛容）
@@ -51,7 +58,9 @@
     {
       id: 'jsqr',
       name: 'jsQR',
-      note: '素朴なJSデコーダ。いちばん厳しい',
+      note: '素朴なJSデコーダ。装飾に厳しい',
+      severity: 1,
+      onFail: '簡素な読み取りアプリでは失敗することがあります',
       heavy: false,
       load: once(async () => {
         if (typeof global.jsQR !== 'function') await loadScript(V('jsQR.js'));
@@ -67,6 +76,8 @@
       id: 'zxing',
       name: 'ZXing',
       note: 'zxing-cpp。多くのスキャナアプリの系統',
+      severity: 2,
+      onFail: 'スキャナアプリの一部で失敗することがあります',
       heavy: true,
       load: once(async () => {
         if (typeof global.ZXingWASM === 'undefined') {
@@ -91,10 +102,14 @@
     {
       id: 'wechat',
       name: 'OpenCV WeChat',
-      note: '検出が機械学習ベース。装飾に強い',
+      note: '検出が機械学習ベース。スマホのカメラに近い',
+      severity: 3,
+      onFail: 'スマホのカメラで失敗する可能性があります',
       heavy: true,
       load: once(async () => {
-        const mod = await import(V('wechat/index.js'));
+        // 失敗した import はモジュールマップに残るので、やり直しではクエリを変える
+        const q = wechatTries++ ? '?r=' + Date.now() : '';
+        const mod = await import(V('wechat/index.js') + q);
         await mod.ready();
         ENGINES_BY_ID.wechat._scan = mod.scan;
         return true;
@@ -111,6 +126,8 @@
       id: 'native',
       name: 'ブラウザ内蔵',
       note: 'macOS/iOSはApple Vision、AndroidはML Kit。実機そのもの',
+      severity: 3,
+      onFail: 'お使いの端末のカメラでは失敗する可能性があります',
       heavy: false,
       load: once(async () => {
         if (typeof global.BarcodeDetector === 'undefined') return false;
@@ -134,9 +151,15 @@
   // ------------------------------------------------------------------
   // 検査
   // ------------------------------------------------------------------
-  // 実機のカメラが捉える解像度に近いあたりを何段か試す。デコーダによって
-  // 得意な倍率が違い、上げれば通るとは限らないので、1つでも通れば合格とする。
-  const SCALES = [4, 6, 9, 12];
+  // 1モジュールあたり何ピクセルで読ませるか。カメラで撮ったときに近い低い側
+  // （4〜6）から、書き出した PNG をそのまま読ませる高い側（16〜24）までを見る。
+  //
+  // 「1段でも通れば合格」にしてはいけない。低い側はアンチエイリアスで形の崩れが
+  // ならされるぶん通りやすく、そこだけ拾って合格にすると、書き出した画像が
+  // まったく読めないデザインを「どの環境でも読めます」と言ってしまう。実際、
+  // ハート+ジッター100%+ドット枠+横ライン目 は 3〜4px でしか読めず 9px 以上は
+  // 全滅した。なので全段を試して、通った段の広さを見る。
+  const SCALES = [4, 6, 10, 16, 24];
 
   // クワイエットゾーンが規格の 4 モジュールに足りないぶんは、背景色で補って
   // から読ませる。実際には QR の周りにも背景が続いているのが普通で、そこを
@@ -178,31 +201,51 @@
     const stale = () => mine !== seq;
     const report = t => { if (opts.onProgress && !stale()) opts.onProgress(t); };
 
-    // 使うデコーダを決める。重いものは、明示的に頼まれたときか、
-    // すでに一度読み込んであるとき（＝費用は払い済み）だけ動かす。
+    // 使うデコーダを決める。重いものは、明示的に頼まれたときか、すでに一度
+    // 読み込んであるとき（＝費用は払い済み。2回目以降の検査は数十msで終わる）
+    // だけ動かす。
+    const info = (e, st) => ({ id: e.id, name: e.name, note: e.note,
+      severity: e.severity, onFail: e.onFail, state: st });
     const use = [];
+    const dead = [];   // 取得や初期化に失敗したもの。「読めなかった」とは別物として扱う。
     for (const e of ENGINES) {
       if (e.heavy && !opts.heavy && !e.load.loaded()) continue;
-      let ok = false;
+      let ok = false, broke = false;
       try {
         if (e.heavy && !e.load.loaded()) report(e.name + ' を読み込み中…');
         ok = await e.load();
-      } catch (err) { ok = false; }
+      } catch (err) {
+        // 例外＝取りに行って失敗した。false＝この環境にそもそも無い（内蔵APIなど）。
+        // 後者は黙って外し、前者だけを「読み込めなかった」として表に出す。
+        broke = true;
+      }
       if (stale()) return null;
       if (ok) use.push(e);
+      else if (broke) dead.push(e);
     }
-    if (!use.length) return { engines: [], ran: 0, passed: 0, level: 'na', mismatch: false };
+    // 動かせるものが一つも無い。読み込めなかった顔ぶれは持ち帰る（黙って消すと
+    // 「確かめていない」ことが誰にも伝わらない）。
+    if (!use.length) {
+      return { engines: dead.map(e => info(e, 'unavailable')),
+               ran: 0, passed: 0, level: 'na', mismatch: false };
+    }
 
     const state = {};
     const tries = {};   // 試した回数と、そのうち応答が返らなかった回数。
     const stalls = {};  // 全部だんまりだったデコーダは「落ちた」ではなく「動かなかった」。
-    use.forEach(e => { state[e.id] = 'fail'; tries[e.id] = 0; stalls[e.id] = 0; });
+    const hits = {};    // 通った段の数。全段通って初めて ok にする。
+    const errors = {};  // 例外を投げた回数。毎回投げるならデコーダ自体が動いていない。
+    use.forEach(e => {
+      state[e.id] = 'fail'; tries[e.id] = 0; stalls[e.id] = 0; hits[e.id] = 0; errors[e.id] = 0;
+    });
     const pad = Math.max(0, 4 - (opts.margin == null ? 4 : opts.margin));
     let mismatch = false;
 
     let drew = 0;
     for (const px of SCALES) {
-      const pending = use.filter(e => state[e.id] !== 'ok');
+      // 早期打ち切りはしない。どこまで広い解像度で読めるかを知りたいので、
+      // 通ったあとの段も必ず試す。
+      const pending = use.filter(e => state[e.id] !== 'mismatch');
       if (!pending.length) break;
 
       report('検査中… (' + px + 'px/モジュール)');
@@ -223,34 +266,54 @@
         } catch (err) {
           text = null;
           if (err && err.message === 'timeout') stalls[e.id]++;
+          else errors[e.id]++;
         }
         if (stale()) return null;
-        if (text === opts.expect) state[e.id] = 'ok';
+        if (text === opts.expect) hits[e.id]++;
         else if (text) { state[e.id] = 'mismatch'; mismatch = true; }
       }
     }
 
     // 一枚も描けなかったのに「読めません」と言うのは嘘になる。
-    if (!drew) return { engines: [], ran: 0, passed: 0, level: 'na', mismatch: false };
+    if (!drew) {
+      return { engines: dead.map(e => info(e, 'unavailable')),
+               ran: 0, passed: 0, level: 'na', mismatch: false };
+    }
 
-    const engines = use
-      .filter(e => !(tries[e.id] > 0 && stalls[e.id] === tries[e.id]))
-      .map(e => ({ id: e.id, name: e.name, note: e.note, state: state[e.id] }));
-    if (!engines.length) return { engines: [], ran: 0, passed: 0, level: 'na', mismatch: false };
-    const passed = engines.filter(e => e.state === 'ok').length;
+    // 実際に動いたデコーダだけを結果に数える。全部だんまりだったもの、毎回例外を
+    // 投げたもの（＝wasm が取れていないなど）は「読めなかった」ではないので外す。
+    const ran = use.filter(e => {
+      const n = tries[e.id] - stalls[e.id];
+      if (tries[e.id] > 0 && stalls[e.id] === tries[e.id]) return false;
+      if (n > 0 && errors[e.id] === n) {
+        e.load.reset();       // 次に呼ばれたら読み込みからやり直す
+        dead.push(e);
+        return false;
+      }
+      return true;
+    });
 
-    // 通った数ではなく「いちばん厳しいどこまで通ったか」で段を決める。
-    // ENGINES が厳しい順なので、先頭が通っていれば最良。
-    let level;
-    if (passed === 0) level = 'ng';
-    else if (passed === engines.length) level = 'best';
-    else if (engines[0].state === 'ok') level = 'good';
-    else level = 'fair';
+    // 全段で読めて ok。一部だけなら partial（解像度しだいで落ちる）。
+    ran.forEach(e => {
+      if (state[e.id] === 'mismatch') return;
+      const n = tries[e.id] - stalls[e.id];
+      state[e.id] = hits[e.id] === 0 ? 'fail' : hits[e.id] >= n ? 'ok' : 'partial';
+    });
 
-    return { engines: engines, ran: engines.length, passed: passed, level: level, mismatch: mismatch };
+    const engines = ran.map(e => info(e, state[e.id]))
+      .concat(dead.map(e => info(e, 'unavailable')));
+    if (!ran.length) return { engines: engines, ran: 0, passed: 0, level: 'na', mismatch: false };
+    const passed = ran.filter(e => state[e.id] === 'ok').length;
+
+    // ng は「どの解像度でも一度も読めなかった」ときだけ。一部の解像度で
+    // 読めているなら壊れてはいないので、partial にして app.js 側で言い分ける。
+    const anyHit = ran.some(e => state[e.id] === 'ok' || state[e.id] === 'partial');
+    const level = !anyHit ? 'ng' : passed === ran.length ? 'best' : 'partial';
+
+    return { engines: engines, ran: ran.length, passed: passed, level: level, mismatch: mismatch };
   }
 
-  // 重いデコーダをすでに抱えているか（ボタンの表示切り替え用）
+  // 重いデコーダをすでに抱えているか（ボタンの表示と、判定の重みづけ用）
   function heavyLoaded() {
     return ENGINES.filter(e => e.heavy).every(e => e.load.loaded());
   }
