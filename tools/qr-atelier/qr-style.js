@@ -254,7 +254,10 @@
             parts.push(rectPath(x0, y0, s, s, 0));
             break;
           case 'rounded':
-            parts.push(rectPath(x0, y0, s, s, s * 0.3));
+            parts.push(rectPath(x0, y0, s, s, s * 0.16));
+            break;
+          case 'xrounded':
+            parts.push(rectPath(x0, y0, s, s, s * 0.34));
             break;
           case 'dot':
             parts.push(circlePath(cx, cy, s / 2));
@@ -285,7 +288,7 @@
             parts.push(boxPath(x0, y0, x1, y1, [0, s / 2, s / 2, s / 2], [0, 1, 1, 1]));
             break;
           default:
-            parts.push(rectPath(x0, y0, s, s, s * 0.3));
+            parts.push(rectPath(x0, y0, s, s, s * 0.16));
         }
       }
     }
@@ -303,12 +306,10 @@
     switch (style) {
       case 'square':   return boxPath(x, y, x1, y1, r(0), [0, 0, 0, 0]);
       case 'rounded':  return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
-      case 'xrounded': return boxPath(x, y, x1, y1, r(s * 0.26), [1, 1, 1, 1]);
-      case 'circle':   return boxPath(x, y, x1, y1, r(s * 0.34), [1, 1, 1, 1]);
+      case 'xrounded': return boxPath(x, y, x1, y1, r(s * 0.34), [1, 1, 1, 1]);
+      case 'circle':   return boxPath(x, y, x1, y1, r(s * 0.42), [1, 1, 1, 1]);
       case 'leaf':     return boxPath(x, y, x1, y1, [s * 0.36, 0, s * 0.36, 0], [1, 0, 1, 0]);
-      case 'leaf2':    return boxPath(x, y, x1, y1, [0, s * 0.36, 0, s * 0.36], [0, 1, 0, 1]);
       case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.34, s * 0.34, s * 0.34], [0, 1, 1, 1]);
-      case 'cut2':     return boxPath(x, y, x1, y1, [s * 0.34, s * 0.34, 0, s * 0.34], [1, 1, 0, 1]);
       default:         return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
     }
   }
@@ -340,16 +341,20 @@
   function markerEyePath(fx, fy, style) {
     const x = fx + 2, y = fy + 2, s = 3;
     const x1 = x + s, y1 = y + s;
+    const cx = x + s / 2, cy = y + s / 2;
     switch (style) {
-      case 'square':  return boxPath(x, y, x1, y1, [0, 0, 0, 0], [0, 0, 0, 0]);
-      case 'circle':  return boxPath(x, y, x1, y1, [EYE_R, EYE_R, EYE_R, EYE_R], [1, 1, 1, 1]);
-      case 'leaf':    return boxPath(x, y, x1, y1, [EYE_R, 0, EYE_R, 0], [1, 0, 1, 0]);
-      case 'leaf2':   return boxPath(x, y, x1, y1, [0, EYE_R, 0, EYE_R], [0, 1, 0, 1]);
-      case 'cut':     return boxPath(x, y, x1, y1, [0, s * 0.45, s * 0.45, s * 0.45], [0, 1, 1, 1]);
-      case 'cut2':    return boxPath(x, y, x1, y1, [s * 0.45, s * 0.45, 0, s * 0.45], [1, 1, 0, 1]);
-      case 'xmark':   return crossPath(x + s / 2, y + s / 2, 1.2, 0.75);
-      case 'rounded':
-      default:        return boxPath(x, y, x1, y1, [s * 0.3, s * 0.3, s * 0.3, s * 0.3], [1, 1, 1, 1]);
+      case 'square':   return boxPath(x, y, x1, y1, [0, 0, 0, 0], [0, 0, 0, 0]);
+      case 'rounded':  return boxPath(x, y, x1, y1, [s * 0.16, s * 0.16, s * 0.16, s * 0.16], [1, 1, 1, 1]);
+      case 'xrounded': return boxPath(x, y, x1, y1, [s * 0.34, s * 0.34, s * 0.34, s * 0.34], [1, 1, 1, 1]);
+      case 'circle':   return boxPath(x, y, x1, y1, [EYE_R, EYE_R, EYE_R, EYE_R], [1, 1, 1, 1]);
+      case 'leaf':     return boxPath(x, y, x1, y1, [EYE_R, 0, EYE_R, 0], [1, 0, 1, 0]);
+      case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.45, s * 0.45, s * 0.45], [0, 1, 1, 1]);
+      case 'diamond':  return polyPath([[cx, cy - 1.65], [cx + 1.65, cy], [cx, cy + 1.65], [cx - 1.65, cy]]);
+      case 'star':     return starPath(cx, cy, 1.7, 1.05, 5);
+      case 'heart':    return heartPath(cx, cy, 1.45);
+      case 'plus':     return plusPath(cx, cy, 1.5, 0.72);
+      case 'xmark':    return crossPath(cx, cy, 1.2, 0.75);
+      default:         return boxPath(x, y, x1, y1, [s * 0.16, s * 0.16, s * 0.16, s * 0.16], [1, 1, 1, 1]);
     }
   }
 
@@ -638,7 +643,7 @@
   }
 
   function eyePreview(eyeStyle) {
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.8 1.8 3.4 3.4">' +
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.7 1.7 3.6 3.6">' +
       '<path d="' + markerEyePath(0, 0, eyeStyle) + '" fill="currentColor"/></svg>';
   }
 

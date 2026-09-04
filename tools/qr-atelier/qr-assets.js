@@ -222,7 +222,7 @@
     {
       name: 'ダイヤ',
       style: {
-        cell: 'diamond', cellScale: 1.1, markerFrame: 'cut', markerEye: 'leaf2',
+        cell: 'diamond', cellScale: 1.1, markerFrame: 'cut', markerEye: 'leaf',
         fg: { type: 'linear', from: '#13547A', to: '#80D0C7', angle: 120 },
         bg: { type: 'solid', color: '#0B1F2A' },
         markerFrameColor: '#80D0C7', markerEyeColor: '#FFFFFF', radius: 3
@@ -239,7 +239,7 @@
     {
       name: 'フレッシュ',
       style: {
-        cell: 'classy2', cellScale: 1, markerFrame: 'leaf2', markerEye: 'leaf2',
+        cell: 'classy2', cellScale: 1, markerFrame: 'leaf', markerEye: 'leaf',
         fg: { type: 'solid', color: '#047857' }, bg: { type: 'solid', color: '#F0FDF4' },
         markerFrameColor: '', markerEyeColor: '#065F46', radius: 4
       }
@@ -250,9 +250,10 @@
   // 形の一覧（UIのボタンを作るための名前とプレビュー用の識別子）
   // ------------------------------------------------------------------
   const CELL_SHAPES = [
-    { id: 'square',  name: '四角' },
-    { id: 'rounded', name: '角丸' },
-    { id: 'dot',     name: 'ドット' },
+    { id: 'square',   name: '四角' },
+    { id: 'rounded',  name: '角丸' },
+    { id: 'xrounded', name: '丸み強' },
+    { id: 'dot',      name: 'ドット' },
     { id: 'classy',  name: 'リーフ' },
     { id: 'classy2', name: '雫' },
     { id: 'diamond', name: 'ひし形' },
@@ -270,21 +271,22 @@
     { id: 'xrounded', name: '丸み強' },
     { id: 'circle',   name: 'まる' },
     { id: 'leaf',     name: 'リーフ' },
-    { id: 'leaf2',    name: 'リーフ（逆）' },
     { id: 'cut',      name: '雫' },
-    { id: 'cut2',     name: '雫（逆）' },
     { id: 'dots',     name: 'ドット枠' }
   ];
 
   const MARKER_EYES = [
-    { id: 'square',  name: '四角' },
-    { id: 'rounded', name: '角丸' },
-    { id: 'circle',  name: 'まる' },
-    { id: 'leaf',    name: 'リーフ' },
-    { id: 'leaf2',   name: 'リーフ（逆）' },
-    { id: 'cut',     name: '雫' },
-    { id: 'cut2',    name: '雫（逆）' },
-    { id: 'xmark',   name: 'ばってん' }
+    { id: 'square',   name: '四角' },
+    { id: 'rounded',  name: '角丸' },
+    { id: 'xrounded', name: '丸み強' },
+    { id: 'circle',   name: 'まる' },
+    { id: 'leaf',     name: 'リーフ' },
+    { id: 'cut',      name: '雫' },
+    { id: 'diamond',  name: 'ひし型' },
+    { id: 'star',     name: '星' },
+    { id: 'heart',    name: 'ハート' },
+    { id: 'plus',     name: '十字' },
+    { id: 'xmark',    name: 'ばってん' }
   ];
 
   const FRAMES = [

@@ -470,6 +470,9 @@
         state.style.logo.icon = icon.id;
         state.style.logo.iconData = icon;
         state.style.logo.type = 'icon';
+        if (A.BRAND_COLORS[icon.id]) {
+          state.style.logo.color = A.BRAND_COLORS[icon.id];
+        }
         state.presetName = '';
         buildIconGrid();
         syncControls();
@@ -561,7 +564,6 @@
     $('val-logopad').textContent = Math.round(s.logo.pad * 100) + '%';
     setSeg('logo-backdrop', s.logo.backdrop, 'v');
     $('logo-bd-color').value = normHex(s.logo.backdropColor, '#FFFFFF');
-    $('btn-brand-color').classList.toggle('hidden', !A.BRAND_COLORS[s.logo.icon]);
     $('logo-thumb').classList.toggle('hidden', !(s.logo.type === 'image' && s.logo.src));
     if (s.logo.src) $('logo-thumb-img').src = s.logo.src;
     $('hint-logo').textContent = s.logo.type === 'none' ? 'なし'
@@ -867,6 +869,9 @@
         const first = A.ICONS.find(i => i.group === state.iconGroup) || A.ICONS[0];
         state.style.logo.icon = first.id;
         state.style.logo.iconData = first;
+        if (A.BRAND_COLORS[first.id]) {
+          state.style.logo.color = A.BRAND_COLORS[first.id];
+        }
         buildIconGrid();
       }
     });
@@ -913,14 +918,6 @@
     $('frame-text').addEventListener('input', e => {
       state.style.frame.text = e.target.value;
       scheduleUpdate();
-    });
-
-    $('btn-brand-color').addEventListener('click', () => {
-      const c = A.BRAND_COLORS[state.style.logo.icon];
-      if (!c) return;
-      state.style.logo.color = c;
-      syncControls();
-      update();
     });
 
     Array.prototype.forEach.call($('icon-tabs').children, b => {
