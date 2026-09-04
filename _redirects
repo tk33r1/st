@@ -12,8 +12,10 @@
 /tools/csv-json/*    /tools/csv-json-bridge/:splat  301
 /images/ogp/csv-json-ogp.png   /images/ogp/csv-json-bridge-ogp.png  301
 
-# 改名: 2026-09-04  CSV文字コード一括変換ツール → Charset Converter
-/tools/csv-encoding      /tools/charset-converter/  301
-/tools/csv-encoding/     /tools/charset-converter/  301
-/tools/csv-encoding/*    /tools/charset-converter/:splat  301
-/images/ogp/csv-encoding-ogp.png   /images/ogp/charset-converter-ogp.png  301
+# 改名: 2026-09-04  CSV文字コード一括変換ツール → CSV Charset Converter
+# 途中の charset-converter は同日内の短命で外部に出ていないので、
+# csv-encoding からの 301 をそのまま新 URL に向け直す。
+/tools/csv-encoding      /tools/csv-charset-converter/  301
+/tools/csv-encoding/     /tools/csv-charset-converter/  301
+/tools/csv-encoding/*    /tools/csv-charset-converter/:splat  301
+/images/ogp/csv-encoding-ogp.png   /images/ogp/csv-charset-converter-ogp.png  301

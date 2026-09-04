@@ -286,7 +286,9 @@
     { id: 'star',     name: '星' },
     { id: 'heart',    name: 'ハート' },
     { id: 'plus',     name: '十字' },
-    { id: 'xmark',    name: 'ばってん' }
+    { id: 'xmark',    name: 'ばってん' },
+    { id: 'vbar',     name: '縦ライン' },
+    { id: 'hbar',     name: '横ライン' }
   ];
 
   const FRAMES = [

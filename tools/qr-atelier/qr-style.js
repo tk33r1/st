@@ -15,6 +15,7 @@
   const DEFAULTS = {
     cell: 'rounded',
     cellScale: 1,
+    cellJitter: 0,
     markerFrame: 'rounded',
     markerEye: 'rounded',
     fg: { type: 'solid', color: '#111827', from: '#111827', to: '#2563EB', angle: 45 },
@@ -208,14 +209,31 @@
   // ------------------------------------------------------------------
   // データセルの描画
   // ------------------------------------------------------------------
-  function cellsPath(grid, size, ox, oy, shape, scale) {
+  // 座標 (x, y) に基づく決定的な疑似乱数（0 <= r < 1）。
+  // 再描画しても同じセルは同じサイズを保ち、チラつきやズレを防ぐ。
+  function cellRand(x, y, seed) {
+    let h = (x * 374761393 + y * 668265263 + (seed || 0) * 3266489917) ^ 0x5bf03635;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  function cellScaleAt(x, y, baseScale, jitter, seed) {
+    const s0 = Math.max(0.3, Math.min(1.15, baseScale));
+    if (!jitter) return s0;
+    const r = cellRand(x, y, seed);
+    const delta = (r - 0.5) * 2; // -1 ~ +1
+    // jitter = 1 のとき最大 ±35% のサイズ変動
+    const s = s0 * (1 + delta * jitter * 0.35);
+    return Math.max(0.55, Math.min(1.15, s));
+  }
+
+  function cellsPath(grid, size, ox, oy, shape, scale, jitter, seed) {
     const dark = (x, y) => x >= 0 && y >= 0 && x < size && y < size && grid[y * size + x] === 1;
     const parts = [];
+    const jit = Math.max(0, Math.min(1, Number(jitter) || 0));
 
     // 縦横のラインは連続するマスをまとめてカプセルにする
     if (shape === 'vbar' || shape === 'hbar') {
-      const t = Math.max(0.3, Math.min(1, scale));
-      const inset = (1 - t) / 2;
       const seen = new Uint8Array(size * size);
       for (let a = 0; a < size; a++) {
         for (let b = 0; b < size; b++) {
@@ -230,6 +248,8 @@
             seen[ny * size + nx] = 1;
             len++;
           }
+          const t = Math.min(1, cellScaleAt(x, y, scale, jit, seed));
+          const inset = (1 - t) / 2;
           const w = shape === 'vbar' ? t : len;
           const h = shape === 'vbar' ? len : t;
           const px = ox + x + (shape === 'vbar' ? inset : 0);
@@ -243,7 +263,7 @@
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         if (!dark(x, y)) continue;
-        const s = Math.max(0.3, Math.min(1.15, scale));
+        const s = cellScaleAt(x, y, scale, jit, seed);
         const inset = (1 - s) / 2;
         const x0 = ox + x + inset, y0 = oy + y + inset;
         const x1 = x0 + s, y1 = y0 + s;
@@ -317,8 +337,6 @@
   // 外周リング（7x7 から 5x5 を抜く）
   function markerFramePath(fx, fy, style) {
     if (style === 'dots') {
-      // リング上の24モジュールを点で置く。半径0.58でわずかに重ね、
-      // 走査線が途切れないようにしている。
       const parts = [];
       for (let dy = 0; dy < 7; dy++) {
         for (let dx = 0; dx < 7; dx++) {
@@ -354,6 +372,8 @@
       case 'heart':    return heartPath(cx, cy, 1.45);
       case 'plus':     return plusPath(cx, cy, 1.5, 0.72);
       case 'xmark':    return crossPath(cx, cy, 1.2, 0.75);
+      case 'vbar':     return [0, 1, 2].map(i => rectPath(x + i + 0.1, y, 0.8, s, 0.4)).join('');
+      case 'hbar':     return [0, 1, 2].map(i => rectPath(x, y + i + 0.1, s, 0.8, 0.4)).join('');
       default:         return boxPath(x, y, x1, y1, [s * 0.16, s * 0.16, s * 0.16, s * 0.16], [1, 1, 1, 1]);
     }
   }
@@ -523,7 +543,7 @@
     }
 
     // データセル
-    const cells = cellsPath(grid, size, ox, oy, st.cell, st.cellScale);
+    const cells = cellsPath(grid, size, ox, oy, st.cell, st.cellScale, st.cellJitter, st.cellJitterSeed);
     if (cells) body += '<path d="' + cells + '" fill="' + fgRef + '"/>';
 
     // マーカー3つ

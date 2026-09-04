@@ -73,8 +73,8 @@ const SHELL_CSS = `
 
 const CARDS = [
   {
-    slug: 'charset-converter', out: 'images/ogp/charset-converter-ogp.png', cat: 'converter',
-    h1: 'Charset<br>Converter',
+    slug: 'csv-charset-converter', out: 'images/ogp/csv-charset-converter-ogp.png', cat: 'converter',
+    h1: 'CSV Charset<br>Converter',
     sub: 'CSVが今なにで保存されているか、<br>ひと目で。まとめて直せる。',
     chips: ['自動判別', 'BOM 付け外し', '変換不可文字を検出'],
     css: `

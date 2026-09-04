@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" class="st-theme">
 <head>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YRM5KPVGX7"></script>
@@ -24,7 +24,10 @@
   <meta name="description" content="ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集">
   <meta name="robots" content="max-image-preview:large">
   <title>SAFE TOOLS</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F1EFE9'/%3E%3Cpath d='M16 4.6 6.4 8.3v7.4c0 5.9 4 9.9 9.6 11.7 5.6-1.8 9.6-5.8 9.6-11.7V8.3Z' fill='%2317160F'/%3E%3Cpath d='m11.5 16.1 3.3 3.4 6-6.4' fill='none' stroke='%23F1EFE9' stroke-width='2.8' stroke-linecap='square'/%3E%3C/svg%3E" type="image/svg+xml">
+  <!-- The mark: a hex nut with a keyhole. The nut says tool, the keyhole says
+       locked, and together they say what the set is. No frame, so the fill
+       flips with the viewer's colour scheme to hold up on either tab strip. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cstyle%3Epath{--s:%2315191D;--w:%23F7F8F9}@media (prefers-color-scheme:dark){path{--s:%23E5E9ED;--w:%230F1317}}%3C/style%3E%3Cpath d='M29.2 16 22.6 27.4H9.4L2.8 16 9.4 4.6h13.2Z' fill='var(--s)'/%3E%3Cpath transform='translate(-1.92 -3.03) scale(1.12)' d='M16 10.4a3.4 3.4 0 0 0-1.1 6.6l-1.3 6.4h4.8L17.1 17A3.4 3.4 0 0 0 16 10.4Z' fill='var(--w)'/%3E%3C/svg%3E" type="image/svg+xml">
   <link rel="canonical" href="https://tk.st/tools/">
   <link rel="author" href="https://tk.st/">
   <meta property="og:title" content="SAFE TOOLS">
@@ -71,7 +74,7 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../data/tools-ui.css?v=20260829">
 
   <!-- Stamp the remembered theme before first paint. The tools write the same
@@ -87,326 +90,200 @@
 
   <style>
     /* ------------------------------------------------------------------
-       SAFE TOOLS index — the Print Shop. This is the one page in the set
-       that is read rather than operated, so it is allowed to be loud: ink
-       rules, hard shadows, uppercase mono. The tools themselves stay quiet.
+       SAFE TOOLS index — the shelf the instruments sit on.
 
-       data/tools-ui.css is linked for its tokens only — <html> deliberately
-       has no .st-theme, so none of the Instrument chrome applies here.
+       This page wears the same chrome as the tools it lists: <html> carries
+       .st-theme, so the app bar, toolbar, footer, scroll-top button, tokens
+       and dark palette all come from data/tools-ui.css. Only what is unique
+       to a *list* of tools is written here — the shelf head, the filter
+       chips and the cards. A card borrows the accent of its category, so
+       the index card, its badge and the tool page it opens agree on colour.
        ------------------------------------------------------------------ */
 
-    :root {
-      --paper: #F1EFE9;
-      --paper-2: #FFFFFF;
-      --ink: #17160F;
-      --ink-2: #5B594E;
-      --ink-3: #8B887B;
-      --rule: #17160F;
-      --hair: #D6D2C6;
-      --shadow-ink: rgba(23, 22, 15, 0.9);
-      --bpm: 60;
-    }
+    /* The index shows a grid rather than a single instrument, so its shell
+       is wider than a tool's. Every other measurement stays theirs. */
+    .st-theme { --shell: 1080px; }
+    .st-theme main { max-width: var(--shell); padding: 22px 20px 56px; }
 
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) {
-        --paper: #131208;
-        --paper-2: #1C1B12;
-        --ink: #EFEBDD;
-        --ink-2: #A8A493;
-        --ink-3: #7A776A;
-        --rule: #EFEBDD;
-        --hair: #35332A;
-        --shadow-ink: rgba(239, 235, 221, 0.55);
-      /* Category accents. The light values come from data/tools-ui.css;
-         its dark block is gated on .st-theme, which this page has not. */
-      --cat-optimizer: #38BDF8;  --cat-optimizer-ink: #06283A;
-      --cat-converter: #2DD4BF;  --cat-converter-ink: #052E2B;
-      --cat-editor:    #818CF8;  --cat-editor-ink:    #14153A;
-      --cat-generator: #E879F9;  --cat-generator-ink: #2A0D31;
-      }
-    }
-    :root[data-theme="dark"] {
-      --paper: #131208;
-      --paper-2: #1C1B12;
-      --ink: #EFEBDD;
-      --ink-2: #A8A493;
-      --ink-3: #7A776A;
-      --rule: #EFEBDD;
-      --hair: #35332A;
-      --shadow-ink: rgba(239, 235, 221, 0.55);
-      /* Category accents. The light values come from data/tools-ui.css;
-         its dark block is gated on .st-theme, which this page has not. */
-      --cat-optimizer: #38BDF8;  --cat-optimizer-ink: #06283A;
-      --cat-converter: #2DD4BF;  --cat-converter-ink: #052E2B;
-      --cat-editor:    #818CF8;  --cat-editor-ink:    #14153A;
-      --cat-generator: #E879F9;  --cat-generator-ink: #2A0D31;
-    }
+    /* Lucide stamps 24x24 onto every icon it injects, and this page carries
+       no utility classes to override that, so the sizes live here. */
+    .icon-btn svg,
+    .search-wrap svg { width: 15px; height: 15px; }
+    .fact svg { width: 13px; height: 13px; }
+    #empty-state .box svg { width: 20px; height: 20px; }
+    /* The mark is drawn, not loaded, so it needs its own box. */
+    .crumb-mark { color: var(--ink); }
+    .crumb-mark svg { display: block; width: 18px; height: 18px; }
+    .tool-img-fallback svg { width: 26px; height: 26px; }
 
-    *, *::before, *::after { box-sizing: border-box; }
+    /* ===== facts strip =====
+       The page name sits at the end of the trail, the way it does on every
+       tool, so the shelf keeps only what the bar cannot say: what the whole
+       set promises. One line, above the controls.
 
-    html, body {
-      margin: 0;
-      min-height: 100%;
-      background: var(--paper);
-      color: var(--ink);
-      font-family: "Inter", system-ui, sans-serif;
-      font-size: 15px;
-      line-height: 1.75;
-      -webkit-font-smoothing: antialiased;
+       width:100% matters: body is a column flex container, and an auto-margin
+       flex item without it shrinks to its content instead of filling the
+       shell — the same shape main gets from tools-ui.css. */
+    .shelf {
+      width: 100%;
+      max-width: var(--shell);
+      margin: 0 auto;
+      padding: 11px 20px 10px;
     }
-    body { display: flex; flex-direction: column; min-height: 100vh; }
-
-    .hidden { display: none !important; }
-
-    .mono {
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-variant-numeric: tabular-nums;
-    }
-    .lbl {
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-
-    /* ===== masthead ===== */
-    .masthead { border-bottom: 2px solid var(--rule); }
-    .mast-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
-
-    .mast-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 11px 0;
-      border-bottom: 1px solid var(--hair);
-    }
-    /* Breadcrumb — same trail and same markup as the tools, set in the index's
-       own ink rather than the Instrument tokens. */
-    .crumb ol {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: baseline;
-      gap: 9px;
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 11.5px;
-      letter-spacing: 0.1em;
-      white-space: nowrap;
-    }
-    .crumb li { display: flex; align-items: baseline; gap: 9px; }
-    .crumb li + li::before { content: "/"; color: var(--hair); }
-    .crumb a { color: var(--ink-2); text-decoration: none; transition: color 120ms ease; }
-    .crumb a:hover { color: var(--ink); }
-    .crumb a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-    .crumb [aria-current="page"] {
-      font-weight: 700;
-      color: var(--ink);
-      letter-spacing: 0.14em;
-    }
-    @media (max-width: 640px) {
-      .crumb .crumb-root { display: none; }
-      .crumb .crumb-root + li::before { content: none; }
-    }
-
-    /* The site's own mark at the end of the trail. Its image is read from this
-       page's <link rel="icon"> at runtime, so the bar and the browser tab can
-       never end up showing different icons. */
-    .crumb-mark {
-      width: 18px;
-      height: 18px;
-      border-radius: 3px;
-      flex: none;
-      border: 1px solid var(--hair);
-      background: center / contain no-repeat;
-    }
-
-    .mast-issue { margin-left: auto; color: var(--ink-2); }
-
-    .icon-btn {
-      width: 30px;
-      height: 30px;
+    /* Three plain statements of fact, set as readouts rather than as a pitch. */
+    .shelf-facts { display: flex; flex-wrap: wrap; gap: 7px; }
+    .fact {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      border: 1.5px solid var(--rule);
-      background: var(--paper-2);
-      color: var(--ink);
-      cursor: pointer;
-      flex: none;
-      border-radius: 2px;
-      transition: transform 60ms ease;
-    }
-    .icon-btn:active { transform: translateY(2px); }
-    .icon-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-
-    /* Lucide stamps 24x24 onto every icon it injects. Tailwind used to
-       override that; this page no longer loads it, so the sizes live here. */
-    #theme-toggle svg,
-    #scroll-top-btn svg,
-    .search-wrap svg { width: 16px; height: 16px; }
-    #empty-state .box svg { width: 22px; height: 22px; }
-    .tool-img-fallback svg { width: 30px; height: 30px; opacity: .45; }
-
-    #theme-toggle .to-dark { display: inline-flex; }
-    #theme-toggle .to-light { display: none; }
-    :root[data-theme="dark"] #theme-toggle .to-dark { display: none; }
-    :root[data-theme="dark"] #theme-toggle .to-light { display: inline-flex; }
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) #theme-toggle .to-dark { display: none; }
-      :root:not([data-theme="light"]) #theme-toggle .to-light { display: inline-flex; }
-    }
-
-    .mast-main {
-      display: grid;
-      grid-template-columns: minmax(0, auto) minmax(0, 1fr);
-      gap: 8px 40px;
-      align-items: end;
-      padding: 26px 0 22px;
-    }
-    @media (max-width: 780px) { .mast-main { grid-template-columns: 1fr; gap: 14px; } }
-
-    .mast-title {
-      font-family: "Archivo", "Inter", sans-serif;
-      font-weight: 800;
-      font-size: clamp(52px, 12vw, 116px);
-      line-height: 0.82;
-      letter-spacing: -0.055em;
-      text-transform: uppercase;
-      margin: 0;
-    }
-    .mast-side { display: flex; flex-direction: column; gap: 14px; padding-bottom: 6px; }
-    .mast-lede {
-      margin: 0;
-      font-size: 14.5px;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      background: var(--panel);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
       color: var(--ink-2);
-      max-width: 38ch;
-      /* Japanese has no spaces to break on, so without this the last clause
-         happily leaves a one-character orphan on its own line. */
-      text-wrap: pretty;
-      line-break: strict;
+      white-space: nowrap;
     }
+    .fact svg { color: var(--accent); flex: none; }
 
-    .mast-controls { display: flex; gap: 8px; flex-wrap: wrap; }
-    .search-wrap { position: relative; flex: 1; min-width: 190px; }
-    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ink-3); }
+    /* ===== toolbar =====
+       Search, categories and sort ride the tools' own sticky toolbar, so the
+       controls stay put while the shelf scrolls past them. */
+    .search-wrap { position: relative; flex: 1 1 190px; min-width: 0; display: flex; }
+    .search-wrap svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-3);
+      pointer-events: none;
+    }
     #search-input {
       width: 100%;
-      border: 1.5px solid var(--rule);
-      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
       color: var(--ink);
-      border-radius: 2px;
-      padding: 8px 12px 8px 32px;
-      font-family: "Inter", sans-serif;
+      padding: 6px 11px 6px 32px;
+      font-family: var(--font-ui);
       font-size: 13.5px;
+      transition: border-color 120ms ease;
     }
     #search-input::placeholder { color: var(--ink-3); }
-    #search-input:focus { outline: none; box-shadow: 3px 3px 0 var(--shadow-ink); }
+    #search-input:focus { outline: none; border-color: var(--accent); }
 
-    #sort-select {
-      border: 1.5px solid var(--rule);
-      background: var(--paper-2);
-      color: var(--ink);
-      border-radius: 2px;
-      padding: 8px 28px 8px 11px;
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 11.5px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      cursor: pointer;
-      appearance: none;
-      background-image:
-        linear-gradient(45deg, transparent 50%, currentColor 50%),
-        linear-gradient(135deg, currentColor 50%, transparent 50%);
-      background-position: right 13px center, right 9px center;
-      background-size: 4px 4px, 4px 4px;
-      background-repeat: no-repeat;
+    #category-filter { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+    /* On a narrow screen the sort pairs up with the search on the first row
+       and the chips take the second, which is one row fewer than letting them
+       wrap in DOM order. */
+    @media (max-width: 780px) {
+      .tb-sort { order: 2; }
+      #category-filter { order: 3; flex-basis: 100%; }
     }
-    #sort-select:focus { outline: none; box-shadow: 3px 3px 0 var(--shadow-ink); }
-
-    /* A printer's rule: the page is set on a press, not a canvas. */
-    .press-rule {
-      height: 7px;
-      background-image: repeating-linear-gradient(90deg, var(--rule) 0 2px, transparent 2px 9px);
-    }
-
-    /* ===== main ===== */
-    main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 26px 22px 64px; }
-
-    #message-bar {
-      border: 1.5px solid var(--rule);
-      background: var(--paper-2);
-      padding: 10px 14px;
-      font-size: 13px;
-      margin-bottom: 20px;
-      box-shadow: 3px 3px 0 var(--shadow-ink);
-    }
-    #message-bar.msg-error { border-color: #C0392B; color: #C0392B; box-shadow: 3px 3px 0 #C0392B; }
-
-    #category-filter { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 22px; }
     .filter-chip {
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
+      --chip: var(--ink-3);
+      --chip-soft: var(--panel-2);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      padding: 5px 13px;
-      border: 1.5px solid var(--rule);
-      border-radius: 2px;
-      background: var(--paper-2);
-      color: var(--ink);
+      padding: 4px 11px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--ink-2);
       cursor: pointer;
       white-space: nowrap;
-      transition: transform 60ms ease;
+      transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
     }
-    .filter-chip:active { transform: translateY(2px); }
-    .filter-chip.active { background: var(--ink); color: var(--paper); }
-    .filter-chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    /* A dot in the category's own colour, so the chips read as the same
+       four-hue ramp the cards and the tools themselves use. */
+    .filter-chip::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--chip);
+      flex: none;
+    }
+    .filter-chip[data-cat="optimizer"] { --chip: var(--cat-optimizer); --chip-soft: var(--cat-optimizer-soft); }
+    .filter-chip[data-cat="converter"] { --chip: var(--cat-converter); --chip-soft: var(--cat-converter-soft); }
+    .filter-chip[data-cat="editor"]    { --chip: var(--cat-editor);    --chip-soft: var(--cat-editor-soft); }
+    .filter-chip[data-cat="generator"] { --chip: var(--cat-generator); --chip-soft: var(--cat-generator-soft); }
+    .filter-chip:hover:not(.active) { border-color: var(--rule-strong); color: var(--ink); }
+    .filter-chip.active {
+      background: var(--chip-soft);
+      border-color: var(--chip);
+      color: var(--chip);
+      font-weight: 700;
+    }
+    .filter-chip[data-cat="all"].active { color: var(--ink); border-color: var(--rule-strong); }
+    .filter-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+    /* ===== notice ===== */
+    #message-bar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      padding: 9px 13px;
+      margin-bottom: 16px;
+      font-size: 12.5px;
+      color: var(--ink-2);
+    }
+    #message-bar.msg-error { border-left-color: var(--err); color: var(--err); }
+
+    /* ===== shelf ===== */
     #tool-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
-      gap: 26px 22px;
+      grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+      gap: 18px;
     }
 
-    /* ===== card ===== */
-    /* A card wears the colour of what its tool does, so the index card, the
-       category badge and the tool page it opens all agree. */
-    .tool-card[data-category="optimizer"] { --card-accent: var(--cat-optimizer); --card-accent-ink: var(--cat-optimizer-ink); }
-    .tool-card[data-category="converter"] { --card-accent: var(--cat-converter); --card-accent-ink: var(--cat-converter-ink); }
-    .tool-card[data-category="editor"]    { --card-accent: var(--cat-editor);    --card-accent-ink: var(--cat-editor-ink); }
-    .tool-card[data-category="generator"] { --card-accent: var(--cat-generator); --card-accent-ink: var(--cat-generator-ink); }
+    /* A card wears the colour of what its tool does, so the card, its badge
+       and the tool page it opens all agree. */
+    .tool-card[data-category="optimizer"] { --accent: var(--cat-optimizer); --accent-ink: var(--cat-optimizer-ink); --accent-soft: var(--cat-optimizer-soft); }
+    .tool-card[data-category="converter"] { --accent: var(--cat-converter); --accent-ink: var(--cat-converter-ink); --accent-soft: var(--cat-converter-soft); }
+    .tool-card[data-category="editor"]    { --accent: var(--cat-editor);    --accent-ink: var(--cat-editor-ink);    --accent-soft: var(--cat-editor-soft); }
+    .tool-card[data-category="generator"] { --accent: var(--cat-generator); --accent-ink: var(--cat-generator-ink); --accent-soft: var(--cat-generator-soft); }
 
     .tool-card {
-      --card-accent: var(--ink);
-      --card-accent-ink: var(--paper);
       display: flex;
       flex-direction: column;
-      border: 2px solid var(--rule);
-      border-radius: 2px;
-      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-2);
+      background: var(--panel);
       color: inherit;
       text-decoration: none;
       overflow: hidden;
-      box-shadow: 5px 5px 0 var(--shadow-ink);
-      transition: transform 130ms ease, box-shadow 130ms ease;
+      transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
     }
-    .tool-card:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 8px 8px 0 var(--card-accent);
-    }
-    .tool-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--card-accent); }
-    .tool-card:focus-visible { outline: 2px solid var(--card-accent); outline-offset: 3px; }
+    .tool-card:hover { border-color: var(--accent); box-shadow: var(--shadow-1); transform: translateY(-2px); }
+    .tool-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .tool-img-wrap {
       position: relative;
       aspect-ratio: 1200 / 630;
-      background: var(--paper);
-      border-bottom: 2px solid var(--rule);
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--rule);
       overflow: hidden;
     }
-    .tool-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .tool-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 420ms cubic-bezier(.2, .7, .3, 1);
+    }
+    .tool-card:hover .tool-img { transform: scale(1.025); }
     .tool-img-fallback {
       position: absolute;
       inset: 0;
@@ -414,145 +291,118 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 7px;
       color: var(--ink-3);
-      font-size: 11px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
     }
     .badge-new {
       position: absolute;
-      top: 0;
-      left: 0;
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      padding: 3px 9px;
-      background: var(--card-accent);
-      color: var(--card-accent-ink);
-      border-right: 2px solid var(--rule);
-      border-bottom: 2px solid var(--rule);
-    }
-
-    .tool-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
-
-    .category-badge {
-      display: inline-block;
-      font-family: "JetBrains Mono", ui-monospace, monospace;
+      top: 9px;
+      left: 9px;
+      font-family: var(--font-mono);
       font-size: 9.5px;
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--card-accent);
-      border-bottom: 2px solid var(--card-accent);
-      padding-bottom: 2px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .tool-body { padding: 13px 14px 15px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+    .category-badge {
       align-self: flex-start;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
     }
     .tool-title {
-      font-family: "Archivo", "Inter", sans-serif;
-      font-size: 17px;
+      font-size: 15.5px;
       font-weight: 700;
-      line-height: 1.3;
-      letter-spacing: -0.02em;
+      line-height: 1.45;
+      letter-spacing: -0.015em;
       margin: 0;
       color: var(--ink);
     }
-    .tool-desc { font-size: 13px; line-height: 1.75; color: var(--ink-2); margin: 0; flex: 1; }
+    /* Descriptions in tools.json run from one line to five; clamping keeps a
+       row of cards the same height without trimming the source data. */
+    .tool-desc {
+      margin: 0;
+      flex: 1;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--ink-2);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
     .tool-tags { display: flex; flex-wrap: wrap; gap: 5px; }
     .tag-chip {
-      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-family: var(--font-mono);
       font-size: 10px;
-      letter-spacing: 0.06em;
-      color: var(--ink-2);
-      border: 1px solid var(--hair);
-      border-radius: 2px;
-      padding: 1px 6px;
+      color: var(--ink-3);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      padding: 1px 8px;
     }
 
     /* ===== skeleton ===== */
     .skeleton {
-      background: linear-gradient(90deg, var(--hair) 25%, var(--paper) 50%, var(--hair) 75%);
+      background: linear-gradient(90deg, var(--panel-2) 25%, var(--rule) 50%, var(--panel-2) 75%);
       background-size: 200% 100%;
-      animation: shimmer 1.6s infinite;
+      animation: shimmer 1.5s infinite;
+      border-radius: 3px;
     }
     @keyframes shimmer {
       0%   { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
-    .sk-line { height: 12px; }
+    .sk-line { height: 11px; }
     .sk-line.w25 { width: 25%; }
+    .sk-line.w60 { width: 60%; }
     .sk-line.w75 { width: 75%; }
     .sk-line.w100 { width: 100%; }
-    .sk-line.w60 { width: 60%; }
 
     /* ===== empty ===== */
-    #empty-state { text-align: center; padding: 72px 0; }
+    #empty-state { text-align: center; padding: 64px 0; }
     #empty-state .box {
-      width: 56px;
-      height: 56px;
-      border: 2px solid var(--rule);
+      width: 46px;
+      height: 46px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 14px;
-      box-shadow: 4px 4px 0 var(--shadow-ink);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+      color: var(--ink-3);
+      margin-bottom: 12px;
     }
-    #empty-state p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+    #empty-state p { margin: 0; font-size: 13px; color: var(--ink-3); }
 
-    /* ===== footer ===== */
-    footer { margin-top: auto; border-top: 2px solid var(--rule); }
-    .foot-in {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 14px 22px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-family: "JetBrains Mono", ui-monospace, monospace;
-      font-size: 11px;
-      color: var(--ink-2);
-    }
-    /* Three fixed slots, matching the tools: support widget, notice, way up.
-       A grid so the notice sits on the page centre line regardless of the
-       widths either side of it. */
-    .foot-in {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 12px;
-    }
-    #donation-button-container { justify-self: start; }
-    .foot-copy { justify-self: center; white-space: nowrap; }
-    /* The way back up follows the reader rather than waiting at the bottom.
-       Set as a Print Shop card: ink border over its own hard shadow. */
-    #scroll-top-btn {
-      position: fixed;
-      right: 22px;
-      bottom: 22px;
-      width: 38px;
-      height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--rule);
-      border-radius: 2px;
-      background: var(--paper-2);
-      color: var(--ink);
-      cursor: pointer;
-      box-shadow: 4px 4px 0 var(--shadow-ink);
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(6px);
-      transition: opacity 200ms ease, transform 200ms ease;
-      z-index: 40;
-    }
-    #scroll-top-btn.visible { opacity: 1; pointer-events: auto; transform: none; }
-    #scroll-top-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--shadow-ink); }
-    #scroll-top-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-
-    .fade-up { animation: fadeUp 320ms ease both; }
+    .fade-up { animation: fadeUp 300ms ease both; }
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: none; }
+    }
+
+    /* On a phone the pills cost more height than they earn, so the same three
+       facts are set as one quiet line under the lede. */
+    @media (max-width: 560px) {
+      .shelf { padding: 10px 20px 8px; }
+      .st-theme main { padding-top: 14px; }
+      .shelf-facts { gap: 4px 12px; }
+      .fact { border: 0; background: none; padding: 0; font-size: 10px; }
+      #tool-grid { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -567,55 +417,77 @@
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
-  <!-- ===================== masthead ===================== -->
-  <header class="masthead">
-    <div class="mast-in">
+  <!-- ===================== app bar ===================== -->
+  <!-- The same bar every tool wears: the trail up on the left, the tool's
+       mark, live state and the theme switch on the right. Here the state is
+       how many tools the shelf is currently showing. -->
+  <header class="app-bar">
+    <div class="bar-in">
+      <nav class="crumb" aria-label="パンくずリスト">
+        <ol>
+          <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
+          <li><h1 aria-current="page">SAFE TOOLS</h1></li>
+        </ol>
+      </nav>
+      <!-- The same nut and keyhole as the favicon, drawn inline so it takes
+           the page's ink: the favicon follows the reader's OS colour scheme,
+           which is free to disagree with the theme they picked here. -->
+      <span class="crumb-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M29.2 16 22.6 27.4H9.4L2.8 16 9.4 4.6h13.2Z" fill="currentColor"/>
+          <path transform="translate(-1.92 -3.03) scale(1.12)" d="M16 10.4a3.4 3.4 0 0 0-1.1 6.6l-1.3 6.4h4.8L17.1 17A3.4 3.4 0 0 0 16 10.4Z" fill="var(--panel)"/>
+        </svg>
+      </span>
 
-      <div class="mast-row">
-        <nav class="crumb" aria-label="パンくずリスト">
-          <ol>
-            <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-            <li><span aria-current="page">SAFE TOOLS</span></li>
-          </ol>
-        </nav>
-        <span class="crumb-mark" aria-hidden="true"></span>
-        <span class="mast-issue lbl">NO. <span id="tool-count">0</span></span>
+      <div class="bar-actions">
+        <span class="bar-status">
+          <span class="st-led"></span><span id="tool-count" class="num">0</span> tools
+        </span>
         <button id="theme-toggle" class="icon-btn" type="button" aria-label="配色を切り替える" title="配色を切り替える">
           <i data-lucide="moon" class="to-dark"></i>
           <i data-lucide="sun" class="to-light"></i>
         </button>
       </div>
-
-      <div class="mast-main">
-        <h1 class="mast-title">Safe<br>Tools</h1>
-
-        <div class="mast-side">
-          <p class="mast-lede">
-            ブラウザの中だけで動く道具。ファイルはサーバーに送られず、端末から出ません。
-          </p>
-          <div class="mast-controls">
-            <div class="search-wrap">
-              <i data-lucide="search"></i>
-              <input type="text" id="search-input" placeholder="道具を探す" autocomplete="off" aria-label="ツールを検索">
-            </div>
-            <select id="sort-select" aria-label="並び替え">
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="title">Title</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
     </div>
   </header>
 
-  <div class="press-rule"></div>
+  <!-- ===================== shelf head ===================== -->
+  <div class="shelf">
+    <div class="shelf-facts">
+      <span class="fact"><i data-lucide="shield-check"></i>端末内で処理</span>
+      <span class="fact"><i data-lucide="cloud-off"></i>アップロードなし</span>
+      <span class="fact"><i data-lucide="zap"></i>インストール不要</span>
+    </div>
+  </div>
+
+  <!-- ===================== toolbar ===================== -->
+  <div class="toolbar">
+    <div class="tb-in">
+      <div class="search-wrap">
+        <i data-lucide="search"></i>
+        <input type="text" id="search-input" placeholder="道具を探す" autocomplete="off" aria-label="ツールを検索">
+      </div>
+
+      <div class="tb-sep"></div>
+
+      <div id="category-filter" role="group" aria-label="カテゴリで絞り込む"></div>
+
+      <div class="tb-sep"></div>
+
+      <div class="tb-group tb-sort">
+        <label class="st-lbl" for="sort-select">sort</label>
+        <select id="sort-select" class="tb-select" aria-label="並び替え">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="title">Title</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================== main ===================== -->
   <main>
     <div id="message-bar" class="hidden"></div>
-    <div id="category-filter"></div>
 
     <div id="empty-state" class="hidden">
       <div class="box"><i data-lucide="search-x"></i></div>
@@ -652,13 +524,6 @@
       root.setAttribute('data-theme', next);
       try { localStorage.setItem('st-theme', next); } catch (e) { }
     });
-    /* The mark beside the trail is this page's own favicon, read from
-       the <link>, so the bar and the browser tab cannot drift apart. */
-    (function () {
-      var icon = document.querySelector('link[rel="icon"]');
-      var mark = document.querySelector('.crumb-mark');
-      if (icon && mark) mark.style.backgroundImage = 'url("' + icon.href + '")';
-    })();
   /* The way back up follows the reader: it appears only once there is
      something to scroll back over. */
   (function () {
@@ -738,12 +603,15 @@
     function renderCategoryChips() {
       const cats = [...new Set(records.map(r => r.category).filter(Boolean))].sort();
       if (!cats.length) return;
-      categoryFilter.classList.add('visible');
       categoryFilter.innerHTML = '';
       ['all', ...cats].forEach(cat => {
         const btn = document.createElement('button');
         const isActive = cat === activeCategory;
+        btn.type = 'button';
         btn.className = 'filter-chip' + (isActive ? ' active' : '');
+        /* The chip carries its category so the dot and the active fill can
+           take that category's own colour straight from the tokens. */
+        btn.dataset.cat = cat;
         btn.textContent = cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1);
         btn.setAttribute('aria-pressed', String(isActive));
         btn.addEventListener('click', () => {

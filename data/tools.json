@@ -99,9 +99,9 @@
   },
   {
     "id": 8,
-    "title": "Charset Converter - CSV文字コード一括変換ツール",
-    "url": "https://tk.st/tools/charset-converter/",
-    "imageUrl": "https://tk.st/images/ogp/charset-converter-ogp.png",
+    "title": "CSV Charset Converter - CSV文字コード一括変換ツール",
+    "url": "https://tk.st/tools/csv-charset-converter/",
+    "imageUrl": "https://tk.st/images/ogp/csv-charset-converter-ogp.png",
     "category": "converter",
     "description": "アップロードしたCSVが今なんの文字コードで保存されているかを自動判別して表示し、UTF-8やShift_JISへまとめて変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックにも対応しています。",
     "tags": [

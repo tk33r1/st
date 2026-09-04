@@ -1262,59 +1262,6 @@
       color: var(--neo-purple);
     }
 
-    /*
-     * 受付中は赤い点と「受付中」を添えるだけ。ページ下端の補助導線なので、
-     * ボタンに化けさせるとポップアップと二重に主張してうるさくなる。
-     */
-    .request-cta.live a {
-      display: inline-flex;
-      align-items: center;
-      /* 下線はリンク本文だけに引きたいので、親からは外す */
-      border-bottom: none;
-    }
-
-    /* display:none なので、受付していない間は読み上げにも出てこない */
-    .request-cta-badge {
-      display: none;
-    }
-
-    /*
-     * ポップアップのバッジと同じ組み立て（DotGothic16 / 0.625rem / 字間 .1em /
-     * 角 2px / 1px の罫 / 明滅する丸）。1 ページに 2 つ出る「受付中」なので、
-     * 形も色相もそろえる。
-     *
-     * 色だけは白地用に落としてある。テーマの --heart-secondary #37f2e6 は
-     * 暗い地の上で使う想定の明るさで、白地に置くと 1.40:1 しか出ず読めない。
-     * 色相 176 度・彩度はそのままに明度を 26% まで下げた #087d75 なら 5.00:1。
-     */
-    .request-cta.live .request-cta-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-right: 10px;
-      padding: 3px 9px;
-      font-family: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-      font-size: 0.625rem;
-      line-height: 1.7;
-      letter-spacing: 0.1em;
-      color: #087d75;
-      border: 1px solid currentColor;
-      border-radius: 2px;
-    }
-
-    /* 灯った丸。明滅はポップアップと同じ badge-blip */
-    .request-cta.live .request-cta-badge::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-      animation: badge-blip 1.6s ease-in-out infinite;
-    }
-
-    .request-cta.live a > span:last-child {
-      border-bottom: 1px dashed var(--neo-purple);
-    }
 
     /* ===== Image Modal ===== */
     .image-modal {
@@ -1954,166 +1901,230 @@
       border: 1px solid rgba(156, 122, 247, 0.45);
     }
 
-    /* ===== LIVE POPUP ===== */
+    /* ===== LIVE POPUP (STYLISH HUD) ===== */
     /*
-     * 受付中だけ出す隅のカード。飛び先の /dj/request/ は美術紫水（白昼夢）の暗いテーマなので、
-     * このカードだけそちらの見た目を借りて「向こう側をのぞく窓」にしている。
-     * 配色・罫線・走査線・ドット絵のハートは data/bijutsu-shisui.css / .js と同じ値。
-     *
-     * 白は使わない。会場では QR からリクエストページへ直接降りてくるので、
-     * ここは気づかせるだけでよく、面積も主張も小さいままにする。
+     * 受付中だけ出す隅のコンパクトHUDカード。
+     * 人類踊狂計画のブランド深紫（--dark-blue-purple）× ネオパープル（--neo-purple）
+     * によるプロ機材・計器風の佇まいで、極限までスタイリッシュかつ上品に。
+     * カード全体がリクエストページへの遷移リンク。
      */
     .live-pop {
-      /* 白昼夢テーマの値はこのカードの中だけに閉じる（ページ本体の :root とは別系統） */
-      --bs-bg: #121216;
-      --bs-fg: #ececec;
-      --bs-fg-dim: #9a9aa0;
-      --bs-pink: #ff2f6e;
-      --bs-cyan: #37f2e6;
-      --bs-border: rgba(255, 255, 255, 0.14);
-
       position: fixed;
       left: 24px;
       bottom: 24px;
       z-index: 950;
-      width: min(300px, calc(100vw - 48px));
-      padding: 14px 16px 16px;
-      /* 左にハートの標、右に文字。ハートは 3 行ぶんを貫く */
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      column-gap: 11px;
-      background: var(--bs-bg);
-      border: 1px solid var(--bs-border);
-      /* 向こうのテーマは --r: 2px。角は落とさない */
-      border-radius: 2px;
-      box-shadow: 0 14px 30px rgba(10, 10, 12, 0.35);
+      width: min(240px, calc(100vw - 40px));
       opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: translateY(14px) scale(0.98);
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .live-pop.show {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
 
-    /* VHS の走査線。本家と同じ 1px / 3px。
-       親が transform で重ね合わせの文脈を作るので、混色はカードの中で閉じる */
-    .live-pop::after {
+    /* 全体が遷移領域となるカードリンク */
+    .live-pop-link {
+      display: block;
+      position: relative;
+      padding: 9px 24px 9px 13px;
+      background: rgba(45, 27, 78, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(156, 122, 247, 0.55);
+      border-radius: 2px;
+      box-shadow: 0 10px 26px rgba(10, 5, 25, 0.3), 0 0 12px rgba(156, 122, 247, 0.15);
+      text-decoration: none;
+      color: var(--white);
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    }
+
+    .live-pop-link:hover {
+      border-color: var(--neo-purple);
+      box-shadow: 0 12px 30px rgba(10, 5, 25, 0.4), 0 0 18px rgba(156, 122, 247, 0.35);
+      transform: translateY(-2px);
+    }
+
+    /* 左端の計器風アクセントライン */
+    .live-pop-link::before {
       content: '';
       position: absolute;
-      inset: 0;
-      pointer-events: none;
-      mix-blend-mode: overlay;
-      background: repeating-linear-gradient(to bottom,
-          rgba(255, 255, 255, 0.03) 0px,
-          rgba(255, 255, 255, 0.03) 1px,
-          transparent 1px,
-          transparent 3px);
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--neo-purple);
+      box-shadow: 0 0 8px rgba(156, 122, 247, 0.7);
     }
 
-    /* ドット絵のハート。升目と隙間は DJ_ART.HEART / DOT と同じ */
-    .live-pop-heart {
-      grid-column: 1;
-      grid-row: 1 / span 3;
-      align-self: start;
-      margin-top: 3px;
-      width: 17px;
-      height: auto;
-      color: var(--bs-pink);
-      /* 升目の境目を補間させない。ぼけるとドット絵に見えない */
-      shape-rendering: crispEdges;
-    }
-
-    /* /dj/request/ の受付中バッジと同じ組み立て（DotGothic16 / 0.625rem / 字間 .1em / 角 2px） */
-    .live-pop-status {
-      grid-column: 2;
-      grid-row: 1;
-      justify-self: start;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 9px;
-      font-family: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-      font-size: 0.625rem;
-      line-height: 1.7;
-      letter-spacing: 0.1em;
-      color: var(--bs-cyan);
-      border: 1px solid currentColor;
-      border-radius: 2px;
-    }
-
-    /* 灯った丸。向こうと同じ明滅で「いま開いている」を示す */
-    .live-pop-status::before {
-      content: '';
+    /* 幾何学レティクル（対角の照準コーナー） */
+    .live-pop-reticle {
+      position: absolute;
       width: 6px;
       height: 6px;
+      pointer-events: none;
+    }
+
+    .live-pop-reticle.top-left {
+      top: -1px;
+      left: -1px;
+      border-top: 2px solid var(--neo-purple);
+      border-left: 2px solid var(--neo-purple);
+    }
+
+    .live-pop-reticle.bottom-right {
+      bottom: -1px;
+      right: -1px;
+      border-bottom: 2px solid var(--neo-purple);
+      border-right: 2px solid var(--neo-purple);
+    }
+
+    /* ヘッダー行: ステータス表示と遷移合図の矢印 */
+    .live-pop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    /* 計器風ステータスラベル */
+    .live-pop-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--neo-purple);
+      text-transform: uppercase;
+    }
+
+    /* 赤の生体/受信パルスLED */
+    .live-pop-pulse {
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
-      background: currentColor;
+      background: var(--accent-red);
+      box-shadow: 0 0 6px var(--accent-red);
       animation: badge-blip 1.6s ease-in-out infinite;
+      flex-shrink: 0;
     }
 
     @keyframes badge-blip {
-
-      0%,
-      100% {
+      0%, 100% {
         opacity: 1;
       }
-
       50% {
-        opacity: 0.2;
+        opacity: 0.25;
+      }
+    }
+
+    .live-pop-arrow {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.75rem;
+      line-height: 1;
+      color: rgba(255, 255, 255, 0.45);
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .live-pop-link:hover .live-pop-arrow {
+      transform: translateX(3px);
+      color: var(--white);
+    }
+
+    /* コンテンツ行: イコライザー + イベント名 */
+    .live-pop-body {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* 3本バーのライブ・イコライザー */
+    .live-pop-eq {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      width: 9px;
+      height: 11px;
+      flex-shrink: 0;
+      padding-bottom: 1px;
+    }
+
+    .live-pop-eq span {
+      width: 2px;
+      background: var(--neo-purple);
+      border-radius: 1px;
+      animation: eq-bounce 1.2s ease-in-out infinite alternate;
+    }
+
+    .live-pop-eq span:nth-child(1) {
+      height: 40%;
+      animation-delay: 0.1s;
+    }
+
+    .live-pop-eq span:nth-child(2) {
+      height: 100%;
+      animation-delay: 0.35s;
+    }
+
+    .live-pop-eq span:nth-child(3) {
+      height: 60%;
+      animation-delay: 0.2s;
+    }
+
+    @keyframes eq-bounce {
+      0% {
+        height: 25%;
+      }
+      100% {
+        height: 100%;
       }
     }
 
     .live-pop-title {
-      grid-column: 2;
-      grid-row: 2;
-      margin-top: 9px;
-      font-size: 0.95rem;
-      font-weight: 700;
+      font-family: 'Noto Serif JP', 'Georgia', serif;
+      font-size: 0.8rem;
+      font-weight: 600;
       letter-spacing: 0.03em;
-      color: var(--bs-fg);
-      /* 会場名まで入った長い回名でもカードを縦に伸ばさない */
+      color: var(--white);
+      line-height: 1.3;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      margin: 0;
+      transition: color 0.2s ease;
     }
 
-    /* 向こうのパンくずと同じ「くすんだ罫線 → ホバーでシアン」 */
-    .live-pop-link {
-      grid-column: 2;
-      grid-row: 3;
-      justify-self: start;
-      margin-top: 9px;
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-      color: var(--bs-cyan);
-      text-decoration: none;
-      border-bottom: 1px solid var(--bs-border);
-      transition: border-color 0.3s ease;
-    }
-
-    .live-pop-link:hover {
-      border-bottom-color: var(--bs-cyan);
-    }
-
+    /* 閉じるボタン（カードの右上にオーバーレイ） */
     .live-pop-close {
       position: absolute;
       top: 2px;
-      right: 4px;
-      width: 26px;
-      height: 26px;
+      right: 2px;
+      z-index: 10;
+      width: 24px;
+      height: 24px;
       background: none;
       border: none;
-      color: var(--bs-fg-dim);
-      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 1.05rem;
       line-height: 1;
       cursor: pointer;
-      transition: color 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border-radius: 2px;
+      transition: color 0.2s ease, background 0.2s ease;
     }
 
     .live-pop-close:hover {
-      color: var(--bs-fg);
+      color: var(--white);
+      background: rgba(255, 255, 255, 0.15);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2135,9 +2146,9 @@
         scroll-behavior: auto;
       }
 
-      /* data/bijutsu-shisui.css と同じ扱い。動きを減らす設定では走査線を出さない */
-      .live-pop::after {
-        display: none;
+      .live-pop-pulse,
+      .live-pop-eq span {
+        animation: none;
       }
 
       /* 上の一括指定は duration しか潰せない。位置が動くものは transform ごと止める */
@@ -2174,12 +2185,12 @@
         display: none;
       }
 
-      /* 画面幅いっぱいに寄せる。左右 16px は back-to-top と同じ余白感 */
+      /* モバイルでも画面幅いっぱいに広げず、左下にコンパクトに佇ませる */
       .live-pop {
         left: 16px;
-        right: 16px;
+        right: auto;
         bottom: 16px;
-        width: auto;
+        width: min(240px, calc(100vw - 32px));
       }
 
       /*
@@ -2606,7 +2617,9 @@
       </dl>
     </template>
     <template id="gearDetailSymbol">
-      <p class="gear-modal-text">人類踊狂計画のトレードマーク。赤い受話器型の、ロリポップヘッドホン。通常の両耳のヘッドホンだと、次の曲で踊り狂い、今流れている曲に集中できなかったため、オーダー。映画マトリックスの、真実・非日常との行き来をインスパイア。</p>
+      <p class="gear-modal-text">
+        人類踊狂計画のトレードマーク。赤い受話器型の、ロリポップヘッドホン。通常の両耳のヘッドホンだと、次の曲で踊り狂い、今流れている曲に集中できなかったため、オーダー。映画マトリックスの、真実・非日常との行き来をインスパイア。
+      </p>
       <dl class="spec-list">
         <div class="spec-row">
           <dt>スピーカー</dt>
@@ -2615,14 +2628,17 @@
         <div class="spec-row">
           <dt>制作元</dt>
           <dd>
-            <a class="spec-link" href="https://www.acou-sticks.com/" target="_blank" rel="noopener noreferrer">AcouSticks</a>
+            <a class="spec-link" href="https://www.acou-sticks.com/" target="_blank"
+              rel="noopener noreferrer">AcouSticks</a>
           </dd>
         </div>
       </dl>
     </template>
     <template id="gearDetailFestival">
-      <p class="gear-modal-text">日本最大のサイケデリックトランスフェス、<a class="spec-link"
-          href="https://gaia.dmt-ent.com/" target="_blank" rel="noopener noreferrer">GAIA</a>。5大エレメント（地・水・風・火・空）構成で、テーマが「宇宙全体への愛と感謝」。2024年から毎年参加。2026年からはスタッフとして支えている。自然の中で寝泊まりしながら、24時間音に浸る。焚き火を見つめる。自我の境界が溶けていく。明るく前向きな死。人類踊狂計画の理念を体現した場所。</p>
+      <p class="gear-modal-text">日本最大のサイケデリックトランスフェス、<a class="spec-link" href="https://gaia.dmt-ent.com/"
+          target="_blank"
+          rel="noopener noreferrer">GAIA</a>。5大エレメント（地・水・風・火・空）構成で、テーマが「宇宙全体への愛と感謝」。2024年から毎年参加。2026年からはスタッフとして支えている。自然の中で寝泊まりしながら、24時間音に浸る。焚き火を見つめる。自我の境界が溶けていく。明るく前向きな死。人類踊狂計画の理念を体現した場所。
+      </p>
       <dl class="spec-list">
         <div class="spec-row">
           <dt>開催地</dt>
@@ -2638,7 +2654,8 @@
 
   <!-- SOUND LOG -->
   <section class="sound-log-section" id="sound">
-    <h2 class="sound-log-header reveal"><i data-lucide="volume-2" class="section-icon" aria-hidden="true"></i><span lang="en">Audio Stream</span></h2>
+    <h2 class="sound-log-header reveal"><i data-lucide="volume-2" class="section-icon" aria-hidden="true"></i><span
+        lang="en">Audio Stream</span></h2>
     <div class="genre-list reveal">
       <div class="genre-item" lang="en">BIG ROOM HOUSE</div>
       <div class="genre-item" lang="en">PSYTRANCE</div>
@@ -2656,7 +2673,8 @@
   <section class="operation-section" id="archive">
     <div class="operation-container">
       <div class="reveal">
-        <h2 class="operation-title"><i data-lucide="archive" class="section-icon" aria-hidden="true"></i><span lang="en">Archive / Past</span></h2>
+        <h2 class="operation-title"><i data-lucide="archive" class="section-icon" aria-hidden="true"></i><span
+            lang="en">Archive / Past</span></h2>
         <div class="timeline">
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
@@ -2665,8 +2683,8 @@
                    ../images/contents/daydream_03-01.avif
                    ../images/contents/daydream_03-02.avif" data-alts="
                    白昼夢 vol.03 の出演者フライヤー。赤地にドット絵のハート柄。MAIN DJ は DJ ポー、ほかに Myxri・DJ SUGAR・人類踊狂計画・MAMEPY・Alulage、VJ に Mitsuki Oboro と KUROTORA、PAINT に Aya
-                   |白昼夢 vol.03 のタイムテーブル。12 時のフリーブースから 19 時半まで、20 時撤収完了。人類踊狂計画は 14 時と 15 時半の 2 枠" target="_blank" rel="noopener noreferrer"
-                class="timeline-link">
+                   |白昼夢 vol.03 のタイムテーブル。12 時のフリーブースから 19 時半まで、20 時撤収完了。人類踊狂計画は 14 時と 15 時半の 2 枠" target="_blank"
+                rel="noopener noreferrer" class="timeline-link">
                 Daydream #03<br>
                 Lounge bar Krishuna
                 <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
@@ -2677,8 +2695,8 @@
                    ../images/contents/Live-DJ_Factory.webp
                    ../images/contents/Live-DJ_Factory2.webp" data-alts="
                    Live&amp;Dj Factory のフライヤー。7 月 26 日（日）15 時開演、渋谷 R Lounge 6F、入場 2,700 円 + 1 ドリンク。ライブに雨音とアプローズ・#03-USHIMITU-・HELLZAPOPPIN'、DJ に彼方玲・ハシバタカナリ・zensen・Alulage・人類踊狂計画
-                   |Live&amp;Dj Factory のタイムテーブル。14 時 40 分開場から 21 時終演まで。人類踊狂計画は 18 時 15 分から踊れるアイドル楽曲セット" target="_blank" rel="noopener noreferrer"
-                class="timeline-link">
+                   |Live&amp;Dj Factory のタイムテーブル。14 時 40 分開場から 21 時終演まで。人類踊狂計画は 18 時 15 分から踊れるアイドル楽曲セット"
+                target="_blank" rel="noopener noreferrer" class="timeline-link">
                 Live&amp;DJ Factory<br>
                 R Lounge
                 <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
@@ -2688,11 +2706,12 @@
               <a href="../images/contents/daydream_02-1.avif" data-images="
                    ../images/contents/daydream_02-1.avif
                    ../images/contents/daydream_02-2.avif
-                   ../images/contents/daydream_02-3.avif" data-alts="
+                   ../images/contents/daydream_02-3.avif"
+                data-alts="
                    白昼夢 #02 のメインビジュアル。朱色の地に緑と薄紫で刷った花木と、下部に筆文字の「白昼夢」
                    |白昼夢 #02 のタイムテーブル。12 時のフリーブースから 19 時半まで、20 時撤収完了。DJ 体験コーナーを挟みつつ いろはす・omeme_gangimari・m changm・ブラジル・MAMEPY が回す
-                   |白昼夢 #02 の告知。2026 年 7 月 12 日（日）12 時開場〜19 時半終演、新宿ゴールデン街 Lounge bar Krishuna、3,500 円。DJ にブラジル・omeme_gangimari・MAMEPY・いろはす・m changm、VJ に KUROTORA、ボディペイントに Amy Yokomatsu、ライブペイントにノゾミ。「健やかに狂え。夢のような真昼のクラブ」" target="_blank" rel="noopener noreferrer"
-                class="timeline-link">
+                   |白昼夢 #02 の告知。2026 年 7 月 12 日（日）12 時開場〜19 時半終演、新宿ゴールデン街 Lounge bar Krishuna、3,500 円。DJ にブラジル・omeme_gangimari・MAMEPY・いろはす・m changm、VJ に KUROTORA、ボディペイントに Amy Yokomatsu、ライブペイントにノゾミ。「健やかに狂え。夢のような真昼のクラブ」"
+                target="_blank" rel="noopener noreferrer" class="timeline-link">
                 Daydream #02<br>
                 Lounge bar Krishuna
                 <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
@@ -2706,9 +2725,10 @@
               </a>
             </div>
             <div class="timeline-event">
-              <a href="../images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif" data-alts="
-                   NEXTORM -BASE- #16 のフライヤー。2026 年 1 月 12 日（月）、ハウス・テクノとクロスオーバーサウンド。NØEL と MARU、WELRY・AKIAMA・TAKEDA が出演。青と緑の流体を横帯に切り分けた暗いビジュアル" target="_blank" rel="noopener noreferrer"
-                class="timeline-link">
+              <a href="../images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif"
+                data-alts="
+                   NEXTORM -BASE- #16 のフライヤー。2026 年 1 月 12 日（月）、ハウス・テクノとクロスオーバーサウンド。NØEL と MARU、WELRY・AKIAMA・TAKEDA が出演。青と緑の流体を横帯に切り分けた暗いビジュアル" target="_blank"
+                rel="noopener noreferrer" class="timeline-link">
                 NEXTORM -BASE- #16<br>
                 Ohjo-bldg
                 <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
@@ -2720,9 +2740,10 @@
             <div class="timeline-item">
               <div class="timeline-year">2025</div>
               <div class="timeline-event">
-                <a href="../images/contents/Night-Drip_Shinjuku-HEIST.jpg" data-alts="
-                     Night Drip のフライヤー。10 月 24 日（金）23 時から新宿 HEIST、クロスオーバーテクノとサイケデリックトランス。早川あおせのモジュラーシンセライブ、PARTY FISH・DonChim・ila・PoyoTaro・Alulage・人類踊狂計画、VJ サイコ。入場 2,500 円 + 1 ドリンク。水滴が落ちて波紋が広がるビジュアル" target="_blank" rel="noopener noreferrer"
-                  class="timeline-link">
+                <a href="../images/contents/Night-Drip_Shinjuku-HEIST.jpg"
+                  data-alts="
+                     Night Drip のフライヤー。10 月 24 日（金）23 時から新宿 HEIST、クロスオーバーテクノとサイケデリックトランス。早川あおせのモジュラーシンセライブ、PARTY FISH・DonChim・ila・PoyoTaro・Alulage・人類踊狂計画、VJ サイコ。入場 2,500 円 + 1 ドリンク。水滴が落ちて波紋が広がるビジュアル"
+                  target="_blank" rel="noopener noreferrer" class="timeline-link">
                   Night-Drip<br>
                   Shinjuku-HEIST.
                   <i data-lucide="image" class="timeline-icon" aria-hidden="true"></i>
@@ -2744,7 +2765,8 @@
         </div>
       </div>
       <div class="reveal">
-        <h2 class="operation-title"><i data-lucide="calendar" class="section-icon" aria-hidden="true"></i><span lang="en">Schedule / Future</span></h2>
+        <h2 class="operation-title"><i data-lucide="calendar" class="section-icon" aria-hidden="true"></i><span
+            lang="en">Schedule / Future</span></h2>
         <div class="calendar-container">
           <iframe
             src="https://calendar.google.com/calendar/embed?src=98c9b5391efae35abfa40bf788649fb44e9c6f6e1d3647cfde502024b203fdc8%40group.calendar.google.com&amp;ctz=Asia%2FTokyo"
@@ -2756,7 +2778,8 @@
 
   <!-- VIDEO -->
   <section class="video-section" id="visual">
-    <h2 class="video-title reveal"><i data-lucide="film" class="section-icon" aria-hidden="true"></i><span lang="en">Visual Database</span></h2>
+    <h2 class="video-title reveal"><i data-lucide="film" class="section-icon" aria-hidden="true"></i><span
+        lang="en">Visual Database</span></h2>
     <div class="video-container reveal">
       <iframe src="https://fast.wistia.net/embed/iframe/8jg7134pce" title="Video Content" scrolling="no"
         class="wistia_embed" name="wistia_embed" allowfullscreen loading="lazy"></iframe>
@@ -2772,7 +2795,8 @@
       </svg>
     </div>
     <div class="contact-content reveal">
-      <h2 class="about-title"><i data-lucide="users" class="section-icon" aria-hidden="true"></i><span lang="en">About Me</span></h2>
+      <h2 class="about-title"><i data-lucide="users" class="section-icon" aria-hidden="true"></i><span lang="en">About
+          Me</span></h2>
 
       <div class="about-letter">
         <div class="about-unit">
@@ -2823,12 +2847,8 @@
   </section>
 
   <!-- SONG REQUEST -->
-  <!-- 受付中は JS が .live を付け、バッジ付きの赤いボタンになる -->
   <div class="request-cta" id="requestCta">
-    <a href="request/">
-      <span class="request-cta-badge">受付中</span>
-      <span>♪ 曲リクエスト</span>
-    </a>
+    <a href="request/">♪ 曲リクエスト</a>
   </div>
 
   <!-- BREADCRUMB -->
@@ -2868,21 +2888,24 @@
   </div>
 
   <!-- Live Popup: 受付中の回があるときだけ JS が出す -->
-  <aside class="live-pop" id="livePop" hidden>
-    <!--
-      ドット絵のハート。升目は data/bijutsu-shisui.js の DJ_ART.HEART（7x6）、
-      1 升 0.92 の隙間も同じ。隙間を詰めると升目が繋がってドット絵に見えなくなる。
-    -->
-    <svg class="live-pop-heart" viewBox="0 0 7 6" fill="currentColor" aria-hidden="true">
-      <rect x="1" y="0" width="0.92" height="0.92"/><rect x="2" y="0" width="0.92" height="0.92"/><rect x="4" y="0" width="0.92" height="0.92"/><rect x="5" y="0" width="0.92" height="0.92"/><rect x="0" y="1" width="0.92" height="0.92"/><rect x="1" y="1" width="0.92" height="0.92"/>
-      <rect x="2" y="1" width="0.92" height="0.92"/><rect x="3" y="1" width="0.92" height="0.92"/><rect x="4" y="1" width="0.92" height="0.92"/><rect x="5" y="1" width="0.92" height="0.92"/><rect x="6" y="1" width="0.92" height="0.92"/><rect x="0" y="2" width="0.92" height="0.92"/>
-      <rect x="1" y="2" width="0.92" height="0.92"/><rect x="2" y="2" width="0.92" height="0.92"/><rect x="3" y="2" width="0.92" height="0.92"/><rect x="4" y="2" width="0.92" height="0.92"/><rect x="5" y="2" width="0.92" height="0.92"/><rect x="6" y="2" width="0.92" height="0.92"/>
-      <rect x="1" y="3" width="0.92" height="0.92"/><rect x="2" y="3" width="0.92" height="0.92"/><rect x="3" y="3" width="0.92" height="0.92"/><rect x="4" y="3" width="0.92" height="0.92"/><rect x="5" y="3" width="0.92" height="0.92"/><rect x="2" y="4" width="0.92" height="0.92"/>
-      <rect x="3" y="4" width="0.92" height="0.92"/><rect x="4" y="4" width="0.92" height="0.92"/><rect x="3" y="5" width="0.92" height="0.92"/>
-    </svg>
-    <p class="live-pop-status">受付中</p>
-    <p class="live-pop-title" id="livePopTitle"></p>
-    <a class="live-pop-link" href="request/">かけてほしい曲を送る</a>
+  <aside class="live-pop" id="livePop" hidden aria-label="曲リクエスト受付中">
+    <a class="live-pop-link" href="request/" title="曲リクエストを送る">
+      <div class="live-pop-reticle top-left" aria-hidden="true"></div>
+      <div class="live-pop-reticle bottom-right" aria-hidden="true"></div>
+      <div class="live-pop-header">
+        <span class="live-pop-status">
+          <span class="live-pop-pulse" aria-hidden="true"></span>
+          LIVE REQUEST
+        </span>
+        <span class="live-pop-arrow" aria-hidden="true">&rarr;</span>
+      </div>
+      <div class="live-pop-body">
+        <span class="live-pop-eq" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+        <p class="live-pop-title" id="livePopTitle">曲リクエスト受付中</p>
+      </div>
+    </a>
     <button class="live-pop-close" id="livePopClose" type="button" aria-label="閉じる">&times;</button>
   </aside>
 
@@ -3338,7 +3361,6 @@
     // 受付中の回があるときだけ出す。取れなくても黙って何もしない
     //（このページの主題はポートフォリオで、リクエストは付随機能）。
     const livePop = document.getElementById('livePop');
-    const requestCta = document.getElementById('requestCta');
     // 閉じたことはタブを閉じるまで覚える。回が変われば（code が変われば）また出す
     const DISMISS_KEY = 'dj-live-pop-dismissed';
     const dismissed = (code) => {
@@ -3351,41 +3373,45 @@
     };
 
     if (livePop) {
-      fetch('/dj/api/req/event', { headers: { Accept: 'application/json' } })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (!data || !data.open) return;
-          // 受付中のあいだは、下端の導線にも赤い点と「受付中」を添える
-          if (requestCta) requestCta.classList.add('live');
-          // バッジの DotGothic16（/dj/request/ と同じ書体）は受付中のときしか使わない。
-          // head に置くと hidden のままでも subset が落ちてくるので、ここで読む。
-          // ポップアップを閉じていても下端のバッジでは要るので、dismissed の判定より前に置く。
-          const dot = document.createElement('link');
-          dot.rel = 'stylesheet';
-          dot.href = 'https://fonts.googleapis.com/css2?family=DotGothic16&display=swap';
-          document.head.appendChild(dot);
+      const isPreview = new URLSearchParams(location.search).get('live') === '1';
+      const getEvent = isPreview
+        ? Promise.resolve({ open: true, title: '人類踊狂計画 Live Session', code: 'preview' })
+        : fetch('/dj/api/req/event', { headers: { Accept: 'application/json' } })
+            .then(res => res.ok ? res.json() : null)
+            .catch(() => null);
 
-          if (dismissed(data.code)) return;
+      getEvent.then(data => {
+        if (!data || !data.open) return;
 
-          // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる
-          const title = document.getElementById('livePopTitle');
-          title.textContent = data.title || '';
-          title.hidden = !data.title;
-          livePop.hidden = false;
-          document.body.classList.add('live-pop-open');
-          // hidden を外した直後だと display の変化と同じフレームになり transition が乗らない
-          requestAnimationFrame(() => livePop.classList.add('show'));
+        if (dismissed(data.code)) return;
 
-          document.getElementById('livePopClose').addEventListener('click', () => {
+        // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる
+        const title = document.getElementById('livePopTitle');
+        if (title) {
+          title.textContent = data.title || '曲リクエスト受付中';
+        }
+        livePop.hidden = false;
+        document.body.classList.add('live-pop-open');
+        // ポップアップ内の Lucide アイコン（radio 等）を展開
+        if (window.lucide) lucide.createIcons();
+        // hidden を外した直後だと display の変化と同じフレームになり transition が乗らない
+        requestAnimationFrame(() => livePop.classList.add('show'));
+
+        const closeBtn = document.getElementById('livePopClose');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            // 親カードの <a> によるページ遷移を防ぐ
+            e.preventDefault();
+            e.stopPropagation();
             livePop.classList.remove('show');
             document.body.classList.remove('live-pop-open');
-            setTimeout(() => { livePop.hidden = true; }, 500);
+            setTimeout(() => { livePop.hidden = true; }, 350);
             try {
               sessionStorage.setItem(DISMISS_KEY, data.code || '1');
             } catch { /* 保存できなくても閉じる動作自体は成立する */ }
           });
-        })
-        .catch(() => { });
+        }
+      });
     }
 
     // 8. Initialize Lucide Icons

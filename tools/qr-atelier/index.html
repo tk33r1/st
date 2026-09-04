@@ -124,7 +124,7 @@
             "name": "中央にロゴを置いても読み取れますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "誤り訂正レベルHであれば、面積のおよそ20%までを目安に読み取れます。本ツールはロゴの面積とコントラストを常に監視して警告し、対応ブラウザでは生成したQRコードを実際にデコードして読み取りテストまで行います。"
+              "text": "誤り訂正レベルHであれば、面積のおよそ20%までを目安に読み取れます。本ツールはロゴの面積とコントラストを常に監視して警告し、さらに生成したQRコードを性格の違う複数のデコーダで実際に読み返して、何個が読めたかを表示します。すべてブラウザ内で動き、画像が外に出ることはありません。"
             }
           },
           {
@@ -143,9 +143,6 @@
 
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <!-- jsQR: 生成した絵を読み返して「本当にスキャンできるか」を確かめるためだけに使う。
-       BarcodeDetector は Windows の Chrome では使えないので、こちらが本命。 -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -213,18 +210,40 @@
     #preview { width: 100%; max-width: 340px; }
     #preview svg { width: 100%; height: auto; display: block; border-radius: 4px; }
 
+
     .verdict {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; flex-direction: column; gap: 7px;
       font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.02em;
       padding: 9px 12px; border: 1px solid var(--rule); border-radius: var(--r-1);
       background: var(--panel);
     }
+    .verdict-head { display: flex; align-items: center; gap: 8px; }
     .verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); flex: none; }
-    .verdict.ok .dot { background: var(--ok); }
+    .verdict.best .dot, .verdict.good .dot { background: var(--ok); }
+    .verdict.fair .dot { background: var(--warn); }
     .verdict.ng .dot { background: var(--err); }
     .verdict.na .dot { background: var(--ink-3); }
-    .verdict b { font-weight: 700; color: var(--ink); }
-    .verdict span { color: var(--ink-2); }
+    .verdict b { font-weight: 700; color: var(--ink); flex: none; }
+    #verdict-note { color: var(--ink-2); line-height: 1.65; }
+    #verdict-note:empty { display: none; }
+    .verdict-more {
+      margin-left: auto; flex: none; cursor: pointer;
+      font-family: inherit; font-size: 10.5px; color: var(--ink-2);
+      padding: 3px 8px; border: 1px solid var(--rule); border-radius: var(--r-1);
+      background: transparent;
+    }
+    .verdict-more:hover { color: var(--ink); border-color: var(--ink-3); }
+    .verdict-more[disabled] { opacity: 0.5; cursor: default; }
+    .verdict-engines { display: flex; flex-wrap: wrap; gap: 5px; }
+    .verdict-engines:empty { display: none; }
+    .eng {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10.5px; color: var(--ink-2);
+      padding: 2px 7px; border: 1px solid var(--rule); border-radius: 999px;
+    }
+    .eng i { width: 5px; height: 5px; border-radius: 50%; background: var(--err); font-style: normal; flex: none; }
+    .eng.ok i { background: var(--ok); }
+    .eng.mismatch i { background: var(--warn); }
 
     .alerts { display: flex; flex-direction: column; gap: 6px; }
     .alert {
@@ -482,9 +501,13 @@
         </div>
 
         <div id="verdict" class="verdict na">
-          <span class="dot"></span>
-          <b id="verdict-title">待機中</b>
-          <span id="verdict-note"></span>
+          <div class="verdict-head">
+            <span class="dot"></span>
+            <b id="verdict-title">待機中</b>
+            <button id="btn-verify" class="verdict-more" type="button">詳しく検査</button>
+          </div>
+          <div id="verdict-note">内容を入力するとここに出ます</div>
+          <div class="verdict-engines" id="verdict-engines"></div>
         </div>
 
         <div class="meta-row" id="meta-row"></div>
@@ -545,6 +568,11 @@
               <span class="st-lbl">セルの太さ</span>
               <input type="range" id="opt-cellscale" min="0.85" max="1.1" step="0.05" value="1">
               <span class="val" id="val-cellscale">100%</span>
+            </div>
+            <div class="slider-row">
+              <span class="st-lbl">太さのバラつき</span>
+              <input type="range" id="opt-celljitter" min="0" max="1" step="0.05" value="0">
+              <span class="val" id="val-celljitter">0%</span>
             </div>
             <div class="field">
               <label>マーカーの枠</label>
@@ -793,8 +821,16 @@
       <p>
         デザインを凝るほど、QRコードは読み取りにくくなります。このツールは前景と背景の
         コントラスト比、ロゴが覆う面積、余白の広さを常に見張って、危ないときに警告します。
-        さらに対応ブラウザ（Chrome / Edge / Androidなど）では、書き出す絵そのものを
-        その場でデコードし直して、本当に読み取れるかを確かめています。
+        さらに、書き出す絵そのものをその場でデコードし直して、本当に読み取れるかを確かめています。
+      </p>
+      <p>
+        このとき使うデコーダは1つではありません。読み取りソフトには寛容さの差が大きく、
+        素朴なものが落とす絵をスマホのカメラは平気で読む、ということが普通に起こります。
+        そこで「詳しく検査」を押すと、厳しいもの（jsQR）、多くのスキャナアプリと同じ系統のもの（ZXing）、
+        検出に機械学習を使うもの（OpenCV WeChat）の3つに読ませて、いくつ通ったかを出します。
+        3つとも通れば、どんな読み取り環境でもまず大丈夫。2つなら、実機のカメラでは読めるけれど
+        簡素なアプリでは落ちることがある、という意味です。デコーダはすべてこのページに同梱していて、
+        検査のために画像が外部へ送られることはありません。
       </p>
 
       <div class="qa">
@@ -892,6 +928,7 @@
   <script src="qr-core.js?v=20260903"></script>
   <script src="qr-style.js?v=20260903"></script>
   <script src="qr-assets.js?v=20260903"></script>
+  <script src="qr-verify.js?v=20260904"></script>
   <script src="app.js?v=20260903"></script>
 </body>
 </html>

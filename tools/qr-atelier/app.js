@@ -193,6 +193,12 @@
         if (saved[k] !== undefined) state[k] = saved[k];
       });
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
+      if (state.style.markerFrame && !A.MARKER_FRAMES.some(f => f.id === state.style.markerFrame)) {
+        state.style.markerFrame = window.QRStyle.DEFAULTS.markerFrame;
+      }
+      if (state.style.markerEye && !A.MARKER_EYES.some(e => e.id === state.style.markerEye)) {
+        state.style.markerEye = window.QRStyle.DEFAULTS.markerEye;
+      }
       if (state.style.logo.type === 'icon' && state.style.logo.icon) {
         state.style.logo.iconData = A.ICONS.find(i => i.id === state.style.logo.icon) || null;
       }
@@ -537,6 +543,8 @@
 
     $('opt-cellscale').value = s.cellScale;
     $('val-cellscale').textContent = Math.round(s.cellScale * 100) + '%';
+    $('opt-celljitter').value = s.cellJitter || 0;
+    $('val-celljitter').textContent = Math.round((s.cellJitter || 0) * 100) + '%';
     $('opt-margin').value = s.margin;
     $('val-margin').textContent = s.margin;
     // 角丸の上限は余白しだい（qr-style.js 側の丸め上限と合わせる）
@@ -590,31 +598,6 @@
   let lastSvg = '';
   let lastPayload = '';
   let renderTimer = null;
-  let verifySeq = 0;
-
-  // 読み取りテストの手段。ブラウザ内蔵のBarcodeDetectorが使えるならそれを、
-  // 使えない環境（Windows版Chromeなど）ではjsQRで読み返す。
-  const detector = (function () {
-    if (typeof window.BarcodeDetector === 'undefined') return null;
-    try { return new window.BarcodeDetector({ formats: ['qr_code'] }); }
-    catch (e) { return null; }
-  })();
-
-  async function decodeCanvas(canvas) {
-    if (detector) {
-      try {
-        const results = await detector.detect(canvas);
-        if (results.length) return results[0].rawValue;
-      } catch (e) { /* 内蔵が転んだらjsQRに任せる */ }
-    }
-    if (typeof window.jsQR === 'function') {
-      const ctx = canvas.getContext('2d');
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const hit = window.jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
-      if (hit) return hit.data;
-    }
-    return null;
-  }
 
   function scheduleUpdate() {
     if (renderTimer) clearTimeout(renderTimer);
@@ -636,7 +619,7 @@
     if (!text) {
       $('preview').innerHTML = '';
       lastSvg = '';
-      setVerdict('na', '待機中', '内容を入力するとここに出ます');
+      setVerdict('na', '待機中', '内容を入力するとここに出ます', []);
       setStatus('ready', 'idle');
       return;
     }
@@ -647,7 +630,7 @@
     } catch (e) {
       $('preview').innerHTML = '';
       lastSvg = '';
-      setVerdict('ng', '入りきりません', '文字数を減らすか、誤り訂正レベルを下げてください');
+      setVerdict('ng', '入りきりません', '文字数を減らすか、誤り訂正レベルを下げてください', []);
       pushAlert('error', 'この内容はQRコードの上限（バージョン40）を超えています。文字数を減らしてください。');
       setStatus('too long', 'err');
       return;
@@ -666,7 +649,7 @@
     out.warnings.forEach(w => pushAlert(w.level, w.text));
     setStatus('v' + qr.version + ' / ' + qr.ec, 'idle');
 
-    verify(out.svg, text);
+    verify(out.svg, text, false);
   }
 
   function pushAlert(level, text) {
@@ -675,62 +658,109 @@
     $('alerts').appendChild(a);
   }
 
-  function setVerdict(kind, title, note) {
-    const v = $('verdict');
-    v.className = 'verdict ' + kind;
+  // ------------------------------------------------------------------
+  // 読み取りテスト
+  // ------------------------------------------------------------------
+  // 判定は qr-verify.js に任せて、ここは表示だけ。ひとつのデコーダの失敗を
+  // 「読めません」と断定しないのが肝で、通ったデコーダの寛容さの段に応じて
+  // 「どこまでの環境で読めるか」を出す。
+  const VERDICTS = {
+    best: ['ok', '読み取りOK', 'どの読み取り環境でも読めます'],
+    good: ['ok', '読み取りOK', '実機のカメラでもアプリでも読めます'],
+    fair: ['fair', '読めます（機種による）', '実機のカメラなら読めますが、簡素なアプリでは失敗することがあります']
+  };
+
+  function setVerdict(kind, title, note, engines) {
+    $('verdict').className = 'verdict ' + kind;
     $('verdict-title').textContent = title;
     $('verdict-note').textContent = note || '';
+    const box = $('verdict-engines');
+    box.innerHTML = '';
+    (engines || []).forEach(e => {
+      const chip = el('span', { class: 'eng ' + e.state, title: e.note });
+      chip.appendChild(el('i'));
+      chip.appendChild(el('span', null, e.name));
+      box.appendChild(chip);
+    });
   }
-
-  // 生成した絵をそのままデコードし直して、本当に読めるか確かめる。
-  // 実機のカメラに近い解像度（1モジュール3〜9px）で何段か試す。解像度を
-  // 上げすぎるとデコーダ側の二値化がかえって不安定になり、逆に特定の倍率
-  // だけ取りこぼすこともあるので、1つでも通れば「読める」と判断する。
-  const VERIFY_SCALES = [4, 3, 6, 7, 9];
 
   function moduleWidth(svg) {
     const m = svg.match(/viewBox="0 0 ([0-9.]+) /);
     return m ? parseFloat(m[1]) : 41;
   }
 
-  async function verify(svg, expect) {
-    if (!detector && typeof window.jsQR !== 'function') {
-      setVerdict('na', '読み取りテスト非対応', 'この環境では自動チェックできません');
+  // 足りない余白を補うときの色。グラデーションは中間色で代表させる。
+  function padColor() {
+    const bg = state.style.bg;
+    if (bg.type !== 'gradient') return bg.color;
+    const mix = (a, b) => {
+      const n = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+      const x = n(a), y = n(b);
+      return '#' + x.map((v, i) => Math.round((v + y[i]) / 2).toString(16).padStart(2, '0')).join('');
+    };
+    return mix(bg.from, bg.to);
+  }
+
+  async function verify(svg, expect, heavy) {
+    if (!window.QRVerify) {
+      setVerdict('na', '読み取りテスト非対応', 'この環境では自動チェックできません', []);
       return;
     }
-    const seq = ++verifySeq;
-    setVerdict('na', 'チェック中…', '');
-    const W = moduleWidth(svg);
-    let sawSomething = false;
+    const pad = padColor();
+    setVerdict('na', 'チェック中…', '', []);
     try {
-      for (const k of VERIFY_SCALES) {
-        const canvas = await rasterize(svg, Math.round(W * k), '#FFFFFF');
-        const decoded = await decodeCanvas(canvas);
-        if (seq !== verifySeq) return;
-        if (decoded === expect) {
-          setVerdict('ok', '読み取りOK', '書き出す絵をその場でデコードして確認しました');
-          return;
-        }
-        if (decoded) sawSomething = true;
+      const r = await window.QRVerify.run({
+        render: px => rasterize(svg, px, pad),
+        expect: expect,
+        moduleWidth: moduleWidth(svg),
+        margin: state.style.margin,
+        padColor: pad,
+        heavy: heavy,
+        onProgress: t => setVerdict('na', t, '', [])
+      });
+      if (!r) return;                       // 新しい検査に追い越された
+      $('btn-verify').textContent = window.QRVerify.heavyLoaded() ? '再検査' : '詳しく検査';
+
+      if (!r.ran) {
+        setVerdict('na', 'チェックできません', 'この環境ではデコーダを読み込めませんでした', []);
+      } else if (r.level === 'ng' && !window.QRVerify.heavyLoaded()) {
+        // 軽いデコーダしか動いていない段階での失敗は、証拠として弱い。jsQR は
+        // 装飾に厳しく、そこで落ちても実機では読めることが多い。断定せずに
+        // 詳しい検査へ誘導する。
+        setVerdict('fair', '簡易チェックでは読めません',
+          '実機のカメラなら読めることがあります。「詳しく検査」で確かめてください', r.engines);
+      } else if (r.level === 'ng') {
+        setVerdict('ng', r.mismatch ? '内容がずれています' : '読み取れませんでした',
+          r.mismatch ? '別の内容として読まれています。ロゴや装飾を控えめにしてください'
+                     : 'コントラスト・ロゴの大きさ・余白を見直してください', r.engines);
+      } else {
+        const v = VERDICTS[r.level];
+        setVerdict(v[0], v[1],
+          (r.ran > 1 ? r.passed + '/' + r.ran + 'のデコーダで成功。' : '') + v[2], r.engines);
       }
-      setVerdict('ng', sawSomething ? '内容がずれています' : '読み取れませんでした',
-        'コントラスト・ロゴの大きさ・余白を見直してください');
     } catch (e) {
-      if (seq !== verifySeq) return;
-      setVerdict('na', 'チェックできず', '');
+      setVerdict('na', 'チェックできず', '', []);
     }
   }
 
   // ------------------------------------------------------------------
   // 書き出し
   // ------------------------------------------------------------------
-  function svgToImage(svg, px) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
+  // 画像の読み込み待ちは onload ではなく decode() を使う。onload は描画の
+  // 都合で発火が遅れたり落ちたりすることがあり、読み取りテストのように
+  // 短い間隔で何枚も起こすと止まってしまう。
+  async function svgToImage(svg, px) {
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(window.QRStyle.resize(svg, px));
+    if (typeof img.decode === 'function') {
+      await img.decode();
+      return img;
+    }
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
       img.onerror = () => reject(new Error('svg load failed'));
-      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(window.QRStyle.resize(svg, px));
     });
+    return img;
   }
 
   async function rasterize(svg, px, flatten) {
@@ -900,6 +930,7 @@
 
     bindRange('fg-angle', 'val-angle', v => v + '°', v => { state.style.fg.angle = v; });
     bindRange('opt-cellscale', 'val-cellscale', v => Math.round(v * 100) + '%', v => { state.style.cellScale = v; });
+    bindRange('opt-celljitter', 'val-celljitter', v => Math.round(v * 100) + '%', v => { state.style.cellJitter = v; });
     bindRange('opt-margin', 'val-margin', v => String(v), v => {
       state.style.margin = v;
       // 余白を狭めたら角丸の上限も下がる
@@ -974,6 +1005,12 @@
     $('btn-webp').addEventListener('click', () => exportRaster('image/webp', 'webp', 0.94));
     $('btn-svg').addEventListener('click', exportSvg);
     $('btn-copy').addEventListener('click', copyImage);
+
+    // 重いデコーダ（zxing-wasm と OpenCV）はここで初めて取りに行く。
+    // 一度読めば以後の自動チェックにも加わる。
+    $('btn-verify').addEventListener('click', () => {
+      if (lastSvg && lastPayload) verify(lastSvg, lastPayload, true);
+    });
   }
 
   function loadLogo(file) {
@@ -1039,6 +1076,7 @@
 
     s.radius = pick([0, 1, 2, 3, 4, 6]);
     s.cellScale = pick([0.9, 0.95, 1, 1, 1]);
+    s.cellJitter = pick([0, 0, 0, 0.15, 0.3]);
     s.margin = 4;
     state.presetName = '';
 

@@ -796,8 +796,8 @@
 /* The donation widget centres its tooltip over its button. The widget now
    sits in the footer's left slot on every page, so a centred tooltip hangs
    off the left edge and gets clipped — anchor it to the button's left edge
-   instead. Unscoped on purpose: the index links this file but carries no
-   .st-theme, and its widget sits in the same slot. */
+   instead. Left unscoped so it also covers any page that drops the widget
+   into this slot without wearing .st-theme. */
 #donation-button-container .donation-widget-tooltip { left: 0; right: auto; }
 #donation-button-container .donation-widget-tooltip::after {
   left: 12px;
