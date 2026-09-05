@@ -40,11 +40,21 @@
   }
 
   // 一度読み込んだら以後は使い回す。読み込み中の重複呼び出しも 1 本にまとめる。
+  //
+  // started() と done() は別物にしておく。取得中の数秒を「読み込み済み」と
+  // 答えると、ボタンが先に消えて無反応に見える。使い分けは呼び出し側で：
+  //   started() … いま走らせてよいか（費用を払い済みか）
+  //   done()    … もう取りに行く必要がないか（ボタンを畳んでよいか）
   function once(fn) {
     let p = null;
-    const wrapped = () => (p || (p = fn().catch(e => { p = null; throw e; })));
-    wrapped.loaded = () => p !== null;
-    wrapped.reset = () => { p = null; };   // 壊れていたら次回また取りに行かせる
+    let ready = false;
+    const wrapped = () => (p || (p = fn().then(
+      v => { ready = !!v; return v; },
+      e => { p = null; ready = false; throw e; }
+    )));
+    wrapped.started = () => p !== null;
+    wrapped.done = () => ready;
+    wrapped.reset = () => { p = null; ready = false; };   // 壊れていたら次回また取りに行かせる
     return wrapped;
   }
 
@@ -161,6 +171,21 @@
   // 全滅した。なので全段を試して、通った段の広さを見る。
   const SCALES = [4, 6, 10, 16, 24];
 
+  // ただしモジュール数ぶんは掛け算で効くので、絶対値の頭も要る。v40（177
+  // モジュール＋余白）を 24px/モジュールで描くと 4440px 四方になり、
+  // getImageData だけで 79MB。モバイルでは確保に失敗して黙って落ちる。
+  // 上限に張り付いた段は同じ絵になるので、重複は畳んで一度だけ試す。
+  const MAX_PX = 2000;
+
+  function scalePixels(moduleWidth) {
+    const out = [];
+    for (const px of SCALES) {
+      const w = Math.min(MAX_PX, Math.round(moduleWidth * px));
+      if (!out.length || out[out.length - 1].w !== w) out.push({ px: px, w: w });
+    }
+    return out;
+  }
+
   // クワイエットゾーンが規格の 4 モジュールに足りないぶんは、背景色で補って
   // から読ませる。実際には QR の周りにも背景が続いているのが普通で、そこを
   // 詰めて落とすと「余白が狭い」という別の警告と二重に減点することになる。
@@ -209,10 +234,10 @@
     const use = [];
     const dead = [];   // 取得や初期化に失敗したもの。「読めなかった」とは別物として扱う。
     for (const e of ENGINES) {
-      if (e.heavy && !opts.heavy && !e.load.loaded()) continue;
+      if (e.heavy && !opts.heavy && !e.load.started()) continue;
       let ok = false, broke = false;
       try {
-        if (e.heavy && !e.load.loaded()) report(e.name + ' を読み込み中…');
+        if (e.heavy && !e.load.started()) report(e.name + ' を読み込み中…');
         ok = await e.load();
       } catch (err) {
         // 例外＝取りに行って失敗した。false＝この環境にそもそも無い（内蔵APIなど）。
@@ -242,7 +267,8 @@
     let mismatch = false;
 
     let drew = 0;
-    for (const px of SCALES) {
+    for (const step of scalePixels(opts.moduleWidth)) {
+      const px = step.px;
       // 早期打ち切りはしない。どこまで広い解像度で読めるかを知りたいので、
       // 通ったあとの段も必ず試す。
       const pending = use.filter(e => state[e.id] !== 'mismatch');
@@ -251,8 +277,8 @@
       report('検査中… (' + px + 'px/モジュール)');
       let canvas, image;
       try {
-        canvas = padded(await withTimeout(opts.render(Math.round(opts.moduleWidth * px)), 6000),
-          px, pad, opts.padColor);
+        canvas = padded(await withTimeout(opts.render(step.w), 6000),
+          Math.max(1, Math.round(step.w / opts.moduleWidth)), pad, opts.padColor);
         image = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
         drew++;
       } catch (e) { continue; }
@@ -313,9 +339,11 @@
     return { engines: engines, ran: ran.length, passed: passed, level: level, mismatch: mismatch };
   }
 
-  // 重いデコーダをすでに抱えているか（ボタンの表示と、判定の重みづけ用）
+  // 重いデコーダをすでに抱えているか（ボタンの表示と、判定の重みづけ用）。
+  // 取得中はまだ false。ボタンを先に消してしまうと、押せる状態に戻るまで
+  // 何も起きていないように見える。
   function heavyLoaded() {
-    return ENGINES.filter(e => e.heavy).every(e => e.load.loaded());
+    return ENGINES.filter(e => e.heavy).every(e => e.load.done());
   }
 
   global.QRVerify = { run: run, heavyLoaded: heavyLoaded, ENGINES: ENGINES };

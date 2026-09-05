@@ -18,12 +18,17 @@
     cellJitter: 0,
     markerFrame: 'rounded',
     markerEye: 'rounded',
-    fg: { type: 'solid', color: '#111827', from: '#111827', to: '#2563EB', angle: 45 },
-    bg: { type: 'solid', color: '#FFFFFF', from: '#FFFFFF', to: '#E5E7EB', angle: 45 },
+    fg: { type: 'solid', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '' },
+    bg: { type: 'solid', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', transparency: 80 },
+    markerFramePaint: { type: 'auto', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '' },
+    markerEyePaint: { type: 'auto', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '' },
     markerFrameColor: '',
     markerEyeColor: '',
     margin: 4,
     radius: 2,
+    // 暗い地に明るいセルを意図して置くデザインでは true。反転の注意を
+    // 「警告」から「補足」に落とすだけで、注意そのものは消さない。
+    invertOk: false,
     logo: {
       type: 'none', icon: '', src: '', text: '',
       size: 0.22, pad: 0.14, backdrop: 'rounded', backdropColor: '#FFFFFF',
@@ -92,10 +97,44 @@
     return (hi + 0.05) / (lo + 0.05);
   }
 
-  // グラデーションは代表色（中間）で明るさを判定する
-  function paintColor(paint) {
+  // グラデーションは代表色（中間）で明るさを判定する。多色は背景と最もコントラストが低い色を返す
+  function paintColor(paint, bgHex) {
     if (!paint || paint.type === 'none') return null;
+    if (paint.type === 'white') return '#FFFFFF';
+    if (paint.type === 'black') return '#000000';
     if (paint.type === 'solid') return paint.color;
+    if (paint.type === 'image') return paint.color || '#111827';
+    if (paint.type === 'multi') {
+      const colors = (Array.isArray(paint.colors) && paint.colors.length) ? paint.colors : [paint.color || '#111827'];
+      if (!bgHex) return colors[0];
+      let worstColor = colors[0];
+      let minRatio = Infinity;
+      colors.forEach(c => {
+        const r = contrastRatio(c, bgHex);
+        if (r < minRatio) {
+          minRatio = r;
+          worstColor = c;
+        }
+      });
+      return worstColor;
+    }
+    const stops = [paint.from];
+    if (paint.mid) stops.push(paint.mid);
+    stops.push(paint.to);
+    if (bgHex) {
+      let worstColor = stops[0];
+      let minRatio = Infinity;
+      stops.forEach(c => {
+        if (!c) return;
+        const r = contrastRatio(c, bgHex);
+        if (r < minRatio) {
+          minRatio = r;
+          worstColor = c;
+        }
+      });
+      return worstColor;
+    }
+    if (paint.mid) return paint.mid;
     const a = hexToRgb(paint.from), b = hexToRgb(paint.to);
     if (!a || !b) return paint.from || paint.color;
     const mid = a.map((v, i) => Math.round((v + b[i]) / 2));
@@ -253,27 +292,54 @@
   // データセルの描画
   // ------------------------------------------------------------------
   // 座標 (x, y) に基づく決定的な疑似乱数（0 <= r < 1）。
-  // 再描画しても同じセルは同じサイズを保ち、チラつきやズレを防ぐ。
+  // 再描画しても同じセルは同じサイズ・色を保ち、チラつきやズレを防ぐ。
   function cellRand(x, y, seed) {
-    let h = (x * 374761393 + y * 668265263 + (seed || 0) * 3266489917) ^ 0x5bf03635;
+    let h = (x * 374761393 + y * 668265263 + (seed || 0) * 1013904223) ^ 0x5bf03635;
     h = Math.imul(h ^ (h >>> 13), 1274126177);
     return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
   }
 
-  function cellScaleAt(x, y, baseScale, jitter, seed) {
+  function cellScaleAt(x, y, baseScale, jitter) {
     const s0 = Math.max(0.3, Math.min(1.15, baseScale));
     if (!jitter) return s0;
-    const r = cellRand(x, y, seed);
+    const r = cellRand(x, y, 0);
     const delta = (r - 0.5) * 2; // -1 ~ +1
     // jitter = 1 のとき最大 ±35% のサイズ変動
     const s = s0 * (1 + delta * jitter * 0.35);
     return Math.max(0.55, Math.min(1.15, s));
   }
 
-  function cellsPath(grid, size, ox, oy, shape, scale, jitter, seed) {
+  function singleCellPath(shape, x0, y0, s) {
+    const x1 = x0 + s, y1 = y0 + s;
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    switch (shape) {
+      case 'square':   return rectPath(x0, y0, s, s, 0);
+      case 'rounded':  return rectPath(x0, y0, s, s, s * 0.16);
+      case 'xrounded': return rectPath(x0, y0, s, s, s * 0.34);
+      case 'dot':      return circlePath(cx, cy, s / 2);
+      case 'diamond':  return polyPath([[cx, cy - s * 0.66], [cx + s * 0.66, cy], [cx, cy + s * 0.66], [cx - s * 0.66, cy]]);
+      case 'star':     return starPath(cx, cy, s * 0.72, s * 0.44, 5);
+      case 'heart':    return heartPath(cx, cy, s * 0.62);
+      case 'plus':     return plusPath(cx, cy, s * 0.68, s * 0.3);
+      case 'xmark':    return crossPath(cx, cy, s * 0.46, s * 0.2);
+      case 'hexagon':  return hexagonPath(cx, cy, s * 0.58);
+      case 'octagon':  return octagonPath(x0, y0, s, s * 0.28);
+      case 'flower':   return flowerPath(cx, cy, s * 0.54);
+      case 'classy':   return boxPath(x0, y0, x1, y1, [s / 2, 0, s / 2, 0], [1, 0, 1, 0]);
+      case 'classy2':  return boxPath(x0, y0, x1, y1, [0, s / 2, s / 2, s / 2], [0, 1, 1, 1]);
+      default:         return rectPath(x0, y0, s, s, s * 0.16);
+    }
+  }
+
+  function cellsGroupedPath(grid, size, ox, oy, shape, scale, jitter, colors, seed) {
     const dark = (x, y) => x >= 0 && y >= 0 && x < size && y < size && grid[y * size + x] === 1;
-    const parts = [];
     const jit = Math.max(0, Math.min(1, Number(jitter) || 0));
+    const isMulti = Array.isArray(colors) && colors.length > 1;
+    const colorBuckets = {};
+    if (isMulti) {
+      colors.forEach(c => { colorBuckets[c] = []; });
+    }
+    const singleParts = [];
 
     // 縦横のラインは連続するマスをまとめてカプセルにする
     if (shape === 'vbar' || shape === 'hbar') {
@@ -291,80 +357,48 @@
             seen[ny * size + nx] = 1;
             len++;
           }
-          const t = Math.min(1, cellScaleAt(x, y, scale, jit, seed));
+          const t = Math.min(1, cellScaleAt(x, y, scale, jit));
           const inset = (1 - t) / 2;
           const w = shape === 'vbar' ? t : len;
           const h = shape === 'vbar' ? len : t;
           const px = ox + x + (shape === 'vbar' ? inset : 0);
           const py = oy + y + (shape === 'vbar' ? 0 : inset);
-          parts.push(rectPath(px, py, w, h, t / 2));
+          const p = rectPath(px, py, w, h, t / 2);
+          if (isMulti) {
+            const cIdx = Math.floor(cellRand(x, y, (seed || 0) + 17) * colors.length);
+            colorBuckets[colors[cIdx]].push(p);
+          } else {
+            singleParts.push(p);
+          }
         }
       }
-      return parts.join('');
-    }
-
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        if (!dark(x, y)) continue;
-        const s = cellScaleAt(x, y, scale, jit, seed);
-        const inset = (1 - s) / 2;
-        const x0 = ox + x + inset, y0 = oy + y + inset;
-        const x1 = x0 + s, y1 = y0 + s;
-        const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-
-        switch (shape) {
-          case 'square':
-            parts.push(rectPath(x0, y0, s, s, 0));
-            break;
-          case 'rounded':
-            parts.push(rectPath(x0, y0, s, s, s * 0.16));
-            break;
-          case 'xrounded':
-            parts.push(rectPath(x0, y0, s, s, s * 0.34));
-            break;
-          case 'dot':
-            parts.push(circlePath(cx, cy, s / 2));
-            break;
-          case 'diamond':
-            // 頂点をセルの外へ少し出す。素直に内接させるとインクが減りすぎて、
-            // 読み取り機が「明るいマス」と誤読しやすくなる。
-            parts.push(polyPath([[cx, cy - s * 0.66], [cx + s * 0.66, cy], [cx, cy + s * 0.66], [cx - s * 0.66, cy]]));
-            break;
-          case 'star':
-            parts.push(starPath(cx, cy, s * 0.72, s * 0.44, 5));
-            break;
-          case 'heart':
-            parts.push(heartPath(cx, cy, s * 0.62));
-            break;
-          case 'plus':
-            parts.push(plusPath(cx, cy, s * 0.68, s * 0.3));
-            break;
-          case 'xmark':
-            parts.push(crossPath(cx, cy, s * 0.46, s * 0.2));
-            break;
-          case 'hexagon':
-            parts.push(hexagonPath(cx, cy, s * 0.58));
-            break;
-          case 'octagon':
-            parts.push(octagonPath(x0, y0, s, s * 0.28));
-            break;
-          case 'flower':
-            parts.push(flowerPath(cx, cy, s * 0.54));
-            break;
-          case 'classy':
-            // リーフ：向かい合う2つの角だけ落とす
-            parts.push(boxPath(x0, y0, x1, y1, [s / 2, 0, s / 2, 0], [1, 0, 1, 0]));
-            break;
-          case 'classy2':
-            // 雫：左上だけ角を残して、あとは丸める
-            parts.push(boxPath(x0, y0, x1, y1, [0, s / 2, s / 2, s / 2], [0, 1, 1, 1]));
-            break;
-          default:
-            parts.push(rectPath(x0, y0, s, s, s * 0.16));
+    } else {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!dark(x, y)) continue;
+          const s = cellScaleAt(x, y, scale, jit);
+          const inset = (1 - s) / 2;
+          const x0 = ox + x + inset, y0 = oy + y + inset;
+          const p = singleCellPath(shape, x0, y0, s);
+          if (isMulti) {
+            const cIdx = Math.floor(cellRand(x, y, (seed || 0) + 17) * colors.length);
+            colorBuckets[colors[cIdx]].push(p);
+          } else {
+            singleParts.push(p);
+          }
         }
       }
     }
-    return parts.join('');
+
+    if (isMulti) {
+      return colors.map(c => ({ color: c, d: (colorBuckets[c] || []).join('') }));
+    }
+    return [{ color: null, d: singleParts.join('') }];
+  }
+
+  function cellsPath(grid, size, ox, oy, shape, scale, jitter) {
+    const groups = cellsGroupedPath(grid, size, ox, oy, shape, scale, jitter, null, 0);
+    return groups[0].d;
   }
 
   // ------------------------------------------------------------------
@@ -457,30 +491,86 @@
   // ------------------------------------------------------------------
   // 塗り（単色 / グラデーション）
   // ------------------------------------------------------------------
+  function gradientStops(paint) {
+    let s = '<stop offset="0" stop-color="' + esc(paint.from) + '"/>';
+    if (paint.mid) {
+      s += '<stop offset="0.5" stop-color="' + esc(paint.mid) + '"/>';
+    }
+    s += '<stop offset="1" stop-color="' + esc(paint.to) + '"/>';
+    return s;
+  }
+
+  function multiGradientStops(colors) {
+    if (!Array.isArray(colors) || colors.length === 0) {
+      return '<stop offset="0" stop-color="#2563EB"/><stop offset="1" stop-color="#DB2777"/>';
+    }
+    if (colors.length === 1) {
+      return '<stop offset="0" stop-color="' + esc(colors[0]) + '"/><stop offset="1" stop-color="' + esc(colors[0]) + '"/>';
+    }
+    return colors.map((c, i) => {
+      const offset = (i / (colors.length - 1)).toFixed(3);
+      return '<stop offset="' + offset + '" stop-color="' + esc(c) + '"/>';
+    }).join('');
+  }
+
   function paintDef(paint, id, box) {
     if (!paint || paint.type === 'solid' || paint.type === 'none') return '';
+    if (paint.type === 'image') {
+      if (!paint.src) return '';
+      return '<pattern id="' + id + '" patternUnits="userSpaceOnUse" x="' + n(box.x) +
+        '" y="' + n(box.y) + '" width="' + n(box.w) + '" height="' + n(box.h) + '">' +
+        '<image href="' + esc(paint.src) + '" x="0" y="0" width="' + n(box.w) +
+        '" height="' + n(box.h) + '" preserveAspectRatio="xMidYMid slice"/>' +
+        '</pattern>';
+    }
+    const isMulti = paint.type === 'multi';
     const a = ((paint.angle || 0) * Math.PI) / 180;
+    const stops = isMulti ? multiGradientStops(paint.colors) : gradientStops(paint);
     if (paint.type === 'radial') {
       const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
       const r = Math.sqrt(box.w * box.w + box.h * box.h) / 2;
       return '<radialGradient id="' + id + '" gradientUnits="userSpaceOnUse" cx="' + n(cx) +
-        '" cy="' + n(cy) + '" r="' + n(r) + '">' +
-        '<stop offset="0" stop-color="' + esc(paint.from) + '"/>' +
-        '<stop offset="1" stop-color="' + esc(paint.to) + '"/></radialGradient>';
+        '" cy="' + n(cy) + '" r="' + n(r) + '">' + stops + '</radialGradient>';
     }
     const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
     const half = Math.max(box.w, box.h) / 2;
     const dx = Math.cos(a) * half, dy = Math.sin(a) * half;
     return '<linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="' + n(cx - dx) +
       '" y1="' + n(cy - dy) + '" x2="' + n(cx + dx) + '" y2="' + n(cy + dy) + '">' +
-      '<stop offset="0" stop-color="' + esc(paint.from) + '"/>' +
-      '<stop offset="1" stop-color="' + esc(paint.to) + '"/></linearGradient>';
+      stops + '</linearGradient>';
   }
 
-  function paintRef(paint, id) {
+  function paintRef(paint, id, fallbackColor) {
     if (!paint || paint.type === 'none') return 'none';
-    if (paint.type === 'solid') return esc(paint.color);
+    if (paint.type === 'white') return '#FFFFFF';
+    if (paint.type === 'black') return '#000000';
+    if (paint.type === 'solid') return esc(paint.color || fallbackColor || '#111827');
+    if (paint.type === 'image') return paint.src ? 'url(#' + id + ')' : esc(paint.color || fallbackColor || '#111827');
     return 'url(#' + id + ')';
+  }
+
+  function getMarkerFill(paint, fg, id, fgRef, cornerIdx) {
+    if (!paint || paint.type === 'auto' || paint.type === 'none') {
+      if (fg.type === 'multi') {
+        const colors = (Array.isArray(fg.colors) && fg.colors.length) ? fg.colors : ['#111827'];
+        return esc(colors[cornerIdx % colors.length]);
+      }
+      return fgRef;
+    }
+    if (paint.type === 'solid') {
+      return esc(paint.color || '#111827');
+    }
+    if (paint.type === 'multi') {
+      const colors = (Array.isArray(paint.colors) && paint.colors.length) ? paint.colors : ['#111827'];
+      return esc(colors[(cornerIdx + (paint.seed || 0)) % colors.length]);
+    }
+    if (paint.type === 'image') {
+      return paint.src ? 'url(#' + id + ')' : esc(paint.color || '#111827');
+    }
+    if (paint.type === 'linear' || paint.type === 'radial') {
+      return 'url(#' + id + ')';
+    }
+    return fgRef;
   }
 
   // ------------------------------------------------------------------
@@ -579,11 +669,65 @@
     const uid = 'qs' + Math.random().toString(36).slice(2, 8);
     let defs = '';
     defs += paintDef(st.fg, uid + 'f', qrBox);
-    defs += paintDef(st.bg, uid + 'b', { x: 0, y: 0, w: W, h: H });
-    const fgRef = paintRef(st.fg, uid + 'f');
-    const bgRef = paintRef(st.bg, uid + 'b');
-    const frameFill = st.markerFrameColor || fgRef;
-    const eyeFill = st.markerEyeColor || fgRef;
+    const fgRef = paintRef(st.fg, uid + 'f', '#111827');
+
+    const bgBox = st.frame.type === 'label' ? { x: bx, y: by, w: inner, h: inner } : { x: 0, y: 0, w: W, h: H };
+    let bgPaint = st.bg || { type: 'solid', color: '#FFFFFF', transparency: 80 };
+    if (bgPaint.type === 'white') {
+      bgPaint = { type: 'solid', color: '#FFFFFF', transparency: 0 };
+    } else if (bgPaint.type === 'black') {
+      bgPaint = { type: 'solid', color: '#000000', transparency: 0 };
+    } else if (bgPaint.type === 'auto') {
+      bgPaint = Object.assign({}, st.fg, {
+        transparency: st.bg.transparency !== undefined ? st.bg.transparency : 80
+      });
+    }
+
+    if (bgPaint.type === 'linear' || bgPaint.type === 'radial' || bgPaint.type === 'image') {
+      defs += paintDef(bgPaint, uid + 'b', bgBox);
+    }
+    const bgRef = paintRef(bgPaint, uid + 'b', '#FFFFFF');
+    const bgTransparency = bgPaint.transparency !== undefined ? Number(bgPaint.transparency) : 80;
+    const bgOpacity = bgPaint.type === 'none' ? 0 : Math.max(0, Math.min(1, (100 - bgTransparency) / 100));
+
+    function buildBgMosaic(box, r, colors, seed, opac) {
+      const clipId = uid + 'bgc';
+      defs += '<clipPath id="' + clipId + '"><path d="' + rectPath(box.x, box.y, box.w, box.h, r) + '"/></clipPath>';
+      const cols = Array.isArray(colors) && colors.length ? colors : ['#2563EB', '#7C3AED'];
+      const tileSize = Math.max(1.8, Math.min(2.6, box.w / 18));
+      const nCols = Math.ceil(box.w / tileSize);
+      const nRows = Math.ceil(box.h / tileSize);
+      const buckets = {};
+      cols.forEach(c => { buckets[c] = []; });
+      for (let ry = 0; ry < nRows; ry++) {
+        for (let rx = 0; rx < nCols; rx++) {
+          const cIdx = Math.floor(cellRand(rx, ry, (seed || 0) + 103) * cols.length);
+          const px = box.x + rx * tileSize;
+          const py = box.y + ry * tileSize;
+          const pw = Math.min(tileSize, box.x + box.w - px) + 0.05;
+          const ph = Math.min(tileSize, box.y + box.h - py) + 0.05;
+          buckets[cols[cIdx]].push(rectPath(px, py, pw, ph, 0));
+        }
+      }
+      let out = '<g clip-path="url(#' + clipId + ')"' + (opac < 1 ? ' opacity="' + n(opac) + '"' : '') + '>';
+      cols.forEach(c => {
+        if (buckets[c].length) {
+          out += '<path d="' + buckets[c].join('') + '" fill="' + esc(c) + '"/>';
+        }
+      });
+      out += '</g>';
+      return out;
+    }
+
+    const mfPaint = st.markerFramePaint || (st.markerFrameColor ? { type: 'solid', color: st.markerFrameColor } : { type: 'auto' });
+    const mePaint = st.markerEyePaint || (st.markerEyeColor ? { type: 'solid', color: st.markerEyeColor } : { type: 'auto' });
+
+    if (mfPaint && (mfPaint.type === 'linear' || mfPaint.type === 'radial' || mfPaint.type === 'image')) {
+      defs += paintDef(mfPaint, uid + 'mf', qrBox);
+    }
+    if (mePaint && (mePaint.type === 'linear' || mePaint.type === 'radial' || mePaint.type === 'image')) {
+      defs += paintDef(mePaint, uid + 'me', qrBox);
+    }
 
     // ---- 組み立て -----------------------------------------------------
     let body = '';
@@ -593,11 +737,22 @@
       const fr = st.frame.radius;
       body += '<path d="' + rectPath(0, 0, W, H, fr) + '" fill="' + esc(st.frame.color) + '"/>';
       // QRブロックの下地
-      body += '<path d="' + rectPath(bx, by, inner, inner, radius) + '" fill="' +
-        (st.bg.type === 'none' ? '#FFFFFF' : bgRef) + '"/>';
+      if (bgPaint.type !== 'none' && bgOpacity > 0) {
+        if (bgPaint.type === 'multi') {
+          body += buildBgMosaic({ x: bx, y: by, w: inner, h: inner }, radius, bgPaint.colors, bgPaint.seed, bgOpacity);
+        } else {
+          body += '<path d="' + rectPath(bx, by, inner, inner, radius) + '" fill="' + bgRef +
+            '"' + (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/>';
+        }
+      }
     } else {
-      if (st.bg.type !== 'none') {
-        body += '<path d="' + rectPath(0, 0, W, H, radius) + '" fill="' + bgRef + '"/>';
+      if (bgPaint.type !== 'none' && bgOpacity > 0) {
+        if (bgPaint.type === 'multi') {
+          body += buildBgMosaic({ x: 0, y: 0, w: W, h: H }, radius, bgPaint.colors, bgPaint.seed, bgOpacity);
+        } else {
+          body += '<path d="' + rectPath(0, 0, W, H, radius) + '" fill="' + bgRef +
+            '"' + (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/>';
+        }
       }
       if (st.frame.type === 'line') {
         const inset = fm.stroke / 2 + 0.4;
@@ -607,13 +762,22 @@
     }
 
     // データセル
-    const cells = cellsPath(grid, size, ox, oy, st.cell, st.cellScale, st.cellJitter, st.cellJitterSeed);
-    if (cells) body += '<path d="' + cells + '" fill="' + fgRef + '"/>';
+    const cellGroups = cellsGroupedPath(
+      grid, size, ox, oy, st.cell, st.cellScale, st.cellJitter,
+      st.fg.type === 'multi' ? st.fg.colors : null, st.fg.seed
+    );
+    cellGroups.forEach(g => {
+      if (g.d) {
+        body += '<path d="' + g.d + '" fill="' + (g.color ? esc(g.color) : fgRef) + '"/>';
+      }
+    });
 
     // マーカー3つ
     const corners = [[0, 0], [size - 7, 0], [0, size - 7]];
-    corners.forEach(c => {
+    corners.forEach((c, idx) => {
       const fx = ox + c[0], fy = oy + c[1];
+      const frameFill = getMarkerFill(mfPaint, st.fg, uid + 'mf', fgRef, idx);
+      const eyeFill = getMarkerFill(mePaint, st.fg, uid + 'me', fgRef, idx);
       body += '<path d="' + markerFramePath(fx, fy, st.markerFrame) +
         '" fill="' + frameFill + '" fill-rule="evenodd"/>';
       body += '<path d="' + markerEyePath(fx, fy, st.markerEye) + '" fill="' + eyeFill + '"/>';
@@ -655,11 +819,11 @@
 
     // ---- 読み取りへの注意 ---------------------------------------------
     const warnings = [];
-    const fgC = paintColor(st.fg);
     const bgC = st.bg.type === 'none' ? '#FFFFFF' : paintColor(st.bg);
+    const fgC = paintColor(st.fg, bgC);
     const ratio = fgC && bgC ? contrastRatio(fgC, bgC) : 21;
     if (ratio < 3) {
-      warnings.push({ level: 'error', text: 'コントラストが不足しています（' + ratio.toFixed(1) + ':1）。前景と背景の明暗差を大きくしてください。' });
+      warnings.push({ level: 'error', text: 'コントラストが不足しています（' + ratio.toFixed(1) + ':1）。セルと背景の明暗差を大きくしてください。' });
     } else if (ratio < 4.5) {
       warnings.push({ level: 'warn', text: 'コントラストがやや低めです（' + ratio.toFixed(1) + ':1）。読み取りにくい環境があるかもしれません。' });
     }
@@ -674,7 +838,9 @@
       }
     });
     if (fgC && bgC && luminance(fgC) > luminance(bgC)) {
-      warnings.push({ level: 'warn', text: '背景より前景のほうが明るい「反転QR」です。読み取れないアプリがあります。' });
+      warnings.push(st.invertOk
+        ? { level: 'info', text: '暗い地に明るいセルを置いた「反転QR」です。意図した配色ですが、対応していない読み取りアプリもあるので実機で確かめてください。' }
+        : { level: 'warn', text: '背景よりセルのほうが明るい「反転QR」です。読み取れないアプリがあります。' });
     }
     const coverage = knocked / (size * size);
     const budget = ({ L: 0.07, M: 0.15, Q: 0.25, H: 0.30 })[qr.ec] || 0.15;
@@ -685,6 +851,18 @@
     }
     if (margin < 2) {
       warnings.push({ level: 'warn', text: '余白（クワイエットゾーン）が狭いと読み取り精度が落ちます。4以上を推奨。' });
+    }
+    if (st.fg.type === 'image' && st.fg.src) {
+      warnings.push({ level: 'info', text: '画像セルは絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
+    }
+    if (st.bg.type === 'image' && st.bg.src) {
+      warnings.push({ level: 'info', text: '背景画像は絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
+    }
+    if (mfPaint && mfPaint.type === 'image' && mfPaint.src) {
+      warnings.push({ level: 'info', text: 'マーカー枠の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
+    }
+    if (mePaint && mePaint.type === 'image' && mePaint.src) {
+      warnings.push({ level: 'info', text: 'マーカー目の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
     }
 
     return {

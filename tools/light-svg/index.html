@@ -698,6 +698,7 @@
     <i data-lucide="arrow-up"></i>
   </button>
   <script src="../../data/buy-me-oil.js"></script>
+  <script src="../../data/tools-share.js?v=20260905"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 
   <script>
@@ -1337,6 +1338,7 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      if (window.STShare) STShare.celebrate();
     });
 
     // Web Share API only — image/svg+xml on the clipboard isn't accepted by

@@ -207,6 +207,8 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
+    // ファイルが手元に落ちた＝この人の用は足りた。共通の「よかったらシェアを」。
+    if (window.STShare) STShare.celebrate();
   }
 
   // ---------------------------------------------------------------- history

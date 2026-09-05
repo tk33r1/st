@@ -710,6 +710,7 @@
   </button>
 
   <script src="../../data/buy-me-oil.js"></script>
+  <script src="../../data/tools-share.js?v=20260905"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 
   <script>
@@ -1265,6 +1266,8 @@
         document.execCommand('copy');
         toast('結果をコピーしました');
       }
+      // このツールは保存よりコピーが本命の出口なので、ここも完了とみなす。
+      if (window.STShare) STShare.celebrate();
     });
 
     $('btn-download').addEventListener('click', () => {
@@ -1277,6 +1280,7 @@
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast('diff-result.txt を保存しました');
+      if (window.STShare) STShare.celebrate();
     });
 
     $('btn-copy-aio').addEventListener('click', async () => {

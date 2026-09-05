@@ -19,3 +19,12 @@
 /tools/csv-encoding/     /tools/csv-charset-converter/  301
 /tools/csv-encoding/*    /tools/csv-charset-converter/:splat  301
 /images/ogp/csv-encoding-ogp.png   /images/ogp/csv-charset-converter-ogp.png  301
+
+# 統合/改名: 2026-09-05  PDF to Image → PDF Studio
+# 旧ツールを PDF Studio に統合。HTML スタブから _redirects による 301 に切り替え。
+/tools/pdf-to-image        /tools/pdf-studio/  301
+/tools/pdf-to-image/       /tools/pdf-studio/  301
+/tools/pdf-to-image/*      /tools/pdf-studio/:splat  301
+/tools/pdf-to-image.html   /tools/pdf-studio/  301
+/images/ogp/pdf-to-image-ogp.webp   /images/ogp/pdf-studio-ogp.png  301
+/images/ogp/pdf-to-image-ogp.png    /images/ogp/pdf-studio-ogp.png  301

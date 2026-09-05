@@ -22,8 +22,8 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新） |
-| `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` 由来（`data/tools-ui.css` の `--cat-*`）で、ツール個別には持たない |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新） |
+| `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` 由来（`data/tools-ui.css` の `--cat-*`）で、ツール個別には持たない。ダウンロード等の完了地点では `STShare.celebrate()` を呼ぶ（後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
@@ -93,6 +93,14 @@
 - **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`data/glitch.js` が
   描画する。記事追加時は HTML ではなく JSON を編集する。tools/game の一覧も同様に
   `data/tools.json` / `data/game.json` が正。
+- **完了時のお願い**: ツールがユーザーの用を足した瞬間（ダウンロード・保存・書き出し、
+  text-diff なら結果のコピー）で `if (window.STShare) STShare.celebrate();` を呼ぶ。
+  文面・共有 URL はページの JSON-LD / og:title / canonical から自動で組み立てるので
+  引数は不要。頻度制御（1セッション1回、21日クールダウン、応じた人は180日、
+  「今後は表示しない」は永久）は `data/tools-share.js` 側に閉じているので、
+  呼び出し側で条件分岐しない。ツールを増やすときは `<script src="../../data/tools-share.js">`
+  を `buy-me-oil.js` の隣に置き、ダウンロード処理を通す共通関数に1行足すだけでよい。
+  見た目の確認は URL に `?st-share=preview` を付けて完了操作をすると抑制を無視して出る。
 - **personas 二重管理**: `workers/magi2/persona.yaml` が正本で `personas.js` がランタイム用。
   **変更時は両方を更新すること**（ファイル頭の注意書きどおり）。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて

@@ -469,6 +469,7 @@
     <i data-lucide="arrow-up"></i>
   </button>
   <script src="../../data/buy-me-oil.js"></script>
+  <script src="../../data/tools-share.js?v=20260905"></script>
   <script>
     new DonationWidget({ containerId: 'donation-button-container' }).init();
   </script>
@@ -1225,6 +1226,8 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      // ファイルが手元に落ちた＝この人の用は足りた。共通の「よかったらシェアを」。
+      if (window.STShare) STShare.celebrate();
     }
 
     function downloadOne(item) {

@@ -188,21 +188,91 @@
     @media (max-width: 940px) { .stage { position: static; } }
 
     .canvas-card {
-      background: var(--canvas);
-      border: 1px solid var(--canvas-rule);
+      position: relative;
       border-radius: var(--r-2);
       padding: 22px;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 300px;
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+      transition: background-color 200ms ease, border-color 200ms ease;
+    }
+    .canvas-card.theme-dark {
+      background-color: var(--canvas);
+      border: 1px solid var(--canvas-rule);
       background-image:
         linear-gradient(45deg, var(--canvas-2) 25%, transparent 25%),
         linear-gradient(-45deg, var(--canvas-2) 25%, transparent 25%),
         linear-gradient(45deg, transparent 75%, var(--canvas-2) 75%),
         linear-gradient(-45deg, transparent 75%, var(--canvas-2) 75%);
-      background-size: 18px 18px;
-      background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+    }
+    .canvas-card.theme-light {
+      background-color: #ffffff;
+      border: 1px solid var(--rule);
+      background-image:
+        linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+        linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+        linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+    }
+    .canvas-card.dragover {
+      outline: 2px dashed var(--accent);
+      outline-offset: -4px;
+    }
+    /* プレビュー市松模様の明暗切り替え */
+    .canvas-checker-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: inline-flex;
+      padding: 2px;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      z-index: 5;
+      gap: 2px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    .canvas-card.theme-light .canvas-checker-toggle {
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+    .canvas-checker-toggle button {
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 500;
+      border: none;
+      border-radius: 9999px;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      line-height: 1.2;
+      transition: all 120ms ease;
+      font-family: inherit;
+    }
+    .canvas-card.theme-light .canvas-checker-toggle button {
+      color: #64748b;
+    }
+    .canvas-checker-toggle button:hover {
+      color: #f8fafc;
+    }
+    .canvas-card.theme-light .canvas-checker-toggle button:hover {
+      color: #0f172a;
+    }
+    .canvas-checker-toggle button.active {
+      background: #334155;
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .canvas-card.theme-light .canvas-checker-toggle button.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     }
     #preview { width: 100%; max-width: 340px; }
     #preview svg { width: 100%; height: auto; display: block; border-radius: 4px; }
@@ -217,6 +287,7 @@
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
     }
     .verdict-bar .bar-in {
+      height: auto;
       min-height: 50px;
       padding: 6px 20px;
       display: flex;
@@ -300,9 +371,20 @@
     .eng.unavailable i { background: var(--ink-3); }
 
     @media (max-width: 768px) {
-      .verdict-bar .bar-in { padding: 8px 16px; min-height: auto; }
-      .verdict { flex-wrap: wrap; gap: 6px; }
-      .verdict-side { width: 100%; justify-content: space-between; margin-left: 0; }
+      .verdict-bar .bar-in { padding: 8px 16px; height: auto; min-height: auto; }
+      .verdict { flex-wrap: wrap; gap: 5px 10px; }
+      .verdict-head { width: 100%; gap: 5px 8px; }
+      #verdict-note { width: 100%; }
+      .verdict-side {
+        width: 100%;
+        margin-left: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .verdict-engines { flex: 1 1 0%; min-width: 0; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+      .verdict-more { flex: 0 0 auto; margin: 0 auto; }
+      .verdict-time { flex: 1 1 0%; min-width: 0; text-align: right; white-space: nowrap; margin-left: auto; }
     }
 
     .save-controls {
@@ -453,6 +535,115 @@
     }
     .grad-btn.active { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
 
+    /* 多色（マルチカラー）設定 */
+    .multi-colors-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .multi-color-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px 3px 4px;
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+    }
+    .multi-color-item input[type="color"] {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border: 1px solid rgb(0 0 0 / .15);
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+    }
+    .multi-color-item .color-hex {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--ink-2);
+    }
+    .multi-color-item .btn-remove-color {
+      background: none;
+      border: none;
+      color: var(--ink-3);
+      cursor: pointer;
+      padding: 0 2px;
+      font-size: 14px;
+      line-height: 1;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .multi-color-item .btn-remove-color:hover:not(:disabled) {
+      color: var(--err, #EF4444);
+    }
+    .multi-color-item .btn-remove-color:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .multi-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .multi-presets-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .multi-palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .multi-pal-btn {
+      height: 32px;
+      border-radius: var(--r-1);
+      border: 1px solid var(--rule);
+      cursor: pointer;
+      padding: 3px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      background: var(--bg);
+      transition: border-color 120ms ease;
+    }
+    .multi-pal-btn:hover {
+      border-color: var(--accent);
+    }
+    .multi-pal-dots {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+    .multi-pal-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid rgb(0 0 0 / .12);
+    }
+    .multi-pal-btn i {
+      font-size: 9.5px;
+      font-style: normal;
+      color: var(--ink-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* ---- スライダー行 ---- */
     .slider-row { display: flex; align-items: center; gap: 10px; }
     .slider-row .st-lbl { width: 84px; flex: none; }
@@ -556,8 +747,8 @@
         </div>
         <div class="verdict-side">
           <div class="verdict-engines" id="verdict-engines"></div>
-          <span id="verdict-time" class="verdict-time"></span>
           <button id="btn-verify" class="verdict-more" type="button">詳しく検査</button>
+          <span id="verdict-time" class="verdict-time"></span>
         </div>
       </div>
     </div>
@@ -568,7 +759,12 @@
 
       <!-- ===================== 左：プレビューと書き出し ===================== -->
       <div class="stage">
-        <div class="canvas-card">
+        <div class="canvas-card theme-light" id="canvas-card">
+          <div class="canvas-checker-toggle" id="checker-toggle" aria-label="プレビュー背景切り替え">
+            <button type="button" data-checker="auto" class="active" title="セルの色に合わせて白/黒を自動切替">自動</button>
+            <button type="button" data-checker="light" title="白ベース市松模様">白</button>
+            <button type="button" data-checker="dark" title="黒ベース市松模様">黒</button>
+          </div>
           <!-- QRのSVGはこのツールが組み立てた文字列で、外から入る値はすべて
                qr-style.js の esc() を通している。 -->
           <div id="preview" aria-label="QRコードのプレビュー"></div>
@@ -576,6 +772,14 @@
 
         <div class="meta-row" id="meta-row"></div>
         <div class="alerts" id="alerts"></div>
+
+        <div class="out-grid">
+          <button id="btn-png" class="st-btn" type="button">PNGで保存</button>
+          <button id="btn-svg" class="st-btn" type="button">SVGで保存</button>
+          <button id="btn-jpg" class="st-btn-quiet" type="button">JPEG</button>
+          <button id="btn-webp" class="st-btn-quiet" type="button">WebP</button>
+          <button id="btn-copy" class="st-btn-quiet" type="button" style="grid-column: 1 / -1;">画像をコピー</button>
+        </div>
 
         <div class="save-controls">
           <div class="save-opt-group">
@@ -596,14 +800,6 @@
               <option value="H" selected>H（30%・推奨）</option>
             </select>
           </div>
-        </div>
-
-        <div class="out-grid">
-          <button id="btn-png" class="st-btn" type="button">PNGで保存</button>
-          <button id="btn-svg" class="st-btn" type="button">SVGで保存</button>
-          <button id="btn-jpg" class="st-btn-quiet" type="button">JPEG</button>
-          <button id="btn-webp" class="st-btn-quiet" type="button">WebP</button>
-          <button id="btn-copy" class="st-btn-quiet" type="button" style="grid-column: 1 / -1;">画像をコピー</button>
         </div>
 
         <p class="note">入力もロゴ画像も端末から出ません。短縮URLを挟まないので、広告が差し込まれることも、あとからリンク先が変わることもありません。</p>
@@ -688,65 +884,121 @@
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
+            <!-- 着色対象切り替えタブ -->
             <div class="field">
-              <label>前景（コードの色）</label>
-              <div class="st-seg seg-sm" id="fg-mode">
+              <label>着色対象</label>
+              <div class="st-seg" id="color-target-seg">
+                <button type="button" data-target="cell" class="active">セル</button>
+                <button type="button" data-target="frame">マーカーの枠</button>
+                <button type="button" data-target="eye">マーカーの目</button>
+                <button type="button" data-target="bg">背景</button>
+              </div>
+            </div>
+
+            <!-- カラーモード切り替え -->
+            <div class="field">
+              <label id="color-mode-label">カラーモード</label>
+              <div class="st-seg seg-sm" id="color-mode-seg">
+                <button type="button" data-mode="white" id="btn-mode-white" class="hidden">白</button>
+                <button type="button" data-mode="black" id="btn-mode-black" class="hidden">黒</button>
+                <button type="button" data-mode="none" id="btn-mode-none" class="hidden">透明</button>
+                <button type="button" data-mode="auto" id="btn-mode-auto" class="hidden">セルの色</button>
                 <button type="button" data-mode="solid" class="active">単色</button>
+                <button type="button" data-mode="multi">多色</button>
                 <button type="button" data-mode="linear">グラデーション</button>
                 <button type="button" data-mode="radial">放射</button>
+                <button type="button" data-mode="image">画像</button>
               </div>
             </div>
 
-            <div id="fg-solid">
+            <!-- パネル：白 (white) -->
+            <div id="color-pane-white" class="hidden">
+              <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+                背景を不透明な白（#FFFFFF）に固定します。
+              </div>
+            </div>
+
+            <!-- パネル：黒 (black) -->
+            <div id="color-pane-black" class="hidden">
+              <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+                背景を不透明な黒（#000000）に固定します。
+              </div>
+            </div>
+
+            <!-- パネル：セルの色 (auto) -->
+            <div id="color-pane-auto" class="hidden">
+              <div class="notice" id="color-auto-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+                セルの色設定と連動します。<br>
+                グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。
+              </div>
+            </div>
+
+            <!-- パネル：透明 (none) -->
+            <div id="color-pane-none" class="hidden">
+              <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+                背景を透明にします。<br>
+                透過PNGや透過SVGとして背景のない画像を書き出せます。
+              </div>
+            </div>
+
+            <!-- パネル：単色 -->
+            <div id="color-pane-solid">
               <div class="color-row">
-                <input type="color" id="fg-color-picker" value="#111827" aria-label="前景色">
-                <input type="text" id="fg-color-hex" value="#111827" spellcheck="false" aria-label="前景色のカラーコード">
+                <input type="color" id="target-color-picker" value="#111827" aria-label="選択中の色">
+                <input type="text" id="target-color-hex" value="#111827" spellcheck="false" aria-label="選択中の色のカラーコード">
               </div>
             </div>
 
-            <div id="fg-grad" class="hidden">
+            <!-- パネル：グラデーション / 放射 -->
+            <div id="color-pane-grad" class="hidden">
               <div class="grad-grid" id="grad-grid"></div>
-              <div class="color-row" style="margin-top:10px">
-                <input type="color" id="fg-from" value="#FC466B" aria-label="開始色">
-                <input type="color" id="fg-to" value="#3F5EFB" aria-label="終了色">
-                <div class="slider-row" style="flex:1">
+              <div id="grad-colors-list" class="multi-colors-list" style="margin-top:10px"></div>
+              <div class="multi-actions">
+                <button type="button" id="btn-add-grad-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+                <div class="slider-row" id="grad-angle-row" style="flex:1;">
                   <span class="st-lbl">角度</span>
-                  <input type="range" id="fg-angle" min="0" max="359" step="1" value="45">
-                  <span class="val" id="val-angle">45°</span>
+                  <input type="range" id="target-angle" min="0" max="359" step="1" value="45">
+                  <span class="val" id="val-target-angle">45°</span>
                 </div>
               </div>
+            </div>
+
+            <!-- パネル：多色 -->
+            <div id="color-pane-multi" class="hidden">
+              <div id="multi-colors-list" class="multi-colors-list"></div>
+              <div class="multi-actions">
+                <button type="button" id="btn-add-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+                <button type="button" id="btn-shuffle-color" class="st-btn-quiet btn-sm" title="色の配置をランダムに入れ替えます">配置をシャッフル</button>
+              </div>
+              <div class="multi-presets-title">多色パレット</div>
+              <div id="multi-palette-grid" class="multi-palette-grid"></div>
+            </div>
+
+            <!-- パネル：画像 -->
+            <div id="color-pane-image" class="hidden">
+              <div class="logo-drop" id="target-image-drop" role="button" tabindex="0">
+                画像をドロップ、またはクリックして選択（PNG / JPEG / WebP / SVG）
+                <input type="file" id="target-image-file" accept="image/*" class="hidden">
+              </div>
+              <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
+                <input type="url" id="target-image-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false">
+                <button type="button" id="btn-target-image-url" class="st-btn-quiet btn-sm">適用</button>
+              </div>
+              <div class="logo-thumb hidden" id="target-image-thumb" style="margin-top:10px">
+                <img id="target-image-thumb-img" alt="選んだ画像">
+                <button class="st-btn-quiet" type="button" id="btn-target-image-clear">外す</button>
+              </div>
+              <p class="note" style="margin-top:8px">※ コントラストがはっきりした画像を選ぶと読み取りやすくなります。</p>
+            </div>
+
+            <!-- 背景透明度スライダー（背景選択時のみ表示） -->
+            <div class="slider-row hidden" id="bg-transparency-row" style="margin-top:12px; padding:8px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1);">
+              <span class="st-lbl" style="font-weight:600;">透明度</span>
+              <input type="range" id="target-transparency" min="0" max="100" step="1" value="80">
+              <span class="val" id="val-target-transparency">80%</span>
             </div>
 
             <div id="swatch-host" class="swatch-group"></div>
-
-            <div class="field">
-              <label>背景</label>
-              <div class="st-seg seg-sm" id="bg-mode">
-                <button type="button" data-mode="solid" class="active">単色</button>
-                <button type="button" data-mode="none">透明</button>
-              </div>
-              <div class="color-row" id="bg-row" style="margin-top:8px">
-                <input type="color" id="bg-color-picker" value="#FFFFFF" aria-label="背景色">
-                <input type="text" id="bg-color-hex" value="#FFFFFF" spellcheck="false" aria-label="背景色のカラーコード">
-              </div>
-            </div>
-
-            <div class="grid2">
-              <div class="field">
-                <label>マーカーの枠色</label>
-                <div class="color-row">
-                  <input type="color" id="mf-color" value="#111827" aria-label="マーカー枠の色">
-                  <button class="st-btn-quiet" type="button" data-clear="mf">前景に合わせる</button>
-                </div>
-              </div>
-              <div class="field">
-                <label>マーカーの目の色</label>
-                <div class="color-row">
-                  <input type="color" id="me-color" value="#111827" aria-label="マーカーの目の色">
-                  <button class="st-btn-quiet" type="button" data-clear="me">前景に合わせる</button>
-                </div>
-              </div>
-            </div>
           </div>
         </details>
 
@@ -781,6 +1033,10 @@
               <div class="logo-drop" id="logo-drop" role="button" tabindex="0">
                 画像をドロップ、またはクリックして選択（PNG / SVG / JPEG）
                 <input type="file" id="logo-file" accept="image/*" class="hidden">
+              </div>
+              <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
+                <input type="url" id="logo-image-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false">
+                <button type="button" id="btn-logo-image-url" class="st-btn-quiet btn-sm">適用</button>
               </div>
               <div class="logo-thumb hidden" id="logo-thumb" style="margin-top:10px">
                 <img id="logo-thumb-img" alt="選んだロゴ">
@@ -897,7 +1153,7 @@
 
       <h3>読めなくならないように</h3>
       <p>
-        デザインを凝るほど、QRコードは読み取りにくくなります。このツールは前景と背景の
+        デザインを凝るほど、QRコードは読み取りにくくなります。このツールはセルと背景の
         コントラスト比、ロゴが覆う面積、余白の広さを常に見張って、危ないときに警告します。
         さらに、書き出す絵そのものをその場でデコードし直して、本当に読み取れるかを確かめています。
       </p>
@@ -962,6 +1218,7 @@
   </button>
 
   <script src="../../data/buy-me-oil.js"></script>
+  <script src="../../data/tools-share.js?v=20260905"></script>
   <script>
     new DonationWidget({ containerId: 'donation-button-container' }).init();
   </script>

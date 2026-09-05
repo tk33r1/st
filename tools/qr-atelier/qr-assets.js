@@ -124,20 +124,20 @@
   // グラデーションのプリセット
   // ------------------------------------------------------------------
   const GRADIENTS = [
-    { name: 'サンセット',     from: '#FF6B6B', to: '#FFD93D', angle: 45 },
-    { name: 'オーシャン',     from: '#2E3192', to: '#1BFFFF', angle: 45 },
-    { name: 'ミント',         from: '#00B09B', to: '#96C93D', angle: 45 },
-    { name: 'ラベンダー',     from: '#7F00FF', to: '#E100FF', angle: 45 },
-    { name: 'ピーチ',         from: '#FF7E5F', to: '#FEB47B', angle: 45 },
+    { name: 'サンセット',     from: '#E11D48', mid: '#F97316', to: '#EAB308', angle: 45 },
+    { name: 'オーシャン',     from: '#1E3A8A', mid: '#0284C7', to: '#06B6D4', angle: 45 },
+    { name: 'ネオン',         from: '#FF007F', mid: '#8338EC', to: '#3A86FF', angle: 45 },
+    { name: 'オーロラ',       from: '#4F46E5', mid: '#06B6D4', to: '#10B981', angle: 45 },
+    { name: 'ミント',         from: '#065F46', mid: '#059669', to: '#84CC16', angle: 45 },
+    { name: 'ラベンダー',     from: '#581C87', mid: '#8B5CF6', to: '#EC4899', angle: 45 },
+    { name: 'スカイ',         from: '#1E40AF', mid: '#3B82F6', to: '#38BDF8', angle: 45 },
+    { name: 'チェリー',       from: '#881337', mid: '#E11D48', to: '#FB7185', angle: 45 },
+    { name: 'フォレスト',     from: '#064E3B', mid: '#0D9488', to: '#22C55E', angle: 45 },
+    { name: 'サイバー',       from: '#D946EF', mid: '#6366F1', to: '#06B6D4', angle: 45 },
+    { name: 'ピーチ',         from: '#EA580C', to: '#FBBF24', angle: 45 },
+    { name: 'ローズゴールド', from: '#9F5F68', to: '#C9A227', angle: 45 },
     { name: 'ミッドナイト',   from: '#0F2027', to: '#2C5364', angle: 45 },
-    { name: 'チェリー',       from: '#EB3349', to: '#F45C43', angle: 45 },
-    { name: 'フォレスト',     from: '#134E5E', to: '#71B280', angle: 45 },
-    { name: 'ローズゴールド', from: '#B76E79', to: '#C9A227', angle: 45 },
-    { name: 'ネオン',         from: '#FC466B', to: '#3F5EFB', angle: 45 },
-    { name: 'アクア',         from: '#13547A', to: '#80D0C7', angle: 45 },
-    { name: 'スカイ',         from: '#4776E6', to: '#8E54E9', angle: 45 },
-    { name: 'コーラル',       from: '#FF9966', to: '#FF5E62', angle: 45 },
-    { name: 'インク',         from: '#232526', to: '#414345', angle: 45 }
+    { name: 'インク',         from: '#111827', to: '#4B5563', angle: 45 }
   ];
 
   // ------------------------------------------------------------------
@@ -172,16 +172,17 @@
       name: 'ネオン',
       style: {
         cell: 'dot', cellScale: 0.9, markerFrame: 'circle', markerEye: 'circle',
-        fg: { type: 'linear', from: '#FC466B', to: '#3F5EFB', angle: 45 },
+        fg: { type: 'linear', from: '#FC5778', to: '#506CFB', angle: 45 },
         bg: { type: 'solid', color: '#0B0F14' },
-        markerFrameColor: '#00F5D4', markerEyeColor: '#FFFFFF', radius: 4
+        markerFrameColor: '#00F5D4', markerEyeColor: '#FFFFFF', radius: 4,
+        invertOk: true
       }
     },
     {
       name: 'サンセット',
       style: {
         cell: 'classy', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
-        fg: { type: 'linear', from: '#E03131', to: '#E8590C', angle: 60 },
+        fg: { type: 'linear', from: '#CA2C2C', to: '#D1500B', angle: 60 },
         bg: { type: 'solid', color: '#FFF8F0' },
         markerFrameColor: '', markerEyeColor: '#C2410C', radius: 4
       }
@@ -225,14 +226,15 @@
         cell: 'diamond', cellScale: 1.1, markerFrame: 'cut', markerEye: 'leaf',
         fg: { type: 'linear', from: '#13547A', to: '#80D0C7', angle: 120 },
         bg: { type: 'solid', color: '#0B1F2A' },
-        markerFrameColor: '#80D0C7', markerEyeColor: '#FFFFFF', radius: 3
+        markerFrameColor: '#80D0C7', markerEyeColor: '#FFFFFF', radius: 3,
+        invertOk: true
       }
     },
     {
       name: 'パステル',
       style: {
         cell: 'rounded', cellScale: 0.95, markerFrame: 'xrounded', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#7C6BAA' }, bg: { type: 'solid', color: '#FDF2F8' },
+        fg: { type: 'solid', color: '#7565A0' }, bg: { type: 'solid', color: '#FDF2F8' },
         markerFrameColor: '#C2185B', markerEyeColor: '#3F6EA8', radius: 6
       }
     },

@@ -939,6 +939,7 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 showToast(filename + ' をダウンロードしました。');
+                if (window.STShare) STShare.celebrate();
             };
 
             if ('showSaveFilePicker' in window) {
@@ -952,6 +953,7 @@
                     await writable.write(data);
                     await writable.close();
                     showToast(fileHandle.name + ' を保存しました。');
+                    if (window.STShare) STShare.celebrate();
                 } catch (err) {
                     if (err.name === 'AbortError') {
                         // ユーザーがキャンセルした場合は何もしない
@@ -1074,6 +1076,7 @@
       <i data-lucide="arrow-up"></i>
     </button>
     <script src="../../data/buy-me-oil.js"></script>
+    <script src="../../data/tools-share.js?v=20260905"></script>
     <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 </body>
 </html>
