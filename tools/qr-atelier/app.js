@@ -164,17 +164,64 @@
     exportSize: 1024,
     presetName: '',
     iconGroup: 'brand',
-    colorTarget: 'cell', // 'cell' | 'frame' | 'eye'
+    colorScope: 'cell',  // 最後に触った色パネル（＝着色対象）
     previewChecker: 'auto', // 'auto' | 'light' | 'dark'
     style: JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS))
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
 
-  function getActivePaint() {
-    if (state.colorTarget === 'frame') return state.style.markerFramePaint;
-    if (state.colorTarget === 'eye') return state.style.markerEyePaint;
-    if (state.colorTarget === 'bg') return state.style.bg;
+  // 色の設定パネルは着色対象ごとに1枚ずつ、その対象の形の設定のすぐ下に置く。
+  // 切り替えるタブはないので、スコープ名がそのまま対象名になる。
+  const COLOR_SCOPES = ['cell', 'frame', 'eye', 'bg', 'logobd'];
+
+  function scopeTarget(scope) { return scope; }
+
+  function paintOf(target) {
+    if (target === 'frame') return state.style.markerFramePaint;
+    if (target === 'eye') return state.style.markerEyePaint;
+    if (target === 'bg') return state.style.bg;
+    if (target === 'logobd') return getLogoBackdropPaint();
     return state.style.fg;
+  }
+
+  function paintOfScope(scope) { return paintOf(scopeTarget(scope)); }
+
+  // プレビューへの画像ドロップなど、パネル外から「いま触っている色」を指す用
+  function getActivePaint() { return paintOfScope(state.colorScope); }
+
+  function colorPanel(scope) {
+    return document.querySelector('.color-panel[data-scope="' + scope + '"]');
+  }
+
+  // パネル内の部品は id ではなく data-cid で引く（3枚あるので id にできない）
+  function cq(scope, cid) {
+    const panel = colorPanel(scope);
+    return panel ? panel.querySelector('[data-cid="' + cid + '"]') : null;
+  }
+
+  function paintLabel(p) {
+    const n = p.mid ? '3色' : '2色';
+    return p.type === 'white' ? '白' :
+      p.type === 'black' ? '黒' :
+      p.type === 'none' ? '透明' :
+      p.type === 'auto' ? 'セルの色' :
+      p.type === 'solid' ? '単色' :
+      p.type === 'multi' ? '多色 (' + ((p.colors || []).length) + '色)' :
+      p.type === 'image' ? '画像' :
+      p.type === 'radial' ? '放射 (' + n + ')' :
+      'グラデーション (' + n + ')';
+  }
+
+  // ロゴの下地の塗り。背景と同じ 9 モードを持つ。
+  // 旧データは色ひとつ（backdropColor）と backdrop:'none' で表していたので拾い直す。
+  function getLogoBackdropPaint() {
+    const lg = state.style.logo;
+    if (!lg.backdropPaint || !lg.backdropPaint.type) {
+      lg.backdropPaint = lg.backdrop === 'none'
+        ? { type: 'none', color: '#FFFFFF', transparency: 0 }
+        : { type: 'solid', color: lg.backdropColor || '#FFFFFF', transparency: 0 };
+    }
+    return lg.backdropPaint;
   }
 
   function getLogoPaint() {
@@ -237,6 +284,14 @@
       if (window.QRCore.LEVELS.indexOf(state.ec) < 0) state.ec = 'H';
       state.minVersion = clampNum(state.minVersion, 1, 14, 1);
       if ([512, 1024, 2048, 4096].indexOf(state.exportSize) < 0) state.exportSize = 1024;
+      // 旧データのロゴの下地は、色ひとつ（backdropColor）と backdrop:'none'（下地なし）で
+      // 表していた。DEFAULTS を被せると backdropPaint が既定値で埋まってしまうので、
+      // 被せる前に「形＋塗り」へ移しておく。
+      if (saved.style && saved.style.logo && !saved.style.logo.backdropPaint) {
+        saved.style.logo.backdropPaint = saved.style.logo.backdrop === 'none'
+          ? { type: 'none', color: '#FFFFFF', transparency: 0 }
+          : { type: 'solid', color: saved.style.logo.backdropColor || '#FFFFFF', transparency: 0 };
+      }
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
       if (state.style.logo && !state.style.logo.paint) {
         state.style.logo.paint = {
@@ -310,6 +365,20 @@
     s.markerEyePaint = sanitizePaint(s.markerEyePaint, 'auto', s.fg.color);
 
     s.bg = sanitizePaint(s.bg, 'solid', '#FFFFFF', true);
+
+    // ロゴの下地。形はマーカーの枠と同じ一覧から選ぶ。旧データの 'none'（下地なし）は
+    // 形を角丸に戻したうえで、塗りのほうを「透明」に移す。
+    if (!s.logo.backdropPaint) {
+      s.logo.backdropPaint = s.logo.backdrop === 'none'
+        ? { type: 'none', color: '#FFFFFF', transparency: 0 }
+        : { type: 'solid', color: s.logo.backdropColor || '#FFFFFF', transparency: 0 };
+    }
+    if (!s.logo.backdrop || !A.MARKER_FRAMES.some(f => f.id === s.logo.backdrop)) {
+      s.logo.backdrop = D.logo.backdrop;
+    }
+    // 下地は既定で不透明。sanitizePaint は未指定を 80% 透過とみなすので、先に埋めておく
+    if (s.logo.backdropPaint.transparency === undefined) s.logo.backdropPaint.transparency = 0;
+    s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'solid', '#FFFFFF', true);
 
     [[s, 'markerFrameColor', ''], [s, 'markerEyeColor', ''],
      [s.logo, 'color', D.logo.color], [s.logo, 'backdropColor', D.logo.backdropColor],
@@ -545,6 +614,7 @@
         state.style = window.QRStyle.merge(state.style, JSON.parse(JSON.stringify(p.style)));
         state.presetName = p.name;
         syncControls();
+        buildShapeGrids();
         buildPresets();
         update();
       });
@@ -590,6 +660,26 @@
       frameHost.appendChild(b);
     });
 
+    const bdHost = $('logo-backdrop-grid');
+    if (bdHost) {
+      bdHost.innerHTML = '';
+      A.MARKER_FRAMES.forEach(f => {
+        const b = el('button', { class: 'shape-btn' + (state.style.logo.backdrop === f.id ? ' active' : ''), type: 'button', title: f.name });
+        const holder = el('div');
+        holder.innerHTML = window.QRStyle.backdropPreview(f.id);
+        b.appendChild(holder.firstChild);
+        b.appendChild(el('i', null, f.name));
+        b.addEventListener('click', () => {
+          state.style.logo.backdrop = f.id;
+          state.presetName = '';
+          buildShapeGrids();
+          buildPresets();
+          update();
+        });
+        bdHost.appendChild(b);
+      });
+    }
+
     const eyeHost = $('eye-grid');
     eyeHost.innerHTML = '';
     A.MARKER_EYES.forEach(s => {
@@ -623,11 +713,11 @@
     { name: 'パステル', colors: ['#F472B6', '#A78BFA', '#60A5FA', '#34D399'] }
   ];
 
-  function buildMultiColorsList() {
-    const host = $('multi-colors-list');
+  function buildMultiColorsList(scope) {
+    const host = cq(scope, 'multi-colors-list');
     if (!host) return;
     host.innerHTML = '';
-    const p = getActivePaint();
+    const p = paintOfScope(scope);
     if (!Array.isArray(p.colors)) p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
     const colors = p.colors;
     colors.forEach((c, idx) => {
@@ -669,7 +759,7 @@
       host.appendChild(item);
     });
 
-    const addBtn = $('btn-add-color');
+    const addBtn = cq(scope, 'btn-add-color');
     if (addBtn) {
       const atMax = colors.length >= 8;
       addBtn.classList.toggle('hidden', atMax);
@@ -678,8 +768,8 @@
     }
   }
 
-  function buildMultiPalettes() {
-    const host = $('multi-palette-grid');
+  function buildMultiPalettes(scope) {
+    const host = cq(scope, 'multi-palette-grid');
     if (!host) return;
     host.innerHTML = '';
     MULTI_PALETTES.forEach(p => {
@@ -693,7 +783,8 @@
       btn.appendChild(dots);
       btn.appendChild(el('i', null, p.name));
       btn.addEventListener('click', () => {
-        getActivePaint().colors = p.colors.slice();
+        state.colorScope = scope;
+        paintOfScope(scope).colors = p.colors.slice();
         state.presetName = '';
         syncControls();
         buildPresets();
@@ -710,11 +801,11 @@
     return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('');
   }
 
-  function buildGradColorsList() {
-    const host = $('grad-colors-list');
+  function buildGradColorsList(scope) {
+    const host = cq(scope, 'grad-colors-list');
     if (!host) return;
     host.innerHTML = '';
-    const p = getActivePaint();
+    const p = paintOfScope(scope);
     const hasMid = !!p.mid;
     const items = hasMid
       ? [{ key: 'from', role: '開始', val: p.from || '#FC466B' },
@@ -775,7 +866,7 @@
       host.appendChild(elItem);
     });
 
-    const addBtn = $('btn-add-grad-color');
+    const addBtn = cq(scope, 'btn-add-grad-color');
     if (addBtn) {
       addBtn.classList.toggle('hidden', hasMid);
       addBtn.hidden = hasMid;
@@ -785,8 +876,9 @@
 
 
 
-  function buildSwatches() {
-    const host = $('swatch-host');
+  function buildSwatches(scope) {
+    const host = cq(scope, 'swatch-host');
+    if (!host) return;
     host.innerHTML = '';
     A.SWATCHES.forEach(group => {
       const g = el('div', { class: 'swatch-group' });
@@ -796,7 +888,8 @@
         const b = el('button', { class: 'sw', type: 'button', title: c, 'aria-label': c });
         b.style.background = c;
         b.addEventListener('click', () => {
-          const p = getActivePaint();
+          state.colorScope = scope;
+          const p = paintOfScope(scope);
           if (p.type === 'solid') {
             p.color = c;
           } else if (p.type === 'multi') {
@@ -824,8 +917,9 @@
     });
   }
 
-  function buildGradients() {
-    const host = $('grad-grid');
+  function buildGradients(scope) {
+    const host = cq(scope, 'grad-grid');
+    if (!host) return;
     host.innerHTML = '';
     A.GRADIENTS.forEach(g => {
       const b = el('button', { class: 'grad-btn', type: 'button', title: g.name });
@@ -833,7 +927,8 @@
       b.style.background = 'linear-gradient(' + (g.angle + 90) + 'deg, ' + stops.join(', ') + ')';
       b.appendChild(el('span', null, g.name));
       b.addEventListener('click', () => {
-        const p = getActivePaint();
+        state.colorScope = scope;
+        const p = paintOfScope(scope);
         p.from = g.from;
         p.mid = g.mid || '';
         p.to = g.to;
@@ -1420,52 +1515,36 @@
   // ------------------------------------------------------------------
   // 画面と状態の同期
   // ------------------------------------------------------------------
+  const asEl = x => (typeof x === 'string' ? $(x) : x);
+
   function setSeg(hostId, value, attr) {
-    const host = $(hostId);
+    const host = asEl(hostId);
     if (!host) return;
     Array.prototype.forEach.call(host.children, b => {
       b.classList.toggle('active', b.dataset[attr] === value);
     });
   }
 
-  function syncControls() {
-    const s = state.style;
+  // 色パネル1枚ぶんの表示を、その対象の塗りに合わせる
+  function syncColorPanel(scope) {
+    if (!colorPanel(scope)) return;
+    const target = scopeTarget(scope);
+    const p = paintOfScope(scope);
+    const isCell = target === 'cell';
+    const isBg = target === 'bg';
+    const isLogoBd = target === 'logobd';
+    // 背景とロゴの下地は「敷く面」なので、白・黒・透明まで選べる
+    const isPlate = isBg || isLogoBd;
 
-    $('opt-ec').value = state.ec;
-    $('opt-size').value = String(state.exportSize);
+    [['btn-mode-white', !isPlate], ['btn-mode-black', !isPlate],
+     ['btn-mode-none', !isPlate], ['btn-mode-auto', isCell]].forEach(pair => {
+      const b = cq(scope, pair[0]);
+      if (!b) return;
+      b.classList.toggle('hidden', pair[1]);
+      b.hidden = pair[1];
+    });
 
-    // 着色対象セグメント
-    setSeg('color-target-seg', state.colorTarget, 'target');
-
-    const p = getActivePaint();
-    const isCell = state.colorTarget === 'cell';
-    const isBg = state.colorTarget === 'bg';
-
-    const whiteBtn = $('btn-mode-white');
-    if (whiteBtn) {
-      whiteBtn.classList.toggle('hidden', !isBg);
-      whiteBtn.hidden = !isBg;
-    }
-
-    const blackBtn = $('btn-mode-black');
-    if (blackBtn) {
-      blackBtn.classList.toggle('hidden', !isBg);
-      blackBtn.hidden = !isBg;
-    }
-
-    const noneBtn = $('btn-mode-none');
-    if (noneBtn) {
-      noneBtn.classList.toggle('hidden', !isBg);
-      noneBtn.hidden = !isBg;
-    }
-
-    const autoBtn = $('btn-mode-auto');
-    if (autoBtn) {
-      autoBtn.classList.toggle('hidden', isCell);
-      autoBtn.hidden = isCell;
-    }
-
-    setSeg('color-mode-seg', p.type, 'mode');
+    setSeg(cq(scope, 'color-mode-seg'), p.type, 'mode');
 
     const isWhite = p.type === 'white';
     const isBlack = p.type === 'black';
@@ -1476,89 +1555,77 @@
     const isMulti = p.type === 'multi';
     const isImage = p.type === 'image';
 
-    const paneWhite = $('color-pane-white');
-    if (paneWhite) paneWhite.classList.toggle('hidden', !isWhite);
+    [['pane-white', isWhite], ['pane-black', isBlack], ['pane-auto', isAuto],
+     ['pane-none', isNone], ['pane-solid', isSolid], ['pane-grad', isGrad],
+     ['pane-multi', isMulti], ['pane-image', isImage]].forEach(pair => {
+      const pane = cq(scope, pair[0]);
+      if (pane) pane.classList.toggle('hidden', !pair[1]);
+    });
 
-    const paneBlack = $('color-pane-black');
-    if (paneBlack) paneBlack.classList.toggle('hidden', !isBlack);
-
-    const paneAuto = $('color-pane-auto');
-    if (paneAuto) paneAuto.classList.toggle('hidden', !isAuto);
-    const autoNotice = $('color-auto-notice');
+    const plateWord = isLogoBd ? 'ロゴの下地' : '背景';
+    const autoNotice = cq(scope, 'auto-notice');
     if (autoNotice) {
       autoNotice.innerHTML = isBg
         ? 'セルの色設定と連動します。<br>グラデーション・放射・画像・多色のテクスチャが指定の透明度で背景に反映されます。'
         : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
     }
+    const whiteNotice = cq(scope, 'white-notice');
+    if (whiteNotice) whiteNotice.textContent = plateWord + 'を不透明な白（#FFFFFF）に固定します。';
+    const blackNotice = cq(scope, 'black-notice');
+    if (blackNotice) blackNotice.textContent = plateWord + 'を不透明な黒（#000000）に固定します。';
+    const noneNotice = cq(scope, 'none-notice');
+    if (noneNotice) {
+      noneNotice.innerHTML = isLogoBd
+        ? 'ロゴの下地を描きません。<br>セルを消す範囲（下地の形）はそのまま残るので、背景が抜けて見えます。'
+        : '背景を透明にします。<br>透過PNGや透過SVGとして背景のない画像を書き出せます。';
+    }
 
-    const paneNone = $('color-pane-none');
-    if (paneNone) paneNone.classList.toggle('hidden', !isNone);
-
-    const paneSolid = $('color-pane-solid');
-    if (paneSolid) paneSolid.classList.toggle('hidden', !isSolid);
-
-    const paneGrad = $('color-pane-grad');
-    if (paneGrad) paneGrad.classList.toggle('hidden', !isGrad);
-
-    const paneMulti = $('color-pane-multi');
-    if (paneMulti) paneMulti.classList.toggle('hidden', !isMulti);
-
-    const paneImage = $('color-pane-image');
-    if (paneImage) paneImage.classList.toggle('hidden', !isImage);
-
-    const swatchHost = $('swatch-host');
+    const swatchHost = cq(scope, 'swatch-host');
     if (swatchHost) swatchHost.classList.toggle('hidden', isImage || isAuto || isNone || isWhite || isBlack);
 
-    const transRow = $('bg-transparency-row');
-    if (transRow) transRow.classList.toggle('hidden', !isBg || isNone || isWhite || isBlack);
-    const transVal = p.transparency !== undefined ? p.transparency : 80;
-    if ($('target-transparency')) $('target-transparency').value = transVal;
-    if ($('val-target-transparency')) $('val-target-transparency').textContent = transVal + '%';
+    const transRow = cq(scope, 'transparency-row');
+    if (transRow) transRow.classList.toggle('hidden', !isPlate || isNone || isWhite || isBlack);
+    const transVal = p.transparency !== undefined ? p.transparency : (isLogoBd ? 0 : 80);
+    const transInput = cq(scope, 'transparency');
+    if (transInput) transInput.value = transVal;
+    const transLabel = cq(scope, 'val-transparency');
+    if (transLabel) transLabel.textContent = transVal + '%';
 
-    const targetPicker = $('target-color-picker');
-    const targetHex = $('target-color-hex');
-    if (targetPicker) targetPicker.value = normHex(p.color, isBg ? '#FFFFFF' : '#111827');
-    if (targetHex) targetHex.value = normHex(p.color, isBg ? '#FFFFFF' : '#111827');
+    const fallback = isPlate ? '#FFFFFF' : '#111827';
+    const picker = cq(scope, 'color-picker');
+    const hex = cq(scope, 'color-hex');
+    if (picker) picker.value = normHex(p.color, fallback);
+    if (hex) hex.value = normHex(p.color, fallback);
 
-    const targetAngle = $('target-angle');
-    const valTargetAngle = $('val-target-angle');
-    if (targetAngle) targetAngle.value = p.angle || 45;
-    if (valTargetAngle) valTargetAngle.textContent = (p.angle || 45) + '°';
-    const gradAngleRow = $('grad-angle-row');
-    if (gradAngleRow) {
-      gradAngleRow.classList.toggle('hidden', p.type === 'radial');
+    const angle = cq(scope, 'angle');
+    if (angle) angle.value = p.angle || 45;
+    const angleLabel = cq(scope, 'val-angle');
+    if (angleLabel) angleLabel.textContent = (p.angle || 45) + '°';
+    const angleRow = cq(scope, 'angle-row');
+    if (angleRow) angleRow.classList.toggle('hidden', p.type === 'radial');
+
+    const thumb = cq(scope, 'image-thumb');
+    if (thumb) {
+      thumb.classList.toggle('hidden', !(isImage && p.src));
+      const img = cq(scope, 'image-thumb-img');
+      if (p.src && img) img.src = p.src;
     }
 
-    const imgThumb = $('target-image-thumb');
-    if (imgThumb) {
-      imgThumb.classList.toggle('hidden', !(isImage && p.src));
-      if (p.src) $('target-image-thumb-img').src = p.src;
-    }
+    if (isMulti) buildMultiColorsList(scope);
+    else if (isGrad) buildGradColorsList(scope);
+  }
 
-    if (isBg) {
-      $('hint-color').textContent =
-        p.type === 'white' ? '白' :
-        p.type === 'black' ? '黒' :
-        p.type === 'none' ? '透明' :
-        p.type === 'auto' ? 'セルの色' :
-        p.type === 'solid' ? '単色' :
-        p.type === 'radial' ? '放射' :
-        p.type === 'multi' ? '多色' :
-        p.type === 'image' ? '画像' : 'グラデーション';
-    } else {
-      const gradColorCount = s.fg.mid ? '3色' : '2色';
-      $('hint-color').textContent =
-        s.fg.type === 'solid' ? '単色' :
-        s.fg.type === 'radial' ? '放射 (' + gradColorCount + ')' :
-        s.fg.type === 'multi' ? '多色 (' + s.fg.colors.length + '色)' :
-        s.fg.type === 'image' ? '画像' :
-        'グラデーション (' + gradColorCount + ')';
-    }
-    if (isMulti) {
-      buildMultiColorsList();
-    } else if (isGrad) {
-      buildGradColorsList();
-    }
+  function syncControls() {
+    const s = state.style;
+
+    $('opt-ec').value = state.ec;
+    $('opt-size').value = String(state.exportSize);
+
+    COLOR_SCOPES.forEach(syncColorPanel);
+
+    // 見出しの脇に出す要約
+    $('hint-shape-color').textContent = paintLabel(state.style.fg);
+    $('hint-bg').textContent = paintLabel(state.style.bg);
 
     $('opt-cellscale').value = s.cellScale;
     $('val-cellscale').textContent = Math.round(s.cellScale * 100) + '%';
@@ -1685,8 +1752,6 @@
     $('val-logosize').textContent = Math.round(s.logo.size * 100) + '%';
     $('logo-pad').value = s.logo.pad;
     $('val-logopad').textContent = Math.round(s.logo.pad * 100) + '%';
-    setSeg('logo-backdrop', s.logo.backdrop, 'v');
-    $('logo-bd-color').value = normHex(s.logo.backdropColor, '#FFFFFF');
     $('logo-thumb').classList.toggle('hidden', !(s.logo.type === 'image' && s.logo.src));
     if (s.logo.src) $('logo-thumb-img').src = s.logo.src;
     $('hint-logo').textContent = s.logo.type === 'none' ? 'なし'
@@ -2048,9 +2113,9 @@
   // 配線
   // ------------------------------------------------------------------
   function bindColor(pickerId, hexId, apply) {
-    const picker = $(pickerId);
+    const picker = asEl(pickerId);
     if (!picker) return;
-    const hex = hexId ? $(hexId) : null;
+    const hex = hexId ? asEl(hexId) : null;
     picker.addEventListener('input', () => {
       const v = normHex(picker.value, '#000000');
       if (hex) hex.value = v;
@@ -2074,7 +2139,8 @@
   }
 
   function bindSeg(hostId, attr, apply) {
-    const host = $(hostId);
+    const host = asEl(hostId);
+    if (!host) return;
     Array.prototype.forEach.call(host.children, b => {
       b.addEventListener('click', () => {
         apply(b.dataset[attr]);
@@ -2087,10 +2153,12 @@
   }
 
   function bindRange(id, labelId, format, apply) {
-    const input = $(id);
+    const input = asEl(id);
+    if (!input) return;
+    const label = asEl(labelId);
     input.addEventListener('input', () => {
       const v = parseFloat(input.value);
-      $(labelId).textContent = format(v);
+      if (label) label.textContent = format(v);
       apply(v);
       state.presetName = '';
       update({ debounceVerify: true });
@@ -2104,63 +2172,126 @@
     });
   }
 
+  // テンプレートから色パネルを起こし、そのスコープ専用に結線する
+  function buildColorPanels() {
+    const tpl = $('color-panel-tpl');
+    if (!tpl) return;
+    COLOR_SCOPES.forEach(scope => {
+      const host = colorPanel(scope);
+      if (!host || host.childElementCount) return;
+      host.appendChild(tpl.content.cloneNode(true));
+    });
+  }
+
+  function wireColorPanel(scope) {
+    if (!colorPanel(scope)) return;
+    const touch = () => { state.colorScope = scope; };
+
+    bindSeg(cq(scope, 'color-mode-seg'), 'mode', v => {
+      touch();
+      paintOfScope(scope).type = v;
+    });
+
+    bindColor(cq(scope, 'color-picker'), cq(scope, 'color-hex'), v => {
+      touch();
+      paintOfScope(scope).color = v;
+    });
+    bindRange(cq(scope, 'angle'), cq(scope, 'val-angle'), v => v + '°', v => {
+      touch();
+      paintOfScope(scope).angle = v;
+    });
+    bindRange(cq(scope, 'transparency'), cq(scope, 'val-transparency'), v => Math.round(v) + '%', v => {
+      touch();
+      paintOfScope(scope).transparency = Math.round(v);
+    });
+
+    const addColor = cq(scope, 'btn-add-color');
+    if (addColor) addColor.addEventListener('click', () => {
+      touch();
+      const p = paintOfScope(scope);
+      if (!Array.isArray(p.colors)) p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
+      if (p.colors.length >= 8) return;
+      const candidates = ['#EF4444', '#F59E0B', '#10B981', '#06B6D4', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'];
+      p.colors.push(candidates.find(c => p.colors.indexOf(c) < 0) ||
+        candidates[Math.floor(Math.random() * candidates.length)]);
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+
+    const shuffleColor = cq(scope, 'btn-shuffle-color');
+    if (shuffleColor) shuffleColor.addEventListener('click', () => {
+      touch();
+      const p = paintOfScope(scope);
+      p.seed = (p.seed || 0) + 1;
+      update();
+    });
+
+    const addGrad = cq(scope, 'btn-add-grad-color');
+    if (addGrad) addGrad.addEventListener('click', () => {
+      touch();
+      const p = paintOfScope(scope);
+      if (p.mid) return;
+      p.mid = blendHex(p.from || '#FC466B', p.to || '#3F5EFB');
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+
+    // 画像
+    const drop = cq(scope, 'image-drop');
+    const fileInput = cq(scope, 'image-file');
+    if (drop && fileInput) {
+      drop.addEventListener('click', () => { touch(); fileInput.click(); });
+      drop.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touch(); fileInput.click(); }
+      });
+      ['dragenter', 'dragover'].forEach(nm => drop.addEventListener(nm, e => {
+        e.preventDefault(); e.stopPropagation(); drop.classList.add('dragover');
+      }));
+      ['dragleave', 'drop'].forEach(nm => drop.addEventListener(nm, e => {
+        e.preventDefault(); e.stopPropagation(); drop.classList.remove('dragover');
+      }));
+      drop.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation();
+        touch();
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+          loadTargetImage(e.dataTransfer.files[0]);
+        } else if (e.dataTransfer) {
+          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+          if (url) loadTargetImageUrl(url);
+        }
+      });
+      fileInput.addEventListener('change', e => {
+        touch();
+        if (e.target.files && e.target.files.length) loadTargetImage(e.target.files[0]);
+      });
+    }
+    const clearBtn = cq(scope, 'btn-image-clear');
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      touch();
+      const p = paintOfScope(scope);
+      p.src = '';
+      p.type = (scope === 'frame' || scope === 'eye') ? 'auto' : 'solid';
+      if (fileInput) fileInput.value = '';
+      syncControls();
+      update();
+    });
+    const urlBtn = cq(scope, 'btn-image-url');
+    const urlInput = cq(scope, 'image-url');
+    if (urlBtn && urlInput) {
+      urlBtn.addEventListener('click', () => { touch(); loadTargetImageUrl(urlInput.value); });
+      urlInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); touch(); loadTargetImageUrl(urlInput.value); }
+      });
+    }
+  }
+
   function wire() {
     $('opt-ec').addEventListener('change', e => { state.ec = e.target.value; syncControls(); update(); });
     $('opt-size').addEventListener('change', e => { state.exportSize = parseInt(e.target.value, 10); save(); });
 
-    bindSeg('color-target-seg', 'target', v => {
-      state.colorTarget = v;
-      syncControls();
-    });
-
-    bindSeg('color-mode-seg', 'mode', v => {
-      const p = getActivePaint();
-      p.type = v;
-    });
-
-    const btnAddColor = $('btn-add-color');
-    if (btnAddColor) {
-      btnAddColor.addEventListener('click', () => {
-        const p = getActivePaint();
-        if (!Array.isArray(p.colors)) p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
-        const colors = p.colors;
-        if (colors.length >= 8) return;
-        const candidates = ['#EF4444', '#F59E0B', '#10B981', '#06B6D4', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'];
-        const next = candidates.find(c => colors.indexOf(c) < 0) || candidates[Math.floor(Math.random() * candidates.length)];
-        colors.push(next);
-        state.presetName = '';
-        syncControls();
-        update();
-      });
-    }
-
-    const btnShuffle = $('btn-shuffle-color');
-    if (btnShuffle) {
-      btnShuffle.addEventListener('click', () => {
-        const p = getActivePaint();
-        p.seed = (p.seed || 0) + 1;
-        update();
-      });
-    }
-
-    const btnAddGradColor = $('btn-add-grad-color');
-    if (btnAddGradColor) {
-      btnAddGradColor.addEventListener('click', () => {
-        const p = getActivePaint();
-        if (p.mid) return;
-        p.mid = blendHex(p.from || '#FC466B', p.to || '#3F5EFB');
-        state.presetName = '';
-        syncControls();
-        update();
-      });
-    }
-
-    bindColor('target-color-picker', 'target-color-hex', v => { getActivePaint().color = v; });
-    bindRange('target-angle', 'val-target-angle', v => v + '°', v => { getActivePaint().angle = v; });
-    bindRange('target-transparency', 'val-target-transparency', v => Math.round(v) + '%', v => {
-      const p = getActivePaint();
-      p.transparency = Math.round(v);
-    });
+    COLOR_SCOPES.forEach(wireColorPanel);
 
     bindSeg('logo-mode', 'mode', v => {
       state.style.logo.type = v;
@@ -2174,10 +2305,8 @@
         buildIconGrid();
       }
     });
-    bindSeg('logo-backdrop', 'v', v => { state.style.logo.backdrop = v; });
 
     bindColor('logo-text-color', null, v => { state.style.logo.color = v; });
-    bindColor('logo-bd-color', null, v => { state.style.logo.backdropColor = v; });
 
     bindSeg('logo-color-mode-seg', 'mode', v => {
       getLogoPaint().type = v;
@@ -2506,52 +2635,6 @@
       });
     }
 
-    // ---- 対象画像（セル・マーカー枠・マーカー目） ----
-    const targetDrop = $('target-image-drop');
-    const targetFileInput = $('target-image-file');
-    if (targetDrop && targetFileInput) {
-      targetDrop.addEventListener('click', () => targetFileInput.click());
-      targetDrop.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); targetFileInput.click(); }
-      });
-      ['dragenter', 'dragover'].forEach(name => targetDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); targetDrop.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(name => targetDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); targetDrop.classList.remove('dragover');
-      }));
-      targetDrop.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation(); targetDrop.classList.remove('dragover');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadTargetImage(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadTargetImageUrl(url);
-        }
-      });
-      targetFileInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) loadTargetImage(e.target.files[0]);
-      });
-    }
-    const btnTargetImgClear = $('btn-target-image-clear');
-    if (btnTargetImgClear) {
-      btnTargetImgClear.addEventListener('click', () => {
-        const p = getActivePaint();
-        p.src = '';
-        p.type = (state.colorTarget === 'cell' || state.colorTarget === 'bg') ? 'solid' : 'auto';
-        if (targetFileInput) targetFileInput.value = '';
-        syncControls();
-        update();
-      });
-    }
-    const btnTargetImgUrl = $('btn-target-image-url');
-    const targetImgUrlInput = $('target-image-url');
-    if (btnTargetImgUrl && targetImgUrlInput) {
-      btnTargetImgUrl.addEventListener('click', () => loadTargetImageUrl(targetImgUrlInput.value));
-      targetImgUrlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); loadTargetImageUrl(targetImgUrlInput.value); }
-      });
-    }
 
     // ---- プレビュー領域への画像ドロップ（選択中の対象画像として反映） ----
     const canvasCard = document.querySelector('.canvas-card');
@@ -2687,9 +2770,11 @@
   }
 
   function getTargetLabel() {
-    return state.colorTarget === 'cell' ? 'セル' :
-           state.colorTarget === 'frame' ? 'マーカー枠' :
-           state.colorTarget === 'eye' ? 'マーカー目' : '背景';
+    const t = scopeTarget(state.colorScope);
+    return t === 'cell' ? 'セル' :
+           t === 'frame' ? 'マーカー枠' :
+           t === 'eye' ? 'マーカー目' :
+           t === 'logobd' ? 'ロゴの下地' : '背景';
   }
 
   function loadTargetImage(file) {
@@ -2724,7 +2809,7 @@
       p.src = dataUrl;
       p.type = 'image';
       state.presetName = '';
-      const input = $('target-image-url');
+      const input = cq(state.colorScope, 'image-url');
       if (input) input.value = '';
       syncControls();
       update();
@@ -2806,9 +2891,12 @@
     buildTypeFields();
     buildPresets();
     buildShapeGrids();
-    buildSwatches();
-    buildGradients();
-    buildMultiPalettes();
+    buildColorPanels();
+    COLOR_SCOPES.forEach(scope => {
+      buildSwatches(scope);
+      buildGradients(scope);
+      buildMultiPalettes(scope);
+    });
     buildLogoSwatches();
     buildLogoGradients();
     buildLogoMultiPalettes();

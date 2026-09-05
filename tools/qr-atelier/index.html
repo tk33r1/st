@@ -460,6 +460,8 @@
     .sec > summary:hover { background: var(--panel-2); }
     .sec-body { padding: 4px 15px 16px; display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--rule); }
 
+    .sec-rule { height: 1px; background: var(--rule); margin: 2px 0; }
+    .color-panel { display: flex; flex-direction: column; gap: 14px; }
     .field { display: flex; flex-direction: column; gap: 6px; }
     .field > label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em;
       text-transform: uppercase; color: var(--ink-2); }
@@ -837,11 +839,11 @@
           </div>
         </details>
 
-        <!-- 形 -->
+        <!-- セルとマーカー -->
         <details class="sec">
           <summary>
             <span class="st-lbl">セルとマーカー</span>
-            <span class="hint" id="hint-shape">角丸</span>
+            <span class="hint"><span id="hint-shape">角丸</span> · <span id="hint-shape-color">単色</span></span>
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
@@ -866,139 +868,43 @@
             </div>
             <p class="note" style="margin-top:-4px;margin-bottom:12px">密度を上げるとマス目が細かくなります。デザインの都合で細かくしたいときだけ動かしてください（読み取りやすさは下がります）。</p>
             <div class="field">
+              <label>セルの色</label>
+              <div class="color-panel" data-scope="cell"></div>
+            </div>
+
+            <div class="sec-rule"></div>
+
+            <div class="field">
               <label>マーカーの枠</label>
               <div class="shape-grid" id="frame-grid"></div>
             </div>
             <div class="field">
+              <label>マーカーの枠の色</label>
+              <div class="color-panel" data-scope="frame"></div>
+            </div>
+
+            <div class="sec-rule"></div>
+
+            <div class="field">
               <label>マーカーの目</label>
               <div class="shape-grid" id="eye-grid"></div>
+            </div>
+            <div class="field">
+              <label>マーカーの目の色</label>
+              <div class="color-panel" data-scope="eye"></div>
             </div>
           </div>
         </details>
 
-        <!-- 色 -->
+        <!-- 背景 -->
         <details class="sec">
           <summary>
-            <span class="st-lbl">カラー</span>
-            <span class="hint" id="hint-color">単色</span>
+            <span class="st-lbl">背景</span>
+            <span class="hint" id="hint-bg">単色</span>
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
-            <!-- 着色対象切り替えタブ -->
-            <div class="field">
-              <label>着色対象</label>
-              <div class="st-seg" id="color-target-seg">
-                <button type="button" data-target="cell" class="active">セル</button>
-                <button type="button" data-target="frame">マーカーの枠</button>
-                <button type="button" data-target="eye">マーカーの目</button>
-                <button type="button" data-target="bg">背景</button>
-              </div>
-            </div>
-
-            <!-- カラーモード切り替え -->
-            <div class="field">
-              <label id="color-mode-label">カラーモード</label>
-              <div class="st-seg seg-sm" id="color-mode-seg">
-                <button type="button" data-mode="white" id="btn-mode-white" class="hidden">白</button>
-                <button type="button" data-mode="black" id="btn-mode-black" class="hidden">黒</button>
-                <button type="button" data-mode="none" id="btn-mode-none" class="hidden">透明</button>
-                <button type="button" data-mode="auto" id="btn-mode-auto" class="hidden">セルの色</button>
-                <button type="button" data-mode="solid" class="active">単色</button>
-                <button type="button" data-mode="multi">多色</button>
-                <button type="button" data-mode="linear">グラデーション</button>
-                <button type="button" data-mode="radial">放射</button>
-                <button type="button" data-mode="image">画像</button>
-              </div>
-            </div>
-
-            <!-- パネル：白 (white) -->
-            <div id="color-pane-white" class="hidden">
-              <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
-                背景を不透明な白（#FFFFFF）に固定します。
-              </div>
-            </div>
-
-            <!-- パネル：黒 (black) -->
-            <div id="color-pane-black" class="hidden">
-              <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
-                背景を不透明な黒（#000000）に固定します。
-              </div>
-            </div>
-
-            <!-- パネル：セルの色 (auto) -->
-            <div id="color-pane-auto" class="hidden">
-              <div class="notice" id="color-auto-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
-                セルの色設定と連動します。<br>
-                グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。
-              </div>
-            </div>
-
-            <!-- パネル：透明 (none) -->
-            <div id="color-pane-none" class="hidden">
-              <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
-                背景を透明にします。<br>
-                透過PNGや透過SVGとして背景のない画像を書き出せます。
-              </div>
-            </div>
-
-            <!-- パネル：単色 -->
-            <div id="color-pane-solid">
-              <div class="color-row">
-                <input type="color" id="target-color-picker" value="#111827" aria-label="選択中の色">
-                <input type="text" id="target-color-hex" value="#111827" spellcheck="false" aria-label="選択中の色のカラーコード">
-              </div>
-            </div>
-
-            <!-- パネル：グラデーション / 放射 -->
-            <div id="color-pane-grad" class="hidden">
-              <div class="grad-grid" id="grad-grid"></div>
-              <div id="grad-colors-list" class="multi-colors-list" style="margin-top:10px"></div>
-              <div class="multi-actions">
-                <button type="button" id="btn-add-grad-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
-                <div class="slider-row" id="grad-angle-row" style="flex:1;">
-                  <span class="st-lbl">角度</span>
-                  <input type="range" id="target-angle" min="0" max="359" step="1" value="45">
-                  <span class="val" id="val-target-angle">45°</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- パネル：多色 -->
-            <div id="color-pane-multi" class="hidden">
-              <div id="multi-colors-list" class="multi-colors-list"></div>
-              <div class="multi-actions">
-                <button type="button" id="btn-add-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
-                <button type="button" id="btn-shuffle-color" class="st-btn-quiet btn-sm" title="色の配置をランダムに入れ替えます">配置をシャッフル</button>
-              </div>
-              <div class="multi-presets-title">多色パレット</div>
-              <div id="multi-palette-grid" class="multi-palette-grid"></div>
-            </div>
-
-            <!-- パネル：画像 -->
-            <div id="color-pane-image" class="hidden">
-              <div class="logo-drop" id="target-image-drop" role="button" tabindex="0">
-                画像をドロップ、またはクリックして選択（PNG / JPEG / WebP / SVG）
-                <input type="file" id="target-image-file" accept="image/*" class="hidden">
-              </div>
-              <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
-                <input type="url" id="target-image-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false">
-                <button type="button" id="btn-target-image-url" class="st-btn-quiet btn-sm">適用</button>
-              </div>
-              <div class="logo-thumb hidden" id="target-image-thumb" style="margin-top:10px">
-                <img id="target-image-thumb-img" alt="選んだ画像">
-                <button class="st-btn-quiet" type="button" id="btn-target-image-clear">外す</button>
-              </div>
-              <p class="note" style="margin-top:8px">※ コントラストがはっきりした画像を選ぶと読み取りやすくなります。</p>
-            </div>
-
-            <!-- 背景透明度スライダー（背景選択時のみ表示） -->
-            <div class="slider-row hidden" id="bg-transparency-row" style="margin-top:12px; padding:8px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1);">
-              <span class="st-lbl" style="font-weight:600;">透明度</span>
-              <input type="range" id="target-transparency" min="0" max="100" step="1" value="80">
-              <span class="val" id="val-target-transparency">80%</span>
-            </div>
-
-            <div id="swatch-host" class="swatch-group"></div>
+            <div class="color-panel" data-scope="bg"></div>
           </div>
         </details>
 
@@ -1225,15 +1131,12 @@
               </div>
               <div class="field">
                 <label>ロゴの下地</label>
-                <div class="st-seg seg-sm" id="logo-backdrop">
-                  <button type="button" data-v="rounded" class="active">角丸</button>
-                  <button type="button" data-v="circle">円</button>
-                  <button type="button" data-v="none">なし</button>
-                </div>
-                <div class="color-row" style="margin-top:8px">
-                  <input type="color" id="logo-bd-color" value="#FFFFFF" aria-label="下地の色">
-                  <span class="sub">下地は、下のセルを消してロゴを読みやすくします。</span>
-                </div>
+                <div class="shape-grid" id="logo-backdrop-grid"></div>
+                <p class="note" style="margin-top:8px">※ 下地は、下のセルを消してロゴを読みやすくします。</p>
+              </div>
+              <div class="field">
+                <label>下地の色</label>
+                <div class="color-panel" data-scope="logobd"></div>
               </div>
             </div>
           </div>
@@ -1303,7 +1206,7 @@
         <li>セル（データの点）16種類 — 四角・角丸・ドット・六角形・八角形・フラワー・リーフ・雫・ひし形・星・ハート・十字・ばってん・縦横ライン</li>
         <li>マーカー（三隅の目印）— 枠9種類 × 目16種類、色も枠と目で別々に指定できます</li>
         <li>色 — 単色スウォッチ68色、グラデーション14種、角度指定つきの線形／放射グラデーション</li>
-        <li>中央のロゴ — SNSアイコン19種、汎用アイコン24種、手持ちの画像、絵文字や文字</li>
+        <li>中央のロゴ — SNS・ブランドアイコン32種、汎用アイコン24種、手持ちの画像、絵文字や文字</li>
         <li>フレーム — 枠線・ラベルの2種類に、好きな一言を添えられます</li>
         <li>書き出し — PNG / JPEG / WebP（最大4096px）と、印刷に強いSVG</li>
       </ul>
@@ -1422,10 +1325,105 @@
     })();
   </script>
 
+      <!-- 色パネル（セル・マーカー／背景／ロゴの下地の3か所に同じものを立てる） -->
+      <template id="color-panel-tpl">
+        <div class="field">
+          <div class="st-seg seg-sm" data-cid="color-mode-seg">
+            <button type="button" data-mode="white" data-cid="btn-mode-white" class="hidden">白</button>
+            <button type="button" data-mode="black" data-cid="btn-mode-black" class="hidden">黒</button>
+            <button type="button" data-mode="none" data-cid="btn-mode-none" class="hidden">透明</button>
+            <button type="button" data-mode="auto" data-cid="btn-mode-auto" class="hidden">セルの色</button>
+            <button type="button" data-mode="solid" class="active">単色</button>
+            <button type="button" data-mode="multi">多色</button>
+            <button type="button" data-mode="linear">グラデーション</button>
+            <button type="button" data-mode="radial">放射</button>
+            <button type="button" data-mode="image">画像</button>
+          </div>
+        </div>
+
+        <div data-cid="pane-white" class="hidden">
+          <div class="notice" data-cid="white-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+            背景を不透明な白（#FFFFFF）に固定します。
+          </div>
+        </div>
+
+        <div data-cid="pane-black" class="hidden">
+          <div class="notice" data-cid="black-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+            背景を不透明な黒（#000000）に固定します。
+          </div>
+        </div>
+
+        <div data-cid="pane-auto" class="hidden">
+          <div class="notice" data-cid="auto-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+            セルの色設定と連動します。
+          </div>
+        </div>
+
+        <div data-cid="pane-none" class="hidden">
+          <div class="notice" data-cid="none-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+            背景を透明にします。
+          </div>
+        </div>
+
+        <div data-cid="pane-solid">
+          <div class="color-row">
+            <input type="color" data-cid="color-picker" value="#111827" aria-label="選択中の色">
+            <input type="text" data-cid="color-hex" value="#111827" spellcheck="false" aria-label="選択中の色のカラーコード">
+          </div>
+        </div>
+
+        <div data-cid="pane-grad" class="hidden">
+          <div class="grad-grid" data-cid="grad-grid"></div>
+          <div data-cid="grad-colors-list" class="multi-colors-list" style="margin-top:10px"></div>
+          <div class="multi-actions">
+            <button type="button" data-cid="btn-add-grad-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+            <div class="slider-row" data-cid="angle-row" style="flex:1;">
+              <span class="st-lbl">角度</span>
+              <input type="range" data-cid="angle" min="0" max="359" step="1" value="45" aria-label="グラデーションの角度">
+              <span class="val" data-cid="val-angle">45°</span>
+            </div>
+          </div>
+        </div>
+
+        <div data-cid="pane-multi" class="hidden">
+          <div data-cid="multi-colors-list" class="multi-colors-list"></div>
+          <div class="multi-actions">
+            <button type="button" data-cid="btn-add-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+            <button type="button" data-cid="btn-shuffle-color" class="st-btn-quiet btn-sm" title="色の配置をランダムに入れ替えます">配置をシャッフル</button>
+          </div>
+          <div class="multi-presets-title">多色パレット</div>
+          <div data-cid="multi-palette-grid" class="multi-palette-grid"></div>
+        </div>
+
+        <div data-cid="pane-image" class="hidden">
+          <div class="logo-drop" data-cid="image-drop" role="button" tabindex="0">
+            画像をドロップ、またはクリックして選択（PNG / JPEG / WebP / SVG）
+            <input type="file" data-cid="image-file" accept="image/*" class="hidden">
+          </div>
+          <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
+            <input type="url" data-cid="image-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false" aria-label="画像URL">
+            <button type="button" data-cid="btn-image-url" class="st-btn-quiet btn-sm">適用</button>
+          </div>
+          <div class="logo-thumb hidden" data-cid="image-thumb" style="margin-top:10px">
+            <img data-cid="image-thumb-img" alt="選んだ画像">
+            <button class="st-btn-quiet" type="button" data-cid="btn-image-clear">外す</button>
+          </div>
+          <p class="note" style="margin-top:8px">※ コントラストがはっきりした画像を選ぶと読み取りやすくなります。</p>
+        </div>
+
+        <div class="slider-row hidden" data-cid="transparency-row" style="margin-top:12px; padding:8px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1);">
+          <span class="st-lbl" style="font-weight:600;">透明度</span>
+          <input type="range" data-cid="transparency" min="0" max="100" step="1" value="80" aria-label="透明度">
+          <span class="val" data-cid="val-transparency">80%</span>
+        </div>
+
+        <div data-cid="swatch-host" class="swatch-group"></div>
+      </template>
+
   <script src="qr-core.js?v=20260903"></script>
-  <script src="qr-style.js?v=20260905"></script>
-  <script src="qr-assets.js?v=20260904_2"></script>
+  <script src="qr-style.js?v=20260905_2"></script>
+  <script src="qr-assets.js?v=20260905"></script>
   <script src="qr-verify.js?v=20260904"></script>
-  <script src="app.js?v=20260905"></script>
+  <script src="app.js?v=20260905_2"></script>
 </body>
 </html>
