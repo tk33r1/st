@@ -517,9 +517,8 @@
     return Math.hypot(ax - inner, ay - inner) <= r;
   }
 
-  // 旧データ（backdropColor と backdrop:'none'）も受けられるようにして塗りを取り出す。
-  // 'auto' は「背景の色」。bgPaint は白・黒・セルの色をほどいた後のものを渡すこと。
-  function backdropPaintOf(logo, bgPaint) {
+  // 旧データ（backdropColor と backdrop:'none'）も受けられるようにして塗りを取り出す
+  function backdropPaintOf(logo, fg) {
     let p = logo.backdropPaint;
     if (!p || !p.type) {
       p = logo.backdrop === 'none'
@@ -529,8 +528,7 @@
     if (p.type === 'white') return { type: 'solid', color: '#FFFFFF', transparency: 0 };
     if (p.type === 'black') return { type: 'solid', color: '#000000', transparency: 0 };
     if (p.type === 'auto') {
-      if (!bgPaint || bgPaint.type === 'none') return { type: 'none' };
-      return Object.assign({}, bgPaint, {
+      return Object.assign({}, fg, {
         transparency: p.transparency !== undefined ? p.transparency : 0
       });
     }
@@ -940,14 +938,12 @@
     const bgTransparency = bgPaint.transparency !== undefined ? Number(bgPaint.transparency) : 80;
     const bgOpacity = bgPaint.type === 'none' ? 0 : Math.max(0, Math.min(1, (100 - bgTransparency) / 100));
 
-    // 背景モザイクのタイルの大きさ。ロゴの下地を「背景の色」にしたときも同じ刻みを使う
-    const bgTile = Math.max(1.8, Math.min(2.6, bgBox.w / 18));
-
     function buildBgMosaic(box, r, colors, seed, opac) {
       const clipId = uid + 'bgc';
       defs += '<clipPath id="' + clipId + '"><path d="' + rectPath(box.x, box.y, box.w, box.h, r) + '"/></clipPath>';
+      const tileSize = Math.max(1.8, Math.min(2.6, box.w / 18));
       return '<g clip-path="url(#' + clipId + ')"' + (opac < 1 ? ' opacity="' + n(opac) + '"' : '') + '>' +
-        mosaicTiles(box, colors, seed, bgTile, null, 103) + '</g>';
+        mosaicTiles(box, colors, seed, tileSize, null, 103) + '</g>';
     }
 
     const mfPaint = st.markerFramePaint || (st.markerFrameColor ? { type: 'solid', color: st.markerFrameColor } : { type: 'auto' });
@@ -1016,7 +1012,7 @@
 
     // ロゴ
     if (hasLogo) {
-      const bdPaint = backdropPaintOf(logo, bgPaint);
+      const bdPaint = backdropPaintOf(logo, st.fg);
       if (bdPaint.type !== 'none') {
         const d = backdropPath(cx, cy, knockSide, bdStyle);
         const half = knockSide / 2;
@@ -1028,10 +1024,10 @@
           body += '<path d="' + d + '" fill="' + esc(bdPaint.color || '#FFFFFF') + '"' +
             (bdOp < 1 ? ' fill-opacity="' + n(bdOp) + '"' : '') + '/>';
         } else {
-          // 「背景の色」のときは、背景のモザイクと刻みも原点もそろえて模様をつなげる
-          const autoOpts = (logo.backdropPaint && logo.backdropPaint.type === 'auto')
-            ? { tile: bgTile, origin: { x: bgBox.x, y: bgBox.y }, seedShift: 103 } : null;
-          const layer = paintedShape(bdPaint, bdBox, uid + 'bd', '<path d="' + d + '"/>', autoOpts);
+          // セルと同じ模様を下地にも通すため、多色はモジュール格子に合わせる
+          const cellOpts = (logo.backdropPaint && logo.backdropPaint.type === 'auto')
+            ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+          const layer = paintedShape(bdPaint, bdBox, uid + 'bd', '<path d="' + d + '"/>', cellOpts);
           if (layer) {
             defs += layer.defs;
             body += op ? '<g' + op + '>' + layer.body + '</g>' : layer.body;
