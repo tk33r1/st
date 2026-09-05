@@ -163,7 +163,10 @@
     minVersion: 1,
     exportSize: 1024,
     presetName: '',
+    presetCategory: 'all',
     iconGroup: 'brand',
+    frameTopIconGroup: 'brand',
+    frameBottomIconGroup: 'brand',
     colorScope: 'cell',  // 最後に触った色パネル（＝着色対象）
     previewChecker: 'auto', // 'auto' | 'light' | 'dark'
     style: JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS))
@@ -172,15 +175,87 @@
 
   // 色の設定パネルは着色対象ごとに1枚ずつ、その対象の形の設定のすぐ下に置く。
   // 切り替えるタブはないので、スコープ名がそのまま対象名になる。
-  const COLOR_SCOPES = ['cell', 'frame', 'eye', 'bg', 'logobd'];
+  const COLOR_SCOPES = ['cell', 'frame', 'eye', 'bg', 'logobd', 'frameborder', 'framelabel', 'frametext', 'framebd'];
+
+  // 画像の塗りの倍率（描画エンジンと同じ範囲。UI では % で見せる）
+  const IMG_SCALE_MIN = (window.QRStyle && window.QRStyle.IMG_SCALE_MIN) || 0.2;
+  const IMG_SCALE_MAX = (window.QRStyle && window.QRStyle.IMG_SCALE_MAX) || 4;
+
+  function imgScalePct(p) {
+    const v = clampNum(p && p.imgScale, IMG_SCALE_MIN, IMG_SCALE_MAX, 1);
+    return Math.round(v * 100);
+  }
+
+  // 画像モードのときだけ出す拡大・縮小スライダー
+  function syncImageScaleRow(row, input, label, paint, visible) {
+    const pct = imgScalePct(paint);
+    if (row) row.classList.toggle('hidden', !visible);
+    if (input) input.value = pct;
+    if (label) label.textContent = pct + '%';
+  }
 
   function scopeTarget(scope) { return scope; }
+
+  function getFrameLinePaint() {
+    if (!state.style.frame) {
+      state.style.frame = { type: 'none', pos: 'bottom', text: 'スキャンしてね', font: 'sans', color: '#111827', textColor: '#FFFFFF', radius: 3 };
+    }
+    if (!state.style.frame.paint) {
+      state.style.frame.paint = {
+        type: 'auto',
+        color: state.style.frame.color || '#111827',
+        from: '#111827',
+        mid: '',
+        to: '#2563EB',
+        angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'],
+        seed: 0,
+        src: '',
+        transparency: 0
+      };
+    }
+    return state.style.frame.paint;
+  }
+
+  function getFrameTextPaint() {
+    if (!state.style.frame) {
+      state.style.frame = { type: 'none', pos: 'bottom', text: 'スキャンしてね', font: 'sans', color: '#111827', textColor: '#FFFFFF', radius: 3 };
+    }
+    if (!state.style.frame.textPaint) {
+      state.style.frame.textPaint = {
+        type: 'solid',
+        color: state.style.frame.textColor || '#FFFFFF',
+        from: '#FC466B',
+        mid: '',
+        to: '#3F5EFB',
+        angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'],
+        seed: 0,
+        src: '',
+        transparency: 0
+      };
+    }
+    return state.style.frame.textPaint;
+  }
+
+  // ラベルの中身の下地の塗り。ロゴの下地と同じ 9 モードを持つが、
+  // 既定は「なし」なので、選ぶまでは今までどおり板は敷かれない。
+  function getFrameBackdropPaint() {
+    const fr = state.style.frame;
+    if (!fr.backdropPaint || !fr.backdropPaint.type) {
+      fr.backdropPaint = { type: 'none', color: '#FFFFFF', transparency: 0 };
+    }
+    return fr.backdropPaint;
+  }
 
   function paintOf(target) {
     if (target === 'frame') return state.style.markerFramePaint;
     if (target === 'eye') return state.style.markerEyePaint;
     if (target === 'bg') return state.style.bg;
     if (target === 'logobd') return getLogoBackdropPaint();
+    if (target === 'frameborder' || target === 'framelabel') return getFrameLinePaint();
+    if (target === 'frametext') return getFrameTextPaint();
+    if (target === 'framebd') return getFrameBackdropPaint();
     return state.style.fg;
   }
 
@@ -229,7 +304,7 @@
       state.style.logo.paint = {
         type: 'brand', color: state.style.logo.color || '#111827',
         from: '#111827', mid: '', to: '#2563EB', angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: ''
+        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
       };
     }
     return state.style.logo.paint;
@@ -260,7 +335,26 @@
       if (copy.style.markerEyePaint && copy.style.markerEyePaint.src && copy.style.markerEyePaint.src.length > 300000) {
         copy.style.markerEyePaint.src = '';
       }
+      if (copy.style.frame && copy.style.frame.paint && copy.style.frame.paint.src && copy.style.frame.paint.src.length > 300000) {
+        copy.style.frame.paint.src = '';
+      }
+      if (copy.style.frame && copy.style.frame.textPaint && copy.style.frame.textPaint.src && copy.style.frame.textPaint.src.length > 300000) {
+        copy.style.frame.textPaint.src = '';
+      }
+      if (copy.style.frame && copy.style.frame.backdropPaint && copy.style.frame.backdropPaint.src && copy.style.frame.backdropPaint.src.length > 300000) {
+        copy.style.frame.backdropPaint.src = '';
+      }
+      if (copy.style.frame && copy.style.frame.src && copy.style.frame.src.length > 300000) {
+        copy.style.frame.src = '';
+      }
+      if (copy.style.frame && copy.style.frame.topSrc && copy.style.frame.topSrc.length > 300000) {
+        copy.style.frame.topSrc = '';
+      }
       delete copy.style.logo.iconData;
+      if (copy.style.frame) {
+        delete copy.style.frame.iconData;
+        delete copy.style.frame.topIconData;
+      }
       localStorage.setItem(STORE_KEY, JSON.stringify(copy));
     } catch (e) { /* private mode — 保存しないだけ */ }
   }
@@ -275,7 +369,7 @@
       if (saved.values) Object.keys(state.values).forEach(k => {
         if (saved.values[k]) Object.assign(state.values[k], saved.values[k]);
       });
-      ['ec', 'minVersion', 'exportSize', 'presetName', 'iconGroup'].forEach(k => {
+      ['ec', 'minVersion', 'exportSize', 'presetName', 'presetCategory', 'iconGroup', 'frameIconGroup', 'frameTopIconGroup', 'frameBottomIconGroup'].forEach(k => {
         if (saved[k] !== undefined) state[k] = saved[k];
       });
       if (['auto', 'light', 'dark'].indexOf(saved.previewChecker) >= 0) {
@@ -293,6 +387,37 @@
           : { type: 'solid', color: saved.style.logo.backdropColor || '#FFFFFF', transparency: 0 };
       }
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
+      if (state.style.frame && !state.style.frame.paint) {
+        state.style.frame.paint = {
+          type: 'auto',
+          color: state.style.frame.color || '#111827',
+          from: '#111827',
+          mid: '',
+          to: '#2563EB',
+          angle: 45,
+          colors: ['#2563EB', '#7C3AED', '#DB2777'],
+          seed: 0,
+          src: '',
+          transparency: 0
+        };
+      }
+      if (state.style.frame && !state.style.frame.textPaint) {
+        state.style.frame.textPaint = {
+          type: 'solid',
+          color: state.style.frame.textColor || '#FFFFFF',
+          from: '#FC466B',
+          mid: '',
+          to: '#3F5EFB',
+          angle: 45,
+          colors: ['#2563EB', '#7C3AED', '#DB2777'],
+          seed: 0,
+          src: '',
+          transparency: 0
+        };
+      }
+      if (state.style.frame && !state.style.frame.font) {
+        state.style.frame.font = 'sans';
+      }
       if (state.style.logo && !state.style.logo.paint) {
         state.style.logo.paint = {
           type: 'brand', color: state.style.logo.color || '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
@@ -313,6 +438,12 @@
       }
       if (state.style.logo.type === 'icon' && state.style.logo.icon) {
         state.style.logo.iconData = A.ICONS.find(i => i.id === state.style.logo.icon) || null;
+      }
+      if (state.style.frame && state.style.frame.icon) {
+        state.style.frame.iconData = A.ICONS.find(i => i.id === state.style.frame.icon) || null;
+      }
+      if (state.style.frame && state.style.frame.topIcon) {
+        state.style.frame.topIconData = A.ICONS.find(i => i.id === state.style.frame.topIcon) || null;
       }
       sanitizeStyle(state.style);
     } catch (e) { /* 壊れた保存は捨てる */ }
@@ -340,8 +471,9 @@
     }
     p.seed = typeof p.seed === 'number' && !isNaN(p.seed) ? Math.floor(p.seed) : 0;
     p.src = sanitizeImageUrl(p.src);
+    p.imgScale = clampNum(p.imgScale, IMG_SCALE_MIN, IMG_SCALE_MAX, 1);
     if (isBg || p.transparency !== undefined) {
-      p.transparency = clampNum(p.transparency, 0, 100, 80);
+      p.transparency = clampNum(p.transparency, 0, 100, 0);
     }
     return p;
   }
@@ -364,6 +496,59 @@
     }
     s.markerEyePaint = sanitizePaint(s.markerEyePaint, 'auto', s.fg.color);
 
+    if (!s.frame.paint) {
+      s.frame.paint = { type: 'auto', color: s.frame.color || '#111827' };
+    }
+    s.frame.paint = sanitizePaint(s.frame.paint, 'auto', s.fg.color);
+
+    if (!s.frame.textPaint) {
+      s.frame.textPaint = { type: 'solid', color: s.frame.textColor || '#FFFFFF' };
+    }
+    s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'solid', '#FFFFFF');
+    if (!s.frame.font || ['sans', 'rounded', 'serif', 'mono', 'impact'].indexOf(s.frame.font) < 0) {
+      s.frame.font = 'sans';
+    }
+    if (!s.frame.contentMode || ['text', 'icon', 'image'].indexOf(s.frame.contentMode) < 0) {
+      s.frame.contentMode = 'text';
+    }
+    if (!s.frame.topContentMode || ['text', 'icon', 'image'].indexOf(s.frame.topContentMode) < 0) {
+      s.frame.topContentMode = 'text';
+    }
+    if (!s.frame.pos || ['bottom', 'top', 'both'].indexOf(s.frame.pos) < 0) {
+      s.frame.pos = 'bottom';
+    }
+    s.frame.icon = s.frame.icon || 'si-instagram';
+    if (!s.frame.iconColorMode || ['brand', 'auto', 'solid'].indexOf(s.frame.iconColorMode) < 0) {
+      s.frame.iconColorMode = 'brand';
+    }
+    s.frame.iconColor = normHex(s.frame.iconColor, '#FFFFFF');
+    s.frame.src = sanitizeImageUrl(s.frame.src);
+
+    s.frame.topIcon = s.frame.topIcon || 'si-instagram';
+    if (!s.frame.topIconColorMode || ['brand', 'auto', 'solid'].indexOf(s.frame.topIconColorMode) < 0) {
+      s.frame.topIconColorMode = 'brand';
+    }
+    s.frame.topIconColor = normHex(s.frame.topIconColor, '#FFFFFF');
+    s.frame.topSrc = sanitizeImageUrl(s.frame.topSrc);
+    s.frame.textTop = String(s.frame.textTop || '');
+
+    // 消えた種類（点線・太線＋細線）は近いものへ寄せる
+    s.frame.line = window.QRStyle.lineIdOf(s.frame.line);
+    const lineDef = window.QRStyle.LINE_STYLES[s.frame.line];
+    s.frame.lineWidth = clampNum(s.frame.lineWidth, 0.15, 2.5, lineDef.stroke);
+    s.frame.lineWidth2 = clampNum(s.frame.lineWidth2, 0.15, 2.5, lineDef.inner || 0.28);
+
+    // ラベルの中身の下地。形はマーカーの枠と同じ一覧から選ぶ
+    if (!s.frame.backdrop || !A.MARKER_FRAMES.some(f => f.id === s.frame.backdrop)) {
+      s.frame.backdrop = D.frame.backdrop;
+    }
+    if (!s.frame.backdropPaint || !s.frame.backdropPaint.type) {
+      s.frame.backdropPaint = { type: 'none', color: '#FFFFFF', transparency: 0 };
+    }
+    // 下地は既定で不透明。sanitizePaint は未指定を 80% 透過とみなすので、先に埋めておく
+    if (s.frame.backdropPaint.transparency === undefined) s.frame.backdropPaint.transparency = 0;
+    s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'none', '#FFFFFF', true);
+
     s.bg = sanitizePaint(s.bg, 'solid', '#FFFFFF', true);
 
     // ロゴの下地。形はマーカーの枠と同じ一覧から選ぶ。旧データの 'none'（下地なし）は
@@ -376,7 +561,6 @@
     if (!s.logo.backdrop || !A.MARKER_FRAMES.some(f => f.id === s.logo.backdrop)) {
       s.logo.backdrop = D.logo.backdrop;
     }
-    // 下地は既定で不透明。sanitizePaint は未指定を 80% 透過とみなすので、先に埋めておく
     if (s.logo.backdropPaint.transparency === undefined) s.logo.backdropPaint.transparency = 0;
     s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'solid', '#FFFFFF', true);
 
@@ -392,6 +576,8 @@
     s.logo.size = clampNum(s.logo.size, 0.06, 0.34, D.logo.size);
     s.logo.pad = clampNum(s.logo.pad, 0, 0.5, D.logo.pad);
     s.frame.radius = clampNum(s.frame.radius, 0, 10, D.frame.radius);
+    s.frame.contentSize = clampNum(s.frame.contentSize, 0.5, 1.6, D.frame.contentSize);
+    s.frame.contentPad = clampNum(s.frame.contentPad, 0, 0.6, D.frame.contentPad);
     s.frame.text = String(s.frame.text == null ? D.frame.text : s.frame.text);
     s.logo.text = String(s.logo.text == null ? '' : s.logo.text);
     s.logo.src = sanitizeImageUrl(s.logo.src);
@@ -598,23 +784,80 @@
   // ------------------------------------------------------------------
   let previewQR = null; // テンプレート用の使い回し
 
+  const PRESET_CATEGORIES = [
+    { id: 'all', name: 'すべて' },
+    { id: 'basic', name: '定番' },
+    { id: 'gradient', name: 'グラデ' },
+    { id: 'multi', name: '多色' },
+    { id: 'frame', name: 'フレーム' },
+    { id: 'unique', name: '個性派' }
+  ];
+
+  function buildPresetCategoryChips() {
+    const host = $('preset-cat-chips');
+    if (!host) return;
+    host.innerHTML = '';
+    PRESET_CATEGORIES.forEach(cat => {
+      const b = el('button', {
+        class: 'chip' + (state.presetCategory === cat.id ? ' active' : ''),
+        type: 'button'
+      }, cat.name);
+      b.addEventListener('click', () => {
+        state.presetCategory = cat.id;
+        buildPresetCategoryChips();
+        buildPresets();
+      });
+      host.appendChild(b);
+    });
+  }
+
   function buildPresets() {
     const host = $('preset-grid');
+    if (!host) return;
     host.innerHTML = '';
     if (!previewQR) previewQR = window.QRCore.encode('https://tk.st/', { ec: 'M' });
 
-    A.PRESETS.forEach(p => {
+    const filtered = A.PRESETS.filter(p => state.presetCategory === 'all' || p.category === state.presetCategory);
+
+    filtered.forEach(p => {
       const btn = el('button', { class: 'preset-btn' + (state.presetName === p.name ? ' active' : ''), type: 'button' });
-      const out = window.QRStyle.render(previewQR, Object.assign({}, p.style, { margin: 2, frame: { type: 'none' } }));
-      const holder = el('div');
-      holder.innerHTML = out.svg;
-      btn.appendChild(holder.firstChild);
+
+      // サムネイル用のレンダリングスタイル
+      const thumbStyle = Object.assign({}, p.style);
+      if (thumbStyle.margin === undefined) thumbStyle.margin = 3;
+
+      const out = window.QRStyle.render(previewQR, thumbStyle);
+      const thumb = el('div', { class: 'preset-thumb' });
+      thumb.innerHTML = out.svg;
+      btn.appendChild(thumb);
       btn.appendChild(el('i', null, p.name));
+
       btn.addEventListener('click', () => {
-        state.style = window.QRStyle.merge(state.style, JSON.parse(JSON.stringify(p.style)));
+        const userLogoSrc = (state.style.logo && state.style.logo.type === 'image') ? state.style.logo.src : '';
+        const userLogoText = (state.style.logo && state.style.logo.type === 'text') ? state.style.logo.text : '';
+
+        // DEFAULTS をベースにしてテンプレートのスタイルをディープマージ
+        const base = JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS));
+        state.style = window.QRStyle.merge(base, JSON.parse(JSON.stringify(p.style)));
+
+        // ユーザーが置いていた画像ロゴ・文字ロゴは、テンプレートがロゴに
+        // 触れていないときだけ戻す。logo を書いたテンプレート（ミニマルなど）は
+        // 「ロゴなし」まで含めて指定なので、そちらを尊重する。
+        if (!p.style.logo && userLogoSrc) {
+          state.style.logo.type = 'image';
+          state.style.logo.src = userLogoSrc;
+        } else if (!p.style.logo && userLogoText) {
+          state.style.logo.type = 'text';
+          state.style.logo.text = userLogoText;
+        }
+
+        // セルの密度は style ではなく state 側。テンプレートは基本「自動」に戻す
+        state.minVersion = p.minVersion || 1;
+
         state.presetName = p.name;
         syncControls();
         buildShapeGrids();
+        buildFrameChips();
         buildPresets();
         update();
       });
@@ -660,23 +903,59 @@
       frameHost.appendChild(b);
     });
 
-    const bdHost = $('logo-backdrop-grid');
-    if (bdHost) {
-      bdHost.innerHTML = '';
+    // ロゴの下地とラベルの下地は同じ形の一覧から選ぶ
+    function buildBackdropGrid(hostId, current, pick) {
+      const host = $(hostId);
+      if (!host) return;
+      host.innerHTML = '';
       A.MARKER_FRAMES.forEach(f => {
-        const b = el('button', { class: 'shape-btn' + (state.style.logo.backdrop === f.id ? ' active' : ''), type: 'button', title: f.name });
+        const b = el('button', { class: 'shape-btn' + (current === f.id ? ' active' : ''), type: 'button', title: f.name });
         const holder = el('div');
         holder.innerHTML = window.QRStyle.backdropPreview(f.id);
         b.appendChild(holder.firstChild);
         b.appendChild(el('i', null, f.name));
         b.addEventListener('click', () => {
-          state.style.logo.backdrop = f.id;
+          pick(f.id);
           state.presetName = '';
           buildShapeGrids();
           buildPresets();
           update();
         });
-        bdHost.appendChild(b);
+        host.appendChild(b);
+      });
+    }
+
+    buildBackdropGrid('logo-backdrop-grid', state.style.logo.backdrop, id => {
+      state.style.logo.backdrop = id;
+    });
+    buildBackdropGrid('frame-backdrop-grid', state.style.frame && state.style.frame.backdrop, id => {
+      state.style.frame.backdrop = id;
+    });
+
+    // 枠線の種類。見本は本番と同じ描画コードから起こす
+    const lineHost = $('frame-line-grid');
+    if (lineHost) {
+      lineHost.innerHTML = '';
+      A.FRAME_LINES.forEach(f => {
+        const b = el('button', { class: 'shape-btn' + (state.style.frame.line === f.id ? ' active' : ''), type: 'button', title: f.name });
+        const holder = el('div');
+        holder.innerHTML = window.QRStyle.linePreview(f.id);
+        b.appendChild(holder.firstChild);
+        b.appendChild(el('i', null, f.name));
+        b.addEventListener('click', () => {
+          const ls = window.QRStyle.LINE_STYLES[f.id] || {};
+          state.style.frame.line = f.id;
+          state.style.frame.lineWidth = ls.stroke;
+          state.style.frame.lineWidth2 = ls.inner || 0.28;
+          state.presetName = '';
+          buildShapeGrids();
+          buildFrameChips();
+          buildPresets();
+          // 太さの既定値と、二重線のときだけ出る2本目のスライダーを描き直す
+          syncControls();
+          update();
+        });
+        lineHost.appendChild(b);
       });
     }
 
@@ -1495,6 +1774,90 @@
     });
   }
 
+  function buildFrameTopIconGrid() {
+    const host = $('frame-top-icon-grid');
+    if (!host) return;
+    host.innerHTML = '';
+    const currentIcon = (state.style.frame && state.style.frame.topIcon) || 'si-instagram';
+    A.ICONS.filter(i => i.group === state.frameTopIconGroup).forEach(icon => {
+      const b = el('button', {
+        class: 'icon-btn' + (currentIcon === icon.id ? ' active' : ''),
+        type: 'button',
+        title: icon.name,
+        'aria-label': icon.name
+      });
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', icon.vb);
+      if (icon.rawSvg) {
+        svg.innerHTML = icon.rawSvg.replace(/__UID__/g, 'frame_top_grid_' + icon.id);
+      } else {
+        svg.setAttribute('fill', 'currentColor');
+        icon.p.forEach(p => {
+          const path = document.createElementNS(svgNS, 'path');
+          path.setAttribute('d', p.d);
+          if (p.e) path.setAttribute('fill-rule', 'evenodd');
+          svg.appendChild(path);
+        });
+      }
+      b.appendChild(svg);
+      b.addEventListener('click', () => {
+        if (!state.style.frame) state.style.frame = {};
+        state.style.frame.topIcon = icon.id;
+        state.style.frame.topIconData = icon;
+        state.style.frame.topContentMode = 'icon';
+        state.presetName = '';
+        buildFrameTopIconGrid();
+        syncControls();
+        update();
+        save();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  function buildFrameBottomIconGrid() {
+    const host = $('frame-bottom-icon-grid');
+    if (!host) return;
+    host.innerHTML = '';
+    const currentIcon = (state.style.frame && state.style.frame.icon) || 'si-instagram';
+    A.ICONS.filter(i => i.group === state.frameBottomIconGroup).forEach(icon => {
+      const b = el('button', {
+        class: 'icon-btn' + (currentIcon === icon.id ? ' active' : ''),
+        type: 'button',
+        title: icon.name,
+        'aria-label': icon.name
+      });
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', icon.vb);
+      if (icon.rawSvg) {
+        svg.innerHTML = icon.rawSvg.replace(/__UID__/g, 'frame_bot_grid_' + icon.id);
+      } else {
+        svg.setAttribute('fill', 'currentColor');
+        icon.p.forEach(p => {
+          const path = document.createElementNS(svgNS, 'path');
+          path.setAttribute('d', p.d);
+          if (p.e) path.setAttribute('fill-rule', 'evenodd');
+          svg.appendChild(path);
+        });
+      }
+      b.appendChild(svg);
+      b.addEventListener('click', () => {
+        if (!state.style.frame) state.style.frame = {};
+        state.style.frame.icon = icon.id;
+        state.style.frame.iconData = icon;
+        state.style.frame.contentMode = 'icon';
+        state.presetName = '';
+        buildFrameBottomIconGrid();
+        syncControls();
+        update();
+        save();
+      });
+      host.appendChild(b);
+    });
+  }
+
   function buildFrameChips() {
     const host = $('frame-chips');
     host.innerHTML = '';
@@ -1509,7 +1872,9 @@
       });
       host.appendChild(b);
     });
-    $('hint-frame').textContent = (A.FRAMES.find(f => f.id === state.style.frame.type) || {}).name || 'なし';
+    const frameName = (A.FRAMES.find(f => f.id === state.style.frame.type) || {}).name || 'なし';
+    const lineName = (A.FRAME_LINES.find(f => f.id === state.style.frame.line) || {}).name || '';
+    $('hint-frame').textContent = state.style.frame.type === 'line' && lineName ? lineName : frameName;
   }
 
   // ------------------------------------------------------------------
@@ -1533,8 +1898,9 @@
     const isCell = target === 'cell';
     const isBg = target === 'bg';
     const isLogoBd = target === 'logobd';
-    // 背景とロゴの下地は「敷く面」なので、白・黒・透明まで選べる
-    const isPlate = isBg || isLogoBd;
+    const isFrameBd = target === 'framebd';
+    // 背景と下地は「敷く面」なので、白・黒・透明まで選べる
+    const isPlate = isBg || isLogoBd || isFrameBd;
 
     [['btn-mode-white', !isPlate], ['btn-mode-black', !isPlate],
      ['btn-mode-none', !isPlate], ['btn-mode-auto', isCell]].forEach(pair => {
@@ -1562,7 +1928,7 @@
       if (pane) pane.classList.toggle('hidden', !pair[1]);
     });
 
-    const plateWord = isLogoBd ? 'ロゴの下地' : '背景';
+    const plateWord = isLogoBd ? 'ロゴの下地' : isFrameBd ? 'ラベルの下地' : '背景';
     const autoNotice = cq(scope, 'auto-notice');
     if (autoNotice) {
       autoNotice.innerHTML = isBg
@@ -1577,7 +1943,9 @@
     if (noneNotice) {
       noneNotice.innerHTML = isLogoBd
         ? 'ロゴの下地を描きません。<br>セルを消す範囲（下地の形）はそのまま残るので、背景が抜けて見えます。'
-        : '背景を透明にします。<br>透過PNGや透過SVGとして背景のない画像を書き出せます。';
+        : isFrameBd
+          ? 'ラベルの下地を描きません。<br>文字やアイコンだけがフレームの上に載ります。'
+          : '背景を透明にします。<br>透過PNGや透過SVGとして背景のない画像を書き出せます。';
     }
 
     const swatchHost = cq(scope, 'swatch-host');
@@ -1585,7 +1953,7 @@
 
     const transRow = cq(scope, 'transparency-row');
     if (transRow) transRow.classList.toggle('hidden', !isPlate || isNone || isWhite || isBlack);
-    const transVal = p.transparency !== undefined ? p.transparency : (isLogoBd ? 0 : 80);
+    const transVal = p.transparency !== undefined ? p.transparency : 0;
     const transInput = cq(scope, 'transparency');
     if (transInput) transInput.value = transVal;
     const transLabel = cq(scope, 'val-transparency');
@@ -1610,9 +1978,16 @@
       const img = cq(scope, 'image-thumb-img');
       if (p.src && img) img.src = p.src;
     }
+    syncImageScaleRow(cq(scope, 'image-scale-row'), cq(scope, 'image-scale'),
+      cq(scope, 'val-image-scale'), p, !!(isImage && p.src));
 
     if (isMulti) buildMultiColorsList(scope);
     else if (isGrad) buildGradColorsList(scope);
+  }
+
+  // 0.70 ではなく 0.7 と出す
+  function fmtLineWidth(v) {
+    return String(Math.round(Number(v) * 100) / 100);
   }
 
   function syncControls() {
@@ -1712,6 +2087,8 @@
       imgMaskThumb.classList.toggle('hidden', !(isLImage && lp.src));
       if (lp.src) $('logo-image-mask-thumb-img').src = lp.src;
     }
+    syncImageScaleRow($('logo-image-scale-row'), $('logo-image-scale'),
+      $('val-logo-image-scale'), lp, !!(isLImage && lp.src));
     // 文字（Text）用の同期
     setSeg('logo-font-seg', s.logo.font || 'sans', 'font');
     setSeg('logo-text-color-mode-seg', lp.type, 'mode');
@@ -1747,6 +2124,8 @@
       textImgMaskThumb.classList.toggle('hidden', !(isLImage && lp.src));
       if (lp.src) $('logo-text-image-mask-thumb-img').src = lp.src;
     }
+    syncImageScaleRow($('logo-text-image-scale-row'), $('logo-text-image-scale'),
+      $('val-logo-text-image-scale'), lp, !!(isLImage && lp.src));
     $('logo-text').value = s.logo.text || '';
     $('logo-size').value = s.logo.size;
     $('val-logosize').textContent = Math.round(s.logo.size * 100) + '%';
@@ -1758,16 +2137,123 @@
       : s.logo.type === 'icon' ? ((A.ICONS.find(i => i.id === s.logo.icon) || {}).name || 'アイコン')
       : s.logo.type === 'image' ? '画像' : '文字';
 
-    $('frame-opts').classList.toggle('hidden', s.frame.type === 'none' || s.frame.type === 'line');
-    $('frame-text').value = s.frame.text;
-    $('frame-color').value = normHex(s.frame.color, '#111827');
-    $('frame-textcolor').value = normHex(s.frame.textColor, '#FFFFFF');
-    if (s.frame.type === 'line') {
-      $('frame-opts').classList.remove('hidden');
-      $('frame-text').parentElement.classList.add('hidden');
-    } else {
-      $('frame-text').parentElement.classList.remove('hidden');
+    const isFrameLine = s.frame.type === 'line';
+    const isFrameLabel = s.frame.type === 'label';
+    if ($('frame-line-opts')) $('frame-line-opts').classList.toggle('hidden', !isFrameLine);
+    if ($('frame-label-opts')) $('frame-label-opts').classList.toggle('hidden', !isFrameLabel);
+
+    const isDoubleLine = s.frame.line === 'double';
+    if ($('frame-line-width')) $('frame-line-width').value = s.frame.lineWidth;
+    if ($('val-frame-line-width')) $('val-frame-line-width').textContent = fmtLineWidth(s.frame.lineWidth);
+    if ($('frame-line-width2')) $('frame-line-width2').value = s.frame.lineWidth2;
+    if ($('val-frame-line-width2')) $('val-frame-line-width2').textContent = fmtLineWidth(s.frame.lineWidth2);
+    if ($('frame-line-width2-row')) $('frame-line-width2-row').classList.toggle('hidden', !isDoubleLine);
+    if ($('frame-line-width-label')) $('frame-line-width-label').textContent = isDoubleLine ? '外側の太さ' : '太さ';
+    if ($('frame-line-note')) {
+      $('frame-line-note').textContent =
+        s.frame.line === 'cells' ? '※ 太さは、外周に並べるセルの大きさです。セルの形と太さの設定に連動します。'
+        : s.frame.line === 'stamp' ? '※ 太さは、ミシン目の内側にできる縁の幅です。'
+        : s.frame.line === 'ticket' ? '※ 左右の切り欠きは、地をくり抜いて作っています。'
+        : s.frame.line === 'balloon' ? '※ しっぽのぶん、下に伸びます。'
+        : '';
     }
+
+    const framePos = (s.frame && s.frame.pos) || 'bottom';
+    setSeg('frame-pos-seg', framePos, 'pos');
+
+    const showTop = framePos === 'top' || framePos === 'both';
+    const showBottom = framePos === 'bottom' || framePos === 'both';
+    const isBoth = framePos === 'both';
+
+    if ($('frame-section-top')) $('frame-section-top').classList.toggle('hidden', !showTop);
+    if ($('frame-section-bottom')) $('frame-section-bottom').classList.toggle('hidden', !showBottom);
+
+    if ($('frame-top-heading')) $('frame-top-heading').textContent = isBoth ? '上部ラベルの内容' : 'ラベルの内容';
+    if ($('frame-bottom-heading')) $('frame-bottom-heading').textContent = isBoth ? '下部ラベルの内容' : 'ラベルの内容';
+
+    // ---- 上部ラベル同期 ----
+    const topCMode = (s.frame && s.frame.topContentMode) || 'text';
+    setSeg('frame-top-content-mode-seg', topCMode, 'mode');
+    if ($('frame-top-pane-text')) $('frame-top-pane-text').classList.toggle('hidden', topCMode !== 'text');
+    if ($('frame-top-pane-icon')) $('frame-top-pane-icon').classList.toggle('hidden', topCMode !== 'icon');
+    if ($('frame-top-pane-image')) $('frame-top-pane-image').classList.toggle('hidden', topCMode !== 'image');
+
+    if ($('frame-text-top')) $('frame-text-top').value = (s.frame && s.frame.textTop) || '';
+
+    if ($('frame-top-icon-tabs')) {
+      Array.prototype.forEach.call($('frame-top-icon-tabs').children, t => {
+        t.classList.toggle('active', t.dataset.group === state.frameTopIconGroup);
+      });
+    }
+    const currentTopIcon = (s.frame && s.frame.topIcon) || 'si-instagram';
+    if ($('frame-top-icon-grid')) {
+      Array.prototype.forEach.call($('frame-top-icon-grid').children, b => {
+        b.classList.toggle('active', b.getAttribute('title') === (A.ICONS.find(i => i.id === currentTopIcon) || {}).name);
+      });
+    }
+    const topIconColorMode = (s.frame && s.frame.topIconColorMode) || 'brand';
+    setSeg('frame-top-icon-color-mode-seg', topIconColorMode, 'mode');
+    if ($('frame-top-icon-pane-solid')) $('frame-top-icon-pane-solid').classList.toggle('hidden', topIconColorMode !== 'solid');
+    const topIconColor = (s.frame && s.frame.topIconColor) || '#FFFFFF';
+    if ($('frame-top-icon-solid-picker')) $('frame-top-icon-solid-picker').value = normHex(topIconColor, '#FFFFFF');
+    if ($('frame-top-icon-solid-hex')) $('frame-top-icon-solid-hex').value = normHex(topIconColor, '#FFFFFF');
+
+    const hasTopImg = !!(s.frame && s.frame.topSrc);
+    if ($('frame-top-image-thumb')) {
+      $('frame-top-image-thumb').classList.toggle('hidden', !hasTopImg);
+      if (hasTopImg && $('frame-top-image-thumb-img')) {
+        $('frame-top-image-thumb-img').src = s.frame.topSrc;
+      }
+    }
+
+    // ---- 下部ラベル同期 ----
+    const bottomCMode = (s.frame && s.frame.contentMode) || 'text';
+    setSeg('frame-bottom-content-mode-seg', bottomCMode, 'mode');
+    if ($('frame-bottom-pane-text')) $('frame-bottom-pane-text').classList.toggle('hidden', bottomCMode !== 'text');
+    if ($('frame-bottom-pane-icon')) $('frame-bottom-pane-icon').classList.toggle('hidden', bottomCMode !== 'icon');
+    if ($('frame-bottom-pane-image')) $('frame-bottom-pane-image').classList.toggle('hidden', bottomCMode !== 'image');
+
+    if ($('frame-text')) $('frame-text').value = (s.frame && s.frame.text) || '';
+    if ($('frame-text-label')) $('frame-text-label').textContent = isBoth ? '下部の文字' : 'フレームの文字';
+
+    if ($('frame-bottom-icon-tabs')) {
+      Array.prototype.forEach.call($('frame-bottom-icon-tabs').children, t => {
+        t.classList.toggle('active', t.dataset.group === state.frameBottomIconGroup);
+      });
+    }
+    const currentBottomIcon = (s.frame && s.frame.icon) || 'si-instagram';
+    if ($('frame-bottom-icon-grid')) {
+      Array.prototype.forEach.call($('frame-bottom-icon-grid').children, b => {
+        b.classList.toggle('active', b.getAttribute('title') === (A.ICONS.find(i => i.id === currentBottomIcon) || {}).name);
+      });
+    }
+    const bottomIconColorMode = (s.frame && s.frame.iconColorMode) || 'brand';
+    setSeg('frame-bottom-icon-color-mode-seg', bottomIconColorMode, 'mode');
+    if ($('frame-bottom-icon-pane-solid')) $('frame-bottom-icon-pane-solid').classList.toggle('hidden', bottomIconColorMode !== 'solid');
+    const bottomIconColor = (s.frame && s.frame.iconColor) || '#FFFFFF';
+    if ($('frame-bottom-icon-solid-picker')) $('frame-bottom-icon-solid-picker').value = normHex(bottomIconColor, '#FFFFFF');
+    if ($('frame-bottom-icon-solid-hex')) $('frame-bottom-icon-solid-hex').value = normHex(bottomIconColor, '#FFFFFF');
+
+    const hasBottomImg = !!(s.frame && s.frame.src);
+    if ($('frame-bottom-image-thumb')) {
+      $('frame-bottom-image-thumb').classList.toggle('hidden', !hasBottomImg);
+      if (hasBottomImg && $('frame-bottom-image-thumb-img')) {
+        $('frame-bottom-image-thumb-img').src = s.frame.src;
+      }
+    }
+
+    // ---- 共通：中身の大きさ・余白 ----
+    const fcSize = s.frame && s.frame.contentSize != null ? s.frame.contentSize : 1;
+    const fcPad = s.frame && s.frame.contentPad != null ? s.frame.contentPad : 0.2;
+    if ($('frame-content-size')) $('frame-content-size').value = fcSize;
+    if ($('val-frame-content-size')) $('val-frame-content-size').textContent = Math.round(fcSize * 100) + '%';
+    if ($('frame-content-pad')) $('frame-content-pad').value = fcPad;
+    if ($('val-frame-content-pad')) $('val-frame-content-pad').textContent = Math.round(fcPad * 100) + '%';
+
+    // ---- 共通：フォント ----
+    setSeg('frame-font-seg', (s.frame && s.frame.font) || 'sans', 'font');
+    const hasAnyText = (showTop && topCMode === 'text') || (showBottom && bottomCMode === 'text');
+    if ($('frame-font-wrap')) $('frame-font-wrap').classList.toggle('hidden', !hasAnyText);
     updateCanvasChecker();
   }
 
@@ -2267,6 +2753,19 @@
         if (e.target.files && e.target.files.length) loadTargetImage(e.target.files[0]);
       });
     }
+    bindRange(cq(scope, 'image-scale'), cq(scope, 'val-image-scale'), v => Math.round(v) + '%', v => {
+      touch();
+      paintOfScope(scope).imgScale = Math.round(v) / 100;
+    });
+    const scaleReset = cq(scope, 'btn-image-scale-reset');
+    if (scaleReset) scaleReset.addEventListener('click', () => {
+      touch();
+      paintOfScope(scope).imgScale = 1;
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+
     const clearBtn = cq(scope, 'btn-image-clear');
     if (clearBtn) clearBtn.addEventListener('click', () => {
       touch();
@@ -2416,6 +2915,24 @@
       });
     }
 
+    [['logo-image-scale', 'val-logo-image-scale', 'btn-logo-image-scale-reset'],
+     ['logo-text-image-scale', 'val-logo-text-image-scale', 'btn-logo-text-image-scale-reset']
+    ].forEach(ids => {
+      bindRange(ids[0], ids[1], v => Math.round(v) + '%', v => {
+        getLogoPaint().imgScale = Math.round(v) / 100;
+        state.presetName = '';
+        // アイコン用と文字用で同じ塗りを見ているので、もう片方の目盛りも合わせる
+        syncControls();
+      });
+      const reset = $(ids[2]);
+      if (reset) reset.addEventListener('click', () => {
+        getLogoPaint().imgScale = 1;
+        state.presetName = '';
+        syncControls();
+        update();
+      });
+    });
+
     const btnLogoMaskClear = $('btn-logo-image-mask-clear');
     if (btnLogoMaskClear) {
       btnLogoMaskClear.addEventListener('click', () => {
@@ -2440,6 +2957,10 @@
     bindRange('opt-minver', 'val-minver', v => (v <= 1 ? '自動' : 'v' + v + '以上'), v => { state.minVersion = v; });
     bindRange('logo-size', 'val-logosize', v => Math.round(v * 100) + '%', v => { state.style.logo.size = v; });
     bindRange('logo-pad', 'val-logopad', v => Math.round(v * 100) + '%', v => { state.style.logo.pad = v; });
+    bindRange('frame-line-width', 'val-frame-line-width', fmtLineWidth, v => { state.style.frame.lineWidth = v; });
+    bindRange('frame-line-width2', 'val-frame-line-width2', fmtLineWidth, v => { state.style.frame.lineWidth2 = v; });
+    bindRange('frame-content-size', 'val-frame-content-size', v => Math.round(v * 100) + '%', v => { state.style.frame.contentSize = v; });
+    bindRange('frame-content-pad', 'val-frame-content-pad', v => Math.round(v * 100) + '%', v => { state.style.frame.contentPad = v; });
 
     $('logo-text').addEventListener('input', e => {
       state.style.logo.text = e.target.value;
@@ -2449,6 +2970,111 @@
 
     bindSeg('logo-font-seg', 'font', v => {
       state.style.logo.font = v;
+      state.presetName = '';
+      update();
+      save();
+    });
+
+    bindSeg('frame-pos-seg', 'pos', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.pos = v;
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    });
+
+    bindSeg('frame-font-seg', 'font', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.font = v;
+      state.presetName = '';
+      update();
+      save();
+    });
+
+    // ---- 上部ラベル ----
+    bindSeg('frame-top-content-mode-seg', 'mode', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.topContentMode = v;
+      if (v === 'icon' && !state.style.frame.topIconData) {
+        const first = A.ICONS.find(i => i.group === state.frameTopIconGroup) || A.ICONS[0];
+        state.style.frame.topIcon = first.id;
+        state.style.frame.topIconData = first;
+        buildFrameTopIconGrid();
+      }
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    });
+
+    const frameTopIconTabs = $('frame-top-icon-tabs');
+    if (frameTopIconTabs) {
+      Array.prototype.forEach.call(frameTopIconTabs.children, b => {
+        b.addEventListener('click', () => {
+          state.frameTopIconGroup = b.dataset.group;
+          Array.prototype.forEach.call(frameTopIconTabs.children, t => t.classList.toggle('active', t === b));
+          buildFrameTopIconGrid();
+        });
+      });
+    }
+
+    bindSeg('frame-top-icon-color-mode-seg', 'mode', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.topIconColorMode = v;
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    });
+
+    bindColor('frame-top-icon-solid-picker', 'frame-top-icon-solid-hex', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.topIconColor = v;
+      state.presetName = '';
+      update();
+      save();
+    });
+
+    // ---- 下部ラベル ----
+    bindSeg('frame-bottom-content-mode-seg', 'mode', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.contentMode = v;
+      if (v === 'icon' && !state.style.frame.iconData) {
+        const first = A.ICONS.find(i => i.group === state.frameBottomIconGroup) || A.ICONS[0];
+        state.style.frame.icon = first.id;
+        state.style.frame.iconData = first;
+        buildFrameBottomIconGrid();
+      }
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    });
+
+    const frameBottomIconTabs = $('frame-bottom-icon-tabs');
+    if (frameBottomIconTabs) {
+      Array.prototype.forEach.call(frameBottomIconTabs.children, b => {
+        b.addEventListener('click', () => {
+          state.frameBottomIconGroup = b.dataset.group;
+          Array.prototype.forEach.call(frameBottomIconTabs.children, t => t.classList.toggle('active', t === b));
+          buildFrameBottomIconGrid();
+        });
+      });
+    }
+
+    bindSeg('frame-bottom-icon-color-mode-seg', 'mode', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.iconColorMode = v;
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    });
+
+    bindColor('frame-bottom-icon-solid-picker', 'frame-bottom-icon-solid-hex', v => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.iconColor = v;
       state.presetName = '';
       update();
       save();
@@ -2579,6 +3205,15 @@
       scheduleUpdate();
     });
 
+    const frameTextTop = $('frame-text-top');
+    if (frameTextTop) {
+      frameTextTop.addEventListener('input', e => {
+        if (!state.style.frame) state.style.frame = {};
+        state.style.frame.textTop = e.target.value;
+        scheduleUpdate();
+      });
+    }
+
     Array.prototype.forEach.call($('icon-tabs').children, b => {
       b.addEventListener('click', () => {
         state.iconGroup = b.dataset.group;
@@ -2635,6 +3270,100 @@
       });
     }
 
+    // ---- 上部フレーム画像 ----
+    const frameTopDrop = $('frame-top-image-drop');
+    const frameTopFileInput = $('frame-top-image-file');
+    if (frameTopDrop && frameTopFileInput) {
+      frameTopDrop.addEventListener('click', () => frameTopFileInput.click());
+      frameTopDrop.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); frameTopFileInput.click(); }
+      });
+      ['dragenter', 'dragover'].forEach(name => frameTopDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); frameTopDrop.classList.add('dragover');
+      }));
+      ['dragleave', 'drop'].forEach(name => frameTopDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); frameTopDrop.classList.remove('dragover');
+      }));
+      frameTopDrop.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation(); frameTopDrop.classList.remove('dragover');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+          loadFrameTopImage(e.dataTransfer.files[0]);
+        } else if (e.dataTransfer) {
+          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+          if (url) loadFrameTopImageUrl(url);
+        }
+      });
+      frameTopFileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files.length) loadFrameTopImage(e.target.files[0]);
+      });
+    }
+    const btnFrameTopImgClear = $('btn-frame-top-image-clear');
+    if (btnFrameTopImgClear) {
+      btnFrameTopImgClear.addEventListener('click', () => {
+        if (state.style.frame) state.style.frame.topSrc = '';
+        if (frameTopFileInput) frameTopFileInput.value = '';
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+    const btnFrameTopImgUrl = $('btn-frame-top-image-url');
+    const frameTopImgUrlInput = $('frame-top-image-url');
+    if (btnFrameTopImgUrl && frameTopImgUrlInput) {
+      btnFrameTopImgUrl.addEventListener('click', () => loadFrameTopImageUrl(frameTopImgUrlInput.value));
+      frameTopImgUrlInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); loadFrameTopImageUrl(frameTopImgUrlInput.value); }
+      });
+    }
+
+    // ---- 下部フレーム画像 ----
+    const frameBottomDrop = $('frame-bottom-image-drop');
+    const frameBottomFileInput = $('frame-bottom-image-file');
+    if (frameBottomDrop && frameBottomFileInput) {
+      frameBottomDrop.addEventListener('click', () => frameBottomFileInput.click());
+      frameBottomDrop.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); frameBottomFileInput.click(); }
+      });
+      ['dragenter', 'dragover'].forEach(name => frameBottomDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); frameBottomDrop.classList.add('dragover');
+      }));
+      ['dragleave', 'drop'].forEach(name => frameBottomDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); frameBottomDrop.classList.remove('dragover');
+      }));
+      frameBottomDrop.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation(); frameBottomDrop.classList.remove('dragover');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+          loadFrameBottomImage(e.dataTransfer.files[0]);
+        } else if (e.dataTransfer) {
+          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+          if (url) loadFrameBottomImageUrl(url);
+        }
+      });
+      frameBottomFileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files.length) loadFrameBottomImage(e.target.files[0]);
+      });
+    }
+    const btnFrameBottomImgClear = $('btn-frame-bottom-image-clear');
+    if (btnFrameBottomImgClear) {
+      btnFrameBottomImgClear.addEventListener('click', () => {
+        if (state.style.frame) state.style.frame.src = '';
+        if (frameBottomFileInput) frameBottomFileInput.value = '';
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+    const btnFrameBottomImgUrl = $('btn-frame-bottom-image-url');
+    const frameBottomImgUrlInput = $('frame-bottom-image-url');
+    if (btnFrameBottomImgUrl && frameBottomImgUrlInput) {
+      btnFrameBottomImgUrl.addEventListener('click', () => loadFrameBottomImageUrl(frameBottomImgUrlInput.value));
+      frameBottomImgUrlInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); loadFrameBottomImageUrl(frameBottomImgUrlInput.value); }
+      });
+    }
+
 
     // ---- プレビュー領域への画像ドロップ（選択中の対象画像として反映） ----
     const canvasCard = document.querySelector('.canvas-card');
@@ -2674,6 +3403,8 @@
     $('btn-shuffle').addEventListener('click', shuffle);
     $('btn-reset').addEventListener('click', () => {
       state.style = JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS));
+      // セルの密度も「自動」に戻す（密度だけ style ではなく state 側にある）
+      state.minVersion = 1;
       state.presetName = '';
       syncControls();
       buildShapeGrids();
@@ -2769,6 +3500,94 @@
     }
   }
 
+  function loadFrameTopImage(file) {
+    if (!file.type || file.type.indexOf('image/') !== 0) {
+      showToast('画像ファイルを選んでください', 'error');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      showToast('画像は4MBまでにしてください', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.topSrc = String(reader.result);
+      state.style.frame.topContentMode = 'image';
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+      showToast('上部フレーム画像を適用しました');
+    };
+    reader.onerror = () => showToast('画像を読み込めませんでした', 'error');
+    reader.readAsDataURL(file);
+  }
+
+  async function loadFrameTopImageUrl(url) {
+    if (!url || !url.trim()) return;
+    try {
+      showToast('画像を読み込み中…');
+      const dataUrl = await fetchImageAsDataUrl(url.trim());
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.topSrc = dataUrl;
+      state.style.frame.topContentMode = 'image';
+      state.presetName = '';
+      const input = $('frame-top-image-url');
+      if (input) input.value = '';
+      syncControls();
+      update();
+      save();
+      showToast('上部フレーム画像を適用しました');
+    } catch (err) {
+      showToast(err.message || '画像を読み込めませんでした', 'error');
+    }
+  }
+
+  function loadFrameBottomImage(file) {
+    if (!file.type || file.type.indexOf('image/') !== 0) {
+      showToast('画像ファイルを選んでください', 'error');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      showToast('画像は4MBまでにしてください', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.src = String(reader.result);
+      state.style.frame.contentMode = 'image';
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+      showToast('下部フレーム画像を適用しました');
+    };
+    reader.onerror = () => showToast('画像を読み込めませんでした', 'error');
+    reader.readAsDataURL(file);
+  }
+
+  async function loadFrameBottomImageUrl(url) {
+    if (!url || !url.trim()) return;
+    try {
+      showToast('画像を読み込み中…');
+      const dataUrl = await fetchImageAsDataUrl(url.trim());
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.src = dataUrl;
+      state.style.frame.contentMode = 'image';
+      state.presetName = '';
+      const input = $('frame-bottom-image-url');
+      if (input) input.value = '';
+      syncControls();
+      update();
+      save();
+      showToast('下部フレーム画像を適用しました');
+    } catch (err) {
+      showToast(err.message || '画像を読み込めませんでした', 'error');
+    }
+  }
+
   function getTargetLabel() {
     const t = scopeTarget(state.colorScope);
     return t === 'cell' ? 'セル' :
@@ -2823,54 +3642,115 @@
 
   function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
-  // おまかせは「必ず読める範囲で」振る。明るい地に暗いセルを置き、
-  // マーカーを別色にするときも背景とのコントラストを確かめてから採用する。
+  // おまかせデザイン。押すたびにはっきり違うものが出るように、
+  // 「地の明暗 → 塗り方 → 形 → フレーム」の順に振っていく。
+  // 塗りは丸ごと差し替えるので、必ず既定値にマージして欠けたキーを埋める
+  // （transparency が抜けると背景が透けてしまうため）。
   function shuffle() {
     const s = state.style;
+    const D = window.QRStyle.DEFAULTS;
+    const M = window.QRStyle.merge;
     const contrast = window.QRStyle.contrastRatio;
 
+    // ---- 地の色。4回に1回くらいは暗い地（反転デザイン）にする ----
+    const lightGrounds = ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#FAFAFA', '#F8FAFC', '#FFF8F0',
+                          '#F7F4EE', '#F0FDF4', '#FDF2F8', '#EEF2FF', '#FFFBEB', '#ECFEFF'];
+    const darkGrounds = ['#0B1220', '#09090B', '#111827', '#0F172A', '#172554',
+                         '#1E1B4B', '#022C22', '#3B0764'];
+    const dark = Math.random() < 0.25;
+    const ground = pick(dark ? darkGrounds : lightGrounds);
+    const readable = c => contrast(c, ground) >= 5;
+
+    const solids = [];
+    A.SWATCHES.forEach(group => group.colors.forEach(c => { if (readable(c)) solids.push(c); }));
+    const grads = A.GRADIENTS.filter(g => readable(g.from) && readable(g.to) && (!g.mid || readable(g.mid)));
+    const accent = () => (solids.length ? pick(solids) : (dark ? '#F8FAFC' : '#111827'));
+
+    // ---- セルの塗り。単色ばかりにならないよう塗り方から振る ----
+    const roll = Math.random();
+    let fg = null;
+    if (roll < 0.34 && grads.length) {
+      const g = pick(grads);
+      fg = {
+        type: Math.random() < 0.28 ? 'radial' : 'linear',
+        color: g.from, from: g.from, to: g.to,
+        mid: (g.mid && Math.random() < 0.5) ? g.mid : '',
+        angle: pick([0, 30, 45, 60, 90, 120, 135, 180, 225, 270, 315])
+      };
+    } else if (roll < 0.5 && solids.length >= 4) {
+      const colors = [];
+      const want = pick([3, 3, 4]);
+      let guard = 0;
+      while (colors.length < want && guard++ < 40) {
+        const c = pick(solids);
+        if (colors.indexOf(c) < 0) colors.push(c);
+      }
+      fg = { type: 'multi', colors: colors, seed: Math.floor(Math.random() * 1000) };
+    }
+    if (!fg) fg = { type: 'solid', color: accent() };
+
+    s.fg = M(D.fg, fg);
+    s.bg = M(D.bg, { type: 'solid', color: ground, transparency: 0 });
+    // 暗い地に明るいセルを置くのは意図したデザインなので、反転の注意は補足に落とす
+    s.invertOk = dark;
+
+    // ---- 形 ----
     s.cell = pick(A.CELL_SHAPES).id;
     s.markerFrame = pick(A.MARKER_FRAMES).id;
     s.markerEye = pick(A.MARKER_EYES).id;
+    s.cellScale = pick([0.9, 0.95, 1, 1, 1, 1.05]);
+    s.cellJitter = pick([0, 0, 0, 0, 0.15, 0.3]);
+    s.radius = pick([0, 0, 1, 2, 3, 4, 6, 8]);
+    s.margin = 4;
+    state.minVersion = 1;
 
-    const grounds = ['#FFFFFF', '#FFFFFF', '#FFFFFF', '#F8FAFC', '#FFF8F0', '#F7F4EE', '#F0FDF4', '#FDF2F8'];
-    const bg = pick(grounds);
-    const readable = c => contrast(c, bg) >= 5;
-
-    // セル：4割はグラデーション。ただし両端とも十分濃いものだけ通す。
-    let fg = null;
-    if (Math.random() < 0.4) {
-      const usable = A.GRADIENTS.filter(g => readable(g.from) && readable(g.to));
-      if (usable.length) {
-        const g = pick(usable);
-        fg = { type: Math.random() < 0.25 ? 'radial' : 'linear', color: g.from, from: g.from, to: g.to,
-               angle: Math.floor(Math.random() * 360) };
-      }
-    }
-    if (!fg) {
-      const usable = [];
-      A.SWATCHES.forEach(group => group.colors.forEach(c => { if (readable(c)) usable.push(c); }));
-      const c = usable.length ? pick(usable) : '#111827';
-      fg = { type: 'solid', color: c, from: s.fg.from, to: s.fg.to, angle: s.fg.angle };
-    }
-    s.fg = fg;
-    s.bg = { type: 'solid', color: bg, from: s.bg.from, to: s.bg.to, angle: s.bg.angle };
-
-    const accents = [];
-    A.SWATCHES.forEach(group => group.colors.forEach(c => { if (readable(c)) accents.push(c); }));
+    // ---- マーカーの色 ----
     s.markerFrameColor = '';
     s.markerEyeColor = '';
-    s.markerFramePaint = (accents.length && Math.random() < 0.4) ? { type: 'solid', color: pick(accents) } : { type: 'auto' };
-    s.markerEyePaint = (accents.length && Math.random() < 0.3) ? { type: 'solid', color: pick(accents) } : { type: 'auto' };
+    s.markerFramePaint = M(D.markerFramePaint,
+      Math.random() < 0.45 ? { type: 'solid', color: accent() } : { type: 'auto' });
+    s.markerEyePaint = M(D.markerEyePaint,
+      Math.random() < 0.35 ? { type: 'solid', color: accent() } : { type: 'auto' });
 
-    s.radius = pick([0, 1, 2, 3, 4, 6]);
-    s.cellScale = pick([0.9, 0.95, 1, 1, 1]);
-    s.cellJitter = pick([0, 0, 0, 0.15, 0.3]);
-    s.margin = 4;
+    // ---- フレーム。半分は枠なし、残りを枠線とラベルで分ける ----
+    const frameRoll = Math.random();
+    if (frameRoll < 0.5) {
+      s.frame.type = 'none';
+    } else if (frameRoll < 0.78) {
+      const lineId = pick(A.FRAME_LINES).id;
+      const ls = window.QRStyle.LINE_STYLES[lineId] || {};
+      s.frame.type = 'line';
+      s.frame.line = lineId;
+      s.frame.lineWidth = ls.stroke || 0.7;
+      s.frame.lineWidth2 = ls.inner || 0.28;
+      s.frame.paint = M(D.frame.paint,
+        Math.random() < 0.5 ? { type: 'auto' } : { type: 'solid', color: accent() });
+    } else {
+      // ラベルは帯の色を先に決めて、そのうえで読める文字色を選ぶ
+      const band = accent();
+      const onBand = contrast(band, '#FFFFFF') >= contrast(band, '#111827') ? '#FFFFFF' : '#111827';
+      s.frame.type = 'label';
+      s.frame.pos = pick(['bottom', 'bottom', 'bottom', 'top', 'both']);
+      s.frame.mode = 'text';
+      s.frame.contentMode = 'text';
+      s.frame.topMode = 'text';
+      s.frame.topContentMode = 'text';
+      s.frame.text = pick(['スキャンしてね', 'SCAN ME', '読み取ってください', 'こちらから', 'MENU', 'FOLLOW US']);
+      const tops = ['SCAN ME', 'ようこそ', 'FOLLOW US', 'MENU'].filter(t => t !== s.frame.text);
+      s.frame.textTop = s.frame.pos === 'bottom' ? '' : pick(tops);
+      s.frame.font = pick(['sans', 'rounded', 'serif', 'mono', 'impact']);
+      s.frame.contentSize = pick([0.85, 0.9, 1, 1, 1.1]);
+      s.frame.contentPad = 0.2;
+      s.frame.paint = M(D.frame.paint, { type: 'solid', color: band });
+      s.frame.textPaint = M(D.frame.textPaint, { type: 'solid', color: onBand });
+      s.frame.backdropPaint = M(D.frame.backdropPaint, { type: 'none' });
+    }
+
     state.presetName = '';
 
     syncControls();
     buildShapeGrids();
+    buildFrameChips();
     buildPresets();
     update();
   }
@@ -2889,6 +3769,7 @@
 
     buildTypeChips();
     buildTypeFields();
+    buildPresetCategoryChips();
     buildPresets();
     buildShapeGrids();
     buildColorPanels();
@@ -2904,6 +3785,8 @@
     buildLogoTextGradients();
     buildLogoTextMultiPalettes();
     buildIconGrid();
+    buildFrameTopIconGrid();
+    buildFrameBottomIconGrid();
     buildFrameChips();
     syncControls();
     wire();

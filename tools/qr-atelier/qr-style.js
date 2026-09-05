@@ -12,16 +12,22 @@
 (function (global) {
   'use strict';
 
+  // 画像の塗りの倍率の範囲（UI のスライダーと合わせる）
+  const IMG_SCALE_MIN = 0.2;
+  const IMG_SCALE_MAX = 4;
+
+  // 初期状態（「デザインを初期化」もここに戻る）。
+  // 四角いセル・四角いマーカー・黒・白地の、いちばん素の QR。
   const DEFAULTS = {
-    cell: 'rounded',
+    cell: 'square',
     cellScale: 1,
     cellJitter: 0,
-    markerFrame: 'rounded',
-    markerEye: 'rounded',
-    fg: { type: 'solid', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '' },
-    bg: { type: 'solid', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', transparency: 80 },
-    markerFramePaint: { type: 'auto', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '' },
-    markerEyePaint: { type: 'auto', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '' },
+    markerFrame: 'square',
+    markerEye: 'square',
+    fg: { type: 'solid', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
+    bg: { type: 'white', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1, transparency: 0 },
+    markerFramePaint: { type: 'auto', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
+    markerEyePaint: { type: 'auto', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
     markerFrameColor: '',
     markerEyeColor: '',
     margin: 4,
@@ -37,15 +43,80 @@
       // 多色・グラデーション・放射・画像）を受け付ける
       backdropPaint: {
         type: 'white', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45,
-        colors: ['#FFFFFF', '#E5E7EB'], seed: 0, src: '', transparency: 0
+        colors: ['#FFFFFF', '#E5E7EB'], seed: 0, src: '', imgScale: 1, transparency: 0
       },
       color: '#111827', knockout: true,
       paint: {
         type: 'brand', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: ''
+        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
       }
     },
-    frame: { type: 'none', text: 'スキャンしてね', color: '#111827', textColor: '#FFFFFF', radius: 3 }
+    frame: {
+      type: 'none',
+      // 枠線の種類と太さ（type: 'line' のときだけ効く）。
+      // lineWidth2 は二重線の内側の線だけに効く
+      line: 'solid',
+      lineWidth: 0.7,
+      lineWidth2: 0.28,
+      mode: 'text',
+      contentMode: 'text',
+      topMode: 'text',
+      topContentMode: 'text',
+      pos: 'bottom',
+      text: 'スキャンしてね',
+      textTop: '',
+      font: 'sans',
+      icon: 'si-instagram',
+      iconData: '',
+      iconColorMode: 'brand',
+      iconColor: '#FFFFFF',
+      src: '',
+      topIcon: 'si-instagram',
+      topIconData: null,
+      topIconColorMode: 'brand',
+      topIconColor: '#FFFFFF',
+      topSrc: '',
+      color: '#111827',
+      textColor: '#FFFFFF',
+      radius: 3,
+      // ラベルの中身（文字・アイコン・画像）の大きさと、その周りの余白。
+      // 既定の 1.0 / 0.2 で帯の高さが 4.0 + 0.8*2 = 5.6 になり、
+      // 旧来の FRAME_METRICS.label と同じ見た目に揃う
+      contentSize: 1,
+      contentPad: 0.2,
+      // 中身の後ろに敷く板。形はマーカーの枠と同じ一覧から選ぶ
+      backdrop: 'rounded',
+      backdropPaint: {
+        type: 'none', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45,
+        colors: ['#FFFFFF', '#E5E7EB'], seed: 0, src: '', imgScale: 1, transparency: 0
+      },
+      paint: {
+        type: 'auto',
+        color: '#111827',
+        from: '#111827',
+        mid: '',
+        to: '#2563EB',
+        angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'],
+        seed: 0,
+        src: '',
+        imgScale: 1,
+        transparency: 0
+      },
+      textPaint: {
+        type: 'solid',
+        color: '#FFFFFF',
+        from: '#FC466B',
+        mid: '',
+        to: '#3F5EFB',
+        angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'],
+        seed: 0,
+        src: '',
+        imgScale: 1,
+        transparency: 0
+      }
+    }
   };
 
   // 外枠の余白・ラベル高さ（モジュール単位）
@@ -54,6 +125,76 @@
     line:   { pad: 1.6, label: 0,   stroke: 0.7 },
     label:  { pad: 1.8, label: 5.6, stroke: 0 }
   };
+
+  // 枠線の種類ごとの既定値（モジュール単位）。
+  //   stroke … 線の太さの初期値。ユーザーが太さスライダーで上書きする
+  //   outer  … 外周から線の外側までの隙間
+  //   clear  … 線の内側から QR ブロックまでの隙間
+  // 余白（pad）は太さから毎回計算するので、線を太くしても QR に食い込まない。
+  // クワイエットゾーンは pad とは別に margin で確保してあるので、読み取りには影響しない。
+  const LINE_STYLES = {
+    solid:   { stroke: 0.7,  outer: 0.4,  clear: 0.5 },
+    double:  { stroke: 0.5,  outer: 0.4,  clear: 0.86, inner: 0.28, gap: 0.85 },
+    dashed:  { stroke: 0.7,  outer: 0.4,  clear: 0.5 },
+    bracket: { stroke: 0.9,  outer: 0.45, clear: 0.55 },
+    ticket:  { stroke: 0.55, outer: 0.4,  clear: 0.83, notch: 1.25 },
+    // セル枠の「太さ」は、外周に並べるセルの大きさ
+    cells:   { stroke: 1,    outer: 0.25, clear: 0.85 },
+    // 切手の「太さ」は、ミシン目の内側にできる縁の幅。outer はミシン目の山のぶん
+    stamp:   { stroke: 1.3,  outer: 0,    clear: 0.7,  bite: 0.5 },
+    balloon: { stroke: 0.7,  outer: 0.4,  clear: 0.5,  tail: 2.2 }
+  };
+
+  // 種類が消えた古い保存を拾い直す
+  const LINE_ALIAS = { doubleBold: 'double', dotted: 'dashed' };
+
+  function lineIdOf(id) {
+    const a = LINE_ALIAS[id] || id;
+    return LINE_STYLES[a] ? a : 'solid';
+  }
+
+  function lineStyleOf(id) {
+    return LINE_STYLES[lineIdOf(id)];
+  }
+
+  // ミシン目の山の半径。細い縁のときは山も小さくする
+  function stampBite(ls, lw) {
+    return Math.max(0.25, Math.min(ls.bite, lw * 0.5));
+  }
+
+  function clampLineWidth(v, fallback) {
+    const x = Number(v);
+    return isFinite(x) ? Math.max(0.15, Math.min(2.5, x)) : fallback;
+  }
+
+  // 太さから、線の位置（inset）と外枠の余白（pad）を出す。
+  // 太くしたぶんだけ pad も広がるので、どの太さでも QR との隙間は変わらない。
+  function lineGeom(id, lw, lw2) {
+    const key = lineIdOf(id);
+    const ls = LINE_STYLES[key];
+    const w = clampLineWidth(lw, ls.stroke);
+    const w2 = clampLineWidth(lw2, ls.inner || 0.28);
+    let inset, pad;
+    if (key === 'cells') {
+      inset = ls.outer;
+      pad = ls.outer + w + ls.clear;
+    } else if (key === 'stamp') {
+      // ミシン目の山が外へ膨らむので、その半径ぶんだけ外側を空けておく
+      inset = stampBite(ls, w);
+      pad = inset + w + ls.clear;
+    } else if (key === 'ticket') {
+      // 切り取り線は、切り欠きの内側にミシン目が来るところまで下げる
+      inset = ls.notch + 0.3 + w / 2;
+      pad = inset + w / 2 + ls.clear;
+    } else if (key === 'double') {
+      inset = ls.outer + w / 2;
+      pad = inset + ls.gap + w2 / 2 + ls.clear;
+    } else {
+      inset = ls.outer + w / 2;
+      pad = inset + w / 2 + ls.clear;
+    }
+    return { key: key, ls: ls, lw: w, lw2: w2, inset: inset, pad: pad, tail: ls.tail || 0 };
+  }
 
   // ------------------------------------------------------------------
   // 小物
@@ -461,6 +602,150 @@
   }
 
   // ------------------------------------------------------------------
+  // 枠線
+  // ------------------------------------------------------------------
+  // 切手のミシン目。外周に半円の食い込みを等間隔で並べた矩形を、時計回りに一周描く。
+  // 進行方向の右（＝内側）へ膨らませるので sweep は全辺 1。
+  function scallopRectPath(x, y, w, h, bite) {
+    // 切り上げておくと山の半径が bite を超えない＝外周からはみ出さない
+    const nx = Math.max(2, Math.ceil(w / (bite * 2)));
+    const ny = Math.max(2, Math.ceil(h / (bite * 2)));
+    const sx = w / nx, sy = h / ny;
+    const arc = (rr, px, py) => 'A' + n(rr) + ' ' + n(rr) + ' 0 0 1 ' + n(px) + ' ' + n(py);
+    let d = 'M' + n(x) + ' ' + n(y);
+    for (let i = 0; i < nx; i++) d += arc(sx / 2, x + (i + 1) * sx, y);
+    for (let j = 0; j < ny; j++) d += arc(sy / 2, x + w, y + (j + 1) * sy);
+    for (let i = nx - 1; i >= 0; i--) d += arc(sx / 2, x + i * sx, y + h);
+    for (let j = ny - 1; j >= 0; j--) d += arc(sy / 2, x, y + j * sy);
+    return d + 'Z';
+  }
+
+  // 吹き出し。角丸の本体の下辺から、しっぽが三角に飛び出す。
+  // k を増やすと全体が内側に寄るので、地の形（k=0）と枠線（k=inset）を同じ式から作れる。
+  function balloonPath(k, W, H, tail, r, tailCx, tailW) {
+    const x0 = k, y0 = k, x1 = W - k;
+    const y1 = H - tail - k;                 // 本体の下端
+    const tipY = H - k * 1.8;                // しっぽの先
+    const tw = Math.max(0.6, tailW - k * 1.4);
+    const t1 = tailCx - tw / 2, t2 = tailCx + tw / 2;
+    const rr = Math.max(0, Math.min(r, (x1 - x0) / 2, (y1 - y0) / 2));
+    const arc = (px, py) => 'A' + n(rr) + ' ' + n(rr) + ' 0 0 1 ' + n(px) + ' ' + n(py);
+    return 'M' + n(x0 + rr) + ' ' + n(y0) +
+      'H' + n(x1 - rr) + arc(x1, y0 + rr) +
+      'V' + n(y1 - rr) + arc(x1 - rr, y1) +
+      'H' + n(t2) +
+      'L' + n(tailCx - tw * 0.25) + ' ' + n(tipY) +
+      'L' + n(t1) + ' ' + n(y1) +
+      'H' + n(x0 + rr) + arc(x0, y1 - rr) +
+      'V' + n(y0 + rr) + arc(x0 + rr, y0) + 'Z';
+  }
+
+  // 枠線を「stroke で描くパス」「塗りで描くパス」「地を切り抜く形」に分けて返す。
+  // 色の当て方（単色・グラデ・画像・多色）は呼び出し側でまとめて面倒を見るので、
+  // ここは形だけを組み立てる。プレビューの小さい絵も同じ関数から作る。
+  function frameLineParts(id, opts) {
+    const o = opts || {};
+    const W = o.W, H = o.H;
+    const g = lineGeom(id, o.lw, o.lw2);
+    const ls = g.ls, lw = g.lw, inset = g.inset;
+    const tail = o.tail !== undefined ? o.tail : g.tail;
+    const radius = o.radius || 0;
+    const outerR = Math.max(0, radius - inset);
+    const box = () => rectPath(inset, inset, W - inset * 2, H - inset * 2, outerR);
+    const strokes = [];
+    let fillD = '';
+    let bgClipD = '';
+    // 塗りが「外形から内側を抜いた帯」になる種類は evenodd で抜く
+    let fillEvenOdd = false;
+
+    if (g.key === 'cells') {
+      // 外周に、QR本体と同じ形のセルをぐるっと一周並べる。太さ＝セルの大きさ
+      const u = lw;
+      const cols = Math.max(3, Math.round((W - inset * 2) / u));
+      const rows = Math.max(3, Math.round((H - inset * 2) / u));
+      const x0 = (W - cols * u) / 2, y0 = (H - rows * u) / 2;
+      // 本体のセルは 100% だと隣とくっついてベタ帯に見えるので、枠では少し痩せさせる
+      const t = Math.max(0.35, Math.min(0.86, (Number(o.cellScale) || 1) * 0.82));
+      const s = u * t;
+      const off = (u - s) / 2;
+      const put = (px, py) => { fillD += singleCellPath(o.cell || 'rounded', px + off, py + off, s); };
+      for (let i = 0; i < cols; i++) {
+        put(x0 + i * u, y0);
+        put(x0 + i * u, y0 + (rows - 1) * u);
+      }
+      for (let j = 1; j < rows - 1; j++) {
+        put(x0, y0 + j * u);
+        put(x0 + (cols - 1) * u, y0 + j * u);
+      }
+    } else if (g.key === 'stamp') {
+      // ミシン目で縁取った札。地もこの形に切り抜くので、食い込みがそのまま外形になる
+      const bite = stampBite(ls, lw);
+      const outerD = scallopRectPath(inset, inset, W - inset * 2, H - inset * 2, bite);
+      bgClipD = outerD;
+      fillD = outerD + rectPath(inset + lw, inset + lw, W - (inset + lw) * 2, H - (inset + lw) * 2, Math.max(0, outerR));
+      fillEvenOdd = true;
+    } else if (g.key === 'balloon') {
+      const tailCx = W * 0.32, tailW = Math.min(2.6, W * 0.16);
+      bgClipD = balloonPath(0, W, H, tail, Math.max(1, radius), tailCx, tailW);
+      strokes.push({
+        d: balloonPath(inset, W, H, tail, Math.max(1, radius) - inset * 0.5, tailCx, tailW),
+        w: lw
+      });
+    } else if (g.key === 'bracket') {
+      // 四隅だけの L 字。カメラのファインダーのように「ここを読む」を示す
+      const L = Math.max(lw * 3, Math.min(W, H) * 0.22);
+      const r = Math.max(0.4, outerR);
+      const x0 = inset, y0 = inset, x1 = W - inset, y1 = H - inset;
+      const arc = 'A' + n(r) + ' ' + n(r) + ' 0 0 1 ';
+      strokes.push({ d:
+        'M' + n(x0) + ' ' + n(y0 + L) + 'V' + n(y0 + r) + arc + n(x0 + r) + ' ' + n(y0) + 'H' + n(x0 + L) +
+        'M' + n(x1 - L) + ' ' + n(y0) + 'H' + n(x1 - r) + arc + n(x1) + ' ' + n(y0 + r) + 'V' + n(y0 + L) +
+        'M' + n(x1) + ' ' + n(y1 - L) + 'V' + n(y1 - r) + arc + n(x1 - r) + ' ' + n(y1) + 'H' + n(x1 - L) +
+        'M' + n(x0 + L) + ' ' + n(y1) + 'H' + n(x0 + r) + arc + n(x0) + ' ' + n(y1 - r) + 'V' + n(y1 - L),
+        w: lw, cap: 'round' });
+    } else if (g.key === 'double') {
+      const gap = ls.gap;
+      strokes.push({ d: box(), w: lw });
+      strokes.push({
+        d: rectPath(inset + gap, inset + gap, W - (inset + gap) * 2, H - (inset + gap) * 2, Math.max(0, outerR - gap)),
+        w: g.lw2
+      });
+    } else if (g.key === 'dashed') {
+      strokes.push({ d: box(), w: lw, dash: n(lw * 2.8) + ' ' + n(lw * 1.7) });
+    } else if (g.key === 'ticket') {
+      // 切り取り線＋左右の切り欠き。切り欠きは地をくり抜いて作る
+      const cy = H / 2;
+      const nr = ls.notch;
+      bgClipD = rectPath(0, 0, W, H, radius) + circlePath(0, cy, nr) + circlePath(W, cy, nr);
+      strokes.push({ d: box(), w: lw, dash: '0 ' + n(lw * 2.4), cap: 'round' });
+      // くり抜いた縁をなぞる半円。地が透明でも切り欠きの形が分かる
+      strokes.push({
+        d: 'M0 ' + n(cy - nr) + 'A' + n(nr) + ' ' + n(nr) + ' 0 0 1 0 ' + n(cy + nr) +
+           'M' + n(W) + ' ' + n(cy - nr) + 'A' + n(nr) + ' ' + n(nr) + ' 0 0 0 ' + n(W) + ' ' + n(cy + nr),
+        w: lw * 0.8
+      });
+    } else {
+      strokes.push({ d: box(), w: lw });
+    }
+
+    return { strokes: strokes, fillD: fillD, bgClipD: bgClipD, fillEvenOdd: fillEvenOdd };
+  }
+
+  function lineFillMarkup(parts, val) {
+    if (!parts.fillD) return '';
+    return '<path d="' + parts.fillD + '" fill="' + val + '"' +
+      (parts.fillEvenOdd ? ' fill-rule="evenodd"' : '') + '/>';
+  }
+
+  // 既定（butt / miter）のときは属性を書かない。角丸0の実線で角が丸まってしまうのを避ける
+  function lineStrokeMarkup(parts, val) {
+    return parts.strokes.map(s =>
+      '<path d="' + s.d + '" fill="none" stroke="' + val + '" stroke-width="' + n(s.w) + '"' +
+      (s.dash ? ' stroke-dasharray="' + s.dash + '"' : '') +
+      (s.cap ? ' stroke-linecap="' + s.cap + '"' : '') + '/>').join('');
+  }
+
+  // ------------------------------------------------------------------
   // ロゴの下地
   // ------------------------------------------------------------------
   // 形はマーカーの枠と同じ 9 種。ただし枠はリング（外形から内側を抜いたもの）
@@ -612,14 +897,26 @@
     }).join('');
   }
 
+  // 画像の塗りの倍率。1 で面いっぱい、大きくすると寄って（切り取られて）、
+  // 小さくするとタイルのように繰り返す
+  function imgScaleOf(paint) {
+    const s = Number(paint && paint.imgScale);
+    return Number.isFinite(s) && s > 0 ? Math.min(IMG_SCALE_MAX, Math.max(IMG_SCALE_MIN, s)) : 1;
+  }
+
   function paintDef(paint, id, box) {
     if (!paint || paint.type === 'solid' || paint.type === 'none') return '';
     if (paint.type === 'image') {
       if (!paint.src) return '';
-      return '<pattern id="' + id + '" patternUnits="userSpaceOnUse" x="' + n(box.x) +
-        '" y="' + n(box.y) + '" width="' + n(box.w) + '" height="' + n(box.h) + '">' +
-        '<image href="' + esc(paint.src) + '" x="0" y="0" width="' + n(box.w) +
-        '" height="' + n(box.h) + '" preserveAspectRatio="xMidYMid slice"/>' +
+      // パターンの升目そのものを拡大縮小する。升目が面より大きければ中央を
+      // 切り取った「寄り」に、小さければ同じ絵が並ぶ
+      const k = imgScaleOf(paint);
+      const pw = box.w * k, ph = box.h * k;
+      const px = box.x + (box.w - pw) / 2, py = box.y + (box.h - ph) / 2;
+      return '<pattern id="' + id + '" patternUnits="userSpaceOnUse" x="' + n(px) +
+        '" y="' + n(py) + '" width="' + n(pw) + '" height="' + n(ph) + '">' +
+        '<image href="' + esc(paint.src) + '" x="0" y="0" width="' + n(pw) +
+        '" height="' + n(ph) + '" preserveAspectRatio="xMidYMid slice"/>' +
         '</pattern>';
     }
     const isMulti = paint.type === 'multi';
@@ -716,9 +1013,9 @@
     let fill = '';
     if (type === 'image') {
       if (!paint.src) return null;
-      fill = '<image href="' + esc(paint.src) + '" x="' + n(box.x) + '" y="' + n(box.y) +
-        '" width="' + n(box.w) + '" height="' + n(box.h) +
-        '" preserveAspectRatio="xMidYMid slice"/>';
+      // 倍率つきの升目をそのまま使いたいので、直に <image> を置かずパターン越しに塗る
+      defs += paintDef(paint, id, box);
+      fill = '<path d="' + rectPath(box.x, box.y, box.w, box.h, 0) + '" fill="url(#' + id + ')"/>';
     } else if (type === 'multi') {
       const o = opts || {};
       const tile = o.tile || Math.max(0.2, box.w / 6);
@@ -869,13 +1166,58 @@
     // 余白の1.5倍を上限にして、四隅の白場が必ず残るようにする。
     const radius = Math.max(0, Math.min(st.radius, margin * 1.5));
     const fm = FRAME_METRICS[st.frame.type] || FRAME_METRICS.none;
-    const pad = fm.pad;
-    const labelH = fm.label && st.frame.text ? fm.label : 0;
+    const isLine = st.frame.type === 'line';
+    // 枠線の余白は、種類と太さから毎回計算する（太くしても QR に食い込まないように）
+    const lineId = isLine ? lineIdOf(st.frame.line) : 'solid';
+    const lineG = lineGeom(lineId, st.frame.lineWidth, st.frame.lineWidth2);
+    const pad = isLine ? lineG.pad : fm.pad;
+    // 吹き出しのしっぽは下にはみ出すぶんだけ縦を伸ばす
+    const tailH = isLine ? lineG.tail : 0;
+    const isLabel = st.frame.type === 'label';
+    const pos = (st.frame && st.frame.pos) || 'bottom';
+
+    const topCMode = isLabel
+      ? ((pos === 'both' || (st.frame && (st.frame.topContentMode || st.frame.topMode)))
+          ? ((st.frame && (st.frame.topContentMode || st.frame.topMode)) || 'text')
+          : ((st.frame && (st.frame.contentMode || st.frame.mode)) || 'text'))
+      : 'text';
+    const bottomCMode = isLabel
+      ? ((st.frame && (st.frame.contentMode || st.frame.mode)) || 'text')
+      : 'text';
+
+    const hasTop = isLabel && (pos === 'top' || pos === 'both');
+    const hasBottom = isLabel && (pos === 'bottom' || pos === 'both');
+
+    const topText = pos === 'both' ? (st.frame.textTop || '') : (st.frame.textTop || st.frame.text || '');
+    const bottomText = st.frame.text || '';
+
+    const topSrc = (pos === 'both' || st.frame.topSrc) ? (st.frame.topSrc || '') : (st.frame.src || '');
+    const bottomSrc = st.frame.src || '';
+
+    const hasTopContent = topCMode === 'icon'
+      ? true
+      : (topCMode === 'image' ? !!topSrc : !!String(topText).trim());
+    const hasBottomContent = bottomCMode === 'icon'
+      ? true
+      : (bottomCMode === 'image' ? !!bottomSrc : !!String(bottomText).trim());
+
+    // ラベルの中身の大きさと、その周りの余白（中身の大きさに対する比）。
+    // 既定の 1.0 / 0.2 なら 4.0 + 0.8*2 = 5.6 で、FRAME_METRICS.label と同じ帯になる。
+    const fcSizeRaw = Number(st.frame.contentSize);
+    const fcSize = isFinite(fcSizeRaw) ? Math.max(0.5, Math.min(1.6, fcSizeRaw)) : 1;
+    const fcPadRaw = Number(st.frame.contentPad);
+    const fcPadR = isFinite(fcPadRaw) ? Math.max(0, Math.min(0.6, fcPadRaw)) : 0.2;
+    const contentSide = 4 * fcSize;
+    const contentPadU = contentSide * fcPadR;
+
+    const labelH = isLabel && fm.label ? contentSide + contentPadU * 2 : 0;
+    const topH = hasTop && hasTopContent ? labelH : 0;
+    const bottomH = hasBottom && hasBottomContent ? labelH : 0;
 
     const W = inner + pad * 2;
-    const H = inner + pad * 2 + labelH;
-    const bx = pad, by = pad;               // QRブロック（余白込み）の左上
-    const ox = pad + margin, oy = pad + margin; // モジュール(0,0)の左上
+    const H = inner + pad * 2 + topH + bottomH + tailH;
+    const bx = pad, by = pad + topH;               // QRブロック（余白込み）の左上
+    const ox = pad + margin, oy = pad + topH + margin; // モジュール(0,0)の左上
 
     // ---- どのモジュールを「データセル」として描くか -------------------
     const isFinder = (x, y) =>
@@ -920,14 +1262,14 @@
     const fgRef = paintRef(st.fg, uid + 'f', '#111827');
 
     const bgBox = st.frame.type === 'label' ? { x: bx, y: by, w: inner, h: inner } : { x: 0, y: 0, w: W, h: H };
-    let bgPaint = st.bg || { type: 'solid', color: '#FFFFFF', transparency: 80 };
+    let bgPaint = st.bg || { type: 'solid', color: '#FFFFFF', transparency: 0 };
     if (bgPaint.type === 'white') {
       bgPaint = { type: 'solid', color: '#FFFFFF', transparency: 0 };
     } else if (bgPaint.type === 'black') {
       bgPaint = { type: 'solid', color: '#000000', transparency: 0 };
     } else if (bgPaint.type === 'auto') {
       bgPaint = Object.assign({}, st.fg, {
-        transparency: st.bg.transparency !== undefined ? st.bg.transparency : 80
+        transparency: st.bg.transparency !== undefined ? st.bg.transparency : 0
       });
     }
 
@@ -935,12 +1277,15 @@
       defs += paintDef(bgPaint, uid + 'b', bgBox);
     }
     const bgRef = paintRef(bgPaint, uid + 'b', '#FFFFFF');
-    const bgTransparency = bgPaint.transparency !== undefined ? Number(bgPaint.transparency) : 80;
+    // 透明度が指定されていない塗りは「不透明」とみなす。
+    // （透明にしたいときは type:'none' か transparency を明示する）
+    const bgTransparency = bgPaint.transparency !== undefined ? Number(bgPaint.transparency) : 0;
     const bgOpacity = bgPaint.type === 'none' ? 0 : Math.max(0, Math.min(1, (100 - bgTransparency) / 100));
 
-    function buildBgMosaic(box, r, colors, seed, opac) {
+    function buildBgMosaic(box, r, colors, seed, opac, shapeD) {
       const clipId = uid + 'bgc';
-      defs += '<clipPath id="' + clipId + '"><path d="' + rectPath(box.x, box.y, box.w, box.h, r) + '"/></clipPath>';
+      defs += '<clipPath id="' + clipId + '"><path d="' +
+        (shapeD || rectPath(box.x, box.y, box.w, box.h, r)) + '" clip-rule="evenodd"/></clipPath>';
       const tileSize = Math.max(1.8, Math.min(2.6, box.w / 18));
       return '<g clip-path="url(#' + clipId + ')"' + (opac < 1 ? ' opacity="' + n(opac) + '"' : '') + '>' +
         mosaicTiles(box, colors, seed, tileSize, null, 103) + '</g>';
@@ -962,7 +1307,25 @@
     // 外枠の地
     if (st.frame.type === 'label') {
       const fr = st.frame.radius;
-      body += '<path d="' + rectPath(0, 0, W, H, fr) + '" fill="' + esc(st.frame.color) + '"/>';
+      const flPaint = (st.frame && st.frame.paint) ? st.frame.paint : (st.frame && st.frame.color ? { type: 'solid', color: st.frame.color } : { type: 'auto' });
+      const labelD = rectPath(0, 0, W, H, fr);
+      const isFlAuto = flPaint.type === 'auto';
+      if (isFlAuto && (st.fg.type === 'linear' || st.fg.type === 'radial' || st.fg.type === 'image')) {
+        defs += '<clipPath id="' + uid + 'flc"><path d="' + labelD + '"/></clipPath>';
+        body += '<g clip-path="url(#' + uid + 'flc)"><path d="' +
+          rectPath(0, 0, W, H, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
+      } else {
+        const cellOpts = isFlAuto ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+        const actualPaint = isFlAuto ? st.fg : flPaint;
+        const layer = paintedShape(actualPaint, { x: 0, y: 0, w: W, h: H }, uid + 'fl', '<path d="' + labelD + '"/>', cellOpts);
+        if (layer) {
+          defs += layer.defs;
+          body += layer.body;
+        } else {
+          const c = isFlAuto ? (st.fg.color || '#111827') : (flPaint.color || st.frame.color || '#111827');
+          body += '<path d="' + labelD + '" fill="' + esc(c) + '"/>';
+        }
+      }
       // QRブロックの下地
       if (bgPaint.type !== 'none' && bgOpacity > 0) {
         if (bgPaint.type === 'multi') {
@@ -973,18 +1336,69 @@
         }
       }
     } else {
+      // 切り取り線・切手・吹き出しは、地も枠の形に合わせて切り抜く
+      const lineParts = st.frame.type === 'line'
+        ? frameLineParts(lineId, {
+            W: W, H: H, radius: radius, cell: st.cell, cellScale: st.cellScale,
+            lw: st.frame.lineWidth, lw2: st.frame.lineWidth2
+          })
+        : { strokes: [], fillD: '', bgClipD: '' };
+      const bgShapeD = lineParts.bgClipD || '';
+
       if (bgPaint.type !== 'none' && bgOpacity > 0) {
         if (bgPaint.type === 'multi') {
-          body += buildBgMosaic({ x: 0, y: 0, w: W, h: H }, radius, bgPaint.colors, bgPaint.seed, bgOpacity);
+          body += buildBgMosaic({ x: 0, y: 0, w: W, h: H }, radius, bgPaint.colors, bgPaint.seed, bgOpacity, bgShapeD);
+        } else if (bgShapeD) {
+          // 塗るのは矩形のまま。形はクリップ側で決める（evenodd を直塗りすると、
+          // 札の外へはみ出した切り欠きが逆に塗られてしまう）
+          const cutId = uid + 'cut';
+          defs += '<clipPath id="' + cutId + '"><path d="' + bgShapeD + '" clip-rule="evenodd"/></clipPath>';
+          body += '<g clip-path="url(#' + cutId + ')"><path d="' + rectPath(0, 0, W, H, 0) +
+            '" fill="' + bgRef + '"' + (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/></g>';
         } else {
           body += '<path d="' + rectPath(0, 0, W, H, radius) + '" fill="' + bgRef +
             '"' + (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/>';
         }
       }
       if (st.frame.type === 'line') {
-        const inset = fm.stroke / 2 + 0.4;
-        body += '<path d="' + rectPath(inset, inset, W - inset * 2, H - inset * 2, Math.max(0, radius - inset)) +
-          '" fill="none" stroke="' + esc(st.frame.color) + '" stroke-width="' + n(fm.stroke) + '"/>';
+        const flPaint = (st.frame && st.frame.paint) ? st.frame.paint : (st.frame && st.frame.color ? { type: 'solid', color: st.frame.color } : { type: 'auto' });
+        const frameBox = { x: 0, y: 0, w: W, h: H };
+        const isFlAuto = flPaint.type === 'auto';
+        const isMultiMode = (isFlAuto && st.fg.type === 'multi') || (!isFlAuto && flPaint.type === 'multi');
+
+        if (isMultiMode) {
+          const multiColors = isFlAuto ? st.fg.colors : flPaint.colors;
+          const multiSeed = isFlAuto ? st.fg.seed : flPaint.seed;
+          const multiOrigin = isFlAuto ? { x: qrBox.x, y: qrBox.y } : null;
+          const tileSize = Math.max(1.8, Math.min(2.6, W / 18));
+          const maskId = uid + 'flm';
+          defs += '<mask id="' + maskId + '" maskUnits="userSpaceOnUse" x="0" y="0" width="' + n(W) + '" height="' + n(H) + '">' +
+            lineStrokeMarkup(lineParts, '#FFFFFF') +
+            lineFillMarkup(lineParts, '#FFFFFF') +
+            '</mask>';
+          body += '<g mask="url(#' + maskId + ')">' +
+            mosaicTiles(frameBox, multiColors, multiSeed, tileSize, multiOrigin, 103) +
+            '</g>';
+        } else {
+          // 単色は色そのもの、グラデ・画像は url(#...)。どちらも stroke にも fill にも使える
+          let strokeVal = '';
+          if (isFlAuto) {
+            if (st.fg.type === 'linear' || st.fg.type === 'radial' || st.fg.type === 'image') {
+              strokeVal = fgRef || '#111827';
+            } else {
+              strokeVal = esc(st.fg.color || '#111827');
+            }
+          } else if (flPaint.type === 'solid') {
+            strokeVal = esc(flPaint.color || st.frame.color || '#111827');
+          } else if (flPaint.type === 'linear' || flPaint.type === 'radial' || flPaint.type === 'image') {
+            defs += paintDef(flPaint, uid + 'fl', frameBox);
+            strokeVal = paintRef(flPaint, uid + 'fl', '#111827');
+          } else {
+            strokeVal = esc(flPaint.color || st.frame.color || '#111827');
+          }
+          body += lineStrokeMarkup(lineParts, strokeVal);
+          body += lineFillMarkup(lineParts, strokeVal);
+        }
       }
     }
 
@@ -1020,12 +1434,20 @@
         const bdTr = bdPaint.transparency !== undefined ? Number(bdPaint.transparency) : 0;
         const bdOp = Math.max(0, Math.min(1, (100 - bdTr) / 100));
         const op = bdOp < 1 ? ' opacity="' + n(bdOp) + '"' : '';
+        const isBdAuto = !!(logo.backdropPaint && logo.backdropPaint.type === 'auto');
         if (bdPaint.type === 'solid') {
           body += '<path d="' + d + '" fill="' + esc(bdPaint.color || '#FFFFFF') + '"' +
             (bdOp < 1 ? ' fill-opacity="' + n(bdOp) + '"' : '') + '/>';
+        } else if (isBdAuto && bdPaint.type !== 'multi') {
+          // 「セルの色」のグラデーション・放射・画像は、セル側の定義をそのまま引く。
+          // 下地の箱で定義し直すと、勾配も画像も下地の中だけで完結してしまい、
+          // セルと切れた別の模様になる。形で切り抜くだけにして一続きにする。
+          defs += '<clipPath id="' + uid + 'bdc"><path d="' + d + '"/></clipPath>';
+          body += '<g clip-path="url(#' + uid + 'bdc)"' + op + '><path d="' +
+            rectPath(bdBox.x, bdBox.y, bdBox.w, bdBox.h, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
         } else {
-          // セルと同じ模様を下地にも通すため、多色はモジュール格子に合わせる
-          const cellOpts = (logo.backdropPaint && logo.backdropPaint.type === 'auto')
+          // 多色はセルと同じモジュール格子・同じ種で振ると目地がそろう
+          const cellOpts = isBdAuto
             ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
           const layer = paintedShape(bdPaint, bdBox, uid + 'bd', '<path d="' + d + '"/>', cellOpts);
           if (layer) {
@@ -1041,22 +1463,218 @@
       body += lo.body;
     }
 
-    // 外枠のテキスト
-    if (labelH) {
-      const text = String(st.frame.text);
-      const avail = W - 3;
-      // 全角は約1em、半角は約0.55em として収まる字送りを見積もる
-      let units = 0;
-      for (let i = 0; i < text.length; i++) {
-        units += text.charCodeAt(i) > 0x2E80 ? 1 : 0.56;
+    // 外枠のコンテンツ（文字・アイコン・画像）
+    if (topH || bottomH) {
+      const font = (st.frame && st.frame.font) || 'sans';
+      let fontFamily = 'Inter, "Noto Sans JP", system-ui, sans-serif';
+      if (font === 'rounded') fontFamily = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif';
+      else if (font === 'serif') fontFamily = '"Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif';
+      else if (font === 'mono') fontFamily = '"JetBrains Mono", Consolas, Monaco, monospace';
+      else if (font === 'impact') fontFamily = 'Impact, "Arial Black", sans-serif';
+
+      const tp = (st.frame && st.frame.textPaint) ? st.frame.textPaint : (st.frame && st.frame.textColor ? { type: 'solid', color: st.frame.textColor } : { type: 'solid', color: '#FFFFFF' });
+      const tMode = tp.type || 'solid';
+      const tPaint = tMode === 'auto' ? (st.fg || { type: 'solid', color: '#111827' }) : tp;
+      const tPtype = tPaint.type || 'solid';
+
+      // 下地を先に敷くために、文字の寸法だけを取り出せるようにしておく
+      function frameTextMetrics(textStr) {
+        const text = String(textStr || '');
+        const avail = W - 3;
+        let units = 0;
+        for (let i = 0; i < text.length; i++) {
+          units += text.charCodeAt(i) > 0x2E80 ? 1 : 0.56;
+        }
+        const cap = contentSide * 0.85;
+        const fs = Math.max(contentSide * 0.4, Math.min(cap, units ? avail / units : cap));
+        return { fs: fs, units: units, tw: Math.max(fs * 2, fs * units) };
       }
-      const fs = Math.max(1.6, Math.min(3.4, units ? avail / units : 3.4));
-      const ty = pad + inner + labelH / 2;
-      body += '<text x="' + n(W / 2) + '" y="' + n(ty) + '" font-size="' + n(fs) +
-        '" font-weight="700" fill="' + esc(st.frame.textColor) +
-        '" text-anchor="middle" dominant-baseline="central" letter-spacing="' + n(fs * 0.02) +
-        '" font-family="Inter, &quot;Noto Sans JP&quot;, &quot;Hiragino Sans&quot;, &quot;Yu Gothic&quot;, system-ui, sans-serif">' +
-        esc(text) + '</text>';
+
+      function renderFrameText(textStr, ty, idSuffix) {
+        if (!textStr) return;
+        const text = String(textStr);
+        const m = frameTextMetrics(text);
+        const fs = m.fs;
+        const tw = m.tw;
+        const th = Math.max(fs * 1.5, labelH);
+        const textBox = { x: W / 2 - tw / 2, y: ty - th / 2, w: tw, h: th };
+        const tPid = uid + 'ft' + idSuffix;
+
+        const textEl = fill => '<text x="' + n(W / 2) + '" y="' + n(ty) + '" font-size="' + n(fs) +
+          '" font-weight="700"' + (fill ? ' fill="' + fill + '"' : '') +
+          ' text-anchor="middle" dominant-baseline="central" letter-spacing="' + n(fs * 0.02) +
+          '" font-family="' + esc(fontFamily) + '">' + esc(text) + '</text>';
+
+        if (tPtype === 'multi') {
+          const cellOpts = tMode === 'auto' ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+          const layer = paintedShape(tPaint, textBox, tPid, textEl(null), cellOpts);
+          if (layer) { defs += layer.defs; body += layer.body; }
+          else body += textEl(esc((tPaint.colors && tPaint.colors[0]) || '#FFFFFF'));
+        } else if (tPtype === 'linear' || tPtype === 'radial' || (tPtype === 'image' && tPaint.src)) {
+          if (tMode === 'auto') {
+            body += textEl(fgRef || '#111827');
+          } else {
+            defs += paintDef(tPaint, tPid, textBox);
+            body += textEl('url(#' + tPid + ')');
+          }
+        } else {
+          body += textEl(esc(tPaint.color || st.frame.textColor || '#FFFFFF'));
+        }
+      }
+
+      function renderFrameIcon(iconId, cx, cy, idSuffix, iconDataOpt, iconModeOpt, iconColOpt) {
+        const icons = (global.QRAssets && global.QRAssets.ICONS) || [];
+        const icon = iconDataOpt || icons.find(i => i.id === iconId) || icons[0];
+        if (!icon) return;
+        const side = contentSide;
+        const vb = String(icon.vb || '0 0 24 24').split(/\s+/).map(Number);
+        const vw = vb[2] || 24, vh = vb[3] || 24;
+        const k = side / Math.max(vw, vh);
+        const tx = cx - (vw * k) / 2 - (vb[0] || 0) * k;
+        const ty = cy - (vh * k) / 2 - (vb[1] || 0) * k;
+        const tf = 'translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')';
+        const pid = uid + 'fi' + idSuffix;
+
+        const iconMode = iconModeOpt || (st.frame && (st.frame.iconColorMode || (st.frame.iconPaint && st.frame.iconPaint.type))) || 'brand';
+        const iconCol = iconColOpt || (st.frame && (st.frame.iconColor || (st.frame.iconPaint && st.frame.iconPaint.color))) || '#FFFFFF';
+
+        const flat = color => {
+          let s = '<g transform="' + tf + '" fill="' + color + '">';
+          icon.p.forEach(p => {
+            s += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+          });
+          return s + '</g>';
+        };
+
+        if (iconMode === 'brand') {
+          if (icon.rawSvg) {
+            const raw = icon.rawSvg.replace(/__UID__/g, pid + '_');
+            body += '<g transform="' + tf + '">' + raw + '</g>';
+          } else {
+            const bColor = (global.QRAssets && global.QRAssets.BRAND_COLORS && global.QRAssets.BRAND_COLORS[icon.id]) || iconCol;
+            body += flat(esc(bColor));
+          }
+        } else if (iconMode === 'solid') {
+          body += flat(esc(iconCol));
+        } else if (iconMode === 'auto') {
+          const fgMode = st.fg ? st.fg.type : 'solid';
+          if (fgMode === 'solid') {
+            body += flat(esc(st.fg.color || '#111827'));
+          } else {
+            body += flat(fgRef || '#111827');
+          }
+        } else {
+          body += flat(esc(iconCol));
+        }
+      }
+
+      function renderFrameImage(src, cx, cy) {
+        if (!src) return;
+        const maxH = contentSide * 1.05;
+        const maxW = W - pad * 2;
+        const imgX = cx - maxW / 2;
+        const imgY = cy - maxH / 2;
+        body += '<image href="' + esc(src) + '" x="' + n(imgX) + '" y="' + n(imgY) + '" width="' +
+          n(maxW) + '" height="' + n(maxH) + '" preserveAspectRatio="xMidYMid meet"/>';
+      }
+
+      // 中身がどれだけの箱を占めるか。下地の大きさをこれに合わせる。
+      // 画像は縦横比が分からない（読み込まずに文字列だけで組み立てている）ので、
+      // アイコンと同じ正方形の板を敷く。
+      function frameContentBox(isTop) {
+        const cMode = isTop ? topCMode : bottomCMode;
+        if (cMode === 'icon') return { w: contentSide, h: contentSide };
+        if (cMode === 'image') {
+          return (isTop ? topSrc : bottomSrc) ? { w: contentSide, h: contentSide } : null;
+        }
+        const txt = isTop ? topText : bottomText;
+        if (!String(txt).trim()) return null;
+        // 文字幅は「全角1・半角0.56」の見積もりなので、大文字の並びだと少し足りない。
+        // 板が字に食い込まないよう、両側に半文字ぶんだけ足しておく。
+        const m = frameTextMetrics(txt);
+        return { w: m.tw + m.fs * 0.5, h: contentSide };
+      }
+
+      // 中身の後ろに敷く板。正方形の下地を描いてから横に伸ばすので、
+      // 文字のように横長のときは角の丸みも一緒に伸びて帯になる。
+      function renderFrameBackdrop(cy, idSuffix, isTop) {
+        const bdPaint = backdropPaintOf(st.frame, st.fg);
+        if (!bdPaint || bdPaint.type === 'none') return;
+        const box = frameContentBox(isTop);
+        if (!box || box.w <= 0 || box.h <= 0) return;
+
+        const bh = box.h + contentPadU;
+        const bw = Math.min(W, box.w + contentPadU);
+        const style = (st.frame.backdrop && st.frame.backdrop !== 'none') ? st.frame.backdrop : 'rounded';
+        const d = backdropPath(0, 0, bh, style);
+        const sx = bh > 0 ? bw / bh : 1;
+        const tf = 'translate(' + n(W / 2) + ' ' + n(cy) + ') scale(' + n(sx) + ' 1)';
+        const shape = '<g transform="' + tf + '"><path d="' + d + '"/></g>';
+        const bdBox = { x: W / 2 - bw / 2, y: cy - bh / 2, w: bw, h: bh };
+        const pid = uid + 'fbd' + idSuffix;
+
+        const bdTr = bdPaint.transparency !== undefined ? Number(bdPaint.transparency) : 0;
+        const bdOp = Math.max(0, Math.min(1, (100 - bdTr) / 100));
+        const op = bdOp < 1 ? ' opacity="' + n(bdOp) + '"' : '';
+        const isBdAuto = !!(st.frame.backdropPaint && st.frame.backdropPaint.type === 'auto');
+
+        if (bdPaint.type === 'solid') {
+          body += '<g transform="' + tf + '" fill="' + esc(bdPaint.color || '#FFFFFF') + '"' +
+            (bdOp < 1 ? ' fill-opacity="' + n(bdOp) + '"' : '') + '><path d="' + d + '"/></g>';
+        } else if (isBdAuto && bdPaint.type !== 'multi') {
+          // 「セルの色」はセル側の定義をそのまま引く。板の中だけで勾配や画像を
+          // 組み直すと、セルと切れた別の模様になってしまう。
+          defs += '<clipPath id="' + pid + 'c">' + shape + '</clipPath>';
+          body += '<g clip-path="url(#' + pid + 'c)"' + op + '><path d="' +
+            rectPath(bdBox.x, bdBox.y, bdBox.w, bdBox.h, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
+        } else {
+          const cellOpts = isBdAuto
+            ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+          const layer = paintedShape(bdPaint, bdBox, pid, shape, cellOpts);
+          if (layer) {
+            defs += layer.defs;
+            body += op ? '<g' + op + '>' + layer.body + '</g>' : layer.body;
+          } else {
+            body += '<g transform="' + tf + '" fill="' + esc(bdPaint.color || '#FFFFFF') +
+              '"><path d="' + d + '"/></g>';
+          }
+        }
+      }
+
+      function renderContent(cy, idSuffix, isTop) {
+        const cMode = isTop ? topCMode : bottomCMode;
+
+        renderFrameBackdrop(cy, idSuffix, isTop);
+
+        if (cMode === 'icon') {
+          const iconId = isTop
+            ? ((pos === 'both' || st.frame.topIcon) ? (st.frame.topIcon || 'si-instagram') : (st.frame.icon || 'si-instagram'))
+            : (st.frame.icon || 'si-instagram');
+          const iconData = isTop
+            ? ((pos === 'both' || st.frame.topIconData) ? st.frame.topIconData : st.frame.iconData)
+            : st.frame.iconData;
+          const iconMode = isTop
+            ? ((pos === 'both' || st.frame.topIconColorMode) ? (st.frame.topIconColorMode || 'brand') : (st.frame.iconColorMode || 'brand'))
+            : (st.frame.iconColorMode || 'brand');
+          const iconCol = isTop
+            ? ((pos === 'both' || st.frame.topIconColor) ? (st.frame.topIconColor || '#FFFFFF') : (st.frame.iconColor || '#FFFFFF'))
+            : (st.frame.iconColor || '#FFFFFF');
+          renderFrameIcon(iconId, W / 2, cy, idSuffix, iconData, iconMode, iconCol);
+        } else if (cMode === 'image') {
+          const src = isTop ? topSrc : bottomSrc;
+          renderFrameImage(src, W / 2, cy);
+        } else {
+          const txt = isTop ? topText : bottomText;
+          renderFrameText(txt, cy, idSuffix);
+        }
+      }
+
+      if (topH) {
+        renderContent(pad + labelH / 2, 't', true);
+      }
+      if (bottomH) {
+        renderContent(pad + topH + inner + labelH / 2, 'b', false);
+      }
     }
 
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + n(W) + ' ' + n(H) +
@@ -1156,6 +1774,21 @@
       '<circle cx="3.5" cy="3.5" r="1.6" fill="currentColor"/></svg>';
   }
 
+  // 枠線の種類の見本。本番と同じ frameLineParts から作るので、
+  // 一覧の絵と実際の出力がずれない。
+  function linePreview(id) {
+    const B = 8;
+    // しっぽは見本の中に収まるよう短くする
+    const tail = lineStyleOf(id).tail ? 1.5 : 0;
+    const parts = frameLineParts(id, {
+      W: B, H: B + tail, radius: 1.6, cell: 'rounded', cellScale: 0.92, tail: tail
+    });
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.3 -0.3 ' + n(B + 0.6) + ' ' + n(B + tail + 0.6) + '">' +
+      lineStrokeMarkup(parts, 'currentColor') +
+      lineFillMarkup(parts, 'currentColor') +
+      '</svg>';
+  }
+
   function eyePreview(eyeStyle) {
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="1.7 1.7 3.6 3.6">' +
       '<path d="' + markerEyePath(0, 0, eyeStyle) + '" fill="currentColor"/></svg>';
@@ -1170,6 +1803,11 @@
     markerPreview: markerPreview,
     eyePreview: eyePreview,
     backdropPreview: backdropPreview,
-    contrastRatio: contrastRatio
+    linePreview: linePreview,
+    LINE_STYLES: LINE_STYLES,
+    lineIdOf: lineIdOf,
+    contrastRatio: contrastRatio,
+    IMG_SCALE_MIN: IMG_SCALE_MIN,
+    IMG_SCALE_MAX: IMG_SCALE_MAX
   };
 })(window);

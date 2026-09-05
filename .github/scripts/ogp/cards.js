@@ -340,7 +340,7 @@ const CARDS = [
     slug: 'qr-atelier', out: 'images/ogp/qr-atelier-ogp.png', cat: 'generator',
     h1: 'QR<br>Atelier',
     sub: 'セル・マーカー・色・ロゴまで。<br>おしゃれなQRコードを、無料で。',
-    chips: ['セル12種', 'グラデーション', '中央ロゴ', 'SVG書き出し'],
+    chips: ['デザイン28種', 'セル16種', 'グラデーション', 'SVG書き出し'],
     css: `
       .right { justify-content: flex-end; }
       .art { width: 483px; height: auto; display: block; }`,

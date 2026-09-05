@@ -212,108 +212,395 @@
 
   // ------------------------------------------------------------------
   // まるごと差し替えるデザインプリセット（既定値に上書きマージする）
+  //
+  //   ・style に書いた項目だけが既定値を上書きする。
+  //   ・logo を書いたテンプレートは中央のロゴまで指定する。書かなければ、
+  //     ユーザーが置いていたロゴはそのまま残る。
+  //   ・セルの密度（minVersion）は、テンプレートを選ぶと「自動」に戻る。
   // ------------------------------------------------------------------
   const PRESETS = [
+    // --- 定番 (basic) ---
     {
+      // 「デザインを初期化」と同じ、いちばん素の状態
       name: 'ミニマル',
+      category: 'basic',
       style: {
-        cell: 'rounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#111827' }, bg: { type: 'solid', color: '#FFFFFF' },
-        markerFrameColor: '', markerEyeColor: '', radius: 2
+        cell: 'square', cellScale: 1, cellJitter: 0,
+        markerFrame: 'square', markerEye: 'square',
+        fg: { type: 'solid', color: '#000000' },
+        bg: { type: 'white', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 2, margin: 4,
+        logo: { type: 'none' },
+        frame: { type: 'none' }
       }
     },
     {
-      name: 'ドット',
+      name: 'ソフト角丸',
+      category: 'basic',
       style: {
-        cell: 'dot', cellScale: 0.92, markerFrame: 'circle', markerEye: 'circle',
-        fg: { type: 'solid', color: '#1F2937' }, bg: { type: 'solid', color: '#FFFFFF' },
-        markerFrameColor: '#2563EB', markerEyeColor: '#2563EB', radius: 3
-      }
-    },
-    {
-      name: '雫',
-      style: {
-        cell: 'classy2', cellScale: 1, markerFrame: 'xrounded', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#0F172A' }, bg: { type: 'solid', color: '#F8FAFC' },
-        markerFrameColor: '', markerEyeColor: '', radius: 4
-      }
-    },
-    {
-      name: 'ネオン',
-      style: {
-        cell: 'dot', cellScale: 0.9, markerFrame: 'circle', markerEye: 'circle',
-        fg: { type: 'linear', from: '#FC5778', to: '#506CFB', angle: 45 },
-        bg: { type: 'solid', color: '#0B0F14' },
-        markerFrameColor: '#00F5D4', markerEyeColor: '#FFFFFF', radius: 4,
-        invertOk: true
-      }
-    },
-    {
-      name: 'サンセット',
-      style: {
-        cell: 'classy', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
-        fg: { type: 'linear', from: '#CA2C2C', to: '#D1500B', angle: 60 },
-        bg: { type: 'solid', color: '#FFF8F0' },
-        markerFrameColor: '', markerEyeColor: '#C2410C', radius: 4
-      }
-    },
-    {
-      name: '和モダン',
-      style: {
-        cell: 'classy', cellScale: 1, markerFrame: 'leaf', markerEye: 'leaf',
-        fg: { type: 'solid', color: '#165E83' }, bg: { type: 'solid', color: '#F7F4EE' },
-        markerFrameColor: '#B7282E', markerEyeColor: '#165E83', radius: 1
-      }
-    },
-    {
-      name: 'ポップ',
-      style: {
-        cell: 'heart', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
-        fg: { type: 'linear', from: '#7048E8', to: '#E64980', angle: 30 },
-        bg: { type: 'solid', color: '#FFFFFF' },
-        markerFrameColor: '#1971C2', markerEyeColor: '#7048E8', radius: 5
+        cell: 'rounded', cellScale: 1, markerFrame: 'xrounded', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#111827' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 4, margin: 4, frame: { type: 'none' }
       }
     },
     {
       name: 'ビジネス',
+      category: 'basic',
       style: {
         cell: 'square', cellScale: 1, markerFrame: 'square', markerEye: 'square',
-        fg: { type: 'solid', color: '#0F172A' }, bg: { type: 'solid', color: '#FFFFFF' },
-        markerFrameColor: '#1D4ED8', markerEyeColor: '#0F172A', radius: 0
+        fg: { type: 'solid', color: '#1E3A8A' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#2563EB' },
+        markerEyePaint: { type: 'solid', color: '#1E3A8A' },
+        frame: { type: 'line', line: 'solid', lineWidth: 0.5, paint: { type: 'solid', color: '#94A3B8' } },
+        radius: 0, margin: 4
       }
     },
     {
-      name: 'モノクロ・線',
+      name: 'モノクロ・ドット',
+      category: 'basic',
       style: {
-        cell: 'vbar', cellScale: 0.88, markerFrame: 'square', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#111111' }, bg: { type: 'solid', color: '#FFFFFF' },
-        markerFrameColor: '', markerEyeColor: '', radius: 2
+        cell: 'dot', cellScale: 1, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'solid', color: '#18181B' },
+        bg: { type: 'solid', color: '#FAFAFA', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 6, margin: 4, frame: { type: 'none' }
       }
     },
     {
-      name: 'ダイヤ',
+      name: 'モダン・ライン',
+      category: 'basic',
       style: {
-        cell: 'diamond', cellScale: 1.1, markerFrame: 'cut', markerEye: 'leaf',
-        fg: { type: 'linear', from: '#13547A', to: '#80D0C7', angle: 120 },
-        bg: { type: 'solid', color: '#0B1F2A' },
-        markerFrameColor: '#80D0C7', markerEyeColor: '#FFFFFF', radius: 3,
+        cell: 'vbar', cellScale: 0.9, markerFrame: 'square', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#18181B' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        frame: { type: 'line', line: 'bracket', lineWidth: 0.9, paint: { type: 'solid', color: '#71717A' } },
+        radius: 2, margin: 4
+      }
+    },
+    {
+      // 暗い地に明るいセル。反転を承知のデザインなので invertOk を立てる
+      name: 'ナイト',
+      category: 'basic',
+      style: {
+        cell: 'rounded', cellScale: 1, markerFrame: 'xrounded', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#F8FAFC' },
+        bg: { type: 'solid', color: '#0B1220', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#38BDF8' },
+        markerEyePaint: { type: 'solid', color: '#F8FAFC' },
+        radius: 5, margin: 4, frame: { type: 'none' },
+        invertOk: true
+      }
+    },
+
+    // --- グラデーション (gradient) ---
+    {
+      name: 'サンセット',
+      category: 'gradient',
+      style: {
+        cell: 'classy', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
+        fg: { type: 'linear', from: '#B91C1C', to: '#C2410C', angle: 45 },
+        bg: { type: 'solid', color: '#FFF8F0', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#C2410C' },
+        radius: 4, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'オーロラ',
+      category: 'gradient',
+      style: {
+        cell: 'classy2', cellScale: 1, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'linear', from: '#0F766E', mid: '#1D4ED8', to: '#6D28D9', angle: 45 },
+        bg: { type: 'solid', color: '#F0FDFA', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#0F766E' },
+        markerEyePaint: { type: 'solid', color: '#1D4ED8' },
+        radius: 4, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'サイバー・ネオン',
+      category: 'gradient',
+      style: {
+        cell: 'dot', cellScale: 0.92, markerFrame: 'octagon', markerEye: 'circle',
+        fg: { type: 'radial', from: '#F43F5E', to: '#8B5CF6' },
+        bg: { type: 'solid', color: '#09090B', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#06B6D4' },
+        markerEyePaint: { type: 'solid', color: '#FFFFFF' },
+        radius: 4, margin: 4, frame: { type: 'none' },
         invertOk: true
       }
     },
     {
-      name: 'パステル',
+      name: 'ゴールド・ナイト',
+      category: 'gradient',
       style: {
-        cell: 'rounded', cellScale: 0.95, markerFrame: 'xrounded', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#7565A0' }, bg: { type: 'solid', color: '#FDF2F8' },
-        markerFrameColor: '#C2185B', markerEyeColor: '#3F6EA8', radius: 6
+        cell: 'square', cellScale: 1, markerFrame: 'square', markerEye: 'square',
+        fg: { type: 'linear', from: '#FBBF24', to: '#D97706', angle: 135 },
+        bg: { type: 'solid', color: '#0F172A', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#FDE68A' },
+        markerEyePaint: { type: 'auto' },
+        frame: {
+          type: 'line', line: 'double', lineWidth: 0.45, lineWidth2: 0.22,
+          paint: { type: 'solid', color: '#D97706' }
+        },
+        radius: 1, margin: 4,
+        invertOk: true
       }
     },
     {
-      name: 'フレッシュ',
+      name: 'ミント・フェード',
+      category: 'gradient',
       style: {
-        cell: 'classy2', cellScale: 1, markerFrame: 'leaf', markerEye: 'leaf',
-        fg: { type: 'solid', color: '#047857' }, bg: { type: 'solid', color: '#F0FDF4' },
-        markerFrameColor: '', markerEyeColor: '#065F46', radius: 4
+        cell: 'xrounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'xrounded',
+        fg: { type: 'linear', from: '#065F46', to: '#0E7490', angle: 90 },
+        bg: { type: 'linear', from: '#FFFFFF', to: '#ECFEFF', angle: 90, transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#065F46' },
+        radius: 5, margin: 4, frame: { type: 'none' }
+      }
+    },
+
+    // --- 多色モザイク (multi) ---
+    {
+      name: 'テラゾー',
+      category: 'multi',
+      style: {
+        cell: 'xrounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
+        fg: { type: 'multi', colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 12 },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 3, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'トイ・ブロック',
+      category: 'multi',
+      style: {
+        cell: 'square', cellScale: 1, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'multi', colors: ['#DC2626', '#1D4ED8', '#B45309', '#047857'], seed: 5 },
+        bg: { type: 'solid', color: '#FAFAFA', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        frame: { type: 'line', line: 'cells', lineWidth: 1, paint: { type: 'auto' } },
+        radius: 2, margin: 4
+      }
+    },
+    {
+      name: 'パステル・タイル',
+      category: 'multi',
+      style: {
+        cell: 'rounded', cellScale: 0.95, markerFrame: 'xrounded', markerEye: 'rounded',
+        fg: { type: 'multi', colors: ['#4F46E5', '#BE185D', '#0F766E'], seed: 42 },
+        bg: { type: 'solid', color: '#FDF4FF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 4, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'モザイク・ナイト',
+      category: 'multi',
+      style: {
+        cell: 'hexagon', cellScale: 1, markerFrame: 'octagon', markerEye: 'hexagon',
+        fg: { type: 'multi', colors: ['#22D3EE', '#A78BFA', '#F472B6', '#FDE047'], seed: 8 },
+        bg: { type: 'solid', color: '#111827', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#F8FAFC' },
+        markerEyePaint: { type: 'auto' },
+        radius: 4, margin: 4, frame: { type: 'none' },
+        invertOk: true
+      }
+    },
+
+    // --- フレーム (frame) ---
+    {
+      name: 'スキャンしてね',
+      category: 'frame',
+      style: {
+        cell: 'rounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#0F172A' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#2563EB' },
+        markerEyePaint: { type: 'solid', color: '#2563EB' },
+        frame: {
+          type: 'label', pos: 'bottom', contentMode: 'text',
+          text: 'スキャンしてね', font: 'rounded',
+          contentSize: 1, contentPad: 0.2,
+          backdropPaint: { type: 'none' },
+          paint: { type: 'auto' }, textPaint: { type: 'solid', color: '#FFFFFF' }
+        },
+        radius: 3, margin: 4
+      }
+    },
+    {
+      name: 'SCAN ME',
+      category: 'frame',
+      style: {
+        cell: 'square', cellScale: 1, markerFrame: 'square', markerEye: 'square',
+        fg: { type: 'solid', color: '#111827' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        frame: {
+          type: 'label', pos: 'bottom', contentMode: 'text',
+          text: 'SCAN ME', font: 'impact',
+          contentSize: 1.1, contentPad: 0.18,
+          backdropPaint: { type: 'none' },
+          paint: { type: 'solid', color: '#F59E0B' }, textPaint: { type: 'solid', color: '#111827' }
+        },
+        radius: 0, margin: 4
+      }
+    },
+    {
+      name: '上下ラベル',
+      category: 'frame',
+      style: {
+        cell: 'rounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#0F172A' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        frame: {
+          type: 'label', pos: 'both',
+          topContentMode: 'text', contentMode: 'text',
+          textTop: 'FOLLOW US', text: '@example', font: 'mono',
+          contentSize: 0.85, contentPad: 0.22,
+          backdropPaint: { type: 'none' },
+          paint: { type: 'solid', color: '#0F172A' }, textPaint: { type: 'solid', color: '#FFFFFF' }
+        },
+        radius: 3, margin: 4
+      }
+    },
+    {
+      name: 'チケット',
+      category: 'frame',
+      style: {
+        cell: 'square', cellScale: 1, markerFrame: 'square', markerEye: 'square',
+        fg: { type: 'solid', color: '#0F172A' },
+        bg: { type: 'solid', color: '#FFFBEB', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#B45309' },
+        markerEyePaint: { type: 'auto' },
+        frame: { type: 'line', line: 'ticket', lineWidth: 0.55, paint: { type: 'solid', color: '#B45309' } },
+        radius: 1, margin: 4
+      }
+    },
+    {
+      name: 'スタンプ',
+      category: 'frame',
+      style: {
+        cell: 'rounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#1E3A8A' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        frame: { type: 'line', line: 'stamp', lineWidth: 1.3, paint: { type: 'solid', color: '#1E3A8A' } },
+        radius: 0, margin: 4
+      }
+    },
+    {
+      name: '吹き出し',
+      category: 'frame',
+      style: {
+        cell: 'dot', cellScale: 1, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'solid', color: '#BE185D' },
+        bg: { type: 'solid', color: '#FFF1F2', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        frame: { type: 'line', line: 'balloon', lineWidth: 0.7, paint: { type: 'solid', color: '#BE185D' } },
+        radius: 5, margin: 4
+      }
+    },
+    {
+      name: 'ボタニカル',
+      category: 'frame',
+      style: {
+        cell: 'classy', cellScale: 1, markerFrame: 'leaf', markerEye: 'leaf',
+        fg: { type: 'solid', color: '#166534' },
+        bg: { type: 'solid', color: '#F0FDF4', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#15803D' },
+        markerEyePaint: { type: 'solid', color: '#166534' },
+        frame: {
+          type: 'label', pos: 'bottom', contentMode: 'text',
+          text: 'FOLLOW US', font: 'serif',
+          contentSize: 0.9, contentPad: 0.22,
+          backdropPaint: { type: 'none' },
+          paint: { type: 'auto' }, textPaint: { type: 'solid', color: '#FFFFFF' }
+        },
+        radius: 2, margin: 4
+      }
+    },
+
+    // --- 個性派 (unique) ---
+    {
+      name: 'スターライト',
+      category: 'unique',
+      style: {
+        cell: 'star', cellScale: 1.05, markerFrame: 'flower', markerEye: 'star',
+        fg: { type: 'linear', from: '#4F46E5', to: '#7C3AED', angle: 60 },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#4F46E5' },
+        markerEyePaint: { type: 'solid', color: '#B45309' },
+        radius: 4, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'スイート・ハート',
+      category: 'unique',
+      style: {
+        cell: 'heart', cellScale: 1.05, markerFrame: 'xrounded', markerEye: 'heart',
+        fg: { type: 'linear', from: '#BE123C', to: '#9D174D', angle: 30 },
+        bg: { type: 'solid', color: '#FFF1F2', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#BE123C' },
+        markerEyePaint: { type: 'solid', color: '#BE123C' },
+        radius: 5, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: '和モダン・椿',
+      category: 'unique',
+      style: {
+        cell: 'plus', cellScale: 1, markerFrame: 'leaf', markerEye: 'leaf',
+        fg: { type: 'solid', color: '#1E3A8A' },
+        bg: { type: 'solid', color: '#FDFBF7', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#B91C1C' },
+        markerEyePaint: { type: 'solid', color: '#1E3A8A' },
+        radius: 1, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'フラワー',
+      category: 'unique',
+      style: {
+        cell: 'flower', cellScale: 1, markerFrame: 'flower', markerEye: 'flower',
+        fg: { type: 'linear', from: '#047857', to: '#0F766E', angle: 45 },
+        bg: { type: 'solid', color: '#F0FDF4', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#047857' },
+        markerEyePaint: { type: 'solid', color: '#047857' },
+        radius: 4, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      // 太さのバラつきで、手で押したような揺らぎを出す
+      name: 'ゆらぎ',
+      category: 'unique',
+      style: {
+        cell: 'dot', cellScale: 1.05, cellJitter: 0.3,
+        markerFrame: 'cut', markerEye: 'cut',
+        fg: { type: 'solid', color: '#334155' },
+        bg: { type: 'solid', color: '#F8FAFC', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#0369A1' },
+        radius: 6, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'ダイヤ・グリッド',
+      category: 'unique',
+      style: {
+        cell: 'diamond', cellScale: 1.05, markerFrame: 'dots', markerEye: 'diamond',
+        fg: { type: 'solid', color: '#312E81' },
+        bg: { type: 'solid', color: '#EEF2FF', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#BE185D' },
+        radius: 2, margin: 4, frame: { type: 'none' }
       }
     }
   ];
@@ -371,6 +658,18 @@
     { id: 'hbar',     name: '横ライン' }
   ];
 
+  // 枠線の種類。id は QRStyle.LINE_STYLES と対応する
+  const FRAME_LINES = [
+    { id: 'solid',   name: '実線' },
+    { id: 'double',  name: '二重線' },
+    { id: 'dashed',  name: '破線' },
+    { id: 'bracket', name: '角ブラケット' },
+    { id: 'ticket',  name: '切り取り線' },
+    { id: 'stamp',   name: '切手' },
+    { id: 'balloon', name: '吹き出し' },
+    { id: 'cells',   name: 'セル枠' }
+  ];
+
   const FRAMES = [
     { id: 'none',   name: 'なし' },
     { id: 'line',   name: '枠線' },
@@ -385,6 +684,7 @@
     PRESETS: PRESETS,
     CELL_SHAPES: CELL_SHAPES,
     MARKER_FRAMES: MARKER_FRAMES,
+    FRAME_LINES: FRAME_LINES,
     MARKER_EYES: MARKER_EYES,
     FRAMES: FRAMES
   };
