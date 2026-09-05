@@ -1,13 +1,19 @@
 /* QR Atelier — 画面まわり
  *
  * qr-core.js（符号化）と qr-style.js（描画）をつなぎ、入力・デザイン操作・
- * 書き出しを受け持つ。ページの外へ出ていく通信はひとつもない。
+ * 書き出しを受け持つ。
+ *
+ * 入力した内容そのものは、符号化から検査・書き出しまで一度も外へ出ない。
+ * 外へ出るのはページの土台（Tailwind・lucide・Google Fonts など）と、
+ * 「画像をURLで指定」したときのその画像、それに書き出し時のフォント取得だけ。
  */
 (function () {
   'use strict';
 
   const { showToast } = window.STCommon;
   const A = window.QRAssets;
+  // 選べる書体は qr-style.js の表がひとつの出どころ。検証もシャッフルもそこから引く。
+  const FONTS = window.QRStyle.FONT_KEYS;
 
   // 制御文字はエスケープ表記が化けやすいので、必ずコードポイントから作る。
   const CRLF = String.fromCharCode(13) + String.fromCharCode(10);
@@ -196,56 +202,18 @@
 
   function scopeTarget(scope) { return scope; }
 
-  function getFrameLinePaint() {
-    if (!state.style.frame) {
-      state.style.frame = { type: 'none', pos: 'bottom', text: 'スキャンしてね', font: 'sans', color: '#111827', textColor: '#FFFFFF', radius: 3 };
-    }
-    if (!state.style.frame.paint) {
-      state.style.frame.paint = {
-        type: 'auto',
-        color: state.style.frame.color || '#111827',
-        from: '#111827',
-        mid: '',
-        to: '#2563EB',
-        angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'],
-        seed: 0,
-        src: '',
-        transparency: 0
-      };
-    }
-    return state.style.frame.paint;
-  }
-
-  function getFrameTextPaint() {
-    if (!state.style.frame) {
-      state.style.frame = { type: 'none', pos: 'bottom', text: 'スキャンしてね', font: 'sans', color: '#111827', textColor: '#FFFFFF', radius: 3 };
-    }
-    if (!state.style.frame.textPaint) {
-      state.style.frame.textPaint = {
-        type: 'solid',
-        color: state.style.frame.textColor || '#FFFFFF',
-        from: '#FC466B',
-        mid: '',
-        to: '#3F5EFB',
-        angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'],
-        seed: 0,
-        src: '',
-        transparency: 0
-      };
-    }
-    return state.style.frame.textPaint;
-  }
+  // state.style は必ず DEFAULTS から起こす（初期化・復元・テンプレート適用・
+  // 初期化ボタンの4か所とも）。QRStyle.merge は DEFAULTS のキーを再帰的に
+  // 埋めるので、frame も frame.paint も「無いかもしれない」状態にはならない。
+  // 以前は呼び出し側ごとに作り直していたが、その場しのぎの不完全な形が
+  // 入るだけで、守っている対象は存在しなかった。
+  function getFrameLinePaint() { return state.style.frame.paint; }
+  function getFrameTextPaint() { return state.style.frame.textPaint; }
 
   // ラベルの中身の下地の塗り。ロゴの下地と同じ 9 モードを持つが、
   // 既定は「なし」なので、選ぶまでは今までどおり板は敷かれない。
   function getFrameBackdropPaint() {
-    const fr = state.style.frame;
-    if (!fr.backdropPaint || !fr.backdropPaint.type) {
-      fr.backdropPaint = { type: 'none', color: '#FFFFFF', transparency: 0 };
-    }
-    return fr.backdropPaint;
+    return state.style.frame.backdropPaint;
   }
 
   function paintOf(target) {
@@ -299,64 +267,64 @@
     return lg.backdropPaint;
   }
 
-  function getLogoPaint() {
-    if (!state.style.logo.paint) {
-      state.style.logo.paint = {
-        type: 'brand', color: state.style.logo.color || '#111827',
-        from: '#111827', mid: '', to: '#2563EB', angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
-      };
-    }
-    return state.style.logo.paint;
-  }
+  function getLogoPaint() { return state.style.logo.paint; }
 
   const STORE_KEY = 'qr-atelier-v1';
 
+  // 受け付ける画像の上限。ファイルからでもURLからでも同じ線を引く。
+  const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+
+  // これより長い画像（data URL）は覚えない。localStorage の枠を1枚で使い切る。
+  const MAX_STORED_SRC = 300000;
+
+  // 覚えるときに大きすぎる画像を落とす場所。[持ち主, キー名] で並べる。
+  function storedImageSlots(s) {
+    return [
+      [s.logo, 'src'], [s.logo.paint, 'src'],
+      [s.fg, 'src'], [s.bg, 'src'],
+      [s.markerFramePaint, 'src'], [s.markerEyePaint, 'src'],
+      [s.frame.paint, 'src'], [s.frame.textPaint, 'src'], [s.frame.backdropPaint, 'src'],
+      [s.frame, 'src'], [s.frame, 'topSrc']
+    ];
+  }
+
   function save() {
     try {
-      const copy = JSON.parse(JSON.stringify(state));
-      // 画像は重いので、大きいものは覚えない
-      if (copy.style.logo && copy.style.logo.src && copy.style.logo.src.length > 300000) {
-        copy.style.logo.src = '';
-        copy.style.logo.type = 'none';
-      }
-      if (copy.style.logo && copy.style.logo.paint && copy.style.logo.paint.src && copy.style.logo.paint.src.length > 300000) {
-        copy.style.logo.paint.src = '';
-      }
-      if (copy.style.fg && copy.style.fg.src && copy.style.fg.src.length > 300000) {
-        copy.style.fg.src = '';
-      }
-      if (copy.style.bg && copy.style.bg.src && copy.style.bg.src.length > 300000) {
-        copy.style.bg.src = '';
-      }
-      if (copy.style.markerFramePaint && copy.style.markerFramePaint.src && copy.style.markerFramePaint.src.length > 300000) {
-        copy.style.markerFramePaint.src = '';
-      }
-      if (copy.style.markerEyePaint && copy.style.markerEyePaint.src && copy.style.markerEyePaint.src.length > 300000) {
-        copy.style.markerEyePaint.src = '';
-      }
-      if (copy.style.frame && copy.style.frame.paint && copy.style.frame.paint.src && copy.style.frame.paint.src.length > 300000) {
-        copy.style.frame.paint.src = '';
-      }
-      if (copy.style.frame && copy.style.frame.textPaint && copy.style.frame.textPaint.src && copy.style.frame.textPaint.src.length > 300000) {
-        copy.style.frame.textPaint.src = '';
-      }
-      if (copy.style.frame && copy.style.frame.backdropPaint && copy.style.frame.backdropPaint.src && copy.style.frame.backdropPaint.src.length > 300000) {
-        copy.style.frame.backdropPaint.src = '';
-      }
-      if (copy.style.frame && copy.style.frame.src && copy.style.frame.src.length > 300000) {
-        copy.style.frame.src = '';
-      }
-      if (copy.style.frame && copy.style.frame.topSrc && copy.style.frame.topSrc.length > 300000) {
-        copy.style.frame.topSrc = '';
-      }
-      delete copy.style.logo.iconData;
-      if (copy.style.frame) {
-        delete copy.style.frame.iconData;
-        delete copy.style.frame.topIconData;
-      }
-      localStorage.setItem(STORE_KEY, JSON.stringify(copy));
+      // 覚えられない画像は、複製せずに直列化しながら落とす。state を丸ごと
+      // 複製してから消すと、これから捨てる data URL を一度そっくり作り直す
+      // ことになる（4MB の画像なら往復で 10MB 級の文字列になる）。
+      const drop = new Set();
+      let logoDropped = false;
+      storedImageSlots(state.style).forEach(slot => {
+        const owner = slot[0], key = slot[1];
+        if (owner && typeof owner[key] === 'string' && owner[key].length > MAX_STORED_SRC) {
+          drop.add(owner[key]);
+          if (owner === state.style.logo && key === 'src') logoDropped = true;
+        }
+      });
+      const json = JSON.stringify(state, function (k, v) {
+        // アイコンの実体は QRAssets から引き直せるので覚えない
+        if (k === 'iconData' || k === 'topIconData') return undefined;
+        if (typeof v === 'string' && drop.has(v)) return '';
+        // ロゴ本体の画像だけは、消したあと種類も戻さないと空のロゴが残る
+        if (logoDropped && k === 'type' && this === state.style.logo) return 'none';
+        return v;
+      });
+      localStorage.setItem(STORE_KEY, json);
     } catch (e) { /* private mode — 保存しないだけ */ }
+  }
+
+  // 保存は state 全体の直列化なので、埋め込んだ画像ぶんだけ重い。操作のたびに
+  // 走らせる意味はないので、最後の操作から少し置いて1回にまとめる。画面を
+  // 離れるときだけは、待っているぶんを取りこぼさないよう即座に書く。
+  let saveTimer = null;
+  function saveSoon() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { saveTimer = null; save(); }, 400);
+  }
+  function saveNow() {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    save();
   }
 
   function restore() {
@@ -369,7 +337,7 @@
       if (saved.values) Object.keys(state.values).forEach(k => {
         if (saved.values[k]) Object.assign(state.values[k], saved.values[k]);
       });
-      ['ec', 'minVersion', 'exportSize', 'presetName', 'presetCategory', 'iconGroup', 'frameIconGroup', 'frameTopIconGroup', 'frameBottomIconGroup'].forEach(k => {
+      ['ec', 'minVersion', 'exportSize', 'presetName', 'presetCategory', 'iconGroup', 'frameTopIconGroup', 'frameBottomIconGroup'].forEach(k => {
         if (saved[k] !== undefined) state[k] = saved[k];
       });
       if (['auto', 'light', 'dark'].indexOf(saved.previewChecker) >= 0) {
@@ -386,47 +354,9 @@
           ? { type: 'none', color: '#FFFFFF', transparency: 0 }
           : { type: 'solid', color: saved.style.logo.backdropColor || '#FFFFFF', transparency: 0 };
       }
+      // merge は DEFAULTS のキーを再帰的に埋めるので、frame.paint / logo.paint /
+      // font などの穴埋めはここでは要らない。値の妥当性は sanitizeStyle が見る。
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
-      if (state.style.frame && !state.style.frame.paint) {
-        state.style.frame.paint = {
-          type: 'auto',
-          color: state.style.frame.color || '#111827',
-          from: '#111827',
-          mid: '',
-          to: '#2563EB',
-          angle: 45,
-          colors: ['#2563EB', '#7C3AED', '#DB2777'],
-          seed: 0,
-          src: '',
-          transparency: 0
-        };
-      }
-      if (state.style.frame && !state.style.frame.textPaint) {
-        state.style.frame.textPaint = {
-          type: 'solid',
-          color: state.style.frame.textColor || '#FFFFFF',
-          from: '#FC466B',
-          mid: '',
-          to: '#3F5EFB',
-          angle: 45,
-          colors: ['#2563EB', '#7C3AED', '#DB2777'],
-          seed: 0,
-          src: '',
-          transparency: 0
-        };
-      }
-      if (state.style.frame && !state.style.frame.font) {
-        state.style.frame.font = 'sans';
-      }
-      if (state.style.logo && !state.style.logo.paint) {
-        state.style.logo.paint = {
-          type: 'brand', color: state.style.logo.color || '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
-          colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: ''
-        };
-      }
-      if (state.style.logo && !state.style.logo.font) {
-        state.style.logo.font = 'sans';
-      }
       if (state.style.markerFrame && !A.MARKER_FRAMES.some(f => f.id === state.style.markerFrame)) {
         state.style.markerFrame = window.QRStyle.DEFAULTS.markerFrame;
       }
@@ -449,18 +379,26 @@
     } catch (e) { /* 壊れた保存は捨てる */ }
   }
 
-  function sanitizePaint(p, defaultType, fallbackColor, isBg) {
-    const D = window.QRStyle.DEFAULTS;
+  // 塗りのモードは、どこに使う塗りかで選べる顔ぶれが変わる。画面のボタンの
+  // 並び（index.html の color-mode-seg / logo-color-mode-seg）と対で持つこと。
+  //   basic … セルとラベルの文字。追従先が無いので実体のある塗りだけ
+  //   auto  … マーカーとフレームの線。既定は「セルの色に追従」
+  //   brand … ロゴ。アイコンのブランド公式色を選べる
+  //   plate … 背景と下地。敷く面なので白・黒・透明まで選べる
+  const PAINT_MODES = {
+    basic: ['solid', 'multi', 'linear', 'radial', 'image'],
+    auto: ['auto', 'solid', 'multi', 'linear', 'radial', 'image'],
+    brand: ['brand', 'auto', 'solid', 'multi', 'linear', 'radial', 'image'],
+    plate: ['white', 'black', 'none', 'auto', 'solid', 'multi', 'linear', 'radial', 'image']
+  };
+
+  function sanitizePaint(p, kind, defaultType, fallbackColor) {
     if (!p || typeof p !== 'object') p = {};
-    const validTypes = isBg
-      ? ['white', 'black', 'none', 'auto', 'solid', 'multi', 'linear', 'radial', 'image']
-      : defaultType === 'auto'
-        ? ['auto', 'solid', 'multi', 'linear', 'radial', 'image']
-        : ['solid', 'multi', 'linear', 'radial', 'image'];
-    if (validTypes.indexOf(p.type) < 0) p.type = defaultType;
-    p.color = normHex(p.color, fallbackColor || (isBg ? '#FFFFFF' : '#111827'));
-    p.from = normHex(p.from, isBg ? '#FFFFFF' : '#FC466B');
-    p.to = normHex(p.to, isBg ? '#E5E7EB' : '#3F5EFB');
+    const isPlate = kind === 'plate';
+    if (PAINT_MODES[kind].indexOf(p.type) < 0) p.type = defaultType;
+    p.color = normHex(p.color, fallbackColor || (isPlate ? '#FFFFFF' : '#111827'));
+    p.from = normHex(p.from, isPlate ? '#FFFFFF' : '#FC466B');
+    p.to = normHex(p.to, isPlate ? '#E5E7EB' : '#3F5EFB');
     p.mid = p.mid ? normHex(p.mid, '') : '';
     p.angle = clampNum(p.angle, 0, 359, 45);
     if (!Array.isArray(p.colors) || p.colors.length === 0) {
@@ -472,7 +410,8 @@
     p.seed = typeof p.seed === 'number' && !isNaN(p.seed) ? Math.floor(p.seed) : 0;
     p.src = sanitizeImageUrl(p.src);
     p.imgScale = clampNum(p.imgScale, IMG_SCALE_MIN, IMG_SCALE_MAX, 1);
-    if (isBg || p.transparency !== undefined) {
+    // 透過スライダーを持たない塗り（ロゴなど）に、勝手に生やさない
+    if (isPlate || p.transparency !== undefined) {
       p.transparency = clampNum(p.transparency, 0, 100, 0);
     }
     return p;
@@ -483,29 +422,29 @@
   // 色は #RRGGBB に、数値は範囲内の数に必ず均しておく。
   function sanitizeStyle(s) {
     const D = window.QRStyle.DEFAULTS;
-    s.fg = sanitizePaint(s.fg, 'solid', '#111827');
+    s.fg = sanitizePaint(s.fg, 'basic', 'solid', '#111827');
 
     // 旧プロパティからの移行と初期化
     if (!s.markerFramePaint) {
       s.markerFramePaint = s.markerFrameColor ? { type: 'solid', color: s.markerFrameColor } : { type: 'auto' };
     }
-    s.markerFramePaint = sanitizePaint(s.markerFramePaint, 'auto', s.fg.color);
+    s.markerFramePaint = sanitizePaint(s.markerFramePaint, 'auto', 'auto', s.fg.color);
 
     if (!s.markerEyePaint) {
       s.markerEyePaint = s.markerEyeColor ? { type: 'solid', color: s.markerEyeColor } : { type: 'auto' };
     }
-    s.markerEyePaint = sanitizePaint(s.markerEyePaint, 'auto', s.fg.color);
+    s.markerEyePaint = sanitizePaint(s.markerEyePaint, 'auto', 'auto', s.fg.color);
 
     if (!s.frame.paint) {
       s.frame.paint = { type: 'auto', color: s.frame.color || '#111827' };
     }
-    s.frame.paint = sanitizePaint(s.frame.paint, 'auto', s.fg.color);
+    s.frame.paint = sanitizePaint(s.frame.paint, 'auto', 'auto', s.fg.color);
 
     if (!s.frame.textPaint) {
       s.frame.textPaint = { type: 'solid', color: s.frame.textColor || '#FFFFFF' };
     }
-    s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'solid', '#FFFFFF');
-    if (!s.frame.font || ['sans', 'rounded', 'serif', 'mono', 'impact'].indexOf(s.frame.font) < 0) {
+    s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'basic', 'solid', '#FFFFFF');
+    if (!s.frame.font || FONTS.indexOf(s.frame.font) < 0) {
       s.frame.font = 'sans';
     }
     if (!s.frame.contentMode || ['text', 'icon', 'image'].indexOf(s.frame.contentMode) < 0) {
@@ -547,9 +486,9 @@
     }
     // 下地は既定で不透明。sanitizePaint は未指定を 80% 透過とみなすので、先に埋めておく
     if (s.frame.backdropPaint.transparency === undefined) s.frame.backdropPaint.transparency = 0;
-    s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'none', '#FFFFFF', true);
+    s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'plate', 'none', '#FFFFFF');
 
-    s.bg = sanitizePaint(s.bg, 'solid', '#FFFFFF', true);
+    s.bg = sanitizePaint(s.bg, 'plate', 'solid', '#FFFFFF');
 
     // ロゴの下地。形はマーカーの枠と同じ一覧から選ぶ。旧データの 'none'（下地なし）は
     // 形を角丸に戻したうえで、塗りのほうを「透明」に移す。
@@ -562,7 +501,12 @@
       s.logo.backdrop = D.logo.backdrop;
     }
     if (s.logo.backdropPaint.transparency === undefined) s.logo.backdropPaint.transparency = 0;
-    s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'solid', '#FFFFFF', true);
+    s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'plate', 'solid', '#FFFFFF');
+
+    // ロゴ本体の塗り。ここだけ 'brand'（アイコンのブランド公式色）を選べる。
+    // 画面では、ブランド以外のアイコン群を選んでいるときに syncControls が
+    // 'auto' へ寄せるので、ここでは 'brand' をそのまま通してよい。
+    s.logo.paint = sanitizePaint(s.logo.paint, 'brand', 'brand', s.logo.color || D.logo.color);
 
     [[s, 'markerFrameColor', ''], [s, 'markerEyeColor', ''],
      [s.logo, 'color', D.logo.color], [s.logo, 'backdropColor', D.logo.backdropColor],
@@ -580,6 +524,7 @@
     s.frame.contentPad = clampNum(s.frame.contentPad, 0, 0.6, D.frame.contentPad);
     s.frame.text = String(s.frame.text == null ? D.frame.text : s.frame.text);
     s.logo.text = String(s.logo.text == null ? '' : s.logo.text);
+    if (!s.logo.font || FONTS.indexOf(s.logo.font) < 0) s.logo.font = 'sans';
     s.logo.src = sanitizeImageUrl(s.logo.src);
     s.invertOk = !!s.invertOk;
     if (!A.CELL_SHAPES.some(c => c.id === s.cell)) s.cell = D.cell;
@@ -619,6 +564,16 @@
   function clampNum(v, lo, hi, fallback) {
     const x = Number(v);
     return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : fallback;
+  }
+
+  // Blob / File を data URL に。画像もフォントもこれ1本で読む。
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error('read failed'));
+      reader.readAsDataURL(blob);
+    });
   }
 
   function normHex(v, fallback) {
@@ -1085,17 +1040,12 @@
         state.presetName = '';
         update();
       });
-      picker.addEventListener('change', () => {
-        save();
-      });
-
       removeBtn.addEventListener('click', () => {
         if (colors.length <= 2) return;
         colors.splice(idx, 1);
         state.presetName = '';
         syncControls();
         update();
-        save();
       });
 
       item.appendChild(picker);
@@ -1132,7 +1082,6 @@
         syncControls();
         syncPresetActive();
         update();
-        save();
       });
       host.appendChild(btn);
     });
@@ -1174,10 +1123,6 @@
         state.presetName = '';
         update();
       });
-      picker.addEventListener('change', () => {
-        save();
-      });
-
       removeBtn.addEventListener('click', () => {
         if (!hasMid) return;
         if (item.key === 'from') {
@@ -1192,7 +1137,6 @@
         state.presetName = '';
         syncControls();
         update();
-        save();
       });
 
       elItem.appendChild(picker);
@@ -1229,7 +1173,6 @@
         syncControls();
         syncPresetActive();
         update();
-        save();
       });
       host.appendChild(b);
     });
@@ -1251,7 +1194,6 @@
           syncControls();
           syncPresetActive();
           update();
-          save();
         });
         row.appendChild(b);
       });
@@ -1293,110 +1235,35 @@
     renderGradients(cq(scope, 'grad-grid'), () => paintOfScope(scope), () => { state.colorScope = scope; });
   }
 
-  // 中央ロゴ用
+  // 中央ロゴ用。
+  // ロゴの塗り（getLogoPaint）は「アイコン」パネルと「文字」パネルで共有していて、
+  // 部品の id もこの2つの頭違いで揃えてある。片方だけ描き直すと隠れているほうが
+  // 古い値のまま残るので、どちらも同じ内容で起こす。
+  const LOGO_PANES = ['logo', 'logo-text'];
+
   function buildLogoMultiColorsList() {
-    renderMultiColorsList($('logo-multi-colors-list'), getLogoPaint(), $('btn-logo-add-color'));
+    LOGO_PANES.forEach(p => renderMultiColorsList($(p + '-multi-colors-list'), getLogoPaint(), $('btn-' + p + '-add-color')));
   }
 
   function buildLogoMultiPalettes() {
-    renderMultiPalettes($('logo-multi-palette-grid'), getLogoPaint);
+    LOGO_PANES.forEach(p => renderMultiPalettes($(p + '-multi-palette-grid'), getLogoPaint));
   }
 
   function buildLogoGradColorsList() {
-    renderGradColorsList($('logo-grad-colors-list'), getLogoPaint(), $('btn-logo-add-grad-color'));
+    LOGO_PANES.forEach(p => renderGradColorsList($(p + '-grad-colors-list'), getLogoPaint(), $('btn-' + p + '-add-grad-color')));
   }
 
   function buildLogoGradients() {
-    renderGradients($('logo-grad-grid'), getLogoPaint);
+    LOGO_PANES.forEach(p => renderGradients($(p + '-grad-grid'), getLogoPaint));
   }
 
   function buildLogoSwatches() {
-    renderSwatches($('logo-swatch-host'), c => {
+    LOGO_PANES.forEach(p => renderSwatches($(p + '-swatch-host'), c => {
       const lp = getLogoPaint();
       lp.color = c;
       state.style.logo.color = c;
-    });
+    }));
   }
-
-  function loadLogoImageMask(file) {
-    if (!file || !file.type.match(/^image\//)) {
-      showToast('画像ファイルを選んでください', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const lp = getLogoPaint();
-      lp.src = reader.result;
-      state.presetName = '';
-      syncControls();
-      update();
-      save();
-    };
-    reader.onerror = () => showToast('画像の読み込みに失敗しました', 'error');
-    reader.readAsDataURL(file);
-  }
-
-  function loadLogoImageMaskUrl(url) {
-    const s = String(url || '').trim();
-    if (!s) return;
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL('image/png');
-        const lp = getLogoPaint();
-        lp.src = dataUrl;
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-        showToast('画像を適用しました', 'success');
-      } catch (err) {
-        const lp = getLogoPaint();
-        lp.src = s;
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-        showToast('URL画像を適用しました', 'success');
-      }
-    };
-    img.onerror = () => showToast('画像の読み込みに失敗しました。URLを確認してください', 'error');
-    img.src = s;
-  }
-
-  // ロゴテキスト用
-  function buildLogoTextMultiColorsList() {
-    renderMultiColorsList($('logo-text-multi-colors-list'), getLogoPaint(), $('btn-logo-text-add-color'));
-  }
-
-  function buildLogoTextMultiPalettes() {
-    renderMultiPalettes($('logo-text-multi-palette-grid'), getLogoPaint);
-  }
-
-  function buildLogoTextGradColorsList() {
-    renderGradColorsList($('logo-text-grad-colors-list'), getLogoPaint(), $('btn-logo-text-add-grad-color'));
-  }
-
-  function buildLogoTextGradients() {
-    renderGradients($('logo-text-grad-grid'), getLogoPaint);
-  }
-
-  function buildLogoTextSwatches() {
-    renderSwatches($('logo-text-swatch-host'), c => {
-      const lp = getLogoPaint();
-      lp.color = c;
-      state.style.logo.color = c;
-    });
-  }
-
-  const loadLogoTextImageMask = loadLogoImageMask;
-  const loadLogoTextImageMaskUrl = loadLogoImageMaskUrl;
 
   function renderIconSvg(icon, uidPrefix) {
     const svgNS = 'http://www.w3.org/2000/svg';
@@ -1436,7 +1303,6 @@
         state.presetName = '';
         syncControls();
         update();
-        save();
       });
       host.appendChild(b);
     });
@@ -1456,7 +1322,6 @@
   function buildFrameTopIconGrid() {
     const currentIcon = (state.style.frame && state.style.frame.topIcon) || 'si-instagram';
     renderIconGrid($('frame-top-icon-grid'), state.frameTopIconGroup, currentIcon, 'frame_top_grid_', icon => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.topIcon = icon.id;
       state.style.frame.topIconData = icon;
       state.style.frame.topContentMode = 'icon';
@@ -1466,7 +1331,6 @@
   function buildFrameBottomIconGrid() {
     const currentIcon = (state.style.frame && state.style.frame.icon) || 'si-instagram';
     renderIconGrid($('frame-bottom-icon-grid'), state.frameBottomIconGroup, currentIcon, 'frame_bot_grid_', icon => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.icon = icon.id;
       state.style.frame.iconData = icon;
       state.style.frame.contentMode = 'icon';
@@ -1723,7 +1587,6 @@
 
     const pTextMulti = $('logo-text-pane-multi');
     if (pTextMulti) pTextMulti.classList.toggle('hidden', !isLMulti);
-    if (isLMulti) buildLogoTextMultiColorsList();
 
     const pTextGrad = $('logo-text-pane-grad');
     if (pTextGrad) pTextGrad.classList.toggle('hidden', !isLGrad);
@@ -1733,7 +1596,6 @@
     const textAngleVal = $('val-logo-text-target-angle');
     if (textAngleRange) textAngleRange.value = lp.angle || 45;
     if (textAngleVal) textAngleVal.textContent = (lp.angle || 45) + '°';
-    if (isLGrad) buildLogoTextGradColorsList();
 
     const pTextImage = $('logo-text-pane-image');
     if (pTextImage) pTextImage.classList.toggle('hidden', !isLImage);
@@ -1890,7 +1752,10 @@
 
   function update(opts) {
     if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
-    save();
+    saveSoon();
+    // 市松模様はセルの色だけで決まる。描けたかどうかに関係なく合わせたいので、
+    // 出口ごとに呼ばず入口で一度だけ。
+    updateCanvasChecker();
 
     const text = payload();
     lastPayload = text;
@@ -1943,7 +1808,6 @@
       if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
       verify(out.svg, text, false);
     }
-    updateCanvasChecker();
   }
 
   function pushAlert(level, text) {
@@ -1986,28 +1850,12 @@
     return m ? parseFloat(m[1]) : 41;
   }
 
-  // 足りない余白を補うときの色。透明のときは白、単色のときはその色。
+  // 足りない余白を補うときの色。実際に地として描かれる色を使う。
+  // 「セルの色」や「白」は指定でしかないので resolvePaint で解いてから訊く。
+  // 透明（paintColor が null）は、読ませるときは白い紙の上とみなす。
   function padColor() {
-    const bg = state.style.bg;
-    if (!bg || bg.type === 'none' || bg.type === 'white') return '#FFFFFF';
-    if (bg.type === 'black') return '#000000';
-    if (bg.type === 'solid') return bg.color || '#FFFFFF';
-    if (bg.type === 'image') return bg.color || '#FFFFFF';
-    if (bg.type === 'multi') {
-      return (Array.isArray(bg.colors) && bg.colors[0]) ? bg.colors[0] : (bg.color || '#FFFFFF');
-    }
-    if (bg.mid) return bg.mid;
-    if (bg.from && bg.to) {
-      const mix = (a, b) => {
-        const n = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-        const x = n(a), y = n(b);
-        if (x.some(isNaN) || y.some(isNaN)) return null;
-        return '#' + x.map((v, i) => Math.round((v + y[i]) / 2).toString(16).padStart(2, '0')).join('');
-      };
-      const mixed = mix(bg.from, bg.to);
-      if (mixed) return mixed;
-    }
-    return (window.QRStyle && window.QRStyle.paintColor) ? (window.QRStyle.paintColor(bg) || '#FFFFFF') : '#FFFFFF';
+    const bg = window.QRStyle.resolvePaint(state.style.bg, state.style.fg);
+    return window.QRStyle.paintColor(bg) || '#FFFFFF';
   }
 
   // デコーダを読み込んだあとの検査は数十msで終わる。結果が前と同じだと画面が
@@ -2121,6 +1969,78 @@
   // ------------------------------------------------------------------
   // 書き出し
   // ------------------------------------------------------------------
+  // ---- 書き出し用のフォント -------------------------------------------
+  // 画面のプレビューはページが読み込んだ Google Fonts で描かれるが、書き出しは
+  // SVG を data URL の <img> として読ませるため、外部リソースを取りに行けず、
+  // ページのフォントも受け継がない。放っておくと、選んだ書体が画面にだけ効いて
+  // 書き出した画像は既定の書体になる（実測でも指定あり／なしが同じ形になった）。
+  //
+  // そこで書き出す直前に「いま実際に使っている字だけ」を woff2 で取り寄せて、
+  // @font-face として SVG に埋める。Google Fonts の &text= で欲しい字だけに
+  // 絞れるので、数キロバイトで済む。
+  //
+  // 取り寄せに失敗しても書き出し自体は止めない（今までどおり既定の書体で出る）。
+  // 直近ぶんだけ覚えておく。字面が変わるたびに別の項目になるので、
+  // 上限を置かないと base64 のフォントがセッション中ずっと溜まりつづける。
+  const FONT_CACHE_MAX = 8;
+  const fontCssCache = new Map();
+
+  async function fetchWithTimeout(url, ms) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(url, { signal: ctrl.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function fetchFontFace(run) {
+    const cssUrl = 'https://fonts.googleapis.com/css2?family=' +
+      encodeURIComponent(run.web).replace(/%20/g, '+') + ':wght@' + run.weight +
+      '&text=' + encodeURIComponent(run.text);
+    const cssRes = await fetchWithTimeout(cssUrl, 6000);
+    if (!cssRes.ok) throw new Error('font css ' + cssRes.status);
+    const css = await cssRes.text();
+
+    // &text= を付けたときの応答は @font-face ひとつ。そこから woff2 の URL を拾う。
+    // 字を絞った配信は拡張子が付かない（/l/font?kit=… の形）ので、
+    // 拡張子ではなく format('woff2') の側で見分ける。
+    const m = css.match(/url\((https:\/\/[^)]+)\)\s*format\('woff2'\)/);
+    if (!m) throw new Error('no woff2');
+    const fontRes = await fetchWithTimeout(m[1], 6000);
+    if (!fontRes.ok) throw new Error('font ' + fontRes.status);
+    const dataUrl = await blobToDataUrl(await fontRes.blob());
+
+    return '@font-face{font-family:"' + run.web + '";font-style:normal;font-weight:' +
+      run.weight + ";src:url(" + dataUrl + ") format('woff2');}";
+  }
+
+  // 覚えるのは「結果」ではなく「取り寄せ中の約束」。書き出しを続けて押しても
+  // 取りに行くのは一度で済み、取れなかったこと自体も覚える（取れない環境で
+  // 書き出すたびに待ち時間だけ払う、ということがなくなる）。
+  function fontFaceCss(run) {
+    const key = run.web + '|' + run.weight + '|' + run.text;
+    let p = fontCssCache.get(key);
+    if (!p) {
+      p = fetchFontFace(run).catch(() => '');
+      fontCssCache.set(key, p);
+      if (fontCssCache.size > FONT_CACHE_MAX) {
+        fontCssCache.delete(fontCssCache.keys().next().value);
+      }
+    }
+    return p;
+  }
+
+  // 書き出す SVG に、その絵で使っている書体を埋めて返す。取れなかったぶんは諦める。
+  async function withExportFonts(svg) {
+    let runs = [];
+    try { runs = window.QRStyle.textRuns(state.style); } catch (e) { return svg; }
+    if (!runs.length) return svg;
+    const faces = await Promise.all(runs.map(fontFaceCss));
+    return window.QRStyle.embedFontCss(svg, faces.join(''));
+  }
+
   // 画像の読み込み待ちは onload ではなく decode() を使う。onload は描画の
   // 都合で発火が遅れたり落ちたりすることがあり、読み取りテストのように
   // 短い間隔で何枚も起こすと止まってしまう。
@@ -2177,21 +2097,26 @@
     setStatus('rendering', '');
     try {
       const flatten = mime === 'image/jpeg' ? '#FFFFFF' : null;
-      const canvas = await rasterize(lastSvg, state.exportSize, flatten);
+      const canvas = await rasterize(await withExportFonts(lastSvg), state.exportSize, flatten);
       const blob = await new Promise(res => canvas.toBlob(res, mime, quality));
       if (!blob) throw new Error('encode failed');
-      saveBlob(blob, fileStem() + '.' + ext);
-      showToast(ext.toUpperCase() + 'を保存しました');
+      // 対応していない形式を渡すと、黙って PNG が返ってくる。拡張子を偽らない
+      const realExt = blob.type === mime ? ext : (blob.type.split('/')[1] || ext);
+      saveBlob(blob, fileStem() + '.' + realExt);
+      showToast(realExt === ext
+        ? ext.toUpperCase() + 'を保存しました'
+        : 'このブラウザは' + ext.toUpperCase() + 'に対応していないため' +
+          realExt.toUpperCase() + 'で保存しました');
     } catch (e) {
       showToast('書き出しに失敗しました', 'error');
     }
     setStatus('ready', 'idle');
   }
 
-  function exportSvg() {
+  async function exportSvg() {
     if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
     const doc = '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) +
-      window.QRStyle.resize(lastSvg, 1024);
+      window.QRStyle.resize(await withExportFonts(lastSvg), 1024);
     saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), fileStem() + '.svg');
     showToast('SVGを保存しました');
   }
@@ -2202,14 +2127,27 @@
       showToast('このブラウザは画像コピーに対応していません', 'error');
       return;
     }
-    try {
-      const canvas = await rasterize(lastSvg, Math.min(2048, state.exportSize), null);
+    // Safari は「押されてすぐ」でないと書き込ませてくれない。描き終わってから
+    // write を呼ぶと操作の有効期限が切れるので、中身は Promise のまま渡す。
+    const png = (async () => {
+      const canvas = await rasterize(await withExportFonts(lastSvg), Math.min(2048, state.exportSize), null);
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-      await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': blob })]);
+      if (!blob) throw new Error('encode failed');
+      return blob;
+    })();
+    try {
+      await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': png })]);
       showToast('画像をコピーしました');
       if (window.STShare) STShare.celebrate();
     } catch (e) {
-      showToast('コピーできませんでした', 'error');
+      // Promise を受け付けない実装もあるので、その場合は焼けた Blob で入れ直す
+      try {
+        await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': await png })]);
+        showToast('画像をコピーしました');
+        if (window.STShare) STShare.celebrate();
+      } catch (e2) {
+        showToast('コピーできませんでした', 'error');
+      }
     }
   }
 
@@ -2283,6 +2221,70 @@
     });
   }
 
+  // ---- 画像の受け口 --------------------------------------------------
+  // ドロップ・ファイル選択・URL入力の配線は、行き先が違うだけで中身は同じ。
+  // before は「押される前にやること」（色パネルは、いま触っている対象を移す）。
+
+  // 落とされたものを受けるだけの部分。プレビュー領域のように、
+  // ファイル選択ボタンを持たない場所でも使う。
+  // 枠そのもの（クリック・Enter/Space・ドラッグ中の見た目・ファイルの受け取り）は
+  // ツール共通の STCommon.setupDropzone に任せる。ここで足すのは2つだけ：
+  //   - 他のブラウザ窓から画像を引くと、ファイルではなく URL が落ちてくる
+  //   - ファイル選択ダイアログの change（共通側は click までしか見ない）
+  // fileId を渡さなければ、落とすだけの領域（プレビュー）として使える。
+  function wireImageDrop(zoneId, fileId, target, before) {
+    const zone = asEl(zoneId);
+    if (!zone) return;
+    const fileInput = fileId ? asEl(fileId) : null;
+    const take = file => { if (before) before(); loadImageFile(file, target); };
+
+    window.STCommon.setupDropzone({
+      dropzone: zone,
+      fileInput: fileInput,
+      onFiles: files => take(files[0])
+    });
+
+    zone.addEventListener('drop', e => {
+      const dt = e.dataTransfer;
+      if (!dt || (dt.files && dt.files.length)) return;   // ファイルは共通側が受けている
+      const url = dt.getData('text/uri-list') || dt.getData('text/plain');
+      if (!url) return;
+      if (before) before();
+      loadImageUrl(url, target);
+    });
+
+    if (fileInput) {
+      fileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files.length) take(e.target.files[0]);
+      });
+    }
+  }
+
+  // URLで指定する欄（ボタンと Enter の両方）
+  function wireImageUrlInput(btnId, inputId, target, before) {
+    const btn = asEl(btnId), input = asEl(inputId);
+    if (!btn || !input) return;
+    const go = () => { if (before) before(); loadImageUrl(input.value, target); };
+    btn.addEventListener('click', go);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); go(); }
+    });
+  }
+
+  // 画像を外す。file 欄を空にしないと、同じファイルを選び直しても change が出ない
+  function wireImageClear(btnId, fileId, clear) {
+    const btn = asEl(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      clear();
+      const fileInput = asEl(fileId);
+      if (fileInput) fileInput.value = '';
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+  }
+
   // テンプレートから色パネルを起こし、そのスコープ専用に結線する
   function buildColorPanels() {
     const tpl = $('color-panel-tpl');
@@ -2350,34 +2352,8 @@
     });
 
     // 画像
-    const drop = cq(scope, 'image-drop');
-    const fileInput = cq(scope, 'image-file');
-    if (drop && fileInput) {
-      drop.addEventListener('click', () => { touch(); fileInput.click(); });
-      drop.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touch(); fileInput.click(); }
-      });
-      ['dragenter', 'dragover'].forEach(nm => drop.addEventListener(nm, e => {
-        e.preventDefault(); e.stopPropagation(); drop.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(nm => drop.addEventListener(nm, e => {
-        e.preventDefault(); e.stopPropagation(); drop.classList.remove('dragover');
-      }));
-      drop.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation();
-        touch();
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadTargetImage(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadTargetImageUrl(url);
-        }
-      });
-      fileInput.addEventListener('change', e => {
-        touch();
-        if (e.target.files && e.target.files.length) loadTargetImage(e.target.files[0]);
-      });
-    }
+    wireImageDrop(cq(scope, 'image-drop'), cq(scope, 'image-file'),
+      IMAGE_TARGETS.target, touch);
     bindRange(cq(scope, 'image-scale'), cq(scope, 'val-image-scale'), v => Math.round(v) + '%', v => {
       touch();
       paintOfScope(scope).imgScale = Math.round(v) / 100;
@@ -2391,29 +2367,19 @@
       update();
     });
 
-    const clearBtn = cq(scope, 'btn-image-clear');
-    if (clearBtn) clearBtn.addEventListener('click', () => {
+    wireImageClear(cq(scope, 'btn-image-clear'), cq(scope, 'image-file'), () => {
       touch();
       const p = paintOfScope(scope);
       p.src = '';
       p.type = (scope === 'frame' || scope === 'eye') ? 'auto' : 'solid';
-      if (fileInput) fileInput.value = '';
-      syncControls();
-      update();
     });
-    const urlBtn = cq(scope, 'btn-image-url');
-    const urlInput = cq(scope, 'image-url');
-    if (urlBtn && urlInput) {
-      urlBtn.addEventListener('click', () => { touch(); loadTargetImageUrl(urlInput.value); });
-      urlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); touch(); loadTargetImageUrl(urlInput.value); }
-      });
-    }
+    wireImageUrlInput(cq(scope, 'btn-image-url'), cq(scope, 'image-url'),
+      IMAGE_TARGETS.target, touch);
   }
 
   function wire() {
     $('opt-ec').addEventListener('change', e => { state.ec = e.target.value; syncControls(); update(); });
-    $('opt-size').addEventListener('change', e => { state.exportSize = parseInt(e.target.value, 10); save(); });
+    $('opt-size').addEventListener('change', e => { state.exportSize = parseInt(e.target.value, 10); saveNow(); });
 
     COLOR_SCOPES.forEach(wireColorPanel);
 
@@ -2432,45 +2398,47 @@
 
     bindColor('logo-text-color', null, v => { state.style.logo.color = v; });
 
-    bindSeg('logo-color-mode-seg', 'mode', v => {
-      getLogoPaint().type = v;
+    // ロゴの塗りは「アイコン」パネルと「文字」パネルの両方から触れる。中身は
+    // getLogoPaint() ひとつなので、同じ操作を id の頭だけ変えて2枚ぶん結線する。
+    // 片方を動かしたらもう片方の目盛りも合うよう、どの操作も syncControls を通す。
+    const afterLogoPaint = () => {
       state.presetName = '';
       syncControls();
       update();
-      save();
-    });
+    };
 
-    bindColor('logo-solid-picker', 'logo-solid-hex', v => {
-      getLogoPaint().color = v;
-      state.style.logo.color = v;
-      state.presetName = '';
-      update();
-    });
-    bindRange('logo-target-angle', 'val-logo-target-angle', v => v + '°', v => {
-      getLogoPaint().angle = v;
-      state.presetName = '';
-      update();
-    });
+    LOGO_PANES.forEach(pane => {
+      bindSeg(pane + '-color-mode-seg', 'mode', v => {
+        getLogoPaint().type = v;
+        afterLogoPaint();
+      });
 
-    const addLogoColorBtn = $('btn-logo-add-color');
-    if (addLogoColorBtn) {
-      addLogoColorBtn.addEventListener('click', () => {
+      bindColor(pane + '-solid-picker', pane + '-solid-hex', v => {
+        getLogoPaint().color = v;
+        state.style.logo.color = v;
+        state.presetName = '';
+        update();
+      });
+
+      bindRange(pane + '-target-angle', 'val-' + pane + '-target-angle', v => v + '°', v => {
+        getLogoPaint().angle = v;
+        state.presetName = '';
+        update();
+      });
+
+      const addColor = $('btn-' + pane + '-add-color');
+      if (addColor) addColor.addEventListener('click', () => {
         const lp = getLogoPaint();
         if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED'];
         if (lp.colors.length >= 8) return;
         const last = lp.colors[lp.colors.length - 1];
         const prev = lp.colors.length > 1 ? lp.colors[lp.colors.length - 2] : '#2563EB';
         lp.colors.push(blendHex(last, prev));
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
+        afterLogoPaint();
       });
-    }
 
-    const shuffleLogoColorBtn = $('btn-logo-shuffle-color');
-    if (shuffleLogoColorBtn) {
-      shuffleLogoColorBtn.addEventListener('click', () => {
+      const shuffleColor = $('btn-' + pane + '-shuffle-color');
+      if (shuffleColor) shuffleColor.addEventListener('click', () => {
         const lp = getLogoPaint();
         if (!Array.isArray(lp.colors) || lp.colors.length <= 1) return;
         for (let i = lp.colors.length - 1; i > 0; i--) {
@@ -2480,95 +2448,37 @@
           lp.colors[j] = t;
         }
         lp.seed = (lp.seed || 0) + 1;
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
+        afterLogoPaint();
       });
-    }
 
-    const addLogoGradColorBtn = $('btn-logo-add-grad-color');
-    if (addLogoGradColorBtn) {
-      addLogoGradColorBtn.addEventListener('click', () => {
+      const addGrad = $('btn-' + pane + '-add-grad-color');
+      if (addGrad) addGrad.addEventListener('click', () => {
         const lp = getLogoPaint();
         if (lp.mid) return;
         lp.mid = blendHex(lp.from || '#FC466B', lp.to || '#3F5EFB');
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
+        afterLogoPaint();
       });
-    }
 
-    // アイコン画像マスク
-    const maskDrop = $('logo-image-mask-drop');
-    const maskFileInput = $('logo-image-mask-file');
-    if (maskDrop && maskFileInput) {
-      maskDrop.addEventListener('click', () => maskFileInput.click());
-      maskDrop.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); maskFileInput.click(); }
+      // 塗りに敷く画像（マスク）
+      wireImageDrop(pane + '-image-mask-drop', pane + '-image-mask-file',
+        IMAGE_TARGETS.logoMask);
+      wireImageUrlInput('btn-' + pane + '-image-mask-url', pane + '-image-mask-url',
+        IMAGE_TARGETS.logoMask);
+      wireImageClear('btn-' + pane + '-image-mask-clear', pane + '-image-mask-file', () => {
+        getLogoPaint().src = '';
       });
-      ['dragenter', 'dragover'].forEach(name => maskDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); maskDrop.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(name => maskDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); maskDrop.classList.remove('dragover');
-      }));
-      maskDrop.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation(); maskDrop.classList.remove('dragover');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadLogoImageMask(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadLogoImageMaskUrl(url);
-        }
-      });
-      maskFileInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) {
-          loadLogoImageMask(e.target.files[0]);
-        }
-      });
-    }
 
-    const btnLogoMaskUrl = $('btn-logo-image-mask-url');
-    if (btnLogoMaskUrl) {
-      btnLogoMaskUrl.addEventListener('click', () => {
-        const urlInput = $('logo-image-mask-url');
-        if (urlInput && urlInput.value) {
-          loadLogoImageMaskUrl(urlInput.value);
-        }
-      });
-    }
-
-    [['logo-image-scale', 'val-logo-image-scale', 'btn-logo-image-scale-reset'],
-     ['logo-text-image-scale', 'val-logo-text-image-scale', 'btn-logo-text-image-scale-reset']
-    ].forEach(ids => {
-      bindRange(ids[0], ids[1], v => Math.round(v) + '%', v => {
+      bindRange(pane + '-image-scale', 'val-' + pane + '-image-scale', v => Math.round(v) + '%', v => {
         getLogoPaint().imgScale = Math.round(v) / 100;
         state.presetName = '';
-        // アイコン用と文字用で同じ塗りを見ているので、もう片方の目盛りも合わせる
         syncControls();
       });
-      const reset = $(ids[2]);
-      if (reset) reset.addEventListener('click', () => {
+      const scaleReset = $('btn-' + pane + '-image-scale-reset');
+      if (scaleReset) scaleReset.addEventListener('click', () => {
         getLogoPaint().imgScale = 1;
-        state.presetName = '';
-        syncControls();
-        update();
+        afterLogoPaint();
       });
     });
-
-    const btnLogoMaskClear = $('btn-logo-image-mask-clear');
-    if (btnLogoMaskClear) {
-      btnLogoMaskClear.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        lp.src = '';
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-    }
     bindColor('frame-color', null, v => { state.style.frame.color = v; });
     bindColor('frame-textcolor', null, v => { state.style.frame.textColor = v; });
     bindRange('opt-cellscale', 'val-cellscale', v => Math.round(v * 100) + '%', v => { state.style.cellScale = v; });
@@ -2597,29 +2507,23 @@
       state.style.logo.font = v;
       state.presetName = '';
       update();
-      save();
     });
 
     bindSeg('frame-pos-seg', 'pos', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.pos = v;
       state.presetName = '';
       syncControls();
       update();
-      save();
     });
 
     bindSeg('frame-font-seg', 'font', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.font = v;
       state.presetName = '';
       update();
-      save();
     });
 
     // ---- 上部ラベル ----
     bindSeg('frame-top-content-mode-seg', 'mode', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.topContentMode = v;
       if (v === 'icon' && !state.style.frame.topIconData) {
         const first = A.ICONS.find(i => i.group === state.frameTopIconGroup) || A.ICONS[0];
@@ -2630,7 +2534,6 @@
       state.presetName = '';
       syncControls();
       update();
-      save();
     });
 
     const frameTopIconTabs = $('frame-top-icon-tabs');
@@ -2645,25 +2548,20 @@
     }
 
     bindSeg('frame-top-icon-color-mode-seg', 'mode', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.topIconColorMode = v;
       state.presetName = '';
       syncControls();
       update();
-      save();
     });
 
     bindColor('frame-top-icon-solid-picker', 'frame-top-icon-solid-hex', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.topIconColor = v;
       state.presetName = '';
       update();
-      save();
     });
 
     // ---- 下部ラベル ----
     bindSeg('frame-bottom-content-mode-seg', 'mode', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.contentMode = v;
       if (v === 'icon' && !state.style.frame.iconData) {
         const first = A.ICONS.find(i => i.group === state.frameBottomIconGroup) || A.ICONS[0];
@@ -2674,7 +2572,6 @@
       state.presetName = '';
       syncControls();
       update();
-      save();
     });
 
     const frameBottomIconTabs = $('frame-bottom-icon-tabs');
@@ -2689,141 +2586,17 @@
     }
 
     bindSeg('frame-bottom-icon-color-mode-seg', 'mode', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.iconColorMode = v;
       state.presetName = '';
       syncControls();
       update();
-      save();
     });
 
     bindColor('frame-bottom-icon-solid-picker', 'frame-bottom-icon-solid-hex', v => {
-      if (!state.style.frame) state.style.frame = {};
       state.style.frame.iconColor = v;
       state.presetName = '';
       update();
-      save();
     });
-
-    bindSeg('logo-text-color-mode-seg', 'mode', v => {
-      getLogoPaint().type = v;
-      state.presetName = '';
-      syncControls();
-      update();
-      save();
-    });
-
-    bindColor('logo-text-solid-picker', 'logo-text-solid-hex', v => {
-      getLogoPaint().color = v;
-      state.style.logo.color = v;
-      state.presetName = '';
-      update();
-    });
-    bindRange('logo-text-target-angle', 'val-logo-text-target-angle', v => v + '°', v => {
-      getLogoPaint().angle = v;
-      state.presetName = '';
-      update();
-    });
-
-    const addLogoTextColorBtn = $('btn-logo-text-add-color');
-    if (addLogoTextColorBtn) {
-      addLogoTextColorBtn.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED'];
-        if (lp.colors.length >= 8) return;
-        const last = lp.colors[lp.colors.length - 1];
-        const prev = lp.colors.length > 1 ? lp.colors[lp.colors.length - 2] : '#2563EB';
-        lp.colors.push(blendHex(last, prev));
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-    }
-
-    const shuffleLogoTextColorBtn = $('btn-logo-text-shuffle-color');
-    if (shuffleLogoTextColorBtn) {
-      shuffleLogoTextColorBtn.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        if (!Array.isArray(lp.colors) || lp.colors.length <= 1) return;
-        for (let i = lp.colors.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          const t = lp.colors[i];
-          lp.colors[i] = lp.colors[j];
-          lp.colors[j] = t;
-        }
-        lp.seed = (lp.seed || 0) + 1;
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-    }
-
-    const addLogoTextGradColorBtn = $('btn-logo-text-add-grad-color');
-    if (addLogoTextGradColorBtn) {
-      addLogoTextGradColorBtn.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        if (lp.mid) return;
-        lp.mid = blendHex(lp.from || '#FC466B', lp.to || '#3F5EFB');
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-    }
-
-    // 文字用画像マスク
-    const textMaskDrop = $('logo-text-image-mask-drop');
-    const textMaskFileInput = $('logo-text-image-mask-file');
-    if (textMaskDrop && textMaskFileInput) {
-      textMaskDrop.addEventListener('click', () => textMaskFileInput.click());
-      textMaskDrop.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); textMaskFileInput.click(); }
-      });
-      ['dragenter', 'dragover'].forEach(name => textMaskDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); textMaskDrop.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(name => textMaskDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); textMaskDrop.classList.remove('dragover');
-      }));
-      textMaskDrop.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation(); textMaskDrop.classList.remove('dragover');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadLogoTextImageMask(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadLogoTextImageMaskUrl(url);
-        }
-      });
-      textMaskFileInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) {
-          loadLogoTextImageMask(e.target.files[0]);
-        }
-      });
-    }
-
-    const btnLogoTextMaskUrl = $('btn-logo-text-image-mask-url');
-    if (btnLogoTextMaskUrl) {
-      btnLogoTextMaskUrl.addEventListener('click', () => {
-        const urlInput = $('logo-text-image-mask-url');
-        if (urlInput && urlInput.value) {
-          loadLogoTextImageMaskUrl(urlInput.value);
-        }
-      });
-    }
-
-    const btnLogoTextMaskClear = $('btn-logo-text-image-mask-clear');
-    if (btnLogoTextMaskClear) {
-      btnLogoTextMaskClear.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        lp.src = '';
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-    }
 
     $('frame-text').addEventListener('input', e => {
       state.style.frame.text = e.target.value;
@@ -2833,7 +2606,6 @@
     const frameTextTop = $('frame-text-top');
     if (frameTextTop) {
       frameTextTop.addEventListener('input', e => {
-        if (!state.style.frame) state.style.frame = {};
         state.style.frame.textTop = e.target.value;
         scheduleUpdate();
       });
@@ -2845,171 +2617,29 @@
         Array.prototype.forEach.call($('icon-tabs').children, x => x.classList.toggle('active', x === b));
         buildIconGrid();
         syncControls();
-        save();
+        saveNow();
       });
     });
 
     // ---- ロゴ画像 ----
-    const drop = $('logo-drop');
-    const fileInput = $('logo-file');
-    if (drop && fileInput) {
-      drop.addEventListener('click', () => fileInput.click());
-      drop.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
-      });
-      ['dragenter', 'dragover'].forEach(name => drop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); drop.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(name => drop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); drop.classList.remove('dragover');
-      }));
-      drop.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation(); drop.classList.remove('dragover');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadLogo(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadLogoUrl(url);
-        }
-      });
-      fileInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) loadLogo(e.target.files[0]);
-      });
-    }
-    const btnLogoClear = $('btn-logo-clear');
-    if (btnLogoClear) {
-      btnLogoClear.addEventListener('click', () => {
-        state.style.logo.src = '';
-        state.style.logo.type = 'none';
-        if (fileInput) fileInput.value = '';
-        syncControls();
-        update();
-      });
-    }
-    const btnLogoUrl = $('btn-logo-image-url');
-    const logoUrlInput = $('logo-image-url');
-    if (btnLogoUrl && logoUrlInput) {
-      btnLogoUrl.addEventListener('click', () => loadLogoUrl(logoUrlInput.value));
-      logoUrlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); loadLogoUrl(logoUrlInput.value); }
-      });
-    }
+    wireImageDrop('logo-drop', 'logo-file', IMAGE_TARGETS.logo);
+    wireImageUrlInput('btn-logo-image-url', 'logo-image-url', IMAGE_TARGETS.logo);
+    wireImageClear('btn-logo-clear', 'logo-file', () => {
+      state.style.logo.src = '';
+      state.style.logo.type = 'none';
+    });
 
-    // ---- 上部フレーム画像 ----
-    const frameTopDrop = $('frame-top-image-drop');
-    const frameTopFileInput = $('frame-top-image-file');
-    if (frameTopDrop && frameTopFileInput) {
-      frameTopDrop.addEventListener('click', () => frameTopFileInput.click());
-      frameTopDrop.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); frameTopFileInput.click(); }
-      });
-      ['dragenter', 'dragover'].forEach(name => frameTopDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); frameTopDrop.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(name => frameTopDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); frameTopDrop.classList.remove('dragover');
-      }));
-      frameTopDrop.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation(); frameTopDrop.classList.remove('dragover');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadFrameTopImage(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadFrameTopImageUrl(url);
-        }
-      });
-      frameTopFileInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) loadFrameTopImage(e.target.files[0]);
-      });
-    }
-    const btnFrameTopImgClear = $('btn-frame-top-image-clear');
-    if (btnFrameTopImgClear) {
-      btnFrameTopImgClear.addEventListener('click', () => {
-        if (state.style.frame) state.style.frame.topSrc = '';
-        if (frameTopFileInput) frameTopFileInput.value = '';
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-    }
-    const btnFrameTopImgUrl = $('btn-frame-top-image-url');
-    const frameTopImgUrlInput = $('frame-top-image-url');
-    if (btnFrameTopImgUrl && frameTopImgUrlInput) {
-      btnFrameTopImgUrl.addEventListener('click', () => loadFrameTopImageUrl(frameTopImgUrlInput.value));
-      frameTopImgUrlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); loadFrameTopImageUrl(frameTopImgUrlInput.value); }
-      });
-    }
+    // ---- 上下フレームの画像 ----
+    wireImageDrop('frame-top-image-drop', 'frame-top-image-file', IMAGE_TARGETS.frameTop);
+    wireImageUrlInput('btn-frame-top-image-url', 'frame-top-image-url', IMAGE_TARGETS.frameTop);
+    wireImageClear('btn-frame-top-image-clear', 'frame-top-image-file', () => { state.style.frame.topSrc = ''; });
 
-    // ---- 下部フレーム画像 ----
-    const frameBottomDrop = $('frame-bottom-image-drop');
-    const frameBottomFileInput = $('frame-bottom-image-file');
-    if (frameBottomDrop && frameBottomFileInput) {
-      frameBottomDrop.addEventListener('click', () => frameBottomFileInput.click());
-      frameBottomDrop.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); frameBottomFileInput.click(); }
-      });
-      ['dragenter', 'dragover'].forEach(name => frameBottomDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); frameBottomDrop.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(name => frameBottomDrop.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); frameBottomDrop.classList.remove('dragover');
-      }));
-      frameBottomDrop.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation(); frameBottomDrop.classList.remove('dragover');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadFrameBottomImage(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadFrameBottomImageUrl(url);
-        }
-      });
-      frameBottomFileInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) loadFrameBottomImage(e.target.files[0]);
-      });
-    }
-    const btnFrameBottomImgClear = $('btn-frame-bottom-image-clear');
-    if (btnFrameBottomImgClear) {
-      btnFrameBottomImgClear.addEventListener('click', () => {
-        if (state.style.frame) state.style.frame.src = '';
-        if (frameBottomFileInput) frameBottomFileInput.value = '';
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-    }
-    const btnFrameBottomImgUrl = $('btn-frame-bottom-image-url');
-    const frameBottomImgUrlInput = $('frame-bottom-image-url');
-    if (btnFrameBottomImgUrl && frameBottomImgUrlInput) {
-      btnFrameBottomImgUrl.addEventListener('click', () => loadFrameBottomImageUrl(frameBottomImgUrlInput.value));
-      frameBottomImgUrlInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); loadFrameBottomImageUrl(frameBottomImgUrlInput.value); }
-      });
-    }
-
+    wireImageDrop('frame-bottom-image-drop', 'frame-bottom-image-file', IMAGE_TARGETS.frameBottom);
+    wireImageUrlInput('btn-frame-bottom-image-url', 'frame-bottom-image-url', IMAGE_TARGETS.frameBottom);
+    wireImageClear('btn-frame-bottom-image-clear', 'frame-bottom-image-file', () => { state.style.frame.src = ''; });
 
     // ---- プレビュー領域への画像ドロップ（選択中の対象画像として反映） ----
-    const canvasCard = document.querySelector('.canvas-card');
-    if (canvasCard) {
-      ['dragenter', 'dragover'].forEach(name => canvasCard.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); canvasCard.classList.add('dragover');
-      }));
-      ['dragleave', 'drop'].forEach(name => canvasCard.addEventListener(name, e => {
-        e.preventDefault(); e.stopPropagation(); canvasCard.classList.remove('dragover');
-      }));
-      canvasCard.addEventListener('drop', e => {
-        e.preventDefault(); e.stopPropagation(); canvasCard.classList.remove('dragover');
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          loadTargetImage(e.dataTransfer.files[0]);
-        } else if (e.dataTransfer) {
-          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
-          if (url) loadTargetImageUrl(url);
-        }
-      });
-    }
-
+    wireImageDrop(document.querySelector('.canvas-card'), null, IMAGE_TARGETS.target);
 
 
     // ---- プレビュー市松模様の明暗切り替え ----
@@ -3019,7 +2649,7 @@
         btn.addEventListener('click', () => {
           state.previewChecker = btn.dataset.checker || 'auto';
           updateCanvasChecker();
-          save();
+          saveNow();
         });
       });
     }
@@ -3034,7 +2664,7 @@
       syncControls();
       buildShapeGrids();
       buildFrameChips();
-      buildPresets();
+      syncPresetActive();
       update();
       showToast('デザインを初期化しました');
     });
@@ -3050,214 +2680,154 @@
     $('btn-verify').addEventListener('click', () => {
       if (lastSvg && lastPayload) verify(lastSvg, lastPayload, true);
     });
+
+    // 保存はまとめて後回しにしているので、離れる前に取りこぼしを書き切る
+    window.addEventListener('pagehide', saveNow);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') saveNow();
+    });
   }
 
-  function testImageLoad(url) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(url);
-      img.onerror = () => reject(new Error('画像を読み込めませんでした。URLを確認してください'));
-      img.src = url;
-    });
+  // 中身が正しく伝わるエラー。これを投げたぶんは文面をそのまま出す。
+  function imageError(message) {
+    const e = new Error(message);
+    e.shown = true;
+    return e;
   }
 
   async function fetchImageAsDataUrl(url) {
     const clean = sanitizeImageUrl(url);
-    if (!clean) throw new Error('有効な画像URL（https://... または data:image/...）を入力してください');
+    if (!clean) throw imageError('有効な画像URL（https://... または data:image/...）を入力してください');
     if (clean.startsWith('data:image/')) {
       return clean;
     }
+    // 社内・家庭内のアドレスは取りに行かない（他のツールと同じ扱い）
     try {
-      const res = await fetch(clean, { mode: 'cors' });
-      if (!res.ok) throw new Error('画像の取得に失敗しました (' + res.status + ')');
-      const blob = await res.blob();
-      if (blob.size > 4 * 1024 * 1024) throw new Error('画像は4MBまでにしてください');
-      return await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
-        reader.readAsDataURL(blob);
-      });
+      if (window.STCommon.isPrivateHost(new URL(clean).hostname)) {
+        throw imageError('このアドレスからは取得できません。公開されているURLを指定してください');
+      }
     } catch (err) {
-      throw new Error('外部サーバーの画像保護（CORS）により取得できませんでした。端末から画像ファイルを直接アップロードしてください');
+      throw err.shown ? err : imageError('URLの形式が正しくありません');
     }
-  }
-
-  function loadLogo(file) {
-    if (!file.type || file.type.indexOf('image/') !== 0) {
-      showToast('画像ファイルを選んでください', 'error');
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      showToast('画像は4MBまでにしてください', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      state.style.logo.src = String(reader.result);
-      state.style.logo.type = 'image';
-      state.presetName = '';
-      syncControls();
-      update();
-      showToast('ロゴ画像を適用しました');
-    };
-    reader.onerror = () => showToast('画像を読み込めませんでした', 'error');
-    reader.readAsDataURL(file);
-  }
-
-  async function loadLogoUrl(url) {
-    if (!url || !url.trim()) return;
+    let res;
+    // fetch そのものが失敗するのは、相手が CORS を許していないときがほとんど。
+    // 応答が返ってきたあとの失敗（404・サイズ超過・読み込み失敗）まで
+    // CORS のせいにすると、直しようのない案内をしてしまう。
     try {
-      showToast('ロゴを読み込み中…');
-      const dataUrl = await fetchImageAsDataUrl(url.trim());
-      state.style.logo.src = dataUrl;
-      state.style.logo.type = 'image';
-      state.presetName = '';
-      const input = $('logo-image-url');
-      if (input) input.value = '';
-      syncControls();
-      update();
-      showToast('ロゴ画像を適用しました');
+      res = await fetch(clean, { mode: 'cors' });
     } catch (err) {
-      showToast(err.message || 'ロゴを読み込めませんでした', 'error');
+      throw imageError('外部サーバーの画像保護（CORS）により取得できませんでした。端末から画像ファイルを直接アップロードしてください');
     }
+    if (!res.ok) throw imageError('画像を取得できませんでした（HTTP ' + res.status + '）。URLを確認してください');
+    const blob = await res.blob();
+    if (blob.size > MAX_IMAGE_BYTES) throw imageError('画像は4MBまでにしてください');
+    if (blob.type && blob.type.indexOf('image/') !== 0) {
+      throw imageError('画像ではないものが返ってきました。URLを確認してください');
+    }
+    return blobToDataUrl(blob).catch(() => {
+      throw imageError('画像の読み込みに失敗しました');
+    });
   }
 
-  function loadFrameTopImage(file) {
-    if (!file.type || file.type.indexOf('image/') !== 0) {
-      showToast('画像ファイルを選んでください', 'error');
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      showToast('画像は4MBまでにしてください', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (!state.style.frame) state.style.frame = {};
-      state.style.frame.topSrc = String(reader.result);
-      state.style.frame.topContentMode = 'image';
-      state.presetName = '';
-      syncControls();
-      update();
-      save();
-      showToast('上部フレーム画像を適用しました');
-    };
-    reader.onerror = () => showToast('画像を読み込めませんでした', 'error');
-    reader.readAsDataURL(file);
-  }
-
-  async function loadFrameTopImageUrl(url) {
-    if (!url || !url.trim()) return;
-    try {
-      showToast('画像を読み込み中…');
-      const dataUrl = await fetchImageAsDataUrl(url.trim());
-      if (!state.style.frame) state.style.frame = {};
-      state.style.frame.topSrc = dataUrl;
-      state.style.frame.topContentMode = 'image';
-      state.presetName = '';
-      const input = $('frame-top-image-url');
-      if (input) input.value = '';
-      syncControls();
-      update();
-      save();
-      showToast('上部フレーム画像を適用しました');
-    } catch (err) {
-      showToast(err.message || '画像を読み込めませんでした', 'error');
-    }
-  }
-
-  function loadFrameBottomImage(file) {
-    if (!file.type || file.type.indexOf('image/') !== 0) {
-      showToast('画像ファイルを選んでください', 'error');
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      showToast('画像は4MBまでにしてください', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (!state.style.frame) state.style.frame = {};
-      state.style.frame.src = String(reader.result);
-      state.style.frame.contentMode = 'image';
-      state.presetName = '';
-      syncControls();
-      update();
-      save();
-      showToast('下部フレーム画像を適用しました');
-    };
-    reader.onerror = () => showToast('画像を読み込めませんでした', 'error');
-    reader.readAsDataURL(file);
-  }
-
-  async function loadFrameBottomImageUrl(url) {
-    if (!url || !url.trim()) return;
-    try {
-      showToast('画像を読み込み中…');
-      const dataUrl = await fetchImageAsDataUrl(url.trim());
-      if (!state.style.frame) state.style.frame = {};
-      state.style.frame.src = dataUrl;
-      state.style.frame.contentMode = 'image';
-      state.presetName = '';
-      const input = $('frame-bottom-image-url');
-      if (input) input.value = '';
-      syncControls();
-      update();
-      save();
-      showToast('下部フレーム画像を適用しました');
-    } catch (err) {
-      showToast(err.message || '画像を読み込めませんでした', 'error');
-    }
-  }
+  // 色パネルのスコープ名 → 画面で呼んでいる名前。COLOR_SCOPES と同じ顔ぶれを
+  // 揃えておくこと（抜けると、別の対象に適用したのに「背景」と案内してしまう）。
+  const TARGET_LABELS = {
+    cell: 'セル',
+    frame: 'マーカー枠',
+    eye: 'マーカー目',
+    bg: '背景',
+    logobd: 'ロゴの下地',
+    frameborder: 'フレームの線',
+    framelabel: 'フレームの帯',
+    frametext: 'フレームの文字',
+    framebd: 'ラベルの下地'
+  };
 
   function getTargetLabel() {
-    const t = scopeTarget(state.colorScope);
-    return t === 'cell' ? 'セル' :
-           t === 'frame' ? 'マーカー枠' :
-           t === 'eye' ? 'マーカー目' :
-           t === 'logobd' ? 'ロゴの下地' : '背景';
+    return TARGET_LABELS[scopeTarget(state.colorScope)] || '背景';
   }
 
-  function loadTargetImage(file) {
-    if (!file.type || file.type.indexOf('image/') !== 0) {
+  // 画像の受け口。ファイルからでもURLからでも、入り口の検査と後始末は同じで、
+  // 違うのは「どこに入れるか」だけ。行き先ごとに apply / label / urlInputs を持つ。
+  // label と urlInputs はどれも関数（色パネル向けは、いま触っている対象で
+  // 中身が変わるため）。
+  const IMAGE_TARGETS = {
+    logo: {
+      label: () => 'ロゴ画像',
+      urlInputs: () => [$('logo-image-url')],
+      apply: src => {
+        state.style.logo.src = src;
+        state.style.logo.type = 'image';
+      }
+    },
+    // アイコン・文字ロゴの「塗り」に敷く画像。入力欄は2枚のパネルに1つずつある
+    logoMask: {
+      label: () => 'ロゴの塗り画像',
+      urlInputs: () => [$('logo-image-mask-url'), $('logo-text-image-mask-url')],
+      apply: src => { getLogoPaint().src = src; }
+    },
+    frameTop: {
+      label: () => '上部フレーム画像',
+      urlInputs: () => [$('frame-top-image-url')],
+      apply: src => {
+        state.style.frame.topSrc = src;
+        state.style.frame.topContentMode = 'image';
+      }
+    },
+    frameBottom: {
+      label: () => '下部フレーム画像',
+      urlInputs: () => [$('frame-bottom-image-url')],
+      apply: src => {
+        state.style.frame.src = src;
+        state.style.frame.contentMode = 'image';
+      }
+    },
+    // いま触っている色パネルの塗り。入力欄はそのパネルの中にある
+    target: {
+      label: () => getTargetLabel() + '画像',
+      urlInputs: () => [cq(state.colorScope, 'image-url')],
+      apply: src => {
+        const p = getActivePaint();
+        p.src = src;
+        p.type = 'image';
+      }
+    }
+  };
+
+  function applyImage(src, target) {
+    target.apply(src);
+    state.presetName = '';
+    syncControls();
+    update();
+    target.urlInputs().forEach(input => { if (input) input.value = ''; });
+    showToast(target.label() + 'を適用しました');
+  }
+
+  function loadImageFile(file, target) {
+    if (!file || !file.type || file.type.indexOf('image/') !== 0) {
       showToast('画像ファイルを選んでください', 'error');
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_BYTES) {
       showToast('画像は4MBまでにしてください', 'error');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const p = getActivePaint();
-      p.src = String(reader.result);
-      p.type = 'image';
-      state.presetName = '';
-      syncControls();
-      update();
-      showToast(getTargetLabel() + '画像を適用しました');
-    };
-    reader.onerror = () => showToast('画像を読み込めませんでした', 'error');
-    reader.readAsDataURL(file);
+    blobToDataUrl(file).then(
+      src => applyImage(src, target),
+      () => showToast('画像を読み込めませんでした', 'error')
+    );
   }
 
-  async function loadTargetImageUrl(url) {
-    if (!url || !url.trim()) return;
+  async function loadImageUrl(url, target) {
+    const s = String(url || '').trim();
+    if (!s) return;
     try {
       showToast('画像を読み込み中…');
-      const dataUrl = await fetchImageAsDataUrl(url.trim());
-      const p = getActivePaint();
-      p.src = dataUrl;
-      p.type = 'image';
-      state.presetName = '';
-      const input = cq(state.colorScope, 'image-url');
-      if (input) input.value = '';
-      syncControls();
-      update();
-      showToast(getTargetLabel() + '画像を適用しました');
+      // ここで必ず data URL に焼く。URL のまま持つと、画面には出るのに
+      // 書き出した画像からは消える（書き出しの SVG は外部を取りに行けない）。
+      applyImage(await fetchImageAsDataUrl(s), target);
     } catch (err) {
-      showToast(err.message || '画像を読み込めませんでした', 'error');
+      showToast((err && err.shown && err.message) || '画像を読み込めませんでした', 'error');
     }
   }
 
@@ -3354,14 +2924,12 @@
       const onBand = contrast(band, '#FFFFFF') >= contrast(band, '#111827') ? '#FFFFFF' : '#111827';
       s.frame.type = 'label';
       s.frame.pos = pick(['bottom', 'bottom', 'bottom', 'top', 'both']);
-      s.frame.mode = 'text';
       s.frame.contentMode = 'text';
-      s.frame.topMode = 'text';
       s.frame.topContentMode = 'text';
       s.frame.text = pick(['スキャンしてね', 'SCAN ME', '読み取ってください', 'こちらから', 'MENU', 'FOLLOW US']);
       const tops = ['SCAN ME', 'ようこそ', 'FOLLOW US', 'MENU'].filter(t => t !== s.frame.text);
       s.frame.textTop = s.frame.pos === 'bottom' ? '' : pick(tops);
-      s.frame.font = pick(['sans', 'rounded', 'serif', 'mono', 'impact']);
+      s.frame.font = pick(FONTS);
       s.frame.contentSize = pick([0.85, 0.9, 1, 1, 1.1]);
       s.frame.contentPad = 0.2;
       s.frame.paint = M(D.frame.paint, { type: 'solid', color: band });
@@ -3374,7 +2942,8 @@
     syncControls();
     buildShapeGrids();
     buildFrameChips();
-    buildPresets();
+    // テンプレートの見本は state に依存しないので、選択状態を移すだけでよい
+    syncPresetActive();
     update();
   }
 
@@ -3382,7 +2951,9 @@
   // 起動
   // ------------------------------------------------------------------
   function init() {
-    lucide.createIcons();
+    // 飾りのアイコンは CDN 頼み。取れなかったときにここで転ぶと、
+    // ローカルだけで動くはずの本体まで巻き添えで死ぬ。
+    if (window.lucide) lucide.createIcons();
     $('currentYear').textContent = new Date().getFullYear();
 
     restore();
@@ -3404,9 +2975,6 @@
     buildLogoSwatches();
     buildLogoGradients();
     buildLogoMultiPalettes();
-    buildLogoTextSwatches();
-    buildLogoTextGradients();
-    buildLogoTextMultiPalettes();
     buildIconGrid();
     buildFrameTopIconGrid();
     buildFrameBottomIconGrid();

@@ -148,6 +148,29 @@
   // 種類が消えた古い保存を拾い直す
   const LINE_ALIAS = { doubleBold: 'double', dotted: 'dashed' };
 
+  // 文字の書体。ロゴの文字とフレームのラベルで同じ一覧を使う。
+  //
+  // web は「その見た目を出すのに Google Fonts が要る書体」。書き出しでは SVG を
+  // data URL の <img> として読み込むが、その文脈の SVG は外部リソースを取りに
+  // 行けず、ページが読み込んだフォントも受け継がない。指定したままだと画面と
+  // 書き出しで書体が変わってしまうので、app.js 側がこの名前を頼りにフォントを
+  // 埋め込んでから書き出す。impact はどの環境にもある想定なので web は無し。
+  const FONT_STACKS = {
+    sans:    { stack: 'Inter, "Noto Sans JP", system-ui, sans-serif', web: 'Inter' },
+    rounded: { stack: '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif', web: 'M PLUS Rounded 1c' },
+    serif:   { stack: '"Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif', web: 'Noto Serif JP' },
+    mono:    { stack: '"JetBrains Mono", Consolas, Monaco, monospace', web: 'JetBrains Mono' },
+    impact:  { stack: 'Impact, "Arial Black", sans-serif', web: '' }
+  };
+
+  // 文字はどこでも太字 700 で描いている。埋め込む字面もこの太さで揃える。
+  const FONT_WEIGHT = 700;
+  const FONT_KEYS = Object.keys(FONT_STACKS);
+
+  function fontOf(key) {
+    return FONT_STACKS[key] || FONT_STACKS.sans;
+  }
+
   function lineIdOf(id) {
     const a = LINE_ALIAS[id] || id;
     return LINE_STYLES[a] ? a : 'solid';
@@ -210,6 +233,14 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  // 配列は必ず写しを返す。参照のまま返すと、返り値の colors を1つ足しただけで
+  // 元の DEFAULTS（やテンプレートの定義）まで書き換わってしまう。オブジェクトは
+  // 下の再帰が組み立て直すので、ここで写すのは配列だけでよい。
+  // ※ 中身まで写さないのは、色は文字列で、要素を作り替える使い方が無いため。
+  function dup(v) {
+    return Array.isArray(v) ? v.slice() : v;
+  }
+
   function merge(base, over) {
     const out = {};
     Object.keys(base).forEach(k => {
@@ -218,11 +249,11 @@
       if (b && typeof b === 'object' && !Array.isArray(b)) {
         out[k] = merge(b, o && typeof o === 'object' ? o : {});
       } else {
-        out[k] = o === undefined || o === null ? b : o;
+        out[k] = dup(o === undefined || o === null ? b : o);
       }
     });
     // 上書き側にしかないキー（markerFrameColor の空文字など）も拾う
-    if (over) Object.keys(over).forEach(k => { if (!(k in out)) out[k] = over[k]; });
+    if (over) Object.keys(over).forEach(k => { if (!(k in out)) out[k] = dup(over[k]); });
     return out;
   }
 
@@ -249,9 +280,27 @@
     return (hi + 0.05) / (lo + 0.05);
   }
 
-  // グラデーションは代表色（中間）で明るさを判定する。多色は背景と最もコントラストが低い色を返す
+  // 「白」「黒」「セルの色」は、それ自体が塗りではなく指定でしかない。実際に
+  // 何で描かれるかを知りたい場所（描画・コントラスト判定・余白を補う色）が
+  // それぞれ解決していたので、ここ一箇所にまとめる。
+  function resolvePaint(paint, fg) {
+    const p = paint || { type: 'solid', color: '#FFFFFF', transparency: 0 };
+    // 白・黒は「不透明で固定」という指定（画面でも透過スライダーを隠している）
+    if (p.type === 'white') return { type: 'solid', color: '#FFFFFF', transparency: 0 };
+    if (p.type === 'black') return { type: 'solid', color: '#000000', transparency: 0 };
+    // 「セルの色」はセルの塗りをそのまま延ばす。透過の指定だけは持ち越す
+    if (p.type === 'auto') {
+      return Object.assign({}, fg, {
+        transparency: p.transparency !== undefined ? p.transparency : 0
+      });
+    }
+    return p;
+  }
+
+  // グラデーションは代表色（中間）で明るさを判定する。多色は背景と最もコントラストが低い色を返す。
+  // 指定でしかない type（white/black/auto）は resolvePaint で解いてから渡すこと。
   function paintColor(paint, bgHex) {
-    if (!paint || paint.type === 'none') return null;
+    if (!paint || paint.type === 'none' || paint.type === 'auto') return null;
     if (paint.type === 'white') return '#FFFFFF';
     if (paint.type === 'black') return '#000000';
     if (paint.type === 'solid') return paint.color;
@@ -495,9 +544,11 @@
     const dark = (x, y) => x >= 0 && y >= 0 && x < size && y < size && grid[y * size + x] === 1;
     const jit = Math.max(0, Math.min(1, Number(jitter) || 0));
     const isMulti = Array.isArray(colors) && colors.length > 1;
-    const colorBuckets = {};
+    // 同じ色が2つ以上入っていても束は1本にする（mosaicTiles と同じ扱い）。
+    // 色ごとに配列を作り直すと、重複した色のパスが同じ数だけ複製されてしまう。
+    const colorBuckets = new Map();
     if (isMulti) {
-      colors.forEach(c => { colorBuckets[c] = []; });
+      colors.forEach(c => { if (!colorBuckets.has(c)) colorBuckets.set(c, []); });
     }
     const singleParts = [];
 
@@ -526,7 +577,7 @@
           const p = rectPath(px, py, w, h, t / 2);
           if (isMulti) {
             const cIdx = Math.floor(cellRand(x, y, (seed || 0) + 17) * colors.length);
-            colorBuckets[colors[cIdx]].push(p);
+            colorBuckets.get(colors[cIdx]).push(p);
           } else {
             singleParts.push(p);
           }
@@ -542,7 +593,7 @@
           const p = singleCellPath(shape, x0, y0, s);
           if (isMulti) {
             const cIdx = Math.floor(cellRand(x, y, (seed || 0) + 17) * colors.length);
-            colorBuckets[colors[cIdx]].push(p);
+            colorBuckets.get(colors[cIdx]).push(p);
           } else {
             singleParts.push(p);
           }
@@ -551,7 +602,8 @@
     }
 
     if (isMulti) {
-      return colors.map(c => ({ color: c, d: (colorBuckets[c] || []).join('') }));
+      // 重複を畳んだので、束は Map の並び（＝初出順）で1色1本ずつ出す
+      return Array.from(colorBuckets, e => ({ color: e[0], d: e[1].join('') }));
     }
     return [{ color: null, d: singleParts.join('') }];
   }
@@ -802,6 +854,31 @@
     return Math.hypot(ax - inner, ay - inner) <= r;
   }
 
+  // ラベルの上下に「何を」「どの文字・画像で」出すか。位置の指定と、上側だけ
+  // 別指定にできる仕組みが絡んで条件が込み入るので、ここでまとめて決める。
+  // 描画（render）と、書き出し用のフォント集め（textRuns）の両方がこれを見る。
+  // 片方だけ直すと、描いた文字と埋め込む字がずれても気づけない。
+  function frameLabelParts(st) {
+    const fr = st.frame || {};
+    const isLabel = fr.type === 'label';
+    const pos = fr.pos || 'bottom';
+    // contentMode/topContentMode が今のキー。mode/topMode は旧データ。
+    const bottomCMode = isLabel ? (fr.contentMode || fr.mode || 'text') : 'text';
+    // 上下を出し分けないときは、上も下の指定をそのまま使う
+    const topOwn = fr.topContentMode || fr.topMode;
+    const topCMode = isLabel ? ((pos === 'both' || topOwn) ? (topOwn || 'text') : bottomCMode) : 'text';
+    return {
+      pos: pos,
+      isLabel: isLabel,
+      topCMode: topCMode,
+      bottomCMode: bottomCMode,
+      topText: pos === 'both' ? (fr.textTop || '') : (fr.textTop || fr.text || ''),
+      bottomText: fr.text || '',
+      topSrc: (pos === 'both' || fr.topSrc) ? (fr.topSrc || '') : (fr.src || ''),
+      bottomSrc: fr.src || ''
+    };
+  }
+
   // 旧データ（backdropColor と backdrop:'none'）も受けられるようにして塗りを取り出す
   function backdropPaintOf(logo, fg) {
     let p = logo.backdropPaint;
@@ -810,14 +887,7 @@
         ? { type: 'none' }
         : { type: 'solid', color: logo.backdropColor || '#FFFFFF', transparency: 0 };
     }
-    if (p.type === 'white') return { type: 'solid', color: '#FFFFFF', transparency: 0 };
-    if (p.type === 'black') return { type: 'solid', color: '#000000', transparency: 0 };
-    if (p.type === 'auto') {
-      return Object.assign({}, fg, {
-        transparency: p.transparency !== undefined ? p.transparency : 0
-      });
-    }
-    return p;
+    return resolvePaint(p, fg);
   }
 
   // 外周リング（7x7 から 5x5 を抜く）
@@ -1107,12 +1177,7 @@
       const fs = side * (logo.text.length > 2 ? 0.5 : 0.78);
       const lp = (logo && logo.paint) ? logo.paint : { type: 'solid', color: logo.color || '#111827' };
       const mode = lp.type || 'solid';
-      const font = logo.font || 'sans';
-      let fontFamily = 'Inter, "Noto Sans JP", system-ui, sans-serif';
-      if (font === 'rounded') fontFamily = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif';
-      else if (font === 'serif') fontFamily = '"Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif';
-      else if (font === 'mono') fontFamily = '"JetBrains Mono", Consolas, Monaco, monospace';
-      else if (font === 'impact') fontFamily = 'Impact, "Arial Black", sans-serif';
+      const fontFamily = fontOf(logo.font).stack;
 
       // 塗りを敷く箱は文字の広がりに合わせる。正方形のままだと、横に長い
       // 文字列で画像がタイル状に繰り返され、勾配も途中で頭打ちになる。
@@ -1126,7 +1191,7 @@
       box = { x: cx - tw / 2, y: cy - th / 2, w: tw, h: th };
 
       const textEl = fill => '<text x="' + n(cx) + '" y="' + n(cy) + '" font-size="' + n(fs) +
-        '" font-weight="700"' + (fill ? ' fill="' + fill + '"' : '') +
+        '" font-weight="' + FONT_WEIGHT + '"' + (fill ? ' fill="' + fill + '"' : '') +
         ' text-anchor="middle" dominant-baseline="central" ' +
         'font-family="' + esc(fontFamily) + '">' + esc(logo.text) + '</text>';
 
@@ -1174,25 +1239,17 @@
     // 吹き出しのしっぽは下にはみ出すぶんだけ縦を伸ばす
     const tailH = isLine ? lineG.tail : 0;
     const isLabel = st.frame.type === 'label';
-    const pos = (st.frame && st.frame.pos) || 'bottom';
-
-    const topCMode = isLabel
-      ? ((pos === 'both' || (st.frame && (st.frame.topContentMode || st.frame.topMode)))
-          ? ((st.frame && (st.frame.topContentMode || st.frame.topMode)) || 'text')
-          : ((st.frame && (st.frame.contentMode || st.frame.mode)) || 'text'))
-      : 'text';
-    const bottomCMode = isLabel
-      ? ((st.frame && (st.frame.contentMode || st.frame.mode)) || 'text')
-      : 'text';
+    const L = frameLabelParts(st);
+    const pos = L.pos;
+    const topCMode = L.topCMode;
+    const bottomCMode = L.bottomCMode;
+    const topText = L.topText;
+    const bottomText = L.bottomText;
+    const topSrc = L.topSrc;
+    const bottomSrc = L.bottomSrc;
 
     const hasTop = isLabel && (pos === 'top' || pos === 'both');
     const hasBottom = isLabel && (pos === 'bottom' || pos === 'both');
-
-    const topText = pos === 'both' ? (st.frame.textTop || '') : (st.frame.textTop || st.frame.text || '');
-    const bottomText = st.frame.text || '';
-
-    const topSrc = (pos === 'both' || st.frame.topSrc) ? (st.frame.topSrc || '') : (st.frame.src || '');
-    const bottomSrc = st.frame.src || '';
 
     const hasTopContent = topCMode === 'icon'
       ? true
@@ -1262,16 +1319,7 @@
     const fgRef = paintRef(st.fg, uid + 'f', '#111827');
 
     const bgBox = st.frame.type === 'label' ? { x: bx, y: by, w: inner, h: inner } : { x: 0, y: 0, w: W, h: H };
-    let bgPaint = st.bg || { type: 'solid', color: '#FFFFFF', transparency: 0 };
-    if (bgPaint.type === 'white') {
-      bgPaint = { type: 'solid', color: '#FFFFFF', transparency: 0 };
-    } else if (bgPaint.type === 'black') {
-      bgPaint = { type: 'solid', color: '#000000', transparency: 0 };
-    } else if (bgPaint.type === 'auto') {
-      bgPaint = Object.assign({}, st.fg, {
-        transparency: st.bg.transparency !== undefined ? st.bg.transparency : 0
-      });
-    }
+    const bgPaint = resolvePaint(st.bg, st.fg);
 
     if (bgPaint.type === 'linear' || bgPaint.type === 'radial' || bgPaint.type === 'image') {
       defs += paintDef(bgPaint, uid + 'b', bgBox);
@@ -1465,12 +1513,7 @@
 
     // 外枠のコンテンツ（文字・アイコン・画像）
     if (topH || bottomH) {
-      const font = (st.frame && st.frame.font) || 'sans';
-      let fontFamily = 'Inter, "Noto Sans JP", system-ui, sans-serif';
-      if (font === 'rounded') fontFamily = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif';
-      else if (font === 'serif') fontFamily = '"Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif';
-      else if (font === 'mono') fontFamily = '"JetBrains Mono", Consolas, Monaco, monospace';
-      else if (font === 'impact') fontFamily = 'Impact, "Arial Black", sans-serif';
+      const fontFamily = fontOf(st.frame.font).stack;
 
       const tp = (st.frame && st.frame.textPaint) ? st.frame.textPaint : (st.frame && st.frame.textColor ? { type: 'solid', color: st.frame.textColor } : { type: 'solid', color: '#FFFFFF' });
       const tMode = tp.type || 'solid';
@@ -1501,7 +1544,7 @@
         const tPid = uid + 'ft' + idSuffix;
 
         const textEl = fill => '<text x="' + n(W / 2) + '" y="' + n(ty) + '" font-size="' + n(fs) +
-          '" font-weight="700"' + (fill ? ' fill="' + fill + '"' : '') +
+          '" font-weight="' + FONT_WEIGHT + '"' + (fill ? ' fill="' + fill + '"' : '') +
           ' text-anchor="middle" dominant-baseline="central" letter-spacing="' + n(fs * 0.02) +
           '" font-family="' + esc(fontFamily) + '">' + esc(text) + '</text>';
 
@@ -1683,7 +1726,10 @@
 
     // ---- 読み取りへの注意 ---------------------------------------------
     const warnings = [];
-    const bgC = st.bg.type === 'none' ? '#FFFFFF' : paintColor(st.bg);
+    // 判定には、白・黒・「セルの色」を解決したあとの bgPaint を使う。
+    // st.bg をそのまま渡すと type:'auto' が素通りしてグラデーションの
+    // 既定色を返し、実際は地とセルが同色でもコントラスト良好と出てしまう。
+    const bgC = bgPaint.type === 'none' ? '#FFFFFF' : paintColor(bgPaint);
     const fgC = paintColor(st.fg, bgC);
     const ratio = fgC && bgC ? contrastRatio(fgC, bgC) : 21;
     if (ratio < 3) {
@@ -1691,10 +1737,15 @@
     } else if (ratio < 4.5) {
       warnings.push({ level: 'warn', text: 'コントラストがやや低めです（' + ratio.toFixed(1) + ':1）。読み取りにくい環境があるかもしれません。' });
     }
-    // マーカーだけ別色にしたときの見落としが一番多い
-    [[st.markerFrameColor, 'マーカーの枠'], [st.markerEyeColor, 'マーカーの目']].forEach(pair => {
-      if (!pair[0] || !bgC) return;
-      const r = contrastRatio(pair[0], bgC);
+    // マーカーだけ別色にしたときの見落としが一番多い。
+    // 'auto'（セルの色に追従）はセル側の判定で見ているので、ここでは外す。
+    [[mfPaint, 'マーカーの枠'], [mePaint, 'マーカーの目']].forEach(pair => {
+      if (!bgC) return;
+      // 'auto'（セルの色に追従）と 'none' は paintColor が null を返す。
+      // 前者はセル側の判定で見ているので、ここで重ねて言わない。
+      const mc = paintColor(pair[0], bgC);
+      if (!mc) return;
+      const r = contrastRatio(mc, bgC);
       if (r < 3) {
         warnings.push({ level: 'error', text: pair[1] + 'の色が背景に近すぎます（' + r.toFixed(1) + ':1）。位置検出パターンが見えないと読み取れません。' });
       } else if (r < 4.5) {
@@ -1737,6 +1788,52 @@
       coverage: coverage,
       warnings: warnings
     };
+  }
+
+  // ------------------------------------------------------------------
+  // 書き出し用のフォント埋め込み
+  // ------------------------------------------------------------------
+  // このスタイルで実際に描かれる文字を、書体ごとにまとめて返す。
+  // 書き出し前にこのぶんだけフォントを取り寄せて SVG に埋めれば、画面と
+  // 同じ書体で書き出せる。impact のようにローカルで足りる書体は web が空。
+  function textRuns(styleIn) {
+    const st = merge(DEFAULTS, styleIn || {});
+    const byFont = new Map();
+    const add = (fontKey, text) => {
+      const t = String(text || '');
+      if (!t.trim()) return;
+      const web = fontOf(fontKey).web;
+      if (!web) return;
+      byFont.set(web, (byFont.get(web) || '') + t);
+    };
+
+    if (st.logo.type === 'text') add(st.logo.font, st.logo.text);
+
+    const L = frameLabelParts(st);
+    if (L.isLabel) {
+      if ((L.pos === 'bottom' || L.pos === 'both') && L.bottomCMode === 'text') {
+        add(st.frame.font, L.bottomText);
+      }
+      if ((L.pos === 'top' || L.pos === 'both') && L.topCMode === 'text') {
+        add(st.frame.font, L.topText);
+      }
+    }
+
+    // 要るのは字の種類だけ。並べ替えて畳めば、同じ字を使い回した文言は
+    // 同じ取り寄せになる（呼び出し側のキャッシュがそのまま効く）。
+    return Array.from(byFont, e => ({
+      web: e[0],
+      weight: FONT_WEIGHT,
+      text: Array.from(new Set(e[1])).sort().join('')
+    }));
+  }
+
+  // @font-face を SVG の中に入れる。<defs> があればその先頭へ、無ければ作る。
+  function embedFontCss(svg, css) {
+    if (!css) return svg;
+    const style = '<style>' + css + '</style>';
+    if (svg.indexOf('<defs>') >= 0) return svg.replace('<defs>', '<defs>' + style);
+    return svg.replace(/(<svg\b[^>]*>)/, '$1<defs>' + style + '</defs>');
   }
 
   // 指定ピクセル幅で書き出すために width/height だけ差し替える
@@ -1807,6 +1904,11 @@
     LINE_STYLES: LINE_STYLES,
     lineIdOf: lineIdOf,
     contrastRatio: contrastRatio,
+    paintColor: paintColor,
+    resolvePaint: resolvePaint,
+    FONT_KEYS: FONT_KEYS,
+    textRuns: textRuns,
+    embedFontCss: embedFontCss,
     IMG_SCALE_MIN: IMG_SCALE_MIN,
     IMG_SCALE_MAX: IMG_SCALE_MAX
   };
