@@ -1543,6 +1543,9 @@
       b.classList.toggle('hidden', pair[1]);
       b.hidden = pair[1];
     });
+    // ロゴの下地がなじませる相手はセルではなく背景
+    const autoBtn = cq(scope, 'btn-mode-auto');
+    if (autoBtn) autoBtn.textContent = isLogoBd ? '背景の色' : 'セルの色';
 
     setSeg(cq(scope, 'color-mode-seg'), p.type, 'mode');
 
@@ -1565,9 +1568,11 @@
     const plateWord = isLogoBd ? 'ロゴの下地' : '背景';
     const autoNotice = cq(scope, 'auto-notice');
     if (autoNotice) {
-      autoNotice.innerHTML = isBg
-        ? 'セルの色設定と連動します。<br>グラデーション・放射・画像・多色のテクスチャが指定の透明度で背景に反映されます。'
-        : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
+      autoNotice.innerHTML = isLogoBd
+        ? '背景の色設定と連動します。<br>グラデーション・放射・画像・多色の時は背景と一体の連続したテクスチャになります。背景が透明なら下地も描かれません。'
+        : isBg
+          ? 'セルの色設定と連動します。<br>グラデーション・放射・画像・多色のテクスチャが指定の透明度で背景に反映されます。'
+          : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
     }
     const whiteNotice = cq(scope, 'white-notice');
     if (whiteNotice) whiteNotice.textContent = plateWord + 'を不透明な白（#FFFFFF）に固定します。';
