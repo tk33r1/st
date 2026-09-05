@@ -204,9 +204,12 @@
   // 1 段ぶんの描画が返ってこなくても、パネル全体が固まらないようにする。
   function withTimeout(p, ms) {
     let t;
+    const timeoutPromise = new Promise((_, reject) => {
+      t = setTimeout(() => reject(new Error('timeout')), ms);
+    });
     return Promise.race([
       Promise.resolve(p).finally(() => clearTimeout(t)),
-      new Promise((_, reject) => { t = setTimeout(() => reject(new Error('timeout')), ms); })
+      timeoutPromise
     ]);
   }
 

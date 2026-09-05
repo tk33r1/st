@@ -188,7 +188,7 @@
   function writePayload(bb, mode, text, bytes) {
     if (mode === 'numeric') {
       for (let i = 0; i < text.length; i += 3) {
-        const chunk = text.substr(i, 3);
+        const chunk = text.slice(i, i + 3);
         bb.put(parseInt(chunk, 10), chunk.length * 3 + 1);
       }
       return;

@@ -811,6 +811,20 @@
     });
   }
 
+  function syncPresetActive() {
+    const host = $('preset-grid');
+    if (host) {
+      const buttons = host.querySelectorAll('.preset-btn');
+      const filtered = A.PRESETS.filter(p => state.presetCategory === 'all' || p.category === state.presetCategory);
+      buttons.forEach((btn, idx) => {
+        const p = filtered[idx];
+        if (p) btn.classList.toggle('active', state.presetName === p.name);
+      });
+    }
+    const hint = $('hint-preset');
+    if (hint) hint.textContent = state.presetName || 'カスタム';
+  }
+
   function buildPresets() {
     const host = $('preset-grid');
     if (!host) return;
@@ -856,52 +870,91 @@
 
         state.presetName = p.name;
         syncControls();
-        buildShapeGrids();
         buildFrameChips();
-        buildPresets();
+        syncPresetActive();
         update();
       });
       host.appendChild(btn);
     });
-    $('hint-preset').textContent = state.presetName || 'カスタム';
+    const hint = $('hint-preset');
+    if (hint) hint.textContent = state.presetName || 'カスタム';
+  }
+
+  function syncShapeGridActive(hostId, currentId) {
+    const host = $(hostId);
+    if (!host) return;
+    Array.prototype.forEach.call(host.children, btn => {
+      btn.classList.toggle('active', btn.dataset.id === currentId);
+    });
+  }
+
+  function updateFrameGridPreviews() {
+    const host = $('frame-grid');
+    if (!host) return;
+    Array.prototype.forEach.call(host.children, btn => {
+      const id = btn.dataset.id;
+      const holder = btn.querySelector('.preview-holder');
+      if (holder && id) {
+        holder.innerHTML = window.QRStyle.markerPreview(id, state.style.markerEye);
+      }
+    });
+  }
+
+  function syncShapeActive() {
+    syncShapeGridActive('cell-grid', state.style.cell);
+    syncShapeGridActive('frame-grid', state.style.markerFrame);
+    syncShapeGridActive('logo-backdrop-grid', state.style.logo.backdrop);
+    syncShapeGridActive('frame-backdrop-grid', state.style.frame && state.style.frame.backdrop);
+    syncShapeGridActive('frame-line-grid', state.style.frame && state.style.frame.line);
+    syncShapeGridActive('eye-grid', state.style.markerEye);
+
+    const cellName = (A.CELL_SHAPES.find(s => s.id === state.style.cell) || {}).name || '';
+    const hintShape = $('hint-shape');
+    if (hintShape) hintShape.textContent = cellName;
   }
 
   function buildShapeGrids() {
     const cellHost = $('cell-grid');
-    cellHost.innerHTML = '';
-    A.CELL_SHAPES.forEach(s => {
-      const b = el('button', { class: 'shape-btn' + (state.style.cell === s.id ? ' active' : ''), type: 'button', title: s.name });
-      const holder = el('div');
-      holder.innerHTML = window.QRStyle.cellPreview(s.id);
-      b.appendChild(holder.firstChild);
-      b.appendChild(el('i', null, s.name));
-      b.addEventListener('click', () => {
-        state.style.cell = s.id;
-        state.presetName = '';
-        buildShapeGrids();
-        buildPresets();
-        update();
+    if (cellHost) {
+      cellHost.innerHTML = '';
+      A.CELL_SHAPES.forEach(s => {
+        const b = el('button', { class: 'shape-btn' + (state.style.cell === s.id ? ' active' : ''), type: 'button', title: s.name });
+        b.dataset.id = s.id;
+        const holder = el('div', { class: 'preview-holder' });
+        holder.innerHTML = window.QRStyle.cellPreview(s.id);
+        b.appendChild(holder);
+        b.appendChild(el('i', null, s.name));
+        b.addEventListener('click', () => {
+          state.style.cell = s.id;
+          state.presetName = '';
+          syncShapeActive();
+          syncPresetActive();
+          update();
+        });
+        cellHost.appendChild(b);
       });
-      cellHost.appendChild(b);
-    });
+    }
 
     const frameHost = $('frame-grid');
-    frameHost.innerHTML = '';
-    A.MARKER_FRAMES.forEach(s => {
-      const b = el('button', { class: 'shape-btn' + (state.style.markerFrame === s.id ? ' active' : ''), type: 'button', title: s.name });
-      const holder = el('div');
-      holder.innerHTML = window.QRStyle.markerPreview(s.id, state.style.markerEye);
-      b.appendChild(holder.firstChild);
-      b.appendChild(el('i', null, s.name));
-      b.addEventListener('click', () => {
-        state.style.markerFrame = s.id;
-        state.presetName = '';
-        buildShapeGrids();
-        buildPresets();
-        update();
+    if (frameHost) {
+      frameHost.innerHTML = '';
+      A.MARKER_FRAMES.forEach(s => {
+        const b = el('button', { class: 'shape-btn' + (state.style.markerFrame === s.id ? ' active' : ''), type: 'button', title: s.name });
+        b.dataset.id = s.id;
+        const holder = el('div', { class: 'preview-holder' });
+        holder.innerHTML = window.QRStyle.markerPreview(s.id, state.style.markerEye);
+        b.appendChild(holder);
+        b.appendChild(el('i', null, s.name));
+        b.addEventListener('click', () => {
+          state.style.markerFrame = s.id;
+          state.presetName = '';
+          syncShapeActive();
+          syncPresetActive();
+          update();
+        });
+        frameHost.appendChild(b);
       });
-      frameHost.appendChild(b);
-    });
+    }
 
     // ロゴの下地とラベルの下地は同じ形の一覧から選ぶ
     function buildBackdropGrid(hostId, current, pick) {
@@ -910,15 +963,16 @@
       host.innerHTML = '';
       A.MARKER_FRAMES.forEach(f => {
         const b = el('button', { class: 'shape-btn' + (current === f.id ? ' active' : ''), type: 'button', title: f.name });
-        const holder = el('div');
+        b.dataset.id = f.id;
+        const holder = el('div', { class: 'preview-holder' });
         holder.innerHTML = window.QRStyle.backdropPreview(f.id);
-        b.appendChild(holder.firstChild);
+        b.appendChild(holder);
         b.appendChild(el('i', null, f.name));
         b.addEventListener('click', () => {
           pick(f.id);
           state.presetName = '';
-          buildShapeGrids();
-          buildPresets();
+          syncShapeActive();
+          syncPresetActive();
           update();
         });
         host.appendChild(b);
@@ -937,10 +991,11 @@
     if (lineHost) {
       lineHost.innerHTML = '';
       A.FRAME_LINES.forEach(f => {
-        const b = el('button', { class: 'shape-btn' + (state.style.frame.line === f.id ? ' active' : ''), type: 'button', title: f.name });
-        const holder = el('div');
+        const b = el('button', { class: 'shape-btn' + ((state.style.frame && state.style.frame.line === f.id) ? ' active' : ''), type: 'button', title: f.name });
+        b.dataset.id = f.id;
+        const holder = el('div', { class: 'preview-holder' });
         holder.innerHTML = window.QRStyle.linePreview(f.id);
-        b.appendChild(holder.firstChild);
+        b.appendChild(holder);
         b.appendChild(el('i', null, f.name));
         b.addEventListener('click', () => {
           const ls = window.QRStyle.LINE_STYLES[f.id] || {};
@@ -948,9 +1003,9 @@
           state.style.frame.lineWidth = ls.stroke;
           state.style.frame.lineWidth2 = ls.inner || 0.28;
           state.presetName = '';
-          buildShapeGrids();
+          syncShapeActive();
           buildFrameChips();
-          buildPresets();
+          syncPresetActive();
           // 太さの既定値と、二重線のときだけ出る2本目のスライダーを描き直す
           syncControls();
           update();
@@ -960,25 +1015,30 @@
     }
 
     const eyeHost = $('eye-grid');
-    eyeHost.innerHTML = '';
-    A.MARKER_EYES.forEach(s => {
-      const b = el('button', { class: 'shape-btn' + (state.style.markerEye === s.id ? ' active' : ''), type: 'button', title: s.name });
-      const holder = el('div');
-      holder.innerHTML = window.QRStyle.eyePreview(s.id);
-      b.appendChild(holder.firstChild);
-      b.appendChild(el('i', null, s.name));
-      b.addEventListener('click', () => {
-        state.style.markerEye = s.id;
-        state.presetName = '';
-        buildShapeGrids();
-        buildPresets();
-        update();
+    if (eyeHost) {
+      eyeHost.innerHTML = '';
+      A.MARKER_EYES.forEach(s => {
+        const b = el('button', { class: 'shape-btn' + (state.style.markerEye === s.id ? ' active' : ''), type: 'button', title: s.name });
+        b.dataset.id = s.id;
+        const holder = el('div', { class: 'preview-holder' });
+        holder.innerHTML = window.QRStyle.eyePreview(s.id);
+        b.appendChild(holder);
+        b.appendChild(el('i', null, s.name));
+        b.addEventListener('click', () => {
+          state.style.markerEye = s.id;
+          state.presetName = '';
+          syncShapeActive();
+          updateFrameGridPreviews();
+          syncPresetActive();
+          update();
+        });
+        eyeHost.appendChild(b);
       });
-      eyeHost.appendChild(b);
-    });
+    }
 
     const cellName = (A.CELL_SHAPES.find(s => s.id === state.style.cell) || {}).name || '';
-    $('hint-shape').textContent = cellName;
+    const hintShape = $('hint-shape');
+    if (hintShape) hintShape.textContent = cellName;
   }
 
   const MULTI_PALETTES = [
@@ -992,11 +1052,16 @@
     { name: 'パステル', colors: ['#F472B6', '#A78BFA', '#60A5FA', '#34D399'] }
   ];
 
-  function buildMultiColorsList(scope) {
-    const host = cq(scope, 'multi-colors-list');
+  function blendHex(c1, c2) {
+    const a = hexToRgb(c1) || [0, 0, 0];
+    const b = hexToRgb(c2) || [255, 255, 255];
+    const m = a.map((v, i) => Math.round((v + b[i]) / 2));
+    return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+
+  function renderMultiColorsList(host, p, addBtn) {
     if (!host) return;
     host.innerHTML = '';
-    const p = paintOfScope(scope);
     if (!Array.isArray(p.colors)) p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
     const colors = p.colors;
     colors.forEach((c, idx) => {
@@ -1030,6 +1095,7 @@
         state.presetName = '';
         syncControls();
         update();
+        save();
       });
 
       item.appendChild(picker);
@@ -1038,7 +1104,6 @@
       host.appendChild(item);
     });
 
-    const addBtn = cq(scope, 'btn-add-color');
     if (addBtn) {
       const atMax = colors.length >= 8;
       addBtn.classList.toggle('hidden', atMax);
@@ -1047,8 +1112,7 @@
     }
   }
 
-  function buildMultiPalettes(scope) {
-    const host = cq(scope, 'multi-palette-grid');
+  function renderMultiPalettes(host, getPaint, onSelect) {
     if (!host) return;
     host.innerHTML = '';
     MULTI_PALETTES.forEach(p => {
@@ -1062,29 +1126,21 @@
       btn.appendChild(dots);
       btn.appendChild(el('i', null, p.name));
       btn.addEventListener('click', () => {
-        state.colorScope = scope;
-        paintOfScope(scope).colors = p.colors.slice();
+        if (onSelect) onSelect();
+        getPaint().colors = p.colors.slice();
         state.presetName = '';
         syncControls();
-        buildPresets();
+        syncPresetActive();
         update();
+        save();
       });
       host.appendChild(btn);
     });
   }
 
-  function blendHex(c1, c2) {
-    const a = hexToRgb(c1) || [0, 0, 0];
-    const b = hexToRgb(c2) || [255, 255, 255];
-    const m = a.map((v, i) => Math.round((v + b[i]) / 2));
-    return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('');
-  }
-
-  function buildGradColorsList(scope) {
-    const host = cq(scope, 'grad-colors-list');
+  function renderGradColorsList(host, p, addBtn) {
     if (!host) return;
     host.innerHTML = '';
-    const p = paintOfScope(scope);
     const hasMid = !!p.mid;
     const items = hasMid
       ? [{ key: 'from', role: '開始', val: p.from || '#FC466B' },
@@ -1093,7 +1149,7 @@
       : [{ key: 'from', role: '開始', val: p.from || '#FC466B' },
          { key: 'to',   role: '終了', val: p.to || '#3F5EFB' }];
 
-    items.forEach((item, idx) => {
+    items.forEach((item) => {
       const elItem = el('div', { class: 'multi-color-item' });
       const picker = el('input', { type: 'color', value: normHex(item.val, '#FC466B'), 'aria-label': item.role + '色' });
       const roleSpan = el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, item.role);
@@ -1136,6 +1192,7 @@
         state.presetName = '';
         syncControls();
         update();
+        save();
       });
 
       elItem.appendChild(picker);
@@ -1145,7 +1202,6 @@
       host.appendChild(elItem);
     });
 
-    const addBtn = cq(scope, 'btn-add-grad-color');
     if (addBtn) {
       addBtn.classList.toggle('hidden', hasMid);
       addBtn.hidden = hasMid;
@@ -1153,51 +1209,7 @@
     }
   }
 
-
-
-  function buildSwatches(scope) {
-    const host = cq(scope, 'swatch-host');
-    if (!host) return;
-    host.innerHTML = '';
-    A.SWATCHES.forEach(group => {
-      const g = el('div', { class: 'swatch-group' });
-      g.appendChild(el('b', null, group.name));
-      const row = el('div', { class: 'swatches' });
-      group.colors.forEach(c => {
-        const b = el('button', { class: 'sw', type: 'button', title: c, 'aria-label': c });
-        b.style.background = c;
-        b.addEventListener('click', () => {
-          state.colorScope = scope;
-          const p = paintOfScope(scope);
-          if (p.type === 'solid') {
-            p.color = c;
-          } else if (p.type === 'multi') {
-            if (p.colors.indexOf(c) < 0 && p.colors.length < 8) {
-              p.colors.push(c);
-            } else {
-              p.colors[p.colors.length - 1] = c;
-            }
-          } else {
-            if (!p.mid) {
-              p.mid = c;
-            } else {
-              p.to = c;
-            }
-          }
-          state.presetName = '';
-          syncControls();
-          buildPresets();
-          update();
-        });
-        row.appendChild(b);
-      });
-      g.appendChild(row);
-      host.appendChild(g);
-    });
-  }
-
-  function buildGradients(scope) {
-    const host = cq(scope, 'grad-grid');
+  function renderGradients(host, getPaint, onSelect) {
     if (!host) return;
     host.innerHTML = '';
     A.GRADIENTS.forEach(g => {
@@ -1206,8 +1218,8 @@
       b.style.background = 'linear-gradient(' + (g.angle + 90) + 'deg, ' + stops.join(', ') + ')';
       b.appendChild(el('span', null, g.name));
       b.addEventListener('click', () => {
-        state.colorScope = scope;
-        const p = paintOfScope(scope);
+        if (onSelect) onSelect();
+        const p = getPaint();
         p.from = g.from;
         p.mid = g.mid || '';
         p.to = g.to;
@@ -1215,185 +1227,7 @@
         if (p.type === 'solid' || p.type === 'multi' || p.type === 'auto') p.type = 'linear';
         state.presetName = '';
         syncControls();
-        buildPresets();
-        update();
-      });
-      host.appendChild(b);
-    });
-  }
-
-  function buildLogoMultiColorsList() {
-    const host = $('logo-multi-colors-list');
-    if (!host) return;
-    host.innerHTML = '';
-    const lp = getLogoPaint();
-    if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED', '#DB2777'];
-    const colors = lp.colors;
-    colors.forEach((c, idx) => {
-      const item = el('div', { class: 'multi-color-item' });
-      const picker = el('input', { type: 'color', value: normHex(c, '#2563EB'), 'aria-label': '色 ' + (idx + 1) });
-      const hexSpan = el('span', { class: 'color-hex' }, normHex(c, '#2563EB'));
-      const removeBtn = el('button', {
-        class: 'btn-remove-color',
-        type: 'button',
-        title: 'この色を削除',
-        'aria-label': 'この色を削除'
-      }, '×');
-      if (colors.length <= 2) {
-        removeBtn.disabled = true;
-      }
-
-      picker.addEventListener('input', () => {
-        const hex = picker.value.toUpperCase();
-        hexSpan.textContent = hex;
-        colors[idx] = hex;
-        state.presetName = '';
-        update();
-      });
-      picker.addEventListener('change', () => {
-        save();
-      });
-
-      removeBtn.addEventListener('click', () => {
-        if (colors.length <= 2) return;
-        colors.splice(idx, 1);
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-
-      item.appendChild(picker);
-      item.appendChild(hexSpan);
-      item.appendChild(removeBtn);
-      host.appendChild(item);
-    });
-
-    const addBtn = $('btn-logo-add-color');
-    if (addBtn) {
-      const atMax = colors.length >= 8;
-      addBtn.classList.toggle('hidden', atMax);
-      addBtn.hidden = atMax;
-      addBtn.disabled = atMax;
-    }
-  }
-
-  function buildLogoMultiPalettes() {
-    const host = $('logo-multi-palette-grid');
-    if (!host) return;
-    host.innerHTML = '';
-    MULTI_PALETTES.forEach(p => {
-      const btn = el('button', { class: 'multi-pal-btn', type: 'button', title: p.name });
-      const dots = el('div', { class: 'multi-pal-dots' });
-      p.colors.forEach(c => {
-        const s = el('span');
-        s.style.background = c;
-        dots.appendChild(s);
-      });
-      btn.appendChild(dots);
-      btn.appendChild(el('i', null, p.name));
-      btn.addEventListener('click', () => {
-        getLogoPaint().colors = p.colors.slice();
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-      host.appendChild(btn);
-    });
-  }
-
-  function buildLogoGradColorsList() {
-    const host = $('logo-grad-colors-list');
-    if (!host) return;
-    host.innerHTML = '';
-    const lp = getLogoPaint();
-    const hasMid = !!lp.mid;
-    const items = hasMid
-      ? [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
-         { key: 'mid',  role: '中間', val: lp.mid },
-         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }]
-      : [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
-         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }];
-
-    items.forEach((item, idx) => {
-      const elItem = el('div', { class: 'multi-color-item' });
-      const picker = el('input', { type: 'color', value: normHex(item.val, '#FC466B'), 'aria-label': item.role + '色' });
-      const roleSpan = el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, item.role);
-      const hexSpan = el('span', { class: 'color-hex' }, normHex(item.val, '#FC466B'));
-      const removeBtn = el('button', {
-        class: 'btn-remove-color',
-        type: 'button',
-        title: item.role + '色を削除',
-        'aria-label': item.role + '色を削除'
-      }, '×');
-
-      if (!hasMid) {
-        removeBtn.disabled = true;
-      }
-
-      picker.addEventListener('input', () => {
-        const hex = picker.value.toUpperCase();
-        hexSpan.textContent = hex;
-        if (item.key === 'from') lp.from = hex;
-        else if (item.key === 'mid') lp.mid = hex;
-        else lp.to = hex;
-        state.presetName = '';
-        update();
-      });
-      picker.addEventListener('change', () => {
-        save();
-      });
-
-      removeBtn.addEventListener('click', () => {
-        if (!hasMid) return;
-        if (item.key === 'from') {
-          lp.from = lp.mid;
-          lp.mid = '';
-        } else if (item.key === 'mid') {
-          lp.mid = '';
-        } else {
-          lp.to = lp.mid;
-          lp.mid = '';
-        }
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-
-      elItem.appendChild(picker);
-      elItem.appendChild(roleSpan);
-      elItem.appendChild(hexSpan);
-      elItem.appendChild(removeBtn);
-      host.appendChild(elItem);
-    });
-
-    const addBtn = $('btn-logo-add-grad-color');
-    if (addBtn) {
-      addBtn.classList.toggle('hidden', hasMid);
-      addBtn.hidden = hasMid;
-      addBtn.disabled = hasMid;
-    }
-  }
-
-  function buildLogoGradients() {
-    const host = $('logo-grad-grid');
-    if (!host) return;
-    host.innerHTML = '';
-    A.GRADIENTS.forEach(g => {
-      const b = el('button', { class: 'grad-btn', type: 'button', title: g.name });
-      const stops = g.mid ? [g.from, g.mid, g.to] : [g.from, g.to];
-      b.style.background = 'linear-gradient(' + (g.angle + 90) + 'deg, ' + stops.join(', ') + ')';
-      b.appendChild(el('span', null, g.name));
-      b.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        lp.from = g.from;
-        lp.mid = g.mid || '';
-        lp.to = g.to;
-        lp.angle = g.angle;
-        state.presetName = '';
-        syncControls();
+        syncPresetActive();
         update();
         save();
       });
@@ -1401,8 +1235,7 @@
     });
   }
 
-  function buildLogoSwatches() {
-    const host = $('logo-swatch-host');
+  function renderSwatches(host, onPickColor) {
     if (!host) return;
     host.innerHTML = '';
     A.SWATCHES.forEach(group => {
@@ -1413,11 +1246,10 @@
         const b = el('button', { class: 'sw', type: 'button', title: c, 'aria-label': c });
         b.style.background = c;
         b.addEventListener('click', () => {
-          const lp = getLogoPaint();
-          lp.color = c;
-          state.style.logo.color = c;
+          onPickColor(c);
           state.presetName = '';
           syncControls();
+          syncPresetActive();
           update();
           save();
         });
@@ -1425,6 +1257,64 @@
       });
       g.appendChild(row);
       host.appendChild(g);
+    });
+  }
+
+  // 汎用スコープ（セル・マーカー・背景）
+  function buildMultiColorsList(scope) {
+    renderMultiColorsList(cq(scope, 'multi-colors-list'), paintOfScope(scope), cq(scope, 'btn-add-color'));
+  }
+
+  function buildMultiPalettes(scope) {
+    renderMultiPalettes(cq(scope, 'multi-palette-grid'), () => paintOfScope(scope), () => { state.colorScope = scope; });
+  }
+
+  function buildGradColorsList(scope) {
+    renderGradColorsList(cq(scope, 'grad-colors-list'), paintOfScope(scope), cq(scope, 'btn-add-grad-color'));
+  }
+
+  function buildSwatches(scope) {
+    renderSwatches(cq(scope, 'swatch-host'), c => {
+      state.colorScope = scope;
+      const p = paintOfScope(scope);
+      if (p.type === 'solid') {
+        p.color = c;
+      } else if (p.type === 'multi') {
+        if (p.colors.indexOf(c) < 0 && p.colors.length < 8) p.colors.push(c);
+        else p.colors[p.colors.length - 1] = c;
+      } else {
+        if (!p.mid) p.mid = c;
+        else p.to = c;
+      }
+    });
+  }
+
+  function buildGradients(scope) {
+    renderGradients(cq(scope, 'grad-grid'), () => paintOfScope(scope), () => { state.colorScope = scope; });
+  }
+
+  // 中央ロゴ用
+  function buildLogoMultiColorsList() {
+    renderMultiColorsList($('logo-multi-colors-list'), getLogoPaint(), $('btn-logo-add-color'));
+  }
+
+  function buildLogoMultiPalettes() {
+    renderMultiPalettes($('logo-multi-palette-grid'), getLogoPaint);
+  }
+
+  function buildLogoGradColorsList() {
+    renderGradColorsList($('logo-grad-colors-list'), getLogoPaint(), $('btn-logo-add-grad-color'));
+  }
+
+  function buildLogoGradients() {
+    renderGradients($('logo-grad-grid'), getLogoPaint);
+  }
+
+  function buildLogoSwatches() {
+    renderSwatches($('logo-swatch-host'), c => {
+      const lp = getLogoPaint();
+      lp.color = c;
+      state.style.logo.color = c;
     });
   }
 
@@ -1480,381 +1370,106 @@
     img.src = s;
   }
 
+  // ロゴテキスト用
   function buildLogoTextMultiColorsList() {
-    const host = $('logo-text-multi-colors-list');
-    if (!host) return;
-    host.innerHTML = '';
-    const lp = getLogoPaint();
-    if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED', '#DB2777'];
-    const colors = lp.colors;
-    colors.forEach((c, idx) => {
-      const item = el('div', { class: 'multi-color-item' });
-      const picker = el('input', { type: 'color', value: normHex(c, '#2563EB'), 'aria-label': '色 ' + (idx + 1) });
-      const hexSpan = el('span', { class: 'color-hex' }, normHex(c, '#2563EB'));
-      const removeBtn = el('button', {
-        class: 'btn-remove-color',
-        type: 'button',
-        title: 'この色を削除',
-        'aria-label': 'この色を削除'
-      }, '×');
-      if (colors.length <= 2) {
-        removeBtn.disabled = true;
-      }
-
-      picker.addEventListener('input', () => {
-        const hex = picker.value.toUpperCase();
-        hexSpan.textContent = hex;
-        colors[idx] = hex;
-        state.presetName = '';
-        update();
-      });
-      picker.addEventListener('change', () => {
-        save();
-      });
-
-      removeBtn.addEventListener('click', () => {
-        if (colors.length <= 2) return;
-        colors.splice(idx, 1);
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-
-      item.appendChild(picker);
-      item.appendChild(hexSpan);
-      item.appendChild(removeBtn);
-      host.appendChild(item);
-    });
-
-    const addBtn = $('btn-logo-text-add-color');
-    if (addBtn) {
-      const atMax = colors.length >= 8;
-      addBtn.classList.toggle('hidden', atMax);
-      addBtn.hidden = atMax;
-      addBtn.disabled = atMax;
-    }
+    renderMultiColorsList($('logo-text-multi-colors-list'), getLogoPaint(), $('btn-logo-text-add-color'));
   }
 
   function buildLogoTextMultiPalettes() {
-    const host = $('logo-text-multi-palette-grid');
-    if (!host) return;
-    host.innerHTML = '';
-    MULTI_PALETTES.forEach(p => {
-      const btn = el('button', { class: 'multi-pal-btn', type: 'button', title: p.name });
-      const dots = el('div', { class: 'multi-pal-dots' });
-      p.colors.forEach(c => {
-        const s = el('span');
-        s.style.background = c;
-        dots.appendChild(s);
-      });
-      btn.appendChild(dots);
-      btn.appendChild(el('i', null, p.name));
-      btn.addEventListener('click', () => {
-        getLogoPaint().colors = p.colors.slice();
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-      host.appendChild(btn);
-    });
+    renderMultiPalettes($('logo-text-multi-palette-grid'), getLogoPaint);
   }
 
   function buildLogoTextGradColorsList() {
-    const host = $('logo-text-grad-colors-list');
-    if (!host) return;
-    host.innerHTML = '';
-    const lp = getLogoPaint();
-    const hasMid = !!lp.mid;
-    const items = hasMid
-      ? [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
-         { key: 'mid',  role: '中間', val: lp.mid },
-         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }]
-      : [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
-         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }];
-
-    items.forEach((item, idx) => {
-      const elItem = el('div', { class: 'multi-color-item' });
-      const picker = el('input', { type: 'color', value: normHex(item.val, '#FC466B'), 'aria-label': item.role + '色' });
-      const roleSpan = el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, item.role);
-      const hexSpan = el('span', { class: 'color-hex' }, normHex(item.val, '#FC466B'));
-      const removeBtn = el('button', {
-        class: 'btn-remove-color',
-        type: 'button',
-        title: item.role + '色を削除',
-        'aria-label': item.role + '色を削除'
-      }, '×');
-
-      if (!hasMid) {
-        removeBtn.disabled = true;
-      }
-
-      picker.addEventListener('input', () => {
-        const hex = picker.value.toUpperCase();
-        hexSpan.textContent = hex;
-        if (item.key === 'from') lp.from = hex;
-        else if (item.key === 'mid') lp.mid = hex;
-        else lp.to = hex;
-        state.presetName = '';
-        update();
-      });
-      picker.addEventListener('change', () => {
-        save();
-      });
-
-      removeBtn.addEventListener('click', () => {
-        if (!hasMid) return;
-        if (item.key === 'from') {
-          lp.from = lp.mid;
-          lp.mid = '';
-        } else if (item.key === 'mid') {
-          lp.mid = '';
-        } else {
-          lp.to = lp.mid;
-          lp.mid = '';
-        }
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-
-      elItem.appendChild(picker);
-      elItem.appendChild(roleSpan);
-      elItem.appendChild(hexSpan);
-      elItem.appendChild(removeBtn);
-      host.appendChild(elItem);
-    });
-
-    const addBtn = $('btn-logo-text-add-grad-color');
-    if (addBtn) {
-      addBtn.classList.toggle('hidden', hasMid);
-      addBtn.hidden = hasMid;
-      addBtn.disabled = hasMid;
-    }
+    renderGradColorsList($('logo-text-grad-colors-list'), getLogoPaint(), $('btn-logo-text-add-grad-color'));
   }
 
   function buildLogoTextGradients() {
-    const host = $('logo-text-grad-grid');
-    if (!host) return;
-    host.innerHTML = '';
-    A.GRADIENTS.forEach(g => {
-      const b = el('button', { class: 'grad-btn', type: 'button', title: g.name });
-      const stops = g.mid ? [g.from, g.mid, g.to] : [g.from, g.to];
-      b.style.background = 'linear-gradient(' + (g.angle + 90) + 'deg, ' + stops.join(', ') + ')';
-      b.appendChild(el('span', null, g.name));
-      b.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        lp.from = g.from;
-        lp.mid = g.mid || '';
-        lp.to = g.to;
-        lp.angle = g.angle;
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-      });
-      host.appendChild(b);
-    });
+    renderGradients($('logo-text-grad-grid'), getLogoPaint);
   }
 
   function buildLogoTextSwatches() {
-    const host = $('logo-text-swatch-host');
-    if (!host) return;
-    host.innerHTML = '';
-    A.SWATCHES.forEach(group => {
-      const g = el('div', { class: 'swatch-group' });
-      g.appendChild(el('b', null, group.name));
-      const row = el('div', { class: 'swatches' });
-      group.colors.forEach(c => {
-        const b = el('button', { class: 'sw', type: 'button', title: c, 'aria-label': c });
-        b.style.background = c;
-        b.addEventListener('click', () => {
-          const lp = getLogoPaint();
-          lp.color = c;
-          state.style.logo.color = c;
-          state.presetName = '';
-          syncControls();
-          update();
-          save();
-        });
-        row.appendChild(b);
-      });
-      g.appendChild(row);
-      host.appendChild(g);
+    renderSwatches($('logo-text-swatch-host'), c => {
+      const lp = getLogoPaint();
+      lp.color = c;
+      state.style.logo.color = c;
     });
   }
 
-  function loadLogoTextImageMask(file) {
-    if (!file || !file.type.match(/^image\//)) {
-      showToast('画像ファイルを選んでください', 'error');
-      return;
+  const loadLogoTextImageMask = loadLogoImageMask;
+  const loadLogoTextImageMaskUrl = loadLogoImageMaskUrl;
+
+  function renderIconSvg(icon, uidPrefix) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', icon.vb);
+    if (icon.rawSvg) {
+      svg.innerHTML = icon.rawSvg.replace(/__UID__/g, (uidPrefix || 'icon_') + icon.id);
+    } else {
+      svg.setAttribute('fill', 'currentColor');
+      icon.p.forEach(p => {
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', p.d);
+        if (p.e) path.setAttribute('fill-rule', 'evenodd');
+        svg.appendChild(path);
+      });
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const lp = getLogoPaint();
-      lp.src = reader.result;
-      state.presetName = '';
-      syncControls();
-      update();
-      save();
-    };
-    reader.onerror = () => showToast('画像の読み込みに失敗しました', 'error');
-    reader.readAsDataURL(file);
+    return svg;
   }
 
-  function loadLogoTextImageMaskUrl(url) {
-    const s = String(url || '').trim();
-    if (!s) return;
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL('image/png');
-        const lp = getLogoPaint();
-        lp.src = dataUrl;
+  function renderIconGrid(host, group, currentId, uidPrefix, onPick) {
+    if (!host) return;
+    host.innerHTML = '';
+    A.ICONS.filter(i => i.group === group).forEach(icon => {
+      const b = el('button', {
+        class: 'icon-btn' + (currentId === icon.id ? ' active' : ''),
+        type: 'button',
+        title: icon.name,
+        'aria-label': icon.name
+      });
+      b.dataset.id = icon.id;
+      b.appendChild(renderIconSvg(icon, uidPrefix));
+      b.addEventListener('click', () => {
+        onPick(icon);
+        Array.prototype.forEach.call(host.children, child => {
+          child.classList.toggle('active', child.dataset.id === icon.id);
+        });
         state.presetName = '';
         syncControls();
         update();
         save();
-        showToast('画像を適用しました', 'success');
-      } catch (err) {
-        const lp = getLogoPaint();
-        lp.src = s;
-        state.presetName = '';
-        syncControls();
-        update();
-        save();
-        showToast('URL画像を適用しました', 'success');
-      }
-    };
-    img.onerror = () => showToast('画像の読み込みに失敗しました。URLを確認してください', 'error');
-    img.src = s;
+      });
+      host.appendChild(b);
+    });
   }
 
   function buildIconGrid() {
-    const host = $('icon-grid');
-    host.innerHTML = '';
-    A.ICONS.filter(i => i.group === state.iconGroup).forEach(icon => {
-      const b = el('button', { class: 'icon-btn' + (state.style.logo.icon === icon.id ? ' active' : ''), type: 'button', title: icon.name, 'aria-label': icon.name });
-      const svgNS = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('viewBox', icon.vb);
-      if (icon.rawSvg) {
-        svg.innerHTML = icon.rawSvg.replace(/__UID__/g, 'grid_' + icon.id);
-      } else {
-        svg.setAttribute('fill', 'currentColor');
-        icon.p.forEach(p => {
-          const path = document.createElementNS(svgNS, 'path');
-          path.setAttribute('d', p.d);
-          if (p.e) path.setAttribute('fill-rule', 'evenodd');
-          svg.appendChild(path);
-        });
+    renderIconGrid($('icon-grid'), state.iconGroup, state.style.logo.icon, 'grid_', icon => {
+      state.style.logo.icon = icon.id;
+      state.style.logo.iconData = icon;
+      state.style.logo.type = 'icon';
+      if (A.BRAND_COLORS[icon.id]) {
+        state.style.logo.color = A.BRAND_COLORS[icon.id];
       }
-      b.appendChild(svg);
-      b.addEventListener('click', () => {
-        state.style.logo.icon = icon.id;
-        state.style.logo.iconData = icon;
-        state.style.logo.type = 'icon';
-        if (A.BRAND_COLORS[icon.id]) {
-          state.style.logo.color = A.BRAND_COLORS[icon.id];
-        }
-        state.presetName = '';
-        buildIconGrid();
-        syncControls();
-        update();
-      });
-      host.appendChild(b);
     });
   }
 
   function buildFrameTopIconGrid() {
-    const host = $('frame-top-icon-grid');
-    if (!host) return;
-    host.innerHTML = '';
     const currentIcon = (state.style.frame && state.style.frame.topIcon) || 'si-instagram';
-    A.ICONS.filter(i => i.group === state.frameTopIconGroup).forEach(icon => {
-      const b = el('button', {
-        class: 'icon-btn' + (currentIcon === icon.id ? ' active' : ''),
-        type: 'button',
-        title: icon.name,
-        'aria-label': icon.name
-      });
-      const svgNS = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('viewBox', icon.vb);
-      if (icon.rawSvg) {
-        svg.innerHTML = icon.rawSvg.replace(/__UID__/g, 'frame_top_grid_' + icon.id);
-      } else {
-        svg.setAttribute('fill', 'currentColor');
-        icon.p.forEach(p => {
-          const path = document.createElementNS(svgNS, 'path');
-          path.setAttribute('d', p.d);
-          if (p.e) path.setAttribute('fill-rule', 'evenodd');
-          svg.appendChild(path);
-        });
-      }
-      b.appendChild(svg);
-      b.addEventListener('click', () => {
-        if (!state.style.frame) state.style.frame = {};
-        state.style.frame.topIcon = icon.id;
-        state.style.frame.topIconData = icon;
-        state.style.frame.topContentMode = 'icon';
-        state.presetName = '';
-        buildFrameTopIconGrid();
-        syncControls();
-        update();
-        save();
-      });
-      host.appendChild(b);
+    renderIconGrid($('frame-top-icon-grid'), state.frameTopIconGroup, currentIcon, 'frame_top_grid_', icon => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.topIcon = icon.id;
+      state.style.frame.topIconData = icon;
+      state.style.frame.topContentMode = 'icon';
     });
   }
 
   function buildFrameBottomIconGrid() {
-    const host = $('frame-bottom-icon-grid');
-    if (!host) return;
-    host.innerHTML = '';
     const currentIcon = (state.style.frame && state.style.frame.icon) || 'si-instagram';
-    A.ICONS.filter(i => i.group === state.frameBottomIconGroup).forEach(icon => {
-      const b = el('button', {
-        class: 'icon-btn' + (currentIcon === icon.id ? ' active' : ''),
-        type: 'button',
-        title: icon.name,
-        'aria-label': icon.name
-      });
-      const svgNS = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('viewBox', icon.vb);
-      if (icon.rawSvg) {
-        svg.innerHTML = icon.rawSvg.replace(/__UID__/g, 'frame_bot_grid_' + icon.id);
-      } else {
-        svg.setAttribute('fill', 'currentColor');
-        icon.p.forEach(p => {
-          const path = document.createElementNS(svgNS, 'path');
-          path.setAttribute('d', p.d);
-          if (p.e) path.setAttribute('fill-rule', 'evenodd');
-          svg.appendChild(path);
-        });
-      }
-      b.appendChild(svg);
-      b.addEventListener('click', () => {
-        if (!state.style.frame) state.style.frame = {};
-        state.style.frame.icon = icon.id;
-        state.style.frame.iconData = icon;
-        state.style.frame.contentMode = 'icon';
-        state.presetName = '';
-        buildFrameBottomIconGrid();
-        syncControls();
-        update();
-        save();
-      });
-      host.appendChild(b);
+    renderIconGrid($('frame-bottom-icon-grid'), state.frameBottomIconGroup, currentIcon, 'frame_bot_grid_', icon => {
+      if (!state.style.frame) state.style.frame = {};
+      state.style.frame.icon = icon.id;
+      state.style.frame.iconData = icon;
+      state.style.frame.contentMode = 'icon';
     });
   }
 
@@ -1992,6 +1607,9 @@
 
   function syncControls() {
     const s = state.style;
+
+    syncShapeActive();
+    updateFrameGridPreviews();
 
     $('opt-ec').value = state.ec;
     $('opt-size').value = String(state.exportSize);
@@ -2186,11 +1804,7 @@
       });
     }
     const currentTopIcon = (s.frame && s.frame.topIcon) || 'si-instagram';
-    if ($('frame-top-icon-grid')) {
-      Array.prototype.forEach.call($('frame-top-icon-grid').children, b => {
-        b.classList.toggle('active', b.getAttribute('title') === (A.ICONS.find(i => i.id === currentTopIcon) || {}).name);
-      });
-    }
+    syncShapeGridActive('frame-top-icon-grid', currentTopIcon);
     const topIconColorMode = (s.frame && s.frame.topIconColorMode) || 'brand';
     setSeg('frame-top-icon-color-mode-seg', topIconColorMode, 'mode');
     if ($('frame-top-icon-pane-solid')) $('frame-top-icon-pane-solid').classList.toggle('hidden', topIconColorMode !== 'solid');
@@ -2222,11 +1836,7 @@
       });
     }
     const currentBottomIcon = (s.frame && s.frame.icon) || 'si-instagram';
-    if ($('frame-bottom-icon-grid')) {
-      Array.prototype.forEach.call($('frame-bottom-icon-grid').children, b => {
-        b.classList.toggle('active', b.getAttribute('title') === (A.ICONS.find(i => i.id === currentBottomIcon) || {}).name);
-      });
-    }
+    syncShapeGridActive('frame-bottom-icon-grid', currentBottomIcon);
     const bottomIconColorMode = (s.frame && s.frame.iconColorMode) || 'brand';
     setSeg('frame-bottom-icon-color-mode-seg', bottomIconColorMode, 'mode');
     if ($('frame-bottom-icon-pane-solid')) $('frame-bottom-icon-pane-solid').classList.toggle('hidden', bottomIconColorMode !== 'solid');
@@ -2379,18 +1989,25 @@
   // 足りない余白を補うときの色。透明のときは白、単色のときはその色。
   function padColor() {
     const bg = state.style.bg;
-    if (bg.type === 'none') return '#FFFFFF';
-    if (bg.type === 'white') return '#FFFFFF';
+    if (!bg || bg.type === 'none' || bg.type === 'white') return '#FFFFFF';
     if (bg.type === 'black') return '#000000';
-    if (bg.type === 'solid') return bg.color;
+    if (bg.type === 'solid') return bg.color || '#FFFFFF';
     if (bg.type === 'image') return bg.color || '#FFFFFF';
+    if (bg.type === 'multi') {
+      return (Array.isArray(bg.colors) && bg.colors[0]) ? bg.colors[0] : (bg.color || '#FFFFFF');
+    }
     if (bg.mid) return bg.mid;
-    const mix = (a, b) => {
-      const n = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
-      const x = n(a), y = n(b);
-      return '#' + x.map((v, i) => Math.round((v + y[i]) / 2).toString(16).padStart(2, '0')).join('');
-    };
-    return mix(bg.from, bg.to);
+    if (bg.from && bg.to) {
+      const mix = (a, b) => {
+        const n = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+        const x = n(a), y = n(b);
+        if (x.some(isNaN) || y.some(isNaN)) return null;
+        return '#' + x.map((v, i) => Math.round((v + y[i]) / 2).toString(16).padStart(2, '0')).join('');
+      };
+      const mixed = mix(bg.from, bg.to);
+      if (mixed) return mixed;
+    }
+    return (window.QRStyle && window.QRStyle.paintColor) ? (window.QRStyle.paintColor(bg) || '#FFFFFF') : '#FFFFFF';
   }
 
   // デコーダを読み込んだあとの検査は数十msで終わる。結果が前と同じだと画面が
@@ -2590,6 +2207,7 @@
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
       await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': blob })]);
       showToast('画像をコピーしました');
+      if (window.STShare) STShare.celebrate();
     } catch (e) {
       showToast('コピーできませんでした', 'error');
     }
@@ -2607,8 +2225,15 @@
       if (hex) hex.value = v;
       apply(v);
       state.presetName = '';
-      buildPresets();
-      update();
+      syncPresetActive();
+      update({ debounceVerify: true });
+    });
+    picker.addEventListener('change', () => {
+      if (verifyTimer) {
+        clearTimeout(verifyTimer);
+        verifyTimer = null;
+        if (lastSvg && lastPayload) verify(lastSvg, lastPayload, false);
+      }
     });
     if (hex) {
       hex.addEventListener('change', () => {
@@ -2618,7 +2243,7 @@
         picker.value = v;
         apply(v);
         state.presetName = '';
-        buildPresets();
+        syncPresetActive();
         update();
       });
     }
@@ -2632,7 +2257,7 @@
         apply(b.dataset[attr]);
         state.presetName = '';
         syncControls();
-        buildPresets();
+        syncPresetActive();
         update();
       });
     });
@@ -3454,9 +3079,7 @@
         reader.readAsDataURL(blob);
       });
     } catch (err) {
-      console.warn('Direct CORS fetch failed, trying direct image load fallback:', err);
-      await testImageLoad(clean);
-      return clean;
+      throw new Error('外部サーバーの画像保護（CORS）により取得できませんでした。端末から画像ファイルを直接アップロードしてください');
     }
   }
 
