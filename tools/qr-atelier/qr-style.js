@@ -31,8 +31,13 @@
     invertOk: false,
     logo: {
       type: 'none', icon: '', src: '', text: '',
+      font: 'sans',
       size: 0.22, pad: 0.14, backdrop: 'rounded', backdropColor: '#FFFFFF',
-      color: '#111827', knockout: true
+      color: '#111827', knockout: true,
+      paint: {
+        type: 'brand', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: ''
+      }
     },
     frame: { type: 'none', text: 'スキャンしてね', color: '#111827', textColor: '#FFFFFF', radius: 3 }
   };
@@ -576,33 +581,147 @@
   // ------------------------------------------------------------------
   // ロゴ
   // ------------------------------------------------------------------
-  function logoSvg(logo, cx, cy, side) {
+  function logoSvg(logo, cx, cy, side, uid, fg, fgRef) {
     if (!logo || logo.type === 'none') return '';
     const half = side / 2;
     const x = cx - half, y = cy - half;
     let out = '';
 
     if (logo.type === 'icon' && logo.iconData) {
-      const vb = String(logo.iconData.vb || '0 0 24 24').split(/\s+/).map(Number);
+      const icon = logo.iconData;
+      const vb = String(icon.vb || '0 0 24 24').split(/\s+/).map(Number);
       const vw = vb[2] || 24, vh = vb[3] || 24;
       const k = side / Math.max(vw, vh);
       const tx = cx - (vw * k) / 2 - vb[0] * k;
       const ty = cy - (vh * k) / 2 - vb[1] * k;
-      out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')" fill="' +
-        esc(logo.color) + '">';
-      logo.iconData.p.forEach(p => {
-        out += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
-      });
-      out += '</g>';
+      const lp = (logo && logo.paint) ? logo.paint : { type: 'brand', color: logo.color || '#111827' };
+      const mode = lp.type || 'brand';
+
+      if (mode === 'brand') {
+        if (icon.rawSvg) {
+          const raw = icon.rawSvg.replace(/__UID__/g, (uid || 'logo_') + '_');
+          out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')">' + raw + '</g>';
+        } else {
+          const bColor = (global.QRAssets && global.QRAssets.BRAND_COLORS && global.QRAssets.BRAND_COLORS[icon.id]) || lp.color || logo.color || '#111827';
+          out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')" fill="' + esc(bColor) + '">';
+          icon.p.forEach(p => {
+            out += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+          });
+          out += '</g>';
+        }
+      } else if (mode === 'auto') {
+        const fgMode = fg ? fg.type : 'solid';
+        if (fgMode === 'multi') {
+          const cols = (fg.colors && fg.colors.length) ? fg.colors : ['#111827'];
+          out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')">';
+          icon.p.forEach((p, i) => {
+            out += '<path d="' + p.d + '" fill="' + esc(cols[i % cols.length]) + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+          });
+          out += '</g>';
+        } else if (fgMode === 'solid') {
+          out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')" fill="' + esc(fg.color || '#111827') + '">';
+          icon.p.forEach(p => {
+            out += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+          });
+          out += '</g>';
+        } else {
+          out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')" fill="' + (fgRef || '#111827') + '">';
+          icon.p.forEach(p => {
+            out += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+          });
+          out += '</g>';
+        }
+      } else if (mode === 'solid') {
+        const sColor = lp.color || logo.color || '#111827';
+        out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')" fill="' + esc(sColor) + '">';
+        icon.p.forEach(p => {
+          out += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+        });
+        out += '</g>';
+      } else if (mode === 'multi') {
+        const cols = (Array.isArray(lp.colors) && lp.colors.length) ? lp.colors : ['#2563EB', '#7C3AED'];
+        if (icon.p && icon.p.length > 1) {
+          out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')">';
+          icon.p.forEach((p, i) => {
+            const c = esc(cols[(i + (lp.seed || 0)) % cols.length]);
+            out += '<path d="' + p.d + '" fill="' + c + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+          });
+          out += '</g>';
+        } else {
+          out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')" fill="url(#' + (uid || 'logo_') + 'lo)">';
+          icon.p.forEach(p => {
+            out += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+          });
+          out += '</g>';
+        }
+      } else if (mode === 'linear' || mode === 'radial' || mode === 'image') {
+        out += '<g transform="translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')" fill="url(#' + (uid || 'logo_') + 'lo)">';
+        icon.p.forEach(p => {
+          out += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+        });
+        out += '</g>';
+      }
     } else if (logo.type === 'image' && logo.src) {
       out += '<image href="' + esc(logo.src) + '" x="' + n(x) + '" y="' + n(y) + '" width="' +
         n(side) + '" height="' + n(side) + '" preserveAspectRatio="xMidYMid meet"/>';
     } else if (logo.type === 'text' && logo.text) {
       const fs = side * (logo.text.length > 2 ? 0.5 : 0.78);
+      const lp = (logo && logo.paint) ? logo.paint : { type: 'solid', color: logo.color || '#111827' };
+      const mode = lp.type || 'solid';
+      const font = logo.font || 'sans';
+      let fontFamily = 'Inter, "Noto Sans JP", system-ui, sans-serif';
+      if (font === 'rounded') fontFamily = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif';
+      else if (font === 'serif') fontFamily = '"Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif';
+      else if (font === 'mono') fontFamily = '"JetBrains Mono", Consolas, Monaco, monospace';
+      else if (font === 'impact') fontFamily = 'Impact, "Arial Black", sans-serif';
+
+      let textFill = esc(lp.color || logo.color || '#111827');
+      if (mode === 'auto') {
+        const fgMode = fg ? fg.type : 'solid';
+        if (fgMode === 'multi') {
+          const cols = (fg.colors && fg.colors.length) ? fg.colors : ['#111827'];
+          if (logo.text.length > 1) {
+            let tspans = '';
+            for (let i = 0; i < logo.text.length; i++) {
+              tspans += '<tspan fill="' + esc(cols[i % cols.length]) + '">' + esc(logo.text[i]) + '</tspan>';
+            }
+            out += '<text x="' + n(cx) + '" y="' + n(cy) + '" font-size="' + n(fs) +
+              '" font-weight="700" text-anchor="middle" dominant-baseline="central" ' +
+              'font-family="' + esc(fontFamily) + '">' + tspans + '</text>';
+            return out;
+          } else {
+            textFill = esc(cols[0]);
+          }
+        } else if (fgMode === 'solid') {
+          textFill = esc(fg.color || '#111827');
+        } else {
+          textFill = fgRef || '#111827';
+        }
+      } else if (mode === 'solid') {
+        textFill = esc(lp.color || logo.color || '#111827');
+      } else if (mode === 'multi') {
+        const cols = (Array.isArray(lp.colors) && lp.colors.length) ? lp.colors : ['#2563EB', '#7C3AED'];
+        if (logo.text.length > 1) {
+          let tspans = '';
+          for (let i = 0; i < logo.text.length; i++) {
+            const c = esc(cols[(i + (lp.seed || 0)) % cols.length]);
+            tspans += '<tspan fill="' + c + '">' + esc(logo.text[i]) + '</tspan>';
+          }
+          out += '<text x="' + n(cx) + '" y="' + n(cy) + '" font-size="' + n(fs) +
+            '" font-weight="700" text-anchor="middle" dominant-baseline="central" ' +
+            'font-family="' + esc(fontFamily) + '">' + tspans + '</text>';
+          return out;
+        } else {
+          textFill = 'url(#' + (uid || 'logo_') + 'lo)';
+        }
+      } else if (mode === 'linear' || mode === 'radial' || mode === 'image') {
+        textFill = 'url(#' + (uid || 'logo_') + 'lo)';
+      }
+
       out += '<text x="' + n(cx) + '" y="' + n(cy) + '" font-size="' + n(fs) +
-        '" font-weight="700" fill="' + esc(logo.color) +
+        '" font-weight="700" fill="' + textFill +
         '" text-anchor="middle" dominant-baseline="central" ' +
-        'font-family="Inter, &quot;Noto Sans JP&quot;, system-ui, sans-serif">' +
+        'font-family="' + esc(fontFamily) + '">' +
         esc(logo.text) + '</text>';
     }
     return out;
@@ -728,6 +847,13 @@
     if (mePaint && (mePaint.type === 'linear' || mePaint.type === 'radial' || mePaint.type === 'image')) {
       defs += paintDef(mePaint, uid + 'me', qrBox);
     }
+    if (hasLogo && (logo.type === 'icon' || logo.type === 'text') && logo.paint) {
+      const lp = logo.paint;
+      const logoBox = { x: cx - logoSide / 2, y: cy - logoSide / 2, w: logoSide, h: logoSide };
+      if (lp.type === 'linear' || lp.type === 'radial' || lp.type === 'image' || lp.type === 'multi') {
+        defs += paintDef(lp, uid + 'lo', logoBox);
+      }
+    }
 
     // ---- 組み立て -----------------------------------------------------
     let body = '';
@@ -792,7 +918,7 @@
           : rectPath(cx - half, cy - half, knockSide, knockSide, knockSide * 0.22);
         body += '<path d="' + d + '" fill="' + esc(logo.backdropColor) + '"/>';
       }
-      body += logoSvg(logo, cx, cy, logoSide);
+      body += logoSvg(logo, cx, cy, logoSide, uid, st.fg, fgRef);
     }
 
     // 外枠のテキスト

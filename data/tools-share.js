@@ -17,6 +17,7 @@
  *     url      : 'https://...',     // 既定: canonical → og:url → 現在地
  *     text     : '共有文',           // 既定: og:title
  *     hashtags : ['SAFETOOLS'],     // 既定: なし
+ *     feedbackUrl: 'https://...',   // 既定: /contact/（件名にツール名が入る）
  *     after    : 1,                 // 何回目の完了で出すか（既定 1）
  *     delay    : 1200,              // 完了から表示までの ms（既定 1200）
  *     force    : false              // 抑制記録を無視して必ず出す
@@ -186,7 +187,7 @@
       '  transition:border-color 120ms ease, color 120ms ease, background 120ms ease;',
       '}',
       '.st-share-btn:hover{border-color:var(--accent, #0F766E); color:var(--accent, #0F766E);}',
-      '.st-share-btn:focus-visible, .st-share-close:focus-visible, .st-share-skip:focus-visible{',
+      '.st-share-btn:focus-visible, .st-share-close:focus-visible, .st-share-quiet:focus-visible{',
       '  outline:2px solid var(--accent, #0F766E); outline-offset:2px;',
       '}',
       '.st-share-btn svg{width:14px; height:14px; flex:0 0 auto;}',
@@ -196,13 +197,18 @@
       '  background:var(--accent-soft, #E3F2F0); color:var(--accent, #0F766E);',
       '}',
       '.st-share-btn--oil:hover{background:var(--accent, #0F766E); color:var(--accent-ink, #FFFFFF);}',
-      '.st-share-skip{',
-      '  display:block; margin:10px auto 0; padding:2px 4px;',
-      '  border:0; background:none; cursor:pointer;',
-      '  font-family:inherit; font-size:10.5px; color:var(--ink-3, #8C949B);',
+      // 足元の2つは役割が逆向き（届ける／黙らせる）なので、左右に離して置く。
+      '.st-share-foot{',
+      '  display:flex; align-items:center; justify-content:space-between;',
+      '  gap:10px; margin-top:11px;',
+      '}',
+      '.st-share-quiet{',
+      '  padding:2px 0; border:0; background:none; cursor:pointer;',
+      '  font-family:inherit; font-size:10.5px; line-height:1.5;',
+      '  color:var(--ink-3, #8C949B);',
       '  text-decoration:underline; text-underline-offset:2px;',
       '}',
-      '.st-share-skip:hover{color:var(--ink-2, #5C666E);}'
+      '.st-share-quiet:hover{color:var(--ink-2, #5C666E);}'
     ].join(NL);
     document.head.appendChild(style);
   }
@@ -336,16 +342,31 @@
 
     var oil = button('st-share-btn--oil', ICON.oil, '開発を応援する');
 
+    // 「役に立たなかった」人にも行き先を用意する。褒める導線しかないと、
+    // 直せるはずの不満が黙って持ち帰られてしまう。
+    var foot = document.createElement('div');
+    foot.className = 'st-share-foot';
+
+    var feedback = document.createElement('a');
+    feedback.className = 'st-share-quiet';
+    feedback.href = cfg.feedbackUrl;
+    feedback.target = '_blank';
+    feedback.rel = 'noopener noreferrer';
+    feedback.textContent = '要望・不具合を伝える';
+
     var skip = document.createElement('button');
     skip.type = 'button';
-    skip.className = 'st-share-skip';
+    skip.className = 'st-share-quiet st-share-skip';
     skip.textContent = '今後は表示しない';
+
+    foot.appendChild(feedback);
+    foot.appendChild(skip);
 
     card.appendChild(head);
     card.appendChild(body);
     card.appendChild(row);
     card.appendChild(oil);
-    card.appendChild(skip);
+    card.appendChild(foot);
     document.body.appendChild(card);
     current = card;
 
@@ -374,6 +395,13 @@
 
     skip.addEventListener('click', function () {
       if (!cfg.preview) suppressFor(COOLDOWN_OPTOUT);
+      dismiss(card);
+    });
+
+    // 遷移は href に任せる（中クリックや「新しいタブで開く」を殺さないため）。
+    // ここでやるのは、声を届けてくれた人にしばらく聞かないことだけ。
+    feedback.addEventListener('click', function () {
+      if (!cfg.preview) suppressFor(COOLDOWN_ACTED);
       dismiss(card);
     });
 
@@ -435,6 +463,10 @@
       text: text,
       url: url,
       intentUrl: 'https://twitter.com/intent/tweet?' + params.toString(),
+      // /contact/ は Turnstile を通してからメーラーを開くページ。どのツールの
+      // 話かが分からないと直しようがないので、件名にツール名を載せて渡す。
+      feedbackUrl: opts.feedbackUrl ||
+        ('https://tk.st/contact/?subject=' + encodeURIComponent('[' + name + '] 改善のご提案')),
       preview: !!opts.preview
     };
   }

@@ -137,7 +137,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@700;800&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
   <script src="../../data/tools-ui.js?v=20260823"></script>
 
@@ -1023,9 +1023,85 @@
                 <button class="chip" type="button" data-group="basic">ベーシック</button>
               </div>
               <div class="icon-grid" id="icon-grid"></div>
-              <div class="color-row" style="margin-top:10px">
-                <input type="color" id="logo-color" value="#111827" aria-label="ロゴの色">
-                <input type="text" id="logo-color-hex" value="#111827" spellcheck="false" aria-label="ロゴのカラーコード">
+
+              <!-- アイコンのカラーモード切り替え -->
+              <div class="field" style="margin-top:14px">
+                <label id="logo-color-mode-label">アイコンの色</label>
+                <div class="st-seg seg-sm" id="logo-color-mode-seg">
+                  <button type="button" data-mode="brand" id="btn-logo-mode-brand" class="active">ブランドカラー</button>
+                  <button type="button" data-mode="auto" id="btn-logo-mode-auto">セルの色</button>
+                  <button type="button" data-mode="solid" id="btn-logo-mode-solid">単色</button>
+                  <button type="button" data-mode="multi" id="btn-logo-mode-multi">多色</button>
+                  <button type="button" data-mode="linear" id="btn-logo-mode-linear">グラデーション</button>
+                  <button type="button" data-mode="radial" id="btn-logo-mode-radial">放射</button>
+                  <button type="button" data-mode="image" id="btn-logo-mode-image">画像</button>
+                </div>
+              </div>
+
+              <!-- パネル：ブランドカラー -->
+              <div id="logo-pane-brand">
+                <div class="notice" id="logo-brand-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+                  公式ブランドカラーで表示します。
+                </div>
+              </div>
+
+              <!-- パネル：セルの色 -->
+              <div id="logo-pane-auto" class="hidden">
+                <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+                  セルの色設定と連動します。<br>
+                  グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。
+                </div>
+              </div>
+
+              <!-- パネル：単色 -->
+              <div id="logo-pane-solid" class="hidden">
+                <div class="color-row">
+                  <input type="color" id="logo-solid-picker" value="#111827" aria-label="アイコンの色">
+                  <input type="text" id="logo-solid-hex" value="#111827" spellcheck="false" aria-label="アイコンのカラーコード">
+                </div>
+                <div id="logo-swatch-host" class="swatch-group" style="margin-top:8px"></div>
+              </div>
+
+              <!-- パネル：多色 -->
+              <div id="logo-pane-multi" class="hidden">
+                <div id="logo-multi-colors-list" class="multi-colors-list"></div>
+                <div class="multi-actions">
+                  <button type="button" id="btn-logo-add-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+                  <button type="button" id="btn-logo-shuffle-color" class="st-btn-quiet btn-sm" title="色の配置をランダムに入れ替えます">配置をシャッフル</button>
+                </div>
+                <div class="multi-presets-title">多色パレット</div>
+                <div id="logo-multi-palette-grid" class="multi-palette-grid"></div>
+              </div>
+
+              <!-- パネル：グラデーション / 放射 -->
+              <div id="logo-pane-grad" class="hidden">
+                <div class="grad-grid" id="logo-grad-grid"></div>
+                <div id="logo-grad-colors-list" class="multi-colors-list" style="margin-top:10px"></div>
+                <div class="multi-actions">
+                  <button type="button" id="btn-logo-add-grad-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+                  <div class="slider-row" id="logo-grad-angle-row" style="flex:1;">
+                    <span class="st-lbl">角度</span>
+                    <input type="range" id="logo-target-angle" min="0" max="359" step="1" value="45">
+                    <span class="val" id="val-logo-target-angle">45°</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- パネル：画像 -->
+              <div id="logo-pane-image" class="hidden">
+                <div class="logo-drop" id="logo-image-mask-drop" role="button" tabindex="0">
+                  画像をドロップ、またはクリックして選択（PNG / JPEG / WebP / SVG）
+                  <input type="file" id="logo-image-mask-file" accept="image/*" class="hidden">
+                </div>
+                <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
+                  <input type="url" id="logo-image-mask-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false">
+                  <button type="button" id="btn-logo-image-mask-url" class="st-btn-quiet btn-sm">適用</button>
+                </div>
+                <div class="logo-thumb hidden" id="logo-image-mask-thumb" style="margin-top:10px">
+                  <img id="logo-image-mask-thumb-img" alt="選んだ画像">
+                  <button class="st-btn-quiet" type="button" id="btn-logo-image-mask-clear">外す</button>
+                </div>
+                <p class="note" style="margin-top:8px">※ アイコンの形に画像をくり抜いて表示します。</p>
               </div>
             </div>
 
@@ -1050,8 +1126,89 @@
                 <input type="text" id="logo-text" maxlength="4" placeholder="例：ST / 🎧 / ★">
                 <span class="sub">2文字までが読みやすいです。</span>
               </div>
-              <div class="color-row" style="margin-top:8px">
-                <input type="color" id="logo-text-color" value="#111827" aria-label="文字の色">
+
+              <!-- フォント選択 -->
+              <div class="field" style="margin-top:12px">
+                <label>フォント</label>
+                <div class="st-seg seg-sm" id="logo-font-seg">
+                  <button type="button" data-font="sans" class="active" style="font-family:Inter, sans-serif; font-weight:700;">ゴシック</button>
+                  <button type="button" data-font="rounded" style="font-family:'M PLUS Rounded 1c', sans-serif; font-weight:700;">丸ゴシック</button>
+                  <button type="button" data-font="serif" style="font-family:'Noto Serif JP', serif; font-weight:700;">明朝</button>
+                  <button type="button" data-font="mono" style="font-family:'JetBrains Mono', monospace; font-weight:700;">等幅</button>
+                  <button type="button" data-font="impact" style="font-family:Impact, sans-serif;">太字</button>
+                </div>
+              </div>
+
+              <!-- 文字のカラーモード切り替え -->
+              <div class="field" style="margin-top:14px">
+                <label id="logo-text-color-mode-label">文字の色</label>
+                <div class="st-seg seg-sm" id="logo-text-color-mode-seg">
+                  <button type="button" data-mode="auto" id="btn-logo-text-mode-auto">セルの色</button>
+                  <button type="button" data-mode="solid" id="btn-logo-text-mode-solid" class="active">単色</button>
+                  <button type="button" data-mode="multi" id="btn-logo-text-mode-multi">多色</button>
+                  <button type="button" data-mode="linear" id="btn-logo-text-mode-linear">グラデーション</button>
+                  <button type="button" data-mode="radial" id="btn-logo-text-mode-radial">放射</button>
+                  <button type="button" data-mode="image" id="btn-logo-text-mode-image">画像</button>
+                </div>
+              </div>
+
+              <!-- パネル：セルの色 -->
+              <div id="logo-text-pane-auto" class="hidden" style="margin-top:8px">
+                <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+                  セルの色設定と連動します。<br>
+                  グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。
+                </div>
+              </div>
+
+              <!-- パネル：単色 -->
+              <div id="logo-text-pane-solid" style="margin-top:8px">
+                <div class="color-row">
+                  <input type="color" id="logo-text-solid-picker" value="#111827" aria-label="文字の色">
+                  <input type="text" id="logo-text-solid-hex" value="#111827" spellcheck="false" aria-label="文字のカラーコード">
+                </div>
+                <div id="logo-text-swatch-host" class="swatch-group" style="margin-top:8px"></div>
+              </div>
+
+              <!-- パネル：多色 -->
+              <div id="logo-text-pane-multi" class="hidden" style="margin-top:8px">
+                <div id="logo-text-multi-colors-list" class="multi-colors-list"></div>
+                <div class="multi-actions">
+                  <button type="button" id="btn-logo-text-add-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+                  <button type="button" id="btn-logo-text-shuffle-color" class="st-btn-quiet btn-sm" title="色の配置をランダムに入れ替えます">配置をシャッフル</button>
+                </div>
+                <div class="multi-presets-title">多色パレット</div>
+                <div id="logo-text-multi-palette-grid" class="multi-palette-grid"></div>
+              </div>
+
+              <!-- パネル：グラデーション / 放射 -->
+              <div id="logo-text-pane-grad" class="hidden" style="margin-top:8px">
+                <div class="grad-grid" id="logo-text-grad-grid"></div>
+                <div id="logo-text-grad-colors-list" class="multi-colors-list" style="margin-top:10px"></div>
+                <div class="multi-actions">
+                  <button type="button" id="btn-logo-text-add-grad-color" class="st-btn-quiet btn-sm">+ 色を追加</button>
+                  <div class="slider-row" id="logo-text-grad-angle-row" style="flex:1;">
+                    <span class="st-lbl">角度</span>
+                    <input type="range" id="logo-text-target-angle" min="0" max="359" step="1" value="45">
+                    <span class="val" id="val-logo-text-target-angle">45°</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- パネル：画像 -->
+              <div id="logo-text-pane-image" class="hidden" style="margin-top:8px">
+                <div class="logo-drop" id="logo-text-image-mask-drop" role="button" tabindex="0">
+                  画像をドロップ、またはクリックして選択（PNG / JPEG / WebP / SVG）
+                  <input type="file" id="logo-text-image-mask-file" accept="image/*" class="hidden">
+                </div>
+                <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
+                  <input type="url" id="logo-text-image-mask-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false">
+                  <button type="button" id="btn-logo-text-image-mask-url" class="st-btn-quiet btn-sm">適用</button>
+                </div>
+                <div class="logo-thumb hidden" id="logo-text-image-mask-thumb" style="margin-top:10px">
+                  <img id="logo-text-image-mask-thumb-img" alt="選んだ画像">
+                  <button class="st-btn-quiet" type="button" id="btn-logo-text-image-mask-clear">外す</button>
+                </div>
+                <p class="note" style="margin-top:8px">※ 文字の形に画像をくり抜いて表示します。</p>
               </div>
             </div>
 

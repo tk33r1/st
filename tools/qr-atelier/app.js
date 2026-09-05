@@ -177,6 +177,17 @@
     return state.style.fg;
   }
 
+  function getLogoPaint() {
+    if (!state.style.logo.paint) {
+      state.style.logo.paint = {
+        type: 'brand', color: state.style.logo.color || '#111827',
+        from: '#111827', mid: '', to: '#2563EB', angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: ''
+      };
+    }
+    return state.style.logo.paint;
+  }
+
   const STORE_KEY = 'qr-atelier-v1';
 
   function save() {
@@ -186,6 +197,9 @@
       if (copy.style.logo && copy.style.logo.src && copy.style.logo.src.length > 300000) {
         copy.style.logo.src = '';
         copy.style.logo.type = 'none';
+      }
+      if (copy.style.logo && copy.style.logo.paint && copy.style.logo.paint.src && copy.style.logo.paint.src.length > 300000) {
+        copy.style.logo.paint.src = '';
       }
       if (copy.style.fg && copy.style.fg.src && copy.style.fg.src.length > 300000) {
         copy.style.fg.src = '';
@@ -224,6 +238,15 @@
       state.minVersion = clampNum(state.minVersion, 1, 14, 1);
       if ([512, 1024, 2048, 4096].indexOf(state.exportSize) < 0) state.exportSize = 1024;
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
+      if (state.style.logo && !state.style.logo.paint) {
+        state.style.logo.paint = {
+          type: 'brand', color: state.style.logo.color || '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
+          colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: ''
+        };
+      }
+      if (state.style.logo && !state.style.logo.font) {
+        state.style.logo.font = 'sans';
+      }
       if (state.style.markerFrame && !A.MARKER_FRAMES.some(f => f.id === state.style.markerFrame)) {
         state.style.markerFrame = window.QRStyle.DEFAULTS.markerFrame;
       }
@@ -825,6 +848,522 @@
     });
   }
 
+  function buildLogoMultiColorsList() {
+    const host = $('logo-multi-colors-list');
+    if (!host) return;
+    host.innerHTML = '';
+    const lp = getLogoPaint();
+    if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED', '#DB2777'];
+    const colors = lp.colors;
+    colors.forEach((c, idx) => {
+      const item = el('div', { class: 'multi-color-item' });
+      const picker = el('input', { type: 'color', value: normHex(c, '#2563EB'), 'aria-label': '色 ' + (idx + 1) });
+      const hexSpan = el('span', { class: 'color-hex' }, normHex(c, '#2563EB'));
+      const removeBtn = el('button', {
+        class: 'btn-remove-color',
+        type: 'button',
+        title: 'この色を削除',
+        'aria-label': 'この色を削除'
+      }, '×');
+      if (colors.length <= 2) {
+        removeBtn.disabled = true;
+      }
+
+      picker.addEventListener('input', () => {
+        const hex = picker.value.toUpperCase();
+        hexSpan.textContent = hex;
+        colors[idx] = hex;
+        state.presetName = '';
+        update();
+      });
+      picker.addEventListener('change', () => {
+        save();
+      });
+
+      removeBtn.addEventListener('click', () => {
+        if (colors.length <= 2) return;
+        colors.splice(idx, 1);
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+
+      item.appendChild(picker);
+      item.appendChild(hexSpan);
+      item.appendChild(removeBtn);
+      host.appendChild(item);
+    });
+
+    const addBtn = $('btn-logo-add-color');
+    if (addBtn) {
+      const atMax = colors.length >= 8;
+      addBtn.classList.toggle('hidden', atMax);
+      addBtn.hidden = atMax;
+      addBtn.disabled = atMax;
+    }
+  }
+
+  function buildLogoMultiPalettes() {
+    const host = $('logo-multi-palette-grid');
+    if (!host) return;
+    host.innerHTML = '';
+    MULTI_PALETTES.forEach(p => {
+      const btn = el('button', { class: 'multi-pal-btn', type: 'button', title: p.name });
+      const dots = el('div', { class: 'multi-pal-dots' });
+      p.colors.forEach(c => {
+        const s = el('span');
+        s.style.background = c;
+        dots.appendChild(s);
+      });
+      btn.appendChild(dots);
+      btn.appendChild(el('i', null, p.name));
+      btn.addEventListener('click', () => {
+        getLogoPaint().colors = p.colors.slice();
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+      host.appendChild(btn);
+    });
+  }
+
+  function buildLogoGradColorsList() {
+    const host = $('logo-grad-colors-list');
+    if (!host) return;
+    host.innerHTML = '';
+    const lp = getLogoPaint();
+    const hasMid = !!lp.mid;
+    const items = hasMid
+      ? [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
+         { key: 'mid',  role: '中間', val: lp.mid },
+         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }]
+      : [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
+         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }];
+
+    items.forEach((item, idx) => {
+      const elItem = el('div', { class: 'multi-color-item' });
+      const picker = el('input', { type: 'color', value: normHex(item.val, '#FC466B'), 'aria-label': item.role + '色' });
+      const roleSpan = el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, item.role);
+      const hexSpan = el('span', { class: 'color-hex' }, normHex(item.val, '#FC466B'));
+      const removeBtn = el('button', {
+        class: 'btn-remove-color',
+        type: 'button',
+        title: item.role + '色を削除',
+        'aria-label': item.role + '色を削除'
+      }, '×');
+
+      if (!hasMid) {
+        removeBtn.disabled = true;
+      }
+
+      picker.addEventListener('input', () => {
+        const hex = picker.value.toUpperCase();
+        hexSpan.textContent = hex;
+        if (item.key === 'from') lp.from = hex;
+        else if (item.key === 'mid') lp.mid = hex;
+        else lp.to = hex;
+        state.presetName = '';
+        update();
+      });
+      picker.addEventListener('change', () => {
+        save();
+      });
+
+      removeBtn.addEventListener('click', () => {
+        if (!hasMid) return;
+        if (item.key === 'from') {
+          lp.from = lp.mid;
+          lp.mid = '';
+        } else if (item.key === 'mid') {
+          lp.mid = '';
+        } else {
+          lp.to = lp.mid;
+          lp.mid = '';
+        }
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+
+      elItem.appendChild(picker);
+      elItem.appendChild(roleSpan);
+      elItem.appendChild(hexSpan);
+      elItem.appendChild(removeBtn);
+      host.appendChild(elItem);
+    });
+
+    const addBtn = $('btn-logo-add-grad-color');
+    if (addBtn) {
+      addBtn.classList.toggle('hidden', hasMid);
+      addBtn.hidden = hasMid;
+      addBtn.disabled = hasMid;
+    }
+  }
+
+  function buildLogoGradients() {
+    const host = $('logo-grad-grid');
+    if (!host) return;
+    host.innerHTML = '';
+    A.GRADIENTS.forEach(g => {
+      const b = el('button', { class: 'grad-btn', type: 'button', title: g.name });
+      const stops = g.mid ? [g.from, g.mid, g.to] : [g.from, g.to];
+      b.style.background = 'linear-gradient(' + (g.angle + 90) + 'deg, ' + stops.join(', ') + ')';
+      b.appendChild(el('span', null, g.name));
+      b.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        lp.from = g.from;
+        lp.mid = g.mid || '';
+        lp.to = g.to;
+        lp.angle = g.angle;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  function buildLogoSwatches() {
+    const host = $('logo-swatch-host');
+    if (!host) return;
+    host.innerHTML = '';
+    A.SWATCHES.forEach(group => {
+      const g = el('div', { class: 'swatch-group' });
+      g.appendChild(el('b', null, group.name));
+      const row = el('div', { class: 'swatches' });
+      group.colors.forEach(c => {
+        const b = el('button', { class: 'sw', type: 'button', title: c, 'aria-label': c });
+        b.style.background = c;
+        b.addEventListener('click', () => {
+          const lp = getLogoPaint();
+          lp.color = c;
+          state.style.logo.color = c;
+          state.presetName = '';
+          syncControls();
+          update();
+          save();
+        });
+        row.appendChild(b);
+      });
+      g.appendChild(row);
+      host.appendChild(g);
+    });
+  }
+
+  function loadLogoImageMask(file) {
+    if (!file || !file.type.match(/^image\//)) {
+      showToast('画像ファイルを選んでください', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lp = getLogoPaint();
+      lp.src = reader.result;
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    };
+    reader.onerror = () => showToast('画像の読み込みに失敗しました', 'error');
+    reader.readAsDataURL(file);
+  }
+
+  function loadLogoImageMaskUrl(url) {
+    const s = String(url || '').trim();
+    if (!s) return;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+        const lp = getLogoPaint();
+        lp.src = dataUrl;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+        showToast('画像を適用しました', 'success');
+      } catch (err) {
+        const lp = getLogoPaint();
+        lp.src = s;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+        showToast('URL画像を適用しました', 'success');
+      }
+    };
+    img.onerror = () => showToast('画像の読み込みに失敗しました。URLを確認してください', 'error');
+    img.src = s;
+  }
+
+  function buildLogoTextMultiColorsList() {
+    const host = $('logo-text-multi-colors-list');
+    if (!host) return;
+    host.innerHTML = '';
+    const lp = getLogoPaint();
+    if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED', '#DB2777'];
+    const colors = lp.colors;
+    colors.forEach((c, idx) => {
+      const item = el('div', { class: 'multi-color-item' });
+      const picker = el('input', { type: 'color', value: normHex(c, '#2563EB'), 'aria-label': '色 ' + (idx + 1) });
+      const hexSpan = el('span', { class: 'color-hex' }, normHex(c, '#2563EB'));
+      const removeBtn = el('button', {
+        class: 'btn-remove-color',
+        type: 'button',
+        title: 'この色を削除',
+        'aria-label': 'この色を削除'
+      }, '×');
+      if (colors.length <= 2) {
+        removeBtn.disabled = true;
+      }
+
+      picker.addEventListener('input', () => {
+        const hex = picker.value.toUpperCase();
+        hexSpan.textContent = hex;
+        colors[idx] = hex;
+        state.presetName = '';
+        update();
+      });
+      picker.addEventListener('change', () => {
+        save();
+      });
+
+      removeBtn.addEventListener('click', () => {
+        if (colors.length <= 2) return;
+        colors.splice(idx, 1);
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+
+      item.appendChild(picker);
+      item.appendChild(hexSpan);
+      item.appendChild(removeBtn);
+      host.appendChild(item);
+    });
+
+    const addBtn = $('btn-logo-text-add-color');
+    if (addBtn) {
+      const atMax = colors.length >= 8;
+      addBtn.classList.toggle('hidden', atMax);
+      addBtn.hidden = atMax;
+      addBtn.disabled = atMax;
+    }
+  }
+
+  function buildLogoTextMultiPalettes() {
+    const host = $('logo-text-multi-palette-grid');
+    if (!host) return;
+    host.innerHTML = '';
+    MULTI_PALETTES.forEach(p => {
+      const btn = el('button', { class: 'multi-pal-btn', type: 'button', title: p.name });
+      const dots = el('div', { class: 'multi-pal-dots' });
+      p.colors.forEach(c => {
+        const s = el('span');
+        s.style.background = c;
+        dots.appendChild(s);
+      });
+      btn.appendChild(dots);
+      btn.appendChild(el('i', null, p.name));
+      btn.addEventListener('click', () => {
+        getLogoPaint().colors = p.colors.slice();
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+      host.appendChild(btn);
+    });
+  }
+
+  function buildLogoTextGradColorsList() {
+    const host = $('logo-text-grad-colors-list');
+    if (!host) return;
+    host.innerHTML = '';
+    const lp = getLogoPaint();
+    const hasMid = !!lp.mid;
+    const items = hasMid
+      ? [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
+         { key: 'mid',  role: '中間', val: lp.mid },
+         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }]
+      : [{ key: 'from', role: '開始', val: lp.from || '#FC466B' },
+         { key: 'to',   role: '終了', val: lp.to || '#3F5EFB' }];
+
+    items.forEach((item, idx) => {
+      const elItem = el('div', { class: 'multi-color-item' });
+      const picker = el('input', { type: 'color', value: normHex(item.val, '#FC466B'), 'aria-label': item.role + '色' });
+      const roleSpan = el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, item.role);
+      const hexSpan = el('span', { class: 'color-hex' }, normHex(item.val, '#FC466B'));
+      const removeBtn = el('button', {
+        class: 'btn-remove-color',
+        type: 'button',
+        title: item.role + '色を削除',
+        'aria-label': item.role + '色を削除'
+      }, '×');
+
+      if (!hasMid) {
+        removeBtn.disabled = true;
+      }
+
+      picker.addEventListener('input', () => {
+        const hex = picker.value.toUpperCase();
+        hexSpan.textContent = hex;
+        if (item.key === 'from') lp.from = hex;
+        else if (item.key === 'mid') lp.mid = hex;
+        else lp.to = hex;
+        state.presetName = '';
+        update();
+      });
+      picker.addEventListener('change', () => {
+        save();
+      });
+
+      removeBtn.addEventListener('click', () => {
+        if (!hasMid) return;
+        if (item.key === 'from') {
+          lp.from = lp.mid;
+          lp.mid = '';
+        } else if (item.key === 'mid') {
+          lp.mid = '';
+        } else {
+          lp.to = lp.mid;
+          lp.mid = '';
+        }
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+
+      elItem.appendChild(picker);
+      elItem.appendChild(roleSpan);
+      elItem.appendChild(hexSpan);
+      elItem.appendChild(removeBtn);
+      host.appendChild(elItem);
+    });
+
+    const addBtn = $('btn-logo-text-add-grad-color');
+    if (addBtn) {
+      addBtn.classList.toggle('hidden', hasMid);
+      addBtn.hidden = hasMid;
+      addBtn.disabled = hasMid;
+    }
+  }
+
+  function buildLogoTextGradients() {
+    const host = $('logo-text-grad-grid');
+    if (!host) return;
+    host.innerHTML = '';
+    A.GRADIENTS.forEach(g => {
+      const b = el('button', { class: 'grad-btn', type: 'button', title: g.name });
+      const stops = g.mid ? [g.from, g.mid, g.to] : [g.from, g.to];
+      b.style.background = 'linear-gradient(' + (g.angle + 90) + 'deg, ' + stops.join(', ') + ')';
+      b.appendChild(el('span', null, g.name));
+      b.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        lp.from = g.from;
+        lp.mid = g.mid || '';
+        lp.to = g.to;
+        lp.angle = g.angle;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  function buildLogoTextSwatches() {
+    const host = $('logo-text-swatch-host');
+    if (!host) return;
+    host.innerHTML = '';
+    A.SWATCHES.forEach(group => {
+      const g = el('div', { class: 'swatch-group' });
+      g.appendChild(el('b', null, group.name));
+      const row = el('div', { class: 'swatches' });
+      group.colors.forEach(c => {
+        const b = el('button', { class: 'sw', type: 'button', title: c, 'aria-label': c });
+        b.style.background = c;
+        b.addEventListener('click', () => {
+          const lp = getLogoPaint();
+          lp.color = c;
+          state.style.logo.color = c;
+          state.presetName = '';
+          syncControls();
+          update();
+          save();
+        });
+        row.appendChild(b);
+      });
+      g.appendChild(row);
+      host.appendChild(g);
+    });
+  }
+
+  function loadLogoTextImageMask(file) {
+    if (!file || !file.type.match(/^image\//)) {
+      showToast('画像ファイルを選んでください', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lp = getLogoPaint();
+      lp.src = reader.result;
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    };
+    reader.onerror = () => showToast('画像の読み込みに失敗しました', 'error');
+    reader.readAsDataURL(file);
+  }
+
+  function loadLogoTextImageMaskUrl(url) {
+    const s = String(url || '').trim();
+    if (!s) return;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+        const lp = getLogoPaint();
+        lp.src = dataUrl;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+        showToast('画像を適用しました', 'success');
+      } catch (err) {
+        const lp = getLogoPaint();
+        lp.src = s;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+        showToast('URL画像を適用しました', 'success');
+      }
+    };
+    img.onerror = () => showToast('画像の読み込みに失敗しました。URLを確認してください', 'error');
+    img.src = s;
+  }
+
   function buildIconGrid() {
     const host = $('icon-grid');
     host.innerHTML = '';
@@ -833,13 +1372,17 @@
       const svgNS = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(svgNS, 'svg');
       svg.setAttribute('viewBox', icon.vb);
-      svg.setAttribute('fill', 'currentColor');
-      icon.p.forEach(p => {
-        const path = document.createElementNS(svgNS, 'path');
-        path.setAttribute('d', p.d);
-        if (p.e) path.setAttribute('fill-rule', 'evenodd');
-        svg.appendChild(path);
-      });
+      if (icon.rawSvg) {
+        svg.innerHTML = icon.rawSvg.replace(/__UID__/g, 'grid_' + icon.id);
+      } else {
+        svg.setAttribute('fill', 'currentColor');
+        icon.p.forEach(p => {
+          const path = document.createElementNS(svgNS, 'path');
+          path.setAttribute('d', p.d);
+          if (p.e) path.setAttribute('fill-rule', 'evenodd');
+          svg.appendChild(path);
+        });
+      }
       b.appendChild(svg);
       b.addEventListener('click', () => {
         state.style.logo.icon = icon.id;
@@ -1038,9 +1581,105 @@
     $('logo-image-pane').classList.toggle('hidden', s.logo.type !== 'image');
     $('logo-text-pane').classList.toggle('hidden', s.logo.type !== 'text');
     $('logo-common').classList.toggle('hidden', s.logo.type === 'none');
-    $('logo-color').value = normHex(s.logo.color, '#111827');
-    $('logo-color-hex').value = normHex(s.logo.color, '#111827');
-    $('logo-text-color').value = normHex(s.logo.color, '#111827');
+
+    const isBrandGroup = state.iconGroup === 'brand';
+    const brandModeBtn = $('btn-logo-mode-brand');
+    if (brandModeBtn) {
+      brandModeBtn.classList.toggle('hidden', !isBrandGroup);
+      brandModeBtn.hidden = !isBrandGroup;
+    }
+
+    const lp = getLogoPaint();
+    if (!isBrandGroup && lp.type === 'brand') {
+      lp.type = 'auto';
+    }
+
+    setSeg('logo-color-mode-seg', lp.type, 'mode');
+
+    const isLBrand = lp.type === 'brand';
+    const isLAuto = lp.type === 'auto';
+    const isLSolid = lp.type === 'solid';
+    const isLMulti = lp.type === 'multi';
+    const isLGrad = lp.type === 'linear' || lp.type === 'radial';
+    const isLImage = lp.type === 'image';
+
+    const pBrand = $('logo-pane-brand');
+    if (pBrand) pBrand.classList.toggle('hidden', !isLBrand);
+    const brandNotice = $('logo-brand-notice');
+    if (brandNotice) {
+      const curIcon = A.ICONS.find(i => i.id === s.logo.icon);
+      const isRaw = curIcon && !!curIcon.rawSvg;
+      brandNotice.textContent = isRaw
+        ? '※ 公式マルチカラーで表示されます。'
+        : '※ ブランド公式の指定色で表示されます。';
+    }
+
+    const pAuto = $('logo-pane-auto');
+    if (pAuto) pAuto.classList.toggle('hidden', !isLAuto);
+
+    const pSolid = $('logo-pane-solid');
+    if (pSolid) pSolid.classList.toggle('hidden', !isLSolid);
+    const solidPicker = $('logo-solid-picker');
+    const solidHex = $('logo-solid-hex');
+    if (solidPicker) solidPicker.value = normHex(lp.color, '#111827');
+    if (solidHex) solidHex.value = normHex(lp.color, '#111827');
+
+    const pMulti = $('logo-pane-multi');
+    if (pMulti) pMulti.classList.toggle('hidden', !isLMulti);
+    if (isLMulti) buildLogoMultiColorsList();
+
+    const pGrad = $('logo-pane-grad');
+    if (pGrad) pGrad.classList.toggle('hidden', !isLGrad);
+    const logoGradAngleRow = $('logo-grad-angle-row');
+    if (logoGradAngleRow) logoGradAngleRow.classList.toggle('hidden', lp.type === 'radial');
+    const angleRange = $('logo-target-angle');
+    const angleVal = $('val-logo-target-angle');
+    if (angleRange) angleRange.value = lp.angle || 45;
+    if (angleVal) angleVal.textContent = (lp.angle || 45) + '°';
+    if (isLGrad) buildLogoGradColorsList();
+
+    const pImage = $('logo-pane-image');
+    if (pImage) pImage.classList.toggle('hidden', !isLImage);
+    const imgMaskThumb = $('logo-image-mask-thumb');
+    if (imgMaskThumb) {
+      imgMaskThumb.classList.toggle('hidden', !(isLImage && lp.src));
+      if (lp.src) $('logo-image-mask-thumb-img').src = lp.src;
+    }
+    // 文字（Text）用の同期
+    setSeg('logo-font-seg', s.logo.font || 'sans', 'font');
+    setSeg('logo-text-color-mode-seg', lp.type, 'mode');
+
+    const pTextAuto = $('logo-text-pane-auto');
+    if (pTextAuto) pTextAuto.classList.toggle('hidden', !isLAuto);
+
+    const pTextSolid = $('logo-text-pane-solid');
+    if (pTextSolid) pTextSolid.classList.toggle('hidden', !isLSolid);
+    const textSolidPicker = $('logo-text-solid-picker');
+    const textSolidHex = $('logo-text-solid-hex');
+    if (textSolidPicker) textSolidPicker.value = normHex(lp.color, '#111827');
+    if (textSolidHex) textSolidHex.value = normHex(lp.color, '#111827');
+
+    const pTextMulti = $('logo-text-pane-multi');
+    if (pTextMulti) pTextMulti.classList.toggle('hidden', !isLMulti);
+    if (isLMulti) buildLogoTextMultiColorsList();
+
+    const pTextGrad = $('logo-text-pane-grad');
+    if (pTextGrad) pTextGrad.classList.toggle('hidden', !isLGrad);
+    const textLogoGradAngleRow = $('logo-text-grad-angle-row');
+    if (textLogoGradAngleRow) textLogoGradAngleRow.classList.toggle('hidden', lp.type === 'radial');
+    const textAngleRange = $('logo-text-target-angle');
+    const textAngleVal = $('val-logo-text-target-angle');
+    if (textAngleRange) textAngleRange.value = lp.angle || 45;
+    if (textAngleVal) textAngleVal.textContent = (lp.angle || 45) + '°';
+    if (isLGrad) buildLogoTextGradColorsList();
+
+    const pTextImage = $('logo-text-pane-image');
+    if (pTextImage) pTextImage.classList.toggle('hidden', !isLImage);
+    const textImgMaskThumb = $('logo-text-image-mask-thumb');
+    if (textImgMaskThumb) {
+      textImgMaskThumb.classList.toggle('hidden', !(isLImage && lp.src));
+      if (lp.src) $('logo-text-image-mask-thumb-img').src = lp.src;
+    }
     $('logo-text').value = s.logo.text || '';
     $('logo-size').value = s.logo.size;
     $('val-logosize').textContent = Math.round(s.logo.size * 100) + '%';
@@ -1537,9 +2176,128 @@
     });
     bindSeg('logo-backdrop', 'v', v => { state.style.logo.backdrop = v; });
 
-    bindColor('logo-color', 'logo-color-hex', v => { state.style.logo.color = v; });
     bindColor('logo-text-color', null, v => { state.style.logo.color = v; });
     bindColor('logo-bd-color', null, v => { state.style.logo.backdropColor = v; });
+
+    bindSeg('logo-color-mode-seg', 'mode', v => {
+      getLogoPaint().type = v;
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    });
+
+    bindColor('logo-solid-picker', 'logo-solid-hex', v => {
+      getLogoPaint().color = v;
+      state.style.logo.color = v;
+      state.presetName = '';
+      update();
+    });
+    bindRange('logo-target-angle', 'val-logo-target-angle', v => v + '°', v => {
+      getLogoPaint().angle = v;
+      state.presetName = '';
+      update();
+    });
+
+    const addLogoColorBtn = $('btn-logo-add-color');
+    if (addLogoColorBtn) {
+      addLogoColorBtn.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED'];
+        if (lp.colors.length >= 8) return;
+        const last = lp.colors[lp.colors.length - 1];
+        const prev = lp.colors.length > 1 ? lp.colors[lp.colors.length - 2] : '#2563EB';
+        lp.colors.push(blendHex(last, prev));
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+
+    const shuffleLogoColorBtn = $('btn-logo-shuffle-color');
+    if (shuffleLogoColorBtn) {
+      shuffleLogoColorBtn.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        if (!Array.isArray(lp.colors) || lp.colors.length <= 1) return;
+        for (let i = lp.colors.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = lp.colors[i];
+          lp.colors[i] = lp.colors[j];
+          lp.colors[j] = t;
+        }
+        lp.seed = (lp.seed || 0) + 1;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+
+    const addLogoGradColorBtn = $('btn-logo-add-grad-color');
+    if (addLogoGradColorBtn) {
+      addLogoGradColorBtn.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        if (lp.mid) return;
+        lp.mid = blendHex(lp.from || '#FC466B', lp.to || '#3F5EFB');
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+
+    // アイコン画像マスク
+    const maskDrop = $('logo-image-mask-drop');
+    const maskFileInput = $('logo-image-mask-file');
+    if (maskDrop && maskFileInput) {
+      maskDrop.addEventListener('click', () => maskFileInput.click());
+      maskDrop.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); maskFileInput.click(); }
+      });
+      ['dragenter', 'dragover'].forEach(name => maskDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); maskDrop.classList.add('dragover');
+      }));
+      ['dragleave', 'drop'].forEach(name => maskDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); maskDrop.classList.remove('dragover');
+      }));
+      maskDrop.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation(); maskDrop.classList.remove('dragover');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+          loadLogoImageMask(e.dataTransfer.files[0]);
+        } else if (e.dataTransfer) {
+          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+          if (url) loadLogoImageMaskUrl(url);
+        }
+      });
+      maskFileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files.length) {
+          loadLogoImageMask(e.target.files[0]);
+        }
+      });
+    }
+
+    const btnLogoMaskUrl = $('btn-logo-image-mask-url');
+    if (btnLogoMaskUrl) {
+      btnLogoMaskUrl.addEventListener('click', () => {
+        const urlInput = $('logo-image-mask-url');
+        if (urlInput && urlInput.value) {
+          loadLogoImageMaskUrl(urlInput.value);
+        }
+      });
+    }
+
+    const btnLogoMaskClear = $('btn-logo-image-mask-clear');
+    if (btnLogoMaskClear) {
+      btnLogoMaskClear.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        lp.src = '';
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
     bindColor('frame-color', null, v => { state.style.frame.color = v; });
     bindColor('frame-textcolor', null, v => { state.style.frame.textColor = v; });
     bindRange('opt-cellscale', 'val-cellscale', v => Math.round(v * 100) + '%', v => { state.style.cellScale = v; });
@@ -1559,6 +2317,134 @@
       state.presetName = '';
       scheduleUpdate();
     });
+
+    bindSeg('logo-font-seg', 'font', v => {
+      state.style.logo.font = v;
+      state.presetName = '';
+      update();
+      save();
+    });
+
+    bindSeg('logo-text-color-mode-seg', 'mode', v => {
+      getLogoPaint().type = v;
+      state.presetName = '';
+      syncControls();
+      update();
+      save();
+    });
+
+    bindColor('logo-text-solid-picker', 'logo-text-solid-hex', v => {
+      getLogoPaint().color = v;
+      state.style.logo.color = v;
+      state.presetName = '';
+      update();
+    });
+    bindRange('logo-text-target-angle', 'val-logo-text-target-angle', v => v + '°', v => {
+      getLogoPaint().angle = v;
+      state.presetName = '';
+      update();
+    });
+
+    const addLogoTextColorBtn = $('btn-logo-text-add-color');
+    if (addLogoTextColorBtn) {
+      addLogoTextColorBtn.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED'];
+        if (lp.colors.length >= 8) return;
+        const last = lp.colors[lp.colors.length - 1];
+        const prev = lp.colors.length > 1 ? lp.colors[lp.colors.length - 2] : '#2563EB';
+        lp.colors.push(blendHex(last, prev));
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+
+    const shuffleLogoTextColorBtn = $('btn-logo-text-shuffle-color');
+    if (shuffleLogoTextColorBtn) {
+      shuffleLogoTextColorBtn.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        if (!Array.isArray(lp.colors) || lp.colors.length <= 1) return;
+        for (let i = lp.colors.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const t = lp.colors[i];
+          lp.colors[i] = lp.colors[j];
+          lp.colors[j] = t;
+        }
+        lp.seed = (lp.seed || 0) + 1;
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+
+    const addLogoTextGradColorBtn = $('btn-logo-text-add-grad-color');
+    if (addLogoTextGradColorBtn) {
+      addLogoTextGradColorBtn.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        if (lp.mid) return;
+        lp.mid = blendHex(lp.from || '#FC466B', lp.to || '#3F5EFB');
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+
+    // 文字用画像マスク
+    const textMaskDrop = $('logo-text-image-mask-drop');
+    const textMaskFileInput = $('logo-text-image-mask-file');
+    if (textMaskDrop && textMaskFileInput) {
+      textMaskDrop.addEventListener('click', () => textMaskFileInput.click());
+      textMaskDrop.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); textMaskFileInput.click(); }
+      });
+      ['dragenter', 'dragover'].forEach(name => textMaskDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); textMaskDrop.classList.add('dragover');
+      }));
+      ['dragleave', 'drop'].forEach(name => textMaskDrop.addEventListener(name, e => {
+        e.preventDefault(); e.stopPropagation(); textMaskDrop.classList.remove('dragover');
+      }));
+      textMaskDrop.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation(); textMaskDrop.classList.remove('dragover');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+          loadLogoTextImageMask(e.dataTransfer.files[0]);
+        } else if (e.dataTransfer) {
+          const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+          if (url) loadLogoTextImageMaskUrl(url);
+        }
+      });
+      textMaskFileInput.addEventListener('change', e => {
+        if (e.target.files && e.target.files.length) {
+          loadLogoTextImageMask(e.target.files[0]);
+        }
+      });
+    }
+
+    const btnLogoTextMaskUrl = $('btn-logo-text-image-mask-url');
+    if (btnLogoTextMaskUrl) {
+      btnLogoTextMaskUrl.addEventListener('click', () => {
+        const urlInput = $('logo-text-image-mask-url');
+        if (urlInput && urlInput.value) {
+          loadLogoTextImageMaskUrl(urlInput.value);
+        }
+      });
+    }
+
+    const btnLogoTextMaskClear = $('btn-logo-text-image-mask-clear');
+    if (btnLogoTextMaskClear) {
+      btnLogoTextMaskClear.addEventListener('click', () => {
+        const lp = getLogoPaint();
+        lp.src = '';
+        state.presetName = '';
+        syncControls();
+        update();
+        save();
+      });
+    }
+
     $('frame-text').addEventListener('input', e => {
       state.style.frame.text = e.target.value;
       scheduleUpdate();
@@ -1569,6 +2455,7 @@
         state.iconGroup = b.dataset.group;
         Array.prototype.forEach.call($('icon-tabs').children, x => x.classList.toggle('active', x === b));
         buildIconGrid();
+        syncControls();
         save();
       });
     });
@@ -1922,6 +2809,12 @@
     buildSwatches();
     buildGradients();
     buildMultiPalettes();
+    buildLogoSwatches();
+    buildLogoGradients();
+    buildLogoMultiPalettes();
+    buildLogoTextSwatches();
+    buildLogoTextGradients();
+    buildLogoTextMultiPalettes();
     buildIconGrid();
     buildFrameChips();
     syncControls();

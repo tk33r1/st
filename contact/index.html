@@ -188,10 +188,22 @@
             var domain = "tk.st";
             var email = user + "@" + domain;
 
+            // ?subject= があれば件名に載せる（ツール側から「どのツールの話か」を
+            // 渡してもらうため）。改行と制御文字を落としてから必ずエンコードする。
+            // 生で連結すると &body= などを差し込まれる。
+            var raw = new URLSearchParams(location.search).get("subject") || "";
+            var subject = "";
+            for (var i = 0; i < raw.length && subject.length < 120; i++) {
+                var code = raw.charCodeAt(i);
+                subject += (code < 32 || code === 127) ? " " : raw.charAt(i);
+            }
+            subject = subject.trim();
+            var query = subject ? "?subject=" + encodeURIComponent(subject) : "";
+
             // メーラーの起動
             try {
                 var mailtoLink = document.createElement('a');
-                mailtoLink.href = "mailto:" + email;
+                mailtoLink.href = "mailto:" + email + query;
                 document.body.appendChild(mailtoLink);
                 mailtoLink.click();
                 document.body.removeChild(mailtoLink);
