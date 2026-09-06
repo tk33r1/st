@@ -280,6 +280,185 @@
     return (hi + 0.05) / (lo + 0.05);
   }
 
+  // WCAG のコントラスト比は「人が小さな文字を読めるか」の指標で、デコーダが
+  // 見ている量ではない。読み取りの警告はこちらで出す。
+  //
+  // jsQR も ZXing も、二値化は 8x8 ブロックごとの平均を閾値にする。ただし
+  // ブロック内の明暗差が小さいとき（jsQR の MIN_DYNAMIC_RANGE = 24）は平均が
+  // 使えないので、閾値を min / 2 に落とす。書き出し解像度では 1 モジュールが
+  // 8px より大きく、ブロックがまるごと 1 色で埋まるので、事実上この分岐しか
+  // 通らない。つまりデコーダの条件は「暗いほうの明るさが明るいほうの半分未満」。
+  //
+  // 実測でも境界はちょうど半分だった。白背景なら #7E7E7E（0.494）は全解像度で
+  // 通り、#818181（0.506）は 16px 以上で全滅する。同じ境界を WCAG 比で書くと
+  // 背景の明るさしだいで 2.78:1 〜 4.06:1 の間を動くので、固定のしきい値では
+  // どう選んでも当たらない。
+  //
+  // 明るさはガンマ補正されたまま使う（線形化しない）。デコーダがそうしている。
+  function encodedLuma(hex) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return 0;
+    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  }
+
+  // 0 に近いほど良く、1 は同じ色。反転QRでも同じ意味になるよう暗い側 / 明るい側で取る。
+  function lumaRatio(a, b) {
+    const la = encodedLuma(a), lb = encodedLuma(b);
+    const hi = Math.max(la, lb), lo = Math.min(la, lb);
+    return hi <= 0 ? 1 : lo / hi;   // どちらも真っ黒なら差が無い＝最悪
+  }
+
+  // 0.50 が二値化の壁そのもの。0.44 は壁まで 1 割強しかないあたりで、装飾セルの
+  // アンチエイリアスや印刷のにじみで壁を越えうる範囲。
+  //
+  // 逆に、カメラ相当（ぼかし＋ノイズ＋照明むら）で 4〜6px/モジュールを測ると
+  // 0.45〜0.66 まで通った。低解像度ではブロック平均のほうが効いて、min / 2 の
+  // 分岐に落ちないため。厳しいのはカメラではなく書き出した画像のほうなので、
+  // カメラのための上乗せは要らない。
+  const LUMA_WALL = 0.50;
+  const LUMA_TIGHT = 0.44;
+
+  function rgbToHsl(r, g, b) {
+    const rf = r / 255, gf = g / 255, bf = b / 255;
+    const max = Math.max(rf, gf, bf), min = Math.min(rf, gf, bf);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case rf: h = ((gf - bf) / d + (gf < bf ? 6 : 0)) / 6; break;
+        case gf: h = ((bf - rf) / d + 2) / 6; break;
+        case bf: h = ((rf - gf) / d + 4) / 6; break;
+      }
+    }
+    return [h, s, l];
+  }
+
+  function hslToRgb(h, s, l) {
+    if (s === 0) {
+      const v = Math.round(l * 255);
+      return [v, v, v];
+    }
+    const hue2rgb = (p, q, t) => {
+      let tt = t;
+      if (tt < 0) tt += 1;
+      if (tt > 1) tt -= 1;
+      if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+      if (tt < 1 / 2) return q;
+      if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    return [
+      Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
+      Math.round(hue2rgb(p, q, h) * 255),
+      Math.round(hue2rgb(p, q, h - 1 / 3) * 255)
+    ];
+  }
+
+  function rgbToHex(rgb) {
+    const toHex = n => {
+      const h = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+      return h.length === 1 ? '0' + h : h;
+    };
+    return ('#' + toHex(rgb[0]) + toHex(rgb[1]) + toHex(rgb[2])).toUpperCase();
+  }
+
+  // 元の色相と彩度をできるだけ保ったまま、背景とのコントラスト比が
+  // targetRatio（既定 4.8）に達するよう明度（L）を二分探索で調整する。
+  function adjustContrast(hex, bgHex, targetRatio) {
+    const target = targetRatio || 4.8;
+    const baseRgb = hexToRgb(hex);
+    if (!baseRgb) return hex;
+    const bg = bgHex || '#FFFFFF';
+    const currentRatio = contrastRatio(hex, bg);
+    if (currentRatio >= target) return hex;
+
+    const bgLum = luminance(bg);
+    let [h, s, l] = rgbToHsl(baseRgb[0], baseRgb[1], baseRgb[2]);
+    const shouldDarken = bgLum > 0.45;
+
+    let bestHex = hex;
+    let bestRatio = currentRatio;
+
+    if (shouldDarken) {
+      let low = 0.02, high = Math.min(l, 0.95);
+      for (let i = 0; i < 20; i++) {
+        const mid = (low + high) / 2;
+        const testS = Math.min(1, s * 1.05);
+        const testHex = rgbToHex(hslToRgb(h, testS, mid));
+        const r = contrastRatio(testHex, bg);
+        if (r >= target) {
+          bestHex = testHex;
+          bestRatio = r;
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+      if (bestRatio < target) {
+        bestHex = rgbToHex(hslToRgb(h, s * 0.7, 0.05));
+      }
+    } else {
+      let low = Math.max(l, 0.05), high = 0.98;
+      for (let i = 0; i < 20; i++) {
+        const mid = (low + high) / 2;
+        const testHex = rgbToHex(hslToRgb(h, s, mid));
+        const r = contrastRatio(testHex, bg);
+        if (r >= target) {
+          bestHex = testHex;
+          bestRatio = r;
+          high = mid;
+        } else {
+          low = mid;
+        }
+      }
+      if (bestRatio < target) {
+        bestHex = rgbToHex(hslToRgb(h, s * 0.7, 0.95));
+      }
+    }
+
+    return bestHex;
+  }
+
+  // adjustContrast と同じ二分探索を、WCAG 比ではなく明るさの比でやる。
+  // 自動調整のあとに警告が残ると、押しても何も直らないボタンになってしまう。
+  function adjustReadability(hex, bgHex, target) {
+    const goal = target || 0.38;          // 壁 0.50 に対して少し余裕を持たせる
+    const baseRgb = hexToRgb(hex);
+    if (!baseRgb) return hex;
+    const bg = bgHex || '#FFFFFF';
+    if (lumaRatio(hex, bg) <= goal) return hex;
+
+    const [h, s, l] = rgbToHsl(baseRgb[0], baseRgb[1], baseRgb[2]);
+
+    // 明るくするか暗くするかは、背景の明るさだけでは決められない。中間の
+    // 背景で明るい側に振ると、白に張り付いてもまだ差が開かないことがある
+    // （#4A6FA5 を #9AB3D4 の上に置いた場合など）。両方やって良いほうを採る。
+    // 暗くするほうは白背景でも中間背景でも効くので、事実上「暗くできるなら
+    // 暗くする」になり、反転QRに化けるのは背景が本当に暗いときだけになる。
+    function bisect(darken) {
+      let low = darken ? 0.02 : Math.max(l, 0.05);
+      let high = darken ? Math.min(l, 0.95) : 0.98;
+      let best = rgbToHex(hslToRgb(h, s * 0.7, darken ? 0.05 : 0.95));
+      for (let i = 0; i < 20; i++) {
+        const mid = (low + high) / 2;
+        const testHex = rgbToHex(hslToRgb(h, darken ? Math.min(1, s * 1.05) : s, mid));
+        if (lumaRatio(testHex, bg) <= goal) {
+          best = testHex;
+          if (darken) low = mid; else high = mid;
+        } else {
+          if (darken) high = mid; else low = mid;
+        }
+      }
+      return best;
+    }
+
+    const darker = bisect(true), lighter = bisect(false);
+    return lumaRatio(darker, bg) <= lumaRatio(lighter, bg) ? darker : lighter;
+  }
+
   // 「白」「黒」「セルの色」は、それ自体が塗りではなく指定でしかない。実際に
   // 何で描かれるかを知りたい場所（描画・コントラスト判定・余白を補う色）が
   // それぞれ解決していたので、ここ一箇所にまとめる。
@@ -525,6 +704,10 @@
       case 'square':   return rectPath(x0, y0, s, s, 0);
       case 'rounded':  return rectPath(x0, y0, s, s, s * 0.16);
       case 'xrounded': return rectPath(x0, y0, s, s, s * 0.34);
+      case 'connected': return rectPath(x0, y0, s, s, s * 0.45);
+      case 'liquid':   return circlePath(cx, cy, s * 0.48);
+      case 'circuit':  return octagonPath(x0, y0, s, s * 0.22);
+      case 'mosaic':   return polyPath([[cx, cy - s * 0.52], [cx + s * 0.52, cy], [cx, cy + s * 0.52], [cx - s * 0.52, cy]]);
       case 'dot':      return circlePath(cx, cy, s / 2);
       case 'diamond':  return polyPath([[cx, cy - s * 0.66], [cx + s * 0.66, cy], [cx, cy + s * 0.66], [cx - s * 0.66, cy]]);
       case 'star':     return starPath(cx, cy, s * 0.72, s * 0.44, 5);
@@ -544,15 +727,22 @@
     const dark = (x, y) => x >= 0 && y >= 0 && x < size && y < size && grid[y * size + x] === 1;
     const jit = Math.max(0, Math.min(1, Number(jitter) || 0));
     const isMulti = Array.isArray(colors) && colors.length > 1;
-    // 同じ色が2つ以上入っていても束は1本にする（mosaicTiles と同じ扱い）。
-    // 色ごとに配列を作り直すと、重複した色のパスが同じ数だけ複製されてしまう。
     const colorBuckets = new Map();
     if (isMulti) {
       colors.forEach(c => { if (!colorBuckets.has(c)) colorBuckets.set(c, []); });
     }
     const singleParts = [];
 
-    // 縦横のラインは連続するマスをまとめてカプセルにする
+    const pushP = (p, x, y) => {
+      if (!p) return;
+      if (isMulti) {
+        const cIdx = Math.floor(cellRand(x, y, (seed || 0) + 17) * colors.length);
+        colorBuckets.get(colors[cIdx]).push(p);
+      } else {
+        singleParts.push(p);
+      }
+    };
+
     if (shape === 'vbar' || shape === 'hbar') {
       const seen = new Uint8Array(size * size);
       for (let a = 0; a < size; a++) {
@@ -574,12 +764,119 @@
           const h = shape === 'vbar' ? len : t;
           const px = ox + x + (shape === 'vbar' ? inset : 0);
           const py = oy + y + (shape === 'vbar' ? 0 : inset);
-          const p = rectPath(px, py, w, h, t / 2);
-          if (isMulti) {
-            const cIdx = Math.floor(cellRand(x, y, (seed || 0) + 17) * colors.length);
-            colorBuckets.get(colors[cIdx]).push(p);
-          } else {
-            singleParts.push(p);
+          pushP(rectPath(px, py, w, h, t / 2), x, y);
+        }
+      }
+    } else if (shape === 'connected' || shape === 'liquid') {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!dark(x, y)) continue;
+          const top = dark(x, y - 1);
+          const right = dark(x + 1, y);
+          const bottom = dark(x, y + 1);
+          const left = dark(x - 1, y);
+          const s = cellScaleAt(x, y, scale, jit);
+
+          // リキッドで孤立した1マスは完全な正円（水滴）
+          if (shape === 'liquid' && !top && !right && !bottom && !left) {
+            pushP(circlePath(ox + x + 0.5, oy + y + 0.5, s * 0.48), x, y);
+            continue;
+          }
+
+          const inset = Math.max(0, (1 - s) / 2);
+          const x0 = ox + x + (left ? 0 : inset);
+          const y0 = oy + y + (top ? 0 : inset);
+          const x1 = ox + x + 1 - (right ? 0 : inset);
+          const y1 = oy + y + 1 - (bottom ? 0 : inset);
+          const w = x1 - x0;
+          const h = y1 - y0;
+          const rBase = Math.min(w, h) * (shape === 'liquid' ? 0.5 : 0.45);
+          const rTL = (!top && !left) ? rBase : 0;
+          const rTR = (!top && !right) ? rBase : 0;
+          const rBR = (!bottom && !right) ? rBase : 0;
+          const rBL = (!bottom && !left) ? rBase : 0;
+          pushP(boxPath(x0, y0, x1, y1, [rTL, rTR, rBR, rBL], [1, 1, 1, 1]), x, y);
+
+          // リキッドは内角（くぼみ）にも逆アールフィレットを入れて完全一体化
+          // セルの太さ（s）で細くしたときも、枝の外側エッジの真の交点（inset 考慮）から正確に円弧を開始し、
+          // 隣接DARKセルの肉の内部深くまでアンカーを潜り込ませることで、どの太さでも白線・隙間を完全に根絶する。
+          // 全パスは boxPath と同じ時計回り（CW）で統一。
+          if (shape === 'liquid') {
+            const rIn = Math.min(0.32, s * 0.38);
+            const d = Math.min(0.35, s * 0.42); // セル本体の内部へ深く潜らせるアンカー深度
+            const f = n => n.toFixed(3);
+            if (top && left && !dark(x - 1, y - 1)) {
+              const cx = ox + x + inset, cy = oy + y + inset;
+              pushP(`M ${f(cx - rIn)} ${f(cy)} A ${f(rIn)} ${f(rIn)} 0 0 0 ${f(cx)} ${f(cy - rIn)} L ${f(cx + d)} ${f(cy - rIn)} L ${f(cx + d)} ${f(cy + d)} L ${f(cx - rIn)} ${f(cy + d)} Z`, x, y);
+            }
+            if (top && right && !dark(x + 1, y - 1)) {
+              const cx = ox + x + 1 - inset, cy = oy + y + inset;
+              pushP(`M ${f(cx)} ${f(cy - rIn)} A ${f(rIn)} ${f(rIn)} 0 0 0 ${f(cx + rIn)} ${f(cy)} L ${f(cx + rIn)} ${f(cy + d)} L ${f(cx - d)} ${f(cy + d)} L ${f(cx - d)} ${f(cy - rIn)} Z`, x, y);
+            }
+            if (bottom && right && !dark(x + 1, y + 1)) {
+              const cx = ox + x + 1 - inset, cy = oy + y + 1 - inset;
+              pushP(`M ${f(cx + rIn)} ${f(cy)} A ${f(rIn)} ${f(rIn)} 0 0 0 ${f(cx)} ${f(cy + rIn)} L ${f(cx - d)} ${f(cy + rIn)} L ${f(cx - d)} ${f(cy - d)} L ${f(cx + rIn)} ${f(cy - d)} Z`, x, y);
+            }
+            if (bottom && left && !dark(x - 1, y + 1)) {
+              const cx = ox + x + inset, cy = oy + y + 1 - inset;
+              pushP(`M ${f(cx)} ${f(cy + rIn)} A ${f(rIn)} ${f(rIn)} 0 0 0 ${f(cx - rIn)} ${f(cy)} L ${f(cx - rIn)} ${f(cy - d)} L ${f(cx + d)} ${f(cy - d)} L ${f(cx + d)} ${f(cy + rIn)} Z`, x, y);
+            }
+          }
+        }
+      }
+    } else if (shape === 'circuit') {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!dark(x, y)) continue;
+          const top = dark(x, y - 1);
+          const right = dark(x + 1, y);
+          const bottom = dark(x, y + 1);
+          const left = dark(x - 1, y);
+          const s = cellScaleAt(x, y, scale, jit);
+
+          const inset = Math.max(0, (1 - s) / 2);
+          const x0 = ox + x + (left ? 0 : inset);
+          const y0 = oy + y + (top ? 0 : inset);
+          const x1 = ox + x + 1 - (right ? 0 : inset);
+          const y1 = oy + y + 1 - (bottom ? 0 : inset);
+
+          // 回路基板特有の45度斜め面取り配線（PCB Chamfer Trace）
+          const ch = Math.min(x1 - x0, y1 - y0) * 0.22;
+          const pts = [];
+          pts.push([(!top && !left) ? x0 + ch : x0, y0]);
+          pts.push([(!top && !right) ? x1 - ch : x1, y0]);
+          if (!top && !right) pts.push([x1, y0 + ch]);
+          pts.push([x1, (!bottom && !right) ? y1 - ch : y1]);
+          if (!bottom && !right) pts.push([x1 - ch, y1]);
+          pts.push([(!bottom && !left) ? x0 + ch : x0, y1]);
+          if (!bottom && !left) pts.push([x0, y1 - ch]);
+          pts.push([x0, (!top && !left) ? y0 + ch : y0]);
+
+          pushP(polyPath(pts), x, y);
+        }
+      }
+    } else if (shape === 'mosaic') {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!dark(x, y)) continue;
+          const s = cellScaleAt(x, y, scale, jit);
+          const inset = (1 - s) / 2;
+          const x0 = ox + x + inset, y0 = oy + y + inset;
+          // メインセル
+          pushP(rectPath(x0, y0, s, s, s * 0.22), x, y);
+
+          // 対角（斜め）隣接セルとのマイクロ菱形ブリッジ
+          const dBR = dark(x + 1, y + 1) && (!dark(x + 1, y) || !dark(x, y + 1));
+          if (dBR) {
+            const bx = ox + x + 1, by = oy + y + 1;
+            const bw = 0.22;
+            pushP(polyPath([[bx, by - bw], [bx + bw, by], [bx, by + bw], [bx - bw, by]]), x, y);
+          }
+          const dBL = dark(x - 1, y + 1) && (!dark(x - 1, y) || !dark(x, y + 1));
+          if (dBL) {
+            const bx = ox + x, by = oy + y + 1;
+            const bw = 0.22;
+            pushP(polyPath([[bx, by - bw], [bx + bw, by], [bx, by + bw], [bx - bw, by]]), x, y);
           }
         }
       }
@@ -591,12 +888,7 @@
           const inset = (1 - s) / 2;
           const x0 = ox + x + inset, y0 = oy + y + inset;
           const p = singleCellPath(shape, x0, y0, s);
-          if (isMulti) {
-            const cIdx = Math.floor(cellRand(x, y, (seed || 0) + 17) * colors.length);
-            colorBuckets.get(colors[cIdx]).push(p);
-          } else {
-            singleParts.push(p);
-          }
+          pushP(p, x, y);
         }
       }
     }
@@ -1732,10 +2024,14 @@
     const bgC = bgPaint.type === 'none' ? '#FFFFFF' : paintColor(bgPaint);
     const fgC = paintColor(st.fg, bgC);
     const ratio = fgC && bgC ? contrastRatio(fgC, bgC) : 21;
-    if (ratio < 3) {
-      warnings.push({ level: 'error', text: 'コントラストが不足しています（' + ratio.toFixed(1) + ':1）。セルと背景の明暗差を大きくしてください。' });
-    } else if (ratio < 4.5) {
-      warnings.push({ level: 'warn', text: 'コントラストがやや低めです（' + ratio.toFixed(1) + ':1）。読み取りにくい環境があるかもしれません。' });
+    // 表示する数値は WCAG 比のまま（見慣れているのはこちら）。ただし警告を
+    // 出すかどうかは lumaRatio で決める。判定と、見せる数字とを分けている。
+    const lr = fgC && bgC ? lumaRatio(fgC, bgC) : 0;
+    const pct = Math.round(lr * 100);
+    if (lr >= LUMA_WALL) {
+      warnings.push({ kind: 'contrast', level: 'error', text: 'セルと背景の明暗差が足りません（暗いほうの明るさが明るいほうの ' + pct + '%）。50% を超えるとデコーダが白黒に分けられず、まず読み取れません。' });
+    } else if (lr >= LUMA_TIGHT) {
+      warnings.push({ kind: 'contrast', level: 'warn', text: 'セルと背景の明暗差に余裕がありません（' + pct + '%、限界は 50%）。装飾のにじみや印刷で崩れると読めなくなることがあります。' });
     }
     // マーカーだけ別色にしたときの見落としが一番多い。
     // 'auto'（セルの色に追従）はセル側の判定で見ているので、ここでは外す。
@@ -1745,11 +2041,11 @@
       // 前者はセル側の判定で見ているので、ここで重ねて言わない。
       const mc = paintColor(pair[0], bgC);
       if (!mc) return;
-      const r = contrastRatio(mc, bgC);
-      if (r < 3) {
-        warnings.push({ level: 'error', text: pair[1] + 'の色が背景に近すぎます（' + r.toFixed(1) + ':1）。位置検出パターンが見えないと読み取れません。' });
-      } else if (r < 4.5) {
-        warnings.push({ level: 'warn', text: pair[1] + 'の色がやや薄めです（' + r.toFixed(1) + ':1）。' });
+      const r = lumaRatio(mc, bgC);
+      if (r >= LUMA_WALL) {
+        warnings.push({ level: 'error', text: pair[1] + 'の色が背景に近すぎます（明るさの比 ' + Math.round(r * 100) + '%）。位置検出パターンが見えないと読み取れません。' });
+      } else if (r >= LUMA_TIGHT) {
+        warnings.push({ level: 'warn', text: pair[1] + 'の色が背景に近めです（' + Math.round(r * 100) + '%、限界は 50%）。' });
       }
     });
     if (fgC && bgC && luminance(fgC) > luminance(bgC)) {
@@ -1785,6 +2081,7 @@
       width: W,
       height: H,
       contrast: ratio,
+      lumaRatio: lr,
       coverage: coverage,
       warnings: warnings
     };
@@ -1904,6 +2201,13 @@
     LINE_STYLES: LINE_STYLES,
     lineIdOf: lineIdOf,
     contrastRatio: contrastRatio,
+    lumaRatio: lumaRatio,
+    encodedLuma: encodedLuma,
+    adjustReadability: adjustReadability,
+    LUMA_WALL: LUMA_WALL,
+    LUMA_TIGHT: LUMA_TIGHT,
+    luminance: luminance,
+    adjustContrast: adjustContrast,
     paintColor: paintColor,
     resolvePaint: resolvePaint,
     FONT_KEYS: FONT_KEYS,

@@ -63,10 +63,76 @@
       build: f => normalizeUrl(f.url)
     },
     {
+      id: 'sns', name: 'SNS', hint: 'SNS',
+      fields: [
+        {
+          k: 'platform', label: 'サービス', type: 'select',
+          options: [
+            ['instagram', 'Instagram'],
+            ['x', 'X（Twitter）'],
+            ['line', 'LINE（友だち・公式）'],
+            ['tiktok', 'TikTok'],
+            ['youtube', 'YouTube'],
+            ['threads', 'Threads'],
+            ['bluesky', 'Bluesky'],
+            ['github', 'GitHub'],
+            ['note', 'note'],
+            ['facebook', 'Facebook']
+          ]
+        },
+        { k: 'id', label: 'ユーザー名 / ID', type: 'text', ph: '例: shitake' }
+      ],
+      init: { platform: 'instagram', id: '' },
+      build: f => {
+        const id = String(f.id || '').trim().replace(/^@/, '');
+        if (!id) return '';
+        switch (f.platform) {
+          case 'instagram': return 'https://www.instagram.com/' + id + '/';
+          case 'x': return 'https://x.com/' + id;
+          case 'line': return 'https://line.me/R/ti/p/~' + id;
+          case 'tiktok': return 'https://www.tiktok.com/@' + id;
+          case 'youtube': return (id.startsWith('UC') || id.startsWith('@')) ? 'https://www.youtube.com/' + id : 'https://www.youtube.com/@' + id;
+          case 'threads': return 'https://www.threads.net/@' + id;
+          case 'bluesky': return 'https://bsky.app/profile/' + (id.indexOf('.') >= 0 ? id : id + '.bsky.social');
+          case 'github': return 'https://github.com/' + id;
+          case 'note': return 'https://note.com/' + id;
+          case 'facebook': return 'https://www.facebook.com/' + id;
+          default: return normalizeUrl(id);
+        }
+      }
+    },
+    {
       id: 'text', name: 'テキスト', hint: 'テキスト',
       fields: [{ k: 'text', label: '好きな文章', type: 'textarea', ph: 'そのまま表示される文字列' }],
       init: { text: '' },
       build: f => String(f.text || '')
+    },
+    {
+      id: 'event', name: 'カレンダー', hint: 'iCal',
+      fields: [
+        { k: 'title', label: '予定名', type: 'text', ph: '例：新商品リリース / 展示会' },
+        { k: 'start', label: '開始日時', type: 'datetime-local', ph: '' },
+        { k: 'end', label: '終了日時', type: 'datetime-local', ph: '' },
+        { k: 'location', label: '場所', type: 'text', ph: '例：東京ビッグサイト / オンライン' },
+        { k: 'desc', label: '詳細・メモ', type: 'textarea', ph: '詳細や参加用リンクなど' }
+      ],
+      init: { title: '', start: '', end: '', location: '', desc: '' },
+      build: f => {
+        if (!f.title) return '';
+        const fmtDt = val => {
+          if (!val) return '';
+          const s = String(val).replace(/[-:]/g, '');
+          return s.length === 15 ? s + '00' : s.length === 16 ? s.replace('T', 'T') + ':00'.replace(':', '') : s;
+        };
+        const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT'];
+        L.push('SUMMARY:' + vcardEscape(f.title));
+        if (f.start) L.push('DTSTART:' + fmtDt(f.start));
+        if (f.end) L.push('DTEND:' + fmtDt(f.end));
+        if (f.location) L.push('LOCATION:' + vcardEscape(f.location));
+        if (f.desc) L.push('DESCRIPTION:' + vcardEscape(f.desc));
+        L.push('END:VEVENT', 'END:VCALENDAR');
+        return L.join(CRLF);
+      }
     },
     {
       id: 'email', name: 'メール', hint: 'mailto',
@@ -81,8 +147,6 @@
         const q = [];
         if (f.subject) q.push('subject=' + encodeURIComponent(f.subject));
         if (f.body) q.push('body=' + encodeURIComponent(f.body));
-        // 宛先も空白や記号が入るとURLとして壊れる。ただし @ と , まで潰すと
-        // 読みにくいうえ、カンマ区切りの複数宛先が使えなくなるので戻す。
         const to = encodeURIComponent(String(f.to).trim())
           .replace(/%40/g, '@').replace(/%2C/gi, ',');
         return 'mailto:' + to + (q.length ? '?' + q.join('&') : '');
@@ -107,7 +171,7 @@
       id: 'wifi', name: 'Wi-Fi', hint: 'WIFI',
       fields: [
         { k: 'ssid', label: 'ネットワーク名（SSID）', type: 'text', ph: 'MyHomeWiFi' },
-        { k: 'pass', label: 'パスワード', type: 'text', ph: '' },
+        { k: 'pass', label: 'パスワード', type: 'password', ph: '' },
         { k: 'enc', label: '暗号化方式', type: 'select', options: [['WPA', 'WPA / WPA2 / WPA3'], ['WEP', 'WEP'], ['nopass', 'なし（オープン）']] },
         { k: 'hidden', label: 'ステルスSSID', type: 'checkbox', sub: 'SSIDを隠している場合はオン' }
       ],
@@ -377,6 +441,139 @@
       }
       sanitizeStyle(state.style);
     } catch (e) { /* 壊れた保存は捨てる */ }
+  }
+
+  // ------------------------------------------------------------------
+  // Undo / Redo 履歴管理
+  // ------------------------------------------------------------------
+  const undoStack = [];
+  const redoStack = [];
+  const MAX_HISTORY = 50;
+  let isApplyingHistory = false;
+  let historyTimer = null;
+  let lastCommittedSnapshot = '';
+
+  function getSnapshot() {
+    return JSON.stringify({
+      type: state.type,
+      values: state.values,
+      ec: state.ec,
+      minVersion: state.minVersion,
+      exportSize: state.exportSize,
+      presetName: state.presetName,
+      presetCategory: state.presetCategory,
+      iconGroup: state.iconGroup,
+      frameTopIconGroup: state.frameTopIconGroup,
+      frameBottomIconGroup: state.frameBottomIconGroup,
+      style: state.style
+    });
+  }
+
+  function commitHistory() {
+    if (isApplyingHistory) return;
+    const snap = getSnapshot();
+    if (snap === lastCommittedSnapshot) return;
+    if (lastCommittedSnapshot) {
+      undoStack.push(lastCommittedSnapshot);
+      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+      redoStack.length = 0;
+      updateHistoryButtons();
+    }
+    lastCommittedSnapshot = snap;
+  }
+
+  function recordHistorySoon(immediate) {
+    if (isApplyingHistory) return;
+    if (immediate) {
+      if (historyTimer) { clearTimeout(historyTimer); historyTimer = null; }
+      commitHistory();
+      return;
+    }
+    if (historyTimer) clearTimeout(historyTimer);
+    historyTimer = setTimeout(() => {
+      historyTimer = null;
+      commitHistory();
+    }, 400);
+  }
+
+  function updateHistoryButtons() {
+    const btnUndo = $('btn-undo');
+    const btnRedo = $('btn-redo');
+    if (btnUndo) {
+      btnUndo.disabled = undoStack.length === 0;
+    }
+    if (btnRedo) {
+      btnRedo.disabled = redoStack.length === 0;
+    }
+  }
+
+  function applySnapshot(snapStr) {
+    if (!snapStr) return;
+    let data;
+    try {
+      data = JSON.parse(snapStr);
+    } catch (e) {
+      return;
+    }
+
+    isApplyingHistory = true;
+    try {
+      if (data.type) state.type = data.type;
+      if (data.values) {
+        Object.keys(data.values).forEach(k => {
+          state.values[k] = Object.assign({}, data.values[k]);
+        });
+      }
+      if (data.ec) state.ec = data.ec;
+      if (data.minVersion !== undefined) state.minVersion = data.minVersion;
+      if (data.exportSize) state.exportSize = data.exportSize;
+      if (data.presetName !== undefined) state.presetName = data.presetName;
+      if (data.presetCategory !== undefined) state.presetCategory = data.presetCategory;
+      if (data.iconGroup !== undefined) state.iconGroup = data.iconGroup;
+      if (data.frameTopIconGroup !== undefined) state.frameTopIconGroup = data.frameTopIconGroup;
+      if (data.frameBottomIconGroup !== undefined) state.frameBottomIconGroup = data.frameBottomIconGroup;
+      if (data.style) {
+        state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, data.style);
+        sanitizeStyle(state.style);
+      }
+
+      lastCommittedSnapshot = getSnapshot();
+
+      buildTypeChips();
+      buildTypeFields();
+      syncControls();
+      buildShapeGrids();
+      buildFrameChips();
+      syncPresetActive();
+      update();
+    } finally {
+      isApplyingHistory = false;
+    }
+    updateHistoryButtons();
+  }
+
+  function undo() {
+    if (historyTimer) {
+      clearTimeout(historyTimer);
+      historyTimer = null;
+      commitHistory();
+    }
+    if (undoStack.length === 0) return;
+    const prev = undoStack.pop();
+    redoStack.push(getSnapshot());
+    applySnapshot(prev);
+  }
+
+  function redo() {
+    if (redoStack.length === 0) return;
+    const next = redoStack.pop();
+    undoStack.push(getSnapshot());
+    applySnapshot(next);
+  }
+
+  function initHistory() {
+    lastCommittedSnapshot = getSnapshot();
+    updateHistoryButtons();
   }
 
   // 塗りのモードは、どこに使う塗りかで選べる顔ぶれが変わる。画面のボタンの
@@ -700,9 +897,32 @@
         wrap.style.flexDirection = 'row';
         wrap.style.alignItems = 'center';
         wrap.insertBefore(input, wrap.firstChild);
+      } else if (f.type === 'password') {
+        const pwrap = el('div', { class: 'pwd-wrap' });
+        input = el('input', { type: 'password', id: id, placeholder: f.ph || '' });
+        input.value = values[f.k] || '';
+        const toggleBtn = el('button', { type: 'button', class: 'btn-pwd-toggle', title: 'パスワードの表示/非表示を切り替え', 'aria-label': 'パスワードの表示・非表示' });
+        toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        toggleBtn.addEventListener('click', () => {
+          const isPwd = input.type === 'password';
+          input.type = isPwd ? 'text' : 'password';
+          toggleBtn.innerHTML = isPwd
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        });
+        pwrap.appendChild(input);
+        pwrap.appendChild(toggleBtn);
+        wrap.appendChild(pwrap);
       } else {
         input = el('input', { type: f.type, id: id, placeholder: f.ph || '' });
         input.value = values[f.k] || '';
+        if (f.type === 'datetime-local') {
+          input.addEventListener('click', () => {
+            if (typeof input.showPicker === 'function') {
+              try { input.showPicker(); } catch (e) {}
+            }
+          });
+        }
       }
 
       const commit = () => {
@@ -712,13 +932,47 @@
       input.addEventListener('input', commit);
       input.addEventListener('change', commit);
 
-      if (f.type !== 'checkbox') wrap.appendChild(input);
+      if (f.type !== 'checkbox' && f.type !== 'password') wrap.appendChild(input);
       if (f.sub) wrap.appendChild(el('span', { class: 'sub' }, f.sub));
       pairs.push(wrap);
     });
 
-    // 連絡先は項目が多いので2列に畳む
-    if (type.id === 'vcard' || type.id === 'geo') {
+    if (type.id === 'sns') {
+      const btnLogoSync = el('button', {
+        type: 'button',
+        class: 'st-btn-quiet btn-sm',
+        style: 'align-self: flex-start; margin-top: 4px;'
+      }, '中央ロゴもこのSNSアイコンにする');
+      btnLogoSync.addEventListener('click', () => {
+        const platform = values.platform;
+        const iconIdMap = {
+          instagram: 'si-instagram',
+          x: 'si-x',
+          line: 'si-line',
+          tiktok: 'si-tiktok',
+          youtube: 'si-youtube',
+          threads: 'si-threads',
+          bluesky: 'si-bluesky',
+          github: 'si-github',
+          note: 'si-note',
+          facebook: 'si-facebook'
+        };
+        const iconId = iconIdMap[platform];
+        if (iconId) {
+          state.style.logo.type = 'icon';
+          state.style.logo.icon = iconId;
+          state.style.logo.iconData = A.ICONS.find(i => i.id === iconId) || null;
+          state.presetName = '';
+          syncControls();
+          update();
+          showToast('中央ロゴに ' + platform + ' を設定しました');
+        }
+      });
+      pairs.push(btnLogoSync);
+    }
+
+    // 連絡先やカレンダーは項目が多いので2列に畳む
+    if (type.id === 'vcard' || type.id === 'geo' || type.id === 'event') {
       const grid = el('div', { class: 'grid2' });
       pairs.forEach(p => grid.appendChild(p));
       host.appendChild(grid);
@@ -1734,6 +1988,10 @@
   // ------------------------------------------------------------------
   let lastSvg = '';
   let lastPayload = '';
+  // コントラストの警告は、検査の結果が出たあとで言い換えることがある。
+  // そのための取っ手と、言い換えに使う数字。
+  let contrastAlert = null;
+  let lastLumaPct = 0;
   let renderTimer = null;
   let verifyTimer = null;
 
@@ -1753,6 +2011,7 @@
   function update(opts) {
     if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
     saveSoon();
+    recordHistorySoon(opts && opts.immediateHistory);
     // 市松模様はセルの色だけで決まる。描けたかどうかに関係なく合わせたいので、
     // 出口ごとに呼ばず入口で一度だけ。
     updateCanvasChecker();
@@ -1793,13 +2052,39 @@
     lastSvg = out.svg;
     $('preview').innerHTML = out.svg;
 
+    // フローティングミニプレビューがあれば同期
+    const fpSvg = $('float-preview-svg');
+    if (fpSvg) fpSvg.innerHTML = out.svg;
+
+    // フルスクリーンが開いていればプレビューも同期
+    const fsPrev = $('fullscreen-preview');
+    if (fsPrev && $('fullscreen-modal') && !$('fullscreen-modal').classList.contains('hidden')) {
+      fsPrev.innerHTML = out.svg;
+    }
+
     [['v' + qr.version, 'バージョン'], [qr.size + '×' + qr.size, 'モジュール'],
      ['EC ' + qr.ec, '誤り訂正'], [new TextEncoder().encode(text).length + ' B', 'データ量'],
      ['コントラスト ' + out.contrast.toFixed(1) + ':1', '']].forEach(m => {
       meta.appendChild(el('span', { class: 'meta', title: m[1] }, m[0]));
     });
 
-    out.warnings.forEach(w => pushAlert(w.level, w.text));
+    lastLumaPct = Math.round((out.lumaRatio || 0) * 100);
+    contrastAlert = null;
+    let contrastAlerted = false;
+    out.warnings.forEach(w => {
+      // 文面の部分一致で拾っていたが、「画像セルは絵柄や明暗によって…」まで
+      // 引っかかって、自動調整のボタンが関係のない警告に付いていた。種類で見る。
+      const isContrast = w.kind === 'contrast';
+      if (isContrast && !contrastAlerted) {
+        contrastAlerted = true;
+        contrastAlert = pushAlert(w.level, w.text, {
+          label: 'コントラストを自動調整する',
+          onClick: autoFixContrast
+        });
+      } else {
+        pushAlert(w.level, w.text);
+      }
+    });
     setStatus('v' + qr.version + ' / ' + qr.ec, 'idle');
 
     if (opts && opts.debounceVerify) {
@@ -1810,10 +2095,84 @@
     }
   }
 
-  function pushAlert(level, text) {
+  function autoFixContrast() {
+    const QRStyle = window.QRStyle;
+    const bgResolved = QRStyle.resolvePaint ? QRStyle.resolvePaint(state.style.bg, state.style.fg) : state.style.bg;
+    const bgCol = QRStyle.paintColor ? (QRStyle.paintColor(bgResolved) || '#FFFFFF') : '#FFFFFF';
+    const isBgLight = (QRStyle.luminance ? QRStyle.luminance(bgCol) : 1) > 0.45;
+
+    const fixColor = c => {
+      if (!c) return isBgLight ? '#111827' : '#F8FAFC';
+      // 目標は警告と同じ物差しで置く。WCAG 比を目標にすると、直したあとも
+      // 明暗差の警告が残って「押しても消えないボタン」になる。
+      return QRStyle.adjustReadability ? QRStyle.adjustReadability(c, bgCol, 0.38)
+        : QRStyle.adjustContrast ? QRStyle.adjustContrast(c, bgCol, 4.8)
+        : (isBgLight ? '#111827' : '#F8FAFC');
+    };
+
+    // セルの塗りを、元の色相・種類を保ったまま調整
+    if (state.style.fg) {
+      const fg = state.style.fg;
+      if (fg.type === 'solid') {
+        const origColor = fg.color || (isBgLight ? '#CCCCCC' : '#333333');
+        fg.color = fixColor(origColor);
+      } else if (fg.type === 'linear' || fg.type === 'radial') {
+        if (fg.from) fg.from = fixColor(fg.from);
+        if (fg.mid) fg.mid = fixColor(fg.mid);
+        if (fg.to) fg.to = fixColor(fg.to);
+      } else if (fg.type === 'multi' && Array.isArray(fg.colors)) {
+        fg.colors = fg.colors.map(c => fixColor(c));
+      } else if (fg.type === 'image' && fg.color) {
+        fg.color = fixColor(fg.color);
+      }
+    }
+
+    // マーカー枠やマーカー目も、別色指定かつコントラスト不足の場合に色相を活かして補正
+    ['markerFramePaint', 'markerEyePaint'].forEach(key => {
+      const p = state.style[key];
+      if (p && p.type === 'solid' && p.color) {
+        if (QRStyle.lumaRatio && QRStyle.lumaRatio(p.color, bgCol) >= QRStyle.LUMA_TIGHT) {
+          p.color = fixColor(p.color);
+        }
+      }
+    });
+
+    state.presetName = '';
+    syncControls();
+    update();
+    showToast('明暗差を自動調整しました（元の色合いを保って補正）');
+  }
+
+  function pushAlert(level, text, action) {
     const a = el('div', { class: 'alert' + (level === 'error' ? ' error' : '') });
-    a.appendChild(el('span', null, text));
+    const content = el('div', { style: 'display:flex; flex-direction:column; gap:5px; flex:1;' });
+    content.appendChild(el('span', null, text));
+    if (action) {
+      const btn = el('button', {
+        type: 'button',
+        class: 'st-btn-quiet btn-sm',
+        style: 'align-self: flex-start; padding: 3px 9px; font-size: 11px; margin-top: 2px;'
+      }, action.label);
+      btn.addEventListener('click', action.onClick);
+      content.appendChild(btn);
+    }
+    a.appendChild(content);
     $('alerts').appendChild(a);
+    return a;
+  }
+
+  // 検査パネルが「読み取りOK」なのに、すぐ上で「明暗差が足りません」と赤が
+  // 出ていると、同じ画面のふたつのパネルが正反対のことを言うことになる。
+  // 実際に読めたという事実のほうが強い証拠なので、一段下げて言い換える。
+  // 消しはしない — 二値化の壁までの余裕が少ないこと自体は変わらないため。
+  function softenContrastAlert() {
+    if (!contrastAlert || !contrastAlert.parentNode) return;
+    const span = contrastAlert.querySelector('span');
+    if (!span) return;
+    contrastAlert.classList.remove('error');
+    span.textContent = 'この配色でも読み取れましたが、セルと背景の明暗差は限界に近めです（' +
+      lastLumaPct + '%、限界は 50%）。印刷やカメラ越しでは崩れることがあります。';
+    contrastAlert = null;   // 言い換えるのは一度だけ。次の描画でまた作り直す
   }
 
   // ------------------------------------------------------------------
@@ -1830,6 +2189,7 @@
   };
 
   function setVerdict(kind, title, note, engines) {
+    if (kind === 'ok') softenContrastAlert();
     $('verdict').className = 'verdict ' + kind;
     $('verdict-title').textContent = title;
     $('verdict-note').textContent = note || '';
@@ -2092,6 +2452,34 @@
     if (window.STShare) STShare.celebrate();
   }
 
+  function flashButtonSuccess(btn, successText) {
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = successText;
+    btn.classList.add('btn-success-flash');
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove('btn-success-flash');
+    }, 1400);
+  }
+
+  function openFullscreen() {
+    if (!lastSvg) return;
+    const modal = $('fullscreen-modal');
+    const host = $('fullscreen-preview');
+    if (!modal || !host) return;
+    host.innerHTML = lastSvg;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeFullscreen() {
+    const modal = $('fullscreen-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
   async function exportRaster(mime, ext, quality) {
     if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
     setStatus('rendering', '');
@@ -2103,6 +2491,8 @@
       // 対応していない形式を渡すと、黙って PNG が返ってくる。拡張子を偽らない
       const realExt = blob.type === mime ? ext : (blob.type.split('/')[1] || ext);
       saveBlob(blob, fileStem() + '.' + realExt);
+      const btn = $('btn-' + ext);
+      if (btn) flashButtonSuccess(btn, '✓ 保存完了');
       showToast(realExt === ext
         ? ext.toUpperCase() + 'を保存しました'
         : 'このブラウザは' + ext.toUpperCase() + 'に対応していないため' +
@@ -2118,6 +2508,7 @@
     const doc = '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) +
       window.QRStyle.resize(await withExportFonts(lastSvg), 1024);
     saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), fileStem() + '.svg');
+    flashButtonSuccess($('btn-svg'), '✓ 保存完了');
     showToast('SVGを保存しました');
   }
 
@@ -2137,12 +2528,14 @@
     })();
     try {
       await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': png })]);
+      flashButtonSuccess($('btn-copy'), '✓ コピー完了');
       showToast('画像をコピーしました');
       if (window.STShare) STShare.celebrate();
     } catch (e) {
       // Promise を受け付けない実装もあるので、その場合は焼けた Blob で入れ直す
       try {
         await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': await png })]);
+        flashButtonSuccess($('btn-copy'), '✓ コピー完了');
         showToast('画像をコピーしました');
         if (window.STShare) STShare.celebrate();
       } catch (e2) {
@@ -2681,11 +3074,85 @@
       if (lastSvg && lastPayload) verify(lastSvg, lastPayload, true);
     });
 
+    // フルスクリーン（ライトボックス）
+    const btnFsClose = $('btn-fullscreen-close');
+    if (btnFsClose) btnFsClose.addEventListener('click', closeFullscreen);
+    const fsModal = $('fullscreen-modal');
+    if (fsModal) {
+      fsModal.addEventListener('click', e => {
+        if (e.target === fsModal || e.target.classList.contains('fullscreen-modal-backdrop')) {
+          closeFullscreen();
+        }
+      });
+    }
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeFullscreen();
+    });
+
+    // ---- 履歴操作（Undo / Redo） ----
+    const btnUndo = $('btn-undo');
+    if (btnUndo) btnUndo.addEventListener('click', undo);
+    const btnRedo = $('btn-redo');
+    if (btnRedo) btnRedo.addEventListener('click', redo);
+
+    window.addEventListener('keydown', e => {
+      if (e.isComposing || e.keyCode === 229) return;
+      const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+      if (!mod) return;
+
+      const target = e.target;
+      const isTextInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+      const isContentField = isTextInput && target.id && target.id.startsWith('f-');
+
+      if (e.key === 'z' || e.key === 'Z') {
+        if (e.shiftKey) {
+          if (isContentField) return;
+          e.preventDefault();
+          redo();
+        } else {
+          if (isContentField) return;
+          e.preventDefault();
+          undo();
+        }
+      } else if (e.key === 'y' || e.key === 'Y') {
+        if (isContentField) return;
+        e.preventDefault();
+        redo();
+      }
+    });
+
+    // モバイル用フローティングミニプレビュー
+    setupFloatPreview();
+
     // 保存はまとめて後回しにしているので、離れる前に取りこぼしを書き切る
     window.addEventListener('pagehide', saveNow);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') saveNow();
     });
+  }
+
+  function setupFloatPreview() {
+    const card = $('canvas-card');
+    const floatEl = $('float-preview');
+    if (!card || !floatEl) return;
+
+    floatEl.addEventListener('click', openFullscreen);
+    floatEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openFullscreen();
+      }
+    });
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          floatEl.classList.toggle('visible', !entry.isIntersecting);
+        });
+      }, { threshold: 0.1 });
+      observer.observe(card);
+    }
   }
 
   // 中身が正しく伝わるエラー。これを投げたぶんは文面をそのまま出す。
@@ -2982,6 +3449,7 @@
     syncControls();
     wire();
     update();
+    initHistory();
   }
 
   if (document.readyState === 'loading') {

@@ -54,7 +54,7 @@
           "priceCurrency": "JPY"
         },
         "browserRequirements": "Requires JavaScript",
-        "featureList": "28種類のデザインテンプレート, 16種類のセル形状, 9種類のマーカー枠と16種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/テキスト/メール/電話/SMS/Wi-Fi/連絡先/位置情報, PNG・SVG・JPEG・WebP書き出し, 読み取りテスト, サーバーへの送信なし"
+        "featureList": "29種類のデザインテンプレート, 17種類のセル形状（連結セル含む）, 9種類のマーカー枠と16種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先/位置情報, PNG・SVG・JPEG・WebP書き出し, 読み取りテスト, サーバーへの送信なし"
       },
       {
         "@type": "BreadcrumbList",
@@ -304,6 +304,13 @@
       #preview { max-width: 460px; }
     }
 
+    .history-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-right: 2px;
+    }
+
     /* ---- スクロール追従バー（読み取り判定） ---- */
     .verdict-bar {
       position: sticky;
@@ -493,10 +500,17 @@
     .field > label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em;
       text-transform: uppercase; color: var(--ink-2); }
     .field input[type="text"], .field input[type="url"], .field input[type="email"],
-    .field input[type="tel"], .field input[type="number"], .field textarea, .field select {
+    .field input[type="tel"], .field input[type="number"], .field input[type="password"],
+    .field input[type="datetime-local"], .field textarea, .field select {
       font-family: var(--font-ui); font-size: 13.5px; color: var(--ink);
       background: var(--bg); border: 1px solid var(--rule); border-radius: var(--r-1);
       padding: 9px 11px; width: 100%;
+    }
+    .field input[type="datetime-local"] {
+      cursor: pointer;
+    }
+    .field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
     }
     .field textarea { min-height: 96px; resize: vertical; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
     .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--accent); }
@@ -741,6 +755,175 @@
     #logo-common, #logo-icon-pane, #logo-image-pane, #logo-text-pane, #frame-opts {
       display: flex; flex-direction: column; gap: 12px;
     }
+
+    /* フルスクリーンモーダル（ライトボックス） */
+    .fullscreen-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .fullscreen-modal.hidden { display: none; }
+    .fullscreen-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .fullscreen-modal-card {
+      position: relative;
+      z-index: 2;
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-2);
+      padding: 34px 18px 18px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      animation: modal-pop 180ms ease-out;
+    }
+    @keyframes modal-pop {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .fullscreen-modal-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      font-size: 13px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid var(--rule);
+      background: var(--panel-2);
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+    .fullscreen-modal-close:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .fullscreen-preview-host {
+      width: clamp(260px, 60vh, 520px);
+      max-width: 80vw;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: var(--r-1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+    }
+    .fullscreen-preview-host svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* モバイル用フローティングミニプレビュー（画面左下に配置） */
+    .float-preview {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 40;
+      background: var(--panel);
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--r-2);
+      padding: 5px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 160ms ease, opacity 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+      transform: translateY(80px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .float-preview.visible {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .float-preview:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+      border-color: var(--accent);
+    }
+    .float-preview-inner {
+      width: 52px;
+      height: 52px;
+      background: #ffffff;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .float-preview-inner svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* パスワードトグル入力欄 */
+    .pwd-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .pwd-wrap input {
+      font-family: var(--font-ui);
+      font-size: 13.5px;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      padding: 9px 36px 9px 11px !important;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .pwd-wrap input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .btn-pwd-toggle {
+      position: absolute;
+      right: 6px;
+      background: none;
+      border: none;
+      color: var(--ink-3);
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: color 120ms ease;
+    }
+    .btn-pwd-toggle:hover {
+      color: var(--ink);
+    }
+
+    /* 完了ボタンの成功フラッシュ演出 */
+    .btn-success-flash {
+      background: var(--ok) !important;
+      color: #ffffff !important;
+      border-color: var(--ok) !important;
+      transform: scale(0.98);
+      transition: all 150ms ease;
+    }
   </style>
 </head>
 <body>
@@ -762,6 +945,14 @@
       <span class="crumb-mark" aria-hidden="true"></span>
 
       <div class="bar-actions">
+        <div class="history-actions" role="group" aria-label="履歴操作">
+          <button id="btn-undo" class="icon-btn" type="button" aria-label="元に戻す (Ctrl+Z)" title="元に戻す (Ctrl+Z)" disabled>
+            <i data-lucide="undo-2" class="w-4 h-4"></i>
+          </button>
+          <button id="btn-redo" class="icon-btn" type="button" aria-label="やり直す (Ctrl+Y)" title="やり直す (Ctrl+Y)" disabled>
+            <i data-lucide="redo-2" class="w-4 h-4"></i>
+          </button>
+        </div>
         <span class="bar-status">
           <span id="status-led" class="st-led idle"></span><span id="status-text">ready</span>
         </span>
@@ -846,7 +1037,7 @@
       <div class="cols">
 
         <!-- 内容 -->
-        <details class="sec" open>
+        <details class="sec" id="sec-content" open>
           <summary>
             <span class="st-lbl">内容</span>
             <span class="hint" id="hint-content">URL</span>
@@ -859,7 +1050,7 @@
         </details>
 
         <!-- テンプレート -->
-        <details class="sec" open>
+        <details class="sec" id="sec-preset" open>
           <summary>
             <span class="st-lbl">テンプレート</span>
             <span class="hint" id="hint-preset">—</span>
@@ -876,7 +1067,7 @@
         </details>
 
         <!-- セルとマーカー -->
-        <details class="sec">
+        <details class="sec" id="sec-shape">
           <summary>
             <span class="st-lbl">セルとマーカー</span>
             <span class="hint"><span id="hint-shape">四角</span> · <span id="hint-shape-color">単色</span></span>
@@ -933,7 +1124,7 @@
         </details>
 
         <!-- 背景 -->
-        <details class="sec">
+        <details class="sec" id="sec-bg">
           <summary>
             <span class="st-lbl">背景</span>
             <span class="hint" id="hint-bg">白</span>
@@ -945,7 +1136,7 @@
         </details>
 
         <!-- ロゴ -->
-        <details class="sec">
+        <details class="sec" id="sec-logo">
           <summary>
             <span class="st-lbl">中央のロゴ</span>
             <span class="hint" id="hint-logo">なし</span>
@@ -1191,7 +1382,7 @@
         </details>
 
         <!-- フレーム -->
-        <details class="sec">
+        <details class="sec" id="sec-frame">
           <summary>
             <span class="st-lbl">フレームと文字</span>
             <span class="hint" id="hint-frame">なし</span>
@@ -1414,6 +1605,20 @@
       </div>
     </div>
 
+    <!-- ===================== フルスクリーン表示（スマホ実機テスト用） ===================== -->
+    <div id="fullscreen-modal" class="fullscreen-modal hidden" role="dialog" aria-modal="true" aria-label="QRコード全画面プレビュー">
+      <div class="fullscreen-modal-backdrop"></div>
+      <div class="fullscreen-modal-card">
+        <button type="button" id="btn-fullscreen-close" class="fullscreen-modal-close" aria-label="閉じる">✕</button>
+        <div id="fullscreen-preview" class="fullscreen-preview-host"></div>
+      </div>
+    </div>
+
+    <!-- ===================== モバイル用フローティング・ミニプレビュー ===================== -->
+    <div id="float-preview" class="float-preview" role="button" tabindex="0" title="全画面表示（スマホ等のカメラでテストできます）" aria-label="全画面表示">
+      <div class="float-preview-inner" id="float-preview-svg"></div>
+    </div>
+
     <!-- ===================== 説明 ===================== -->
     <div class="prose">
       <h2>広告も有効期限もない、おしゃれなQRコードを無料で</h2>
@@ -1430,16 +1635,16 @@
 
       <h3>QRコードにできる中身</h3>
       <p>
-        URL・テキスト・メール・電話番号・SMS・Wi-Fi・連絡先（vCard）・位置情報の8種類に対応しています。
-        Wi-Fiならネットワーク名とパスワードを貼り紙に、連絡先なら名刺に、といった使い方ができます。
+        URL・SNS・テキスト・カレンダー予定・メール・電話番号・SMS・Wi-Fi・連絡先（vCard）・位置情報の10種類に対応しています。
+        SNSならユーザー名を入れるだけで公式URLと中央ロゴを自動設定でき、カレンダーならイベント日時と場所を登録、Wi-Fiならネットワーク名とパスワード（伏字/表示切り替え対応）を貼り紙に、連絡先なら名刺に、といった使い方ができます。
         どれも規格どおりの文字列をそのまま埋め込むので、読み取った側は追加のアプリなしで
         接続や登録の画面に進めます。
       </p>
 
       <h3>デザインでいじれるところ</h3>
       <ul>
-        <li>テンプレート28種類 — 定番・グラデ・多色・フレーム・個性派から選んで、そこから細かく詰められます。「おまかせデザイン」を押せば、地の明暗から配色・形・フレームまで毎回組み替えます</li>
-        <li>セル（データの点）16種類 — 四角・角丸・丸み強・ドット・六角形・八角形・フラワー・リーフ・雫・ひし形・星・ハート・十字・ばってん・縦横ライン</li>
+        <li>テンプレート29種類 — 定番・グラデ・多色・フレーム・個性派から選んで、そこから細かく詰められます。「おまかせデザイン」を押せば、地の明暗から配色・形・フレームまで毎回組み替えます</li>
+        <li>セル（データの点）17種類 — 連結（コネクテッド）・四角・角丸・丸み強・ドット・六角形・八角形・フラワー・リーフ・雫・ひし形・星・ハート・十字・ばってん・縦横ライン</li>
         <li>セルの詰め方 — 太さ、太さのバラつき（手で押したような揺らぎ）、マス目の密度まで動かせます</li>
         <li>マーカー（三隅の目印）— 枠9種類 × 目16種類、色も枠と目で別々に指定できます</li>
         <li>色 — 単色スウォッチ68色、グラデーション14種、角度指定つきの線形／放射グラデーション、セルごとに色を散らす多色モザイク。背景は白・黒・透明・セルの色との連動も選べます</li>

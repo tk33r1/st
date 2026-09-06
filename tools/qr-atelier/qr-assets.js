@@ -235,15 +235,27 @@
         frame: { type: 'none' }
       }
     },
+
     {
-      name: 'ソフト角丸',
+      name: 'コネクト・モダン',
       category: 'basic',
       style: {
-        cell: 'rounded', cellScale: 1, markerFrame: 'xrounded', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#111827' },
+        cell: 'connected', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#0F172A' },
         bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
         markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
         radius: 4, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'リキッド',
+      category: 'basic',
+      style: {
+        cell: 'liquid', cellScale: 1, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'solid', color: '#0F172A' },
+        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 5, margin: 4, frame: { type: 'none' }
       }
     },
     {
@@ -282,20 +294,7 @@
         radius: 2, margin: 4
       }
     },
-    {
-      // 暗い地に明るいセル。反転を承知のデザインなので invertOk を立てる
-      name: 'ナイト',
-      category: 'basic',
-      style: {
-        cell: 'rounded', cellScale: 1, markerFrame: 'xrounded', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#F8FAFC' },
-        bg: { type: 'solid', color: '#0B1220', transparency: 0 },
-        markerFramePaint: { type: 'solid', color: '#38BDF8' },
-        markerEyePaint: { type: 'solid', color: '#F8FAFC' },
-        radius: 5, margin: 4, frame: { type: 'none' },
-        invertOk: true
-      }
-    },
+
 
     // --- グラデーション (gradient) ---
     {
@@ -364,6 +363,18 @@
         radius: 5, margin: 4, frame: { type: 'none' }
       }
     },
+    {
+      name: 'アクア・リキッド',
+      category: 'gradient',
+      style: {
+        cell: 'liquid', cellScale: 1, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'linear', from: '#0369A1', to: '#1E3A8A', angle: 135 },
+        bg: { type: 'solid', color: '#F0F9FF', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#0369A1' },
+        markerEyePaint: { type: 'solid', color: '#1E3A8A' },
+        radius: 5, margin: 4, frame: { type: 'none' }
+      }
+    },
 
     // --- 多色モザイク (multi) ---
     {
@@ -390,16 +401,17 @@
       }
     },
     {
-      name: 'パステル・タイル',
+      name: '漆・和モダン',
       category: 'multi',
       style: {
-        cell: 'rounded', cellScale: 0.95, markerFrame: 'xrounded', markerEye: 'rounded',
-        fg: { type: 'multi', colors: ['#4F46E5', '#BE185D', '#0F766E'], seed: 42 },
-        bg: { type: 'solid', color: '#FDF4FF', transparency: 0 },
+        cell: 'rounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
+        fg: { type: 'multi', colors: ['#991B1B', '#1E293B', '#B45309', '#065F46'], seed: 21 },
+        bg: { type: 'solid', color: '#FDFBF7', transparency: 0 },
         markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
-        radius: 4, margin: 4, frame: { type: 'none' }
+        radius: 3, margin: 4, frame: { type: 'none' }
       }
     },
+
     {
       name: 'モザイク・ナイト',
       category: 'multi',
@@ -414,26 +426,9 @@
       }
     },
 
+
     // --- フレーム (frame) ---
-    {
-      name: 'スキャンしてね',
-      category: 'frame',
-      style: {
-        cell: 'rounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
-        fg: { type: 'solid', color: '#0F172A' },
-        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
-        markerFramePaint: { type: 'solid', color: '#2563EB' },
-        markerEyePaint: { type: 'solid', color: '#2563EB' },
-        frame: {
-          type: 'label', pos: 'bottom', contentMode: 'text',
-          text: 'スキャンしてね', font: 'rounded',
-          contentSize: 1, contentPad: 0.2,
-          backdropPaint: { type: 'none' },
-          paint: { type: 'auto' }, textPaint: { type: 'solid', color: '#FFFFFF' }
-        },
-        radius: 3, margin: 4
-      }
-    },
+
     {
       name: 'SCAN ME',
       category: 'frame',
@@ -452,6 +447,7 @@
         radius: 0, margin: 4
       }
     },
+
     {
       name: '上下ラベル',
       category: 'frame',
@@ -508,25 +504,7 @@
         radius: 5, margin: 4
       }
     },
-    {
-      name: 'ボタニカル',
-      category: 'frame',
-      style: {
-        cell: 'classy', cellScale: 1, markerFrame: 'leaf', markerEye: 'leaf',
-        fg: { type: 'solid', color: '#166534' },
-        bg: { type: 'solid', color: '#F0FDF4', transparency: 0 },
-        markerFramePaint: { type: 'solid', color: '#15803D' },
-        markerEyePaint: { type: 'solid', color: '#166534' },
-        frame: {
-          type: 'label', pos: 'bottom', contentMode: 'text',
-          text: 'FOLLOW US', font: 'serif',
-          contentSize: 0.9, contentPad: 0.22,
-          backdropPaint: { type: 'none' },
-          paint: { type: 'auto' }, textPaint: { type: 'solid', color: '#FFFFFF' }
-        },
-        radius: 2, margin: 4
-      }
-    },
+
 
     // --- 個性派 (unique) ---
     {
@@ -554,7 +532,7 @@
       }
     },
     {
-      name: '和モダン・椿',
+      name: '椿・和モダン',
       category: 'unique',
       style: {
         cell: 'plus', cellScale: 1, markerFrame: 'leaf', markerEye: 'leaf',
@@ -602,6 +580,19 @@
         markerEyePaint: { type: 'solid', color: '#BE185D' },
         radius: 2, margin: 4, frame: { type: 'none' }
       }
+    },
+    {
+      name: 'サイバー・サーキット',
+      category: 'unique',
+      style: {
+        cell: 'circuit', cellScale: 1, markerFrame: 'octagon', markerEye: 'octagon',
+        fg: { type: 'linear', from: '#10B981', to: '#06B6D4', angle: 45 },
+        bg: { type: 'solid', color: '#090D16', transparency: 0 },
+        markerFramePaint: { type: 'solid', color: '#10B981' },
+        markerEyePaint: { type: 'solid', color: '#06B6D4' },
+        radius: 3, margin: 4, frame: { type: 'none' },
+        invertOk: true
+      }
     }
   ];
 
@@ -624,7 +615,11 @@
     { id: 'plus',    name: '十字' },
     { id: 'xmark',   name: 'ばってん' },
     { id: 'vbar',    name: '縦ライン' },
-    { id: 'hbar',    name: '横ライン' }
+    { id: 'hbar',    name: '横ライン' },
+    { id: 'connected', name: '連結' },
+    { id: 'liquid',   name: 'リキッド' },
+    { id: 'circuit',  name: 'サーキット' },
+    { id: 'mosaic',   name: 'モザイク' }
   ];
 
   const MARKER_FRAMES = [
