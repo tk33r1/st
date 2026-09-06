@@ -239,6 +239,7 @@
     frameBottomIconGroup: 'brand',
     colorScope: 'cell',  // 最後に触った色パネル（＝着色対象）
     previewChecker: 'auto', // 'auto' | 'light' | 'dark'
+    rememberContent: true,  // 入力内容をこの端末に残すか（デザインの保存とは別）
     style: JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS))
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
@@ -352,6 +353,30 @@
     ];
   }
 
+  // パスワード欄だけは、覚える設定にかかわらず保存しない。ここに入るのは
+  // 自宅とはかぎらず、店や職場の Wi-Fi のこともある。消し忘れの影響が
+  // 入力した本人だけで終わらないので、入れ直す手間のほうを取る。
+  const SECRET_FIELDS = {};
+  TYPES.forEach(t => {
+    const keys = t.fields.filter(f => f.type === 'password').map(f => f.k);
+    if (keys.length) SECRET_FIELDS[t.id] = keys;
+  });
+
+  // 保存する入力内容。覚えない設定なら丸ごと落とす。state 側は触らないので
+  // 画面に出ているものは消えない（消えるのは端末に残るぶんだけ）。
+  function valuesToStore() {
+    if (!state.rememberContent) return null;
+    const out = {};
+    Object.keys(state.values).forEach(id => {
+      const secret = SECRET_FIELDS[id];
+      if (!secret) { out[id] = state.values[id]; return; }
+      const copy = Object.assign({}, state.values[id]);
+      secret.forEach(k => { copy[k] = ''; });
+      out[id] = copy;
+    });
+    return out;
+  }
+
   function save() {
     try {
       // 覚えられない画像は、複製せずに直列化しながら落とす。state を丸ごと
@@ -369,6 +394,8 @@
       const json = JSON.stringify(state, function (k, v) {
         // アイコンの実体は QRAssets から引き直せるので覚えない
         if (k === 'iconData' || k === 'topIconData') return undefined;
+        // 入力内容はここで差し替える（パスワードを抜く／丸ごと落とす）
+        if (k === 'values' && this === state) return valuesToStore();
         if (typeof v === 'string' && drop.has(v)) return '';
         // ロゴ本体の画像だけは、消したあと種類も戻さないと空のロゴが残る
         if (logoDropped && k === 'type' && this === state.style.logo) return 'none';
@@ -407,6 +434,7 @@
       if (['auto', 'light', 'dark'].indexOf(saved.previewChecker) >= 0) {
         state.previewChecker = saved.previewChecker;
       }
+      if (saved.rememberContent === false) state.rememberContent = false;
       if (window.QRCore.LEVELS.indexOf(state.ec) < 0) state.ec = 'H';
       state.minVersion = clampNum(state.minVersion, 1, 14, 1);
       if ([512, 1024, 2048, 4096].indexOf(state.exportSize) < 0) state.exportSize = 1024;
@@ -1731,6 +1759,8 @@
 
     $('opt-ec').value = state.ec;
     $('opt-size').value = String(state.exportSize);
+    const remember = $('opt-remember');
+    if (remember) remember.checked = state.rememberContent;
 
     COLOR_SCOPES.forEach(syncColorPanel);
 
@@ -1988,10 +2018,7 @@
   // ------------------------------------------------------------------
   let lastSvg = '';
   let lastPayload = '';
-  // コントラストの警告は、検査の結果が出たあとで言い換えることがある。
-  // そのための取っ手と、言い換えに使う数字。
-  let contrastAlert = null;
-  let lastLumaPct = 0;
+
   let renderTimer = null;
   let verifyTimer = null;
 
@@ -2068,22 +2095,8 @@
       meta.appendChild(el('span', { class: 'meta', title: m[1] }, m[0]));
     });
 
-    lastLumaPct = Math.round((out.lumaRatio || 0) * 100);
-    contrastAlert = null;
-    let contrastAlerted = false;
     out.warnings.forEach(w => {
-      // 文面の部分一致で拾っていたが、「画像セルは絵柄や明暗によって…」まで
-      // 引っかかって、自動調整のボタンが関係のない警告に付いていた。種類で見る。
-      const isContrast = w.kind === 'contrast';
-      if (isContrast && !contrastAlerted) {
-        contrastAlerted = true;
-        contrastAlert = pushAlert(w.level, w.text, {
-          label: 'コントラストを自動調整する',
-          onClick: autoFixContrast
-        });
-      } else {
-        pushAlert(w.level, w.text);
-      }
+      pushAlert(w.level, w.text);
     });
     setStatus('v' + qr.version + ' / ' + qr.ec, 'idle');
 
@@ -2095,53 +2108,7 @@
     }
   }
 
-  function autoFixContrast() {
-    const QRStyle = window.QRStyle;
-    const bgResolved = QRStyle.resolvePaint ? QRStyle.resolvePaint(state.style.bg, state.style.fg) : state.style.bg;
-    const bgCol = QRStyle.paintColor ? (QRStyle.paintColor(bgResolved) || '#FFFFFF') : '#FFFFFF';
-    const isBgLight = (QRStyle.luminance ? QRStyle.luminance(bgCol) : 1) > 0.45;
 
-    const fixColor = c => {
-      if (!c) return isBgLight ? '#111827' : '#F8FAFC';
-      // 目標は警告と同じ物差しで置く。WCAG 比を目標にすると、直したあとも
-      // 明暗差の警告が残って「押しても消えないボタン」になる。
-      return QRStyle.adjustReadability ? QRStyle.adjustReadability(c, bgCol, 0.38)
-        : QRStyle.adjustContrast ? QRStyle.adjustContrast(c, bgCol, 4.8)
-        : (isBgLight ? '#111827' : '#F8FAFC');
-    };
-
-    // セルの塗りを、元の色相・種類を保ったまま調整
-    if (state.style.fg) {
-      const fg = state.style.fg;
-      if (fg.type === 'solid') {
-        const origColor = fg.color || (isBgLight ? '#CCCCCC' : '#333333');
-        fg.color = fixColor(origColor);
-      } else if (fg.type === 'linear' || fg.type === 'radial') {
-        if (fg.from) fg.from = fixColor(fg.from);
-        if (fg.mid) fg.mid = fixColor(fg.mid);
-        if (fg.to) fg.to = fixColor(fg.to);
-      } else if (fg.type === 'multi' && Array.isArray(fg.colors)) {
-        fg.colors = fg.colors.map(c => fixColor(c));
-      } else if (fg.type === 'image' && fg.color) {
-        fg.color = fixColor(fg.color);
-      }
-    }
-
-    // マーカー枠やマーカー目も、別色指定かつコントラスト不足の場合に色相を活かして補正
-    ['markerFramePaint', 'markerEyePaint'].forEach(key => {
-      const p = state.style[key];
-      if (p && p.type === 'solid' && p.color) {
-        if (QRStyle.lumaRatio && QRStyle.lumaRatio(p.color, bgCol) >= QRStyle.LUMA_TIGHT) {
-          p.color = fixColor(p.color);
-        }
-      }
-    });
-
-    state.presetName = '';
-    syncControls();
-    update();
-    showToast('明暗差を自動調整しました（元の色合いを保って補正）');
-  }
 
   function pushAlert(level, text, action) {
     const a = el('div', { class: 'alert' + (level === 'error' ? ' error' : '') });
@@ -2161,19 +2128,7 @@
     return a;
   }
 
-  // 検査パネルが「読み取りOK」なのに、すぐ上で「明暗差が足りません」と赤が
-  // 出ていると、同じ画面のふたつのパネルが正反対のことを言うことになる。
-  // 実際に読めたという事実のほうが強い証拠なので、一段下げて言い換える。
-  // 消しはしない — 二値化の壁までの余裕が少ないこと自体は変わらないため。
-  function softenContrastAlert() {
-    if (!contrastAlert || !contrastAlert.parentNode) return;
-    const span = contrastAlert.querySelector('span');
-    if (!span) return;
-    contrastAlert.classList.remove('error');
-    span.textContent = 'この配色でも読み取れましたが、セルと背景の明暗差は限界に近めです（' +
-      lastLumaPct + '%、限界は 50%）。印刷やカメラ越しでは崩れることがあります。';
-    contrastAlert = null;   // 言い換えるのは一度だけ。次の描画でまた作り直す
-  }
+
 
   // ------------------------------------------------------------------
   // 読み取りテスト
@@ -2188,8 +2143,11 @@
     3: '読めない環境がありそうです'
   };
 
+  // 直近の判定。書き出す前に「赤のまま出そうとしていないか」を見るのに使う。
+  let lastVerdict = { kind: 'na', title: '', note: '' };
+
   function setVerdict(kind, title, note, engines) {
-    if (kind === 'ok') softenContrastAlert();
+    lastVerdict = { kind: kind, title: title, note: note || '' };
     $('verdict').className = 'verdict ' + kind;
     $('verdict-title').textContent = title;
     $('verdict-note').textContent = note || '';
@@ -2480,8 +2438,65 @@
     document.body.style.overflow = '';
   }
 
+  // 書き出す直前に、待っている検査を繰り上げて片づける。押した時点の絵で
+  // 判断したいので、180ms 後に走る予定のものを待たない。
+  async function settleVerdict() {
+    if (!verifyTimer) return;
+    clearTimeout(verifyTimer);
+    verifyTimer = null;
+    if (lastSvg && lastPayload) await verify(lastSvg, lastPayload, false);
+  }
+
+  // 赤い判定のときだけ、一度だけ訊く。印刷してから気づくのがいちばん高くつく。
+  function askExportAnyway() {
+    const modal = $('confirm-modal');
+    if (!modal) return Promise.resolve(true);
+    // 判定の文面は句点で終わらないことがある。次の文と地続きに見えないよう補う。
+    const note = lastVerdict.note || '';
+    const lead = !note ? '' : (note.charAt(note.length - 1) === '。' ? note : note + '。');
+    $('confirm-title').textContent = lastVerdict.title || '読み取れませんでした';
+    $('confirm-body').textContent = lead +
+      'このまま書き出すと、印刷したあとで読めないことに気づくかもしれません。';
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    const ok = $('btn-confirm-ok');
+    const cancel = $('btn-confirm-cancel');
+    return new Promise(resolve => {
+      function done(answer) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        ok.removeEventListener('click', onOk);
+        cancel.removeEventListener('click', onCancel);
+        modal.removeEventListener('click', onBackdrop);
+        window.removeEventListener('keydown', onKey);
+        resolve(answer);
+      }
+      function onOk() { done(true); }
+      function onCancel() { done(false); }
+      function onBackdrop(e) {
+        if (e.target === modal || e.target.classList.contains('fullscreen-modal-backdrop')) done(false);
+      }
+      function onKey(e) { if (e.key === 'Escape') done(false); }
+      ok.addEventListener('click', onOk);
+      cancel.addEventListener('click', onCancel);
+      modal.addEventListener('click', onBackdrop);
+      window.addEventListener('keydown', onKey);
+      cancel.focus();
+    });
+  }
+
+  // 書き出してよいか。読めない判定のときだけ確認を挟む。
+  // 「簡易チェックでは読めません」（黄）は止めない。軽いデコーダの失敗は
+  // 実機では読めることが多く、そこで止めると偽陰性で手を止めることになる。
+  async function okToExport() {
+    await settleVerdict();
+    if (lastVerdict.kind !== 'ng') return true;
+    return askExportAnyway();
+  }
+
   async function exportRaster(mime, ext, quality) {
     if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
+    if (!(await okToExport())) return;
     setStatus('rendering', '');
     try {
       const flatten = mime === 'image/jpeg' ? '#FFFFFF' : null;
@@ -2505,11 +2520,21 @@
 
   async function exportSvg() {
     if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
+    if (!(await okToExport())) return;
     const doc = '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) +
       window.QRStyle.resize(await withExportFonts(lastSvg), 1024);
     saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), fileStem() + '.svg');
     flashButtonSuccess($('btn-svg'), '✓ 保存完了');
     showToast('SVGを保存しました');
+  }
+
+  // コピーだけは確認を挟めない。Safari は「押されてすぐ」でないと
+  // クリップボードに書かせてくれず、ダイアログを出すと有効期限が切れる。
+  // 止めるかわりに、赤い判定のときは知らせを添える。
+  function copyNote() {
+    return lastVerdict.kind === 'ng'
+      ? '画像をコピーしました。読み取りテストは失敗しているので、使う前に確かめてください'
+      : '画像をコピーしました';
   }
 
   async function copyImage() {
@@ -2529,14 +2554,14 @@
     try {
       await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': png })]);
       flashButtonSuccess($('btn-copy'), '✓ コピー完了');
-      showToast('画像をコピーしました');
+      showToast(copyNote());
       if (window.STShare) STShare.celebrate();
     } catch (e) {
       // Promise を受け付けない実装もあるので、その場合は焼けた Blob で入れ直す
       try {
         await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': await png })]);
         flashButtonSuccess($('btn-copy'), '✓ コピー完了');
-        showToast('画像をコピーしました');
+        showToast(copyNote());
         if (window.STShare) STShare.celebrate();
       } catch (e2) {
         showToast('コピーできませんでした', 'error');
@@ -2773,6 +2798,19 @@
   function wire() {
     $('opt-ec').addEventListener('change', e => { state.ec = e.target.value; syncControls(); update(); });
     $('opt-size').addEventListener('change', e => { state.exportSize = parseInt(e.target.value, 10); saveNow(); });
+
+    // 入力内容をこの端末に残すかどうか。オフにした時点で、すでに保存されて
+    // いるぶんも消す（設定だけ変わって中身が残っていては意味がない）。
+    const optRemember = $('opt-remember');
+    if (optRemember) {
+      optRemember.addEventListener('change', () => {
+        state.rememberContent = optRemember.checked;
+        saveNow();
+        showToast(optRemember.checked
+          ? '入力内容をこの端末に残します（パスワードは除く）'
+          : '保存していた入力内容を消しました。デザインは残ります');
+      });
+    }
 
     COLOR_SCOPES.forEach(wireColorPanel);
 

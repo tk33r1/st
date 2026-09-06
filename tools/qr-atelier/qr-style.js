@@ -365,99 +365,6 @@
     return ('#' + toHex(rgb[0]) + toHex(rgb[1]) + toHex(rgb[2])).toUpperCase();
   }
 
-  // 元の色相と彩度をできるだけ保ったまま、背景とのコントラスト比が
-  // targetRatio（既定 4.8）に達するよう明度（L）を二分探索で調整する。
-  function adjustContrast(hex, bgHex, targetRatio) {
-    const target = targetRatio || 4.8;
-    const baseRgb = hexToRgb(hex);
-    if (!baseRgb) return hex;
-    const bg = bgHex || '#FFFFFF';
-    const currentRatio = contrastRatio(hex, bg);
-    if (currentRatio >= target) return hex;
-
-    const bgLum = luminance(bg);
-    let [h, s, l] = rgbToHsl(baseRgb[0], baseRgb[1], baseRgb[2]);
-    const shouldDarken = bgLum > 0.45;
-
-    let bestHex = hex;
-    let bestRatio = currentRatio;
-
-    if (shouldDarken) {
-      let low = 0.02, high = Math.min(l, 0.95);
-      for (let i = 0; i < 20; i++) {
-        const mid = (low + high) / 2;
-        const testS = Math.min(1, s * 1.05);
-        const testHex = rgbToHex(hslToRgb(h, testS, mid));
-        const r = contrastRatio(testHex, bg);
-        if (r >= target) {
-          bestHex = testHex;
-          bestRatio = r;
-          low = mid;
-        } else {
-          high = mid;
-        }
-      }
-      if (bestRatio < target) {
-        bestHex = rgbToHex(hslToRgb(h, s * 0.7, 0.05));
-      }
-    } else {
-      let low = Math.max(l, 0.05), high = 0.98;
-      for (let i = 0; i < 20; i++) {
-        const mid = (low + high) / 2;
-        const testHex = rgbToHex(hslToRgb(h, s, mid));
-        const r = contrastRatio(testHex, bg);
-        if (r >= target) {
-          bestHex = testHex;
-          bestRatio = r;
-          high = mid;
-        } else {
-          low = mid;
-        }
-      }
-      if (bestRatio < target) {
-        bestHex = rgbToHex(hslToRgb(h, s * 0.7, 0.95));
-      }
-    }
-
-    return bestHex;
-  }
-
-  // adjustContrast と同じ二分探索を、WCAG 比ではなく明るさの比でやる。
-  // 自動調整のあとに警告が残ると、押しても何も直らないボタンになってしまう。
-  function adjustReadability(hex, bgHex, target) {
-    const goal = target || 0.38;          // 壁 0.50 に対して少し余裕を持たせる
-    const baseRgb = hexToRgb(hex);
-    if (!baseRgb) return hex;
-    const bg = bgHex || '#FFFFFF';
-    if (lumaRatio(hex, bg) <= goal) return hex;
-
-    const [h, s, l] = rgbToHsl(baseRgb[0], baseRgb[1], baseRgb[2]);
-
-    // 明るくするか暗くするかは、背景の明るさだけでは決められない。中間の
-    // 背景で明るい側に振ると、白に張り付いてもまだ差が開かないことがある
-    // （#4A6FA5 を #9AB3D4 の上に置いた場合など）。両方やって良いほうを採る。
-    // 暗くするほうは白背景でも中間背景でも効くので、事実上「暗くできるなら
-    // 暗くする」になり、反転QRに化けるのは背景が本当に暗いときだけになる。
-    function bisect(darken) {
-      let low = darken ? 0.02 : Math.max(l, 0.05);
-      let high = darken ? Math.min(l, 0.95) : 0.98;
-      let best = rgbToHex(hslToRgb(h, s * 0.7, darken ? 0.05 : 0.95));
-      for (let i = 0; i < 20; i++) {
-        const mid = (low + high) / 2;
-        const testHex = rgbToHex(hslToRgb(h, darken ? Math.min(1, s * 1.05) : s, mid));
-        if (lumaRatio(testHex, bg) <= goal) {
-          best = testHex;
-          if (darken) low = mid; else high = mid;
-        } else {
-          if (darken) high = mid; else low = mid;
-        }
-      }
-      return best;
-    }
-
-    const darker = bisect(true), lighter = bisect(false);
-    return lumaRatio(darker, bg) <= lumaRatio(lighter, bg) ? darker : lighter;
-  }
 
   // 「白」「黒」「セルの色」は、それ自体が塗りではなく指定でしかない。実際に
   // 何で描かれるかを知りたい場所（描画・コントラスト判定・余白を補う色）が
@@ -545,6 +452,45 @@
     d += 'L' + n(x0) + ' ' + n(y0 + rr[0]);
     d += arc(0, x0 + rr[0], y0);
     return d + 'Z';
+  }
+
+  // 隣とくっつく形のセルの輪郭。時計回りに一周しながら、角ごとに
+  //   { r: 半径 }        … 外側の角。丸める
+  //   { ch: 落とし幅 }   … 外側の角。45度で落とす
+  //   { nx: 横, ny: 縦 } … 内側の角。隣の帯の内側の線まで欠き取る
+  //   null               … 直角
+  // を選ぶ。corners は [左上, 右上, 右下, 左下] の順。
+  // 回り方と始点は boxPath と同じ（左上の角を出たところから時計回り）。
+  function joinedBoxPath(x0, y0, x1, y1, corners) {
+    const P = (px, py) => n(px) + ' ' + n(py);
+    // 角ごとに「入ってくる辺が止まる点」「角の中の道」「出ていく辺が始まる点」。
+    // どちらの辺から入ってどちらへ出るかは角の位置で決まる（左上なら左辺から
+    // 入って上辺へ出る）ので、i の偶奇で縦横を振り分ける。
+    const geom = i => {
+      const k = corners[i] || {};
+      const cx = (i === 0 || i === 3) ? x0 : x1;
+      const cy = (i === 0 || i === 1) ? y0 : y1;
+      const sx = (i === 0 || i === 3) ? 1 : -1;
+      const sy = (i === 0 || i === 1) ? 1 : -1;
+      const hx = k.nx !== undefined ? k.nx : (k.r || k.ch || 0);
+      const vy = k.ny !== undefined ? k.ny : (k.r || k.ch || 0);
+      const onV = [cx, cy + sy * vy];
+      const onH = [cx + sx * hx, cy];
+      const vFirst = (i % 2) === 0;
+      const entry = vFirst ? onV : onH;
+      const exit = vFirst ? onH : onV;
+      let mid = '';
+      if (k.r) mid = 'A' + n(k.r) + ' ' + n(k.r) + ' 0 0 1 ' + P(exit[0], exit[1]);
+      else if (k.ch) mid = 'L' + P(exit[0], exit[1]);
+      else if (k.nx !== undefined) mid = 'L' + P(cx + sx * hx, cy + sy * vy) + 'L' + P(exit[0], exit[1]);
+      return { entry: entry, exit: exit, mid: mid };
+    };
+    const g = [geom(0), geom(1), geom(2), geom(3)];
+    return 'M' + P(g[0].exit[0], g[0].exit[1]) +
+      'L' + P(g[1].entry[0], g[1].entry[1]) + g[1].mid +
+      'L' + P(g[2].entry[0], g[2].entry[1]) + g[2].mid +
+      'L' + P(g[3].entry[0], g[3].entry[1]) + g[3].mid +
+      'L' + P(g[0].entry[0], g[0].entry[1]) + g[0].mid + 'Z';
   }
 
   function rectPath(x, y, w, h, r) {
@@ -726,6 +672,15 @@
   function cellsGroupedPath(grid, size, ox, oy, shape, scale, jitter, colors, seed) {
     const dark = (x, y) => x >= 0 && y >= 0 && x < size && y < size && grid[y * size + x] === 1;
     const jit = Math.max(0, Math.min(1, Number(jitter) || 0));
+
+    // セルが隣まで伸びるぶんの引っ込み量。ジッタで太さが揃わないので隣の値で測る。
+    const insAt = (ax, ay) => Math.max(0, (1 - cellScaleAt(ax, ay, scale, jit)) / 2);
+
+    // 両隣が暗いのに斜めが明るい角。箱の角をそのまま出すと、隣の帯の内側の線
+    // より外へ張り出して小さな突起になる（L字の内側に残る出っ張り）。
+    // 隣の帯の内側の線まで欠き取ってやると、帯の太さが一定になる。
+    const notchAt = (x, y, a, b, dx, dy) => (a && b && !dark(x + dx, y + dy))
+      ? { nx: insAt(x, y + dy), ny: insAt(x + dx, y) } : null;
     const isMulti = Array.isArray(colors) && colors.length > 1;
     const colorBuckets = new Map();
     if (isMulti) {
@@ -791,11 +746,17 @@
           const w = x1 - x0;
           const h = y1 - y0;
           const rBase = Math.min(w, h) * (shape === 'liquid' ? 0.5 : 0.45);
-          const rTL = (!top && !left) ? rBase : 0;
-          const rTR = (!top && !right) ? rBase : 0;
-          const rBR = (!bottom && !right) ? rBase : 0;
-          const rBL = (!bottom && !left) ? rBase : 0;
-          pushP(boxPath(x0, y0, x1, y1, [rTL, rTR, rBR, rBL], [1, 1, 1, 1]), x, y);
+          // リキッドは同じ角に逆アールのフィレットを足して滑らかにつなぐので、
+          // ここで欠き取らない（フィレットが覆う範囲と紙一重で、境に髪の毛ほどの
+          // 隙間が出る）。連結は欠き取って帯の太さを揃える。
+          const nt = (a, b, dx, dy) => (shape === 'liquid' ? null : notchAt(x, y, a, b, dx, dy));
+          const cor = (outer, notch) => (outer ? { r: rBase } : notch);
+          pushP(joinedBoxPath(x0, y0, x1, y1, [
+            cor(!top && !left, nt(top, left, -1, -1)),
+            cor(!top && !right, nt(top, right, 1, -1)),
+            cor(!bottom && !right, nt(bottom, right, 1, 1)),
+            cor(!bottom && !left, nt(bottom, left, -1, 1))
+          ]), x, y);
 
           // リキッドは内角（くぼみ）にも逆アールフィレットを入れて完全一体化
           // セルの太さ（s）で細くしたときも、枝の外側エッジの真の交点（inset 考慮）から正確に円弧を開始し、
@@ -842,17 +803,13 @@
 
           // 回路基板特有の45度斜め面取り配線（PCB Chamfer Trace）
           const ch = Math.min(x1 - x0, y1 - y0) * 0.22;
-          const pts = [];
-          pts.push([(!top && !left) ? x0 + ch : x0, y0]);
-          pts.push([(!top && !right) ? x1 - ch : x1, y0]);
-          if (!top && !right) pts.push([x1, y0 + ch]);
-          pts.push([x1, (!bottom && !right) ? y1 - ch : y1]);
-          if (!bottom && !right) pts.push([x1 - ch, y1]);
-          pts.push([(!bottom && !left) ? x0 + ch : x0, y1]);
-          if (!bottom && !left) pts.push([x0, y1 - ch]);
-          pts.push([x0, (!top && !left) ? y0 + ch : y0]);
-
-          pushP(polyPath(pts), x, y);
+          const cor = (outer, notch) => (outer ? { ch: ch } : notch);
+          pushP(joinedBoxPath(x0, y0, x1, y1, [
+            cor(!top && !left, notchAt(x, y, top, left, -1, -1)),
+            cor(!top && !right, notchAt(x, y, top, right, 1, -1)),
+            cor(!bottom && !right, notchAt(x, y, bottom, right, 1, 1)),
+            cor(!bottom && !left, notchAt(x, y, bottom, left, -1, 1))
+          ]), x, y);
         }
       }
     } else if (shape === 'mosaic') {
@@ -903,6 +860,29 @@
   function cellsPath(grid, size, ox, oy, shape, scale, jitter) {
     const groups = cellsGroupedPath(grid, size, ox, oy, shape, scale, jitter, null, 0);
     return groups[0].d;
+  }
+
+  // パスの数値をまとめて u 倍する（原点まわりの相似拡大）。cellsGroupedPath は
+  // 「1セル＝1」の座標系で組み立てるので、セルの大きさが 1 でない場所で使い回す
+  // ときにこれを通す。呼ぶ側が原点も u で割った系で渡せば平行移動は要らず、
+  // 相対コマンドもそのまま同じ倍率で効く。
+  // 円弧の回転角と2つのフラグ（3〜5番目）は長さではないので、そのまま通す。
+  function scalePath(d, u) {
+    const tokens = String(d).match(/[A-Za-z]|[-+]?[0-9.]+(?:[eE][-+]?[0-9]+)?/g);
+    if (!tokens) return '';
+    let out = '', cmd = '', arg = 0;
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (t.length === 1 && (t >= 'A' && t <= 'Z' || t >= 'a' && t <= 'z')) {
+        cmd = t; arg = 0; out += t;
+        continue;
+      }
+      const slot = (cmd === 'A' || cmd === 'a') ? arg % 7 : -1;
+      const keep = slot >= 2 && slot <= 4;
+      out += (arg ? ' ' : '') + (keep ? t : n(parseFloat(t) * u));
+      arg++;
+    }
+    return out;
   }
 
   // ------------------------------------------------------------------
@@ -1003,24 +983,34 @@
     let fillEvenOdd = false;
 
     if (g.key === 'cells') {
-      // 外周に、QR本体と同じ形のセルをぐるっと一周並べる。太さ＝セルの大きさ
+      // 外周に、QR本体と同じ形のセルをぐるっと一周並べる。太さ＝セルの大きさ。
+      //
+      // 並べ方は本体と同じ cellsGroupedPath に任せる。連結・リキッド・サーキット・
+      // 縦横ラインは「隣に何があるか」で形が変わり、モザイクに至っては単独と
+      // 連なりで形そのものが違う（ひし形／角丸四角）。ここで1マスずつ独立に
+      // 描いていたので、本体だけが繋がって枠は粒のまま、という食い違いが出ていた。
       const u = lw;
       const cols = Math.max(3, Math.round((W - inset * 2) / u));
       const rows = Math.max(3, Math.round((H - inset * 2) / u));
       const x0 = (W - cols * u) / 2, y0 = (H - rows * u) / 2;
       // 本体のセルは 100% だと隣とくっついてベタ帯に見えるので、枠では少し痩せさせる
       const t = Math.max(0.35, Math.min(0.86, (Number(o.cellScale) || 1) * 0.82));
-      const s = u * t;
-      const off = (u - s) / 2;
-      const put = (px, py) => { fillD += singleCellPath(o.cell || 'rounded', px + off, py + off, s); };
+      // 外周だけを暗にした格子を作って渡す。cellsGroupedPath は正方の格子を
+      // 前提にしているので、一辺は長いほうに合わせる（余りはすべて明のまま）。
+      const N = Math.max(cols, rows);
+      const ring = new Uint8Array(N * N);
       for (let i = 0; i < cols; i++) {
-        put(x0 + i * u, y0);
-        put(x0 + i * u, y0 + (rows - 1) * u);
+        ring[i] = 1;
+        ring[(rows - 1) * N + i] = 1;
       }
       for (let j = 1; j < rows - 1; j++) {
-        put(x0, y0 + j * u);
-        put(x0 + (cols - 1) * u, y0 + j * u);
+        ring[j * N] = 1;
+        ring[j * N + cols - 1] = 1;
       }
+      // 「1セル＝1」で組んでから u 倍する。原点も u で割って渡しておけば、
+      // 拡大だけで正しい位置に収まる。
+      const ringD = cellsGroupedPath(ring, N, x0 / u, y0 / u, o.cell || 'rounded', t, 0, null, 0)[0].d;
+      fillD = scalePath(ringD, u);
     } else if (g.key === 'stamp') {
       // ミシン目で縁取った札。地もこの形に切り抜くので、食い込みがそのまま外形になる
       const bite = stampBite(ls, lw);
@@ -2203,11 +2193,11 @@
     contrastRatio: contrastRatio,
     lumaRatio: lumaRatio,
     encodedLuma: encodedLuma,
-    adjustReadability: adjustReadability,
+
     LUMA_WALL: LUMA_WALL,
     LUMA_TIGHT: LUMA_TIGHT,
     luminance: luminance,
-    adjustContrast: adjustContrast,
+
     paintColor: paintColor,
     resolvePaint: resolvePaint,
     FONT_KEYS: FONT_KEYS,

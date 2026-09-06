@@ -515,6 +515,11 @@
     .field textarea { min-height: 96px; resize: vertical; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
     .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--accent); }
     .field .sub { font-size: 11.5px; color: var(--ink-3); }
+    .remember-row { flex-direction: row; align-items: center; gap: 9px;
+      margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rule); }
+    .remember-row > label { font-family: var(--font-ui); font-size: 12.5px;
+      letter-spacing: 0; text-transform: none; color: var(--ink-2); cursor: pointer; }
+    .remember-note { font-size: 11.5px; color: var(--ink-3); line-height: 1.65; margin: 7px 0 0; }
     .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     @media (max-width: 560px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
 
@@ -767,6 +772,14 @@
       padding: 20px;
     }
     .fullscreen-modal.hidden { display: none; }
+    .fullscreen-modal-card.confirm-card {
+      align-items: stretch; text-align: left;
+      padding: 20px; max-width: 400px; gap: 10px;
+    }
+    .confirm-card b { font-size: 14px; color: var(--ink); }
+    .confirm-card p { font-size: 12.5px; color: var(--ink-2); line-height: 1.7; margin: 0; }
+    .confirm-actions { display: flex; gap: 8px; margin-top: 6px; }
+    .confirm-actions > button { flex: 1 1 0%; justify-content: center; }
     .fullscreen-modal-backdrop {
       position: absolute;
       inset: 0;
@@ -1046,6 +1059,11 @@
           <div class="sec-body">
             <div class="chips" id="type-chips"></div>
             <div id="type-fields"></div>
+            <div class="field remember-row">
+              <input type="checkbox" id="opt-remember" class="tb-check" checked>
+              <label for="opt-remember">この端末に入力内容を残す</label>
+            </div>
+            <p class="remember-note">オフにすると、次に開いたとき入力欄は空になります。Wi-Fiのパスワードは、この設定にかかわらず保存しません。デザインの設定はどちらでも残ります。</p>
           </div>
         </details>
 
@@ -1614,6 +1632,19 @@
       </div>
     </div>
 
+    <!-- ===================== 書き出し前の確認（判定が赤のときだけ） ===================== -->
+    <div id="confirm-modal" class="fullscreen-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="fullscreen-modal-backdrop"></div>
+      <div class="fullscreen-modal-card confirm-card">
+        <b id="confirm-title">読み取れませんでした</b>
+        <p id="confirm-body"></p>
+        <div class="confirm-actions">
+          <button type="button" id="btn-confirm-cancel" class="st-btn">やめて直す</button>
+          <button type="button" id="btn-confirm-ok" class="st-btn-quiet">このまま書き出す</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ===================== モバイル用フローティング・ミニプレビュー ===================== -->
     <div id="float-preview" class="float-preview" role="button" tabindex="0" title="全画面表示（スマホ等のカメラでテストできます）" aria-label="全画面表示">
       <div class="float-preview-inner" id="float-preview-svg"></div>
@@ -1702,6 +1733,9 @@
         <b>Q. 作りかけのデザインは残りますか？</b>
         同じブラウザで開き直せば、直前の内容とデザインが戻ります。保存先はこの端末のブラウザの中だけで、
         サーバーには何も送られません。別の端末には引き継がれないので、大事なものは画像かSVGで書き出しておいてください。
+        Wi-Fiのパスワードだけは、他人の端末や共用のパソコンに残ると影響がその人だけで終わらないため、保存しません。
+        内容そのものを残したくないときは、「内容」の下にある「この端末に入力内容を残す」をオフにしてください
+        （オフにすると、それまでに保存されていた内容も消えます。デザインは残ります）。
       </div>
       <div class="qa">
         <b>Q. スマホでも使えますか？</b>
@@ -1885,9 +1919,9 @@
       </template>
 
   <script src="qr-core.js?v=20260905"></script>
-  <script src="qr-style.js?v=20260905_8"></script>
+  <script src="qr-style.js?v=20260906_2"></script>
   <script src="qr-assets.js?v=20260905"></script>
   <script src="qr-verify.js?v=20260905"></script>
-  <script src="app.js?v=20260905_10"></script>
+  <script src="app.js?v=20260906"></script>
 </body>
 </html>
