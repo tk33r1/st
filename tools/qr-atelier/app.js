@@ -235,6 +235,7 @@
     presetName: '',
     presetCategory: 'all',
     iconGroup: 'brand',
+    frameIconGroup: 'brand',
     frameTopIconGroup: 'brand',
     frameBottomIconGroup: 'brand',
     colorScope: 'cell',  // 最後に触った色パネル（＝着色対象）
@@ -244,9 +245,8 @@
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
 
-  // 色の設定パネルは着色対象ごとに1枚ずつ、その対象の形の設定のすぐ下に置く。
-  // 切り替えるタブはないので、スコープ名がそのまま対象名になる。
-  const COLOR_SCOPES = ['cell', 'frame', 'eye', 'bg', 'logobd', 'frameborder', 'framelabel', 'frametext', 'framebd'];
+  // 基本となる色設定パネル（セルと背景）
+  const COLOR_SCOPES = ['cell', 'bg'];
 
   // 画像の塗りの倍率（描画エンジンと同じ範囲。UI では % で見せる）
   const IMG_SCALE_MIN = (window.QRStyle && window.QRStyle.IMG_SCALE_MIN) || 0.2;
@@ -1517,36 +1517,6 @@
     renderGradients(cq(scope, 'grad-grid'), () => paintOfScope(scope), () => { state.colorScope = scope; });
   }
 
-  // 中央ロゴ用。
-  // ロゴの塗り（getLogoPaint）は「アイコン」パネルと「文字」パネルで共有していて、
-  // 部品の id もこの2つの頭違いで揃えてある。片方だけ描き直すと隠れているほうが
-  // 古い値のまま残るので、どちらも同じ内容で起こす。
-  const LOGO_PANES = ['logo', 'logo-text'];
-
-  function buildLogoMultiColorsList() {
-    LOGO_PANES.forEach(p => renderMultiColorsList($(p + '-multi-colors-list'), getLogoPaint(), $('btn-' + p + '-add-color')));
-  }
-
-  function buildLogoMultiPalettes() {
-    LOGO_PANES.forEach(p => renderMultiPalettes($(p + '-multi-palette-grid'), getLogoPaint));
-  }
-
-  function buildLogoGradColorsList() {
-    LOGO_PANES.forEach(p => renderGradColorsList($(p + '-grad-colors-list'), getLogoPaint(), $('btn-' + p + '-add-grad-color')));
-  }
-
-  function buildLogoGradients() {
-    LOGO_PANES.forEach(p => renderGradients($(p + '-grad-grid'), getLogoPaint));
-  }
-
-  function buildLogoSwatches() {
-    LOGO_PANES.forEach(p => renderSwatches($(p + '-swatch-host'), c => {
-      const lp = getLogoPaint();
-      lp.color = c;
-      state.style.logo.color = c;
-    }));
-  }
-
   function renderIconSvg(icon, uidPrefix) {
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
@@ -1601,21 +1571,15 @@
     });
   }
 
-  function buildFrameTopIconGrid() {
-    const currentIcon = (state.style.frame && state.style.frame.topIcon) || 'si-instagram';
-    renderIconGrid($('frame-top-icon-grid'), state.frameTopIconGroup, currentIcon, 'frame_top_grid_', icon => {
-      state.style.frame.topIcon = icon.id;
-      state.style.frame.topIconData = icon;
-      state.style.frame.topContentMode = 'icon';
-    });
-  }
-
-  function buildFrameBottomIconGrid() {
-    const currentIcon = (state.style.frame && state.style.frame.icon) || 'si-instagram';
-    renderIconGrid($('frame-bottom-icon-grid'), state.frameBottomIconGroup, currentIcon, 'frame_bot_grid_', icon => {
+  function buildFrameIconGrid() {
+    const currentIcon = (state.style.frame && (state.style.frame.icon || state.style.frame.topIcon)) || 'si-instagram';
+    renderIconGrid($('frame-icon-grid'), state.frameIconGroup || 'brand', currentIcon, 'frame_icon_grid_', icon => {
       state.style.frame.icon = icon.id;
       state.style.frame.iconData = icon;
+      state.style.frame.topIcon = icon.id;
+      state.style.frame.topIconData = icon;
       state.style.frame.contentMode = 'icon';
+      state.style.frame.topContentMode = 'icon';
     });
   }
 
@@ -1784,6 +1748,20 @@
     $('opt-minver').value = state.minVersion;
     $('val-minver').textContent = state.minVersion <= 1 ? '自動' : 'v' + state.minVersion + '以上';
 
+    // マーカー枠・目の色同期
+    const markerSyncCheck = $('opt-marker-sync');
+    const isMarkerSync = (!s.markerFramePaint || s.markerFramePaint.type === 'auto') && (!s.markerEyePaint || s.markerEyePaint.type === 'auto');
+    if (markerSyncCheck) markerSyncCheck.checked = isMarkerSync;
+    const markerCustomColors = $('marker-custom-colors');
+    if (markerCustomColors) markerCustomColors.classList.toggle('hidden', isMarkerSync);
+    const mFrameCol = (s.markerFramePaint && s.markerFramePaint.color) || '#000000';
+    if ($('marker-frame-color-picker')) $('marker-frame-color-picker').value = normHex(mFrameCol, '#000000');
+    if ($('marker-frame-color-hex')) $('marker-frame-color-hex').value = normHex(mFrameCol, '#000000');
+    const mEyeCol = (s.markerEyePaint && s.markerEyePaint.color) || '#000000';
+    if ($('marker-eye-color-picker')) $('marker-eye-color-picker').value = normHex(mEyeCol, '#000000');
+    if ($('marker-eye-color-hex')) $('marker-eye-color-hex').value = normHex(mEyeCol, '#000000');
+
+    // ロゴ同期
     setSeg('logo-mode', s.logo.type, 'mode');
     $('logo-icon-pane').classList.toggle('hidden', s.logo.type !== 'icon');
     $('logo-image-pane').classList.toggle('hidden', s.logo.type !== 'image');
@@ -1802,105 +1780,41 @@
       lp.type = 'auto';
     }
 
+    // アイコンモードの色同期
     setSeg('logo-color-mode-seg', lp.type, 'mode');
-
-    const isLBrand = lp.type === 'brand';
-    const isLAuto = lp.type === 'auto';
     const isLSolid = lp.type === 'solid';
-    const isLMulti = lp.type === 'multi';
-    const isLGrad = lp.type === 'linear' || lp.type === 'radial';
-    const isLImage = lp.type === 'image';
+    if ($('logo-pane-solid')) $('logo-pane-solid').classList.toggle('hidden', !isLSolid);
+    if ($('logo-solid-picker')) $('logo-solid-picker').value = normHex(lp.color, '#111827');
+    if ($('logo-solid-hex')) $('logo-solid-hex').value = normHex(lp.color, '#111827');
 
-    const pBrand = $('logo-pane-brand');
-    if (pBrand) pBrand.classList.toggle('hidden', !isLBrand);
-    const brandNotice = $('logo-brand-notice');
-    if (brandNotice) {
-      const curIcon = A.ICONS.find(i => i.id === s.logo.icon);
-      const isRaw = curIcon && !!curIcon.rawSvg;
-      brandNotice.textContent = isRaw
-        ? '※ 公式マルチカラーで表示されます。'
-        : '※ ブランド公式の指定色で表示されます。';
-    }
-
-    const pAuto = $('logo-pane-auto');
-    if (pAuto) pAuto.classList.toggle('hidden', !isLAuto);
-
-    const pSolid = $('logo-pane-solid');
-    if (pSolid) pSolid.classList.toggle('hidden', !isLSolid);
-    const solidPicker = $('logo-solid-picker');
-    const solidHex = $('logo-solid-hex');
-    if (solidPicker) solidPicker.value = normHex(lp.color, '#111827');
-    if (solidHex) solidHex.value = normHex(lp.color, '#111827');
-
-    const pMulti = $('logo-pane-multi');
-    if (pMulti) pMulti.classList.toggle('hidden', !isLMulti);
-    if (isLMulti) buildLogoMultiColorsList();
-
-    const pGrad = $('logo-pane-grad');
-    if (pGrad) pGrad.classList.toggle('hidden', !isLGrad);
-    const logoGradAngleRow = $('logo-grad-angle-row');
-    if (logoGradAngleRow) logoGradAngleRow.classList.toggle('hidden', lp.type === 'radial');
-    const angleRange = $('logo-target-angle');
-    const angleVal = $('val-logo-target-angle');
-    if (angleRange) angleRange.value = lp.angle || 45;
-    if (angleVal) angleVal.textContent = (lp.angle || 45) + '°';
-    if (isLGrad) buildLogoGradColorsList();
-
-    const pImage = $('logo-pane-image');
-    if (pImage) pImage.classList.toggle('hidden', !isLImage);
-    const imgMaskThumb = $('logo-image-mask-thumb');
-    if (imgMaskThumb) {
-      imgMaskThumb.classList.toggle('hidden', !(isLImage && lp.src));
-      if (lp.src) $('logo-image-mask-thumb-img').src = lp.src;
-    }
-    syncImageScaleRow($('logo-image-scale-row'), $('logo-image-scale'),
-      $('val-logo-image-scale'), lp, !!(isLImage && lp.src));
     // 文字（Text）用の同期
     setSeg('logo-font-seg', s.logo.font || 'sans', 'font');
-    setSeg('logo-text-color-mode-seg', lp.type, 'mode');
+    setSeg('logo-text-color-mode-seg', lp.type === 'solid' ? 'solid' : 'auto', 'mode');
+    if ($('logo-text-pane-solid')) $('logo-text-pane-solid').classList.toggle('hidden', !isLSolid);
+    if ($('logo-text-solid-picker')) $('logo-text-solid-picker').value = normHex(lp.color, '#111827');
+    if ($('logo-text-solid-hex')) $('logo-text-solid-hex').value = normHex(lp.color, '#111827');
+    if ($('logo-text')) $('logo-text').value = s.logo.text || '';
 
-    const pTextAuto = $('logo-text-pane-auto');
-    if (pTextAuto) pTextAuto.classList.toggle('hidden', !isLAuto);
+    // 下地の同期
+    const lbd = getLogoBackdropPaint();
+    const lbdType = lbd.type === 'solid' ? 'solid' : (lbd.type === 'black' ? 'black' : (lbd.type === 'none' ? 'none' : 'white'));
+    setSeg('logo-backdrop-mode-seg', lbdType, 'mode');
+    if ($('logo-backdrop-solid-row')) $('logo-backdrop-solid-row').classList.toggle('hidden', lbd.type !== 'solid');
+    if ($('logo-backdrop-solid-picker')) $('logo-backdrop-solid-picker').value = normHex(lbd.color, '#FFFFFF');
+    if ($('logo-backdrop-solid-hex')) $('logo-backdrop-solid-hex').value = normHex(lbd.color, '#FFFFFF');
 
-    const pTextSolid = $('logo-text-pane-solid');
-    if (pTextSolid) pTextSolid.classList.toggle('hidden', !isLSolid);
-    const textSolidPicker = $('logo-text-solid-picker');
-    const textSolidHex = $('logo-text-solid-hex');
-    if (textSolidPicker) textSolidPicker.value = normHex(lp.color, '#111827');
-    if (textSolidHex) textSolidHex.value = normHex(lp.color, '#111827');
-
-    const pTextMulti = $('logo-text-pane-multi');
-    if (pTextMulti) pTextMulti.classList.toggle('hidden', !isLMulti);
-
-    const pTextGrad = $('logo-text-pane-grad');
-    if (pTextGrad) pTextGrad.classList.toggle('hidden', !isLGrad);
-    const textLogoGradAngleRow = $('logo-text-grad-angle-row');
-    if (textLogoGradAngleRow) textLogoGradAngleRow.classList.toggle('hidden', lp.type === 'radial');
-    const textAngleRange = $('logo-text-target-angle');
-    const textAngleVal = $('val-logo-text-target-angle');
-    if (textAngleRange) textAngleRange.value = lp.angle || 45;
-    if (textAngleVal) textAngleVal.textContent = (lp.angle || 45) + '°';
-
-    const pTextImage = $('logo-text-pane-image');
-    if (pTextImage) pTextImage.classList.toggle('hidden', !isLImage);
-    const textImgMaskThumb = $('logo-text-image-mask-thumb');
-    if (textImgMaskThumb) {
-      textImgMaskThumb.classList.toggle('hidden', !(isLImage && lp.src));
-      if (lp.src) $('logo-text-image-mask-thumb-img').src = lp.src;
-    }
-    syncImageScaleRow($('logo-text-image-scale-row'), $('logo-text-image-scale'),
-      $('val-logo-text-image-scale'), lp, !!(isLImage && lp.src));
-    $('logo-text').value = s.logo.text || '';
-    $('logo-size').value = s.logo.size;
-    $('val-logosize').textContent = Math.round(s.logo.size * 100) + '%';
-    $('logo-pad').value = s.logo.pad;
-    $('val-logopad').textContent = Math.round(s.logo.pad * 100) + '%';
-    $('logo-thumb').classList.toggle('hidden', !(s.logo.type === 'image' && s.logo.src));
-    if (s.logo.src) $('logo-thumb-img').src = s.logo.src;
+    // ロゴ共通
+    if ($('logo-size')) $('logo-size').value = s.logo.size;
+    if ($('val-logosize')) $('val-logosize').textContent = Math.round(s.logo.size * 100) + '%';
+    if ($('logo-pad')) $('logo-pad').value = s.logo.pad;
+    if ($('val-logopad')) $('val-logopad').textContent = Math.round(s.logo.pad * 100) + '%';
+    if ($('logo-thumb')) $('logo-thumb').classList.toggle('hidden', !(s.logo.type === 'image' && s.logo.src));
+    if (s.logo.src && $('logo-thumb-img')) $('logo-thumb-img').src = s.logo.src;
     $('hint-logo').textContent = s.logo.type === 'none' ? 'なし'
       : s.logo.type === 'icon' ? ((A.ICONS.find(i => i.id === s.logo.icon) || {}).name || 'アイコン')
       : s.logo.type === 'image' ? '画像' : '文字';
 
+    // フレーム同期
     const isFrameLine = s.frame.type === 'line';
     const isFrameLabel = s.frame.type === 'label';
     if ($('frame-line-opts')) $('frame-line-opts').classList.toggle('hidden', !isFrameLine);
@@ -1921,84 +1835,52 @@
         : s.frame.line === 'balloon' ? '※ しっぽのぶん、下に伸びます。'
         : '';
     }
+    const linePaintMode = (s.frame.paint && s.frame.paint.type === 'solid') ? 'solid' : 'auto';
+    setSeg('frame-line-color-mode-seg', linePaintMode, 'mode');
+    if ($('frame-line-solid-row')) $('frame-line-solid-row').classList.toggle('hidden', linePaintMode !== 'solid');
+    const lineCol = (s.frame.paint && s.frame.paint.color) || s.frame.color || '#111827';
+    if ($('frame-line-solid-picker')) $('frame-line-solid-picker').value = normHex(lineCol, '#111827');
+    if ($('frame-line-solid-hex')) $('frame-line-solid-hex').value = normHex(lineCol, '#111827');
 
-    const framePos = (s.frame && s.frame.pos) || 'bottom';
+    const framePos = (s.frame && s.frame.pos === 'top') ? 'top' : 'bottom';
     setSeg('frame-pos-seg', framePos, 'pos');
 
-    const showTop = framePos === 'top' || framePos === 'both';
-    const showBottom = framePos === 'bottom' || framePos === 'both';
-    const isBoth = framePos === 'both';
+    const cMode = (s.frame && (framePos === 'top' ? (s.frame.topContentMode || s.frame.contentMode) : s.frame.contentMode)) || 'text';
+    setSeg('frame-content-mode-seg', cMode, 'mode');
+    if ($('frame-pane-text')) $('frame-pane-text').classList.toggle('hidden', cMode !== 'text');
+    if ($('frame-pane-icon')) $('frame-pane-icon').classList.toggle('hidden', cMode !== 'icon');
+    if ($('frame-pane-image')) $('frame-pane-image').classList.toggle('hidden', cMode !== 'image');
 
-    if ($('frame-section-top')) $('frame-section-top').classList.toggle('hidden', !showTop);
-    if ($('frame-section-bottom')) $('frame-section-bottom').classList.toggle('hidden', !showBottom);
+    // テキスト
+    if ($('frame-text')) $('frame-text').value = (framePos === 'top' ? (s.frame.textTop || s.frame.text) : s.frame.text) || '';
+    setSeg('frame-font-seg', (s.frame && s.frame.font) || 'sans', 'font');
+    const textCol = (s.frame.textPaint && s.frame.textPaint.color) || s.frame.textColor || '#FFFFFF';
+    if ($('frame-text-solid-picker')) $('frame-text-solid-picker').value = normHex(textCol, '#FFFFFF');
+    if ($('frame-text-solid-hex')) $('frame-text-solid-hex').value = normHex(textCol, '#FFFFFF');
 
-    if ($('frame-top-heading')) $('frame-top-heading').textContent = isBoth ? '上部ラベルの内容' : 'ラベルの内容';
-    if ($('frame-bottom-heading')) $('frame-bottom-heading').textContent = isBoth ? '下部ラベルの内容' : 'ラベルの内容';
-
-    // ---- 上部ラベル同期 ----
-    const topCMode = (s.frame && s.frame.topContentMode) || 'text';
-    setSeg('frame-top-content-mode-seg', topCMode, 'mode');
-    if ($('frame-top-pane-text')) $('frame-top-pane-text').classList.toggle('hidden', topCMode !== 'text');
-    if ($('frame-top-pane-icon')) $('frame-top-pane-icon').classList.toggle('hidden', topCMode !== 'icon');
-    if ($('frame-top-pane-image')) $('frame-top-pane-image').classList.toggle('hidden', topCMode !== 'image');
-
-    if ($('frame-text-top')) $('frame-text-top').value = (s.frame && s.frame.textTop) || '';
-
-    if ($('frame-top-icon-tabs')) {
-      Array.prototype.forEach.call($('frame-top-icon-tabs').children, t => {
-        t.classList.toggle('active', t.dataset.group === state.frameTopIconGroup);
+    // アイコン
+    if ($('frame-icon-tabs')) {
+      Array.prototype.forEach.call($('frame-icon-tabs').children, t => {
+        t.classList.toggle('active', t.dataset.group === (state.frameIconGroup || 'brand'));
       });
     }
-    const currentTopIcon = (s.frame && s.frame.topIcon) || 'si-instagram';
-    syncShapeGridActive('frame-top-icon-grid', currentTopIcon);
-    const topIconColorMode = (s.frame && s.frame.topIconColorMode) || 'brand';
-    setSeg('frame-top-icon-color-mode-seg', topIconColorMode, 'mode');
-    if ($('frame-top-icon-pane-solid')) $('frame-top-icon-pane-solid').classList.toggle('hidden', topIconColorMode !== 'solid');
-    const topIconColor = (s.frame && s.frame.topIconColor) || '#FFFFFF';
-    if ($('frame-top-icon-solid-picker')) $('frame-top-icon-solid-picker').value = normHex(topIconColor, '#FFFFFF');
-    if ($('frame-top-icon-solid-hex')) $('frame-top-icon-solid-hex').value = normHex(topIconColor, '#FFFFFF');
+    const curIcon = (framePos === 'top' ? (s.frame.topIcon || s.frame.icon) : s.frame.icon) || 'si-instagram';
+    syncShapeGridActive('frame-icon-grid', curIcon);
+    const iconColMode = (framePos === 'top' ? (s.frame.topIconColorMode || s.frame.iconColorMode) : s.frame.iconColorMode) || 'brand';
+    setSeg('frame-icon-color-mode-seg', iconColMode, 'mode');
+    if ($('frame-icon-solid-row')) $('frame-icon-solid-row').classList.toggle('hidden', iconColMode !== 'solid');
+    const iconCol = (framePos === 'top' ? (s.frame.topIconColor || s.frame.iconColor) : s.frame.iconColor) || '#FFFFFF';
+    if ($('frame-icon-solid-picker')) $('frame-icon-solid-picker').value = normHex(iconCol, '#FFFFFF');
+    if ($('frame-icon-solid-hex')) $('frame-icon-solid-hex').value = normHex(iconCol, '#FFFFFF');
 
-    const hasTopImg = !!(s.frame && s.frame.topSrc);
-    if ($('frame-top-image-thumb')) {
-      $('frame-top-image-thumb').classList.toggle('hidden', !hasTopImg);
-      if (hasTopImg && $('frame-top-image-thumb-img')) {
-        $('frame-top-image-thumb-img').src = s.frame.topSrc;
-      }
+    // 画像
+    const curImgSrc = (framePos === 'top' ? (s.frame.topSrc || s.frame.src) : s.frame.src) || '';
+    if ($('frame-image-thumb')) {
+      $('frame-image-thumb').classList.toggle('hidden', !curImgSrc);
+      if (curImgSrc && $('frame-image-thumb-img')) $('frame-image-thumb-img').src = curImgSrc;
     }
 
-    // ---- 下部ラベル同期 ----
-    const bottomCMode = (s.frame && s.frame.contentMode) || 'text';
-    setSeg('frame-bottom-content-mode-seg', bottomCMode, 'mode');
-    if ($('frame-bottom-pane-text')) $('frame-bottom-pane-text').classList.toggle('hidden', bottomCMode !== 'text');
-    if ($('frame-bottom-pane-icon')) $('frame-bottom-pane-icon').classList.toggle('hidden', bottomCMode !== 'icon');
-    if ($('frame-bottom-pane-image')) $('frame-bottom-pane-image').classList.toggle('hidden', bottomCMode !== 'image');
-
-    if ($('frame-text')) $('frame-text').value = (s.frame && s.frame.text) || '';
-    if ($('frame-text-label')) $('frame-text-label').textContent = isBoth ? '下部の文字' : 'フレームの文字';
-
-    if ($('frame-bottom-icon-tabs')) {
-      Array.prototype.forEach.call($('frame-bottom-icon-tabs').children, t => {
-        t.classList.toggle('active', t.dataset.group === state.frameBottomIconGroup);
-      });
-    }
-    const currentBottomIcon = (s.frame && s.frame.icon) || 'si-instagram';
-    syncShapeGridActive('frame-bottom-icon-grid', currentBottomIcon);
-    const bottomIconColorMode = (s.frame && s.frame.iconColorMode) || 'brand';
-    setSeg('frame-bottom-icon-color-mode-seg', bottomIconColorMode, 'mode');
-    if ($('frame-bottom-icon-pane-solid')) $('frame-bottom-icon-pane-solid').classList.toggle('hidden', bottomIconColorMode !== 'solid');
-    const bottomIconColor = (s.frame && s.frame.iconColor) || '#FFFFFF';
-    if ($('frame-bottom-icon-solid-picker')) $('frame-bottom-icon-solid-picker').value = normHex(bottomIconColor, '#FFFFFF');
-    if ($('frame-bottom-icon-solid-hex')) $('frame-bottom-icon-solid-hex').value = normHex(bottomIconColor, '#FFFFFF');
-
-    const hasBottomImg = !!(s.frame && s.frame.src);
-    if ($('frame-bottom-image-thumb')) {
-      $('frame-bottom-image-thumb').classList.toggle('hidden', !hasBottomImg);
-      if (hasBottomImg && $('frame-bottom-image-thumb-img')) {
-        $('frame-bottom-image-thumb-img').src = s.frame.src;
-      }
-    }
-
-    // ---- 共通：中身の大きさ・余白 ----
+    // 中身の大きさ・余白
     const fcSize = s.frame && s.frame.contentSize != null ? s.frame.contentSize : 1;
     const fcPad = s.frame && s.frame.contentPad != null ? s.frame.contentPad : 0.2;
     if ($('frame-content-size')) $('frame-content-size').value = fcSize;
@@ -2006,10 +1888,23 @@
     if ($('frame-content-pad')) $('frame-content-pad').value = fcPad;
     if ($('val-frame-content-pad')) $('val-frame-content-pad').textContent = Math.round(fcPad * 100) + '%';
 
-    // ---- 共通：フォント ----
-    setSeg('frame-font-seg', (s.frame && s.frame.font) || 'sans', 'font');
-    const hasAnyText = (showTop && topCMode === 'text') || (showBottom && bottomCMode === 'text');
-    if ($('frame-font-wrap')) $('frame-font-wrap').classList.toggle('hidden', !hasAnyText);
+    // 帯（フレーム）の色
+    const labelPaintMode = (s.frame.paint && s.frame.paint.type === 'solid') ? 'solid' : 'auto';
+    setSeg('frame-label-color-mode-seg', labelPaintMode, 'mode');
+    if ($('frame-label-solid-row')) $('frame-label-solid-row').classList.toggle('hidden', labelPaintMode !== 'solid');
+    const labelCol = (s.frame.paint && s.frame.paint.color) || s.frame.color || '#111827';
+    if ($('frame-label-solid-picker')) $('frame-label-solid-picker').value = normHex(labelCol, '#111827');
+    if ($('frame-label-solid-hex')) $('frame-label-solid-hex').value = normHex(labelCol, '#111827');
+
+    // 下地の色
+    const fbd = getFrameBackdropPaint();
+    const fbdMode = fbd.type === 'solid' ? 'solid' : (fbd.type === 'white' ? 'white' : 'none');
+    setSeg('frame-backdrop-color-mode-seg', fbdMode, 'mode');
+    if ($('frame-backdrop-solid-row')) $('frame-backdrop-solid-row').classList.toggle('hidden', fbdMode !== 'solid');
+    const fbdCol = fbd.color || '#FFFFFF';
+    if ($('frame-backdrop-solid-picker')) $('frame-backdrop-solid-picker').value = normHex(fbdCol, '#FFFFFF');
+    if ($('frame-backdrop-solid-hex')) $('frame-backdrop-solid-hex').value = normHex(fbdCol, '#FFFFFF');
+
     updateCanvasChecker();
   }
 
@@ -2021,6 +1916,7 @@
 
   let renderTimer = null;
   let verifyTimer = null;
+  let activeVerifyPromise = null;
 
   function scheduleUpdate() {
     if (renderTimer) clearTimeout(renderTimer);
@@ -2211,76 +2107,84 @@
       setVerdict('na', '読み取りテスト非対応', 'この環境では自動チェックできません', []);
       return;
     }
-    const pad = padColor();
-    setVerdict('na', 'チェック中…', '', []);
-    syncVerifyButton(true);
-    try {
-      const run = window.QRVerify.run({
-        render: px => rasterize(svg, px, pad),
-        expect: expect,
-        moduleWidth: moduleWidth(svg),
-        margin: state.style.margin,
-        padColor: pad,
-        heavy: heavy,
-        onProgress: t => setVerdict('na', t, '', [])
-      });
-      const r = await run;
-      if (!r) return;                       // 新しい検査に追い越された
-      // 読み込めなかったデコーダは「読めなかった」ではない。確かめられていない
-      // だけなので、判定の分母から外したうえで、その旨をはっきり添える。
-      missingNames = r.engines.filter(e => e.state === 'unavailable').map(e => e.name);
-      const missing = missingNames.length
-        ? '（' + missingNames.join('と') + 'は読み込めず、確認できていません）' : '';
+    const p = (async () => {
+      const pad = padColor();
+      setVerdict('na', 'チェック中…', '', []);
       syncVerifyButton(true);
+      try {
+        const run = window.QRVerify.run({
+          render: px => rasterize(svg, px, pad),
+          expect: expect,
+          moduleWidth: moduleWidth(svg),
+          margin: state.style.margin,
+          padColor: pad,
+          heavy: heavy,
+          onProgress: t => setVerdict('na', t, '', [])
+        });
+        const r = await run;
+        if (!r) return;                       // 新しい検査に追い越された
+        // 読み込めなかったデコーダは「読めなかった」ではない。確かめられていない
+        // だけなので、判定の分母から外したうえで、その旨をはっきり添える。
+        missingNames = r.engines.filter(e => e.state === 'unavailable').map(e => e.name);
+        const missing = missingNames.length
+          ? '（' + missingNames.join('と') + 'は読み込めず、確認できていません）' : '';
+        syncVerifyButton(true);
 
-      if (!r.ran) {
-        setVerdict('na', 'チェックできません',
-          'デコーダを読み込めませんでした。通信状態を確かめて、もう一度お試しください',
-          r.engines);
-      } else if (r.level === 'ng' && !window.QRVerify.heavyLoaded()) {
-        // 軽いデコーダしか動いていない段階での失敗は、証拠として弱い。jsQR は
-        // 装飾に厳しく、そこで落ちても実機では読めることが多い。断定せずに
-        // 詳しい検査へ誘導する。
-        setVerdict('fair', '簡易チェックでは読めません',
-          '実機のカメラなら読めることがあります。「詳しく検査」で確かめてください', r.engines);
-      } else if (r.level === 'ng') {
-        setVerdict('ng', r.mismatch ? '内容がずれています' : '読み取れませんでした',
-          r.mismatch ? '別の内容として読まれています。ロゴや装飾を控えめにしてください'
-                     : 'コントラスト・ロゴの大きさ・余白を見直してください', r.engines);
-      } else if (r.level === 'best') {
-        setVerdict('ok', '読み取りOK',
-          (r.ran > 1 ? r.ran + 'つのデコーダすべてが' : '') + '全解像度で成功。' +
-          (missing ? '確かめられた範囲では問題ありません' + missing
-                   : 'どの読み取り環境でも読めます'), r.engines);
-      } else {
-        const bad = r.engines.filter(e => e.state !== 'ok' && e.state !== 'unavailable')
-          .sort((a, b) => b.severity - a.severity);
-        const worst = bad[0];
-        // 実機系（severity 3）とアプリ系（2）が全部通っているなら、残りは jsQR の
-        // 苦手な形というだけ。これで警告を出すと形の半分以上が黄色になり、直した
-        // はずの偽陰性が戻ってくる。緑のまま、事実だけ添える。
-        const strong = r.engines.filter(e => e.severity >= 2 && e.state !== 'unavailable');
-        if (strong.length && strong.every(e => e.state === 'ok')) {
+        if (!r.ran) {
+          setVerdict('na', 'チェックできません',
+            'デコーダを読み込めませんでした。通信状態を確かめて、もう一度お試しください',
+            r.engines);
+        } else if (r.level === 'ng' && !window.QRVerify.heavyLoaded()) {
+          // 軽いデコーダしか動いていない段階での失敗は、証拠として弱い。jsQR は
+          // 装飾に厳しく、そこで落ちても実機では読めることが多い。断定せずに
+          // 詳しい検査へ誘導する。
+          setVerdict('fair', '簡易チェックでは読めません',
+            '実機のカメラなら読めることがあります。「詳しく検査」で確かめてください', r.engines);
+        } else if (r.level === 'ng') {
+          setVerdict('ng', r.mismatch ? '内容がずれています' : '読み取れませんでした',
+            r.mismatch ? '別の内容として読まれています。ロゴや装飾を控えめにしてください'
+                       : 'コントラスト・ロゴの大きさ・余白を見直してください', r.engines);
+        } else if (r.level === 'best') {
           setVerdict('ok', '読み取りOK',
-            '実機のカメラでもスキャナアプリでも読めます。' + worst.name +
-            'のような簡素なデコーダだけが苦手な形です' + missing, r.engines);
-        } else if (worst.severity >= 3 && worst.state === 'partial') {
-          // 実機系までもが「一部の解像度でしか読めない」＝解像度依存。書き出した
-          // 画像をそのまま読ませると失敗するので、そこを名指しで言う。
-          setVerdict('fair', '解像度によって読めません',
-            '小さく写したときは読めますが、拡大すると読めなくなります。' +
-            '書き出した画像をそのまま読ませると失敗する可能性が高いので、' +
-            'マーカーの目や太さのバラつきを控えめにしてください' + missing, r.engines);
+            (r.ran > 1 ? r.ran + 'つのデコーダすべてが' : '') + '全解像度で成功。' +
+            (missing ? '確かめられた範囲では問題ありません' + missing
+                     : 'どの読み取り環境でも読めます'), r.engines);
         } else {
-          setVerdict('fair', PARTIAL[worst.severity],
-            r.passed + '/' + r.ran + 'のデコーダで安定。' + worst.name +
-            (worst.state === 'partial' ? 'は一部の解像度でしか読めず、' : 'では読めず、') +
-            worst.onFail + missing, r.engines);
+          const bad = r.engines.filter(e => e.state !== 'ok' && e.state !== 'unavailable')
+            .sort((a, b) => b.severity - a.severity);
+          const worst = bad[0];
+          // 実機系（severity 3）とアプリ系（2）が全部通っているなら、残りは jsQR の
+          // 苦手な形というだけ。これで警告を出すと形の半分以上が黄色になり、直した
+          // はずの偽陰性が戻ってくる。緑のまま、事実だけ添える。
+          const strong = r.engines.filter(e => e.severity >= 2 && e.state !== 'unavailable');
+          if (strong.length && strong.every(e => e.state === 'ok')) {
+            setVerdict('ok', '読み取りOK',
+              '実機のカメラでもスキャナアプリでも読めます。' + worst.name +
+              'のような簡素なデコーダだけが苦手な形です' + missing, r.engines);
+          } else if (worst.severity >= 3 && worst.state === 'partial') {
+            // 実機系までもが「一部の解像度でしか読めない」＝解像度依存。書き出した
+            // 画像をそのまま読ませると失敗するので、そこを名指しで言う。
+            setVerdict('fair', '解像度によって読めません',
+              '小さく写したときは読めますが、拡大すると読めなくなります。' +
+              '書き出した画像をそのまま読ませると失敗する可能性が高いので、' +
+              'マーカーの目や太さのバラつきを控えめにしてください' + missing, r.engines);
+          } else {
+            setVerdict('fair', PARTIAL[worst.severity],
+              r.passed + '/' + r.ran + 'のデコーダで安定。' + worst.name +
+              (worst.state === 'partial' ? 'は一部の解像度でしか読めず、' : 'では読めず、') +
+              worst.onFail + missing, r.engines);
+          }
         }
+        markChecked();   // setVerdict が class を書き換えるので、必ずその後で
+      } catch (e) {
+        setVerdict('na', 'チェックできず', '', []);
       }
-      markChecked();   // setVerdict が class を書き換えるので、必ずその後で
-    } catch (e) {
-      setVerdict('na', 'チェックできず', '', []);
+    })();
+    activeVerifyPromise = p;
+    try {
+      await p;
+    } finally {
+      if (activeVerifyPromise === p) activeVerifyPromise = null;
     }
   }
 
@@ -2440,11 +2344,15 @@
 
   // 書き出す直前に、待っている検査を繰り上げて片づける。押した時点の絵で
   // 判断したいので、180ms 後に走る予定のものを待たない。
+  // すでに検査が走っている最中なら、その完了を待つ。
   async function settleVerdict() {
-    if (!verifyTimer) return;
-    clearTimeout(verifyTimer);
-    verifyTimer = null;
-    if (lastSvg && lastPayload) await verify(lastSvg, lastPayload, false);
+    if (verifyTimer) {
+      clearTimeout(verifyTimer);
+      verifyTimer = null;
+      if (lastSvg && lastPayload) await verify(lastSvg, lastPayload, false);
+    } else if (activeVerifyPromise) {
+      await activeVerifyPromise;
+    }
   }
 
   // 赤い判定のときだけ、一度だけ訊く。印刷してから気づくのがいちばん高くつく。
@@ -2814,6 +2722,36 @@
 
     COLOR_SCOPES.forEach(wireColorPanel);
 
+    // マーカー色（連動トグル ＆ 別色指定時の単色ピッカー）
+    const markerSync = $('opt-marker-sync');
+    if (markerSync) {
+      markerSync.addEventListener('change', () => {
+        if (markerSync.checked) {
+          state.style.markerFramePaint = { type: 'auto' };
+          state.style.markerEyePaint = { type: 'auto' };
+        } else {
+          const fc = $('marker-frame-color-picker') ? $('marker-frame-color-picker').value : '#000000';
+          const ec = $('marker-eye-color-picker') ? $('marker-eye-color-picker').value : '#000000';
+          state.style.markerFramePaint = { type: 'solid', color: fc };
+          state.style.markerEyePaint = { type: 'solid', color: ec };
+        }
+        state.presetName = '';
+        syncControls();
+        update();
+      });
+    }
+    bindColor('marker-frame-color-picker', 'marker-frame-color-hex', v => {
+      state.style.markerFramePaint = { type: 'solid', color: v };
+      state.presetName = '';
+      update();
+    });
+    bindColor('marker-eye-color-picker', 'marker-eye-color-hex', v => {
+      state.style.markerEyePaint = { type: 'solid', color: v };
+      state.presetName = '';
+      update();
+    });
+
+    // ロゴ種類
     bindSeg('logo-mode', 'mode', v => {
       state.style.logo.type = v;
       if (v === 'icon' && !state.style.logo.iconData) {
@@ -2827,96 +2765,59 @@
       }
     });
 
-    bindColor('logo-text-color', null, v => { state.style.logo.color = v; });
-
-    // ロゴの塗りは「アイコン」パネルと「文字」パネルの両方から触れる。中身は
-    // getLogoPaint() ひとつなので、同じ操作を id の頭だけ変えて2枚ぶん結線する。
-    // 片方を動かしたらもう片方の目盛りも合うよう、どの操作も syncControls を通す。
-    const afterLogoPaint = () => {
+    // ロゴアイコン色
+    bindSeg('logo-color-mode-seg', 'mode', v => {
+      const lp = getLogoPaint();
+      lp.type = v;
+      if (v === 'solid' && !lp.color) lp.color = '#111827';
       state.presetName = '';
       syncControls();
       update();
-    };
-
-    LOGO_PANES.forEach(pane => {
-      bindSeg(pane + '-color-mode-seg', 'mode', v => {
-        getLogoPaint().type = v;
-        afterLogoPaint();
-      });
-
-      bindColor(pane + '-solid-picker', pane + '-solid-hex', v => {
-        getLogoPaint().color = v;
-        state.style.logo.color = v;
-        state.presetName = '';
-        update();
-      });
-
-      bindRange(pane + '-target-angle', 'val-' + pane + '-target-angle', v => v + '°', v => {
-        getLogoPaint().angle = v;
-        state.presetName = '';
-        update();
-      });
-
-      const addColor = $('btn-' + pane + '-add-color');
-      if (addColor) addColor.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        if (!Array.isArray(lp.colors)) lp.colors = ['#2563EB', '#7C3AED'];
-        if (lp.colors.length >= 8) return;
-        const last = lp.colors[lp.colors.length - 1];
-        const prev = lp.colors.length > 1 ? lp.colors[lp.colors.length - 2] : '#2563EB';
-        lp.colors.push(blendHex(last, prev));
-        afterLogoPaint();
-      });
-
-      const shuffleColor = $('btn-' + pane + '-shuffle-color');
-      if (shuffleColor) shuffleColor.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        if (!Array.isArray(lp.colors) || lp.colors.length <= 1) return;
-        for (let i = lp.colors.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          const t = lp.colors[i];
-          lp.colors[i] = lp.colors[j];
-          lp.colors[j] = t;
-        }
-        lp.seed = (lp.seed || 0) + 1;
-        afterLogoPaint();
-      });
-
-      const addGrad = $('btn-' + pane + '-add-grad-color');
-      if (addGrad) addGrad.addEventListener('click', () => {
-        const lp = getLogoPaint();
-        if (lp.mid) return;
-        lp.mid = blendHex(lp.from || '#FC466B', lp.to || '#3F5EFB');
-        afterLogoPaint();
-      });
-
-      // 塗りに敷く画像（マスク）
-      wireImageDrop(pane + '-image-mask-drop', pane + '-image-mask-file',
-        IMAGE_TARGETS.logoMask);
-      wireImageUrlInput('btn-' + pane + '-image-mask-url', pane + '-image-mask-url',
-        IMAGE_TARGETS.logoMask);
-      wireImageClear('btn-' + pane + '-image-mask-clear', pane + '-image-mask-file', () => {
-        getLogoPaint().src = '';
-      });
-
-      bindRange(pane + '-image-scale', 'val-' + pane + '-image-scale', v => Math.round(v) + '%', v => {
-        getLogoPaint().imgScale = Math.round(v) / 100;
-        state.presetName = '';
-        syncControls();
-      });
-      const scaleReset = $('btn-' + pane + '-image-scale-reset');
-      if (scaleReset) scaleReset.addEventListener('click', () => {
-        getLogoPaint().imgScale = 1;
-        afterLogoPaint();
-      });
     });
+    bindColor('logo-solid-picker', 'logo-solid-hex', v => {
+      getLogoPaint().color = v;
+      state.style.logo.color = v;
+      state.presetName = '';
+      update();
+    });
+
+    // ロゴ文字色
+    bindSeg('logo-text-color-mode-seg', 'mode', v => {
+      const lp = getLogoPaint();
+      lp.type = v;
+      if (v === 'solid' && !lp.color) lp.color = '#111827';
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+    bindColor('logo-text-solid-picker', 'logo-text-solid-hex', v => {
+      getLogoPaint().color = v;
+      state.style.logo.color = v;
+      state.presetName = '';
+      update();
+    });
+
+    // ロゴ下地色
+    bindSeg('logo-backdrop-mode-seg', 'mode', v => {
+      const lbd = getLogoBackdropPaint();
+      lbd.type = v;
+      if (v === 'solid' && !lbd.color) lbd.color = '#FFFFFF';
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+    bindColor('logo-backdrop-solid-picker', 'logo-backdrop-solid-hex', v => {
+      getLogoBackdropPaint().color = v;
+      state.presetName = '';
+      update();
+    });
+
     bindColor('frame-color', null, v => { state.style.frame.color = v; });
     bindColor('frame-textcolor', null, v => { state.style.frame.textColor = v; });
     bindRange('opt-cellscale', 'val-cellscale', v => Math.round(v * 100) + '%', v => { state.style.cellScale = v; });
     bindRange('opt-celljitter', 'val-celljitter', v => Math.round(v * 100) + '%', v => { state.style.cellJitter = v; });
     bindRange('opt-margin', 'val-margin', v => String(v), v => {
       state.style.margin = v;
-      // 余白を狭めたら角丸の上限も下がる
       syncControls();
     });
     bindRange('opt-radius', 'val-radius', v => String(v), v => { state.style.radius = v; });
@@ -2940,10 +2841,55 @@
       update();
     });
 
+    // フレーム位置・種類・内容
     bindSeg('frame-pos-seg', 'pos', v => {
       state.style.frame.pos = v;
       state.presetName = '';
       syncControls();
+      update();
+    });
+
+    bindSeg('frame-content-mode-seg', 'mode', v => {
+      state.style.frame.contentMode = v;
+      state.style.frame.topContentMode = v;
+      if (v === 'icon' && !state.style.frame.iconData) {
+        const first = A.ICONS.find(i => i.group === (state.frameIconGroup || 'brand')) || A.ICONS[0];
+        state.style.frame.icon = first.id;
+        state.style.frame.iconData = first;
+        state.style.frame.topIcon = first.id;
+        state.style.frame.topIconData = first;
+        buildFrameIconGrid();
+      }
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+
+    const frameIconTabs = $('frame-icon-tabs');
+    if (frameIconTabs) {
+      Array.prototype.forEach.call(frameIconTabs.children, b => {
+        b.addEventListener('click', () => {
+          state.frameIconGroup = b.dataset.group;
+          state.frameTopIconGroup = b.dataset.group;
+          state.frameBottomIconGroup = b.dataset.group;
+          Array.prototype.forEach.call(frameIconTabs.children, t => t.classList.toggle('active', t === b));
+          buildFrameIconGrid();
+        });
+      });
+    }
+
+    bindSeg('frame-icon-color-mode-seg', 'mode', v => {
+      state.style.frame.iconColorMode = v;
+      state.style.frame.topIconColorMode = v;
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+
+    bindColor('frame-icon-solid-picker', 'frame-icon-solid-hex', v => {
+      state.style.frame.iconColor = v;
+      state.style.frame.topIconColor = v;
+      state.presetName = '';
       update();
     });
 
@@ -2953,94 +2899,65 @@
       update();
     });
 
-    // ---- 上部ラベル ----
-    bindSeg('frame-top-content-mode-seg', 'mode', v => {
-      state.style.frame.topContentMode = v;
-      if (v === 'icon' && !state.style.frame.topIconData) {
-        const first = A.ICONS.find(i => i.group === state.frameTopIconGroup) || A.ICONS[0];
-        state.style.frame.topIcon = first.id;
-        state.style.frame.topIconData = first;
-        buildFrameTopIconGrid();
-      }
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-
-    const frameTopIconTabs = $('frame-top-icon-tabs');
-    if (frameTopIconTabs) {
-      Array.prototype.forEach.call(frameTopIconTabs.children, b => {
-        b.addEventListener('click', () => {
-          state.frameTopIconGroup = b.dataset.group;
-          Array.prototype.forEach.call(frameTopIconTabs.children, t => t.classList.toggle('active', t === b));
-          buildFrameTopIconGrid();
-        });
-      });
-    }
-
-    bindSeg('frame-top-icon-color-mode-seg', 'mode', v => {
-      state.style.frame.topIconColorMode = v;
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-
-    bindColor('frame-top-icon-solid-picker', 'frame-top-icon-solid-hex', v => {
-      state.style.frame.topIconColor = v;
-      state.presetName = '';
-      update();
-    });
-
-    // ---- 下部ラベル ----
-    bindSeg('frame-bottom-content-mode-seg', 'mode', v => {
-      state.style.frame.contentMode = v;
-      if (v === 'icon' && !state.style.frame.iconData) {
-        const first = A.ICONS.find(i => i.group === state.frameBottomIconGroup) || A.ICONS[0];
-        state.style.frame.icon = first.id;
-        state.style.frame.iconData = first;
-        buildFrameBottomIconGrid();
-      }
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-
-    const frameBottomIconTabs = $('frame-bottom-icon-tabs');
-    if (frameBottomIconTabs) {
-      Array.prototype.forEach.call(frameBottomIconTabs.children, b => {
-        b.addEventListener('click', () => {
-          state.frameBottomIconGroup = b.dataset.group;
-          Array.prototype.forEach.call(frameBottomIconTabs.children, t => t.classList.toggle('active', t === b));
-          buildFrameBottomIconGrid();
-        });
-      });
-    }
-
-    bindSeg('frame-bottom-icon-color-mode-seg', 'mode', v => {
-      state.style.frame.iconColorMode = v;
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-
-    bindColor('frame-bottom-icon-solid-picker', 'frame-bottom-icon-solid-hex', v => {
-      state.style.frame.iconColor = v;
-      state.presetName = '';
-      update();
-    });
-
     $('frame-text').addEventListener('input', e => {
       state.style.frame.text = e.target.value;
+      state.style.frame.textTop = e.target.value;
       scheduleUpdate();
     });
 
-    const frameTextTop = $('frame-text-top');
-    if (frameTextTop) {
-      frameTextTop.addEventListener('input', e => {
-        state.style.frame.textTop = e.target.value;
-        scheduleUpdate();
-      });
-    }
+    bindColor('frame-text-solid-picker', 'frame-text-solid-hex', v => {
+      state.style.frame.textColor = v;
+      state.style.frame.textPaint = { type: 'solid', color: v };
+      state.presetName = '';
+      update();
+    });
+
+    // 帯（フレーム）の色
+    bindSeg('frame-label-color-mode-seg', 'mode', v => {
+      const picker = $('frame-label-solid-picker');
+      const curCol = picker ? picker.value : '#111827';
+      state.style.frame.paint = v === 'auto' ? { type: 'auto' } : { type: 'solid', color: curCol };
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+    bindColor('frame-label-solid-picker', 'frame-label-solid-hex', v => {
+      state.style.frame.paint = { type: 'solid', color: v };
+      state.style.frame.color = v;
+      state.presetName = '';
+      update();
+    });
+
+    // 枠線の色
+    bindSeg('frame-line-color-mode-seg', 'mode', v => {
+      const picker = $('frame-line-solid-picker');
+      const curCol = picker ? picker.value : '#111827';
+      state.style.frame.paint = v === 'auto' ? { type: 'auto' } : { type: 'solid', color: curCol };
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+    bindColor('frame-line-solid-picker', 'frame-line-solid-hex', v => {
+      state.style.frame.paint = { type: 'solid', color: v };
+      state.style.frame.color = v;
+      state.presetName = '';
+      update();
+    });
+
+    // 下地の色
+    bindSeg('frame-backdrop-color-mode-seg', 'mode', v => {
+      const fbd = getFrameBackdropPaint();
+      fbd.type = v;
+      if (v === 'solid' && !fbd.color) fbd.color = '#FFFFFF';
+      state.presetName = '';
+      syncControls();
+      update();
+    });
+    bindColor('frame-backdrop-solid-picker', 'frame-backdrop-solid-hex', v => {
+      getFrameBackdropPaint().color = v;
+      state.presetName = '';
+      update();
+    });
 
     Array.prototype.forEach.call($('icon-tabs').children, b => {
       b.addEventListener('click', () => {
@@ -3060,14 +2977,13 @@
       state.style.logo.type = 'none';
     });
 
-    // ---- 上下フレームの画像 ----
-    wireImageDrop('frame-top-image-drop', 'frame-top-image-file', IMAGE_TARGETS.frameTop);
-    wireImageUrlInput('btn-frame-top-image-url', 'frame-top-image-url', IMAGE_TARGETS.frameTop);
-    wireImageClear('btn-frame-top-image-clear', 'frame-top-image-file', () => { state.style.frame.topSrc = ''; });
-
-    wireImageDrop('frame-bottom-image-drop', 'frame-bottom-image-file', IMAGE_TARGETS.frameBottom);
-    wireImageUrlInput('btn-frame-bottom-image-url', 'frame-bottom-image-url', IMAGE_TARGETS.frameBottom);
-    wireImageClear('btn-frame-bottom-image-clear', 'frame-bottom-image-file', () => { state.style.frame.src = ''; });
+    // ---- フレーム画像 ----
+    wireImageDrop('frame-image-drop', 'frame-image-file', IMAGE_TARGETS.frame);
+    wireImageUrlInput('btn-frame-image-url', 'frame-image-url', IMAGE_TARGETS.frame);
+    wireImageClear('btn-frame-image-clear', 'frame-image-file', () => {
+      state.style.frame.src = '';
+      state.style.frame.topSrc = '';
+    });
 
     // ---- プレビュー領域への画像ドロップ（選択中の対象画像として反映） ----
     wireImageDrop(document.querySelector('.canvas-card'), null, IMAGE_TARGETS.target);
@@ -3234,18 +3150,9 @@
     });
   }
 
-  // 色パネルのスコープ名 → 画面で呼んでいる名前。COLOR_SCOPES と同じ顔ぶれを
-  // 揃えておくこと（抜けると、別の対象に適用したのに「背景」と案内してしまう）。
   const TARGET_LABELS = {
     cell: 'セル',
-    frame: 'マーカー枠',
-    eye: 'マーカー目',
-    bg: '背景',
-    logobd: 'ロゴの下地',
-    frameborder: 'フレームの線',
-    framelabel: 'フレームの帯',
-    frametext: 'フレームの文字',
-    framebd: 'ラベルの下地'
+    bg: '背景'
   };
 
   function getTargetLabel() {
@@ -3254,8 +3161,6 @@
 
   // 画像の受け口。ファイルからでもURLからでも、入り口の検査と後始末は同じで、
   // 違うのは「どこに入れるか」だけ。行き先ごとに apply / label / urlInputs を持つ。
-  // label と urlInputs はどれも関数（色パネル向けは、いま触っている対象で
-  // 中身が変わるため）。
   const IMAGE_TARGETS = {
     logo: {
       label: () => 'ロゴ画像',
@@ -3265,26 +3170,14 @@
         state.style.logo.type = 'image';
       }
     },
-    // アイコン・文字ロゴの「塗り」に敷く画像。入力欄は2枚のパネルに1つずつある
-    logoMask: {
-      label: () => 'ロゴの塗り画像',
-      urlInputs: () => [$('logo-image-mask-url'), $('logo-text-image-mask-url')],
-      apply: src => { getLogoPaint().src = src; }
-    },
-    frameTop: {
-      label: () => '上部フレーム画像',
-      urlInputs: () => [$('frame-top-image-url')],
-      apply: src => {
-        state.style.frame.topSrc = src;
-        state.style.frame.topContentMode = 'image';
-      }
-    },
-    frameBottom: {
-      label: () => '下部フレーム画像',
-      urlInputs: () => [$('frame-bottom-image-url')],
+    frame: {
+      label: () => 'フレーム画像',
+      urlInputs: () => [$('frame-image-url')],
       apply: src => {
         state.style.frame.src = src;
+        state.style.frame.topSrc = src;
         state.style.frame.contentMode = 'image';
+        state.style.frame.topContentMode = 'image';
       }
     },
     // いま触っている色パネルの塗り。入力欄はそのパネルの中にある
@@ -3477,12 +3370,8 @@
       buildGradients(scope);
       buildMultiPalettes(scope);
     });
-    buildLogoSwatches();
-    buildLogoGradients();
-    buildLogoMultiPalettes();
     buildIconGrid();
-    buildFrameTopIconGrid();
-    buildFrameBottomIconGrid();
+    buildFrameIconGrid();
     buildFrameChips();
     syncControls();
     wire();
