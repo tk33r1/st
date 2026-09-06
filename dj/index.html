@@ -94,7 +94,24 @@
               "url": "https://shisui-tea.jp/",
               "sameAs": ["https://bijutsushisui.com/"],
               "logo": "https://tk.st/images/contents/shisui-logo.png"
-            }
+            },
+            "subjectOf": [
+              {
+                "@type": "Article",
+                "@id": "https://magazine.re-camera-shop.com/%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E6%83%85%E5%A0%B1/%E8%B8%8A%E3%82%8B%E4%BB%A3%E3%82%8F%E3%82%8A%E3%81%AB%E3%82%B7%E3%83%A3%E3%83%83%E3%82%BF%E3%83%BC%E3%82%92%E5%88%87%E3%82%8B%E3%80%82%E3%83%8A%E3%82%A4%E3%83%88%E3%82%AB%E3%83%AB%E3%83%81%E3%83%A3/",
+                "name": "踊る代わりにシャッターを切る。ナイトカルチャーを写す写真のはじまり。人類踊狂計画さん",
+                "headline": "踊る代わりにシャッターを切る。ナイトカルチャーを写す写真のはじまり。人類踊狂計画さん",
+                "url": "https://magazine.re-camera-shop.com/%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E6%83%85%E5%A0%B1/%E8%B8%8A%E3%82%8B%E4%BB%A3%E3%82%8F%E3%82%8A%E3%81%AB%E3%82%B7%E3%83%A3%E3%83%83%E3%82%BF%E3%83%BC%E3%82%92%E5%88%87%E3%82%8B%E3%80%82%E3%83%8A%E3%82%A4%E3%83%88%E3%82%AB%E3%83%AB%E3%83%81%E3%83%A3/",
+                "publisher": {
+                  "@type": "Organization",
+                  "name": "アールイーカメラマガジン",
+                  "url": "https://magazine.re-camera-shop.com/",
+                  "logo": "https://magazine.re-camera-shop.com/wp-content/themes/cameramagazine/img/logo.webp"
+                },
+                "inLanguage": "ja",
+                "description": "夜間撮影用機材の購入元。御徒町にあるカメラ専門店。インタビュー「踊る代わりにシャッターを切る」を掲載。"
+              }
+            ]
           }
         },
         {
@@ -146,7 +163,7 @@
               "name": "出演依頼や相談はどこから連絡すればよいですか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "InstagramのDM（@dj_hcp）または公式サイトのお問い合わせフォームよりお気軽にご相談ください。"
+                "text": "このページ下部の出演オファーフォームからお送りいただくのが確実です。日程・会場・イベント趣旨をまとめて入力でき、内容はそのままメールで届きます。InstagramのDM（@dj_hcp）やメールでも承ります。"
               }
             }
           ]
@@ -1102,6 +1119,87 @@
       color: var(--neo-purple);
     }
 
+    /*
+     * 便箋（活動名義・所属団体）の下に置く取材記事カード。
+     * 便箋と同じ世界観（白地、紫の境界、切り欠きモチーフ、ドロップシャドウ）を保ちつつ、
+     * 上の便箋（about-unit）とフォーマット・リンク構成を揃えて中央揃えで配置する。
+     */
+    .about-interview-block {
+      --fold: 18px;
+      position: relative;
+      margin: 0 auto 40px auto;
+      max-width: 440px;
+    }
+
+    .about-interview-card {
+      position: relative;
+      background: var(--white);
+      border: 1px solid rgba(156, 122, 247, 0.45);
+      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
+      filter: drop-shadow(0 14px 28px rgba(45, 27, 78, 0.22));
+      padding: 30px 28px 28px;
+      text-align: center;
+    }
+
+    /* 折り返しの紙裏モチーフ */
+    .about-interview-card::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: var(--fold);
+      height: var(--fold);
+      background: linear-gradient(135deg, rgba(156, 122, 247, 0.28) 50%, transparent 50%);
+    }
+
+    .about-interview-label {
+      margin-bottom: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      color: var(--neo-purple);
+    }
+
+    .about-interview-brand {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .about-interview-brand:hover {
+      transform: translateY(-2px);
+    }
+
+    .about-interview-brand img {
+      height: 30px;
+      width: auto;
+      max-width: 85%;
+      object-fit: contain;
+    }
+
+    .about-interview-card p {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      line-height: 1.9;
+      font-weight: 300;
+      color: var(--black);
+      letter-spacing: 0.02em;
+      text-wrap: balance;
+    }
+
+    .about-interview-card a:not(.about-interview-brand) {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dashed var(--neo-purple);
+      transition: color 0.3s ease;
+    }
+
+    .about-interview-card a:not(.about-interview-brand):hover {
+      color: var(--neo-purple);
+    }
+
     .about-note {
       font-size: 0.85rem;
       color: rgba(26, 26, 26, 0.7);
@@ -1430,6 +1528,299 @@
       font-size: 0.85rem;
       color: rgba(26, 26, 26, 0.65);
       margin-top: 6px;
+    }
+
+    /* ===== OFFER FORM ===== */
+    /*
+     * FAQ と同じ白地の続きに置く。ここで背景を変えると「FAQ を読む → その場で
+     * 送る」という一続きの流れが切れるため、区切りは見出しとカードの枠線だけで作る。
+     */
+    .offer-section {
+      background: var(--white);
+      padding: 0 40px 70px;
+      position: relative;
+    }
+
+    .offer-content {
+      width: 100%;
+      max-width: 880px;
+      margin: 0 auto;
+    }
+
+    .offer-title {
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      text-align: center;
+      color: var(--black);
+    }
+
+    .offer-lead {
+      max-width: 620px;
+      margin: 0 auto 32px;
+      text-align: center;
+      font-size: 0.92rem;
+      line-height: 1.9;
+      color: rgba(26, 26, 26, 0.75);
+    }
+
+    .offer-lead a {
+      color: #7b55d6;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .offer-form {
+      background: #faf9fd;
+      border: 1px solid rgba(156, 122, 247, 0.3);
+      padding: 32px 34px 30px;
+      position: relative;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .offer-form:focus-within {
+      border-color: var(--neo-purple);
+      box-shadow: 0 8px 24px rgba(156, 122, 247, 0.12);
+    }
+
+    /* faq-item と同じ左端のインジケータ。入力中だけ点く */
+    .offer-form::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--neo-purple);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .offer-form:focus-within::before {
+      opacity: 1;
+    }
+
+    /*
+     * 短い項目は 2 列、本文は 1 列。列数を CSS だけで決めるので、
+     * 項目を足すときは .offer-field--wide を付けるかどうかだけ考えればよい。
+     */
+    .offer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px 24px;
+    }
+
+    .offer-field--wide {
+      grid-column: 1 / -1;
+    }
+
+    .offer-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.68rem;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--neo-purple);
+      margin-bottom: 8px;
+    }
+
+    .offer-label::before {
+      content: "";
+      width: 3px;
+      height: 0.85em;
+      background: var(--neo-purple);
+      flex: none;
+    }
+
+    /* 必須の目印。色だけに頼らないよう記号を併記する */
+    .offer-required {
+      font-family: system-ui, -apple-system, sans-serif;
+      letter-spacing: 0;
+      font-size: 0.72rem;
+      color: var(--accent-red);
+    }
+
+    .offer-input,
+    .offer-select,
+    .offer-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 13px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--dark-blue-purple);
+      background: var(--white);
+      border: 1px solid rgba(156, 122, 247, 0.35);
+      border-radius: 0;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .offer-textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    /* select だけは矢印が消えるので背景画像で描き直す（SVG は data URI で内包） */
+    .offer-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239c7af7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 18px 18px;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    .offer-input:focus,
+    .offer-select:focus,
+    .offer-textarea:focus {
+      outline: none;
+      border-color: var(--neo-purple);
+      box-shadow: 0 0 0 3px rgba(156, 122, 247, 0.18);
+    }
+
+    .offer-input::placeholder,
+    .offer-textarea::placeholder {
+      color: rgba(45, 27, 78, 0.35);
+    }
+
+    .offer-hint {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: rgba(26, 26, 26, 0.6);
+    }
+
+    /*
+     * ハニーポット。display:none だと自動入力が避けることがあるので、
+     * 見た目だけ画面外へ飛ばして「機械には見えるが人には見えない」状態にする。
+     */
+    .offer-hp {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    .offer-actions {
+      margin-top: 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Turnstile のウィジェットは 300×65。枠が出るまで高さを確保して飛び跳ねを防ぐ */
+    .offer-turnstile {
+      min-height: 65px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .offer-submit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-width: 260px;
+      padding: 15px 34px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.82rem;
+      font-weight: bold;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--white);
+      background: var(--dark-blue-purple);
+      border: 1px solid var(--dark-blue-purple);
+      border-radius: 0;
+      cursor: pointer;
+      transition: background 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
+    }
+
+    .offer-submit:hover:not(:disabled) {
+      background: var(--neo-purple);
+      border-color: var(--neo-purple);
+    }
+
+    .offer-submit:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .offer-submit:focus-visible {
+      outline: 2px solid var(--neo-purple);
+      outline-offset: 3px;
+    }
+
+    .offer-submit:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* 送信中に回すリング。prefers-reduced-motion では止める */
+    .offer-spinner {
+      width: 14px;
+      height: 14px;
+      flex: none;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: var(--white);
+      border-radius: 50%;
+      animation: offer-spin 0.7s linear infinite;
+    }
+
+    @keyframes offer-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .offer-spinner {
+        animation: none;
+      }
+    }
+
+    /*
+     * 結果の表示。role="status" を当てるので、成否は色ではなく文言で伝える
+     * （読み上げには色が届かない）。
+     */
+    .offer-status {
+      width: 100%;
+      margin-top: 4px;
+      padding: 13px 16px;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      border-left: 3px solid var(--neo-purple);
+      background: rgba(156, 122, 247, 0.08);
+      color: var(--dark-blue-purple);
+    }
+
+    .offer-status[data-state="error"] {
+      border-left-color: var(--accent-red);
+      background: rgba(255, 51, 51, 0.07);
+      color: #8a1c1c;
+    }
+
+    .offer-status a {
+      color: #7b55d6;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .offer-privacy {
+      margin: 18px 0 0;
+      text-align: center;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      color: rgba(26, 26, 26, 0.55);
     }
 
     .request-cta {
@@ -1846,6 +2237,16 @@
       transform: translate(2px, -2px);
     }
 
+    /* 同じページの下へ降りるリンク。↗ だと外部へ出るように読めるので ↓ にする */
+    .spec-link--inpage::after {
+      content: "\2193";
+      /* ↓ */
+    }
+
+    .spec-link--inpage:hover::after {
+      transform: translateY(2px);
+    }
+
     .gear-modal-close {
       position: absolute;
       top: 10px;
@@ -1900,6 +2301,7 @@
     .video-title,
     .about-title,
     .faq-title,
+    .offer-title,
     .operation-title {
       display: flex;
       align-items: center;
@@ -1910,7 +2312,8 @@
     .sound-log-header,
     .video-title,
     .about-title,
-    .faq-title {
+    .faq-title,
+    .offer-title {
       justify-content: center;
     }
 
@@ -2532,6 +2935,30 @@
         font-size: 0.9rem;
       }
 
+      .offer-section {
+        padding: 0 20px 50px;
+      }
+
+      .offer-lead {
+        margin-bottom: 26px;
+        font-size: 0.88rem;
+      }
+
+      .offer-form {
+        padding: 24px 18px 22px;
+      }
+
+      /* SP は 1 列。2 列のままだと入力欄が親指の幅を割る */
+      .offer-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .offer-submit {
+        width: 100%;
+        min-width: 0;
+      }
+
       .about-letter {
         /* SP は上=活動名義 / 下=所属団体 */
         grid-template-columns: 1fr;
@@ -2556,6 +2983,23 @@
       }
 
       .about-unit p {
+        font-size: 0.9rem;
+        line-height: 1.9;
+      }
+
+      .about-interview-block {
+        margin-bottom: 35px;
+      }
+
+      .about-interview-card {
+        padding: 26px 22px;
+      }
+
+      .about-interview-brand img {
+        height: 24px;
+      }
+
+      .about-interview-card p {
         font-size: 0.9rem;
         line-height: 1.9;
       }
@@ -2654,6 +3098,7 @@
       <li><a href="#visual" data-label="VISUAL"><span class="sr-only">映像</span></a></li>
       <li><a href="#about" data-label="ABOUT"><span class="sr-only">プロフィール</span></a></li>
       <li><a href="#faq" data-label="FAQ"><span class="sr-only">よくある質問</span></a></li>
+      <li><a href="#offer" data-label="OFFER"><span class="sr-only">出演オファー</span></a></li>
     </ol>
   </nav>
 
@@ -2829,11 +3274,14 @@
         <div class="spec-row">
           <dt>オファー方法</dt>
           <dd>
+            <a class="spec-link spec-link--inpage" href="#offer">出演オファーフォーム</a>
+            または
             <a class="spec-link" href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の
               DM</a>
-            または
+            ／
             <a class="spec-link"
               href="https://tk.st/contact/?to=dj&subject=%E3%83%96%E3%83%83%E3%82%AD%E3%83%B3%E3%82%B0%E3%81%AE%E3%81%94%E7%9B%B8%E8%AB%87">メール</a>
+            <span class="spec-note">※ フォームなら日程・会場・イベント趣旨をまとめて送れます</span>
           </dd>
         </div>
       </dl>
@@ -3110,6 +3558,22 @@
         </div>
       </div>
 
+      <div class="about-interview-block">
+        <div class="about-interview-card">
+          <div class="about-interview-label">取材記事</div>
+          <a class="about-interview-brand" href="https://magazine.re-camera-shop.com/" target="_blank"
+            rel="noopener noreferrer" title="アールイーマガジン">
+            <img src="https://magazine.re-camera-shop.com/wp-content/themes/cameramagazine/img/logo.webp"
+              alt="アールイーマガジン" width="212" height="30" loading="lazy">
+          </a>
+          <p>夜間撮影用機材の購入元。御徒町にあるカメラ専門店。</p>
+          <p>インタビュー<a
+              href="https://magazine.re-camera-shop.com/%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E6%83%85%E5%A0%B1/%E8%B8%8A%E3%82%8B%E4%BB%A3%E3%82%8F%E3%82%8A%E3%81%AB%E3%82%B7%E3%83%A3%E3%83%83%E3%82%BF%E3%83%BC%E3%82%92%E5%88%87%E3%82%8B%E3%80%82%E3%83%8A%E3%82%A4%E3%83%88%E3%82%AB%E3%83%AB%E3%83%81%E3%83%A3/"
+              target="_blank" rel="noopener noreferrer">「踊る代わりにシャッターを切る」</a>を掲載。
+          </p>
+        </div>
+      </div>
+
       <div class="contact-buttons">
         <a href="https://tk.st/in" target="_blank" rel="noopener" class="hex-button" aria-label="Instagram"
           title="Instagram">
@@ -3241,13 +3705,118 @@
             </svg>
           </summary>
           <div class="faq-answer">
-            <p><a href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の DM（@dj_hcp）</a>
-              または <a
+            <p>このページ下部の <a href="#offer">出演オファーフォーム</a>
+              からお送りいただくのがいちばん確実です。日程・会場・イベント趣旨をまとめて入力でき、内容はそのままメールで届きます。</p>
+            <p>もちろん <a href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の
+                DM（@dj_hcp）</a> や <a
                 href="https://tk.st/contact/?to=dj&subject=%E3%83%96%E3%83%83%E3%82%AD%E3%83%B3%E3%82%B0%E3%81%AE%E3%81%94%E7%9B%B8%E8%AB%87"
-                target="_blank" rel="noopener">メールフォーム</a> よりお気軽にご相談ください。日程・会場・イベント趣旨をお知らせいただければスムーズです。</p>
+                target="_blank" rel="noopener">メール</a> でも承ります。お好きな方法でお気軽にご相談ください。</p>
           </div>
         </details>
       </div>
+    </div>
+  </section>
+
+  <!-- OFFER FORM -->
+  <section class="offer-section" id="offer">
+    <div class="offer-content">
+      <h2 class="offer-title reveal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="section-icon" aria-hidden="true">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <path d="m22 6-10 7L2 6" />
+        </svg><span lang="en">Offer / Booking</span></h2>
+
+      <p class="offer-lead reveal">
+        出演のご依頼・ご相談はこちらのフォームからお送りください。<br>
+        出演料・交通費は不要です（<a href="#faq">FAQ</a> もあわせてご覧ください）。<br>
+        内容を確認のうえ、通常2〜3日以内にご記入のメールアドレスへ返信いたします。
+      </p>
+
+      <form class="offer-form reveal" id="offerForm" novalidate>
+        <div class="offer-grid">
+          <div class="offer-field">
+            <label class="offer-label" for="offerName">お名前 <span class="offer-required"
+                aria-hidden="true">必須</span></label>
+            <input class="offer-input" type="text" id="offerName" name="name" maxlength="80" required
+              autocomplete="name" placeholder="武田 慎也">
+          </div>
+
+          <div class="offer-field">
+            <label class="offer-label" for="offerOrg">団体名・店舗名</label>
+            <input class="offer-input" type="text" id="offerOrg" name="org" maxlength="80"
+              autocomplete="organization" placeholder="美術紫水">
+          </div>
+
+          <div class="offer-field">
+            <label class="offer-label" for="offerEmail">返信先メール <span class="offer-required"
+                aria-hidden="true">必須</span></label>
+            <input class="offer-input" type="email" id="offerEmail" name="email" maxlength="120" required
+              autocomplete="email" inputmode="email" placeholder="you@example.com">
+          </div>
+
+          <div class="offer-field">
+            <label class="offer-label" for="offerContact">その他の連絡先</label>
+            <input class="offer-input" type="text" id="offerContact" name="contact" maxlength="120"
+              placeholder="Instagram @your_id など">
+          </div>
+
+          <div class="offer-field">
+            <label class="offer-label" for="offerEvent">イベント名</label>
+            <input class="offer-input" type="text" id="offerEvent" name="event" maxlength="120"
+              placeholder="未定でも構いません">
+          </div>
+
+          <div class="offer-field">
+            <label class="offer-label" for="offerDate">開催日時</label>
+            <input class="offer-input" type="text" id="offerDate" name="date" maxlength="120"
+              placeholder="2026/03/14 21:00〜 など">
+          </div>
+
+          <div class="offer-field">
+            <label class="offer-label" for="offerVenue">会場・エリア</label>
+            <input class="offer-input" type="text" id="offerVenue" name="venue" maxlength="120"
+              placeholder="新宿 / 渋谷 の店舗名など">
+          </div>
+
+          <div class="offer-field">
+            <label class="offer-label" for="offerGear">機材</label>
+            <select class="offer-select" id="offerGear" name="gear">
+              <option value="">選択してください</option>
+              <option value="bring">持ち込み希望（機材・スピーカー一式）</option>
+              <option value="venue">会場の常設機材を使用</option>
+              <option value="unsure">未定・相談したい</option>
+            </select>
+          </div>
+
+          <div class="offer-field offer-field--wide">
+            <label class="offer-label" for="offerMessage">ご相談内容 <span class="offer-required"
+                aria-hidden="true">必須</span></label>
+            <textarea class="offer-textarea" id="offerMessage" name="message" maxlength="2000" required
+              placeholder="イベントの趣旨、想定人数、希望する時間・持ち時間、雰囲気やジャンルのご希望など"></textarea>
+            <span class="offer-hint">分かる範囲で構いません。決まっていない点はそのままお書きください。</span>
+          </div>
+        </div>
+
+        <!-- ハニーポット。人には見せず、機械が埋めたら送信を捨てる -->
+        <div class="offer-hp" aria-hidden="true">
+          <label for="offerWebsite">ウェブサイト</label>
+          <input type="text" id="offerWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="offer-actions">
+          <!-- Turnstile はフォームが視界に入ってから読み込む（下部の JS 参照） -->
+          <div class="offer-turnstile" id="offerTurnstile"></div>
+          <button class="offer-submit" type="submit" id="offerSubmit">
+            <span id="offerSubmitLabel" lang="en">Send Offer</span>
+          </button>
+          <p class="offer-status" id="offerStatus" role="status" aria-live="polite" hidden></p>
+        </div>
+
+        <p class="offer-privacy">
+          いただいた内容はご相談への返信にのみ使用し、第三者へ提供することはありません。
+        </p>
+      </form>
     </div>
   </section>
 
@@ -3719,8 +4288,15 @@
       item.addEventListener('click', () => openGearModal(item));
     });
 
-    // パネル内（テキスト選択など）以外をクリックしたら閉じる。× もパネル内なので個別に拾う
+    // パネル内（テキスト選択など）以外をクリックしたら閉じる。× もパネル内なので個別に拾う。
+    // 同じページの下へ飛ぶリンク（オファーフォーム等）も、開いたままだとスクロールが
+    // ロックされていて着地先が見えないので閉じる（遷移そのものは既定の動作に任せる）
     gearModal.addEventListener('click', (e) => {
+      const inPageLink = e.target.closest('a[href^="#"]');
+      if (inPageLink) {
+        hideGearModal();
+        return;
+      }
       if (e.target.closest('.gear-modal-panel') && !e.target.closest('.gear-modal-close')) return;
       hideGearModal();
     });
@@ -3826,7 +4402,175 @@
       });
     }
 
-    // 8. Lucide アイコンはインライン SVG 化済みのため createIcons() は不要
+    // 8. Offer Form
+    /*
+     * 送信先は tk-st-dj-offer Worker（workers/dj-offer）。受け取った内容は
+     * Resend でメールに転送されるだけで、どこにも保存されない。
+     *
+     * Turnstile はページ先頭では読み込まない。オファーを送る人はごく一部なので、
+     * 全員に外部スクリプトを踏ませる理由がない。フォームが視界に入った時点で
+     * 初めて注入し、明示レンダリングでウィジェットを出す。
+     *
+     * トークンはウィジェットのコールバックでだけ受け取る。期限切れ・エラー時は
+     * 必ず空に戻して、古いトークンで送信できないようにする。
+     */
+    const offerForm = document.getElementById('offerForm');
+    if (offerForm) {
+      const OFFER_API = '/dj/api/offer/send';
+      const OFFER_SITE_KEY = '0x4AAAAAACwi9fjjeeh8ujIK';
+      // DM の案内は失敗時にだけ添える。成功時に別の連絡先を出しても迷わせるだけ
+      const OFFER_DM = '<a href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の DM</a>';
+
+      const submitBtn = document.getElementById('offerSubmit');
+      const statusEl = document.getElementById('offerStatus');
+      const turnstileBox = document.getElementById('offerTurnstile');
+      let turnstileToken = '';
+      let widgetId = null;
+      let sending = false;
+
+      const setStatus = (html, state) => {
+        if (!statusEl) return;
+        if (!html) {
+          statusEl.hidden = true;
+          statusEl.removeAttribute('data-state');
+          statusEl.innerHTML = '';
+          return;
+        }
+        statusEl.innerHTML = html;
+        statusEl.dataset.state = state;
+        statusEl.hidden = false;
+      };
+
+      const setSending = (on) => {
+        sending = on;
+        submitBtn.disabled = on;
+        // ラベルごと差し替える。文言だけ変えるとスピナーの置き場所がなくなる
+        submitBtn.innerHTML = on
+          ? '<span class="offer-spinner" aria-hidden="true"></span><span lang="en">Sending...</span>'
+          : '<span id="offerSubmitLabel" lang="en">Send Offer</span>';
+      };
+
+      /* ── Turnstile の遅延読み込み ───────────────── */
+      window.onOfferTurnstileLoad = function () {
+        try {
+          widgetId = turnstile.render('#offerTurnstile', {
+            sitekey: OFFER_SITE_KEY,
+            callback: (token) => { turnstileToken = token; },
+            'expired-callback': () => { turnstileToken = ''; },
+            'error-callback': () => { turnstileToken = ''; },
+          });
+        } catch (e) {
+          // 読めてもレンダリングで落ちることがある。送信時に文言で拾う
+          turnstileToken = '';
+        }
+      };
+
+      let turnstileRequested = false;
+      const loadTurnstile = () => {
+        if (turnstileRequested) return;
+        turnstileRequested = true;
+        const s = document.createElement('script');
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onOfferTurnstileLoad&render=explicit';
+        s.async = true;
+        s.defer = true;
+        document.head.appendChild(s);
+      };
+
+      if ('IntersectionObserver' in window) {
+        const offerObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            loadTurnstile();
+            observer.disconnect();
+          });
+          // 画面に入る少し手前で読み始め、たどり着いた頃には枠が出ている状態にする
+        }, { rootMargin: '200px' });
+        offerObserver.observe(offerForm);
+      } else {
+        loadTurnstile();
+      }
+      // 直接フォームへフォーカスされた場合（タブ移動・#offer リンク）も取りこぼさない
+      offerForm.addEventListener('focusin', loadTurnstile, { once: true });
+
+      /* ── 送信 ───────────────────────────────── */
+      offerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (sending) return;
+
+        const value = (id) => (document.getElementById(id).value || '').trim();
+        const payload = {
+          name: value('offerName'),
+          org: value('offerOrg'),
+          email: value('offerEmail'),
+          contact: value('offerContact'),
+          event: value('offerEvent'),
+          date: value('offerDate'),
+          venue: value('offerVenue'),
+          gear: value('offerGear'),
+          message: value('offerMessage'),
+          website: value('offerWebsite'),
+          token: turnstileToken,
+        };
+
+        // 必須の確認はサーバー側でもやるが、往復させる前にここで止める。
+        // 足りない欄へフォーカスを移し、どこを直すのかを画面で示す
+        const missing = [
+          ['offerName', 'お名前'],
+          ['offerEmail', '返信先メールアドレス'],
+          ['offerMessage', 'ご相談内容'],
+        ].find(([id]) => !value(id));
+        if (missing) {
+          setStatus(missing[1] + 'をご記入ください。', 'error');
+          document.getElementById(missing[0]).focus();
+          return;
+        }
+        if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(payload.email)) {
+          setStatus('メールアドレスの形式をご確認ください。', 'error');
+          document.getElementById('offerEmail').focus();
+          return;
+        }
+        if (!payload.token) {
+          loadTurnstile();
+          setStatus('認証の読み込みが終わるまで少しお待ちください。しばらく経っても変わらない場合は ' + OFFER_DM + ' からご連絡ください。', 'error');
+          return;
+        }
+
+        setSending(true);
+        setStatus('送信しています…', 'sending');
+
+        try {
+          const res = await fetch(OFFER_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.ok) {
+            // 送信済みのフォームは畳む。同じ内容を二度送れる状態にしておかない
+            offerForm.querySelector('.offer-grid').hidden = true;
+            turnstileBox.hidden = true;
+            submitBtn.hidden = true;
+            setStatus('送信しました。ありがとうございます。<br>内容を確認のうえ、通常2〜3日以内にご記入のメールアドレスへ返信いたします。', 'done');
+            return;
+          }
+
+          // 失敗したトークンは使い回せない。次の送信に備えて引き直す
+          turnstileToken = '';
+          if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);
+          setStatus((data.error || '送信に失敗しました。') + '<br>解決しない場合は ' + OFFER_DM + ' からご連絡ください。', 'error');
+        } catch (err) {
+          turnstileToken = '';
+          if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);
+          setStatus('通信に失敗しました。電波の良い場所でお試しいただくか、' + OFFER_DM + ' からご連絡ください。', 'error');
+        } finally {
+          if (!submitBtn.hidden) setSending(false);
+          else sending = false;
+        }
+      });
+    }
+
+    // 9. Lucide アイコンはインライン SVG 化済みのため createIcons() は不要
 
     // 開始年はマークアップ（JS 無効時にそのまま表示されるフォールバックでもある）を唯一の情報源にし、
     // 終了年だけ現在年に更新する。年をまたいでもソースの書き換えは不要。

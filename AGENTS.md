@@ -27,7 +27,7 @@
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
-| `dj/` | DJ 関連。`schedule/`（日程調整）、`request/`（曲リクエスト）、`booth/`（ブースコンソール） |
+| `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト）、`booth/`（ブースコンソール） |
 | `magi/`, `contact/`, `job/`, `thought/` | 個別ページ |
 | `anniversary/` | 記念日ページ。`matsumura40/`（旧 `/matsumura40/`。`_redirects` で 301 済み） |
 | `images/` | `common/`, `contents/`, `favicons/`, `ogp/` |
@@ -42,6 +42,7 @@
 | `workers/comments` | tk-st-comments | `tk.st/glitch/api/*` | glitch 記事のコメント。D1: `glitch-comments-db` |
 | `workers/dj-schedule` | tk-st-dj-schedule | `tk.st/dj/api/schedule/*` | 日程調整 API。D1: `dj-schedule-db`。**詳細は同ディレクトリの README.md を読むこと** |
 | `workers/dj-request` | tk-st-dj-request | `tk.st/dj/api/req/*` | 曲リクエスト API。D1: `dj-request-db`。secret: `ADMIN_KEY`, `IP_SALT` |
+| `workers/dj-offer` | tk-st-dj-offer | `tk.st/dj/api/offer/*` | 出演オファーフォームの受け口。D1 なし（内容は Resend でメール転送するだけ）。secret: `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `OFFER_TO`, `OFFER_FROM`。**Resend / Turnstile の初期設定は同ディレクトリの README.md を読むこと** |
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版。secret: `MAGI_API_KEY` |
 | `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`（`MAGI_DEEPSEEK_API_KEY` は未使用の保持） |
 | `workers/wrangler` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db`。wrangler のみ npm 依存 |

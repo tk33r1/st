@@ -573,7 +573,7 @@
       name: 'ダイヤ・グリッド',
       category: 'unique',
       style: {
-        cell: 'diamond', cellScale: 1.05, markerFrame: 'dots', markerEye: 'diamond',
+        cell: 'diamond', cellScale: 1.05, markerFrame: 'cells', markerEye: 'diamond',
         fg: { type: 'solid', color: '#312E81' },
         bg: { type: 'solid', color: '#EEF2FF', transparency: 0 },
         markerFramePaint: { type: 'auto' },
@@ -631,6 +631,21 @@
     { id: 'flower',   name: 'フラワー' },
     { id: 'leaf',     name: 'リーフ' },
     { id: 'cut',      name: '雫' },
+    { id: 'cells',    name: 'セル枠' }
+  ];
+
+  // 下地（ロゴ・ラベルの後ろに敷く板）の形。マーカーの枠とほぼ同じ並びだが、
+  // 「セル枠」は面ではなく粒の輪なので板には使えない。代わりに縁が波打つ
+  // 「ドット枠」を残してある。
+  const BACKDROP_SHAPES = [
+    { id: 'square',   name: '四角' },
+    { id: 'rounded',  name: '角丸' },
+    { id: 'xrounded', name: '丸み強' },
+    { id: 'circle',   name: 'まる' },
+    { id: 'octagon',  name: '八角形' },
+    { id: 'flower',   name: 'フラワー' },
+    { id: 'leaf',     name: 'リーフ' },
+    { id: 'cut',      name: '雫' },
     { id: 'dots',     name: 'ドット枠' }
   ];
 
@@ -648,9 +663,7 @@
     { id: 'star',     name: '星' },
     { id: 'heart',    name: 'ハート' },
     { id: 'plus',     name: '十字' },
-    { id: 'xmark',    name: 'ばってん' },
-    { id: 'vbar',     name: '縦ライン' },
-    { id: 'hbar',     name: '横ライン' }
+    { id: 'xmark',    name: 'ばってん' }
   ];
 
   // 枠線の種類。id は QRStyle.LINE_STYLES と対応する
@@ -679,6 +692,7 @@
     PRESETS: PRESETS,
     CELL_SHAPES: CELL_SHAPES,
     MARKER_FRAMES: MARKER_FRAMES,
+    BACKDROP_SHAPES: BACKDROP_SHAPES,
     FRAME_LINES: FRAME_LINES,
     MARKER_EYES: MARKER_EYES,
     FRAMES: FRAMES

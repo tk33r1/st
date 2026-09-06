@@ -46,8 +46,14 @@
         colors: ['#FFFFFF', '#E5E7EB'], seed: 0, src: '', imgScale: 1, transparency: 0
       },
       color: '#111827', knockout: true,
+      // アイコンの塗り。ここだけ 'brand'（アイコン公式色）を選べる
       paint: {
         type: 'brand', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
+      },
+      // 文字の塗り。画面ではアイコンと別の欄なので、状態も分けて持つ
+      textPaint: {
+        type: 'auto', color: '#111827', from: '#FC466B', mid: '', to: '#3F5EFB', angle: 45,
         colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
       }
     },
@@ -70,6 +76,13 @@
       iconData: '',
       iconColorMode: 'brand',
       iconColor: '#FFFFFF',
+      // ラベルのアイコンの塗り。ロゴのアイコンと同じ 7 モード
+      // （ブランドカラー・セルの色・単色・多色・グラデーション・放射・画像）。
+      // iconColorMode / iconColor は旧データ用に残してある。
+      iconPaint: {
+        type: 'brand', color: '#FFFFFF', from: '#FC466B', mid: '', to: '#3F5EFB', angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
+      },
       src: '',
       topIcon: 'si-instagram',
       topIconData: null,
@@ -1173,7 +1186,24 @@
   }
 
   // 外周リング（7x7 から 5x5 を抜く）
-  function markerFramePath(fx, fy, style) {
+  //   opts … セル枠のときだけ見る { cell, cellScale }
+  function markerFramePath(fx, fy, style, opts) {
+    if (style === 'cells') {
+      // 枠線の「セル枠」と同じ考え方で、外周7マスに本体と同じ形のセルを並べる。
+      // 並べ方は cellsGroupedPath に任せるので、隣を見て形が変わる種類
+      // （連結・リキッド・サーキット・モザイク）も本体と同じつながり方になる。
+      const o = opts || {};
+      const ring = new Uint8Array(49);
+      for (let i = 0; i < 7; i++) { ring[i] = 1; ring[42 + i] = 1; }
+      for (let j = 1; j < 6; j++) { ring[j * 7] = 1; ring[j * 7 + 6] = 1; }
+      // ここは飾りである前に位置検出パターンなので、外周の枠線とは逆に、
+      // 隣とわずかに重なるまで太らせる。粒の間に地色の隙間が空くと
+      // 1:1:3:1:1 の走査が途切れ、読み取りが目に見えて落ちる（実測で
+      // ドットのセルが 6解像度中 1 まで落ちた）。旧「ドット枠」も直径 1.16
+      // モジュールの円を重ねて輪にしていたので、太さの狙いはそれに合わせる。
+      const t = Math.max(0.35, Math.min(1.15, (Number(o.cellScale) || 1) * 1.15));
+      return cellsGroupedPath(ring, 7, fx, fy, o.cell || 'rounded', t, 0, null, 0)[0].d;
+    }
     if (style === 'dots') {
       const parts = [];
       for (let dy = 0; dy < 7; dy++) {
@@ -1457,7 +1487,8 @@
         n(side) + '" height="' + n(side) + '" preserveAspectRatio="xMidYMid meet"/>';
     } else if (logo.type === 'text' && logo.text) {
       const fs = side * (logo.text.length > 2 ? 0.5 : 0.78);
-      const lp = (logo && logo.paint) ? logo.paint : { type: 'solid', color: logo.color || '#111827' };
+      // textPaint が今のキー。旧データはアイコンと同じ paint を共有していた。
+      const lp = (logo && (logo.textPaint || logo.paint)) || { type: 'solid', color: logo.color || '#111827' };
       const mode = lp.type || 'solid';
       const fontFamily = fontOf(logo.font).stack;
 
@@ -1749,8 +1780,10 @@
       const fx = ox + c[0], fy = oy + c[1];
       const frameFill = getMarkerFill(mfPaint, st.fg, uid + 'mf', fgRef, idx);
       const eyeFill = getMarkerFill(mePaint, st.fg, uid + 'me', fgRef, idx);
-      body += '<path d="' + markerFramePath(fx, fy, st.markerFrame) +
-        '" fill="' + frameFill + '" fill-rule="evenodd"/>';
+      // セル枠は粒を並べるだけで穴を抜かない。evenodd だと重なりが白く抜ける
+      const mfEvenOdd = st.markerFrame === 'cells' ? '' : ' fill-rule="evenodd"';
+      body += '<path d="' + markerFramePath(fx, fy, st.markerFrame, { cell: st.cell, cellScale: st.cellScale }) +
+        '" fill="' + frameFill + '"' + mfEvenOdd + '/>';
       body += '<path d="' + markerEyePath(fx, fy, st.markerEye) + '" fill="' + eyeFill + '"/>';
     });
 
@@ -1847,7 +1880,7 @@
         }
       }
 
-      function renderFrameIcon(iconId, cx, cy, idSuffix, iconDataOpt, iconModeOpt, iconColOpt) {
+      function renderFrameIcon(iconId, cx, cy, idSuffix, iconDataOpt, iconPaintOpt) {
         const icons = (global.QRAssets && global.QRAssets.ICONS) || [];
         const icon = iconDataOpt || icons.find(i => i.id === iconId) || icons[0];
         if (!icon) return;
@@ -1859,9 +1892,12 @@
         const ty = cy - (vh * k) / 2 - (vb[1] || 0) * k;
         const tf = 'translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')';
         const pid = uid + 'fi' + idSuffix;
+        const box = { x: cx - side / 2, y: cy - side / 2, w: side, h: side };
 
-        const iconMode = iconModeOpt || (st.frame && (st.frame.iconColorMode || (st.frame.iconPaint && st.frame.iconPaint.type))) || 'brand';
-        const iconCol = iconColOpt || (st.frame && (st.frame.iconColor || (st.frame.iconPaint && st.frame.iconPaint.color))) || '#FFFFFF';
+        const ip = iconPaintOpt || (st.frame && st.frame.iconPaint) ||
+          { type: (st.frame && st.frame.iconColorMode) || 'brand', color: (st.frame && st.frame.iconColor) || '#FFFFFF' };
+        const iconMode = ip.type || 'brand';
+        const iconCol = ip.color || (st.frame && st.frame.iconColor) || '#FFFFFF';
 
         const flat = color => {
           let s = '<g transform="' + tf + '" fill="' + color + '">';
@@ -1869,6 +1905,14 @@
             s += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
           });
           return s + '</g>';
+        };
+        // アイコンの形そのもの（クリップ用）。ロゴと同じで、塗りは変換の外に置く
+        const clipShape = () => {
+          let s = '';
+          icon.p.forEach(p => {
+            s += '<path d="' + p.d + '" transform="' + tf + '"' + (p.e ? ' clip-rule="evenodd"' : '') + '/>';
+          });
+          return s;
         };
 
         if (iconMode === 'brand') {
@@ -1882,14 +1926,22 @@
         } else if (iconMode === 'solid') {
           body += flat(esc(iconCol));
         } else if (iconMode === 'auto') {
+          // セルの塗りをそのまま延長する。多色だけは面で塗らないと粒が出ない
           const fgMode = st.fg ? st.fg.type : 'solid';
           if (fgMode === 'solid') {
             body += flat(esc(st.fg.color || '#111827'));
+          } else if (fgMode === 'multi') {
+            const cellOpts = { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 };
+            const layer = paintedShape(st.fg, box, pid, clipShape(), cellOpts);
+            if (layer) { defs += layer.defs; body += layer.body; }
+            else body += flat(fgRef || '#111827');
           } else {
             body += flat(fgRef || '#111827');
           }
         } else {
-          body += flat(esc(iconCol));
+          const layer = paintedShape(ip, box, pid, clipShape(), null);
+          if (layer) { defs += layer.defs; body += layer.body; }
+          else body += flat(esc(iconCol));
         }
       }
 
@@ -1978,13 +2030,13 @@
           const iconData = isTop
             ? ((pos === 'both' || st.frame.topIconData) ? st.frame.topIconData : st.frame.iconData)
             : st.frame.iconData;
-          const iconMode = isTop
-            ? ((pos === 'both' || st.frame.topIconColorMode) ? (st.frame.topIconColorMode || 'brand') : (st.frame.iconColorMode || 'brand'))
-            : (st.frame.iconColorMode || 'brand');
-          const iconCol = isTop
-            ? ((pos === 'both' || st.frame.topIconColor) ? (st.frame.topIconColor || '#FFFFFF') : (st.frame.iconColor || '#FFFFFF'))
-            : (st.frame.iconColor || '#FFFFFF');
-          renderFrameIcon(iconId, W / 2, cy, idSuffix, iconData, iconMode, iconCol);
+          // アイコンの色は上下で分けられない（指定する場所がひとつしかない）。
+          // iconPaint が今のキーで、topIconColorMode/iconColorMode は旧データ。
+          const iconPaint = st.frame.iconPaint || {
+            type: (isTop ? st.frame.topIconColorMode : st.frame.iconColorMode) || 'brand',
+            color: (isTop ? st.frame.topIconColor : st.frame.iconColor) || '#FFFFFF'
+          };
+          renderFrameIcon(iconId, W / 2, cy, idSuffix, iconData, iconPaint);
         } else if (cMode === 'image') {
           const src = isTop ? topSrc : bottomSrc;
           renderFrameImage(src, W / 2, cy);
@@ -2145,9 +2197,10 @@
       '" fill="currentColor"/></svg>';
   }
 
-  function markerPreview(frameStyle, eyeStyle) {
+  function markerPreview(frameStyle, eyeStyle, opts) {
+    const eo = frameStyle === 'cells' ? '' : ' fill-rule="evenodd"';
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.3 -0.3 7.6 7.6">' +
-      '<path d="' + markerFramePath(0, 0, frameStyle) + '" fill="currentColor" fill-rule="evenodd"/>' +
+      '<path d="' + markerFramePath(0, 0, frameStyle, opts) + '" fill="currentColor"' + eo + '/>' +
       '<path d="' + markerEyePath(0, 0, eyeStyle) + '" fill="currentColor"/></svg>';
   }
 

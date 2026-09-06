@@ -1,0 +1,23 @@
+name               = "tk-st-dj-offer"
+main               = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# dj-schedule が tk.st/dj/api/schedule/*、dj-request が tk.st/dj/api/req/* を
+# 使うので、こちらは offer/* に固定する。
+# Cloudflare は route の重複を許さないため、接頭辞は必ず別にすること。
+[[routes]]
+pattern   = "tk.st/dj/api/offer/*"
+zone_name = "tk.st"
+
+# D1 は持たない。届いた内容はメールに載せるだけで Worker 側に残さない。
+
+# secret は wrangler secret put で設定する（コミットしない）:
+#   wrangler secret put RESEND_API_KEY        … Resend の API キー（re_ で始まる）
+#   wrangler secret put TURNSTILE_SECRET_KEY  … Turnstile の Secret Key
+#                                               （サイトキー 0x4AAAAAACwi9fjjeeh8ujIK と対）
+#   wrangler secret put OFFER_TO              … 受信アドレス（dj@tk.st）
+#   wrangler secret put OFFER_FROM            … 差出人（人類踊狂計画 <dj@tk.st>）
+#                                               Resend で認証済みドメインであること
+#
+# 宛先・差出人を var ではなく secret にしているのは、このリポジトリが公開で、
+# アドレスを平文で置かない方針（contact/index.html 参照）に合わせるため。

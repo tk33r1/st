@@ -245,8 +245,25 @@
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
 
-  // 基本となる色設定パネル（セルと背景）
-  const COLOR_SCOPES = ['cell', 'bg'];
+  // 色設定パネルを立てる場所。どれも同じテンプレートから起こして、
+  // 「どの塗りを指すか」だけが違う（paintOf を参照）。
+  const COLOR_SCOPES = [
+    'cell', 'bg',
+    'frame', 'eye',
+    'logoicon', 'logotext', 'logobd',
+    'frameborder', 'framelabel', 'frametext', 'frameicon', 'framebd'
+  ];
+
+  // 白・黒・透明まで選べる「面を敷く」対象
+  const PLATE_SCOPES = ['bg', 'logobd', 'framebd'];
+  // ブランドカラー（アイコンそのものの色）を選べる対象
+  const BRAND_SCOPES = ['logoicon', 'frameicon'];
+
+  // 画像を外したときに戻る塗り方。追従先を持つ対象は「セルの色」に落とす
+  const CLEARED_IMAGE_TYPE = {
+    cell: 'solid', bg: 'white', logobd: 'white', framebd: 'none',
+    logoicon: 'brand', frameicon: 'brand'
+  };
 
   // 画像の塗りの倍率（描画エンジンと同じ範囲。UI では % で見せる）
   const IMG_SCALE_MIN = (window.QRStyle && window.QRStyle.IMG_SCALE_MIN) || 0.2;
@@ -275,6 +292,21 @@
   function getFrameLinePaint() { return state.style.frame.paint; }
   function getFrameTextPaint() { return state.style.frame.textPaint; }
 
+  // ラベルのアイコンの塗り。旧データは iconColorMode と iconColor の
+  // 二つ組だったので、無ければそこから起こす。
+  function getFrameIconPaint() {
+    const fr = state.style.frame;
+    if (!fr.iconPaint || !fr.iconPaint.type) {
+      fr.iconPaint = {
+        type: fr.iconColorMode || 'brand',
+        color: fr.iconColor || '#FFFFFF',
+        from: '#FC466B', mid: '', to: '#3F5EFB', angle: 45,
+        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
+      };
+    }
+    return fr.iconPaint;
+  }
+
   // ラベルの中身の下地の塗り。ロゴの下地と同じ 9 モードを持つが、
   // 既定は「なし」なので、選ぶまでは今までどおり板は敷かれない。
   function getFrameBackdropPaint() {
@@ -285,6 +317,9 @@
     if (target === 'frame') return state.style.markerFramePaint;
     if (target === 'eye') return state.style.markerEyePaint;
     if (target === 'bg') return state.style.bg;
+    if (target === 'logoicon') return getLogoPaint();
+    if (target === 'logotext') return getLogoTextPaint();
+    if (target === 'frameicon') return getFrameIconPaint();
     if (target === 'logobd') return getLogoBackdropPaint();
     if (target === 'frameborder' || target === 'framelabel') return getFrameLinePaint();
     if (target === 'frametext') return getFrameTextPaint();
@@ -309,7 +344,8 @@
 
   function paintLabel(p) {
     const n = p.mid ? '3色' : '2色';
-    return p.type === 'white' ? '白' :
+    return p.type === 'brand' ? 'ブランドカラー' :
+      p.type === 'white' ? '白' :
       p.type === 'black' ? '黒' :
       p.type === 'none' ? '透明' :
       p.type === 'auto' ? 'セルの色' :
@@ -334,6 +370,15 @@
 
   function getLogoPaint() { return state.style.logo.paint; }
 
+  // 文字の塗り。旧データはアイコンと同じ paint を共有していたので拾い直す。
+  function getLogoTextPaint() {
+    const lg = state.style.logo;
+    if (!lg.textPaint || !lg.textPaint.type) {
+      lg.textPaint = JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS.logo.textPaint));
+    }
+    return lg.textPaint;
+  }
+
   const STORE_KEY = 'qr-atelier-v1';
 
   // 受け付ける画像の上限。ファイルからでもURLからでも同じ線を引く。
@@ -345,10 +390,11 @@
   // 覚えるときに大きすぎる画像を落とす場所。[持ち主, キー名] で並べる。
   function storedImageSlots(s) {
     return [
-      [s.logo, 'src'], [s.logo.paint, 'src'],
+      [s.logo, 'src'], [s.logo.paint, 'src'], [s.logo.textPaint, 'src'],
       [s.fg, 'src'], [s.bg, 'src'],
       [s.markerFramePaint, 'src'], [s.markerEyePaint, 'src'],
       [s.frame.paint, 'src'], [s.frame.textPaint, 'src'], [s.frame.backdropPaint, 'src'],
+      [s.frame.iconPaint, 'src'],
       [s.frame, 'src'], [s.frame, 'topSrc']
     ];
   }
@@ -445,6 +491,22 @@
         saved.style.logo.backdropPaint = saved.style.logo.backdrop === 'none'
           ? { type: 'none', color: '#FFFFFF', transparency: 0 }
           : { type: 'solid', color: saved.style.logo.backdropColor || '#FFFFFF', transparency: 0 };
+      }
+      // 文字のロゴも、以前はアイコンと同じ paint を共有していた。DEFAULTS の
+      // textPaint に上書きされる前に、そちらへ写しておく。
+      if (saved.style && saved.style.logo && !saved.style.logo.textPaint &&
+          saved.style.logo.type === 'text' && saved.style.logo.paint) {
+        saved.style.logo.textPaint = JSON.parse(JSON.stringify(saved.style.logo.paint));
+        if (saved.style.logo.textPaint.type === 'brand') saved.style.logo.textPaint.type = 'auto';
+      }
+      // ラベルのアイコン色も同じ理由（DEFAULTS の iconPaint に上書きされる）で、
+      // 被せる前に iconColorMode と iconColor から起こしておく。
+      if (saved.style && saved.style.frame && !saved.style.frame.iconPaint &&
+          saved.style.frame.iconColorMode) {
+        saved.style.frame.iconPaint = {
+          type: saved.style.frame.iconColorMode,
+          color: saved.style.frame.iconColor || '#FFFFFF'
+        };
       }
       // merge は DEFAULTS のキーを再帰的に埋めるので、frame.paint / logo.paint /
       // font などの穴埋めはここでは要らない。値の妥当性は sanitizeStyle が見る。
@@ -605,10 +667,10 @@
   }
 
   // 塗りのモードは、どこに使う塗りかで選べる顔ぶれが変わる。画面のボタンの
-  // 並び（index.html の color-mode-seg / logo-color-mode-seg）と対で持つこと。
-  //   basic … セルとラベルの文字。追従先が無いので実体のある塗りだけ
-  //   auto  … マーカーとフレームの線。既定は「セルの色に追従」
-  //   brand … ロゴ。アイコンのブランド公式色を選べる
+  // 並び（index.html の color-panel-tpl の color-mode-seg）と対で持つこと。
+  //   basic … セル。自分が追従先なので「セルの色」は持てない
+  //   auto  … マーカー・枠線・帯・ラベルの文字。既定は「セルの色に追従」
+  //   brand … アイコン。ブランド公式色を選べる
   //   plate … 背景と下地。敷く面なので白・黒・透明まで選べる
   const PAINT_MODES = {
     basic: ['solid', 'multi', 'linear', 'radial', 'image'],
@@ -668,7 +730,7 @@
     if (!s.frame.textPaint) {
       s.frame.textPaint = { type: 'solid', color: s.frame.textColor || '#FFFFFF' };
     }
-    s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'basic', 'solid', '#FFFFFF');
+    s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'auto', 'solid', '#FFFFFF');
     if (!s.frame.font || FONTS.indexOf(s.frame.font) < 0) {
       s.frame.font = 'sans';
     }
@@ -686,6 +748,11 @@
       s.frame.iconColorMode = 'brand';
     }
     s.frame.iconColor = normHex(s.frame.iconColor, '#FFFFFF');
+    // アイコンの塗り。旧データ（iconColorMode と iconColor の二つ組）から起こす
+    if (!s.frame.iconPaint || !s.frame.iconPaint.type) {
+      s.frame.iconPaint = { type: s.frame.iconColorMode || 'brand', color: s.frame.iconColor };
+    }
+    s.frame.iconPaint = sanitizePaint(s.frame.iconPaint, 'brand', 'brand', s.frame.iconColor);
     s.frame.src = sanitizeImageUrl(s.frame.src);
 
     s.frame.topIcon = s.frame.topIcon || 'si-instagram';
@@ -702,8 +769,8 @@
     s.frame.lineWidth = clampNum(s.frame.lineWidth, 0.15, 2.5, lineDef.stroke);
     s.frame.lineWidth2 = clampNum(s.frame.lineWidth2, 0.15, 2.5, lineDef.inner || 0.28);
 
-    // ラベルの中身の下地。形はマーカーの枠と同じ一覧から選ぶ
-    if (!s.frame.backdrop || !A.MARKER_FRAMES.some(f => f.id === s.frame.backdrop)) {
+    // ラベルの中身の下地。形は下地用の一覧から選ぶ
+    if (!s.frame.backdrop || !A.BACKDROP_SHAPES.some(f => f.id === s.frame.backdrop)) {
       s.frame.backdrop = D.frame.backdrop;
     }
     if (!s.frame.backdropPaint || !s.frame.backdropPaint.type) {
@@ -715,14 +782,14 @@
 
     s.bg = sanitizePaint(s.bg, 'plate', 'solid', '#FFFFFF');
 
-    // ロゴの下地。形はマーカーの枠と同じ一覧から選ぶ。旧データの 'none'（下地なし）は
+    // ロゴの下地。形は下地用の一覧から選ぶ。旧データの 'none'（下地なし）は
     // 形を角丸に戻したうえで、塗りのほうを「透明」に移す。
     if (!s.logo.backdropPaint) {
       s.logo.backdropPaint = s.logo.backdrop === 'none'
         ? { type: 'none', color: '#FFFFFF', transparency: 0 }
         : { type: 'solid', color: s.logo.backdropColor || '#FFFFFF', transparency: 0 };
     }
-    if (!s.logo.backdrop || !A.MARKER_FRAMES.some(f => f.id === s.logo.backdrop)) {
+    if (!s.logo.backdrop || !A.BACKDROP_SHAPES.some(f => f.id === s.logo.backdrop)) {
       s.logo.backdrop = D.logo.backdrop;
     }
     if (s.logo.backdropPaint.transparency === undefined) s.logo.backdropPaint.transparency = 0;
@@ -732,6 +799,12 @@
     // 画面では、ブランド以外のアイコン群を選んでいるときに syncControls が
     // 'auto' へ寄せるので、ここでは 'brand' をそのまま通してよい。
     s.logo.paint = sanitizePaint(s.logo.paint, 'brand', 'brand', s.logo.color || D.logo.color);
+
+    // 文字の塗り。旧データはアイコンと同じ paint を共有していた。
+    if (!s.logo.textPaint || !s.logo.textPaint.type) {
+      s.logo.textPaint = { type: 'auto', color: s.logo.color || D.logo.color };
+    }
+    s.logo.textPaint = sanitizePaint(s.logo.textPaint, 'auto', 'auto', s.logo.color || D.logo.color);
 
     [[s, 'markerFrameColor', ''], [s, 'markerEyeColor', ''],
      [s.logo, 'color', D.logo.color], [s.logo, 'backdropColor', D.logo.backdropColor],
@@ -1125,19 +1198,26 @@
     });
   }
 
+  // 「セル枠」はセルの形と太さをそのまま使うので、見本もそれを渡して起こす
+  function markerPreviewOpts() {
+    return { cell: state.style.cell, cellScale: state.style.cellScale };
+  }
+
   function updateFrameGridPreviews() {
     const host = $('frame-grid');
     if (!host) return;
+    const opts = markerPreviewOpts();
     Array.prototype.forEach.call(host.children, btn => {
       const id = btn.dataset.id;
       const holder = btn.querySelector('.preview-holder');
       if (holder && id) {
-        holder.innerHTML = window.QRStyle.markerPreview(id, state.style.markerEye);
+        holder.innerHTML = window.QRStyle.markerPreview(id, state.style.markerEye, opts);
       }
     });
   }
 
   function syncShapeActive() {
+    updateFrameGridPreviews();
     syncShapeGridActive('cell-grid', state.style.cell);
     syncShapeGridActive('frame-grid', state.style.markerFrame);
     syncShapeGridActive('logo-backdrop-grid', state.style.logo.backdrop);
@@ -1179,7 +1259,7 @@
         const b = el('button', { class: 'shape-btn' + (state.style.markerFrame === s.id ? ' active' : ''), type: 'button', title: s.name });
         b.dataset.id = s.id;
         const holder = el('div', { class: 'preview-holder' });
-        holder.innerHTML = window.QRStyle.markerPreview(s.id, state.style.markerEye);
+        holder.innerHTML = window.QRStyle.markerPreview(s.id, state.style.markerEye, markerPreviewOpts());
         b.appendChild(holder);
         b.appendChild(el('i', null, s.name));
         b.addEventListener('click', () => {
@@ -1198,7 +1278,7 @@
       const host = $(hostId);
       if (!host) return;
       host.innerHTML = '';
-      A.MARKER_FRAMES.forEach(f => {
+      A.BACKDROP_SHAPES.forEach(f => {
         const b = el('button', { class: 'shape-btn' + (current === f.id ? ' active' : ''), type: 'button', title: f.name });
         b.dataset.id = f.id;
         const holder = el('div', { class: 'preview-holder' });
@@ -1303,6 +1383,9 @@
     const colors = p.colors;
     colors.forEach((c, idx) => {
       const item = el('div', { class: 'multi-color-item' });
+      // 見本だけでなくカラーコードを押しても色を選べるように、<label> で包む。
+      // ラベルはクリックを中の input へ渡すので、こちらで転送を書く必要はない。
+      const hit = el('label', { class: 'mc-hit' });
       const picker = el('input', { type: 'color', value: normHex(c, '#2563EB'), 'aria-label': '色 ' + (idx + 1) });
       const hexSpan = el('span', { class: 'color-hex' }, normHex(c, '#2563EB'));
       const removeBtn = el('button', {
@@ -1330,8 +1413,9 @@
         update();
       });
 
-      item.appendChild(picker);
-      item.appendChild(hexSpan);
+      hit.appendChild(picker);
+      hit.appendChild(hexSpan);
+      item.appendChild(hit);
       item.appendChild(removeBtn);
       host.appendChild(item);
     });
@@ -1382,6 +1466,7 @@
 
     items.forEach((item) => {
       const elItem = el('div', { class: 'multi-color-item' });
+      const hit = el('label', { class: 'mc-hit' });
       const picker = el('input', { type: 'color', value: normHex(item.val, '#FC466B'), 'aria-label': item.role + '色' });
       const roleSpan = el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, item.role);
       const hexSpan = el('span', { class: 'color-hex' }, normHex(item.val, '#FC466B'));
@@ -1421,9 +1506,10 @@
         update();
       });
 
-      elItem.appendChild(picker);
-      elItem.appendChild(roleSpan);
-      elItem.appendChild(hexSpan);
+      hit.appendChild(picker);
+      hit.appendChild(roleSpan);
+      hit.appendChild(hexSpan);
+      elItem.appendChild(hit);
       elItem.appendChild(removeBtn);
       host.appendChild(elItem);
     });
@@ -1515,6 +1601,18 @@
 
   function buildGradients(scope) {
     renderGradients(cq(scope, 'grad-grid'), () => paintOfScope(scope), () => { state.colorScope = scope; });
+  }
+
+  // 見本の一覧（色・グラデーション・多色パレット）はパネル1枚で百個近いボタンに
+  // なる。パネルは十枚以上あるので、その塗り方を実際に開いたときに一度だけ組む。
+  const builtPanelParts = new Set();
+  function ensurePanelPart(scope, part) {
+    const key = scope + ':' + part;
+    if (builtPanelParts.has(key)) return;
+    builtPanelParts.add(key);
+    if (part === 'swatch') buildSwatches(scope);
+    else if (part === 'grad') buildGradients(scope);
+    else if (part === 'multi') buildMultiPalettes(scope);
   }
 
   function renderIconSvg(icon, uidPrefix) {
@@ -1625,40 +1723,61 @@
     const isLogoBd = target === 'logobd';
     const isFrameBd = target === 'framebd';
     // 背景と下地は「敷く面」なので、白・黒・透明まで選べる
-    const isPlate = isBg || isLogoBd || isFrameBd;
+    const isPlate = PLATE_SCOPES.indexOf(target) >= 0;
+    // ブランドカラーはアイコンにしか意味がない。さらに、汎用アイコンには
+    // ブランド色そのものが無いので、「SNS・ブランド」の一覧を開いている
+    // ときだけ出す。ロゴとラベルで別々の一覧を持っているので、対象ごとに見る。
+    const iconGroupOf = { logoicon: state.iconGroup, frameicon: state.frameIconGroup };
+    const showBrand = BRAND_SCOPES.indexOf(target) >= 0 &&
+      (iconGroupOf[target] || 'brand') === 'brand';
 
     [['btn-mode-white', !isPlate], ['btn-mode-black', !isPlate],
-     ['btn-mode-none', !isPlate], ['btn-mode-auto', isCell]].forEach(pair => {
+     ['btn-mode-none', !isPlate], ['btn-mode-brand', !showBrand],
+     ['btn-mode-auto', isCell]].forEach(pair => {
       const b = cq(scope, pair[0]);
       if (!b) return;
       b.classList.toggle('hidden', pair[1]);
       b.hidden = pair[1];
     });
 
-    setSeg(cq(scope, 'color-mode-seg'), p.type, 'mode');
+    // 出せない指定が残っていたら、いちばん近い意味に寄せる
+    if (p.type === 'brand' && !showBrand) p.type = 'auto';
+    if (p.type === 'auto' && isCell) p.type = 'solid';
+    if (!isPlate && (p.type === 'white' || p.type === 'black' || p.type === 'none')) {
+      p.type = p.type === 'none' ? 'auto' : 'solid';
+    }
 
     const isWhite = p.type === 'white';
     const isBlack = p.type === 'black';
     const isAuto = p.type === 'auto';
     const isNone = p.type === 'none';
+    const isBrand = p.type === 'brand';
     const isSolid = p.type === 'solid';
     const isGrad = p.type === 'linear' || p.type === 'radial';
     const isMulti = p.type === 'multi';
     const isImage = p.type === 'image';
 
+    setSeg(cq(scope, 'color-mode-seg'), p.type, 'mode');
+
     [['pane-white', isWhite], ['pane-black', isBlack], ['pane-auto', isAuto],
-     ['pane-none', isNone], ['pane-solid', isSolid], ['pane-grad', isGrad],
-     ['pane-multi', isMulti], ['pane-image', isImage]].forEach(pair => {
+     ['pane-none', isNone], ['pane-brand', isBrand], ['pane-solid', isSolid],
+     ['pane-grad', isGrad], ['pane-multi', isMulti], ['pane-image', isImage]].forEach(pair => {
       const pane = cq(scope, pair[0]);
       if (pane) pane.classList.toggle('hidden', !pair[1]);
     });
+
+    // 一覧の中身は重いので、その塗り方を選んだときに一度だけ組み立てる
+    if (isGrad) ensurePanelPart(scope, 'grad');
+    if (isMulti) ensurePanelPart(scope, 'multi');
 
     const plateWord = isLogoBd ? 'ロゴの下地' : isFrameBd ? 'ラベルの下地' : '背景';
     const autoNotice = cq(scope, 'auto-notice');
     if (autoNotice) {
       autoNotice.innerHTML = isBg
         ? 'セルの色設定と連動します。<br>グラデーション・放射・画像・多色のテクスチャが指定の透明度で背景に反映されます。'
-        : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
+        : (target === 'frame' || target === 'eye')
+          ? 'セルの色設定と連動します。<br>多色のときは、3つのマーカーに色が1つずつ振られます。'
+          : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
     }
     const whiteNotice = cq(scope, 'white-notice');
     if (whiteNotice) whiteNotice.textContent = plateWord + 'を不透明な白（#FFFFFF）に固定します。';
@@ -1674,7 +1793,9 @@
     }
 
     const swatchHost = cq(scope, 'swatch-host');
-    if (swatchHost) swatchHost.classList.toggle('hidden', isImage || isAuto || isNone || isWhite || isBlack);
+    const hideSwatch = isImage || isAuto || isNone || isWhite || isBlack || isBrand;
+    if (!hideSwatch) ensurePanelPart(scope, 'swatch');
+    if (swatchHost) swatchHost.classList.toggle('hidden', hideSwatch);
 
     const transRow = cq(scope, 'transparency-row');
     if (transRow) transRow.classList.toggle('hidden', !isPlate || isNone || isWhite || isBlack);
@@ -1719,7 +1840,6 @@
     const s = state.style;
 
     syncShapeActive();
-    updateFrameGridPreviews();
 
     $('opt-ec').value = state.ec;
     $('opt-size').value = String(state.exportSize);
@@ -1731,6 +1851,18 @@
     // 見出しの脇に出す要約
     $('hint-shape-color').textContent = paintLabel(state.style.fg);
     $('hint-bg').textContent = paintLabel(state.style.bg);
+    const markerHint = $('hint-marker');
+    if (markerHint) {
+      const fName = (A.MARKER_FRAMES.find(f => f.id === s.markerFrame) || {}).name || '';
+      const eName = (A.MARKER_EYES.find(e => e.id === s.markerEye) || {}).name || '';
+      markerHint.textContent = fName === eName ? fName : fName + '／' + eName;
+    }
+    const markerColHint = $('hint-marker-color');
+    if (markerColHint) {
+      const fLbl = paintLabel(s.markerFramePaint);
+      const eLbl = paintLabel(s.markerEyePaint);
+      markerColHint.textContent = fLbl === eLbl ? fLbl : fLbl + '／' + eLbl;
+    }
 
     $('opt-cellscale').value = s.cellScale;
     $('val-cellscale').textContent = Math.round(s.cellScale * 100) + '%';
@@ -1748,19 +1880,6 @@
     $('opt-minver').value = state.minVersion;
     $('val-minver').textContent = state.minVersion <= 1 ? '自動' : 'v' + state.minVersion + '以上';
 
-    // マーカー枠・目の色同期
-    const markerSyncCheck = $('opt-marker-sync');
-    const isMarkerSync = (!s.markerFramePaint || s.markerFramePaint.type === 'auto') && (!s.markerEyePaint || s.markerEyePaint.type === 'auto');
-    if (markerSyncCheck) markerSyncCheck.checked = isMarkerSync;
-    const markerCustomColors = $('marker-custom-colors');
-    if (markerCustomColors) markerCustomColors.classList.toggle('hidden', isMarkerSync);
-    const mFrameCol = (s.markerFramePaint && s.markerFramePaint.color) || '#000000';
-    if ($('marker-frame-color-picker')) $('marker-frame-color-picker').value = normHex(mFrameCol, '#000000');
-    if ($('marker-frame-color-hex')) $('marker-frame-color-hex').value = normHex(mFrameCol, '#000000');
-    const mEyeCol = (s.markerEyePaint && s.markerEyePaint.color) || '#000000';
-    if ($('marker-eye-color-picker')) $('marker-eye-color-picker').value = normHex(mEyeCol, '#000000');
-    if ($('marker-eye-color-hex')) $('marker-eye-color-hex').value = normHex(mEyeCol, '#000000');
-
     // ロゴ同期
     setSeg('logo-mode', s.logo.type, 'mode');
     $('logo-icon-pane').classList.toggle('hidden', s.logo.type !== 'icon');
@@ -1768,40 +1887,8 @@
     $('logo-text-pane').classList.toggle('hidden', s.logo.type !== 'text');
     $('logo-common').classList.toggle('hidden', s.logo.type === 'none');
 
-    const isBrandGroup = state.iconGroup === 'brand';
-    const brandModeBtn = $('btn-logo-mode-brand');
-    if (brandModeBtn) {
-      brandModeBtn.classList.toggle('hidden', !isBrandGroup);
-      brandModeBtn.hidden = !isBrandGroup;
-    }
-
-    const lp = getLogoPaint();
-    if (!isBrandGroup && lp.type === 'brand') {
-      lp.type = 'auto';
-    }
-
-    // アイコンモードの色同期
-    setSeg('logo-color-mode-seg', lp.type, 'mode');
-    const isLSolid = lp.type === 'solid';
-    if ($('logo-pane-solid')) $('logo-pane-solid').classList.toggle('hidden', !isLSolid);
-    if ($('logo-solid-picker')) $('logo-solid-picker').value = normHex(lp.color, '#111827');
-    if ($('logo-solid-hex')) $('logo-solid-hex').value = normHex(lp.color, '#111827');
-
-    // 文字（Text）用の同期
     setSeg('logo-font-seg', s.logo.font || 'sans', 'font');
-    setSeg('logo-text-color-mode-seg', lp.type === 'solid' ? 'solid' : 'auto', 'mode');
-    if ($('logo-text-pane-solid')) $('logo-text-pane-solid').classList.toggle('hidden', !isLSolid);
-    if ($('logo-text-solid-picker')) $('logo-text-solid-picker').value = normHex(lp.color, '#111827');
-    if ($('logo-text-solid-hex')) $('logo-text-solid-hex').value = normHex(lp.color, '#111827');
     if ($('logo-text')) $('logo-text').value = s.logo.text || '';
-
-    // 下地の同期
-    const lbd = getLogoBackdropPaint();
-    const lbdType = lbd.type === 'solid' ? 'solid' : (lbd.type === 'black' ? 'black' : (lbd.type === 'none' ? 'none' : 'white'));
-    setSeg('logo-backdrop-mode-seg', lbdType, 'mode');
-    if ($('logo-backdrop-solid-row')) $('logo-backdrop-solid-row').classList.toggle('hidden', lbd.type !== 'solid');
-    if ($('logo-backdrop-solid-picker')) $('logo-backdrop-solid-picker').value = normHex(lbd.color, '#FFFFFF');
-    if ($('logo-backdrop-solid-hex')) $('logo-backdrop-solid-hex').value = normHex(lbd.color, '#FFFFFF');
 
     // ロゴ共通
     if ($('logo-size')) $('logo-size').value = s.logo.size;
@@ -1835,13 +1922,6 @@
         : s.frame.line === 'balloon' ? '※ しっぽのぶん、下に伸びます。'
         : '';
     }
-    const linePaintMode = (s.frame.paint && s.frame.paint.type === 'solid') ? 'solid' : 'auto';
-    setSeg('frame-line-color-mode-seg', linePaintMode, 'mode');
-    if ($('frame-line-solid-row')) $('frame-line-solid-row').classList.toggle('hidden', linePaintMode !== 'solid');
-    const lineCol = (s.frame.paint && s.frame.paint.color) || s.frame.color || '#111827';
-    if ($('frame-line-solid-picker')) $('frame-line-solid-picker').value = normHex(lineCol, '#111827');
-    if ($('frame-line-solid-hex')) $('frame-line-solid-hex').value = normHex(lineCol, '#111827');
-
     const framePos = (s.frame && s.frame.pos === 'top') ? 'top' : 'bottom';
     setSeg('frame-pos-seg', framePos, 'pos');
 
@@ -1854,9 +1934,6 @@
     // テキスト
     if ($('frame-text')) $('frame-text').value = (framePos === 'top' ? (s.frame.textTop || s.frame.text) : s.frame.text) || '';
     setSeg('frame-font-seg', (s.frame && s.frame.font) || 'sans', 'font');
-    const textCol = (s.frame.textPaint && s.frame.textPaint.color) || s.frame.textColor || '#FFFFFF';
-    if ($('frame-text-solid-picker')) $('frame-text-solid-picker').value = normHex(textCol, '#FFFFFF');
-    if ($('frame-text-solid-hex')) $('frame-text-solid-hex').value = normHex(textCol, '#FFFFFF');
 
     // アイコン
     if ($('frame-icon-tabs')) {
@@ -1866,12 +1943,6 @@
     }
     const curIcon = (framePos === 'top' ? (s.frame.topIcon || s.frame.icon) : s.frame.icon) || 'si-instagram';
     syncShapeGridActive('frame-icon-grid', curIcon);
-    const iconColMode = (framePos === 'top' ? (s.frame.topIconColorMode || s.frame.iconColorMode) : s.frame.iconColorMode) || 'brand';
-    setSeg('frame-icon-color-mode-seg', iconColMode, 'mode');
-    if ($('frame-icon-solid-row')) $('frame-icon-solid-row').classList.toggle('hidden', iconColMode !== 'solid');
-    const iconCol = (framePos === 'top' ? (s.frame.topIconColor || s.frame.iconColor) : s.frame.iconColor) || '#FFFFFF';
-    if ($('frame-icon-solid-picker')) $('frame-icon-solid-picker').value = normHex(iconCol, '#FFFFFF');
-    if ($('frame-icon-solid-hex')) $('frame-icon-solid-hex').value = normHex(iconCol, '#FFFFFF');
 
     // 画像
     const curImgSrc = (framePos === 'top' ? (s.frame.topSrc || s.frame.src) : s.frame.src) || '';
@@ -1887,23 +1958,6 @@
     if ($('val-frame-content-size')) $('val-frame-content-size').textContent = Math.round(fcSize * 100) + '%';
     if ($('frame-content-pad')) $('frame-content-pad').value = fcPad;
     if ($('val-frame-content-pad')) $('val-frame-content-pad').textContent = Math.round(fcPad * 100) + '%';
-
-    // 帯（フレーム）の色
-    const labelPaintMode = (s.frame.paint && s.frame.paint.type === 'solid') ? 'solid' : 'auto';
-    setSeg('frame-label-color-mode-seg', labelPaintMode, 'mode');
-    if ($('frame-label-solid-row')) $('frame-label-solid-row').classList.toggle('hidden', labelPaintMode !== 'solid');
-    const labelCol = (s.frame.paint && s.frame.paint.color) || s.frame.color || '#111827';
-    if ($('frame-label-solid-picker')) $('frame-label-solid-picker').value = normHex(labelCol, '#111827');
-    if ($('frame-label-solid-hex')) $('frame-label-solid-hex').value = normHex(labelCol, '#111827');
-
-    // 下地の色
-    const fbd = getFrameBackdropPaint();
-    const fbdMode = fbd.type === 'solid' ? 'solid' : (fbd.type === 'white' ? 'white' : 'none');
-    setSeg('frame-backdrop-color-mode-seg', fbdMode, 'mode');
-    if ($('frame-backdrop-solid-row')) $('frame-backdrop-solid-row').classList.toggle('hidden', fbdMode !== 'solid');
-    const fbdCol = fbd.color || '#FFFFFF';
-    if ($('frame-backdrop-solid-picker')) $('frame-backdrop-solid-picker').value = normHex(fbdCol, '#FFFFFF');
-    if ($('frame-backdrop-solid-hex')) $('frame-backdrop-solid-hex').value = normHex(fbdCol, '#FFFFFF');
 
     updateCanvasChecker();
   }
@@ -2697,7 +2751,7 @@
       touch();
       const p = paintOfScope(scope);
       p.src = '';
-      p.type = (scope === 'frame' || scope === 'eye') ? 'auto' : 'solid';
+      p.type = CLEARED_IMAGE_TYPE[scope] || 'auto';
     });
     wireImageUrlInput(cq(scope, 'btn-image-url'), cq(scope, 'image-url'),
       IMAGE_TARGETS.target, touch);
@@ -2722,35 +2776,6 @@
 
     COLOR_SCOPES.forEach(wireColorPanel);
 
-    // マーカー色（連動トグル ＆ 別色指定時の単色ピッカー）
-    const markerSync = $('opt-marker-sync');
-    if (markerSync) {
-      markerSync.addEventListener('change', () => {
-        if (markerSync.checked) {
-          state.style.markerFramePaint = { type: 'auto' };
-          state.style.markerEyePaint = { type: 'auto' };
-        } else {
-          const fc = $('marker-frame-color-picker') ? $('marker-frame-color-picker').value : '#000000';
-          const ec = $('marker-eye-color-picker') ? $('marker-eye-color-picker').value : '#000000';
-          state.style.markerFramePaint = { type: 'solid', color: fc };
-          state.style.markerEyePaint = { type: 'solid', color: ec };
-        }
-        state.presetName = '';
-        syncControls();
-        update();
-      });
-    }
-    bindColor('marker-frame-color-picker', 'marker-frame-color-hex', v => {
-      state.style.markerFramePaint = { type: 'solid', color: v };
-      state.presetName = '';
-      update();
-    });
-    bindColor('marker-eye-color-picker', 'marker-eye-color-hex', v => {
-      state.style.markerEyePaint = { type: 'solid', color: v };
-      state.presetName = '';
-      update();
-    });
-
     // ロゴ種類
     bindSeg('logo-mode', 'mode', v => {
       state.style.logo.type = v;
@@ -2765,56 +2790,10 @@
       }
     });
 
-    // ロゴアイコン色
-    bindSeg('logo-color-mode-seg', 'mode', v => {
-      const lp = getLogoPaint();
-      lp.type = v;
-      if (v === 'solid' && !lp.color) lp.color = '#111827';
-      state.presetName = '';
-      syncControls();
-      update();
+    bindRange('opt-cellscale', 'val-cellscale', v => Math.round(v * 100) + '%', v => {
+      state.style.cellScale = v;
+      updateFrameGridPreviews();
     });
-    bindColor('logo-solid-picker', 'logo-solid-hex', v => {
-      getLogoPaint().color = v;
-      state.style.logo.color = v;
-      state.presetName = '';
-      update();
-    });
-
-    // ロゴ文字色
-    bindSeg('logo-text-color-mode-seg', 'mode', v => {
-      const lp = getLogoPaint();
-      lp.type = v;
-      if (v === 'solid' && !lp.color) lp.color = '#111827';
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-    bindColor('logo-text-solid-picker', 'logo-text-solid-hex', v => {
-      getLogoPaint().color = v;
-      state.style.logo.color = v;
-      state.presetName = '';
-      update();
-    });
-
-    // ロゴ下地色
-    bindSeg('logo-backdrop-mode-seg', 'mode', v => {
-      const lbd = getLogoBackdropPaint();
-      lbd.type = v;
-      if (v === 'solid' && !lbd.color) lbd.color = '#FFFFFF';
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-    bindColor('logo-backdrop-solid-picker', 'logo-backdrop-solid-hex', v => {
-      getLogoBackdropPaint().color = v;
-      state.presetName = '';
-      update();
-    });
-
-    bindColor('frame-color', null, v => { state.style.frame.color = v; });
-    bindColor('frame-textcolor', null, v => { state.style.frame.textColor = v; });
-    bindRange('opt-cellscale', 'val-cellscale', v => Math.round(v * 100) + '%', v => { state.style.cellScale = v; });
     bindRange('opt-celljitter', 'val-celljitter', v => Math.round(v * 100) + '%', v => { state.style.cellJitter = v; });
     bindRange('opt-margin', 'val-margin', v => String(v), v => {
       state.style.margin = v;
@@ -2874,24 +2853,14 @@
           state.frameBottomIconGroup = b.dataset.group;
           Array.prototype.forEach.call(frameIconTabs.children, t => t.classList.toggle('active', t === b));
           buildFrameIconGrid();
+          // 一覧を替えるとブランドカラーを出せるかどうかが変わる。
+          // 色パネルを組み直さないと、ベーシックのアイコンに
+          // 「ブランドカラー」が残ったままになる。
+          syncControls();
+          update();
         });
       });
     }
-
-    bindSeg('frame-icon-color-mode-seg', 'mode', v => {
-      state.style.frame.iconColorMode = v;
-      state.style.frame.topIconColorMode = v;
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-
-    bindColor('frame-icon-solid-picker', 'frame-icon-solid-hex', v => {
-      state.style.frame.iconColor = v;
-      state.style.frame.topIconColor = v;
-      state.presetName = '';
-      update();
-    });
 
     bindSeg('frame-font-seg', 'font', v => {
       state.style.frame.font = v;
@@ -2903,60 +2872,6 @@
       state.style.frame.text = e.target.value;
       state.style.frame.textTop = e.target.value;
       scheduleUpdate();
-    });
-
-    bindColor('frame-text-solid-picker', 'frame-text-solid-hex', v => {
-      state.style.frame.textColor = v;
-      state.style.frame.textPaint = { type: 'solid', color: v };
-      state.presetName = '';
-      update();
-    });
-
-    // 帯（フレーム）の色
-    bindSeg('frame-label-color-mode-seg', 'mode', v => {
-      const picker = $('frame-label-solid-picker');
-      const curCol = picker ? picker.value : '#111827';
-      state.style.frame.paint = v === 'auto' ? { type: 'auto' } : { type: 'solid', color: curCol };
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-    bindColor('frame-label-solid-picker', 'frame-label-solid-hex', v => {
-      state.style.frame.paint = { type: 'solid', color: v };
-      state.style.frame.color = v;
-      state.presetName = '';
-      update();
-    });
-
-    // 枠線の色
-    bindSeg('frame-line-color-mode-seg', 'mode', v => {
-      const picker = $('frame-line-solid-picker');
-      const curCol = picker ? picker.value : '#111827';
-      state.style.frame.paint = v === 'auto' ? { type: 'auto' } : { type: 'solid', color: curCol };
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-    bindColor('frame-line-solid-picker', 'frame-line-solid-hex', v => {
-      state.style.frame.paint = { type: 'solid', color: v };
-      state.style.frame.color = v;
-      state.presetName = '';
-      update();
-    });
-
-    // 下地の色
-    bindSeg('frame-backdrop-color-mode-seg', 'mode', v => {
-      const fbd = getFrameBackdropPaint();
-      fbd.type = v;
-      if (v === 'solid' && !fbd.color) fbd.color = '#FFFFFF';
-      state.presetName = '';
-      syncControls();
-      update();
-    });
-    bindColor('frame-backdrop-solid-picker', 'frame-backdrop-solid-hex', v => {
-      getFrameBackdropPaint().color = v;
-      state.presetName = '';
-      update();
     });
 
     Array.prototype.forEach.call($('icon-tabs').children, b => {
@@ -3152,7 +3067,17 @@
 
   const TARGET_LABELS = {
     cell: 'セル',
-    bg: '背景'
+    bg: '背景',
+    frame: 'マーカーの枠',
+    eye: 'マーカーの目',
+    logoicon: 'ロゴのアイコン',
+    logotext: 'ロゴの文字',
+    logobd: 'ロゴの下地',
+    frameborder: '枠線',
+    framelabel: '帯',
+    frametext: 'ラベルの文字',
+    frameicon: 'ラベルのアイコン',
+    framebd: 'ラベルの下地'
   };
 
   function getTargetLabel() {
@@ -3365,11 +3290,6 @@
     buildPresets();
     buildShapeGrids();
     buildColorPanels();
-    COLOR_SCOPES.forEach(scope => {
-      buildSwatches(scope);
-      buildGradients(scope);
-      buildMultiPalettes(scope);
-    });
     buildIconGrid();
     buildFrameIconGrid();
     buildFrameChips();

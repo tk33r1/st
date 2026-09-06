@@ -54,7 +54,7 @@
           "priceCurrency": "JPY"
         },
         "browserRequirements": "Requires JavaScript",
-        "featureList": "29種類のデザインテンプレート, 17種類のセル形状（連結セル含む）, 9種類のマーカー枠と16種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先/位置情報, PNG・SVG・JPEG・WebP書き出し, 読み取りテスト, サーバーへの送信なし"
+        "featureList": "29種類のデザインテンプレート, 17種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先/位置情報, PNG・SVG・JPEG・WebP書き出し, 読み取りテスト, サーバーへの送信なし"
       },
       {
         "@type": "BreadcrumbList",
@@ -599,6 +599,27 @@
       border: 1px solid var(--rule);
       border-radius: var(--r-1);
     }
+    /* 見本・役割名・カラーコードをまとめた当たり判定。
+       ここを押すと中の input[type=color] が開く */
+    .multi-color-item .mc-hit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      /* 文字を押したときに選択されてしまうと、拾い損ねたように見える */
+      user-select: none;
+      -webkit-user-select: none;
+      border-radius: 4px;
+      padding: 1px 3px 1px 1px;
+      margin: -1px -3px -1px -1px;
+    }
+    .multi-color-item .mc-hit:hover {
+      background: var(--bg-card);
+    }
+    .multi-color-item .mc-hit:focus-within {
+      outline: 2px solid var(--accent, #2563EB);
+      outline-offset: 1px;
+    }
     .multi-color-item input[type="color"] {
       width: 24px;
       height: 24px;
@@ -1084,10 +1105,10 @@
           </div>
         </details>
 
-        <!-- セルとマーカー -->
+        <!-- セル -->
         <details class="sec" id="sec-shape">
           <summary>
-            <span class="st-lbl">セルとマーカー</span>
+            <span class="st-lbl">セル</span>
             <span class="hint"><span id="hint-shape">四角</span> · <span id="hint-shape-color">単色</span></span>
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
@@ -1116,9 +1137,17 @@
               <label>セルの色</label>
               <div class="color-panel" data-scope="cell"></div>
             </div>
+          </div>
+        </details>
 
-            <div class="sec-rule"></div>
-
+        <!-- マーカー -->
+        <details class="sec" id="sec-marker">
+          <summary>
+            <span class="st-lbl">マーカー</span>
+            <span class="hint"><span id="hint-marker">四角</span> · <span id="hint-marker-color">セルの色</span></span>
+            <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
+          </summary>
+          <div class="sec-body">
             <div class="field">
               <label>マーカーの枠と目</label>
               <div class="grid2">
@@ -1133,29 +1162,18 @@
               </div>
             </div>
 
-            <div class="field" style="margin-top:12px">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="opt-marker-sync" class="tb-check" checked>
-                <label for="opt-marker-sync" style="cursor:pointer; font-size:12.5px; color:var(--ink-2); text-transform:none; letter-spacing:0;">マーカーの色をセルの色に合わせる</label>
-              </div>
+            <div class="sec-rule"></div>
+
+            <div class="field">
+              <label>マーカーの枠の色</label>
+              <div class="color-panel" data-scope="frame"></div>
             </div>
-            <div id="marker-custom-colors" class="hidden" style="margin-top:8px;">
-              <div class="grid2">
-                <div class="field">
-                  <label>枠の色</label>
-                  <div class="color-row">
-                    <input type="color" id="marker-frame-color-picker" value="#000000" aria-label="マーカー枠の色">
-                    <input type="text" id="marker-frame-color-hex" value="#000000" spellcheck="false" aria-label="マーカー枠のカラーコード">
-                  </div>
-                </div>
-                <div class="field">
-                  <label>目の色</label>
-                  <div class="color-row">
-                    <input type="color" id="marker-eye-color-picker" value="#000000" aria-label="マーカー目の色">
-                    <input type="text" id="marker-eye-color-hex" value="#000000" spellcheck="false" aria-label="マーカー目のカラーコード">
-                  </div>
-                </div>
-              </div>
+
+            <div class="sec-rule"></div>
+
+            <div class="field">
+              <label>マーカーの目の色</label>
+              <div class="color-panel" data-scope="eye"></div>
             </div>
           </div>
         </details>
@@ -1197,17 +1215,7 @@
 
               <div class="field" style="margin-top:12px">
                 <label id="logo-color-mode-label">アイコンの色</label>
-                <div class="st-seg seg-sm" id="logo-color-mode-seg">
-                  <button type="button" data-mode="brand" id="btn-logo-mode-brand" class="active">ブランドカラー</button>
-                  <button type="button" data-mode="auto" id="btn-logo-mode-auto">セルの色</button>
-                  <button type="button" data-mode="solid" id="btn-logo-mode-solid">単色</button>
-                </div>
-              </div>
-              <div id="logo-pane-solid" class="hidden" style="margin-top:8px">
-                <div class="color-row">
-                  <input type="color" id="logo-solid-picker" value="#111827" aria-label="アイコンの色">
-                  <input type="text" id="logo-solid-hex" value="#111827" spellcheck="false" aria-label="アイコンのカラーコード">
-                </div>
+                <div class="color-panel" data-scope="logoicon"></div>
               </div>
             </div>
 
@@ -1246,16 +1254,7 @@
               </div>
               <div class="field" style="margin-top:12px">
                 <label id="logo-text-color-mode-label">文字の色</label>
-                <div class="st-seg seg-sm" id="logo-text-color-mode-seg">
-                  <button type="button" data-mode="auto" id="btn-logo-text-mode-auto" class="active">セルの色</button>
-                  <button type="button" data-mode="solid" id="btn-logo-text-mode-solid">単色</button>
-                </div>
-              </div>
-              <div id="logo-text-pane-solid" class="hidden" style="margin-top:8px">
-                <div class="color-row">
-                  <input type="color" id="logo-text-solid-picker" value="#111827" aria-label="文字の色">
-                  <input type="text" id="logo-text-solid-hex" value="#111827" spellcheck="false" aria-label="文字のカラーコード">
-                </div>
+                <div class="color-panel" data-scope="logotext"></div>
               </div>
             </div>
 
@@ -1277,18 +1276,7 @@
               </div>
               <div class="field">
                 <label>下地の色</label>
-                <div class="st-seg seg-sm" id="logo-backdrop-mode-seg">
-                  <button type="button" data-mode="white" class="active">白</button>
-                  <button type="button" data-mode="black">黒</button>
-                  <button type="button" data-mode="none">透明</button>
-                  <button type="button" data-mode="solid">単色</button>
-                </div>
-                <div id="logo-backdrop-solid-row" class="hidden" style="margin-top:8px">
-                  <div class="color-row">
-                    <input type="color" id="logo-backdrop-solid-picker" value="#FFFFFF" aria-label="下地の色">
-                    <input type="text" id="logo-backdrop-solid-hex" value="#FFFFFF" spellcheck="false" aria-label="下地のカラーコード">
-                  </div>
-                </div>
+                <div class="color-panel" data-scope="logobd"></div>
               </div>
             </div>
           </div>
@@ -1321,16 +1309,7 @@
               </div>
               <div class="field" style="margin-top:10px">
                 <label>枠線の色</label>
-                <div class="st-seg seg-sm" id="frame-line-color-mode-seg">
-                  <button type="button" data-mode="auto" class="active">セルの色</button>
-                  <button type="button" data-mode="solid">単色</button>
-                </div>
-                <div id="frame-line-solid-row" class="hidden" style="margin-top:8px">
-                  <div class="color-row">
-                    <input type="color" id="frame-line-solid-picker" value="#111827" aria-label="枠線の色">
-                    <input type="text" id="frame-line-solid-hex" value="#111827" spellcheck="false" aria-label="枠線のカラーコード">
-                  </div>
-                </div>
+                <div class="color-panel" data-scope="frameborder"></div>
               </div>
             </div>
 
@@ -1370,10 +1349,7 @@
                 </div>
                 <div class="field" style="margin-top:10px">
                   <label>文字の色</label>
-                  <div class="color-row">
-                    <input type="color" id="frame-text-solid-picker" value="#FFFFFF" aria-label="文字の色">
-                    <input type="text" id="frame-text-solid-hex" value="#FFFFFF" spellcheck="false" aria-label="文字のカラーコード">
-                  </div>
+                  <div class="color-panel" data-scope="frametext"></div>
                 </div>
               </div>
 
@@ -1386,17 +1362,7 @@
                 <div class="icon-grid" id="frame-icon-grid"></div>
                 <div class="field" style="margin-top:12px">
                   <label>アイコンの色</label>
-                  <div class="st-seg seg-sm" id="frame-icon-color-mode-seg">
-                    <button type="button" data-mode="brand" class="active">ブランドカラー</button>
-                    <button type="button" data-mode="auto">セルの色</button>
-                    <button type="button" data-mode="solid">単色</button>
-                  </div>
-                </div>
-                <div id="frame-icon-solid-row" class="hidden" style="margin-top:8px">
-                  <div class="color-row">
-                    <input type="color" id="frame-icon-solid-picker" value="#FFFFFF" aria-label="アイコンの色">
-                    <input type="text" id="frame-icon-solid-hex" value="#FFFFFF" spellcheck="false" aria-label="アイコンのカラーコード">
-                  </div>
+                  <div class="color-panel" data-scope="frameicon"></div>
                 </div>
               </div>
 
@@ -1430,16 +1396,7 @@
                 </div>
                 <div class="field" style="margin-top:10px">
                   <label>帯（フレーム）の色</label>
-                  <div class="st-seg seg-sm" id="frame-label-color-mode-seg">
-                    <button type="button" data-mode="auto" class="active">セルの色</button>
-                    <button type="button" data-mode="solid">単色</button>
-                  </div>
-                  <div id="frame-label-solid-row" class="hidden" style="margin-top:8px">
-                    <div class="color-row">
-                      <input type="color" id="frame-label-solid-picker" value="#111827" aria-label="帯の色">
-                      <input type="text" id="frame-label-solid-hex" value="#111827" spellcheck="false" aria-label="帯のカラーコード">
-                    </div>
-                  </div>
+                  <div class="color-panel" data-scope="framelabel"></div>
                 </div>
                 <div class="field" style="margin-top:10px">
                   <label>下地の形</label>
@@ -1447,17 +1404,7 @@
                 </div>
                 <div class="field" style="margin-top:8px">
                   <label>下地の色</label>
-                  <div class="st-seg seg-sm" id="frame-backdrop-color-mode-seg">
-                    <button type="button" data-mode="none" class="active">なし（透明）</button>
-                    <button type="button" data-mode="white">白</button>
-                    <button type="button" data-mode="solid">単色</button>
-                  </div>
-                  <div id="frame-backdrop-solid-row" class="hidden" style="margin-top:8px">
-                    <div class="color-row">
-                      <input type="color" id="frame-backdrop-solid-picker" value="#FFFFFF" aria-label="下地の色">
-                      <input type="text" id="frame-backdrop-solid-hex" value="#FFFFFF" spellcheck="false" aria-label="下地のカラーコード">
-                    </div>
-                  </div>
+                  <div class="color-panel" data-scope="framebd"></div>
                 </div>
               </div>
             </div>
@@ -1532,7 +1479,7 @@
         <li>テンプレート29種類 — 定番・グラデ・多色・フレーム・個性派から選んで、そこから細かく詰められます。「おまかせデザイン」を押せば、地の明暗から配色・形・フレームまで毎回組み替えます</li>
         <li>セル（データの点）17種類 — 連結（コネクテッド）・四角・角丸・丸み強・ドット・六角形・八角形・フラワー・リーフ・雫・ひし形・星・ハート・十字・ばってん・縦横ライン</li>
         <li>セルの詰め方 — 太さ、太さのバラつき（手で押したような揺らぎ）、マス目の密度まで動かせます</li>
-        <li>マーカー（三隅の目印）— 枠9種類 × 目16種類、色も枠と目で別々に指定できます</li>
+        <li>マーカー（三隅の目印）— 枠9種類 × 目14種類、色も枠と目でそれぞれ塗りの全種類から選べます</li>
         <li>色 — 単色スウォッチ68色、グラデーション14種、角度指定つきの線形／放射グラデーション、セルごとに色を散らす多色モザイク。背景は白・黒・透明・セルの色との連動も選べます</li>
         <li>塗りに画像 — セル・マーカー・背景・ロゴのそれぞれに手持ちの画像を敷いて、拡大縮小できます</li>
         <li>中央のロゴ — SNS・ブランドアイコン32種、汎用アイコン24種、手持ちの画像、絵文字や文字。アイコンの色は塗りと同じ選択肢から選べ、後ろに敷く下地の形と色も変えられます</li>
@@ -1558,7 +1505,7 @@
         しかも、1モジュールを4ピクセルで描いたものから24ピクセルで描いたものまで、
         解像度を変えて何段も試します。カメラで小さく写したときだけ読めて、
         書き出した画像を等倍で読ませると失敗する、というデザインが実際にあるためです
-        （マーカーの目を縦ラインや横ラインにすると起きやすい）。全段で読めたときだけ「読み取りOK」、
+        （マーカーの目を細い形にすると起きやすい）。全段で読めたときだけ「読み取りOK」、
         一部の解像度でしか読めないときは、その旨をはっきり出します。
         デコーダはこのページに同梱していて（端末そのものの読み取り機能だけはブラウザ自身の機能です）、
         検査のために画像が外部へ送られることはありません。
@@ -1672,13 +1619,14 @@
     })();
   </script>
 
-      <!-- 色パネル（セル・マーカー／背景／ロゴの下地の3か所に同じものを立てる） -->
+      <!-- 色パネル（セル・マーカーの枠と目・背景・ロゴ・フレームの各所に同じものを立てる） -->
       <template id="color-panel-tpl">
         <div class="field">
           <div class="st-seg seg-sm" data-cid="color-mode-seg">
             <button type="button" data-mode="white" data-cid="btn-mode-white" class="hidden">白</button>
             <button type="button" data-mode="black" data-cid="btn-mode-black" class="hidden">黒</button>
             <button type="button" data-mode="none" data-cid="btn-mode-none" class="hidden">透明</button>
+            <button type="button" data-mode="brand" data-cid="btn-mode-brand" class="hidden">ブランドカラー</button>
             <button type="button" data-mode="auto" data-cid="btn-mode-auto" class="hidden">セルの色</button>
             <button type="button" data-mode="solid" class="active">単色</button>
             <button type="button" data-mode="multi">多色</button>
@@ -1697,6 +1645,12 @@
         <div data-cid="pane-black" class="hidden">
           <div class="notice" data-cid="black-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
             背景を不透明な黒（#000000）に固定します。
+          </div>
+        </div>
+
+        <div data-cid="pane-brand" class="hidden">
+          <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+            アイコンそのものの色（SNSやブランドの指定色）で描きます。
           </div>
         </div>
 
@@ -1774,9 +1728,9 @@
       </template>
 
   <script src="qr-core.js?v=20260905"></script>
-  <script src="qr-style.js?v=20260906_2"></script>
-  <script src="qr-assets.js?v=20260905"></script>
+  <script src="qr-style.js?v=20260907"></script>
+  <script src="qr-assets.js?v=20260907"></script>
   <script src="qr-verify.js?v=20260905"></script>
-  <script src="app.js?v=20260906_2"></script>
+  <script src="app.js?v=20260907_2"></script>
 </body>
 </html>
