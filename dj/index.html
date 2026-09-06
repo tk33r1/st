@@ -1668,6 +1668,36 @@
       resize: vertical;
     }
 
+    /*
+     * datetime-local は空のとき "yyyy/mm/dd --:--" を出すので placeholder は効かない。
+     * 未入力であることが分かるよう、値が入るまで文字色を薄くしておく（:not(:focus) で
+     * 開いている最中は通常色に戻し、いま触っている欄が沈んで見えないようにする）。
+     */
+    .offer-input--datetime:not(:focus):invalid,
+    .offer-input--datetime:not(:focus):placeholder-shown {
+      color: rgba(45, 27, 78, 0.45);
+    }
+
+    /*
+     * カレンダーのアイコン。既定は黒でこの配色から浮くが、filter で色を寄せるのは
+     * ブラウザ任せで当てにならない。素のアイコンは透明にして、select と同じ手で
+     * 紫の SVG を背景に敷く（欄のどこを押しても JS が showPicker を呼ぶので、
+     * 見えないアイコンを狙わせることにはならない）。
+     */
+    .offer-input--datetime {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239c7af7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='4' rx='2' ry='2'/%3E%3Cline x1='16' x2='16' y1='2' y2='6'/%3E%3Cline x1='8' x2='8' y1='2' y2='6'/%3E%3Cline x1='3' x2='21' y1='10' y2='10'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 18px 18px;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    .offer-input--datetime::-webkit-calendar-picker-indicator {
+      opacity: 0;
+      cursor: pointer;
+    }
+
     /* select だけは矢印が消えるので背景画像で描き直す（SVG は data URI で内包） */
     .offer-select {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239c7af7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -1763,6 +1793,19 @@
     .offer-submit:disabled {
       opacity: 0.55;
       cursor: not-allowed;
+    }
+
+    /* 紙飛行機。押すと飛ぶ気配だけ出す（送信中はスピナーと入れ替わる） */
+    .offer-submit-icon {
+      width: 16px;
+      height: 16px;
+      flex: none;
+      stroke-width: 1.75;
+      transition: transform 0.25s ease;
+    }
+
+    .offer-submit:hover:not(:disabled) .offer-submit-icon {
+      transform: translate(2px, -2px);
     }
 
     /* 送信中に回すリング。prefers-reduced-motion では止める */
@@ -3739,7 +3782,7 @@
             <label class="offer-label" for="offerName">お名前 <span class="offer-required"
                 aria-hidden="true">必須</span></label>
             <input class="offer-input" type="text" id="offerName" name="name" maxlength="80" required
-              autocomplete="name" placeholder="武田 慎也">
+              autocomplete="name" placeholder="人類踊狂計画">
           </div>
 
           <div class="offer-field">
@@ -3769,8 +3812,8 @@
 
           <div class="offer-field">
             <label class="offer-label" for="offerDate">開催日時</label>
-            <input class="offer-input" type="text" id="offerDate" name="date" maxlength="120"
-              placeholder="2026/03/14 21:00〜 など">
+            <input class="offer-input offer-input--datetime" type="datetime-local" id="offerDate" name="date">
+            <span class="offer-hint">未定・候補が複数の場合は空欄のままご相談内容へ。</span>
           </div>
 
           <div class="offer-field">
@@ -3807,8 +3850,18 @@
         <div class="offer-actions">
           <!-- Turnstile はフォームが視界に入ってから読み込む（下部の JS 参照） -->
           <div class="offer-turnstile" id="offerTurnstile"></div>
+          <!--
+            アイコンとラベルは JS が送信中に差し替える。マークアップと JS 側の
+            テンプレート（setSending）は同じ形を保つこと
+          -->
           <button class="offer-submit" type="submit" id="offerSubmit">
-            <span id="offerSubmitLabel" lang="en">Send Offer</span>
+            <svg class="offer-submit-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <line x1="22" x2="11" y1="2" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+            <span lang="en">Send Offer</span>
           </button>
           <p class="offer-status" id="offerStatus" role="status" aria-live="polite" hidden></p>
         </div>
@@ -3889,7 +3942,10 @@
     </svg>
   </button>
 
-  <!-- Lucide アイコンは CDN 依存を廃止し、使用する 11 種をインライン SVG 化済み -->
+  <!--
+    Lucide アイコンは CDN 依存を廃止し、使う分だけインライン SVG 化済み。
+    アイコンを増やすときも CDN には戻さず、lucide から該当の path をここに写す
+  -->
   <script>
     // 1. DOM Elements Cache
     const progressBar = document.getElementById('progressBar');
@@ -4441,13 +4497,55 @@
         statusEl.hidden = false;
       };
 
+      // マークアップ側の紙飛行機と同じもの。送信中はスピナーと入れ替える
+      const PLANE_SVG = '<svg class="offer-submit-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"'
+        + ' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+        + ' stroke-linejoin="round" aria-hidden="true"><line x1="22" x2="11" y1="2" y2="13"/>'
+        + '<polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+
       const setSending = (on) => {
         sending = on;
         submitBtn.disabled = on;
-        // ラベルごと差し替える。文言だけ変えるとスピナーの置き場所がなくなる
+        // 中身ごと差し替える。文言だけ変えるとアイコンとスピナーの置き場所がなくなる
         submitBtn.innerHTML = on
           ? '<span class="offer-spinner" aria-hidden="true"></span><span lang="en">Sending...</span>'
-          : '<span id="offerSubmitLabel" lang="en">Send Offer</span>';
+          : PLANE_SVG + '<span lang="en">Send Offer</span>';
+      };
+
+      /* ── 開催日時 ────────────────────────────
+       * datetime-local は、Chrome だと右端のアイコンを狙わないとカレンダーが出ない。
+       * 欄のどこを押しても開くよう showPicker() を明示的に呼ぶ。
+       * ユーザー操作の中でしか呼べず、未対応・二重呼び出しでは例外を投げるので握る。
+       */
+      const dateInput = document.getElementById('offerDate');
+      if (dateInput) {
+        const openPicker = () => {
+          if (typeof dateInput.showPicker !== 'function') return;
+          try { dateInput.showPicker(); } catch (e) { /* 既に開いている等 */ }
+        };
+        dateInput.addEventListener('click', openPicker);
+        // キーボードで到達した人にも同じ入口を用意する（矢印キーでの直接入力も残る）
+        dateInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openPicker();
+          }
+        });
+      }
+
+      /*
+       * 送信時は「2026-03-14T21:00」ではなく読める形に直す。メールを開いた側が
+       * ISO 文字列を頭の中で変換する羽目にならないよう、曜日まで添える。
+       * 値が空、または想定外の形なら素通しする（サーバー側で長さだけ詰める）。
+       */
+      const formatDateTime = (raw) => {
+        const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(raw || '');
+        if (!m) return raw || '';
+        const [, y, mo, d, h, mi] = m;
+        const dt = new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi));
+        if (Number.isNaN(dt.getTime())) return raw;
+        const wd = '日月火水木金土'[dt.getDay()];
+        return `${y}年${Number(mo)}月${Number(d)}日(${wd}) ${h}:${mi}`;
       };
 
       /* ── Turnstile の遅延読み込み ───────────────── */
@@ -4504,7 +4602,7 @@
           email: value('offerEmail'),
           contact: value('offerContact'),
           event: value('offerEvent'),
-          date: value('offerDate'),
+          date: formatDateTime(value('offerDate')),
           venue: value('offerVenue'),
           gear: value('offerGear'),
           message: value('offerMessage'),
