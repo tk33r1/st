@@ -1165,15 +1165,13 @@
             <div class="sec-rule"></div>
 
             <div class="field">
-              <label>マーカーの枠の色</label>
-              <div class="color-panel" data-scope="frame"></div>
-            </div>
-
-            <div class="sec-rule"></div>
-
-            <div class="field">
-              <label>マーカーの目の色</label>
-              <div class="color-panel" data-scope="eye"></div>
+              <label>マーカーの色</label>
+              <div class="st-seg seg-sm" id="marker-color-seg">
+                <button type="button" data-part="frame" class="active">枠</button>
+                <button type="button" data-part="eye">目</button>
+              </div>
+              <div class="color-panel" data-scope="frame" style="margin-top:8px"></div>
+              <div class="color-panel hidden" data-scope="eye" style="margin-top:8px"></div>
             </div>
           </div>
         </details>
@@ -1738,6 +1736,6 @@
   <script src="qr-style.js?v=20260907"></script>
   <script src="qr-assets.js?v=20260907"></script>
   <script src="qr-verify.js?v=20260905"></script>
-  <script src="app.js?v=20260907_3"></script>
+  <script src="app.js?v=20260907_4"></script>
 </body>
 </html>

@@ -1739,12 +1739,6 @@
       color: rgba(26, 26, 26, 0.6);
     }
 
-    /* 日時を選んだあとの確認表示。案内文ではなく入力の結果なので色を立てる */
-    .offer-hint--picked {
-      color: #7b55d6;
-      font-weight: 600;
-    }
-
     /*
      * ハニーポット。display:none だと自動入力が避けることがあるので、
      * 見た目だけ画面外へ飛ばして「機械には見えるが人には見えない」状態にする。
@@ -3829,7 +3823,7 @@
           <div class="offer-field">
             <label class="offer-label" for="offerDate">開催日時</label>
             <input class="offer-input offer-input--datetime" type="datetime-local" id="offerDate" name="date">
-            <span class="offer-hint" id="offerDateHint">未定・候補が複数の場合は空欄のままご相談内容へ。</span>
+            <span class="offer-hint">未定・候補が複数の場合は空欄のままご相談内容へ。</span>
           </div>
 
           <div class="offer-field">
@@ -4534,7 +4528,6 @@
        * ユーザー操作の中でしか呼べず、未対応・二重呼び出しでは例外を投げるので握る。
        */
       const dateInput = document.getElementById('offerDate');
-      const dateHint = document.getElementById('offerDateHint');
 
       /*
        * 送信時は「2026-03-14T21:00」ではなく読める形に直す。メールを開いた側が
@@ -4565,26 +4558,6 @@
           }
         });
 
-        /*
-         * datetime-local の表示形式はブラウザとロケール任せで、Chrome は日付を
-         * 選んでも曜日を出さない。土曜のつもりが金曜だった、という取り違えは
-         * 日程調整でいちばん困るので、注記の位置に曜日つきで見せる。
-         * 出しているのは formatDateTime そのものなので、ここに見えている文字列が
-         * そのままメールに載る。
-         */
-        if (dateHint) {
-          const hintDefault = dateHint.textContent;
-          const syncHint = () => {
-            const shown = formatDateTime(dateInput.value);
-            const picked = !!dateInput.value && shown !== dateInput.value;
-            dateHint.textContent = picked ? shown + ' として送信されます' : hintDefault;
-            dateHint.classList.toggle('offer-hint--picked', picked);
-          };
-          dateInput.addEventListener('input', syncHint);
-          dateInput.addEventListener('change', syncHint);
-          // 戻る操作などで値が復元されている場合に備え、初期表示でも一度合わせる
-          syncHint();
-        }
       }
 
       /* ── Turnstile の遅延読み込み ───────────────── */

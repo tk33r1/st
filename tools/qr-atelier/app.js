@@ -2787,6 +2787,24 @@
       IMAGE_TARGETS.target, touch);
   }
 
+  // マーカーの枠と目の色パネルは中身が同じなので、縦に２枚並べず切り替えで見せる。
+  // 状態は持たない（どちらの色も常に生きている）ただの表示切り替え。
+  function wireMarkerColorToggle() {
+    const seg = $('marker-color-seg');
+    if (!seg) return;
+    Array.prototype.forEach.call(seg.children, b => {
+      b.addEventListener('click', () => {
+        const part = b.dataset.part;
+        Array.prototype.forEach.call(seg.children, o => o.classList.toggle('active', o === b));
+        ['frame', 'eye'].forEach(scope => {
+          const panel = colorPanel(scope);
+          if (panel) panel.classList.toggle('hidden', scope !== part);
+        });
+        state.colorScope = part;
+      });
+    });
+  }
+
   function wire() {
     $('opt-ec').addEventListener('change', e => { state.ec = e.target.value; syncControls(); update(); });
     $('opt-size').addEventListener('change', e => { state.exportSize = parseInt(e.target.value, 10); saveNow(); });
@@ -2805,6 +2823,7 @@
     }
 
     COLOR_SCOPES.forEach(wireColorPanel);
+    wireMarkerColorToggle();
 
     // ロゴ種類
     bindSeg('logo-mode', 'mode', v => {
