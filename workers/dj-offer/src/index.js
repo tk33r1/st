@@ -256,8 +256,11 @@ export default {
     }
 
     if (!env.RESEND_API_KEY || !env.OFFER_TO || !env.OFFER_FROM) {
-      // 設定漏れは送信者のせいではないので、内容は伝えず 500 で返す
-      return json({ error: '送信処理を実行できませんでした。お手数ですが DM からご連絡ください。' }, 500, cors);
+      // 設定漏れは送信者のせいではないので、内容は伝えず 500 で返す。
+      // 代わりに、どれが欠けているかを wrangler tail 側へ出す（値は出さない）
+      const missing = ['RESEND_API_KEY', 'OFFER_TO', 'OFFER_FROM'].filter((k) => !env[k]);
+      console.log('secret missing:', missing.join(','));
+      return json({ error: '送信処理を実行できませんでした。' }, 500, cors);
     }
 
     const at = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
@@ -267,7 +270,7 @@ export default {
     const sent = await sendMail(env, subject, text, f.email);
     if (!sent.ok) {
       console.log('resend failed', sent.status, sent.detail);
-      return json({ error: '送信に失敗しました。お手数ですが DM からご連絡ください。' }, 502, cors);
+      return json({ error: '送信に失敗しました。' }, 502, cors);
     }
 
     return json({ ok: true }, 200, cors);

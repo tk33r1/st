@@ -1572,6 +1572,17 @@
       text-underline-offset: 3px;
     }
 
+    /*
+     * hidden 属性で伏せる要素は、ここで明示的に display:none にする。
+     * UA スタイルの [hidden]{display:none} は著者スタイルより弱いので、
+     * .offer-grid（grid）や .offer-submit（inline-flex）のように display を
+     * 指定した要素は hidden を付けても消えない。送信完了後にフォームを畳む
+     * 処理がこれに依存しているため、属性セレクタで確実に勝たせる。
+     */
+    .offer-form [hidden] {
+      display: none;
+    }
+
     .offer-form {
       background: #faf9fd;
       border: 1px solid rgba(156, 122, 247, 0.3);
@@ -1726,6 +1737,12 @@
       margin-top: 6px;
       font-size: 0.8rem;
       color: rgba(26, 26, 26, 0.6);
+    }
+
+    /* 日時を選んだあとの確認表示。案内文ではなく入力の結果なので色を立てる */
+    .offer-hint--picked {
+      color: #7b55d6;
+      font-weight: 600;
     }
 
     /*
@@ -3772,7 +3789,6 @@
 
       <p class="offer-lead reveal">
         出演のご依頼・ご相談はこちらのフォームからお送りください。<br>
-        出演料・交通費は不要です（<a href="#faq">FAQ</a> もあわせてご覧ください）。<br>
         内容を確認のうえ、通常2〜3日以内にご記入のメールアドレスへ返信いたします。
       </p>
 
@@ -3813,7 +3829,7 @@
           <div class="offer-field">
             <label class="offer-label" for="offerDate">開催日時</label>
             <input class="offer-input offer-input--datetime" type="datetime-local" id="offerDate" name="date">
-            <span class="offer-hint">未定・候補が複数の場合は空欄のままご相談内容へ。</span>
+            <span class="offer-hint" id="offerDateHint">未定・候補が複数の場合は空欄のままご相談内容へ。</span>
           </div>
 
           <div class="offer-field">
@@ -4518,20 +4534,7 @@
        * ユーザー操作の中でしか呼べず、未対応・二重呼び出しでは例外を投げるので握る。
        */
       const dateInput = document.getElementById('offerDate');
-      if (dateInput) {
-        const openPicker = () => {
-          if (typeof dateInput.showPicker !== 'function') return;
-          try { dateInput.showPicker(); } catch (e) { /* 既に開いている等 */ }
-        };
-        dateInput.addEventListener('click', openPicker);
-        // キーボードで到達した人にも同じ入口を用意する（矢印キーでの直接入力も残る）
-        dateInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            openPicker();
-          }
-        });
-      }
+      const dateHint = document.getElementById('offerDateHint');
 
       /*
        * 送信時は「2026-03-14T21:00」ではなく読める形に直す。メールを開いた側が
@@ -4547,6 +4550,42 @@
         const wd = '日月火水木金土'[dt.getDay()];
         return `${y}年${Number(mo)}月${Number(d)}日(${wd}) ${h}:${mi}`;
       };
+
+      if (dateInput) {
+        const openPicker = () => {
+          if (typeof dateInput.showPicker !== 'function') return;
+          try { dateInput.showPicker(); } catch (e) { /* 既に開いている等 */ }
+        };
+        dateInput.addEventListener('click', openPicker);
+        // キーボードで到達した人にも同じ入口を用意する（矢印キーでの直接入力も残る）
+        dateInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openPicker();
+          }
+        });
+
+        /*
+         * datetime-local の表示形式はブラウザとロケール任せで、Chrome は日付を
+         * 選んでも曜日を出さない。土曜のつもりが金曜だった、という取り違えは
+         * 日程調整でいちばん困るので、注記の位置に曜日つきで見せる。
+         * 出しているのは formatDateTime そのものなので、ここに見えている文字列が
+         * そのままメールに載る。
+         */
+        if (dateHint) {
+          const hintDefault = dateHint.textContent;
+          const syncHint = () => {
+            const shown = formatDateTime(dateInput.value);
+            const picked = !!dateInput.value && shown !== dateInput.value;
+            dateHint.textContent = picked ? shown + ' として送信されます' : hintDefault;
+            dateHint.classList.toggle('offer-hint--picked', picked);
+          };
+          dateInput.addEventListener('input', syncHint);
+          dateInput.addEventListener('change', syncHint);
+          // 戻る操作などで値が復元されている場合に備え、初期表示でも一度合わせる
+          syncHint();
+        }
+      }
 
       /* ── Turnstile の遅延読み込み ───────────────── */
       window.onOfferTurnstileLoad = function () {
@@ -4662,8 +4701,9 @@
           if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);
           setStatus('通信に失敗しました。電波の良い場所でお試しいただくか、' + OFFER_DM + ' からご連絡ください。', 'error');
         } finally {
-          if (!submitBtn.hidden) setSending(false);
-          else sending = false;
+          // 成功時はボタンごと伏せてあるので、ここで戻しても画面には出てこない。
+          // 分岐を持たせると「送信中のまま」の取りこぼしが生まれるので必ず戻す
+          setSending(false);
         }
       });
     }

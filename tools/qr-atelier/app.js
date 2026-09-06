@@ -55,6 +55,20 @@
     return out;
   }
 
+  // 予定の中身から決まる 32bit の値（FNV-1a）。UID に使う。
+  // DTSTAMP（規格上は必須）は入れていない。中身は「この iCal を書き出した時刻」
+  // なので、入れると再描画のたびに QR が変わってしまう。実機の取り込みでは
+  // DTSTAMP 無しが問題になったことはないので、安定するほうを取る。
+  function eventUid(f, start, end) {
+    const src = [f.title, start, end, f.location, f.desc].join(String.fromCharCode(31));
+    let h = 0x811c9dc5;
+    for (let i = 0; i < src.length; i++) {
+      h ^= src.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(36);
+  }
+
   const TYPES = [
     {
       id: 'url', name: 'URL', hint: 'URL',
@@ -119,15 +133,29 @@
       init: { title: '', start: '', end: '', location: '', desc: '' },
       build: f => {
         if (!f.title) return '';
+        // datetime-local は "2026-09-07T12:34"（端末によっては秒付きで
+        // "2026-09-07T12:34:56"）で届く。iCal の DATE-TIME は
+        // YYYYMMDDTHHMMSS の15文字ちょうどなので、秒まで必ず埋める。
+        // 区切りを削ってから長さで分岐すると、実際には来ない長さを見ることに
+        // なるので、日付と時刻に分けてから桁で揃える。
         const fmtDt = val => {
-          if (!val) return '';
-          const s = String(val).replace(/[-:]/g, '');
-          return s.length === 15 ? s + '00' : s.length === 16 ? s.replace('T', 'T') + ':00'.replace(':', '') : s;
+          const parts = String(val || '').split('T');
+          if (parts.length < 2) return '';
+          const date = parts[0].replace(/[^0-9]/g, '');
+          const time = parts[1].replace(/[^0-9]/g, '');
+          if (date.length !== 8) return '';
+          return date + 'T' + (time + '000000').slice(0, 6);
         };
+        const start = fmtDt(f.start);
+        const end = fmtDt(f.end);
         const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT'];
+        // UID は規格上必須。ただし毎回ランダムにすると、色を変えただけで
+        // QR の中身まで変わってしまう（payload() は再描画のたびに呼ばれる）。
+        // 予定の中身から決まる値にして、同じ予定なら同じ QR になるようにする。
+        L.push('UID:' + eventUid(f, start, end) + '@qr-atelier.tk.st');
         L.push('SUMMARY:' + vcardEscape(f.title));
-        if (f.start) L.push('DTSTART:' + fmtDt(f.start));
-        if (f.end) L.push('DTEND:' + fmtDt(f.end));
+        if (start) L.push('DTSTART:' + start);
+        if (end) L.push('DTEND:' + end);
         if (f.location) L.push('LOCATION:' + vcardEscape(f.location));
         if (f.desc) L.push('DESCRIPTION:' + vcardEscape(f.desc));
         L.push('END:VEVENT', 'END:VCALENDAR');
@@ -236,8 +264,6 @@
     presetCategory: 'all',
     iconGroup: 'brand',
     frameIconGroup: 'brand',
-    frameTopIconGroup: 'brand',
-    frameBottomIconGroup: 'brand',
     colorScope: 'cell',  // 最後に触った色パネル（＝着色対象）
     previewChecker: 'auto', // 'auto' | 'light' | 'dark'
     rememberContent: true,  // 入力内容をこの端末に残すか（デザインの保存とは別）
@@ -474,7 +500,7 @@
       if (saved.values) Object.keys(state.values).forEach(k => {
         if (saved.values[k]) Object.assign(state.values[k], saved.values[k]);
       });
-      ['ec', 'minVersion', 'exportSize', 'presetName', 'presetCategory', 'iconGroup', 'frameTopIconGroup', 'frameBottomIconGroup'].forEach(k => {
+      ['ec', 'minVersion', 'exportSize', 'presetName', 'presetCategory', 'iconGroup', 'frameIconGroup'].forEach(k => {
         if (saved[k] !== undefined) state[k] = saved[k];
       });
       if (['auto', 'light', 'dark'].indexOf(saved.previewChecker) >= 0) {
@@ -482,6 +508,10 @@
       }
       if (saved.rememberContent === false) state.rememberContent = false;
       if (window.QRCore.LEVELS.indexOf(state.ec) < 0) state.ec = 'H';
+      // 知らない group が入ると、アイコンの一覧が丸ごと空になる
+      ['iconGroup', 'frameIconGroup'].forEach(k => {
+        if (!A.ICONS.some(i => i.group === state[k])) state[k] = 'brand';
+      });
       state.minVersion = clampNum(state.minVersion, 1, 14, 1);
       if ([512, 1024, 2048, 4096].indexOf(state.exportSize) < 0) state.exportSize = 1024;
       // 旧データのロゴの下地は、色ひとつ（backdropColor）と backdrop:'none'（下地なし）で
@@ -553,8 +583,7 @@
       presetName: state.presetName,
       presetCategory: state.presetCategory,
       iconGroup: state.iconGroup,
-      frameTopIconGroup: state.frameTopIconGroup,
-      frameBottomIconGroup: state.frameBottomIconGroup,
+      frameIconGroup: state.frameIconGroup,
       style: state.style
     });
   }
@@ -620,8 +649,7 @@
       if (data.presetName !== undefined) state.presetName = data.presetName;
       if (data.presetCategory !== undefined) state.presetCategory = data.presetCategory;
       if (data.iconGroup !== undefined) state.iconGroup = data.iconGroup;
-      if (data.frameTopIconGroup !== undefined) state.frameTopIconGroup = data.frameTopIconGroup;
-      if (data.frameBottomIconGroup !== undefined) state.frameBottomIconGroup = data.frameBottomIconGroup;
+      if (data.frameIconGroup !== undefined) state.frameIconGroup = data.frameIconGroup;
       if (data.style) {
         state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, data.style);
         sanitizeStyle(state.style);
@@ -633,6 +661,8 @@
       buildTypeFields();
       syncControls();
       buildShapeGrids();
+      buildIconGrid();
+      buildFrameIconGrid();
       buildFrameChips();
       syncPresetActive();
       update();
@@ -2849,8 +2879,6 @@
       Array.prototype.forEach.call(frameIconTabs.children, b => {
         b.addEventListener('click', () => {
           state.frameIconGroup = b.dataset.group;
-          state.frameTopIconGroup = b.dataset.group;
-          state.frameBottomIconGroup = b.dataset.group;
           Array.prototype.forEach.call(frameIconTabs.children, t => t.classList.toggle('active', t === b));
           buildFrameIconGrid();
           // 一覧を替えるとブランドカラーを出せるかどうかが変わる。
