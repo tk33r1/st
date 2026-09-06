@@ -1979,8 +1979,13 @@
     }
 
     @keyframes shimmer {
-      0%   { background-position: 100% 0; }
-      100% { background-position: -100% 0; }
+      0% {
+        background-position: 100% 0;
+      }
+
+      100% {
+        background-position: -100% 0;
+      }
     }
 
     /*
@@ -2041,6 +2046,7 @@
       0% {
         height: 25%;
       }
+
       100% {
         height: 100%;
       }
@@ -2499,11 +2505,11 @@
           <span class="hexagon-layer"></span>
         </span>
       </button>
-      <button class="gear-item" type="button" data-gear-tag="SYMBOL" data-gear-title="シンボル"
-        data-detail="gearDetailSymbol">
+      <button class="gear-item" type="button" data-gear-tag="BOOKING" data-gear-title="ブッキング"
+        data-detail="gearDetailBooking">
         <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="" class="gear-image" loading="lazy">
         <span class="gear-label">
-          <span class="gear-label-text">シンボル</span>
+          <span class="gear-label-text">ブッキング</span>
           <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
         </span>
         <span class="at-field">
@@ -2511,11 +2517,11 @@
           <span class="hexagon-layer"></span>
         </span>
       </button>
-      <button class="gear-item" type="button" data-gear-tag="FESTIVAL" data-gear-title="フェス"
-        data-detail="gearDetailFestival">
-        <img src="https://tk.st/images/contents/happy-death.avif" alt="" class="gear-image" loading="lazy">
+      <button class="gear-item" type="button" data-gear-tag="PLAYSTYLE" data-gear-title="プレイスタイル"
+        data-detail="gearDetailPlaystyle">
+        <img src="https://tk.st/images/contents/psyche.avif" alt="" class="gear-image" loading="lazy">
         <span class="gear-label">
-          <span class="gear-label-text">フェス</span>
+          <span class="gear-label-text">プレイスタイル</span>
           <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
         </span>
         <span class="at-field">
@@ -2527,7 +2533,9 @@
 
     <!-- ギア詳細モーダルの中身（非表示。開いたときに複製して差し込む） -->
     <template id="gearDetailEquipment">
-      <p class="gear-modal-text">4ch オールインワン型の DJ システム。クラブ標準と配置が異なるものの、利用頻度の低い機能を削減・集約することは、自身の理念にも近く、愛機として運用。</p>
+      <p class="gear-modal-text">4ch オールインワン型の DJ
+        システム。クラブ標準と配置が異なるものの、デザインと音の良さから、愛機として利用。外部電源のない環境や、クラブ標準の機材でも DJ 可能。
+      </p>
       <dl class="spec-list">
         <div class="spec-row">
           <dt>DJ機材</dt>
@@ -2555,10 +2563,10 @@
           <dd>2系統（XLR / 標準フォーン）</dd>
         </div>
         <div class="spec-row">
-          <dt>電源</dt>
+          <dt>外部電源</dt>
           <dd>
-            AC100V 1口（消費電力 60&nbsp;W）
-            <span class="spec-note">※ スピーカーはバッテリー内蔵。フル充電で約 8 時間、AC電源なしでも運用可</span>
+            AC100V 1口（消費電力最大 60&nbsp;W）
+            <span class="spec-note">※ スピーカーはバッテリー駆動、DJ機材をポータブル電源に接続で約7時間程度 DJ 可</span>
           </dd>
         </div>
         <div class="spec-row">
@@ -2570,37 +2578,67 @@
         </div>
       </dl>
     </template>
-    <template id="gearDetailSymbol">
+    <template id="gearDetailBooking">
       <p class="gear-modal-text">
-        人類踊狂計画のトレードマーク。赤い受話器型の、ロリポップヘッドホン。通常の両耳のヘッドホンだと、次の曲で踊り狂い、今流れている曲に集中できなかったため、オーダー。映画マトリックスの、真実・非日常との行き来をインスパイア。
+        人類踊狂計画のトレードマーク、赤い受話器型のロリポップヘッドホンを持って回しに伺います。機材・スピーカーの持ち込みも可能。お気軽にご連絡ください。
       </p>
       <dl class="spec-list">
         <div class="spec-row">
-          <dt>スピーカー</dt>
-          <dd>Pioneer HDJ-X7</dd>
+          <dt>活動拠点</dt>
+          <dd>新宿・渋谷など都内主要エリア</dd>
         </div>
         <div class="spec-row">
-          <dt>制作元</dt>
+          <dt>出演料・交通費等</dt>
+          <dd>不要<span class="spec-note">※ よろしければお酒をください</span></dd>
+        </div>
+        <div class="spec-row">
+          <dt>時間帯</dt>
           <dd>
-            <a class="spec-link" href="https://www.acou-sticks.com/" target="_blank"
-              rel="noopener noreferrer">AcouSticks</a>
+            月〜木・日祝：20時〜終電前まで<br>
+            金・土：終日（深夜帯も可）
+          </dd>
+        </div>
+        <div class="spec-row">
+          <dt>対応イベント</dt>
+          <dd>クラブ、バー、パーティまで幅広く対応</dd>
+        </div>
+        <div class="spec-row">
+          <dt>オファー方法</dt>
+          <dd>
+            <a class="spec-link" href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の
+              DM</a>
+            または
+            <a class="spec-link"
+              href="https://tk.st/contact/?to=dj&subject=%E3%83%96%E3%83%83%E3%82%AD%E3%83%B3%E3%82%B0%E3%81%AE%E3%81%94%E7%9B%B8%E8%AB%87">メール</a>
           </dd>
         </div>
       </dl>
     </template>
-    <template id="gearDetailFestival">
-      <p class="gear-modal-text">日本最大のサイケデリックトランスフェス、<a class="spec-link" href="https://gaia.dmt-ent.com/"
-          target="_blank"
-          rel="noopener noreferrer">GAIA</a>。5大エレメント（地・水・風・火・空）構成で、テーマが「宇宙全体への愛と感謝」。2024年から毎年参加。2026年からはスタッフとして支えている。自然の中で寝泊まりしながら、24時間音に浸る。焚き火を見つめる。自我の境界が溶けていく。明るく前向きな死。人類踊狂計画の理念を体現した場所。
+    <template id="gearDetailPlaystyle">
+      <p class="gear-modal-text">
+        ホストクラブでの DJ
+        経験を原点とし、主役は常に聴き手というスタンス。踊れる曲から会話を邪魔しない曲まで、場の空気に合わせて柔軟に選曲。音楽を楽しむ本質は「展開の予測」と考え、過度な加工を排し、誰もが知る名曲と原曲の個性を最大化する。
       </p>
       <dl class="spec-list">
         <div class="spec-row">
-          <dt>開催地</dt>
-          <dd>関西の温泉地</dd>
+          <dt>ミックススタイル</dt>
+          <dd>ショートミックス</dd>
         </div>
         <div class="spec-row">
-          <dt>時期</dt>
-          <dd>毎年9月ごろ・3日間</dd>
+          <dt>選曲方針</dt>
+          <dd>アンセム・ヒットチューン重視</dd>
+        </div>
+        <div class="spec-row">
+          <dt>エフェクト・加工</dt>
+          <dd>最小限</dd>
+        </div>
+        <div class="spec-row">
+          <dt>リクエスト対応</dt>
+          <dd>
+            積極受付<br>
+            <a class="spec-link" href="https://tk.st/dj/request/" target="_blank" rel="noopener noreferrer">AI
+              選曲アシスト付き専用フォーム</a>を開発・運用
+          </dd>
         </div>
       </dl>
     </template>
@@ -2756,8 +2794,7 @@
       <div class="about-letter">
         <div class="about-unit">
           <div class="about-label">活動名義</div>
-          <a class="about-brand" href="https://tk.st/contact?to=dj" target="_blank" rel="noopener"
-            title="お問い合わせ">
+          <a class="about-brand" href="https://tk.st/contact?to=dj" target="_blank" rel="noopener" title="お問い合わせ">
             <img src="https://tk.st/images/contents/dj-logo4.avif" alt="人類踊狂計画 ロゴ" width="36" height="36"
               loading="lazy">
             <span class="about-name">人類踊狂計画</span>
@@ -3329,8 +3366,8 @@
       const getEvent = isPreview
         ? Promise.resolve({ open: true, title: '人類踊狂計画 Live Session', code: 'preview' })
         : fetch('/dj/api/req/event', { headers: { Accept: 'application/json' } })
-            .then(res => res.ok ? res.json() : null)
-            .catch(() => null);
+          .then(res => res.ok ? res.json() : null)
+          .catch(() => null);
 
       getEvent.then(data => {
         if (!data || !data.open) return;
