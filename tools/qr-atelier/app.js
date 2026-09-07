@@ -1056,12 +1056,14 @@
         }
       }
 
-      const commit = () => {
+      const commit = opts => {
         values[f.k] = f.type === 'checkbox' ? input.checked : input.value;
-        update();
+        update(opts);
       };
-      input.addEventListener('input', commit);
-      input.addEventListener('change', commit);
+      // 打っているあいだは検査を待たせる。1文字ごとに走らせても、出るのは
+      // 打ちかけの文字列に対する判定でしかない
+      input.addEventListener('input', () => commit({ debounceVerify: true }));
+      input.addEventListener('change', () => commit());
 
       if (f.type !== 'checkbox' && f.type !== 'password') wrap.appendChild(input);
       if (f.sub) wrap.appendChild(el('span', { class: 'sub' }, f.sub));
@@ -1428,13 +1430,16 @@
         removeBtn.disabled = true;
       }
 
+      // つまみを動かしているあいだは検査を待たせる。ここを素の update() に
+      // すると、ドラッグ1コマごとにデコーダが起動して画面が固まる
       picker.addEventListener('input', () => {
         const hex = picker.value.toUpperCase();
         hexSpan.textContent = hex;
         colors[idx] = hex;
         state.presetName = '';
-        update();
+        update({ debounceVerify: true });
       });
+      picker.addEventListener('change', verifyOnCommit);
       removeBtn.addEventListener('click', () => {
         if (colors.length <= 2) return;
         colors.splice(idx, 1);
@@ -1518,8 +1523,9 @@
         else if (item.key === 'mid') p.mid = hex;
         else p.to = hex;
         state.presetName = '';
-        update();
+        update({ debounceVerify: true });
       });
+      picker.addEventListener('change', verifyOnCommit);
       removeBtn.addEventListener('click', () => {
         if (!hasMid) return;
         if (item.key === 'from') {
@@ -2000,11 +2006,26 @@
 
   let renderTimer = null;
   let verifyTimer = null;
+
+  // 中身・誤り訂正・密度が変わっていなければ、QR は組み直さなくてよい。
+  // 色や形をいじっているあいだ（ドラッグ中は毎コマここへ来る）、同じ
+  // 計算を繰り返さないための一枚だけの控え。render は自前の格子へ写して
+  // から描くので、渡した QR が書き換わることはない。
+  let qrCache = null;
+  function encodeQR(text) {
+    const key = state.ec + '|' + state.minVersion + '|' + text;
+    if (qrCache && qrCache.key === key) return qrCache.qr;
+    const qr = window.QRCore.encode(text, { ec: state.ec, minVersion: state.minVersion });
+    qrCache = { key: key, qr: qr };
+    return qr;
+  }
   let activeVerifyPromise = null;
 
+  // 文字を打っているあいだの描き直し。検査まで毎回走らせると、1文字ごとに
+  // デコーダが起動する。描き直しは詰めて、検査は打ち終わりまで待たせる。
   function scheduleUpdate() {
     if (renderTimer) clearTimeout(renderTimer);
-    renderTimer = setTimeout(update, 90);
+    renderTimer = setTimeout(() => update({ debounceVerify: true }), 90);
   }
 
   function scheduleVerify(svg, text, heavy, delay) {
@@ -2015,6 +2036,17 @@
     }, delay || 180);
   }
 
+  // 「操作が終わった」合図（change）が来たら、180ms を待たずに検査へ入る。
+  // ただし待ち時間をゼロにはしない。Chrome の <input type="color"> は、
+  // つまみを動かしているあいだ input と一緒に change も投げ続けるので、
+  // その場で走らせるとドラッグ1コマごとにデコーダが起動して画面が固まる
+  // （40コマ動かすと 40 回・2.4秒ぶん走っていた）。短く待ち直せば、
+  // 動かしているあいだは走らず、止まった直後に1回だけ走る。
+  function verifyOnCommit() {
+    if (!verifyTimer || !lastSvg || !lastPayload) return;
+    scheduleVerify(lastSvg, lastPayload, false, 60);
+  }
+
   function update(opts) {
     if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
     saveSoon();
@@ -2022,6 +2054,9 @@
     // 市松模様はセルの色だけで決まる。描けたかどうかに関係なく合わせたいので、
     // 出口ごとに呼ばず入口で一度だけ。
     updateCanvasChecker();
+    // 一括生成の「フレームの文字にする列」も、フレームの種類しだいで
+    // 出したり引っ込めたりする。ここも描けたかどうかとは関係がない
+    syncBulkLabelRow();
 
     const text = payload();
     lastPayload = text;
@@ -2043,7 +2078,7 @@
 
     let qr;
     try {
-      qr = window.QRCore.encode(text, { ec: state.ec, minVersion: state.minVersion });
+      qr = encodeQR(text);
     } catch (e) {
       if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
       $('preview').innerHTML = '';
@@ -2148,12 +2183,23 @@
     return m ? parseFloat(m[1]) : 41;
   }
 
+  // 読ませるときに敷く紙の色。書き出した絵は透けたまま渡されるので、
+  // どこかで不透明にしないとデコーダは透明部分を真っ黒として読む。
+  const PAPER = '#FFFFFF';
+
   // 足りない余白を補うときの色。実際に地として描かれる色を使う。
   // 「セルの色」や「白」は指定でしかないので resolvePaint で解いてから訊く。
+  // 透過スライダーで抜いたぶんは紙が透けるので、そのぶん白へ寄せる。
+  // ここを不透明の色のまま返すと、透過 100%（＝何も描かれない）の背景でも
+  // 紙をその色で塗ってしまい、「背景＝セルの色」や「セルと同じグラデーション」
+  // では絵の全面がセルと同色になって、必ず読み取りに失敗していた。
   // 透明（paintColor が null）は、読ませるときは白い紙の上とみなす。
   function padColor() {
     const bg = window.QRStyle.resolvePaint(state.style.bg, state.style.fg);
-    return window.QRStyle.paintColor(bg) || '#FFFFFF';
+    const c = window.QRStyle.paintColor(bg);
+    if (!c || bg.type === 'none') return PAPER;
+    const tr = bg.transparency !== undefined ? Number(bg.transparency) : 0;
+    return window.QRStyle.overWhite(c, (100 - tr) / 100);
   }
 
   // デコーダを読み込んだあとの検査は数十msで終わる。結果が前と同じだと画面が
@@ -2197,7 +2243,10 @@
       syncVerifyButton(true);
       try {
         const run = window.QRVerify.run({
-          render: px => rasterize(svg, px, pad),
+          // 下敷きは紙そのもの（白）。ここに背景の色を敷くと、SVG 側の背景が
+          // その上にもう一度重なり、透過を指定した意味がなくなってしまう。
+          // 足りない余白を補う色（pad）とは役割が違うので、分けて渡す。
+          render: px => rasterize(svg, px, PAPER),
           expect: expect,
           moduleWidth: moduleWidth(svg),
           margin: state.style.margin,
@@ -2562,6 +2611,387 @@
   }
 
   // ------------------------------------------------------------------
+  // CSV一括生成
+  // ------------------------------------------------------------------
+  // 画面で作っているデザインはそのままに、中身だけを CSV の行で差し替えて焼く。
+  //
+  // 1行ずつデコーダにかけ直すことはしない。デザインの読み取りやすさは全行に
+  // 等しく効くので、上の判定がそのまま全部の答えになる。行ごとに変わるのは
+  // 中身の長さ（＝マス目の細かさ）だけなので、入りきらなかった行だけを拾う。
+
+  const BULK_MAX = 1000;      // これ以上は焼くのも ZIP にするのも重すぎる
+  const BULK_YIELD = 8;       // 何件ごとに画面へ制御を返すか
+  const BULK_NONE = '__none__';
+
+  const bulk = {
+    rows: [],          // 見出しも含む、読み込んだままの全行
+    fileName: '',
+    encoding: '',
+    running: false,
+    abort: false
+  };
+
+  // 列の見出し。1行目を見出しに使わないときは「1列目」「2列目」…と数える。
+  function bulkColumns() {
+    const width = bulk.rows.reduce((m, r) => Math.max(m, r.length), 0);
+    const useHeader = $('bulk-header').checked && bulk.rows.length > 1;
+    const head = useHeader ? bulk.rows[0] : [];
+    const out = [];
+    for (let i = 0; i < width; i++) {
+      const name = (head[i] || '').trim();
+      out.push(name ? name + '（' + (i + 1) + '列目）' : (i + 1) + '列目');
+    }
+    return out;
+  }
+
+  function bulkDataRows() {
+    const useHeader = $('bulk-header').checked && bulk.rows.length > 1;
+    return bulk.rows.slice(useHeader ? 1 : 0);
+  }
+
+  // 選び直しても選択が飛ばないよう、いまの値を覚えてから組み直す
+  function bulkFillSelects() {
+    const cols = bulkColumns();
+    [['bulk-col-content', false], ['bulk-col-name', true], ['bulk-col-label', true]]
+      .forEach(pair => {
+        const sel = $(pair[0]);
+        const keep = sel.value;
+        sel.innerHTML = '';
+        if (pair[1]) sel.appendChild(el('option', { value: BULK_NONE }, '使わない'));
+        cols.forEach((c, i) => sel.appendChild(el('option', { value: String(i) }, c)));
+        const has = Array.prototype.some.call(sel.options, o => o.value === keep);
+        sel.value = has ? keep : (pair[1] ? BULK_NONE : '0');
+      });
+  }
+
+  // 最初の数行を表で見せる。どの列が QR になるのかは、色で示すのが早い。
+  function bulkPreview() {
+    const host = $('bulk-preview');
+    host.innerHTML = '';
+    const rows = bulkDataRows();
+    if (!rows.length) return;
+    const cols = bulkColumns();
+    const picked = {
+      content: Number($('bulk-col-content').value),
+      name: $('bulk-col-name').value === BULK_NONE ? -1 : Number($('bulk-col-name').value),
+      label: $('bulk-col-label').value === BULK_NONE ? -1 : Number($('bulk-col-label').value)
+    };
+    const table = el('table');
+    const thead = el('thead');
+    const htr = el('tr');
+    cols.forEach((c, i) => {
+      const th = el('th', { class: i === picked.content ? 'pick' : '' }, c);
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    table.appendChild(thead);
+    const tbody = el('tbody');
+    rows.slice(0, 4).forEach(r => {
+      const tr = el('tr');
+      cols.forEach((c, i) => {
+        const marks = [];
+        if (i === picked.content) marks.push('pick');
+        tr.appendChild(el('td', { class: marks.join(' ') }, r[i] || ''));
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    host.appendChild(table);
+  }
+
+  // ラベル付きのフレームを選んでいるときだけ、文字を差し替える列を出す。
+  // 効きようのない設定を並べても、迷わせるだけになる。
+  function syncBulkLabelRow() {
+    const row = $('bulk-label-row');
+    if (!row) return;
+    const st = state.style.frame || {};
+    const usable = st.type === 'label' &&
+      (st.contentMode === 'text' || st.topContentMode === 'text');
+    row.classList.toggle('hidden', !usable);
+  }
+
+  function bulkSummary() {
+    if (!bulk.rows.length) return '—';
+    const n = bulkDataRows().length;
+    return n + '行' + (bulk.encoding ? ' / ' + bulk.encoding : '');
+  }
+
+  function syncBulkHint() {
+    const hint = $('hint-bulk');
+    if (hint) hint.textContent = bulkSummary();
+  }
+
+  function bulkRefresh() {
+    bulkFillSelects();
+    bulkPreview();
+    syncBulkLabelRow();
+    syncBulkHint();
+    $('bulk-report').innerHTML = '';
+  }
+
+  async function loadBulkFile(file) {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('CSVが大きすぎます（8MBまで）', 'error');
+      return;
+    }
+    try {
+      const parsed = window.QRBulk.decodeText(await file.arrayBuffer());
+      const out = window.QRBulk.parse(parsed.text);
+      if (!out.rows.length) {
+        showToast('CSVに行がありません', 'error');
+        return;
+      }
+      bulk.rows = out.rows;
+      bulk.fileName = file.name;
+      bulk.encoding = parsed.encoding;
+      $('bulk-file-name').textContent = file.name + '（' + out.rows.length + '行）';
+      $('bulk-setup').classList.remove('hidden');
+      // 見出しらしさは、1行目に「作れない中身」が並んでいるかでは決められない。
+      // 素直に既定を on にしておき、表を見て外してもらう
+      bulkRefresh();
+    } catch (e) {
+      showToast('CSVを読み込めませんでした', 'error');
+    }
+  }
+
+  function clearBulk() {
+    bulk.rows = [];
+    bulk.fileName = '';
+    bulk.encoding = '';
+    $('bulk-setup').classList.add('hidden');
+    $('bulk-preview').innerHTML = '';
+    $('bulk-report').innerHTML = '';
+    $('bulk-file').value = '';
+    syncBulkHint();
+  }
+
+  function setBulkProgress(done, total, note) {
+    const box = $('bulk-progress');
+    box.classList.remove('hidden');
+    $('bulk-bar-fill').style.width = (total ? Math.round((done / total) * 100) : 0) + '%';
+    $('bulk-progress-text').textContent = note || (done + ' / ' + total);
+  }
+
+  // ラベルを行ごとに差し替えるので、書体の取り寄せは全行ぶんまとめて1回で
+  // 済ませる。行ごとに textRuns を通すと、行の数だけ取りに行くことになる。
+  async function bulkFontCss(baseStyle, labels) {
+    const probe = Object.assign({}, baseStyle);
+    probe.frame = Object.assign({}, baseStyle.frame);
+    const all = labels.join('');
+    probe.frame.text = String(probe.frame.text || '') + all;
+    probe.frame.textTop = String(probe.frame.textTop || '') + all;
+    let runs = [];
+    try { runs = window.QRStyle.textRuns(probe); } catch (e) { return ''; }
+    if (!runs.length) return '';
+    const faces = await Promise.all(runs.map(fontFaceCss));
+    return faces.join('');
+  }
+
+  const BULK_FORMATS = {
+    png:  { ext: 'png',  mime: 'image/png',  quality: undefined },
+    jpg:  { ext: 'jpg',  mime: 'image/jpeg', quality: 0.92 },
+    webp: { ext: 'webp', mime: 'image/webp', quality: 0.92 },
+    svg:  { ext: 'svg',  mime: '',           quality: undefined }
+  };
+
+  async function runBulk() {
+    if (bulk.running) { bulk.abort = true; return; }
+    const rows = bulkDataRows();
+    if (!rows.length) { showToast('CSVの行がありません', 'error'); return; }
+    if (!(await okToExport())) return;
+
+    const contentIdx = Number($('bulk-col-content').value) || 0;
+    const nameSel = $('bulk-col-name').value;
+    const labelSel = $('bulk-col-label').value;
+    const nameIdx = nameSel === BULK_NONE ? -1 : Number(nameSel);
+    const labelIdx = (labelSel === BULK_NONE || $('bulk-label-row').classList.contains('hidden'))
+      ? -1 : Number(labelSel);
+    const asUrl = $('bulk-as-url').checked;
+    const fmt = BULK_FORMATS[$('bulk-format').value] || BULK_FORMATS.png;
+
+    const over = rows.length > BULK_MAX ? rows.length - BULK_MAX : 0;
+    const use = over ? rows.slice(0, BULK_MAX) : rows;
+
+    // フレームの文字だけ行ごとに差し替える。塗りやロゴは共有のままでよいので、
+    // frame だけ自前の入れ物にして、render に渡すあいだ state を汚さない
+    const baseStyle = Object.assign({}, state.style);
+    baseStyle.frame = Object.assign({}, state.style.frame);
+
+    const btn = $('btn-bulk-run');
+    bulk.running = true;
+    bulk.abort = false;
+    btn.textContent = '中止する';
+    $('bulk-report').innerHTML = '';
+    setBulkProgress(0, use.length, '書体を用意しています…');
+    setStatus('bulk', '');
+
+    const files = [];
+    const skipped = [];   // 中身が空だった行
+    const failed = [];    // 入りきらなかった行
+    const take = window.QRBulk.nameTaker();
+    const headOffset = ($('bulk-header').checked && bulk.rows.length > 1) ? 2 : 1;
+    const digits = String(use.length).length;
+    const pad = n => String(n).padStart(digits, '0');
+    const manifest = [['行', 'ファイル名', '中身']];
+
+    try {
+      const labels = labelIdx >= 0 ? use.map(r => String(r[labelIdx] || '')) : [];
+      const faceCss = await bulkFontCss(baseStyle, labels);
+
+      for (let i = 0; i < use.length; i++) {
+        if (bulk.abort) break;
+        const row = use[i];
+        const lineNo = i + headOffset;
+        const raw = String(row[contentIdx] == null ? '' : row[contentIdx]).trim();
+        const text = asUrl ? normalizeUrl(raw) : raw;
+        if (!text) {
+          // 行そのものが空っぽなら黙って飛ばす。ファイル末尾の改行や手で
+          // 編集した空行まで並べると、ほんとうに直すべき行が埋もれる
+          if (row.some(c => String(c == null ? '' : c).trim())) skipped.push(lineNo);
+          continue;
+        }
+
+        let qr;
+        try {
+          qr = window.QRCore.encode(text, { ec: state.ec, minVersion: state.minVersion });
+        } catch (e) {
+          failed.push(lineNo);
+          continue;
+        }
+
+        if (labelIdx >= 0) baseStyle.frame.text = String(row[labelIdx] || '');
+        let svg = window.QRStyle.render(qr, baseStyle).svg;
+        if (faceCss) svg = window.QRStyle.embedFontCss(svg, faceCss);
+
+        const base = window.QRBulk.safeName(nameIdx >= 0 ? row[nameIdx] : '') || ('qr-' + pad(i + 1));
+        const name = take(base, fmt.ext);
+
+        let bytes;
+        if (fmt.ext === 'svg') {
+          const doc = '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) +
+            window.QRStyle.resize(svg, 1024);
+          bytes = new TextEncoder().encode(doc);
+        } else {
+          const flatten = fmt.mime === 'image/jpeg' ? '#FFFFFF' : null;
+          const canvas = await rasterize(svg, state.exportSize, flatten);
+          const blob = await new Promise(res => canvas.toBlob(res, fmt.mime, fmt.quality));
+          if (!blob) { failed.push(lineNo); continue; }
+          bytes = new Uint8Array(await blob.arrayBuffer());
+        }
+
+        files.push({ name: name, bytes: bytes });
+        manifest.push([String(lineNo), name, text]);
+
+        if (i % BULK_YIELD === 0 || i === use.length - 1) {
+          setBulkProgress(i + 1, use.length);
+          // canvas.toBlob と decode() のあいだは画面が止まる。数件ごとに
+          // 制御を返して、進み具合と「中止」が効くようにする
+          await new Promise(r => setTimeout(r, 0));
+        }
+      }
+
+      if (!files.length) {
+        showToast(bulk.abort ? '中止しました' : 'QRコードにできる行がありませんでした',
+          bulk.abort ? undefined : 'error');
+      } else {
+        setBulkProgress(use.length, use.length, 'ZIPにまとめています…');
+        // どのファイルが何の中身かを一覧にして同梱する。Excel で開けるよう
+        // BOM を付ける（付けないと日本語が化ける）
+        const csv = manifest.map(r => r.map(csvCell).join(',')).join(CRLF) + CRLF;
+        files.push({
+          name: '一覧.csv',
+          bytes: new TextEncoder().encode(String.fromCharCode(0xFEFF) + csv)
+        });
+        const zip = window.QRBulk.zip(files);
+        saveBlob(zip, 'qr-bulk-' + stamp() + '.zip');
+        if (window.STShare) STShare.celebrate();
+      }
+
+      bulkReport({
+        made: files.length ? files.length - 1 : 0,
+        skipped: skipped, failed: failed, over: over, aborted: bulk.abort, ext: fmt.ext
+      });
+    } catch (e) {
+      showToast(String(e && e.message) === 'zip too large'
+        ? 'ZIPが大きすぎます。サイズを下げるか、行を分けてください'
+        : '一括生成に失敗しました', 'error');
+    }
+
+    bulk.running = false;
+    bulk.abort = false;
+    btn.textContent = 'まとめて作る';
+    $('bulk-progress').classList.add('hidden');
+    setStatus('ready', 'idle');
+  }
+
+  // CSV のセル。区切り・引用符・改行が入っていたら引用符でくるむ
+  function csvCell(v) {
+    const s = String(v == null ? '' : v);
+    const q = String.fromCharCode(34);
+    const needs = s.indexOf(',') >= 0 || s.indexOf(q) >= 0 ||
+      s.indexOf(String.fromCharCode(10)) >= 0 || s.indexOf(String.fromCharCode(13)) >= 0;
+    return needs ? q + s.split(q).join(q + q) + q : s;
+  }
+
+  function stamp() {
+    const d = new Date();
+    const p = v => String(v).padStart(2, '0');
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+      '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+
+  function bulkReport(r) {
+    const host = $('bulk-report');
+    host.innerHTML = '';
+    const head = el('div');
+    if (r.aborted && !r.made) {
+      head.appendChild(document.createTextNode('中止しました。'));
+    } else {
+      head.appendChild(el('b', null, r.made + '件'));
+      head.appendChild(document.createTextNode(r.aborted
+        ? 'を作ったところで中止しました。ここまでのぶんはZIPに入っています。'
+        : 'の' + r.ext.toUpperCase() + 'をZIPにまとめました。'));
+    }
+    host.appendChild(head);
+
+    const notes = [];
+    if (r.over && !r.aborted) notes.push('一度に作れるのは' + BULK_MAX + '行までです。残り' + r.over + '行は作っていません。');
+    if (r.skipped.length) notes.push('中身が空だった行：' + lineList(r.skipped));
+    if (r.failed.length) notes.push('QRコードに入りきらなかった行：' + lineList(r.failed) +
+      '（誤り訂正を下げるか、中身を短くしてください）');
+    if (notes.length) {
+      const ul = el('ul');
+      notes.forEach(n => ul.appendChild(el('li', null, n)));
+      host.appendChild(ul);
+    }
+  }
+
+  function lineList(lines) {
+    const head = lines.slice(0, 8).map(n => n + '行目').join('、');
+    return lines.length > 8 ? head + ' ほか' + (lines.length - 8) + '行' : head;
+  }
+
+  function wireBulk() {
+    if (!window.QRBulk) return;
+    const zone = $('bulk-drop'), input = $('bulk-file');
+    window.STCommon.setupDropzone({
+      dropzone: zone,
+      fileInput: input,
+      onFiles: files => loadBulkFile(files[0])
+    });
+    input.addEventListener('change', e => {
+      if (e.target.files && e.target.files.length) loadBulkFile(e.target.files[0]);
+    });
+    $('btn-bulk-clear').addEventListener('click', clearBulk);
+    $('bulk-header').addEventListener('change', bulkRefresh);
+    ['bulk-col-content', 'bulk-col-name', 'bulk-col-label'].forEach(id => {
+      $(id).addEventListener('change', bulkPreview);
+    });
+    $('btn-bulk-run').addEventListener('click', runBulk);
+  }
+
+  // ------------------------------------------------------------------
   // 配線
   // ------------------------------------------------------------------
   function bindColor(pickerId, hexId, apply) {
@@ -2576,13 +3006,7 @@
       syncPresetActive();
       update({ debounceVerify: true });
     });
-    picker.addEventListener('change', () => {
-      if (verifyTimer) {
-        clearTimeout(verifyTimer);
-        verifyTimer = null;
-        if (lastSvg && lastPayload) verify(lastSvg, lastPayload, false);
-      }
-    });
+    picker.addEventListener('change', verifyOnCommit);
     if (hex) {
       hex.addEventListener('change', () => {
         const v = normHex(hex.value, null);
@@ -2622,13 +3046,7 @@
       state.presetName = '';
       update({ debounceVerify: true });
     });
-    input.addEventListener('change', () => {
-      if (verifyTimer) {
-        clearTimeout(verifyTimer);
-        verifyTimer = null;
-        if (lastSvg && lastPayload) verify(lastSvg, lastPayload, false);
-      }
-    });
+    input.addEventListener('change', verifyOnCommit);
   }
 
   // ---- 画像の受け口 --------------------------------------------------
@@ -3342,6 +3760,7 @@
     buildFrameChips();
     syncControls();
     wire();
+    wireBulk();
     update();
     initHistory();
   }

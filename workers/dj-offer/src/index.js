@@ -33,14 +33,15 @@ const RATE_KEEP_MIN   = 60;   // 元帳をこの分数だけ残す
 
 // 入力欄ごとの上限。メール1通に収まる範囲で、書きたいことが切れない程度に取る。
 const LIMITS = {
-  name:    80,
-  org:     80,
-  email:   120,
-  contact: 120,
-  event:   120,
-  date:    120,
-  venue:   120,
-  message: 2000,
+  name:      80,
+  org:       80,
+  email:     120,
+  contact:   120,
+  event:     120,
+  date:      120,
+  venue:     120,
+  venueGear: 120,
+  message:   2000,
 };
 
 // 機材の持ち込み。select の値はここにあるものだけ通す。
@@ -153,7 +154,7 @@ function buildMailText(f, meta) {
     row('イベント名', f.event),
     row('開催日時', f.date),
     row('会場', f.venue),
-    row('機材', GEAR_LABELS[f.gear] || '（未選択）'),
+    row('機材', (GEAR_LABELS[f.gear] || '（未選択）') + (f.venueGear ? '／' + f.venueGear : '')),
     '',
     'ご相談内容：',
     f.message,
@@ -227,15 +228,17 @@ export default {
      * ここで弾いた分はメールも外部リクエストも発生しないので、数え漏らしても損はない。
      */
     const f = {
-      name:    clean(body.name, LIMITS.name),
-      org:     clean(body.org, LIMITS.org),
-      email:   clean(body.email, LIMITS.email),
-      contact: clean(body.contact, LIMITS.contact),
-      event:   clean(body.event, LIMITS.event),
-      date:    clean(body.date, LIMITS.date),
-      venue:   clean(body.venue, LIMITS.venue),
-      gear:    Object.prototype.hasOwnProperty.call(GEAR_LABELS, body.gear) ? body.gear : '',
-      message: clean(body.message, LIMITS.message, true),
+      name:      clean(body.name, LIMITS.name),
+      org:       clean(body.org, LIMITS.org),
+      email:     clean(body.email, LIMITS.email),
+      contact:   clean(body.contact, LIMITS.contact),
+      event:     clean(body.event, LIMITS.event),
+      date:      clean(body.date, LIMITS.date),
+      venue:     clean(body.venue, LIMITS.venue),
+      gear:      Object.prototype.hasOwnProperty.call(GEAR_LABELS, body.gear) ? body.gear : '',
+      // 会場の常設機材を選んだときだけ意味を持つ欄。ほかの選択で送られてきたら捨てる
+      venueGear: body.gear === 'venue' ? clean(body.venueGear, LIMITS.venueGear) : '',
+      message:   clean(body.message, LIMITS.message, true),
     };
 
     if (!f.name)  return json({ error: 'お名前をご記入ください。' }, 400, cors);

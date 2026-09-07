@@ -14,12 +14,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="おしゃれなQRコードを完全無料・ブラウザ内で作成。セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインでき、PNG・SVGで書き出せます。短縮URLを挟まないので広告も有効期限もありません。">
   <meta name="robots" content="max-image-preview:large">
-  <title>QR Atelier - おしゃれなQRコード作成ツール | SAFE TOOLS</title>
+  <title>QR Atelier - おしゃれなQRコードを無料で安全に作成 | SAFE TOOLS</title>
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23C026D3'/%3E%3Cg fill='%23fff'%3E%3Crect x='6' y='6' width='8' height='8' rx='2.5'/%3E%3Crect x='18' y='6' width='8' height='8' rx='2.5'/%3E%3Crect x='6' y='18' width='8' height='8' rx='2.5'/%3E%3Ccircle cx='20' cy='20' r='2'/%3E%3Ccircle cx='24.5' cy='24.5' r='2'/%3E%3Ccircle cx='20' cy='25' r='1.6'/%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml">
   <link rel="canonical" href="https://tk.st/tools/qr-atelier/">
   <link rel="author" href="https://tk.st/">
-  <meta property="og:title" content="QR Atelier - おしゃれなQRコード作成ツール">
+  <meta property="og:title" content="QR Atelier - おしゃれなQRコードを無料で安全に作成">
   <meta property="og:description" content="セル・マーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザイン。完全無料・ブラウザ内完結・短縮URLなし。PNGとSVGで書き出せます。">
   <meta property="og:image" content="https://tk.st/images/ogp/qr-atelier-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/qr-atelier/">
@@ -27,7 +27,7 @@
   <meta property="og:site_name" content="SAFE TOOLS">
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="QR Atelier - おしゃれなQRコード作成ツール">
+  <meta name="twitter:title" content="QR Atelier - おしゃれなQRコードを無料で安全に作成">
   <meta name="twitter:description" content="セル・マーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザイン。完全無料・ブラウザ内完結・短縮URLなし。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/qr-atelier-ogp.png">
 
@@ -38,7 +38,7 @@
       {
         "@type": "SoftwareApplication",
         "@id": "https://tk.st/tools/qr-atelier/#webapp",
-        "name": "QR Atelier - おしゃれなQRコード作成ツール",
+        "name": "QR Atelier - おしゃれなQRコードを無料で安全に作成",
         "description": "セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインできるQRコード作成ツール。ブラウザ内で完結し、短縮URLを挟まないので広告も有効期限もありません。",
         "url": "https://tk.st/tools/qr-atelier/",
         "inLanguage": "ja",
@@ -124,6 +124,14 @@
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "作れます。背景の色を「透明」にすると、PNG・WebP・SVGは透過のまま書き出せます。JPEGは透過を持てない形式なので白で塗りつぶされます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "CSVから大量のQRコードをまとめて作れますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "作れます。「CSV一括生成」にCSVを読み込ませると、いま画面で作っているデザインのまま、行ぶんのQRコードを一度に作ってZIPにまとめます。1回あたり1000行までで、QRコードにする列・ファイル名にする列・フレームの文字にする列をそれぞれ指定できます。ExcelのCSV（Shift_JIS）もそのまま読めます。ZIPには、どのファイルが何の中身かをまとめた一覧のCSVも入ります。読み込みも生成もブラウザの中だけで動くので、CSVはどこにも送られません。"
             }
           },
           {
@@ -744,6 +752,27 @@
     .logo-thumb img { width: 44px; height: 44px; object-fit: contain; border: 1px solid var(--rule);
       border-radius: var(--r-1); background: #fff; padding: 3px; }
 
+    /* ---- CSV一括生成 ---- */
+    .bulk-file-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+    .bulk-file-name { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-2);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bulk-preview { overflow-x: auto; border: 1px solid var(--rule); border-radius: var(--r-1); }
+    .bulk-preview table { border-collapse: collapse; font-size: 11.5px;
+      font-family: var(--font-mono); width: 100%; }
+    .bulk-preview th, .bulk-preview td { padding: 4px 8px; border-bottom: 1px solid var(--rule);
+      text-align: left; white-space: nowrap; max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+    .bulk-preview th { color: var(--ink-3); font-weight: 600; background: var(--panel-2); }
+    .bulk-preview tr:last-child td { border-bottom: none; }
+    /* 選んだ列だけ色を変えて、どれが QR になるのかを表で示す */
+    .bulk-preview .pick { color: var(--accent); }
+    .bulk-progress { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-2); }
+    .bulk-bar { flex: 1; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+    .bulk-bar > i { display: block; height: 100%; width: 0; background: var(--accent);
+      transition: width 120ms linear; }
+    .bulk-report { font-size: 11.5px; line-height: 1.7; color: var(--ink-2); }
+    .bulk-report b { color: var(--ink); }
+    .bulk-report ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-3); }
+
     /* ---- テンプレート ---- */
     .preset-cat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .preset-cat-chips .chip { padding: 4px 10px; font-size: 11.5px; }
@@ -1085,6 +1114,77 @@
               <label for="opt-remember">この端末に入力内容を残す</label>
             </div>
             <p class="remember-note">オフにすると、次に開いたとき入力欄は初期状態に戻ります。Wi-Fiのパスワードは、この設定にかかわらず保存しません。デザインの設定はどちらでも残ります。</p>
+          </div>
+        </details>
+
+        <!-- CSV一括生成 -->
+        <details class="sec" id="sec-bulk">
+          <summary>
+            <span class="st-lbl">CSV一括生成</span>
+            <span class="hint" id="hint-bulk">—</span>
+            <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
+          </summary>
+          <div class="sec-body">
+            <p class="remember-note" style="margin:0 0 10px">
+              CSVの行ぶんのQRコードを、いま作っているデザインのまま一度に作って ZIP で保存します。
+              読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。
+            </p>
+            <div class="logo-drop" id="bulk-drop" role="button" tabindex="0">
+              CSVをドロップ、またはクリックして選択（.csv / .txt）
+              <input type="file" id="bulk-file" accept=".csv,.txt,text/csv,text/plain" class="hidden">
+            </div>
+
+            <div id="bulk-setup" class="hidden" style="margin-top:12px">
+              <div class="bulk-file-row" style="margin-bottom:12px">
+                <span class="bulk-file-name" id="bulk-file-name"></span>
+                <button type="button" id="btn-bulk-clear" class="st-btn-quiet btn-sm">外す</button>
+              </div>
+
+              <div class="field remember-row" style="margin-bottom:12px">
+                <input type="checkbox" id="bulk-header" class="tb-check" checked>
+                <label for="bulk-header">1行目は見出し（QRコードは作らない）</label>
+              </div>
+
+              <div class="field" style="margin-bottom:12px">
+                <label for="bulk-col-content">QRコードにする列</label>
+                <select id="bulk-col-content" class="tb-select"></select>
+              </div>
+              <div class="field" style="margin-bottom:12px">
+                <label for="bulk-col-name">ファイル名にする列</label>
+                <select id="bulk-col-name" class="tb-select"></select>
+              </div>
+              <div class="field hidden" id="bulk-label-row" style="margin-bottom:12px">
+                <label for="bulk-col-label">フレームの文字にする列</label>
+                <select id="bulk-col-label" class="tb-select"></select>
+              </div>
+
+              <div class="field remember-row" style="margin-bottom:12px">
+                <input type="checkbox" id="bulk-as-url" class="tb-check">
+                <label for="bulk-as-url">URLとして整える（https:// を補う）</label>
+              </div>
+
+              <div class="field" style="margin-bottom:12px">
+                <label for="bulk-format">書き出す形式</label>
+                <select id="bulk-format" class="tb-select">
+                  <option value="png" selected>PNG</option>
+                  <option value="svg">SVG</option>
+                  <option value="jpg">JPEG</option>
+                  <option value="webp">WebP</option>
+                </select>
+                <span class="sub">サイズと誤り訂正は、左の書き出し設定をそのまま使います。</span>
+              </div>
+
+              <div class="bulk-preview" id="bulk-preview" style="margin-bottom:12px"></div>
+
+              <button id="btn-bulk-run" class="st-btn" type="button" style="width:100%; justify-content:center">
+                まとめて作る
+              </button>
+              <div class="bulk-progress hidden" id="bulk-progress" style="margin-top:10px">
+                <div class="bulk-bar"><i id="bulk-bar-fill"></i></div>
+                <span id="bulk-progress-text"></span>
+              </div>
+              <div class="bulk-report" id="bulk-report" style="margin-top:10px"></div>
+            </div>
           </div>
         </details>
 
@@ -1481,7 +1581,7 @@
 
       <h3>デザインでいじれるところ</h3>
       <ul>
-        <li>テンプレート28種類 — 定番・グラデ・多色・フレーム・個性派から選んで、そこから細かく詰められます。「おまかせデザイン」を押せば、地の明暗から配色・形・フレームまで毎回組み替えます</li>
+        <li>テンプレート40種類 — 定番・グラデ・多色・フレーム・個性派から選んで、そこから細かく詰められます。「おまかせデザイン」を押せば、地の明暗から配色・形・フレームまで毎回組み替えます</li>
         <li>セル（データの点）20種類 — 連結（コネクテッド）・リキッド・サーキット・モザイク・四角・角丸・丸み強・ドット・六角形・八角形・フラワー・リーフ・雫・ひし形・星・ハート・十字・ばってん・縦ライン・横ライン</li>
         <li>セルの詰め方 — 太さ、太さのバラつき（手で押したような揺らぎ）、マス目の密度まで動かせます</li>
         <li>マーカー（三隅の目印）— 枠9種類 × 目14種類、色も枠と目でそれぞれ塗りの全種類から選べます</li>
@@ -1490,6 +1590,7 @@
         <li>中央のロゴ — SNS・ブランドアイコン32種、汎用アイコン24種、手持ちの画像、絵文字や文字。アイコンの色は塗りと同じ選択肢から選べ、後ろに敷く下地の形と色も変えられます</li>
         <li>フレーム — 枠線8種類（実線・二重線・破線・角ブラケット・切り取り線・切手・吹き出し・セル枠）と、上下に一言を添えられるラベル。ラベルには文字のほかアイコンや画像も置けます</li>
         <li>書き出し — PNG / JPEG / WebP（最大4096px）と、印刷に強いSVG。クリップボードへ直接コピーもできます</li>
+        <li>CSV一括生成 — 店舗一覧や座席表のCSVを読み込ませると、いま作っているデザインのまま行ぶんのQRコードを一度に作り、ZIPにまとめて保存します。ファイル名にする列やフレームの文字にする列も指定できます</li>
       </ul>
 
       <h3>読めなくならないように</h3>
@@ -1733,9 +1834,10 @@
       </template>
 
   <script src="qr-core.js?v=20260905"></script>
-  <script src="qr-style.js?v=20260907"></script>
-  <script src="qr-assets.js?v=20260907"></script>
+  <script src="qr-style.js?v=20260907_2"></script>
+  <script src="qr-assets.js?v=20260908"></script>
   <script src="qr-verify.js?v=20260905"></script>
-  <script src="app.js?v=20260907_4"></script>
+  <script src="qr-bulk.js?v=20260907"></script>
+  <script src="app.js?v=20260908_2"></script>
 </body>
 </html>

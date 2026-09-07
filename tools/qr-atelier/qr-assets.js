@@ -295,6 +295,32 @@
       }
     },
 
+    {
+      // マーカーの枠を「セル枠」で組む。輪郭ではなく粒の輪で囲うので、
+      // 地の中にコードが浮いて見える。粒を少し痩せさせて目地を見せる
+      name: 'ピクセル・グリッド',
+      category: 'basic',
+      style: {
+        cell: 'square', cellScale: 0.9, markerFrame: 'cells', markerEye: 'square',
+        fg: { type: 'solid', color: '#1E293B' },
+        bg: { type: 'white', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 2, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'オクタゴン・タイル',
+      category: 'basic',
+      style: {
+        cell: 'octagon', cellScale: 1.05, markerFrame: 'octagon', markerEye: 'octagon',
+        fg: { type: 'solid', color: '#0F172A' },
+        bg: { type: 'solid', color: '#F8FAFC', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#0E7490' },
+        radius: 3, margin: 4, frame: { type: 'none' }
+      }
+    },
+
 
     // --- グラデーション (gradient) ---
     {
@@ -303,7 +329,7 @@
       style: {
         cell: 'classy', cellScale: 1, markerFrame: 'xrounded', markerEye: 'circle',
         fg: { type: 'linear', from: '#B91C1C', to: '#C2410C', angle: 45 },
-        bg: { type: 'solid', color: '#FFF8F0', transparency: 0 },
+        bg: { type: 'radial', from: '#FFFFFF', to: '#FFE8D6', transparency: 0 },
         markerFramePaint: { type: 'auto' },
         markerEyePaint: { type: 'solid', color: '#C2410C' },
         radius: 4, margin: 4, frame: { type: 'none' }
@@ -327,7 +353,7 @@
       style: {
         cell: 'dot', cellScale: 0.92, markerFrame: 'octagon', markerEye: 'circle',
         fg: { type: 'radial', from: '#F43F5E', to: '#8B5CF6' },
-        bg: { type: 'solid', color: '#09090B', transparency: 0 },
+        bg: { type: 'radial', from: '#1E1B4B', to: '#09090B', transparency: 0 },
         markerFramePaint: { type: 'solid', color: '#06B6D4' },
         markerEyePaint: { type: 'solid', color: '#FFFFFF' },
         radius: 4, margin: 4, frame: { type: 'none' },
@@ -340,7 +366,7 @@
       style: {
         cell: 'square', cellScale: 1, markerFrame: 'square', markerEye: 'square',
         fg: { type: 'linear', from: '#FBBF24', to: '#D97706', angle: 135 },
-        bg: { type: 'solid', color: '#0F172A', transparency: 0 },
+        bg: { type: 'linear', from: '#0B1220', to: '#1E1B4B', angle: 135, transparency: 0 },
         markerFramePaint: { type: 'solid', color: '#FDE68A' },
         markerEyePaint: { type: 'auto' },
         frame: {
@@ -376,6 +402,48 @@
       }
     },
 
+    {
+      // セルも地もグラデーション。地は同系のごく淡いほうへ振って、
+      // 紙そのものに色がついているように見せる
+      name: 'ペーパー・グラデ',
+      category: 'gradient',
+      style: {
+        cell: 'liquid', cellScale: 1, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'linear', from: '#0F766E', to: '#065F46', angle: 135 },
+        bg: { type: 'linear', from: '#ECFEFF', to: '#F0FDF4', angle: 45, transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#0F766E' },
+        radius: 5, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'ミッドナイト・グロウ',
+      category: 'gradient',
+      style: {
+        cell: 'xrounded', cellScale: 1.05, markerFrame: 'xrounded', markerEye: 'xrounded',
+        fg: { type: 'solid', color: '#F8FAFC' },
+        bg: { type: 'linear', from: '#0F172A', to: '#3B0764', angle: 135, transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#C4B5FD' },
+        radius: 5, margin: 4, frame: { type: 'none' },
+        invertOk: true
+      }
+    },
+
+    {
+      // 横ラインのセル。縦の「モダン・ライン」と対になる横組み
+      name: 'ボーダー・ライン',
+      category: 'gradient',
+      style: {
+        cell: 'hbar', cellScale: 0.9, markerFrame: 'square', markerEye: 'rounded',
+        fg: { type: 'linear', from: '#1E3A8A', to: '#0369A1', angle: 90 },
+        bg: { type: 'linear', from: '#FFFFFF', to: '#EFF6FF', angle: 90, transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#0369A1' },
+        radius: 3, margin: 4, frame: { type: 'none' }
+      }
+    },
+
     // --- 多色モザイク (multi) ---
     {
       name: 'テラゾー',
@@ -383,7 +451,7 @@
       style: {
         cell: 'xrounded', cellScale: 1, markerFrame: 'rounded', markerEye: 'rounded',
         fg: { type: 'multi', colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 12 },
-        bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        bg: { type: 'multi', colors: ['#FFFFFF', '#FBFCFE', '#F7F9FC', '#FFFFFF'], seed: 2, transparency: 0 },
         markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
         radius: 3, margin: 4, frame: { type: 'none' }
       }
@@ -426,6 +494,31 @@
       }
     },
 
+
+    {
+      // 太さのバラつきを主役にした一枚。粒の大きさが揃わないほど、
+      // 撒いた紙吹雪らしくなる
+      name: 'コンフェッティ',
+      category: 'multi',
+      style: {
+        cell: 'dot', cellScale: 1.1, cellJitter: 0.35, markerFrame: 'circle', markerEye: 'circle',
+        fg: { type: 'multi', colors: ['#BE123C', '#B45309', '#0369A1', '#6D28D9'], seed: 6 },
+        bg: { type: 'radial', from: '#FFFFFF', to: '#FEF3C7', transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 6, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'ピクセル・ポップ',
+      category: 'multi',
+      style: {
+        cell: 'xrounded', cellScale: 1, markerFrame: 'cells', markerEye: 'rounded',
+        fg: { type: 'multi', colors: ['#1D4ED8', '#7E22CE', '#BE123C'], seed: 9 },
+        bg: { type: 'multi', colors: ['#FFFFFF', '#FAFBFE', '#FFFFFF', '#F6F8FE'], seed: 2, transparency: 0 },
+        markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },
+        radius: 3, margin: 4, frame: { type: 'none' }
+      }
+    },
 
     // --- フレーム (frame) ---
 
@@ -511,7 +604,7 @@
       name: 'スターライト',
       category: 'unique',
       style: {
-        cell: 'star', cellScale: 1.05, markerFrame: 'flower', markerEye: 'star',
+        cell: 'star', cellScale: 1.15, markerFrame: 'circle', markerEye: 'star',
         fg: { type: 'linear', from: '#4F46E5', to: '#7C3AED', angle: 60 },
         bg: { type: 'solid', color: '#FFFFFF', transparency: 0 },
         markerFramePaint: { type: 'solid', color: '#4F46E5' },
@@ -573,7 +666,7 @@
       name: 'ダイヤ・グリッド',
       category: 'unique',
       style: {
-        cell: 'diamond', cellScale: 1.05, markerFrame: 'cells', markerEye: 'diamond',
+        cell: 'diamond', cellScale: 1.15, markerFrame: 'octagon', markerEye: 'diamond',
         fg: { type: 'solid', color: '#312E81' },
         bg: { type: 'solid', color: '#EEF2FF', transparency: 0 },
         markerFramePaint: { type: 'auto' },
@@ -591,6 +684,72 @@
         markerFramePaint: { type: 'solid', color: '#10B981' },
         markerEyePaint: { type: 'solid', color: '#06B6D4' },
         radius: 3, margin: 4, frame: { type: 'none' },
+        invertOk: true
+      }
+    },
+    {
+      name: 'モザイク・タイル',
+      category: 'unique',
+      style: {
+        cell: 'mosaic', cellScale: 1, markerFrame: 'cells', markerEye: 'square',
+        fg: { type: 'linear', from: '#1E3A8A', to: '#0E7490', angle: 45 },
+        bg: { type: 'solid', color: '#F8FAFC', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#0E7490' },
+        radius: 2, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      // 太さのバラつきをいちばん強くかけたもの。砂を撒いたような粗さになる
+      name: 'サンド',
+      category: 'unique',
+      style: {
+        cell: 'rounded', cellScale: 1.05, cellJitter: 0.5,
+        markerFrame: 'xrounded', markerEye: 'xrounded',
+        fg: { type: 'solid', color: '#78350F' },
+        bg: { type: 'linear', from: '#FFFBEB', to: '#FDE68A', angle: 135, transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#B45309' },
+        radius: 6, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      name: 'クロス・ステッチ',
+      category: 'unique',
+      style: {
+        cell: 'xmark', cellScale: 1.15, markerFrame: 'rounded', markerEye: 'xmark',
+        fg: { type: 'solid', color: '#9D174D' },
+        bg: { type: 'solid', color: '#FFF1F2', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#4C0519' },
+        radius: 3, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      // 十字のセルと十字の目。まるい枠に十字が収まる形になる
+      name: 'プラス・マーク',
+      category: 'unique',
+      style: {
+        cell: 'plus', cellScale: 1.1, markerFrame: 'circle', markerEye: 'plus',
+        fg: { type: 'solid', color: '#B91C1C' },
+        bg: { type: 'solid', color: '#FFFBEB', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#0F172A' },
+        radius: 6, margin: 4, frame: { type: 'none' }
+      }
+    },
+    {
+      // 黒板にチョークで書いたような、かすれた太さのバラつき
+      name: 'チョーク・ボード',
+      category: 'unique',
+      style: {
+        cell: 'xrounded', cellScale: 1.05, cellJitter: 0.4,
+        markerFrame: 'rounded', markerEye: 'rounded',
+        fg: { type: 'solid', color: '#F8FAFC' },
+        bg: { type: 'solid', color: '#1F3A2E', transparency: 0 },
+        markerFramePaint: { type: 'auto' },
+        markerEyePaint: { type: 'solid', color: '#FDE68A' },
+        radius: 4, margin: 4, frame: { type: 'none' },
         invertOk: true
       }
     }

@@ -370,6 +370,17 @@
     ];
   }
 
+  // 塗りを白い紙の上に置いたときに見える色。透かしたぶんは紙が透ける。
+  // 透過は「その色が薄くなる」ではなく「地の白が出てくる」なので、
+  // 色そのものだけを見て明暗やコントラストを決めると判断を誤る。
+  function overWhite(hex, opacity) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return '#FFFFFF';
+    const a = Math.max(0, Math.min(1, Number(opacity)));
+    if (a >= 1) return rgbToHex(rgb);
+    return rgbToHex(rgb.map(v => v * a + 255 * (1 - a)));
+  }
+
   function rgbToHex(rgb) {
     const toHex = n => {
       const h = Math.max(0, Math.min(255, Math.round(n))).toString(16);
@@ -1327,11 +1338,22 @@
     return 'url(#' + id + ')';
   }
 
-  function getMarkerFill(paint, fg, id, fgRef, cornerIdx) {
+  // 多色をマーカーに配る。面は3隅×（枠・目）の6つしかないので、色を順ぐりに
+  // 当てると規則がそのまま見えてしまい、しかも枠と目に同じ番号が回るので
+  // 「枠と目がどの隅でも必ず同じ色」になってしまう。セルと同じ決定的な乱数で
+  // 選び、枠と目には別の種を与えて、同じ色になる隅もあれば違う隅もある形にする。
+  const MARKER_PART_SEED = { frame: 13, eye: 71 };
+
+  function pickMarkerColor(colors, seed, cornerIdx, part) {
+    const r = cellRand(cornerIdx, MARKER_PART_SEED[part] || 13, (seed || 0) + 41);
+    return colors[Math.floor(r * colors.length)];
+  }
+
+  function getMarkerFill(paint, fg, id, fgRef, cornerIdx, part) {
     if (!paint || paint.type === 'auto' || paint.type === 'none') {
       if (fg.type === 'multi') {
         const colors = (Array.isArray(fg.colors) && fg.colors.length) ? fg.colors : ['#111827'];
-        return esc(colors[cornerIdx % colors.length]);
+        return esc(pickMarkerColor(colors, fg.seed, cornerIdx, part));
       }
       return fgRef;
     }
@@ -1340,7 +1362,7 @@
     }
     if (paint.type === 'multi') {
       const colors = (Array.isArray(paint.colors) && paint.colors.length) ? paint.colors : ['#111827'];
-      return esc(colors[(cornerIdx + (paint.seed || 0)) % colors.length]);
+      return esc(pickMarkerColor(colors, paint.seed, cornerIdx, part));
     }
     if (paint.type === 'image') {
       return paint.src ? 'url(#' + id + ')' : esc(paint.color || '#111827');
@@ -1778,8 +1800,8 @@
     const corners = [[0, 0], [size - 7, 0], [0, size - 7]];
     corners.forEach((c, idx) => {
       const fx = ox + c[0], fy = oy + c[1];
-      const frameFill = getMarkerFill(mfPaint, st.fg, uid + 'mf', fgRef, idx);
-      const eyeFill = getMarkerFill(mePaint, st.fg, uid + 'me', fgRef, idx);
+      const frameFill = getMarkerFill(mfPaint, st.fg, uid + 'mf', fgRef, idx, 'frame');
+      const eyeFill = getMarkerFill(mePaint, st.fg, uid + 'me', fgRef, idx, 'eye');
       // セル枠は粒を並べるだけで穴を抜かない。evenodd だと重なりが白く抜ける
       const mfEvenOdd = st.markerFrame === 'cells' ? '' : ' fill-rule="evenodd"';
       body += '<path d="' + markerFramePath(fx, fy, st.markerFrame, { cell: st.cell, cellScale: st.cellScale }) +
@@ -2063,7 +2085,10 @@
     // 判定には、白・黒・「セルの色」を解決したあとの bgPaint を使う。
     // st.bg をそのまま渡すと type:'auto' が素通りしてグラデーションの
     // 既定色を返し、実際は地とセルが同色でもコントラスト良好と出てしまう。
-    const bgC = bgPaint.type === 'none' ? '#FFFFFF' : paintColor(bgPaint);
+    // 透過スライダーで抜いたぶんは白い紙が透ける。不透明な色のまま比べると、
+    // 「背景＝セルの色・透過100%」のように実際には何も描かれない配色でも
+    // セルと同色と判定してしまい、出るはずのないコントラスト警告が必ず出る。
+    const bgC = bgOpacity <= 0 ? '#FFFFFF' : overWhite(paintColor(bgPaint), bgOpacity);
     const fgC = paintColor(st.fg, bgC);
     const ratio = fgC && bgC ? contrastRatio(fgC, bgC) : 21;
     // 表示する数値は WCAG 比のまま（見慣れているのはこちら）。ただし警告を
@@ -2253,6 +2278,7 @@
 
     paintColor: paintColor,
     resolvePaint: resolvePaint,
+    overWhite: overWhite,
     FONT_KEYS: FONT_KEYS,
     textRuns: textRuns,
     embedFontCss: embedFontCss,
