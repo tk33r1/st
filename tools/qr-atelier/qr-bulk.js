@@ -132,17 +132,25 @@
       const ch = s.charAt(i);
       out += BAD_CHARS.indexOf(ch) >= 0 ? '_' : ch;
     }
-    // 空白は1つに畳む。末尾のドットと空白は Windows が黙って削るので、
-    // こちらで先に落として名前がぶつからないようにしておく
+    // 空白は1つに畳む
     out = out.split(/\s+/).join(' ').trim();
+
+    // 長すぎる名前は展開先のパス長に響く。切るのは末尾を整える前に行う
+    // （後だと、切った拍子に末尾のドットや空白がまた顔を出す）。
+    if (out.length > 60) {
+      out = out.slice(0, 60);
+      // サロゲートペアの片割れが残ると、ZIP の名前で置換文字に化ける
+      const tail = out.charCodeAt(out.length - 1);
+      if (tail >= 0xD800 && tail <= 0xDBFF) out = out.slice(0, -1);
+    }
+
+    // 末尾のドットと空白は Windows が黙って削るので、こちらで先に落として
+    // 名前がぶつからないようにしておく
     while (out.length && (out.charAt(out.length - 1) === '.' || out.charAt(out.length - 1) === ' ')) {
       out = out.slice(0, -1);
     }
-    out = out.replace(/^\s+/, '');
     if (!out) return '';
     if (RESERVED.indexOf(out.toUpperCase()) >= 0) out = '_' + out;
-    // 長すぎる名前は展開先のパス長に響く
-    if (out.length > 60) out = out.slice(0, 60).trim();
     return out;
   }
 

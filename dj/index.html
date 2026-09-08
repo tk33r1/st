@@ -152,10 +152,10 @@
             },
             {
               "@type": "Question",
-              "name": "対応可能な時間帯はいつですか？",
+              "name": "出演可能な時間帯はいつですか？",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "月〜木・日祝は 20:00〜終電前まで、金・土は終日（深夜帯のデイ・オールナイト問わず）対応可能です。"
+                "text": "月〜木・日祝は 20:00〜終電前まで、金・土は終日（深夜帯・オールナイトも可）対応可能です。"
               }
             },
             {
@@ -203,6 +203,13 @@
       --black: #1a1a1a;
       --accent-red: #ff3333;
       /*
+       * 地の上に乗せて「読ませる」ための色。--accent-red / --neo-purple を
+       * そのまま使うと白地で 4.5:1 に届かないので、明度を落とした対を別に持つ。
+       * body.berserk では地が反転するため、こちらも合わせて差し替える。
+       */
+      --status-error-ink: #8a1c1c;
+      --link-ink: #7b55d6;
+      /*
        * 面と文字の色。--white / --black を「白そのもの」として直に使うと配色を
        * 差し替えられないので、地（surface）と文字（ink）は必ずここを経由させる。
        * 暴走モード（body.berserk）はこの一式を上書きするだけで全ページが反転する。
@@ -231,6 +238,17 @@
        * 詰めすぎるとセクションの切れ目が読めず、情報量の多いページほど窮屈に見える。
        */
       --section-pad-y: 80px;
+      /*
+       * 六角形の切り抜き。GEAR のカードと SNS ボタンで同じ形を使う。
+       * 形を変えるならここ 1 か所（A.T. フィールドの層は別形なので含めない）。
+       */
+      --hex-clip: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      /*
+       * 画面上端に積むものの高さ。進捗バー → 非常事態の帯 → SYNC RATE の札、の順に下がる。
+       * 3 か所が同じ数字に依存するので、値ではなく式で結んでおく。
+       */
+      --progress-h: 4px;
+      --berserk-band-h: 26px;
     }
 
     html,
@@ -414,7 +432,7 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 4px;
+      height: var(--progress-h);
       background: rgba(0, 0, 0, 0.1);
       z-index: 1000;
     }
@@ -551,7 +569,7 @@
       position: relative;
       height: 320px;
       background: var(--surface);
-      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      clip-path: var(--hex-clip);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -712,16 +730,8 @@
       color: var(--white);
     }
 
-    /*
-     * 見出しの大きさ・字間・太さは .operation-title に揃える。
-     * opacity は持たせない（.reveal.active の opacity:1 に負けて表示後は効かない上、
-     * .reveal の初期値 0 と同詳細度で後勝ちするため、フェードインの開始値まで書き換えてしまう）。
-     */
+    /* 体裁は「SECTION HEADING」に集約。ここは余白と寄せだけ */
     .sound-log-header {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
-      font-weight: 600;
-      text-transform: uppercase;
       margin-bottom: 60px;
       text-align: center;
     }
@@ -820,7 +830,7 @@
 
     .timeline-event {
       font-size: 0.9rem;
-      color: #666;
+      color: rgba(var(--ink-rgb), 0.65);
       line-height: 1.6;
     }
 
@@ -877,12 +887,8 @@
     }
 
     .operation-title {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
       margin-bottom: 30px;
       color: var(--ink);
-      text-transform: uppercase;
-      font-weight: 600;
     }
 
     .calendar-container {
@@ -948,12 +954,7 @@
       z-index: 1;
     }
 
-    /* 大きさ・字間・太さは .operation-title に揃える。opacity を持たせない理由は .sound-log-header と同じ */
     .video-title {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
-      font-weight: 600;
-      text-transform: uppercase;
       margin-bottom: 40px;
       text-align: center;
       color: var(--white);
@@ -1019,37 +1020,27 @@
 
     /* ===== ABOUT ===== */
     .about-title {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
       margin-bottom: 40px;
       /* VIDEO から伸びてきた紫の帯の上に乗る位置なので白 */
       color: var(--white);
-      text-transform: uppercase;
-      font-weight: 600;
       text-align: center;
     }
 
     /*
-     * 紫の三角が背後に食い込む位置なので、白地のままだと本文が潰れる。
-     * 便箋（右下を折り返した紙）1 枚に活動名義と所属団体を並べて、白背景が乗っていても不自然にしない。
-     * 切り欠きの形は .gear-modal-panel と同じ造形に合わせている。
+     * 白地・紫の細枠・右下を折り返した紙、という共通の造形。便箋と取材記事カードで
+     * 共有する。切り欠きの形は .gear-modal-panel に合わせ、大きさは使う側が --fold で決める。
+     * clip-path は box-shadow も切るので、影は切り抜いた形に沿う drop-shadow で出す。
      */
-    .about-letter {
-      --fold: 22px;
+    .paper {
       position: relative;
-      display: grid;
-      /* PC は左=活動名義 / 右=所属団体。行の高さは grid の stretch で揃うので仕切り線が通る */
-      grid-template-columns: 1fr 1fr;
-      margin: 0 auto 40px auto;
       background: var(--surface);
       border: 1px solid rgba(var(--neo-purple-rgb), 0.45);
       clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
-      /* clip-path は box-shadow も切るので、影は切り抜いた形に沿う drop-shadow で出す */
       filter: drop-shadow(0 14px 28px rgba(45, 27, 78, 0.22));
     }
 
     /* 折り返した紙の裏側。切り欠きで残る側（左上半分）を陰にする */
-    .about-letter::after {
+    .paper::after {
       content: '';
       position: absolute;
       right: 0;
@@ -1057,6 +1048,18 @@
       width: var(--fold);
       height: var(--fold);
       background: linear-gradient(135deg, rgba(var(--neo-purple-rgb), 0.28) 50%, transparent 50%);
+    }
+
+    /*
+     * 紫の三角が背後に食い込む位置なので、白地のままだと本文が潰れる。
+     * 便箋 1 枚に活動名義と所属団体を並べて、白背景が乗っていても不自然にしない。
+     */
+    .about-letter {
+      --fold: 22px;
+      display: grid;
+      /* PC は左=活動名義 / 右=所属団体。行の高さは grid の stretch で揃うので仕切り線が通る */
+      grid-template-columns: 1fr 1fr;
+      margin: 0 auto 40px auto;
     }
 
     .about-unit {
@@ -1105,7 +1108,9 @@
       letter-spacing: 0.08em;
     }
 
-    .about-label {
+    /* 便箋の「活動名義／所属団体」と取材記事カードの「取材記事」に共通の小見出し */
+    .about-label,
+    .about-interview-label {
       margin-bottom: 12px;
       font-size: 0.75rem;
       font-weight: 600;
@@ -1113,7 +1118,8 @@
       color: var(--neo-purple);
     }
 
-    .about-unit p {
+    .about-unit p,
+    .about-interview-card p {
       margin-top: 16px;
       font-size: 0.95rem;
       line-height: 1.9;
@@ -1136,32 +1142,8 @@
     }
 
     .about-interview-card {
-      position: relative;
-      background: var(--surface);
-      border: 1px solid rgba(var(--neo-purple-rgb), 0.45);
-      clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--fold)), calc(100% - var(--fold)) 100%, 0 100%);
-      filter: drop-shadow(0 14px 28px rgba(45, 27, 78, 0.22));
       padding: 30px 28px 28px;
       text-align: center;
-    }
-
-    /* 折り返しの紙裏モチーフ */
-    .about-interview-card::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: var(--fold);
-      height: var(--fold);
-      background: linear-gradient(135deg, rgba(var(--neo-purple-rgb), 0.28) 50%, transparent 50%);
-    }
-
-    .about-interview-label {
-      margin-bottom: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.18em;
-      color: var(--neo-purple);
     }
 
     .about-interview-brand {
@@ -1183,66 +1165,6 @@
       object-fit: contain;
     }
 
-    .about-interview-card p {
-      margin-top: 16px;
-      font-size: 0.95rem;
-      line-height: 1.9;
-      font-weight: 300;
-      color: var(--ink);
-      letter-spacing: 0.02em;
-      text-wrap: balance;
-    }
-
-    .about-note {
-      font-size: 0.85rem;
-      color: rgba(var(--ink-rgb), 0.7);
-    }
-
-    .contact-logo-space {
-      position: relative;
-      width: 130px;
-      height: 150px;
-      margin: 0 auto 30px auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-
-    .contact-logo-space:hover {
-      transform: scale(1.05);
-    }
-
-    .logo-hex-border {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-
-    .contact-logo-space img {
-      position: relative;
-      z-index: 2;
-      width: 75%;
-      height: 75%;
-      object-fit: contain;
-    }
-
-    .contact-message {
-      font-size: clamp(1.2rem, 3vw, 2rem);
-      line-height: 1.8;
-      color: var(--ink);
-      margin-bottom: 45px;
-      font-weight: 300;
-      letter-spacing: 0.02em;
-    }
-
-    .contact-cta {
-      margin-bottom: 60px;
-    }
-
     .contact-buttons {
       display: flex;
       justify-content: center;
@@ -1261,7 +1183,7 @@
       border: none;
       cursor: pointer;
       transition: all 0.3s ease;
-      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      clip-path: var(--hex-clip);
       position: relative;
       overflow: hidden;
       text-decoration: none;
@@ -1306,6 +1228,16 @@
       --dark-blue-purple-light: #380a0f;
       /* 赤地に乗る文字。純白だと浮くので暖色寄りに倒す */
       --white: #fff2ef;
+      /* 暗転した地に乗る版。明度を上げ直して 4.5:1 を確保する */
+      --status-error-ink: #ffb3ae;
+      --link-ink: #ff6f66;
+      /*
+       * 非常事態表示の 2 色。赤の警告に橙が差さるのが原典の配色で、
+       * 赤一色より「計器が振り切れている」感じが出る。
+       * SVG データ URI 側にも同じ値を直に書いてあるので、変えるなら両方直すこと。
+       */
+      --berserk-amber: #ffa629;
+      --berserk-hazard: #14060a;
       color-scheme: dark;
     }
 
@@ -1335,7 +1267,7 @@
 
     body.berserk .sync-rate-text {
       /* 警告帯の下へ逃がす。帯と札が重なると数字が読めなくなる */
-      top: 38px;
+      top: calc(var(--progress-h) + var(--berserk-band-h) + 8px);
       animation: berserk-blink 1.1s steps(1, end) infinite;
       box-shadow: 0 0 14px rgba(255, 59, 48, 0.55);
     }
@@ -1354,11 +1286,27 @@
           rgba(255, 59, 48, 0.11) 1px,
           transparent 1px,
           transparent 4px);
-      animation: berserk-scan 6s linear infinite;
     }
 
+    /*
+     * 赤い六角パネルが壁一面に灯る絵の代わり。細かい文字まで入れても
+     * この不透明度では潰れるので、輪郭だけの蜂の巣にしてある。
+     * ページ側にも六角（AT フィールド・GEAR・SNS ボタン）があるので形は揃う。
+     */
+    .berserk-fx::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='96'%3E%3Cg fill='none' stroke='%23ff3b30' stroke-width='1' opacity='.13'%3E%3Cpath d='M28 0 56 16 56 48 28 64 0 48 0 16Z'/%3E%3Cpath d='M0 48 28 64 28 96 0 112 -28 96 -28 64Z'/%3E%3Cpath d='M56 48 84 64 84 96 56 112 28 96 28 64Z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    /*
+     * 演出のアニメーションはすべてここから下で暴走中だけ回す。
+     * .berserk-fx に直に書くと opacity:0 で見えない平時もずっと回り続ける。
+     */
     body.berserk .berserk-fx {
       opacity: 1;
+      animation: berserk-scan 6s linear infinite;
     }
 
     /*
@@ -1398,7 +1346,7 @@
     }
 
     /* 四隅から寄ってくる赤。脈打たせて「収まっていない」状態を出す */
-    .berserk-fx::before {
+    .berserk-fx::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -1406,6 +1354,9 @@
           transparent 45%,
           rgba(255, 59, 48, 0.16) 78%,
           rgba(255, 59, 48, 0.4) 100%);
+    }
+
+    body.berserk .berserk-fx::after {
       animation: berserk-pulse 2.4s ease-in-out infinite;
     }
 
@@ -1421,27 +1372,108 @@
       }
     }
 
-    /* 上端の警告帯。ここだけ文字を出して、何が起きているか一応読めるようにする */
-    .berserk-fx::after {
-      content: "WARNING: BERSERK — 暴走";
+    /*
+     * 上下に走らせる非常事態のトラ柄。画面を上下から挟むことで、本文を隠さずに
+     * 「囲われている」画にする。突入時は画面外から滑り込ませ、平時は畳んでおく。
+     * 高さは back-to-top ボタン（bottom: 30px）と SYNC RATE の札に当たらない値。
+     */
+    .berserk-band {
       position: absolute;
-      top: 4px;
       left: 0;
       right: 0;
-      padding: 3px 0 4px;
-      text-align: center;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.62rem;
-      font-weight: bold;
-      letter-spacing: 0.36em;
-      color: #fff2ef;
-      background: rgba(255, 59, 48, 0.82);
-      transform: translateY(-100%);
+      z-index: 2;
+      height: var(--berserk-band-h);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: repeating-linear-gradient(-45deg,
+          #ff2a17 0 12px,
+          var(--berserk-hazard, #14060a) 12px 24px);
+      box-shadow: 0 0 20px rgba(255, 42, 23, 0.55);
       transition: transform 0.5s ease 0.2s;
     }
 
-    body.berserk .berserk-fx::after {
+    /* 進捗バーの下に置く。バーを隠すと目盛りが読めなくなる */
+    .berserk-band--top {
+      top: var(--progress-h);
+      transform: translateY(calc(-100% - var(--progress-h)));
+    }
+
+    .berserk-band--bottom {
+      bottom: 0;
+      transform: translateY(100%);
+    }
+
+    body.berserk .berserk-band {
       transform: translateY(0);
+    }
+
+    /* トラ柄を黒で抜いた上に置く赤の「非常事態」。書体は本文と同じ明朝で揃える */
+    .berserk-alert {
+      position: relative;
+      padding: 3px 20px 4px;
+      background: var(--berserk-hazard, #14060a);
+      color: #ff2a17;
+      font-family: 'Noto Serif JP', 'Georgia', serif;
+      font-weight: 900;
+      font-size: 0.8rem;
+      line-height: 1;
+      letter-spacing: 0.42em;
+      text-indent: 0.42em;
+      text-shadow: 0 0 10px rgba(255, 42, 23, 0.85);
+    }
+
+    /*
+     * SYNC RATE と同じ明滅を当てて、2 つで 1 つの警報に見せる。
+     * body.berserk に紐付けるのは位相を揃えるため。素の .berserk-alert に
+     * 書くとページ読み込み時から回り始めて、突入時に始まる SYNC RATE とずれる。
+     */
+    body.berserk .berserk-alert {
+      animation: berserk-blink 1.1s steps(1, end) infinite;
+    }
+
+    /* 両脇の橙の縦棒。原典の 非常事態 表示にある囲み */
+    .berserk-alert::before,
+    .berserk-alert::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 5px;
+      height: 18px;
+      transform: translateY(-50%);
+      background: var(--berserk-amber, #ffa629);
+    }
+
+    .berserk-alert::before {
+      left: 3px;
+    }
+
+    .berserk-alert::after {
+      right: 3px;
+    }
+
+    /*
+     * 流れる EMERGENCY。要素を並べて動かすと画面幅ごとに継ぎ目の出方が変わるので、
+     * 1 コマを SVG にして背景で敷き詰め、背景位置をタイル 1 枚分だけ動かす。
+     * これならどの幅でもループが必ず繋がる。色は --berserk-amber と同じ値。
+     */
+    .berserk-marquee {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='26'%3E%3Ctext x='0' y='19' font-family='Arial Black,Arial,Helvetica,sans-serif' font-size='15' font-weight='900' letter-spacing='2.5' fill='%23ffa629'%3EEMERGENCY%3C/text%3E%3C/svg%3E");
+      background-repeat: repeat-x;
+      background-position: 0 center;
+    }
+
+    body.berserk .berserk-marquee {
+      animation: berserk-marquee 2.6s linear infinite;
+    }
+
+    @keyframes berserk-marquee {
+      to {
+        background-position-x: -220px;
+      }
     }
 
     /* ===== 活動停止 =====
@@ -1616,7 +1648,7 @@
     }
 
     .site-crumb a {
-      color: #7b55d6;
+      color: var(--link-ink);
       text-decoration: none;
       transition: color 0.3s ease;
     }
@@ -1643,10 +1675,6 @@
     }
 
     .faq-title {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
-      font-weight: 600;
-      text-transform: uppercase;
       margin-bottom: 40px;
       text-align: center;
       color: var(--ink);
@@ -1658,7 +1686,13 @@
       gap: 16px;
     }
 
-    .faq-item {
+    /*
+     * FAQ の各項目とオファーフォームは同じパネルの意匠。開いている／入力中に
+     * 枠が点き、左端のインジケータが灯る。違うのは状態を表すセレクタだけ
+     * （[open] と :focus-within）なので、見た目はここ 1 か所で決める。
+     */
+    .faq-item,
+    .offer-form {
       background: var(--surface-alt);
       border: 1px solid rgba(var(--neo-purple-rgb), 0.3);
       position: relative;
@@ -1669,13 +1703,15 @@
       border-color: var(--neo-purple);
     }
 
-    .faq-item[open] {
+    .faq-item[open],
+    .offer-form:focus-within {
       border-color: var(--neo-purple);
       box-shadow: 0 8px 24px rgba(var(--neo-purple-rgb), 0.12);
     }
 
     /* 左端のメカニカルなインジケータライン */
-    .faq-item::before {
+    .faq-item::before,
+    .offer-form::before {
       content: '';
       position: absolute;
       left: 0;
@@ -1687,7 +1723,8 @@
       transition: opacity 0.25s ease;
     }
 
-    .faq-item[open]::before {
+    .faq-item[open]::before,
+    .offer-form:focus-within::before {
       opacity: 1;
     }
 
@@ -1778,10 +1815,6 @@
     }
 
     .offer-title {
-      font-size: 1.2rem;
-      letter-spacing: 0.1em;
-      font-weight: 600;
-      text-transform: uppercase;
       margin-bottom: 16px;
       text-align: center;
       color: var(--ink);
@@ -1807,34 +1840,9 @@
       display: none;
     }
 
+    /* パネルの意匠は .faq-item と共通（FAQ 側にまとめてある）。ここは余白だけ */
     .offer-form {
-      background: var(--surface-alt);
-      border: 1px solid rgba(var(--neo-purple-rgb), 0.3);
       padding: 32px 34px 30px;
-      position: relative;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-    }
-
-    .offer-form:focus-within {
-      border-color: var(--neo-purple);
-      box-shadow: 0 8px 24px rgba(var(--neo-purple-rgb), 0.12);
-    }
-
-    /* faq-item と同じ左端のインジケータ。入力中だけ点く */
-    .offer-form::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: var(--neo-purple);
-      opacity: 0;
-      transition: opacity 0.25s ease;
-    }
-
-    .offer-form:focus-within::before {
-      opacity: 1;
     }
 
     /*
@@ -1851,7 +1859,12 @@
       grid-column: 1 / -1;
     }
 
-    .offer-label {
+    /*
+     * 端末風のラベル。オファーフォームの項目名と、ギアモーダルのスペック表の
+     * 見出し（.spec-row dt）で同じ書式を使う。違うのは下余白だけ。
+     */
+    .offer-label,
+    .spec-row dt {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -1864,7 +1877,8 @@
       margin-bottom: 8px;
     }
 
-    .offer-label::before {
+    .offer-label::before,
+    .spec-row dt::before {
       content: "";
       width: 3px;
       height: 0.85em;
@@ -2060,12 +2074,6 @@
       }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      .offer-spinner {
-        animation: none;
-      }
-    }
-
     /*
      * 結果の表示。role="status" を当てるので、成否は色ではなく文言で伝える
      * （読み上げには色が届かない）。
@@ -2084,7 +2092,7 @@
     .offer-status[data-state="error"] {
       border-left-color: var(--accent-red);
       background: rgba(255, 51, 51, 0.07);
-      color: #8a1c1c;
+      color: var(--status-error-ink);
     }
 
     .offer-privacy {
@@ -2107,7 +2115,7 @@
      * ここを常時目立たせても押しどころの無いボタンが増えるだけになる。
      */
     .request-cta a {
-      color: #7b55d6;
+      color: var(--link-ink);
       text-decoration: none;
       font-size: 0.8rem;
       letter-spacing: 0.05em;
@@ -2253,10 +2261,7 @@
       display: none;
     }
 
-    .image-modal.multi .modal-nav {
-      display: flex;
-    }
-
+    .image-modal.multi .modal-nav,
     .image-modal.multi .modal-dots {
       display: flex;
     }
@@ -2430,7 +2435,7 @@
       margin-top: 20px;
     }
 
-    /* 機材スペックの読み取り表。NERV 端末風に、ラベルは等幅・値は本文書体で並べる */
+    /* 機材スペックの読み取り表。ラベルの書式は .offer-label と共通（上を参照） */
     .spec-list {
       margin: 0;
       display: flex;
@@ -2439,23 +2444,7 @@
     }
 
     .spec-row dt {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.68rem;
-      font-weight: bold;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--neo-purple);
       margin-bottom: 6px;
-    }
-
-    .spec-row dt::before {
-      content: "";
-      width: 3px;
-      height: 0.85em;
-      background: var(--neo-purple);
     }
 
     .spec-row dd {
@@ -2535,8 +2524,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--ink-deep);
-      /* 画像の上に重なるので、下地が暗くても × が読めるよう白を敷く */
+      /*
+       * 画像の上に重なるので、下地が暗くても × が読めるよう白を敷く。
+       * 文字色は --ink-deep だと暴走モードで白へ振れ、この白地に沈んで見えなくなる。
+       * 反転しても暗いままの --dark-blue-purple を使う（暴走中は暗赤に寄る）。
+       */
+      color: var(--dark-blue-purple);
       background: rgba(255, 255, 255, 0.92);
       border: 1px solid var(--neo-purple);
       border-radius: 50%;
@@ -2569,11 +2562,17 @@
       border: 0;
     }
 
-    /* ===== SECTION HEADING ICON ===== */
+    /* ===== SECTION HEADING ===== */
     /*
-     * 見出しの記号。絵文字は書体もサイズも OS 任せで、
-     * 六角形・レティクル・A.T.フィールドの直線的な造形から浮くため lucide の線画に統一する。
-     * 大きさは em 基準にして、見出しのフォントサイズを変えれば追従するようにしてある。
+     * 各セクションの見出しの体裁はここ 1 か所で決める。個別のルールに残すのは
+     * 余白・文字色・寄せだけ（大きさや太さを各所に複製すると、1 つ変えたときに
+     * 6 か所すべてを直す羽目になる）。
+     * 記号に絵文字は使わない。書体もサイズも OS 任せで、六角形・レティクル・
+     * A.T.フィールドの直線的な造形から浮くため lucide の線画に統一する。
+     * アイコンの大きさは em 基準なので、下の font-size を変えれば追従する。
+     *
+     * opacity は持たせないこと（.reveal.active の opacity:1 に負けて表示後は効かず、
+     * .reveal の初期値 0 と同詳細度で後勝ちして、フェードインの開始値まで書き換えてしまう）。
      */
     .sound-log-header,
     .video-title,
@@ -2584,6 +2583,10 @@
       display: flex;
       align-items: center;
       gap: 0.6em;
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
     /* .operation-title だけは左寄せ（2 カラムの見出しなので中央に置くと軸がずれる） */
@@ -2985,6 +2988,12 @@
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+        /*
+         * duration だけ潰すと delay が残る。モーダルの visibility は
+         * 「0s linear 0.3s」で畳んでいるので、遅延が生きたままだと閉じた直後の
+         * 0.3 秒間、透明なオーバーレイがクリックを吸ってしまう。
+         */
+        transition-delay: 0s !important;
       }
 
       .reveal {
@@ -3003,7 +3012,8 @@
       }
 
       .live-pop-status,
-      .live-pop-eq span {
+      .live-pop-eq span,
+      .offer-spinner {
         animation: none;
       }
 
@@ -3011,13 +3021,31 @@
        * 暴走モードの明滅・脈動・走査線は、上の duration 潰しだけだと
        * 一度だけ最終フレームで止まって不自然になる。まとめて無効にする。
        * 配色が反転すること自体は動きではないので、そちらは残す。
+       *
+       * 演出を個別に列挙すると、効果を足すたびにここへの追記を忘れて漏れる。
+       * 入れ物（.berserk-fx / .shutdown-fx）の配下を丸ごと止めるので、
+       * 中に何を足しても自動で拾える。詳細度は打ち消す側と同じ (0,2,1) で、
+       * 後に置いてあるぶんこちらが勝つ。
        */
       body.berserk .sync-rate-text,
-      .berserk-fx,
-      .berserk-fx::before,
+      body.berserk .berserk-fx,
+      body.berserk .berserk-fx::before,
+      body.berserk .berserk-fx::after,
+      body.berserk .berserk-fx *,
+      body.berserk .berserk-fx *::before,
+      body.berserk .berserk-fx *::after,
       body.shutting-down .shutdown-fx,
-      body.shutting-down .shutdown-fx-label {
+      body.shutting-down .shutdown-fx * {
         animation: none;
+      }
+
+      /*
+       * 帯は滑り込ませず、その場で出す。上の一括指定が潰せるのは duration だけで、
+       * transition-property までは触らない。ここで none にして初めて
+       * 「クラスが付いた瞬間に確定位置へ出る」状態になる（0.01ms でも 1 フレームは残る）。
+       */
+      .berserk-band {
+        transition: none;
       }
 
       /* 上の一括指定は duration しか潰せない。位置が動くものは transform ごと止める */
@@ -3081,15 +3109,16 @@
       }
 
       .gear-content {
+        --gear-gap: 20px;
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 20px;
+        gap: var(--gear-gap);
       }
 
       .gear-item {
-        /* gap の半分を引く。.gear-content の gap を変えたらここも合わせること */
-        width: calc(50% - 10px);
+        /* 2 列。1 本ぶんの gap を 2 枚で分け合う（--gear-gap は親から継承） */
+        width: calc(50% - var(--gear-gap) / 2);
         max-width: 220px;
         height: auto;
         aspect-ratio: 1 / 1;
@@ -3201,11 +3230,6 @@
         padding: 15px;
       }
 
-      .contact-message {
-        margin-bottom: 40px;
-        font-size: 1rem;
-      }
-
       .about-title,
       .faq-title {
         margin-bottom: 30px;
@@ -3272,7 +3296,8 @@
         font-size: 1.2rem;
       }
 
-      .about-unit p {
+      .about-unit p,
+      .about-interview-card p {
         font-size: 0.9rem;
         line-height: 1.9;
       }
@@ -3287,11 +3312,6 @@
 
       .about-interview-brand img {
         height: 24px;
-      }
-
-      .about-interview-card p {
-        font-size: 0.9rem;
-        line-height: 1.9;
       }
     }
 
@@ -3377,8 +3397,15 @@
   <!-- 演出であって進捗の読み上げではない。支援技術には渡さない -->
   <div class="sync-rate-text" id="syncRateText" aria-hidden="true" lang="en">SYNC RATE: 0.00%</div>
 
-  <!-- 暴走モードの演出（走査線・赤の脈動・警告帯）と、活動停止の暗転。どちらも装飾 -->
-  <div class="berserk-fx" aria-hidden="true"></div>
+  <!-- 暴走モードの演出（非常事態のトラ柄・走査線・六角パネル・赤の脈動）と、活動停止の暗転。どちらも装飾 -->
+  <div class="berserk-fx" aria-hidden="true">
+    <div class="berserk-band berserk-band--top">
+      <span class="berserk-alert" lang="ja">非常事態</span>
+    </div>
+    <div class="berserk-band berserk-band--bottom">
+      <span class="berserk-marquee"></span>
+    </div>
+  </div>
   <div class="shutdown-fx" aria-hidden="true">
     <span class="shutdown-fx-label" lang="ja">活動停止</span>
   </div>
@@ -3815,10 +3842,10 @@
           Me</span></h2>
 
       <!-- 自ドメイン宛の target="_blank" だけ referrer を残す（流入元の把握）。外部宛は noreferrer 付き -->
-      <div class="about-letter">
+      <div class="about-letter paper">
         <div class="about-unit">
           <div class="about-label">活動名義</div>
-          <a class="about-brand" href="https://tk.st/contact?to=dj" target="_blank" rel="noopener" title="お問い合わせ">
+          <a class="about-brand" href="https://tk.st/contact/?to=dj" target="_blank" rel="noopener" title="お問い合わせ">
             <img src="https://tk.st/images/contents/dj-logo4.avif" alt="人類踊狂計画 ロゴ" width="36" height="36"
               loading="lazy">
             <span class="about-name">人類踊狂計画</span>
@@ -3842,7 +3869,7 @@
       </div>
 
       <div class="about-interview-block">
-        <div class="about-interview-card">
+        <div class="about-interview-card paper">
           <div class="about-interview-label">取材記事</div>
           <a class="about-interview-brand" href="https://magazine.re-camera-shop.com/" target="_blank"
             rel="noopener noreferrer" title="アールイーマガジン">
@@ -4108,7 +4135,8 @@
             </svg>
             <span lang="en">Send Offer</span>
           </button>
-          <p class="offer-status" id="offerStatus" role="status" aria-live="polite" hidden></p>
+          <!-- 送信完了で送信ボタンごと畳むので、フォーカスの預け先としてここを使う -->
+          <p class="offer-status" id="offerStatus" role="status" aria-live="polite" tabindex="-1" hidden></p>
         </div>
 
         <p class="offer-privacy">
@@ -4322,10 +4350,22 @@
     const updateScrollUi = () => {
       const scrollTop = window.scrollY;
       const clientHeight = window.innerHeight;
+
+      /*
+       * キャッシュした高さは遅延読み込みが済む前だと短い。ブラウザが復元した
+       * スクロール位置と噛み合うと「まだ読んでいないのに最下部」と誤判定し、
+       * 暴走モードに入ったまま戻らなくなる。最下部に見えたときだけ実測で
+       * 確かめ直す（最下部付近でしか通らないので、毎フレーム測ることにはならない）。
+       */
+      let isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
+      if (isAtBottom) {
+        scrollHeight = document.documentElement.scrollHeight;
+        isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
+      }
+
       const maxScroll = scrollHeight - clientHeight;
       const scrollPercent = maxScroll > 0 ? Math.max(0, Math.min(1, scrollTop / maxScroll)) : 0;
 
-      const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
       // スクロールできない高さ（極端な拡大など）では最上部と最下部が同じ点になる。
       // そこで突入させると入って即停止を繰り返すので、動ける場合だけ拾う
       if (isAtBottom && maxScroll > 0) enterBerserk();
@@ -4795,6 +4835,11 @@
       let widgetId = null;
       let sending = false;
 
+      /*
+       * html にはこのファイルが持つ文言だけを渡すこと。サーバーから返る文字列を
+       * 混ぜるときは setServerStatus を通す（+ で連結して innerHTML へ渡すと、
+       * Worker がいつか入力を含むエラーを返した瞬間に XSS になる）。
+       */
       const setStatus = (html, state) => {
         if (!statusEl) return;
         if (!html) {
@@ -4803,9 +4848,17 @@
           statusEl.innerHTML = '';
           return;
         }
-        statusEl.innerHTML = html;
-        statusEl.dataset.state = state;
+        // live region は「見えている状態で中身が変わる」ことで読み上げられる。
+        // hidden を外してから書き込む（逆順だと読み上げない支援技術がある）
         statusEl.hidden = false;
+        statusEl.dataset.state = state;
+        statusEl.innerHTML = html;
+      };
+
+      // サーバーの文言はテキストとして入れ、案内文だけをこちら側の HTML で足す
+      const setServerStatus = (text, state) => {
+        setStatus('<span data-server-text></span><br>解決しない場合は ' + OFFER_DM + ' からご連絡ください。', state);
+        if (statusEl) statusEl.querySelector('[data-server-text]').textContent = text;
       };
 
       // マークアップ側の紙飛行機と同じもの。送信中はスピナーと入れ替える
@@ -4964,13 +5017,16 @@
             turnstileBox.hidden = true;
             submitBtn.hidden = true;
             setStatus('送信しました。ありがとうございます。<br>内容を確認のうえ、通常2〜3日以内にご記入のメールアドレスへ返信いたします。', 'done');
+            // 押した送信ボタンごと畳むので、放っておくとフォーカスが body へ落ちる。
+            // 結果の文言へ預けて、キーボード操作の文脈を保つ
+            if (statusEl) statusEl.focus({ preventScroll: true });
             return;
           }
 
           // 失敗したトークンは使い回せない。次の送信に備えて引き直す
           turnstileToken = '';
           if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);
-          setStatus((data.error || '送信に失敗しました。') + '<br>解決しない場合は ' + OFFER_DM + ' からご連絡ください。', 'error');
+          setServerStatus(data.error || '送信に失敗しました。', 'error');
         } catch (err) {
           turnstileToken = '';
           if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);

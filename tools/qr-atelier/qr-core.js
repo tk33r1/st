@@ -80,10 +80,10 @@
 
   // 誤り訂正レベル → 形式情報の2ビット（L=01, M=00, Q=11, H=10）と表の列。
   const EC = {
-    L: { index: 0, formatBits: 1, ratio: 0.07 },
-    M: { index: 1, formatBits: 0, ratio: 0.15 },
-    Q: { index: 2, formatBits: 3, ratio: 0.25 },
-    H: { index: 3, formatBits: 2, ratio: 0.30 }
+    L: { index: 0, formatBits: 1 },
+    M: { index: 1, formatBits: 0 },
+    Q: { index: 2, formatBits: 3 },
+    H: { index: 3, formatBits: 2 }
   };
 
   const ALNUM = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
@@ -531,16 +531,8 @@
     };
   }
 
-  // 指定レベルでその文字列が入りきるかの下調べ（UIの上限表示に使う）
-  function capacityFor(ec, mode, version) {
-    return Math.floor((dataCapacityBits(version, ec) - 4 - countBits(mode, version)) / 8);
-  }
-
   global.QRCore = {
     encode: encode,
-    detectMode: detectMode,
-    capacityFor: capacityFor,
-    ecRatio: level => (EC[level] || EC.M).ratio,
     LEVELS: ['L', 'M', 'Q', 'H']
   };
 })(window);

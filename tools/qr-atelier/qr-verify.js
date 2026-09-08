@@ -349,5 +349,5 @@
     return ENGINES.filter(e => e.heavy).every(e => e.load.done());
   }
 
-  global.QRVerify = { run: run, heavyLoaded: heavyLoaded, ENGINES: ENGINES };
+  global.QRVerify = { run: run, heavyLoaded: heavyLoaded };
 })(window);

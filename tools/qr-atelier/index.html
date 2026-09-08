@@ -1417,6 +1417,7 @@
                 <div class="st-seg seg-sm" id="frame-pos-seg">
                   <button type="button" data-pos="bottom" class="active">下部</button>
                   <button type="button" data-pos="top">上部</button>
+                  <button type="button" data-pos="both">上下</button>
                 </div>
               </div>
 
@@ -1431,8 +1432,12 @@
 
               <!-- 文字パネル -->
               <div id="frame-pane-text" style="margin-top:10px">
+                <div class="field hidden" id="frame-text-top-row" style="margin-bottom:10px">
+                  <label for="frame-text-top">上部の文字</label>
+                  <input type="text" id="frame-text-top" maxlength="24" value="">
+                </div>
                 <div class="field">
-                  <label>表示する文字</label>
+                  <label for="frame-text" id="frame-text-label">表示する文字</label>
                   <input type="text" id="frame-text" maxlength="24" value="スキャンしてね">
                 </div>
                 <div class="field" style="margin-top:10px">
@@ -1833,11 +1838,11 @@
         <div data-cid="swatch-host" class="swatch-group"></div>
       </template>
 
-  <script src="qr-core.js?v=20260905"></script>
-  <script src="qr-style.js?v=20260907_2"></script>
+  <script src="qr-core.js?v=20260908_3"></script>
+  <script src="qr-style.js?v=20260908_3"></script>
   <script src="qr-assets.js?v=20260908"></script>
-  <script src="qr-verify.js?v=20260905"></script>
-  <script src="qr-bulk.js?v=20260907"></script>
-  <script src="app.js?v=20260908_2"></script>
+  <script src="qr-verify.js?v=20260908_3"></script>
+  <script src="qr-bulk.js?v=20260908_3"></script>
+  <script src="app.js?v=20260908_3"></script>
 </body>
 </html>

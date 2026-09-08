@@ -184,6 +184,14 @@
     return FONT_STACKS[key] || FONT_STACKS.sans;
   }
 
+  // 角を丸めすぎると、下地の角が削れてクワイエットゾーンを食う。余白の1.5倍を
+  // 上限にして、四隅の白場が必ず残るようにする。画面のスライダーも同じ上限で
+  // 頭打ちにしたいので、係数はここひとつに置いて app.js から引かせる。
+  function maxRadius(margin) {
+    const m = Number(margin);
+    return Number.isFinite(m) ? Math.max(0, m) * 1.5 : 0;
+  }
+
   function lineIdOf(id) {
     const a = LINE_ALIAS[id] || id;
     return LINE_STYLES[a] ? a : 'solid';
@@ -246,12 +254,20 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  // 配列は必ず写しを返す。参照のまま返すと、返り値の colors を1つ足しただけで
-  // 元の DEFAULTS（やテンプレートの定義）まで書き換わってしまう。オブジェクトは
-  // 下の再帰が組み立て直すので、ここで写すのは配列だけでよい。
-  // ※ 中身まで写さないのは、色は文字列で、要素を作り替える使い方が無いため。
+  // 入れ物は必ず写しを返す。参照のまま返すと、返り値の colors を1つ足しただけで
+  // 元の DEFAULTS（やテンプレートの定義）まで書き換わってしまう。
+  // 下の merge が組み立て直すのは「DEFAULTS 側にも同じキーがある入れ子」だけで、
+  // 上書き側にしかないキー（テンプレートが足した設定や iconData など）はここを
+  // 素通りする。配列だけ写して足りていたのは、たまたまその形が来ていなかった
+  // からで、来た瞬間に元を書き換える口になる。中身まで再帰で写しておく。
   function dup(v) {
-    return Array.isArray(v) ? v.slice() : v;
+    if (Array.isArray(v)) return v.map(dup);
+    if (v && typeof v === 'object') {
+      const out = {};
+      Object.keys(v).forEach(k => { out[k] = dup(v[k]); });
+      return out;
+    }
+    return v;
   }
 
   function merge(base, over) {
@@ -330,45 +346,6 @@
   // カメラのための上乗せは要らない。
   const LUMA_WALL = 0.50;
   const LUMA_TIGHT = 0.44;
-
-  function rgbToHsl(r, g, b) {
-    const rf = r / 255, gf = g / 255, bf = b / 255;
-    const max = Math.max(rf, gf, bf), min = Math.min(rf, gf, bf);
-    let h = 0, s = 0, l = (max + min) / 2;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case rf: h = ((gf - bf) / d + (gf < bf ? 6 : 0)) / 6; break;
-        case gf: h = ((bf - rf) / d + 2) / 6; break;
-        case bf: h = ((rf - gf) / d + 4) / 6; break;
-      }
-    }
-    return [h, s, l];
-  }
-
-  function hslToRgb(h, s, l) {
-    if (s === 0) {
-      const v = Math.round(l * 255);
-      return [v, v, v];
-    }
-    const hue2rgb = (p, q, t) => {
-      let tt = t;
-      if (tt < 0) tt += 1;
-      if (tt > 1) tt -= 1;
-      if (tt < 1 / 6) return p + (q - p) * 6 * tt;
-      if (tt < 1 / 2) return q;
-      if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
-      return p;
-    };
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    return [
-      Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
-      Math.round(hue2rgb(p, q, h) * 255),
-      Math.round(hue2rgb(p, q, h - 1 / 3) * 255)
-    ];
-  }
 
   // 塗りを白い紙の上に置いたときに見える色。透かしたぶんは紙が透ける。
   // 透過は「その色が薄くなる」ではなく「地の白が出てくる」なので、
@@ -1562,9 +1539,7 @@
     const size = qr.size;
     const margin = Math.max(0, Math.min(10, Math.round(st.margin)));
     const inner = size + margin * 2;
-    // 角を丸めすぎると、下地の角が削れてクワイエットゾーンを食う。
-    // 余白の1.5倍を上限にして、四隅の白場が必ず残るようにする。
-    const radius = Math.max(0, Math.min(st.radius, margin * 1.5));
+    const radius = Math.max(0, Math.min(st.radius, maxRadius(margin)));
     const fm = FRAME_METRICS[st.frame.type] || FRAME_METRICS.none;
     const isLine = st.frame.type === 'line';
     // 枠線の余白は、種類と太さから毎回計算する（太くしても QR に食い込まないように）
@@ -1634,14 +1609,18 @@
     // 下地の形。'none' は旧データの「下地なし」なので、抜きの形だけ角丸で代用する
     const bdStyle = (logo.backdrop && logo.backdrop !== 'none') ? logo.backdrop : 'rounded';
 
-    if (hasLogo && logo.knockout) {
+    // ロゴが覆うモジュールは、セルを消すかどうかに関わらず数える。knocked は
+    // 「誤り訂正でどれだけ取り返す必要があるか」の見積もりで、抜かずに上から
+    // 重ねても隠れる量は変わらない。ここを knockout の中に入れていたので、
+    // 抜きを切ったときだけ面積の警告まで黙っていた。
+    if (hasLogo) {
       const half = knockSide / 2;
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           const mx = ox + x + 0.5, my = oy + y + 0.5;
           if (!insideBackdrop(mx - cx, my - cy, half, bdStyle)) continue;
           knocked++;
-          if (!isFinder(x, y)) grid[y * size + x] = 0;
+          if (logo.knockout && !isFinder(x, y)) grid[y * size + x] = 0;
         }
       }
     }
@@ -2121,6 +2100,7 @@
         : { level: 'warn', text: '背景よりセルのほうが明るい「反転QR」です。読み取れないアプリがあります。' });
     }
     const coverage = knocked / (size * size);
+    // 各レベルが取り返せるコード語の割合（規格の公称値）。ロゴで隠せる量の目安。
     const budget = ({ L: 0.07, M: 0.15, Q: 0.25, H: 0.30 })[qr.ec] || 0.15;
     if (hasLogo && coverage > budget * 0.85) {
       warnings.push({ level: 'error', text: 'ロゴが大きすぎます（' + Math.round(coverage * 100) + '%）。小さくするか誤り訂正レベルを上げてください。' });
@@ -2268,14 +2248,11 @@
     linePreview: linePreview,
     LINE_STYLES: LINE_STYLES,
     lineIdOf: lineIdOf,
+    maxRadius: maxRadius,
     contrastRatio: contrastRatio,
-    lumaRatio: lumaRatio,
+    // 明るさの見立ては app.js（プレビューの市松）でも使うので出しておく。
+    // 読み取りのしきい値（LUMA_WALL / LUMA_TIGHT）は判定ごとここが持つ。
     encodedLuma: encodedLuma,
-
-    LUMA_WALL: LUMA_WALL,
-    LUMA_TIGHT: LUMA_TIGHT,
-    luminance: luminance,
-
     paintColor: paintColor,
     resolvePaint: resolvePaint,
     overWhite: overWhite,

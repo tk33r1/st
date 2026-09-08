@@ -806,8 +806,7 @@
     if (!s.frame.backdropPaint || !s.frame.backdropPaint.type) {
       s.frame.backdropPaint = { type: 'none', color: '#FFFFFF', transparency: 0 };
     }
-    // 下地は既定で不透明。sanitizePaint は未指定を 80% 透過とみなすので、先に埋めておく
-    if (s.frame.backdropPaint.transparency === undefined) s.frame.backdropPaint.transparency = 0;
+    // 透過は sanitizePaint が埋める（下地は plate なので、未指定は 0＝不透明）
     s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'plate', 'none', '#FFFFFF');
 
     s.bg = sanitizePaint(s.bg, 'plate', 'solid', '#FFFFFF');
@@ -822,7 +821,6 @@
     if (!s.logo.backdrop || !A.BACKDROP_SHAPES.some(f => f.id === s.logo.backdrop)) {
       s.logo.backdrop = D.logo.backdrop;
     }
-    if (s.logo.backdropPaint.transparency === undefined) s.logo.backdropPaint.transparency = 0;
     s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'plate', 'solid', '#FFFFFF');
 
     // ロゴ本体の塗り。ここだけ 'brand'（アイコンのブランド公式色）を選べる。
@@ -844,7 +842,10 @@
     s.cellScale = clampNum(s.cellScale, 0.3, 1.15, D.cellScale);
     s.cellJitter = clampNum(s.cellJitter, 0, 1, D.cellJitter);
     s.margin = clampNum(s.margin, 0, 10, D.margin);
-    s.radius = clampNum(s.radius, 0, 10, D.radius);
+    // 角丸は余白より大きくできない（余白ゼロなら丸みもゼロ）。復元・テンプレート
+    // 適用・シャッフル・undo のどこから来ても、ここで上限に収まっているようにする
+    const radiusCap = maxRadiusOf(s.margin);
+    s.radius = clampNum(s.radius, 0, radiusCap, Math.min(D.radius, radiusCap));
     s.logo.size = clampNum(s.logo.size, 0.06, 0.34, D.logo.size);
     s.logo.pad = clampNum(s.logo.pad, 0, 0.5, D.logo.pad);
     s.frame.radius = clampNum(s.frame.radius, 0, 10, D.frame.radius);
@@ -854,6 +855,9 @@
     s.logo.text = String(s.logo.text == null ? '' : s.logo.text);
     if (!s.logo.font || FONTS.indexOf(s.logo.font) < 0) s.logo.font = 'sans';
     s.logo.src = sanitizeImageUrl(s.logo.src);
+    // ロゴの下のセルを抜くか。画面には出していないが、テンプレートや古い保存が
+    // 落としてくることがあるので、真偽値には均しておく
+    s.logo.knockout = s.logo.knockout !== false;
     s.invertOk = !!s.invertOk;
     if (!A.CELL_SHAPES.some(c => c.id === s.cell)) s.cell = D.cell;
   }
@@ -920,40 +924,26 @@
     return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
   }
 
-  function getLuminance(rgb) {
-    if (!rgb) return 0;
-    return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
-  }
-
+  // セルの明るさ（0〜255）。複数色の塗りは平均で見る。
+  // 明るさの式は qr-style.js の encodedLuma ひとつに寄せる。ここだけ別の
+  // 係数で測っていると、同じ色を「明るい」と言ったり言わなかったりする。
   function getCellLuminance() {
     const fg = state.style && state.style.fg;
     if (!fg) return 0;
-    if (fg.type === 'solid') {
-      return getLuminance(hexToRgb(fg.color));
-    }
+    const luma = window.QRStyle.encodedLuma;
+    if (fg.type === 'solid') return luma(fg.color);
+    let cols = null;
     if (fg.type === 'linear' || fg.type === 'radial') {
-      const cols = [fg.from, fg.to];
-      if (fg.mid) cols.push(fg.mid);
-      let sum = 0, count = 0;
-      cols.forEach(c => {
-        const rgb = hexToRgb(c);
-        if (rgb) { sum += getLuminance(rgb); count++; }
-      });
-      return count ? sum / count : 0;
+      cols = fg.mid ? [fg.from, fg.mid, fg.to] : [fg.from, fg.to];
+    } else if (fg.type === 'multi') {
+      cols = Array.isArray(fg.colors) && fg.colors.length ? fg.colors : ['#2563EB', '#7C3AED', '#DB2777'];
     }
-    if (fg.type === 'multi') {
-      const cols = Array.isArray(fg.colors) && fg.colors.length ? fg.colors : ['#2563EB', '#7C3AED'];
-      let sum = 0, count = 0;
-      cols.forEach(c => {
-        const rgb = hexToRgb(c);
-        if (rgb) { sum += getLuminance(rgb); count++; }
-      });
-      return count ? sum / count : 0;
-    }
-    if (fg.type === 'image') {
-      return 0;
-    }
-    return 0;
+    if (!cols) return 0;   // 画像などは絵柄しだいなので暗いほうに倒しておく
+    let sum = 0, count = 0;
+    cols.forEach(c => {
+      if (hexToRgb(c)) { sum += luma(c); count++; }
+    });
+    return count ? sum / count : 0;
   }
 
   function updateCanvasChecker() {
@@ -1192,9 +1182,10 @@
         const userLogoSrc = (state.style.logo && state.style.logo.type === 'image') ? state.style.logo.src : '';
         const userLogoText = (state.style.logo && state.style.logo.type === 'text') ? state.style.logo.text : '';
 
-        // DEFAULTS をベースにしてテンプレートのスタイルをディープマージ
-        const base = JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS));
-        state.style = window.QRStyle.merge(base, JSON.parse(JSON.stringify(p.style)));
+        // DEFAULTS をベースにしてテンプレートのスタイルをディープマージ。
+        // merge は入れ物を必ず写して返すので、DEFAULTS もテンプレートの定義も
+        // 返り値経由では書き換わらない（写しを作ってから渡す必要はない）
+        state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, p.style);
 
         // ユーザーが置いていた画像ロゴ・文字ロゴは、テンプレートがロゴに
         // 触れていないときだけ戻す。logo を書いたテンプレート（ミニマルなど）は
@@ -1206,6 +1197,10 @@
           state.style.logo.type = 'text';
           state.style.logo.text = userLogoText;
         }
+
+        // 範囲外の値や古い形のキーを均す。まるごと差し替える経路は
+        // 復元・undo と同じように、ここを必ず通す
+        sanitizeStyle(state.style);
 
         // セルの密度は style ではなく state 側。テンプレートは基本「自動」に戻す
         state.minVersion = p.minVersion || 1;
@@ -1872,6 +1867,27 @@
     return String(Math.round(Number(v) * 100) / 100);
   }
 
+  // ラベルの位置。qr-style.js が受ける3通りをそのまま返す（画面の並びと対）。
+  // frame を渡せば、いま画面に出ていない style（一括生成の作業用など）も測れる。
+  function framePosOf(frame) {
+    const p = (frame || state.style.frame || {}).pos;
+    return (p === 'top' || p === 'both') ? p : 'bottom';
+  }
+
+  // ラベルの文字は上下で入れ物が違う（text / textTop）。qr-style.js が
+  // その位置で実際に描くほうのキーを返す。「上下」のときは下を指し、
+  // 上の文字は専用の欄（frame-text-top）が受け持つ。
+  function frameTextKey() {
+    return framePosOf() === 'top' ? 'textTop' : 'text';
+  }
+
+  // 角丸の上限。係数は qr-style.js が持っているので、そこから引いて
+  // スライダーの刻み（0.5）と最大値（10）に丸めるだけにする
+  function maxRadiusOf(margin) {
+    const cap = window.QRStyle.maxRadius(clampNum(margin, 0, 10, 4));
+    return Math.min(10, Math.round(cap * 2) / 2);
+  }
+
   function syncControls() {
     const s = state.style;
 
@@ -1906,9 +1922,10 @@
     $('val-celljitter').textContent = Math.round((s.cellJitter || 0) * 100) + '%';
     $('opt-margin').value = s.margin;
     $('val-margin').textContent = s.margin;
-    // 角丸の上限は余白しだい（qr-style.js 側の丸め上限と合わせる）
-    const maxRadius = Math.round(s.margin * 1.5 * 2) / 2;
-    if (s.radius > maxRadius) s.radius = maxRadius;
+    // 角丸の上限は余白しだい。はみ出したぶんを削るのは余白を動かした側の
+    // 仕事で、ここは見せるだけ（syncControls が state を書き換えると、
+    // 履歴の取り方と噛み合わなくなる）
+    const maxRadius = maxRadiusOf(s.margin);
     $('opt-radius').max = maxRadius;
     $('opt-radius').value = s.radius;
     $('opt-radius').disabled = maxRadius === 0;
@@ -1958,7 +1975,8 @@
         : s.frame.line === 'balloon' ? '※ しっぽのぶん、下に伸びます。'
         : '';
     }
-    const framePos = (s.frame && s.frame.pos === 'top') ? 'top' : 'bottom';
+    const framePos = framePosOf();
+    const isBothPos = framePos === 'both';
     setSeg('frame-pos-seg', framePos, 'pos');
 
     const cMode = (s.frame && (framePos === 'top' ? (s.frame.topContentMode || s.frame.contentMode) : s.frame.contentMode)) || 'text';
@@ -1967,8 +1985,12 @@
     if ($('frame-pane-icon')) $('frame-pane-icon').classList.toggle('hidden', cMode !== 'icon');
     if ($('frame-pane-image')) $('frame-pane-image').classList.toggle('hidden', cMode !== 'image');
 
-    // テキスト
-    if ($('frame-text')) $('frame-text').value = (framePos === 'top' ? (s.frame.textTop || s.frame.text) : s.frame.text) || '';
+    // テキスト。上下に出すときだけ、上の文字を別の欄で受ける
+    if ($('frame-text')) $('frame-text').value = s.frame[frameTextKey()] || '';
+    if ($('frame-text-label')) $('frame-text-label').textContent = isBothPos ? '下部の文字' : '表示する文字';
+    const topTextRow = $('frame-text-top-row');
+    if (topTextRow) topTextRow.classList.toggle('hidden', !isBothPos);
+    if ($('frame-text-top')) $('frame-text-top').value = s.frame.textTop || '';
     setSeg('frame-font-seg', (s.frame && s.frame.font) || 'sans', 'font');
 
     // アイコン
@@ -2705,9 +2727,22 @@
     const row = $('bulk-label-row');
     if (!row) return;
     const st = state.style.frame || {};
-    const usable = st.type === 'label' &&
-      (st.contentMode === 'text' || st.topContentMode === 'text');
+    // 「文字」で描かれる帯が実際にあるときだけ。位置ごとに内容の指定が
+    // 別なので、いま出ている帯のほうを見る
+    const pos = framePosOf();
+    const usable = st.type === 'label' && (
+      (pos !== 'top' && st.contentMode === 'text') ||
+      (pos !== 'bottom' && st.topContentMode === 'text'));
     row.classList.toggle('hidden', !usable);
+  }
+
+  // ラベルの文字を1行ぶん差し替える。text と textTop のどちらが描かれるかは
+  // 位置で決まるので、出ている帯すべてに入れる。ここを frame.text だけに
+  // していると、位置が「上部」のとき全行が元の文言のまま焼き上がる。
+  function applyBulkLabel(frame, text) {
+    const pos = framePosOf(frame);
+    if (pos !== 'top') frame.text = text;
+    if (pos !== 'bottom') frame.textTop = text;
   }
 
   function bulkSummary() {
@@ -2721,10 +2756,20 @@
     if (hint) hint.textContent = bulkSummary();
   }
 
+  // 読み込んだファイルの見出し。行数は「これから作る枚数」＝データ行で数える。
+  // 見出し行を含めた総数を出すと、右肩の要約や書き出した枚数と1つずれる。
+  function syncBulkFileName() {
+    const host = $('bulk-file-name');
+    if (!host) return;
+    host.textContent = bulk.fileName
+      ? bulk.fileName + '（' + bulkDataRows().length + '行）' : '';
+  }
+
   function bulkRefresh() {
     bulkFillSelects();
     bulkPreview();
     syncBulkLabelRow();
+    syncBulkFileName();
     syncBulkHint();
     $('bulk-report').innerHTML = '';
   }
@@ -2745,7 +2790,6 @@
       bulk.rows = out.rows;
       bulk.fileName = file.name;
       bulk.encoding = parsed.encoding;
-      $('bulk-file-name').textContent = file.name + '（' + out.rows.length + '行）';
       $('bulk-setup').classList.remove('hidden');
       // 見出しらしさは、1行目に「作れない中身」が並んでいるかでは決められない。
       // 素直に既定を on にしておき、表を見て外してもらう
@@ -2763,6 +2807,7 @@
     $('bulk-preview').innerHTML = '';
     $('bulk-report').innerHTML = '';
     $('bulk-file').value = '';
+    syncBulkFileName();
     syncBulkHint();
   }
 
@@ -2841,6 +2886,14 @@
 
       for (let i = 0; i < use.length; i++) {
         if (bulk.abort) break;
+        // 進み具合と「中止」は、飛ばした行でも動かす。ここを行の処理の後ろに
+        // 置くと、空行が続いたときだけバーが止まって固まったように見える。
+        // canvas.toBlob と decode() のあいだは画面が止まるので、数件ごとに返す
+        if (i % BULK_YIELD === 0) {
+          setBulkProgress(i, use.length);
+          await new Promise(r => setTimeout(r, 0));
+          if (bulk.abort) break;
+        }
         const row = use[i];
         const lineNo = i + headOffset;
         const raw = String(row[contentIdx] == null ? '' : row[contentIdx]).trim();
@@ -2860,7 +2913,7 @@
           continue;
         }
 
-        if (labelIdx >= 0) baseStyle.frame.text = String(row[labelIdx] || '');
+        if (labelIdx >= 0) applyBulkLabel(baseStyle.frame, String(row[labelIdx] || ''));
         let svg = window.QRStyle.render(qr, baseStyle).svg;
         if (faceCss) svg = window.QRStyle.embedFontCss(svg, faceCss);
 
@@ -2882,13 +2935,6 @@
 
         files.push({ name: name, bytes: bytes });
         manifest.push([String(lineNo), name, text]);
-
-        if (i % BULK_YIELD === 0 || i === use.length - 1) {
-          setBulkProgress(i + 1, use.length);
-          // canvas.toBlob と decode() のあいだは画面が止まる。数件ごとに
-          // 制御を返して、進み具合と「中止」が効くようにする
-          await new Promise(r => setTimeout(r, 0));
-        }
       }
 
       if (!files.length) {
@@ -3264,6 +3310,9 @@
     bindRange('opt-celljitter', 'val-celljitter', v => Math.round(v * 100) + '%', v => { state.style.cellJitter = v; });
     bindRange('opt-margin', 'val-margin', v => String(v), v => {
       state.style.margin = v;
+      // 角丸の上限は余白で決まる。余白を詰めたぶん、はみ出した丸みは先に削る
+      const cap = maxRadiusOf(v);
+      if (state.style.radius > cap) state.style.radius = cap;
       syncControls();
     });
     bindRange('opt-radius', 'val-radius', v => String(v), v => { state.style.radius = v; });
@@ -3289,7 +3338,12 @@
 
     // フレーム位置・種類・内容
     bindSeg('frame-pos-seg', 'pos', v => {
-      state.style.frame.pos = v;
+      const fr = state.style.frame;
+      // 上を使う配置へ移るとき、上の文字がまだ無ければ下の文字から起こす。
+      // qr-style.js は textTop が空だと text へ落とすので、空欄のまま見せると
+      // 画面（空）と実際の絵（下の文字が上にも出る）が食い違う。
+      if ((v === 'top' || v === 'both') && !fr.textTop) fr.textTop = fr.text || '';
+      fr.pos = v;
       state.presetName = '';
       syncControls();
       update();
@@ -3333,11 +3387,18 @@
       update();
     });
 
+    // いま描かれるほうの入れ物へ入れる。上下に出しているときは、この欄は下だけ。
     $('frame-text').addEventListener('input', e => {
-      state.style.frame.text = e.target.value;
-      state.style.frame.textTop = e.target.value;
+      state.style.frame[frameTextKey()] = e.target.value;
       scheduleUpdate();
     });
+
+    if ($('frame-text-top')) {
+      $('frame-text-top').addEventListener('input', e => {
+        state.style.frame.textTop = e.target.value;
+        scheduleUpdate();
+      });
+    }
 
     Array.prototype.forEach.call($('icon-tabs').children, b => {
       b.addEventListener('click', () => {
@@ -3726,6 +3787,10 @@
     }
 
     state.presetName = '';
+
+    // 振った値どうしの噛み合わせ（角丸は余白より大きくできない、など）は
+    // ここで均す。振る側が上限を知っていなくてよくなる
+    sanitizeStyle(state.style);
 
     syncControls();
     buildShapeGrids();
