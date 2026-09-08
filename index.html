@@ -118,7 +118,11 @@
     .max-w-\[400px\] { max-width: 400px }
     .min-w-\[400px\] { min-width: 400px }
     .flex { display: flex }
-    .hidden { display: none }
+    /* `!important` on purpose: several components set `display` at id specificity
+       (#cmd-palette, #notif-center, …), which a plain class can never outrank whatever the
+       source order. This one declaration replaces the nine `#x.hidden` / `.x.hidden`
+       overrides those rules used to need. */
+    .hidden { display: none !important }
     .block { display: block }
     .inline-block { display: inline-block }
     .grid { display: grid }
@@ -346,7 +350,16 @@
       transition: background-color var(--duration-normal), color var(--duration-normal);
     }
 
-    * { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important }
+    /* One monospace stack for the whole document, applied by inheritance rather than a
+       universal `!important`. Form controls do not inherit font-family on their own, hence
+       the second rule. Anything that genuinely wants another face (the akutagawa letter)
+       can now simply say so instead of having to out-shout a universal override. */
+    html { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace }
+    /* Elements with a UA-stylesheet font-family of their own do not inherit: form
+       controls, and the monospace group (a bare `pre` would drop the ASCII banner onto
+       the browser default face and lose the column alignment). Verified in a browser —
+       this is what the old universal `!important` was quietly covering. */
+    input, button, select, textarea, pre, code, kbd, samp { font-family: inherit }
 
     @keyframes blink {
         0%, 100% { opacity: 1 }
@@ -765,7 +778,6 @@
       gap: 8px;
       width: 100%;
       padding: 7px 10px;
-      font-family: monospace;
       color: var(--secondary-color);
       background: transparent;
       border: 1px solid var(--border-color);
@@ -851,7 +863,6 @@
     }
 
     body.choreomania-active #app span:not(.hidden) { display: inline-block }
-    body.choreomania-active #app span.hidden { display: none !important }
 
     body.choreomania-active #app :is(span, a, pre, [class*="text-"], .glow) {
       color: hsl(calc((var(--mouse-x) + var(--mouse-y)) * 180), 80%, 60%) !important;
@@ -925,8 +936,6 @@
       border-left-color: var(--primary-color);
     }
 
-    .act-btn.hidden { display: none }
-
     .nav-badge {
       position: absolute;
       bottom: 8px;
@@ -941,8 +950,6 @@
       min-width: 14px;
       text-align: center;
     }
-
-    .nav-badge.hidden { display: none }
 
     #sidebar {
       width: 14rem;
@@ -1363,10 +1370,6 @@
       font-weight: 700;
     }
 
-    /* Same specificity as .hidden but declared later, so it would otherwise win and
-       leave a permanent "0" badge on the PROBLEMS tab. Mirrors .nav-badge.hidden. */
-    .panel-badge.hidden { display: none }
-
     .panel-pane {
       overflow-y: auto;
       min-height: 0;
@@ -1587,11 +1590,8 @@
       padding: 4px 0;
     }
 
-    #agent-more-dropdown.hidden { display: none }
-
     #agent-more-dropdown button, #agent-more-dropdown a {
       font-size: 12px !important;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
       line-height: 1.5 !important;
     }
 
@@ -1841,8 +1841,6 @@
       gap: 0.35rem;
       padding: 0.5rem 0.6rem 0;
     }
-
-    #agent-attach-tray.hidden { display: none }
 
     .attach-chip {
       position: relative;
@@ -2141,8 +2139,6 @@
       background: rgba(0, 0, 0, 0.35);
     }
 
-    #cmd-palette.hidden { display: none }
-
     #cmd-palette-box {
       margin-top: 8vh;
       width: min(600px, 92vw);
@@ -2237,8 +2233,6 @@
       border-radius: 6px;
       box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
     }
-
-    #cmd-suggest.hidden { display: none }
 
     .sg-item {
       display: flex;
@@ -2424,8 +2418,6 @@
       text-align: center;
     }
 
-    #notif-count.hidden { display: none }
-
     #notif-center {
       position: fixed;
       right: 0.75rem;
@@ -2441,8 +2433,6 @@
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
       overflow: hidden;
     }
-
-    #notif-center.hidden { display: none }
 
     #notif-center-head {
       display: flex;
@@ -2607,7 +2597,6 @@
     }
 
     #apk-download-title {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 0.875rem;
       font-weight: 700;
       color: var(--primary-color);
@@ -3008,7 +2997,8 @@
       <div id="sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="Resize side bar"
         title="Drag to resize"></div>
       <main id="editor-group" class="flex flex-col flex-1">
-        <div id="tabbar" class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
+        <div id="tabbar" role="tablist" aria-label="Open editors" data-ja-aria="開いているエディター"
+          class="flex bg-surface border-b border-color text-xs overflow-x-auto"></div>
         <div id="breadcrumb" class="px-4 py-1 text-[10px] text-secondary border-b border-color truncate">
           <span>tk.st</span>
         </div>
@@ -3107,7 +3097,12 @@
               title="Close Panel" data-ja-title="パネルを閉じる"><svg aria-hidden="true" width="14" height="14" stroke-width="1.8"><use href="#ic-x" /></svg></button>
           </div>
         </div>
-        <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs" aria-live="polite" aria-atomic="false"></div>
+        <!-- No aria-live here: the integrated reply streams in by rewriting its whole
+             textContent token by token, so a live region on the log re-reads the growing
+             answer continuously. #agent-status announces the finished turn once instead —
+             the same split as #editor-status against the editor pane. -->
+        <div id="agent-log" class="flex-1 p-3 space-y-2 text-xs"></div>
+        <div id="agent-status" class="sr-only" aria-live="polite"></div>
         <div id="agent-degraded" class="hidden p-3 text-xs text-secondary border-t border-color"></div>
         <div id="agent-attach-tray" class="hidden border-t border-color"></div>
         <div id="agent-inputline" class="flex items-center gap-2 p-2 border-t border-color">
@@ -3219,9 +3214,10 @@
       dark: { en: 'Hacky Flâneur', ja: 'ハッキー・フラヌール' }
     };
     const jobTitleFor = isDark => tr(JOB_TITLES[isDark ? 'dark' : 'light'].en, JOB_TITLES[isDark ? 'dark' : 'light'].ja);
-    // The head script has already resolved the theme (stored choice, else the OS), so
-    // seed the job title from the live attribute — hard-coding light would show the
-    // wrong title until the first manual toggle.
+    // The head script has already painted the theme (always light on a fresh load; a
+    // hidden-command URL such as ?cmd=matrix forces dark before this runs), so seed the
+    // job title from the live attribute — hard-coding light would show the wrong title
+    // in that case until the first manual toggle.
     const isDarkNow = () => document.documentElement.getAttribute('data-theme') === 'dark';
     const config = { display_name: 'Shinya Takeda', job_title: jobTitleFor(isDarkNow()), location_text: 'Tokyo, Japan' };
     const DOM = {
@@ -3246,6 +3242,12 @@
     };
     const delay = ms => new Promise(r => setTimeout(r, ms));
     const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
+    // Only ever put an http(s) URL in an href. esc() stops the attribute being broken out
+    // of, but not a `javascript:` payload — and the one place this is needed (MAGI's
+    // legacy_url) takes its value from a Worker response rather than from this file.
+    // The empty guard is not redundant: new URL('undefined', location.href) resolves to a
+    // perfectly valid same-origin path, so a missing value would otherwise become a link.
+    const safeUrl = u => { if (!u) return ''; try { const p = new URL(String(u), location.href); return (p.protocol === 'http:' || p.protocol === 'https:') ? p.href : ''; } catch (_) { return ''; } };
     const cmdNotFoundHTML = cmd => tr(
       `<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`,
       `<div class="text-xs my-1 text-red-500">コマンドが見つかりません: '${esc(cmd)}'. 利用可能なコマンドは <span class="text-normal font-bold">help</span> と入力してください。</div>`);
@@ -3310,7 +3312,10 @@
       put(val);
     };
     const verBadge = () => ` <span class="text-secondary" style="font-size: 0.8em; opacity: 0.8;">ver.${currentVersion}.0</span>`;
-    const clearCmdParam = () => { if (window.location.search) { try { window.history.pushState({}, '', window.location.pathname); } catch (err) { } } };
+    // replaceState, not pushState: the URL is a shareable label for the current view, not a
+    // history stack — nothing here listens for popstate, so a pushed entry would let Back
+    // restore a `?cmd=…` URL the page then fails to act on (URL and screen out of sync).
+    const clearCmdParam = () => { if (window.location.search) { try { window.history.replaceState({}, '', window.location.pathname); } catch (err) { } } };
     // Randomised fly-off transform, shared by `meltdown` and rampage's section collapse
     // (the CSS reads --dx/--dy/--deg); clearTransformVars is its inverse.
     const setTransformVars = el => {
@@ -3363,6 +3368,7 @@
         const msg = entry.replace(/^\[SYS\]\s*/, '');
         const channel = /Extension|拡張機能/i.test(msg) ? 'Extensions' : /Theme|テーマ/i.test(msg) ? 'Theme' : 'System';
         systemLog.push({ t: new Date(), channel, msg });
+        if (systemLog.length > MAX_HISTORY) systemLog.shift();
         if (!document.getElementById('panel-output').classList.contains('hidden')) renderOutput();
       }
     }
@@ -3374,12 +3380,15 @@
     function recountProblems() {
       errorCount = problems.filter(p => p.sev === 'error').length;
       warnCount = problems.filter(p => p.sev === 'warn').length;
-      if (DOM.statusLeft) DOM.statusLeft.innerHTML = `<span>⊘</span> <span>${errorCount}</span>  <span>⚠</span> <span>${warnCount}</span>`;
+      if (DOM.statusLeft) DOM.statusLeft.innerHTML = `<span>⊘</span> <span>${errorCount}</span> <span>⚠</span> <span>${warnCount}</span>`;
       if (DOM.probBadge) { const n = errorCount + warnCount; DOM.probBadge.innerHTML = `<span>${n}</span>`; DOM.probBadge.classList.toggle('hidden', n === 0); }
       if (DOM.panelProblems && !DOM.panelProblems.classList.contains('hidden')) renderProblems();
     }
     function addProblem(sev, msg, opts = {}) {
       problems.push({ sev, msg, file: opts.file || 'terminal', line: opts.line || 0, cmd: opts.cmd || FILE_CMD[opts.file] || null });
+      // Capped like commandHistory / notifications: a long `rampage` (or a stubborn typist)
+      // otherwise grows this without limit, and renderProblems() re-renders every row.
+      if (problems.length > MAX_HISTORY) problems.shift();
       recountProblems();
     }
     function renderProblems() {
@@ -3608,10 +3617,15 @@
       css: '#519aba', // Stylesheet - teal-blue
       sh: '#6cc04a', // Shell      - green
       bin: '#9d7cf0', // Binary     - purple
-      ai: '#d96fc4', // AI model   - magenta
       yaml: '#a3a0e6', // YAML       - soft blue-violet
       py: '#c79ad6', // Python     - soft red-violet
+      exe: '#b56a63', // Executable - brick
+      html: '#d4703a', // HTML       - orange
+      lang: '#d96fc4', // Lang pack  - magenta
     };
+    // Every extension in FILE_META has an entry above, and nothing else does — a missing one
+    // silently reads as the grey of a plain .txt, which is what web3.html and japanese.lang
+    // used to do.
     function fileTypeColor(name) {
       const ext = (name && name.includes('.')) ? name.split('.').pop() : '';
       return FILETYPE_COLOR[ext] || '#8a8f98';
@@ -3741,7 +3755,11 @@
 
     // Doc commands that render into editor tabs and are safe to regenerate on a
     // language switch (akutagawa is async/animated, so it is intentionally left).
-    const LANG_DOC_TABS = ['about', 'identify', 'timeline', 'pages', 'help'];
+    // 'identify' is left out for the same reason as akutagawa: its tab holds a *result*
+    // (executeIdentifyVersion writes the chosen profile back into tabState), and
+    // regenerating it from commands.identify() would discard that and drop the reader back
+    // on the version picker.
+    const LANG_DOC_TABS = ['about', 'timeline', 'pages', 'help'];
     function applyLang() {
       document.documentElement.setAttribute('lang', currentLang);
       const isDark = isDarkNow();
@@ -3790,7 +3808,7 @@
       if (identifyBtn) {
         e.preventDefault();
         const url = identifyBtn.getAttribute('href');
-        if (url) { try { window.history.pushState({}, '', url); } catch (err) { } }
+        if (url) { try { window.history.replaceState({}, '', url); } catch (err) { } } // see clearCmdParam
         await executeIdentifyVersion(identifyBtn.dataset.version, identifyBtn.dataset.id);
       }
 
@@ -3890,7 +3908,10 @@
       if (langEl) langEl.textContent = getLangMode(activeTab || activeCmd);
       DOM.tabbar.innerHTML = tabOrder.map(c => {
         const m = FILE_META[c] || { name: c, icon: '•' };
-        return `<div class="ed-tab ${c === activeTab ? 'active' : ''}" data-tab="${c}"><span class="text-primary">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="${tr('Close', '閉じる')}">✕</span></div>`;
+        // role/tabindex/aria-selected mirror the bottom panel's tabs; the ✕ stays a plain
+        // span (a focusable child inside a role="tab" is invalid) and is reachable from the
+        // keyboard through the Delete handler below instead.
+        return `<div class="ed-tab ${c === activeTab ? 'active' : ''}" data-tab="${c}" role="tab" tabindex="0" aria-selected="${c === activeTab ? 'true' : 'false'}"><span class="text-primary" aria-hidden="true">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="${tr('Close', '閉じる')}" aria-hidden="true">✕</span></div>`;
       }).join('');
       DOM.breadcrumb.innerHTML = activeTab ? `<span>tk.st</span> <span class="opacity-50">›</span> <span>${esc(fileLabel(activeTab))}</span>` : '<span>tk.st</span>';
       const div = document.createElement('div');
@@ -3925,6 +3946,28 @@
       if (close) { closeTab(close.dataset.close); return; }
       const tab = e.target.closest('[data-tab]');
       if (tab) { activeTab = tab.dataset.tab; setActiveTree(activeTab); renderEditor(); }
+    });
+    // Keyboard parity with the mouse. renderEditor()/closeTab() rebuild the whole bar, so
+    // every branch hands focus back to the row it should now be on — otherwise the next
+    // Tab restarts from the top of the document.
+    const focusTab = (cmd) => {
+      const el = cmd && DOM.tabbar.querySelector(`[data-tab="${cssEsc(cmd)}"]`);
+      (el || DOM.input).focus({ preventScroll: true });
+    };
+    DOM.tabbar.addEventListener('keydown', (e) => {
+      const tab = e.target.closest('[data-tab]'); if (!tab) return;
+      const cmd = tab.dataset.tab;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activeTab = cmd; setActiveTree(cmd); renderEditor(); focusTab(cmd);
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        closeTab(cmd); focusTab(activeTab);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const i = tabOrder.indexOf(cmd);
+        if (i >= 0 && tabOrder.length) focusTab(tabOrder[(i + (e.key === 'ArrowRight' ? 1 : -1) + tabOrder.length) % tabOrder.length]);
+      }
     });
 
     // Standard Japanese renderings of the 16Personalities traits and the
@@ -4055,7 +4098,7 @@
     }
     function setBpm(value) {
       const bpm = Math.max(1, Math.min(999, Math.round(value)));
-      document.documentElement.style.setProperty('--bpm', bpm);
+      document.documentElement.style.setProperty('--bpm', String(bpm));
       syncBpmUI(bpm);
       return bpm;
     }
@@ -4228,16 +4271,16 @@
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `${tr('Loading', '読み込み中')}...  ${spinners[frameIndex++ % 4]}`; }, 300);
         await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
-        return `<div class="my-4 border rounded text-sm bg-[#faf6f0] text-[#2c2b29] relative" style="font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important; line-height: 2; border-color: #e3dac9; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; width: fit-content; max-width: 95%; min-width: 280px; padding: 24px 36px; box-sizing: border-box;">
-          <div style="border-bottom: 1px dashed #d1c7bd; padding-bottom: 12px; margin-bottom: 20px; font-weight: bold; font-size: 11px; letter-spacing: 0.1em; color: #8c7e6e; font-family: ui-monospace, SFMono-Regular, monospace !important;">LETTER.TXT</div>
-          <p style="margin: 0 0 24px 0; font-style: italic; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important;">${tr(`I'm sorry for the psychological burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.`, `あなたに心理的な負担をかけてしまって、ごめんなさい。<br>私にはあなたの人生に責任を持つ資格はないと、わかっています。<br>それでも、あなたの健康と成長を、いつも願っています。`)}</p>
+        return `<div class="my-4 border rounded text-sm bg-[#faf6f0] text-[#2c2b29] relative" style="font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif; line-height: 2; border-color: #e3dac9; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; width: fit-content; max-width: 95%; min-width: 280px; padding: 24px 36px; box-sizing: border-box;">
+          <div style="border-bottom: 1px dashed #d1c7bd; padding-bottom: 12px; margin-bottom: 20px; font-weight: bold; font-size: 11px; letter-spacing: 0.1em; color: #8c7e6e; font-family: ui-monospace, SFMono-Regular, monospace;">LETTER.TXT</div>
+          <p style="margin: 0 0 24px 0; font-style: italic; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif;">${tr(`I'm sorry for the psychological burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.`, `あなたに心理的な負担をかけてしまって、ごめんなさい。<br>私にはあなたの人生に責任を持つ資格はないと、わかっています。<br>それでも、あなたの健康と成長を、いつも願っています。`)}</p>
           <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; min-height: 45px;">
-            <pre style="margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-size: 10px; line-height: 1.1; color: #7693b5; text-align: left; opacity: 0.85; font-weight: bold;" title="Forget-me-not (勿忘草)">
+            <pre style="margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; line-height: 1.1; color: #7693b5; text-align: left; opacity: 0.85; font-weight: bold;" title="Forget-me-not (勿忘草)">
    _
  _( )_
 (_(*)_)
   (_)</pre>
-            <div style="text-align: right; font-size: 12px; color: #5c5246; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif !important; padding-bottom: 4px;">— ST</div>
+            <div style="text-align: right; font-size: 12px; color: #5c5246; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif; padding-bottom: 4px;">— ST</div>
           </div>
         </div>`;
       },
@@ -5604,7 +5647,7 @@
       choreomania() {
         document.body.classList.toggle('choreomania-active');
         if (document.body.classList.contains('choreomania-active')) {
-          document.body.style.setProperty('--mouse-x', 0.5); document.body.style.setProperty('--mouse-y', 0.5);
+          document.body.style.setProperty('--mouse-x', '0.5'); document.body.style.setProperty('--mouse-y', '0.5');
           return tr(`<div class="my-3 text-xs font-bold glow" style="color: #ff00ff;">CHOREOMANIA MODE: ACTIVATED.<br>Transcending the ego.</div>`,
             `<div class="my-3 text-xs font-bold glow" style="color: #ff00ff;">CHOREOMANIA モード：起動。<br>自我を超越中。</div>`);
         } else {
@@ -5754,13 +5797,19 @@
     const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
-        const win = window.open(url, '_blank', 'noopener,noreferrer');
+        // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to
+        // a clickable link. The return value cannot detect that — `window.open` with
+        // `noopener` hands back null even when it succeeded (per spec), which used to fire
+        // the fallback on every single call. Transient activation is what popup blockers
+        // actually gate on, so ask about that instead; browsers without the API fall
+        // through to the optimistic message.
+        const blocked = !!(navigator.userActivation && !navigator.userActivation.isActive);
+        window.open(url, '_blank', 'noopener,noreferrer');
         const labelHtml = cmd === 'web3' ? '<span class="text-primary">Web3</span> page'
           : cmd === 'contact' ? '<span class="text-primary">contact</span> page'
             : `<span class="text-primary">${esc(cmd)}</span>`;
 
-        // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to a clickable link.
-        if (!win) {
+        if (blocked) {
           return tr(`<div class="my-3 text-xs text-secondary">Open ${labelHtml}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`,
             `<div class="my-3 text-xs text-secondary">${labelHtml} を開く: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`);
         }
@@ -5781,8 +5830,8 @@
       if (!document.body.classList.contains('choreomania-active')) return;
       if (!choreoTicking) {
         requestAnimationFrame(() => {
-          document.body.style.setProperty('--mouse-x', clientX / window.innerWidth);
-          document.body.style.setProperty('--mouse-y', clientY / window.innerHeight);
+          document.body.style.setProperty('--mouse-x', String(clientX / window.innerWidth));
+          document.body.style.setProperty('--mouse-y', String(clientY / window.innerHeight));
           choreoTicking = false;
         });
         choreoTicking = true;
@@ -6056,7 +6105,7 @@
     document.getElementById('btn-close').addEventListener('click', async () => {
       DOM.app.style.opacity = '0'; await delay(500);
       const overlay = document.createElement('div'); overlay.id = 'close-overlay';
-      overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:monospace; background:var(--bg-color); color:var(--secondary-color); cursor:pointer; z-index:10000;`;
+      overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-color); color:var(--secondary-color); cursor:pointer; z-index:10000;`;
       overlay.innerHTML = tr(`<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>`,
         `<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">接続を終了しました。</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ クリックして再接続 ]</div>`);
       overlay.addEventListener('click', () => { softReload(); });
@@ -6074,7 +6123,7 @@
         minIcon = document.createElement('div'); minIcon.id = 'minimized-icon';
         minIcon.innerHTML = tr(`<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`,
           `<span class="text-primary">▸ ターミナル</span> <span class="text-secondary">[クリックで展開]</span>`);
-        minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;`;
+        minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;`;
         minIcon.addEventListener('click', async () => {
           addToHistory(tr('[SYS] Terminal restored from minimized state', '[SYS] ターミナルを最小化状態から復元しました'));
           minIcon.style.opacity = '0'; await delay(300); minIcon.style.display = 'none';
@@ -6498,6 +6547,7 @@
       safeRemove('magi_current_history');
       safeRemove('magi_current_title');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
+      announceAgent('');
       agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
       attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
       agentDockEl.style.removeProperty('width');
@@ -6511,6 +6561,10 @@
       if (infoPanel) infoPanel.remove();
     }
     const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
+    // One announcement per finished turn (see the comment on #agent-log). Replaying a saved
+    // session deliberately says nothing: the reader asked for it and can walk the log.
+    const agentStatusEl = document.getElementById('agent-status');
+    const announceAgent = (text) => { if (agentStatusEl) agentStatusEl.textContent = text || ''; };
     function agentDegrade(msg) {
       agentDead = true;
       agentDegraded.textContent = msg || tr('MAGI only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.', 'MAGI は本番環境（tk.st）でのみ動作します。旧MAGI ↗ は引き続きご利用いただけます。');
@@ -6526,9 +6580,11 @@
       if (env.request_id) lines.push(`<div class="agent-rid">request_id: ${esc(env.request_id)}</div>`);
       div.innerHTML = `⚠ ${esc(env.message || tr('An error occurred', 'エラーが発生しました'))}${lines.join('')}`;
       agentLog.appendChild(div);
-      if (env.legacy_url) {
+      announceAgent(env.message || tr('An error occurred', 'エラーが発生しました'));
+      const legacyUrl = safeUrl(env.legacy_url);
+      if (legacyUrl) {
         const a = document.createElement('div'); a.className = 'text-[10px] mt-1';
-        a.innerHTML = `<a href="${esc(env.legacy_url)}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${tr('Use Legacy MAGI ↗', '旧MAGIを使う ↗')}</a>`;
+        a.innerHTML = `<a href="${esc(legacyUrl)}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${tr('Use Legacy MAGI ↗', '旧MAGIを使う ↗')}</a>`;
         agentLog.appendChild(a);
       }
       agentScroll();
@@ -6771,6 +6827,7 @@
       }
       if (reply && !errored) {
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
+        announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
         agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)), mid, reactions: pendingReactions[mid] || {} });
         delete pendingReactions[mid];
         safeStore('magi_current_history', agentHistory);
@@ -7383,10 +7440,9 @@
     if (suggestBox) suggestBox.addEventListener('mousedown', (e) => {
       const it = e.target.closest('.sg-item'); if (!it) return;
       e.preventDefault();
-      const chosen = suggestItems[+it.dataset.i];
-      closeSuggest();
-      DOM.input.value = ''; updateCaret(); clearCmdParam();
-      handleCommand(chosen);
+      // Accept, don't run — same as [Tab], and same as clicking a VS Code completion.
+      // Executing straight off the click meant one mis-click fired `meltdown`.
+      acceptSuggest(+it.dataset.i);
     });
 
     // --- View toggles shared by shortcuts + palette ---
@@ -7515,15 +7571,19 @@
     const apkModal = document.getElementById('apk-download-modal');
     const apkCloseBtn = document.getElementById('apk-download-close');
 
-    // Everything the dialog offers, in tab order. The content is fixed (close button +
-    // the download link), so no visibility filtering is needed.
-    const apkFocusables = () => Array.from(apkModal.querySelectorAll('a[href], button:not([disabled])'));
+    // Everything a dialog offers, in tab order. Both have fixed content (the APK dialog:
+    // close button + download link; the palette: its input), so no visibility filtering
+    // is needed.
+    const focusablesIn = (root) => Array.from(root.querySelectorAll('a[href], button:not([disabled]), input:not([disabled])'));
     const apkOpen = () => !!apkModal && apkModal.classList.contains('active');
+    const paletteOpen = () => !paletteEl.classList.contains('hidden');
     // "Some dialog owns the keyboard." Both of these are aria-modal, so the global
     // shortcuts must stand down for either — otherwise Ctrl+Shift+P opens the palette
     // *underneath* the APK dialog. Each dialog keeps its own hide mechanism; only this
     // predicate knows about both, so the shortcut layer no longer reads their classes.
-    const modalOpen = () => apkOpen() || !paletteEl.classList.contains('hidden');
+    const modalOpen = () => apkOpen() || paletteOpen();
+    // Whichever dialog currently owns the keyboard, for the shared Escape / Tab handler.
+    const openDialog = () => apkOpen() ? apkModal : (paletteOpen() ? paletteEl : null);
     let apkLastFocus = null;
 
     function showApkDownloadModal() {
@@ -7559,13 +7619,20 @@
     document.addEventListener('keydown', (e) => {
       // Key check first: this fires on every keystroke, and typing is the whole page.
       if (e.key !== 'Escape' && e.key !== 'Tab') return;
-      if (!apkOpen()) return;
-      if (e.key === 'Escape') { closeApkDownloadModal(); return; }
-      // aria-modal="true" promises the dialog is the only reachable content, so Tab has
-      // to wrap inside it rather than walking off into the terminal behind the overlay.
-      const f = apkFocusables();
+      const dlg = openDialog();
+      if (!dlg) return; // includes the case where the palette input just handled Escape itself
+      if (e.key === 'Escape') {
+        if (dlg === apkModal) closeApkDownloadModal();
+        else { closePalette(); DOM.input.focus({ preventScroll: true }); }
+        return;
+      }
+      // aria-modal="true" promises the dialog is the only reachable content, so Tab has to
+      // wrap inside it rather than walking off into the terminal behind the overlay. The
+      // palette's only stop is its own input, so there Tab simply stays put.
+      const f = focusablesIn(dlg);
+      if (!f.length) { e.preventDefault(); return; }
       const first = f[0], last = f[f.length - 1];
-      if (!apkModal.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+      if (!dlg.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
       else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });

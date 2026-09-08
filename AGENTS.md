@@ -7,8 +7,12 @@
 ## プロジェクト概要
 
 - **サイト本体**: ビルド工程なしの素の静的ファイル。各ページは `*/index.html` に
-  スタイルとスクリプトをほぼ内包する自給自足型（ルートの `index.html` は単体で約350KB）。
+  スタイルとスクリプトをほぼ内包する自給自足型（ルートの `index.html` は単体で約400KB）。
   公開 URL はディレクトリ構造と一致する（`tools/pdf-studio/index.html` → `https://tk.st/tools/pdf-studio/`）。
+  ルートの `index.html` は Bitcoin の Witness 領域（Ordinals インスクリプション）にも刻んである
+  ため、外部フォント / CDN / 外部アセットを足さない（CSS・JS・アイコン・QR はすべてインライン）。
+  **例外は head の Ahrefs と GTM の2本だけ**で、これは公開サイト側の計測用。インスクリプション版は
+  この2行を落としたものになる。新しく外部参照を増やすときは、その前提を壊していないか確認すること。
 - **Workers** (`workers/`): 認証・DB・AI 呼び出しなどのサーバーサイド機能。
   Cloudflare Workers + D1 (SQLite)。すべて `src/index.js` 単一ファイル構成で、
   `export default { async fetch(request, env) {...} }` の標準形。
