@@ -1280,6 +1280,12 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.6s ease;
+      /* 走査線。等間隔の横縞をゆっくり流す */
+      background-image: repeating-linear-gradient(to bottom,
+          rgba(255, 59, 48, 0.11) 0px,
+          rgba(255, 59, 48, 0.11) 1px,
+          transparent 1px,
+          transparent 4px);
     }
 
     /*
@@ -1300,6 +1306,7 @@
      */
     body.berserk .berserk-fx {
       opacity: 1;
+      animation: berserk-scan 6s linear infinite;
     }
 
     /*
@@ -1332,223 +1339,9 @@
       transition: filter 0.6s ease;
     }
 
-    /*
-     * 走査線に代わる、信号が欠ける絵。板 2 枚（この入れ物の ::before / ::after）と
-     * 背後を反転させる帯 1 本の三層で、平時はどれも透明。steps() の飛びで
-     * 一瞬だけ出しては消す。ease で繋ぐと「滑らかに揺れる布」になってしまい、
-     * 壊れた画にならない。周期は互いに割り切れない秒数にしてあるので、
-     * 三層が同時に暴れる瞬間はたまにしか来ない。
-     */
-    .berserk-glitch {
-      position: fixed;
-      inset: 0;
-      z-index: 1201;
-      pointer-events: none;
-    }
-
-    /*
-     * 活動停止では黒幕の裏に隠れるが、backdrop-filter は畳んだ黒まで拾って
-     * 縁を光らせる。暗転中は要素ごと消す。
-     */
-    body.shutting-down .berserk-glitch,
-    body.shutting-down .berserk-glitch-shift {
-      display: none;
-    }
-
-    /*
-     * 欠けた区画。等間隔の横縞を敷くと、いくら動かしても走査線に見えてしまう。
-     * 幅も高さも揃わない板を数枚だけ置いて、画面の一部だけが破けている画にする。
-     * 板の中で赤から青緑へ振ってあるのは、RGB が分離してずれた縁を出すため。
-     */
-    .berserk-glitch::before,
-    .berserk-glitch::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      mix-blend-mode: screen;
-      background-repeat: no-repeat;
-    }
-
-    .berserk-glitch::before {
-      background-image:
-        linear-gradient(90deg, rgba(255, 59, 48, 0.62), rgba(255, 214, 204, 0.3) 68%, rgba(0, 225, 255, 0.34)),
-        linear-gradient(90deg, rgba(0, 225, 255, 0.42), rgba(255, 59, 48, 0.55)),
-        linear-gradient(90deg, rgba(255, 59, 48, 0.5), rgba(255, 59, 48, 0.06) 62%, rgba(255, 255, 255, 0.3)),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 59, 48, 0.45));
-      background-size: 43% 17px, 26% 7px, 61% 26px, 14% 5px;
-      background-position: 6% 21%, 63% 45%, 11% 70%, 79% 12%;
-    }
-
-    /*
-     * 相方。同じ配置だと二枚重なっても一枚に見えるので、板の数も比率も変えてある。
-     */
-    .berserk-glitch::after {
-      background-image:
-        linear-gradient(90deg, rgba(0, 225, 255, 0.4), rgba(255, 59, 48, 0.5)),
-        linear-gradient(90deg, rgba(255, 59, 48, 0.55), rgba(255, 240, 235, 0.32)),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.34), rgba(0, 225, 255, 0.3));
-      background-size: 33% 11px, 55% 31px, 22% 6px;
-      background-position: 71% 33%, 2% 62%, 46% 88%;
-    }
-
-    /*
-     * 色を被せるだけだと「板が浮いている」に留まる。ここは背後のピクセルを
-     * 直に反転させて、その帯だけ画が化けたように見せる。効果は opacity で
-     * 消えるので、平時に backdrop-filter が効き続けることはない。
-     *
-     * ただし backdrop-filter は、重ね順を持つ入れ物の中に置くとそこで閉じてしまい、
-     * ページ本体まで届かない（.berserk-fx の中でも板の入れ物の中でも効かなかった）。
-     * この帯だけ body 直下の独立したレイヤーに置いてあるのはそのため。
-     */
-    .berserk-glitch-shift {
-      position: fixed;
-      z-index: 1202;
-      pointer-events: none;
-      left: 0;
-      right: 0;
-      top: 12%;
-      height: 4%;
-      opacity: 0;
-      -webkit-backdrop-filter: invert(1) hue-rotate(150deg) saturate(1.5);
-      backdrop-filter: invert(1) hue-rotate(150deg) saturate(1.5);
-    }
-
-    body.berserk .berserk-glitch-shift {
-      animation: berserk-shift 5.3s steps(1, end) infinite;
-    }
-
-    body.berserk .berserk-glitch::before {
-      animation: berserk-slice-a 2.9s steps(1, end) infinite;
-    }
-
-    body.berserk .berserk-glitch::after {
-      animation: berserk-slice-b 3.7s steps(1, end) infinite;
-    }
-
-    /*
-     * バーストごとに板の座標ごと入れ替える。同じ配置のまま点滅させると
-     * 「同じ模様が明滅している」だけになり、壊れた信号には見えない。
-     */
-    @keyframes berserk-slice-a {
-
-      0%,
-      100% {
-        opacity: 0;
-        background-position: 6% 21%, 63% 45%, 11% 70%, 79% 12%;
-      }
-
-      3% {
-        opacity: 1;
-        background-position: 6% 21%, 63% 45%, 11% 70%, 79% 12%;
-      }
-
-      6% {
-        opacity: 0;
-      }
-
-      31% {
-        opacity: 0.92;
-        background-position: 41% 8%, 4% 58%, 33% 37%, 62% 77%;
-      }
-
-      33% {
-        opacity: 0;
-      }
-
-      34% {
-        opacity: 1;
-        background-position: 44% 9%, 9% 57%, 30% 39%, 66% 76%;
-      }
-
-      37% {
-        opacity: 0;
-      }
-
-      68% {
-        opacity: 0.88;
-        background-position: 18% 83%, 52% 16%, 25% 52%, 8% 30%;
-      }
-
-      71% {
-        opacity: 0;
-      }
-    }
-
-    /* 化ける帯は数を絞る。多用すると画面全体が明滅して本文が読めなくなる */
-    @keyframes berserk-shift {
-
-      0%,
-      100% {
-        opacity: 0;
-        top: 12%;
-        height: 4%;
-      }
-
-      2% {
-        opacity: 0.9;
-        top: 12%;
-        height: 4%;
-      }
-
-      4% {
-        opacity: 0;
-      }
-
-      37% {
-        opacity: 1;
-        top: 63%;
-        height: 2.5%;
-      }
-
-      39% {
-        opacity: 0;
-      }
-
-      64% {
-        opacity: 0.7;
-        top: 34%;
-        height: 6%;
-      }
-
-      67% {
-        opacity: 0;
-      }
-    }
-
-    @keyframes berserk-slice-b {
-
-      0%,
-      100% {
-        opacity: 0;
-        background-position: 71% 33%, 2% 62%, 46% 88%;
-      }
-
-      11% {
-        opacity: 0.9;
-        background-position: 71% 33%, 2% 62%, 46% 88%;
-      }
-
-      14% {
-        opacity: 0;
-      }
-
-      46% {
-        opacity: 1;
-        background-position: 12% 74%, 39% 19%, 68% 47%;
-      }
-
-      48% {
-        opacity: 0;
-      }
-
-      82% {
-        opacity: 0.82;
-        background-position: 57% 51%, 21% 26%, 3% 9%;
-      }
-
-      86% {
-        opacity: 0;
+    @keyframes berserk-scan {
+      to {
+        background-position-y: 40px;
       }
     }
 
@@ -3225,15 +3018,15 @@
       }
 
       /*
-       * 暴走モードの明滅・脈動・グリッチは、上の duration 潰しだけだと
+       * 暴走モードの明滅・脈動・走査線は、上の duration 潰しだけだと
        * 一度だけ最終フレームで止まって不自然になる。まとめて無効にする。
        * 配色が反転すること自体は動きではないので、そちらは残す。
        *
-     * 演出を個別に列挙すると、効果を足すたびにここへの追記を忘れて漏れる。
-     * 入れ物（.berserk-fx / .berserk-glitch / .shutdown-fx）と、単体で出す帯の配下を丸ごと
-     * 止めるので、中に何を足しても自動で拾える。詳細度は打ち消す側と同じ (0,2,1)
-     * で、後に置いてあるぶんこちらが勝つ。
-     */
+       * 演出を個別に列挙すると、効果を足すたびにここへの追記を忘れて漏れる。
+       * 入れ物（.berserk-fx / .shutdown-fx）の配下を丸ごと止めるので、
+       * 中に何を足しても自動で拾える。詳細度は打ち消す側と同じ (0,2,1) で、
+       * 後に置いてあるぶんこちらが勝つ。
+       */
       body.berserk .sync-rate-text,
       body.berserk .berserk-fx,
       body.berserk .berserk-fx::before,
@@ -3241,9 +3034,6 @@
       body.berserk .berserk-fx *,
       body.berserk .berserk-fx *::before,
       body.berserk .berserk-fx *::after,
-      body.berserk .berserk-glitch::before,
-      body.berserk .berserk-glitch::after,
-      body.berserk .berserk-glitch-shift,
       body.shutting-down .shutdown-fx,
       body.shutting-down .shutdown-fx * {
         animation: none;
@@ -3607,7 +3397,7 @@
   <!-- 演出であって進捗の読み上げではない。支援技術には渡さない -->
   <div class="sync-rate-text" id="syncRateText" aria-hidden="true" lang="en">SYNC RATE: 0.00%</div>
 
-  <!-- 暴走モードの演出（非常事態のトラ柄・六角パネル・赤の脈動）と、活動停止の暗転。どちらも装飾 -->
+  <!-- 暴走モードの演出（非常事態のトラ柄・走査線・六角パネル・赤の脈動）と、活動停止の暗転。どちらも装飾 -->
   <div class="berserk-fx" aria-hidden="true">
     <div class="berserk-band berserk-band--top">
       <span class="berserk-alert" lang="ja">非常事態</span>
@@ -3616,10 +3406,6 @@
       <span class="berserk-marquee"></span>
     </div>
   </div>
-  <!-- グリッチの板。上の演出とは別レイヤーに置く -->
-  <div class="berserk-glitch" aria-hidden="true"></div>
-  <!-- 背後を反転させる帯。backdrop-filter が効くよう、入れ子にせず body 直下に置く -->
-  <i class="berserk-glitch-shift" aria-hidden="true"></i>
   <div class="shutdown-fx" aria-hidden="true">
     <span class="shutdown-fx-label" lang="ja">活動停止</span>
   </div>
