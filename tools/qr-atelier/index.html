@@ -12,7 +12,7 @@
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="おしゃれなQRコードを完全無料・ブラウザ内で作成。セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインでき、PNG・SVGで書き出せます。短縮URLを挟まないので広告も有効期限もありません。">
+  <meta name="description" content="おしゃれなQRコードを完全無料・ブラウザ内で作成。セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインでき、PNG・SVGで書き出せます。印刷はmm指定、作ったデザインは保存もリンク共有も可能。短縮URLを挟まないので広告も有効期限もありません。">
   <meta name="robots" content="max-image-preview:large">
   <title>QR Atelier - おしゃれなQRコードを無料で安全に作成 | SAFE TOOLS</title>
 
@@ -20,7 +20,7 @@
   <link rel="canonical" href="https://tk.st/tools/qr-atelier/">
   <link rel="author" href="https://tk.st/">
   <meta property="og:title" content="QR Atelier - おしゃれなQRコードを無料で安全に作成">
-  <meta property="og:description" content="セル・マーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザイン。完全無料・ブラウザ内完結・短縮URLなし。PNGとSVGで書き出せます。">
+  <meta property="og:description" content="セル・マーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザイン。印刷はmm指定、デザインは保存・共有できます。完全無料・ブラウザ内完結・短縮URLなし。">
   <meta property="og:image" content="https://tk.st/images/ogp/qr-atelier-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/qr-atelier/">
   <meta property="og:type" content="website">
@@ -28,7 +28,7 @@
   <meta property="og:locale" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="QR Atelier - おしゃれなQRコードを無料で安全に作成">
-  <meta name="twitter:description" content="セル・マーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザイン。完全無料・ブラウザ内完結・短縮URLなし。">
+  <meta name="twitter:description" content="セル・マーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザイン。印刷はmm指定、デザインは保存・共有できます。完全無料・ブラウザ内完結・短縮URLなし。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/qr-atelier-ogp.png">
 
   <script type="application/ld+json">
@@ -39,7 +39,7 @@
         "@type": "SoftwareApplication",
         "@id": "https://tk.st/tools/qr-atelier/#webapp",
         "name": "QR Atelier - おしゃれなQRコードを無料で安全に作成",
-        "description": "セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインできるQRコード作成ツール。ブラウザ内で完結し、短縮URLを挟まないので広告も有効期限もありません。",
+        "description": "セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインできるQRコード作成ツール。印刷はmm指定で1モジュールの寸法まで確かめられ、作ったデザインは保存もリンク共有もできます。ブラウザ内で完結し、短縮URLを挟まないので広告も有効期限もありません。",
         "url": "https://tk.st/tools/qr-atelier/",
         "inLanguage": "ja",
         "publisher": {
@@ -54,7 +54,7 @@
           "priceCurrency": "JPY"
         },
         "browserRequirements": "Requires JavaScript",
-        "featureList": "28種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先/位置情報, PNG・SVG・JPEG・WebP書き出し, 読み取りテスト, サーバーへの送信なし"
+        "featureList": "28種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先（vCard・MeCard）/位置情報/暗号通貨（Bitcoin・Lightning）, PNG・SVG・AVIF・WebP書き出し（AVIFは同梱エンコーダで生成）, 印刷サイズをmmで指定, 読み取りテストと直し方の提示, デザインの保存・書き出し・リンク共有, CSV一括生成, サーバーへの送信なし"
       },
       {
         "@type": "BreadcrumbList",
@@ -115,7 +115,31 @@
             "name": "中央にロゴを置いても読み取れますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "誤り訂正レベルHであれば、面積のおよそ17%までが安全圏です。それを超えると注意を出し、26%を超えると警告します。本ツールはロゴの面積とコントラストを常に監視し、さらに生成したQRコードを性格の違う最大4種類のデコーダ（jsQR・ZXing・OpenCV WeChat・端末内蔵の読み取り機能）で実際に読み返して、何個が読めたかを表示します。すべてブラウザ内で動き、画像が外に出ることはありません。"
+              "text": "誤り訂正レベルHであれば、面積のおよそ17%までが安全圏です。それを超えると注意を出し、26%を超えると警告します。この面積は「大きさ」のスライダーだけでは決まらず、ロゴの余白（覆う一辺が最大1.8倍になります）、下地の形（四角は円の約1.27倍）、誤り訂正レベル、内容の長さでも動きます。そのため本ツールは実際に覆われたマス目を数えて割合を出し、超えたときは「安全な大きさに縮める」ボタンを添えます。さらに生成したQRコードを性格の違う最大4種類のデコーダ（jsQR・ZXing・OpenCV WeChat・端末内蔵の読み取り機能）で実際に読み返して、何個が読めたかを表示します。すべてブラウザ内で動き、画像が外に出ることはありません。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "何ミリで印刷すれば読み取れますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "マス目1つが0.4mmを下回らない大きさが目安です。書き出し設定を「印刷（mm）」に切り替えて仕上がりの幅と解像度（300／600／1200dpi）を入れると、マス目1つが何ミリになるか、その大きさで足りるか、読み取り距離の目安がどれくらいかを表示し、必要な画素数を自動で計算します。SVGもその寸法のまま書き出すので、IllustratorやInDesignに読み込めば拡大率をいじらずに配置できます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "作ったデザインを保存したり、他の人に渡したりできますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "できます。「テンプレート」の中の「保存したデザイン」に名前を付けて残しておくと、次からひと押しで戻せます。ファイル（JSON）に書き出して別の端末で読み込むこともでき、リンクをコピーすれば同じデザインをそのまま人に渡せます。書き出すのもリンクに載せるのもデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は一切含みません。リンクはURLの#から後ろにデザインを詰めたもので、その部分はサーバーへ送られない仕組みです。ただし埋め込んだ画像はリンクには載らないので、画像を使うデザインはファイルで渡してください。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "余白（クワイエットゾーン）は必ず4以上にしないと駄目ですか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "いいえ。クワイエットゾーンは「QRの周囲4マスぶんが地の色であること」が条件で、画像の外側で確保されていても規格上は成立します。白いチラシや名刺に置くなら、余白を0にして書き出し、レイアウトの側で余白を取るのが正しい使い方です。だからこのツールは余白0を選べないようにはせず、注意を出したうえで「余白を4にする」ボタンを添えるにとどめています。"
             }
           },
           {
@@ -123,7 +147,15 @@
             "name": "背景を透明にしたQRコードは作れますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "作れます。背景の色を「透明」にすると、PNG・WebP・SVGは透過のまま書き出せます。JPEGは透過を持てない形式なので白で塗りつぶされます。"
+              "text": "作れます。背景の色を「透明」にすると、PNG・WebP・AVIF・SVGのすべてが透過のまま書き出せます。以前あったJPEGは透過を持てない形式だったため、AVIFに置き換えました。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "どの形式で保存するのがよいですか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。AVIFは同じ絵をいちばん小さく収められて透過も持てますが、ブラウザにはAVIFを書き出す機能がないため、このツールはlibavifのWebAssemblyを同梱していて、AVIFを押したときだけ読み込みます（3.4MB、実行時に外へ出る通信はありません）。1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。"
             }
           },
           {
@@ -139,7 +171,7 @@
             "name": "印刷用のベクターデータは書き出せますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "SVGで書き出せます。IllustratorやInDesignで開けば、拡大しても輪郭がぼけません。PNG・JPEG・WebPは最大4096pxまで指定できます。"
+              "text": "SVGで書き出せます。IllustratorやInDesignで開けば、拡大しても輪郭がぼけません。印刷（mm）に切り替えればSVGもその寸法のまま書き出すので、配置するときに拡大率をいじる必要がありません。PNG・WebP・AVIFは最大4096pxまで指定できます。"
             }
           }
         ]
@@ -793,6 +825,82 @@
     .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
     .preset-btn.active { border-color: var(--accent); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
+
+    /* ---- 読み上げ専用（画面には出さないが、読み上げ環境には届く） ---- */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+
+    /* ---- 警告の直し方ボタン ---- */
+    .alert-body { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+    .alert-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1px; }
+    .alert-actions button { padding: 3px 9px; font-size: 11px; }
+
+    /* ---- 印刷サイズ ---- */
+    .print-controls {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 10px 12px; border: 1px solid var(--rule); border-radius: var(--r-1);
+      background: var(--panel);
+    }
+    .print-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .print-head .st-seg { margin-left: auto; }
+    .print-fields { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .print-mm {
+      width: 74px; padding: 5px 8px; font-size: 12.5px; font-family: var(--font-mono);
+      border: 1px solid var(--rule); border-radius: var(--r-1);
+      background: var(--bg); color: var(--ink);
+    }
+    .print-unit { font-size: 11.5px; color: var(--ink-2); }
+    .print-note { margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-2); }
+    .print-note:empty { display: none; }
+    .print-note.warn { color: var(--warn); }
+    .print-note.err { color: var(--err); }
+    .tb-derived {
+      font-family: var(--font-mono); font-size: 12.5px; color: var(--ink);
+      padding: 5px 9px; border: 1px solid var(--rule); border-radius: var(--r-1);
+      background: var(--panel-2); min-width: 78px; text-align: center;
+    }
+
+    /* ---- 保存したデザイン ---- */
+    .my-designs {
+      margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--rule);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .my-head { display: flex; align-items: center; gap: 8px; }
+    .my-head .st-lbl { flex: 1; }
+    .my-save-row { display: flex; gap: 6px; align-items: center; }
+    .my-save-row input {
+      flex: 1; min-width: 0; padding: 6px 10px; font-size: 12.5px;
+      border: 1px solid var(--rule); border-radius: var(--r-1);
+      background: var(--bg); color: var(--ink);
+    }
+    .my-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+    .my-tile { position: relative; display: flex; }
+    .my-tile .preset-btn { flex: 1; min-width: 0; }
+    .my-del {
+      position: absolute; top: -6px; right: -6px;
+      width: 20px; height: 20px; line-height: 1; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 999px; border: 1px solid var(--rule-strong);
+      background: var(--panel); color: var(--ink-2); cursor: pointer;
+      opacity: 0; transition: opacity 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+    .my-tile:hover .my-del, .my-del:focus-visible { opacity: 1; }
+    .my-del:hover { color: var(--err); border-color: var(--err); }
+    /* 触る画面にはホバーが無い。出しっぱなしにする */
+    @media (hover: none) { .my-del { opacity: 1; } }
+    .my-empty { margin: 0; }
+    .my-io-note { margin: 0; }
+    .my-empty.hidden { display: none; }
+    .design-io { display: flex; flex-wrap: wrap; gap: 6px; }
+    .design-io button { flex: 1 1 auto; justify-content: center; }
+    .my-io-note code {
+      font-family: var(--font-mono); font-size: 11px;
+      background: var(--panel-2); border: 1px solid var(--rule);
+      border-radius: 3px; padding: 0 3px;
+    }
+
     /* ---- 説明文 ---- */
     .prose { max-width: 780px; margin: 46px auto 0; color: var(--ink-2); font-size: 14px; line-height: 1.85; }
     .prose h2 { font-size: 18px; color: var(--ink); margin: 34px 0 12px; }
@@ -925,14 +1033,20 @@
       border-color: var(--accent);
     }
     .float-preview-inner {
-      width: 52px;
-      height: 52px;
+      /* 52px では、セルの形もグラデーションの差も見分けられなかった。
+         スマホでは左のプレビューが流れて消えるので、ここが唯一の確認手段になる。 */
+      width: 96px;
+      height: 96px;
       background: #ffffff;
       border-radius: 4px;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+    /* 幅の狭い端末では画面を覆いすぎないよう少しだけ落とす */
+    @media (max-width: 380px) {
+      .float-preview-inner { width: 80px; height: 80px; }
     }
     .float-preview-inner svg {
       width: 100%;
@@ -1031,6 +1145,9 @@
   <div class="verdict-bar">
     <div class="bar-in">
       <div id="verdict" class="verdict na">
+        <!-- 画面では判定の色と文字で分かるが、読み上げ環境には何も届かない。
+             確定した判定だけをここへ流す（途中経過は流さない）。 -->
+        <span id="verdict-sr" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
         <div class="verdict-head">
           <span class="dot"></span>
           <b id="verdict-title">待機中</b>
@@ -1062,12 +1179,12 @@
         </div>
 
         <div class="meta-row" id="meta-row"></div>
-        <div class="alerts" id="alerts"></div>
+        <div class="alerts" id="alerts" role="status" aria-live="polite"></div>
 
         <div class="out-grid">
           <button id="btn-png" class="st-btn" type="button">PNGで保存</button>
           <button id="btn-svg" class="st-btn" type="button">SVGで保存</button>
-          <button id="btn-jpg" class="st-btn-quiet" type="button">JPEG</button>
+          <button id="btn-avif" class="st-btn-quiet" type="button" title="可逆圧縮・透過対応。初回だけエンコーダを読み込みます">AVIF</button>
           <button id="btn-webp" class="st-btn-quiet" type="button">WebP</button>
           <button id="btn-copy" class="st-btn-quiet" type="button" style="grid-column: 1 / -1;">画像をコピー</button>
         </div>
@@ -1081,6 +1198,7 @@
               <option value="2048">2048 px</option>
               <option value="4096">4096 px</option>
             </select>
+            <span id="opt-size-derived" class="tb-derived hidden" aria-live="polite"></span>
           </div>
           <div class="save-opt-group">
             <label class="st-lbl" for="opt-ec" title="欠けや汚れをどれだけ復元できるか。ロゴを置くならHが安全">誤り訂正</label>
@@ -1091,6 +1209,28 @@
               <option value="H" selected>H（30%・推奨）</option>
             </select>
           </div>
+        </div>
+
+        <div class="print-controls">
+          <div class="print-head">
+            <span class="st-lbl">仕上がり</span>
+            <div class="st-seg seg-sm" id="size-unit-seg">
+              <button type="button" data-unit="px" class="active">画面（px）</button>
+              <button type="button" data-unit="mm">印刷（mm）</button>
+            </div>
+          </div>
+          <div class="print-fields hidden" id="print-fields">
+            <label class="st-lbl" for="opt-print-mm">幅</label>
+            <input type="number" id="opt-print-mm" class="print-mm" min="5" max="400" step="1" value="40" inputmode="numeric">
+            <span class="print-unit">mm</span>
+            <label class="st-lbl" for="opt-print-dpi">解像度</label>
+            <select id="opt-print-dpi" class="tb-select">
+              <option value="300" selected>300 dpi</option>
+              <option value="600">600 dpi</option>
+              <option value="1200">1200 dpi</option>
+            </select>
+          </div>
+          <p class="print-note" id="print-note"></p>
         </div>
 
         <p class="note">入力もロゴ画像も端末から出ません。短縮URLを挟まないので、広告が差し込まれることも、あとからリンク先が変わることもありません。</p>
@@ -1117,77 +1257,6 @@
           </div>
         </details>
 
-        <!-- CSV一括生成 -->
-        <details class="sec" id="sec-bulk">
-          <summary>
-            <span class="st-lbl">CSV一括生成</span>
-            <span class="hint" id="hint-bulk">—</span>
-            <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
-          </summary>
-          <div class="sec-body">
-            <p class="remember-note" style="margin:0 0 10px">
-              CSVの行ぶんのQRコードを、いま作っているデザインのまま一度に作って ZIP で保存します。
-              読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。
-            </p>
-            <div class="logo-drop" id="bulk-drop" role="button" tabindex="0">
-              CSVをドロップ、またはクリックして選択（.csv / .txt）
-              <input type="file" id="bulk-file" accept=".csv,.txt,text/csv,text/plain" class="hidden">
-            </div>
-
-            <div id="bulk-setup" class="hidden" style="margin-top:12px">
-              <div class="bulk-file-row" style="margin-bottom:12px">
-                <span class="bulk-file-name" id="bulk-file-name"></span>
-                <button type="button" id="btn-bulk-clear" class="st-btn-quiet btn-sm">外す</button>
-              </div>
-
-              <div class="field remember-row" style="margin-bottom:12px">
-                <input type="checkbox" id="bulk-header" class="tb-check" checked>
-                <label for="bulk-header">1行目は見出し（QRコードは作らない）</label>
-              </div>
-
-              <div class="field" style="margin-bottom:12px">
-                <label for="bulk-col-content">QRコードにする列</label>
-                <select id="bulk-col-content" class="tb-select"></select>
-              </div>
-              <div class="field" style="margin-bottom:12px">
-                <label for="bulk-col-name">ファイル名にする列</label>
-                <select id="bulk-col-name" class="tb-select"></select>
-              </div>
-              <div class="field hidden" id="bulk-label-row" style="margin-bottom:12px">
-                <label for="bulk-col-label">フレームの文字にする列</label>
-                <select id="bulk-col-label" class="tb-select"></select>
-              </div>
-
-              <div class="field remember-row" style="margin-bottom:12px">
-                <input type="checkbox" id="bulk-as-url" class="tb-check">
-                <label for="bulk-as-url">URLとして整える（https:// を補う）</label>
-              </div>
-
-              <div class="field" style="margin-bottom:12px">
-                <label for="bulk-format">書き出す形式</label>
-                <select id="bulk-format" class="tb-select">
-                  <option value="png" selected>PNG</option>
-                  <option value="svg">SVG</option>
-                  <option value="jpg">JPEG</option>
-                  <option value="webp">WebP</option>
-                </select>
-                <span class="sub">サイズと誤り訂正は、左の書き出し設定をそのまま使います。</span>
-              </div>
-
-              <div class="bulk-preview" id="bulk-preview" style="margin-bottom:12px"></div>
-
-              <button id="btn-bulk-run" class="st-btn" type="button" style="width:100%; justify-content:center">
-                まとめて作る
-              </button>
-              <div class="bulk-progress hidden" id="bulk-progress" style="margin-top:10px">
-                <div class="bulk-bar"><i id="bulk-bar-fill"></i></div>
-                <span id="bulk-progress-text"></span>
-              </div>
-              <div class="bulk-report" id="bulk-report" style="margin-top:10px"></div>
-            </div>
-          </div>
-        </details>
-
         <!-- テンプレート -->
         <details class="sec" id="sec-preset" open>
           <summary>
@@ -1200,6 +1269,34 @@
               <button id="btn-shuffle" class="st-btn-quiet" type="button" title="配色と形をランダムに組み替える">おまかせデザイン</button>
               <button id="btn-reset" class="st-btn-quiet" type="button">デザインを初期化</button>
             </div>
+
+            <!-- 保存したデザイン。端末に残るのは「いま開いているもの」ひとつだけ
+                 なので、名前を付けて取っておく場所をここに置く。 -->
+            <div class="my-designs">
+              <div class="my-head">
+                <span class="st-lbl">保存したデザイン</span>
+                <button id="btn-design-save" class="st-btn-quiet btn-sm" type="button">いまのデザインを保存</button>
+              </div>
+              <div class="my-save-row hidden" id="my-save-row">
+                <input type="text" id="my-save-name" maxlength="24" placeholder="名前（例：会社の名刺用）" aria-label="デザインの名前">
+                <button id="btn-design-save-ok" class="st-btn btn-sm" type="button">保存</button>
+                <button id="btn-design-save-cancel" class="st-btn-quiet btn-sm" type="button">やめる</button>
+              </div>
+              <div class="preset-grid my-grid hidden" id="my-design-grid"></div>
+              <p class="remember-note my-empty" id="my-design-empty">まだありません。気に入った配色や形ができたら保存しておくと、次からひと押しで戻せます。</p>
+              <div class="design-io">
+                <button id="btn-design-export" class="st-btn-quiet btn-sm" type="button">ファイルに書き出す</button>
+                <button id="btn-design-import" class="st-btn-quiet btn-sm" type="button">ファイルから読み込む</button>
+                <button id="btn-design-share" class="st-btn-quiet btn-sm" type="button">リンクをコピー</button>
+                <input type="file" id="design-file" accept=".json,application/json" class="hidden">
+              </div>
+              <p class="remember-note my-io-note">
+                書き出すのもリンクに載せるのもデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は含みません。
+                リンクは <code>#</code> から後ろにデザインを詰めたもので、その部分はサーバーへ送られません。
+                埋め込んだ画像はリンクには載らないので、画像を使うデザインはファイルで渡してください。
+              </p>
+            </div>
+
             <div class="preset-cat-chips" id="preset-cat-chips"></div>
             <div class="preset-grid" id="preset-grid"></div>
           </div>
@@ -1320,12 +1417,8 @@
             <!-- 画像選択パネル -->
             <div id="logo-image-pane" class="hidden">
               <div class="logo-drop" id="logo-drop" role="button" tabindex="0">
-                画像をドロップ、またはクリックして選択（PNG / SVG / JPEG）
+                画像をドロップ、またはクリックして選択（PNG / SVG / JPEG / WebP）
                 <input type="file" id="logo-file" accept="image/*" class="hidden">
-              </div>
-              <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
-                <input type="url" id="logo-image-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false">
-                <button type="button" id="btn-logo-image-url" class="st-btn-quiet btn-sm">適用</button>
               </div>
               <div class="logo-thumb hidden" id="logo-thumb" style="margin-top:10px">
                 <img id="logo-thumb-img" alt="選んだロゴ">
@@ -1475,10 +1568,6 @@
                   画像をドロップ、またはクリックして選択
                   <input type="file" id="frame-image-file" accept="image/*" class="hidden">
                 </div>
-                <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
-                  <input type="url" id="frame-image-url" placeholder="画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false">
-                  <button type="button" id="btn-frame-image-url" class="st-btn-quiet btn-sm">適用</button>
-                </div>
                 <div class="logo-thumb hidden" id="frame-image-thumb" style="margin-top:10px">
                   <img id="frame-image-thumb-img" alt="選んだ画像">
                   <button class="st-btn-quiet" type="button" id="btn-frame-image-clear">外す</button>
@@ -1521,6 +1610,78 @@
               <span class="st-lbl">角丸</span>
               <input type="range" id="opt-radius" min="0" max="10" step="0.5" value="2">
               <span class="val" id="val-radius">2</span>
+            </div>
+          </div>
+        </details>
+
+        <!-- CSV一括生成（1枚だけ作る人には関係がないので、いちばん下） -->
+        <details class="sec" id="sec-bulk">
+          <summary>
+            <span class="st-lbl">CSV一括生成</span>
+            <span class="hint" id="hint-bulk">—</span>
+            <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
+          </summary>
+          <div class="sec-body">
+            <p class="remember-note" style="margin:0 0 10px">
+              CSVの行ぶんのQRコードを、いま作っているデザインのまま一度に作って ZIP で保存します。
+              読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。
+            </p>
+            <div class="logo-drop" id="bulk-drop" role="button" tabindex="0">
+              CSVをドロップ、またはクリックして選択（.csv / .txt）
+              <input type="file" id="bulk-file" accept=".csv,.txt,text/csv,text/plain" class="hidden">
+            </div>
+
+            <div id="bulk-setup" class="hidden" style="margin-top:12px">
+              <div class="bulk-file-row" style="margin-bottom:12px">
+                <span class="bulk-file-name" id="bulk-file-name"></span>
+                <button type="button" id="btn-bulk-clear" class="st-btn-quiet btn-sm">外す</button>
+              </div>
+
+              <div class="field remember-row" style="margin-bottom:12px">
+                <input type="checkbox" id="bulk-header" class="tb-check" checked>
+                <label for="bulk-header">1行目は見出し（QRコードは作らない）</label>
+              </div>
+
+              <div class="field" style="margin-bottom:12px">
+                <label for="bulk-col-content">QRコードにする列</label>
+                <select id="bulk-col-content" class="tb-select"></select>
+              </div>
+              <div class="field" style="margin-bottom:12px">
+                <label for="bulk-col-name">ファイル名にする列</label>
+                <select id="bulk-col-name" class="tb-select"></select>
+              </div>
+              <div class="field hidden" id="bulk-label-row" style="margin-bottom:12px">
+                <label for="bulk-col-label">フレームの文字にする列</label>
+                <select id="bulk-col-label" class="tb-select"></select>
+              </div>
+
+              <div class="field remember-row" style="margin-bottom:12px">
+                <input type="checkbox" id="bulk-as-url" class="tb-check">
+                <label for="bulk-as-url">URLとして整える（https:// を補う）</label>
+              </div>
+
+              <div class="field" style="margin-bottom:12px">
+                <label for="bulk-format">書き出す形式</label>
+                <select id="bulk-format" class="tb-select">
+                  <option value="png" selected>PNG</option>
+                  <option value="svg">SVG</option>
+                  <option value="avif">AVIF</option>
+                  <option value="webp">WebP</option>
+                </select>
+                <span class="sub">サイズと誤り訂正は、左の書き出し設定をそのまま使います。</span>
+                <span class="sub hidden" id="bulk-format-note">AVIFは1枚ごとに 0.3〜1秒 かかります（PNGの20倍ほど）。行数が多いときはPNGのほうが速く終わります。</span>
+              </div>
+
+              <div class="bulk-preview" id="bulk-preview" style="margin-bottom:12px"></div>
+
+              <button id="btn-bulk-run" class="st-btn" type="button" style="width:100%; justify-content:center">
+                まとめて作る
+              </button>
+              <div class="bulk-progress hidden" id="bulk-progress" style="margin-top:10px">
+                <div class="bulk-bar"><i id="bulk-bar-fill"></i></div>
+                <span id="bulk-progress-text"></span>
+              </div>
+              <div class="bulk-report" id="bulk-report" style="margin-top:10px"></div>
             </div>
           </div>
         </details>
@@ -1574,12 +1735,15 @@
         問い合わせる仕組みなので、Googleに渡るのは<strong>ラベルに入れた文字そのもの</strong>です。
         QRコードに埋め込む内容（URL・Wi-Fiのパスワード・連絡先など）とロゴ画像は、このときも送られません。
         文字を使わないデザインなら、この通信自体が起きません。
+        読み取りテストのデコーダとAVIFのエンコーダはこのサイトに同梱してあり、そちらは外部の通信を伴いません。
       </p>
 
       <h3>QRコードにできる中身</h3>
       <p>
-        URL・SNS・テキスト・カレンダー予定・メール・電話番号・SMS・Wi-Fi・連絡先（vCard）・位置情報の10種類に対応しています。
+        URL・SNS・テキスト・カレンダー予定・メール・電話番号・SMS・Wi-Fi・連絡先・位置情報・暗号通貨の11種類に対応しています。
         SNSならユーザー名を入れるだけで公式URLと中央ロゴを自動設定でき、カレンダーならイベント日時と場所を登録、Wi-Fiならネットワーク名とパスワード（伏字/表示切り替え対応）を貼り紙に、連絡先なら名刺に、といった使い方ができます。
+        連絡先はvCardとMeCardの両方に対応していて、MeCardを選ぶと同じ内容でもデータ量が小さくなり、マス目が粗くなるぶん読み取りやすくなります。
+        暗号通貨はBitcoin（BIP-21・金額とラベル付き）とLightning（請求書・LNURL）に対応しています。Lightningは中身がすべて英数字なので、大文字に揃えてQRの英数字モードに乗せ、同じ請求書でもマス目が粗くなるようにしています。
         どれも規格どおりの文字列をそのまま埋め込むので、読み取った側は追加のアプリなしで
         接続や登録の画面に進めます。
       </p>
@@ -1594,7 +1758,9 @@
         <li>塗りに画像 — セル・マーカー・背景・ロゴのそれぞれに手持ちの画像を敷いて、拡大縮小できます</li>
         <li>中央のロゴ — SNS・ブランドアイコン32種、汎用アイコン24種、手持ちの画像、絵文字や文字。アイコンの色は塗りと同じ選択肢から選べ、後ろに敷く下地の形と色も変えられます</li>
         <li>フレーム — 枠線8種類（実線・二重線・破線・角ブラケット・切り取り線・切手・吹き出し・セル枠）と、上下に一言を添えられるラベル。ラベルには文字のほかアイコンや画像も置けます</li>
-        <li>書き出し — PNG / JPEG / WebP（最大4096px）と、印刷に強いSVG。クリップボードへ直接コピーもできます</li>
+        <li>書き出し — PNG / WebP / AVIF（最大4096px）と、印刷に強いSVG。クリップボードへ直接コピーもできます。AVIFは同じ絵をいちばん小さく収められて透過も持てます（1024pxの黒白QRなら、PNGの43KBに対して13KB）</li>
+        <li>印刷サイズ — 仕上がりを「印刷（mm）」に切り替えると、幅と解像度（300／600／1200dpi）から必要な画素数を計算し、マス目1つが何ミリになるか・その大きさで足りるか・読み取り距離の目安を出します。SVGもその寸法のまま書き出せます</li>
+        <li>デザインの保存と共有 — 気に入った配色や形は名前を付けて残しておけます。ファイルに書き出して別の端末で読み込むことも、リンクをコピーして人に渡すこともできます（渡るのはデザインだけで、入力した内容は含みません）</li>
         <li>CSV一括生成 — 店舗一覧や座席表のCSVを読み込ませると、いま作っているデザインのまま行ぶんのQRコードを一度に作り、ZIPにまとめて保存します。ファイル名にする列やフレームの文字にする列も指定できます</li>
       </ul>
 
@@ -1635,20 +1801,58 @@
         <b>Q. ロゴはどのくらいまで大きくできますか？</b>
         誤り訂正レベルHなら面積の17%あたりまでが安全圏です。そこを超えると注意を出し、
         26%を超えると「大きすぎます」とはっきり止めます。誤り訂正レベルを下げると、この目安も一緒に下がります。
+        この面積は「大きさ」のスライダーだけでは決まりません。ロゴの余白は覆う一辺を最大1.8倍（＝面積で3.24倍）にしますし、
+        下地を四角にすると円の約1.27倍になり、内容が長くなればマス目の総数も変わります。
+        同じ「22%」でも、条件しだいで実際の被覆は6%にも16%にもなります。だから上限を決めて選べなくするのではなく、
+        実際に覆われたマス目を数えて割合を出し、超えたときは「安全な大きさに縮める」ボタンを添えています。
+      </div>
+      <div class="qa">
+        <b>Q. 何ミリで印刷すれば読み取れますか？</b>
+        マス目1つが0.4mmを下回らない大きさが目安です。書き出し設定を「印刷（mm）」に切り替えて仕上がりの幅と
+        解像度を入れると、マス目1つが何ミリになるか、その大きさで足りるか、読み取り距離の目安（おおむねQRの一辺の10倍）を
+        表示し、必要な画素数を自動で計算します。SVGもその寸法のまま書き出すので、IllustratorやInDesignに
+        読み込めば拡大率をいじらずに配置できます。「画面（px）」のままでも、いまのデザインなら最低何ミリ必要かは出しています。
+      </div>
+      <div class="qa">
+        <b>Q. 余白（クワイエットゾーン）は必ず4以上にしないと駄目ですか？</b>
+        いいえ。クワイエットゾーンは「QRの周囲4マスぶんが地の色であること」が条件で、
+        画像の外側で確保されていても規格上は成立します。白いチラシや名刺に置くなら、余白を0にして
+        書き出し、レイアウトの側で余白を取るのが正しい使い方です。だからこのツールは余白0を選べないようにはせず、
+        注意を出したうえで「余白を4にする」ボタンを添えるにとどめています。
       </div>
       <div class="qa">
         <b>Q. 背景を透明にできますか？</b>
-        できます。背景の色を「透明」にすれば、PNG・WebP・SVGは透過のまま書き出せます。
-        JPEGは透過を持てない形式なので、白で塗りつぶされます。
+        できます。背景の色を「透明」にすれば、PNG・WebP・AVIF・SVGのすべてが透過のまま書き出せます。
+        以前あったJPEGは透過を持てない形式だったため、AVIFに置き換えました。
         プレビューの市松模様は透けている部分を確かめるためのもので、白地／黒地に切り替えられます。
+      </div>
+      <div class="qa">
+        <b>Q. どの形式で保存するのがよいですか？</b>
+        印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。
+        AVIFは同じ絵をいちばん小さく収められて、透過も持てます（1024pxの黒白QRなら、PNGの43KBに対して13KB）。
+        ただしブラウザにはAVIFを<em>書き出す</em>機能がありません（読むほうはどのブラウザも対応しています）。
+        そこでこのツールは libavif の WebAssembly を同梱していて、AVIFを押したときだけ読み込みます。
+        3.4MBあるので初回だけ少し待ちますが、実行時に外へ出る通信はありません。
+        1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。
       </div>
       <div class="qa">
         <b>Q. 作りかけのデザインは残りますか？</b>
         同じブラウザで開き直せば、直前の内容とデザインが戻ります。保存先はこの端末のブラウザの中だけで、
-        サーバーには何も送られません。別の端末には引き継がれないので、大事なものは画像かSVGで書き出しておいてください。
+        サーバーには何も送られません。ただし残るのは「いま開いているもの」ひとつだけなので、
+        取っておきたいデザインは「テンプレート」の中の「保存したデザイン」に名前を付けて残してください。
+        別の端末へ持っていきたいときはファイルに書き出すか、リンクをコピーして渡せます
+        （どちらもデザインだけで、入力した内容は含みません）。
         Wi-Fiのパスワードだけは、他人の端末や共用のパソコンに残ると影響がその人だけで終わらないため、保存しません。
         内容そのものを残したくないときは、「内容」の下にある「この端末に入力内容を残す」をオフにしてください
         （オフにすると、それまでに保存されていた内容も消えます。デザインは残ります）。
+      </div>
+      <div class="qa">
+        <b>Q. 作ったデザインを保存したり、他の人に渡したりできますか？</b>
+        できます。「テンプレート」の中の「保存したデザイン」に名前を付けて残しておくと、次からひと押しで戻せます。
+        ファイル（JSON）に書き出して別の端末で読み込むこともでき、リンクをコピーすれば同じデザインをそのまま人に渡せます。
+        書き出すのもリンクに載せるのもデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は一切含みません。
+        リンクはURLの<code>#</code>から後ろにデザインを詰めたもので、その部分はサーバーへ送られない仕組みです。
+        ただし埋め込んだ画像はリンクには載らないので、画像を使うデザインはファイルで渡してください。
       </div>
       <div class="qa">
         <b>Q. スマホでも使えますか？</b>
@@ -1812,10 +2016,6 @@
             画像をドロップ、またはクリックして選択（PNG / JPEG / WebP / SVG）
             <input type="file" data-cid="image-file" accept="image/*" class="hidden">
           </div>
-          <div class="url-input-row" style="display:flex; gap:6px; margin-top:8px;">
-            <input type="url" data-cid="image-url" placeholder="または画像URL（https://...）" style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--rule); border-radius:var(--r-1); background:var(--bg); color:var(--ink);" spellcheck="false" aria-label="画像URL">
-            <button type="button" data-cid="btn-image-url" class="st-btn-quiet btn-sm">適用</button>
-          </div>
           <div class="logo-thumb hidden" data-cid="image-thumb" style="margin-top:10px">
             <img data-cid="image-thumb-img" alt="選んだ画像">
             <button class="st-btn-quiet" type="button" data-cid="btn-image-clear">外す</button>
@@ -1838,11 +2038,12 @@
         <div data-cid="swatch-host" class="swatch-group"></div>
       </template>
 
-  <script src="qr-core.js?v=20260908_3"></script>
-  <script src="qr-style.js?v=20260908_3"></script>
-  <script src="qr-assets.js?v=20260908"></script>
-  <script src="qr-verify.js?v=20260908_3"></script>
-  <script src="qr-bulk.js?v=20260908_3"></script>
-  <script src="app.js?v=20260908_3"></script>
+  <script src="qr-core.js?v=20260910_3"></script>
+  <script src="qr-style.js?v=20260910_3"></script>
+  <script src="qr-assets.js?v=20260910_3"></script>
+  <script src="qr-verify.js?v=20260910_3"></script>
+  <script src="qr-bulk.js?v=20260910_3"></script>
+  <script src="qr-avif.js?v=20260910_3"></script>
+  <script src="app.js?v=20260910_3"></script>
 </body>
 </html>

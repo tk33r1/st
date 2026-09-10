@@ -28,8 +28,6 @@
     bg: { type: 'white', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1, transparency: 0 },
     markerFramePaint: { type: 'auto', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
     markerEyePaint: { type: 'auto', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
-    markerFrameColor: '',
-    markerEyeColor: '',
     margin: 4,
     radius: 2,
     // 暗い地に明るいセルを意図して置くデザインでは true。反転の注意を
@@ -38,14 +36,14 @@
     logo: {
       type: 'none', icon: '', src: '', text: '',
       font: 'sans',
-      size: 0.22, pad: 0.14, backdrop: 'rounded', backdropColor: '#FFFFFF',
+      size: 0.22, pad: 0.14, backdrop: 'rounded',
       // 下地の塗り。背景と同じ 9 モード（白・黒・透明・セルの色・単色・
       // 多色・グラデーション・放射・画像）を受け付ける
       backdropPaint: {
         type: 'white', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45,
         colors: ['#FFFFFF', '#E5E7EB'], seed: 0, src: '', imgScale: 1, transparency: 0
       },
-      color: '#111827', knockout: true,
+      knockout: true,
       // アイコンの塗り。ここだけ 'brand'（アイコン公式色）を選べる
       paint: {
         type: 'brand', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
@@ -64,9 +62,7 @@
       line: 'solid',
       lineWidth: 0.7,
       lineWidth2: 0.28,
-      mode: 'text',
       contentMode: 'text',
-      topMode: 'text',
       topContentMode: 'text',
       pos: 'bottom',
       text: 'スキャンしてね',
@@ -74,11 +70,8 @@
       font: 'sans',
       icon: 'si-instagram',
       iconData: '',
-      iconColorMode: 'brand',
-      iconColor: '#FFFFFF',
       // ラベルのアイコンの塗り。ロゴのアイコンと同じ 7 モード
       // （ブランドカラー・セルの色・単色・多色・グラデーション・放射・画像）。
-      // iconColorMode / iconColor は旧データ用に残してある。
       iconPaint: {
         type: 'brand', color: '#FFFFFF', from: '#FC466B', mid: '', to: '#3F5EFB', angle: 45,
         colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
@@ -86,11 +79,7 @@
       src: '',
       topIcon: 'si-instagram',
       topIconData: null,
-      topIconColorMode: 'brand',
-      topIconColor: '#FFFFFF',
       topSrc: '',
-      color: '#111827',
-      textColor: '#FFFFFF',
       radius: 3,
       // ラベルの中身（文字・アイコン・画像）の大きさと、その周りの余白。
       // 既定の 1.0 / 0.2 で帯の高さが 4.0 + 0.8*2 = 5.6 になり、
@@ -281,7 +270,7 @@
         out[k] = dup(o === undefined || o === null ? b : o);
       }
     });
-    // 上書き側にしかないキー（markerFrameColor の空文字など）も拾う
+    // 上書き側にしかないキーも拾う
     if (over) Object.keys(over).forEach(k => { if (!(k in out)) out[k] = dup(over[k]); });
     return out;
   }
@@ -1145,10 +1134,9 @@
     const fr = st.frame || {};
     const isLabel = fr.type === 'label';
     const pos = fr.pos || 'bottom';
-    // contentMode/topContentMode が今のキー。mode/topMode は旧データ。
-    const bottomCMode = isLabel ? (fr.contentMode || fr.mode || 'text') : 'text';
+    const bottomCMode = isLabel ? (fr.contentMode || 'text') : 'text';
     // 上下を出し分けないときは、上も下の指定をそのまま使う
-    const topOwn = fr.topContentMode || fr.topMode;
+    const topOwn = fr.topContentMode;
     const topCMode = isLabel ? ((pos === 'both' || topOwn) ? (topOwn || 'text') : bottomCMode) : 'text';
     return {
       pos: pos,
@@ -1162,13 +1150,13 @@
     };
   }
 
-  // 旧データ（backdropColor と backdrop:'none'）も受けられるようにして塗りを取り出す
+  // ロゴの下地の塗りを取り出す
   function backdropPaintOf(logo, fg) {
     let p = logo.backdropPaint;
     if (!p || !p.type) {
       p = logo.backdrop === 'none'
         ? { type: 'none' }
-        : { type: 'solid', color: logo.backdropColor || '#FFFFFF', transparency: 0 };
+        : { type: 'solid', color: '#FFFFFF', transparency: 0 };
     }
     return resolvePaint(p, fg);
   }
@@ -1430,7 +1418,7 @@
       const k = side / Math.max(vw, vh);
       const tx = cx - (vw * k) / 2 - vb[0] * k;
       const ty = cy - (vh * k) / 2 - vb[1] * k;
-      const lp = (logo && logo.paint) ? logo.paint : { type: 'brand', color: logo.color || '#111827' };
+      const lp = logo.paint;
       const mode = lp.type || 'brand';
       const tf = 'translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')';
 
@@ -1456,11 +1444,11 @@
           const raw = icon.rawSvg.replace(/__UID__/g, (uid || 'logo_') + '_');
           out += '<g transform="' + tf + '">' + raw + '</g>';
         } else {
-          const bColor = (global.QRAssets && global.QRAssets.BRAND_COLORS && global.QRAssets.BRAND_COLORS[icon.id]) || lp.color || logo.color || '#111827';
+          const bColor = (global.QRAssets && global.QRAssets.BRAND_COLORS && global.QRAssets.BRAND_COLORS[icon.id]) || lp.color || '#111827';
           out += flat(esc(bColor));
         }
       } else if (mode === 'solid') {
-        out += flat(esc(lp.color || logo.color || '#111827'));
+        out += flat(esc(lp.color || '#111827'));
       } else if (mode === 'auto') {
         // セルの塗りをそのまま延長する。単色以外はセル側の定義を参照するので、
         // ロゴの上でも模様がつながって見える。
@@ -1479,7 +1467,7 @@
       } else {
         const layer = paintedShape(lp, box, pid, clipShape(), null);
         if (layer) { defs += layer.defs; out += layer.body; }
-        else out += flat(esc(lp.color || logo.color || '#111827'));
+        else out += flat(esc(lp.color || '#111827'));
       }
     } else if (logo.type === 'image' && logo.src) {
       out += '<image href="' + esc(logo.src) + '" x="' + n(x) + '" y="' + n(y) + '" width="' +
@@ -1487,7 +1475,7 @@
     } else if (logo.type === 'text' && logo.text) {
       const fs = side * (logo.text.length > 2 ? 0.5 : 0.78);
       // textPaint が今のキー。旧データはアイコンと同じ paint を共有していた。
-      const lp = (logo && (logo.textPaint || logo.paint)) || { type: 'solid', color: logo.color || '#111827' };
+      const lp = logo.textPaint || logo.paint;
       const mode = lp.type || 'solid';
       const fontFamily = fontOf(logo.font).stack;
 
@@ -1525,7 +1513,7 @@
           out += textEl('url(#' + pid + ')');
         }
       } else {
-        out += textEl(esc(paint.color || logo.color || '#111827'));
+        out += textEl(esc(paint.color || '#111827'));
       }
     }
     return { defs: defs, body: out };
@@ -1653,8 +1641,8 @@
         mosaicTiles(box, colors, seed, tileSize, null, 103) + '</g>';
     }
 
-    const mfPaint = st.markerFramePaint || (st.markerFrameColor ? { type: 'solid', color: st.markerFrameColor } : { type: 'auto' });
-    const mePaint = st.markerEyePaint || (st.markerEyeColor ? { type: 'solid', color: st.markerEyeColor } : { type: 'auto' });
+    const mfPaint = st.markerFramePaint;
+    const mePaint = st.markerEyePaint;
 
     if (mfPaint && (mfPaint.type === 'linear' || mfPaint.type === 'radial' || mfPaint.type === 'image')) {
       defs += paintDef(mfPaint, uid + 'mf', qrBox);
@@ -1669,7 +1657,7 @@
     // 外枠の地
     if (st.frame.type === 'label') {
       const fr = st.frame.radius;
-      const flPaint = (st.frame && st.frame.paint) ? st.frame.paint : (st.frame && st.frame.color ? { type: 'solid', color: st.frame.color } : { type: 'auto' });
+      const flPaint = st.frame.paint;
       const labelD = rectPath(0, 0, W, H, fr);
       const isFlAuto = flPaint.type === 'auto';
       if (isFlAuto && (st.fg.type === 'linear' || st.fg.type === 'radial' || st.fg.type === 'image')) {
@@ -1684,7 +1672,7 @@
           defs += layer.defs;
           body += layer.body;
         } else {
-          const c = isFlAuto ? (st.fg.color || '#111827') : (flPaint.color || st.frame.color || '#111827');
+          const c = isFlAuto ? (st.fg.color || '#111827') : (flPaint.color || '#111827');
           body += '<path d="' + labelD + '" fill="' + esc(c) + '"/>';
         }
       }
@@ -1723,7 +1711,7 @@
         }
       }
       if (st.frame.type === 'line') {
-        const flPaint = (st.frame && st.frame.paint) ? st.frame.paint : (st.frame && st.frame.color ? { type: 'solid', color: st.frame.color } : { type: 'auto' });
+        const flPaint = st.frame.paint;
         const frameBox = { x: 0, y: 0, w: W, h: H };
         const isFlAuto = flPaint.type === 'auto';
         const isMultiMode = (isFlAuto && st.fg.type === 'multi') || (!isFlAuto && flPaint.type === 'multi');
@@ -1751,12 +1739,12 @@
               strokeVal = esc(st.fg.color || '#111827');
             }
           } else if (flPaint.type === 'solid') {
-            strokeVal = esc(flPaint.color || st.frame.color || '#111827');
+            strokeVal = esc(flPaint.color || '#111827');
           } else if (flPaint.type === 'linear' || flPaint.type === 'radial' || flPaint.type === 'image') {
             defs += paintDef(flPaint, uid + 'fl', frameBox);
             strokeVal = paintRef(flPaint, uid + 'fl', '#111827');
           } else {
-            strokeVal = esc(flPaint.color || st.frame.color || '#111827');
+            strokeVal = esc(flPaint.color || '#111827');
           }
           body += lineStrokeMarkup(lineParts, strokeVal);
           body += lineFillMarkup(lineParts, strokeVal);
@@ -1831,7 +1819,7 @@
     if (topH || bottomH) {
       const fontFamily = fontOf(st.frame.font).stack;
 
-      const tp = (st.frame && st.frame.textPaint) ? st.frame.textPaint : (st.frame && st.frame.textColor ? { type: 'solid', color: st.frame.textColor } : { type: 'solid', color: '#FFFFFF' });
+      const tp = st.frame.textPaint;
       const tMode = tp.type || 'solid';
       const tPaint = tMode === 'auto' ? (st.fg || { type: 'solid', color: '#111827' }) : tp;
       const tPtype = tPaint.type || 'solid';
@@ -1877,7 +1865,7 @@
             body += textEl('url(#' + tPid + ')');
           }
         } else {
-          body += textEl(esc(tPaint.color || st.frame.textColor || '#FFFFFF'));
+          body += textEl(esc(tPaint.color || '#FFFFFF'));
         }
       }
 
@@ -1896,9 +1884,9 @@
         const box = { x: cx - side / 2, y: cy - side / 2, w: side, h: side };
 
         const ip = iconPaintOpt || (st.frame && st.frame.iconPaint) ||
-          { type: (st.frame && st.frame.iconColorMode) || 'brand', color: (st.frame && st.frame.iconColor) || '#FFFFFF' };
+          { type: 'brand', color: '#FFFFFF' };
         const iconMode = ip.type || 'brand';
-        const iconCol = ip.color || (st.frame && st.frame.iconColor) || '#FFFFFF';
+        const iconCol = ip.color || '#FFFFFF';
 
         const flat = color => {
           let s = '<g transform="' + tf + '" fill="' + color + '">';
@@ -2031,12 +2019,8 @@
           const iconData = isTop
             ? ((pos === 'both' || st.frame.topIconData) ? st.frame.topIconData : st.frame.iconData)
             : st.frame.iconData;
-          // アイコンの色は上下で分けられない（指定する場所がひとつしかない）。
-          // iconPaint が今のキーで、topIconColorMode/iconColorMode は旧データ。
-          const iconPaint = st.frame.iconPaint || {
-            type: (isTop ? st.frame.topIconColorMode : st.frame.iconColorMode) || 'brand',
-            color: (isTop ? st.frame.topIconColor : st.frame.iconColor) || '#FFFFFF'
-          };
+          // アイコンの色は上下で分けられない（指定する場所がひとつしかない）
+          const iconPaint = st.frame.iconPaint;
           renderFrameIcon(iconId, W / 2, cy, idSuffix, iconData, iconPaint);
         } else if (cMode === 'image') {
           const src = isTop ? topSrc : bottomSrc;
@@ -2081,7 +2065,7 @@
     }
     // マーカーだけ別色にしたときの見落としが一番多い。
     // 'auto'（セルの色に追従）はセル側の判定で見ているので、ここでは外す。
-    [[mfPaint, 'マーカーの枠'], [mePaint, 'マーカーの目']].forEach(pair => {
+    [[mfPaint, 'マーカーの枠', 'marker-frame'], [mePaint, 'マーカーの目', 'marker-eye']].forEach(pair => {
       if (!bgC) return;
       // 'auto'（セルの色に追従）と 'none' は paintColor が null を返す。
       // 前者はセル側の判定で見ているので、ここで重ねて言わない。
@@ -2089,38 +2073,45 @@
       if (!mc) return;
       const r = lumaRatio(mc, bgC);
       if (r >= LUMA_WALL) {
-        warnings.push({ level: 'error', text: pair[1] + 'の色が背景に近すぎます（明るさの比 ' + Math.round(r * 100) + '%）。位置検出パターンが見えないと読み取れません。' });
+        warnings.push({ kind: pair[2], level: 'error', text: pair[1] + 'の色が背景に近すぎます（明るさの比 ' + Math.round(r * 100) + '%）。位置検出パターンが見えないと読み取れません。' });
       } else if (r >= LUMA_TIGHT) {
-        warnings.push({ level: 'warn', text: pair[1] + 'の色が背景に近めです（' + Math.round(r * 100) + '%、限界は 50%）。' });
+        warnings.push({ kind: pair[2], level: 'warn', text: pair[1] + 'の色が背景に近めです（' + Math.round(r * 100) + '%、限界は 50%）。' });
       }
     });
     if (fgC && bgC && luminance(fgC) > luminance(bgC)) {
       warnings.push(st.invertOk
-        ? { level: 'info', text: '暗い地に明るいセルを置いた「反転QR」です。意図した配色ですが、対応していない読み取りアプリもあるので実機で確かめてください。' }
-        : { level: 'warn', text: '背景よりセルのほうが明るい「反転QR」です。読み取れないアプリがあります。' });
+        ? { kind: 'invert-ok', level: 'info', text: '暗い地に明るいセルを置いた「反転QR」です。意図した配色ですが、対応していない読み取りアプリもあるので実機で確かめてください。' }
+        : { kind: 'invert', level: 'warn', text: '背景よりセルのほうが明るい「反転QR」です。読み取れないアプリがあります。' });
     }
     const coverage = knocked / (size * size);
     // 各レベルが取り返せるコード語の割合（規格の公称値）。ロゴで隠せる量の目安。
     const budget = ({ L: 0.07, M: 0.15, Q: 0.25, H: 0.30 })[qr.ec] || 0.15;
+    // この割合はスライダーの「大きさ」だけでは決まらない。余白は覆う一辺を
+    // 最大 1.8 倍（＝面積 3.24 倍）にし、下地を四角にすると円の約 1.27 倍になり、
+    // 分母のモジュール数は内容の長さで動く。だから上限を静的に決めて選べなく
+    // することはできず、実際に覆われたモジュール数を数えて言うしかない。
     if (hasLogo && coverage > budget * 0.85) {
-      warnings.push({ level: 'error', text: 'ロゴが大きすぎます（' + Math.round(coverage * 100) + '%）。小さくするか誤り訂正レベルを上げてください。' });
+      warnings.push({ kind: 'logo-big', level: 'error', text: 'ロゴが大きすぎます（' + Math.round(coverage * 100) + '%）。この割合は「大きさ」だけでなく、余白・下地の形・誤り訂正レベルでも変わります。' });
     } else if (hasLogo && coverage > budget * 0.55) {
-      warnings.push({ level: 'warn', text: 'ロゴの面積が誤り訂正の余力に近づいています（' + Math.round(coverage * 100) + '%）。' });
+      warnings.push({ kind: 'logo-tight', level: 'warn', text: 'ロゴの面積が誤り訂正の余力に近づいています（' + Math.round(coverage * 100) + '%）。余白を広げても、下地を四角にしても増えます。' });
     }
+    // クワイエットゾーンは「QRの周囲4モジュールが地の色」であればよく、
+    // 画像の外側で確保されていても規格上は成立する。白い紙に刷る前提で
+    // レイアウト側に余白を持たせる使い方は正しいので、選べなくはしない。
     if (margin < 2) {
-      warnings.push({ level: 'warn', text: '余白（クワイエットゾーン）が狭いと読み取り精度が落ちます。4以上を推奨。' });
+      warnings.push({ kind: 'margin', level: 'warn', text: '余白（クワイエットゾーン）が狭いと読み取り精度が落ちます。4以上を推奨。ただし、紙やレイアウトの側で周囲4モジュールぶんの地色を確保できるなら、このままでも構いません。' });
     }
     if (st.fg.type === 'image' && st.fg.src) {
-      warnings.push({ level: 'info', text: '画像セルは絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
+      warnings.push({ kind: 'img-cell', level: 'info', text: '画像セルは絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
     }
     if (st.bg.type === 'image' && st.bg.src) {
-      warnings.push({ level: 'info', text: '背景画像は絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
+      warnings.push({ kind: 'img-bg', level: 'info', text: '背景画像は絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
     }
     if (mfPaint && mfPaint.type === 'image' && mfPaint.src) {
-      warnings.push({ level: 'info', text: 'マーカー枠の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
+      warnings.push({ kind: 'img-marker-frame', level: 'info', text: 'マーカー枠の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
     }
     if (mePaint && mePaint.type === 'image' && mePaint.src) {
-      warnings.push({ level: 'info', text: 'マーカー目の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
+      warnings.push({ kind: 'img-marker-eye', level: 'info', text: 'マーカー目の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
     }
 
     return {
@@ -2130,6 +2121,9 @@
       contrast: ratio,
       lumaRatio: lr,
       coverage: coverage,
+      // ロゴで隠してよい面積の目安（誤り訂正レベルで決まる）。画面側が
+      // 「安全な大きさ」を逆算するのに使う。
+      logoBudget: budget,
       warnings: warnings
     };
   }
@@ -2189,6 +2183,19 @@
     return svg.replace(/(<svg\b[^>]*?)\bwidth="[^"]*"\s+height="[^"]*"/, '$1width="' + px + '" height="' + height + '"');
   }
 
+  // 印刷用に物理寸法を持たせる。Illustrator や InDesign に読ませたとき、
+  // 拡大率をいじらなくてもそのままの寸法で入る。viewBox はそのままなので
+  // 中身の座標は変わらない。
+  function resizeMm(svg, mm) {
+    const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    if (!m) return svg;
+    const w = parseFloat(m[1]), h = parseFloat(m[2]);
+    if (!(w > 0)) return svg;
+    const height = Math.round((mm * h / w) * 1000) / 1000;
+    return svg.replace(/(<svg\b[^>]*?)\bwidth="[^"]*"\s+height="[^"]*"/,
+      '$1width="' + mm + 'mm" height="' + height + 'mm"');
+  }
+
   // ------------------------------------------------------------------
   // UIのボタン用の小さなプレビュー
   // ------------------------------------------------------------------
@@ -2240,6 +2247,7 @@
     DEFAULTS: DEFAULTS,
     render: render,
     resize: resize,
+    resizeMm: resizeMm,
     merge: merge,
     cellPreview: cellPreview,
     markerPreview: markerPreview,
@@ -2253,6 +2261,7 @@
     // 明るさの見立ては app.js（プレビューの市松）でも使うので出しておく。
     // 読み取りのしきい値（LUMA_WALL / LUMA_TIGHT）は判定ごとここが持つ。
     encodedLuma: encodedLuma,
+    lumaRatio: lumaRatio,
     paintColor: paintColor,
     resolvePaint: resolvePaint,
     overWhite: overWhite,
