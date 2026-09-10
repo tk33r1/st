@@ -333,13 +333,15 @@
     sizeUnit: 'px',       // 'px'（画面向け） | 'mm'（印刷向け）
     printMm: 40,          // 仕上がりの幅（mm）
     printDpi: 300,        // 印刷の解像度
+    lossless: false,      // AVIF・WebP を可逆で焼くか
+    quality: 95,          // 非可逆のときの品質（60〜100）
+    effort: 2,            // 可逆のときの圧縮の強さ（1〜3）
     presetName: '',
     presetCategory: 'all',
     iconGroup: 'brand',
     frameIconGroup: 'brand',
     colorScope: 'cell',  // 最後に触った色パネル（＝着色対象）
     previewChecker: 'auto', // 'auto' | 'light' | 'dark'
-    rememberContent: true,  // 入力内容をこの端末に残すか（デザインの保存とは別）
     style: JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS))
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
@@ -478,10 +480,8 @@
     if (keys.length) SECRET_FIELDS[t.id] = keys;
   });
 
-  // 保存する入力内容。覚えない設定なら丸ごと落とす。state 側は触らないので
-  // 画面に出ているものは消えない（消えるのは端末に残るぶんだけ）。
+  // 端末に残す入力内容。パスワードだけは抜く。
   function valuesToStore() {
-    if (!state.rememberContent) return null;
     const out = {};
     Object.keys(state.values).forEach(id => {
       const secret = SECRET_FIELDS[id];
@@ -534,6 +534,11 @@
     save();
   }
 
+  // 待っている書き込みを、書かずに捨てる（消したあとに書き戻させない）
+  function cancelPendingSave() {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  }
+
   function restore() {
     let raw = null;
     try { raw = localStorage.getItem(STORE_KEY); } catch (e) { return; }
@@ -545,13 +550,12 @@
         if (saved.values[k]) Object.assign(state.values[k], saved.values[k]);
       });
       ['ec', 'minVersion', 'exportSize', 'sizeUnit', 'printMm', 'printDpi',
-       'presetName', 'presetCategory', 'iconGroup', 'frameIconGroup'].forEach(k => {
+       'quality', 'effort', 'presetName', 'presetCategory', 'iconGroup', 'frameIconGroup'].forEach(k => {
         if (saved[k] !== undefined) state[k] = saved[k];
       });
       if (['auto', 'light', 'dark'].indexOf(saved.previewChecker) >= 0) {
         state.previewChecker = saved.previewChecker;
       }
-      if (saved.rememberContent === false) state.rememberContent = false;
       if (window.QRCore.LEVELS.indexOf(state.ec) < 0) state.ec = 'H';
       // 知らない group が入ると、アイコンの一覧が丸ごと空になる
       ['iconGroup', 'frameIconGroup'].forEach(k => {
@@ -562,6 +566,9 @@
       if (state.sizeUnit !== 'mm') state.sizeUnit = 'px';
       state.printMm = Math.round(clampNum(state.printMm, PRINT_MM_MIN, PRINT_MM_MAX, 40));
       if (PRINT_DPI.indexOf(state.printDpi) < 0) state.printDpi = 300;
+      state.lossless = saved.lossless === true;
+      state.quality = Math.round(clampNum(state.quality, QUALITY_MIN, QUALITY_MAX, 95));
+      state.effort = Math.round(clampNum(state.effort, 1, 3, 2));
       // merge は DEFAULTS のキーを再帰的に埋めるので、frame.paint / logo.paint /
       // font などの穴埋めはここでは要らない。値の妥当性は sanitizeStyle が見る。
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
@@ -607,6 +614,9 @@
       sizeUnit: state.sizeUnit,
       printMm: state.printMm,
       printDpi: state.printDpi,
+      lossless: state.lossless,
+      quality: state.quality,
+      effort: state.effort,
       presetName: state.presetName,
       presetCategory: state.presetCategory,
       iconGroup: state.iconGroup,
@@ -676,6 +686,9 @@
       if (data.sizeUnit) state.sizeUnit = data.sizeUnit;
       if (data.printMm) state.printMm = data.printMm;
       if (data.printDpi) state.printDpi = data.printDpi;
+      if (data.lossless !== undefined) state.lossless = !!data.lossless;
+      if (data.quality) state.quality = data.quality;
+      if (data.effort) state.effort = data.effort;
       if (data.presetName !== undefined) state.presetName = data.presetName;
       if (data.presetCategory !== undefined) state.presetCategory = data.presetCategory;
       if (data.iconGroup !== undefined) state.iconGroup = data.iconGroup;
@@ -1131,6 +1144,9 @@
   let previewQR = null; // テンプレート用の使い回し
 
   const PRESET_CATEGORIES = [
+    // 自分で足したものも、はじめから入っているものも同じ「テンプレート」。
+    // 棚を分けず、絞り込みひとつで見せ分ける。
+    { id: 'mine', name: 'マイ' },
     { id: 'all', name: 'すべて' },
     { id: 'basic', name: '定番' },
     { id: 'gradient', name: 'グラデ' },
@@ -1151,6 +1167,7 @@
       setActive(b, state.presetCategory === cat.id);
       b.addEventListener('click', () => {
         state.presetCategory = cat.id;
+        closeSaveRow();
         buildPresetCategoryChips();
         buildPresets();
       });
@@ -1158,93 +1175,214 @@
     });
   }
 
+  // 並びには自分のぶんとはじめからのぶんが混ざるので、位置ではなく名前で合わせる
   function syncPresetActive() {
     const host = $('preset-grid');
     if (host) {
-      const buttons = host.querySelectorAll('.preset-btn');
-      const filtered = A.PRESETS.filter(p => state.presetCategory === 'all' || p.category === state.presetCategory);
-      buttons.forEach((btn, idx) => {
-        const p = filtered[idx];
-        if (p) setActive(btn, state.presetName === p.name);
-      });
-    }
-    // 保存したデザインも同じ presetName で選ばれているので、まとめて合わせる
-    const mine = $('my-design-grid');
-    if (mine) {
-      Array.prototype.forEach.call(mine.querySelectorAll('.preset-btn'), btn => {
-        setActive(btn, !!state.presetName && btn.title === state.presetName);
+      Array.prototype.forEach.call(host.querySelectorAll('.preset-btn[data-preset-name]'), btn => {
+        setActive(btn, btn.dataset.presetName === state.presetName);
       });
     }
     const hint = $('hint-preset');
     if (hint) hint.textContent = state.presetName || 'カスタム';
   }
 
+  function presetThumb(style) {
+    if (!previewQR) previewQR = window.QRCore.encode('https://tk.st/', { ec: 'M' });
+    const thumbStyle = window.QRStyle.merge(window.QRStyle.DEFAULTS, style);
+    // テンプレートが余白を指定していないときだけ、見本用に少し詰める
+    if (style.margin === undefined) thumbStyle.margin = 3;
+    const thumb = el('div', { class: 'preset-thumb' });
+    try {
+      thumb.innerHTML = window.QRStyle.render(previewQR, thumbStyle).svg;
+    } catch (e) { /* 壊れた保存でも並びからは消さない */ }
+    return thumb;
+  }
+
+  // はじめから入っているテンプレート
+  function presetTile(p) {
+    const btn = el('button', { class: 'preset-btn', type: 'button', title: p.name });
+    btn.dataset.presetName = p.name;
+    setActive(btn, state.presetName === p.name);
+    btn.appendChild(presetThumb(p.style));
+    btn.appendChild(el('i', null, p.name));
+
+    btn.addEventListener('click', () => {
+      const userLogoSrc = (state.style.logo && state.style.logo.type === 'image') ? state.style.logo.src : '';
+      const userLogoText = (state.style.logo && state.style.logo.type === 'text') ? state.style.logo.text : '';
+
+      // DEFAULTS をベースにしてテンプレートのスタイルをディープマージ。
+      // merge は入れ物を必ず写して返すので、DEFAULTS もテンプレートの定義も
+      // 返り値経由では書き換わらない（写しを作ってから渡す必要はない）
+      state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, p.style);
+
+      // ユーザーが置いていた画像ロゴ・文字ロゴは、テンプレートがロゴに
+      // 触れていないときだけ戻す。logo を書いたテンプレート（ミニマルなど）は
+      // 「ロゴなし」まで含めて指定なので、そちらを尊重する。
+      if (!p.style.logo && userLogoSrc) {
+        state.style.logo.type = 'image';
+        state.style.logo.src = userLogoSrc;
+      } else if (!p.style.logo && userLogoText) {
+        state.style.logo.type = 'text';
+        state.style.logo.text = userLogoText;
+      }
+
+      // 範囲外の値や古い形のキーを均す。まるごと差し替える経路は
+      // 復元・undo と同じように、ここを必ず通す
+      sanitizeStyle(state.style);
+
+      // セルの密度は style ではなく state 側。テンプレートは基本「自動」に戻す
+      state.minVersion = p.minVersion || 1;
+
+      state.presetName = p.name;
+      syncControls();
+      buildFrameChips();
+      syncPresetActive();
+      update();
+    });
+    return btn;
+  }
+
+  // 自分で足したテンプレート。消せるように×を重ねる
+  function myTile(d) {
+    const tile = el('div', { class: 'my-tile' });
+    const btn = el('button', { class: 'preset-btn', type: 'button', title: d.name });
+    btn.dataset.presetName = d.name;
+    setActive(btn, state.presetName === d.name);
+    btn.appendChild(presetThumb(d.style));
+    btn.appendChild(el('i', null, d.name));
+    btn.addEventListener('click', () => {
+      applyStyle(d.style, d.name);
+      showToast(d.name + ' を読み込みました');
+    });
+
+    const del = el('button', {
+      class: 'my-del', type: 'button',
+      'aria-label': d.name + ' を削除', title: '削除'
+    }, '×');
+    del.addEventListener('click', () => {
+      if (!storeMyDesigns(loadMyDesigns().filter(x => x.id !== d.id))) return;
+      buildPresets();
+      showToast(d.name + ' を消しました');
+    });
+
+    tile.appendChild(btn);
+    tile.appendChild(del);
+    return tile;
+  }
+
+  // 「いまの見た目を追加」。押すものだが、並びの中にあるほうが見つけやすい
+  function addTile() {
+    const btn = el('button', {
+      class: 'preset-btn add-tile', type: 'button',
+      title: 'いま画面に出ている見た目を、マイテンプレートに足します'
+    });
+    btn.appendChild(el('div', { class: 'preset-thumb' }, '＋'));
+    btn.appendChild(el('i', null, '見た目を追加'));
+    btn.addEventListener('click', openSaveRow);
+    return btn;
+  }
+
   function buildPresets() {
     const host = $('preset-grid');
     if (!host) return;
     host.innerHTML = '';
-    if (!previewQR) previewQR = window.QRCore.encode('https://tk.st/', { ec: 'M' });
 
-    const filtered = A.PRESETS.filter(p => state.presetCategory === 'all' || p.category === state.presetCategory);
+    const cat = state.presetCategory;
+    const isMine = cat === 'mine';
+    // 自分のぶんは「マイ」と「すべて」に出す。足す口も、出ているところには必ず添える
+    const showMine = isMine || cat === 'all';
+    const mine = showMine ? loadMyDesigns() : [];
 
-    filtered.forEach(p => {
-      const btn = el('button', { class: 'preset-btn', type: 'button' });
-      setActive(btn, state.presetName === p.name);
+    if (showMine) host.appendChild(addTile());
+    mine.forEach(d => host.appendChild(myTile(d)));
 
-      // サムネイル用のレンダリングスタイル
-      const thumbStyle = Object.assign({}, p.style);
-      if (thumbStyle.margin === undefined) thumbStyle.margin = 3;
-
-      const out = window.QRStyle.render(previewQR, thumbStyle);
-      const thumb = el('div', { class: 'preset-thumb' });
-      thumb.innerHTML = out.svg;
-      btn.appendChild(thumb);
-      btn.appendChild(el('i', null, p.name));
-
-      btn.addEventListener('click', () => {
-        const userLogoSrc = (state.style.logo && state.style.logo.type === 'image') ? state.style.logo.src : '';
-        const userLogoText = (state.style.logo && state.style.logo.type === 'text') ? state.style.logo.text : '';
-
-        // DEFAULTS をベースにしてテンプレートのスタイルをディープマージ。
-        // merge は入れ物を必ず写して返すので、DEFAULTS もテンプレートの定義も
-        // 返り値経由では書き換わらない（写しを作ってから渡す必要はない）
-        state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, p.style);
-
-        // ユーザーが置いていた画像ロゴ・文字ロゴは、テンプレートがロゴに
-        // 触れていないときだけ戻す。logo を書いたテンプレート（ミニマルなど）は
-        // 「ロゴなし」まで含めて指定なので、そちらを尊重する。
-        if (!p.style.logo && userLogoSrc) {
-          state.style.logo.type = 'image';
-          state.style.logo.src = userLogoSrc;
-        } else if (!p.style.logo && userLogoText) {
-          state.style.logo.type = 'text';
-          state.style.logo.text = userLogoText;
-        }
-
-        // 範囲外の値や古い形のキーを均す。まるごと差し替える経路は
-        // 復元・undo と同じように、ここを必ず通す
-        sanitizeStyle(state.style);
-
-        // セルの密度は style ではなく state 側。テンプレートは基本「自動」に戻す
-        state.minVersion = p.minVersion || 1;
-
-        state.presetName = p.name;
-        syncControls();
-        buildFrameChips();
-        syncPresetActive();
-        update();
-      });
-      host.appendChild(btn);
-    });
-    // 保存したデザインも同じ presetName で選ばれているので、まとめて合わせる
-    const mine = $('my-design-grid');
-    if (mine) {
-      Array.prototype.forEach.call(mine.querySelectorAll('.preset-btn'), btn => {
-        setActive(btn, !!state.presetName && btn.title === state.presetName);
-      });
+    if (!isMine) {
+      A.PRESETS
+        .filter(p => cat === 'all' || p.category === cat)
+        .forEach(p => host.appendChild(presetTile(p)));
     }
+
+    // 持ち出しの口と説明は「マイ」を見ているときだけ
+    const foot = $('my-foot');
+    if (foot) foot.classList.toggle('hidden', !isMine);
+    const empty = $('my-design-empty');
+    if (empty) empty.classList.toggle('hidden', !isMine || mine.length > 0);
+
     const hint = $('hint-preset');
     if (hint) hint.textContent = state.presetName || 'カスタム';
+  }
+
+  // このツールがこの端末に残しているものを、まとめて消す。
+  //
+  // 以前は「入力内容を残すか」のチェックで先に止める作りだったが、
+  // マイテンプレートの保存と見分けがつかなかった。残すのは既定にして、
+  // 消したい人がいつでも消せるほうへ倒す。消す対象は3つとも
+  // （作りかけの内容・いまのデザイン・マイテンプレート）で、
+  // 一部だけ残ると「消したのに残っている」がまた起きる。
+  async function forgetDevice() {
+    const mine = loadMyDesigns().length;
+    const ok = await askConfirm({
+      title: 'この端末から消しますか？',
+      body: '入力した内容と、いま作りかけのデザイン' +
+        (mine ? '、マイテンプレート' + mine + '件' : '') +
+        'を消します。画面は初期状態に戻ります。元には戻せません。',
+      ok: '消す',
+      cancel: 'やめる'
+    });
+    if (!ok) return;
+
+    try {
+      localStorage.removeItem(STORE_KEY);
+      localStorage.removeItem(MY_KEY);
+    } catch (e) { /* サイトデータが使えない環境。画面だけ戻す */ }
+
+    // 画面に出ているものも初期状態へ戻す。ここを残すと、次に何か触った
+    // 拍子に同じ内容がそのまま書き戻されてしまう。
+    TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
+    state.type = 'url';
+    state.style = JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS));
+    state.minVersion = 1;
+    state.presetName = '';
+    state.presetCategory = 'all';
+    state.ec = 'H';
+
+    closeSaveRow();
+    buildTypeChips();
+    buildTypeFields();
+    syncControls();
+    buildShapeGrids();
+    buildIconGrid();
+    buildFrameIconGrid();
+    buildFrameChips();
+    buildPresetCategoryChips();
+    buildPresets();
+    update();
+
+    // update() が予約した書き戻しを取り消して、痕跡を残さない
+    cancelPendingSave();
+    try {
+      localStorage.removeItem(STORE_KEY);
+      localStorage.removeItem(MY_KEY);
+    } catch (e) { /* 同上 */ }
+
+    showToast('この端末に残していたものを消しました');
+  }
+
+  // 名前を付ける行。並びの中の「＋」からも、保存し直しからも開く
+  function openSaveRow() {
+    const row = $('my-save-row');
+    const name = $('my-save-name');
+    if (!row || !name) return;
+    row.classList.remove('hidden');
+    name.value = state.presetName || '';
+    name.focus();
+    name.select();
+  }
+
+  function closeSaveRow() {
+    const row = $('my-save-row');
+    if (row) row.classList.add('hidden');
   }
 
   function syncShapeGridActive(hostId, currentId) {
@@ -1766,15 +1904,15 @@
   }
 
   // ------------------------------------------------------------------
-  // デザインの持ち出し（保存・ファイル・リンク）
+  // マイテンプレート
   // ------------------------------------------------------------------
   // 端末に残るのは「いま開いているもの」ひとつだけなので、名前を付けて
-  // 取っておく場所と、別の端末や他人へ渡す口をここで用意する。
+  // 取っておく棚と、別の端末や他人へ渡す口をここで用意する。
   // 渡すのはデザインだけで、内容（URL・Wi-Fiのパスワード・連絡先）は
   // 一切入れない。ここが漏れると、保存先を端末内に閉じている意味がなくなる。
   const MY_KEY = 'qr-atelier-mydesigns-v1';
   const MY_MAX = 24;
-  const DESIGN_FILE_KIND = 'qr-atelier-design';
+  const DESIGN_KIND = 'qr-atelier-design';
 
   function loadMyDesigns() {
     try {
@@ -1837,8 +1975,8 @@
     return dropped;
   }
 
-  // 持ち出す形。アイコンの実体（iconData）は QRAssets から引き直せるので
-  // 入れない。本体の保存が replacer で落としているのと同じ扱い。
+  // 取っておく形・渡す形。アイコンの実体（iconData）は QRAssets から
+  // 引き直せるので入れない。本体の保存が replacer で落としているのと同じ扱い。
   function styleForExport() {
     const st = JSON.parse(JSON.stringify(state.style));
     delete st.logo.iconData;
@@ -1861,56 +1999,8 @@
     buildIconGrid();
     buildFrameIconGrid();
     buildFrameChips();
-    syncPresetActive();
-    buildMyDesigns();
+    buildPresets();
     update({ immediateHistory: true });
-  }
-
-  // ---- 保存したデザインの一覧 ----------------------------------------
-  function buildMyDesigns() {
-    const host = $('my-design-grid');
-    if (!host) return;
-    const list = loadMyDesigns();
-    host.innerHTML = '';
-
-    const empty = $('my-design-empty');
-    if (empty) empty.classList.toggle('hidden', list.length > 0);
-    host.classList.toggle('hidden', list.length === 0);
-
-    if (!previewQR) previewQR = window.QRCore.encode('https://tk.st/', { ec: 'M' });
-
-    list.forEach(d => {
-      const tile = el('div', { class: 'my-tile' });
-      const btn = el('button', { class: 'preset-btn', type: 'button', title: d.name });
-      setActive(btn, state.presetName === d.name);
-
-      const thumbStyle = window.QRStyle.merge(window.QRStyle.DEFAULTS, d.style);
-      if (d.style.margin === undefined) thumbStyle.margin = 3;
-      const thumb = el('div', { class: 'preset-thumb' });
-      try {
-        thumb.innerHTML = window.QRStyle.render(previewQR, thumbStyle).svg;
-      } catch (e) { /* 壊れた保存でも一覧からは消さない */ }
-      btn.appendChild(thumb);
-      btn.appendChild(el('i', null, d.name));
-      btn.addEventListener('click', () => {
-        applyStyle(d.style, d.name);
-        showToast(d.name + ' を読み込みました');
-      });
-
-      const del = el('button', {
-        class: 'my-del', type: 'button',
-        'aria-label': d.name + ' を削除', title: '削除'
-      }, '×');
-      del.addEventListener('click', () => {
-        if (!storeMyDesigns(loadMyDesigns().filter(x => x.id !== d.id))) return;
-        buildMyDesigns();
-        showToast(d.name + ' を削除しました');
-      });
-
-      tile.appendChild(btn);
-      tile.appendChild(del);
-      host.appendChild(tile);
-    });
   }
 
   function saveMyDesign(name) {
@@ -1926,49 +2016,17 @@
     if (!storeMyDesigns(list.slice(0, MY_MAX))) return false;
 
     state.presetName = clean;
-    syncPresetActive();
-    buildMyDesigns();
+    // 足したものがその場で見えないと、効いたのかどうか分からない
+    state.presetCategory = 'mine';
+    buildPresetCategoryChips();
+    buildPresets();
     showToast(dropped
-      ? clean + ' を保存しました（大きすぎる画像は含めていません）'
-      : clean + ' を保存しました');
+      ? clean + ' をマイテンプレートに追加しました（大きすぎる画像は含めていません）'
+      : clean + ' をマイテンプレートに追加しました');
     return true;
   }
 
-  // ---- ファイルへの書き出しと読み込み --------------------------------
-  function exportDesignFile() {
-    const doc = {
-      kind: DESIGN_FILE_KIND,
-      version: 1,
-      name: state.presetName || '',
-      savedAt: new Date().toISOString(),
-      style: styleForExport()
-    };
-    saveBlob(new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }),
-      'qr-design-' + fileStem().slice(3) + '.json');
-    showToast('デザインを書き出しました（入力した内容は含まれません）');
-  }
-
-  function importDesignFile(file) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      let doc;
-      try { doc = JSON.parse(String(reader.result)); } catch (e) {
-        showToast('読み込めないファイルです', 'error');
-        return;
-      }
-      if (!doc || doc.kind !== DESIGN_FILE_KIND || !doc.style) {
-        showToast('QR Atelier のデザインファイルではありません', 'error');
-        return;
-      }
-      applyStyle(doc.style, doc.name || '');
-      showToast('デザインを読み込みました');
-    };
-    reader.onerror = () => showToast('ファイルを読めませんでした', 'error');
-    reader.readAsText(file);
-  }
-
-  // ---- リンクで渡す --------------------------------------------------
+  // ---- 渡す ----------------------------------------------------------
   // 載せるのはデザインだけ。フラグメント（#）はサーバーへ送られないので、
   // 渡したリンクを踏んでも、どこにも中身の記録は残らない。
   function b64urlEncode(bytes) {
@@ -2013,14 +2071,14 @@
     return JSON.parse(new TextDecoder().decode(body));
   }
 
-  async function copyDesignLink() {
+  async function shareDesign() {
     const style = styleForExport();
     const dropped = stripImages(style);
 
     let token;
     try {
       token = await packDesign({
-        kind: DESIGN_FILE_KIND, version: 1, name: state.presetName || '', style: style
+        kind: DESIGN_KIND, version: 1, name: state.presetName || '', style: style
       });
     } catch (e) {
       showToast('リンクを作れませんでした', 'error');
@@ -2028,16 +2086,34 @@
     }
 
     const url = location.origin + location.pathname + '#d=' + token;
+    const note = dropped ? '（埋め込んだ画像は含まれません）' : '';
+
+    // 触る端末では OS の共有シートに渡す（LINE でも Slack でも、その人が
+    // ふだん使うところへ届く）。デスクトップにも navigator.share はあるが、
+    // そこはリンクが手元に残るコピーのほうが素直なので分ける。
+    // 判断の基準は data/tools-share.js と揃えてある。
+    const canWebShare = typeof navigator.share === 'function' && navigator.maxTouchPoints > 0;
+    if (canWebShare) {
+      try {
+        await navigator.share({ title: 'QR Atelier のデザイン', url: url });
+        return;
+      } catch (e) {
+        // 取り消しは失敗ではないので、何も言わずに引き下がる
+        if (e && e.name === 'AbortError') return;
+        // 共有シートが開けなかったときは、下のコピーへ落ちる
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(url);
     } catch (e) {
-      showToast('リンクをコピーできませんでした', 'error');
+      showToast('リンクを渡せませんでした', 'error');
       return;
     }
-    flashButtonSuccess($('btn-design-share'), 'コピーしました');
-    showToast(dropped
-      ? 'デザインのリンクをコピーしました（埋め込んだ画像は含まれません）'
-      : 'デザインのリンクをコピーしました');
+    const btn = $('btn-design-share');
+    const label = btn && btn.querySelector('span');
+    if (label) flashButtonSuccess(label, 'コピーしました');
+    showToast('デザインのリンクをコピーしました' + note);
   }
 
   // 開いたときに #d= が付いていたら、そのデザインで始める。
@@ -2047,7 +2123,7 @@
     if (hash.slice(0, 3) !== '#d=') return;
     try {
       const doc = await unpackDesign(hash.slice(3));
-      if (!doc || doc.kind !== DESIGN_FILE_KIND || !doc.style) throw new Error('bad');
+      if (!doc || doc.kind !== DESIGN_KIND || !doc.style) throw new Error('bad');
       applyStyle(doc.style, doc.name || '');
       showToast('共有されたデザインを読み込みました');
     } catch (e) {
@@ -2223,8 +2299,7 @@
     $('opt-ec').value = state.ec;
     $('opt-size').value = String(state.exportSize);
     syncSizeUnit();
-    const remember = $('opt-remember');
-    if (remember) remember.checked = state.rememberContent;
+    syncCompress();
 
     COLOR_SCOPES.forEach(syncColorPanel);
 
@@ -2526,6 +2601,23 @@
   const PRINT_MM_MAX = 400;
   const PRINT_DPI = [300, 600, 1200];
 
+  // ---- AVIF・WebP の圧縮 --------------------------------------------
+  // 非可逆は品質を、可逆は「どれだけ時間をかけて縮めるか」を選ばせる。
+  // 可逆に品質はないが、縮め方の強弱はある（同じ絵のまま大きさだけ変わる）。
+  const QUALITY_MIN = 60;
+  const QUALITY_MAX = 100;
+  const EFFORT_WORDS = { 1: '速さ優先', 2: 'ふつう', 3: '小ささ優先' };
+
+  // WebP は quality 1.0 のときだけ可逆になる（実測で元と1ピクセルも違わない）。
+  // 非可逆で 1.0 を渡すと可逆に化けるので、そこだけは 0.99 で止める。
+  function webpQuality() {
+    return state.lossless ? 1 : Math.min(0.99, state.quality / 100);
+  }
+
+  function avifOptions() {
+    return { lossless: state.lossless, quality: state.quality, effort: state.effort };
+  }
+
   // 直近に描いた絵の幅（モジュール単位）。余白もフレームも込みの、
   // 実際に書き出される絵の幅。印刷の目安はこれを分母に取る。
   let lastModuleW = 0;
@@ -2561,15 +2653,35 @@
     return '約' + (Math.round(m * 10) / 10) + 'm';
   }
 
+  function syncCompress() {
+    setSeg('compress-seg', state.lossless ? 'lossless' : 'lossy', 'mode');
+    const q = $('opt-quality');
+    const ef = $('opt-effort');
+    const label = $('compress-label');
+    const val = $('val-compress');
+    const note = $('compress-note');
+    if (q) { q.value = state.quality; q.classList.toggle('hidden', state.lossless); }
+    if (ef) { ef.value = state.effort; ef.classList.toggle('hidden', !state.lossless); }
+    if (label) label.textContent = state.lossless ? '圧縮の強さ' : '品質';
+    if (val) val.textContent = state.lossless ? EFFORT_WORDS[state.effort] : String(state.quality);
+    if (note) {
+      note.className = 'print-note';
+      note.textContent = state.lossless
+        ? '元の絵と1ピクセルも変わりません。強くするほど小さくなりますが、書き出しに時間がかかります'
+          + '（1024pxの黒白QRで、ふつう51KB・0.5秒／小ささ優先33KB・4秒）。'
+          + 'WebPの可逆には強弱がないので、この強さはAVIFにだけ効きます。'
+        : '元の絵とごくわずかに変わりますが、読み取りには影響しません'
+          + '（1024pxの黒白QRで13KBほど。可逆なら51KB、PNGなら43KB）。';
+    }
+  }
+
   function syncSizeUnit() {
     const isMm = state.sizeUnit === 'mm';
     setSeg('size-unit-seg', state.sizeUnit, 'unit');
     const fields = $('print-fields');
     if (fields) fields.classList.toggle('hidden', !isMm);
-    const sel = $('opt-size');
-    if (sel) sel.classList.toggle('hidden', isMm);
-    const derived = $('opt-size-derived');
-    if (derived) derived.classList.toggle('hidden', !isMm);
+    const pxFields = $('px-fields');
+    if (pxFields) pxFields.classList.toggle('hidden', isMm);
     const mm = $('opt-print-mm');
     if (mm) mm.value = String(state.printMm);
     const dpi = $('opt-print-dpi');
@@ -3100,16 +3212,15 @@
     }
   }
 
-  // 赤い判定のときだけ、一度だけ訊く。印刷してから気づくのがいちばん高くつく。
-  function askExportAnyway() {
+  // 取り返しのつかない操作の前に一度だけ訊く。
+  // opts: { title, body, ok, cancel }。ok を押したときだけ true。
+  function askConfirm(opts) {
     const modal = $('confirm-modal');
     if (!modal) return Promise.resolve(true);
-    // 判定の文面は句点で終わらないことがある。次の文と地続きに見えないよう補う。
-    const note = lastVerdict.note || '';
-    const lead = !note ? '' : (note.charAt(note.length - 1) === '。' ? note : note + '。');
-    $('confirm-title').textContent = lastVerdict.title || '読み取れませんでした';
-    $('confirm-body').textContent = lead +
-      'このまま書き出すと、印刷したあとで読めないことに気づくかもしれません。';
+    $('confirm-title').textContent = opts.title;
+    $('confirm-body').textContent = opts.body;
+    $('btn-confirm-ok').textContent = opts.ok;
+    $('btn-confirm-cancel').textContent = opts.cancel;
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     const ok = $('btn-confirm-ok');
@@ -3138,6 +3249,19 @@
     });
   }
 
+  // 赤い判定のときだけ、一度だけ訊く。印刷してから気づくのがいちばん高くつく。
+  function askExportAnyway() {
+    // 判定の文面は句点で終わらないことがある。次の文と地続きに見えないよう補う。
+    const note = lastVerdict.note || '';
+    const lead = !note ? '' : (note.charAt(note.length - 1) === '。' ? note : note + '。');
+    return askConfirm({
+      title: lastVerdict.title || '読み取れませんでした',
+      body: lead + 'このまま書き出すと、印刷したあとで読めないことに気づくかもしれません。',
+      ok: 'このまま書き出す',
+      cancel: 'やめて直す'
+    });
+  }
+
   // 書き出してよいか。読めない判定のときだけ確認を挟む。
   // 「簡易チェックでは読めません」（黄）は止めない。軽いデコーダの失敗は
   // 実機では読めることが多く、そこで止めると偽陰性で手を止めることになる。
@@ -3149,15 +3273,16 @@
 
   // 1枚ぶんを焼く。AVIF だけはブラウザが焼けないので、同梱した
   // エンコーダに渡す（toBlob に image/avif を渡すと黙って PNG が返る）。
-  async function encodeCanvas(canvas, mime, quality) {
+  async function encodeCanvas(canvas, mime) {
     if (mime === 'image/avif') {
       if (!window.QRAvif) throw new Error('avif encoder missing');
-      return window.QRAvif.encode(canvas);
+      return window.QRAvif.encode(canvas, avifOptions());
     }
-    return new Promise(res => canvas.toBlob(res, mime, quality));
+    const q = mime === 'image/webp' ? webpQuality() : undefined;
+    return new Promise(res => canvas.toBlob(res, mime, q));
   }
 
-  async function exportRaster(mime, ext, quality) {
+  async function exportRaster(mime, ext) {
     if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
     if (!(await okToExport())) return;
 
@@ -3179,7 +3304,7 @@
     setStatus('rendering', '');
     try {
       const canvas = await rasterize(await withExportFonts(lastSvg), outputPx(), null);
-      const blob = await encodeCanvas(canvas, mime, quality);
+      const blob = await encodeCanvas(canvas, mime);
       if (!blob) throw new Error('encode failed');
       // 対応していない形式を渡すと、黙って PNG が返ってくる。拡張子を偽らない
       const realExt = blob.type === mime ? ext : (blob.type.split('/')[1] || ext);
@@ -3455,9 +3580,9 @@
 
   const BULK_FORMATS = {
     png:  { ext: 'png',  mime: 'image/png',  quality: undefined },
-    avif: { ext: 'avif', mime: 'image/avif', quality: undefined },
-    webp: { ext: 'webp', mime: 'image/webp', quality: 0.92 },
-    svg:  { ext: 'svg',  mime: '',           quality: undefined }
+    avif: { ext: 'avif', mime: 'image/avif' },
+    webp: { ext: 'webp', mime: 'image/webp' },
+    svg:  { ext: 'svg',  mime: '' }
   };
 
   async function runBulk() {
@@ -3547,7 +3672,7 @@
           bytes = new TextEncoder().encode(doc);
         } else {
           const canvas = await rasterize(svg, outputPx(), null);
-          const blob = await encodeCanvas(canvas, fmt.mime, fmt.quality);
+          const blob = await encodeCanvas(canvas, fmt.mime);
           if (!blob) { failed.push(lineNo); continue; }
           bytes = new Uint8Array(await blob.arrayBuffer());
         }
@@ -3922,25 +4047,42 @@
       inMm.addEventListener('blur', commitMm);
     }
 
+    // ---- 圧縮 ----
+    const compressSeg = $('compress-seg');
+    if (compressSeg) {
+      Array.prototype.forEach.call(compressSeg.children, b => {
+        b.addEventListener('click', () => {
+          state.lossless = b.dataset.mode === 'lossless';
+          syncCompress();
+          saveNow();
+        });
+      });
+    }
+    const inQuality = $('opt-quality');
+    if (inQuality) {
+      inQuality.addEventListener('input', () => {
+        state.quality = Math.round(clampNum(inQuality.value, QUALITY_MIN, QUALITY_MAX, 95));
+        const val = $('val-compress');
+        if (val) val.textContent = String(state.quality);
+      });
+      inQuality.addEventListener('change', saveNow);
+    }
+    const inEffort = $('opt-effort');
+    if (inEffort) {
+      inEffort.addEventListener('input', () => {
+        state.effort = Math.round(clampNum(inEffort.value, 1, 3, 2));
+        const val = $('val-compress');
+        if (val) val.textContent = EFFORT_WORDS[state.effort];
+      });
+      inEffort.addEventListener('change', saveNow);
+    }
+
     const inDpi = $('opt-print-dpi');
     if (inDpi) {
       inDpi.addEventListener('change', () => {
         state.printDpi = parseInt(inDpi.value, 10) || 300;
         syncPrintNote();
         saveNow();
-      });
-    }
-
-    // 入力内容をこの端末に残すかどうか。オフにした時点で、すでに保存されて
-    // いるぶんも消す（設定だけ変わって中身が残っていては意味がない）。
-    const optRemember = $('opt-remember');
-    if (optRemember) {
-      optRemember.addEventListener('change', () => {
-        state.rememberContent = optRemember.checked;
-        saveNow();
-        showToast(optRemember.checked
-          ? '入力内容をこの端末に残します（パスワードは除く）'
-          : '保存していた入力内容を消しました。デザインは残ります');
       });
     }
 
@@ -4095,21 +4237,8 @@
       });
     }
 
-    // ---- 保存したデザイン ----
-    const saveRow = $('my-save-row');
+    // ---- マイテンプレート ----
     const saveName = $('my-save-name');
-    const openSaveRow = () => {
-      if (!saveRow || !saveName) return;
-      saveRow.classList.remove('hidden');
-      saveName.value = state.presetName || '';
-      saveName.focus();
-      saveName.select();
-    };
-    const closeSaveRow = () => { if (saveRow) saveRow.classList.add('hidden'); };
-
-    const btnDesignSave = $('btn-design-save');
-    if (btnDesignSave) btnDesignSave.addEventListener('click', openSaveRow);
-
     const btnSaveOk = $('btn-design-save-ok');
     if (btnSaveOk) btnSaveOk.addEventListener('click', () => {
       if (saveMyDesign(saveName ? saveName.value : '')) closeSaveRow();
@@ -4122,21 +4251,21 @@
       if (e.key === 'Escape') { e.preventDefault(); closeSaveRow(); }
     });
 
-    const btnDesignExport = $('btn-design-export');
-    if (btnDesignExport) btnDesignExport.addEventListener('click', exportDesignFile);
+    const btnDesignShare = $('btn-design-share');
+    if (btnDesignShare) btnDesignShare.addEventListener('click', shareDesign);
 
-    const designFile = $('design-file');
-    const btnDesignImport = $('btn-design-import');
-    if (btnDesignImport && designFile) {
-      btnDesignImport.addEventListener('click', () => designFile.click());
-      designFile.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) importDesignFile(e.target.files[0]);
-        e.target.value = '';   // 同じファイルをもう一度選べるように
+    const btnForget = $('btn-forget');
+    if (btnForget) btnForget.addEventListener('click', forgetDevice);
+
+    // 補足はふだん畳んでおく
+    const btnEcHelp = $('btn-ec-help');
+    const ecHelp = $('ec-help');
+    if (btnEcHelp && ecHelp) {
+      btnEcHelp.addEventListener('click', () => {
+        const open = ecHelp.classList.toggle('hidden');
+        btnEcHelp.setAttribute('aria-expanded', open ? 'false' : 'true');
       });
     }
-
-    const btnDesignShare = $('btn-design-share');
-    if (btnDesignShare) btnDesignShare.addEventListener('click', copyDesignLink);
 
     // ---- ツールバー ----
     $('btn-shuffle').addEventListener('click', shuffle);
@@ -4155,7 +4284,7 @@
 
     $('btn-png').addEventListener('click', () => exportRaster('image/png', 'png'));
     $('btn-avif').addEventListener('click', () => exportRaster('image/avif', 'avif'));
-    $('btn-webp').addEventListener('click', () => exportRaster('image/webp', 'webp', 0.94));
+    $('btn-webp').addEventListener('click', () => exportRaster('image/webp', 'webp'));
     $('btn-svg').addEventListener('click', exportSvg);
     $('btn-copy').addEventListener('click', copyImage);
 
@@ -4459,7 +4588,6 @@
     buildIconGrid();
     buildFrameIconGrid();
     buildFrameChips();
-    buildMyDesigns();
     syncControls();
     wire();
     wireBulk();

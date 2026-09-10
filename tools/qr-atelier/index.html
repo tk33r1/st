@@ -54,7 +54,7 @@
           "priceCurrency": "JPY"
         },
         "browserRequirements": "Requires JavaScript",
-        "featureList": "28種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先（vCard・MeCard）/位置情報/暗号通貨（Bitcoin・Lightning）, PNG・SVG・AVIF・WebP書き出し（AVIFは同梱エンコーダで生成）, 印刷サイズをmmで指定, 読み取りテストと直し方の提示, デザインの保存・書き出し・リンク共有, CSV一括生成, サーバーへの送信なし"
+        "featureList": "28種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先（vCard・MeCard）/位置情報/暗号通貨（Bitcoin・Lightning）, PNG・SVG・AVIF・WebP書き出し（AVIFは同梱エンコーダで生成、可逆・非可逆を選択可）, 印刷サイズをmmで指定, 読み取りテストと直し方の提示, マイテンプレートとデザインのシェア, CSV一括生成, サーバーへの送信なし"
       },
       {
         "@type": "BreadcrumbList",
@@ -131,7 +131,15 @@
             "name": "作ったデザインを保存したり、他の人に渡したりできますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "できます。「テンプレート」の中の「保存したデザイン」に名前を付けて残しておくと、次からひと押しで戻せます。ファイル（JSON）に書き出して別の端末で読み込むこともでき、リンクをコピーすれば同じデザインをそのまま人に渡せます。書き出すのもリンクに載せるのもデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は一切含みません。リンクはURLの#から後ろにデザインを詰めたもので、その部分はサーバーへ送られない仕組みです。ただし埋め込んだ画像はリンクには載らないので、画像を使うデザインはファイルで渡してください。"
+              "text": "できます。「テンプレート」で「マイ」を選び、並びの先頭にある「＋ 見た目を追加」に名前を付けると、次からひと押しで戻せます。自分で足したものは、はじめから入っているテンプレートと同じ棚に並びます。他の人や別の端末に渡したいときは「デザインをシェア」を押してください。スマホなどではそのまま共有シートが開き、パソコンではリンクがクリップボードに入ります。渡るのはデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は一切含みません。リンクはURLの#から後ろにデザインを詰めたもので、その部分はサーバーへ送られない仕組みです。ただし埋め込んだ画像は載らないので、画像を使うデザインは渡した先で入れ直してもらってください。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "入力した内容はこの端末に残りますか？消せますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "入力した内容とデザインは、次に開いたときのためにこの端末のブラウザへ残ります。サーバーには何も送られません。Wi-Fiのパスワードだけは、他人の端末や共用のパソコンに残ると影響がその人だけで終わらないため、はじめから残しません。共用のパソコンなどで痕跡を残したくないときは、「テンプレート」の「マイ」にある「この端末から消す」を押してください。入力した内容・作りかけのデザイン・マイテンプレートをまとめて消し、画面も初期状態に戻します。フレームやロゴに入れた文字や読み込んだ画像もデザインの一部として残っているので、これでまとめて消えます。"
             }
           },
           {
@@ -155,7 +163,7 @@
             "name": "どの形式で保存するのがよいですか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。AVIFは同じ絵をいちばん小さく収められて透過も持てますが、ブラウザにはAVIFを書き出す機能がないため、このツールはlibavifのWebAssemblyを同梱していて、AVIFを押したときだけ読み込みます（3.4MB、実行時に外へ出る通信はありません）。1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。"
+              "text": "印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。AVIFは同じ絵をいちばん小さく収められて透過も持てますが、ブラウザにはAVIFを書き出す機能がないため、このツールはlibavifのWebAssemblyを同梱していて、AVIFを押したときだけ読み込みます（3.4MB、実行時に外へ出る通信はありません）。1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。AVIFとWebPは可逆・非可逆を選べます。既定は非可逆（品質95）で、これがいちばん小さく収まります。元の絵と1ピクセルも違わないものが要るときは可逆にしてください。1024pxの黒白QRで測ると、非可逆13KB・可逆51KB・PNG43KBでした。可逆のときの「圧縮の強さ」は、時間をかけて縮めるかどうかの設定で、絵の中身は変わりません。"
             }
           },
           {
@@ -242,7 +250,7 @@
     .stage > .meta-row,
     .stage > .alerts,
     .stage > .out-grid,
-    .stage > .save-controls,
+    .stage > .out-opts,
     .stage > .note {
       width: 100%;
       max-width: 560px;
@@ -461,11 +469,21 @@
       .verdict-time { flex: 1 1 0%; min-width: 0; text-align: right; white-space: nowrap; margin-left: auto; }
     }
 
-    .save-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+    .out-opts { display: flex; flex-direction: column; gap: 8px; }
+    .out-opt {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 10px 12px; border: 1px solid var(--rule); border-radius: var(--r-1);
+      background: var(--panel);
     }
+    .out-opt-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .out-opt-head .st-seg { margin-left: auto; }
+    .out-opt-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .out-opt-row .tb-select { flex: 0 1 auto; }
+    /* .st-lbl は大文字化されるので、ここだけ切る（WebP を WEBP にしない） */
+    .out-opt-head .st-lbl { text-transform: none; }
+    /* 「小ささ優先」まで入る幅を確保する */
+    .out-opt .slider-row .val { min-width: 72px; }
+    .out-opt .slider-row .st-lbl { width: 72px; }
     .save-opt-group {
       display: flex;
       align-items: center;
@@ -838,14 +856,6 @@
     .alert-actions button { padding: 3px 9px; font-size: 11px; }
 
     /* ---- 印刷サイズ ---- */
-    .print-controls {
-      display: flex; flex-direction: column; gap: 8px;
-      padding: 10px 12px; border: 1px solid var(--rule); border-radius: var(--r-1);
-      background: var(--panel);
-    }
-    .print-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .print-head .st-seg { margin-left: auto; }
-    .print-fields { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
     .print-mm {
       width: 74px; padding: 5px 8px; font-size: 12.5px; font-family: var(--font-mono);
       border: 1px solid var(--rule); border-radius: var(--r-1);
@@ -861,21 +871,16 @@
       padding: 5px 9px; border: 1px solid var(--rule); border-radius: var(--r-1);
       background: var(--panel-2); min-width: 78px; text-align: center;
     }
+    /* 誤り訂正は「内容」の中。長い説明が付くので幅いっぱいで置く */
+    .ec-field { margin-top: 12px; }
 
-    /* ---- 保存したデザイン ---- */
-    .my-designs {
-      margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--rule);
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .my-head { display: flex; align-items: center; gap: 8px; }
-    .my-head .st-lbl { flex: 1; }
-    .my-save-row { display: flex; gap: 6px; align-items: center; }
+    /* ---- マイテンプレート ---- */
+    .my-save-row { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
     .my-save-row input {
       flex: 1; min-width: 0; padding: 6px 10px; font-size: 12.5px;
       border: 1px solid var(--rule); border-radius: var(--r-1);
       background: var(--bg); color: var(--ink);
     }
-    .my-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
     .my-tile { position: relative; display: flex; }
     .my-tile .preset-btn { flex: 1; min-width: 0; }
     .my-del {
@@ -890,11 +895,35 @@
     .my-del:hover { color: var(--err); border-color: var(--err); }
     /* 触る画面にはホバーが無い。出しっぱなしにする */
     @media (hover: none) { .my-del { opacity: 1; } }
+    /* 「いまの見た目を追加」。並びの中に置くので、タイルと同じ形にする */
+    .add-tile { border-style: dashed; }
+    .add-tile .preset-thumb {
+      font-size: 22px; font-weight: 400; color: var(--ink-3); line-height: 1;
+    }
+    .add-tile:hover .preset-thumb { color: var(--accent); }
+
+    .my-foot {
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .my-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .my-actions button { display: inline-flex; align-items: center; gap: 6px; }
+    .btn-danger:hover { color: var(--err); border-color: var(--err); }
+
+    /* 補足はふだん畳んでおく。読みたい人だけ ⓘ で開く */
+    .field-head { display: flex; align-items: center; gap: 6px; }
+    .info-btn {
+      width: 20px; height: 20px; flex: none;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: none; background: none; padding: 0; cursor: pointer;
+      color: var(--ink-3); border-radius: 999px;
+      transition: color 120ms ease;
+    }
+    .info-btn:hover, .info-btn[aria-expanded="true"] { color: var(--accent); }
+    .info-btn svg { width: 15px; height: 15px; }
     .my-empty { margin: 0; }
-    .my-io-note { margin: 0; }
     .my-empty.hidden { display: none; }
-    .design-io { display: flex; flex-wrap: wrap; gap: 6px; }
-    .design-io button { flex: 1 1 auto; justify-content: center; }
+    .my-io-note { margin: 0; }
     .my-io-note code {
       font-family: var(--font-mono); font-size: 11px;
       background: var(--panel-2); border: 1px solid var(--rule);
@@ -1189,48 +1218,58 @@
           <button id="btn-copy" class="st-btn-quiet" type="button" style="grid-column: 1 / -1;">画像をコピー</button>
         </div>
 
-        <div class="save-controls">
-          <div class="save-opt-group">
-            <label class="st-lbl" for="opt-size">サイズ</label>
-            <select id="opt-size" class="tb-select">
-              <option value="512">512 px</option>
-              <option value="1024" selected>1024 px</option>
-              <option value="2048">2048 px</option>
-              <option value="4096">4096 px</option>
-            </select>
-            <span id="opt-size-derived" class="tb-derived hidden" aria-live="polite"></span>
-          </div>
-          <div class="save-opt-group">
-            <label class="st-lbl" for="opt-ec" title="欠けや汚れをどれだけ復元できるか。ロゴを置くならHが安全">誤り訂正</label>
-            <select id="opt-ec" class="tb-select">
-              <option value="L">L（7%）</option>
-              <option value="M">M（15%）</option>
-              <option value="Q">Q（25%）</option>
-              <option value="H" selected>H（30%・推奨）</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="print-controls">
-          <div class="print-head">
-            <span class="st-lbl">仕上がり</span>
-            <div class="st-seg seg-sm" id="size-unit-seg">
-              <button type="button" data-unit="px" class="active">画面（px）</button>
-              <button type="button" data-unit="mm">印刷（mm）</button>
+        <div class="out-opts">
+          <!-- 大きさの話はひとつの箱にまとめる。px と mm が別の場所に
+               あると、いま何ピクセルで出るのかが読み取れなかった。 -->
+          <div class="out-opt">
+            <div class="out-opt-head">
+              <span class="st-lbl">仕上がりサイズ</span>
+              <div class="st-seg seg-sm" id="size-unit-seg">
+                <button type="button" data-unit="px" class="active">画面（px）</button>
+                <button type="button" data-unit="mm">印刷（mm）</button>
+              </div>
             </div>
+            <div class="out-opt-row" id="px-fields">
+              <label class="st-lbl" for="opt-size">幅</label>
+              <select id="opt-size" class="tb-select">
+                <option value="512">512 px</option>
+                <option value="1024" selected>1024 px</option>
+                <option value="2048">2048 px</option>
+                <option value="4096">4096 px</option>
+              </select>
+            </div>
+            <div class="out-opt-row hidden" id="print-fields">
+              <label class="st-lbl" for="opt-print-mm">幅</label>
+              <input type="number" id="opt-print-mm" class="print-mm" min="5" max="400" step="1" value="40" inputmode="numeric">
+              <span class="print-unit">mm</span>
+              <label class="st-lbl" for="opt-print-dpi">解像度</label>
+              <select id="opt-print-dpi" class="tb-select">
+                <option value="300" selected>300 dpi</option>
+                <option value="600">600 dpi</option>
+                <option value="1200">1200 dpi</option>
+              </select>
+              <span class="print-unit">→</span>
+              <span id="opt-size-derived" class="tb-derived" aria-live="polite"></span>
+            </div>
+            <p class="print-note" id="print-note"></p>
           </div>
-          <div class="print-fields hidden" id="print-fields">
-            <label class="st-lbl" for="opt-print-mm">幅</label>
-            <input type="number" id="opt-print-mm" class="print-mm" min="5" max="400" step="1" value="40" inputmode="numeric">
-            <span class="print-unit">mm</span>
-            <label class="st-lbl" for="opt-print-dpi">解像度</label>
-            <select id="opt-print-dpi" class="tb-select">
-              <option value="300" selected>300 dpi</option>
-              <option value="600">600 dpi</option>
-              <option value="1200">1200 dpi</option>
-            </select>
+
+          <div class="out-opt">
+            <div class="out-opt-head">
+              <span class="st-lbl">AVIF・WebP の圧縮</span>
+              <div class="st-seg seg-sm" id="compress-seg">
+                <button type="button" data-mode="lossy" class="active">非可逆</button>
+                <button type="button" data-mode="lossless">可逆</button>
+              </div>
+            </div>
+            <div class="slider-row">
+              <span class="st-lbl" id="compress-label">品質</span>
+              <input type="range" id="opt-quality" min="60" max="100" step="1" value="95" aria-label="品質">
+              <input type="range" id="opt-effort" class="hidden" min="1" max="3" step="1" value="2" aria-label="圧縮の強さ">
+              <span class="val" id="val-compress">95</span>
+            </div>
+            <p class="print-note" id="compress-note"></p>
           </div>
-          <p class="print-note" id="print-note"></p>
         </div>
 
         <p class="note">入力もロゴ画像も端末から出ません。短縮URLを挟まないので、広告が差し込まれることも、あとからリンク先が変わることもありません。</p>
@@ -1249,11 +1288,28 @@
           <div class="sec-body">
             <div class="chips" id="type-chips"></div>
             <div id="type-fields"></div>
-            <div class="field remember-row">
-              <input type="checkbox" id="opt-remember" class="tb-check" checked>
-              <label for="opt-remember">この端末に入力内容を残す</label>
+
+            <!-- 誤り訂正は書き出しの設定ではない。ここを動かすとQRの絵そのもの
+                 （マス目の数）が変わるので、書き出しの並びから内容側へ移した。 -->
+            <div class="field ec-field">
+              <div class="field-head">
+                <label for="opt-ec">誤り訂正</label>
+                <button type="button" class="info-btn" id="btn-ec-help"
+                  aria-expanded="false" aria-controls="ec-help" aria-label="誤り訂正とは">
+                  <i data-lucide="info" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <select id="opt-ec" class="tb-select">
+                <option value="L">L（7%まで復元）</option>
+                <option value="M">M（15%まで復元）</option>
+                <option value="Q">Q（25%まで復元）</option>
+                <option value="H" selected>H（30%まで復元・推奨）</option>
+              </select>
+              <span class="sub hidden" id="ec-help">欠けや汚れ、中央のロゴでどれだけ隠れても読めるかの余力です。高いほど強くなりますが、そのぶんマス目が細かくなります。ロゴを置くならHのままにしてください。</span>
             </div>
-            <p class="remember-note">オフにすると、次に開いたとき入力欄は初期状態に戻ります。Wi-Fiのパスワードは、この設定にかかわらず保存しません。デザインの設定はどちらでも残ります。</p>
+
+            <p class="remember-note">入力した内容とデザインは、次に開いたときのためにこの端末のブラウザへ残ります（サーバーには送られません）。
+              Wi-Fiのパスワードだけは残しません。共用のパソコンなどで消したいときは、「テンプレート」の「マイ」にある「この端末から消す」を押してください。</p>
           </div>
         </details>
 
@@ -1270,35 +1326,38 @@
               <button id="btn-reset" class="st-btn-quiet" type="button">デザインを初期化</button>
             </div>
 
-            <!-- 保存したデザイン。端末に残るのは「いま開いているもの」ひとつだけ
-                 なので、名前を付けて取っておく場所をここに置く。 -->
-            <div class="my-designs">
-              <div class="my-head">
-                <span class="st-lbl">保存したデザイン</span>
-                <button id="btn-design-save" class="st-btn-quiet btn-sm" type="button">いまのデザインを保存</button>
-              </div>
-              <div class="my-save-row hidden" id="my-save-row">
-                <input type="text" id="my-save-name" maxlength="24" placeholder="名前（例：会社の名刺用）" aria-label="デザインの名前">
-                <button id="btn-design-save-ok" class="st-btn btn-sm" type="button">保存</button>
-                <button id="btn-design-save-cancel" class="st-btn-quiet btn-sm" type="button">やめる</button>
-              </div>
-              <div class="preset-grid my-grid hidden" id="my-design-grid"></div>
-              <p class="remember-note my-empty" id="my-design-empty">まだありません。気に入った配色や形ができたら保存しておくと、次からひと押しで戻せます。</p>
-              <div class="design-io">
-                <button id="btn-design-export" class="st-btn-quiet btn-sm" type="button">ファイルに書き出す</button>
-                <button id="btn-design-import" class="st-btn-quiet btn-sm" type="button">ファイルから読み込む</button>
-                <button id="btn-design-share" class="st-btn-quiet btn-sm" type="button">リンクをコピー</button>
-                <input type="file" id="design-file" accept=".json,application/json" class="hidden">
-              </div>
-              <p class="remember-note my-io-note">
-                書き出すのもリンクに載せるのもデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は含みません。
-                リンクは <code>#</code> から後ろにデザインを詰めたもので、その部分はサーバーへ送られません。
-                埋め込んだ画像はリンクには載らないので、画像を使うデザインはファイルで渡してください。
-              </p>
+            <!-- 自分で作ったものも、はじめから入っているものも、同じ「テンプレート」。
+                 棚を2つに分けず、「マイ」という絞り込みひとつで見せ分ける。 -->
+            <div class="preset-cat-chips" id="preset-cat-chips"></div>
+
+            <div class="my-save-row hidden" id="my-save-row">
+              <input type="text" id="my-save-name" maxlength="24" placeholder="名前（例：会社の名刺用）" aria-label="テンプレートの名前">
+              <button id="btn-design-save-ok" class="st-btn btn-sm" type="button">追加</button>
+              <button id="btn-design-save-cancel" class="st-btn-quiet btn-sm" type="button">やめる</button>
             </div>
 
-            <div class="preset-cat-chips" id="preset-cat-chips"></div>
             <div class="preset-grid" id="preset-grid"></div>
+
+            <!-- 「マイ」を見ているときだけ出す、持ち出しの口 -->
+            <div class="my-foot hidden" id="my-foot">
+              <p class="remember-note my-empty hidden" id="my-design-empty">
+                まだありません。気に入った配色や形ができたら「見た目を追加」で残しておくと、次からひと押しで戻せます。
+              </p>
+              <div class="my-actions">
+                <button id="btn-design-share" class="st-btn-quiet btn-sm" type="button">
+                  <i data-lucide="share-2" class="w-4 h-4"></i><span>デザインをシェア</span>
+                </button>
+                <button id="btn-forget" class="st-btn-quiet btn-sm btn-danger" type="button">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i><span>この端末から消す</span>
+                </button>
+              </div>
+              <p class="remember-note my-io-note">
+                「この端末から消す」は、マイテンプレートに加えて、入力した内容といま作りかけのデザインもまとめて消します。<br>
+                渡るのはいま画面に出ているデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は含みません。
+                リンクは <code>#</code> から後ろにデザインを詰めたもので、その部分はサーバーへ送られません。
+                埋め込んだ画像は載らないので、画像を使うデザインは渡した先で入れ直してもらってください。
+              </p>
+            </div>
           </div>
         </details>
 
@@ -1668,7 +1727,7 @@
                   <option value="avif">AVIF</option>
                   <option value="webp">WebP</option>
                 </select>
-                <span class="sub">サイズと誤り訂正は、左の書き出し設定をそのまま使います。</span>
+                <span class="sub">仕上がりサイズと圧縮は、左の書き出し設定をそのまま使います。</span>
                 <span class="sub hidden" id="bulk-format-note">AVIFは1枚ごとに 0.3〜1秒 かかります（PNGの20倍ほど）。行数が多いときはPNGのほうが速く終わります。</span>
               </div>
 
@@ -1759,8 +1818,9 @@
         <li>中央のロゴ — SNS・ブランドアイコン32種、汎用アイコン24種、手持ちの画像、絵文字や文字。アイコンの色は塗りと同じ選択肢から選べ、後ろに敷く下地の形と色も変えられます</li>
         <li>フレーム — 枠線8種類（実線・二重線・破線・角ブラケット・切り取り線・切手・吹き出し・セル枠）と、上下に一言を添えられるラベル。ラベルには文字のほかアイコンや画像も置けます</li>
         <li>書き出し — PNG / WebP / AVIF（最大4096px）と、印刷に強いSVG。クリップボードへ直接コピーもできます。AVIFは同じ絵をいちばん小さく収められて透過も持てます（1024pxの黒白QRなら、PNGの43KBに対して13KB）</li>
+        <li>圧縮の選択 — AVIFとWebPは可逆・非可逆を選べます。非可逆なら品質を、可逆なら圧縮の強さ（時間をかけるほど小さくなる）をスライダーで決められます。可逆で書き出したものは元の絵と1ピクセルも変わりません</li>
         <li>印刷サイズ — 仕上がりを「印刷（mm）」に切り替えると、幅と解像度（300／600／1200dpi）から必要な画素数を計算し、マス目1つが何ミリになるか・その大きさで足りるか・読み取り距離の目安を出します。SVGもその寸法のまま書き出せます</li>
-        <li>デザインの保存と共有 — 気に入った配色や形は名前を付けて残しておけます。ファイルに書き出して別の端末で読み込むことも、リンクをコピーして人に渡すこともできます（渡るのはデザインだけで、入力した内容は含みません）</li>
+        <li>マイテンプレート — 気に入った配色や形は名前を付けて残せます。自分で足したものは、はじめから入っているテンプレートと同じ棚に並びます。「デザインをシェア」で他の人や別の端末にも渡せます（渡るのはデザインだけで、入力した内容は含みません）</li>
         <li>CSV一括生成 — 店舗一覧や座席表のCSVを読み込ませると、いま作っているデザインのまま行ぶんのQRコードを一度に作り、ZIPにまとめて保存します。ファイル名にする列やフレームの文字にする列も指定できます</li>
       </ul>
 
@@ -1834,25 +1894,30 @@
         そこでこのツールは libavif の WebAssembly を同梱していて、AVIFを押したときだけ読み込みます。
         3.4MBあるので初回だけ少し待ちますが、実行時に外へ出る通信はありません。
         1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。
+        AVIFとWebPは可逆・非可逆を選べます。既定は非可逆（品質95）で、これがいちばん小さく収まります。
+        元の絵と1ピクセルも違わないものが要るときは可逆にしてください。1024pxの黒白QRで測ると、
+        非可逆13KB・可逆51KB・PNG43KBでした。可逆のときの「圧縮の強さ」は、時間をかけて縮めるかどうかの設定で、
+        絵の中身は変わりません（ふつう51KB・0.5秒／小ささ優先33KB・4秒）。
       </div>
       <div class="qa">
-        <b>Q. 作りかけのデザインは残りますか？</b>
-        同じブラウザで開き直せば、直前の内容とデザインが戻ります。保存先はこの端末のブラウザの中だけで、
+        <b>Q. 入力した内容はこの端末に残りますか？消せますか？</b>
+        同じブラウザで開き直せば、直前の内容とデザインが戻ります。残る先はこの端末のブラウザの中だけで、
         サーバーには何も送られません。ただし残るのは「いま開いているもの」ひとつだけなので、
-        取っておきたいデザインは「テンプレート」の中の「保存したデザイン」に名前を付けて残してください。
-        別の端末へ持っていきたいときはファイルに書き出すか、リンクをコピーして渡せます
-        （どちらもデザインだけで、入力した内容は含みません）。
-        Wi-Fiのパスワードだけは、他人の端末や共用のパソコンに残ると影響がその人だけで終わらないため、保存しません。
-        内容そのものを残したくないときは、「内容」の下にある「この端末に入力内容を残す」をオフにしてください
-        （オフにすると、それまでに保存されていた内容も消えます。デザインは残ります）。
+        取っておきたいデザインは「テンプレート」の「マイ」から名前を付けて足してください。
+        Wi-Fiのパスワードだけは、他人の端末や共用のパソコンに残ると影響がその人だけで終わらないため、はじめから残しません。
+        共用のパソコンなどで痕跡を残したくないときは、「テンプレート」の「マイ」にある<strong>「この端末から消す」</strong>を押してください。
+        入力した内容・作りかけのデザイン・マイテンプレートを、まとめて消します。
+        フレームやロゴに入れた文字や読み込んだ画像もデザインの一部として残っているので、これでまとめて消えます。
       </div>
       <div class="qa">
-        <b>Q. 作ったデザインを保存したり、他の人に渡したりできますか？</b>
-        できます。「テンプレート」の中の「保存したデザイン」に名前を付けて残しておくと、次からひと押しで戻せます。
-        ファイル（JSON）に書き出して別の端末で読み込むこともでき、リンクをコピーすれば同じデザインをそのまま人に渡せます。
-        書き出すのもリンクに載せるのもデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は一切含みません。
+        <b>Q. 作ったデザインを取っておいたり、他の人に渡したりできますか？</b>
+        できます。「テンプレート」で「マイ」を選び、並びの先頭にある「＋ 見た目を追加」に名前を付けると、
+        次からひと押しで戻せます。自分で足したものは、はじめから入っているテンプレートと同じ棚に並びます。
+        他の人や別の端末に渡したいときは「デザインをシェア」を押してください。スマホなどではそのまま共有シートが開き、
+        パソコンではリンクがクリップボードに入ります。
+        渡るのはデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は一切含みません。
         リンクはURLの<code>#</code>から後ろにデザインを詰めたもので、その部分はサーバーへ送られない仕組みです。
-        ただし埋め込んだ画像はリンクには載らないので、画像を使うデザインはファイルで渡してください。
+        ただし埋め込んだ画像は載らないので、画像を使うデザインは渡した先で入れ直してもらってください。
       </div>
       <div class="qa">
         <b>Q. スマホでも使えますか？</b>
@@ -2038,12 +2103,12 @@
         <div data-cid="swatch-host" class="swatch-group"></div>
       </template>
 
-  <script src="qr-core.js?v=20260910_3"></script>
-  <script src="qr-style.js?v=20260910_3"></script>
-  <script src="qr-assets.js?v=20260910_3"></script>
-  <script src="qr-verify.js?v=20260910_3"></script>
-  <script src="qr-bulk.js?v=20260910_3"></script>
-  <script src="qr-avif.js?v=20260910_3"></script>
-  <script src="app.js?v=20260910_3"></script>
+  <script src="qr-core.js?v=20260911_6"></script>
+  <script src="qr-style.js?v=20260911_6"></script>
+  <script src="qr-assets.js?v=20260911_6"></script>
+  <script src="qr-verify.js?v=20260911_6"></script>
+  <script src="qr-bulk.js?v=20260911_6"></script>
+  <script src="qr-avif.js?v=20260911_6"></script>
+  <script src="app.js?v=20260911_6"></script>
 </body>
 </html>
