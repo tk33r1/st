@@ -4257,15 +4257,29 @@
     const btnForget = $('btn-forget');
     if (btnForget) btnForget.addEventListener('click', forgetDevice);
 
-    // 補足はふだん畳んでおく
-    const btnEcHelp = $('btn-ec-help');
-    const ecHelp = $('ec-help');
-    if (btnEcHelp && ecHelp) {
-      btnEcHelp.addEventListener('click', () => {
-        const open = ecHelp.classList.toggle('hidden');
-        btnEcHelp.setAttribute('aria-expanded', open ? 'false' : 'true');
+    // 補足はふだん畳んでおく。ⓘ を押した人にだけ出す
+    [['btn-ec-help', 'ec-help'],
+     ['btn-share-help', 'share-help'],
+     ['btn-forget-help', 'forget-help']].forEach(([btnId, noteId]) => {
+      const btn = $(btnId), note = $(noteId);
+      if (!btn || !note) return;
+      btn.addEventListener('click', () => {
+        const closed = note.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', closed ? 'false' : 'true');
       });
-    }
+    });
+
+    // 色パネルはテンプレートから何枚も起こすので、こちらは id ではなく「同じ入れ物の中で
+    // data-note を引く」形にする。押した ⓘ と同じパネルの注記だけが開く。
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest && e.target.closest('.info-btn[data-note-toggle]');
+      if (!btn) return;
+      const scope = btn.closest('[data-cid], .sec-body') || document;
+      const note = scope.querySelector('[data-note="' + btn.dataset.noteToggle + '"]');
+      if (!note) return;
+      const closed = note.classList.toggle('hidden');
+      btn.setAttribute('aria-expanded', closed ? 'false' : 'true');
+    });
 
     // ---- ツールバー ----
     $('btn-shuffle').addEventListener('click', shuffle);
@@ -4594,6 +4608,9 @@
     // HTML に直接書かれたボタン（色パネルのテンプレート由来を含む）の
     // 選択状態を aria にも写す。以後は setActive が保つ。
     seedAriaPressed(document);
+    // 色パネルはテンプレートから起こすので、最初の createIcons に間に合わない。
+    // 中の ⓘ を描くためにもう一度だけ回す。
+    if (window.lucide) lucide.createIcons();
     update();
     initHistory();
     // 共有リンクのデザインは、ふつうの起動が済んでから被せる。

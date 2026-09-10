@@ -907,6 +907,7 @@
       display: flex; flex-direction: column; gap: 8px;
     }
     .my-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .my-action { display: inline-flex; align-items: center; gap: 2px; }
     .my-actions button { display: inline-flex; align-items: center; gap: 6px; }
     .btn-danger:hover { color: var(--err); border-color: var(--err); }
 
@@ -924,6 +925,9 @@
     .my-empty { margin: 0; }
     .my-empty.hidden { display: none; }
     .my-io-note { margin: 0; }
+    .my-io-note.hidden { display: none; }
+    .note.note-fold.hidden { display: none; }
+    .pane-note-row { display: flex; justify-content: flex-end; margin-top: 4px; }
     .my-io-note code {
       font-family: var(--font-mono); font-size: 11px;
       background: var(--panel-2); border: 1px solid var(--rule);
@@ -1272,7 +1276,7 @@
           </div>
         </div>
 
-        <p class="note">入力もロゴ画像も端末から出ません。短縮URLを挟まないので、広告が差し込まれることも、あとからリンク先が変わることもありません。</p>
+        <p class="note">入力もロゴ画像も端末から出ません。</p>
       </div>
 
       <!-- ===================== 右：デザインパネル ===================== -->
@@ -1307,9 +1311,6 @@
               </select>
               <span class="sub hidden" id="ec-help">欠けや汚れ、中央のロゴでどれだけ隠れても読めるかの余力です。高いほど強くなりますが、そのぶんマス目が細かくなります。ロゴを置くならHのままにしてください。</span>
             </div>
-
-            <p class="remember-note">入力した内容とデザインは、次に開いたときのためにこの端末のブラウザへ残ります（サーバーには送られません）。
-              Wi-Fiのパスワードだけは残しません。共用のパソコンなどで消したいときは、「テンプレート」の「マイ」にある「この端末から消す」を押してください。</p>
           </div>
         </details>
 
@@ -1344,18 +1345,32 @@
                 まだありません。気に入った配色や形ができたら「見た目を追加」で残しておくと、次からひと押しで戻せます。
               </p>
               <div class="my-actions">
-                <button id="btn-design-share" class="st-btn-quiet btn-sm" type="button">
-                  <i data-lucide="share-2" class="w-4 h-4"></i><span>デザインをシェア</span>
-                </button>
-                <button id="btn-forget" class="st-btn-quiet btn-sm btn-danger" type="button">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i><span>この端末から消す</span>
-                </button>
+                <span class="my-action">
+                  <button id="btn-design-share" class="st-btn-quiet btn-sm" type="button">
+                    <i data-lucide="share-2" class="w-4 h-4"></i><span>デザインをシェア</span>
+                  </button>
+                  <button type="button" class="info-btn" id="btn-share-help"
+                    aria-expanded="false" aria-controls="share-help" aria-label="デザインをシェアとは">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                  </button>
+                </span>
+                <span class="my-action">
+                  <button id="btn-forget" class="st-btn-quiet btn-sm btn-danger" type="button">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i><span>この端末から消す</span>
+                  </button>
+                  <button type="button" class="info-btn" id="btn-forget-help"
+                    aria-expanded="false" aria-controls="forget-help" aria-label="この端末から消すとは">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                  </button>
+                </span>
               </div>
-              <p class="remember-note my-io-note">
-                「この端末から消す」は、マイテンプレートに加えて、入力した内容といま作りかけのデザインもまとめて消します。<br>
+              <p class="remember-note my-io-note hidden" id="share-help">
                 渡るのはいま画面に出ているデザインだけで、入力した内容（URL・Wi-Fiのパスワード・連絡先）は含みません。
                 リンクは <code>#</code> から後ろにデザインを詰めたもので、その部分はサーバーへ送られません。
                 埋め込んだ画像は載らないので、画像を使うデザインは渡した先で入れ直してもらってください。
+              </p>
+              <p class="remember-note my-io-note hidden" id="forget-help">
+                「この端末から消す」は、マイテンプレートに加えて、入力した内容といま作りかけのデザインもまとめて消します。
               </p>
             </div>
           </div>
@@ -1387,8 +1402,12 @@
               <span class="st-lbl">セルの密度</span>
               <input type="range" id="opt-minver" min="1" max="14" step="1" value="1">
               <span class="val" id="val-minver">自動</span>
+              <button type="button" class="info-btn" data-note-toggle="density"
+                aria-expanded="false" aria-label="セルの密度とは">
+                <i data-lucide="info" class="w-4 h-4"></i>
+              </button>
             </div>
-            <p class="note" style="margin-top:-4px;margin-bottom:12px">密度を上げるとマス目が細かくなります。デザインの都合で細かくしたいときだけ動かしてください（読み取りやすさは下がります）。</p>
+            <p class="note note-fold hidden" data-note="density" style="margin-top:4px;margin-bottom:12px">密度を上げるとマス目が細かくなります。デザインの都合で細かくしたいときだけ動かしてください（読み取りやすさは下がります）。</p>
             <div class="field">
               <label>セルの色</label>
               <div class="color-panel" data-scope="cell"></div>
@@ -1681,10 +1700,6 @@
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
-            <p class="remember-note" style="margin:0 0 10px">
-              CSVの行ぶんのQRコードを、いま作っているデザインのまま一度に作って ZIP で保存します。
-              読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。
-            </p>
             <div class="logo-drop" id="bulk-drop" role="button" tabindex="0">
               CSVをドロップ、またはクリックして選択（.csv / .txt）
               <input type="file" id="bulk-file" accept=".csv,.txt,text/csv,text/plain" class="hidden">
@@ -2081,6 +2096,12 @@
             画像をドロップ、またはクリックして選択（PNG / JPEG / WebP / SVG）
             <input type="file" data-cid="image-file" accept="image/*" class="hidden">
           </div>
+          <div class="pane-note-row">
+            <button type="button" class="info-btn" data-note-toggle="image-tips"
+              aria-expanded="false" aria-label="画像を使うときのこつ">
+              <i data-lucide="info" class="w-4 h-4"></i>
+            </button>
+          </div>
           <div class="logo-thumb hidden" data-cid="image-thumb" style="margin-top:10px">
             <img data-cid="image-thumb-img" alt="選んだ画像">
             <button class="st-btn-quiet" type="button" data-cid="btn-image-clear">外す</button>
@@ -2091,7 +2112,7 @@
             <span class="val" data-cid="val-image-scale">100%</span>
             <button type="button" data-cid="btn-image-scale-reset" class="st-btn-quiet btn-sm" title="100% に戻す">戻す</button>
           </div>
-          <p class="note" style="margin-top:8px">※ コントラストがはっきりした画像を選ぶと読み取りやすくなります。<br>※ 100%より大きくすると中央に寄って切り取られ、小さくすると同じ絵がタイルのように並びます。</p>
+          <p class="note note-fold hidden" data-note="image-tips" style="margin-top:8px">コントラストがはっきりした画像を選ぶと読み取りやすくなります。100%より大きくすると中央に寄って切り取られ、小さくすると同じ絵がタイルのように並びます。</p>
         </div>
 
         <div class="slider-row hidden" data-cid="transparency-row" style="margin-top:12px; padding:8px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1);">
