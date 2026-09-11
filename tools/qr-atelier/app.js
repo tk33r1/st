@@ -2653,6 +2653,12 @@
     return '約' + (Math.round(m * 10) / 10) + 'm';
   }
 
+  // 圧縮の引き出しは AVIF と WebP でしか意味がない。いま誰のために開いて
+  // いるのかを持っておく。見出しも、保存ボタンの文言も、つまみを出すかも
+  // これで決まる。
+  let compressFor = '';
+  const COMPRESS_MIME = { avif: 'image/avif', webp: 'image/webp' };
+
   function syncCompress() {
     setSeg('compress-seg', state.lossless ? 'lossless' : 'lossy', 'mode');
     const q = $('opt-quality');
@@ -2660,19 +2666,57 @@
     const label = $('compress-label');
     const val = $('val-compress');
     const note = $('compress-note');
+    const fmt = compressFor === 'webp' ? 'WebP' : 'AVIF';
+    // WebP の可逆には強弱がない。効かないつまみを出しておくより、消して
+    // 「ここは選ぶところがない」と分かるほうがよい。
+    const noKnob = compressFor === 'webp' && state.lossless;
+    const title = $('compress-title');
+    if (title) title.textContent = fmt + ' の圧縮';
+    const row = $('compress-slider-row');
+    if (row) row.classList.toggle('hidden', noKnob);
     if (q) { q.value = state.quality; q.classList.toggle('hidden', state.lossless); }
     if (ef) { ef.value = state.effort; ef.classList.toggle('hidden', !state.lossless); }
     if (label) label.textContent = state.lossless ? '圧縮の強さ' : '品質';
     if (val) val.textContent = state.lossless ? EFFORT_WORDS[state.effort] : String(state.quality);
     if (note) {
       note.className = 'print-note';
-      note.textContent = state.lossless
+      note.textContent = noKnob
+        ? 'WebPの可逆圧縮に強弱の設定はありません。元の絵と1ピクセルも変わらないまま保存します。'
+        : state.lossless
         ? '元の絵と1ピクセルも変わりません。強くするほど小さくなりますが、書き出しに時間がかかります'
           + '（1024pxの黒白QRで、ふつう51KB・0.5秒／小ささ優先33KB・4秒）。'
-          + 'WebPの可逆には強弱がないので、この強さはAVIFにだけ効きます。'
         : '元の絵とごくわずかに変わりますが、読み取りには影響しません'
           + '（1024pxの黒白QRで13KBほど。可逆なら51KB、PNGなら43KB）。';
     }
+  }
+
+  // 押したボタンの真下へ引き出しを向ける。AVIF は左列、WebP は右列。
+  function openCompress(fmt) {
+    const box = $('opt-compress');
+    if (!box) return;
+    compressFor = fmt;
+    // 2列グリッドの gap 8px ぶんを足し引きすると、ボタンの中心とぴたり合う
+    box.style.setProperty('--caret-x', fmt === 'avif' ? 'calc(25% - 2px)' : 'calc(75% + 2px)');
+    box.classList.remove('hidden');
+    markCompressButtons(fmt);
+    syncCompress();
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function closeCompress() {
+    const box = $('opt-compress');
+    if (box) box.classList.add('hidden');
+    compressFor = '';
+    markCompressButtons('');
+  }
+
+  function markCompressButtons(fmt) {
+    ['avif', 'webp'].forEach(f => {
+      const b = $('btn-' + f);
+      if (!b) return;
+      b.classList.toggle('is-open', f === fmt);
+      b.setAttribute('aria-expanded', f === fmt ? 'true' : 'false');
+    });
   }
 
   function syncSizeUnit() {
@@ -3210,6 +3254,30 @@
     } else if (activeVerifyPromise) {
       await activeVerifyPromise;
     }
+  }
+
+  // 読みもののモーダル。答えを待たないので、confirm と違って Promise は返さない。
+  function openCsvHelp() {
+    const modal = $('csv-help-modal');
+    const close = $('btn-csv-help-close');
+    if (!modal || !close) return;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    function done() {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+      close.removeEventListener('click', done);
+      modal.removeEventListener('click', onBackdrop);
+      window.removeEventListener('keydown', onKey);
+    }
+    function onBackdrop(e) {
+      if (e.target === modal || e.target.classList.contains('fullscreen-modal-backdrop')) done();
+    }
+    function onKey(e) { if (e.key === 'Escape') done(); }
+    close.addEventListener('click', done);
+    modal.addEventListener('click', onBackdrop);
+    window.addEventListener('keydown', onKey);
+    close.focus();
   }
 
   // 取り返しのつかない操作の前に一度だけ訊く。
@@ -4296,20 +4364,24 @@
       showToast('デザインを初期化しました');
     });
 
-    function exportWithCompressCheck(mime, ext) {
-      const box = $('opt-compress');
-      if (box && box.classList.contains('hidden')) {
-        box.classList.remove('hidden');
-        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        showToast('圧縮設定を表示しました。もう一度押すと保存します');
-        return;
-      }
-      exportRaster(mime, ext);
+    // 1度目で設定を開き、同じボタンをもう一度押せばそのまま保存する。
+    // 引き出しの中にも保存ボタンがあるので、どちらからでも進める。
+    function toggleCompress(fmt) {
+      if (compressFor === fmt) { exportRaster(COMPRESS_MIME[fmt], fmt); return; }
+      openCompress(fmt);
     }
 
     $('btn-png').addEventListener('click', () => exportRaster('image/png', 'png'));
-    $('btn-avif').addEventListener('click', () => exportWithCompressCheck('image/avif', 'avif'));
-    $('btn-webp').addEventListener('click', () => exportWithCompressCheck('image/webp', 'webp'));
+    $('btn-avif').addEventListener('click', () => toggleCompress('avif'));
+    $('btn-webp').addEventListener('click', () => toggleCompress('webp'));
+    const btnCompressSave = $('btn-compress-save');
+    if (btnCompressSave) btnCompressSave.addEventListener('click', () => {
+      if (compressFor) exportRaster(COMPRESS_MIME[compressFor], compressFor);
+    });
+    const btnCompressClose = $('btn-compress-close');
+    if (btnCompressClose) btnCompressClose.addEventListener('click', closeCompress);
+    const btnBulkHelp = $('btn-bulk-help');
+    if (btnBulkHelp) btnBulkHelp.addEventListener('click', openCsvHelp);
     $('btn-svg').addEventListener('click', exportSvg);
     $('btn-copy').addEventListener('click', copyImage);
 

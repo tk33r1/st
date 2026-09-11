@@ -185,16 +185,19 @@
       display: block;
       pointer-events: none;
     }
+    /* The wrap covers the whole sheet and reveals the After layer from the
+       handle to the RIGHT edge, so the "After" label in the top-right always
+       sits over the optimized SVG. Clipping it to the left instead put the
+       After render under the "Before" label. */
     .svg-compare-after-wrap {
       position: absolute;
       inset: 0;
       overflow: hidden;
-      width: 50%;
+      clip-path: inset(0 0 0 50%);
       pointer-events: none;
     }
-    /* The After layer is sized to the full compare container (via JS) so the
-       SVG inside renders identically to the Before layer — the wrap only
-       clips it. Without the explicit pixel size we'd just see a tiny SVG. */
+    /* Full-size inside the wrap, which is the same box as the Before layer,
+       so the two renders line up pixel-for-pixel across the seam. */
     .svg-compare-after { width: 100%; height: 100%; }
 
     .svg-compare-handle {
@@ -922,19 +925,14 @@
       }
     }
 
-    // The After layer must be sized to the *whole* compare container, not the
-    // clipping wrap — otherwise the SVG inside it would be squashed into the
-    // 50% slice and stop matching the Before. We pin its pixel size here and
-    // refresh it whenever the layout changes.
-    function syncAfterSize() {
-      compareAfter.style.width = compareEl.clientWidth + 'px';
-      compareAfter.style.height = compareEl.clientHeight + 'px';
-    }
-
     let comparePercent = 50;
     function applyComparePercent(p) {
       comparePercent = Math.max(0, Math.min(100, p));
-      compareAfterWrap.style.width = comparePercent + '%';
+      // Clip away everything LEFT of the handle so the optimized SVG is the
+      // one showing on the right. The wrap keeps the container's full size,
+      // so the After layer never gets squashed into the visible slice and the
+      // percentage survives resizes without any pixel bookkeeping.
+      compareAfterWrap.style.clipPath = 'inset(0 0 0 ' + comparePercent + '%)';
       compareHandle.style.left = comparePercent + '%';
     }
 
@@ -961,7 +959,6 @@
     }
     compareEl.addEventListener('pointerup', endDrag);
     compareEl.addEventListener('pointercancel', endDrag);
-    window.addEventListener('resize', syncAfterSize);
 
     function setSliderFill(slider) {
       const min = parseFloat(slider.min);
@@ -1138,10 +1135,9 @@
       setStatus('editing', 'idle');
 
       switchView('view-result');
-      // syncAfterSize needs the compare container to be laid out, which only
-      // happens once we leave the (hidden) upload view. Defer one frame.
+      // Defer one frame so the result view paints before the first (possibly
+      // slow) SVGO pass blocks the main thread.
       requestAnimationFrame(() => {
-        syncAfterSize();
         runOptimization(true);
       });
     }

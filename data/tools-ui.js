@@ -165,19 +165,14 @@
 
     let currentPercent = initial;
 
-    function syncAfterSize() {
-      // Match the after image to the before image's rendered box so the
-      // clip in .compare-after-wrap lines up pixel-for-pixel.
-      const r = beforeImg.getBoundingClientRect();
-      afterImg.style.width = r.width + 'px';
-      afterImg.style.height = r.height + 'px';
-    }
-
     function applyPercent(percent) {
       currentPercent = Math.max(0, Math.min(100, percent));
-      afterWrap.style.width = currentPercent + '%';
+      // Clip away everything LEFT of the handle so the After image is the one
+      // showing on the right, under the 変換後 label. Both layers share the
+      // same box via CSS, so the percentage needs no pixel bookkeeping and
+      // survives resizes on its own.
+      afterWrap.style.clipPath = 'inset(0 0 0 ' + currentPercent + '%)';
       handle.style.left = currentPercent + '%';
-      syncAfterSize();
     }
 
     function setFromClientX(clientX) {
@@ -189,16 +184,7 @@
 
     beforeImg.src = opts.beforeUrl;
     afterImg.src = opts.afterUrl;
-
-    let loaded = 0;
-    const onLoad = () => {
-      loaded += 1;
-      if (loaded >= 2) applyPercent(initial);
-    };
-    beforeImg.addEventListener('load', onLoad);
-    afterImg.addEventListener('load', onLoad);
-    if (beforeImg.complete && beforeImg.naturalWidth > 0) onLoad();
-    if (afterImg.complete && afterImg.naturalWidth > 0) onLoad();
+    applyPercent(initial);
 
     let dragging = false;
     function onDown(e) {
@@ -212,7 +198,6 @@
       setFromClientX(x);
     }
     function onUp() { dragging = false; }
-    function onResize() { applyPercent(currentPercent); }
 
     container.addEventListener('mousedown', onDown);
     window.addEventListener('mousemove', onMove);
@@ -220,14 +205,12 @@
     container.addEventListener('touchstart', onDown, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: true });
     window.addEventListener('touchend', onUp);
-    window.addEventListener('resize', onResize);
 
     return function teardown() {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onUp);
-      window.removeEventListener('resize', onResize);
     };
   }
 
