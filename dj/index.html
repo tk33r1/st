@@ -1274,11 +1274,25 @@
           url("../images/contents/real-hand-cursor_2@2x.png") 2x) 28 0, pointer;
     }
 
-    /* 入力欄は文字の間を狙う。手ではキャレットの落ちる位置が読めない */
+    /*
+     * label にはブラウザ既定で cursor: default が当たっている。放っておくと
+     * 項目名の上だけ矢印に戻るので、地の文と同じ手に揃える。
+     */
+    body.berserk label {
+      cursor: inherit;
+    }
+
+    /*
+     * 入力欄も手のままにする。ブラウザ既定で text（I ビーム）が当たっていて、
+     * 何もしないと入力欄の上だけカーソルが変わり、クリックして書いている間は
+     * ずっと I のままになる。書ける場所であることは、枠と点滅するキャレットと
+     * ラベルで分かるので、カーソルは演出を優先して手で通す。
+     * inherit なので :focus でも変わらない。
+     */
     body.berserk input[type="text"],
     body.berserk input[type="email"],
     body.berserk textarea {
-      cursor: text;
+      cursor: inherit;
     }
 
     /*
@@ -1287,7 +1301,8 @@
      * 膜の位置決めに親の position が要る。静的な箱に足すだけなので見た目は変わらない。
      */
     .sound-log-embed,
-    .calendar-container {
+    .calendar-container,
+    .offer-turnstile {
       position: relative;
     }
 
@@ -1318,34 +1333,40 @@
     }
 
     /*
-     * 面が破れる 1 回きりの演出。地が橙に灯ってから、ギザギザの割れ口で
-     * 上下に分かれて散る。2 枚の clip-path は割れ口の折れ線を共有していて、
-     * 片方の頂点列をもう片方が逆順にたどるので、継ぎ目がぴたりと合う。
+     * 面が破れる 1 回きりの演出。手で紙を破るときの順で組んである。
+     *   掴んで引く（歪む）→ 限界で灯る → 一点から裂ける → 左右に振り分けて剥がれる
+     * 割れ口は振幅をばらつかせた 19 点のギザギザで、左下から右上へ斜めに走る。
+     * 2 枚の clip-path はこの頂点列を共有していて（片方が逆順にたどる）、
+     * 裂けるまで継ぎ目が見えない。transform-origin を左右の逆端に置いてあるので、
+     * 平行移動ではなく端を軸にめくれ上がり、引きちぎった感じになる。
      * 範囲は埋め込みの中だけ。画面全体は明滅しない。
      */
     .at-iframe-veil--breaking {
       opacity: 1;
-      animation: at-veil-flare 0.62s ease-out forwards;
+      animation: at-veil-flare 0.72s ease-out forwards;
     }
 
     .at-iframe-veil--breaking::before,
     .at-iframe-veil--breaking::after {
       content: '';
       position: absolute;
-      /* 散るときに縁から地が覗かないよう、少しはみ出させておく */
+      /* めくれるときに縁から地が覗かないよう、少しはみ出させておく */
       inset: -4%;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='96'%3E %3Cg fill='none' stroke='%23ffc46a' stroke-width='1.9' opacity='.95'%3E %3Cpath d='M28 0 56 16 56 48 28 64 0 48 0 16Z'/%3E%3Cpath d='M0 48 28 64 28 96 0 112 -28 96 -28 64Z'/%3E %3Cpath d='M56 48 84 64 84 96 56 112 28 96 28 64Z'/%3E%3C/g%3E%3C/svg%3E");
       background-position: center;
     }
 
     .at-iframe-veil--breaking::before {
-      clip-path: polygon(0 0, 100% 0, 100% 36%, 72% 47%, 44% 34%, 22% 49%, 0 40%);
-      animation: at-veil-shard-up 0.62s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      clip-path: polygon(0 0, 100% 0, 100% 28%, 95% 24%, 90% 31%, 84% 27%, 78% 34%, 72% 30%, 67% 37%, 61% 33%, 56% 41%, 50% 37%, 44% 45%, 39% 41%, 33% 49%, 28% 45%, 21% 54%, 17% 50%, 11% 59%, 6% 55%, 0 62%);
+      /* 右端を軸に。左から裂けて右へ抜けるように見せる */
+      transform-origin: 100% 50%;
+      animation: at-veil-rip-up 0.72s cubic-bezier(0.25, 0.6, 0.2, 1) forwards;
     }
 
     .at-iframe-veil--breaking::after {
-      clip-path: polygon(0 40%, 22% 49%, 44% 34%, 72% 47%, 100% 36%, 100% 100%, 0 100%);
-      animation: at-veil-shard-down 0.62s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+      clip-path: polygon(0 62%, 6% 55%, 11% 59%, 17% 50%, 21% 54%, 28% 45%, 33% 49%, 39% 41%, 44% 45%, 50% 37%, 56% 41%, 61% 33%, 67% 37%, 72% 30%, 78% 34%, 84% 27%, 90% 31%, 95% 24%, 100% 28%, 100% 100%, 0 100%);
+      transform-origin: 0 50%;
+      animation: at-veil-rip-down 0.72s cubic-bezier(0.25, 0.6, 0.2, 1) forwards;
     }
 
     @keyframes at-veil-flare {
@@ -1353,8 +1374,9 @@
         background-color: rgba(255, 166, 41, 0);
       }
 
-      18% {
-        background-color: rgba(255, 166, 41, 0.26);
+      /* 引っ張りきったところで一番強く灯る。裂けたあとは急に引く */
+      16% {
+        background-color: rgba(255, 166, 41, 0.3);
       }
 
       100% {
@@ -1362,27 +1384,49 @@
       }
     }
 
-    @keyframes at-veil-shard-up {
+    @keyframes at-veil-rip-up {
       0% {
         opacity: 1;
         transform: none;
       }
 
+      /* 掴んで引く。まだ裂けていない */
+      13% {
+        opacity: 1;
+        transform: translate(-1.5%, -2%) rotate(-0.6deg);
+      }
+
+      /* ここで繊維が切れる */
+      22% {
+        opacity: 1;
+        transform: translate(-3%, -6%) rotate(-3deg);
+      }
+
       100% {
         opacity: 0;
-        transform: translate(-4%, -17%) rotate(-2.5deg);
+        transform: translate(-11%, -30%) rotate(-11deg);
       }
     }
 
-    @keyframes at-veil-shard-down {
+    @keyframes at-veil-rip-down {
       0% {
         opacity: 1;
         transform: none;
       }
 
+      13% {
+        opacity: 1;
+        transform: translate(1.5%, 2%) rotate(0.6deg);
+      }
+
+      22% {
+        opacity: 1;
+        transform: translate(3%, 6%) rotate(3deg);
+      }
+
       100% {
         opacity: 0;
-        transform: translate(4%, 17%) rotate(2.5deg);
+        transform: translate(11%, 30%) rotate(11deg);
       }
     }
 
@@ -1431,18 +1475,6 @@
           rgba(255, 59, 48, 0.11) 1px,
           transparent 1px,
           transparent 4px);
-    }
-
-    /*
-     * 赤い六角パネルが壁一面に灯る絵の代わり。細かい文字まで入れても
-     * この不透明度では潰れるので、輪郭だけの蜂の巣にしてある。
-     * ページ側にも六角（AT フィールド・GEAR・SNS ボタン）があるので形は揃う。
-     */
-    .berserk-fx::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='96'%3E%3Cg fill='none' stroke='%23ff3b30' stroke-width='1' opacity='.13'%3E%3Cpath d='M28 0 56 16 56 48 28 64 0 48 0 16Z'/%3E%3Cpath d='M0 48 28 64 28 96 0 112 -28 96 -28 64Z'/%3E%3Cpath d='M56 48 84 64 84 96 56 112 28 96 28 64Z'/%3E%3C/g%3E%3C/svg%3E");
     }
 
     /*
@@ -1725,7 +1757,7 @@
     }
 
     /*
-     * 灯る六角の壁。.berserk-fx::before と同じ 56x96 のタイルを橙で敷き直し、
+     * 灯る六角の壁。膜と同じ 56x96 のタイルを橙で敷き直し、
      * 中心ほど濃くなるマスクで丸く切る。タイル自体は動かさないので、
      * 背景の蜂の巣がその場で反応したように見える。
      */
@@ -3354,7 +3386,6 @@
        */
       body.berserk .sync-rate-text,
       body.berserk .berserk-fx,
-      body.berserk .berserk-fx::before,
       body.berserk .berserk-fx::after,
       body.berserk .berserk-fx *,
       body.berserk .berserk-fx *::before,
@@ -4726,13 +4757,13 @@
     /*
      * iframe の中は別文書で、外の cursor が届かない。暴走中だけ面を張って手を保ち、
      * 最初に押した時点でその面を破って退かせる。以後その埋め込みは普通に触れる。
-     * 破れる 0.62s の間は面が残るので、演出が終わるまでクリックは中へ抜けない。
+     * 破れる 0.72s の間は面が残るので、演出が終わるまでクリックは中へ抜けない。
      */
-    const VEIL_BREAK_MS = 620;
+    const VEIL_BREAK_MS = 720;
     const iframeVeils = [];
-    document.querySelectorAll('.sound-log-embed, .calendar-container, .video-container')
+    // Turnstile の iframe は遅延読み込みで後から挿さる。要素の有無では判定しない
+    document.querySelectorAll('.sound-log-embed, .calendar-container, .video-container, .offer-turnstile')
       .forEach((holder) => {
-        if (!holder.querySelector('iframe')) return;
         const veil = document.createElement('div');
         veil.className = 'at-iframe-veil';
         veil.setAttribute('aria-hidden', 'true');

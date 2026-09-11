@@ -983,12 +983,21 @@
     .confirm-card p { font-size: 12.5px; color: var(--ink-2); line-height: 1.7; margin: 0; }
     .confirm-actions { display: flex; gap: 8px; margin-top: 6px; }
     .confirm-actions > button { flex: 1 1 0%; justify-content: center; }
-    /* CSV のひな形。狭いパネルなので2〜3列に折り返す */
-    .tpl-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
-      gap: 6px; margin-top: 7px;
+    .bulk-head { margin-bottom: 7px; }
+    .bulk-map { margin-bottom: 12px; }
+    .bulk-map-head {
+      font-size: 11.5px; color: var(--ink-3); margin: 0 0 8px;
     }
-    .tpl-grid button { width: 100%; justify-content: center; }
+    .bulk-map-head b { color: var(--ink); font-weight: 600; }
+    .bulk-map .field { margin-bottom: 10px; }
+    .bulk-map-out {
+      margin: 0 0 12px; padding: 8px 10px;
+      font-family: var(--font-mono); font-size: 11px; line-height: 1.6;
+      color: var(--ink-2); background: var(--panel-2);
+      border: 1px solid var(--rule); border-radius: var(--r-1);
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .bulk-map-out.empty { color: var(--err); font-family: inherit; }
     .csv-note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.75; color: var(--ink-3); }
     .csv-note.hidden { display: none; }
     .csv-note p { margin: 0 0 8px; }
@@ -1737,26 +1746,20 @@
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
-            <!-- ひな形はモーダルの奥に置くと存在に気づかれない。CSVをどう書くか
-                 分からない人がまず触るところなので、いちばん上へ出す。 -->
-            <div class="field">
-              <div class="field-head">
-                <label>ひな形をダウンロード</label>
-                <button type="button" class="info-btn" data-note-toggle="csv"
-                  aria-expanded="false" aria-label="CSVの書き方">
-                  <i data-lucide="info" class="w-4 h-4"></i>
-                </button>
-              </div>
-              <span class="sub">作りたいものを選ぶと、見本入りのCSVが落ちてきます。中身を書き換えて、下から読み込ませてください。</span>
-              <div class="tpl-grid" id="csv-tpl-grid"></div>
+            <div class="field-head bulk-head">
+              <label>CSVを読み込む</label>
+              <button type="button" class="info-btn" data-note-toggle="csv"
+                aria-expanded="false" aria-label="CSVの書き方">
+                <i data-lucide="info" class="w-4 h-4"></i>
+              </button>
             </div>
 
             <div class="csv-note hidden" data-note="csv">
-              <p>1行が1枚になります。「内容」の列がQRコードの中身で、使わない列は無視されます。どの列を何に使うかは、読み込んだあとで選べます。</p>
+              <p>1行が1枚になります。「内容」でいま選んでいる種類の項目ひとつひとつに、CSVのどの列を当てるかを選びます。当てなかった項目は「内容」に入っている値のまま、どの行も同じになります。</p>
               <p>1回につき1000行までです。ExcelのCSV（Shift_JIS）もそのまま読めます。区切りはカンマ・タブ・セミコロンを自動で見分けます。</p>
               <p>カンマや改行を含むセルは <code>"</code> で囲み、セルの中の <code>"</code> は <code>""</code> と2つ重ねてください（RFC 4180）。</p>
-              <p>ファイル名に使えない文字（<code>\ / : * ? " &lt; &gt; |</code>）は <code>_</code> に置き換わり、60文字を超えると切られます。同じ名前が続いたときは <code>-2</code> <code>-3</code> と付きます。</p>
-              <p>できあがりはZIPで、中に「一覧.csv」（行番号・ファイル名・中身）も入ります。読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。</p>
+              <p>ファイル名は <code>qr-01</code> から順に振ります。どの行がどのファイルになったかは、ZIPに入る「一覧.csv」（行番号・ファイル名・中身）で確かめられます。</p>
+              <p>読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。</p>
             </div>
 
             <div class="logo-drop" id="bulk-drop" role="button" tabindex="0">
@@ -1775,23 +1778,12 @@
                 <label for="bulk-header">1行目は見出し（QRコードは作らない）</label>
               </div>
 
-              <div class="field" style="margin-bottom:12px">
-                <label for="bulk-col-content">QRコードにする列</label>
-                <select id="bulk-col-content" class="tb-select"></select>
-              </div>
-              <div class="field" style="margin-bottom:12px">
-                <label for="bulk-col-name">ファイル名にする列</label>
-                <select id="bulk-col-name" class="tb-select"></select>
-              </div>
-              <div class="field hidden" id="bulk-label-row" style="margin-bottom:12px">
-                <label for="bulk-col-label">フレームの文字にする列</label>
-                <select id="bulk-col-label" class="tb-select"></select>
-              </div>
+              <!-- 「内容」で選んでいる種類の項目に、CSVの列を当てていく。
+                   Wi-Fi や連絡先の書式を手で組ませると、区切り記号のエスケープ
+                   まで覚えてもらうことになる。項目ごとに列を指すほうが速い。 -->
+              <div class="bulk-map" id="bulk-map"></div>
+              <div class="bulk-preview" id="bulk-preview" style="margin-bottom:12px"></div>
 
-              <div class="field remember-row" style="margin-bottom:12px">
-                <input type="checkbox" id="bulk-as-url" class="tb-check">
-                <label for="bulk-as-url">URLとして整える（https:// を補う）</label>
-              </div>
 
               <div class="field" style="margin-bottom:12px">
                 <label for="bulk-format">書き出す形式</label>
@@ -1804,8 +1796,6 @@
                 <span class="sub">仕上がりサイズと圧縮は、左の書き出し設定をそのまま使います。</span>
                 <span class="sub hidden" id="bulk-format-note">AVIFは1枚ごとに 0.3〜1秒 かかります（PNGの20倍ほど）。行数が多いときはPNGのほうが速く終わります。</span>
               </div>
-
-              <div class="bulk-preview" id="bulk-preview" style="margin-bottom:12px"></div>
 
               <button id="btn-bulk-run" class="st-btn" type="button" style="width:100%; justify-content:center">
                 まとめて作る

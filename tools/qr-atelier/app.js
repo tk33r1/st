@@ -998,6 +998,7 @@
         state.type = t.id;
         buildTypeChips();
         buildTypeFields();
+        bulkRefresh();
         update();
       });
       host.appendChild(b);
@@ -2481,7 +2482,6 @@
     updateCanvasChecker();
     // 一括生成の「フレームの文字にする列」も、フレームの種類しだいで
     // 出したり引っ込めたりする。ここも描けたかどうかとは関係がない
-    syncBulkLabelRow();
 
     const text = payload();
     lastPayload = text;
@@ -3256,117 +3256,6 @@
     }
   }
 
-  // ------------------------------------------------------------------
-  // CSV のひな形
-  // ------------------------------------------------------------------
-  // 中身は画面と同じ TYPES の build() に通して作る。Wi-Fi や vCard の
-  // 書き方をここへ書き写すと、本体を直したときに必ず食い違う。
-  //   [種類, 値, ファイル名, ラベル]
-  const TEMPLATE_ROWS = {
-    url: [
-      ['url', { url: 'https://example.com/shop-a' }, '店舗A', 'A店'],
-      ['url', { url: 'https://example.com/shop-b' }, '店舗B', 'B店']
-    ],
-    sns: [
-      ['sns', { platform: 'instagram', id: 'example_shop' }, 'Instagram', 'Insta'],
-      ['sns', { platform: 'x', id: 'example_shop' }, 'X', 'X'],
-      ['sns', { platform: 'line', id: 'abcdefg' }, 'LINE', 'LINE'],
-      ['sns', { platform: 'youtube', id: 'example_shop' }, 'YouTube', 'YT']
-    ],
-    text: [
-      ['text', { text: 'ご来店ありがとうございます' }, 'あいさつ', ''],
-      ['text', { text: '10%OFF クーポン' }, 'クーポン', 'CLUPON']
-    ],
-    event: [
-      ['event', { title: '新商品発表会', start: '2026-10-01T13:00', end: '2026-10-01T15:00',
-        location: '東京ビッグサイト', desc: '受付は12時30分から' }, '発表会', ''],
-      ['event', { title: '内覧会', start: '2026-10-02T10:00', end: '2026-10-02T17:00',
-        location: '本社ショールーム', desc: '' }, '内覧会', '']
-    ],
-    email: [
-      ['email', { to: 'info@example.com', subject: 'お問い合わせ', body: '' }, '問い合わせ', ''],
-      ['email', { to: 'support@example.com', subject: '修理のご依頼', body: '製品名：' }, '修理受付', '']
-    ],
-    tel: [
-      ['tel', { tel: '+81312345678' }, '本社', ''],
-      ['tel', { tel: '09012345678' }, '担当携帯', '']
-    ],
-    sms: [
-      ['sms', { tel: '09012345678', msg: '予約をお願いします' }, '予約', ''],
-      ['sms', { tel: '09087654321', msg: '' }, '連絡先', '']
-    ],
-    wifi: [
-      ['wifi', { ssid: 'CafeWiFi-1F', pass: 'guest1234', enc: 'WPA', hidden: false }, '1F', '1F'],
-      ['wifi', { ssid: 'CafeWiFi-2F', pass: 'guest5678', enc: 'WPA', hidden: false }, '2F', '2F'],
-      ['wifi', { ssid: 'CafeWiFi-Free', pass: '', enc: 'nopass', hidden: false }, 'フリー', 'FREE']
-    ],
-    vcard: [
-      ['vcard', { format: 'vcard', last: '山田', first: '太郎', org: '株式会社サンプル',
-        title: '営業部', tel: '09012345678', email: 'taro@example.com',
-        url: 'https://example.com/', note: '' }, '山田太郎', ''],
-      ['vcard', { format: 'mecard', last: '鈴木', first: '花子', org: '株式会社サンプル',
-        title: '広報部', tel: '09087654321', email: 'hanako@example.com',
-        url: '', note: '' }, '鈴木花子', '']
-    ],
-    geo: [
-      ['geo', { lat: '35.681236', lng: '139.767125' }, '東京駅', '東京'],
-      ['geo', { lat: '34.702485', lng: '135.495951' }, '大阪駅', '大阪']
-    ],
-    crypto: [
-      ['crypto', { chain: 'bitcoin', addr: 'bc1qexampleaddressreplacemexxxxxxxxxxxxxxx',
-        amount: '0.001', label: 'ご支援ありがとうございます' },
-        '寄付（アドレスを差し替えてください）', ''],
-      ['crypto', { chain: 'lightning', addr: 'lnbc1exampleinvoicereplacemexxxxxxxxxxxxx',
-        amount: '', label: '' }, 'Lightning（差し替えてください）', '']
-    ]
-  };
-
-  // 「ぜんぶ入り」は各種類から1行ずつ。どの種類がどう書けるのかを
-  // 1枚で見比べられる。
-  function templateRows(id) {
-    if (id !== 'all') return TEMPLATE_ROWS[id] || [];
-    const out = [];
-    TYPES.forEach(t => {
-      const rows = TEMPLATE_ROWS[t.id];
-      if (rows && rows.length) out.push(rows[0]);
-    });
-    return out;
-  }
-
-  function templateCsv(id) {
-    const lines = [['内容', 'ファイル名', 'ラベル'].join(',')];
-    templateRows(id).forEach(([typeId, values, name, label]) => {
-      const type = TYPES.find(t => t.id === typeId);
-      const text = type ? type.build(values) : '';
-      if (!text) return;
-      lines.push([text, name, label].map(csvCell).join(','));
-    });
-    // Excel で開いたときに日本語が化けないよう BOM を付ける
-    return String.fromCharCode(0xFEFF) + lines.join(CRLF) + CRLF;
-  }
-
-  function downloadTemplate(id) {
-    const csv = templateCsv(id);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    saveBlob(blob, 'qr-template-' + id + '.csv');
-  }
-
-  // ひな形のボタンは TYPES から起こす。種類を足したときに並べ忘れない。
-  function buildTemplateGrid() {
-    const grid = $('csv-tpl-grid');
-    if (!grid || grid.childElementCount) return;
-    const items = [{ id: 'all', name: 'ぜんぶ入り' }]
-      .concat(TYPES.filter(t => TEMPLATE_ROWS[t.id]).map(t => ({ id: t.id, name: t.name })));
-    items.forEach(it => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'st-btn-quiet btn-sm';
-      b.textContent = it.name;
-      b.addEventListener('click', () => downloadTemplate(it.id));
-      grid.appendChild(b);
-    });
-  }
-
   // 取り返しのつかない操作の前に一度だけ訊く。
   // opts: { title, body, ok, cancel }。ok を押したときだけ true。
   function askConfirm(opts) {
@@ -3544,6 +3433,9 @@
   const BULK_MAX = 1000;      // これ以上は焼くのも ZIP にするのも重すぎる
   const BULK_YIELD = 8;       // 何件ごとに画面へ制御を返すか
   const BULK_NONE = '__none__';
+  const BULK_DOT = String.fromCharCode(46);   // 種類と項目をつなぐ区切り
+  const BULK_SEP = String.fromCharCode(47);   // 1つの列を2項目に当てたときの区切り
+  const BULK_NL = String.fromCharCode(10);
 
   const bulk = {
     rows: [],          // 見出しも含む、読み込んだままの全行
@@ -3571,59 +3463,183 @@
     return bulk.rows.slice(useHeader ? 1 : 0);
   }
 
-  // 見出しの名前で当たりを付ける。ひな形はこの名前で見出しを出しているので、
-  // 落としてそのまま流せば、ファイル名もラベルも選び直さずに済む。
-  const BULK_GUESS = {
-    'bulk-col-content': ['内容', 'コンテンツ', 'url', 'content'],
-    'bulk-col-name': ['ファイル名', '名前', 'name', 'filename'],
-    'bulk-col-label': ['ラベル', 'label']
+  // 項目に列を当てるときの手がかり。見出しが項目名そのものでなくても拾える
+  // ように、よくある言い換えを持っておく。キーは「種類.項目」にすること。
+  // 項目キーだけで引くと、カレンダーの「予定名」と連絡先の「役職」が同じ
+  // title で衝突して、まるで関係のない列を掴む。
+  const BULK_ALIAS = {
+    'url.url': ['url', 'リンク', 'リンク先', '内容', 'アドレス', 'リンクurl'],
+    'sns.id': ['id', 'ユーザー名', 'アカウント', 'ユーザーid', 'ユーザ名'],
+    'sns.platform': ['サービス', 'sns', 'プラットフォーム'],
+    'text.text': ['文章', '本文', '内容', 'テキスト'],
+    'event.title': ['予定名', 'タイトル', '名称', 'イベント名'],
+    'event.start': ['開始', '開始日時', '開始時刻'],
+    'event.end': ['終了', '終了日時', '終了時刻'],
+    'event.location': ['場所', '会場', '住所'],
+    'event.desc': ['詳細', 'メモ', '説明', '備考', '詳細メモ'],
+    'email.to': ['宛先', 'メール', 'メールアドレス', 'email'],
+    'email.subject': ['件名', 'タイトル'],
+    'email.body': ['本文', '内容'],
+    'tel.tel': ['電話', '電話番号', '連絡先', 'tel'],
+    'sms.tel': ['送信先', '電話', '電話番号', 'tel'],
+    'sms.msg': ['本文', 'メッセージ'],
+    'wifi.ssid': ['ssid', 'ネットワーク名', 'ネットワーク', 'ネットワーク名ssid'],
+    'wifi.pass': ['パスワード', 'password', 'pass', 'キー'],
+    'wifi.enc': ['暗号化', '暗号化方式', '認証方式', 'セキュリティ'],
+    'wifi.hidden': ['ステルス', 'ステルスssid', '非公開'],
+    'vcard.last': ['姓', '名字', '苗字'],
+    'vcard.first': ['名', '下の名前'],
+    'vcard.org': ['会社', '組織', '会社名', '所属', '会社組織'],
+    'vcard.title': ['役職', '肩書', '肩書き'],
+    'vcard.tel': ['電話', '電話番号', '携帯'],
+    'vcard.email': ['メール', 'メールアドレス', 'email'],
+    'vcard.url': ['サイト', 'url', 'ホームページ'],
+    'vcard.note': ['メモ', '備考'],
+    'geo.lat': ['緯度', 'lat'],
+    'geo.lng': ['経度', 'lng', 'lon', 'longitude'],
+    'crypto.addr': ['アドレス', '請求書', 'address', 'アドレス請求書'],
+    'crypto.amount': ['金額', 'amount', '金額btc'],
+    'crypto.label': ['ラベル', 'label']
   };
 
-  function bulkGuessColumn(id) {
-    const want = BULK_GUESS[id];
-    if (!want) return '';
+  function bulkNorm(v) {
+    return String(v == null ? '' : v).trim().toLowerCase()
+      .split(' ').join('').split('　').join('');
+  }
+
+  // 見出しの名前で当たりを付ける。合わなければ空を返して「固定」のままにする。
+  function bulkGuessColumn(type, field) {
     const useHeader = $('bulk-header').checked && bulk.rows.length > 1;
     const head = useHeader ? bulk.rows[0] : [];
+    if (!head.length) return '';
+    const want = [field.label, field.k]
+      .concat(BULK_ALIAS[bulkMapKey(type, field)] || []).map(bulkNorm);
     for (let i = 0; i < head.length; i++) {
-      const name = String(head[i] == null ? '' : head[i]).trim().toLowerCase();
-      if (want.some(w => w.toLowerCase() === name)) return String(i);
+      const name = bulkNorm(head[i]);
+      if (name && want.indexOf(name) >= 0) return String(i);
     }
     return '';
   }
 
-  // 選び直しても選択が飛ばないよう、いまの値を覚えてから組み直す
-  function bulkFillSelects() {
-    const cols = bulkColumns();
-    [['bulk-col-content', false], ['bulk-col-name', true], ['bulk-col-label', true]]
-      .forEach(pair => {
-        const sel = $(pair[0]);
-        const keep = sel.value;
-        sel.innerHTML = '';
-        if (pair[1]) sel.appendChild(el('option', { value: BULK_NONE }, '使わない'));
-        cols.forEach((c, i) => sel.appendChild(el('option', { value: String(i) }, c)));
-        const has = Array.prototype.some.call(sel.options, o => o.value === keep);
-        const guess = bulkGuessColumn(pair[0]);
-        sel.value = has ? keep : (guess || (pair[1] ? BULK_NONE : '0'));
-      });
+  // 「内容」でいま選んでいる種類。一括生成はこの種類の組み立てをそのまま使う。
+  function bulkType() {
+    return TYPES.find(t => t.id === state.type) || TYPES[0];
   }
 
-  // 最初の数行を表で見せる。どの列が QR になるのかは、色で示すのが早い。
+  // bulkMap … いま効いている割り当て（毎回組み直す）
+  // bulkPicked … 人が手で選んだものだけ。当て推量はここへ入れない。
+  // 分けないと、列がまだ無いうちの空振りが「選んだ結果」として焼き付き、
+  // ファイルを読ませても見出しを拾わなくなる。
+  const bulkMap = {};
+  const bulkPicked = {};
+
+  function bulkMapKey(type, field) { return type.id + BULK_DOT + field.k; }
+
+  // 項目ひとつにつき1本のセレクト。当てなければ「内容」の値のまま。
+  function bulkFillSelects() {
+    const host = $('bulk-map');
+    if (!host) return;
+    const type = bulkType();
+    const cols = bulkColumns();
+    host.innerHTML = '';
+
+    const head = el('p', { class: 'bulk-map-head' });
+    head.appendChild(document.createTextNode('「内容」で選んでいる '));
+    head.appendChild(el('b', null, type.name));
+    head.appendChild(document.createTextNode(' の項目に、CSVの列を当てます。'));
+    host.appendChild(head);
+
+    const firstText = type.fields.find(f => f.type !== 'select' && f.type !== 'checkbox');
+
+    type.fields.forEach(f => {
+      const wrap = el('div', { class: 'field' });
+      const id = 'bulk-map-' + type.id + '-' + f.k;
+      wrap.appendChild(el('label', { for: id }, f.label));
+      const sel = el('select', { class: 'tb-select', id: id });
+      sel.appendChild(el('option', { value: BULK_NONE }, '使わない（いまの内容のまま）'));
+      cols.forEach((c, i) => sel.appendChild(el('option', { value: String(i) }, c)));
+      const key = bulkMapKey(type, f);
+      const keep = bulkPicked[key];
+      const has = keep != null && Array.prototype.some.call(sel.options, o => o.value === keep);
+      // 何も当てないと全行が同じ絵になるので、頭の1項目だけ1列目を指しておく。
+      // 選択肢やチェックの項目を指しても意味が通らないので、文字の項目から選ぶ。
+      const fallback = f === firstText ? '0' : BULK_NONE;
+      sel.value = has ? keep : (bulkGuessColumn(type, f) || fallback);
+      // 列がまだ1本も無いときは、どの値も選べない。空のままにしない。
+      if (sel.selectedIndex < 0) sel.value = BULK_NONE;
+      bulkMap[key] = sel.value;
+      sel.addEventListener('change', () => {
+        bulkPicked[key] = sel.value;
+        bulkMap[key] = sel.value;
+        bulkPreview();
+      });
+      wrap.appendChild(sel);
+      host.appendChild(wrap);
+    });
+  }
+
+  // 当てた列がひとつでもあるか。ぜんぶ「固定」だと、同じ絵が行数ぶん出る。
+  function bulkMappedFields(type) {
+    return type.fields.filter(f => bulkMap[bulkMapKey(type, f)] !== BULK_NONE);
+  }
+
+  // 選択肢とチェックは、CSV に何と書かれていても拾えるようにする。
+  // 読めない綴りのときは「内容」の値を残す（黙って既定値に倒さない）。
+  const BULK_TRUE = ['true', '1', 'yes', 'y', 'on', 'はい', 'オン', 'あり', '○'];
+  const BULK_FALSE = ['false', '0', 'no', 'n', 'off', 'いいえ', 'オフ', 'なし', '×'];
+
+  function bulkCoerce(field, raw, fallback) {
+    const s = String(raw == null ? '' : raw).trim();
+    if (field.type === 'checkbox') {
+      const k = bulkNorm(s);
+      if (BULK_TRUE.indexOf(k) >= 0) return true;
+      if (BULK_FALSE.indexOf(k) >= 0) return false;
+      return fallback;
+    }
+    if (field.type === 'select') {
+      const k = bulkNorm(s);
+      const hit = (field.options || []).find(o => bulkNorm(o[0]) === k || bulkNorm(o[1]) === k);
+      return hit ? hit[0] : fallback;
+    }
+    return s;
+  }
+
+  // 1行ぶんの中身を、画面と同じ build() で組み立てる。
+  function bulkPayload(type, row) {
+    const base = state.values[type.id] || {};
+    const vals = Object.assign({}, base);
+    type.fields.forEach(f => {
+      const pick = bulkMap[bulkMapKey(type, f)];
+      if (pick === BULK_NONE || pick == null) return;
+      vals[f.k] = bulkCoerce(f, row[Number(pick)], base[f.k]);
+    });
+    try { return String(type.build(vals) || ''); } catch (e) { return ''; }
+  }
+
+  // 最初の数行を表で見せる。当てた列に色を置き、その下に「1行目はこうなる」を
+  // そのまま出す。組み上がりを見せないと、当て方が合っているか確かめようがない。
   function bulkPreview() {
     const host = $('bulk-preview');
     host.innerHTML = '';
     const rows = bulkDataRows();
     if (!rows.length) return;
     const cols = bulkColumns();
-    const picked = {
-      content: Number($('bulk-col-content').value),
-      name: $('bulk-col-name').value === BULK_NONE ? -1 : Number($('bulk-col-name').value),
-      label: $('bulk-col-label').value === BULK_NONE ? -1 : Number($('bulk-col-label').value)
-    };
+    const type = bulkType();
+    // 列番号 → 当てた項目名（同じ列を2つの項目に当てることもできる）
+    const picked = {};
+    type.fields.forEach(f => {
+      const v = bulkMap[bulkMapKey(type, f)];
+      if (v === BULK_NONE || v == null) return;
+      const i = Number(v);
+      picked[i] = picked[i] ? picked[i] + BULK_SEP + f.label : f.label;
+    });
+
     const table = el('table');
     const thead = el('thead');
     const htr = el('tr');
     cols.forEach((c, i) => {
-      const th = el('th', { class: i === picked.content ? 'pick' : '' }, c);
+      const th = el('th', { class: picked[i] ? 'pick' : '' }, picked[i] ? picked[i] : c);
+      if (picked[i]) th.setAttribute('title', c);
       htr.appendChild(th);
     });
     thead.appendChild(htr);
@@ -3632,38 +3648,18 @@
     rows.slice(0, 4).forEach(r => {
       const tr = el('tr');
       cols.forEach((c, i) => {
-        const marks = [];
-        if (i === picked.content) marks.push('pick');
-        tr.appendChild(el('td', { class: marks.join(' ') }, r[i] || ''));
+        tr.appendChild(el('td', { class: picked[i] ? 'pick' : '' }, r[i] || ''));
       });
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
+
+    const out = bulkPayload(type, rows[0]);
+    const line = el('p', { class: 'bulk-map-out' + (out ? '' : ' empty') },
+      out ? '1行目はこうなります：' + BULK_NL + out
+          : '1行目が空になります。当てる列を見直すか、「内容」に値を入れてください。');
+    host.appendChild(line);
     host.appendChild(table);
-  }
-
-  // ラベル付きのフレームを選んでいるときだけ、文字を差し替える列を出す。
-  // 効きようのない設定を並べても、迷わせるだけになる。
-  function syncBulkLabelRow() {
-    const row = $('bulk-label-row');
-    if (!row) return;
-    const st = state.style.frame || {};
-    // 「文字」で描かれる帯が実際にあるときだけ。位置ごとに内容の指定が
-    // 別なので、いま出ている帯のほうを見る
-    const pos = framePosOf();
-    const usable = st.type === 'label' && (
-      (pos !== 'top' && st.contentMode === 'text') ||
-      (pos !== 'bottom' && st.topContentMode === 'text'));
-    row.classList.toggle('hidden', !usable);
-  }
-
-  // ラベルの文字を1行ぶん差し替える。text と textTop のどちらが描かれるかは
-  // 位置で決まるので、出ている帯すべてに入れる。ここを frame.text だけに
-  // していると、位置が「上部」のとき全行が元の文言のまま焼き上がる。
-  function applyBulkLabel(frame, text) {
-    const pos = framePosOf(frame);
-    if (pos !== 'top') frame.text = text;
-    if (pos !== 'bottom') frame.textTop = text;
   }
 
   function bulkSummary() {
@@ -3689,7 +3685,6 @@
   function bulkRefresh() {
     bulkFillSelects();
     bulkPreview();
-    syncBulkLabelRow();
     syncBulkFileName();
     syncBulkHint();
     $('bulk-report').innerHTML = '';
@@ -3711,6 +3706,8 @@
       bulk.rows = out.rows;
       bulk.fileName = file.name;
       bulk.encoding = parsed.encoding;
+      // 別のファイルなら列の並びも違う。前の選択は引き継がず、見出しから引き直す
+      Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
       $('bulk-setup').classList.remove('hidden');
       // 見出しらしさは、1行目に「作れない中身」が並んでいるかでは決められない。
       // 素直に既定を on にしておき、表を見て外してもらう
@@ -3767,22 +3764,18 @@
     if (!rows.length) { showToast('CSVの行がありません', 'error'); return; }
     if (!(await okToExport())) return;
 
-    const contentIdx = Number($('bulk-col-content').value) || 0;
-    const nameSel = $('bulk-col-name').value;
-    const labelSel = $('bulk-col-label').value;
-    const nameIdx = nameSel === BULK_NONE ? -1 : Number(nameSel);
-    const labelIdx = (labelSel === BULK_NONE || $('bulk-label-row').classList.contains('hidden'))
-      ? -1 : Number(labelSel);
-    const asUrl = $('bulk-as-url').checked;
+    const type = bulkType();
+    if (!bulkMappedFields(type).length) {
+      showToast('CSVの列をひとつも当てていません', 'error');
+      return;
+    }
     const fmt = BULK_FORMATS[$('bulk-format').value] || BULK_FORMATS.png;
 
     const over = rows.length > BULK_MAX ? rows.length - BULK_MAX : 0;
     const use = over ? rows.slice(0, BULK_MAX) : rows;
 
-    // フレームの文字だけ行ごとに差し替える。塗りやロゴは共有のままでよいので、
-    // frame だけ自前の入れ物にして、render に渡すあいだ state を汚さない
+    // デザインは全行で同じ。フレームの文字も、画面で入れた値のまま出る。
     const baseStyle = Object.assign({}, state.style);
-    baseStyle.frame = Object.assign({}, state.style.frame);
 
     const btn = $('btn-bulk-run');
     bulk.running = true;
@@ -3802,8 +3795,7 @@
     const manifest = [['行', 'ファイル名', '中身']];
 
     try {
-      const labels = labelIdx >= 0 ? use.map(r => String(r[labelIdx] || '')) : [];
-      const faceCss = await bulkFontCss(baseStyle, labels);
+      const faceCss = await bulkFontCss(baseStyle, []);
 
       for (let i = 0; i < use.length; i++) {
         if (bulk.abort) break;
@@ -3817,8 +3809,7 @@
         }
         const row = use[i];
         const lineNo = i + headOffset;
-        const raw = String(row[contentIdx] == null ? '' : row[contentIdx]).trim();
-        const text = asUrl ? normalizeUrl(raw) : raw;
+        const text = bulkPayload(type, row);
         if (!text) {
           // 行そのものが空っぽなら黙って飛ばす。ファイル末尾の改行や手で
           // 編集した空行まで並べると、ほんとうに直すべき行が埋もれる
@@ -3834,12 +3825,10 @@
           continue;
         }
 
-        if (labelIdx >= 0) applyBulkLabel(baseStyle.frame, String(row[labelIdx] || ''));
         let svg = window.QRStyle.render(qr, baseStyle).svg;
         if (faceCss) svg = window.QRStyle.embedFontCss(svg, faceCss);
 
-        const base = window.QRBulk.safeName(nameIdx >= 0 ? row[nameIdx] : '') || ('qr-' + pad(i + 1));
-        const name = take(base, fmt.ext);
+        const name = take('qr-' + pad(i + 1), fmt.ext);
 
         let bytes;
         if (fmt.ext === 'svg') {
@@ -3969,9 +3958,6 @@
     });
     $('btn-bulk-clear').addEventListener('click', clearBulk);
     $('bulk-header').addEventListener('change', bulkRefresh);
-    ['bulk-col-content', 'bulk-col-name', 'bulk-col-label'].forEach(id => {
-      $(id).addEventListener('change', bulkPreview);
-    });
     $('btn-bulk-run').addEventListener('click', runBulk);
   }
 
@@ -4793,7 +4779,6 @@
     buildIconGrid();
     buildFrameIconGrid();
     buildFrameChips();
-    buildTemplateGrid();
     syncControls();
     wire();
     wireBulk();
