@@ -636,6 +636,67 @@
       opacity: 0.3;
     }
 
+    /* Big Five (OCEAN): one track per domain, plus a thin track per facet. */
+    .bf-bar {
+      position: relative;
+      height: 0.5rem;
+      width: 100%;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background-color: var(--surface-color);
+      overflow: hidden;
+    }
+
+    .bf-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.5s ease;
+    }
+
+    /* auto-fit, not a media query: the editor pane is far narrower than the
+       viewport, so the column count has to follow the container. */
+    .bf-facets {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      column-gap: 1.5rem;
+      row-gap: 0.25rem;
+    }
+
+    .bf-facet {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Fixed basis, not a percentage: every facet track has to be the same
+       length or the fills stop being comparable between rows. */
+    .bf-facet-name {
+      flex: 0 0 7.75rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bf-facet-track {
+      flex: 1 1 auto;
+      min-width: 1.5rem;
+      height: 2px;
+      background-color: var(--border-color);
+    }
+
+    .bf-facet-fill {
+      display: block;
+      height: 100%;
+      opacity: 0.7;
+      transition: width 0.5s ease;
+    }
+
+    .bf-facet-score {
+      flex: 0 0 1.25rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
     .meditation-overlay {
       position: fixed;
       top: 0;
@@ -2862,7 +2923,7 @@
     <p>Learn about me. Shinya Takeda, Technical Marketing Lead. The sun for the cyber realm, The moon for music and
       philosophy. I love profound tranquility, laced with a spoonful of madness.</p>
     <h2><a href="?cmd=identify">identify</a></h2>
-    <p>View personality versions. MBTI and CliftonStrengths profile.</p>
+    <p>View personality versions. MBTI, CliftonStrengths and Big Five (OCEAN) profile.</p>
     <h3><a href="?cmd=identify&v=2.0">ver.2.0 [ACTIVE]</a></h3>
     <p>Post-traffic accident</p>
     <h3><a href="?cmd=identify&v=1.0">ver.1.0 [ARCHIVED]</a></h3>
@@ -3571,7 +3632,16 @@
         s: { t: 'CliftonStrengths: Strategic Thinking 🔗', t_ja: 'クリフトンストレングス: 戦略的思考力 🔗', l: 'https://tk.st/data/st-cliftonstrengths-top5-ver2.pdf' },
         traits: [{ name: 'Extraverted', pct: 54, opposite: 'Introverted' }, { name: 'Intuitive', pct: 94, opposite: 'Observant' }, { name: 'Thinking', pct: 41, opposite: 'Feeling' }, { name: 'Judging', pct: 46, opposite: 'Prospecting' }, { name: 'Assertive', pct: 83, opposite: 'Turbulent' }],
         strengths: [{ name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' }, { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' }, { name: 'Executing', pct: 15.034, pattern: 'dots' }],
-        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Input', category: 'Strategic Thinking' }, { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Individualization', category: 'Relationship Building' }]
+        themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Input', category: 'Strategic Thinking' }, { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Individualization', category: 'Relationship Building' }],
+        b: { t: 'Big Five: OCEAN 🔗', t_ja: 'ビッグファイブ: OCEAN 🔗', l: 'https://bigfive-test.com/result/6aa3b45c4caee819a9552778' },
+        // IPIP-NEO (120 items): domain score out of 120, each facet out of 20.
+        bigfive: [
+          { name: 'Openness to Experience', score: 101, level: 'High', facets: [{ name: 'Imagination', score: 17 }, { name: 'Artistic Interests', score: 19 }, { name: 'Emotionality', score: 11 }, { name: 'Adventurousness', score: 20 }, { name: 'Intellect', score: 19 }, { name: 'Liberalism', score: 15 }] },
+          { name: 'Conscientiousness', score: 92, level: 'High', facets: [{ name: 'Self-Efficacy', score: 17 }, { name: 'Orderliness', score: 19 }, { name: 'Dutifulness', score: 15 }, { name: 'Achievement-Striving', score: 16 }, { name: 'Self-Discipline', score: 14 }, { name: 'Cautiousness', score: 11 }] },
+          { name: 'Extraversion', score: 77, level: 'High', facets: [{ name: 'Friendliness', score: 15 }, { name: 'Gregariousness', score: 12 }, { name: 'Assertiveness', score: 9 }, { name: 'Activity Level', score: 9 }, { name: 'Excitement-Seeking', score: 18 }, { name: 'Cheerfulness', score: 14 }] },
+          { name: 'Agreeableness', score: 83, level: 'High', facets: [{ name: 'Trust', score: 15 }, { name: 'Morality', score: 17 }, { name: 'Altruism', score: 12 }, { name: 'Cooperation', score: 14 }, { name: 'Modesty', score: 11 }, { name: 'Sympathy', score: 14 }] },
+          { name: 'Neuroticism', score: 41, level: 'Low', facets: [{ name: 'Anxiety', score: 5 }, { name: 'Anger', score: 4 }, { name: 'Depression', score: 9 }, { name: 'Self-Consciousness', score: 8 }, { name: 'Immoderation', score: 11 }, { name: 'Vulnerability', score: 4 }] }
+        ]
       },
       '1.0': {
         m: { t: 'MBTI: Commander (ENTJ-A)', t_ja: 'MBTI: 指揮官 (ENTJ-A)', l: null },
@@ -3986,7 +4056,21 @@
       // CliftonStrengths themes
       'Maximizer': '最上志向', 'Input': '収集心', 'Strategic': '戦略性',
       'Ideation': '着想', 'Individualization': '個別化', 'Learner': '学習欲',
-      'Futuristic': '未来志向', 'Intellection': '内省'
+      'Futuristic': '未来志向', 'Intellection': '内省',
+      // Big Five domains and their IPIP-NEO facets
+      'Openness to Experience': '開放性', 'Conscientiousness': '誠実性',
+      'Extraversion': '外向性', 'Agreeableness': '協調性', 'Neuroticism': '神経症的傾向',
+      'High': '高い', 'Average': '平均的', 'Low': '低い',
+      'Imagination': '想像力', 'Artistic Interests': '芸術への関心', 'Emotionality': '情動性',
+      'Adventurousness': '冒険心', 'Intellect': '知性', 'Liberalism': '革新性',
+      'Self-Efficacy': '自己効力感', 'Orderliness': '秩序性', 'Dutifulness': '忠実性',
+      'Achievement-Striving': '達成追求', 'Self-Discipline': '自己統制', 'Cautiousness': '慎重さ',
+      'Friendliness': '友好性', 'Gregariousness': '社交性', 'Assertiveness': '自己主張',
+      'Activity Level': '活動性', 'Excitement-Seeking': '刺激希求', 'Cheerfulness': '快活さ',
+      'Trust': '信頼', 'Morality': '道徳性', 'Altruism': '利他性',
+      'Cooperation': '協力性', 'Modesty': '謙虚さ', 'Sympathy': '共感',
+      'Anxiety': '不安', 'Anger': '怒り', 'Depression': '抑うつ',
+      'Self-Consciousness': '自意識', 'Immoderation': '衝動性', 'Vulnerability': '脆弱性'
     };
     const term = en => tr(en, JA_TERMS[en]);
 
@@ -4034,6 +4118,24 @@
         <div class="w-56 text-right truncate text-secondary">${esc(term(row.category))}</div>
       </div>`).join('');
 
+    // Big Five: a domain track (out of BIGFIVE_DOMAIN_MAX) with its six facet
+    // tracks (out of BIGFIVE_FACET_MAX) nested underneath, mirroring the MBTI rows.
+    const BIGFIVE_DOMAIN_MAX = 120, BIGFIVE_FACET_MAX = 20;
+    const createBigFiveRows = (domains, isVer2) => {
+      const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      return domains.map(d => `
+        <div class="text-xs mb-6">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-normal">${esc(term(d.name))}</span>
+            <span class="text-secondary">${d.score} / ${BIGFIVE_DOMAIN_MAX} · ${esc(term(d.level))}</span>
+          </div>
+          <div class="bf-bar" aria-hidden="true"><div class="bf-bar-fill" style="width:${(d.score / BIGFIVE_DOMAIN_MAX * 100).toFixed(1)}%; background:${color};"></div></div>
+          <div class="bf-facets mt-2">
+            ${d.facets.map(f => `<div class="bf-facet"><span class="bf-facet-name text-[10px] text-secondary">${esc(term(f.name))}</span><span class="bf-facet-track" aria-hidden="true"><span class="bf-facet-fill" style="width:${(f.score / BIGFIVE_FACET_MAX * 100).toFixed(0)}%; background:${color};"></span></span><span class="bf-facet-score text-[10px] text-secondary">${f.score}</span></div>`).join('')}
+          </div>
+        </div>`).join('');
+    };
+
     const wrapCmd = (content, extraClass = '') => `<div class="my-3 w-[90%] max-w-[809px] ${extraClass}">${content}</div>`;
 
     const renderCmdList = (title, cmdList) => {
@@ -4058,6 +4160,17 @@
       const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${mTitle}</a>` : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${mTitle}</div>`;
       const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${sTitle}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${sTitle}</div>`;
 
+      // ver.1.0 predates the Big Five test, so the whole block is data-driven and simply absent there.
+      let bfHtml = '';
+      if (data.bigfive && data.b) {
+        const bTitle = pick(data.b, 't');
+        const bfTitleHtml = data.b.l ? `<a href="${data.b.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${bTitle}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${bTitle}</div>`;
+        bfHtml = `
+            ${bfTitleHtml}
+            <div>${createBigFiveRows(data.bigfive, isV2)}</div>
+            <div class="text-[10px] text-secondary opacity-70">${tr(`Domains are scored out of ${BIGFIVE_DOMAIN_MAX}, facets out of ${BIGFIVE_FACET_MAX}.`, `領域は${BIGFIVE_DOMAIN_MAX}点、各ファセットは${BIGFIVE_FACET_MAX}点満点です。`)}</div>`;
+      }
+
       const result = `
         <div class="mt-4 fade-in w-full">
           <div class="p-4 border rounded border-color bg-surface">
@@ -4070,6 +4183,7 @@
               <div class="flex text-[10px] font-bold mb-1 min-w-[400px]" style="color: ${titleColor};"><div class="w-8">${tr('RANK', '順位')}</div><div class="flex-1">${tr('THEME', '資質')}</div><div class="w-56 text-right">${tr('CATEGORY', '領域')}</div></div>
               <div class="overflow-x-auto border-t border-color min-w-[400px]">${tableRows}</div>
             </div>
+            ${bfHtml}
           </div>
         </div>`;
 

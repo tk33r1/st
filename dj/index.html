@@ -1274,6 +1274,58 @@
           url("../images/contents/real-hand-cursor_2@2x.png") 2x) 28 0, pointer;
     }
 
+    /* ===== 疑似カーソル =====
+     * Chromium は画面端から約 32px の帯の中では、36 CSS px を超える画像カーソルを
+     * 無効化する（UI 偽装の防止。実測で 36px は通り 40px 以上は拒否、判定は
+     * ビットマップの実寸ではなく CSS px での表示サイズ）。64px のまま端でも
+     * 手を出し続けるには、本物のカーソルを消して自前で描くしかない。
+     *
+     * at-fake-cursor は JS が疑似カーソルを用意できたときだけ付く。付かなければ
+     * 下の cursor: url(...) がそのまま効くので、JS が動かない環境でも手は出る。
+     */
+    .berserk-cursor {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 64px;
+      height: 64px;
+      z-index: 2500;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    /* 画像は hotspot ぶんずらして置く。包み側の原点がポインタの座標になる */
+    .berserk-cursor img {
+      position: absolute;
+      top: 0;
+      width: 64px;
+      height: 64px;
+      display: none;
+    }
+
+    .berserk-cursor-hand {
+      left: -6px;
+    }
+
+    .berserk-cursor-point {
+      left: -28px;
+    }
+
+    .berserk-cursor[data-kind="hand"] .berserk-cursor-hand,
+    .berserk-cursor[data-kind="point"] .berserk-cursor-point {
+      display: block;
+    }
+
+    /*
+     * 疑似カーソルを出している間は本物を全部消す。個別に列挙すると指定を足すたびに
+     * 漏れて 2 つ出るので、まとめて none にする。iframe の中は別文書なので効かないが、
+     * そちらは疑似カーソル側を隠して中のカーソルに任せる。
+     */
+    body.berserk.at-fake-cursor,
+    body.berserk.at-fake-cursor * {
+      cursor: none !important;
+    }
+
     /*
      * label にはブラウザ既定で cursor: default が当たっている。放っておくと
      * 項目名の上だけ矢印に戻るので、地の文と同じ手に揃える。
@@ -3775,6 +3827,13 @@
   <div class="berserk-flash" aria-hidden="true"></div>
   <!-- クリックした点に A.T. フィールドの干渉を出す受け皿。中身は JS が足して消す -->
   <div class="at-burst-layer" id="atBurstLayer" aria-hidden="true"></div>
+  <!-- 暴走中の手。画面端でも消えないよう、本物のカーソルを消して自前で描く -->
+  <div class="berserk-cursor" id="berserkCursor" data-kind="hand" aria-hidden="true" hidden>
+    <img class="berserk-cursor-hand" src="../images/contents/real-hand-cursor_1@2x.png" width="64" height="64"
+      alt="" decoding="async">
+    <img class="berserk-cursor-point" src="../images/contents/real-hand-cursor_2@2x.png" width="64" height="64"
+      alt="" decoding="async">
+  </div>
   <div class="shutdown-fx" aria-hidden="true">
     <span class="shutdown-fx-label" lang="ja">活動停止</span>
   </div>
@@ -4702,10 +4761,70 @@
       berserkElapsed.textContent = `ELAPSED ${mm}:${ss}`;
     };
 
+    /*
+     * 暴走中の手は自前で描く。Chromium は画面端から約 32px の帯では 36 CSS px を
+     * 超える画像カーソルを無効化するので、64px のままだと端で矢印に戻ってしまう。
+     * cursor: none にして、この要素をポインタに追従させる。
+     * 位置は常に控えておき、突入した瞬間からその場に出せるようにする。
+     */
+    const berserkCursor = document.getElementById('berserkCursor');
+    const POINTING_TARGETS = 'a, button, summary, [role="button"], .offer-select, .offer-input--datetime';
+    let cursorX = 0;
+    let cursorY = 0;
+    let cursorHasPos = false;
+    let cursorFrame = 0;
+
+    const paintCursor = () => {
+      cursorFrame = 0;
+      berserkCursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0)`;
+    };
+
+    const showCursor = (target) => {
+      if (!berserkCursor || !berserk || shuttingDown || !cursorHasPos) return;
+      const kind = target && target.closest && target.closest(POINTING_TARGETS) ? 'point' : 'hand';
+      if (berserkCursor.dataset.kind !== kind) berserkCursor.dataset.kind = kind;
+      berserkCursor.hidden = false;
+      // 1 フレームに 1 回だけ動かす。mousemove は毎フレーム以上に飛んでくる
+      if (!cursorFrame) cursorFrame = requestAnimationFrame(paintCursor);
+    };
+
+    const hideCursor = () => {
+      if (berserkCursor) berserkCursor.hidden = true;
+    };
+
+    /*
+     * mousemove ではなく pointermove を見る。タッチはタップのたびに mousemove を
+     * 合成するので、mousemove で拾うと指を離した場所に手が置き去りになる。
+     */
+    document.addEventListener('pointermove', (event) => {
+      if (event.pointerType !== 'mouse') return;
+      cursorX = event.clientX;
+      cursorY = event.clientY;
+      cursorHasPos = true;
+      showCursor(event.target);
+    }, { passive: true });
+
+    /*
+     * 窓の外や iframe の中へ抜けたときは relatedTarget が null になる。
+     * そこは別文書でこちらのカーソルが届かないので、疑似カーソルは引っ込めて
+     * 向こうのカーソルに任せる。戻ってくれば pointermove でまた出る。
+     */
+    document.addEventListener('pointerout', (event) => {
+      if (!event.relatedTarget) hideCursor();
+    }, { passive: true });
+    window.addEventListener('blur', hideCursor);
+
     const enterBerserk = () => {
       if (berserk) return;
       berserk = true;
       document.body.classList.add('berserk');
+
+      // 疑似カーソルを出せたときだけ本物を消す。用意できなければ url() の手が残る
+      if (berserkCursor) {
+        document.body.classList.add('at-fake-cursor');
+        // ホイールで突入した直後は mousemove が来ない。控えた座標からその場に出す
+        if (cursorHasPos) showCursor(document.elementFromPoint(cursorX, cursorY));
+      }
 
       berserkStartedAt = Date.now();
       renderElapsed();
@@ -4742,7 +4861,8 @@
       });
       berserk = false;
       shuttingDown = false;
-      document.body.classList.remove('berserk', 'shutting-down', 'berserk-enter');
+      document.body.classList.remove('berserk', 'shutting-down', 'berserk-enter', 'at-fake-cursor');
+      hideCursor();
       updateScrollUi();
     };
 

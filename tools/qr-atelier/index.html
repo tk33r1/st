@@ -984,6 +984,12 @@
     .confirm-actions { display: flex; gap: 8px; margin-top: 6px; }
     .confirm-actions > button { flex: 1 1 0%; justify-content: center; }
     .bulk-head { margin-bottom: 7px; }
+    /* ひな形。狭いパネルなので2〜3列に折り返す */
+    .tpl-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+      gap: 6px; margin-top: 7px;
+    }
+    .tpl-grid button { width: 100%; justify-content: center; }
     .bulk-map { margin-bottom: 12px; }
     .bulk-map-head {
       font-size: 11.5px; color: var(--ink-3); margin: 0 0 8px;
@@ -1746,7 +1752,18 @@
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
-            <div class="field-head bulk-head">
+            <!-- 列の組み方は種類ごとに違う。ひな形も種類ごとに1本ずつ出す。
+                 見出しを項目名そのものにしてあるので、落としてそのまま入れれば
+                 どの列がどの項目かは自動で当たる。 -->
+            <div class="field">
+              <div class="field-head bulk-head">
+                <label>ひな形をダウンロード</label>
+              </div>
+              <span class="sub">作りたいものを選ぶと、その項目を列に分けたCSVが落ちてきます。「内容」もその種類に切り替わります。</span>
+              <div class="tpl-grid" id="csv-tpl-grid"></div>
+            </div>
+
+            <div class="field-head bulk-head" style="margin-top:14px">
               <label>CSVを読み込む</label>
               <button type="button" class="info-btn" data-note-toggle="csv"
                 aria-expanded="false" aria-label="CSVの書き方">

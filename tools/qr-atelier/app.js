@@ -3256,6 +3256,95 @@
     }
   }
 
+  // ------------------------------------------------------------------
+  // CSV のひな形
+  // ------------------------------------------------------------------
+  // 種類ごとに1本。見出しは項目の名前そのものにするので、落としてそのまま
+  // 読み込ませれば、どの列がどの項目かは bulkGuessColumn が自動で当てる。
+  // cols は項目キー。行ごとに変わらない設定（連絡先の形式、暗号通貨の種類、
+  // ステルスSSID）は列に出さない。「内容」で一度選べば全行に効く。
+  const TEMPLATE_ROWS = {
+    url: { cols: ['url'], rows: [
+      ['https://example.com/shop-a'],
+      ['https://example.com/shop-b'],
+      ['https://example.com/shop-c']] },
+    sns: { cols: ['platform', 'id'], rows: [
+      ['instagram', 'example_shop'],
+      ['x', 'example_shop'],
+      ['line', 'abcdefg'],
+      ['youtube', 'example_shop']] },
+    text: { cols: ['text'], rows: [
+      ['ご来店ありがとうございます'],
+      ['10%OFF クーポン']] },
+    event: { cols: ['title', 'start', 'end', 'location', 'desc'], rows: [
+      ['新商品発表会', '2026-10-01T13:00', '2026-10-01T15:00', '東京ビッグサイト', '受付は12時30分から'],
+      ['内覧会', '2026-10-02T10:00', '2026-10-02T17:00', '本社ショールーム', '']] },
+    email: { cols: ['to', 'subject', 'body'], rows: [
+      ['info@example.com', 'お問い合わせ', ''],
+      ['support@example.com', '修理のご依頼', '製品名：']] },
+    tel: { cols: ['tel'], rows: [
+      ['+81312345678'],
+      ['09012345678']] },
+    sms: { cols: ['tel', 'msg'], rows: [
+      ['09012345678', '予約をお願いします'],
+      ['09087654321', '']] },
+    wifi: { cols: ['ssid', 'pass', 'enc'], rows: [
+      ['CafeWiFi-1F', 'guest1234', 'WPA'],
+      ['CafeWiFi-2F', 'guest5678', 'WPA'],
+      ['CafeWiFi-Free', '', 'なし（オープン）']] },
+    vcard: { cols: ['last', 'first', 'org', 'title', 'tel', 'email'], rows: [
+      ['山田', '太郎', '株式会社サンプル', '営業部', '09012345678', 'taro@example.com'],
+      ['鈴木', '花子', '株式会社サンプル', '広報部', '09087654321', 'hanako@example.com']] },
+    geo: { cols: ['lat', 'lng'], rows: [
+      ['35.681236', '139.767125'],
+      ['34.702485', '135.495951']] },
+    crypto: { cols: ['addr', 'amount', 'label'], rows: [
+      ['bc1qexampleaddressreplacemexxxxxxxxxxxxxxx', '0.001', 'ご支援ありがとうございます'],
+      ['bc1qanotheraddressreplacemexxxxxxxxxxxxxxx', '', '']] }
+  };
+
+  function templateCsv(type) {
+    const tpl = TEMPLATE_ROWS[type.id];
+    if (!tpl) return '';
+    const head = tpl.cols.map(k => {
+      const f = type.fields.find(x => x.k === k);
+      return f ? f.label : k;
+    });
+    const lines = [head.map(csvCell).join(',')];
+    tpl.rows.forEach(r => lines.push(r.map(csvCell).join(',')));
+    // Excel で開いたときに日本語が化けないよう BOM を付ける
+    return String.fromCharCode(0xFEFF) + lines.join(CRLF) + CRLF;
+  }
+
+  // ひな形は種類とひと組。落としただけで「内容」がその種類になっていないと、
+  // 読み込んでも当てる項目がかみ合わない。ここで一緒に切り替える。
+  function downloadTemplate(id) {
+    const type = TYPES.find(t => t.id === id);
+    if (!type) return;
+    if (state.type !== id) {
+      state.type = id;
+      buildTypeChips();
+      buildTypeFields();
+      bulkRefresh();
+      update();
+    }
+    const csv = templateCsv(type);
+    if (!csv) return;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    saveBlob(blob, 'qr-template-' + id + '.csv');
+  }
+
+  // ボタンは TYPES から起こす。種類を足したときに並べ忘れない。
+  function buildTemplateGrid() {
+    const grid = $('csv-tpl-grid');
+    if (!grid || grid.childElementCount) return;
+    TYPES.filter(t => TEMPLATE_ROWS[t.id]).forEach(t => {
+      const b = el('button', { type: 'button', class: 'st-btn-quiet btn-sm' }, t.name);
+      b.addEventListener('click', () => downloadTemplate(t.id));
+      grid.appendChild(b);
+    });
+  }
+
   // 取り返しのつかない操作の前に一度だけ訊く。
   // opts: { title, body, ok, cancel }。ok を押したときだけ true。
   function askConfirm(opts) {
@@ -4779,6 +4868,7 @@
     buildIconGrid();
     buildFrameIconGrid();
     buildFrameChips();
+    buildTemplateGrid();
     syncControls();
     wire();
     wireBulk();
