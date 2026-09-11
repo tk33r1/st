@@ -3256,28 +3256,115 @@
     }
   }
 
-  // 読みもののモーダル。答えを待たないので、confirm と違って Promise は返さない。
-  function openCsvHelp() {
-    const modal = $('csv-help-modal');
-    const close = $('btn-csv-help-close');
-    if (!modal || !close) return;
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    function done() {
-      modal.classList.add('hidden');
-      document.body.style.overflow = '';
-      close.removeEventListener('click', done);
-      modal.removeEventListener('click', onBackdrop);
-      window.removeEventListener('keydown', onKey);
-    }
-    function onBackdrop(e) {
-      if (e.target === modal || e.target.classList.contains('fullscreen-modal-backdrop')) done();
-    }
-    function onKey(e) { if (e.key === 'Escape') done(); }
-    close.addEventListener('click', done);
-    modal.addEventListener('click', onBackdrop);
-    window.addEventListener('keydown', onKey);
-    close.focus();
+  // ------------------------------------------------------------------
+  // CSV のひな形
+  // ------------------------------------------------------------------
+  // 中身は画面と同じ TYPES の build() に通して作る。Wi-Fi や vCard の
+  // 書き方をここへ書き写すと、本体を直したときに必ず食い違う。
+  //   [種類, 値, ファイル名, ラベル]
+  const TEMPLATE_ROWS = {
+    url: [
+      ['url', { url: 'https://example.com/shop-a' }, '店舗A', 'A店'],
+      ['url', { url: 'https://example.com/shop-b' }, '店舗B', 'B店']
+    ],
+    sns: [
+      ['sns', { platform: 'instagram', id: 'example_shop' }, 'Instagram', 'Insta'],
+      ['sns', { platform: 'x', id: 'example_shop' }, 'X', 'X'],
+      ['sns', { platform: 'line', id: 'abcdefg' }, 'LINE', 'LINE'],
+      ['sns', { platform: 'youtube', id: 'example_shop' }, 'YouTube', 'YT']
+    ],
+    text: [
+      ['text', { text: 'ご来店ありがとうございます' }, 'あいさつ', ''],
+      ['text', { text: '10%OFF クーポン' }, 'クーポン', 'CLUPON']
+    ],
+    event: [
+      ['event', { title: '新商品発表会', start: '2026-10-01T13:00', end: '2026-10-01T15:00',
+        location: '東京ビッグサイト', desc: '受付は12時30分から' }, '発表会', ''],
+      ['event', { title: '内覧会', start: '2026-10-02T10:00', end: '2026-10-02T17:00',
+        location: '本社ショールーム', desc: '' }, '内覧会', '']
+    ],
+    email: [
+      ['email', { to: 'info@example.com', subject: 'お問い合わせ', body: '' }, '問い合わせ', ''],
+      ['email', { to: 'support@example.com', subject: '修理のご依頼', body: '製品名：' }, '修理受付', '']
+    ],
+    tel: [
+      ['tel', { tel: '+81312345678' }, '本社', ''],
+      ['tel', { tel: '09012345678' }, '担当携帯', '']
+    ],
+    sms: [
+      ['sms', { tel: '09012345678', msg: '予約をお願いします' }, '予約', ''],
+      ['sms', { tel: '09087654321', msg: '' }, '連絡先', '']
+    ],
+    wifi: [
+      ['wifi', { ssid: 'CafeWiFi-1F', pass: 'guest1234', enc: 'WPA', hidden: false }, '1F', '1F'],
+      ['wifi', { ssid: 'CafeWiFi-2F', pass: 'guest5678', enc: 'WPA', hidden: false }, '2F', '2F'],
+      ['wifi', { ssid: 'CafeWiFi-Free', pass: '', enc: 'nopass', hidden: false }, 'フリー', 'FREE']
+    ],
+    vcard: [
+      ['vcard', { format: 'vcard', last: '山田', first: '太郎', org: '株式会社サンプル',
+        title: '営業部', tel: '09012345678', email: 'taro@example.com',
+        url: 'https://example.com/', note: '' }, '山田太郎', ''],
+      ['vcard', { format: 'mecard', last: '鈴木', first: '花子', org: '株式会社サンプル',
+        title: '広報部', tel: '09087654321', email: 'hanako@example.com',
+        url: '', note: '' }, '鈴木花子', '']
+    ],
+    geo: [
+      ['geo', { lat: '35.681236', lng: '139.767125' }, '東京駅', '東京'],
+      ['geo', { lat: '34.702485', lng: '135.495951' }, '大阪駅', '大阪']
+    ],
+    crypto: [
+      ['crypto', { chain: 'bitcoin', addr: 'bc1qexampleaddressreplacemexxxxxxxxxxxxxxx',
+        amount: '0.001', label: 'ご支援ありがとうございます' },
+        '寄付（アドレスを差し替えてください）', ''],
+      ['crypto', { chain: 'lightning', addr: 'lnbc1exampleinvoicereplacemexxxxxxxxxxxxx',
+        amount: '', label: '' }, 'Lightning（差し替えてください）', '']
+    ]
+  };
+
+  // 「ぜんぶ入り」は各種類から1行ずつ。どの種類がどう書けるのかを
+  // 1枚で見比べられる。
+  function templateRows(id) {
+    if (id !== 'all') return TEMPLATE_ROWS[id] || [];
+    const out = [];
+    TYPES.forEach(t => {
+      const rows = TEMPLATE_ROWS[t.id];
+      if (rows && rows.length) out.push(rows[0]);
+    });
+    return out;
+  }
+
+  function templateCsv(id) {
+    const lines = [['内容', 'ファイル名', 'ラベル'].join(',')];
+    templateRows(id).forEach(([typeId, values, name, label]) => {
+      const type = TYPES.find(t => t.id === typeId);
+      const text = type ? type.build(values) : '';
+      if (!text) return;
+      lines.push([text, name, label].map(csvCell).join(','));
+    });
+    // Excel で開いたときに日本語が化けないよう BOM を付ける
+    return String.fromCharCode(0xFEFF) + lines.join(CRLF) + CRLF;
+  }
+
+  function downloadTemplate(id) {
+    const csv = templateCsv(id);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    saveBlob(blob, 'qr-template-' + id + '.csv');
+  }
+
+  // ひな形のボタンは TYPES から起こす。種類を足したときに並べ忘れない。
+  function buildTemplateGrid() {
+    const grid = $('csv-tpl-grid');
+    if (!grid || grid.childElementCount) return;
+    const items = [{ id: 'all', name: 'ぜんぶ入り' }]
+      .concat(TYPES.filter(t => TEMPLATE_ROWS[t.id]).map(t => ({ id: t.id, name: t.name })));
+    items.forEach(it => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'st-btn-quiet btn-sm';
+      b.textContent = it.name;
+      b.addEventListener('click', () => downloadTemplate(it.id));
+      grid.appendChild(b);
+    });
   }
 
   // 取り返しのつかない操作の前に一度だけ訊く。
@@ -3484,6 +3571,26 @@
     return bulk.rows.slice(useHeader ? 1 : 0);
   }
 
+  // 見出しの名前で当たりを付ける。ひな形はこの名前で見出しを出しているので、
+  // 落としてそのまま流せば、ファイル名もラベルも選び直さずに済む。
+  const BULK_GUESS = {
+    'bulk-col-content': ['内容', 'コンテンツ', 'url', 'content'],
+    'bulk-col-name': ['ファイル名', '名前', 'name', 'filename'],
+    'bulk-col-label': ['ラベル', 'label']
+  };
+
+  function bulkGuessColumn(id) {
+    const want = BULK_GUESS[id];
+    if (!want) return '';
+    const useHeader = $('bulk-header').checked && bulk.rows.length > 1;
+    const head = useHeader ? bulk.rows[0] : [];
+    for (let i = 0; i < head.length; i++) {
+      const name = String(head[i] == null ? '' : head[i]).trim().toLowerCase();
+      if (want.some(w => w.toLowerCase() === name)) return String(i);
+    }
+    return '';
+  }
+
   // 選び直しても選択が飛ばないよう、いまの値を覚えてから組み直す
   function bulkFillSelects() {
     const cols = bulkColumns();
@@ -3495,7 +3602,8 @@
         if (pair[1]) sel.appendChild(el('option', { value: BULK_NONE }, '使わない'));
         cols.forEach((c, i) => sel.appendChild(el('option', { value: String(i) }, c)));
         const has = Array.prototype.some.call(sel.options, o => o.value === keep);
-        sel.value = has ? keep : (pair[1] ? BULK_NONE : '0');
+        const guess = bulkGuessColumn(pair[0]);
+        sel.value = has ? keep : (guess || (pair[1] ? BULK_NONE : '0'));
       });
   }
 
@@ -3784,11 +3892,15 @@
   }
 
   // CSV のセル。区切り・引用符・改行が入っていたら引用符でくるむ
+  // 区切りの見分けは引用符の外だけを数えるので、「;」やタブを含むセルも
+  // 囲んでおく。囲まないと WIFI: の「;」だらけの行がセミコロン区切りに
+  // 見えてしまい、読み直したときに列がばらばらになる。
   function csvCell(v) {
     const s = String(v == null ? '' : v);
     const q = String.fromCharCode(34);
-    const needs = s.indexOf(',') >= 0 || s.indexOf(q) >= 0 ||
-      s.indexOf(String.fromCharCode(10)) >= 0 || s.indexOf(String.fromCharCode(13)) >= 0;
+    const marks = [',', ';', q, String.fromCharCode(9),
+      String.fromCharCode(10), String.fromCharCode(13)];
+    const needs = marks.some(m => s.indexOf(m) >= 0);
     return needs ? q + s.split(q).join(q + q) + q : s;
   }
 
@@ -4364,10 +4476,10 @@
       showToast('デザインを初期化しました');
     });
 
-    // 1度目で設定を開き、同じボタンをもう一度押せばそのまま保存する。
-    // 引き出しの中にも保存ボタンがあるので、どちらからでも進める。
+    // このボタンは開け閉めだけ。保存するのは引き出しの中の1本に絞る。
+    // 「AVIFで保存」を押しても保存されないのが、いちばん分かりにくかった。
     function toggleCompress(fmt) {
-      if (compressFor === fmt) { exportRaster(COMPRESS_MIME[fmt], fmt); return; }
+      if (compressFor === fmt) { closeCompress(); return; }
       openCompress(fmt);
     }
 
@@ -4378,10 +4490,6 @@
     if (btnCompressSave) btnCompressSave.addEventListener('click', () => {
       if (compressFor) exportRaster(COMPRESS_MIME[compressFor], compressFor);
     });
-    const btnCompressClose = $('btn-compress-close');
-    if (btnCompressClose) btnCompressClose.addEventListener('click', closeCompress);
-    const btnBulkHelp = $('btn-bulk-help');
-    if (btnBulkHelp) btnBulkHelp.addEventListener('click', openCsvHelp);
     $('btn-svg').addEventListener('click', exportSvg);
     $('btn-copy').addEventListener('click', copyImage);
 
@@ -4685,6 +4793,7 @@
     buildIconGrid();
     buildFrameIconGrid();
     buildFrameChips();
+    buildTemplateGrid();
     syncControls();
     wire();
     wireBulk();

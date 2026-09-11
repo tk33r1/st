@@ -544,8 +544,7 @@
       border-left: 1px solid var(--rule); border-top: 1px solid var(--rule);
       transform: rotate(45deg);
     }
-    .compress-actions { display: flex; gap: 8px; }
-    .compress-actions > button { flex: 1 1 0%; }
+    .compress-drawer > .st-btn { width: 100%; justify-content: center; }
     .out-grid .st-btn-quiet.is-open { border-color: var(--accent); color: var(--accent); }
 
     /* ---- パネル ---- */
@@ -984,29 +983,21 @@
     .confirm-card p { font-size: 12.5px; color: var(--ink-2); line-height: 1.7; margin: 0; }
     .confirm-actions { display: flex; gap: 8px; margin-top: 6px; }
     .confirm-actions > button { flex: 1 1 0%; justify-content: center; }
-    /* 読みものとしてのモーダル。長いので中だけスクロールさせる */
-    .fullscreen-modal-card.help-card {
-      align-items: stretch; text-align: left;
-      padding: 34px 18px 18px; max-width: 520px; gap: 10px;
+    /* CSV のひな形。狭いパネルなので2〜3列に折り返す */
+    .tpl-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+      gap: 6px; margin-top: 7px;
     }
-    .help-card > b { font-size: 14px; color: var(--ink); }
-    .help-body { overflow-y: auto; font-size: 12.5px; line-height: 1.75; color: var(--ink-2); }
-    .help-body p { margin: 0 0 10px; }
-    .help-body pre {
-      margin: 0 0 12px; padding: 9px 11px; overflow-x: auto;
-      font-family: var(--font-mono); font-size: 11.5px; line-height: 1.7;
-      color: var(--ink); background: var(--panel-2);
-      border: 1px solid var(--rule); border-radius: var(--r-1);
-    }
-    .help-body dl { margin: 0; }
-    .help-body dt { font-weight: 600; color: var(--ink); margin-top: 10px; }
-    .help-body dd { margin: 2px 0 0; }
-    .help-body code {
+    .tpl-grid button { width: 100%; justify-content: center; }
+    .csv-note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.75; color: var(--ink-3); }
+    .csv-note.hidden { display: none; }
+    .csv-note p { margin: 0 0 8px; }
+    .csv-note p:last-child { margin-bottom: 0; }
+    .csv-note code {
       font-family: var(--font-mono); font-size: 11px;
       background: var(--panel-2); border: 1px solid var(--rule);
       border-radius: 3px; padding: 0 3px;
     }
-    .help-foot { margin: 14px 0 0; color: var(--ink-3); }
     .fullscreen-modal-backdrop {
       position: absolute;
       inset: 0;
@@ -1253,9 +1244,12 @@
         <div class="out-grid">
           <button id="btn-png" class="st-btn" type="button">PNGで保存</button>
           <button id="btn-svg" class="st-btn" type="button">SVGで保存</button>
+          <!-- この2つは押しても保存しない。圧縮の設定を開くだけで、保存は
+               引き出しの中の1本に絞る。「保存」と書いてあるのに保存されない
+               のがいちばん分かりにくかったので、名前から「で保存」を外した。 -->
           <button id="btn-avif" class="st-btn-quiet" type="button" aria-expanded="false" aria-controls="opt-compress"
-            title="可逆圧縮・透過対応。初回だけエンコーダを読み込みます">AVIFで保存</button>
-          <button id="btn-webp" class="st-btn-quiet" type="button" aria-expanded="false" aria-controls="opt-compress">WebPで保存</button>
+            title="可逆圧縮・透過対応。押すと圧縮の設定が開きます">AVIF</button>
+          <button id="btn-webp" class="st-btn-quiet" type="button" aria-expanded="false" aria-controls="opt-compress">WebP</button>
 
           <!-- 圧縮の設定は、押したボタンのすぐ下に開く。離れた場所へ出していた
                ときは、どのボタンの設定なのかも、どうすれば保存できるのかも
@@ -1276,10 +1270,7 @@
               <span class="val" id="val-compress">95</span>
             </div>
             <p class="print-note" id="compress-note"></p>
-            <div class="compress-actions">
-              <button type="button" id="btn-compress-save" class="st-btn">この設定で保存</button>
-              <button type="button" id="btn-compress-close" class="st-btn-quiet">閉じる</button>
-            </div>
+            <button type="button" id="btn-compress-save" class="st-btn">この設定で保存</button>
           </div>
 
           <button id="btn-copy" class="st-btn-quiet" type="button" style="grid-column: 1 / -1;">画像をコピー</button>
@@ -1746,11 +1737,28 @@
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
-            <div class="pane-note-row">
-              <button type="button" class="info-btn" id="btn-bulk-help" aria-haspopup="dialog" aria-label="CSVの書き方">
-                <i data-lucide="info" class="w-4 h-4"></i>
-              </button>
+            <!-- ひな形はモーダルの奥に置くと存在に気づかれない。CSVをどう書くか
+                 分からない人がまず触るところなので、いちばん上へ出す。 -->
+            <div class="field">
+              <div class="field-head">
+                <label>ひな形をダウンロード</label>
+                <button type="button" class="info-btn" data-note-toggle="csv"
+                  aria-expanded="false" aria-label="CSVの書き方">
+                  <i data-lucide="info" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <span class="sub">作りたいものを選ぶと、見本入りのCSVが落ちてきます。中身を書き換えて、下から読み込ませてください。</span>
+              <div class="tpl-grid" id="csv-tpl-grid"></div>
             </div>
+
+            <div class="csv-note hidden" data-note="csv">
+              <p>1行が1枚になります。「内容」の列がQRコードの中身で、使わない列は無視されます。どの列を何に使うかは、読み込んだあとで選べます。</p>
+              <p>1回につき1000行までです。ExcelのCSV（Shift_JIS）もそのまま読めます。区切りはカンマ・タブ・セミコロンを自動で見分けます。</p>
+              <p>カンマや改行を含むセルは <code>"</code> で囲み、セルの中の <code>"</code> は <code>""</code> と2つ重ねてください（RFC 4180）。</p>
+              <p>ファイル名に使えない文字（<code>\ / : * ? " &lt; &gt; |</code>）は <code>_</code> に置き換わり、60文字を超えると切られます。同じ名前が続いたときは <code>-2</code> <code>-3</code> と付きます。</p>
+              <p>できあがりはZIPで、中に「一覧.csv」（行番号・ファイル名・中身）も入ります。読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。</p>
+            </div>
+
             <div class="logo-drop" id="bulk-drop" role="button" tabindex="0">
               CSVをドロップ、またはクリックして選択（.csv / .txt）
               <input type="file" id="bulk-file" accept=".csv,.txt,text/csv,text/plain" class="hidden">
@@ -1832,44 +1840,6 @@
         <div class="confirm-actions">
           <button type="button" id="btn-confirm-cancel" class="st-btn">やめて直す</button>
           <button type="button" id="btn-confirm-ok" class="st-btn-quiet">このまま書き出す</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===================== CSVの書き方 ===================== -->
-    <div id="csv-help-modal" class="fullscreen-modal hidden" role="dialog" aria-modal="true" aria-labelledby="csv-help-title">
-      <div class="fullscreen-modal-backdrop"></div>
-      <div class="fullscreen-modal-card help-card">
-        <button type="button" id="btn-csv-help-close" class="fullscreen-modal-close" aria-label="閉じる">✕</button>
-        <b id="csv-help-title">CSVの書き方</b>
-        <div class="help-body">
-          <p>1行が1枚になります。いちばん簡単なのは、QRコードにしたい文字を縦に並べただけのものです。</p>
-          <pre>https://example.com/a
-https://example.com/b
-https://example.com/c</pre>
-          <p>ファイル名やフレームの文字も行ごとに変えたいときは、列を足します。どの列を何に使うかは、読み込んだあとで選びます。</p>
-          <pre>内容,ファイル名,ラベル
-https://example.com/a,店舗A,A店
-https://example.com/b,店舗B,B店</pre>
-          <dl>
-            <dt>見出し行</dt>
-            <dd>1行目が見出しでも、いきなり中身でも構いません。読み込んだあとの「1行目は見出し」で切り替えます。</dd>
-            <dt>列の数</dt>
-            <dd>何列あっても構いません。使わない列は無視されます。</dd>
-            <dt>区切り</dt>
-            <dd>カンマのほか、タブ区切りとセミコロン区切りも自動で見分けます。</dd>
-            <dt>文字コード</dt>
-            <dd>ExcelのCSV（Shift_JIS）もそのまま読めます。UTF-8・UTF-16・BOM付きも自動で判別します。</dd>
-            <dt>カンマや改行を含むセル</dt>
-            <dd><code>"</code> で囲んでください。セルの中の <code>"</code> は <code>""</code> と2つ重ねます（RFC 4180）。</dd>
-            <dt>行数</dt>
-            <dd>1回につき1000行までです。</dd>
-            <dt>ファイル名になる文字</dt>
-            <dd><code>\ / : * ? " &lt; &gt; |</code> は <code>_</code> に置き換わり、60文字を超えると切られます。同じ名前が続いたときは <code>-2</code> <code>-3</code> と付きます。空の行は <code>qr-01</code> のような通し番号になります。</dd>
-            <dt>できあがり</dt>
-            <dd>画像をZIPにまとめて保存します。中には「一覧.csv」も入っていて、どの行がどのファイルになったか（行番号・ファイル名・中身）を確かめられます。</dd>
-          </dl>
-          <p class="help-foot">読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。</p>
         </div>
       </div>
     </div>
