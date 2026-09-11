@@ -163,7 +163,7 @@
             "name": "どの形式で保存するのがよいですか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。AVIFは同じ絵をいちばん小さく収められて透過も持てますが、ブラウザにはAVIFを書き出す機能がないため、このツールはlibavifのWebAssemblyを同梱していて、AVIFを押したときだけ読み込みます（3.4MB、実行時に外へ出る通信はありません）。1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。AVIFとWebPは可逆・非可逆を選べます。既定は非可逆（品質95）で、これがいちばん小さく収まります。元の絵と1ピクセルも違わないものが要るときは可逆にしてください。1024pxの黒白QRで測ると、非可逆13KB・可逆51KB・PNG43KBでした。可逆のときの「圧縮の強さ」は、時間をかけて縮めるかどうかの設定で、絵の中身は変わりません。"
+              "text": "印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。AVIFは同じ絵をいちばん小さく収められて透過も持てますが、ブラウザにはAVIFを書き出す機能がないため、このツールはlibavifのWebAssemblyを同梱していて、「AVIFで保存」を押したときだけ読み込みます（3.4MB、実行時に外へ出る通信はありません）。1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。AVIFとWebPは可逆・非可逆を選べます。既定は非可逆（品質95）で、これがいちばん小さく収まります。元の絵と1ピクセルも違わないものが要るときは可逆にしてください。1024pxの黒白QRで測ると、非可逆13KB・可逆51KB・PNG43KBでした。可逆のときの「圧縮の強さ」は、時間をかけて縮めるかどうかの設定で、絵の中身は変わりません。"
             }
           },
           {
@@ -1217,8 +1217,8 @@
         <div class="out-grid">
           <button id="btn-png" class="st-btn" type="button">PNGで保存</button>
           <button id="btn-svg" class="st-btn" type="button">SVGで保存</button>
-          <button id="btn-avif" class="st-btn-quiet" type="button" title="可逆圧縮・透過対応。初回だけエンコーダを読み込みます">AVIF</button>
-          <button id="btn-webp" class="st-btn-quiet" type="button">WebP</button>
+          <button id="btn-avif" class="st-btn-quiet" type="button" title="可逆圧縮・透過対応。初回だけエンコーダを読み込みます">AVIFで保存</button>
+          <button id="btn-webp" class="st-btn-quiet" type="button">WebPで保存</button>
           <button id="btn-copy" class="st-btn-quiet" type="button" style="grid-column: 1 / -1;">画像をコピー</button>
         </div>
 
@@ -1258,7 +1258,7 @@
             <p class="print-note" id="print-note"></p>
           </div>
 
-          <div class="out-opt">
+          <div class="out-opt hidden" id="opt-compress">
             <div class="out-opt-head">
               <span class="st-lbl">AVIF・WebP の圧縮</span>
               <div class="st-seg seg-sm" id="compress-seg">
@@ -1906,7 +1906,7 @@
         印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。
         AVIFは同じ絵をいちばん小さく収められて、透過も持てます（1024pxの黒白QRなら、PNGの43KBに対して13KB）。
         ただしブラウザにはAVIFを<em>書き出す</em>機能がありません（読むほうはどのブラウザも対応しています）。
-        そこでこのツールは libavif の WebAssembly を同梱していて、AVIFを押したときだけ読み込みます。
+        そこでこのツールは libavif の WebAssembly を同梱していて、「AVIFで保存」を押したときだけ読み込みます。
         3.4MBあるので初回だけ少し待ちますが、実行時に外へ出る通信はありません。
         1枚あたり0.3〜1秒かかるので、CSV一括生成で行数が多いときはPNGのほうが速く終わります。
         AVIFとWebPは可逆・非可逆を選べます。既定は非可逆（品質95）で、これがいちばん小さく収まります。
@@ -2130,6 +2130,6 @@
   <script src="qr-verify.js?v=20260911_6"></script>
   <script src="qr-bulk.js?v=20260911_6"></script>
   <script src="qr-avif.js?v=20260911_6"></script>
-  <script src="app.js?v=20260911_6"></script>
+  <script src="app.js?v=20260911_7"></script>
 </body>
 </html>

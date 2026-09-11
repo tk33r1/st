@@ -259,10 +259,26 @@
 
       <div class="tb-sep"></div>
 
-      <div class="tb-group">
-        <label class="st-lbl" for="resize-percent" title="縦横比を維持して縮小">scale</label>
-        <input type="number" id="resize-percent" class="tb-input" style="width:54px" min="1" max="100" step="1" value="100">
-        <span class="unit">%</span>
+      <div class="tb-group" id="resize-group">
+        <span class="st-lbl">resize</span>
+        <div class="st-seg" id="resize-mode">
+          <button type="button" class="resize-mode-btn active" data-mode="scale">scale</button>
+          <button type="button" class="resize-mode-btn" data-mode="width">width</button>
+        </div>
+        <div id="resize-scale-wrap" class="flex items-center gap-1">
+          <input type="number" id="resize-percent" class="tb-input" style="width:54px" min="1" max="100" step="1" value="100" title="縦横比を維持して縮小">
+          <span class="unit">%</span>
+        </div>
+        <div id="resize-width-wrap" class="flex items-center gap-1 hidden">
+          <input type="number" id="resize-width" class="tb-input" style="width:68px" min="1" step="1" placeholder="auto" title="横幅（px）を手入力で指定。縦横比を維持してリサイズ（空欄で変更なし）" list="width-presets">
+          <span class="unit">px</span>
+          <datalist id="width-presets">
+            <option value="1920">
+            <option value="1200">
+            <option value="800">
+            <option value="640">
+          </datalist>
+        </div>
       </div>
     </div>
   </div>
@@ -502,19 +518,52 @@
     }
     applyQualityState();
 
-    // Resize control (scale down by percentage, aspect ratio preserved)
+    // Resize control (scale by percentage or custom width in px, aspect ratio preserved)
+    const resizeModeBtns = document.querySelectorAll('.resize-mode-btn');
+    const resizeScaleWrap = document.getElementById('resize-scale-wrap');
+    const resizeWidthWrap = document.getElementById('resize-width-wrap');
     const resizePercent = document.getElementById('resize-percent');
+    const resizeWidth = document.getElementById('resize-width');
+    let selectedResizeMode = 'scale';
 
-    // Compute target dimensions from a scale percentage, keeping aspect ratio.
-    // Only shrinks — 100% (or anything >= 100) leaves the image untouched.
-    function computeResizeTarget(w, h, percent) {
-      const p = parseFloat(percent);
-      if (!p || p <= 0 || p >= 100) return { w, h };
-      const scale = p / 100;
-      return {
-        w: Math.max(1, Math.round(w * scale)),
-        h: Math.max(1, Math.round(h * scale)),
-      };
+    resizeModeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        resizeModeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedResizeMode = btn.dataset.mode;
+        if (selectedResizeMode === 'width') {
+          resizeScaleWrap.classList.add('hidden');
+          resizeWidthWrap.classList.remove('hidden');
+          resizeWidth.focus();
+        } else {
+          resizeWidthWrap.classList.add('hidden');
+          resizeScaleWrap.classList.remove('hidden');
+          resizePercent.focus();
+        }
+      });
+    });
+
+    // Compute target dimensions keeping aspect ratio.
+    // - In 'width' mode: resizes to specified px width (if valid and > 0).
+    // - In 'scale' mode: only shrinks — 100% (or >= 100) leaves the image untouched.
+    function computeResizeTarget(w, h, opts) {
+      if (opts.resizeMode === 'width') {
+        const targetW = parseInt(opts.resizeWidth, 10);
+        if (!targetW || targetW <= 0 || targetW === w) return { w, h };
+        const scale = targetW / w;
+        return {
+          w: targetW,
+          h: Math.max(1, Math.round(h * scale)),
+        };
+      } else {
+        const p = parseFloat(opts.resizePercent);
+        if (!p || p <= 0 || p >= 100) return { w, h };
+        const scale = p / 100;
+        return {
+          w: Math.max(1, Math.round(w * scale)),
+          h: Math.max(1, Math.round(h * scale)),
+        };
+      }
     }
 
     const dropzone = document.getElementById('dropzone');
@@ -629,7 +678,7 @@
 
       const bitmap = await decodeToBitmap(file);
 
-      const { w: targetW, h: targetH } = computeResizeTarget(bitmap.width, bitmap.height, opts.resizePercent);
+      const { w: targetW, h: targetH } = computeResizeTarget(bitmap.width, bitmap.height, opts);
 
       const canvas = document.createElement('canvas');
       canvas.width = targetW;
@@ -683,16 +732,25 @@
       const opts = {
         format: selectedFormat,
         quality: parseInt(optQuality.value, 10),
+        resizeMode: selectedResizeMode,
         resizePercent: parseFloat(resizePercent.value),
+        resizeWidth: parseInt(resizeWidth.value, 10),
       };
 
       const total = files.length;
+
+      let resizeArg = '';
+      if (opts.resizeMode === 'width') {
+        if (opts.resizeWidth > 0) resizeArg = ` --width ${opts.resizeWidth}px`;
+      } else {
+        if (opts.resizePercent < 100) resizeArg = ` --scale ${opts.resizePercent}%`;
+      }
 
       // The command line the user effectively just typed.
       loadingMsg.textContent =
         `convert ${total} file${total > 1 ? 's' : ''} --to ${opts.format}`
         + (opts.format === 'webp-lossless' ? '' : ` --quality ${opts.quality}`)
-        + (opts.resizePercent < 100 ? ` --scale ${opts.resizePercent}%` : '');
+        + resizeArg;
       loadingSubmsg.textContent = '';
 
       for (let i = 0; i < files.length; i++) {

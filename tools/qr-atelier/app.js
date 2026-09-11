@@ -4296,9 +4296,20 @@
       showToast('デザインを初期化しました');
     });
 
+    function exportWithCompressCheck(mime, ext) {
+      const box = $('opt-compress');
+      if (box && box.classList.contains('hidden')) {
+        box.classList.remove('hidden');
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        showToast('圧縮設定を表示しました。もう一度押すと保存します');
+        return;
+      }
+      exportRaster(mime, ext);
+    }
+
     $('btn-png').addEventListener('click', () => exportRaster('image/png', 'png'));
-    $('btn-avif').addEventListener('click', () => exportRaster('image/avif', 'avif'));
-    $('btn-webp').addEventListener('click', () => exportRaster('image/webp', 'webp'));
+    $('btn-avif').addEventListener('click', () => exportWithCompressCheck('image/avif', 'avif'));
+    $('btn-webp').addEventListener('click', () => exportWithCompressCheck('image/webp', 'webp'));
     $('btn-svg').addEventListener('click', exportSvg);
     $('btn-copy').addEventListener('click', copyImage);
 
