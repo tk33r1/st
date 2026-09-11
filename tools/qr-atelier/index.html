@@ -826,6 +826,11 @@
     .bulk-preview tr:last-child td { border-bottom: none; }
     /* 選んだ列だけ色を変えて、どれが QR になるのかを表で示す */
     .bulk-preview .pick { color: var(--accent); }
+    /* 選べない値。押す前に気づけるよう、セルごと赤で示す */
+    .bulk-preview td.bad {
+      color: var(--err); background: color-mix(in srgb, var(--err) 12%, transparent);
+      font-weight: 600;
+    }
     .bulk-progress { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-2); }
     .bulk-bar { flex: 1; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
     .bulk-bar > i { display: block; height: 100%; width: 0; background: var(--accent);
@@ -984,18 +989,21 @@
     .confirm-actions { display: flex; gap: 8px; margin-top: 6px; }
     .confirm-actions > button { flex: 1 1 0%; justify-content: center; }
     .bulk-head { margin-bottom: 7px; }
-    /* ひな形。狭いパネルなので2〜3列に折り返す */
-    .tpl-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
-      gap: 6px; margin-top: 7px;
-    }
-    .tpl-grid button { width: 100%; justify-content: center; }
+    /* ひな形はブック1冊ぶんの1本だけ。文字が折れない幅で置く */
+    .tpl-grid { display: flex; }
+    .tpl-grid button { justify-content: center; }
     .bulk-map { margin-bottom: 12px; }
     .bulk-map-head {
       font-size: 11.5px; color: var(--ink-3); margin: 0 0 8px;
     }
     .bulk-map-head b { color: var(--ink); font-weight: 600; }
     .bulk-map .field { margin-bottom: 10px; }
+    /* 選択式の項目に列を当てたときだけ、書ける値を並べる */
+    .bulk-words {
+      display: none; margin-top: 4px;
+      font-size: 11px; line-height: 1.6; color: var(--ink-3);
+    }
+    .bulk-map .field.has-words .bulk-words { display: block; }
     .bulk-map-out {
       margin: 0 0 12px; padding: 8px 10px;
       font-family: var(--font-mono); font-size: 11px; line-height: 1.6;
@@ -1752,19 +1760,12 @@
             <i data-lucide="chevron-down" class="chev w-4 h-4"></i>
           </summary>
           <div class="sec-body">
-            <!-- 列の組み方は種類ごとに違う。ひな形も種類ごとに1本ずつ出す。
-                 見出しを項目名そのものにしてあるので、落としてそのまま入れれば
-                 どの列がどの項目かは自動で当たる。 -->
-            <div class="field">
-              <div class="field-head bulk-head">
-                <label>ひな形をダウンロード</label>
-              </div>
-              <span class="sub">作りたいものを選ぶと、その項目を列に分けたCSVが落ちてきます。「内容」もその種類に切り替わります。</span>
-              <div class="tpl-grid" id="csv-tpl-grid"></div>
-            </div>
+            <!-- ボタンに「ひな形(.xlsx)をダウンロード」と書いてあるので、
+                 その上に同じ言葉の見出しは置かない。 -->
+            <div class="tpl-grid" id="csv-tpl-grid"></div>
 
             <div class="field-head bulk-head" style="margin-top:14px">
-              <label>CSVを読み込む</label>
+              <label>ファイルを読み込む</label>
               <button type="button" class="info-btn" data-note-toggle="csv"
                 aria-expanded="false" aria-label="CSVの書き方">
                 <i data-lucide="info" class="w-4 h-4"></i>
@@ -1772,22 +1773,30 @@
             </div>
 
             <div class="csv-note hidden" data-note="csv">
-              <p>1行が1枚になります。「内容」でいま選んでいる種類の項目ひとつひとつに、CSVのどの列を当てるかを選びます。当てなかった項目は「内容」に入っている値のまま、どの行も同じになります。</p>
-              <p>1回につき1000行までです。ExcelのCSV（Shift_JIS）もそのまま読めます。区切りはカンマ・タブ・セミコロンを自動で見分けます。</p>
-              <p>カンマや改行を含むセルは <code>"</code> で囲み、セルの中の <code>"</code> は <code>""</code> と2つ重ねてください（RFC 4180）。</p>
-              <p>ファイル名は <code>qr-01</code> から順に振ります。どの行がどのファイルになったかは、ZIPに入る「一覧.csv」（行番号・ファイル名・中身）で確かめられます。</p>
-              <p>読み込みも書き出しもこの端末の中だけで動き、CSVはどこにも送りません。</p>
+              <p>1行が1枚になります。「内容」でいま選んでいる種類の項目ひとつひとつに、どの列を当てるかを選びます。当てなかった項目は「内容」に入っている値のまま、どの行も同じになります。</p>
+              <p>ひな形は <code>.xlsx</code> が1つで、中に種類ごとのシートが入っています。作りたい種類のシートに書いて、そのまま読み込ませてください。暗号化方式やSNSのように選ぶものはセルがドロップダウンになっているので、打ち間違いが起きません。ExcelでもGoogleスプレッドシートでも開けます（スプレッドシートは「ファイル→インポート」）。</p>
+              <p>見本は「記入例」シートにまとめてあります。種類のシートには見出しだけを置いてあるので、消し忘れた見本がQRコードになって出てくることはありません。</p>
+              <p>読み込めるのは <code>.xlsx</code>・<code>.csv</code>・<code>.txt</code> です。CSVはExcelのShift_JISもそのまま読め、区切りはカンマ・タブ・セミコロンを自動で見分けます。カンマや改行を含むセルは <code>"</code> で囲み、セルの中の <code>"</code> は <code>""</code> と2つ重ねてください。</p>
+              <p>1回につき1000行までです。ファイル名は <code>qr-01</code> から順に振ります。どの行がどのファイルになったかは、ZIPに入る「一覧.csv」（行番号・ファイル名・中身）で確かめられます。</p>
+              <p>読み込みも書き出しもこの端末の中だけで動き、ファイルはどこにも送りません。</p>
             </div>
 
             <div class="logo-drop" id="bulk-drop" role="button" tabindex="0">
-              CSVをドロップ、またはクリックして選択（.csv / .txt）
-              <input type="file" id="bulk-file" accept=".csv,.txt,text/csv,text/plain" class="hidden">
+              ファイルをドロップ、またはクリックして選択（.xlsx / .csv / .txt）
+              <input type="file" id="bulk-file" class="hidden"
+                accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain">
             </div>
 
             <div id="bulk-setup" class="hidden" style="margin-top:12px">
               <div class="bulk-file-row" style="margin-bottom:12px">
                 <span class="bulk-file-name" id="bulk-file-name"></span>
                 <button type="button" id="btn-bulk-clear" class="st-btn-quiet btn-sm">外す</button>
+              </div>
+
+              <!-- Excel ブックは種類ごとのタブでできている。どれを読むかを選ばせる -->
+              <div class="field hidden" id="bulk-sheet-row" style="margin-bottom:12px">
+                <label for="bulk-sheet">読み込むシート</label>
+                <select id="bulk-sheet" class="tb-select"></select>
               </div>
 
               <div class="field remember-row" style="margin-bottom:12px">
@@ -2195,6 +2204,7 @@
   <script src="qr-assets.js?v=20260911_6"></script>
   <script src="qr-verify.js?v=20260911_6"></script>
   <script src="qr-bulk.js?v=20260911_6"></script>
+  <script src="qr-xlsx.js?v=20260912_1"></script>
   <script src="qr-avif.js?v=20260911_6"></script>
   <script src="app.js?v=20260911_7"></script>
 </body>

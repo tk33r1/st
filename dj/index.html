@@ -1385,40 +1385,43 @@
     }
 
     /*
-     * 面が破れる 1 回きりの演出。手で紙を破るときの順で組んである。
-     *   掴んで引く（歪む）→ 限界で灯る → 一点から裂ける → 左右に振り分けて剥がれる
-     * 割れ口は振幅をばらつかせた 19 点のギザギザで、左下から右上へ斜めに走る。
-     * 2 枚の clip-path はこの頂点列を共有していて（片方が逆順にたどる）、
-     * 裂けるまで継ぎ目が見えない。transform-origin を左右の逆端に置いてあるので、
-     * 平行移動ではなく端を軸にめくれ上がり、引きちぎった感じになる。
-     * 範囲は埋め込みの中だけ。画面全体は明滅しない。
+     * 面が破れる 1 回きりの演出。
+     * 2 枚に割って左右へ滑らせる作りだったが、割れ口が 1 本の直線で破片も 2 つだけ、
+     * しかも膜の素の背景が下に残るので「無傷の面から複製が剥がれる」絵になっていた。
+     * 押した点から放射状に裂けて、大きさも向きもばらばらの破片が散る形に作り直した。
+     *
+     * 破片は JS が作る。どれも inset: 0 の全面コピーで、背景の敷き方も同じまま
+     * clip-path だけが違う。合わせると元の面が寸分たがわず再現されるので、
+     * 散り始めるまで継ぎ目が見えない。隣り合う破片は裂け目の折れ線を共有する。
      */
     .at-iframe-veil--breaking {
       opacity: 1;
-      animation: at-veil-flare 0.72s ease-out forwards;
+      /* 素の面を消す。残すと破片の裏に無傷の面が居座って、破れたように見えない */
+      background-image: none;
+      animation: at-veil-flare 0.8s ease-out forwards;
     }
 
-    .at-iframe-veil--breaking::before,
-    .at-iframe-veil--breaking::after {
+    /* 押した点の破孔。ここから裂けたことを示す */
+    .at-iframe-veil--breaking::before {
       content: '';
       position: absolute;
-      /* めくれるときに縁から地が覗かないよう、少しはみ出させておく */
-      inset: -4%;
+      inset: 0;
+      transform-origin: var(--ox) var(--oy);
+      background: radial-gradient(circle at var(--ox) var(--oy),
+          rgba(255, 233, 186, 0.85) 0%,
+          rgba(255, 166, 41, 0.4) 9%,
+          transparent 34%);
+      animation: at-veil-impact 0.44s ease-out forwards;
+    }
+
+    .at-veil-shard {
+      position: absolute;
+      inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='96'%3E %3Cg fill='none' stroke='%23ffc46a' stroke-width='1.9' opacity='.95'%3E %3Cpath d='M28 0 56 16 56 48 28 64 0 48 0 16Z'/%3E%3Cpath d='M0 48 28 64 28 96 0 112 -28 96 -28 64Z'/%3E %3Cpath d='M56 48 84 64 84 96 56 112 28 96 28 64Z'/%3E%3C/g%3E%3C/svg%3E");
       background-position: center;
-    }
-
-    .at-iframe-veil--breaking::before {
-      clip-path: polygon(0 0, 100% 0, 100% 28%, 95% 24%, 90% 31%, 84% 27%, 78% 34%, 72% 30%, 67% 37%, 61% 33%, 56% 41%, 50% 37%, 44% 45%, 39% 41%, 33% 49%, 28% 45%, 21% 54%, 17% 50%, 11% 59%, 6% 55%, 0 62%);
-      /* 右端を軸に。左から裂けて右へ抜けるように見せる */
-      transform-origin: 100% 50%;
-      animation: at-veil-rip-up 0.72s cubic-bezier(0.25, 0.6, 0.2, 1) forwards;
-    }
-
-    .at-iframe-veil--breaking::after {
-      clip-path: polygon(0 62%, 6% 55%, 11% 59%, 17% 50%, 21% 54%, 28% 45%, 33% 49%, 39% 41%, 44% 45%, 50% 37%, 56% 41%, 61% 33%, 67% 37%, 72% 30%, 78% 34%, 84% 27%, 90% 31%, 95% 24%, 100% 28%, 100% 100%, 0 100%);
-      transform-origin: 0 50%;
-      animation: at-veil-rip-down 0.72s cubic-bezier(0.25, 0.6, 0.2, 1) forwards;
+      /* 押した点を軸に回す。破片が破孔から振り払われる向きになる */
+      transform-origin: var(--ox) var(--oy);
+      animation: at-veil-scatter 0.62s cubic-bezier(0.2, 0.55, 0.25, 1) var(--delay) both;
     }
 
     @keyframes at-veil-flare {
@@ -1426,9 +1429,8 @@
         background-color: rgba(255, 166, 41, 0);
       }
 
-      /* 引っ張りきったところで一番強く灯る。裂けたあとは急に引く */
-      16% {
-        background-color: rgba(255, 166, 41, 0.3);
+      12% {
+        background-color: rgba(255, 166, 41, 0.26);
       }
 
       100% {
@@ -1436,49 +1438,41 @@
       }
     }
 
-    @keyframes at-veil-rip-up {
+    @keyframes at-veil-impact {
       0% {
-        opacity: 1;
-        transform: none;
+        opacity: 0;
+        transform: scale(0.25);
       }
 
-      /* 掴んで引く。まだ裂けていない */
-      13% {
+      18% {
         opacity: 1;
-        transform: translate(-1.5%, -2%) rotate(-0.6deg);
-      }
-
-      /* ここで繊維が切れる */
-      22% {
-        opacity: 1;
-        transform: translate(-3%, -6%) rotate(-3deg);
+        transform: scale(1);
       }
 
       100% {
         opacity: 0;
-        transform: translate(-11%, -30%) rotate(-11deg);
+        transform: scale(1.6);
       }
     }
 
-    @keyframes at-veil-rip-down {
+    @keyframes at-veil-scatter {
       0% {
         opacity: 1;
         transform: none;
       }
 
-      13% {
+      /*
+       * 飛ぶ前に一拍だけ踏ん張る。全部が同時に真っ直ぐ散ると割れガラスに見える。
+       * 破片ごとに delay が違うので、ここがずれて順に千切れていくように見える。
+       */
+      14% {
         opacity: 1;
-        transform: translate(1.5%, 2%) rotate(0.6deg);
-      }
-
-      22% {
-        opacity: 1;
-        transform: translate(3%, 6%) rotate(3deg);
+        transform: translate(calc(var(--dx) / 11), calc(var(--dy) / 11)) rotate(calc(var(--rot) / 9));
       }
 
       100% {
         opacity: 0;
-        transform: translate(11%, 30%) rotate(11deg);
+        transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.06);
       }
     }
 
@@ -3450,7 +3444,7 @@
       .at-burst::after,
       .at-iframe-veil--breaking,
       .at-iframe-veil--breaking::before,
-      .at-iframe-veil--breaking::after {
+      .at-veil-shard {
         animation: none;
       }
 
@@ -4858,6 +4852,7 @@
       // 次に暴走したときは、面をもう一度張るところからやり直す
       iframeVeils.forEach((veil) => {
         veil.classList.remove('at-iframe-veil--off', 'at-iframe-veil--breaking');
+        veil.replaceChildren();
       });
       berserk = false;
       shuttingDown = false;
@@ -4879,7 +4874,90 @@
      * 最初に押した時点でその面を破って退かせる。以後その埋め込みは普通に触れる。
      * 破れる 0.72s の間は面が残るので、演出が終わるまでクリックは中へ抜けない。
      */
-    const VEIL_BREAK_MS = 720;
+    const VEIL_BREAK_MS = 820;
+
+    /*
+     * 面の破片を作る。押した点から放射状に裂け目を引き、隣り合う裂け目に挟まれた
+     * 区画を 1 枚の破片にする。裂け目の折れ線は隣どうしで共有するので隙間が出ない。
+     * 折れ線は角度を細かく振ってあり、直線にはならない。
+     * 破片はどれも inset: 0 の全面コピーで、clip-path だけが違う。合わせると
+     * 元の面が再現され、散り始めるまで割れ目が見えない。
+     */
+    const VEIL_SHARDS = 9;
+
+    const buildVeilShards = (veil, originX, originY) => {
+      // 箱の外まで伸ばす。隣の裂け目との弦が箱に食い込まない長さが要る
+      const REACH = 300;
+
+      /*
+       * 区画の広さをばらけさせる。等分すると破片が揃いすぎて、
+       * 割れたガラスのような規則正しい絵になる。
+       */
+      const weights = [];
+      let weightSum = 0;
+      for (let i = 0; i < VEIL_SHARDS; i += 1) {
+        const w = 0.6 + Math.random() * 0.9;
+        weights.push(w);
+        weightSum += w;
+      }
+      const bases = [];
+      let angle = Math.random() * Math.PI * 2;
+      for (let i = 0; i < VEIL_SHARDS; i += 1) {
+        bases.push(angle);
+        angle += (weights[i] / weightSum) * Math.PI * 2;
+      }
+      const gaps = bases.map((v, i) => (i + 1 < VEIL_SHARDS ? bases[i + 1] - v : bases[0] + Math.PI * 2 - v));
+
+      const rays = [];
+      for (let i = 0; i < VEIL_SHARDS; i += 1) {
+        const base = bases[i];
+        /*
+         * 折れ線の振り幅は隣との間隔から決める。隣り合う 2 本が互いに
+         * 0.45 倍まで振っても和は間隔の 0.9 倍に収まり、追い越さない。
+         * 追い越すと多角形が自分と交差して、破片が裏返って見える。
+         */
+        const room = 0.45 * Math.min(gaps[i], gaps[(i - 1 + VEIL_SHARDS) % VEIL_SHARDS]);
+        const points = [];
+        for (let step = 1; step <= 4; step += 1) {
+          const t = step / 4;
+          // 先端は振らない。ここが揃っていないと隣との弦が箱に食い込む
+          const wobble = step === 4 ? 0 : (Math.random() * 2 - 1) * room;
+          // 半径もずらす。角度だけだと折れ線が扇形に整って見える
+          const radius = REACH * t * (step === 4 ? 1 : 0.82 + Math.random() * 0.36);
+          points.push([
+            originX + Math.cos(base + wobble) * radius,
+            originY + Math.sin(base + wobble) * radius,
+          ]);
+        }
+        rays.push({ base, points });
+      }
+
+      const fmt = (pt) => `${pt[0].toFixed(1)}% ${pt[1].toFixed(1)}%`;
+      const shards = [];
+      for (let i = 0; i < VEIL_SHARDS; i += 1) {
+        const a = rays[i];
+        const b = rays[(i + 1) % VEIL_SHARDS];
+        const outline = [[originX, originY]]
+          .concat(a.points)
+          .concat(b.points.slice().reverse());
+        const mid = a.base + gaps[i] / 2;
+        const distance = 55 + Math.random() * 80;
+
+        const shard = document.createElement('span');
+        shard.className = 'at-veil-shard';
+        shard.style.clipPath = `polygon(${outline.map(fmt).join(', ')})`;
+        shard.style.setProperty('--ox', `${originX}%`);
+        shard.style.setProperty('--oy', `${originY}%`);
+        shard.style.setProperty('--dx', `${(Math.cos(mid) * distance).toFixed(1)}px`);
+        shard.style.setProperty('--dy', `${(Math.sin(mid) * distance).toFixed(1)}px`);
+        shard.style.setProperty('--rot', `${(Math.random() * 26 - 13).toFixed(1)}deg`);
+        shard.style.setProperty('--delay', `${Math.round(Math.random() * 140)}ms`);
+        shards.push(shard);
+      }
+      veil.style.setProperty('--ox', `${originX}%`);
+      veil.style.setProperty('--oy', `${originY}%`);
+      veil.append(...shards);
+    };
     const iframeVeils = [];
     // Turnstile の iframe は遅延読み込みで後から挿さる。要素の有無では判定しない
     document.querySelectorAll('.sound-log-embed, .calendar-container, .video-container, .offer-turnstile')
@@ -4887,7 +4965,7 @@
         const veil = document.createElement('div');
         veil.className = 'at-iframe-veil';
         veil.setAttribute('aria-hidden', 'true');
-        veil.addEventListener('pointerdown', () => {
+        veil.addEventListener('pointerdown', (event) => {
           if (veil.classList.contains('at-iframe-veil--off')) return;
           // 破れている途中にもう一度押されても、演出を頭から作り直さない
           if (veil.classList.contains('at-iframe-veil--breaking')) return;
@@ -4896,10 +4974,16 @@
             veil.classList.add('at-iframe-veil--off');
             return;
           }
+          // 破孔は押した点。面のどこを突いたかで散り方が変わる
+          const box = veil.getBoundingClientRect();
+          const originX = box.width ? ((event.clientX - box.left) / box.width) * 100 : 50;
+          const originY = box.height ? ((event.clientY - box.top) / box.height) * 100 : 50;
+          buildVeilShards(veil, originX, originY);
           veil.classList.add('at-iframe-veil--breaking');
           setTimeout(() => {
             veil.classList.remove('at-iframe-veil--breaking');
             veil.classList.add('at-iframe-veil--off');
+            veil.replaceChildren();
           }, VEIL_BREAK_MS);
         });
         holder.appendChild(veil);
@@ -4908,8 +4992,13 @@
 
     document.addEventListener('pointerdown', (event) => {
       if (!berserk || shuttingDown || reduceMotion.matches || !atBurstLayer) return;
-      // モーダル（z-index 2000）の中で出しても板の裏に隠れ、縁からはみ出すだけ
-      if (event.target.closest && event.target.closest('.image-modal, .gear-modal')) return;
+      /*
+       * モーダル（z-index 2000）の中で出しても板の裏に隠れ、縁からはみ出すだけ。
+       * 膜の上でも出さない。同じクリックで面が破れるので、干渉の六角が重なると
+       * 無傷の面がその場に残っているように見えて、破れた感じが消える。
+       */
+      if (event.target.closest
+        && event.target.closest('.image-modal, .gear-modal, .at-iframe-veil')) return;
       const now = event.timeStamp || performance.now();
       // 連打で光が積み上がらないよう間引く
       if (now - lastBurstAt < 90) return;

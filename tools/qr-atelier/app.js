@@ -152,11 +152,13 @@
         // YYYYMMDDTHHMMSS の15文字ちょうどなので、秒まで必ず埋める。
         // 区切りを削ってから長さで分岐すると、実際には来ない長さを見ることに
         // なるので、日付と時刻に分けてから桁で揃える。
+        // 区切りは T のほか空白も通す。表計算で日付を選ぶと
+        // 「2026/11/05 10:30」の形で来るので、T だけを見ていると
+        // 予定の時刻が丸ごと落ちる。時刻なしの日付だけも 0時として通す。
         const fmtDt = val => {
-          const parts = String(val || '').split('T');
-          if (parts.length < 2) return '';
-          const date = parts[0].replace(/[^0-9]/g, '');
-          const time = parts[1].replace(/[^0-9]/g, '');
+          const parts = String(val || '').trim().split(/[T ]+/);
+          const date = (parts[0] || '').replace(/[^0-9]/g, '');
+          const time = (parts[1] || '').replace(/[^0-9]/g, '');
           if (date.length !== 8) return '';
           return date + 'T' + (time + '000000').slice(0, 6);
         };
@@ -998,6 +1000,14 @@
         state.type = t.id;
         buildTypeChips();
         buildTypeFields();
+        // 種類ごとのタブが入ったブックなら、その種類のタブへ一緒に移る
+        if (bulk.sheets.length > 1) {
+          const at = bulkSheetForType(bulk.sheets, t.name);
+          if (at >= 0 && at !== bulk.sheetAt) {
+            bulkUseSheet(at);
+            Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
+          }
+        }
         bulkRefresh();
         update();
       });
@@ -3303,46 +3313,113 @@
       ['bc1qanotheraddressreplacemexxxxxxxxxxxxxxx', '', '']] }
   };
 
-  function templateCsv(type) {
+  // ひな形の中身。見出しは項目の名前そのもの。
+  function templateParts(type) {
     const tpl = TEMPLATE_ROWS[type.id];
-    if (!tpl) return '';
-    const head = tpl.cols.map(k => {
-      const f = type.fields.find(x => x.k === k);
-      return f ? f.label : k;
+    if (!tpl) return null;
+    const fields = tpl.cols.map(k => type.fields.find(x => x.k === k) || { k: k, label: k });
+    // 選ぶ項目は、ドロップダウンに並ぶ言葉そのものを見本にする。'WPA' と
+    // 書いておくと、一覧に無い値として Excel に弾かれる（一覧側は
+    // 'WPA / WPA2 / WPA3' という表示名で持っているため）。
+    const rows = tpl.rows.map(r => r.map((v, i) => {
+      const f = fields[i];
+      if (!f || f.type !== 'select') return v;
+      const hit = (f.options || []).find(o => o[0] === v || o[1] === v);
+      return hit ? hit[1] : v;
+    }));
+    return {
+      fields: fields,
+      headers: fields.map(f => f.label),
+      rows: rows
+    };
+  }
+
+  const TEMPLATE_EXAMPLE_SHEET = '記入例';
+
+  // ブック1冊に種類ぶんのシートを立てる。ボタンを11個並べるより、
+  // 落としてから中でタブを選ぶほうが早い。
+  //
+  // 種類のシートには見出しだけを置き、見本は「記入例」シートへ寄せる。
+  // 見本をそのまま残しておくと、消し忘れた行がそのままQRコードになって
+  // 出てくる。
+  function templateBookSheets() {
+    const sheets = [];
+    const example = [];
+    TYPES.forEach(t => {
+      const part = templateParts(t);
+      if (!part) return;
+      const lists = [];
+      const dates = [];
+      part.fields.forEach((f, i) => {
+        if (f.type === 'select') {
+          lists.push({ col: i, values: (f.options || []).map(o => o[1]) });
+        } else if (f.type === 'datetime-local') {
+          dates.push(i);
+        }
+      });
+      sheets.push({
+        name: t.name,
+        grid: [part.headers],
+        headerRow: true,
+        lists: lists,
+        dates: dates
+      });
+
+      example.push([t.name]);
+      example.push(part.headers);
+      part.rows.forEach(r => example.push(r));
+      example.push([]);
     });
-    const lines = [head.map(csvCell).join(',')];
-    tpl.rows.forEach(r => lines.push(r.map(csvCell).join(',')));
+
+    // 記入例は太字の種類名で区切る。どこからどこまでが1種類か分かるように
+    const bold = [];
+    example.forEach((row, n) => { if (row.length === 1 && row[0]) bold.push(n); });
+    sheets.push({
+      name: TEMPLATE_EXAMPLE_SHEET,
+      grid: example,
+      boldRows: bold
+    });
+    return sheets;
+  }
+
+  function downloadTemplateBook() {
+    if (window.QRXlsx && window.QRBulk) {
+      try {
+        const blob = window.QRXlsx.build({
+          sheets: templateBookSheets(),
+          maxRows: BULK_MAX
+        });
+        saveBlob(blob, 'qr-template.xlsx');
+        showToast('種類ごとのシートが入っています。「記入例」を見ながら書いてください');
+        return;
+      } catch (e) {
+        // ブックを組めなかったときは、いま選んでいる種類の CSV に落とす。
+        // 何も落ちてこないより、選択肢が無いだけのほうがまだ進める。
+      }
+    }
+    const type = bulkType();
+    const csv = templateCsv(type);
+    if (!csv) return;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    saveBlob(blob, 'qr-template-' + type.id + '.csv');
+  }
+
+  function templateCsv(type) {
+    const t = templateParts(type);
+    if (!t) return '';
+    const lines = [t.headers.map(csvCell).join(',')];
+    t.rows.forEach(r => lines.push(r.map(csvCell).join(',')));
     // Excel で開いたときに日本語が化けないよう BOM を付ける
     return String.fromCharCode(0xFEFF) + lines.join(CRLF) + CRLF;
   }
 
-  // ひな形は種類とひと組。落としただけで「内容」がその種類になっていないと、
-  // 読み込んでも当てる項目がかみ合わない。ここで一緒に切り替える。
-  function downloadTemplate(id) {
-    const type = TYPES.find(t => t.id === id);
-    if (!type) return;
-    if (state.type !== id) {
-      state.type = id;
-      buildTypeChips();
-      buildTypeFields();
-      bulkRefresh();
-      update();
-    }
-    const csv = templateCsv(type);
-    if (!csv) return;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    saveBlob(blob, 'qr-template-' + id + '.csv');
-  }
-
-  // ボタンは TYPES から起こす。種類を足したときに並べ忘れない。
   function buildTemplateGrid() {
     const grid = $('csv-tpl-grid');
     if (!grid || grid.childElementCount) return;
-    TYPES.filter(t => TEMPLATE_ROWS[t.id]).forEach(t => {
-      const b = el('button', { type: 'button', class: 'st-btn-quiet btn-sm' }, t.name);
-      b.addEventListener('click', () => downloadTemplate(t.id));
-      grid.appendChild(b);
-    });
+    const b = el('button', { type: 'button', class: 'st-btn-quiet btn-sm' },
+      'ひな形(.xlsx)をダウンロード');
+    b.addEventListener('click', downloadTemplateBook);
+    grid.appendChild(b);
   }
 
   // 取り返しのつかない操作の前に一度だけ訊く。
@@ -3528,17 +3605,65 @@
 
   const bulk = {
     rows: [],          // 見出しも含む、読み込んだままの全行
+    sheets: [],        // Excel ブックのときは、入っていたシートぜんぶ
+    sheetAt: 0,        // そのうち、いま読んでいるもの
     fileName: '',
     encoding: '',
     running: false,
     abort: false
   };
 
+  // 種類の名前と同じシートを探す。ひな形は種類ごとのタブでできているので、
+  // 「内容」で Wi-Fi を選んでいるなら Wi-Fi のタブを読むのが素直。
+  function bulkSheetForType(sheets, typeName) {
+    const want = bulkNorm(typeName);
+    for (let i = 0; i < sheets.length; i++) {
+      if (bulkNorm(sheets[i].name) === want) return i;
+    }
+    return -1;
+  }
+
+  // 中身のあるシート＝見出しのほかに1行以上あるもの
+  function bulkSheetHasData(sh) {
+    return sh && sh.rows.length > 1 && sh.rows.slice(1).some(r => r.some(v => String(v || '').trim()));
+  }
+
+  function bulkUseSheet(at) {
+    const sh = bulk.sheets[at];
+    if (!sh) return;
+    bulk.sheetAt = at;
+    bulk.rows = sh.rows;
+    bulk.encoding = 'Excel' + (sh.name ? '／' + sh.name : '');
+  }
+
+  function bulkFillSheetSelect() {
+    const row = $('bulk-sheet-row');
+    const sel = $('bulk-sheet');
+    if (!row || !sel) return;
+    const many = bulk.sheets.length > 1;
+    row.classList.toggle('hidden', !many);
+    if (!many) return;
+    sel.innerHTML = '';
+    bulk.sheets.forEach((sh, i) => {
+      const mark = bulkSheetHasData(sh) ? '' : '（空）';
+      sel.appendChild(el('option', { value: String(i) }, (sh.name || ('シート' + (i + 1))) + mark));
+    });
+    sel.value = String(bulk.sheetAt);
+  }
+
+  // 見出し行にするかは、チェックのとおりに従う。かつては「1行しかないなら
+  // 見出し扱いしない」と気を利かせていたが、ひな形の空シート（見出しだけ）で
+  // その見出しがそのままQRコードになって出てきた。
+  function bulkUseHeader() {
+    const box = $('bulk-header');
+    return !!(box && box.checked);
+  }
+
   // 列の見出し。1行目を見出しに使わないときは「1列目」「2列目」…と数える。
   function bulkColumns() {
     const width = bulk.rows.reduce((m, r) => Math.max(m, r.length), 0);
-    const useHeader = $('bulk-header').checked && bulk.rows.length > 1;
-    const head = useHeader ? bulk.rows[0] : [];
+    const useHeader = bulkUseHeader();
+    const head = (useHeader && bulk.rows[0]) || [];
     const out = [];
     for (let i = 0; i < width; i++) {
       const name = (head[i] || '').trim();
@@ -3548,7 +3673,7 @@
   }
 
   function bulkDataRows() {
-    const useHeader = $('bulk-header').checked && bulk.rows.length > 1;
+    const useHeader = bulkUseHeader();
     return bulk.rows.slice(useHeader ? 1 : 0);
   }
 
@@ -3598,8 +3723,8 @@
 
   // 見出しの名前で当たりを付ける。合わなければ空を返して「固定」のままにする。
   function bulkGuessColumn(type, field) {
-    const useHeader = $('bulk-header').checked && bulk.rows.length > 1;
-    const head = useHeader ? bulk.rows[0] : [];
+    const useHeader = bulkUseHeader();
+    const head = (useHeader && bulk.rows[0]) || [];
     if (!head.length) return '';
     const want = [field.label, field.k]
       .concat(BULK_ALIAS[bulkMapKey(type, field)] || []).map(bulkNorm);
@@ -3660,9 +3785,20 @@
       sel.addEventListener('change', () => {
         bulkPicked[key] = sel.value;
         bulkMap[key] = sel.value;
+        wrap.classList.toggle('has-words', showWords());
         bulkPreview();
       });
       wrap.appendChild(sel);
+
+      // 選択式の項目は、CSVに何と書けばよいのかが画面のどこにも無かった。
+      // 列を当てたときだけ、選べる値をその場に並べる。
+      const words = f.type === 'select' ? bulkOptionWords(type, f) : null;
+      function showWords() { return !!words && sel.value !== BULK_NONE; }
+      if (words) {
+        wrap.appendChild(el('span', { class: 'bulk-words' },
+          '書ける値：' + words.join('')));
+        wrap.classList.toggle('has-words', showWords());
+      }
       host.appendChild(wrap);
     });
   }
@@ -3677,32 +3813,78 @@
   const BULK_TRUE = ['true', '1', 'yes', 'y', 'on', 'はい', 'オン', 'あり', '○'];
   const BULK_FALSE = ['false', '0', 'no', 'n', 'off', 'いいえ', 'オフ', 'なし', '×'];
 
-  function bulkCoerce(field, raw, fallback) {
+  // 選択式の別名。人が手で打つ以上、正式な綴りだけを通しても取りこぼす。
+  // キーは「種類.項目.選択肢の値」。ここに無い綴りは通さず、行ごと止める。
+  const BULK_OPTION_ALIAS = {
+    'wifi.enc.WPA': ['wpa2', 'wpa3', 'wpa/wpa2', 'wpa2psk', 'wpa2-psk', 'wpapsk', 'wpa2personal'],
+    'wifi.enc.nopass': ['オープン', 'open', 'none', '無し', 'なし', 'パスワードなし', 'フリー', 'free'],
+    'sns.platform.x': ['twitter', 'ツイッター', 'ツイート', 'エックス'],
+    'sns.platform.instagram': ['インスタ', 'インスタグラム', 'ig'],
+    'sns.platform.youtube': ['yt', 'ユーチューブ'],
+    'sns.platform.line': ['ライン'],
+    'sns.platform.tiktok': ['ティックトック', 'ティクトク'],
+    'sns.platform.facebook': ['fb', 'フェイスブック'],
+    'sns.platform.threads': ['スレッズ'],
+    'sns.platform.bluesky': ['ブルースカイ', 'bsky'],
+    'vcard.format.vcard': ['vcard', 'ブイカード', '標準'],
+    'vcard.format.mecard': ['mecard', 'ミーカード'],
+    'crypto.chain.bitcoin': ['btc', 'ビットコイン', 'オンチェーン'],
+    'crypto.chain.lightning': ['ln', 'ライトニング', 'lnurl']
+  };
+
+  // その項目で選べる値。画面のドロップダウンに出ているものと同じ。
+  // 「WPA / WPA2 / WPA3」のように選択肢の名前自体に区切り記号が入るので、
+  // 中黒で並べるとどこで切れるのか読めない。1つずつ括ってから並べる。
+  function bulkOptionWords(type, field) {
+    return (field.options || []).map(o => '「' + o[1] + '」');
+  }
+
+  // 突き合わせの結果。ok が false の行は作らない。黙って既定値に倒すと、
+  // 形としては正しいQRができてしまい、刷ってから間違いに気づくことになる。
+  function bulkCoerce(type, field, raw, fallback) {
     const s = String(raw == null ? '' : raw).trim();
     if (field.type === 'checkbox') {
       const k = bulkNorm(s);
-      if (BULK_TRUE.indexOf(k) >= 0) return true;
-      if (BULK_FALSE.indexOf(k) >= 0) return false;
-      return fallback;
+      if (!k) return { ok: true, value: fallback };
+      if (BULK_TRUE.indexOf(k) >= 0) return { ok: true, value: true };
+      if (BULK_FALSE.indexOf(k) >= 0) return { ok: true, value: false };
+      return { ok: false, value: fallback, raw: s, words: ['はい', 'いいえ'] };
     }
     if (field.type === 'select') {
       const k = bulkNorm(s);
-      const hit = (field.options || []).find(o => bulkNorm(o[0]) === k || bulkNorm(o[1]) === k);
-      return hit ? hit[0] : fallback;
+      // 空欄は「書いていない」＝「内容」の値のまま。誤りとは分けて扱う。
+      if (!k) return { ok: true, value: fallback };
+      const opts = field.options || [];
+      let hit = opts.find(o => bulkNorm(o[0]) === k || bulkNorm(o[1]) === k);
+      if (!hit) {
+        hit = opts.find(o => {
+          const alias = BULK_OPTION_ALIAS[bulkMapKey(type, field) + BULK_DOT + o[0]];
+          return alias && alias.some(a => bulkNorm(a) === k);
+        });
+      }
+      if (hit) return { ok: true, value: hit[0] };
+      return { ok: false, value: fallback, raw: s, words: bulkOptionWords(type, field) };
     }
-    return s;
+    return { ok: true, value: s };
   }
 
   // 1行ぶんの中身を、画面と同じ build() で組み立てる。
+  // 戻りは { text, errors }。errors があれば、その行は作らない。
   function bulkPayload(type, row) {
     const base = state.values[type.id] || {};
     const vals = Object.assign({}, base);
+    const errors = [];
     type.fields.forEach(f => {
       const pick = bulkMap[bulkMapKey(type, f)];
       if (pick === BULK_NONE || pick == null) return;
-      vals[f.k] = bulkCoerce(f, row[Number(pick)], base[f.k]);
+      const col = Number(pick);
+      const got = bulkCoerce(type, f, row[col], base[f.k]);
+      vals[f.k] = got.value;
+      if (!got.ok) errors.push({ col: col, label: f.label, raw: got.raw, words: got.words });
     });
-    try { return String(type.build(vals) || ''); } catch (e) { return ''; }
+    let text = '';
+    try { text = String(type.build(vals) || ''); } catch (e) { text = ''; }
+    return { text: text, errors: errors };
   }
 
   // 最初の数行を表で見せる。当てた列に色を置き、その下に「1行目はこうなる」を
@@ -3711,7 +3893,14 @@
     const host = $('bulk-preview');
     host.innerHTML = '';
     const rows = bulkDataRows();
-    if (!rows.length) return;
+    if (!rows.length) {
+      // 空のまま黙っていると、読めていないのか書いていないのかが分からない
+      host.appendChild(el('p', { class: 'bulk-map-out empty' },
+        bulk.sheets.length > 1
+          ? 'このシートには、まだ中身の行がありません。書いたシートを上で選んでください。'
+          : '中身の行がありません。見出しの下に1行以上書いてください。'));
+      return;
+    }
     const cols = bulkColumns();
     const type = bulkType();
     // 列番号 → 当てた項目名（同じ列を2つの項目に当てることもできる）
@@ -3736,19 +3925,49 @@
     const tbody = el('tbody');
     rows.slice(0, 4).forEach(r => {
       const tr = el('tr');
+      // 選べない値が入っている列は、押す前に赤で分かるようにする
+      const bad = {};
+      bulkPayload(type, r).errors.forEach(e => { bad[e.col] = true; });
       cols.forEach((c, i) => {
-        tr.appendChild(el('td', { class: picked[i] ? 'pick' : '' }, r[i] || ''));
+        const marks = picked[i] ? ['pick'] : [];
+        if (bad[i]) marks.push('bad');
+        tr.appendChild(el('td', { class: marks.join(' ') }, r[i] || ''));
       });
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
 
-    const out = bulkPayload(type, rows[0]);
-    const line = el('p', { class: 'bulk-map-out' + (out ? '' : ' empty') },
-      out ? '1行目はこうなります：' + BULK_NL + out
-          : '1行目が空になります。当てる列を見直すか、「内容」に値を入れてください。');
+    // 全行ぶん見ておく。1行目だけ見て「大丈夫そう」と押させない。
+    let badRows = 0;
+    let firstBad = null;
+    rows.forEach((r, n) => {
+      const e = bulkPayload(type, r).errors;
+      if (!e.length) return;
+      badRows++;
+      if (!firstBad) firstBad = { line: n + (useHeaderOffset() ? 2 : 1), err: e[0] };
+    });
+
+    const first = bulkPayload(type, rows[0]);
+    let line;
+    if (badRows) {
+      const e = firstBad.err;
+      line = el('p', { class: 'bulk-map-out empty' },
+        badRows + '行で、選べない値が使われています。このままだと、その行は作られません。' + BULK_NL +
+        firstBad.line + '行目「' + e.label + '：' + e.raw + '」' + BULK_NL +
+        '書ける値：' + (e.words || []).join(''));
+    } else if (first.text) {
+      line = el('p', { class: 'bulk-map-out' }, '1行目はこうなります：' + BULK_NL + first.text);
+    } else {
+      line = el('p', { class: 'bulk-map-out empty' },
+        '1行目が空になります。当てる列を見直すか、「内容」に値を入れてください。');
+    }
     host.appendChild(line);
     host.appendChild(table);
+  }
+
+  // 見出し行があるぶん、CSV の行番号は1つずれる
+  function useHeaderOffset() {
+    return bulkUseHeader();
   }
 
   function bulkSummary() {
@@ -3772,6 +3991,7 @@
   }
 
   function bulkRefresh() {
+    bulkFillSheetSelect();
     bulkFillSelects();
     bulkPreview();
     syncBulkFileName();
@@ -3779,22 +3999,54 @@
     $('bulk-report').innerHTML = '';
   }
 
+  // 先頭が PK なら ZIP、つまり xlsx（拡張子を変えられていても中身で決める）
+  function looksXlsx(buf, name) {
+    const u = new Uint8Array(buf, 0, Math.min(4, buf.byteLength));
+    const pk = u.length >= 2 && u[0] === 0x50 && u[1] === 0x4B;
+    return pk || /\.xlsx$/i.test(String(name || ''));
+  }
+
   async function loadBulkFile(file) {
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) {
-      showToast('CSVが大きすぎます（8MBまで）', 'error');
+      showToast('ファイルが大きすぎます（8MBまで）', 'error');
       return;
     }
     try {
-      const parsed = window.QRBulk.decodeText(await file.arrayBuffer());
-      const out = window.QRBulk.parse(parsed.text);
+      const buf = await file.arrayBuffer();
+      let out, encoding;
+      let sheets = [];
+      let pickAt = 0;
+      if (looksXlsx(buf, file.name)) {
+        if (!window.QRXlsx || !window.QRXlsx.canRead()) {
+          showToast('この環境ではExcelブックを開けません。CSVで保存し直してください', 'error');
+          return;
+        }
+        const book = await window.QRXlsx.read(buf);
+        // 隠しシート（選択肢の置き場）は選ばせない
+        sheets = book.sheets.filter(sh => !sh.hidden);
+        if (!sheets.length) sheets = book.sheets;
+        // いま選んでいる種類のタブ → 中身のあるタブ → 先頭、の順で当てる
+        let at = bulkSheetForType(sheets, bulkType().name);
+        if (at < 0) at = sheets.findIndex(bulkSheetHasData);
+        if (at < 0) at = 0;
+        out = { rows: sheets[at].rows };
+        encoding = 'Excel' + (sheets[at].name ? '／' + sheets[at].name : '');
+        pickAt = at;
+      } else {
+        const parsed = window.QRBulk.decodeText(buf);
+        out = window.QRBulk.parse(parsed.text);
+        encoding = parsed.encoding;
+      }
       if (!out.rows.length) {
-        showToast('CSVに行がありません', 'error');
+        showToast('ファイルに行がありません', 'error');
         return;
       }
+      bulk.sheets = sheets;
+      bulk.sheetAt = pickAt;
       bulk.rows = out.rows;
       bulk.fileName = file.name;
-      bulk.encoding = parsed.encoding;
+      bulk.encoding = encoding;
       // 別のファイルなら列の並びも違う。前の選択は引き継がず、見出しから引き直す
       Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
       $('bulk-setup').classList.remove('hidden');
@@ -3802,12 +4054,16 @@
       // 素直に既定を on にしておき、表を見て外してもらう
       bulkRefresh();
     } catch (e) {
-      showToast('CSVを読み込めませんでした', 'error');
+      showToast(String(e && e.message) === 'not xlsx'
+        ? 'Excelブックとして読めませんでした（.xlsx で保存されているか確かめてください）'
+        : 'ファイルを読み込めませんでした', 'error');
     }
   }
 
   function clearBulk() {
     bulk.rows = [];
+    bulk.sheets = [];
+    bulk.sheetAt = 0;
     bulk.fileName = '';
     bulk.encoding = '';
     $('bulk-setup').classList.add('hidden');
@@ -3850,7 +4106,7 @@
   async function runBulk() {
     if (bulk.running) { bulk.abort = true; return; }
     const rows = bulkDataRows();
-    if (!rows.length) { showToast('CSVの行がありません', 'error'); return; }
+    if (!rows.length) { showToast('読み込んだ行がありません', 'error'); return; }
     if (!(await okToExport())) return;
 
     const type = bulkType();
@@ -3877,8 +4133,9 @@
     const files = [];
     const skipped = [];   // 中身が空だった行
     const failed = [];    // 入りきらなかった行
+    const invalid = [];   // 選べない値が書かれていた行（{ line, label, raw, words }）
     const take = window.QRBulk.nameTaker();
-    const headOffset = ($('bulk-header').checked && bulk.rows.length > 1) ? 2 : 1;
+    const headOffset = bulkUseHeader() ? 2 : 1;
     const digits = String(use.length).length;
     const pad = n => String(n).padStart(digits, '0');
     const manifest = [['行', 'ファイル名', '中身']];
@@ -3898,7 +4155,15 @@
         }
         const row = use[i];
         const lineNo = i + headOffset;
-        const text = bulkPayload(type, row);
+        const built = bulkPayload(type, row);
+        // 選べない値は、黙って既定値に倒さない。形の正しいQRができてしまうと、
+        // 読み取り検査も通り、刷ってから気づくことになる。
+        if (built.errors.length) {
+          const e = built.errors[0];
+          invalid.push({ line: lineNo, label: e.label, raw: e.raw, words: e.words });
+          continue;
+        }
+        const text = built.text;
         if (!text) {
           // 行そのものが空っぽなら黙って飛ばす。ファイル末尾の改行や手で
           // 編集した空行まで並べると、ほんとうに直すべき行が埋もれる
@@ -3936,7 +4201,9 @@
       }
 
       if (!files.length) {
-        showToast(bulk.abort ? '中止しました' : 'QRコードにできる行がありませんでした',
+        showToast(bulk.abort ? '中止しました'
+          : invalid.length ? '選べない値が書かれていて、1件も作れませんでした'
+          : 'QRコードにできる行がありませんでした',
           bulk.abort ? undefined : 'error');
       } else {
         setBulkProgress(use.length, use.length, 'ZIPにまとめています…');
@@ -3954,7 +4221,8 @@
 
       bulkReport({
         made: files.length ? files.length - 1 : 0,
-        skipped: skipped, failed: failed, over: over, aborted: bulk.abort, ext: fmt.ext
+        skipped: skipped, failed: failed, invalid: invalid,
+        over: over, aborted: bulk.abort, ext: fmt.ext
       });
     } catch (e) {
       showToast(String(e && e.message) === 'zip too large'
@@ -4006,6 +4274,13 @@
     const notes = [];
     if (r.over && !r.aborted) notes.push('一度に作れるのは' + BULK_MAX + '行までです。残り' + r.over + '行は作っていません。');
     if (r.skipped.length) notes.push('中身が空だった行：' + lineList(r.skipped));
+    // 何をどう直せばよいかまで書く。行番号だけだと、結局CSVと画面を往復させる。
+    if (r.invalid.length) {
+      const e = r.invalid[0];
+      notes.push('選べない値が書かれていた行：' + lineList(r.invalid.map(v => v.line)) +
+        '（例：' + e.line + '行目「' + e.label + '：' + e.raw + '」→ 書ける値は ' +
+        (e.words || []).join('') + '）');
+    }
     if (r.failed.length) notes.push('QRコードに入りきらなかった行：' + lineList(r.failed) +
       '（誤り訂正を下げるか、中身を短くしてください）');
     if (notes.length) {
@@ -4047,6 +4322,15 @@
     });
     $('btn-bulk-clear').addEventListener('click', clearBulk);
     $('bulk-header').addEventListener('change', bulkRefresh);
+    const sheetSel = $('bulk-sheet');
+    if (sheetSel) {
+      sheetSel.addEventListener('change', () => {
+        bulkUseSheet(Number(sheetSel.value) || 0);
+        // シートが変われば列の並びも変わる。当てた列は引き直す
+        Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
+        bulkRefresh();
+      });
+    }
     $('btn-bulk-run').addEventListener('click', runBulk);
   }
 

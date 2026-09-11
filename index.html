@@ -653,11 +653,17 @@
       transition: width 0.5s ease;
     }
 
+    .bf-pctile {
+      text-align: right;
+      margin-top: 0.25rem;
+      font-variant-numeric: tabular-nums;
+    }
+
     /* auto-fit, not a media query: the editor pane is far narrower than the
        viewport, so the column count has to follow the container. */
     .bf-facets {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
       column-gap: 1.5rem;
       row-gap: 0.25rem;
     }
@@ -694,6 +700,13 @@
     .bf-facet-score {
       flex: 0 0 1.25rem;
       text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bf-facet-pct {
+      flex: 0 0 2.5rem;
+      text-align: right;
+      opacity: 0.8;
       font-variant-numeric: tabular-nums;
     }
 
@@ -2884,7 +2897,7 @@
       <path d="M6 3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-1c0.5 1.5 1.5 3 2.5 4.5c-3 0-5-1.5-7.5-4.5H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z" />
     </symbol>
     <symbol id="ic-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="3" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </symbol>
     <symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -3633,14 +3646,18 @@
         traits: [{ name: 'Extraverted', pct: 54, opposite: 'Introverted' }, { name: 'Intuitive', pct: 94, opposite: 'Observant' }, { name: 'Thinking', pct: 41, opposite: 'Feeling' }, { name: 'Judging', pct: 46, opposite: 'Prospecting' }, { name: 'Assertive', pct: 83, opposite: 'Turbulent' }],
         strengths: [{ name: 'Strategic Thinking', pct: 40.1123, pattern: 'solid' }, { name: 'Influencing', pct: 28.4096, pattern: 'diagonal' }, { name: 'Relationship Building', pct: 16.4441, pattern: 'grid' }, { name: 'Executing', pct: 15.034, pattern: 'dots' }],
         themes: [{ rank: '1', theme: 'Maximizer', category: 'Influencing' }, { rank: '2', theme: 'Input', category: 'Strategic Thinking' }, { rank: '3', theme: 'Strategic', category: 'Strategic Thinking' }, { rank: '4', theme: 'Ideation', category: 'Strategic Thinking' }, { rank: '5', theme: 'Individualization', category: 'Relationship Building' }],
-        b: { t: 'Big Five: OCEAN 🔗', t_ja: 'ビッグファイブ: OCEAN 🔗', l: 'https://bigfive-test.com/result/6aa3b45c4caee819a9552778' },
-        // IPIP-NEO (120 items): domain score out of 120, each facet out of 20.
+        b: { t: 'Big Five: EHCNO 🔗', t_ja: 'ビッグファイブ: EHCNO 🔗', l: 'https://tk.st/data/Dummy_Client_IPIP-NEO-120_2026-09-12.pdf' },
+        // IPIP-NEO-120, administered 2026.09.12. Domain score 24-120, facet score 4-20,
+        // so `pct` (the community percentile) is what the bars plot and what the
+        // High/Average/Low descriptor follows -- a raw score would read as far too
+        // high next to a "Low" label. Percentiles are strings: the report caps them
+        // at '> 95' / '> 99' / '< 2'.
         bigfive: [
-          { name: 'Openness to Experience', score: 101, level: 'High', facets: [{ name: 'Imagination', score: 17 }, { name: 'Artistic Interests', score: 19 }, { name: 'Emotionality', score: 11 }, { name: 'Adventurousness', score: 20 }, { name: 'Intellect', score: 19 }, { name: 'Liberalism', score: 15 }] },
-          { name: 'Conscientiousness', score: 92, level: 'High', facets: [{ name: 'Self-Efficacy', score: 17 }, { name: 'Orderliness', score: 19 }, { name: 'Dutifulness', score: 15 }, { name: 'Achievement-Striving', score: 16 }, { name: 'Self-Discipline', score: 14 }, { name: 'Cautiousness', score: 11 }] },
-          { name: 'Extraversion', score: 77, level: 'High', facets: [{ name: 'Friendliness', score: 15 }, { name: 'Gregariousness', score: 12 }, { name: 'Assertiveness', score: 9 }, { name: 'Activity Level', score: 9 }, { name: 'Excitement-Seeking', score: 18 }, { name: 'Cheerfulness', score: 14 }] },
-          { name: 'Agreeableness', score: 83, level: 'High', facets: [{ name: 'Trust', score: 15 }, { name: 'Morality', score: 17 }, { name: 'Altruism', score: 12 }, { name: 'Cooperation', score: 14 }, { name: 'Modesty', score: 11 }, { name: 'Sympathy', score: 14 }] },
-          { name: 'Neuroticism', score: 41, level: 'Low', facets: [{ name: 'Anxiety', score: 5 }, { name: 'Anger', score: 4 }, { name: 'Depression', score: 9 }, { name: 'Self-Consciousness', score: 8 }, { name: 'Immoderation', score: 11 }, { name: 'Vulnerability', score: 4 }] }
+          { name: 'Openness to Experience', score: 96, pct: '81', level: 'High', facets: [{ name: 'Imagination', score: 15, pct: '43' }, { name: 'Artistic Interests', score: 18, pct: '82' }, { name: 'Emotionality', score: 10, pct: '5' }, { name: 'Adventurousness', score: 17, pct: '88' }, { name: 'Intellect', score: 20, pct: '> 95' }, { name: 'Liberalism', score: 16, pct: '92' }] },
+          { name: 'Conscientiousness', score: 86, pct: '51', level: 'Average', facets: [{ name: 'Self-Efficacy', score: 16, pct: '50' }, { name: 'Orderliness', score: 18, pct: '87' }, { name: 'Dutifulness', score: 14, pct: '24' }, { name: 'Achievement Striving', score: 14, pct: '33' }, { name: 'Self-Discipline', score: 15, pct: '69' }, { name: 'Cautiousness', score: 9, pct: '20' }] },
+          { name: 'Extroversion', score: 91, pct: '72', level: 'High', facets: [{ name: 'Friendliness', score: 16, pct: '64' }, { name: 'Gregariousness', score: 13, pct: '52' }, { name: 'Assertiveness', score: 14, pct: '46' }, { name: 'Activity Level', score: 12, pct: '43' }, { name: 'Excitement Seeking', score: 20, pct: '> 99' }, { name: 'Cheerfulness', score: 16, pct: '54' }] },
+          { name: 'Agreeableness', score: 79, pct: '18', level: 'Low', facets: [{ name: 'Trust', score: 16, pct: '71' }, { name: 'Morality', score: 14, pct: '21' }, { name: 'Altruism', score: 13, pct: '9' }, { name: 'Cooperation', score: 13, pct: '29' }, { name: 'Modesty', score: 7, pct: '5' }, { name: 'Sympathy', score: 16, pct: '56' }] },
+          { name: 'Neuroticism', score: 36, pct: '1.5', level: 'Low', facets: [{ name: 'Anxiety', score: 5, pct: '3' }, { name: 'Anger', score: 4, pct: '< 2' }, { name: 'Depression', score: 8, pct: '34' }, { name: 'Self-Consciousness', score: 6, pct: '6' }, { name: 'Immoderation', score: 9, pct: '18' }, { name: 'Vulnerability', score: 4, pct: '< 2' }] }
         ]
       },
       '1.0': {
@@ -4059,14 +4076,14 @@
       'Futuristic': '未来志向', 'Intellection': '内省',
       // Big Five domains and their IPIP-NEO facets
       'Openness to Experience': '開放性', 'Conscientiousness': '誠実性',
-      'Extraversion': '外向性', 'Agreeableness': '協調性', 'Neuroticism': '神経症的傾向',
+      'Extroversion': '外向性', 'Agreeableness': '協調性', 'Neuroticism': '神経症的傾向',
       'High': '高い', 'Average': '平均的', 'Low': '低い',
       'Imagination': '想像力', 'Artistic Interests': '芸術への関心', 'Emotionality': '情動性',
       'Adventurousness': '冒険心', 'Intellect': '知性', 'Liberalism': '革新性',
       'Self-Efficacy': '自己効力感', 'Orderliness': '秩序性', 'Dutifulness': '忠実性',
-      'Achievement-Striving': '達成追求', 'Self-Discipline': '自己統制', 'Cautiousness': '慎重さ',
+      'Achievement Striving': '達成追求', 'Self-Discipline': '自己統制', 'Cautiousness': '慎重さ',
       'Friendliness': '友好性', 'Gregariousness': '社交性', 'Assertiveness': '自己主張',
-      'Activity Level': '活動性', 'Excitement-Seeking': '刺激希求', 'Cheerfulness': '快活さ',
+      'Activity Level': '活動性', 'Excitement Seeking': '刺激希求', 'Cheerfulness': '快活さ',
       'Trust': '信頼', 'Morality': '道徳性', 'Altruism': '利他性',
       'Cooperation': '協力性', 'Modesty': '謙虚さ', 'Sympathy': '共感',
       'Anxiety': '不安', 'Anger': '怒り', 'Depression': '抑うつ',
@@ -4118,20 +4135,25 @@
         <div class="w-56 text-right truncate text-secondary">${esc(term(row.category))}</div>
       </div>`).join('');
 
-    // Big Five: a domain track (out of BIGFIVE_DOMAIN_MAX) with its six facet
-    // tracks (out of BIGFIVE_FACET_MAX) nested underneath, mirroring the MBTI rows.
-    const BIGFIVE_DOMAIN_MAX = 120, BIGFIVE_FACET_MAX = 20;
+    // Big Five: a domain track with its six facet tracks nested underneath,
+    // mirroring the MBTI rows. Every bar is the community percentile; the numbers
+    // beside them are the raw IPIP-NEO scores, whose floors are 24 and 4.
+    const BIGFIVE_DOMAIN_RANGE = '24-120', BIGFIVE_FACET_RANGE = '4-20';
+    // Report percentiles arrive capped ('> 95', '< 2'): keep the label, take the number.
+    const bfPctWidth = p => Math.max(0, Math.min(100, parseFloat(String(p).replace(/[^0-9.]/g, '')) || 0));
+    const bfPctLabel = p => String(p).replace(/\s+/g, '');
     const createBigFiveRows = (domains, isVer2) => {
       const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       return domains.map(d => `
         <div class="text-xs mb-6">
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-normal">${esc(term(d.name))}</span>
-            <span class="text-secondary">${d.score} / ${BIGFIVE_DOMAIN_MAX} · ${esc(term(d.level))}</span>
+            <span class="text-secondary">${d.score} / 120 · ${esc(term(d.level))}</span>
           </div>
-          <div class="bf-bar" aria-hidden="true"><div class="bf-bar-fill" style="width:${(d.score / BIGFIVE_DOMAIN_MAX * 100).toFixed(1)}%; background:${color};"></div></div>
+          <div class="bf-bar" aria-hidden="true"><div class="bf-bar-fill" style="width:${bfPctWidth(d.pct)}%; background:${color};"></div></div>
+          <div class="bf-pctile text-[10px] text-secondary">${tr(`${esc(bfPctLabel(d.pct))}%ile`, `${esc(bfPctLabel(d.pct))} パーセンタイル`)}</div>
           <div class="bf-facets mt-2">
-            ${d.facets.map(f => `<div class="bf-facet"><span class="bf-facet-name text-[10px] text-secondary">${esc(term(f.name))}</span><span class="bf-facet-track" aria-hidden="true"><span class="bf-facet-fill" style="width:${(f.score / BIGFIVE_FACET_MAX * 100).toFixed(0)}%; background:${color};"></span></span><span class="bf-facet-score text-[10px] text-secondary">${f.score}</span></div>`).join('')}
+            ${d.facets.map(f => `<div class="bf-facet"><span class="bf-facet-name text-[10px] text-secondary">${esc(term(f.name))}</span><span class="bf-facet-track" aria-hidden="true"><span class="bf-facet-fill" style="width:${bfPctWidth(f.pct)}%; background:${color};"></span></span><span class="bf-facet-score text-[10px] text-normal">${f.score}</span><span class="bf-facet-pct text-[10px] text-secondary">${esc(bfPctLabel(f.pct))}</span></div>`).join('')}
           </div>
         </div>`).join('');
     };
@@ -4168,7 +4190,7 @@
         bfHtml = `
             ${bfTitleHtml}
             <div>${createBigFiveRows(data.bigfive, isV2)}</div>
-            <div class="text-[10px] text-secondary opacity-70">${tr(`Domains are scored out of ${BIGFIVE_DOMAIN_MAX}, facets out of ${BIGFIVE_FACET_MAX}.`, `領域は${BIGFIVE_DOMAIN_MAX}点、各ファセットは${BIGFIVE_FACET_MAX}点満点です。`)}</div>`;
+            <div class="text-[10px] text-secondary opacity-70">${tr(`Bars are community percentiles. Numbers are raw IPIP-NEO-120 scores: domains ${BIGFIVE_DOMAIN_RANGE}, facets ${BIGFIVE_FACET_RANGE}.`, `バーはコミュニティ・パーセンタイル。数値は IPIP-NEO-120 の素点で、領域が ${BIGFIVE_DOMAIN_RANGE}、ファセットが ${BIGFIVE_FACET_RANGE} の範囲です。`)}</div>`;
       }
 
       const result = `
