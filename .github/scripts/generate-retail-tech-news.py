@@ -57,6 +57,10 @@ GLOBAL_NOISE_BLACKLIST = [
 ]
 
 
+# 著者ノードの正規 @id（ポータル・記事ページで共通）
+PERSON_ID = "https://tk.st/#author"
+
+
 def esc(text):
     """HTML特殊文字を安全にエスケープ（XSS防止）"""
     if text is None:
@@ -310,10 +314,34 @@ def gather_all_candidate_news(target_date=None, exclude_date_key=None):
     }
 
 
+def build_candidate_index(candidates):
+    """LLM に渡す候補へ安定IDを付与し、(国内候補, 海外候補, id -> 元アイテム) を返す。
+
+    元記事URLは LLM に渡さない。長い Google News のリダイレクトURLを LLM が
+    ドメイン直下へ正規化・切り詰めてしまい、出典リンクが記事に着地しなくなるため。
+    """
+    index = {}
+
+    def tag(items, prefix):
+        listed = []
+        for i, it in enumerate(items, 1):
+            cid = '%s-%02d' % (prefix, i)
+            index[cid] = it
+            listed.append({
+                'id': cid,
+                'title': it['title'],
+                'source': it['source'],
+                'pub_date': it['pub_date'],
+                'description': it['description'],
+            })
+        return listed
+
+    return tag(candidates['JP'][:45], 'JP'), tag(candidates['GLOBAL'][:30], 'GL'), index
+
+
 def build_prompt(candidates, target_date_str, yesterday_str):
     """LLM共通のプロンプト構築（精選候補プールから重要トピックを厳選・既出トピック完全除外）"""
-    jp_sample = candidates['JP'][:45]
-    global_sample = candidates['GLOBAL'][:30]
+    jp_sample, global_sample, candidate_index = build_candidate_index(candidates)
 
     recent_titles = candidates.get('recent_published_titles', [])
     recent_section = ""
@@ -345,6 +373,8 @@ def build_prompt(candidates, target_date_str, yesterday_str):
 6. 昨日の動向全体を象徴する最も重要なポイント3点を「エグゼクティブ・サマリー（executive_summary）」としてまとめてください。
 7. カテゴリは以下から選択：
    「店舗DX・次世代決済」「リテールメディア・店頭広告」「物流・RFID・ロボティクス」「AI・需要予測・パーソナライズ」「SNS話題・生活者のリアル」「グローバル先端トレンド」
+8. 各記事には、選定元の候補に付いている "id" をそのまま "source_id" として必ず出力してください。
+   出典URLはシステム側が id から復元します。URLの推測・生成・出力は一切しないでください。
 
 【国内ニュース候補】:
 {json.dumps(jp_sample, ensure_ascii=False, indent=2)}
@@ -363,13 +393,13 @@ Markdownのコードブロック（```json）などは付けず、純粋なJSON�
       "title": "日本語見出し",
       "original_title": "",
       "source": "媒体名",
-      "url": "元のlink URL",
+      "source_id": "選定元候補のid（例: JP-03）",
       "summary": "要約（140〜240文字）",
       "why_it_matters": "示唆・考察（120〜200文字）",
       "tags": ["スマートカート", "店舗DX"]
     }}
   ]
-}}"""
+}}""", candidate_index
 
 
 def call_llm_api(endpoint, api_key, model_name, prompt_content):
@@ -407,10 +437,59 @@ def call_llm_api(endpoint, api_key, model_name, prompt_content):
         return json.loads(raw_text)
 
 
+def title_match_key(title):
+    """タイトルの表記ゆれを吸収した突合キー。
+
+    記号の種類を列挙するのは漏れが出るため、英数字と漢字かな以外を落とす方針にする。
+    """
+    if not title:
+        return ''
+    return ''.join(ch for ch in str(title).lower() if ch.isalnum())[:40]
+
+
+def resolve_source_urls(result, candidate_index):
+    """LLM が返した記事へ、候補IDから元記事URLを再接続する。
+
+    第1候補は source_id、外した場合はタイトル突合で救済。どちらでも決まらない記事は
+    出典リンクを付けない（推測URLや誤リンクを出すより、リンク無しのほうが誠実）。
+    """
+    by_title = {}
+    for it in candidate_index.values():
+        key = title_match_key(it['title'])
+        if key and key not in by_title:
+            by_title[key] = it
+
+    resolved = 0
+    unresolved = []
+    for art in result.get('articles', []):
+        src = candidate_index.get(str(art.get('source_id') or '').strip().upper())
+        if src is None:
+            for cand_title in (art.get('original_title'), art.get('title')):
+                key = title_match_key(cand_title)
+                if key and key in by_title:
+                    src = by_title[key]
+                    break
+
+        if src:
+            art['url'] = src['link']
+            if not art.get('source'):
+                art['source'] = src['source']
+            art['source_pub_ts'] = src.get('pub_ts', 0)
+            resolved += 1
+        else:
+            art['url'] = ''
+            unresolved.append(art.get('title', '(無題)'))
+
+    print(f" -> 出典URLの再接続: {resolved} 件成功 / {len(unresolved)} 件不明")
+    for t in unresolved:
+        print(f"[WARN] 出典を特定できずリンク無しで出力します: {t[:50]}", file=sys.stderr)
+    return result
+
+
 def analyze_news_with_fallback(candidates, target_date_str, yesterday_str):
     """マルチAIチェーン（第1: DeepSeek -> 第2: OpenAI GPT -> 最終: ルールベース）"""
     print("[2/3] AI要約・インサイト生成プロセスを開始...")
-    prompt = build_prompt(candidates, target_date_str, yesterday_str)
+    prompt, candidate_index = build_prompt(candidates, target_date_str, yesterday_str)
 
     # プロバイダーチェーン定義
     providers = [
@@ -438,6 +517,7 @@ def analyze_news_with_fallback(candidates, target_date_str, yesterday_str):
             res = call_llm_api(p['url'], p['key'], p['model'], prompt)
             if res and res.get('articles'):
                 print(f"[SUCCESS] {p['name']} による生成が成功しました！")
+                resolve_source_urls(res, candidate_index)
                 res['generated_by'] = p['badge_label']
                 res['engine_type'] = p['name'].lower()
                 return res
@@ -485,6 +565,7 @@ def fallback_rule_based(candidates, yesterday_str):
             "original_title": "",
             "source": it['source'],
             "url": it['link'],
+            "source_pub_ts": it.get('pub_ts', 0),
             "summary": it['description'][:220] or f"{it['source']}による流通DX関連の最新報道です。",
             "why_it_matters": wim,
             "tags": tags
@@ -500,6 +581,7 @@ def fallback_rule_based(candidates, yesterday_str):
             "original_title": it['title'],
             "source": it['source'],
             "url": it['link'],
+            "source_pub_ts": it.get('pub_ts', 0),
             "summary": it['description'][:220] or f"Global retail technology movement reported by {it['source']}.",
             "why_it_matters": "海外メガ小売や先端スタートアップの動向は、日本企業が次世代戦略を策定する先行指標となります。",
             "tags": ["海外動向", "グローバル"]
@@ -574,6 +656,8 @@ def build_dynamic_jsonld(issue_data, date_key, formatted_date):
         for t in a.get('tags', []):
             all_keywords.add(t)
 
+    issue_iso = f"{date_key[:4]}-{date_key[4:6]}-{date_key[6:8]}T08:00:00+09:00"
+
     # 収録記事の個別 NewsArticle / ListItem
     list_items = []
     has_part_list = []
@@ -587,10 +671,23 @@ def build_dynamic_jsonld(issue_data, date_key, formatted_date):
             "description": art.get('summary', ''),
             "url": art_id,
             "articleSection": art.get('category', '流通DX'),
-            "inLanguage": "ja"
+            "inLanguage": "ja",
+            # 各カードは本号の一部として同時に公開される
+            "datePublished": issue_iso,
+            "dateModified": issue_iso,
+            "isPartOf": {"@id": f"https://tk.st/job/retailtechdaily/{date_key}/#article"},
+            "author": {"@id": PERSON_ID},
+            "publisher": {"@id": PERSON_ID}
         }
         if art.get('url'):
-            art_schema["sameAs"] = art['url']
+            # 出典は sameAs（同一性）ではなく isBasedOn（何を元にしたか）で表す
+            based_on = {"@type": "NewsArticle", "url": art['url']}
+            if art.get('source'):
+                based_on["publisher"] = {"@type": "Organization", "name": art['source']}
+            src_ts = art.get('source_pub_ts') or 0
+            if src_ts:
+                based_on["datePublished"] = datetime.fromtimestamp(src_ts, JST).isoformat()
+            art_schema["isBasedOn"] = based_on
         if art.get('tags'):
             art_schema["keywords"] = art['tags']
 
@@ -617,16 +714,8 @@ def build_dynamic_jsonld(issue_data, date_key, formatted_date):
             "datePublished": f"{date_key[:4]}-{date_key[4:6]}-{date_key[6:8]}T08:00:00+09:00",
             "dateModified": f"{date_key[:4]}-{date_key[4:6]}-{date_key[6:8]}T08:00:00+09:00",
             "inLanguage": "ja",
-            "author": {
-                "@type": "Person",
-                "name": "Shinya Takeda",
-                "url": "https://tk.st/job/"
-            },
-            "publisher": {
-                "@type": "Person",
-                "name": "Shinya Takeda",
-                "url": "https://tk.st/"
-            },
+            "author": {"@id": PERSON_ID},
+            "publisher": {"@id": PERSON_ID},
             "articleSection": all_categories,
             "keywords": sorted(list(all_keywords)),
             "hasPart": has_part_list
@@ -647,6 +736,15 @@ def build_dynamic_jsonld(issue_data, date_key, formatted_date):
                 { "@type": "ListItem", "position": 3, "name": "Retail Tech Daily", "item": "https://tk.st/job/retailtechdaily/" },
                 { "@type": "ListItem", "position": 4, "name": f"{formatted_date}号", "item": f"https://tk.st/job/retailtechdaily/{date_key}/" }
             ]
+        },
+        # ポータル側の @graph と同じ @id を使い、著者ノードを1か所に集約する
+        {
+            "@type": "Person",
+            "@id": PERSON_ID,
+            "name": "Shinya Takeda",
+            "url": "https://tk.st/job/",
+            "jobTitle": "Digital Marketer / Tech Lead",
+            "sameAs": ["https://tk.st/", "https://github.com/tk33r1"]
         }
     ]
 
@@ -687,7 +785,7 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
 
     cat_chips = []
     for c, cnt in cat_counts.items():
-        cat_chips.append(f'<button type="button" class="filter-chip" data-filter-type="category" data-filter-val="{esc(c)}">{esc(c)} <span class="chip-count">{cnt}</span></button>')
+        cat_chips.append(f'<button type="button" class="filter-chip" data-filter-type="category" data-filter-val="{esc(c)}" aria-pressed="false">{esc(c)} <span class="chip-count">{cnt}</span></button>')
     cat_chips_html = "".join(cat_chips)
 
     # クイック目次アイテム（30秒スキャン用）
@@ -719,7 +817,9 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
         orig_title = art.get('original_title', '')
         orig_html = f'<div class="original-title">{esc(orig_title)}</div>' if orig_title else ''
         tags_html = " ".join([f'<span class="tag">#{esc(t)}</span>' for t in art.get('tags', [])])
-        safe_url = sanitize_url(art.get('url', '#'))
+        # 出典が確定できなかった記事はリンクを張らずタイトルだけ出す
+        safe_url = sanitize_url(art.get('url', ''))
+        has_source = safe_url != '#'
         raw_title = art.get('title', '')
 
         # ボールドスキャン（重要企業名・技術キーワード強調）
@@ -734,6 +834,18 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
         escaped_detail = esc(detail_wim)
         bold_detail = bold_scan_text(escaped_detail)
 
+        if has_source:
+            title_inner = f"""
+            <a href="{safe_url}" target="_blank" rel="noopener noreferrer">
+              {esc(raw_title)}
+              {ICON_EXTERNAL_SVG}
+            </a>
+          """
+            source_link_html = f'<a class="source-link" href="{safe_url}" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>'
+        else:
+            title_inner = esc(raw_title)
+            source_link_html = '<span class="source-link is-missing" title="出典URLを特定できませんでした">出典リンクなし</span>'
+
         # X共有リンク用
         tweet_text = f"{raw_title} | Retail Tech Daily Brief {date_key}"
         tweet_intent = f"https://x.com/intent/post?text={urllib.parse.quote(tweet_text)}&url={urllib.parse.quote(f'https://tk.st/job/retailtechdaily/{date_key}/#art-{idx}')}"
@@ -741,16 +853,11 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
         articles_html.append(f"""
         <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}">
           <div class="card-meta">
-            <span class="region-badge {badge_class}" data-filter-trigger="region" data-filter-val="{region_code}" title="この地域のニュースで絞り込み">{badge_text}</span>
-            <span class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</span>
+            <button type="button" class="region-badge {badge_class}" data-filter-trigger="region" data-filter-val="{region_code}" title="この地域のニュースで絞り込み">{badge_text}</button>
+            <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>
             <span class="source-tag">{esc(art.get('source', '業界速報'))}</span>
           </div>
-          <h3 class="card-title">
-            <a href="{safe_url}" target="_blank" rel="noopener noreferrer">
-              {esc(raw_title)}
-              {ICON_EXTERNAL_SVG}
-            </a>
-          </h3>
+          <h3 class="card-title">{title_inner}</h3>
           {orig_html}
           <div class="card-summary"><p>{bold_summary}</p></div>
           <div class="why-it-matters">
@@ -774,7 +881,7 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
               <a href="{tweet_intent}" target="_blank" rel="noopener noreferrer" class="x-share-btn" title="Xでポスト">
                 {ICON_X_SVG}
               </a>
-              <a class="source-link" href="{safe_url}" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
+              {source_link_html}
             </div>
           </div>
         </article>
@@ -786,18 +893,13 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
-  new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  }})(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
-  <!-- End Google Tag Manager -->
-
+  <!-- charset は head の先頭に置く（後続バイトの解釈を確定させる） -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- 計測タグ（GTM + Ahrefs）は /data/analytics.js に集約 -->
+  <script src="../../../data/analytics.js" async></script>
+
   <title>{formatted_date}号：昨日のリテールテック＆流通DXニュースまとめ — Retail Tech Daily Brief | tk.st</title>
   <meta name="description" content="{dynamic_page_desc}">
   <meta name="author" content="Shinya Takeda">
@@ -910,11 +1012,11 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
             </div>
           </div>
         </div>
-        <div class="filter-scroll" role="toolbar" aria-label="ニュース種別フィルター">
-          <button type="button" class="filter-chip active" data-filter="all">すべて <span class="chip-count">{total_count}</span></button>
+        <div class="filter-scroll" role="group" aria-label="ニュース種別フィルター">
+          <button type="button" class="filter-chip active" data-filter="all" aria-pressed="true">すべて <span class="chip-count">{total_count}</span></button>
           <span class="chip-divider"></span>
-          <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP">🇯🇵 国内 <span class="chip-count">{jp_count}</span></button>
-          <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL">🌐 海外 <span class="chip-count">{global_count}</span></button>
+          <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">🇯🇵 国内 <span class="chip-count">{jp_count}</span></button>
+          <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">🌐 海外 <span class="chip-count">{global_count}</span></button>
           <span class="chip-divider"></span>
           {cat_chips_html}
         </div>
@@ -941,7 +1043,7 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
       <div class="curator-avatar">ST</div>
       <div class="curator-info">
         <h4>Curated &amp; Analyzed by Shinya Takeda</h4>
-        <p>デジタルマーケター / テックリード。流通・ECのUI/UX改善、データ基盤構築、AIエージェント開発を専門とし、日々のリテール先端動向をキュレーション・分析しています。<a href="../../" style="color:var(--primary); font-weight:700; text-decoration:none;">実績はこちら &rarr;</a></p>
+        <p>デジタルマーケター / テックリード。流通・ECのUI/UX改善、データ基盤構築、AIエージェント開発を専門とし、日々のリテール先端動向をキュレーション・分析しています。<a href="../../" class="text-link">実績はこちら &rarr;</a></p>
       </div>
     </div>
   </main>
@@ -977,6 +1079,7 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
 
   <script>
   (function() {{
+    const CHECK_ICON = '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>';
     const chips = document.querySelectorAll('.filter-chip');
     const cards = document.querySelectorAll('.news-card');
     const visibleCountEl = document.getElementById('visibleArticlesCount');
@@ -987,14 +1090,21 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
     const articlesListEl = document.getElementById('articlesList');
 
     // 1. スクロール進捗バー
+    // scrollHeight はスクロール毎に読むと毎フレーム強制レイアウトになるのでキャッシュし、
+    // 高さが変わり得るタイミング（resize・フィルター適用）だけ測り直す。
+    let maxScroll = 0;
+    function measureScrollRange() {{
+      maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      updateProgressBar();
+    }}
     function updateProgressBar() {{
       if (!progressBar) return;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const pct = maxScroll > 0 ? (window.scrollY / maxScroll) * 100 : 0;
       progressBar.style.width = Math.min(100, Math.max(0, pct)) + '%';
     }}
     window.addEventListener('scroll', updateProgressBar, {{ passive: true }});
-    updateProgressBar();
+    window.addEventListener('resize', measureScrollRange, {{ passive: true }});
+    measureScrollRange();
 
     // 2. 表示モード切り替え（詳細 ⇄ コンパクト）
     function setViewMode(mode) {{
@@ -1017,6 +1127,8 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
     }} catch(e) {{}}
 
     // 3. ニュース種別フィルター
+    // 初回の ?filter= 復元ではチップへスクロールさせない（読み込み直後に画面が飛ぶため）
+    let scrollActiveChipIntoView = false;
     function applyFilter(type, val) {{
       let matched = 0;
       cards.forEach(function(card) {{
@@ -1042,18 +1154,19 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
       chips.forEach(function(chip) {{
         const cType = chip.getAttribute('data-filter-type') || (chip.getAttribute('data-filter') === 'all' ? 'all' : '');
         const cVal = chip.getAttribute('data-filter-val') || '';
-        if (type === 'all' && cType === 'all') {{
-          chip.classList.add('active');
-        }} else if (type === cType && val === cVal) {{
-          chip.classList.add('active');
+        const isActive = (type === 'all' && cType === 'all') || (type === cType && val === cVal);
+        chip.classList.toggle('active', isActive);
+        chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        // 横スクロールする絞り込みバーの中で、選択中のチップを見える位置へ寄せる。
+        // ページ読み込み直後（?filter= の復元）は動かさない。
+        if (isActive && scrollActiveChipIntoView) {{
           chip.scrollIntoView({{ behavior: 'smooth', block: 'nearest', inline: 'center' }});
-        }} else {{
-          chip.classList.remove('active');
         }}
       }});
 
       if (visibleCountEl) visibleCountEl.textContent = matched;
       if (emptyState) emptyState.style.display = (matched === 0) ? 'block' : 'none';
+      measureScrollRange();
 
       // URL パラメータの同期
       try {{
@@ -1083,7 +1196,7 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
       btn.addEventListener('click', function(e) {{
         e.preventDefault();
         const type = btn.getAttribute('data-filter-trigger');
-        const val = btn.getAttribute('data-val');
+        const val = btn.getAttribute('data-filter-val');
         applyFilter(type, val);
         const targetSec = document.getElementById('articlesSection');
         if (targetSec) targetSec.scrollIntoView({{ behavior: 'smooth' }});
@@ -1097,17 +1210,43 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
     }}
 
     // 初回 URL パラメータ復元
+    // params.get() は既にデコード済みなので decodeURIComponent は掛けない。
+    // 値側にコロンが含まれても壊れないよう、最初のコロンだけで分割する。
     try {{
       const params = new URLSearchParams(window.location.search);
       const f = params.get('filter');
-      if (f && f.indexOf(':') > -1) {{
-        const parts = f.split(':');
-        applyFilter(parts[0], decodeURIComponent(parts[1]));
+      const sep = f ? f.indexOf(':') : -1;
+      if (sep > 0) {{
+        const type = f.slice(0, sep);
+        const val = f.slice(sep + 1);
+        // 該当チップが無い絞り込み条件（古いリンク等）は無視して全件表示のままにする
+        const known = Array.from(chips).some(function(chip) {{
+          return chip.getAttribute('data-filter-type') === type
+            && chip.getAttribute('data-filter-val') === val;
+        }});
+        if (known) applyFilter(type, val);
       }}
     }} catch(e) {{}}
+    scrollActiveChipIntoView = true;
 
     // 4. 社内共有コピーボタン（Slack / Teams用）
     document.querySelectorAll('.share-copy-btn').forEach(function(btn) {{
+      // 元の中身は最初に1度だけ退避する。クリック毎に取り直すと、2秒以内の連打で
+      // 「コピー完了！」の状態を"元"として保存してしまい、表示が戻らなくなる。
+      const originalHtml = btn.innerHTML;
+      let restoreTimer = null;
+
+      function flash(message, ok) {{
+        if (restoreTimer) clearTimeout(restoreTimer);
+        btn.classList.toggle('copied', ok);
+        btn.innerHTML = (ok ? CHECK_ICON : '') + '<span>' + message + '</span>';
+        restoreTimer = setTimeout(function() {{
+          btn.classList.remove('copied');
+          btn.innerHTML = originalHtml;
+          restoreTimer = null;
+        }}, 2000);
+      }}
+
       btn.addEventListener('click', async function() {{
         const title = btn.getAttribute('data-share-title');
         const takeaway = btn.getAttribute('data-share-takeaway');
@@ -1136,15 +1275,8 @@ def render_article_html(issue_data, date_key, formatted_date, prev_issue=None, n
           }} catch(e) {{}}
         }}
 
-        if (success) {{
-          const origHtml = btn.innerHTML;
-          btn.classList.add('copied');
-          btn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg><span>コピー完了！</span>';
-          setTimeout(function() {{
-            btn.classList.remove('copied');
-            btn.innerHTML = origHtml;
-          }}, 2000);
-        }}
+        // 失敗時も黙らない（非HTTPSや権限拒否で何も起きないと操作不能に見える）
+        flash(success ? 'コピー完了！' : 'コピーできませんでした', success);
       }});
     }});
 
@@ -1196,6 +1328,49 @@ FAQ_ITEMS = [
 ]
 
 
+# 絞り込みピルの表示用ラベル。キーは記事カテゴリ名。
+# ここに無いカテゴリも（絵文字なしで）そのまま出すので、分類を増やしても穴は開かない。
+CATEGORY_PILL_LABELS = {
+    "店舗DX・次世代決済": "🛒 店舗DX / カート",
+    "リテールメディア・店頭広告": "📺 リテールメディア",
+    "物流・RFID・ロボティクス": "📦 RFID / 棚卸ロボ",
+    "AI・需要予測・パーソナライズ": "🤖 需要予測AI",
+    "SNS話題・生活者のリアル": "💬 SNS話題・生活者のリアル",
+    "グローバル先端トレンド": "🌐 グローバル先端トレンド",
+}
+
+
+def build_meta_pills_html(latest):
+    """最新号に実在するカテゴリだけで絞り込みピルを組む。
+
+    固定リストで出すと、その号に載っていないカテゴリのピルが「0件」ページへ着地する。
+    記事ページ側のチップ（cat_counts）と同じ集合を使うのが正しい。
+    """
+    if not latest:
+        return ''
+
+    date_key = latest['date']
+    articles = latest.get('articles', [])
+
+    seen = []
+    for art in articles:
+        cat = art.get('category')
+        if cat and cat not in seen:
+            seen.append(cat)
+
+    pills = []
+    for cat in seen:
+        label = CATEGORY_PILL_LABELS.get(cat, cat)
+        query = 'category:' + urllib.parse.quote(cat, safe='')
+        pills.append(f'<a href="{esc(date_key)}/?filter={query}" class="meta-pill-item">{esc(label)}</a>')
+
+    # 海外記事があるときだけ地域ピルを添える
+    if any(art.get('region') == 'GLOBAL' for art in articles):
+        pills.append(f'<a href="{esc(date_key)}/?filter=region:GLOBAL" class="meta-pill-item">🌍 海外ニュースすべて</a>')
+
+    return "\n        ".join(pills)
+
+
 def render_top_index_html(articles_history):
     """トップポータルページ (job/retailtechdaily/index.html) の HTML を生成（FAQおよびFAQPage構造化データ付き）"""
     latest = articles_history[0] if articles_history else None
@@ -1204,6 +1379,7 @@ def render_top_index_html(articles_history):
 
     latest_engine = esc(latest.get('generated_by', 'DeepSeek AI')) if latest else ""
     latest_engine_type = esc(latest.get('engine_type', 'deepseek')) if latest else ""
+    meta_pills_html = build_meta_pills_html(latest)
 
     displayed_history = articles_history[:40]
     history_cards = []
@@ -1214,7 +1390,7 @@ def render_top_index_html(articles_history):
         count = int(issue.get('count', len(issue.get('articles', []))))
         title = esc(issue.get('title', f'{d_fmt}号まとめ'))
         eng_label = esc(issue.get('generated_by', ''))
-        eng_tag = f'<span style="font-size:10.5px; opacity:0.75;">• {eng_label.split()[0]}</span>' if eng_label else ''
+        eng_tag = f'<span class="history-engine">• {eng_label.split()[0]}</span>' if eng_label else ''
 
         history_cards.append(f"""
         <a href="{d}/" class="history-card">
@@ -1366,18 +1542,13 @@ def render_top_index_html(articles_history):
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
-  new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  }})(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
-  <!-- End Google Tag Manager -->
-
+  <!-- charset は head の先頭に置く（後続バイトの解釈を確定させる） -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- 計測タグ（GTM + Ahrefs）は /data/analytics.js に集約 -->
+  <script src="../../data/analytics.js" async></script>
+
   <title>Retail Tech Daily Brief — 毎朝8時のリテールテック・流通DX日刊速報 | tk.st</title>
   <meta name="description" content="毎朝8:00更新。昨日の国内外リテールテック・流通DX動向（スマートカート、無人決済、リテールメディア、RFIDロボティクス、AI需要予測）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊速報。">
   <meta name="author" content="Shinya Takeda">
@@ -1431,7 +1602,7 @@ def render_top_index_html(articles_history):
   <main class="container">
     <nav class="breadcrumbs">
       <a href="https://tk.st/">⌂ Shinya Takeda</a><span>/</span>
-      <a href="../../">Job</a><span>/</span>
+      <a href="../">Job</a><span>/</span>
       <strong>Retail Tech Daily</strong>
     </nav>
 
@@ -1440,12 +1611,7 @@ def render_top_index_html(articles_history):
       <h1 class="portal-title">Retail Tech Daily Brief</h1>
       <p class="portal-desc">昨日の国内外のリテールテック・流通DX動向を毎朝8時に集約。<br>AI・スマートカート・リテールメディア・RFIDの先端動向をプロのインサイト付きでお届けします。</p>
       <div class="meta-pills">
-        <a href="{latest["date"]}/?filter=category:店舗DX・次世代決済" class="meta-pill-item">🛒 店舗DX / カート</a>
-        <a href="{latest["date"]}/?filter=category:リテールメディア・店頭広告" class="meta-pill-item">📺 リテールメディア</a>
-        <a href="{latest["date"]}/?filter=category:物流・RFID・ロボティクス" class="meta-pill-item">📦 RFID / 棚卸ロボ</a>
-        <a href="{latest["date"]}/?filter=category:AI・需要予測・パーソナライズ" class="meta-pill-item">🤖 需要予測AI</a>
-        <a href="{latest["date"]}/?filter=category:SNS話題・生活者のリアル" class="meta-pill-item">💬 SNS話題・生活者のリアル</a>
-        <a href="{latest["date"]}/?filter=region:GLOBAL" class="meta-pill-item">🌐 グローバルトレンド</a>
+{meta_pills_html}
       </div>
     </section>
 
@@ -1490,7 +1656,7 @@ def render_top_index_html(articles_history):
       <div class="curator-avatar">ST</div>
       <div class="curator-info">
         <h4>Curated by Shinya Takeda</h4>
-        <p>EC/流通のUI/UX改善からAI・Web3プロダクト開発まで。ビジネス課題をテクノロジーで解決するデジタルマーケター / テックリードのポートフォリオをご覧ください。<a href="../../" style="color:var(--primary); font-weight:700; text-decoration:none;">Works &amp; Profileを見る &rarr;</a></p>
+        <p>EC/流通のUI/UX改善からAI・Web3プロダクト開発まで。ビジネス課題をテクノロジーで解決するデジタルマーケター / テックリードのポートフォリオをご覧ください。<a href="../" class="text-link">Works &amp; Profileを見る &rarr;</a></p>
       </div>
     </div>
   </main>
@@ -1548,10 +1714,15 @@ def render_top_index_html(articles_history):
 def generate_rss_xml(articles_history):
     """RSS 2.0 フィード (job/retailtechdaily/rss.xml) を生成"""
     items_xml = []
+    latest_pub_dt = None
     for issue in articles_history[:15]:
         d = issue['date']
         pub_dt = datetime.strptime(d, '%Y%m%d').replace(hour=8, minute=0, second=0, tzinfo=JST)
-        rfc822_date = pub_dt.strftime('%a, %d %b %Y %H:%M:%S +0900')
+        if latest_pub_dt is None or pub_dt > latest_pub_dt:
+            latest_pub_dt = pub_dt
+        # strftime の %a/%b はロケール依存（日本語環境で「土」等になり RFC822 として壊れる）。
+        # email.utils なら常に英語表記で出る。
+        rfc822_date = email.utils.format_datetime(pub_dt)
         desc_escaped = esc(issue.get('summary') or '')
         title_escaped = esc(issue.get('title', f'{d}号'))
 
@@ -1564,6 +1735,12 @@ def generate_rss_xml(articles_history):
     </item>""")
 
     rss_body = "\n".join(items_xml)
+    # channel の pubDate は最新号、lastBuildDate は生成時刻。
+    # どちらも欠けているとリーダー側が更新を判断しづらい。
+    channel_pub_date = email.utils.format_datetime(latest_pub_dt) if latest_pub_dt else ''
+    last_build_date = email.utils.format_datetime(datetime.now(JST))
+    channel_dates = f"    <pubDate>{channel_pub_date}</pubDate>\n" if channel_pub_date else ''
+
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
@@ -1571,6 +1748,9 @@ def generate_rss_xml(articles_history):
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>昨日の国内外リテールテック・流通DX動向をAI要約＋ビジネス示唆付きで毎朝8時に配信する日刊ニュースブリーフ。</description>
     <language>ja</language>
+{channel_dates}    <lastBuildDate>{last_build_date}</lastBuildDate>
+    <ttl>720</ttl>
+    <generator>Retail Tech Daily Brief generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
 {rss_body}
   </channel>

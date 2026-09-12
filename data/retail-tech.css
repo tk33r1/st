@@ -722,6 +722,7 @@ a.meta-pill-item:hover {
 .region-badge {
   font-family: "Outfit", sans-serif;
   font-size: 10px;
+  line-height: 1.6;
   font-weight: 800;
   padding: 2px 7px;
   border-radius: var(--radius-sm);
@@ -747,6 +748,7 @@ a.meta-pill-item:hover {
 }
 
 .category-badge {
+  font-family: inherit;
   font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
@@ -766,6 +768,30 @@ a.meta-pill-item:hover {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
   border-color: var(--border-strong);
 }
+
+/* バックナンバーカードの生成エンジン表記 */
+.history-engine {
+  font-size: 10.5px;
+  opacity: 0.75;
+}
+
+/* 出典URLを特定できなかった記事の表示（リンクにはしない） */
+.source-link.is-missing {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.source-link.is-missing:hover {
+  text-decoration: none;
+}
+
+.text-link {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.text-link:hover { text-decoration: underline; }
 
 .source-tag {
   font-size: 11.5px;
@@ -1541,3 +1567,20 @@ a.meta-pill-item:hover {
   }
 }
 
+/* ==========================================================================
+   モーション低減設定（prefers-reduced-motion）
+   アニメーション・スムーススクロールを無効化しても情報は欠落しない作りにする
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .news-card.fade-in { animation: none; }
+  .history-card:hover,
+  .featured-btn:hover,
+  .meta-pill-item:hover { transform: none; }
+}

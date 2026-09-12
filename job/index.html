@@ -1,18 +1,13 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
-  <!-- End Google Tag Manager -->
-
+  <!-- charset は head の先頭に置く（後続バイトの解釈を確定させる） -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- 計測タグ（GTM + Ahrefs）は /data/analytics.js に集約 -->
+  <script src="../data/analytics.js" async></script>
+
   <title>Shinya Takeda — Portfolio &amp; Works | Logic &amp; Engineering</title>
   <meta name="description" content="データ駆動のグロースハックから、AI・Web3の次世代UX実装まで。ビジネス課題をテクノロジーとエディトリアルな精密さで解決するデジタルマーケター / テックリード 武田伸也のポートフォリオ。">
   <meta name="author" content="Shinya Takeda">
@@ -105,10 +100,11 @@
   <link rel="icon" href="https://tk.st/favicon.ico" type="image/x-icon">
   <link rel="icon" href="https://tk.st/images/favicons/st-favicon.png" type="image/png">
   
-  <!-- Google Fonts: 厳選フォントのみ（Outfit: 幾何数字・英字 / Zen Kaku Gothic New: 端正な日本語） -->
+  <!-- Google Fonts: 厳選フォントのみ（Outfit: 幾何数字・英字 / Zen Kaku Gothic New: 端正な日本語）
+       ウェイトは実際に CSS で指定しているものだけを要求する（未使用ウェイトは転送量の無駄） -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   
   <style>
     /* ==========================================================================
@@ -136,7 +132,16 @@
       
       --accent-green: #15803d;   /* tk.st 伝統のシステムグリーン */
       --accent-green-bg: #dcfce7;
-      
+      --accent-red: #dc2626;     /* 入力エラー・警告 */
+
+      /* 反転（ダーク）面 */
+      --on-dark: #ffffff;
+      --ink-surface: #0f172a;
+      --ink-border: #1e293b;
+      --ink-text: #f8fafc;
+      --ink-muted: #94a3b8;
+      --ink-accent: #38bdf8;
+
       --radius-sm: 4px;
       --radius-md: 8px;
       --radius-lg: 12px;
@@ -177,10 +182,6 @@
       margin: 0 auto;
       padding: 0 24px;
     }
-
-    /* エディトリアル・タイポグラフィ */
-    .font-display { font-family: "Outfit", sans-serif; }
-    .font-mono { font-family: "JetBrains Mono", monospace; }
 
     .micro-kicker {
       font-family: "Outfit", sans-serif;
@@ -228,7 +229,7 @@
       width: 34px;
       height: 34px;
       background: var(--text);
-      color: #ffffff;
+      color: var(--on-dark);
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
@@ -238,7 +239,7 @@
       font-size: 13px;
       letter-spacing: 0.05em;
     }
-    .brand-meta h1 {
+    .brand-meta .brand-name {
       font-family: "Outfit", sans-serif;
       font-weight: 800;
       font-size: 15px;
@@ -278,7 +279,7 @@
     }
     .nav-item-badge:hover {
       background: var(--primary);
-      color: #ffffff;
+      color: var(--on-dark);
     }
     .nav-item-badge .pulse-dot {
       width: 6px;
@@ -287,7 +288,7 @@
       background: var(--primary);
     }
     .nav-item-badge:hover .pulse-dot {
-      background: #ffffff;
+      background: var(--on-dark);
     }
 
     /* モバイルメニュー */
@@ -376,7 +377,7 @@
       align-items: center;
       gap: 8px;
       background: var(--text);
-      color: #ffffff;
+      color: var(--on-dark);
       text-decoration: none;
       font-weight: 700;
       font-size: 14px;
@@ -387,6 +388,11 @@
     .btn-primary:hover {
       background: #1e293b;
       transform: translateY(-1px);
+    }
+    button.btn-primary {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
     }
     .btn-secondary {
       display: inline-flex;
@@ -461,6 +467,11 @@
       border-bottom: 1px solid var(--border);
       padding-bottom: 14px;
     }
+    .signal-board-title {
+      font-size: 17px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
     .live-status {
       display: inline-flex;
       align-items: center;
@@ -521,11 +532,11 @@
 
     /* Experience Architecture（幾何構造ブロック） */
     .architecture-box {
-      background: #0f172a;
-      color: #ffffff;
+      background: var(--ink-surface);
+      color: var(--on-dark);
       border-radius: var(--radius-md);
       padding: 20px;
-      border: 1px solid #1e293b;
+      border: 1px solid var(--ink-border);
     }
     .arch-label {
       font-family: "Outfit", sans-serif;
@@ -533,7 +544,7 @@
       font-weight: 800;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #94a3b8;
+      color: var(--ink-muted);
       margin-bottom: 8px;
     }
     .arch-title {
@@ -541,11 +552,11 @@
       font-weight: 800;
       line-height: 1.4;
       margin-bottom: 8px;
-      color: #f8fafc;
+      color: var(--ink-text);
     }
     .arch-desc {
       font-size: 12.5px;
-      color: #94a3b8;
+      color: var(--ink-muted);
       line-height: 1.65;
       margin-bottom: 14px;
     }
@@ -561,8 +572,8 @@
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
     }
-    .pipeline-step { color: #38bdf8; font-weight: 700; }
-    .pipeline-arrow { color: #64748b; }
+    .pipeline-step { color: var(--ink-accent); font-weight: 700; }
+    .pipeline-arrow { color: var(--text-subtle); }
 
     /* セクション共通 */
     .section-wrap {
@@ -615,7 +626,7 @@
       height: 72px;
       border-radius: var(--radius-md);
       background: var(--text);
-      color: #ffffff;
+      color: var(--on-dark);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -627,6 +638,33 @@
     .profile-title { font-size: 18px; font-weight: 800; }
     .profile-role { font-size: 12px; color: var(--text-subtle); margin-top: 2px; }
 
+    .card-heading {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .card-heading-lg {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 8px 0 12px;
+    }
+    .card-lead {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .card-body-text {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .text-link {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .text-link:hover { text-decoration: underline; }
+
     .philosophy-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -634,7 +672,34 @@
       margin-top: 20px;
     }
     @media (max-width: 580px) {
-      .philosophy-grid { grid-template-columns: 1fr; }
+      .card-heading {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .card-heading-lg {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 8px 0 12px;
+    }
+    .card-lead {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .card-body-text {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .text-link {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .text-link:hover { text-decoration: underline; }
+
+    .philosophy-grid { grid-template-columns: 1fr; }
     }
     .philo-card {
       background: var(--surface-subtle);
@@ -727,7 +792,7 @@
     }
     .filter-btn.active {
       background: var(--text);
-      color: #ffffff;
+      color: var(--on-dark);
       border-color: var(--text);
     }
 
@@ -819,7 +884,7 @@
     }
     .btn-detail:hover {
       background: var(--text);
-      color: #ffffff;
+      color: var(--on-dark);
       border-color: var(--text);
     }
 
@@ -876,6 +941,9 @@
       color: var(--text);
       font-family: inherit;
       transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input[aria-invalid="true"], .form-textarea[aria-invalid="true"] {
+      border-color: var(--accent-red);
     }
     .form-input:focus, .form-textarea:focus {
       outline: none;
@@ -959,6 +1027,30 @@
       font-size: 16px;
     }
     .modal-close-btn:hover { background: var(--border); }
+    .modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.4;
+      margin: 8px 0 14px;
+    }
+    .modal-desc {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+    .modal-panel {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+    .modal-panel-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
     .modal-highlights {
       list-style: none;
       margin-top: 14px;
@@ -990,7 +1082,7 @@
       width: 40px;
       height: 40px;
       background: var(--text);
-      color: #ffffff;
+      color: var(--on-dark);
       border-radius: var(--radius-sm);
       border: none;
       cursor: pointer;
@@ -1008,6 +1100,19 @@
       transform: translateY(0);
       pointer-events: auto;
     }
+
+    /* モーション低減設定のユーザーにはアニメーションとスムーススクロールを無効化 */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .btn-primary:hover,
+      .work-card-inner:hover { transform: none; }
+    }
   </style>
 </head>
 <body>
@@ -1020,7 +1125,7 @@
       <a href="#hero" class="brand-link">
         <div class="brand-monogram">ST</div>
         <div class="brand-meta">
-          <h1>Shinya Takeda</h1>
+          <div class="brand-name">Shinya Takeda</div>
           <span>Portfolio &amp; Works 2026</span>
         </div>
       </a>
@@ -1036,7 +1141,7 @@
         </a>
       </nav>
 
-      <button class="menu-toggle" id="menuBtn" aria-label="メニュー開閉">
+      <button class="menu-toggle" id="menuBtn" type="button" aria-label="メニュー開閉" aria-expanded="false" aria-controls="mobileDrawer">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
     </div>
@@ -1059,14 +1164,14 @@
     </nav>
 
     <!-- ヒーローセクション -->
-</html>
+    <section class="hero-section" id="hero">
       <div class="hero-grid">
         <!-- ヒーロー左側 -->
         <div class="hero-lead">
           <div class="micro-kicker">Digital Strategist / Tech Lead / Architect</div>
-          <h2 class="hero-headline">
+          <h1 class="hero-headline">
             データ駆動のグロースハックから、AI・Web3の次世代UX実装まで。
-          </h2>
+          </h1>
           <p class="hero-description">
             ECのUI/UX改善、GA4/Lookerによるデータ基盤構築、AIエージェント開発を横断し、顧客体験とLTVを最大化します。指標を読む論理と、心に残る体験をテクノロジーで接続します。
           </p>
@@ -1104,7 +1209,7 @@
           <div class="signal-board-header">
             <div>
               <span class="micro-kicker">Signal Board</span>
-              <div style="font-size: 17px; font-weight: 800; margin-top: 2px;">Logic ✕ Engineering</div>
+              <div class="signal-board-title">Logic ✕ Engineering</div>
             </div>
             <div class="live-status">Active Pipeline</div>
           </div>
@@ -1148,7 +1253,7 @@
     <section class="section-wrap" id="about">
       <div class="section-header">
         <span class="micro-kicker">01 / Profile &amp; Mission</span>
-        <h3 class="section-title">About Me</h3>
+        <h2 class="section-title">About Me</h2>
         <p class="section-subtitle">「数値を読み解く」だけでなく「新しい体験を創る」フルスタックなマーケター。</p>
       </div>
 
@@ -1159,14 +1264,14 @@
             <div class="profile-title">Shinya Takeda</div>
             <div class="profile-role">Digital Marketer / Tech Lead</div>
           </div>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.7;">
+          <p class="card-body-text">
             大規模小売・流通ECにおける定量的アプローチ（ABテスト、UI/UX改善、広告運用）を強みとしながら、対話型AIエージェントの開発や、Web3領域のトークノミクスを活用した次世代の顧客接点構築にも取り組んでいます。
           </p>
         </div>
 
         <div class="card-panel">
-          <h4 style="font-size: 19px; font-weight: 800; margin-bottom: 12px;">ビジネスの成長とユーザーの感動を両立させる。</h4>
-          <p style="font-size: 14px; color: var(--text-muted); line-height: 1.8;">
+          <h3 class="card-heading">ビジネスの成長とユーザーの感動を両立させる。</h3>
+          <p class="card-lead">
             マーケティングの意思決定をデータで科学し、現場で高速にPDCAを回す「ロジック」。そして、ユーザーが一瞬で引き込まれるUIやキャラクター対話を実現する「プレイフルネス」。この2軸を掛け合わせ、再現性のある成果を設計します。
           </p>
 
@@ -1195,7 +1300,7 @@
     <section class="section-wrap" id="skills">
       <div class="section-header">
         <span class="micro-kicker">02 / Core Competence</span>
-        <h3 class="section-title">Skills &amp; Capabilities</h3>
+        <h2 class="section-title">Skills &amp; Capabilities</h2>
         <p class="section-subtitle">論理的な改善力と、次世代テクノロジーを使った体験設計力を、3つの専門領域で整理しています。</p>
       </div>
 
@@ -1266,16 +1371,16 @@
     <section class="section-wrap" id="works">
       <div class="section-header">
         <span class="micro-kicker">03 / Case Studies</span>
-        <h3 class="section-title">Works &amp; Case Studies</h3>
+        <h2 class="section-title">Works &amp; Case Studies</h2>
         <p class="section-subtitle">成果を生む仕組みと、記憶に残る体験の実例。データ、AI、CDN、Web3を横断した代表的な事例です。</p>
       </div>
 
       <!-- フィルターバー -->
       <div class="works-filter-bar">
-        <button class="filter-btn active" data-filter="all">ALL</button>
-        <button class="filter-btn" data-filter="data">DATA &amp; GROWTH</button>
-        <button class="filter-btn" data-filter="ai">AI &amp; UX</button>
-        <button class="filter-btn" data-filter="web3">WEB3 &amp; CDN</button>
+        <button class="filter-btn active" type="button" data-filter="all" aria-pressed="true">ALL</button>
+        <button class="filter-btn" type="button" data-filter="data" aria-pressed="false">DATA &amp; GROWTH</button>
+        <button class="filter-btn" type="button" data-filter="ai" aria-pressed="false">AI &amp; UX</button>
+        <button class="filter-btn" type="button" data-filter="web3" aria-pressed="false">WEB3 &amp; CDN</button>
       </div>
 
       <div class="works-grid" id="worksGrid">
@@ -1283,7 +1388,7 @@
         <div class="work-item" data-category="data" data-full-desc="大規模小売・インテリアECにおいて、オンラインと実店舗の行動データをつなぎ、改善施策の速度と精度を上げるプロジェクト。計測の整備から可視化、改善実装まで一気通貫で設計しました。" data-highlights='["GA4の計測設計とイベント整理により、全社の意思決定の土台を標準化", "Looker Studioダッシュボードで現場のMD・マーケターが即座に判断できる状態を構築", "商品詳細ページおよびカート導線のA/Bテストを高速に回し、CVR +18.4% を達成"]'>
           <div class="work-card-inner">
             <span class="work-case-badge">CASE 01 / E-COMMERCE &amp; DATA</span>
-            <h4 class="work-title">大規模小売・インテリアECにおけるデータ駆動型UI/UX改善とOMO推進</h4>
+            <h3 class="work-title">大規模小売・インテリアECにおけるデータ駆動型UI/UX改善とOMO推進</h3>
             <div class="tag-cloud">
               <span class="tag-chip">EC Growth</span>
               <span class="tag-chip">GA4</span>
@@ -1305,7 +1410,7 @@
         <div class="work-item" data-category="ai" data-full-desc="独自キャラクターを活かした対話体験を設計し、単なる案内ボットではない“愛着のあるAI接点”を実装。ブランド体験の延長としてAIを活用することで、サイト滞在価値を高める企画です。" data-highlights='["キャラクターの口調・役割・世界観を精密にプロンプト設計し、独自性を確立", "SSE（Server-Sent Events）ストリーミングによる超低遅延なレスポンスUX", "遊び心と実用性を両立し、ユーザーのセッション深度（滞在時間）+31.0% を記録"]'>
           <div class="work-card-inner">
             <span class="work-case-badge">CASE 02 / AI AGENT &amp; CHARACTER</span>
-            <h4 class="work-title">エンタメ型AIエージェントとキャラクター開発による新規UX創出</h4>
+            <h3 class="work-title">エンタメ型AIエージェントとキャラクター開発による新規UX創出</h3>
             <div class="tag-cloud">
               <span class="tag-chip">Agent Development Kit</span>
               <span class="tag-chip">LLM Orchestration</span>
@@ -1326,7 +1431,7 @@
         <div class="work-item" data-category="web3" data-full-desc="表示速度の最適化と広告効率の改善を基盤にしながら、Web3技術による新しいロイヤルティ施策も検証したハイブリッド型の取り組み。短期成果と未来施策の両立を目指しました。" data-highlights='["Cloudflare Edge キャッシュ設計・配信最適化により、TTFB（初回応答時間）を半減", "高速化によって広告流入後の直帰率を抑制し、CPA（顧客獲得単価）の大幅低減に寄与", "Bitcoin Witness (Ordinals) やオンチェーン検証を活用した次世代接点の実証"]'>
           <div class="work-card-inner">
             <span class="work-case-badge">CASE 03 / EDGE INFRA &amp; WEB3</span>
-            <h4 class="work-title">グローバル配信基盤の最適化とWeb3・次世代広告戦略の統合</h4>
+            <h3 class="work-title">グローバル配信基盤の最適化とWeb3・次世代広告戦略の統合</h3>
             <div class="tag-cloud">
               <span class="tag-chip">Cloudflare CDN</span>
               <span class="tag-chip">Edge Performance</span>
@@ -1349,15 +1454,15 @@
     <section class="section-wrap" id="contact">
       <div class="section-header">
         <span class="micro-kicker">04 / Inquiry</span>
-        <h3 class="section-title">Contact &amp; Inquiries</h3>
+        <h2 class="section-title">Contact &amp; Inquiries</h2>
         <p class="section-subtitle">プロジェクトのご相談、データ基盤構築、AIエージェント企画、詳細な職務経歴書のご請求はこちらからお願いいたします。</p>
       </div>
 
       <div class="contact-grid">
         <div class="card-panel">
           <div class="micro-kicker">Collaboration</div>
-          <h4 style="font-size: 20px; font-weight: 800; margin: 8px 0 12px;">要件定義前の壁打ちから伴走します。</h4>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.7;">
+          <h3 class="card-heading-lg">要件定義前の壁打ちから伴走します。</h3>
+          <p class="card-body-text">
             まだ予算や施策内容が固まっていない段階でも、課題の棚卸しやデータ分析設計からディスカッション可能です。
           </p>
 
@@ -1368,27 +1473,27 @@
             </div>
             <div class="contact-info-item">
               <h4>直接連絡・SNS</h4>
-              <p>メールフォームのほか、<a href="https://tk.st/contact/" style="color:var(--primary); font-weight:700; text-decoration:none;">総合コンタクト窓口</a>からもお問い合わせいただけます。</p>
+              <p>メールフォームのほか、<a href="https://tk.st/contact/" class="text-link">総合コンタクト窓口</a>からもお問い合わせいただけます。</p>
             </div>
           </div>
         </div>
 
         <div class="card-panel">
-          <form id="contactForm" novalidate>
+          <form id="contactForm" novalidate aria-describedby="submitFeedback">
             <div class="form-group">
               <label class="form-label" for="name">お名前 / 企業名</label>
-              <input class="form-input" type="text" id="name" name="name" placeholder="例: 武田 伸也">
+              <input class="form-input" type="text" id="name" name="name" placeholder="例: 武田 伸也" required autocomplete="name">
             </div>
             <div class="form-group">
               <label class="form-label" for="email">メールアドレス</label>
-              <input class="form-input" type="email" id="email" name="email" placeholder="you@company.com">
+              <input class="form-input" type="email" id="email" name="email" placeholder="you@company.com" required autocomplete="email">
             </div>
             <div class="form-group">
               <label class="form-label" for="message">ご相談内容</label>
-              <textarea class="form-textarea" id="message" name="message" rows="5" placeholder="ご相談内容やプロジェクトの概要をご記入ください"></textarea>
+              <textarea class="form-textarea" id="message" name="message" rows="5" placeholder="ご相談内容やプロジェクトの概要をご記入ください" required></textarea>
             </div>
             <div class="form-btn-row">
-              <button type="submit" class="btn-primary" style="cursor:pointer; border:none;">
+              <button type="submit" class="btn-primary">
                 <span>メッセージを送信</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
               </button>
@@ -1420,15 +1525,15 @@
 
   <!-- ケーススタディ詳細モーダル -->
   <div class="modal-overlay" id="caseModal" aria-hidden="true">
-    <div class="modal-box">
-      <button class="modal-close-btn" id="modalClose" aria-label="閉じる">&times;</button>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close-btn" id="modalClose" type="button" aria-label="閉じる">&times;</button>
       <span class="micro-kicker">Case Study Analysis</span>
-      <h3 id="modalTitle" style="font-size: 22px; font-weight: 800; line-height: 1.4; margin: 8px 0 14px;"></h3>
+      <h2 class="modal-title" id="modalTitle"></h2>
       <div class="tag-cloud" id="modalTags"></div>
-      <p id="modalDesc" style="font-size: 14.5px; color: var(--text-muted); line-height: 1.8; margin-bottom: 20px;"></p>
-      
-      <div style="background:var(--surface-subtle); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px;">
-        <div style="font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;">Key Highlights &amp; Results</div>
+      <p class="modal-desc" id="modalDesc"></p>
+
+      <div class="modal-panel">
+        <div class="modal-panel-title">Key Highlights &amp; Results</div>
         <ul class="modal-highlights" id="modalHighlights"></ul>
       </div>
     </div>
@@ -1454,16 +1559,29 @@
 
     // 2. モーダル制御（カード要素から動的抽出・二重管理ゼロ）
     const modal = document.getElementById('caseModal');
+    const modalBox = modal.querySelector('.modal-box');
     const modalTitle = document.getElementById('modalTitle');
     const modalTags = document.getElementById('modalTags');
     const modalDesc = document.getElementById('modalDesc');
     const modalHighlights = document.getElementById('modalHighlights');
     const modalClose = document.getElementById('modalClose');
+    let lastFocusedBeforeModal = null;
+
+    // 与えられた文字列は textContent 経由でのみ流し込む（innerHTML を使わない）
+    function fillList(container, items, tagName, className) {
+      container.textContent = '';
+      items.forEach(text => {
+        const el = document.createElement(tagName);
+        if (className) el.className = className;
+        el.textContent = text;
+        container.appendChild(el);
+      });
+    }
 
     function openModalFromCard(card) {
       if (!card) return;
-      const title = card.querySelector('.work-title')?.textContent || '';
-      const fullDesc = card.getAttribute('data-full-desc') || card.querySelector('.work-summary')?.textContent || '';
+      const title = card.querySelector('.work-title')?.textContent.trim() || '';
+      const fullDesc = card.getAttribute('data-full-desc') || card.querySelector('.work-summary')?.textContent.trim() || '';
       let highlights = [];
       try {
         highlights = JSON.parse(card.getAttribute('data-highlights') || '[]');
@@ -1474,24 +1592,31 @@
 
       modalTitle.textContent = title;
       modalDesc.textContent = fullDesc;
-      modalTags.innerHTML = tags.map(t => `<span class="tag-chip">${t}</span>`).join('');
-      modalHighlights.innerHTML = highlights.map(h => `<li>${h}</li>`).join('');
+      fillList(modalTags, tags, 'span', 'tag-chip');
+      fillList(modalHighlights, highlights, 'li', null);
 
+      lastFocusedBeforeModal = document.activeElement;
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+      modalClose.focus();
     }
 
     function closeModal() {
+      if (!modal.classList.contains('open')) return;
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      // 開く前にフォーカスしていた要素へ戻す（キーボード操作の文脈を失わせない）
+      if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === 'function') {
+        lastFocusedBeforeModal.focus();
+      }
+      lastFocusedBeforeModal = null;
     }
 
     document.querySelectorAll('.btn-detail').forEach(btn => {
       btn.addEventListener('click', () => {
-        const card = btn.closest('.work-item');
-        openModalFromCard(card);
+        openModalFromCard(btn.closest('.work-item'));
       });
     });
 
@@ -1499,75 +1624,155 @@
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal();
     });
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+      if (!modal.classList.contains('open')) return;
+      if (e.key === 'Escape') {
+        closeModal();
+        return;
+      }
+      // フォーカストラップ: モーダルの外へ Tab で抜けさせない
+      if (e.key !== 'Tab') return;
+      const focusable = modalBox.querySelectorAll('a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])');
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     });
 
     // 3. Works カテゴリフィルター
     const filterBtns = document.querySelectorAll('.filter-btn');
     const workItems = document.querySelectorAll('.work-item');
+    // 非表示化は transition 後に行うため、連打時に古いタイマーが後から効かないよう保持する
+    const hideTimers = new WeakMap();
 
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        filterBtns.forEach(b => b.classList.remove('active'));
+        filterBtns.forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         const filter = btn.getAttribute('data-filter');
 
         workItems.forEach(item => {
+          const pending = hideTimers.get(item);
+          if (pending) {
+            clearTimeout(pending);
+            hideTimers.delete(item);
+          }
+
           const cat = item.getAttribute('data-category');
           if (filter === 'all' || cat === filter) {
             item.classList.remove('hidden-item');
-            setTimeout(() => { item.style.opacity = '1'; item.style.transform = 'translateY(0)'; }, 10);
+            // hidden-item 解除直後は transition が走らないので、次フレームで可視化する
+            requestAnimationFrame(() => {
+              item.style.opacity = '1';
+              item.style.transform = 'translateY(0)';
+            });
           } else {
             item.style.opacity = '0';
             item.style.transform = 'translateY(8px)';
-            setTimeout(() => item.classList.add('hidden-item'), 250);
+            hideTimers.set(item, setTimeout(() => {
+              item.classList.add('hidden-item');
+              hideTimers.delete(item);
+            }, 250));
           }
         });
       });
     });
 
-    // 4. コンタクトフォーム（mailto連動フォールバック対応）
+    // 4. コンタクトフォーム（メールソフト起動方式・サーバーレス）
     const form = document.getElementById('contactForm');
     const feedback = document.getElementById('submitFeedback');
+    const fieldName = document.getElementById('name');
+    const fieldEmail = document.getElementById('email');
+    const fieldMessage = document.getElementById('message');
+    // 宛先はアドレスそのものを HTML にも URL にも書かない（/contact/ と同じ方針）
+    const MAIL_USER = 'hi';
+    const MAIL_DOMAIN = 'tk.st';
+    const MAILTO_BODY_LIMIT = 1500;
+
+    function showFeedback(message, isError) {
+      feedback.textContent = message;
+      feedback.style.color = isError ? 'var(--accent-red)' : 'var(--accent-green)';
+      feedback.style.opacity = '1';
+    }
+
+    function markInvalid(field, invalid) {
+      if (invalid) {
+        field.setAttribute('aria-invalid', 'true');
+      } else {
+        field.removeAttribute('aria-invalid');
+      }
+    }
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const message = document.getElementById('message').value.trim();
+      const name = fieldName.value.trim();
+      const email = fieldEmail.value.trim();
+      const message = fieldMessage.value.trim();
+
+      markInvalid(fieldName, !name);
+      markInvalid(fieldEmail, !email);
+      markInvalid(fieldMessage, !message);
 
       if (!name || !email || !message) {
-        feedback.textContent = 'すべての項目を入力してください。';
-        feedback.style.color = '#dc2626';
-        feedback.style.opacity = '1';
+        showFeedback('すべての項目を入力してください。', true);
+        (!name ? fieldName : !email ? fieldEmail : fieldMessage).focus();
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        feedback.textContent = '正しいメールアドレスを入力してください。';
-        feedback.style.color = '#dc2626';
-        feedback.style.opacity = '1';
+        markInvalid(fieldEmail, true);
+        showFeedback('正しいメールアドレスを入力してください。', true);
+        fieldEmail.focus();
         return;
       }
 
-      // 送信完了演出（メールソフト起動フォールバック）
-      feedback.textContent = 'お問い合わせありがとうございます。送信完了しました。';
-      feedback.style.color = 'var(--accent-green)';
-      feedback.style.opacity = '1';
-      form.reset();
+      const subject = 'Portfolio からのお問い合わせ: ' + name;
+      const body = [
+        'お名前 / 企業名: ' + name,
+        '返信先メールアドレス: ' + email,
+        '',
+        'ご相談内容:',
+        message,
+        ''
+      ].join('\n');
 
-      setTimeout(() => { feedback.style.opacity = '0'; }, 5000);
+      if (body.length > MAILTO_BODY_LIMIT) {
+        showFeedback('内容が長いため、恐れ入りますが総合コンタクト窓口からお送りください。', true);
+        return;
+      }
+
+      // メールソフトを起動する（送信はユーザーの手元で完了する）
+      const href = 'mailto:' + MAIL_USER + '@' + MAIL_DOMAIN
+        + '?subject=' + encodeURIComponent(subject)
+        + '&body=' + encodeURIComponent(body);
+      try {
+        window.location.href = href;
+        // 起動に失敗しても内容が消えないよう、フォームはリセットしない
+        showFeedback('メールソフトを起動しました。そのまま送信してください。', false);
+      } catch (err) {
+        showFeedback('メールソフトを起動できませんでした。総合コンタクト窓口をご利用ください。', true);
+      }
+    });
+
+    [fieldName, fieldEmail, fieldMessage].forEach(field => {
+      field.addEventListener('input', () => markInvalid(field, false));
     });
 
     // 5. スクロールトップボタン
     const btnTop = document.getElementById('btnTop');
     window.addEventListener('scroll', () => {
-      if (window.scrollY > 350) {
-        btnTop.classList.add('visible');
-      } else {
-        btnTop.classList.remove('visible');
-      }
-    });
+      btnTop.classList.toggle('visible', window.scrollY > 350);
+    }, { passive: true });
     btnTop.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });

@@ -141,8 +141,6 @@
     .items-center { align-items: center }
     .justify-between { justify-content: space-between }
     .justify-center { justify-content: center }
-    .flex-between { display: flex; align-items: center; justify-content: space-between }
-    .flex-center { display: flex; align-items: center; justify-content: center }
     .flex-1 { flex: 1 1 0% }
     .gap-2 { gap: 0.5rem }
     .gap-2\.5 { gap: 0.625rem }
@@ -3318,7 +3316,7 @@
     // job title from the live attribute — hard-coding light would show the wrong title
     // in that case until the first manual toggle.
     const isDarkNow = () => document.documentElement.getAttribute('data-theme') === 'dark';
-    const config = { display_name: 'Shinya Takeda', job_title: jobTitleFor(isDarkNow()), location_text: 'Tokyo, Japan' };
+    const config = { display_name: 'Shinya Takeda', job_title: jobTitleFor(isDarkNow()) };
     const DOM = {
       app: document.getElementById('app'),
       output: document.getElementById('output-area'),
@@ -3351,7 +3349,12 @@
       `<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Type <span class="text-normal font-bold">help</span> for available commands.</div>`,
       `<div class="text-xs my-1 text-red-500">コマンドが見つかりません: '${esc(cmd)}'. 利用可能なコマンドは <span class="text-normal font-bold">help</span> と入力してください。</div>`);
 
+    // Three separate limits that happen to agree today. Kept apart on purpose: the first
+    // bounds an in-memory log, the second bounds what is written to localStorage, and the
+    // third bounds a notification list — tuning one should not silently move the others.
     const MAX_HISTORY = 50;
+    const MAX_SAVED_SESSIONS = 50;
+    const MAX_NOTIFICATIONS = 50;
     // Split on purpose: commandHistory is the Source Control log (it carries [SYS]
     // events too), inputHistory is only what was typed, so ↑/↓ never recall a [SYS] line.
     let commandHistory = [], inputHistory = [], historyIndex = -1, currentVersion = 2;
@@ -3435,6 +3438,10 @@
     // CSS.escape is unavailable in older WebViews; the raw value is a safe enough
     // fallback because every selector built with this is an internal id/codename.
     const cssEsc = v => (window.CSS && CSS.escape) ? CSS.escape(v) : v;
+    // Step an index by `dir` within a list of `len`, wrapping at both ends (negative-safe).
+    // Every ←/→/↑↓ list in here — both tab bars, IntelliSense, the command palette — wraps
+    // the same way, and each used to re-derive the `+ len) % len` trick on its own.
+    const wrapIndex = (i, dir, len) => (i + dir + len) % len;
 
     function updateGitBadge() {
       if (DOM.badgeGit) {
@@ -3444,11 +3451,12 @@
     }
 
     // Prepend to a capped, consecutive-duplicate-free log. Returns whether it actually
-    // grew, so callers don't count a suppressed repeat as new activity.
-    function pushCapped(list, entry) {
+    // grew, so callers don't count a suppressed repeat as new activity. `cap` is a parameter
+    // because the other capped lists limit different things and only share a number today.
+    function pushCapped(list, entry, cap = MAX_HISTORY) {
       if (list[0] === entry) return false;
       list.unshift(entry);
-      if (list.length > MAX_HISTORY) list.pop();
+      if (list.length > cap) list.pop();
       return true;
     }
 
@@ -3473,7 +3481,7 @@
     }
 
     // --- PROBLEMS panel (footer ⊘ errors · ⚠ warnings + diagnostics list) ---
-    const FILE_CMD = { 'identify.yaml': 'identify', 'bpm.css': 'bpm', 'letter.txt': 'akutagawa', 'about.yaml': 'about', 'help.md': 'help' };
+    // (FILE_CMD, the file→command map this panel links through, is derived from FILE_META below.)
     // Starts empty: problems are recorded only from real events (unknown commands, sudo failures, etc.).
     const problems = [];
     function recountProblems() {
@@ -3624,7 +3632,7 @@
         ja: ["昼はデジタル、夜は音楽とフラヌリ。", "平穏と狂気を愛してる。"]
       },
       rows: [
-        { label: ['🗼 Origin', '🗼 出身地'], val: ['Tokyo, Japan', '東京、日本'], isLocation: true },
+        { label: ['🗼 Origin', '🗼 出身地'], val: ['Tokyo, Japan', '東京、日本'] },
         { label: ['🧬 Roots', '🧬 ルーツ'], val: ['Osaka, Japan', '大阪、日本'] },
         { label: ['📅 Born', '📅 生まれ'], val: ['198X', '198X'] },
         { label: ['♉ Zodiac', '♉ 星座'], val: ['Taurus', '牡牛座'] },
@@ -3727,6 +3735,10 @@
     // `rebuild` directly (e.g. from `?cmd=rebuild`) put an extension in the set that nothing
     // could ever satisfy. Every place that maps a command to an extension goes through here.
     const backingExt = c => (c === 'rebuild' ? 'meltdown' : c);
+    // The installed extensions as a list, for anything that renders them (help, the Explorer
+    // tree, the palette's file list). `rebuild` is excluded — backingExt() already keeps it out
+    // of the set, so this is belt-and-braces, but as one predicate rather than three copies.
+    const installedList = () => [...installedExtensions].filter(c => c !== 'rebuild');
     // A command is usable if it isn't hidden, or its backing extension is installed.
     // Single source for every cmd filter.
     const isCmdAvailable = c => !UNLISTED_CMDS.has(c) && (!hiddenCommands.includes(c) || installedExtensions.has(backingExt(c)));
@@ -3734,26 +3746,27 @@
     // Shared file-type color system: the Explorer tree, file tabs, and the
     // Extensions Marketplace cards all derive their icon colour from here so a
     // given file/extension looks identical wherever it appears.
-    const FILETYPE_COLOR = {
-      md: '#4a9ed4', // Markdown   - blue
-      json: '#c9a227', // JSON       - gold
-      txt: '#8a8f98', // Plain text - gray
-      css: '#519aba', // Stylesheet - teal-blue
-      sh: '#6cc04a', // Shell      - green
-      bin: '#9d7cf0', // Binary     - purple
-      yaml: '#a3a0e6', // YAML       - soft blue-violet
-      py: '#c79ad6', // Python     - soft red-violet
-      exe: '#b56a63', // Executable - brick
-      html: '#d4703a', // HTML       - orange
-      lang: '#d96fc4', // Lang pack  - magenta
-    };
-    // Every extension in FILE_META has an entry above, and nothing else does — a missing one
+    // One row per extension: the icon colour and the language the status bar reports for it.
+    // Both were keyed by extension already but lived in two tables edited together, and the
+    // status-bar half had drifted into a ladder of per-command cases. A file type is one fact.
+    // Every extension in FILE_META has an entry here, and nothing else does — a missing one
     // silently reads as the grey of a plain .txt, which is what web3.html and japanese.lang
     // used to do.
-    function fileTypeColor(name) {
-      const ext = (name && name.includes('.')) ? name.split('.').pop() : '';
-      return FILETYPE_COLOR[ext] || '#8a8f98';
-    }
+    const FILETYPE = {
+      md: { c: '#4a9ed4', lang: 'Markdown' },     // blue
+      json: { c: '#c9a227', lang: 'JSON' },         // gold
+      txt: { c: '#8a8f98', lang: 'Plain Text' },   // gray
+      css: { c: '#519aba', lang: 'CSS' },          // teal-blue
+      sh: { c: '#6cc04a', lang: 'Shell Script' }, // green
+      bin: { c: '#9d7cf0', lang: 'Binary' },       // purple
+      yaml: { c: '#a3a0e6', lang: 'YAML' },         // soft blue-violet
+      py: { c: '#c79ad6', lang: 'Python' },        // soft red-violet
+      exe: { c: '#b56a63', lang: 'Executable' },   // brick
+      html: { c: '#d4703a', lang: 'URL' },          // orange — web3.html opens a link, not a document
+      lang: { c: '#d96fc4' },                       // magenta — japanese.lang has no mode; falls back to Shell
+    };
+    const extOf = name => (name && name.includes('.')) ? name.split('.').pop() : '';
+    const fileTypeColor = name => (FILETYPE[extOf(name)] || {}).c || '#8a8f98';
     // Some glyphs carry a strong conventional color (a heart is red, a warning sign is amber).
     // These override the file-type color so the icon reads naturally regardless of its extension.
     const ICON_COLOR = {
@@ -3847,8 +3860,7 @@
     function applyTheme(isDark) {
       TK.paint(isDark ? 'dark' : 'light'); // data-theme + theme-color, defined in the head script
       setJobTitle(isDark);
-      if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
-      if (tabState['about']) tabState['about'] = commands.about();
+      regenTabs(THEME_DOC_TABS);
       // The search index is theme-independent (both job-title variants are indexed once
       // in buildSearchIndex), so no reindex/re-render is needed on theme toggle.
       renderExtensions();
@@ -3891,14 +3903,25 @@
     // regenerating it from commands.identify() would discard that and drop the reader back
     // on the version picker.
     const LANG_DOC_TABS = ['about', 'timeline', 'pages', 'help'];
+    // The tabs that show the job title or the version badge, and so go stale on a theme
+    // switch and on `rebuild` (which bumps currentVersion) rather than on a language switch.
+    const THEME_DOC_TABS = ['welcome', 'about'];
+    // Re-render the named tabs in place, skipping any that aren't open. Three events
+    // invalidate an open document — theme switch, language switch, `rebuild` — and each used
+    // to hand-write the same loop. `welcome` renders from welcomeHTML() rather than commands{};
+    // that exception now lives here once instead of at every call site.
+    const regenTabs = (cmds) => cmds.forEach(c => {
+      const render = c === 'welcome' ? welcomeHTML : commands[c];
+      if (!tabState[c] || !render) return;
+      try { tabState[c] = render(); } catch (e) { }
+    });
     function applyLang() {
       document.documentElement.setAttribute('lang', currentLang);
       const isDark = isDarkNow();
       setJobTitle(isDark);
       applyChrome();
       // Regenerate any open document tabs so their content matches the language.
-      if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
-      LANG_DOC_TABS.forEach(c => { if (tabState[c] && commands[c]) { try { tabState[c] = commands[c](); } catch (e) { } } });
+      regenTabs(['welcome', ...LANG_DOC_TABS]);
       renderEditor();
       renderExplorerTree();
       renderExtensions();
@@ -4018,18 +4041,13 @@
       web3: { name: 'web3.html', icon: '⬡' },
       japanese: { name: 'japanese.lang', icon: 'あ' }
     };
-    const getLangMode = (cmd) => {
-      if (!cmd) return 'Shell';
-      if (['theme', 'bpm'].includes(cmd)) return 'CSS';
-      if (['matrix', 'meditation'].includes(cmd)) return 'Binary';
-      if (cmd === 'rampage') return 'Executable';
-      if (['meltdown', 'clear'].includes(cmd)) return 'Shell Script';
-      if (cmd === 'contact') return 'Plain Text';
-      if (cmd === 'web3') return 'URL';
-      const m = FILE_META[cmd];
-      if (!m || !m.name.includes('.')) return 'Shell';
-      return { md: 'Markdown', json: 'JSON', yaml: 'YAML', py: 'Python', txt: 'Plain Text', sh: 'Shell Script' }[m.name.split('.').pop()] || 'Shell';
-    };
+    // FILE_META reversed, for the PROBLEMS panel: which command re-opens a given file. Only
+    // documents worth reopening are listed — a `rampage.exe` row must not re-fire rampage.
+    // Derived, not retyped, so a rename above cannot leave this pointing at a dead filename.
+    const FILE_CMD = Object.fromEntries(['identify', 'bpm', 'akutagawa', 'about', 'help'].map(c => [FILE_META[c].name, c]));
+    // The file's own extension decides the mode — no per-command cases. A name without a
+    // known extension (welcome, japanese.lang) reads as plain Shell.
+    const getLangMode = (cmd) => { const m = cmd && FILE_META[cmd]; return (m && (FILETYPE[extOf(m.name)] || {}).lang) || 'Shell'; };
     let tabState = {}, tabOrder = [], activeTab = null;
     const fileLabel = c => (FILE_META[c] || { name: c }).name;
 
@@ -4109,7 +4127,7 @@
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
         e.preventDefault();
         const i = tabOrder.indexOf(cmd);
-        if (i >= 0 && tabOrder.length) focusTab(tabOrder[(i + (e.key === 'ArrowRight' ? 1 : -1) + tabOrder.length) % tabOrder.length]);
+        if (i >= 0 && tabOrder.length) focusTab(tabOrder[wrapIndex(i, e.key === 'ArrowRight' ? 1 : -1, tabOrder.length)]);
       }
     });
 
@@ -4356,7 +4374,7 @@
     const commands = {
       help: () => {
         const base = [['about', tr('Learn about me', '私について')], ['identify', tr('View personality versions', '人格のバージョン')], ['timeline', tr('Trace my life events', '人生の出来事を辿る')], ['pages', tr('Explore my creations', '制作物を見る')], ['contact', tr('Contact me', '連絡先')], ['clear', tr('Clear terminal', 'ターミナルをクリア')], ['help', tr('Show this menu', 'このメニューを表示')]];
-        const installed = [...installedExtensions].filter(c => c !== 'rebuild').sort().map(c => [c, cdesc(c)]);
+        const installed = installedList().sort().map(c => [c, cdesc(c)]);
         return renderCmdList('Available Commands:', base.concat(installed));
       },
       clear: () => { DOM.terminalLog.innerHTML = ''; return null; },
@@ -4382,7 +4400,7 @@
         const bioLines = tr(ABOUT_DATA.bio.en, ABOUT_DATA.bio.ja);
         const rows = ABOUT_DATA.rows.map(r => [
           tr(r.label[0], r.label[1]),
-          r.isLocation ? tr(config.location_text, '東京、日本') : tr(r.val[0], r.val[1])
+          tr(r.val[0], r.val[1])
         ]);
         return wrapCmd(`
             <div class="text-lg font-bold glow mb-1 text-primary">${esc(tr(config.display_name, '武田 伸也'))}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
@@ -4544,8 +4562,7 @@
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) {
               clearInterval(rebuildInterval); rebuildInterval = null; isMeltdown = false; meltdownElements = []; currentVersion++;
-              if (tabState['welcome']) tabState['welcome'] = welcomeHTML();
-              if (tabState['about']) tabState['about'] = commands.about();
+              regenTabs(THEME_DOC_TABS); // the version badge these two show has just changed
               document.body.classList.remove('system-meltdown');
               const nameEl = document.getElementById('display-name-el');
               if (nameEl) nameEl.innerHTML = `${esc(config.display_name)}${verBadge()}`;
@@ -6201,7 +6218,7 @@
     DOM.input.addEventListener('keydown', async (e) => {
       if (isMatrixActive || isMeditationActive) return;
       // While the IntelliSense popup is open it owns navigation/accept.
-      if (suggestOpen) {
+      if (suggestOpen()) {
         if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggest(1); return; }
         if (e.key === 'ArrowUp') { e.preventDefault(); moveSuggest(-1); return; }
         if (e.key === 'Escape') { e.preventDefault(); closeSuggest(); return; }
@@ -6279,7 +6296,9 @@
       problems.length = 0; recountProblems();
       installedExtensions.clear();
       renderExplorerTree();
-      renderExtensions();
+      // No renderExtensions() here: applyTheme() below calls it, and nothing paints in
+      // between (this whole block is synchronous after the opening await), so rebuilding
+      // the marketplace twice only ever threw the first result away.
       // Tear down any active full-screen effects so their canvas/overlay and timers don't leak across the reload.
       if (matrixTeardown) matrixTeardown();
       if (meditationTeardown) meditationTeardown();
@@ -6368,7 +6387,7 @@
     const sidebarTree = document.getElementById('sidebar-tree');
     const sidebarEl = document.getElementById('sidebar');
     function renderExplorerTree() {
-      const files = [...sidebarFiles, ...[...installedExtensions].filter(ext => ext !== 'rebuild')];
+      const files = [...sidebarFiles, ...installedList()];
       sidebarTree.innerHTML = files.map(c => {
         const m = treeMeta(c);
         return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span style="color:${iconColor(c, m.name)}">${m.icon}</span><span>${esc(m.name)}</span></button>`;
@@ -6554,7 +6573,7 @@
       const i = tabs.indexOf(t);
       const next = e.key === 'Home' ? 0
         : e.key === 'End' ? tabs.length - 1
-          : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+          : wrapIndex(i, e.key === 'ArrowRight' ? 1 : -1, tabs.length);
       // Follow the focus, like VS Code and the APG's automatic-activation pattern: showPanel
       // rewrites the tabindexes, so focus() has to come after it.
       showPanel(tabs[next].dataset.panel);
@@ -6579,13 +6598,17 @@
       const editorGroup = document.getElementById('editor-group');
       const agentDock = document.getElementById('agentdock');
       const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
-      // Generic drag: bind a handle to an onMove(ev) that sets the target size.
-      function bindResizer(resizer, axisClass, onMove) {
+      // Generic drag: `start()` measures once at pointerdown and returns the onMove(ev) that
+      // sizes the target. Per-drag, not per-move: pointermove fires at pointer rate and
+      // getBoundingClientRect() forces layout, while the edge each handler reads is pinned
+      // by the flex layout for the whole drag.
+      function bindResizer(resizer, axisClass, start) {
         resizer.addEventListener('pointerdown', (e) => {
           e.preventDefault();
           resizer.setPointerCapture(e.pointerId);
           document.body.classList.add(axisClass);
           resizer.classList.add('resizer-active');
+          const onMove = start();
           const up = (ev) => {
             try { resizer.releasePointerCapture(ev.pointerId); } catch (_) { }
             document.body.classList.remove(axisClass);
@@ -6597,17 +6620,17 @@
           window.addEventListener('pointerup', up);
         });
       }
-      bindResizer(document.getElementById('sidebar-resizer'), 'resizing-x', (ev) => {
-        const w = ev.clientX - sidebar.getBoundingClientRect().left;
-        sidebar.style.width = clamp(w, 140, window.innerWidth * 0.6) + 'px';
+      bindResizer(document.getElementById('sidebar-resizer'), 'resizing-x', () => {
+        const left = sidebar.getBoundingClientRect().left, max = window.innerWidth * 0.6;
+        return (ev) => { sidebar.style.width = clamp(ev.clientX - left, 140, max) + 'px'; };
       });
-      bindResizer(document.getElementById('panel-resizer'), 'resizing-y', (ev) => {
+      bindResizer(document.getElementById('panel-resizer'), 'resizing-y', () => {
         const rect = editorGroup.getBoundingClientRect();
-        panel.style.height = clamp(rect.bottom - ev.clientY, 64, rect.height - 80) + 'px';
+        return (ev) => { panel.style.height = clamp(rect.bottom - ev.clientY, 64, rect.height - 80) + 'px'; };
       });
-      bindResizer(document.getElementById('agentdock-resizer'), 'resizing-x', (ev) => {
-        const w = agentDock.getBoundingClientRect().right - ev.clientX;
-        agentDock.style.width = clamp(w, 220, window.innerWidth * 0.6) + 'px';
+      bindResizer(document.getElementById('agentdock-resizer'), 'resizing-x', () => {
+        const right = agentDock.getBoundingClientRect().right, max = window.innerWidth * 0.6;
+        return (ev) => { agentDock.style.width = clamp(right - ev.clientX, 220, max) + 'px'; };
       });
     })();
 
@@ -7324,14 +7347,12 @@
         safeStore('magi_current_session_id', currentSessionId);
       }
       // 新規・既存どちらも「先頭に積む」のは同じ
-      sessions.unshift({
+      pushCapped(sessions, {
         id: currentSessionId,
         timestamp: Date.now(),
         title: title,
         history: [...agentHistory]
-      });
-
-      if (sessions.length > 50) sessions.pop();
+      }, MAX_SAVED_SESSIONS);
       safeStore('magi_saved_sessions', sessions);
 
       // 履歴パネルが開いていればリストを再描画
@@ -7609,8 +7630,7 @@
 
     function showToast(msg, type) {
       // Record into the notification center first (so the bell reflects it even if the toast is missed).
-      notifications.unshift({ msg, type: type === 'warn' ? 'warn' : 'info', t: new Date() });
-      if (notifications.length > 50) notifications.pop();
+      pushCapped(notifications, { msg, type: type === 'warn' ? 'warn' : 'info', t: new Date() }, MAX_NOTIFICATIONS);
       if (notifCenter && !notifCenter.classList.contains('hidden')) { renderNotifCenter(); }
       else { unreadNotifications++; updateNotifBell(); }
 
@@ -7639,52 +7659,68 @@
     });
 
     // --- Editor gutter (line numbers + hover active line) ---
+    // Must match the `.ed-ln { height }` rule: the row count and the hover hit-testing below
+    // both divide by it, and all three used to spell 20 separately.
+    const LINE_H = 20;
     function updateGutter() {
       const gutter = document.getElementById('editor-gutter');
       const content = document.getElementById('editor-content');
       const ed = document.getElementById('editor');
       if (!gutter || !content || !ed) return;
-      const LINE = 20;
       const h = Math.max(content.scrollHeight, ed.clientHeight);
-      const n = Math.max(1, Math.ceil(h / LINE));
+      const n = Math.max(1, Math.ceil(h / LINE_H));
       let html = '';
       for (let i = 1; i <= n; i++) html += `<div class="ed-ln">${i}</div>`;
       gutter.innerHTML = html;
     }
     (function setupGutterHover() {
       const ed = document.getElementById('editor');
-      if (!ed) return;
+      const gutter = document.getElementById('editor-gutter');
+      const content = document.getElementById('editor-content');
+      if (!ed || !gutter || !content) return;
+      // getComputedStyle() and getBoundingClientRect() force layout, and this fires on every
+      // mousemove across the reading pane. Neither value changes as the cursor moves, so both
+      // are measured once and refreshed only on scroll/resize.
+      let padTop = 0, edTop = 0, edScroll = 0;
+      const measure = () => {
+        padTop = parseFloat(getComputedStyle(content).paddingTop) || 0;
+        edTop = ed.getBoundingClientRect().top;
+        edScroll = ed.scrollTop;
+      };
+      measure();
+      let lastIdx = -1;
       ed.addEventListener('mousemove', (e) => {
-        const gutter = document.getElementById('editor-gutter');
-        const content = document.getElementById('editor-content');
-        if (!gutter || !content) return;
-        const padTop = parseFloat(getComputedStyle(content).paddingTop) || 0;
-        const y = e.clientY - ed.getBoundingClientRect().top + ed.scrollTop - padTop;
-        const idx = Math.floor(y / 20);
+        const idx = Math.floor((e.clientY - edTop + edScroll - padTop) / LINE_H);
+        if (idx === lastIdx) return; // same row as the previous pixel — nothing to repaint
+        lastIdx = idx;
         const lines = gutter.children;
         for (let i = 0; i < lines.length; i++) lines[i].classList.toggle('active', i === idx);
-      });
+      }, { passive: true });
       ed.addEventListener('mouseleave', () => {
-        document.querySelectorAll('#editor-gutter .ed-ln.active').forEach(el => el.classList.remove('active'));
+        lastIdx = -1;
+        gutter.querySelectorAll('.ed-ln.active').forEach(el => el.classList.remove('active'));
       });
-      window.addEventListener('resize', updateGutter);
+      ed.addEventListener('scroll', measure, { passive: true });
+      window.addEventListener('resize', () => { measure(); updateGutter(); });
     })();
 
     // --- Inline IntelliSense suggestions on the terminal input ---
     const suggestBox = document.getElementById('cmd-suggest');
-    let suggestItems = [], suggestSel = -1, suggestOpen = false;
+    // No `suggestOpen` flag: it only ever mirrored suggestItems.length, which is the
+    // real state — one fewer thing to keep in sync across render/close/accept.
+    let suggestItems = [], suggestSel = -1;
+    const suggestOpen = () => suggestItems.length > 0;
     // Keep the combobox on #cmd-input in step with the popup. aria-activedescendant is what
     // makes ↑/↓ speak: focus never leaves the input, so without it the moving highlight is
     // invisible to a screen reader.
     function syncSuggestAria() {
-      DOM.input.setAttribute('aria-expanded', suggestOpen ? 'true' : 'false');
-      if (suggestOpen && suggestSel >= 0) DOM.input.setAttribute('aria-activedescendant', 'sg-item-' + suggestSel);
+      DOM.input.setAttribute('aria-expanded', suggestOpen() ? 'true' : 'false');
+      if (suggestOpen() && suggestSel >= 0) DOM.input.setAttribute('aria-activedescendant', 'sg-item-' + suggestSel);
       else DOM.input.removeAttribute('aria-activedescendant');
     }
     function renderSuggest() {
       if (!suggestBox) return;
-      if (!suggestItems.length) { suggestBox.classList.add('hidden'); suggestOpen = false; syncSuggestAria(); return; }
-      suggestOpen = true;
+      if (!suggestItems.length) { suggestBox.classList.add('hidden'); syncSuggestAria(); return; }
       suggestBox.classList.remove('hidden');
       suggestBox.innerHTML = suggestItems.map((c, i) => {
         const m = treeMeta(c);
@@ -7695,8 +7731,8 @@
       }).join('');
       syncSuggestAria();
     }
-    function closeSuggest() { suggestItems = []; suggestSel = -1; suggestOpen = false; if (suggestBox) suggestBox.classList.add('hidden'); syncSuggestAria(); }
-    function moveSuggest(dir) { if (!suggestItems.length) return; suggestSel = (suggestSel + dir + suggestItems.length) % suggestItems.length; renderSuggest(); }
+    function closeSuggest() { suggestItems = []; suggestSel = -1; if (suggestBox) suggestBox.classList.add('hidden'); syncSuggestAria(); }
+    function moveSuggest(dir) { if (!suggestItems.length) return; suggestSel = wrapIndex(suggestSel, dir, suggestItems.length); renderSuggest(); }
     function acceptSuggest(i) { const c = suggestItems[i]; if (c == null) return; DOM.input.value = c; updateCaret(); closeSuggest(); DOM.input.focus({ preventScroll: true }); }
     DOM.input.addEventListener('input', () => {
       if (DOM.input.type === 'password') { closeSuggest(); return; }
@@ -7760,7 +7796,7 @@
         });
         return actions.concat(cmds);
       }
-      const files = ['welcome', ...sidebarFiles, ...[...installedExtensions].filter(c => c !== 'rebuild')];
+      const files = ['welcome', ...sidebarFiles, ...installedList()];
       const seen = new Set(), items = [];
       files.forEach(c => {
         if (seen.has(c)) return; seen.add(c);
@@ -7819,11 +7855,11 @@
       const v = paletteInput.value; paletteInput.value = ''; paletteInput.value = v;
     }
     function closePalette() { paletteEl.classList.add('hidden'); paletteInput.value = ''; }
+    function movePalette(dir) { if (!paletteFiltered.length) return; paletteSel = wrapIndex(paletteSel, dir, paletteFiltered.length); renderPalette(); }
     function runPaletteSel() { const it = paletteFiltered[paletteSel]; if (!it) return; closePalette(); it.run(); }
     paletteInput.addEventListener('input', () => { paletteSel = 0; renderPalette(); });
     paletteInput.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowDown') { e.preventDefault(); if (paletteFiltered.length) { paletteSel = (paletteSel + 1) % paletteFiltered.length; renderPalette(); } }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); if (paletteFiltered.length) { paletteSel = (paletteSel - 1 + paletteFiltered.length) % paletteFiltered.length; renderPalette(); } }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); movePalette(e.key === 'ArrowDown' ? 1 : -1); }
       else if (e.key === 'Enter') { e.preventDefault(); runPaletteSel(); }
       else if (e.key === 'Escape') { e.preventDefault(); closePalette(); DOM.input.focus({ preventScroll: true }); }
     });
