@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://tk.st/</loc>
-<lastmod>2026-09-12T03:43:47Z</lastmod>
+<lastmod>2026-09-13T07:04:44+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/data/Dummy_Client_IPIP-NEO-120_2026-09-12.pdf</loc>
@@ -31,6 +31,10 @@
 <url>
 <loc>https://tk.st/magi/</loc>
 <lastmod>2026-09-05T08:04:17+09:00</lastmod>
+</url>
+<url>
+<loc>https://tk.st/motovlog/</loc>
+<lastmod>2026-09-13T07:04:44+09:00</lastmod>
 </url>
 <url>
 <loc>https://tk.st/thought/</loc>
@@ -110,7 +114,7 @@
 </url>
 <url>
 <loc>https://tk.st/job/nitoridaily/</loc>
-<lastmod>2026-09-12T23:46:15+09:00</lastmod>
+<lastmod>2026-09-12T14:46:40Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/</loc>
@@ -158,7 +162,7 @@
 </url>
 <url>
 <loc>https://tk.st/job/nitoridaily/20260912/</loc>
-<lastmod>2026-09-12T23:46:15+09:00</lastmod>
+<lastmod>2026-09-12T14:46:40Z</lastmod>
 </url>
 <url>
 <loc>https://tk.st/job/retailtechdaily/20260912/</loc>
