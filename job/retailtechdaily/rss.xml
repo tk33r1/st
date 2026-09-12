@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Retail Tech Daily Brief — 毎朝8時のリテールテック速報</title>
+    <link>https://tk.st/job/retailtechdaily/</link>
+    <description>昨日の国内外リテールテック・流通DX動向をAI要約＋ビジネス示唆付きで毎朝8時に配信する日刊ニュースブリーフ。</description>
+    <language>ja</language>
+    <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>2026年9月12日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20260912/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260912/</guid>
+      <pubDate>Sat, 12 Sep 2026 08:00:00 +0900</pubDate>
+      <description>ファミマが10年ぶりレジ全面刷新で「店員・客切り替え式」を導入。 / イトーヨーカ堂のリテールメディア組織論やアスタリスクのRFIDスマートカート開発など、リアル店舗のDXが加速。</description>
+    </item>
+  </channel>
+</rss>

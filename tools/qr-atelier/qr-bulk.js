@@ -65,7 +65,11 @@
     let lines = 0;
     for (let i = 0; i < head.length; i++) {
       const ch = head.charAt(i);
-      if (ch === QUOTE) { inQuote = !inQuote; continue; }
+      if (ch === QUOTE) {
+        if (inQuote && head.charAt(i + 1) === QUOTE) { i++; continue; }
+        inQuote = !inQuote;
+        continue;
+      }
       if (inQuote) continue;
       if (ch === LF) { lines++; if (lines >= 20) break; continue; }
       if (count[ch] !== undefined) count[ch]++;

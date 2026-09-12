@@ -38,6 +38,7 @@ async function launch(port = 9222) {
     '--no-first-run',
     '--no-default-browser-check',
     '--disable-gpu',
+    '--no-sandbox',
   ], { stdio: 'ignore', detached: false });
 
   for (let i = 0; i < 60; i++) {

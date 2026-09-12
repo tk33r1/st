@@ -880,9 +880,14 @@ export default {
 
     if (method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
-    // ブースコンソールは公開運用。鍵は掛けない（noindex で、どこからもリンクしない）。
-    // 他サイトのページから叩かれるのだけ Origin で弾く。
-    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    // 状態を変更する操作（POST, PATCH, DELETE）はブラウザからのアクセスのみ通す（Origin 必須）。
+    // GET は直アクセス等で Origin が付かない場合もあるため、付いている場合のみ検証する。
+    const isWrite = ['POST', 'PATCH', 'DELETE'].includes(method);
+    if (isWrite) {
+      if (!ALLOWED_ORIGINS.includes(origin)) {
+        return json({ error: 'forbidden' }, 403, cors);
+      }
+    } else if (origin && !ALLOWED_ORIGINS.includes(origin)) {
       return json({ error: 'forbidden' }, 403, cors);
     }
 

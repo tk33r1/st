@@ -606,6 +606,49 @@
   let historyTimer = null;
   let lastCommittedSnapshot = '';
 
+  // 画像（Data URLなど巨大な文字列）の重複保持を防ぐメモリ上の参照プール。
+  // 50世代のスナップショットが同じ画像を参照していても、実体は1つだけ保持する。
+  const historyImagePool = new Map();
+  const historyImageRevPool = new Map();
+  let historyImageSeq = 0;
+
+  function internHistoryImage(src) {
+    if (!src || typeof src !== 'string' || src.length < 100) return src;
+    let id = historyImageRevPool.get(src);
+    if (!id) {
+      id = '__img_ref_' + (++historyImageSeq) + '__';
+      historyImagePool.set(id, src);
+      historyImageRevPool.set(src, id);
+    }
+    return id;
+  }
+
+  function resolveHistoryImage(val) {
+    if (typeof val === 'string' && val.indexOf('__img_ref_') === 0 && val.slice(-2) === '__' && historyImagePool.has(val)) {
+      return historyImagePool.get(val);
+    }
+    return val;
+  }
+
+  function cleanHistoryImagePool() {
+    const activeRefs = new Set();
+    const scan = str => {
+      if (!str) return;
+      const matches = str.match(/__img_ref_\d+__/g);
+      if (matches) matches.forEach(m => activeRefs.add(m));
+    };
+    undoStack.forEach(scan);
+    redoStack.forEach(scan);
+    scan(lastCommittedSnapshot);
+
+    for (const [id, src] of historyImagePool.entries()) {
+      if (!activeRefs.has(id)) {
+        historyImagePool.delete(id);
+        historyImageRevPool.delete(src);
+      }
+    }
+  }
+
   function getSnapshot() {
     return JSON.stringify({
       type: state.type,
@@ -624,6 +667,11 @@
       iconGroup: state.iconGroup,
       frameIconGroup: state.frameIconGroup,
       style: state.style
+    }, function (k, v) {
+      if (typeof v === 'string' && v.length >= 100 && (k === 'src' || k === 'topSrc' || v.indexOf('data:image/') === 0)) {
+        return internHistoryImage(v);
+      }
+      return v;
     });
   }
 
@@ -633,7 +681,10 @@
     if (snap === lastCommittedSnapshot) return;
     if (lastCommittedSnapshot) {
       undoStack.push(lastCommittedSnapshot);
-      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+      if (undoStack.length > MAX_HISTORY) {
+        undoStack.shift();
+        cleanHistoryImagePool();
+      }
       redoStack.length = 0;
       updateHistoryButtons();
     }
@@ -669,7 +720,9 @@
     if (!snapStr) return;
     let data;
     try {
-      data = JSON.parse(snapStr);
+      data = JSON.parse(snapStr, function (k, v) {
+        return resolveHistoryImage(v);
+      });
     } catch (e) {
       return;
     }
@@ -3236,21 +3289,30 @@
     }, 1400);
   }
 
+  let lastFocusedElement = null;
+
   function openFullscreen() {
     if (!lastSvg) return;
     const modal = $('fullscreen-modal');
     const host = $('fullscreen-preview');
     if (!modal || !host) return;
+    lastFocusedElement = document.activeElement;
     host.innerHTML = lastSvg;
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    const closeBtn = $('btn-fullscreen-close');
+    if (closeBtn) closeBtn.focus();
   }
 
   function closeFullscreen() {
     const modal = $('fullscreen-modal');
-    if (!modal) return;
+    if (!modal || modal.classList.contains('hidden')) return;
     modal.classList.add('hidden');
     document.body.style.overflow = '';
+    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+      lastFocusedElement.focus();
+      lastFocusedElement = null;
+    }
   }
 
   // 書き出す直前に、待っている検査を繰り上げて片づける。押した時点の絵で
@@ -4870,7 +4932,29 @@
       });
     }
     window.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closeFullscreen();
+      if (e.key === 'Escape') {
+        const fsModal = $('fullscreen-modal');
+        if (fsModal && !fsModal.classList.contains('hidden')) {
+          closeFullscreen();
+          return;
+        }
+        const optCompress = $('opt-compress');
+        if (optCompress && !optCompress.classList.contains('hidden')) {
+          optCompress.classList.add('hidden');
+          const compressBtn = document.querySelector('[data-drawer="opt-compress"]');
+          if (compressBtn) {
+            compressBtn.setAttribute('aria-expanded', 'false');
+            compressBtn.focus();
+          }
+          return;
+        }
+        if (bulk.running) {
+          bulk.abort = true;
+          const btn = $('btn-bulk-run');
+          if (btn) btn.textContent = '中止しています…';
+          return;
+        }
+      }
     });
 
     // ---- 履歴操作（Undo / Redo） ----

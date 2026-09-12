@@ -106,7 +106,7 @@
                   "@type": "Organization",
                   "name": "アールイーカメラマガジン",
                   "url": "https://magazine.re-camera-shop.com/",
-                  "logo": "https://magazine.re-camera-shop.com/wp-content/themes/cameramagazine/img/logo.webp"
+                  "logo": "https://tk.st/images/contents/re-camera-logo.webp"
                 },
                 "inLanguage": "ja",
                 "description": "夜間撮影用機材の購入元。御徒町にあるカメラ専門店。インタビュー「踊る代わりにシャッターを切る」を掲載。"
@@ -4298,7 +4298,7 @@
           <div class="about-interview-label">取材記事</div>
           <a class="about-interview-brand" href="https://magazine.re-camera-shop.com/" target="_blank"
             rel="noopener noreferrer" title="アールイーマガジン">
-            <img src="https://magazine.re-camera-shop.com/wp-content/themes/cameramagazine/img/logo.webp"
+            <img src="https://tk.st/images/contents/re-camera-logo.webp"
               alt="アールイーマガジン" width="212" height="30" loading="lazy">
           </a>
           <p>夜間撮影用機材の購入元。御徒町にあるカメラ専門店。</p>
@@ -5606,7 +5606,7 @@
        * 値が空、または想定外の形なら素通しする（サーバー側で長さだけ詰める）。
        */
       const formatDateTime = (raw) => {
-        const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(raw || '');
+        const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/.exec(raw || '');
         if (!m) return raw || '';
         const [, y, mo, d, h, mi] = m;
         const dt = new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi));

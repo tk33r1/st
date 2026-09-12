@@ -12,3 +12,7 @@ node_modules/
 dom.txt
 err.txt
 *.log
+
+# Python cache
+__pycache__/
+*.pyc

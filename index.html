@@ -48,10 +48,18 @@
       --surface-alt: #f9fafb;
       --surface-hover: #e5e7eb;
       --text-color: #1f2937;
-      --primary-color: #16a34a;
+      --primary-color: #15803d;
       --primary-bg: #dcfce7;
       --primary-bg-hover: #bbf7d0;
-      --secondary-color: #6b7280;
+      --secondary-color: #4b5563;
+      /* One step fainter than --secondary-color, for section labels and captions.
+         A *colour*, never `opacity`, because opacity composites toward the
+         background and drops those (mostly 10px) strings under the 4.5:1 floor —
+         --secondary-color at 70% measures 3.58 here and 3.08 in dark. Dark has no
+         headroom to go fainter than --secondary-color and still clear 4.5, so
+         there the two tones nearly meet; the hierarchy is carried by the size and
+         letter-spacing those labels already have. */
+      --dim-color: #616a75;
       --border-color: #d1d5db;
       --bpm: 60;
       --duration-fast: calc(0.1s * var(--phi));
@@ -70,6 +78,7 @@
       --primary-bg: #4ade8026;
       --primary-bg-hover: #4ade8040;
       --secondary-color: #888888;
+      --dim-color: #8f8f8f;
       --border-color: #333333;
       --music-color: #c084fc;
     }
@@ -93,6 +102,7 @@
     .hover\:bg-primary-dim-hover:hover { background-color: var(--primary-bg-hover) }
     .text-primary { color: var(--primary-color) }
     .text-secondary { color: var(--secondary-color) }
+    .text-dim { color: var(--dim-color) }
     .text-normal { color: var(--text-color) }
     .text-red-500 { color: #ef4444 }
     .bg-surface { background-color: var(--surface-color) }
@@ -2931,56 +2941,57 @@
     </symbol>
   </svg>
   <div class="sr-only">
-    <h1>Available Commands:</h1>
-    <h2><a href="?cmd=about">about</a></h2>
+    <h1>Shinya Takeda - Terminal Portfolio</h1>
+    <h2>Available Commands</h2>
+    <h3><a href="?cmd=about">about</a></h3>
     <p>Learn about me. Shinya Takeda, Technical Marketing Lead. The sun for the cyber realm, The moon for music and
       philosophy. I love profound tranquility, laced with a spoonful of madness.</p>
-    <h2><a href="?cmd=identify">identify</a></h2>
+    <h3><a href="?cmd=identify">identify</a></h3>
     <p>View personality versions. MBTI, CliftonStrengths and Big Five (OCEAN) profile.</p>
-    <h3><a href="?cmd=identify&v=2.0">ver.2.0 [ACTIVE]</a></h3>
+    <h4><a href="?cmd=identify&v=2.0">ver.2.0 [ACTIVE]</a></h4>
     <p>Post-traffic accident</p>
-    <h3><a href="?cmd=identify&v=1.0">ver.1.0 [ARCHIVED]</a></h3>
+    <h4><a href="?cmd=identify&v=1.0">ver.1.0 [ARCHIVED]</a></h4>
     <p>Pre-traffic accident</p>
-    <h2><a href="?cmd=timeline">timeline</a></h2>
+    <h3><a href="?cmd=timeline">timeline</a></h3>
     <p>Trace my life events. Chronological records of my digital projects, music achievements, and
       life reflections.</p>
-    <h2><a href="?cmd=pages">pages</a></h2>
+    <h3><a href="?cmd=pages">pages</a></h3>
     <p>Explore my creations</p>
-    <h3><a href="https://tk.st/dj/">Overview | DJ Human Choreomania Project</a></h3>
-    <h3><a href="https://tk.st/job/">Overview | My career history, work achievements</a></h3>
-    <h3><a href="https://tk.st/game/">AI coding benchmark: Game</a></h3>
-    <h3><a href="https://tk.st/tools/">AI coding benchmark: Productivity tool</a></h3>
-    <h3><a href="https://tk.st/glitch/">Finding the "bugs" that lead to better living.</a></h3>
-    <h3><a href="https://tk.st/thought/">A shared margin for contemplating the essence of life.</a></h3>
-    <h2>MAGI</h2>
+    <h4><a href="https://tk.st/dj/">Overview | DJ Human Choreomania Project</a></h4>
+    <h4><a href="https://tk.st/job/">Overview | My career history, work achievements</a></h4>
+    <h4><a href="https://tk.st/game/">AI coding benchmark: Game</a></h4>
+    <h4><a href="https://tk.st/tools/">AI coding benchmark: Productivity tool</a></h4>
+    <h4><a href="https://tk.st/glitch/">Finding the "bugs" that lead to better living.</a></h4>
+    <h4><a href="https://tk.st/thought/">A shared margin for contemplating the essence of life.</a></h4>
+    <h3>MAGI</h3>
     <p>Chat with my three personas (Enthusiast, Humanist, Strategist), synthesized into one voice. Open the ✦ panel.</p>
     <a href="https://tk.st/magi/">Legacy MAGI System</a>
-    <h2><a href="?cmd=contact">contact</a></h2>
+    <h3><a href="?cmd=contact">contact</a></h3>
     <p>Contact me</p>
     <a href="https://tk.st/contact/">Contact Page</a>
-    <h2><a href="?cmd=clear">clear</a></h2>
+    <h3><a href="?cmd=clear">clear</a></h3>
     <p>Clear terminal</p>
-    <h2><a href="?cmd=help">help</a></h2>
+    <h3><a href="?cmd=help">help</a></h3>
     <p>Show this menu</p>
-    <h1>Hidden Commands:</h1>
-    <h2><a href="?cmd=web3">web3</a></h2>
+    <h2>Hidden Commands</h2>
+    <h3><a href="?cmd=web3">web3</a></h3>
     <p>Dive into my Web3 page</p>
     <a href="https://web3.tk.st/">Web3 Page</a>
-    <h2><a href="?cmd=akutagawa">akutagawa</a></h2>
+    <h3><a href="?cmd=akutagawa">akutagawa</a></h3>
     <p>A message from the past</p>
-    <h2><a href="?cmd=bpm">bpm</a></h2>
+    <h3><a href="?cmd=bpm">bpm</a></h3>
     <p>Tap out the system heartbeat</p>
-    <h2><a href="?cmd=choreomania">choreomania</a></h2>
+    <h3><a href="?cmd=choreomania">choreomania</a></h3>
     <p>Merging souls in ecstasy</p>
-    <h2><a href="?cmd=meltdown">meltdown</a></h2>
+    <h3><a href="?cmd=meltdown">meltdown</a></h3>
     <p>And rebuild</p>
-    <h2><a href="?cmd=matrix">matrix</a></h2>
+    <h3><a href="?cmd=matrix">matrix</a></h3>
     <p>Enter the Matrix</p>
-    <h2><a href="?cmd=meditation">meditation</a></h2>
+    <h3><a href="?cmd=meditation">meditation</a></h3>
     <p>Clear your mind</p>
-    <h2><a href="?cmd=rampage">rampage</a></h2>
+    <h3><a href="?cmd=rampage">rampage</a></h3>
     <p>Wreck the screen</p>
-    <h2><a href="?cmd=theme">theme</a></h2>
+    <h3><a href="?cmd=theme">theme</a></h3>
     <p>Change terminal color</p>
   </div>
 
@@ -3002,8 +3013,7 @@
       <div class="flex items-center gap-4">
         <button id="btn-reload" class="flex items-center gap-2 cursor-pointer ml-2 transition-opacity hover:opacity-70"
           title="Reload Terminal" data-ja-title="ターミナルを再読み込み" data-ja-aria="ターミナルを再読み込み" aria-label="Reload Terminal">
-          <span class="text-primary">▸</span> <span id="titlebar-name"
-            class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
+          <span class="text-primary">▸</span> <span class="text-xs tracking-wider text-secondary">ST@portfolio:~</span>
         </button>
       </div>
     </header>
@@ -3033,30 +3043,30 @@
       </nav>
       <aside id="sidebar" class="bg-surface border-r border-color" aria-label="Side Bar">
         <div id="view-explorer">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="エクスプローラー">EXPLORER
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-dim" data-ja="エクスプローラー">EXPLORER
           </div>
           <button id="tree-folder" type="button" class="tree-folder text-xs font-bold text-normal"><span
               class="tree-chevron text-secondary">▾</span><span>tk.st</span></button>
           <nav id="sidebar-tree" class="text-xs"></nav>
-          <div class="px-3 pt-4 mt-2 border-t border-color text-[10px] text-secondary opacity-70">⎇ <span
+          <div class="px-3 pt-4 mt-2 border-t border-color text-[10px] text-dim">⎇ <span
               class="text-primary">main</span></div>
         </div>
         <div id="view-search" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="検索">SEARCH</div>
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-dim" data-ja="検索">SEARCH</div>
           <div class="px-3 pb-2"><input type="text" id="search-input" autocomplete="off" spellcheck="false"
               placeholder="Search commands" data-ja-ph="コマンドを検索" data-ja-aria="コマンドを検索" aria-label="Search commands">
           </div>
-          <div id="search-count" class="px-3 pb-1 text-[10px] text-secondary opacity-70"></div>
+          <div id="search-count" class="px-3 pb-1 text-[10px] text-dim"></div>
           <nav id="search-results" class="text-xs"></nav>
         </div>
         <div id="view-git" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="ソース管理">SOURCE
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-dim" data-ja="ソース管理">SOURCE
             CONTROL</div>
-          <div id="git-count" class="px-3 pb-1 text-[10px] text-secondary opacity-70"></div>
+          <div id="git-count" class="px-3 pb-1 text-[10px] text-dim"></div>
           <nav id="git-history" class="text-xs"></nav>
         </div>
         <div id="view-extensions" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="拡張機能">EXTENSIONS
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-dim" data-ja="拡張機能">EXTENSIONS
           </div>
           <div class="px-3 pb-2"><input type="text" id="ext-search-input" autocomplete="off" spellcheck="false"
               placeholder="Search Extensions in Marketplace" data-ja-ph="マーケットプレースで拡張機能を検索" data-ja-aria="拡張機能を検索"
@@ -3064,7 +3074,7 @@
           <div id="extensions-list" class="px-3 pb-2 space-y-2"></div>
         </div>
         <div id="view-arsenal" class="hidden">
-          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-secondary opacity-70" data-ja="アーセナル">ARSENAL</div>
+          <div class="px-3 pt-3 pb-1 text-[10px] tracking-wider text-dim" data-ja="アーセナル">ARSENAL</div>
           <div id="arsenal-list" class="px-3 pb-2 space-y-2"></div>
         </div>
       </aside>
@@ -3085,7 +3095,10 @@
               <!-- No aria-live here: an opened document (e.g. `timeline`) can be thousands of
                    words, and announcing the whole editor pane on every tab switch buries the
                    terminal's own live region. The TERMINAL log stays the live region. -->
-              <div id="output-area" role="document" tabindex="-1"></div>
+              <!-- The single panel every .ed-tab controls: only the active tab's document is
+                   ever rendered here, so one tabpanel serves the whole tablist. renderEditor()
+                   points aria-labelledby at whichever tab is currently selected. -->
+              <div id="output-area" role="tabpanel" tabindex="-1"></div>
             </div>
           </div>
         </div>
@@ -3098,32 +3111,40 @@
                  transform on purpose (it stays a steady click target, like .ed-tab / .tree-item),
                  so the text needs a child of its own to dance with — PROBLEMS already had one for
                  its badge, which is why it was the only tab that moved. data-ja moves onto that
-                 child too: applyChrome() assigns textContent, which would wipe the child otherwise. -->
-            <span class="panel-tab active" role="tab" tabindex="0" aria-selected="true"
-              data-panel="terminal"><span data-ja="ターミナル">TERMINAL</span></span><span class="panel-tab" role="tab"
-              tabindex="0" aria-selected="false" data-panel="problems"><span
+                 child too: applyChrome() assigns textContent, which would wipe the child otherwise.
+                 Roving tabindex: only the selected tab is a Tab stop (the rest are -1 and are
+                 reached with ←/→), which is what a tablist owes the keyboard — four stops for
+                 one control is not. showPanel() moves both the stop and aria-selected. -->
+            <span class="panel-tab active" role="tab" tabindex="0" aria-selected="true" id="paneltab-terminal"
+              aria-controls="terminal" data-panel="terminal"><span data-ja="ターミナル">TERMINAL</span></span><span class="panel-tab" role="tab"
+              tabindex="-1" aria-selected="false" id="paneltab-problems" aria-controls="panel-problems" data-panel="problems"><span
                 data-ja="問題">PROBLEMS</span><span id="panel-problems-badge"
-                class="panel-badge hidden">0</span></span><span class="panel-tab" role="tab" tabindex="0"
-              aria-selected="false" data-panel="output"><span data-ja="出力">OUTPUT</span></span><span
-              class="panel-tab" role="tab" tabindex="0" aria-selected="false" data-panel="ports"><span
+                class="panel-badge hidden">0</span></span><span class="panel-tab" role="tab" tabindex="-1"
+              aria-selected="false" id="paneltab-output" aria-controls="panel-output" data-panel="output"><span data-ja="出力">OUTPUT</span></span><span
+              class="panel-tab" role="tab" tabindex="-1" aria-selected="false" id="paneltab-ports" aria-controls="panel-ports" data-panel="ports"><span
                 data-ja="ポート">PORTS</span></span>
           </div>
-          <div id="panel-problems" class="panel-pane flex-1 p-3 text-xs hidden"></div>
-          <div id="panel-output" class="panel-pane flex-1 p-3 text-xs hidden"></div>
-          <div id="panel-ports" class="panel-pane flex-1 p-3 text-xs hidden"></div>
-          <div id="terminal" class="flex-1 p-3 space-y-1" style="scroll-behavior:smooth;">
+          <div id="panel-problems" class="panel-pane flex-1 p-3 text-xs hidden" role="tabpanel" aria-labelledby="paneltab-problems" tabindex="0"></div>
+          <div id="panel-output" class="panel-pane flex-1 p-3 text-xs hidden" role="tabpanel" aria-labelledby="paneltab-output" tabindex="0"></div>
+          <div id="panel-ports" class="panel-pane flex-1 p-3 text-xs hidden" role="tabpanel" aria-labelledby="paneltab-ports" tabindex="0"></div>
+          <div id="terminal" class="flex-1 p-3 space-y-1" role="tabpanel" aria-labelledby="paneltab-terminal" style="scroll-behavior:smooth;">
             <div id="terminal-log" aria-live="polite" aria-atomic="false"></div>
             <div class="hidden items-center gap-2 mt-2" id="input-line">
-              <span id="prompt-prefix" class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span>
+              <span class="text-xs whitespace-nowrap text-primary">ST@portfolio:~$</span>
               <div class="relative flex-1 flex items-center overflow-hidden">
+                <!-- combobox wiring for the IntelliSense popup below: renderSuggest() /
+                     closeSuggest() own aria-expanded and aria-activedescendant, so a screen
+                     reader hears the list open and hears each candidate as ↑/↓ move. -->
                 <input type="text" id="cmd-input" class="cmd-input w-full text-sm caret-transparent" autocomplete="off"
                   spellcheck="false" placeholder="type 'help'..." data-ja-ph="「help」と入力…" data-ja-aria="コマンド入力"
-                  aria-label="Command input">
+                  aria-label="Command input" role="combobox" aria-expanded="false"
+                  aria-controls="cmd-suggest" aria-autocomplete="list">
                 <span id="cmd-mirror" class="text-sm flex items-center"
                   style="visibility:hidden; white-space:pre;"></span>
                 <span id="custom-caret" class="bpm-caret" style="display:none;"></span>
               </div>
-              <div id="cmd-suggest" class="hidden"></div>
+              <div id="cmd-suggest" class="hidden" role="listbox" aria-label="Command suggestions"
+                data-ja-aria="コマンド候補"></div>
             </div>
           </div>
         </div>
@@ -3140,18 +3161,18 @@
             <button id="btn-history-agent" class="dock-icon-btn"
               title="View conversation history" data-ja-title="会話履歴を表示"><svg aria-hidden="true" width="14" height="14" stroke-width="1.8"><use href="#ic-clock" /></svg></button>
             <!-- Kebab Menu (More Options) -->
-            <div class="relative inline-block flex items-center justify-center">
+            <div class="relative flex items-center justify-center">
               <button id="btn-more-agent" class="dock-icon-btn"
                 title="More Options" data-ja-title="その他の操作">
                 <svg aria-hidden="true" width="14" height="14" stroke-width="2"><use href="#ic-kebab" /></svg>
               </button>
               <div id="agent-more-dropdown" class="hidden text-[10px]">
-                <button id="btn-share-agent" class="dock-menu-item disabled"
+                <button id="btn-share-agent" class="dock-menu-item disabled" disabled
                   title="Share/Copy conversation">
                   <svg aria-hidden="true" width="12" height="12" stroke-width="1.8"><use href="#ic-share" /></svg>
                   <span data-ja="共有">Share</span>
                 </button>
-                <button id="btn-export-agent" class="dock-menu-item disabled"
+                <button id="btn-export-agent" class="dock-menu-item disabled" disabled
                   title="Export conversation as Markdown">
                   <svg aria-hidden="true" width="12" height="12" stroke-width="1.8">
                     <use href="#ic-download" />
@@ -3210,7 +3231,7 @@
             aria-label="Notifications"><svg aria-hidden="true" width="13" height="13" stroke-width="2"><use href="#ic-bell" /></svg><span id="notif-count" class="hidden">0</span></button>
         </div>
       </div>
-      <span class="copyright-text opacity-50 whitespace-nowrap"
+      <span class="copyright-text text-dim whitespace-nowrap"
         style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);"><span>©</span> <span
           id="copyright-year"></span> <span>Shinya Takeda</span></span>
     </footer>
@@ -3218,11 +3239,15 @@
 
   <div id="cmd-palette" class="hidden" role="dialog" aria-modal="true" aria-label="Command Palette">
     <div id="cmd-palette-box">
+      <!-- Same combobox contract as #cmd-input: renderPalette() keeps aria-activedescendant
+           pointing at the highlighted row, and #cmd-palette-count is an aria-live region so
+           the result tally is spoken as the query narrows. -->
       <input id="cmd-palette-input" type="text" autocomplete="off" spellcheck="false"
         placeholder="Type '>' for commands, or search files…" data-ja-ph="「>」でコマンド、またはファイルを検索…"
-        data-ja-aria="コマンドパレット入力" aria-label="Command Palette input">
-      <div id="cmd-palette-list"></div>
-      <div id="cmd-palette-foot"><span id="cmd-palette-count"></span><span data-ja="↑↓ 移動 · ↵ 実行 · esc 閉じる">↑↓ navigate
+        data-ja-aria="コマンドパレット入力" aria-label="Command Palette input"
+        role="combobox" aria-expanded="true" aria-controls="cmd-palette-list" aria-autocomplete="list">
+      <div id="cmd-palette-list" role="listbox" aria-label="Results" data-ja-aria="検索結果"></div>
+      <div id="cmd-palette-foot"><span id="cmd-palette-count" aria-live="polite"></span><span data-ja="↑↓ 移動 · ↵ 実行 · esc 閉じる">↑↓ navigate
           · ↵ run · esc close</span></div>
     </div>
   </div>
@@ -3235,18 +3260,18 @@
       </div>
       <div id="apk-download-body">
         <div class="apk-download-options">
-          <div class="apk-option-card qr-card">
+          <div class="apk-option-card">
             <div class="option-title" data-ja="QRコードをスキャン">Scan QR Code</div>
             <div class="qr-container">
               <!-- QR for https://tk.st/magi-app/android/ — inlined (byte-mode, ECC M, 29 modules) so the
                    modal needs no third-party image host. Fill is currentColor, so the theme drives it. -->
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" id="apk-qr-image" class="text-primary" role="img" aria-label="QR code to download the MAGI Android app" data-ja-aria="MAGI AndroidアプリをダウンロードするQRコード"><rect width="37" height="37" fill="#fff"/><g transform="translate(4 4)" fill="currentColor"><path d="M0 0h7v1h-7zM8 0h4v1h-4zM15 0h5v1h-5zM22 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h2v1h-2zM14 1h2v1h-2zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM12 2h4v1h-4zM18 2h2v1h-2zM22 2h1v1h-1zM24 2h3v1h-3zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h2v1h-2zM16 3h2v1h-2zM20 3h1v1h-1zM22 3h1v1h-1zM24 3h3v1h-3zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h1v1h-1zM11 4h3v1h-3zM17 4h1v1h-1zM19 4h1v1h-1zM22 4h1v1h-1zM24 4h3v1h-3zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM12 5h1v1h-1zM14 5h1v1h-1zM19 5h1v1h-1zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h7v1h-7zM8 7h2v1h-2zM12 7h3v1h-3zM17 7h2v1h-2zM20 7h1v1h-1zM0 8h1v1h-1zM2 8h2v1h-2zM5 8h3v1h-3zM10 8h2v1h-2zM13 8h2v1h-2zM16 8h5v1h-5zM22 8h1v1h-1zM25 8h1v1h-1zM27 8h2v1h-2zM0 9h6v1h-6zM9 9h1v1h-1zM11 9h2v1h-2zM15 9h6v1h-6zM22 9h3v1h-3zM28 9h1v1h-1zM0 10h1v1h-1zM3 10h6v1h-6zM11 10h1v1h-1zM14 10h2v1h-2zM18 10h1v1h-1zM21 10h1v1h-1zM24 10h1v1h-1zM26 10h2v1h-2zM0 11h1v1h-1zM2 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM11 11h5v1h-5zM19 11h1v1h-1zM22 11h1v1h-1zM28 11h1v1h-1zM4 12h6v1h-6zM16 12h2v1h-2zM21 12h1v1h-1zM23 12h1v1h-1zM25 12h2v1h-2zM0 13h1v1h-1zM5 13h1v1h-1zM9 13h1v1h-1zM12 13h2v1h-2zM17 13h1v1h-1zM19 13h1v1h-1zM22 13h1v1h-1zM26 13h3v1h-3zM0 14h1v1h-1zM4 14h1v1h-1zM6 14h2v1h-2zM9 14h2v1h-2zM14 14h1v1h-1zM18 14h4v1h-4zM24 14h1v1h-1zM26 14h3v1h-3zM0 15h2v1h-2zM3 15h1v1h-1zM5 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM18 15h1v1h-1zM20 15h1v1h-1zM22 15h2v1h-2zM27 15h1v1h-1zM1 16h2v1h-2zM4 16h4v1h-4zM10 16h1v1h-1zM12 16h1v1h-1zM18 16h4v1h-4zM23 16h3v1h-3zM27 16h1v1h-1zM2 17h2v1h-2zM8 17h6v1h-6zM18 17h1v1h-1zM25 17h3v1h-3zM0 18h1v1h-1zM2 18h2v1h-2zM6 18h2v1h-2zM17 18h2v1h-2zM20 18h1v1h-1zM22 18h2v1h-2zM26 18h1v1h-1zM2 19h1v1h-1zM7 19h3v1h-3zM11 19h2v1h-2zM15 19h3v1h-3zM20 19h2v1h-2zM23 19h2v1h-2zM26 19h1v1h-1zM1 20h4v1h-4zM6 20h1v1h-1zM9 20h2v1h-2zM13 20h1v1h-1zM15 20h4v1h-4zM20 20h7v1h-7zM8 21h1v1h-1zM12 21h4v1h-4zM17 21h2v1h-2zM20 21h1v1h-1zM24 21h5v1h-5zM0 22h7v1h-7zM8 22h2v1h-2zM11 22h3v1h-3zM16 22h1v1h-1zM18 22h3v1h-3zM22 22h1v1h-1zM24 22h2v1h-2zM27 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM11 23h1v1h-1zM15 23h1v1h-1zM18 23h1v1h-1zM20 23h1v1h-1zM24 23h2v1h-2zM27 23h1v1h-1zM0 24h1v1h-1zM2 24h3v1h-3zM6 24h1v1h-1zM9 24h1v1h-1zM11 24h2v1h-2zM14 24h1v1h-1zM17 24h1v1h-1zM20 24h5v1h-5zM26 24h1v1h-1zM28 24h1v1h-1zM0 25h1v1h-1zM2 25h3v1h-3zM6 25h1v1h-1zM8 25h1v1h-1zM11 25h1v1h-1zM14 25h2v1h-2zM19 25h1v1h-1zM21 25h1v1h-1zM23 25h3v1h-3zM27 25h1v1h-1zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM8 26h1v1h-1zM12 26h1v1h-1zM16 26h1v1h-1zM23 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM9 27h1v1h-1zM11 27h1v1h-1zM13 27h1v1h-1zM15 27h2v1h-2zM20 27h2v1h-2zM24 27h2v1h-2zM27 27h1v1h-1zM0 28h7v1h-7zM8 28h2v1h-2zM11 28h1v1h-1zM18 28h4v1h-4zM25 28h1v1h-1zM27 28h1v1h-1z"/></g></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" class="text-primary" role="img" aria-label="QR code to download the MAGI Android app" data-ja-aria="MAGI AndroidアプリをダウンロードするQRコード"><rect width="37" height="37" fill="#fff"/><g transform="translate(4 4)" fill="currentColor"><path d="M0 0h7v1h-7zM8 0h4v1h-4zM15 0h5v1h-5zM22 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h2v1h-2zM14 1h2v1h-2zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM12 2h4v1h-4zM18 2h2v1h-2zM22 2h1v1h-1zM24 2h3v1h-3zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h2v1h-2zM16 3h2v1h-2zM20 3h1v1h-1zM22 3h1v1h-1zM24 3h3v1h-3zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h1v1h-1zM11 4h3v1h-3zM17 4h1v1h-1zM19 4h1v1h-1zM22 4h1v1h-1zM24 4h3v1h-3zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM12 5h1v1h-1zM14 5h1v1h-1zM19 5h1v1h-1zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h7v1h-7zM8 7h2v1h-2zM12 7h3v1h-3zM17 7h2v1h-2zM20 7h1v1h-1zM0 8h1v1h-1zM2 8h2v1h-2zM5 8h3v1h-3zM10 8h2v1h-2zM13 8h2v1h-2zM16 8h5v1h-5zM22 8h1v1h-1zM25 8h1v1h-1zM27 8h2v1h-2zM0 9h6v1h-6zM9 9h1v1h-1zM11 9h2v1h-2zM15 9h6v1h-6zM22 9h3v1h-3zM28 9h1v1h-1zM0 10h1v1h-1zM3 10h6v1h-6zM11 10h1v1h-1zM14 10h2v1h-2zM18 10h1v1h-1zM21 10h1v1h-1zM24 10h1v1h-1zM26 10h2v1h-2zM0 11h1v1h-1zM2 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM11 11h5v1h-5zM19 11h1v1h-1zM22 11h1v1h-1zM28 11h1v1h-1zM4 12h6v1h-6zM16 12h2v1h-2zM21 12h1v1h-1zM23 12h1v1h-1zM25 12h2v1h-2zM0 13h1v1h-1zM5 13h1v1h-1zM9 13h1v1h-1zM12 13h2v1h-2zM17 13h1v1h-1zM19 13h1v1h-1zM22 13h1v1h-1zM26 13h3v1h-3zM0 14h1v1h-1zM4 14h1v1h-1zM6 14h2v1h-2zM9 14h2v1h-2zM14 14h1v1h-1zM18 14h4v1h-4zM24 14h1v1h-1zM26 14h3v1h-3zM0 15h2v1h-2zM3 15h1v1h-1zM5 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM18 15h1v1h-1zM20 15h1v1h-1zM22 15h2v1h-2zM27 15h1v1h-1zM1 16h2v1h-2zM4 16h4v1h-4zM10 16h1v1h-1zM12 16h1v1h-1zM18 16h4v1h-4zM23 16h3v1h-3zM27 16h1v1h-1zM2 17h2v1h-2zM8 17h6v1h-6zM18 17h1v1h-1zM25 17h3v1h-3zM0 18h1v1h-1zM2 18h2v1h-2zM6 18h2v1h-2zM17 18h2v1h-2zM20 18h1v1h-1zM22 18h2v1h-2zM26 18h1v1h-1zM2 19h1v1h-1zM7 19h3v1h-3zM11 19h2v1h-2zM15 19h3v1h-3zM20 19h2v1h-2zM23 19h2v1h-2zM26 19h1v1h-1zM1 20h4v1h-4zM6 20h1v1h-1zM9 20h2v1h-2zM13 20h1v1h-1zM15 20h4v1h-4zM20 20h7v1h-7zM8 21h1v1h-1zM12 21h4v1h-4zM17 21h2v1h-2zM20 21h1v1h-1zM24 21h5v1h-5zM0 22h7v1h-7zM8 22h2v1h-2zM11 22h3v1h-3zM16 22h1v1h-1zM18 22h3v1h-3zM22 22h1v1h-1zM24 22h2v1h-2zM27 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM11 23h1v1h-1zM15 23h1v1h-1zM18 23h1v1h-1zM20 23h1v1h-1zM24 23h2v1h-2zM27 23h1v1h-1zM0 24h1v1h-1zM2 24h3v1h-3zM6 24h1v1h-1zM9 24h1v1h-1zM11 24h2v1h-2zM14 24h1v1h-1zM17 24h1v1h-1zM20 24h5v1h-5zM26 24h1v1h-1zM28 24h1v1h-1zM0 25h1v1h-1zM2 25h3v1h-3zM6 25h1v1h-1zM8 25h1v1h-1zM11 25h1v1h-1zM14 25h2v1h-2zM19 25h1v1h-1zM21 25h1v1h-1zM23 25h3v1h-3zM27 25h1v1h-1zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM8 26h1v1h-1zM12 26h1v1h-1zM16 26h1v1h-1zM23 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM9 27h1v1h-1zM11 27h1v1h-1zM13 27h1v1h-1zM15 27h2v1h-2zM20 27h2v1h-2zM24 27h2v1h-2zM27 27h1v1h-1zM0 28h7v1h-7zM8 28h2v1h-2zM11 28h1v1h-1zM18 28h4v1h-4zM25 28h1v1h-1zM27 28h1v1h-1z"/></g></svg>
 
             </div>
             <div class="option-desc" data-ja="スマートフォンのカメラで読み取ってインストール。">Scan with your phone's camera to install.</div>
           </div>
 
-          <div class="apk-option-card download-card">
+          <div class="apk-option-card">
             <div class="option-title" data-ja="直接ダウンロード">Direct Download</div>
             <a href="https://tk.st/magi-app/android/" target="_blank" rel="noopener noreferrer"
               class="download-container" title="Download the APK file directly" data-ja-title="APKファイルを直接ダウンロード">
@@ -3468,7 +3493,7 @@
     function renderProblems() {
       const pane = DOM.panelProblems;
       if (!pane) return;
-      if (!problems.length) { pane.innerHTML = tr(`<div class="text-secondary opacity-70">No problems have been detected.</div>`, `<div class="text-secondary opacity-70">問題は検出されていません。</div>`); return; }
+      if (!problems.length) { pane.innerHTML = tr(`<div class="text-dim">No problems have been detected.</div>`, `<div class="text-dim">問題は検出されていません。</div>`); return; }
       pane.innerHTML = problems.map((p, i) => {
         const icon = p.sev === 'error' ? '<span class="text-red-500">⊘</span>' : '<span style="color:#fbbf24">⚠</span>';
         const loc = `${esc(p.file)}${p.line ? ':' + p.line : ''}`;
@@ -3495,7 +3520,7 @@
           <select id="output-channel">${channels.map(c => `<option value="${c}" ${c === outputChannel ? 'selected' : ''}>${channelLabel(c)}</option>`).join('')}</select></div>` +
         (rows.length
           ? rows.map(e => `<div class="out-line"><span class="out-ts">[${fmt(e.t)}]</span><span class="text-normal">${esc(e.msg)}</span></div>`).join('')
-          : `<div class="text-secondary opacity-70">${tr('No output for this channel yet.', 'このチャンネルの出力はまだありません。')}</div>`);
+          : `<div class="text-dim">${tr('No output for this channel yet.', 'このチャンネルの出力はまだありません。')}</div>`);
     }
 
     // --- PORTS panel (sameAs profiles surfaced as forwarded ports) ---
@@ -3529,6 +3554,7 @@
         const sel = t.dataset.panel === name;
         t.classList.toggle('active', sel);
         t.setAttribute('aria-selected', sel ? 'true' : 'false');
+        t.tabIndex = sel ? 0 : -1; // roving tabindex: the selected tab is the only Tab stop
       });
       if (name === 'problems') renderProblems();
       else if (name === 'output') renderOutput();
@@ -3544,7 +3570,13 @@
       const sp = document.getElementById('status-pos');
       if (sp) sp.innerHTML = tr(`<span>Ln 1,</span> <span>Col ${pos + 1}</span>`, `<span>行 1,</span> <span>列 ${pos + 1}</span>`);
     }
-    const scrollTerminal = () => { DOM.terminal.scrollTop = DOM.terminal.scrollHeight; };
+    const MAX_TERMINAL_LOGS = 200;
+    const scrollTerminal = () => {
+      while (DOM.terminalLog && DOM.terminalLog.children.length > MAX_TERMINAL_LOGS) {
+        DOM.terminalLog.firstElementChild.remove();
+      }
+      DOM.terminal.scrollTop = DOM.terminal.scrollHeight;
+    };
 
     ['input', 'selectionchange'].forEach(ev => {
       (ev === 'selectionchange' ? document : DOM.input).addEventListener(ev, () => {
@@ -3690,9 +3722,14 @@
     // Command Palette, side-bar search). 'sudo' is a hidden mechanic — listing it would
     // give away the akutagawa easter egg before the letter hints at it.
     const UNLISTED_CMDS = new Set(['sudo']);
-    // A command is usable if it isn't hidden, or its backing extension is installed
-    // (rebuild rides on the 'meltdown' extension). Single source for every cmd filter.
-    const isCmdAvailable = c => !UNLISTED_CMDS.has(c) && (!hiddenCommands.includes(c) || installedExtensions.has(c === 'rebuild' ? 'meltdown' : c));
+    // The extension a hidden command is delivered by. Almost always itself, but `rebuild`
+    // rides on `meltdown` and has no marketplace entry of its own — which is why installing
+    // `rebuild` directly (e.g. from `?cmd=rebuild`) put an extension in the set that nothing
+    // could ever satisfy. Every place that maps a command to an extension goes through here.
+    const backingExt = c => (c === 'rebuild' ? 'meltdown' : c);
+    // A command is usable if it isn't hidden, or its backing extension is installed.
+    // Single source for every cmd filter.
+    const isCmdAvailable = c => !UNLISTED_CMDS.has(c) && (!hiddenCommands.includes(c) || installedExtensions.has(backingExt(c)));
 
     // Shared file-type color system: the Explorer tree, file tabs, and the
     // Extensions Marketplace cards all derive their icon colour from here so a
@@ -3729,10 +3766,17 @@
     function iconColor(cmd, name) {
       return ICON_COLOR[cmd] || fileTypeColor(name);
     }
+    // Extensions whose install/uninstall is mid-flight. The marketplace re-renders for
+    // reasons of its own (the search box filters on every keystroke, a language switch
+    // rebuilds every card), which used to hand back a fresh, enabled button underneath a
+    // pending operation — so the pending state lives here rather than on the DOM node.
+    const extPending = new Set();
     function extCardHtml({ cmd, meta, isInstalled }) {
       const tm = treeMeta(cmd);
       const color = iconColor(cmd, tm.name);
       const desc = cdesc(cmd) || meta.desc || '';
+      const pending = extPending.has(cmd);
+      const busyLabel = `<span class="ext-spinner"></span> ${isInstalled ? tr('Uninstalling', 'アンインストール中') : tr('Installing', 'インストール中')}`;
       return `
         <div class="ext-card p-2 border border-color rounded bg-surface-alt">
           <div class="ext-icon" style="background:linear-gradient(135deg,${color},${color}b3)">${esc(tm.icon)}</div>
@@ -3741,12 +3785,12 @@
               <span class="font-bold text-normal text-xs truncate">${esc(meta.name)}</span>
               ${isInstalled ? `<span class="ext-installed-tag" title="${tr('Installed', 'インストール済み')}" aria-label="${tr('Installed', 'インストール済み')}">✓</span>` : ''}
             </div>
-            <div class="ext-desc text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
+            <div class="text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
           </div>
           <div class="ext-author text-[10px] text-secondary truncate">${esc(meta.author)}</div>
           ${isInstalled
-          ? `<button class="ext-uninstall-btn ext-btn ext-btn-block ext-btn-uninstall" data-ext="${cmd}" title="${tr(`Uninstall ${esc(meta.name)}`, `${esc(meta.name)} をアンインストール`)}">${tr('Uninstall', 'アンインストール')}</button>`
-          : `<button class="ext-install-btn ext-btn ext-btn-block ext-btn-install" data-ext="${cmd}">${tr('Install', 'インストール')}</button>`}
+          ? `<button class="ext-uninstall-btn ext-btn ext-btn-block ext-btn-uninstall" data-ext="${cmd}" ${pending ? 'disabled' : ''} title="${tr(`Uninstall ${esc(meta.name)}`, `${esc(meta.name)} をアンインストール`)}">${pending ? busyLabel : tr('Uninstall', 'アンインストール')}</button>`
+          : `<button class="ext-install-btn ext-btn ext-btn-block ext-btn-install" data-ext="${cmd}" ${pending ? 'disabled' : ''}>${pending ? busyLabel : tr('Install', 'インストール')}</button>`}
         </div>
       `;
     }
@@ -3771,16 +3815,16 @@
 
       let html = '';
       if (installed.length) {
-        html += `<div class="ext-section-label text-secondary opacity-70 pt-2 mb-1">${tr('INSTALLED', 'インストール済み')} — ${installed.length}</div>`;
+        html += `<div class="ext-section-label text-dim pt-2 mb-1">${tr('INSTALLED', 'インストール済み')} — ${installed.length}</div>`;
         html += installed.map(extCardHtml).join('');
       }
       if (available.length) {
-        html += `<div class="ext-section-label text-secondary opacity-70 ${installed.length ? 'pt-2' : ''} mb-1">${tr('RECOMMENDED', 'おすすめ')} — ${available.length}</div>`;
+        html += `<div class="ext-section-label text-dim ${installed.length ? 'pt-2' : ''} mb-1">${tr('RECOMMENDED', 'おすすめ')} — ${available.length}</div>`;
         html += available.map(extCardHtml).join('');
       }
       if (!installed.length && !available.length) {
-        html = tr(`<div class="text-[10px] text-secondary opacity-70 pt-2">No extensions found matching your search.</div>`,
-          `<div class="text-[10px] text-secondary opacity-70 pt-2">検索に一致する拡張機能は見つかりませんでした。</div>`);
+        html = tr(`<div class="text-[10px] text-dim pt-2">No extensions found matching your search.</div>`,
+          `<div class="text-[10px] text-dim pt-2">検索に一致する拡張機能は見つかりませんでした。</div>`);
       }
       list.innerHTML = html;
 
@@ -3946,7 +3990,7 @@
       list.innerHTML = commandHistory.length
         ? commandHistory.map(cmd => {
           const isSys = cmd.startsWith('[SYS]');
-          return `<div class="tree-item ${isSys ? 'text-secondary italic opacity-70' : 'text-normal'} truncate" title="${esc(cmd)}"><span class="text-secondary">${isSys ? '•' : '$'}</span><span class="truncate">${esc(cmd)}</span></div>`;
+          return `<div class="tree-item ${isSys ? 'text-dim italic' : 'text-normal'} truncate" title="${esc(cmd)}"><span class="text-secondary">${isSys ? '•' : '$'}</span><span class="truncate">${esc(cmd)}</span></div>`;
         }).join('')
         : tr(`<div class="px-3 py-2 text-xs text-secondary">No operation history yet.</div>`, `<div class="px-3 py-2 text-xs text-secondary">操作履歴はまだありません。</div>`);
     }
@@ -3998,8 +4042,15 @@
         // role/tabindex/aria-selected mirror the bottom panel's tabs; the ✕ stays a plain
         // span (a focusable child inside a role="tab" is invalid) and is reachable from the
         // keyboard through the Delete handler below instead.
-        return `<div class="ed-tab ${c === activeTab ? 'active' : ''}" data-tab="${c}" role="tab" tabindex="0" aria-selected="${c === activeTab ? 'true' : 'false'}"><span class="text-primary" aria-hidden="true">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="${tr('Close', '閉じる')}" aria-hidden="true">✕</span></div>`;
+        // Roving tabindex, as on #panel-tabs: only the active tab is a Tab stop, the rest are
+        // reached with ←/→ (the keydown handler below). Every tab points at #output-area,
+        // which is the one panel they share.
+        const sel = c === activeTab;
+        return `<div class="ed-tab ${sel ? 'active' : ''}" data-tab="${c}" id="edtab-${c}" role="tab" aria-controls="output-area" tabindex="${sel ? 0 : -1}" aria-selected="${sel ? 'true' : 'false'}"><span class="text-primary" aria-hidden="true">${m.icon}</span><span>${esc(m.name)}</span><span class="tab-close" data-close="${c}" title="${tr('Close', '閉じる')}" aria-hidden="true">✕</span></div>`;
       }).join('');
+      // Name the panel after the tab that filled it (and drop the stale label when nothing is open).
+      if (activeTab) DOM.output.setAttribute('aria-labelledby', 'edtab-' + activeTab);
+      else DOM.output.removeAttribute('aria-labelledby');
       DOM.breadcrumb.innerHTML = activeTab ? `<span>tk.st</span> <span class="opacity-50">›</span> <span>${esc(fileLabel(activeTab))}</span>` : '<span>tk.st</span>';
       const div = document.createElement('div');
       div.className = 'fade-in';
@@ -4037,8 +4088,13 @@
     // Keyboard parity with the mouse. renderEditor()/closeTab() rebuild the whole bar, so
     // every branch hands focus back to the row it should now be on — otherwise the next
     // Tab restarts from the top of the document.
+    // Manual activation (arrowing moves focus, Enter/Space opens), because activating a tab
+    // here re-renders a whole document — too expensive to fire on every arrow press, and the
+    // pattern the APG recommends for exactly that case. The roving tabindex therefore has to
+    // follow *focus* rather than selection, or Tab-ing back would skip the tab in hand.
     const focusTab = (cmd) => {
       const el = cmd && DOM.tabbar.querySelector(`[data-tab="${cssEsc(cmd)}"]`);
+      if (el) DOM.tabbar.querySelectorAll('[data-tab]').forEach(t => { t.tabIndex = t === el ? 0 : -1; });
       (el || DOM.input).focus({ preventScroll: true });
     };
     DOM.tabbar.addEventListener('keydown', (e) => {
@@ -4166,7 +4222,7 @@
       return wrapCmd(`
         <div class="glow text-sm font-bold mb-2 text-primary">${esc(shownTitle)}</div>
         <div class="grid gap-1 text-xs text-normal">${cmdList.map(c => `<div class="flex"><span class="w-24 text-primary">${esc(c[0])}</span><span>- ${esc(c[1])}</span></div>`).join('')}</div>
-        ${isMain ? `<div class="text-[10px] mt-4 opacity-50 italic text-normal">${tr('Tip: Use [Tab] to autocomplete. Some hidden commands may exist...', 'ヒント：[Tab] キーで補完できます。隠れたコマンドもあるかも……')}</div>` : ''}
+        ${isMain ? `<div class="text-[10px] mt-4 italic text-dim">${tr('Tip: Use [Tab] to autocomplete. Some hidden commands may exist...', 'ヒント：[Tab] キーで補完できます。隠れたコマンドもあるかも……')}</div>` : ''}
       `);
     };
 
@@ -4190,7 +4246,7 @@
         bfHtml = `
             ${bfTitleHtml}
             <div>${createBigFiveRows(data.bigfive, isV2)}</div>
-            <div class="text-[10px] text-secondary opacity-70">${tr(`Bars are community percentiles. Numbers are raw IPIP-NEO-120 scores: domains ${BIGFIVE_DOMAIN_RANGE}, facets ${BIGFIVE_FACET_RANGE}.`, `バーはコミュニティ・パーセンタイル。数値は IPIP-NEO-120 の素点で、領域が ${BIGFIVE_DOMAIN_RANGE}、ファセットが ${BIGFIVE_FACET_RANGE} の範囲です。`)}</div>`;
+            <div class="text-[10px] text-dim">${tr(`Bars are community percentiles. Numbers are raw IPIP-NEO-120 scores: domains ${BIGFIVE_DOMAIN_RANGE}, facets ${BIGFIVE_FACET_RANGE}.`, `バーはコミュニティ・パーセンタイル。数値は IPIP-NEO-120 の素点で、領域が ${BIGFIVE_DOMAIN_RANGE}、ファセットが ${BIGFIVE_FACET_RANGE} の範囲です。`)}</div>`;
       }
 
       const result = `
@@ -6040,7 +6096,7 @@
       }
 
       if (hiddenCommands.includes(cmd)) {
-        const requiredExt = cmd === 'rebuild' ? 'meltdown' : cmd;
+        const requiredExt = backingExt(cmd);
         if (!installedExtensions.has(requiredExt)) {
           addProblem('error', `Command not found: '${cmd}'`, { file: 'terminal' });
           await printToTerminal(cmdNotFoundHTML(cmd), 50);
@@ -6110,7 +6166,10 @@
         if (hiddenCommands.includes(targetCmd)) {
           // Install first: applyTheme() re-renders the marketplace, so adding after it
           // would leave the extension listed as "RECOMMENDED" (and the badge off by one).
-          installedExtensions.add(targetCmd);
+          // backingExt(), not the command itself: ?cmd=rebuild used to add a phantom
+          // 'rebuild' entry that isCmdAvailable() could never match, so the URL darkened
+          // the theme and then answered its own command with "not found".
+          installedExtensions.add(backingExt(targetCmd));
           applyTheme(true);
           renderExplorerTree(); // surface the extension's file in the Explorer too
         }
@@ -6193,7 +6252,13 @@
     });
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
+    // Guards against a double-click on ⟳ (and on the close overlay): softReload awaits a
+    // 300ms fade with the button still live, so a second click used to start a *second*
+    // boot() alongside the first — duplicated banner lines, and the ?cmd= easter egg run twice.
+    let reloading = false;
     async function softReload() {
+      if (reloading) return;
+      reloading = true;
       const overlay = document.getElementById('close-overlay');
       if (overlay) overlay.remove();
       DOM.app.style.opacity = '0';
@@ -6203,6 +6268,13 @@
       inputHistory = [];
       unreadHistoryCount = 0;
       updateGitBadge();
+      // The notification centre is session state like everything else here: leaving the bell
+      // holding pre-reload toasts (and their unread count) was the one thing that survived.
+      notifications.length = 0;
+      unreadNotifications = 0;
+      updateNotifBell();
+      renderNotifCenter();
+      closeNotifCenter();
       historyIndex = -1; isMeltdown = false; meltdownElements = []; if (meltdownInterval) clearInterval(meltdownInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 2;
       problems.length = 0; recountProblems();
       installedExtensions.clear();
@@ -6227,12 +6299,20 @@
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
       setActiveActBtn('explorer');
+      showPanel('terminal');
+      // Drop the inline sizes the drag handles wrote, so a reload restores the default
+      // layout the same way resetAgent() already did for the MAGI dock's width.
+      sidebarEl.style.removeProperty('width');
+      document.getElementById('panel').style.removeProperty('height');
+      document.getElementById('panel').classList.remove('collapsed');
+      document.getElementById('panel-resizer').classList.remove('collapsed');
       resetAgent();
       DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
       DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
       document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
       clearCmdParam();
       DOM.app.style.opacity = '1';
+      reloading = false;
       boot();
     }
 
@@ -6333,8 +6413,8 @@
       const list = document.getElementById('arsenal-list');
       if (!list) return;
       if (!isRampageActive) {
-        list.innerHTML = tr(`<div class="px-1 py-2 text-[11px] text-secondary opacity-70 leading-relaxed">No rampage in progress.<br>Run <span class="text-normal font-bold">rampage</span> to arm your arsenal.</div>`,
-          `<div class="px-1 py-2 text-[11px] text-secondary opacity-70 leading-relaxed">進行中のランページはありません。<br><span class="text-normal font-bold">rampage</span> を実行して武器を装備しよう。</div>`);
+        list.innerHTML = tr(`<div class="px-1 py-2 text-[11px] text-dim leading-relaxed">No rampage in progress.<br>Run <span class="text-normal font-bold">rampage</span> to arm your arsenal.</div>`,
+          `<div class="px-1 py-2 text-[11px] text-dim leading-relaxed">進行中のランページはありません。<br><span class="text-normal font-bold">rampage</span> を実行して武器を装備しよう。</div>`);
         return;
       }
       const wait = Math.ceil((shockReadyAt - performance.now()) / 1000);
@@ -6428,13 +6508,21 @@
       const btn = e.target.closest('.ext-install-btn, .ext-uninstall-btn');
       if (!btn || btn.disabled) return;
       const cmd = btn.dataset.ext;
+      if (extPending.has(cmd)) return;
       const act = EXT_ACTIONS[btn.classList.contains('ext-install-btn') ? 'install' : 'uninstall'];
+      extPending.add(cmd);
       btn.innerHTML = `<span class="ext-spinner"></span> ${act.spinner()}`;
       btn.disabled = true;
       setTimeout(() => {
+        extPending.delete(cmd);
         act.apply(cmd);
+        // `help` lists the installed extensions, so its indexed body text goes stale the
+        // moment this set changes; the index is otherwise only built at load and on a
+        // language switch.
+        buildSearchIndex();
         renderExtensions();
         renderExplorerTree();
+        if (currentView() === 'search' && searchInput.value) renderSearch(searchInput.value);
         addToHistory(act.history(cmd));
         showToast(act.toast(cmd), act.toastType);
         printToTerminal(act.term(cmd));
@@ -6453,9 +6541,24 @@
       const t = e.target.closest('.panel-tab'); if (!t) return;
       showPanel(t.dataset.panel);
     });
+    // Keyboard parity with #tabbar: ←/→ walk the tablist (wrapping), Home/End jump to the
+    // ends, Enter/Space activate. With the roving tabindex above, arrows are the *only* way
+    // to reach the unselected tabs, so this is required rather than a nicety.
     document.getElementById('panel-tabs').addEventListener('keydown', (e) => {
       const t = e.target.closest('.panel-tab'); if (!t) return;
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showPanel(t.dataset.panel); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showPanel(t.dataset.panel); return; }
+      const keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
+      if (!keys.includes(e.key)) return;
+      e.preventDefault();
+      const tabs = [...document.querySelectorAll('#panel-tabs .panel-tab')];
+      const i = tabs.indexOf(t);
+      const next = e.key === 'Home' ? 0
+        : e.key === 'End' ? tabs.length - 1
+          : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      // Follow the focus, like VS Code and the APG's automatic-activation pattern: showPanel
+      // rewrites the tabindexes, so focus() has to come after it.
+      showPanel(tabs[next].dataset.panel);
+      tabs[next].focus();
     });
     document.getElementById('panel-problems').addEventListener('click', (e) => {
       const row = e.target.closest('.prob-row[data-cmd]'); if (!row) return;
@@ -6884,7 +6987,7 @@
       const mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
       turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
         <div class="persona-card thinking" data-codename="${p.codename}">
-          <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
+          <div class="persona-head"><span class="text-primary" aria-hidden="true">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
           <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">…</div></div>
           <div class="persona-round" data-round="2" hidden><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">…</div></div>
           ${reactionBarHTML(p.codename)}
@@ -6969,6 +7072,22 @@
         safeStore('magi_current_history', agentHistory);
         updateAgentActionButtons();
         syncCurrentToSaved();
+      } else if (!turn.isConnected) {
+        // The whole turn was discarded (HTTP error / network / timeout), so the question it
+        // belonged to has to come back out of agentHistory too. Leaving it made the *next*
+        // request send two user messages in a row, and left magi_current_history disagreeing
+        // with the saved session — which is only ever written on the success path above.
+        // The mid-stream `error` event is deliberately not covered here: it keeps the turn,
+        // because the personas had already spoken, and their cards need the question above them.
+        const last = agentHistory[agentHistory.length - 1];
+        if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
+        delete pendingReactions[mid];
+        u.remove();
+        if (agentHistory.length) safeStore('magi_current_history', agentHistory);
+        else safeRemove('magi_current_history');
+        // Nothing left in the dock → restore the splash, but never on top of the error that
+        // explains why (renderAgentError appended it to this same log).
+        if (!agentHistory.length && !agentDead && !agentLog.querySelector('.agent-err')) agentLog.innerHTML = agentHintHTML();
       }
     }
     agentSendBtn.addEventListener('click', agentSend);
@@ -7154,7 +7273,7 @@
               const r2Hidden = deb.round2 === '…' ? 'hidden' : '';
               return `
                 <div class="persona-card" data-codename="${p.codename}">
-                  <div class="persona-head"><span class="persona-hex text-primary">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
+                  <div class="persona-head"><span class="text-primary" aria-hidden="true">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
                   <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">${esc(deb.round1)}</div></div>
                   <div class="persona-round" data-round="2" ${r2Hidden}><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">${esc(deb.round2)}</div></div>
                   ${reactionBarHTML(p.codename)}
@@ -7253,6 +7372,8 @@
       const listContainer = document.getElementById('agent-history-list');
       if (!listContainer) return;
 
+      // Everything below is read back from localStorage, so it is treated as untrusted like
+      // any other outside input — ids go through esc() the same way titles do.
       const sessions = safeParse(safeGet('magi_saved_sessions'), []);
       if (sessions.length === 0) {
         listContainer.innerHTML = `<div class="text-center text-secondary py-8">${tr('No saved conversations.', '保存されたチャット履歴はありません。')}</div>`;
@@ -7260,12 +7381,12 @@
       }
 
       listContainer.innerHTML = sessions.map(session => `
-        <div class="flex items-center justify-between p-2 rounded border border-color hover:bg-surface-alt transition-colors group cursor-pointer w-full overflow-hidden" data-id="${session.id}">
-          <div class="flex-1 min-w-0 pr-2 overflow-hidden btn-load-session" data-id="${session.id}">
+        <div class="flex items-center justify-between p-2 rounded border border-color hover:bg-surface-alt transition-colors group cursor-pointer w-full overflow-hidden" data-id="${esc(session.id)}">
+          <div class="flex-1 min-w-0 pr-2 overflow-hidden btn-load-session" data-id="${esc(session.id)}">
             <div class="truncate text-xs font-semibold text-normal group-hover:text-primary transition-colors">${esc(session.title)}</div>
             <div class="text-[9px] text-secondary mt-0.5">${new Date(session.timestamp).toLocaleString()}</div>
           </div>
-          <button class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${session.id}" title="${tr('Delete chat', 'チャットを削除')}">
+          <button class="text-secondary hover:text-red-500 opacity-60 hover:opacity-100 transition-opacity p-1.5 btn-delete-session bg-transparent border-none flex-shrink-0 cursor-pointer" data-id="${esc(session.id)}" title="${tr('Delete chat', 'チャットを削除')}">
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
@@ -7324,7 +7445,10 @@
           <ul class="space-y-1.5 list-disc pl-4 text-secondary text-[11px] leading-relaxed">
             <li>${tr('A multi-agent system with 3 debating personas modeled on <strong class="text-normal">Shinya Takeda\'s personality</strong>.', '<strong class="text-normal">武田 伸也の人格</strong>をモデルに設計された、3つのペルソナが議論を交わすマルチエージェントシステム。')}</li>
             <li>${tr('This is a <strong class="text-normal">parody &amp; experimental system</strong> inspired by the MAGI system from <strong class="text-normal">Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.', 'これは<strong class="text-normal">「新世紀エヴァンゲリオン」</strong>のMAGIシステムにインスパイアされた、<strong class="text-normal">パロディ＆実験用システム</strong>です。プログラミングなどの実用的なタスクへの利用は想定されていません。')}</li>
-            <li>${tr('Strict limits: max <strong class="text-normal">1,000 characters</strong> per input, limited output tokens, <strong class="text-normal">24 daily requests</strong>, and <strong class="text-normal">12 rounds</strong> per session.', '利用制限：1回あたりの入力は最大<strong class="text-normal">1,000文字</strong>まで、出力トークン数制限あり、1日あたり<strong class="text-normal">24回のリクエスト</strong>、1セッションあたり<strong class="text-normal">12往復</strong>まで。')}</li>
+            <!-- "12 messages", not "12 round-trips": AGENT_MAX_HISTORY and the Worker's
+                 history_max_messages are both 12 *messages* (≈6 exchanges), which is the
+                 context window carried forward — not a cap on how long a session may run. -->
+            <li>${tr(`Strict limits: max <strong class="text-normal">1,000 characters</strong> per input, limited output tokens, and <strong class="text-normal">24 daily requests</strong>. Each reply is written with the last <strong class="text-normal">${AGENT_MAX_HISTORY} messages</strong> as context; anything older drops out.`, `利用制限：1回あたりの入力は最大<strong class="text-normal">1,000文字</strong>まで、出力トークン数制限あり、1日あたり<strong class="text-normal">24回のリクエスト</strong>まで。回答は直近<strong class="text-normal">${AGENT_MAX_HISTORY}メッセージ</strong>（およそ6往復）を文脈として生成され、それより古い発言は対象外になります。`)}</li>
             <li>${tr('Images can be attached (up to <strong class="text-normal">4 per message</strong>, resized in your browser before sending) and are sent to the API just like text.', '画像も添付できます（1メッセージ<strong class="text-normal">最大4枚</strong>。送信前にブラウザ側で縮小されます）。テキスト同様に API へ送信されます。')}</li>
             <li>${tr('By default, inputs are <strong class="text-normal">not saved</strong> in the database, unless you <strong class="text-normal">react</strong> to a reply (👍/emoji) to help improve MAGI.', 'デフォルトでは、MAGI向上のために回答へ<strong class="text-normal">リアクション</strong>（👍や絵文字）をしない限り、入力内容はデータベースに<strong class="text-normal">保存されません</strong>。')}</li>
             <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
@@ -7359,11 +7483,13 @@
     // エクスポート＆共有ロジック
     function updateAgentActionButtons() {
       const hasHistory = agentHistory && agentHistory.length > 0;
-      // .dock-menu-item.disabled carries both the dimming and the pointer-events
-      // block, so the state lives in one place instead of a class plus inline style.
+      // .dock-menu-item.disabled carries the dimming, but pointer-events alone only stops
+      // the mouse: the button stayed in the Tab order and was announced as enabled, and
+      // Enter still fired the handler. The `disabled` property is what actually removes it
+      // from the tab order and the accessibility tree, so set both.
       ['btn-share-agent', 'btn-export-agent'].forEach(id => {
         const btn = document.getElementById(id);
-        if (btn) btn.classList.toggle('disabled', !hasHistory);
+        if (btn) { btn.classList.toggle('disabled', !hasHistory); btn.disabled = !hasHistory; }
       });
     }
 
@@ -7547,20 +7673,29 @@
     // --- Inline IntelliSense suggestions on the terminal input ---
     const suggestBox = document.getElementById('cmd-suggest');
     let suggestItems = [], suggestSel = -1, suggestOpen = false;
+    // Keep the combobox on #cmd-input in step with the popup. aria-activedescendant is what
+    // makes ↑/↓ speak: focus never leaves the input, so without it the moving highlight is
+    // invisible to a screen reader.
+    function syncSuggestAria() {
+      DOM.input.setAttribute('aria-expanded', suggestOpen ? 'true' : 'false');
+      if (suggestOpen && suggestSel >= 0) DOM.input.setAttribute('aria-activedescendant', 'sg-item-' + suggestSel);
+      else DOM.input.removeAttribute('aria-activedescendant');
+    }
     function renderSuggest() {
       if (!suggestBox) return;
-      if (!suggestItems.length) { suggestBox.classList.add('hidden'); suggestOpen = false; return; }
+      if (!suggestItems.length) { suggestBox.classList.add('hidden'); suggestOpen = false; syncSuggestAria(); return; }
       suggestOpen = true;
       suggestBox.classList.remove('hidden');
       suggestBox.innerHTML = suggestItems.map((c, i) => {
         const m = treeMeta(c);
-        return `<div class="sg-item ${i === suggestSel ? 'active' : ''}" data-i="${i}">
-          <span class="sg-icon" style="color:${iconColor(c, m.name)}">${esc(m.icon || '›')}</span>
+        return `<div class="sg-item ${i === suggestSel ? 'active' : ''}" id="sg-item-${i}" role="option" aria-selected="${i === suggestSel ? 'true' : 'false'}" data-i="${i}">
+          <span class="sg-icon" aria-hidden="true" style="color:${iconColor(c, m.name)}">${esc(m.icon || '›')}</span>
           <span class="sg-label">${esc(c)}</span>
           <span class="sg-desc">${esc(cdesc(c))}</span></div>`;
       }).join('');
+      syncSuggestAria();
     }
-    function closeSuggest() { suggestItems = []; suggestSel = -1; suggestOpen = false; if (suggestBox) suggestBox.classList.add('hidden'); }
+    function closeSuggest() { suggestItems = []; suggestSel = -1; suggestOpen = false; if (suggestBox) suggestBox.classList.add('hidden'); syncSuggestAria(); }
     function moveSuggest(dir) { if (!suggestItems.length) return; suggestSel = (suggestSel + dir + suggestItems.length) % suggestItems.length; renderSuggest(); }
     function acceptSuggest(i) { const c = suggestItems[i]; if (c == null) return; DOM.input.value = c; updateCaret(); closeSuggest(); DOM.input.focus({ preventScroll: true }); }
     DOM.input.addEventListener('input', () => {
@@ -7661,12 +7796,15 @@
       paletteFiltered = src;
       if (paletteSel >= src.length) paletteSel = 0;
       paletteList.innerHTML = src.length ? src.map((it, i) =>
-        `<div class="cp-item ${i === paletteSel ? 'active' : ''}" data-i="${i}">
-          <span class="cp-icon" style="color:${it.iconColor || 'var(--primary-color)'}">${esc(it.icon || '›')}</span>
+        `<div class="cp-item ${i === paletteSel ? 'active' : ''}" id="cp-item-${i}" role="option" aria-selected="${i === paletteSel ? 'true' : 'false'}" data-i="${i}">
+          <span class="cp-icon" aria-hidden="true" style="color:${it.iconColor || 'var(--primary-color)'}">${esc(it.icon || '›')}</span>
           <span class="cp-label">${esc(it.label)}</span>
           <span class="cp-desc">${esc(it.desc || '')}</span>
         </div>`).join('') : `<div class="cp-empty">${tr('No matching results', '一致する結果がありません')}</div>`;
       paletteCount.textContent = tr(`${src.length} result${src.length === 1 ? '' : 's'}`, `${src.length} 件`);
+      // Focus stays in the input, so the highlighted row is only announced via activedescendant.
+      if (src.length) paletteInput.setAttribute('aria-activedescendant', 'cp-item-' + paletteSel);
+      else paletteInput.removeAttribute('aria-activedescendant');
       const active = paletteList.querySelector('.cp-item.active');
       if (active) active.scrollIntoView({ block: 'nearest' });
     }
@@ -7784,6 +7922,7 @@
       }
       if (modalOpen()) return; // an open dialog owns the keyboard
       if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette('>'); return; }
+      if (mod && !e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette(''); return; }
       if (mod && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); toggleSidebar(); return; }
       if (mod && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); togglePanel(); return; }
       if (mod && e.key === '`') { e.preventDefault(); focusTerminal(); return; }

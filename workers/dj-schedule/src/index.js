@@ -259,21 +259,22 @@ export default {
           'SELECT id FROM month_responses WHERE ym = ? AND name = ?'
         ).bind(ym, name).first();
 
-        if (existing) {
-          await env.DB.prepare(
-            'UPDATE month_responses SET answers = ?, comment = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-          ).bind(JSON.stringify(answers), comment, existing.id).run();
-        } else {
+        if (!existing) {
           const counted = await env.DB.prepare(
             'SELECT COUNT(*) AS c FROM month_responses WHERE ym = ?'
           ).bind(ym).first();
           if ((counted?.c ?? 0) >= MAX_RESPONSES) {
             return json({ error: '回答数の上限に達しました' }, 400, cors);
           }
-          await env.DB.prepare(
-            'INSERT INTO month_responses (ym, name, answers, comment) VALUES (?, ?, ?, ?)'
-          ).bind(ym, name, JSON.stringify(answers), comment).run();
         }
+
+        await env.DB.prepare(
+          `INSERT INTO month_responses (ym, name, answers, comment) VALUES (?, ?, ?, ?)
+           ON CONFLICT(ym, name) DO UPDATE SET
+             answers = excluded.answers,
+             comment = excluded.comment,
+             updated_at = CURRENT_TIMESTAMP`
+        ).bind(ym, name, JSON.stringify(answers), comment).run();
 
         return json(await loadMonth(env, ym), 200, cors);
       }

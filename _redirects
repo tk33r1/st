@@ -28,3 +28,8 @@
 /tools/pdf-to-image.html   /tools/pdf-studio/  301
 /images/ogp/pdf-to-image-ogp.webp   /images/ogp/pdf-studio-ogp.png  301
 /images/ogp/pdf-to-image-ogp.png    /images/ogp/pdf-studio-ogp.png  301
+
+# 改名: 2026-09-12  Retail Tech News → Retail Tech Daily
+/job/retailtechnews        /job/retailtechdaily/  301
+/job/retailtechnews/       /job/retailtechdaily/  301
+/job/retailtechnews/*      /job/retailtechdaily/:splat  301

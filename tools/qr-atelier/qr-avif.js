@@ -88,8 +88,8 @@
     const px = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const out = mod.encode(new Uint8Array(px.data.buffer), canvas.width, canvas.height, optionsFor(opts));
     if (!out) throw new Error('avif encode failed');
-    // 返るのは Uint8Array。そのまま渡すと環境によって型が合わないので包み直す
-    return new Blob([out.buffer || out], { type: 'image/avif' });
+    // 返るのは Uint8Array。直接渡せば byteOffset / byteLength が正しく反映される
+    return new Blob([out], { type: 'image/avif' });
   }
 
   global.QRAvif = {
