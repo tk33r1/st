@@ -129,6 +129,26 @@ body {
   border-color: var(--border-strong);
 }
 
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.nav-icon-btn:hover {
+  background: var(--surface-subtle);
+  color: var(--primary);
+  border-color: var(--border-strong);
+}
+
 /* --- パンくず --- */
 .breadcrumbs {
   padding: 14px 0 6px;

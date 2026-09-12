@@ -41,6 +41,7 @@ ICON_EXTERNAL_SVG = '<svg class="external-icon" viewBox="0 0 24 24" width="13" h
 ICON_WIM_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
 ICON_COPY_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'
 ICON_X_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
+ICON_RSS_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg>'
 
 
 def esc(s):
@@ -946,7 +947,11 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         </article>
         """)
 
-    exec_summary_html = "".join([f"<li>{esc(item)}</li>" for item in issue_data.get('executive_summary', [])])
+    exec_summary_list = issue_data.get('executive_summary', [])
+    exec_summary_html = "".join([f"<li>{esc(item)}</li>" for item in exec_summary_list])
+    # AIは通常ちょうど3点で生成するが、後日の手動修正等で件数が変わることもあるため、
+    # 3点ちょうどの時だけ「3大」と謳い、それ以外は件数を偽らない汎用見出しにする。
+    exec_title_text = "昨日の3大重要トピック（Executive Summary）" if len(exec_summary_list) == 3 else "昨日の重要トピック（Executive Summary）"
     p_link = f'<a href="../{prev_issue["date"]}/" class="nav-prev">&larr; {prev_issue["date"][:4]}/{prev_issue["date"][4:6]}/{prev_issue["date"][6:8]} 号</a>' if prev_issue else '<span class="nav-disabled">&larr; 前号</span>'
     n_link = f'<a href="../{next_issue["date"]}/" class="nav-next">{next_issue["date"][:4]}/{next_issue["date"][4:6]}/{next_issue["date"][6:8]} 号 &rarr;</a>' if next_issue else '<span class="nav-disabled">最新号</span>'
 
@@ -1000,9 +1005,6 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
           <span class="brand-subtitle">{config['brand_subtitle']}</span>
         </div>
       </a>
-      <div class="header-nav">
-        <a href="../" class="nav-btn">一覧へ</a>
-      </div>
     </div>
   </header>
 
@@ -1031,7 +1033,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
     <section class="executive-card">
       <div class="exec-title">
         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-        <span>昨日の3大重要トピック（Executive Summary）</span>
+        <span>{exec_title_text}</span>
       </div>
       <ul class="exec-list">{exec_summary_html}</ul>
     </section>
@@ -1344,7 +1346,9 @@ def render_top_index_html(config, articles_history):
         </div>
       </a>
       <div class="header-nav">
-        <a href="rss.xml" class="nav-btn" target="_blank" rel="noopener noreferrer">RSS 購読</a>
+        <a href="rss.xml" class="nav-icon-btn" target="_blank" rel="noopener noreferrer" aria-label="RSSを購読" title="RSSを購読">
+          {ICON_RSS_SVG}
+        </a>
       </div>
     </div>
   </header>
