@@ -29,7 +29,11 @@
       "Bash(python -c \"import json,sys; d=json.load\\(open\\('_titletest.json'\\)\\); d['max_tokens']=256; json.dump\\(d,open\\('_titletest2.json','w'\\),ensure_ascii=False\\)\")",
       "Bash(python -c \"import json,sys; r=json.load\\(sys.stdin\\); c=r['choices'][0]; print\\('finish:',c['finish_reason']\\); print\\('content:',repr\\(c['message']['content']\\)\\); print\\('reasoning:',repr\\(c['message'].get\\('reasoning_content'\\)\\)[:200]\\); print\\('usage:',r['usage']\\)\")",
       "Bash(python -c \"import json; d=json.load\\(open\\('_titletest.json',encoding='utf-8'\\)\\); d['max_tokens']=256; json.dump\\(d,open\\('_titletest2.json','w',encoding='utf-8'\\),ensure_ascii=False\\)\")",
-      "Bash(python -c \"import json,sys; r=json.load\\(sys.stdin\\); c=r['choices'][0]; print\\('finish:',c['finish_reason']\\); print\\('content:',repr\\(c['message']['content']\\)\\); print\\('reasoning_len:',len\\(c['message'].get\\('reasoning_content'\\) or ''\\)\\); print\\('usage:',r['usage']\\)\")"
+      "Bash(python -c \"import json,sys; r=json.load\\(sys.stdin\\); c=r['choices'][0]; print\\('finish:',c['finish_reason']\\); print\\('content:',repr\\(c['message']['content']\\)\\); print\\('reasoning_len:',len\\(c['message'].get\\('reasoning_content'\\) or ''\\)\\); print\\('usage:',r['usage']\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -m py_compile .github/scripts/brightdata_social.py .github/scripts/daily_engine.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
+      "Bash(python .github/scripts/generate-retail-tech-daily.py --rebuild)"
     ],
     "additionalDirectories": [
       "c:\\Users\\minep\\.claude\\projects\\c--dev-tk-st\\memory"

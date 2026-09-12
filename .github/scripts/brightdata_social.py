@@ -3,8 +3,8 @@
 """Bright Data Web Scraper API 経由の SNS バズ投稿収集
 
 現状の対象は TikTok のみ（Instagram はハッシュタグ探索の手段が無いため見送り）。
-`TikTok - Posts by Search URL Fast API` から「昨日 JST に投稿された人気動画」を取得し、
-daily_engine.py の EXTRA 候補（`is_sns_raw`）と同じ形に整形して返す。
+`TikTok - Posts by Search URL Fast API` から「直近 1 週間で再生数を伸ばしたニトリ関連動画」を
+取得し、daily_engine.py の EXTRA 候補（`is_sns_raw`）と同じ形に整形して返す。
 
 API 仕様は Bright Data 管理画面の AUTHENTICATED REQUEST 実値が一次情報。
 公開ドキュメントにはこの Fast API のページが無く、docs 側の近縁データセット
@@ -13,19 +13,29 @@ API 仕様は Bright Data 管理画面の AUTHENTICATED REQUEST 実値が一次�
     POST /datasets/v3/scrape?dataset_id=gd_m7n5ixlw1gc4no56kx&notify=false&include_errors=true
     {"input":[{"url":"https://www.tiktok.com/search?q=...",
                "num_of_posts":20,
-               "start_date":"2026-09-10T15:00:00.000Z",   # ISO8601 UTC（MM-DD-YYYY ではない）
-               "end_date":"2026-09-11T15:00:00.000Z",
                "country":""}],
      "limit_per_input":20}
 
-`start_date` / `end_date` は UTC の瞬時なので、JST の「昨日 0 時〜今日 0 時」をそのまま表現できる。
+★ start_date / end_date は受け付けるが**渡さない**。実測（2026-09-12）の結果:
+
+    日付あり: 26 件中ニトリ関連 2 件（最高 1,252 再生）
+    日付なし: 30 件中ニトリ関連 20 件（最高 110 万再生）
+
+日付を渡すと TikTok 側が検索の関連度順を捨て、「その日投稿された無関係な人気動画」を返す。
+一方で関連度順に取ると検索上位は数週間〜数ヶ月かけて伸びた動画で占められ、昨日の投稿は入らない。
+「ニトリ × 昨日投稿 × 人気」は両立しないため、関連度順で取得して投稿日と再生数はこちら側で絞る。
+（`https://www.tiktok.com/tag/<語>` は error_code=dead_page で使用不可）
+
+呼び出しは前夜 20:00 JST の nitori-tiktok-fetch.yml から capture_snapshot() で行い、
+翌朝の本体は load_snapshot() でそれを読むだけ。取得時刻を記録するので、紙面に
+「昨日20時時点で人気だった動画」と事実どおり書ける。
 
 APIキーは環境変数 BRIGHTDATA_API_KEY からのみ読む（コード・成果物には一切書かない）。
 未設定・障害・タイムアウト時は必ず空リストを返し、毎朝の発行パイプラインを落とさない。
 
 単体プローブ（実 API を 1 回だけ叩いて挙動を表示する）:
-    BRIGHTDATA_API_KEY=... python brightdata_social.py --num 20
-    BRIGHTDATA_API_KEY=... python brightdata_social.py --num 30 --no-date  # 日付を送らず関連度順を見る
+    BRIGHTDATA_API_KEY=... python brightdata_social.py --num 30
+    BRIGHTDATA_API_KEY=... python brightdata_social.py --num 20 --date-filter  # 旧方式との比較用
 """
 
 import json
@@ -268,7 +278,7 @@ def _relevant(text, relevant_keywords):
     return any(k.lower() in lowered for k in relevant_keywords)
 
 
-def _normalize_tiktok(row, relevant_keywords=(), spam_keywords=()):
+def _normalize_tiktok(row, relevant_keywords=(), spam_keywords=(), excluded_accounts=()):
     """TikTok の 1 レコードを EXTRA 候補形式に整形する（不採用なら None）。"""
     description = (row.get('description') or '').strip()
     hashtags = row.get('hashtags') or []
@@ -286,11 +296,19 @@ def _normalize_tiktok(row, relevant_keywords=(), spam_keywords=()):
     if posted is None:
         return None
 
-    username = (row.get('profile_username') or row.get('account_id') or '').lstrip('@').strip()
+    # profile_username は表示名（例 "Nitori - ニトリ【公式】"）でハンドルではない。
+    # ハンドルは URL 側の @xxx に入っているので、そちらを一次情報にする。
     post_id = str(row.get('post_id') or '').strip()
     link = (row.get('url') or row.get('post_url') or '').strip()
-    if not link and username and post_id:
-        link = f"https://www.tiktok.com/@{username}/video/{post_id}"
+    profile_url = (row.get('profile_url') or '').strip()
+    handle_match = re.search(r'tiktok\.com/@([^/?#]+)', link or profile_url)
+    handle = handle_match.group(1) if handle_match else ''
+    if handle and any(handle.lower() == a.lower() for a in excluded_accounts):
+        return None
+
+    username = (row.get('profile_username') or row.get('account_id') or handle).lstrip('@').strip()
+    if not link and handle and post_id:
+        link = f"https://www.tiktok.com/@{handle}/video/{post_id}"
     if not link:
         return None
 
@@ -325,7 +343,8 @@ def _normalize_tiktok(row, relevant_keywords=(), spam_keywords=()):
 
 
 def fetch_tiktok_buzz(search_queries, captured_at=None, relevant_keywords=(),
-                      spam_keywords=(), deadline=None, limit=SNAPSHOT_KEEP):
+                      spam_keywords=(), deadline=None, limit=SNAPSHOT_KEEP,
+                      excluded_accounts=()):
     """「直近 N 日に投稿された、ニトリ関連で再生数の多い」TikTok 動画を返す。
 
     **API に start_date / end_date は渡さない。** 実測の結果、日付フィルタを付けると
@@ -392,7 +411,7 @@ def fetch_tiktok_buzz(search_queries, captured_at=None, relevant_keywords=(),
     for row in rows:
         if not isinstance(row, dict) or _is_error_row(row):
             continue
-        item = _normalize_tiktok(row, relevant_keywords, spam_keywords)
+        item = _normalize_tiktok(row, relevant_keywords, spam_keywords, excluded_accounts)
         if item is None:
             continue
         posted = datetime.fromtimestamp(item['pub_ts'], JST)
@@ -415,7 +434,8 @@ def fetch_tiktok_buzz(search_queries, captured_at=None, relevant_keywords=(),
     return items[:limit]
 
 
-def capture_snapshot(path, tiktok_queries=(), relevant_keywords=(), spam_keywords=()):
+def capture_snapshot(path, tiktok_queries=(), relevant_keywords=(), spam_keywords=(),
+                     excluded_accounts=()):
     """前夜の取得ワークフロー用。収集結果をスナップショット JSON として書き出す。
 
     取得に失敗しても既存のスナップショットは壊さない（0 件で上書きしない）。
@@ -423,7 +443,8 @@ def capture_snapshot(path, tiktok_queries=(), relevant_keywords=(), spam_keyword
     captured_at = datetime.now(JST)
     try:
         items = fetch_tiktok_buzz(
-            tiktok_queries, captured_at, relevant_keywords, spam_keywords
+            tiktok_queries, captured_at, relevant_keywords, spam_keywords,
+            excluded_accounts=excluded_accounts,
         )
     except Exception as e:
         _warn(f"TikTok 収集失敗: {type(e).__name__}: {e}")
@@ -485,7 +506,8 @@ def load_snapshot(path, target_date=None, max_age_hours=36):
     return items
 
 
-def _probe(num_of_posts=5, keyword='ニトリ', relevant=None, use_tag_url=False, spam=(), send_dates=True):
+def _probe(num_of_posts=5, keyword='ニトリ', relevant=None, use_tag_url=False, spam=(),
+           send_dates=True, excluded=()):
     """管理画面の実値で確定しきれなかった挙動を実キーで確認するプローブ。"""
     relevant = relevant or [keyword]
     api_key = _api_key()
@@ -578,7 +600,7 @@ def _probe(num_of_posts=5, keyword='ニトリ', relevant=None, use_tag_url=False
     n_relevant_in_window = 0
     seen = set()
     for r in data_rows:
-        it = _normalize_tiktok(r, relevant, spam)
+        it = _normalize_tiktok(r, relevant, spam, excluded)
         desc = re.sub(r'\s+', ' ', str(r.get('description') or ''))[:40]
         src = str((r.get('input') or {}).get('url', ''))
         src = urllib.parse.unquote(src.rsplit('=', 1)[-1].rsplit('/', 1)[-1])[:10]
@@ -633,6 +655,7 @@ if __name__ == '__main__':
             _gen.TIKTOK_SEARCH_QUERIES,
             _gen.TIKTOK_RELEVANT_KEYWORDS,
             _gen.TIKTOK_SPAM_KEYWORDS,
+            _gen.TIKTOK_EXCLUDED_ACCOUNTS,
         ))
 
     num = 5
@@ -653,11 +676,14 @@ if __name__ == '__main__':
             relevant = [w for w in sys.argv[sys.argv.index('--relevant') + 1].split(',') if w]
         except IndexError:
             pass
-    # 本番と同じスパム語で測れるよう、媒体側の定数を借りる（取れなければ空で続行）
-    spam = ()
+    # 本番と同じ除外条件で測れるよう、媒体側の定数を借りる（取れなければ空で続行）
+    spam, excluded = (), ()
     try:
         import importlib
-        spam = tuple(importlib.import_module('generate-nitori-daily').TIKTOK_SPAM_KEYWORDS)
+        _g = importlib.import_module('generate-nitori-daily')
+        spam = tuple(_g.TIKTOK_SPAM_KEYWORDS)
+        excluded = tuple(_g.TIKTOK_EXCLUDED_ACCOUNTS)
     except Exception:
         pass
-    sys.exit(_probe(num, kw, relevant, '--tag' in sys.argv, spam, send_dates='--no-date' not in sys.argv))
+    sys.exit(_probe(num, kw, relevant, '--tag' in sys.argv, spam,
+                    send_dates='--no-date' not in sys.argv, excluded=excluded))

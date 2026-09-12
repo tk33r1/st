@@ -28,7 +28,8 @@
       "Bash(grep -nE \"^\\\\s*[.#a-zA-Z@][^{};]*\\\\{\\\\s*$\")",
       "Bash(python3 _analyze.py)",
       "PowerShell(py _analyze.py)",
-      "Bash(gh release *)"
+      "Bash(gh release *)",
+      "Bash(git config *)"
     ],
     "additionalDirectories": [
       "C:\\dev\\tk.st\\game\\masala-tetris-vindaloo"

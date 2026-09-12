@@ -2839,7 +2839,7 @@
         "description": "Portfolio of Shinya Takeda (武田 伸也). Technical Marketing Lead, UI Designer, Data Analyst, AI Agent Architect, Web3 Explorer, and DJ Human Choreomania Project (人類踊狂計画). Explore my projects and philosophy through this interactive terminal.",
         "url": "https://tk.st/",
         "image": "https://tk.st/images/ogp/root-ogp.webp",
-        "sameAs": ["https://x.com/Tah_Keh", "https://www.instagram.com/dj_hcp/", "https://www.linkedin.com/in/shinyatakeda/", "https://github.com/tk33r1", "https://www.coursera.org/learner/takeda", "https://www.mixcloud.com/dj_hcp/", "https://ko-fi.com/shinyatakeda"],
+        "sameAs": ["https://x.com/Tah_Keh", "https://www.instagram.com/dj_hcp/", "https://www.linkedin.com/in/shinyatakeda/", "https://github.com/tk33r1", "https://www.coursera.org/learner/takeda", "https://www.mixcloud.com/dj_hcp/", "https://ko-fi.com/shinyatakeda", "https://www.youtube.com/@liberty_motovlog", "https://www.instagram.com/liberty_motovlog/"],
         "knowsAbout": ["Technical Marketing", "Digital Marketing", "Project Management", "Data Analytics", "GA4 Strategy", "A/B Testing", "UI/UX Design", "SEO and AIO", "Management Search Engine", "AI Agent Architecture", "Server-side GTM", "Frontend Development", "Cloudflare Pages", "Web3 & On-chain Systems", "Bitcoin Runes and Ordinals", "DJing", "Full-on Psytrance", "Big Room House", "Melodic Techno", "Philosophy", "Erich Fromm"]
       },
       "name": "Shinya Takeda - Terminal Portfolio",
@@ -2961,6 +2961,7 @@
     <h4><a href="https://tk.st/tools/">AI coding benchmark: Productivity tool</a></h4>
     <h4><a href="https://tk.st/glitch/">Finding the "bugs" that lead to better living.</a></h4>
     <h4><a href="https://tk.st/thought/">A shared margin for contemplating the essence of life.</a></h4>
+    <h4><a href="https://tk.st/motovlog/">Overview | US 250th Anniversary Harley & Return Rider</a></h4>
     <h3>MAGI</h3>
     <p>Chat with my three personas (Enthusiast, Humanist, Strategist), synthesized into one voice. Open the ✦ panel.</p>
     <a href="https://tk.st/magi/">Legacy MAGI System</a>
@@ -3623,7 +3624,8 @@
       { name: '/game', desc: 'AI coding benchmark: Game', desc_ja: 'AIコーディング・ベンチマーク：ゲーム', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/game/' },
       { name: '/tools', desc: 'AI coding benchmark: Productivity tool', desc_ja: 'AIコーディング・ベンチマーク：生産性ツール', tech: 'Gemini, Canva AI, Claude Code', link: 'https://tk.st/tools/' },
       { name: '/glitch', desc: 'Finding the "bugs" that lead to better living.', desc_ja: 'より良く生きるための「バグ」を見つける。', tech: 'A Dialectical Lens, Deconstructive Urge', link: 'https://tk.st/glitch/' },
-      { name: '/thought', desc: 'A shared margin for contemplating the essence of life.', desc_ja: '生の本質を思索するための、共有された余白。', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/thought/' }
+      { name: '/thought', desc: 'A shared margin for contemplating the essence of life.', desc_ja: '生の本質を思索するための、共有された余白。', tech: 'Erich Fromm, Friedrich Nietzsche, Epictetus, Buddha', link: 'https://tk.st/thought/' },
+      { name: '/motovlog', desc: 'Overview | US 250th Anniversary Harley & Return Rider', desc_ja: '概要｜アメリカ建国250周年記念ハーレーと事故からのリターン', tech: '2026 Heritage Classic Liberty Edition (FLHC), US 250th, 3-Beat Sound', link: 'https://tk.st/motovlog/' }
     ];
 
     const ABOUT_DATA = {
@@ -6003,7 +6005,7 @@
       }
     };
 
-    const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
+    const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', '/motovlog': 'https://tk.st/motovlog/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
         // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to
