@@ -6,12 +6,14 @@
 """
 
 import html
+import json
 import os
 import re
 import sys
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
+import brightdata_social
 from daily_engine import build_keyword_regex, is_fresh, run_daily_pipeline
 
 JST = timezone(timedelta(hours=9))
@@ -54,6 +56,25 @@ YAHOO_REALTIME_SPAM_KEYWORDS = [
     '当選', 'プレゼント', '懸賞', '商品券', 'その場であたり', 'フォロー＆リポスト',
     'チキニトラジオ', 'にとりめし', '実業団', '5000m', 'タイムレース', 'ガチャ',
     '似顔絵', 'パトロール', 'スポンサー', 'パチンコ', 'パチスロ', '台'
+]
+
+# TikTok 検索 URL に展開するキーワード
+TIKTOK_SEARCH_QUERIES = ['ニトリ', 'ニトリ 購入品', 'デコホーム']
+
+# 前夜 20:00 JST の取得ワークフローが書き出すスナップショット
+TIKTOK_SNAPSHOT_PATH = os.path.join(REPO_ROOT, 'data', 'nitori-tiktok-buzz.json')
+
+# TikTok の説明文・ハッシュタグに含まれていなければ「ニトリの話題」とみなさない
+TIKTOK_RELEVANT_KEYWORDS = ['ニトリ', 'nitori', 'デコホーム', 'ニトリネット']
+
+# 動画系に適用するスパム語。Yahoo! リアルタイム用の一覧から、短すぎて誤爆する語（'台' は
+# 「ラック2台」等を巻き込む）と X 固有の語を外し、動画で多いアフィリエイト系を足したもの。
+# 投資系は「三菱商事・ニトリ・ソフトバンクGも解説」のように社名を羅列するだけで
+# 生活者の声ではない動画が実際に混入したため、銘柄解説の語彙も落とす。
+TIKTOK_SPAM_KEYWORDS = [
+    '当選', 'プレゼント', '懸賞', '商品券', 'フォロー＆リポスト', 'ガチャ',
+    'パチンコ', 'パチスロ', 'アフィリエイト', '案件募集', '副業',
+    '銘柄', '爆騰', '急騰', '利上げ', '株価', '投資', 'FX', '仮想通貨', '配当'
 ]
 
 
@@ -124,6 +145,8 @@ def fetch_yahoo_realtime_nitori_buzz(target_date=None):
             'pub_date': time_text,
             'pub_ts': pub_ts,
             'is_sns_raw': True,
+            'platform': 'x',
+            'author': f"@{author_id}",
             'likes': like,
             'retweets': rt,
             'raw_text': body_text
@@ -131,6 +154,58 @@ def fetch_yahoo_realtime_nitori_buzz(target_date=None):
 
     items.sort(key=lambda x: x['likes'], reverse=True)
     return items[:5]
+
+
+def recently_featured_sns_urls(days_limit=7):
+    """直近の号で既に載せた SNS 投稿の URL 集合。
+
+    TikTok は「直近1週間の人気」から選ぶ都合上、同じ動画が何日も上位に居座る。
+    再掲を防がないと毎朝ほぼ同じカードが並ぶので、ここで除外リストを作る。
+    """
+    urls = set()
+    try:
+        with open(CONFIG['data_json_path'], 'r', encoding='utf-8') as f:
+            issues = json.load(f)
+    except Exception:
+        return urls
+
+    issues.sort(key=lambda x: x.get('date', ''), reverse=True)
+    for issue in issues[:days_limit]:
+        for buzz in issue.get('sns_buzz', []):
+            u = buzz.get('url', '')
+            if u:
+                urls.add(u)
+    return urls
+
+
+def fetch_all_social_buzz(target_date=None):
+    """SNSリアル反響セクション用の候補を全ソースから集める。
+
+    X は Yahoo! リアルタイム検索で「昨日」の投稿を直接取得する。
+    TikTok は前夜 20:00 JST の取得ワークフローが書き出したスナップショットを読む
+    （API を直接叩かない）。TikTok 検索は日付で絞ると関連度が壊れるため「直近1週間の人気」
+    を前夜時点で確定させる設計で、詳細は brightdata_social.py の docstring を参照。
+
+    どのソースが落ちても X だけで発行できるよう、各ソースは独立して失敗を吸収する。
+    """
+    items = []
+
+    try:
+        items.extend(fetch_yahoo_realtime_nitori_buzz(target_date))
+    except Exception as e:
+        print(f"[WARN] X（Yahoo!リアルタイム）収集失敗: {type(e).__name__}: {e}", file=sys.stderr)
+
+    try:
+        tiktok_items = brightdata_social.load_snapshot(TIKTOK_SNAPSHOT_PATH, target_date)
+        already = recently_featured_sns_urls()
+        fresh = [it for it in tiktok_items if it.get('link') not in already]
+        if len(fresh) < len(tiktok_items):
+            print(f" -> TikTok: 直近の号で掲載済みの {len(tiktok_items) - len(fresh)} 件を除外")
+        items.extend(fresh[:brightdata_social.TOP_N_PER_PLATFORM])
+    except Exception as e:
+        print(f"[WARN] TikTok スナップショット処理失敗: {type(e).__name__}: {e}", file=sys.stderr)
+
+    return items
 
 
 def is_nitori_relevant(it, is_global=False):
@@ -182,11 +257,11 @@ FAQ_ITEMS = [
     },
     {
         "q": "ニュースの更新頻度と配信時間はいつですか？",
-        "a": "土日・祝日を含め、毎日朝8:00（日本時間・JST）に自動配信しています。前日に発表されたプレスリリース、業界専門紙・一般紙の報道、さらにX（旧Twitter）で反響を呼んだ生活者のリアルな声を、毎朝の通勤時や始業前の3〜5分で効率よくキャッチアップできます。"
+        "a": "土日・祝日を含め、毎日朝8:00（日本時間・JST）に自動配信しています。前日に発表されたプレスリリース、業界専門紙・一般紙の報道、さらにX（旧Twitter）やTikTokで反響を呼んだ生活者のリアルな声を、毎朝の通勤時や始業前の3〜5分で効率よくキャッチアップできます。"
     },
     {
         "q": "ニュースやSNS話題の選定・分析はどのように行われていますか？",
-        "a": "流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。マルチAI（DeepSeek / OpenAI GPT）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。"
+        "a": "流通・小売の業界専門紙やIR速報に加え、X（旧Twitter）およびTikTok上の生活者による「買ってよかった神アイテム」「組み立てやすさ」「店舗体験」「価格への反響」といったリアルな声をクローリング。TikTokは前日投稿分を再生数順で収集しているため、短尺動画で実際の使用シーンが伸びている商品も拾えます。マルチAI（DeepSeek / OpenAI GPT）が「SPAとしての強み」「生活者UX・利便性への影響度」「事業インパクト」を多角的に分析して厳選しています。"
     },
     {
         "q": "最新ニュースの通知や購読はできますか？",
@@ -289,9 +364,9 @@ CONFIG = {
     'brand_title': 'Nitori Daily',
     'brand_title_short': 'ニトリニュース＆SNS話題',
     'brand_subtitle': '毎朝8時のニトリ速報＆SNS話題',
-    'brand_desc': '毎朝8:00更新。昨日のニトリ・ニトリHD動向およびSNS上の話題・反響（ヒット商品、使い勝手、店舗体験、物流DX、SPA戦略）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊ニュースメディア。',
-    'hero_desc': '昨日のニトリ・ニトリHD動向およびSNS上の話題・反響。ヒット商品・生活者UX・店舗体験・SPA物流DXの最前線をAIのインサイト付きでお届けします。',
-    'portal_hero_desc': '昨日のニトリ・ニトリHD動向およびSNS上の話題・反響を毎朝8時に集約。<br>ヒット商品・生活者UX・店舗体験・SPA物流DXの先端動向をAIのインサイト付きでお届けします。',
+    'brand_desc': '毎朝8:00更新。昨日のニトリ・ニトリHD動向およびX・TikTok上の話題・反響（ヒット商品、使い勝手、店舗体験、物流DX、SPA戦略）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊ニュースメディア。',
+    'hero_desc': '昨日のニトリ・ニトリHD動向およびX・TikTok上の話題・反響。ヒット商品・生活者UX・店舗体験・SPA物流DXの最前線をAIのインサイト付きでお届けします。',
+    'portal_hero_desc': '昨日のニトリ・ニトリHD動向およびX・TikTok上の話題・反響を毎朝8時に集約。<br>ヒット商品・生活者UX・店舗体験・SPA物流DXの先端動向をAIのインサイト付きでお届けします。',
     'css_file': 'nitori-daily.css',
     'favicon_file': 'nitori-favicon.svg',
     'ogp_target': 'nitori',
@@ -311,7 +386,7 @@ CONFIG = {
 
     'jp_noise_blacklist': JP_NOISE_BLACKLIST,
     'global_noise_blacklist': GLOBAL_NOISE_BLACKLIST,
-    'extra_candidates_fn': fetch_yahoo_realtime_nitori_buzz,
+    'extra_candidates_fn': fetch_all_social_buzz,
     'is_relevant_fn': is_nitori_relevant,
     'relevance_sort_key_fn': relevance_sort_key,
     'keyword_regex': build_keyword_regex(KEYWORD_PATTERNS),
@@ -321,7 +396,7 @@ CONFIG = {
 2. 直近掲載済みのトピックと重複する内容は必ず除外し、昨日新しく発表・報道された最新動向を最優先してください。
 3. 国内ニュースから最も重要なもの4〜6件、海外・グローバル関連から2〜4件を厳選してください（計7〜10件）。ただし候補は事前に直近数日分の日付範囲で絞り込み済みです。海外ニュース候補の件数がこれに満たない場合は、無理に古い・関連度の低い候補で件数を埋めず、実際に選定条件を満たす件数のみを採用してください（0件でも構いません）。
    選定の際は「SPA（製造物流小売業）としての構造的強み」「ヒット商品・新商品開発」「物流・自動化・DXの進化」「店舗展開・海外進出の成果」「価格戦略・為替対応」を最重視してください。
-4. 候補の中に『【Xで〜いいね】』と記載されたSNS生バズ投稿（Yahoo! リアルタイム検索）がある場合は、生活者の共感・反響や生活空間提案へのインサイトが大きいものを必ず1〜2件選定し、カテゴリ『SNS話題・リアル反響』として採用してください。単なるツイートの転載ではなく、「なぜその使い方やアイテムが反響を呼んでいるのか」「生活者UXや商品力にどんな示唆があるか（Why it matters）」をプロの視点で分析・要約してください。記事URLには参照元となったXポストのURL（https://x.com/...）を設定してください。""",
+4. 候補の中に『【Xで〜いいね】』『【TikTokで〜回再生】』と記載されたSNS生バズ投稿（X はYahoo! リアルタイム検索、TikTok は前日投稿の再生数上位）がある場合は、生活者の共感・反響や生活空間提案へのインサイトが大きいものを必ず1〜2件選定し、カテゴリ『SNS話題・リアル反響』として採用してください。単なる投稿の転載ではなく、「なぜその使い方やアイテムが反響を呼んでいるのか」「生活者UXや商品力にどんな示唆があるか（Why it matters）」をプロの視点で分析・要約してください。記事URLには参照元となった投稿のURL（https://x.com/... または https://www.tiktok.com/...）を設定してください。""",
     'prompt_categories': '「商品開発・ヒット商品」「デジタル・EC・アプリ」「店舗展開・海外戦略」「物流・サプライチェーン」「経営・価格戦略・PB」「SNS話題・リアル反響」「グローバル先端トレンド」',
     'sample_category': '商品開発・ヒット商品',
     'sample_tags': ["ニトリ", "商品開発"],
@@ -337,7 +412,7 @@ CONFIG = {
         { "@type": "Thing", "name": "ニトリホールディングス" },
         { "@type": "Thing", "name": "製造物流小売業(SPA)" },
         { "@type": "Thing", "name": "商品開発・ヒット商品" },
-        { "@type": "Thing", "name": "生活者UX・SNS話題" },
+        { "@type": "Thing", "name": "生活者UX・SNS話題（X / TikTok）" },
         { "@type": "Thing", "name": "デジタル・アプリ・EC" },
         { "@type": "Thing", "name": "物流自動化・ホームロジスティクス" },
         { "@type": "Thing", "name": "店舗展開・グローバル戦略" }
@@ -345,7 +420,7 @@ CONFIG = {
     'person_knows_about': [
         "ニトリ・SPAビジネスモデル",
         "家具・インテリア・ホームファッション",
-        "生活者インサイト・SNS反響分析",
+        "生活者インサイト・SNS反響分析（X / TikTok）",
         "リテールDX・公式アプリ・EC",
         "自動化物流・サプライチェーン",
         "UI/UXエンジニアリング"

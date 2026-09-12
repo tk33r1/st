@@ -3,6 +3,8 @@ name: Daily Nitori Brief
 on:
   schedule:
     # 毎朝 08:05 JST（前日 23:05 UTC）に実行（retail-tech-daily との競合防止）
+    # TikTok の収集は前夜 20:00 の nitori-tiktok-fetch.yml が済ませており、
+    # ここではそのスナップショットを読むだけなので所要時間は従来どおり
     - cron: '5 23 * * *'
   workflow_dispatch:
     inputs:

@@ -42,6 +42,44 @@ ICON_WIM_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentC
 ICON_COPY_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'
 ICON_X_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
 ICON_RSS_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg>'
+ICON_TIKTOK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>'
+ICON_INSTAGRAM_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="2" width="20" height="20" rx="5.5"></rect><circle cx="12" cy="12" r="4.2"></circle><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"></circle></svg>'
+
+# SNS バズカードのプラットフォーム別メタ情報。
+# 過去号の JSON には platform キーが無いため、未設定は 'x' にフォールバックする。
+SNS_PLATFORM_META = {
+    'x': {
+        'order': 0,
+        'label': 'X',
+        'icon': ICON_X_SVG,
+        'badge_class': 'sns-badge-x',
+        'link_text': 'Xでポストを見る',
+        'author_fallback': 'Xユーザー',
+        'tags': ["SNS話題", "生活者UX", "バズアイテム"],
+    },
+    'tiktok': {
+        'order': 1,
+        'label': 'TikTok',
+        'icon': ICON_TIKTOK_SVG,
+        'badge_class': 'sns-badge-tiktok',
+        'link_text': 'TikTokで動画を見る',
+        'author_fallback': 'TikTokユーザー',
+        'tags': ["TikTok話題", "生活者UX", "バズ動画"],
+    },
+    'instagram': {
+        'order': 2,
+        'label': 'Instagram',
+        'icon': ICON_INSTAGRAM_SVG,
+        'badge_class': 'sns-badge-ig',
+        'link_text': 'Instagramでリールを見る',
+        'author_fallback': 'Instagramユーザー',
+        'tags': ["Instagram話題", "生活者UX", "バズリール"],
+    },
+}
+
+
+def sns_platform_meta(platform):
+    return SNS_PLATFORM_META.get(platform or 'x', SNS_PLATFORM_META['x'])
 
 
 def esc(s):
@@ -348,20 +386,32 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
     sns_output_fields = ""
     if extra_items:
         sns_sample = [{
+            'platform': sns_platform_meta(it.get('platform'))['label'],
             'title': it.get('title', ''),
             'text': it.get('raw_text') or it.get('description', ''),
             'likes': it.get('likes', 0),
             'retweets': it.get('retweets', 0),
+            'views': it.get('views', 0),
+            'comments': it.get('comments', 0),
         } for it in extra_items]
+        sns_platform_labels = []
+        for it in extra_items:
+            label = sns_platform_meta(it.get('platform'))['label']
+            if label not in sns_platform_labels:
+                sns_platform_labels.append(label)
+        sns_platform_names = " / ".join(sns_platform_labels)
         sns_section = f"""
-【X（旧Twitter）生活者バズ投稿一覧（本日の「Xリアル反響」セクション用）】:
+【SNS生活者バズ投稿一覧（{sns_platform_names}／本日の「SNSリアル反響」セクション用）】:
 以下は生活者が実際に投稿し話題になっている生の声です。記事候補とは別に、この一覧全体を俯瞰して
 共通する傾向・トレンドを分析し、後述の "sns_summary" / "sns_why_it_matters" を作成してください。
+各投稿の "platform" は投稿先（{sns_platform_names}）を示します。X は likes / retweets、
+動画系（TikTok・Instagram）は views（再生数）が反響の主指標です。媒体ごとの反応の質の違い
+（例: 短尺動画では実際の使用シーンや組み立て過程が伸びる等）にも触れてください。
 {json.dumps(sns_sample, ensure_ascii=False, indent=2)}
 """
         sns_output_fields = """,
-  "sns_summary": "上記のX投稿一覧全体の傾向を要約した客観的な説明文（120〜200文字）",
-  "sns_why_it_matters": "上記のX投稿一覧全体を踏まえた、プロの視点による生活者UX・ビジネスへの示唆（120〜200文字）\""""
+  "sns_summary": "上記のSNS投稿一覧全体の傾向を媒体横断で要約した客観的な説明文（120〜200文字）",
+  "sns_why_it_matters": "上記のSNS投稿一覧全体を踏まえた、プロの視点による生活者UX・ビジネスへの示唆（120〜200文字）\""""
 
     prompt = f"""あなたは日本最高峰の{config['editor_title']}です。
 本日の発行日: {target_date_str}（まとめ対象: {yesterday_str}の最新動向）
@@ -608,9 +658,12 @@ def build_sns_buzz_items(extra_items, config):
     for it in extra_items:
         likes = it.get('likes', 0)
         rt = it.get('retweets', 0)
+        platform = it.get('platform', 'x')
         source = it.get('source', '')
-        author = source.replace('X (@', '@').replace(')', '') if '(@' in source else source
-        
+        author = it.get('author', '')
+        if not author:
+            author = re.sub(r'^\w+ \(@', '@', source).replace(')', '') if '(@' in source else source
+
         snippet = it.get('raw_text')
         if not snippet:
             desc = it.get('description', '')
@@ -621,18 +674,22 @@ def build_sns_buzz_items(extra_items, config):
         snippet = snippet.strip()
 
         t = it.get('title', '')
-        t_clean = re.sub(r'^【Xで[\d,]+いいね】', '', t).strip()
+        t_clean = re.sub(r'^【(?:Xで[\d,]+いいね|TikTokで[^】]+|Instagramで[^】]+)】', '', t).strip()
         if not t_clean or len(t_clean) < 10:
             t_clean = snippet[:70] + "..." if len(snippet) > 75 else snippet
 
         buzz_list.append({
             'title': t_clean,
+            'platform': platform,
             'author': author,
             'url': it.get('link', ''),
             'likes': likes,
             'retweets': rt,
+            'views': it.get('views', 0),
+            'comments': it.get('comments', 0),
+            'posted_on': it.get('pub_date', ''),
             'text': snippet,
-            'tags': ["SNS話題", "生活者UX", "バズアイテム"]
+            'tags': SNS_PLATFORM_META.get(platform, SNS_PLATFORM_META['x'])['tags']
         })
     return buzz_list
 
@@ -755,25 +812,52 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
 
     cards_html = []
     kw_regex = config.get('keyword_regex')
-    for idx, item in enumerate(sns_buzz, 1):
+    ordered_buzz = sorted(sns_buzz, key=lambda b: sns_platform_meta(b.get('platform'))['order'])
+
+    for idx, item in enumerate(ordered_buzz, 1):
+        platform = item.get('platform', 'x')
+        meta = sns_platform_meta(platform)
         likes_str = f"{item.get('likes', 0):,}"
-        rt_str = f"{item.get('retweets', 0):,}"
-        author = esc(item.get('author', 'Xユーザー'))
+        author = esc(item.get('author') or meta['author_fallback'])
         raw_url = sanitize_url(item.get('url', ''))
         raw_text = item.get('text', '')
         clean_text = re.sub(r'https?://\S+', '', raw_text).strip()
         bold_text = bold_scan_text(esc(clean_text), kw_regex)
 
+        # X は「いいね＋リポスト」、動画系は「再生数＋いいね＋コメント」が読者の見たい指標
+        if platform == 'x':
+            rt_str = f"{item.get('retweets', 0):,}"
+            stat_spans = [
+                f'<span class="sns-stat-likes" title="{likes_str} いいね">❤️ {likes_str}</span>',
+                f'<span class="sns-stat-rt" title="{rt_str} リポスト">🔁 {rt_str}</span>',
+            ]
+        else:
+            views_str = f"{item.get('views', 0):,}"
+            comments_str = f"{item.get('comments', 0):,}"
+            stat_spans = [
+                f'<span class="sns-stat-views" title="{views_str} 回再生">▶️ {views_str}</span>',
+                f'<span class="sns-stat-likes" title="{likes_str} いいね">❤️ {likes_str}</span>',
+                f'<span class="sns-stat-comments" title="{comments_str} コメント">💬 {comments_str}</span>',
+            ]
+        # カード内の統計スパンは 1 行 1 要素（既存の生成 HTML のインデントに合わせる）
+        stats_html = """
+              """.join(stat_spans)
+
+        # 動画系は「直近1週間」から選ぶので、いつの投稿かをカード単位で示す。
+        # X は昨日の投稿だけなので従来どおり日付を出さない。
+        posted_html = ''
+        if platform != 'x' and item.get('posted_on'):
+            posted_html = f'<span class="sns-card-date">{esc(item["posted_on"])}</span>'
+
         cards_html.append(f"""
-        <div class="sns-card" id="sns-buzz-{idx}">
+        <div class="sns-card" id="sns-buzz-{idx}" data-platform="{esc(platform)}">
           <div class="sns-card-meta">
             <a href="{raw_url}" target="_blank" rel="noopener noreferrer" class="sns-card-author">
-              {ICON_X_SVG}
-              <span>{author}</span>
+              {meta['icon']}
+              <span>{author}</span>{posted_html}
             </a>
             <div class="sns-card-stats">
-              <span class="sns-stat-likes" title="{likes_str} いいね">❤️ {likes_str}</span>
-              <span class="sns-stat-rt" title="{rt_str} リポスト">🔁 {rt_str}</span>
+              {stats_html}
             </div>
           </div>
           <div class="sns-card-body">
@@ -781,7 +865,7 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
           </div>
           <div class="sns-card-footer">
             <a href="{raw_url}" target="_blank" rel="noopener noreferrer" class="sns-card-link">
-              <span>Xでポストを見る</span>
+              <span>{meta['link_text']}</span>
               {ICON_EXTERNAL_SVG}
             </a>
           </div>
@@ -818,14 +902,48 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
         </div>
       </div>"""
 
+    # 収録されたプラットフォームだけをバッジ・見出しに出す（X のみの過去号は従来表示のまま）
+    platform_counts = {}
+    for item in ordered_buzz:
+        p = item.get('platform', 'x')
+        platform_counts[p] = platform_counts.get(p, 0) + 1
+    present = sorted(platform_counts.items(), key=lambda kv: sns_platform_meta(kv[0])['order'])
+
+    badges = []
+    for p, count in present:
+        meta = sns_platform_meta(p)
+        # 単一プラットフォームなら従来どおり「Xリアル反響」の形。複数なら媒体名＋件数。
+        if len(present) == 1:
+            inner = f'{meta["label"]}リアル反響'
+        else:
+            inner = f'{meta["label"]} <span class="sns-badge-count">{count}</span>'
+        badges.append(f'<span class="{meta["badge_class"]}">{meta["icon"]} {inner}</span>')
+    badges_html = "".join(badges)
+
+    labels = [sns_platform_meta(p)['label'] for p, _ in present]
+    if labels == ['X']:
+        heading = "昨日のX（Twitter）生活者バズ・リアル反響まとめ"
+    else:
+        heading = f'SNS生活者バズ・リアル反響まとめ（{" / ".join(labels)}）'
+
+    # 収集条件が媒体ごとに違う（X は昨日の投稿、動画系は直近1週間で伸びている投稿）。
+    # 「昨日の投稿」と誤読されないよう、対象期間を必ず明示する。
+    subs = []
+    if 'x' in platform_counts:
+        subs.append('X は昨日の投稿')
+    video_labels = [sns_platform_meta(p)['label'] for p, _ in present if p != 'x']
+    if video_labels:
+        subs.append(f'{" / ".join(video_labels)} は直近1週間で再生数を伸ばした投稿')
+    sub_text = esc('、'.join(subs) + '。生活者が注目した神アイテム・使い勝手や比較の生の声')
+
     return f"""
     <section class="sns-buzz-section" id="snsBuzzSection">
       <div class="sns-buzz-header">
         <div class="sns-buzz-title-wrap">
-          <span class="sns-badge-x">{ICON_X_SVG} Xリアル反響</span>
-          <h2 class="sns-buzz-title">昨日のX（Twitter）生活者バズ・リアル反響まとめ</h2>
+          {badges_html}
+          <h2 class="sns-buzz-title">{heading}</h2>
         </div>
-        <span class="sns-buzz-sub">生活者が注目した神アイテム・使い勝手や比較の生の声</span>
+        <span class="sns-buzz-sub">{sub_text}</span>
       </div>
       {summary_box_html}
       <div class="sns-buzz-grid">
@@ -839,6 +957,20 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
     articles = issue_data.get('articles', [])
     sns_buzz = issue_data.get('sns_buzz', [])
     sns_buzz_html = render_sns_buzz_section(sns_buzz, config, issue_data=issue_data)
+
+    # 目次からSNSセクションへ飛ぶリンク。収録プラットフォームに応じてラベルとアイコンを変える
+    sns_quick_link = ''
+    if sns_buzz:
+        sns_platforms = sorted(
+            {b.get('platform', 'x') for b in sns_buzz},
+            key=lambda p: sns_platform_meta(p)['order']
+        )
+        sns_quick_icons = "".join(sns_platform_meta(p)['icon'] for p in sns_platforms)
+        sns_quick_label = 'Xリアル反響' if sns_platforms == ['x'] else 'SNSリアル反響'
+        sns_quick_link = (
+            f'<a href="#snsBuzzSection" class="qi-sns-link">{sns_quick_icons}'
+            f' <span>{sns_quick_label} ({len(sns_buzz)}件) ↓</span></a>'
+        )
     total_count = len(articles)
     engine_label = esc(issue_data.get('generated_by', 'DeepSeek AI'))
     engine_type = esc(issue_data.get('engine_type', 'deepseek'))
@@ -1049,7 +1181,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
           <span>本日のヘッドライン目次（30秒スキャン）</span>
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
-          {f'<a href="#snsBuzzSection" class="qi-sns-link">{ICON_X_SVG} <span>Xリアル反響 ({len(sns_buzz)}件) ↓</span></a>' if sns_buzz else ''}
+          {sns_quick_link}
           <span class="qi-sub">タップで各記事へジャンプ</span>
         </div>
       </div>

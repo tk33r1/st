@@ -1,0 +1,51 @@
+name: Nitori TikTok Buzz Snapshot
+
+# 翌朝の Nitori Daily Brief 用に、TikTok で人気のニトリ関連動画を前夜に取得しておく。
+#
+# 朝ではなく前夜 20:00 JST に回すのは、翌朝の紙面で「昨日20時時点で人気だった動画」と
+# 事実どおりに書けるようにするため。あわせて Bright Data の 3〜4 分の待ちが朝の発行から
+# 外れるので、本体は 08:05 JST 発行のままでいられる。
+
+on:
+  schedule:
+    # 毎日 20:00 JST（11:00 UTC）
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nitori-tiktok-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch-tiktok:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Fetch TikTok buzz snapshot
+      env:
+        BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+        BRIGHTDATA_TIKTOK_DATASET_ID: ${{ vars.BRIGHTDATA_TIKTOK_DATASET_ID }}
+        BRIGHTDATA_TIMEOUT_SEC: '900'
+        BRIGHTDATA_MIN_VIEWS: '10000'
+        BRIGHTDATA_WINDOW_DAYS: '7'
+      run: |
+        python .github/scripts/brightdata_social.py --snapshot
+
+    - name: Commit snapshot
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add data/nitori-tiktok-buzz.json
+        git commit -m "Update TikTok buzz snapshot [skip ci]" || exit 0
+        git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
+        git push origin HEAD:main

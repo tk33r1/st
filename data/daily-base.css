@@ -1685,10 +1685,13 @@ a.meta-pill-item:hover {
 .sns-buzz-title-wrap {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
-.sns-badge-x {
+.sns-badge-x,
+.sns-badge-tiktok,
+.sns-badge-ig {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1699,6 +1702,26 @@ a.meta-pill-item:hover {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.03em;
+}
+
+.sns-badge-tiktok {
+  background: #010101;
+  box-shadow: inset 0 0 0 1px rgba(37, 244, 238, 0.55);
+}
+
+.sns-badge-ig {
+  background: linear-gradient(45deg, #f09433 0%, #dc2743 50%, #bc1888 100%);
+}
+
+.sns-badge-count {
+  display: inline-block;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
 }
 
 .sns-buzz-title {
@@ -1763,10 +1786,20 @@ a.meta-pill-item:hover {
   background: var(--surface);
 }
 
+/* プラットフォーム別のアクセント（platform 未設定の過去号は X 扱いで従来の見た目のまま） */
+.sns-card[data-platform="tiktok"] {
+  border-left: 3px solid #25f4ee;
+}
+
+.sns-card[data-platform="instagram"] {
+  border-left: 3px solid #dc2743;
+}
+
 .sns-card-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -1789,7 +1822,8 @@ a.meta-pill-item:hover {
 .sns-card-stats {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   font-size: 12px;
   font-weight: 700;
 }
@@ -1808,6 +1842,20 @@ a.meta-pill-item:hover {
   color: #0284c7;
 }
 
+.sns-stat-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #0f766e;
+}
+
+.sns-stat-comments {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+}
+
 .sns-card-body {
   font-size: 13.5px;
   line-height: 1.65;
@@ -1822,6 +1870,14 @@ a.meta-pill-item:hover {
   margin: 0;
   font-style: normal;
   color: var(--text);
+}
+
+.sns-card[data-platform="tiktok"] .sns-card-body blockquote {
+  border-left-color: #25f4ee;
+}
+
+.sns-card[data-platform="instagram"] .sns-card-body blockquote {
+  border-left-color: #dc2743;
 }
 
 .sns-card-wim {
@@ -1920,4 +1976,11 @@ a.meta-pill-item:hover {
   .history-card:hover,
   .featured-btn:hover,
   .meta-pill-item:hover { transform: none; }
+}
+
+.sns-card-date {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-subtle);
 }
