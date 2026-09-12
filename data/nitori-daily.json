@@ -2,159 +2,123 @@
   {
     "date": "20260912",
     "title": "2026年9月12日号：昨日のニトリニュース＆SNS話題まとめ",
-    "summary": "9月11日は、ニトリグループの新商品展開や国内外の事業進展に関する最新ニュースが注目されました。 オムニチャネル推進や物流自動化、店舗オペレーションの進化による顧客体験の向上が続いています。",
-    "count": 9,
-    "generated_by": "Rule-based Engine (Fallback)",
-    "engine_type": "fallback",
+    "summary": "ニトリのSPA力を背景に、低価格ながら収納・洗濯・ペット対応など生活上の具体的な不便を解消する商品への支持が目立った。 島忠ホームズ葛西へのN+出店は、家具・ホームセンター店舗を衣料の接点へ転換し、グループ内送客と商圏深耕を進める動きとして重要だ。",
+    "count": 6,
+    "generated_by": "OpenAI (gpt-5.6-luna)",
+    "engine_type": "openai",
     "executive_summary": [
-      "9月11日は、ニトリグループの新商品展開や国内外の事業進展に関する最新ニュースが注目されました。",
-      "オムニチャネル推進や物流自動化、店舗オペレーションの進化による顧客体験の向上が続いています。",
-      "アジアをはじめとする海外展開や新業態の拡大が着実に進展しています。"
+      "ニトリのSPA力を背景に、低価格ながら収納・洗濯・ペット対応など生活上の具体的な不便を解消する商品への支持が目立った。",
+      "島忠ホームズ葛西へのN+出店は、家具・ホームセンター店舗を衣料の接点へ転換し、グループ内送客と商圏深耕を進める動きとして重要だ。",
+      "海外候補は新規性のある9月11日発表が確認できず、過去報道の重複掲載を避けるため、今回は国内の最新動向を中心に選定した。"
     ],
     "articles": [
       {
         "region": "JP",
-        "category": "SNS話題・リアル反響",
-        "title": "「7kgの洗濯機満タンでも余裕で干せます」　ニトリの“X型物干し”で悩みが軽減！　「洗濯ストレスが減った」「布団も干せる」（1/2） | ライフ ねとらぼリサーチ - ねとらぼ",
-        "original_title": "",
-        "source": "ねとらぼ",
-        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9UZnF5ZjhjeE9ENWtHYWx3X095aTRWMUxjUklpWnRScDJkbkpsRHZxUHd1aFJHcEc2cFI3RnpFVlVDTXpSaVotOHlxVEVxWGJPZ2xwTjNpVWNxYzVZakFBdmEwQm1nRUlL0gFoQVVfeXFMT1RmcXlmOGN4T0Q1a0dhbHdfT3lpNFYxTGNSSWladFJwMmRuSmxEdnFQd3VoUkdwRzZwUjdGekVWVUNNelJpWi04eXFURXFYYk9nbHBOM2lVY3FjNVlqQUF2YTBCbWdFSUs?oc=5",
-        "source_pub_ts": 1789175400,
-        "summary": "「7kgの洗濯機満タンでも余裕で干せます」 ニトリの“X型物干し”で悩みが軽減！ 「洗濯ストレスが減った」「布団も干せる」（1/2） | ライフ ねとらぼリサーチ ねとらぼ",
-        "why_it_matters": "生活者の実際の使用感や日常の『プチストレス解消』体験がSNSで自然拡散されることで、ブランドへの信頼感向上と店舗・EC双方の来店動機形成に直結しています。",
-        "tags": [
-          "生活者UX",
-          "バズ商品",
-          "生活提案"
-        ]
-      },
-      {
-        "region": "JP",
         "category": "店舗展開・海外戦略",
-        "title": "島忠ホームズ葛西にニトリ系アパレル「N＋」 江戸川区内初出店へ - au Webポータル",
+        "title": "島忠ホームズ葛西にN+、江戸川区初出店で衣料の商圏を拡大",
         "original_title": "",
         "source": "au Webポータル",
+        "source_id": "JP-02",
+        "summary": "ニトリグループのアパレルブランドN+が、島忠ホームズ葛西に江戸川区内初となる店舗を出店する。家具・ホームセンターを目的に来店する顧客へ、日常着や機能性衣料を提案できる新たな接点となり、グループ施設の売場生産性向上と買い回り促進が期待される。",
+        "why_it_matters": "N+単独出店ではなく島忠の既存商圏・来店頻度を活用できる点が重要だ。住関連購買と衣料を同じ生活提案の文脈で束ねれば、店舗の滞在価値を高めながら、ニトリグループ内で顧客接点とデータを蓄積するSPA型の拡張が進む。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "島忠",
+          "店舗展開"
+        ],
         "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBVY3hFaVZ0M2lqcGJCRWI3MkZsM21hY3FybURkdi1sMlZWN1RHZU5ZTmhXdXd3aHc4dFdadXlydEZvUmVXcm8tSGF3OHR0eFRYaGRCd2lqUE9KQi1kYVBfWUN4ZEZrV1VVVWhOcjFKdDBHV01qYW03cA?oc=5",
-        "source_pub_ts": 1789167615,
-        "summary": "島忠ホームズ葛西にニトリ系アパレル「N＋」 江戸川区内初出店へ au Webポータル",
-        "why_it_matters": "新業態『N＋』やデコホームの展開、島忠店舗への複合出店など、ドミナント戦略と生活動線への浸透により、顧客層の裾野拡大が進んでいます。",
-        "tags": [
-          "店舗展開",
-          "新業態",
-          "島忠"
-        ]
+        "source_pub_ts": 1789167615
       },
       {
         "region": "JP",
         "category": "商品開発・ヒット商品",
-        "title": "「何度もリピしてます」　ニトリの“799円シンプルな収納バスケット”が人気！　「シンプルで使いやすい！」「見た目もおしゃれですっきり収納！」（1/2） | ライフ ねとらぼリサーチ - ねとらぼ",
+        "title": "799円の収納バスケットがリピート支持、低価格と見た目を両立",
         "original_title": "",
         "source": "ねとらぼ",
+        "source_id": "JP-03",
+        "summary": "ニトリの799円のシンプルな収納バスケットに、複数回購入する利用者や、使いやすさと外観を評価する声が集まっている。収納用品として用途を限定しすぎないデザインと手に取りやすい価格が、部屋ごとの追加購入や買い足しにつながっている。",
+        "why_it_matters": "収納カテゴリーでは、単価の低さだけでなく、生活空間に置き続けられる意匠とサイズ展開がリピートを生む。標準化した商品設計を大量調達・物流で支え、複数個購入を促す価格帯に落とし込むことは、SPAの規模効果が最も表れやすい領域だ。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "PB",
+          "リピート購入"
+        ],
         "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBmUElGb2J1R0RTQm5HVGpRZEg3eExCREx5Q18tVEhxbXhIbTV6ZmNBMHZsbENQTjZLSVFlTDRVMEdIdWZKWE9JMG53bXJCUGRTVTRqX2VZa1c0V0RqelZpY205d092aDNC0gFoQVVfeXFMUGZQSUZvYnVHRFNCbkdUalFkSDd4TEJETHlDXy1USHFteEhtNXpmY0EwdmxsQ1BONktJUWVMNFUwR0h1ZkpYT0kwbndtckJQZFNVNGpfZVlrVzRXRGp6VmljbTl3T3ZoM0I?oc=5",
-        "source_pub_ts": 1789129500,
-        "summary": "「何度もリピしてます」 ニトリの“799円シンプルな収納バスケット”が人気！ 「シンプルで使いやすい！」「見た目もおしゃれですっきり収納！」（1/2） | ライフ ねとらぼリサーチ ねとらぼ",
-        "why_it_matters": "生活空間の困りごとを解決する独自視点の商品開発と、SPA（製造物流小売業）としての高いコストパフォーマンスにより『お、ねだん以上』の価値が体現されています。",
-        "tags": [
-          "商品開発",
-          "生活提案",
-          "PB"
-        ]
+        "source_pub_ts": 1789129500
       },
       {
         "region": "JP",
         "category": "商品開発・ヒット商品",
-        "title": "40・50代の毎日服 →【ニトリのN+】で発見！ 着回しやすい『新作パンツ』 - ｄメニューニュース",
-        "original_title": "",
-        "source": "ｄメニューニュース",
-        "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOa0xWakV3bGp4NUFnOW9mQzQ2UGIyZEp0YktVdTNtN2xGYkRFckxfbGw2VXpiT2xiNHJYaFgzN2dralVkOUJWOVVUQlhQekRGSV85UVlDSWNHR1RscVNCV2x0RTNWVnJzeUN4REU1Zk1VSXNLZGxHZFlHaUhGQ1RYbks1ckdyYThQMnZaVldsMDdkQUdWckhBbkdENnRNSEpLaDBWZHBSUdIBpwFBVV95cUxOa0xWakV3bGp4NUFnOW9mQzQ2UGIyZEp0YktVdTNtN2xGYkRFckxfbGw2VXpiT2xiNHJYaFgzN2dralVkOUJWOVVUQlhQekRGSV85UVlDSWNHR1RscVNCV2x0RTNWVnJzeUN4REU1Zk1VSXNLZGxHZFlHaUhGQ1RYbks1ckdyYThQMnZaVldsMDdkQUdWckhBbkdENnRNSEpLaDBWZHBSUQ?oc=5",
-        "source_pub_ts": 1789121100,
-        "summary": "40・50代の毎日服 →【ニトリのN+】で発見！ 着回しやすい『新作パンツ』 ｄメニューニュース",
-        "why_it_matters": "生活空間の困りごとを解決する独自視点の商品開発と、SPA（製造物流小売業）としての高いコストパフォーマンスにより『お、ねだん以上』の価値が体現されています。",
-        "tags": [
-          "商品開発",
-          "生活提案",
-          "PB"
-        ]
-      },
-      {
-        "region": "JP",
-        "category": "商品開発・ヒット商品",
-        "title": "「黒猫と白猫で購入しちゃいました」ニトリの“599円茶わん”に「軽くて扱いやすいです」「即手に取ってしまった」「目つき - ニコニコニュース",
-        "original_title": "",
-        "source": "ニコニコニュース",
-        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE01UHMxb1VGRldrZDF0T28zOHZfVld5MGRCTW1BZ1hSdGFnanplYzdwRGs4dEhpWWY3elFiVnZTYWpUSnhBTnBlSW9ka0FXbHdxaDNZT2RXeW55dGlqTzRHWHNaZTZYYmhTSERXekdnTXJLZDQxR3c?oc=5",
-        "source_pub_ts": 1789102828,
-        "summary": "「黒猫と白猫で購入しちゃいました」ニトリの“599円茶わん”に「軽くて扱いやすいです」「即手に取ってしまった」「目つき ニコニコニュース",
-        "why_it_matters": "生活空間の困りごとを解決する独自視点の商品開発と、SPA（製造物流小売業）としての高いコストパフォーマンスにより『お、ねだん以上』の価値が体現されています。",
-        "tags": [
-          "商品開発",
-          "生活提案",
-          "PB"
-        ]
-      },
-      {
-        "region": "JP",
-        "category": "商品開発・ヒット商品",
-        "title": "「3人分の1日の洗濯物は干せます」　ニトリ“2490円室内物干し”の人気の理由「この値段でこのクオリティはすごい」「夜しか洗濯できない私にピッタリ」（1/2） | ライフ ねとらぼリサーチ - ねとらぼ",
+        "title": "2490円の室内物干し、夜洗濯と家族分の大量干しに対応",
         "original_title": "",
         "source": "ねとらぼ",
+        "source_id": "JP-06",
+        "summary": "ニトリの2490円の室内物干しが、3人分の一日分を干せる容量や、夜しか洗濯できない生活への適合性で支持されている。限られた住空間でも使いやすい構造と手頃な価格により、天候や勤務時間に左右されない洗濯環境を提案する商品として注目された。",
+        "why_it_matters": "共働き世帯や都市住宅では、洗濯の課題は容量・設置性・価格の三つ巴だ。具体的な生活シーンを満たす機能を低価格で提供できれば、単なる物干しではなく家事負担軽減のソリューションになる。使用人数を明確にした訴求も購買判断を早める。",
+        "tags": [
+          "ニトリ",
+          "室内物干し",
+          "家事負担軽減",
+          "商品開発"
+        ],
         "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9LU21SeXJQTlRJSlVhV1RNV25qemJSbzduNDBMcV9tTkVPSWtoR0J1OXJxMmM4UEhFSWlVVkZrSmtCdzVMQWNhcWxWX0E5OWVZMnplUGFxZWtDVHVUMVJzSXR2Z9IBaEFVX3lxTE5ubGZiU0VpZFpqaTh0V0lQc25pM1VybUh6R2lWWllmTGNrVnhTM2sxWHdZVlBTNTVrUjd3allRVExLaHo3NVRwNmY5dFJUT09fNlJ2WlRTZUo3ei1DeGtFMG9jTXJLYVhq?oc=5",
-        "source_pub_ts": 1789102398,
-        "summary": "「3人分の1日の洗濯物は干せます」 ニトリ“2490円室内物干し”の人気の理由「この値段でこのクオリティはすごい」「夜しか洗濯できない私にピッタリ」（1/2） | ライフ ねとらぼリサーチ ねとらぼ",
-        "why_it_matters": "生活空間の困りごとを解決する独自視点の商品開発と、SPA（製造物流小売業）としての高いコストパフォーマンスにより『お、ねだん以上』の価値が体現されています。",
+        "source_pub_ts": 1789102398
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "家具・大型家電約600品を対象に秋の感謝祭、買い替え需要を喚起",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-08",
+        "summary": "ニトリは9月18日から、家具や大型家電など約600アイテムを対象とする秋の感謝祭を11日間開催する。期間限定価格に加え、大型家具・大型家電の引取サービスも訴求し、買い替え時の処分負担を抑えながら、まとまった住環境需要を取り込む施策となる。",
+        "why_it_matters": "値引きだけでなく引取を組み合わせることで、購入を阻む搬出・廃棄の摩擦を下げている。大型商品の販売では、商品価格、配送、設置、回収を一体設計できることが競争力になる。PBと物流網を持つニトリなら、販促を買い替えサイクルの創出へ転換できる。",
         "tags": [
-          "商品開発",
-          "生活提案",
+          "ニトリ",
+          "秋の感謝祭",
+          "価格戦略",
+          "大型商品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1iYnlGcnJsVndrYUR2YzBGa25YcDlqNmhsMGM2SVUxdGw4VkpYNGRDb085MHJVSEZkWVAzdnJhM0xvcnJibzRXbGl4M0k4YVFQNmZVRy1HMTg?oc=5",
+        "source_pub_ts": 1789094014
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "傷・汚れに強いストレッチソファカバー、買い替えずに長く使う提案",
+        "original_title": "",
+        "source": "流通スーパーニュース",
+        "source_id": "JP-09",
+        "summary": "ニトリが、引っかき傷や汚れに強いストレッチソファカバーを発売した。既存ソファに装着しやすい伸縮性と、日常使用で生じる傷・汚れへの耐性を組み合わせ、家具を買い替えずに見た目と使い勝手を更新できる商品として、ペット飼育世帯や子育て世帯にも提案しやすい。",
+        "why_it_matters": "大型家具の買い替えは価格・搬出・廃棄が障壁になるため、カバーによる延命は新しい需要を開拓する。耐久性を機能価値としてPB化すれば、家具本体とのクロスセルや買い替え周期の最適化にもつながる。生活課題を素材・加工で解決する商品開発の好例だ。",
+        "tags": [
+          "ニトリ",
+          "ソファカバー",
+          "ペット対応",
           "PB"
-        ]
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1PSGF1MENnUlFyeVlPZkUxb2hwMkxxeklfOGZfRXVfZ3hpcUR0WHVraHNKeFpQRG9xd0RuNmI3bWhtNXJ1TTN2X1pFd0pXYWtPUVhwOHUxMUl3dHNGMnc?oc=5",
+        "source_pub_ts": 1789088897
       },
       {
-        "region": "GLOBAL",
-        "category": "グローバル先端トレンド",
-        "title": "【海外動向】Nitori in BGC & Makati: Japanese Furniture and Home Decor Store - Philippine Primer",
-        "original_title": "Nitori in BGC & Makati: Japanese Furniture and Home Decor Store - Philippine Primer",
-        "source": "Philippine Primer",
-        "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBabTA2ZHMwZjB1bkVZZkJCU2l4VG5qRFBNQ183dFpZNWVjVEFBOUFvcVMtS184MXpxVVlTTHhTOTQxcUhNXzZ2M1FTTQ?oc=5",
-        "source_pub_ts": 1786604400,
-        "summary": "Nitori in BGC & Makati: Japanese Furniture and Home Decor Store Philippine Primer",
-        "why_it_matters": "海外進出（アジア・東南アジア）の拡大に伴い、現地での知名度獲得とグローバルサプライチェーンの最適化が今後の成長エンジンとなります。",
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "Xで話題のNウォーム毛布、投票型投稿が示す“選べる快適性”",
+        "original_title": "",
+        "source": "x.com",
+        "source_id": "JP-25",
+        "summary": "ニトリ公式の投稿では、冬向けのくりえり毛布と袖付きスマホ毛布を提示し、リポストといいねで欲しい商品を投票する形式が採用された。単なる防寒具ではなく、寝具と在宅時間の過ごし方を選べる商品として、生活者の参加意識を引き出す設計が特徴だ。",
+        "why_it_matters": "反響を生む理由は、機能比較が直感的で、自分の冬の過ごし方を投票に重ねられる点にある。SNS上の投票は需要の可視化と商品理解を同時に進める。防寒性能だけでなく、スマホ利用やリラックス姿勢まで含めたUX提案が、季節商品の拡散力を高めている。",
         "tags": [
-          "海外展開",
-          "グローバル",
-          "アジア戦略"
-        ]
-      },
-      {
-        "region": "GLOBAL",
-        "category": "グローバル先端トレンド",
-        "title": "【海外動向】Alpro Group and NITORI Malaysia Collaborate to Promote Better Living Through Home & Preventive Healthcare - Malay Mail",
-        "original_title": "Alpro Group and NITORI Malaysia Collaborate to Promote Better Living Through Home & Preventive Healthcare - Malay Mail",
-        "source": "Malay Mail",
-        "url": "https://news.google.com/rss/articles/CBMiggJBVV95cUxQZW1jY0VjRTMtZ1FXc0RKZHh4WmFCcWFJTDZLUElhdzZZbE1USjFkZEZFVm5Ram5iUlR2R1c1cGZmNU1CNVFfSmwzdVNFMm1tckxWSlpzeXR0R2pBQ3lWcDZxRlVMVGlKcFZqSFFTcGY2ZEx1WDBBYkpUdGoxdmVYNlZNN040b3lkbDhwbGhMU3V0ZGpzZUpvTlJVMkV2Y1phUjFaN2NFZTc1bWYxNnZQVHo5a0I4QS1SWXp1V0NMS1RpREw1YlJFNnMwOWxrSXJoNmcwZmpJbTlaTkJMNy12SS04bnFLTzBUVGRmQm15Z21qeTBXenAyZ2pUaGV5R3RYX0HSAYcCQVVfeXFMTmVUSTBUWmZGenVfdHA4LWRSMlVyNjNoUU00QmFpcVRfWUk0VzZ1QWtVNGthWnpoMzcwbnZJLU9ZTXotRnFJd0NXWlF1N21CX3ZKU1l6SElNRWoxWm40UUo4Z3AydGRLdEU4N29mbldxU1hnaGV1dm03VG9IR293cTNQTWt6VlBnc3R4b0huRTRtUmlydnZCZHdnNXU3dWRDc1lDOE5rSkJvV3V3ejQ0ZTRIM0prZG91NF9nNWpNNFVtS3YtSFZkOTBLdGtjNVM4UEJnSm5TdFh4MFZnMWNsUHhXUEZmLWctV2tXNzBnbEdEZHNMV0hFX1EzWmMtdnM2UFZlZC1tZTg?oc=5",
-        "source_pub_ts": 1785135600,
-        "summary": "Alpro Group and NITORI Malaysia Collaborate to Promote Better Living Through Home & Preventive Healthcare Malay Mail",
-        "why_it_matters": "海外進出（アジア・東南アジア）の拡大に伴い、現地での知名度獲得とグローバルサプライチェーンの最適化が今後の成長エンジンとなります。",
-        "tags": [
-          "海外展開",
-          "グローバル",
-          "アジア戦略"
-        ]
-      },
-      {
-        "region": "GLOBAL",
-        "category": "グローバル先端トレンド",
-        "title": "【海外動向】GMA Kapuso Foundation, Nitori PH donate beddings, clothes, more to quake victims in Sarangani - GMA Network",
-        "original_title": "GMA Kapuso Foundation, Nitori PH donate beddings, clothes, more to quake victims in Sarangani - GMA Network",
-        "source": "GMA Network",
-        "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxPU1gtRVFpcHF6a09mVEhUdmdqQmdDeldDV3g3Y0FzMHdEOTEzTlY3Z3hEdkJzWlZhaDBwd3BnTFFSaWI5LVZQSWtSUC00NkJXNmo1VWE1LXdNbk5tSzZIcTRMMGxLYmlzVXhjUERsNEFGTllSNlhkd18zQlYwSTNjeEk3S3BWaTZacUR5M3FVUmxETl9GNDJmTUZzUmhEOEtaUTFRTVBuZ3k4bHhBN1NqWTIzbkNOOWFlVGhVTjBvMXUycmEwT2xYZk1FNFlvVGNkYnB1M181Yk9IRHIwSEJoR2tMcHpTVldESXfSAe8BQVVfeXFMUDFDOVpxOGl3a1FrLTE5b1k5aEY4aDIybFIzbWpmNExGOFREdk9VVW9QWmJyNkFBVTczN1V2MjhjbHo1X0VPam5jZlE0U184SWxxckNtbERQZ1c3OE1wcVhzLUx0MHV4VFEwNTZPckF6WTgwWjM3QjFRUmRXTm5aSzFLMVNUSlVQaVVZZFdzRXlISzlBamd2Q2VxSmRIZ0hFVE8zcXZ5cHRhbWtIUGNnMlEyb3ZmUUJrZ0FteHR1ZnFIVk8xTGdEbGVSelduWnU1SGVfc29nMm5wZkNheUlHUEhXTVNWaGgtRFp0WlhSaTA?oc=5",
-        "source_pub_ts": 1784703600,
-        "summary": "GMA Kapuso Foundation, Nitori PH donate beddings, clothes, more to quake victims in Sarangani GMA Network",
-        "why_it_matters": "海外進出（アジア・東南アジア）の拡大に伴い、現地での知名度獲得とグローバルサプライチェーンの最適化が今後の成長エンジンとなります。",
-        "tags": [
-          "海外展開",
-          "グローバル",
-          "アジア戦略"
-        ]
+          "ニトリ",
+          "Nウォーム",
+          "SNS反響",
+          "冬物"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE9lMG1GZkJTSEZmX3hoemlpMVAtalpuS0o2NUxlOFZNUDdrbmlRdnFCS25sRFgwbnpxUHdXdVJRWklSUC0wZ3QwbUJQYTBoejZOdUc0S09jNGdySDdZd0s1LWszYlhDdw?oc=5",
+        "source_pub_ts": 1763712000
       }
     ],
     "sns_buzz": [
