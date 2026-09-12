@@ -290,6 +290,21 @@
     .nav-item-badge:hover .pulse-dot {
       background: var(--on-dark);
     }
+    .nav-item-badge-nitori {
+      background: rgba(0, 158, 150, 0.08);
+      color: #00827c;
+      border: 1px solid rgba(0, 158, 150, 0.25);
+    }
+    .nav-item-badge-nitori:hover {
+      background: #009e96;
+      color: #ffffff;
+    }
+    .nav-item-badge-nitori .pulse-dot {
+      background: #009e96;
+    }
+    .nav-item-badge-nitori:hover .pulse-dot {
+      background: #ffffff;
+    }
 
     /* モバイルメニュー */
     .menu-toggle {
@@ -798,7 +813,7 @@
 
     .works-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 20px;
     }
     @media (max-width: 920px) {
@@ -886,6 +901,45 @@
       background: var(--text);
       color: var(--on-dark);
       border-color: var(--text);
+    }
+    .work-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+    .work-links-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-work-ext {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--primary-subtle);
+      transition: all 0.15s ease;
+    }
+    .btn-work-ext:hover {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .btn-work-ext.btn-ext-nitori {
+      color: #00827c;
+      background: rgba(0, 158, 150, 0.08);
+    }
+    .btn-work-ext.btn-ext-nitori:hover {
+      background: #009e96;
+      color: #ffffff;
     }
 
     /* Contact セクション */
@@ -1135,9 +1189,13 @@
         <a class="nav-item" href="#skills">Skills</a>
         <a class="nav-item" href="#works">Works</a>
         <a class="nav-item" href="#contact">Contact</a>
-        <a class="nav-item nav-item-badge" href="./retailtechdaily/">
+        <a class="nav-item nav-item-badge" href="./retailtechdaily/" title="流通DX・先端小売日刊速報">
           <span class="pulse-dot"></span>
-          <span>Retail Tech Daily（日刊速報）</span>
+          <span>Retail Tech Daily</span>
+        </a>
+        <a class="nav-item nav-item-badge nav-item-badge-nitori" href="./nitoridaily/" title="ニトリ動向＆SNS話題速報">
+          <span class="pulse-dot"></span>
+          <span>Nitori Daily</span>
         </a>
       </nav>
 
@@ -1152,7 +1210,8 @@
       <a class="nav-item" href="#skills">Skills</a>
       <a class="nav-item" href="#works">Works</a>
       <a class="nav-item" href="#contact">Contact</a>
-      <a class="nav-item nav-item-badge" href="./retailtechdaily/">Retail Tech Daily（日刊速報）</a>
+      <a class="nav-item nav-item-badge" href="./retailtechdaily/">Retail Tech Daily（流通DX速報）</a>
+      <a class="nav-item nav-item-badge nav-item-badge-nitori" href="./nitoridaily/">Nitori Daily（ニトリ速報）</a>
     </div>
   </header>
 
@@ -1447,6 +1506,34 @@
             </button>
           </div>
         </div>
+
+        <!-- Case 4 -->
+        <div class="work-item" data-category="ai" data-full-desc="毎朝の国内外ニュース収集から、マルチAI（DeepSeek / GPT）による要約・ビジネス示唆（Why it matters）の抽出、Headless Chrome CDPによるLossless WebP OGP画像の動的生成、GitHub Actionsによる自動コミット配信まで、完全保守レス・ゼロランニングコストで運用する自律型日刊メディアパイプラインの設計・開発。" data-highlights='["DeepSeek-v4.1 と GPT-5.6 によるフォールバック付きマルチAI要約オーケストレーション", "Headless Chrome CDP による 2400×1260 Lossless WebP OGP画像の完全自動生成", "完全ビルドレス（Vanilla HTML/CSS/JS）による超軽量・高速な表示とSchema.org構造化データ（NewsArticle/FAQPage）の自動生成", "社内共有コピーボタン（Slack/Teams用）や読了目安時間、フィルターチップなど実務視点のエディトリアルUX"]'>
+          <div class="work-card-inner">
+            <span class="work-case-badge">CASE 04 / AUTONOMOUS AI &amp; MEDIA</span>
+            <h3 class="work-title">マルチAI日刊メディア自律運用基盤（Retail Tech Daily / Nitori Daily）</h3>
+            <div class="tag-cloud">
+              <span class="tag-chip">Autonomous Pipeline</span>
+              <span class="tag-chip">GitHub Actions</span>
+              <span class="tag-chip">DeepSeek / GPT</span>
+              <span class="tag-chip">Lossless WebP OGP</span>
+              <span class="tag-chip">Schema.org SEO</span>
+            </div>
+            <p class="work-summary">
+              最新ニュースのクローリングからAI要約・ビジネス示唆抽出、OGP動的生成、GitHub Actions配信まで。完全保守レス・ゼロコストで毎朝自律稼働する日刊メディア運用基盤。
+            </p>
+            <div class="work-card-footer">
+              <button class="btn-detail" type="button">
+                <span>Case Detail</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+              <div class="work-links-group">
+                <a href="./retailtechdaily/" class="btn-work-ext" title="Retail Tech Daily を開く">Retail Tech &rarr;</a>
+                <a href="./nitoridaily/" class="btn-work-ext btn-ext-nitori" title="Nitori Daily を開く">Nitori &rarr;</a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1512,6 +1599,7 @@
         <a href="https://tk.st/">Home (Terminal)</a>
         <a href="#hero">Portfolio</a>
         <a href="./retailtechdaily/">Retail Tech Daily</a>
+        <a href="./nitoridaily/">Nitori Daily</a>
         <a href="https://tk.st/contact/">Contact</a>
       </div>
       <p>&copy; <span id="copyYear"></span> Shinya Takeda (tk.st). All rights reserved.</p>

@@ -1,0 +1,14 @@
+@charset "UTF-8";
+@import "./daily-base.css";
+
+/**
+ * Retail Tech Daily Brief — デザイン CSS
+ * 共通UI基盤: data/daily-base.css
+ */
+:root {
+  --primary: #0f4c81;
+  --primary-hover: #0a355c;
+  --primary-subtle: rgba(15, 76, 129, 0.07);
+  --primary-border: rgba(15, 76, 129, 0.2);
+  --primary-shadow: rgba(15, 76, 129, 0.2);
+}

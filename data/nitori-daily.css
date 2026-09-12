@@ -1,0 +1,14 @@
+@charset "UTF-8";
+@import "./daily-base.css";
+
+/**
+ * Nitori Daily Brief — デザイン CSS（ニトリカラー R0 G158 B150）
+ * 共通UI基盤: data/daily-base.css
+ */
+:root {
+  --primary: #009e96;
+  --primary-hover: #00827c;
+  --primary-subtle: rgba(0, 158, 150, 0.08);
+  --primary-border: rgba(0, 158, 150, 0.25);
+  --primary-shadow: rgba(0, 158, 150, 0.22);
+}
