@@ -356,26 +356,55 @@ def call_llm_api(endpoint, api_key, model_name, prompt_content, user_agent):
             {"role": "system", "content": "You are a professional editorial curator and analyst. Return only valid JSON adhering strictly to the requested schema."},
             {"role": "user", "content": prompt_content}
         ],
-        "temperature": 0.2,
         "response_format": {"type": "json_object"}
     }
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(
-        endpoint,
-        data=data,
-        headers={
-            'Content-Type': 'application/json',
-            'Authorization': f"Bearer {api_key}",
-            'User-Agent': user_agent
-        }
-    )
-    with urllib.request.urlopen(req, timeout=45) as resp:
-        body = json.loads(resp.read().decode('utf-8'))
-        raw_text = body['choices'][0]['message']['content'].strip()
-        if raw_text.startswith('```'):
-            raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
-            raw_text = re.sub(r'\s*```$', '', raw_text)
-        return json.loads(raw_text)
+    # OpenAI の最新推論モデル等では reasoning_effort: 'none' が必要な場合がある
+    if 'gpt' in model_name.lower() or 'luna' in model_name.lower():
+        payload["reasoning_effort"] = "none"
+        payload["temperature"] = 0.2
+    else:
+        payload["temperature"] = 0.2
+
+    def do_request(p_data):
+        req = urllib.request.Request(
+            endpoint,
+            data=json.dumps(p_data).encode('utf-8'),
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f"Bearer {api_key}",
+                'User-Agent': user_agent
+            }
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            body = json.loads(resp.read().decode('utf-8'))
+            raw_text = body['choices'][0]['message']['content'].strip()
+            if raw_text.startswith('```'):
+                raw_text = re.sub(r'^```(?:json)?\s*', '', raw_text)
+                raw_text = re.sub(r'\s*```$', '', raw_text)
+            return json.loads(raw_text)
+
+    try:
+        return do_request(payload)
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode('utf-8', errors='ignore')
+        print(f"[WARN] API HTTP {e.code} ({model_name}): {err_body}", file=sys.stderr)
+
+        # temperature / reasoning_effort / response_format 不整合時の自動再試行
+        if e.code == 400 and any(k in err_body.lower() for k in ['temperature', 'reasoning_effort', 'unsupported', 'response_format']):
+            print(f" -> パラメータを安全最小構成にして再試行...", file=sys.stderr)
+            fallback_payload = {
+                "model": model_name,
+                "messages": payload["messages"]
+            }
+            if "response_format" not in err_body.lower():
+                fallback_payload["response_format"] = {"type": "json_object"}
+            try:
+                return do_request(fallback_payload)
+            except urllib.error.HTTPError as e2:
+                err_body2 = e2.read().decode('utf-8', errors='ignore')
+                print(f"[ERROR] 再試行も失敗 ({model_name}): {err_body2}", file=sys.stderr)
+                raise RuntimeError(f"HTTP {e2.code}: {err_body2}") from e2
+        raise RuntimeError(f"HTTP {e.code}: {err_body}") from e
 
 
 def title_match_key(title):
