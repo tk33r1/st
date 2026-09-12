@@ -2,14 +2,13 @@ name: Nitori TikTok Buzz Snapshot
 
 # 翌朝の Nitori Daily Brief 用に、TikTok で人気のニトリ関連動画を前夜に取得しておく。
 #
-# 朝ではなく前夜 20:00 JST に回すのは、翌朝の紙面で「昨日20時時点で人気だった動画」と
-# 事実どおりに書けるようにするため。あわせて Bright Data の 3〜4 分の待ちが朝の発行から
-# 外れるので、本体は 08:05 JST 発行のままでいられる。
+# 前日 14:00 JST に回すことで、Bright Data の 3〜4 分の待ちを翌朝の発行処理から外す。
+# 本体は翌朝 02:05 JST に、このスナップショットを読み込んで発行する。
 
 on:
   schedule:
-    # 毎日 20:00 JST（11:00 UTC）
-    - cron: '0 11 * * *'
+    # 毎日 14:00 JST（05:00 UTC）
+    - cron: '0 5 * * *'
   workflow_dispatch:
 
 permissions:

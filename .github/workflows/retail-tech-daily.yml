@@ -2,8 +2,8 @@ name: Daily Retail Tech Brief
 
 on:
   schedule:
-    # 毎朝 07:55 JST（前日 22:55 UTC）に実行（nitori-daily との競合防止）
-    - cron: '55 22 * * *'
+    # 毎朝 01:55 JST（前日 16:55 UTC）に実行（nitori-daily との競合防止）
+    - cron: '55 16 * * *'
   workflow_dispatch:
     inputs:
       date:
