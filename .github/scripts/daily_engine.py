@@ -47,6 +47,15 @@ def esc(s):
     return html.escape(str(s or ''), quote=True)
 
 
+_JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
+
+
+def escape_jsonld_for_script(json_str):
+    """外部由来のテキスト（記事タイトル等）が </script> を含んでいても
+    <script type="application/ld+json"> を閉じてしまわないようにする。"""
+    return json_str.translate(_JSONLD_SCRIPT_ESCAPE_TABLE)
+
+
 def sanitize_url(url):
     if not url:
         return '#'
@@ -101,6 +110,13 @@ def split_takeaway(raw_wim):
         return takeaway, detail
     else:
         return wim, ""
+
+
+def is_fresh(item, cutoff_ts):
+    """記事の pub_ts が cutoff_ts 以降か（=「昨日のニュース」の鮮度条件を満たすか）。
+    足切り（gather_all_candidate_news）と並び替え優先度（各メディアの relevance_sort_key_fn）の
+    両方で同じ鮮度定義を使うための共有関数。"""
+    return item.get('pub_ts', 0) >= cutoff_ts
 
 
 def parse_pub_date_timestamp(pub_str):
@@ -255,10 +271,25 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
         gl_raw, config['global_noise_blacklist'], pub_history, config.get('is_relevant_fn'), is_global=True
     )
 
+    # Google News の "when:Nd" はヒット件数が少ない狭いクエリ（特に海外の個社名検索）だと
+    # 無視され、条件に合う新着が足りない分を古い記事で埋めて返してくることがある。
+    # クエリ文字列側の指定は当てにならないため、実際の pub_ts で確実に足切りする。
+    cutoff_days = 3 if target_date.weekday() == 0 else 1
+    cutoff_ts = (target_date - timedelta(days=cutoff_days)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+
+    def apply_recency_cutoff(items, label):
+        fresh = [it for it in items if is_fresh(it, cutoff_ts)]
+        stale = len(items) - len(fresh)
+        if stale:
+            cutoff_str = datetime.fromtimestamp(cutoff_ts, JST).strftime('%Y-%m-%d %H:%M JST')
+            print(f" -> [{label}] Google Newsのwhen:フィルタが効かず混入した古い記事を除外: {stale} 件 ({cutoff_str} 以降のみ採用)")
+        return fresh
+
+    jp_items = apply_recency_cutoff(jp_items, '国内')
+    global_items = apply_recency_cutoff(global_items, '海外')
+
     sort_fn = config.get('relevance_sort_key_fn')
     if sort_fn:
-        cutoff_days = 3 if target_date.weekday() == 0 else 1
-        cutoff_ts = (target_date - timedelta(days=cutoff_days)).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
         jp_items.sort(key=lambda x: sort_fn(x, False, cutoff_ts), reverse=True)
         global_items.sort(key=lambda x: sort_fn(x, True, cutoff_ts), reverse=True)
     else:
@@ -280,6 +311,7 @@ def build_candidate_index(candidates):
         listed = []
         for i, it in enumerate(items, 1):
             cid = f"{prefix}-{i:02d}"
+            it['_cand_id'] = cid
             index[cid] = it
             listed.append({
                 'id': cid,
@@ -307,6 +339,26 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
 {formatted_titles}
 """
 
+    extra_items = candidates.get('EXTRA', [])
+    sns_section = ""
+    sns_output_fields = ""
+    if extra_items:
+        sns_sample = [{
+            'title': it.get('title', ''),
+            'text': it.get('raw_text') or it.get('description', ''),
+            'likes': it.get('likes', 0),
+            'retweets': it.get('retweets', 0),
+        } for it in extra_items]
+        sns_section = f"""
+【X（旧Twitter）生活者バズ投稿一覧（本日の「Xリアル反響」セクション用）】:
+以下は生活者が実際に投稿し話題になっている生の声です。記事候補とは別に、この一覧全体を俯瞰して
+共通する傾向・トレンドを分析し、後述の "sns_summary" / "sns_why_it_matters" を作成してください。
+{json.dumps(sns_sample, ensure_ascii=False, indent=2)}
+"""
+        sns_output_fields = """,
+  "sns_summary": "上記のX投稿一覧全体の傾向を要約した客観的な説明文（120〜200文字）",
+  "sns_why_it_matters": "上記のX投稿一覧全体を踏まえた、プロの視点による生活者UX・ビジネスへの示唆（120〜200文字）\""""
+
     prompt = f"""あなたは日本最高峰の{config['editor_title']}です。
 本日の発行日: {target_date_str}（まとめ対象: {yesterday_str}の最新動向）
 
@@ -314,6 +366,7 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
 {recent_section}
 【厳格な選別ルール】
 {config['prompt_selection_rules']}
+- "region" は必ず "JP" または "GLOBAL" のいずれか（この2文字列のみ、"GL" や "Global" 等の省略・別表記は禁止）を出力してください。国内ニュース候補（JP-xx）から選んだ記事は "JP"、海外ニュース候補（GL-xx）から選んだ記事は必ず "GLOBAL" としてください。
 - 海外ニュースはタイトルを魅力的かつ正確な日本語に翻訳し、元の英語タイトル（original_title）も保持してください。
 - すべての記事について、事実の要約（summary: 140〜240文字）に加え、プロの視点によるビジネス示唆『Why it matters（ここがポイント）』（120〜200文字）を必ず記述してください。
 - 昨日の動向全体を象徴する最も重要なポイント3点を「エグゼクティブ・サマリー（executive_summary）」としてまとめてください。
@@ -327,7 +380,7 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
 
 【海外ニュース候補】:
 {json.dumps(global_sample, ensure_ascii=False, indent=2)}
-
+{sns_section}
 【出力形式】
 Markdownのコードブロック（```json）などは付けず、純粋なJSONのみを出力してください:
 {{
@@ -343,8 +396,19 @@ Markdownのコードブロック（```json）などは付けず、純粋なJSON�
       "summary": "要約（140〜240文字）",
       "why_it_matters": "示唆・考察（120〜200文字）",
       "tags": {json.dumps(config['sample_tags'], ensure_ascii=False)}
+    }},
+    {{
+      "region": "GLOBAL",
+      "category": "{config['sample_category']}",
+      "title": "海外ニュースの日本語見出し",
+      "original_title": "Original English Headline",
+      "source": "媒体名",
+      "source_id": "選定元候補のid（例: GL-02）",
+      "summary": "要約（140〜240文字）",
+      "why_it_matters": "示唆・考察（120〜200文字）",
+      "tags": {json.dumps(config['sample_tags'], ensure_ascii=False)}
     }}
-  ]
+  ]{sns_output_fields}
 }}"""
     return prompt, candidate_index
 
@@ -414,6 +478,19 @@ def title_match_key(title):
     return t[:18]
 
 
+def normalize_region(value, fallback='JP'):
+    """AIが自由記述した region 表記のゆれ（GL / Global / 海外 等）を吸収する。
+    レンダリング側は 'JP' / 'GLOBAL' の完全一致で国内・海外バッジを出し分けているため、
+    ここで正規化しないと表記ゆれの分だけ海外記事が国内扱いになってしまう。"""
+    s = str(value or '')
+    v = re.sub(r'[\s_-]', '', s).upper()
+    if v in ('GLOBAL', 'GL', 'OVERSEAS', 'INTL', 'INTERNATIONAL', 'WORLD') or '海外' in s:
+        return 'GLOBAL'
+    if v in ('JP', 'JAPAN', 'DOMESTIC') or '国内' in s:
+        return 'JP'
+    return fallback
+
+
 def resolve_source_urls(result, candidate_index):
     by_title = {}
     for it in candidate_index.values():
@@ -445,9 +522,20 @@ def resolve_source_urls(result, candidate_index):
             if not art.get('source'):
                 art['source'] = src['source']
             art['source_pub_ts'] = src.get('pub_ts', 0)
+            # region はAIの自由記述に頼らず、実際に一致した候補が JP/GLOBAL どちらの
+            # リストから来たかで機械的に確定する（"GL" 等の表記ゆれで海外記事が
+            # 国内バッジになる不具合の再発防止）。candidate_index の値は必ず
+            # build_candidate_index で _cand_id を付与済みのため常に 'JP'/'GL' で始まる。
+            art['region'] = 'GLOBAL' if src['_cand_id'].startswith('GL') else 'JP'
             resolved += 1
         else:
             art['url'] = ''
+            # 候補を特定できなくても、source_id が "JP-xx"/"GL-xx" 形式であれば
+            # そのプレフィックスの方がAIの自由記述(region)より信頼できるので優先する。
+            if m:
+                art['region'] = 'GLOBAL' if m.group(1) == 'GL' else 'JP'
+            else:
+                art['region'] = normalize_region(art.get('region'))
             unresolved.append(art.get('title', '(無題)'))
 
     print(f" -> 出典URLの再接続: {resolved} 件成功 / {len(unresolved)} 件不明")
@@ -657,7 +745,7 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
     }
 
 
-def render_sns_buzz_section(sns_buzz, config, date_key, issue_data=None):
+def render_sns_buzz_section(sns_buzz, config, issue_data=None):
     if not sns_buzz:
         return ""
 
@@ -745,14 +833,14 @@ def render_sns_buzz_section(sns_buzz, config, date_key, issue_data=None):
 def render_article_html(config, issue_data, date_key, formatted_date, prev_issue=None, next_issue=None):
     articles = issue_data.get('articles', [])
     sns_buzz = issue_data.get('sns_buzz', [])
-    sns_buzz_html = render_sns_buzz_section(sns_buzz, config, date_key, issue_data=issue_data)
+    sns_buzz_html = render_sns_buzz_section(sns_buzz, config, issue_data=issue_data)
     total_count = len(articles)
     engine_label = esc(issue_data.get('generated_by', 'DeepSeek AI'))
     engine_type = esc(issue_data.get('engine_type', 'deepseek'))
     engine_class = f"engine-{engine_type}"
 
     jsonld_obj = build_dynamic_jsonld(config, issue_data, date_key, formatted_date)
-    dynamic_jsonld_str = json.dumps(jsonld_obj, ensure_ascii=False, indent=2)
+    dynamic_jsonld_str = escape_jsonld_for_script(json.dumps(jsonld_obj, ensure_ascii=False, indent=2))
     dynamic_page_desc = esc(jsonld_obj['@graph'][0]['description'])
 
     total_chars = sum(len(a.get('title', '')) + len(a.get('summary', '')) + len(a.get('why_it_matters', '')) for a in articles)
@@ -1118,6 +1206,8 @@ def render_top_index_html(config, articles_history):
 
     latest_date_str = latest['date'] if latest else '20260912'
     latest_iso_date = f"{latest_date_str[:4]}-{latest_date_str[4:6]}-{latest_date_str[6:8]}T08:00:00+09:00"
+    earliest_date_str = articles_history[-1]['date'] if articles_history else latest_date_str
+    earliest_iso_date = f"{earliest_date_str[:4]}-{earliest_date_str[4:6]}-{earliest_date_str[6:8]}T08:00:00+09:00"
     base_url = f"https://tk.st/job/{config['media_id']}/"
 
     issue_items = []
@@ -1172,7 +1262,7 @@ def render_top_index_html(config, articles_history):
             "url": base_url,
             "primaryImageOfPage": config['portal_ogp_image'],
             "inLanguage": "ja",
-            "datePublished": "2026-09-12T08:00:00+09:00",
+            "datePublished": earliest_iso_date,
             "dateModified": latest_iso_date,
             "author": { "@id": PERSON_ID },
             "publisher": { "@id": PERSON_ID },
@@ -1201,7 +1291,7 @@ def render_top_index_html(config, articles_history):
             "sameAs": ["https://tk.st/", "https://github.com/tk33r1"]
         }
     ]
-    portal_jsonld_str = json.dumps({"@context": "https://schema.org", "@graph": portal_graph}, ensure_ascii=False, indent=2)
+    portal_jsonld_str = escape_jsonld_for_script(json.dumps({"@context": "https://schema.org", "@graph": portal_graph}, ensure_ascii=False, indent=2))
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
@@ -1503,7 +1593,9 @@ def run_daily_pipeline(config):
         "engine_type": ai_result.get('engine_type', 'deepseek'),
         "executive_summary": exec_summary,
         "articles": ai_result.get('articles', []),
-        "sns_buzz": ai_result.get('sns_buzz', [])
+        "sns_buzz": ai_result.get('sns_buzz', []),
+        "sns_summary": ai_result.get('sns_summary', ''),
+        "sns_why_it_matters": ai_result.get('sns_why_it_matters', '')
     }
     articles_history.append(new_issue)
     articles_history.sort(key=lambda x: x['date'], reverse=True)
@@ -1512,7 +1604,17 @@ def run_daily_pipeline(config):
     with open(data_json_path, 'w', encoding='utf-8') as f:
         json.dump(articles_history, f, ensure_ascii=False, indent=2)
 
-    for i, issue in enumerate(articles_history):
+    # 新規追加号と、その前後で prev/next リンクが変わる隣接号だけ再生成すれば十分
+    # （それ以外の過去号の内容・リンク先は今回の追加で変化しない）
+    new_index = next(i for i, iss in enumerate(articles_history) if iss['date'] == target_date_key)
+    indices_to_render = {new_index}
+    if new_index > 0:
+        indices_to_render.add(new_index - 1)
+    if new_index + 1 < len(articles_history):
+        indices_to_render.add(new_index + 1)
+
+    for i in sorted(indices_to_render):
+        issue = articles_history[i]
         prev_issue = articles_history[i + 1] if i + 1 < len(articles_history) else None
         next_issue = articles_history[i - 1] if i > 0 else None
         d = issue['date']

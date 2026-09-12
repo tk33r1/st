@@ -12,7 +12,7 @@ import sys
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
-from daily_engine import build_keyword_regex, run_daily_pipeline
+from daily_engine import build_keyword_regex, is_fresh, run_daily_pipeline
 
 JST = timezone(timedelta(hours=9))
 
@@ -151,8 +151,8 @@ def relevance_sort_key(it, is_gl=False, cutoff_ts=0):
     t = it['title'].lower()
     kws = GLOBAL_RELEVANT_KEYWORDS if is_gl else NITORI_RELEVANT_KEYWORDS
     has_title = 1 if any(k in t for k in kws) else 0
-    is_fresh = 1 if it.get('pub_ts', 0) >= cutoff_ts else 0
-    return (has_title, is_fresh, it.get('pub_ts', 0))
+    fresh_flag = 1 if is_fresh(it, cutoff_ts) else 0
+    return (has_title, fresh_flag, it.get('pub_ts', 0))
 
 
 KEYWORD_PATTERNS = [
@@ -319,7 +319,7 @@ CONFIG = {
     'editor_title': '流通・SPAアナリスト兼インテリア・小売マーケター（「Nitori Daily Brief」編集長）',
     'prompt_selection_rules': """1. ニトリグループに無関係な他社の単独ニュースやスパム懸賞は完全に除外してください。
 2. 直近掲載済みのトピックと重複する内容は必ず除外し、昨日新しく発表・報道された最新動向を最優先してください。
-3. 国内ニュースから最も重要なもの4〜6件、海外・グローバル関連から2〜4件を厳選してください（計7〜10件）。
+3. 国内ニュースから最も重要なもの4〜6件、海外・グローバル関連から2〜4件を厳選してください（計7〜10件）。ただし候補は事前に直近数日分の日付範囲で絞り込み済みです。海外ニュース候補の件数がこれに満たない場合は、無理に古い・関連度の低い候補で件数を埋めず、実際に選定条件を満たす件数のみを採用してください（0件でも構いません）。
    選定の際は「SPA（製造物流小売業）としての構造的強み」「ヒット商品・新商品開発」「物流・自動化・DXの進化」「店舗展開・海外進出の成果」「価格戦略・為替対応」を最重視してください。
 4. 候補の中に『【Xで〜いいね】』と記載されたSNS生バズ投稿（Yahoo! リアルタイム検索）がある場合は、生活者の共感・反響や生活空間提案へのインサイトが大きいものを必ず1〜2件選定し、カテゴリ『SNS話題・リアル反響』として採用してください。単なるツイートの転載ではなく、「なぜその使い方やアイテムが反響を呼んでいるのか」「生活者UXや商品力にどんな示唆があるか（Why it matters）」をプロの視点で分析・要約してください。記事URLには参照元となったXポストのURL（https://x.com/...）を設定してください。""",
     'prompt_categories': '「商品開発・ヒット商品」「デジタル・EC・アプリ」「店舗展開・海外戦略」「物流・サプライチェーン」「経営・価格戦略・PB」「SNS話題・リアル反響」「グローバル先端トレンド」',
