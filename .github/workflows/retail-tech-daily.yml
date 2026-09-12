@@ -39,7 +39,7 @@ jobs:
     - name: Generate Retail Tech Daily Brief
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        DEEPSEEK_MODEL: 'deepseek-v4.1-flash'
+        DEEPSEEK_MODEL: 'deepseek-flash'
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         OPENAI_MODEL: 'gpt-5.6-luna'
       run: |
@@ -50,6 +50,6 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
         git add job/retailtechdaily/ data/retail-tech-daily.json images/ogp/
-        git commit -m "Auto-generate retail tech daily [skip ci]" || exit 0
+        git commit -m "Auto-generate retail tech daily" || exit 0
         git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
         git push origin HEAD:main

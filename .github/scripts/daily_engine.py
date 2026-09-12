@@ -463,10 +463,10 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
     providers = [
         {
             "name": "DeepSeek",
-            "model": os.environ.get('DEEPSEEK_MODEL', 'deepseek-v4.1-flash').strip(),
+            "model": os.environ.get('DEEPSEEK_MODEL', 'deepseek-flash').strip(),
             "key": os.environ.get('DEEPSEEK_API_KEY', '').strip(),
             "url": "https://api.deepseek.com/chat/completions",
-            "badge_label": f"DeepSeek ({os.environ.get('DEEPSEEK_MODEL', 'deepseek-v4.1-flash').strip()})"
+            "badge_label": f"DeepSeek ({os.environ.get('DEEPSEEK_MODEL', 'deepseek-flash').strip()})"
         },
         {
             "name": "OpenAI",
