@@ -83,7 +83,7 @@ def build_keyword_regex(patterns):
 def bold_scan_text(escaped_text, keyword_regex):
     if not escaped_text or not keyword_regex:
         return escaped_text
-    return keyword_regex.sub(r'<strong class="scan-kw">\1</strong>', escaped_text)
+    return keyword_regex.sub(r'<strong class="kw-scan">\1</strong>', escaped_text)
 
 
 def split_takeaway(raw_wim):
@@ -91,17 +91,20 @@ def split_takeaway(raw_wim):
         return "", ""
     wim = clean_html_text(raw_wim).strip()
     
-    in_quote = 0
-    quote_open = '「『（("“'
-    quote_close = '」』）)"”'
+    # "/” は開き・閉じが同じ文字集合に含まれる（対称的な引用符）ため、
+    # 単純な開き/閉じカウンタでは開いたまま閉じられず永久にロックされる。
+    # スタックで「今開いている引用符が閉じるはずの文字」を管理し、
+    # 対称な引用符は直前に同種が開いていれば閉じ・そうでなければ開き、として扱う。
+    quote_pairs = {'「': '」', '『': '』', '（': '）', '(': ')', '"': '"', '“': '”'}
+    quote_stack = []
     split_idx = -1
-    
+
     for i, ch in enumerate(wim):
-        if ch in quote_open:
-            in_quote += 1
-        elif ch in quote_close and in_quote > 0:
-            in_quote -= 1
-        elif in_quote == 0 and ch in '。！？!?':
+        if quote_stack and ch == quote_stack[-1]:
+            quote_stack.pop()
+        elif ch in quote_pairs:
+            quote_stack.append(quote_pairs[ch])
+        elif not quote_stack and ch in '。！？!?':
             split_idx = i
             break
             
@@ -784,21 +787,22 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
           </div>
         </div>""")
 
-    # セクション全体の要約・示唆まとめブロック
+    # セクション全体の要約・示唆まとめブロック（AIが生成した場合のみ表示）。
+    # AIが sns_summary/sns_why_it_matters を返さなかった場合（項目省略やルールベース
+    # フォールバック時）、その日の実際の投稿内容と無関係な固定文言をでっち上げて
+    # 「AIの分析」であるかのように出すのは不誠実なため、ボックス自体を省略する。
     issue = issue_data or {}
     raw_summary = issue.get('sns_summary', '')
-    if not raw_summary:
-        raw_summary = "昨日のX（旧Twitter）では、他社ブランド（山崎実業、無印良品、ワークマン等）との具体的な使い比べや、ヒノキまな板の意外な消臭活用など、生活者のリアルな試行錯誤と日常の知恵が注目を集めました。カタログスペックにとどまらない、生活者の実感に基づく生の声が自然拡散されています。"
-    bold_summary = bold_scan_text(esc(raw_summary), kw_regex)
-
     raw_wim = issue.get('sns_why_it_matters', '')
-    if not raw_wim:
-        raw_wim = "生活者の実際の使用感や日常の『プチストレス解消』体験がSNSで自然拡散されることで、ブランドへの信頼感向上と店舗・EC双方の来店動機形成に直結しています。他社製品との使い分け比較の中で、『生活シーンやコストパフォーマンスに応じたニトリの選択肢』がどう生活者に受容されているかを把握することは、商品開発や店頭MDの改善に不可欠なインサイトとなります。"
-    takeaway, detail_wim = split_takeaway(raw_wim)
-    bold_takeaway = bold_scan_text(esc(takeaway), kw_regex)
-    bold_detail = bold_scan_text(esc(detail_wim), kw_regex)
 
-    summary_box_html = f"""
+    summary_box_html = ""
+    if raw_summary or raw_wim:
+        bold_summary = bold_scan_text(esc(raw_summary), kw_regex)
+        takeaway, detail_wim = split_takeaway(raw_wim)
+        bold_takeaway = bold_scan_text(esc(takeaway), kw_regex)
+        bold_detail = bold_scan_text(esc(detail_wim), kw_regex)
+
+        summary_box_html = f"""
       <div class="sns-buzz-summary-box">
         <div class="card-summary"><p>{bold_summary}</p></div>
         <div class="why-it-matters">
