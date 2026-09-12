@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" class="h-full">
+<html lang="ja">
 <head>
   <!-- Ahrefs -->
   <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
@@ -76,454 +76,199 @@
   }
   </script>
 
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- NES.css: 8ビット調のUIコンポーネント -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Architects+Daughter&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet">
   
   <style>
-    :root {
-      --bg: #fdf6e3;
-      --surface: #ffffff;
-      --text: #1a1a1a;
-      --primary: #e63946;
-      --secondary: #ffb703;
-      --accent: #1d3557;
-      --outline: #000000;
-    }
-
+    :root { --ink: #212529; --screen: #f7f7f7; --nes-blue: #209cee; --nes-red: #e76e55; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body, button, input, select { font-family: "Press Start 2P", "Noto Sans JP", monospace; }
+    html, body { min-height: 100%; }
     body {
       margin: 0;
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: 'Architects Daughter', cursive;
+      color: var(--ink);
       overflow-x: hidden;
+      background-color: #171220;
+      background-image: url("data:image/svg+xml,%3Csvg width='192' height='192' viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg' shape-rendering='crispEdges'%3E%3Cg fill='%23533d6b' opacity='.72'%3E%3Cpath d='M76 56h40v8H76zM68 64h56v8H68zM60 72h72v8H60zM60 80h16v8H60zM84 80h24v8H84zM116 80h16v8h-16zM60 88h72v8H60zM76 96h8v8h-8zM108 96h8v8h-8zM68 104h16v8H68zM108 104h16v8h-16zM60 112h8v8h-8zM84 112h24v8H84zM124 112h8v8h-8z'/%3E%3C/g%3E%3Cg fill='%23f7d51d' opacity='.6'%3E%3Cpath d='M22 24h4v16h-4zM16 30h16v4H16zM154 142h6v18h-6zM148 148h18v6h-18z'/%3E%3C/g%3E%3Cg fill='%23209cee' opacity='.5'%3E%3Cpath d='M150 30h6v6h-6zM30 150h6v6h-6zM168 82h4v4h-4zM20 92h4v4h-4z'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 192px 192px;
+      background-attachment: fixed;
+    }
+    body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60; background: repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0 1px, transparent 1px 4px); opacity: .25; }
+    .bw-mode { filter: grayscale(1) contrast(1.15); }
+    .hidden { display: none !important; }
+    .page-shell { width: 100%; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; }
+
+    .site-header { width: 100%; padding: 24px 24px 16px; }
+    .header-panel, .footer-panel { width: min(100%, 72rem); margin: 4px auto !important; }
+    .header-panel .title { color: #fff; background: var(--nes-blue); }
+    .header-content, .brand, .controls, .status-chip { display: flex; align-items: center; }
+    .header-content { justify-content: space-between; gap: 20px; }
+    .brand { gap: 12px; }
+    .pixel-title { margin: 0; color: #fff; font-size: clamp(2rem, 4vw, 2.5rem); line-height: 1.45; letter-spacing: .04em; text-transform: uppercase; text-shadow: 3px 3px 0 var(--nes-red); }
+    .pixel-title.card-title { color: var(--ink); font-size: 1rem; text-shadow: 3px 3px 0 #92cc41; }
+    .heart-wrap { position: relative; display: block; flex: 0 0 64px; width: 64px; height: 64px; animation: heartBeat 1.25s steps(2, end) infinite; transform-origin: center; }
+    .heart-wrap > .nes-icon { position: absolute; top: 50%; left: 50%; margin: 0; translate: -50% -50%; scale: 1.15; transform-origin: center; }
+    .controls { gap: 12px; }
+    .search-control { width: 14rem; }
+    .sort-control { width: 8.5rem; }
+    .pixel-input { width: 100%; font-size: .65rem !important; }
+    .sort-control select { color: var(--ink) !important; background-color: #fff !important; }
+    .sort-control option { color: var(--ink); background: #fff; }
+    .status-chip { justify-content: center; gap: 8px; padding: 10px 16px; color: #fff; font-size: .62rem; white-space: nowrap; background: var(--ink); border: 4px solid #fff; box-shadow: 4px 4px 0 #000; }
+    .status-icon { color: #aaa; }
+    @keyframes heartBeat {
+      0%, 36%, 100% { transform: scale(1); }
+      10% { transform: scale(1.12); }
+      20% { transform: scale(1); }
+      28% { transform: scale(1.08); }
     }
 
-    /* 80s Comic Effects */
-    .halftone-burst {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 60%, rgba(255,183,3,0.1) 60%, rgba(255,183,3,0.1) 100%);
-      background-size: 100% 100%;
-      opacity: 0.5;
-    }
+    .main-content { width: 100%; padding: 0 24px 32px; }
+    .content-panel { width: min(100%, 72rem); margin: 0 auto; }
+    .message-bar { margin-bottom: 16px; padding: 12px 16px; font-size: .7rem; }
+    .game-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+    .game-card { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 100%; padding: 16px !important; overflow: hidden; background: var(--screen); transition: transform 150ms steps(2, end); }
+    .game-card:hover { transform: translateY(-4px); }
+    .image-frame { position: relative; width: 100%; aspect-ratio: 1200 / 630; overflow: hidden; border: 4px solid var(--ink); background: var(--ink); }
+    .thumbnail-button { display: block; padding: 0; color: inherit; font: inherit; text-align: left; cursor: zoom-in; }
+    .thumbnail-button:focus-visible { outline: 4px solid var(--nes-blue); outline-offset: 4px; }
+    .thumbnail-button:disabled { cursor: default; }
+    .game-image { width: 100%; height: 100%; object-fit: cover; transition: transform 300ms steps(4, end); }
+    .game-card:hover .game-image { transform: scale(1.05); }
+    .image-fallback { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #777; background: #ddd; }
+    .no-signal-icon { font-size: 2rem; }
+    .card-new { position: absolute !important; top: 8px; left: 8px; z-index: 3; width: 4.5rem !important; font-size: .42rem; pointer-events: none; }
+    .card-new > .is-error { padding: 4px 5px; }
+    .card-body, .card-details { display: flex; flex: 1; flex-direction: column; }
+    .card-body { gap: 12px; margin-top: 16px; }
+    .card-details { gap: 8px; }
+    .game-description { margin: 0; color: #374151; font-size: .62rem; font-weight: normal; letter-spacing: .02em; line-height: 2.1; }
+    .game-meta { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; color: #6b6b6b; font-size: .52rem; line-height: 1.7; }
+    .ai-mark { color: var(--nes-blue); }
+    .card-actions { display: flex; align-items: center; justify-content: flex-end; margin-top: auto; padding-top: 10px; border-top: 2px solid rgba(0,0,0,.1); }
+    .pixel-button { display: inline-flex; align-items: center; gap: 8px; padding: 8px 24px; font-size: .68rem; white-space: nowrap; }
+    .game-genre { width: max-content !important; min-width: 5rem; font-size: .45rem; }
+    .game-genre > span { padding: 4px 7px; }
+    .game-genre > .is-warning, .game-genre > .is-success { color: var(--ink); }
 
-    .bw-mode {
-      filter: grayscale(1) contrast(1.2) brightness(1.1);
-    }
-
-    .vignette {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.1) 100%);
-      z-index: 45;
-    }
-
-    /* Background Decorations */
-    .decor-layer {
-      position: fixed;
-      inset: 0;
-      z-index: 2;
-      pointer-events: none;
-      overflow: hidden;
-      opacity: 0.15;
-    }
-
-    .decor-pow {
-      position: absolute;
-      top: 5%;
-      right: -2%;
-      width: 300px;
-      height: 300px;
-      transform: rotate(15deg);
-    }
-
-    .decor-bam {
-      position: absolute;
-      bottom: 10%;
-      left: -2%;
-      width: 250px;
-      height: 250px;
-      transform: rotate(-10deg);
-    }
-
-    .decor-dots {
-      position: absolute;
-      top: 40%;
-      right: 10%;
-      width: 200px;
-      height: 200px;
-      background-image: radial-gradient(var(--outline) 20%, transparent 20%);
-      background-size: 15px 15px;
-      mask-image: radial-gradient(circle, black, transparent 70%);
-    }
-
-    .decor-lines {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 40px,
-        rgba(0, 0, 0, 0.05) 40px,
-        rgba(0, 0, 0, 0.05) 41px
-      );
-    }
-
-    /* Comic paper texture */
-    .comic-page::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.04;
-      mix-blend-mode: multiply;
-      z-index: 50;
-    }
-
-    .comic-title {
-      font-family: "Bangers", cursive;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--outline);
-      -webkit-text-stroke: 1px var(--outline);
-      filter: drop-shadow(3px 3px 0 var(--secondary));
-    }
-
-    /* ワクワク機能：ホバー時のグリッチエフェクト */
-    .glitch {
-      position: relative;
-    }
-    .group:hover .glitch::before, .group:hover .glitch::after {
-      content: attr(data-text);
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0.8;
-    }
-    .group:hover .glitch::before {
-      color: var(--primary);
-      z-index: -1;
-      animation: glitch-anim 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
-    }
-    .group:hover .glitch::after {
-      color: var(--secondary);
-      z-index: -2;
-      animation: glitch-anim-2 0.3s cubic-bezier(.25, .46, .45, .94) reverse both infinite;
-    }
-    @keyframes glitch-anim {
-      0% { transform: translate(0) }
-      20% { transform: translate(-2px, 2px) }
-      40% { transform: translate(-2px, -2px) }
-      60% { transform: translate(2px, 2px) }
-      80% { transform: translate(2px, -2px) }
-      100% { transform: translate(0) }
-    }
-    @keyframes glitch-anim-2 {
-      0% { transform: translate(0) }
-      20% { transform: translate(2px, -2px) }
-      40% { transform: translate(2px, 2px) }
-      60% { transform: translate(-2px, -2px) }
-      80% { transform: translate(-2px, 2px) }
-      100% { transform: translate(0) }
-    }
-
-    .retro-panel {
-      background: var(--surface);
-      border: 3px solid var(--outline);
-      box-shadow: 6px 6px 0 var(--outline);
-      position: relative;
-    }
-
-    .game-card {
-      background: var(--surface);
-      border: 3px solid var(--outline);
-      box-shadow: 5px 5px 0 var(--outline);
-      transition: transform 200ms cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 200ms ease;
-      overflow: hidden;
-    }
-
-    .game-card:hover {
-      transform: translate(-3px, -3px) rotate(-1deg);
-      box-shadow: 8px 8px 0 var(--outline);
-    }
-
-    .comic-btn {
-      font-family: "Bangers", cursive;
-      font-size: 1.2rem;
-      padding: 0.5rem 1.5rem;
-      background: var(--primary);
-      color: white;
-      border: 3px solid var(--outline);
-      box-shadow: 4px 4px 0 var(--outline);
-      transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      cursor: pointer;
-    }
-
-    .comic-btn:hover {
-      background: #ff4d4d;
-      transform: translate(-1px, -1px);
-      box-shadow: 5px 5px 0 var(--outline);
-    }
-
-    .comic-btn:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 var(--outline);
-    }
-
-    .comic-input {
-      background: #fff;
-      border: 3px solid var(--outline);
-      color: var(--text);
-      font-family: "Kalam", cursive;
-      font-weight: 700;
-      box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
-    }
-
-    .comic-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 4px 4px 0 var(--outline);
-    }
-
-    select.comic-input {
-      background-image: url('data:image/svg+xml,%3Csvg fill="%23000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M7 10l5 5 5-5z"/%3E%3C/svg%3E');
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      padding-right: 32px;
-    }
-
-    .fade-up { animation: fadeUp 500ms ease both; }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .img-frame {
-      background: #eee;
-      border-bottom: 3px solid var(--outline);
-      position: relative;
-    }
-
-    .comic-footer {
-      border-top: 3px solid var(--outline);
-      background: #ffffff;
-      margin-top: 40px;
-      box-shadow: 0 -6px 0 var(--outline);
-    }
-
-    .status-chip {
-      border: 3px solid var(--outline);
-      background: var(--secondary);
-      font-family: "Bangers", cursive;
-      color: var(--outline);
-    }
-
-    .comic-heart {
-      display: inline-block;
-      width: 44px; height: 44px;
-      background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M50 88.7L14.1 53.1C5.1 44.2 5.1 29.8 14.1 20.9 23.1 12 37.5 12 46.5 20.9L50 24.4 53.5 20.9C62.5 12 76.9 12 85.9 20.9 94.9 29.8 94.9 44.2 85.9 53.1L50 88.7Z" fill="%23e63946" stroke="%23000" stroke-width="8"/%3E%3C/svg%3E');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      animation: comicHeartbeat 1s ease-in-out infinite;
-    }
-
-    @keyframes comicHeartbeat {
-      0% { transform: scale(1) rotate(0deg); }
-      15% { transform: scale(1.3) rotate(-5deg); }
-      30% { transform: scale(1) rotate(0deg); }
-      45% { transform: scale(1.3) rotate(5deg); }
-      60% { transform: scale(1) rotate(0deg); }
-    }
-
-    .skeleton {
-      background: linear-gradient(90deg, var(--surface) 25%, rgba(255,255,255,0.07) 50%, var(--surface) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.6s infinite;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    #genre-filter {
-      display: none;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 16px;
-    }
+    #genre-filter { display: none; max-width: 100%; flex-wrap: wrap; gap: 12px; align-items: center; margin: 4px 0 24px; }
     #genre-filter.visible { display: flex; }
+    .genre-chip { font-size: .62rem; white-space: nowrap; }
+    .genre-chip.active { outline: 4px solid #fff; outline-offset: 3px; filter: brightness(.9); }
+    .skeleton { background: linear-gradient(90deg, #d3d3d3 25%, #fff 50%, #d3d3d3 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+    .skeleton-image { aspect-ratio: 1200 / 630; }
+    .skeleton-image .skeleton { width: 100%; height: 100%; }
+    .skeleton-copy { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+    .skeleton-line { height: 16px; }
+    .skeleton-line.title { width: 75%; height: 24px; }
+    .skeleton-line.short { width: 25%; }
+    .skeleton-line.medium { width: 85%; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .fade-up { animation: fadeUp 250ms steps(4, end) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    .genre-chip {
-      font-family: "Bangers", cursive;
-      font-size: 14px;
-      border: 3px solid var(--outline);
-      background: #fff;
-      color: var(--outline);
-      cursor: pointer;
-      padding: 4px 16px;
-      white-space: nowrap;
-      transition: all 150ms ease;
-      box-shadow: 3px 3px 0 var(--outline);
-    }
-    .genre-chip:hover {
-      background: var(--secondary);
-      transform: translate(-1px, -1px);
-      box-shadow: 4px 4px 0 var(--outline);
-    }
-    .genre-chip.active {
-      background: var(--primary);
-      color: #fff;
-      transform: translate(1px, 1px);
-      box-shadow: 2px 2px 0 var(--outline);
-    }
-
-    .badge-new {
-      font-family: "Bangers", cursive;
-      font-size: 12px;
-      background: var(--primary);
-      color: #fff;
-      padding: 4px 8px;
-      border: 2px solid var(--outline);
-      transform: rotate(-10deg);
-      box-shadow: 3px 3px 0 var(--outline);
-    }
-
-    #scroll-top-btn {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 300ms ease, transform 300ms ease;
-      transform: translateY(12px);
-    }
-    #scroll-top-btn.visible {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-    @media (max-width: 640px) {
-      #scroll-top-btn {
-        bottom: 60px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-      .skeleton { animation: none; background: var(--surface); }
-    }
+    .empty-state { padding: 40px; text-align: center; }
+    .empty-icon { display: block; margin-bottom: 20px; color: var(--nes-red); font-size: 2rem; }
+    .empty-state p { margin: 16px 0 0; font-size: .7rem; line-height: 1.8; }
+    .image-modal { width: min(calc(100% - 32px), 72rem); max-width: none; max-height: calc(100dvh - 32px); padding: 0; overflow: visible; color: #fff; border: 0; background: transparent; }
+    .image-modal::backdrop { background: rgba(10, 8, 16, .88); }
+    .image-modal-panel { position: relative; margin: 0 !important; padding: 24px !important; }
+    .image-modal-panel > .title { white-space: nowrap; }
+    .image-modal-close { position: absolute; top: 12px; right: 16px; z-index: 2; min-width: 44px; padding: 8px 10px; font-size: .75rem; }
+    .image-modal-frame { display: flex; align-items: center; justify-content: center; overflow: auto; max-height: calc(100dvh - 160px); border: 4px solid #fff; background: #000; }
+    .image-modal-image { display: block; width: 100%; height: auto; max-height: calc(100dvh - 168px); object-fit: contain; image-rendering: auto; }
+    .image-modal-caption { margin: 16px 0 0; overflow-wrap: anywhere; font-size: .65rem; line-height: 1.8; text-align: center; }
+    .site-footer { width: 100%; padding: 24px 24px 32px; color: #fff; }
+    .footer-panel { display: flex; align-items: center; }
+    .footer-side { display: flex; flex: 1; align-items: center; }
+    .footer-side:last-child { justify-content: flex-end; }
+    .footer-home { padding: 4px 12px; color: var(--ink) !important; font-size: .62rem; }
+    .copyright { font-size: .62rem; opacity: .65; }
+    #scroll-top-btn { position: fixed; bottom: 28px; right: 28px; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 150ms steps(2, end), transform 150ms steps(2, end); transform: translateY(12px); }
+    #scroll-top-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    @media (max-width: 1199px) { .game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 900px) { .header-content { align-items: stretch; flex-direction: column; } .controls { align-items: stretch; } .search-control { flex: 1; width: auto; } }
+    @media (max-width: 767px) { .site-header, .main-content, .site-footer { padding-left: 16px; padding-right: 16px; } .game-grid { grid-template-columns: 1fr; } .game-card { width: calc(100% - 8px); margin: 4px; } }
+    @media (max-width: 640px) { .controls { flex-direction: column; } .sort-control { width: 100%; } .genre-chip { font-size: .54rem; } .heart-wrap { flex-basis: 52px; width: 52px; height: 52px; } .heart-wrap > .nes-icon { scale: 1; } .footer-panel { gap: 16px; flex-wrap: wrap; justify-content: center; } .footer-side { flex: none; } .image-modal-panel { padding: 16px !important; } .image-modal-close { top: 8px; right: 8px; } .image-modal-caption { font-size: .52rem; } #scroll-top-btn { right: 16px; bottom: 60px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
   </style>
 </head>
 
-<body class="h-full relative">
+<body>
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
-  <div class="halftone-burst"></div>
-  <div class="vignette"></div>
-
-  <div class="decor-layer">
-    <div class="decor-lines"></div>
-    <div class="decor-pow">
-      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <path d="M100 10l15 40 45-15-20 45 45 20-45 15 20 45-45-20-15 45-15-45-45 20 20-45-45-20 45-15-20-45 45 15z" fill="var(--secondary)" stroke="var(--outline)" stroke-width="4"/>
-        <text x="52%" y="57%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="40" fill="rgba(0,0,0,0.2)" aria-hidden="true">POW!</text>
-        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="40" fill="var(--primary)" stroke="var(--outline)" stroke-width="1.5">POW!</text>
-      </svg>
-    </div>
-    <div class="decor-bam">
-      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <path d="M100 20l10 30 35-10-15 35 35 15-35 10 15 35-35-15-10 35-10-35-35 15 15-35-35-15 35-10-15-35 35 10z" fill="var(--primary)" stroke="var(--outline)" stroke-width="4"/>
-        <text x="52%" y="57%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="36" fill="rgba(0,0,0,0.2)" aria-hidden="true">BAM!</text>
-        <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Bangers" font-size="36" fill="white" stroke="var(--outline)" stroke-width="1.5">BAM!</text>
-      </svg>
-    </div>
-    <div class="decor-dots"></div>
-  </div>
-  
-  <div id="app" class="comic-page h-full w-full overflow-auto relative z-10">
-    <header class="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-4">
-      <div class="max-w-6xl mx-auto retro-panel rounded-none p-4 sm:p-6">
-        <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          
-          <div class="flex items-center gap-3">
-            <h1 id="title-text" class="comic-title leading-tight text-[32px] sm:text-[40px]">ST GAMES</h1>
-            <div class="comic-heart ml-3 sm:ml-5"></div>
+  <div id="app" class="page-shell">
+    <header class="site-header">
+      <div class="header-panel nes-container is-dark with-title">
+        <p class="title">GAME LIBRARY</p>
+        <div class="header-content">
+          <div class="brand">
+            <h1 id="title-text" class="pixel-title">ST GAMES</h1>
+            <span class="heart-wrap" aria-hidden="true"><i class="nes-icon is-large heart"></i></span>
           </div>
-          
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            <div class="relative w-full sm:w-56">
-              <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-60"></i>
-              <input type="text" id="search-input" aria-label="Search games" placeholder="SEARCH..." class="comic-input w-full pl-9 pr-4 py-2 text-[20px] snd-hover" autocomplete="off">
+          <div class="controls">
+            <div class="search-control">
+              <input type="search" id="search-input" aria-label="Search games" placeholder="SEARCH..." class="nes-input pixel-input snd-hover" autocomplete="off">
             </div>
-            
-            <select id="sort-select" aria-label="Sort games" class="comic-input appearance-none px-3 py-2 text-[20px] cursor-pointer snd-hover">
-              <option value="newest">NEWEST</option>
-              <option value="oldest">OLDEST</option>
-              <option value="title">TITLE</option>
-            </select>
-
-            <div class="status-chip px-4 py-2.5 flex items-center justify-center gap-2 text-[20px] whitespace-nowrap">
-              <i data-lucide="database" class="w-4 h-4 opacity-60"></i>
+            <div class="sort-control nes-select">
+              <select id="sort-select" aria-label="Sort games" class="pixel-input snd-hover">
+                <option value="newest">NEWEST</option>
+                <option value="oldest">OLDEST</option>
+                <option value="title">TITLE</option>
+              </select>
+            </div>
+            <div class="status-chip">
+              <span class="status-icon" aria-hidden="true">▣</span>
               <span>SAVED: <span id="game-count">0</span></span>
             </div>
           </div>
-          
         </div>
       </div>
     </header>
-    
-    <main class="w-full px-4 sm:px-6 lg:px-10 pb-8 relative z-10">
-      <section class="max-w-6xl mx-auto">
-        <div id="message-bar" class="hidden mb-4 retro-panel px-4 py-3 text-[20px]"></div>
 
+    <main class="main-content">
+      <section class="content-panel">
+        <div id="message-bar" class="message-bar nes-container is-rounded hidden"></div>
         <div id="genre-filter"></div>
-
-        <div id="empty-state" class="retro-panel p-8 sm:p-10 text-center fade-up hidden">
-          <div class="mx-auto w-16 h-16 flex items-center justify-center mb-5">
-            <i data-lucide="ghost" class="w-12 h-12 opacity-60"></i>
-          </div>
-          <h2 class="comic-title text-[20px] sm:text-[24px] leading-relaxed">NO GAMES FOUND</h2>
-          <p class="mt-4 text-[20px] sm:text-[24px] opacity-85 text-center">条件に一致するゲームが見つかりません。</p>
+        <div id="empty-state" class="empty-state nes-container is-rounded fade-up hidden">
+          <span class="empty-icon" aria-hidden="true">?</span>
+          <h2 class="pixel-title card-title">NO GAMES FOUND</h2>
+          <p>条件に一致するゲームが見つかりません。</p>
         </div>
-        
-        <div id="game-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+        <div id="game-grid" class="game-grid"></div>
       </section>
     </main>
-    <footer class="w-full px-4 sm:px-6 lg:px-10 pt-6 pb-8 relative z-10 comic-footer">
-      <div class="max-w-6xl mx-auto flex items-center">
-        <div class="flex-1 flex items-center">
-          <a href="https://tk.st/" class="comic-btn inline-flex items-center gap-1.5 px-3 py-1 text-[14px] bg-white text-black hover:bg-gray-100" aria-label="Back to tk.st"><span>&lt;</span><span class="hidden sm:inline">tk.st</span></a>
+    <footer class="site-footer">
+      <div class="footer-panel nes-container is-dark">
+        <div class="footer-side">
+          <a href="https://tk.st/" class="footer-home nes-btn" aria-label="Back to tk.st">&lt; tk.st</a>
         </div>
-        <span class="text-[18px] opacity-60">&copy; <span id="currentYear">2024-2026</span> Shinya Takeda</span>
-        <div class="flex-1 flex justify-end items-center">
+        <span class="copyright">&copy; <span id="currentYear">2024-2026</span> Shinya Takeda</span>
+        <div class="footer-side">
           <div id="donation-button-container"></div>
         </div>
       </div>
     </footer>
   </div>
 
-  <button id="scroll-top-btn" class="comic-btn px-3 py-2 bg-white text-black" aria-label="Scroll to top">
-    <i data-lucide="chevrons-up" class="w-5 h-5"></i>
-  </button>
+  <dialog id="image-modal" class="image-modal" aria-labelledby="image-modal-heading">
+    <div class="image-modal-panel nes-container is-dark with-title">
+      <p id="image-modal-heading" class="title">SCREEN VIEW</p>
+      <button id="image-modal-close" type="button" class="image-modal-close nes-btn is-error" aria-label="Close image">X</button>
+      <div class="image-modal-frame">
+        <img id="image-modal-image" class="image-modal-image" src="" alt="">
+      </div>
+      <p id="image-modal-caption" class="image-modal-caption"></p>
+    </div>
+  </dialog>
+
+  <button id="scroll-top-btn" class="nes-btn pixel-button" aria-label="Scroll to top">▲</button>
 
   <script src="../data/buy-me-oil.js"></script>
   <script>
@@ -534,7 +279,6 @@
     }).init();
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script>
     // --- Web Audio API (ワクワク機能：効果音) ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -571,7 +315,7 @@
       oscillator.stop(audioCtx.currentTime + duration);
     }
 
-    // Comic Sound Wrappers
+    // 8ビット効果音
     const soundPop = () => playBeep(800, 'triangle', 0.04);
     const soundPunch = () => playBeep(400, 'sine', 0.2, 50);
     const soundJingle = () => {
@@ -610,7 +354,33 @@
     const sortSelect = document.getElementById("sort-select");
     const genreFilter = document.getElementById("genre-filter");
     const scrollTopBtn = document.getElementById("scroll-top-btn");
-    const appEl = document.getElementById("app");
+    const imageModal = document.getElementById("image-modal");
+    const imageModalImage = document.getElementById("image-modal-image");
+    const imageModalCaption = document.getElementById("image-modal-caption");
+    const imageModalClose = document.getElementById("image-modal-close");
+
+    function openImageModal(src, title) {
+      imageModalImage.src = src;
+      imageModalImage.alt = `${title} thumbnail enlarged`;
+      imageModalCaption.textContent = title;
+      imageModal.showModal();
+      soundPop();
+    }
+
+    function closeImageModal() {
+      imageModal.close();
+      imageModalImage.removeAttribute('src');
+      imageModalImage.alt = '';
+    }
+
+    imageModalClose.addEventListener('click', closeImageModal);
+    imageModal.addEventListener('click', event => {
+      if (event.target === imageModal) closeImageModal();
+    });
+    imageModal.addEventListener('close', () => {
+      imageModalImage.removeAttribute('src');
+      imageModalImage.alt = '';
+    });
 
     function showMessage(text, type) {
       if (!text) {
@@ -620,27 +390,32 @@
       }
       messageBar.classList.remove("hidden");
       messageBar.textContent = text;
-      messageBar.style.borderColor = type === "error" ? "var(--secondary)" : "var(--primary)";
+      messageBar.style.borderColor = type === "error" ? "var(--nes-red)" : "var(--nes-blue)";
     }
 
     function showSkeletons(count = 6) {
       grid.innerHTML = '';
       for (let i = 0; i < count; i++) {
         const sk = document.createElement('div');
-        sk.className = 'game-card p-4 flex flex-col gap-4';
+        sk.className = 'game-card nes-container is-rounded';
         sk.innerHTML = `
-          <div class="img-frame aspect-[1200/630] w-full relative overflow-hidden">
-            <div class="skeleton w-full h-full"></div>
+          <div class="image-frame skeleton-image">
+            <div class="skeleton"></div>
           </div>
-          <div class="flex flex-col gap-3 pt-1">
-            <div class="skeleton h-6 w-3/4 rounded-none"></div>
-            <div class="skeleton h-4 w-1/4 rounded-none"></div>
-            <div class="skeleton h-4 w-full rounded-none"></div>
-            <div class="skeleton h-4 w-5/6 rounded-none"></div>
+          <div class="skeleton-copy">
+            <div class="skeleton skeleton-line title"></div>
+            <div class="skeleton skeleton-line short"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line medium"></div>
           </div>
         `;
         grid.appendChild(sk);
       }
+    }
+
+    function genreTone(genre) {
+      const key = String(genre || '').toLowerCase();
+      return ({ all: 'is-primary', puzzle: 'is-warning', roguelike: 'is-success', sandbox: 'is-error' })[key] || 'is-primary';
     }
 
     function renderGenreChips() {
@@ -650,8 +425,10 @@
       genreFilter.innerHTML = '';
       ['all', ...genres].forEach(genre => {
         const chip = document.createElement('button');
-        chip.className = 'genre-chip' + (genre === activeGenre ? ' active' : '');
+        chip.type = 'button';
+        chip.className = `genre-chip nes-btn ${genreTone(genre)}` + (genre === activeGenre ? ' active' : '');
         chip.textContent = genre === 'all' ? 'ALL' : genre.toUpperCase();
+        chip.setAttribute('aria-pressed', String(genre === activeGenre));
         chip.addEventListener('click', () => {
           activeGenre = genre;
           soundPop();
@@ -669,10 +446,11 @@
 
     function createCard(record) {
       const card = document.createElement("article");
-      card.className = "game-card fade-up p-4 flex flex-col gap-4 group cursor-pointer";
+      card.className = "game-card nes-container is-rounded fade-up";
       const title = escapeHTML(record.title);
       const desc = escapeHTML(record.description || '');
       const genre = record.genre ? escapeHTML(record.genre) : '';
+      const genreToneClass = genreTone(record.genre);
       const ai = record.ai ? escapeHTML(record.ai) : '';
       const url = escapeHTML(record.url);
       const imgUrl = escapeHTML(record.imageUrl);
@@ -680,26 +458,26 @@
       const isNew = newIds.has(record.id);
 
       card.innerHTML = `
-        <div class="img-frame aspect-[1200/630] w-full relative overflow-hidden">
+        ${isNew ? `<span class="card-new nes-badge"><span class="is-error">NEW!</span></span>` : ''}
+        <button type="button" class="image-frame thumbnail-button" aria-label="${title}のサムネイルを拡大表示">
           <img src="${imgUrl}" alt="${title}" loading="lazy"
-               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="hidden absolute inset-0 flex-col items-center justify-center bg-gray-200 text-black/40">
-            <i data-lucide="tv" class="w-10 h-10 mb-2"></i>
-            <span class="comic-title text-[24px]">NO SIGNAL</span>
+               class="game-image"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.closest('.thumbnail-button').disabled=true;">
+          <div class="image-fallback">
+            <span class="no-signal-icon" aria-hidden="true">□</span>
+            <span class="pixel-title card-title">NO SIGNAL</span>
           </div>
-          ${isNew ? `<span class="badge-new absolute top-2 left-2">NEW!</span>` : ''}
-        </div>
-        <div class="flex flex-col gap-3 flex-grow">
-          <h3 class="comic-title text-[20px] sm:text-[24px] leading-tight text-black" data-text="${title}">${title}</h3>
-          <div class="flex flex-col gap-2 flex-grow">
-            ${genre ? `<div class="inline-block px-3 py-0.5 border-2 border-black text-black font-bold text-[14px] uppercase tracking-wider w-max mb-1 bg-yellow-400 font-sans">${genre}</div>` : ''}
-            <p class="text-[16px] sm:text-[18px] leading-[1.4] text-gray-700 font-bold">${desc}</p>
-            ${ai ? `<div class="flex items-center gap-1.5 mt-auto pt-2 text-red-600 font-bold text-[14px] sm:text-[16px]"><i data-lucide="bot" class="w-4 h-4"></i><span class="opacity-90">${ai}</span></div>` : ''}
+        </button>
+        <div class="card-body">
+          <h3 class="pixel-title card-title">${title}</h3>
+          <div class="card-details">
+            ${genre ? `<span class="nes-badge game-genre"><span class="${genreToneClass}">${genre}</span></span>` : ''}
+            <p class="game-description">${desc}</p>
+            ${ai ? `<div class="game-meta"><span class="ai-mark" aria-hidden="true">[AI]</span><span>${ai}</span></div>` : ''}
           </div>
-          <div class="flex items-center gap-3 flex-wrap pt-2 mt-auto border-t-2 border-black/10">
-            <a href="${url}" target="_blank" rel="noopener noreferrer" class="comic-btn inline-flex items-center gap-2 px-6 py-2 mt-2 text-[16px] bg-red-500 text-white ml-auto snd-click">
-              <i data-lucide="play" class="w-4 h-4 fill-white"></i><span>READ GAME</span>
+          <div class="card-actions">
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="nes-btn is-primary pixel-button snd-click">
+              <span aria-hidden="true">▶</span><span>READ GAME</span>
             </a>
           </div>
         </div>
@@ -711,6 +489,8 @@
       if (startBtn) {
         startBtn.addEventListener('mousedown', soundPunch);
       }
+      const thumbnailButton = card.querySelector('.thumbnail-button');
+      thumbnailButton.addEventListener('click', () => openImageModal(record.imageUrl, record.title));
       
       return card;
     }
@@ -741,9 +521,6 @@
       countEl.textContent = filtered.length;
       emptyState.classList.toggle("hidden", filtered.length > 0);
       
-      lucide.createIcons({
-        attrs: { 'stroke-width': 2.5 }
-      });
     }
 
     function computeNewIds() {
@@ -768,16 +545,12 @@
     async function loadGames() {
       showSkeletons(6);
       try {
-        const res = await fetch('https://tk.st/data/game.json');
+        const res = await fetch('../data/game.json');
         if (!res.ok) throw new Error('Network error');
         records = await res.json();
       } catch (error) {
-        showMessage('サーバーとの通信に失敗しました。テスト用データを表示しています。', 'error');
-        records = [
-          { id: 1, title: "MASALA TETRIS", url: "https://tk.st/game/masala-tetris/", imageUrl: "https://tk.st/images/ogp/masala-tetris-ogp.png", genre: "puzzle", description: "First released in 2024, MASALA TETRIS is a unique twist on the indian Tetris game.", ai: "Generated by Gemini 2.5 Pro" },
-          { id: 2, title: "爆速タイピングバトル", url: "#", imageUrl: "https://example.com/not-found.jpg", genre: "typing", description: "生成AIが作る独特な例文を打ち込むタイピングゲーム。君の限界に挑戦しろ！", ai: "Generated by Gemini 2.5 Flash" },
-          { id: 3, title: "NEON RIDER 2099", url: "#", imageUrl: "https://example.com/not-found.jpg", genre: "racing", description: "サイバーパンクな都市を駆け抜けるハイスピードレース。", ai: "Generated by Claude 3.5 Sonnet" }
-        ];
+        records = [];
+        showMessage('ゲーム一覧を読み込めませんでした。時間をおいて再度お試しください。', 'error');
       } finally {
         computeNewIds();
         renderGenreChips();
@@ -794,15 +567,13 @@
     }
 
     // スクロールトップボタン
-    appEl.addEventListener('scroll', () => {
-      scrollTopBtn.classList.toggle('visible', appEl.scrollTop > 300);
+    window.addEventListener('scroll', () => {
+      scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
     });
     scrollTopBtn.addEventListener('click', () => {
-      appEl.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       soundPop();
     });
-    lucide.createIcons({ nodes: [scrollTopBtn] });
-
     // 初期化処理
     searchInput.addEventListener("input", updateView);
     sortSelect.addEventListener("change", updateView);
