@@ -1345,6 +1345,7 @@ def generate_rss_xml(config, articles_history):
     channel_pub_date = email.utils.format_datetime(latest_pub_dt) if latest_pub_dt else ''
     last_build_date = email.utils.format_datetime(datetime.now(JST))
     channel_dates = f"    <pubDate>{channel_pub_date}</pubDate>\n" if channel_pub_date else ''
+    items_joined = "\n".join(items_xml)
 
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -1357,7 +1358,7 @@ def generate_rss_xml(config, articles_history):
     <ttl>720</ttl>
     <generator>{config['media_name']} generator</generator>
     <atom:link href="{base_url}rss.xml" rel="self" type="application/rss+xml"/>
-{"\n".join(items_xml)}
+{items_joined}
   </channel>
 </rss>
 """
