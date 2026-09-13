@@ -1,5 +1,193 @@
 [
   {
+    "date": "20260914",
+    "title": "2026年9月14日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジの是非が世界的な争点に——欧米では撤去・見直しが進む一方、日本では導入が拡大。顧客の納得感と監視・運用コストを含めた総合ROIが投資判断を左右する段階に入った。 店頭メディアの再定義が加速——アマゾンのChatGPT内広告試験、ウォルグリーンのデジタルサイネージ再挑戦、アドインテの豪州展示会出展など、リテールメディアがAIチャネルと店頭を横断し始めている。",
+    "count": 10,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "セルフレジの是非が世界的な争点に——欧米では撤去・見直しが進む一方、日本では導入が拡大。顧客の納得感と監視・運用コストを含めた総合ROIが投資判断を左右する段階に入った。",
+      "店頭メディアの再定義が加速——アマゾンのChatGPT内広告試験、ウォルグリーンのデジタルサイネージ再挑戦、アドインテの豪州展示会出展など、リテールメディアがAIチャネルと店頭を横断し始めている。",
+      "小売のAI・データ基盤づくりが経営課題に——米HarpsのAI部門長任命、イオンリテールのネットスーパー・EC組織統合、東大発AI自動発注の台頭など、現場業務の自動化と在庫最適化の動きが顕著になった。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジで客に働かせて割引ゼロ——欧米小売がセルフレジ撤去に追い込まれた理由",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-04",
+        "summary": "欧米の小売チェーンでセルフレジ撤去の動きが広がっている。買い物客に会計作業を負担させながら割引も提供しない「無償労働」への不満が根底にあり、万引きや誤スキャンによる在庫・収益ロス、精算トラブルへの店員対応コストも重なった。日本のスーパー・ドラッグストアでもセルフレジ比率が高まるなか、導入効果をどう検証するかが問われている。",
+        "why_it_matters": "セルフレジは「省人化投資」として語られがちだが、欧米の失敗は顧客の納得感と運用設計を欠けば投資回収が崩れることを示す。日本の小売は削減効果だけでなく、顧客インセンティブ設計や監視コストまで含めた総合ROIで判断すべきだ。",
+        "tags": [
+          "セルフレジ",
+          "店内UX",
+          "欧米動向"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE1pc2xVTWdNak9mRGd2aEIxVkJrS05TaWxnSTE4RDVXNS1GTzBOOVJxOENFeFd0ZmprbnpxODh2QUl2WjBUcHR6V3VydzV0SGpIekc4TF9sMk9TTDNjSGl3azJ6aWt3dw?oc=5",
+        "source_pub_ts": 1789292306
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "韓国で10代が無人店窃盗、賭博借金返済が犯罪に——無人店舗運営の防犯リスク顕在化",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-06",
+        "summary": "韓国で10代の若者が賭博の借金返済のために無人店舗から商品を窃取する事件が報じられた。無人店舗は人件費削減と24時間営業を両立できる一方、監視体制の薄さが犯罪の入り口になり得る。日本でも無人店舗やセルフレジの導入が進むなか、AIカメラや入退店認証による防犯設計が不可欠になっている。",
+        "why_it_matters": "無人店舗の経済性は盗難率に大きく左右される。省人化の効果を最大化するには、顔認証・行動検知カメラ・在庫センサーを組み合わせた損失防止の仕組みを初期設計に織り込む必要があり、防犯は追加コストではなく収益を守る投資と捉えるべきだ。",
+        "tags": [
+          "無人店舗",
+          "防犯",
+          "AIカメラ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9PNHVvUkxabzlPQ29WaFBJcWxWQzh4Y0RKeDdNRE13akVQTkNDdUpzNmpjVEJyQ2VhMVdtSldPazBNSDN6VUxlNkRPS29ydnd1OUlPYU5Ha1AxWnhrek45SkNsMmh1MlZDOHfSAWpBVV95cUxPTzR1b1JMWm85T0NvVmhQSXFsVkM4eGNESng3TURNd2pFUE5DQ3VKczZqY1RCckNlYTFXbUpXT2swTUgzelVMZTZET0tvcnZ3dTlJT2FOR2tQMVp4a3pOOUpDbDJodTJWQzh3?oc=5",
+        "source_pub_ts": 1789269059
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "バーコードのない店舗のセルフ会計問題、カメラ認識で解決へ",
+        "original_title": "",
+        "source": "korit.jp",
+        "source_id": "JP-07",
+        "summary": "バーコードなしで商品を陳列する店舗では、セルフ会計時に商品特定が難しく、精算の滞留や誤登録が課題となる。カメラと画像認識を組み合わせ、商品をかざすだけで識別する仕組みが解決策として注目される。青果や量り売り、バルク商品など、従来POSが苦手としてきた領域の会計を自動化し、レジ待ちと人件費を同時に削減できる可能性がある。",
+        "why_it_matters": "画像認識型の会計は、スマートカートやAI棚と組み合わせることで「取った時点で決済」に近づく。バーコード前提のPOS運用からの転換は、青果・惣菜など非バーコード領域のデータ取得を可能にし、需要予測や在庫精度の向上にも波及する。",
+        "tags": [
+          "画像認識",
+          "セルフ会計",
+          "スマートカート"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE1nQ1RZZ2JZQ3VLS005YW9HZlk1MVVlSDZuV0RoeERBZWFramJpTTNBWHRMOVFTOVhYT1pwbW95aWxSYm5CSjJCdmZtZDQ2a05yX0lRUXN5ZG81eHpTZ09KdVRONlltLWFkQlgwRDd3VlFUTlE1LS1aZA?oc=5",
+        "source_pub_ts": 1789261493
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "イオンリテール、ネットスーパーとECの運営組織を一体化",
+        "original_title": "",
+        "source": "gekiryu-online.jp",
+        "source_id": "JP-25",
+        "summary": "イオンリテールはネットスーパーとEC事業の運営組織を一体化した。デジタル接客・配送・在庫を共通のオペレーションで回し、注文チャネルをまたいだ顧客体験の統一とコスト効率の改善を狙う。店舗在庫を起点としたラストワンマイルの最適化や、アプリ・実店舗・宅配を横断するデータ連携が今後の焦点となる。",
+        "why_it_matters": "ネットスーパーとECの組織統合は、オムニチャネルをチャネル別最適から顧客別最適へ転換する布石だ。物流・在庫・CRMのデータを一元化できるかが、店舗起点のラストワンマイル競争で優位に立つ条件になる。",
+        "tags": [
+          "オムニチャネル",
+          "ネットスーパー",
+          "組織再編"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBwT2RoQk1lUTBnN3RCWm53VnZVaE5sdDVMLThEUEptMXA3dFo1bWJlOXY5ZE8yc21iX3MzOWYzUk1GVzlSM0tOQkJ3TEY5VXktcnc?oc=5",
+        "source_pub_ts": 1789113475
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "東大発AI自動発注「α-発注」、国際物流総合展で「在庫革命」をテーマに登壇",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-26",
+        "summary": "東京大学発スタートアップのAI自動発注サービス「α-発注」が、国際物流総合展2026で「在庫革命」をテーマにセミナーを実施した。需要予測と発注業務の自動化により、欠品と過剰在庫の同時削減を狙う。人手不足が深刻な食品スーパーやドラッグストアにとって、発注業務の負荷軽減と在庫回転の改善は経営課題となっている。",
+        "why_it_matters": "発注は依然として属人的な業務が多く、AI需要予測の導入余地が大きい領域だ。発注精度の向上は欠品ロスと廃棄ロスの両方を削り、棚割りや物流計画とも連動する。POS・在庫データの整備状況が導入効果を左右する点は見逃せない。",
+        "tags": [
+          "AI需要予測",
+          "自動発注",
+          "在庫最適化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFB5QXZZYXRrNlNWdVZob216WHdVR0k5ZGozaHB2eEpuamh1VlI2N2dmQUpTbW9KbDVLVmhteEI5NVp5ekwzck9UcEcwSlVKMTZSNDFyRnVGdGhwdVVUNVBDLUZCR1RXZnRGUHlvSDlCczVsdw?oc=5",
+        "source_pub_ts": 1789112400
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "アドインテ、豪州「RETAIL SHOW AUSTRALIA 2026」に出展",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-38",
+        "summary": "リテールメディア関連のソリューションを手掛けるアドインテが、オーストラリア最大級のリテール展示会「RETAIL SHOW AUSTRALIA 2026」への出展を発表した。店舗向けデジタルサイネージや購買データを活用した広告配信の知見を、海外の小売事業者やブランドに提案する狙いとみられる。日本のリテールメディア技術の海外展開が加速している。",
+        "why_it_matters": "日本のリテールメディア関連企業が海外展示会に打って出る動きは、国内市場の競争激化と伸び悩みを映す。店頭サイネージと購買データを組み合わせた配信ノウハウは海外でも通用する可能性が高く、小売との共同事業モデルをどう現地化できるかが成否を分ける。",
+        "tags": [
+          "リテールメディア",
+          "デジタルサイネージ",
+          "海外展開"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5WQjQ0VE0tRFNDOUdNdGswcGM4STNYNEFTcTNpb2VGeTdhbDhkOHVSTmUtNlZ2V01hLTNSanZKYTJkazZ2bUhnSFo4STcxelBuN2hiZFRudkx6UVdVTHRBYlZnRFlxaGIwLUE?oc=5",
+        "source_pub_ts": 1789099202
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "アマゾン、ChatGPT内で広告サービスを試験導入——AI対話型コマースの幕開け",
+        "original_title": "Amazon pilots ad services in ChatGPT: What marketers need to know",
+        "source": "Retail Dive",
+        "source_id": "GL-09",
+        "summary": "アマゾンがChatGPT内での広告配信サービスの試験を開始した。生成AIの対話インターフェース上で商品提案と広告を組み合わせ、購買意欲の高い会話の文脈に広告を差し込む。検索連動型からAI対話型へと広告の接点が移りつつあり、マーケターは計測指標やアトリビューションの再設計を迫られている。",
+        "why_it_matters": "AIアシスタントが購買の入口になれば、小売の集客・広告の主導権はプラットフォーム側に移る。リテールメディアは自社アプリや店頭に閉じず、外部AIチャネルへの出稿・データ連携を設計する必要があり、検索広告の再定義が急務となる。",
+        "tags": [
+          "生成AI",
+          "リテールメディア",
+          "広告"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxQc1dmSk9Tbm5ybWdLalhSbU81SkhmTUVuZVZ3ZDBkU05fcGszR2pKd2V3S19PYV9WTUV1dUpJLW9zbTFWQnU4UWNIaUtHdV9LblZKaEFJTW9PQVFpTHdMU3BoOFBPa1V5MmN6UkczTkxSQVRUWUJvUnVPTVIzSTBXbEVncm9UMFZWaTJHb0Q1c0lvNDBxSDJQeWNJVEw5ejZmd080?oc=5",
+        "source_pub_ts": 1789137087
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "ウォルグリーン、店頭デジタルサイネージ広告に再挑戦——「成果の出る枠」に注力",
+        "original_title": "Walgreens says it's focused on 'higher-performing' ad placements as it tries again with digital screens",
+        "source": "Modern Retail",
+        "source_id": "GL-12",
+        "summary": "ウォルグリーンが店頭デジタルサイネージを活用した広告事業に再挑戦する。過去の展開では効果測定や在庫連動が課題となったため、今回は成果の出る設置場所と枠に絞り、購買データとひも付けた配信を重視する。ドラッグストアの店頭メディアは、来店客の購買行動に近い接点としてブランドの関心を集めている。",
+        "why_it_matters": "店頭サイネージ広告は「設置すれば売れる」段階を終え、効果測定と在庫・販促との連動が成否を分ける。小売は媒体価値を数値で示せるかが問われ、POS・ロイヤルティデータと配信基盤の統合がリテールメディア収益化の鍵となる。",
+        "tags": [
+          "リテールメディア",
+          "デジタルサイネージ",
+          "店頭広告"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxNSjZRTFB0UV9kSXRTLXlrOVYxVTZIREhzTzNxck8xTFdkUGNNRk1xNjh1dXFfeFh0dExLZXNTYTRHYTloT3Z2ZUhIS21xV0VXdEFfRWlDMFA3aEFUbVNUaFZESmtmdXZDdkdJYWt0ZHo3d3hyZk1VUlVweVNxZGxpRWtNVzZkTnFjM0NMdzJIbGRFcW51a1g0cmlyNldpd2VGZkZwTE84Q3ZxX1ltWDRMQUN3ajVEcjQzSVNicURWQldLM0ZrYmRzaHhjTHFScUZWMlhIWA?oc=5",
+        "source_pub_ts": 1789099444
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "米食品スーパーHarps、初の「AI部門長」を任命",
+        "original_title": "Harps names first director of AI",
+        "source": "Grocery Dive",
+        "source_id": "GL-08",
+        "summary": "米国の食品スーパーHarpsは、社内で初となるAI担当ディレクターを任命した。需要予測、発注、価格設定、店舗運営などでのAI活用を横断的に推進する体制を整える狙いだ。地方チェーンでもAI人材を経営層に据える動きが始まり、人材不足とコスト高に直面する食品小売の業務改革が加速している。",
+        "why_it_matters": "AI専任役員の設置は、AI活用が試験導入から全社戦略へ移る転換点を示す。発注や値付けなど現場判断の自動化は、店舗スタッフの負荷軽減と粗利改善に直結する。日本の中堅スーパーも同様の体制づくりを迫られるだろう。",
+        "tags": [
+          "AI人材",
+          "食品スーパー",
+          "業務改革"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNT21yTDlPSWVzZXhEbzdOcTJ2bjFKa3RKRDl5STQxVExZaVctRFpLOUtwcENvakNlRDUwRGM0eklYRktmZkdHa2dqU0RjLXlua3VlYzVVc2VtVS1PVVU5a3ZHXzBLeEZKOHotM1psSUd4aFJfZHNCekozQkxkZEp4dlhwblh4ejMtX2R4dUdLanZHQkYyTWN2VGhURlVVcE9yWUlfY3phWWV1Zw?oc=5",
+        "source_pub_ts": 1789137667
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "クローガー、既存店売上がほぼゼロ成長に——シクロスポラ集団感染が青果販売を直撃",
+        "original_title": "Kroger's comps slide to near zero as cyclospora outbreak eats into produce sales",
+        "source": "Grocery Dive",
+        "source_id": "GL-02",
+        "summary": "米大手スーパーのクローガーは、寄生虫シクロスポラによる集団感染の影響で青果の販売が落ち込み、既存店売上高の伸びがほぼゼロに沈んだ。食の安全への不安が特定カテゴリの購買を急速に冷え込ませた形で、サプライチェーンのトレーサビリティと産地情報の可視化の重要性が改めて浮き彫りになった。",
+        "why_it_matters": "食品事故は売上に即座に跳ね返り、落ち込んだカテゴリの回復には時間がかかる。産地から店頭までの追跡データを日常的に整備し、問題発生時に迅速に情報開示できる体制が、小売の信頼と収益を守る防波堤になる。在庫・物流システムの投資判断にも影響する。",
+        "tags": [
+          "食品流通",
+          "トレーサビリティ",
+          "サプライチェーン"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPOHNyQ001MHdBZ2JNYUI5cUtOeTdYWjVfTnI5dnhFeVZlNlNNdVFGQ1RQdzF6MFNiMmNHUmRZOGU2SWcyUTBVRXRKeEgySHNyVjE0MGtBSEJGX3NxMk1DYXkwVVlqa2llLWJRa2I0bE5KdWZWTF81Z0hhRTF0dENqT3FlazFzZjVVZTlPeU44REZvN0J1UjVYZWJ3M2dfZw?oc=5",
+        "source_pub_ts": 1789144867
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260913",
     "title": "2026年9月13日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "国内はアインHDの次世代薬局モデル実証やカインズの「AI×Slack」活用など、大規模投資に頼らず店舗業務と顧客接点を組み替える“軽量DX”の発表が目立った一日となった。 サプライチェーン分析市場が2035年に20億6,980万ドル規模へ拡大するとの予測が示され、需要予測・在庫・物流最適化へのデータ投資が国内でも本格化している。",
