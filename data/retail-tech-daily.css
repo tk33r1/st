@@ -2,13 +2,17 @@
 @import "./daily-base.css";
 
 /**
- * Retail Tech Daily Brief — デザイン CSS
+ * Retail Tech Daily Brief — テーマ CSS
+ * ブランドカラー: シグナル・コバルト (#1a47d4)
+ *   流通テックの「決済・データ・通信」の信号色。ニトリのティールと十分に離れつつ、
+ *   白背景で 8:1 前後のコントラストを保てるので本文リンクにもそのまま使える。
  * 共通UI基盤: data/daily-base.css
  */
 :root {
-  --primary: #0f4c81;
-  --primary-hover: #0a355c;
-  --primary-subtle: rgba(15, 76, 129, 0.07);
-  --primary-border: rgba(15, 76, 129, 0.2);
-  --primary-shadow: rgba(15, 76, 129, 0.2);
+  --primary: #1a47d4;
+  /* コバルトは白地で約 8:1 出るため、文字色もブランド色をそのまま使える */
+  --primary-ink: #1a47d4;
+  --primary-subtle: rgba(26, 71, 212, 0.06);
+  --primary-border: rgba(26, 71, 212, 0.24);
+  --primary-shadow: rgba(26, 71, 212, 0.38);
 }

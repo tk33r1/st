@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Nitori Daily Brief — 毎朝8時のニトリ速報＆SNS話題</title>
+    <title>Nitori Daily — 毎朝8時のニトリ速報＆SNS話題</title>
     <link>https://tk.st/job/nitoridaily/</link>
     <description>毎朝8:00更新。昨日のニトリ・ニトリHD動向およびX・TikTok上の話題・反響（ヒット商品、使い勝手、店舗体験、物流DX、SPA戦略）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊ニュースメディア。</description>
     <language>ja</language>
     <pubDate>Mon, 14 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 14 Sep 2026 04:15:13 +0900</lastBuildDate>
+    <lastBuildDate>Mon, 14 Sep 2026 07:18:50 +0900</lastBuildDate>
     <ttl>720</ttl>
-    <generator>Nitori Daily Brief generator</generator>
+    <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title>2026年9月14日号：昨日のニトリニュース＆SNS話題まとめ</title>

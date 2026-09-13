@@ -839,9 +839,7 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
                 f'<span class="sns-stat-likes" title="{likes_str} いいね">❤️ {likes_str}</span>',
                 f'<span class="sns-stat-comments" title="{comments_str} コメント">💬 {comments_str}</span>',
             ]
-        # カード内の統計スパンは 1 行 1 要素（既存の生成 HTML のインデントに合わせる）
-        stats_html = """
-              """.join(stat_spans)
+        stats_html = "".join(stat_spans)
 
         # 動画系は「直近1週間」から選ぶので、いつの投稿かをカード単位で示す。
         # X は昨日の投稿だけなので従来どおり日付を出さない。
@@ -850,26 +848,14 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
             posted_html = f'<span class="sns-card-date">{esc(item["posted_on"])}</span>'
 
         cards_html.append(f"""
-        <div class="sns-card" id="sns-buzz-{idx}" data-platform="{esc(platform)}">
-          <div class="sns-card-meta">
-            <a href="{raw_url}" target="_blank" rel="noopener noreferrer" class="sns-card-author">
-              {meta['icon']}
-              <span>{author}</span>{posted_html}
-            </a>
-            <div class="sns-card-stats">
-              {stats_html}
-            </div>
+        <article class="sns-card" id="sns-buzz-{idx}" data-platform="{esc(platform)}">
+          <div class="sns-card-head">
+            <a href="{raw_url}" target="_blank" rel="noopener noreferrer" class="sns-card-author">{meta['icon']}<span>{author}</span>{posted_html}</a>
+            <div class="sns-card-stats">{stats_html}</div>
           </div>
-          <div class="sns-card-body">
-            <blockquote>{bold_text}</blockquote>
-          </div>
-          <div class="sns-card-footer">
-            <a href="{raw_url}" target="_blank" rel="noopener noreferrer" class="sns-card-link">
-              <span>{meta['link_text']}</span>
-              {ICON_EXTERNAL_SVG}
-            </a>
-          </div>
-        </div>""")
+          <blockquote class="sns-card-body">{bold_text}</blockquote>
+          <a href="{raw_url}" target="_blank" rel="noopener noreferrer" class="sns-card-link"><span>{meta['link_text']}</span>{ICON_EXTERNAL_SVG}</a>
+        </article>""")
 
     # セクション全体の要約・示唆まとめブロック（AIが生成した場合のみ表示）。
     # AIが sns_summary/sns_why_it_matters を返さなかった場合（項目省略やルールベース
@@ -887,13 +873,10 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
         bold_detail = bold_scan_text(esc(detail_wim), kw_regex)
 
         summary_box_html = f"""
-      <div class="sns-buzz-summary-box">
+      <div class="panel panel-sns">
         <div class="card-summary"><p>{bold_summary}</p></div>
         <div class="why-it-matters">
-          <div class="wim-header">
-            {ICON_WIM_SVG}
-            <strong>Why it matters（生活者UX・生活空間への示唆）</strong>
-          </div>
+          <div class="wim-header">{ICON_WIM_SVG}<strong>Why it matters（生活者UX・生活空間への示唆）</strong></div>
           <div class="wim-takeaway">
             <span class="takeaway-badge">KEY TAKEAWAY</span>
             <p class="takeaway-text">{bold_takeaway}</p>
@@ -937,16 +920,18 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
     sub_text = esc('、'.join(subs) + '。生活者が注目した神アイテム・使い勝手や比較の生の声')
 
     return f"""
-    <section class="sns-buzz-section" id="snsBuzzSection">
-      <div class="sns-buzz-header">
-        <div class="sns-buzz-title-wrap">
-          {badges_html}
-          <h2 class="sns-buzz-title">{heading}</h2>
-        </div>
-        <span class="sns-buzz-sub">{sub_text}</span>
+    <section class="sns-section" id="snsBuzzSection">
+      <div class="section-head">
+        <h2 class="section-title">{heading}</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+        <span class="section-count">{len(ordered_buzz)} posts</span>
+      </div>
+      <div class="sns-intro">
+        <div class="sns-badges">{badges_html}</div>
+        <p class="sns-sub">{sub_text}</p>
       </div>
       {summary_box_html}
-      <div class="sns-buzz-grid">
+      <div class="sns-grid">
 {"".join(cards_html)}
       </div>
     </section>
@@ -1003,10 +988,11 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         quick_index_items.append(f"""        <li class="qi-item">
           <a href="#art-{idx}" class="qi-link">
             <span class="qi-num">{idx:02d}</span>
-            <span class="qi-badge {b_class}">{b_txt}</span>
-            <span class="qi-cat">{esc(cat_name)}</span>
-            <span class="qi-title">{esc(art.get('title', ''))}</span>
-            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            <span class="qi-body">
+              <span class="qi-tags"><span class="qi-badge {b_class}">{b_txt}</span><span class="qi-cat">{esc(cat_name)}</span></span>
+              <span class="qi-title">{esc(art.get('title', ''))}</span>
+            </span>
+            <svg class="qi-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
           </a>
         </li>""")
     quick_index_html = "\n".join(quick_index_items)
@@ -1017,10 +1003,10 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         is_global = art.get('region') == 'GLOBAL'
         region_code = 'GLOBAL' if is_global else 'JP'
         badge_class = 'badge-global' if is_global else 'badge-jp'
-        badge_text = '海外 Global' if is_global else '国内 Japan'
+        badge_text = '海外 GLOBAL' if is_global else '国内 JAPAN'
         category_name = art.get('category', config['sample_category'])
         orig_title = art.get('original_title', '')
-        orig_html = f'<div class="original-title">{esc(orig_title)}</div>' if orig_title else ''
+        orig_html = f'<p class="original-title">{esc(orig_title)}</p>' if orig_title else ''
         safe_url = sanitize_url(art.get('url', ''))
         has_source = safe_url != '#'
         raw_title = art.get('title', '')
@@ -1031,12 +1017,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         bold_detail = bold_scan_text(esc(detail_wim), kw_regex)
 
         if has_source:
-            title_inner = f"""
-            <a href="{safe_url}" target="_blank" rel="noopener noreferrer">
-              {esc(raw_title)}
-              {ICON_EXTERNAL_SVG}
-            </a>
-          """
+            title_inner = f'<a href="{safe_url}" target="_blank" rel="noopener noreferrer">{esc(raw_title)}{ICON_EXTERNAL_SVG}</a>'
             source_link_html = f'<a class="source-link" href="{safe_url}" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>'
         else:
             title_inner = esc(raw_title)
@@ -1049,47 +1030,41 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
         articles_html.append(f"""
         <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}">
-          <div class="card-meta">
-            <button type="button" class="region-badge {badge_class}" data-filter-trigger="region" data-filter-val="{region_code}" title="この地域のニュースで絞り込み">{badge_text}</button>
-            <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>
-            <span class="source-tag">{esc(art.get('source', '業界速報'))}</span>
-          </div>
-          <h3 class="card-title">{title_inner}</h3>
-          {orig_html}
-          <div class="card-summary"><p>{bold_summary}</p></div>
-          <div class="why-it-matters">
-            <div class="wim-header">
-              {ICON_WIM_SVG}
-              <strong>Why it matters（ビジネス・テック的示唆）</strong>
+          <div class="card-index" aria-hidden="true">{idx:02d}</div>
+          <div class="card-main">
+            <div class="card-meta">
+              <button type="button" class="region-badge {badge_class}" data-filter-trigger="region" data-filter-val="{region_code}" title="この地域のニュースで絞り込み">{badge_text}</button>
+              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>
+              <span class="source-tag">{esc(art.get('source', '業界速報'))}</span>
             </div>
-            <div class="wim-takeaway">
-              <span class="takeaway-badge">KEY TAKEAWAY</span>
-              <p class="takeaway-text">{bold_takeaway}</p>
+            <h3 class="card-title">{title_inner}</h3>
+            {orig_html}
+            <div class="card-summary"><p>{bold_summary}</p></div>
+            <div class="why-it-matters">
+              <div class="wim-header">{ICON_WIM_SVG}<strong>Why it matters（ビジネス・テック的示唆）</strong></div>
+              <div class="wim-takeaway">
+                <span class="takeaway-badge">KEY TAKEAWAY</span>
+                <p class="takeaway-text">{bold_takeaway}</p>
+              </div>
+              {f'<p class="wim-detail">{bold_detail}</p>' if bold_detail else ''}
             </div>
-            {f'<p class="wim-detail">{bold_detail}</p>' if bold_detail else ''}
-          </div>
-          <div class="card-footer">
-            <div class="card-actions">
-              <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">
-                {ICON_COPY_SVG}
-                <span>社内共有コピー</span>
-              </button>
-              <a href="{tweet_intent}" target="_blank" rel="noopener noreferrer" class="x-share-btn" title="Xでポスト">
-                {ICON_X_SVG}
-              </a>
-              {source_link_html}
+            <div class="card-footer">
+              <div class="card-actions">
+                <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>社内共有コピー</span></button>
+                <a href="{tweet_intent}" target="_blank" rel="noopener noreferrer" class="x-share-btn" title="Xでポスト">{ICON_X_SVG}</a>
+                {source_link_html}
+              </div>
             </div>
           </div>
-        </article>
-        """)
+        </article>""")
 
     exec_summary_list = issue_data.get('executive_summary', [])
     exec_summary_html = "".join([f"<li>{esc(item)}</li>" for item in exec_summary_list])
     # AIは通常ちょうど3点で生成するが、後日の手動修正等で件数が変わることもあるため、
     # 3点ちょうどの時だけ「3大」と謳い、それ以外は件数を偽らない汎用見出しにする。
     exec_title_text = "昨日の3大重要トピック（Executive Summary）" if len(exec_summary_list) == 3 else "昨日の重要トピック（Executive Summary）"
-    p_link = f'<a href="../{prev_issue["date"]}/" class="nav-prev">&larr; {prev_issue["date"][:4]}/{prev_issue["date"][4:6]}/{prev_issue["date"][6:8]} 号</a>' if prev_issue else '<span class="nav-disabled">&larr; 前号</span>'
-    n_link = f'<a href="../{next_issue["date"]}/" class="nav-next">{next_issue["date"][:4]}/{next_issue["date"][4:6]}/{next_issue["date"][6:8]} 号 &rarr;</a>' if next_issue else '<span class="nav-disabled">最新号</span>'
+    p_link = f'<a href="../{prev_issue["date"]}/" class="nav-prev">&larr; {prev_issue["date"][:4]}.{prev_issue["date"][4:6]}.{prev_issue["date"][6:8]} 号</a>' if prev_issue else '<span class="nav-disabled">&larr; 前号なし</span>'
+    n_link = f'<a href="../{next_issue["date"]}/" class="nav-next">{next_issue["date"][:4]}.{next_issue["date"][4:6]}.{next_issue["date"][6:8]} 号 &rarr;</a>' if next_issue else '<span class="nav-disabled nav-next">最新号</span>'
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
@@ -1123,7 +1098,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   <link rel="apple-touch-icon" href="../../../images/favicons/{config['favicon_file']}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700&family=Outfit:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
   <script type="application/ld+json">
 {dynamic_jsonld_str}
   </script>
@@ -1132,110 +1107,122 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 <body id="top">
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
   <header class="site-header">
-    <div class="container header-inner">
-      <a href="../" class="brand-logo">
-        {config['brand_logo_svg']}
-        <div>
-          <div class="brand-title">{config['brand_title']}</div>
-          <span class="brand-subtitle">{config['brand_subtitle']}</span>
-        </div>
+    <div class="header-inner">
+      <a href="../" class="brand">
+        <span class="brand-mark">{config['brand_logo_svg']}</span>
+        <span class="brand-text">
+          <span class="brand-name">{config['brand_title']}</span>
+          <span class="brand-tag">{config['brand_subtitle']}</span>
+        </span>
       </a>
+      <nav class="header-actions" aria-label="メディア内ナビゲーション">
+        <a href="../" class="header-link">バックナンバー</a>
+        <a href="../rss.xml" class="icon-btn" target="_blank" rel="noopener noreferrer" aria-label="RSSを購読" title="RSSを購読">{ICON_RSS_SVG}</a>
+      </nav>
     </div>
   </header>
 
   <main class="container">
-    <nav class="breadcrumbs">
-      <a href="https://tk.st/">⌂ Shinya Takeda</a><span>/</span>
-      <a href="../../">Job</a><span>/</span>
-      <a href="../">{config['brand_title']}</a><span>/</span>
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../../">Job</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">{config['brand_title']}</a><span class="sep" aria-hidden="true">/</span>
       <strong>{formatted_date}号</strong>
     </nav>
 
-    <section class="issue-hero">
-      <div class="issue-meta-row">
-        <span class="daily-tag">Daily Brief</span>
-        <span class="issue-date-label">{formatted_date} 08:00 JST 配信</span>
-        <span class="reading-time-badge">
-          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          読了目安 約{reading_minutes}分（{total_chars:,}文字）
-        </span>
-        <span class="engine-badge {engine_class}"><span class="engine-dot"></span>{engine_label}</span>
-      </div>
-      <h1 class="hero-title">{formatted_date}号：昨日の{config['brand_title_short']}まとめ</h1>
-      <p class="hero-desc">{config['hero_desc']}</p>
-    </section>
-
-    <section class="executive-card">
-      <div class="exec-title">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-        <span>{exec_title_text}</span>
-      </div>
-      <ul class="exec-list">{exec_summary_html}</ul>
-    </section>
-
-    <section class="quick-index-card">
-      <div class="qi-header">
-        <div class="qi-title-wrap">
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-          <span>本日のヘッドライン目次（30秒スキャン）</span>
+    <article class="issue">
+      <header class="issue-masthead">
+        <div class="issue-kicker">
+          <span class="kicker-tag">Daily Brief</span>
+          <span class="kicker-date">{formatted_date} 08:00 JST 配信</span>
         </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          {sns_quick_link}
-          <span class="qi-sub">タップで各記事へジャンプ</span>
+        <h1 class="issue-title">{formatted_date}号：昨日の{config['brand_title_short']}まとめ</h1>
+        <p class="issue-lede">{config['hero_desc']}</p>
+        <div class="issue-stats">
+          <span class="stat">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            読了目安 約{reading_minutes}分 / {total_chars:,}字
+          </span>
+          <span class="stat">全 {total_count} 本</span>
+          <span class="engine-badge {engine_class}"><span class="engine-dot"></span>{engine_label}</span>
         </div>
-      </div>
-      <ol class="qi-list">
-{quick_index_html}
-      </ol>
-    </section>
+      </header>
 
-    <section class="articles-section" id="articlesSection">
-      <div class="section-headline">
-        <h2>厳選トピックス</h2>
-      </div>
+      <section class="panel panel-exec" aria-labelledby="execTitle">
+        <h2 class="panel-title" id="execTitle">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>{exec_title_text}</span>
+        </h2>
+        <ol class="exec-list">{exec_summary_html}</ol>
+      </section>
 
-      <div class="filter-wrapper">
-        <div class="filter-bar-header">
-          <div class="filter-label">
-            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-            <span>種別で絞込</span>
+      <section class="panel panel-index" aria-labelledby="indexTitle">
+        <div class="panel-head">
+          <h2 class="panel-title" id="indexTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            <span>本日のヘッドライン目次（30秒スキャン）</span>
+          </h2>
+          <div class="panel-head-aside">
+            {sns_quick_link}
+            <span class="panel-note">タップで各記事へジャンプ</span>
           </div>
-          <div class="filter-actions">
-            <span class="filter-status">表示中: <strong id="visibleArticlesCount">{total_count}</strong> / {total_count} 件</span>
-            <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
-            <div class="view-mode-toggle" id="viewModeToggle" role="button" tabindex="0" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え">
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-text">3行コンパクト表示</span>
+        </div>
+        <ol class="qi-list">
+{quick_index_html}
+        </ol>
+      </section>
+
+      <section class="articles-section" id="articlesSection">
+        <div class="section-head">
+          <h2 class="section-title">厳選トピックス</h2>
+          <span class="section-rule" aria-hidden="true"></span>
+          <span class="section-count">{total_count} stories</span>
+        </div>
+
+        <div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label">
+              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              <span>Filter</span>
+            </div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">{total_count}</strong> / {total_count}</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <div class="view-mode-toggle" id="viewModeToggle" role="button" tabindex="0" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え">
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                <span class="toggle-text">3行コンパクト</span>
+              </div>
             </div>
           </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">{total_count}</span></button>
+            <span class="chip-divider" aria-hidden="true"></span>
+            <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">{sum(1 for a in articles if a.get('region') != 'GLOBAL')}</span></button>
+            <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">{sum(1 for a in articles if a.get('region') == 'GLOBAL')}</span></button>
+            <span class="chip-divider" aria-hidden="true"></span>
+            {cat_chips_html}
+          </div>
         </div>
-        <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
-          <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">{total_count}</span></button>
-          <span class="chip-divider" aria-hidden="true"></span>
-          <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">{sum(1 for a in articles if a.get('region') != 'GLOBAL')}</span></button>
-          <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">{sum(1 for a in articles if a.get('region') == 'GLOBAL')}</span></button>
-          <span class="chip-divider" aria-hidden="true"></span>
-          {cat_chips_html}
+
+        <div class="articles-list detail-view" id="articlesList">
+{"".join(articles_html)}
         </div>
-      </div>
 
-      <div class="articles-list detail-view" id="articlesList">
-        {"".join(articles_html)}
-      </div>
+        <div class="no-results-msg" id="noResultsMsg" style="display:none;">
+          <p>該当する条件のニュースは見つかりませんでした。</p>
+        </div>
+      </section>
 
-      <div class="no-results-msg" id="noResultsMsg" style="display:none;">
-        <p>該当する条件のニュースは見つかりませんでした。</p>
-      </div>
-    </section>
+      {sns_buzz_html}
 
-    {sns_buzz_html}
-
-    <nav class="issue-nav" aria-label="前後の号への移動">
-      {p_link}
-      <a href="../" class="nav-archive">一覧へ戻る</a>
-      {n_link}
-    </nav>
+      <nav class="issue-nav" aria-label="前後の号への移動">
+        {p_link}
+        <a href="../" class="nav-archive">一覧へ戻る</a>
+        {n_link}
+      </nav>
+    </article>
   </main>
 
   <footer class="site-footer">
@@ -1248,7 +1235,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
           <div class="footer-links">
             <a href="https://tk.st/">Home</a><a href="../">{config['brand_title']}</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a href="https://tk.st/contact/">Contact</a>
           </div>
-          <p>&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
         </div>
         <div class="footer-right-spacer" aria-hidden="true"></div>
       </div>
@@ -1256,7 +1243,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   </footer>
 
   <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
   </a>
 
   <script src="../../../data/buy-me-oil.js"></script>
@@ -1297,27 +1284,35 @@ def render_top_index_html(config, articles_history):
     latest_engine_type = esc(latest.get('engine_type', 'deepseek')) if latest else ""
     meta_pills_html = build_meta_pills_html(config, latest)
 
-    history_cards = []
-    for issue in articles_history[:40]:
+    # 当日号はすぐ上の「Latest Issue」に出るため、アーカイブには含めない
+    archive_source = articles_history[1:] if latest else articles_history
+
+    history_rows = []
+    for issue in archive_source[:40]:
         d = esc(issue['date'])
         d_fmt = f"{d[:4]}年{int(d[4:6])}月{int(d[6:8])}日"
         summary_preview = esc(issue.get('summary', '') or f"昨日の{config['brand_title_short']}まとめ。")
         count = int(issue.get('count', len(issue.get('articles', []))))
         title = esc(issue.get('title', f'{d_fmt}号まとめ'))
         eng_label = esc(issue.get('generated_by', ''))
-        eng_tag = f'<span class="history-engine">• {eng_label.split()[0]}</span>' if eng_label else ''
+        eng_tag = f'<span class="archive-engine">{eng_label.split()[0]}</span>' if eng_label else ''
 
-        history_cards.append(f"""
-        <a href="{d}/" class="history-card">
-          <div class="history-card-header">
-            <span class="history-date">{d_fmt} 号</span>
-            <span class="history-count">{count} 本 {eng_tag}</span>
-          </div>
-          <div class="history-title">{title}</div>
-          <div class="history-desc">{summary_preview}</div>
-          <div class="history-arrow">記事を読む &rarr;</div>
-        </a>
-        """)
+        history_rows.append(f"""        <li class="archive-item">
+          <a href="{d}/" class="archive-row">
+            <span class="archive-date">
+              <span class="archive-day">{d[6:8]}</span>
+              <span class="archive-ym">{d[:4]}.{d[4:6]}</span>
+            </span>
+            <span class="archive-body">
+              <span class="archive-title">{title}</span>
+              <span class="archive-desc">{summary_preview}</span>
+            </span>
+            <span class="archive-meta">
+              <span class="archive-count">{count} 本</span>
+              {eng_tag}
+            </span>
+          </a>
+        </li>""")
 
     faq_jsonld_entities = []
     faq_html_items = []
@@ -1333,7 +1328,7 @@ def render_top_index_html(config, articles_history):
           <summary class="faq-question">
             <span class="faq-q-badge">Q</span>
             <span class="faq-q-text">{esc(item['q'])}</span>
-            <span class="faq-toggle-icon"></span>
+            <span class="faq-toggle-icon" aria-hidden="true"></span>
           </summary>
           <div class="faq-answer">
             <p>{item['a']}</p>
@@ -1431,6 +1426,24 @@ def render_top_index_html(config, articles_history):
     ]
     portal_jsonld_str = escape_jsonld_for_script(json.dumps({"@context": "https://schema.org", "@graph": portal_graph}, ensure_ascii=False, indent=2))
 
+    featured_html = f"""
+    <section class="featured" aria-labelledby="featuredTitle">
+      <div class="featured-head">
+        <span class="featured-badge">Latest Issue</span>
+        <span class="featured-date">{latest_date_formatted} 08:00 号</span>
+        <span class="engine-badge engine-{latest_engine_type}"><span class="engine-dot"></span>{latest_engine}</span>
+      </div>
+      <h2 class="featured-title" id="featuredTitle">
+        <a href="{latest["date"] if latest else ""}/">{esc(latest.get("title", f"{latest_date_formatted}号 速報")) if latest else ""}</a>
+      </h2>
+      <ul class="featured-highlights">{latest_highlights}</ul>
+      <a href="{latest["date"] if latest else ""}/" class="featured-btn">
+        <span>最新号を読む</span>
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
+    </section>
+    """ if latest else ''
+
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -1464,7 +1477,7 @@ def render_top_index_html(config, articles_history):
   <link rel="apple-touch-icon" href="../../images/favicons/{config['favicon_file']}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700&family=Outfit:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
   <script type="application/ld+json">
 {portal_jsonld_str}
   </script>
@@ -1472,83 +1485,70 @@ def render_top_index_html(config, articles_history):
 </head>
 <body id="top">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
   <header class="site-header">
-    <div class="container header-inner">
-      <a href="./" class="brand-logo">
-        {config['brand_logo_svg']}
-        <div>
-          <div class="brand-title">{config['brand_title']}</div>
-          <span class="brand-subtitle">{config['brand_subtitle']}</span>
-        </div>
+    <div class="header-inner">
+      <a href="./" class="brand">
+        <span class="brand-mark">{config['brand_logo_svg']}</span>
+        <span class="brand-text">
+          <span class="brand-name">{config['brand_title']}</span>
+          <span class="brand-tag">{config['brand_subtitle']}</span>
+        </span>
       </a>
-      <div class="header-nav">
-        <a href="rss.xml" class="nav-icon-btn" target="_blank" rel="noopener noreferrer" aria-label="RSSを購読" title="RSSを購読">
-          {ICON_RSS_SVG}
-        </a>
-      </div>
+      <nav class="header-actions" aria-label="メディア内ナビゲーション">
+        <a href="#faq" class="header-link">FAQ</a>
+        <a href="rss.xml" class="icon-btn" target="_blank" rel="noopener noreferrer" aria-label="RSSを購読" title="RSSを購読">{ICON_RSS_SVG}</a>
+      </nav>
     </div>
   </header>
 
   <main class="container">
-    <nav class="breadcrumbs">
-      <a href="https://tk.st/">⌂ Shinya Takeda</a><span>/</span>
-      <a href="../">Job</a><span>/</span>
+    <nav class="breadcrumbs" aria-label="パンくずリスト">
+      <a href="https://tk.st/">Shinya Takeda</a><span class="sep" aria-hidden="true">/</span>
+      <a href="../">Job</a><span class="sep" aria-hidden="true">/</span>
       <strong>{config['brand_title']}</strong>
     </nav>
 
-    <section class="portal-hero">
-      <div class="badge-pill"><span class="badge-dot"></span>毎朝 08:00 JST 配信</div>
-      <h1 class="portal-title">{config['media_name']}</h1>
-      <p class="portal-desc">{config['portal_hero_desc']}</p>
-      <div class="meta-pills">
+    <section class="masthead">
+      <div class="masthead-inner">
+        <h1 class="masthead-title">{config['media_name']}</h1>
+        <div class="masthead-rule" aria-hidden="true"></div>
+        <p class="masthead-desc">{config['portal_hero_desc']}</p>
+        <div class="meta-pills">
 {meta_pills_html}
-      </div>
-    </section>
-
-    {f'''
-    <section class="featured-latest">
-      <div class="featured-header">
-        <div class="featured-meta">
-          <span class="featured-badge">Latest Issue</span>
-          <span class="featured-date">{latest_date_formatted} 08:00 号</span>
         </div>
-        <div><span class="engine-badge engine-{latest_engine_type}"><span class="engine-dot"></span>{latest_engine}</span></div>
       </div>
-      <h2 class="featured-title">
-        <a href="{latest["date"]}/">{esc(latest.get("title", f"{latest_date_formatted}号 速報"))}</a>
-      </h2>
-      <ul class="featured-highlights">{latest_highlights}</ul>
-      <a href="{latest["date"]}/" class="featured-btn">
-        <span>最新号を読む</span>
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-      </a>
     </section>
-    ''' if latest else ''}
-
-    <section class="archive-section">
-      <h2 style="font-size:20px; font-weight:800; margin-bottom:18px;">バックナンバー・アーカイブ</h2>
-      <div class="history-grid">{"".join(history_cards)}</div>
+{featured_html}
+    <section class="archive-section" aria-labelledby="archiveTitle">
+      <div class="section-head">
+        <h2 class="section-title" id="archiveTitle">バックナンバー・アーカイブ</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+        <span class="section-count">{len(archive_source)} issues</span>
+      </div>
+      <ol class="archive-list">
+{"".join(history_rows)}
+      </ol>
     </section>
 
-    <section class="faq-section" id="faq">
-      <div class="faq-header">
-        <h2>
-          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-          よくあるご質問（FAQ）
-        </h2>
+    <section class="faq-section" id="faq" aria-labelledby="faqTitle">
+      <div class="section-head">
+        <h2 class="section-title" id="faqTitle">よくあるご質問</h2>
+        <span class="section-rule" aria-hidden="true"></span>
+        <span class="section-count">{len(config['faq_items'])} questions</span>
       </div>
       <div class="faq-accordion">
 {faq_accordion_html}
       </div>
     </section>
 
-    <div class="curator-card">
-      <div class="curator-avatar">ST</div>
+    <section class="curator" aria-labelledby="curatorTitle">
+      <div class="curator-avatar" aria-hidden="true">ST</div>
       <div class="curator-info">
-        <h4>Curated by Shinya Takeda</h4>
+        <h2 id="curatorTitle">Curated by Shinya Takeda</h2>
         <p>EC/流通のUI/UX改善からAI・Web3プロダクト開発まで。ビジネス課題をテクノロジーで解決するデジタルマーケター / テックリードのポートフォリオをご覧ください。<a href="../" class="text-link">Works &amp; Profileを見る &rarr;</a></p>
       </div>
-    </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -1561,7 +1561,7 @@ def render_top_index_html(config, articles_history):
           <div class="footer-links">
             <a href="https://tk.st/">Home</a><a href="./">{config['brand_title']}</a><a href="#faq">FAQ</a><a href="rss.xml">RSS</a><a href="https://tk.st/contact/">Contact</a>
           </div>
-          <p>&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
         </div>
         <div class="footer-right-spacer" aria-hidden="true"></div>
       </div>
@@ -1569,7 +1569,7 @@ def render_top_index_html(config, articles_history):
   </footer>
 
   <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
   </a>
 
   <script src="../../data/buy-me-oil.js"></script>

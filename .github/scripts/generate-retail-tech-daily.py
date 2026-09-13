@@ -59,7 +59,7 @@ CATEGORY_PILL_LABELS = {
 
 FAQ_ITEMS = [
     {
-        "q": "「Retail Tech Daily Brief」とはどのようなメディアですか？",
+        "q": "「Retail Tech Daily」とはどのようなメディアですか？",
         "a": "スマートカート、無人店舗・ウォークスルー決済、リテールメディア、電子棚札、RFID、需要予測AIなど、国内外のリテールテック・流通DXの最前線を毎朝8:00（JST）に集約・解説する日刊ブリーフです。客観的な事実報道に加え、現場のオペレーションや生活者の購買UX、ビジネス構造に与える示唆（Why it matters）をプロの視点で付与しています。"
     },
     {
@@ -83,9 +83,9 @@ FAQ_ITEMS = [
 BRAND_LOGO_SVG = """<svg viewBox="0 0 64 64" width="34" height="34" style="flex-shrink:0; border-radius:7px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
   <defs>
     <linearGradient id="headerCartBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0b192e" />
-      <stop offset="60%" stop-color="#0f4c81" />
-      <stop offset="100%" stop-color="#1e293b" />
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
     </linearGradient>
     <linearGradient id="headerCartSignal" x1="0%" y1="100%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#38bdf8" />
@@ -177,7 +177,7 @@ def fallback_rule_based(candidates, yesterday_str):
 
 CONFIG = {
     'media_id': 'retailtechdaily',
-    'media_name': 'Retail Tech Daily Brief',
+    'media_name': 'Retail Tech Daily',
     'brand_title': 'Retail Tech Daily',
     'brand_title_short': 'リテールテック＆流通DX',
     'brand_subtitle': '毎朝8時の流通DX・リテールテック日刊速報',
@@ -188,7 +188,7 @@ CONFIG = {
     'favicon_file': 'retail-tech-favicon.svg',
     'ogp_target': 'retail-tech',
     'portal_ogp_image': 'https://tk.st/images/ogp/retail-tech-ogp.webp',
-    'theme_color': '#0f4c81',
+    'theme_color': '#1a47d4',
     'share_prefix': '【流通DX日刊速報】',
     'user_agent': 'RetailTechDailyBrief/3.0',
     'data_json_path': os.path.join(REPO_ROOT, 'data', 'retail-tech-daily.json'),

@@ -123,7 +123,6 @@
     }
 
     body {
-      margin: 0;
       overflow-x: clip;
     }
 
@@ -141,31 +140,18 @@
     .nav-inner,
     .brand-link,
     .nav-links,
-    .btn-terminal-back,
-    .btn-yt-nav,
     .hero-brand-header,
     .hero-badges,
     .hero-actions,
-    .btn-hero-primary,
-    .btn-hero-secondary,
     .machine-badge-box,
-    .badge-250th,
-    .badge-limited,
-    .viewer-expand-btn,
-    .viewer-hint-badge,
     .viewer-controls,
-    .viewer-btn,
     .viewer-slider-wrap,
-    .shop-btn,
-    .teaser-status,
     .teaser-btn-row,
     .footer-inner,
     .footer-links,
     .footer-copy,
-    .viewer-modal,
     .viewer-modal-header,
     .viewer-modal-title,
-    .viewer-modal-close,
     .viewer-modal-body {
       display: flex;
       align-items: center;
@@ -197,6 +183,7 @@
     .teaser-status,
     .viewer-modal-close {
       display: inline-flex;
+      align-items: center;
     }
 
     .btn-yt-nav,
@@ -205,9 +192,7 @@
     .viewer-expand-btn,
     .viewer-btn,
     .viewer-slider,
-    .viewer-modal-close,
-    .viewer-canvas-box,
-    .viewer-modal-body {
+    .viewer-modal-close {
       cursor: pointer;
     }
 
@@ -324,13 +309,11 @@
     .viewer-modal-container {
       z-index: 1;
       display: flex;
-      width: min(94vw, 1180px);
       flex-direction: column;
     }
 
     .viewer-modal-body {
       flex: 1;
-      min-height: 0;
     }
 
     .viewer-modal-body img {
@@ -340,18 +323,13 @@
 
     :root {
       --ink: #08090b;
-      --ink-soft: #111318;
-      --ink-raised: #171a20;
       --paper: #efe9dc;
       --paper-bright: #faf7ef;
-      --paper-dim: #d9d0c1;
-      --chrome: #b9bec5;
       --blue: #0758c8;
       --blue-bright: #2274e8;
       --red: #c62b32;
       --red-bright: #eb3941;
       --line-dark: rgba(255, 255, 255, 0.13);
-      --line-light: rgba(8, 9, 11, 0.16);
       --display: 'Bebas Neue', Impact, sans-serif;
       --sans: 'Montserrat', Arial, sans-serif;
       --jp: 'Zen Kaku Gothic New', sans-serif;
@@ -371,7 +349,6 @@
     body {
       min-width: 320px;
       background: var(--ink);
-      background-image: none;
       color: var(--paper-bright);
     }
 
@@ -443,9 +420,7 @@
 
     .container {
       width: min(calc(100% - 48px), var(--page));
-      max-width: none;
       margin: 0 auto;
-      padding: 0;
     }
 
     .section {
@@ -458,7 +433,6 @@
       grid-template-columns: minmax(140px, .45fr) 1.55fr;
       gap: 24px 48px;
       align-items: end;
-      max-width: none;
       margin: 0 0 clamp(50px, 6vw, 82px);
       text-align: left;
     }
@@ -467,10 +441,6 @@
       align-self: start;
       display: flex;
       gap: 12px;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: none;
       color: var(--red);
       font-family: var(--sans);
       font-size: 10px;
@@ -489,7 +459,6 @@
     }
 
     .section-title {
-      margin: 0;
       color: inherit;
       font-family: var(--display);
       font-size: clamp(45px, 6vw, 82px);
@@ -501,7 +470,6 @@
     .section-desc {
       grid-column: 2;
       max-width: 680px;
-      margin: 0;
       color: inherit;
       font-size: 14px;
       line-height: 1.9;
@@ -532,16 +500,11 @@
       letter-spacing: .095em;
     }
 
-    .brand-link:hover {
-      color: #fff;
-    }
-
     .nav-logo {
       width: 40px;
       height: 40px;
       border: 1px solid rgba(255, 255, 255, .3);
       border-radius: 50%;
-      box-shadow: none;
     }
 
     .brand-badge {
@@ -588,15 +551,11 @@
     }
 
     .btn-terminal-back {
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      color: rgba(255, 255, 255, .44);
+      color: rgba(255, 255, 255, .62);
       font-size: 10px;
     }
 
     .btn-terminal-back:hover {
-      border: 0;
       color: #fff;
     }
 
@@ -614,7 +573,6 @@
     .btn-yt-nav:hover {
       background: transparent;
       color: #fff;
-      transform: none;
     }
 
     .hero {
@@ -655,8 +613,6 @@
       opacity: .96;
       background-position: center center;
       filter: saturate(.78) contrast(1.08) brightness(.72);
-      -webkit-mask-image: none;
-      mask-image: none;
       transform: scale(1.015);
       animation: heroIn 1.6s var(--ease) both;
     }
@@ -667,7 +623,6 @@
     }
 
     .hero > .container {
-      position: relative;
       z-index: 1;
       display: flex;
       align-items: center;
@@ -675,9 +630,7 @@
     }
 
     .hero-content {
-      position: static;
       width: min(100%, 760px);
-      max-width: none;
       animation: contentIn 1s .15s var(--ease) both;
     }
 
@@ -695,11 +648,6 @@
       width: 72px;
       height: 72px;
       border: 1px solid rgba(255, 255, 255, .35);
-      box-shadow: 0 16px 42px rgba(0, 0, 0, .45);
-    }
-
-    .hero-logo-img:hover {
-      transform: none;
       box-shadow: 0 16px 42px rgba(0, 0, 0, .45);
     }
 
@@ -724,8 +672,6 @@
     }
 
     .hero-pill.anniversary {
-      border-color: rgba(255, 255, 255, .24);
-      background: rgba(7, 9, 12, .4);
       color: #fff;
     }
 
@@ -810,7 +756,6 @@
     .btn-hero-primary {
       border: 1px solid var(--red);
       background: var(--red);
-      box-shadow: none;
     }
 
     .btn-hero-primary:hover {
@@ -837,7 +782,6 @@
       left: 0;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
-      padding: 0;
       border: 1px solid var(--line-dark);
       border-bottom: 0;
       background: rgba(8, 9, 11, .72);
@@ -872,7 +816,7 @@
 
     .stat-label {
       margin-top: 7px;
-      color: rgba(255, 255, 255, .44);
+      color: rgba(255, 255, 255, .62);
       font-family: var(--sans);
       font-size: 8px;
       letter-spacing: .16em;
@@ -902,8 +846,6 @@
     }
 
     .story-track {
-      max-width: none;
-      margin: 0;
       counter-reset: story;
     }
 
@@ -920,12 +862,10 @@
       grid-template-columns: clamp(104px, 13vw, 170px) minmax(0, 1fr);
       gap: clamp(26px, 5vw, 72px);
       min-height: 168px;
-      margin: 0;
       counter-increment: story;
     }
 
-    .story-marker,
-    .story-marker.accident {
+    .story-marker {
       top: 9px;
       left: clamp(104px, 13vw, 170px);
       width: 13px;
@@ -950,12 +890,12 @@
     }
 
     .story-date {
-      color: var(--ink) !important;
+      color: var(--ink);
       font-family: var(--display);
       font-size: clamp(30px, 3.2vw, 46px);
       letter-spacing: .03em;
       line-height: 1;
-      opacity: .78 !important;
+      opacity: .78;
     }
 
     .story-node > .story-card {
@@ -963,11 +903,7 @@
       grid-column: 2;
       grid-row: 1;
       max-width: 820px;
-      margin: 0;
       padding: 0 0 48px;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
     }
 
     .story-card::before {
@@ -979,17 +915,6 @@
       font-family: var(--display);
       font-size: 52px;
       line-height: 1;
-    }
-
-    .story-card:hover,
-    .story-card.accent-accident,
-    .story-card.accent-liberty {
-      border: 0;
-      background: transparent;
-    }
-
-    .story-mobile-date {
-      display: none;
     }
 
     .story-title {
@@ -1037,20 +962,13 @@
       gap: 34px;
     }
 
-    .machine-main-card {
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-    }
-
     .machine-badge-box {
       gap: 8px;
       margin-bottom: 12px;
     }
 
     .machine-code {
-      color: rgba(255, 255, 255, .36);
+      color: rgba(255, 255, 255, .62);
       font-family: ui-monospace, monospace;
       font-size: 9px;
       letter-spacing: .12em;
@@ -1079,7 +997,6 @@
     }
 
     .machine-name {
-      margin: 0;
       color: #fff;
       font-family: var(--display);
       font-size: clamp(60px, 8vw, 108px);
@@ -1090,7 +1007,7 @@
 
     .machine-sub {
       margin: 14px 0 38px;
-      color: rgba(255, 255, 255, .47);
+      color: rgba(255, 255, 255, .62);
       font-family: var(--sans);
       font-size: 10px;
       font-weight: 700;
@@ -1098,18 +1015,14 @@
     }
 
     .machine-viewer-wrap {
-      position: relative;
       margin: 0 0 34px;
       border: 1px solid rgba(255, 255, 255, .16);
-      border-radius: 0;
-      overflow: hidden;
       background: #f7f7f4;
       box-shadow: 0 36px 90px rgba(0, 0, 0, .28);
     }
 
     .viewer-canvas-box {
       min-height: 520px;
-      border-radius: 0;
       background: #f7f7f4;
     }
 
@@ -1161,14 +1074,8 @@
     }
 
     .viewer-hint-overlay {
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: transparent;
+      inset: 0;
       pointer-events: none;
-      transform: none;
     }
 
     .viewer-hint-badge {
@@ -1176,7 +1083,6 @@
       bottom: 24px;
       left: 50%;
       padding: 9px 13px;
-      border: 0;
       border-radius: 2px;
       background: var(--ink);
       color: #fff;
@@ -1276,7 +1182,7 @@
 
     .viewer-frame-counter {
       min-width: 42px;
-      color: rgba(8, 9, 11, .5);
+      color: rgba(8, 9, 11, .68);
       font-size: 9px;
     }
 
@@ -1284,16 +1190,13 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 0;
-      margin: 0;
       border: 1px solid var(--line-dark);
     }
 
     .feature-chip {
       min-height: 150px;
       padding: 24px 20px;
-      border: 0;
       border-right: 1px solid var(--line-dark);
-      border-radius: 0;
       background: rgba(255, 255, 255, .025);
       color: rgba(255, 255, 255, .5);
       font-size: 11px;
@@ -1316,7 +1219,6 @@
     .machine-specs {
       grid-template-columns: repeat(4, 1fr);
       gap: 0;
-      margin: 0;
       border: 1px solid var(--line-dark);
       border-top: 0;
     }
@@ -1324,10 +1226,7 @@
     .spec-box {
       min-height: 132px;
       padding: 23px 20px;
-      border: 0;
       border-right: 1px solid var(--line-dark);
-      border-radius: 0;
-      background: transparent;
     }
 
     .spec-box:last-child {
@@ -1352,7 +1251,7 @@
 
     .spec-s {
       margin-top: 6px;
-      color: rgba(255, 255, 255, .38);
+      color: rgba(255, 255, 255, .62);
       font-size: 10px;
       line-height: 1.6;
     }
@@ -1364,7 +1263,6 @@
       align-items: center;
       padding: 28px;
       border: 1px solid var(--line-dark);
-      border-radius: 0;
       background: rgba(255, 255, 255, .025);
     }
 
@@ -1372,15 +1270,7 @@
       grid-column: 1;
       height: 100%;
       min-height: 330px;
-      margin: 0 !important;
-      border-radius: 0;
       filter: saturate(.7) contrast(1.08);
-    }
-
-    .side-photo-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
     }
 
     .shop-copy {
@@ -1396,7 +1286,6 @@
       gap: 10px;
       align-items: center;
       align-self: stretch;
-      margin: 0;
       color: #fff;
       font-family: var(--sans);
       font-size: clamp(17px, 2.1vw, 25px);
@@ -1446,8 +1335,6 @@
       position: relative;
       min-height: 280px;
       padding: clamp(30px, 4vw, 52px);
-      border: 0;
-      border-radius: 0;
       background: var(--paper);
       counter-increment: pillar;
       overflow: hidden;
@@ -1465,9 +1352,7 @@
     }
 
     .theme-box:hover {
-      border: 0;
       background: var(--paper-bright);
-      transform: none;
     }
 
     .theme-icon {
@@ -1518,10 +1403,7 @@
       position: relative;
       max-width: 850px;
       padding: 0 0 0 clamp(28px, 5vw, 70px);
-      border: 0;
       border-left: 1px solid rgba(255, 255, 255, .32);
-      border-radius: 0;
-      background: transparent;
       text-align: left;
     }
 
@@ -1728,7 +1610,7 @@
     .footer-sub {
       max-width: 550px;
       margin-top: 4px;
-      color: rgba(255, 255, 255, .35);
+      color: rgba(255, 255, 255, .62);
       font-family: var(--sans);
       font-size: 8px;
       letter-spacing: .07em;
@@ -1753,7 +1635,7 @@
     .footer-copy {
       padding-top: 24px;
       border-top: 1px solid var(--line-dark);
-      color: rgba(255, 255, 255, .27);
+      color: rgba(255, 255, 255, .62);
       font-family: var(--sans);
       font-size: 8px;
       letter-spacing: .06em;
@@ -1773,6 +1655,7 @@
 
     .viewer-modal[open] {
       display: flex;
+      align-items: center;
     }
 
     .viewer-modal::backdrop {
@@ -1786,7 +1669,6 @@
       max-width: 1180px;
       max-height: calc(100svh - 40px);
       border: 1px solid rgba(255, 255, 255, .2);
-      border-radius: 0;
       background: #f5f5f1;
       box-shadow: 0 40px 100px rgba(0, 0, 0, .62);
     }
@@ -1819,7 +1701,6 @@
       border-color: var(--ink);
       background: var(--ink);
       color: #fff;
-      transform: none;
     }
 
     .viewer-modal-body {
@@ -1903,25 +1784,20 @@
         padding: 94px 16px 138px;
       }
       .hero-content { width: 100%; min-width: 0; }
-      .hero-brand-header { align-items: flex-start; margin-bottom: 26px; }
-      .hero-brand-header { flex-direction: column; }
+      .hero-brand-header { align-items: flex-start; flex-direction: column; margin-bottom: 26px; }
       .hero-badges {
-        display: flex;
-        max-width: 100%;
         width: 100%;
-        flex-wrap: wrap;
+        max-width: 100%;
       }
       .hero-logo-img { width: 58px; height: 58px; }
       .hero-title-en { font-size: clamp(68px, 23vw, 104px); }
       .hero-title-en .accent { margin-left: 20px; }
       .hero-title-ja,
       .hero-lead,
-      .hero-actions { margin-left: 20px; }
-      .hero-title-ja,
-      .hero-lead,
       .hero-actions {
         width: auto;
         max-width: none;
+        margin-left: 20px;
         margin-right: 0;
       }
       .hero-title-ja { font-size: 16px; overflow-wrap: anywhere; }
@@ -1931,17 +1807,13 @@
       .btn-hero-primary,
       .btn-hero-secondary { width: 100%; }
       .hero-stats > div { min-height: 76px; padding: 15px 12px; }
-      .hero-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
       .stat-num { font-size: 28px; }
-      .stat-label { font-size: 6px; line-height: 1.4; }
+      .stat-label { font-size: 8px; line-height: 1.4; }
       .story-track::before,
-      .story-marker,
-      .story-marker.accident { left: 88px; }
+      .story-marker { left: 88px; }
       .story-node { grid-template-columns: 88px minmax(0, 1fr); gap: 24px; min-height: 0; }
       .story-date { font-size: 29px; }
-      .story-card,
-      .story-node:nth-child(even) .story-card,
-      .story-node:nth-child(odd) .story-card { padding-bottom: 46px; }
+      .story-node > .story-card { padding-bottom: 46px; }
       .story-card::before { display: none; }
       .story-title { padding-right: 0; font-size: 16px; }
       .story-body { font-size: 11.5px; }
@@ -1969,12 +1841,11 @@
       .feature-chip:last-child,
       .spec-box:last-child { border-bottom: 0; }
       .shop-card {
-        display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: 0;
         padding: 18px;
       }
-      .side-photo-wrap { min-height: 230px; margin-bottom: 25px !important; }
+      .side-photo-wrap { min-height: 230px; margin-bottom: 25px; }
       .shop-title { font-size: 17px; }
       .shop-btn { width: 100%; }
       .themes-grid { grid-template-columns: 1fr; }
@@ -1987,7 +1858,7 @@
       .ride-log > div:nth-child(-n+2) { border-bottom: 1px solid rgba(255, 255, 255, .16); }
       .teaser-btn-row { align-items: stretch; flex-direction: column; }
       .footer-inner { align-items: flex-start; flex-direction: column; }
-      .footer-links { align-items: flex-start; flex-wrap: wrap; }
+      .footer-links { align-items: flex-start; }
       .footer-copy { align-items: flex-start; gap: 10px; flex-direction: column; }
       .viewer-modal { padding: 8px; }
       .viewer-modal-container { max-height: calc(100svh - 16px); }
@@ -2048,14 +1919,12 @@
       <div class="hero-content">
         <!-- Hero Brand Header with Official Logo -->
         <div class="hero-brand-header">
-          <div class="hero-logo-wrap">
-            <img src="../images/contents/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式エンブレムロゴ" class="hero-logo-img"
-              width="84" height="84">
-          </div>
+          <img src="../images/contents/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式エンブレムロゴ" class="hero-logo-img"
+            width="84" height="84">
           <div class="hero-badges">
             <span class="hero-pill anniversary">★ UNITED STATES 250 / 1776—2026</span>
             <span class="hero-pill">日本限定 39 台</span>
-            <span class="hero-pill status">始動準備中 / COMING SOON</span>
+            <span class="hero-pill status" data-channel-status>始動準備中 / COMING SOON</span>
           </div>
         </div>
 
@@ -2127,7 +1996,6 @@
         <div class="story-node">
           <div class="story-marker"></div>
           <div class="story-card">
-            <div class="story-mobile-date">2007</div>
             <h3 class="story-title">映画『イージー★ライダー』との出会い</h3>
             <p class="story-body">
               大学生のとき、映画『イージー★ライダー』を観てハーレーに強烈な憧憬を抱く。ヒッピー文化、風と自由への生涯にわたる傾倒がここから始まり、休日のレンタルバイクで風を感じる原点となる。
@@ -2141,7 +2009,6 @@
           <div class="story-marker"></div>
           <div class="story-date-wrap"><span class="story-date">2024</span></div>
           <div class="story-card">
-            <div class="story-mobile-date">2024</div>
             <h3 class="story-title">38歳、スポーツモデル「ナイトスター」新車購入</h3>
             <p class="story-body">
               現在もお世話になっているハーレーダビッドソン東久留米店にて、最新水冷レボリューションマックス搭載のスポーツモデル「ナイトスター (RH975)」を新車購入。毎週末のツーリングに胸を躍らせる。
@@ -2152,8 +2019,7 @@
         <!-- 2025 -->
         <div class="story-node">
           <div class="story-marker accident"></div>
-          <div class="story-card accent-accident">
-            <div class="story-mobile-date">2025.07</div>
+          <div class="story-card">
             <h3 class="story-title">交差点事故・40日間の入院と記憶喪失</h3>
             <p class="story-body">
               仕事からの帰宅中、交差点で右折してきた対向車とナイトスターが激しく衝突。40日間にわたる入院、腕と腰の骨折、そして記憶障害。日常生活への復帰すら危ぶまれる生死の淵を経験し、愛機は廃車となった。
@@ -2167,7 +2033,6 @@
           <div class="story-marker"></div>
           <div class="story-date-wrap"><span class="story-date">2025.08</span></div>
           <div class="story-card">
-            <div class="story-mobile-date">2025.08</div>
             <h3 class="story-title">ver 2.0 再起動と「メメント・モリ」</h3>
             <p class="story-body">
               看護師さんたちの献身的なケア、周囲の支えを通じて価値観が一変。死を常に自覚し今を生き切る決意として、入院中に起草した遺言書を法務局へ提出。「ver 2.0」としての第二の人生が始まった。
@@ -2178,8 +2043,7 @@
         <!-- 2026 -->
         <div class="story-node">
           <div class="story-marker"></div>
-          <div class="story-card accent-liberty">
-            <div class="story-mobile-date">2026</div>
+          <div class="story-card">
             <h3 class="story-title">「人生にはハーレーが必要だ」—— 建国250周年 Liberty Edition との運命</h3>
             <p class="story-body">
               「これ以上周囲に心配をかけられない」と一度はバイクを諦めかけたが、魂の底から湧き上がる衝動は抑えられなかった。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ。アメリカ建国250周年を記念して日本にわずか39台のみ割り当てられた希少な『Heritage
@@ -2205,19 +2069,17 @@
 
       <div class="machine-grid">
         <!-- Machine Specs -->
-        <div class="machine-main-card">
-          <div>
-            <div class="machine-badge-box">
-              <span class="badge-250th">★ UNITED STATES 250</span>
-              <span class="badge-limited">日本限定 39 台</span>
-              <span class="machine-code">FLHC / 2026</span>
-            </div>
-            <div class="machine-name">HERITAGE CLASSIC</div>
-            <div class="machine-sub">2026 LIBERTY EDITION</div>
+        <div>
+          <div class="machine-badge-box">
+            <span class="badge-250th">★ UNITED STATES 250</span>
+            <span class="badge-limited">日本限定 39 台</span>
+            <span class="machine-code">FLHC / 2026</span>
           </div>
+          <div class="machine-name">HERITAGE CLASSIC</div>
+          <div class="machine-sub">2026 LIBERTY EDITION</div>
 
           <!-- 360° Interactive Bike Viewer -->
-          <div class="machine-viewer-wrap" id="bikeViewerWrap" role="region"
+          <div class="machine-viewer-wrap" role="region"
             aria-label="ハーレーダビッドソン 2026 リバティエディション 360度インタラクティブビューワー">
             <div class="viewer-canvas-box" id="bikeCanvasBox" tabindex="0"
               role="group" aria-roledescription="360度ビューワー"
@@ -2316,7 +2178,6 @@
               <div class="spec-s">最低地上高 120 mm / 軸距 1,630 mm</div>
             </div>
           </div>
-
         </div>
 
         <!-- Right column: Dealer Photo & Thanks -->
@@ -2428,7 +2289,7 @@
             <span>↗</span>
           </a>
           <a href="/contact/?subject=LIBERTY%20MOTOVLOG%20撮影・取材・ツーリングのお誘い"
-            class="btn-hero-secondary btn-contact">
+            class="btn-hero-secondary">
             <span>撮影・取材のお問い合わせ</span>
             <span>→</span>
           </a>
@@ -2489,6 +2350,8 @@
         <img id="modal360Img" alt="ハーレーダビッドソン 2026 リバティエディション 拡大360度ビュー"
           width="1200" height="720" decoding="async" draggable="false">
         <div class="viewer-modal-hint">ドラッグまたはスワイプで360度回転</div>
+        <p class="viewer-status" id="modalViewerStatus" role="status" aria-live="polite"></p>
+        <p class="sr-only" id="modalViewerA11yStatus" aria-live="polite" aria-atomic="true"></p>
       </div>
 
       <div class="viewer-controls">
@@ -2509,25 +2372,22 @@
 
   <!-- Channel Experience & 360° Viewer -->
   <script>
-    // 公開後はこの設定だけを更新する。
-    const MOTOVLOG_CHANNEL = Object.freeze({
-      status: 'coming-soon',
-      youtubeUrl: 'https://www.youtube.com/@liberty_motovlog',
-      subscribeUrl: 'https://www.youtube.com/@liberty_motovlog?sub_confirmation=1',
-      instagramUrl: 'https://www.instagram.com/liberty_motovlog/',
-      latestVideo: null,
-      // latestVideo: { id: 'YOUTUBE_ID', title: '動画タイトル', description: '動画概要',
-      //   uploadDate: '2026-00-00', duration: 'PT00M00S',
-      //   thumbnailUrl: 'https://tk.st/images/ogp/motovlog-ogp.jpg' },
-      latestRide: null
-      // latestRide: { route: '出発地 → 目的地', distance: '000 km',
-      //   recorded: '2026.00.00', weather: 'SUNNY / 00°C' }
-    });
-
     (function initChannelExperience() {
-      const config = MOTOVLOG_CHANNEL;
+      // 公開後はこの設定だけを更新する。
+      const config = {
+        youtubeUrl: 'https://www.youtube.com/@liberty_motovlog',
+        subscribeUrl: 'https://www.youtube.com/@liberty_motovlog?sub_confirmation=1',
+        instagramUrl: 'https://www.instagram.com/liberty_motovlog/',
+        latestVideo: null,
+        // latestVideo: { id: 'YOUTUBE_ID', title: '動画タイトル', description: '動画概要',
+        //   uploadDate: '2026-00-00', duration: 'PT00M00S',
+        //   thumbnailUrl: 'https://tk.st/images/ogp/motovlog-ogp.jpg' },
+        latestRide: null
+        // latestRide: { route: '出発地 → 目的地', distance: '000 km',
+        //   recorded: '2026.00.00', weather: 'SUNNY / 00°C' }
+      };
       const video = config.latestVideo;
-      const hasVideo = Boolean(video && /^[A-Za-z0-9_-]{11}$/.test(video.id || ''));
+      const hasVideo = /^[A-Za-z0-9_-]{11}$/.test(video?.id || '');
 
       document.querySelectorAll('[data-channel-subscribe]').forEach(link => { link.href = config.subscribeUrl; });
       document.querySelectorAll('[data-channel-youtube]').forEach(link => { link.href = config.youtubeUrl; });
@@ -2541,10 +2401,11 @@
           if (label) label.textContent = '最新動画を見る';
         });
 
-        const status = document.querySelector('[data-channel-status]');
         const title = document.querySelector('[data-channel-title]');
         const description = document.querySelector('[data-channel-description]');
-        if (status) status.textContent = 'LATEST RIDE / NOW PLAYING';
+        document.querySelectorAll('[data-channel-status]').forEach(status => {
+          status.textContent = 'LATEST RIDE / NOW PLAYING';
+        });
         if (title) title.textContent = video.title || '最新のライドを公開しました';
         if (description) description.textContent = video.description || 'LIBERTY MOTOVLOG の最新エピソードをご覧ください。';
 
@@ -2601,7 +2462,9 @@
         });
         rideLog.hidden = false;
       }
+    })();
 
+    (function initActiveNavigation() {
       const navLinks = [...document.querySelectorAll('[data-nav-section]')];
       const sections = navLinks.map(link => document.getElementById(link.dataset.navSection)).filter(Boolean);
       let navFrame = null;
@@ -2631,6 +2494,7 @@
     (function initBikeViewer() {
       const TOTAL_FRAMES = 29;
       const PX_PER_FRAME = 12;
+      const PRELOAD_RADIUS = 3;
       const paths = Array.from({ length: TOTAL_FRAMES }, (_, index) =>
         '../images/contents/liberty-edition/liberty-edition_' + String(index + 1).padStart(2, '0') + '.webp'
       );
@@ -2643,6 +2507,8 @@
       const dialog = document.getElementById('viewerModal');
       const modalCanvas = document.getElementById('modalCanvasBox');
       const modalImage = document.getElementById('modal360Img');
+      const modalStatus = document.getElementById('modalViewerStatus');
+      const modalLiveStatus = document.getElementById('modalViewerA11yStatus');
       const closeButton = document.getElementById('modalCloseBtn');
       if (!image || !canvas || !dialog) return;
 
@@ -2651,11 +2517,11 @@
       const autoButtons = [document.getElementById('viewerAutoBtn'), document.getElementById('modalAutoBtn')].filter(Boolean);
       const autoTexts = [document.getElementById('autoBtnText'), document.getElementById('modalAutoText')].filter(Boolean);
       const autoIcons = [document.getElementById('autoBtnIcon'), document.getElementById('modalAutoIcon')].filter(Boolean);
+      const statuses = [status, modalStatus].filter(Boolean);
       const cache = new Map();
-      const preloadQueue = [];
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       let current = 0;
-      let progressiveStarted = false;
+      let preloadingEnabled = false;
       let pointer = null;
       let autoFrame = null;
       let lastAutoTime = 0;
@@ -2664,47 +2530,41 @@
       let previousOverflow = '';
 
       const normalize = index => ((index % TOTAL_FRAMES) + TOTAL_FRAMES) % TOTAL_FRAMES;
-      const showError = () => {
-        if (!status) return;
-        status.textContent = '画像を読み込めませんでした。通信環境を確認して再度お試しください。';
-        status.classList.add('is-visible');
+      const circularDistance = (a, b) => Math.min(normalize(a - b), normalize(b - a));
+      const showError = target => {
+        if (!target) return;
+        target.textContent = '画像を読み込めませんでした。通信環境を確認して再度お試しください。';
+        target.classList.add('is-visible');
       };
-      const clearError = () => {
-        if (!status) return;
-        status.textContent = '';
-        status.classList.remove('is-visible');
+      const clearError = target => {
+        const targets = target ? [target] : statuses;
+        targets.forEach(element => {
+          element.textContent = '';
+          element.classList.remove('is-visible');
+        });
       };
       const preload = index => {
         const safe = normalize(index);
-        if (cache.has(safe)) return cache.get(safe);
+        if (cache.has(safe)) return;
         const preloadImage = new Image();
         preloadImage.decoding = 'async';
         preloadImage.addEventListener('error', () => {
-          cache.delete(safe);
-          if (safe === current) showError();
+          if (cache.get(safe) === preloadImage) cache.delete(safe);
+          if (safe === current) showError(dialog.open ? modalStatus : status);
         }, { once: true });
         preloadImage.src = paths[safe];
         cache.set(safe, preloadImage);
-        return preloadImage;
       };
-      const preloadNearby = index => [-2, -1, 0, 1, 2].forEach(offset => preload(index + offset));
-      const scheduleIdle = window.requestIdleCallback
-        ? callback => window.requestIdleCallback(callback, { timeout: 800 })
-        : callback => window.setTimeout(callback, 80);
-
-      function loadNext() {
-        const next = preloadQueue.shift();
-        if (typeof next === 'number') preload(next);
-        if (preloadQueue.length) window.setTimeout(() => scheduleIdle(loadNext), 70);
-      }
-
-      function startProgressiveLoading() {
-        if (progressiveStarted) return;
-        progressiveStarted = true;
-        for (let distance = 1; distance < TOTAL_FRAMES; distance++) {
-          preloadQueue.push(normalize(current + distance));
+      const preloadNearby = index => {
+        for (const cached of cache.keys()) {
+          if (circularDistance(cached, index) > PRELOAD_RADIUS) cache.delete(cached);
         }
-        scheduleIdle(loadNext);
+        for (let offset = -PRELOAD_RADIUS; offset <= PRELOAD_RADIUS; offset++) preload(index + offset);
+      };
+
+      function startPreloading() {
+        preloadingEnabled = true;
+        preloadNearby(current);
       }
 
       function hideHint() {
@@ -2716,7 +2576,7 @@
       function setFrame(index, announce = false) {
         current = normalize(index);
         clearError();
-        if (progressiveStarted) preloadNearby(current);
+        if (preloadingEnabled) preloadNearby(current);
         image.src = paths[current];
         if (dialog.open && modalImage) modalImage.src = paths[current];
         sliders.forEach(slider => {
@@ -2724,28 +2584,28 @@
         });
         const text = (current + 1) + ' / ' + TOTAL_FRAMES;
         counters.forEach(counter => { counter.textContent = text; });
-        if (announce && liveStatus) {
-          liveStatus.textContent = '全' + TOTAL_FRAMES + 'フレーム中' + (current + 1) + 'フレーム目';
+        const activeLiveStatus = dialog.open ? modalLiveStatus : liveStatus;
+        if (announce && activeLiveStatus) {
+          activeLiveStatus.textContent = '全' + TOTAL_FRAMES + 'フレーム中' + (current + 1) + 'フレーム目';
         }
       }
 
-      image.addEventListener('load', clearError);
-      image.addEventListener('error', showError);
+      image.addEventListener('load', () => clearError(status));
+      image.addEventListener('error', () => showError(status));
       if (modalImage) {
-        modalImage.addEventListener('load', clearError);
-        modalImage.addEventListener('error', showError);
+        modalImage.addEventListener('load', () => clearError(modalStatus));
+        modalImage.addEventListener('error', () => showError(modalStatus));
       }
 
       if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver(entries => {
           if (!entries.some(entry => entry.isIntersecting)) return;
-          preloadNearby(current);
-          startProgressiveLoading();
+          startPreloading();
           observer.disconnect();
         }, { rootMargin: '600px 0px' });
         observer.observe(canvas);
       } else {
-        startProgressiveLoading();
+        startPreloading();
       }
 
       function openDialog() {
@@ -2753,6 +2613,7 @@
         previousFocus = document.activeElement;
         previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
+        startPreloading();
         if (modalImage) modalImage.src = paths[current];
         dialog.showModal();
         requestAnimationFrame(() => (modalCanvas || closeButton).focus({ preventScroll: true }));
@@ -2802,7 +2663,7 @@
 
       function startAuto() {
         if (reducedMotion.matches || autoFrame !== null) return;
-        startProgressiveLoading();
+        startPreloading();
         hideHint();
         lastAutoTime = performance.now();
         autoButtons.forEach(button => {
@@ -2817,14 +2678,16 @@
       }
 
       function applyMotionPreference() {
-        if (reducedMotion.matches) stopAuto();
+        const motionOff = reducedMotion.matches;
+        if (motionOff) stopAuto();
         autoButtons.forEach(button => {
-          button.disabled = reducedMotion.matches;
-          button.title = reducedMotion.matches
+          button.disabled = motionOff;
+          button.title = motionOff
             ? '端末の「視差効果を減らす」設定により自動回転は停止しています'
             : '自動回転を切り替える';
         });
-        if (reducedMotion.matches) autoTexts.forEach(text => { text.textContent = 'MOTION OFF'; });
+        if (motionOff) autoTexts.forEach(text => { text.textContent = 'MOTION OFF'; });
+        else if (autoFrame === null) autoTexts.forEach(text => { text.textContent = 'AUTO ROTATE'; });
       }
 
       autoButtons.forEach(button => button.addEventListener('click', () => {
@@ -2857,7 +2720,7 @@
             startFrame: current, distance: 0
           };
           element.classList.add('is-dragging');
-          startProgressiveLoading();
+          startPreloading();
           hideHint();
           stopAuto();
         });
@@ -2883,7 +2746,7 @@
           }
           if (next === null) return;
           event.preventDefault();
-          startProgressiveLoading();
+          startPreloading();
           hideHint();
           stopAuto();
           setFrame(next, true);
@@ -2893,7 +2756,7 @@
       bindControls(canvas, false);
       bindControls(modalCanvas, true);
       sliders.forEach(slider => slider.addEventListener('input', () => {
-        startProgressiveLoading();
+        startPreloading();
         hideHint();
         stopAuto();
         setFrame(Number.parseInt(slider.value, 10), true);
@@ -2901,7 +2764,10 @@
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) stopAuto();
       });
-      window.addEventListener('pagehide', stopAuto);
+      window.addEventListener('pagehide', () => {
+        stopAuto();
+        cache.clear();
+      });
       setFrame(0);
     })();
   </script>

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Retail Tech Daily Brief — 毎朝8時の流通DX・リテールテック日刊速報</title>
+    <title>Retail Tech Daily — 毎朝8時の流通DX・リテールテック日刊速報</title>
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>毎朝8:00更新。昨日の国内外リテールテック・流通DX動向（スマートカート、無人決済、リテールメディア、RFIDロボティクス、AI需要予測）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊速報。</description>
     <language>ja</language>
     <pubDate>Mon, 14 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 14 Sep 2026 04:11:12 +0900</lastBuildDate>
+    <lastBuildDate>Mon, 14 Sep 2026 07:18:51 +0900</lastBuildDate>
     <ttl>720</ttl>
-    <generator>Retail Tech Daily Brief generator</generator>
+    <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title>2026年9月14日号：昨日のリテールテック＆流通DXまとめ</title>

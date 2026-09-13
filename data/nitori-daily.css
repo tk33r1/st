@@ -2,13 +2,15 @@
 @import "./daily-base.css";
 
 /**
- * Nitori Daily Brief — デザイン CSS（ニトリカラー R0 G158 B150）
+ * Nitori Daily Brief — テーマ CSS
+ * ブランドカラー: ニトリグリーン R0 G158 B150 (#009e96)
  * 共通UI基盤: data/daily-base.css
  */
 :root {
   --primary: #009e96;
-  --primary-hover: #00827c;
-  --primary-subtle: rgba(0, 158, 150, 0.08);
-  --primary-border: rgba(0, 158, 150, 0.25);
-  --primary-shadow: rgba(0, 158, 150, 0.22);
+  /* 白地の小さな文字でも AA（4.5:1）を満たす暗いティール。面はブランド色のまま */
+  --primary-ink: #00736d;
+  --primary-subtle: rgba(0, 158, 150, 0.07);
+  --primary-border: rgba(0, 158, 150, 0.28);
+  --primary-shadow: rgba(0, 158, 150, 0.4);
 }

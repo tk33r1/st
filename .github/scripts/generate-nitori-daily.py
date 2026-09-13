@@ -261,7 +261,7 @@ CATEGORY_PILL_LABELS = {
 
 FAQ_ITEMS = [
     {
-        "q": "「Nitori Daily Brief」とはどのようなメディアですか？",
+        "q": "「Nitori Daily」とはどのようなメディアですか？",
         "a": "株式会社ニトリおよびニトリホールディングスグループ（デコホーム、島忠、N+等）の最新動向（新商品・バズアイテム、DX・公式アプリ、物流自動化・ホームロジスティクス、国内外の店舗出店、価格戦略など）を毎朝8:00（JST）に集約・解説する日刊ブリーフです。客観的な事実報道に加え、SPA（製造物流小売業）としての構造的強みや生活者UXへの示唆（Why it matters）をプロの視点で付与しています。"
     },
     {
@@ -369,7 +369,7 @@ def fallback_rule_based(candidates, yesterday_str):
 
 CONFIG = {
     'media_id': 'nitoridaily',
-    'media_name': 'Nitori Daily Brief',
+    'media_name': 'Nitori Daily',
     'brand_title': 'Nitori Daily',
     'brand_title_short': 'ニトリニュース＆SNS話題',
     'brand_subtitle': '毎朝8時のニトリ速報＆SNS話題',

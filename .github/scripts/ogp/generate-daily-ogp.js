@@ -16,9 +16,9 @@ const BRAND_CONFIGS = {
     port: 9335,
     brandTitle: 'Retail Tech Daily',
     brandSub: '毎朝8時の流通DX・リテールテック速報',
-    primaryColor: '#0f4c81',
-    primarySubtle: 'rgba(15, 76, 129, 0.08)',
-    primaryBorder: 'rgba(15, 76, 129, 0.2)',
+    primaryColor: '#6f8cf7',
+    primarySubtle: 'rgba(111, 140, 247, 0.12)',
+    primaryBorder: 'rgba(111, 140, 247, 0.32)',
     badgeBg: '#0f172a',
     jsonPath: path.join(ROOT, 'data', 'retail-tech-daily.json'),
     outPrefix: 'retailtechdaily',
@@ -27,9 +27,9 @@ const BRAND_CONFIGS = {
     logoSvg: `<svg viewBox="0 0 64 64" width="38" height="38" style="flex-shrink:0; border-radius:8px; box-shadow:0 1px 3px rgba(15,23,42,0.12);">
   <defs>
     <linearGradient id="dOgBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0b192e" />
-      <stop offset="60%" stop-color="#0f4c81" />
-      <stop offset="100%" stop-color="#1e293b" />
+      <stop offset="0%" stop-color="#0e2a6d" />
+      <stop offset="60%" stop-color="#1a47d4" />
+      <stop offset="100%" stop-color="#0b1f52" />
     </linearGradient>
     <linearGradient id="dOgSig" x1="0%" y1="100%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#38bdf8" />
