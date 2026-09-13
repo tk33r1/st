@@ -108,34 +108,8 @@
 
   <style>
     /* =========================================
-       Variables & Theme (US 250th Liberty Edition)
-       Cobalt Electric Blue × Star-Spangled Red × Asphalt Black
+       2026 Full Redesign — American Road Editorial
        ========================================= */
-    :root {
-      --bg: #090a0f;
-      --card-bg: rgba(16, 20, 31, 0.78);
-      --border: rgba(255, 255, 255, 0.08);
-
-      /* Liberty Edition Core Colors */
-      --liberty-blue: #1d68ed;
-      --liberty-blue-bright: #3b82f6;
-      --liberty-blue-glow: rgba(29, 104, 237, 0.3);
-      --liberty-windshield: #0284c7;
-      --accent-red: #ef4444;
-      --accent-red-dim: rgba(239, 68, 68, 0.15);
-
-      --text: #f3f4f6;
-      --muted: #9ca3af;
-      --dim: #64748b;
-
-      --font-display: 'Bebas Neue', sans-serif;
-      --font-heading: 'Montserrat', sans-serif;
-      --font-body: 'Zen Kaku Gothic New', sans-serif;
-      --max-w: 1060px;
-      --radius: 12px;
-      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
     *,
     *::before,
     *::after {
@@ -146,23 +120,11 @@
 
     html {
       scroll-behavior: smooth;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      line-height: 1.7;
-      letter-spacing: 0.02em;
-      -webkit-font-smoothing: antialiased;
     }
 
     body {
-      background-color: var(--bg);
-      background-image:
-        radial-gradient(circle at 50% 0%, rgba(29, 104, 237, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at 85% 30%, rgba(239, 68, 68, 0.06) 0%, transparent 40%),
-        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
-      overflow-x: hidden;
+      margin: 0;
+      overflow-x: clip;
     }
 
     a {
@@ -171,1318 +133,1882 @@
     }
 
     img {
+      display: block;
       max-width: 100%;
       height: auto;
-      display: block;
     }
 
-    .container {
-      width: 100%;
-      max-width: var(--max-w);
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    .section {
-      padding: 64px 0;
-      position: relative;
-    }
-
-    .section-header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .section-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: var(--font-heading);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--liberty-blue-bright);
-      background: rgba(29, 104, 237, 0.1);
-      border: 1px solid rgba(29, 104, 237, 0.3);
-      padding: 5px 14px;
-      border-radius: 999px;
-      margin-bottom: 12px;
-    }
-
-    .section-title {
-      font-family: var(--font-heading);
-      font-size: clamp(24px, 3.5vw, 34px);
-      font-weight: 900;
-      letter-spacing: -0.01em;
-      line-height: 1.3;
-      color: #fff;
-      margin-bottom: 10px;
-    }
-
-    .section-desc {
-      font-size: 14px;
-      color: var(--muted);
-      max-width: 620px;
-      margin: 0 auto;
-    }
-
-    /* =========================================
-       Navigation Header
-       ========================================= */
-    .nav-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      background: rgba(9, 10, 15, 0.85);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .nav-inner {
-      height: 62px;
+    .nav-inner,
+    .brand-link,
+    .nav-links,
+    .btn-terminal-back,
+    .btn-yt-nav,
+    .hero-brand-header,
+    .hero-badges,
+    .hero-actions,
+    .btn-hero-primary,
+    .btn-hero-secondary,
+    .machine-badge-box,
+    .badge-250th,
+    .badge-limited,
+    .viewer-expand-btn,
+    .viewer-hint-badge,
+    .viewer-controls,
+    .viewer-btn,
+    .viewer-slider-wrap,
+    .shop-btn,
+    .teaser-status,
+    .teaser-btn-row,
+    .footer-inner,
+    .footer-links,
+    .footer-copy,
+    .viewer-modal,
+    .viewer-modal-header,
+    .viewer-modal-title,
+    .viewer-modal-close,
+    .viewer-modal-body {
       display: flex;
       align-items: center;
+    }
+
+    .nav-inner,
+    .footer-inner,
+    .footer-copy,
+    .viewer-modal-header {
       justify-content: space-between;
     }
 
-    .brand-link {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-family: var(--font-display);
-      font-size: 24px;
-      letter-spacing: 0.06em;
-      color: #fff;
+    .hero-badges,
+    .hero-actions,
+    .machine-badge-box,
+    .footer-links,
+    .footer-copy {
+      flex-wrap: wrap;
     }
 
-    .brand-link:hover {
-      color: var(--liberty-blue-bright);
-    }
-
-    .nav-logo {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      object-fit: cover;
-      box-shadow: 0 0 10px rgba(29, 104, 237, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .brand-badge {
-      font-family: var(--font-heading);
-      font-size: 9px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--liberty-blue), var(--accent-red));
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-terminal-back {
+    .btn-terminal-back,
+    .btn-yt-nav,
+    .btn-hero-primary,
+    .btn-hero-secondary,
+    .viewer-expand-btn,
+    .viewer-hint-badge,
+    .viewer-btn,
+    .shop-btn,
+    .teaser-status,
+    .viewer-modal-close {
       display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      color: var(--muted);
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      transition: var(--transition);
     }
 
-    .btn-terminal-back:hover {
-      color: var(--liberty-blue-bright);
-      border-color: var(--liberty-blue-bright);
-    }
-
-    .btn-yt-nav {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #ff0000;
-      color: #fff;
-      font-family: var(--font-heading);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 7px 14px;
-      border-radius: 999px;
-      transition: var(--transition);
-    }
-
-    .btn-yt-nav:hover {
-      background: #d90000;
-      transform: translateY(-1px);
-    }
-
-    /* =========================================
-       Hero Section
-       ========================================= */
-    .hero {
-      padding-top: 110px;
-      padding-bottom: 54px;
-      position: relative;
-      overflow: hidden;
+    .btn-yt-nav,
+    .btn-hero-primary,
+    .btn-hero-secondary,
+    .viewer-expand-btn,
+    .viewer-btn,
+    .viewer-slider,
+    .viewer-modal-close,
+    .viewer-canvas-box,
+    .viewer-modal-body {
+      cursor: pointer;
     }
 
     .hero-bg-media {
       position: absolute;
-      inset: 0;
-      z-index: 0;
-      opacity: 0.38;
       background-image: url('../images/contents/motovlog-liberty-canyon.jpg');
+      background-repeat: no-repeat;
       background-size: cover;
-      background-position: center 35%;
-      filter: saturate(1.05) brightness(0.85);
-      mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
     }
 
-    .hero-content {
+    .hero > .container {
       position: relative;
-      z-index: 1;
-      max-width: 800px;
     }
 
-    /* Hero Logo & Brand Header */
-    .hero-brand-header {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 20px;
+    .hero-logo-img,
+    .nav-logo {
+      object-fit: cover;
     }
 
-    .hero-logo-wrap {
-      flex-shrink: 0;
-    }
-
-    .hero-logo-img {
-      width: 84px;
-      height: 84px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(29, 104, 237, 0.45);
-      transition: var(--transition);
-    }
-
-    .hero-logo-img:hover {
-      transform: scale(1.05) rotate(3deg);
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 35px rgba(29, 104, 237, 0.6);
-    }
-
-    .hero-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .hero-pill {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 12px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      color: #e5e7eb;
-    }
-
-    .hero-pill.anniversary {
-      background: linear-gradient(135deg, rgba(29, 104, 237, 0.25) 0%, rgba(239, 68, 68, 0.2) 100%);
-      border-color: rgba(59, 130, 246, 0.5);
-      color: #93c5fd;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-    }
-
-    .hero-pill.status {
-      background: var(--accent-red-dim);
-      border-color: rgba(239, 68, 68, 0.4);
-      color: #fca5a5;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .hero-pill.status::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      background: #ef4444;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #ef4444;
-    }
-
-    .hero-title-en {
-      font-family: var(--font-display);
-      font-size: clamp(48px, 7.5vw, 84px);
-      line-height: 0.95;
-      letter-spacing: 0.04em;
-      color: #fff;
-      margin-bottom: 12px;
-    }
-
-    .hero-title-en .accent {
-      background: linear-gradient(135deg, #60a5fa 20%, #1d4ed8 80%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-title-ja {
-      font-size: clamp(18px, 2.8vw, 24px);
-      font-weight: 700;
-      color: #f3f4f6;
-      margin-bottom: 18px;
-      line-height: 1.4;
-    }
-
-    .hero-lead {
-      font-size: 15px;
-      color: #cbd5e1;
-      line-height: 1.8;
-      margin-bottom: 28px;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 32px;
-    }
-
-    .btn-hero-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: #ff0000;
-      color: #fff;
-      font-family: var(--font-heading);
-      font-size: 14px;
-      font-weight: 800;
-      padding: 14px 26px;
-      border-radius: 8px;
-      box-shadow: 0 6px 20px rgba(255, 0, 0, 0.35);
-      transition: var(--transition);
-    }
-
-    .btn-hero-primary:hover {
-      background: #d90000;
-      transform: translateY(-2px);
-    }
-
-    .btn-hero-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-      font-family: var(--font-heading);
-      font-size: 13px;
-      font-weight: 700;
-      padding: 14px 22px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      transition: var(--transition);
-    }
-
-    .btn-hero-secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--liberty-blue-bright);
-    }
-
-    .hero-stats {
+    .hero-stats,
+    .machine-specs {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
     }
 
-    .stat-num {
-      font-family: var(--font-display);
-      font-size: 26px;
-      color: var(--liberty-blue-bright);
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 10px;
-      color: var(--dim);
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
-
-    /* =========================================
-       Story Timeline Section
-       ========================================= */
-    .story-track {
+    .story-track,
+    .story-node,
+    .machine-viewer-wrap,
+    .viewer-canvas-box,
+    .side-photo-wrap,
+    .viewer-modal-container,
+    .viewer-modal-body {
       position: relative;
-      max-width: 780px;
-      margin: 0 auto;
-    }
-
-    .story-track::before {
-      content: '';
-      position: absolute;
-      top: 16px;
-      bottom: 16px;
-      left: 16px;
-      width: 2px;
-      background: linear-gradient(to bottom, var(--liberty-blue-bright) 0%, var(--accent-red) 50%, var(--liberty-blue-bright) 100%);
-    }
-
-    @media (min-width: 768px) {
-      .story-track::before {
-        left: 50%;
-        transform: translateX(-50%);
-      }
-    }
-
-    .story-node {
-      position: relative;
-      margin-bottom: 32px;
-    }
-
-    @media (min-width: 768px) {
-      .story-node {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
-      }
-
-      .story-node:nth-child(even) .story-card {
-        grid-column: 2;
-      }
-
-      .story-node:nth-child(even) .story-date-wrap {
-        grid-column: 1;
-        text-align: right;
-        justify-content: flex-end;
-      }
-
-      .story-node:nth-child(odd) .story-card {
-        grid-column: 1;
-      }
-
-      .story-node:nth-child(odd) .story-date-wrap {
-        grid-column: 2;
-        text-align: left;
-        justify-content: flex-start;
-      }
     }
 
     .story-marker {
       position: absolute;
-      left: 16px;
-      top: 20px;
-      transform: translate(-50%, -50%);
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--bg);
-      border: 3px solid var(--liberty-blue-bright);
       z-index: 2;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
     }
 
-    @media (min-width: 768px) {
-      .story-marker {
-        left: 50%;
-      }
-    }
-
-    .story-marker.accident {
-      border-color: var(--accent-red);
-      box-shadow: 0 0 10px var(--accent-red);
-    }
-
-    .story-date-wrap {
-      display: none;
-    }
-
-    @media (min-width: 768px) {
-      .story-date-wrap {
-        display: flex;
-        align-items: center;
-      }
-
-      .story-date {
-        font-family: var(--font-display);
-        font-size: 32px;
-        color: rgba(255, 255, 255, 0.3);
-      }
-    }
-
-    .story-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 22px;
-      margin-left: 36px;
-      transition: var(--transition);
-    }
-
-    @media (min-width: 768px) {
-      .story-card {
-        margin-left: 0;
-      }
-    }
-
-    .story-card:hover {
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .story-card.accent-accident {
-      border-color: rgba(239, 68, 68, 0.3);
-      background: rgba(239, 68, 68, 0.05);
-    }
-
-    .story-card.accent-liberty {
-      border-color: rgba(59, 130, 246, 0.4);
-      background: rgba(29, 104, 237, 0.06);
-    }
-
-    .story-mobile-date {
-      font-family: var(--font-display);
-      font-size: 18px;
-      color: var(--liberty-blue-bright);
-      margin-bottom: 2px;
-    }
-
-    @media (min-width: 768px) {
-      .story-mobile-date {
-        display: none;
-      }
-    }
-
-    .story-title {
-      font-family: var(--font-heading);
-      font-size: 16px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 8px;
-    }
-
-    .story-body {
-      font-size: 13.5px;
-      color: #d1d5db;
-      line-height: 1.7;
-    }
-
-    /* =========================================
-       The Machine & Sound Section (Unified)
-       ========================================= */
-    .machine-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-    }
-
-    @media (min-width: 860px) {
-      .machine-grid {
-        grid-template-columns: 1.2fr 0.8fr;
-      }
-    }
-
-    .machine-main-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .machine-badge-box {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .badge-250th {
-      background: linear-gradient(135deg, var(--liberty-blue), var(--accent-red));
-      color: #fff;
-      font-family: var(--font-heading);
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      padding: 4px 10px;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
-
-    .badge-limited {
-      background: rgba(255, 255, 255, 0.1);
-      color: #e2e8f0;
-      font-family: var(--font-heading);
-      font-size: 10px;
-      font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-    }
-
-    .machine-name {
-      font-family: var(--font-display);
-      font-size: clamp(28px, 4vw, 40px);
-      color: #fff;
-      line-height: 1.05;
-    }
-
-    .machine-sub {
-      font-size: 13px;
-      color: var(--liberty-blue-bright);
-      font-weight: 700;
-      margin-bottom: 18px;
-    }
-
-    /* =========================================
-       360° Interactive Bike Viewer & Zoom Modal
-       ========================================= */
-    .machine-viewer-wrap {
-      margin-bottom: 20px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: #ffffff;
+    .machine-viewer-wrap,
+    .viewer-canvas-box,
+    .side-photo-wrap,
+    .viewer-modal-container,
+    .viewer-modal-body {
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-      position: relative;
+    }
+
+    .machine-viewer-wrap,
+    .viewer-canvas-box,
+    .viewer-modal-body {
       user-select: none;
       -webkit-user-select: none;
     }
 
     .viewer-canvas-box,
     .viewer-modal-body {
-      position: relative;
       width: 100%;
-      aspect-ratio: 1200 / 720;
-      background: #ffffff;
-      cursor: grab;
-      display: flex;
-      align-items: center;
+      aspect-ratio: 5 / 3;
       justify-content: center;
       touch-action: pan-y;
-      overflow: hidden;
-      user-select: none;
-      -webkit-user-select: none;
+      cursor: grab;
     }
 
-    .viewer-modal-body {
-      max-height: 70vh;
-    }
-
-    .viewer-canvas-box:active,
     .viewer-canvas-box.is-dragging,
-    .viewer-modal-body:active,
     .viewer-modal-body.is-dragging {
       cursor: grabbing;
     }
 
     .viewer-canvas-box img,
     .viewer-modal-body img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
       pointer-events: none;
-      transform: scale(1.35);
-      transform-origin: center center;
-      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+      user-select: none;
     }
 
-    .viewer-expand-btn {
+    .viewer-expand-btn,
+    .viewer-hint-overlay {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
-      background: rgba(8, 10, 15, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 6px;
-      font-family: var(--font-heading);
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
-      cursor: pointer;
-      transition: var(--transition);
       z-index: 5;
     }
 
-    .viewer-expand-btn:hover {
-      background: var(--liberty-blue);
-      border-color: var(--liberty-blue-bright);
-      box-shadow: 0 0 12px rgba(29, 104, 237, 0.5);
-    }
-
     .viewer-hint-overlay {
-      position: absolute;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      pointer-events: none;
-      transition: opacity 0.35s ease;
-      z-index: 2;
+      transition: opacity .3s ease, visibility .3s ease;
     }
 
-    .viewer-hint-overlay.is-hidden {
-      opacity: 0;
+    .viewer-slider-wrap {
+      flex: 1;
+      min-width: 0;
     }
 
-    .viewer-hint-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 6px 14px;
-      background: rgba(8, 10, 15, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 9999px;
-      font-family: var(--font-heading);
-      font-size: 11px;
-      font-weight: 800;
-      color: #93c5fd;
-      letter-spacing: 0.08em;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    .viewer-slider {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
-    .viewer-hint-badge svg {
-      animation: spinHint 4s linear infinite;
-      color: var(--liberty-blue-bright);
+    .side-photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    @keyframes spinHint {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* 360° Zoom Modal */
     .viewer-modal {
       position: fixed;
       inset: 0;
       z-index: 10000;
       display: none;
-      align-items: center;
       justify-content: center;
-      padding: 16px;
-    }
-
-    .viewer-modal.is-open {
-      display: flex;
-    }
-
-    .viewer-modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(4, 6, 12, 0.94);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
     }
 
     .viewer-modal-container {
-      position: relative;
-      width: min(94vw, 1200px);
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      z-index: 1;
       display: flex;
+      width: min(94vw, 1180px);
       flex-direction: column;
-      overflow: hidden;
-      z-index: 2;
-      animation: modalIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.96); }
-      to { opacity: 1; transform: scale(1); }
+    .viewer-modal-body {
+      flex: 1;
+      min-height: 0;
     }
 
-    .viewer-modal-header {
-      background: #0d101a;
-      border-bottom: 1px solid var(--border);
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: #fff;
+    .viewer-modal-body img {
+      width: 100%;
+      height: 100%;
     }
 
-    .viewer-modal-title {
-      font-family: var(--font-heading);
-      font-size: 12px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      letter-spacing: 0.04em;
+    :root {
+      --ink: #08090b;
+      --ink-soft: #111318;
+      --ink-raised: #171a20;
+      --paper: #efe9dc;
+      --paper-bright: #faf7ef;
+      --paper-dim: #d9d0c1;
+      --chrome: #b9bec5;
+      --blue: #0758c8;
+      --blue-bright: #2274e8;
+      --red: #c62b32;
+      --red-bright: #eb3941;
+      --line-dark: rgba(255, 255, 255, 0.13);
+      --line-light: rgba(8, 9, 11, 0.16);
+      --display: 'Bebas Neue', Impact, sans-serif;
+      --sans: 'Montserrat', Arial, sans-serif;
+      --jp: 'Zen Kaku Gothic New', sans-serif;
+      --page: 1240px;
+      --ease: cubic-bezier(.2, .75, .2, 1);
     }
 
-    .viewer-modal-close {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #e5e7eb;
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: var(--transition);
+    html {
+      background: var(--ink);
+      color: var(--paper-bright);
+      font-family: var(--jp);
+      font-size: 16px;
+      line-height: 1.8;
+      scroll-padding-top: 78px;
     }
 
-    .viewer-modal-close:hover {
-      background: #ef4444;
-      border-color: #f87171;
-      color: #fff;
+    body {
+      min-width: 320px;
+      background: var(--ink);
+      background-image: none;
+      color: var(--paper-bright);
     }
 
-    .viewer-modal-hint {
-      position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(8, 10, 15, 0.85);
-      color: #93c5fd;
-      padding: 5px 14px;
-      border-radius: 9999px;
-      font-size: 11px;
-      font-weight: 700;
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
       pointer-events: none;
-      letter-spacing: 0.05em;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      content: '';
+      opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
     }
 
-    /* Shared Viewer Controls (Inline & Modal) */
-    .viewer-controls {
-      background: #0d101a;
-      border-top: 1px solid var(--border);
+    ::selection {
+      color: #fff;
+      background: var(--blue);
+    }
+
+    a,
+    button,
+    input {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 2px solid var(--blue-bright);
+      outline-offset: 4px;
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 20000;
+      padding: 10px 14px;
+      background: var(--paper-bright);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 800;
+      transform: translateY(-160%);
+      transition: transform .2s ease;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .container {
+      width: min(calc(100% - 48px), var(--page));
+      max-width: none;
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    .section {
+      position: relative;
+      padding: clamp(88px, 10vw, 156px) 0;
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: minmax(140px, .45fr) 1.55fr;
+      gap: 24px 48px;
+      align-items: end;
+      max-width: none;
+      margin: 0 0 clamp(50px, 6vw, 82px);
+      text-align: left;
+    }
+
+    .section-tag {
+      align-self: start;
+      display: flex;
+      gap: 12px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      color: var(--red);
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .22em;
+      line-height: 1.4;
+    }
+
+    .section-tag::before {
+      width: 28px;
+      height: 2px;
+      margin-top: 6px;
+      flex: 0 0 auto;
+      content: '';
+      background: currentColor;
+    }
+
+    .section-title {
+      margin: 0;
+      color: inherit;
+      font-family: var(--display);
+      font-size: clamp(45px, 6vw, 82px);
+      font-weight: 400;
+      letter-spacing: .025em;
+      line-height: .93;
+    }
+
+    .section-desc {
+      grid-column: 2;
+      max-width: 680px;
+      margin: 0;
+      color: inherit;
+      font-size: 14px;
+      line-height: 1.9;
+      opacity: .7;
+    }
+
+    .nav-header {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--line-dark);
+      background: rgba(8, 9, 11, .78);
+      backdrop-filter: blur(18px) saturate(130%);
+      -webkit-backdrop-filter: blur(18px) saturate(130%);
+    }
+
+    .nav-inner {
+      height: 72px;
+    }
+
+    .brand-link {
+      gap: 12px;
+      color: #fff;
+      font-family: var(--display);
+      font-size: 24px;
+      letter-spacing: .095em;
+    }
+
+    .brand-link:hover {
+      color: #fff;
+    }
+
+    .nav-logo {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255, 255, 255, .3);
+      border-radius: 50%;
+      box-shadow: none;
+    }
+
+    .brand-badge {
+      padding: 3px 7px 2px;
+      border: 1px solid rgba(255, 255, 255, .34);
+      border-radius: 2px;
+      background: transparent;
+      color: rgba(255, 255, 255, .7);
+      font-size: 8px;
+      letter-spacing: .12em;
+    }
+
+    .nav-links {
+      gap: 28px;
+    }
+
+    .nav-anchor {
+      position: relative;
+      color: rgba(255, 255, 255, .68);
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      transition: color .2s ease;
+    }
+
+    .nav-anchor:hover {
+      color: #fff;
+    }
+
+    .nav-anchor[aria-current="true"] {
+      color: #fff;
+    }
+
+    .nav-anchor[aria-current="true"]::after {
+      position: absolute;
+      right: 0;
+      bottom: -25px;
+      left: 0;
+      height: 2px;
+      content: '';
+      background: var(--red);
+    }
+
+    .btn-terminal-back {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      color: rgba(255, 255, 255, .44);
+      font-size: 10px;
+    }
+
+    .btn-terminal-back:hover {
+      border: 0;
+      color: #fff;
+    }
+
+    .btn-yt-nav {
+      gap: 9px;
       padding: 10px 16px;
+      border: 1px solid var(--red);
+      border-radius: 2px;
+      background: var(--red);
+      font-size: 10px;
+      letter-spacing: .08em;
+      transition: background .25s ease, color .25s ease, transform .25s ease;
+    }
+
+    .btn-yt-nav:hover {
+      background: transparent;
+      color: #fff;
+      transform: none;
+    }
+
+    .hero {
+      position: relative;
+      display: flex;
+      min-height: max(820px, 100svh);
+      padding: 72px 0 0;
+      overflow: hidden;
+      isolation: isolate;
+      background: #0a0c0f;
+    }
+
+    .hero::before {
+      position: absolute;
+      inset: 72px 0 0;
+      z-index: -1;
+      content: '';
+      background:
+        linear-gradient(90deg, rgba(3, 5, 8, .96) 0%, rgba(3, 5, 8, .71) 43%, rgba(3, 5, 8, .12) 74%),
+        linear-gradient(0deg, #08090b 0%, transparent 32%),
+        linear-gradient(180deg, rgba(3, 5, 8, .18), transparent 35%);
+    }
+
+    .hero::after {
+      position: absolute;
+      right: max(24px, calc((100vw - var(--page)) / 2));
+      bottom: 52px;
+      z-index: 2;
+      width: 1px;
+      height: 124px;
+      content: '';
+      background: linear-gradient(to bottom, var(--red) 0 33%, #eee 33% 66%, var(--blue-bright) 66%);
+    }
+
+    .hero-bg-media {
+      inset: 72px 0 0;
+      z-index: -2;
+      opacity: .96;
+      background-position: center center;
+      filter: saturate(.78) contrast(1.08) brightness(.72);
+      -webkit-mask-image: none;
+      mask-image: none;
+      transform: scale(1.015);
+      animation: heroIn 1.6s var(--ease) both;
+    }
+
+    @keyframes heroIn {
+      from { opacity: 0; transform: scale(1.07); }
+      to { opacity: .96; transform: scale(1.015); }
+    }
+
+    .hero > .container {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
-      gap: 12px;
+      padding: clamp(82px, 11vh, 132px) 0 150px;
     }
 
-    .viewer-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #e5e7eb;
-      font-family: var(--font-heading);
-      font-size: 11px;
+    .hero-content {
+      position: static;
+      width: min(100%, 760px);
+      max-width: none;
+      animation: contentIn 1s .15s var(--ease) both;
+    }
+
+    @keyframes contentIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .hero-brand-header {
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+
+    .hero-logo-img {
+      width: 72px;
+      height: 72px;
+      border: 1px solid rgba(255, 255, 255, .35);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, .45);
+    }
+
+    .hero-logo-img:hover {
+      transform: none;
+      box-shadow: 0 16px 42px rgba(0, 0, 0, .45);
+    }
+
+    .hero-badges {
+      gap: 7px;
+      min-width: 0;
+      max-width: 480px;
+    }
+
+    .hero-pill {
+      flex: 0 0 auto;
+      padding: 6px 9px 5px;
+      border: 1px solid rgba(255, 255, 255, .24);
+      border-radius: 2px;
+      background: rgba(7, 9, 12, .4);
+      color: rgba(255, 255, 255, .75);
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: .08em;
+      line-height: 1;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-pill.anniversary {
+      border-color: rgba(255, 255, 255, .24);
+      background: rgba(7, 9, 12, .4);
+      color: #fff;
+    }
+
+    .hero-pill.status {
+      border-color: rgba(225, 54, 62, .72);
+      background: rgba(141, 14, 21, .22);
+      color: #ffbdc0;
+    }
+
+    .hero-pill.status::before {
+      width: 5px;
+      height: 5px;
+      background: var(--red-bright);
+      box-shadow: 0 0 10px var(--red-bright);
+    }
+
+    .hero-title-en {
+      margin: 0 0 20px;
+      color: var(--paper-bright);
+      font-family: var(--display);
+      font-size: clamp(80px, 11.4vw, 152px);
+      font-weight: 400;
+      letter-spacing: .01em;
+      line-height: .76;
+      text-shadow: 0 10px 40px rgba(0, 0, 0, .25);
+    }
+
+    .hero-title-en .accent {
+      display: inline-block;
+      margin-left: clamp(38px, 6vw, 76px);
+      padding-top: .16em;
+      background: none;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 1px rgba(250, 247, 239, .72);
+    }
+
+    .hero-title-ja {
+      margin: 0 0 20px clamp(40px, 6vw, 80px);
+      padding-left: 18px;
+      border-left: 3px solid var(--red);
+      color: #fff;
+      font-size: clamp(17px, 1.7vw, 22px);
       font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: var(--transition);
+      line-height: 1.55;
+    }
+
+    .hero-lead {
+      max-width: 660px;
+      margin: 0 0 30px clamp(40px, 6vw, 80px);
+      color: rgba(255, 255, 255, .68);
+      font-size: 13px;
+      line-height: 1.95;
+    }
+
+    .hero-lead strong {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .hero-actions {
+      gap: 10px;
+      margin: 0 0 0 clamp(40px, 6vw, 80px);
+    }
+
+    .btn-hero-primary,
+    .btn-hero-secondary,
+    .shop-btn {
+      position: relative;
+      justify-content: center;
+      min-height: 52px;
+      padding: 0 22px;
+      border-radius: 2px;
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      overflow: hidden;
+      transition: transform .25s var(--ease), background .25s ease, color .25s ease, border-color .25s ease;
+    }
+
+    .btn-hero-primary {
+      border: 1px solid var(--red);
+      background: var(--red);
+      box-shadow: none;
+    }
+
+    .btn-hero-primary:hover {
+      background: #a91f26;
+      transform: translateY(-2px);
+    }
+
+    .btn-hero-secondary {
+      border: 1px solid rgba(255, 255, 255, .26);
+      background: rgba(7, 9, 12, .36);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-hero-secondary:hover {
+      border-color: rgba(255, 255, 255, .6);
+      background: rgba(255, 255, 255, .08);
+      transform: translateY(-2px);
+    }
+
+    .hero-stats {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      padding: 0;
+      border: 1px solid var(--line-dark);
+      border-bottom: 0;
+      background: rgba(8, 9, 11, .72);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-stats > div {
+      display: flex;
+      min-height: 96px;
+      padding: 20px 26px;
+      flex-direction: column;
+      justify-content: center;
+      border-right: 1px solid var(--line-dark);
+    }
+
+    .hero-stats > div:last-child {
+      border-right: 0;
+    }
+
+    .stat-num {
+      color: #fff;
+      font-family: var(--display);
+      font-size: 38px;
+      letter-spacing: .04em;
+      line-height: 1;
+    }
+
+    .stat-num small {
+      margin-left: 2px;
+      font-size: .46em;
+    }
+
+    .stat-label {
+      margin-top: 7px;
+      color: rgba(255, 255, 255, .44);
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: .16em;
+    }
+
+    #story {
+      overflow: hidden;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    #story::before {
+      position: absolute;
+      top: -180px;
+      right: -100px;
+      color: rgba(8, 9, 11, .035);
+      content: 'RIDE ON';
+      font-family: var(--display);
+      font-size: 360px;
+      line-height: 1;
       white-space: nowrap;
     }
 
-    .viewer-btn:hover {
-      background: rgba(29, 104, 237, 0.2);
-      border-color: var(--liberty-blue-bright);
-      color: #fff;
+    #story .section-header {
+      position: relative;
+      z-index: 1;
     }
 
-    .viewer-btn.active {
-      background: var(--liberty-blue);
-      border-color: var(--liberty-blue-bright);
-      color: #fff;
-      box-shadow: 0 0 10px rgba(29, 104, 237, 0.4);
+    .story-track {
+      max-width: none;
+      margin: 0;
+      counter-reset: story;
     }
 
-    .viewer-slider-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
+    .story-track::before {
+      top: 0;
+      bottom: 0;
+      left: clamp(104px, 13vw, 170px);
+      width: 1px;
+      background: rgba(8, 9, 11, .22);
     }
 
-    .viewer-slider {
-      width: 100%;
-      height: 4px;
-      border-radius: 2px;
-      background: rgba(255, 255, 255, 0.15);
-      outline: none;
-      -webkit-appearance: none;
-      cursor: pointer;
-    }
-
-    .viewer-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--liberty-blue-bright);
-      border: 2px solid #ffffff;
-      box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
-      cursor: pointer;
-      transition: transform 0.1s ease;
-    }
-
-    .viewer-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.25);
-    }
-
-    .viewer-slider::-moz-range-thumb {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--liberty-blue-bright);
-      border: 2px solid #ffffff;
-      box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
-      cursor: pointer;
-    }
-
-    .viewer-frame-counter {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 11px;
-      color: var(--muted);
-      min-width: 44px;
-      text-align: right;
-    }
-
-    /* Special Details Cards */
-    .liberty-features-grid {
+    .story-node {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
+      grid-template-columns: clamp(104px, 13vw, 170px) minmax(0, 1fr);
+      gap: clamp(26px, 5vw, 72px);
+      min-height: 168px;
+      margin: 0;
+      counter-increment: story;
     }
 
-    .feature-chip {
-      background: rgba(29, 104, 237, 0.06);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: 6px;
-      padding: 10px;
-      font-size: 11.5px;
-      line-height: 1.5;
+    .story-marker,
+    .story-marker.accident {
+      top: 9px;
+      left: clamp(104px, 13vw, 170px);
+      width: 13px;
+      height: 13px;
+      border: 3px solid var(--paper);
+      background: var(--blue);
+      box-shadow: 0 0 0 1px var(--blue);
     }
 
-    .feature-chip-title {
-      font-family: var(--font-heading);
-      font-size: 11px;
+    .story-marker.accident {
+      background: var(--red);
+      box-shadow: 0 0 0 1px var(--red);
+    }
+
+    .story-node > .story-date-wrap {
+      display: flex;
+      grid-column: 1;
+      grid-row: 1;
+      align-items: flex-start;
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .story-date {
+      color: var(--ink) !important;
+      font-family: var(--display);
+      font-size: clamp(30px, 3.2vw, 46px);
+      letter-spacing: .03em;
+      line-height: 1;
+      opacity: .78 !important;
+    }
+
+    .story-node > .story-card {
+      position: relative;
+      grid-column: 2;
+      grid-row: 1;
+      max-width: 820px;
+      margin: 0;
+      padding: 0 0 48px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .story-card::before {
+      position: absolute;
+      top: -3px;
+      right: 0;
+      color: rgba(8, 9, 11, .08);
+      content: '0' counter(story);
+      font-family: var(--display);
+      font-size: 52px;
+      line-height: 1;
+    }
+
+    .story-card:hover,
+    .story-card.accent-accident,
+    .story-card.accent-liberty {
+      border: 0;
+      background: transparent;
+    }
+
+    .story-mobile-date {
+      display: none;
+    }
+
+    .story-title {
+      max-width: 700px;
+      margin: 0 0 11px;
+      padding-right: 68px;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: clamp(17px, 2vw, 23px);
       font-weight: 800;
-      color: #93c5fd;
-      margin-bottom: 2px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      letter-spacing: -.02em;
+      line-height: 1.45;
     }
 
-    .machine-specs {
+    .story-body {
+      max-width: 720px;
+      color: rgba(8, 9, 11, .64);
+      font-size: 13px;
+      line-height: 1.9;
+    }
+
+    #machine {
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 60% 32%, rgba(18, 86, 180, .14), transparent 34%),
+        linear-gradient(135deg, #11141a, #07080a 65%);
+      color: var(--paper-bright);
+    }
+
+    #machine::after {
+      position: absolute;
+      top: 0;
+      right: max(24px, calc((100vw - var(--page)) / 2));
+      width: 1px;
+      height: 100%;
+      content: '';
+      background: rgba(255, 255, 255, .045);
+    }
+
+    .machine-grid {
+      position: relative;
+      z-index: 1;
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 34px;
     }
 
-    .spec-box {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px;
+    .machine-main-card {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
 
-    .spec-k {
+    .machine-badge-box {
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .machine-code {
+      color: rgba(255, 255, 255, .36);
+      font-family: ui-monospace, monospace;
+      font-size: 9px;
+      letter-spacing: .12em;
+    }
+
+    .badge-250th,
+    .badge-limited {
+      padding: 5px 8px 4px;
+      border-radius: 2px;
+      font-family: var(--sans);
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .09em;
+    }
+
+    .badge-250th {
+      border: 1px solid rgba(52, 124, 224, .46);
+      background: rgba(7, 88, 200, .16);
+      color: #80b5ff;
+    }
+
+    .badge-limited {
+      border: 1px solid rgba(235, 57, 65, .42);
+      background: rgba(198, 43, 50, .12);
+      color: #ff8d93;
+    }
+
+    .machine-name {
+      margin: 0;
+      color: #fff;
+      font-family: var(--display);
+      font-size: clamp(60px, 8vw, 108px);
+      font-weight: 400;
+      letter-spacing: .015em;
+      line-height: .85;
+    }
+
+    .machine-sub {
+      margin: 14px 0 38px;
+      color: rgba(255, 255, 255, .47);
+      font-family: var(--sans);
       font-size: 10px;
       font-weight: 700;
-      color: var(--dim);
-      text-transform: uppercase;
+      letter-spacing: .28em;
     }
 
-    .spec-v {
-      font-family: var(--font-heading);
-      font-size: 14px;
+    .machine-viewer-wrap {
+      position: relative;
+      margin: 0 0 34px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 0;
+      overflow: hidden;
+      background: #f7f7f4;
+      box-shadow: 0 36px 90px rgba(0, 0, 0, .28);
+    }
+
+    .viewer-canvas-box {
+      min-height: 520px;
+      border-radius: 0;
+      background: #f7f7f4;
+    }
+
+    .viewer-canvas-box::before {
+      position: absolute;
+      top: 24px;
+      left: 26px;
+      z-index: 2;
+      color: rgba(8, 9, 11, .36);
+      content: '360° / INTERACTIVE VIEW';
+      font-family: var(--sans);
+      font-size: 9px;
       font-weight: 800;
-      color: #fff;
+      letter-spacing: .18em;
+      pointer-events: none;
     }
 
-    .spec-s {
-      font-size: 11px;
-      color: var(--muted);
+    .viewer-canvas-box img {
+      width: 100%;
+      height: 100%;
+      min-height: 520px;
+      object-fit: contain;
+      transform: scale(1);
+      transition: transform .18s ease;
     }
 
-    /* Sound Simulator (Integrated inside Machine section) */
-    .sound-strip {
-      background: linear-gradient(135deg, #0f1526 0%, #151d38 100%);
-      border: 1px solid rgba(59, 130, 246, 0.35);
-      border-radius: 8px;
-      padding: 18px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
+    .viewer-canvas-box:hover img {
+      transform: scale(1.015);
     }
 
-    .sound-text-title {
-      font-family: var(--font-heading);
-      font-size: 13px;
-      font-weight: 800;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .viewer-canvas-box.is-dragging img {
+      transform: scale(1.01);
     }
 
-    .sound-text-sub {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .sound-controls {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .rpm-box {
-      background: #090a0d;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 12px;
-      text-align: center;
-      min-width: 80px;
-    }
-
-    .rpm-num {
-      font-family: ui-monospace, monospace;
-      font-size: 17px;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .rpm-num.active {
-      color: var(--liberty-blue-bright);
-      text-shadow: 0 0 10px var(--liberty-blue-glow);
-    }
-
-    .rpm-lbl {
+    .viewer-expand-btn {
+      top: 18px;
+      right: 18px;
+      gap: 7px;
+      padding: 9px 11px;
+      border: 1px solid rgba(8, 9, 11, .2);
+      border-radius: 2px;
+      background: rgba(250, 250, 247, .86);
+      color: var(--ink);
+      font-family: var(--sans);
       font-size: 8px;
-      color: var(--dim);
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: .08em;
+      backdrop-filter: blur(8px);
+    }
+
+    .viewer-hint-overlay {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: transparent;
+      pointer-events: none;
+      transform: none;
+    }
+
+    .viewer-hint-badge {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      padding: 9px 13px;
+      border: 0;
+      border-radius: 2px;
+      background: var(--ink);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .11em;
+      transform: translateX(-50%);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, .18);
+    }
+
+    .viewer-hint-overlay.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .viewer-status {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 6;
+      display: none;
+      max-width: calc(100% - 36px);
+      padding: 8px 11px;
+      border: 1px solid rgba(198, 43, 50, .35);
+      background: rgba(8, 9, 11, .9);
+      color: #ffb8bc;
+      font-size: 10px;
+    }
+
+    .viewer-status.is-visible {
       display: block;
     }
 
-    .btn-engine {
-      background: #1e293b;
+    .viewer-controls {
+      min-height: 58px;
+      padding: 0 18px;
+      border-top: 1px solid rgba(8, 9, 11, .14);
+      background: #ecece8;
+    }
+
+    .viewer-btn {
+      gap: 7px;
+      padding: 8px 10px;
+      border: 1px solid rgba(8, 9, 11, .17);
+      border-radius: 2px;
+      background: transparent;
+      color: rgba(8, 9, 11, .72);
+      font-family: var(--sans);
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .viewer-btn:hover,
+    .viewer-btn.active {
+      border-color: var(--blue);
+      background: var(--blue);
       color: #fff;
-      border: 1px solid rgba(59, 130, 246, 0.4);
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-family: var(--font-heading);
+    }
+
+    .viewer-btn:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    .viewer-btn:disabled:hover {
+      border-color: rgba(8, 9, 11, .17);
+      background: transparent;
+      color: rgba(8, 9, 11, .72);
+    }
+
+    .viewer-slider-wrap {
+      margin: 0 18px;
+    }
+
+    .viewer-slider {
+      height: 2px;
+      background: rgba(8, 9, 11, .22);
+    }
+
+    .viewer-slider::-webkit-slider-thumb {
+      width: 14px;
+      height: 14px;
+      border: 3px solid #ecece8;
+      background: var(--blue);
+      box-shadow: 0 0 0 1px var(--blue);
+    }
+
+    .viewer-slider::-moz-range-thumb {
+      width: 10px;
+      height: 10px;
+      border: 2px solid #ecece8;
+      background: var(--blue);
+      box-shadow: 0 0 0 1px var(--blue);
+    }
+
+    .viewer-frame-counter {
+      min-width: 42px;
+      color: rgba(8, 9, 11, .5);
+      font-size: 9px;
+    }
+
+    .liberty-features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      margin: 0;
+      border: 1px solid var(--line-dark);
+    }
+
+    .feature-chip {
+      min-height: 150px;
+      padding: 24px 20px;
+      border: 0;
+      border-right: 1px solid var(--line-dark);
+      border-radius: 0;
+      background: rgba(255, 255, 255, .025);
+      color: rgba(255, 255, 255, .5);
+      font-size: 11px;
+      line-height: 1.75;
+    }
+
+    .feature-chip:last-child {
+      border-right: 0;
+    }
+
+    .feature-chip-title {
+      margin-bottom: 13px;
+      color: #fff;
+      font-family: var(--sans);
       font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      line-height: 1.45;
     }
 
-    .btn-engine:hover {
-      border-color: var(--liberty-blue-bright);
-      transform: scale(1.02);
+    .machine-specs {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      margin: 0;
+      border: 1px solid var(--line-dark);
+      border-top: 0;
     }
 
-    .btn-engine.running {
-      background: #ef4444;
-      border-color: #f87171;
-      box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+    .spec-box {
+      min-height: 132px;
+      padding: 23px 20px;
+      border: 0;
+      border-right: 1px solid var(--line-dark);
+      border-radius: 0;
+      background: transparent;
     }
 
-    /* Right column: Thanks & Photo Card */
+    .spec-box:last-child {
+      border-right: 0;
+    }
+
+    .spec-k {
+      margin-bottom: 10px;
+      color: var(--blue-bright);
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: .12em;
+    }
+
+    .spec-v {
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .spec-s {
+      margin-top: 6px;
+      color: rgba(255, 255, 255, .38);
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
     .shop-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      display: grid;
+      grid-template-columns: minmax(300px, .9fr) 1.1fr;
+      gap: clamp(28px, 5vw, 72px);
+      align-items: center;
       padding: 28px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 20px;
+      border: 1px solid var(--line-dark);
+      border-radius: 0;
+      background: rgba(255, 255, 255, .025);
     }
 
     .side-photo-wrap {
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid var(--border);
+      grid-column: 1;
+      height: 100%;
+      min-height: 330px;
+      margin: 0 !important;
+      border-radius: 0;
+      filter: saturate(.7) contrast(1.08);
     }
 
     .side-photo-wrap img {
       width: 100%;
-      height: auto;
+      height: 100%;
       object-fit: cover;
     }
 
-    .shop-title {
-      font-family: var(--font-heading);
-      font-size: 16px;
-      font-weight: 800;
-      color: var(--liberty-blue-bright);
-      margin-bottom: 10px;
+    .shop-copy {
       display: flex;
+      gap: 22px;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .shop-title {
+      display: flex;
+      gap: 10px;
       align-items: center;
-      gap: 8px;
+      align-self: stretch;
+      margin: 0;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: clamp(17px, 2.1vw, 25px);
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .shop-title svg {
+      color: var(--red);
     }
 
     .shop-desc {
-      font-size: 13px;
-      color: #d1d5db;
-      line-height: 1.75;
+      color: rgba(255, 255, 255, .52);
+      font-size: 12px;
+      line-height: 1.9;
     }
 
     .shop-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      padding: 12px 18px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      font-weight: 700;
+      align-self: flex-start;
+      width: auto;
+      border: 1px solid rgba(255, 255, 255, .24);
+      background: transparent;
       color: #fff;
-      transition: var(--transition);
     }
 
     .shop-btn:hover {
-      border-color: var(--liberty-blue-bright);
-      color: var(--liberty-blue-bright);
+      border-color: #fff;
+      background: #fff;
+      color: var(--ink);
     }
 
-    /* =========================================
-       Themes Grid
-       ========================================= */
+    #themes {
+      background: #ddd5c8;
+      color: var(--ink);
+    }
+
     .themes-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      border: 1px solid rgba(8, 9, 11, .22);
+      background: rgba(8, 9, 11, .22);
+      counter-reset: pillar;
     }
 
     .theme-box {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 24px 20px;
-      transition: var(--transition);
+      position: relative;
+      min-height: 280px;
+      padding: clamp(30px, 4vw, 52px);
+      border: 0;
+      border-radius: 0;
+      background: var(--paper);
+      counter-increment: pillar;
+      overflow: hidden;
+    }
+
+    .theme-box::after {
+      position: absolute;
+      right: 24px;
+      bottom: -18px;
+      color: rgba(8, 9, 11, .045);
+      content: '0' counter(pillar);
+      font-family: var(--display);
+      font-size: 150px;
+      line-height: 1;
     }
 
     .theme-box:hover {
-      border-color: rgba(59, 130, 246, 0.4);
-      transform: translateY(-2px);
+      border: 0;
+      background: var(--paper-bright);
+      transform: none;
     }
 
     .theme-icon {
-      font-size: 26px;
-      margin-bottom: 10px;
-      display: inline-block;
+      display: grid;
+      width: 44px;
+      height: 44px;
+      margin-bottom: 52px;
+      place-items: center;
+      border: 1px solid rgba(8, 9, 11, .16);
+      border-radius: 50%;
+      color: var(--blue);
+    }
+
+    .theme-icon svg {
+      width: 21px;
+      height: 21px;
     }
 
     .theme-t {
-      font-family: var(--font-heading);
-      font-size: 15px;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 12px;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: clamp(18px, 2vw, 24px);
       font-weight: 800;
-      color: #fff;
-      margin-bottom: 8px;
+      letter-spacing: -.02em;
     }
 
     .theme-d {
-      font-size: 12.5px;
-      color: var(--muted);
-      line-height: 1.65;
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      color: rgba(8, 9, 11, .58);
+      font-size: 12px;
+      line-height: 1.9;
     }
 
-    /* =========================================
-       YouTube Teaser / CTA Section
-       ========================================= */
+    #channel {
+      padding: clamp(90px, 11vw, 150px) 0;
+      overflow: hidden;
+      background:
+        linear-gradient(110deg, rgba(5, 7, 10, .94) 0%, rgba(5, 7, 10, .78) 54%, rgba(5, 7, 10, .35) 100%),
+        url('../images/contents/motovlog-liberty-canyon.jpg') center 56% / cover;
+    }
+
     .teaser-card {
-      background: linear-gradient(180deg, #101524 0%, #090a10 100%);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      border-radius: var(--radius);
-      padding: 44px 20px;
-      text-align: center;
       position: relative;
+      max-width: 850px;
+      padding: 0 0 0 clamp(28px, 5vw, 70px);
+      border: 0;
+      border-left: 1px solid rgba(255, 255, 255, .32);
+      border-radius: 0;
+      background: transparent;
+      text-align: left;
+    }
+
+    .teaser-card::before {
+      position: absolute;
+      top: 0;
+      left: -2px;
+      width: 3px;
+      height: 84px;
+      content: '';
+      background: linear-gradient(var(--red) 0 33%, #fff 33% 66%, var(--blue-bright) 66%);
     }
 
     .teaser-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 4px 14px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      color: #e5e7eb;
-      margin-bottom: 16px;
+      margin-bottom: 22px;
+      padding: 6px 9px 5px;
+      border: 1px solid rgba(255, 255, 255, .24);
+      border-radius: 2px;
+      background: rgba(8, 9, 11, .42);
+      color: rgba(255, 255, 255, .72);
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: .13em;
     }
 
     .teaser-title {
-      font-family: var(--font-heading);
-      font-size: clamp(22px, 3.2vw, 30px);
-      font-weight: 900;
+      max-width: 760px;
+      margin-bottom: 22px;
       color: #fff;
-      margin-bottom: 12px;
+      font-family: var(--display);
+      font-size: clamp(52px, 7.5vw, 96px);
+      font-weight: 400;
+      letter-spacing: .02em;
+      line-height: .94;
     }
 
     .teaser-desc {
-      font-size: 14px;
-      color: var(--muted);
-      max-width: 560px;
-      margin: 0 auto 28px;
-      line-height: 1.7;
+      max-width: 650px;
+      margin: 0 0 32px;
+      color: rgba(255, 255, 255, .62);
+      font-size: 13px;
+      line-height: 1.9;
     }
 
-    .teaser-btn-row {
+    .latest-video {
+      width: min(100%, 820px);
+      margin: 34px 0;
+      border: 1px solid rgba(255, 255, 255, .24);
+      background: #07090d;
+    }
+
+    .video-consent {
+      position: relative;
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    /* =========================================
-       Footer
-       ========================================= */
-    .footer {
-      border-top: 1px solid var(--border);
-      padding: 48px 0 32px;
-      background: #06070a;
-    }
-
-    .footer-inner {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      padding: 28px;
+      border: 0;
       align-items: center;
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-
-    .footer-title {
-      font-family: var(--font-display);
-      font-size: 22px;
+      justify-content: center;
+      gap: 16px;
+      overflow: hidden;
+      background-color: #11141a;
+      background-position: center;
+      background-size: cover;
       color: #fff;
-      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-align: left;
     }
 
-    .footer-sub {
-      font-size: 11px;
-      color: var(--dim);
+    .video-consent::before {
+      position: absolute;
+      inset: 0;
+      content: '';
+      background: rgba(5, 7, 10, .54);
+      transition: background .25s ease;
+    }
+
+    .video-consent:hover::before {
+      background: rgba(5, 7, 10, .38);
+    }
+
+    .video-consent > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .video-consent strong,
+    .video-consent small {
       display: block;
     }
 
-    .footer-links {
+    .video-consent strong {
+      font-family: var(--sans);
+      font-size: 15px;
+    }
+
+    .video-consent small {
+      margin-top: 3px;
+      color: rgba(255, 255, 255, .68);
+      font-size: 9px;
+    }
+
+    .video-play {
+      display: grid;
+      width: 52px;
+      height: 52px;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 12px 32px rgba(198, 43, 50, .32);
+    }
+
+    .video-frame {
+      aspect-ratio: 16 / 9;
+    }
+
+    .video-frame iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .ride-log {
+      display: grid;
+      width: min(100%, 820px);
+      margin: 0 0 34px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border: 1px solid rgba(255, 255, 255, .2);
+    }
+
+    .ride-log[hidden],
+    .latest-video[hidden],
+    .video-frame[hidden],
+    .video-consent[hidden] {
+      display: none;
+    }
+
+    .ride-log > div {
+      min-width: 0;
+      padding: 17px 18px;
+      border-right: 1px solid rgba(255, 255, 255, .16);
+    }
+
+    .ride-log > div:last-child {
+      border-right: 0;
+    }
+
+    .ride-log dt {
+      color: var(--blue-bright);
+      font-family: var(--sans);
+      font-size: 7px;
+      font-weight: 800;
+      letter-spacing: .14em;
+    }
+
+    .ride-log dd {
+      margin-top: 5px;
+      color: #fff;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .teaser-btn-row {
+      gap: 10px;
+      justify-content: flex-start;
+    }
+
+    .footer {
+      padding: 60px 0 34px;
+      border-top: 1px solid var(--line-dark);
+      background: #060709;
+    }
+
+    .footer-inner {
+      align-items: flex-start;
+      gap: 40px;
+      padding-bottom: 44px;
+    }
+
+    .footer-brand {
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      font-size: 12px;
-      color: var(--muted);
+      align-items: center;
+      gap: 14px;
+    }
+
+    .footer-brand img {
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 50%;
+    }
+
+    .footer-title {
+      display: block;
+      color: #fff;
+      font-family: var(--display);
+      font-size: 22px;
+      letter-spacing: .08em;
+    }
+
+    .footer-sub {
+      max-width: 550px;
+      margin-top: 4px;
+      color: rgba(255, 255, 255, .35);
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: .07em;
+    }
+
+    .footer-links {
+      gap: 22px;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, .52);
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .08em;
     }
 
     .footer-links a:hover {
-      color: var(--liberty-blue-bright);
+      color: #fff;
     }
 
     .footer-copy {
-      border-top: 1px solid rgba(255, 255, 255, 0.04);
-      padding-top: 18px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--dim);
+      padding-top: 24px;
+      border-top: 1px solid var(--line-dark);
+      color: rgba(255, 255, 255, .27);
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: .06em;
     }
 
-    @media (max-width: 640px) {
-      .section {
-        padding: 48px 0;
-      }
+    .viewer-modal {
+      width: min(calc(100vw - 32px), 1220px);
+      max-width: none;
+      max-height: none;
+      margin: auto;
+      padding: 20px;
+      border: 0;
+      background: transparent;
+      overflow: visible;
+      color: var(--ink);
+    }
 
-      .hero-brand-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 14px;
-      }
+    .viewer-modal[open] {
+      display: flex;
+    }
 
-      .hero-logo-img {
-        width: 72px;
-        height: 72px;
-      }
+    .viewer-modal::backdrop {
+      background: rgba(3, 4, 6, .82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
 
-      .hero-stats {
+    .viewer-modal-container {
+      width: 100%;
+      max-width: 1180px;
+      max-height: calc(100svh - 40px);
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 0;
+      background: #f5f5f1;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, .62);
+    }
+
+    .viewer-modal-header {
+      min-height: 58px;
+      padding: 0 18px;
+      border-bottom: 1px solid rgba(8, 9, 11, .14);
+      background: #ecece8;
+    }
+
+    .viewer-modal-title {
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .viewer-modal-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(8, 9, 11, .2);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .viewer-modal-close:hover {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: #fff;
+      transform: none;
+    }
+
+    .viewer-modal-body {
+      min-height: 0;
+      background: #f5f5f1;
+    }
+
+    .viewer-modal-body img {
+      max-height: calc(100svh - 158px);
+      object-fit: contain;
+      transform: scale(1);
+    }
+
+    .viewer-modal-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      padding: 7px 10px;
+      border-radius: 2px;
+      background: var(--ink);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: .07em;
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+
+    @media (max-width: 980px) {
+      .nav-anchor { display: none; }
+      .hero { min-height: 860px; }
+      .hero::before {
+        background:
+          linear-gradient(90deg, rgba(3, 5, 8, .95) 0%, rgba(3, 5, 8, .7) 58%, rgba(3, 5, 8, .25) 100%),
+          linear-gradient(0deg, #08090b 0%, transparent 38%);
+      }
+      .hero-content { width: min(100%, 700px); }
+      .liberty-features-grid,
+      .machine-specs { grid-template-columns: repeat(2, 1fr); }
+      .feature-chip:nth-child(2),
+      .spec-box:nth-child(2) { border-right: 0; }
+      .feature-chip:nth-child(-n+2),
+      .spec-box:nth-child(-n+2) { border-bottom: 1px solid var(--line-dark); }
+      .shop-card { grid-template-columns: .9fr 1.1fr; }
+      .viewer-canvas-box,
+      .viewer-canvas-box img { min-height: 430px; }
+    }
+
+    @media (max-width: 720px) {
+      .container { width: min(calc(100% - 32px), var(--page)); }
+      .section { padding: 82px 0; }
+      .section-header {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 18px;
+        margin-bottom: 46px;
       }
-
-      .hero-actions,
-      .teaser-btn-row {
-        flex-direction: column;
+      .section-desc { grid-column: 1; }
+      .section-title { font-size: clamp(44px, 14vw, 68px); }
+      .nav-inner { height: 64px; }
+      .nav-header .container { width: calc(100% - 24px); }
+      .nav-logo { width: 34px; height: 34px; }
+      .brand-link { gap: 8px; font-size: 18px; }
+      .brand-badge,
+      .btn-terminal-back { display: none; }
+      .nav-links { gap: 8px; }
+      .btn-yt-nav { padding: 8px 10px; }
+      .hero {
+        min-height: 900px;
+        padding-top: 64px;
       }
-
-      .btn-hero-primary,
-      .btn-hero-secondary {
+      .hero-bg-media { inset: 64px 0 0; background-position: 62% center; }
+      .hero::before {
+        inset: 64px 0 0;
+        background:
+          linear-gradient(0deg, #08090b 0%, rgba(3, 5, 8, .72) 54%, rgba(3, 5, 8, .18) 100%),
+          linear-gradient(90deg, rgba(3, 5, 8, .72), rgba(3, 5, 8, .08));
+      }
+      .hero > .container {
+        align-items: flex-end;
         width: 100%;
-        justify-content: center;
+        padding: 94px 16px 138px;
       }
-
-      .liberty-features-grid {
-        grid-template-columns: 1fr;
+      .hero-content { width: 100%; min-width: 0; }
+      .hero-brand-header { align-items: flex-start; margin-bottom: 26px; }
+      .hero-brand-header { flex-direction: column; }
+      .hero-badges {
+        display: flex;
+        max-width: 100%;
+        width: 100%;
+        flex-wrap: wrap;
       }
-
-      .machine-specs {
-        grid-template-columns: 1fr;
+      .hero-logo-img { width: 58px; height: 58px; }
+      .hero-title-en { font-size: clamp(68px, 23vw, 104px); }
+      .hero-title-en .accent { margin-left: 20px; }
+      .hero-title-ja,
+      .hero-lead,
+      .hero-actions { margin-left: 20px; }
+      .hero-title-ja,
+      .hero-lead,
+      .hero-actions {
+        width: auto;
+        max-width: none;
+        margin-right: 0;
       }
-
-      .sound-strip {
-        flex-direction: column;
-        align-items: stretch;
+      .hero-title-ja { font-size: 16px; overflow-wrap: anywhere; }
+      .hero-lead { font-size: 11.5px; line-height: 1.85; overflow-wrap: anywhere; }
+      .hero-lead br { display: none; }
+      .hero-actions { align-items: stretch; flex-direction: column; }
+      .btn-hero-primary,
+      .btn-hero-secondary { width: 100%; }
+      .hero-stats > div { min-height: 76px; padding: 15px 12px; }
+      .hero-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+      .stat-num { font-size: 28px; }
+      .stat-label { font-size: 6px; line-height: 1.4; }
+      .story-track::before,
+      .story-marker,
+      .story-marker.accident { left: 88px; }
+      .story-node { grid-template-columns: 88px minmax(0, 1fr); gap: 24px; min-height: 0; }
+      .story-date { font-size: 29px; }
+      .story-card,
+      .story-node:nth-child(even) .story-card,
+      .story-node:nth-child(odd) .story-card { padding-bottom: 46px; }
+      .story-card::before { display: none; }
+      .story-title { padding-right: 0; font-size: 16px; }
+      .story-body { font-size: 11.5px; }
+      .machine-name { font-size: clamp(56px, 18vw, 82px); }
+      .machine-sub { font-size: 8px; letter-spacing: .18em; }
+      .viewer-canvas-box,
+      .viewer-canvas-box img { min-height: 280px; }
+      .viewer-canvas-box::before { top: 14px; left: 14px; font-size: 7px; }
+      .viewer-expand-btn { top: 10px; right: 10px; }
+      .viewer-expand-btn span { display: none; }
+      .viewer-hint-badge { bottom: 15px; white-space: nowrap; }
+      .viewer-controls { padding: 0 10px; }
+      .viewer-btn { padding: 7px; }
+      .viewer-slider-wrap { margin: 0 10px; }
+      .liberty-features-grid,
+      .machine-specs { grid-template-columns: 1fr; }
+      .feature-chip,
+      .feature-chip:nth-child(2),
+      .spec-box,
+      .spec-box:nth-child(2) {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line-dark);
       }
-
-      .sound-controls {
-        justify-content: space-between;
+      .feature-chip:last-child,
+      .spec-box:last-child { border-bottom: 0; }
+      .shop-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        padding: 18px;
       }
+      .side-photo-wrap { min-height: 230px; margin-bottom: 25px !important; }
+      .shop-title { font-size: 17px; }
+      .shop-btn { width: 100%; }
+      .themes-grid { grid-template-columns: 1fr; }
+      .theme-box { min-height: 240px; }
+      .theme-icon { margin-bottom: 36px; }
+      .teaser-card { padding-left: 24px; }
+      .teaser-title { font-size: clamp(50px, 16vw, 76px); }
+      .ride-log { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ride-log > div:nth-child(2) { border-right: 0; }
+      .ride-log > div:nth-child(-n+2) { border-bottom: 1px solid rgba(255, 255, 255, .16); }
+      .teaser-btn-row { align-items: stretch; flex-direction: column; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+      .footer-links { align-items: flex-start; flex-wrap: wrap; }
+      .footer-copy { align-items: flex-start; gap: 10px; flex-direction: column; }
+      .viewer-modal { padding: 8px; }
+      .viewer-modal-container { max-height: calc(100svh - 16px); }
+      .viewer-modal-title > span:last-child { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      html {
-        scroll-behavior: auto;
-      }
-      .viewer-hint-badge svg {
-        animation: none;
-      }
-      .viewer-modal-container {
-        animation: none;
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
       }
     }
   </style>
 </head>
 
 <body>
+
+  <a class="skip-link" href="#main">本文へスキップ</a>
 
   <!-- Navigation Header -->
   <header class="nav-header">
@@ -1494,11 +2020,15 @@
         <span class="brand-badge">250th ANNIVERSARY</span>
       </a>
       <div class="nav-links">
+        <a href="#story" class="nav-anchor" data-nav-section="story">Origin</a>
+        <a href="#machine" class="nav-anchor" data-nav-section="machine">Machine</a>
+        <a href="#themes" class="nav-anchor" data-nav-section="themes">Journal</a>
+        <a href="#channel" class="nav-anchor" data-nav-section="channel">Channel</a>
         <a href="https://tk.st/" class="btn-terminal-back" title="Return to Terminal Portfolio">
           <span>ST@portfolio:~$</span>
         </a>
         <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
-          class="btn-yt-nav">
+          class="btn-yt-nav" data-channel-subscribe>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
             <path
               d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
@@ -1523,15 +2053,13 @@
               width="84" height="84">
           </div>
           <div class="hero-badges">
-            <span class="hero-pill anniversary">🇺🇸 アメリカ建国250周年記念モデル (1776 - 2026)</span>
+            <span class="hero-pill anniversary">★ UNITED STATES 250 / 1776—2026</span>
             <span class="hero-pill">日本限定 39 台</span>
             <span class="hero-pill status">始動準備中 / COMING SOON</span>
           </div>
         </div>
 
-        <h1 class="hero-title-en">
-          LIBERTY<br><span class="accent">MOTOVLOG</span>
-        </h1>
+        <h1 class="hero-title-en">LIBERTY<br><span class="accent">MOTOVLOG</span></h1>
 
         <div class="hero-title-ja">
           死線を越えて、再び風の中へ。<br>
@@ -1547,7 +2075,7 @@
 
         <div class="hero-actions">
           <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank"
-            rel="noopener noreferrer" class="btn-hero-primary">
+            rel="noopener noreferrer" class="btn-hero-primary" data-channel-primary data-channel-subscribe>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
@@ -1556,7 +2084,7 @@
           </a>
 
           <a href="https://www.instagram.com/liberty_motovlog/" target="_blank" rel="noopener noreferrer"
-            class="btn-hero-secondary">
+            class="btn-hero-secondary" data-channel-instagram>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
@@ -1567,7 +2095,7 @@
 
         <div class="hero-stats">
           <div>
-            <div class="stat-num">250<span style="font-size:16px;">th</span></div>
+            <div class="stat-num">250<small>th</small></div>
             <div class="stat-label">U.S. SEMIQUINCENTENNIAL</div>
           </div>
           <div>
@@ -1625,13 +2153,13 @@
         <div class="story-node">
           <div class="story-marker accident"></div>
           <div class="story-card accent-accident">
-            <div class="story-mobile-date" style="color:var(--accent-red);">2025.07</div>
+            <div class="story-mobile-date">2025.07</div>
             <h3 class="story-title">交差点事故・40日間の入院と記憶喪失</h3>
             <p class="story-body">
               仕事からの帰宅中、交差点で右折してきた対向車とナイトスターが激しく衝突。40日間にわたる入院、腕と腰の骨折、そして記憶障害。日常生活への復帰すら危ぶまれる生死の淵を経験し、愛機は廃車となった。
             </p>
           </div>
-          <div class="story-date-wrap"><span class="story-date" style="color:rgba(239, 68, 68, 0.4);">2025</span></div>
+          <div class="story-date-wrap"><span class="story-date">2025</span></div>
         </div>
 
         <!-- 2025 Reboot -->
@@ -1649,28 +2177,26 @@
 
         <!-- 2026 -->
         <div class="story-node">
-          <div class="story-marker"
-            style="border-color:var(--liberty-blue-bright); box-shadow:0 0 10px var(--liberty-blue-bright);"></div>
+          <div class="story-marker"></div>
           <div class="story-card accent-liberty">
-            <div class="story-mobile-date" style="color:var(--liberty-blue-bright);">2026</div>
+            <div class="story-mobile-date">2026</div>
             <h3 class="story-title">「人生にはハーレーが必要だ」—— 建国250周年 Liberty Edition との運命</h3>
             <p class="story-body">
               「これ以上周囲に心配をかけられない」と一度はバイクを諦めかけたが、魂の底から湧き上がる衝動は抑えられなかった。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ。アメリカ建国250周年を記念して日本にわずか39台のみ割り当てられた希少な『Heritage
               Classic Liberty Edition』を迎え、奇跡のリターンを果たす。
             </p>
           </div>
-          <div class="story-date-wrap"><span class="story-date"
-              style="color:var(--liberty-blue-bright); opacity:0.6;">2026</span></div>
+          <div class="story-date-wrap"><span class="story-date">2026</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- The Machine & Integrated Sound Experience -->
+  <!-- The Machine -->
   <section class="section" id="machine">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">The Machine & Sound</span>
+        <span class="section-tag">The Machine</span>
         <h2 class="section-title">愛機：Heritage Classic Liberty Edition</h2>
         <p class="section-desc">
           アメリカ建国250周年記念限定モデル（FLHC）。伝統のNo.1星条旗ロゴ、コバルトブルー風防、そして漆黒の重低音。
@@ -1678,13 +2204,13 @@
       </div>
 
       <div class="machine-grid">
-        <!-- Machine Specs & Sound Simulator -->
+        <!-- Machine Specs -->
         <div class="machine-main-card">
           <div>
             <div class="machine-badge-box">
-              <span class="badge-250th">🇺🇸 アメリカ建国250周年記念</span>
+              <span class="badge-250th">★ UNITED STATES 250</span>
               <span class="badge-limited">日本限定 39 台</span>
-              <span style="font-family:ui-monospace; font-size:11px; color:var(--dim);">FLHC</span>
+              <span class="machine-code">FLHC / 2026</span>
             </div>
             <div class="machine-name">HERITAGE CLASSIC</div>
             <div class="machine-sub">2026 LIBERTY EDITION</div>
@@ -1693,10 +2219,13 @@
           <!-- 360° Interactive Bike Viewer -->
           <div class="machine-viewer-wrap" id="bikeViewerWrap" role="region"
             aria-label="ハーレーダビッドソン 2026 リバティエディション 360度インタラクティブビューワー">
-            <div class="viewer-canvas-box" id="bikeCanvasBox" title="クリックして大画面で拡大表示">
+            <div class="viewer-canvas-box" id="bikeCanvasBox" tabindex="0"
+              role="group" aria-roledescription="360度ビューワー"
+              aria-label="車両を360度で見る。左右矢印キーまたはドラッグで回転"
+              aria-describedby="viewerInstructions" title="クリックして大画面で拡大表示">
               <img id="bike360Img" src="../images/contents/liberty-edition/liberty-edition_01.webp"
                 alt="ハーレーダビッドソン 2026 ヘリテイジ クラシック リバティ エディション 360度ビュー（アメリカ建国250周年記念・日本限定39台）" width="1200" height="720"
-                draggable="false">
+                loading="lazy" decoding="async" draggable="false">
 
               <!-- Expand / Fullscreen Button -->
               <button type="button" class="viewer-expand-btn" id="viewerExpandBtn" aria-label="全画面で拡大表示"
@@ -1721,11 +2250,15 @@
                   <span>360° DRAG TO ROTATE</span>
                 </span>
               </div>
+              <p class="viewer-status" id="viewerStatus" role="status" aria-live="polite"></p>
             </div>
+
+            <p class="sr-only" id="viewerInstructions">左右矢印キーで1フレーム、HomeキーとEndキーで先頭と最後へ移動します。Enterキーで拡大表示します。</p>
+            <p class="sr-only" id="viewerA11yStatus" aria-live="polite" aria-atomic="true"></p>
 
             <!-- Viewer Control Bar -->
             <div class="viewer-controls">
-              <button type="button" class="viewer-btn" id="viewerAutoBtn" aria-label="360度自動回転切り替え">
+              <button type="button" class="viewer-btn" id="viewerAutoBtn" aria-label="360度自動回転切り替え" aria-pressed="false">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" id="autoBtnIcon">
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
@@ -1744,19 +2277,19 @@
           <!-- 250th Liberty Edition Special Features -->
           <div class="liberty-features-grid">
             <div class="feature-chip">
-              <div class="feature-chip-title">🔹 コバルトブルー風防</div>
+              <div class="feature-chip-title">01 / コバルトブルー風防</div>
               下部に鮮やかなブルーのクリアティントを配した専用ウィンドシールド。
             </div>
             <div class="feature-chip">
-              <div class="feature-chip-title">🦅 星条旗 No.1 & イーグル</div>
+              <div class="feature-chip-title">02 / 星条旗 No.1 & イーグル</div>
               タンクサイドに誇らしく描かれた伝統のNo.1ロゴと自由の鷲の翼。
             </div>
             <div class="feature-chip">
-              <div class="feature-chip-title">🧵 専用ブルーステッチ</div>
+              <div class="feature-chip-title">03 / 専用ブルーステッチ</div>
               重厚なブラックレザーサドルに映えるエレクトリックブルーのステッチ。
             </div>
             <div class="feature-chip">
-              <div class="feature-chip-title">⚡ 漆黒の排気 & Vツイン</div>
+              <div class="feature-chip-title">04 / 漆黒の排気 & Vツイン</div>
               引き締められた漆黒の2-in-1エキゾーストとMilwaukee-Eight 117の重低音。
             </div>
           </div>
@@ -1784,42 +2317,15 @@
             </div>
           </div>
 
-          <!-- Integrated 3-Beat Engine Sound Simulator -->
-          <div class="sound-strip">
-            <div>
-              <div class="sound-text-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
-                3拍子アイドリング・パルス
-              </div>
-              <div class="sound-text-sub">Web Audio API によるブラウザ合成サウンド</div>
-            </div>
-
-            <div class="sound-controls">
-              <div class="rpm-box">
-                <span class="rpm-num" id="rpmValue">0</span>
-                <span class="rpm-lbl">RPM</span>
-              </div>
-              <button type="button" class="btn-engine" id="engineBtn" aria-pressed="false" aria-label="3拍子排気音シミュレーター開始">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2v10m-7.07-7.07A10 10 0 1 0 19.07 4.93" stroke="currentColor" stroke-width="2.5"
-                    fill="none" stroke-linecap="round" />
-                </svg>
-                <span id="engineBtnText">START ENGINE</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         <!-- Right column: Dealer Photo & Thanks -->
         <div class="shop-card">
-          <div>
-            <div class="side-photo-wrap" style="margin-bottom:18px;">
-              <img src="../images/contents/Harley-Davidson%20HIGASHI%20KURUME.webp" alt="ハーレーダビッドソン東久留米 店舗外観"
-                loading="lazy" width="1200" height="708">
-            </div>
+          <div class="side-photo-wrap">
+            <img src="../images/contents/Harley-Davidson%20HIGASHI%20KURUME.webp" alt="ハーレーダビッドソン東久留米 店舗外観"
+              loading="lazy" width="1200" height="708">
+          </div>
+          <div class="shop-copy">
             <div class="shop-title">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path
@@ -1831,13 +2337,12 @@
               ナイトスターの新車購入時から事故の対応、そして今回の限定Liberty Editionへのリターンに至るまで、親身に支えてくださった正規ディーラー。<br><br>
               退院後に店舗へ伺った際も、スタッフ・メカニックの皆様が総出で快気と再出発を祝ってくださいました。このチャンネルは、東久留米店をはじめとする愛あるコミュニティへの感謝とともに発信されています。
             </div>
+            <a href="https://harleydavidson-higashikurume.com/" target="_blank" rel="noopener noreferrer"
+              class="shop-btn">
+              <span>ハーレーダビッドソン東久留米 公式サイト</span>
+              <span>↗</span>
+            </a>
           </div>
-
-          <a href="https://harleydavidson-higashikurume.com/" target="_blank" rel="noopener noreferrer"
-            class="shop-btn">
-            <span>ハーレーダビッドソン東久留米 公式サイト</span>
-            <span>↗</span>
-          </a>
         </div>
       </div>
     </div>
@@ -1856,22 +2361,22 @@
 
       <div class="themes-grid">
         <div class="theme-box">
-          <span class="theme-icon">🌊</span>
+          <span class="theme-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 15c3-3 5 3 8 0s5 3 10-1M4 10c2-1 3-4 7-4 4 0 5 3 9 2"/></svg></span>
           <h3 class="theme-t">日本各地の景色と風</h3>
           <p class="theme-d">四季折々の美しい日本の風景やワインディングを、高画質なロードトリップ映像でお届けします。</p>
         </div>
         <div class="theme-box">
-          <span class="theme-icon">🤝</span>
+          <span class="theme-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m8 12 3 3c1 1 3 1 4 0l5-5M3 10l4-4 4 2M21 10l-4-4-4 2M5 12l5 6c1 1 2 1 3 0l1-1"/></svg></span>
           <h3 class="theme-t">温かいコミュニティ</h3>
           <p class="theme-d">道行くライダーとのヤエー、ショップや仲間たちとの絆。ハーレーで広がる人の輪を記録します。</p>
         </div>
         <div class="theme-box">
-          <span class="theme-icon">⚡</span>
+          <span class="theme-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z"/></svg></span>
           <h3 class="theme-t">至高の3拍子 & トルク</h3>
           <p class="theme-d">Vツインの太い鼓動と心地よい排気音。鉄馬の魅力を五感で伝えます。</p>
         </div>
         <div class="theme-box">
-          <span class="theme-icon">🛡️</span>
+          <span class="theme-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 4 6v5c0 5 3 8 8 10 5-2 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-5"/></svg></span>
           <h3 class="theme-t">安全意識とリアルなギア</h3>
           <p class="theme-d">大事故と記憶喪失を経験したからこそわかる、防衛運転や命を守るギア選びについて等身大で語ります。</p>
         </div>
@@ -1883,15 +2388,34 @@
   <section class="section" id="channel">
     <div class="container">
       <div class="teaser-card">
-        <span class="teaser-status">第1弾動画 鋭意制作中 / IN PRODUCTION</span>
-        <h2 class="teaser-title">YouTube チャンネルにて始動準備中</h2>
-        <p class="teaser-desc">
+        <span class="teaser-status" data-channel-status>第1弾動画 鋭意制作中 / IN PRODUCTION</span>
+        <h2 class="teaser-title" data-channel-title>YouTube チャンネルにて始動準備中</h2>
+        <p class="teaser-desc" data-channel-description>
           『LIBERTY MOTOVLOG』は現在、第1弾動画の撮影・編集を進めております。<br>
           建国250周年限定モデルの走り出しの通知を受け取れるよう、ぜひチャンネル登録をしてお待ちください！
         </p>
+
+        <div class="latest-video" id="latestVideo" hidden>
+          <button type="button" class="video-consent" id="videoLoadBtn">
+            <span class="video-play" aria-hidden="true">▶</span>
+            <span>
+              <strong>最新動画を再生</strong>
+              <small>YouTubeはクリック後に読み込まれます</small>
+            </span>
+          </button>
+          <div class="video-frame" id="videoFrame" hidden></div>
+        </div>
+
+        <dl class="ride-log" id="rideLog" hidden>
+          <div><dt>ROUTE</dt><dd data-ride-route></dd></div>
+          <div><dt>DISTANCE</dt><dd data-ride-distance></dd></div>
+          <div><dt>RECORDED</dt><dd data-ride-date></dd></div>
+          <div><dt>WEATHER</dt><dd data-ride-weather></dd></div>
+        </dl>
+
         <div class="teaser-btn-row">
           <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank"
-            rel="noopener noreferrer" class="btn-hero-primary">
+            rel="noopener noreferrer" class="btn-hero-primary" data-channel-primary data-channel-subscribe>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
@@ -1899,9 +2423,14 @@
             <span>YouTube チャンネル登録する</span>
           </a>
           <a href="https://www.instagram.com/liberty_motovlog/" target="_blank" rel="noopener noreferrer"
-            class="btn-hero-secondary">
+            class="btn-hero-secondary" data-channel-instagram>
             <span>Instagramで日常を見る</span>
             <span>↗</span>
+          </a>
+          <a href="/contact/?subject=LIBERTY%20MOTOVLOG%20撮影・取材・ツーリングのお誘い"
+            class="btn-hero-secondary btn-contact">
+            <span>撮影・取材のお問い合わせ</span>
+            <span>→</span>
           </a>
         </div>
       </div>
@@ -1913,9 +2442,9 @@
   <footer class="footer">
     <div class="container">
       <div class="footer-inner">
-        <div style="display:flex; align-items:center; gap:14px;">
+        <div class="footer-brand">
           <img src="../images/contents/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式ロゴ" width="36" height="36"
-            style="width:36px; height:36px; border-radius:50%; box-shadow:0 0 10px rgba(29,104,237,0.35);">
+            loading="lazy">
           <div>
             <span class="footer-title">LIBERTY MOTOVLOG</span>
             <span class="footer-sub">Harley-Davidson 2026 Heritage Classic Liberty Edition (FLHC) - US 250th
@@ -1924,9 +2453,9 @@
         </div>
         <div class="footer-links">
           <a href="https://tk.st/">tk.st Terminal</a>
-          <a href="https://www.youtube.com/@liberty_motovlog" target="_blank" rel="noopener noreferrer">YouTube</a>
-          <a href="https://www.instagram.com/liberty_motovlog/" target="_blank" rel="noopener noreferrer">Instagram</a>
-          <a href="mailto:vlog@tk.st">vlog@tk.st</a>
+          <a href="https://www.youtube.com/@liberty_motovlog" target="_blank" rel="noopener noreferrer" data-channel-youtube>YouTube</a>
+          <a href="https://www.instagram.com/liberty_motovlog/" target="_blank" rel="noopener noreferrer" data-channel-instagram>Instagram</a>
+          <a href="/contact/?subject=LIBERTY%20MOTOVLOG%20お問い合わせ">Contact</a>
         </div>
       </div>
       <div class="footer-copy">
@@ -1937,13 +2466,11 @@
   </footer>
 
   <!-- 360° Fullscreen Zoom Modal -->
-  <div class="viewer-modal" id="viewerModal" role="dialog" aria-modal="true"
-    aria-label="ハーレーダビッドソン 2026 リバティエディション 拡大360度ビュー">
-    <div class="viewer-modal-backdrop" id="modalBackdrop"></div>
+  <dialog class="viewer-modal" id="viewerModal" aria-labelledby="viewerModalTitle">
     <div class="viewer-modal-container">
       <div class="viewer-modal-header">
-        <div class="viewer-modal-title">
-          <span class="badge-250th">🇺🇸 250th ANNIVERSARY</span>
+        <div class="viewer-modal-title" id="viewerModalTitle">
+          <span class="badge-250th">★ UNITED STATES 250</span>
           <span>HERITAGE CLASSIC LIBERTY EDITION (360° ZOOM)</span>
         </div>
         <button type="button" class="viewer-modal-close" id="modalCloseBtn" aria-label="閉じる" title="閉じる (Esc)">
@@ -1955,14 +2482,17 @@
         </button>
       </div>
 
-      <div class="viewer-modal-body" id="modalCanvasBox" title="ドラッグまたはスワイプで回転">
-        <img id="modal360Img" src="../images/contents/liberty-edition/liberty-edition_01.webp"
-          alt="ハーレーダビッドソン 2026 リバティエディション 拡大360度ビュー" draggable="false">
+      <div class="viewer-modal-body" id="modalCanvasBox" tabindex="0"
+        role="group" aria-roledescription="拡大360度ビューワー"
+        aria-label="車両を拡大して360度で見る。左右矢印キーまたはドラッグで回転"
+        title="ドラッグまたはスワイプで回転">
+        <img id="modal360Img" alt="ハーレーダビッドソン 2026 リバティエディション 拡大360度ビュー"
+          width="1200" height="720" decoding="async" draggable="false">
         <div class="viewer-modal-hint">ドラッグまたはスワイプで360度回転</div>
       </div>
 
       <div class="viewer-controls">
-        <button type="button" class="viewer-btn" id="modalAutoBtn" aria-label="自動回転切り替え">
+        <button type="button" class="viewer-btn" id="modalAutoBtn" aria-label="自動回転切り替え" aria-pressed="false">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" id="modalAutoIcon">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
@@ -1975,343 +2505,406 @@
         <span class="viewer-frame-counter" id="modalCounter">1 / 29</span>
       </div>
     </div>
-  </div>
+  </dialog>
 
-  <!-- Web Audio API Engine Pulse Script -->
+  <!-- Channel Experience & 360° Viewer -->
   <script>
-    (function () {
-      let audioCtx = null;
-      let isRunning = false;
-      let timerId = null;
-      let stepIndex = 0;
+    // 公開後はこの設定だけを更新する。
+    const MOTOVLOG_CHANNEL = Object.freeze({
+      status: 'coming-soon',
+      youtubeUrl: 'https://www.youtube.com/@liberty_motovlog',
+      subscribeUrl: 'https://www.youtube.com/@liberty_motovlog?sub_confirmation=1',
+      instagramUrl: 'https://www.instagram.com/liberty_motovlog/',
+      latestVideo: null,
+      // latestVideo: { id: 'YOUTUBE_ID', title: '動画タイトル', description: '動画概要',
+      //   uploadDate: '2026-00-00', duration: 'PT00M00S',
+      //   thumbnailUrl: 'https://tk.st/images/ogp/motovlog-ogp.jpg' },
+      latestRide: null
+      // latestRide: { route: '出発地 → 目的地', distance: '000 km',
+      //   recorded: '2026.00.00', weather: 'SUNNY / 00°C' }
+    });
 
-      const engineBtn = document.getElementById('engineBtn');
-      const engineBtnText = document.getElementById('engineBtnText');
-      const rpmValue = document.getElementById('rpmValue');
+    (function initChannelExperience() {
+      const config = MOTOVLOG_CHANNEL;
+      const video = config.latestVideo;
+      const hasVideo = Boolean(video && /^[A-Za-z0-9_-]{11}$/.test(video.id || ''));
 
-      const rhythmPattern = [
-        { interval: 140, gain: 1.0, freq: 52 },
-        { interval: 150, gain: 0.85, freq: 48 },
-        { interval: 440, gain: 0.6, freq: 44 }
-      ];
+      document.querySelectorAll('[data-channel-subscribe]').forEach(link => { link.href = config.subscribeUrl; });
+      document.querySelectorAll('[data-channel-youtube]').forEach(link => { link.href = config.youtubeUrl; });
+      document.querySelectorAll('[data-channel-instagram]').forEach(link => { link.href = config.instagramUrl; });
 
-      function initAudio() {
-        if (!audioCtx) {
-          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-          if (!AudioContextClass) return false;
-          audioCtx = new AudioContextClass();
+      if (hasVideo) {
+        const videoUrl = 'https://www.youtube.com/watch?v=' + encodeURIComponent(video.id);
+        document.querySelectorAll('[data-channel-primary]').forEach(link => {
+          link.href = videoUrl;
+          const label = link.querySelector('span:last-child');
+          if (label) label.textContent = '最新動画を見る';
+        });
+
+        const status = document.querySelector('[data-channel-status]');
+        const title = document.querySelector('[data-channel-title]');
+        const description = document.querySelector('[data-channel-description]');
+        if (status) status.textContent = 'LATEST RIDE / NOW PLAYING';
+        if (title) title.textContent = video.title || '最新のライドを公開しました';
+        if (description) description.textContent = video.description || 'LIBERTY MOTOVLOG の最新エピソードをご覧ください。';
+
+        const shell = document.getElementById('latestVideo');
+        const loadButton = document.getElementById('videoLoadBtn');
+        const frame = document.getElementById('videoFrame');
+        if (shell && loadButton && frame) {
+          shell.hidden = false;
+          loadButton.setAttribute('aria-label', (video.title || '最新動画') + 'をYouTubeで再生');
+          const thumbnail = video.thumbnailUrl || '../images/contents/motovlog-liberty-canyon.jpg';
+          loadButton.style.backgroundImage = 'url("' + thumbnail.replace(/"/g, '%22') + '")';
+          loadButton.addEventListener('click', () => {
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(video.id) + '?autoplay=1';
+            iframe.title = video.title || 'LIBERTY MOTOVLOG 最新動画';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+            iframe.allowFullscreen = true;
+            iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+            frame.replaceChildren(iframe);
+            frame.hidden = false;
+            loadButton.hidden = true;
+          }, { once: true });
         }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
+
+        if (video.uploadDate) {
+          const jsonLd = {
+            '@context': 'https://schema.org', '@type': 'VideoObject',
+            name: video.title || 'LIBERTY MOTOVLOG 最新動画',
+            description: video.description || 'Heritage Classic Liberty Edition と走るモトブログ。',
+            thumbnailUrl: [video.thumbnailUrl || 'https://tk.st/images/ogp/motovlog-ogp.jpg'],
+            uploadDate: video.uploadDate, contentUrl: videoUrl,
+            embedUrl: 'https://www.youtube-nocookie.com/embed/' + video.id
+          };
+          if (video.duration) jsonLd.duration = video.duration;
+          const script = document.createElement('script');
+          script.type = 'application/ld+json';
+          script.id = 'latest-video-jsonld';
+          script.textContent = JSON.stringify(jsonLd);
+          document.head.appendChild(script);
         }
-        return true;
       }
 
-      function playPulse(volume, baseFreq) {
-        if (!audioCtx) return;
-        const now = audioCtx.currentTime;
-
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        const filter = audioCtx.createBiquadFilter();
-
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(140, now);
-
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(baseFreq, now);
-        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.45, now + 0.12);
-
-        gainNode.gain.setValueAtTime(volume * 0.4, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
-
-        osc.connect(filter);
-        filter.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.14);
+      const ride = config.latestRide;
+      const rideLog = document.getElementById('rideLog');
+      if (ride && rideLog) {
+        const fields = {
+          '[data-ride-route]': ride.route, '[data-ride-distance]': ride.distance,
+          '[data-ride-date]': ride.recorded, '[data-ride-weather]': ride.weather
+        };
+        Object.entries(fields).forEach(([selector, value]) => {
+          const field = rideLog.querySelector(selector);
+          if (field && value) field.textContent = value;
+          else if (field) field.parentElement.hidden = true;
+        });
+        rideLog.hidden = false;
       }
 
-      function tick() {
-        if (!isRunning) return;
-
-        const current = rhythmPattern[stepIndex];
-        playPulse(current.gain, current.freq);
-
-        const jitter = Math.floor(Math.random() * 40) - 20;
-        rpmValue.textContent = 850 + jitter;
-
-        stepIndex = (stepIndex + 1) % rhythmPattern.length;
-        timerId = setTimeout(tick, current.interval);
-      }
-
-      function startEngine() {
-        const ready = initAudio();
-        if (!ready && !audioCtx) return;
-        isRunning = true;
-        stepIndex = 0;
-        engineBtn.classList.add('running');
-        engineBtn.setAttribute('aria-pressed', 'true');
-        engineBtn.setAttribute('aria-label', '3拍子排気音シミュレーター停止');
-        engineBtnText.textContent = 'STOP ENGINE';
-        rpmValue.classList.add('active');
-        tick();
-      }
-
-      function stopEngine() {
-        isRunning = false;
-        if (timerId) clearTimeout(timerId);
-        engineBtn.classList.remove('running');
-        engineBtn.setAttribute('aria-pressed', 'false');
-        engineBtn.setAttribute('aria-label', '3拍子排気音シミュレーター開始');
-        engineBtnText.textContent = 'START ENGINE';
-        rpmValue.textContent = '0';
-        rpmValue.classList.remove('active');
-      }
-
-      engineBtn.addEventListener('click', function () {
-        if (isRunning) stopEngine();
-        else startEngine();
-      });
-
-      // Auto-stop when tab becomes hidden
-      document.addEventListener('visibilitychange', function () {
-        if (document.hidden && isRunning) {
-          stopEngine();
-        }
-      });
+      const navLinks = [...document.querySelectorAll('[data-nav-section]')];
+      const sections = navLinks.map(link => document.getElementById(link.dataset.navSection)).filter(Boolean);
+      let navFrame = null;
+      const updateActiveNav = () => {
+        navFrame = null;
+        const atPageEnd = Math.ceil(window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 2;
+        const probe = window.innerHeight * .42;
+        const active = atPageEnd
+          ? sections[sections.length - 1]
+          : sections.find(section => {
+            const rect = section.getBoundingClientRect();
+            return rect.top <= probe && rect.bottom > probe;
+          });
+        navLinks.forEach(link => {
+          if (active && link.dataset.navSection === active.id) link.setAttribute('aria-current', 'true');
+          else link.removeAttribute('aria-current');
+        });
+      };
+      const scheduleNavUpdate = () => {
+        if (navFrame === null) navFrame = requestAnimationFrame(updateActiveNav);
+      };
+      window.addEventListener('scroll', scheduleNavUpdate, { passive: true });
+      window.addEventListener('resize', scheduleNavUpdate);
+      updateActiveNav();
     })();
 
-    // =========================================
-    // 360° Interactive Bike Viewer & Zoom Modal
-    // =========================================
-    (function () {
+    (function initBikeViewer() {
       const TOTAL_FRAMES = 29;
-      const framePaths = Array.from({ length: TOTAL_FRAMES }, (_, i) => {
-        const src = `../images/contents/liberty-edition/liberty-edition_${String(i + 1).padStart(2, '0')}.webp`;
-        new Image().src = src; // in-memory browser cache preload
-        return src;
-      });
+      const PX_PER_FRAME = 12;
+      const paths = Array.from({ length: TOTAL_FRAMES }, (_, index) =>
+        '../images/contents/liberty-edition/liberty-edition_' + String(index + 1).padStart(2, '0') + '.webp'
+      );
+      const image = document.getElementById('bike360Img');
+      const canvas = document.getElementById('bikeCanvasBox');
+      const hint = document.getElementById('viewerHint');
+      const status = document.getElementById('viewerStatus');
+      const liveStatus = document.getElementById('viewerA11yStatus');
+      const expand = document.getElementById('viewerExpandBtn');
+      const dialog = document.getElementById('viewerModal');
+      const modalCanvas = document.getElementById('modalCanvasBox');
+      const modalImage = document.getElementById('modal360Img');
+      const closeButton = document.getElementById('modalCloseBtn');
+      if (!image || !canvas || !dialog) return;
 
-      // DOM Elements
-      const imgElem = document.getElementById('bike360Img');
-      const boxElem = document.getElementById('bikeCanvasBox');
-      const hintElem = document.getElementById('viewerHint');
-      const expandBtn = document.getElementById('viewerExpandBtn');
-
-      const modalElem = document.getElementById('viewerModal');
-      const modalBox = document.getElementById('modalCanvasBox');
-      const modalImg = document.getElementById('modal360Img');
-      const modalCloseBtn = document.getElementById('modalCloseBtn');
-      const modalBackdrop = document.getElementById('modalBackdrop');
-
-      if (!imgElem || !boxElem) return;
-
-      // Grouped controller elements for synchronizing inline and modal
       const sliders = [document.getElementById('viewerRange'), document.getElementById('modalRange')].filter(Boolean);
       const counters = [document.getElementById('viewerCounter'), document.getElementById('modalCounter')].filter(Boolean);
-      const autoBtns = [document.getElementById('viewerAutoBtn'), document.getElementById('modalAutoBtn')].filter(Boolean);
+      const autoButtons = [document.getElementById('viewerAutoBtn'), document.getElementById('modalAutoBtn')].filter(Boolean);
       const autoTexts = [document.getElementById('autoBtnText'), document.getElementById('modalAutoText')].filter(Boolean);
       const autoIcons = [document.getElementById('autoBtnIcon'), document.getElementById('modalAutoIcon')].filter(Boolean);
+      const cache = new Map();
+      const preloadQueue = [];
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let current = 0;
+      let progressiveStarted = false;
+      let pointer = null;
+      let autoFrame = null;
+      let lastAutoTime = 0;
+      let interacted = false;
+      let previousFocus = null;
+      let previousOverflow = '';
 
-      let currentFrame = 0;
-      let isDragging = false;
-      let isModalDragging = false;
-      let startX = 0;
-      let startY = 0;
-      let startFrame = 0;
-      let dragDistance = 0;
-      let isAutoRotating = false;
-      let autoTimer = null;
-      let hasInteracted = false;
+      const normalize = index => ((index % TOTAL_FRAMES) + TOTAL_FRAMES) % TOTAL_FRAMES;
+      const showError = () => {
+        if (!status) return;
+        status.textContent = '画像を読み込めませんでした。通信環境を確認して再度お試しください。';
+        status.classList.add('is-visible');
+      };
+      const clearError = () => {
+        if (!status) return;
+        status.textContent = '';
+        status.classList.remove('is-visible');
+      };
+      const preload = index => {
+        const safe = normalize(index);
+        if (cache.has(safe)) return cache.get(safe);
+        const preloadImage = new Image();
+        preloadImage.decoding = 'async';
+        preloadImage.addEventListener('error', () => {
+          cache.delete(safe);
+          if (safe === current) showError();
+        }, { once: true });
+        preloadImage.src = paths[safe];
+        cache.set(safe, preloadImage);
+        return preloadImage;
+      };
+      const preloadNearby = index => [-2, -1, 0, 1, 2].forEach(offset => preload(index + offset));
+      const scheduleIdle = window.requestIdleCallback
+        ? callback => window.requestIdleCallback(callback, { timeout: 800 })
+        : callback => window.setTimeout(callback, 80);
 
-      function setFrame(index) {
-        currentFrame = ((index % TOTAL_FRAMES) + TOTAL_FRAMES) % TOTAL_FRAMES;
-        const currentSrc = framePaths[currentFrame];
+      function loadNext() {
+        const next = preloadQueue.shift();
+        if (typeof next === 'number') preload(next);
+        if (preloadQueue.length) window.setTimeout(() => scheduleIdle(loadNext), 70);
+      }
 
-        imgElem.src = currentSrc;
-        if (modalImg) modalImg.src = currentSrc;
-
-        sliders.forEach(s => { if (document.activeElement !== s) s.value = currentFrame; });
-        const counterText = `${currentFrame + 1} / ${TOTAL_FRAMES}`;
-        counters.forEach(c => { c.textContent = counterText; });
+      function startProgressiveLoading() {
+        if (progressiveStarted) return;
+        progressiveStarted = true;
+        for (let distance = 1; distance < TOTAL_FRAMES; distance++) {
+          preloadQueue.push(normalize(current + distance));
+        }
+        scheduleIdle(loadNext);
       }
 
       function hideHint() {
-        if (!hasInteracted && hintElem) {
-          hasInteracted = true;
-          hintElem.classList.add('is-hidden');
+        if (interacted || !hint) return;
+        interacted = true;
+        hint.classList.add('is-hidden');
+      }
+
+      function setFrame(index, announce = false) {
+        current = normalize(index);
+        clearError();
+        if (progressiveStarted) preloadNearby(current);
+        image.src = paths[current];
+        if (dialog.open && modalImage) modalImage.src = paths[current];
+        sliders.forEach(slider => {
+          if (document.activeElement !== slider) slider.value = current;
+        });
+        const text = (current + 1) + ' / ' + TOTAL_FRAMES;
+        counters.forEach(counter => { counter.textContent = text; });
+        if (announce && liveStatus) {
+          liveStatus.textContent = '全' + TOTAL_FRAMES + 'フレーム中' + (current + 1) + 'フレーム目';
         }
       }
 
-      // Modal Open / Close (with Focus Restoration & A11y)
-      let lastFocusedElement = null;
+      image.addEventListener('load', clearError);
+      image.addEventListener('error', showError);
+      if (modalImage) {
+        modalImage.addEventListener('load', clearError);
+        modalImage.addEventListener('error', showError);
+      }
 
-      function openModal() {
-        if (!modalElem) return;
-        lastFocusedElement = document.activeElement;
-        modalElem.classList.add('is-open');
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(entries => {
+          if (!entries.some(entry => entry.isIntersecting)) return;
+          preloadNearby(current);
+          startProgressiveLoading();
+          observer.disconnect();
+        }, { rootMargin: '600px 0px' });
+        observer.observe(canvas);
+      } else {
+        startProgressiveLoading();
+      }
+
+      function openDialog() {
+        if (dialog.open) return;
+        previousFocus = document.activeElement;
+        previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
-        setFrame(currentFrame);
-        if (modalCloseBtn) modalCloseBtn.focus();
+        if (modalImage) modalImage.src = paths[current];
+        dialog.showModal();
+        requestAnimationFrame(() => (modalCanvas || closeButton).focus({ preventScroll: true }));
       }
 
-      function closeModal() {
-        if (!modalElem) return;
-        modalElem.classList.remove('is-open');
-        document.body.style.overflow = '';
-        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
-          lastFocusedElement.focus();
-        }
+      function closeDialog() {
+        if (dialog.open) dialog.close();
       }
 
-      if (expandBtn) expandBtn.addEventListener('click', (e) => { e.stopPropagation(); openModal(); });
-      if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
-      if (modalBackdrop) modalBackdrop.addEventListener('click', closeModal);
-
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalElem && modalElem.classList.contains('is-open')) closeModal();
+      dialog.addEventListener('close', () => {
+        document.body.style.overflow = previousOverflow;
+        if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+        previousFocus = null;
       });
+      dialog.addEventListener('cancel', event => {
+        event.preventDefault();
+        closeDialog();
+      });
+      dialog.addEventListener('click', event => {
+        if (event.target === dialog) closeDialog();
+      });
+      if (expand) expand.addEventListener('click', event => {
+        event.stopPropagation();
+        openDialog();
+      });
+      if (closeButton) closeButton.addEventListener('click', closeDialog);
 
-      // Modal Focus Trap for Keyboard A11y
-      if (modalElem) {
-        modalElem.addEventListener('keydown', (e) => {
-          if (e.key !== 'Tab') return;
-          const focusable = modalElem.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
-          if (!focusable.length) return;
-          const first = focusable[0];
-          const last = focusable[focusable.length - 1];
-          if (e.shiftKey && document.activeElement === first) {
-            e.preventDefault();
-            last.focus();
-          } else if (!e.shiftKey && document.activeElement === last) {
-            e.preventDefault();
-            first.focus();
-          }
+      function stopAuto() {
+        if (autoFrame !== null) cancelAnimationFrame(autoFrame);
+        autoFrame = null;
+        autoButtons.forEach(button => {
+          button.classList.remove('active');
+          button.setAttribute('aria-pressed', 'false');
         });
+        autoTexts.forEach(text => { text.textContent = 'AUTO ROTATE'; });
+        autoIcons.forEach(icon => { icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>'; });
       }
 
-      // Drag logic: 12px drag = 1 frame rotation
-      const PX_PER_FRAME = 12;
-
-      function onStart(clientX, clientY, isModal) {
-        if (isModal) {
-          isModalDragging = true;
-          if (modalBox) modalBox.classList.add('is-dragging');
-        } else {
-          isDragging = true;
-          boxElem.classList.add('is-dragging');
+      function autoStep(time) {
+        if (autoFrame === null) return;
+        if (time - lastAutoTime >= 110) {
+          setFrame(current + 1);
+          lastAutoTime = time;
         }
-        startX = clientX;
-        startY = clientY;
-        dragDistance = 0;
-        startFrame = currentFrame;
+        autoFrame = requestAnimationFrame(autoStep);
+      }
+
+      function startAuto() {
+        if (reducedMotion.matches || autoFrame !== null) return;
+        startProgressiveLoading();
         hideHint();
-        if (isAutoRotating) stopAutoRotate();
-      }
-
-      function onMove(clientX, clientY) {
-        if (!isDragging && !isModalDragging) return;
-        const deltaX = clientX - startX;
-        const deltaY = clientY - startY;
-        dragDistance = Math.hypot(deltaX, deltaY);
-        const frameDiff = Math.round(deltaX / PX_PER_FRAME);
-        setFrame(startFrame + frameDiff);
-      }
-
-      function onEnd(targetIsModal) {
-        const wasDraggingInline = isDragging;
-        const dist = dragDistance;
-
-        if (isDragging) {
-          isDragging = false;
-          boxElem.classList.remove('is-dragging');
-        }
-        if (isModalDragging) {
-          isModalDragging = false;
-          if (modalBox) modalBox.classList.remove('is-dragging');
-        }
-
-        // Click / tap without drag (< 6px) opens zoom modal
-        if (wasDraggingInline && !targetIsModal && dist < 6) {
-          openModal();
-        }
-      }
-
-      // Unified Pointer Event Binding (Inline & Modal)
-      [ [boxElem, false], [modalBox, true] ].forEach(([elem, isModal]) => {
-        if (!elem) return;
-
-        elem.addEventListener('mousedown', (e) => {
-          if (e.target.closest('#viewerExpandBtn') || e.target.closest('.viewer-controls')) return;
-          e.preventDefault();
-          onStart(e.clientX, e.clientY, isModal);
+        lastAutoTime = performance.now();
+        autoButtons.forEach(button => {
+          button.classList.add('active');
+          button.setAttribute('aria-pressed', 'true');
         });
+        autoTexts.forEach(text => { text.textContent = 'PAUSE'; });
+        autoIcons.forEach(icon => {
+          icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+        });
+        autoFrame = requestAnimationFrame(autoStep);
+      }
 
-        elem.addEventListener('touchstart', (e) => {
-          if (e.target.closest('#viewerExpandBtn')) return;
-          if (e.touches.length === 1) onStart(e.touches[0].clientX, e.touches[0].clientY, isModal);
-        }, { passive: true });
+      function applyMotionPreference() {
+        if (reducedMotion.matches) stopAuto();
+        autoButtons.forEach(button => {
+          button.disabled = reducedMotion.matches;
+          button.title = reducedMotion.matches
+            ? '端末の「視差効果を減らす」設定により自動回転は停止しています'
+            : '自動回転を切り替える';
+        });
+        if (reducedMotion.matches) autoTexts.forEach(text => { text.textContent = 'MOTION OFF'; });
+      }
 
-        elem.addEventListener('touchmove', (e) => {
-          const dragging = isModal ? isModalDragging : isDragging;
-          if (dragging && e.touches.length === 1) onMove(e.touches[0].clientX, e.touches[0].clientY);
-        }, { passive: true });
+      autoButtons.forEach(button => button.addEventListener('click', () => {
+        if (autoFrame === null) startAuto();
+        else stopAuto();
+      }));
+      applyMotionPreference();
+      if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', applyMotionPreference);
+      else if (reducedMotion.addListener) reducedMotion.addListener(applyMotionPreference);
 
-        elem.addEventListener('touchend', () => onEnd(isModal));
-        elem.addEventListener('touchcancel', () => onEnd(isModal));
-      });
+      function endPointer(event, cancelled = false) {
+        if (!pointer || pointer.id !== event.pointerId) return;
+        const state = pointer;
+        pointer = null;
+        state.element.classList.remove('is-dragging');
+        if (state.element.hasPointerCapture(event.pointerId)) state.element.releasePointerCapture(event.pointerId);
+        if (!cancelled && !state.modal && state.distance < 6) openDialog();
+      }
 
-      window.addEventListener('mousemove', (e) => {
-        if (isDragging || isModalDragging) onMove(e.clientX, e.clientY);
-      });
-      window.addEventListener('mouseup', () => onEnd(isModalDragging));
-
-      // Slider synchronization
-      sliders.forEach(slider => {
-        slider.addEventListener('input', () => {
+      function bindControls(element, isModal) {
+        if (!element) return;
+        element.addEventListener('pointerdown', event => {
+          if (event.pointerType === 'mouse' && event.button !== 0) return;
+          if (event.target instanceof Element && event.target.closest('button')) return;
+          element.focus({ preventScroll: true });
+          element.setPointerCapture(event.pointerId);
+          pointer = {
+            element, modal: isModal, id: event.pointerId,
+            startX: event.clientX, startY: event.clientY,
+            startFrame: current, distance: 0
+          };
+          element.classList.add('is-dragging');
+          startProgressiveLoading();
           hideHint();
-          if (isAutoRotating) stopAutoRotate();
-          setFrame(parseInt(slider.value, 10));
+          stopAuto();
         });
-      });
+        element.addEventListener('pointermove', event => {
+          if (!pointer || pointer.id !== event.pointerId) return;
+          const x = event.clientX - pointer.startX;
+          const y = event.clientY - pointer.startY;
+          pointer.distance = Math.hypot(x, y);
+          setFrame(pointer.startFrame + Math.round(x / PX_PER_FRAME));
+        });
+        element.addEventListener('pointerup', event => endPointer(event));
+        element.addEventListener('pointercancel', event => endPointer(event, true));
+        element.addEventListener('keydown', event => {
+          let next = null;
+          if (event.key === 'ArrowLeft') next = current - 1;
+          else if (event.key === 'ArrowRight') next = current + 1;
+          else if (event.key === 'Home') next = 0;
+          else if (event.key === 'End') next = TOTAL_FRAMES - 1;
+          else if (!isModal && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            openDialog();
+            return;
+          }
+          if (next === null) return;
+          event.preventDefault();
+          startProgressiveLoading();
+          hideHint();
+          stopAuto();
+          setFrame(next, true);
+        });
+      }
 
-      // Auto Rotate Toggle
-      function startAutoRotate() {
-        isAutoRotating = true;
-        autoBtns.forEach(b => b.classList.add('active'));
-        autoTexts.forEach(t => { t.textContent = 'PAUSE'; });
-        const pauseSvg = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-        autoIcons.forEach(ic => { ic.innerHTML = pauseSvg; });
+      bindControls(canvas, false);
+      bindControls(modalCanvas, true);
+      sliders.forEach(slider => slider.addEventListener('input', () => {
+        startProgressiveLoading();
         hideHint();
-        autoTimer = setInterval(() => setFrame(currentFrame + 1), 110);
-      }
-
-      function stopAutoRotate() {
-        isAutoRotating = false;
-        if (autoTimer) {
-          clearInterval(autoTimer);
-          autoTimer = null;
-        }
-        autoBtns.forEach(b => b.classList.remove('active'));
-        autoTexts.forEach(t => { t.textContent = 'AUTO ROTATE'; });
-        const playSvg = '<polygon points="5 3 19 12 5 21 5 3"/>';
-        autoIcons.forEach(ic => { ic.innerHTML = playSvg; });
-      }
-
-      function toggleAutoRotate() {
-        if (isAutoRotating) stopAutoRotate();
-        else startAutoRotate();
-      }
-
-      autoBtns.forEach(btn => btn.addEventListener('click', toggleAutoRotate));
-
-      // Pause auto-rotation when page hidden
+        stopAuto();
+        setFrame(Number.parseInt(slider.value, 10), true);
+      }));
       document.addEventListener('visibilitychange', () => {
-        if (document.hidden && isAutoRotating) stopAutoRotate();
+        if (document.hidden) stopAuto();
       });
-    })();</script>
+      window.addEventListener('pagehide', stopAuto);
+      setFrame(0);
+    })();
+  </script>
 
 </body>
 
