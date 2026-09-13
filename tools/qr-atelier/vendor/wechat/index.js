@@ -20,28 +20,51 @@ async function getOpenCV() {
 async function ready() {
   await getOpenCV();
 }
+function release(value) {
+  if (value && typeof value.delete === "function") value.delete();
+}
 async function scan(input, options = {}) {
   const { cv, qrcode_detector } = await getOpenCV();
-  const inputImage = cv.imread(input, cv.IMREAD_GRAYSCALE);
-  const points_vec = new cv.MatVector();
-  const res = qrcode_detector.detectAndDecode(inputImage, points_vec);
-  const points = points_vec.get(0);
-  const rect = points ? {
-    x: points.floatAt(0),
-    y: points.floatAt(1),
-    width: points.floatAt(4) - points.floatAt(0),
-    height: points.floatAt(5) - points.floatAt(1)
-  } : void 0;
+  let inputImage;
+  let points_vec;
+  let res;
+  let points;
+  let dst;
+  let roiRect;
+  let text = "";
+  let rect;
   let rectCanvas;
-  if (rect && options.includeRectCanvas) {
-    rectCanvas = document.createElement("canvas");
-    const dst = inputImage.roi(new cv.Rect(rect.x, rect.y, rect.width, rect.height));
-    cv.imshow(rectCanvas, dst);
-    dst.delete();
+  try {
+    inputImage = cv.imread(input, cv.IMREAD_GRAYSCALE);
+    points_vec = new cv.MatVector();
+    res = qrcode_detector.detectAndDecode(inputImage, points_vec);
+    if (!res || typeof res.size !== "function" || res.size() > 0) text = res ? res.get(0) : "";
+    if (!points_vec || typeof points_vec.size !== "function" || points_vec.size() > 0) {
+      points = points_vec ? points_vec.get(0) : null;
+    }
+    rect = points ? {
+      x: points.floatAt(0),
+      y: points.floatAt(1),
+      width: points.floatAt(4) - points.floatAt(0),
+      height: points.floatAt(5) - points.floatAt(1)
+    } : void 0;
+    if (rect && options.includeRectCanvas) {
+      rectCanvas = document.createElement("canvas");
+      roiRect = new cv.Rect(rect.x, rect.y, rect.width, rect.height);
+      dst = inputImage.roi(roiRect);
+      cv.imshow(rectCanvas, dst);
+    }
+  } finally {
+    // OpenCV.js / Embind のオブジェクトは GC では WASM ヒープから解放されない。
+    release(dst);
+    release(roiRect);
+    release(points);
+    release(res);
+    release(points_vec);
+    release(inputImage);
   }
-  inputImage.delete();
   return {
-    text: res.get(0),
+    text,
     rect,
     rectCanvas
   };

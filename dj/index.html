@@ -193,6 +193,13 @@
       font-weight: inherit;
     }
 
+    .svg-sprite {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
     :root {
       --neo-purple: rgb(156, 122, 247);
       /* 罫線・グロー用。半透明で使うので rgb 3 値でも持つ（暴走モードで一緒に赤へ振る） */
@@ -200,7 +207,6 @@
       --dark-blue-purple: #2d1b4e;
       --dark-blue-purple-light: #3d2b5e;
       --white: #ffffff;
-      --black: #1a1a1a;
       --accent-red: #ff3333;
       /*
        * 地の上に乗せて「読ませる」ための色。--accent-red / --neo-purple を
@@ -210,7 +216,7 @@
       --status-error-ink: #8a1c1c;
       --link-ink: #7b55d6;
       /*
-       * 面と文字の色。--white / --black を「白そのもの」として直に使うと配色を
+       * 面と文字の色。--white や色の直値をそのまま使うと配色を
        * 差し替えられないので、地（surface）と文字（ink）は必ずここを経由させる。
        * 暴走モード（body.berserk）はこの一式を上書きするだけで全ページが反転する。
        * 半透明を作るところがあるので、rgb 3 値版も対で持つ。
@@ -650,7 +656,7 @@
       font-family: 'Courier New', Courier, monospace;
       font-size: 0.65rem;
       letter-spacing: 0.22em;
-      color: var(--neo-purple);
+      color: var(--white);
       border-top: 1px solid rgba(var(--neo-purple-rgb), 0.6);
       padding-top: 6px;
     }
@@ -689,7 +695,9 @@
       }
     }
 
-    .hexagon-layer {
+    .at-field::before,
+    .at-field::after {
+      content: '';
       position: absolute;
       width: 100%;
       height: 100%;
@@ -697,7 +705,7 @@
       clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
     }
 
-    .hexagon-layer:nth-child(2) {
+    .at-field::after {
       border-color: var(--accent-red);
     }
 
@@ -705,7 +713,7 @@
      * 親が .active になったときだけ再生する。無条件に animation を置くと
      * .at-field が opacity:0 のまま読み込み時に一度きり走って終わり、二度と見えない。
      */
-    .at-field.active .hexagon-layer:nth-child(2) {
+    .at-field.active::after {
       animation: pulse-layer 0.6s ease-out forwards;
     }
 
@@ -843,7 +851,7 @@
     }
 
     .timeline-link:hover {
-      color: var(--neo-purple);
+      color: var(--link-ink);
     }
 
     .timeline-event+.timeline-event {
@@ -858,16 +866,15 @@
       font-size: 1rem;
       font-weight: 700;
       letter-spacing: 0.05em;
-      color: var(--neo-purple);
+      color: var(--link-ink);
       cursor: pointer;
       list-style: none;
       padding: 6px 0;
-      opacity: 0.7;
-      transition: opacity 0.3s ease;
+      transition: color 0.3s ease;
     }
 
     .timeline-archive>summary:hover {
-      opacity: 1;
+      color: var(--ink-deep);
     }
 
     .timeline-archive>summary::-webkit-details-marker {
@@ -1091,7 +1098,7 @@
     }
 
     .about-brand:hover {
-      color: var(--neo-purple);
+      color: var(--link-ink);
       transform: translateY(-2px);
     }
 
@@ -1115,7 +1122,7 @@
       font-size: 0.75rem;
       font-weight: 600;
       letter-spacing: 0.18em;
-      color: var(--neo-purple);
+      color: var(--link-ink);
     }
 
     .about-unit p,
@@ -2038,7 +2045,7 @@
     }
 
     .site-crumb a:hover {
-      color: var(--neo-purple);
+      color: var(--ink-deep);
     }
 
     /* ===== FAQ ===== */
@@ -2142,7 +2149,7 @@
     }
 
     .faq-q-prefix {
-      color: var(--neo-purple);
+      color: var(--link-ink);
       font-family: system-ui, -apple-system, sans-serif;
       font-weight: 900;
       font-size: 1.1rem;
@@ -2155,6 +2162,7 @@
       height: 20px;
       flex: none;
       color: var(--neo-purple);
+      stroke-width: 2;
       transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
@@ -2257,7 +2265,7 @@
       font-weight: bold;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--neo-purple);
+      color: var(--link-ink);
       margin-bottom: 8px;
     }
 
@@ -2275,7 +2283,7 @@
       font-family: system-ui, -apple-system, sans-serif;
       letter-spacing: 0;
       font-size: 0.72rem;
-      color: var(--accent-red);
+      color: var(--status-error-ink);
     }
 
     .offer-input,
@@ -2308,7 +2316,7 @@
      */
     .offer-input--datetime:not(:focus):invalid,
     .offer-input--datetime:not(:focus):placeholder-shown {
-      color: rgba(var(--ink-deep-rgb), 0.45);
+      color: rgba(var(--ink-deep-rgb), 0.65);
     }
 
     /*
@@ -2351,7 +2359,7 @@
 
     .offer-input::placeholder,
     .offer-textarea::placeholder {
-      color: rgba(var(--ink-deep-rgb), 0.35);
+      color: rgba(var(--ink-deep-rgb), 0.65);
     }
 
     .offer-hint {
@@ -2410,8 +2418,8 @@
     }
 
     .offer-submit:hover:not(:disabled) {
-      background: var(--neo-purple);
-      border-color: var(--neo-purple);
+      background: var(--dark-blue-purple-light);
+      border-color: var(--dark-blue-purple-light);
     }
 
     .offer-submit:active:not(:disabled) {
@@ -2484,7 +2492,7 @@
       text-align: center;
       font-size: 0.78rem;
       line-height: 1.8;
-      color: rgba(var(--ink-rgb), 0.55);
+      color: rgba(var(--ink-rgb), 0.65);
     }
 
     .request-cta {
@@ -2508,24 +2516,15 @@
     }
 
     .request-cta a:hover {
-      color: var(--neo-purple);
+      color: var(--ink-deep);
     }
 
 
     /* ===== Image Modal ===== */
-    .image-modal {
-      /*
-       * 画像の上限はトラック幅・スライド高に依存させず、ビューポート基準の絶対値で持つ。
-       * .modal-figure は内容に合わせて縮む箱なので、その中で % 指定にすると解決が循環する。
-       */
-      --modal-w: min(90vw, 1000px);
-      --modal-h: 85vh;
+    .image-modal,
+    .gear-modal {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
+      inset: 0;
       z-index: 2000;
       display: flex;
       align-items: center;
@@ -2542,6 +2541,16 @@
       overscroll-behavior: contain;
     }
 
+    .image-modal {
+      /*
+       * 画像の上限はトラック幅・スライド高に依存させず、ビューポート基準の絶対値で持つ。
+       * .modal-figure は内容に合わせて縮む箱なので、その中で % 指定にすると解決が循環する。
+       */
+      --modal-w: min(90vw, 1000px);
+      --modal-h: 85vh;
+      background: rgba(0, 0, 0, 0.85);
+    }
+
     .image-modal img,
     .image-modal button {
       cursor: default;
@@ -2553,7 +2562,8 @@
       cursor: pointer;
     }
 
-    .image-modal.active {
+    .image-modal.active,
+    .gear-modal.active {
       opacity: 1;
       visibility: visible;
       transition: opacity 0.3s ease, visibility 0s linear 0s;
@@ -2705,57 +2715,41 @@
       background: var(--neo-purple);
     }
 
-    .modal-close {
+    .modal-close,
+    .gear-modal-close {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 36px;
-      height: 36px;
+      width: var(--modal-close-size);
+      height: var(--modal-close-size);
       padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--white);
-      background: rgba(10, 10, 20, 0.6);
       border: 1px solid var(--neo-purple);
       border-radius: 50%;
-      font-size: 1.6rem;
       cursor: pointer;
-      transition: background 0.3s ease;
       line-height: 1;
+    }
+
+    .modal-close {
+      --modal-close-size: 36px;
+      top: 8px;
+      right: 8px;
+      color: var(--white);
+      background: rgba(10, 10, 20, 0.6);
+      font-size: 1.6rem;
+      transition: background 0.3s ease;
       z-index: 2;
     }
 
-    .modal-close:hover {
+    .modal-close:hover,
+    .gear-modal-close:hover {
       background: var(--neo-purple);
     }
 
     /* ===== Gear Modal ===== */
     .gear-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       padding: 24px;
       background: rgba(10, 5, 25, 0.85);
-      backdrop-filter: blur(5px);
-      opacity: 0;
-      visibility: hidden;
-      /* 画像モーダルと同じ理由で、表示は即時・非表示はフェード後に切り替える */
-      transition: opacity 0.3s ease, visibility 0s linear 0.3s;
-      overscroll-behavior: contain;
-      cursor: zoom-out;
-    }
-
-    .gear-modal.active {
-      opacity: 1;
-      visibility: visible;
-      transition: opacity 0.3s ease, visibility 0s linear 0s;
     }
 
     .gear-modal-panel {
@@ -2795,7 +2789,7 @@
       font-size: 0.72rem;
       font-weight: bold;
       letter-spacing: 0.22em;
-      color: var(--neo-purple);
+      color: var(--link-ink);
     }
 
     .gear-modal-title {
@@ -2844,7 +2838,7 @@
       padding-left: 1.2em;
       text-indent: -1.2em;
       font-size: 0.82rem;
-      color: rgba(var(--ink-deep-rgb), 0.62);
+      color: rgba(var(--ink-deep-rgb), 0.65);
     }
 
     /* ===== TEXT LINK =====
@@ -2867,12 +2861,12 @@
       display: inline-block;
       margin-left: 4px;
       font-size: 0.82em;
-      color: var(--neo-purple);
+      color: var(--link-ink);
       transition: transform 0.2s ease;
     }
 
     .text-link:hover {
-      color: var(--neo-purple);
+      color: var(--link-ink);
     }
 
     .text-link:hover::after {
@@ -2899,15 +2893,9 @@
     }
 
     .gear-modal-close {
-      position: absolute;
+      --modal-close-size: 34px;
       top: 10px;
       right: 10px;
-      width: 34px;
-      height: 34px;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       /*
        * 画像の上に重なるので、下地が暗くても × が読めるよう白を敷く。
        * 文字色は --ink-deep だと暴走モードで白へ振れ、この白地に沈んで見えなくなる。
@@ -2915,16 +2903,11 @@
        */
       color: var(--dark-blue-purple);
       background: rgba(255, 255, 255, 0.92);
-      border: 1px solid var(--neo-purple);
-      border-radius: 50%;
       font-size: 1.5rem;
-      line-height: 1;
-      cursor: pointer;
       transition: background 0.3s ease, color 0.3s ease;
     }
 
     .gear-modal-close:hover {
-      background: var(--neo-purple);
       color: var(--white);
     }
 
@@ -2988,6 +2971,15 @@
       flex: none;
       stroke-width: 1.5;
       color: var(--neo-purple);
+    }
+
+    .timeline-icon,
+    .faq-icon,
+    .offer-submit-icon {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     /* 紫地に乗る見出しは紫のアイコンだと沈むので白に寄せる */
@@ -3799,6 +3791,19 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0"
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+  <!-- 繰り返し使う線画はインラインスプライトに集約する -->
+  <svg class="svg-sprite" aria-hidden="true" focusable="false">
+    <symbol id="icon-image" viewBox="0 0 24 24">
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </symbol>
+    <symbol id="icon-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+    <symbol id="icon-send" viewBox="0 0 24 24">
+      <line x1="22" x2="11" y1="2" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </symbol>
+  </svg>
   <!-- SYNC RATE Meter -->
   <div class="progress-container" aria-hidden="true">
     <div class="progress-bar" id="progressBar"></div>
@@ -3850,6 +3855,7 @@
     </ol>
   </nav>
 
+  <main id="main-content">
   <!-- HERO -->
   <section class="hero-section" id="hero">
     <div class="reticle top-left"></div>
@@ -3875,6 +3881,7 @@
 
   <!-- PHILOSOPHY -->
   <section class="philosophy-section" id="philosophy">
+    <h2 class="sr-only">理念</h2>
     <div class="philosophy-bg">
       <div class="philosophy-octahedron">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -3907,44 +3914,36 @@
 
   <!-- GEAR -->
   <section class="gear-section" id="gear">
+    <h2 class="sr-only">機材とブッキング</h2>
     <div class="gear-bg-split"></div>
     <div class="gear-content reveal">
       <!-- 詳細は data-detail が指す <template> の中身。差し替えはそのテンプレートだけでよい -->
-      <button class="gear-item" type="button" data-gear-tag="EQUIPMENT" data-gear-title="使用機材"
+      <button class="gear-item" type="button" aria-label="使用機材の詳細を表示" data-gear-tag="EQUIPMENT" data-gear-title="使用機材"
         data-detail="gearDetailEquipment">
         <img src="https://tk.st/images/contents/OPUS-QUAD.avif" alt="2枚のジョグホイールと波形表示のタッチ画面が光る、オールインワン型DJシステム" class="gear-image" loading="lazy">
         <span class="gear-label">
           <span class="gear-label-text">使用機材</span>
           <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
         </span>
-        <span class="at-field">
-          <span class="hexagon-layer"></span>
-          <span class="hexagon-layer"></span>
-        </span>
+        <span class="at-field"></span>
       </button>
-      <button class="gear-item" type="button" data-gear-tag="BOOKING" data-gear-title="ブッキング"
+      <button class="gear-item" type="button" aria-label="ブッキングの詳細を表示" data-gear-tag="BOOKING" data-gear-title="ブッキング"
         data-detail="gearDetailBooking">
         <img src="https://tk.st/images/contents/lollipop-headphone.avif" alt="木目のミキサー卓に置かれた、オレンジ色のケーブルがつながった赤い受話器" class="gear-image" loading="lazy">
         <span class="gear-label">
           <span class="gear-label-text">ブッキング</span>
           <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
         </span>
-        <span class="at-field">
-          <span class="hexagon-layer"></span>
-          <span class="hexagon-layer"></span>
-        </span>
+        <span class="at-field"></span>
       </button>
-      <button class="gear-item" type="button" data-gear-tag="PLAYSTYLE" data-gear-title="プレイスタイル"
+      <button class="gear-item" type="button" aria-label="プレイスタイルの詳細を表示" data-gear-tag="PLAYSTYLE" data-gear-title="プレイスタイル"
         data-detail="gearDetailPlaystyle">
         <img src="https://tk.st/images/contents/happy-death.avif" alt="タイダイ柄のバンダナで顔を覆い、ペイントだらけのフード付きジャケットをまとって寝そべるマネキン" class="gear-image" loading="lazy">
         <span class="gear-label">
           <span class="gear-label-text">プレイスタイル</span>
           <span class="gear-label-hint" aria-hidden="true">VIEW DETAIL</span>
         </span>
-        <span class="at-field">
-          <span class="hexagon-layer"></span>
-          <span class="hexagon-layer"></span>
-        </span>
+        <span class="at-field"></span>
       </button>
     </div>
 
@@ -4109,13 +4108,7 @@
                 rel="noopener noreferrer" class="timeline-link">
                 Daydream #03<br>
                 Lounge bar Krishuna
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="timeline-icon" aria-hidden="true">
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
+                <svg class="timeline-icon" aria-hidden="true"><use href="#icon-image" /></svg>
               </a>
             </div>
             <div class="timeline-event">
@@ -4127,13 +4120,7 @@
                 target="_blank" rel="noopener noreferrer" class="timeline-link">
                 Live&amp;DJ Factory<br>
                 R Lounge
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="timeline-icon" aria-hidden="true">
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
+                <svg class="timeline-icon" aria-hidden="true"><use href="#icon-image" /></svg>
               </a>
             </div>
             <div class="timeline-event">
@@ -4148,13 +4135,7 @@
                 target="_blank" rel="noopener noreferrer" class="timeline-link">
                 Daydream #02<br>
                 Lounge bar Krishuna
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="timeline-icon" aria-hidden="true">
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
+                <svg class="timeline-icon" aria-hidden="true"><use href="#icon-image" /></svg>
               </a>
             </div>
             <div class="timeline-event">
@@ -4164,13 +4145,7 @@
                 rel="noopener noreferrer" class="timeline-link">
                 NEXTORM -BASE- #16<br>
                 Ohjo-bldg
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="timeline-icon" aria-hidden="true">
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
+                <svg class="timeline-icon" aria-hidden="true"><use href="#icon-image" /></svg>
               </a>
             </div>
           </div>
@@ -4185,13 +4160,7 @@
                   target="_blank" rel="noopener noreferrer" class="timeline-link">
                   Night-Drip<br>
                   Shinjuku-HEIST.
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="timeline-icon" aria-hidden="true">
-                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                    <circle cx="9" cy="9" r="2" />
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                  </svg>
+                  <svg class="timeline-icon" aria-hidden="true"><use href="#icon-image" /></svg>
                 </a>
               </div>
               <div class="timeline-event">
@@ -4354,11 +4323,7 @@
         <details class="faq-item">
           <summary class="faq-question">
             <span class="faq-q-text"><span class="faq-q-prefix">Q.</span> 出演料や交通費は発生しますか？</span>
-            <svg class="faq-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              aria-hidden="true">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <svg class="faq-icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
           </summary>
           <div class="faq-answer">
             <p><strong>完全ボランティア（無料）</strong>で活動しております。出演料・交通費などは一切いただきません。<span class="faq-note">※
@@ -4369,11 +4334,7 @@
         <details class="faq-item">
           <summary class="faq-question">
             <span class="faq-q-text"><span class="faq-q-prefix">Q.</span> どのようなイベントや場所でDJ可能ですか？</span>
-            <svg class="faq-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              aria-hidden="true">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <svg class="faq-icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
           </summary>
           <div class="faq-answer">
             <p>クラブイベントはもちろん、バー、カフェ、アート展示会、身内のパーティ、屋外・野外イベントまで幅広く対応可能です。</p>
@@ -4384,11 +4345,7 @@
         <details class="faq-item">
           <summary class="faq-question">
             <span class="faq-q-text"><span class="faq-q-prefix">Q.</span> 機材やスピーカーがない会場でも依頼できますか？</span>
-            <svg class="faq-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              aria-hidden="true">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <svg class="faq-icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
           </summary>
           <div class="faq-answer">
             <p><strong>DJ機材・スピーカーの一式持ち込みが可能</strong>です。</p>
@@ -4401,11 +4358,7 @@
         <details class="faq-item">
           <summary class="faq-question">
             <span class="faq-q-text"><span class="faq-q-prefix">Q.</span> どんなジャンル・選曲に対応していますか？BGMも頼めますか？</span>
-            <svg class="faq-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              aria-hidden="true">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <svg class="faq-icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
           </summary>
           <div class="faq-answer">
             <p>
@@ -4417,11 +4370,7 @@
         <details class="faq-item">
           <summary class="faq-question">
             <span class="faq-q-text"><span class="faq-q-prefix">Q.</span> 出演可能な時間帯はいつですか？</span>
-            <svg class="faq-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              aria-hidden="true">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <svg class="faq-icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
           </summary>
           <div class="faq-answer">
             <p>基本スケジュールは以下の通りです：</p>
@@ -4433,11 +4382,7 @@
         <details class="faq-item">
           <summary class="faq-question">
             <span class="faq-q-text"><span class="faq-q-prefix">Q.</span> 出演依頼や相談はどこから連絡すればよいですか？</span>
-            <svg class="faq-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              aria-hidden="true">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+            <svg class="faq-icon" aria-hidden="true"><use href="#icon-chevron-down" /></svg>
           </summary>
           <div class="faq-answer">
             <p>このページ下部の <a class="text-link text-link--down" href="#offer">出演オファーフォーム</a>
@@ -4547,18 +4492,11 @@
         <div class="offer-actions">
           <!-- Turnstile はフォームが視界に入ってから読み込む（下部の JS 参照） -->
           <div class="offer-turnstile" id="offerTurnstile"></div>
-          <!--
-            アイコンとラベルは JS が送信中に差し替える。マークアップと JS 側の
-            テンプレート（setSending）は同じ形を保つこと
-          -->
-          <button class="offer-submit" type="submit" id="offerSubmit">
-            <svg class="offer-submit-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true">
-              <line x1="22" x2="11" y1="2" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-            <span lang="en">Send Offer</span>
+          <!-- 送信処理の登録が終わるまで通常送信させず、個人情報がURLへ出るのを防ぐ -->
+          <button class="offer-submit" type="button" id="offerSubmit">
+            <svg class="offer-submit-icon" aria-hidden="true"><use href="#icon-send" /></svg>
+            <span class="offer-spinner" aria-hidden="true" hidden></span>
+            <span id="offerSubmitLabel" lang="en">Send Offer</span>
           </button>
           <!-- 送信完了で送信ボタンごと畳むので、フォーカスの預け先としてここを使う -->
           <p class="offer-status" id="offerStatus" role="status" aria-live="polite" tabindex="-1" hidden></p>
@@ -4575,6 +4513,7 @@
   <div class="request-cta">
     <a href="request/">♪ 曲リクエスト</a>
   </div>
+  </main>
 
   <!-- BREADCRUMB -->
   <nav class="site-crumb" aria-label="パンくずリスト">
@@ -4652,6 +4591,7 @@
     const backToTopBtn = document.getElementById('backToTop');
     const heroScrollCue = document.getElementById('heroScrollCue');
     const livePop = document.getElementById('livePop');
+    const gearItems = document.querySelectorAll('.gear-item');
     let canShowLivePop = false;
 
     // 2. A.T. Field Effect
@@ -4662,14 +4602,14 @@
       atField.classList.add('active');
     };
 
-    document.querySelectorAll('.gear-item').forEach(item => {
+    gearItems.forEach(item => {
       const atField = item.querySelector('.at-field');
       if (!atField) return;
 
       // 終了イベントで外す（setTimeout だと CSS 側の 0.6s を JS に二重管理させることになる）。
-      // 子の .hexagon-layer からも animationend が上がってくるので発生源を絞る
+      // ::after の animationend も同じ要素へ届くため、親側のアニメーション名で絞る
       atField.addEventListener('animationend', (e) => {
-        if (e.target === atField) atField.classList.remove('active');
+        if (e.animationName === 'at-field-pulse') atField.classList.remove('active');
       });
 
       // pointerenter ならマウスとタッチが 1 本にまとまる（mouseenter + touchstart だと合成イベントで二重発火する）
@@ -5213,6 +5153,20 @@
       }
     };
 
+    const openModal = (modalEl, focusTarget) => {
+      modalEl.classList.add('active');
+      setScrollLock(true);
+      if (focusTarget) focusTarget.focus({ preventScroll: true });
+    };
+
+    const closeModal = (modalEl, returnTarget) => {
+      if (!modalEl.classList.contains('active')) return false;
+      modalEl.classList.remove('active');
+      setScrollLock(false);
+      if (returnTarget) returnTarget.focus({ preventScroll: true });
+      return true;
+    };
+
     const currentIndex = () => {
       if (!modalTrack.clientWidth) return 0;
       return Math.round(modalTrack.scrollLeft / modalTrack.clientWidth);
@@ -5255,8 +5209,8 @@
 
     const buildSlides = (srcs, alts, label) => {
       clearTimeout(clearTimer); // 閉じた直後に開き直しても中身が消されないように
-      modalTrack.innerHTML = '';
-      modalDots.innerHTML = '';
+      modalTrack.replaceChildren();
+      modalDots.replaceChildren();
       slideCount = srcs.length;
 
       srcs.forEach((src, i) => {
@@ -5274,7 +5228,7 @@
         close.type = 'button';
         close.className = 'modal-close';
         close.setAttribute('aria-label', '閉じる');
-        close.innerHTML = '&times;';
+        close.textContent = '×';
         figure.appendChild(img);
         figure.appendChild(close);
         slide.appendChild(figure);
@@ -5303,24 +5257,17 @@
         if (!srcs.length) return;
         lastFocused = link;
         buildSlides(srcs, getAlts(link), link.textContent.trim().replace(/\s+/g, ' '));
-        modal.classList.add('active');
-        setScrollLock(true);
-        const first = focusablesIn(modal)[0];
-        if (first) first.focus({ preventScroll: true });
+        openModal(modal, focusablesIn(modal)[0]);
       });
     });
 
     const hideModal = () => {
-      modal.classList.remove('active');
-      setScrollLock(false);
-      if (lastFocused) {
-        lastFocused.focus({ preventScroll: true });
-        lastFocused = null;
-      }
+      if (!closeModal(modal, lastFocused)) return;
+      lastFocused = null;
       clearTimeout(clearTimer);
       clearTimer = setTimeout(() => {
-        modalTrack.innerHTML = '';
-        modalDots.innerHTML = '';
+        modalTrack.replaceChildren();
+        modalDots.replaceChildren();
         modal.classList.remove('multi');
         slideCount = 0;
       }, 300);
@@ -5337,19 +5284,6 @@
     modal.addEventListener('click', (e) => {
       if (e.target.closest('img, .modal-nav, .modal-dot')) return;
       hideModal();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (!modal.classList.contains('active')) return;
-      if (e.key === 'Escape') {
-        hideModal();
-      } else if (e.key === 'ArrowLeft') {
-        goTo(currentIndex() - 1);
-      } else if (e.key === 'ArrowRight') {
-        goTo(currentIndex() + 1);
-      } else if (e.key === 'Tab') {
-        trapTab(modal, e);
-      }
     });
 
     // 5.5. Gear Modal Control
@@ -5378,22 +5312,15 @@
       else gearModalBody.replaceChildren();
 
       gearLastFocused = item;
-      gearModal.classList.add('active');
-      setScrollLock(true);
-      gearModalClose.focus({ preventScroll: true });
+      openModal(gearModal, gearModalClose);
     };
 
     const hideGearModal = () => {
-      if (!gearModal.classList.contains('active')) return;
-      gearModal.classList.remove('active');
-      setScrollLock(false);
-      if (gearLastFocused) {
-        gearLastFocused.focus({ preventScroll: true });
-        gearLastFocused = null;
-      }
+      if (!closeModal(gearModal, gearLastFocused)) return;
+      gearLastFocused = null;
     };
 
-    document.querySelectorAll('.gear-item').forEach(item => {
+    gearItems.forEach(item => {
       item.addEventListener('click', () => openGearModal(item));
     });
 
@@ -5411,11 +5338,17 @@
     });
 
     document.addEventListener('keydown', (e) => {
-      if (!gearModal.classList.contains('active')) return;
+      const activeModal = modal.classList.contains('active') ? modal
+        : gearModal.classList.contains('active') ? gearModal : null;
+      if (!activeModal) return;
       if (e.key === 'Escape') {
-        hideGearModal();
+        activeModal === modal ? hideModal() : hideGearModal();
+      } else if (activeModal === modal && e.key === 'ArrowLeft') {
+        goTo(currentIndex() - 1);
+      } else if (activeModal === modal && e.key === 'ArrowRight') {
+        goTo(currentIndex() + 1);
       } else if (e.key === 'Tab') {
-        trapTab(gearModal, e);
+        trapTab(activeModal, e);
       }
     });
 
@@ -5527,6 +5460,7 @@
     if (offerForm) {
       const OFFER_API = '/dj/api/offer/send';
       const OFFER_SITE_KEY = '0x4AAAAAACwi9fjjeeh8ujIK';
+      const OFFER_TIMEOUT_MS = 30_000;
       // DM の案内は失敗時にだけ添える。成功時に別の連絡先を出しても迷わせるだけ
       const OFFER_DM = '<a class="text-link" href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の DM</a>';
 
@@ -5546,6 +5480,9 @@
       syncVenueGear();
 
       const submitBtn = document.getElementById('offerSubmit');
+      const submitIcon = submitBtn.querySelector('.offer-submit-icon');
+      const submitSpinner = submitBtn.querySelector('.offer-spinner');
+      const submitLabel = document.getElementById('offerSubmitLabel');
       const statusEl = document.getElementById('offerStatus');
       const turnstileBox = document.getElementById('offerTurnstile');
       let turnstileToken = '';
@@ -5578,19 +5515,12 @@
         if (statusEl) statusEl.querySelector('[data-server-text]').textContent = text;
       };
 
-      // マークアップ側の紙飛行機と同じもの。送信中はスピナーと入れ替える
-      const PLANE_SVG = '<svg class="offer-submit-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"'
-        + ' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
-        + ' stroke-linejoin="round" aria-hidden="true"><line x1="22" x2="11" y1="2" y2="13"/>'
-        + '<polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
-
       const setSending = (on) => {
         sending = on;
         submitBtn.disabled = on;
-        // 中身ごと差し替える。文言だけ変えるとアイコンとスピナーの置き場所がなくなる
-        submitBtn.innerHTML = on
-          ? '<span class="offer-spinner" aria-hidden="true"></span><span lang="en">Sending...</span>'
-          : PLANE_SVG + '<span lang="en">Send Offer</span>';
+        submitIcon.toggleAttribute('hidden', on);
+        submitSpinner.hidden = !on;
+        submitLabel.textContent = on ? 'Sending...' : 'Send Offer';
       };
 
       /* ── 開催日時 ────────────────────────────
@@ -5719,12 +5649,16 @@
 
         setSending(true);
         setStatus('送信しています…', 'sending');
+        let timeoutId;
 
         try {
+          const controller = new AbortController();
+          timeoutId = setTimeout(() => controller.abort(), OFFER_TIMEOUT_MS);
           const res = await fetch(OFFER_API, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
+            signal: controller.signal,
           });
           const data = await res.json().catch(() => ({}));
 
@@ -5747,13 +5681,20 @@
         } catch (err) {
           turnstileToken = '';
           if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);
-          setStatus('通信に失敗しました。電波の良い場所でお試しいただくか、' + OFFER_DM + ' からご連絡ください。', 'error');
+          const message = err && err.name === 'AbortError'
+            ? '送信がタイムアウトしました。送信済みの場合もあるため、重複を避ける場合は ' + OFFER_DM + ' からご確認ください。'
+            : '通信に失敗しました。電波の良い場所でお試しいただくか、' + OFFER_DM + ' からご連絡ください。';
+          setStatus(message, 'error');
         } finally {
+          clearTimeout(timeoutId);
           // 成功時はボタンごと伏せてあるので、ここで戻しても画面には出てこない。
           // 分岐を持たせると「送信中のまま」の取りこぼしが生まれるので必ず戻す
           setSending(false);
         }
       });
+
+      // ここまで例外なく初期化できた場合だけ、フォームの通常の submit 操作を有効にする
+      submitBtn.type = 'submit';
     }
 
     // 9. Lucide アイコンはインライン SVG 化済みのため createIcons() は不要

@@ -1398,6 +1398,78 @@
     return { defs: defs, body: '<g clip-path="url(#' + id + 'c)">' + fill + '</g>' };
   }
 
+  // ロゴとフレームラベルで共通のアイコン描画。違うのは既定色と、セルの
+  // グラデーションを追従させるときにクリップを介すかどうかだけ。
+  function paintedIcon(icon, cx, cy, side, pid, paint, fg, fgRef, qrBox, opts) {
+    const empty = { defs: '', body: '' };
+    if (!icon) return empty;
+    const o = opts || {};
+    const vb = String(icon.vb || '0 0 24 24').split(/\s+/).map(Number);
+    const vw = vb[2] || 24, vh = vb[3] || 24;
+    const k = side / Math.max(vw, vh);
+    const tx = cx - (vw * k) / 2 - (vb[0] || 0) * k;
+    const ty = cy - (vh * k) / 2 - (vb[1] || 0) * k;
+    const tf = 'translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')';
+    const box = { x: cx - side / 2, y: cy - side / 2, w: side, h: side };
+    const p = paint || { type: 'solid', color: o.defaultColor || '#111827' };
+    const mode = p.type || 'brand';
+    const color = p.color || o.defaultColor || '#111827';
+    const cellOpts = qrBox
+      ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+    let defs = '';
+    let body = '';
+
+    const flat = fill => {
+      let s = '<g transform="' + tf + '" fill="' + fill + '">';
+      icon.p.forEach(path => {
+        s += '<path d="' + path.d + '"' + (path.e ? ' fill-rule="evenodd"' : '') + '/>';
+      });
+      return s + '</g>';
+    };
+    const clipShape = () => {
+      let s = '';
+      icon.p.forEach(path => {
+        s += '<path d="' + path.d + '" transform="' + tf + '"' +
+          (path.e ? ' clip-rule="evenodd"' : '') + '/>';
+      });
+      return s;
+    };
+
+    if (mode === 'brand') {
+      if (icon.rawSvg) {
+        const raw = icon.rawSvg.replace(/__UID__/g, o.rawPrefix || (pid + '_'));
+        body += '<g transform="' + tf + '">' + raw + '</g>';
+      } else {
+        const brand = (global.QRAssets && global.QRAssets.BRAND_COLORS &&
+          global.QRAssets.BRAND_COLORS[icon.id]) || color;
+        body += flat(esc(brand));
+      }
+    } else if (mode === 'solid') {
+      body += flat(esc(color));
+    } else if (mode === 'auto') {
+      const fgMode = fg ? fg.type : 'solid';
+      if (fgMode === 'solid') {
+        body += flat(esc(fg.color || '#111827'));
+      } else if (fgMode === 'multi') {
+        const layer = paintedShape(fg, box, pid, clipShape(), cellOpts);
+        if (layer) { defs += layer.defs; body += layer.body; }
+        else body += flat(fgRef || '#111827');
+      } else if (o.clipAutoComplex) {
+        defs += '<clipPath id="' + pid + 'c">' + clipShape() + '</clipPath>';
+        body += '<g clip-path="url(#' + pid + 'c)"><path d="' +
+          rectPath(box.x, box.y, box.w, box.h, 0) + '" fill="' +
+          (fgRef || '#111827') + '"/></g>';
+      } else {
+        body += flat(fgRef || '#111827');
+      }
+    } else {
+      const layer = paintedShape(p, box, pid, clipShape(), null);
+      if (layer) { defs += layer.defs; body += layer.body; }
+      else body += flat(esc(color));
+    }
+    return { defs: defs, body: body };
+  }
+
   // 戻り値は { defs, body }。塗りの定義が要る描き方があるので本体と一緒に返す。
   function logoSvg(logo, cx, cy, side, uid, fg, fgRef, qrBox) {
     const empty = { defs: '', body: '' };
@@ -1412,63 +1484,14 @@
     let out = '';
 
     if (logo.type === 'icon' && logo.iconData) {
-      const icon = logo.iconData;
-      const vb = String(icon.vb || '0 0 24 24').split(/\s+/).map(Number);
-      const vw = vb[2] || 24, vh = vb[3] || 24;
-      const k = side / Math.max(vw, vh);
-      const tx = cx - (vw * k) / 2 - vb[0] * k;
-      const ty = cy - (vh * k) / 2 - vb[1] * k;
-      const lp = logo.paint;
-      const mode = lp.type || 'brand';
-      const tf = 'translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')';
-
-      // 一色で塗るだけの描き方
-      const flat = color => {
-        let s = '<g transform="' + tf + '" fill="' + color + '">';
-        icon.p.forEach(p => {
-          s += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
+      const layer = paintedIcon(logo.iconData, cx, cy, side, pid, logo.paint,
+        fg, fgRef, qrBox, {
+          defaultColor: '#111827',
+          rawPrefix: (uid || 'logo_') + '_',
+          clipAutoComplex: true
         });
-        return s + '</g>';
-      };
-      // アイコンの形そのもの（クリップ用）
-      const clipShape = () => {
-        let s = '';
-        icon.p.forEach(p => {
-          s += '<path d="' + p.d + '" transform="' + tf + '"' + (p.e ? ' clip-rule="evenodd"' : '') + '/>';
-        });
-        return s;
-      };
-
-      if (mode === 'brand') {
-        if (icon.rawSvg) {
-          const raw = icon.rawSvg.replace(/__UID__/g, (uid || 'logo_') + '_');
-          out += '<g transform="' + tf + '">' + raw + '</g>';
-        } else {
-          const bColor = (global.QRAssets && global.QRAssets.BRAND_COLORS && global.QRAssets.BRAND_COLORS[icon.id]) || lp.color || '#111827';
-          out += flat(esc(bColor));
-        }
-      } else if (mode === 'solid') {
-        out += flat(esc(lp.color || '#111827'));
-      } else if (mode === 'auto') {
-        // セルの塗りをそのまま延長する。単色以外はセル側の定義を参照するので、
-        // ロゴの上でも模様がつながって見える。
-        const fgMode = fg ? fg.type : 'solid';
-        if (fgMode === 'solid') {
-          out += flat(esc(fg.color || '#111827'));
-        } else if (fgMode === 'multi') {
-          const layer = paintedShape(fg, box, pid, clipShape(), cellOpts);
-          if (layer) { defs += layer.defs; out += layer.body; }
-          else out += flat(fgRef || '#111827');
-        } else {
-          defs += '<clipPath id="' + pid + 'c">' + clipShape() + '</clipPath>';
-          out += '<g clip-path="url(#' + pid + 'c)"><path d="' +
-            rectPath(box.x, box.y, box.w, box.h, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
-        }
-      } else {
-        const layer = paintedShape(lp, box, pid, clipShape(), null);
-        if (layer) { defs += layer.defs; out += layer.body; }
-        else out += flat(esc(lp.color || '#111827'));
-      }
+      defs += layer.defs;
+      out += layer.body;
     } else if (logo.type === 'image' && logo.src) {
       out += '<image href="' + esc(logo.src) + '" x="' + n(x) + '" y="' + n(y) + '" width="' +
         n(side) + '" height="' + n(side) + '" preserveAspectRatio="xMidYMid meet"/>';
@@ -1873,65 +1896,13 @@
         const icons = (global.QRAssets && global.QRAssets.ICONS) || [];
         const icon = iconDataOpt || icons.find(i => i.id === iconId) || icons[0];
         if (!icon) return;
-        const side = contentSide;
-        const vb = String(icon.vb || '0 0 24 24').split(/\s+/).map(Number);
-        const vw = vb[2] || 24, vh = vb[3] || 24;
-        const k = side / Math.max(vw, vh);
-        const tx = cx - (vw * k) / 2 - (vb[0] || 0) * k;
-        const ty = cy - (vh * k) / 2 - (vb[1] || 0) * k;
-        const tf = 'translate(' + n(tx) + ' ' + n(ty) + ') scale(' + n(k) + ')';
         const pid = uid + 'fi' + idSuffix;
-        const box = { x: cx - side / 2, y: cy - side / 2, w: side, h: side };
-
         const ip = iconPaintOpt || (st.frame && st.frame.iconPaint) ||
           { type: 'brand', color: '#FFFFFF' };
-        const iconMode = ip.type || 'brand';
-        const iconCol = ip.color || '#FFFFFF';
-
-        const flat = color => {
-          let s = '<g transform="' + tf + '" fill="' + color + '">';
-          icon.p.forEach(p => {
-            s += '<path d="' + p.d + '"' + (p.e ? ' fill-rule="evenodd"' : '') + '/>';
-          });
-          return s + '</g>';
-        };
-        // アイコンの形そのもの（クリップ用）。ロゴと同じで、塗りは変換の外に置く
-        const clipShape = () => {
-          let s = '';
-          icon.p.forEach(p => {
-            s += '<path d="' + p.d + '" transform="' + tf + '"' + (p.e ? ' clip-rule="evenodd"' : '') + '/>';
-          });
-          return s;
-        };
-
-        if (iconMode === 'brand') {
-          if (icon.rawSvg) {
-            const raw = icon.rawSvg.replace(/__UID__/g, pid + '_');
-            body += '<g transform="' + tf + '">' + raw + '</g>';
-          } else {
-            const bColor = (global.QRAssets && global.QRAssets.BRAND_COLORS && global.QRAssets.BRAND_COLORS[icon.id]) || iconCol;
-            body += flat(esc(bColor));
-          }
-        } else if (iconMode === 'solid') {
-          body += flat(esc(iconCol));
-        } else if (iconMode === 'auto') {
-          // セルの塗りをそのまま延長する。多色だけは面で塗らないと粒が出ない
-          const fgMode = st.fg ? st.fg.type : 'solid';
-          if (fgMode === 'solid') {
-            body += flat(esc(st.fg.color || '#111827'));
-          } else if (fgMode === 'multi') {
-            const cellOpts = { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 };
-            const layer = paintedShape(st.fg, box, pid, clipShape(), cellOpts);
-            if (layer) { defs += layer.defs; body += layer.body; }
-            else body += flat(fgRef || '#111827');
-          } else {
-            body += flat(fgRef || '#111827');
-          }
-        } else {
-          const layer = paintedShape(ip, box, pid, clipShape(), null);
-          if (layer) { defs += layer.defs; body += layer.body; }
-          else body += flat(esc(iconCol));
-        }
+        const layer = paintedIcon(icon, cx, cy, contentSide, pid, ip,
+          st.fg, fgRef, qrBox, { defaultColor: '#FFFFFF', rawPrefix: pid + '_' });
+        defs += layer.defs;
+        body += layer.body;
       }
 
       function renderFrameImage(src, cx, cy) {

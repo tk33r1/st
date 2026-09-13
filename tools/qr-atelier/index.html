@@ -188,7 +188,6 @@
   }
   </script>
 
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -218,6 +217,13 @@
       --accent-ink: var(--cat-generator-ink);
       --accent-soft: var(--cat-generator-soft);
     }
+
+    /* このページで使う基本リセット。以前はアイコン寸法のためだけに読み込んだ
+       Tailwind の Preflight が偶然ここも受け持っていた。 */
+    button, input, select, textarea { margin: 0; font: inherit; color: inherit; }
+    button { text-transform: none; }
+    .w-4 { width: 1rem; }
+    .h-4 { height: 1rem; }
 
     .st-theme { --shell: 1240px; }
     .st-theme main { max-width: 1240px; }
@@ -945,6 +951,20 @@
     .note.note-fold.hidden { display: none; }
     .slider-row.hidden { display: none; }
     .pane-note-row { display: flex; justify-content: flex-end; margin-top: 4px; }
+    [data-font="sans"] { font-family: Inter, sans-serif; font-weight: 700; }
+    [data-font="rounded"] { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 700; }
+    [data-font="serif"] { font-family: "Noto Serif JP", serif; font-weight: 700; }
+    [data-font="mono"] { font-family: "JetBrains Mono", monospace; font-weight: 700; }
+    [data-font="impact"] { font-family: Impact, sans-serif; }
+    .notice {
+      padding: 10px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      font-size: 12px;
+      color: var(--ink-2);
+      line-height: 1.6;
+    }
     .my-io-note code {
       font-family: var(--font-mono); font-size: 11px;
       background: var(--panel-2); border: 1px solid var(--rule);
@@ -1574,11 +1594,11 @@
               <div class="field" style="margin-top:12px">
                 <label>フォント</label>
                 <div class="st-seg seg-sm" id="logo-font-seg">
-                  <button type="button" data-font="sans" class="active" style="font-family:Inter, sans-serif; font-weight:700;">ゴシック</button>
-                  <button type="button" data-font="rounded" style="font-family:'M PLUS Rounded 1c', sans-serif; font-weight:700;">丸ゴシック</button>
-                  <button type="button" data-font="serif" style="font-family:'Noto Serif JP', serif; font-weight:700;">明朝</button>
-                  <button type="button" data-font="mono" style="font-family:'JetBrains Mono', monospace; font-weight:700;">等幅</button>
-                  <button type="button" data-font="impact" style="font-family:Impact, sans-serif;">太字</button>
+                  <button type="button" data-font="sans" class="active">ゴシック</button>
+                  <button type="button" data-font="rounded">丸ゴシック</button>
+                  <button type="button" data-font="serif">明朝</button>
+                  <button type="button" data-font="mono">等幅</button>
+                  <button type="button" data-font="impact">太字</button>
                 </div>
               </div>
               <div class="field" style="margin-top:12px">
@@ -1674,11 +1694,11 @@
                 <div class="field" style="margin-top:10px">
                   <label>フォント</label>
                   <div class="st-seg seg-sm" id="frame-font-seg">
-                    <button type="button" data-font="sans" class="active" style="font-family:Inter, sans-serif; font-weight:700;">ゴシック</button>
-                    <button type="button" data-font="rounded" style="font-family:'M PLUS Rounded 1c', sans-serif; font-weight:700;">丸ゴシック</button>
-                    <button type="button" data-font="serif" style="font-family:'Noto Serif JP', serif; font-weight:700;">明朝</button>
-                    <button type="button" data-font="mono" style="font-family:'JetBrains Mono', monospace; font-weight:700;">等幅</button>
-                    <button type="button" data-font="impact" style="font-family:Impact, sans-serif;">太字</button>
+                    <button type="button" data-font="sans" class="active">ゴシック</button>
+                    <button type="button" data-font="rounded">丸ゴシック</button>
+                    <button type="button" data-font="serif">明朝</button>
+                    <button type="button" data-font="mono">等幅</button>
+                    <button type="button" data-font="impact">太字</button>
                   </div>
                 </div>
                 <div class="field" style="margin-top:10px">
@@ -2051,18 +2071,14 @@
     /* Theme: system by default, explicit choice remembered. The stamp on
        <html> is what data/tools-ui.css keys its dark tokens off. */
     (function () {
-      const KEY = 'st-theme';
       const root = document.documentElement;
-      let saved = null;
-      try { saved = localStorage.getItem(KEY); } catch (e) { /* site data blocked */ }
-      if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
 
       document.getElementById('theme-toggle').addEventListener('click', () => {
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
         const next = current === 'dark' ? 'light' : 'dark';
         root.setAttribute('data-theme', next);
-        try { localStorage.setItem(KEY, next); } catch (e) { /* site data blocked */ }
+        try { localStorage.setItem('st-theme', next); } catch (e) { /* site data blocked */ }
       });
     })();
 
@@ -2107,31 +2123,31 @@
         </div>
 
         <div data-cid="pane-white" class="hidden">
-          <div class="notice" data-cid="white-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+          <div class="notice" data-cid="white-notice">
             背景を不透明な白（#FFFFFF）に固定します。
           </div>
         </div>
 
         <div data-cid="pane-black" class="hidden">
-          <div class="notice" data-cid="black-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+          <div class="notice" data-cid="black-notice">
             背景を不透明な黒（#000000）に固定します。
           </div>
         </div>
 
         <div data-cid="pane-brand" class="hidden">
-          <div class="notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+          <div class="notice">
             アイコンそのものの色（SNSやブランドの指定色）で描きます。
           </div>
         </div>
 
         <div data-cid="pane-auto" class="hidden">
-          <div class="notice" data-cid="auto-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+          <div class="notice" data-cid="auto-notice">
             セルの色設定と連動します。
           </div>
         </div>
 
         <div data-cid="pane-none" class="hidden">
-          <div class="notice" data-cid="none-notice" style="padding:10px 12px; background:var(--bg-card); border:1px solid var(--rule); border-radius:var(--r-1); font-size:12px; color:var(--ink-2); line-height:1.6;">
+          <div class="notice" data-cid="none-notice">
             背景を透明にします。
           </div>
         </div>
@@ -2200,12 +2216,12 @@
       </template>
 
   <script src="qr-core.js?v=20260911_6"></script>
-  <script src="qr-style.js?v=20260911_6"></script>
+  <script src="qr-style.js?v=20260913_1"></script>
   <script src="qr-assets.js?v=20260911_6"></script>
-  <script src="qr-verify.js?v=20260911_6"></script>
+  <script src="qr-verify.js?v=20260913_1"></script>
   <script src="qr-bulk.js?v=20260912_1"></script>
   <script src="qr-xlsx.js?v=20260912_1"></script>
   <script src="qr-avif.js?v=20260912_1"></script>
-  <script src="app.js?v=20260912_1"></script>
+  <script src="app.js?v=20260913_1"></script>
 </body>
 </html>

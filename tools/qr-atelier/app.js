@@ -4,8 +4,8 @@
  * 書き出しを受け持つ。
  *
  * 入力した内容そのものは、符号化から検査・書き出しまで一度も外へ出ない。
- * 外へ出るのはページの土台（Tailwind・lucide・Google Fonts など）と、
- * 「画像をURLで指定」したときのその画像、それに書き出し時のフォント取得だけ。
+ * 外へ出るのはページの計測・装飾アイコンと、表示・書き出しに使うフォントの
+ * 取得だけ。
  */
 (function () {
   'use strict';
@@ -315,13 +315,26 @@
         // 区別する。取り違えると送金先が変わるので、ここは打たれたまま渡す。
         const addr = raw.replace(/^bitcoin:/i, '');
         const q = [];
-        const amt = String(f.amount || '').trim();
-        if (amt && isFinite(Number(amt)) && Number(amt) > 0) q.push('amount=' + Number(amt));
+        const amt = bitcoinAmount(f.amount);
+        if (amt) q.push('amount=' + amt);
         if (f.label) q.push('label=' + encodeURIComponent(String(f.label).trim()));
         return 'bitcoin:' + addr + (q.length ? '?' + q.join('&') : '');
       }
     }
   ];
+
+  // BIP-21 の amount は指数表記ではなく、小数点以下8桁までの10進数で渡す。
+  // Number を通すと 1 satoshi が 1e-8 になり、ウォレットによっては解釈されない。
+  function bitcoinAmount(value) {
+    let s = String(value == null ? '' : value).trim();
+    if (!s || !/^(?:\d+(?:\.\d{1,8})?|\.\d{1,8})$/.test(s)) return '';
+    if (s.charAt(0) === '.') s = '0' + s;
+    const parts = s.split('.');
+    const whole = parts[0].replace(/^0+(?=\d)/, '');
+    const frac = (parts[1] || '').replace(/0+$/, '');
+    if (whole === '0' && !frac) return '';
+    return whole + (frac ? '.' + frac : '');
+  }
 
   // ------------------------------------------------------------------
   // 状態
@@ -348,25 +361,23 @@
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
 
-  // 色設定パネルを立てる場所。どれも同じテンプレートから起こして、
-  // 「どの塗りを指すか」だけが違う（paintOf を参照）。
-  const COLOR_SCOPES = [
-    'cell', 'bg',
-    'frame', 'eye',
-    'logoicon', 'logotext', 'logobd',
-    'frameborder', 'framelabel', 'frametext', 'frameicon', 'framebd'
-  ];
-
-  // 白・黒・透明まで選べる「面を敷く」対象
-  const PLATE_SCOPES = ['bg', 'logobd', 'framebd'];
-  // ブランドカラー（アイコンそのものの色）を選べる対象
-  const BRAND_SCOPES = ['logoicon', 'frameicon'];
-
-  // 画像を外したときに戻る塗り方。追従先を持つ対象は「セルの色」に落とす
-  const CLEARED_IMAGE_TYPE = {
-    cell: 'solid', bg: 'white', logobd: 'white', framebd: 'none',
-    logoicon: 'brand', frameicon: 'brand'
+  // 色パネルごとの違いはここだけに置く。対象一覧・塗りの場所・使える特殊色・
+  // 画像を外したときの戻り先・表示名を別々に持つと、追加時に必ずどれかが漏れる。
+  const COLOR_SCOPE_META = {
+    cell:        { paint: s => s.fg,                kind: 'basic', clearType: 'solid', label: 'セル' },
+    bg:          { paint: s => s.bg,                kind: 'plate', clearType: 'white', label: '背景' },
+    frame:       { paint: s => s.markerFramePaint,  kind: 'auto',  clearType: 'auto',  label: 'マーカーの枠' },
+    eye:         { paint: s => s.markerEyePaint,    kind: 'auto',  clearType: 'auto',  label: 'マーカーの目' },
+    logoicon:    { paint: s => s.logo.paint,        kind: 'brand', clearType: 'brand', label: 'ロゴのアイコン' },
+    logotext:    { paint: s => s.logo.textPaint,    kind: 'auto',  clearType: 'auto',  label: 'ロゴの文字' },
+    logobd:      { paint: s => s.logo.backdropPaint, kind: 'plate', clearType: 'white', label: 'ロゴの下地' },
+    frameborder: { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '枠線' },
+    framelabel:  { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '帯' },
+    frametext:   { paint: s => s.frame.textPaint,   kind: 'auto',  clearType: 'auto',  label: 'ラベルの文字' },
+    frameicon:   { paint: s => s.frame.iconPaint,   kind: 'brand', clearType: 'brand', label: 'ラベルのアイコン' },
+    framebd:     { paint: s => s.frame.backdropPaint, kind: 'plate', clearType: 'none', label: 'ラベルの下地' }
   };
+  const COLOR_SCOPES = Object.keys(COLOR_SCOPE_META);
 
   // 画像の塗りの倍率（描画エンジンと同じ範囲。UI では % で見せる）
   const IMG_SCALE_MIN = (window.QRStyle && window.QRStyle.IMG_SCALE_MIN) || 0.2;
@@ -385,42 +396,13 @@
     if (label) label.textContent = pct + '%';
   }
 
-  function scopeTarget(scope) { return scope; }
-
-  // state.style は必ず DEFAULTS から起こす（初期化・復元・テンプレート適用・
-  // 初期化ボタンの4か所とも）。QRStyle.merge は DEFAULTS のキーを再帰的に
-  // 埋めるので、frame も frame.paint も「無いかもしれない」状態にはならない。
-  // 以前は呼び出し側ごとに作り直していたが、その場しのぎの不完全な形が
-  // 入るだけで、守っている対象は存在しなかった。
-  function getFrameLinePaint() { return state.style.frame.paint; }
-  function getFrameTextPaint() { return state.style.frame.textPaint; }
-
-  function getFrameIconPaint() { return state.style.frame.iconPaint; }
-
-  // ラベルの中身の下地の塗り。ロゴの下地と同じ 9 モードを持つが、
-  // 既定は「なし」なので、選ぶまでは今までどおり板は敷かれない。
-  function getFrameBackdropPaint() {
-    return state.style.frame.backdropPaint;
+  function paintOf(scope) {
+    const meta = COLOR_SCOPE_META[scope];
+    return meta ? meta.paint(state.style) : state.style.fg;
   }
-
-  function paintOf(target) {
-    if (target === 'frame') return state.style.markerFramePaint;
-    if (target === 'eye') return state.style.markerEyePaint;
-    if (target === 'bg') return state.style.bg;
-    if (target === 'logoicon') return getLogoPaint();
-    if (target === 'logotext') return getLogoTextPaint();
-    if (target === 'frameicon') return getFrameIconPaint();
-    if (target === 'logobd') return getLogoBackdropPaint();
-    if (target === 'frameborder' || target === 'framelabel') return getFrameLinePaint();
-    if (target === 'frametext') return getFrameTextPaint();
-    if (target === 'framebd') return getFrameBackdropPaint();
-    return state.style.fg;
-  }
-
-  function paintOfScope(scope) { return paintOf(scopeTarget(scope)); }
 
   // プレビューへの画像ドロップなど、パネル外から「いま触っている色」を指す用
-  function getActivePaint() { return paintOfScope(state.colorScope); }
+  function getActivePaint() { return paintOf(state.colorScope); }
 
   function colorPanel(scope) {
     return document.querySelector('.color-panel[data-scope="' + scope + '"]');
@@ -446,16 +428,9 @@
       'グラデーション (' + n + ')';
   }
 
-  // ロゴの下地の塗り。背景と同じ 9 モードを持つ。
-  function getLogoBackdropPaint() { return state.style.logo.backdropPaint; }
-
-  function getLogoPaint() { return state.style.logo.paint; }
-
-  function getLogoTextPaint() { return state.style.logo.textPaint; }
-
   const STORE_KEY = 'qr-atelier-v1';
 
-  // 受け付ける画像の上限。ファイルからでもURLからでも同じ線を引く。
+  // 受け付ける画像ファイルの上限。
   const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
   // これより長い画像（data URL）は覚えない。localStorage の枠を1枚で使い切る。
@@ -547,7 +522,7 @@
     if (!raw) return;
     try {
       const saved = JSON.parse(raw);
-      if (saved.type) state.type = saved.type;
+      if (saved.type && TYPES.some(t => t.id === saved.type)) state.type = saved.type;
       if (saved.values) Object.keys(state.values).forEach(k => {
         if (saved.values[k]) Object.assign(state.values[k], saved.values[k]);
       });
@@ -683,12 +658,14 @@
       undoStack.push(lastCommittedSnapshot);
       if (undoStack.length > MAX_HISTORY) {
         undoStack.shift();
-        cleanHistoryImagePool();
       }
       redoStack.length = 0;
       updateHistoryButtons();
     }
     lastCommittedSnapshot = snap;
+    // Undo 後に別の編集を始めると Redo 側の画像参照は不要になる。
+    // 新しいスナップショットを確定してから、孤立した巨大な Data URL を捨てる。
+    cleanHistoryImagePool();
   }
 
   function recordHistorySoon(immediate) {
@@ -729,7 +706,7 @@
 
     isApplyingHistory = true;
     try {
-      if (data.type) state.type = data.type;
+      if (data.type && TYPES.some(t => t.id === data.type)) state.type = data.type;
       if (data.values) {
         Object.keys(data.values).forEach(k => {
           state.values[k] = Object.assign({}, data.values[k]);
@@ -789,9 +766,19 @@
     applySnapshot(next);
   }
 
-  function initHistory() {
+  function resetHistory() {
+    if (historyTimer) { clearTimeout(historyTimer); historyTimer = null; }
+    undoStack.length = 0;
+    redoStack.length = 0;
+    historyImagePool.clear();
+    historyImageRevPool.clear();
+    historyImageSeq = 0;
     lastCommittedSnapshot = getSnapshot();
     updateHistoryButtons();
+  }
+
+  function initHistory() {
+    resetHistory();
   }
 
   // 塗りのモードは、どこに使う塗りかで選べる顔ぶれが変わる。画面のボタンの
@@ -855,11 +842,14 @@
     if (!s.frame.pos || ['bottom', 'top', 'both'].indexOf(s.frame.pos) < 0) {
       s.frame.pos = 'bottom';
     }
-    s.frame.icon = s.frame.icon || 'si-instagram';
+    if (!A.ICONS.some(i => i.id === s.frame.icon)) s.frame.icon = D.frame.icon;
+    // iconData は保存・共有されたオブジェクトを信用せず、同梱一覧の id から毎回引き直す。
+    s.frame.iconData = A.ICONS.find(i => i.id === s.frame.icon) || null;
     s.frame.iconPaint = sanitizePaint(s.frame.iconPaint, 'brand', 'brand', '#FFFFFF');
     s.frame.src = sanitizeImageUrl(s.frame.src);
 
-    s.frame.topIcon = s.frame.topIcon || 'si-instagram';
+    if (!A.ICONS.some(i => i.id === s.frame.topIcon)) s.frame.topIcon = D.frame.topIcon;
+    s.frame.topIconData = A.ICONS.find(i => i.id === s.frame.topIcon) || null;
     s.frame.topSrc = sanitizeImageUrl(s.frame.topSrc);
     s.frame.textTop = String(s.frame.textTop || '');
 
@@ -889,6 +879,8 @@
     // 'auto' へ寄せるので、ここでは 'brand' をそのまま通してよい。
     s.logo.paint = sanitizePaint(s.logo.paint, 'brand', 'brand', D.logo.paint.color);
     s.logo.textPaint = sanitizePaint(s.logo.textPaint, 'auto', 'auto', D.logo.textPaint.color);
+    if (!A.ICONS.some(i => i.id === s.logo.icon)) s.logo.icon = D.logo.icon;
+    s.logo.iconData = A.ICONS.find(i => i.id === s.logo.icon) || null;
 
     s.cellScale = clampNum(s.cellScale, 0.3, 1.15, D.cellScale);
     s.cellJitter = clampNum(s.cellJitter, 0, 1, D.cellJitter);
@@ -1423,7 +1415,9 @@
     buildPresets();
     update();
 
-    // update() が予約した書き戻しを取り消して、痕跡を残さない
+    // update() が予約した履歴と書き戻しを取り消す。Undo/Redo や画像プールに
+    // 消す前の入力が残ると、この画面だけで復元できてしまう。
+    resetHistory();
     cancelPendingSave();
     try {
       localStorage.removeItem(STORE_KEY);
@@ -1840,21 +1834,21 @@
 
   // 汎用スコープ（セル・マーカー・背景）
   function buildMultiColorsList(scope) {
-    renderMultiColorsList(cq(scope, 'multi-colors-list'), paintOfScope(scope), cq(scope, 'btn-add-color'));
+    renderMultiColorsList(cq(scope, 'multi-colors-list'), paintOf(scope), cq(scope, 'btn-add-color'));
   }
 
   function buildMultiPalettes(scope) {
-    renderMultiPalettes(cq(scope, 'multi-palette-grid'), () => paintOfScope(scope), () => { state.colorScope = scope; });
+    renderMultiPalettes(cq(scope, 'multi-palette-grid'), () => paintOf(scope), () => { state.colorScope = scope; });
   }
 
   function buildGradColorsList(scope) {
-    renderGradColorsList(cq(scope, 'grad-colors-list'), paintOfScope(scope), cq(scope, 'btn-add-grad-color'));
+    renderGradColorsList(cq(scope, 'grad-colors-list'), paintOf(scope), cq(scope, 'btn-add-grad-color'));
   }
 
   function buildSwatches(scope) {
     renderSwatches(cq(scope, 'swatch-host'), c => {
       state.colorScope = scope;
-      const p = paintOfScope(scope);
+      const p = paintOf(scope);
       if (p.type === 'solid') {
         p.color = c;
       } else if (p.type === 'multi') {
@@ -1868,7 +1862,7 @@
   }
 
   function buildGradients(scope) {
-    renderGradients(cq(scope, 'grad-grid'), () => paintOfScope(scope), () => { state.colorScope = scope; });
+    renderGradients(cq(scope, 'grad-grid'), () => paintOf(scope), () => { state.colorScope = scope; });
   }
 
   // 見本の一覧（色・グラデーション・多色パレット）はパネル1枚で百個近いボタンに
@@ -2051,11 +2045,13 @@
 
   // 読み込んだデザインを画面に載せる。アイコンの実体は id から引き直す。
   function applyStyle(styleIn, name) {
-    state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, styleIn || {});
-    const lg = state.style.logo, fr = state.style.frame;
-    if (lg.icon) lg.iconData = A.ICONS.find(i => i.id === lg.icon) || null;
-    if (fr.icon) fr.iconData = A.ICONS.find(i => i.id === fr.icon) || null;
-    if (fr.topIcon) fr.topIconData = A.ICONS.find(i => i.id === fr.topIcon) || null;
+    const incoming = JSON.parse(JSON.stringify(styleIn || {}));
+    if (incoming.logo) delete incoming.logo.iconData;
+    if (incoming.frame) {
+      delete incoming.frame.iconData;
+      delete incoming.frame.topIconData;
+    }
+    state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, incoming);
     sanitizeStyle(state.style);
     state.presetName = name || '';
     syncControls();
@@ -2214,20 +2210,20 @@
   // 色パネル1枚ぶんの表示を、その対象の塗りに合わせる
   function syncColorPanel(scope) {
     if (!colorPanel(scope)) return;
-    const target = scopeTarget(scope);
-    const p = paintOfScope(scope);
-    const isCell = target === 'cell';
-    const isBg = target === 'bg';
-    const isLogoBd = target === 'logobd';
-    const isFrameBd = target === 'framebd';
+    const meta = COLOR_SCOPE_META[scope];
+    const p = paintOf(scope);
+    const isCell = scope === 'cell';
+    const isBg = scope === 'bg';
+    const isLogoBd = scope === 'logobd';
+    const isFrameBd = scope === 'framebd';
     // 背景と下地は「敷く面」なので、白・黒・透明まで選べる
-    const isPlate = PLATE_SCOPES.indexOf(target) >= 0;
+    const isPlate = meta.kind === 'plate';
     // ブランドカラーはアイコンにしか意味がない。さらに、汎用アイコンには
     // ブランド色そのものが無いので、「SNS・ブランド」の一覧を開いている
     // ときだけ出す。ロゴとラベルで別々の一覧を持っているので、対象ごとに見る。
     const iconGroupOf = { logoicon: state.iconGroup, frameicon: state.frameIconGroup };
-    const showBrand = BRAND_SCOPES.indexOf(target) >= 0 &&
-      (iconGroupOf[target] || 'brand') === 'brand';
+    const showBrand = meta.kind === 'brand' &&
+      (iconGroupOf[scope] || 'brand') === 'brand';
 
     [['btn-mode-white', !isPlate], ['btn-mode-black', !isPlate],
      ['btn-mode-none', !isPlate], ['btn-mode-brand', !showBrand],
@@ -2273,7 +2269,7 @@
     if (autoNotice) {
       autoNotice.innerHTML = isBg
         ? 'セルの色設定と連動します。<br>グラデーション・放射・画像・多色のテクスチャが指定の透明度で背景に反映されます。'
-        : (target === 'frame' || target === 'eye')
+        : (scope === 'frame' || scope === 'eye')
           ? 'セルの色設定と連動します。<br>多色のときは、3つのマーカーに色が1つずつ振られます。'
           : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
     }
@@ -3096,6 +3092,11 @@
           setVerdict('na', 'チェックできません',
             'デコーダを読み込めませんでした。通信状態を確かめて、もう一度お試しください',
             r.engines);
+        } else if (r.mismatch) {
+          // ひとつでも別の内容として復号したなら、ほかのエンジンで読めても安全とは
+          // 言えない。簡易チェックかどうかより先に赤判定へ倒す。
+          setVerdict('ng', '内容がずれています',
+            '別の内容として読まれています。ロゴや装飾を控えめにしてください', r.engines);
         } else if (r.level === 'ng' && !window.QRVerify.heavyLoaded()) {
           // 軽いデコーダしか動いていない段階での失敗は、証拠として弱い。jsQR は
           // 装飾に厳しく、そこで落ちても実機では読めることが多い。断定せずに
@@ -3103,14 +3104,12 @@
           setVerdict('fair', '簡易チェックでは読めません',
             '実機のカメラなら読めることがあります。「詳しく検査」で確かめてください', r.engines);
         } else if (r.level === 'ng') {
-          setVerdict('ng', r.mismatch ? '内容がずれています' : '読み取れませんでした',
-            r.mismatch ? '別の内容として読まれています。ロゴや装飾を控えめにしてください'
-                       : 'コントラスト・ロゴの大きさ・余白を見直してください', r.engines);
+          setVerdict('ng', '読み取れませんでした',
+            'コントラスト・ロゴの大きさ・余白を見直してください', r.engines);
         } else if (r.level === 'best') {
           setVerdict('ok', '読み取りOK',
-            (r.ran > 1 ? r.ran + 'つのデコーダすべてが' : '') + '全解像度で成功。' +
-            (missing ? '確かめられた範囲では問題ありません' + missing
-                     : 'どの読み取り環境でも読めます'), r.engines);
+            (r.ran > 1 ? r.ran + 'つのデコーダすべてで' : '') +
+            '全解像度に成功しました。確認した範囲では安定しています' + missing, r.engines);
         } else {
           const bad = r.engines.filter(e => e.state !== 'ok' && e.state !== 'unavailable')
             .sort((a, b) => b.severity - a.severity);
@@ -3121,7 +3120,7 @@
           const strong = r.engines.filter(e => e.severity >= 2 && e.state !== 'unavailable');
           if (strong.length && strong.every(e => e.state === 'ok')) {
             setVerdict('ok', '読み取りOK',
-              '実機のカメラでもスキャナアプリでも読めます。' + worst.name +
+              strong.map(e => e.name).join('と') + 'では全解像度に成功しました。' + worst.name +
               'のような簡素なデコーダだけが苦手な形です' + missing, r.engines);
           } else if (worst.severity >= 3 && worst.state === 'partial') {
             // 実機系までもが「一部の解像度でしか読めない」＝解像度依存。書き出した
@@ -4116,8 +4115,11 @@
       // 素直に既定を on にしておき、表を見て外してもらう
       bulkRefresh();
     } catch (e) {
-      showToast(String(e && e.message) === 'not xlsx'
+      const message = String(e && e.message);
+      showToast(message === 'not xlsx'
         ? 'Excelブックとして読めませんでした（.xlsx で保存されているか確かめてください）'
+        : message === 'xlsx too large'
+        ? 'Excelブックの展開サイズ・シート数・行数が大きすぎます'
         : 'ファイルを読み込めませんでした', 'error');
     }
   }
@@ -4259,7 +4261,8 @@
         }
 
         files.push({ name: name, bytes: bytes });
-        manifest.push([String(lineNo), name, text]);
+        // QR に埋める本文は変えず、表計算ソフトで開く一覧側だけ数式を無害化する。
+        manifest.push([String(lineNo), name, spreadsheetText(text)]);
       }
 
       if (!files.length) {
@@ -4303,6 +4306,13 @@
   // 区切りの見分けは引用符の外だけを数えるので、「;」やタブを含むセルも
   // 囲んでおく。囲まないと WIFI: の「;」だらけの行がセミコロン区切りに
   // 見えてしまい、読み直したときに列がばらばらになる。
+  function spreadsheetText(v) {
+    const s = String(v == null ? '' : v);
+    // 引用符で囲むだけでは Excel 等の数式評価は止まらない。先頭の空白を
+    // 飛ばした位置に数式記号がある場合も含め、文字列として扱わせる。
+    return (/^[\u0000-\u0020]*[=+\-@]/.test(s) || /^[\t\r\n]/.test(s)) ? "'" + s : s;
+  }
+
   function csvCell(v) {
     const s = String(v == null ? '' : v);
     const q = String.fromCharCode(34);
@@ -4455,15 +4465,14 @@
   }
 
   // ---- 画像の受け口 --------------------------------------------------
-  // ドロップ・ファイル選択・URL入力の配線は、行き先が違うだけで中身は同じ。
+  // ドロップとファイル選択の配線は、行き先が違うだけで中身は同じ。
   // before は「押される前にやること」（色パネルは、いま触っている対象を移す）。
 
   // 落とされたものを受けるだけの部分。プレビュー領域のように、
   // ファイル選択ボタンを持たない場所でも使う。
   // 枠そのもの（クリック・Enter/Space・ドラッグ中の見た目・ファイルの受け取り）は
-  // ツール共通の STCommon.setupDropzone に任せる。ここで足すのは2つだけ：
-  //   - 他のブラウザ窓から画像を引くと、ファイルではなく URL が落ちてくる
-  //   - ファイル選択ダイアログの change（共通側は click までしか見ない）
+  // ツール共通の STCommon.setupDropzone に任せる。ここで足すのは、共通側が
+  // click までしか見ないファイル選択ダイアログの change だけ。
   // fileId を渡さなければ、落とすだけの領域（プレビュー）として使える。
   function wireImageDrop(zoneId, fileId, target, before) {
     const zone = asEl(zoneId);
@@ -4484,7 +4493,6 @@
     }
   }
 
-  // URLで指定する欄（ボタンと Enter の両方）
   // 画像を外す。file 欄を空にしないと、同じファイルを選び直しても change が出ない
   function wireImageClear(btnId, fileId, clear) {
     const btn = asEl(btnId);
@@ -4516,26 +4524,26 @@
 
     bindSeg(cq(scope, 'color-mode-seg'), 'mode', v => {
       touch();
-      paintOfScope(scope).type = v;
+      paintOf(scope).type = v;
     });
 
     bindColor(cq(scope, 'color-picker'), cq(scope, 'color-hex'), v => {
       touch();
-      paintOfScope(scope).color = v;
+      paintOf(scope).color = v;
     });
     bindRange(cq(scope, 'angle'), cq(scope, 'val-angle'), v => v + '°', v => {
       touch();
-      paintOfScope(scope).angle = v;
+      paintOf(scope).angle = v;
     });
     bindRange(cq(scope, 'transparency'), cq(scope, 'val-transparency'), v => Math.round(v) + '%', v => {
       touch();
-      paintOfScope(scope).transparency = Math.round(v);
+      paintOf(scope).transparency = Math.round(v);
     });
 
     const addColor = cq(scope, 'btn-add-color');
     if (addColor) addColor.addEventListener('click', () => {
       touch();
-      const p = paintOfScope(scope);
+      const p = paintOf(scope);
       if (!Array.isArray(p.colors)) p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
       if (p.colors.length >= 8) return;
       const candidates = ['#EF4444', '#F59E0B', '#10B981', '#06B6D4', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'];
@@ -4549,7 +4557,7 @@
     const shuffleColor = cq(scope, 'btn-shuffle-color');
     if (shuffleColor) shuffleColor.addEventListener('click', () => {
       touch();
-      const p = paintOfScope(scope);
+      const p = paintOf(scope);
       p.seed = (p.seed || 0) + 1;
       update();
     });
@@ -4557,7 +4565,7 @@
     const addGrad = cq(scope, 'btn-add-grad-color');
     if (addGrad) addGrad.addEventListener('click', () => {
       touch();
-      const p = paintOfScope(scope);
+      const p = paintOf(scope);
       if (p.mid) return;
       p.mid = blendHex(p.from || '#FC466B', p.to || '#3F5EFB');
       state.presetName = '';
@@ -4570,12 +4578,12 @@
       IMAGE_TARGETS.target, touch);
     bindRange(cq(scope, 'image-scale'), cq(scope, 'val-image-scale'), v => Math.round(v) + '%', v => {
       touch();
-      paintOfScope(scope).imgScale = Math.round(v) / 100;
+      paintOf(scope).imgScale = Math.round(v) / 100;
     });
     const scaleReset = cq(scope, 'btn-image-scale-reset');
     if (scaleReset) scaleReset.addEventListener('click', () => {
       touch();
-      paintOfScope(scope).imgScale = 1;
+      paintOf(scope).imgScale = 1;
       state.presetName = '';
       syncControls();
       update();
@@ -4583,9 +4591,9 @@
 
     wireImageClear(cq(scope, 'btn-image-clear'), cq(scope, 'image-file'), () => {
       touch();
-      const p = paintOfScope(scope);
+      const p = paintOf(scope);
       p.src = '';
-      p.type = CLEARED_IMAGE_TYPE[scope] || 'auto';
+      p.type = COLOR_SCOPE_META[scope].clearType;
     });
   }
 
@@ -4730,8 +4738,6 @@
 
     bindSeg('logo-font-seg', 'font', v => {
       state.style.logo.font = v;
-      state.presetName = '';
-      update();
     });
 
     // フレーム位置・種類・内容
@@ -4742,9 +4748,6 @@
       // 画面（空）と実際の絵（下の文字が上にも出る）が食い違う。
       if ((v === 'top' || v === 'both') && !fr.textTop) fr.textTop = fr.text || '';
       fr.pos = v;
-      state.presetName = '';
-      syncControls();
-      update();
     });
 
     bindSeg('frame-content-mode-seg', 'mode', v => {
@@ -4758,9 +4761,6 @@
         state.style.frame.topIconData = first;
         buildFrameIconGrid();
       }
-      state.presetName = '';
-      syncControls();
-      update();
     });
 
     const frameIconTabs = $('frame-icon-tabs');
@@ -4781,8 +4781,6 @@
 
     bindSeg('frame-font-seg', 'font', v => {
       state.style.frame.font = v;
-      state.presetName = '';
-      update();
     });
 
     // いま描かれるほうの入れ物へ入れる。上下に出しているときは、この欄は下だけ。
@@ -5023,23 +5021,9 @@
     }
   }
 
-  const TARGET_LABELS = {
-    cell: 'セル',
-    bg: '背景',
-    frame: 'マーカーの枠',
-    eye: 'マーカーの目',
-    logoicon: 'ロゴのアイコン',
-    logotext: 'ロゴの文字',
-    logobd: 'ロゴの下地',
-    frameborder: '枠線',
-    framelabel: '帯',
-    frametext: 'ラベルの文字',
-    frameicon: 'ラベルのアイコン',
-    framebd: 'ラベルの下地'
-  };
-
   function getTargetLabel() {
-    return TARGET_LABELS[scopeTarget(state.colorScope)] || '背景';
+    const meta = COLOR_SCOPE_META[state.colorScope];
+    return meta ? meta.label : '背景';
   }
 
   // 画像の受け口。入り口の検査と後始末は共通で、違うのは「どこに入れるか」

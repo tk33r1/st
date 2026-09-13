@@ -276,10 +276,49 @@
   // ------------------------------------------------------------------
   function canRead() { return typeof global.DecompressionStream === 'function'; }
 
-  async function inflateRaw(data) {
+  const XLSX_MAX_ENTRIES = 2048;
+  const XLSX_MAX_PART_BYTES = 16 * 1024 * 1024;
+  const XLSX_MAX_TOTAL_BYTES = 32 * 1024 * 1024;
+  const XLSX_MAX_SHEETS = 128;
+  const XLSX_MAX_ROWS = 1001;   // 見出し1行＋一括生成1000行
+  const XLSX_MAX_COLS = 128;
+
+  async function inflateRaw(data, maxBytes) {
     const ds = new global.DecompressionStream('deflate-raw');
-    const stream = new Blob([data]).stream().pipeThrough(ds);
-    return new Uint8Array(await new Response(stream).arrayBuffer());
+    const reader = new Blob([data]).stream().pipeThrough(ds).getReader();
+    const chunks = [];
+    let total = 0;
+    try {
+      while (true) {
+        const part = await reader.read();
+        if (part.done) break;
+        total += part.value.byteLength;
+        if (total > maxBytes) {
+          try { await reader.cancel(); } catch (e) { /* サイズ超過が本来のエラー */ }
+          throw new Error('xlsx too large');
+        }
+        chunks.push(part.value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const out = new Uint8Array(total);
+    let at = 0;
+    chunks.forEach(chunk => { out.set(chunk, at); at += chunk.byteLength; });
+    return out;
+  }
+
+  function hasRange(at, length, total) {
+    return Number.isSafeInteger(at) && Number.isSafeInteger(length) &&
+      at >= 0 && length >= 0 && at <= total - length;
+  }
+
+  function wantedPart(name) {
+    return name === 'xl/workbook.xml' ||
+      name === 'xl/_rels/workbook.xml.rels' ||
+      name === 'xl/sharedStrings.xml' ||
+      name === 'xl/styles.xml' ||
+      /^xl\/worksheets\/[^/]+\.xml$/i.test(name);
   }
 
   // 中央ディレクトリから引く。ローカルヘッダだけを頭からなめると、
@@ -295,27 +334,53 @@
     if (eocd < 0) throw new Error('not a zip');
 
     const count = view.getUint16(eocd + 10, true);
+    if (count > XLSX_MAX_ENTRIES) throw new Error('xlsx too large');
     let p = view.getUint32(eocd + 16, true);
     const out = {};
     const dec = new TextDecoder('utf-8');
+    let totalOut = 0;
+    let sheetCount = 0;
     for (let n = 0; n < count; n++) {
-      if (view.getUint32(p, true) !== 0x02014B50) break;
+      if (!hasRange(p, 46, u.length) || view.getUint32(p, true) !== 0x02014B50) {
+        throw new Error('not a zip');
+      }
+      const flags = view.getUint16(p + 8, true);
       const method = view.getUint16(p + 10, true);
       const size = view.getUint32(p + 20, true);
+      const unpacked = view.getUint32(p + 24, true);
       const nameLen = view.getUint16(p + 28, true);
       const extraLen = view.getUint16(p + 30, true);
       const cmtLen = view.getUint16(p + 32, true);
       const local = view.getUint32(p + 42, true);
+      const entryLen = 46 + nameLen + extraLen + cmtLen;
+      if (!hasRange(p, entryLen, u.length)) throw new Error('not a zip');
       const name = dec.decode(u.subarray(p + 46, p + 46 + nameLen));
 
-      // データの位置はローカルヘッダ側の長さで決まる（中央側とは別物）
-      const lNameLen = view.getUint16(local + 26, true);
-      const lExtraLen = view.getUint16(local + 28, true);
-      const start = local + 30 + lNameLen + lExtraLen;
-      const raw = u.subarray(start, start + size);
-      out[name] = method === 0 ? raw : await inflateRaw(raw);
+      if (wantedPart(name)) {
+        if (/^xl\/worksheets\//i.test(name) && ++sheetCount > XLSX_MAX_SHEETS) {
+          throw new Error('xlsx too large');
+        }
+        if ((flags & 1) || (method !== 0 && method !== 8) ||
+            unpacked === 0xFFFFFFFF || unpacked > XLSX_MAX_PART_BYTES ||
+            totalOut + unpacked > XLSX_MAX_TOTAL_BYTES) {
+          throw new Error('xlsx too large');
+        }
+        if (!hasRange(local, 30, u.length) || view.getUint32(local, true) !== 0x04034B50) {
+          throw new Error('not a zip');
+        }
+        // データの位置はローカルヘッダ側の長さで決まる（中央側とは別物）
+        const lNameLen = view.getUint16(local + 26, true);
+        const lExtraLen = view.getUint16(local + 28, true);
+        const start = local + 30 + lNameLen + lExtraLen;
+        if (!hasRange(start, size, u.length)) throw new Error('not a zip');
+        const raw = u.subarray(start, start + size);
+        const part = method === 0 ? raw : await inflateRaw(raw, unpacked);
+        if (part.byteLength !== unpacked) throw new Error('not a zip');
+        totalOut += part.byteLength;
+        out[name] = part;
+      }
 
-      p += 46 + nameLen + extraLen + cmtLen;
+      p += entryLen;
     }
     return out;
   }
@@ -355,8 +420,8 @@
   }
 
   // Excel の連番 → "YYYY-MM-DDTHH:MM"（画面の日時入力と同じ書き方）
-  function serialToText(n) {
-    const ms = Math.round((n - 25569) * 86400000);
+  function serialToText(n, date1904) {
+    const ms = Math.round((n - (date1904 ? 24107 : 25569)) * 86400000);
     const d = new Date(ms);
     if (isNaN(d.getTime())) return String(n);
     const p = v => String(v).padStart(2, '0');
@@ -394,14 +459,19 @@
     });
   }
 
-  function sheetRows(doc, strings, dates) {
+  function sheetRows(doc, strings, dates, date1904) {
     const rows = [];
     let width = 0;
-    tagsIn(doc, 'row').forEach(row => {
+    for (const row of tagsIn(doc, 'row')) {
+      const fallbackRow = rows.length + 1;
+      const rowNo = Number(row.getAttribute('r') || fallbackRow);
+      if (!Number.isInteger(rowNo) || rowNo < 1) continue;
+      if (rowNo > XLSX_MAX_ROWS) continue;
       const cells = [];
-      tagsIn(row, 'c').forEach(c => {
+      for (const c of tagsIn(row, 'c')) {
         const ref = c.getAttribute('r') || '';
         const at = ref ? colIndex(ref) : cells.length;
+        if (!Number.isInteger(at) || at < 0 || at >= XLSX_MAX_COLS) continue;
         const type = c.getAttribute('t') || 'n';
         let text = '';
         if (type === 'inlineStr') {
@@ -415,17 +485,16 @@
           // 日付は連番で入っている。書式を見てから文字に戻す
           if (type === 'n' && text !== '' && dates[Number(c.getAttribute('s') || 0)]) {
             const num = Number(text);
-            if (isFinite(num)) text = serialToText(num);
+            if (isFinite(num)) text = serialToText(num, date1904);
           }
         }
         while (cells.length < at) cells.push('');
         cells[at] = text;
-      });
-      const r = Number(row.getAttribute('r') || (rows.length + 1));
-      while (rows.length < r - 1) rows.push([]);
-      rows[r - 1] = cells;
+      }
+      while (rows.length < rowNo - 1) rows.push([]);
+      rows[rowNo - 1] = cells;
       width = Math.max(width, cells.length);
-    });
+    }
     // 末尾の空行は落とす。行番号がずれないよう、途中の空行は残す
     while (rows.length && !rows[rows.length - 1].some(v => String(v || '').trim())) rows.pop();
     rows.forEach(r => { while (r.length < width) r.push(''); });
@@ -441,12 +510,16 @@
     const rels = parseXml(zip['xl/_rels/workbook.xml.rels']);
     const strings = sharedStrings(parseXml(zip['xl/sharedStrings.xml']));
     const dates = dateStyles(parseXml(zip['xl/styles.xml']));
+    const workbookPr = wb && tagsIn(wb, 'workbookPr')[0];
+    const date1904Value = workbookPr ? String(workbookPr.getAttribute('date1904') || '') : '';
+    const date1904 = date1904Value === '1' || date1904Value.toLowerCase() === 'true';
 
     const sheets = [];
     sheetList(wb, rels).forEach(sh => {
       const doc = parseXml(zip[sh.path]);
       if (!doc) return;
-      sheets.push({ name: sh.name, hidden: sh.hidden, rows: sheetRows(doc, strings, dates) });
+      sheets.push({ name: sh.name, hidden: sh.hidden,
+        rows: sheetRows(doc, strings, dates, date1904) });
     });
     if (!sheets.length) throw new Error('no sheet');
     return { sheets: sheets };

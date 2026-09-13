@@ -258,13 +258,10 @@
                ran: 0, passed: 0, level: 'na', mismatch: false };
     }
 
-    const state = {};
-    const tries = {};   // 試した回数と、そのうち応答が返らなかった回数。
-    const stalls = {};  // 全部だんまりだったデコーダは「落ちた」ではなく「動かなかった」。
-    const hits = {};    // 通った段の数。全段通って初めて ok にする。
-    const errors = {};  // 例外を投げた回数。毎回投げるならデコーダ自体が動いていない。
+    // エンジンごとの途中経過。別々の表を同じ id で並行管理しない。
+    const stats = {};
     use.forEach(e => {
-      state[e.id] = 'fail'; tries[e.id] = 0; stalls[e.id] = 0; hits[e.id] = 0; errors[e.id] = 0;
+      stats[e.id] = { state: 'fail', tries: 0, stalls: 0, hits: 0, errors: 0 };
     });
     const pad = Math.max(0, 4 - (opts.margin == null ? 4 : opts.margin));
     let mismatch = false;
@@ -274,7 +271,7 @@
       const px = step.px;
       // 早期打ち切りはしない。どこまで広い解像度で読めるかを知りたいので、
       // 通ったあとの段も必ず試す。
-      const pending = use.filter(e => state[e.id] !== 'mismatch');
+      const pending = use.filter(e => stats[e.id].state !== 'mismatch');
       if (!pending.length) break;
 
       report('検査中… (' + px + 'px/モジュール)');
@@ -288,18 +285,19 @@
       if (stale()) return null;
 
       for (const e of pending) {
+        const stat = stats[e.id];
         let text = null;
-        tries[e.id]++;
+        stat.tries++;
         try {
           text = await withTimeout(e.decode(canvas, image), 8000);
         } catch (err) {
           text = null;
-          if (err && err.message === 'timeout') stalls[e.id]++;
-          else errors[e.id]++;
+          if (err && err.message === 'timeout') stat.stalls++;
+          else stat.errors++;
         }
         if (stale()) return null;
-        if (text === opts.expect) hits[e.id]++;
-        else if (text) { state[e.id] = 'mismatch'; mismatch = true; }
+        if (text === opts.expect) stat.hits++;
+        else if (text) { stat.state = 'mismatch'; mismatch = true; }
       }
     }
 
@@ -312,9 +310,10 @@
     // 実際に動いたデコーダだけを結果に数える。全部だんまりだったもの、毎回例外を
     // 投げたもの（＝wasm が取れていないなど）は「読めなかった」ではないので外す。
     const ran = use.filter(e => {
-      const n = tries[e.id] - stalls[e.id];
-      if (tries[e.id] > 0 && stalls[e.id] === tries[e.id]) return false;
-      if (n > 0 && errors[e.id] === n) {
+      const stat = stats[e.id];
+      const n = stat.tries - stat.stalls;
+      if (stat.tries > 0 && stat.stalls === stat.tries) return false;
+      if (n > 0 && stat.errors === n) {
         e.load.reset();       // 次に呼ばれたら読み込みからやり直す
         dead.push(e);
         return false;
@@ -324,19 +323,20 @@
 
     // 全段で読めて ok。一部だけなら partial（解像度しだいで落ちる）。
     ran.forEach(e => {
-      if (state[e.id] === 'mismatch') return;
-      const n = tries[e.id] - stalls[e.id];
-      state[e.id] = hits[e.id] === 0 ? 'fail' : hits[e.id] >= n ? 'ok' : 'partial';
+      const stat = stats[e.id];
+      if (stat.state === 'mismatch') return;
+      const n = stat.tries - stat.stalls;
+      stat.state = stat.hits === 0 ? 'fail' : stat.hits >= n ? 'ok' : 'partial';
     });
 
-    const engines = ran.map(e => info(e, state[e.id]))
+    const engines = ran.map(e => info(e, stats[e.id].state))
       .concat(dead.map(e => info(e, 'unavailable')));
     if (!ran.length) return { engines: engines, ran: 0, passed: 0, level: 'na', mismatch: false };
-    const passed = ran.filter(e => state[e.id] === 'ok').length;
+    const passed = ran.filter(e => stats[e.id].state === 'ok').length;
 
     // ng は「どの解像度でも一度も読めなかった」ときだけ。一部の解像度で
     // 読めているなら壊れてはいないので、partial にして app.js 側で言い分ける。
-    const anyHit = ran.some(e => state[e.id] === 'ok' || state[e.id] === 'partial');
+    const anyHit = ran.some(e => stats[e.id].state === 'ok' || stats[e.id].state === 'partial');
     const level = !anyHit ? 'ng' : passed === ran.length ? 'best' : 'partial';
 
     return { engines: engines, ran: ran.length, passed: passed, level: level, mismatch: mismatch };
