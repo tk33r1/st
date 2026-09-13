@@ -16,6 +16,7 @@ import sys
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 # Windows コンソール等の UTF-8 出力安全化
@@ -40,6 +41,7 @@ PERSON_ID = "https://tk.st/#author"
 ICON_EXTERNAL_SVG = '<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>'
 ICON_WIM_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
 ICON_COPY_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'
+ICON_SHARE_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg>'
 ICON_X_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
 ICON_RSS_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg>'
 ICON_TIKTOK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>'
@@ -84,6 +86,11 @@ def sns_platform_meta(platform):
 
 def esc(s):
     return html.escape(str(s or ''), quote=True)
+
+
+def clean_generated_text(value):
+    """テンプレート内の条件付き空行が残す末尾空白を除去する。"""
+    return '\n'.join(line.rstrip() for line in value.splitlines()) + '\n'
 
 
 _JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
@@ -364,11 +371,14 @@ def build_candidate_index(candidates):
             })
         return listed
 
-    return tag_list(candidates['JP'][:45], 'JP'), tag_list(candidates['GLOBAL'][:30], 'GL'), index
+    jp_list = tag_list(candidates['JP'][:45], 'JP')
+    global_list = tag_list(candidates['GLOBAL'][:30], 'GL')
+    sns_list = tag_list(candidates.get('EXTRA', []), 'SNS')
+    return jp_list, global_list, sns_list, index
 
 
 def build_prompt(config, candidates, target_date_str, yesterday_str):
-    jp_sample, global_sample, candidate_index = build_candidate_index(candidates)
+    jp_sample, global_sample, sns_candidates, candidate_index = build_candidate_index(candidates)
     recent_titles = candidates.get('recent_published_titles', [])
     recent_section = ""
     if recent_titles:
@@ -386,6 +396,7 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
     sns_output_fields = ""
     if extra_items:
         sns_sample = [{
+            'id': source.get('id', ''),
             'platform': sns_platform_meta(it.get('platform'))['label'],
             'title': it.get('title', ''),
             'text': it.get('raw_text') or it.get('description', ''),
@@ -393,7 +404,7 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
             'retweets': it.get('retweets', 0),
             'views': it.get('views', 0),
             'comments': it.get('comments', 0),
-        } for it in extra_items]
+        } for source, it in zip(sns_candidates, extra_items)]
         sns_platform_labels = []
         for it in extra_items:
             label = sns_platform_meta(it.get('platform'))['label']
@@ -402,7 +413,8 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
         sns_platform_names = " / ".join(sns_platform_labels)
         sns_section = f"""
 【SNS生活者バズ投稿一覧（{sns_platform_names}／本日の「SNSリアル反響」セクション用）】:
-以下は生活者が実際に投稿し話題になっている生の声です。記事候補とは別に、この一覧全体を俯瞰して
+以下は生活者が実際に投稿し話題になっている生の声です。重要な投稿は記事として選定して構いません。
+その場合は一覧の "id"（SNS-xx）を記事の "source_id" に必ずそのまま設定してください。また、一覧全体を俯瞰して
 共通する傾向・トレンドを分析し、後述の "sns_summary" / "sns_why_it_matters" を作成してください。
 各投稿の "platform" は投稿先（{sns_platform_names}）を示します。X は likes / retweets、
 動画系（TikTok・Instagram）は views（再生数）が反響の主指標です。媒体ごとの反応の質の違い
@@ -556,7 +568,7 @@ def resolve_source_urls(result, candidate_index):
     unresolved = []
     for art in result.get('articles', []):
         raw_sid = str(art.get('source_id') or art.get('id') or '').strip().upper()
-        m = re.search(r'(JP|GL)-?(\d+)', raw_sid)
+        m = re.search(r'(JP|GL|SNS)-?(\d+)', raw_sid)
         src = None
         if m:
             norm_sid = f"{m.group(1)}-{int(m.group(2)):02d}"
@@ -584,7 +596,7 @@ def resolve_source_urls(result, candidate_index):
             resolved += 1
         else:
             art['url'] = ''
-            # 候補を特定できなくても、source_id が "JP-xx"/"GL-xx" 形式であれば
+            # 候補を特定できなくても、source_id が "JP-xx"/"GL-xx"/"SNS-xx" 形式であれば
             # そのプレフィックスの方がAIの自由記述(region)より信頼できるので優先する。
             if m:
                 art['region'] = 'GLOBAL' if m.group(1) == 'GL' else 'JP'
@@ -679,6 +691,7 @@ def build_sns_buzz_items(extra_items, config):
             t_clean = snippet[:70] + "..." if len(snippet) > 75 else snippet
 
         buzz_list.append({
+            'source_id': it.get('_cand_id', ''),
             'title': t_clean,
             'platform': platform,
             'author': author,
@@ -688,10 +701,180 @@ def build_sns_buzz_items(extra_items, config):
             'views': it.get('views', 0),
             'comments': it.get('comments', 0),
             'posted_on': it.get('pub_date', ''),
+            'captured_at': it.get('captured_at', ''),
             'text': snippet,
             'tags': SNS_PLATFORM_META.get(platform, SNS_PLATFORM_META['x'])['tags']
         })
     return buzz_list
+
+
+def normalize_match_text(value):
+    """SNS投稿とAI見出しの照合に使う、記号を除いた緩い比較キー。"""
+    return re.sub(r'[^0-9a-zA-Zぁ-んァ-ヶ一-龠]+', '', str(value or '').lower())
+
+
+def parse_source_timestamp(value):
+    if not value:
+        return 0
+    text = str(value).strip()
+    for fmt in ('%Y-%m-%d %H:%M', '%Y-%m-%d', '%Y/%m/%d %H:%M', '%Y/%m/%d'):
+        try:
+            return int(datetime.strptime(text, fmt).replace(tzinfo=JST).timestamp())
+        except ValueError:
+            continue
+    return 0
+
+
+def repair_issue_source_links(issue):
+    """旧号を含め、SNS由来の厳選記事を保持済みの生投稿URLへ再接続する。"""
+    buzz = issue.get('sns_buzz', []) or []
+    if not buzz:
+        return False
+
+    changed = False
+    for idx, item in enumerate(buzz, 1):
+        if not item.get('source_id'):
+            item['source_id'] = f'SNS-{idx:02d}'
+            changed = True
+    for art in issue.get('articles', []) or []:
+        if art.get('url'):
+            continue
+
+        matched = None
+        sid = str(art.get('source_id') or '').strip().upper()
+        m = re.fullmatch(r'SNS-?(\d+)', sid)
+        if m:
+            idx = int(m.group(1)) - 1
+            if 0 <= idx < len(buzz):
+                matched = buzz[idx]
+
+        if matched is None:
+            art_key = normalize_match_text(art.get('title'))
+            best_score = 0
+            for item in buzz:
+                item_key = normalize_match_text(item.get('text') or item.get('title'))
+                if not item_key:
+                    continue
+                prefix = min(len(art_key), len(item_key), 28)
+                score = prefix if prefix >= 10 and (art_key[:prefix] in item_key or item_key[:prefix] in art_key) else 0
+                if score > best_score:
+                    best_score = score
+                    matched = item
+
+        if matched and matched.get('url'):
+            art['url'] = matched['url']
+            art['source_pub_ts'] = art.get('source_pub_ts') or parse_source_timestamp(matched.get('posted_on'))
+            changed = True
+    return changed
+
+
+def source_kind(art):
+    source = str(art.get('source') or '').lower()
+    url = str(art.get('url') or '').lower()
+    category = str(art.get('category') or '')
+    if category.startswith('SNS') or source in ('x', 'tiktok', 'instagram') or 'x.com/' in url or 'tiktok.com/' in url:
+        return 'SNS投稿'
+    if any(word in source or word in url for word in ('pr times', 'prtimes.', 'atpress', 'アットプレス')):
+        return 'プレスリリース'
+    if any(word in source or word in url for word in ('公式', 'blog.google', 'nitori-net.jp')):
+        return '一次情報'
+    return '報道・解説'
+
+
+def source_time_html(art):
+    raw_ts = art.get('source_pub_ts') or 0
+    try:
+        ts = int(raw_ts)
+    except (TypeError, ValueError):
+        ts = 0
+    if not ts:
+        return ''
+    dt = datetime.fromtimestamp(ts, JST)
+    return f'<time datetime="{dt.isoformat()}" title="出典の公開日時">公開 {dt:%Y.%m.%d %H:%M} JST</time>'
+
+
+def nitori_content_lane(art):
+    category = str(art.get('category') or '')
+    if category.startswith('SNS'):
+        return 'consumer'
+    if category in ('商品開発・ヒット商品', '店舗展開・海外戦略'):
+        return 'product'
+    return 'corporate'
+
+
+def nitori_product_query(art):
+    if nitori_content_lane(art) not in ('product', 'consumer'):
+        return ''
+    generic = {'ニトリ', '商品開発', 'SNS反響', 'SNS拡散', 'リアル反響', '生活者UX',
+               '価格戦略', 'PB', '口コミ', 'ヒット商品', '新商品', '生活提案', 'EC導線'}
+    for tag in art.get('tags', []) or []:
+        tag = str(tag).strip()
+        if tag and tag not in generic:
+            return tag
+    return ''
+
+
+def social_platform_totals(issue):
+    totals = defaultdict(lambda: {'count': 0, 'likes': 0, 'views': 0, 'comments': 0})
+    for item in issue.get('sns_buzz', []) or []:
+        platform = item.get('platform') or 'x'
+        totals[platform]['count'] += 1
+        for key in ('likes', 'views', 'comments'):
+            try:
+                totals[platform][key] += int(item.get(key) or 0)
+            except (TypeError, ValueError):
+                pass
+    return totals
+
+
+def render_social_metrics(issue, previous_issue=None):
+    totals = social_platform_totals(issue)
+    if not totals:
+        return ''
+    previous = social_platform_totals(previous_issue or {})
+    cards = []
+    for platform in sorted(totals, key=lambda p: sns_platform_meta(p)['order']):
+        values = totals[platform]
+        primary_key = 'views' if values['views'] else 'likes'
+        primary_label = '再生' if primary_key == 'views' else 'いいね'
+        current_value = values[primary_key]
+        previous_value = previous.get(platform, {}).get(primary_key, 0)
+        delta = ''
+        if previous_value:
+            pct = round((current_value - previous_value) / previous_value * 100)
+            sign = '+' if pct > 0 else ''
+            delta = f'<span class="buzz-delta">前号掲載分比 {sign}{pct}%</span>'
+        cards.append(f'''<div class="buzz-metric">
+          <span class="buzz-metric-label">{sns_platform_meta(platform)['label']}・掲載 {values['count']}件</span>
+          <strong>{current_value:,}</strong><span>{primary_label}合計</span>{delta}
+        </div>''')
+    captured = next((item.get('captured_at') for item in issue.get('sns_buzz', []) if item.get('captured_at')), '')
+    captured_html = f'<p class="buzz-captured">取得時点: {esc(captured)}</p>' if captured else '<p class="buzz-captured">各号発行時点のスナップショット。反応数は取得後に変動します。</p>'
+    return f'''<section class="buzz-metrics" aria-labelledby="buzzMetricsTitle">
+      <div class="section-head"><h2 class="section-title" id="buzzMetricsTitle">SNSバズ推移</h2><span class="section-rule" aria-hidden="true"></span></div>
+      <div class="buzz-metrics-grid">{"".join(cards)}</div>{captured_html}
+    </section>'''
+
+
+def build_search_index(config, articles_history):
+    records = []
+    for issue in articles_history:
+        date_key = issue.get('date', '')
+        for idx, art in enumerate(issue.get('articles', []) or [], 1):
+            records.append({
+                'date': date_key,
+                'issue_title': issue.get('title', ''),
+                'title': art.get('title', ''),
+                'summary': art.get('summary', ''),
+                'takeaway': split_takeaway(art.get('why_it_matters', ''))[0],
+                'source': art.get('source', ''),
+                'source_kind': source_kind(art),
+                'category': art.get('category', ''),
+                'region': normalize_region(art.get('region')),
+                'tags': art.get('tags', []) or [],
+                'url': f"{date_key}/#art-{idx}",
+            })
+    return {'media': config['media_id'], 'generated_at': datetime.now(JST).isoformat(), 'records': records}
 
 
 def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
@@ -806,13 +989,18 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
     }
 
 
-def render_sns_buzz_section(sns_buzz, config, issue_data=None):
+def render_sns_buzz_section(sns_buzz, config, issue_data=None, featured_urls=None):
     if not sns_buzz:
+        return ""
+
+    featured_urls = {u for u in (featured_urls or set()) if u}
+    remaining_buzz = [item for item in sns_buzz if item.get('url') not in featured_urls]
+    if not remaining_buzz:
         return ""
 
     cards_html = []
     kw_regex = config.get('keyword_regex')
-    ordered_buzz = sorted(sns_buzz, key=lambda b: sns_platform_meta(b.get('platform'))['order'])
+    ordered_buzz = sorted(remaining_buzz, key=lambda b: sns_platform_meta(b.get('platform'))['order'])
 
     for idx, item in enumerate(ordered_buzz, 1):
         platform = item.get('platform', 'x')
@@ -866,7 +1054,7 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
     raw_wim = issue.get('sns_why_it_matters', '')
 
     summary_box_html = ""
-    if raw_summary or raw_wim:
+    if (raw_summary or raw_wim) and not featured_urls:
         bold_summary = bold_scan_text(esc(raw_summary), kw_regex)
         takeaway, detail_wim = split_takeaway(raw_wim)
         bold_takeaway = bold_scan_text(esc(takeaway), kw_regex)
@@ -905,9 +1093,10 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
 
     labels = [sns_platform_meta(p)['label'] for p, _ in present]
     if labels == ['X']:
-        heading = "昨日のX（Twitter）生活者バズ・リアル反響まとめ"
+        heading = "その他のX（Twitter）生活者バズ" if featured_urls else "昨日のX（Twitter）生活者バズ・リアル反響まとめ"
     else:
-        heading = f'SNS生活者バズ・リアル反響まとめ（{" / ".join(labels)}）'
+        prefix = 'その他のSNS生活者バズ' if featured_urls else 'SNS生活者バズ・リアル反響まとめ'
+        heading = f'{prefix}（{" / ".join(labels)}）'
 
     # 収集条件が媒体ごとに違う（X は昨日の投稿、動画系は直近1週間で伸びている投稿）。
     # 「昨日の投稿」と誤読されないよう、対象期間を必ず明示する。
@@ -939,24 +1128,36 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None):
 
 
 def render_article_html(config, issue_data, date_key, formatted_date, prev_issue=None, next_issue=None):
+    repair_issue_source_links(issue_data)
     articles = issue_data.get('articles', [])
     sns_buzz = issue_data.get('sns_buzz', [])
-    sns_buzz_html = render_sns_buzz_section(sns_buzz, config, issue_data=issue_data)
+    total_count = len(articles)
+    is_low_volume = total_count <= 3
+    is_nitori = config['media_id'] == 'nitoridaily'
+    featured_urls = {
+        art.get('url') for art in articles
+        if art.get('category') == 'SNS話題・リアル反響' and art.get('url')
+    }
+    remaining_sns = [item for item in sns_buzz if item.get('url') not in featured_urls]
+    sns_buzz_html = render_sns_buzz_section(
+        sns_buzz, config, issue_data=issue_data,
+        featured_urls=featured_urls if is_nitori else None
+    )
+    social_metrics_html = render_social_metrics(issue_data, prev_issue) if is_nitori else ''
 
     # 目次からSNSセクションへ飛ぶリンク。収録プラットフォームに応じてラベルとアイコンを変える
     sns_quick_link = ''
-    if sns_buzz:
+    if remaining_sns and not is_low_volume:
         sns_platforms = sorted(
-            {b.get('platform', 'x') for b in sns_buzz},
+            {b.get('platform', 'x') for b in remaining_sns},
             key=lambda p: sns_platform_meta(p)['order']
         )
         sns_quick_icons = "".join(sns_platform_meta(p)['icon'] for p in sns_platforms)
         sns_quick_label = 'Xリアル反響' if sns_platforms == ['x'] else 'SNSリアル反響'
         sns_quick_link = (
             f'<a href="#snsBuzzSection" class="qi-sns-link">{sns_quick_icons}'
-            f' <span>{sns_quick_label} ({len(sns_buzz)}件) ↓</span></a>'
+            f' <span>{sns_quick_label} ({len(remaining_sns)}件) ↓</span></a>'
         )
-    total_count = len(articles)
     engine_label = esc(issue_data.get('generated_by', 'DeepSeek AI'))
     engine_type = esc(issue_data.get('engine_type', 'deepseek'))
     engine_class = f"engine-{engine_type}"
@@ -998,7 +1199,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
     quick_index_html = "\n".join(quick_index_items)
 
     kw_regex = config['keyword_regex']
-    articles_html = []
+    article_entries = []
     for idx, art in enumerate(articles, 1):
         is_global = art.get('region') == 'GLOBAL'
         region_code = 'GLOBAL' if is_global else 'JP'
@@ -1010,6 +1211,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         safe_url = sanitize_url(art.get('url', ''))
         has_source = safe_url != '#'
         raw_title = art.get('title', '')
+        lane = nitori_content_lane(art) if is_nitori else 'all'
 
         bold_summary = bold_scan_text(esc(art.get('summary', '')), kw_regex)
         takeaway, detail_wim = split_takeaway(art.get('why_it_matters', ''))
@@ -1023,20 +1225,43 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             title_inner = esc(raw_title)
             source_link_html = '<span class="source-link is-missing" title="出典URLを特定できませんでした">出典リンクなし</span>'
 
-        tweet_text = f"{raw_title} | {config['media_name']} {date_key}"
-        media_id = config['media_id']
-        share_url = f"https://tk.st/job/{media_id}/{date_key}/#art-{idx}"
-        tweet_intent = f"https://x.com/intent/post?text={urllib.parse.quote(tweet_text)}&url={urllib.parse.quote(share_url)}"
+        share_url = f"https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}"
+        source_time = source_time_html(art)
+        source_meta_html = f'<div class="source-details"><span class="source-kind">{source_kind(art)}</span>{source_time}</div>'
+        correction_subject = urllib.parse.quote(f"{config['brand_title']} {formatted_date}号 記事{idx}の訂正・出典について")
+        correction_link = f'<a class="correction-link" href="https://tk.st/contact/?subject={correction_subject}">訂正・出典を報告</a>'
 
-        articles_html.append(f"""
-        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}">
+        tags_html = ''.join(
+            f'<span class="topic-tag-wrap"><a class="topic-tag" href="../?q={urllib.parse.quote(str(tag))}#archiveSearch">#{esc(tag)}</a>'
+            f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button></span>'
+            for tag in (art.get('tags', []) or []) if str(tag).strip()
+        )
+        tags_block = f'<div class="card-tags" aria-label="記事タグ">{tags_html}</div>' if tags_html else ''
+
+        product_link = ''
+        if is_nitori:
+            product_query = nitori_product_query(art)
+            if product_query:
+                product_url = f"https://www.nitori-net.jp/ec/keyword/{urllib.parse.quote(product_query, safe='')}/"
+                product_link = f'<a class="product-search-link" href="{product_url}" target="_blank" rel="noopener noreferrer">ニトリ公式で「{esc(product_query)}」を探す {ICON_EXTERNAL_SVG}</a>'
+
+        if is_low_volume:
+            region_control = f'<span class="region-badge {badge_class}">{badge_text}</span>'
+            category_control = f'<span class="category-badge">{esc(category_name)}</span>'
+        else:
+            region_control = f'<button type="button" class="region-badge {badge_class}" data-filter-trigger="region" data-filter-val="{region_code}" title="この地域のニュースで絞り込み">{badge_text}</button>'
+            category_control = f'<button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>'
+
+        card_html = f"""
+        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}">
           <div class="card-index" aria-hidden="true">{idx:02d}</div>
           <div class="card-main">
             <div class="card-meta">
-              <button type="button" class="region-badge {badge_class}" data-filter-trigger="region" data-filter-val="{region_code}" title="この地域のニュースで絞り込み">{badge_text}</button>
-              <button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>
+              {region_control}
+              {category_control}
               <span class="source-tag">{esc(art.get('source', '業界速報'))}</span>
             </div>
+            {source_meta_html}
             <h3 class="card-title">{title_inner}</h3>
             {orig_html}
             <div class="card-summary"><p>{bold_summary}</p></div>
@@ -1048,21 +1273,105 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
               </div>
               {f'<p class="wim-detail">{bold_detail}</p>' if bold_detail else ''}
             </div>
+            {tags_block}
+            {product_link}
             <div class="card-footer">
               <div class="card-actions">
+                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
                 <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>社内共有コピー</span></button>
-                <a href="{tweet_intent}" target="_blank" rel="noopener noreferrer" class="x-share-btn" title="Xでポスト">{ICON_X_SVG}</a>
+                <button type="button" class="native-share-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}" title="共有先を選ぶ">{ICON_SHARE_SVG}<span>共有</span></button>
                 {source_link_html}
+                {correction_link}
               </div>
             </div>
           </div>
-        </article>""")
+        </article>"""
+        article_entries.append((lane, card_html))
+
+    lane_nav_html = ''
+    if is_nitori:
+        lane_meta = (
+            ('corporate', '企業・経営'),
+            ('product', '商品・店舗'),
+            ('consumer', '生活者SNS'),
+        )
+        lane_counts = Counter(lane for lane, _ in article_entries)
+        lane_nav_html = '<nav class="content-lane-nav" aria-label="情報種別">' + ''.join(
+            f'<a href="#lane-{key}"><span>{label}</span><strong>{lane_counts[key]}</strong></a>'
+            for key, label in lane_meta if lane_counts[key]
+        ) + '</nav>'
+        grouped = []
+        for key, label in lane_meta:
+            lane_cards = ''.join(card for lane, card in article_entries if lane == key)
+            if lane_cards:
+                grouped.append(f'<section class="content-lane" id="lane-{key}" data-lane-group="{key}"><h3 class="content-lane-title">{label}</h3>{lane_cards}</section>')
+        articles_html = ''.join(grouped)
+    else:
+        articles_html = ''.join(card for _, card in article_entries)
 
     exec_summary_list = issue_data.get('executive_summary', [])
     exec_summary_html = "".join([f"<li>{esc(item)}</li>" for item in exec_summary_list])
     # AIは通常ちょうど3点で生成するが、後日の手動修正等で件数が変わることもあるため、
     # 3点ちょうどの時だけ「3大」と謳い、それ以外は件数を偽らない汎用見出しにする。
     exec_title_text = "昨日の3大重要トピック（Executive Summary）" if len(exec_summary_list) == 3 else "昨日の重要トピック（Executive Summary）"
+
+    if is_low_volume:
+        status_text = exec_summary_list[0] if exec_summary_list else f'{formatted_date}号は全{total_count}件です。'
+        status_label = '本日の企業・経営ニュースはありません' if is_nitori and all(nitori_content_lane(a) == 'consumer' for a in articles) else '本日の概況'
+        summary_panel_html = f'''<section class="daily-status" aria-labelledby="dailyStatusTitle">
+          <span class="daily-status-label">LOW VOLUME BRIEF</span>
+          <h2 id="dailyStatusTitle">{status_label}</h2>
+          <p>{esc(status_text)}</p>
+        </section>'''
+        index_panel_html = ''
+        filter_wrapper_html = ''
+        reading_progress_html = ''
+    else:
+        summary_panel_html = f'''<section class="panel panel-exec" aria-labelledby="execTitle">
+          <h2 class="panel-title" id="execTitle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>{exec_title_text}</span>
+          </h2>
+          <ol class="exec-list">{exec_summary_html}</ol>
+        </section>'''
+        index_panel_html = f'''<section class="panel panel-index" aria-labelledby="indexTitle">
+          <div class="panel-head">
+            <h2 class="panel-title" id="indexTitle">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              <span>本日のヘッドライン目次（30秒スキャン）</span>
+            </h2>
+            <div class="panel-head-aside">{sns_quick_link}<span class="panel-note">タップで各記事へジャンプ</span></div>
+          </div>
+          <ol class="qi-list">{quick_index_html}</ol>
+        </section>'''
+
+        jp_count = sum(1 for a in articles if a.get('region') != 'GLOBAL')
+        global_count = sum(1 for a in articles if a.get('region') == 'GLOBAL')
+        region_chips = ''
+        if jp_count:
+            region_chips += f'<button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">{jp_count}</span></button>'
+        if global_count:
+            region_chips += f'<button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">{global_count}</span></button>'
+        filter_wrapper_html = f'''<div class="filter-wrapper">
+          <div class="filter-bar-header">
+            <div class="filter-label"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span>Filter</span></div>
+            <div class="filter-actions">
+              <span class="filter-status">表示中 <strong id="visibleArticlesCount">{total_count}</strong> / {total_count}</span>
+              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
+              <button type="button" class="view-mode-toggle" id="viewModeToggle" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え"><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="toggle-text">3行コンパクト</span></button>
+            </div>
+          </div>
+          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
+            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">{total_count}</span></button>
+            <span class="chip-divider" aria-hidden="true"></span>{region_chips}<span class="chip-divider" aria-hidden="true"></span>{cat_chips_html}
+          </div>
+        </div>'''
+        reading_progress_html = '<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>'
+
+    share_selected_html = f'''<div class="bulk-share-bar" id="bulkShareBar">
+      <span><strong id="selectedArticlesCount">0</strong>件選択</span>
+      <button type="button" id="shareSelectedBtn" data-share-prefix="{esc(config['share_prefix'])}" disabled>{ICON_SHARE_SVG}<span>選択記事をまとめて共有</span></button>
+    </div>'''
     p_link = f'<a href="../{prev_issue["date"]}/" class="nav-prev">&larr; {prev_issue["date"][:4]}.{prev_issue["date"][4:6]}.{prev_issue["date"][6:8]} 号</a>' if prev_issue else '<span class="nav-disabled">&larr; 前号なし</span>'
     n_link = f'<a href="../{next_issue["date"]}/" class="nav-next">{next_issue["date"][:4]}.{next_issue["date"][4:6]}.{next_issue["date"][6:8]} 号 &rarr;</a>' if next_issue else '<span class="nav-disabled nav-next">最新号</span>'
 
@@ -1104,8 +1413,8 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   </script>
   <link rel="stylesheet" href="../../../data/{config['css_file']}">
 </head>
-<body id="top">
-  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+<body id="top" data-daily-media="{config['media_id']}">
+  {reading_progress_html}
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <header class="site-header">
@@ -1150,29 +1459,8 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         </div>
       </header>
 
-      <section class="panel panel-exec" aria-labelledby="execTitle">
-        <h2 class="panel-title" id="execTitle">
-          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          <span>{exec_title_text}</span>
-        </h2>
-        <ol class="exec-list">{exec_summary_html}</ol>
-      </section>
-
-      <section class="panel panel-index" aria-labelledby="indexTitle">
-        <div class="panel-head">
-          <h2 class="panel-title" id="indexTitle">
-            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-            <span>本日のヘッドライン目次（30秒スキャン）</span>
-          </h2>
-          <div class="panel-head-aside">
-            {sns_quick_link}
-            <span class="panel-note">タップで各記事へジャンプ</span>
-          </div>
-        </div>
-        <ol class="qi-list">
-{quick_index_html}
-        </ol>
-      </section>
+      {summary_panel_html}
+      {index_panel_html}
 
       <section class="articles-section" id="articlesSection">
         <div class="section-head">
@@ -1181,33 +1469,12 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
           <span class="section-count">{total_count} stories</span>
         </div>
 
-        <div class="filter-wrapper">
-          <div class="filter-bar-header">
-            <div class="filter-label">
-              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-              <span>Filter</span>
-            </div>
-            <div class="filter-actions">
-              <span class="filter-status">表示中 <strong id="visibleArticlesCount">{total_count}</strong> / {total_count}</span>
-              <button type="button" class="filter-reset-btn" id="filterResetBtn" style="display:none;">条件リセット &times;</button>
-              <div class="view-mode-toggle" id="viewModeToggle" role="button" tabindex="0" aria-label="3行コンパクト表示切替" aria-pressed="false" data-current-mode="detail" title="3行コンパクト表示に切り替え">
-                <span class="toggle-track"><span class="toggle-thumb"></span></span>
-                <span class="toggle-text">3行コンパクト</span>
-              </div>
-            </div>
-          </div>
-          <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
-            <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">{total_count}</span></button>
-            <span class="chip-divider" aria-hidden="true"></span>
-            <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">{sum(1 for a in articles if a.get('region') != 'GLOBAL')}</span></button>
-            <button type="button" class="filter-chip" data-filter-type="region" data-filter-val="GLOBAL" aria-pressed="false">海外 <span class="chip-count">{sum(1 for a in articles if a.get('region') == 'GLOBAL')}</span></button>
-            <span class="chip-divider" aria-hidden="true"></span>
-            {cat_chips_html}
-          </div>
-        </div>
+        {lane_nav_html}
+        {filter_wrapper_html}
+        {share_selected_html}
 
         <div class="articles-list detail-view" id="articlesList">
-{"".join(articles_html)}
+{articles_html}
         </div>
 
         <div class="no-results-msg" id="noResultsMsg" style="display:none;">
@@ -1215,6 +1482,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         </div>
       </section>
 
+      {social_metrics_html}
       {sns_buzz_html}
 
       <nav class="issue-nav" aria-label="前後の号への移動">
@@ -1277,9 +1545,13 @@ def build_meta_pills_html(config, latest):
 
 
 def render_top_index_html(config, articles_history):
+    base_url = f"https://tk.st/job/{config['media_id']}/"
+    for issue in articles_history:
+        repair_issue_source_links(issue)
     latest = articles_history[0] if articles_history else None
     latest_date_formatted = f"{latest['date'][:4]}年{int(latest['date'][4:6])}月{int(latest['date'][6:8])}日" if latest else ""
-    latest_highlights = "".join([f"<li>{esc(h)}</li>" for h in latest.get('executive_summary', [])[:3]]) if latest else ""
+    highlight_limit = 1 if latest and int(latest.get('count', len(latest.get('articles', [])))) <= 3 else 3
+    latest_highlights = "".join([f"<li>{esc(h)}</li>" for h in latest.get('executive_summary', [])[:highlight_limit]]) if latest else ""
     latest_engine = esc(latest.get('generated_by', 'DeepSeek AI')) if latest else ""
     latest_engine_type = esc(latest.get('engine_type', 'deepseek')) if latest else ""
     meta_pills_html = build_meta_pills_html(config, latest)
@@ -1288,16 +1560,14 @@ def render_top_index_html(config, articles_history):
     archive_source = articles_history[1:] if latest else articles_history
 
     history_rows = []
-    for issue in archive_source[:40]:
+    for issue in archive_source:
         d = esc(issue['date'])
         d_fmt = f"{d[:4]}年{int(d[4:6])}月{int(d[6:8])}日"
         summary_preview = esc(issue.get('summary', '') or f"昨日の{config['brand_title_short']}まとめ。")
         count = int(issue.get('count', len(issue.get('articles', []))))
         title = esc(issue.get('title', f'{d_fmt}号まとめ'))
-        eng_label = esc(issue.get('generated_by', ''))
-        eng_tag = f'<span class="archive-engine">{eng_label.split()[0]}</span>' if eng_label else ''
 
-        history_rows.append(f"""        <li class="archive-item">
+        history_rows.append(f"""        <li class="archive-item" data-archive-month="{d[:6]}">
           <a href="{d}/" class="archive-row">
             <span class="archive-date">
               <span class="archive-day">{d[6:8]}</span>
@@ -1309,10 +1579,56 @@ def render_top_index_html(config, articles_history):
             </span>
             <span class="archive-meta">
               <span class="archive-count">{count} 本</span>
-              {eng_tag}
             </span>
           </a>
         </li>""")
+
+    all_categories = sorted({
+        str(art.get('category')) for issue in articles_history for art in issue.get('articles', [])
+        if art.get('category')
+    })
+    all_months = sorted({str(issue.get('date', ''))[:6] for issue in articles_history if issue.get('date')}, reverse=True)
+    category_options = ''.join(f'<option value="{esc(cat)}">{esc(cat)}</option>' for cat in all_categories)
+    month_options = ''.join(
+        f'<option value="{month}">{month[:4]}年{int(month[4:6])}月</option>' for month in all_months
+    )
+
+    recent_issues = articles_history[:7]
+    trend_counts = Counter()
+    generic_tags = {'ニトリ', '流通DX', 'リテールテック', '国内', '海外', 'グローバル'}
+    for issue in recent_issues:
+        for art in issue.get('articles', []) or []:
+            tags = [str(tag).strip() for tag in art.get('tags', []) or [] if str(tag).strip()]
+            for tag in tags:
+                if tag not in generic_tags:
+                    trend_counts[tag] += 1
+    trend_items = ''.join(
+        f'<li><a href="?q={urllib.parse.quote(tag)}#archiveSearch"><span>#{esc(tag)}</span><strong>{count}件</strong></a></li>'
+        for tag, count in trend_counts.most_common(8)
+    )
+    trend_section_html = f'''<section class="trend-section" aria-labelledby="trendTitle">
+      <div class="section-head"><h2 class="section-title" id="trendTitle">直近{len(recent_issues)}号の注目テーマ</h2><span class="section-rule" aria-hidden="true"></span></div>
+      <ul class="trend-list">{trend_items}</ul>
+      <div class="watch-panel"><h3>ウォッチ中のテーマ</h3><div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div></div>
+    </section>''' if trend_items else ''
+
+    archive_tools_html = f'''<section class="archive-search" id="archiveSearch" aria-labelledby="archiveSearchTitle">
+      <div class="section-head"><h2 class="section-title" id="archiveSearchTitle">記事を横断検索</h2><span class="section-rule" aria-hidden="true"></span></div>
+      <form class="archive-search-form" id="archiveSearchForm" role="search">
+        <label class="search-query"><span>キーワード・企業・商品名</span><input type="search" id="archiveSearchInput" autocomplete="off" placeholder="例：セルフレジ、イオン、収納"></label>
+        <label><span>カテゴリ</span><select id="archiveCategoryFilter"><option value="">すべて</option>{category_options}</select></label>
+        <label><span>地域</span><select id="archiveRegionFilter"><option value="">すべて</option><option value="JP">国内</option><option value="GLOBAL">海外</option></select></label>
+        <label><span>月</span><select id="archiveMonthFilter"><option value="">すべて</option>{month_options}</select></label>
+        <button type="submit">検索</button>
+      </form>
+      <p class="archive-search-status" id="archiveSearchStatus" aria-live="polite"></p>
+      <div class="archive-search-results" id="archiveSearchResults"></div>
+    </section>'''
+
+    subscribe_html = f'''<section class="subscribe-panel" aria-labelledby="subscribeTitle">
+      <div><span class="subscribe-kicker">SUBSCRIBE</span><h2 id="subscribeTitle">毎朝の更新を購読</h2><p>RSSリーダーやSlack・Teams・Discordに登録できます。</p></div>
+      <div class="subscribe-actions"><a href="rss.xml" target="_blank" rel="noopener noreferrer">{ICON_RSS_SVG}<span>RSSを開く</span></a><button type="button" data-rss-copy="{base_url}rss.xml">{ICON_COPY_SVG}<span>RSS URLをコピー</span></button></div>
+    </section>'''
 
     faq_jsonld_entities = []
     faq_html_items = []
@@ -1483,7 +1799,7 @@ def render_top_index_html(config, articles_history):
   </script>
   <link rel="stylesheet" href="../../data/{config['css_file']}">
 </head>
-<body id="top">
+<body id="top" data-daily-media="{config['media_id']}">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <header class="site-header">
@@ -1520,6 +1836,9 @@ def render_top_index_html(config, articles_history):
       </div>
     </section>
 {featured_html}
+    {subscribe_html}
+    {trend_section_html}
+    {archive_tools_html}
     <section class="archive-section" aria-labelledby="archiveTitle">
       <div class="section-head">
         <h2 class="section-title" id="archiveTitle">バックナンバー・アーカイブ</h2>
@@ -1529,6 +1848,7 @@ def render_top_index_html(config, articles_history):
       <ol class="archive-list">
 {"".join(history_rows)}
       </ol>
+      <p class="archive-empty" id="archiveEmpty" hidden>選択した月のバックナンバーはありません。</p>
     </section>
 
     <section class="faq-section" id="faq" aria-labelledby="faqTitle">
@@ -1648,6 +1968,7 @@ def run_daily_pipeline(config):
     job_dir = config['job_dir']
     rss_xml_path = os.path.join(job_dir, 'rss.xml')
     top_html_path = os.path.join(job_dir, 'index.html')
+    search_index_path = os.path.join(job_dir, 'search-index.json')
 
     if args.rebuild:
         print(f"=== {config['media_name']}: Rebuilding HTML and RSS from JSON ===")
@@ -1657,28 +1978,38 @@ def run_daily_pipeline(config):
         with open(data_json_path, 'r', encoding='utf-8') as f:
             articles_history = json.load(f)
         articles_history.sort(key=lambda x: x['date'], reverse=True)
+        history_changed = False
+        for issue in articles_history:
+            history_changed = repair_issue_source_links(issue) or history_changed
+        if history_changed:
+            with open(data_json_path, 'w', encoding='utf-8') as f:
+                json.dump(articles_history, f, ensure_ascii=False, indent=2)
+            print(" -> 旧号のSNS出典URLを修復してJSONへ反映")
 
         for i, issue in enumerate(articles_history):
             prev_issue = articles_history[i + 1] if i + 1 < len(articles_history) else None
             next_issue = articles_history[i - 1] if i > 0 else None
             d = issue['date']
             d_fmt = f"{d[:4]}年{int(d[4:6])}月{int(d[6:8])}日"
-            issue_html = render_article_html(config, issue, d, d_fmt, prev_issue, next_issue)
+            issue_html = clean_generated_text(render_article_html(config, issue, d, d_fmt, prev_issue, next_issue))
             issue_dir = os.path.join(job_dir, d)
             os.makedirs(issue_dir, exist_ok=True)
             with open(os.path.join(issue_dir, 'index.html'), 'w', encoding='utf-8') as f:
                 f.write(issue_html)
             print(f" -> 再生成: {d}号 HTML")
 
-        top_html = render_top_index_html(config, articles_history)
+        top_html = clean_generated_text(render_top_index_html(config, articles_history))
         with open(top_html_path, 'w', encoding='utf-8') as f:
             f.write(top_html)
         print(f" -> 再生成: トップポータル index.html")
 
-        rss_content = generate_rss_xml(config, articles_history)
+        rss_content = clean_generated_text(generate_rss_xml(config, articles_history))
         with open(rss_xml_path, 'w', encoding='utf-8') as f:
             f.write(rss_content)
         print(f" -> 再生成: rss.xml")
+        with open(search_index_path, 'w', encoding='utf-8') as f:
+            json.dump(build_search_index(config, articles_history), f, ensure_ascii=False, separators=(',', ':'))
+        print(f" -> 再生成: search-index.json")
         print("=== Rebuild 完了 ===")
         return
 
@@ -1759,19 +2090,21 @@ def run_daily_pipeline(config):
         next_issue = articles_history[i - 1] if i > 0 else None
         d = issue['date']
         d_fmt = f"{d[:4]}年{int(d[4:6])}月{int(d[6:8])}日"
-        issue_html = render_article_html(config, issue, d, d_fmt, prev_issue, next_issue)
+        issue_html = clean_generated_text(render_article_html(config, issue, d, d_fmt, prev_issue, next_issue))
         issue_dir = os.path.join(job_dir, d)
         os.makedirs(issue_dir, exist_ok=True)
         with open(os.path.join(issue_dir, 'index.html'), 'w', encoding='utf-8') as f:
             f.write(issue_html)
 
-    top_html = render_top_index_html(config, articles_history)
+    top_html = clean_generated_text(render_top_index_html(config, articles_history))
     with open(top_html_path, 'w', encoding='utf-8') as f:
         f.write(top_html)
 
-    rss_content = generate_rss_xml(config, articles_history)
+    rss_content = clean_generated_text(generate_rss_xml(config, articles_history))
     with open(rss_xml_path, 'w', encoding='utf-8') as f:
         f.write(rss_content)
+    with open(search_index_path, 'w', encoding='utf-8') as f:
+        json.dump(build_search_index(config, articles_history), f, ensure_ascii=False, separators=(',', ':'))
 
     trigger_daily_ogp_generation(config, target_date_key)
     print(f"=== 完了: {config['media_name']} ({target_date_key}号 / Engine: {ai_result.get('generated_by')}) ===")

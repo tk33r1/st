@@ -182,7 +182,7 @@
 
             var logoUrl = "https://tk.st/images/favicons/st-favicon.svg";
             // 宛先は ?to= のキーから引く。アドレスそのものをURLにもHTMLにも書かない
-            var boxes = { dj: "dj" };
+            var boxes = { dj: "dj", vlog: "vlog" };
             var key = new URLSearchParams(location.search).get("to");
             var user = boxes[key] || "hi";
             var domain = "tk.st";
