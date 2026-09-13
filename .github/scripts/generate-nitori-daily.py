@@ -61,7 +61,7 @@ YAHOO_REALTIME_SPAM_KEYWORDS = [
 # TikTok 検索 URL に展開するキーワード
 TIKTOK_SEARCH_QUERIES = ['ニトリ', 'ニトリ 購入品', 'デコホーム']
 
-# 前夜 20:00 JST の取得ワークフローが書き出すスナップショット
+# 発行前日の取得ワークフロー（nitori-tiktok-fetch.yml）が書き出すスナップショット
 TIKTOK_SNAPSHOT_PATH = os.path.join(REPO_ROOT, 'data', 'nitori-tiktok-buzz.json')
 
 # TikTok の説明文・ハッシュタグに含まれていなければ「ニトリの話題」とみなさない
@@ -191,7 +191,7 @@ def fetch_all_social_buzz(target_date=None):
     """SNSリアル反響セクション用の候補を全ソースから集める。
 
     X は Yahoo! リアルタイム検索で「昨日」の投稿を直接取得する。
-    TikTok は前夜 20:00 JST の取得ワークフローが書き出したスナップショットを読む
+    TikTok は発行前日の取得ワークフローが書き出したスナップショットを読む
     （API を直接叩かない）。TikTok 検索は日付で絞ると関連度が壊れるため「直近1週間の人気」
     を前夜時点で確定させる設計で、詳細は brightdata_social.py の docstring を参照。
 

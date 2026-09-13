@@ -26,9 +26,9 @@ API 仕様は Bright Data 管理画面の AUTHENTICATED REQUEST 実値が一次�
 「ニトリ × 昨日投稿 × 人気」は両立しないため、関連度順で取得して投稿日と再生数はこちら側で絞る。
 （`https://www.tiktok.com/tag/<語>` は error_code=dead_page で使用不可）
 
-呼び出しは前夜 20:00 JST の nitori-tiktok-fetch.yml から capture_snapshot() で行い、
-翌朝の本体は load_snapshot() でそれを読むだけ。取得時刻を記録するので、紙面に
-「昨日20時時点で人気だった動画」と事実どおり書ける。
+呼び出しは発行前日の nitori-tiktok-fetch.yml から capture_snapshot() で行い、
+本体は load_snapshot() でそれを読むだけ。取得時刻をスナップショットに記録するので、
+「いつ時点のランキングか」を後から確認できる（実行時刻はワークフローの cron 参照）。
 
 APIキーは環境変数 BRIGHTDATA_API_KEY からのみ読む（コード・成果物には一切書かない）。
 未設定・障害・タイムアウト時は必ず空リストを返し、毎朝の発行パイプラインを落とさない。
@@ -686,4 +686,4 @@ if __name__ == '__main__':
     except Exception:
         pass
     sys.exit(_probe(num, kw, relevant, '--tag' in sys.argv, spam,
-                    send_dates='--no-date' not in sys.argv, excluded=excluded))
+                    send_dates='--date-filter' in sys.argv, excluded=excluded))
