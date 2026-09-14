@@ -50,6 +50,9 @@ from datetime import datetime, timedelta, timezone
 
 JST = timezone(timedelta(hours=9))
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
+
 API_BASE = 'https://api.brightdata.com/datasets/v3'
 DEFAULT_TIKTOK_DATASET_ID = 'gd_m7n5ixlw1gc4no56kx'
 
@@ -75,6 +78,21 @@ POLL_INTERVAL_SEC = 10
 HTTP_TIMEOUT_SEC = 90
 
 USER_AGENT = 'DailyBriefSocial/1.0'
+
+# Nitori Daily の TikTok 収集設定。取得処理と同じモジュールに置き、
+# brightdata_social.py と generate-nitori-daily.py の相互 import を避ける。
+TIKTOK_SEARCH_QUERIES = ['ニトリ', 'ニトリ 購入品', 'デコホーム']
+TIKTOK_RELEVANT_KEYWORDS = ['ニトリ', 'nitori', 'デコホーム', 'ニトリネット']
+TIKTOK_SPAM_KEYWORDS = [
+    '当選', 'プレゼント', '懸賞', '商品券', 'フォロー＆リポスト', 'ガチャ',
+    'パチンコ', 'パチスロ', 'アフィリエイト', '案件募集', '副業',
+    '銘柄', '爆騰', '急騰', '利上げ', '株価', '投資', 'FX', '仮想通貨', '配当',
+    'トーナメント', 'ゴルフ',
+]
+TIKTOK_EXCLUDED_ACCOUNTS = [
+    'nitori_official', 'nitori_deco_home', 'nitori', 'nitorijp',
+]
+TIKTOK_SNAPSHOT_PATH = os.path.join(REPO_ROOT, 'data', 'nitori-tiktok-buzz.json')
 
 
 def _warn(msg):
@@ -646,16 +664,14 @@ def _arg(name, default=None):
 
 
 if __name__ == '__main__':
-    # 前夜の取得ワークフロー用。媒体側の設定を読んでスナップショットを書き出す。
+    # 前夜の取得ワークフロー用。
     if '--snapshot' in sys.argv:
-        import importlib
-        _gen = importlib.import_module('generate-nitori-daily')
         sys.exit(capture_snapshot(
-            _arg('--snapshot') or _gen.TIKTOK_SNAPSHOT_PATH,
-            _gen.TIKTOK_SEARCH_QUERIES,
-            _gen.TIKTOK_RELEVANT_KEYWORDS,
-            _gen.TIKTOK_SPAM_KEYWORDS,
-            _gen.TIKTOK_EXCLUDED_ACCOUNTS,
+            _arg('--snapshot') or TIKTOK_SNAPSHOT_PATH,
+            TIKTOK_SEARCH_QUERIES,
+            TIKTOK_RELEVANT_KEYWORDS,
+            TIKTOK_SPAM_KEYWORDS,
+            TIKTOK_EXCLUDED_ACCOUNTS,
         ))
 
     num = 5
@@ -676,14 +692,6 @@ if __name__ == '__main__':
             relevant = [w for w in sys.argv[sys.argv.index('--relevant') + 1].split(',') if w]
         except IndexError:
             pass
-    # 本番と同じ除外条件で測れるよう、媒体側の定数を借りる（取れなければ空で続行）
-    spam, excluded = (), ()
-    try:
-        import importlib
-        _g = importlib.import_module('generate-nitori-daily')
-        spam = tuple(_g.TIKTOK_SPAM_KEYWORDS)
-        excluded = tuple(_g.TIKTOK_EXCLUDED_ACCOUNTS)
-    except Exception:
-        pass
-    sys.exit(_probe(num, kw, relevant, '--tag' in sys.argv, spam,
-                    send_dates='--date-filter' in sys.argv, excluded=excluded))
+    sys.exit(_probe(num, kw, relevant, '--tag' in sys.argv, tuple(TIKTOK_SPAM_KEYWORDS),
+                    send_dates='--date-filter' in sys.argv,
+                    excluded=tuple(TIKTOK_EXCLUDED_ACCOUNTS)))

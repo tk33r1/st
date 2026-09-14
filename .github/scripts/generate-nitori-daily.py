@@ -58,33 +58,8 @@ YAHOO_REALTIME_SPAM_KEYWORDS = [
     '似顔絵', 'パトロール', 'スポンサー', 'パチンコ', 'パチスロ', '台'
 ]
 
-# TikTok 検索 URL に展開するキーワード
-TIKTOK_SEARCH_QUERIES = ['ニトリ', 'ニトリ 購入品', 'デコホーム']
-
 # 発行前日の取得ワークフロー（nitori-tiktok-fetch.yml）が書き出すスナップショット
-TIKTOK_SNAPSHOT_PATH = os.path.join(REPO_ROOT, 'data', 'nitori-tiktok-buzz.json')
-
-# TikTok の説明文・ハッシュタグに含まれていなければ「ニトリの話題」とみなさない
-TIKTOK_RELEVANT_KEYWORDS = ['ニトリ', 'nitori', 'デコホーム', 'ニトリネット']
-
-# 動画系に適用するスパム語。Yahoo! リアルタイム用の一覧から、短すぎて誤爆する語（'台' は
-# 「ラック2台」等を巻き込む）と X 固有の語を外し、動画で多いアフィリエイト系を足したもの。
-# 投資系は「三菱商事・ニトリ・ソフトバンクGも解説」のように社名を羅列するだけで
-# 生活者の声ではない動画が実際に混入したため、銘柄解説の語彙も落とす。
-TIKTOK_SPAM_KEYWORDS = [
-    '当選', 'プレゼント', '懸賞', '商品券', 'フォロー＆リポスト', 'ガチャ',
-    'パチンコ', 'パチスロ', 'アフィリエイト', '案件募集', '副業',
-    '銘柄', '爆騰', '急騰', '利上げ', '株価', '投資', 'FX', '仮想通貨', '配当',
-    # 冠スポンサー大会（ニトリレディスゴルフトーナメント等）の中継クリップは
-    # 商品体験でも生活者の声でもないので、このセクションには載せない
-    'トーナメント', 'ゴルフ',
-]
-
-# ニトリ自身の公式アカウント。このセクションの看板は「生活者の生の声」なので、
-# ブランド自身の宣伝動画は再生数が伸びていても載せない。
-TIKTOK_EXCLUDED_ACCOUNTS = [
-    'nitori_official', 'nitori_deco_home', 'nitori', 'nitorijp',
-]
+TIKTOK_SNAPSHOT_PATH = brightdata_social.TIKTOK_SNAPSHOT_PATH
 
 
 def fetch_yahoo_realtime_nitori_buzz(target_date=None):
@@ -237,6 +212,35 @@ def relevance_sort_key(it, is_gl=False, cutoff_ts=0):
     has_title = 1 if any(k in t for k in kws) else 0
     fresh_flag = 1 if is_fresh(it, cutoff_ts) else 0
     return (has_title, fresh_flag, it.get('pub_ts', 0))
+
+
+def content_lane(art):
+    """記事を Nitori Daily の3つの情報レーンへ分類する。"""
+    category = str(art.get('category') or '')
+    if category.startswith('SNS'):
+        return 'consumer'
+    if category in ('商品開発・ヒット商品', '店舗展開・海外戦略'):
+        return 'product'
+    return 'corporate'
+
+
+def product_link(art):
+    """商品・生活者記事からニトリ公式検索リンクを組み立てる。"""
+    if content_lane(art) not in ('product', 'consumer'):
+        return None
+    generic = {
+        'ニトリ', '商品開発', 'SNS反響', 'SNS拡散', 'リアル反響', '生活者UX',
+        '価格戦略', 'PB', '口コミ', 'ヒット商品', '新商品', '生活提案', 'EC導線',
+    }
+    query = next(
+        (str(tag).strip() for tag in (art.get('tags', []) or [])
+         if str(tag).strip() and str(tag).strip() not in generic),
+        '',
+    )
+    if not query:
+        return None
+    url = f"https://www.nitori-net.jp/ec/keyword/{urllib.parse.quote(query, safe='')}/"
+    return f'ニトリ公式で「{query}」を探す', url
 
 
 KEYWORD_PATTERNS = [
@@ -398,6 +402,16 @@ CONFIG = {
     'extra_candidates_fn': fetch_all_social_buzz,
     'is_relevant_fn': is_nitori_relevant,
     'relevance_sort_key_fn': relevance_sort_key,
+    'content_lane_fn': content_lane,
+    'content_lanes': (
+        ('corporate', '企業・経営'),
+        ('product', '商品・店舗'),
+        ('consumer', '生活者SNS'),
+    ),
+    'product_link_fn': product_link,
+    'dedupe_featured_sns': True,
+    'show_social_metrics': True,
+    'consumer_only_status_label': '本日の企業・経営ニュースはありません',
     'keyword_regex': build_keyword_regex(KEYWORD_PATTERNS),
 
     'editor_title': '流通・SPAアナリスト兼インテリア・小売マーケター（「Nitori Daily Brief」編集長）',

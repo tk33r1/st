@@ -203,6 +203,19 @@
       '\n💡 要点: ' + (btn.dataset.shareTakeaway || '') + '\n🔗 ' + (btn.dataset.shareUrl || '');
   }
 
+  async function shareOrCopy(payload, fallbackText, btn, successMessage) {
+    if (navigator.share) {
+      try {
+        await navigator.share(payload);
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+      }
+    }
+    const ok = await copyText(fallbackText);
+    flashButton(btn, ok ? successMessage : '共有できませんでした', ok);
+  }
+
   function initSharing() {
     document.querySelectorAll('.share-copy-btn').forEach(function(btn) {
       btn.addEventListener('click', async function() {
@@ -214,11 +227,8 @@
     document.querySelectorAll('.native-share-btn').forEach(function(btn) {
       btn.addEventListener('click', async function() {
         const payload = { title: btn.dataset.shareTitle || document.title, text: btn.dataset.shareTakeaway || '', url: btn.dataset.shareUrl || window.location.href };
-        if (navigator.share) {
-          try { await navigator.share(payload); return; } catch (e) { if (e && e.name === 'AbortError') return; }
-        }
-        const ok = await copyText(payload.title + '\n💡 要点: ' + payload.text + '\n🔗 ' + payload.url);
-        flashButton(btn, ok ? '共有文をコピー' : '共有できませんでした', ok);
+        const fallbackText = payload.title + '\n💡 要点: ' + payload.text + '\n🔗 ' + payload.url;
+        await shareOrCopy(payload, fallbackText, btn, '共有文をコピー');
       });
     });
 
@@ -245,11 +255,7 @@
         return (index + 1) + '. ' + card.dataset.shareTitle + '\n   💡 ' + card.dataset.shareTakeaway + '\n   ' + card.dataset.shareUrl;
       }).join('\n\n');
       const payload = { title: prefix.replace(/[【】]/g, '') + 'まとめ', text: text };
-      if (navigator.share) {
-        try { await navigator.share(payload); return; } catch (e) { if (e && e.name === 'AbortError') return; }
-      }
-      const ok = await copyText(prefix + '\n' + text);
-      flashButton(bulkBtn, ok ? 'まとめをコピー完了' : '共有できませんでした', ok);
+      await shareOrCopy(payload, prefix + '\n' + text, bulkBtn, 'まとめをコピー完了');
     });
     updateBulk();
   }

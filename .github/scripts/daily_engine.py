@@ -108,6 +108,66 @@ def sibling_media_link(config, path_prefix):
     return f'<a href="{path_prefix}{media_id}/" class="header-menu-media-link">{title}</a>'
 
 
+def render_site_header(config, brand_href, search_action, menu_links, sibling_prefix):
+    """ポータルと個別号で共通のサイトヘッダーを描画する。"""
+    items = []
+    for href, label, external in menu_links:
+        external_attrs = ' target="_blank" rel="noopener noreferrer"' if external else ''
+        items.append(f'<a href="{esc(href)}"{external_attrs}>{esc(label)}</a>')
+    sibling = sibling_media_link(config, sibling_prefix)
+    if sibling:
+        items.append(sibling)
+    menu_html = '\n            '.join(items)
+    return f'''<header class="site-header">
+    <div class="header-inner">
+      <a href="{esc(brand_href)}" class="brand">
+        <span class="brand-mark">{config['brand_logo_svg']}</span>
+        <span class="brand-text">
+          <span class="brand-name">{config['brand_title']}</span>
+          <span class="brand-tag">{config['brand_subtitle']}</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        <form class="header-search" action="{esc(search_action)}" method="get" role="search">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー">{ICON_MENU_SVG}</button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            {menu_html}
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>'''
+
+
+def render_page_footer(config, media_href, faq_href, rss_href):
+    """共通フッターとページ先頭へ戻るボタンを描画する。"""
+    return f'''<footer class="site-footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div class="footer-left">
+          <div id="donation-button-container"></div>
+        </div>
+        <div class="footer-center">
+          <div class="footer-links">
+            <a href="https://tk.st/">Home</a><a href="{esc(media_href)}">{config['brand_title']}</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a><a href="https://tk.st/contact/">Contact</a>
+          </div>
+          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+        </div>
+        <div class="footer-right-spacer" aria-hidden="true"></div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </a>'''
+
+
 _JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
 
 
@@ -808,27 +868,6 @@ def source_time_html(art):
     return f'<time datetime="{dt.isoformat()}" title="出典の公開日時">公開 {dt:%Y.%m.%d %H:%M} JST</time>'
 
 
-def nitori_content_lane(art):
-    category = str(art.get('category') or '')
-    if category.startswith('SNS'):
-        return 'consumer'
-    if category in ('商品開発・ヒット商品', '店舗展開・海外戦略'):
-        return 'product'
-    return 'corporate'
-
-
-def nitori_product_query(art):
-    if nitori_content_lane(art) not in ('product', 'consumer'):
-        return ''
-    generic = {'ニトリ', '商品開発', 'SNS反響', 'SNS拡散', 'リアル反響', '生活者UX',
-               '価格戦略', 'PB', '口コミ', 'ヒット商品', '新商品', '生活提案', 'EC導線'}
-    for tag in art.get('tags', []) or []:
-        tag = str(tag).strip()
-        if tag and tag not in generic:
-            return tag
-    return ''
-
-
 def social_platform_totals(issue):
     totals = defaultdict(lambda: {'count': 0, 'likes': 0, 'views': 0, 'comments': 0})
     for item in issue.get('sns_buzz', []) or []:
@@ -1143,22 +1182,23 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None, featured_urls=Non
 
 
 def render_article_html(config, issue_data, date_key, formatted_date, prev_issue=None, next_issue=None):
-    repair_issue_source_links(issue_data)
     articles = issue_data.get('articles', [])
     sns_buzz = issue_data.get('sns_buzz', [])
     total_count = len(articles)
     is_low_volume = total_count <= 3
-    is_nitori = config['media_id'] == 'nitoridaily'
-    featured_urls = {
+    lane_fn = config.get('content_lane_fn')
+    lane_meta = config.get('content_lanes', ())
+    product_link_fn = config.get('product_link_fn')
+    featured_urls = ({
         art.get('url') for art in articles
         if art.get('category') == 'SNS話題・リアル反響' and art.get('url')
-    }
+    } if config.get('dedupe_featured_sns') else set())
     remaining_sns = [item for item in sns_buzz if item.get('url') not in featured_urls]
     sns_buzz_html = render_sns_buzz_section(
         sns_buzz, config, issue_data=issue_data,
-        featured_urls=featured_urls if is_nitori else None
+        featured_urls=featured_urls or None
     )
-    social_metrics_html = render_social_metrics(issue_data, prev_issue) if is_nitori else ''
+    social_metrics_html = render_social_metrics(issue_data, prev_issue) if config.get('show_social_metrics') else ''
 
     # 目次からSNSセクションへ飛ぶリンク。収録プラットフォームに応じてラベルとアイコンを変える
     sns_quick_link = ''
@@ -1179,8 +1219,14 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
     jsonld_obj = build_dynamic_jsonld(config, issue_data, date_key, formatted_date)
     dynamic_jsonld_str = escape_jsonld_for_script(json.dumps(jsonld_obj, ensure_ascii=False, indent=2))
-    sibling_menu_html = sibling_media_link(config, '../../')
     dynamic_page_desc = esc(jsonld_obj['@graph'][0]['description'])
+    site_header_html = render_site_header(config, '../', '../#archiveSearch', (
+        ('../', 'メディアトップ', False),
+        ('../#archiveTitle', 'バックナンバー', False),
+        ('../#faq', 'FAQ', False),
+        ('../rss.xml', 'RSSを購読', True),
+    ), '../../')
+    site_footer_html = render_page_footer(config, '../', '../#faq', '../rss.xml')
 
     total_chars = sum(len(a.get('title', '')) + len(a.get('summary', '')) + len(a.get('why_it_matters', '')) for a in articles)
     total_chars += sum(len(s) for s in issue_data.get('executive_summary', []))
@@ -1227,7 +1273,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         safe_url = sanitize_url(art.get('url', ''))
         has_source = safe_url != '#'
         raw_title = art.get('title', '')
-        lane = nitori_content_lane(art) if is_nitori else 'all'
+        lane = lane_fn(art) if lane_fn else 'all'
 
         bold_summary = bold_scan_text(esc(art.get('summary', '')), kw_regex)
         takeaway, detail_wim = split_takeaway(art.get('why_it_matters', ''))
@@ -1255,11 +1301,10 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         tags_block = f'<div class="card-tags" aria-label="記事タグ">{tags_html}</div>' if tags_html else ''
 
         product_link = ''
-        if is_nitori:
-            product_query = nitori_product_query(art)
-            if product_query:
-                product_url = f"https://www.nitori-net.jp/ec/keyword/{urllib.parse.quote(product_query, safe='')}/"
-                product_link = f'<a class="product-search-link" href="{product_url}" target="_blank" rel="noopener noreferrer">ニトリ公式で「{esc(product_query)}」を探す {ICON_EXTERNAL_SVG}</a>'
+        product_link_data = product_link_fn(art) if product_link_fn else None
+        if product_link_data:
+            product_label, product_url = product_link_data
+            product_link = f'<a class="product-search-link" href="{sanitize_url(product_url)}" target="_blank" rel="noopener noreferrer">{esc(product_label)} {ICON_EXTERNAL_SVG}</a>'
 
         if is_low_volume:
             region_control = f'<span class="region-badge {badge_class}">{badge_text}</span>'
@@ -1305,12 +1350,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         article_entries.append((lane, card_html))
 
     lane_nav_html = ''
-    if is_nitori:
-        lane_meta = (
-            ('corporate', '企業・経営'),
-            ('product', '商品・店舗'),
-            ('consumer', '生活者SNS'),
-        )
+    if lane_fn and lane_meta:
         lane_counts = Counter(lane for lane, _ in article_entries)
         lane_nav_html = '<nav class="content-lane-nav" aria-label="情報種別">' + ''.join(
             f'<a href="#lane-{key}"><span>{label}</span><strong>{lane_counts[key]}</strong></a>'
@@ -1333,7 +1373,8 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
     if is_low_volume:
         status_text = exec_summary_list[0] if exec_summary_list else f'{formatted_date}号は全{total_count}件です。'
-        status_label = '本日の企業・経営ニュースはありません' if is_nitori and all(nitori_content_lane(a) == 'consumer' for a in articles) else '本日の概況'
+        only_consumer = lane_fn and articles and all(lane_fn(a) == 'consumer' for a in articles)
+        status_label = config.get('consumer_only_status_label', '本日の概況') if only_consumer else '本日の概況'
         summary_panel_html = f'''<section class="daily-status" aria-labelledby="dailyStatusTitle">
           <span class="daily-status-label">LOW VOLUME BRIEF</span>
           <h2 id="dailyStatusTitle">{status_label}</h2>
@@ -1433,34 +1474,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   {reading_progress_html}
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-  <header class="site-header">
-    <div class="header-inner">
-      <a href="../" class="brand">
-        <span class="brand-mark">{config['brand_logo_svg']}</span>
-        <span class="brand-text">
-          <span class="brand-name">{config['brand_title']}</span>
-          <span class="brand-tag">{config['brand_subtitle']}</span>
-        </span>
-      </a>
-      <div class="header-actions">
-        <form class="header-search" action="../#archiveSearch" method="get" role="search">
-          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
-          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
-          <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
-        </form>
-        <div class="header-menu">
-          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー">{ICON_MENU_SVG}</button>
-          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
-            <a href="../">メディアトップ</a>
-            <a href="../#archiveTitle">バックナンバー</a>
-            <a href="../#faq">FAQ</a>
-            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
-            {sibling_menu_html}
-          </nav>
-        </div>
-      </div>
-    </div>
-  </header>
+  {site_header_html}
 
   <main class="container">
     <nav class="breadcrumbs" aria-label="パンくずリスト">
@@ -1522,26 +1536,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
     </article>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-layout">
-        <div class="footer-left">
-          <div id="donation-button-container"></div>
-        </div>
-        <div class="footer-center">
-          <div class="footer-links">
-            <a href="https://tk.st/">Home</a><a href="../">{config['brand_title']}</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a href="https://tk.st/contact/">Contact</a>
-          </div>
-          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
-        </div>
-        <div class="footer-right-spacer" aria-hidden="true"></div>
-      </div>
-    </div>
-  </footer>
-
-  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
-  </a>
+  {site_footer_html}
 
   <script src="../../../data/buy-me-oil.js"></script>
   <script src="../../../data/daily-ui.js"></script>
@@ -1575,17 +1570,23 @@ def build_meta_pills_html(config, latest):
 
 def render_top_index_html(config, articles_history):
     base_url = f"https://tk.st/job/{config['media_id']}/"
-    for issue in articles_history:
-        repair_issue_source_links(issue)
     latest = articles_history[0] if articles_history else None
     latest_date_formatted = f"{latest['date'][:4]}年{int(latest['date'][4:6])}月{int(latest['date'][6:8])}日" if latest else ""
     highlight_limit = 1 if latest and int(latest.get('count', len(latest.get('articles', [])))) <= 3 else 3
     latest_highlights = "".join([f"<li>{esc(h)}</li>" for h in latest.get('executive_summary', [])[:highlight_limit]]) if latest else ""
     latest_engine = esc(latest.get('generated_by', 'DeepSeek AI')) if latest else ""
     latest_engine_type = esc(latest.get('engine_type', 'deepseek')) if latest else ""
-    latest_menu_html = f'<a href="{esc(latest["date"])}/">最新号を読む</a>' if latest else ""
-    sibling_menu_html = sibling_media_link(config, '../')
     meta_pills_html = build_meta_pills_html(config, latest)
+    menu_links = []
+    if latest:
+        menu_links.append((f'{latest["date"]}/', '最新号を読む', False))
+    menu_links.extend((
+        ('#archiveTitle', 'バックナンバー', False),
+        ('#faq', 'FAQ', False),
+        ('rss.xml', 'RSSを購読', True),
+    ))
+    site_header_html = render_site_header(config, './', './#archiveSearch', menu_links, '../')
+    site_footer_html = render_page_footer(config, './', '#faq', 'rss.xml')
 
     # 当日号はすぐ上の「Latest Issue」に出るため、アーカイブには含めない
     archive_source = articles_history[1:] if latest else articles_history
@@ -1688,8 +1689,6 @@ def render_top_index_html(config, articles_history):
     latest_iso_date = f"{latest_date_str[:4]}-{latest_date_str[4:6]}-{latest_date_str[6:8]}T08:00:00+09:00"
     earliest_date_str = articles_history[-1]['date'] if articles_history else latest_date_str
     earliest_iso_date = f"{earliest_date_str[:4]}-{earliest_date_str[4:6]}-{earliest_date_str[6:8]}T08:00:00+09:00"
-    base_url = f"https://tk.st/job/{config['media_id']}/"
-
     issue_items = []
     for idx, issue in enumerate(articles_history[:20], 1):
         d = issue['date']
@@ -1833,34 +1832,7 @@ def render_top_index_html(config, articles_history):
 <body id="top" data-daily-media="{config['media_id']}">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-  <header class="site-header">
-    <div class="header-inner">
-      <a href="./" class="brand">
-        <span class="brand-mark">{config['brand_logo_svg']}</span>
-        <span class="brand-text">
-          <span class="brand-name">{config['brand_title']}</span>
-          <span class="brand-tag">{config['brand_subtitle']}</span>
-        </span>
-      </a>
-      <div class="header-actions">
-        <form class="header-search" action="./#archiveSearch" method="get" role="search">
-          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
-          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
-          <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
-        </form>
-        <div class="header-menu">
-          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー">{ICON_MENU_SVG}</button>
-          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
-            {latest_menu_html}
-            <a href="#archiveTitle">バックナンバー</a>
-            <a href="#faq">FAQ</a>
-            <a href="rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
-            {sibling_menu_html}
-          </nav>
-        </div>
-      </div>
-    </div>
-  </header>
+  {site_header_html}
 
   <main class="container">
     <nav class="breadcrumbs" aria-label="パンくずリスト">
@@ -1915,26 +1887,7 @@ def render_top_index_html(config, articles_history):
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-layout">
-        <div class="footer-left">
-          <div id="donation-button-container"></div>
-        </div>
-        <div class="footer-center">
-          <div class="footer-links">
-            <a href="https://tk.st/">Home</a><a href="./">{config['brand_title']}</a><a href="#faq">FAQ</a><a href="rss.xml">RSS</a><a href="https://tk.st/contact/">Contact</a>
-          </div>
-          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
-        </div>
-        <div class="footer-right-spacer" aria-hidden="true"></div>
-      </div>
-    </div>
-  </footer>
-
-  <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
-  </a>
+  {site_footer_html}
 
   <script src="../../data/buy-me-oil.js"></script>
   <script src="../../data/daily-ui.js"></script>
@@ -2001,6 +1954,47 @@ def trigger_daily_ogp_generation(config, date_key):
         print(f"[WARN] OGP 画像生成に失敗しました（記事生成自体は継続します）: {e}", file=sys.stderr)
 
 
+def format_issue_date(date_key):
+    return f"{date_key[:4]}年{int(date_key[4:6])}月{int(date_key[6:8])}日"
+
+
+def repair_history_source_links(articles_history):
+    """履歴をレンダー前に一度だけ正規化する。"""
+    changed = False
+    for issue in articles_history:
+        changed = repair_issue_source_links(issue) or changed
+    return changed
+
+
+def write_issue_page(config, articles_history, index):
+    issue = articles_history[index]
+    prev_issue = articles_history[index + 1] if index + 1 < len(articles_history) else None
+    next_issue = articles_history[index - 1] if index > 0 else None
+    date_key = issue['date']
+    issue_html = clean_generated_text(
+        render_article_html(config, issue, date_key, format_issue_date(date_key), prev_issue, next_issue)
+    )
+    issue_dir = os.path.join(config['job_dir'], date_key)
+    os.makedirs(issue_dir, exist_ok=True)
+    with open(os.path.join(issue_dir, 'index.html'), 'w', encoding='utf-8') as f:
+        f.write(issue_html)
+    return date_key
+
+
+def write_collection_outputs(config, articles_history):
+    """ポータル、RSS、検索インデックスをまとめて書き出す。"""
+    job_dir = config['job_dir']
+    outputs = (
+        ('index.html', clean_generated_text(render_top_index_html(config, articles_history))),
+        ('rss.xml', clean_generated_text(generate_rss_xml(config, articles_history))),
+    )
+    for filename, content in outputs:
+        with open(os.path.join(job_dir, filename), 'w', encoding='utf-8') as f:
+            f.write(content)
+    with open(os.path.join(job_dir, 'search-index.json'), 'w', encoding='utf-8') as f:
+        json.dump(build_search_index(config, articles_history), f, ensure_ascii=False, separators=(',', ':'))
+
+
 def run_daily_pipeline(config):
     parser = argparse.ArgumentParser(description=f"{config['media_name']} Pipeline")
     parser.add_argument('--date', type=str, default='', help='Target issue date in YYYYMMDD format')
@@ -2010,10 +2004,6 @@ def run_daily_pipeline(config):
 
     data_json_path = config['data_json_path']
     job_dir = config['job_dir']
-    rss_xml_path = os.path.join(job_dir, 'rss.xml')
-    top_html_path = os.path.join(job_dir, 'index.html')
-    search_index_path = os.path.join(job_dir, 'search-index.json')
-
     if args.rebuild:
         print(f"=== {config['media_name']}: Rebuilding HTML and RSS from JSON ===")
         if not os.path.exists(data_json_path):
@@ -2022,37 +2012,19 @@ def run_daily_pipeline(config):
         with open(data_json_path, 'r', encoding='utf-8') as f:
             articles_history = json.load(f)
         articles_history.sort(key=lambda x: x['date'], reverse=True)
-        history_changed = False
-        for issue in articles_history:
-            history_changed = repair_issue_source_links(issue) or history_changed
+        history_changed = repair_history_source_links(articles_history)
         if history_changed:
             with open(data_json_path, 'w', encoding='utf-8') as f:
                 json.dump(articles_history, f, ensure_ascii=False, indent=2)
             print(" -> 旧号のSNS出典URLを修復してJSONへ反映")
 
-        for i, issue in enumerate(articles_history):
-            prev_issue = articles_history[i + 1] if i + 1 < len(articles_history) else None
-            next_issue = articles_history[i - 1] if i > 0 else None
-            d = issue['date']
-            d_fmt = f"{d[:4]}年{int(d[4:6])}月{int(d[6:8])}日"
-            issue_html = clean_generated_text(render_article_html(config, issue, d, d_fmt, prev_issue, next_issue))
-            issue_dir = os.path.join(job_dir, d)
-            os.makedirs(issue_dir, exist_ok=True)
-            with open(os.path.join(issue_dir, 'index.html'), 'w', encoding='utf-8') as f:
-                f.write(issue_html)
-            print(f" -> 再生成: {d}号 HTML")
+        for i in range(len(articles_history)):
+            date_key = write_issue_page(config, articles_history, i)
+            print(f" -> 再生成: {date_key}号 HTML")
 
-        top_html = clean_generated_text(render_top_index_html(config, articles_history))
-        with open(top_html_path, 'w', encoding='utf-8') as f:
-            f.write(top_html)
+        write_collection_outputs(config, articles_history)
         print(f" -> 再生成: トップポータル index.html")
-
-        rss_content = clean_generated_text(generate_rss_xml(config, articles_history))
-        with open(rss_xml_path, 'w', encoding='utf-8') as f:
-            f.write(rss_content)
         print(f" -> 再生成: rss.xml")
-        with open(search_index_path, 'w', encoding='utf-8') as f:
-            json.dump(build_search_index(config, articles_history), f, ensure_ascii=False, separators=(',', ':'))
         print(f" -> 再生成: search-index.json")
         print("=== Rebuild 完了 ===")
         return
@@ -2064,7 +2036,7 @@ def run_daily_pipeline(config):
         target_dt = datetime.now(JST)
 
     target_date_key = target_dt.strftime('%Y%m%d')
-    target_date_formatted = f"{target_date_key[:4]}年{int(target_date_key[4:6])}月{int(target_date_key[6:8])}日"
+    target_date_formatted = format_issue_date(target_date_key)
     yesterday_dt = target_dt - timedelta(days=1)
     yesterday_str = f"{yesterday_dt.month}月{yesterday_dt.day}日"
 
@@ -2114,6 +2086,7 @@ def run_daily_pipeline(config):
     }
     articles_history.append(new_issue)
     articles_history.sort(key=lambda x: x['date'], reverse=True)
+    repair_history_source_links(articles_history)
 
     print("[3/3] ファイル出力中...")
     with open(data_json_path, 'w', encoding='utf-8') as f:
@@ -2129,26 +2102,9 @@ def run_daily_pipeline(config):
         indices_to_render.add(new_index + 1)
 
     for i in sorted(indices_to_render):
-        issue = articles_history[i]
-        prev_issue = articles_history[i + 1] if i + 1 < len(articles_history) else None
-        next_issue = articles_history[i - 1] if i > 0 else None
-        d = issue['date']
-        d_fmt = f"{d[:4]}年{int(d[4:6])}月{int(d[6:8])}日"
-        issue_html = clean_generated_text(render_article_html(config, issue, d, d_fmt, prev_issue, next_issue))
-        issue_dir = os.path.join(job_dir, d)
-        os.makedirs(issue_dir, exist_ok=True)
-        with open(os.path.join(issue_dir, 'index.html'), 'w', encoding='utf-8') as f:
-            f.write(issue_html)
+        write_issue_page(config, articles_history, i)
 
-    top_html = clean_generated_text(render_top_index_html(config, articles_history))
-    with open(top_html_path, 'w', encoding='utf-8') as f:
-        f.write(top_html)
-
-    rss_content = clean_generated_text(generate_rss_xml(config, articles_history))
-    with open(rss_xml_path, 'w', encoding='utf-8') as f:
-        f.write(rss_content)
-    with open(search_index_path, 'w', encoding='utf-8') as f:
-        json.dump(build_search_index(config, articles_history), f, ensure_ascii=False, separators=(',', ':'))
+    write_collection_outputs(config, articles_history)
 
     trigger_daily_ogp_generation(config, target_date_key)
     print(f"=== 完了: {config['media_name']} ({target_date_key}号 / Engine: {ai_result.get('generated_by')}) ===")
