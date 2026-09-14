@@ -286,10 +286,23 @@
           <span class="brand-tag">毎朝8時の流通DX・リテールテック日刊速報</span>
         </span>
       </a>
-      <nav class="header-actions" aria-label="メディア内ナビゲーション">
-        <a href="#faq" class="header-link">FAQ</a>
-        <a href="rss.xml" class="icon-btn" target="_blank" rel="noopener noreferrer" aria-label="RSSを購読" title="RSSを購読"><svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></a>
-      </nav>
+      <div class="header-actions">
+        <form class="header-search" action="./#archiveSearch" method="get" role="search">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg></button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="20260914/">最新号を読む</a>
+            <a href="#archiveTitle">バックナンバー</a>
+            <a href="#faq">FAQ</a>
+            <a href="rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="../nitoridaily/" class="header-menu-media-link">Nitori Daily</a>
+          </nav>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -304,7 +317,7 @@
       <div class="masthead-inner">
         <h1 class="masthead-title">Retail Tech Daily</h1>
         <div class="masthead-rule" aria-hidden="true"></div>
-        <p class="masthead-desc">昨日の国内外のリテールテック・流通DX動向を毎朝8時に集約。<br>スマートカート・リテールメディア・RFID等の先端動向をAIのインサイト付きでお届けします。</p>
+        <p class="masthead-desc">国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。<br>スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</p>
         <div class="meta-pills">
 <a href="20260914/?filter=category:SNS%E8%A9%B1%E9%A1%8C%E3%83%BB%E7%94%9F%E6%B4%BB%E8%80%85%E3%81%AE%E3%83%AA%E3%82%A2%E3%83%AB" class="meta-pill-item">💬 SNS話題・生活者のリアル</a>
         <a href="20260914/?filter=category:%E5%BA%97%E8%88%97DX%E3%83%BB%E6%AC%A1%E4%B8%96%E4%BB%A3%E6%B1%BA%E6%B8%88" class="meta-pill-item">💳 店舗DX・次世代決済</a>
@@ -473,7 +486,7 @@
           <div class="footer-links">
             <a href="https://tk.st/">Home</a><a href="./">Retail Tech Daily</a><a href="#faq">FAQ</a><a href="rss.xml">RSS</a><a href="https://tk.st/contact/">Contact</a>
           </div>
-          <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
+          <p class="footer-copy">&copy; Shinya Takeda</p>
         </div>
         <div class="footer-right-spacer" aria-hidden="true"></div>
       </div>

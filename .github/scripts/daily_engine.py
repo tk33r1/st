@@ -44,6 +44,8 @@ ICON_COPY_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="current
 ICON_SHARE_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg>'
 ICON_X_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
 ICON_RSS_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg>'
+ICON_SEARCH_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg>'
+ICON_MENU_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>'
 ICON_TIKTOK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>'
 ICON_INSTAGRAM_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="2" width="20" height="20" rx="5.5"></rect><circle cx="12" cy="12" r="4.2"></circle><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"></circle></svg>'
 
@@ -91,6 +93,19 @@ def esc(s):
 def clean_generated_text(value):
     """テンプレート内の条件付き空行が残す末尾空白を除去する。"""
     return '\n'.join(line.rstrip() for line in value.splitlines()) + '\n'
+
+
+def sibling_media_link(config, path_prefix):
+    """ハンバーガーメニューに表示する姉妹メディアへのリンクを返す。"""
+    siblings = {
+        'retailtechdaily': ('nitoridaily', 'Nitori Daily'),
+        'nitoridaily': ('retailtechdaily', 'Retail Tech Daily'),
+    }
+    sibling = siblings.get(config.get('media_id'))
+    if not sibling:
+        return ''
+    media_id, title = sibling
+    return f'<a href="{path_prefix}{media_id}/" class="header-menu-media-link">{title}</a>'
 
 
 _JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
@@ -1164,6 +1179,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
     jsonld_obj = build_dynamic_jsonld(config, issue_data, date_key, formatted_date)
     dynamic_jsonld_str = escape_jsonld_for_script(json.dumps(jsonld_obj, ensure_ascii=False, indent=2))
+    sibling_menu_html = sibling_media_link(config, '../../')
     dynamic_page_desc = esc(jsonld_obj['@graph'][0]['description'])
 
     total_chars = sum(len(a.get('title', '')) + len(a.get('summary', '')) + len(a.get('why_it_matters', '')) for a in articles)
@@ -1426,10 +1442,23 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
           <span class="brand-tag">{config['brand_subtitle']}</span>
         </span>
       </a>
-      <nav class="header-actions" aria-label="メディア内ナビゲーション">
-        <a href="../" class="header-link">バックナンバー</a>
-        <a href="../rss.xml" class="icon-btn" target="_blank" rel="noopener noreferrer" aria-label="RSSを購読" title="RSSを購読">{ICON_RSS_SVG}</a>
-      </nav>
+      <div class="header-actions">
+        <form class="header-search" action="../#archiveSearch" method="get" role="search">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー">{ICON_MENU_SVG}</button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            <a href="../">メディアトップ</a>
+            <a href="../#archiveTitle">バックナンバー</a>
+            <a href="../#faq">FAQ</a>
+            <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            {sibling_menu_html}
+          </nav>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -1554,6 +1583,8 @@ def render_top_index_html(config, articles_history):
     latest_highlights = "".join([f"<li>{esc(h)}</li>" for h in latest.get('executive_summary', [])[:highlight_limit]]) if latest else ""
     latest_engine = esc(latest.get('generated_by', 'DeepSeek AI')) if latest else ""
     latest_engine_type = esc(latest.get('engine_type', 'deepseek')) if latest else ""
+    latest_menu_html = f'<a href="{esc(latest["date"])}/">最新号を読む</a>' if latest else ""
+    sibling_menu_html = sibling_media_link(config, '../')
     meta_pills_html = build_meta_pills_html(config, latest)
 
     # 当日号はすぐ上の「Latest Issue」に出るため、アーカイブには含めない
@@ -1811,10 +1842,23 @@ def render_top_index_html(config, articles_history):
           <span class="brand-tag">{config['brand_subtitle']}</span>
         </span>
       </a>
-      <nav class="header-actions" aria-label="メディア内ナビゲーション">
-        <a href="#faq" class="header-link">FAQ</a>
-        <a href="rss.xml" class="icon-btn" target="_blank" rel="noopener noreferrer" aria-label="RSSを購読" title="RSSを購読">{ICON_RSS_SVG}</a>
-      </nav>
+      <div class="header-actions">
+        <form class="header-search" action="./#archiveSearch" method="get" role="search">
+          <label class="header-search-label" for="headerSearchInput">記事を検索</label>
+          <input type="search" id="headerSearchInput" name="q" autocomplete="off" placeholder="記事を検索">
+          <button type="submit" class="header-search-submit" aria-label="検索">{ICON_SEARCH_SVG}</button>
+        </form>
+        <div class="header-menu">
+          <button type="button" class="icon-btn header-menu-button" id="dailyMenuButton" aria-expanded="false" aria-controls="dailyMenuPanel" aria-label="メニューを開く" title="メニュー">{ICON_MENU_SVG}</button>
+          <nav class="header-menu-panel" id="dailyMenuPanel" aria-label="メニュー" hidden>
+            {latest_menu_html}
+            <a href="#archiveTitle">バックナンバー</a>
+            <a href="#faq">FAQ</a>
+            <a href="rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            {sibling_menu_html}
+          </nav>
+        </div>
+      </div>
     </div>
   </header>
 

@@ -51,6 +51,40 @@
     }, { passive: true });
   }
 
+  function initHeaderMenu() {
+    const button = document.getElementById('dailyMenuButton');
+    const panel = document.getElementById('dailyMenuPanel');
+    if (!button || !panel) return;
+
+    function closeMenu(returnFocus) {
+      if (panel.hidden) return;
+      panel.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-label', 'メニューを開く');
+      if (returnFocus) button.focus();
+    }
+
+    button.addEventListener('click', function() {
+      const opening = panel.hidden;
+      panel.hidden = !opening;
+      button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      button.setAttribute('aria-label', opening ? 'メニューを閉じる' : 'メニューを開く');
+      if (opening) {
+        const firstLink = panel.querySelector('a');
+        if (firstLink) firstLink.focus();
+      }
+    });
+    panel.addEventListener('click', function(e) {
+      if (e.target.closest('a')) closeMenu(false);
+    });
+    document.addEventListener('click', function(e) {
+      if (!panel.hidden && !e.target.closest('.header-menu')) closeMenu(false);
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !panel.hidden) closeMenu(true);
+    });
+  }
+
   function initViewMode() {
     const btn = document.getElementById('viewModeToggle');
     const container = document.getElementById('articlesList');
@@ -386,6 +420,7 @@
   }
 
   function initDailyUI() {
+    initHeaderMenu();
     initReadingProgress();
     initViewMode();
     initIssueFilters();
