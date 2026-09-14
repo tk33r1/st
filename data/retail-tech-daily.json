@@ -1,5 +1,142 @@
 [
   {
+    "date": "20260915",
+    "title": "2026年9月15日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "国内では、イオンが有事を想定した新物流センターを開設し、店舗網を支える物流の冗長性と地域分散を強化した。 消費減税を巡る調査では、流通企業が短期間に複数回のシステム改修を迫られる懸念が浮上し、制度変更対応のITコストが焦点になった。",
+    "count": 7,
+    "generated_by": "OpenAI (gpt-5.6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "国内では、イオンが有事を想定した新物流センターを開設し、店舗網を支える物流の冗長性と地域分散を強化した。",
+      "消費減税を巡る調査では、流通企業が短期間に複数回のシステム改修を迫られる懸念が浮上し、制度変更対応のITコストが焦点になった。",
+      "海外では、InstacartとShiptがAIショッピングアシスタントを相次いで投入し、検索・比較・購買支援を担う対話型コマースの競争が本格化している。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "イオン、岩手に新物流センター開設　有事に強い分散型物流へ",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-30",
+        "summary": "イオンは岩手県金ケ崎町に新たな物流センターを開設した。有事や災害などを想定し、既存拠点への集中を避けながら、東北エリアの店舗へ商品を安定供給できる物流体制を整える。店舗網の拡大だけでなく、供給継続性を重視した拠点配置が特徴だ。",
+        "why_it_matters": "物流センター新設の評価軸が、処理能力やコストだけでなく、災害・感染症・地政学リスクへの耐性へ広がっている。小売各社には、在庫配置、輸送ルート、代替拠点を含むサプライチェーンのデジタル可視化が求められる。",
+        "tags": [
+          "物流DX",
+          "レジリエンス",
+          "サプライチェーン"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFB6OFBlT0NuMkotUWNRQktuUkNOakVBcUdxeEY4Ni1zZFZUd0xwWmZiWFhEV2pyQ3B6T1h2SktFenlFZjRXLUExOERabkNwa2JsdUJvNFhmX2w?oc=5",
+        "source_pub_ts": 1789353300
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "消費減税で流通のシステム改修が二度必要に　生団連が対応コストを懸念",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-15",
+        "summary": "生団連の調査で、消費減税が実施された場合、流通企業が税率変更に伴うシステム改修を短期間に複数回迫られる可能性が示された。POS、受発注、請求、会計など広範な業務への影響が想定され、現場負担と費用増への懸念が高まっている。",
+        "why_it_matters": "税制変更は価格政策だけでなく、店舗・本部・取引先をつなぐ基幹システム全体の変更管理を伴う。小売企業は税率や制度を設定値で切り替えられる設計、テスト環境、取引先との標準化を平時から整備すべきだ。",
+        "tags": [
+          "POS",
+          "基幹システム",
+          "制度対応"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE9aU3M5Tzh6dHFSenFabFdMREhOWnVicTc5ZGppcDFrQnlZOUgwX3dQSnZlcTk4Sk54R2NJR2xWYzhFc1BjUzkxZnZvZlk3eXVHR0pKVGJBcHk?oc=5",
+        "source_pub_ts": 1789370400
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ZETAのリテールメディア広告売上が2.7倍　構造改革と中計の進展を説明",
+        "original_title": "",
+        "source": "value-press.com",
+        "source_id": "JP-45",
+        "summary": "ZETAは、リテールメディア広告事業の第2四半期売上高が前年同期比2.7倍に成長したと発表した。構造改革の進捗や中期経営計画の方向性も示し、購買データや検索接点を活用した広告事業の拡大を進めている。",
+        "why_it_matters": "市場が広告枠の販売量から、購買に近い接点での効果測定と収益性へ移行するなか、成長率はデータ基盤と営業・運用体制の組み合わせが生む成果を示す。小売企業は媒体開発だけでなく、計測標準と組織設計を急ぐ必要がある。",
+        "tags": [
+          "リテールメディア",
+          "購買データ",
+          "広告効果測定"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBRWlRNVmZxMkh4X3daMUVwenB5b1Z5ZThvVlRvY3NoN182YWlsUW5mMGtVdmlrSjJtZWp4RnJKSTJDaE5zMFl3X0pWOGNaa0ZMNF9EcmwtTThXbHc?oc=5",
+        "source_pub_ts": 1789340400
+      },
+      {
+        "region": "JP",
+        "category": "AI需要予測",
+        "title": "購入意向が高くても売れない理由を分析　購買プロセス起点の需要予測",
+        "original_title": "",
+        "source": "MarkeZine",
+        "source_id": "JP-43",
+        "summary": "生活者調査や購買プロセスの分析を通じ、商品への購入意向が高いにもかかわらず実際の販売につながらない要因を考察する記事。認知、比較、来店、売場接触、購入といった段階ごとの離脱を捉え、需要予測の精度向上を論じている。",
+        "why_it_matters": "需要予測をアンケートや過去実績だけに依存すると、意向と行動の差を見誤る。検索、来店、棚前行動、欠品、販促接触などのデータを統合し、予測を発注だけでなく売場改善や販促配分に接続することが重要だ。",
+        "tags": [
+          "AI需要予測",
+          "購買データ",
+          "販促最適化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1ZRXI1MnR3cFZNRUVfZzNwaGNVUDE2R1l0Q3ljRWphSi11QlN0dFlCNUhuR0liYnJXSGZpbENQakpUbHNITzdncWp4Q3RhcktDMUpj?oc=5",
+        "source_pub_ts": 1789346378
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "セルフレジ普及で新たな万引き手口　広島の商業施設が防犯意識を強化",
+        "original_title": "",
+        "source": "FNNプライムオンライン",
+        "source_id": "JP-07",
+        "summary": "広島の商業施設で防犯パトロールが行われ、セルフレジの普及に伴う新たな万引き手口への警戒が呼びかけられた。省人化の利便性の一方で、未精算や商品登録を巡る不正が課題となり、従業員による見守りの重要性が改めて示された。",
+        "why_it_matters": "セルフレジは機器導入だけで成立せず、監視、例外処理、従業員配置、データ分析を含む運用設計が収益性を左右する。防犯を強めすぎれば顧客体験を損なうため、リスクベースのアラートと接客の両立が必要だ。",
+        "tags": [
+          "セルフレジ",
+          "店舗防犯",
+          "無人決済"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFA3b2lQcncySXdfaFNrRmNyVkFUNWk1TlYwS3ctdWdXV2RFc2hPRThUZzkwLXNJZVUyZW9KOTdBZ2NtNDEydXZCR3ZpanBUZw?oc=5",
+        "source_pub_ts": 1789378620
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "InstacartとShipt、AIショッピングアシスタントを投入　対話型購買支援が競争領域に",
+        "original_title": "Instacart, Shipt launch AI-powered shopping assistants",
+        "source": "Retail Dive",
+        "source_id": "GL-08",
+        "summary": "米国の食品・日用品配送プラットフォームInstacartとShiptが、AIを活用したショッピングアシスタントを相次いで開始した。商品検索や比較、用途に応じた提案などを対話形式で支援し、従来のキーワード検索中心の買い物体験を変えようとしている。",
+        "why_it_matters": "AIアシスタントは検索窓の高度化にとどまらず、商品発見、選択、カゴ投入を一体化し、購買導線の主導権を握る可能性がある。小売企業には、商品属性の構造化、在庫・価格のリアルタイム連携、推薦品質の検証が不可欠になる。",
+        "tags": [
+          "生成AI",
+          "AIショッピング",
+          "対話型コマース"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQSVo3ZXFRd1kydXFSNTE0T3paZEQ4Y2J0TFItMlQ0S3oxMW1tWTNGODA3SnVkVlRoTEx0enV3dUVWNHdNT1R0bF9RZHc2ZUE4Vm1XbEk3Zk9HUlhCRTJBVk56YTI2Z3B4SjA3SlA5NkdoOC1rWXdqR1BsNUpwbUF2QXcxWWgzZUdhYjJKNDJWNzFrb1Zza1IzZQ?oc=5",
+        "source_pub_ts": 1789394191
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "10代、友人や親よりAIの推薦を信頼　若年層の購買意思決定が変化",
+        "original_title": "Teens start to trust AI recommendations more than friends, parents",
+        "source": "Retail Dive",
+        "source_id": "GL-03",
+        "summary": "調査で、10代の消費者が商品選びにおいて、友人や親よりもAIによる推薦を信頼し始めていることが示された。若年層にとってAIは検索補助ではなく、好みの理解や候補の絞り込みを担う身近な相談相手になりつつある。",
+        "why_it_matters": "若年層の購買形成が、広告や口コミから個別最適化された対話へ移る兆しだ。小売・ブランドは推薦の透明性、データ利用への同意、誤情報対策を整えながら、AI上で選ばれる商品情報とブランド体験を設計する必要がある。",
+        "tags": [
+          "AI推薦",
+          "若年消費者",
+          "購買行動"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQejUxamdCai1PSDMtX1U3SDR1QUVtYzF0UnJ6STlJNFZnT2Y4bmlPYVJIdjJsZElVd3FHUno4OWp4M2V6a3B2RFp2aGVxVnJUSjVsQXVuX0h3VGVBSVFKV0RCOVBpZDFxWjdfSkRNTzM3dG1kQ0cxSjNZS0Z0MlFzYWcxaTJPTm9nQmNITXhseDA?oc=5",
+        "source_pub_ts": 1789401393
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260914",
     "title": "2026年9月14日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "セルフレジの是非が世界的な争点に——欧米では撤去・見直しが進む一方、日本では導入が拡大。顧客の納得感と監視・運用コストを含めた総合ROIが投資判断を左右する段階に入った。 店頭メディアの再定義が加速——アマゾンのChatGPT内広告試験、ウォルグリーンのデジタルサイネージ再挑戦、アドインテの豪州展示会出展など、リテールメディアがAIチャネルと店頭を横断し始めている。",
