@@ -1,5 +1,278 @@
 [
   {
+    "date": "20260915",
+    "title": "2026年9月15日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリリテールタイが全14拠点に請求書受領・経理業務のデジタル基盤を導入し、海外事業の管理標準化を進めた。 国内では、ニトリへの信頼度調査で首位となり、価格・品ぞろえ・利便性を含む総合的なブランド評価の強さが示された。",
+    "count": 7,
+    "generated_by": "OpenAI (gpt-5.6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "ニトリリテールタイが全14拠点に請求書受領・経理業務のデジタル基盤を導入し、海外事業の管理標準化を進めた。",
+      "国内では、ニトリへの信頼度調査で首位となり、価格・品ぞろえ・利便性を含む総合的なブランド評価の強さが示された。",
+      "SNSでは、購入前の採寸行動や一人暮らしの家具一式導入など、失敗回避と暮らしの立ち上げを支援する購買体験が反響を集めた。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリリテールタイ、全14拠点でBill One導入——海外経理を標準化",
+        "original_title": "",
+        "source": "ニュースメディアVOIX",
+        "source_id": "JP-02",
+        "summary": "ニトリリテールタイは、請求書受領サービス「Bill One」をタイ国内の全14拠点に導入した。紙やメールで届く請求書を集約し、受領から確認、経理処理までの業務を効率化。拠点ごとに分散していた処理の可視化と、海外事業における経理業務の標準化を進める取り組みだ。",
+        "why_it_matters": "SPAの競争力は商品や店舗だけでなく、拡大した拠点を低コストで統制するバックオフィスにも左右される。海外拠点の請求書データを共通基盤に載せることで、処理時間の短縮に加え、内部統制や経営判断の迅速化にもつながる。",
+        "tags": [
+          "ニトリ",
+          "海外事業",
+          "経理DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNZFM4WFNXUlpUNm40NzNseFhOdF9MWHdjQjBrUTE0SDVfelJLazQ4elJkVzNvZTEtVUJLajBXWGhyd2pVODNQR0lELWdVTDRjODd3ZG5KVFZubEZaU3h3TWY5ZkRrMk9ZSEhfVlM5NUk5bmZUOE1YRi1pM1g1dG43UTdLZTQ?oc=5",
+        "source_pub_ts": 1789371218
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリが「信頼している家具・インテリアチェーン」首位に——2026年調査",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-01",
+        "summary": "2026年に実施された家具・インテリアチェーンの信頼度調査で、ニトリが第1位となった。家具から生活雑貨まで幅広い品ぞろえを持ち、手頃な価格で住空間を一括提案する業態が、生活者から総合的に評価された結果とみられる。ブランドへの安心感が購買の入口になっている。",
+        "why_it_matters": "価格訴求だけでは模倣されやすい一方、信頼は継続購買や大型商品の購入を支える無形資産だ。商品品質、店舗網、配送、アフターサービスを一体運用するニトリの垂直統合が、日常品から家具まで任せられる印象を形成している。",
+        "tags": [
+          "ニトリ",
+          "ブランド",
+          "顧客信頼"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1pODFGWk5kTDIwNTV1QzQwd21tVjhidEZjMjBCMjhadktfQVZkdVBNOHJaRGRzaFhiVHF4NFR4LWpOd3FlMGU4UTFqZTZ3ZmZFZS1xazgxc2otQWtLaDNpcnp4N19VdDZS0gFoQVVfeXFMTWk4MUZaTmRMMjA1NXVDNDB3bW1WOGJ0RmMyMEIyOFp2S19BVmR1UE04clpEZHNoWGJUcXg0VHgtak53cWUwZThRMWplNndmZkVlLXFrODFzai1Ba0toM2lyeng3X1V0NlI?oc=5",
+        "source_pub_ts": 1789385400
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「これ一つで全部干せる」ニトリの1,990円パラソル型物干しに高評価",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-06",
+        "summary": "ニトリの1,990円パラソル型物干しが、洗濯物をまとめて干せる実用性で注目を集めている。洗濯物が偏っても倒れにくい構造や、限られたスペースで多くの衣類を干せる点が評価され、「これ一つで洗濯物すべて干せる」といった反響につながった。",
+        "why_it_matters": "物干しは使用頻度が高く、不満が明確な生活課題解決型商品だ。低価格に加え、容量、安定性、設置性を一つの商品で満たすことで、単品購入でも価値が伝わる。洗濯関連商品の横展開や、収納とのセット提案にも発展余地がある。",
+        "tags": [
+          "ニトリ",
+          "生活課題解決",
+          "洗濯用品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBPOG1BNGZwWXp5TFRoYTZSYWZEN0hYS2lYMGhxVTlfdHBDYzBLbGc2U045VWtPR2pkX3kzanN1RFZUTTJpdEVsR2hFcG0ydmg4NXVRdm1ReVVoSHV1ZjA1QldDNnl2bTFNSi0w?oc=5",
+        "source_pub_ts": 1789346400
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "巨大食パン型の低反発座椅子、14段階リクライニングで話題",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-07",
+        "summary": "ニトリの5,590円「食パン座椅子」が、食パンを思わせるユニークな外観と、低反発クッション、14段階のリクライニング機能で紹介された。テレビ視聴や読書など日常のくつろぎ用途に対応し、見た目の楽しさと実用性を両立した商品として注目されている。",
+        "why_it_matters": "家具に遊び心を加えながら、座り心地や姿勢調整という機能価値を確保している点が重要だ。SNSで視覚的に拡散しやすいデザインは来店・検索の入口となり、手頃な価格設定が衝動買いと実用品需要の双方を取り込む。",
+        "tags": [
+          "ニトリ",
+          "家具",
+          "デザイン商品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9ocXJ1cFJxUXptX09IdTgtclpFQ09zWDk5WW9WQ3lwdWRINHNrVTMwbkhDTmtzcjlOdThXNzZTbU1FWFNMZUFvN3M5Y2NNUE9JaERtV1Z3?oc=5",
+        "source_pub_ts": 1789339500
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "最後の1枚まで取り出しやすい、699円ティッシュケースの工夫",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-08",
+        "summary": "ニトリの699円ティッシュケースは、内部のスプリングで箱や中身を押し上げ、残量が少なくなってもティッシュを取り出しやすくする。日常的な「最後の数枚が出てこない」という不満を、シンプルな機構で解消する商品として紹介された。",
+        "why_it_matters": "大きな市場の定番品ほど、使用中の小さなストレスを解消する改良が差別化になる。低単価で試しやすく、買い替えや複数個需要も見込めるため、ニトリが得意とする生活者起点のPB開発と店舗での関連購買に適した商品だ。",
+        "tags": [
+          "ニトリ",
+          "PB",
+          "UX改善"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE13S0hBeWxPMHZ3X3BPNDNlLXBTVTBBWEV3bXdLeExXS0lBY1FOcVN0OTZEQm44UjUxMnFLZGZYZU5TV3kzR1EwbGE3RWJLcVQzWVVyUnJ3?oc=5",
+        "source_pub_ts": 1789337400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「棚のサイズを測ってからニトリへ」——採寸が購買行動として共感を獲得",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "Xで、棚のサイズを測ってからニトリへ向かう自身の行動を表現した投稿が1万7,355いいね、1,027リポストを獲得した。家具や収納用品を購入する前に設置場所を確認する、生活者の現実的な買い物習慣をユーモラスに示した投稿で、失敗を避けたい心理への共感が広がった。",
+        "why_it_matters": "家具・収納では「買ったが入らない」が最大の失敗要因であり、採寸は購買前UXの核心だ。商品寸法の分かりやすい提示、店舗での相談、アプリ上のサイズ比較やAR配置支援を強化すれば、購入不安を減らし成約率と満足度を高められる。",
+        "tags": [
+          "ニトリ",
+          "SNS反響",
+          "収納",
+          "購買UX"
+        ],
+        "url": "https://x.com/ymnk_luvclassic/status/2099376520435487151",
+        "source_pub_ts": 1789383600
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "一人暮らしの部屋づくりを一括支援——デスク・チェア・ディスプレイ購入動画が3.5万再生",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-07",
+        "summary": "TikTokでは、一人暮らしを始めた投稿者がニトリでデスクとチェアをそろえ、ディスプレイまで購入して部屋を整える動画が3万5,500回再生された。家具単品ではなく、生活の立ち上げを段階的に見せる内容で、同世代の視聴者から31件のコメントが寄せられている。",
+        "why_it_matters": "短尺動画では、商品のスペックよりも開封・設置・完成までの変化が購買イメージを具体化する。ニトリは新生活を起点に家具、家電、収納を横断したセット提案を行い、部屋づくりの進行に合わせて追加購入を促す余地が大きい。",
+        "tags": [
+          "ニトリ",
+          "TikTok",
+          "新生活",
+          "セット購買"
+        ],
+        "url": "https://www.tiktok.com/@yui_growth/video/7684515618288127253",
+        "source_pub_ts": 1789200000.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "棚のサイズ測ってニトリ行く時の私 x.com/raul__swan/sta…",
+        "platform": "x",
+        "author": "@ymnk_luvclassic",
+        "url": "https://x.com/ymnk_luvclassic/status/2099376520435487151",
+        "likes": 17355,
+        "retweets": 1027,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:55",
+        "captured_at": "",
+        "text": "棚のサイズ測ってニトリ行く時の私 x.com/raul__swan/sta…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ヤバいだろって思う人✋ 北海道の土地が、静岡県と同じくらいの面積分、中国に買われてしまっている。ニトリも絡んでいる pic.x.com/XO...",
+        "platform": "x",
+        "author": "@SamuraiShibaJP",
+        "url": "https://x.com/SamuraiShibaJP/status/2099468705956520070",
+        "likes": 2944,
+        "retweets": 1101,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:02",
+        "captured_at": "",
+        "text": "ヤバいだろって思う人✋ 北海道の土地が、静岡県と同じくらいの面積分、中国に買われてしまっている。ニトリも絡んでいる pic.x.com/XOia75qAew",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "我こそは寒がりですという人、気が早いけどガチでこれ買って…2025年ベストバイの1つ…ニトリの毛布にもなる布団カバー…。肌あたりの良いふわっ...",
+        "platform": "x",
+        "author": "@enonon122",
+        "url": "https://x.com/enonon122/status/2099463464788074891",
+        "likes": 941,
+        "retweets": 79,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:41",
+        "captured_at": "",
+        "text": "我こそは寒がりですという人、気が早いけどガチでこれ買って…2025年ベストバイの1つ…ニトリの毛布にもなる布団カバー…。肌あたりの良いふわっと軽い触り心地なのに布団カバーだから重みもあってなんともいえない極上の寝心地…残念ながら朝布団から出ることが苦痛になりますが睡眠の質は向上します pic.x.com/urQzLOdVmb",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "村井氏は旧岸田派・財務省出身。総裁選では小泉氏支持。普通なら警戒されそうな経歴だよね😅 だが高市総理は自ら選挙区まで応援に入り、「日本の未来...",
+        "platform": "x",
+        "author": "@Sin_nippon",
+        "url": "https://x.com/Sin_nippon/status/2099351633624977873",
+        "likes": 382,
+        "retweets": 42,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:16",
+        "captured_at": "",
+        "text": "村井氏は旧岸田派・財務省出身。総裁選では小泉氏支持。普通なら警戒されそうな経歴だよね😅 だが高市総理は自ら選挙区まで応援に入り、「日本の未来の力は村井さんそのもの」とまで言った。睡眠1〜2時間の日々を嘆いた総理に、翌日『ニトリの横向き枕』を届けた人でもあるらしい🤭",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリやりますねえスギ pic.x.com/yvXh7C2l9N",
+        "platform": "x",
+        "author": "@BNc2ka",
+        "url": "https://x.com/BNc2ka/status/2099469561582272879",
+        "likes": 144,
+        "retweets": 5,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:05",
+        "captured_at": "",
+        "text": "ニトリやりますねえスギ pic.x.com/yvXh7C2l9N",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "ニトリの想像以上にヤバい怪物級の神商品がこれw#おすすめ #ランキング #雑学 #人気商品",
+        "platform": "tiktok",
+        "author": "@わた|神商品ラボ",
+        "url": "https://www.tiktok.com/@bestbuy_jp.rank/video/7683004616937671957",
+        "likes": 608,
+        "retweets": 27,
+        "views": 92100,
+        "comments": 3,
+        "posted_on": "2026-09-08 12:41",
+        "captured_at": "2026-09-14T19:19:24.741036+09:00",
+        "text": "ニトリの想像以上にヤバい怪物級の神商品がこれw#おすすめ #ランキング #雑学 #人気商品",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      },
+      {
+        "source_id": "SNS-07",
+        "title": "一人暮らし生活を始めて ついに念願のデスクが届きました‼️🎁✨️ ニトリさんでデスクとチェアを揃えて、ディスプレイまで購入しました✊🏻‪💖 ...",
+        "platform": "tiktok",
+        "author": "@ゆい  ┇多忙大学生の日常",
+        "url": "https://www.tiktok.com/@yui_growth/video/7684515618288127253",
+        "likes": 766,
+        "retweets": 1,
+        "views": 35500,
+        "comments": 31,
+        "posted_on": "2026-09-12 17:00",
+        "captured_at": "2026-09-14T19:19:24.741036+09:00",
+        "text": "一人暮らし生活を始めて ついに念願のデスクが届きました‼️🎁✨️ ニトリさんでデスクとチェアを揃えて、ディスプレイまで購入しました✊🏻‪💖 どんどん家ができあがっていくのがすごく楽しいです💖✨️ これから一人暮らしする方の参考になると嬉しいです🏠✨️ #一人暮らし#大学生#女子大生#一人暮らし女子 #デスク周り",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "SNSでは、Xで採寸してから店舗へ向かう行動や、寝具・生活用品への実感ベースの評価が共感を集めた。一方、TikTokでは商品単体より、一人暮らしの部屋づくりや使用イメージを見せる動画が再生を伸ばしている。媒体ごとに、Xは共感・拡散、TikTokは視覚的な体験理解が反響の軸となった。",
+    "sns_why_it_matters": "生活者は価格だけでなく、購入失敗を避ける情報と、導入後の暮らしを想像できる体験を求めている。Xでは採寸や使用感の言語化が信頼を生み、TikTokでは設置・完成までの可視化が購買を後押しするため、商品情報と実演コンテンツを連動させることが重要だ。"
+  },
+  {
     "date": "20260914",
     "title": "2026年9月14日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "本日はニトリグループに関する国内・海外の新規ニュース候補がなく、一次情報は生活者発信（X・TikTok）に限定された。経営・商品・出店の新発表がないため、選定はSNSリアル反響2件に集約し、生活者インサイトから示唆を抽出した。 Xでは「Francfrancで買わなくてもよくない？」など他ブランド比較による“デザイン価格比”の再評価が約9,160いいねに到達。SPAの垂直統合が生む価格優位が、専門店の代替という生活者言語で可視化されている。",
