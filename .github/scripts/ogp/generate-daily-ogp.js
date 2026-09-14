@@ -95,9 +95,6 @@ function buildDailyHtml(brandCfg, issue) {
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -105,7 +102,7 @@ function buildDailyHtml(brandCfg, issue) {
     height: 630px;
     background: #0f172a;
     color: #f8fafc;
-    font-family: 'Zen Kaku Gothic New', -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -138,7 +135,7 @@ function buildDailyHtml(brandCfg, issue) {
     line-height: 1.15;
   }
   .brand-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
     font-size: 20px;
     font-weight: 800;
     color: #ffffff;
@@ -156,7 +153,7 @@ function buildDailyHtml(brandCfg, issue) {
     gap: 10px;
   }
   .pill-date {
-    font-family: 'Outfit', 'Zen Kaku Gothic New', sans-serif;
+    font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", Arial, sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: ${brandCfg.primaryColor};
@@ -190,7 +187,7 @@ function buildDailyHtml(brandCfg, issue) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: 'Outfit', sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: ${brandCfg.primaryColor};
@@ -276,7 +273,7 @@ function buildDailyHtml(brandCfg, issue) {
     border: 1px solid rgba(51, 65, 85, 0.6);
   }
   .site-domain {
-    font-family: 'Outfit', sans-serif;
+    font-family: "Segoe UI", Arial, sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: #94a3b8;

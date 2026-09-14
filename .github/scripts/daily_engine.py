@@ -13,6 +13,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -93,6 +94,37 @@ def esc(s):
 def clean_generated_text(value):
     """テンプレート内の条件付き空行が残す末尾空白を除去する。"""
     return '\n'.join(line.rstrip() for line in value.splitlines()) + '\n'
+
+
+def load_json_list(path):
+    """履歴 JSON を読み込む。破損時は空データとして続行せず、既存履歴を保護する。"""
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            value = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        raise RuntimeError(f"履歴 JSON を読み込めないため処理を中止します: {path}") from e
+    if not isinstance(value, list):
+        raise RuntimeError(f"履歴 JSON のルート要素が配列ではありません: {path}")
+    return value
+
+
+def write_json_atomic(path, value, **dump_options):
+    """同一ディレクトリの一時ファイルへ書き出してから置換し、途中終了による破損を防ぐ。"""
+    directory = os.path.dirname(path) or '.'
+    os.makedirs(directory, exist_ok=True)
+    fd, temp_path = tempfile.mkstemp(prefix=f'.{os.path.basename(path)}.', suffix='.tmp', dir=directory)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as f:
+            json.dump(value, f, ensure_ascii=False, **dump_options)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+    except Exception:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
+        raise
 
 
 def sibling_media_link(config, path_prefix):
@@ -181,9 +213,15 @@ def sanitize_url(url):
     if not url:
         return '#'
     url = str(url).strip()
-    if re.match(r'^(https?:)?//', url, re.IGNORECASE):
-        return url
-    return '#'
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7f for ch in url):
+        return '#'
+    try:
+        parsed = urllib.parse.urlsplit(url)
+    except ValueError:
+        return '#'
+    if parsed.scheme.lower() not in ('http', 'https') or not parsed.netloc:
+        return '#'
+    return url
 
 
 def clean_html_text(text):
@@ -291,39 +329,34 @@ def fetch_google_news_rss(query, lang='ja', gl='JP', ceid='JP:ja', max_items=40)
 def load_recent_published_history(json_path, exclude_date_key=None, days_limit=7):
     if not os.path.exists(json_path):
         return {'recent_urls': set(), 'recent_title_keys': set(), 'recent_titles': []}
-    try:
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        recent_urls = set()
-        recent_title_keys = set()
-        recent_titles = []
-        issues = sorted(data, key=lambda x: x.get('date', ''), reverse=True)
-        count = 0
-        for issue in issues:
-            d = issue.get('date')
-            if exclude_date_key and d == exclude_date_key:
-                continue
-            if count >= days_limit:
-                break
-            count += 1
-            for art in issue.get('articles', []):
-                u = art.get('url', '')
-                if u:
-                    recent_urls.add(u)
-                t = art.get('title', '')
-                if t:
-                    recent_titles.append(t)
-                    tk = re.sub(r'\s+', '', t[:20].lower())
-                    if tk:
-                        recent_title_keys.add(tk)
-        return {
-            'recent_urls': recent_urls,
-            'recent_title_keys': recent_title_keys,
-            'recent_titles': recent_titles
-        }
-    except Exception as e:
-        print(f"[WARN] 過去記事履歴の読み込み失敗: {e}", file=sys.stderr)
-        return {'recent_urls': set(), 'recent_title_keys': set(), 'recent_titles': []}
+    data = load_json_list(json_path)
+    recent_urls = set()
+    recent_title_keys = set()
+    recent_titles = []
+    issues = sorted(data, key=lambda x: x.get('date', ''), reverse=True)
+    count = 0
+    for issue in issues:
+        d = issue.get('date')
+        if exclude_date_key and d == exclude_date_key:
+            continue
+        if count >= days_limit:
+            break
+        count += 1
+        for art in issue.get('articles', []):
+            u = art.get('url', '')
+            if u:
+                recent_urls.add(u)
+            t = art.get('title', '')
+            if t:
+                recent_titles.append(t)
+                tk = re.sub(r'\s+', '', t[:20].lower())
+                if tk:
+                    recent_title_keys.add(tk)
+    return {
+        'recent_urls': recent_urls,
+        'recent_title_keys': recent_title_keys,
+        'recent_titles': recent_titles
+    }
 
 
 def filter_and_dedup_news(items, blacklist_patterns, published_history=None, is_relevant_fn=None, is_global=False):
@@ -970,8 +1003,9 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
             "author": {"@id": PERSON_ID},
             "publisher": {"@id": PERSON_ID}
         }
-        if art.get('url'):
-            based_on = {"@type": "NewsArticle", "url": art['url']}
+        source_url = sanitize_url(art.get('url'))
+        if source_url != '#':
+            based_on = {"@type": "NewsArticle", "url": source_url}
             if art.get('source'):
                 based_on["publisher"] = {"@type": "Organization", "name": art['source']}
             src_ts = art.get('source_pub_ts') or 0
@@ -1061,7 +1095,7 @@ def render_sns_buzz_section(sns_buzz, config, issue_data=None, featured_urls=Non
         meta = sns_platform_meta(platform)
         likes_str = f"{item.get('likes', 0):,}"
         author = esc(item.get('author') or meta['author_fallback'])
-        raw_url = sanitize_url(item.get('url', ''))
+        raw_url = esc(sanitize_url(item.get('url', '')))
         raw_text = item.get('text', '')
         clean_text = re.sub(r'https?://\S+', '', raw_text).strip()
         bold_text = bold_scan_text(esc(clean_text), kw_regex)
@@ -1272,6 +1306,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         orig_html = f'<p class="original-title">{esc(orig_title)}</p>' if orig_title else ''
         safe_url = sanitize_url(art.get('url', ''))
         has_source = safe_url != '#'
+        safe_href = esc(safe_url)
         raw_title = art.get('title', '')
         lane = lane_fn(art) if lane_fn else 'all'
 
@@ -1281,8 +1316,8 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         bold_detail = bold_scan_text(esc(detail_wim), kw_regex)
 
         if has_source:
-            title_inner = f'<a href="{safe_url}" target="_blank" rel="noopener noreferrer">{esc(raw_title)}{ICON_EXTERNAL_SVG}</a>'
-            source_link_html = f'<a class="source-link" href="{safe_url}" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>'
+            title_inner = f'<a href="{safe_href}" target="_blank" rel="noopener noreferrer">{esc(raw_title)}{ICON_EXTERNAL_SVG}</a>'
+            source_link_html = f'<a class="source-link" href="{safe_href}" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>'
         else:
             title_inner = esc(raw_title)
             source_link_html = '<span class="source-link is-missing" title="出典URLを特定できませんでした">出典リンクなし</span>'
@@ -1304,7 +1339,8 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         product_link_data = product_link_fn(art) if product_link_fn else None
         if product_link_data:
             product_label, product_url = product_link_data
-            product_link = f'<a class="product-search-link" href="{sanitize_url(product_url)}" target="_blank" rel="noopener noreferrer">{esc(product_label)} {ICON_EXTERNAL_SVG}</a>'
+            product_href = esc(sanitize_url(product_url))
+            product_link = f'<a class="product-search-link" href="{product_href}" target="_blank" rel="noopener noreferrer">{esc(product_label)} {ICON_EXTERNAL_SVG}</a>'
 
         if is_low_volume:
             region_control = f'<span class="region-badge {badge_class}">{badge_text}</span>'
@@ -1462,9 +1498,6 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
   <link rel="icon" href="../../../images/favicons/{config['favicon_file']}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../../../images/favicons/{config['favicon_file']}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700&family=Outfit:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
   <script type="application/ld+json">
 {dynamic_jsonld_str}
   </script>
@@ -1821,9 +1854,6 @@ def render_top_index_html(config, articles_history):
 
   <link rel="icon" href="../../images/favicons/{config['favicon_file']}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../../images/favicons/{config['favicon_file']}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600;700&family=Outfit:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
   <script type="application/ld+json">
 {portal_jsonld_str}
   </script>
@@ -1943,15 +1973,14 @@ def generate_rss_xml(config, articles_history):
 def trigger_daily_ogp_generation(config, date_key):
     ogp_script = os.path.join(REPO_ROOT, '.github', 'scripts', 'ogp', 'generate-daily-ogp.js')
     if not os.path.exists(ogp_script):
-        print(f"[WARN] OGP 生成スクリプトが見つかりません: {ogp_script}", file=sys.stderr)
-        return
+        raise FileNotFoundError(f"OGP 生成スクリプトが見つかりません: {ogp_script}")
     print(f" -> 日刊 OGP 画像生成中 (Lossless WebP): {date_key}...")
     try:
         import subprocess
         res = subprocess.run(['node', ogp_script, config['ogp_target'], str(date_key)], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
         print(f" -> {res.stdout.strip()}")
     except Exception as e:
-        print(f"[WARN] OGP 画像生成に失敗しました（記事生成自体は継続します）: {e}", file=sys.stderr)
+        raise RuntimeError(f"OGP 画像生成に失敗しました: {e}") from e
 
 
 def format_issue_date(date_key):
@@ -1991,8 +2020,11 @@ def write_collection_outputs(config, articles_history):
     for filename, content in outputs:
         with open(os.path.join(job_dir, filename), 'w', encoding='utf-8') as f:
             f.write(content)
-    with open(os.path.join(job_dir, 'search-index.json'), 'w', encoding='utf-8') as f:
-        json.dump(build_search_index(config, articles_history), f, ensure_ascii=False, separators=(',', ':'))
+    write_json_atomic(
+        os.path.join(job_dir, 'search-index.json'),
+        build_search_index(config, articles_history),
+        separators=(',', ':'),
+    )
 
 
 def run_daily_pipeline(config):
@@ -2009,13 +2041,11 @@ def run_daily_pipeline(config):
         if not os.path.exists(data_json_path):
             print(f"[ERROR] {data_json_path} が存在しません。", file=sys.stderr)
             sys.exit(1)
-        with open(data_json_path, 'r', encoding='utf-8') as f:
-            articles_history = json.load(f)
+        articles_history = load_json_list(data_json_path)
         articles_history.sort(key=lambda x: x['date'], reverse=True)
         history_changed = repair_history_source_links(articles_history)
         if history_changed:
-            with open(data_json_path, 'w', encoding='utf-8') as f:
-                json.dump(articles_history, f, ensure_ascii=False, indent=2)
+            write_json_atomic(data_json_path, articles_history, indent=2)
             print(" -> 旧号のSNS出典URLを修復してJSONへ反映")
 
         for i in range(len(articles_history)):
@@ -2060,11 +2090,7 @@ def run_daily_pipeline(config):
 
     articles_history = []
     if os.path.exists(data_json_path):
-        try:
-            with open(data_json_path, 'r', encoding='utf-8') as f:
-                articles_history = json.load(f)
-        except Exception:
-            pass
+        articles_history = load_json_list(data_json_path)
 
     articles_history = [a for a in articles_history if a.get('date') != target_date_key]
 
@@ -2089,8 +2115,7 @@ def run_daily_pipeline(config):
     repair_history_source_links(articles_history)
 
     print("[3/3] ファイル出力中...")
-    with open(data_json_path, 'w', encoding='utf-8') as f:
-        json.dump(articles_history, f, ensure_ascii=False, indent=2)
+    write_json_atomic(data_json_path, articles_history, indent=2)
 
     # 新規追加号と、その前後で prev/next リンクが変わる隣接号だけ再生成すれば十分
     # （それ以外の過去号の内容・リンク先は今回の追加で変化しない）

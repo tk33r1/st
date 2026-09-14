@@ -2170,6 +2170,12 @@ a {
     scroll-padding-top: 74px;
   }
 
+  /* iOS 系ブラウザは 16px 未満のフォーム要素へフォーカスすると自動拡大し、
+     ソフトキーボード入力中にビューポート位置を補正する。 */
+  .header-search input {
+    font-size: 16px;
+  }
+
   .brand-tag {
     display: none;
   }
@@ -2848,6 +2854,11 @@ a {
 }
 
 @media (max-width: 720px) {
+  .archive-search-form input,
+  .archive-search-form select {
+    font-size: 16px;
+  }
+
   .subscribe-panel {
     align-items: flex-start;
     flex-direction: column;
