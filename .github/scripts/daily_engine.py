@@ -1757,7 +1757,7 @@ def render_top_index_html(config, articles_history):
             "name": config['media_name'],
             "alternateName": config['periodical_alternates'],
             "headline": config['brand_subtitle'],
-            "description": config['brand_desc'],
+            "description": config.get('portal_seo_desc') or config['brand_desc'],
             "url": base_url,
             "inLanguage": "ja",
             "issuanceFrequency": "P1D",
@@ -1770,7 +1770,7 @@ def render_top_index_html(config, articles_history):
             "isPartOf": { "@id": f"{base_url}#periodical" },
             "name": f"{config['media_name']} — ポータル＆アーカイブ",
             "headline": f"昨日の{config['brand_title_short']}動向をAI要約＋ビジネス示唆付きで届ける日刊速報",
-            "description": config['brand_desc'],
+            "description": config.get('portal_seo_desc') or config['brand_desc'],
             "url": base_url,
             "primaryImageOfPage": config['portal_ogp_image'],
             "inLanguage": "ja",
@@ -1956,9 +1956,9 @@ def generate_rss_xml(config, articles_history):
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>{config['media_name']} — {config['brand_subtitle']}</title>
+    <title>{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']}"}</title>
     <link>{base_url}</link>
-    <description>{config['brand_desc']}</description>
+    <description>{config.get('portal_seo_desc') or config['brand_desc']}</description>
     <language>ja</language>
 {channel_dates}    <lastBuildDate>{last_build_date}</lastBuildDate>
     <ttl>720</ttl>
