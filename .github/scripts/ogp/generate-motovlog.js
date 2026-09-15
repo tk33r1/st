@@ -5,12 +5,17 @@
  *
  * 書き出すもの:
  *   images/ogp/motovlog-ogp.jpg                   2400x1260
- *   images/favicons/motovlog-favicon.png          192x192（フルブリードの円）
+ *   images/favicons/motovlog-favicon.svg          鷲マーク（正本は motovlog-eagle.js）
+ *   images/favicons/motovlog-favicon.png          192x192
  *   images/favicons/motovlog-apple-touch-icon.png 180x180（角まで埋めた四角）
  *
  * カードの色・書体・グラデーションは motovlog/index.html のヒーローと同じ値。
- * ページ側を触ったらここも合わせること。バッジは motovlog-favicon.svg が正本で、
- * PNG 2枚はそれを焼いたもの（SVG を直せば両方この場で作り直せる）。
+ * ページ側を触ったらここも合わせること。
+ *
+ * 鷲の形は motovlog-eagle.js が持つ（羽根はスクリプト生成なので、SVG を手で
+ * いじらずそちらを直す）。SVG は prefers-color-scheme で色を反転するが、PNG と
+ * OGP カードはメディアクエリを評価できない地の上に載るので、クリーム固定の
+ * 版を焼いている。
  *
  * generate.js と同じく、ページ HTML は OS の temp に書く。リポジトリ内に置くと
  * sitemap のワークフローが *.html を拾って公開してしまう。
@@ -21,6 +26,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { launch, connect, newPage, evalJs, sleep } = require('./cdp.js');
+const { buildEagleSvg } = require('./motovlog-eagle.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const PORT = 9335;
@@ -30,13 +36,16 @@ const SCALE = 2;              // 1200x630 を dsf 2 で撮って 2400x1260
 const JPEG_QUALITY = 90;
 
 const SHOT = 'images/contents/motovlog-liberty-canyon.jpg';
-const MARK = 'images/favicons/motovlog-favicon.svg';
 
 function dataUri(rel) {
   const ext = path.extname(rel).slice(1).toLowerCase();
   const mime = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : 'image/' + ext;
   return 'data:' + mime + ';base64,' + fs.readFileSync(path.join(ROOT, rel)).toString('base64');
 }
+
+// cream, fixed: both the card and the PNGs sit on a known dark ground
+const MARK_URI = 'data:image/svg+xml;base64,' +
+  Buffer.from(buildEagleSvg({ adaptive: false }), 'utf8').toString('base64');
 
 function buildHtml() {
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
@@ -70,7 +79,7 @@ function buildHtml() {
   .wrap{position:relative;z-index:2;height:100%;padding:52px 60px 46px;display:flex;flex-direction:column}
 
   .top{display:flex;align-items:center;gap:16px}
-  .mark{width:62px;height:62px;flex:0 0 auto}
+  .mark{width:74px;height:74px;flex:0 0 auto;margin:-6px 0}
   .wordmark{font-family:var(--sans);font-weight:700;font-size:17px;letter-spacing:.2em;color:#fff}
   .anniv{font-family:var(--sans);font-weight:700;font-size:10px;letter-spacing:.13em;
          padding:5px 9px 4px;border:1px solid rgba(255,255,255,.28);border-radius:2px;
@@ -113,7 +122,7 @@ function buildHtml() {
   <div class="veil"></div>
   <div class="wrap">
     <div class="top">
-      <img class="mark" src="${dataUri(MARK)}" alt="">
+      <img class="mark" src="${MARK_URI}" alt="">
       <div class="wordmark">LIBERTY MOTOVLOG</div>
       <div class="anniv">250th ANNIVERSARY</div>
     </div>
@@ -160,7 +169,7 @@ img.onload = () => {
   window.OUT = c.toDataURL('image/png');
 };
 img.onerror = () => { window.OUT = 'ERR'; };
-img.src = ${JSON.stringify(dataUri(MARK))};
+img.src = ${JSON.stringify(MARK_URI)};
 <\/script></body></html>`;
 }
 
@@ -188,6 +197,12 @@ async function writeIcon(cdp, tmp, name, html) {
   const chrome = await launch(PORT);
   try {
     const cdp = await connect(PORT);
+
+    // --- 鷲マーク（他の2つがこれを焼くので先に書く） ------------------------
+    const svgDest = path.join(ROOT, 'images', 'favicons', 'motovlog-favicon.svg');
+    fs.writeFileSync(svgDest, buildEagleSvg(), 'utf8');
+    console.log('images/favicons/motovlog-favicon.svg  ' +
+      (fs.statSync(svgDest).size / 1024).toFixed(1) + ' KB');
 
     // --- OGP カード --------------------------------------------------------
     const page = path.join(tmp, 'motovlog-ogp.html');
@@ -220,8 +235,8 @@ async function writeIcon(cdp, tmp, name, html) {
 
     // --- ファビコン PNG ----------------------------------------------------
     for (const [name, size, pad, bg] of [
-      ['motovlog-favicon', 192, 0, ''],
-      ['motovlog-apple-touch-icon', 180, 0.08, '#11141b'],
+      ['motovlog-favicon', 192, 0.02, ''],
+      ['motovlog-apple-touch-icon', 180, 0.06, '#11141b'],
     ]) {
       const f = await writeIcon(cdp, tmp, name, buildIconHtml(size, pad, bg));
       console.log('images/favicons/' + name + '.png  ' +
