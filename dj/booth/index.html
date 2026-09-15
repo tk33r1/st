@@ -21,103 +21,29 @@
   <style>
     .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto;
             padding: 0 calc(20px + env(safe-area-inset-right)) 64px calc(20px + env(safe-area-inset-left)); }
-
-    .rig { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 20px 0 18px; border-bottom: 1px solid var(--line); }
     .brand { display: flex; align-items: baseline; gap: 12px; margin-right: auto; }
-    .brand h1 { font-family: var(--serif); font-weight: 900; font-size: 21px; letter-spacing: .02em; margin: 0; line-height: 1.2; }
-    .brand .code { font-family: var(--mono); font-size: 11.5px; color: var(--faint); letter-spacing: .12em; border: 1px solid var(--line); padding: 2px 7px; border-radius: 2px; }
 
     /* ポーリングが通っている間だけ明滅させる。止まった＝切断なので点きっぱなし */
     @keyframes blip { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
 
-    .gauge { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
-    .gauge .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--go); box-shadow: 0 0 8px var(--go);
-      animation: blip 1.6s ease-in-out infinite;
-    }
-    .gauge.off .dot { background: var(--stop); box-shadow: 0 0 8px var(--stop); animation: none; }
-
     /* スイッチと操作ボタンの入れ物。スイッチ以外も入るので名前は「操作群」 */
     .rigctl { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-
-    /* 受付・通知はトグルスイッチ。状態はノブの位置と色が出すので、ラベルは名前で固定。
-       倒れている向きは aria-checked ひとつで持ち、見た目もそれを見て切り替える */
-    .accept {
-      display: inline-flex; align-items: center; gap: 9px;
-      padding: 5px 2px; font-size: 13.5px; font-weight: 600; color: var(--faint);
-    }
     /* .accept が display を指定しているので、hidden だけでは消えない */
     .accept[hidden] { display: none; }
-    .accept .track {
-      position: relative; flex: none; width: 30px; height: 16px;
-      border: 1px solid var(--line); border-radius: 999px; background: var(--ink);
-      transition: background .18s ease, border-color .18s ease;
-    }
-    .accept .knob {
-      position: absolute; top: 50%; left: 2px; margin-top: -5px;
-      width: 10px; height: 10px; border-radius: 50%; background: var(--faint);
-      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
-    }
-    .accept[aria-checked="true"] { color: var(--go); }
-    .accept[aria-checked="true"] .track {
-      border-color: color-mix(in srgb, var(--go) 55%, var(--line));
-      background: color-mix(in srgb, var(--go) 18%, var(--ink));
-    }
-    .accept[aria-checked="true"] .knob { transform: translateX(14px); background: var(--go); box-shadow: 0 0 10px var(--go); }
-
-    .ghostbtn { border: 1px solid var(--line); border-radius: var(--r); padding: 7px 14px; font-size: 13px; color: var(--muted); }
-    .ghostbtn:hover { background: var(--card); color: var(--text); border-color: var(--accent-dim); }
-
-    .offline {
-      display: none; align-items: center; gap: 10px;
-      background: color-mix(in srgb, var(--stop) 16%, var(--ink));
-      border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
-      color: #FFC9C9; border-radius: var(--r); padding: 10px 16px; margin-top: 16px; font-size: 13.5px;
-    }
     .offline.show { display: flex; }
 
     .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 18px 0; }
-    .tab {
-      display: inline-flex; align-items: center; gap: 8px;
-      border: 1px solid transparent; border-radius: 2px; padding: 7px 15px;
-      font-size: 13.5px; font-weight: 500; color: var(--muted);
-    }
-    .tab:hover { color: var(--text); background: var(--panel); }
-    .tab[aria-selected="true"] { background: var(--card-hi); color: var(--text); border-color: var(--accent-dim); }
-    .tab .n { font-family: var(--mono); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--faint); background: var(--ink); border-radius: 2px; padding: 1px 7px; }
-    .tab[aria-selected="true"] .n { color: var(--accent); }
 
     .sort { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; min-width: 0; }
-    .sort .lbl { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: .1em; margin-right: 8px; }
-    .sort button { padding: 6px 12px; font-size: 13px; color: var(--muted); border-radius: 2px; }
-    .sort button[aria-pressed="true"] { background: var(--card-hi); color: var(--text); }
 
     .grid { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: 26px; align-items: start; }
     @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
     .feed { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-
-    .card {
-      display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px;
-      background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent);
-      border-radius: var(--r); padding: 16px 18px 14px;
-    }
-    .card:hover { background: var(--card-hi); }
-    .card.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-dim), 0 8px 28px -14px #000; }
-    .card[data-status="queued"] { border-left-color: var(--go); }
-    .card[data-status="played"] { border-left-color: var(--faint); opacity: .62; }
-    .card[data-status="skipped"] { border-left-color: var(--line); opacity: .42; }
-    .card[data-status="skipped"] .title { text-decoration: line-through; text-decoration-color: var(--faint); }
     .card.fresh { animation: pulse 1.6s ease-out 2; }
     @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 35% { box-shadow: 0 0 0 2px var(--accent-dim); } }
 
     .art { width: 64px; height: 64px; border-radius: 2px; overflow: hidden; background: var(--ink); }
     .art img { width: 100%; height: 100%; display: block; }
-    .art.none {
-      display: grid; place-items: center;
-      background: repeating-linear-gradient(45deg, #241B33 0 6px, #1D1729 6px 12px);
-      color: var(--warn); font-size: 22px;
-    }
 
     /* 本文は1本の列。右肩に乗るのは REQ/LIKE だけで、ほかは行いっぱいに広がる。
        仕様や本文まで名前の柱に閉じ込めると、細い画面で右に穴が空いて札が縦に伸びる */
@@ -130,84 +56,24 @@
     .counts { grid-column: 2; grid-row: 1; }
     /* 曲そのものの素性。札の中では一塊に見せたいので、行の間隔だけ詰める */
     .info { display: flex; flex-direction: column; gap: 5px; }
-    .artist { color: var(--muted); font-size: 12.5px; }
-    .title { font-size: 16.5px; font-weight: 600; line-height: 1.35; word-break: break-word; }
-    .title .variant {
-      font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--accent);
-      border: 1px solid var(--accent-dim); border-radius: 2px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px;
-    }
     .meta { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
 
     /* 繋ぎの判断材料。暗所で一瞥して拾えるよう、等幅で1行に並べる */
     .specs { display: flex; flex-wrap: wrap; gap: 6px; }
-    .spec {
-      font-family: var(--mono); font-size: 11.5px; font-variant-numeric: tabular-nums;
-      color: var(--muted); border: 1px solid var(--line); border-radius: 2px; padding: 1px 7px;
-    }
-    .spec.hi { color: var(--accent); border-color: var(--accent-dim); }
-    .spec.ex { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
-    .flag {
-      display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--warn);
-      border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line)); border-radius: 2px; padding: 1px 7px;
-      align-self: flex-start;
-    }
 
     /* REQ = リクエストした人数、LIKE = 来場者が押したいいね。別物なので並べて出す */
     .counts { display: flex; gap: 6px; flex-shrink: 0; }
-    .votes {
-      display: flex; flex-direction: column; align-items: center; gap: 1px;
-      font-family: var(--mono); font-variant-numeric: tabular-nums;
-      border: 1px solid var(--line); border-radius: 2px; padding: 5px 10px; flex-shrink: 0;
-    }
-    .votes b { font-size: 17px; font-weight: 600; line-height: 1; }
-    .votes span { font-size: 9.5px; color: var(--faint); letter-spacing: .08em; }
-    .votes.hot { border-color: var(--accent-dim); color: var(--accent); }
-    .votes.likes.hot { color: var(--stop); border-color: color-mix(in srgb, var(--stop) 50%, var(--line)); }
-
-    .msg { border-left: 2px solid var(--line); padding: 2px 0 2px 12px; font-size: 13.5px; color: #CFC6DF; }
     .msg + .msg { margin-top: 6px; }
-    .msg .who { color: var(--faint); font-size: 12px; margin-left: 8px; }
 
     /* 繋ぐ位置を探すのに一番使うので、鳴らしていなくても最初から出しておく。
        再生ボタン・バー・残り時間を1行に並べ、伸び縮みするのはバーだけ */
     .player { display: flex; align-items: center; gap: 12px; }
-    .pbtn {
-      width: 38px; height: 38px; flex: none; border-radius: var(--r);
-      border: 1px solid var(--accent-dim); color: var(--accent);
-      display: grid; place-items: center; font-size: 13px; line-height: 1;
-    }
-    .pbtn:hover { background: var(--accent); color: var(--ink); }
-    /* 見た目は 3px の細線のまま。padding で当たり判定だけ上下へ広げる */
-    .prev {
-      flex: 1; min-width: 0;
-      height: 3px; box-sizing: content-box; padding: 10px 0; cursor: pointer;
-      background-color: var(--line); background-clip: content-box; border-radius: 2px;
-      overflow: hidden; display: block;
-    }
     /* 鳴っていないバーは沈めておく。いまどのカードを試聴中かは一目で分かるように */
     .prev:not(.on) { opacity: .5; }
     .player:hover .prev { opacity: 1; }
-    .prev b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width .2s linear; }
-    .ptime {
-      flex: none; font-family: var(--mono); font-size: 11px; color: var(--faint);
-      white-space: nowrap; font-variant-numeric: tabular-nums;
-    }
 
     .acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .act {
-      border: 1px solid var(--line); border-radius: 2px; padding: 8px 13px; font-size: 13px; color: var(--muted);
-      display: inline-flex; align-items: center; gap: 7px;
-    }
-    .act:hover { background: var(--panel); color: var(--text); border-color: var(--accent-dim); }
-    .act.primary { background: var(--accent); border-color: var(--accent); color: #14091F; font-weight: 600; }
-    .act.primary:hover { background: #B195FA; border-color: #B195FA; color: #14091F; }
-    .act.done:hover { color: var(--go); border-color: color-mix(in srgb, var(--go) 50%, var(--line)); }
-    .act.drop:hover { color: var(--stop); border-color: color-mix(in srgb, var(--stop) 50%, var(--line)); }
     .acts .spacer { flex: 1; }
-    .kbd { font-family: var(--mono); font-size: 10px; color: var(--faint); border: 1px solid var(--line); border-radius: 2px; padding: 0 4px; line-height: 1.5; }
-    .act.primary .kbd { color: #14091F; border-color: #14091f55; }
-
-    .empty { border: 1px dashed var(--line); border-radius: var(--r); padding: 44px 20px; text-align: center; color: var(--faint); font-size: 13.5px; }
 
     /* 細い画面。数字を右肩に残すと曲名が細い柱に押し込まれ、
        右に穴の空いた縦長の札になる。REQ/LIKE は横並びに畳んで、幅を名前へ返す */
@@ -222,33 +88,10 @@
       .acts .spacer { display: none; }
       .acts .kbd { display: none; }
     }
-
-    .rail {
-      background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
-      padding: 16px; position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px;
-    }
-    .rail h2 { font-size: 11.5px; font-family: var(--mono); letter-spacing: .14em; color: var(--faint); margin: 0; font-weight: 500; }
     .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
     .rail li { display: grid; grid-template-columns: 15px 34px minmax(0, 1fr); gap: 10px; align-items: center; }
-    .rail .no { font-family: var(--mono); font-size: 12px; color: var(--go); font-variant-numeric: tabular-nums; }
     .rail .art { width: 34px; height: 34px; border-radius: 2px; }
-    .rail .t { display: block; font-size: 13px; font-weight: 500; }
-    .rail .a { display: block; font-size: 11px; color: var(--faint); }
-    /* 空表示はグリッドの1列目(15px)に入ると1文字ずつ折り返すので、行ごと通常フローに戻す */
-    .rail li.blank { display: block; color: var(--faint); font-size: 12.5px; }
-
-
-    /* 暗いブースで狙って叩ける大きさを最優先。押した瞬間だけ枠が光る */
-    .tapbox { display: flex; flex-direction: column; gap: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
-    .tappad {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      border: 1px solid var(--line); border-radius: var(--r); background: var(--card);
-      padding: 13px 10px 11px; user-select: none; -webkit-user-select: none; touch-action: manipulation;
-    }
     .tappad:hover { border-color: var(--accent-dim); }
-    .tappad.hit { border-color: var(--accent); background: var(--card-hi); }
-    .tappad .val { font-family: var(--mono); font-size: 29px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
-    .tappad .val.idle { color: var(--faint); }
     .tappad .hint { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--faint); }
     .taprow { display: flex; gap: 6px; }
     .taprow .act { flex: 1; justify-content: center; padding: 6px 0; font-size: 12px; }
@@ -256,86 +99,16 @@
     .act[disabled] { opacity: .38; cursor: default; }
     .act[disabled]:hover { background: none; color: var(--muted); border-color: var(--line); }
     .taptgt { margin: 0; font-family: var(--mono); font-size: 10.5px; line-height: 1.5; color: var(--faint); }
-
-    .keys { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; gap: 20px; flex-wrap: wrap; font-family: var(--mono); font-size: 11.5px; color: var(--faint); }
     .keys span { display: inline-flex; align-items: center; gap: 6px; }
 
-    /* GetSongBPM は利用条件として表示リンクを求めているので、隠さず出す */
-    /* ===== パンくずの補足ボタン（土台は data/bijutsu-shisui.css）===== */
-    .crumb-info {
-      appearance: none;
-      width: 17px; height: 17px; padding: 0;
-      display: inline-flex; align-items: center; justify-content: center;
-      border: 1px solid rgba(156, 122, 247, 0.35);
-      border-radius: 50%;
-      background: none;
-      color: rgba(156, 122, 247, 0.85);
-      font: 600 11px/1 var(--sans);
-      cursor: pointer;
-      transition: color .2s ease, border-color .2s ease, background .2s ease;
-    }
-
-    .crumb-info:hover,
-    .crumb-info[aria-expanded="true"] {
-      color: #B195FA;
-      border-color: #B195FA;
-      background: rgba(156, 122, 247, 0.12);
-    }
-
     .crumb-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-    .crumb-note {
-      max-width: var(--page-max);
-      margin: 10px auto 0;
-      padding: 11px 13px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--r);
-      font-size: 12px;
-      line-height: 1.7;
-      color: var(--muted);
-    }
-
-    .crumb-note a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-dim); }
-    .crumb-note a:hover { color: #B195FA; border-bottom-color: #B195FA; }
-
-    .toast {
-      position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 20px);
-      display: flex; align-items: center; gap: 16px;
-      background: var(--card-hi); border: 1px solid var(--accent-dim); border-radius: var(--r);
-      padding: 12px 14px 12px 18px; font-size: 13.5px; box-shadow: 0 18px 46px -18px #000;
-      opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; z-index: 40;
-      max-width: calc(100vw - 32px);
-    }
     .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 
     .toast > span { min-width: 0; word-break: break-all; }
-    .toast button { color: var(--accent); font-weight: 600; font-size: 13px; padding: 4px 8px; border-radius: 2px; }
-
-    /* ===== 過去のイベント（削除ダイアログ）===== */
-    #evDlg {
-      /* 土台の CSS が余白を全部落とすので、中央寄せは自分で戻す */
-      margin: auto; overflow: auto;
-      width: min(560px, calc(100vw - 32px)); max-height: min(80vh, 720px);
-      background: var(--panel); color: var(--text);
-      border: 1px solid var(--line); border-radius: var(--r);
-      padding: 20px; box-shadow: 0 30px 70px -20px #000;
-    }
     #evDlg::backdrop { background: rgba(0, 0, 0, .68); }
     .evhead { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; }
-    .evhead h2 { font-family: var(--serif); font-size: 16px; margin: 0; flex: 1; }
     #evList { display: flex; flex-direction: column; gap: 8px; }
-
-    /* 1行に「どの回か」と「何が消えるか」を並べる。数を見ないと消してよいか
-       決められないので、件数は削除ボタンの隣に置く。 */
-    .evrow {
-      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center;
-      background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 11px 13px;
-    }
-    .evrow .t { font-size: 13.5px; font-weight: 600; }
     .evrow .m { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 3px; letter-spacing: .06em; }
-    .evrow.cur { border-color: var(--accent-dim); background: var(--card-hi); }
-    .evrow .now { font-family: var(--mono); font-size: 11px; color: var(--accent); white-space: nowrap; }
     .evdel {
       font-size: 12.5px; white-space: nowrap; padding: 7px 13px; border-radius: var(--r);
       color: var(--stop); border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
@@ -346,17 +119,21 @@
     .evnote strong { color: var(--stop); font-weight: 600; }
     .evblank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 20px 0; }
 
-    /* ===== ここから下は /dj/schedule/ と同じ見え方に寄せるための上書き =====
-       土台（変数・リセット・背景演出・パンくず・フッター）は
-       data/bijutsu-shisui.css にある */
+    /* ===== コンポーネント別スタイル ===== */
 
     /* ===== HEADER ===== */
     .rig {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--line);
       padding: 6vh 0 18px;
       border-bottom-color: var(--border);
     }
 
     .brand h1 {
+      margin: 0;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: clamp(1.25rem, 4vw, 1.75rem);
@@ -365,6 +142,9 @@
     }
 
     .brand .code {
+      border: 1px solid var(--line);
+      padding: 2px 7px;
+      border-radius: 2px;
       font-family: var(--f-display);
       font-size: 0.6875rem;
       letter-spacing: 0.12em;
@@ -373,22 +153,38 @@
     }
 
     .gauge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
       font-family: var(--f-display);
       font-size: 0.6875rem;
       letter-spacing: 0.08em;
     }
 
     .gauge .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      animation: blip 1.6s ease-in-out infinite;
       background: var(--heart-secondary);
       box-shadow: 0 0 8px var(--heart-secondary);
     }
 
     .gauge.off .dot {
+      animation: none;
       background: var(--heart-primary);
       box-shadow: 0 0 8px var(--heart-primary);
     }
 
+    /* 受付・通知はトグルスイッチ。状態はノブの位置と色が出すので、ラベルは名前で固定。
+       倒れている向きは aria-checked ひとつで持ち、見た目もそれを見て切り替える */
+
     .accept {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 5px 2px;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 0.75rem;
@@ -397,11 +193,26 @@
     }
 
     .accept .track {
+      position: relative;
+      flex: none;
+      width: 30px;
+      height: 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      transition: background .18s ease, border-color .18s ease;
       border-color: var(--border);
       background: var(--bg-elevated);
     }
 
     .accept .knob {
+      position: absolute;
+      top: 50%;
+      left: 2px;
+      margin-top: -5px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
       background: var(--fg-dim);
     }
 
@@ -415,11 +226,14 @@
     }
 
     .accept[aria-checked="true"] .knob {
+      transform: translateX(14px);
       background: var(--heart-secondary);
       box-shadow: 0 0 10px var(--heart-secondary);
     }
 
     .ghostbtn {
+      border: 1px solid var(--line);
+      border-radius: var(--r);
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       letter-spacing: 0.1em;
@@ -434,6 +248,14 @@
     }
 
     .offline {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
+      border-radius: var(--r);
+      padding: 10px 16px;
+      margin-top: 16px;
+      font-size: 13.5px;
       font-family: var(--f-body);
       background: var(--bg-elevated);
       border-color: var(--heart-primary);
@@ -442,6 +264,11 @@
 
     /* ===== TABS / SORT ===== */
     .tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 2px;
+      padding: 7px 15px;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 0.75rem;
@@ -462,6 +289,9 @@
     }
 
     .tab .n {
+      font-variant-numeric: tabular-nums;
+      border-radius: 2px;
+      padding: 1px 7px;
       font-family: var(--f-display);
       font-size: 0.6875rem;
       background: transparent;
@@ -475,12 +305,16 @@
     }
 
     .sort .lbl {
+      color: var(--faint);
+      margin-right: 8px;
       font-family: var(--f-display);
       font-size: 0.625rem;
       letter-spacing: 0.2em;
     }
 
     .sort button {
+      padding: 6px 12px;
+      border-radius: 2px;
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       letter-spacing: 0.08em;
@@ -500,6 +334,12 @@
 
     /* ===== CARD ===== */
     .card {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 16px 18px 14px;
       background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
       border-color: var(--border);
       border-left: 3px solid var(--heart-secondary);
@@ -521,14 +361,17 @@
     }
 
     .card[data-status="played"] {
+      opacity: .62;
       border-left-color: var(--fg-dim);
     }
 
     .card[data-status="skipped"] {
+      opacity: .42;
       border-left-color: var(--border);
     }
 
     .card[data-status="skipped"] .title {
+      text-decoration: line-through;
       text-decoration-color: var(--fg-dim);
     }
 
@@ -538,16 +381,21 @@
     }
 
     .art.none {
+      display: grid;
+      place-items: center;
+      font-size: 22px;
       background: repeating-linear-gradient(45deg, #17171d 0 6px, #121216 6px 12px);
       color: var(--glitch-accent);
     }
 
     .artist {
+      color: var(--muted);
       font-family: var(--f-body);
       font-size: 0.75rem;
     }
 
     .title {
+      word-break: break-word;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 1rem;
@@ -556,6 +404,12 @@
     }
 
     .title .variant {
+      font-size: 11.5px;
+      border: 1px solid var(--accent-dim);
+      border-radius: 2px;
+      padding: 1px 6px;
+      margin-left: 8px;
+      vertical-align: 2px;
       font-family: var(--f-display);
       font-weight: 400;
       color: var(--heart-secondary);
@@ -569,6 +423,12 @@
     }
 
     .spec {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      padding: 1px 7px;
       color: var(--fg-dim);
       border-color: var(--border);
     }
@@ -584,6 +444,13 @@
     }
 
     .flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
+      border-radius: 2px;
+      padding: 1px 7px;
+      align-self: flex-start;
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       color: var(--glitch-accent);
@@ -591,11 +458,22 @@
     }
 
     .votes {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      font-variant-numeric: tabular-nums;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      padding: 5px 10px;
+      flex-shrink: 0;
       font-family: var(--f-display);
       border-color: var(--border);
     }
 
     .votes b {
+      font-size: 17px;
+      line-height: 1;
       font-weight: 400;
     }
 
@@ -617,6 +495,8 @@
     }
 
     .msg {
+      border-left: 2px solid var(--line);
+      padding: 2px 0 2px 12px;
       font-family: var(--f-body);
       font-size: 0.8125rem;
       color: var(--fg);
@@ -624,12 +504,22 @@
     }
 
     .msg .who {
+      margin-left: 8px;
       font-family: var(--f-display);
       font-size: 0.6875rem;
       color: var(--fg-dim);
     }
 
     .pbtn {
+      width: 38px;
+      height: 38px;
+      flex: none;
+      border-radius: var(--r);
+      border: 1px solid var(--accent-dim);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      line-height: 1;
       border-color: var(--heart-secondary);
       color: var(--heart-secondary);
     }
@@ -639,16 +529,36 @@
       color: var(--bg);
     }
 
+    /* 見た目は 3px の細線のまま。padding で当たり判定だけ上下へ広げる */
+
     /* background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
     .prev {
+      flex: 1;
+      min-width: 0;
+      height: 3px;
+      box-sizing: content-box;
+      padding: 10px 0;
+      cursor: pointer;
+      background-clip: content-box;
+      border-radius: 2px;
+      overflow: hidden;
+      display: block;
       background-color: var(--border);
     }
 
     .prev b {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: 2px;
+      transition: width .2s linear;
       background: var(--heart-secondary);
     }
 
     .ptime {
+      flex: none;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
       font-family: var(--f-display);
       font-size: 0.6875rem;
       letter-spacing: 0.08em;
@@ -657,6 +567,12 @@
 
     /* ===== ACTIONS ===== */
     .act {
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      padding: 8px 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       letter-spacing: 0.1em;
@@ -694,6 +610,11 @@
     }
 
     .kbd {
+      font-size: 10px;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      padding: 0 4px;
+      line-height: 1.5;
       font-family: var(--f-display);
       border-color: var(--border);
       color: var(--fg-dim);
@@ -705,6 +626,11 @@
     }
 
     .empty {
+      border: 1px dashed var(--line);
+      border-radius: var(--r);
+      padding: 44px 20px;
+      text-align: center;
+      font-size: 13.5px;
       font-family: var(--f-body);
       border-color: var(--border);
       color: var(--fg-dim);
@@ -712,11 +638,20 @@
 
     /* ===== RAIL ===== */
     .rail {
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 16px;
+      position: sticky;
+      top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
       background: transparent;
       border-color: var(--border);
     }
 
     .rail h2 {
+      margin: 0;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 0.8125rem;
@@ -725,29 +660,58 @@
     }
 
     .rail .no {
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
       font-family: var(--f-display);
       color: var(--heart-secondary);
     }
 
     .rail .t {
+      display: block;
+      font-size: 13px;
       font-family: var(--f-body);
       font-weight: 400;
     }
 
     .rail .a {
+      display: block;
+      font-size: 11px;
       font-family: var(--f-display);
       color: var(--fg-dim);
     }
 
+    /* 空表示はグリッドの1列目(15px)に入ると1文字ずつ折り返すので、行ごと通常フローに戻す */
+
     .rail li.blank {
+      display: block;
+      font-size: 12.5px;
       font-family: var(--f-body);
       color: var(--fg-dim);
     }
 
+    /* 暗いブースで狙って叩ける大きさを最優先。押した瞬間だけ枠が光る */
+
     /* ===== TAP BPM ===== */
-    .tapbox { border-bottom-color: var(--border); }
+    .tapbox {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      border-bottom-color: var(--border);
+    }
 
     .tappad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 13px 10px 11px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
       background: transparent;
       border-color: var(--border);
     }
@@ -757,8 +721,16 @@
       border-color: var(--heart-secondary);
     }
 
-    .tappad .val { color: var(--heart-secondary); }
-    .tappad .val.idle { color: var(--fg-dim); }
+    .tappad .val {
+      font-family: var(--mono);
+      font-size: 29px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      color: var(--heart-secondary);
+    }
+    .tappad .val.idle {
+      color: var(--fg-dim);
+    }
 
     .tappad .hint,
     .taptgt {
@@ -766,6 +738,12 @@
       color: var(--fg-dim);
     }
     .keys {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
       font-family: var(--f-display);
       font-size: 0.6875rem;
       letter-spacing: 0.06em;
@@ -773,8 +751,23 @@
       color: var(--fg-dim);
     }
 
+    /* GetSongBPM は利用条件として表示リンクを求めているので、隠さず出す */
+    /* ===== パンくずの補足ボタン（土台は data/bijutsu-shisui.css）===== */
+
     /* ===== パンくずの補足ボタン ===== */
     .crumb-info {
+      appearance: none;
+      width: 17px;
+      height: 17px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(156, 122, 247, 0.35);
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+      transition: color .2s ease, border-color .2s ease, background .2s ease;
       border-color: var(--border);
       color: var(--fg-dim);
       font: 400 11px/1 var(--f-display);
@@ -788,6 +781,13 @@
     }
 
     .crumb-note {
+      max-width: var(--page-max);
+      margin: 10px auto 0;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      font-size: 12px;
+      line-height: 1.7;
       font-family: var(--f-body);
       background: var(--bg-elevated);
       border-color: var(--border);
@@ -795,6 +795,8 @@
     }
 
     .crumb-note a {
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent-dim);
       color: var(--heart-secondary);
       border-bottom-color: var(--heart-secondary);
     }
@@ -804,25 +806,52 @@
       border-bottom-color: var(--fg);
     }
 
+    /* ===== 過去のイベント（削除ダイアログ）===== */
+
     /* ===== 過去のイベント ===== */
     #evDlg {
+      /* 土台の CSS が余白を全部落とすので、中央寄せは自分で戻す */ margin: auto;
+      overflow: auto;
+      width: min(560px, calc(100vw - 32px));
+      max-height: min(80vh, 720px);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 20px;
+      box-shadow: 0 30px 70px -20px #000;
       background: var(--bg-elevated);
       border-color: var(--border);
       font-family: var(--f-body);
     }
 
     .evhead h2 {
+      font-size: 16px;
+      margin: 0;
+      flex: 1;
       font-family: var(--f-dot);
       font-weight: 400;
       letter-spacing: 0.1em;
     }
 
+    /* 1行に「どの回か」と「何が消えるか」を並べる。数を見ないと消してよいか
+       決められないので、件数は削除ボタンの隣に置く。 */
+
     .evrow {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 11px 13px;
       background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
       border-color: var(--border);
     }
 
-    .evrow .t { font-weight: 400; }
+    .evrow .t {
+      font-size: 13.5px;
+      font-weight: 400;
+    }
 
     .evrow .m,
     .evrow .now,
@@ -830,11 +859,34 @@
       font-family: var(--f-display);
     }
 
-    .evrow.cur { border-color: var(--heart-secondary); }
-    .evrow .now { color: var(--heart-secondary); }
+    .evrow.cur {
+      background: var(--card-hi);
+      border-color: var(--heart-secondary);
+    }
+    .evrow .now {
+      font-family: var(--mono);
+      font-size: 11px;
+      white-space: nowrap;
+      color: var(--heart-secondary);
+    }
 
     /* ===== TOAST ===== */
     .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      transform: translate(-50%, 20px);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--r);
+      padding: 12px 14px 12px 18px;
+      font-size: 13.5px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s, transform .18s;
+      max-width: calc(100vw - 32px);
       font-family: var(--f-body);
       background: var(--bg-elevated);
       border-color: var(--heart-secondary);
@@ -843,6 +895,9 @@
     }
 
     .toast button {
+      font-size: 13px;
+      padding: 4px 8px;
+      border-radius: 2px;
       font-family: var(--f-dot);
       font-weight: 400;
       letter-spacing: 0.08em;
@@ -1036,7 +1091,23 @@
     const inflight = new Map();   // 書き込み中の id -> status
 
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
-    const api = (path, opts = {}) => fetch(API + path, opts);
+    async function apiJson(path, opts = {}) {
+      let res;
+      try {
+        res = await fetch(API + path, opts);
+      } catch {
+        throw new Error('通信に失敗しました。接続を確認してください');
+      }
+      let data = {};
+      try { data = await res.json(); } catch { /* JSON でないエラー応答 */ }
+      if (!res.ok) {
+        const error = new Error(data.message || '通信に失敗しました');
+        error.status = res.status;
+        error.data = data;
+        throw error;
+      }
+      return data;
+    }
 
     /* ── 描画 ─────────────────────────────── */
     function counts() {
@@ -1178,7 +1249,7 @@
 
     async function load(first) {
       try {
-        const d = await (await api('/admin/songs')).json();
+        const d = await apiJson('/admin/songs');
         ev = d.event;
         if (ev) {
           $('#evTitle').textContent = ev.title;
@@ -1217,12 +1288,11 @@
     }
 
     async function patch(id, status) {
-      const res = await api('/admin/songs/' + id, {
+      await apiJson('/admin/songs/' + id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error('patch failed');
     }
 
     /* ── 操作 ─────────────────────────────── */
@@ -1375,18 +1445,16 @@
     }));
 
     $('#accept').addEventListener('click', async () => {
-      const want = $('#accept').dataset.on === 'true' ? 'closed' : 'open';
+      const want = $('#accept').getAttribute('aria-checked') === 'true' ? 'closed' : 'open';
       try {
-        const res = await api('/admin/event', {
+        const d = await apiJson('/admin/event', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: want }),
         });
-        const d = await res.json();
-        if (!res.ok) { toast(d.message || '切り替えられませんでした'); return; }
         paintSwitch('#accept', !!d.open);
         toast(d.open ? 'リクエストの受付を再開しました' : 'リクエストの受付を停止しました');
-      } catch { toast('切り替えられませんでした'); }
+      } catch (e) { toast(e.message || '切り替えられませんでした'); }
     });
 
     $('#newEvent').addEventListener('click', async () => {
@@ -1394,17 +1462,15 @@
       if (title === null) return;
       if (!confirm('現在のイベントを締めて、新しいイベントを開始します。よろしいですか？')) return;
       try {
-        const res = await api('/admin/event', {
+        const d = await apiJson('/admin/event', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title }),
         });
-        const d = await res.json();
-        if (!res.ok) { toast(d.message || '作成できませんでした'); return; }
         seen = new Set();
         await load(true);
         toast('「' + d.title + '」を開始しました（' + d.code + '）');
-      } catch { toast('作成できませんでした'); }
+      } catch (e) { toast(e.message || '作成できませんでした'); }
     });
 
     /* ── 過去のイベントの削除 ───────────────────
@@ -1429,7 +1495,7 @@
       const box = $('#evList');
       box.innerHTML = '<div class="evblank">読み込んでいます…</div>';
       try {
-        const d = await (await api('/admin/events')).json();
+        const d = await apiJson('/admin/events');
         box.innerHTML = d.events.length
           ? d.events.map(evrowHTML).join('')
           : '<div class="evblank">イベントがありません</div>';
@@ -1453,26 +1519,28 @@
 
       btn.disabled = true;
       try {
-        let res = await api('/admin/events/' + encodeURIComponent(code), {
-          method: 'DELETE',
-          headers: adminKey() ? { Authorization: 'Bearer ' + adminKey() } : {},
-        });
-        // ADMIN_KEY を後から設定した場合。一度だけ訊いて、次からは黙って通す
-        if (res.status === 401) {
+        const path = '/admin/events/' + encodeURIComponent(code);
+        let d;
+        try {
+          d = await apiJson(path, {
+            method: 'DELETE',
+            headers: adminKey() ? { Authorization: 'Bearer ' + adminKey() } : {},
+          });
+        } catch (e) {
+          // ADMIN_KEY を後から設定した場合。一度だけ訊いて、次からは黙って通す
+          if (e.status !== 401) throw e;
           const key = prompt('管理キーを入力してください');
           if (key === null) { btn.disabled = false; return; }
           try { localStorage.setItem(ADMIN_KEY, key.trim()); } catch {}
-          res = await api('/admin/events/' + encodeURIComponent(code), {
+          d = await apiJson(path, {
             method: 'DELETE', headers: { Authorization: 'Bearer ' + key.trim() },
           });
         }
-        const d = await res.json();
-        if (!res.ok) { btn.disabled = false; toast(d.message || '削除できませんでした'); return; }
         toast('「' + d.title + '」を削除しました（' + d.songs + '曲 / ' + d.requests + '件）');
         await loadEvents();
-      } catch {
+      } catch (e) {
         btn.disabled = false;
-        toast('削除できませんでした');
+        toast(e.message || '削除できませんでした');
       }
     }
 
@@ -1707,8 +1775,11 @@
     paintTap();
 
     /* ── 起動 ─────────────────────────────── */
-    load(true);
-    setInterval(() => load(false), 5000);
+    async function poll() {
+      await load(false);
+      setTimeout(poll, 5000);
+    }
+    load(true).finally(() => setTimeout(poll, 5000));
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>

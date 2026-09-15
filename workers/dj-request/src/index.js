@@ -43,6 +43,7 @@
  */
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
+const API_BASE = '/dj/api/req';
 
 // 連打の抑止。IP ではなく端末単位で数える（会場の Wi-Fi では IP が全員同じ）。
 // 鍵はブラウザが持つので作り直せば逃げられるが、止めたいのは面白半分の連打で、
@@ -73,6 +74,14 @@ const json = (data, status = 200, extra = {}) =>
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...extra },
   });
+
+async function readJson(request) {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
 
 /** 制御文字を落として長さを詰める。表示側で必ずエスケープする前提。 */
 function clean(v, max) {
@@ -123,9 +132,11 @@ function newEventCode() {
   return [...r].map((n) => A[n % A.length]).join('');
 }
 
-async function openEvent(env) {
+/** 受付中の回を優先し、なければ最新の回を返す。公開一覧とブースの基準はここに揃える。 */
+async function currentEvent(env) {
   return env.DB.prepare(
-    `SELECT code, title FROM events WHERE status = 'open' LIMIT 1`
+    `SELECT code, title, status, created_at FROM events
+      ORDER BY (status = 'open') DESC, created_at DESC LIMIT 1`
   ).first();
 }
 
@@ -212,19 +223,21 @@ async function enrichSong(env, songId, artist, title, durationMs) {
 
 /* ── 公開: 現在のイベント ───────────────── */
 async function getEvent(env, cors) {
-  const ev = await openEvent(env);
-  return json(ev ? { open: true, code: ev.code, title: ev.title } : { open: false }, 200, cors);
+  const ev = await currentEvent(env);
+  return json(ev && ev.status === 'open'
+    ? { open: true, code: ev.code, title: ev.title }
+    : { open: false }, 200, cors);
 }
 
 /* ── 公開: 投稿 ─────────────────────────── */
 async function postRequest(request, env, cors, ctx) {
-  const ev = await openEvent(env);
-  if (!ev) return json({ error: 'closed', message: 'ただいまリクエストの受付時間外です' }, 409, cors);
+  const ev = await currentEvent(env);
+  if (!ev || ev.status !== 'open') {
+    return json({ error: 'closed', message: 'ただいまリクエストの受付時間外です' }, 409, cors);
+  }
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
+  const body = await readJson(request);
+  if (!body) {
     return json({ error: 'bad_request', message: '内容を読み取れませんでした' }, 400, cors);
   }
 
@@ -382,17 +395,14 @@ async function getSong(id, request, env, cors) {
 
   // 直せるのは「いま受付中の回」の「DJ がまだ触っていない」曲だけ。
   // 前回の鍵がブラウザに残っていても編集欄は出さない（ownRequest と同じ条件）。
-  const ev = await openEvent(env);
-  const live = !!ev && s.event_code === ev.code;
+  const ev = await currentEvent(env);
+  const live = !!ev && ev.status === 'open' && s.event_code === ev.code;
   const pending = s.status === 'pending';
   const editable = live && pending;
 
   // 終わった回の曲か。いいねを押せるのは「いちばん新しい回」だけなので
   // （setLike と同じ条件）、ボタンを出すかどうかの判断にそのまま使える。
-  const latest = ev || await env.DB.prepare(
-    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
-  const past = !latest || s.event_code !== latest.code;
+  const past = !ev || s.event_code !== ev.code;
 
   return json({
     song: {
@@ -437,8 +447,8 @@ async function ownRequest(id, token, env) {
   if (!row) return { error: NOT_YOURS };
   // 前回の鍵がブラウザに残っていても、終わった回には触らせない。
   // 履歴が後から書き換わったり、取り下げで曲ごと消えたりするのを防ぐ。
-  const ev = await openEvent(env);
-  if (!ev || row.event_code !== ev.code) {
+  const ev = await currentEvent(env);
+  if (!ev || ev.status !== 'open' || row.event_code !== ev.code) {
     return { error: ['closed', 'この回の受付は終了しているため、変更・取り下げはできません', 409] };
   }
   if (s.status !== 'pending') {
@@ -449,8 +459,7 @@ async function ownRequest(id, token, env) {
 
 /* ── 公開: 自分の投稿を直す ───────────────── */
 async function patchMine(id, request, env, cors) {
-  let body;
-  try { body = await request.json(); } catch { body = {}; }
+  const body = await readJson(request) || {};
 
   const got = await ownRequest(id, bearer(request), env);
   if (got.error) return json({ error: got.error[0], message: got.error[1] }, got.error[2], cors);
@@ -499,8 +508,7 @@ async function deleteMine(id, request, env, cors) {
    合計は songs.likes に持つ。引き算ではなく likes を数え直して書き戻すので、
    途中で失敗して値がずれても、次に誰かが押した時点で正しい数に戻る。 */
 async function setLike(id, on, request, env, cors) {
-  let body;
-  try { body = await request.json(); } catch { body = {}; }
+  const body = await readJson(request) || {};
   const deviceKey = clean(body.device, 64);
   if (!deviceKey) {
     return json({ error: 'no_device', message: 'この端末ではいいねを押せません' }, 400, cors);
@@ -509,10 +517,8 @@ async function setLike(id, on, request, env, cors) {
   const s = await env.DB.prepare(`SELECT id, event_code FROM songs WHERE id = ?`).bind(id).first();
   if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
 
-  const latest = await openEvent(env) || await env.DB.prepare(
-    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
-  if (!latest || s.event_code !== latest.code) {
+  const current = await currentEvent(env);
+  if (!current || s.event_code !== current.code) {
     return json({ error: 'closed', message: 'この回はもう終わっています' }, 409, cors);
   }
 
@@ -569,30 +575,27 @@ const shapeSong = (s, firstName) => ({
 });
 
 async function getBoard(env, cors) {
-  const ev = await openEvent(env);
-  const latest = ev || await env.DB.prepare(
-    `SELECT code, title FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
-  if (!latest) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
+  const ev = await currentEvent(env);
+  if (!ev) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
 
   const played = await env.DB.prepare(
     `SELECT ${BOARD_COLS} FROM songs
       WHERE event_code = ? AND status = 'played'
       ORDER BY played_at DESC, id DESC`
-  ).bind(latest.code).all();
+  ).bind(ev.code).all();
 
   const waiting = await env.DB.prepare(
     `SELECT ${BOARD_COLS} FROM songs
       WHERE event_code = ? AND status <> 'played'
       ORDER BY votes DESC, id ASC LIMIT ?`
-  ).bind(latest.code, BOARD_WAITING).all();
+  ).bind(ev.code, BOARD_WAITING).all();
 
-  const firstName = await firstNames(latest.code, env);
+  const firstName = await firstNames(ev.code, env);
   const shape = (s) => shapeSong(s, firstName);
 
   const p = played.results.map(shape);
   return json({
-    event: { code: latest.code, title: latest.title, open: !!ev },
+    event: { code: ev.code, title: ev.title, open: ev.status === 'open' },
     now: p[0] || null,
     played: p,
     waiting: waiting.results.map(shape),
@@ -603,9 +606,7 @@ async function getBoard(env, cors) {
    /board が返す「いまの回」は除く。曲が1曲もかかっていない回も出さない
    （中身が空の回を開かせても、来場者には何も分からないため）。 */
 async function getPastEvents(env, cors) {
-  const latest = await openEvent(env) || await env.DB.prepare(
-    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
+  const current = await currentEvent(env);
 
   const rows = await env.DB.prepare(
     `SELECT e.code, e.title, e.created_at, COUNT(s.id) AS played
@@ -615,7 +616,7 @@ async function getPastEvents(env, cors) {
       GROUP BY e.code, e.title, e.created_at
       ORDER BY e.created_at DESC
       LIMIT ?`
-  ).bind(latest ? latest.code : '', PAST_EVENTS).all();
+  ).bind(current ? current.code : '', PAST_EVENTS).all();
 
   return json({
     events: rows.results.map((e) => ({
@@ -656,9 +657,7 @@ async function getPastBoard(code, env, cors) {
    削除する回を選ぶための一覧。曲が1件も無い回も、いまの回も返す。
    公開側の /events とは別物で、あちらは「来場者に見せられる回」だけを返す。 */
 async function adminEvents(env, cors) {
-  const cur = await openEvent(env) || await env.DB.prepare(
-    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
+  const cur = await currentEvent(env);
 
   const rows = await env.DB.prepare(
     `SELECT e.code, e.title, e.status, e.created_at, e.closed_at,
@@ -704,9 +703,7 @@ async function adminDeleteEvent(code, request, env, cors) {
   ).bind(code).first();
   if (!ev) return json({ error: 'not_found', message: 'この回は見つかりませんでした' }, 404, cors);
 
-  const cur = await openEvent(env) || await env.DB.prepare(
-    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
+  const cur = await currentEvent(env);
   if (cur && cur.code === code) {
     return json({
       error: 'current',
@@ -736,9 +733,7 @@ async function adminDeleteEvent(code, request, env, cors) {
 
 /* ── 管理 ───────────────────────────────── */
 async function adminSongs(env, cors) {
-  const ev = await openEvent(env) || await env.DB.prepare(
-    `SELECT code, title FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
+  const ev = await currentEvent(env);
   if (!ev) return json({ event: null, songs: [] }, 200, cors);
 
   const songs = await env.DB.prepare(
@@ -756,9 +751,8 @@ async function adminSongs(env, cors) {
     bySong.get(v.song_id).push({ name: v.from_name, message: v.message, at: v.created_at });
   }
 
-  const open = await openEvent(env);
   return json({
-    event: { code: ev.code, title: ev.title, open: !!open },
+    event: { code: ev.code, title: ev.title, open: ev.status === 'open' },
     songs: songs.results.map((s) => ({
       id: s.id,
       trackId: s.track_id,
@@ -789,8 +783,7 @@ async function adminSongs(env, cors) {
 }
 
 async function adminPatchSong(id, request, env, cors) {
-  let body;
-  try { body = await request.json(); } catch { body = {}; }
+  const body = await readJson(request) || {};
   const status = String(body.status || '');
   if (!['pending', 'queued', 'played', 'skipped'].includes(status)) {
     return json({ error: 'bad_request', message: 'status が不正です' }, 400, cors);
@@ -807,8 +800,7 @@ async function adminPatchSong(id, request, env, cors) {
 }
 
 async function adminNewEvent(request, env, cors) {
-  let body;
-  try { body = await request.json(); } catch { body = {}; }
+  const body = await readJson(request) || {};
   const title = clean(body.title, 60) || '今回のリクエスト';
   const code = newEventCode();
   // 「閉じてから開く」を1バッチで。部分ユニークインデックスがあるので
@@ -821,8 +813,7 @@ async function adminNewEvent(request, env, cors) {
 }
 
 async function adminToggleEvent(request, env, cors) {
-  let body;
-  try { body = await request.json(); } catch { body = {}; }
+  const body = await readJson(request) || {};
   const want = body.status === 'open' ? 'open' : 'closed';
 
   if (want === 'closed') {
@@ -832,25 +823,21 @@ async function adminToggleEvent(request, env, cors) {
     return json({ ok: true, open: false }, 200, cors);
   }
 
-  const already = await openEvent(env);
-  if (already) return json({ ok: true, open: true, code: already.code }, 200, cors);
-
-  const last = await env.DB.prepare(
-    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
-  if (!last) return json({ error: 'no_event', message: 'イベントがまだありません' }, 409, cors);
+  const current = await currentEvent(env);
+  if (current && current.status === 'open') {
+    return json({ ok: true, open: true, code: current.code }, 200, cors);
+  }
+  if (!current) return json({ error: 'no_event', message: 'イベントがまだありません' }, 409, cors);
 
   await env.DB.prepare(
     `UPDATE events SET status = 'open', closed_at = NULL WHERE code = ?`
-  ).bind(last.code).run();
-  return json({ ok: true, open: true, code: last.code }, 200, cors);
+  ).bind(current.code).run();
+  return json({ ok: true, open: true, code: current.code }, 200, cors);
 }
 
 /** BPM が空の曲をまとめて引き直す。API が落ちていた時の取りこぼし回収用。 */
 async function adminEnrich(env, cors, ctx) {
-  const ev = await openEvent(env) || await env.DB.prepare(
-    `SELECT code FROM events ORDER BY created_at DESC LIMIT 1`
-  ).first();
+  const ev = await currentEvent(env);
   if (!ev) return json({ ok: true, queued: 0 }, 200, cors);
 
   const { results } = await env.DB.prepare(
@@ -875,7 +862,8 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
     const cors = corsHeaders(origin);
-    const path = url.pathname.replace(/\/+$/, '');
+    const fullPath = url.pathname.replace(/\/+$/, '');
+    const path = fullPath.startsWith(API_BASE) ? (fullPath.slice(API_BASE.length) || '/') : '';
     const method = request.method;
 
     if (method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
@@ -892,38 +880,38 @@ export default {
     }
 
     try {
-      if (path === '/dj/api/req/event' && method === 'GET')     return await getEvent(env, cors);
-      if (path === '/dj/api/req/board' && method === 'GET')     return await getBoard(env, cors);
-      if (path === '/dj/api/req/events' && method === 'GET')    return await getPastEvents(env, cors);
+      if (path === '/event' && method === 'GET')     return await getEvent(env, cors);
+      if (path === '/board' && method === 'GET')     return await getBoard(env, cors);
+      if (path === '/events' && method === 'GET')    return await getPastEvents(env, cors);
 
-      const past = path.match(/^\/dj\/api\/req\/events\/([0-9A-Za-z]{1,12})$/);
+      const past = path.match(/^\/events\/([0-9A-Za-z]{1,12})$/);
       if (past && method === 'GET') return await getPastBoard(past[1].toUpperCase(), env, cors);
 
-      if (path === '/dj/api/req/requests' && method === 'POST') return await postRequest(request, env, cors, ctx);
+      if (path === '/requests' && method === 'POST') return await postRequest(request, env, cors, ctx);
 
-      const song = path.match(/^\/dj\/api\/req\/songs\/(\d+)$/);
+      const song = path.match(/^\/songs\/(\d+)$/);
       if (song && method === 'GET') return await getSong(Number(song[1]), request, env, cors);
 
-      const own = path.match(/^\/dj\/api\/req\/songs\/(\d+)\/mine$/);
+      const own = path.match(/^\/songs\/(\d+)\/mine$/);
       if (own && method === 'PATCH')  return await patchMine(Number(own[1]), request, env, cors);
       if (own && method === 'DELETE') return await deleteMine(Number(own[1]), request, env, cors);
 
-      const like = path.match(/^\/dj\/api\/req\/songs\/(\d+)\/like$/);
+      const like = path.match(/^\/songs\/(\d+)\/like$/);
       if (like && method === 'POST')   return await setLike(Number(like[1]), true, request, env, cors);
       if (like && method === 'DELETE') return await setLike(Number(like[1]), false, request, env, cors);
 
-      if (path === '/dj/api/req/admin/songs' && method === 'GET')    return await adminSongs(env, cors);
-      if (path === '/dj/api/req/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);
-      if (path === '/dj/api/req/admin/event' && method === 'POST')   return await adminNewEvent(request, env, cors);
-      if (path === '/dj/api/req/admin/event' && method === 'PATCH')  return await adminToggleEvent(request, env, cors);
-      if (path === '/dj/api/req/admin/events' && method === 'GET')   return await adminEvents(env, cors);
+      if (path === '/admin/songs' && method === 'GET')    return await adminSongs(env, cors);
+      if (path === '/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);
+      if (path === '/admin/event' && method === 'POST')   return await adminNewEvent(request, env, cors);
+      if (path === '/admin/event' && method === 'PATCH')  return await adminToggleEvent(request, env, cors);
+      if (path === '/admin/events' && method === 'GET')   return await adminEvents(env, cors);
 
-      const adminEv = path.match(/^\/dj\/api\/req\/admin\/events\/([0-9A-Za-z]{1,12})$/);
+      const adminEv = path.match(/^\/admin\/events\/([0-9A-Za-z]{1,12})$/);
       if (adminEv && method === 'DELETE') {
         return await adminDeleteEvent(adminEv[1].toUpperCase(), request, env, cors);
       }
 
-      const m = path.match(/^\/dj\/api\/req\/admin\/songs\/(\d+)$/);
+      const m = path.match(/^\/admin\/songs\/(\d+)$/);
       if (m && method === 'PATCH') return await adminPatchSong(Number(m[1]), request, env, cors);
 
       return json({ error: 'not_found' }, 404, cors);
