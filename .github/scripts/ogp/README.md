@@ -40,25 +40,12 @@ SAFE TOOLS の棚に載らないページは、`cards.js` を通さず1ページ
 共有するが、カードの定義はそれぞれのファイルに閉じている。
 
 ```bash
-node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP とファビコン
+node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP
 ```
 
-`generate-motovlog.js` はカードに加えてファビコンも書き出す
-（`motovlog-favicon.svg` / `.png` / `motovlog-apple-touch-icon.png`）。
-
-鷲マークの正本は `motovlog-eagle.js`。羽根はスクリプトで生成しているので、
-**書き出された SVG を手でいじらずこちらを直す**。ロゴ
-（`images/contents/motovlog-logo.webp`）から採寸した 64x64、翼幅 62 の形で、
-翼は「細い前縁のアーチ」と「その下に間を空けて垂れる風切羽の塊」の2つを
-別々に描いている（1枚の塊にすると鷲に見えなくなる）。
-
-SVG は `prefers-color-scheme` で色を反転する（暗いタブではクリーム、明るい
-タブではインク）。台座の円を持たないので、これがないと片方の地色で消える。
-PNG とカードはメディアクエリを評価できない地の上に載るため、クリーム固定の
-版を焼いている。
-
-カードの色と書体は `motovlog/index.html` のヒーローと同じ値を持っているので、
-ページ側のデザインを変えたらスクリプトも合わせて直すこと。
+カードの色・書体・グラデーションは `motovlog/index.html` のヒーローと同じ値を
+持ち、左肩のマークもページのナビと同じ `images/contents/motovlog-logo.webp` を
+読む。ページ側のデザインを変えたらスクリプトも合わせて直すこと。
 
 ## アクセントカラーはカテゴリで決まる
 
