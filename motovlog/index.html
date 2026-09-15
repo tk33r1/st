@@ -24,7 +24,7 @@
   <meta name="theme-color" content="#080a10">
 
   <title>LIBERTY MOTOVLOG ★ 事故からのハーレーリターンライダー | tk.st</title>
-  <link rel="icon" href="https://tk.st/images/favicons/motovlog-favicon.png" type="image/png">
+  <link rel="icon" href="https://tk.st/images/favicons/liberty-motovlog-favicon.png" type="image/png">
   <link rel="icon" href="https://tk.st/favicon.ico" type="image/x-icon">
   <link rel="canonical" href="https://tk.st/motovlog/">
   <link rel="author" href="https://tk.st/">
@@ -149,18 +149,14 @@
     .teaser-btn-row,
     .footer-inner,
     .footer-links,
-    .footer-copy,
-    .viewer-modal-header,
-    .viewer-modal-title,
-    .viewer-modal-body {
+    .footer-copy {
       display: flex;
       align-items: center;
     }
 
     .nav-inner,
     .footer-inner,
-    .footer-copy,
-    .viewer-modal-header {
+    .footer-copy {
       justify-content: space-between;
     }
 
@@ -176,12 +172,10 @@
     .btn-yt-nav,
     .btn-hero-primary,
     .btn-hero-secondary,
-    .viewer-expand-btn,
     .viewer-hint-badge,
     .viewer-btn,
     .shop-btn,
-    .teaser-status,
-    .viewer-modal-close {
+    .teaser-status {
       display: inline-flex;
       align-items: center;
     }
@@ -189,10 +183,8 @@
     .btn-yt-nav,
     .btn-hero-primary,
     .btn-hero-secondary,
-    .viewer-expand-btn,
     .viewer-btn,
-    .viewer-slider,
-    .viewer-modal-close {
+    .viewer-slider {
       cursor: pointer;
     }
 
@@ -221,9 +213,7 @@
     .story-node,
     .machine-viewer-wrap,
     .viewer-canvas-box,
-    .side-photo-wrap,
-    .viewer-modal-container,
-    .viewer-modal-body {
+    .side-photo-wrap {
       position: relative;
     }
 
@@ -236,46 +226,36 @@
 
     .machine-viewer-wrap,
     .viewer-canvas-box,
-    .side-photo-wrap,
-    .viewer-modal-container,
-    .viewer-modal-body {
+    .side-photo-wrap {
       overflow: hidden;
     }
 
     .machine-viewer-wrap,
-    .viewer-canvas-box,
-    .viewer-modal-body {
+    .viewer-canvas-box {
       user-select: none;
       -webkit-user-select: none;
     }
 
-    .viewer-canvas-box,
-    .viewer-modal-body {
+    .viewer-canvas-box {
       width: 100%;
-      aspect-ratio: 5 / 3;
+      aspect-ratio: 16 / 10;
       justify-content: center;
       touch-action: pan-y;
       cursor: grab;
     }
 
-    .viewer-canvas-box.is-dragging,
-    .viewer-modal-body.is-dragging {
+    .viewer-canvas-box.is-dragging {
       cursor: grabbing;
     }
 
-    .viewer-canvas-box img,
-    .viewer-modal-body img {
+    .viewer-canvas-box img {
       pointer-events: none;
       user-select: none;
     }
 
-    .viewer-expand-btn,
     .viewer-hint-overlay {
       position: absolute;
       z-index: 5;
-    }
-
-    .viewer-hint-overlay {
       transition: opacity .3s ease, visibility .3s ease;
     }
 
@@ -296,29 +276,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-    }
-
-    .viewer-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 10000;
-      display: none;
-      justify-content: center;
-    }
-
-    .viewer-modal-container {
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .viewer-modal-body {
-      flex: 1;
-    }
-
-    .viewer-modal-body img {
-      width: 100%;
-      height: 100%;
     }
 
     :root {
@@ -461,10 +418,16 @@
     .section-title {
       color: inherit;
       font-family: var(--display);
-      font-size: clamp(45px, 6vw, 82px);
+      font-size: clamp(40px, 5.2vw, 68px);
       font-weight: 400;
       letter-spacing: .025em;
-      line-height: .93;
+      line-height: 1.06;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+
+    .section-title span {
+      display: inline-block;
     }
 
     .section-desc {
@@ -596,16 +559,6 @@
         linear-gradient(180deg, rgba(3, 5, 8, .18), transparent 35%);
     }
 
-    .hero::after {
-      position: absolute;
-      right: max(24px, calc((100vw - var(--page)) / 2));
-      bottom: 52px;
-      z-index: 2;
-      width: 1px;
-      height: 124px;
-      content: '';
-      background: linear-gradient(to bottom, var(--red) 0 33%, #eee 33% 66%, var(--blue-bright) 66%);
-    }
 
     .hero-bg-media {
       inset: 72px 0 0;
@@ -626,7 +579,7 @@
       z-index: 1;
       display: flex;
       align-items: center;
-      padding: clamp(82px, 11vh, 132px) 0 150px;
+      padding: clamp(41px, 5.5vh, 66px) 0 150px;
     }
 
     .hero-content {
@@ -742,6 +695,7 @@
     .shop-btn {
       position: relative;
       justify-content: center;
+      gap: 10px;
       min-height: 52px;
       padding: 0 22px;
       border-radius: 2px;
@@ -850,10 +804,13 @@
     }
 
     .story-track::before {
+      position: absolute;
       top: 0;
       bottom: 0;
       left: clamp(104px, 13vw, 170px);
+      z-index: 1;
       width: 1px;
+      content: '';
       background: rgba(8, 9, 11, .22);
     }
 
@@ -1022,7 +979,7 @@
     }
 
     .viewer-canvas-box {
-      min-height: 520px;
+      min-height: 640px;
       background: #f7f7f4;
     }
 
@@ -1043,7 +1000,7 @@
     .viewer-canvas-box img {
       width: 100%;
       height: 100%;
-      min-height: 520px;
+      min-height: 640px;
       object-fit: contain;
       transform: scale(1);
       transition: transform .18s ease;
@@ -1055,22 +1012,6 @@
 
     .viewer-canvas-box.is-dragging img {
       transform: scale(1.01);
-    }
-
-    .viewer-expand-btn {
-      top: 18px;
-      right: 18px;
-      gap: 7px;
-      padding: 9px 11px;
-      border: 1px solid rgba(8, 9, 11, .2);
-      border-radius: 2px;
-      background: rgba(250, 250, 247, .86);
-      color: var(--ink);
-      font-family: var(--sans);
-      font-size: 8px;
-      font-weight: 800;
-      letter-spacing: .08em;
-      backdrop-filter: blur(8px);
     }
 
     .viewer-hint-overlay {
@@ -1430,14 +1371,20 @@
     }
 
     .teaser-title {
-      max-width: 760px;
+      max-width: 820px;
       margin-bottom: 22px;
       color: #fff;
       font-family: var(--display);
-      font-size: clamp(52px, 7.5vw, 96px);
+      font-size: clamp(40px, 5.5vw, 76px);
       font-weight: 400;
       letter-spacing: .02em;
-      line-height: .94;
+      line-height: 1.08;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+
+    .teaser-title span {
+      display: inline-block;
     }
 
     .teaser-desc {
@@ -1643,94 +1590,6 @@
       text-align: center;
     }
 
-    .viewer-modal {
-      width: min(calc(100vw - 32px), 1220px);
-      max-width: none;
-      max-height: none;
-      margin: auto;
-      padding: 20px;
-      border: 0;
-      background: transparent;
-      overflow: visible;
-      color: var(--ink);
-    }
-
-    .viewer-modal[open] {
-      display: flex;
-      align-items: center;
-    }
-
-    .viewer-modal::backdrop {
-      background: rgba(3, 4, 6, .82);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-
-    .viewer-modal-container {
-      width: 100%;
-      max-width: 1180px;
-      max-height: calc(100svh - 40px);
-      border: 1px solid rgba(255, 255, 255, .2);
-      background: #f5f5f1;
-      box-shadow: 0 40px 100px rgba(0, 0, 0, .62);
-    }
-
-    .viewer-modal-header {
-      min-height: 58px;
-      padding: 0 18px;
-      border-bottom: 1px solid rgba(8, 9, 11, .14);
-      background: #ecece8;
-    }
-
-    .viewer-modal-title {
-      color: var(--ink);
-      font-family: var(--sans);
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: .08em;
-    }
-
-    .viewer-modal-close {
-      width: 34px;
-      height: 34px;
-      border: 1px solid rgba(8, 9, 11, .2);
-      border-radius: 50%;
-      background: transparent;
-      color: var(--ink);
-    }
-
-    .viewer-modal-close:hover {
-      border-color: var(--ink);
-      background: var(--ink);
-      color: #fff;
-    }
-
-    .viewer-modal-body {
-      min-height: 0;
-      background: #f5f5f1;
-    }
-
-    .viewer-modal-body img {
-      max-height: calc(100svh - 158px);
-      object-fit: contain;
-      transform: scale(1);
-    }
-
-    .viewer-modal-hint {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      padding: 7px 10px;
-      border-radius: 2px;
-      background: var(--ink);
-      color: #fff;
-      font-family: var(--sans);
-      font-size: 8px;
-      letter-spacing: .07em;
-      pointer-events: none;
-      transform: translateX(-50%);
-    }
-
     @media (max-width: 980px) {
       .nav-anchor { display: none; }
       .hero { min-height: 860px; }
@@ -1748,7 +1607,7 @@
       .spec-box:nth-child(-n+2) { border-bottom: 1px solid var(--line-dark); }
       .shop-card { grid-template-columns: .9fr 1.1fr; }
       .viewer-canvas-box,
-      .viewer-canvas-box img { min-height: 430px; }
+      .viewer-canvas-box img { min-height: 540px; }
     }
 
     @media (max-width: 720px) {
@@ -1760,7 +1619,7 @@
         margin-bottom: 46px;
       }
       .section-desc { grid-column: 1; }
-      .section-title { font-size: clamp(44px, 14vw, 68px); }
+      .section-title { font-size: clamp(34px, 10vw, 56px); line-height: 1.1; }
       .nav-inner { height: 64px; }
       .nav-header .container { width: calc(100% - 24px); }
       .nav-logo { width: 34px; height: 34px; }
@@ -1770,7 +1629,7 @@
       .nav-links { gap: 8px; }
       .btn-yt-nav { padding: 8px 10px; }
       .hero {
-        min-height: 900px;
+        min-height: 800px;
         padding-top: 64px;
       }
       .hero-bg-media { inset: 64px 0 0; background-position: 62% center; }
@@ -1783,7 +1642,7 @@
       .hero > .container {
         align-items: flex-end;
         width: 100%;
-        padding: 94px 16px 138px;
+        padding: 47px 16px 138px;
       }
       .hero-content { width: 100%; min-width: 0; }
       .hero-brand-header { align-items: flex-start; flex-direction: column; margin-bottom: 26px; }
@@ -1822,10 +1681,8 @@
       .machine-name { font-size: clamp(56px, 18vw, 82px); }
       .machine-sub { font-size: 8px; letter-spacing: .18em; }
       .viewer-canvas-box,
-      .viewer-canvas-box img { min-height: 280px; }
+      .viewer-canvas-box img { min-height: 380px; }
       .viewer-canvas-box::before { top: 14px; left: 14px; font-size: 7px; }
-      .viewer-expand-btn { top: 10px; right: 10px; }
-      .viewer-expand-btn span { display: none; }
       .viewer-hint-badge { bottom: 15px; white-space: nowrap; }
       .viewer-controls { padding: 0 10px; }
       .viewer-btn { padding: 7px; }
@@ -1854,7 +1711,7 @@
       .theme-box { min-height: 240px; }
       .theme-icon { margin-bottom: 36px; }
       .teaser-card { padding-left: 24px; }
-      .teaser-title { font-size: clamp(50px, 16vw, 76px); }
+      .teaser-title { font-size: clamp(34px, 10vw, 54px); line-height: 1.1; }
       .ride-log { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ride-log > div:nth-child(2) { border-right: 0; }
       .ride-log > div:nth-child(-n+2) { border-bottom: 1px solid rgba(255, 255, 255, .16); }
@@ -1862,9 +1719,6 @@
       .footer-inner { align-items: flex-start; flex-direction: column; }
       .footer-links { align-items: flex-start; }
       .footer-copy { align-items: center; gap: 10px; flex-direction: column; }
-      .viewer-modal { padding: 8px; }
-      .viewer-modal-container { max-height: calc(100svh - 16px); }
-      .viewer-modal-title > span:last-child { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1895,7 +1749,7 @@
       <div class="nav-links">
         <a href="#story" class="nav-anchor" data-nav-section="story">Origin</a>
         <a href="#machine" class="nav-anchor" data-nav-section="machine">Machine</a>
-        <a href="#themes" class="nav-anchor" data-nav-section="themes">Journal</a>
+        <a href="#themes" class="nav-anchor" data-nav-section="themes">Themes</a>
         <a href="#channel" class="nav-anchor" data-nav-section="channel">Channel</a>
         <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
           class="btn-yt-nav" data-channel-subscribe>
@@ -1982,7 +1836,7 @@
     <div class="container">
       <div class="section-header">
         <span class="section-tag">The Narrative</span>
-        <h2 class="section-title">発信の経緯と再生の軌跡</h2>
+        <h2 class="section-title"><span>発信の経緯と</span><span>再生の軌跡</span></h2>
         <p class="section-desc">
           映画への憧れから始まったバイクライフは、死線をさまよう事故を経て、生きることそのものを深く愛する哲学へと昇華しました。
         </p>
@@ -2069,23 +1923,10 @@
             <div class="viewer-canvas-box" id="bikeCanvasBox" tabindex="0"
               role="group" aria-roledescription="360度ビューワー"
               aria-label="車両を360度で見る。左右矢印キーまたはドラッグで回転"
-              aria-describedby="viewerInstructions" title="クリックして大画面で拡大表示">
+              aria-describedby="viewerInstructions">
               <img id="bike360Img" src="../images/contents/liberty-edition/liberty-edition_01.webp"
                 alt="ハーレーダビッドソン 2026 ヘリテイジ クラシック リバティ エディション 360度ビュー（アメリカ建国250周年記念・日本限定39台）" width="1200" height="720"
                 loading="lazy" decoding="async" draggable="false">
-
-              <!-- Expand / Fullscreen Button -->
-              <button type="button" class="viewer-expand-btn" id="viewerExpandBtn" aria-label="全画面で拡大表示"
-                title="クリックして大画面で拡大表示">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <polyline points="9 21 3 21 3 15"></polyline>
-                  <line x1="21" y1="3" x2="14" y2="10"></line>
-                  <line x1="3" y1="21" x2="10" y2="14"></line>
-                </svg>
-                <span>拡大表示</span>
-              </button>
 
               <!-- 360 Hint Overlay -->
               <div class="viewer-hint-overlay" id="viewerHint">
@@ -2100,7 +1941,7 @@
               <p class="viewer-status" id="viewerStatus" role="status" aria-live="polite"></p>
             </div>
 
-            <p class="sr-only" id="viewerInstructions">左右矢印キーで1フレーム、HomeキーとEndキーで先頭と最後へ移動します。Enterキーで拡大表示します。</p>
+            <p class="sr-only" id="viewerInstructions">左右矢印キーで1フレーム、HomeキーとEndキーで先頭と最後へ移動します。</p>
             <p class="sr-only" id="viewerA11yStatus" aria-live="polite" aria-atomic="true"></p>
 
             <!-- Viewer Control Bar -->
@@ -2198,7 +2039,7 @@
   <section class="section" id="themes">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Pillars</span>
+        <span class="section-tag">Themes</span>
         <h2 class="section-title">発信の4大テーマ</h2>
         <p class="section-desc">
           ただ走るだけではない。事故を越えたからこそ伝えられる、景色と生の尊さ。
@@ -2235,7 +2076,7 @@
     <div class="container">
       <div class="teaser-card">
         <span class="teaser-status" data-channel-status>第1弾動画 鋭意制作中 / IN PRODUCTION</span>
-        <h2 class="teaser-title" data-channel-title>YouTube チャンネルにて始動準備中</h2>
+        <h2 class="teaser-title" data-channel-title><span>YouTube チャンネルにて</span><br><span>始動準備中</span></h2>
         <p class="teaser-desc" data-channel-description>
           『LIBERTY MOTOVLOG』は現在、第1弾動画の撮影・編集を進めております。<br>
           建国250周年限定モデルの走り出しの通知を受け取れるよう、ぜひチャンネル登録をしてお待ちください！
@@ -2310,50 +2151,6 @@
     </div>
   </footer>
 
-  <!-- 360° Fullscreen Zoom Modal -->
-  <dialog class="viewer-modal" id="viewerModal" aria-labelledby="viewerModalTitle">
-    <div class="viewer-modal-container">
-      <div class="viewer-modal-header">
-        <div class="viewer-modal-title" id="viewerModalTitle">
-          <span class="badge-250th">★ UNITED STATES 250</span>
-          <span>HERITAGE CLASSIC LIBERTY EDITION (360° ZOOM)</span>
-        </div>
-        <button type="button" class="viewer-modal-close" id="modalCloseBtn" aria-label="閉じる" title="閉じる (Esc)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="viewer-modal-body" id="modalCanvasBox" tabindex="0"
-        role="group" aria-roledescription="拡大360度ビューワー"
-        aria-label="車両を拡大して360度で見る。左右矢印キーまたはドラッグで回転"
-        title="ドラッグまたはスワイプで回転">
-        <img id="modal360Img" alt="ハーレーダビッドソン 2026 リバティエディション 拡大360度ビュー"
-          width="1200" height="720" decoding="async" draggable="false">
-        <div class="viewer-modal-hint">ドラッグまたはスワイプで360度回転</div>
-        <p class="viewer-status" id="modalViewerStatus" role="status" aria-live="polite"></p>
-        <p class="sr-only" id="modalViewerA11yStatus" aria-live="polite" aria-atomic="true"></p>
-      </div>
-
-      <div class="viewer-controls">
-        <button type="button" class="viewer-btn" id="modalAutoBtn" aria-label="自動回転切り替え" aria-pressed="false">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" id="modalAutoIcon">
-            <polygon points="5 3 19 12 5 21 5 3" />
-          </svg>
-          <span id="modalAutoText">AUTO ROTATE</span>
-        </button>
-        <div class="viewer-slider-wrap">
-          <input type="range" id="modalRange" min="0" max="28" value="0" step="1" aria-label="回転角度スライダー"
-            class="viewer-slider">
-        </div>
-        <span class="viewer-frame-counter" id="modalCounter">1 / 29</span>
-      </div>
-    </div>
-  </dialog>
-
   <!-- Channel Experience & 360° Viewer -->
   <script>
     (function initChannelExperience() {
@@ -2379,10 +2176,13 @@
 
       if (hasVideo) {
         const videoUrl = 'https://www.youtube.com/watch?v=' + encodeURIComponent(video.id);
+        const playSvgPath = 'M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z';
         document.querySelectorAll('[data-channel-primary]').forEach(link => {
           link.href = videoUrl;
           const label = link.querySelector('span:last-child');
           if (label) label.textContent = '最新動画を見る';
+          const iconPath = link.querySelector('svg path');
+          if (iconPath) iconPath.setAttribute('d', playSvgPath);
         });
 
         const title = document.querySelector('[data-channel-title]');
@@ -2487,21 +2287,13 @@
       const hint = document.getElementById('viewerHint');
       const status = document.getElementById('viewerStatus');
       const liveStatus = document.getElementById('viewerA11yStatus');
-      const expand = document.getElementById('viewerExpandBtn');
-      const dialog = document.getElementById('viewerModal');
-      const modalCanvas = document.getElementById('modalCanvasBox');
-      const modalImage = document.getElementById('modal360Img');
-      const modalStatus = document.getElementById('modalViewerStatus');
-      const modalLiveStatus = document.getElementById('modalViewerA11yStatus');
-      const closeButton = document.getElementById('modalCloseBtn');
-      if (!image || !canvas || !dialog) return;
+      if (!image || !canvas) return;
 
-      const sliders = [document.getElementById('viewerRange'), document.getElementById('modalRange')].filter(Boolean);
-      const counters = [document.getElementById('viewerCounter'), document.getElementById('modalCounter')].filter(Boolean);
-      const autoButtons = [document.getElementById('viewerAutoBtn'), document.getElementById('modalAutoBtn')].filter(Boolean);
-      const autoTexts = [document.getElementById('autoBtnText'), document.getElementById('modalAutoText')].filter(Boolean);
-      const autoIcons = [document.getElementById('autoBtnIcon'), document.getElementById('modalAutoIcon')].filter(Boolean);
-      const statuses = [status, modalStatus].filter(Boolean);
+      const slider = document.getElementById('viewerRange');
+      const counter = document.getElementById('viewerCounter');
+      const autoButton = document.getElementById('viewerAutoBtn');
+      const autoText = document.getElementById('autoBtnText');
+      const autoIcon = document.getElementById('autoBtnIcon');
       const cache = new Map();
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       let current = 0;
@@ -2510,22 +2302,18 @@
       let autoFrame = null;
       let lastAutoTime = 0;
       let interacted = false;
-      let previousFocus = null;
-      let previousOverflow = '';
 
       const normalize = index => ((index % TOTAL_FRAMES) + TOTAL_FRAMES) % TOTAL_FRAMES;
       const circularDistance = (a, b) => Math.min(normalize(a - b), normalize(b - a));
-      const showError = target => {
-        if (!target) return;
-        target.textContent = '画像を読み込めませんでした。通信環境を確認して再度お試しください。';
-        target.classList.add('is-visible');
+      const showError = () => {
+        if (!status) return;
+        status.textContent = '画像を読み込めませんでした。通信環境を確認して再度お試しください。';
+        status.classList.add('is-visible');
       };
-      const clearError = target => {
-        const targets = target ? [target] : statuses;
-        targets.forEach(element => {
-          element.textContent = '';
-          element.classList.remove('is-visible');
-        });
+      const clearError = () => {
+        if (!status) return;
+        status.textContent = '';
+        status.classList.remove('is-visible');
       };
       const preload = index => {
         const safe = normalize(index);
@@ -2534,7 +2322,7 @@
         preloadImage.decoding = 'async';
         preloadImage.addEventListener('error', () => {
           if (cache.get(safe) === preloadImage) cache.delete(safe);
-          if (safe === current) showError(dialog.open ? modalStatus : status);
+          if (safe === current) showError();
         }, { once: true });
         preloadImage.src = paths[safe];
         cache.set(safe, preloadImage);
@@ -2562,24 +2350,15 @@
         clearError();
         if (preloadingEnabled) preloadNearby(current);
         image.src = paths[current];
-        if (dialog.open && modalImage) modalImage.src = paths[current];
-        sliders.forEach(slider => {
-          if (document.activeElement !== slider) slider.value = current;
-        });
-        const text = (current + 1) + ' / ' + TOTAL_FRAMES;
-        counters.forEach(counter => { counter.textContent = text; });
-        const activeLiveStatus = dialog.open ? modalLiveStatus : liveStatus;
-        if (announce && activeLiveStatus) {
-          activeLiveStatus.textContent = '全' + TOTAL_FRAMES + 'フレーム中' + (current + 1) + 'フレーム目';
+        if (slider && document.activeElement !== slider) slider.value = current;
+        if (counter) counter.textContent = (current + 1) + ' / ' + TOTAL_FRAMES;
+        if (announce && liveStatus) {
+          liveStatus.textContent = '全' + TOTAL_FRAMES + 'フレーム中' + (current + 1) + 'フレーム目';
         }
       }
 
-      image.addEventListener('load', () => clearError(status));
-      image.addEventListener('error', () => showError(status));
-      if (modalImage) {
-        modalImage.addEventListener('load', () => clearError(modalStatus));
-        modalImage.addEventListener('error', () => showError(modalStatus));
-      }
+      image.addEventListener('load', clearError);
+      image.addEventListener('error', showError);
 
       if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver(entries => {
@@ -2592,48 +2371,14 @@
         startPreloading();
       }
 
-      function openDialog() {
-        if (dialog.open) return;
-        previousFocus = document.activeElement;
-        previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        startPreloading();
-        if (modalImage) modalImage.src = paths[current];
-        dialog.showModal();
-        requestAnimationFrame(() => (modalCanvas || closeButton).focus({ preventScroll: true }));
-      }
-
-      function closeDialog() {
-        if (dialog.open) dialog.close();
-      }
-
-      dialog.addEventListener('close', () => {
-        document.body.style.overflow = previousOverflow;
-        if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
-        previousFocus = null;
-      });
-      dialog.addEventListener('cancel', event => {
-        event.preventDefault();
-        closeDialog();
-      });
-      dialog.addEventListener('click', event => {
-        if (event.target === dialog) closeDialog();
-      });
-      if (expand) expand.addEventListener('click', event => {
-        event.stopPropagation();
-        openDialog();
-      });
-      if (closeButton) closeButton.addEventListener('click', closeDialog);
-
       function stopAuto() {
         if (autoFrame !== null) cancelAnimationFrame(autoFrame);
         autoFrame = null;
-        autoButtons.forEach(button => {
-          button.classList.remove('active');
-          button.setAttribute('aria-pressed', 'false');
-        });
-        autoTexts.forEach(text => { text.textContent = 'AUTO ROTATE'; });
-        autoIcons.forEach(icon => { icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>'; });
+        if (!autoButton) return;
+        autoButton.classList.remove('active');
+        autoButton.setAttribute('aria-pressed', 'false');
+        if (autoText) autoText.textContent = 'AUTO ROTATE';
+        if (autoIcon) autoIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
       }
 
       function autoStep(time) {
@@ -2650,101 +2395,81 @@
         startPreloading();
         hideHint();
         lastAutoTime = performance.now();
-        autoButtons.forEach(button => {
-          button.classList.add('active');
-          button.setAttribute('aria-pressed', 'true');
-        });
-        autoTexts.forEach(text => { text.textContent = 'PAUSE'; });
-        autoIcons.forEach(icon => {
-          icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-        });
+        if (autoButton) {
+          autoButton.classList.add('active');
+          autoButton.setAttribute('aria-pressed', 'true');
+        }
+        if (autoText) autoText.textContent = 'PAUSE';
+        if (autoIcon) autoIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
         autoFrame = requestAnimationFrame(autoStep);
       }
 
       function applyMotionPreference() {
         const motionOff = reducedMotion.matches;
         if (motionOff) stopAuto();
-        autoButtons.forEach(button => {
-          button.disabled = motionOff;
-          button.title = motionOff
+        if (autoButton) {
+          autoButton.disabled = motionOff;
+          autoButton.title = motionOff
             ? '端末の「視差効果を減らす」設定により自動回転は停止しています'
             : '自動回転を切り替える';
-        });
-        if (motionOff) autoTexts.forEach(text => { text.textContent = 'MOTION OFF'; });
-        else if (autoFrame === null) autoTexts.forEach(text => { text.textContent = 'AUTO ROTATE'; });
+        }
+        if (motionOff && autoText) autoText.textContent = 'MOTION OFF';
+        else if (autoFrame === null && autoText) autoText.textContent = 'AUTO ROTATE';
       }
 
-      autoButtons.forEach(button => button.addEventListener('click', () => {
+      if (autoButton) autoButton.addEventListener('click', () => {
         if (autoFrame === null) startAuto();
         else stopAuto();
-      }));
+      });
       applyMotionPreference();
       if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', applyMotionPreference);
       else if (reducedMotion.addListener) reducedMotion.addListener(applyMotionPreference);
 
-      function endPointer(event, cancelled = false) {
+      function endPointer(event) {
         if (!pointer || pointer.id !== event.pointerId) return;
-        const state = pointer;
         pointer = null;
-        state.element.classList.remove('is-dragging');
-        if (state.element.hasPointerCapture(event.pointerId)) state.element.releasePointerCapture(event.pointerId);
-        if (!cancelled && !state.modal && state.distance < 6) openDialog();
+        canvas.classList.remove('is-dragging');
+        if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
       }
 
-      function bindControls(element, isModal) {
-        if (!element) return;
-        element.addEventListener('pointerdown', event => {
-          if (event.pointerType === 'mouse' && event.button !== 0) return;
-          if (event.target instanceof Element && event.target.closest('button')) return;
-          element.focus({ preventScroll: true });
-          element.setPointerCapture(event.pointerId);
-          pointer = {
-            element, modal: isModal, id: event.pointerId,
-            startX: event.clientX, startY: event.clientY,
-            startFrame: current, distance: 0
-          };
-          element.classList.add('is-dragging');
-          startPreloading();
-          hideHint();
-          stopAuto();
-        });
-        element.addEventListener('pointermove', event => {
-          if (!pointer || pointer.id !== event.pointerId) return;
-          const x = event.clientX - pointer.startX;
-          const y = event.clientY - pointer.startY;
-          pointer.distance = Math.hypot(x, y);
-          setFrame(pointer.startFrame + Math.round(x / PX_PER_FRAME));
-        });
-        element.addEventListener('pointerup', event => endPointer(event));
-        element.addEventListener('pointercancel', event => endPointer(event, true));
-        element.addEventListener('keydown', event => {
-          let next = null;
-          if (event.key === 'ArrowLeft') next = current - 1;
-          else if (event.key === 'ArrowRight') next = current + 1;
-          else if (event.key === 'Home') next = 0;
-          else if (event.key === 'End') next = TOTAL_FRAMES - 1;
-          else if (!isModal && (event.key === 'Enter' || event.key === ' ')) {
-            event.preventDefault();
-            openDialog();
-            return;
-          }
-          if (next === null) return;
-          event.preventDefault();
-          startPreloading();
-          hideHint();
-          stopAuto();
-          setFrame(next, true);
-        });
-      }
+      canvas.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        if (event.target instanceof Element && event.target.closest('button')) return;
+        canvas.focus({ preventScroll: true });
+        canvas.setPointerCapture(event.pointerId);
+        pointer = { id: event.pointerId, startX: event.clientX, startFrame: current };
+        canvas.classList.add('is-dragging');
+        startPreloading();
+        hideHint();
+        stopAuto();
+      });
+      canvas.addEventListener('pointermove', event => {
+        if (!pointer || pointer.id !== event.pointerId) return;
+        const x = event.clientX - pointer.startX;
+        setFrame(pointer.startFrame + Math.round(x / PX_PER_FRAME));
+      });
+      canvas.addEventListener('pointerup', endPointer);
+      canvas.addEventListener('pointercancel', endPointer);
+      canvas.addEventListener('keydown', event => {
+        let next = null;
+        if (event.key === 'ArrowLeft') next = current - 1;
+        else if (event.key === 'ArrowRight') next = current + 1;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = TOTAL_FRAMES - 1;
+        if (next === null) return;
+        event.preventDefault();
+        startPreloading();
+        hideHint();
+        stopAuto();
+        setFrame(next, true);
+      });
 
-      bindControls(canvas, false);
-      bindControls(modalCanvas, true);
-      sliders.forEach(slider => slider.addEventListener('input', () => {
+      if (slider) slider.addEventListener('input', () => {
         startPreloading();
         hideHint();
         stopAuto();
         setFrame(Number.parseInt(slider.value, 10), true);
-      }));
+      });
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) stopAuto();
       });
