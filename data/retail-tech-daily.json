@@ -1,5 +1,185 @@
 [
   {
+    "date": "20260916",
+    "title": "2026年9月16日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "国内の焦点はニトリHDの基幹システムOCI移行。需要予測処理が約4分の1、日次バッチが始業前に完了し、競争軸が「処理速度」から「データ鮮度＝当日の意思決定」へ移ったことを象徴する。 リテールメディアはアークランズの「ARUTANA」参画でホームセンター領域へ拡張。リーチ数ではなく購買文脈の解像度をどう広告価値に変えるかが次の争点になる。",
+    "count": 9,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "国内の焦点はニトリHDの基幹システムOCI移行。需要予測処理が約4分の1、日次バッチが始業前に完了し、競争軸が「処理速度」から「データ鮮度＝当日の意思決定」へ移ったことを象徴する。",
+      "リテールメディアはアークランズの「ARUTANA」参画でホームセンター領域へ拡張。リーチ数ではなく購買文脈の解像度をどう広告価値に変えるかが次の争点になる。",
+      "店舗の省人化はレジ周辺から資源回収・落とし物対応など付帯業務へ波及。SNSではセルフレジ監視業務の実態をめぐる議論が拡大し、海外ではAI疲れによる有人チャネル再評価と食品小売のカテゴリーマネジメント改革が進む。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ニトリHD、基幹システムをOCIへ移行——需要予測処理は4分の1、日次バッチは始業前に完了",
+        "original_title": "",
+        "source": "LOGISTICS TODAY",
+        "source_id": "JP-08",
+        "summary": "ニトリホールディングスが、店舗販売や配送業務を支える基幹システムをOracle Cloud Infrastructureへ移行した。処理性能は最大4倍に向上し、需要予測処理の所要時間は約4分の1に短縮。従来は夜間から早朝に及んでいた日次バッチが始業前に完了するようになり、店舗と物流の現場が最新の需給データを当日の業務開始時点で使える体制へ転換した。",
+        "why_it_matters": "基幹刷新の主眼はコスト削減よりも「データの鮮度」にある。需要予測の高速化は発注精度・欠品率・在庫回転に直結し、バッチの前倒しは現場の判断を前日データから当日データへ変える。処理速度と業務締め時刻の改善は、小売DXの投資対効果を測る標準的な評価軸になっていく。",
+        "tags": [
+          "基幹システム",
+          "クラウド移行",
+          "AI需要予測",
+          "在庫最適化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiSkFVX3lxTE5VMnlqNWFjNk10VTJWYWVHRlBIRzJVNTVId2tHU1picXk3UzlIcXV5dERPbUJHOTMyRlQ3c2pOYVV5QXNsMWFRM0xn?oc=5",
+        "source_pub_ts": 1789456616
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "アークランズ、リテールメディア基盤「ARUTANA」に参画——ホームセンターの購買データを広告資産化",
+        "original_title": "",
+        "source": "時事ドットコム",
+        "source_id": "JP-12",
+        "summary": "ビバホームやムサシを展開するアークランズが、小売事業者の購買データを活用したリテールメディアプラットフォーム「ARUTANA」に参画した。DIY・園芸・住設といった専門性の高い購買シグナルを広告在庫として開放し、メーカーやブランドの販促接点を拡張する。食品スーパーやドラッグストア中心だった国内リテールメディア市場に、新たな業態カテゴリが加わる形だ。",
+        "why_it_matters": "リテールメディアの競争軸はリーチ数から購買文脈の解像度へ移りつつある。ホームセンターのデータは買い替え周期が長く、検討期間中の潜在ニーズを捉えやすい。住設・リフォームなど高単価商材の送客まで設計できれば、物販粗利を補う収益柱になり得る。",
+        "tags": [
+          "リテールメディア",
+          "購買データ",
+          "ホームセンター",
+          "広告在庫"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5RS3FtbmNydEsyd3F3ekJrRWllUUZTdXpMbnlndWF4QjB6Ym5TYmZpanNfa2twYmN2czJFV1Fsbkt6dWxEN1pGdlphU2E2eWVuOUthQWVocC1lSnk2RUlVTW52S1c4bWNaMnpn?oc=5",
+        "source_pub_ts": 1789449300
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "カインズ、資源回収の無人受付を実証——AI判定と遠隔カメラで店舗負荷を削減",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-24",
+        "summary": "カインズが資源回収業務にDXを導入し、AIによる品目判定と遠隔カメラを組み合わせた無人受付の運用を始めた。来店客が持ち込む資源物をその場で判別し、スタッフが常時対応しなくても受付が成立する仕組みで、回収業務に張り付く人員を販売業務へ戻す狙い。人手不足が続く店舗運営において、付帯業務の自動化を進める事例となる。",
+        "why_it_matters": "小売の省人化はレジや接客だけでなく、資源回収・返品・品出しなど「見えにくい付帯業務」へ広がっている。AI判定と遠隔監視の組み合わせは、無人化と不正防止を両立させる現実的な設計だ。店舗生産性の単位が「レジ通過人数」から「スタッフの稼働配分」へ移る転換点といえる。",
+        "tags": [
+          "店舗DX",
+          "AI判定",
+          "無人化",
+          "省人化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1jYzBNU3JvUTFTWXJEMHEzRlVqb1huSTlrS0JBLUEwNk1QTV95UmUyM1l1RHJDa3ZPT2FvSnduRkwyXzVVUkZhYmozbWZZZl9YeDktN1AtbFY?oc=5",
+        "source_pub_ts": 1789438620
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "セブンイレブン、「7NOW」に予約機能——受け取り時間を選べる購買体験へ",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-25",
+        "summary": "セブン‐イレブン・ジャパンが配送アプリ「7NOW」に予約機能を搭載した。商品の受け取り・配達タイミングを来店前に指定できるようになり、昼休みや帰宅時間など生活シーンに合わせた購買が可能になる。コンビニの即時性を保ちつつ、計画購買やまとめ買いを取り込むことで、アプリ経由の顧客接点と客単価の底上げを狙う。",
+        "why_it_matters": "即時配送の競争が一巡した今、焦点は「いつ買うか」を顧客が設計できるかにある。予約機能は欠品や待ち時間という体験上の摩擦を減らし、アプリを購買計画の入口に変える。時間帯需要を先読みできる点は、発注やシフト最適化のデータ基盤としても価値が大きい。",
+        "tags": [
+          "アプリ",
+          "予約購買",
+          "ラストワンマイル",
+          "顧客接点"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE55WmZmc1o1d1NBMThpXzhIWTVCRlZsZFFOLTc5QkhkWTNYcG9oM0V5Rk9XSHhWMkVRWl83aldabzdzcVlCRXg3V2ZkeF9wUFdR?oc=5",
+        "source_pub_ts": 1789437720
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "パルコ、池袋・渋谷店に「落とし物クラウドfind」——施設横断検索で問い合わせ対応を効率化",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-31",
+        "summary": "パルコが池袋店と渋谷店に落とし物管理クラウド「find」を導入した。拾得物の情報をデジタルで一元管理し、複数施設をまたいだ横断検索が可能になることで、電話や窓口での照会対応にかかる時間を削減する。館内の顧客サービス業務をデータ化し、スタッフの作業負荷と顧客の待ち時間を同時に圧縮する取り組みだ。",
+        "why_it_matters": "落とし物対応は売上に直結しないが、顧客満足とスタッフ工数を大きく左右する「静かなコスト」だ。横断検索は複数館を運営するほど効果が大きく、商業施設の共通インフラになり得る。バックヤード業務のクラウド化は、人手不足下で顧客対応品質を守る現実解となる。",
+        "tags": [
+          "店舗DX",
+          "バックヤード",
+          "クラウド",
+          "顧客サービス"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1PQlMxeFZMUUx5VWNQWFdwSk9wNi1pbG9lNnlGcmVhcFJZOUpwWmZZM05scnVWNy1nUjVtRzE2N3ZqUzZHRHVTdFdSUy04ZGh2?oc=5",
+        "source_pub_ts": 1789434000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「セルフレジを見守る店員は暇そう」に反論続出——現場の実態がSNSで話題",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-33",
+        "summary": "セルフレジの監視業務にあたる店員について「暇そうに見える」という見方に対し、実際はエラー対応や年齢確認、不正防止、複数台の同時監視で想像以上に忙しいという現場の声がSNSで広がった。まとめ漫画をきっかけに利用客と店員の認識のズレが可視化され、セルフレジ運用の難しさと人員配置の課題をめぐる議論に発展している。",
+        "why_it_matters": "セルフレジは「人を減らす装置」ではなく、監視や例外処理という新たな負荷を生む装置でもある。生活者の認知と現場実態のギャップは、セルフレジ投資の評価を誤らせる要因になる。遠隔監視やAIによる例外検知への投資判断は、こうした現場の声を起点に設計されるべきだ。",
+        "tags": [
+          "セルフレジ",
+          "SNS反響",
+          "店舗オペレーション",
+          "人手不足"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE82azNXQ0VoRTBlNXRZRXhZaGVEYVhPVklPZmQyRW51NlFiWG5CSUlIWVlQOW9DaURpTWVRSHRVWXN3MGZCakJHSngzRXo2Z1p0QUF4Wmx30gFbQVVfeXFMT25tOTloWFVhZVE0dlJvcDgwNTJiVVJFVTV5SUZtM2lLeHhlVEZPNTN3MHJXSGp2U0JldUNTb2c2S1BLRFR1ckRPV08yN3NFakZQOU1zV1VDLWVqQQ?oc=5",
+        "source_pub_ts": 1789426373
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "AI疲れでカスタマーサービスの電話窓口が見直しへ——ブランドが人的チャネルを再評価",
+        "original_title": "Brands Briefing: Customer-service phone lines are getting a second look thanks to AI fatigue",
+        "source": "modernretail.co",
+        "source_id": "GL-03",
+        "summary": "米国ではAIチャットボットによる顧客対応が広がる一方、解決に至らない問い合わせへの「AI疲れ」が顕在化し、ブランドが見直しを進めている。オペレーターによる電話窓口を再評価し、チャットで完結しない複雑な相談を人へつなぐ体制を再構築する動きが報じられた。自動化一辺倒ではなく、有人チャネルをどう残すかが論点になっている。",
+        "why_it_matters": "顧客体験の自動化は「コスト削減」と「解決率」のトレードオフが本質だ。AIで一次対応を担いつつ、有人へシームレスに接続できるかが競争力を分ける。小売の有人レジとセルフレジのハイブリッドと同じ論点であり、チャネル設計の巧拙が離反率に直結する。",
+        "tags": [
+          "カスタマーサービス",
+          "AI活用",
+          "有人チャネル",
+          "顧客体験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxPNW9zNno3dk1CdUZWYmxnSG9lY1JadWYxV1RqWWQ5bDFyNC1FUnN0WG51Ry1QVWpPQmMtRm5wVk84VlJERHRtQXVTU1hMMW5BYUt0d3VmV1ZCdE8tLWU5alVfWktmMmFQb1ZLZ0RqYzR4ZUxFcGcxVU55dE1BTEtvYzVpSmxkZTUxNUswTGd3dGxrSTh4ZFBzV1R0Rll1UWhXYkJ1VlQ1NnVvSnlDLTZiV1djanVFMHR3ZTNYU0h4OURNUGw4OWRVVWRB?oc=5",
+        "source_pub_ts": 1789488923
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "食品小売の数量減がカテゴリーマネジメント改革を促す——単価上昇の裏で買い上げ点数が低下",
+        "original_title": "Declining grocery volumes demand transformation of category management",
+        "source": "Grocery Dive",
+        "source_id": "GL-07",
+        "summary": "食品小売で購買数量の減少が続くなか、従来のカテゴリーマネジメント手法の刷新が求められている。値上げによる単価上昇が売上を下支えする一方、数量ベースでは顧客の買い上げ点数が減っており、価格・品揃え・棚割りの前提が崩れつつある。データ分析を軸に、カテゴリの役割定義や品目数の適正化を見直す動きが進む。",
+        "why_it_matters": "単価上昇で売上が維持されていても、数量減は来店頻度と買い上げ点数の低下を意味し、中長期の収益基盤を蝕む。購買データと需要予測を組み合わせ、どのカテゴリで客数を守り、どこで粗利を取るかを再設計する必要がある。棚と在庫の最適化は、その実行装置として重要性が増す。",
+        "tags": [
+          "カテゴリーマネジメント",
+          "購買データ",
+          "食品小売",
+          "価格戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPdkZUZVdfU0ZlY0ItaEdlVVVxMTJyRjBmby1ZTngyS1hmRjJTV3Q3VlJKZ0JPczJaMDlmYlowdjBMMjEtU2o5b3UyQWZWYUduS2dzVFhRaVA5ZjVPTE51MDJNMWNfbkI4ZERpS0xDRmptVHl0YkR2S25yVEs1X3V4T1ZvamYyZGdxUTJ4akVHMF9rWnVoLWc?oc=5",
+        "source_pub_ts": 1789483915
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "ベストバイ、過去最速でホリデーギフト特設を開設——商戦前倒しでEC接点を争奪",
+        "original_title": "Best Buy launches holiday gifting center earlier than ever",
+        "source": "Retail Dive",
+        "source_id": "GL-17",
+        "summary": "米ベストバイが、ホリデー商戦に向けたギフト特設ページを過去最も早い時期に開設した。商品提案やレビュー、在庫状況をウェブ上でまとめて提示し、検索・比較の段階から購買意欲の高い顧客を取り込む狙い。値引き頼みではなく、早期の接点確保と店舗受け取りを含むオムニチャネル導線の設計が焦点となる。",
+        "why_it_matters": "商戦の前倒しは在庫と物流の山を平準化し、値引き圧力を下げる効果がある。早期接点は購買データの蓄積期間を延ばし、リテールメディア在庫の価値も高める。日本でも年末商戦の立ち上がりとアプリ接点の設計が、粗利確保の分岐点になりつつある。",
+        "tags": [
+          "EC",
+          "オムニチャネル",
+          "年末商戦",
+          "リテールメディア"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQcXRNQk9HT1RUZWEwMXpUckE1U1VGSk5DNFR1TFBSQ194THVSSThaNENqX0pTU29HUWhNUFVIX1ZMVUIyaWtBQVN1bHlya0IwdFBpWFMzaVFGRDVVT09nSmdJUXE4aTJuNG5oX1dhMWtaWjlNY1phSF9uTkVsTnN3NFlJdw?oc=5",
+        "source_pub_ts": 1789398993
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260915",
     "title": "2026年9月15日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "国内では、イオンが有事を想定した新物流センターを開設し、店舗網を支える物流の冗長性と地域分散を強化した。 消費減税を巡る調査では、流通企業が短期間に複数回のシステム改修を迫られる懸念が浮上し、制度変更対応のITコストが焦点になった。",
