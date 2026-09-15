@@ -33,6 +33,20 @@ Web フォント（JetBrains Mono / Noto Sans JP）を Google Fonts から読む
 
 ツールを増やすときは `cards.js` に1エントリ足す。
 
+## ツール以外のページ
+
+SAFE TOOLS の棚に載らないページは、`cards.js` を通さず1ページ1スクリプトで
+持っている（`generate-job-ogp.js`、`generate-motovlog.js` など）。`cdp.js` は
+共有するが、カードの定義はそれぞれのファイルに閉じている。
+
+```bash
+node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP
+```
+
+カードの色・書体・グラデーションは `motovlog/index.html` のヒーローと同じ値を
+持ち、左肩のマークもページのナビと同じ `images/contents/motovlog-logo.webp` を
+読む。ページ側のデザインを変えたらスクリプトも合わせて直すこと。
+
 ## アクセントカラーはカテゴリで決まる
 
 `cat` は `data/tools.json` の `category` と一致していなければならず、
