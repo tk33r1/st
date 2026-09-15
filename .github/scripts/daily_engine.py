@@ -1829,8 +1829,8 @@ def render_top_index_html(config, articles_history):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="../../data/analytics.js" async></script>
-  <title>{config['media_name']} — {config['brand_subtitle']} | tk.st</title>
-  <meta name="description" content="{config['brand_desc']}">
+  <title>{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"}</title>
+  <meta name="description" content="{config.get('portal_seo_desc') or config['brand_desc']}">
   <meta name="author" content="Shinya Takeda">
   <meta name="robots" content="max-image-preview:large">
   <meta name="theme-color" content="{config['theme_color']}">
@@ -1839,8 +1839,8 @@ def render_top_index_html(config, articles_history):
   <link rel="author" href="https://tk.st/">
   <link rel="alternate" type="application/rss+xml" title="{config['media_name']} RSS" href="{base_url}rss.xml">
 
-  <meta property="og:title" content="{config['media_name']} — {config['brand_subtitle']} | tk.st">
-  <meta property="og:description" content="{config['brand_desc']}">
+  <meta property="og:title" content="{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"}">
+  <meta property="og:description" content="{config.get('portal_seo_desc') or config['brand_desc']}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{base_url}">
   <meta property="og:site_name" content="{config['media_name']} | tk.st">
@@ -1848,8 +1848,8 @@ def render_top_index_html(config, articles_history):
   <meta property="og:image" content="{config['portal_ogp_image']}">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{config['media_name']} — {config['brand_subtitle']} | tk.st">
-  <meta name="twitter:description" content="{config['brand_desc']}">
+  <meta name="twitter:title" content="{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"}">
+  <meta name="twitter:description" content="{config.get('portal_seo_desc') or config['brand_desc']}">
   <meta name="twitter:image" content="{config['portal_ogp_image']}">
 
   <link rel="icon" href="../../images/favicons/{config['favicon_file']}" type="image/svg+xml">
