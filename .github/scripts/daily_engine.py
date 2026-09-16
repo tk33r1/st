@@ -1374,7 +1374,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             {product_link}
             <div class="card-footer">
               <div class="card-actions">
-                <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}" title="共有先を選ぶ">{ICON_SHARE_SVG}<span>共有</span></button>
                 {source_link_html}
                 {correction_link}
