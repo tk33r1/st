@@ -1,5 +1,176 @@
 [
   {
+    "date": "20260917",
+    "title": "2026年9月17日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "リテールメディアが「枠の販売」から「行動変容の設計」へ——USEN MEDIA PROMOTIONとDearOneの提携、ロケットの店頭立体装飾、ウォルマートのScintilla AI強化など、購買データと店頭接点を統合する動きが国内外で同時に進んだ。 決済・レジ周辺の体験と運用課題が顕在化——ウォークスルー決済や顔認証改札の普及が進む一方、100均セルフレジの行列など生活者の不満も表面化し、技術導入と運用設計の両立が問われている。",
+    "count": 9,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "リテールメディアが「枠の販売」から「行動変容の設計」へ——USEN MEDIA PROMOTIONとDearOneの提携、ロケットの店頭立体装飾、ウォルマートのScintilla AI強化など、購買データと店頭接点を統合する動きが国内外で同時に進んだ。",
+      "決済・レジ周辺の体験と運用課題が顕在化——ウォークスルー決済や顔認証改札の普及が進む一方、100均セルフレジの行列など生活者の不満も表面化し、技術導入と運用設計の両立が問われている。",
+      "店舗そのものを資産として捉え直す動き——セブンイレブンの高圧受電設備再利用、海外ブランドの実店舗回帰に見られるように、コスト・環境・顧客接点を統合した店舗戦略の再構築が加速している。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "USEN MEDIA PROMOTIONとDearOneが提携、サイネージ×アプリ購買データで次世代リテールメディア",
+        "original_title": "",
+        "source": "Digital PR Platform",
+        "source_id": "JP-11",
+        "summary": "USEN MEDIA PROMOTIONとNTTドコモグループのDearOneは業務提携契約を締結した。店舗のデジタルサイネージや店内音声放送といった店頭メディアと、アプリ経由で取得した購買データを掛け合わせ、次世代型のリテールメディアを共同展開する。店頭での接触から購買までの効果測定を可能にし、広告主への価値提供を高める狙いだ。",
+        "why_it_matters": "店頭サイネージとアプリ購買データの統合は、リテールメディア最大の課題である効果測定に切り込む動きだ。ID連携で実購買に紐づく広告価値が可視化されれば、媒体価値の算定基準そのものが変わり、小売の収益構造やメーカーの販促予算配分にまで波及する。",
+        "tags": [
+          "リテールメディア",
+          "店頭サイネージ",
+          "ID連携"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiQ0FVX3lxTE1HSnVWa2NaOUhQUFdScXpqUjlpOGN6ZHQ4eWlrYlUyQjRkODljWENsUEJCZVpZOUU2OFB1X0FVUmwyaWM?oc=5",
+        "source_pub_ts": 1789542521
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "レジなしコンビニ、顔認証改札——ウォークスルー決済が示す現金なき未来",
+        "original_title": "",
+        "source": "TBS NEWS DIG",
+        "source_id": "JP-04",
+        "summary": "MBSニュースがウォークスルー決済や顔認証改札など、進化する決済の仕組みを特集した。レジなしコンビニでの買い物や顔パス改札の実用化が進む一方、現金がなくなるのか、プライバシーや導入コストなどの課題も指摘。海外では体内マイクロチップを導入する国もあり、決済インフラの姿が大きく変わりつつある。",
+        "why_it_matters": "ウォークスルー決済はレジ待ち解消という体験価値と、認証精度・プライバシー・設備投資という導入障壁が表裏一体だ。生活者の受容度を測る世論形成が普及速度を左右し、小売の店舗設計と人件費、防犯体制の再構築に直結する。導入は技術以上に合意形成の勝負となる。",
+        "tags": [
+          "ウォークスルー決済",
+          "顔認証",
+          "キャッシュレス"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE0tdl9kMzIzVWFFU1F5ZDlzQUpoYXR4LUwweGVmc0dqVHpyMHdDcDFvdXRVa0JjNE1vWG5wMEgwM3hienZ1YjktN0xXcUFxbXcwTHBoaWdBb0NVenhNeG1jbnQ2bHF6YkU?oc=5",
+        "source_pub_ts": 1789558562
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "100均のセルフレジに大行列、幼児に操作を教える姿にSNSで賛否",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-15",
+        "summary": "100円ショップのセルフレジに長い行列ができ、幼児にセルフレジの操作を教える若い母親の姿に「それ、今じゃなきゃダメなのか」とイライラが募る——。ニコニコニュースが報じたSNS投稿が話題を集めた。セルフレジの定着に伴い、混雑時の運用や利用マナーのあり方が生活者の間で議論になっている。",
+        "why_it_matters": "セルフレジの普及は効率化の一方で、混雑や利用マナーをめぐる新たなストレスを生んでいる。店舗側には有人レジとの動線設計や子連れ客への配慮が問われ、導入効果を最大限に引き出す運用設計が、顧客体験と満足度の差別化要因となる。",
+        "tags": [
+          "セルフレジ",
+          "SNS話題",
+          "店内UX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1Ld28zU0F4cGFIMGlRMUpPck55dXpIWkxMTkl3LU1rVUZGS3JldUVhVlVKUWIxTTdVdHJ6YzV4SFJpNWRlXzFoLUE2SXgwOTQ3cWZDTXY0cUxiWExWZDZXbl90RjROYlBh?oc=5",
+        "source_pub_ts": 1789538406
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "告知から物語へ、消費者の次の行動を読むリテールメディアの進化",
+        "original_title": "",
+        "source": "DIGIDAY［日本版］",
+        "source_id": "JP-17",
+        "summary": "DIGIDAY日本版がリテールメディアの進化を分析した。単なる商品告知にとどまらず、消費者の購買データを起点に次の行動を予測し、物語のように一人ひとりへ最適な情報を配信する手法へと変わりつつある。小売が持つ購買データの価値が高まり、広告と販売促進の境界が溶けていく方向性を示す。",
+        "why_it_matters": "購買データ起点の予測配信は、リテールメディアを「広告枠の販売」から「行動変容の設計」へと進化させる。小売がメーカーのマーケティング機能を代替する構図が強まり、媒体価値と収益モデル、組織の再定義が求められる。コンテンツ制作力が新たな競争軸となる。",
+        "tags": [
+          "リテールメディア",
+          "需要予測",
+          "パーソナライズ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPUEV0QlpyY1RVa2ZpaThULTV0R0hOQnhCbnZLYjNycTVLa0swNlIxYml5MkpOMXBPanhYUDYtSDY5aUxEYTB4TDBXbFBmQmYyX05ZVVBLNUhvbDM1eHIzWTU1VEpfM1JVTzF0dVFiVEJFb3J1UzAtYmtUdXowQmx2ZDFQVG5URDBtZXVNWkYtVkg5ck16SVhiT0tOM0hydmVWYVZEWjRqY2ctSWk4T2FTaXM3WS02d1E?oc=5",
+        "source_pub_ts": 1789534834
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "セブンイレブン、高圧受電設備を再利用——パナソニックらと連携",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-28",
+        "summary": "セブンイレブンはパナソニック、伊藤忠プランテックと連携し、閉店・改装店舗の高圧受電設備を再利用する取り組みを始める。設備の再活用により新店舗の開設コストと環境負荷を抑え、出店スピードを高める狙い。物流・インフラの効率化とサステナビリティを両立させる店舗運営の先進事例となる。",
+        "why_it_matters": "店舗インフラの再利用は、出店コストと環境負荷の同時削減という小売の構造課題に応える。設備の標準化とサプライヤー連携が進めば、多店舗展開のスピードと収益性、脱炭素対応を一体で設計できるようになり、出店戦略の前提そのものを変える。",
+        "tags": [
+          "店舗自動化",
+          "サステナビリティ",
+          "出店戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFBCcG9hUUhBVklNSExvWnl1YS1wekd6LUpxY1A3UloxVm9qSE9QYmhpenNJcDhjcFdVY0w2bmNNRklwMEd4eVB2TVpMdzE3dWIwd1BqUTR1ejk?oc=5",
+        "source_pub_ts": 1789520700
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "ロケット、ドラッグストア店頭リテールメディアに立体缶ダミー装飾を初導入",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-30",
+        "summary": "ロケットは、ドラッグストア店頭のリテールメディア「インパクトゲート」に、立体感のある大型缶ダミー装飾を初めて導入した。棚前の特設装置で商品を立体的に訴求し、来店客の目を引く新しい店頭広告の形を提案。メーカーの販促と小売の媒体収益を結びつける取り組みとして注目される。",
+        "why_it_matters": "購買直前の「最後の一米」を狙う創意工夫は、リテールメディアの価値を「枠」から「体験」へ広げる。棚前の接触を強化できれば、メーカーの販促費を小売が取り込む余地が広がり、店舗空間そのものが収益資産として再評価される。演出力が媒体価値を左右する。",
+        "tags": [
+          "リテールメディア",
+          "店頭販促",
+          "店舗空間"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9qbE4wTHVBcTctV01GazlIelFJM1IwYlBPb2FyWFg0U1RnRVhRSGNwZkVQcmNFRGFqak5mZ2YzT2JqcWEyRkt0T0o2M3doWGZzMExndlpGZDVlby1uQmdadWlramlTUGIzSHc?oc=5",
+        "source_pub_ts": 1789516201
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "ウォルマート、インサイト基盤「Scintilla」にマーケットプレイスデータとAI機能を追加",
+        "original_title": "Walmart adds marketplace data, deeper AI features to Scintilla insights platform",
+        "source": "modernretail.co",
+        "source_id": "GL-03",
+        "summary": "ウォルマートは、出店者やブランド向けのデータ分析基盤「Scintilla」に、マーケットプレイスのデータとより高度なAI機能を追加した。自社ECとマーケットプレイスの購買データを統合し、広告主が需要予測や品揃え判断に使えるインサイトを強化。リテールメディアとデータ事業の収益拡大を狙う。",
+        "why_it_matters": "購買データとマーケットプレイス情報を統合したAIインサイトは、リテールメディアを「広告枠」から「意思決定支援サービス」へ押し上げる。小売がメーカーの需要予測機能を内部化すれば、データ事業が新たな高収益源として定着する。データの解釈力が競争優位を決める。",
+        "tags": [
+          "リテールメディア",
+          "AI需要予測",
+          "データ事業"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNb0VQZ0pXbU9tX2RLeWdFdTBvNnY1TXhsaENBQ3J6LXowdUNhQXRSV3gza1VPLVJaNVdwOHRjeTdkZWFVYUYzcVdoaVZjaDUzcGVBSW1KMWQydVo4R3RHbHpINmxDYkk1d2tTTXY1aElISlZqM24welRqdUZRYkJ0enhZMEtnaUpFcVJDbTBjV2pUa2JXb1hISldTNmYwYXVIaE1mTXAzb1NaZWdmU21iSnBCeXBWdlBDLVlV?oc=5",
+        "source_pub_ts": 1789571726
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "TikTok Shop米国の高級リセール取引、ほぼ全てがライブ配信経由に",
+        "original_title": "Nearly all luxury resale transactions on TikTok Shop US now come from livestreams",
+        "source": "modernretail.co",
+        "source_id": "GL-08",
+        "summary": "TikTok Shop米国では、高級品リセールの取引のほぼすべてがライブコマース経由で成立していることが分かった。リアルタイムの実演と対話が購買を後押しし、従来のECとは異なる購買行動を生んでいる。ライブ配信が高単価商材の主要な販路へと成長しつつある実態を示す。",
+        "why_it_matters": "ライブコマースが高級リセールの主戦場になった事実は、動画と対話が信頼と購買を同時に生み出すことを示す。小売は商品ページ中心の設計を見直し、配信と在庫・決済・物流を連動させる体制づくりが急務となる。演者と顧客の関係性が売上を左右する。",
+        "tags": [
+          "ライブコマース",
+          "ソーシャルコマース",
+          "リセール"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQVm1DMGw0Njh5eTZoRUswNk9aLUZCVmdkbzJ0dTBMNVVKRm9yRVI0NGxOUGhLQVRsUkMxdFQweDFkWE9KbzRhMDF5cVN3U1FQV0FRQ2pIN1pYSkItcDZ6QUY0QkVBbzhmcEFiSnlNNE8tT3pSNmZEbHM1ZHBIcXh3bjJBaXBwNlFBNU5CVk0zMjBfbXBhVzVySF9MYkdHRG9sTWxEUlN2eG5wNXB3QkZYLWVKZlFfNDhuZHNXMV9B?oc=5",
+        "source_pub_ts": 1789531332
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "AIがデジタル集客を揺さぶる中、ブランドが実店舗回帰へ",
+        "original_title": "Brands refocus on physical retail as AI disrupts digital customer acquisition",
+        "source": "modernretail.co",
+        "source_id": "GL-09",
+        "summary": "AIの台頭でデジタル広告や集客の効果が不透明になる中、ブランドが実店舗を重視する動きを強めている。オンラインでの獲得コスト上昇とAI検索の浸透を受け、体験や接客を通じた直接的な顧客接点の価値が再評価されている。実店舗を起点にした顧客獲得戦略の再構築が進む。",
+        "why_it_matters": "AIによる集客の不確実性が高まるほど、実店舗は自社で制御できる顧客接点として価値を増す。店舗をデータ取得と関係構築の拠点と位置づけ、オンラインと融合させる設計力が、ブランドの顧客獲得コストと競争力を左右する。店舗投資の再評価が進む。",
+        "tags": [
+          "実店舗回帰",
+          "顧客獲得",
+          "AI"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNelVJR3RiRFdvVl9XOWZfRHJ3ZGVQRV9FSG5BZUpva01rejd4YXJyNG9oY1JTSGQ3dDhNVDk2azctU3dYM01kQS1walJvellEOUdacFBsamdaMlN3VVFRdGx1d242SUlXVE5rUHl4ZFRyTG5OSlkwbkprcm42THlodG1PZ0F6ZUc0OXp6Nnh5YlVlNnIxblRMeThSclpwTnJkOTM2TUNpVlZLRTA0ak9IalYxOHNQTU0?oc=5",
+        "source_pub_ts": 1789531316
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260916",
     "title": "2026年9月16日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "国内の焦点はニトリHDの基幹システムOCI移行。需要予測処理が約4分の1、日次バッチが始業前に完了し、競争軸が「処理速度」から「データ鮮度＝当日の意思決定」へ移ったことを象徴する。 リテールメディアはアークランズの「ARUTANA」参画でホームセンター領域へ拡張。リーチ数ではなく購買文脈の解像度をどう広告価値に変えるかが次の争点になる。",
