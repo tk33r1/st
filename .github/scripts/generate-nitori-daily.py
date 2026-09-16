@@ -6,7 +6,6 @@
 """
 
 import html
-import json
 import os
 import re
 import sys
@@ -14,7 +13,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 import brightdata_social
-from daily_engine import build_keyword_regex, is_fresh, run_daily_pipeline
+from daily_engine import build_keyword_regex, build_rule_based_fallback, run_daily_pipeline
 
 JST = timezone(timedelta(hours=9))
 
@@ -140,28 +139,6 @@ def fetch_yahoo_realtime_nitori_buzz(target_date=None):
     return items[:5]
 
 
-def recently_featured_sns_urls(days_limit=7):
-    """直近の号で既に載せた SNS 投稿の URL 集合。
-
-    TikTok は「直近1週間の人気」から選ぶ都合上、同じ動画が何日も上位に居座る。
-    再掲を防がないと毎朝ほぼ同じカードが並ぶので、ここで除外リストを作る。
-    """
-    urls = set()
-    try:
-        with open(CONFIG['data_json_path'], 'r', encoding='utf-8') as f:
-            issues = json.load(f)
-    except Exception:
-        return urls
-
-    issues.sort(key=lambda x: x.get('date', ''), reverse=True)
-    for issue in issues[:days_limit]:
-        for buzz in issue.get('sns_buzz', []):
-            u = buzz.get('url', '')
-            if u:
-                urls.add(u)
-    return urls
-
-
 def fetch_all_social_buzz(target_date=None):
     """SNSリアル反響セクション用の候補を全ソースから集める。
 
@@ -181,11 +158,7 @@ def fetch_all_social_buzz(target_date=None):
 
     try:
         tiktok_items = brightdata_social.load_snapshot(TIKTOK_SNAPSHOT_PATH, target_date)
-        already = recently_featured_sns_urls()
-        fresh = [it for it in tiktok_items if it.get('link') not in already]
-        if len(fresh) < len(tiktok_items):
-            print(f" -> TikTok: 直近の号で掲載済みの {len(tiktok_items) - len(fresh)} 件を除外")
-        items.extend(fresh[:brightdata_social.TOP_N_PER_PLATFORM])
+        items.extend(tiktok_items)
     except Exception as e:
         print(f"[WARN] TikTok スナップショット処理失敗: {type(e).__name__}: {e}", file=sys.stderr)
 
@@ -198,20 +171,14 @@ def is_nitori_relevant(it, is_global=False):
     t = it.get('title', '').lower()
     d = it.get('description', '').lower()
     kws = GLOBAL_RELEVANT_KEYWORDS if is_global else NITORI_RELEVANT_KEYWORDS
-    if any(k in t for k in kws):
-        return True
-    if is_global:
-        return any(k in d for k in ['nitori', 'ニトリ'])
-    else:
-        return any(k in d for k in NITORI_RELEVANT_KEYWORDS)
+    return any(k in t or k in d for k in kws)
 
 
-def relevance_sort_key(it, is_gl=False, cutoff_ts=0):
+def relevance_sort_key(it, is_gl=False):
     t = it['title'].lower()
     kws = GLOBAL_RELEVANT_KEYWORDS if is_gl else NITORI_RELEVANT_KEYWORDS
     has_title = 1 if any(k in t for k in kws) else 0
-    fresh_flag = 1 if is_fresh(it, cutoff_ts) else 0
-    return (has_title, fresh_flag, it.get('pub_ts', 0))
+    return (has_title, it.get('pub_ts', 0))
 
 
 def content_lane(art):
@@ -315,73 +282,36 @@ BRAND_LOGO_SVG = """<svg viewBox="0 0 64 64" width="34" height="34" style="flex-
 
 
 def fallback_rule_based(candidates, yesterday_str):
-    articles = []
     sns_news_count = 0
-    for it in candidates['JP']:
-        t = it['title']
-        desc = it.get('description', '')
 
-        if any(k in t for k in ['アプリ', 'DX', 'EC', 'ネット', '自動', 'ロボット', '物流', 'RFID', '手ぶら', '計測', 'AI']):
-            cat = "デジタル・EC・アプリ"
-            wim = "自社物流（ホームロジスティクス）の自動化と公式アプリの顧客接点強化により、購入から配送・設置までのオムニチャネル体験の最適化が進んでいます。"
-            tags = ["ニトリDX", "物流自動化", "アプリ"]
-        elif any(k in t for k in ['出店', 'オープン', '店舗', '海外', 'アジア', '葛西', '島忠', 'N＋', 'デコホーム', '進出']):
-            cat = "店舗展開・海外戦略"
-            wim = "新業態『N＋』やデコホームの展開、島忠店舗への複合出店など、ドミナント戦略と生活動線への浸透により、顧客層の裾野拡大が進んでいます。"
-            tags = ["店舗展開", "新業態", "島忠"]
-        elif any(k in t for k in ['値下げ', 'プライスダウン', '価格', '決算', '似鳥', '社長', '円安', '業績', '戦略']):
-            cat = "経営・価格戦略・PB"
-            wim = "原材料高や為替変動に対し、自社完結のサプライチェーンと徹底的な効率化を武器に、生活防衛意識に応える機動的な価格戦略を展開しています。"
-            tags = ["価格戦略", "SPA", "経営"]
-        elif sns_news_count < 1 and any(k in t for k in ['Xで話題', 'SNS', '物議', '賛否', 'バズ', '反響', '神アイテム', '悩み', 'ストレス', '満タン', '余裕']):
-            cat = "SNS話題・リアル反響"
-            wim = "生活者の実際の使用感や日常の『プチストレス解消』体験がSNSで自然拡散されることで、ブランドへの信頼感向上と店舗・EC双方の来店動機形成に直結しています。"
-            tags = ["生活者UX", "バズ商品", "生活提案"]
+    def classify(item):
+        nonlocal sns_news_count
+        title = item['title']
+        if any(k in title for k in ['アプリ', 'DX', 'EC', 'ネット', '自動', 'ロボット', '物流', 'RFID', '手ぶら', '計測', 'AI']):
+            return "デジタル・EC・アプリ", "自社物流（ホームロジスティクス）の自動化と公式アプリの顧客接点強化により、購入から配送・設置までのオムニチャネル体験の最適化が進んでいます。", ["ニトリDX", "物流自動化", "アプリ"]
+        if any(k in title for k in ['出店', 'オープン', '店舗', '海外', 'アジア', '葛西', '島忠', 'N＋', 'デコホーム', '進出']):
+            return "店舗展開・海外戦略", "新業態『N＋』やデコホームの展開、島忠店舗への複合出店など、ドミナント戦略と生活動線への浸透により、顧客層の裾野拡大が進んでいます。", ["店舗展開", "新業態", "島忠"]
+        if any(k in title for k in ['値下げ', 'プライスダウン', '価格', '決算', '似鳥', '社長', '円安', '業績', '戦略']):
+            return "経営・価格戦略・PB", "原材料高や為替変動に対し、自社完結のサプライチェーンと徹底的な効率化を武器に、生活防衛意識に応える機動的な価格戦略を展開しています。", ["価格戦略", "SPA", "経営"]
+        if sns_news_count < 1 and any(k in title for k in ['Xで話題', 'SNS', '物議', '賛否', 'バズ', '反響', '神アイテム', '悩み', 'ストレス', '満タン', '余裕']):
             sns_news_count += 1
-        else:
-            cat = "商品開発・ヒット商品"
-            wim = "生活空間の困りごとを解決する独自視点の商品開発と、SPA（製造物流小売業）としての高いコストパフォーマンスにより『お、ねだん以上』の価値が体現されています。"
-            tags = ["商品開発", "生活提案", "PB"]
+            return "SNS話題・リアル反響", "生活者の実際の使用感や日常の『プチストレス解消』体験がSNSで自然拡散されることで、ブランドへの信頼感向上と店舗・EC双方の来店動機形成に直結しています。", ["生活者UX", "バズ商品", "生活提案"]
+        return "商品開発・ヒット商品", "生活空間の困りごとを解決する独自視点の商品開発と、SPA（製造物流小売業）としての高いコストパフォーマンスにより『お、ねだん以上』の価値が体現されています。", ["商品開発", "生活提案", "PB"]
 
-        articles.append({
-            "region": "JP",
-            "category": cat,
-            "title": t,
-            "original_title": "",
-            "source": it['source'],
-            "url": it['link'],
-            "source_pub_ts": it.get('pub_ts', 0),
-            "summary": desc[:220] or f"{it['source']}による株式会社ニトリに関する最新報道です。",
-            "why_it_matters": wim,
-            "tags": tags
-        })
-        if len([a for a in articles if a['region'] == 'JP']) >= 6:
-            break
-
-    for it in candidates['GLOBAL']:
-        articles.append({
-            "region": "GLOBAL",
-            "category": "グローバル先端トレンド",
-            "title": f"【海外動向】{it['title']}",
-            "original_title": it['title'],
-            "source": it['source'],
-            "url": it['link'],
-            "source_pub_ts": it.get('pub_ts', 0),
-            "summary": it['description'][:220] or f"Global movement related to Nitori reported by {it['source']}.",
-            "why_it_matters": "海外進出（アジア・東南アジア）の拡大に伴い、現地での知名度獲得とグローバルサプライチェーンの最適化が今後の成長エンジンとなります。",
-            "tags": ["海外展開", "グローバル", "アジア戦略"]
-        })
-        if len([a for a in articles if a['region'] == 'GLOBAL']) >= 3:
-            break
-
-    return {
-        "executive_summary": [
-            f"{yesterday_str}は、ニトリグループの新商品展開や国内外の事業進展に関する最新ニュースが注目されました。",
+    return build_rule_based_fallback(
+        candidates, yesterday_str, classify,
+        jp_limit=6,
+        global_limit=3,
+        jp_summary_fallback="{source}による株式会社ニトリに関する最新報道です。",
+        global_summary_fallback="Global movement related to Nitori reported by {source}.",
+        global_why_it_matters="海外進出（アジア・東南アジア）の拡大に伴い、現地での知名度獲得とグローバルサプライチェーンの最適化が今後の成長エンジンとなります。",
+        global_tags=["海外展開", "グローバル", "アジア戦略"],
+        executive_summary=[
+            "{yesterday}は、ニトリグループの新商品展開や国内外の事業進展に関する最新ニュースが注目されました。",
             "オムニチャネル推進や物流自動化、店舗オペレーションの進化による顧客体験の向上が続いています。",
-            "アジアをはじめとする海外展開や新業態の拡大が着実に進展しています。"
+            "アジアをはじめとする海外展開や新業態の拡大が着実に進展しています。",
         ],
-        "articles": articles
-    }
+    )
 
 
 CONFIG = {
@@ -416,6 +346,7 @@ CONFIG = {
     'jp_noise_blacklist': JP_NOISE_BLACKLIST,
     'global_noise_blacklist': GLOBAL_NOISE_BLACKLIST,
     'extra_candidates_fn': fetch_all_social_buzz,
+    'extra_candidate_limits': {'tiktok': brightdata_social.TOP_N_PER_PLATFORM},
     'is_relevant_fn': is_nitori_relevant,
     'relevance_sort_key_fn': relevance_sort_key,
     'content_lane_fn': content_lane,

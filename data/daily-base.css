@@ -2783,6 +2783,16 @@ a {
   color: var(--ink);
 }
 
+.trend-list > li > a > span,
+.trend-list > li > a > strong {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .trend-list strong {
   color: var(--primary-ink);
   font-family: var(--font-mono);

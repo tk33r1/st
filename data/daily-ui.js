@@ -280,9 +280,20 @@
     scrollActiveChipIntoView = true;
   }
 
-  function shareTextForButton(btn) {
-    return (btn.dataset.sharePrefix || '') + (btn.dataset.shareTitle || '') +
-      '\n💡 要点: ' + (btn.dataset.shareTakeaway || '') + '\n🔗 ' + (btn.dataset.shareUrl || '');
+  function shareDataForButton(btn) {
+    const card = btn.closest('.news-card');
+    const data = card ? card.dataset : btn.dataset;
+    return {
+      prefix: document.body.dataset.sharePrefix || '',
+      title: data.shareTitle || document.title,
+      takeaway: data.shareTakeaway || '',
+      url: data.shareUrl || window.location.href
+    };
+  }
+
+  function shareText(data) {
+    return data.prefix + data.title +
+      '\n💡 要点: ' + data.takeaway + '\n🔗 ' + data.url;
   }
 
   async function shareOrCopy(payload, fallbackText, btn, successMessage) {
@@ -301,15 +312,16 @@
   function initSharing() {
     document.querySelectorAll('.share-copy-btn').forEach(function(btn) {
       btn.addEventListener('click', async function() {
-        const ok = await copyText(shareTextForButton(btn));
+        const ok = await copyText(shareText(shareDataForButton(btn)));
         flashButton(btn, ok ? 'コピー完了！' : 'コピーできませんでした', ok);
       });
     });
 
     document.querySelectorAll('.native-share-btn').forEach(function(btn) {
       btn.addEventListener('click', async function() {
-        const payload = { title: btn.dataset.shareTitle || document.title, text: btn.dataset.shareTakeaway || '', url: btn.dataset.shareUrl || window.location.href };
-        const fallbackText = payload.title + '\n💡 要点: ' + payload.text + '\n🔗 ' + payload.url;
+        const data = shareDataForButton(btn);
+        const payload = { title: data.title, text: data.takeaway, url: data.url };
+        const fallbackText = data.title + '\n💡 要点: ' + data.takeaway + '\n🔗 ' + data.url;
         await shareOrCopy(payload, fallbackText, btn, '共有文をコピー');
       });
     });

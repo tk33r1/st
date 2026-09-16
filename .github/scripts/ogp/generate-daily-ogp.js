@@ -320,14 +320,11 @@ function buildDailyHtml(brandCfg, issue) {
 }
 
 async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
-  // 後方互換性: 第1引数が日付（数字のみ）の場合
-  if (/^\d+$/.test(targetBrand) && !targetDate) {
-    targetDate = targetBrand;
-    targetBrand = 'retail-tech';
-  }
-
-  const brandKey = (targetBrand === 'nitori' || targetBrand === 'nitoridaily') ? 'nitori' : 'retail-tech';
+  const brandKey = targetBrand;
   const brandCfg = BRAND_CONFIGS[brandKey];
+  if (!brandCfg) {
+    throw new Error(`Unknown brand: ${targetBrand}`);
+  }
 
   if (!fs.existsSync(brandCfg.jsonPath)) {
     throw new Error(`${brandCfg.jsonPath} not found`);

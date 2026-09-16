@@ -35,7 +35,6 @@ if hasattr(sys.stderr, 'reconfigure'):
 JST = timezone(timedelta(hours=9))
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
-DATA_DIR = os.path.join(REPO_ROOT, 'data')
 PERSON_ID = "https://tk.st/#author"
 
 # 共有 SVG アイコン
@@ -300,8 +299,7 @@ def split_takeaway(raw_wim):
 
 def is_fresh(item, cutoff_ts):
     """記事の pub_ts が cutoff_ts 以降か（=「昨日のニュース」の鮮度条件を満たすか）。
-    足切り（gather_all_candidate_news）と並び替え優先度（各メディアの relevance_sort_key_fn）の
-    両方で同じ鮮度定義を使うための共有関数。"""
+    Google News の when: 指定だけに頼らず、取得結果を機械的に足切りする。"""
     return item.get('pub_ts', 0) >= cutoff_ts
 
 
@@ -376,6 +374,10 @@ def load_recent_published_history(json_path, exclude_date_key=None, days_limit=7
                 tk = re.sub(r'\s+', '', t[:20].lower())
                 if tk:
                     recent_title_keys.add(tk)
+        for buzz in issue.get('sns_buzz', []) or []:
+            u = buzz.get('url', '')
+            if u:
+                recent_urls.add(u)
     return {
         'recent_urls': recent_urls,
         'recent_title_keys': recent_title_keys,
@@ -441,6 +443,18 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
             extra_items, _ = filter_and_dedup_news(
                 extra_raw, config['jp_noise_blacklist'], pub_history, config.get('is_relevant_fn'), is_global=False
             )
+            extra_limits = config.get('extra_candidate_limits', {})
+            if extra_limits:
+                platform_counts = defaultdict(int)
+                limited_items = []
+                for item in extra_items:
+                    platform = item.get('platform', '')
+                    limit = extra_limits.get(platform)
+                    if limit is not None and platform_counts[platform] >= limit:
+                        continue
+                    limited_items.append(item)
+                    platform_counts[platform] += 1
+                extra_items = limited_items
             print(f" -> 追加ソース収集完了: {len(extra_items)} 件 (元 {len(extra_raw)} 件)")
         except Exception as e:
             print(f"[WARN] extra_candidates_fn 実行失敗: {e}", file=sys.stderr)
@@ -471,8 +485,8 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
 
     sort_fn = config.get('relevance_sort_key_fn')
     if sort_fn:
-        jp_items.sort(key=lambda x: sort_fn(x, False, cutoff_ts), reverse=True)
-        global_items.sort(key=lambda x: sort_fn(x, True, cutoff_ts), reverse=True)
+        jp_items.sort(key=lambda x: sort_fn(x, False), reverse=True)
+        global_items.sort(key=lambda x: sort_fn(x, True), reverse=True)
     else:
         jp_items.sort(key=lambda x: x.get('pub_ts', 0), reverse=True)
         global_items.sort(key=lambda x: x.get('pub_ts', 0), reverse=True)
@@ -507,6 +521,47 @@ def build_candidate_index(candidates):
     global_list = tag_list(candidates['GLOBAL'][:30], 'GL')
     sns_list = tag_list(candidates.get('EXTRA', []), 'SNS')
     return jp_list, global_list, sns_list, index
+
+
+def build_rule_based_fallback(
+        candidates, yesterday_str, classify_fn, *, jp_limit, global_limit,
+        jp_summary_fallback, global_summary_fallback, global_why_it_matters,
+        global_tags, executive_summary):
+    """媒体固有の分類規則を使い、共通形式のフォールバック記事を組み立てる。"""
+    articles = []
+    for item in candidates['JP'][:jp_limit]:
+        category, why_it_matters, tags = classify_fn(item)
+        articles.append({
+            "region": "JP",
+            "category": category,
+            "title": item['title'],
+            "original_title": "",
+            "source": item['source'],
+            "url": item['link'],
+            "source_pub_ts": item.get('pub_ts', 0),
+            "summary": item.get('description', '')[:220] or jp_summary_fallback.format(source=item['source']),
+            "why_it_matters": why_it_matters,
+            "tags": tags,
+        })
+
+    for item in candidates['GLOBAL'][:global_limit]:
+        articles.append({
+            "region": "GLOBAL",
+            "category": "グローバル先端トレンド",
+            "title": f"【海外動向】{item['title']}",
+            "original_title": item['title'],
+            "source": item['source'],
+            "url": item['link'],
+            "source_pub_ts": item.get('pub_ts', 0),
+            "summary": item.get('description', '')[:220] or global_summary_fallback.format(source=item['source']),
+            "why_it_matters": global_why_it_matters,
+            "tags": global_tags,
+        })
+
+    return {
+        "executive_summary": [text.format(yesterday=yesterday_str) for text in executive_summary],
+        "articles": articles,
+    }
 
 
 def build_prompt(config, candidates, target_date_str, yesterday_str):
@@ -618,14 +673,12 @@ def call_llm_api(endpoint, api_key, model_name, prompt_content, user_agent):
             {"role": "system", "content": "You are a professional editorial curator and analyst. Return only valid JSON adhering strictly to the requested schema."},
             {"role": "user", "content": prompt_content}
         ],
-        "response_format": {"type": "json_object"}
+        "response_format": {"type": "json_object"},
+        "temperature": 0.2,
     }
     # OpenAI の最新推論モデル等では reasoning_effort: 'none' が必要な場合がある
     if 'gpt' in model_name.lower() or 'luna' in model_name.lower():
         payload["reasoning_effort"] = "none"
-        payload["temperature"] = 0.2
-    else:
-        payload["temperature"] = 0.2
 
     def do_request(p_data):
         req = urllib.request.Request(
@@ -974,7 +1027,6 @@ def build_search_index(config, articles_history):
         for idx, art in enumerate(issue.get('articles', []) or [], 1):
             records.append({
                 'date': date_key,
-                'issue_title': issue.get('title', ''),
                 'title': art.get('title', ''),
                 'summary': art.get('summary', ''),
                 'takeaway': split_takeaway(art.get('why_it_matters', ''))[0],
@@ -985,7 +1037,7 @@ def build_search_index(config, articles_history):
                 'tags': art.get('tags', []) or [],
                 'url': f"{date_key}/#art-{idx}",
             })
-    return {'media': config['media_id'], 'generated_at': datetime.now(JST).isoformat(), 'records': records}
+    return {'media': config['media_id'], 'records': records}
 
 
 def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
@@ -1377,7 +1429,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             category_control = f'<button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>'
 
         card_html = f"""
-        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}">
+        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}">
           <div class="card-index" aria-hidden="true">{idx:02d}</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1401,8 +1453,8 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             {product_link}
             <div class="card-footer">
               <div class="card-actions">
-                <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>コピー</span></button>
-                <button type="button" class="native-share-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}" title="共有先を選ぶ">{ICON_SHARE_SVG}<span>共有</span></button>
+                <button type="button" class="share-copy-btn" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>コピー</span></button>
+                <button type="button" class="native-share-btn" title="共有先を選ぶ">{ICON_SHARE_SVG}<span>共有</span></button>
                 {source_link_html}
                 {correction_link}
               </div>
@@ -1532,7 +1584,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   </script>
   <link rel="stylesheet" href="../../../data/{config['css_file']}">
 </head>
-<body id="top" data-daily-media="{config['media_id']}">
+<body id="top" data-daily-media="{config['media_id']}" data-share-prefix="{esc(config['share_prefix'])}">
   {reading_progress_html}
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 

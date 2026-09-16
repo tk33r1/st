@@ -18,42 +18,10 @@ concurrency:
   group: retail-tech-daily
   cancel-in-progress: false
 
-env:
-  BOT_EMAIL: "github-actions[bot]@users.noreply.github.com"
-
 jobs:
   generate-news:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pillow
-
-    - name: Generate Retail Tech Daily Brief
-      env:
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        DEEPSEEK_MODEL: 'deepseek-flash'
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        OPENAI_MODEL: 'gpt-5.6-luna'
-      run: |
-        python .github/scripts/generate-retail-tech-daily.py --date "${{ github.event.inputs.date }}"
-
-    - name: Commit and Push changes
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "$BOT_EMAIL"
-        git add job/retailtechdaily/ data/retail-tech-daily.json images/ogp/
-        git commit -m "Auto-generate retail tech daily" || exit 0
-        git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
-        git push origin HEAD:main
+    uses: ./.github/workflows/daily-brief-reusable.yml
+    with:
+      media: retailtechdaily
+      target-date: ${{ github.event.inputs.date || '' }}
+    secrets: inherit

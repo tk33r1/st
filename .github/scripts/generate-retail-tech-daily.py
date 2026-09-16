@@ -7,7 +7,7 @@
 
 import os
 import re
-from daily_engine import build_keyword_regex, run_daily_pipeline
+from daily_engine import build_keyword_regex, build_rule_based_fallback, run_daily_pipeline
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
@@ -110,76 +110,36 @@ BRAND_LOGO_SVG = """<svg viewBox="0 0 64 64" width="34" height="34" style="flex-
 </svg>"""
 
 
+def classify_fallback_article(item):
+    title = item['title']
+    if any(k in title for k in ['Xで話題', 'SNS', '物議', '賛否', 'バズ', 'Twitter', 'x.com', '反響', '不満', '使い勝手']):
+        return "SNS話題・生活者のリアル", "店舗オペレーションの省人化・自動化が進む一方で、操作性や現金対応など生活者側の受容性・UXギャップへの配慮が不可欠となっています。", ["SNS話題", "店舗UX"]
+    if any(k in title for k in ['リテールメディア', 'サイネージ', '広告', 'アドインテ']):
+        return "リテールメディア・広告", "実店舗の購買データと店頭接点をメディア化し、新たな収益源と顧客エンゲージメントを同時に創出する動きが本格化しています。", ["リテールメディア", "サイネージ", "広告収益"]
+    if any(k in title for k in ['RFID', 'ロボット', '物流', '自動発注', '需要予測', '自動倉庫', '棚札', 'ESL']):
+        return "サプライチェーン・店舗自動化", "RFIDやAI需要予測による在庫精度向上と自動発注が、欠品防止と現場スタッフの業務負荷軽減を両立させています。", ["RFID", "需要予測AI", "自動発注"]
+    if any(k in title for k in ['スマートカート', 'カート']):
+        return "スマートカート", "レジ待ち時間をゼロにするだけでなく、スキャン時のクーポン提示やレコメンドによる客単価向上が実証されています。", ["スマートカート", "店内UX", "レジレス"]
+    if any(k in title for k in ['レジ', '決済', '無人', '省人化', 'セルフレジ', 'ウォークスルー']):
+        return "店舗DX・次世代決済", "人手不足解消と購買体験価値向上の両立において、現場オペレーションの省人化とDX推進が急務となっています。", ["店舗DX", "決済", "セルフレジ"]
+    return "流通DX一般", "テクノロジーの活用による顧客体験の再定義と、データドリブンな店舗運営への移行が流通各社で加速しています。", ["流通DX", "オムニチャネル"]
+
+
 def fallback_rule_based(candidates, yesterday_str):
-    articles = []
-    for it in candidates['JP']:
-        t = it['title']
-        is_sns = any(k in t for k in ['Xで話題', 'SNS', '物議', '賛否', 'バズ', 'Twitter', 'x.com', '反響', '不満', '使い勝手'])
-
-        if is_sns:
-            cat = "SNS話題・生活者のリアル"
-            wim = "店舗オペレーションの省人化・自動化が進む一方で、操作性や現金対応など生活者側の受容性・UXギャップへの配慮が不可欠となっています。"
-            tags = ["SNS話題", "店舗UX"]
-        elif any(k in t for k in ['リテールメディア', 'サイネージ', '広告', 'アドインテ']):
-            cat = "リテールメディア・広告"
-            wim = "実店舗の購買データと店頭接点をメディア化し、新たな収益源と顧客エンゲージメントを同時に創出する動きが本格化しています。"
-            tags = ["リテールメディア", "サイネージ", "広告収益"]
-        elif any(k in t for k in ['RFID', 'ロボット', '物流', '自動発注', '需要予測', '自動倉庫', '棚札', 'ESL']):
-            cat = "サプライチェーン・店舗自動化"
-            wim = "RFIDやAI需要予測による在庫精度向上と自動発注が、欠品防止と現場スタッフの業務負荷軽減を両立させています。"
-            tags = ["RFID", "需要予測AI", "自動発注"]
-        elif any(k in t for k in ['スマートカート', 'カート']):
-            cat = "スマートカート"
-            wim = "レジ待ち時間をゼロにするだけでなく、スキャン時のクーポン提示やレコメンドによる客単価向上が実証されています。"
-            tags = ["スマートカート", "店内UX", "レジレス"]
-        elif any(k in t for k in ['レジ', '決済', '無人', '省人化', 'セルフレジ', 'ウォークスルー']):
-            cat = "店舗DX・次世代決済"
-            wim = "人手不足解消と購買体験価値向上の両立において、現場オペレーションの省人化とDX推進が急務となっています。"
-            tags = ["店舗DX", "決済", "セルフレジ"]
-        else:
-            cat = "流通DX一般"
-            wim = "テクノロジーの活用による顧客体験の再定義と、データドリブンな店舗運営への移行が流通各社で加速しています。"
-            tags = ["流通DX", "オムニチャネル"]
-
-        articles.append({
-            "region": "JP",
-            "category": cat,
-            "title": t,
-            "original_title": "",
-            "source": it['source'],
-            "url": it['link'],
-            "source_pub_ts": it.get('pub_ts', 0),
-            "summary": it['description'][:220] or f"{it['source']}による流通DX関連の最新報道です。",
-            "why_it_matters": wim,
-            "tags": tags
-        })
-        if len([a for a in articles if a['region'] == 'JP']) >= 5:
-            break
-
-    for it in candidates['GLOBAL']:
-        articles.append({
-            "region": "GLOBAL",
-            "category": "グローバル先端トレンド",
-            "title": f"【海外動向】{it['title']}",
-            "original_title": it['title'],
-            "source": it['source'],
-            "url": it['link'],
-            "source_pub_ts": it.get('pub_ts', 0),
-            "summary": it['description'][:220] or f"Global retail technology movement reported by {it['source']}.",
-            "why_it_matters": "海外メガ小売や先端スタートアップの動向は、日本企業が次世代戦略を策定する先行指標となります。",
-            "tags": ["海外動向", "グローバル"]
-        })
-        if len([a for a in articles if a['region'] == 'GLOBAL']) >= 4:
-            break
-
-    return {
-        "executive_summary": [
-            f"{yesterday_str}は、大手流通チェーンによる次世代レジやカートの現場導入検証が活発化しました。",
+    return build_rule_based_fallback(
+        candidates, yesterday_str, classify_fallback_article,
+        jp_limit=5,
+        global_limit=4,
+        jp_summary_fallback="{source}による流通DX関連の最新報道です。",
+        global_summary_fallback="Global retail technology movement reported by {source}.",
+        global_why_it_matters="海外メガ小売や先端スタートアップの動向は、日本企業が次世代戦略を策定する先行指標となります。",
+        global_tags=["海外動向", "グローバル"],
+        executive_summary=[
+            "{yesterday}は、大手流通チェーンによる次世代レジやカートの現場導入検証が活発化しました。",
             "店頭サイネージと購買データを掛け合わせたリテールメディアの戦略が引き続き注目を集めています。",
-            "海外市場では、自動店舗（Autonomous Store）やEC連携カートの進化が加速しています。"
+            "海外市場では、自動店舗（Autonomous Store）やEC連携カートの進化が加速しています。",
         ],
-        "articles": articles
-    }
+    )
 
 
 CONFIG = {
