@@ -1,5 +1,269 @@
 [
   {
+    "date": "20260917",
+    "title": "2026年9月17日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリが基幹システムをOCIへ移行し、夜間バッチ処理を6時間弱から約1時間半へ短縮。SPAの需給判断や店舗オペレーションを支えるデータ反映リードタイムの短縮が、実店舗とECの連動精度を左右する基盤整備として進む。 商品面ではニトリ×ちふれの初コラボなど異業種・消耗品領域へのPB拡大が進み、999円のネコ型ケーキスタンドや1合ずつ出る米びつなど低価格の造形雑貨・キッチン用品が支持を集める。島忠の「爆安挑戦セール」第8弾と合わせ、価格訴求と来店動機づくりが並走。",
+    "count": 7,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "ニトリが基幹システムをOCIへ移行し、夜間バッチ処理を6時間弱から約1時間半へ短縮。SPAの需給判断や店舗オペレーションを支えるデータ反映リードタイムの短縮が、実店舗とECの連動精度を左右する基盤整備として進む。",
+      "商品面ではニトリ×ちふれの初コラボなど異業種・消耗品領域へのPB拡大が進み、999円のネコ型ケーキスタンドや1合ずつ出る米びつなど低価格の造形雑貨・キッチン用品が支持を集める。島忠の「爆安挑戦セール」第8弾と合わせ、価格訴求と来店動機づくりが並走。",
+      "SNSでは複数チェーンを比較するTikTokまとめ動画が6.7万回再生、Xではプラモ収納への転用など想定外用途の“ちょうどいい”が支持を集めた。生活者発信が購買検討とブランド相対評価の場となり、用途発見型の口コミが集客資産として機能している。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ、基幹システムをOCIへ移行——夜間バッチを6時間弱から約1時間半へ短縮",
+        "original_title": "",
+        "source": "ZDNET Japan",
+        "source_id": "JP-06",
+        "summary": "ニトリが基幹システムをOracle Cloud Infrastructure（OCI）へ移行したと報じられた。夜間バッチ処理が6時間弱から約1時間半へと大幅に短縮され、日次処理の完了が早まることで在庫や販売データの鮮度が向上。SPAとしての需給判断や店舗オペレーションの意思決定スピードを底上げする基盤刷新となる。",
+        "why_it_matters": "基幹系のクラウド移行はコスト削減にとどまらず、データ反映のリードタイム短縮を通じて「判断の高速化」に直結する。需要予測や自動発注、在庫配分を回すSPAにとって処理時間の壁は成長制約であり、夜間バッチ短縮は実店舗とECの連動精度を高める布石だ。",
+        "tags": [
+          "ニトリ",
+          "DX",
+          "基幹システム",
+          "クラウド",
+          "SPA"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFA2V01URzVEMmhhbUhxUHZJczZRQmc2eUJfX1ItRWFPcEc5ZS1OUGNtT2NsZHRtM1RsY0gxQ0xZN0pibk45MDVFQkNpWXZVeFRoOFBB?oc=5",
+        "source_pub_ts": 1789534800
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "島忠、物価高対応の「爆安挑戦セール」第8弾を9月16日より開催",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-09",
+        "summary": "島忠ホームズは9月16日より、物価高に負けない価格応援企画「爆安挑戦セール」の第8弾を開催する。生活必需品を中心に据えた値下げキャンペーンを第8弾まで積み上げてきた点が特徴で、ニトリグループのホームセンター事業として日常使い商品の集客と来店頻度の底上げを狙う。",
+        "why_it_matters": "値下げを単発でなく第8弾まで反復するのは、価格訴求を恒常的な集客装置へ変える戦略だ。ニトリ本体の低価格PBと島忠の日用品を組み合わせ、物価高局面の生活防衛需要を取り込む。グループ横断での価格・品揃えの役割分担が透けて見える。",
+        "tags": [
+          "ニトリ",
+          "島忠",
+          "価格戦略",
+          "PB",
+          "販促"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9QVXpKaTRKNTVJM1NUakNWSFp3LUVRMVlSUHpLMnZ0WlFwQ2hTSVI5SU5SanM1R2xMal9VemsyNzFUM3JFR0NkTXhXT2tRRXZ1MDdJQy0wcDR1WGFLTHBxa0lIa2lPblp4MFE?oc=5",
+        "source_pub_ts": 1789524002
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ×ちふれが初コラボ、999円からの「もっちり保湿シリーズ」で秋の乾燥ケア",
+        "original_title": "",
+        "source": "LIMO",
+        "source_id": "JP-10",
+        "summary": "ニトリと化粧品ブランド「ちふれ」が初コラボし、999円から購入できる「もっちり保湿シリーズ」を展開する。ヒアルロン酸やコラーゲンを配合し、秋の乾燥対策に応える限定スキンケア商品群。SNSでも1,857いいねを集め、見た目のかわいさと実力派処方の両立が支持されている。",
+        "why_it_matters": "家具・雑貨の枠を越え、消耗品のスキンケアへPBを広げる動きは、来店頻度とリピート購買を高める「生活消耗品」戦略の一環だ。低価格帯で信頼ブランドと組むことで、インテリア以外の接点を増やし、顧客のLTV拡大につなげる狙いが読み取れる。",
+        "tags": [
+          "ニトリ",
+          "ちふれ",
+          "コラボ",
+          "スキンケア",
+          "PB"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE12YnRXZ1dxN2daUnZkM0RacGhvaUEtTXFJV0xsSkU4VDdieURFYURTTW1mWUUtWlRkSHB0OUdzLW9LaVhjY2NkQzFERlIyNmcwUEZmdklB?oc=5",
+        "source_pub_ts": 1789519500
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「ハロウィンにもぴったり」ニトリの999円ネコ型ケーキスタンドが高評価",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-01",
+        "summary": "ニトリの「ネコ型ケーキスタンド」が999円という手頃な価格で高評価を集めている。「おうちアフタヌーンティーに使えて便利」「ハロウィンにもぴったり」といった声が上がり、季節イベントや在宅での演出需要を取り込む。デザイン性と価格の両立が支持される典型例だ。",
+        "why_it_matters": "低価格の造形雑貨は、SNS映えと季節需要を同時に捉える回転の速い商品だ。ハロウィンなど短期イベントに紐づけることで単価は低くとも来店動機と話題性を生む。デザイン×低価格で「ついで買い」を誘発する導線設計が、SPAの粗利維持に効いてくる。",
+        "tags": [
+          "ニトリ",
+          "商品開発",
+          "低価格",
+          "季節商材"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBLOXkzbV9uNWlpa0lxVHNiYkJtV2kwUDRUQjFJOGtJcVVzNnJ3eHpOekRCUjVRVk05VWd1OVktczg4R0t0NExpNEpGWkpaR25MMTRNdVppai1pN2xGVGZaTXo3aExWaTZWVUdj?oc=5",
+        "source_pub_ts": 1789561500
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「計量カップを使わなくてよくなった」ニトリの“1合ずつ出る米びつ”が大好評",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-11",
+        "summary": "ニトリの「1合ずつ出て来る米びつ」が好評を集めている。「計量カップを使わなくてよくなった」「5キロの米がピッタリ入る」「コンパクトで洗えるのがいい」と、計量の手間と収納性・衛生面を同時に解決。日々の調理動線を短くする実用性が支持の中心となっている。",
+        "why_it_matters": "派手さはないが、毎日の調理で繰り返し使われるキッチン用品はリピートと口コミが積み上がる領域だ。計量の手間削減という“小さな時短”は生活者の痛みに直結し、価格以上の納得感を生む。機能改善型の定番商品が支持基盤を厚くする好例といえる。",
+        "tags": [
+          "ニトリ",
+          "キッチン用品",
+          "時短",
+          "定番商品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9ORnJCdVFmRzRrelNWVl9LSC1hdWYwU3E2Q05TUTRfeEpRNUxka3lNT0tzam5FMi13MU1QSGVzRk55RWY5aU5qRzdtclpLcHJxWElwLVNOdHNkSW9HbjgxdXo3a9IBaEFVX3lxTE5CdXVLWnZyYXIxQ3lHYzRabzNDbkNkd2dCU3gzR09aeXhYYzVndFFhaG43VG5TZWVyX2luN0lRdmVaWnl2QWFWQm5aR1BIZkMtUms0OHhFN3psQ2UwS3FxOHpqYzJjWVNv?oc=5",
+        "source_pub_ts": 1789518173
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリ・IKEA・楽天を横断比較した「快適アイテム10選」がTikTokで6.7万回再生",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "TikTokで「ニトリ・IKEA・楽天で見つけた暮らしが快適になるアイテム10選」が6.7万回再生を記録した。価格と購入先を明記し保存を促す構成で、複数チェーンを横断して比較する“買ってよかった”系のまとめ動画。短尺で視聴者の比較検討と後追い購買を後押しするフォーマットだ。",
+        "why_it_matters": "他社と並べて紹介されることは、価格・デザインの相対評価に晒されることを意味する。同時に比較動画は「保存」され後から購買へつながる検索資産になる。ニトリが選ばれ続けるには、比較文脈での刺さり方を把握し、値段と見た目の納得感を磨くことが重要だ。",
+        "tags": [
+          "ニトリ",
+          "TikTok",
+          "比較",
+          "SNS",
+          "購買検討"
+        ],
+        "url": "https://www.tiktok.com/@benri29861/video/7684042764119493909",
+        "source_pub_ts": 1789080631.0
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「モデラーのために開発されたのでは」プラモ工具収納にニトリのアイテムが“寸法ビッタシ”と話題",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-05",
+        "summary": "Xで288いいねを集めた投稿は、プラモデルの工具やマテリアル収納にニトリのアイテムが「寸法がビッタシ」と紹介するもの。「モデラーのために開発されたのでは」と驚きの声が上がり、想定外の用途で愛用される様子がうかがえる。汎用収納の“副次的な最適解”として支持された形だ。",
+        "why_it_matters": "メーカーが想定しない用途で支持されることは、商品の汎用性とマニア層の深いニーズの存在を示す。特定コミュニティの“ちょうどいい”は強い口コミを生み、新規顧客を呼ぶ。収納什器の寸法設計の妙が、趣味領域の集客資産になり得ることを示唆する。",
+        "tags": [
+          "ニトリ",
+          "X",
+          "収納",
+          "趣味",
+          "口コミ"
+        ],
+        "url": "https://x.com/NippperCom/status/2100063373866012802",
+        "source_pub_ts": 1789556400
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "日本🇯🇵から出て行け！ 売国奴企業が！ ニトリ会長！ 我々は！ 中国なしに生きては行けない！ pic.x.com/LEd5Mkwnaq",
+        "platform": "x",
+        "author": "@Tanakaseiji14",
+        "url": "https://x.com/Tanakaseiji14/status/2100041913965686970",
+        "likes": 2553,
+        "retweets": 475,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:59",
+        "captured_at": "",
+        "text": "日本🇯🇵から出て行け！ 売国奴企業が！ ニトリ会長！ 我々は！ 中国なしに生きては行けない！ pic.x.com/LEd5Mkwnaq",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "10月10日（土）に開催される「ニトリJD.LEAGUE 第12節 豊田ラウンド』にゲストとして出演させて頂きます‼️⚾️ 今からすっごく楽...",
+        "platform": "x",
+        "author": "@coco_ske48",
+        "url": "https://x.com/coco_ske48/status/2100158013096997335",
+        "likes": 380,
+        "retweets": 47,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:41",
+        "captured_at": "",
+        "text": "10月10日（土）に開催される「ニトリJD.LEAGUE 第12節 豊田ラウンド』にゲストとして出演させて頂きます‼️⚾️ 今からすっごく楽しみです> ·̫ <⸝⸝ 当日は会場が大熱狂するように、同期3人で精一杯がんばります✊🏻✊🏻 みゆちゃんの始球式一緒に応援しようね🌟 ファンの皆さんのご来場お待ちしてます！ x.com/redterriers_1/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "10月10日に開催される「ニトリJD.LEAGUE 第12節 豊田ラウンド」に出演させていただきます✨ 会場を盛り上げることができるように、...",
+        "platform": "x",
+        "author": "@mii_chan1120",
+        "url": "https://x.com/mii_chan1120/status/2100187094392176787",
+        "likes": 331,
+        "retweets": 36,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 20:36",
+        "captured_at": "",
+        "text": "10月10日に開催される「ニトリJD.LEAGUE 第12節 豊田ラウンド」に出演させていただきます✨ 会場を盛り上げることができるように、精一杯頑張ります💪🏻❤️‍🔥 同期3人でとっても楽しみです🥹🎶 みなさん、ぜひお越しください💞 #トヨタレッドテリアーズ #SKE48 x.com/redterriers_1/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "\\📢スペシャルゲスト来場決定/ 10月10日（土）に開催する 「ニトリJD.LEAGUE 第12節 豊田ラウンド」に、 ✨SKE48 松川み...",
+        "platform": "x",
+        "author": "@RedTerriers_1",
+        "url": "https://x.com/RedTerriers_1/status/2100151897902690443",
+        "likes": 323,
+        "retweets": 86,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:16",
+        "captured_at": "",
+        "text": "\\📢スペシャルゲスト来場決定/ 10月10日（土）に開催する 「ニトリJD.LEAGUE 第12節 豊田ラウンド」に、 ✨SKE48 松川みゆさん ✨SKE48 南澤恋々さん ✨SKE48 長谷川雅さん の3名がスペシャルゲストとして来場決定！ 当日はトークショーや始球式など、会場を盛り上げていただきます🎤ぜひ会場へ☺️🙌 pic.x.com/SIv1QXkQio",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ついに「これはモデラーのために開発されたのでは!?」と思えるほどビッタシ来る寸法のものに出会うことができました。 nippper.com/2...",
+        "platform": "x",
+        "author": "@NippperCom",
+        "url": "https://x.com/NippperCom/status/2100063373866012802",
+        "likes": 288,
+        "retweets": 39,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:25",
+        "captured_at": "",
+        "text": "ついに「これはモデラーのために開発されたのでは!?」と思えるほどビッタシ来る寸法のものに出会うことができました。 nippper.com/2020/09/10069/ 神レベル！プラモのツールとマテリアル、格納するならニトリのこれです。 #ピックアップ #工具 pic.x.com/HJNXxj9iyV",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "＼これ欲しい！ってなるやつ集めた🔥／ ニトリ・IKEA・楽天で見つけた 暮らしがちょっと快適になるアイテム10選！ 気になった家具・アイテム...",
+        "platform": "tiktok",
+        "author": "@benri29861",
+        "url": "https://www.tiktok.com/@benri29861/video/7684042764119493909",
+        "likes": 471,
+        "retweets": 16,
+        "views": 67300,
+        "comments": 7,
+        "posted_on": "2026-09-11 07:50",
+        "captured_at": "2026-09-16T18:40:41.538761+09:00",
+        "text": "＼これ欲しい！ってなるやつ集めた🔥／ ニトリ・IKEA・楽天で見つけた 暮らしがちょっと快適になるアイテム10選！ 気になった家具・アイテムあった？👇 コメントに番号で教えて❤️ 値段と購入先も載せてるから、 気になるものは保存📌して後でチェック！ こういう「買ってよかった暮らしアイテム」を紹介してます❤️ 次も見たい人はフォローしてね❤️ #ニトリ #家具 #インテリア #便利アイテム #収納アイデア",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "媒体横断では、Xはスポーツ協賛（JD.LEAGUE）や趣味の収納転用などブランド接点と特定用途の“ちょうどいい”が支持を集め、TikTokは他チェーン比較のまとめ動画が6.7万回再生と伸びた。短尺は実使用・比較の具体性、Xは利用シーンの発見共有が反響の鍵。中国依存を巡る分極化した政治的投稿も一部見られる。",
+    "sns_why_it_matters": "比較・保存型の動画は購買検討の入口であり、ニトリが他社と並べられ選ばれる場になっている。趣味やスポーツなど非・家具文脈での接点が口コミを生むため、汎用性と寸法・使い勝手の作り込みが集客資産となる。生活者発信の用途発見を拾い、商品改善や売場提案へ還元する仕組みが問われる。"
+  },
+  {
     "date": "20260916",
     "title": "2026年9月16日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "9月15日の最大の論点は基幹系・需要予測の刷新。ニトリがオラクルを導入し需要予測処理を約4分の1に短縮したと報じられ、SPAの在庫・物流判断を高速化するDX投資が経営課題の中核に据わった。 AI×産学連携も始動。北海道大学と共同で「理想のインテリア」を数値化する研究に着手し、感性領域をデータ化して商品開発とレコメンドに接続する構えを見せた。",
