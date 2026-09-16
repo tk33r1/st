@@ -1698,8 +1698,12 @@ def render_top_index_html(config, articles_history):
             for tag in tags:
                 if tag not in generic_tags:
                     trend_counts[tag] += 1
+    # ☆ は記事タグと同じ .topic-watch-btn。initTopicWatch が全件まとめて拾うので JS 側の追加は不要。
     trend_items = ''.join(
-        f'<li><a href="?q={urllib.parse.quote(tag)}#archiveSearch"><span>#{esc(tag)}</span><strong>{count}件</strong></a></li>'
+        f'<li><span class="trend-item">'
+        f'<a href="?q={urllib.parse.quote(tag)}#archiveSearch"><span>#{esc(tag)}</span><strong>{count}件</strong></a>'
+        f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button>'
+        f'</span></li>'
         for tag, count in trend_counts.most_common(8)
     )
     trend_section_html = f'''<section class="trend-section" aria-labelledby="trendTitle">
@@ -1707,7 +1711,7 @@ def render_top_index_html(config, articles_history):
       <ul class="trend-list">{trend_items}</ul>
       <div class="watch-panel">
         <h3>ウォッチ中のテーマ</h3>
-        <div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div>
+        <div id="watchTopics" class="watch-topics"><span class="watch-empty">上の注目テーマや記事タグの ☆ からテーマを登録できます。</span></div>
         <div class="watch-feed" id="watchFeed" hidden>
           <div class="watch-feed-head">
             <p class="watch-feed-status" id="watchFeedStatus"></p>

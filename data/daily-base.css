@@ -2729,16 +2729,31 @@ a {
   list-style: none;
 }
 
+/* 枠線はリンクではなく外側が持つ。中に ☆ を並べて一つのピルに見せるため。 */
+.trend-item {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
 .trend-list a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 11px;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
+  padding: 7px 9px 7px 12px;
   color: var(--ink-2);
   font-size: 11.5px;
+}
+
+.trend-list a:hover {
+  color: var(--primary-ink);
+}
+
+.trend-item .topic-watch-btn {
+  padding-inline: 9px;
+  font-size: 12px;
 }
 
 /* 検索と解除を一つのピルに収める。記事タグの .topic-tag-wrap と同じ作り。 */
