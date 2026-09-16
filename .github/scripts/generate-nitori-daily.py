@@ -374,6 +374,7 @@ def fallback_rule_based(candidates, yesterday_str):
 CONFIG = {
     'media_id': 'nitoridaily',
     'media_name': 'Nitori Daily',
+    'x_handle': 'nitoridaily',
     'brand_title': 'Nitori Daily',
     'brand_title_short': 'ニトリニュース＆SNS話題',
     'brand_subtitle': '毎朝8時のニトリ速報＆SNS話題',
