@@ -628,10 +628,14 @@ a {
 
 .issue-lede {
   margin-top: 16px;
-  max-width: 48em;
   font-size: 14.5px;
   line-height: 1.9;
   color: var(--ink-2);
+  /* 48em (=696px) は欧文向けの行長。和文だと本文幅を300px以上余らせたまま
+     「リテールメディア|などの」のように語の途中で折れていた。行長はコンテナに
+     委ね、折る位置と行の揃えだけ整える（auto-phrase は未対応ブラウザでは無視）。 */
+  text-wrap: balance;
+  word-break: auto-phrase;
 }
 
 .issue-stats {
@@ -2729,31 +2733,15 @@ a {
   list-style: none;
 }
 
-/* 枠線はリンクではなく外側が持つ。中に ☆ を並べて一つのピルに見せるため。 */
-.trend-item {
-  display: inline-flex;
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-}
-
-.trend-list a {
+/* ピルそのものは記事タグの .topic-tag-wrap をそのまま使う。件数の分だけ間隔を足す。 */
+.trend-list .topic-tag {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 9px 7px 12px;
-  color: var(--ink-2);
-  font-size: 11.5px;
+  gap: 7px;
 }
 
-.trend-list a:hover {
+.trend-list .topic-tag:hover {
   color: var(--primary-ink);
-}
-
-.trend-item .topic-watch-btn {
-  padding-inline: 9px;
-  font-size: 12px;
 }
 
 /* 検索と解除を一つのピルに収める。記事タグの .topic-tag-wrap と同じ作り。 */
