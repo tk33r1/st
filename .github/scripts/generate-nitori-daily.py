@@ -263,6 +263,9 @@ CATEGORY_PILL_LABELS = {
     "グローバル先端トレンド": "🌐 グローバル先端トレンド",
 }
 
+# FAQ の本文と CONFIG の両方から参照する。二重管理にするとハンドルの変更時に片方が残る。
+X_HANDLE = 'dailynitori'
+
 FAQ_ITEMS = [
     {
         "q": "「Nitori Daily」とはどのようなメディアですか？",
@@ -278,7 +281,7 @@ FAQ_ITEMS = [
     },
     {
         "q": "最新ニュースの通知や購読はできますか？",
-        "a": "本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeams、DiscordのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/nitoridaily\" target=\"_blank\" rel=\"noopener noreferrer\">@nitoridaily</a> もあわせてご利用ください。"
+        "a": f"本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeams、DiscordのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/{X_HANDLE}\" target=\"_blank\" rel=\"noopener noreferrer\">@{X_HANDLE}</a> もあわせてご利用ください。"
     },
     {
         "q": "社内チャット（Slack/Teams）やSNSへの引用・共有は可能ですか？",
@@ -378,7 +381,7 @@ def fallback_rule_based(candidates, yesterday_str):
 CONFIG = {
     'media_id': 'nitoridaily',
     'media_name': 'Nitori Daily',
-    'x_handle': 'nitoridaily',
+    'x_handle': X_HANDLE,
     'brand_title': 'Nitori Daily',
     'brand_title_short': 'ニトリニュース＆SNS話題',
     'brand_subtitle': '毎朝8時のニトリ速報＆SNS話題',

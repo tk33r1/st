@@ -57,6 +57,9 @@ CATEGORY_PILL_LABELS = {
     "グローバル先端トレンド": "🌐 グローバル先端トレンド",
 }
 
+# FAQ の本文と CONFIG の両方から参照する。二重管理にするとハンドルの変更時に片方が残る。
+X_HANDLE = 'retailtechdaily'
+
 FAQ_ITEMS = [
     {
         "q": "「Retail Tech Daily」とはどのようなメディアですか？",
@@ -72,7 +75,7 @@ FAQ_ITEMS = [
     },
     {
         "q": "最新ニュースの通知や購読はできますか？",
-        "a": "本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeamsのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/retailtechdaily\" target=\"_blank\" rel=\"noopener noreferrer\">@retailtechdaily</a> もあわせてご利用ください。"
+        "a": f"本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeamsのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/{X_HANDLE}\" target=\"_blank\" rel=\"noopener noreferrer\">@{X_HANDLE}</a> もあわせてご利用ください。"
     },
     {
         "q": "社内チャット（Slack/Teams）への引用・共有は可能ですか？",
@@ -182,7 +185,7 @@ def fallback_rule_based(candidates, yesterday_str):
 CONFIG = {
     'media_id': 'retailtechdaily',
     'media_name': 'Retail Tech Daily',
-    'x_handle': 'retailtechdaily',
+    'x_handle': X_HANDLE,
     'brand_title': 'Retail Tech Daily',
     'brand_title_short': 'リテールテック＆流通DX',
     'brand_subtitle': '毎朝8時の流通DX・リテールテック日刊速報',
