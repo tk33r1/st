@@ -22,6 +22,7 @@
   <meta property="og:image" content="https://tk.st/images/ogp/nitoridaily-20260916.webp">
 
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nitoridaily">
   <meta name="twitter:title" content="2026年9月16日号：昨日のニトリニュース＆SNS話題まとめ — Nitori Daily">
   <meta name="twitter:description" content="9月15日の最大の論点は基幹系・需要予測の刷新。ニトリがオラクルを導入し需要予測処理を約4分の1に短縮したと報じられ、SPAの在庫・物流判断を高速化するDX投資が経営課題の中核に据わった。 AI×産学連携も始動。北海道大学と共同で「理想のインテリア」を数値化する研究に着手し、感性領域をデータ化して商品開発とレコメンドに接続する構えを見せた。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/nitoridaily-20260916.webp">
@@ -497,6 +498,7 @@
             <a href="../#archiveTitle">バックナンバー</a>
             <a href="../#faq">FAQ</a>
             <a href="../rss.xml" target="_blank" rel="noopener noreferrer">RSSを購読</a>
+            <a href="https://x.com/nitoridaily" target="_blank" rel="noopener noreferrer">公式X</a>
             <a href="../../retailtechdaily/" class="header-menu-media-link">Retail Tech Daily</a>
           </nav>
         </div>
@@ -636,17 +638,18 @@
           </div>
           <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
             <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">7</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
             <span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="region" data-filter-val="JP" aria-pressed="false">国内 <span class="chip-count">7</span></button><span class="chip-divider" aria-hidden="true"></span><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="物流・サプライチェーン" aria-pressed="false">物流・サプライチェーン <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="デジタル・EC・アプリ" aria-pressed="false">デジタル・EC・アプリ <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="店舗展開・海外戦略" aria-pressed="false">店舗展開・海外戦略 <span class="chip-count">1</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="商品開発・ヒット商品" aria-pressed="false">商品開発・ヒット商品 <span class="chip-count">2</span></button><button type="button" class="filter-chip" data-filter-type="category" data-filter-val="SNS話題・リアル反響" aria-pressed="false">SNS話題・リアル反響 <span class="chip-count">2</span></button>
           </div>
         </div>
-        <div class="bulk-share-bar" id="bulkShareBar">
-      <span><strong id="selectedArticlesCount">0</strong>件選択</span>
-      <button type="button" id="shareSelectedBtn" data-share-prefix="【ニトリ日刊速報】" disabled><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>選択記事をまとめて共有</span></button>
-    </div>
+        <div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>
 
         <div class="articles-list detail-view" id="articlesList">
 <section class="content-lane" id="lane-corporate" data-lane-group="corporate"><h3 class="content-lane-title">企業・経営</h3>
-        <article class="news-card" id="art-1" data-region="JP" data-category="物流・サプライチェーン" data-lane="corporate" data-share-title="ニトリ、オラクル導入で需要予測処理を約4分の1に——基幹系刷新でSPAの判断を高速化" data-share-takeaway="需要予測の高速化は発注・生産・配送のリードタイム短縮と在庫回転の改善に波及する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-1">
+        <article class="news-card" id="art-1" data-region="JP" data-category="物流・サプライチェーン" data-lane="corporate">
           <div class="card-index" aria-hidden="true">01</div>
           <div class="card-main">
             <div class="card-meta">
@@ -670,8 +673,7 @@
 
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="ニトリ、オラクル導入で需要予測処理を約4分の1に——基幹系刷新でSPAの判断を高速化" data-share-takeaway="需要予測の高速化は発注・生産・配送のリードタイム短縮と在庫回転の改善に波及する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-1" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="ニトリ、オラクル導入で需要予測処理を約4分の1に——基幹系刷新でSPAの判断を高速化" data-share-takeaway="需要予測の高速化は発注・生産・配送のリードタイム短縮と在庫回転の改善に波及する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-1" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="ニトリ、オラクル導入で需要予測処理を約4分の1に——基幹系刷新でSPAの判断を高速化" data-share-takeaway="需要予測の高速化は発注・生産・配送のリードタイム短縮と在庫回転の改善に波及する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-1" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
                 <a class="source-link" href="https://news.google.com/rss/articles/CBMiSkFVX3lxTE5VMnlqNWFjNk10VTJWYWVHRlBIRzJVNTVId2tHU1picXk3UzlIcXV5dERPbUJHOTMyRlQ3c2pOYVV5QXNsMWFRM0xn?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
                 <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B49%E6%9C%8816%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B1%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
@@ -679,7 +681,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-2" data-region="JP" data-category="デジタル・EC・アプリ" data-lane="corporate" data-share-title="ニトリ、AIで「理想のインテリア」を数値化——北海道大学と共同研究" data-share-takeaway="「理想の部屋」を数値化できれば、接客・EC・カタログを横断する提案エンジンになり、客単価と満足度を同時に引き上げられる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-2">
+        <article class="news-card" id="art-2" data-region="JP" data-category="デジタル・EC・アプリ" data-lane="corporate">
           <div class="card-index" aria-hidden="true">02</div>
           <div class="card-main">
             <div class="card-meta">
@@ -703,8 +705,7 @@
 
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="ニトリ、AIで「理想のインテリア」を数値化——北海道大学と共同研究" data-share-takeaway="「理想の部屋」を数値化できれば、接客・EC・カタログを横断する提案エンジンになり、客単価と満足度を同時に引き上げられる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-2" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="ニトリ、AIで「理想のインテリア」を数値化——北海道大学と共同研究" data-share-takeaway="「理想の部屋」を数値化できれば、接客・EC・カタログを横断する提案エンジンになり、客単価と満足度を同時に引き上げられる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-2" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="ニトリ、AIで「理想のインテリア」を数値化——北海道大学と共同研究" data-share-takeaway="「理想の部屋」を数値化できれば、接客・EC・カタログを横断する提案エンジンになり、客単価と満足度を同時に引き上げられる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-2" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
                 <a class="source-link" href="https://news.google.com/rss/articles/CBMiVEFVX3lxTFB3RzN5LWNYLWFfMzlzQXVWS1duM1dCNG5zT1A0em9EWlgwQlhYeWZoWkI5M0pVMWpHWTgtUzZfWmpkcWtKYWhsZGxwY01tNDV4aF81bA?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
                 <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B49%E6%9C%8816%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B2%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
@@ -712,7 +713,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-product" data-lane-group="product"><h3 class="content-lane-title">商品・店舗</h3>
-        <article class="news-card" id="art-3" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product" data-share-title="ニトリ、福島県に「福島御山店」を2027年3月開業へ" data-share-takeaway="店舗網の拡大は、ECと店舗在庫を一体で見る在庫の可視化とセットになって初めて強みになる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-3">
+        <article class="news-card" id="art-3" data-region="JP" data-category="店舗展開・海外戦略" data-lane="product">
           <div class="card-index" aria-hidden="true">03</div>
           <div class="card-main">
             <div class="card-meta">
@@ -736,8 +737,7 @@
             <a class="product-search-link" href="https://www.nitori-net.jp/ec/keyword/%E5%BA%97%E8%88%97%E5%B1%95%E9%96%8B/" target="_blank" rel="noopener noreferrer">ニトリ公式で「店舗展開」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="ニトリ、福島県に「福島御山店」を2027年3月開業へ" data-share-takeaway="店舗網の拡大は、ECと店舗在庫を一体で見る在庫の可視化とセットになって初めて強みになる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-3" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="ニトリ、福島県に「福島御山店」を2027年3月開業へ" data-share-takeaway="店舗網の拡大は、ECと店舗在庫を一体で見る在庫の可視化とセットになって初めて強みになる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-3" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="ニトリ、福島県に「福島御山店」を2027年3月開業へ" data-share-takeaway="店舗網の拡大は、ECと店舗在庫を一体で見る在庫の可視化とセットになって初めて強みになる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-3" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
                 <a class="source-link" href="https://news.google.com/rss/articles/CBMiUEFVX3lxTFBQUU5Lb09EV040c2RXclR1a3JFcWJXOGtXeGw5eG1tTzg1ZnFzSXYxci1TdEtudTVKZGRJM3ZvUGVkYnQ5VTNkcWQ3SHdXMDhh?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
                 <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B49%E6%9C%8816%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B3%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
@@ -745,7 +745,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="ニトリ×スヌーピー、1,000円以下で買える「持ち歩き」コラボ3選" data-share-takeaway="低価格帯のIPコラボは集客のフックとして機能しつつ、ついで買いで客単価を押し上げる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-4">
+        <article class="news-card" id="art-4" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product">
           <div class="card-index" aria-hidden="true">04</div>
           <div class="card-main">
             <div class="card-meta">
@@ -769,8 +769,7 @@
             <a class="product-search-link" href="https://www.nitori-net.jp/ec/keyword/%E3%82%B3%E3%83%A9%E3%83%9C/" target="_blank" rel="noopener noreferrer">ニトリ公式で「コラボ」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="ニトリ×スヌーピー、1,000円以下で買える「持ち歩き」コラボ3選" data-share-takeaway="低価格帯のIPコラボは集客のフックとして機能しつつ、ついで買いで客単価を押し上げる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-4" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="ニトリ×スヌーピー、1,000円以下で買える「持ち歩き」コラボ3選" data-share-takeaway="低価格帯のIPコラボは集客のフックとして機能しつつ、ついで買いで客単価を押し上げる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-4" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="ニトリ×スヌーピー、1,000円以下で買える「持ち歩き」コラボ3選" data-share-takeaway="低価格帯のIPコラボは集客のフックとして機能しつつ、ついで買いで客単価を押し上げる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-4" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
                 <a class="source-link" href="https://news.google.com/rss/articles/CBMiYkFVX3lxTE9lN3BFNDNvczFDcTRIN3hoZE1xdEdFY3I1eEpLSDZ2ODF1aXVmLXJ1WHRodC1qMzVXSElhVkg3MHZLcjlVREVKdWRHdWZZRnBjcUdQU3M1NEx4SGpqeXpTX0hR0gFiQVVfeXFMT2U3cEU0M29zMUNxNEg3eGhkTXF0R0VjcjV4SktINnY4MXVpdWYtcnVYdGh0LWozNVdISWFWSDcwdktyOVVERUp1ZEd1ZllGcGNxR1BTczU0THhIamp5elNfSFE?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
                 <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B49%E6%9C%8816%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B4%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
@@ -778,7 +777,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product" data-share-title="「ソファより快適かも」ニトリの座面が伸ばせる座椅子、7,990円で1台3役" data-share-takeaway="ソファより安く場所を取らない家具は、単身・共働き世帯の強い味方になる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-5">
+        <article class="news-card" id="art-5" data-region="JP" data-category="商品開発・ヒット商品" data-lane="product">
           <div class="card-index" aria-hidden="true">05</div>
           <div class="card-main">
             <div class="card-meta">
@@ -802,8 +801,7 @@
             <a class="product-search-link" href="https://www.nitori-net.jp/ec/keyword/%E5%BA%A7%E6%A4%85%E5%AD%90/" target="_blank" rel="noopener noreferrer">ニトリ公式で「座椅子」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="「ソファより快適かも」ニトリの座面が伸ばせる座椅子、7,990円で1台3役" data-share-takeaway="ソファより安く場所を取らない家具は、単身・共働き世帯の強い味方になる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-5" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="「ソファより快適かも」ニトリの座面が伸ばせる座椅子、7,990円で1台3役" data-share-takeaway="ソファより安く場所を取らない家具は、単身・共働き世帯の強い味方になる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-5" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="「ソファより快適かも」ニトリの座面が伸ばせる座椅子、7,990円で1台3役" data-share-takeaway="ソファより安く場所を取らない家具は、単身・共働き世帯の強い味方になる。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-5" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
                 <a class="source-link" href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE85OTRoNllpOUFJX0JveFJPdzNNODQ0Vnk3UEtTVGhpN29USllLQ195YmZhRGNHdlZCNWl3N3BXMlBCSGJWN05fTkd0SktIZTJVODk4MkpR?oc=5" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
                 <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B49%E6%9C%8816%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B5%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
@@ -811,7 +809,7 @@
             </div>
           </div>
         </article></section><section class="content-lane" id="lane-consumer" data-lane-group="consumer"><h3 class="content-lane-title">生活者SNS</h3>
-        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="「入荷タイミングが分からない」池袋ニトリ前の光景が1,149いいね——店頭需要の“見えにくさ”が話題" data-share-takeaway="入荷情報が関心を集めるのは、商品力が高くても「買えるタイミング」が購買決定を左右する証左だ。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-6">
+        <article class="news-card" id="art-6" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer">
           <div class="card-index" aria-hidden="true">06</div>
           <div class="card-main">
             <div class="card-meta">
@@ -835,8 +833,7 @@
             <a class="product-search-link" href="https://www.nitori-net.jp/ec/keyword/SNS/" target="_blank" rel="noopener noreferrer">ニトリ公式で「SNS」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="「入荷タイミングが分からない」池袋ニトリ前の光景が1,149いいね——店頭需要の“見えにくさ”が話題" data-share-takeaway="入荷情報が関心を集めるのは、商品力が高くても「買えるタイミング」が購買決定を左右する証左だ。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-6" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="「入荷タイミングが分からない」池袋ニトリ前の光景が1,149いいね——店頭需要の“見えにくさ”が話題" data-share-takeaway="入荷情報が関心を集めるのは、商品力が高くても「買えるタイミング」が購買決定を左右する証左だ。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-6" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="「入荷タイミングが分からない」池袋ニトリ前の光景が1,149いいね——店頭需要の“見えにくさ”が話題" data-share-takeaway="入荷情報が関心を集めるのは、商品力が高くても「買えるタイミング」が購買決定を左右する証左だ。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-6" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
                 <a class="source-link" href="https://x.com/krkrkrop11/status/2099779241957339611" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
                 <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B49%E6%9C%8816%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B6%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
@@ -844,7 +841,7 @@
             </div>
           </div>
         </article>
-        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer" data-share-title="「ニトリのレベル上がりすぎ」604いいね——生活者が実感する“デザインと価格”の再評価" data-share-takeaway="「安いから買う」から「良いから買う」への評価軸の移行は、PBの価格訴求に依存しない収益構造への転換を意味する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-7">
+        <article class="news-card" id="art-7" data-region="JP" data-category="SNS話題・リアル反響" data-lane="consumer">
           <div class="card-index" aria-hidden="true">07</div>
           <div class="card-main">
             <div class="card-meta">
@@ -868,8 +865,7 @@
             <a class="product-search-link" href="https://www.nitori-net.jp/ec/keyword/SNS/" target="_blank" rel="noopener noreferrer">ニトリ公式で「SNS」を探す <svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="「ニトリのレベル上がりすぎ」604いいね——生活者が実感する“デザインと価格”の再評価" data-share-takeaway="「安いから買う」から「良いから買う」への評価軸の移行は、PBの価格訴求に依存しない収益構造への転換を意味する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-7" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="「ニトリのレベル上がりすぎ」604いいね——生活者が実感する“デザインと価格”の再評価" data-share-takeaway="「安いから買う」から「良いから買う」への評価軸の移行は、PBの価格訴求に依存しない収益構造への転換を意味する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-7" data-share-prefix="【ニトリ日刊速報】" title="SlackやTeamsの社内共有用にコピー"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="「ニトリのレベル上がりすぎ」604いいね——生活者が実感する“デザインと価格”の再評価" data-share-takeaway="「安いから買う」から「良いから買う」への評価軸の移行は、PBの価格訴求に依存しない収益構造への転換を意味する。" data-share-url="https://tk.st/job/nitoridaily/20260916/#art-7" title="共有先を選ぶ"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"></path></svg><span>共有</span></button>
                 <a class="source-link" href="https://x.com/ibashodesign/status/2099840071881167013" target="_blank" rel="noopener noreferrer">元記事を読む &rarr;</a>
                 <a class="correction-link" href="https://tk.st/contact/?subject=Nitori%20Daily%202026%E5%B9%B49%E6%9C%8816%E6%97%A5%E5%8F%B7%20%E8%A8%98%E4%BA%8B7%E3%81%AE%E8%A8%82%E6%AD%A3%E3%83%BB%E5%87%BA%E5%85%B8%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">訂正・出典を報告</a>
@@ -949,7 +945,7 @@
         </div>
         <div class="footer-center">
           <div class="footer-links">
-            <a href="https://tk.st/">Home</a><a href="../">Nitori Daily</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a href="https://tk.st/contact/">Contact</a>
+            <a href="https://tk.st/">Home</a><a href="../">Nitori Daily</a><a href="../#faq">FAQ</a><a href="../rss.xml">RSS</a><a href="https://x.com/nitoridaily" target="_blank" rel="noopener noreferrer">公式X</a><a href="https://tk.st/contact/?to=nitoridaily">Contact</a>
           </div>
           <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
         </div>

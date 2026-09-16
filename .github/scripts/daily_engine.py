@@ -176,8 +176,27 @@ def render_site_header(config, brand_href, search_action, menu_links, sibling_pr
   </header>'''
 
 
+def x_handle(config):
+    """公式Xアカウントの @ を除いたハンドル。未設定のメディアでは空文字を返す。"""
+    return str(config.get('x_handle') or '').lstrip('@')
+
+
+def x_profile_url(config):
+    """公式Xアカウントの URL。未設定のメディアでは空文字を返す。"""
+    handle = x_handle(config)
+    return f'https://x.com/{handle}' if handle else ''
+
+
+def x_site_meta(config):
+    """Twitter Card をメディアの公式アカウントに紐づける meta タグ。"""
+    handle = x_handle(config)
+    return f'<meta name="twitter:site" content="@{esc(handle)}">' if handle else ''
+
+
 def render_page_footer(config, media_href, faq_href, rss_href):
     """共通フッターとページ先頭へ戻るボタンを描画する。"""
+    x_url = x_profile_url(config)
+    x_link = f'<a href="{esc(x_url)}" target="_blank" rel="noopener noreferrer">公式X</a>' if x_url else ''
     return f'''<footer class="site-footer">
     <div class="container">
       <div class="footer-layout">
@@ -186,7 +205,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
         </div>
         <div class="footer-center">
           <div class="footer-links">
-            <a href="https://tk.st/">Home</a><a href="{esc(media_href)}">{config['brand_title']}</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a><a href="https://tk.st/contact/">Contact</a>
+            <a href="https://tk.st/">Home</a><a href="{esc(media_href)}">{config['brand_title']}</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a>{x_link}<a href="https://tk.st/contact/?to={esc(config['media_id'])}">Contact</a>
           </div>
           <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
         </div>
@@ -1254,12 +1273,15 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
     jsonld_obj = build_dynamic_jsonld(config, issue_data, date_key, formatted_date)
     dynamic_jsonld_str = escape_jsonld_for_script(json.dumps(jsonld_obj, ensure_ascii=False, indent=2))
     dynamic_page_desc = esc(jsonld_obj['@graph'][0]['description'])
-    site_header_html = render_site_header(config, '../', '../#archiveSearch', (
+    issue_menu_links = [
         ('../', 'メディアトップ', False),
         ('../#archiveTitle', 'バックナンバー', False),
         ('../#faq', 'FAQ', False),
         ('../rss.xml', 'RSSを購読', True),
-    ), '../../')
+    ]
+    if x_profile_url(config):
+        issue_menu_links.append((x_profile_url(config), '公式X', True))
+    site_header_html = render_site_header(config, '../', '../#archiveSearch', issue_menu_links, '../../')
     site_footer_html = render_page_footer(config, '../', '../#faq', '../rss.xml')
 
     total_chars = sum(len(a.get('title', '')) + len(a.get('summary', '')) + len(a.get('why_it_matters', '')) for a in articles)
@@ -1350,7 +1372,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             category_control = f'<button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>'
 
         card_html = f"""
-        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}">
+        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}">
           <div class="card-index" aria-hidden="true">{idx:02d}</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1374,8 +1396,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             {product_link}
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
-                <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>社内共有コピー</span></button>
+                <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}" title="共有先を選ぶ">{ICON_SHARE_SVG}<span>共有</span></button>
                 {source_link_html}
                 {correction_link}
@@ -1418,6 +1439,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         </section>'''
         index_panel_html = ''
         filter_wrapper_html = ''
+        watch_banner_html = ''
         reading_progress_html = ''
     else:
         summary_panel_html = f'''<section class="panel panel-exec" aria-labelledby="execTitle">
@@ -1456,15 +1478,16 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
           </div>
           <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
             <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">{total_count}</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
             <span class="chip-divider" aria-hidden="true"></span>{region_chips}<span class="chip-divider" aria-hidden="true"></span>{cat_chips_html}
           </div>
         </div>'''
+        watch_banner_html = '''<div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
+        </div>'''
         reading_progress_html = '<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>'
 
-    share_selected_html = f'''<div class="bulk-share-bar" id="bulkShareBar">
-      <span><strong id="selectedArticlesCount">0</strong>件選択</span>
-      <button type="button" id="shareSelectedBtn" data-share-prefix="{esc(config['share_prefix'])}" disabled>{ICON_SHARE_SVG}<span>選択記事をまとめて共有</span></button>
-    </div>'''
     p_link = f'<a href="../{prev_issue["date"]}/" class="nav-prev">&larr; {prev_issue["date"][:4]}.{prev_issue["date"][4:6]}.{prev_issue["date"][6:8]} 号</a>' if prev_issue else '<span class="nav-disabled">&larr; 前号なし</span>'
     n_link = f'<a href="../{next_issue["date"]}/" class="nav-next">{next_issue["date"][:4]}.{next_issue["date"][4:6]}.{next_issue["date"][6:8]} 号 &rarr;</a>' if next_issue else '<span class="nav-disabled nav-next">最新号</span>'
 
@@ -1492,6 +1515,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   <meta property="og:image" content="https://tk.st/images/ogp/{config['media_id']}-{date_key}.webp">
 
   <meta name="twitter:card" content="summary_large_image">
+  {x_site_meta(config)}
   <meta name="twitter:title" content="{formatted_date}号：昨日の{config['brand_title_short']}まとめ — {config['media_name']}">
   <meta name="twitter:description" content="{dynamic_page_desc}">
   <meta name="twitter:image" content="https://tk.st/images/ogp/{config['media_id']}-{date_key}.webp">
@@ -1547,7 +1571,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
         {lane_nav_html}
         {filter_wrapper_html}
-        {share_selected_html}
+        {watch_banner_html}
 
         <div class="articles-list detail-view" id="articlesList">
 {articles_html}
@@ -1618,6 +1642,8 @@ def render_top_index_html(config, articles_history):
         ('#faq', 'FAQ', False),
         ('rss.xml', 'RSSを購読', True),
     ))
+    if x_profile_url(config):
+        menu_links.append((x_profile_url(config), '公式X', True))
     site_header_html = render_site_header(config, './', './#archiveSearch', menu_links, '../')
     site_footer_html = render_page_footer(config, './', '#faq', 'rss.xml')
 
@@ -1674,7 +1700,17 @@ def render_top_index_html(config, articles_history):
     trend_section_html = f'''<section class="trend-section" aria-labelledby="trendTitle">
       <div class="section-head"><h2 class="section-title" id="trendTitle">直近{len(recent_issues)}号の注目テーマ</h2><span class="section-rule" aria-hidden="true"></span></div>
       <ul class="trend-list">{trend_items}</ul>
-      <div class="watch-panel"><h3>ウォッチ中のテーマ</h3><div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div></div>
+      <div class="watch-panel">
+        <h3>ウォッチ中のテーマ</h3>
+        <div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div>
+        <div class="watch-feed" id="watchFeed" hidden>
+          <div class="watch-feed-head">
+            <p class="watch-feed-status" id="watchFeedStatus"></p>
+            <button type="button" class="watch-feed-seen" id="watchFeedSeen" hidden>既読にする</button>
+          </div>
+          <ul class="watch-feed-list" id="watchFeedList"></ul>
+        </div>
+      </div>
     </section>''' if trend_items else ''
 
     archive_tools_html = f'''<section class="archive-search" id="archiveSearch" aria-labelledby="archiveSearchTitle">
@@ -1690,9 +1726,14 @@ def render_top_index_html(config, articles_history):
       <div class="archive-search-results" id="archiveSearchResults"></div>
     </section>'''
 
+    portal_x_url = x_profile_url(config)
+    x_follow_link = (f'<a href="{esc(portal_x_url)}" target="_blank" rel="noopener noreferrer">{ICON_X_SVG}'
+                     f'<span>公式Xをフォロー</span></a>') if portal_x_url else ''
+    subscribe_desc = ('RSSリーダーやSlack・Teams・Discordに登録できます。Xでも毎朝の更新をお知らせします。'
+                      if portal_x_url else 'RSSリーダーやSlack・Teams・Discordに登録できます。')
     subscribe_html = f'''<section class="subscribe-panel" aria-labelledby="subscribeTitle">
-      <div><span class="subscribe-kicker">SUBSCRIBE</span><h2 id="subscribeTitle">毎朝の更新を購読</h2><p>RSSリーダーやSlack・Teams・Discordに登録できます。</p></div>
-      <div class="subscribe-actions"><a href="rss.xml" target="_blank" rel="noopener noreferrer">{ICON_RSS_SVG}<span>RSSを開く</span></a><button type="button" data-rss-copy="{base_url}rss.xml">{ICON_COPY_SVG}<span>RSS URLをコピー</span></button></div>
+      <div><span class="subscribe-kicker">SUBSCRIBE</span><h2 id="subscribeTitle">毎朝の更新を購読</h2><p>{subscribe_desc}</p></div>
+      <div class="subscribe-actions"><a href="rss.xml" target="_blank" rel="noopener noreferrer">{ICON_RSS_SVG}<span>RSSを開く</span></a><button type="button" data-rss-copy="{base_url}rss.xml">{ICON_COPY_SVG}<span>RSS URLをコピー</span></button>{x_follow_link}</div>
     </section>'''
 
     faq_jsonld_entities = []
@@ -1762,7 +1803,8 @@ def render_top_index_html(config, articles_history):
             "inLanguage": "ja",
             "issuanceFrequency": "P1D",
             "about": config['periodical_about'],
-            "publisher": { "@id": PERSON_ID }
+            "publisher": { "@id": PERSON_ID },
+            **({"sameAs": [x_profile_url(config)]} if x_profile_url(config) else {})
         },
         {
             "@type": "CollectionPage",
@@ -1848,6 +1890,7 @@ def render_top_index_html(config, articles_history):
   <meta property="og:image" content="{config['portal_ogp_image']}">
 
   <meta name="twitter:card" content="summary_large_image">
+  {x_site_meta(config)}
   <meta name="twitter:title" content="{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"}">
   <meta name="twitter:description" content="{config.get('portal_seo_desc') or config['brand_desc']}">
   <meta name="twitter:image" content="{config['portal_ogp_image']}">

@@ -282,7 +282,7 @@ FAQ_ITEMS = [
     },
     {
         "q": "社内チャット（Slack/Teams）やSNSへの引用・共有は可能ですか？",
-        "a": "はい、ご自由に共有いただけます。各日刊記事の個別ニュースカードに設置されている「📋 社内共有コピー」ボタンをクリックすると、社内ツール貼り付け用に最適化された要約テキストが一発でクリップボードにコピーされます。"
+        "a": "はい、ご自由に共有いただけます。各日刊記事の個別ニュースカードに設置されている「📋 コピー」ボタンをクリックすると、社内ツール貼り付け用に最適化された要約テキストが一発でクリップボードにコピーされます。"
     }
 ]
 
@@ -374,13 +374,14 @@ def fallback_rule_based(candidates, yesterday_str):
 CONFIG = {
     'media_id': 'nitoridaily',
     'media_name': 'Nitori Daily',
+    'x_handle': 'nitoridaily',
     'brand_title': 'Nitori Daily',
     'brand_title_short': 'ニトリニュース＆SNS話題',
     'brand_subtitle': '毎朝8時のニトリ速報＆SNS話題',
     'brand_desc': '毎朝8:00更新。昨日のニトリ・ニトリHD動向およびX・TikTok上の話題・反響（ヒット商品、使い勝手、店舗体験、物流DX、SPA戦略）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊ニュースメディア。',
     'hero_desc': 'ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。',
     'portal_hero_desc': 'ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。<br>ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。',
-    'portal_seo_title': 'ニトリ最新速報ニュース・SNSの話題まとめ | Nitori Daily',
+    'portal_seo_title': '日刊ニトリ／速報ニュース・SNSの話題まとめ | Nitori Daily',
     'portal_seo_desc': 'ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。',
     'css_file': 'nitori-daily.css',
     'favicon_file': 'nitori-favicon.svg',
