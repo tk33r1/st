@@ -2479,9 +2479,7 @@ a {
   font-weight: 700;
 }
 
-.share-select-label,
 .native-share-btn,
-.bulk-share-bar button,
 .subscribe-actions button,
 .subscribe-actions a {
   display: inline-flex;
@@ -2498,12 +2496,7 @@ a {
   cursor: pointer;
 }
 
-.share-select-label input {
-  accent-color: var(--primary);
-}
-
 .native-share-btn:hover,
-.bulk-share-bar button:hover,
 .subscribe-actions button:hover,
 .subscribe-actions a:hover {
   border-color: var(--primary-border);
@@ -2517,34 +2510,6 @@ a {
   text-decoration: underline;
   text-decoration-color: var(--rule-strong);
   text-underline-offset: 3px;
-}
-
-.bulk-share-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  min-height: 42px;
-  padding: 8px 0;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-}
-
-.bulk-share-bar button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.bulk-share-bar.has-selection {
-  position: sticky;
-  top: 70px;
-  z-index: 8;
-  padding-inline: 12px;
-  border: 1px solid var(--primary-border);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: var(--shadow-sm);
 }
 
 .daily-status {
@@ -2867,9 +2832,6 @@ a {
   .archive-search-results,
   .content-lane-nav {
     grid-template-columns: 1fr;
-  }
-  .bulk-share-bar.has-selection {
-    top: 62px;
   }
   .source-link,
   .correction-link {

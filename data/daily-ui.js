@@ -231,33 +231,6 @@
         await shareOrCopy(payload, fallbackText, btn, '共有文をコピー');
       });
     });
-
-    const checks = Array.from(document.querySelectorAll('.share-select'));
-    const bulkBar = document.getElementById('bulkShareBar');
-    const bulkBtn = document.getElementById('shareSelectedBtn');
-    const count = document.getElementById('selectedArticlesCount');
-    if (!checks.length || !bulkBar || !bulkBtn) return;
-
-    function selectedCards() {
-      return checks.filter(function(check) { return check.checked; }).map(function(check) { return check.closest('.news-card'); });
-    }
-    function updateBulk() {
-      const selected = selectedCards();
-      count.textContent = String(selected.length);
-      bulkBtn.disabled = selected.length === 0;
-      bulkBar.classList.toggle('has-selection', selected.length > 0);
-    }
-    checks.forEach(function(check) { check.addEventListener('change', updateBulk); });
-    bulkBtn.addEventListener('click', async function() {
-      const selected = selectedCards();
-      const prefix = bulkBtn.dataset.sharePrefix || '';
-      const text = selected.map(function(card, index) {
-        return (index + 1) + '. ' + card.dataset.shareTitle + '\n   💡 ' + card.dataset.shareTakeaway + '\n   ' + card.dataset.shareUrl;
-      }).join('\n\n');
-      const payload = { title: prefix.replace(/[【】]/g, '') + 'まとめ', text: text };
-      await shareOrCopy(payload, prefix + '\n' + text, bulkBtn, 'まとめをコピー完了');
-    });
-    updateBulk();
   }
 
   function normalizeSearch(value) {

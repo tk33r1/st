@@ -1350,7 +1350,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             category_control = f'<button type="button" class="category-badge" data-filter-trigger="category" data-filter-val="{esc(category_name)}" title="このカテゴリで絞り込み">{esc(category_name)}</button>'
 
         card_html = f"""
-        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}">
+        <article class="news-card" id="art-{idx}" data-region="{region_code}" data-category="{esc(category_name)}" data-lane="{lane}">
           <div class="card-index" aria-hidden="true">{idx:02d}</div>
           <div class="card-main">
             <div class="card-meta">
@@ -1374,7 +1374,6 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
             {product_link}
             <div class="card-footer">
               <div class="card-actions">
-                <label class="share-select-label"><input type="checkbox" class="share-select" aria-label="この記事をまとめて共有に追加"><span>選択</span></label>
                 <button type="button" class="share-copy-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}" data-share-prefix="{esc(config['share_prefix'])}" title="SlackやTeamsの社内共有用にコピー">{ICON_COPY_SVG}<span>社内共有コピー</span></button>
                 <button type="button" class="native-share-btn" data-share-title="{esc(raw_title)}" data-share-takeaway="{esc(takeaway)}" data-share-url="{share_url}" title="共有先を選ぶ">{ICON_SHARE_SVG}<span>共有</span></button>
                 {source_link_html}
@@ -1461,10 +1460,6 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         </div>'''
         reading_progress_html = '<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>'
 
-    share_selected_html = f'''<div class="bulk-share-bar" id="bulkShareBar">
-      <span><strong id="selectedArticlesCount">0</strong>件選択</span>
-      <button type="button" id="shareSelectedBtn" data-share-prefix="{esc(config['share_prefix'])}" disabled>{ICON_SHARE_SVG}<span>選択記事をまとめて共有</span></button>
-    </div>'''
     p_link = f'<a href="../{prev_issue["date"]}/" class="nav-prev">&larr; {prev_issue["date"][:4]}.{prev_issue["date"][4:6]}.{prev_issue["date"][6:8]} 号</a>' if prev_issue else '<span class="nav-disabled">&larr; 前号なし</span>'
     n_link = f'<a href="../{next_issue["date"]}/" class="nav-next">{next_issue["date"][:4]}.{next_issue["date"][4:6]}.{next_issue["date"][6:8]} 号 &rarr;</a>' if next_issue else '<span class="nav-disabled nav-next">最新号</span>'
 
@@ -1547,7 +1542,6 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
         {lane_nav_html}
         {filter_wrapper_html}
-        {share_selected_html}
 
         <div class="articles-list detail-view" id="articlesList">
 {articles_html}
