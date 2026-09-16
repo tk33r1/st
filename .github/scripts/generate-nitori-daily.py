@@ -225,12 +225,18 @@ def content_lane(art):
 
 
 def product_link(art):
-    """商品・生活者記事からニトリ公式検索リンクを組み立てる。"""
-    if content_lane(art) not in ('product', 'consumer'):
+    """商品を扱う記事にだけニトリ公式ECの検索リンクを組み立てる。
+
+    出店・物流・経営の記事にEC検索結果を並べても行き先が噛み合わないため、
+    レーンではなくカテゴリそのもので絞る（product レーンには出店記事も入る）。
+    """
+    if str(art.get('category') or '') != '商品開発・ヒット商品':
         return None
+    # EC検索の語として成立しないタグ。これを避けて後続の商品名を拾う。
     generic = {
         'ニトリ', '商品開発', 'SNS反響', 'SNS拡散', 'リアル反響', '生活者UX',
         '価格戦略', 'PB', '口コミ', 'ヒット商品', '新商品', '生活提案', 'EC導線',
+        'UX改善', '家事UX', '感情価値', '生活課題解決', 'コラボ', '低価格', 'ミドル層',
     }
     query = next(
         (str(tag).strip() for tag in (art.get('tags', []) or [])
@@ -239,7 +245,7 @@ def product_link(art):
     )
     if not query:
         return None
-    url = f"https://www.nitori-net.jp/ec/keyword/{urllib.parse.quote(query, safe='')}/"
+    url = f"https://www.nitori-net.jp/ec/search/?q={urllib.parse.quote(query, safe='')}"
     return f'ニトリ公式で「{query}」を探す', url
 
 
