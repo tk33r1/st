@@ -200,16 +200,9 @@ def render_page_footer(config, media_href, faq_href, rss_href):
     ブランド名の項目は置かない（同じ行き先が二つ並ぶだけになる）。
     """
     x_url = x_profile_url(config)
-    social_html = f'''<div class="footer-social">
-    <div class="container">
-      <a class="footer-x-btn" href="{esc(x_url)}" target="_blank" rel="noopener noreferrer">
-        {ICON_X_SVG}<span>公式Xをフォロー</span><span class="footer-x-handle">@{esc(x_handle(config))}</span>
-      </a>
-    </div>
-  </div>
-
-  ''' if x_url else ''
-    return f'''{social_html}<footer class="site-footer">
+    x_link = (f'<a class="footer-x-link" href="{esc(x_url)}" target="_blank" rel="noopener noreferrer" '
+              f'title="公式X" aria-label="公式X @{esc(x_handle(config))}">{ICON_X_SVG}</a>') if x_url else ''
+    return f'''<footer class="site-footer">
     <div class="container">
       <div class="footer-layout">
         <div class="footer-left">
@@ -217,7 +210,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
         </div>
         <div class="footer-center">
           <div class="footer-links">
-            <a href="{esc(media_href)}">Home</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a><a href="https://tk.st/contact/?to={esc(config['media_id'])}">Contact</a>
+            <a href="{esc(media_href)}">Home</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a>{x_link}<a href="https://tk.st/contact/?to={esc(config['media_id'])}">Contact</a>
           </div>
           <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
         </div>
