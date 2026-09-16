@@ -40,6 +40,49 @@
     }, 2000);
   }
 
+  // ウォッチ中テーマは日次ページのフィルタとポータルの新着一覧が同時に読む。
+  // 双方が同じ配列を見るように、localStorage への出入りをここに集約する。
+  function createWatchStore() {
+    const media = document.body.dataset.dailyMedia || 'daily';
+    const topicsKey = 'daily_watch_topics:' + media;
+    const seenKey = 'daily_watch_seen:' + media;
+    const listeners = [];
+    let topics = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem(topicsKey) || '[]');
+      if (Array.isArray(parsed)) topics = parsed.filter(function(t) { return typeof t === 'string' && t; });
+    } catch (e) {}
+
+    return {
+      list: function() { return topics.slice(); },
+      size: function() { return topics.length; },
+      has: function(topic) { return topics.indexOf(topic) !== -1; },
+      matches: function(candidates) {
+        if (!topics.length) return false;
+        return (candidates || []).some(function(topic) { return topics.indexOf(topic) !== -1; });
+      },
+      toggle: function(topic) {
+        const index = topics.indexOf(topic);
+        if (index === -1) topics.push(topic); else topics.splice(index, 1);
+        try { localStorage.setItem(topicsKey, JSON.stringify(topics)); } catch (e) {}
+        listeners.forEach(function(fn) { fn(); });
+      },
+      onChange: function(fn) { listeners.push(fn); },
+      seen: function() {
+        try { return localStorage.getItem(seenKey) || ''; } catch (e) { return ''; }
+      },
+      markSeen: function(date) {
+        try { localStorage.setItem(seenKey, String(date || '')); } catch (e) {}
+      }
+    };
+  }
+
+  function cardTopics(card) {
+    return Array.from(card.querySelectorAll('[data-watch-topic]')).map(function(btn) {
+      return btn.dataset.watchTopic;
+    });
+  }
+
   function initReadingProgress() {
     const progressBar = document.getElementById('readingProgress');
     if (!progressBar) return;
@@ -106,7 +149,7 @@
     btn.addEventListener('click', function() { apply(mode === 'detail' ? 'compact' : 'detail'); });
   }
 
-  function initIssueFilters() {
+  function initIssueFilters(watch) {
     const chips = Array.from(document.querySelectorAll('.filter-chip'));
     const cards = Array.from(document.querySelectorAll('.news-card'));
     if (!chips.length || !cards.length) return;
@@ -114,8 +157,32 @@
     const resetBtn = document.getElementById('filterResetBtn');
     const countEl = document.getElementById('visibleArticlesCount');
     const noResultsEl = document.getElementById('noResultsMsg');
-    const state = { region: '', category: '', lane: '' };
+    const watchChip = document.getElementById('watchFilterChip');
+    const banner = document.getElementById('watchBanner');
+    const bannerCount = document.getElementById('watchBannerCount');
+    const state = { region: '', category: '', lane: '', watch: '' };
+    const topicsByCard = new Map();
+    cards.forEach(function(card) { topicsByCard.set(card, cardTopics(card)); });
     let scrollActiveChipIntoView = false;
+
+    function watchedCardCount() {
+      return cards.reduce(function(total, card) {
+        return total + (watch.matches(topicsByCard.get(card)) ? 1 : 0);
+      }, 0);
+    }
+
+    function refreshWatchUi() {
+      const matched = watchedCardCount();
+      if (watchChip) {
+        watchChip.hidden = watch.size() === 0;
+        const chipCount = watchChip.querySelector('.chip-count');
+        if (chipCount) chipCount.textContent = String(matched);
+      }
+      if (banner) {
+        banner.hidden = !(watch.size() > 0 && matched > 0 && !state.watch);
+        if (bannerCount) bannerCount.textContent = String(matched);
+      }
+    }
 
     function updateLaneVisibility() {
       document.querySelectorAll('[data-lane-group]').forEach(function(group) {
@@ -131,15 +198,17 @@
         state.region = '';
         state.category = '';
         state.lane = '';
+        state.watch = '';
       } else if (Object.prototype.hasOwnProperty.call(state, type)) {
         state[type] = state[type] === value ? '' : value;
       }
+      if (state.watch && !watch.size()) state.watch = '';
 
       let visible = 0;
       chips.forEach(function(chip) {
         const chipType = chip.dataset.filterType;
         const active = chipType === 'all'
-          ? !state.region && !state.category && !state.lane
+          ? !state.region && !state.category && !state.lane && !state.watch
           : state[chipType] === chip.dataset.filterVal;
         chip.classList.toggle('active', active);
         chip.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -151,14 +220,16 @@
       cards.forEach(function(card) {
         const matches = (!state.region || card.dataset.region === state.region) &&
           (!state.category || card.dataset.category === state.category) &&
-          (!state.lane || card.dataset.lane === state.lane);
+          (!state.lane || card.dataset.lane === state.lane) &&
+          (!state.watch || watch.matches(topicsByCard.get(card)));
         card.classList.toggle('is-hidden', !matches);
         if (matches) visible += 1;
       });
       updateLaneVisibility();
+      refreshWatchUi();
 
       if (countEl) countEl.textContent = String(visible);
-      if (resetBtn) resetBtn.style.display = visible === cards.length && !state.region && !state.category && !state.lane ? 'none' : 'inline-flex';
+      if (resetBtn) resetBtn.style.display = visible === cards.length && !state.region && !state.category && !state.lane && !state.watch ? 'none' : 'inline-flex';
       if (noResultsEl) noResultsEl.style.display = visible === 0 ? 'block' : 'none';
 
       try {
@@ -184,6 +255,17 @@
       });
     });
     if (resetBtn) resetBtn.addEventListener('click', function() { applyFilter('all', ''); });
+
+    const bannerApply = document.getElementById('watchBannerApply');
+    if (bannerApply) {
+      bannerApply.addEventListener('click', function() {
+        applyFilter('watch', 'on');
+        const target = document.getElementById('articlesSection');
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+    // ☆ の付け外しは件数も絞り込み結果も変えるので、現在の状態で描き直す。
+    watch.onChange(function() { applyFilter('', ''); });
 
     try {
       const params = new URLSearchParams(window.location.search);
@@ -259,6 +341,21 @@
     return article;
   }
 
+  // 横断検索とウォッチ新着が同じ search-index.json を読むので、取得は一度だけにする。
+  let searchIndexPromise = null;
+  function loadSearchIndex() {
+    if (!searchIndexPromise) {
+      searchIndexPromise = fetch('search-index.json', { cache: 'no-cache' })
+        .then(function(response) {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.json();
+        })
+        .then(function(payload) { return Array.isArray(payload.records) ? payload.records : []; })
+        .catch(function() { return null; });
+    }
+    return searchIndexPromise;
+  }
+
   function initArchiveSearch() {
     const form = document.getElementById('archiveSearchForm');
     if (!form) return;
@@ -286,15 +383,9 @@
     async function ensureIndex() {
       if (records) return records;
       status.textContent = '検索インデックスを読み込んでいます…';
-      try {
-        const response = await fetch('search-index.json', { cache: 'no-cache' });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-        const payload = await response.json();
-        records = Array.isArray(payload.records) ? payload.records : [];
-      } catch (e) {
-        status.textContent = '検索データを読み込めませんでした。';
-        records = [];
-      }
+      const loaded = await loadSearchIndex();
+      if (!loaded) status.textContent = '検索データを読み込めませんでした。';
+      records = loaded || [];
       return records;
     }
 
@@ -328,19 +419,11 @@
     } catch (e) {}
   }
 
-  function initTopicWatch() {
-    const media = document.body.dataset.dailyMedia || 'daily';
-    const storageKey = 'daily_watch_topics:' + media;
-    let watched = [];
-    try { watched = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch (e) { watched = []; }
-    if (!Array.isArray(watched)) watched = [];
-
-    function save() {
-      try { localStorage.setItem(storageKey, JSON.stringify(watched)); } catch (e) {}
-    }
+  function initTopicWatch(watch) {
     function refresh() {
+      const watched = watch.list();
       document.querySelectorAll('.topic-watch-btn').forEach(function(btn) {
-        const active = watched.indexOf(btn.dataset.watchTopic) !== -1;
+        const active = watch.has(btn.dataset.watchTopic);
         btn.textContent = active ? '★' : '☆';
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
@@ -371,15 +454,88 @@
       });
     }
     document.querySelectorAll('.topic-watch-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        const topic = btn.dataset.watchTopic;
-        const index = watched.indexOf(topic);
-        if (index === -1) watched.push(topic); else watched.splice(index, 1);
-        save();
-        refresh();
-      });
+      btn.addEventListener('click', function() { watch.toggle(btn.dataset.watchTopic); });
     });
+    watch.onChange(refresh);
     refresh();
+  }
+
+  function initWatchFeed(watch) {
+    const container = document.getElementById('watchFeed');
+    const statusEl = document.getElementById('watchFeedStatus');
+    const listEl = document.getElementById('watchFeedList');
+    const seenBtn = document.getElementById('watchFeedSeen');
+    if (!container || !statusEl || !listEl) return;
+    const MAX_ROWS = 8;
+    let records = null;
+    let latestDate = '';
+
+    function formatDate(value) {
+      const date = String(value || '');
+      return date.length === 8 ? date.slice(0, 4) + '.' + date.slice(4, 6) + '.' + date.slice(6, 8) : date;
+    }
+
+    function createRow(record, seen) {
+      const item = document.createElement('li');
+      item.className = 'watch-feed-item';
+      const isNew = String(record.date) > seen;
+      if (isNew) {
+        item.classList.add('is-new');
+        const badge = document.createElement('span');
+        badge.className = 'watch-feed-new';
+        badge.textContent = 'NEW';
+        item.appendChild(badge);
+      }
+      const link = document.createElement('a');
+      link.href = record.url;
+      link.textContent = record.title;
+      const meta = document.createElement('p');
+      meta.className = 'watch-feed-meta';
+      const hits = (record.tags || []).filter(function(tag) { return watch.has(tag); });
+      meta.textContent = [formatDate(record.date)].concat(hits.map(function(tag) { return '#' + tag; })).join(' / ');
+      item.append(link, meta);
+      return item;
+    }
+
+    function render() {
+      if (!records) return;
+      if (!watch.size()) {
+        container.hidden = true;
+        return;
+      }
+      container.hidden = false;
+      const matched = records
+        .filter(function(record) { return watch.matches(record.tags || []); })
+        .sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); });
+      const seen = watch.seen();
+      const fresh = matched.filter(function(record) { return String(record.date) > seen; });
+
+      if (fresh.length) statusEl.textContent = 'ウォッチ中のテーマに新着 ' + fresh.length + '件';
+      else if (matched.length) statusEl.textContent = 'ウォッチ中のテーマの記事 ' + matched.length + '件（新着なし）';
+      else statusEl.textContent = 'ウォッチ中のテーマに一致する記事はまだありません。';
+
+      if (seenBtn) seenBtn.hidden = fresh.length === 0;
+      listEl.replaceChildren();
+      matched.slice(0, MAX_ROWS).forEach(function(record) { listEl.appendChild(createRow(record, seen)); });
+    }
+
+    if (seenBtn) {
+      seenBtn.addEventListener('click', function() {
+        watch.markSeen(latestDate);
+        render();
+      });
+    }
+    watch.onChange(render);
+    loadSearchIndex().then(function(loaded) {
+      records = loaded || [];
+      latestDate = records.reduce(function(max, record) {
+        const date = String(record.date || '');
+        return date > max ? date : max;
+      }, '');
+      // 初回は基準日を黙って記録する。登録直後の過去記事まで NEW 扱いにしないため。
+      if (!watch.seen() && latestDate) watch.markSeen(latestDate);
+      render();
+    });
   }
 
   function initRssCopy() {
@@ -399,13 +555,15 @@
   }
 
   function initDailyUI() {
+    const watch = createWatchStore();
     initHeaderMenu();
     initReadingProgress();
     initViewMode();
-    initIssueFilters();
+    initIssueFilters(watch);
     initSharing();
     initArchiveSearch();
-    initTopicWatch();
+    initTopicWatch(watch);
+    initWatchFeed(watch);
     initRssCopy();
     initBackToTop();
     if (typeof DonationWidget !== 'undefined') {

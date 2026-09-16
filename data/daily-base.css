@@ -982,6 +982,52 @@ a {
   margin-inline: 2px;
 }
 
+.filter-chip-watch {
+  border-color: var(--primary-border);
+  color: var(--primary-ink);
+}
+
+/* display 指定を持つ要素は hidden 属性だけでは隠れないので明示的に打ち消す */
+.filter-chip[hidden] {
+  display: none;
+}
+
+.watch-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 9px 14px;
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-sm);
+  background: var(--primary-subtle);
+  color: var(--primary-ink);
+  font-size: 12px;
+}
+
+.watch-banner[hidden] {
+  display: none;
+}
+
+.watch-banner button {
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--primary-ink);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.watch-banner button:hover {
+  background: var(--surface-2);
+  border-color: var(--ink-3);
+}
+
 /* --------------------------------------------------------------------------
    12. ニュースカード
    -------------------------------------------------------------------------- */
@@ -2712,6 +2758,94 @@ a {
 .watch-empty {
   color: var(--ink-3);
   font-size: 11.5px;
+}
+
+.watch-feed {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+
+.watch-feed[hidden] {
+  display: none;
+}
+
+.watch-feed-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.watch-feed-status {
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.watch-feed-seen {
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 11px;
+  cursor: pointer;
+}
+
+.watch-feed-seen:hover {
+  border-color: var(--primary-border);
+  color: var(--primary-ink);
+}
+
+.watch-feed-seen[hidden] {
+  display: none;
+}
+
+.watch-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+
+.watch-feed-item a {
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.watch-feed-item a:hover {
+  color: var(--primary-ink);
+}
+
+.watch-feed-item.is-new a {
+  color: var(--primary-ink);
+}
+
+.watch-feed-new {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-ink);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+.watch-feed-meta {
+  margin-top: 3px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
 }
 
 .archive-search-form {

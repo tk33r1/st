@@ -1417,6 +1417,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         </section>'''
         index_panel_html = ''
         filter_wrapper_html = ''
+        watch_banner_html = ''
         reading_progress_html = ''
     else:
         summary_panel_html = f'''<section class="panel panel-exec" aria-labelledby="execTitle">
@@ -1455,8 +1456,13 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
           </div>
           <div class="filter-chips-scroll" role="toolbar" aria-label="ニュース絞り込み">
             <button type="button" class="filter-chip active" data-filter-type="all" data-filter-val="all" aria-pressed="true">すべて <span class="chip-count">{total_count}</span></button>
+            <button type="button" class="filter-chip filter-chip-watch" id="watchFilterChip" data-filter-type="watch" data-filter-val="on" aria-pressed="false" hidden>★ ウォッチ中 <span class="chip-count">0</span></button>
             <span class="chip-divider" aria-hidden="true"></span>{region_chips}<span class="chip-divider" aria-hidden="true"></span>{cat_chips_html}
           </div>
+        </div>'''
+        watch_banner_html = '''<div class="watch-banner" id="watchBanner" hidden>
+          <span>★ ウォッチ中のテーマに一致する記事が <strong id="watchBannerCount">0</strong> 件あります。</span>
+          <button type="button" id="watchBannerApply">この記事だけ表示</button>
         </div>'''
         reading_progress_html = '<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>'
 
@@ -1542,6 +1548,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
         {lane_nav_html}
         {filter_wrapper_html}
+        {watch_banner_html}
 
         <div class="articles-list detail-view" id="articlesList">
 {articles_html}
@@ -1668,7 +1675,17 @@ def render_top_index_html(config, articles_history):
     trend_section_html = f'''<section class="trend-section" aria-labelledby="trendTitle">
       <div class="section-head"><h2 class="section-title" id="trendTitle">直近{len(recent_issues)}号の注目テーマ</h2><span class="section-rule" aria-hidden="true"></span></div>
       <ul class="trend-list">{trend_items}</ul>
-      <div class="watch-panel"><h3>ウォッチ中のテーマ</h3><div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div></div>
+      <div class="watch-panel">
+        <h3>ウォッチ中のテーマ</h3>
+        <div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div>
+        <div class="watch-feed" id="watchFeed" hidden>
+          <div class="watch-feed-head">
+            <p class="watch-feed-status" id="watchFeedStatus"></p>
+            <button type="button" class="watch-feed-seen" id="watchFeedSeen" hidden>既読にする</button>
+          </div>
+          <ul class="watch-feed-list" id="watchFeedList"></ul>
+        </div>
+      </div>
     </section>''' if trend_items else ''
 
     archive_tools_html = f'''<section class="archive-search" id="archiveSearch" aria-labelledby="archiveSearchTitle">

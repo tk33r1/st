@@ -366,7 +366,17 @@
     <section class="trend-section" aria-labelledby="trendTitle">
       <div class="section-head"><h2 class="section-title" id="trendTitle">直近5号の注目テーマ</h2><span class="section-rule" aria-hidden="true"></span></div>
       <ul class="trend-list"><li><a href="?q=%E5%95%86%E5%93%81%E9%96%8B%E7%99%BA#archiveSearch"><span>#商品開発</span><strong>4件</strong></a></li><li><a href="?q=PB#archiveSearch"><span>#PB</span><strong>3件</strong></a></li><li><a href="?q=%E3%83%92%E3%83%83%E3%83%88%E5%95%86%E5%93%81#archiveSearch"><span>#ヒット商品</span><strong>3件</strong></a></li><li><a href="?q=SNS%E5%8F%8D%E9%9F%BF#archiveSearch"><span>#SNS反響</span><strong>3件</strong></a></li><li><a href="?q=%E4%BE%A1%E6%A0%BC%E6%88%A6%E7%95%A5#archiveSearch"><span>#価格戦略</span><strong>3件</strong></a></li><li><a href="?q=%E5%BA%97%E8%88%97%E5%B1%95%E9%96%8B#archiveSearch"><span>#店舗展開</span><strong>2件</strong></a></li><li><a href="?q=SNS#archiveSearch"><span>#SNS</span><strong>2件</strong></a></li><li><a href="?q=%E3%83%87%E3%82%B6%E3%82%A4%E3%83%B3#archiveSearch"><span>#デザイン</span><strong>2件</strong></a></li></ul>
-      <div class="watch-panel"><h3>ウォッチ中のテーマ</h3><div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div></div>
+      <div class="watch-panel">
+        <h3>ウォッチ中のテーマ</h3>
+        <div id="watchTopics" class="watch-topics"><span class="watch-empty">記事タグの ☆ からテーマを登録できます。</span></div>
+        <div class="watch-feed" id="watchFeed" hidden>
+          <div class="watch-feed-head">
+            <p class="watch-feed-status" id="watchFeedStatus"></p>
+            <button type="button" class="watch-feed-seen" id="watchFeedSeen" hidden>既読にする</button>
+          </div>
+          <ul class="watch-feed-list" id="watchFeedList"></ul>
+        </div>
+      </div>
     </section>
     <section class="archive-search" id="archiveSearch" aria-labelledby="archiveSearchTitle">
       <div class="section-head"><h2 class="section-title" id="archiveSearchTitle">記事を横断検索</h2><span class="section-rule" aria-hidden="true"></span></div>
