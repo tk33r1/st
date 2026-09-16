@@ -438,10 +438,15 @@
         return;
       }
       watched.forEach(function(topic) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = '★ ' + topic;
-        btn.addEventListener('click', function() {
+        const item = document.createElement('span');
+        item.className = 'watch-topic-item';
+
+        const search = document.createElement('button');
+        search.type = 'button';
+        search.className = 'watch-topic-search';
+        search.textContent = '★ ' + topic;
+        search.title = 'このテーマで検索';
+        search.addEventListener('click', function() {
           const input = document.getElementById('archiveSearchInput');
           const form = document.getElementById('archiveSearchForm');
           if (input && form) {
@@ -450,7 +455,17 @@
             document.getElementById('archiveSearch').scrollIntoView({ behavior: 'smooth' });
           }
         });
-        container.appendChild(btn);
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'watch-topic-remove';
+        remove.textContent = '×';
+        remove.title = 'ウォッチを解除';
+        remove.setAttribute('aria-label', topic + ' のウォッチを解除');
+        remove.addEventListener('click', function() { watch.toggle(topic); });
+
+        item.append(search, remove);
+        container.appendChild(item);
       });
     }
     document.querySelectorAll('.topic-watch-btn').forEach(function(btn) {

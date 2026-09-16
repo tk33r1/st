@@ -2081,54 +2081,6 @@ a {
 /* --------------------------------------------------------------------------
    20. フッター
    -------------------------------------------------------------------------- */
-.footer-social {
-  margin-top: 72px;
-  text-align: center;
-}
-
-/* フッター本体の余白はこのブロックが引き受けるので、続く footer 側は詰める */
-.footer-social + .site-footer {
-  margin-top: 26px;
-}
-
-.footer-x-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 18px;
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink-2);
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  font-weight: 700;
-  transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
-}
-
-.footer-x-btn svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-}
-
-.footer-x-btn:hover {
-  border-color: var(--primary-border);
-  background: var(--primary-subtle);
-  color: var(--primary-ink);
-}
-
-.footer-x-handle {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  color: var(--ink-3);
-}
-
-.footer-x-btn:hover .footer-x-handle {
-  color: var(--primary-ink);
-}
-
 .site-footer {
   margin-top: 72px;
   padding: 32px 0 40px;
@@ -2168,6 +2120,17 @@ a {
 
 .footer-links a:hover {
   color: var(--primary-ink);
+}
+
+/* アイコンだけのリンクなので、隣のテキストリンクと高さを揃える */
+.footer-x-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.footer-x-link svg {
+  width: 13px;
+  height: 13px;
 }
 
 .footer-copy {
@@ -2484,8 +2447,7 @@ a {
   .reading-progress,
   .issue-nav,
   .card-actions,
-  .site-footer,
-  .footer-social {
+  .site-footer {
     display: none !important;
   }
 
@@ -2767,8 +2729,7 @@ a {
   list-style: none;
 }
 
-.trend-list a,
-.watch-topics button {
+.trend-list a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2778,6 +2739,45 @@ a {
   background: var(--surface);
   color: var(--ink-2);
   font-size: 11.5px;
+}
+
+/* 検索と解除を一つのピルに収める。記事タグの .topic-tag-wrap と同じ作り。 */
+.watch-topic-item {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.watch-topic-search {
+  border: 0;
+  padding: 7px 9px 7px 12px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.watch-topic-search:hover {
+  color: var(--primary-ink);
+}
+
+.watch-topic-remove {
+  border: 0;
+  border-left: 1px solid var(--rule);
+  padding: 4px 11px 5px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.watch-topic-remove:hover {
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .trend-list strong {
