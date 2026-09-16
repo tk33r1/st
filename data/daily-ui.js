@@ -433,7 +433,7 @@
       if (!watched.length) {
         const empty = document.createElement('span');
         empty.className = 'watch-empty';
-        empty.textContent = '記事タグの ☆ からテーマを登録できます。';
+        empty.textContent = '上の注目テーマや記事タグの ☆ からテーマを登録できます。';
         container.appendChild(empty);
         return;
       }
