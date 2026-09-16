@@ -194,10 +194,22 @@ def x_site_meta(config):
 
 
 def render_page_footer(config, media_href, faq_href, rss_href):
-    """共通フッターとページ先頭へ戻るボタンを描画する。"""
+    """共通フッターとページ先頭へ戻るボタンを描画する。
+
+    Home はサイト全体のトップではなく各メディアのポータルを指すため、
+    ブランド名の項目は置かない（同じ行き先が二つ並ぶだけになる）。
+    """
     x_url = x_profile_url(config)
-    x_link = f'<a href="{esc(x_url)}" target="_blank" rel="noopener noreferrer">公式X</a>' if x_url else ''
-    return f'''<footer class="site-footer">
+    social_html = f'''<div class="footer-social">
+    <div class="container">
+      <a class="footer-x-btn" href="{esc(x_url)}" target="_blank" rel="noopener noreferrer">
+        {ICON_X_SVG}<span>公式Xをフォロー</span><span class="footer-x-handle">@{esc(x_handle(config))}</span>
+      </a>
+    </div>
+  </div>
+
+  ''' if x_url else ''
+    return f'''{social_html}<footer class="site-footer">
     <div class="container">
       <div class="footer-layout">
         <div class="footer-left">
@@ -205,7 +217,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
         </div>
         <div class="footer-center">
           <div class="footer-links">
-            <a href="https://tk.st/">Home</a><a href="{esc(media_href)}">{config['brand_title']}</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a>{x_link}<a href="https://tk.st/contact/?to={esc(config['media_id'])}">Contact</a>
+            <a href="{esc(media_href)}">Home</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a><a href="https://tk.st/contact/?to={esc(config['media_id'])}">Contact</a>
           </div>
           <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
         </div>
