@@ -185,7 +185,7 @@ CONFIG = {
     'brand_desc': '毎朝8:00更新。昨日の国内外リテールテック・流通DX動向（スマートカート、無人決済、リテールメディア、RFIDロボティクス、AI需要予測）をマルチAI（DeepSeek / GPT）が要約・示唆付きで配信する日刊速報。',
     'hero_desc': '国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。',
     'portal_hero_desc': '国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。<br>スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。',
-    'portal_seo_title': 'リテールテック・流通DXのデイリー速報ニュース | Retail Tech Daily',
+    'portal_seo_title': '日刊リテールテック／流通DXの速報ニュース | Retail Tech Daily',
     'portal_seo_desc': '国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。',
     'css_file': 'retail-tech-daily.css',
     'favicon_file': 'retail-tech-favicon.svg',
