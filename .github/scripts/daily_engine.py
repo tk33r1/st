@@ -186,7 +186,7 @@ def render_page_footer(config, media_href, faq_href, rss_href):
         </div>
         <div class="footer-center">
           <div class="footer-links">
-            <a href="https://tk.st/">Home</a><a href="{esc(media_href)}">{config['brand_title']}</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a><a href="https://tk.st/contact/">Contact</a>
+            <a href="https://tk.st/">Home</a><a href="{esc(media_href)}">{config['brand_title']}</a><a href="{esc(faq_href)}">FAQ</a><a href="{esc(rss_href)}">RSS</a><a href="https://tk.st/contact/?to={esc(config['media_id'])}">Contact</a>
           </div>
           <p class="footer-copy">&copy; 2026 Shinya Takeda (tk.st). All rights reserved.</p>
         </div>
