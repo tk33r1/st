@@ -1698,10 +1698,11 @@ def render_top_index_html(config, articles_history):
             for tag in tags:
                 if tag not in generic_tags:
                     trend_counts[tag] += 1
-    # ☆ は記事タグと同じ .topic-watch-btn。initTopicWatch が全件まとめて拾うので JS 側の追加は不要。
+    # 記事タグと同じ .topic-tag-wrap をそのまま使う。見た目が揃い、
+    # initTopicWatch が .topic-watch-btn を全件まとめて拾うので JS 側の追加も要らない。
     trend_items = ''.join(
-        f'<li><span class="trend-item">'
-        f'<a href="?q={urllib.parse.quote(tag)}#archiveSearch"><span>#{esc(tag)}</span><strong>{count}件</strong></a>'
+        f'<li><span class="topic-tag-wrap">'
+        f'<a class="topic-tag" href="?q={urllib.parse.quote(tag)}#archiveSearch">#{esc(tag)}<strong>{count}件</strong></a>'
         f'<button type="button" class="topic-watch-btn" data-watch-topic="{esc(tag)}" aria-pressed="false" title="このテーマをウォッチ">☆</button>'
         f'</span></li>'
         for tag, count in trend_counts.most_common(8)
