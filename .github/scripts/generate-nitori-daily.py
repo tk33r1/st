@@ -29,22 +29,6 @@ GLOBAL_GENERAL_QUERY = '("Nitori" OR "Nitori Holdings" OR "ニトリ") ("store" 
 GLOBAL_INDUSTRY_QUERY = '("IKEA" OR "Nitori" OR "home furnishing") ("automation" OR "supply chain" OR "store" OR "retail tech" OR "robotics")'
 GLOBAL_SNS_QUERY = '((site:x.com OR site:twitter.com) ("Nitori" OR "ニトリ")) OR (("Nitori" OR "ニトリ") ("global" OR "overseas" OR "Asia" OR "expansion"))'
 
-JP_NOISE_BLACKLIST = [
-    re.compile(p, re.IGNORECASE) for p in [
-        r'人事異動', r'役員の異動', r'機構改革', r'決算短信', r'業績予想',
-        r'レシピ', r'スイーツ', r'コラボメニュー', r'新メニュー', r'福袋',
-        r'新設届出', r'大規模小売店舗立地法',
-        r'プレゼント', r'懸賞', r'フォロー＆リポスト', r'ブロマイド', r'一番くじ', r'キャンペーン開催'
-    ]
-]
-
-GLOBAL_NOISE_BLACKLIST = [
-    re.compile(p, re.IGNORECASE) for p in [
-        r'stock jumps', r'shares fall', r'financial results', r'q[1-4] earnings', r'quarterly',
-        r'giveaway', r'sweepstakes'
-    ]
-]
-
 NITORI_RELEVANT_KEYWORDS = [
     'ニトリ', 'nitori', 'デコホーム', '島忠', 'シマホ', '似鳥', 'ホームズ'
 ]
@@ -255,14 +239,6 @@ FAQ_ITEMS = [
     {
         "q": "最新ニュースの通知や購読はできますか？",
         "a": f"本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeams、DiscordのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/{X_HANDLE}\" target=\"_blank\" rel=\"noopener noreferrer\">@{X_HANDLE}</a> もあわせてご利用ください。"
-    },
-    {
-        "q": "社内チャット（Slack/Teams）やSNSへの引用・共有は可能ですか？",
-        "a": "はい、ご自由に共有いただけます。各ニュースカードの「📋 コピー」ボタンを押すと、見出し・要点・リンクをまとめた社内ツール貼り付け用のテキストがクリップボードにコピーされます。隣の「共有」ボタンは、対応環境では端末の共有メニューを開き、非対応の環境では同じテキストをコピーします。"
-    },
-    {
-        "q": "気になるテーマだけを追いかけることはできますか？",
-        "a": "はい。各記事のタグ横にある ☆ を押すと、そのテーマをウォッチできます。ウォッチ中のテーマは、日刊記事ページでは「★ ウォッチ中」フィルタで該当記事だけに絞り込め、ポータルの「ウォッチ中のテーマ」欄では該当する最新記事が一覧表示され、前回チェック以降に公開された記事には NEW が付きます。解除はポータルの一覧にある × か、記事タグの ★ をもう一度押してください。なおウォッチの設定はご利用のブラウザ内にのみ保存されるため、他の端末には引き継がれません。メールやプッシュによる通知は行っていません。"
     }
 ]
 
@@ -344,8 +320,6 @@ CONFIG = {
     'global_query_ind': GLOBAL_INDUSTRY_QUERY,
     'global_query_sns': GLOBAL_SNS_QUERY,
 
-    'jp_noise_blacklist': JP_NOISE_BLACKLIST,
-    'global_noise_blacklist': GLOBAL_NOISE_BLACKLIST,
     'extra_candidates_fn': fetch_all_social_buzz,
     'extra_candidate_limits': {'tiktok': brightdata_social.TOP_N_PER_PLATFORM},
     'is_relevant_fn': is_nitori_relevant,
@@ -361,6 +335,8 @@ CONFIG = {
     'show_social_metrics': True,
     'consumer_only_status_label': '本日の企業・経営ニュースはありません',
     'keyword_regex': build_keyword_regex(KEYWORD_PATTERNS),
+    'generic_trend_tags': ['ニトリ'],
+    'primary_source_domains': ['nitori-net.jp'],
 
     'editor_title': '流通・SPAアナリスト兼インテリア・小売マーケター（「Nitori Daily Brief」編集長）',
     'prompt_selection_rules': """1. ニトリグループに無関係な他社の単独ニュースやスパム懸賞は完全に除外してください。

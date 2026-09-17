@@ -1406,8 +1406,7 @@ a {
 }
 
 .sns-badge-x,
-.sns-badge-tiktok,
-.sns-badge-ig {
+.sns-badge-tiktok {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1423,10 +1422,6 @@ a {
 .sns-badge-tiktok {
   background: #0f0f13;
   box-shadow: inset 0 0 0 1px rgba(37, 244, 238, 0.35);
-}
-
-.sns-badge-ig {
-  background: linear-gradient(120deg, #b8318b, #e1306c 45%, #f0a03a);
 }
 
 .sns-badge-count {
@@ -1484,10 +1479,6 @@ a {
 
 .sns-card[data-platform="tiktok"] {
   border-top-color: #25f4ee;
-}
-
-.sns-card[data-platform="instagram"] {
-  border-top-color: #e1306c;
 }
 
 .sns-card-head {

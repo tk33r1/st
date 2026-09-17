@@ -47,7 +47,49 @@ ICON_RSS_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentC
 ICON_SEARCH_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.2" y1="16.2" x2="21" y2="21"></line></svg>'
 ICON_MENU_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>'
 ICON_TIKTOK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.6 2.6 0 0 1-2.6-2.6c0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>'
-ICON_INSTAGRAM_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="2" width="20" height="20" rx="5.5"></rect><circle cx="12" cy="12" r="4.2"></circle><circle cx="17.6" cy="6.4" r="1.2" fill="currentColor" stroke="none"></circle></svg>'
+
+# 全媒体で共通のノイズ除外パターン。媒体固有の追加分は CONFIG の
+# jp_noise_blacklist / global_noise_blacklist に足すとこれとマージされる。
+DEFAULT_JP_NOISE_BLACKLIST = [
+    re.compile(p, re.IGNORECASE) for p in [
+        r'人事異動', r'役員の異動', r'機構改革', r'決算短信', r'業績予想',
+        r'レシピ', r'スイーツ', r'コラボメニュー', r'新メニュー', r'福袋',
+        r'新設届出', r'大規模小売店舗立地法',
+        r'プレゼント', r'懸賞', r'フォロー＆リポスト', r'ブロマイド', r'一番くじ', r'キャンペーン開催'
+    ]
+]
+
+DEFAULT_GLOBAL_NOISE_BLACKLIST = [
+    re.compile(p, re.IGNORECASE) for p in [
+        r'stock jumps', r'shares fall', r'financial results', r'q[1-4] earnings', r'quarterly',
+        r'giveaway', r'sweepstakes'
+    ]
+]
+
+
+def noise_blacklist(config, key, defaults):
+    """共通パターンに媒体固有パターンを足したものを返す。"""
+    return defaults + list(config.get(key) or [])
+
+
+# 全媒体で文面が同一の FAQ。UI 側（共有ボタン・ウォッチ機能）の仕様を変えたときに
+# 媒体ごとの CONFIG が片方だけ古くなるのを防ぐため、ここで一元管理する。
+# CONFIG の faq_items（媒体固有の説明）の後ろに連結される。
+SHARED_FAQ_ITEMS = [
+    {
+        "q": "社内チャット（Slack/Teams）やSNSへの引用・共有は可能ですか？",
+        "a": "はい、ご自由に共有いただけます。各ニュースカードの「📋 コピー」ボタンを押すと、見出し・要点・リンクをまとめた社内ツール貼り付け用のテキストがクリップボードにコピーされます。隣の「共有」ボタンは、対応環境では端末の共有メニューを開き、非対応の環境では同じテキストをコピーします。"
+    },
+    {
+        "q": "気になるテーマだけを追いかけることはできますか？",
+        "a": "はい。各記事のタグ横にある ☆ を押すと、そのテーマをウォッチできます。ウォッチ中のテーマは、日刊記事ページでは「★ ウォッチ中」フィルタで該当記事だけに絞り込め、ポータルの「ウォッチ中のテーマ」欄では該当する最新記事が一覧表示され、前回チェック以降に公開された記事には NEW が付きます。解除はポータルの一覧にある × か、記事タグの ★ をもう一度押してください。なおウォッチの設定はご利用のブラウザ内にのみ保存されるため、他の端末には引き継がれません。メールやプッシュによる通知は行っていません。"
+    }
+]
+
+
+def faq_items(config):
+    """媒体固有 FAQ に共通 FAQ を連結して返す。"""
+    return list(config['faq_items']) + SHARED_FAQ_ITEMS
 
 # SNS バズカードのプラットフォーム別メタ情報。
 # 過去号の JSON には platform キーが無いため、未設定は 'x' にフォールバックする。
@@ -69,15 +111,6 @@ SNS_PLATFORM_META = {
         'link_text': 'TikTokで動画を見る',
         'author_fallback': 'TikTokユーザー',
         'tags': ["TikTok話題", "生活者UX", "バズ動画"],
-    },
-    'instagram': {
-        'order': 2,
-        'label': 'Instagram',
-        'icon': ICON_INSTAGRAM_SVG,
-        'badge_class': 'sns-badge-ig',
-        'link_text': 'Instagramでリールを見る',
-        'author_fallback': 'Instagramユーザー',
-        'tags': ["Instagram話題", "生活者UX", "バズリール"],
     },
 }
 
@@ -221,6 +254,51 @@ def render_page_footer(config, media_href, faq_href, rss_href):
   <a href="#top" class="btn-top" id="btnTop" aria-label="最上部へ戻る" title="最上部へ戻る">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
   </a>'''
+
+
+def render_head(config, rel, title, social_title, description, canonical,
+                og_type, og_image, jsonld_str, extra_links=()):
+    """号ページとポータルで共通の <head>。
+
+    canonical / og / twitter に同じ値を三重に書く形なので、片方だけ直して
+    食い違うのを防ぐためここに集約する。rel はサイトルートまでの相対パス
+    （号ページは '../../../'、ポータルは '../../'）。
+    social_title は <title> と違い " | tk.st" の有無が媒体・ページで異なるため別引数。
+    extra_links は canonical 直後に差し込む <link> タグ（ポータルの RSS alternate 等）。
+    """
+    extra_html = ''.join('  ' + tag + '\n' for tag in extra_links)
+    return f"""  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="{rel}data/analytics.js" async></script>
+  <title>{title}</title>
+  <meta name="description" content="{description}">
+  <meta name="author" content="Shinya Takeda">
+  <meta name="robots" content="max-image-preview:large">
+  <meta name="theme-color" content="{config['theme_color']}">
+
+  <link rel="canonical" href="{canonical}">
+  <link rel="author" href="https://tk.st/">
+{extra_html}
+  <meta property="og:title" content="{social_title}">
+  <meta property="og:description" content="{description}">
+  <meta property="og:type" content="{og_type}">
+  <meta property="og:url" content="{canonical}">
+  <meta property="og:site_name" content="{config['media_name']} | tk.st">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="{og_image}">
+
+  <meta name="twitter:card" content="summary_large_image">
+  {x_site_meta(config)}
+  <meta name="twitter:title" content="{social_title}">
+  <meta name="twitter:description" content="{description}">
+  <meta name="twitter:image" content="{og_image}">
+
+  <link rel="icon" href="{rel}images/favicons/{config['favicon_file']}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{rel}images/favicons/{config['favicon_file']}">
+  <script type="application/ld+json">
+{jsonld_str}
+  </script>
+  <link rel="stylesheet" href="{rel}data/{config['css_file']}">"""
 
 
 _JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
@@ -426,12 +504,14 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
 
     pub_history = load_recent_published_history(config['data_json_path'], exclude_date_key=exclude_date_key, days_limit=7)
     when_clause = "when:3d" if target_date.weekday() == 0 else "when:2d"
+    jp_blacklist = noise_blacklist(config, 'jp_noise_blacklist', DEFAULT_JP_NOISE_BLACKLIST)
+    global_blacklist = noise_blacklist(config, 'global_noise_blacklist', DEFAULT_GLOBAL_NOISE_BLACKLIST)
 
     jp_raw = fetch_google_news_rss(f"{config['jp_query_gen']} {when_clause}", lang='ja', gl='JP', ceid='JP:ja', max_items=40)
     jp_raw += fetch_google_news_rss(f"{config['jp_query_ind']} {when_clause}", lang='ja', gl='JP', ceid='JP:ja', max_items=35)
     jp_raw += fetch_google_news_rss(f"{config['jp_query_sns']} {when_clause}", lang='ja', gl='JP', ceid='JP:ja', max_items=25)
     jp_items, jp_past_dups = filter_and_dedup_news(
-        jp_raw, config['jp_noise_blacklist'], pub_history, config.get('is_relevant_fn'), is_global=False
+        jp_raw, jp_blacklist, pub_history, config.get('is_relevant_fn'), is_global=False
     )
 
     # 外部追加ソース（例: Yahoo! リアルタイム検索バズ等）
@@ -441,7 +521,7 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
         try:
             extra_raw = extra_fn(target_date)
             extra_items, _ = filter_and_dedup_news(
-                extra_raw, config['jp_noise_blacklist'], pub_history, config.get('is_relevant_fn'), is_global=False
+                extra_raw, jp_blacklist, pub_history, config.get('is_relevant_fn'), is_global=False
             )
             extra_limits = config.get('extra_candidate_limits', {})
             if extra_limits:
@@ -463,7 +543,7 @@ def gather_all_candidate_news(config, target_date=None, exclude_date_key=None):
     gl_raw += fetch_google_news_rss(f"{config['global_query_ind']} {when_clause}", lang='en-US', gl='US', ceid='US:en', max_items=35)
     gl_raw += fetch_google_news_rss(f"{config['global_query_sns']} {when_clause}", lang='en-US', gl='US', ceid='US:en', max_items=20)
     global_items, global_past_dups = filter_and_dedup_news(
-        gl_raw, config['global_noise_blacklist'], pub_history, config.get('is_relevant_fn'), is_global=True
+        gl_raw, global_blacklist, pub_history, config.get('is_relevant_fn'), is_global=True
     )
 
     # Google News の "when:Nd" はヒット件数が少ない狭いクエリ（特に海外の個社名検索）だと
@@ -598,14 +678,25 @@ def build_prompt(config, candidates, target_date_str, yesterday_str):
             if label not in sns_platform_labels:
                 sns_platform_labels.append(label)
         sns_platform_names = " / ".join(sns_platform_labels)
+        # 反響の主指標は媒体ごとに違う。ここを静的な媒体名で書くと、実際には
+        # 収録していない媒体の話をAIが sns_summary に書いてしまうため、
+        # 実際に候補として渡した媒体だけに言及する。
+        video_labels = [label for label in sns_platform_labels if label != 'X']
+        metric_parts = []
+        if 'X' in sns_platform_labels:
+            metric_parts.append('X は likes / retweets')
+        if video_labels:
+            metric_parts.append(f'動画系（{" / ".join(video_labels)}）は views（再生数）')
+        metric_note = f'{"、".join(metric_parts)}が反響の主指標です。'
+        # 「媒体ごとの違い」は2媒体以上を収録した号でしか成り立たない
+        if len(sns_platform_labels) > 1:
+            metric_note += '媒体ごとの反応の質の違い（例: 短尺動画では実際の使用シーンや組み立て過程が伸びる等）にも触れてください。'
         sns_section = f"""
 【SNS生活者バズ投稿一覧（{sns_platform_names}／本日の「SNSリアル反響」セクション用）】:
 以下は生活者が実際に投稿し話題になっている生の声です。重要な投稿は記事として選定して構いません。
 その場合は一覧の "id"（SNS-xx）を記事の "source_id" に必ずそのまま設定してください。また、一覧全体を俯瞰して
 共通する傾向・トレンドを分析し、後述の "sns_summary" / "sns_why_it_matters" を作成してください。
-各投稿の "platform" は投稿先（{sns_platform_names}）を示します。X は likes / retweets、
-動画系（TikTok・Instagram）は views（再生数）が反響の主指標です。媒体ごとの反応の質の違い
-（例: 短尺動画では実際の使用シーンや組み立て過程が伸びる等）にも触れてください。
+各投稿の "platform" は投稿先（{sns_platform_names}）を示します。{metric_note}
 {json.dumps(sns_sample, ensure_ascii=False, indent=2)}
 """
         sns_output_fields = """,
@@ -851,44 +942,30 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
 
 
 def build_sns_buzz_items(extra_items, config):
+    """収集元が付けた構造化フィールドをそのままバズカード用に写す。
+
+    title / description は候補としてAIプロンプトへ渡すための表示用整形文字列
+    （`【Xで1,234いいね】…`）なので、ここでは使わず raw_text をそのまま採る。
+    整形文字列をパースし直すと、収集側の文面を変えた瞬間に壊れる。
+    """
     buzz_list = []
     for it in extra_items:
-        likes = it.get('likes', 0)
-        rt = it.get('retweets', 0)
         platform = it.get('platform', 'x')
-        source = it.get('source', '')
-        author = it.get('author', '')
-        if not author:
-            author = re.sub(r'^\w+ \(@', '@', source).replace(')', '') if '(@' in source else source
-
-        snippet = it.get('raw_text')
-        if not snippet:
-            desc = it.get('description', '')
-            if '：\n「' in desc:
-                snippet = desc.split('：\n「', 1)[1].rstrip('」')
-            else:
-                snippet = desc
-        snippet = snippet.strip()
-
-        t = it.get('title', '')
-        t_clean = re.sub(r'^【(?:Xで[\d,]+いいね|TikTokで[^】]+|Instagramで[^】]+)】', '', t).strip()
-        if not t_clean or len(t_clean) < 10:
-            t_clean = snippet[:70] + "..." if len(snippet) > 75 else snippet
-
+        snippet = (it.get('raw_text') or '').strip()
         buzz_list.append({
             'source_id': it.get('_cand_id', ''),
-            'title': t_clean,
+            'title': snippet[:70] + "..." if len(snippet) > 75 else snippet,
             'platform': platform,
-            'author': author,
+            'author': it.get('author', ''),
             'url': it.get('link', ''),
-            'likes': likes,
-            'retweets': rt,
+            'likes': it.get('likes', 0),
+            'retweets': it.get('retweets', 0),
             'views': it.get('views', 0),
             'comments': it.get('comments', 0),
             'posted_on': it.get('pub_date', ''),
             'captured_at': it.get('captured_at', ''),
             'text': snippet,
-            'tags': SNS_PLATFORM_META.get(platform, SNS_PLATFORM_META['x'])['tags']
+            'tags': sns_platform_meta(platform)['tags']
         })
     return buzz_list
 
@@ -953,15 +1030,19 @@ def repair_issue_source_links(issue):
     return changed
 
 
-def source_kind(art):
+PRIMARY_SOURCE_MARKERS = ('公式', 'blog.google')
+
+
+def source_kind(art, config):
     source = str(art.get('source') or '').lower()
     url = str(art.get('url') or '').lower()
     category = str(art.get('category') or '')
-    if category.startswith('SNS') or source in ('x', 'tiktok', 'instagram') or 'x.com/' in url or 'tiktok.com/' in url:
+    if category.startswith('SNS') or source in SNS_PLATFORM_META or 'x.com/' in url or 'tiktok.com/' in url:
         return 'SNS投稿'
     if any(word in source or word in url for word in ('pr times', 'prtimes.', 'atpress', 'アットプレス')):
         return 'プレスリリース'
-    if any(word in source or word in url for word in ('公式', 'blog.google', 'nitori-net.jp')):
+    markers = PRIMARY_SOURCE_MARKERS + tuple(config.get('primary_source_domains', ()))
+    if any(word in source or word in url for word in markers):
         return '一次情報'
     return '報道・解説'
 
@@ -1031,7 +1112,7 @@ def build_search_index(config, articles_history):
                 'summary': art.get('summary', ''),
                 'takeaway': split_takeaway(art.get('why_it_matters', ''))[0],
                 'source': art.get('source', ''),
-                'source_kind': source_kind(art),
+                'source_kind': source_kind(art, config),
                 'category': art.get('category', ''),
                 'region': normalize_region(art.get('region')),
                 'tags': art.get('tags', []) or [],
@@ -1403,7 +1484,7 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
         share_url = f"https://tk.st/job/{config['media_id']}/{date_key}/#art-{idx}"
         source_time = source_time_html(art)
-        source_meta_html = f'<div class="source-details"><span class="source-kind">{source_kind(art)}</span>{source_time}</div>'
+        source_meta_html = f'<div class="source-details"><span class="source-kind">{source_kind(art, config)}</span>{source_time}</div>'
         correction_subject = urllib.parse.quote(f"{config['brand_title']} {formatted_date}号 記事{idx}の訂正・出典について")
         correction_link = f'<a class="correction-link" href="https://tk.st/contact/?subject={correction_subject}">訂正・出典を報告</a>'
 
@@ -1545,44 +1626,26 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
         </div>'''
         reading_progress_html = '<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>'
 
+    issue_url = f"https://tk.st/job/{config['media_id']}/{date_key}/"
+    issue_social_title = f"{formatted_date}号：昨日の{config['brand_title_short']}まとめ — {config['media_name']}"
+    issue_head_html = render_head(
+        config, '../../../',
+        title=f"{issue_social_title} | tk.st",
+        social_title=issue_social_title,
+        description=dynamic_page_desc,
+        canonical=issue_url,
+        og_type='article',
+        og_image=f"https://tk.st/images/ogp/{config['media_id']}/{date_key}.webp",
+        jsonld_str=dynamic_jsonld_str,
+    )
+
     p_link = f'<a href="../{prev_issue["date"]}/" class="nav-prev">&larr; {prev_issue["date"][:4]}.{prev_issue["date"][4:6]}.{prev_issue["date"][6:8]} 号</a>' if prev_issue else '<span class="nav-disabled">&larr; 前号なし</span>'
     n_link = f'<a href="../{next_issue["date"]}/" class="nav-next">{next_issue["date"][:4]}.{next_issue["date"][4:6]}.{next_issue["date"][6:8]} 号 &rarr;</a>' if next_issue else '<span class="nav-disabled nav-next">最新号</span>'
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="../../../data/analytics.js" async></script>
-  <title>{formatted_date}号：昨日の{config['brand_title_short']}まとめ — {config['media_name']} | tk.st</title>
-  <meta name="description" content="{dynamic_page_desc}">
-  <meta name="author" content="Shinya Takeda">
-  <meta name="robots" content="max-image-preview:large">
-  <meta name="theme-color" content="{config['theme_color']}">
-
-  <link rel="canonical" href="https://tk.st/job/{config['media_id']}/{date_key}/">
-  <link rel="author" href="https://tk.st/">
-
-  <meta property="og:title" content="{formatted_date}号：昨日の{config['brand_title_short']}まとめ — {config['media_name']}">
-  <meta property="og:description" content="{dynamic_page_desc}">
-  <meta property="og:type" content="article">
-  <meta property="og:url" content="https://tk.st/job/{config['media_id']}/{date_key}/">
-  <meta property="og:site_name" content="{config['media_name']} | tk.st">
-  <meta property="og:locale" content="ja_JP">
-  <meta property="og:image" content="https://tk.st/images/ogp/{config['media_id']}/{date_key}.webp">
-
-  <meta name="twitter:card" content="summary_large_image">
-  {x_site_meta(config)}
-  <meta name="twitter:title" content="{formatted_date}号：昨日の{config['brand_title_short']}まとめ — {config['media_name']}">
-  <meta name="twitter:description" content="{dynamic_page_desc}">
-  <meta name="twitter:image" content="https://tk.st/images/ogp/{config['media_id']}/{date_key}.webp">
-
-  <link rel="icon" href="../../../images/favicons/{config['favicon_file']}" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="../../../images/favicons/{config['favicon_file']}">
-  <script type="application/ld+json">
-{dynamic_jsonld_str}
-  </script>
-  <link rel="stylesheet" href="../../../data/{config['css_file']}">
+{issue_head_html}
 </head>
 <body id="top" data-daily-media="{config['media_id']}" data-share-prefix="{esc(config['share_prefix'])}">
   {reading_progress_html}
@@ -1684,6 +1747,8 @@ def build_meta_pills_html(config, latest):
 
 def render_top_index_html(config, articles_history):
     base_url = f"https://tk.st/job/{config['media_id']}/"
+    portal_title = config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"
+    portal_desc = config.get('portal_seo_desc') or config['brand_desc']
     latest = articles_history[0] if articles_history else None
     latest_date_formatted = f"{latest['date'][:4]}年{int(latest['date'][4:6])}月{int(latest['date'][6:8])}日" if latest else ""
     highlight_limit = 1 if latest and int(latest.get('count', len(latest.get('articles', [])))) <= 3 else 3
@@ -1743,7 +1808,9 @@ def render_top_index_html(config, articles_history):
 
     recent_issues = articles_history[:7]
     trend_counts = Counter()
-    generic_tags = {'ニトリ', '流通DX', 'リテールテック', '国内', '海外', 'グローバル'}
+    # 全記事に付きがちで「注目テーマ」として情報量が無いタグ。
+    # 媒体名そのもの等の固有分は CONFIG の generic_trend_tags で足す。
+    generic_tags = {'国内', '海外', 'グローバル'} | set(config.get('generic_trend_tags', ()))
     for issue in recent_issues:
         for art in issue.get('articles', []) or []:
             tags = [str(tag).strip() for tag in art.get('tags', []) or [] if str(tag).strip()]
@@ -1800,7 +1867,8 @@ def render_top_index_html(config, articles_history):
 
     faq_jsonld_entities = []
     faq_html_items = []
-    for idx, item in enumerate(config['faq_items'], 1):
+    all_faq_items = faq_items(config)
+    for idx, item in enumerate(all_faq_items, 1):
         clean_ans = clean_html_text(item["a"])
         faq_jsonld_entities.append({
             "@type": "Question",
@@ -1860,7 +1928,7 @@ def render_top_index_html(config, articles_history):
             "name": config['media_name'],
             "alternateName": config['periodical_alternates'],
             "headline": config['brand_subtitle'],
-            "description": config.get('portal_seo_desc') or config['brand_desc'],
+            "description": portal_desc,
             "url": base_url,
             "inLanguage": "ja",
             "issuanceFrequency": "P1D",
@@ -1874,7 +1942,7 @@ def render_top_index_html(config, articles_history):
             "isPartOf": { "@id": f"{base_url}#periodical" },
             "name": f"{config['media_name']} — ポータル＆アーカイブ",
             "headline": f"昨日の{config['brand_title_short']}動向をAI要約＋ビジネス示唆付きで届ける日刊速報",
-            "description": config.get('portal_seo_desc') or config['brand_desc'],
+            "description": portal_desc,
             "url": base_url,
             "primaryImageOfPage": config['portal_ogp_image'],
             "inLanguage": "ja",
@@ -1909,6 +1977,18 @@ def render_top_index_html(config, articles_history):
     ]
     portal_jsonld_str = escape_jsonld_for_script(json.dumps({"@context": "https://schema.org", "@graph": portal_graph}, ensure_ascii=False, indent=2))
 
+    portal_head_html = render_head(
+        config, '../../',
+        title=portal_title,
+        social_title=portal_title,
+        description=portal_desc,
+        canonical=base_url,
+        og_type='website',
+        og_image=config['portal_ogp_image'],
+        jsonld_str=portal_jsonld_str,
+        extra_links=[f'<link rel="alternate" type="application/rss+xml" title="{config["media_name"]} RSS" href="{base_url}rss.xml">'],
+    )
+
     featured_html = f"""
     <section class="featured" aria-labelledby="featuredTitle">
       <div class="featured-head">
@@ -1930,39 +2010,7 @@ def render_top_index_html(config, articles_history):
     return f"""<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="../../data/analytics.js" async></script>
-  <title>{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"}</title>
-  <meta name="description" content="{config.get('portal_seo_desc') or config['brand_desc']}">
-  <meta name="author" content="Shinya Takeda">
-  <meta name="robots" content="max-image-preview:large">
-  <meta name="theme-color" content="{config['theme_color']}">
-
-  <link rel="canonical" href="{base_url}">
-  <link rel="author" href="https://tk.st/">
-  <link rel="alternate" type="application/rss+xml" title="{config['media_name']} RSS" href="{base_url}rss.xml">
-
-  <meta property="og:title" content="{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"}">
-  <meta property="og:description" content="{config.get('portal_seo_desc') or config['brand_desc']}">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="{base_url}">
-  <meta property="og:site_name" content="{config['media_name']} | tk.st">
-  <meta property="og:locale" content="ja_JP">
-  <meta property="og:image" content="{config['portal_ogp_image']}">
-
-  <meta name="twitter:card" content="summary_large_image">
-  {x_site_meta(config)}
-  <meta name="twitter:title" content="{config.get('portal_seo_title') or f"{config['media_name']} — {config['brand_subtitle']} | tk.st"}">
-  <meta name="twitter:description" content="{config.get('portal_seo_desc') or config['brand_desc']}">
-  <meta name="twitter:image" content="{config['portal_ogp_image']}">
-
-  <link rel="icon" href="../../images/favicons/{config['favicon_file']}" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="../../images/favicons/{config['favicon_file']}">
-  <script type="application/ld+json">
-{portal_jsonld_str}
-  </script>
-  <link rel="stylesheet" href="../../data/{config['css_file']}">
+{portal_head_html}
 </head>
 <body id="top" data-daily-media="{config['media_id']}">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -2006,7 +2054,7 @@ def render_top_index_html(config, articles_history):
       <div class="section-head">
         <h2 class="section-title" id="faqTitle">よくあるご質問</h2>
         <span class="section-rule" aria-hidden="true"></span>
-        <span class="section-count">{len(config['faq_items'])} questions</span>
+        <span class="section-count">{len(all_faq_items)} questions</span>
       </div>
       <div class="faq-accordion">
 {faq_accordion_html}
@@ -2093,11 +2141,12 @@ def format_issue_date(date_key):
 
 
 def repair_history_source_links(articles_history):
-    """履歴をレンダー前に一度だけ正規化する。"""
-    changed = False
-    for issue in articles_history:
-        changed = repair_issue_source_links(issue) or changed
-    return changed
+    """履歴をレンダー前に一度だけ正規化し、内容が変わった号の index を返す。
+
+    呼び出し側は返ってきた index も再レンダー対象に含めること。JSON だけ直して
+    HTML を作り直さないと、修復後の出典リンクがページに反映されない。
+    """
+    return {i for i, issue in enumerate(articles_history) if repair_issue_source_links(issue)}
 
 
 def write_issue_page(config, articles_history, index):
@@ -2148,10 +2197,10 @@ def run_daily_pipeline(config):
             sys.exit(1)
         articles_history = load_json_list(data_json_path)
         articles_history.sort(key=lambda x: x['date'], reverse=True)
-        history_changed = repair_history_source_links(articles_history)
-        if history_changed:
+        repaired_indices = repair_history_source_links(articles_history)
+        if repaired_indices:
             write_json_atomic(data_json_path, articles_history, indent=2)
-            print(" -> 旧号のSNS出典URLを修復してJSONへ反映")
+            print(f" -> 旧号のSNS出典URLを修復してJSONへ反映: {len(repaired_indices)} 号")
 
         for i in range(len(articles_history)):
             date_key = write_issue_page(config, articles_history, i)
@@ -2217,15 +2266,16 @@ def run_daily_pipeline(config):
     }
     articles_history.append(new_issue)
     articles_history.sort(key=lambda x: x['date'], reverse=True)
-    repair_history_source_links(articles_history)
+    repaired_indices = repair_history_source_links(articles_history)
 
     print("[3/3] ファイル出力中...")
     write_json_atomic(data_json_path, articles_history, indent=2)
 
     # 新規追加号と、その前後で prev/next リンクが変わる隣接号だけ再生成すれば十分
-    # （それ以外の過去号の内容・リンク先は今回の追加で変化しない）
+    # （それ以外の過去号の内容・リンク先は今回の追加で変化しない）。
+    # ただし出典URLを修復した過去号は中身が変わっているので必ず作り直す。
     new_index = next(i for i, iss in enumerate(articles_history) if iss['date'] == target_date_key)
-    indices_to_render = {new_index}
+    indices_to_render = {new_index} | repaired_indices
     if new_index > 0:
         indices_to_render.add(new_index - 1)
     if new_index + 1 < len(articles_history):

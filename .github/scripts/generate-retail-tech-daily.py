@@ -6,7 +6,6 @@
 """
 
 import os
-import re
 from daily_engine import build_keyword_regex, build_rule_based_fallback, run_daily_pipeline
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,22 +19,6 @@ JP_SNS_QUERY = '((site:x.com OR site:twitter.com) ("セルフレジ" OR "スマ�
 GLOBAL_GENERAL_QUERY = '("retail tech" OR "retail technology" OR "retail media" OR "smart cart" OR "smart trolley" OR "cashierless" OR "frictionless checkout" OR "electronic shelf label" OR "retail AI" OR "grocery tech" OR "autonomous checkout")'
 GLOBAL_INDUSTRY_QUERY = '(site:retaildive.com OR site:grocerydive.com OR site:modernretail.co) ("AI" OR "tech" OR "media" OR "checkout" OR "cart" OR "automation" OR "store")'
 GLOBAL_SNS_QUERY = '((site:x.com OR site:twitter.com) ("self-checkout" OR "smart cart" OR "cashierless" OR "grocery" OR "supermarket")) OR (("viral on X" OR "trending on X" OR "customers complain" OR "backlash") ("self-checkout" OR "smart cart" OR "cashierless" OR "retail tech"))'
-
-JP_NOISE_BLACKLIST = [
-    re.compile(p, re.IGNORECASE) for p in [
-        r'人事異動', r'役員の異動', r'機構改革', r'決算短信', r'業績予想',
-        r'レシピ', r'スイーツ', r'コラボメニュー', r'新メニュー', r'福袋',
-        r'新設届出', r'大規模小売店舗立地法',
-        r'プレゼント', r'懸賞', r'フォロー＆リポスト', r'ブロマイド', r'一番くじ', r'キャンペーン開催'
-    ]
-]
-
-GLOBAL_NOISE_BLACKLIST = [
-    re.compile(p, re.IGNORECASE) for p in [
-        r'stock jumps', r'shares fall', r'financial results', r'q[1-4] earnings', r'quarterly',
-        r'giveaway', r'sweepstakes'
-    ]
-]
 
 KEYWORD_PATTERNS = [
     'ファミリーマート', 'ファミマ', 'セブン-イレブン', 'セブン＆アイ', 'セブン', 'ローソン',
@@ -76,14 +59,6 @@ FAQ_ITEMS = [
     {
         "q": "最新ニュースの通知や購読はできますか？",
         "a": f"本ページでの閲覧に加え、<a href=\"rss.xml\">RSSフィード (rss.xml)</a> による購読が可能です。SlackやTeamsのRSS連携アプリに登録することで、社内チャットへの毎朝の自動配信も容易に行えます。公式Xアカウント <a href=\"https://x.com/{X_HANDLE}\" target=\"_blank\" rel=\"noopener noreferrer\">@{X_HANDLE}</a> もあわせてご利用ください。"
-    },
-    {
-        "q": "社内チャット（Slack/Teams）への引用・共有は可能ですか？",
-        "a": "はい、ご自由に共有いただけます。各ニュースカードの「📋 コピー」ボタンを押すと、見出し・要点・リンクをまとめた社内ツール貼り付け用のテキストがクリップボードにコピーされます。隣の「共有」ボタンは、対応環境では端末の共有メニューを開き、非対応の環境では同じテキストをコピーします。"
-    },
-    {
-        "q": "気になるテーマだけを追いかけることはできますか？",
-        "a": "はい。各記事のタグ横にある ☆ を押すと、そのテーマをウォッチできます。ウォッチ中のテーマは、日刊記事ページでは「★ ウォッチ中」フィルタで該当記事だけに絞り込め、ポータルの「ウォッチ中のテーマ」欄では該当する最新記事が一覧表示され、前回チェック以降に公開された記事には NEW が付きます。解除はポータルの一覧にある × か、記事タグの ★ をもう一度押してください。なおウォッチの設定はご利用のブラウザ内にのみ保存されるため、他の端末には引き継がれません。メールやプッシュによる通知は行っていません。"
     }
 ]
 
@@ -172,9 +147,8 @@ CONFIG = {
     'global_query_ind': GLOBAL_INDUSTRY_QUERY,
     'global_query_sns': GLOBAL_SNS_QUERY,
 
-    'jp_noise_blacklist': JP_NOISE_BLACKLIST,
-    'global_noise_blacklist': GLOBAL_NOISE_BLACKLIST,
     'keyword_regex': build_keyword_regex(KEYWORD_PATTERNS),
+    'generic_trend_tags': ['流通DX', 'リテールテック'],
 
     'editor_title': '流通・リテールテック専門アナリスト（「Retail Tech Daily Brief」編集長）',
     'prompt_selection_rules': """1. リテールテック・流通DX・店舗イノベーションに無関係な記事は完全に除外してください。
