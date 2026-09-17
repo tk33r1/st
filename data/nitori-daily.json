@@ -1,5 +1,291 @@
 [
   {
+    "date": "20260918",
+    "title": "2026年9月18日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリは自社EC「ニトリネットマーケットプレイス」を本格始動し、食品・アウトドア・生花を追加して取扱カテゴリーを5から8へ拡大。同時にMirakl連携の受注管理コネクタを業界に先駆けて採用し、モール運営の運用基盤を整えた。家具・日用品の枠を越えた生活提案型ECへの転換が進む。 白井社長は中国事業の今期黒字化が「達成可」と表明。消費低迷が続く本土でも小型店を軸に出店を増やし、家具中心からキッチン雑貨など回転商材へ品揃えをシフトして市場を深掘りする。海外事業を収益源として定着させる正念場となる。",
+    "count": 9,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "ニトリは自社EC「ニトリネットマーケットプレイス」を本格始動し、食品・アウトドア・生花を追加して取扱カテゴリーを5から8へ拡大。同時にMirakl連携の受注管理コネクタを業界に先駆けて採用し、モール運営の運用基盤を整えた。家具・日用品の枠を越えた生活提案型ECへの転換が進む。",
+      "白井社長は中国事業の今期黒字化が「達成可」と表明。消費低迷が続く本土でも小型店を軸に出店を増やし、家具中心からキッチン雑貨など回転商材へ品揃えをシフトして市場を深掘りする。海外事業を収益源として定着させる正念場となる。",
+      "生活者接点では、キッチンマット（Xで約6,000いいね）やベトナム公式TikTokのU字抱き枕（3.8万回再生）などSNS発の反響が継続。栗まんじゅうクッションら季節商材と合わせ、デザインと季節性が低価格帯の売れ筋を左右している。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリネットマーケットプレイスが本格始動——食品・アウトドア・生花を追加し取扱カテゴリーを5から8へ拡大",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-18",
+        "summary": "ニトリは9月17日、自社EC「ニトリネット」内のマーケットプレイスを本格始動し、新たに「食品」「アウトドア」「生花・観葉植物」の取扱いを開始したと発表した。取扱カテゴリーは従来の5から8へ拡大。カレーやイワタニのコンロなどが出品され、家具・日用品にとどまらない生活提案型モールへの転換を狙う。",
+        "why_it_matters": "SPAが自社ECを「モール化」する動きは、客単価と来店頻度の向上に加え、商品・購買データの獲得競争へ軸足を移す象徴だ。実店舗の品揃えを超えるロングテールをオンラインで補完し、送客と在庫リスクの最適化を両立できるかが問われる。",
+        "tags": [
+          "ニトリ",
+          "EC",
+          "マーケットプレイス"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBkQkMzZnMzazFiN2Jsa24xVmNkSGpmTjFyZnE1eHUwdlBaVGVkUG1UanUyN04zVjBUd1FmQTVWbzR1Vi0wSnpoQ3RyUjhoM1BydTlIWUktRTZyQm9aZTU0R1VsX2tUUTJ4Ymc?oc=5",
+        "source_pub_ts": 1789606802
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "フラッグシップ、Mirakl導入モールとCROSS MALLを連携する「Connector for Mirakl」をニトリに提供開始",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-01",
+        "summary": "フラッグシップは9月17日、Mirakl導入企業のマーケットプレイスとアイルの「CROSS MALL」を連携する「Connector for Mirakl」をニトリに提供開始したと発表した。マーケットプレイス上の注文・在庫・出荷情報を既存の受注管理基盤へ自動連携し、出店拡大に伴うバックヤード業務の負荷を軽減する。",
+        "why_it_matters": "マーケットプレイス拡大の成否は出品者数より「運用の自動化」で決まる。受注・在庫・物流データを標準化して連携できるかが、SPA型ECのスケール可否を左右する。モール運営ノウハウを外部ツールで補完する判断は、内製固執からの転換として注目に値する。",
+        "tags": [
+          "ニトリ",
+          "EC",
+          "物流DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBQTkRwRXdDVU90N3dGQ1Z5SjFnb19LNTFKNG93VlJEc0hnLWpRdzhJZ3JSQjM1ZXZQX1I3M2kxaFJIaHVOQXE4cVlic0ttcnJuMDlPMGFtQVVZMHpCSkdOYlN3Vjc3VDdI?oc=5",
+        "source_pub_ts": 1789656684
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリHD白井社長、中国事業の今期黒字化「達成可」——不況下でも小型店を軸に出店を加速",
+        "original_title": "",
+        "source": "北海道新聞デジタル",
+        "source_id": "JP-05",
+        "summary": "ニトリホールディングスの白井俊之社長はインタビューで、中国事業について今期中の黒字化が「達成可能」との見通しを示した。消費低迷が続く本土市場でも出店を増やし、家具中心からキッチン雑貨など小型商材を厚くした小型店で市場を深掘りする方針。採算改善と出店拡大を両立させる構えだ。",
+        "why_it_matters": "中国は家具需要が冷え込みやすく、大型店依存はリスクが大きい。小型店と生活雑貨へのシフトは、低価格帯の回転商材で客数を稼ぐSPAモデルの応用だ。海外事業の黒字化は収益源の分散を意味し、国内依存からの脱却度合いが今後の評価軸になる。",
+        "tags": [
+          "ニトリ",
+          "中国",
+          "海外戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE53N1VYQkRQSTladmpjVnJuU1gxX3JLNFp5MWN6ZkNVT0dIUEd6UjE3d05hM2ViYkpILU91NmFGMnp5RHRhVEpMU0w5Q1l0Qk1NUTFzZHJqTFBadw?oc=5",
+        "source_pub_ts": 1789642842
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「衝動買いしてしまった」ニトリの“栗まんじゅうクッション”がSNSで話題沸騰、販売拡大",
+        "original_title": "",
+        "source": "All About ニュース",
+        "source_id": "JP-17",
+        "summary": "ニトリの「栗まんじゅうクッション」がSNSで反響を呼び、販売が拡大している。リアルな栗の形と秋らしい色合いが「衝動買いしてしまった」と話題に。クッションとしての実用性に加え、季節感のあるインテリア雑貨として写真映えする点が支持を集め、投稿をきっかけに来店・購入につながる動きが出ている。",
+        "why_it_matters": "低価格帯の季節雑貨がSNSで“自走”して売れる流れは、広告費に依存しない需要創出の好例だ。秋の短い商機に合わせた投入と、写真に撮りたくなる造形の設計がセットで効いている。反響を在庫・補充計画へ即時反映できるかが機会損失を防ぐ鍵となる。",
+        "tags": [
+          "ニトリ",
+          "ヒット商品",
+          "SNS"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMi6wFBVV95cUxQWWc3QXVLTjZESGFodm85bDk1OGt5Mm9PRDg0YVdFaDlvOWZlLVl5bGFxUlZlenBuRXlIcU5yc0VQU29rbDhHWXlLVlZlUTh6OXlyczRLQXB0QUtFWnd6b1B1Z0VGN2Y1M0pldUJSNk9fS1VsWnhRQ24zNlc0NDJKdjc3dGVhTVVmTjd4YV9fOE5oSXE1Y2M0Y0RtbHVqVGJra1MzSzVQZkJmb01WalBkSVVOMllKRnY3UTJkQkpOY3o2akw3dnlBOWN5R0huZVVNbnR2VGZyejRpbUN5cy1lbUwwOC1VU0VBejJr?oc=5",
+        "source_pub_ts": 1789607340
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「神レベルの商品です」ニトリの収納付きスタンドミラーが大好評——省スペースで高評価",
+        "original_title": "",
+        "source": "ねとらぼ",
+        "source_id": "JP-04",
+        "summary": "ニトリの収納付きスタンドミラーが「神レベルの商品です」「省スペースで便利すぎる」と好評を集めている。鏡の背面や下部に収納を備え、身支度と小物整理を一台で完結できる設計が支持の理由。限られた住空間でも置き場所を選ばず、「あと10個くらいほしい」といった声も上がるなど、実用性重視の生活者に刺さっている。",
+        "why_it_matters": "都市部の狭小住宅では「一つの家具に複数機能」が購買決定要因になる。鏡×収納という組み合わせは、設置面積あたりの機能密度を高める発想だ。口コミで機能価値が伝播する商品は値引きに頼らず定価販売を維持しやすく、収益性の面でも示唆が大きい。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "ヒット商品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE03SXBtZzVuSmdBN3kyZ1N2SzlIejBwR0k3UUlmMlJVV1U0bWdHazgxOEQybDVsY2N0YUtUWGhhd0dMMFE1Slp4RURaWjV5TmE0Y1RGYlc3NlBTX2lGRkNSaGx4Rk5xSDA30gFoQVVfeXFMTTdJcG1nNW5KZ0E3eTJnU3ZLOUh6MHBHSTdRSWYyUlVXVTRtZ0drODE4RDJsNWxjY3RhS1RYaGF3R0wwUTVKWnhFRFpaNXlOYTRjVEZiVzc2UFNfaUZGQ1JobHhGTnFIMDc?oc=5",
+        "source_pub_ts": 1789647900
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "【Xで5,997いいね】ニトリのキッチンマットが「かわいい」と反響——実用雑貨の“見せる化”",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "ニトリのキッチンマットの写真を投稿したXのポストが約6,000いいねを集めた。「かわいい」の一言と画像のみというシンプルな投稿ながら、キッチンという実用空間にデザイン性を持ち込む使い方が共感を呼んだ形だ。リプライでは色違いや耐久性、洗濯のしやすさなどの実用情報も交わされ、購買検討の場として機能している。",
+        "why_it_matters": "水回り用品は機能優先で選ばれがちだが、色柄のデザイン次第で“見せたくなる”商材に変わる。低単価でも写真映えすればSNSで拡散し、来店動機になる。キッチン周りのデザインラインを揃える提案は、関連買い回りを生む導線として有効だ。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "キッチン"
+        ],
+        "url": "https://x.com/ranranrunrun94/status/2100531122321170874",
+        "source_pub_ts": 1789642800
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "【TikTokで3.8万回再生】ベトナムでニトリのU字型抱き枕が話題——身体を包む大型設計が支持",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "ニトリベトナムの公式TikTokが投稿したU字型抱き枕「Mochi Mochi」の動画が約3.8万回再生を記録した。70×130cmの大型サイズで全身を包み込み、ふわふわの肌触りとカバーが外して洗える実用性を訴求。寝る・読書・リラックスの3用途を短尺動画で見せ、コメントも26件寄せられるなど現地での関心が高い。",
+        "why_it_matters": "同じ商品でも市場ごとに訴求軸を変える必要がある。日本では収納・機能が語られるが、東南アジアでは睡眠の快適さと肌触りが響く。現地公式アカウントが自ら短尺動画で商品を説明する運用は、越境EC・海外店舗の集客コストを下げる有効な型だ。",
+        "tags": [
+          "ニトリ",
+          "海外",
+          "TikTok"
+        ],
+        "url": "https://www.tiktok.com/@nitori.vietnam/video/7685750473311128853",
+        "source_pub_ts": 1789478236.0
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、中国の新店舗で家具よりキッチン用品を重視——イケアに対抗する独自路線",
+        "original_title": "IKEA rival Nitori to focus on kitchenware over furniture in new China stores",
+        "source": "Nikkei Asia",
+        "source_id": "GL-01",
+        "summary": "ニトリが中国の新規店舗で、家具中心の品揃えからキッチン用品など生活雑貨を厚くする方針に転換しつつあると報じられた。家具購入は意思決定が重く消費低迷の影響を受けやすい一方、低価格の日用品は来店頻度と回転率を稼げる。イケアとの差別化を図りつつ、小型店で都市部の需要を取り込む狙いだ。",
+        "why_it_matters": "家具は景気敏感だが、キッチン雑貨は日常消費に近く不況下でも回転する。カテゴリー構成を市場環境に合わせて組み替えられるのはSPAの強みだ。海外で「家具屋」ではなく「生活雑貨店」として認知を広げる戦略は、出店余地の拡大にもつながる。",
+        "tags": [
+          "ニトリ",
+          "中国",
+          "海外戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPZmxCX1N3NTZ3YkVndjlRMkwydjNfb1EyVy0wdnNmbVNwOVJDUjh0ck1zLUU2dzBPXzV6VVFFQzU0YVhRRnhGbWN4TzJlYUs1eWRnWFp2TWdJcHNoWWxsYk9nbkgtRzVjZTljOERkZzc1STl5dWY1QkJHOUh0N1Bqbm5uMDZnOFVuY28tbWNFN25YUkNtY2RBY2U2U3Q0c1psRnVQWm1lcXMzd2QzUGM1d0IzUTBYOEE?oc=5",
+        "source_pub_ts": 1789662720
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、香港「マリタイム・スクエア」に出店——アジア都市部で存在感を拡大",
+        "original_title": "Japanese home-furnishing giant NITORI arrives at Maritime Square",
+        "source": "The Standard (HK)",
+        "source_id": "GL-02",
+        "summary": "香港の商業施設「マリタイム・スクエア」にニトリが出店したと報じられた。日本発のホームファニシング大手として、限られた住空間で暮らす香港の生活者に対し、省スペース家具と低価格の日用品を訴求する。交通結節点に近い大型モールへの出店は、ブランド認知の底上げと都市部需要の取り込みを狙ったものだ。",
+        "why_it_matters": "香港は住居面積が狭く、収納・省スペース商材の需要が構造的に大きい。日本の商品設計がそのまま刺さる市場であり、在庫回転と客単価の両取りを狙える。アジア主要都市の好立地モールを押さえる動きは、海外ブランド認知の起点として重要だ。",
+        "tags": [
+          "ニトリ",
+          "香港",
+          "店舗展開"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQSlM0V0JDOXlsZlMzSWI2N3pnZUR1amF6MUNyQXJlWGt2b2dVc2pISEc1RHlfRjU2M2RRdms3cHNpN1FiNUdiYVg3QlBGaWU1d255WWRINXYySU92cXB4bzB4OVR6SUUxZVZFbjFlZ1pxUncwTWZJekZmNElEVS1mYkd4bmZyeE1Jdmd2NHhFUWc2d18tdXo4Q3FmVVJUTGduYXl1Y2VpaHJXei1pYzM2SjBZMjJkdw?oc=5",
+        "source_pub_ts": 1789632512
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのキッチンマットかわいい pic.x.com/YPp33NUaWt",
+        "platform": "x",
+        "author": "@ranranrunrun94",
+        "url": "https://x.com/ranranrunrun94/status/2100531122321170874",
+        "likes": 5997,
+        "retweets": 489,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:23",
+        "captured_at": "",
+        "text": "ニトリのキッチンマットかわいい pic.x.com/YPp33NUaWt",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリデコホームの新作がピンクで可愛すぎた〜🎀💭リボン好きの私がスルーできる訳も無く…🤦‍♀️💓厳選して買ってきた🪽 pic.x.com/Y...",
+        "platform": "x",
+        "author": "@ha_chan417",
+        "url": "https://x.com/ha_chan417/status/2100452464743067920",
+        "likes": 5792,
+        "retweets": 317,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:11",
+        "captured_at": "",
+        "text": "ニトリデコホームの新作がピンクで可愛すぎた〜🎀💭リボン好きの私がスルーできる訳も無く…🤦‍♀️💓厳選して買ってきた🪽 pic.x.com/YF0dO6VE23",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "NITORIの収納めちゃ可愛いぞ…最近レベル高いの多いな pic.x.com/1wO0RbsfAu",
+        "platform": "x",
+        "author": "@ibashodesign",
+        "url": "https://x.com/ibashodesign/status/2100536063081263246",
+        "likes": 1985,
+        "retweets": 48,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:43",
+        "captured_at": "",
+        "text": "NITORIの収納めちゃ可愛いぞ…最近レベル高いの多いな pic.x.com/1wO0RbsfAu",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ここでいう偉い人はよく前説してるので支配人だと思われている実は番組編成部長のおじさんではなく、シャオヘイに敷物を用意せよと命じて中の人をニト...",
+        "platform": "x",
+        "author": "@cinemacity_jp",
+        "url": "https://x.com/cinemacity_jp/status/2100573243505787039",
+        "likes": 312,
+        "retweets": 96,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 22:11",
+        "captured_at": "",
+        "text": "ここでいう偉い人はよく前説してるので支配人だと思われている実は番組編成部長のおじさんではなく、シャオヘイに敷物を用意せよと命じて中の人をニトリに走らせた本物の支配人です (￣▽￣) x.com/cinemacity_jp/…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "道東は寒暖差のせいで夜の軽装が厳しくなりました(裸族は寒い😣) 冬パジャマにはまだ早いので🙄 安価で今話題のニトリのリカバリーウェアを導入し...",
+        "platform": "x",
+        "author": "@orufye1380",
+        "url": "https://x.com/orufye1380/status/2100341527050625187",
+        "likes": 88,
+        "retweets": 8,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 6:50",
+        "captured_at": "",
+        "text": "道東は寒暖差のせいで夜の軽装が厳しくなりました(裸族は寒い😣) 冬パジャマにはまだ早いので🙄 安価で今話題のニトリのリカバリーウェアを導入してみた😎 ​薄手なのに体の芯から温まる感覚があって驚き😳 ​筋肉のコリや疲労回復への効果はこれから検証だけど🧐 温活としてはかなり優秀かもね…☺️✌ pic.x.com/nXPvvDSiQ3",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "GỐI ÔM CHỮ U MOCHI MOCHI – ÔM TRỌN CƠ THỂ, NGỦ CỰC ÊM! ☁️✨ 🏷️ CD: 2115...",
+        "platform": "tiktok",
+        "author": "@NITORI Vietnam",
+        "url": "https://www.tiktok.com/@nitori.vietnam/video/7685750473311128853",
+        "likes": 667,
+        "retweets": 658,
+        "views": 37900,
+        "comments": 26,
+        "posted_on": "2026-09-15 22:17",
+        "captured_at": "2026-09-17T18:49:11.712616+09:00",
+        "text": "GỐI ÔM CHỮ U MOCHI MOCHI – ÔM TRỌN CƠ THỂ, NGỦ CỰC ÊM! ☁️✨ 🏷️ CD: 2115100136677 Một chiếc gối ôm chữ U dành cho những ngày chỉ muốn cuộn mình lại và nghỉ ngơi thật thoải mái 🥹💤 ✨ Thiết kế chữ U ôm trọn cơ thể ✨ Kích thước lớn 70 × 130 cm ✨ Bề mặt Fluffy mềm mại, êm ái ✨ Vỏ gối có thể tháo rời và giặt sạch ✨ Phù hợp để ngủ, đọc sách hoặc thư giãn #NITORI #nitorivietnam #mochi #gối #foryou",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "今回のバズ投稿は、約6,000いいねのキッチンマットなど“デザインで語られる定番品”がXで伸び、TikTokではベトナム公式のU字抱き枕動画が3.8万回再生と実使用シーン型が強い。Xは画像1枚で共感と購買検討を集め、動画はサイズ・肌触り・洗える等の機能説明と組み合わせて伸びる傾向が明確だ。",
+    "sns_why_it_matters": "Xの静止画バズは「かわいい」という感情が起点で、色柄やシリーズ展開の示唆が得られる。TikTokは機能と使用シーンを短時間で伝え、海外では睡眠・快適性が訴求軸になる。媒体特性に合わせて投稿を分け、反響を商品計画や補充、海外の訴求設計へ還元する仕組みを持つことが低コスト集客の鍵となる。"
+  },
+  {
     "date": "20260917",
     "title": "2026年9月17日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリが基幹システムをOCIへ移行し、夜間バッチ処理を6時間弱から約1時間半へ短縮。SPAの需給判断や店舗オペレーションを支えるデータ反映リードタイムの短縮が、実店舗とECの連動精度を左右する基盤整備として進む。 商品面ではニトリ×ちふれの初コラボなど異業種・消耗品領域へのPB拡大が進み、999円のネコ型ケーキスタンドや1合ずつ出る米びつなど低価格の造形雑貨・キッチン用品が支持を集める。島忠の「爆安挑戦セール」第8弾と合わせ、価格訴求と来店動機づくりが並走。",
