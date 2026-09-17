@@ -1,5 +1,176 @@
 [
   {
+    "date": "20260918",
+    "title": "2026年9月18日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "AI需要予測と店頭インフラの高度化が加速。フォーティエンスの消費財向けAI需要予測サービス開始、イシダの電子棚札急成長など、在庫・補充・価格変更をデータで自動化する動きが同時多発した。 セルフレジが生活者の関心の中心に。郵便局のセルフレジ対応開始やユニクロのRFID一括会計の仕組みとリスクが話題を集め、利便性と読み取り精度・不正対策の両立が改めて問われている。",
+    "count": 9,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "AI需要予測と店頭インフラの高度化が加速。フォーティエンスの消費財向けAI需要予測サービス開始、イシダの電子棚札急成長など、在庫・補充・価格変更をデータで自動化する動きが同時多発した。",
+      "セルフレジが生活者の関心の中心に。郵便局のセルフレジ対応開始やユニクロのRFID一括会計の仕組みとリスクが話題を集め、利便性と読み取り精度・不正対策の両立が改めて問われている。",
+      "リテールメディアと顧客接点データの統合競争が激化。betrendの分析基盤、Pinterestの視覚検索広告、ShiptのAI強化など、接点を押さえ購買へつなげる基盤整備が国内外で進んだ。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "フォーティエンス、消費財向けAI需要予測「FDEサービス」提供開始",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-02",
+        "summary": "フォーティエンスコンサルティングは17日、消費財業界向けにAI駆動型の需要予測サービス「FDEサービス」の提供を開始すると発表した。需要予測の高度化により欠品と過剰在庫の同時抑制や、生産・物流・店頭補充の計画精度向上を狙う。分析人材を社内に抱えにくい中堅の消費財メーカーや小売に対し、モデル構築から運用までを伴走支援する形で提供する。",
+        "why_it_matters": "需要予測は小売・消費財の在庫コストと欠品率を直接左右する経営指標だ。外販型のAI需要予測サービスが普及するほど、調達・補充の意思決定は勘からデータ駆動へ移行する。中堅企業が早期に導入できるかが、棚効率と価格競争力の差を生む分水嶺になる。",
+        "tags": [
+          "AI需要予測",
+          "消費財",
+          "サプライチェーン"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9tYjJWUEhiNF9tV21nSDRmejNFQlBFN3FhMEJ4aTRqZDlqaHlFMGlSVFh1NVZuRkwtTVdrS2x0cVFKb1ZNYVlxeGdjOTBxNEh1ZXEtU055a1ZWWGhRQjlFd2tMQk5JNHJYcjRvblVLN05ROHVXa0hfSjFLQQ?oc=5",
+        "source_pub_ts": 1789640323
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "イシダの電子棚札が急成長、人手不足と消費減税が追い風",
+        "original_title": "",
+        "source": "京都新聞デジタル",
+        "source_id": "JP-27",
+        "summary": "京都新聞は17日、京都市左京区のイシダが手掛ける電子棚札（ESL）が急成長していると報じた。小売店の慢性的な人手不足を受け、値札の張り替え作業を省力化する需要が拡大。さらに消費税率引き下げを控え、価格変更の頻度と工数が増えることへの備えとして導入機運が高まる。ESLは価格の即時一括更新や在庫・売場管理との連携も可能にする。",
+        "why_it_matters": "電子棚札は単なる省人化ツールではなく、価格をリアルタイム制御できる店頭インフラだ。消費減税のような制度変更は一斉値札替えという現場負荷を生み、ESLの投資回収を一気に短縮する。ESL経由で取得した棚データを需要予測やリテールメディアへ接続できるかが次の競争軸となる。",
+        "tags": [
+          "電子棚札",
+          "店舗DX",
+          "省人化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBLV0ROR3NEZ0tjaWxMemk0bEZRSk5rYnJpOVZiR0ZlNFZaRGxBOEZqUHpEdC14ejloTTNYY3QxVmd3SUI0T0NiQUo5c2FhMUZuSWlOOGs2Qm02SWs?oc=5",
+        "source_pub_ts": 1789588200
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "betrend、顧客接点データを統合する分析基盤「betrend アナリティクス」提供開始",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-15",
+        "summary": "17日、顧客接点データを統合するスマートCRM分析オプション『betrend アナリティクス』の提供が開始された。店舗・アプリ・Webなどに分散する顧客接点データを束ね、マーケティングROI（MROI）の可視化・改善と、店舗DXにおける意思決定の加速を狙う。来店・購買・反応データを横断分析し、施策の効果測定と次の打ち手の精度を高める。",
+        "why_it_matters": "リテールメディアや店舗DXの投資対効果は、接点データを統合し施策と購買を結び付けられるかにかかる。MROIを継続測定できる基盤は、広告主への説明責任と社内の予算獲得の両面で武器になる。データ統合の巧拙が、実店舗を持つ企業のマーケ競争力を分ける。",
+        "tags": [
+          "リテールメディア",
+          "店舗DX",
+          "MROI"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBjMVhwQlVPM3UyS19OQ2hpM2toTE9EYzFRUUJPNjFoYmhQZ2tXak95My1BZTNTdjcta1lwRGY4X1FwWXZVbkRSYVJfazl3NEJFRGl5eVdGZWRXb19rZUloYnVGUVp4cW0tcFE?oc=5",
+        "source_pub_ts": 1789610403
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "郵便局のセルフレジで料金支払い、11月2日から「有効期限付き証紙」",
+        "original_title": "",
+        "source": "DXマガジン",
+        "source_id": "JP-05",
+        "summary": "DXマガジンは17日、11月2日から開始される郵便局のセルフレジ対応を報じた。郵便料金の支払いをセルフレジで完結できるようにするもので、有効期限付き証紙の運用が鍵となる。窓口の混雑緩和と職員の負荷軽減を狙い、切手・証紙の販売や支払い業務の自動化を進める。全国の郵便局網という巨大な対面拠点のセルフ化の一歩となる。",
+        "why_it_matters": "郵便局は全国に約2万局を構える巨大な対面ネットワークで、その決済セルフ化は小売以上に社会的影響が大きい。証紙という現物資産に有効期限を付けセルフレジで扱う設計は、アナログ資産とデジタル決済の折衷策だ。証紙が電子化すれば窓口の役割は相談業務へ大きくシフトする。",
+        "tags": [
+          "セルフレジ",
+          "次世代決済",
+          "省人化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE44cGtVcXJHV2FPalJZaXhBeWNGU3otODY5UURpUHVLVl9pZmt1aDRqTGFsNTVvN2VtUkFYZFpPN2xoSkpUT1FuWUk5VkU3bDlFWnc?oc=5",
+        "source_pub_ts": 1789626062
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「えっ、もう終わり？」ユニクロのセルフレジが一瞬で会計できる理由と潜むリスク",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-24",
+        "summary": "Yahoo!ニュースの連載が、ユニクロのセルフレジが驚くほど短時間で会計できる仕組みと、そこに潜むリスクを解説し話題を集めている。RFIDを活用した一括読み取りにより、商品を一点ずつスキャンせずとも会計が完了する点が特徴だ。読者からは利便性を評価する声の一方、読み取り精度やタグの扱い、万引き対策への懸念も上がっている。",
+        "why_it_matters": "一括会計の体験は来店客の満足度を大きく高めるが、裏側ではRFIDタグの精度と運用コスト、不正対策の設計が問われる。快適さとリスク管理はトレードオフになりやすく、現場の運用設計が成否を分ける。RFID会計はアパレルだけでなく食品・日用品への横展開が次の焦点となる。",
+        "tags": [
+          "セルフレジ",
+          "RFID",
+          "SNS話題"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPZ0EtX3BGNzJaY1dod1RCS0tpQlBwdm1McGZOaUI4VjBMcW54X2pjVDR1QkVMOXRld1o0MS11YU5LdmJoRjFqZ2ZIcTVLY010NHNHLXB6a2lMQXVEb29FTEtiWlAyUnVyT0Y4ZDAxNHJMUmRobUNPVHpNWjNwbTk4T0ZqR0ctOHhn?oc=5",
+        "source_pub_ts": 1789593327
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ZOZO、コーデアプリ「WEAR」に新機能——診断から試着まで一連の体験を提供",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-09",
+        "summary": "ZOZOは17日、コーディネートアプリ「WEAR」に新機能を追加したと発表した。スタイル診断から試着までをアプリ内で一貫して体験できるようにし、ユーザーの好みに応じた提案と購買の接続を強化する。コーデ閲覧という従来の役割から、発見・検討・購入を担うショッピング接点へとアプリの位置づけを広げる狙いだ。",
+        "why_it_matters": "アプリを「見る場所」から「買う場所」へ転換する動きは、ECの獲得競争がコンテンツ起点に移ったことを示す。診断・試着といった意思決定の途中工程を自社で押さえられれば、購買直前の離脱を防ぎ送客の歩留まりを高められる。OMOの成否は体験の一気通貫度で決まる。",
+        "tags": [
+          "OMO",
+          "アプリ",
+          "顧客体験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBpU25LSWRQaUNQM3lfbTE3bGp2SFB3T2VCVm1SWnJsdVpWc3FkZmNXU25ZekRHaU9nc243ZDR3WVhpUnhlNEFwVjdOMnpfTUc3?oc=5",
+        "source_pub_ts": 1789622640
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "ターゲット傘下の配送アプリShipt、AI機能を強化——インスタカートを追う",
+        "original_title": "Big-Box Briefing: Target-owned delivery app Shipt makes AI push, mirroring Instacart",
+        "source": "Modern Retail",
+        "source_id": "GL-06",
+        "summary": "ターゲット傘下の配送アプリShiptが、AIを活用した機能強化に踏み出した。インスタカートと同様の方向性で、注文の提案や買い物代行の効率化、パーソナライズによって配送体験の向上を狙う。大手小売が自前の配送・ラストワンマイル網にAIを組み込み、外部プラットフォームへの依存を減らす動きが鮮明になっている。",
+        "why_it_matters": "食品・日用品の配送競争は、価格や配送速度からパーソナライズと運用効率の勝負へ移りつつある。AIによる需要予測とルーティング最適化は、買い物代行の人手コストを左右する生命線だ。自社アプリにAIを内製できるかが、手数料を払う側と取る側の分岐点になる。",
+        "tags": [
+          "AI需要予測",
+          "ラストワンマイル",
+          "配送DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxNNzRONkJDckpINXJWSDhkd1Q0MFExQmstc054QTFqTXhUZGhXczJhdHN1aklaRFhHYVJ6WDRkcmhGVXNSYXYtdTg4Y3ZnQlNWVWhtTXBEZklGYmhpWWk3ODdqQk5CU1ppQVdWMzZDNkVZeWRrTElZajRGWFlSSXVoSHlybVdHZnVIUFdDZWxFODV1SVB5VUphMXRscDl5ZWpIZ3V4d1ZjVnF5RmxGM0VNYVFrMWpXX2QzdDBpeDFXMA?oc=5",
+        "source_pub_ts": 1789658646
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "Pinterest、Visual Search Adsなど新広告ツール群を発表——ブランド獲得へ攻勢",
+        "original_title": "Pinterest unveils new suite of ad tools, including Visual Search Ads, in its pitch to brands",
+        "source": "Modern Retail",
+        "source_id": "GL-09",
+        "summary": "Pinterestは、Visual Search Adsを含む新たな広告ツール群を発表した。画像検索や視覚的な発見行動を購買意欲に結び付ける狙いで、ブランドへの訴求を強める。ユーザーが「探す・見つける」段階で広告を届けることで、リテールメディアに近い形の収益機会を広げようとしている。",
+        "why_it_matters": "検索・発見の起点がテキストから画像・動画へ移るなか、視覚検索広告はリテールメディアとSNS広告の中間領域を切り開く。購買意図の上流を押さえられれば、小売側のファーストパーティデータと組み合わせた効果測定の余地も広がる。広告在庫の争奪は検索・動画・小売の三つ巴になる。",
+        "tags": [
+          "リテールメディア",
+          "広告",
+          "視覚検索"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxQMkxlYlF4STVlbVloU1c3WUczeHFMRXU0Z3FzSTRxeEFDcHB5blZOU3pmeWlHc1dINUxBY01KVjluM014R3EydkI4emNVSzAxSFVPVGxIRTVHaDBpeFFLT2k4bUduOUUwc1pNbFREbkZXRTlHUkJOVl8wbzRPVTlzSVE4bndLQTgwV2tEV1Q3MHdOUFNPY1hYM0UyTGJ3NHFVTDcwbUhMbnNkOWwxMEZKbkZnSWg3V1Eta185bUM3U2VTVGdUZFJtVA?oc=5",
+        "source_pub_ts": 1789637585
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "アマゾン、最低開始時給を20ドルへ引き上げ——物流人材獲得競争が激化",
+        "original_title": "Amazon boosts minimum hourly starting wage to $20",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "アマゾンは、米国の倉庫・物流拠点などで働く従業員の最低開始時給を20ドルに引き上げると発表した。人手確保と定着率向上を狙ったもので、物流・フルフィルメント人材の獲得競争が激化するなかでの待遇改善となる。賃金上昇は、倉庫・配送現場での自動化・省人化投資を一段と後押しする可能性がある。",
+        "why_it_matters": "物流・倉庫人材の賃金上昇は、小売・EC各社のコスト構造を直撃する。人件費が上がるほど、ロボティクスや自動仕分けへの投資回収が短縮され、自動化の導入判断が前倒しになる。待遇改善と省人化投資を同時に進められるかが物流コスト競争力の分水嶺となる。",
+        "tags": [
+          "物流",
+          "自動化",
+          "人件費"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxNYjJWVlFlN3VqTU9xVExhblN2YWxjd2JETjZraVhCRU9ubk00NTVrWThaOTI5bktzZFVFdV9jXzFmN1p2VnRKSWRpV3ptUF9XdXZzb0NNVG94eGZfVllZTW9PLWphZDBlakswTHM2SXhVR2pBeGwydTRTNzh3cG1JNWI0TmJZN3BhYkE?oc=5",
+        "source_pub_ts": 1789661672
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260917",
     "title": "2026年9月17日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "リテールメディアが「枠の販売」から「行動変容の設計」へ——USEN MEDIA PROMOTIONとDearOneの提携、ロケットの店頭立体装飾、ウォルマートのScintilla AI強化など、購買データと店頭接点を統合する動きが国内外で同時に進んだ。 決済・レジ周辺の体験と運用課題が顕在化——ウォークスルー決済や顔認証改札の普及が進む一方、100均セルフレジの行列など生活者の不満も表面化し、技術導入と運用設計の両立が問われている。",
