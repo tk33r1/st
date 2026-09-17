@@ -28,7 +28,7 @@
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
 | `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` 由来（`data/tools-ui.css` の `--cat-*`）で、ツール個別には持たない。ダウンロード等の完了地点では `STShare.celebrate()` を呼ぶ（後述） |
-| `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない |
+| `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
 | `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト）、`booth/`（ブースコンソール） |
@@ -90,7 +90,10 @@
     取得して `data/oil-price.json` を更新。
   - `retail-tech-daily.yml` / `nitori-daily.yml`（毎朝 JST）: `daily-brief-reusable.yml` 経由で
     日刊ブリーフを生成し、最後に `post-to-x.py` が新着号を公式 X（@retailtechdaily /
-    @dailynitori）へポストする。ポスト ID は号の JSON（`x_post_id`）に記録され、これが
+    @dailynitori）へポストする。本文の URL は `ttps://` 表記にして自動リンクを避け
+    （X は URL 付きポストを課金対象にする）、代わりに号の OGP 画像を添付する。
+    OGP は Chrome でレンダリングするため、CI に `fonts-noto-cjk` の導入が必須
+    （入れないと日本語が豆腐になる）。ポスト ID は号の JSON（`x_post_id`）に記録され、これが
     二重ポストの抑止を兼ねる。認証は OAuth 1.0a で、リポジトリ Secrets に
     `X_<MEDIA_ID 大文字>_CONSUMER_KEY` / `_CONSUMER_SECRET` / `_ACCESS_TOKEN` /
     `_ACCESS_TOKEN_SECRET` の4点（メディアごと）を置く。未設定なら警告だけ出して生成は通す。

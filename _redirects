@@ -29,3 +29,7 @@
 /images/ogp/pdf-to-image-ogp.webp   /images/ogp/pdf-studio-ogp.png  301
 /images/ogp/pdf-to-image-ogp.png    /images/ogp/pdf-studio-ogp.png  301
 
+# 移動: 2026-09-17  日刊の号別 OGP を images/ogp 直下からメディア別ディレクトリへ
+# 既にXやSNSへ出ている号のカード画像が 404 にならないように 301 を張る。
+/images/ogp/nitoridaily-*      /images/ogp/nitoridaily/:splat  301
+/images/ogp/retailtechdaily-*  /images/ogp/retailtechdaily/:splat  301

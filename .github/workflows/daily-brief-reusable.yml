@@ -37,6 +37,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pillow
+    # OGP カードは Chrome でレンダリングするので、日本語フォントが無いと豆腐になる
+    - name: Install Japanese fonts
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq fonts-noto-cjk fonts-noto-color-emoji
+        fc-cache -f > /dev/null
 
     - name: Generate daily brief
       env:

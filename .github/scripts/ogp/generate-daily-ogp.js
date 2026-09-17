@@ -102,7 +102,7 @@ function buildDailyHtml(brandCfg, issue) {
     height: 630px;
     background: #0f172a;
     color: #f8fafc;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Noto Sans CJK JP", sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -135,7 +135,7 @@ function buildDailyHtml(brandCfg, issue) {
     line-height: 1.15;
   }
   .brand-title {
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Noto Sans CJK JP", Arial, sans-serif;
     font-size: 20px;
     font-weight: 800;
     color: #ffffff;
@@ -153,7 +153,7 @@ function buildDailyHtml(brandCfg, issue) {
     gap: 10px;
   }
   .pill-date {
-    font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", Arial, sans-serif;
+    font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Noto Sans CJK JP", Arial, sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: ${brandCfg.primaryColor};
@@ -187,7 +187,7 @@ function buildDailyHtml(brandCfg, issue) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Noto Sans CJK JP", Arial, sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: ${brandCfg.primaryColor};
@@ -273,7 +273,7 @@ function buildDailyHtml(brandCfg, issue) {
     border: 1px solid rgba(51, 65, 85, 0.6);
   }
   .site-domain {
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Noto Sans CJK JP", Arial, sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: #94a3b8;
@@ -340,8 +340,11 @@ async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
   }
 
   const d = issue.date;
-  const outPngPath = path.join(ROOT, 'images', 'ogp', `${brandCfg.outPrefix}-${d}.png`);
-  const outWebpPath = path.join(ROOT, 'images', 'ogp', `${brandCfg.outPrefix}-${d}.webp`);
+  // 日刊の号ごとの OGP はメディア別ディレクトリに置く（images/ogp 直下の肥大化を避ける）
+  const outDir = path.join(ROOT, 'images', 'ogp', brandCfg.outPrefix);
+  fs.mkdirSync(outDir, { recursive: true });
+  const outPngPath = path.join(outDir, `${d}.png`);
+  const outWebpPath = path.join(outDir, `${d}.webp`);
 
   const htmlContent = buildDailyHtml(brandCfg, issue);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `ogp-${brandKey}-`));
@@ -389,7 +392,7 @@ img.save(dst, format='WEBP', lossless=True, method=6)
   try { fs.unlinkSync(outPngPath); } catch {}
 
   const kb = (fs.statSync(outWebpPath).size / 1024).toFixed(1);
-  console.log(`SUCCESS: images/ogp/${brandCfg.outPrefix}-${d}.webp (${kb} KB, Lossless WebP 2400x1260)`);
+  console.log(`SUCCESS: images/ogp/${brandCfg.outPrefix}/${d}.webp (${kb} KB, Lossless WebP 2400x1260)`);
 
   // ポータル代表 OGP にも同期コピー
   try {

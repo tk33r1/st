@@ -52,6 +52,11 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+    # OGP 画像（WebP）を X 用に PNG 変換するのに使う
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pillow
 
     - name: Post to X
       env:

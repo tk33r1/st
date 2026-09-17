@@ -1110,7 +1110,7 @@ def build_dynamic_jsonld(config, issue_data, date_key, formatted_date):
             "headline": f"{formatted_date}号：昨日の{config['brand_title_short']}まとめ",
             "description": dynamic_desc,
             "url": f"{base_url}{date_key}/",
-            "image": f"https://tk.st/images/ogp/{config['media_id']}-{date_key}.webp",
+            "image": f"https://tk.st/images/ogp/{config['media_id']}/{date_key}.webp",
             "datePublished": issue_iso,
             "dateModified": issue_iso,
             "inLanguage": "ja",
@@ -1569,13 +1569,13 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
   <meta property="og:url" content="https://tk.st/job/{config['media_id']}/{date_key}/">
   <meta property="og:site_name" content="{config['media_name']} | tk.st">
   <meta property="og:locale" content="ja_JP">
-  <meta property="og:image" content="https://tk.st/images/ogp/{config['media_id']}-{date_key}.webp">
+  <meta property="og:image" content="https://tk.st/images/ogp/{config['media_id']}/{date_key}.webp">
 
   <meta name="twitter:card" content="summary_large_image">
   {x_site_meta(config)}
   <meta name="twitter:title" content="{formatted_date}号：昨日の{config['brand_title_short']}まとめ — {config['media_name']}">
   <meta name="twitter:description" content="{dynamic_page_desc}">
-  <meta name="twitter:image" content="https://tk.st/images/ogp/{config['media_id']}-{date_key}.webp">
+  <meta name="twitter:image" content="https://tk.st/images/ogp/{config['media_id']}/{date_key}.webp">
 
   <link rel="icon" href="../../../images/favicons/{config['favicon_file']}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../../../images/favicons/{config['favicon_file']}">
