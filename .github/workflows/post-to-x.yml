@@ -1,0 +1,90 @@
+name: Post Daily Brief to X
+
+# 日刊生成とは切り離して、既存の号を X へポストし直すための手動ワークフロー。
+# 再送・バックフィル・本文の事前確認（dry-run）に使う。
+# 通常の毎朝の投稿は daily-brief-reusable.yml の Post to X ステップが行う。
+
+on:
+  workflow_dispatch:
+    inputs:
+      media:
+        description: 'Target media'
+        required: true
+        type: choice
+        options:
+          - nitoridaily
+          - retailtechdaily
+      date:
+        description: 'Target issue date (YYYYMMDD). Leave empty for the latest issue.'
+        required: false
+        default: ''
+      dry-run:
+        description: 'Show the post text without posting'
+        required: false
+        default: false
+        type: boolean
+      force:
+        description: 'Post again even if the issue is already recorded as posted'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: post-to-x-${{ inputs.media }}
+  cancel-in-progress: false
+
+env:
+  BOT_EMAIL: "github-actions[bot]@users.noreply.github.com"
+
+jobs:
+  post-to-x:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Post to X
+      env:
+        MEDIA: ${{ inputs.media }}
+        TARGET_DATE: ${{ inputs.date }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        FORCE: ${{ inputs.force }}
+        X_NITORIDAILY_CONSUMER_KEY: ${{ secrets.X_NITORIDAILY_CONSUMER_KEY }}
+        X_NITORIDAILY_CONSUMER_SECRET: ${{ secrets.X_NITORIDAILY_CONSUMER_SECRET }}
+        X_NITORIDAILY_ACCESS_TOKEN: ${{ secrets.X_NITORIDAILY_ACCESS_TOKEN }}
+        X_NITORIDAILY_ACCESS_TOKEN_SECRET: ${{ secrets.X_NITORIDAILY_ACCESS_TOKEN_SECRET }}
+        X_RETAILTECHDAILY_CONSUMER_KEY: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_KEY }}
+        X_RETAILTECHDAILY_CONSUMER_SECRET: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_SECRET }}
+        X_RETAILTECHDAILY_ACCESS_TOKEN: ${{ secrets.X_RETAILTECHDAILY_ACCESS_TOKEN }}
+        X_RETAILTECHDAILY_ACCESS_TOKEN_SECRET: ${{ secrets.X_RETAILTECHDAILY_ACCESS_TOKEN_SECRET }}
+      run: |
+        args="--media $MEDIA"
+        if [ -n "$TARGET_DATE" ]; then
+          args="$args --date $TARGET_DATE"
+        fi
+        if [ "$DRY_RUN" = "true" ]; then
+          args="$args --dry-run"
+        fi
+        if [ "$FORCE" = "true" ]; then
+          args="$args --force"
+        fi
+        python .github/scripts/post-to-x.py $args
+
+    - name: Record the post
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "$BOT_EMAIL"
+        git add data/nitori-daily.json data/retail-tech-daily.json
+        git commit -m "Record X post [skip ci]" || exit 0
+        git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
+        git push origin HEAD:main

@@ -88,6 +88,14 @@
     `[skip ci]` と冪等性でループ回避。
   - `oil-price.yml`（毎週水曜 07:00 UTC）: 資源エネルギー庁の xlsx から東京のハイオク価格を
     取得して `data/oil-price.json` を更新。
+  - `retail-tech-daily.yml` / `nitori-daily.yml`（毎朝 JST）: `daily-brief-reusable.yml` 経由で
+    日刊ブリーフを生成し、最後に `post-to-x.py` が新着号を公式 X（@retailtechdaily /
+    @dailynitori）へポストする。ポスト ID は号の JSON（`x_post_id`）に記録され、これが
+    二重ポストの抑止を兼ねる。認証は OAuth 1.0a で、リポジトリ Secrets に
+    `X_<MEDIA_ID 大文字>_CONSUMER_KEY` / `_CONSUMER_SECRET` / `_ACCESS_TOKEN` /
+    `_ACCESS_TOKEN_SECRET` の4点（メディアごと）を置く。未設定なら警告だけ出して生成は通す。
+  - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
+    `dry-run` での本文確認に使う（生成は走らない）。
 
 ## コーディング規約
 

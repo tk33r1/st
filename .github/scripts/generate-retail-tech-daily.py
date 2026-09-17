@@ -146,6 +146,7 @@ CONFIG = {
     'media_id': 'retailtechdaily',
     'media_name': 'Retail Tech Daily',
     'x_handle': X_HANDLE,
+    'x_hashtags': ['#リテールテック', '#流通DX'],
     'brand_title': 'Retail Tech Daily',
     'brand_title_short': 'リテールテック＆流通DX',
     'brand_subtitle': '毎朝8時の流通DX・リテールテック日刊速報',

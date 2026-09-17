@@ -79,3 +79,29 @@ jobs:
         git commit -m "$commit_message" || exit 0
         git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
         git push origin HEAD:main
+
+    # 号ページの公開反映を待ってから公式 X へポストし、投稿 ID を号の JSON に記録する
+    - name: Post to X
+      env:
+        MEDIA: ${{ inputs.media }}
+        TARGET_DATE: ${{ inputs.target-date }}
+        X_NITORIDAILY_CONSUMER_KEY: ${{ secrets.X_NITORIDAILY_CONSUMER_KEY }}
+        X_NITORIDAILY_CONSUMER_SECRET: ${{ secrets.X_NITORIDAILY_CONSUMER_SECRET }}
+        X_NITORIDAILY_ACCESS_TOKEN: ${{ secrets.X_NITORIDAILY_ACCESS_TOKEN }}
+        X_NITORIDAILY_ACCESS_TOKEN_SECRET: ${{ secrets.X_NITORIDAILY_ACCESS_TOKEN_SECRET }}
+        X_RETAILTECHDAILY_CONSUMER_KEY: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_KEY }}
+        X_RETAILTECHDAILY_CONSUMER_SECRET: ${{ secrets.X_RETAILTECHDAILY_CONSUMER_SECRET }}
+        X_RETAILTECHDAILY_ACCESS_TOKEN: ${{ secrets.X_RETAILTECHDAILY_ACCESS_TOKEN }}
+        X_RETAILTECHDAILY_ACCESS_TOKEN_SECRET: ${{ secrets.X_RETAILTECHDAILY_ACCESS_TOKEN_SECRET }}
+      run: |
+        if [ -n "$TARGET_DATE" ]; then
+          python .github/scripts/post-to-x.py --media "$MEDIA" --date "$TARGET_DATE"
+        else
+          python .github/scripts/post-to-x.py --media "$MEDIA"
+        fi
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "$BOT_EMAIL"
+        git add data/nitori-daily.json data/retail-tech-daily.json
+        git commit -m "Record X post [skip ci]" || exit 0
+        git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
+        git push origin HEAD:main
