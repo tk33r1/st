@@ -19,7 +19,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
-    content="死線を越えて、再び風の中へ。2025年交差点事故による40日間の入院・記憶喪失から奇跡の生還を果たしたライダーが、アメリカ建国250周年記念・日本限定39台の『2026 Heritage Classic Liberty Edition』で再び走り出す。等身大のハーレーモトブログ。">
+    content="事故から復帰したライダーのハーレーモトブログ。40日間の入院を経て、『2026 Heritage Classic Liberty Edition』とともに再び風の中へ。日本各地の景色と音、そして安全を等身大で記録します。">
   <meta name="robots" content="max-image-preview:large">
   <meta name="theme-color" content="#080a10">
 
@@ -31,7 +31,7 @@
   <!-- OGP / Twitter Card -->
   <meta property="og:title" content="LIBERTY MOTOVLOG ★ 事故からのハーレーリターンライダー">
   <meta property="og:description"
-    content="死線を越えて、再び風の中へ。2025年交差点事故による40日間の入院・記憶喪失から奇跡の生還を果たしたライダーが、アメリカ建国250周年記念・日本限定39台の『2026 Heritage Classic Liberty Edition』で再び走り出す。等身大のハーレーモトブログ。">
+    content="死線を越えて、再び風の中へ。40日間の入院からリターンしたライダーが、『2026 Heritage Classic Liberty Edition』とともに走り出す、等身大のハーレーモトブログ。">
   <meta property="og:image" content="https://tk.st/images/ogp/motovlog-ogp.jpg">
   <meta property="og:url" content="https://tk.st/motovlog/">
   <meta property="og:type" content="website">
@@ -40,7 +40,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="LIBERTY MOTOVLOG ★ 事故からのハーレーリターンライダー">
   <meta name="twitter:description"
-    content="死線を越えて、再び風の中へ。2025年交差点事故による40日間の入院・記憶喪失から奇跡の生還を果たしたライダーが、アメリカ建国250周年記念・日本限定39台の『2026 Heritage Classic Liberty Edition』で再び走り出す。等身大のハーレーモトブログ。">
+    content="死線を越えて、再び風の中へ。40日間の入院からリターンしたライダーが、『2026 Heritage Classic Liberty Edition』とともに走り出す、等身大のハーレーモトブログ。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/motovlog-ogp.jpg">
 
   <!-- Preload Critical Hero Media (LCP) -->
@@ -60,6 +60,7 @@
     "@graph": [
       {
         "@type": "BreadcrumbList",
+        "@id": "https://tk.st/motovlog/#breadcrumb",
         "itemListElement": [
           {
             "@type": "ListItem",
@@ -80,26 +81,31 @@
         "@id": "https://tk.st/motovlog/#webpage",
         "url": "https://tk.st/motovlog/",
         "name": "LIBERTY MOTOVLOG ★ 事故からのハーレーリターンライダー",
-        "description": "死線を越えて、再び風の中へ。2025年交差点事故による40日間の入院・記憶喪失から奇跡の生還を果たしたライダーが、アメリカ建国250周年記念・日本限定39台の『2026 Heritage Classic Liberty Edition』で再び走り出す。等身大のハーレーモトブログ。",
+        "breadcrumb": {
+          "@id": "https://tk.st/motovlog/#breadcrumb"
+        },
+        "primaryImageOfPage": {
+          "@type": "ImageObject",
+          "url": "https://tk.st/images/ogp/motovlog-ogp.jpg",
+          "contentUrl": "https://tk.st/images/ogp/motovlog-ogp.jpg"
+        },
+        "description": "事故から復帰したライダーのハーレーモトブログ。40日間の入院を経て、『2026 Heritage Classic Liberty Edition』とともに再び風の中へ。日本各地の景色と音、そして安全を等身大で記録します。",
         "inLanguage": "ja",
         "datePublished": "2026-09-13T00:00:00+09:00",
-        "dateModified": "2026-09-18T09:53:47+09:00",
+        "dateModified": "2026-09-18T12:00:00+09:00",
         "author": {
           "@type": "Person",
           "@id": "https://tk.st/#shitake",
           "name": "Shinya Takeda",
-          "url": "https://tk.st/"
+          "url": "https://tk.st/",
+          "sameAs": [
+            "https://www.youtube.com/@liberty_motovlog",
+            "https://www.instagram.com/liberty_motovlog/"
+          ]
         },
         "publisher": {
-          "@type": "Person",
-          "@id": "https://tk.st/#shitake",
-          "name": "Shinya Takeda",
-          "url": "https://tk.st/"
-        },
-        "sameAs": [
-          "https://www.youtube.com/@liberty_motovlog",
-          "https://www.instagram.com/liberty_motovlog/"
-        ]
+          "@id": "https://tk.st/#shitake"
+        }
       }
     ]
   }
@@ -470,16 +476,6 @@
       border-radius: 50%;
     }
 
-    .brand-badge {
-      padding: 3px 7px 2px;
-      border: 1px solid rgba(255, 255, 255, .34);
-      border-radius: 2px;
-      background: transparent;
-      color: rgba(255, 255, 255, .7);
-      font-size: 8px;
-      letter-spacing: .12em;
-    }
-
     .nav-links {
       gap: 28px;
     }
@@ -624,7 +620,7 @@
       backdrop-filter: blur(8px);
     }
 
-    .hero-pill.anniversary {
+    .hero-pill.model {
       color: #fff;
     }
 
@@ -909,6 +905,11 @@
       height: 100%;
       content: '';
       background: rgba(255, 255, 255, .045);
+    }
+
+    #thanks {
+      background: linear-gradient(135deg, #0d1014, #07080a 70%);
+      color: var(--paper-bright);
     }
 
     .machine-grid {
@@ -1698,7 +1699,6 @@
       .nav-header .container { width: calc(100% - 24px); }
       .nav-logo { width: 34px; height: 34px; }
       .brand-link { gap: 8px; font-size: 18px; }
-      .brand-badge,
       .btn-terminal-back { display: none; }
       .nav-links { gap: 8px; }
       .btn-yt-nav { padding: 8px 10px; }
@@ -1821,11 +1821,11 @@
         <img src="../images/contents/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式ロゴ" class="nav-logo" width="34"
           height="34">
         <span>LIBERTY MOTOVLOG</span>
-        <span class="brand-badge">250th ANNIVERSARY</span>
       </a>
       <div class="nav-links">
         <a href="#story" class="nav-anchor" data-nav-section="story">Origin</a>
         <a href="#machine" class="nav-anchor" data-nav-section="machine">Machine</a>
+        <a href="#thanks" class="nav-anchor" data-nav-section="thanks">Thanks</a>
         <a href="#themes" class="nav-anchor" data-nav-section="themes">Themes</a>
         <a href="#channel" class="nav-anchor" data-nav-section="channel">Channel</a>
         <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
@@ -1850,24 +1850,24 @@
         <!-- Hero Brand Header with Official Logo -->
         <div class="hero-brand-header">
           <div class="hero-badges">
-            <span class="hero-pill anniversary">★ UNITED STATES 250 / 1776—2026</span>
-            <span class="hero-pill">日本限定 39 台</span>
-            <span class="hero-pill status" data-channel-status>始動準備中 / COMING SOON</span>
+            <span class="hero-pill model" lang="en">2026 HERITAGE CLASSIC LIBERTY EDITION</span>
+            <span class="hero-pill status" data-channel-status-short>始動準備中 / COMING SOON</span>
           </div>
         </div>
 
-        <h1 class="hero-title-en">LIBERTY<br><span class="accent">MOTOVLOG</span></h1>
+        <h1 class="hero-title-en" lang="en">LIBERTY<br><span class="accent">MOTOVLOG</span><span class="sr-only"
+            lang="ja">｜ハーレーで走るリターンライダーのモトブログ</span></h1>
 
         <div class="hero-title-ja">
           死線を越えて、再び風の中へ。<br>
-          建国250周年記念の限定ハーレーと、事故からのリターン。
+          Liberty を冠するハーレーと、事故からのリターンライダー。
         </div>
 
         <p class="hero-lead">
           2025年、右折車との衝突事故による40日間の入院と記憶障害。<br>
-          愛機の全損から奇跡的に回復を果たしたライダーが、<strong>「やっぱり自分の人生にはハーレーが必要だ」</strong>と一念発起。<br>
-          アメリカ建国250周年（Semiquincentennial）を祝い日本にわずか39台のみ届けられた『Heritage Classic Liberty Edition』とともに、第二の人生（ver
-          2.0）を駆ける等身大のモトブログ。
+          愛機を失い、それでも<strong>「やっぱり自分の人生にはハーレーが必要だ」</strong>と一念発起したライダーが、<br>
+          縁あって手にした『Heritage Classic Liberty Edition』とともに走り出す。<br>
+          事故前を ver 1.0 とするなら、ここから先は ver 2.0。第二の人生を走る等身大のモトブログ。
         </p>
 
         <div class="hero-actions">
@@ -1893,15 +1893,15 @@
         <div class="hero-stats">
           <div>
             <div class="stat-num">250<small>th</small></div>
-            <div class="stat-label">U.S. SEMIQUINCENTENNIAL</div>
+            <div class="stat-label" lang="en">U.S. SEMIQUINCENTENNIAL</div>
           </div>
           <div>
             <div class="stat-num">39</div>
-            <div class="stat-label">JAPAN LIMITED (UNITS)</div>
+            <div class="stat-label" lang="en">JAPAN LIMITED (UNITS)</div>
           </div>
           <div>
             <div class="stat-num">ver 2.0</div>
-            <div class="stat-label">REBOOTED LIFE PHILOSOPHY</div>
+            <div class="stat-label" lang="en">REBOOTED LIFE PHILOSOPHY</div>
           </div>
         </div>
       </div>
@@ -1912,10 +1912,10 @@
   <section class="section" id="story">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">The Narrative</span>
+        <span class="section-tag" lang="en">The Narrative</span>
         <h2 class="section-title"><span>発信の経緯と</span><span>再生の軌跡</span></h2>
         <p class="section-desc">
-          映画への憧れから始まったバイクライフは、死線をさまよう事故を経て、生きることそのものを深く愛する哲学へと昇華しました。
+          映画への憧れから始まったバイクライフは、大きな事故を経て、生きることそのものを深く愛する哲学へと昇華しました。
         </p>
       </div>
 
@@ -1935,13 +1935,13 @@
         <!-- 2024 -->
         <div class="story-node">
           <div class="story-marker"></div>
-          <div class="story-date-wrap"><span class="story-date">2024</span></div>
           <div class="story-card">
             <h3 class="story-title">スポーツモデル「ナイトスター」新車購入</h3>
             <p class="story-body">
               現在もお世話になっているハーレーダビッドソン東久留米店にて、最新水冷レボリューションマックス搭載のスポーツモデル「ナイトスター (RH975)」を新車購入。毎週末のツーリングに胸を躍らせる。
             </p>
           </div>
+          <div class="story-date-wrap"><span class="story-date">2024</span></div>
         </div>
 
         <!-- 2025 -->
@@ -1960,10 +1960,10 @@
         <div class="story-node">
           <div class="story-marker"></div>
           <div class="story-card">
-            <h3 class="story-title">「人生にはハーレーが必要だ」—— 建国250周年 Liberty Edition との運命</h3>
+            <h3 class="story-title">「人生にはハーレーが必要だ」—— Liberty Edition との巡り合わせ</h3>
             <p class="story-body">
-              「これ以上周囲に心配をかけられない」と一度はバイクを諦めかけたが、魂の底から湧き上がる衝動は抑えられなかった。右橈骨のプレートを抜く手術を終えた翌日、退院したその足で東久留米店へ。右手の出血もまだ止まらないまま「やっぱりハーレーのライダーに戻りたい」と伝えると、アメリカ建国250周年を記念して日本にわずか39台のみ割り当てられた『Heritage
-              Classic Liberty Edition』の抽選受付が、ちょうど始まっているところだという。——結果は、当選。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ、奇跡のリターンを果たす。
+              「これ以上周囲に心配をかけられない」と一度はバイクを諦めかけたが、その思いは抑えられなかった。右橈骨のプレートを抜く手術を終えた翌日、退院したその足で東久留米店へ。「やっぱりハーレーのライダーに戻りたい」と伝えると、日本にわずか39台のみ割り当てられた『Heritage
+              Classic Liberty Edition』の抽選受付が、ちょうど始まっているところだという。——結果は、当選。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ、リターンを果たす。
             </p>
           </div>
           <div class="story-date-wrap"><span class="story-date">2026</span></div>
@@ -1976,10 +1976,10 @@
   <section class="section" id="machine">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">The Machine</span>
+        <span class="section-tag" lang="en">The Machine</span>
         <h2 class="section-title">愛機：Heritage Classic Liberty Edition</h2>
         <p class="section-desc">
-          アメリカ建国250周年記念限定モデル（FLHC）。伝統のNo.1星条旗ロゴ、コバルトブルー風防、そして漆黒の重低音。
+          アメリカ建国250周年を記念した世界2,500台の限定モデル。日本への割り当ては39台（FLHC）。伝統のNo.1星条旗ロゴ、コバルトブルー風防、そして漆黒の重低音。
         </p>
       </div>
 
@@ -1987,12 +1987,12 @@
         <!-- Machine Specs -->
         <div>
           <div class="machine-badge-box">
-            <span class="badge-250th">★ UNITED STATES 250</span>
+            <span class="badge-250th" lang="en">★ UNITED STATES 250</span>
             <span class="badge-limited">日本限定 39 台</span>
-            <span class="machine-code">FLHC / 2026</span>
+            <span class="machine-code" lang="en">FLHC / 2026</span>
           </div>
-          <div class="machine-name">HERITAGE CLASSIC</div>
-          <div class="machine-sub">2026 LIBERTY EDITION</div>
+          <div class="machine-name" lang="en">HERITAGE CLASSIC</div>
+          <div class="machine-sub" lang="en">2026 LIBERTY EDITION</div>
 
           <!-- 360° Interactive Bike Viewer -->
           <div class="machine-viewer-wrap" role="region"
@@ -2002,7 +2002,7 @@
               aria-label="車両を360度で見る。左右矢印キーまたはドラッグで回転"
               aria-describedby="viewerInstructions">
               <img id="bike360Img" src="../images/contents/liberty-edition/liberty-edition_01.webp"
-                alt="ハーレーダビッドソン 2026 ヘリテイジ クラシック リバティ エディション 360度ビュー（アメリカ建国250周年記念・日本限定39台）" width="1200" height="720"
+                alt="ハーレーダビッドソン 2026 ヘリテイジ クラシック リバティ エディション 360度ビュー" width="1200" height="720"
                 loading="lazy" decoding="async" draggable="false">
 
               <!-- 360 Hint Overlay -->
@@ -2012,7 +2012,7 @@
                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
                   </svg>
-                  <span>360° DRAG TO ROTATE</span>
+                  <span lang="en">360° DRAG / ARROW KEYS</span>
                 </span>
               </div>
               <p class="viewer-status" id="viewerStatus" role="status" aria-live="polite"></p>
@@ -2027,7 +2027,7 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" id="autoBtnIcon">
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
-                <span id="autoBtnText">AUTO ROTATE</span>
+                <span id="autoBtnText" lang="en">AUTO ROTATE</span>
               </button>
 
               <div class="viewer-slider-wrap">
@@ -2061,61 +2061,24 @@
 
           <div class="machine-specs">
             <div class="spec-box">
-              <div class="spec-k">ENGINE & DISPLACEMENT</div>
+              <div class="spec-k" lang="en">ENGINE &amp; DISPLACEMENT</div>
               <div class="spec-v">Milwaukee-Eight™ 117</div>
               <div class="spec-s">1,923 cc（空油冷45度 Vツイン）</div>
             </div>
             <div class="spec-box">
-              <div class="spec-k">MAX TORQUE & OUTPUT</div>
+              <div class="spec-k" lang="en">MAX TORQUE &amp; OUTPUT</div>
               <div class="spec-v">156 Nm @ 2,750 rpm</div>
               <div class="spec-s">91 HP (68 kW) @ 5,020 rpm</div>
             </div>
             <div class="spec-box">
-              <div class="spec-k">WEIGHT & CAPACITY</div>
+              <div class="spec-k" lang="en">WEIGHT &amp; CAPACITY</div>
               <div class="spec-v">326 kg / 燃料 18.9 L</div>
               <div class="spec-s">Dunlop バイアスタイヤ（前後16インチ）</div>
             </div>
             <div class="spec-box">
-              <div class="spec-k">DIMENSIONS</div>
+              <div class="spec-k" lang="en">DIMENSIONS</div>
               <div class="spec-v">全長 2,415 mm / シート高 690 mm</div>
               <div class="spec-s">最低地上高 120 mm / 軸距 1,630 mm</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right column: Dealer Photo & Thanks -->
-        <div class="shop-card">
-          <div class="side-photo-wrap">
-            <img src="../images/contents/Harley-Davidson%20HIGASHI%20KURUME.webp" alt="ハーレーダビッドソン東久留米 店舗外観"
-              loading="lazy" width="1200" height="708">
-          </div>
-          <div class="shop-copy">
-            <div class="shop-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path
-                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-              </svg>
-              Special Thanks：ハーレー東久留米
-            </div>
-            <div class="shop-desc">
-              ナイトスターの新車購入時から事故の対応、そして今回の限定Liberty Editionへのリターンに至るまで、親身に支えてくださった正規ディーラー。<br><br>
-              退院後に店舗へ伺った際も、スタッフ・メカニックの皆様が総出で快気と再出発を祝ってくださいました。このチャンネルは、東久留米店をはじめとする愛あるコミュニティへの感謝とともに発信されています。
-            </div>
-            <div class="shop-links">
-              <a href="https://harleydavidson-higashikurume.com/" target="_blank" rel="noopener noreferrer"
-                class="shop-btn">
-                <span>公式サイト</span>
-                <span>↗</span>
-              </a>
-              <a href="https://lin.ee/4Agyc7T" target="_blank" rel="noopener noreferrer" class="shop-btn">
-                <span>公式LINE</span>
-                <span>↗</span>
-              </a>
-              <a href="https://www.instagram.com/hd.higashikurume/" target="_blank" rel="noopener noreferrer"
-                class="shop-btn">
-                <span>公式Instagram</span>
-                <span>↗</span>
-              </a>
             </div>
           </div>
         </div>
@@ -2130,7 +2093,7 @@
             <div class="video-frame" id="dealerVideoFrame" hidden></div>
           </div>
           <div class="dealer-video-copy">
-            <span class="dealer-video-tag">DEALER REVIEW</span>
+            <span class="dealer-video-tag" lang="en">DEALER REVIEW</span>
             <p class="dealer-video-title">
               【ハーレー】世界2,500台だけ！建国250年のリバティ・エディションがかっこよすぎた【2026 ヘリテイジクラシック】
             </p>
@@ -2149,11 +2112,60 @@
     </div>
   </section>
 
+  <!-- Special Thanks -->
+  <section class="section" id="thanks">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" lang="en">Gratitude</span>
+        <h2 class="section-title">支えてくれた人たち</h2>
+        <p class="section-desc">
+          ナイトスターの納車から事故の対応、そしてLiberty Editionでの再出発まで。ひとりでは戻ってこられませんでした。
+        </p>
+      </div>
+
+      <div class="shop-card">
+        <div class="side-photo-wrap">
+          <img src="../images/contents/Harley-Davidson%20HIGASHI%20KURUME.webp" alt="ハーレーダビッドソン東久留米 店舗外観"
+            loading="lazy" width="1200" height="708">
+        </div>
+        <div class="shop-copy">
+          <div class="shop-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+            Special Thanks：ハーレー東久留米
+          </div>
+          <div class="shop-desc">
+            ナイトスターの新車購入時から事故の対応、そして今回の限定Liberty Editionへのリターンに至るまで、親身に支えてくださった正規ディーラー。<br><br>
+            退院後に店舗へ伺った際も、スタッフ・メカニックの皆様が総出で快気と再出発を祝ってくださいました。このチャンネルは、東久留米店をはじめとする愛あるコミュニティへの感謝とともに発信されています。
+          </div>
+          <div class="shop-links">
+            <a href="https://harleydavidson-higashikurume.com/" target="_blank" rel="noopener noreferrer"
+              class="shop-btn">
+              <span>公式サイト</span>
+              <span>↗</span>
+            </a>
+            <a href="https://lin.ee/4Agyc7T" target="_blank" rel="noopener noreferrer" class="shop-btn">
+              <span>公式LINE</span>
+              <span>↗</span>
+            </a>
+            <a href="https://www.instagram.com/hd.higashikurume/" target="_blank" rel="noopener noreferrer"
+              class="shop-btn">
+              <span>公式Instagram</span>
+              <span>↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Content Themes -->
   <section class="section" id="themes">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Themes</span>
+        <span class="section-tag" lang="en">Themes</span>
         <h2 class="section-title">発信の4大テーマ</h2>
         <p class="section-desc">
           ただ走るだけではない。事故を越えたからこそ伝えられる、景色と生の尊さ。
@@ -2174,7 +2186,7 @@
         <div class="theme-box">
           <span class="theme-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z"/></svg></span>
           <h3 class="theme-t">至高の3拍子 & トルク</h3>
-          <p class="theme-d">Vツインの太い鼓動と心地よい排気音。鉄馬の魅力を五感で伝えます。</p>
+          <p class="theme-d">アイドリングで生まれる不等間隔な鼓動、通称「3拍子」。Vツインの太い鼓動と心地よい排気音を、五感で伝わるように収録します。</p>
         </div>
         <div class="theme-box">
           <span class="theme-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 4 6v5c0 5 3 8 8 10 5-2 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-5"/></svg></span>
@@ -2189,11 +2201,11 @@
   <section class="section" id="channel">
     <div class="container">
       <div class="teaser-card">
-        <span class="teaser-status" data-channel-status>第1弾動画 鋭意制作中 / IN PRODUCTION</span>
+        <span class="teaser-status" data-channel-status>第1弾「納車」 2026年11月 公開予定</span>
         <h2 class="teaser-title" data-channel-title><span>YouTube チャンネルにて</span><br><span>始動準備中</span></h2>
         <p class="teaser-desc" data-channel-description>
-          『LIBERTY MOTOVLOG』は現在、第1弾動画の撮影・編集を進めております。<br>
-          建国250周年限定モデルの走り出しの通知を受け取れるよう、ぜひチャンネル登録をしてお待ちください！
+          『LIBERTY MOTOVLOG』の第1弾は「納車」。2026年11月の公開に向けて、撮影・編集を進めています。<br>
+          走り出しの通知を受け取れるよう、ぜひチャンネル登録をしてお待ちください！
         </p>
 
         <div class="latest-video" id="latestVideo" hidden>
@@ -2208,10 +2220,10 @@
         </div>
 
         <dl class="ride-log" id="rideLog" hidden>
-          <div><dt>ROUTE</dt><dd data-ride-route></dd></div>
-          <div><dt>DISTANCE</dt><dd data-ride-distance></dd></div>
-          <div><dt>RECORDED</dt><dd data-ride-date></dd></div>
-          <div><dt>WEATHER</dt><dd data-ride-weather></dd></div>
+          <div><dt lang="en">ROUTE</dt><dd data-ride-route></dd></div>
+          <div><dt lang="en">DISTANCE</dt><dd data-ride-distance></dd></div>
+          <div><dt lang="en">RECORDED</dt><dd data-ride-date></dd></div>
+          <div><dt lang="en">WEATHER</dt><dd data-ride-weather></dd></div>
         </dl>
 
         <div class="teaser-btn-row">
@@ -2228,11 +2240,6 @@
             <span>Instagramで日常を見る</span>
             <span>↗</span>
           </a>
-          <a href="/contact/?to=vlog&subject=LIBERTY%20MOTOVLOG%20撮影・取材・ツーリングのお誘い"
-            class="btn-hero-secondary">
-            <span>撮影・取材のお問い合わせ</span>
-            <span>→</span>
-          </a>
         </div>
       </div>
     </div>
@@ -2248,7 +2255,7 @@
             loading="lazy">
           <div>
             <span class="footer-title">LIBERTY MOTOVLOG</span>
-            <span class="footer-sub">Harley-Davidson 2026 Heritage Classic Liberty Edition (FLHC) - US 250th
+            <span class="footer-sub" lang="en">Harley-Davidson 2026 Heritage Classic Liberty Edition (FLHC) - US 250th
               Anniversary</span>
           </div>
         </div>
@@ -2320,7 +2327,10 @@
         const title = document.querySelector('[data-channel-title]');
         const description = document.querySelector('[data-channel-description]');
         document.querySelectorAll('[data-channel-status]').forEach(status => {
-          status.textContent = 'LATEST RIDE / NOW PLAYING';
+          status.textContent = '最新エピソード公開中 / LATEST RIDE';
+        });
+        document.querySelectorAll('[data-channel-status-short]').forEach(status => {
+          status.textContent = '公開中 / NOW PLAYING';
         });
         if (title) title.textContent = video.title || '最新のライドを公開しました';
         if (description) description.textContent = video.description || 'LIBERTY MOTOVLOG の最新エピソードをご覧ください。';
