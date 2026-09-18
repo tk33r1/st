@@ -145,14 +145,12 @@
     .nav-inner,
     .brand-link,
     .nav-links,
-    .hero-brand-header,
     .hero-badges,
     .hero-actions,
     .machine-badge-box,
     .viewer-controls,
     .viewer-slider-wrap,
     .teaser-btn-row,
-    .footer-inner,
     .footer-links,
     .footer-copy {
       display: flex;
@@ -160,8 +158,7 @@
     }
 
     .nav-inner,
-    .footer-inner,
-    .footer-copy {
+    .footer-inner {
       justify-content: space-between;
     }
 
@@ -173,7 +170,6 @@
       flex-wrap: wrap;
     }
 
-    .btn-terminal-back,
     .btn-yt-nav,
     .btn-hero-primary,
     .btn-hero-secondary,
@@ -204,7 +200,6 @@
       position: relative;
     }
 
-    .hero-logo-img,
     .nav-logo {
       object-fit: cover;
     }
@@ -244,7 +239,6 @@
     .viewer-canvas-box {
       width: 100%;
       aspect-ratio: 451 / 270;
-      justify-content: center;
       background: #fff;
       touch-action: pan-y;
       cursor: grab;
@@ -290,8 +284,13 @@
       --paper-bright: #faf7ef;
       --blue: #0758c8;
       --blue-bright: #2274e8;
+      /* 暗背景上の小さな青ラベル用。--blue-bright は明背景のフォーカス枠で 3:1 を維持する必要があるため分離 */
+      --blue-label: #3b87f0;
       --red: #c62b32;
-      --red-bright: #eb3941;
+      /* 小さな赤ラベル用。暗背景 4.97:1 / 明背景 4.95:1 で AA を満たす */
+      --red-bright: #f8363f;
+      --red-deep: #a6242a;
+      --tag-red: var(--red-deep);
       --line-dark: rgba(255, 255, 255, 0.13);
       --display: 'Bebas Neue', Impact, sans-serif;
       --sans: 'Montserrat', Arial, sans-serif;
@@ -397,14 +396,13 @@
       gap: 24px 48px;
       align-items: end;
       margin: 0 0 clamp(50px, 6vw, 82px);
-      text-align: left;
     }
 
     .section-tag {
       align-self: start;
       display: flex;
       gap: 12px;
-      color: var(--red);
+      color: var(--tag-red);
       font-family: var(--sans);
       font-size: 10px;
       font-weight: 800;
@@ -422,24 +420,24 @@
     }
 
     .section-title {
-      color: inherit;
       font-family: var(--display);
       font-size: clamp(40px, 5.2vw, 68px);
       font-weight: 400;
       letter-spacing: .025em;
       line-height: 1.06;
       word-break: keep-all;
-      overflow-wrap: break-word;
+      /* anywhere は min-content 幅に反映されるため、日本語見出しがトラックを押し広げない */
+      overflow-wrap: anywhere;
     }
 
-    .section-title span {
+    .section-title span,
+    .teaser-title span {
       display: inline-block;
     }
 
     .section-desc {
       grid-column: 2;
       max-width: 680px;
-      color: inherit;
       font-size: 14px;
       line-height: 1.9;
       opacity: .7;
@@ -491,10 +489,7 @@
       transition: color .2s ease;
     }
 
-    .nav-anchor:hover {
-      color: #fff;
-    }
-
+    .nav-anchor:hover,
     .nav-anchor[aria-current="true"] {
       color: #fff;
     }
@@ -507,15 +502,6 @@
       height: 2px;
       content: '';
       background: var(--red);
-    }
-
-    .btn-terminal-back {
-      color: rgba(255, 255, 255, .62);
-      font-size: 10px;
-    }
-
-    .btn-terminal-back:hover {
-      color: #fff;
     }
 
     .btn-yt-nav {
@@ -588,22 +574,12 @@
       to { opacity: 1; }
     }
 
-    .hero-brand-header {
-      gap: 18px;
-      margin-bottom: 30px;
-    }
-
-    .hero-logo-img {
-      width: 72px;
-      height: 72px;
-      border: 1px solid rgba(255, 255, 255, .35);
-      box-shadow: 0 16px 42px rgba(0, 0, 0, .45);
-    }
-
     .hero-badges {
       gap: 7px;
       min-width: 0;
+      width: fit-content;
       max-width: 480px;
+      margin-bottom: 30px;
     }
 
     .hero-pill {
@@ -614,7 +590,7 @@
       background: rgba(7, 9, 12, .4);
       color: rgba(255, 255, 255, .75);
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       letter-spacing: .08em;
       line-height: 1;
       backdrop-filter: blur(8px);
@@ -628,13 +604,6 @@
       border-color: rgba(225, 54, 62, .72);
       background: rgba(141, 14, 21, .22);
       color: #ffbdc0;
-    }
-
-    .hero-pill.status::before {
-      width: 5px;
-      height: 5px;
-      background: var(--red-bright);
-      box-shadow: 0 0 10px var(--red-bright);
     }
 
     .hero-title-en {
@@ -652,7 +621,6 @@
       display: inline-block;
       margin-left: clamp(38px, 6vw, 76px);
       padding-top: .16em;
-      background: none;
       color: transparent;
       -webkit-text-fill-color: transparent;
       -webkit-text-stroke: 1px rgba(250, 247, 239, .72);
@@ -731,7 +699,6 @@
       bottom: 0;
       left: 0;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0;
       border: 1px solid var(--line-dark);
       border-bottom: 0;
       background: rgba(8, 9, 11, .72);
@@ -768,7 +735,7 @@
       margin-top: 7px;
       color: rgba(255, 255, 255, .62);
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       letter-spacing: .16em;
     }
 
@@ -838,12 +805,9 @@
       grid-column: 1;
       grid-row: 1;
       align-items: flex-start;
-      justify-content: flex-start;
-      text-align: left;
     }
 
     .story-date {
-      color: var(--ink);
       font-family: var(--display);
       font-size: clamp(30px, 3.2vw, 46px);
       letter-spacing: .03em;
@@ -874,7 +838,6 @@
       max-width: 700px;
       margin: 0 0 11px;
       padding-right: 68px;
-      color: var(--ink);
       font-family: var(--sans);
       font-size: clamp(17px, 2vw, 23px);
       font-weight: 800;
@@ -912,6 +875,11 @@
       color: var(--paper-bright);
     }
 
+    #machine,
+    #thanks {
+      --tag-red: var(--red-bright);
+    }
+
     .machine-grid {
       position: relative;
       z-index: 1;
@@ -937,7 +905,7 @@
       padding: 5px 8px 4px;
       border-radius: 2px;
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 800;
       letter-spacing: .09em;
     }
@@ -1013,7 +981,7 @@
       background: var(--ink);
       color: #fff;
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 800;
       letter-spacing: .11em;
       transform: translateX(-50%);
@@ -1058,7 +1026,7 @@
       background: transparent;
       color: rgba(8, 9, 11, .72);
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 800;
       letter-spacing: .08em;
     }
@@ -1086,8 +1054,10 @@
     }
 
     .viewer-slider {
-      height: 2px;
+      height: 24px;
+      padding: 11px 0;
       background: rgba(8, 9, 11, .22);
+      background-clip: content-box;
     }
 
     .viewer-slider::-webkit-slider-thumb {
@@ -1115,7 +1085,6 @@
     .liberty-features-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0;
       border: 1px solid var(--line-dark);
     }
 
@@ -1144,7 +1113,6 @@
 
     .machine-specs {
       grid-template-columns: repeat(4, 1fr);
-      gap: 0;
       border: 1px solid var(--line-dark);
       border-top: 0;
     }
@@ -1161,9 +1129,9 @@
 
     .spec-k {
       margin-bottom: 10px;
-      color: var(--blue-bright);
+      color: var(--blue-label);
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       letter-spacing: .12em;
     }
 
@@ -1182,7 +1150,8 @@
       line-height: 1.6;
     }
 
-    .shop-card {
+    .shop-card,
+    .dealer-video {
       display: grid;
       grid-template-columns: minmax(300px, .9fr) 1.1fr;
       gap: clamp(28px, 5vw, 72px);
@@ -1199,7 +1168,8 @@
       filter: saturate(.7) contrast(1.08);
     }
 
-    .shop-copy {
+    .shop-copy,
+    .dealer-video-copy {
       display: flex;
       gap: 22px;
       min-width: 0;
@@ -1223,7 +1193,8 @@
       color: var(--red);
     }
 
-    .shop-desc {
+    .shop-desc,
+    .dealer-video-desc {
       color: rgba(255, 255, 255, .52);
       font-size: 12px;
       line-height: 1.9;
@@ -1231,7 +1202,6 @@
 
     .shop-btn {
       align-self: flex-start;
-      width: auto;
       border: 1px solid rgba(255, 255, 255, .24);
       background: transparent;
       color: #fff;
@@ -1247,16 +1217,6 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-    }
-
-    .dealer-video {
-      display: grid;
-      grid-template-columns: minmax(300px, .9fr) 1.1fr;
-      gap: clamp(28px, 5vw, 72px);
-      align-items: center;
-      padding: 28px;
-      border: 1px solid var(--line-dark);
-      background: rgba(255, 255, 255, .025);
     }
 
     .dealer-video-media {
@@ -1289,15 +1249,11 @@
     }
 
     .dealer-video-copy {
-      display: flex;
       gap: 16px;
-      min-width: 0;
-      flex-direction: column;
-      justify-content: center;
     }
 
     .dealer-video-tag {
-      color: var(--red);
+      color: var(--tag-red);
       font-family: var(--sans);
       font-size: 9px;
       font-weight: 800;
@@ -1312,14 +1268,8 @@
       line-height: 1.55;
     }
 
-    .dealer-video-desc {
-      color: rgba(255, 255, 255, .52);
-      font-size: 12px;
-      line-height: 1.9;
-    }
-
     .dealer-video-credit {
-      color: rgba(255, 255, 255, .38);
+      color: rgba(255, 255, 255, .48);
       font-size: 10px;
       line-height: 1.85;
     }
@@ -1392,7 +1342,6 @@
       position: relative;
       z-index: 1;
       margin-bottom: 12px;
-      color: var(--ink);
       font-family: var(--sans);
       font-size: clamp(18px, 2vw, 24px);
       font-weight: 800;
@@ -1421,7 +1370,6 @@
       max-width: 850px;
       padding: 0 0 0 clamp(28px, 5vw, 70px);
       border-left: 1px solid rgba(255, 255, 255, .32);
-      text-align: left;
     }
 
     .teaser-card::before {
@@ -1442,7 +1390,7 @@
       background: rgba(8, 9, 11, .42);
       color: rgba(255, 255, 255, .72);
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       letter-spacing: .13em;
     }
 
@@ -1456,11 +1404,7 @@
       letter-spacing: .02em;
       line-height: 1.08;
       word-break: keep-all;
-      overflow-wrap: break-word;
-    }
-
-    .teaser-title span {
-      display: inline-block;
+      overflow-wrap: anywhere;
     }
 
     .teaser-desc {
@@ -1561,8 +1505,6 @@
     }
 
     .ride-log[hidden],
-    .latest-video[hidden],
-    .video-frame[hidden],
     .video-consent[hidden] {
       display: none;
     }
@@ -1578,9 +1520,9 @@
     }
 
     .ride-log dt {
-      color: var(--blue-bright);
+      color: var(--blue-label);
       font-family: var(--sans);
-      font-size: 7px;
+      font-size: 9px;
       font-weight: 800;
       letter-spacing: .14em;
     }
@@ -1594,7 +1536,6 @@
 
     .teaser-btn-row {
       gap: 10px;
-      justify-content: flex-start;
     }
 
     .footer {
@@ -1604,6 +1545,7 @@
     }
 
     .footer-inner {
+      display: flex;
       align-items: flex-start;
       gap: 40px;
       padding-bottom: 44px;
@@ -1635,7 +1577,7 @@
       margin-top: 4px;
       color: rgba(255, 255, 255, .62);
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       letter-spacing: .07em;
     }
 
@@ -1644,6 +1586,7 @@
     }
 
     .footer-links a {
+      padding: 4px 0;
       color: rgba(255, 255, 255, .52);
       font-family: var(--sans);
       font-size: 9px;
@@ -1660,7 +1603,7 @@
       border-top: 1px solid var(--line-dark);
       color: rgba(255, 255, 255, .62);
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       letter-spacing: .06em;
       justify-content: center;
       text-align: center;
@@ -1699,7 +1642,6 @@
       .nav-header .container { width: calc(100% - 24px); }
       .nav-logo { width: 34px; height: 34px; }
       .brand-link { gap: 8px; font-size: 18px; }
-      .btn-terminal-back { display: none; }
       .nav-links { gap: 8px; }
       .btn-yt-nav { padding: 8px 10px; }
       .hero {
@@ -1719,18 +1661,16 @@
         padding: 47px 16px 138px;
       }
       .hero-content { width: 100%; min-width: 0; }
-      .hero-brand-header { align-items: flex-start; flex-direction: column; margin-bottom: 26px; }
       .hero-badges {
         width: 100%;
         max-width: 100%;
+        margin-bottom: 26px;
       }
-      .hero-logo-img { width: 58px; height: 58px; }
       .hero-title-en { font-size: clamp(68px, 23vw, 104px); }
       .hero-title-en .accent { margin-left: 20px; }
       .hero-title-ja,
       .hero-lead,
       .hero-actions {
-        width: auto;
         max-width: none;
         margin-left: 20px;
         margin-right: 0;
@@ -1743,7 +1683,7 @@
       .btn-hero-secondary { width: 100%; }
       .hero-stats > div { min-height: 76px; padding: 15px 12px; }
       .stat-num { font-size: 28px; }
-      .stat-label { font-size: 8px; line-height: 1.4; }
+      .stat-label { font-size: 9px; line-height: 1.4; }
       .story-track::before,
       .story-marker { left: 88px; }
       .story-node { grid-template-columns: 88px minmax(0, 1fr); gap: 24px; min-height: 0; }
@@ -1753,8 +1693,8 @@
       .story-title { padding-right: 0; font-size: 16px; }
       .story-body { font-size: 11.5px; }
       .machine-name { font-size: clamp(56px, 18vw, 82px); }
-      .machine-sub { font-size: 8px; letter-spacing: .18em; }
-      .viewer-canvas-box::before { top: 14px; left: 14px; font-size: 7px; }
+      .machine-sub { font-size: 9px; letter-spacing: .18em; }
+      .viewer-canvas-box::before { top: 14px; left: 14px; font-size: 9px; }
       .viewer-hint-badge { bottom: 15px; white-space: nowrap; }
       .viewer-controls { padding: 0 10px; }
       .viewer-btn { padding: 7px; }
@@ -1771,19 +1711,13 @@
       }
       .feature-chip:last-child,
       .spec-box:last-child { border-bottom: 0; }
-      .shop-card {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0;
-        padding: 18px;
-      }
+      .shop-card,
+      .dealer-video { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+      .shop-card { gap: 0; }
+      .dealer-video { gap: 22px; }
       .side-photo-wrap { min-height: 230px; margin-bottom: 25px; }
       .shop-title { font-size: 17px; }
       .shop-btn { width: 100%; }
-      .dealer-video {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 22px;
-        padding: 18px;
-      }
       .themes-grid { grid-template-columns: 1fr; }
       .theme-box { min-height: 240px; }
       .theme-icon { margin-bottom: 36px; }
@@ -1795,11 +1729,10 @@
       .teaser-btn-row { align-items: stretch; flex-direction: column; }
       .footer-inner { align-items: flex-start; flex-direction: column; }
       .footer-links { align-items: flex-start; }
-      .footer-copy { align-items: center; gap: 10px; flex-direction: column; }
+      .footer-copy { gap: 10px; flex-direction: column; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
       *, *::before, *::after {
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
@@ -1812,6 +1745,16 @@
 
 <body>
 
+  <!-- Icon sprite: 複数箇所で使うアイコンだけを1度だけ定義する -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="i-youtube" viewBox="0 0 24 24">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24">
+      <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
+    </symbol>
+  </svg>
+
   <a class="skip-link" href="#main">本文へスキップ</a>
 
   <!-- Navigation Header -->
@@ -1822,7 +1765,7 @@
           height="34">
         <span>LIBERTY MOTOVLOG</span>
       </a>
-      <div class="nav-links">
+      <nav class="nav-links" aria-label="セクション">
         <a href="#story" class="nav-anchor" data-nav-section="story">Origin</a>
         <a href="#machine" class="nav-anchor" data-nav-section="machine">Machine</a>
         <a href="#thanks" class="nav-anchor" data-nav-section="thanks">Thanks</a>
@@ -1830,13 +1773,10 @@
         <a href="#channel" class="nav-anchor" data-nav-section="channel">Channel</a>
         <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank" rel="noopener noreferrer"
           class="btn-yt-nav" data-channel-subscribe>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-          </svg>
+          <svg width="13" height="13" fill="currentColor"><use href="#i-youtube" /></svg>
           <span>登録する</span>
         </a>
-      </div>
+      </nav>
     </div>
   </header>
 
@@ -1847,15 +1787,12 @@
     <div class="hero-bg-media"></div>
     <div class="container">
       <div class="hero-content">
-        <!-- Hero Brand Header with Official Logo -->
-        <div class="hero-brand-header">
-          <div class="hero-badges">
-            <span class="hero-pill model" lang="en">2026 HERITAGE CLASSIC LIBERTY EDITION</span>
-            <span class="hero-pill status" data-channel-status-short>始動準備中 / COMING SOON</span>
-          </div>
+        <div class="hero-badges">
+          <span class="hero-pill model" lang="en">2026 HERITAGE CLASSIC LIBERTY EDITION</span>
+          <span class="hero-pill status" data-channel-status-short>始動準備中 / COMING SOON</span>
         </div>
 
-        <h1 class="hero-title-en" lang="en">LIBERTY<br><span class="accent">MOTOVLOG</span><span class="sr-only"
+        <h1 class="hero-title-en" lang="en">LIBERTY <br><span class="accent">MOTOVLOG</span><span class="sr-only"
             lang="ja">｜ハーレーで走るリターンライダーのモトブログ</span></h1>
 
         <div class="hero-title-ja">
@@ -1873,10 +1810,7 @@
         <div class="hero-actions">
           <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank"
             rel="noopener noreferrer" class="btn-hero-primary" data-channel-primary data-channel-subscribe>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-            </svg>
+            <svg width="18" height="18" fill="currentColor"><use href="#i-youtube" /></svg>
             <span>YouTubeで始動を待つ（チャンネル登録）</span>
           </a>
 
@@ -2020,6 +1954,7 @@
 
             <p class="sr-only" id="viewerInstructions">左右矢印キーで1フレーム、HomeキーとEndキーで先頭と最後へ移動します。</p>
             <p class="sr-only" id="viewerA11yStatus" aria-live="polite" aria-atomic="true"></p>
+            <p class="sr-only" id="autoBtnReason"></p>
 
             <!-- Viewer Control Bar -->
             <div class="viewer-controls">
@@ -2117,7 +2052,7 @@
     <div class="container">
       <div class="section-header">
         <span class="section-tag" lang="en">Gratitude</span>
-        <h2 class="section-title">支えてくれた人たち</h2>
+        <h2 class="section-title"><span>支えてくれた</span><span>人たち</span></h2>
         <p class="section-desc">
           ナイトスターの納車から事故の対応、そしてLiberty Editionでの再出発まで。ひとりでは戻ってこられませんでした。
         </p>
@@ -2229,10 +2164,7 @@
         <div class="teaser-btn-row">
           <a href="https://www.youtube.com/@liberty_motovlog?sub_confirmation=1" target="_blank"
             rel="noopener noreferrer" class="btn-hero-primary" data-channel-primary data-channel-subscribe>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
-            </svg>
+            <svg width="18" height="18" fill="currentColor"><use href="#i-bell" /></svg>
             <span>YouTube チャンネル登録する</span>
           </a>
           <a href="https://www.instagram.com/liberty_motovlog/" target="_blank" rel="noopener noreferrer"
@@ -2274,15 +2206,13 @@
 
   <!-- Channel Experience & 360° Viewer -->
   <script>
-    // ディーラー紹介動画（他チャンネル）。クリックされるまでYouTubeへは接続しない。
-    (function initDealerVideo() {
-      const button = document.getElementById('dealerVideoBtn');
-      const frame = document.getElementById('dealerVideoFrame');
+    // クリックされるまでYouTubeへは接続しない。埋め込みは同意後に生成する。
+    const bindConsentVideo = (button, frame, videoId, title) => {
       if (!button || !frame) return;
       button.addEventListener('click', () => {
         const iframe = document.createElement('iframe');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/Rn1hjVl24g0?autoplay=1';
-        iframe.title = '【ハーレー】世界2,500台だけ！建国250年のリバティ・エディションがかっこよすぎた【2026 ヘリテイジクラシック】';
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) + '?autoplay=1';
+        iframe.title = title;
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
         iframe.allowFullscreen = true;
         iframe.referrerPolicy = 'strict-origin-when-cross-origin';
@@ -2290,10 +2220,20 @@
         frame.hidden = false;
         button.hidden = true;
       }, { once: true });
-    })();
+    };
+
+    // ディーラー紹介動画（他チャンネル）
+    bindConsentVideo(
+      document.getElementById('dealerVideoBtn'),
+      document.getElementById('dealerVideoFrame'),
+      'Rn1hjVl24g0',
+      '【ハーレー】世界2,500台だけ！建国250年のリバティ・エディションがかっこよすぎた【2026 ヘリテイジクラシック】'
+    );
 
     (function initChannelExperience() {
       // 公開後はこの設定だけを更新する。
+      // 注: latestVideo を設定すると VideoObject の JSON-LD を JS で生成する。
+      //     JS を実行しないクローラにも渡すため、公開時は <head> に静的にも書き出すこと。
       const config = {
         youtubeUrl: 'https://www.youtube.com/@liberty_motovlog',
         subscribeUrl: 'https://www.youtube.com/@liberty_motovlog?sub_confirmation=1',
@@ -2315,13 +2255,12 @@
 
       if (hasVideo) {
         const videoUrl = 'https://www.youtube.com/watch?v=' + encodeURIComponent(video.id);
-        const playSvgPath = 'M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z';
         document.querySelectorAll('[data-channel-primary]').forEach(link => {
           link.href = videoUrl;
           const label = link.querySelector('span:last-child');
           if (label) label.textContent = '最新動画を見る';
-          const iconPath = link.querySelector('svg path');
-          if (iconPath) iconPath.setAttribute('d', playSvgPath);
+          const icon = link.querySelector('use');
+          if (icon) icon.setAttribute('href', '#i-youtube');
         });
 
         const title = document.querySelector('[data-channel-title]');
@@ -2343,17 +2282,7 @@
           loadButton.setAttribute('aria-label', (video.title || '最新動画') + 'をYouTubeで再生');
           const thumbnail = video.thumbnailUrl || '../images/contents/motovlog-liberty-canyon.jpg';
           loadButton.style.backgroundImage = 'url("' + thumbnail.replace(/"/g, '%22') + '")';
-          loadButton.addEventListener('click', () => {
-            const iframe = document.createElement('iframe');
-            iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(video.id) + '?autoplay=1';
-            iframe.title = video.title || 'LIBERTY MOTOVLOG 最新動画';
-            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-            iframe.allowFullscreen = true;
-            iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-            frame.replaceChildren(iframe);
-            frame.hidden = false;
-            loadButton.hidden = true;
-          }, { once: true });
+          bindConsentVideo(loadButton, frame, video.id, video.title || 'LIBERTY MOTOVLOG 最新動画');
         }
 
         if (video.uploadDate) {
@@ -2436,6 +2365,7 @@
       const autoButton = document.getElementById('viewerAutoBtn');
       const autoText = document.getElementById('autoBtnText');
       const autoIcon = document.getElementById('autoBtnIcon');
+      const autoReason = document.getElementById('autoBtnReason');
       const cache = new Map();
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       let current = 0;
@@ -2487,12 +2417,17 @@
         hint.classList.add('is-hidden');
       }
 
+      // フレーム数は TOTAL_FRAMES だけを情報源にする（HTML 側の max は JS 無効時のフォールバック）
+      if (slider) slider.max = TOTAL_FRAMES - 1;
+
       function setFrame(index, announce = false) {
         current = normalize(index);
         clearError();
         if (preloadingEnabled) preloadNearby(current);
         image.src = paths[current];
         if (slider && document.activeElement !== slider) slider.value = current;
+        // スライダーの値は 0 始まりなので、読み上げは表示と同じ 1 始まりに合わせる
+        if (slider) slider.setAttribute('aria-valuetext', (current + 1) + ' / ' + TOTAL_FRAMES);
         if (counter) counter.textContent = (current + 1) + ' / ' + TOTAL_FRAMES;
         if (announce && liveStatus) {
           liveStatus.textContent = '全' + TOTAL_FRAMES + 'フレーム中' + (current + 1) + 'フレーム目';
@@ -2548,12 +2483,18 @@
 
       function applyMotionPreference() {
         const motionOff = reducedMotion.matches;
+        const reason = motionOff
+          ? '端末の「視差効果を減らす」設定により自動回転は停止しています'
+          : '自動回転を切り替える';
         if (motionOff) stopAuto();
         if (autoButton) {
           autoButton.disabled = motionOff;
-          autoButton.title = motionOff
-            ? '端末の「視差効果を減らす」設定により自動回転は停止しています'
-            : '自動回転を切り替える';
+          autoButton.title = reason;
+          // aria-label がアクセシブル名になるため、理由は describedby 側で伝える
+          if (autoReason) {
+            autoReason.textContent = reason;
+            autoButton.setAttribute('aria-describedby', 'autoBtnReason');
+          }
         }
         if (motionOff && autoText) autoText.textContent = 'MOTION OFF';
         else if (autoFrame === null && autoText) autoText.textContent = 'AUTO ROTATE';
@@ -2576,7 +2517,6 @@
 
       canvas.addEventListener('pointerdown', event => {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
-        if (event.target instanceof Element && event.target.closest('button')) return;
         canvas.focus({ preventScroll: true });
         canvas.setPointerCapture(event.pointerId);
         pointer = { id: event.pointerId, startX: event.clientX, startFrame: current };
