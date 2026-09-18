@@ -8,7 +8,6 @@
  *
  *   QRBulk.decodeText(buffer)  → { text, encoding }
  *   QRBulk.parse(text)         → { rows, delimiter }
- *   QRBulk.safeName(s)         → ファイル名に使える文字列（残らなければ ''）
  *   QRBulk.nameTaker()         → 重複しない名前を配る関数
  *   QRBulk.zip(files)          → Blob
  *
@@ -120,44 +119,6 @@
   // ------------------------------------------------------------------
   // ファイル名
   // ------------------------------------------------------------------
-  // Windows で作れない名前をつくらない。ZIP を開いた先で名前が化けたり、
-  // 展開そのものが失敗したりすると、何百枚ぶんの書き出しが丸ごと無駄になる。
-  const BAD_CHARS = [String.fromCharCode(92), '/', ':', '*', '?', QUOTE, '<', '>', '|'];
-  const RESERVED = ['CON', 'PRN', 'AUX', 'NUL',
-    'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
-    'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
-
-  function safeName(input) {
-    const s = String(input == null ? '' : input);
-    let out = '';
-    for (let i = 0; i < s.length; i++) {
-      const code = s.charCodeAt(i);
-      if (code < 32 || code === 127) { out += ' '; continue; }
-      const ch = s.charAt(i);
-      out += BAD_CHARS.indexOf(ch) >= 0 ? '_' : ch;
-    }
-    // 空白は1つに畳む
-    out = out.split(/\s+/).join(' ').trim();
-
-    // 長すぎる名前は展開先のパス長に響く。切るのは末尾を整える前に行う
-    // （後だと、切った拍子に末尾のドットや空白がまた顔を出す）。
-    if (out.length > 60) {
-      out = out.slice(0, 60);
-      // サロゲートペアの片割れが残ると、ZIP の名前で置換文字に化ける
-      const tail = out.charCodeAt(out.length - 1);
-      if (tail >= 0xD800 && tail <= 0xDBFF) out = out.slice(0, -1);
-    }
-
-    // 末尾のドットと空白は Windows が黙って削るので、こちらで先に落として
-    // 名前がぶつからないようにしておく
-    while (out.length && (out.charAt(out.length - 1) === '.' || out.charAt(out.length - 1) === ' ')) {
-      out = out.slice(0, -1);
-    }
-    if (!out) return '';
-    if (RESERVED.indexOf(out.toUpperCase()) >= 0) out = '_' + out;
-    return out;
-  }
-
   // 同じ名前が来たら -2, -3 … と足す。大文字小文字だけ違う名前も、
   // Windows と macOS では同じものとして扱われるので衝突とみなす。
   function nameTaker() {
@@ -273,11 +234,8 @@
 
   global.QRBulk = {
     decodeText: decodeText,
-    sniffDelimiter: sniffDelimiter,
     parse: parse,
-    safeName: safeName,
     nameTaker: nameTaker,
-    crc32: crc32,
     zip: zip
   };
 })(window);

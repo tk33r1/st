@@ -5,7 +5,9 @@
  * これは Chrome・Firefox・Safari のどれも同じ（2026 年時点）。
  * そこで libavif/aom の WebAssembly ビルドを同梱して、こちらで焼く。
  *
- *   window.QRAvif.encode(canvas) → Promise<Blob>
+ *   QRAvif.encode(canvas, opts) → Promise<Blob>   opts: { lossless, quality, effort }
+ *   QRAvif.load()               → Promise（エンコーダを取りに行く）
+ *   QRAvif.loaded()             → すでに抱えているか（取得中はまだ false）
  *
  * 可逆と非可逆のどちらでも焼ける。どちらを使うかは画面の設定で決まる。
  * エンコーダは 3.4MB あるので、AVIF を押されたときに初めて読み込む。
@@ -95,7 +97,6 @@
   global.QRAvif = {
     encode: encode,
     load: load,
-    loaded: loaded,
-    EFFORT_SPEED: EFFORT_SPEED
+    loaded: loaded
   };
 })(window);

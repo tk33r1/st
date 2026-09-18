@@ -490,17 +490,6 @@
     /* 「小ささ優先」まで入る幅を確保する */
     .out-opt .slider-row .val { min-width: 72px; }
     .out-opt .slider-row .st-lbl { width: 72px; }
-    .save-opt-group {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      background: var(--panel);
-      border: 1px solid var(--rule);
-      border-radius: var(--r-1);
-      padding: 5px 9px;
-    }
-    .save-opt-group .st-lbl { font-size: 11px; white-space: nowrap; flex: none; }
-    .save-opt-group .tb-select { flex: 1; min-width: 0; padding: 4px 6px; font-size: 12px; }
 
     .preset-actions {
       display: flex;
@@ -572,8 +561,11 @@
     .sec-rule { height: 1px; background: var(--rule); margin: 2px 0; }
     .color-panel { display: flex; flex-direction: column; gap: 14px; }
     .field { display: flex; flex-direction: column; gap: 6px; }
-    .field > label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--ink-2); }
+    /* 見出しの体裁。実在の入力を指す <label> と、ボタン群・色パネルの見出しに使う
+       <span class="field-label"> の両方に効かせる。何も label しない <label> は
+       支援技術に「対応する入力がある」と誤って伝わるので置かない。 */
+    .field > label, .field > .field-label { font-family: var(--font-mono); font-size: 10.5px;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
     .field input[type="text"], .field input[type="url"], .field input[type="email"],
     .field input[type="tel"], .field input[type="number"], .field input[type="password"],
     .field input[type="datetime-local"], .field textarea, .field select {
@@ -944,12 +936,10 @@
     }
     .info-btn:hover, .info-btn[aria-expanded="true"] { color: var(--accent); }
     .info-btn svg { width: 15px; height: 15px; }
+    /* .hidden は tools-ui.css の .st-theme .hidden が !important で伏せるので、
+       個別の規則は要らない（このページは <html class="st-theme">）。 */
     .my-empty { margin: 0; }
-    .my-empty.hidden { display: none; }
     .my-io-note { margin: 0; }
-    .my-io-note.hidden { display: none; }
-    .note.note-fold.hidden { display: none; }
-    .slider-row.hidden { display: none; }
     .pane-note-row { display: flex; justify-content: flex-end; margin-top: 4px; }
     [data-font="sans"] { font-family: Inter, sans-serif; font-weight: 700; }
     [data-font="rounded"] { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 700; }
@@ -981,11 +971,10 @@
     .prose .qa { border-top: 1px solid var(--rule); padding-top: 14px; margin-top: 14px; }
     .prose .qa b { color: var(--ink); display: block; margin-bottom: 4px; }
 
-    .toolbar .tb-in { gap: 14px; }
     .seg-sm > * { padding: 5px 11px; font-size: 11.5px; }
     /* パネルの中では、選択肢の数だけの幅に収める（列いっぱいに伸ばさない）。 */
     .sec .st-seg { align-self: flex-start; max-width: 100%; }
-    #logo-common, #logo-icon-pane, #logo-image-pane, #logo-text-pane, #frame-opts {
+    #logo-common, #logo-icon-pane, #logo-image-pane, #logo-text-pane {
       display: flex; flex-direction: column; gap: 12px;
     }
 
@@ -999,7 +988,6 @@
       justify-content: center;
       padding: 20px;
     }
-    .fullscreen-modal.hidden { display: none; }
     .fullscreen-modal-card.confirm-card {
       align-items: stretch; text-align: left;
       padding: 20px; max-width: 400px; gap: 10px;
@@ -1033,7 +1021,6 @@
     }
     .bulk-map-out.empty { color: var(--err); font-family: inherit; }
     .csv-note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.75; color: var(--ink-3); }
-    .csv-note.hidden { display: none; }
     .csv-note p { margin: 0 0 8px; }
     .csv-note p:last-child { margin-bottom: 0; }
     .csv-note code {
@@ -1363,7 +1350,7 @@
       <div class="cols">
 
         <!-- 内容 -->
-        <details class="sec" id="sec-content" open>
+        <details class="sec" open>
           <summary>
             <span class="st-lbl">内容</span>
             <span class="hint" id="hint-content">URL</span>
@@ -1395,7 +1382,7 @@
         </details>
 
         <!-- テンプレート -->
-        <details class="sec" id="sec-preset" open>
+        <details class="sec" open>
           <summary>
             <span class="st-lbl">テンプレート</span>
             <span class="hint" id="hint-preset">—</span>
@@ -1457,7 +1444,7 @@
         </details>
 
         <!-- セル -->
-        <details class="sec" id="sec-shape">
+        <details class="sec">
           <summary>
             <span class="st-lbl">セル</span>
             <span class="hint"><span id="hint-shape">四角</span> · <span id="hint-shape-color">単色</span></span>
@@ -1465,8 +1452,8 @@
           </summary>
           <div class="sec-body">
             <div class="field">
-              <label>セル（データの点）</label>
-              <div class="shape-grid" id="cell-grid"></div>
+              <span class="field-label" id="lbl-cell-grid">セル（データの点）</span>
+              <div role="group" aria-labelledby="lbl-cell-grid" class="shape-grid" id="cell-grid"></div>
             </div>
             <div class="slider-row">
               <span class="st-lbl">セルの太さ</span>
@@ -1489,14 +1476,14 @@
             </div>
             <p class="note note-fold hidden" data-note="density" style="margin-top:4px;margin-bottom:12px">密度を上げるとマス目が細かくなります。デザインの都合で細かくしたいときだけ動かしてください（読み取りやすさは下がります）。</p>
             <div class="field">
-              <label>セルの色</label>
-              <div class="color-panel" data-scope="cell"></div>
+              <span class="field-label" id="lbl-color-cell">セルの色</span>
+              <div role="group" aria-labelledby="lbl-color-cell" class="color-panel" data-scope="cell"></div>
             </div>
           </div>
         </details>
 
         <!-- マーカー -->
-        <details class="sec" id="sec-marker">
+        <details class="sec">
           <summary>
             <span class="st-lbl">マーカー</span>
             <span class="hint"><span id="hint-marker">四角</span> · <span id="hint-marker-color">セルの色</span></span>
@@ -1504,8 +1491,8 @@
           </summary>
           <div class="sec-body">
             <div class="field">
-              <label>マーカーの枠と目</label>
-              <div class="grid2">
+              <span class="field-label" id="lbl-marker-shape-group">マーカーの枠と目</span>
+              <div role="group" aria-labelledby="lbl-marker-shape-group" id="marker-shape-group" class="grid2">
                 <div>
                   <span class="st-lbl" style="display:block; margin-bottom:6px; font-size:11.5px;">枠の形</span>
                   <div class="shape-grid" id="frame-grid"></div>
@@ -1520,8 +1507,8 @@
             <div class="sec-rule"></div>
 
             <div class="field">
-              <label>マーカーの色</label>
-              <div class="st-seg seg-sm" id="marker-color-seg">
+              <span class="field-label" id="lbl-marker-color-seg">マーカーの色</span>
+              <div role="group" aria-labelledby="lbl-marker-color-seg" class="st-seg seg-sm" id="marker-color-seg">
                 <button type="button" data-part="frame" class="active">枠</button>
                 <button type="button" data-part="eye">目</button>
               </div>
@@ -1532,7 +1519,7 @@
         </details>
 
         <!-- 背景 -->
-        <details class="sec" id="sec-bg">
+        <details class="sec">
           <summary>
             <span class="st-lbl">背景</span>
             <span class="hint" id="hint-bg">白</span>
@@ -1544,7 +1531,7 @@
         </details>
 
         <!-- ロゴ -->
-        <details class="sec" id="sec-logo">
+        <details class="sec">
           <summary>
             <span class="st-lbl">中央のロゴ</span>
             <span class="hint" id="hint-logo">なし</span>
@@ -1567,8 +1554,8 @@
               <div class="icon-grid" id="icon-grid"></div>
 
               <div class="field" style="margin-top:12px">
-                <label id="logo-color-mode-label">アイコンの色</label>
-                <div class="color-panel" data-scope="logoicon"></div>
+                <span class="field-label" id="lbl-color-logoicon">アイコンの色</span>
+                <div role="group" aria-labelledby="lbl-color-logoicon" class="color-panel" data-scope="logoicon"></div>
               </div>
             </div>
 
@@ -1587,13 +1574,13 @@
             <!-- 文字選択パネル -->
             <div id="logo-text-pane" class="hidden">
               <div class="field">
-                <label>中央に置く文字・絵文字</label>
+                <label for="logo-text">中央に置く文字・絵文字</label>
                 <input type="text" id="logo-text" maxlength="4" placeholder="例：ST / 🎧 / ★">
                 <span class="sub">2文字までが読みやすいです。</span>
               </div>
               <div class="field" style="margin-top:12px">
-                <label>フォント</label>
-                <div class="st-seg seg-sm" id="logo-font-seg">
+                <span class="field-label" id="lbl-logo-font-seg">フォント</span>
+                <div role="group" aria-labelledby="lbl-logo-font-seg" class="st-seg seg-sm" id="logo-font-seg">
                   <button type="button" data-font="sans" class="active">ゴシック</button>
                   <button type="button" data-font="rounded">丸ゴシック</button>
                   <button type="button" data-font="serif">明朝</button>
@@ -1602,8 +1589,8 @@
                 </div>
               </div>
               <div class="field" style="margin-top:12px">
-                <label id="logo-text-color-mode-label">文字の色</label>
-                <div class="color-panel" data-scope="logotext"></div>
+                <span class="field-label" id="lbl-color-logotext">文字の色</span>
+                <div role="group" aria-labelledby="lbl-color-logotext" class="color-panel" data-scope="logotext"></div>
               </div>
             </div>
 
@@ -1620,19 +1607,19 @@
                 <span class="val" id="val-logopad">14%</span>
               </div>
               <div class="field" style="margin-top:12px">
-                <label>下地の形</label>
-                <div class="shape-grid" id="logo-backdrop-grid"></div>
+                <span class="field-label" id="lbl-logo-backdrop-grid">下地の形</span>
+                <div role="group" aria-labelledby="lbl-logo-backdrop-grid" class="shape-grid" id="logo-backdrop-grid"></div>
               </div>
               <div class="field">
-                <label>下地の色</label>
-                <div class="color-panel" data-scope="logobd"></div>
+                <span class="field-label" id="lbl-color-logobd">下地の色</span>
+                <div role="group" aria-labelledby="lbl-color-logobd" class="color-panel" data-scope="logobd"></div>
               </div>
             </div>
           </div>
         </details>
 
         <!-- フレーム -->
-        <details class="sec" id="sec-frame">
+        <details class="sec">
           <summary>
             <span class="st-lbl">フレームと文字</span>
             <span class="hint" id="hint-frame">なし</span>
@@ -1642,8 +1629,8 @@
             <div class="chips" id="frame-chips"></div>
             <div id="frame-line-opts" class="hidden">
               <div class="field">
-                <label>枠線の種類</label>
-                <div class="shape-grid" id="frame-line-grid"></div>
+                <span class="field-label" id="lbl-frame-line-grid">枠線の種類</span>
+                <div role="group" aria-labelledby="lbl-frame-line-grid" class="shape-grid" id="frame-line-grid"></div>
                 <div class="slider-row" style="margin-top:10px">
                   <span class="st-lbl" id="frame-line-width-label">太さ</span>
                   <input type="range" id="frame-line-width" min="0.15" max="2.5" step="0.05" value="0.7">
@@ -1657,15 +1644,15 @@
                 <p class="note" id="frame-line-note" style="margin-top:8px"></p>
               </div>
               <div class="field" style="margin-top:10px">
-                <label>枠線の色</label>
-                <div class="color-panel" data-scope="frameborder"></div>
+                <span class="field-label" id="lbl-color-frameborder">枠線の色</span>
+                <div role="group" aria-labelledby="lbl-color-frameborder" class="color-panel" data-scope="frameborder"></div>
               </div>
             </div>
 
             <div id="frame-label-opts" class="hidden">
               <div class="field">
-                <label>ラベルの位置</label>
-                <div class="st-seg seg-sm" id="frame-pos-seg">
+                <span class="field-label" id="lbl-frame-pos-seg">ラベルの位置</span>
+                <div role="group" aria-labelledby="lbl-frame-pos-seg" class="st-seg seg-sm" id="frame-pos-seg">
                   <button type="button" data-pos="bottom" class="active">下部</button>
                   <button type="button" data-pos="top">上部</button>
                   <button type="button" data-pos="both">上下</button>
@@ -1673,8 +1660,8 @@
               </div>
 
               <div class="field" style="margin-top:12px">
-                <label>ラベルの内容</label>
-                <div class="st-seg seg-sm" id="frame-content-mode-seg">
+                <span class="field-label" id="lbl-frame-content-mode-seg">ラベルの内容</span>
+                <div role="group" aria-labelledby="lbl-frame-content-mode-seg" class="st-seg seg-sm" id="frame-content-mode-seg">
                   <button type="button" data-mode="text" class="active">文字</button>
                   <button type="button" data-mode="icon">アイコン</button>
                   <button type="button" data-mode="image">画像</button>
@@ -1692,8 +1679,8 @@
                   <input type="text" id="frame-text" maxlength="24" value="スキャンしてね">
                 </div>
                 <div class="field" style="margin-top:10px">
-                  <label>フォント</label>
-                  <div class="st-seg seg-sm" id="frame-font-seg">
+                  <span class="field-label" id="lbl-frame-font-seg">フォント</span>
+                  <div role="group" aria-labelledby="lbl-frame-font-seg" class="st-seg seg-sm" id="frame-font-seg">
                     <button type="button" data-font="sans" class="active">ゴシック</button>
                     <button type="button" data-font="rounded">丸ゴシック</button>
                     <button type="button" data-font="serif">明朝</button>
@@ -1702,8 +1689,8 @@
                   </div>
                 </div>
                 <div class="field" style="margin-top:10px">
-                  <label>文字の色</label>
-                  <div class="color-panel" data-scope="frametext"></div>
+                  <span class="field-label" id="lbl-color-frametext">文字の色</span>
+                  <div role="group" aria-labelledby="lbl-color-frametext" class="color-panel" data-scope="frametext"></div>
                 </div>
               </div>
 
@@ -1715,8 +1702,8 @@
                 </div>
                 <div class="icon-grid" id="frame-icon-grid"></div>
                 <div class="field" style="margin-top:12px">
-                  <label>アイコンの色</label>
-                  <div class="color-panel" data-scope="frameicon"></div>
+                  <span class="field-label" id="lbl-color-frameicon">アイコンの色</span>
+                  <div role="group" aria-labelledby="lbl-color-frameicon" class="color-panel" data-scope="frameicon"></div>
                 </div>
               </div>
 
@@ -1733,7 +1720,7 @@
               </div>
 
               <!-- ラベルの装飾・色 -->
-              <div id="frame-content-wrap" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--rule);">
+              <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--rule);">
                 <div class="slider-row">
                   <span class="st-lbl">大きさ</span>
                   <input type="range" id="frame-content-size" min="0.5" max="1.6" step="0.05" value="1">
@@ -1745,16 +1732,16 @@
                   <span class="val" id="val-frame-content-pad">20%</span>
                 </div>
                 <div class="field" style="margin-top:10px">
-                  <label>帯（フレーム）の色</label>
-                  <div class="color-panel" data-scope="framelabel"></div>
+                  <span class="field-label" id="lbl-color-framelabel">帯（フレーム）の色</span>
+                  <div role="group" aria-labelledby="lbl-color-framelabel" class="color-panel" data-scope="framelabel"></div>
                 </div>
                 <div class="field" style="margin-top:10px">
-                  <label>下地の形</label>
-                  <div class="shape-grid" id="frame-backdrop-grid"></div>
+                  <span class="field-label" id="lbl-frame-backdrop-grid">下地の形</span>
+                  <div role="group" aria-labelledby="lbl-frame-backdrop-grid" class="shape-grid" id="frame-backdrop-grid"></div>
                 </div>
                 <div class="field" style="margin-top:8px">
-                  <label>下地の色</label>
-                  <div class="color-panel" data-scope="framebd"></div>
+                  <span class="field-label" id="lbl-color-framebd">下地の色</span>
+                  <div role="group" aria-labelledby="lbl-color-framebd" class="color-panel" data-scope="framebd"></div>
                 </div>
               </div>
             </div>
@@ -1773,7 +1760,7 @@
         </details>
 
         <!-- CSV一括生成（1枚だけ作る人には関係がないので、いちばん下） -->
-        <details class="sec" id="sec-bulk">
+        <details class="sec">
           <summary>
             <span class="st-lbl">CSV一括生成</span>
             <span class="hint" id="hint-bulk">—</span>
@@ -1785,7 +1772,7 @@
             <div class="tpl-grid" id="csv-tpl-grid"></div>
 
             <div class="field-head bulk-head" style="margin-top:14px">
-              <label>ファイルを読み込む</label>
+              <span class="field-label">ファイルを読み込む</span>
               <button type="button" class="info-btn" data-note-toggle="csv"
                 aria-expanded="false" aria-label="CSVの書き方">
                 <i data-lucide="info" class="w-4 h-4"></i>
@@ -2215,13 +2202,13 @@
         <div data-cid="swatch-host" class="swatch-group"></div>
       </template>
 
-  <script src="qr-core.js?v=20260911_6"></script>
-  <script src="qr-style.js?v=20260913_1"></script>
+  <script src="qr-core.js?v=20260918_1"></script>
+  <script src="qr-style.js?v=20260918_1"></script>
   <script src="qr-assets.js?v=20260911_6"></script>
-  <script src="qr-verify.js?v=20260913_1"></script>
-  <script src="qr-bulk.js?v=20260912_1"></script>
-  <script src="qr-xlsx.js?v=20260912_1"></script>
-  <script src="qr-avif.js?v=20260912_1"></script>
-  <script src="app.js?v=20260913_1"></script>
+  <script src="qr-verify.js?v=20260918_1"></script>
+  <script src="qr-bulk.js?v=20260918_1"></script>
+  <script src="qr-xlsx.js?v=20260918_1"></script>
+  <script src="qr-avif.js?v=20260918_1"></script>
+  <script src="app.js?v=20260918_1"></script>
 </body>
 </html>

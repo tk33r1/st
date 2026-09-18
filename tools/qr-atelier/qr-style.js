@@ -17,6 +17,31 @@
   const IMG_SCALE_MAX = 4;
 
   // 初期状態（「デザインを初期化」もここに戻る）。
+  // 塗りの既定値。10個ある塗りはどれも同じキーを持つので、違うところだけ渡して作る。
+  // ここを1か所にしておかないと、キーを1つ足すたびに10か所を直すことになり、
+  // 抜けた塗りだけ merge で埋まらずに undefined のまま描画へ回る。
+  //
+  // colors は必ず写しを返す。ひとつの配列を全部の塗りで共有すると、どこか1か所で
+  // 多色を編集しただけで、ほかの塗りの色まで一緒に変わってしまう。
+  const BRAND_COLORS = ['#2563EB', '#7C3AED', '#DB2777'];
+  const PLATE_COLORS = ['#FFFFFF', '#E5E7EB'];
+
+  function paintDefaults(over) {
+    const out = Object.assign({
+      type: 'solid', color: '#111827',
+      from: '#111827', mid: '', to: '#2563EB', angle: 45,
+      colors: BRAND_COLORS, seed: 0, src: '', imgScale: 1
+    }, over);
+    out.colors = out.colors.slice();
+    return out;
+  }
+
+  // 白地に敷く板（背景・下地）。グラデーションは白→薄いグレーで、透過スライダーを
+  // 持つのはこの系統だけ。多色の初期値だけは用途で違うので over で渡す。
+  const platePaint = over => paintDefaults(Object.assign({
+    color: '#FFFFFF', from: '#FFFFFF', to: '#E5E7EB', transparency: 0
+  }, over));
+
   // 四角いセル・四角いマーカー・黒・白地の、いちばん素の QR。
   const DEFAULTS = {
     cell: 'square',
@@ -24,10 +49,10 @@
     cellJitter: 0,
     markerFrame: 'square',
     markerEye: 'square',
-    fg: { type: 'solid', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
-    bg: { type: 'white', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1, transparency: 0 },
-    markerFramePaint: { type: 'auto', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
-    markerEyePaint: { type: 'auto', color: '#000000', from: '#111827', mid: '', to: '#2563EB', angle: 45, colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1 },
+    fg: paintDefaults({ type: 'solid', color: '#000000' }),
+    bg: platePaint({ type: 'white' }),
+    markerFramePaint: paintDefaults({ type: 'auto', color: '#000000' }),
+    markerEyePaint: paintDefaults({ type: 'auto', color: '#000000' }),
     margin: 4,
     radius: 2,
     // 暗い地に明るいセルを意図して置くデザインでは true。反転の注意を
@@ -39,21 +64,12 @@
       size: 0.22, pad: 0.14, backdrop: 'rounded',
       // 下地の塗り。背景と同じ 9 モード（白・黒・透明・セルの色・単色・
       // 多色・グラデーション・放射・画像）を受け付ける
-      backdropPaint: {
-        type: 'white', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45,
-        colors: ['#FFFFFF', '#E5E7EB'], seed: 0, src: '', imgScale: 1, transparency: 0
-      },
+      backdropPaint: platePaint({ type: 'white', colors: PLATE_COLORS }),
       knockout: true,
       // アイコンの塗り。ここだけ 'brand'（アイコン公式色）を選べる
-      paint: {
-        type: 'brand', color: '#111827', from: '#111827', mid: '', to: '#2563EB', angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
-      },
+      paint: paintDefaults({ type: 'brand' }),
       // 文字の塗り。画面ではアイコンと別の欄なので、状態も分けて持つ
-      textPaint: {
-        type: 'auto', color: '#111827', from: '#FC466B', mid: '', to: '#3F5EFB', angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
-      }
+      textPaint: paintDefaults({ type: 'auto', from: '#FC466B', to: '#3F5EFB' })
     },
     frame: {
       type: 'none',
@@ -72,10 +88,7 @@
       iconData: '',
       // ラベルのアイコンの塗り。ロゴのアイコンと同じ 7 モード
       // （ブランドカラー・セルの色・単色・多色・グラデーション・放射・画像）。
-      iconPaint: {
-        type: 'brand', color: '#FFFFFF', from: '#FC466B', mid: '', to: '#3F5EFB', angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'], seed: 0, src: '', imgScale: 1
-      },
+      iconPaint: paintDefaults({ type: 'brand', color: '#FFFFFF', from: '#FC466B', to: '#3F5EFB' }),
       src: '',
       topIcon: 'si-instagram',
       topIconData: null,
@@ -83,49 +96,25 @@
       radius: 3,
       // ラベルの中身（文字・アイコン・画像）の大きさと、その周りの余白。
       // 既定の 1.0 / 0.2 で帯の高さが 4.0 + 0.8*2 = 5.6 になり、
-      // 旧来の FRAME_METRICS.label と同じ見た目に揃う
+      // FRAME_METRICS.label と同じ見た目に揃う
       contentSize: 1,
       contentPad: 0.2,
       // 中身の後ろに敷く板。形はマーカーの枠と同じ一覧から選ぶ
       backdrop: 'rounded',
-      backdropPaint: {
-        type: 'none', color: '#FFFFFF', from: '#FFFFFF', mid: '', to: '#E5E7EB', angle: 45,
-        colors: ['#FFFFFF', '#E5E7EB'], seed: 0, src: '', imgScale: 1, transparency: 0
-      },
-      paint: {
-        type: 'auto',
-        color: '#111827',
-        from: '#111827',
-        mid: '',
-        to: '#2563EB',
-        angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'],
-        seed: 0,
-        src: '',
-        imgScale: 1,
-        transparency: 0
-      },
-      textPaint: {
-        type: 'solid',
-        color: '#FFFFFF',
-        from: '#FC466B',
-        mid: '',
-        to: '#3F5EFB',
-        angle: 45,
-        colors: ['#2563EB', '#7C3AED', '#DB2777'],
-        seed: 0,
-        src: '',
-        imgScale: 1,
-        transparency: 0
-      }
+      backdropPaint: platePaint({ type: 'none', colors: PLATE_COLORS }),
+      paint: paintDefaults({ type: 'auto', transparency: 0 }),
+      textPaint: paintDefaults({
+        type: 'solid', color: '#FFFFFF', from: '#FC466B', to: '#3F5EFB', transparency: 0
+      })
     }
   };
 
-  // 外枠の余白・ラベル高さ（モジュール単位）
+  // 外枠の余白・ラベル高さ（モジュール単位）。
+  // type: 'line' は余白を太さから毎回計算する（lineGeom）ので、ここには持たない。
+  // 未知の type は none 扱いになり、余白もラベルも出ない。
   const FRAME_METRICS = {
-    none:   { pad: 0,   label: 0,   stroke: 0 },
-    line:   { pad: 1.6, label: 0,   stroke: 0.7 },
-    label:  { pad: 1.8, label: 5.6, stroke: 0 }
+    none:  { pad: 0,   label: 0 },
+    label: { pad: 1.8, label: 5.6 }
   };
 
   // 枠線の種類ごとの既定値（モジュール単位）。
@@ -171,6 +160,21 @@
 
   function fontOf(key) {
     return FONT_STACKS[key] || FONT_STACKS.sans;
+  }
+
+  // 字送りの見積もり（em 単位）。文字を実際に組まずに、箱の幅と文字サイズを
+  // 先に決めるための近似。ロゴの下地とラベルの帯が同じ数字を使うので、係数は
+  // ここひとつに置く（片方だけ直すと、同じ文字列なのに場所で幅が変わる）。
+  // 0x2E80 より上は CJK＝全角とみなして 1em、それ以外は半角として扱う。
+  const HALF_WIDTH_EM = 0.6;
+
+  function textUnits(str) {
+    const s = String(str || '');
+    let units = 0;
+    for (let i = 0; i < s.length; i++) {
+      units += s.charCodeAt(i) > 0x2E80 ? 1 : HALF_WIDTH_EM;
+    }
+    return units;
   }
 
   // 角を丸めすぎると、下地の角が削れてクワイエットゾーンを食う。余白の1.5倍を
@@ -375,6 +379,23 @@
 
   // グラデーションは代表色（中間）で明るさを判定する。多色は背景と最もコントラストが低い色を返す。
   // 指定でしかない type（white/black/auto）は resolvePaint で解いてから渡すこと。
+  // 複数色の塗りを1色で代表させるときは、背景といちばんコントラストが低い色を採る。
+  // 「どこかが読みにくい」を見落とさないため、平均でも先頭でもなく最悪値で見る。
+  // 空の色は飛ばす（グラデーションの mid は未指定のことがある）。
+  function worstContrast(colors, bgHex, fallback) {
+    let worstColor = fallback;
+    let minRatio = Infinity;
+    colors.forEach(c => {
+      if (!c) return;
+      const r = contrastRatio(c, bgHex);
+      if (r < minRatio) {
+        minRatio = r;
+        worstColor = c;
+      }
+    });
+    return worstColor;
+  }
+
   function paintColor(paint, bgHex) {
     if (!paint || paint.type === 'none' || paint.type === 'auto') return null;
     if (paint.type === 'white') return '#FFFFFF';
@@ -384,33 +405,12 @@
     if (paint.type === 'multi') {
       const colors = (Array.isArray(paint.colors) && paint.colors.length) ? paint.colors : [paint.color || '#111827'];
       if (!bgHex) return colors[0];
-      let worstColor = colors[0];
-      let minRatio = Infinity;
-      colors.forEach(c => {
-        const r = contrastRatio(c, bgHex);
-        if (r < minRatio) {
-          minRatio = r;
-          worstColor = c;
-        }
-      });
-      return worstColor;
+      return worstContrast(colors, bgHex, colors[0]);
     }
     const stops = [paint.from];
     if (paint.mid) stops.push(paint.mid);
     stops.push(paint.to);
-    if (bgHex) {
-      let worstColor = stops[0];
-      let minRatio = Infinity;
-      stops.forEach(c => {
-        if (!c) return;
-        const r = contrastRatio(c, bgHex);
-        if (r < minRatio) {
-          minRatio = r;
-          worstColor = c;
-        }
-      });
-      return worstColor;
-    }
+    if (bgHex) return worstContrast(stops, bgHex, stops[0]);
     if (paint.mid) return paint.mid;
     const a = hexToRgb(paint.from), b = hexToRgb(paint.to);
     if (!a || !b) return paint.from || paint.color;
@@ -636,14 +636,13 @@
   function singleCellPath(shape, x0, y0, s) {
     const x1 = x0 + s, y1 = y0 + s;
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    // connected / liquid / circuit / mosaic は隣のセルとつながる形なので、
+    // 1セルだけでは決まらない。cellsPath 側の専用ループが先に受けるため
+    // ここには来ない。
     switch (shape) {
       case 'square':   return rectPath(x0, y0, s, s, 0);
       case 'rounded':  return rectPath(x0, y0, s, s, s * 0.16);
       case 'xrounded': return rectPath(x0, y0, s, s, s * 0.34);
-      case 'connected': return rectPath(x0, y0, s, s, s * 0.45);
-      case 'liquid':   return circlePath(cx, cy, s * 0.48);
-      case 'circuit':  return octagonPath(x0, y0, s, s * 0.22);
-      case 'mosaic':   return polyPath([[cx, cy - s * 0.52], [cx + s * 0.52, cy], [cx, cy + s * 0.52], [cx - s * 0.52, cy]]);
       case 'dot':      return circlePath(cx, cy, s / 2);
       case 'diamond':  return polyPath([[cx, cy - s * 0.66], [cx + s * 0.66, cy], [cx, cy + s * 0.66], [cx - s * 0.66, cy]]);
       case 'star':     return starPath(cx, cy, s * 0.72, s * 0.44, 5);
@@ -1471,6 +1470,48 @@
   }
 
   // 戻り値は { defs, body }。塗りの定義が要る描き方があるので本体と一緒に返す。
+  // ロゴの下地とラベルの帯は、塗りの解き方がまったく同じ：単色はそのまま塗り、
+  // 「セルの色」は切り抜きでセル側の定義を引き継ぎ、それ以外は paintedShape に
+  // 任せる。違うのは図形の書き方だけなので、そこだけ受け取って残りはここが見る。
+  //   rawPaint … 生の指定（'auto' かどうかの判定用。解いたあとでは分からない）
+  //   idBase   … clipPath は idBase + 'c'、塗りは idBase をそのまま使う
+  //   shape    … clipPath や paintedShape に渡す図形のマークアップ
+  //   solid    … 単色で塗るマークアップを作る関数（エスケープ済みの色と
+  //              fill-opacity 属性を受け取る）
+  // 返すのは { defs, body } の断片で、呼び出し側がそれぞれに足す。
+  function backdropLayer(bdPaint, rawPaint, bdBox, idBase, shape, solid, fgRef, qrBox) {
+    const bdTr = bdPaint.transparency !== undefined ? Number(bdPaint.transparency) : 0;
+    const bdOp = Math.max(0, Math.min(1, (100 - bdTr) / 100));
+    const op = bdOp < 1 ? ' opacity="' + n(bdOp) + '"' : '';
+    const isBdAuto = !!(rawPaint && rawPaint.type === 'auto');
+    const fill = esc(bdPaint.color || '#FFFFFF');
+
+    if (bdPaint.type === 'solid') {
+      return { defs: '', body: solid(fill, bdOp < 1 ? ' fill-opacity="' + n(bdOp) + '"' : '') };
+    }
+
+    if (isBdAuto && bdPaint.type !== 'multi') {
+      // 「セルの色」のグラデーション・放射・画像は、セル側の定義をそのまま引く。
+      // 下地の箱で定義し直すと、勾配も画像も下地の中だけで完結してしまい、
+      // セルと切れた別の模様になる。形で切り抜くだけにして一続きにする。
+      return {
+        defs: '<clipPath id="' + idBase + 'c">' + shape + '</clipPath>',
+        body: '<g clip-path="url(#' + idBase + 'c)"' + op + '><path d="' +
+          rectPath(bdBox.x, bdBox.y, bdBox.w, bdBox.h, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>'
+      };
+    }
+
+    // 多色はセルと同じモジュール格子・同じ種で振ると目地がそろう
+    const cellOpts = isBdAuto
+      ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+    const layer = paintedShape(bdPaint, bdBox, idBase, shape, cellOpts);
+    if (!layer) return { defs: '', body: solid(fill, '') };
+    return {
+      defs: layer.defs,
+      body: op ? '<g' + op + '>' + layer.body + '</g>' : layer.body
+    };
+  }
+
   function logoSvg(logo, cx, cy, side, uid, fg, fgRef, qrBox) {
     const empty = { defs: '', body: '' };
     if (!logo || logo.type === 'none') return empty;
@@ -1504,11 +1545,7 @@
 
       // 塗りを敷く箱は文字の広がりに合わせる。正方形のままだと、横に長い
       // 文字列で画像がタイル状に繰り返され、勾配も途中で頭打ちになる。
-      // 全角は約1em、半角は約0.6em として字送りを見積もる。
-      let units = 0;
-      for (let i = 0; i < logo.text.length; i++) {
-        units += logo.text.charCodeAt(i) > 0x2E80 ? 1 : 0.6;
-      }
+      const units = textUnits(logo.text);
       const tw = Math.max(side, fs * units);
       const th = Math.max(side, fs * 1.15);
       box = { x: cx - tw / 2, y: cy - th / 2, w: tw, h: th };
@@ -1806,32 +1843,12 @@
         const d = backdropPath(cx, cy, knockSide, bdStyle);
         const half = knockSide / 2;
         const bdBox = { x: cx - half, y: cy - half, w: knockSide, h: knockSide };
-        const bdTr = bdPaint.transparency !== undefined ? Number(bdPaint.transparency) : 0;
-        const bdOp = Math.max(0, Math.min(1, (100 - bdTr) / 100));
-        const op = bdOp < 1 ? ' opacity="' + n(bdOp) + '"' : '';
-        const isBdAuto = !!(logo.backdropPaint && logo.backdropPaint.type === 'auto');
-        if (bdPaint.type === 'solid') {
-          body += '<path d="' + d + '" fill="' + esc(bdPaint.color || '#FFFFFF') + '"' +
-            (bdOp < 1 ? ' fill-opacity="' + n(bdOp) + '"' : '') + '/>';
-        } else if (isBdAuto && bdPaint.type !== 'multi') {
-          // 「セルの色」のグラデーション・放射・画像は、セル側の定義をそのまま引く。
-          // 下地の箱で定義し直すと、勾配も画像も下地の中だけで完結してしまい、
-          // セルと切れた別の模様になる。形で切り抜くだけにして一続きにする。
-          defs += '<clipPath id="' + uid + 'bdc"><path d="' + d + '"/></clipPath>';
-          body += '<g clip-path="url(#' + uid + 'bdc)"' + op + '><path d="' +
-            rectPath(bdBox.x, bdBox.y, bdBox.w, bdBox.h, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
-        } else {
-          // 多色はセルと同じモジュール格子・同じ種で振ると目地がそろう
-          const cellOpts = isBdAuto
-            ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
-          const layer = paintedShape(bdPaint, bdBox, uid + 'bd', '<path d="' + d + '"/>', cellOpts);
-          if (layer) {
-            defs += layer.defs;
-            body += op ? '<g' + op + '>' + layer.body + '</g>' : layer.body;
-          } else {
-            body += '<path d="' + d + '" fill="' + esc(bdPaint.color || '#FFFFFF') + '"/>';
-          }
-        }
+        const layer = backdropLayer(bdPaint, logo.backdropPaint, bdBox, uid + 'bd',
+          '<path d="' + d + '"/>',
+          (fill, fillOp) => '<path d="' + d + '" fill="' + fill + '"' + fillOp + '/>',
+          fgRef, qrBox);
+        defs += layer.defs;
+        body += layer.body;
       }
       const lo = logoSvg(logo, cx, cy, logoSide, uid, st.fg, fgRef, qrBox);
       defs += lo.defs;
@@ -1849,12 +1866,8 @@
 
       // 下地を先に敷くために、文字の寸法だけを取り出せるようにしておく
       function frameTextMetrics(textStr) {
-        const text = String(textStr || '');
         const avail = W - 3;
-        let units = 0;
-        for (let i = 0; i < text.length; i++) {
-          units += text.charCodeAt(i) > 0x2E80 ? 1 : 0.56;
-        }
+        const units = textUnits(textStr);
         const cap = contentSide * 0.85;
         const fs = Math.max(contentSide * 0.4, Math.min(cap, units ? avail / units : cap));
         return { fs: fs, units: units, tw: Math.max(fs * 2, fs * units) };
@@ -1949,33 +1962,12 @@
         const shape = '<g transform="' + tf + '"><path d="' + d + '"/></g>';
         const bdBox = { x: W / 2 - bw / 2, y: cy - bh / 2, w: bw, h: bh };
         const pid = uid + 'fbd' + idSuffix;
-
-        const bdTr = bdPaint.transparency !== undefined ? Number(bdPaint.transparency) : 0;
-        const bdOp = Math.max(0, Math.min(1, (100 - bdTr) / 100));
-        const op = bdOp < 1 ? ' opacity="' + n(bdOp) + '"' : '';
-        const isBdAuto = !!(st.frame.backdropPaint && st.frame.backdropPaint.type === 'auto');
-
-        if (bdPaint.type === 'solid') {
-          body += '<g transform="' + tf + '" fill="' + esc(bdPaint.color || '#FFFFFF') + '"' +
-            (bdOp < 1 ? ' fill-opacity="' + n(bdOp) + '"' : '') + '><path d="' + d + '"/></g>';
-        } else if (isBdAuto && bdPaint.type !== 'multi') {
-          // 「セルの色」はセル側の定義をそのまま引く。板の中だけで勾配や画像を
-          // 組み直すと、セルと切れた別の模様になってしまう。
-          defs += '<clipPath id="' + pid + 'c">' + shape + '</clipPath>';
-          body += '<g clip-path="url(#' + pid + 'c)"' + op + '><path d="' +
-            rectPath(bdBox.x, bdBox.y, bdBox.w, bdBox.h, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
-        } else {
-          const cellOpts = isBdAuto
-            ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
-          const layer = paintedShape(bdPaint, bdBox, pid, shape, cellOpts);
-          if (layer) {
-            defs += layer.defs;
-            body += op ? '<g' + op + '>' + layer.body + '</g>' : layer.body;
-          } else {
-            body += '<g transform="' + tf + '" fill="' + esc(bdPaint.color || '#FFFFFF') +
-              '"><path d="' + d + '"/></g>';
-          }
-        }
+        const layer = backdropLayer(bdPaint, st.frame.backdropPaint, bdBox, pid, shape,
+          (fill, fillOp) => '<g transform="' + tf + '" fill="' + fill + '"' + fillOp +
+            '><path d="' + d + '"/></g>',
+          fgRef, qrBox);
+        defs += layer.defs;
+        body += layer.body;
       }
 
       function renderContent(cy, idSuffix, isTop) {
@@ -2088,9 +2080,7 @@
     return {
       svg: svg,
       width: W,
-      height: H,
       contrast: ratio,
-      lumaRatio: lr,
       coverage: coverage,
       // ロゴで隠してよい面積の目安（誤り訂正レベルで決まる）。画面側が
       // 「安全な大きさ」を逆算するのに使う。
@@ -2145,26 +2135,28 @@
     return svg.replace(/(<svg\b[^>]*>)/, '$1<defs>' + style + '</defs>');
   }
 
-  // 指定ピクセル幅で書き出すために width/height だけ差し替える
-  function resize(svg, px) {
-    const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
-    if (!m) return svg;
-    const w = parseFloat(m[1]), h = parseFloat(m[2]);
-    const height = Math.round((px * h) / w);
-    return svg.replace(/(<svg\b[^>]*?)\bwidth="[^"]*"\s+height="[^"]*"/, '$1width="' + px + '" height="' + height + '"');
-  }
-
-  // 印刷用に物理寸法を持たせる。Illustrator や InDesign に読ませたとき、
-  // 拡大率をいじらなくてもそのままの寸法で入る。viewBox はそのままなので
-  // 中身の座標は変わらない。
-  function resizeMm(svg, mm) {
+  // width / height だけ差し替える。viewBox には触らないので中身の座標は変わらない。
+  // 高さは viewBox の縦横比から出す。step は丸めの細かさで、px なら整数（1）、
+  // mm なら小数3桁（1000）まで残す。
+  function setSvgSize(svg, width, unit, step) {
     const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
     if (!m) return svg;
     const w = parseFloat(m[1]), h = parseFloat(m[2]);
     if (!(w > 0)) return svg;
-    const height = Math.round((mm * h / w) * 1000) / 1000;
+    const height = Math.round((width * h / w) * step) / step;
     return svg.replace(/(<svg\b[^>]*?)\bwidth="[^"]*"\s+height="[^"]*"/,
-      '$1width="' + mm + 'mm" height="' + height + 'mm"');
+      '$1width="' + width + unit + '" height="' + height + unit + '"');
+  }
+
+  // 指定ピクセル幅で書き出すために width/height だけ差し替える
+  function resize(svg, px) {
+    return setSvgSize(svg, px, '', 1);
+  }
+
+  // 印刷用に物理寸法を持たせる。Illustrator や InDesign に読ませたとき、
+  // 拡大率をいじらなくてもそのままの寸法で入る。
+  function resizeMm(svg, mm) {
+    return setSvgSize(svg, mm, 'mm', 1000);
   }
 
   // ------------------------------------------------------------------
@@ -2229,6 +2221,9 @@
     lineIdOf: lineIdOf,
     maxRadius: maxRadius,
     contrastRatio: contrastRatio,
+    // 色の分解も app.js（混色・明るさの計算）が同じものを使う。二重に持つと、
+    // 3桁表記や # なしの扱いが片方だけ変わってもしばらく気づけない。
+    hexToRgb: hexToRgb,
     // 明るさの見立ては app.js（プレビューの市松）でも使うので出しておく。
     // 読み取りのしきい値（LUMA_WALL / LUMA_TIGHT）は判定ごとここが持つ。
     encodedLuma: encodedLuma,

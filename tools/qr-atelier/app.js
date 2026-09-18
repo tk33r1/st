@@ -361,6 +361,18 @@
   };
   TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
 
+  // 保存・復元・undo/redo が持ち回る、style 以外の状態キー。type / values / style は
+  // 形が特別なので、それぞれの関数が個別に見る。
+  //
+  // 一覧を1か所にしておかないと、キーを足したときに getSnapshot には入れたのに
+  // applySnapshot へ書き忘れる、といったことが起きる。そうなると undo だけが
+  // その項目を戻さないのに、画面上は何も壊れていないように見えてしまう。
+  //
+  // colorScope と previewChecker はここに入れない。どちらも「いまどこを見ているか」
+  // という画面の都合で、作った絵の一部ではないので、undo で巻き戻すとかえって驚く。
+  const SNAPSHOT_KEYS = ['ec', 'minVersion', 'exportSize', 'sizeUnit', 'printMm', 'printDpi',
+    'lossless', 'quality', 'effort', 'presetName', 'presetCategory', 'iconGroup', 'frameIconGroup'];
+
   // 色パネルごとの違いはここだけに置く。対象一覧・塗りの場所・使える特殊色・
   // 画像を外したときの戻り先・表示名を別々に持つと、追加時に必ずどれかが漏れる。
   const COLOR_SCOPE_META = {
@@ -379,9 +391,10 @@
   };
   const COLOR_SCOPES = Object.keys(COLOR_SCOPE_META);
 
-  // 画像の塗りの倍率（描画エンジンと同じ範囲。UI では % で見せる）
-  const IMG_SCALE_MIN = (window.QRStyle && window.QRStyle.IMG_SCALE_MIN) || 0.2;
-  const IMG_SCALE_MAX = (window.QRStyle && window.QRStyle.IMG_SCALE_MAX) || 4;
+  // 画像の塗りの倍率（描画エンジンと同じ範囲。UI では % で見せる）。
+  // QRStyle は 16行目で無ガードに読んでいるので、ここに来た時点で必ずある。
+  const IMG_SCALE_MIN = window.QRStyle.IMG_SCALE_MIN;
+  const IMG_SCALE_MAX = window.QRStyle.IMG_SCALE_MAX;
 
   function imgScalePct(p) {
     const v = clampNum(p && p.imgScale, IMG_SCALE_MIN, IMG_SCALE_MAX, 1);
@@ -526,10 +539,10 @@
       if (saved.values) Object.keys(state.values).forEach(k => {
         if (saved.values[k]) Object.assign(state.values[k], saved.values[k]);
       });
-      ['ec', 'minVersion', 'exportSize', 'sizeUnit', 'printMm', 'printDpi',
-       'quality', 'effort', 'presetName', 'presetCategory', 'iconGroup', 'frameIconGroup'].forEach(k => {
+      SNAPSHOT_KEYS.forEach(k => {
         if (saved[k] !== undefined) state[k] = saved[k];
       });
+      // 市松模様は履歴には乗せないが、保存はする（次に開いたときも同じ見え方にしたい）
       if (['auto', 'light', 'dark'].indexOf(saved.previewChecker) >= 0) {
         state.previewChecker = saved.previewChecker;
       }
@@ -558,15 +571,8 @@
       if (state.style.frame && state.style.frame.type && !A.FRAMES.some(f => f.id === state.style.frame.type)) {
         state.style.frame.type = 'none';
       }
-      if (state.style.logo.type === 'icon' && state.style.logo.icon) {
-        state.style.logo.iconData = A.ICONS.find(i => i.id === state.style.logo.icon) || null;
-      }
-      if (state.style.frame && state.style.frame.icon) {
-        state.style.frame.iconData = A.ICONS.find(i => i.id === state.style.frame.icon) || null;
-      }
-      if (state.style.frame && state.style.frame.topIcon) {
-        state.style.frame.topIconData = A.ICONS.find(i => i.id === state.style.frame.topIcon) || null;
-      }
+      // iconData の引き直しは sanitizeStyle が無条件でやる（保存された
+      // オブジェクトは信用せず、id から毎回引く）ので、ここでは触らない。
       sanitizeStyle(state.style);
     } catch (e) { /* 壊れた保存は捨てる */ }
   }
@@ -625,24 +631,9 @@
   }
 
   function getSnapshot() {
-    return JSON.stringify({
-      type: state.type,
-      values: state.values,
-      ec: state.ec,
-      minVersion: state.minVersion,
-      exportSize: state.exportSize,
-      sizeUnit: state.sizeUnit,
-      printMm: state.printMm,
-      printDpi: state.printDpi,
-      lossless: state.lossless,
-      quality: state.quality,
-      effort: state.effort,
-      presetName: state.presetName,
-      presetCategory: state.presetCategory,
-      iconGroup: state.iconGroup,
-      frameIconGroup: state.frameIconGroup,
-      style: state.style
-    }, function (k, v) {
+    const snap = { type: state.type, values: state.values, style: state.style };
+    SNAPSHOT_KEYS.forEach(k => { snap[k] = state[k]; });
+    return JSON.stringify(snap, function (k, v) {
       if (typeof v === 'string' && v.length >= 100 && (k === 'src' || k === 'topSrc' || v.indexOf('data:image/') === 0)) {
         return internHistoryImage(v);
       }
@@ -712,19 +703,10 @@
           state.values[k] = Object.assign({}, data.values[k]);
         });
       }
-      if (data.ec) state.ec = data.ec;
-      if (data.minVersion !== undefined) state.minVersion = data.minVersion;
-      if (data.exportSize) state.exportSize = data.exportSize;
-      if (data.sizeUnit) state.sizeUnit = data.sizeUnit;
-      if (data.printMm) state.printMm = data.printMm;
-      if (data.printDpi) state.printDpi = data.printDpi;
-      if (data.lossless !== undefined) state.lossless = !!data.lossless;
-      if (data.quality) state.quality = data.quality;
-      if (data.effort) state.effort = data.effort;
-      if (data.presetName !== undefined) state.presetName = data.presetName;
-      if (data.presetCategory !== undefined) state.presetCategory = data.presetCategory;
-      if (data.iconGroup !== undefined) state.iconGroup = data.iconGroup;
-      if (data.frameIconGroup !== undefined) state.frameIconGroup = data.frameIconGroup;
+      SNAPSHOT_KEYS.forEach(k => {
+        if (data[k] !== undefined) state[k] = data[k];
+      });
+      state.lossless = state.lossless === true;
       if (data.style) {
         state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, data.style);
         sanitizeStyle(state.style);
@@ -980,12 +962,9 @@
     return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toUpperCase() : fallback;
   }
 
-  function hexToRgb(hex) {
-    let h = String(hex || '').trim().replace('#', '');
-    if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
-    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-  }
+  // 色の分解は qr-style.js のものをそのまま借りる。二重に持つと、3桁表記や
+  // # なしの扱いを片方だけ直したときに、画面と書き出しで色がずれる。
+  const hexToRgb = window.QRStyle.hexToRgb;
 
   // セルの明るさ（0〜255）。複数色の塗りは平均で見る。
   // 明るさの式は qr-style.js の encodedLuma ひとつに寄せる。ここだけ別の
@@ -1024,12 +1003,9 @@
     card.classList.toggle('theme-dark', isDark);
     card.classList.toggle('theme-light', !isDark);
 
-    const toggle = $('checker-toggle');
-    if (toggle) {
-      Array.prototype.forEach.call(toggle.children, btn => {
-        setActive(btn, btn.dataset.checker === state.previewChecker);
-      });
-    }
+    eachSegButton('checker-toggle', btn => {
+      setActive(btn, btn.dataset.checker === state.previewChecker);
+    });
   }
 
   // ------------------------------------------------------------------
@@ -1150,24 +1126,15 @@
         style: 'align-self: flex-start; margin-top: 4px;'
       }, '中央ロゴもこのSNSアイコンにする');
       btnLogoSync.addEventListener('click', () => {
+        // SNS の選択肢の id と、同梱アイコンの id は 'si-' を足すだけで対応する。
+        // 表で持つと、選択肢を足したときに片方だけ書き忘れて黙って効かなくなる。
+        // アイコンが無い相手はここで弾かれるので、増やすのは選択肢だけでよい。
         const platform = values.platform;
-        const iconIdMap = {
-          instagram: 'si-instagram',
-          x: 'si-x',
-          line: 'si-line',
-          tiktok: 'si-tiktok',
-          youtube: 'si-youtube',
-          threads: 'si-threads',
-          bluesky: 'si-bluesky',
-          github: 'si-github',
-          note: 'si-note',
-          facebook: 'si-facebook'
-        };
-        const iconId = iconIdMap[platform];
-        if (iconId) {
+        const icon = A.ICONS.find(i => i.id === 'si-' + platform);
+        if (icon) {
           state.style.logo.type = 'icon';
-          state.style.logo.icon = iconId;
-          state.style.logo.iconData = A.ICONS.find(i => i.id === iconId) || null;
+          state.style.logo.icon = icon.id;
+          state.style.logo.iconData = icon;
           state.presetName = '';
           syncControls();
           update();
@@ -1256,58 +1223,28 @@
   }
 
   // はじめから入っているテンプレート
-  function presetTile(p) {
-    const btn = el('button', { class: 'preset-btn', type: 'button', title: p.name });
-    btn.dataset.presetName = p.name;
-    setActive(btn, state.presetName === p.name);
-    btn.appendChild(presetThumb(p.style));
-    btn.appendChild(el('i', null, p.name));
-
-    btn.addEventListener('click', () => {
-      const userLogoSrc = (state.style.logo && state.style.logo.type === 'image') ? state.style.logo.src : '';
-      const userLogoText = (state.style.logo && state.style.logo.type === 'text') ? state.style.logo.text : '';
-
-      // DEFAULTS をベースにしてテンプレートのスタイルをディープマージ。
-      // merge は入れ物を必ず写して返すので、DEFAULTS もテンプレートの定義も
-      // 返り値経由では書き換わらない（写しを作ってから渡す必要はない）
-      state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, p.style);
-
-      // ユーザーが置いていた画像ロゴ・文字ロゴは、テンプレートがロゴに
-      // 触れていないときだけ戻す。logo を書いたテンプレート（ミニマルなど）は
-      // 「ロゴなし」まで含めて指定なので、そちらを尊重する。
-      if (!p.style.logo && userLogoSrc) {
-        state.style.logo.type = 'image';
-        state.style.logo.src = userLogoSrc;
-      } else if (!p.style.logo && userLogoText) {
-        state.style.logo.type = 'text';
-        state.style.logo.text = userLogoText;
-      }
-
-      // 範囲外の値や古い形のキーを均す。まるごと差し替える経路は
-      // 復元・undo と同じように、ここを必ず通す
-      sanitizeStyle(state.style);
-
-      // セルの密度は style ではなく state 側。テンプレートは基本「自動」に戻す
-      state.minVersion = p.minVersion || 1;
-
-      state.presetName = p.name;
-      syncControls();
-      buildFrameChips();
-      syncPresetActive();
-      update();
-    });
+  // テンプレートの札。見本と名前、それに「いま選ばれているか」の印までは
+  // 同梱ぶんもマイテンプレートも同じで、押したときの振る舞いだけが違う。
+  function tileButton(name, style, onPick) {
+    const btn = el('button', { class: 'preset-btn', type: 'button', title: name });
+    btn.dataset.presetName = name;
+    setActive(btn, state.presetName === name);
+    btn.appendChild(presetThumb(style));
+    btn.appendChild(el('i', null, name));
+    btn.addEventListener('click', onPick);
     return btn;
+  }
+
+  function presetTile(p) {
+    // セルの密度は style ではなく state 側。テンプレートは基本「自動」に戻す。
+    return tileButton(p.name, p.style,
+      () => applyStyle(p.style, p.name, { minVersion: p.minVersion || 1, keepLogo: true }));
   }
 
   // 自分で足したテンプレート。消せるように×を重ねる
   function myTile(d) {
     const tile = el('div', { class: 'my-tile' });
-    const btn = el('button', { class: 'preset-btn', type: 'button', title: d.name });
-    btn.dataset.presetName = d.name;
-    setActive(btn, state.presetName === d.name);
-    btn.appendChild(presetThumb(d.style));
-    btn.appendChild(el('i', null, d.name));
-    btn.addEventListener('click', () => {
+    const btn = tileButton(d.name, d.style, () => {
       applyStyle(d.style, d.name);
       showToast(d.name + ' を読み込みました');
     });
@@ -1444,11 +1381,7 @@
   }
 
   function syncShapeGridActive(hostId, currentId) {
-    const host = $(hostId);
-    if (!host) return;
-    Array.prototype.forEach.call(host.children, btn => {
-      setActive(btn, btn.dataset.id === currentId);
-    });
+    eachSegButton(hostId, btn => setActive(btn, btn.dataset.id === currentId));
   }
 
   // 「セル枠」はセルの形と太さをそのまま使うので、見本もそれを渡して起こす
@@ -1457,16 +1390,22 @@
   }
 
   function updateFrameGridPreviews() {
-    const host = $('frame-grid');
-    if (!host) return;
     const opts = markerPreviewOpts();
-    Array.prototype.forEach.call(host.children, btn => {
+    eachSegButton('frame-grid', btn => {
       const id = btn.dataset.id;
       const holder = btn.querySelector('.preview-holder');
       if (holder && id) {
         holder.innerHTML = window.QRStyle.markerPreview(id, state.style.markerEye, opts);
       }
     });
+  }
+
+  // 選んでいるセルの形の名前を説明文のところに出す。一覧を組み直したときも、
+  // 選び直しただけのときも同じものを出したいので、1か所に置く。
+  function syncShapeHint() {
+    const cellName = (A.CELL_SHAPES.find(s => s.id === state.style.cell) || {}).name || '';
+    const hintShape = $('hint-shape');
+    if (hintShape) hintShape.textContent = cellName;
   }
 
   function syncShapeActive() {
@@ -1477,143 +1416,84 @@
     syncShapeGridActive('frame-backdrop-grid', state.style.frame && state.style.frame.backdrop);
     syncShapeGridActive('frame-line-grid', state.style.frame && state.style.frame.line);
     syncShapeGridActive('eye-grid', state.style.markerEye);
+    syncShapeHint();
+  }
 
-    const cellName = (A.CELL_SHAPES.find(s => s.id === state.style.cell) || {}).name || '';
-    const hintShape = $('hint-shape');
-    if (hintShape) hintShape.textContent = cellName;
+  // 形を選ぶ一覧（セル・マーカー枠・下地・枠線・マーカー目）。
+  // どれも「見本を敷いたボタンを並べて、押されたら state を書いて描き直す」だけで、
+  // 違うのは一覧・見本の起こし方・押したときの後始末に限られる。手で5回書くと、
+  // 1つだけ syncPresetActive を忘れる、といったズレが出るのでここに寄せる。
+  //   items   … { id, name } の一覧
+  //   current … いま選ばれている id を返す関数（描き直すたびに引き直す）
+  //   preview … id から見本の SVG を起こす関数
+  //   pick    … 押されたときに state を書く関数
+  //   after   … その一覧だけに要る追加の後始末（省略可）
+  function buildShapeGrid(hostId, items, current, preview, pick, after) {
+    const host = $(hostId);
+    if (!host) return;
+    host.innerHTML = '';
+    const cur = current();
+    items.forEach(s => {
+      const b = el('button', { class: 'shape-btn', type: 'button', title: s.name });
+      setActive(b, cur === s.id);
+      b.dataset.id = s.id;
+      const holder = el('div', { class: 'preview-holder' });
+      holder.innerHTML = preview(s.id);
+      b.appendChild(holder);
+      b.appendChild(el('i', null, s.name));
+      b.addEventListener('click', () => {
+        pick(s.id);
+        state.presetName = '';
+        syncShapeActive();
+        if (after) after();
+        syncPresetActive();
+        update();
+      });
+      host.appendChild(b);
+    });
   }
 
   function buildShapeGrids() {
-    const cellHost = $('cell-grid');
-    if (cellHost) {
-      cellHost.innerHTML = '';
-      A.CELL_SHAPES.forEach(s => {
-        const b = el('button', { class: 'shape-btn', type: 'button', title: s.name });
-        setActive(b, state.style.cell === s.id);
-        b.dataset.id = s.id;
-        const holder = el('div', { class: 'preview-holder' });
-        holder.innerHTML = window.QRStyle.cellPreview(s.id);
-        b.appendChild(holder);
-        b.appendChild(el('i', null, s.name));
-        b.addEventListener('click', () => {
-          state.style.cell = s.id;
-          state.presetName = '';
-          syncShapeActive();
-          syncPresetActive();
-          update();
-        });
-        cellHost.appendChild(b);
-      });
-    }
+    const S = window.QRStyle;
+    const frame = () => state.style.frame || {};
 
-    const frameHost = $('frame-grid');
-    if (frameHost) {
-      frameHost.innerHTML = '';
-      A.MARKER_FRAMES.forEach(s => {
-        const b = el('button', { class: 'shape-btn', type: 'button', title: s.name });
-        setActive(b, state.style.markerFrame === s.id);
-        b.dataset.id = s.id;
-        const holder = el('div', { class: 'preview-holder' });
-        holder.innerHTML = window.QRStyle.markerPreview(s.id, state.style.markerEye, markerPreviewOpts());
-        b.appendChild(holder);
-        b.appendChild(el('i', null, s.name));
-        b.addEventListener('click', () => {
-          state.style.markerFrame = s.id;
-          state.presetName = '';
-          syncShapeActive();
-          syncPresetActive();
-          update();
-        });
-        frameHost.appendChild(b);
-      });
-    }
+    buildShapeGrid('cell-grid', A.CELL_SHAPES,
+      () => state.style.cell, S.cellPreview,
+      id => { state.style.cell = id; });
+
+    buildShapeGrid('frame-grid', A.MARKER_FRAMES,
+      () => state.style.markerFrame,
+      id => S.markerPreview(id, state.style.markerEye, markerPreviewOpts()),
+      id => { state.style.markerFrame = id; });
 
     // ロゴの下地とラベルの下地は同じ形の一覧から選ぶ
-    function buildBackdropGrid(hostId, current, pick) {
-      const host = $(hostId);
-      if (!host) return;
-      host.innerHTML = '';
-      A.BACKDROP_SHAPES.forEach(f => {
-        const b = el('button', { class: 'shape-btn', type: 'button', title: f.name });
-        setActive(b, current === f.id);
-        b.dataset.id = f.id;
-        const holder = el('div', { class: 'preview-holder' });
-        holder.innerHTML = window.QRStyle.backdropPreview(f.id);
-        b.appendChild(holder);
-        b.appendChild(el('i', null, f.name));
-        b.addEventListener('click', () => {
-          pick(f.id);
-          state.presetName = '';
-          syncShapeActive();
-          syncPresetActive();
-          update();
-        });
-        host.appendChild(b);
-      });
-    }
+    buildShapeGrid('logo-backdrop-grid', A.BACKDROP_SHAPES,
+      () => state.style.logo.backdrop, S.backdropPreview,
+      id => { state.style.logo.backdrop = id; });
 
-    buildBackdropGrid('logo-backdrop-grid', state.style.logo.backdrop, id => {
-      state.style.logo.backdrop = id;
-    });
-    buildBackdropGrid('frame-backdrop-grid', state.style.frame && state.style.frame.backdrop, id => {
-      state.style.frame.backdrop = id;
-    });
+    buildShapeGrid('frame-backdrop-grid', A.BACKDROP_SHAPES,
+      () => frame().backdrop, S.backdropPreview,
+      id => { state.style.frame.backdrop = id; });
 
     // 枠線の種類。見本は本番と同じ描画コードから起こす
-    const lineHost = $('frame-line-grid');
-    if (lineHost) {
-      lineHost.innerHTML = '';
-      A.FRAME_LINES.forEach(f => {
-        const b = el('button', { class: 'shape-btn', type: 'button', title: f.name });
-        setActive(b, !!(state.style.frame && state.style.frame.line === f.id));
-        b.dataset.id = f.id;
-        const holder = el('div', { class: 'preview-holder' });
-        holder.innerHTML = window.QRStyle.linePreview(f.id);
-        b.appendChild(holder);
-        b.appendChild(el('i', null, f.name));
-        b.addEventListener('click', () => {
-          const ls = window.QRStyle.LINE_STYLES[f.id] || {};
-          state.style.frame.line = f.id;
-          state.style.frame.lineWidth = ls.stroke;
-          state.style.frame.lineWidth2 = ls.inner || 0.28;
-          state.presetName = '';
-          syncShapeActive();
-          buildFrameChips();
-          syncPresetActive();
-          // 太さの既定値と、二重線のときだけ出る2本目のスライダーを描き直す
-          syncControls();
-          update();
-        });
-        lineHost.appendChild(b);
-      });
-    }
+    buildShapeGrid('frame-line-grid', A.FRAME_LINES,
+      () => frame().line, S.linePreview,
+      id => {
+        const ls = S.LINE_STYLES[id] || {};
+        state.style.frame.line = id;
+        state.style.frame.lineWidth = ls.stroke;
+        state.style.frame.lineWidth2 = ls.inner || 0.28;
+      },
+      // 太さの既定値と、二重線のときだけ出る2本目のスライダーを描き直す
+      () => { buildFrameChips(); syncControls(); });
 
-    const eyeHost = $('eye-grid');
-    if (eyeHost) {
-      eyeHost.innerHTML = '';
-      A.MARKER_EYES.forEach(s => {
-        const b = el('button', { class: 'shape-btn', type: 'button', title: s.name });
-        setActive(b, state.style.markerEye === s.id);
-        b.dataset.id = s.id;
-        const holder = el('div', { class: 'preview-holder' });
-        holder.innerHTML = window.QRStyle.eyePreview(s.id);
-        b.appendChild(holder);
-        b.appendChild(el('i', null, s.name));
-        b.addEventListener('click', () => {
-          state.style.markerEye = s.id;
-          state.presetName = '';
-          syncShapeActive();
-          updateFrameGridPreviews();
-          syncPresetActive();
-          update();
-        });
-        eyeHost.appendChild(b);
-      });
-    }
+    buildShapeGrid('eye-grid', A.MARKER_EYES,
+      () => state.style.markerEye, S.eyePreview,
+      id => { state.style.markerEye = id; },
+      // マーカー枠の見本は目の形を映して描くので、こちらも起こし直す
+      updateFrameGridPreviews);
 
-    const cellName = (A.CELL_SHAPES.find(s => s.id === state.style.cell) || {}).name || '';
-    const hintShape = $('hint-shape');
-    if (hintShape) hintShape.textContent = cellName;
+    syncShapeHint();
   }
 
   const MULTI_PALETTES = [
@@ -1910,9 +1790,7 @@
       b.appendChild(renderIconSvg(icon, uidPrefix));
       b.addEventListener('click', () => {
         onPick(icon);
-        Array.prototype.forEach.call(host.children, child => {
-          setActive(child, child.dataset.id === icon.id);
-        });
+        eachSegButton(host, child => setActive(child, child.dataset.id === icon.id));
         state.presetName = '';
         syncControls();
         update();
@@ -2044,15 +1922,45 @@
   }
 
   // 読み込んだデザインを画面に載せる。アイコンの実体は id から引き直す。
-  function applyStyle(styleIn, name) {
+  // 見た目をまるごと差し替える唯一の入口。テンプレート・マイテンプレート・
+  // 共有リンクのどれから来ても、ここを通して同じ後始末（値の均し・グリッドの
+  // 組み直し・履歴への確定）をする。経路ごとに手で並べると、片方にだけ
+  // buildIconGrid を書き忘れて一覧の選択が古いまま残る、といったズレが出る。
+  //   opts.minVersion … セルの密度は style ではなく state 側なので別で受ける
+  //   opts.keepLogo   … 渡された style がロゴに触れていないときだけ、
+  //                     いま置いてある画像／文字ロゴを残す
+  function applyStyle(styleIn, name, opts) {
+    const o = opts || {};
     const incoming = JSON.parse(JSON.stringify(styleIn || {}));
     if (incoming.logo) delete incoming.logo.iconData;
     if (incoming.frame) {
       delete incoming.frame.iconData;
       delete incoming.frame.topIconData;
     }
+
+    // 残すなら、差し替える前に控えておく
+    const cur = state.style.logo || {};
+    const keepSrc = o.keepLogo && !incoming.logo && cur.type === 'image' ? cur.src : '';
+    const keepText = o.keepLogo && !incoming.logo && cur.type === 'text' ? cur.text : '';
+
+    // merge は入れ物を必ず写して返すので、DEFAULTS もテンプレートの定義も
+    // 返り値経由では書き換わらない（写しを作ってから渡す必要はない）
     state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, incoming);
+
+    // logo を書いたテンプレート（ミニマルなど）は「ロゴなし」まで含めて指定なので、
+    // そちらを尊重する。触れていないときだけ、ユーザーの置きものを戻す。
+    if (keepSrc) {
+      state.style.logo.type = 'image';
+      state.style.logo.src = keepSrc;
+    } else if (keepText) {
+      state.style.logo.type = 'text';
+      state.style.logo.text = keepText;
+    }
+
+    // 範囲外の値や古い形のキーを均す。まるごと差し替える経路は
+    // 復元・undo と同じように、ここを必ず通す
     sanitizeStyle(state.style);
+    if (o.minVersion !== undefined) state.minVersion = o.minVersion;
     state.presetName = name || '';
     syncControls();
     buildShapeGrids();
@@ -2199,12 +2107,18 @@
   // ------------------------------------------------------------------
   const asEl = x => (typeof x === 'string' ? $(x) : x);
 
+  // セグメントやタブの子ボタンを順に触る。children は HTMLCollection なので
+  // forEach を持たない。要素が無いページでは黙って何もしない。
+  // 押したときに何をするかは呼び出し側ごとに違う（出力設定はテンプレート名を
+  // 消してはいけない、など）ので、ここは回すところだけを引き受ける。
+  function eachSegButton(host, fn) {
+    const el = asEl(host);
+    if (!el) return;
+    Array.prototype.forEach.call(el.children, fn);
+  }
+
   function setSeg(hostId, value, attr) {
-    const host = asEl(hostId);
-    if (!host) return;
-    Array.prototype.forEach.call(host.children, b => {
-      setActive(b, b.dataset[attr] === value);
-    });
+    eachSegButton(hostId, b => setActive(b, b.dataset[attr] === value));
   }
 
   // 色パネル1枚ぶんの表示を、その対象の塗りに合わせる
@@ -2331,9 +2245,8 @@
   }
 
   // ラベルの位置。qr-style.js が受ける3通りをそのまま返す（画面の並びと対）。
-  // frame を渡せば、いま画面に出ていない style（一括生成の作業用など）も測れる。
-  function framePosOf(frame) {
-    const p = (frame || state.style.frame || {}).pos;
+  function framePosOf() {
+    const p = (state.style.frame || {}).pos;
     return (p === 'top' || p === 'both') ? p : 'bottom';
   }
 
@@ -2457,11 +2370,9 @@
     setSeg('frame-font-seg', (s.frame && s.frame.font) || 'sans', 'font');
 
     // アイコン
-    if ($('frame-icon-tabs')) {
-      Array.prototype.forEach.call($('frame-icon-tabs').children, t => {
-        setActive(t, t.dataset.group === (state.frameIconGroup || 'brand'));
-      });
-    }
+    eachSegButton('frame-icon-tabs', t => {
+      setActive(t, t.dataset.group === (state.frameIconGroup || 'brand'));
+    });
     const curIcon = (framePos === 'top' ? (s.frame.topIcon || s.frame.icon) : s.frame.icon) || 'si-instagram';
     syncShapeGridActive('frame-icon-grid', curIcon);
 
@@ -2539,8 +2450,6 @@
     // 市松模様はセルの色だけで決まる。描けたかどうかに関係なく合わせたいので、
     // 出口ごとに呼ばず入口で一度だけ。
     updateCanvasChecker();
-    // 一括生成の「フレームの文字にする列」も、フレームの種類しだいで
-    // 出したり引っ込めたりする。ここも描けたかどうかとは関係がない
 
     const text = payload();
     lastPayload = text;
@@ -2853,11 +2762,22 @@
     return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
   }
 
-  // いまの背景（白・透明・セル追従まで解いたあと）の実際の色
+  // 読ませるときに敷く紙の色。書き出した絵は透けたまま渡されるので、
+  // どこかで不透明にしないとデコーダは透明部分を真っ黒として読む。
+  const PAPER = '#FFFFFF';
+
+  // いまの背景（白・透明・セル追従まで解いたあと）の実際に地として描かれる色。
+  // 「セルの色」や「白」は指定でしかないので resolvePaint で解いてから訊く。
+  // 透過スライダーで抜いたぶんは紙が透けるので、そのぶん白へ寄せる。
+  // 透明（paintColor が null）は、読ませるときも見るときも白い紙の上とみなす。
+  //
+  // ここを不透明の色のまま返すと、透過 100%（＝何も描かれない）の背景でも
+  // 紙をその色で塗ってしまい、「背景＝セルの色」や「セルと同じグラデーション」
+  // では絵の全面がセルと同色になって、必ず読み取りに失敗していた。
   function resolvedBgHex() {
     const bg = window.QRStyle.resolvePaint(state.style.bg, state.style.fg);
     const c = window.QRStyle.paintColor(bg);
-    if (!c || bg.type === 'none') return '#FFFFFF';
+    if (!c || bg.type === 'none') return PAPER;
     const tr = bg.transparency !== undefined ? Number(bg.transparency) : 0;
     return window.QRStyle.overWhite(c, (100 - tr) / 100);
   }
@@ -3008,24 +2928,6 @@
     return m ? parseFloat(m[1]) : 41;
   }
 
-  // 読ませるときに敷く紙の色。書き出した絵は透けたまま渡されるので、
-  // どこかで不透明にしないとデコーダは透明部分を真っ黒として読む。
-  const PAPER = '#FFFFFF';
-
-  // 足りない余白を補うときの色。実際に地として描かれる色を使う。
-  // 「セルの色」や「白」は指定でしかないので resolvePaint で解いてから訊く。
-  // 透過スライダーで抜いたぶんは紙が透けるので、そのぶん白へ寄せる。
-  // ここを不透明の色のまま返すと、透過 100%（＝何も描かれない）の背景でも
-  // 紙をその色で塗ってしまい、「背景＝セルの色」や「セルと同じグラデーション」
-  // では絵の全面がセルと同色になって、必ず読み取りに失敗していた。
-  // 透明（paintColor が null）は、読ませるときは白い紙の上とみなす。
-  function padColor() {
-    const bg = window.QRStyle.resolvePaint(state.style.bg, state.style.fg);
-    const c = window.QRStyle.paintColor(bg);
-    if (!c || bg.type === 'none') return PAPER;
-    const tr = bg.transparency !== undefined ? Number(bg.transparency) : 0;
-    return window.QRStyle.overWhite(c, (100 - tr) / 100);
-  }
 
   // デコーダを読み込んだあとの検査は数十msで終わる。結果が前と同じだと画面が
   // まったく動かず、走ったのかどうか分からないので、終わるたびに枠を短く光らせ、
@@ -3063,7 +2965,7 @@
       return;
     }
     const p = (async () => {
-      const pad = padColor();
+      const pad = resolvedBgHex();
       setVerdict('na', 'チェック中…', '', [], true);
       syncVerifyButton(true);
       try {
@@ -4436,10 +4338,10 @@
     }
   }
 
+  // 見た目を変えるセグメント。押せばテンプレートから外れたことになるので、
+  // presetName を消して描き直すところまでが一式。
   function bindSeg(hostId, attr, apply) {
-    const host = asEl(hostId);
-    if (!host) return;
-    Array.prototype.forEach.call(host.children, b => {
+    eachSegButton(hostId, b => {
       b.addEventListener('click', () => {
         apply(b.dataset[attr]);
         state.presetName = '';
@@ -4600,12 +4502,10 @@
   // マーカーの枠と目の色パネルは中身が同じなので、縦に２枚並べず切り替えで見せる。
   // 状態は持たない（どちらの色も常に生きている）ただの表示切り替え。
   function wireMarkerColorToggle() {
-    const seg = $('marker-color-seg');
-    if (!seg) return;
-    Array.prototype.forEach.call(seg.children, b => {
+    eachSegButton('marker-color-seg', b => {
       b.addEventListener('click', () => {
         const part = b.dataset.part;
-        Array.prototype.forEach.call(seg.children, o => setActive(o, o === b));
+        eachSegButton('marker-color-seg', o => setActive(o, o === b));
         ['frame', 'eye'].forEach(scope => {
           const panel = colorPanel(scope);
           if (panel) panel.classList.toggle('hidden', scope !== part);
@@ -4624,16 +4524,13 @@
     });
 
     // ---- 仕上がりの単位（画面向けの px と、印刷向けの mm） ----
-    const unitSeg = $('size-unit-seg');
-    if (unitSeg) {
-      Array.prototype.forEach.call(unitSeg.children, b => {
-        b.addEventListener('click', () => {
-          state.sizeUnit = b.dataset.unit === 'mm' ? 'mm' : 'px';
-          syncSizeUnit();
-          saveNow();
-        });
+    eachSegButton('size-unit-seg', b => {
+      b.addEventListener('click', () => {
+        state.sizeUnit = b.dataset.unit === 'mm' ? 'mm' : 'px';
+        syncSizeUnit();
+        saveNow();
       });
-    }
+    });
 
     const inMm = $('opt-print-mm');
     if (inMm) {
@@ -4657,16 +4554,13 @@
     }
 
     // ---- 圧縮 ----
-    const compressSeg = $('compress-seg');
-    if (compressSeg) {
-      Array.prototype.forEach.call(compressSeg.children, b => {
-        b.addEventListener('click', () => {
-          state.lossless = b.dataset.mode === 'lossless';
-          syncCompress();
-          saveNow();
-        });
+    eachSegButton('compress-seg', b => {
+      b.addEventListener('click', () => {
+        state.lossless = b.dataset.mode === 'lossless';
+        syncCompress();
+        saveNow();
       });
-    }
+    });
     const inQuality = $('opt-quality');
     if (inQuality) {
       inQuality.addEventListener('input', () => {
@@ -4763,21 +4657,18 @@
       }
     });
 
-    const frameIconTabs = $('frame-icon-tabs');
-    if (frameIconTabs) {
-      Array.prototype.forEach.call(frameIconTabs.children, b => {
-        b.addEventListener('click', () => {
-          state.frameIconGroup = b.dataset.group;
-          Array.prototype.forEach.call(frameIconTabs.children, t => setActive(t, t === b));
-          buildFrameIconGrid();
-          // 一覧を替えるとブランドカラーを出せるかどうかが変わる。
-          // 色パネルを組み直さないと、ベーシックのアイコンに
-          // 「ブランドカラー」が残ったままになる。
-          syncControls();
-          update();
-        });
+    eachSegButton('frame-icon-tabs', b => {
+      b.addEventListener('click', () => {
+        state.frameIconGroup = b.dataset.group;
+        eachSegButton('frame-icon-tabs', t => setActive(t, t === b));
+        buildFrameIconGrid();
+        // 一覧を替えるとブランドカラーを出せるかどうかが変わる。
+        // 色パネルを組み直さないと、ベーシックのアイコンに
+        // 「ブランドカラー」が残ったままになる。
+        syncControls();
+        update();
       });
-    }
+    });
 
     bindSeg('frame-font-seg', 'font', v => {
       state.style.frame.font = v;
@@ -4796,13 +4687,16 @@
       });
     }
 
-    Array.prototype.forEach.call($('icon-tabs').children, b => {
+    eachSegButton('icon-tabs', b => {
       b.addEventListener('click', () => {
         state.iconGroup = b.dataset.group;
-        Array.prototype.forEach.call($('icon-tabs').children, x => setActive(x, x === b));
+        eachSegButton('icon-tabs', x => setActive(x, x === b));
         buildIconGrid();
+        // 一覧を替えるとブランドカラーを出せるかどうかが変わり、syncControls が
+        // logo.paint の 'brand' を 'auto' へ寄せる。描き直さないと、画面だけ
+        // ブランド色のまま取り残される（ラベル側の frame-icon-tabs と同じ理由）。
         syncControls();
-        saveNow();
+        update();
       });
     });
 
@@ -4825,16 +4719,13 @@
 
 
     // ---- プレビュー市松模様の明暗切り替え ----
-    const checkerToggle = $('checker-toggle');
-    if (checkerToggle) {
-      Array.prototype.forEach.call(checkerToggle.children, btn => {
-        btn.addEventListener('click', () => {
-          state.previewChecker = btn.dataset.checker || 'auto';
-          updateCanvasChecker();
-          saveNow();
-        });
+    eachSegButton('checker-toggle', btn => {
+      btn.addEventListener('click', () => {
+        state.previewChecker = btn.dataset.checker || 'auto';
+        updateCanvasChecker();
+        saveNow();
       });
-    }
+    });
 
     // ---- マイテンプレート ----
     const saveName = $('my-save-name');
@@ -4938,12 +4829,11 @@
         }
         const optCompress = $('opt-compress');
         if (optCompress && !optCompress.classList.contains('hidden')) {
-          optCompress.classList.add('hidden');
-          const compressBtn = document.querySelector('[data-drawer="opt-compress"]');
-          if (compressBtn) {
-            compressBtn.setAttribute('aria-expanded', 'false');
-            compressBtn.focus();
-          }
+          // closeCompress を通す。class を直接落とすと compressFor と
+          // ボタンの is-open / aria-expanded が開いたままで取り残される。
+          const opener = $('btn-' + (compressFor || 'avif'));
+          closeCompress();
+          if (opener) opener.focus();
           return;
         }
         if (bulk.running) {
@@ -5207,7 +5097,7 @@
     $('currentYear').textContent = new Date().getFullYear();
 
     restore();
-    Array.prototype.forEach.call($('icon-tabs').children, b => {
+    eachSegButton('icon-tabs', b => {
       setActive(b, b.dataset.group === state.iconGroup);
     });
 

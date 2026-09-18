@@ -7,7 +7,7 @@
  *
  *   QRXlsx.canRead()            → この環境で読めるか（DecompressionStream の有無）
  *   QRXlsx.build(opts)          → Blob（ダウンロード用のひな形）
- *   QRXlsx.read(arrayBuffer)    → Promise<{ rows, sheet }>
+ *   QRXlsx.read(arrayBuffer)    → Promise<{ sheets: [{ name, hidden, rows }] }>
  *
  * 書き出しは無圧縮で詰める（QRBulk.zip と同じ考え方で、そのまま流用する）。
  * 読み込みだけは相手が圧縮してくるので、DecompressionStream で展開する。
@@ -528,7 +528,6 @@
   global.QRXlsx = {
     canRead: canRead,
     build: build,
-    read: read,
-    colName: colName
+    read: read
   };
 })(window);

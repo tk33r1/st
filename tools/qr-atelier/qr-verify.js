@@ -234,6 +234,9 @@
     // だけ動かす。
     const info = (e, st) => ({ id: e.id, name: e.name, note: e.note,
       severity: e.severity, onFail: e.onFail, state: st });
+    // 「確かめていない」の形。動かせたデコーダが 0 本のときは、理由が何であれ
+    // ここに集約する（ran 0 と level 'na' がばらけると app.js 側で言い分けられない）。
+    const naResult = engines => ({ engines: engines, ran: 0, passed: 0, level: 'na', mismatch: false });
     const use = [];
     const dead = [];   // 取得や初期化に失敗したもの。「読めなかった」とは別物として扱う。
     for (const e of ENGINES) {
@@ -253,10 +256,7 @@
     }
     // 動かせるものが一つも無い。読み込めなかった顔ぶれは持ち帰る（黙って消すと
     // 「確かめていない」ことが誰にも伝わらない）。
-    if (!use.length) {
-      return { engines: dead.map(e => info(e, 'unavailable')),
-               ran: 0, passed: 0, level: 'na', mismatch: false };
-    }
+    if (!use.length) return naResult(dead.map(e => info(e, 'unavailable')));
 
     // エンジンごとの途中経過。別々の表を同じ id で並行管理しない。
     const stats = {};
@@ -302,10 +302,7 @@
     }
 
     // 一枚も描けなかったのに「読めません」と言うのは嘘になる。
-    if (!drew) {
-      return { engines: dead.map(e => info(e, 'unavailable')),
-               ran: 0, passed: 0, level: 'na', mismatch: false };
-    }
+    if (!drew) return naResult(dead.map(e => info(e, 'unavailable')));
 
     // 実際に動いたデコーダだけを結果に数える。全部だんまりだったもの、毎回例外を
     // 投げたもの（＝wasm が取れていないなど）は「読めなかった」ではないので外す。
@@ -331,7 +328,7 @@
 
     const engines = ran.map(e => info(e, stats[e.id].state))
       .concat(dead.map(e => info(e, 'unavailable')));
-    if (!ran.length) return { engines: engines, ran: 0, passed: 0, level: 'na', mismatch: false };
+    if (!ran.length) return naResult(engines);
     const passed = ran.filter(e => stats[e.id].state === 'ok').length;
 
     // ng は「どの解像度でも一度も読めなかった」ときだけ。一部の解像度で

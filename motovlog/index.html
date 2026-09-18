@@ -1242,6 +1242,97 @@
       color: var(--ink);
     }
 
+    .shop-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dealer-video {
+      display: grid;
+      grid-template-columns: minmax(300px, .9fr) 1.1fr;
+      gap: clamp(28px, 5vw, 72px);
+      align-items: center;
+      padding: 28px;
+      border: 1px solid var(--line-dark);
+      background: rgba(255, 255, 255, .025);
+    }
+
+    .dealer-video-media {
+      min-width: 0;
+      border: 1px solid rgba(255, 255, 255, .24);
+      background: #07090d;
+    }
+
+    #dealerVideoBtn {
+      background-image: url('../images/contents/motovlog-dealer-liberty-review.jpg');
+    }
+
+    /* サムネイル自体がタイトルを持つため、文言は右カラムに逃がし再生ボタンのみ重ねる */
+    #dealerVideoBtn::before {
+      background: rgba(5, 7, 10, .34);
+    }
+
+    #dealerVideoBtn:hover::before {
+      background: rgba(5, 7, 10, .18);
+    }
+
+    #dealerVideoBtn .video-play {
+      width: 62px;
+      height: 62px;
+      transition: transform .25s var(--ease);
+    }
+
+    #dealerVideoBtn:hover .video-play {
+      transform: scale(1.08);
+    }
+
+    .dealer-video-copy {
+      display: flex;
+      gap: 16px;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .dealer-video-tag {
+      color: var(--red);
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .18em;
+    }
+
+    .dealer-video-title {
+      color: #fff;
+      font-family: var(--sans);
+      font-size: clamp(15px, 1.7vw, 20px);
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .dealer-video-desc {
+      color: rgba(255, 255, 255, .52);
+      font-size: 12px;
+      line-height: 1.9;
+    }
+
+    .dealer-video-credit {
+      color: rgba(255, 255, 255, .38);
+      font-size: 10px;
+      line-height: 1.85;
+    }
+
+    .dealer-video-credit a {
+      border-bottom: 1px solid rgba(255, 255, 255, .28);
+      color: rgba(255, 255, 255, .7);
+    }
+
+    .dealer-video-credit a:hover {
+      border-bottom-color: #fff;
+      color: #fff;
+    }
+
     #themes {
       background: #ddd5c8;
       color: var(--ink);
@@ -1589,7 +1680,8 @@
       .spec-box:nth-child(2) { border-right: 0; }
       .feature-chip:nth-child(-n+2),
       .spec-box:nth-child(-n+2) { border-bottom: 1px solid var(--line-dark); }
-      .shop-card { grid-template-columns: .9fr 1.1fr; }
+      .shop-card,
+      .dealer-video { grid-template-columns: .9fr 1.1fr; }
     }
 
     @media (max-width: 720px) {
@@ -1687,6 +1779,11 @@
       .side-photo-wrap { min-height: 230px; margin-bottom: 25px; }
       .shop-title { font-size: 17px; }
       .shop-btn { width: 100%; }
+      .dealer-video {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 22px;
+        padding: 18px;
+      }
       .themes-grid { grid-template-columns: 1fr; }
       .theme-box { min-height: 240px; }
       .theme-icon { margin-bottom: 36px; }
@@ -1865,8 +1962,8 @@
           <div class="story-card">
             <h3 class="story-title">「人生にはハーレーが必要だ」—— 建国250周年 Liberty Edition との運命</h3>
             <p class="story-body">
-              「これ以上周囲に心配をかけられない」と一度はバイクを諦めかけたが、魂の底から湧き上がる衝動は抑えられなかった。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ。アメリカ建国250周年を記念して日本にわずか39台のみ割り当てられた希少な『Heritage
-              Classic Liberty Edition』を迎え、奇跡のリターンを果たす。
+              「これ以上周囲に心配をかけられない」と一度はバイクを諦めかけたが、魂の底から湧き上がる衝動は抑えられなかった。右橈骨のプレートを抜く手術を終えた翌日、退院したその足で東久留米店へ。右手の出血もまだ止まらないまま「やっぱりハーレーのライダーに戻りたい」と伝えると、アメリカ建国250周年を記念して日本にわずか39台のみ割り当てられた『Heritage
+              Classic Liberty Edition』の抽選受付が、ちょうど始まっているところだという。——結果は、当選。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ、奇跡のリターンを果たす。
             </p>
           </div>
           <div class="story-date-wrap"><span class="story-date">2026</span></div>
@@ -2004,11 +2101,48 @@
               ナイトスターの新車購入時から事故の対応、そして今回の限定Liberty Editionへのリターンに至るまで、親身に支えてくださった正規ディーラー。<br><br>
               退院後に店舗へ伺った際も、スタッフ・メカニックの皆様が総出で快気と再出発を祝ってくださいました。このチャンネルは、東久留米店をはじめとする愛あるコミュニティへの感謝とともに発信されています。
             </div>
-            <a href="https://harleydavidson-higashikurume.com/" target="_blank" rel="noopener noreferrer"
-              class="shop-btn">
-              <span>ハーレーダビッドソン東久留米 公式サイト</span>
-              <span>↗</span>
-            </a>
+            <div class="shop-links">
+              <a href="https://harleydavidson-higashikurume.com/" target="_blank" rel="noopener noreferrer"
+                class="shop-btn">
+                <span>公式サイト</span>
+                <span>↗</span>
+              </a>
+              <a href="https://lin.ee/4Agyc7T" target="_blank" rel="noopener noreferrer" class="shop-btn">
+                <span>公式LINE</span>
+                <span>↗</span>
+              </a>
+              <a href="https://www.instagram.com/hd.higashikurume/" target="_blank" rel="noopener noreferrer"
+                class="shop-btn">
+                <span>公式Instagram</span>
+                <span>↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dealer review video (third-party, click-to-load) -->
+        <div class="dealer-video">
+          <div class="dealer-video-media">
+            <button type="button" class="video-consent" id="dealerVideoBtn"
+              aria-label="ハーレー東久留米による2026 ヘリテイジクラシック リバティエディション紹介動画をYouTubeで再生">
+              <span class="video-play" aria-hidden="true">▶</span>
+            </button>
+            <div class="video-frame" id="dealerVideoFrame" hidden></div>
+          </div>
+          <div class="dealer-video-copy">
+            <span class="dealer-video-tag">DEALER REVIEW</span>
+            <p class="dealer-video-title">
+              【ハーレー】世界2,500台だけ！建国250年のリバティ・エディションがかっこよすぎた【2026 ヘリテイジクラシック】
+            </p>
+            <p class="dealer-video-desc">
+              ハーレー東久留米の公式チャンネルより、EFIチューニングスペシャリストの伊藤 マコトさんによる Liberty Edition
+              の実車解説。コバルトブルー風防や星条旗 No.1 ロゴといった専用装備を、写真では追いきれない細部まで紹介してくださっています。<br><br>
+              動画内では触れられていませんが、ここで紹介されている個体が、そのまま私の愛機です。無料キャンペーンを利用して、のちに伊藤さんご本人に3拍子チューニングしていただきました。
+            </p>
+            <p class="dealer-video-credit">
+              動画提供：<a href="https://www.youtube.com/@alfahdito1" target="_blank"
+                rel="noopener noreferrer">ハーレー東久留米【ハーレーダビッドソン カスタム】</a>
+            </p>
           </div>
         </div>
       </div>
@@ -2133,6 +2267,24 @@
 
   <!-- Channel Experience & 360° Viewer -->
   <script>
+    // ディーラー紹介動画（他チャンネル）。クリックされるまでYouTubeへは接続しない。
+    (function initDealerVideo() {
+      const button = document.getElementById('dealerVideoBtn');
+      const frame = document.getElementById('dealerVideoFrame');
+      if (!button || !frame) return;
+      button.addEventListener('click', () => {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube-nocookie.com/embed/Rn1hjVl24g0?autoplay=1';
+        iframe.title = '【ハーレー】世界2,500台だけ！建国250年のリバティ・エディションがかっこよすぎた【2026 ヘリテイジクラシック】';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.allowFullscreen = true;
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        frame.replaceChildren(iframe);
+        frame.hidden = false;
+        button.hidden = true;
+      }, { once: true });
+    })();
+
     (function initChannelExperience() {
       // 公開後はこの設定だけを更新する。
       const config = {

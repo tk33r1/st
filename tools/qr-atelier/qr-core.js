@@ -2,14 +2,15 @@
  *
  * 「モデル2のQRコードを組み立てて、明暗のマス目を返す」ところまでが担当。
  * 見た目（セル形状・色・ロゴ）は qr-style.js が受け持つので、ここでは
- * 一切描画しない。返す modules / func をもとに好きに描けばよい。
+ * 一切描画しない。at(x, y) でマス目を引いて好きに描けばよい。
  *
  * 外部ライブラリなし。ブラウザ内で完結する。
  *
- *   const qr = QRCore.encode('https://tk.st/', { ec: 'H' });
+ *   const qr = QRCore.encode('https://tk.st/', { ec: 'H', minVersion: 1 });
+ *   qr.version         → 型番（1〜40）
+ *   qr.ec              → 誤り訂正レベル
  *   qr.size            → 一辺のモジュール数
  *   qr.at(x, y)        → true なら暗モジュール
- *   qr.isFunction(x,y) → true なら機能パターン（位置検出・位置合わせ・タイミング等）
  */
 (function (global) {
   'use strict';
@@ -479,15 +480,14 @@
     const opts = options || {};
     const ec = EC[opts.ec] ? opts.ec : 'M';
     const minVersion = Math.min(40, Math.max(1, opts.minVersion || 1));
-    const mode = opts.mode && MODE_INDICATOR[opts.mode] ? opts.mode : detectMode(text);
+    const mode = detectMode(text);
     const bytes = mode === 'byte' ? toBytes(text) : new Uint8Array(0);
 
     // 収まる最小のバージョンを探す（文字数指示子の長さが版で変わるので毎回計算）
     let version = 0;
-    let usedBits = 0;
     for (let v = minVersion; v <= 40; v++) {
       const need = 4 + countBits(mode, v) + payloadBits(mode, text, bytes);
-      if (need <= dataCapacityBits(v, ec)) { version = v; usedBits = need; break; }
+      if (need <= dataCapacityBits(v, ec)) { version = v; break; }
     }
     if (!version) {
       const e = new Error('データが大きすぎます');
@@ -500,17 +500,15 @@
     drawFunctionPatterns(m, ec);
     drawCodewords(m, codewords);
 
-    // マスク選択：指定がなければ8通り試して減点の小さいものを採る
-    let bestMask = typeof opts.mask === 'number' ? opts.mask : -1;
-    if (bestMask < 0 || bestMask > 7) {
-      let best = Infinity;
-      for (let mask = 0; mask < 8; mask++) {
-        applyMask(m, mask);
-        drawFormatBits(m, ec, mask);
-        const p = penalty(m);
-        if (p < best) { best = p; bestMask = mask; }
-        applyMask(m, mask); // 戻す（XORなので同じ操作で復元できる）
-      }
+    // マスク選択：8通り試して減点の小さいものを採る
+    let bestMask = 0;
+    let best = Infinity;
+    for (let mask = 0; mask < 8; mask++) {
+      applyMask(m, mask);
+      drawFormatBits(m, ec, mask);
+      const p = penalty(m);
+      if (p < best) { best = p; bestMask = mask; }
+      applyMask(m, mask); // 戻す（XORなので同じ操作で復元できる）
     }
     applyMask(m, bestMask);
     drawFormatBits(m, ec, bestMask);
@@ -519,15 +517,8 @@
     return {
       version: version,
       ec: ec,
-      mode: mode,
-      mask: bestMask,
       size: size,
-      modules: m.modules,
-      func: m.func,
-      capacityBits: dataCapacityBits(version, ec),
-      usedBits: usedBits,
-      at: (x, y) => m.modules[y * size + x] === 1,
-      isFunction: (x, y) => m.func[y * size + x] === 1
+      at: (x, y) => m.modules[y * size + x] === 1
     };
   }
 
