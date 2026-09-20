@@ -1,5 +1,167 @@
 [
   {
+    "date": "20260921",
+    "title": "2026年9月21日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セブン-イレブンが宅配アプリ『7NOW』に予約機能を搭載。コンビニデリバリーが「即時配送」から「計画購買」へ広がり、店舗在庫とピッキング人員を時間軸で平準化できるかが新たな競争軸となる。 キャッシュレスが進む一方で1円硬貨が増産される逆説は、現金とキャッシュレスが長期併存する現実を示す。釣銭・硬貨在庫という見えないコストが、セミセルフレジや釣銭機への投資判断を左右する。",
+    "count": 8,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "セブン-イレブンが宅配アプリ『7NOW』に予約機能を搭載。コンビニデリバリーが「即時配送」から「計画購買」へ広がり、店舗在庫とピッキング人員を時間軸で平準化できるかが新たな競争軸となる。",
+      "キャッシュレスが進む一方で1円硬貨が増産される逆説は、現金とキャッシュレスが長期併存する現実を示す。釣銭・硬貨在庫という見えないコストが、セミセルフレジや釣銭機への投資判断を左右する。",
+      "海外ではPB、ポップアップ、スポーツカテゴリー拡張など「価格以外の納得感」と顧客接点の設計が成長ドライバーに。AIやデジタルツールはPoCを越え、既存業務への実装フェーズへ移行している。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "セブン-イレブン、宅配アプリ『7NOW』に予約機能を新搭載",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-04",
+        "summary": "セブン-イレブンが、宅配アプリ『7NOW』に予約機能を新たに搭載したと発表した。利用者が事前に商品や受け取り日時を指定して注文できるようにし、店舗側の在庫とピッキング負荷を平準化する狙いとみられる。即時配送に加えて計画的な購買に対応することで、アプリの利用頻度と客単価の底上げを図る。デリバリーとアプリ会員の囲い込みを各社が競う中、注文の予約化はオペレーション効率と顧客体験の両立を狙う一手となる。",
+        "why_it_matters": "即時配送は、注文が特定時間に集中し店舗の人員と在庫が瞬間的にひっ迫するのが課題だった。予約機能は需要を時間軸で平準化し、欠品やピッキング渋滞を抑える。アプリを“購買計画の入口”に変える動きは、ECと店舗の在庫・人員を一体で最適化するomni戦略の本丸であり、他チェーンの追随を促す。",
+        "tags": [
+          "コンビニ",
+          "デリバリー",
+          "アプリ会員",
+          "需要平準化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5MclNUQ3FubEZPV0NIQ3BJUUF4RDRkdG1sd2ZBamtSRFk4ZmhwcHZPeFNRVmRQOGtXQlBfT0wxWUstcDFmZG8tUEx1ZzlPNExVQ0FV?oc=5",
+        "source_pub_ts": 1789888785
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「1円硬貨を増産」の謎、キャッシュレス化でも減らない現金需要",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-10",
+        "summary": "キャッシュレス決済が普及する一方で、1円硬貨の増産に動く背景を読み解く報道。少額決済や現金併用の習慣が根強く、硬貨の流通在庫の偏りや回収不足が増産につながっているとみられる。決済手段の多様化が進んでも現金需要は消えず、現金とキャッシュレスが併存し続ける実態が浮かび上がる。生活者の決済行動と店舗オペレーションの間にあるギャップを突いた話題として関心を集めている。",
+        "why_it_matters": "キャッシュレス化は“現金消滅”ではなく、併存を前提とした設計問題である。釣り銭や硬貨在庫の物流・管理コストは小売にとって見えにくい負担であり、セミセルフレジ、釣銭機、硬貨レス決済への投資判断に直結する。生活者のリアルな決済行動を起点に店舗設計を考える視点が問われる。",
+        "tags": [
+          "キャッシュレス",
+          "現金",
+          "釣銭機",
+          "生活者行動"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1aT3B6YzhRZWplWjNWUDBwR0VZZVkzODk0ZktKZVJjOTVLeVpSZVhyR1hkM0RhcGNXVXBnaGR3YXZ0c0Q3TmJkR0NrVU1QYXBZc1JTSEZFWk5BY1huZ2g2ZG9JQmJpbXB60gFoQVVfeXFMTVpPcHpjOFFlamVaM1ZQMHBHRVllWTM4OTRmS0plUmM5NUt5WlJlWHJHWGQzRGFwY1dVcGdoZHdhdnRzRDdOYmRHQ2tVTVBhcFlzUlNIRkVaTkFjWG5naDZkb0lCYmltcHo?oc=5",
+        "source_pub_ts": 1789858800
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "カインズ、AI×Slackで月17時間削減と売上向上を両立",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-15",
+        "summary": "カインズがAIとSlackを組み合わせた業務活用の実践例を紹介するオンデマンド配信が公開された。月17時間の工数削減と売上向上を同時に実現したとされ、現場からの問い合わせ対応や情報共有をAIが補助する仕組みが焦点となる。ホームセンターの店舗運営における人手不足対策と生産性向上の具体像として注目される内容で、導入効果と定着の要因が語られている。",
+        "why_it_matters": "AI活用は大規模システムの刷新より、既存のコミュニケーションツールに載せる方が現場に定着しやすい。属人的な問い合わせ対応をAIに移せば、ベテランの暗黙知を全店へ展開できる。店舗スタッフの時間を接客と売場づくりに戻す発想は、小売DXの実利を示す好例だ。",
+        "tags": [
+          "AI活用",
+          "業務効率化",
+          "ホームセンター",
+          "現場DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5PenJZR2NNOHpCZXN1VDg2dUQyNGFCekprckVZWUhoX1ZXVHBzaC1adTBsOHZ2d1JyYnBwTkZZb0pLZjJlT0dhdUVLcDVUUHc?oc=5",
+        "source_pub_ts": 1789776086
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "イオンタウンユーカリが丘に「TTG-MONSTAR」導入の「ARISEGATE」がオープン",
+        "original_title": "",
+        "source": "senken.co.jp",
+        "source_id": "JP-16",
+        "summary": "イオンタウンユーカリが丘に、店舗向けデジタルソリューション『TTG-MONSTAR』を導入した新業態『ARISEGATE』がオープンした。売場設計とデジタル接点を組み合わせ、来店客の体験価値を高める狙いとみられる。既存のショッピングセンター内に新フォーマットを投入する試みで、体験型リテールの潮流と、商業施設側のテナント戦略の変化を象徴する動きとして注目される。",
+        "why_it_matters": "既存SC内に、デジタル接点を前提とした新業態を投入する動きは、GMSの集客力再構築の試金石となる。設備投資を伴う店舗DXは単店では回収が難しいため、SC全体やチェーンへの横展開を前提とした設計かどうかが成否を分ける。テナントと施設のデータ連携が次の論点になる。",
+        "tags": [
+          "店舗DX",
+          "体験型リテール",
+          "ショッピングセンター",
+          "新業態"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQeGVabExxRmZLck1xcGpEWC1tY1I4eTRRT3VaTlR4MjZTc1dRdVE3TmJyMGJpQldtNzY2dTRDNHVldEg0Sl9kQmVWVDFlZkdYczFrRVAyaGJyaVFEUWxsWXhGVDFWVUNwWTRWbDBoSGlIMlpsdGhKY0h6dFdzM0N4MHhXeS1Sb0dHRnE5dUo5WmtQMVF5LS13Tm1yTW44TDdjUDJpdllOelR3RzR4U3c?oc=5",
+        "source_pub_ts": 1789768053
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "オーディーエス、リテールテックJAPANでNFCタブレットを展示",
+        "original_title": "",
+        "source": "山陽新聞",
+        "source_id": "JP-25",
+        "summary": "業務用タブレットのオーディーエスが、『リテールテックJAPAN』で人手不足と従業員の業務効率化をテーマにNFC対応タブレットを展示する。NFCによるかざし認証を活用し、店舗スタッフの端末操作や在庫確認、シフト管理などの負荷軽減を狙う。専用端末を必要としない汎用タブレットでの業務DX提案として、展示会での反響と導入事例の広がりが注目される。",
+        "why_it_matters": "店舗DXのボトルネックは専用ハードの高コストと現場の操作負荷にある。汎用タブレットとNFCの組み合わせなら、既存のスマホ決済や会員証のインフラを流用でき導入障壁を下げられる。人手不足が続く小売では、端末の共通化と投資対効果が導入可否を左右する論点になる。",
+        "tags": [
+          "NFC",
+          "タブレット",
+          "店舗DX",
+          "人手不足対策"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFA5eTl0dERhcVR3QnVLVl9jUDNLUmRLdWl3aTY5bGhpMmV3SGl2c0RrMHZWUGdkTkVJN2lCZE01RmJud1k5dzBpUzdIdDRtRTZCcUE?oc=5",
+        "source_pub_ts": 1789714800
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "オン、サッカー参入を前にエムバペと契約",
+        "original_title": "On signs Mbappé as it preps entry into soccer",
+        "source": "Retail Dive",
+        "source_id": "GL-03",
+        "summary": "スイス発のスポーツブランド「On」が、サッカー事業への本格参入を前に、フランス代表のキリアン・エムバペと契約したと報じられた。ランニング中心だったカテゴリーをチームスポーツへ広げ、世界的な知名度と自社EC・直営店をてこに市場を開拓する狙いだ。スター起用はブランド認知の向上だけでなく、競技特化型シューズの販売拡大を見据えた動きと位置づけられる。",
+        "why_it_matters": "DTCブランドが成長の次の段階で打つ定石は、カテゴリー拡張とスター起用の組み合わせだ。ランニングで築いた会員基盤とEC網を、巨大なサッカー市場へ転用できるかが問われる。ブランド単価の維持と在庫リスクの管理を両にらみする戦略であり、日本のスポーツ小売にも波及しうる。",
+        "tags": [
+          "DTC",
+          "スポーツブランド",
+          "カテゴリー拡張",
+          "ブランド戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNNzFMOFJWNlpKNHFoRXQtNE85R2JEcnQxRGNlajBWVWN3MTdIZ2dlQW5aLWdZQUJFTzA4U1J6QkdyWExQN0tkdkpEamVjZ2xaZ3EzeldQNTRadnBDaUs0SEw5TVdUbk5tVGw3S0NzQTFEaFlmX2xCVU9fOWl0V2EwQS1YSC02d0J2bWdOMlNjM0x2VjBmYVQ1NzBJS0c?oc=5",
+        "source_pub_ts": 1789746499
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "シュナックス、新たなイタリアンPBで「手頃な贅沢」を提案",
+        "original_title": "Schnucks offers ‘affordable indulgence’ with new Italian store brand",
+        "source": "Grocery Dive",
+        "source_id": "GL-05",
+        "summary": "米ミズーリ州を中心に展開するスーパー、シュナックスが、イタリアン料理をテーマにした新たなプライベートブランドを投入した。「手頃な贅沢」を訴え、節約志向が強まる中でも満足感を得たい消費者の需要を取り込む狙いだ。物価高が続く食品小売で、PBを軸に価格帯と体験価値の両立を図る戦略が鮮明になった事例として報じられている。",
+        "why_it_matters": "食品インフレ下では、安さ一辺倒より“納得感”の設計が売上を左右する。PBをカテゴリー単位の物語として作る手法は、NBとの差別化と粗利確保を同時に狙える。日本のスーパーがPB再編やリテールメディア活用を進めるうえでも示唆は大きい。",
+        "tags": [
+          "プライベートブランド",
+          "食品小売",
+          "価格戦略",
+          "PB"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQUFR2RmpfdTV2S2wzOTlaeXZ4eVQ4SDlreWdIZ2t3eFR3YkhmdkppaEh4eEJ3NHVCVG9MenJkLXo5dHlzSFpaYWRkbEtOZVJVS01IbFM2bjFiemZtemN4LTREWFdRT2Uya0xKNmVqS1VfZ0RjNjJucHVvUllrMDZReWdHNXR6dHFqaVo4TnRTUUIzd0RScmIyag?oc=5",
+        "source_pub_ts": 1789744414
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "ビヨンドヨガ、NYの新ポップアップで熱量高い顧客層を獲得",
+        "original_title": "Beyond Yoga captures ‘highly engaged’ NYC customer base with new pop-up",
+        "source": "Retail Dive",
+        "source_id": "GL-06",
+        "summary": "米アスレチックウェアブランドのビヨンドヨガが、ニューヨークで新たなポップアップストアを展開し、エンゲージメントの高い顧客層の獲得に成功したと報じられた。期間限定の実店舗を体験と会員獲得の接点として活用し、EC中心のブランドが都市部で直接顧客と接続する狙いだ。体験型の短期店舗が、顧客データの取得と地域コミュニティ形成の場として機能している点が注目される。",
+        "why_it_matters": "ポップアップは在庫リスクを抑えつつ、来店データと熱量の高い顧客を獲得できる投資効率の高い手法である。ECと実店舗の役割を“売る場”から“関係を深める場”へ組み替える発想は、日本のアパレルやDTCブランドにも十分応用可能だ。",
+        "tags": [
+          "ポップアップ",
+          "DTC",
+          "顧客体験",
+          "会員獲得"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxOWmlqRzZETlIwZVZHWmFBQUEtM1MzdlVVSzVqa25rbEJ1NU5zTTJzd25JTHFUckpIVlR5Y3RvRjlXNVF4R1g3UGE0cUFheWpHN0dJeldESEREeEFzX21FUERmRm5LdTVCQzlTMmxDS1kySkhXc012MUhTdHNIU3M1a2hDU2I?oc=5",
+        "source_pub_ts": 1789742899
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260920",
     "title": "2026年9月20日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "セルフレジ前提の店舗運営が生活者との摩擦を生み、コンビニの対面会計をめぐる投稿がSNSで賛否を呼んだ。省人化と顧客満足をどう両立させるかが店舗DXの焦点に浮上。 米メイシーズがAI在庫補充ツールを導入するなど、アパレル・食品で需要予測と自動補充の実装が加速。値引き在庫と欠品の同時削減が収益改善の主戦場になる。",
