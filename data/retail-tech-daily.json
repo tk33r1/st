@@ -1,5 +1,185 @@
 [
   {
+    "date": "20260922",
+    "title": "2026年9月22日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "店舗の「物理資産」をどう作り替えるかが国内の焦点に。セブン-イレブンの撤去設備リユース、アルビスの北陸初ZEB店舗、カインズの都市型小型店と、出店・改装の設計思想そのものがコストと環境の両面から見直されている。 海外では供給網とラストマイルへの投資競争が顕著。ウェグマンズの1.1億ドル物流投資、コストコの外部配送網活用、食品ECのコールドチェーン再設計など、『届ける力』が小売の競争軸として前面に出た。",
+    "count": 9,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "店舗の「物理資産」をどう作り替えるかが国内の焦点に。セブン-イレブンの撤去設備リユース、アルビスの北陸初ZEB店舗、カインズの都市型小型店と、出店・改装の設計思想そのものがコストと環境の両面から見直されている。",
+      "海外では供給網とラストマイルへの投資競争が顕著。ウェグマンズの1.1億ドル物流投資、コストコの外部配送網活用、食品ECのコールドチェーン再設計など、『届ける力』が小売の競争軸として前面に出た。",
+      "セルフレジ普及の陰で現金・硬貨対応の摩擦がSNSで再燃。決済のデジタル化が進むほど、入金方式やレジ周辺UXの設計が店舗DXの成否を左右する論点として浮上している。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "セブン-イレブン、撤去設備を再活用する「リマニキュービクル」を運用開始",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-24",
+        "summary": "セブン-イレブンが、店舗から撤去した設備を再活用する「リマニキュービクル」の運用を開始した。閉店や改装で不要になった冷蔵ケースや什器などを回収・整備し、新規出店や改装店舗で再利用する仕組み。設備の廃棄コストと新規調達コストを同時に削減し、環境負荷の低減にもつなげる。チェーン全体で循環させる店舗運営モデルとして注目される。",
+        "why_it_matters": "設備のリユースは単なる経費削減にとどまらず、店舗のライフサイクル全体を最適化する供給網改革だ。資材高騰と環境規制が進む中、大手チェーンが「作って捨てる」前提を崩せば、出店・改装のスピードと収益性が変わる。同様の動きは業界標準になり得る。",
+        "tags": [
+          "設備リユース",
+          "サーキュラー",
+          "店舗運営",
+          "コンビニ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9mY2F6bk5DeFdmV0h3YzlvXzVzTENMam55XzdlR255aC0ybkFEWEdWTmZCcVEwdzZ1RUFvQWRPTDhhWkpBOUdVWkZ5LV8yTFlFbVA4?oc=5",
+        "source_pub_ts": 1789959525
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "日本NCRのキャッシュレジスター史に見る、店舗決済インフラの変遷",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-22",
+        "summary": "連載「第182回 日本NCRのキャッシュレジスター」。日本NCRが手掛けてきたキャッシュレジスターの技術的変遷を振り返る内容で、POSシステムの黎明期から現在のセルフレジ・キャッシュレス対応に至るまで、店舗の決済インフラがどのように進化してきたかをたどる。レジという接点が小売デジタル化の起点であり続けてきたことを示す。",
+        "why_it_matters": "レジは長らく店舗の唯一のデータ接点であり、その進化がPOS・在庫・CRMの起点だった。セルフレジやキャッシュレスが当たり前になった今、決済端末の歴史を振り返ることは、スマートカートや生体認証決済など次世代の店舗接点を設計する座標軸になる。",
+        "tags": [
+          "POS",
+          "決済",
+          "セルフレジ",
+          "店舗DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFBsZkkybFViVkVZM1FTemdyXzNMd2I5ZHp6bEUtM29HY2pVU0dSUjdYcmRrTDExbWw0R3RKWWdQVkRqd19KRXFHME90OUhQQjJZWkFPddIBWkFVX3lxTE5IczdtSHRSWTFxVXdhWVZjR0haU3J2ZXlsU3pseEViRHJjSWI5cG9yalA2emllaWdueFB0UFVyNEY3TDlqNWVabnRtcXhHMTVTYlYyLWxCX1h5dw?oc=5",
+        "source_pub_ts": 1789966933
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "カインズ、都市部でリフォーム専門の小型店展開を加速 町田駅前に新店",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-15",
+        "summary": "カインズが都市部でリフォーム専門の小型店舗の展開を加速し、町田駅前の商業施設内に新店をオープンする。郊外の大型ホームセンターとは異なり、住まいのリフォーム提案に特化した都市型の小型フォーマットで、駅前立地の人流を取り込む狙い。既存の大型店網と補完しながら都市部の需要を掘り起こす戦略だ。",
+        "why_it_matters": "ホームセンターの成長余地が都市部へ移る中、小型・専門特化型の出店は「売り場の効率」より「接点の密度」を重く見る発想の転換だ。駅前でリフォーム相談という高単価・非物販領域を押さえれば、ECに侵食されにくい顧客体験を築ける。都市型店舗の新たな勝ち筋を示す。",
+        "tags": [
+          "都市型店舗",
+          "小型店",
+          "リフォーム",
+          "出店戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1qZEtRYlJYVGFxb01FYi1SdzBXTmNtOFBPRE1qTUxHNUVaTzZlWDZVU180dTlraEFCUmNISC1rWTc1ZVowOC1aUjFqbnl0OHpubTNZ?oc=5",
+        "source_pub_ts": 1789976657
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "アルビス、福岡駅前店を北陸初の『ZEB』店舗としてリニューアル",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-12",
+        "summary": "アルビスが福岡駅前店を、北陸初となる『ZEB』（ネット・ゼロ・エネルギー・ビル）店舗としてリニューアルする。高効率設備や再生可能エネルギーの活用により、年間の一次エネルギー消費量を正味でゼロ以下に抑える設計。冷蔵・冷凍で電力消費が大きい食品スーパーにおいて、省エネと収益性の両立を狙う先進事例となる。",
+        "why_it_matters": "食品スーパーは電力多消費型の業態で、光熱費高騰が利益を直撃する。ZEB化は環境対応のアピールにとどまらず、ランニングコストを構造的に下げる競争力策だ。再エネ・蓄電池・需給制御を組み合わせた店舗運営は、今後チェーン標準の設計要件になり得る。",
+        "tags": [
+          "ZEB",
+          "省エネ",
+          "店舗設備",
+          "サステナビリティ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBMZ0ZkR2c5dG1mWFJ3elZxTmRvbllJV21hbEJtUHpuRVppSTVOMzFhWEdwZS16cUdUTll2T3VieDA4bDU3bnhheXoybmFodFZzNmNN?oc=5",
+        "source_pub_ts": 1789984382
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジに小銭を大量投入——現場の悲鳴を描いた漫画がSNSで共感拡大",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-31",
+        "summary": "セルフレジに客が小銭を大量に投入する様子を描いた接客あるある漫画がSNSで共感を集めている。釣り銭や硬貨の扱いをめぐる店員の負担、セルフレジ操作に不慣れな客の戸惑いが背景にあり、現場の悲鳴が可視化された形だ。キャッシュレス化が進んでも現金需要は根強く、硬貨対応が店舗オペレーションの盲点になっていることを示す。",
+        "why_it_matters": "セルフレジ普及の陰で、硬貨投入や釣り銭対応など現金特有の摩擦が現場に残る。決済のデジタル化を進めるだけでは解決せず、入金方式や硬貨処理の設計、レジ周辺のUX改善が欠かせない。生活者の不満は導入効果を相殺しかねず、店舗DXの成否を左右する論点だ。",
+        "tags": [
+          "セルフレジ",
+          "現金",
+          "店内UX",
+          "SNS反響"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9SS0hvQWhMT3NzMWdZbzZraUxTRUo3bHVhdGZjcXJwUTJabEtINEwyQVV2SXU3RnpFdUpPSWhDUVU2RDhZWUppci1yNDZjNWRMSnE0THUwX1NvNWxJZGRWLU91MFFlRHBBdGpKYTlB?oc=5",
+        "source_pub_ts": 1789948283
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ウェグマンズ、サプライチェーン強化に1.1億ドルを投資",
+        "original_title": "Wegmans invests $110M in its supply chain",
+        "source": "Grocery Dive",
+        "source_id": "GL-04",
+        "summary": "米食品スーパーのウェグマンズが、サプライチェーン強化に1.1億ドルを投資すると発表した。流通センターや物流体制の能力を増強し、店舗への安定供給と鮮度維持、コスト効率の改善を狙う。食品小売ではオンライン注文の拡大と欠品抑制の両立が競争力を左右しており、物流への大型投資が相次いでいる。",
+        "why_it_matters": "食品小売の競争軸は売り場から供給網の強さへ移っている。物流投資は在庫回転、欠品率、EC対応力を同時に引き上げ、店舗オペレーションの効率にも波及する。AI需要予測や自動化と組み合わせれば、投資回収の速さがチェーン間の優劣を分けることになる。",
+        "tags": [
+          "サプライチェーン",
+          "物流投資",
+          "食品小売",
+          "欠品抑制"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOMmU5QjRnWEphWjBfR0ZNQ015QTlOVFFtTWw1aVpEQVB6UEFhaWpJTHQtZ1BOUFFVWWtpbUlFTXoxa3NxdFN5bktZeEpUVG10UkQ3eUFiNWNoajVKYnFiNXJaSTRGWVcyeTQ2bG1nQnd1Y1hYXzVSaS1yZEQtT0d1aEEwejFsYTR5RGlOM09ZaDBNV3dHR0I5SzJ0TUhmc2ppMGdEcjFCbWpGeDBtZHVWaVJ1YUxjUQ?oc=5",
+        "source_pub_ts": 1790005914
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "コストコ、ウーバーとドアダッシュで全米配送を開始",
+        "original_title": "Costco now offers nationwide delivery on Uber and DoorDash",
+        "source": "Retail Dive",
+        "source_id": "GL-06",
+        "summary": "米コストコが、ウーバーとドアダッシュの配送網を活用した全米配送サービスを開始した。自前の配送網を持たずに外部プラットフォームのラストマイルを借りる形で、会員向けに店舗商品を自宅まで届ける。倉庫型店舗という既存モデルを維持しながら、eコマース需要を取り込む狙いだ。",
+        "why_it_matters": "低コストの倉庫型モデルを守りつつ外部配送網を使う戦略は、固定費を抑えてEC対応する現実解だ。一方でラストマイルを外部に委ねることで、配送品質と顧客データの主導権をどう保つかが次の論点になる。会員制小売のデジタル接点拡大を象徴する動きだ。",
+        "tags": [
+          "ラストマイル",
+          "配送",
+          "会員制",
+          "EC"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQS2dKa1JmU3AtcGhJcFEzUFVRaU5QM1ROSUNHWXBkcmdVVUVpYWFIbWVMbGxVVWtyQ2hhRFdfcDBrOGRfOG5IcjdnanV4QVUyNGptUUhzZjIyZ3RXclRWbXAzN045SlRvY2JKOEtwbUJ2bzFvZ0lXUVpSektiNmdrbFhxLVAtX2ZrN1BTOTI1X0FDanhwMnJkMVNzeEw3cGtL?oc=5",
+        "source_pub_ts": 1790003023
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "「クリックから冷蔵まで」——食品EC高速化が求める柔軟な物流インフラ",
+        "original_title": "From click to cold: Why faster grocery eCommerce requires more flexible infrastructure",
+        "source": "Grocery Dive",
+        "source_id": "GL-10",
+        "summary": "食品ECの高速化には、より柔軟な物流インフラが不可欠だと論じる分析記事。注文から冷蔵・冷凍を保ったまま届けるには、温度管理された専用拠点やラストマイルの設計、需要変動に耐えるキャパシティ確保が求められる。短時間配送の競争が激化する中、物流の作り方が勝敗を分けると指摘する。",
+        "why_it_matters": "食品ECは「速さ」と「品質（コールドチェーン）」の両立が難しく、常温物流の延長では対応できない。マイクロフルフィルメントや温度帯別の拠点設計に投資できる企業が優位に立つ。定期便やAI需要予測と組み合わせ、配送コストをどこまで下げられるかが収益化の鍵だ。",
+        "tags": [
+          "食品EC",
+          "コールドチェーン",
+          "フルフィルメント",
+          "ラストマイル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQSEhrUFgtb2JlemdMelFwdGZlSkxvSUlZNWVTSDA2ZjZqLWgzRXZxRmtBVGdmQXNyX09WWk93cktJQ3owTWxXS2VMRnJIRWhFdzFoU1hhZGF6ZEZ6WUFHMEJBYk9GSnptWnBuT1dhRWpPdkU5ZEVBLUJHSVlCZVp6MnVQa2loWFVZMjdjc0Y3NEtXRUpGenZmTDJPT25NbGpab01oaUluaEJhN1N0Zy1QTXk5YW9xNlU?oc=5",
+        "source_pub_ts": 1789995300
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "J.C.ペニー、売上減少続く中でマーケットプレイスを開設",
+        "original_title": "J.C. Penney loses share, launches marketplace as sales continue to slide",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "米百貨店のJ.C.ペニーが、売上減少とシェア低下が続く中でマーケットプレイス事業を立ち上げた。自社在庫に頼らず外部出品者の商品を拡充し、品揃えと集客力の補強を狙う。苦境に立つ百貨店が、ECプラットフォーム型の収益モデルへ軸足を移す動きとして注目される。",
+        "why_it_matters": "在庫リスクを負わずに品揃えを広げるマーケットプレイスは、縮小する百貨店が選び得る現実的な打ち手だ。ただし手数料収益と顧客体験、出品者の品質管理を両立できなければ支持は得られない。リテールメディアやデータ活用と結びつけられるかが再生の分かれ目になる。",
+        "tags": [
+          "マーケットプレイス",
+          "百貨店",
+          "EC",
+          "収益モデル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQZjRrRFNkN3NNMjRnMUtrM2JQRXkzeHIwYnJ4LVUzYUVkTHIzSlNvRGZibXlXbGptYkFWN3F6Mnd1Z2tIVWpCTE40UGJvcXAtZDlWdDdCVWFObVluVXZNbGF5bUt1Mk1SWW1nNjRoTmVuR2hxck5kcjlJTzhtUXZXQnlQbnNieF9SS1NRRXQxRmRZWjFadlp6X040UzBVZXktT2tjZWZoNXdiZEJM?oc=5",
+        "source_pub_ts": 1790010223
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260921",
     "title": "2026年9月21日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "セブン-イレブンが宅配アプリ『7NOW』に予約機能を搭載。コンビニデリバリーが「即時配送」から「計画購買」へ広がり、店舗在庫とピッキング人員を時間軸で平準化できるかが新たな競争軸となる。 キャッシュレスが進む一方で1円硬貨が増産される逆説は、現金とキャッシュレスが長期併存する現実を示す。釣銭・硬貨在庫という見えないコストが、セミセルフレジや釣銭機への投資判断を左右する。",
