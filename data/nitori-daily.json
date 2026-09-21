@@ -1,5 +1,263 @@
 [
   {
+    "date": "20260922",
+    "title": "2026年9月22日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリが自社EC「ニトリネットマーケットプレイス」を本格始動。自前の製造・物流・店舗網を土台に外部出品者の在庫を取り込み、品揃えを一気に拡張して購買単価とLTVの向上を狙う、SPAのEC戦略における新たな軸となる動きだ。 「秋の感謝祭」の期間限定価格や、撥水・防汚ソファカバー、デコホームの「香り繋がるシリーズ」など、価格訴求と機能・体験型PBの投入が同時進行。秋冬商戦の立ち上がりに向け、集客と付加価値の両輪で需要を取りにいく構えが見える。",
+    "count": 8,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "ニトリが自社EC「ニトリネットマーケットプレイス」を本格始動。自前の製造・物流・店舗網を土台に外部出品者の在庫を取り込み、品揃えを一気に拡張して購買単価とLTVの向上を狙う、SPAのEC戦略における新たな軸となる動きだ。",
+      "「秋の感謝祭」の期間限定価格や、撥水・防汚ソファカバー、デコホームの「香り繋がるシリーズ」など、価格訴求と機能・体験型PBの投入が同時進行。秋冬商戦の立ち上がりに向け、集客と付加価値の両輪で需要を取りにいく構えが見える。",
+      "島忠ホームズ茅ヶ崎店へのSeria出店に象徴されるテナント刷新は店舗回遊と来店頻度の補完策。加えてSNSではマガジンラックの絵本棚転用やアクスタ収納など用途転用が広がり、生活者起点の新規需要が可視化されている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリ、「ニトリネットマーケットプレイス」を本格始動——自社ECを開放し品揃え拡張へ",
+        "original_title": "",
+        "source": "時事ドットコム",
+        "source_id": "JP-13",
+        "summary": "ニトリが自社EC「ニトリネット」上でマーケットプレイス型の販売を本格始動させたことが報じられた。自社PBと自社物流の強みを土台に、外部出品者の商品を同一カートで提供することで家具・日用品の品揃えを一気に拡張し、ワンストップ購買と購買単価の向上を狙う。在庫リスクを抑えながら商品数を増やせる点で、SPAのEC戦略に新たな軸を加える動きだ。",
+        "why_it_matters": "自前の製造・物流・店舗網に加え、EC上で外部在庫を取り込む「アセットライトな品揃え拡張」は、欠品による離脱を防ぎLTVを高める。大物家具の配送・設置まで一気通貫で握れる点が競合優位となり、実店舗との在庫連携や出品者管理の精度が成否を分ける。",
+        "tags": [
+          "ニトリ",
+          "EC",
+          "マーケットプレイス",
+          "DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9ySVliRTJxZTRyU2Y0SHZyVGpBUTFqYkFpZnlVR0tIWXg5emhwQUJSdGY3R2xlNFI1aExoSEhOUnl4ZDBhenUwcFhFTEVpSzFsUlRkYmxra0NUc2dQcmE4d0hSMkd6Q3ZaMmw4?oc=5",
+        "source_pub_ts": 1789942200
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリ「秋の感謝祭」、5,000円お得の期間限定価格——9月28日まで",
+        "original_title": "",
+        "source": "ヨムーノ",
+        "source_id": "JP-01",
+        "summary": "ニトリが「秋の感謝祭」を開催し、対象商品を期間限定価格で提供している。最大5,000円相当の値引きとなり、ホームセンターで買う必要がなくなるほどの価格訴求だと報じられた。9月28日までの期間限定で、秋冬商戦の立ち上がりに合わせて集客と客単価の押し上げを狙う。製造から小売までを一貫して握るSPAの強みを、価格の説得力へ直結させた施策だ。",
+        "why_it_matters": "調達・物流・店舗を内製化するSPAは値下げ原資を構造的に確保しやすい。競合ホームセンターとの価格比較で優位に立つ「感謝祭」は単なるセールではなく価格イメージの再定義であり、期間と品目を絞った訴求で秋の来店動機を創出し在庫回転を高める効果が期待される。",
+        "tags": [
+          "ニトリ",
+          "価格戦略",
+          "セール",
+          "集客"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiREFVX3lxTFA1UENUWmcxUEMyXzZJaExMVEdHU2NZWFVCbDEtYklvMXhJVnNCRXUzeTFIdVZmeEFMQ2FQX2JwZ1l5Xzhy?oc=5",
+        "source_pub_ts": 1790020827
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "デコホーム「as you are」から「香り繋がるシリーズ」——ボディケアとルームフレグランスを同一香りで",
+        "original_title": "",
+        "source": "tv-tokyo.co.jp",
+        "source_id": "JP-03",
+        "summary": "ニトリのデコホームが、オリジナルブランド「as you are」より「香り繋がるシリーズ」を新発売した。ボディケアとルームフレグランスを同じ香りで統一でき、自分用にもギフトにも訴求する。香りという体験価値を軸に、雑貨・美容・インテリアを横断して購買を連鎖させる設計で、PBの付加価値向上とリピート創出を狙う。",
+        "why_it_matters": "単品ではなく「香り」という一貫した体験でカテゴリーを横断し、まとめ買いとリピートを促す手法は、低価格帯PBのコモディティ化を避ける有効策。ギフト需要やSNS映えも取り込みやすく、デコホームの「かわいい×実用」路線を一段と強化する。",
+        "tags": [
+          "ニトリ",
+          "デコホーム",
+          "PB",
+          "香り"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5OQ1JJSUc1c3pUZl9mek1SZVFOa0R5UnJicE5yRTlzbGU4N29uY1lRYlU1bVdodXE0VGltRU4tbjc2QzljbkwwNm4xYlpqc3ZzMHRzR0NhMTRnUnNHZ2sxeUpUSVlPbDVfQ2hlTVZB?oc=5",
+        "source_pub_ts": 1789988103
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ新作「ソファカバー」、撥水・防汚加工でペット家庭の味方に",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-11",
+        "summary": "ニトリの新作ソファカバーが、撥水・防汚加工でキズや汚れに強いと話題を集めている。古くなったソファを手軽に一新でき、猫や犬と暮らす家庭にも適する。買い替えを伴わない「カバーで延命」という発想は、高額家具の買い替え心理的ハードルを下げ、低予算で住まいの印象を変えたい需要に応える。ペット市場の拡大と部屋づくり需要を同時に捉える商品だ。",
+        "why_it_matters": "家具の「買い替え」ではなく「カバーで更新」を選ばせると、客単価は下がっても購入頻度と接触回数が増える。撥水・防汚という機能訴求はペット・子育て世帯の不安を解消し支持を生みやすい。消耗品的な家具アクセサリーは、リピート収益の柱になり得る。",
+        "tags": [
+          "ニトリ",
+          "ソファカバー",
+          "ペット",
+          "機能性"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE5VbzdWcWdRVVI5eEVMbndaT0Fwd2MtTFE0TDdOMVNVWVpzOE8teGdEbTM3U1pUYUpNLTBxZUNuSUctUi1DS0hMWlFSdXU?oc=5",
+        "source_pub_ts": 1789950600
+      },
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "島忠ホームズ茅ヶ崎店に100円ショップ「Seria」が9月30日オープン——ダイソー跡地の新テナント",
+        "original_title": "",
+        "source": "shonanjin.com",
+        "source_id": "JP-10",
+        "summary": "神奈川県茅ヶ崎市の島忠ホームズ茅ヶ崎店に、100円ショップ「Seria」が9月30日にオープンする。ダイソー跡地への出店で、ホームセンター内のテナント構成が入れ替わる。グループの島忠店舗に集客力のある専門店を組み合わせ、来店頻度と回遊を高める狙いが読み取れる。テナントの刷新は、店舗の魅力維持と相乗集客の両面で意味を持つ。",
+        "why_it_matters": "ホームセンターの集客は「目的買い」に偏りがちだが、100円ショップ併設は日常的な来店動機を補完し、回遊と滞在時間を伸ばす。グループ内のテナントマネジメント力は店舗の坪効率と地域シェアに直結し、島忠ブランド再構築を測る指標にもなる。",
+        "tags": [
+          "ニトリ",
+          "島忠",
+          "店舗展開",
+          "テナント"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNMkpaR2pBblVkSnhhN0JIeWlOYWlXVnpPejNGQzdwazJ5YlRHNmJhTVhyelVESUpqU1dFdnoxQ1UybWVVRFRYS0czWnVubkdncHJILVNUOFZmbUxSNl94bHRsX05CSDUtVVcxUzBEOC1NWmsxU2dQYUMwd0YtZFlLZlNteW5iNmF4amRsLWxQVU1vdnhmVmtoUE1CaURxSlk?oc=5",
+        "source_pub_ts": 1789955813
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリのアパレル「N+」、仕事も休日も使える大人の新作パンツ",
+        "original_title": "",
+        "source": "ｄメニューニュース",
+        "source_id": "JP-04",
+        "summary": "ニトリのアパレルブランド「N+」から、仕事にも休日にも使える大人向けの新作パンツが登場した。オン・オフ兼用という汎用性を打ち出し、住まいだけでなく身につける商品へとPBの領域を広げる。家具・雑貨で培った生活提案力をアパレルへ接続し、ブランドへの滞在時間と客単価を引き上げる狙いが見える。",
+        "why_it_matters": "住空間のブランドがアパレルへ横展開するのは、顧客のライフスタイル全体を囲い込む「トータル生活提案」への布石。N+はハローキティやNキレイなど展開を広げており、衣で獲得した顧客を住まい・美容へ回遊させる導線が、来店頻度とLTVの押し上げにつながる。",
+        "tags": [
+          "ニトリ",
+          "N+",
+          "アパレル",
+          "PB"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNZHlqc3cxaUNrN2VxNEhFeVJSRnVQb0VnU2xQallVLXhiUzE3cXhCTlRnamQ5SngtV2FndVFIcGR2N0tiVmUyWmxaN0I4cUlOblRNYmlDWE04N0R6ckVTVVE4bHN4OVZyeHFnR0tYV1E3ckRCZ1NHWnVaQ2NwQzczVURGbTRvOVdBUG1CWnI3Wnh4NTNOM0QxTmVObnBOVEcwV0p2TFBTNNIBpwFBVV95cUxNZHlqc3cxaUNrN2VxNEhFeVJSRnVQb0VnU2xQallVLXhiUzE3cXhCTlRnamQ5SngtV2FndVFIcGR2N0tiVmUyWmxaN0I4cUlOblRNYmlDWE04N0R6ckVTVVE4bHN4OVZyeHFnR0tYV1E3ckRCZ1NHWnVaQ2NwQzczVURGbTRvOVdBUG1CWnI3Wnh4NTNOM0QxTmVObnBOVEcwV0p2TFBTNA?oc=5",
+        "source_pub_ts": 1789985100
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "【Xで219いいね】ニトリのマガジンラックを“絵本ラック”に——子育て世帯の用途転用が支持",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-03",
+        "summary": "ニトリのマガジンラックを、リビングの絵本ラックとして使う投稿が219いいねを集めた。公式の想定用途ではなく、口コミで「絵本に使える」と広がった点を評価し、取り出しやすさと散らかり防止を目的に採用。子どもが成長したら回転式本棚を検討するという将来設計まで語られ、商品が暮らしの変化に寄り添う様子が伝わる。",
+        "why_it_matters": "顧客が商品を別用途に転用し、その口コミが購買を後押しする現象は、レビューと検索が接続するEC時代の典型的な勝ち筋。メーカーが想定外の用途を拾いタグや検索語に反映できれば、子育て・収納文脈で新たな需要を掘り起こせる。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "用途転用",
+          "子育て"
+        ],
+        "url": "https://x.com/babyyoshinoo/status/2101835183024738526",
+        "source_pub_ts": 1789988400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "【Xで78いいね】ニトリのディスプレイケースに“推し”のアクスタを——推し活需要を捉える収納",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-05",
+        "summary": "ニトリのディスプレイケースに、ビッグアクスタや同梱写真を収めて推し活のディスプレイを整える投稿が反響を呼んだ。棚板を使わず重ねて敷くなど、サイズを活かした工夫が共有されている。コレクションケースとして、推し活・コレクター需要に応える使い方が生活者主導で広がっている実例だ。",
+        "why_it_matters": "コレクションや推し活の「見せる収納」需要は、高単価で反復購買が見込める成長領域。ディスプレイケースという汎用アイテムがアクリルスタンドやホビーの受け皿として定着すれば、関連アクセサリーの品揃え拡張とSNS起点の送客が狙える。用途の可視化が売上を左右する。",
+        "tags": [
+          "ニトリ",
+          "SNS",
+          "推し活",
+          "ディスプレイ"
+        ],
+        "url": "https://x.com/svt_tvxq_a/status/2101974105855586423",
+        "source_pub_ts": 1789988400
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "昨日ニトリで号泣したつぶやきをいっぱいいいねしてくれてありがとう。この子です。あちゃいちゃんです。失明後です。かわゆー(泣) pic.x.c...",
+        "platform": "x",
+        "author": "@kapa_cocco",
+        "url": "https://x.com/kapa_cocco/status/2101828074799317181",
+        "likes": 1496,
+        "retweets": 9,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:17",
+        "captured_at": "",
+        "text": "昨日ニトリで号泣したつぶやきをいっぱいいいねしてくれてありがとう。この子です。あちゃいちゃんです。失明後です。かわゆー(泣) pic.x.com/WnD2Gt5kaw x.com/kapa_cocco/sta…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "返信先:@kkkfff1234kトップの有り様はそのまま対象される存在を表すものです 質がよく、派手ではないものの 上品、国産のもの、それが...",
+        "platform": "x",
+        "author": "@Rayrayray000000",
+        "url": "https://x.com/Rayrayray000000/status/2101866594112835708",
+        "likes": 266,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 11:50",
+        "captured_at": "",
+        "text": "返信先:@kkkfff1234kトップの有り様はそのまま対象される存在を表すものです 質がよく、派手ではないものの 上品、国産のもの、それが日本を表すとして身につければ、そのまま日本という国のアピールです ユニクロニトリがいいというわけですか？ 個人ならそれでもいいでしょうが、公人ですからね？",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "今日は午前は料理代行さん。 午後からニトリにリビング用の絵本ラック買いに行く！正式にはマガジンラックなんだけど、絵本に使ってるクチコミが多か...",
+        "platform": "x",
+        "author": "@babyyoshinoo",
+        "url": "https://x.com/babyyoshinoo/status/2101835183024738526",
+        "likes": 219,
+        "retweets": 10,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:45",
+        "captured_at": "",
+        "text": "今日は午前は料理代行さん。 午後からニトリにリビング用の絵本ラック買いに行く！正式にはマガジンラックなんだけど、絵本に使ってるクチコミが多かったので採用！今は借りてきた絵本を取りやすいように、散らばらないようにしたい用途なのでもう少し大きくなったら、回転式本棚とか検討予定✨️ pic.x.com/QceWVXTGQk",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "守護者一人→ヒトリ 守護者二人→ニトリ 守護者三人→サントリー pic.x.com/FLbVb8LmHa",
+        "platform": "x",
+        "author": "@imamizay",
+        "url": "https://x.com/imamizay/status/2101832647806980373",
+        "likes": 208,
+        "retweets": 30,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:35",
+        "captured_at": "",
+        "text": "守護者一人→ヒトリ 守護者二人→ニトリ 守護者三人→サントリー pic.x.com/FLbVb8LmHa",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ビッグアクスタをニトリのディスプレイケースに格納✨ 初回生産限定盤に同梱されてた裏表素敵なあの写真も丁度入るサイズでRED OCEANを背に...",
+        "platform": "x",
+        "author": "@svt_tvxq_a",
+        "url": "https://x.com/svt_tvxq_a/status/2101974105855586423",
+        "likes": 78,
+        "retweets": 3,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 18:57",
+        "captured_at": "",
+        "text": "ビッグアクスタをニトリのディスプレイケースに格納✨ 初回生産限定盤に同梱されてた裏表素敵なあの写真も丁度入るサイズでRED OCEANを背にする2人になってめっちゃ良い🥳 ※棚板は使わずに重ねて下に敷いた pic.x.com/PoP3HikEzo",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      }
+    ],
+    "sns_summary": "今回の投稿群は、ニトリで思わず涙した体験談から、マガジンラックを絵本棚にする用途転用、アクスタを飾るディスプレイケースの活用まで、商品を自分ごとの暮らしに置き換える投稿が中心。ブランドを巡る言葉遊びや論評も混在し、共感・実用・遊びの三層で生活者が能動的に発信している様子がうかがえる。",
+    "sns_why_it_matters": "重要なのは、生活者が想定外の用途や感情をSNSで可視化し、それが購買の後押しになる点。メーカーは口コミの用途を拾ってタグ・検索・品揃えに反映し、共感型の体験は店舗やECの接点設計に活かせる。UGCを起点に、コレクション収納や子育て文脈など新規需要を掘り起こす余地は大きい。"
+  },
+  {
     "date": "20260921",
     "title": "2026年9月21日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリが化粧品メーカー「ちふれ」と初の共同開発スキンケアを999円から投入。外部専門企業との協業でPBの信頼性と開発スピードを同時に確保し、美容カテゴリーを新たな収益源に育てる狙いが鮮明になった。 799円のプレート、199円からのエコバッグなど、低価格帯でも「高見え」「丈夫」を両立した日用品が生活者の支持を集める。揃え買い・買い足しを前提とした価格と品揃えの設計が、客単価と来店頻度の底上げにつながっている。",
