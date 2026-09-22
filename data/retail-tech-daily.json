@@ -1,5 +1,176 @@
 [
   {
+    "date": "20260923",
+    "title": "2026年9月23日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "AIが需要予測から顧客接点まで「実装段階」へ。フォーティエンスの消費財向け需要予測AI支援やLG U+の小規模事業者向けAX支援など、AIを業務フローに埋め込む動きが国内・アジアで加速した。 セルフレジを巡る生活者の不満がSNSで再燃。100円ショップの大行列と幼児への操作体験への反発は、回転率と顧客体験をどう両立させるかという導入設計の課題を浮き彫りにした。",
+    "count": 9,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "AIが需要予測から顧客接点まで「実装段階」へ。フォーティエンスの消費財向け需要予測AI支援やLG U+の小規模事業者向けAX支援など、AIを業務フローに埋め込む動きが国内・アジアで加速した。",
+      "セルフレジを巡る生活者の不満がSNSで再燃。100円ショップの大行列と幼児への操作体験への反発は、回転率と顧客体験をどう両立させるかという導入設計の課題を浮き彫りにした。",
+      "米国ではアマゾンがメタのAIエージェント「Muse」からの除外を要請するなど、生成AIが購買の入口となる中でプラットフォーム間の主導権争いが表面化。リテールメディアの次の主戦場として要注目。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "フォーティエンス、消費財向け需要予測をAIで支援——食品・日用品の欠品と過剰在庫を同時に抑制",
+        "original_title": "",
+        "source": "日刊工業新聞",
+        "source_id": "JP-06",
+        "summary": "フォーティエンスが消費財メーカー向けに需要予測をAIで支援する取り組みを展開。販促や天候、SNSなどの外部要因を織り込み、経験則や単純な移動平均では捉えきれない需要変動を高精度に予測する。食品・日用品は賞味期限や欠品コストが経営を直撃するため、発注・生産計画の高度化は小売・メーカー双方の収益改善に直結する。",
+        "why_it_matters": "AI需要予測は「精度」より「意思決定への組み込み」が成否を分ける。発注システムや棚割、物流計画とAPIで直結させ、現場が使える形に落とし込めるかが導入効果の分水嶺。外販型の提供はサプライチェーン全体の在庫最適化に向けた地ならしになる。",
+        "tags": [
+          "AI需要予測",
+          "サプライチェーン",
+          "発注最適化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1GcldsR0dUQ0JpQW9LeWZQQ09wNW44UnpDdURlbGZxa3MtdHNMOC1iSXZQa3pFNFg0ZjZmZUtnS0Rudk5kSHJkVzIteW1HbG0zY2dFLW1vbkk?oc=5",
+        "source_pub_ts": 1790090319
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "100均セルフレジの大行列にイライラ——幼児に操作を教える親をめぐりSNSで賛否",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-30",
+        "summary": "100円ショップのセルフレジで順番待ちが長引くなか、幼児にレジ操作を体験させようとする親に対し「今やらなくても」と苛立つ利用者の投稿がSNSで拡散。低価格帯で客単価が低く、セルフレジ台数も限られる業態では混雑が摩擦に直結しやすい。教育目的の利用と回転率確保をどう両立させるかが、店舗運営の現実的な論点として浮上している。",
+        "why_it_matters": "セルフレジは人件費削減の文脈で導入が進んだが、混雑時は逆に顧客体験を損なうリスクをはらむ。台数・動線・アテンダント配置を時間帯別に最適化し、教育利用を許容する設計と回転率のバランスを取れるかが導入成否を分ける。SNSの不満は店舗評判に直結する。",
+        "tags": [
+          "セルフレジ",
+          "SNS話題",
+          "店内UX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBzVXFwVjRnUjF5a2xGS3pjZWFnOV9fU3Y1Y0E5SXhTNkxBV2tlOUNtN0pLdjl0VlpscE9XZ2lXSFBHYWJsbXdYeDUxNnN1UjNYdnpUcHVn0gFbQVVfeXFMUGlxUXFEbUhkd2s2XzUyNTBsLW9aYkFKOUlHSVdlc3VFX3FqZDFacjRGU1NBUTc5NExsLTRMWm92dGl0NzRMdExUbnduQkJGc2ZreDk5NWZJQjRJdw?oc=5",
+        "source_pub_ts": 1790029655
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "LG U+、SODOMALLと協業——小規模事業者向けに「AX」支援を強化",
+        "original_title": "",
+        "source": "디지털투데이",
+        "source_id": "JP-26",
+        "summary": "韓国LG U+がECプラットフォームSODOMALLと組み、小規模事業者向けのAIトランスフォーメーション（AX）支援を強化すると発表した。AIを活用した商品登録、マーケティング、顧客対応などの自動化を通じ、人手と専門知識が乏しい個人・零細事業者のオンライン販売を後押しする。通信キャリアが小商工人のデジタル化支援に本格参入する動きとして注目される。",
+        "why_it_matters": "小規模事業者のDXは本人のITリテラシー不足が最大の障壁で、ツール提供だけでは定着しない。通信キャリアが決済・通信・AIを束ねて運営を伴走する構図は、日本のキャリアやPOSベンダーが取るべきモデルを示唆する。プラットフォーム囲い込み競争の一環でもある。",
+        "tags": [
+          "流通DX",
+          "AI",
+          "小規模事業者"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxPMHdOWjhUVVhsV2V1UlhDUVlhZUl0MW5NRkRSRUp4aUo0Zy1WUlNBNFBZOWdaN0V3OEtWNHlhSzJmdnQ1dTRHZ0dncDdGbmZXcVc2U3VUMzVXVWl3REJsTXFoWFhnTEFOcnRFT1hmV1c4dFpyRDhONGZ4TGUxOXR5VDByX0tpcjlsVTBIdXhFZHVNMXJJeE5qWkhDY0FBZm9HMXNrbWdxcHlQajZGWkIwZ1UxODY0NVdFWmxibXN5Zkw5aWhNSmRianlsOGpYbjBBVVdaRm5uSlU?oc=5",
+        "source_pub_ts": 1790035200
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "「セルフハトヤ」誕生す——スーパーが挑んだセルフサービス化の原点を振り返る",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-17",
+        "summary": "連載コラム「第183回」で、スーパーマーケットのセルフサービス化の転換点となった「セルフハトヤ」の誕生が取り上げられた。対面販売が当たり前だった時代に、客自身が商品を手に取る方式へ踏み切った挑戦は、現在のセルフレジや無人店舗へと連なる原点と言える。流通史の視点から店舗オペレーション革新の意味を問い直す内容となっている。",
+        "why_it_matters": "セルフレジや無人店舗の議論は技術導入に終始しがちだが、本質は顧客に作業を移管するオペレーションモデルの再設計にある。セルフサービス化の歴史は導入時の反発と定着条件を示す先行事例の宝庫であり、過去に学ぶことが自動化投資の意思決定精度を高める。",
+        "tags": [
+          "セルフサービス",
+          "流通史",
+          "店舗オペレーション"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE82SzdxNkFyRUxKSWhGWmNXSy1VX3o4VHhnbHoxQ3VkZW53ZUx5ZjZqbktDa1p2YWxCdXZBWFg0Qk5lUDVXVXBTRVFsanBoZHFsNExSWtIBWkFVX3lxTE1rYUNqS3J5eHZCWHhKNXdBcXQyTkJqYmZ4Z3RwYzl1cFZYM0VLRWszRFhJbEVLSThiRXBGcllPd2dWRUxLenVMU184QmZ1Vk1fZ29oMFZvYVZKZw?oc=5",
+        "source_pub_ts": 1790053388
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "新生ダイエー、再成長への道筋——イオン傘下で問われる店舗改革の実効性",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-19",
+        "summary": "イオン傘下で再建を進める新生ダイエーの成長戦略が特集された。食品を軸とした店舗フォーマットの再設計やPB、デジタル施策を通じてブランドの再構築と収益力回復を狙う。旧ダイエー時代から続く店舗網や人材の制約の下で、どこまで投資対効果を出せるかが焦点となる。イオングループ全体の都市型・食品戦略とも連動する動きとして注目される。",
+        "why_it_matters": "老舗ブランドの再生は看板の掛け替えでは済まず、店舗オペレーションとデータ基盤の再構築が前提になる。食品は欠品率や廃棄ロスが収益を左右するため、発注・需要予測のDX投資が再生の鍵を握る。イオンとの調達・物流シナジーを現場に落とせるかが成否を分ける。",
+        "tags": [
+          "店舗改革",
+          "食品スーパー",
+          "流通DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBkd2hOd0hmcWZxS2x4QUU1NDA2VVkwUnVKTUpQd0JVVGIyZlZyNjQtUk9hZVl0VjhUejduQk1aWlgxSzB4X1ZLWFFCeGU5enlfcVVqYndwUWNCT3MzSVFKU25RZ2ZLSnpxNkE?oc=5",
+        "source_pub_ts": 1790047276
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "アマゾン、メタのAIエージェント「Muse」からの自社除外を要請——ECとAIの主導権争いが表面化",
+        "original_title": "Amazon asks Meta to remove it from the Muse AI agent experience",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "アマゾンが、メタのAIエージェント体験「Muse」において自社サービスを対象から外すようメタに要請したと報じられた。AIエージェントが商品検索や購買の入口を握りつつある中、プラットフォーマーが自社の顧客体験とデータの主導権を巡って綱引きを繰り広げている。生成AIが新たな検索窓になるにつれ、小売とECの流量配分を誰が設計するかが焦点となる。",
+        "why_it_matters": "AIエージェントが購買の入口になれば、商品の発見と比較の主導権はプラットフォームからAI側へ移る。小売事業者は送客の新チャネルを得る一方、価格や在庫データをどこまで外部AIに開示するかの戦略判断を迫られる。囲い込みと開放のせめぎ合いはリテールメディアの次の主戦場になる。",
+        "tags": [
+          "AIエージェント",
+          "EC",
+          "プラットフォーム"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNT1FGYllzMmlaUmQ3WkhPUFdVM1VwZFZsZ2M5NS1kelZ4eTZMMTZXNXNkVExaaG5yUXdRUzZLSW1LOWhhM08tYlRRZWgzdE1FUmx4Smw3dTNsTUNMcGZfSXdMRlAzamZsWkhLNEU4VGFDWHlzZy1QTVZEdEpzM1hUd1hDUUdRaGM2TmQ5SXBR?oc=5",
+        "source_pub_ts": 1790092406
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "FAOシュワルツ、アマゾンに公式ストアを開設——老舗玩具店がECモールへ舵を切る",
+        "original_title": "FAO Schwarz opens Amazon storefront",
+        "source": "Retail Dive",
+        "source_id": "GL-04",
+        "summary": "老舗高級玩具店FAOシュワルツがアマゾン上に公式ストアフロントを開設した。自社店舗やECサイトに加え、巨大モールの集客力と物流網を取り込むことで認知拡大と販売機会の拡充を狙う。体験型の旗艦店とオンラインの利便性をどう組み合わせるかは、ブランド体験と規模の経済を両立させるD2C戦略の試金石となる。",
+        "why_it_matters": "ブランド価値の高い小売でも、集客と物流を自前で抱えるよりモールのインフラを借りる方が効率的な領域が増えている。旗艦店を体験とブランド発信、モールを購買と配送に役割分担するハイブリッド型は日本の中堅アパレル・専門店にも応用可能。手数料と顧客データの扱いが交渉軸になる。",
+        "tags": [
+          "ECモール",
+          "オムニチャネル",
+          "D2C"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOanZDZVFNLS1vZUtqd3BPa2FnaG5tMzZrQ2ZQWkNmUmxJRHhicUxCREJpYURXUE5FTnJhZFdaX3o2ZEUzVnEwbVdHQ0M0cW4xaUhJd1I2a09yYnNVUENpSjM3RnFDa3RyWEN5MU1CWElObVZjdFFyVGNGeXRUR1ZLdQ?oc=5",
+        "source_pub_ts": 1790090008
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "GLP-1薬が世界の食品価値730億ドルを脅かす——肥満治療薬が食の消費構造を変える",
+        "original_title": "GLP-1 drugs put $73B in global food value at risk, report finds",
+        "source": "Grocery Dive",
+        "source_id": "GL-07",
+        "summary": "肥満・糖尿病治療薬GLP-1の普及により、世界で約730億ドル相当の食品価値が減少リスクにさらされるとの調査が公表された。薬の利用者は食欲や摂取量が減り、高カロリー・大容量・嗜好性の高い商品の需要が構造的に縮小する可能性がある。食品小売・メーカーは商品構成やパッケージ、訴求軸の見直しを迫られる。",
+        "why_it_matters": "需要減は一時的なブームではなく、消費者の身体と嗜好が変わる構造変化として捉える必要がある。高タンパク・低糖質・小容量といった新たな軸への品揃え転換と健康訴求のリテールメディア活用が収益防衛の鍵。POSと会員データで購買変化を早期に捉える企業が優位に立つ。",
+        "tags": [
+          "消費トレンド",
+          "食品小売",
+          "ヘルスケア"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNakdYdzFuQjBoLTZIOFdZTG4tZm9fdGFVNGxYUElqV1lQNmlmLTZjZ0ZraWJOb1E3YnNvbnNfelZEcklVLTJtTDhhMmw1NjZqLThab3JTYlVrdkR3REJ5WnYtU0hIdnlxQXJqdE01anpzdFVYdl93bmZYYWZEdHh6RENuU1ZkdnlLVnBUcmpXUzZXUHVvQjNhd21oU3ZUQjVCeHc?oc=5",
+        "source_pub_ts": 1790087602
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "「飛行の速さ」で届けるEC配送——空路活用がラストマイル競争を変える",
+        "original_title": "Enjoy e-commerce delivery at the speed of flight",
+        "source": "Retail Dive",
+        "source_id": "GL-11",
+        "summary": "EC配送の高速化をテーマに、航空輸送を活用した迅速なラストマイルの可能性が論じられた。ドローンや航空貨物、空港拠点の活用により、従来のトラック配送では難しかった当日・超速配達の実現が視野に入る。物流コストと環境負荷、規制対応をどう両立させるかが実装の焦点となる。",
+        "why_it_matters": "配送速度はもはや付加価値ではなく購買決定を左右する基本要件になりつつある。空路やドローンを組み合わせた多層的な配送網は地方や離島のラストマイル課題にも応用できる。ただし採算と環境負荷の制約が大きく、速さと持続可能性のトレードオフ設計が問われる。",
+        "tags": [
+          "ラストマイル",
+          "物流",
+          "ドローン"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPVjhDU19fZkV3cDBic0NHZ3YwVTlJWkhHdTFGX3NvN3hsV2dFYkNvVUl1d20wdjF4NDNyVlFia1VxNGx4YXFkMkJBRDRXVmxvQWxiWERBRFFUa2tCS1piNldaRS0zZ19nVnhSR0RUVXB1UWNzTHFBcE5FcFRpRmQ1emt4QXlLX1pWNThXTDFzNFBpMk0?oc=5",
+        "source_pub_ts": 1790024074
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260922",
     "title": "2026年9月22日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "店舗の「物理資産」をどう作り替えるかが国内の焦点に。セブン-イレブンの撤去設備リユース、アルビスの北陸初ZEB店舗、カインズの都市型小型店と、出店・改装の設計思想そのものがコストと環境の両面から見直されている。 海外では供給網とラストマイルへの投資競争が顕著。ウェグマンズの1.1億ドル物流投資、コストコの外部配送網活用、食品ECのコールドチェーン再設計など、『届ける力』が小売の競争軸として前面に出た。",
