@@ -257,7 +257,9 @@
     if (Array.isArray(v)) return v.map(dup);
     if (v && typeof v === 'object') {
       const out = {};
-      Object.keys(v).forEach(k => { out[k] = dup(v[k]); });
+      // 読み込んだ JSON の "__proto__" は自分のキーとして来る。代入すると
+      // 写しのプロトタイプが差し替わるので、写さない。
+      Object.keys(v).forEach(k => { if (k !== '__proto__') out[k] = dup(v[k]); });
       return out;
     }
     return v;
@@ -624,7 +626,9 @@
   }
 
   function cellScaleAt(x, y, baseScale, jitter) {
-    const s0 = Math.max(0.3, Math.min(1.15, baseScale));
+    // 壊れた保存データで数値でないものが来ると NaN が経路に混ざり、真っ白になる
+    const b = Number(baseScale);
+    const s0 = isFinite(b) ? Math.max(0.3, Math.min(1.15, b)) : 1;
     if (!jitter) return s0;
     const r = cellRand(x, y, 0);
     const delta = (r - 0.5) * 2; // -1 ~ +1
@@ -1650,8 +1654,9 @@
     const hasLogo = logo.type !== 'none' &&
       (logo.type === 'icon' ? !!logo.iconData : logo.type === 'image' ? !!logo.src : !!logo.text);
     const cx = ox + size / 2, cy = oy + size / 2;
-    const logoSide = Math.max(0.06, Math.min(0.34, logo.size)) * size;
-    const knockSide = logoSide * (1 + Math.max(0, Math.min(0.5, logo.pad)) * 2);
+    const logoSizeRaw = Number(logo.size), logoPadRaw = Number(logo.pad);
+    const logoSide = (isFinite(logoSizeRaw) ? Math.max(0.06, Math.min(0.34, logoSizeRaw)) : 0.22) * size;
+    const knockSide = logoSide * (1 + (isFinite(logoPadRaw) ? Math.max(0, Math.min(0.5, logoPadRaw)) : 0.14) * 2);
     let knocked = 0;
 
     // 下地の形。'none' は旧データの「下地なし」なので、抜きの形だけ角丸で代用する

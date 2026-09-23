@@ -127,7 +127,8 @@
         return cells ? '<row r="' + (n + 1) + '">' + cells + '</row>' : '';
       }).join('');
 
-      const dv = (sh.lists || []).map(l => {
+      // 選択肢が空の列は規則を置かない（$A$1:$A$0 という壊れた範囲になる）
+      const dv = (sh.lists || []).filter(l => (l.values || []).length).map(l => {
         const col = colName(l.col);
         const at = colName(l._at);
         const range = "'" + listSheet + "'!$" + at + '$1:$' + at + '$' + (l.values || []).length;

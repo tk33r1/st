@@ -12,7 +12,7 @@
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="おしゃれなQRコードを完全無料・ブラウザ内で作成。セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインでき、PNG・SVGで書き出せます。印刷はmm指定、作ったデザインは保存もリンク共有も可能。短縮URLを挟まないので広告も有効期限もありません。">
+  <meta name="description" content="おしゃれなQRコードを完全無料・ブラウザ内で作成。セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインでき、PNG・SVG・AVIF・WebPで書き出せます。印刷はmm指定、作ったデザインは保存もリンク共有も可能。短縮URLを挟まないので広告も有効期限もありません。">
   <meta name="robots" content="max-image-preview:large">
   <title>QR Atelier - おしゃれなQRコードを無料で安全に作成 | SAFE TOOLS</title>
 
@@ -50,11 +50,11 @@
         "operatingSystem": "Any",
         "offers": {
           "@type": "Offer",
-          "price": 0,
+          "price": "0",
           "priceCurrency": "JPY"
         },
         "browserRequirements": "Requires JavaScript",
-        "featureList": "28種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先（vCard・MeCard）/位置情報/暗号通貨（Bitcoin・Lightning）, PNG・SVG・AVIF・WebP書き出し（AVIFは同梱エンコーダで生成、可逆・非可逆を選択可）, 印刷サイズをmmで指定, 読み取りテストと直し方の提示, マイテンプレートとデザインのシェア, CSV一括生成, サーバーへの送信なし"
+        "featureList": "40種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先（vCard・MeCard）/位置情報/暗号通貨（Bitcoin・Lightning）, PNG・SVG・AVIF・WebP書き出し（AVIFは同梱エンコーダで生成、可逆・非可逆を選択可）, 印刷サイズをmmで指定, 読み取りテストと直し方の提示, マイテンプレートとデザインのシェア, CSV一括生成, サーバーへの送信なし"
       },
       {
         "@type": "BreadcrumbList",
@@ -188,7 +188,7 @@
   }
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" integrity="sha384-JNhb/AfQ8tCvhjfm2WXKx9qovmn7LcndXYllHYDf2CcTBaBMAiPsjRJeC3f9U8V6" crossorigin="anonymous"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1258,14 +1258,14 @@
       <!-- ===================== 左：プレビューと書き出し ===================== -->
       <div class="stage">
         <div class="canvas-card theme-light" id="canvas-card">
-          <div class="canvas-checker-toggle" id="checker-toggle" aria-label="プレビュー背景切り替え">
+          <div class="canvas-checker-toggle" id="checker-toggle" role="group" aria-label="プレビュー背景切り替え">
             <button type="button" data-checker="auto" class="active" title="セルの色に合わせて白/黒を自動切替">自動</button>
             <button type="button" data-checker="light" title="白ベース市松模様">白</button>
             <button type="button" data-checker="dark" title="黒ベース市松模様">黒</button>
           </div>
           <!-- QRのSVGはこのツールが組み立てた文字列で、外から入る値はすべて
                qr-style.js の esc() を通している。 -->
-          <div id="preview" aria-label="QRコードのプレビュー"></div>
+          <div id="preview" role="img" aria-label="QRコードのプレビュー"></div>
         </div>
 
         <div class="meta-row" id="meta-row"></div>
@@ -1827,7 +1827,7 @@
                   <option value="webp">WebP</option>
                 </select>
                 <span class="sub">仕上がりサイズと圧縮は、左の書き出し設定をそのまま使います。</span>
-                <span class="sub hidden" id="bulk-format-note">AVIFは1枚ごとに 0.3〜1秒 かかります（PNGの20倍ほど）。行数が多いときはPNGのほうが速く終わります。</span>
+                <span class="sub hidden" id="bulk-format-note">AVIFは1枚ごとに 0.3〜1秒 かかります（PNGの20倍ほど）。行数が多いときはPNGのほうが速く終わります。可逆の「小ささ優先」は時間がかかりすぎるため、一括では「ふつう」で焼きます。</span>
               </div>
 
               <button id="btn-bulk-run" class="st-btn" type="button" style="width:100%; justify-content:center">
@@ -2203,12 +2203,12 @@
       </template>
 
   <script src="qr-core.js?v=20260918_1"></script>
-  <script src="qr-style.js?v=20260918_1"></script>
-  <script src="qr-assets.js?v=20260911_6"></script>
-  <script src="qr-verify.js?v=20260918_1"></script>
+  <script src="qr-style.js?v=20260924_1"></script>
+  <script src="qr-assets.js?v=20260924_1"></script>
+  <script src="qr-verify.js?v=20260924_1"></script>
   <script src="qr-bulk.js?v=20260918_1"></script>
-  <script src="qr-xlsx.js?v=20260918_1"></script>
+  <script src="qr-xlsx.js?v=20260924_1"></script>
   <script src="qr-avif.js?v=20260918_1"></script>
-  <script src="app.js?v=20260918_1"></script>
+  <script src="app.js?v=20260924_1"></script>
 </body>
 </html>

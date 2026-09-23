@@ -309,7 +309,9 @@
     const ran = use.filter(e => {
       const stat = stats[e.id];
       const n = stat.tries - stat.stalls;
-      if (stat.tries > 0 && stat.stalls === stat.tries) return false;
+      // 全部だんまりのものも、黙って消さずに「確かめられていない」として出す。
+      // 消すと、動いた残りのデコーダだけで判定したことが画面から分からない。
+      if (stat.tries > 0 && stat.stalls === stat.tries) { dead.push(e); return false; }
       if (n > 0 && stat.errors === n) {
         e.load.reset();       // 次に呼ばれたら読み込みからやり直す
         dead.push(e);

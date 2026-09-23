@@ -112,8 +112,11 @@
       ],
       init: { platform: 'instagram', id: '' },
       build: f => {
-        const id = String(f.id || '').trim().replace(/^@/, '');
-        if (!id) return '';
+        const raw = String(f.id || '').trim().replace(/^@/, '');
+        if (!raw) return '';
+        // 空白や / ? # が混ざっても URL の別の部分にならないよう符号化する。
+        // @ だけは YouTube の「@ハンドル」で使うので戻す。
+        const id = encodeURIComponent(raw).replace(/%40/g, '@');
         switch (f.platform) {
           case 'instagram': return 'https://www.instagram.com/' + id + '/';
           case 'x': return 'https://x.com/' + id;
@@ -125,7 +128,7 @@
           case 'github': return 'https://github.com/' + id;
           case 'note': return 'https://note.com/' + id;
           case 'facebook': return 'https://www.facebook.com/' + id;
-          default: return normalizeUrl(id);
+          default: return normalizeUrl(raw);
         }
       }
     },
@@ -537,7 +540,9 @@
       const saved = JSON.parse(raw);
       if (saved.type && TYPES.some(t => t.id === saved.type)) state.type = saved.type;
       if (saved.values) Object.keys(state.values).forEach(k => {
-        if (saved.values[k]) Object.assign(state.values[k], saved.values[k]);
+        // 文字列が来ると Object.assign が1文字ずつ '0','1'… のキーに展開する
+        const v = saved.values[k];
+        if (v && typeof v === 'object' && !Array.isArray(v)) Object.assign(state.values[k], v);
       });
       SNAPSHOT_KEYS.forEach(k => {
         if (saved[k] !== undefined) state[k] = saved[k];
@@ -696,6 +701,7 @@
     }
 
     isApplyingHistory = true;
+    const prevPresetCategory = state.presetCategory;
     try {
       if (data.type && TYPES.some(t => t.id === data.type)) state.type = data.type;
       if (data.values) {
@@ -721,6 +727,12 @@
       buildIconGrid();
       buildFrameIconGrid();
       buildFrameChips();
+      // 分類とアイコンのタブも履歴に乗っているので、見た目も戻す
+      if (state.presetCategory !== prevPresetCategory) {
+        buildPresetCategoryChips();
+        buildPresets();
+      }
+      eachSegButton('icon-tabs', b => setActive(b, b.dataset.group === state.iconGroup));
       syncPresetActive();
       update();
     } finally {
@@ -2484,7 +2496,22 @@
       return;
     }
 
-    const out = window.QRStyle.render(qr, state.style);
+    // 描画で落ちたら、前の絵と判定を残さない。残すと、いまの設定とは違う
+    // 絵がそのまま書き出されてしまう。
+    let out;
+    try {
+      out = window.QRStyle.render(qr, state.style);
+    } catch (e) {
+      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
+      $('preview').innerHTML = '';
+      lastSvg = '';
+      setVerdict('ng', '描けませんでした', 'デザインの設定を見直すか、リセットしてください', []);
+      syncVerifyButton(false);
+      renderAlerts([]);
+      syncPrintNote(0);
+      setStatus('render error', 'err');
+      return;
+    }
     lastSvg = out.svg;
     $('preview').innerHTML = out.svg;
 
@@ -3446,10 +3473,10 @@
 
   // 1枚ぶんを焼く。AVIF だけはブラウザが焼けないので、同梱した
   // エンコーダに渡す（toBlob に image/avif を渡すと黙って PNG が返る）。
-  async function encodeCanvas(canvas, mime) {
+  async function encodeCanvas(canvas, mime, avifOpts) {
     if (mime === 'image/avif') {
       if (!window.QRAvif) throw new Error('avif encoder missing');
-      return window.QRAvif.encode(canvas, avifOptions());
+      return window.QRAvif.encode(canvas, avifOpts || avifOptions());
     }
     const q = mime === 'image/webp' ? webpQuality() : undefined;
     return new Promise(res => canvas.toBlob(res, mime, q));
@@ -3561,6 +3588,9 @@
 
   const BULK_MAX = 1000;      // これ以上は焼くのも ZIP にするのも重すぎる
   const BULK_YIELD = 8;       // 何件ごとに画面へ制御を返すか
+  // ZIP にする前に全部を手元に抱えるので、形式の上限（4GB）より手前で止める。
+  // そこまで行くと、ZIP を組む前にタブのほうが落ちる。
+  const BULK_BYTES_MAX = 512 * 1024 * 1024;
   const BULK_NONE = '__none__';
   const BULK_DOT = String.fromCharCode(46);   // 種類と項目をつなぐ区切り
   const BULK_SEP = String.fromCharCode(47);   // 1つの列を2項目に当てたときの区切り
@@ -3573,6 +3603,7 @@
     fileName: '',
     encoding: '',
     running: false,
+    starting: false,   // 押してから走り出すまで（判定待ち・確認ダイアログ中）
     abort: false
   };
 
@@ -4071,9 +4102,14 @@
 
   async function runBulk() {
     if (bulk.running) { bulk.abort = true; return; }
+    // 判定待ちや確認ダイアログのあいだに押し直されても、2本目を走らせない
+    if (bulk.starting) return;
     const rows = bulkDataRows();
     if (!rows.length) { showToast('読み込んだ行がありません', 'error'); return; }
-    if (!(await okToExport())) return;
+    bulk.starting = true;
+    let ok;
+    try { ok = await okToExport(); } finally { bulk.starting = false; }
+    if (!ok) return;
 
     const type = bulkType();
     if (!bulkMappedFields(type).length) {
@@ -4081,6 +4117,10 @@
       return;
     }
     const fmt = BULK_FORMATS[$('bulk-format').value] || BULK_FORMATS.png;
+    // AVIF のエンコードはメインスレッドを止める。可逆の「小ささ優先」は
+    // 1枚4秒ほどかかり、そのあいだ「中止」も効かないので、一括では「ふつう」まで。
+    const isAvif = fmt.ext === 'avif';
+    const bulkAvif = Object.assign(avifOptions(), { effort: Math.min(state.effort, 2) });
 
     const over = rows.length > BULK_MAX ? rows.length - BULK_MAX : 0;
     const use = over ? rows.slice(0, BULK_MAX) : rows;
@@ -4097,6 +4137,7 @@
     setStatus('bulk', '');
 
     const files = [];
+    let totalBytes = 0;
     const skipped = [];   // 中身が空だった行
     const failed = [];    // 入りきらなかった行
     const invalid = [];   // 選べない値が書かれていた行（{ line, label, raw, words }）
@@ -4114,7 +4155,8 @@
         // 進み具合と「中止」は、飛ばした行でも動かす。ここを行の処理の後ろに
         // 置くと、空行が続いたときだけバーが止まって固まったように見える。
         // canvas.toBlob と decode() のあいだは画面が止まるので、数件ごとに返す
-        if (i % BULK_YIELD === 0) {
+        // AVIF は1枚が重いので、1枚ごとに返して「中止」を効かせる。
+        if (isAvif || i % BULK_YIELD === 0) {
           setBulkProgress(i, use.length);
           await new Promise(r => setTimeout(r, 0));
           if (bulk.abort) break;
@@ -4153,15 +4195,20 @@
         let bytes;
         if (fmt.ext === 'svg') {
           const doc = '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) +
-            window.QRStyle.resize(svg, 1024);
+            // 1枚ずつの書き出しと同じく、mm 指定ならその寸法で出す
+            (state.sizeUnit === 'mm'
+              ? window.QRStyle.resizeMm(svg, state.printMm)
+              : window.QRStyle.resize(svg, 1024));
           bytes = new TextEncoder().encode(doc);
         } else {
           const canvas = await rasterize(svg, outputPx(), null);
-          const blob = await encodeCanvas(canvas, fmt.mime);
+          const blob = await encodeCanvas(canvas, fmt.mime, bulkAvif);
           if (!blob) { failed.push(lineNo); continue; }
           bytes = new Uint8Array(await blob.arrayBuffer());
         }
 
+        totalBytes += bytes.length;
+        if (totalBytes > BULK_BYTES_MAX) throw new Error('zip too large');
         files.push({ name: name, bytes: bytes });
         // QR に埋める本文は変えず、表計算ソフトで開く一覧側だけ数式を無害化する。
         manifest.push([String(lineNo), name, spreadsheetText(text)]);
@@ -4195,13 +4242,13 @@
       showToast(String(e && e.message) === 'zip too large'
         ? 'ZIPが大きすぎます。サイズを下げるか、行を分けてください'
         : '一括生成に失敗しました', 'error');
+    } finally {
+      bulk.running = false;
+      bulk.abort = false;
+      btn.textContent = 'まとめて作る';
+      $('bulk-progress').classList.add('hidden');
+      setStatus('ready', 'idle');
     }
-
-    bulk.running = false;
-    bulk.abort = false;
-    btn.textContent = 'まとめて作る';
-    $('bulk-progress').classList.add('hidden');
-    setStatus('ready', 'idle');
   }
 
   // CSV のセル。区切り・引用符・改行が入っていたら引用符でくるむ
@@ -4857,9 +4904,12 @@
       const mod = isMac ? e.metaKey : e.ctrlKey;
       if (!mod) return;
 
+      // 文字を打てる欄では、ブラウザ自身の取り消しに任せる（内容欄に限らず、
+      // ロゴの文字なども同じ）。スライダーや色などは、こちらの履歴で戻す。
       const target = e.target;
-      const isTextInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
-      const isContentField = isTextInput && target.id && target.id.startsWith('f-');
+      const isContentField = !!target && (target.tagName === 'TEXTAREA' || target.isContentEditable ||
+        (target.tagName === 'INPUT' &&
+          ['text', 'search', 'url', 'email', 'tel', 'password', 'number'].indexOf(target.type) >= 0));
 
       if (e.key === 'z' || e.key === 'Z') {
         if (e.shiftKey) {
