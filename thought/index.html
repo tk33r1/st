@@ -263,7 +263,7 @@
       overflow: hidden;
       border: 0;
       border-radius: 0;
-      background: var(--soft-fill);
+      background: var(--background);
       color: var(--secondary);
       font-size: 1rem;
       white-space: nowrap;
@@ -274,9 +274,9 @@
       transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
     }
     .theme-btn::after { position: absolute; top: 0; right: 0; width: 0.7rem; height: 0.7rem; background: linear-gradient(225deg, var(--background) 0 47%, var(--surface) 48% 56%, var(--strong-fill) 57% 100%); content: ""; pointer-events: none; }
-    .theme-btn[aria-pressed="true"] { background: var(--strong-fill); color: var(--text); font-weight: 600; box-shadow: inset 0 -3px 0 var(--text), inset 0 0 0 1px var(--border); }
+    .theme-btn[aria-pressed="true"] { background: var(--background); color: var(--text); font-weight: 600; box-shadow: inset 0 -3px 0 var(--text), inset 0 0 0 1px var(--border); }
     @media (hover: hover) {
-      .theme-btn:hover { background: var(--strong-fill); color: var(--text); transform: translateY(-1px); }
+      .theme-btn:hover { background: var(--background); color: var(--text); transform: translateY(-1px); }
     }
 
     /* =========================================
