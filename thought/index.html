@@ -310,7 +310,6 @@
     #vLine { width: 1px; height: 10rem; background: linear-gradient(to bottom, transparent, var(--surface), transparent); }
     #hLine { width: 3rem; height: 3px; margin-bottom: 2rem; background: var(--surface); }
     #body { max-width: 36rem; color: var(--secondary); font-size: 1.125rem; line-height: 2.2; letter-spacing: 0.08em; transition: color 0.5s ease; }
-    #body.is-annotating { cursor: text; }
     [data-color] { --marker: var(--hl-yellow); }
     [data-color="pink"] { --marker: var(--hl-pink); }
     [data-color="blue"] { --marker: var(--hl-blue); }
@@ -380,6 +379,53 @@
 
     /* 余白に書く（書き込みはこの端末の localStorage のみ） */
     .note-panel { margin-top: 0.5rem; }
+    /* 思索全体への書き留め。罫線は行の高さ（2em）に合わせて、ノートの一行に文字が乗るようにする */
+    .page-note-label { display: block; margin: 1.2rem 0 0.3rem; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.08em; }
+    #pageNoteInput {
+      display: block;
+      width: 100%;
+      min-height: 8em;
+      padding: 0 0.25rem;
+      border: 0;
+      border-radius: 0;
+      background: repeating-linear-gradient(transparent 0 calc(2em - 1px), var(--border) calc(2em - 1px) 2em);
+      background-attachment: local;
+      color: var(--pencil);
+      font-family: var(--hand);
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 2em;
+      letter-spacing: 0.03em;
+      resize: vertical;
+    }
+    #pageNoteInput::placeholder { color: var(--quiet); opacity: 1; }
+    /* パネルを閉じているときは、書き留めた内容を本文の下に手書きのまま残す（押すと書き直せる） */
+    .page-note {
+      display: block;
+      width: 100%;
+      margin: 1.75rem 0 0;
+      padding: 0.1rem 0 0.1rem 0.9rem;
+      border: 0;
+      border-left: 2px solid var(--surface);
+      background: transparent;
+      color: var(--pencil);
+      font-family: var(--hand);
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 2;
+      letter-spacing: 0.03em;
+      text-align: left;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .page-note::before { display: block; color: var(--quiet); content: "余白に書き留めたこと"; font-family: var(--serif); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.1em; }
+    .page-note:hover { color: var(--text); border-left-color: var(--muted); }
+
+    /* 書き込みの知らせ（重なる・保存できない等）。パネルを開かずに画面下へ短く出す */
+    .note-toast { position: fixed; left: 50%; bottom: max(1.5rem, env(safe-area-inset-bottom)); z-index: 120; width: max-content; max-width: min(calc(100vw - 2rem), 26rem); padding: 0.7rem 1.1rem; border-radius: 0.5rem; background: var(--text); color: var(--background); box-shadow: var(--shadow); font-size: 0.8rem; line-height: 1.7; letter-spacing: 0.05em; opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, 0.5rem); transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease; }
+    .note-toast.is-shown { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
     .annotation-guide { margin: 0; padding: 0.8rem 0.9rem; border-left: 2px solid var(--surface); color: var(--muted); font-size: 0.8rem; line-height: 1.8; letter-spacing: 0.06em; }
     .annotation-guide small { display: block; margin-top: 0.35rem; color: var(--quiet); font-size: 0.72rem; }
 
@@ -656,6 +702,8 @@
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
               </div>
 
+              <button type="button" id="pageNote" class="page-note" title="書き直す" hidden></button>
+
               <div id="metaInfo" class="content-element anim-ready play-fade-up delay-2">
                 <div id="metaContent" class="zen-hide">
                   <p id="lastUpdated"></p>
@@ -680,9 +728,11 @@
 
                 <div id="notePanel" class="note-panel" hidden>
                   <p class="annotation-guide">
-                    <span id="noteHint" aria-live="polite">本文の好きな箇所を選ぶと、蛍光ペンを引いたり、メモを書いたりできます。蛍光ペンやメモをタップすると、色の変更・編集・削除ができます。</span>
+                    <span>本文の好きな箇所を選ぶと、蛍光ペンを引いたり、メモを書いたりできます。蛍光ペンやメモをタップすると、色の変更・編集・削除ができます。</span>
                     <small>書き込みはこの端末のブラウザにだけ保存されます。「写す」で一緒にコピーできます。</small>
                   </p>
+                  <label for="pageNoteInput" class="page-note-label">この思索に書き留める</label>
+                  <textarea id="pageNoteInput" maxlength="2000" placeholder="読んで浮かんだこと、いまの自分の答えを。"></textarea>
                 </div>
               </div>
             </div>
@@ -736,6 +786,7 @@
   </div>
 
   <p id="liveStatus" class="sr-only" aria-live="polite"></p>
+  <p id="noteToast" class="note-toast" role="status" aria-live="polite"></p>
 
   <!-- 本文を選んだとき：色を押すとその色で蛍光ペンを引く。メモは蛍光ペンとは別で、線は引かない -->
   <div id="selectionToolbar" class="selection-toolbar" role="toolbar" aria-label="選択した本文への操作" hidden>
@@ -832,7 +883,9 @@
       openShareModalBtn: document.getElementById('openShareModalBtn'),
       noteToggleBtn: document.getElementById('noteToggleBtn'),
       notePanel: document.getElementById('notePanel'),
-      noteHint: document.getElementById('noteHint'),
+      pageNote: document.getElementById('pageNote'),
+      pageNoteInput: document.getElementById('pageNoteInput'),
+      noteToast: document.getElementById('noteToast'),
       selectionToolbar: document.getElementById('selectionToolbar'),
       selectionColors: document.getElementById('selectionColors'),
       memoSelectionBtn: document.getElementById('memoSelectionBtn'),
@@ -902,6 +955,7 @@
       dark: 'thought-dark-mode',
       zen: 'thought-zen-mode',
       annotationPrefix: 'thought-annotations-',
+      pageNotePrefix: 'thought-page-note-',
       highlightColor: 'thought-highlight-color'
     };
     const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -1033,7 +1087,7 @@
       els.progress.hidden = index < 0;
       els.progressText.textContent = index < 0 ? '' : `${formatIndex(index + 1)} / ${formatIndex(AVAILABLE_THEMES.length)}`;
 
-      if (!els.notePanel.hidden) resetNoteHint();
+      loadPageNote();
       document.title = currentTheme ? `${theme.title} | 思索の余白` : '思索の余白';
     }
 
@@ -1059,6 +1113,9 @@
         el.classList.remove(...Array.from(el.classList).filter(name => name === 'anim-ready' || /^(play|delay)-/.test(name)));
       });
       snapshot.querySelectorAll('.is-active').forEach(el => el.classList.remove('is-active'));
+      // 入力中の値は cloneNode では写らないので、書き留め欄は手で写す
+      const noteInput = snapshot.querySelector('#pageNoteInput');
+      if (noteInput) noteInput.value = els.pageNoteInput.value;
       snapshot.setAttribute('aria-hidden', 'true');
       snapshot.inert = true;
       return snapshot;
@@ -1347,7 +1404,6 @@
        同じ種類どうしは重ねられないが、蛍光ペンとメモは同じ箇所・重なる箇所にも置ける。
        ========================================= */
     const getAnnotationKey = (themeName) => `${STORAGE_KEYS.annotationPrefix}${themeName || 'intro'}`;
-    const NOTE_HINT = els.noteHint.textContent;
     const MEMO_HINT = els.memoHint.textContent;
     const MAX_ANNOTATIONS = 80;
     const HIGHLIGHT_COLOR_NAMES = { yellow: '黄', pink: '桃', blue: '青', green: '緑' };
@@ -1447,14 +1503,13 @@
       }
     }
 
-    function resetNoteHint() {
-      els.noteHint.textContent = NOTE_HINT;
-    }
-
-    // 保存できない・重なる等の知らせは、パネルを開いて本文下の案内で伝える（aria-live で読み上げも）
+    // 保存できない・重なる等の知らせは、画面下に短く出す（role="status" で読み上げも）
+    let toastTimer = null;
     function showNoteMessage(message) {
-      setNoteOpen(true);
-      els.noteHint.textContent = message;
+      window.clearTimeout(toastTimer);
+      els.noteToast.textContent = message;
+      els.noteToast.classList.add('is-shown');
+      toastTimer = window.setTimeout(() => els.noteToast.classList.remove('is-shown'), 3600);
     }
 
     function saveAnnotations() {
@@ -1560,16 +1615,45 @@
       return note;
     }
 
+    // 蛍光ペン・メモは本文を選べばいつでも使える。パネルは使い方の案内と、思索全体への書き留め
     function setNoteOpen(open) {
       els.notePanel.hidden = !open;
       els.noteToggleBtn.setAttribute('aria-expanded', String(open));
-      els.body.classList.toggle('is-annotating', open);
-      if (open) return;
-      resetNoteHint();
-      hideSelectionToolbar(true);
-      const selection = window.getSelection();
-      if (selection && els.body.contains(selection.anchorNode)) selection.removeAllRanges();
+      if (open) loadHandFont();
+      renderPageNote();
     }
+
+    /* =========================================
+       思索全体への書き留め（テーマごとに1つ。入力のたびに保存する）
+       ========================================= */
+    const MAX_PAGE_NOTE = 2000;
+    const getPageNoteKey = (themeName) => `${STORAGE_KEYS.pageNotePrefix}${themeName || 'intro'}`;
+    let currentPageNote = '';
+
+    function loadPageNote() {
+      currentPageNote = (readStorage('localStorage', getPageNoteKey(currentTheme)) || '').slice(0, MAX_PAGE_NOTE);
+      els.pageNoteInput.value = currentPageNote;
+      renderPageNote();
+    }
+
+    // パネルを開いている間は入力欄に出ているので、本文下の表示は閉じているときだけ
+    function renderPageNote() {
+      const text = currentPageNote.trim();
+      els.pageNote.textContent = text;
+      els.pageNote.hidden = !text || !els.notePanel.hidden;
+      if (text) loadHandFont();
+    }
+
+    els.pageNoteInput.addEventListener('input', () => {
+      currentPageNote = els.pageNoteInput.value.slice(0, MAX_PAGE_NOTE);
+      if (!writeStorage('localStorage', getPageNoteKey(currentTheme), currentPageNote.trim() ? currentPageNote : null)) {
+        showNoteMessage('この環境では書き留めを保存できません。「写す」で内容をコピーしてください。');
+      }
+    });
+    els.pageNote.addEventListener('click', () => {
+      setNoteOpen(true);
+      els.pageNoteInput.focus();
+    });
 
     function setCurrentSwatch(toolbar, color) {
       toolbar.querySelectorAll('.color-swatch').forEach(swatch => {
@@ -1579,14 +1663,18 @@
       });
     }
 
-    // ツールバーは対象の少し上に出す。上に余地がなければ下に回す
-    function placeToolbar(toolbar, rect) {
+    // ツールバーは対象の少し上に出す。上に余地がなければ下に回す。
+    // preferBelow は下を先に試す（タッチ端末では選択の上に OS のメニューが出るため。つまみの分だけ離す）
+    const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+    function placeToolbar(toolbar, rect, { preferBelow = false } = {}) {
       toolbar.hidden = false;
       const toolbarRect = toolbar.getBoundingClientRect();
       const halfWidth = toolbarRect.width / 2;
       const left = Math.min(window.innerWidth - halfWidth - 10, Math.max(halfWidth + 10, rect.left + rect.width / 2));
-      let top = rect.top - toolbarRect.height - 10;
-      if (top < 10) top = rect.bottom + 10;
+      const above = rect.top - toolbarRect.height - 10;
+      const below = rect.bottom + (preferBelow ? 28 : 10);
+      let top = preferBelow ? below : above;
+      if (preferBelow ? top + toolbarRect.height > window.innerHeight - 10 : top < 10) top = preferBelow ? above : below;
       toolbar.style.left = `${left}px`;
       toolbar.style.top = `${top}px`;
     }
@@ -1654,7 +1742,7 @@
 
     function updateSelectionToolbar() {
       selectionFrame = null;
-      if (els.notePanel.hidden || els.memoModal.open) {
+      if (els.memoModal.open) {
         hideSelectionToolbar();
         return;
       }
@@ -1672,7 +1760,7 @@
       pendingSelection = offsets;
       hideAnnotationToolbar();
       setCurrentSwatch(els.selectionToolbar, lastHighlightColor);
-      placeToolbar(els.selectionToolbar, range.getBoundingClientRect());
+      placeToolbar(els.selectionToolbar, range.getBoundingClientRect(), { preferBelow: coarsePointerQuery.matches });
     }
 
     function queueSelectionToolbarUpdate() {
@@ -1712,7 +1800,6 @@
         showNoteMessage(error);
         return null;
       }
-      resetNoteHint();
       const highlight = exact || { id: createAnnotationId(), kind: 'highlight', ...selectionData };
       highlight.color = color;
       if (!exact) currentAnnotations.push(highlight);
@@ -1724,7 +1811,6 @@
     function addMemo(selectionData, note) {
       const { error } = checkPlacement('memo', selectionData);
       if (error) return error;
-      resetNoteHint();
       currentAnnotations.push({ id: createAnnotationId(), kind: 'memo', ...selectionData, note });
       commitAnnotations();
       return '';
@@ -2088,7 +2174,9 @@
           : `・蛍光ペン「${annotation.quote}」`
       )).join('\n');
       const annotationBlock = annotations ? `\n\n― 本文への書き込み\n${annotations}` : '';
-      return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
+      const pageNote = currentPageNote.trim();
+      const pageNoteBlock = pageNote ? `\n\n― 余白に書き留めたこと\n${pageNote}` : '';
+      return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}${pageNoteBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
     };
 
     const labelTimers = new WeakMap();
