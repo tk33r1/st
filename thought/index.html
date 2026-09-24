@@ -38,9 +38,10 @@
 {"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Shinya Takeda - Terminal Portfolio","item":"https://tk.st/"},{"@type":"ListItem","position":2,"name":"思索の余白","item":"https://tk.st/thought/"}]},{"@type":"Article","@id":"https://tk.st/thought/#article","mainEntityOfPage":{"@type":"WebPage","@id":"https://tk.st/thought/"},"headline":"思索の余白","description":"人生の本質を思索するための場所","url":"https://tk.st/thought/","inLanguage":"ja","image":{"@type":"ImageObject","url":"https://tk.st/images/ogp/thought-ogp.png","width":2160,"height":1134},"datePublished":"2025-10-12T12:00:00+09:00","dateModified":"2026-09-24T15:32:28+09:00","author":{"@type":"Person","@id":"https://tk.st/#shitake","name":"Shinya Takeda","url":"https://tk.st/"},"publisher":{"@type":"Person","@id":"https://tk.st/#shitake","name":"Shinya Takeda","url":"https://tk.st/"}}]}
 </script>
   <script>
-    /* 描画前にダーク/集中モードを当てる（読み込み時に白く光るのを防ぐ） */
+    /* 描画前にダーク/集中モード/縦書きを当てる（読み込み時に白く光ったり、本文の向きが跳ねたりするのを防ぐ） */
     (function () {
-      var root = document.documentElement, dark = null, zen = false;
+      var root = document.documentElement, dark = null, zen = false, vertical = true;
+      try { vertical = localStorage.getItem('thought-writing-mode') !== 'horizontal'; } catch (_) {}
       try { var stored = localStorage.getItem('thought-dark-mode'); if (stored !== null) dark = stored === 'true'; } catch (_) {}
       try { zen = sessionStorage.getItem('thought-zen-mode') === 'true'; } catch (_) {}
       if (dark === null) dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -49,6 +50,7 @@
         document.querySelector('meta[name="theme-color"]').setAttribute('content', '#161618');
       }
       if (zen) root.classList.add('zen-mode');
+      if (vertical) root.classList.add('vertical-writing');
     })();
   </script>
 
@@ -210,6 +212,7 @@
       transition: color 0.25s ease, background-color 0.25s ease, opacity 0.25s ease;
     }
     .icon-button:hover, .progress-arrow:hover { color: var(--text); background: var(--soft-fill); }
+    .writing-mode-btn span { font-family: var(--serif); font-size: 0.95rem; line-height: 1; }
     .icon { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
     .theme-switch {
       position: relative;
@@ -315,6 +318,15 @@
     [data-color="blue"] { --marker: var(--hl-blue); }
     [data-color="green"] { --marker: var(--hl-green); }
     #body mark.thought-highlight { padding: 0.05em 0; border-radius: 0.08em; background: linear-gradient(transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); color: inherit; box-decoration-break: clone; -webkit-box-decoration-break: clone; cursor: pointer; }
+    /*
+      縦書き（標準）。列の長さ（高さ）は fitVerticalBody が本文の量と幅に合わせて決める。
+      横スクロールはページめくりのスワイプとぶつかるので、全文が幅に収まる長さにする
+    */
+    .vertical-writing #body { max-width: 100%; height: 16em; overflow-x: auto; overflow-y: hidden; writing-mode: vertical-rl; line-height: 2.1; scrollbar-width: thin; }
+    /* 蛍光ペンは横書きの「下半分」に合わせ、縦書きでは行の左側（下側）に引く */
+    .vertical-writing #body mark.thought-highlight { padding: 0 0.05em; background: linear-gradient(to left, transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); }
+    .vertical-writing #body .margin-note { margin: 0.2em 0 0.35em; }
+    .vertical-writing #body .margin-note::before { margin: 0 0 0.2em; }
     #body mark.thought-highlight.is-active { outline: 1px dashed var(--muted); outline-offset: 3px; }
     #body mark.thought-highlight.is-located { animation: locateAnnotation 1.1s ease; }
     /*
@@ -399,6 +411,12 @@
       resize: vertical;
     }
     #pageNoteInput::placeholder { color: var(--quiet); opacity: 1; }
+    .page-note-question { margin: 0 0 0.4rem; color: var(--secondary); font-size: 0.9rem; line-height: 1.9; letter-spacing: 0.06em; }
+    .page-note-question::before { margin-right: 0.6em; color: var(--quiet); content: "問い"; font-size: 0.72rem; letter-spacing: 0.1em; }
+    /* 日をまたいで書き直すと、前の書き留めは日付つきでここに残る */
+    .page-note-history { margin-top: 1rem; font-size: 0.85rem; letter-spacing: 0.06em; }
+    .page-note-history .revision-body { color: var(--pencil); font-family: var(--hand); font-weight: 600; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .note-panel-actions { margin-top: 0.4rem; }
     /* パネルを閉じているときは、書き留めた内容を本文の下に手書きのまま残す（押すと書き直せる） */
     .page-note {
       display: block;
@@ -420,8 +438,18 @@
       cursor: pointer;
       transition: color 0.25s ease, border-color 0.25s ease;
     }
-    .page-note::before { display: block; color: var(--quiet); content: "余白に書き留めたこと"; font-family: var(--serif); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.1em; }
+    .page-note::before { display: block; color: var(--quiet); content: "余白に書き留めたこと　" attr(data-date); font-family: var(--serif); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.1em; }
     .page-note:hover { color: var(--text); border-left-color: var(--muted); }
+
+    /* ひと呼吸。見出しの細い線（.breath-line）と同じ線が、吸うと伸び、吐くと縮む */
+    .breath-overlay { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6rem; background: var(--background); opacity: 0; transition: opacity 0.8s ease; }
+    .breath-overlay.is-shown { opacity: 1; }
+    .breath-overlay:not(.is-shown) { pointer-events: none; }
+    .breath-bar { display: block; width: min(60vw, 16rem); height: 1px; background: var(--muted); transform: scaleX(0.12); transition: transform 4s ease-in-out; }
+    .breath-overlay.is-inhale .breath-bar { transform: scaleX(1); }
+    .breath-text { min-height: 1.5em; margin: 0; color: var(--secondary); font-size: 0.95rem; letter-spacing: 0.5em; text-indent: 0.5em; }
+    .breath-skip { position: absolute; bottom: max(2rem, env(safe-area-inset-bottom)); min-height: 2.75rem; padding: 0 1rem; border: 0; background: transparent; color: var(--quiet); font-size: 0.75rem; letter-spacing: 0.12em; cursor: pointer; }
+    .breath-skip:hover { color: var(--text); }
 
     /* 書き込みの知らせ（重なる・保存できない等）。パネルを開かずに画面下へ短く出す */
     .note-toast { position: fixed; left: 50%; bottom: max(1.5rem, env(safe-area-inset-bottom)); z-index: 120; width: max-content; max-width: min(calc(100vw - 2rem), 26rem); padding: 0.7rem 1.1rem; border-radius: 0.5rem; background: var(--text); color: var(--background); box-shadow: var(--shadow); font-size: 0.8rem; line-height: 1.7; letter-spacing: 0.05em; opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, 0.5rem); transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease; }
@@ -511,10 +539,13 @@
     #zenToggleBtn, #themeToggleBtn { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.5s ease-in-out; }
     .zen-mode .zen-hide { opacity: 0 !important; filter: blur(4px) !important; pointer-events: none !important; }
     .zen-mode .action-btns-wrapper,
+    .zen-mode #writingModeBtn,
     .zen-mode #zenToggleBtn,
     .zen-mode #themeToggleBtn { opacity: 0.35 !important; }
     .zen-mode .action-btns-wrapper:hover,
     .zen-mode .action-btns-wrapper:focus-within,
+    .zen-mode #writingModeBtn:hover,
+    .zen-mode #writingModeBtn:focus-visible,
     .zen-mode #zenToggleBtn:hover,
     .zen-mode #zenToggleBtn:focus-visible,
     .zen-mode #themeToggleBtn:hover,
@@ -641,6 +672,11 @@
             </div>
 
             <div class="display-controls">
+              <!-- 本文は縦書きが標準。表示は切り替え先の文字（縦書きのときは「横」） -->
+              <button type="button" id="writingModeBtn" class="icon-button writing-mode-btn" title="横書きにする" aria-label="横書きにする" aria-pressed="false">
+                <span id="writingModeGlyph" aria-hidden="true">横</span>
+              </button>
+
               <button type="button" id="zenToggleBtn" class="icon-button" title="集中モードにする" aria-label="集中モードにする" aria-pressed="false">
                 <svg id="zenEnterIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
                 <svg id="zenExitIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
@@ -697,8 +733,8 @@
             <div class="prose-panel">
               <div id="hLine" class="content-element anim-ready play-fade-in delay-2"></div>
 
-              <!-- イントロ本文。data-updated はイントロの最終更新日（各テーマの日付は #thoughtSource の article 側） -->
-              <div id="body" class="content-element anim-ready play-fade-up delay-1" data-updated="2025.10.12">
+              <!-- イントロ本文。data-updated はイントロの最終更新日、data-question は書き留め欄に出す問い（各テーマの分は #thoughtSource の article 側） -->
+              <div id="body" class="content-element anim-ready play-fade-up delay-1" data-updated="2025.10.12" data-question="いま、あなたが最新化したい人生のテーマは何だろう。">
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
               </div>
 
@@ -732,7 +768,18 @@
                     <small>書き込みはこの端末のブラウザにだけ保存されます。「写す」で一緒にコピーできます。</small>
                   </p>
                   <label for="pageNoteInput" class="page-note-label">この思索に書き留める</label>
-                  <textarea id="pageNoteInput" maxlength="2000" placeholder="読んで浮かんだこと、いまの自分の答えを。"></textarea>
+                  <p id="pageNoteQuestion" class="page-note-question" hidden></p>
+                  <textarea id="pageNoteInput" maxlength="2000" placeholder="思い浮かんだことを、そのまま。" aria-describedby="pageNoteQuestion"></textarea>
+                  <details id="pageNoteHistory" class="revisions page-note-history" hidden>
+                    <summary></summary>
+                    <ol></ol>
+                  </details>
+                  <div class="note-panel-actions">
+                    <button type="button" id="exportNotesBtn" class="action-btn">
+                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                      <span>思索ノートを書き出す</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -760,25 +807,26 @@
     思索の本文。ここが正本で、スクリプトはここから読み込んで表示する（HTML に置くことで検索エンジンにも本文が届く）。
     - 公開順 = 並び順。テーマを増やすときは article を足す（ナビボタンは h2 から自動生成する）。
     - 参考文献のアフィリエイトリンクには rel="sponsored" を付ける（付いていれば自動で「PR」表示が出る）。
+    - data-question は書き留め欄に出す問い（読み手への問いかけ。省略すると出さない）。
     - 改訂したら、旧版を <section data-role="revision" data-date="YYYY.MM.DD"><p>旧本文</p></section> として残すと「過去の版」に並ぶ。
   -->
   <div id="thoughtSource" hidden>
-    <article data-theme="love" data-updated="2026.03.12">
+    <article data-theme="love" data-updated="2026.03.12" data-question="見返りを求めずに、あなたがいま与えているものは何だろう。">
       <h2>愛とは</h2>
       <p data-role="body">誰かからの見返りを期待したり、何かと交換したりするものではない。かといって、自己犠牲でもない。愛とは、自立した人間同士が、配慮と尊重、転じて責任を持って相対し、互いの核心を知ろうとする中で、自発的にただ、与えるもののように思う。</p>
       <p data-role="reference">エーリッヒ・フロム（2020）『<a href="https://a.r10.to/hkGD1f" target="_blank" rel="sponsored noopener noreferrer" class="reference-link">愛するということ</a>』鈴木晶訳, 紀伊國屋書店.</p>
     </article>
-    <article data-theme="happiness" data-updated="2026.03.16">
+    <article data-theme="happiness" data-updated="2026.03.16" data-question="いま、前向きに手放してもよい苦しみはどれだろう。">
       <h2>幸せとは</h2>
       <p data-role="body">絶え間なく幸せであり続けることは、人間である限り不可能。であれば、自分がコントロールできる範囲の苦しみを取り除く努力をし、それ以外は前向きに手放していく。その静かな諦念が、結果として幸せだと感じる時間を長くするのだろう。</p>
       <p data-role="reference">今枝由郎訳（2001）『<a href="https://a.r10.to/h5DyaJ" target="_blank" rel="sponsored noopener noreferrer" class="reference-link">スッタニパータ ブッダの言葉</a>』光文社.</p>
     </article>
-    <article data-theme="failure" data-updated="2025.12.28">
+    <article data-theme="failure" data-updated="2025.12.28" data-question="まだ何もしていないことの中に、早く失敗してみたいことはあるだろうか。">
       <h2>失敗とは</h2>
       <p data-role="body">失敗の反対は成功だと思いがち。実際には何もしないこと。失敗は新たな学びを伴うが、何もしなければ何も得られない。早く失敗することが成功への近道。それに誰しも気づきながら、怠惰でありたいと願う無意識に、成功の反対に失敗があることを、私たちは常に語りかけられる。</p>
       <p data-role="reference">エリック・リース（2012）『<a href="https://a.r10.to/hRO0hL" target="_blank" rel="sponsored noopener noreferrer" class="reference-link">リーン・スタートアップ</a>』井口耕二訳, 日経BP.</p>
     </article>
-    <article data-theme="life" data-updated="2026.09.24">
+    <article data-theme="life" data-updated="2026.09.24" data-question="最近、困難の中でも周りを気遣えた瞬間はあっただろうか。">
       <h2>人生とは</h2>
       <p data-role="body">人生とは、周りへの気遣いをし続けられる人間になるための旅路。いかなる角度からの困難に対しても余裕を保ち続けるための技術は、本人の経験によってのみ鍛えることができる。</p>
       <p data-role="reference">マルクス・アウレーリウス『<a href="https://amzn.to/4hmnFay" target="_blank" rel="sponsored noopener noreferrer" class="reference-link">自省録</a>』／『<a href="https://amzn.to/4yaaYGX" target="_blank" rel="sponsored noopener noreferrer" class="reference-link">ニコマコス倫理学 (西洋古典叢書 G 28)</a>』.</p>
@@ -787,6 +835,13 @@
 
   <p id="liveStatus" class="sr-only" aria-live="polite"></p>
   <p id="noteToast" class="note-toast" role="status" aria-live="polite"></p>
+
+  <!-- ひと呼吸：集中モードに入るとき、読み始める前に一度だけ呼吸を促す（どこを押しても、キーでも終わる） -->
+  <div id="breathOverlay" class="breath-overlay" hidden>
+    <span class="breath-bar" aria-hidden="true"></span>
+    <p id="breathText" class="breath-text" aria-hidden="true"></p>
+    <button type="button" id="breathSkipBtn" class="breath-skip" aria-label="ひと呼吸をやめて、すぐに読む">すぐに読む</button>
+  </div>
 
   <!-- 本文を選んだとき：色を押すとその色で蛍光ペンを引く。メモは蛍光ペンとは別で、線は引かない -->
   <div id="selectionToolbar" class="selection-toolbar" role="toolbar" aria-label="選択した本文への操作" hidden>
@@ -885,7 +940,15 @@
       notePanel: document.getElementById('notePanel'),
       pageNote: document.getElementById('pageNote'),
       pageNoteInput: document.getElementById('pageNoteInput'),
+      pageNoteQuestion: document.getElementById('pageNoteQuestion'),
+      pageNoteHistory: document.getElementById('pageNoteHistory'),
+      exportNotesBtn: document.getElementById('exportNotesBtn'),
       noteToast: document.getElementById('noteToast'),
+      writingModeBtn: document.getElementById('writingModeBtn'),
+      writingModeGlyph: document.getElementById('writingModeGlyph'),
+      breathOverlay: document.getElementById('breathOverlay'),
+      breathText: document.getElementById('breathText'),
+      breathSkipBtn: document.getElementById('breathSkipBtn'),
       selectionToolbar: document.getElementById('selectionToolbar'),
       selectionColors: document.getElementById('selectionColors'),
       memoSelectionBtn: document.getElementById('memoSelectionBtn'),
@@ -920,6 +983,7 @@
       title: els.title.textContent.trim(),
       body: els.body.textContent.trim(),
       lastUpdated: els.body.dataset.updated || '',
+      question: els.body.dataset.question || '',
       reference: null,
       revisions: []
     };
@@ -930,6 +994,7 @@
         title: article.querySelector('h2').textContent.trim(),
         body: article.querySelector('[data-role="body"]').textContent.trim(),
         lastUpdated: article.dataset.updated || '',
+        question: article.dataset.question || '',
         reference: article.querySelector('[data-role="reference"]'),
         revisions: Array.from(article.querySelectorAll('[data-role="revision"]')).map(section => ({
           date: section.dataset.date || '',
@@ -956,6 +1021,7 @@
       zen: 'thought-zen-mode',
       annotationPrefix: 'thought-annotations-',
       pageNotePrefix: 'thought-page-note-',
+      writingMode: 'thought-writing-mode',
       highlightColor: 'thought-highlight-color'
     };
     const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -989,6 +1055,7 @@
     // 初期値は <head> のスクリプトが <html> に付けたクラスに合わせる
     let isDarkMode = els.root.classList.contains('dark-mode');
     let isZenMode = els.root.classList.contains('zen-mode');
+    let isVertical = els.root.classList.contains('vertical-writing');
     let currentTheme = getThemeFromHash();
     let transitionToken = 0;
     let pageTurnTimer = null;
@@ -1366,6 +1433,33 @@
       navArrow.setAttribute('aria-hidden', String(!enabled));
     }
 
+    /*
+      縦書きの列の長さ（本文の高さ）を、全文が幅に収まる最短の長さにする（二分探索で数回測るだけ）。
+      最短でも VERTICAL_MIN_EM、最長の VERTICAL_MAX_EM でも収まらないときだけ横スクロールに任せる
+    */
+    const VERTICAL_MIN_EM = 14;
+    const VERTICAL_MAX_EM = 40;
+    function fitVerticalBody() {
+      const body = els.body;
+      if (!isVertical) {
+        body.style.height = '';
+        return;
+      }
+      const fits = (em) => {
+        body.style.height = `${em}em`;
+        return body.scrollWidth <= body.clientWidth + 1;
+      };
+      if (fits(VERTICAL_MIN_EM) || !fits(VERTICAL_MAX_EM)) return;
+      let low = VERTICAL_MIN_EM;
+      let high = VERTICAL_MAX_EM;
+      while (high - low > 0.5) {
+        const mid = (low + high) / 2;
+        if (fits(mid)) high = mid;
+        else low = mid;
+      }
+      body.style.height = `${high}em`;
+    }
+
     function applyDisplayModes() {
       els.root.classList.toggle('dark-mode', isDarkMode);
       els.root.classList.toggle('zen-mode', isZenMode);
@@ -1378,6 +1472,13 @@
       els.zenToggleBtn.title = isZenMode ? '集中モードを終了' : '集中モードにする';
       els.zenEnterIcon.hidden = isZenMode;
       els.zenExitIcon.hidden = !isZenMode;
+      els.root.classList.toggle('vertical-writing', isVertical);
+      const writingLabel = isVertical ? '横書きにする' : '縦書きにする';
+      els.writingModeBtn.setAttribute('aria-pressed', String(!isVertical));
+      els.writingModeBtn.setAttribute('aria-label', writingLabel);
+      els.writingModeBtn.title = writingLabel;
+      els.writingModeGlyph.textContent = isVertical ? '横' : '縦';
+      fitVerticalBody();
       // 見えなくした要素に Tab で入らないようにする
       els.zenHidden.forEach(el => { el.inert = isZenMode; });
     }
@@ -1431,8 +1532,9 @@
     renderSwatches(els.selectionColors, name => `${name}の蛍光ペンを引く`, { toggle: false });
     renderSwatches(els.annotationColors, name => `${name}に変える`, { toggle: true });
 
+    const getThemeData = (themeName) => themeName ? themes[themeName] : intro;
     function getCurrentThemeData() {
-      return currentTheme ? themes[currentTheme] : intro;
+      return getThemeData(currentTheme);
     }
     function getCurrentBodyText() {
       return getCurrentThemeData().body;
@@ -1464,9 +1566,10 @@
       同じ種類の書き込みと重ならない出現位置を割り当てる（ずれていない書き込みはずれ 0 なので最優先で元の位置に残る）。
       同じ文言に書き込みが複数あっても、残った出現を本来そこにあった書き込みに渡せる。
     */
-    function loadAnnotations() {
-      const bodyText = getCurrentBodyText();
-      const stored = readStorage('localStorage', getAnnotationKey(currentTheme));
+    // 書き出しでは表示中以外のテーマも読むので、テーマを渡せるようにしてある
+    function loadAnnotations(themeName = currentTheme) {
+      const bodyText = getThemeData(themeName).body;
+      const stored = readStorage('localStorage', getAnnotationKey(themeName));
       if (!stored) return [];
       try {
         const parsed = JSON.parse(stored);
@@ -1569,6 +1672,7 @@
         });
       }
       els.body.replaceChildren(fragment);
+      fitVerticalBody();
       if (activeAnnotationId) {
         if (findAnnotation(activeAnnotationId)) findBodyElements(activeAnnotationId).forEach(el => el.classList.add('is-active'));
         else hideAnnotationToolbar();
@@ -1625,34 +1729,132 @@
 
     /* =========================================
        思索全体への書き留め（テーマごとに1つ。入力のたびに保存する）
+       保存形式は { text, date, history: [{ text, date }] }（history は新しい順）。
+       前回と別の日に書き直し始めたら、前の書き留めを日付つきで history に残す（同じ日の書き直しは上書き）
        ========================================= */
     const MAX_PAGE_NOTE = 2000;
+    const MAX_PAGE_NOTE_HISTORY = 30;
     const getPageNoteKey = (themeName) => `${STORAGE_KEYS.pageNotePrefix}${themeName || 'intro'}`;
-    let currentPageNote = '';
+    const formatDate = (date) => `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+    let pageNote = { text: '', date: '', history: [] };
+
+    // 以前の形式（文字列だけ）も読む
+    function readPageNote(themeName) {
+      const stored = readStorage('localStorage', getPageNoteKey(themeName));
+      const empty = { text: '', date: '', history: [] };
+      if (!stored) return empty;
+      let parsed;
+      try { parsed = JSON.parse(stored); } catch (_) { parsed = null; }
+      if (!parsed || typeof parsed !== 'object') return { ...empty, text: stored.slice(0, MAX_PAGE_NOTE) };
+      const clean = (entry) => ({
+        text: typeof entry?.text === 'string' ? entry.text.slice(0, MAX_PAGE_NOTE) : '',
+        date: typeof entry?.date === 'string' ? entry.date.slice(0, 10) : ''
+      });
+      return {
+        ...clean(parsed),
+        history: (Array.isArray(parsed.history) ? parsed.history : []).map(clean).filter(entry => entry.text.trim()).slice(0, MAX_PAGE_NOTE_HISTORY)
+      };
+    }
+
+    function savePageNote() {
+      const hasContent = pageNote.text.trim() || pageNote.history.length;
+      if (!writeStorage('localStorage', getPageNoteKey(currentTheme), hasContent ? JSON.stringify(pageNote) : null)) {
+        showNoteMessage('この環境では書き留めを保存できません。「写す」で内容をコピーしてください。');
+      }
+    }
 
     function loadPageNote() {
-      currentPageNote = (readStorage('localStorage', getPageNoteKey(currentTheme)) || '').slice(0, MAX_PAGE_NOTE);
-      els.pageNoteInput.value = currentPageNote;
+      pageNote = readPageNote(currentTheme);
+      els.pageNoteInput.value = pageNote.text;
+      const { question } = getCurrentThemeData();
+      els.pageNoteQuestion.textContent = question;
+      els.pageNoteQuestion.hidden = !question;
+      els.pageNoteInput.placeholder = question ? '思い浮かんだことを、そのまま。' : '読んで浮かんだこと、いまの自分の答えを。';
       renderPageNote();
     }
 
     // パネルを開いている間は入力欄に出ているので、本文下の表示は閉じているときだけ
     function renderPageNote() {
-      const text = currentPageNote.trim();
+      const text = pageNote.text.trim();
       els.pageNote.textContent = text;
+      els.pageNote.dataset.date = pageNote.date;
       els.pageNote.hidden = !text || !els.notePanel.hidden;
-      if (text) loadHandFont();
+      if (text || pageNote.history.length) loadHandFont();
+      renderPageNoteHistory();
+    }
+
+    function renderPageNoteHistory() {
+      const { history } = pageNote;
+      els.pageNoteHistory.hidden = !history.length;
+      els.pageNoteHistory.querySelector('summary').textContent = `過去の自分の書き留め（${history.length}）`;
+      els.pageNoteHistory.querySelector('ol').replaceChildren(...history.map(entry => {
+        const item = document.createElement('li');
+        const body = document.createElement('p');
+        body.className = 'revision-body';
+        body.textContent = entry.text;
+        item.append(entry.date ? createTime(entry.date) : '', body);
+        return item;
+      }));
     }
 
     els.pageNoteInput.addEventListener('input', () => {
-      currentPageNote = els.pageNoteInput.value.slice(0, MAX_PAGE_NOTE);
-      if (!writeStorage('localStorage', getPageNoteKey(currentTheme), currentPageNote.trim() ? currentPageNote : null)) {
-        showNoteMessage('この環境では書き留めを保存できません。「写す」で内容をコピーしてください。');
+      const today = formatDate(new Date());
+      if (pageNote.text.trim() && pageNote.date && pageNote.date !== today && pageNote.history[0]?.text !== pageNote.text) {
+        pageNote.history = [{ text: pageNote.text, date: pageNote.date }, ...pageNote.history].slice(0, MAX_PAGE_NOTE_HISTORY);
+        renderPageNoteHistory();
       }
+      pageNote.text = els.pageNoteInput.value.slice(0, MAX_PAGE_NOTE);
+      pageNote.date = today;
+      savePageNote();
     });
     els.pageNote.addEventListener('click', () => {
       setNoteOpen(true);
       els.pageNoteInput.focus();
+    });
+
+    /* =========================================
+       思索ノートを書き出す（全テーマの書き込みを Markdown にまとめる。書き込みはこの端末にしかないため）
+       ========================================= */
+    const indentLines = (text, indent) => text.replace(/\n/g, `\n${indent}`);
+
+    function buildNotebook() {
+      const sections = [null, ...AVAILABLE_THEMES].map(themeName => {
+        const theme = getThemeData(themeName);
+        const annotations = loadAnnotations(themeName);
+        const note = readPageNote(themeName);
+        if (!annotations.length && !note.text.trim() && !note.history.length) return '';
+        const lines = [`## ${theme.title}`, '', `> ${theme.body}`];
+        if (theme.question) lines.push('', `問い：${theme.question}`);
+        const highlights = annotations.filter(item => item.kind === 'highlight');
+        const memos = annotations.filter(item => item.kind === 'memo');
+        if (highlights.length) lines.push('', '### 蛍光ペン', ...highlights.map(item => `- 「${item.quote}」`));
+        if (memos.length) lines.push('', '### メモ', ...memos.map(item => `- 「${item.quote}」\n  ${indentLines(item.note, '  ')}`));
+        if (note.text.trim()) lines.push('', `### 余白に書き留めたこと${note.date ? `（${note.date}）` : ''}`, '', note.text.trim());
+        if (note.history.length) {
+          lines.push('', '### 過去の自分の書き留め');
+          note.history.forEach(entry => lines.push('', `#### ${entry.date || '日付なし'}`, '', entry.text.trim()));
+        }
+        return lines.join('\n');
+      }).filter(Boolean);
+      if (!sections.length) return null;
+      return [`# 思索ノート`, '', `書き出した日：${formatDate(new Date())}`, SITE_URL, '', ...sections.flatMap(section => [section, ''])].join('\n');
+    }
+
+    els.exportNotesBtn.addEventListener('click', () => {
+      const notebook = buildNotebook();
+      if (!notebook) {
+        showNoteMessage('書き出せる書き込みが、まだありません。');
+        return;
+      }
+      const url = URL.createObjectURL(new Blob([notebook], { type: 'text/markdown;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `thought-notebook-${formatDate(new Date()).replace(/\./g, '')}.md`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showNoteMessage('思索ノートを書き出しました。');
     });
 
     function setCurrentSwatch(toolbar, color) {
@@ -2160,12 +2362,84 @@
       applyDisplayModes();
     });
 
-    // 集中モードはこのタブの間だけ（次回訪問はナビが見える状態で始める）
+    // 集中モードはこのタブの間だけ（次回訪問はナビが見える状態で始める）。入るときは、ひと呼吸おいてから読む
     els.zenToggleBtn.addEventListener('click', () => {
       isZenMode = !isZenMode;
       writeStorage('sessionStorage', STORAGE_KEYS.zen, isZenMode ? 'true' : null);
       applyDisplayModes();
+      if (isZenMode) startBreath();
+      else endBreath(true);
     });
+
+    // 縦書きが標準。横書きを選んだときだけ覚えておく
+    els.writingModeBtn.addEventListener('click', () => {
+      isVertical = !isVertical;
+      writeStorage('localStorage', STORAGE_KEYS.writingMode, isVertical ? null : 'horizontal');
+      hideToolbars();
+      applyDisplayModes();
+    });
+
+    // 幅や書体が変わると縦書きの列に収まる長さも変わる
+    let fitFrame = null;
+    const queueFitVerticalBody = () => {
+      if (fitFrame !== null) window.cancelAnimationFrame(fitFrame);
+      fitFrame = window.requestAnimationFrame(() => {
+        fitFrame = null;
+        fitVerticalBody();
+      });
+    };
+    window.addEventListener('resize', queueFitVerticalBody, { passive: true });
+    document.fonts?.addEventListener?.('loadingdone', queueFitVerticalBody);
+
+    /* =========================================
+       ひと呼吸（吸って 4 秒、吐いて 4 秒。どこを押しても、どのキーでも終わる）
+       ========================================= */
+    const BREATH_IN_MS = 4000;
+    const BREATH_OUT_MS = 4000;
+    const BREATH_FADE_MS = 800;
+    let breathTimers = [];
+
+    function startBreath() {
+      if (reducedMotionQuery.matches) return;
+      endBreath(true);
+      hideToolbars();
+      const overlay = els.breathOverlay;
+      overlay.hidden = false;
+      els.breathText.textContent = '吸って';
+      void overlay.offsetWidth; // 表示してから class を付けて、伸びる動きを最初から見せる
+      overlay.classList.add('is-shown', 'is-inhale');
+      els.breathSkipBtn.focus({ preventScroll: true });
+      breathTimers = [
+        window.setTimeout(() => {
+          els.breathText.textContent = '吐いて';
+          overlay.classList.remove('is-inhale');
+        }, BREATH_IN_MS),
+        window.setTimeout(() => endBreath(), BREATH_IN_MS + BREATH_OUT_MS)
+      ];
+    }
+
+    function endBreath(immediate = false) {
+      breathTimers.forEach(timer => window.clearTimeout(timer));
+      breathTimers = [];
+      const overlay = els.breathOverlay;
+      if (overlay.hidden) return;
+      if (overlay.contains(document.activeElement)) els.zenToggleBtn.focus({ preventScroll: true });
+      overlay.classList.remove('is-shown', 'is-inhale');
+      if (immediate) {
+        overlay.hidden = true;
+        return;
+      }
+      breathTimers = [window.setTimeout(() => { overlay.hidden = true; }, BREATH_FADE_MS)];
+    }
+
+    els.breathOverlay.addEventListener('click', () => endBreath());
+    // 呼吸の間のキーは、ほかの操作（ページ送り等）に渡さずに終わらせるだけにする。Tab だけは通す
+    document.addEventListener('keydown', event => {
+      if (!els.breathOverlay.classList.contains('is-shown') || event.key === 'Tab') return;
+      event.preventDefault();
+      event.stopPropagation();
+      endBreath();
+    }, true);
 
     const getFormattedContent = () => {
       const annotations = currentAnnotations.map(annotation => (
@@ -2174,8 +2448,8 @@
           : `・蛍光ペン「${annotation.quote}」`
       )).join('\n');
       const annotationBlock = annotations ? `\n\n― 本文への書き込み\n${annotations}` : '';
-      const pageNote = currentPageNote.trim();
-      const pageNoteBlock = pageNote ? `\n\n― 余白に書き留めたこと\n${pageNote}` : '';
+      const pageNoteText = pageNote.text.trim();
+      const pageNoteBlock = pageNoteText ? `\n\n― 余白に書き留めたこと\n${pageNoteText}` : '';
       return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}${pageNoteBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
     };
 
