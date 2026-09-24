@@ -1,5 +1,193 @@
 [
   {
+    "date": "20260925",
+    "title": "2026年9月25日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "コンビニ3陣営がリテールメディアを成長の柱に据え、提携・新会社で広告と購買データの収益化を加速。ベストバイがコネクテッドTVを軸に据えるなど、小売の収益源が売上高から広告・データへ移る流れが国内外で同時進行した。 省人化・無人化の実装が本格化。三洋堂書店40店舗のAI顔認証による無人営業、郵便局のセルフレジ決済、カスハラ対策義務化を見据えた店舗DXなど、現場のオペレーション改革が規制と人手不足を追い風に広がっている。",
+    "count": 10,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "コンビニ3陣営がリテールメディアを成長の柱に据え、提携・新会社で広告と購買データの収益化を加速。ベストバイがコネクテッドTVを軸に据えるなど、小売の収益源が売上高から広告・データへ移る流れが国内外で同時進行した。",
+      "省人化・無人化の実装が本格化。三洋堂書店40店舗のAI顔認証による無人営業、郵便局のセルフレジ決済、カスハラ対策義務化を見据えた店舗DXなど、現場のオペレーション改革が規制と人手不足を追い風に広がっている。",
+      "AIエージェントと購買の主導権争いが焦点に。タペストリーがGemini経由の販売に踏み出す一方、消費者はAIの助言は受け入れても購入代行には慎重で、信頼設計と同意フローの巧拙がエージェントコマース普及を左右する。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "コンビニ3陣営が競うリテールメディア、提携・新会社で成長の柱へ",
+        "original_title": "",
+        "source": "日本経済新聞",
+        "source_id": "JP-01",
+        "summary": "セブン、ファミマ、ローソンのコンビニ3陣営がリテールメディア事業を成長の柱に据え、提携や新会社設立を通じて広告枠と購買データの活用を拡大している。全国の店舗網とPOSデータを武器に、メーカーや広告主への販売を強化。小売の収益構造を売上高依存から広告・データ収益へ転換する動きが鮮明になった。",
+        "why_it_matters": "コンビニは全国店舗網と購買データを持ち、リテールメディアの主戦場になりつつある。3陣営が競うことで広告単価と選択肢が変動し、NBメーカーの販促設計やCTV・ECとの予算配分にも影響する。店舗の顧客接点をどう資産化できるかが収益力を左右する。",
+        "tags": [
+          "リテールメディア",
+          "購買データ",
+          "コンビニ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE41bDZsXzZYT25BLUdGMzRuSjdXUWhaUGN0X1l3d0E2V0tBRVdQVTg2SnJSMFNqUkttREYyaU9GYkxrYkloUnozVUVLMTZ2WEY3b3ZJLS1xSTdMb1lqZkg5Tnd1ME9PR09Qa3F3Ng?oc=5",
+        "source_pub_ts": 1790269200
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "HOUSEIの無人店舗ソリューション、三洋堂書店40店舗がスマート無人営業化",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-10",
+        "summary": "HOUSEIは、三洋堂書店の約40店舗（全体の約6割）にAI顔認証を活用した無人店舗ソリューションを導入し、スマート無人営業化を実現すると発表した。入退店や決済を顔認証とセルフレジで完結させ、省人化と営業時間の拡大を両立。人手依存型の書店業態で無人運営の実装が本格化する。",
+        "why_it_matters": "書店は棚管理や接客の負荷が高く、地方では人材確保が難しい。顔認証と無人決済の組み合わせは営業時間の延伸と人件費抑制を同時に狙える。4割超の店舗で導入される点は実証段階を超え、省人フォーマットとして他業態への波及が期待される。",
+        "tags": [
+          "無人店舗",
+          "顔認証",
+          "セルフレジ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1NWUVmRkJTcWRaTDFQdFMxczcyWnFfcWxvZUVXcGh0V3FUaWp1cVhEWklsc243SzhtbnlQUmFOOWs4N0M3OVZ4TEZYc3NkRnROMXBjTmhJalVKMkVoVVVqeWN4MUlxTlFaNkE?oc=5",
+        "source_pub_ts": 1790235001
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "SM物流研究会、首都圏の共同配送で積載率13〜38%向上",
+        "original_title": "",
+        "source": "ryutsuu.biz",
+        "source_id": "JP-08",
+        "summary": "SM物流研究会は2026年度上期の活動報告を公表し、首都圏での共同配送によりトラック積載率が13〜38%向上したと明らかにした。食品スーパー各社が配送を共同化し、ドライバー不足や物流の2024年問題への対応を進める。個社最適から業界横断の物流効率化へ、ラストマイル前段の改革が進みつつある。",
+        "why_it_matters": "積載率の改善は配送コストとCO2を同時に削減し、物流費上昇局面での価格競争力を左右する。共同配送は競合間の協調を要するが、効果が数値で示された意味は大きい。発注・入荷データの標準化と連動すれば、需給予測型の物流設計へ発展する余地がある。",
+        "tags": [
+          "共同配送",
+          "物流効率化",
+          "食品スーパー"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTFBLcy1wNWxDaDFRMDlCai01ajE3SERIY3lCYldRWVEyNVpQRldCZWIyd3I1UUtQVkJxNWxYQVFUUVA2NzRiQ3M5a1luSzRWUEVoRFp2bjlXajM?oc=5",
+        "source_pub_ts": 1790238660
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "郵便局のセルフレジで料金支払い、11月2日から「有効期限付き証紙」運用",
+        "original_title": "",
+        "source": "DXマガジン",
+        "source_id": "JP-06",
+        "summary": "日本郵便は11月2日から、郵便局のセルフレジで料金支払いに使える「有効期限付き証紙」の運用を始める。窓口に並ばずに切手やはがきなどの支払いを完結でき、混雑緩和と省人化を図る。公共性の高い窓口サービスにもセルフ決済が広がり、店舗系インフラのDXが郵便網へ拡張する。",
+        "why_it_matters": "郵便局網は全国に約2万局あり、セルフ化の波及効果は大きい。窓口業務のデジタル化は人件費抑制だけでなく、待ち時間短縮による顧客満足の向上にもつながる。証紙というアナログ資産を期限付きで再設計する点は、既存インフラを活かすDXの好例だ。",
+        "tags": [
+          "セルフレジ",
+          "決済DX",
+          "郵便局"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE9yalJBQ1RBdllPVTltbjhidm1BQTlDVkhBbDZJQW1Ja2wyYzdOWHdVcEJISUFEZ2VyVjFkbkJRSTc4bXBkV0JSVk1ONHRqVTduQUdNTUlMOGM?oc=5",
+        "source_pub_ts": 1790239770
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "10月1日カスハラ対策義務化、店舗スタッフを守る店舗DXソリューションが集結",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-24",
+        "summary": "10月1日のカスタマーハラスメント対策義務化を前に、店舗スタッフを守りクレーム対応を支援する店舗DXソリューションが相次いで登場している。音声記録やAIによる応対支援、エスカレーション管理などを通じ、接客現場の負担軽減と証跡確保を狙う。規制対応を契機に店舗のバックオフィス機能のデジタル化が加速する。",
+        "why_it_matters": "カスハラ対策は法令対応であると同時に、人手不足下での離職防止や採用競争力に直結する。応対ログやAI支援は現場の属人的な判断をデータ化し、本部のリスク管理や教育にも活用できる。規制を機に店舗運営システムの刷新需要が生まれる点は見逃せない。",
+        "tags": [
+          "カスハラ対策",
+          "店舗DX",
+          "接客支援"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE01M3U3VXYxSVlXRUFiVm1ReTJaaTF2Wi1EeWlHWEhDWXd5cFdpdXhST0ZYUC1MdkVjQ0ZtYXBUaWtCNkxBQnlBUWF5LXBELW5uU1pITXNYMjgzQkJzdl9fRFNmcWtQYUFqOGc?oc=5",
+        "source_pub_ts": 1790226001
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「セルフレジで人件費減なら価格に反映を」三崎優太氏の投稿にSNSで賛否",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-18",
+        "summary": "実業家の三崎優太氏が「人件費上昇で値上げするなら、セルフレジで下がった人件費は価格に反映されるべきでは」とSNSに投稿し、賛否が広がった。セルフレジ導入で削減したコストが値下げに回らない現状への疑問が背景にある。人件費と価格、省人化投資の関係をめぐり生活者の問題意識が可視化された。",
+        "why_it_matters": "セルフレジは導入コストやメンテ費用も大きく、単純な人件費削減にはならない。だが生活者は「省人化=安くなる」と期待しがちで、価格への説明責任が問われる。導入効果の可視化と納得感の設計が、セルフ化への信頼と利用率を左右する重要な論点となる。",
+        "tags": [
+          "セルフレジ",
+          "値上げ",
+          "SNS反応"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBEallGcVNDMGVFUkNEWm1MdjFOVC1uR2VDVE1TdDM5aXNjQklSRGpzLVhCY2xYejF4eVNYdU53ODFxRGhsRjJsZ0xQWUZseEhXejk1RnJNUlhNOXdEYko4NHFmTklLZVhvZk9GOEFqcEsxbUJIX3R3NHo3RWFzcVU?oc=5",
+        "source_pub_ts": 1790231195
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "タペストリー、グーグルのGeminiアプリとAIモード経由で商品販売へ",
+        "original_title": "Tapestry to sell via Google’s Gemini app, AI Mode",
+        "source": "Retail Dive",
+        "source_id": "GL-01",
+        "summary": "コーチやケイト・スペードを擁するタペストリーは、グーグルのGeminiアプリおよびAI Modeを通じた商品販売を開始する。AIエージェント上で商品が発見・購入される経路を確保し、検索から購買までの導線をAIに委ねる形だ。ブランドが自社EC以外のAI接点へ販売チャネルを広げる動きとして注目される。",
+        "why_it_matters": "検索・発見の主導権がAIエージェントへ移ると、小売の流入構造と広告モデルは根本から変わる。ブランドがAI経由の販売に踏み込むことは、価格や在庫、顧客体験の制御をどう保つかという難題を伴う。エージェントコマース時代の主導権争いが本格化する転換点だ。",
+        "tags": [
+          "AIエージェント",
+          "エージェントコマース",
+          "EC"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNWXREbE9hSE1abF85QjVfeUNIamNRWXdqX0VrOWE0Yy1ERGxhazY0Qmx1eG12NnB3QWV3NURDbnFLYXFiUXI3a1hxVkFkMGh4YzhnMVlCMjdpbzFxUUU2MkpWZUNEQ1lmYkFYSWlzb0pfNDNlOUNFellzRjg4S2NrbDI3cXlTYkQzT24w?oc=5",
+        "source_pub_ts": 1790266637
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "ロウズ、WingとDoorDashとドローン配送の実証を開始",
+        "original_title": "Lowe’s debuts drone delivery pilot with Wing, DoorDash",
+        "source": "Retail Dive",
+        "source_id": "GL-08",
+        "summary": "米ホームセンター大手ロウズは、アルファベット傘下のWingとDoorDashと組み、ドローン配送の実証を始めた。小型の工具や日用品などを短時間で届ける狙いで、店舗を起点にした即時配送の選択肢を広げる。ラストマイルの人手不足と配送コスト上昇を受け、空路活用がホームセンター領域にも広がる。",
+        "why_it_matters": "重量物や大型商品が多いホームセンターでドローンが使える範囲は限られるが、緊急需要や小型商材では配送体験を大きく変える。外部パートナーとの実証は、自前の配送網を持たない小売が即時配送を確保する現実的な道筋を示す。ラストマイル競争の構図が変わりつつある。",
+        "tags": [
+          "ドローン配送",
+          "ラストマイル",
+          "即時配送"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQaXNVYldlZjc0TEFYdWxhTlFkcjl4TFB0dU42amVlbGUzdmdXMGZ4cXJiWnFINWJab19CQTR3YnFFdGNSdFQzTnNaZkQ4eTNCcTBJLVBNOC1GTk56TThNdkhOSmxfVUNDSV9JdE55U1dVczVYMkpQc3lXRmxaRUh1YnpsZlZKYnc?oc=5",
+        "source_pub_ts": 1790259480
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "ベストバイ、リテールメディアの軸にコネクテッドTVを据える",
+        "original_title": "Big-Box Briefing: Best Buy puts CTV at the center of its retail media pitch",
+        "source": "Modern Retail",
+        "source_id": "GL-09",
+        "summary": "ベストバイはリテールメディア事業の提案の中心に、コネクテッドTV広告を据える方針を示した。家電購買データとCTVの視聴データを組み合わせ、広告主に購買に近い訴求を提供する。店舗網とECに加え、家庭内のテレビ接点を獲り込むことで、リテールメディアの広告在庫を拡大しようとしている。",
+        "why_it_matters": "CTVは購買に近いリテールメディアとブランド広告の橋渡し役として伸びており、家電量販の購買データとの相性は良い。小売が保有するメディア枠をCTVへ広げる動きは、日本のリテールメディア戦略にも直接示唆を与える。広告主予算の争奪が一段と激しくなる。",
+        "tags": [
+          "コネクテッドTV",
+          "リテールメディア",
+          "購買データ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxORDBJYzl1eVpNd2ZOTWxLWm4ycWhZV0lQLTBfSkdIcWpxNXRtV0pfNVVTa1dGLXlpUU0wVXNOTWI3ZXRxVTZhb3FVZkdsMVg5WmpvM0U5RE5DbjFxd0hJWklJdzdLclRtZGZqbFIwMFMtc09NRHNCSENxNS1ZVGRIX2VJN0xiN2N3cHFiVy0zNnhNa0lMcHN3Y05ZR1VOQVkxVENIM3ZJdkoweWVHQXE2ZGxfMA?oc=5",
+        "source_pub_ts": 1790258695
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "消費者はAIの「助言」は信じても「購入代行」は認めず",
+        "original_title": "Consumers trust AI to advise, but don’t consent to it purchasing for them",
+        "source": "Retail Dive",
+        "source_id": "GL-12",
+        "summary": "調査によると、消費者はAIによる商品提案や比較などの助言は歓迎する一方、AIが自分に代わって購入を実行することには慎重だ。決済や個人情報の委任に対する心理的ハードルが高く、最終判断は自分で下したいという意向が強い。エージェントコマースの普及には信頼醸成が不可欠であることが示された。",
+        "why_it_matters": "AIエージェントによる自動購買は効率化の象徴だが、消費者の同意設計を誤れば反発を招く。承認フローや取消し可能性、透明性の担保が導入可否を左右する。小売にとっては、AIを「提案」に留めるか「決済」まで委ねるかの線引きが、顧客信頼と収益の両面で戦略課題となる。",
+        "tags": [
+          "AIエージェント",
+          "消費者信頼",
+          "決済"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxPYkEyVlg1TDVmSkpqMTZ4NmZVRS1IelVja2pOQlN0RC1jYzUwYUdrT1pGY0RKaWxIT3lJWWtHUHVKeWg5V1lFU3dWU0JFaHh2ZGhPby1wZVJqcXFlYUxkN1ZZWW5OeFQ5dnI3Mk1Pb19hRHBPbnJSWUd6ZDBVbWN6dlNGdENUb0xUM0paRl9QdnZhTnlscHRTOUdNR18?oc=5",
+        "source_pub_ts": 1790194328
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260924",
     "title": "2026年9月24日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "AI活用は「導入するか」から「どう制御し信頼を得るか」の段階へ。クローガーやシュナックスがAI買い物支援を本格化させる一方、米国では不適切なAIレコメンドによる消費者離れが顕在化。日本でもローソンが生成AI発案の商品を投入し、AI活用の巧拙が明暗を分け始めた。 生活防衛と価格戦略が再燃。低所得世帯の経済的不安の高まりや食品インフレ再燃を受け、値下げやPB強化など価格訴求の重要性が増している。所得層ごとの消費分極化が小売の売上構造を変えつつある。",
