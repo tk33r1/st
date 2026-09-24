@@ -31,43 +31,28 @@
     return 'https://' + s;
   }
 
-  // Wi-Fi と vCard は区切り記号をエスケープしないと読み取り側が誤解する。
-  function wifiEscape(v) {
-    const special = [BACKSLASH, ';', ',', '"', ':'];
-    let out = '';
-    const s = String(v || '');
-    for (let i = 0; i < s.length; i++) {
-      const ch = s.charAt(i);
-      out += special.indexOf(ch) >= 0 ? BACKSLASH + ch : ch;
-    }
-    return out;
+  // Wi-Fi・vCard・MeCard は区切り記号をエスケープしないと読み取り側が誤解する。
+  // 形式ごとに違うのは「どの記号を逃がすか」と「改行を何に置き換えるか」だけ。
+  //   newline … 改行の置き換え先（undefined なら改行もそのまま通す）
+  function escapeWith(special, newline) {
+    return v => {
+      let out = '';
+      const s = String(v || '');
+      for (let i = 0; i < s.length; i++) {
+        const ch = s.charAt(i);
+        const code = s.charCodeAt(i);
+        if (newline !== undefined && (code === 10 || code === 13)) { out += newline; continue; }
+        out += special.indexOf(ch) >= 0 ? BACKSLASH + ch : ch;
+      }
+      return out;
+    };
   }
 
-  function vcardEscape(v) {
-    const special = [BACKSLASH, ';', ','];
-    let out = '';
-    const s = String(v || '');
-    for (let i = 0; i < s.length; i++) {
-      const ch = s.charAt(i);
-      if (ch === String.fromCharCode(10) || ch === String.fromCharCode(13)) { out += BACKSLASH + 'n'; continue; }
-      out += special.indexOf(ch) >= 0 ? BACKSLASH + ch : ch;
-    }
-    return out;
-  }
-
+  const wifiEscape = escapeWith([BACKSLASH, ';', ',', '"', ':']);
+  const vcardEscape = escapeWith([BACKSLASH, ';', ','], BACKSLASH + 'n');
   // MeCard は区切りが ; と : で、姓名の区切りに , まで使う。vCard とは
   // 顔ぶれが違うので別に持つ。
-  function mecardEscape(v) {
-    const special = [BACKSLASH, ';', ':', ','];
-    let out = '';
-    const s = String(v || '');
-    for (let i = 0; i < s.length; i++) {
-      const ch = s.charAt(i);
-      if (ch === String.fromCharCode(10) || ch === String.fromCharCode(13)) { out += ' '; continue; }
-      out += special.indexOf(ch) >= 0 ? BACKSLASH + ch : ch;
-    }
-    return out;
-  }
+  const mecardEscape = escapeWith([BACKSLASH, ';', ':', ','], ' ');
 
   // 予定の中身から決まる 32bit の値（FNV-1a）。UID に使う。
   // DTSTAMP（規格上は必須）は入れていない。中身は「この iCal を書き出した時刻」
@@ -388,7 +373,9 @@
     logobd:      { paint: s => s.logo.backdropPaint, kind: 'plate', clearType: 'white', label: 'ロゴの下地' },
     frameborder: { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '枠線' },
     framelabel:  { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '帯' },
-    frametext:   { paint: s => s.frame.textPaint,   kind: 'auto',  clearType: 'auto',  label: 'ラベルの文字' },
+    // 文字は既定どおり単色（白）へ戻す。帯は既定で「セルの色」なので、文字まで
+    // 'auto' に戻すと帯と同じ色になって読めなくなる
+    frametext:   { paint: s => s.frame.textPaint,   kind: 'auto',  clearType: 'solid', label: 'ラベルの文字' },
     frameicon:   { paint: s => s.frame.iconPaint,   kind: 'brand', clearType: 'brand', label: 'ラベルのアイコン' },
     framebd:     { paint: s => s.frame.backdropPaint, kind: 'plate', clearType: 'none', label: 'ラベルの下地' }
   };
@@ -406,10 +393,9 @@
 
   // 画像モードのときだけ出す拡大・縮小スライダー
   function syncImageScaleRow(row, input, label, paint, visible) {
-    const pct = imgScalePct(paint);
-    if (row) row.classList.toggle('hidden', !visible);
-    if (input) input.value = pct;
-    if (label) label.textContent = pct + '%';
+    const scale = imgScalePct(paint);
+    showIf(row, visible);
+    setRange(input, label, scale, scale + '%');
   }
 
   function paintOf(scope) {
@@ -464,6 +450,14 @@
     ];
   }
 
+  // 覚えるには重すぎる画像の場所。本体の保存もマイテンプレートも同じ線を引く。
+  function oversizedImageSlots(s) {
+    return storedImageSlots(s).filter(slot => {
+      const v = slot[0] && slot[0][slot[1]];
+      return typeof v === 'string' && v.length > MAX_STORED_SRC;
+    });
+  }
+
   // パスワード欄だけは、覚える設定にかかわらず保存しない。ここに入るのは
   // 自宅とはかぎらず、店や職場の Wi-Fi のこともある。消し忘れの影響が
   // 入力した本人だけで終わらないので、入れ直す手間のほうを取る。
@@ -493,12 +487,9 @@
       // ことになる（4MB の画像なら往復で 10MB 級の文字列になる）。
       const drop = new Set();
       let logoDropped = false;
-      storedImageSlots(state.style).forEach(slot => {
-        const owner = slot[0], key = slot[1];
-        if (owner && typeof owner[key] === 'string' && owner[key].length > MAX_STORED_SRC) {
-          drop.add(owner[key]);
-          if (owner === state.style.logo && key === 'src') logoDropped = true;
-        }
+      oversizedImageSlots(state.style).forEach(slot => {
+        drop.add(slot[0][slot[1]]);
+        if (slot[0] === state.style.logo && slot[1] === 'src') logoDropped = true;
       });
       const json = JSON.stringify(state, function (k, v) {
         // アイコンの実体は QRAssets から引き直せるので覚えない
@@ -522,14 +513,15 @@
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => { saveTimer = null; save(); }, 400);
   }
-  function saveNow() {
-    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-    save();
-  }
 
   // 待っている書き込みを、書かずに捨てる（消したあとに書き戻させない）
   function cancelPendingSave() {
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  }
+
+  function saveNow() {
+    cancelPendingSave();
+    save();
   }
 
   function restore() {
@@ -567,13 +559,13 @@
       // merge は DEFAULTS のキーを再帰的に埋めるので、frame.paint / logo.paint /
       // font などの穴埋めはここでは要らない。値の妥当性は sanitizeStyle が見る。
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
-      if (state.style.markerFrame && !A.MARKER_FRAMES.some(f => f.id === state.style.markerFrame)) {
+      if (state.style.markerFrame && !hasId(A.MARKER_FRAMES, state.style.markerFrame)) {
         state.style.markerFrame = window.QRStyle.DEFAULTS.markerFrame;
       }
-      if (state.style.markerEye && !A.MARKER_EYES.some(e => e.id === state.style.markerEye)) {
+      if (state.style.markerEye && !hasId(A.MARKER_EYES, state.style.markerEye)) {
         state.style.markerEye = window.QRStyle.DEFAULTS.markerEye;
       }
-      if (state.style.frame && state.style.frame.type && !A.FRAMES.some(f => f.id === state.style.frame.type)) {
+      if (state.style.frame && state.style.frame.type && !hasId(A.FRAMES, state.style.frame.type)) {
         state.style.frame.type = 'none';
       }
       // iconData の引き直しは sanitizeStyle が無条件でやる（保存された
@@ -722,18 +714,13 @@
 
       buildTypeChips();
       buildTypeFields();
-      syncControls();
-      buildShapeGrids();
-      buildIconGrid();
-      buildFrameIconGrid();
-      buildFrameChips();
+      rebuildDesignUI();
       // 分類とアイコンのタブも履歴に乗っているので、見た目も戻す
       if (state.presetCategory !== prevPresetCategory) {
         buildPresetCategoryChips();
         buildPresets();
       }
       eachSegButton('icon-tabs', b => setActive(b, b.dataset.group === state.iconGroup));
-      syncPresetActive();
       update();
     } finally {
       isApplyingHistory = false;
@@ -771,10 +758,6 @@
     updateHistoryButtons();
   }
 
-  function initHistory() {
-    resetHistory();
-  }
-
   // 塗りのモードは、どこに使う塗りかで選べる顔ぶれが変わる。画面のボタンの
   // 並び（index.html の color-panel-tpl の color-mode-seg）と対で持つこと。
   //   basic … セル。自分が追従先なので「セルの色」は持てない
@@ -787,6 +770,9 @@
     brand: ['brand', 'auto', 'solid', 'multi', 'linear', 'radial', 'image'],
     plate: ['white', 'black', 'none', 'auto', 'solid', 'multi', 'linear', 'radial', 'image']
   };
+
+  // ラベルの中身（文字・アイコン・画像）
+  const CONTENT_MODES = ['text', 'icon', 'image'];
 
   function sanitizePaint(p, kind, defaultType, fallbackColor) {
     if (!p || typeof p !== 'object') p = {};
@@ -824,26 +810,15 @@
     s.markerEyePaint = sanitizePaint(s.markerEyePaint, 'auto', 'auto', s.fg.color);
     s.frame.paint = sanitizePaint(s.frame.paint, 'auto', 'auto', s.fg.color);
     s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'auto', 'solid', '#FFFFFF');
-    if (!s.frame.font || FONTS.indexOf(s.frame.font) < 0) {
-      s.frame.font = 'sans';
-    }
-    if (!s.frame.contentMode || ['text', 'icon', 'image'].indexOf(s.frame.contentMode) < 0) {
-      s.frame.contentMode = 'text';
-    }
-    if (!s.frame.topContentMode || ['text', 'icon', 'image'].indexOf(s.frame.topContentMode) < 0) {
-      s.frame.topContentMode = 'text';
-    }
-    if (!s.frame.pos || ['bottom', 'top', 'both'].indexOf(s.frame.pos) < 0) {
-      s.frame.pos = 'bottom';
-    }
-    if (!A.ICONS.some(i => i.id === s.frame.icon)) s.frame.icon = D.frame.icon;
-    // iconData は保存・共有されたオブジェクトを信用せず、同梱一覧の id から毎回引き直す。
-    s.frame.iconData = A.ICONS.find(i => i.id === s.frame.icon) || null;
+    s.frame.font = oneOf(s.frame.font, FONTS, 'sans');
+    s.frame.contentMode = oneOf(s.frame.contentMode, CONTENT_MODES, 'text');
+    s.frame.topContentMode = oneOf(s.frame.topContentMode, CONTENT_MODES, 'text');
+    s.frame.pos = oneOf(s.frame.pos, ['bottom', 'top', 'both'], 'bottom');
+    pickIcon(s.frame, 'icon', 'iconData', D.frame.icon);
     s.frame.iconPaint = sanitizePaint(s.frame.iconPaint, 'brand', 'brand', '#FFFFFF');
     s.frame.src = sanitizeImageUrl(s.frame.src);
 
-    if (!A.ICONS.some(i => i.id === s.frame.topIcon)) s.frame.topIcon = D.frame.topIcon;
-    s.frame.topIconData = A.ICONS.find(i => i.id === s.frame.topIcon) || null;
+    pickIcon(s.frame, 'topIcon', 'topIconData', D.frame.topIcon);
     s.frame.topSrc = sanitizeImageUrl(s.frame.topSrc);
     s.frame.textTop = String(s.frame.textTop || '');
 
@@ -854,18 +829,14 @@
     s.frame.lineWidth2 = clampNum(s.frame.lineWidth2, 0.15, 2.5, lineDef.inner || 0.28);
 
     // ラベルの中身の下地。形は下地用の一覧から選ぶ
-    if (!s.frame.backdrop || !A.BACKDROP_SHAPES.some(f => f.id === s.frame.backdrop)) {
-      s.frame.backdrop = D.frame.backdrop;
-    }
+    if (!hasId(A.BACKDROP_SHAPES, s.frame.backdrop)) s.frame.backdrop = D.frame.backdrop;
     // 透過は sanitizePaint が埋める（下地は plate なので、未指定は 0＝不透明）
     s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'plate', 'none', '#FFFFFF');
 
     s.bg = sanitizePaint(s.bg, 'plate', 'solid', '#FFFFFF');
 
     // ロゴの下地。形は下地用の一覧から選ぶ
-    if (!s.logo.backdrop || !A.BACKDROP_SHAPES.some(f => f.id === s.logo.backdrop)) {
-      s.logo.backdrop = D.logo.backdrop;
-    }
+    if (!hasId(A.BACKDROP_SHAPES, s.logo.backdrop)) s.logo.backdrop = D.logo.backdrop;
     s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'plate', 'solid', '#FFFFFF');
 
     // ロゴ本体の塗り。ここだけ 'brand'（アイコンのブランド公式色）を選べる。
@@ -873,8 +844,7 @@
     // 'auto' へ寄せるので、ここでは 'brand' をそのまま通してよい。
     s.logo.paint = sanitizePaint(s.logo.paint, 'brand', 'brand', D.logo.paint.color);
     s.logo.textPaint = sanitizePaint(s.logo.textPaint, 'auto', 'auto', D.logo.textPaint.color);
-    if (!A.ICONS.some(i => i.id === s.logo.icon)) s.logo.icon = D.logo.icon;
-    s.logo.iconData = A.ICONS.find(i => i.id === s.logo.icon) || null;
+    pickIcon(s.logo, 'icon', 'iconData', D.logo.icon);
 
     s.cellScale = clampNum(s.cellScale, 0.3, 1.15, D.cellScale);
     s.cellJitter = clampNum(s.cellJitter, 0, 1, D.cellJitter);
@@ -890,13 +860,21 @@
     s.frame.contentPad = clampNum(s.frame.contentPad, 0, 0.6, D.frame.contentPad);
     s.frame.text = String(s.frame.text == null ? D.frame.text : s.frame.text);
     s.logo.text = String(s.logo.text == null ? '' : s.logo.text);
-    if (!s.logo.font || FONTS.indexOf(s.logo.font) < 0) s.logo.font = 'sans';
+    s.logo.font = oneOf(s.logo.font, FONTS, 'sans');
     s.logo.src = sanitizeImageUrl(s.logo.src);
     // ロゴの下のセルを抜くか。画面には出していないが、テンプレートや古い保存が
     // 落としてくることがあるので、真偽値には均しておく
     s.logo.knockout = s.logo.knockout !== false;
     s.invertOk = !!s.invertOk;
-    if (!A.CELL_SHAPES.some(c => c.id === s.cell)) s.cell = D.cell;
+    if (!hasId(A.CELL_SHAPES, s.cell)) s.cell = D.cell;
+  }
+
+  // 同梱アイコンの id と実体（iconData）を組で決める。実体は保存・共有された
+  // オブジェクトを信用せず、同梱一覧の id から毎回引き直す。無い id は既定へ寄せる。
+  function pickIcon(owner, idKey, dataKey, fallbackId) {
+    const icon = findById(A.ICONS, owner[idKey]) || findById(A.ICONS, fallbackId);
+    owner[idKey] = icon ? icon.id : fallbackId;
+    owner[dataKey] = icon;
   }
 
   // 画像はファイルから読んだものだけなので、持っている src は必ず data URL。
@@ -953,6 +931,35 @@
   function clampNum(v, lo, hi, fallback) {
     const x = Number(v);
     return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : fallback;
+  }
+
+  // 一覧にない値は fallback に倒す
+  function oneOf(v, list, fallback) {
+    return list.indexOf(v) >= 0 ? v : fallback;
+  }
+
+  // QRAssets の一覧（{ id, name, … }）を id で引く
+  function findById(list, id) {
+    return list.find(x => x.id === id) || null;
+  }
+
+  function hasId(list, id) {
+    return !!findById(list, id);
+  }
+
+  function nameOf(list, id, fallback) {
+    const hit = findById(list, id);
+    return hit ? hit.name : (fallback || '');
+  }
+
+  // 2桁に0埋め（日時の組み立て用）
+  const pad2 = v => String(v).padStart(2, '0');
+
+  // いまの日時を YYYYMMDD-HHMMSS に（ファイル名用）
+  function stamp() {
+    const d = new Date();
+    return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) +
+      '-' + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
   }
 
   // Blob / File を data URL に。画像もフォントもこれ1本で読む。
@@ -1038,7 +1045,7 @@
           const at = bulkSheetForType(bulk.sheets, t.name);
           if (at >= 0 && at !== bulk.sheetAt) {
             bulkUseSheet(at);
-            Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
+            clearBulkPicked();
           }
         }
         bulkRefresh();
@@ -1051,14 +1058,18 @@
   // 見出しの脇に出す要約。形式を選べる種別（連絡先・暗号通貨）は、選んだ
   // ものによって変わるので関数でも書けるようにしてある。
   function syncContentHint() {
-    const type = TYPES.find(t => t.id === state.type);
-    if (!type) return;
+    const type = currentType();
     const h = typeof type.hint === 'function' ? type.hint(state.values[type.id]) : type.hint;
     $('hint-content').textContent = h;
   }
 
+  // パスワード欄の表示切り替えボタンのアイコン（lucide の eye / eye-off）
+  const EYE_SVG_HEAD = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+  const EYE_ICON = EYE_SVG_HEAD + '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF_ICON = EYE_SVG_HEAD + '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>';
+
   function buildTypeFields() {
-    const type = TYPES.find(t => t.id === state.type);
+    const type = currentType();
     const host = $('type-fields');
     host.innerHTML = '';
     syncContentHint();
@@ -1093,13 +1104,11 @@
         input = el('input', { type: 'password', id: id, placeholder: f.ph || '' });
         input.value = values[f.k] || '';
         const toggleBtn = el('button', { type: 'button', class: 'btn-pwd-toggle', title: 'パスワードの表示/非表示を切り替え', 'aria-label': 'パスワードの表示・非表示' });
-        toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        toggleBtn.innerHTML = EYE_ICON;
         toggleBtn.addEventListener('click', () => {
           const isPwd = input.type === 'password';
           input.type = isPwd ? 'text' : 'password';
-          toggleBtn.innerHTML = isPwd
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+          toggleBtn.innerHTML = isPwd ? EYE_OFF_ICON : EYE_ICON;
         });
         pwrap.appendChild(input);
         pwrap.appendChild(toggleBtn);
@@ -1142,7 +1151,7 @@
         // 表で持つと、選択肢を足したときに片方だけ書き忘れて黙って効かなくなる。
         // アイコンが無い相手はここで弾かれるので、増やすのは選択肢だけでよい。
         const platform = values.platform;
-        const icon = A.ICONS.find(i => i.id === 'si-' + platform);
+        const icon = findById(A.ICONS, 'si-' + platform);
         if (icon) {
           state.style.logo.type = 'icon';
           state.style.logo.icon = icon.id;
@@ -1157,20 +1166,20 @@
     }
 
     // 連絡先やカレンダーは項目が多いので2列に畳む
-    if (type.id === 'vcard' || type.id === 'geo' || type.id === 'event') {
-      const grid = el('div', { class: 'grid2' });
-      pairs.forEach(p => grid.appendChild(p));
-      host.appendChild(grid);
-    } else {
-      const stack = el('div', { class: 'cols' });
-      pairs.forEach(p => stack.appendChild(p));
-      host.appendChild(stack);
-    }
+    const twoCol = type.id === 'vcard' || type.id === 'geo' || type.id === 'event';
+    const box = el('div', { class: twoCol ? 'grid2' : 'cols' });
+    pairs.forEach(p => box.appendChild(p));
+    host.appendChild(box);
   }
 
   function payload() {
-    const type = TYPES.find(t => t.id === state.type);
+    const type = currentType();
     return type.build(state.values[type.id]);
+  }
+
+  // 「内容」でいま選んでいる種類。一括生成もこの種類の組み立てをそのまま使う。
+  function currentType() {
+    return findById(TYPES, state.type) || TYPES[0];
   }
 
   // ------------------------------------------------------------------
@@ -1234,19 +1243,19 @@
     return thumb;
   }
 
-  // はじめから入っているテンプレート
-  // テンプレートの札。見本と名前、それに「いま選ばれているか」の印までは
-  // 同梱ぶんもマイテンプレートも同じで、押したときの振る舞いだけが違う。
+  // テンプレートの札。見本と名前までは同梱ぶんもマイテンプレートも同じで、
+  // 押したときの振る舞いだけが違う。「いま選ばれているか」の印は
+  // buildPresets の最後に syncPresetActive がまとめて付ける。
   function tileButton(name, style, onPick) {
     const btn = el('button', { class: 'preset-btn', type: 'button', title: name });
     btn.dataset.presetName = name;
-    setActive(btn, state.presetName === name);
     btn.appendChild(presetThumb(style));
     btn.appendChild(el('i', null, name));
     btn.addEventListener('click', onPick);
     return btn;
   }
 
+  // はじめから入っているテンプレート
   function presetTile(p) {
     // セルの密度は style ではなく state 側。テンプレートは基本「自動」に戻す。
     return tileButton(p.name, p.style,
@@ -1314,8 +1323,7 @@
     const empty = $('my-design-empty');
     if (empty) empty.classList.toggle('hidden', !isMine || mine.length > 0);
 
-    const hint = $('hint-preset');
-    if (hint) hint.textContent = state.presetName || 'カスタム';
+    syncPresetActive();
   }
 
   // このツールがこの端末に残しているものを、まとめて消す。
@@ -1355,11 +1363,7 @@
     closeSaveRow();
     buildTypeChips();
     buildTypeFields();
-    syncControls();
-    buildShapeGrids();
-    buildIconGrid();
-    buildFrameIconGrid();
-    buildFrameChips();
+    rebuildDesignUI();
     buildPresetCategoryChips();
     buildPresets();
     update();
@@ -1415,9 +1419,8 @@
   // 選んでいるセルの形の名前を説明文のところに出す。一覧を組み直したときも、
   // 選び直しただけのときも同じものを出したいので、1か所に置く。
   function syncShapeHint() {
-    const cellName = (A.CELL_SHAPES.find(s => s.id === state.style.cell) || {}).name || '';
     const hintShape = $('hint-shape');
-    if (hintShape) hintShape.textContent = cellName;
+    if (hintShape) hintShape.textContent = nameOf(A.CELL_SHAPES, state.style.cell);
   }
 
   function syncShapeActive() {
@@ -1434,7 +1437,7 @@
   // 形を選ぶ一覧（セル・マーカー枠・下地・枠線・マーカー目）。
   // どれも「見本を敷いたボタンを並べて、押されたら state を書いて描き直す」だけで、
   // 違うのは一覧・見本の起こし方・押したときの後始末に限られる。手で5回書くと、
-  // 1つだけ syncPresetActive を忘れる、といったズレが出るのでここに寄せる。
+  // 1つだけ後始末を忘れる、といったズレが出るのでここに寄せる。
   //   items   … { id, name } の一覧
   //   current … いま選ばれている id を返す関数（描き直すたびに引き直す）
   //   preview … id から見本の SVG を起こす関数
@@ -1458,7 +1461,6 @@
         state.presetName = '';
         syncShapeActive();
         if (after) after();
-        syncPresetActive();
         update();
       });
       host.appendChild(b);
@@ -1519,11 +1521,13 @@
     { name: 'パステル', colors: ['#F472B6', '#A78BFA', '#60A5FA', '#34D399'] }
   ];
 
-  function blendHex(c1, c2) {
-    const a = hexToRgb(c1) || [0, 0, 0];
-    const b = hexToRgb(c2) || [255, 255, 255];
-    const m = a.map((v, i) => Math.round((v + b[i]) / 2));
-    return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('');
+  // 色を足し引きするボタン。見た目（.hidden）だけでなく hidden と disabled も
+  // 揃えて、隠れているあいだはキーボードからも押せないようにする。
+  function showButton(btn, on) {
+    if (!btn) return;
+    btn.classList.toggle('hidden', !on);
+    btn.hidden = !on;
+    btn.disabled = !on;
   }
 
   function renderMultiColorsList(host, p, addBtn) {
@@ -1573,12 +1577,7 @@
       host.appendChild(item);
     });
 
-    if (addBtn) {
-      const atMax = colors.length >= 8;
-      addBtn.classList.toggle('hidden', atMax);
-      addBtn.hidden = atMax;
-      addBtn.disabled = atMax;
-    }
+    showButton(addBtn, colors.length < 8);
   }
 
   function renderMultiPalettes(host, getPaint, onSelect) {
@@ -1599,7 +1598,6 @@
         getPaint().colors = p.colors.slice();
         state.presetName = '';
         syncControls();
-        syncPresetActive();
         update();
       });
       host.appendChild(btn);
@@ -1610,12 +1608,9 @@
     if (!host) return;
     host.innerHTML = '';
     const hasMid = !!p.mid;
-    const items = hasMid
-      ? [{ key: 'from', role: '開始', val: p.from || '#FC466B' },
-         { key: 'mid',  role: '中間', val: p.mid },
-         { key: 'to',   role: '終了', val: p.to || '#3F5EFB' }]
-      : [{ key: 'from', role: '開始', val: p.from || '#FC466B' },
-         { key: 'to',   role: '終了', val: p.to || '#3F5EFB' }];
+    const items = [{ key: 'from', role: '開始', val: p.from || '#FC466B' }]
+      .concat(hasMid ? [{ key: 'mid', role: '中間', val: p.mid }] : [])
+      .concat([{ key: 'to', role: '終了', val: p.to || '#3F5EFB' }]);
 
     items.forEach((item) => {
       const elItem = el('div', { class: 'multi-color-item' });
@@ -1637,24 +1632,16 @@
       picker.addEventListener('input', () => {
         const hex = picker.value.toUpperCase();
         hexSpan.textContent = hex;
-        if (item.key === 'from') p.from = hex;
-        else if (item.key === 'mid') p.mid = hex;
-        else p.to = hex;
+        p[item.key] = hex;
         state.presetName = '';
         update({ debounceVerify: true });
       });
       picker.addEventListener('change', verifyOnCommit);
       removeBtn.addEventListener('click', () => {
         if (!hasMid) return;
-        if (item.key === 'from') {
-          p.from = p.mid;
-          p.mid = '';
-        } else if (item.key === 'mid') {
-          p.mid = '';
-        } else {
-          p.to = p.mid;
-          p.mid = '';
-        }
+        // 端の色を消したら、中間の色がその端へ繰り上がる
+        if (item.key !== 'mid') p[item.key] = p.mid;
+        p.mid = '';
         state.presetName = '';
         syncControls();
         update();
@@ -1668,11 +1655,7 @@
       host.appendChild(elItem);
     });
 
-    if (addBtn) {
-      addBtn.classList.toggle('hidden', hasMid);
-      addBtn.hidden = hasMid;
-      addBtn.disabled = hasMid;
-    }
+    showButton(addBtn, !hasMid);
   }
 
   function renderGradients(host, getPaint, onSelect) {
@@ -1693,7 +1676,6 @@
         if (p.type === 'solid' || p.type === 'multi' || p.type === 'auto') p.type = 'linear';
         state.presetName = '';
         syncControls();
-        syncPresetActive();
         update();
       });
       host.appendChild(b);
@@ -1714,7 +1696,6 @@
           onPickColor(c);
           state.presetName = '';
           syncControls();
-          syncPresetActive();
           update();
         });
         row.appendChild(b);
@@ -1846,8 +1827,8 @@
       });
       host.appendChild(b);
     });
-    const frameName = (A.FRAMES.find(f => f.id === state.style.frame.type) || {}).name || 'なし';
-    const lineName = (A.FRAME_LINES.find(f => f.id === state.style.frame.line) || {}).name || '';
+    const frameName = nameOf(A.FRAMES, state.style.frame.type, 'なし');
+    const lineName = nameOf(A.FRAME_LINES, state.style.frame.line);
     $('hint-frame').textContent = state.style.frame.type === 'line' && lineName ? lineName : frameName;
   }
 
@@ -1883,37 +1864,23 @@
 
   // 覚えるには重すぎる画像を落とす。本体の保存と同じ線を引く。
   function trimStoredImages(st) {
-    let dropped = false;
-    storedImageSlots(st).forEach(slot => {
-      const owner = slot[0], key = slot[1];
-      if (owner && typeof owner[key] === 'string' && owner[key].length > MAX_STORED_SRC) {
-        owner[key] = '';
-        dropped = true;
-      }
-    });
-    return dropped;
+    const slots = oversizedImageSlots(st);
+    slots.forEach(slot => { slot[0][slot[1]] = ''; });
+    return slots.length > 0;
   }
 
   // 画像をすべて外す（リンクに載せるとき用）。落としたあとは、その画像が
-  // 無いと描けない塗りの種類も戻しておかないと、空の絵になる。
+  // 無いと描けない塗りの種類も戻しておかないと、空の絵になる。戻り先は
+  // 色パネルで「外す」を押したときと同じ（COLOR_SCOPE_META.clearType）。
   function stripImages(st) {
     let dropped = false;
-    const drop = (owner, fallback) => {
+    COLOR_SCOPES.forEach(scope => {
+      const meta = COLOR_SCOPE_META[scope];
+      const owner = meta.paint(st);
       if (!owner) return;
       if (owner.src) { owner.src = ''; dropped = true; }
-      if (owner.type === 'image') { owner.type = fallback; dropped = true; }
-    };
-    drop(st.fg, 'solid');
-    drop(st.bg, 'white');
-    drop(st.markerFramePaint, 'auto');
-    drop(st.markerEyePaint, 'auto');
-    drop(st.logo.paint, 'brand');
-    drop(st.logo.textPaint, 'auto');
-    drop(st.logo.backdropPaint, 'white');
-    drop(st.frame.paint, 'auto');
-    drop(st.frame.textPaint, 'solid');
-    drop(st.frame.backdropPaint, 'none');
-    drop(st.frame.iconPaint, 'brand');
+      if (owner.type === 'image') { owner.type = meta.clearType; dropped = true; }
+    });
     if (st.logo.src) { st.logo.src = ''; dropped = true; }
     if (st.logo.type === 'image') { st.logo.type = 'none'; dropped = true; }
     if (st.frame.src) { st.frame.src = ''; dropped = true; }
@@ -1926,10 +1893,16 @@
   // 取っておく形・渡す形。アイコンの実体（iconData）は QRAssets から
   // 引き直せるので入れない。本体の保存が replacer で落としているのと同じ扱い。
   function styleForExport() {
-    const st = JSON.parse(JSON.stringify(state.style));
-    delete st.logo.iconData;
-    delete st.frame.iconData;
-    delete st.frame.topIconData;
+    return withoutIconData(state.style);
+  }
+
+  function withoutIconData(style) {
+    const st = JSON.parse(JSON.stringify(style || {}));
+    if (st.logo) delete st.logo.iconData;
+    if (st.frame) {
+      delete st.frame.iconData;
+      delete st.frame.topIconData;
+    }
     return st;
   }
 
@@ -1943,12 +1916,7 @@
   //                     いま置いてある画像／文字ロゴを残す
   function applyStyle(styleIn, name, opts) {
     const o = opts || {};
-    const incoming = JSON.parse(JSON.stringify(styleIn || {}));
-    if (incoming.logo) delete incoming.logo.iconData;
-    if (incoming.frame) {
-      delete incoming.frame.iconData;
-      delete incoming.frame.topIconData;
-    }
+    const incoming = withoutIconData(styleIn);
 
     // 残すなら、差し替える前に控えておく
     const cur = state.style.logo || {};
@@ -1974,13 +1942,19 @@
     sanitizeStyle(state.style);
     if (o.minVersion !== undefined) state.minVersion = o.minVersion;
     state.presetName = name || '';
+    rebuildDesignUI();
+    update({ immediateHistory: true });
+  }
+
+  // 見た目をまるごと差し替えたあと（テンプレート・undo・リセット・シャッフル・
+  // 端末から消す）に、デザインの操作部品をすべて state に合わせ直す。
+  // 経路ごとに手で並べると、どれか1つだけ組み直しが漏れる。
+  function rebuildDesignUI() {
     syncControls();
     buildShapeGrids();
     buildIconGrid();
     buildFrameIconGrid();
     buildFrameChips();
-    buildPresets();
-    update({ immediateHistory: true });
   }
 
   function saveMyDesign(name) {
@@ -2133,6 +2107,21 @@
     eachSegButton(hostId, b => setActive(b, b.dataset[attr] === value));
   }
 
+  // 画面への書き込み口。id でも要素でも受け、要素が無いページでは黙って何もしない
+  // （同じ要素を「あるか確かめる」「書く」で2回引かずに済むように）。
+  function setVal(target, v) { const n = asEl(target); if (n) n.value = v; }
+  function setText(target, t) { const n = asEl(target); if (n) n.textContent = t; }
+  function showIf(target, on) { const n = asEl(target); if (n) n.classList.toggle('hidden', !on); }
+  function setImgSrc(target, src) { const n = asEl(target); if (n && src) n.src = src; }
+
+  // スライダーと、その横の値の表示
+  function setRange(id, labelId, v, label) {
+    setVal(id, v);
+    setText(labelId, label);
+  }
+
+  const pct = v => Math.round(v * 100) + '%';
+
   // 色パネル1枚ぶんの表示を、その対象の塗りに合わせる
   function syncColorPanel(scope) {
     if (!colorPanel(scope)) return;
@@ -2151,14 +2140,9 @@
     const showBrand = meta.kind === 'brand' &&
       (iconGroupOf[scope] || 'brand') === 'brand';
 
-    [['btn-mode-white', !isPlate], ['btn-mode-black', !isPlate],
-     ['btn-mode-none', !isPlate], ['btn-mode-brand', !showBrand],
-     ['btn-mode-auto', isCell]].forEach(pair => {
-      const b = cq(scope, pair[0]);
-      if (!b) return;
-      b.classList.toggle('hidden', pair[1]);
-      b.hidden = pair[1];
-    });
+    [['btn-mode-white', isPlate], ['btn-mode-black', isPlate],
+     ['btn-mode-none', isPlate], ['btn-mode-brand', showBrand],
+     ['btn-mode-auto', !isCell]].forEach(pair => showButton(cq(scope, pair[0]), pair[1]));
 
     // 出せない指定が残っていたら、いちばん近い意味に寄せる
     if (p.type === 'brand' && !showBrand) p.type = 'auto';
@@ -2182,8 +2166,7 @@
     [['pane-white', isWhite], ['pane-black', isBlack], ['pane-auto', isAuto],
      ['pane-none', isNone], ['pane-brand', isBrand], ['pane-solid', isSolid],
      ['pane-grad', isGrad], ['pane-multi', isMulti], ['pane-image', isImage]].forEach(pair => {
-      const pane = cq(scope, pair[0]);
-      if (pane) pane.classList.toggle('hidden', !pair[1]);
+      showIf(cq(scope, pair[0]), pair[1]);
     });
 
     // 一覧の中身は重いので、その塗り方を選んだときに一度だけ組み立てる
@@ -2199,10 +2182,8 @@
           ? 'セルの色設定と連動します。<br>多色のときは、3つのマーカーに色が1つずつ振られます。'
           : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
     }
-    const whiteNotice = cq(scope, 'white-notice');
-    if (whiteNotice) whiteNotice.textContent = plateWord + 'を不透明な白（#FFFFFF）に固定します。';
-    const blackNotice = cq(scope, 'black-notice');
-    if (blackNotice) blackNotice.textContent = plateWord + 'を不透明な黒（#000000）に固定します。';
+    setText(cq(scope, 'white-notice'), plateWord + 'を不透明な白（#FFFFFF）に固定します。');
+    setText(cq(scope, 'black-notice'), plateWord + 'を不透明な黒（#000000）に固定します。');
     const noneNotice = cq(scope, 'none-notice');
     if (noneNotice) {
       noneNotice.innerHTML = isLogoBd
@@ -2212,40 +2193,26 @@
           : '背景を透明にします。<br>透過PNGや透過SVGとして背景のない画像を書き出せます。';
     }
 
-    const swatchHost = cq(scope, 'swatch-host');
     const hideSwatch = isImage || isAuto || isNone || isWhite || isBlack || isBrand;
     if (!hideSwatch) ensurePanelPart(scope, 'swatch');
-    if (swatchHost) swatchHost.classList.toggle('hidden', hideSwatch);
+    showIf(cq(scope, 'swatch-host'), !hideSwatch);
 
-    const transRow = cq(scope, 'transparency-row');
-    if (transRow) transRow.classList.toggle('hidden', !isPlate || isNone || isWhite || isBlack);
+    showIf(cq(scope, 'transparency-row'), isPlate && !isNone && !isWhite && !isBlack);
     const transVal = p.transparency !== undefined ? p.transparency : 0;
-    const transInput = cq(scope, 'transparency');
-    if (transInput) transInput.value = transVal;
-    const transLabel = cq(scope, 'val-transparency');
-    if (transLabel) transLabel.textContent = transVal + '%';
+    setRange(cq(scope, 'transparency'), cq(scope, 'val-transparency'), transVal, transVal + '%');
 
-    const fallback = isPlate ? '#FFFFFF' : '#111827';
-    const picker = cq(scope, 'color-picker');
-    const hex = cq(scope, 'color-hex');
-    if (picker) picker.value = normHex(p.color, fallback);
-    if (hex) hex.value = normHex(p.color, fallback);
+    const hex = normHex(p.color, isPlate ? '#FFFFFF' : '#111827');
+    setVal(cq(scope, 'color-picker'), hex);
+    setVal(cq(scope, 'color-hex'), hex);
 
-    const angle = cq(scope, 'angle');
-    if (angle) angle.value = p.angle || 45;
-    const angleLabel = cq(scope, 'val-angle');
-    if (angleLabel) angleLabel.textContent = (p.angle || 45) + '°';
-    const angleRow = cq(scope, 'angle-row');
-    if (angleRow) angleRow.classList.toggle('hidden', p.type === 'radial');
+    setRange(cq(scope, 'angle'), cq(scope, 'val-angle'), p.angle || 45, (p.angle || 45) + '°');
+    showIf(cq(scope, 'angle-row'), p.type !== 'radial');
 
-    const thumb = cq(scope, 'image-thumb');
-    if (thumb) {
-      thumb.classList.toggle('hidden', !(isImage && p.src));
-      const img = cq(scope, 'image-thumb-img');
-      if (p.src && img) img.src = p.src;
-    }
+    const hasImage = !!(isImage && p.src);
+    showIf(cq(scope, 'image-thumb'), hasImage);
+    setImgSrc(cq(scope, 'image-thumb-img'), p.src);
     syncImageScaleRow(cq(scope, 'image-scale-row'), cq(scope, 'image-scale'),
-      cq(scope, 'val-image-scale'), p, !!(isImage && p.src));
+      cq(scope, 'val-image-scale'), p, hasImage);
 
     if (isMulti) buildMultiColorsList(scope);
     else if (isGrad) buildGradColorsList(scope);
@@ -2255,6 +2222,18 @@
   function fmtLineWidth(v) {
     return String(Math.round(Number(v) * 100) / 100);
   }
+
+  function fmtMinVersion(v) {
+    return v <= 1 ? '自動' : 'v' + v + '以上';
+  }
+
+  // 枠線の種類ごとに、太さのスライダーの下へ添える補足
+  const FRAME_LINE_NOTES = {
+    cells: '※ 太さは、外周に並べるセルの大きさです。セルの形と太さの設定に連動します。',
+    stamp: '※ 太さは、ミシン目の内側にできる縁の幅です。',
+    ticket: '※ 左右の切り欠きは、地をくり抜いて作っています。',
+    balloon: '※ しっぽのぶん、下に伸びます。'
+  };
 
   // ラベルの位置。qr-style.js が受ける3通りをそのまま返す（画面の並びと対）。
   function framePosOf() {
@@ -2291,95 +2270,66 @@
     // 見出しの脇に出す要約
     $('hint-shape-color').textContent = paintLabel(state.style.fg);
     $('hint-bg').textContent = paintLabel(state.style.bg);
-    const markerHint = $('hint-marker');
-    if (markerHint) {
-      const fName = (A.MARKER_FRAMES.find(f => f.id === s.markerFrame) || {}).name || '';
-      const eName = (A.MARKER_EYES.find(e => e.id === s.markerEye) || {}).name || '';
-      markerHint.textContent = fName === eName ? fName : fName + '／' + eName;
-    }
-    const markerColHint = $('hint-marker-color');
-    if (markerColHint) {
-      const fLbl = paintLabel(s.markerFramePaint);
-      const eLbl = paintLabel(s.markerEyePaint);
-      markerColHint.textContent = fLbl === eLbl ? fLbl : fLbl + '／' + eLbl;
-    }
+    // 枠と目（またはその塗り）が同じなら1つだけ、違えば並べて出す
+    const pairText = (a, b) => (a === b ? a : a + '／' + b);
+    setText('hint-marker', pairText(nameOf(A.MARKER_FRAMES, s.markerFrame), nameOf(A.MARKER_EYES, s.markerEye)));
+    setText('hint-marker-color', pairText(paintLabel(s.markerFramePaint), paintLabel(s.markerEyePaint)));
 
-    $('opt-cellscale').value = s.cellScale;
-    $('val-cellscale').textContent = Math.round(s.cellScale * 100) + '%';
-    $('opt-celljitter').value = s.cellJitter || 0;
-    $('val-celljitter').textContent = Math.round((s.cellJitter || 0) * 100) + '%';
-    $('opt-margin').value = s.margin;
-    $('val-margin').textContent = s.margin;
+    setRange('opt-cellscale', 'val-cellscale', s.cellScale, pct(s.cellScale));
+    setRange('opt-celljitter', 'val-celljitter', s.cellJitter || 0, pct(s.cellJitter || 0));
+    setRange('opt-margin', 'val-margin', s.margin, s.margin);
     // 角丸の上限は余白しだい。はみ出したぶんを削るのは余白を動かした側の
     // 仕事で、ここは見せるだけ（syncControls が state を書き換えると、
     // 履歴の取り方と噛み合わなくなる）
     const maxRadius = maxRadiusOf(s.margin);
     $('opt-radius').max = maxRadius;
-    $('opt-radius').value = s.radius;
     $('opt-radius').disabled = maxRadius === 0;
-    $('val-radius').textContent = maxRadius === 0 ? '—' : s.radius;
-    $('opt-minver').value = state.minVersion;
-    $('val-minver').textContent = state.minVersion <= 1 ? '自動' : 'v' + state.minVersion + '以上';
+    setRange('opt-radius', 'val-radius', s.radius, maxRadius === 0 ? '—' : s.radius);
+    setRange('opt-minver', 'val-minver', state.minVersion, fmtMinVersion(state.minVersion));
 
     // ロゴ同期
     setSeg('logo-mode', s.logo.type, 'mode');
-    $('logo-icon-pane').classList.toggle('hidden', s.logo.type !== 'icon');
-    $('logo-image-pane').classList.toggle('hidden', s.logo.type !== 'image');
-    $('logo-text-pane').classList.toggle('hidden', s.logo.type !== 'text');
-    $('logo-common').classList.toggle('hidden', s.logo.type === 'none');
+    showIf('logo-icon-pane', s.logo.type === 'icon');
+    showIf('logo-image-pane', s.logo.type === 'image');
+    showIf('logo-text-pane', s.logo.type === 'text');
+    showIf('logo-common', s.logo.type !== 'none');
 
     setSeg('logo-font-seg', s.logo.font || 'sans', 'font');
-    if ($('logo-text')) $('logo-text').value = s.logo.text || '';
+    setVal('logo-text', s.logo.text || '');
 
     // ロゴ共通
-    if ($('logo-size')) $('logo-size').value = s.logo.size;
-    if ($('val-logosize')) $('val-logosize').textContent = Math.round(s.logo.size * 100) + '%';
-    if ($('logo-pad')) $('logo-pad').value = s.logo.pad;
-    if ($('val-logopad')) $('val-logopad').textContent = Math.round(s.logo.pad * 100) + '%';
-    if ($('logo-thumb')) $('logo-thumb').classList.toggle('hidden', !(s.logo.type === 'image' && s.logo.src));
-    if (s.logo.src && $('logo-thumb-img')) $('logo-thumb-img').src = s.logo.src;
+    setRange('logo-size', 'val-logosize', s.logo.size, pct(s.logo.size));
+    setRange('logo-pad', 'val-logopad', s.logo.pad, pct(s.logo.pad));
+    showIf('logo-thumb', s.logo.type === 'image' && s.logo.src);
+    setImgSrc('logo-thumb-img', s.logo.src);
     $('hint-logo').textContent = s.logo.type === 'none' ? 'なし'
-      : s.logo.type === 'icon' ? ((A.ICONS.find(i => i.id === s.logo.icon) || {}).name || 'アイコン')
+      : s.logo.type === 'icon' ? nameOf(A.ICONS, s.logo.icon, 'アイコン')
       : s.logo.type === 'image' ? '画像' : '文字';
 
     // フレーム同期
-    const isFrameLine = s.frame.type === 'line';
-    const isFrameLabel = s.frame.type === 'label';
-    if ($('frame-line-opts')) $('frame-line-opts').classList.toggle('hidden', !isFrameLine);
-    if ($('frame-label-opts')) $('frame-label-opts').classList.toggle('hidden', !isFrameLabel);
+    showIf('frame-line-opts', s.frame.type === 'line');
+    showIf('frame-label-opts', s.frame.type === 'label');
 
     const isDoubleLine = s.frame.line === 'double';
-    if ($('frame-line-width')) $('frame-line-width').value = s.frame.lineWidth;
-    if ($('val-frame-line-width')) $('val-frame-line-width').textContent = fmtLineWidth(s.frame.lineWidth);
-    if ($('frame-line-width2')) $('frame-line-width2').value = s.frame.lineWidth2;
-    if ($('val-frame-line-width2')) $('val-frame-line-width2').textContent = fmtLineWidth(s.frame.lineWidth2);
-    if ($('frame-line-width2-row')) $('frame-line-width2-row').classList.toggle('hidden', !isDoubleLine);
-    if ($('frame-line-width-label')) $('frame-line-width-label').textContent = isDoubleLine ? '外側の太さ' : '太さ';
-    if ($('frame-line-note')) {
-      $('frame-line-note').textContent =
-        s.frame.line === 'cells' ? '※ 太さは、外周に並べるセルの大きさです。セルの形と太さの設定に連動します。'
-        : s.frame.line === 'stamp' ? '※ 太さは、ミシン目の内側にできる縁の幅です。'
-        : s.frame.line === 'ticket' ? '※ 左右の切り欠きは、地をくり抜いて作っています。'
-        : s.frame.line === 'balloon' ? '※ しっぽのぶん、下に伸びます。'
-        : '';
-    }
+    setRange('frame-line-width', 'val-frame-line-width', s.frame.lineWidth, fmtLineWidth(s.frame.lineWidth));
+    setRange('frame-line-width2', 'val-frame-line-width2', s.frame.lineWidth2, fmtLineWidth(s.frame.lineWidth2));
+    showIf('frame-line-width2-row', isDoubleLine);
+    setText('frame-line-width-label', isDoubleLine ? '外側の太さ' : '太さ');
+    setText('frame-line-note', FRAME_LINE_NOTES[s.frame.line] || '');
     const framePos = framePosOf();
     const isBothPos = framePos === 'both';
     setSeg('frame-pos-seg', framePos, 'pos');
 
-    const cMode = (s.frame && (framePos === 'top' ? (s.frame.topContentMode || s.frame.contentMode) : s.frame.contentMode)) || 'text';
+    const cMode = (framePos === 'top' ? (s.frame.topContentMode || s.frame.contentMode) : s.frame.contentMode) || 'text';
     setSeg('frame-content-mode-seg', cMode, 'mode');
-    if ($('frame-pane-text')) $('frame-pane-text').classList.toggle('hidden', cMode !== 'text');
-    if ($('frame-pane-icon')) $('frame-pane-icon').classList.toggle('hidden', cMode !== 'icon');
-    if ($('frame-pane-image')) $('frame-pane-image').classList.toggle('hidden', cMode !== 'image');
+    CONTENT_MODES.forEach(m => showIf('frame-pane-' + m, cMode === m));
 
     // テキスト。上下に出すときだけ、上の文字を別の欄で受ける
-    if ($('frame-text')) $('frame-text').value = s.frame[frameTextKey()] || '';
-    if ($('frame-text-label')) $('frame-text-label').textContent = isBothPos ? '下部の文字' : '表示する文字';
-    const topTextRow = $('frame-text-top-row');
-    if (topTextRow) topTextRow.classList.toggle('hidden', !isBothPos);
-    if ($('frame-text-top')) $('frame-text-top').value = s.frame.textTop || '';
-    setSeg('frame-font-seg', (s.frame && s.frame.font) || 'sans', 'font');
+    setVal('frame-text', s.frame[frameTextKey()] || '');
+    setText('frame-text-label', isBothPos ? '下部の文字' : '表示する文字');
+    showIf('frame-text-top-row', isBothPos);
+    setVal('frame-text-top', s.frame.textTop || '');
+    setSeg('frame-font-seg', s.frame.font || 'sans', 'font');
 
     // アイコン
     eachSegButton('frame-icon-tabs', t => {
@@ -2390,18 +2340,14 @@
 
     // 画像
     const curImgSrc = (framePos === 'top' ? (s.frame.topSrc || s.frame.src) : s.frame.src) || '';
-    if ($('frame-image-thumb')) {
-      $('frame-image-thumb').classList.toggle('hidden', !curImgSrc);
-      if (curImgSrc && $('frame-image-thumb-img')) $('frame-image-thumb-img').src = curImgSrc;
-    }
+    showIf('frame-image-thumb', curImgSrc);
+    setImgSrc('frame-image-thumb-img', curImgSrc);
 
     // 中身の大きさ・余白
-    const fcSize = s.frame && s.frame.contentSize != null ? s.frame.contentSize : 1;
-    const fcPad = s.frame && s.frame.contentPad != null ? s.frame.contentPad : 0.2;
-    if ($('frame-content-size')) $('frame-content-size').value = fcSize;
-    if ($('val-frame-content-size')) $('val-frame-content-size').textContent = Math.round(fcSize * 100) + '%';
-    if ($('frame-content-pad')) $('frame-content-pad').value = fcPad;
-    if ($('val-frame-content-pad')) $('val-frame-content-pad').textContent = Math.round(fcPad * 100) + '%';
+    const fcSize = s.frame.contentSize != null ? s.frame.contentSize : 1;
+    const fcPad = s.frame.contentPad != null ? s.frame.contentPad : 0.2;
+    setRange('frame-content-size', 'val-frame-content-size', fcSize, pct(fcSize));
+    setRange('frame-content-pad', 'val-frame-content-pad', fcPad, pct(fcPad));
 
     updateCanvasChecker();
   }
@@ -2436,8 +2382,13 @@
     renderTimer = setTimeout(() => update({ debounceVerify: true }), 90);
   }
 
+  // 予約してある検査を取り消す
+  function cancelVerify() {
+    if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
+  }
+
   function scheduleVerify(svg, text, heavy, delay) {
-    if (verifyTimer) clearTimeout(verifyTimer);
+    cancelVerify();
     verifyTimer = setTimeout(() => {
       verifyTimer = null;
       verify(svg, text, heavy);
@@ -2462,6 +2413,9 @@
     // 市松模様はセルの色だけで決まる。描けたかどうかに関係なく合わせたいので、
     // 出口ごとに呼ばず入口で一度だけ。
     updateCanvasChecker();
+    // デザインを触った側は presetName を消すだけでよい。選択の印と見出しは
+    // ここで必ず揃える（操作ごとに呼ぶと、どこかで書き忘れて古い名前が残る）。
+    syncPresetActive();
 
     const text = payload();
     lastPayload = text;
@@ -2470,14 +2424,7 @@
     meta.innerHTML = '';
 
     if (!text) {
-      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
-      $('preview').innerHTML = '';
-      lastSvg = '';
-      setVerdict('na', '待機中', '内容を入力するとここに出ます', []);
-      syncVerifyButton(false);
-      renderAlerts([]);
-      syncPrintNote(0);
-      setStatus('ready', 'idle');
+      showNoPreview('na', '待機中', '内容を入力するとここに出ます', [], 'ready', 'idle');
       return;
     }
 
@@ -2485,31 +2432,18 @@
     try {
       qr = encodeQR(text);
     } catch (e) {
-      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
-      $('preview').innerHTML = '';
-      lastSvg = '';
-      setVerdict('ng', '入りきりません', '文字数を減らすか、誤り訂正レベルを下げてください', []);
-      syncVerifyButton(false);
-      renderAlerts([{ kind: 'too-long', level: 'error', text: 'この内容はQRコードの上限（バージョン40）を超えています。文字数を減らしてください。' }]);
-      syncPrintNote(0);
-      setStatus('too long', 'err');
+      showNoPreview('ng', '入りきりません', '文字数を減らすか、誤り訂正レベルを下げてください',
+        [{ kind: 'too-long', level: 'error', text: 'この内容はQRコードの上限（バージョン40）を超えています。文字数を減らしてください。' }],
+        'too long', 'err');
       return;
     }
 
-    // 描画で落ちたら、前の絵と判定を残さない。残すと、いまの設定とは違う
-    // 絵がそのまま書き出されてしまう。
     let out;
     try {
       out = window.QRStyle.render(qr, state.style);
     } catch (e) {
-      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
-      $('preview').innerHTML = '';
-      lastSvg = '';
-      setVerdict('ng', '描けませんでした', 'デザインの設定を見直すか、リセットしてください', []);
-      syncVerifyButton(false);
-      renderAlerts([]);
-      syncPrintNote(0);
-      setStatus('render error', 'err');
+      showNoPreview('ng', '描けませんでした', 'デザインの設定を見直すか、リセットしてください', [],
+        'render error', 'err');
       return;
     }
     lastSvg = out.svg;
@@ -2539,12 +2473,24 @@
     if (opts && opts.debounceVerify) {
       scheduleVerify(out.svg, text, false, 180);
     } else {
-      if (verifyTimer) { clearTimeout(verifyTimer); verifyTimer = null; }
+      cancelVerify();
       verify(out.svg, text, false);
     }
   }
 
-
+  // 絵を出せないとき（空・入りきらない・描画で落ちた）の後始末。前の絵と判定を
+  // 残すと、いまの設定とは違う絵がそのまま書き出されてしまうので、検査の予約も
+  // 含めて全部片づける。
+  function showNoPreview(kind, title, note, alerts, statusText, statusCls) {
+    cancelVerify();
+    $('preview').innerHTML = '';
+    lastSvg = '';
+    setVerdict(kind, title, note, []);
+    syncVerifyButton(false);
+    renderAlerts(alerts);
+    syncPrintNote(0);
+    setStatus(statusText, statusCls);
+  }
 
   function pushAlert(level, text, actions) {
     const a = el('div', { class: 'alert' + (level === 'error' ? ' error' : '') });
@@ -2776,17 +2722,16 @@
     // デザインではない設定を変えただけなら、テンプレート名は残す。
     if (!(opts && opts.keepPreset)) state.presetName = '';
     syncControls();
-    syncPresetActive();
     update({ immediateHistory: true });
     if (message) showToast(message);
   }
 
-  // 色を白または黒へ寄せる（色みは残したまま明るさだけ動かす）
+  // hex を target へ t（0〜1）だけ寄せる。白黒へ寄せれば色みを残したまま
+  // 明るさだけが動き、t = 0.5 なら2色のちょうど中間になる。
   function towardHex(hex, target, t) {
     const a = hexToRgb(hex) || [0, 0, 0];
     const b = hexToRgb(target) || [0, 0, 0];
-    const m = a.map((v, i) => Math.round(v + (b[i] - v) * t));
-    return '#' + m.map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+    return window.QRStyle.rgbToHex(a.map((v, i) => v + (b[i] - v) * t));
   }
 
   // 読ませるときに敷く紙の色。書き出した絵は透けたまま渡されるので、
@@ -2910,8 +2855,6 @@
     return null;
   }
 
-
-
   // ------------------------------------------------------------------
   // 読み取りテスト
   // ------------------------------------------------------------------
@@ -2955,15 +2898,13 @@
     return m ? parseFloat(m[1]) : 41;
   }
 
-
   // デコーダを読み込んだあとの検査は数十msで終わる。結果が前と同じだと画面が
   // まったく動かず、走ったのかどうか分からないので、終わるたびに枠を短く光らせ、
   // 時刻を出す。検査そのものは引き延ばさない。
   function markChecked() {
     const v = $('verdict');
     const d = new Date();
-    const p = n => String(n).padStart(2, '0');
-    $('verdict-time').textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+    $('verdict-time').textContent = pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
     v.classList.remove('flash');
     void v.offsetWidth;               // アニメーションを毎回やり直させる
     v.classList.add('flash');
@@ -3144,13 +3085,27 @@
     return p;
   }
 
-  // 書き出す SVG に、その絵で使っている書体を埋めて返す。取れなかったぶんは諦める。
-  async function withExportFonts(svg) {
+  // そのスタイルで実際に描く字だけの @font-face。取れなかったぶんは諦める。
+  async function exportFontCss(style) {
     let runs = [];
-    try { runs = window.QRStyle.textRuns(state.style); } catch (e) { return svg; }
-    if (!runs.length) return svg;
+    try { runs = window.QRStyle.textRuns(style); } catch (e) { return ''; }
+    if (!runs.length) return '';
     const faces = await Promise.all(runs.map(fontFaceCss));
-    return window.QRStyle.embedFontCss(svg, faces.join(''));
+    return faces.join('');
+  }
+
+  // 書き出す SVG に、いまの絵で使っている書体を埋めて返す。
+  async function withExportFonts(svg) {
+    return window.QRStyle.embedFontCss(svg, await exportFontCss(state.style));
+  }
+
+  // 書き出す SVG 文書。mm 指定のときは mm のまま書き出す。Illustrator や
+  // InDesign に読ませたときに、拡大率をいじらなくてもその寸法で入る。
+  function svgDocument(svg) {
+    const sized = state.sizeUnit === 'mm'
+      ? window.QRStyle.resizeMm(svg, state.printMm)
+      : window.QRStyle.resize(svg, 1024);
+    return '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) + sized;
   }
 
   // 画像の読み込み待ちは onload ではなく decode() を使う。onload は描画の
@@ -3185,12 +3140,9 @@
   }
 
   function fileStem() {
-    const d = new Date();
-    const p = v => String(v).padStart(2, '0');
     // 印刷向けに書き出したものは、あとから見て何ミリで作ったか分かるようにする
     const size = state.sizeUnit === 'mm' ? '-' + state.printMm + 'mm' : '';
-    return 'qr-' + state.type + '-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
-      '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + size;
+    return 'qr-' + state.type + '-' + stamp() + size;
   }
 
   function saveBlob(blob, name) {
@@ -3248,8 +3200,7 @@
   // すでに検査が走っている最中なら、その完了を待つ。
   async function settleVerdict() {
     if (verifyTimer) {
-      clearTimeout(verifyTimer);
-      verifyTimer = null;
+      cancelVerify();
       if (lastSvg && lastPayload) await verify(lastSvg, lastPayload, false);
     } else if (activeVerifyPromise) {
       await activeVerifyPromise;
@@ -3387,7 +3338,7 @@
         // 何も落ちてこないより、選択肢が無いだけのほうがまだ進める。
       }
     }
-    const type = bulkType();
+    const type = currentType();
     const csv = templateCsv(type);
     if (!csv) return;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -3524,13 +3475,7 @@
   async function exportSvg() {
     if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
     if (!(await okToExport())) return;
-    // mm 指定のときは、mm のまま書き出す。Illustrator や InDesign に読ませた
-    // ときに、拡大率をいじらなくてもその寸法で入る。
-    const body = await withExportFonts(lastSvg);
-    const sized = state.sizeUnit === 'mm'
-      ? window.QRStyle.resizeMm(body, state.printMm)
-      : window.QRStyle.resize(body, 1024);
-    const doc = '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) + sized;
+    const doc = svgDocument(await withExportFonts(lastSvg));
     saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), fileStem() + '.svg');
     flashButtonSuccess($('btn-svg'), '✓ 保存完了');
     showToast('SVGを保存しました');
@@ -3559,22 +3504,21 @@
       if (!blob) throw new Error('encode failed');
       return blob;
     })();
+    const write = item => navigator.clipboard.write([new window.ClipboardItem({ 'image/png': item })]);
     try {
-      await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': png })]);
-      flashButtonSuccess($('btn-copy'), '✓ コピー完了');
-      showToast(copyNote());
-      if (window.STShare) STShare.celebrate();
-    } catch (e) {
-      // Promise を受け付けない実装もあるので、その場合は焼けた Blob で入れ直す
       try {
-        await navigator.clipboard.write([new window.ClipboardItem({ 'image/png': await png })]);
-        flashButtonSuccess($('btn-copy'), '✓ コピー完了');
-        showToast(copyNote());
-        if (window.STShare) STShare.celebrate();
-      } catch (e2) {
-        showToast('コピーできませんでした', 'error');
+        await write(png);
+      } catch (e) {
+        // Promise を受け付けない実装もあるので、その場合は焼けた Blob で入れ直す
+        await write(await png);
       }
+    } catch (e2) {
+      showToast('コピーできませんでした', 'error');
+      return;
     }
+    flashButtonSuccess($('btn-copy'), '✓ コピー完了');
+    showToast(copyNote());
+    if (window.STShare) STShare.celebrate();
   }
 
   // ------------------------------------------------------------------
@@ -3611,10 +3555,7 @@
   // 「内容」で Wi-Fi を選んでいるなら Wi-Fi のタブを読むのが素直。
   function bulkSheetForType(sheets, typeName) {
     const want = bulkNorm(typeName);
-    for (let i = 0; i < sheets.length; i++) {
-      if (bulkNorm(sheets[i].name) === want) return i;
-    }
-    return -1;
+    return sheets.findIndex(sh => bulkNorm(sh.name) === want);
   }
 
   // 中身のあるシート＝見出しのほかに1行以上あるもの
@@ -3627,7 +3568,12 @@
     if (!sh) return;
     bulk.sheetAt = at;
     bulk.rows = sh.rows;
-    bulk.encoding = 'Excel' + (sh.name ? '／' + sh.name : '');
+    bulk.encoding = excelLabel(sh);
+  }
+
+  // 読み込み元の表示（右肩の要約に出す）
+  function excelLabel(sh) {
+    return 'Excel' + (sh.name ? '／' + sh.name : '');
   }
 
   function bulkFillSheetSelect() {
@@ -3729,11 +3675,6 @@
     return '';
   }
 
-  // 「内容」でいま選んでいる種類。一括生成はこの種類の組み立てをそのまま使う。
-  function bulkType() {
-    return TYPES.find(t => t.id === state.type) || TYPES[0];
-  }
-
   // bulkMap … いま効いている割り当て（毎回組み直す）
   // bulkPicked … 人が手で選んだものだけ。当て推量はここへ入れない。
   // 分けないと、列がまだ無いうちの空振りが「選んだ結果」として焼き付き、
@@ -3741,13 +3682,18 @@
   const bulkMap = {};
   const bulkPicked = {};
 
+  // 手で選んだ割り当てを捨てる（列の並びが変わったとき）
+  function clearBulkPicked() {
+    Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
+  }
+
   function bulkMapKey(type, field) { return type.id + BULK_DOT + field.k; }
 
   // 項目ひとつにつき1本のセレクト。当てなければ「内容」の値のまま。
   function bulkFillSelects() {
     const host = $('bulk-map');
     if (!host) return;
-    const type = bulkType();
+    const type = currentType();
     const cols = bulkColumns();
     host.innerHTML = '';
 
@@ -3786,7 +3732,7 @@
 
       // 選択式の項目は、CSVに何と書けばよいのかが画面のどこにも無かった。
       // 列を当てたときだけ、選べる値をその場に並べる。
-      const words = f.type === 'select' ? bulkOptionWords(type, f) : null;
+      const words = f.type === 'select' ? bulkOptionWords(f) : null;
       function showWords() { return !!words && sel.value !== BULK_NONE; }
       if (words) {
         wrap.appendChild(el('span', { class: 'bulk-words' },
@@ -3829,7 +3775,7 @@
   // その項目で選べる値。画面のドロップダウンに出ているものと同じ。
   // 「WPA / WPA2 / WPA3」のように選択肢の名前自体に区切り記号が入るので、
   // 中黒で並べるとどこで切れるのか読めない。1つずつ括ってから並べる。
-  function bulkOptionWords(type, field) {
+  function bulkOptionWords(field) {
     return (field.options || []).map(o => '「' + o[1] + '」');
   }
 
@@ -3857,7 +3803,7 @@
         });
       }
       if (hit) return { ok: true, value: hit[0] };
-      return { ok: false, value: fallback, raw: s, words: bulkOptionWords(type, field) };
+      return { ok: false, value: fallback, raw: s, words: bulkOptionWords(field) };
     }
     return { ok: true, value: s };
   }
@@ -3896,7 +3842,9 @@
       return;
     }
     const cols = bulkColumns();
-    const type = bulkType();
+    const type = currentType();
+    // 組み立ては行ごとに1回だけ。表の赤・全行の点検・1行目の見本で使い回す
+    const built = rows.map(r => bulkPayload(type, r));
     // 列番号 → 当てた項目名（同じ列を2つの項目に当てることもできる）
     const picked = {};
     type.fields.forEach(f => {
@@ -3917,11 +3865,11 @@
     thead.appendChild(htr);
     table.appendChild(thead);
     const tbody = el('tbody');
-    rows.slice(0, 4).forEach(r => {
+    rows.slice(0, 4).forEach((r, n) => {
       const tr = el('tr');
       // 選べない値が入っている列は、押す前に赤で分かるようにする
       const bad = {};
-      bulkPayload(type, r).errors.forEach(e => { bad[e.col] = true; });
+      built[n].errors.forEach(e => { bad[e.col] = true; });
       cols.forEach((c, i) => {
         const marks = picked[i] ? ['pick'] : [];
         if (bad[i]) marks.push('bad');
@@ -3932,18 +3880,15 @@
     table.appendChild(tbody);
 
     // 全行ぶん見ておく。1行目だけ見て「大丈夫そう」と押させない。
-    let badRows = 0;
-    let firstBad = null;
-    rows.forEach((r, n) => {
-      const e = bulkPayload(type, r).errors;
-      if (!e.length) return;
-      badRows++;
-      if (!firstBad) firstBad = { line: n + (useHeaderOffset() ? 2 : 1), err: e[0] };
-    });
+    // 見出し行があるぶん、CSV の行番号は1つずれる
+    const headOffset = bulkUseHeader() ? 2 : 1;
+    const badAt = built.map((b, n) => n).filter(n => built[n].errors.length);
+    const badRows = badAt.length;
 
-    const first = bulkPayload(type, rows[0]);
+    const first = built[0];
     let line;
     if (badRows) {
+      const firstBad = { line: badAt[0] + headOffset, err: built[badAt[0]].errors[0] };
       const e = firstBad.err;
       line = el('p', { class: 'bulk-map-out empty' },
         badRows + '行で、選べない値が使われています。このままだと、その行は作られません。' + BULK_NL +
@@ -3957,11 +3902,6 @@
     }
     host.appendChild(line);
     host.appendChild(table);
-  }
-
-  // 見出し行があるぶん、CSV の行番号は1つずれる
-  function useHeaderOffset() {
-    return bulkUseHeader();
   }
 
   function bulkSummary() {
@@ -4021,11 +3961,11 @@
         sheets = book.sheets.filter(sh => !sh.hidden);
         if (!sheets.length) sheets = book.sheets;
         // いま選んでいる種類のタブ → 中身のあるタブ → 先頭、の順で当てる
-        let at = bulkSheetForType(sheets, bulkType().name);
+        let at = bulkSheetForType(sheets, currentType().name);
         if (at < 0) at = sheets.findIndex(bulkSheetHasData);
         if (at < 0) at = 0;
         out = { rows: sheets[at].rows };
-        encoding = 'Excel' + (sheets[at].name ? '／' + sheets[at].name : '');
+        encoding = excelLabel(sheets[at]);
         pickAt = at;
       } else {
         const parsed = window.QRBulk.decodeText(buf);
@@ -4042,7 +3982,7 @@
       bulk.fileName = file.name;
       bulk.encoding = encoding;
       // 別のファイルなら列の並びも違う。前の選択は引き継がず、見出しから引き直す
-      Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
+      clearBulkPicked();
       $('bulk-setup').classList.remove('hidden');
       // 見出しらしさは、1行目に「作れない中身」が並んでいるかでは決められない。
       // 素直に既定を on にしておき、表を見て外してもらう
@@ -4078,21 +4018,6 @@
     $('bulk-progress-text').textContent = note || (done + ' / ' + total);
   }
 
-  // ラベルを行ごとに差し替えるので、書体の取り寄せは全行ぶんまとめて1回で
-  // 済ませる。行ごとに textRuns を通すと、行の数だけ取りに行くことになる。
-  async function bulkFontCss(baseStyle, labels) {
-    const probe = Object.assign({}, baseStyle);
-    probe.frame = Object.assign({}, baseStyle.frame);
-    const all = labels.join('');
-    probe.frame.text = String(probe.frame.text || '') + all;
-    probe.frame.textTop = String(probe.frame.textTop || '') + all;
-    let runs = [];
-    try { runs = window.QRStyle.textRuns(probe); } catch (e) { return ''; }
-    if (!runs.length) return '';
-    const faces = await Promise.all(runs.map(fontFaceCss));
-    return faces.join('');
-  }
-
   const BULK_FORMATS = {
     png:  { ext: 'png',  mime: 'image/png',  quality: undefined },
     avif: { ext: 'avif', mime: 'image/avif' },
@@ -4111,7 +4036,7 @@
     try { ok = await okToExport(); } finally { bulk.starting = false; }
     if (!ok) return;
 
-    const type = bulkType();
+    const type = currentType();
     if (!bulkMappedFields(type).length) {
       showToast('CSVの列をひとつも当てていません', 'error');
       return;
@@ -4148,7 +4073,8 @@
     const manifest = [['行', 'ファイル名', '中身']];
 
     try {
-      const faceCss = await bulkFontCss(baseStyle, []);
+      // デザインは全行で同じなので、書体の取り寄せも最初の1回で済む
+      const faceCss = await exportFontCss(baseStyle);
 
       for (let i = 0; i < use.length; i++) {
         if (bulk.abort) break;
@@ -4194,12 +4120,8 @@
 
         let bytes;
         if (fmt.ext === 'svg') {
-          const doc = '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) +
-            // 1枚ずつの書き出しと同じく、mm 指定ならその寸法で出す
-            (state.sizeUnit === 'mm'
-              ? window.QRStyle.resizeMm(svg, state.printMm)
-              : window.QRStyle.resize(svg, 1024));
-          bytes = new TextEncoder().encode(doc);
+          // 1枚ずつの書き出しと同じく、mm 指定ならその寸法で出す
+          bytes = new TextEncoder().encode(svgDocument(svg));
         } else {
           const canvas = await rasterize(svg, outputPx(), null);
           const blob = await encodeCanvas(canvas, fmt.mime, bulkAvif);
@@ -4269,13 +4191,6 @@
       String.fromCharCode(10), String.fromCharCode(13)];
     const needs = marks.some(m => s.indexOf(m) >= 0);
     return needs ? q + s.split(q).join(q + q) + q : s;
-  }
-
-  function stamp() {
-    const d = new Date();
-    const p = v => String(v).padStart(2, '0');
-    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
-      '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
   }
 
   function bulkReport(r) {
@@ -4348,7 +4263,7 @@
       sheetSel.addEventListener('change', () => {
         bulkUseSheet(Number(sheetSel.value) || 0);
         // シートが変われば列の並びも変わる。当てた列は引き直す
-        Object.keys(bulkPicked).forEach(k => { delete bulkPicked[k]; });
+        clearBulkPicked();
         bulkRefresh();
       });
     }
@@ -4367,7 +4282,6 @@
       if (hex) hex.value = v;
       apply(v);
       state.presetName = '';
-      syncPresetActive();
       update({ debounceVerify: true });
     });
     picker.addEventListener('change', verifyOnCommit);
@@ -4379,7 +4293,6 @@
         picker.value = v;
         apply(v);
         state.presetName = '';
-        syncPresetActive();
         update();
       });
     }
@@ -4393,7 +4306,6 @@
         apply(b.dataset[attr]);
         state.presetName = '';
         syncControls();
-        syncPresetActive();
         update();
       });
     });
@@ -4516,7 +4428,7 @@
       touch();
       const p = paintOf(scope);
       if (p.mid) return;
-      p.mid = blendHex(p.from || '#FC466B', p.to || '#3F5EFB');
+      p.mid = towardHex(p.from || '#FC466B', p.to || '#3F5EFB', 0.5);
       state.presetName = '';
       syncControls();
       update();
@@ -4650,11 +4562,11 @@
       }
     });
 
-    bindRange('opt-cellscale', 'val-cellscale', v => Math.round(v * 100) + '%', v => {
+    bindRange('opt-cellscale', 'val-cellscale', pct, v => {
       state.style.cellScale = v;
       updateFrameGridPreviews();
     });
-    bindRange('opt-celljitter', 'val-celljitter', v => Math.round(v * 100) + '%', v => { state.style.cellJitter = v; });
+    bindRange('opt-celljitter', 'val-celljitter', pct, v => { state.style.cellJitter = v; });
     bindRange('opt-margin', 'val-margin', v => String(v), v => {
       state.style.margin = v;
       // 角丸の上限は余白で決まる。余白を詰めたぶん、はみ出した丸みは先に削る
@@ -4663,13 +4575,13 @@
       syncControls();
     });
     bindRange('opt-radius', 'val-radius', v => String(v), v => { state.style.radius = v; });
-    bindRange('opt-minver', 'val-minver', v => (v <= 1 ? '自動' : 'v' + v + '以上'), v => { state.minVersion = v; });
-    bindRange('logo-size', 'val-logosize', v => Math.round(v * 100) + '%', v => { state.style.logo.size = v; });
-    bindRange('logo-pad', 'val-logopad', v => Math.round(v * 100) + '%', v => { state.style.logo.pad = v; });
+    bindRange('opt-minver', 'val-minver', fmtMinVersion, v => { state.minVersion = v; });
+    bindRange('logo-size', 'val-logosize', pct, v => { state.style.logo.size = v; });
+    bindRange('logo-pad', 'val-logopad', pct, v => { state.style.logo.pad = v; });
     bindRange('frame-line-width', 'val-frame-line-width', fmtLineWidth, v => { state.style.frame.lineWidth = v; });
     bindRange('frame-line-width2', 'val-frame-line-width2', fmtLineWidth, v => { state.style.frame.lineWidth2 = v; });
-    bindRange('frame-content-size', 'val-frame-content-size', v => Math.round(v * 100) + '%', v => { state.style.frame.contentSize = v; });
-    bindRange('frame-content-pad', 'val-frame-content-pad', v => Math.round(v * 100) + '%', v => { state.style.frame.contentPad = v; });
+    bindRange('frame-content-size', 'val-frame-content-size', pct, v => { state.style.frame.contentSize = v; });
+    bindRange('frame-content-pad', 'val-frame-content-pad', pct, v => { state.style.frame.contentPad = v; });
 
     $('logo-text').addEventListener('input', e => {
       state.style.logo.text = e.target.value;
@@ -4764,7 +4676,6 @@
     // ---- プレビュー領域への画像ドロップ（選択中の対象画像として反映） ----
     wireImageDrop(document.querySelector('.canvas-card'), null, IMAGE_TARGETS.target);
 
-
     // ---- プレビュー市松模様の明暗切り替え ----
     eachSegButton('checker-toggle', btn => {
       btn.addEventListener('click', () => {
@@ -4821,15 +4732,9 @@
     // ---- ツールバー ----
     $('btn-shuffle').addEventListener('click', shuffle);
     $('btn-reset').addEventListener('click', () => {
-      state.style = JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS));
-      // セルの密度も「自動」に戻す（密度だけ style ではなく state 側にある）
-      state.minVersion = 1;
-      state.presetName = '';
-      syncControls();
-      buildShapeGrids();
-      buildFrameChips();
-      syncPresetActive();
-      update();
+      // 既定の見た目をテンプレートと同じ入口から当てる。セルの密度も「自動」に
+      // 戻す（密度だけ style ではなく state 側にある）
+      applyStyle({}, '', { minVersion: 1 });
       showToast('デザインを初期化しました');
     });
 
@@ -4911,21 +4816,12 @@
         (target.tagName === 'INPUT' &&
           ['text', 'search', 'url', 'email', 'tel', 'password', 'number'].indexOf(target.type) >= 0));
 
-      if (e.key === 'z' || e.key === 'Z') {
-        if (e.shiftKey) {
-          if (isContentField) return;
-          e.preventDefault();
-          redo();
-        } else {
-          if (isContentField) return;
-          e.preventDefault();
-          undo();
-        }
-      } else if (e.key === 'y' || e.key === 'Y') {
-        if (isContentField) return;
-        e.preventDefault();
-        redo();
-      }
+      const key = String(e.key).toLowerCase();
+      if ((key !== 'z' && key !== 'y') || isContentField) return;
+      e.preventDefault();
+      // Ctrl+Y と Shift 付きの Z はやり直し
+      if (key === 'y' || e.shiftKey) redo();
+      else undo();
     });
 
     // モバイル用フローティングミニプレビュー
@@ -5018,8 +4914,6 @@
       () => showToast('画像を読み込めませんでした', 'error')
     );
   }
-
-
 
   function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
@@ -5129,11 +5023,7 @@
     // ここで均す。振る側が上限を知っていなくてよくなる
     sanitizeStyle(state.style);
 
-    syncControls();
-    buildShapeGrids();
-    buildFrameChips();
-    // テンプレートの見本は state に依存しないので、選択状態を移すだけでよい
-    syncPresetActive();
+    rebuildDesignUI();
     update();
   }
 
@@ -5171,7 +5061,7 @@
     // 中の ⓘ を描くためにもう一度だけ回す。
     if (window.lucide) lucide.createIcons();
     update();
-    initHistory();
+    resetHistory();
     // 共有リンクのデザインは、ふつうの起動が済んでから被せる。
     // 復号を待つあいだ画面が空のままになるのを避ける。
     consumeDesignLink();

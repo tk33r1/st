@@ -361,7 +361,6 @@
     return ('#' + toHex(rgb[0]) + toHex(rgb[1]) + toHex(rgb[2])).toUpperCase();
   }
 
-
   // 「白」「黒」「セルの色」は、それ自体が塗りではなく指定でしかない。実際に
   // 何で描かれるかを知りたい場所（描画・コントラスト判定・余白を補う色）が
   // それぞれ解決していたので、ここ一箇所にまとめる。
@@ -416,8 +415,7 @@
     if (paint.mid) return paint.mid;
     const a = hexToRgb(paint.from), b = hexToRgb(paint.to);
     if (!a || !b) return paint.from || paint.color;
-    const mid = a.map((v, i) => Math.round((v + b[i]) / 2));
-    return '#' + mid.map(v => v.toString(16).padStart(2, '0')).join('');
+    return rgbToHex(a.map((v, i) => (v + b[i]) / 2));
   }
 
   // ------------------------------------------------------------------
@@ -715,7 +713,10 @@
           pushP(rectPath(px, py, w, h, t / 2), x, y);
         }
       }
-    } else if (shape === 'connected' || shape === 'liquid') {
+    } else if (shape === 'connected' || shape === 'liquid' || shape === 'circuit') {
+      // 隣とつながる3種は、帯の組み方まで同じで、外側の角の作り方だけが違う
+      // （連結・リキッドは丸め、サーキットは回路基板の配線のような45度の面取り）。
+      const isLiquid = shape === 'liquid';
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           if (!dark(x, y)) continue;
@@ -726,7 +727,7 @@
           const s = cellScaleAt(x, y, scale, jit);
 
           // リキッドで孤立した1マスは完全な正円（水滴）
-          if (shape === 'liquid' && !top && !right && !bottom && !left) {
+          if (isLiquid && !top && !right && !bottom && !left) {
             pushP(circlePath(ox + x + 0.5, oy + y + 0.5, s * 0.48), x, y);
             continue;
           }
@@ -736,14 +737,15 @@
           const y0 = oy + y + (top ? 0 : inset);
           const x1 = ox + x + 1 - (right ? 0 : inset);
           const y1 = oy + y + 1 - (bottom ? 0 : inset);
-          const w = x1 - x0;
-          const h = y1 - y0;
-          const rBase = Math.min(w, h) * (shape === 'liquid' ? 0.5 : 0.45);
+          const side = Math.min(x1 - x0, y1 - y0);
+          const outerCorner = shape === 'circuit'
+            ? { ch: side * 0.22 }
+            : { r: side * (isLiquid ? 0.5 : 0.45) };
           // リキッドは同じ角に逆アールのフィレットを足して滑らかにつなぐので、
           // ここで欠き取らない（フィレットが覆う範囲と紙一重で、境に髪の毛ほどの
-          // 隙間が出る）。連結は欠き取って帯の太さを揃える。
-          const nt = (a, b, dx, dy) => (shape === 'liquid' ? null : notchAt(x, y, a, b, dx, dy));
-          const cor = (outer, notch) => (outer ? { r: rBase } : notch);
+          // 隙間が出る）。連結とサーキットは欠き取って帯の太さを揃える。
+          const nt = (a, b, dx, dy) => (isLiquid ? null : notchAt(x, y, a, b, dx, dy));
+          const cor = (outer, notch) => (outer ? outerCorner : notch);
           pushP(joinedBoxPath(x0, y0, x1, y1, [
             cor(!top && !left, nt(top, left, -1, -1)),
             cor(!top && !right, nt(top, right, 1, -1)),
@@ -755,7 +757,7 @@
           // セルの太さ（s）で細くしたときも、枝の外側エッジの真の交点（inset 考慮）から正確に円弧を開始し、
           // 隣接DARKセルの肉の内部深くまでアンカーを潜り込ませることで、どの太さでも白線・隙間を完全に根絶する。
           // 全パスは boxPath と同じ時計回り（CW）で統一。
-          if (shape === 'liquid') {
+          if (isLiquid) {
             const rIn = Math.min(0.32, s * 0.38);
             const d = Math.min(0.35, s * 0.42); // セル本体の内部へ深く潜らせるアンカー深度
             const f = n => n.toFixed(3);
@@ -778,34 +780,11 @@
           }
         }
       }
-    } else if (shape === 'circuit') {
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          if (!dark(x, y)) continue;
-          const top = dark(x, y - 1);
-          const right = dark(x + 1, y);
-          const bottom = dark(x, y + 1);
-          const left = dark(x - 1, y);
-          const s = cellScaleAt(x, y, scale, jit);
-
-          const inset = Math.max(0, (1 - s) / 2);
-          const x0 = ox + x + (left ? 0 : inset);
-          const y0 = oy + y + (top ? 0 : inset);
-          const x1 = ox + x + 1 - (right ? 0 : inset);
-          const y1 = oy + y + 1 - (bottom ? 0 : inset);
-
-          // 回路基板特有の45度斜め面取り配線（PCB Chamfer Trace）
-          const ch = Math.min(x1 - x0, y1 - y0) * 0.22;
-          const cor = (outer, notch) => (outer ? { ch: ch } : notch);
-          pushP(joinedBoxPath(x0, y0, x1, y1, [
-            cor(!top && !left, notchAt(x, y, top, left, -1, -1)),
-            cor(!top && !right, notchAt(x, y, top, right, 1, -1)),
-            cor(!bottom && !right, notchAt(x, y, bottom, right, 1, 1)),
-            cor(!bottom && !left, notchAt(x, y, bottom, left, -1, 1))
-          ]), x, y);
-        }
-      }
     } else if (shape === 'mosaic') {
+      // 対角（斜め）隣接セルとのマイクロ菱形ブリッジ。(bx, by) はセルの角
+      const BRIDGE = 0.22;
+      const bridge = (bx, by) =>
+        polyPath([[bx, by - BRIDGE], [bx + BRIDGE, by], [bx, by + BRIDGE], [bx - BRIDGE, by]]);
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           if (!dark(x, y)) continue;
@@ -815,18 +794,12 @@
           // メインセル
           pushP(rectPath(x0, y0, s, s, s * 0.22), x, y);
 
-          // 対角（斜め）隣接セルとのマイクロ菱形ブリッジ
-          const dBR = dark(x + 1, y + 1) && (!dark(x + 1, y) || !dark(x, y + 1));
-          if (dBR) {
-            const bx = ox + x + 1, by = oy + y + 1;
-            const bw = 0.22;
-            pushP(polyPath([[bx, by - bw], [bx + bw, by], [bx, by + bw], [bx - bw, by]]), x, y);
+          // 右下・左下の斜め隣とだけ橋を架ける（左上・右上は相手側が架ける）
+          if (dark(x + 1, y + 1) && (!dark(x + 1, y) || !dark(x, y + 1))) {
+            pushP(bridge(ox + x + 1, oy + y + 1), x, y);
           }
-          const dBL = dark(x - 1, y + 1) && (!dark(x - 1, y) || !dark(x, y + 1));
-          if (dBL) {
-            const bx = ox + x, by = oy + y + 1;
-            const bw = 0.22;
-            pushP(polyPath([[bx, by - bw], [bx + bw, by], [bx, by + bw], [bx - bw, by]]), x, y);
+          if (dark(x - 1, y + 1) && (!dark(x - 1, y) || !dark(x, y + 1))) {
+            pushP(bridge(ox + x, oy + y + 1), x, y);
           }
         }
       }
@@ -883,18 +856,20 @@
   // ------------------------------------------------------------------
   // 枠の丸みは「読み取り機が1行ずつ走査したときに 1:1:3:1:1 が取れる範囲」で
   // 上限を決めてある。完全な円まで丸めると中心行しか条件を満たさなくなる。
+  // 四隅とも同じ丸み
+  const all4 = k => [k, k, k, k];
+
   function frameShape(x, y, s, style) {
     const x1 = x + s, y1 = y + s;
-    const r = k => [k, k, k, k];
     switch (style) {
-      case 'square':   return boxPath(x, y, x1, y1, r(0), [0, 0, 0, 0]);
-      case 'rounded':  return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
-      case 'xrounded': return boxPath(x, y, x1, y1, r(s * 0.34), [1, 1, 1, 1]);
-      case 'circle':   return boxPath(x, y, x1, y1, r(s * 0.42), [1, 1, 1, 1]);
+      case 'square':   return boxPath(x, y, x1, y1, all4(0), all4(0));
+      case 'rounded':  return boxPath(x, y, x1, y1, all4(s * 0.16), all4(1));
+      case 'xrounded': return boxPath(x, y, x1, y1, all4(s * 0.34), all4(1));
+      case 'circle':   return boxPath(x, y, x1, y1, all4(s * 0.42), all4(1));
       case 'octagon':  return octagonPath(x, y, s, s * 0.26);
       case 'leaf':     return boxPath(x, y, x1, y1, [s * 0.36, 0, s * 0.36, 0], [1, 0, 1, 0]);
       case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.34, s * 0.34, s * 0.34], [0, 1, 1, 1]);
-      default:         return boxPath(x, y, x1, y1, r(s * 0.16), [1, 1, 1, 1]);
+      default:         return boxPath(x, y, x1, y1, all4(s * 0.16), all4(1));
     }
   }
 
@@ -912,10 +887,6 @@
       arc(7, 3.5) + arc(7, 6) + corner(6, 7) +
       arc(3.5, 7) + arc(1, 7) + corner(0, 6) +
       arc(0, 3.5) + arc(0, 1) + corner(1, 0) + 'Z';
-  }
-
-  function scallopFramePath(fx, fy) {
-    return scallopPath(fx, fy, 7);
   }
 
   // ------------------------------------------------------------------
@@ -1194,7 +1165,7 @@
       return parts.join('');
     }
     if (style === 'flower') {
-      const outer = scallopFramePath(fx, fy);
+      const outer = scallopPath(fx, fy, 7);
       const hole = boxPath(fx + 1, fy + 1, fx + 6, fy + 6, [1.4, 1.4, 1.4, 1.4], [1, 1, 1, 1]);
       return outer + hole;
     }
@@ -1213,10 +1184,10 @@
     const x1 = x + s, y1 = y + s;
     const cx = x + s / 2, cy = y + s / 2;
     switch (style) {
-      case 'square':   return boxPath(x, y, x1, y1, [0, 0, 0, 0], [0, 0, 0, 0]);
-      case 'rounded':  return boxPath(x, y, x1, y1, [s * 0.16, s * 0.16, s * 0.16, s * 0.16], [1, 1, 1, 1]);
-      case 'xrounded': return boxPath(x, y, x1, y1, [s * 0.34, s * 0.34, s * 0.34, s * 0.34], [1, 1, 1, 1]);
-      case 'circle':   return boxPath(x, y, x1, y1, [EYE_R, EYE_R, EYE_R, EYE_R], [1, 1, 1, 1]);
+      case 'square':   return boxPath(x, y, x1, y1, all4(0), all4(0));
+      case 'rounded':  return boxPath(x, y, x1, y1, all4(s * 0.16), all4(1));
+      case 'xrounded': return boxPath(x, y, x1, y1, all4(s * 0.34), all4(1));
+      case 'circle':   return boxPath(x, y, x1, y1, all4(EYE_R), all4(1));
       case 'hexagon':  return hexagonPath(cx, cy, 1.6);
       case 'octagon':  return octagonPath(x, y, s, 0.78);
       case 'flower':   return flowerPath(cx, cy, 1.55);
@@ -1229,7 +1200,7 @@
       case 'xmark':    return crossPath(cx, cy, 1.2, 0.75);
       case 'vbar':     return [0, 1, 2].map(i => rectPath(x + i + 0.1, y, 0.8, s, 0.4)).join('');
       case 'hbar':     return [0, 1, 2].map(i => rectPath(x, y + i + 0.1, s, 0.8, 0.4)).join('');
-      default:         return boxPath(x, y, x1, y1, [s * 0.16, s * 0.16, s * 0.16, s * 0.16], [1, 1, 1, 1]);
+      default:         return boxPath(x, y, x1, y1, all4(s * 0.16), all4(1));
     }
   }
 
@@ -1401,6 +1372,17 @@
     return { defs: defs, body: '<g clip-path="url(#' + id + 'c)">' + fill + '</g>' };
   }
 
+  // 「セルの色」の多色を、セルと同じモジュール格子・同じ種で振る設定。
+  // こうすると目地がセルとそろい、ロゴや帯までひと続きの模様になる。
+  function cellTile(qrBox) {
+    return qrBox ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+  }
+
+  // url(#…) で定義を引く塗り（グラデーション・放射・画像）か
+  function usesDef(p) {
+    return !!p && (p.type === 'linear' || p.type === 'radial' || p.type === 'image');
+  }
+
   // ロゴとフレームラベルで共通のアイコン描画。違うのは既定色と、セルの
   // グラデーションを追従させるときにクリップを介すかどうかだけ。
   function paintedIcon(icon, cx, cy, side, pid, paint, fg, fgRef, qrBox, opts) {
@@ -1417,8 +1399,7 @@
     const p = paint || { type: 'solid', color: o.defaultColor || '#111827' };
     const mode = p.type || 'brand';
     const color = p.color || o.defaultColor || '#111827';
-    const cellOpts = qrBox
-      ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+    const cellOpts = cellTile(qrBox);
     let defs = '';
     let body = '';
 
@@ -1506,8 +1487,7 @@
     }
 
     // 多色はセルと同じモジュール格子・同じ種で振ると目地がそろう
-    const cellOpts = isBdAuto
-      ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+    const cellOpts = isBdAuto ? cellTile(qrBox) : null;
     const layer = paintedShape(bdPaint, bdBox, idBase, shape, cellOpts);
     if (!layer) return { defs: '', body: solid(fill, '') };
     return {
@@ -1516,71 +1496,63 @@
     };
   }
 
+  // 文字を塗りで描く。ロゴの文字とラベルの文字で共通。
+  //   textEl   … fill（エスケープ済み。null なら属性なし）から <text> を作る関数
+  //   rawPaint … 生の指定。'auto'（セルの色）ならセルの塗りをそのまま使う
+  //   box      … 塗りを敷く箱。文字の広がりに合わせる（正方形のままだと、横に
+  //              長い文字列で画像がタイル状に繰り返され、勾配も途中で頭打ちになる）
+  //   fallback … 色が決まらないときの色
+  function paintedText(textEl, rawPaint, fg, fgRef, box, pid, qrBox, fallback) {
+    const isAuto = (rawPaint.type || 'solid') === 'auto';
+    const paint = isAuto ? (fg || { type: 'solid', color: '#111827' }) : rawPaint;
+    const type = paint.type || 'solid';
+    if (type === 'multi') {
+      // 文字も面で塗る。アイコンの多色と同じブロック模様になる
+      const layer = paintedShape(paint, box, pid, textEl(null), isAuto ? cellTile(qrBox) : null);
+      return layer || { defs: '', body: textEl(esc((paint.colors && paint.colors[0]) || fallback)) };
+    }
+    if (type === 'linear' || type === 'radial' || (type === 'image' && paint.src)) {
+      // 文字には変換がかからないので、外側の座標系の定義をそのまま参照できる。
+      // 「セルの色」ならセル側の定義を引く
+      if (isAuto) return { defs: '', body: textEl(fgRef || '#111827') };
+      return { defs: paintDef(paint, pid, box), body: textEl('url(#' + pid + ')') };
+    }
+    return { defs: '', body: textEl(esc(paint.color || fallback)) };
+  }
+
   function logoSvg(logo, cx, cy, side, uid, fg, fgRef, qrBox) {
-    const empty = { defs: '', body: '' };
-    if (!logo || logo.type === 'none') return empty;
-    const half = side / 2;
-    const x = cx - half, y = cy - half;
-    let box = { x: x, y: y, w: side, h: side };
+    if (!logo || logo.type === 'none') return { defs: '', body: '' };
+    const x = cx - side / 2, y = cy - side / 2;
     const pid = (uid || 'logo_') + 'lo';
-    // セルと同じ模様をロゴにも通すための、モジュール格子の基準点
-    const cellOpts = qrBox ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
-    let defs = '';
-    let out = '';
 
     if (logo.type === 'icon' && logo.iconData) {
-      const layer = paintedIcon(logo.iconData, cx, cy, side, pid, logo.paint,
+      return paintedIcon(logo.iconData, cx, cy, side, pid, logo.paint,
         fg, fgRef, qrBox, {
           defaultColor: '#111827',
           rawPrefix: (uid || 'logo_') + '_',
           clipAutoComplex: true
         });
-      defs += layer.defs;
-      out += layer.body;
-    } else if (logo.type === 'image' && logo.src) {
-      out += '<image href="' + esc(logo.src) + '" x="' + n(x) + '" y="' + n(y) + '" width="' +
-        n(side) + '" height="' + n(side) + '" preserveAspectRatio="xMidYMid meet"/>';
-    } else if (logo.type === 'text' && logo.text) {
+    }
+    if (logo.type === 'image' && logo.src) {
+      return { defs: '', body: '<image href="' + esc(logo.src) + '" x="' + n(x) + '" y="' + n(y) + '" width="' +
+        n(side) + '" height="' + n(side) + '" preserveAspectRatio="xMidYMid meet"/>' };
+    }
+    if (logo.type === 'text' && logo.text) {
       const fs = side * (logo.text.length > 2 ? 0.5 : 0.78);
-      // textPaint が今のキー。旧データはアイコンと同じ paint を共有していた。
-      const lp = logo.textPaint || logo.paint;
-      const mode = lp.type || 'solid';
       const fontFamily = fontOf(logo.font).stack;
-
-      // 塗りを敷く箱は文字の広がりに合わせる。正方形のままだと、横に長い
-      // 文字列で画像がタイル状に繰り返され、勾配も途中で頭打ちになる。
-      const units = textUnits(logo.text);
-      const tw = Math.max(side, fs * units);
+      const tw = Math.max(side, fs * textUnits(logo.text));
       const th = Math.max(side, fs * 1.15);
-      box = { x: cx - tw / 2, y: cy - th / 2, w: tw, h: th };
+      const box = { x: cx - tw / 2, y: cy - th / 2, w: tw, h: th };
 
       const textEl = fill => '<text x="' + n(cx) + '" y="' + n(cy) + '" font-size="' + n(fs) +
         '" font-weight="' + FONT_WEIGHT + '"' + (fill ? ' fill="' + fill + '"' : '') +
         ' text-anchor="middle" dominant-baseline="central" ' +
         'font-family="' + esc(fontFamily) + '">' + esc(logo.text) + '</text>';
 
-      // 「セルの色」はセル側の塗りをそのまま使う
-      const paint = mode === 'auto' ? (fg || { type: 'solid', color: '#111827' }) : lp;
-      const pType = paint.type || 'solid';
-
-      if (pType === 'multi') {
-        // 文字も面で塗る。アイコンの多色と同じブロック模様になる
-        const layer = paintedShape(paint, box, pid, textEl(null), mode === 'auto' ? cellOpts : null);
-        if (layer) { defs += layer.defs; out += layer.body; }
-        else out += textEl(esc((paint.colors && paint.colors[0]) || '#111827'));
-      } else if (pType === 'linear' || pType === 'radial' || (pType === 'image' && paint.src)) {
-        // 文字には変換がかからないので、外側の座標系の定義をそのまま参照できる
-        if (mode === 'auto') {
-          out += textEl(fgRef || '#111827');
-        } else {
-          defs += paintDef(paint, pid, box);
-          out += textEl('url(#' + pid + ')');
-        }
-      } else {
-        out += textEl(esc(paint.color || '#111827'));
-      }
+      // textPaint が今のキー。旧データはアイコンと同じ paint を共有していた。
+      return paintedText(textEl, logo.textPaint || logo.paint, fg, fgRef, box, pid, qrBox, '#111827');
     }
-    return { defs: defs, body: out };
+    return { defs: '', body: '' };
   }
 
   // ------------------------------------------------------------------
@@ -1602,23 +1574,16 @@
     const tailH = isLine ? lineG.tail : 0;
     const isLabel = st.frame.type === 'label';
     const L = frameLabelParts(st);
-    const pos = L.pos;
-    const topCMode = L.topCMode;
-    const bottomCMode = L.bottomCMode;
-    const topText = L.topText;
-    const bottomText = L.bottomText;
-    const topSrc = L.topSrc;
-    const bottomSrc = L.bottomSrc;
 
-    const hasTop = isLabel && (pos === 'top' || pos === 'both');
-    const hasBottom = isLabel && (pos === 'bottom' || pos === 'both');
+    const hasTop = isLabel && (L.pos === 'top' || L.pos === 'both');
+    const hasBottom = isLabel && (L.pos === 'bottom' || L.pos === 'both');
 
-    const hasTopContent = topCMode === 'icon'
+    const hasTopContent = L.topCMode === 'icon'
       ? true
-      : (topCMode === 'image' ? !!topSrc : !!String(topText).trim());
-    const hasBottomContent = bottomCMode === 'icon'
+      : (L.topCMode === 'image' ? !!L.topSrc : !!String(L.topText).trim());
+    const hasBottomContent = L.bottomCMode === 'icon'
       ? true
-      : (bottomCMode === 'image' ? !!bottomSrc : !!String(bottomText).trim());
+      : (L.bottomCMode === 'image' ? !!L.bottomSrc : !!String(L.bottomText).trim());
 
     // ラベルの中身の大きさと、その周りの余白（中身の大きさに対する比）。
     // 既定の 1.0 / 0.2 なら 4.0 + 0.8*2 = 5.6 で、FRAME_METRICS.label と同じ帯になる。
@@ -1688,7 +1653,7 @@
     const bgBox = st.frame.type === 'label' ? { x: bx, y: by, w: inner, h: inner } : { x: 0, y: 0, w: W, h: H };
     const bgPaint = resolvePaint(st.bg, st.fg);
 
-    if (bgPaint.type === 'linear' || bgPaint.type === 'radial' || bgPaint.type === 'image') {
+    if (usesDef(bgPaint)) {
       defs += paintDef(bgPaint, uid + 'b', bgBox);
     }
     const bgRef = paintRef(bgPaint, uid + 'b', '#FFFFFF');
@@ -1696,6 +1661,9 @@
     // （透明にしたいときは type:'none' か transparency を明示する）
     const bgTransparency = bgPaint.transparency !== undefined ? Number(bgPaint.transparency) : 0;
     const bgOpacity = bgPaint.type === 'none' ? 0 : Math.max(0, Math.min(1, (100 - bgTransparency) / 100));
+    // 地を単色・グラデ・画像で塗る path（多色は buildBgMosaic）
+    const bgPlate = d => '<path d="' + d + '" fill="' + bgRef + '"' +
+      (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/>';
 
     function buildBgMosaic(box, r, colors, seed, opac, shapeD) {
       const clipId = uid + 'bgc';
@@ -1709,10 +1677,10 @@
     const mfPaint = st.markerFramePaint;
     const mePaint = st.markerEyePaint;
 
-    if (mfPaint && (mfPaint.type === 'linear' || mfPaint.type === 'radial' || mfPaint.type === 'image')) {
+    if (usesDef(mfPaint)) {
       defs += paintDef(mfPaint, uid + 'mf', qrBox);
     }
-    if (mePaint && (mePaint.type === 'linear' || mePaint.type === 'radial' || mePaint.type === 'image')) {
+    if (usesDef(mePaint)) {
       defs += paintDef(mePaint, uid + 'me', qrBox);
     }
 
@@ -1725,12 +1693,12 @@
       const flPaint = st.frame.paint;
       const labelD = rectPath(0, 0, W, H, fr);
       const isFlAuto = flPaint.type === 'auto';
-      if (isFlAuto && (st.fg.type === 'linear' || st.fg.type === 'radial' || st.fg.type === 'image')) {
+      if (isFlAuto && usesDef(st.fg)) {
         defs += '<clipPath id="' + uid + 'flc"><path d="' + labelD + '"/></clipPath>';
         body += '<g clip-path="url(#' + uid + 'flc)"><path d="' +
           rectPath(0, 0, W, H, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
       } else {
-        const cellOpts = isFlAuto ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
+        const cellOpts = isFlAuto ? cellTile(qrBox) : null;
         const actualPaint = isFlAuto ? st.fg : flPaint;
         const layer = paintedShape(actualPaint, { x: 0, y: 0, w: W, h: H }, uid + 'fl', '<path d="' + labelD + '"/>', cellOpts);
         if (layer) {
@@ -1746,8 +1714,7 @@
         if (bgPaint.type === 'multi') {
           body += buildBgMosaic({ x: bx, y: by, w: inner, h: inner }, radius, bgPaint.colors, bgPaint.seed, bgOpacity);
         } else {
-          body += '<path d="' + rectPath(bx, by, inner, inner, radius) + '" fill="' + bgRef +
-            '"' + (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/>';
+          body += bgPlate(rectPath(bx, by, inner, inner, radius));
         }
       }
     } else {
@@ -1768,11 +1735,9 @@
           // 札の外へはみ出した切り欠きが逆に塗られてしまう）
           const cutId = uid + 'cut';
           defs += '<clipPath id="' + cutId + '"><path d="' + bgShapeD + '" clip-rule="evenodd"/></clipPath>';
-          body += '<g clip-path="url(#' + cutId + ')"><path d="' + rectPath(0, 0, W, H, 0) +
-            '" fill="' + bgRef + '"' + (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/></g>';
+          body += '<g clip-path="url(#' + cutId + ')">' + bgPlate(rectPath(0, 0, W, H, 0)) + '</g>';
         } else {
-          body += '<path d="' + rectPath(0, 0, W, H, radius) + '" fill="' + bgRef +
-            '"' + (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/>';
+          body += bgPlate(rectPath(0, 0, W, H, radius));
         }
       }
       if (st.frame.type === 'line') {
@@ -1798,14 +1763,14 @@
           // 単色は色そのもの、グラデ・画像は url(#...)。どちらも stroke にも fill にも使える
           let strokeVal = '';
           if (isFlAuto) {
-            if (st.fg.type === 'linear' || st.fg.type === 'radial' || st.fg.type === 'image') {
+            if (usesDef(st.fg)) {
               strokeVal = fgRef || '#111827';
             } else {
               strokeVal = esc(st.fg.color || '#111827');
             }
           } else if (flPaint.type === 'solid') {
             strokeVal = esc(flPaint.color || '#111827');
-          } else if (flPaint.type === 'linear' || flPaint.type === 'radial' || flPaint.type === 'image') {
+          } else if (usesDef(flPaint)) {
             defs += paintDef(flPaint, uid + 'fl', frameBox);
             strokeVal = paintRef(flPaint, uid + 'fl', '#111827');
           } else {
@@ -1864,11 +1829,6 @@
     if (topH || bottomH) {
       const fontFamily = fontOf(st.frame.font).stack;
 
-      const tp = st.frame.textPaint;
-      const tMode = tp.type || 'solid';
-      const tPaint = tMode === 'auto' ? (st.fg || { type: 'solid', color: '#111827' }) : tp;
-      const tPtype = tPaint.type || 'solid';
-
       // 下地を先に敷くために、文字の寸法だけを取り出せるようにしておく
       function frameTextMetrics(textStr) {
         const avail = W - 3;
@@ -1883,31 +1843,18 @@
         const text = String(textStr);
         const m = frameTextMetrics(text);
         const fs = m.fs;
-        const tw = m.tw;
         const th = Math.max(fs * 1.5, labelH);
-        const textBox = { x: W / 2 - tw / 2, y: ty - th / 2, w: tw, h: th };
-        const tPid = uid + 'ft' + idSuffix;
+        const textBox = { x: W / 2 - m.tw / 2, y: ty - th / 2, w: m.tw, h: th };
 
         const textEl = fill => '<text x="' + n(W / 2) + '" y="' + n(ty) + '" font-size="' + n(fs) +
           '" font-weight="' + FONT_WEIGHT + '"' + (fill ? ' fill="' + fill + '"' : '') +
           ' text-anchor="middle" dominant-baseline="central" letter-spacing="' + n(fs * 0.02) +
           '" font-family="' + esc(fontFamily) + '">' + esc(text) + '</text>';
 
-        if (tPtype === 'multi') {
-          const cellOpts = tMode === 'auto' ? { tile: 1, origin: { x: qrBox.x, y: qrBox.y }, seedShift: 17 } : null;
-          const layer = paintedShape(tPaint, textBox, tPid, textEl(null), cellOpts);
-          if (layer) { defs += layer.defs; body += layer.body; }
-          else body += textEl(esc((tPaint.colors && tPaint.colors[0]) || '#FFFFFF'));
-        } else if (tPtype === 'linear' || tPtype === 'radial' || (tPtype === 'image' && tPaint.src)) {
-          if (tMode === 'auto') {
-            body += textEl(fgRef || '#111827');
-          } else {
-            defs += paintDef(tPaint, tPid, textBox);
-            body += textEl('url(#' + tPid + ')');
-          }
-        } else {
-          body += textEl(esc(tPaint.color || '#FFFFFF'));
-        }
+        const layer = paintedText(textEl, st.frame.textPaint, st.fg, fgRef, textBox,
+          uid + 'ft' + idSuffix, qrBox, '#FFFFFF');
+        defs += layer.defs;
+        body += layer.body;
       }
 
       function renderFrameIcon(iconId, cx, cy, idSuffix, iconDataOpt, iconPaintOpt) {
@@ -1937,12 +1884,12 @@
       // 画像は縦横比が分からない（読み込まずに文字列だけで組み立てている）ので、
       // アイコンと同じ正方形の板を敷く。
       function frameContentBox(isTop) {
-        const cMode = isTop ? topCMode : bottomCMode;
+        const cMode = isTop ? L.topCMode : L.bottomCMode;
         if (cMode === 'icon') return { w: contentSide, h: contentSide };
         if (cMode === 'image') {
-          return (isTop ? topSrc : bottomSrc) ? { w: contentSide, h: contentSide } : null;
+          return (isTop ? L.topSrc : L.bottomSrc) ? { w: contentSide, h: contentSide } : null;
         }
-        const txt = isTop ? topText : bottomText;
+        const txt = isTop ? L.topText : L.bottomText;
         if (!String(txt).trim()) return null;
         // 文字幅は「全角1・半角0.56」の見積もりなので、大文字の並びだと少し足りない。
         // 板が字に食い込まないよう、両側に半文字ぶんだけ足しておく。
@@ -1976,25 +1923,25 @@
       }
 
       function renderContent(cy, idSuffix, isTop) {
-        const cMode = isTop ? topCMode : bottomCMode;
+        const cMode = isTop ? L.topCMode : L.bottomCMode;
 
         renderFrameBackdrop(cy, idSuffix, isTop);
 
         if (cMode === 'icon') {
           const iconId = isTop
-            ? ((pos === 'both' || st.frame.topIcon) ? (st.frame.topIcon || 'si-instagram') : (st.frame.icon || 'si-instagram'))
+            ? ((L.pos === 'both' || st.frame.topIcon) ? (st.frame.topIcon || 'si-instagram') : (st.frame.icon || 'si-instagram'))
             : (st.frame.icon || 'si-instagram');
           const iconData = isTop
-            ? ((pos === 'both' || st.frame.topIconData) ? st.frame.topIconData : st.frame.iconData)
+            ? ((L.pos === 'both' || st.frame.topIconData) ? st.frame.topIconData : st.frame.iconData)
             : st.frame.iconData;
           // アイコンの色は上下で分けられない（指定する場所がひとつしかない）
           const iconPaint = st.frame.iconPaint;
           renderFrameIcon(iconId, W / 2, cy, idSuffix, iconData, iconPaint);
         } else if (cMode === 'image') {
-          const src = isTop ? topSrc : bottomSrc;
+          const src = isTop ? L.topSrc : L.bottomSrc;
           renderFrameImage(src, W / 2, cy);
         } else {
-          const txt = isTop ? topText : bottomText;
+          const txt = isTop ? L.topText : L.bottomText;
           renderFrameText(txt, cy, idSuffix);
         }
       }
@@ -2069,18 +2016,15 @@
     if (margin < 2) {
       warnings.push({ kind: 'margin', level: 'warn', text: '余白（クワイエットゾーン）が狭いと読み取り精度が落ちます。4以上を推奨。ただし、紙やレイアウトの側で周囲4モジュールぶんの地色を確保できるなら、このままでも構いません。' });
     }
-    if (st.fg.type === 'image' && st.fg.src) {
-      warnings.push({ kind: 'img-cell', level: 'info', text: '画像セルは絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
-    }
-    if (st.bg.type === 'image' && st.bg.src) {
-      warnings.push({ kind: 'img-bg', level: 'info', text: '背景画像は絵柄や明暗によって読み取りにくくなる場合があります。実機で確認してください。' });
-    }
-    if (mfPaint && mfPaint.type === 'image' && mfPaint.src) {
-      warnings.push({ kind: 'img-marker-frame', level: 'info', text: 'マーカー枠の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
-    }
-    if (mePaint && mePaint.type === 'image' && mePaint.src) {
-      warnings.push({ kind: 'img-marker-eye', level: 'info', text: 'マーカー目の画像は絵柄によって読み取りにくくなる場合があります。実機で確認してください。' });
-    }
+    // 画像の塗りは絵柄しだいなので、測れない代わりに実機での確認を促す
+    [[st.fg, 'img-cell', '画像セルは絵柄や明暗'],
+     [st.bg, 'img-bg', '背景画像は絵柄や明暗'],
+     [mfPaint, 'img-marker-frame', 'マーカー枠の画像は絵柄'],
+     [mePaint, 'img-marker-eye', 'マーカー目の画像は絵柄']].forEach(w => {
+      if (w[0] && w[0].type === 'image' && w[0].src) {
+        warnings.push({ kind: w[1], level: 'info', text: w[2] + 'によって読み取りにくくなる場合があります。実機で確認してください。' });
+      }
+    });
 
     return {
       svg: svg,
@@ -2229,6 +2173,7 @@
     // 色の分解も app.js（混色・明るさの計算）が同じものを使う。二重に持つと、
     // 3桁表記や # なしの扱いが片方だけ変わってもしばらく気づけない。
     hexToRgb: hexToRgb,
+    rgbToHex: rgbToHex,
     // 明るさの見立ては app.js（プレビューの市松）でも使うので出しておく。
     // 読み取りのしきい値（LUMA_WALL / LUMA_TIGHT）は判定ごとここが持つ。
     encodedLuma: encodedLuma,
