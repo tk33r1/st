@@ -1094,7 +1094,6 @@
     let isVertical = els.root.classList.contains('vertical-writing');
     let currentTheme = getThemeFromHash();
     let transitionToken = 0;
-    let pageTurnTimer = null;
     let currentAnnotations = [];
     let pendingSelection = null;
     let pendingMemoSelection = null;
@@ -2706,13 +2705,11 @@
     const syncThemeFromUrl = () => {
       switchTheme(getThemeFromHash(), { history: 'none' });
     };
-    window.addEventListener('popstate', syncThemeFromUrl);
     window.addEventListener('hashchange', syncThemeFromUrl);
 
     if (location.hash && !currentTheme) setThemeUrl(null, true);
     applyDisplayModes();
     updateContentData();
-    updateArrows();
     // 登場のアニメーションが落ち着いてから
     scheduleTurnPreview(1600);
 
