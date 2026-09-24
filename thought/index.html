@@ -16,8 +16,9 @@
   <meta name="robots" content="max-image-preview:large">
   <meta name="theme-color" content="#ffffff">
   <title>思索の余白</title>
-  <link rel="icon" href="https://tk.st/images/favicons/think-favicon.png" type="image/png">
-  <link rel="apple-touch-icon" href="https://tk.st/images/favicons/think-favicon.png">
+  <link rel="icon" href="https://tk.st/images/favicons/thought-favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="https://tk.st/images/favicons/thought-favicon.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="https://tk.st/images/favicons/thought-apple-touch-icon.png">
   <link rel="canonical" href="https://tk.st/thought/">
   <link rel="author" href="https://tk.st/">
   <meta property="og:title" content="思索の余白">
@@ -69,9 +70,13 @@
       --noise-1: rgba(0,0,0,0.025);
       --noise-2: rgba(0,0,0,0.02);
       --noise-3: rgba(0,0,0,0.015);
-      --page-fold: rgba(0, 0, 0, 0.1);
-      --highlight: rgba(255, 224, 92, 0.55);
-      --highlight-note: rgba(255, 181, 92, 0.5);
+      --leaf-shade: rgba(0, 0, 0, 0.16);
+      --leaf-shadow: rgba(0, 0, 0, 0.14);
+      /* 蛍光ペンの色（mark / 色見本 / メモ書きの罫で共通） */
+      --hl-yellow: rgba(255, 224, 92, 0.55);
+      --hl-pink: rgba(255, 145, 178, 0.42);
+      --hl-blue: rgba(118, 184, 255, 0.4);
+      --hl-green: rgba(128, 214, 140, 0.45);
       --serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", "Source Han Serif JP", Georgia, serif;
       --latin: Georgia, "Times New Roman", serif;
     }
@@ -92,9 +97,12 @@
       --noise-1: rgba(255,255,255,0.02);
       --noise-2: rgba(255,255,255,0.015);
       --noise-3: rgba(255,255,255,0.01);
-      --page-fold: rgba(255, 255, 255, 0.08);
-      --highlight: rgba(230, 196, 70, 0.42);
-      --highlight-note: rgba(231, 145, 70, 0.42);
+      --leaf-shade: rgba(0, 0, 0, 0.42);
+      --leaf-shadow: rgba(0, 0, 0, 0.5);
+      --hl-yellow: rgba(230, 196, 70, 0.42);
+      --hl-pink: rgba(235, 118, 160, 0.38);
+      --hl-blue: rgba(96, 160, 236, 0.42);
+      --hl-green: rgba(104, 190, 120, 0.38);
     }
 
     /* =========================================
@@ -138,8 +146,8 @@
 
     /* 短い一文は文節で折り返す（非対応ブラウザは従来どおり）。
        本文に auto-phrase を当てると行末がガタつくので、本文は最終行の泣き別れ防止だけにする */
-    #footerText, .note-hint { word-break: auto-phrase; }
-    #body, #footerText, .modal-body, .revision-body, .note-hint { text-wrap: pretty; }
+    #footerText, .annotation-guide { word-break: auto-phrase; }
+    #body, #footerText, .modal-body, .revision-body, .annotation-guide { text-wrap: pretty; }
 
     #app {
       position: relative;
@@ -148,7 +156,9 @@
       width: 100%;
       height: 100vh;
       height: 100dvh;
-      overflow: auto;
+      /* めくっている紙が手前に膨らんでも横スクロールを出さない */
+      overflow-x: hidden;
+      overflow-y: auto;
       background-color: var(--background);
       transition: background-color 0.5s ease;
       scrollbar-width: thin;
@@ -273,9 +283,8 @@
        Main Content
        ========================================= */
     .main-section { display: flex; flex: 1; align-items: center; justify-content: center; width: 100%; margin: 3rem 0 1.5rem; }
-    .content-stage { position: relative; width: 100%; max-width: 64rem; padding: 0 0.5rem; perspective: 1200px; touch-action: pan-y; }
-    .content-layout { position: relative; display: grid; grid-template-columns: minmax(0,1fr) 1px minmax(0,1fr); align-items: center; gap: 4rem; backface-visibility: hidden; transform-style: preserve-3d; }
-    .content-layout::after { position: absolute; z-index: 10; inset: -1rem; border-radius: 0.25rem; background: transparent; content: ""; opacity: 0; pointer-events: none; }
+    .content-stage { position: relative; width: 100%; max-width: 64rem; padding: 0 0.5rem; touch-action: pan-y; }
+    .content-layout { position: relative; display: grid; grid-template-columns: minmax(0,1fr) 1px minmax(0,1fr); align-items: center; gap: 4rem; }
     .title-panel, .prose-panel { min-width: 0; }
     #title {
       margin: 0;
@@ -299,10 +308,34 @@
     #hLine { width: 3rem; height: 3px; margin-bottom: 2rem; background: var(--surface); }
     #body { max-width: 36rem; color: var(--secondary); font-size: 1.125rem; line-height: 2.2; letter-spacing: 0.08em; transition: color 0.5s ease; }
     #body.is-annotating { cursor: text; }
-    #body mark.thought-highlight { padding: 0.05em 0; border-radius: 0.08em; background: linear-gradient(transparent 42%, var(--highlight) 42%, var(--highlight) 88%, transparent 88%); color: inherit; box-decoration-break: clone; -webkit-box-decoration-break: clone; cursor: pointer; }
-    #body mark.thought-highlight.has-note { background: linear-gradient(transparent 42%, var(--highlight-note) 42%, var(--highlight-note) 88%, transparent 88%); }
-    #body mark.thought-highlight.has-note::after { margin-left: 0.12em; color: var(--muted); content: "✎"; font-family: var(--latin); font-size: 0.68em; vertical-align: super; }
+    [data-color] { --marker: var(--hl-yellow); }
+    [data-color="pink"] { --marker: var(--hl-pink); }
+    [data-color="blue"] { --marker: var(--hl-blue); }
+    [data-color="green"] { --marker: var(--hl-green); }
+    #body mark.thought-highlight { padding: 0.05em 0; border-radius: 0.08em; background: linear-gradient(transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); color: inherit; box-decoration-break: clone; -webkit-box-decoration-break: clone; cursor: pointer; }
+    #body mark.thought-highlight.is-active { outline: 1px dashed var(--muted); outline-offset: 3px; }
     #body mark.thought-highlight.is-located { animation: locateAnnotation 1.1s ease; }
+    /* 位置メモは引いた箇所の直後に、小さな書き込みとして差し込む（本文の文字数には数えない） */
+    #body .margin-note {
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      margin: 0.2rem 0 0.6rem;
+      padding: 0.05rem 0 0.05rem 0.7rem;
+      border-left: 2px solid var(--marker);
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.8;
+      letter-spacing: 0.04em;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      transition: color 0.25s ease;
+    }
+    #body .margin-note::before { margin-right: 0.35em; color: var(--quiet); content: "✎"; font-family: var(--latin); }
+    #body .margin-note:hover, #body .margin-note.is-active { color: var(--text); }
     #metaInfo { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 2rem; color: var(--muted); font-size: 0.85rem; letter-spacing: 0.08em; }
     #metaContent { display: flex; flex-direction: column; gap: 0.5rem; }
     #metaContent > p, #metaContent > div { display: flex; align-items: flex-start; margin: 0; line-height: 1.8; }
@@ -338,50 +371,30 @@
     .action-btn span { font-size: 0.8rem; }
 
     /* 余白に書く（書き込みはこの端末の localStorage のみ） */
-    .note-panel { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem; }
+    .note-panel { margin-top: 0.5rem; }
     .annotation-guide { margin: 0; padding: 0.8rem 0.9rem; border-left: 2px solid var(--surface); color: var(--muted); font-size: 0.8rem; line-height: 1.8; letter-spacing: 0.06em; }
-    .annotation-list { display: flex; flex-direction: column; gap: 0.65rem; }
-    .annotation-empty { margin: 0; color: var(--quiet); font-size: 0.78rem; line-height: 1.8; }
-    .annotation-item { padding: 0.8rem 0.9rem; border: 1px solid var(--border); border-radius: 0.3rem; background: var(--soft-fill); }
-    .annotation-item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
-    .annotation-kind { flex: none; margin-top: 0.08rem; padding: 0.08rem 0.38rem; border: 1px solid var(--border); border-radius: 2px; color: var(--quiet); font-size: 0.68rem; letter-spacing: 0.08em; }
-    .annotation-quote { flex: 1; margin: 0; color: var(--secondary); font-size: 0.8rem; line-height: 1.8; }
-    .annotation-note { margin: 0.65rem 0 0; padding-top: 0.65rem; border-top: 1px solid var(--border); color: var(--text); font-size: 0.88rem; line-height: 1.9; white-space: pre-wrap; }
-    .annotation-actions { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 0.55rem; }
-    .annotation-action { min-height: 2.2rem; padding: 0 0.15rem; border: 0; background: transparent; color: var(--quiet); font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer; }
-    .annotation-action:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
-    .general-note { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.25rem; }
-    .general-note-label { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.08em; }
-    #noteInput {
-      width: 100%;
-      min-height: 7rem;
-      padding: 0.9rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      background: var(--soft-fill);
-      color: var(--text);
-      font-size: 0.95rem;
-      line-height: 2;
-      letter-spacing: 0.06em;
-      resize: vertical;
-      transition: border-color 0.25s ease;
-    }
-    #noteInput::placeholder { color: var(--quiet); }
-    #noteInput:focus { border-color: var(--text); outline: none; }
-    .note-hint { margin: 0; color: var(--quiet); font-size: 0.75rem; letter-spacing: 0.06em; }
+    .annotation-guide small { display: block; margin-top: 0.35rem; color: var(--quiet); font-size: 0.72rem; }
 
-    .selection-toolbar { position: fixed; z-index: 100; display: flex; align-items: center; gap: 0.25rem; padding: 0.35rem; border: 1px solid var(--border); border-radius: 999px; background: var(--background); color: var(--text); box-shadow: var(--shadow); transform: translateX(-50%); }
+    .selection-toolbar { position: fixed; z-index: 100; display: flex; align-items: center; gap: 0.2rem; padding: 0.3rem 0.35rem 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--background); color: var(--text); box-shadow: var(--shadow); transform: translateX(-50%); }
     .selection-toolbar[hidden] { display: none; }
-    .selection-tool { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.4rem; padding: 0 0.75rem; border: 0; border-radius: 999px; background: transparent; color: var(--secondary); font-size: 0.75rem; letter-spacing: 0.06em; cursor: pointer; }
+    .toolbar-label { margin-right: 0.1rem; color: var(--quiet); font-size: 0.7rem; letter-spacing: 0.06em; white-space: nowrap; }
+    .toolbar-divider { flex: none; width: 1px; height: 1.3rem; margin: 0 0.2rem; background: var(--border); }
+    .color-picker { display: flex; align-items: center; }
+    .color-swatch { display: inline-flex; align-items: center; justify-content: center; width: 2.1rem; height: 2.4rem; padding: 0; border: 0; border-radius: 999px; background: transparent; cursor: pointer; }
+    .color-swatch::before { width: 1.05rem; height: 1.05rem; border-radius: 50%; background: var(--marker); box-shadow: inset 0 0 0 1px var(--border); content: ""; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .color-swatch:hover::before { transform: scale(1.15); }
+    .color-swatch[aria-pressed="true"]::before { box-shadow: inset 0 0 0 1px var(--border), 0 0 0 2px var(--background), 0 0 0 3.5px var(--muted); }
+    .selection-tool { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.4rem; padding: 0 0.75rem; border: 0; border-radius: 999px; background: transparent; color: var(--secondary); font-size: 0.75rem; letter-spacing: 0.06em; white-space: nowrap; cursor: pointer; }
     .selection-tool:hover, .selection-tool:focus-visible { background: var(--soft-fill); color: var(--text); }
-    .selection-swatch { width: 0.8rem; height: 0.38rem; border-radius: 999px; background: var(--highlight); }
+    .selection-tool .icon { width: 0.95rem; height: 0.95rem; }
 
-    .memo-quote { margin: 0 0 1rem; padding: 0.75rem 0.9rem; border-left: 2px solid var(--highlight-note); background: var(--soft-fill); color: var(--secondary); font-size: 0.86rem; line-height: 1.8; }
+    .memo-quote { margin: 0 0 1rem; padding: 0.75rem 0.9rem; border-left: 2px solid var(--marker); background: var(--soft-fill); color: var(--secondary); font-size: 0.86rem; line-height: 1.8; }
     .memo-label { display: block; margin-bottom: 0.45rem; color: var(--muted); font-size: 0.78rem; letter-spacing: 0.08em; }
     #memoInput { width: 100%; min-height: 8rem; padding: 0.85rem 0.9rem; border: 1px solid var(--border); border-radius: 2px; background: var(--background); color: var(--text); line-height: 1.8; resize: vertical; }
     .memo-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
     .memo-actions .modal-close { flex: 1; }
     .memo-actions .modal-close-secondary { margin-top: 0; }
+    .memo-hint { margin: 0.5rem 0 0; color: var(--quiet); font-size: 0.72rem; line-height: 1.7; }
 
     /* 送れない側の矢印は disabled にして消す（pointer-events は button:disabled 側で切れる） */
     .nav-arrow { position: absolute; top: 50%; z-index: 5; opacity: 0.55; transform: translateY(-50%); }
@@ -397,27 +410,9 @@
     footer { width: 100%; margin-top: auto; }
     .footer-inner { display: flex; width: min(100%, 80rem); flex-direction: column; align-items: center; gap: 0.8rem; margin: 0 auto; padding: 0.5rem max(2rem, env(safe-area-inset-right)) 2rem max(2rem, env(safe-area-inset-left)); }
     #footerText { margin: 0; color: var(--secondary); font-size: 0.92rem; line-height: 1.9; text-align: center; }
-    .disclosure-area { display: flex; justify-content: center; }
     #footerBottom { position: relative; width: 100%; padding: 1.25rem max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border-top: 1px solid var(--border); }
     .breadcrumb-home { position: absolute; top: 50%; left: max(1rem, env(safe-area-inset-left)); display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; color: var(--muted); text-decoration: none; transform: translateY(-50%); transition: color 0.25s ease; }
     .breadcrumb-home:hover { color: var(--text); }
-    #disclosureBtn {
-      display: inline-flex;
-      min-height: 2.25rem;
-      align-items: center;
-      gap: 0.45rem;
-      padding: 0.35rem 0.8rem;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--soft-fill);
-      color: var(--quiet);
-      font-size: 0.75rem;
-      letter-spacing: 0.08em;
-      cursor: pointer;
-      transition: border-color 0.25s ease, background-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
-    }
-    #disclosureBtn .icon { width: 0.95rem; height: 0.95rem; }
-    #disclosureBtn:hover { border-color: var(--muted); background: var(--strong-fill); color: var(--text); transform: translateY(-1px); }
     #copyright { margin: 0; color: var(--quiet); font-family: var(--latin); font-size: 0.75rem; letter-spacing: 0.1em; text-align: center; }
 
     /* =========================================
@@ -485,10 +480,6 @@
       0% { opacity: 0; transform: translateY(20px); }
       100% { opacity: 1; transform: translateY(0); }
     }
-    @keyframes fadeOutDown {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-10px); }
-    }
     @keyframes fadeIn {
       0% { opacity: 0; }
       100% { opacity: 1; }
@@ -501,22 +492,30 @@
       82%, 100% { opacity: 0; transform: translate(0, -50%); }
     }
 
-    @keyframes pageTurnOutNext {
-      from { opacity: 1; transform: translateX(0) rotateY(0deg) scale(1); }
-      to { opacity: 0; transform: translateX(-9%) rotateY(8deg) scale(0.985); }
+    /*
+      ページめくり。綴じ目（左端）を軸に紙を一枚めくる。
+      次へ：今のページの写し（.page-leaf）が手前に浮いて左へ倒れ、下から次のページが現れる。
+      前へ：前のページ（本体）が左から倒れ込んできて、今のページの写し（.page-under）に重なる。
+      --leaf-perspective は紙の幅に合わせて JS が入れる（幅が広いほど奥行きを深くして、端が膨らみすぎないように）
+    */
+    @keyframes leafTurnAway {
+      0% { transform: perspective(var(--leaf-perspective)) rotateY(0deg) skewY(0deg); }
+      18% { transform: perspective(var(--leaf-perspective)) rotateY(-10deg) skewY(-0.8deg) translateZ(6px); }
+      88% { opacity: 1; }
+      100% { opacity: 0; transform: perspective(var(--leaf-perspective)) rotateY(-90deg) skewY(-1.6deg) translateZ(6px); }
     }
-    @keyframes pageTurnInNext {
-      from { opacity: 0; transform: translateX(9%) rotateY(-8deg) scale(0.985); }
-      to { opacity: 1; transform: translateX(0) rotateY(0deg) scale(1); }
+    @keyframes leafLand {
+      0% { opacity: 0; transform: perspective(var(--leaf-perspective)) rotateY(-90deg) skewY(-1.6deg) translateZ(6px); }
+      12% { opacity: 1; }
+      82% { transform: perspective(var(--leaf-perspective)) rotateY(-4deg) skewY(-0.3deg) translateZ(2px); }
+      100% { opacity: 1; transform: perspective(var(--leaf-perspective)) rotateY(0deg) skewY(0deg); }
     }
-    @keyframes pageTurnOutPrev {
-      from { opacity: 1; transform: translateX(0) rotateY(0deg) scale(1); }
-      to { opacity: 0; transform: translateX(9%) rotateY(-8deg) scale(0.985); }
-    }
-    @keyframes pageTurnInPrev {
-      from { opacity: 0; transform: translateX(-9%) rotateY(8deg) scale(0.985); }
-      to { opacity: 1; transform: translateX(0) rotateY(0deg) scale(1); }
-    }
+    /* めくれている紙の陰影（立つほど暗く、綴じ目から遠い側に光が抜ける） */
+    @keyframes leafShadeUp { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes leafShadeDown { from { opacity: 1; } to { opacity: 0; } }
+    /* 下のページに落ちる影 */
+    @keyframes castShadowAway { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+    @keyframes castShadowLand { 0% { opacity: 0; } 100% { opacity: 0.9; } }
     @keyframes locateAnnotation {
       0%, 100% { filter: brightness(1); }
       45% { filter: brightness(1.22); }
@@ -525,14 +524,24 @@
     /* 初回表示は静かに、テーマ切替は待たせない */
     .anim-ready { opacity: 0; }
     .play-fade-up { animation: fadeUpIn 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-    .play-fade-out { animation: fadeOutDown 0.18s ease-out forwards; }
     .play-fade-in { animation: fadeIn 0.8s ease-out forwards; }
-    .page-turn-out-next { transform-origin: left center; animation: pageTurnOutNext 0.28s cubic-bezier(0.55, 0.08, 0.68, 0.53) forwards; }
-    .page-turn-in-next { transform-origin: right center; animation: pageTurnInNext 0.46s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .page-turn-out-prev { transform-origin: right center; animation: pageTurnOutPrev 0.28s cubic-bezier(0.55, 0.08, 0.68, 0.53) forwards; }
-    .page-turn-in-prev { transform-origin: left center; animation: pageTurnInPrev 0.46s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .page-turn-out-next::after, .page-turn-in-prev::after { background: linear-gradient(90deg, transparent 45%, var(--page-fold)); opacity: 1; }
-    .page-turn-out-prev::after, .page-turn-in-next::after { background: linear-gradient(270deg, transparent 45%, var(--page-fold)); opacity: 1; }
+    .page-leaf, .page-under { position: absolute; margin: 0; pointer-events: none; }
+    .page-leaf, .content-layout.is-landing { transform-origin: left center; backface-visibility: hidden; will-change: transform, opacity; }
+    .page-leaf { z-index: 3; box-sizing: border-box; background-color: var(--background); box-shadow: 0 18px 40px -18px var(--leaf-shadow); animation: leafTurnAway 0.72s cubic-bezier(0.42, 0.02, 0.4, 1) forwards; }
+    .page-under { z-index: 0; }
+    .content-layout.is-landing { z-index: 2; background-color: var(--background); box-shadow: 0 0 0 var(--leaf-pad) var(--background), 0 18px 40px calc(var(--leaf-pad) - 18px) var(--leaf-shadow); animation: leafLand 0.72s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+    .page-leaf::after, .content-layout.is-landing::after, .page-shadow {
+      position: absolute;
+      z-index: 5;
+      content: "";
+      pointer-events: none;
+    }
+    .page-leaf::after, .content-layout.is-landing::after { background: linear-gradient(90deg, transparent 0%, var(--leaf-shade) 65%, var(--leaf-shade) 100%); }
+    .page-leaf::after { inset: 0; animation: leafShadeUp 0.72s ease-in forwards; }
+    .content-layout.is-landing::after { inset: calc(var(--leaf-pad) * -1); animation: leafShadeDown 0.72s ease-out forwards; }
+    .page-shadow { z-index: 1; background: linear-gradient(90deg, var(--leaf-shade) 0%, transparent 70%); }
+    .page-shadow.is-away { animation: castShadowAway 0.72s ease-out forwards; }
+    .page-shadow.is-land { animation: castShadowLand 0.72s ease-in forwards; }
     /* 登場の段階（1→3 の順に遅れて出る） */
     .delay-1 { animation-delay: 120ms; }
     .delay-2 { animation-delay: 220ms; }
@@ -690,13 +699,10 @@
                 </div>
 
                 <div id="notePanel" class="note-panel" hidden>
-                  <p id="annotationGuide" class="annotation-guide">本文の好きな箇所を選ぶと、「蛍光ペン」と「メモ」の操作が表示されます。</p>
-                  <div id="annotationList" class="annotation-list" aria-label="この思索への書き込み"></div>
-                  <div class="general-note">
-                    <label for="noteInput" class="general-note-label">思索全体のメモ</label>
-                    <textarea id="noteInput" rows="4" placeholder="思索全体について浮かんだことを、ここに置いておく。"></textarea>
-                  </div>
-                  <p id="noteHint" class="note-hint">蛍光ペンとメモは、この端末のブラウザにだけ保存されます。「写す」で一緒にコピーできます。</p>
+                  <p class="annotation-guide">
+                    <span id="noteHint" aria-live="polite">本文の好きな箇所を選ぶと、蛍光ペンの色とメモを選べます。引いた箇所やメモをタップすると、色の変更・編集・削除ができます。</span>
+                    <small>書き込みはこの端末のブラウザにだけ保存されます。「写す」で一緒にコピーできます。</small>
+                  </p>
                 </div>
               </div>
             </div>
@@ -709,12 +715,6 @@
     <footer class="zen-hide anim-ready play-fade-in delay-3">
       <div class="footer-inner">
         <p id="footerText">余白は、あなたの思索を置くスペース。</p>
-        <div id="disclosureArea" class="disclosure-area">
-          <button type="button" id="disclosureBtn">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
-            <span>広告について</span>
-          </button>
-        </div>
       </div>
 
       <div id="footerBottom">
@@ -757,14 +757,38 @@
 
   <p id="liveStatus" class="sr-only" aria-live="polite"></p>
 
+  <!-- 本文を選んだとき：色を押すとその色で蛍光ペンを引く。メモは最後に使った色で引く -->
   <div id="selectionToolbar" class="selection-toolbar" role="toolbar" aria-label="選択した本文への操作" hidden>
-    <button type="button" id="highlightSelectionBtn" class="selection-tool">
-      <span class="selection-swatch" aria-hidden="true"></span>
-      <span>蛍光ペン</span>
-    </button>
+    <span class="toolbar-label" aria-hidden="true">蛍光ペン</span>
+    <div class="color-picker" role="group" aria-label="蛍光ペンを引く">
+      <button type="button" class="color-swatch" data-color="yellow" aria-label="黄の蛍光ペンを引く" title="黄" aria-pressed="false"></button>
+      <button type="button" class="color-swatch" data-color="pink" aria-label="桃の蛍光ペンを引く" title="桃" aria-pressed="false"></button>
+      <button type="button" class="color-swatch" data-color="blue" aria-label="青の蛍光ペンを引く" title="青" aria-pressed="false"></button>
+      <button type="button" class="color-swatch" data-color="green" aria-label="緑の蛍光ペンを引く" title="緑" aria-pressed="false"></button>
+    </div>
+    <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" id="memoSelectionBtn" class="selection-tool">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
       <span>メモ</span>
+    </button>
+  </div>
+
+  <!-- 引いた箇所・メモをタップしたとき：色の変更、メモの編集、削除 -->
+  <div id="annotationToolbar" class="selection-toolbar" role="toolbar" aria-label="書き込みへの操作" hidden>
+    <div class="color-picker" role="group" aria-label="蛍光ペンの色を変える">
+      <button type="button" class="color-swatch" data-color="yellow" aria-label="黄に変える" title="黄" aria-pressed="false"></button>
+      <button type="button" class="color-swatch" data-color="pink" aria-label="桃に変える" title="桃" aria-pressed="false"></button>
+      <button type="button" class="color-swatch" data-color="blue" aria-label="青に変える" title="青" aria-pressed="false"></button>
+      <button type="button" class="color-swatch" data-color="green" aria-label="緑に変える" title="緑" aria-pressed="false"></button>
+    </div>
+    <span class="toolbar-divider" aria-hidden="true"></span>
+    <button type="button" id="annotationMemoBtn" class="selection-tool">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <span id="annotationMemoLabel">メモ</span>
+    </button>
+    <button type="button" id="annotationDeleteBtn" class="selection-tool">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg>
+      <span>削除</span>
     </button>
   </div>
 
@@ -793,9 +817,10 @@
   <dialog id="memoModal" class="modal" aria-labelledby="memoModalTitle">
     <form id="memoForm" class="modal-panel">
       <h2 id="memoModalTitle" class="modal-title">選んだ箇所にメモする</h2>
-      <blockquote id="memoQuote" class="memo-quote"></blockquote>
+      <blockquote id="memoQuote" class="memo-quote" data-color="yellow"></blockquote>
       <label for="memoInput" class="memo-label">メモ</label>
-      <textarea id="memoInput" maxlength="1200" required placeholder="この箇所から考えたことを書く。"></textarea>
+      <textarea id="memoInput" maxlength="1200" placeholder="この箇所から考えたことを書く。"></textarea>
+      <p id="memoHint" class="memo-hint" hidden>空にして保存すると、メモだけを消して蛍光ペンは残します。</p>
       <div class="memo-actions">
         <button type="button" id="memoCancelBtn" class="modal-close modal-close-secondary">キャンセル</button>
         <button type="submit" class="modal-close">保存する</button>
@@ -826,8 +851,6 @@
       reference: document.getElementById('reference'),
       revisionsRow: document.getElementById('revisionsRow'),
       liveStatus: document.getElementById('liveStatus'),
-      disclosureArea: document.getElementById('disclosureArea'),
-      disclosureBtn: document.getElementById('disclosureBtn'),
       disclosureModal: document.getElementById('disclosureModal'),
       themeToggleBtn: document.getElementById('themeToggleBtn'),
       zenToggleBtn: document.getElementById('zenToggleBtn'),
@@ -838,17 +861,19 @@
       openShareModalBtn: document.getElementById('openShareModalBtn'),
       noteToggleBtn: document.getElementById('noteToggleBtn'),
       notePanel: document.getElementById('notePanel'),
-      annotationGuide: document.getElementById('annotationGuide'),
-      annotationList: document.getElementById('annotationList'),
-      noteInput: document.getElementById('noteInput'),
       noteHint: document.getElementById('noteHint'),
       selectionToolbar: document.getElementById('selectionToolbar'),
-      highlightSelectionBtn: document.getElementById('highlightSelectionBtn'),
       memoSelectionBtn: document.getElementById('memoSelectionBtn'),
+      annotationToolbar: document.getElementById('annotationToolbar'),
+      annotationMemoBtn: document.getElementById('annotationMemoBtn'),
+      annotationMemoLabel: document.getElementById('annotationMemoLabel'),
+      annotationDeleteBtn: document.getElementById('annotationDeleteBtn'),
       memoModal: document.getElementById('memoModal'),
+      memoModalTitle: document.getElementById('memoModalTitle'),
       memoForm: document.getElementById('memoForm'),
       memoQuote: document.getElementById('memoQuote'),
       memoInput: document.getElementById('memoInput'),
+      memoHint: document.getElementById('memoHint'),
       memoCancelBtn: document.getElementById('memoCancelBtn'),
       shareModal: document.getElementById('shareModal'),
       shareX: document.getElementById('shareX'),
@@ -856,7 +881,6 @@
       shareNotion: document.getElementById('shareNotion'),
       shareCopy: document.getElementById('shareCopy'),
       shareCopyLabel: document.getElementById('shareCopyLabel'),
-      contentElements: document.querySelectorAll('.content-element'),
       zenHidden: document.querySelectorAll('.zen-hide'),
       prevThemeBtn: document.getElementById('prevThemeBtn'),
       nextThemeBtn: document.getElementById('nextThemeBtn')
@@ -905,8 +929,8 @@
     const STORAGE_KEYS = {
       dark: 'thought-dark-mode',
       zen: 'thought-zen-mode',
-      notePrefix: 'thought-note-',
-      annotationPrefix: 'thought-annotations-'
+      annotationPrefix: 'thought-annotations-',
+      highlightColor: 'thought-highlight-color'
     };
     const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -941,20 +965,17 @@
     let isZenMode = els.root.classList.contains('zen-mode');
     let currentTheme = getThemeFromHash();
     let transitionToken = 0;
-    let noteSaveTimer = null;
+    let pageTurnTimer = null;
     let currentAnnotations = [];
     let pendingSelection = null;
     let pendingMemoSelection = null;
     let editingAnnotationId = null;
+    let activeAnnotationId = null;
     let selectionFrame = null;
 
     // -1 はイントロ（null は AVAILABLE_THEMES に含まれないので indexOf がそのまま -1 を返す）
     const themeIndex = () => AVAILABLE_THEMES.indexOf(currentTheme);
     const themeHash = (themeName) => themeName ? `#${encodeURIComponent(themeName)}` : '';
-
-    // 登場アニメーションのクラスは HTML に書いたものを正とし、テーマ切替のたびに付け直す
-    const animClasses = new Map(Array.from(els.contentElements, el =>
-      [el, Array.from(el.classList).filter(name => /^(play|delay)-/.test(name))]));
 
     /* =========================================
        Core Logic
@@ -1039,8 +1060,7 @@
       els.progress.hidden = index < 0;
       els.progressText.textContent = index < 0 ? '' : `${formatIndex(index + 1)} / ${formatIndex(AVAILABLE_THEMES.length)}`;
 
-      loadNote(themeName);
-      renderAnnotationList();
+      if (!els.notePanel.hidden) resetNoteHint();
       document.title = themeName ? `${theme.title} | 思索の余白` : '思索の余白';
     }
 
@@ -1050,62 +1070,103 @@
       history[replace ? 'replaceState' : 'pushState']({}, '', url.href);
     }
 
-    function setContentInteractionDisabled(disabled) {
-      [els.copyContentBtn, els.openShareModalBtn, els.noteToggleBtn, els.noteInput]
-        .forEach(element => { element.disabled = disabled; });
+    /* =========================================
+       ページめくり
+       ========================================= */
+    // 写しは見た目だけ使う（登場アニメのクラスは外して最初から見えている状態にする）
+    function createPageSnapshot(className) {
+      const snapshot = els.contentLayout.cloneNode(true);
+      snapshot.classList.remove('is-landing');
+      snapshot.querySelectorAll('.anim-ready, [class*="play-"], [class*="delay-"]').forEach(el => {
+        el.classList.remove(...Array.from(el.classList).filter(name => name === 'anim-ready' || /^(play|delay)-/.test(name)));
+      });
+      snapshot.querySelectorAll('.is-active').forEach(el => el.classList.remove('is-active'));
+      snapshot.classList.add(className);
+      snapshot.setAttribute('aria-hidden', 'true');
+      snapshot.inert = true;
+      return snapshot;
     }
 
-    const PAGE_TURN_CLASSES = ['page-turn-out-next', 'page-turn-in-next', 'page-turn-out-prev', 'page-turn-in-prev'];
+    // rect（ビューポート座標）を、ステージ内の absolute 位置に置き直す
+    function placeInStage(element, rect, pad = 0) {
+      const stageRect = els.contentStage.getBoundingClientRect();
+      element.style.top = `${rect.top - stageRect.top - pad}px`;
+      element.style.left = `${rect.left - stageRect.left - pad}px`;
+      element.style.width = `${rect.width + pad * 2}px`;
+      element.style.height = `${rect.height + pad * 2}px`;
+    }
+
+    function clearPageTurn() {
+      window.clearTimeout(pageTurnTimer);
+      pageTurnTimer = null;
+      els.contentStage.querySelectorAll('.page-leaf, .page-under, .page-shadow').forEach(el => el.remove());
+      els.contentLayout.classList.remove('is-landing');
+    }
+
+    // 次へ：今のページを写した紙が手前にめくれ、下から新しいページが出る
+    // 前へ：新しいページ（本体）が左から倒れ込み、今のページの写しに重なる
+    function turnPage(direction, token, update) {
+      clearPageTurn();
+      const pad = window.innerWidth < 640 ? 12 : 24;
+      const fromRect = els.contentLayout.getBoundingClientRect();
+      const snapshot = createPageSnapshot(direction === 'next' ? 'page-leaf' : 'page-under');
+      els.contentStage.style.setProperty('--leaf-pad', `${pad}px`);
+      els.contentStage.style.setProperty('--leaf-perspective', `${Math.round(Math.max(1100, fromRect.width * 2.6))}px`);
+
+      update();
+
+      // 高さが変わるとステージが上下に動くので、差し込みは更新後の位置で測る
+      const toRect = els.contentLayout.getBoundingClientRect();
+      const shadow = document.createElement('div');
+      shadow.className = `page-shadow ${direction === 'next' ? 'is-away' : 'is-land'}`;
+      if (direction === 'next') {
+        // めくる紙は新旧どちらのページも覆う大きさにし、写しの本文は元の位置に留める
+        const top = Math.min(fromRect.top, toRect.top);
+        const bottom = Math.max(fromRect.bottom, toRect.bottom);
+        placeInStage(snapshot, { top, left: fromRect.left, width: fromRect.width, height: bottom - top }, pad);
+        snapshot.style.padding = `${fromRect.top - top + pad}px ${pad}px ${pad}px`;
+        placeInStage(shadow, toRect, pad);
+        els.contentStage.append(shadow, snapshot);
+      } else {
+        placeInStage(snapshot, fromRect);
+        placeInStage(shadow, fromRect);
+        els.contentStage.append(snapshot, shadow);
+        void els.contentLayout.offsetWidth;
+        els.contentLayout.classList.add('is-landing');
+      }
+
+      pageTurnTimer = window.setTimeout(() => {
+        if (token === transitionToken) clearPageTurn();
+      }, 760);
+    }
 
     // history: 'push' はボタン操作、'replace' は矢印・スワイプ・キーでの順送り（履歴を積まない）
-    function switchTheme(themeName, { history: historyMode = 'push', animate = true, transition = 'fade', direction = 'next' } = {}) {
+    // めくる向きは並び順で決める（イントロが先頭）
+    function switchTheme(themeName, { history: historyMode = 'push', animate = true } = {}) {
       const normalizedTheme = AVAILABLE_THEMES.includes(themeName) ? themeName : null;
       if (currentTheme === normalizedTheme) return;
 
-      flushNote();
+      const fromIndex = themeIndex();
       hideSelectionToolbar(true);
+      hideAnnotationToolbar();
       currentTheme = normalizedTheme;
-      setContentInteractionDisabled(true);
+      const direction = themeIndex() > fromIndex ? 'next' : 'prev';
       const token = ++transitionToken;
-      const shouldAnimate = animate && !reducedMotionQuery.matches;
-      const shouldTurnPage = shouldAnimate && transition === 'page';
-      els.contentLayout.classList.remove(...PAGE_TURN_CLASSES);
-      if (shouldAnimate && !shouldTurnPage) {
-        els.contentElements.forEach(el => {
-          el.classList.remove(...animClasses.get(el), 'play-fade-out');
-          el.classList.add('play-fade-out');
-        });
-      }
-      if (shouldTurnPage) {
-        void els.contentLayout.offsetWidth;
-        els.contentLayout.classList.add(`page-turn-out-${direction}`);
-      }
 
       if (historyMode !== 'none') setThemeUrl(currentTheme, historyMode === 'replace');
       updateButtonsHighlight();
       updateArrows();
 
-      window.setTimeout(() => {
-        if (token !== transitionToken) return;
+      const update = () => {
         updateContentData(currentTheme);
-        setContentInteractionDisabled(false);
-        els.liveStatus.textContent = `${els.title.textContent}。${els.body.textContent}`;
-        if (shouldTurnPage) {
-          els.contentLayout.classList.remove(`page-turn-out-${direction}`);
-          void els.contentLayout.offsetWidth;
-          els.contentLayout.classList.add(`page-turn-in-${direction}`);
-          window.setTimeout(() => {
-            if (token === transitionToken) els.contentLayout.classList.remove(`page-turn-in-${direction}`);
-          }, 480);
-          return;
-        }
-        els.contentElements.forEach(el => {
-          el.classList.remove('play-fade-out');
-          if (!shouldAnimate) return;
-          void el.offsetWidth;
-          el.classList.add(...animClasses.get(el));
-        });
-      }, shouldAnimate ? (shouldTurnPage ? 280 : 180) : 0);
+        els.liveStatus.textContent = `${els.title.textContent}。${getCurrentBodyText()}`;
+      };
+      if (animate && !reducedMotionQuery.matches) {
+        turnPage(direction, token, update);
+      } else {
+        clearPageTurn();
+        update();
+      }
     }
 
     function updateArrows() {
@@ -1152,16 +1213,22 @@
     }
 
     /* =========================================
-       余白に書く（蛍光ペン・位置メモ・全体メモ）
+       余白に書く（蛍光ペン・位置メモ）
        ========================================= */
-    const getNoteKey = (themeName) => `${STORAGE_KEYS.notePrefix}${themeName || 'intro'}`;
     const getAnnotationKey = (themeName) => `${STORAGE_KEYS.annotationPrefix}${themeName || 'intro'}`;
     const NOTE_HINT = els.noteHint.textContent;
     const MAX_ANNOTATIONS = 80;
+    const HIGHLIGHT_COLORS = ['yellow', 'pink', 'blue', 'green'];
+    const normalizeColor = (color) => HIGHLIGHT_COLORS.includes(color) ? color : HIGHLIGHT_COLORS[0];
+    let lastHighlightColor = normalizeColor(readStorage('localStorage', STORAGE_KEYS.highlightColor));
 
     function getCurrentBodyText() {
       return (currentTheme ? themes[currentTheme] : intro).body;
     }
+
+    const findAnnotation = (id) => currentAnnotations.find(item => item.id === id);
+    const findBodyElements = (id) => Array.from(els.body.querySelectorAll('[data-annotation-id]'))
+      .filter(element => element.dataset.annotationId === id);
 
     function loadAnnotations(themeName, bodyText) {
       const stored = readStorage('localStorage', getAnnotationKey(themeName));
@@ -1190,7 +1257,8 @@
             start,
             end,
             quote,
-            note
+            note,
+            color: normalizeColor(item.color)
           });
         });
         return normalized.sort((a, b) => a.start - b.start);
@@ -1199,16 +1267,31 @@
       }
     }
 
+    function resetNoteHint() {
+      els.noteHint.textContent = NOTE_HINT;
+    }
+
+    // 保存できない・重なる等の知らせは、パネルが閉じていても読み上げと本文下の案内で伝える
+    function showNoteMessage(message) {
+      setNoteOpen(true);
+      els.noteHint.textContent = message;
+    }
+
     function saveAnnotations() {
       const value = currentAnnotations.length ? JSON.stringify(currentAnnotations) : null;
       if (!writeStorage('localStorage', getAnnotationKey(currentTheme), value)) {
-        els.noteHint.textContent = 'この環境では書き込みを保存できません。「写す」で内容をコピーしてください。';
+        showNoteMessage('この環境では書き込みを保存できません。「写す」で内容をコピーしてください。');
         return false;
       }
-      els.noteHint.textContent = NOTE_HINT;
       return true;
     }
 
+    function commitAnnotations() {
+      saveAnnotations();
+      renderAnnotatedBody(getCurrentBodyText());
+    }
+
+    // 位置メモは引いた箇所の直後に置く。本文の文字位置の計算からは外す（getSelectionOffsets）
     function renderAnnotatedBody(bodyText) {
       const fragment = document.createDocumentFragment();
       let cursor = 0;
@@ -1216,95 +1299,62 @@
         if (annotation.start > cursor) fragment.append(document.createTextNode(bodyText.slice(cursor, annotation.start)));
         const mark = document.createElement('mark');
         mark.className = 'thought-highlight';
-        if (annotation.note) mark.classList.add('has-note');
         mark.dataset.annotationId = annotation.id;
+        mark.dataset.color = annotation.color;
         mark.textContent = bodyText.slice(annotation.start, annotation.end);
         mark.tabIndex = 0;
         mark.setAttribute('role', 'button');
-        mark.setAttribute('aria-label', annotation.note ? `メモ付きの箇所：${annotation.quote}` : `蛍光ペンを引いた箇所：${annotation.quote}`);
+        mark.setAttribute('aria-haspopup', 'true');
+        mark.setAttribute('aria-label', annotation.note
+          ? `メモ付きの箇所：${annotation.quote}。メモ：${annotation.note}`
+          : `蛍光ペンを引いた箇所：${annotation.quote}`);
         fragment.append(mark);
+        if (annotation.note) {
+          const note = document.createElement('span');
+          note.className = 'margin-note';
+          note.dataset.annotationId = annotation.id;
+          note.dataset.color = annotation.color;
+          note.textContent = annotation.note;
+          note.setAttribute('aria-hidden', 'true');
+          fragment.append(note);
+        }
         cursor = annotation.end;
       });
       if (cursor < bodyText.length) fragment.append(document.createTextNode(bodyText.slice(cursor)));
       els.body.replaceChildren(fragment);
-    }
-
-    function createAnnotationButton(label, action, id) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'annotation-action';
-      button.dataset.action = action;
-      button.dataset.annotationId = id;
-      button.textContent = label;
-      return button;
-    }
-
-    function renderAnnotationList() {
-      els.annotationList.replaceChildren();
-      if (!currentAnnotations.length) {
-        const empty = document.createElement('p');
-        empty.className = 'annotation-empty';
-        empty.textContent = 'まだ書き込みはありません。本文から好きな箇所を選んでください。';
-        els.annotationList.append(empty);
-        return;
+      if (activeAnnotationId) {
+        if (findAnnotation(activeAnnotationId)) findBodyElements(activeAnnotationId).forEach(el => el.classList.add('is-active'));
+        else hideAnnotationToolbar();
       }
-
-      currentAnnotations.forEach(annotation => {
-        const item = document.createElement('article');
-        item.className = 'annotation-item';
-        item.dataset.annotationId = annotation.id;
-        const header = document.createElement('div');
-        header.className = 'annotation-item-header';
-        const kind = document.createElement('span');
-        kind.className = 'annotation-kind';
-        kind.textContent = annotation.note ? 'メモ' : '蛍光ペン';
-        const quote = document.createElement('p');
-        quote.className = 'annotation-quote';
-        quote.textContent = `「${annotation.quote}」`;
-        header.append(kind, quote);
-        item.append(header);
-        if (annotation.note) {
-          const note = document.createElement('p');
-          note.className = 'annotation-note';
-          note.textContent = annotation.note;
-          item.append(note);
-        }
-        const actions = document.createElement('div');
-        actions.className = 'annotation-actions';
-        actions.append(createAnnotationButton('本文を見る', 'locate', annotation.id));
-        if (annotation.note) actions.append(createAnnotationButton('編集', 'edit', annotation.id));
-        actions.append(createAnnotationButton('削除', 'delete', annotation.id));
-        item.append(actions);
-        els.annotationList.append(item);
-      });
     }
 
     function setNoteOpen(open) {
       els.notePanel.hidden = !open;
       els.noteToggleBtn.setAttribute('aria-expanded', String(open));
       els.body.classList.toggle('is-annotating', open);
-      if (!open) {
-        hideSelectionToolbar(true);
-        const selection = window.getSelection();
-        if (selection) selection.removeAllRanges();
-      }
+      if (open) return;
+      resetNoteHint();
+      hideSelectionToolbar(true);
+      const selection = window.getSelection();
+      if (selection && els.body.contains(selection.anchorNode)) selection.removeAllRanges();
     }
 
-    function loadNote(themeName) {
-      const note = readStorage('localStorage', getNoteKey(themeName)) || '';
-      els.noteInput.value = note;
-      els.noteHint.textContent = NOTE_HINT;
-      setNoteOpen(note !== '' || currentAnnotations.length > 0);
+    function setSwatchesPressed(toolbar, color) {
+      toolbar.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.setAttribute('aria-pressed', String(swatch.dataset.color === color));
+      });
     }
 
-    function flushNote() {
-      if (noteSaveTimer === null) return;
-      window.clearTimeout(noteSaveTimer);
-      noteSaveTimer = null;
-      const value = els.noteInput.value.trim() ? els.noteInput.value : null;
-      if (!writeStorage('localStorage', getNoteKey(currentTheme), value)) {
-        els.noteHint.textContent = 'この環境では保存できません。閉じる前に「写す」でコピーしてください。';
-      }
+    // ツールバーは対象の少し上に出す。上に余地がなければ下に回す
+    function placeToolbar(toolbar, rect) {
+      toolbar.hidden = false;
+      const toolbarRect = toolbar.getBoundingClientRect();
+      const halfWidth = toolbarRect.width / 2;
+      const left = Math.min(window.innerWidth - halfWidth - 10, Math.max(halfWidth + 10, rect.left + rect.width / 2));
+      let top = rect.top - toolbarRect.height - 10;
+      if (top < 10) top = rect.bottom + 10;
+      toolbar.style.left = `${left}px`;
+      toolbar.style.top = `${top}px`;
     }
 
     function hideSelectionToolbar(clearPending = false) {
@@ -1312,13 +1362,40 @@
       if (clearPending) pendingSelection = null;
     }
 
+    function hideAnnotationToolbar() {
+      els.annotationToolbar.hidden = true;
+      if (!activeAnnotationId) return;
+      findBodyElements(activeAnnotationId).forEach(el => el.classList.remove('is-active'));
+      activeAnnotationId = null;
+    }
+
+    function showAnnotationToolbar(id, anchor, { focus = false } = {}) {
+      const annotation = findAnnotation(id);
+      if (!annotation) return;
+      hideSelectionToolbar(true);
+      hideAnnotationToolbar();
+      activeAnnotationId = id;
+      findBodyElements(id).forEach(el => el.classList.add('is-active'));
+      setSwatchesPressed(els.annotationToolbar, annotation.color);
+      els.annotationMemoLabel.textContent = annotation.note ? 'メモを編集' : 'メモを書く';
+      placeToolbar(els.annotationToolbar, anchor.getBoundingClientRect());
+      if (focus) els.annotationToolbar.querySelector('.color-swatch[aria-pressed="true"]')?.focus();
+    }
+
+    // 位置メモ（.margin-note）は本文の文字として数えない
+    function textLengthBefore(container, offset) {
+      const range = document.createRange();
+      range.selectNodeContents(els.body);
+      range.setEnd(container, offset);
+      const fragment = range.cloneContents();
+      fragment.querySelectorAll('.margin-note').forEach(note => note.remove());
+      return fragment.textContent.length;
+    }
+
     function getSelectionOffsets(range) {
       if (!els.body.contains(range.startContainer) || !els.body.contains(range.endContainer)) return null;
-      const before = document.createRange();
-      before.selectNodeContents(els.body);
-      before.setEnd(range.startContainer, range.startOffset);
-      let start = before.toString().length;
-      let end = start + range.toString().length;
+      let start = textLengthBefore(range.startContainer, range.startOffset);
+      let end = textLengthBefore(range.endContainer, range.endOffset);
       const bodyText = getCurrentBodyText();
       const selected = bodyText.slice(start, end);
       const leading = selected.match(/^\s*/)?.[0].length || 0;
@@ -1347,15 +1424,9 @@
         return;
       }
       pendingSelection = offsets;
-      const rect = range.getBoundingClientRect();
-      els.selectionToolbar.hidden = false;
-      const toolbarRect = els.selectionToolbar.getBoundingClientRect();
-      const halfWidth = toolbarRect.width / 2;
-      const left = Math.min(window.innerWidth - halfWidth - 10, Math.max(halfWidth + 10, rect.left + rect.width / 2));
-      let top = rect.top - toolbarRect.height - 10;
-      if (top < 10) top = rect.bottom + 10;
-      els.selectionToolbar.style.left = `${left}px`;
-      els.selectionToolbar.style.top = `${top}px`;
+      hideAnnotationToolbar();
+      setSwatchesPressed(els.selectionToolbar, lastHighlightColor);
+      placeToolbar(els.selectionToolbar, range.getBoundingClientRect());
     }
 
     function queueSelectionToolbarUpdate() {
@@ -1369,70 +1440,76 @@
       hideSelectionToolbar(true);
     }
 
-    function addAnnotation(selectionData, note = '') {
+    function rememberColor(color) {
+      lastHighlightColor = color;
+      writeStorage('localStorage', STORAGE_KEYS.highlightColor, color);
+    }
+
+    function addAnnotation(selectionData, { note = '', color = lastHighlightColor } = {}) {
       if (!selectionData) return false;
       const exact = currentAnnotations.find(item => item.start === selectionData.start && item.end === selectionData.end);
       if (exact) {
+        exact.color = color;
         if (note) exact.note = note;
-        saveAnnotations();
-        renderAnnotatedBody(getCurrentBodyText());
-        renderAnnotationList();
+        commitAnnotations();
         return true;
       }
       if (currentAnnotations.length >= MAX_ANNOTATIONS) {
-        els.noteHint.textContent = `書き込みは${MAX_ANNOTATIONS}件まで保存できます。`;
+        showNoteMessage(`書き込みは${MAX_ANNOTATIONS}件まで保存できます。`);
         return false;
       }
       const overlaps = currentAnnotations.some(item => selectionData.start < item.end && selectionData.end > item.start);
       if (overlaps) {
-        els.noteHint.textContent = '既存の書き込みと重ならない範囲を選んでください。';
+        showNoteMessage('既存の書き込みと重ならない範囲を選んでください。');
         return false;
       }
       const id = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      currentAnnotations.push({ ...selectionData, id, note });
+      currentAnnotations.push({ ...selectionData, id, note, color });
       currentAnnotations.sort((a, b) => a.start - b.start);
-      saveAnnotations();
-      renderAnnotatedBody(getCurrentBodyText());
-      renderAnnotationList();
+      commitAnnotations();
+      resetNoteHint();
       return true;
     }
 
     function openMemoDialog(selectionData, annotation = null) {
       pendingMemoSelection = selectionData;
       editingAnnotationId = annotation?.id || null;
+      els.memoModalTitle.textContent = annotation?.note ? 'メモを編集する' : '選んだ箇所にメモする';
+      els.memoQuote.dataset.color = annotation?.color || lastHighlightColor;
       els.memoQuote.textContent = `「${selectionData.quote}」`;
       els.memoInput.value = annotation?.note || '';
+      els.memoHint.hidden = !annotation?.note;
       hideSelectionToolbar();
+      hideAnnotationToolbar();
       els.memoModal.showModal();
       window.setTimeout(() => els.memoInput.focus(), 0);
     }
 
-    function locateAnnotation(id, target = 'body') {
-      const mark = Array.from(els.body.querySelectorAll('[data-annotation-id]')).find(element => element.dataset.annotationId === id);
-      const item = Array.from(els.annotationList.querySelectorAll('[data-annotation-id]')).find(element => element.dataset.annotationId === id);
-      const element = target === 'list' ? item : mark;
-      if (!element) return;
-      element.scrollIntoView({ behavior: reducedMotionQuery.matches ? 'auto' : 'smooth', block: 'center' });
-      if (mark) {
-        mark.classList.remove('is-located');
-        void mark.offsetWidth;
-        mark.classList.add('is-located');
-      }
+    function locateAnnotation(id) {
+      const mark = findBodyElements(id).find(element => element.matches('mark'));
+      if (!mark) return;
+      mark.scrollIntoView({ behavior: reducedMotionQuery.matches ? 'auto' : 'smooth', block: 'center' });
+      mark.classList.remove('is-located');
+      void mark.offsetWidth;
+      mark.classList.add('is-located');
     }
 
     els.noteToggleBtn.addEventListener('click', () => setNoteOpen(els.notePanel.hidden));
-    els.noteInput.addEventListener('input', () => {
-      window.clearTimeout(noteSaveTimer);
-      noteSaveTimer = window.setTimeout(flushNote, 400);
-    });
-    els.noteInput.addEventListener('blur', flushNote);
-    window.addEventListener('pagehide', flushNote);
 
     document.addEventListener('selectionchange', queueSelectionToolbarUpdate);
-    document.getElementById('app').addEventListener('scroll', () => hideSelectionToolbar(), { passive: true });
-    window.addEventListener('resize', () => hideSelectionToolbar(), { passive: true });
+    document.getElementById('app').addEventListener('scroll', () => {
+      hideSelectionToolbar();
+      hideAnnotationToolbar();
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+      hideSelectionToolbar();
+      hideAnnotationToolbar();
+    }, { passive: true });
 
-    els.highlightSelectionBtn.addEventListener('click', () => {
+    els.selectionToolbar.addEventListener('click', event => {
+      const swatch = event.target.closest('.color-swatch');
+      if (!swatch) return;
+      rememberColor(normalizeColor(swatch.dataset.color));
       addAnnotation(pendingSelection);
       finishSelectionAction();
     });
@@ -1443,22 +1520,48 @@
       openMemoDialog(selectionData);
     });
 
+    els.annotationToolbar.addEventListener('click', event => {
+      const annotation = findAnnotation(activeAnnotationId);
+      if (!annotation) {
+        hideAnnotationToolbar();
+        return;
+      }
+      const swatch = event.target.closest('.color-swatch');
+      if (swatch) {
+        annotation.color = normalizeColor(swatch.dataset.color);
+        rememberColor(annotation.color);
+        setSwatchesPressed(els.annotationToolbar, annotation.color);
+        commitAnnotations();
+      } else if (event.target.closest('#annotationMemoBtn')) {
+        openMemoDialog({ start: annotation.start, end: annotation.end, quote: annotation.quote }, annotation);
+      } else if (event.target.closest('#annotationDeleteBtn')) {
+        const message = annotation.note ? 'この蛍光ペンとメモを削除しますか？' : 'この蛍光ペンを削除しますか？';
+        if (!window.confirm(message)) return;
+        hideAnnotationToolbar();
+        currentAnnotations = currentAnnotations.filter(item => item.id !== annotation.id);
+        commitAnnotations();
+        els.liveStatus.textContent = '書き込みを削除しました。';
+      }
+    });
+
     els.memoForm.addEventListener('submit', event => {
       event.preventDefault();
       const note = els.memoInput.value.trim();
-      if (!note || !pendingMemoSelection) return;
+      if (!pendingMemoSelection) return;
       if (editingAnnotationId) {
-        const annotation = currentAnnotations.find(item => item.id === editingAnnotationId);
+        const annotation = findAnnotation(editingAnnotationId);
         if (annotation) annotation.note = note;
-        saveAnnotations();
-        renderAnnotatedBody(getCurrentBodyText());
-        renderAnnotationList();
+        commitAnnotations();
       } else {
-        addAnnotation(pendingMemoSelection, note);
+        if (!note) {
+          els.memoInput.focus();
+          return;
+        }
+        addAnnotation(pendingMemoSelection, { note });
       }
+      const id = editingAnnotationId;
       els.memoModal.close();
-      pendingMemoSelection = null;
-      editingAnnotationId = null;
+      if (id) locateAnnotation(id);
     });
     els.memoCancelBtn.addEventListener('click', () => els.memoModal.close());
     els.memoModal.addEventListener('close', () => {
@@ -1466,36 +1569,38 @@
       editingAnnotationId = null;
     });
 
-    els.annotationList.addEventListener('click', event => {
-      const button = event.target.closest('[data-action]');
-      if (!button) return;
-      const annotation = currentAnnotations.find(item => item.id === button.dataset.annotationId);
-      if (!annotation) return;
-      if (button.dataset.action === 'locate') {
-        locateAnnotation(annotation.id);
-      } else if (button.dataset.action === 'edit') {
-        openMemoDialog({ start: annotation.start, end: annotation.end, quote: annotation.quote }, annotation);
-      } else if (button.dataset.action === 'delete') {
-        if (!window.confirm('この書き込みを削除しますか？')) return;
-        currentAnnotations = currentAnnotations.filter(item => item.id !== annotation.id);
-        saveAnnotations();
-        renderAnnotatedBody(getCurrentBodyText());
-        renderAnnotationList();
+    // 引いた箇所やメモを押すと、その場で色の変更・編集・削除のツールバーを出す（選択中は選択を優先）
+    els.body.addEventListener('click', event => {
+      const target = event.target.closest('[data-annotation-id]');
+      if (!target) return;
+      const selection = window.getSelection();
+      if (selection && !selection.isCollapsed && els.body.contains(selection.anchorNode)) return;
+      const id = target.dataset.annotationId;
+      if (activeAnnotationId === id && !els.annotationToolbar.hidden) {
+        hideAnnotationToolbar();
+        return;
       }
+      showAnnotationToolbar(id, target);
     });
-
-    const activateBodyAnnotation = event => {
-      const mark = event.target.closest('mark[data-annotation-id]');
-      if (!mark) return;
-      setNoteOpen(true);
-      locateAnnotation(mark.dataset.annotationId, 'list');
-    };
-    els.body.addEventListener('click', activateBodyAnnotation);
     els.body.addEventListener('keydown', event => {
       if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('mark[data-annotation-id]')) {
         event.preventDefault();
-        activateBodyAnnotation(event);
+        showAnnotationToolbar(event.target.dataset.annotationId, event.target, { focus: true });
       }
+    });
+    document.addEventListener('pointerdown', event => {
+      if (els.annotationToolbar.hidden) return;
+      if (event.target.closest('#annotationToolbar, #body [data-annotation-id]')) return;
+      hideAnnotationToolbar();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return;
+      if (!els.annotationToolbar.hidden) {
+        const mark = findBodyElements(activeAnnotationId).find(element => element.matches('mark'));
+        hideAnnotationToolbar();
+        mark?.focus();
+      }
+      if (!els.selectionToolbar.hidden) hideSelectionToolbar();
     });
 
     /* =========================================
@@ -1505,11 +1610,7 @@
     function moveTheme(step) {
       const target = themeIndex() + step;
       if (target < -1 || target >= AVAILABLE_THEMES.length) return;
-      switchTheme(AVAILABLE_THEMES[target] ?? null, {
-        history: 'replace',
-        transition: 'page',
-        direction: step > 0 ? 'next' : 'prev'
-      });
+      switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace' });
     }
 
     els.prevThemeBtn.addEventListener('click', () => moveTheme(-1));
@@ -1569,15 +1670,13 @@
     });
 
     const getFormattedContent = () => {
-      const note = els.noteInput.value.trim();
       const annotations = currentAnnotations.map(annotation => (
         annotation.note
           ? `・メモ「${annotation.quote}」\n  ${annotation.note.replace(/\n/g, '\n  ')}`
           : `・蛍光ペン「${annotation.quote}」`
       )).join('\n');
       const annotationBlock = annotations ? `\n\n― 本文への書き込み\n${annotations}` : '';
-      const noteBlock = note ? `\n\n― 思索全体のメモ\n${note}` : '';
-      return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}${noteBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
+      return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
     };
 
     const showTemporaryLabel = (element, message, original, duration = 2500) => {
@@ -1674,7 +1773,6 @@
       await copyWithFeedback(shareUrl, els.shareCopyLabel, 'コピー完了', 'コピー失敗', 'URLコピー');
     });
 
-    els.disclosureBtn.addEventListener('click', () => els.disclosureModal.showModal());
     [els.disclosureModal, els.shareModal, els.memoModal].forEach(modal => {
       modal.addEventListener('click', (event) => {
         if (event.target === modal) modal.close();
@@ -1684,6 +1782,8 @@
     document.addEventListener('keydown', (event) => {
       // Alt+← などブラウザ側の操作とは重ねない。ボタンにフォーカスがあっても矢印キーでは送る
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (event.target.closest('#annotationToolbar, #selectionToolbar')) return;
       if (els.shareModal.open || els.disclosureModal.open || els.memoModal.open) return;
       if (event.target.closest('input, textarea, select, [contenteditable]')) return;
       if (event.key === 'ArrowLeft') moveTheme(-1);

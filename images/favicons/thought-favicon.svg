@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- 思索の余白：夜色の台紙に、角を折った一枚の紙。蛍光ペンを引いた一行と、下に広く残した余白 -->
+  <rect width="64" height="64" rx="14" fill="#161618"/>
+  <path d="M14 9h26l10 10v36H14z" fill="#f4f4f5"/>
+  <path d="M40 9v10h10z" fill="#c0c0c7"/>
+  <rect x="20" y="18" width="9" height="2.6" fill="#161618"/>
+  <rect x="19" y="27.5" width="23" height="6" rx="1" fill="#ffe05c"/>
+  <rect x="20" y="30" width="21" height="2" rx="1" fill="#555555"/>
+  <rect x="20" y="38" width="14" height="2" rx="1" fill="#9a9aa2"/>
+</svg>
