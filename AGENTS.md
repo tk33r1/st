@@ -13,6 +13,7 @@
   ため、外部フォント / CDN / 外部アセットを足さない（CSS・JS・アイコン・QR はすべてインライン）。
   **例外は head の Ahrefs と GTM の2本だけ**で、これは公開サイト側の計測用。インスクリプション版は
   この2行を落としたものになる。新しく外部参照を増やすときは、その前提を壊していないか確認すること。
+  **この制約はトップページ（ルートの `index.html`）だけ**で、他のページは外部の CSS / JS / フォントを使ってよい。
 - **Workers** (`workers/`): 認証・DB・AI 呼び出しなどのサーバーサイド機能。
   Cloudflare Workers + D1 (SQLite)。すべて `src/index.js` 単一ファイル構成で、
   `export default { async fetch(request, env) {...} }` の標準形。
@@ -104,8 +105,9 @@
 
 - **言語**: コメント・ドキュメントは原則**日本語**（magi-app の README や
   tools-ui.js の一部など例外あり）。コミットメッセージは短い英語（`update` 等）。
-- **スタイル**: ページごとに自給自足。外部 CSS/JS への依存は `data/` の共有ファイルに限る。
-  フレームワーク・ビルドツールを勝手に持ち込まない。
+- **スタイル**: ページごとに自給自足が基本。外部参照を禁じるのはトップページ（ルートの `index.html`）
+  だけで、それ以外のページは Google Fonts などの Web フォントや CDN の CSS/JS を読み込んでよい。
+  共有したい自前の CSS/JS は `data/` に置く。フレームワーク・ビルドツールを勝手に持ち込まない。
 - **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`data/glitch.js` が
   描画する。記事追加時は HTML ではなく JSON を編集する。tools/game の一覧も同様に
   `data/tools.json` / `data/game.json` が正。

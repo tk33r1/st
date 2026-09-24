@@ -53,7 +53,7 @@
   </script>
 
   <style>
-    /* Tailwind / Web Font / Icon CDN に依存しないページ固有レイアウト */
+    /* ページ固有レイアウト（Tailwind / Icon CDN は使わない。Web フォントは書き留めたメモの Klee One だけを必要なときに読む） */
     :root {
       color-scheme: light;
       --background: #ffffff;
@@ -77,7 +77,7 @@
       --hl-green: rgba(128, 214, 140, 0.45);
       --serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", "Source Han Serif JP", Georgia, serif;
       --latin: Georgia, "Times New Roman", serif;
-      /* 書き留めたメモの手書き風の書体。外部フォントは読まず、OS にある手書き・教科書体を使う（無ければ本文の明朝） */
+      /* 書き留めたメモの手書き風の書体。Klee One は Google Fonts から読む（loadHandFont）。届くまでは OS の手書き・教科書体、無ければ本文の明朝 */
       --hand: "Klee One", "Klee", "UD Digi Kyokasho NK-R", "UD デジタル 教科書体 NK-R", "YuKyokasho", "Yu Kyokasho", var(--serif);
       --pencil: #5f6470;
     }
@@ -1535,7 +1535,20 @@
       return mark;
     }
 
+    // メモの手書き風書体（Klee One）は、メモを初めて描くときにだけ読み込む（メモの無い人には読ませず、描画も止めない）
+    const HAND_FONT_URL = 'https://fonts.googleapis.com/css2?family=Klee+One:wght@600&display=swap';
+    let handFontRequested = false;
+    function loadHandFont() {
+      if (handFontRequested) return;
+      handFontRequested = true;
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = HAND_FONT_URL;
+      document.head.append(link);
+    }
+
     function createMarginNote(memo) {
+      loadHandFont();
       const note = document.createElement('span');
       note.className = 'margin-note';
       note.dataset.annotationId = memo.id;
