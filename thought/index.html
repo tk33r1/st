@@ -229,11 +229,25 @@
       transition: transform 0.35s ease, background-color 0.35s ease;
     }
     .dark-mode #themeToggleHandle { transform: translateX(1.25rem); }
-    .theme-nav { display: flex; align-items: center; gap: 1rem; min-width: 0; }
-    #buttonScroller { display: flex; flex-wrap: wrap; gap: 0.65rem; }
+    .theme-nav { display: flex; min-width: 0; align-items: center; overflow: hidden; }
+    #buttonScroller {
+      display: flex;
+      width: 100%;
+      min-width: 0;
+      flex-wrap: nowrap;
+      gap: 0.65rem;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+    }
+    #buttonScroller::-webkit-scrollbar { display: none; }
     .theme-btn {
       position: relative;
       isolation: isolate;
+      flex: 0 0 auto;
+      min-width: 7.5rem;
       min-height: 2.75rem;
       padding: 0.65rem 1.05rem;
       overflow: hidden;
@@ -242,8 +256,10 @@
       background: var(--soft-fill);
       color: var(--secondary);
       font-size: 1rem;
+      white-space: nowrap;
       box-shadow: inset 0 0 0 1px var(--surface), 0 2px 0 var(--soft-fill);
       clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 0.7rem, 100% 100%, 0 100%);
+      scroll-snap-align: center;
       cursor: pointer;
       transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
     }
@@ -379,25 +395,29 @@
        Footer
        ========================================= */
     footer { width: 100%; margin-top: auto; }
-    .disclosure-area { display: flex; justify-content: flex-end; width: min(100%, 80rem); margin: 0 auto; padding: 0 max(2rem, env(safe-area-inset-right)) 0.75rem max(2rem, env(safe-area-inset-left)); }
-    .footer-inner { width: min(100%, 80rem); margin: 0 auto; padding: 0.5rem max(2rem, env(safe-area-inset-right)) 2rem max(2rem, env(safe-area-inset-left)); }
+    .footer-inner { display: flex; width: min(100%, 80rem); flex-direction: column; align-items: center; gap: 0.8rem; margin: 0 auto; padding: 0.5rem max(2rem, env(safe-area-inset-right)) 2rem max(2rem, env(safe-area-inset-left)); }
     #footerText { margin: 0; color: var(--secondary); font-size: 0.92rem; line-height: 1.9; text-align: center; }
+    .disclosure-area { display: flex; justify-content: center; }
     #footerBottom { position: relative; width: 100%; padding: 1.25rem max(1rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border-top: 1px solid var(--border); }
     .breadcrumb-home { position: absolute; top: 50%; left: max(1rem, env(safe-area-inset-left)); display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; color: var(--muted); text-decoration: none; transform: translateY(-50%); transition: color 0.25s ease; }
     .breadcrumb-home:hover { color: var(--text); }
     #disclosureBtn {
-      min-height: 2.75rem;
-      padding: 0 0.25rem;
-      border: 0;
-      background: transparent;
+      display: inline-flex;
+      min-height: 2.25rem;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--soft-fill);
       color: var(--quiet);
       font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-underline-offset: 3px;
+      letter-spacing: 0.08em;
       cursor: pointer;
-      transition: color 0.25s ease;
+      transition: border-color 0.25s ease, background-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
     }
-    #disclosureBtn:hover { color: var(--text); text-decoration: underline; }
+    #disclosureBtn .icon { width: 0.95rem; height: 0.95rem; }
+    #disclosureBtn:hover { border-color: var(--muted); background: var(--strong-fill); color: var(--text); transform: translateY(-1px); }
     #copyright { margin: 0; color: var(--quiet); font-family: var(--latin); font-size: 0.75rem; letter-spacing: 0.1em; text-align: center; }
 
     /* =========================================
@@ -555,7 +575,6 @@
       .theme-progress { margin-left: -0.85rem; }
       .theme-progress .progress-arrow { display: inline-flex; }
       .swipe-hint { display: flex; }
-      .disclosure-area { padding-right: max(1.25rem, env(safe-area-inset-right)); padding-left: max(1.25rem, env(safe-area-inset-left)); }
       .footer-inner { padding-right: max(1.25rem, env(safe-area-inset-right)); padding-left: max(1.25rem, env(safe-area-inset-left)); }
       .modal-panel { padding: 1.5rem; }
     }
@@ -686,14 +705,16 @@
       </section>
     </div>
 
-    <div id="disclosureArea" class="disclosure-area">
-      <button type="button" id="disclosureBtn">広告について</button>
-    </div>
-
     <!-- Footer Section -->
     <footer class="zen-hide anim-ready play-fade-in delay-3">
       <div class="footer-inner">
         <p id="footerText">余白は、あなたの思索を置くスペース。</p>
+        <div id="disclosureArea" class="disclosure-area">
+          <button type="button" id="disclosureBtn">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+            <span>広告について</span>
+          </button>
+        </div>
       </div>
 
       <div id="footerBottom">
@@ -1049,15 +1070,15 @@
       const shouldAnimate = animate && !reducedMotionQuery.matches;
       const shouldTurnPage = shouldAnimate && transition === 'page';
       els.contentLayout.classList.remove(...PAGE_TURN_CLASSES);
-      if (shouldAnimate) {
+      if (shouldAnimate && !shouldTurnPage) {
         els.contentElements.forEach(el => {
           el.classList.remove(...animClasses.get(el), 'play-fade-out');
-          el.classList.toggle('play-fade-out', !shouldTurnPage);
+          el.classList.add('play-fade-out');
         });
-        if (shouldTurnPage) {
-          void els.contentLayout.offsetWidth;
-          els.contentLayout.classList.add(`page-turn-out-${direction}`);
-        }
+      }
+      if (shouldTurnPage) {
+        void els.contentLayout.offsetWidth;
+        els.contentLayout.classList.add(`page-turn-out-${direction}`);
       }
 
       if (historyMode !== 'none') setThemeUrl(currentTheme, historyMode === 'replace');
@@ -1116,8 +1137,17 @@
     }
 
     function updateButtonsHighlight() {
+      let activeButton = null;
       els.themeBtns.forEach(btn => {
-        btn.setAttribute('aria-pressed', String(btn.dataset.theme === currentTheme));
+        const isActive = btn.dataset.theme === currentTheme;
+        btn.setAttribute('aria-pressed', String(isActive));
+        if (isActive) activeButton = btn;
+      });
+      if (!activeButton) return;
+      const left = activeButton.offsetLeft - (els.buttonScroller.clientWidth - activeButton.offsetWidth) / 2;
+      els.buttonScroller.scrollTo({
+        left: Math.max(0, left),
+        behavior: reducedMotionQuery.matches ? 'auto' : 'smooth'
       });
     }
 
