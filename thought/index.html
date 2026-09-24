@@ -308,6 +308,8 @@
     .progress-arrow .icon { width: 1.1rem; height: 1.1rem; }
     .swipe-hint { display: none; align-items: center; gap: 0.6rem; margin-top: 0.8rem; color: var(--quiet); font-size: 0.68rem; letter-spacing: 0.12em; transition: opacity 0.35s ease, visibility 0.35s ease; }
     .swipe-hint.is-dismissed { visibility: hidden; opacity: 0; }
+    /* 縦書き（右綴じ）では次へは右へ払うので、点の動きを左右反転する */
+    .vertical-writing .swipe-hint-track { transform: scaleX(-1); }
     .swipe-hint-track { position: relative; width: 2.8rem; height: 1px; overflow: hidden; background: var(--border); }
     .swipe-hint-dot { position: absolute; top: 50%; left: 0; width: 0.42rem; height: 0.42rem; border-radius: 50%; background: var(--muted); transform: translate(2.35rem, -50%); animation: swipeCue 2.4s ease-in-out infinite; }
     #vLine { width: 1px; height: 10rem; background: linear-gradient(to bottom, transparent, var(--surface), transparent); }
@@ -1204,8 +1206,9 @@
       els.contentLayout.classList.remove('is-covered');
     }
 
-    // めくる紙を縦の短冊に切って組む。短冊それぞれが同じページの写しを、自分の幅の分だけ覗かせる
-    function buildLeaf(snapshot, pageRect, coverRect, pad) {
+    // めくる紙を縦の短冊に切って組む。短冊それぞれが同じページの写しを、自分の幅の分だけ覗かせる。
+    // mirrored（縦書き＝右綴じ）では綴じ目が右端なので、短冊を右端に寄せて右端を軸に回す
+    function buildLeaf(snapshot, pageRect, coverRect, pad, mirrored) {
       const leaf = document.createElement('div');
       leaf.className = 'page-leaf';
       leaf.setAttribute('aria-hidden', 'true');
@@ -1218,9 +1221,15 @@
         const strip = document.createElement('div');
         strip.className = 'leaf-strip';
         strip.style.width = `${stripWidth + 1}px`; // 継ぎ目の隙間を 1px 重ねて隠す
+        if (mirrored) {
+          strip.style.left = 'auto';
+          strip.style.right = '0';
+          strip.style.transformOrigin = '100% 50%';
+        }
         const page = document.createElement('div');
         page.className = 'leaf-strip-page';
-        page.style.left = `${-index * stripWidth}px`;
+        // 短冊 index は綴じ目から数えて index 番目の帯を見せる
+        page.style.left = `${mirrored ? -(width - (index + 1) * stripWidth - 1) : -index * stripWidth}px`;
         page.style.width = `${width}px`;
         page.style.padding = `${pageRect.top - coverRect.top + pad}px ${pad}px ${pad}px`;
         page.append(index === 0 ? snapshot : snapshot.cloneNode(true));
@@ -1230,7 +1239,7 @@
         leaf.append(strip);
         return { strip, shade };
       });
-      return { leaf, strips, stripWidth };
+      return { leaf, strips, stripWidth, mirrored };
     }
 
     const easeInOut = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -1264,7 +1273,8 @@
       return x;
     }
 
-    function drawLeaf({ leaf, strips, stripWidth }, shadow, t, direction) {
+    // 綴じ目からの距離（x）で計算し、右綴じでは画面の向きだけを反転して当てる
+    function drawLeaf({ leaf, strips, stripWidth, mirrored }, shadow, t, direction) {
       const { base, angleAt } = leafShape(t, direction);
       const count = strips.length;
       // 光は正面から。立つほど陰り、裏返ると少し暗い紙の裏になる
@@ -1272,6 +1282,7 @@
         const facing = Math.cos(angle * Math.PI / 180);
         return (angle > 90 ? 0.05 + (1 + facing) * 0.22 : (1 - facing) * 0.3).toFixed(3);
       };
+      const spineToEdge = mirrored ? '270deg' : '90deg';
       let x = 0;
       let z = 0;
       let reach = 0;
@@ -1279,26 +1290,28 @@
         const angle = angleAt((index + 0.5) / count);
         const radian = angle * Math.PI / 180;
         const facing = Math.cos(radian);
-        strip.style.transform = `translate3d(${x.toFixed(2)}px, 0, ${z.toFixed(2)}px) rotateY(${(-angle).toFixed(2)}deg)`;
+        strip.style.transform = `translate3d(${(mirrored ? -x : x).toFixed(2)}px, 0, ${z.toFixed(2)}px) rotateY(${(mirrored ? angle : -angle).toFixed(2)}deg)`;
         strip.classList.toggle('is-back', angle > 90);
         // 陰影は短冊の両端の角度でつなぎ、継ぎ目に段が出ないようにする
-        shade.style.background = `linear-gradient(90deg, rgba(0,0,0,${shadeAt(angleAt(index / count))}), rgba(0,0,0,${shadeAt(angleAt((index + 1) / count))}))`;
+        shade.style.background = `linear-gradient(${spineToEdge}, rgba(0,0,0,${shadeAt(angleAt(index / count))}), rgba(0,0,0,${shadeAt(angleAt((index + 1) / count))}))`;
         x += stripWidth * facing;
         z += stripWidth * Math.sin(radian);
         reach = Math.max(reach, x);
       });
       leaf.style.opacity = (1 - smoothstep(128, 172, base)).toFixed(3);
       const strength = 0.2 * Math.sin(Math.PI * Math.min(1, t * 1.15));
-      shadow.style.background = `linear-gradient(90deg, rgba(0,0,0,${(strength * 0.9).toFixed(3)}) 0px, rgba(0,0,0,${(strength * 0.5).toFixed(3)}) ${Math.round(reach * 0.75)}px, rgba(0,0,0,0) ${Math.round(reach + 36)}px)`;
+      shadow.style.background = `linear-gradient(${spineToEdge}, rgba(0,0,0,${(strength * 0.9).toFixed(3)}) 0px, rgba(0,0,0,${(strength * 0.5).toFixed(3)}) ${Math.round(reach * 0.75)}px, rgba(0,0,0,0) ${Math.round(reach + 36)}px)`;
     }
 
     /*
       めくりの準備だけをする（描画は renderTurn / animateTurn）。
       次へ：今のページの写しがしなりながら左へめくれ、下から新しいページが出る（t: 0 → 1）
       前へ：新しいページの写しが左から戻ってきて、今のページの写しに重なる（t: 1 → 0）
+      縦書きのときは右綴じの本として、左右を入れ替える（次へは右へめくれる）
     */
     function beginPageTurn(direction, token, update) {
       clearPageTurn();
+      const mirrored = isVertical;
       const pad = window.innerWidth < 640 ? 12 : 24;
       const fromRect = els.contentLayout.getBoundingClientRect();
       const before = createPageSnapshot();
@@ -1315,13 +1328,13 @@
 
       let parts;
       if (direction === 'next') {
-        parts = buildLeaf(before, fromRect, coverRect, pad);
+        parts = buildLeaf(before, fromRect, coverRect, pad, mirrored);
         els.contentStage.append(shadow, parts.leaf);
       } else {
         const after = createPageSnapshot();
         before.classList.add('page-under');
         placeInStage(before, fromRect);
-        parts = buildLeaf(after, toRect, coverRect, pad);
+        parts = buildLeaf(after, toRect, coverRect, pad, mirrored);
         els.contentLayout.classList.add('is-covered');
         els.contentStage.append(before, shadow, parts.leaf);
       }
@@ -1331,7 +1344,9 @@
         parts,
         shadow,
         t: direction === 'next' ? 0 : 1,
-        spineX: coverRect.left - pad, // 綴じ目（めくる紙の左端）の画面上の位置
+        mirrored,
+        // 綴じ目（めくる紙の左端。右綴じでは右端）の画面上の位置
+        spineX: mirrored ? coverRect.left + coverRect.width + pad : coverRect.left - pad,
         width: coverRect.width + pad * 2
       };
       renderTurn(turn, turn.t);
@@ -1421,10 +1436,21 @@
       updateArrows();
     }
 
+    // 画面の左右の矢印・キーが送る向き（-1 で前、+1 で次）。縦書きは右綴じの本なので、左が「次」
+    const stepForSide = (side) => (side === 'left' ? -1 : 1) * (isVertical ? -1 : 1);
+
     function updateArrows() {
-      const index = themeIndex();
-      setArrowsEnabled(els.prevThemeBtn, els.progressPrevBtn, index >= 0);
-      setArrowsEnabled(els.nextThemeBtn, els.progressNextBtn, index < AVAILABLE_THEMES.length - 1);
+      const canStep = (step) => {
+        const target = themeIndex() + step;
+        return target >= -1 && target < AVAILABLE_THEMES.length;
+      };
+      [['left', els.prevThemeBtn, els.progressPrevBtn], ['right', els.nextThemeBtn, els.progressNextBtn]].forEach(([side, navArrow, progressArrow]) => {
+        const step = stepForSide(side);
+        const label = step > 0 ? '次の思索へ' : '前の思索へ';
+        navArrow.setAttribute('aria-label', label);
+        progressArrow.setAttribute('aria-label', label);
+        setArrowsEnabled(navArrow, progressArrow, canStep(step));
+      });
     }
 
     // 左右の矢印は disabled で消える（CSS）。見えない矢印は読み上げにも出さない
@@ -1479,6 +1505,7 @@
       els.writingModeBtn.title = writingLabel;
       els.writingModeGlyph.textContent = isVertical ? '横' : '縦';
       fitVerticalBody();
+      updateArrows();
       // 見えなくした要素に Tab で入らないようにする
       els.zenHidden.forEach(el => { el.inert = isZenMode; });
     }
@@ -2178,10 +2205,11 @@
       switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace' });
     }
 
-    els.prevThemeBtn.addEventListener('click', () => moveTheme(-1));
-    els.nextThemeBtn.addEventListener('click', () => moveTheme(1));
-    els.progressPrevBtn.addEventListener('click', () => moveTheme(-1));
-    els.progressNextBtn.addEventListener('click', () => moveTheme(1));
+    // prev*/next* のボタンは画面の左右の位置で、送る向きは stepForSide が決める
+    els.prevThemeBtn.addEventListener('click', () => moveTheme(stepForSide('left')));
+    els.nextThemeBtn.addEventListener('click', () => moveTheme(stepForSide('right')));
+    els.progressPrevBtn.addEventListener('click', () => moveTheme(stepForSide('left')));
+    els.progressNextBtn.addEventListener('click', () => moveTheme(stepForSide('right')));
 
     /*
       横スワイプは指に紙が付いてくる。
@@ -2205,7 +2233,8 @@
 
     function findDragT(gesture, fingerX) {
       const { turn, table, grabDistance, startX } = gesture;
-      const dx = fingerX - startX;
+      // 綴じ目から離れる向きを正にそろえる（右綴じでは左向きが正）
+      const dx = (fingerX - startX) * (turn.mirrored ? -1 : 1);
       if (turn.direction === 'next') {
         const target = grabDistance + dx;
         for (let index = 1; index < table.length; index++) {
@@ -2226,7 +2255,9 @@
     }
 
     function startDrag(touch) {
-      const step = touch.clientX - gesture.startX < 0 ? 1 : -1;
+      // 次へは綴じ目の側へ払う（横書きは左へ、縦書きは右へ）
+      const dx = touch.clientX - gesture.startX;
+      const step = (isVertical ? dx > 0 : dx < 0) ? 1 : -1;
       const target = themeIndex() + step;
       if (target < -1 || target >= AVAILABLE_THEMES.length) return false;
       if (document.activeElement?.matches('.theme-btn')) document.activeElement.blur();
@@ -2235,8 +2266,8 @@
       gesture.turn = switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace', interactive: true });
       if (!gesture.turn) return false;
       // つまんだ位置が綴じ目に近すぎると、少しの動きで紙が大きく跳ねるので、紙幅の 6 割より手前はつままない
-      const { spineX, width } = gesture.turn;
-      gesture.grabDistance = Math.min(width, Math.max(width * 0.6, gesture.startX - spineX));
+      const { spineX, width, mirrored } = gesture.turn;
+      gesture.grabDistance = Math.min(width, Math.max(width * 0.6, (gesture.startX - spineX) * (mirrored ? -1 : 1)));
       gesture.table = buildDragTable(gesture.turn, gesture.grabDistance);
       return true;
     }
@@ -2259,7 +2290,8 @@
 
     function releaseDrag(cancelled = false) {
       const { turn, fromTheme } = gesture;
-      const velocity = releaseVelocity();
+      // 綴じ目へ向かう速さを負にそろえる（右綴じでは右向きが綴じ目へ）
+      const velocity = releaseVelocity() * (turn.mirrored ? -1 : 1);
       gesture = null;
       if (turn.token !== transitionToken) return;
       const isNext = turn.direction === 'next';
@@ -2335,7 +2367,7 @@
         const xDiff = gesture.startX - e.changedTouches[0].clientX;
         if (Math.abs(xDiff) > 60) {
           els.swipeHint.classList.add('is-dismissed');
-          moveTheme(xDiff > 0 ? 1 : -1);
+          moveTheme((xDiff > 0) !== isVertical ? 1 : -1);
         }
       }
       gesture = null;
@@ -2566,8 +2598,8 @@
       if (event.target.closest('#annotationToolbar, #selectionToolbar')) return;
       if (els.shareModal.open || els.disclosureModal.open || els.memoModal.open) return;
       if (event.target.closest('input, textarea, select, [contenteditable]')) return;
-      if (event.key === 'ArrowLeft') moveTheme(-1);
-      if (event.key === 'ArrowRight') moveTheme(1);
+      if (event.key === 'ArrowLeft') moveTheme(stepForSide('left'));
+      if (event.key === 'ArrowRight') moveTheme(stepForSide('right'));
     });
 
     const syncThemeFromUrl = () => {
