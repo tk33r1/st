@@ -291,12 +291,22 @@
     .vertical-writing .toc-item { flex: 0 1 2.3rem; min-width: 1.6rem; }
     .vertical-writing .toc-link, .vertical-writing .toc-blank { align-items: flex-start; justify-content: center; width: 100%; min-height: 0; padding: 0.25rem 0 0.5rem; }
     .vertical-writing .toc-text { writing-mode: vertical-rl; }
-    .swipe-hint { display: none; align-items: center; gap: 0.6rem; margin-top: 0.8rem; color: var(--quiet); font-size: 0.68rem; letter-spacing: 0.12em; transition: opacity 0.35s ease, visibility 0.35s ease; }
+    /*
+      めくる向きの案内（スマホだけ）。次へ進むときに指を動かす向きを、矢印と言葉で示す。
+      案内は指を置き始める側（本の小口）に寄せる：横書き（左綴じ）は右端で「← 左へめくる」、
+      縦書き（右綴じ）は左端で「右へめくる →」。文言の出し分けは <html> のクラスだけで決まる
+    */
+    .swipe-hint { display: none; align-items: center; justify-content: flex-end; gap: 0.55rem; margin-top: 0.8rem; color: var(--quiet); font-size: 0.72rem; letter-spacing: 0.12em; transition: opacity 0.35s ease, visibility 0.35s ease; }
     .swipe-hint.is-dismissed { visibility: hidden; opacity: 0; }
-    /* 縦書き（右綴じ）では次へは右へ払うので、点の動きを左右反転する */
-    .vertical-writing .swipe-hint-track { transform: scaleX(-1); }
-    .swipe-hint-track { position: relative; width: 2.8rem; height: 1px; overflow: hidden; background: var(--border); }
-    .swipe-hint-dot { position: absolute; top: 50%; left: 0; width: 0.42rem; height: 0.42rem; border-radius: 50%; background: var(--muted); transform: translate(2.35rem, -50%); animation: swipeCue 2.4s ease-in-out infinite; }
+    .swipe-hint-arrow { --nudge: -0.35rem; display: inline-flex; animation: swipeNudge 2.4s ease-in-out infinite; }
+    .swipe-hint-arrow svg { width: 2.25rem; height: 0.75rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.2; }
+    .swipe-label-vertical { display: none; }
+    /* row-reverse では並びの終わりが左になるので、flex-end のままで左端に寄る */
+    .vertical-writing .swipe-hint { flex-direction: row-reverse; }
+    .vertical-writing .swipe-hint-arrow { --nudge: 0.35rem; }
+    .vertical-writing .swipe-hint-arrow svg { transform: scaleX(-1); }
+    .vertical-writing .swipe-label-horizontal { display: none; }
+    .vertical-writing .swipe-label-vertical { display: inline; }
     #vLine { width: 1px; height: 10rem; background: linear-gradient(to bottom, transparent, var(--surface), transparent); }
     #hLine { width: 3rem; height: 3px; margin-bottom: 2rem; background: var(--surface); }
     #body { max-width: 36rem; color: var(--secondary); font-size: 1.125rem; line-height: 2.2; letter-spacing: 0.08em; transition: color 0.5s ease; }
@@ -553,11 +563,9 @@
       100% { opacity: 1; }
     }
 
-    @keyframes swipeCue {
-      0%, 15% { opacity: 0; transform: translate(2.35rem, -50%); }
-      30% { opacity: 1; }
-      68% { opacity: 1; transform: translate(0, -50%); }
-      82%, 100% { opacity: 0; transform: translate(0, -50%); }
+    @keyframes swipeNudge {
+      0%, 50%, 100% { transform: translateX(0); }
+      22% { transform: translateX(var(--nudge)); }
     }
 
     @keyframes locateAnnotation {
@@ -639,7 +647,7 @@
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
       .anim-ready { opacity: 1; }
       .breath-line { animation: none; }
-      .swipe-hint-dot { animation: none; transform: translate(1.15rem, -50%); }
+      .swipe-hint-arrow { animation: none; }
     }
   </style>
 </head>
@@ -704,9 +712,11 @@
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
               </div>
+              <!-- めくる向きの案内。一度めくれたら、その向き（縦書き／横書き）では出さない -->
               <div id="swipeHint" class="swipe-hint zen-hide" aria-hidden="true">
-                <span class="swipe-hint-track"><span class="swipe-hint-dot"></span></span>
-                <span>左右にスワイプ</span>
+                <span class="swipe-hint-arrow"><svg viewBox="0 0 36 12" focusable="false"><path d="M35 6H1M6 1 1 6l5 5"/></svg></span>
+                <span class="swipe-label-horizontal">左へめくる</span>
+                <span class="swipe-label-vertical">右へめくる</span>
               </div>
             </div>
 
@@ -1047,7 +1057,8 @@
       annotationPrefix: 'thought-annotations-',
       pageNotePrefix: 'thought-page-note-',
       writingMode: 'thought-writing-mode',
-      highlightColor: 'thought-highlight-color'
+      highlightColor: 'thought-highlight-color',
+      swipeLearned: 'thought-swipe-learned'
     };
     const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -1471,12 +1482,75 @@
         progressArrow.setAttribute('aria-label', label);
         setArrowsEnabled(navArrow, progressArrow, canStep(step));
       });
+      updateSwipeHint();
     }
 
     // 左右の矢印は disabled で消える（CSS）。見えない矢印は読み上げにも出さない
     function setArrowsEnabled(navArrow, progressArrow, enabled) {
       navArrow.disabled = progressArrow.disabled = !enabled;
       navArrow.setAttribute('aria-hidden', String(!enabled));
+    }
+
+    /*
+      めくる向きの案内（スマホだけ）。一度めくれたら、その向き（縦書き／横書き）では出さない。
+      縦書きと横書きを切り替えるとめくる向きが逆になるので、覚えた向きと違えばまた出す。
+      最後のページは次へ進めないので見えなくする（高さは残し、ページごとに本文の位置がずれないようにする）
+    */
+    const narrowQuery = window.matchMedia('(max-width: 639px)');
+    const writingModeName = () => (isVertical ? 'vertical' : 'horizontal');
+    const hasLearnedSwipe = () => readStorage('localStorage', STORAGE_KEYS.swipeLearned) === writingModeName();
+    const hasNextPage = () => themeIndex() + 1 < AVAILABLE_THEMES.length;
+
+    function updateSwipeHint() {
+      els.swipeHint.hidden = hasLearnedSwipe();
+      els.swipeHint.classList.toggle('is-dismissed', !hasNextPage());
+    }
+
+    // めくれたら静かに消す（場所は次にページを替えるときに詰める。今詰めると本文が跳ねる）
+    function learnSwipe() {
+      writeStorage('localStorage', STORAGE_KEYS.swipeLearned, writingModeName());
+      window.clearTimeout(turnPreviewTimer);
+      els.swipeHint.classList.add('is-dismissed');
+    }
+
+    /*
+      めくりの見本（スマホで、まだその向きでめくったことがないときに一度だけ）。
+      今のページの写しを重ねて小口側の端だけを少し持ち上げ、そっと戻す。下は白い紙に見せ、中身も URL も変えない。
+      途中で触れたら（touchstart が pendingSettle を呼ぶ）すぐにやめる
+    */
+    const TURN_PREVIEW_T = 0.15;
+    let turnPreviewTimer = null;
+
+    function scheduleTurnPreview(delay) {
+      window.clearTimeout(turnPreviewTimer);
+      turnPreviewTimer = window.setTimeout(previewPageTurn, delay);
+    }
+
+    function previewPageTurn() {
+      const busy = gesture || pendingSettle || pageTurnFrame !== null || document.querySelector('dialog[open]');
+      const typing = els.contentLayout.contains(document.activeElement) && document.activeElement.matches('input, textarea');
+      if (busy || typing || document.hidden || isZenMode || !narrowQuery.matches || reducedMotionQuery.matches) return;
+      if (hasLearnedSwipe() || !hasNextPage()) return;
+      const token = ++transitionToken;
+      const pad = 12;
+      const rect = els.contentLayout.getBoundingClientRect();
+      const shadow = document.createElement('div');
+      shadow.className = 'page-shadow';
+      placeInStage(shadow, rect, pad);
+      const parts = buildLeaf(createPageSnapshot(), rect, rect, pad, isVertical);
+      els.contentLayout.classList.add('is-covered');
+      els.contentStage.append(shadow, parts.leaf);
+      const turn = { direction: 'next', token, parts, shadow, t: 0, mirrored: isVertical };
+      renderTurn(turn, 0);
+      const finish = () => {
+        pendingSettle = null;
+        if (token === transitionToken) clearPageTurn();
+      };
+      pendingSettle = finish;
+      animateTurn(turn, TURN_PREVIEW_T, 700, {
+        progressMap: easeInOut,
+        onDone: () => animateTurn(turn, 0, 800, { progressMap: easeInOut, onDone: finish })
+      });
     }
 
     /*
@@ -2263,7 +2337,6 @@
       const target = themeIndex() + step;
       if (target < -1 || target >= AVAILABLE_THEMES.length) return false;
       if (document.activeElement?.matches('.toc-link, .progress-index')) document.activeElement.blur();
-      els.swipeHint.classList.add('is-dismissed');
       gesture.fromTheme = currentTheme;
       gesture.turn = switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace', interactive: true });
       if (!gesture.turn) return false;
@@ -2309,6 +2382,7 @@
         if (commit) {
           clearPageTurn();
           announceTheme();
+          learnSwipe();
         } else {
           // 元のページに戻す。紙と中身の入れ替えは同じフレーム内で済ませるので、画面は動かない
           switchTheme(fromTheme, { history: 'replace', animate: false, silent: true });
@@ -2368,8 +2442,8 @@
       if (gesture.mode === 'swipe') {
         const xDiff = gesture.startX - e.changedTouches[0].clientX;
         if (Math.abs(xDiff) > 60) {
-          els.swipeHint.classList.add('is-dismissed');
           moveTheme((xDiff > 0) !== isVertical ? 1 : -1);
+          learnSwipe();
         }
       }
       gesture = null;
@@ -2434,6 +2508,8 @@
       writeStorage('localStorage', STORAGE_KEYS.writingMode, isVertical ? null : 'horizontal');
       hideToolbars();
       applyDisplayModes();
+      // めくる向きが逆になったので、見本をもう一度見せる（その向きでまだめくったことがなければ）
+      scheduleTurnPreview(600);
     }));
 
     // 幅や書体が変わると縦書きの列に収まる長さも変わる
@@ -2637,6 +2713,8 @@
     applyDisplayModes();
     updateContentData();
     updateArrows();
+    // 登場のアニメーションが落ち着いてから
+    scheduleTurnPreview(1600);
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
