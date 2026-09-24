@@ -103,11 +103,10 @@
     }
     html { background: var(--background); }
     body {
-      background: var(--background);
       color: var(--text);
       font-family: var(--serif);
       line-break: strict;
-      transition: background-color 0.5s ease, color 0.5s ease;
+      transition: color 0.5s ease;
     }
     ::selection { background: rgba(120,120,120,0.2); }
     button, textarea { font: inherit; }
@@ -119,6 +118,8 @@
     button:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
     [hidden] { display: none !important; }
     .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+    /* 集中モードで隠す要素。矢印は後段の .nav-arrow の transition を優先させたいので、ここ（前方）で定義する */
+    .zen-hide { transition: opacity 0.8s ease, filter 0.8s ease; }
 
     /* 上品な紙の質感を表現するノイズ背景 */
     .paper-noise {
@@ -317,12 +318,12 @@
     #noteInput:focus { border-color: var(--text); outline: none; }
     .note-hint { margin: 0; color: var(--quiet); font-size: 0.75rem; letter-spacing: 0.06em; }
 
-    .nav-arrow { position: absolute; top: 50%; z-index: 5; opacity: 0; pointer-events: none; transform: translateY(-50%); }
+    /* 送れない側の矢印は disabled にして消す（pointer-events は button:disabled 側で切れる） */
+    .nav-arrow { position: absolute; top: 50%; z-index: 5; opacity: 0.55; transform: translateY(-50%); }
     #prevThemeBtn { left: -3.5rem; }
     #nextThemeBtn { right: -3.5rem; }
-    .nav-arrow.is-visible { opacity: 0.55; pointer-events: auto; }
-    .nav-arrow.is-visible:hover { opacity: 1; background: var(--soft-fill); color: var(--text); }
-    .nav-arrow:disabled { opacity: 0 !important; pointer-events: none; cursor: default; }
+    .nav-arrow:hover { opacity: 1; background: var(--soft-fill); color: var(--text); }
+    .nav-arrow:disabled { opacity: 0; }
     .nav-arrow .icon { width: 2rem; height: 2rem; }
 
     /* =========================================
@@ -393,13 +394,8 @@
     /* =========================================
        Zen Mode Styles (集中モード)
        ========================================= */
-    #headerTitleArea, nav, footer, #metaContent, #progress { transition: opacity 0.8s ease, filter 0.8s ease; }
     #zenToggleBtn, #themeToggleBtn { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.5s ease-in-out; }
-    .zen-mode #headerTitleArea,
-    .zen-mode nav,
-    .zen-mode footer,
-    .zen-mode #metaContent,
-    .zen-mode #progress { opacity: 0 !important; filter: blur(4px) !important; pointer-events: none; }
+    .zen-mode .zen-hide { opacity: 0 !important; filter: blur(4px) !important; pointer-events: none !important; }
     .zen-mode .action-btns-wrapper,
     .zen-mode #zenToggleBtn,
     .zen-mode #themeToggleBtn { opacity: 0.35 !important; }
@@ -409,7 +405,6 @@
     .zen-mode #zenToggleBtn:focus-visible,
     .zen-mode #themeToggleBtn:hover,
     .zen-mode #themeToggleBtn:focus-visible { opacity: 1 !important; }
-    .zen-mode .nav-arrow { opacity: 0 !important; pointer-events: none !important; }
 
     /* =========================================
        Animation Definitions
@@ -438,9 +433,10 @@
     .play-fade-up { animation: fadeUpIn 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
     .play-fade-out { animation: fadeOutDown 0.18s ease-out forwards; }
     .play-fade-in { animation: fadeIn 0.8s ease-out forwards; }
-    .delay-200 { animation-delay: 120ms; }
-    .delay-400 { animation-delay: 220ms; }
-    .delay-600 { animation-delay: 320ms; }
+    /* 登場の段階（1→3 の順に遅れて出る） */
+    .delay-1 { animation-delay: 120ms; }
+    .delay-2 { animation-delay: 220ms; }
+    .delay-3 { animation-delay: 320ms; }
 
     /* =========================================
        Responsive
@@ -502,7 +498,7 @@
       <header class="anim-ready play-fade-in">
         <div class="header-stack">
           <div class="header-row">
-            <div id="headerTitleArea">
+            <div id="headerTitleArea" class="zen-hide">
               <div id="topMark" class="breath-line"></div>
               <button type="button" id="subtitle" title="最初の画面へ戻る">Space for Contemplation</button>
             </div>
@@ -523,7 +519,7 @@
             </div>
           </div>
 
-          <nav class="theme-nav" aria-label="思索のテーマ">
+          <nav class="theme-nav zen-hide" aria-label="思索のテーマ">
             <div id="buttonScroller"></div>
             <p class="coming-soon">ほか6つの思索を準備中</p>
           </nav>
@@ -535,17 +531,17 @@
         <div id="contentStage" class="content-stage">
 
           <!-- Navigation Arrows -->
-          <button type="button" id="prevThemeBtn" class="nav-arrow" aria-label="前の思索へ" aria-hidden="true" disabled>
+          <button type="button" id="prevThemeBtn" class="nav-arrow zen-hide" aria-label="前の思索へ" aria-hidden="true" disabled>
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <button type="button" id="nextThemeBtn" class="nav-arrow" aria-label="次の思索へ" aria-hidden="false">
+          <button type="button" id="nextThemeBtn" class="nav-arrow zen-hide" aria-label="次の思索へ">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg>
           </button>
 
           <div class="content-layout">
             <div class="title-panel">
               <h1 id="title" class="content-element anim-ready play-fade-up">思索の余白</h1>
-              <div id="progress" class="theme-progress content-element anim-ready play-fade-in delay-400" hidden>
+              <div id="progress" class="theme-progress zen-hide content-element anim-ready play-fade-in delay-2" hidden>
                 <button type="button" id="progressPrevBtn" class="progress-arrow" aria-label="前の思索へ">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
@@ -556,19 +552,19 @@
               </div>
             </div>
 
-            <div id="vLine" class="content-element anim-ready play-fade-in delay-400"></div>
+            <div id="vLine" class="content-element anim-ready play-fade-in delay-2"></div>
 
             <div class="prose-panel">
-              <div class="content-element anim-ready play-fade-in delay-400">
+              <div class="content-element anim-ready play-fade-in delay-2">
                 <div id="hLine"></div>
               </div>
 
-              <div id="body" class="content-element anim-ready play-fade-up delay-200">
+              <div id="body" class="content-element anim-ready play-fade-up delay-1">
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
               </div>
 
-              <div id="metaInfo" class="content-element anim-ready play-fade-up delay-400">
-                <div id="metaContent" hidden>
+              <div id="metaInfo" class="content-element anim-ready play-fade-up delay-2">
+                <div id="metaContent" class="zen-hide">
                   <p id="lastUpdated"></p>
                   <p id="reference"></p>
                   <div id="revisionsRow" hidden></div>
@@ -602,7 +598,7 @@
     </div>
 
     <!-- Footer Section -->
-    <footer class="anim-ready play-fade-in delay-600">
+    <footer class="zen-hide anim-ready play-fade-in delay-3">
       <div class="footer-inner">
         <p id="footerText">余白は、あなたの思考を置くスペース。</p>
       </div>
@@ -673,10 +669,7 @@
       root: document.documentElement,
       themeColor: document.querySelector('meta[name="theme-color"]'),
       contentStage: document.getElementById('contentStage'),
-      headerTitleArea: document.getElementById('headerTitleArea'),
-      nav: document.querySelector('.theme-nav'),
       buttonScroller: document.getElementById('buttonScroller'),
-      footer: document.querySelector('footer'),
       title: document.getElementById('title'),
       subtitle: document.getElementById('subtitle'),
       body: document.getElementById('body'),
@@ -684,7 +677,6 @@
       progressText: document.getElementById('progressText'),
       progressPrevBtn: document.getElementById('progressPrevBtn'),
       progressNextBtn: document.getElementById('progressNextBtn'),
-      metaContent: document.getElementById('metaContent'),
       lastUpdated: document.getElementById('lastUpdated'),
       reference: document.getElementById('reference'),
       revisionsRow: document.getElementById('revisionsRow'),
@@ -709,6 +701,7 @@
       shareCopy: document.getElementById('shareCopy'),
       shareCopyLabel: document.getElementById('shareCopyLabel'),
       contentElements: document.querySelectorAll('.content-element'),
+      zenHidden: document.querySelectorAll('.zen-hide'),
       prevThemeBtn: document.getElementById('prevThemeBtn'),
       nextThemeBtn: document.getElementById('nextThemeBtn')
     };
@@ -789,12 +782,24 @@
     let transitionToken = 0;
     let noteSaveTimer = null;
 
-    // 集中モードは以前 localStorage に残していた。次回訪問に持ち越さないよう掃除する
-    writeStorage('localStorage', STORAGE_KEYS.zen, null);
+    // -1 はイントロ（null は AVAILABLE_THEMES に含まれないので indexOf がそのまま -1 を返す）
+    const themeIndex = () => AVAILABLE_THEMES.indexOf(currentTheme);
+    const themeHash = (themeName) => themeName ? `#${encodeURIComponent(themeName)}` : '';
+
+    // 登場アニメーションのクラスは HTML に書いたものを正とし、テーマ切替のたびに付け直す
+    const animClasses = new Map(Array.from(els.contentElements, el =>
+      [el, Array.from(el.classList).filter(name => /^(play|delay)-/.test(name))]));
 
     /* =========================================
        Core Logic
        ========================================= */
+    const createTime = (date) => {
+      const time = document.createElement('time');
+      time.dateTime = date.replace(/\./g, '-');
+      time.textContent = date;
+      return time;
+    };
+
     const createBadge = (text) => {
       const badge = document.createElement('span');
       badge.className = 'meta-badge';
@@ -806,22 +811,15 @@
       if (!nodes) {
         row.replaceChildren();
         row.hidden = true;
-        return false;
+        return;
       }
       const content = document.createElement('span');
       content.append(...nodes);
       row.replaceChildren(createBadge(label), content);
       row.hidden = false;
-      return true;
     };
 
-    const buildUpdatedNodes = (updated) => {
-      if (!updated) return null;
-      const time = document.createElement('time');
-      time.dateTime = updated.replace(/\./g, '-');
-      time.textContent = updated;
-      return [time];
-    };
+    const buildUpdatedNodes = (updated) => updated ? [createTime(updated)] : null;
 
     const buildReferenceNodes = (referenceSource) => {
       if (!referenceSource) return null;
@@ -847,13 +845,10 @@
       const list = document.createElement('ol');
       revisions.forEach(revision => {
         const item = document.createElement('li');
-        const time = document.createElement('time');
-        time.dateTime = revision.date.replace(/\./g, '-');
-        time.textContent = revision.date;
         const body = document.createElement('p');
         body.className = 'revision-body';
         body.textContent = revision.body;
-        item.append(time, body);
+        item.append(createTime(revision.date), body);
         list.append(item);
       });
       details.append(summary, list);
@@ -867,12 +862,11 @@
       els.title.textContent = theme.title;
       els.body.textContent = theme.body;
 
-      const hasUpdated = setMetaRow(els.lastUpdated, '最終更新日', buildUpdatedNodes(theme.lastUpdated));
-      const hasReference = setMetaRow(els.reference, '参考文献', buildReferenceNodes(theme.reference));
-      const hasRevisions = setMetaRow(els.revisionsRow, '改訂履歴', buildRevisionNodes(theme.revisions));
-      els.metaContent.hidden = !(hasUpdated || hasReference || hasRevisions);
+      setMetaRow(els.lastUpdated, '最終更新日', buildUpdatedNodes(theme.lastUpdated));
+      setMetaRow(els.reference, '参考文献', buildReferenceNodes(theme.reference));
+      setMetaRow(els.revisionsRow, '改訂履歴', buildRevisionNodes(theme.revisions));
 
-      const index = themeName ? AVAILABLE_THEMES.indexOf(themeName) : -1;
+      const index = AVAILABLE_THEMES.indexOf(themeName);
       els.progress.hidden = index < 0;
       els.progressText.textContent = index < 0 ? '' : `${formatIndex(index + 1)} / ${formatIndex(AVAILABLE_THEMES.length)}`;
 
@@ -882,7 +876,7 @@
 
     function setThemeUrl(themeName, replace = false) {
       const url = new URL(location.href);
-      url.hash = themeName ? encodeURIComponent(themeName) : '';
+      url.hash = themeHash(themeName);
       history[replace ? 'replaceState' : 'pushState']({}, '', url.href);
     }
 
@@ -897,7 +891,7 @@
       const shouldAnimate = animate && !reducedMotionQuery.matches;
       if (shouldAnimate) {
         els.contentElements.forEach(el => {
-          el.classList.remove('play-fade-up', 'play-fade-in', 'delay-200', 'delay-400', 'delay-600');
+          el.classList.remove(...animClasses.get(el));
           el.classList.add('play-fade-out');
         });
       }
@@ -914,28 +908,21 @@
           el.classList.remove('play-fade-out');
           if (!shouldAnimate) return;
           void el.offsetWidth;
-          if (el.id === 'title') el.classList.add('play-fade-up');
-          else if (el.id === 'body') el.classList.add('play-fade-up', 'delay-200');
-          else if (el.id === 'metaInfo') el.classList.add('play-fade-up', 'delay-400');
-          else el.classList.add('play-fade-in', 'delay-400');
+          el.classList.add(...animClasses.get(el));
         });
       }, shouldAnimate ? 180 : 0);
     }
 
     function updateArrows() {
-      const currentIndex = currentTheme ? AVAILABLE_THEMES.indexOf(currentTheme) : -1;
-      const showPrevious = currentIndex >= 0;
-      const showNext = currentIndex < AVAILABLE_THEMES.length - 1;
-      setArrowState(els.prevThemeBtn, showPrevious);
-      setArrowState(els.nextThemeBtn, showNext);
-      els.progressPrevBtn.disabled = !showPrevious;
-      els.progressNextBtn.disabled = !showNext;
+      const index = themeIndex();
+      setArrowsEnabled(els.prevThemeBtn, els.progressPrevBtn, index >= 0);
+      setArrowsEnabled(els.nextThemeBtn, els.progressNextBtn, index < AVAILABLE_THEMES.length - 1);
     }
 
-    function setArrowState(button, visible) {
-      button.classList.toggle('is-visible', visible);
-      button.disabled = !visible;
-      button.setAttribute('aria-hidden', String(!visible));
+    // 左右の矢印は disabled で消える（CSS）。見えない矢印は読み上げにも出さない
+    function setArrowsEnabled(navArrow, progressArrow, enabled) {
+      navArrow.disabled = progressArrow.disabled = !enabled;
+      navArrow.setAttribute('aria-hidden', String(!enabled));
     }
 
     function applyDisplayModes() {
@@ -951,8 +938,7 @@
       els.zenEnterIcon.hidden = isZenMode;
       els.zenExitIcon.hidden = !isZenMode;
       // 見えなくした要素に Tab で入らないようにする
-      [els.headerTitleArea, els.nav, els.footer, els.metaContent, els.progress, els.prevThemeBtn, els.nextThemeBtn]
-        .forEach(el => { el.inert = isZenMode; });
+      els.zenHidden.forEach(el => { el.inert = isZenMode; });
     }
 
     function updateButtonsHighlight() {
@@ -1004,23 +990,17 @@
     /* =========================================
        Event Listeners
        ========================================= */
-    function moveTheme(direction) {
-      const currentIndex = currentTheme ? AVAILABLE_THEMES.indexOf(currentTheme) : -1;
-      let targetTheme;
-
-      if (direction === 'next' && currentIndex < AVAILABLE_THEMES.length - 1) {
-        targetTheme = AVAILABLE_THEMES[currentIndex + 1];
-      } else if (direction === 'prev' && currentIndex >= 0) {
-        targetTheme = currentIndex === 0 ? null : AVAILABLE_THEMES[currentIndex - 1];
-      }
-
-      if (targetTheme !== undefined) switchTheme(targetTheme, { history: 'replace' });
+    // step: -1 で前、+1 で次。イントロ（-1）から最後のテーマまでの範囲で送る
+    function moveTheme(step) {
+      const target = themeIndex() + step;
+      if (target < -1 || target >= AVAILABLE_THEMES.length) return;
+      switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace' });
     }
 
-    els.prevThemeBtn.addEventListener('click', () => moveTheme('prev'));
-    els.nextThemeBtn.addEventListener('click', () => moveTheme('next'));
-    els.progressPrevBtn.addEventListener('click', () => moveTheme('prev'));
-    els.progressNextBtn.addEventListener('click', () => moveTheme('next'));
+    els.prevThemeBtn.addEventListener('click', () => moveTheme(-1));
+    els.nextThemeBtn.addEventListener('click', () => moveTheme(1));
+    els.progressPrevBtn.addEventListener('click', () => moveTheme(-1));
+    els.progressNextBtn.addEventListener('click', () => moveTheme(1));
 
     let touchStart = null;
 
@@ -1044,8 +1024,7 @@
       touchStart = null;
 
       if (Math.abs(xDiff) > 60 && Math.abs(xDiff) > Math.abs(yDiff) * 1.25) {
-        if (xDiff > 0) moveTheme('next');
-        else moveTheme('prev');
+        moveTheme(xDiff > 0 ? 1 : -1);
       }
     }, { passive: true });
 
@@ -1072,35 +1051,10 @@
       applyDisplayModes();
     });
 
-    const copyToClipboard = async (text) => {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        return;
-      }
-
-      const textArea = document.createElement('textarea');
-      try {
-        textArea.value = text;
-        textArea.setAttribute('readonly', '');
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.select();
-        if (!document.execCommand('copy')) throw new Error('Copy command failed');
-      } finally {
-        textArea.remove();
-      }
-    };
-
-    const getThemeHash = () => currentTheme ? `#${encodeURIComponent(currentTheme)}` : '';
-    const getCanonicalThemeUrl = () => `${SITE_URL}${getThemeHash()}`;
-
     const getFormattedContent = () => {
-      const title = els.title.textContent;
-      const bodyText = els.body.textContent.trim();
       const note = els.noteInput.value.trim();
       const noteBlock = note ? `\n\n― 余白のメモ\n${note}` : '';
-      return `【${title}】\n${bodyText}${noteBlock}\n\n― 思索の余白\n${getCanonicalThemeUrl()}`;
+      return `【${els.title.textContent}】\n${els.body.textContent}${noteBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
     };
 
     const showTemporaryLabel = (element, message, original, duration = 2500) => {
@@ -1110,7 +1064,8 @@
 
     const copyWithFeedback = async (text, label, success, failure, original, duration = 2500) => {
       try {
-        await copyToClipboard(text);
+        // サイトは HTTPS 固定なので Clipboard API だけで足りる（未対応なら TypeError で失敗表示に落ちる）
+        await navigator.clipboard.writeText(text);
         showTemporaryLabel(label, success, original, duration);
       } catch (error) {
         console.error('Copy failed', error);
@@ -1124,7 +1079,7 @@
 
     const getShareInfo = () => {
       const title = els.title.textContent;
-      const shareUrl = `${SITE_URL}${UTM_PARAMS}${getThemeHash()}`;
+      const shareUrl = `${SITE_URL}${UTM_PARAMS}${themeHash(currentTheme)}`;
       const text = currentTheme ? `思索の余白：${title}` : `思索の余白 ― 人生の本質を思索するための場所`;
       return { text, shareUrl };
     };
@@ -1175,8 +1130,8 @@
       // Alt+← などブラウザ側の操作とは重ねない。ボタンにフォーカスがあっても矢印キーでは送る
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.target.closest('input, textarea, select, [contenteditable]')) return;
-      if (event.key === 'ArrowLeft') moveTheme('prev');
-      if (event.key === 'ArrowRight') moveTheme('next');
+      if (event.key === 'ArrowLeft') moveTheme(-1);
+      if (event.key === 'ArrowRight') moveTheme(1);
     });
 
     const syncThemeFromUrl = () => {
