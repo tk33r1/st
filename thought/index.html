@@ -273,7 +273,7 @@
       transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
     }
     .theme-btn::after { position: absolute; top: 0; right: 0; width: 0.7rem; height: 0.7rem; background: linear-gradient(225deg, var(--background) 0 47%, var(--surface) 48% 56%, var(--strong-fill) 57% 100%); content: ""; pointer-events: none; }
-    .theme-btn[aria-pressed="true"] { color: var(--text); font-weight: 600; box-shadow: inset 0 -3px 0 var(--text), inset 0 0 0 1px var(--border); }
+    .theme-btn[aria-current="page"] { color: var(--text); font-weight: 600; box-shadow: inset 0 -3px 0 var(--text), inset 0 0 0 1px var(--border); }
     @media (hover: hover) {
       .theme-btn:hover { color: var(--text); transform: translateY(-1px); }
     }
@@ -384,7 +384,7 @@
     .color-swatch { display: inline-flex; align-items: center; justify-content: center; width: 2.1rem; height: 2.4rem; padding: 0; border: 0; border-radius: 999px; background: transparent; cursor: pointer; }
     .color-swatch::before { width: 1.05rem; height: 1.05rem; border-radius: 50%; background: var(--marker); box-shadow: inset 0 0 0 1px var(--border); content: ""; transition: transform 0.2s ease, box-shadow 0.2s ease; }
     .color-swatch:hover::before { transform: scale(1.15); }
-    .color-swatch[aria-pressed="true"]::before { box-shadow: inset 0 0 0 1px var(--border), 0 0 0 2px var(--background), 0 0 0 3.5px var(--muted); }
+    .color-swatch.is-current::before { box-shadow: inset 0 0 0 1px var(--border), 0 0 0 2px var(--background), 0 0 0 3.5px var(--muted); }
     .selection-tool { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.4rem; padding: 0 0.75rem; border: 0; border-radius: 999px; background: transparent; color: var(--secondary); font-size: 0.75rem; letter-spacing: 0.06em; white-space: nowrap; cursor: pointer; }
     .selection-tool:hover, .selection-tool:focus-visible { background: var(--soft-fill); color: var(--text); }
     .selection-tool .icon { width: 0.95rem; height: 0.95rem; }
@@ -576,7 +576,7 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
-  <main id="app" class="paper-noise">
+  <div id="app" class="paper-noise">
     <div class="page-shell">
 
       <!-- Header Section -->
@@ -611,7 +611,7 @@
       </header>
 
       <!-- Main Content Section -->
-      <section class="main-section" aria-labelledby="title">
+      <main class="main-section" aria-labelledby="title">
         <div id="contentStage" class="content-stage">
 
           <!-- Navigation Arrows -->
@@ -645,7 +645,8 @@
             <div class="prose-panel">
               <div id="hLine" class="content-element anim-ready play-fade-in delay-2"></div>
 
-              <div id="body" class="content-element anim-ready play-fade-up delay-1">
+              <!-- イントロ本文。data-updated はイントロの最終更新日（各テーマの日付は #thoughtSource の article 側） -->
+              <div id="body" class="content-element anim-ready play-fade-up delay-1" data-updated="2025.10.12">
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
               </div>
 
@@ -681,7 +682,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </main>
     </div>
 
     <!-- Footer Section -->
@@ -697,7 +698,7 @@
         <p id="copyright">© <span id="copyright-year"></span> Shinya Takeda</p>
       </div>
     </footer>
-  </main>
+  </div>
 
   <!--
     思索の本文。ここが正本で、スクリプトはここから読み込んで表示する（HTML に置くことで検索エンジンにも本文が届く）。
@@ -784,7 +785,7 @@
       <blockquote id="memoQuote" class="memo-quote"></blockquote>
       <label for="memoInput" class="memo-label">メモ</label>
       <textarea id="memoInput" maxlength="1200" placeholder="この箇所から考えたことを書く。"></textarea>
-      <p id="memoHint" class="memo-hint" hidden>空にして保存すると、このメモを削除します。</p>
+      <p id="memoHint" class="memo-hint" aria-live="polite" hidden>空にして保存すると、このメモを削除します。</p>
       <div class="memo-actions">
         <button type="button" id="memoCancelBtn" class="modal-close modal-close-secondary">キャンセル</button>
         <button type="submit" class="modal-close">保存する</button>
@@ -859,7 +860,7 @@
     const intro = {
       title: els.title.textContent.trim(),
       body: els.body.textContent.trim(),
-      lastUpdated: '2025.10.12',
+      lastUpdated: els.body.dataset.updated || '',
       reference: null,
       revisions: []
     };
@@ -886,7 +887,6 @@
       button.type = 'button';
       button.className = 'theme-btn';
       button.dataset.theme = themeName;
-      button.setAttribute('aria-pressed', 'false');
       button.textContent = themes[themeName].title;
       els.buttonScroller.append(button);
     });
@@ -1251,6 +1251,8 @@
       if (pendingSettle) pendingSettle();
       const normalizedTheme = AVAILABLE_THEMES.includes(themeName) ? themeName : null;
       if (currentTheme === normalizedTheme) return null;
+      // 開いたままだと、書きかけのメモが切り替え後のテーマに保存されてしまう
+      if (els.memoModal.open) els.memoModal.close();
 
       const fromIndex = themeIndex();
       hideSelectionToolbar(true);
@@ -1279,9 +1281,8 @@
 
     function announceTheme() {
       const index = themeIndex();
-      els.liveStatus.textContent = index < 0
-        ? `${els.title.textContent}。`
-        : `${els.title.textContent}。${index + 1}件目、全${AVAILABLE_THEMES.length}件。`;
+      const position = index < 0 ? '' : `${index + 1}件目、全${AVAILABLE_THEMES.length}件。`;
+      els.liveStatus.textContent = `${els.title.textContent}。${position}${getCurrentBodyText()}`;
     }
 
     // テーマボタンの選択状態と前後の矢印を currentTheme に合わせる
@@ -1322,7 +1323,8 @@
       let activeButton = null;
       els.themeBtns.forEach(btn => {
         const isActive = btn.dataset.theme === currentTheme;
-        btn.setAttribute('aria-pressed', String(isActive));
+        if (isActive) btn.setAttribute('aria-current', 'page');
+        else btn.removeAttribute('aria-current');
         if (isActive) activeButton = btn;
       });
       if (!activeButton) return;
@@ -1340,6 +1342,7 @@
        ========================================= */
     const getAnnotationKey = (themeName) => `${STORAGE_KEYS.annotationPrefix}${themeName || 'intro'}`;
     const NOTE_HINT = els.noteHint.textContent;
+    const MEMO_HINT = els.memoHint.textContent;
     const MAX_ANNOTATIONS = 80;
     const HIGHLIGHT_COLOR_NAMES = { yellow: '黄', pink: '桃', blue: '青', green: '緑' };
     const HIGHLIGHT_COLORS = Object.keys(HIGHLIGHT_COLOR_NAMES);
@@ -1347,8 +1350,11 @@
     const normalizeColor = (color) => HIGHLIGHT_COLORS.includes(color) ? color : HIGHLIGHT_COLORS[0];
     let lastHighlightColor = normalizeColor(readStorage('localStorage', STORAGE_KEYS.highlightColor));
 
-    // 選んだ本文用（「〜の蛍光ペンを引く」）と、引いた蛍光ペン用（「〜に変える」）の色見本を並べる
-    const renderSwatches = (container, labelOf) => {
+    /*
+      選んだ本文用（「〜の蛍光ペンを引く」）と、引いた蛍光ペン用（「〜に変える」）の色見本を並べる。
+      今の色は .is-current で示す。押すと新しく引く側はトグルではないので、aria-pressed は「変える」側にだけ付ける
+    */
+    const renderSwatches = (container, labelOf, { toggle }) => {
       container.append(...HIGHLIGHT_COLORS.map(color => {
         const swatch = document.createElement('button');
         swatch.type = 'button';
@@ -1356,12 +1362,12 @@
         swatch.dataset.color = color;
         swatch.title = HIGHLIGHT_COLOR_NAMES[color];
         swatch.setAttribute('aria-label', labelOf(HIGHLIGHT_COLOR_NAMES[color]));
-        swatch.setAttribute('aria-pressed', 'false');
+        if (toggle) swatch.setAttribute('aria-pressed', 'false');
         return swatch;
       }));
     };
-    renderSwatches(els.selectionColors, name => `${name}の蛍光ペンを引く`);
-    renderSwatches(els.annotationColors, name => `${name}に変える`);
+    renderSwatches(els.selectionColors, name => `${name}の蛍光ペンを引く`, { toggle: false });
+    renderSwatches(els.annotationColors, name => `${name}に変える`, { toggle: true });
 
     function getCurrentThemeData() {
       return currentTheme ? themes[currentTheme] : intro;
@@ -1370,21 +1376,11 @@
       return getCurrentThemeData().body;
     }
 
-    function findNearestQuote(bodyText, quote, expectedStart) {
-      let nearestStart = -1;
-      let nearestDistance = Infinity;
-      let searchFrom = 0;
-      while (searchFrom <= bodyText.length - quote.length) {
-        const start = bodyText.indexOf(quote, searchFrom);
-        if (start < 0) break;
-        const distance = Math.abs(start - expectedStart);
-        if (distance < nearestDistance) {
-          nearestStart = start;
-          nearestDistance = distance;
-        }
-        searchFrom = start + 1;
-      }
-      return nearestStart;
+    // 本文の中で quote が現れる位置をすべて返す（重なる出現も数える）
+    function findQuoteStarts(bodyText, quote) {
+      const starts = [];
+      for (let start = bodyText.indexOf(quote); start >= 0; start = bodyText.indexOf(quote, start + 1)) starts.push(start);
+      return starts;
     }
 
     const findAnnotation = (id) => currentAnnotations.find(item => item.id === id);
@@ -1400,6 +1396,12 @@
     const overlapsRange = (a, b) => a.start < b.end && a.end > b.start;
     const sameRange = (a, b) => a.start === b.start && a.end === b.end;
 
+    /*
+      保存した書き込みを読み込む。本文を改訂して位置がずれていたら、同じ文言の出現位置へ付け直す。
+      付け直しは書き込みごとではなく全体で決める：保存時の位置からのずれが小さい組み合わせから順に、
+      同じ種類の書き込みと重ならない出現位置を割り当てる（ずれていない書き込みはずれ 0 なので最優先で元の位置に残る）。
+      同じ文言に書き込みが複数あっても、残った出現を本来そこにあった書き込みに渡せる。
+    */
     function loadAnnotations() {
       const bodyText = getCurrentBodyText();
       const stored = readStorage('localStorage', getAnnotationKey(currentTheme));
@@ -1407,29 +1409,33 @@
       try {
         const parsed = JSON.parse(stored);
         if (!Array.isArray(parsed)) return [];
-        const normalized = [];
-        parsed.slice(0, MAX_ANNOTATIONS).forEach(item => {
+        const items = [];
+        parsed.slice(0, MAX_ANNOTATIONS).forEach((item, index) => {
           if (!item || typeof item !== 'object') return;
-          let start = Number(item.start);
-          let end = Number(item.end);
+          const start = Number(item.start);
+          const end = Number(item.end);
           const quote = typeof item.quote === 'string' ? item.quote.slice(0, 600) : '';
           const note = typeof item.note === 'string' ? item.note.slice(0, 1200) : '';
           if (!Number.isInteger(start) || !Number.isInteger(end) || !quote || start < 0 || end <= start) return;
-          if (bodyText.slice(start, end) !== quote) {
-            start = findNearestQuote(bodyText, quote, start);
-            if (start < 0) return;
-            end = start + quote.length;
-          }
-          if (end > bodyText.length) return;
           // 以前の形式（kind なし）は、メモ付きならメモだけ、なければ蛍光ペンとして読む（メモに自動で引いていた線は捨てる）
           const kind = item.kind === 'memo' || item.kind === 'highlight' ? item.kind : (note ? 'memo' : 'highlight');
           if (kind === 'memo' && !note) return;
-          const range = { start, end };
-          if (normalized.some(existing => existing.kind === kind && overlapsRange(existing, range))) return;
-          const base = { id: typeof item.id === 'string' ? item.id : `${Date.now()}-${normalized.length}`, kind, start, end, quote };
-          normalized.push(kind === 'memo' ? { ...base, note } : { ...base, color: normalizeColor(item.color) });
+          const base = { id: typeof item.id === 'string' ? item.id : `${Date.now()}-${index}`, kind, start, end, quote };
+          items.push(kind === 'memo' ? { ...base, note } : { ...base, color: normalizeColor(item.color) });
         });
-        return normalized.sort((a, b) => a.start - b.start);
+
+        // sort は安定なので、ずれが同じなら保存順が先のものを優先する
+        const candidates = items.flatMap(item => findQuoteStarts(bodyText, item.quote)
+          .map(start => ({ item, start, distance: Math.abs(start - item.start) })))
+          .sort((a, b) => a.distance - b.distance);
+        const placed = new Map();
+        candidates.forEach(({ item, start }) => {
+          if (placed.has(item)) return;
+          const range = { start, end: start + item.quote.length };
+          if (Array.from(placed.values()).some(existing => existing.kind === item.kind && overlapsRange(existing, range))) return;
+          placed.set(item, { ...item, ...range });
+        });
+        return Array.from(placed.values()).sort((a, b) => a.start - b.start);
       } catch (_) {
         return [];
       }
@@ -1546,9 +1552,11 @@
       if (selection && els.body.contains(selection.anchorNode)) selection.removeAllRanges();
     }
 
-    function setSwatchesPressed(toolbar, color) {
+    function setCurrentSwatch(toolbar, color) {
       toolbar.querySelectorAll('.color-swatch').forEach(swatch => {
-        swatch.setAttribute('aria-pressed', String(swatch.dataset.color === color));
+        const isCurrent = swatch.dataset.color === color;
+        swatch.classList.toggle('is-current', isCurrent);
+        if (swatch.hasAttribute('aria-pressed')) swatch.setAttribute('aria-pressed', String(isCurrent));
       });
     }
 
@@ -1564,12 +1572,20 @@
       toolbar.style.top = `${top}px`;
     }
 
+    // 隠すツールバーの中にフォーカスがあれば、先に外へ戻す（隠れた要素に残るとページ先頭へ飛ぶ）
+    function moveFocusOutOf(toolbar, target) {
+      if (toolbar.contains(document.activeElement)) (target || els.noteToggleBtn).focus({ preventScroll: true });
+    }
+
     function hideSelectionToolbar(clearPending = false) {
+      moveFocusOutOf(els.selectionToolbar);
       els.selectionToolbar.hidden = true;
       if (clearPending) pendingSelection = null;
     }
 
+    // フォーカスは操作していた書き込みへ戻す（消えていれば「余白に書く」へ）
     function hideAnnotationToolbar() {
+      moveFocusOutOf(els.annotationToolbar, activeAnnotationId && findFocusTarget(activeAnnotationId));
       els.annotationToolbar.hidden = true;
       if (!activeAnnotationId) return;
       findBodyElements(activeAnnotationId).forEach(el => el.classList.remove('is-active'));
@@ -1588,9 +1604,9 @@
       els.annotationColors.hidden = !isHighlight;
       els.annotationDivider.hidden = !isHighlight;
       els.annotationMemoBtn.hidden = isHighlight;
-      if (isHighlight) setSwatchesPressed(els.annotationToolbar, annotation.color);
+      if (isHighlight) setCurrentSwatch(els.annotationToolbar, annotation.color);
       placeToolbar(els.annotationToolbar, anchor.getBoundingClientRect());
-      if (focus) (isHighlight ? els.annotationToolbar.querySelector('.color-swatch[aria-pressed="true"]') : els.annotationMemoBtn)?.focus();
+      if (focus) (isHighlight ? els.annotationToolbar.querySelector('.color-swatch.is-current') : els.annotationMemoBtn)?.focus();
     }
 
     // 位置メモ（.margin-note）は本文の文字として数えない
@@ -1636,7 +1652,7 @@
       }
       pendingSelection = offsets;
       hideAnnotationToolbar();
-      setSwatchesPressed(els.selectionToolbar, lastHighlightColor);
+      setCurrentSwatch(els.selectionToolbar, lastHighlightColor);
       placeToolbar(els.selectionToolbar, range.getBoundingClientRect());
     }
 
@@ -1669,28 +1685,30 @@
     }
 
     // 案内を戻すのは保存の前（保存に失敗したときの知らせを消さないため）
+    // 引いた（色を変えた）蛍光ペンの id を返す。置けなければ null
     function addHighlight(selectionData, color = lastHighlightColor) {
-      if (!selectionData) return;
+      if (!selectionData) return null;
       const { exact, error } = checkPlacement('highlight', selectionData);
       if (error) {
         showNoteMessage(error);
-        return;
+        return null;
       }
       resetNoteHint();
-      if (exact) exact.color = color;
-      else currentAnnotations.push({ id: createAnnotationId(), kind: 'highlight', ...selectionData, color });
+      const highlight = exact || { id: createAnnotationId(), kind: 'highlight', ...selectionData };
+      highlight.color = color;
+      if (!exact) currentAnnotations.push(highlight);
       commitAnnotations();
+      return highlight.id;
     }
 
+    // 置けないときは理由を返す（ダイアログの中で知らせる）
     function addMemo(selectionData, note) {
       const { error } = checkPlacement('memo', selectionData);
-      if (error) {
-        showNoteMessage(error);
-        return;
-      }
+      if (error) return error;
       resetNoteHint();
       currentAnnotations.push({ id: createAnnotationId(), kind: 'memo', ...selectionData, note });
       commitAnnotations();
+      return '';
     }
 
     function removeAnnotation(id) {
@@ -1704,6 +1722,7 @@
       els.memoModalTitle.textContent = memo ? 'メモを編集する' : '選んだ箇所にメモする';
       els.memoQuote.textContent = `「${selectionData.quote}」`;
       els.memoInput.value = memo?.note || '';
+      els.memoHint.textContent = MEMO_HINT;
       els.memoHint.hidden = !memo;
       hideSelectionToolbar();
       hideAnnotationToolbar();
@@ -1714,6 +1733,8 @@
     function focusAnnotation(id) {
       const target = findFocusTarget(id);
       if (!target) return;
+      // 描き直しで元の要素は消えているので、閉じたダイアログからのフォーカスを付け直す
+      target.focus({ preventScroll: true });
       target.scrollIntoView({ behavior: reducedMotionQuery.matches ? 'auto' : 'smooth', block: 'nearest' });
       target.classList.remove('is-located');
       void target.offsetWidth;
@@ -1734,8 +1755,11 @@
       const swatch = event.target.closest('.color-swatch');
       if (!swatch) return;
       rememberColor(normalizeColor(swatch.dataset.color));
-      addHighlight(pendingSelection);
+      const usedKeyboard = els.selectionToolbar.contains(document.activeElement);
+      const id = addHighlight(pendingSelection);
       finishSelectionAction();
+      // ツールバーにフォーカスがあったら、引いた箇所へ移す（続けて色の変更や削除ができる）
+      if (id && usedKeyboard) findFocusTarget(id)?.focus({ preventScroll: true });
     });
     // メモは蛍光ペンを引かない。同じ範囲にメモがあればその編集を開く
     els.memoSelectionBtn.addEventListener('click', () => {
@@ -1760,14 +1784,14 @@
       if (swatch && annotation.kind === 'highlight') {
         annotation.color = normalizeColor(swatch.dataset.color);
         rememberColor(annotation.color);
-        setSwatchesPressed(els.annotationToolbar, annotation.color);
+        setCurrentSwatch(els.annotationToolbar, annotation.color);
         commitAnnotations();
       } else if (event.target.closest('#annotationMemoBtn') && annotation.kind === 'memo') {
         openMemoDialog({ start: annotation.start, end: annotation.end, quote: annotation.quote }, annotation);
       } else if (event.target.closest('#annotationDeleteBtn')) {
         const label = KIND_LABEL[annotation.kind];
         if (!window.confirm(`この${label}を削除しますか？`)) return;
-        hideAnnotationToolbar();
+        // 先に消す（描き直しでツールバーが閉じ、フォーカスは「余白に書く」へ戻る）
         removeAnnotation(annotation.id);
         els.liveStatus.textContent = `${label}を削除しました。`;
       }
@@ -1792,7 +1816,13 @@
           els.memoInput.focus();
           return;
         }
-        addMemo(pendingMemoSelection, note);
+        const error = addMemo(pendingMemoSelection, note);
+        if (error) {
+          // 書いたメモを失わないよう、閉じずに理由を出す
+          els.memoHint.textContent = error;
+          els.memoHint.hidden = false;
+          return;
+        }
       }
       els.memoModal.close();
       if (id && note) focusAnnotation(id);
@@ -1826,6 +1856,9 @@
       // 書き込みは本文にしかない（めくり中の写しは pointer-events: none）ので #body で絞らなくてよい
       if (event.target.closest(`#annotationToolbar, ${ANNOTATION_TARGET}`)) return;
       hideAnnotationToolbar();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') hideToolbars();
     });
 
     /* =========================================
@@ -2146,16 +2179,6 @@
     });
 
     document.addEventListener('keydown', (event) => {
-      // Escape は書き込みのツールバーを閉じ、フォーカスを書き込みに戻す
-      if (event.key === 'Escape') {
-        if (!els.annotationToolbar.hidden) {
-          const target = findFocusTarget(activeAnnotationId);
-          hideAnnotationToolbar();
-          target?.focus();
-        }
-        hideSelectionToolbar();
-        return;
-      }
       // Alt+← などブラウザ側の操作とは重ねない。ボタンにフォーカスがあっても矢印キーでは送る
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
