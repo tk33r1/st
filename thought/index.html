@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" class="h-full">
+<html lang="ja">
 <head>
   <!-- Ahrefs -->
   <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
@@ -35,7 +35,7 @@
   <meta name="twitter:description" content="人生の本質を思索するための場所">
   <meta name="twitter:image" content="https://tk.st/images/ogp/thought-ogp.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Shinya Takeda - Terminal Portfolio","item":"https://tk.st/"},{"@type":"ListItem","position":2,"name":"思索の余白","item":"https://tk.st/thought/"}]},{"@type":"Article","@id":"https://tk.st/thought/#article","mainEntityOfPage":{"@type":"WebPage","@id":"https://tk.st/thought/"},"headline":"思索の余白","description":"人生の本質を思索するための場所","url":"https://tk.st/thought/","inLanguage":"ja","image":{"@type":"ImageObject","url":"https://tk.st/images/ogp/thought-ogp.png","width":2160,"height":1134},"datePublished":"2025-10-12T12:00:00+09:00","dateModified":"2026-09-24T14:11:03+09:00","author":{"@type":"Person","@id":"https://tk.st/#shitake","name":"Shinya Takeda","url":"https://tk.st/"},"publisher":{"@type":"Person","@id":"https://tk.st/#shitake","name":"Shinya Takeda","url":"https://tk.st/"}}]}
+{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Shinya Takeda - Terminal Portfolio","item":"https://tk.st/"},{"@type":"ListItem","position":2,"name":"思索の余白","item":"https://tk.st/thought/"}]},{"@type":"Article","@id":"https://tk.st/thought/#article","mainEntityOfPage":{"@type":"WebPage","@id":"https://tk.st/thought/"},"headline":"思索の余白","description":"人生の本質を思索するための場所","url":"https://tk.st/thought/","inLanguage":"ja","image":{"@type":"ImageObject","url":"https://tk.st/images/ogp/thought-ogp.png","width":2160,"height":1134},"datePublished":"2025-10-12T12:00:00+09:00","dateModified":"2026-09-24T14:45:09+09:00","author":{"@type":"Person","@id":"https://tk.st/#shitake","name":"Shinya Takeda","url":"https://tk.st/"},"publisher":{"@type":"Person","@id":"https://tk.st/#shitake","name":"Shinya Takeda","url":"https://tk.st/"}}]}
 </script>
   <script>
     /* 描画前にダーク/集中モードを当てる（読み込み時に白く光るのを防ぐ） */
@@ -121,7 +121,8 @@
     ::selection { background: rgba(120,120,120,0.2); }
     button, textarea { font: inherit; }
     button, a { -webkit-tap-highlight-color: transparent; }
-    button:focus-visible, a:focus-visible, summary:focus-visible, textarea:focus-visible {
+    button:focus-visible, a:focus-visible, summary:focus-visible, textarea:focus-visible,
+    #body [role="button"]:focus-visible {
       outline: 2px solid var(--focus) !important;
       outline-offset: 4px;
     }
@@ -642,9 +643,7 @@
             <div id="vLine" class="content-element anim-ready play-fade-in delay-2"></div>
 
             <div class="prose-panel">
-              <div class="content-element anim-ready play-fade-in delay-2">
-                <div id="hLine"></div>
-              </div>
+              <div id="hLine" class="content-element anim-ready play-fade-in delay-2"></div>
 
               <div id="body" class="content-element anim-ready play-fade-up delay-1">
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
@@ -1279,7 +1278,10 @@
     }
 
     function announceTheme() {
-      els.liveStatus.textContent = `${els.title.textContent}。${getCurrentBodyText()}`;
+      const index = themeIndex();
+      els.liveStatus.textContent = index < 0
+        ? `${els.title.textContent}。`
+        : `${els.title.textContent}。${index + 1}件目、全${AVAILABLE_THEMES.length}件。`;
     }
 
     // テーマボタンの選択状態と前後の矢印を currentTheme に合わせる
@@ -1368,6 +1370,23 @@
       return getCurrentThemeData().body;
     }
 
+    function findNearestQuote(bodyText, quote, expectedStart) {
+      let nearestStart = -1;
+      let nearestDistance = Infinity;
+      let searchFrom = 0;
+      while (searchFrom <= bodyText.length - quote.length) {
+        const start = bodyText.indexOf(quote, searchFrom);
+        if (start < 0) break;
+        const distance = Math.abs(start - expectedStart);
+        if (distance < nearestDistance) {
+          nearestStart = start;
+          nearestDistance = distance;
+        }
+        searchFrom = start + 1;
+      }
+      return nearestStart;
+    }
+
     const findAnnotation = (id) => currentAnnotations.find(item => item.id === id);
     const findBodyElements = (id) => Array.from(els.body.querySelectorAll('[data-annotation-id]'))
       .filter(element => element.dataset.annotationId === id);
@@ -1397,7 +1416,7 @@
           const note = typeof item.note === 'string' ? item.note.slice(0, 1200) : '';
           if (!Number.isInteger(start) || !Number.isInteger(end) || !quote || start < 0 || end <= start) return;
           if (bodyText.slice(start, end) !== quote) {
-            start = bodyText.indexOf(quote);
+            start = findNearestQuote(bodyText, quote, start);
             if (start < 0) return;
             end = start + quote.length;
           }
@@ -2020,9 +2039,15 @@
       return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
     };
 
+    const labelTimers = new WeakMap();
+
     const showTemporaryLabel = (element, message, original, duration = 2500) => {
+      window.clearTimeout(labelTimers.get(element));
       element.textContent = message;
-      window.setTimeout(() => { element.textContent = original; }, duration);
+      labelTimers.set(element, window.setTimeout(() => {
+        element.textContent = original;
+        labelTimers.delete(element);
+      }, duration));
     };
 
     const copyToClipboard = async (text) => {
