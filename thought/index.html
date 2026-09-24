@@ -179,9 +179,9 @@
     /* =========================================
        Header
        ========================================= */
-    .header-stack { display: flex; flex-direction: column; gap: 2.5rem; }
     .header-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-    #headerTitleArea { display: flex; align-items: center; gap: 1rem; min-width: 0; color: var(--text); }
+    /* 右の操作ボタンは縮めず、狭いときは左の表題の側が折り返す（ボタンを足しても重ならない） */
+    #headerTitleArea { display: flex; flex: 1 1 auto; align-items: center; gap: 1rem; min-width: 0; color: var(--text); }
     #topMark { flex: none; width: 4rem; height: 1px; background: var(--surface); }
     #subtitle {
       padding: 0.4rem 0;
@@ -191,11 +191,15 @@
       font-family: var(--latin);
       font-size: 0.7rem;
       font-weight: 500;
+      line-height: 1.7;
       letter-spacing: 0.28em;
+      text-align: left;
       text-transform: uppercase;
       white-space: nowrap;
       cursor: pointer;
     }
+    /* 狭い画面では「SPACE FOR / CONTEMPLATION」の2行に組む（扉の欧文表題のように） */
+    .subtitle-line { display: inline; }
     .display-controls { position: relative; z-index: 10; display: flex; flex: none; align-items: center; gap: 0.75rem; }
     .icon-button, .nav-arrow, .progress-arrow {
       display: inline-flex;
@@ -212,7 +216,32 @@
       transition: color 0.25s ease, background-color 0.25s ease, opacity 0.25s ease;
     }
     .icon-button:hover, .progress-arrow:hover { color: var(--text); background: var(--soft-fill); }
-    .writing-mode-btn span { font-family: var(--serif); font-size: 0.95rem; line-height: 1; }
+    /*
+      本文の向き。「縦」「横」を両方見せ、今の向きを濃い文字と下線で示す（押した先ではなく今の状態を出す）。
+      押せる範囲は ::before で上下に広げる
+    */
+    .writing-switch { display: inline-flex; align-items: stretch; border: 1px solid var(--border); border-radius: 2px; background: var(--soft-fill); transition: opacity 0.5s ease-in-out; }
+    .writing-option {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.9rem;
+      height: 1.75rem;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--quiet);
+      font-family: var(--serif);
+      font-size: 0.85rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .writing-option::before { position: absolute; inset: -0.5rem 0; content: ""; }
+    .writing-option + .writing-option { border-left: 1px solid var(--border); }
+    .writing-option[aria-pressed="true"] { background: var(--background); color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--text); cursor: default; }
+    .writing-option[aria-pressed="false"]:hover { color: var(--text); }
     .icon { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
     .theme-switch {
       position: relative;
@@ -243,48 +272,6 @@
       transition: transform 0.35s ease, background-color 0.35s ease;
     }
     .dark-mode #themeToggleHandle { transform: translateX(1.25rem); }
-    .theme-nav { display: flex; min-width: 0; align-items: center; overflow: hidden; }
-    #buttonScroller {
-      display: flex;
-      width: 100%;
-      min-width: 0;
-      flex-wrap: nowrap;
-      gap: 0.65rem;
-      /* 横スクロールの箱は上下もはみ出しを切るので、ホバーで浮く 1px と下の影の分だけ内側に余白を取る */
-      padding: 3px 0;
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-      scrollbar-width: none;
-      scroll-snap-type: x proximity;
-      -webkit-overflow-scrolling: touch;
-    }
-    #buttonScroller::-webkit-scrollbar { display: none; }
-    .theme-btn {
-      position: relative;
-      isolation: isolate;
-      flex: 0 0 auto;
-      min-height: 2.75rem;
-      /* 右は折り返した角（0.7rem）の分だけ広く取り、文字が見た目の中央に来るようにする */
-      padding: 0.6rem 1.35rem 0.6rem 1rem;
-      overflow: hidden;
-      border: 0;
-      border-radius: 0;
-      background: var(--background);
-      color: var(--secondary);
-      font-size: 1rem;
-      white-space: nowrap;
-      box-shadow: inset 0 0 0 1px var(--surface), 0 2px 0 var(--soft-fill);
-      clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 0.7rem, 100% 100%, 0 100%);
-      scroll-snap-align: center;
-      cursor: pointer;
-      transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-    }
-    .theme-btn::after { position: absolute; top: 0; right: 0; width: 0.7rem; height: 0.7rem; background: linear-gradient(225deg, var(--background) 0 47%, var(--surface) 48% 56%, var(--strong-fill) 57% 100%); content: ""; pointer-events: none; }
-    .theme-btn[aria-current="page"] { color: var(--text); font-weight: 600; box-shadow: inset 0 -3px 0 var(--text), inset 0 0 0 1px var(--border); }
-    @media (hover: hover) {
-      .theme-btn:hover { color: var(--text); transform: translateY(-1px); }
-    }
-
     /* =========================================
        Main Content
        ========================================= */
@@ -306,6 +293,33 @@
     .theme-progress { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem; color: var(--quiet); font-family: var(--latin); font-size: 0.8rem; letter-spacing: 0.2em; }
     .theme-progress .progress-arrow { display: none; }
     .progress-arrow .icon { width: 1.1rem; height: 1.1rem; }
+    /* ノンブル（02 / 04）。押すと表紙の目次へめくり戻る */
+    .progress-index { min-height: 2.75rem; padding: 0 0.35rem; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-decoration: underline dotted var(--border); text-underline-offset: 0.45em; cursor: pointer; transition: color 0.25s ease; }
+    .progress-index:hover { color: var(--text); }
+
+    /*
+      目次（表紙＝イントロのページだけに出す）。枠は data-slots 個で固定し、まだ書いていない思索は空欄の「余白」として薄く残す
+      （テーマが増えても目次の高さが変わらない）。
+      横書きは最大 3 列の格子に左上から、縦書きは 1 項目 1 行の縦組みで右から左へ並べる（めくる向きと同じ）
+    */
+    .toc { margin-top: 2.25rem; }
+    .toc-heading { margin: 0 0 0.6rem; color: var(--quiet); font-size: 0.72rem; letter-spacing: 0.4em; }
+    .toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(max(6.2em, (100% - 2.4rem) / 3), 1fr)); column-gap: 1.2rem; margin: 0; padding: 0; font-size: 0.95rem; list-style: none; }
+    .toc-item { display: flex; min-width: 0; }
+    .toc-link, .toc-blank { display: flex; align-items: center; min-height: 2.75rem; padding: 0; border: 0; background: transparent; color: var(--secondary); font-size: inherit; letter-spacing: 0.08em; text-align: start; }
+    .toc-link { cursor: pointer; transition: color 0.25s ease; }
+    .toc-blank { color: var(--quiet); opacity: 0.55; }
+    .toc-num { margin-inline-end: 0.7em; color: var(--quiet); font-size: 0.85em; }
+    @media (hover: hover) {
+      .toc-link:hover { color: var(--text); }
+    }
+    .vertical-writing .toc { display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 0.5rem; }
+    .vertical-writing .toc-heading { margin: 0.25rem 0 0; writing-mode: vertical-rl; }
+    /* 列の幅は画面が狭いときだけ詰める（9 項目で 320px 幅にも収まる） */
+    .vertical-writing .toc-list { display: flex; flex: 1 1 auto; flex-direction: row-reverse; min-width: 0; gap: 0; }
+    .vertical-writing .toc-item { flex: 0 1 2.3rem; min-width: 1.6rem; }
+    .vertical-writing .toc-link, .vertical-writing .toc-blank { align-items: flex-start; justify-content: center; width: 100%; min-height: 0; padding: 0.25rem 0 0.5rem; }
+    .vertical-writing .toc-text { writing-mode: vertical-rl; }
     .swipe-hint { display: none; align-items: center; gap: 0.6rem; margin-top: 0.8rem; color: var(--quiet); font-size: 0.68rem; letter-spacing: 0.12em; transition: opacity 0.35s ease, visibility 0.35s ease; }
     .swipe-hint.is-dismissed { visibility: hidden; opacity: 0; }
     /* 縦書き（右綴じ）では次へは右へ払うので、点の動きを左右反転する */
@@ -541,13 +555,13 @@
     #zenToggleBtn, #themeToggleBtn { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.5s ease-in-out; }
     .zen-mode .zen-hide { opacity: 0 !important; filter: blur(4px) !important; pointer-events: none !important; }
     .zen-mode .action-btns-wrapper,
-    .zen-mode #writingModeBtn,
+    .zen-mode #writingModeSwitch,
     .zen-mode #zenToggleBtn,
     .zen-mode #themeToggleBtn { opacity: 0.35 !important; }
     .zen-mode .action-btns-wrapper:hover,
     .zen-mode .action-btns-wrapper:focus-within,
-    .zen-mode #writingModeBtn:hover,
-    .zen-mode #writingModeBtn:focus-visible,
+    .zen-mode #writingModeSwitch:hover,
+    .zen-mode #writingModeSwitch:focus-within,
     .zen-mode #zenToggleBtn:hover,
     .zen-mode #zenToggleBtn:focus-visible,
     .zen-mode #themeToggleBtn:hover,
@@ -617,8 +631,6 @@
     }
     @media (max-width: 1023px) {
       .page-shell { padding-top: max(2rem, env(safe-area-inset-top)); }
-      .header-stack { gap: 2rem; }
-      .theme-nav { align-items: flex-start; flex-direction: column; gap: 0.7rem; }
       .main-section { margin-top: 3rem; }
       .content-layout { grid-template-columns: 1fr; gap: 2rem; }
       #vLine { width: 100%; height: 1px; background: linear-gradient(to right, transparent, var(--surface), transparent); }
@@ -628,10 +640,9 @@
       .header-row { gap: 0.5rem; }
       #headerTitleArea { gap: 0.75rem; }
       #topMark { width: 1.75rem; }
-      #subtitle { font-size: 0.6rem; letter-spacing: 0.14em; }
+      #subtitle { font-size: 0.6rem; line-height: 1.6; letter-spacing: 0.14em; }
+      .subtitle-line { display: block; }
       .display-controls { gap: 0.25rem; }
-      #buttonScroller { gap: 0.45rem; }
-      .theme-btn { padding: 0.5rem 1.1rem 0.5rem 0.8rem; font-size: 0.88rem; }
       .main-section { margin: 2.5rem 0 1rem; }
       .content-stage { padding: 0 0.25rem; }
       .content-layout { gap: 1.65rem; }
@@ -639,6 +650,10 @@
       #hLine { margin-bottom: 1.5rem; }
       #body { font-size: 1rem; line-height: 2.15; }
       #metaInfo { font-size: 0.8rem; }
+      /* 目次は表紙の 1 画面目に収めたいので、狭い画面では間を詰める */
+      .toc { margin-top: 1.5rem; }
+      .toc-heading { margin-bottom: 0.3rem; }
+      .toc-link, .toc-blank { min-height: 2.5rem; }
       /* 狭い画面では本文に重なる左右の矢印をやめ、見出し下の送りに寄せる */
       .nav-arrow { display: none; }
       .theme-progress { margin-left: -0.85rem; }
@@ -646,6 +661,10 @@
       .swipe-hint { display: flex; }
       .footer-inner { padding-right: max(1.25rem, env(safe-area-inset-right)); padding-left: max(1.25rem, env(safe-area-inset-left)); }
       .modal-panel { padding: 1.5rem; }
+    }
+    /* さらに狭い画面では、表題の左の線を外して表題と操作ボタンの幅を確保する */
+    @media (max-width: 359px) {
+      #topMark { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
@@ -666,37 +685,32 @@
 
       <!-- Header Section -->
       <header class="anim-ready play-fade-in">
-        <div class="header-stack">
-          <div class="header-row">
-            <div id="headerTitleArea" class="zen-hide">
-              <div id="topMark" class="breath-line"></div>
-              <button type="button" id="subtitle" title="最初の画面へ戻る">Space for Contemplation</button>
-            </div>
-
-            <div class="display-controls">
-              <!-- 本文は縦書きが標準。表示は切り替え先の文字（縦書きのときは「横」） -->
-              <button type="button" id="writingModeBtn" class="icon-button writing-mode-btn" title="横書きにする" aria-label="横書きにする" aria-pressed="false">
-                <span id="writingModeGlyph" aria-hidden="true">横</span>
-              </button>
-
-              <button type="button" id="zenToggleBtn" class="icon-button" title="集中モードにする" aria-label="集中モードにする" aria-pressed="false">
-                <svg id="zenEnterIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                <svg id="zenExitIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
-              </button>
-
-              <button type="button" id="themeToggleBtn" class="theme-switch" title="夜の余白へ" aria-label="ダークモードにする" aria-pressed="false">
-                <span class="theme-switch-icons" aria-hidden="true">
-                  <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
-                  <svg class="icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-                </span>
-                <span id="themeToggleHandle" aria-hidden="true"></span>
-              </button>
-            </div>
+        <div class="header-row">
+          <div id="headerTitleArea" class="zen-hide">
+            <div id="topMark" class="breath-line"></div>
+            <button type="button" id="subtitle" title="目次へ戻る"><span class="subtitle-line">Space for</span> <span class="subtitle-line">Contemplation</span></button>
           </div>
 
-          <nav class="theme-nav zen-hide" aria-label="思索のテーマ">
-            <div id="buttonScroller"></div>
-          </nav>
+          <div class="display-controls">
+            <!-- 本文の向き。縦書きが標準で、今の向きのほうを押された状態（濃い文字＋下線）で見せる -->
+            <div id="writingModeSwitch" class="writing-switch" role="group" aria-label="本文の向き">
+              <button type="button" class="writing-option" data-mode="vertical" aria-label="縦書き" title="縦書き" aria-pressed="true"><span aria-hidden="true">縦</span></button>
+              <button type="button" class="writing-option" data-mode="horizontal" aria-label="横書き" title="横書き" aria-pressed="false"><span aria-hidden="true">横</span></button>
+            </div>
+
+            <button type="button" id="zenToggleBtn" class="icon-button" title="集中モードにする" aria-label="集中モードにする" aria-pressed="false">
+              <svg id="zenEnterIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+              <svg id="zenExitIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+            </button>
+
+            <button type="button" id="themeToggleBtn" class="theme-switch" title="夜の余白へ" aria-label="ダークモードにする" aria-pressed="false">
+              <span class="theme-switch-icons" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+              </span>
+              <span id="themeToggleHandle" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -719,7 +733,7 @@
                 <button type="button" id="progressPrevBtn" class="progress-arrow" aria-label="前の思索へ">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-                <span id="progressText"></span>
+                <button type="button" id="progressText" class="progress-index" title="目次へ"></button>
                 <button type="button" id="progressNextBtn" class="progress-arrow" aria-label="次の思索へ">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
@@ -741,6 +755,12 @@
               </div>
 
               <button type="button" id="pageNote" class="page-note" title="書き直す" hidden></button>
+
+              <!-- 目次（イントロのページだけに出す）。項目は #thoughtSource の h2 から並べ、data-slots 個に満たない分は空欄で残す -->
+              <nav id="toc" class="toc zen-hide content-element anim-ready play-fade-up delay-2" aria-labelledby="tocHeading" data-slots="9">
+                <p id="tocHeading" class="toc-heading">目次</p>
+                <ol id="tocList" class="toc-list"></ol>
+              </nav>
 
               <div id="metaInfo" class="content-element anim-ready play-fade-up delay-2">
                 <div id="metaContent" class="zen-hide">
@@ -807,7 +827,7 @@
 
   <!--
     思索の本文。ここが正本で、スクリプトはここから読み込んで表示する（HTML に置くことで検索エンジンにも本文が届く）。
-    - 公開順 = 並び順。テーマを増やすときは article を足す（ナビボタンは h2 から自動生成する）。
+    - 公開順 = 並び順。テーマを増やすときは article を足す（目次は h2 から自動生成する。空欄の数は #toc の data-slots で決まる）。
     - 参考文献のアフィリエイトリンクには rel="sponsored" を付ける（付いていれば自動で「PR」表示が出る）。
     - data-question は書き留め欄に出す問い（読み手への問いかけ。省略すると出さない）。
     - 改訂したら、旧版を <section data-role="revision" data-date="YYYY.MM.DD"><p>旧本文</p></section> として残すと「過去の版」に並ぶ。
@@ -916,7 +936,8 @@
       themeColor: document.querySelector('meta[name="theme-color"]'),
       contentStage: document.getElementById('contentStage'),
       contentLayout: document.querySelector('.content-layout'),
-      buttonScroller: document.getElementById('buttonScroller'),
+      toc: document.getElementById('toc'),
+      tocList: document.getElementById('tocList'),
       title: document.getElementById('title'),
       subtitle: document.getElementById('subtitle'),
       body: document.getElementById('body'),
@@ -946,8 +967,7 @@
       pageNoteHistory: document.getElementById('pageNoteHistory'),
       exportNotesBtn: document.getElementById('exportNotesBtn'),
       noteToast: document.getElementById('noteToast'),
-      writingModeBtn: document.getElementById('writingModeBtn'),
-      writingModeGlyph: document.getElementById('writingModeGlyph'),
+      writingOptions: document.querySelectorAll('.writing-option'),
       breathOverlay: document.getElementById('breathOverlay'),
       breathText: document.getElementById('breathText'),
       breathSkipBtn: document.getElementById('breathSkipBtn'),
@@ -1008,15 +1028,52 @@
     const SITE_URL = "https://tk.st/thought/";
     const UTM_PARAMS = "?utm_source=tk.st&utm_medium=referral&utm_campaign=thought_space";
     const AVAILABLE_THEMES = Object.keys(themes);
-    AVAILABLE_THEMES.forEach(themeName => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'theme-btn';
-      button.dataset.theme = themeName;
-      button.textContent = themes[themeName].title;
-      els.buttonScroller.append(button);
-    });
-    els.themeBtns = els.buttonScroller.querySelectorAll('.theme-btn');
+
+    // 目次の番号は漢数字（99 まで）
+    const KANJI_DIGITS = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+    const toKanjiNumber = (n) => n < 10
+      ? KANJI_DIGITS[n]
+      : `${n >= 20 ? KANJI_DIGITS[Math.floor(n / 10)] : ''}十${KANJI_DIGITS[n % 10]}`;
+
+    // 目次を組む。公開済みのテーマは押せる項目、data-slots に満たない分は「まだ書いていない余白」の空欄
+    function buildToc() {
+      const slots = Math.max(AVAILABLE_THEMES.length, Number(els.toc.dataset.slots) || 0);
+      const items = Array.from({ length: slots }, (_, index) => {
+        const themeName = AVAILABLE_THEMES[index];
+        const item = document.createElement('li');
+        item.className = 'toc-item';
+        const entry = document.createElement(themeName ? 'button' : 'span');
+        entry.className = themeName ? 'toc-link' : 'toc-blank';
+        const text = document.createElement('span');
+        text.className = 'toc-text';
+        const num = document.createElement('span');
+        num.className = 'toc-num';
+        num.textContent = toKanjiNumber(index + 1);
+        const title = document.createElement('span');
+        title.className = 'toc-title';
+        title.textContent = themeName ? themes[themeName].title : '‥‥';
+        text.append(num, title);
+        entry.append(text);
+        if (themeName) {
+          entry.type = 'button';
+          entry.dataset.theme = themeName;
+        } else {
+          item.setAttribute('aria-hidden', 'true');
+        }
+        item.append(entry);
+        return item;
+      });
+      els.tocList.replaceChildren(...items);
+      const pending = slots - AVAILABLE_THEMES.length;
+      if (pending > 0) {
+        const note = document.createElement('p');
+        note.className = 'sr-only';
+        note.textContent = `ほか${pending}つの思索を準備中`;
+        els.toc.append(note);
+      }
+    }
+    buildToc();
+    els.tocLinks = els.tocList.querySelectorAll('.toc-link');
 
     const STORAGE_KEYS = {
       dark: 'thought-dark-mode',
@@ -1154,7 +1211,10 @@
 
       const index = themeIndex();
       els.progress.hidden = index < 0;
-      els.progressText.textContent = index < 0 ? '' : `${formatIndex(index + 1)} / ${formatIndex(AVAILABLE_THEMES.length)}`;
+      els.toc.hidden = index >= 0;
+      const position = index < 0 ? '' : `${formatIndex(index + 1)} / ${formatIndex(AVAILABLE_THEMES.length)}`;
+      els.progressText.textContent = position;
+      els.progressText.setAttribute('aria-label', `目次へ戻る（${position}）`);
 
       loadPageNote();
       document.title = currentTheme ? `${theme.title} | 思索の余白` : '思索の余白';
@@ -1407,7 +1467,7 @@
       const token = ++transitionToken;
 
       if (historyMode !== 'none') setThemeUrl(currentTheme, historyMode === 'replace');
-      syncNav();
+      updateArrows();
 
       const update = () => {
         updateContentData();
@@ -1428,12 +1488,6 @@
       const index = themeIndex();
       const position = index < 0 ? '' : `${index + 1}件目、全${AVAILABLE_THEMES.length}件。`;
       els.liveStatus.textContent = `${els.title.textContent}。${position}${getCurrentBodyText()}`;
-    }
-
-    // テーマボタンの選択状態と前後の矢印を currentTheme に合わせる
-    function syncNav() {
-      updateButtonsHighlight();
-      updateArrows();
     }
 
     // 画面の左右の矢印・キーが送る向き（-1 で前、+1 で次）。縦書きは右綴じの本なので、左が「次」
@@ -1499,31 +1553,13 @@
       els.zenEnterIcon.hidden = isZenMode;
       els.zenExitIcon.hidden = !isZenMode;
       els.root.classList.toggle('vertical-writing', isVertical);
-      const writingLabel = isVertical ? '横書きにする' : '縦書きにする';
-      els.writingModeBtn.setAttribute('aria-pressed', String(!isVertical));
-      els.writingModeBtn.setAttribute('aria-label', writingLabel);
-      els.writingModeBtn.title = writingLabel;
-      els.writingModeGlyph.textContent = isVertical ? '横' : '縦';
+      els.writingOptions.forEach(option => {
+        option.setAttribute('aria-pressed', String((option.dataset.mode === 'vertical') === isVertical));
+      });
       fitVerticalBody();
       updateArrows();
       // 見えなくした要素に Tab で入らないようにする
       els.zenHidden.forEach(el => { el.inert = isZenMode; });
-    }
-
-    function updateButtonsHighlight() {
-      let activeButton = null;
-      els.themeBtns.forEach(btn => {
-        const isActive = btn.dataset.theme === currentTheme;
-        if (isActive) btn.setAttribute('aria-current', 'page');
-        else btn.removeAttribute('aria-current');
-        if (isActive) activeButton = btn;
-      });
-      if (!activeButton) return;
-      const left = activeButton.offsetLeft - (els.buttonScroller.clientWidth - activeButton.offsetWidth) / 2;
-      els.buttonScroller.scrollTo({
-        left: Math.max(0, left),
-        behavior: reducedMotionQuery.matches ? 'auto' : 'smooth'
-      });
     }
 
     /* =========================================
@@ -2260,7 +2296,7 @@
       const step = (isVertical ? dx > 0 : dx < 0) ? 1 : -1;
       const target = themeIndex() + step;
       if (target < -1 || target >= AVAILABLE_THEMES.length) return false;
-      if (document.activeElement?.matches('.theme-btn')) document.activeElement.blur();
+      if (document.activeElement?.matches('.toc-link, .progress-index')) document.activeElement.blur();
       els.swipeHint.classList.add('is-dismissed');
       gesture.fromTheme = currentTheme;
       gesture.turn = switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace', interactive: true });
@@ -2378,7 +2414,25 @@
       else gesture = null;
     }, { passive: true });
 
-    els.themeBtns.forEach(btn => btn.addEventListener('click', () => switchTheme(btn.dataset.theme)));
+    // 前へめくる間は本物のページが隠れていて focus できないので、めくり終えてから移す
+    function focusWhenShown(element) {
+      if (!element) return;
+      if (els.contentLayout.classList.contains('is-covered')) {
+        window.setTimeout(() => focusWhenShown(element), 100);
+        return;
+      }
+      if (!element.closest('[hidden]')) element.focus({ preventScroll: true });
+    }
+
+    // 目次から開いたら、フォーカスは「目次へ戻る」ノンブルへ。ノンブルから戻ったら、目次の先頭へ
+    els.tocLinks.forEach(link => link.addEventListener('click', () => {
+      switchTheme(link.dataset.theme);
+      focusWhenShown(els.progressText);
+    }));
+    els.progressText.addEventListener('click', () => {
+      switchTheme(null);
+      focusWhenShown(els.tocLinks[0]);
+    });
     els.subtitle.addEventListener('click', () => switchTheme(null));
 
     els.themeToggleBtn.addEventListener('click', () => {
@@ -2404,12 +2458,14 @@
     });
 
     // 縦書きが標準。横書きを選んだときだけ覚えておく
-    els.writingModeBtn.addEventListener('click', () => {
-      isVertical = !isVertical;
+    els.writingOptions.forEach(option => option.addEventListener('click', () => {
+      const vertical = option.dataset.mode === 'vertical';
+      if (vertical === isVertical) return;
+      isVertical = vertical;
       writeStorage('localStorage', STORAGE_KEYS.writingMode, isVertical ? null : 'horizontal');
       hideToolbars();
       applyDisplayModes();
-    });
+    }));
 
     // 幅や書体が変わると縦書きの列に収まる長さも変わる
     let fitFrame = null;
@@ -2611,7 +2667,7 @@
     if (location.hash && !currentTheme) setThemeUrl(null, true);
     applyDisplayModes();
     updateContentData();
-    syncNav();
+    updateArrows();
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
