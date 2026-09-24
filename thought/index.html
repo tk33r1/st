@@ -40,9 +40,15 @@
   <script>
     /* 描画前にダーク/集中モード/縦書きを当てる（読み込み時に白く光ったり、本文の向きが跳ねたりするのを防ぐ） */
     (function () {
-      var root = document.documentElement, dark = null, zen = false, vertical = true;
-      try { vertical = localStorage.getItem('thought-writing-mode') !== 'horizontal'; } catch (_) {}
-      try { var stored = localStorage.getItem('thought-dark-mode'); if (stored !== null) dark = stored === 'true'; } catch (_) {}
+      var root = document.documentElement, dark = null, zen = false;
+      // 標準の向きはスマホなら縦書き、PC（とタブレット）なら横書き。回転や窓幅で変わらないよう画面の短辺で見る
+      var phone = window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
+      var vertical = phone;
+      root.dataset.defaultWriting = phone ? 'vertical' : 'horizontal';
+      try { var mode = localStorage.getItem('thought-writing-mode'); if (mode === 'vertical' || mode === 'horizontal') vertical = mode === 'vertical'; } catch (_) {}
+      // 昼/夜は端末の設定に従う。手で選んだ分はこのタブの間だけ（以前 localStorage に残していた分は捨てる）
+      try { localStorage.removeItem('thought-dark-mode'); } catch (_) {}
+      try { var stored = sessionStorage.getItem('thought-dark-mode'); if (stored !== null) dark = stored === 'true'; } catch (_) {}
       try { zen = sessionStorage.getItem('thought-zen-mode') === 'true'; } catch (_) {}
       if (dark === null) dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (dark) {
@@ -316,10 +322,12 @@
     [data-color="green"] { --marker: var(--hl-green); }
     #body mark.thought-highlight { padding: 0.05em 0; border-radius: 0.08em; background: linear-gradient(transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); color: inherit; box-decoration-break: clone; -webkit-box-decoration-break: clone; cursor: pointer; }
     /*
-      縦書き（標準）。列の長さ（高さ）は fitVerticalBody が本文の量と幅に合わせて決める。
-      横スクロールはページめくりのスワイプとぶつかるので、全文が幅に収まる長さにする
+      縦書き（スマホの標準）。列の長さ（高さ）は fitVerticalBody が本文の量と幅に合わせて決める。
+      横スクロールはページめくりのスワイプとぶつかるので、全文が幅に収まる長さにする。
+      それでも収まらない（長いメモを書いた等）ときの指での横スクロールは、ブラウザに任せず JS が動かす
+      （touch-action で横の既定動作を止め、スクロールできる間はめくりより先にスクロールする）
     */
-    .vertical-writing #body { max-width: 100%; height: 16em; overflow-x: auto; overflow-y: hidden; writing-mode: vertical-rl; line-height: 2.1; scrollbar-width: thin; }
+    .vertical-writing #body { max-width: 100%; height: 16em; overflow-x: auto; overflow-y: hidden; writing-mode: vertical-rl; line-height: 2.1; scrollbar-width: thin; touch-action: pan-y; }
     /* 蛍光ペンは横書きの「下半分」に合わせ、縦書きでは行の左側（下側）に引く */
     .vertical-writing #body mark.thought-highlight { padding: 0 0.05em; background: linear-gradient(to left, transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); }
     .vertical-writing #body .margin-note { margin: 0.2em 0 0.35em; }
@@ -437,6 +445,14 @@
     }
     .page-note::before { display: block; color: var(--quiet); content: "余白に書き留めたこと　" attr(data-date); font-family: var(--serif); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.1em; }
     .page-note:hover { color: var(--text); border-left-color: var(--muted); }
+    /* 本文の改訂で位置を失った書き込み（本文には描けないので、本文の下に一覧で残す） */
+    .orphaned-notes { margin-top: 1.5rem; }
+    .orphaned-guide { margin: 0.5rem 0 0; color: var(--quiet); font-size: 0.78rem; line-height: 1.8; }
+    .orphan-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .orphan-kind { color: var(--quiet); font-size: 0.72rem; letter-spacing: 0.1em; }
+    .orphan-delete { min-height: 2.25rem; padding: 0 0.25rem; border: 0; background: transparent; color: var(--muted); font-size: 0.75rem; letter-spacing: 0.08em; cursor: pointer; }
+    .orphan-delete:hover { color: var(--text); }
+    .orphan-quote { margin: 0; color: var(--secondary); line-height: 1.9; overflow-wrap: anywhere; }
 
     /* ひと呼吸。見出しの細い線（.breath-line）と同じ線が、吸うと伸び、吐くと縮む */
     .breath-overlay { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6rem; background: var(--background); opacity: 0; transition: opacity 0.8s ease; }
@@ -592,6 +608,11 @@
     /* 裏返った短冊は紙の裏（文字は見せない） */
     .leaf-strip.is-back .leaf-strip-page { visibility: hidden; }
     .content-layout.is-covered { visibility: hidden; }
+    /*
+      めくりの見本の間は、見た目だけ隠す（visibility で隠すとフォーカスや読み上げの位置が外れる。
+      見本はスワイプしない人＝スクリーンリーダーの利用者にも毎回出るので、そちらを壊さない）
+    */
+    .content-layout.is-veiled { opacity: 0; pointer-events: none; }
     /* 登場の段階（1→3 の順に遅れて出る） */
     .delay-1 { animation-delay: 120ms; }
     .delay-2 { animation-delay: 220ms; }
@@ -731,6 +752,13 @@
               </div>
 
               <button type="button" id="pageNote" class="page-note" title="書き直す" hidden></button>
+
+              <!-- 本文の改訂で位置を失った書き込み（中身は JS が入れる） -->
+              <details id="orphanedNotes" class="revisions page-note-history orphaned-notes" hidden>
+                <summary></summary>
+                <p class="orphaned-guide">本文が改訂され、書き込んだ箇所が見つからなくなりました。内容はここに残してあります。</p>
+                <ol></ol>
+              </details>
 
               <!-- 目次（イントロのページだけに出す）。項目は #thoughtSource の h2 から並べ、data-slots 個に満たない分は空欄で残す -->
               <nav id="toc" class="toc zen-hide content-element anim-ready play-fade-up delay-2" aria-labelledby="tocHeading" data-slots="9">
@@ -941,6 +969,7 @@
       pageNoteInput: document.getElementById('pageNoteInput'),
       pageNoteQuestion: document.getElementById('pageNoteQuestion'),
       pageNoteHistory: document.getElementById('pageNoteHistory'),
+      orphanedNotes: document.getElementById('orphanedNotes'),
       exportNotesBtn: document.getElementById('exportNotesBtn'),
       noteToast: document.getElementById('noteToast'),
       writingOptions: document.querySelectorAll('#writingModeSwitch .mode-option'),
@@ -1095,6 +1124,8 @@
     let currentTheme = getThemeFromHash();
     let transitionToken = 0;
     let currentAnnotations = [];
+    // 本文の改訂で位置を失った書き込み（本文には描かず、一覧で見せる。保存時は一緒に書き戻す）
+    let orphanedAnnotations = [];
     let pendingSelection = null;
     let pendingMemoSelection = null;
     let editingAnnotationId = null;
@@ -1177,8 +1208,9 @@
     function updateContentData() {
       const theme = getCurrentThemeData();
       els.title.textContent = theme.title;
-      currentAnnotations = loadAnnotations();
+      ({ placed: currentAnnotations, orphaned: orphanedAnnotations } = loadAnnotations());
       renderAnnotatedBody();
+      renderOrphanedAnnotations();
 
       const hasUpdated = setMetaRow(els.lastUpdated, '最終更新日', buildUpdatedNodes(theme.lastUpdated));
       const hasReference = setMetaRow(els.reference, '参考文献', buildReferenceNodes(theme.reference));
@@ -1213,7 +1245,7 @@
     // 写しは見た目だけ使う（登場アニメのクラスは外して最初から見えている状態にする）
     function createPageSnapshot() {
       const snapshot = els.contentLayout.cloneNode(true);
-      snapshot.classList.remove('is-covered');
+      snapshot.classList.remove('is-covered', 'is-veiled');
       snapshot.querySelectorAll('.anim-ready, [class*="play-"], [class*="delay-"]').forEach(el => {
         el.classList.remove(...Array.from(el.classList).filter(name => name === 'anim-ready' || /^(play|delay)-/.test(name)));
       });
@@ -1239,7 +1271,7 @@
       if (pageTurnFrame !== null) window.cancelAnimationFrame(pageTurnFrame);
       pageTurnFrame = null;
       els.contentStage.querySelectorAll('.page-leaf, .page-under, .page-shadow').forEach(el => el.remove());
-      els.contentLayout.classList.remove('is-covered');
+      els.contentLayout.classList.remove('is-covered', 'is-veiled');
     }
 
     // めくる紙を縦の短冊に切って組む。短冊それぞれが同じページの写しを、自分の幅の分だけ覗かせる。
@@ -1537,7 +1569,7 @@
       shadow.className = 'page-shadow';
       placeInStage(shadow, rect, pad);
       const parts = buildLeaf(createPageSnapshot(), rect, rect, pad, isVertical);
-      els.contentLayout.classList.add('is-covered');
+      els.contentLayout.classList.add('is-veiled');
       els.contentStage.append(shadow, parts.leaf);
       const turn = { direction: 'next', token, parts, shadow, t: 0, mirrored: isVertical };
       renderTurn(turn, 0);
@@ -1667,15 +1699,18 @@
       付け直しは書き込みごとではなく全体で決める：保存時の位置からのずれが小さい組み合わせから順に、
       同じ種類の書き込みと重ならない出現位置を割り当てる（ずれていない書き込みはずれ 0 なので最優先で元の位置に残る）。
       同じ文言に書き込みが複数あっても、残った出現を本来そこにあった書き込みに渡せる。
+      付け直せなかった書き込み（改訂で文言が消えた等）は orphaned として捨てずに返す。保存時にも書き戻すので、
+      文言を元に戻せばまた本文に付く。
     */
     // 書き出しでは表示中以外のテーマも読むので、テーマを渡せるようにしてある
     function loadAnnotations(themeName = currentTheme) {
+      const empty = { placed: [], orphaned: [] };
       const bodyText = getThemeData(themeName).body;
       const stored = readStorage('localStorage', getAnnotationKey(themeName));
-      if (!stored) return [];
+      if (!stored) return empty;
       try {
         const parsed = JSON.parse(stored);
-        if (!Array.isArray(parsed)) return [];
+        if (!Array.isArray(parsed)) return empty;
         const items = [];
         parsed.slice(0, MAX_ANNOTATIONS).forEach((item, index) => {
           if (!item || typeof item !== 'object') return;
@@ -1702,9 +1737,12 @@
           if (Array.from(placed.values()).some(existing => existing.kind === item.kind && overlapsRange(existing, range))) return;
           placed.set(item, { ...item, ...range });
         });
-        return Array.from(placed.values()).sort((a, b) => a.start - b.start);
+        return {
+          placed: Array.from(placed.values()).sort((a, b) => a.start - b.start),
+          orphaned: items.filter(item => !placed.has(item))
+        };
       } catch (_) {
-        return [];
+        return empty;
       }
     }
 
@@ -1718,7 +1756,8 @@
     }
 
     function saveAnnotations() {
-      const value = currentAnnotations.length ? JSON.stringify(currentAnnotations) : null;
+      const all = [...currentAnnotations, ...orphanedAnnotations];
+      const value = all.length ? JSON.stringify(all) : null;
       if (!writeStorage('localStorage', getAnnotationKey(currentTheme), value)) {
         showNoteMessage('この環境では書き込みを保存できません。「写す」で内容をコピーしてください。');
       }
@@ -1899,6 +1938,61 @@
       }));
     }
 
+    /*
+      本文の改訂で位置を失った書き込み。本文には描けないので本文の下に一覧で残し、要らなければ個別に消せる。
+      書き出し・「写す」にも含める
+    */
+    const ORPHANED_HEADING = '本文の改訂で位置を失った書き込み';
+
+    function renderOrphanedAnnotations() {
+      const container = els.orphanedNotes;
+      container.hidden = !orphanedAnnotations.length;
+      container.querySelector('summary').textContent = `${ORPHANED_HEADING}（${orphanedAnnotations.length}）`;
+      if (orphanedAnnotations.some(item => item.kind === 'memo')) loadHandFont();
+      container.querySelector('ol').replaceChildren(...orphanedAnnotations.map(annotation => {
+        const label = KIND_LABEL[annotation.kind];
+        const item = document.createElement('li');
+        const head = document.createElement('div');
+        head.className = 'orphan-head';
+        const kind = document.createElement('span');
+        kind.className = 'orphan-kind';
+        kind.textContent = label;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'orphan-delete';
+        remove.dataset.annotationId = annotation.id;
+        remove.textContent = '削除';
+        remove.setAttribute('aria-label', `この${label}を削除する：${annotation.quote}`);
+        head.append(kind, remove);
+        const quote = document.createElement('p');
+        quote.className = 'orphan-quote';
+        quote.textContent = `「${annotation.quote}」`;
+        item.append(head, quote);
+        if (annotation.kind === 'memo') {
+          const note = document.createElement('p');
+          note.className = 'revision-body';
+          note.textContent = annotation.note;
+          item.append(note);
+        }
+        return item;
+      }));
+    }
+
+    els.orphanedNotes.addEventListener('click', event => {
+      const button = event.target.closest('.orphan-delete');
+      if (!button) return;
+      const annotation = orphanedAnnotations.find(item => item.id === button.dataset.annotationId);
+      if (!annotation) return;
+      const label = KIND_LABEL[annotation.kind];
+      if (!window.confirm(`この${label}を削除しますか？`)) return;
+      orphanedAnnotations = orphanedAnnotations.filter(item => item !== annotation);
+      saveAnnotations();
+      renderOrphanedAnnotations();
+      // 押したボタンは描き直しで消えるので、一覧の見出しへ（一覧ごと消えたら「余白に書く」へ）
+      (els.orphanedNotes.hidden ? els.noteToggleBtn : els.orphanedNotes.querySelector('summary')).focus({ preventScroll: true });
+      els.liveStatus.textContent = `${label}を削除しました。`;
+    });
+
     els.pageNoteInput.addEventListener('input', () => {
       const today = formatDate(new Date());
       if (pageNote.text.trim() && pageNote.date && pageNote.date !== today && pageNote.history[0]?.text !== pageNote.text) {
@@ -1922,15 +2016,21 @@
     function buildNotebook() {
       const sections = [null, ...AVAILABLE_THEMES].map(themeName => {
         const theme = getThemeData(themeName);
-        const annotations = loadAnnotations(themeName);
+        const { placed: annotations, orphaned } = loadAnnotations(themeName);
         const note = readPageNote(themeName);
-        if (!annotations.length && !note.text.trim() && !note.history.length) return '';
+        if (!annotations.length && !orphaned.length && !note.text.trim() && !note.history.length) return '';
         const lines = [`## ${theme.title}`, '', `> ${theme.body}`];
         if (theme.question) lines.push('', `問い：${theme.question}`);
         const highlights = annotations.filter(item => item.kind === 'highlight');
         const memos = annotations.filter(item => item.kind === 'memo');
+        const memoLine = (item, label = '') => `- ${label}「${item.quote}」\n  ${indentLines(item.note, '  ')}`;
         if (highlights.length) lines.push('', '### 蛍光ペン', ...highlights.map(item => `- 「${item.quote}」`));
-        if (memos.length) lines.push('', '### メモ', ...memos.map(item => `- 「${item.quote}」\n  ${indentLines(item.note, '  ')}`));
+        if (memos.length) lines.push('', '### メモ', ...memos.map(item => memoLine(item)));
+        if (orphaned.length) {
+          lines.push('', `### ${ORPHANED_HEADING}`, ...orphaned.map(item => (
+            item.kind === 'memo' ? memoLine(item, 'メモ') : `- 蛍光ペン「${item.quote}」`
+          )));
+        }
         if (note.text.trim()) lines.push('', `### 余白に書き留めたこと${note.date ? `（${note.date}）` : ''}`, '', note.text.trim());
         if (note.history.length) {
           lines.push('', '### 過去の自分の書き留め');
@@ -2091,7 +2191,7 @@
       if (sameKind.some(item => overlapsRange(item, selectionData))) {
         return { error: `ほかの${KIND_LABEL[kind]}と重ならない範囲を選んでください。` };
       }
-      if (currentAnnotations.length >= MAX_ANNOTATIONS) return { error: `書き込みは${MAX_ANNOTATIONS}件まで保存できます。` };
+      if (currentAnnotations.length + orphanedAnnotations.length >= MAX_ANNOTATIONS) return { error: `書き込みは${MAX_ANNOTATIONS}件まで保存できます。` };
       return {};
     }
 
@@ -2280,11 +2380,24 @@
       switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace' });
     }
 
-    // prev*/next* のボタンは画面の左右の位置で、送る向きは stepForSide が決める
-    els.prevThemeBtn.addEventListener('click', () => moveTheme(stepForSide('left')));
-    els.nextThemeBtn.addEventListener('click', () => moveTheme(stepForSide('right')));
-    els.progressPrevBtn.addEventListener('click', () => moveTheme(stepForSide('left')));
-    els.progressNextBtn.addEventListener('click', () => moveTheme(stepForSide('right')));
+    /*
+      prev と next のボタンは画面の左右の位置で、送る向きは stepForSide が決める。
+      押したボタンは、端で押せなくなったり、イントロで #progress ごと隠れたり、前へめくる間は写しの下に隠れたりする。
+      キーボードで押したときにフォーカスが body へ落ちないよう、めくり終えてから近くへ置き直す
+      （押せなければ反対側の矢印、それも隠れていれば目次の先頭）
+    */
+    [
+      [els.prevThemeBtn, 'left', els.nextThemeBtn],
+      [els.nextThemeBtn, 'right', els.prevThemeBtn],
+      [els.progressPrevBtn, 'left', els.progressNextBtn],
+      [els.progressNextBtn, 'right', els.progressPrevBtn]
+    ].forEach(([button, side, partner]) => button.addEventListener('click', () => {
+      const hadFocus = document.activeElement === button;
+      moveTheme(stepForSide(side));
+      if (!hadFocus) return;
+      const usable = (element) => !element.disabled && !element.closest('[hidden]');
+      focusWhenShown(usable(button) ? button : usable(partner) ? partner : els.tocLinks[0]);
+    }));
 
     /*
       横スワイプは指に紙が付いてくる。
@@ -2399,8 +2512,30 @@
         return;
       }
       const touch = e.changedTouches[0];
-      gesture = { mode: 'pending', startX: touch.clientX, startY: touch.clientY, samples: [{ x: touch.clientX, time: performance.now() }] };
+      gesture = {
+        mode: 'pending',
+        startX: touch.clientX,
+        startY: touch.clientY,
+        inBody: els.body.contains(e.target),
+        samples: [{ x: touch.clientX, time: performance.now() }]
+      };
     }, { passive: true });
+
+    /*
+      本文が横にはみ出しているとき（縦書きで長いメモを書いた等）、指の向き dx の先にまだ読む分が残っているか。
+      残っていればめくりより先に本文をスクロールし、端まで来たら次のスワイプでめくる。
+      縦書き（vertical-rl）の scrollLeft は右端が 0 で左へ負になるので、始まりの端からの距離は絶対値で見る
+    */
+    function bodyCanScroll(dx) {
+      const body = els.body;
+      const max = body.scrollWidth - body.clientWidth;
+      if (max <= 1) return false;
+      const fromStart = Math.abs(body.scrollLeft);
+      // 縦書きは左へ、横書きは右へ読み進む。指はその逆向きに払う
+      const forward = isVertical ? dx > 0 : dx < 0;
+      return forward ? fromStart < max - 1 : fromStart > 1;
+    }
+    const BODY_FLING_MS = 250;
 
     els.contentStage.addEventListener('touchmove', (e) => {
       if (!gesture || gesture.mode === 'ignore') return;
@@ -2412,15 +2547,25 @@
         if (Math.hypot(dx, dy) < DRAG_START_DISTANCE) return;
         // 縦の動き・複数指・本文を選択中・動きを減らす設定のときは、指に付いてこさせない
         const horizontal = Math.abs(dx) > Math.abs(dy) * 1.2;
-        if (!horizontal || e.touches.length > 1 || hasBodySelection() || reducedMotionQuery.matches) {
+        if (horizontal && gesture.inBody && e.touches.length === 1 && !hasBodySelection() && bodyCanScroll(dx)) {
+          gesture.mode = 'scroll';
+          gesture.scrollOriginX = touch.clientX;
+          gesture.scrollOrigin = els.body.scrollLeft;
+        } else if (!horizontal || e.touches.length > 1 || hasBodySelection() || reducedMotionQuery.matches) {
           gesture.mode = horizontal && reducedMotionQuery.matches ? 'swipe' : 'ignore';
           return;
-        }
-        if (!startDrag(touch)) {
+        } else if (!startDrag(touch)) {
           gesture.mode = 'ignore';
           return;
+        } else {
+          gesture.mode = 'drag';
         }
-        gesture.mode = 'drag';
+      }
+      if (gesture.mode === 'scroll') {
+        if (e.cancelable) e.preventDefault();
+        // 本文が指に付いてくる（ブラウザが範囲に収める）
+        els.body.scrollLeft = gesture.scrollOrigin - (touch.clientX - gesture.scrollOriginX);
+        return;
       }
       if (gesture.mode !== 'drag') return;
       if (gesture.turn.token !== transitionToken) {
@@ -2436,6 +2581,13 @@
       if (gesture.mode === 'drag') {
         releaseDrag();
         return;
+      }
+      // 払って離したら、その勢いの分だけ滑らせる
+      if (gesture.mode === 'scroll') {
+        const velocity = releaseVelocity();
+        if (Math.abs(velocity) > FLICK_SPEED) {
+          els.body.scrollBy({ left: -velocity * BODY_FLING_MS, behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
+        }
       }
       // 動きを減らす設定では、従来どおり離したときにだけ送る（紙は動かさない）
       if (gesture.mode === 'swipe') {
@@ -2474,18 +2626,18 @@
     });
     els.subtitle.addEventListener('click', () => switchTheme(null));
 
-    // 選んだら覚えておく（選ぶまでは OS の設定に従う）
+    // 手で選んだ分はこのタブの間だけ（次回訪問は端末の設定から始める）。端末と同じ側に戻したら覚えない
     els.colorOptions.forEach(option => option.addEventListener('click', () => {
       const dark = option.dataset.mode === 'dark';
       if (dark === isDarkMode) return;
       isDarkMode = dark;
-      writeStorage('localStorage', STORAGE_KEYS.dark, String(isDarkMode));
+      writeStorage('sessionStorage', STORAGE_KEYS.dark, isDarkMode === colorSchemeQuery.matches ? null : String(isDarkMode));
       applyDisplayModes();
     }));
 
-    // 手動で切り替えていなければ OS の設定変更に追従する
+    // 端末の設定が変わったら、手で選んでいても端末に合わせ直す
     colorSchemeQuery.addEventListener('change', (event) => {
-      if (readStorage('localStorage', STORAGE_KEYS.dark) !== null) return;
+      writeStorage('sessionStorage', STORAGE_KEYS.dark, null);
       isDarkMode = event.matches;
       applyDisplayModes();
     });
@@ -2499,12 +2651,13 @@
       else endBreath(true);
     });
 
-    // 縦書きが標準。横書きを選んだときだけ覚えておく
+    // 標準（スマホは縦、PC は横。<head> で決めている）と違う向きを選んだときだけ覚えておく
     els.writingOptions.forEach(option => option.addEventListener('click', () => {
       const vertical = option.dataset.mode === 'vertical';
       if (vertical === isVertical) return;
       isVertical = vertical;
-      writeStorage('localStorage', STORAGE_KEYS.writingMode, isVertical ? null : 'horizontal');
+      const mode = writingModeName();
+      writeStorage('localStorage', STORAGE_KEYS.writingMode, mode === els.root.dataset.defaultWriting ? null : mode);
       hideToolbars();
       applyDisplayModes();
       // めくる向きが逆になったので、見本をもう一度見せる（その向きでまだめくったことがなければ）
@@ -2574,15 +2727,18 @@
     }, true);
 
     const getFormattedContent = () => {
-      const annotations = currentAnnotations.map(annotation => (
+      const formatAnnotations = (list) => list.map(annotation => (
         annotation.kind === 'memo'
           ? `・メモ「${annotation.quote}」\n  ${annotation.note.replace(/\n/g, '\n  ')}`
           : `・蛍光ペン「${annotation.quote}」`
       )).join('\n');
+      const annotations = formatAnnotations(currentAnnotations);
       const annotationBlock = annotations ? `\n\n― 本文への書き込み\n${annotations}` : '';
+      const orphaned = formatAnnotations(orphanedAnnotations);
+      const orphanedBlock = orphaned ? `\n\n― ${ORPHANED_HEADING}\n${orphaned}` : '';
       const pageNoteText = pageNote.text.trim();
       const pageNoteBlock = pageNoteText ? `\n\n― 余白に書き留めたこと\n${pageNoteText}` : '';
-      return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}${pageNoteBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
+      return `【${els.title.textContent}】\n${getCurrentBodyText()}${annotationBlock}${orphanedBlock}${pageNoteBlock}\n\n― 思索の余白\n${SITE_URL}${themeHash(currentTheme)}`;
     };
 
     const labelTimers = new WeakMap();
