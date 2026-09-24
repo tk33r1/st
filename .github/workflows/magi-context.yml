@@ -51,8 +51,10 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
         git add data/magi-context.json
-        # [skip ci]: sitemap.yml 等を再起動させない（この JSON は sitemap の対象外）
-        git commit -m "Auto-generated MAGI persona context [skip ci]" || exit 0
+        # [skip ci] は付けない。Cloudflare Pages はこの印のコミットをビルドしないため、JSON が
+        # 次の push まで公開されなくなる。GITHUB_TOKEN の push はほかの workflow を起動しないし、
+        # この JSON は上の paths に無いので、付けなくてもループはしない
+        git commit -m "Auto-generated MAGI persona context" || exit 0
         # 同じ push で sitemap.yml も main にコミットしてくるので、取り込んでから push する
         git pull --rebase origin main
         git push origin HEAD:main
