@@ -1,0 +1,58 @@
+name: MAGI Persona Context
+
+# 人格カード（data/magi-context.json）を、元ページが変わったときだけ作り直す。
+# 実際に LLM を呼ぶかどうかはスクリプトが人格ごとのハッシュで決めるので、
+# ここで起動しても素材が変わっていなければ API 呼び出しは 0 回で終わる。
+on:
+  push:
+    branches: [ main ]
+    # .github/scripts/magi-context.py の PERSONAS に並べた素材と揃えること
+    paths:
+      - thought/index.html
+      - dj/index.html
+      - motovlog/index.html
+      - job/index.html
+      - data/tools.json
+      - data/glitch.json
+      - .github/scripts/magi-context.py
+  workflow_dispatch:
+    inputs:
+      force:
+        description: '素材が変わっていなくても全人格を作り直す'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# 連続 push で同時に走ると、同じ JSON を奪い合って push が弾かれる
+concurrency:
+  group: magi-context
+  cancel-in-progress: false
+
+env:
+  BOT_EMAIL: "github-actions[bot]@users.noreply.github.com"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Generate persona cards
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_MODEL: 'gpt-5.6-luna'
+      run: python3 .github/scripts/magi-context.py ${{ inputs.force && '--force' || '' }}
+
+    - name: Commit and push
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "$BOT_EMAIL"
+        git add data/magi-context.json
+        # [skip ci]: sitemap.yml 等を再起動させない（この JSON は sitemap の対象外）
+        git commit -m "Auto-generated MAGI persona context [skip ci]" || exit 0
+        # 同じ push で sitemap.yml も main にコミットしてくるので、取り込んでから push する
+        git pull --rebase origin main
+        git push origin HEAD:main

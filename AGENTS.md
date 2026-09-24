@@ -27,7 +27,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` 由来（`data/tools-ui.css` の `--cat-*`）で、ツール個別には持たない。ダウンロード等の完了地点では `STShare.celebrate()` を呼ぶ（後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
@@ -100,6 +100,9 @@
     `_ACCESS_TOKEN_SECRET` の4点（メディアごと）を置く。未設定なら警告だけ出して生成は通す。
   - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
     `dry-run` での本文確認に使う（生成は走らない）。
+  - `magi-context.yml`（元ページの push 時＋手動）: `.github/scripts/magi-context.py` が
+    MAGI の人格カードを作り直して `data/magi-context.json` にコミットする（後述「MAGI の人格カード」）。
+    素材のハッシュが前回と同じ人格は LLM を呼ばない。手動実行の `force` で全人格を作り直す。
 
 ## コーディング規約
 
@@ -122,8 +125,20 @@
   呼び出し側で条件分岐しない。ツールを増やすときは `<script src="../../data/tools-share.js">`
   を `buy-me-oil.js` の隣に置き、ダウンロード処理を通す共通関数に1行足すだけでよい。
   見た目の確認は URL に `?st-share=preview` を付けて完了操作をすると抑制を無視して出る。
-- **personas 二重管理**: `workers/magi2/persona.yaml` が正本で `personas.js` がランタイム用。
-  **変更時は両方を更新すること**（ファイル頭の注意書きどおり）。
+- **magi2 の人格設定**: `workers/magi2/personas.js` が唯一の正本（人格の骨格プロンプト、モデル、
+  タイムアウト、揺らぎ）。以前あった `persona.yaml` は読まれないまま内容がずれたので廃止した。
+  人間向けの別形式を並べて二重管理に戻さないこと。
+- **MAGI の人格カード（`data-magi` の目印）**: magi2 の3人格は、固定の骨格プロンプト（personas.js）に
+  サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
+  付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、
+  ほかに各ページの JSON-LD と `data/tools.json`・`data/glitch.json` を使う。
+  **ページを改修するときは `data-magi` の属性を残すこと**（class や id は自由に変えてよい）。
+  目印の内側で読ませたくない部分は `data-magi-skip` を付けて外す（job の Signal Board のような
+  演出用の数値や、料金・機材仕様などの実務情報は入れない）。目印が消えると workflow が
+  エラーで止まり、Worker は前回のカードのまま動き続ける。素材のページを増やすときは
+  `magi-context.py` の `PERSONAS` と `magi-context.yml` の `paths` の両方に足す。
+  抽出結果は `python .github/scripts/magi-context.py --dry-run --show` で API キーなしに確認できる。
+  Worker は `https://tk.st/data/magi-context.json` を10分キャッシュで読むので、反映は最大10分遅れる。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで

@@ -1,6 +1,6 @@
 // MAGI — persona config (chat-only)
-// 正本は persona.yaml。Worker はランタイムFSが無いため、この JS を import する。
-// 変更時は persona.yaml と本ファイルを両方更新すること。
+// 人格・モデル設定の唯一の正本（src/index.js が import する）。
+// 以前は人間用に persona.yaml を併置していたが、どこからも読まれず内容がずれたため廃止した。
 
 export const DEFAULTS = {
   endpoint: 'https://api.openai.com/v1/chat/completions',
@@ -84,6 +84,18 @@ export const SYNTHESIZER = {
     '- 議論から自然に導かれた結論を、自分の思想として述べる',
     '返答はユーザーの入力言語で、200文字以内。',
   ].join('\n'),
+};
+
+// 人格カード：サイト本文（各ページの data-magi の目印）から GitHub Actions が要約して
+// data/magi-context.json に書き出したものを、3人格の system プロンプトの後ろに足す。
+// 上の system_prompt は人格の骨格（一人称・口調・文字数）で、カードは「いまの中身」。
+// 取得できないときはカード無し＝上の固定プロンプトだけで動く。→ .github/scripts/magi-context.py
+export const PERSONA_CONTEXT = {
+  url: 'https://tk.st/data/magi-context.json',
+  ttl_ms: 10 * 60 * 1000,   // isolate 内キャッシュの寿命（失敗時もこの間は再取得しない）
+  fetch_timeout_ms: 1500,   // 取れなければカード無しで進める。会話の開始を待たせない
+  max_chars: 2000,          // 1枚あたりの上限（生成側でも検査済み。念のための上限）
+  header: '【いまのあなたが大切にしている考え・関心・経験（本人のサイトより。発言の拠り所にしてよいが、羅列や引用のしすぎは避ける。口調と文字数は上の指定を優先する）】',
 };
 
 // 3人格リクエストの temperature を UI テーマで変化させる（揺らぎ）。

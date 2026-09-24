@@ -1,4 +1,4 @@
-import { DEFAULTS, PERSONAS, PERSONA_TEMPERATURE, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_TEMPERATURE, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -159,6 +159,35 @@ async function fetchTitle(env, lastContent, signal, log) {
     return null;
   }
 }
+
+// --- 人格カード：サイト本文から自動生成した JSON を取り、人格の system プロンプトに足す ---
+// isolate 内で ttl_ms だけ保持。取得に失敗したら直近の成功値、それも無ければカード無しで動く
+// （＝従来どおり固定プロンプトのみ）。カードが無くても会話は止めない。
+let personaCards = { at: 0, cards: null };
+async function loadPersonaCards(log) {
+  if (Date.now() - personaCards.at < PERSONA_CONTEXT.ttl_ms) return personaCards.cards;
+  let cards = null;
+  const t = withTimeout(PERSONA_CONTEXT.fetch_timeout_ms);
+  try {
+    const res = await fetch(PERSONA_CONTEXT.url, { signal: t.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // tk.st は存在しないパスにもトップページを 200 で返すので、JSON として読めるかで判定する
+    const data = await res.json();
+    cards = {};
+    for (const [codename, v] of Object.entries((data && data.personas) || {})) {
+      if (v && typeof v.card === 'string' && v.card.trim()) cards[codename] = v.card.trim().slice(0, PERSONA_CONTEXT.max_chars);
+    }
+    log('persona_context', `cards=${Object.keys(cards).length}`);
+  } catch (e) {
+    log('persona_context', 'failed', e && e.message);
+  } finally { t.clear(); }
+  personaCards = { at: Date.now(), cards: cards || personaCards.cards };
+  return personaCards.cards;
+}
+
+const withCard = (p, cards) => (cards && cards[p.codename])
+  ? { ...p, system_prompt: `${p.system_prompt}\n\n${PERSONA_CONTEXT.header}\n${cards[p.codename]}` }
+  : p;
 
 // 指定 ms でアボートするタイマ付き signal
 function withTimeout(ms) {
@@ -334,12 +363,16 @@ export default {
           const personaTemp = theme ? PERSONA_TEMPERATURE[theme] : undefined;
           if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
 
+          // 人格カード（サイト本文由来の「いまの中身」）を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
+          const cards = await loadPersonaCards(log);
+          const personas = PERSONAS.map(p => withCard(p, cards));
+
           // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
           log('persona_call', 'round1 start');
           const t1 = withTimeout(personaTimeoutMs);
           let opinions;
           try {
-            opinions = await Promise.all(PERSONAS.map(async (p) => {
+            opinions = await Promise.all(personas.map(async (p) => {
               const text = await fetchPersonaText(env, p, messages, t1.signal, log, 1, personaTemp);
               send('persona', { round: 1, codename: p.codename, name: p.name, text });
               return { ...p, r1: text };

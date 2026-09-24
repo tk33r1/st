@@ -1226,7 +1226,9 @@
     <section class="hero-section" id="hero">
       <div class="hero-grid">
         <!-- ヒーロー左側 -->
-        <div class="hero-lead">
+        <!-- data-magi="casper" は MAGI の人格 CASPER-3 の元ネタの目印（.github/scripts/magi-context.py）。改修しても残すこと。
+             右の Signal Board は演出用の数値なので対象外 -->
+        <div class="hero-lead" data-magi="casper">
           <div class="micro-kicker">Digital Strategist / Tech Lead / Architect</div>
           <h1 class="hero-headline">
             データ駆動のグロースハックから、AI・Web3の次世代UX実装まで。
@@ -1234,7 +1236,7 @@
           <p class="hero-description">
             ECのUI/UX改善、GA4/Lookerによるデータ基盤構築、AIエージェント開発を横断し、顧客体験とLTVを最大化します。指標を読む論理と、心に残る体験をテクノロジーで接続します。
           </p>
-          <div class="hero-cta-row">
+          <div class="hero-cta-row" data-magi-skip>
             <a href="#works" class="btn-primary">
               <span>Works（実績を見る）</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -1309,7 +1311,7 @@
     </section>
 
     <!-- About セクション -->
-    <section class="section-wrap" id="about">
+    <section class="section-wrap" id="about" data-magi="casper">
       <div class="section-header">
         <span class="micro-kicker">01 / Profile &amp; Mission</span>
         <h2 class="section-title">About Me</h2>
@@ -1356,7 +1358,7 @@
     </section>
 
     <!-- Skills セクション -->
-    <section class="section-wrap" id="skills">
+    <section class="section-wrap" id="skills" data-magi="casper">
       <div class="section-header">
         <span class="micro-kicker">02 / Core Competence</span>
         <h2 class="section-title">Skills &amp; Capabilities</h2>
@@ -1427,7 +1429,7 @@
     </section>
 
     <!-- Works セクション -->
-    <section class="section-wrap" id="works">
+    <section class="section-wrap" id="works" data-magi="casper">
       <div class="section-header">
         <span class="micro-kicker">03 / Case Studies</span>
         <h2 class="section-title">Works &amp; Case Studies</h2>
