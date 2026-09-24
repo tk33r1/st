@@ -70,8 +70,6 @@
       --noise-1: rgba(0,0,0,0.025);
       --noise-2: rgba(0,0,0,0.02);
       --noise-3: rgba(0,0,0,0.015);
-      --leaf-shade: rgba(0, 0, 0, 0.16);
-      --leaf-shadow: rgba(0, 0, 0, 0.14);
       /* 蛍光ペンの色（mark / 色見本 / メモ書きの罫で共通） */
       --hl-yellow: rgba(255, 224, 92, 0.55);
       --hl-pink: rgba(255, 145, 178, 0.42);
@@ -97,8 +95,6 @@
       --noise-1: rgba(255,255,255,0.02);
       --noise-2: rgba(255,255,255,0.015);
       --noise-3: rgba(255,255,255,0.01);
-      --leaf-shade: rgba(0, 0, 0, 0.42);
-      --leaf-shadow: rgba(0, 0, 0, 0.5);
       --hl-yellow: rgba(230, 196, 70, 0.42);
       --hl-pink: rgba(235, 118, 160, 0.38);
       --hl-blue: rgba(96, 160, 236, 0.42);
@@ -492,30 +488,6 @@
       82%, 100% { opacity: 0; transform: translate(0, -50%); }
     }
 
-    /*
-      ページめくり。綴じ目（左端）を軸に紙を一枚めくる。
-      次へ：今のページの写し（.page-leaf）が手前に浮いて左へ倒れ、下から次のページが現れる。
-      前へ：前のページ（本体）が左から倒れ込んできて、今のページの写し（.page-under）に重なる。
-      --leaf-perspective は紙の幅に合わせて JS が入れる（幅が広いほど奥行きを深くして、端が膨らみすぎないように）
-    */
-    @keyframes leafTurnAway {
-      0% { transform: perspective(var(--leaf-perspective)) rotateY(0deg) skewY(0deg); }
-      18% { transform: perspective(var(--leaf-perspective)) rotateY(-10deg) skewY(-0.8deg) translateZ(6px); }
-      88% { opacity: 1; }
-      100% { opacity: 0; transform: perspective(var(--leaf-perspective)) rotateY(-90deg) skewY(-1.6deg) translateZ(6px); }
-    }
-    @keyframes leafLand {
-      0% { opacity: 0; transform: perspective(var(--leaf-perspective)) rotateY(-90deg) skewY(-1.6deg) translateZ(6px); }
-      12% { opacity: 1; }
-      82% { transform: perspective(var(--leaf-perspective)) rotateY(-4deg) skewY(-0.3deg) translateZ(2px); }
-      100% { opacity: 1; transform: perspective(var(--leaf-perspective)) rotateY(0deg) skewY(0deg); }
-    }
-    /* めくれている紙の陰影（立つほど暗く、綴じ目から遠い側に光が抜ける） */
-    @keyframes leafShadeUp { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes leafShadeDown { from { opacity: 1; } to { opacity: 0; } }
-    /* 下のページに落ちる影 */
-    @keyframes castShadowAway { 0% { opacity: 0.85; } 100% { opacity: 0; } }
-    @keyframes castShadowLand { 0% { opacity: 0; } 100% { opacity: 0.9; } }
     @keyframes locateAnnotation {
       0%, 100% { filter: brightness(1); }
       45% { filter: brightness(1.22); }
@@ -525,23 +497,21 @@
     .anim-ready { opacity: 0; }
     .play-fade-up { animation: fadeUpIn 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
     .play-fade-in { animation: fadeIn 0.8s ease-out forwards; }
-    .page-leaf, .page-under { position: absolute; margin: 0; pointer-events: none; }
-    .page-leaf, .content-layout.is-landing { transform-origin: left center; backface-visibility: hidden; will-change: transform, opacity; }
-    .page-leaf { z-index: 3; box-sizing: border-box; background-color: var(--background); box-shadow: 0 18px 40px -18px var(--leaf-shadow); animation: leafTurnAway 0.72s cubic-bezier(0.42, 0.02, 0.4, 1) forwards; }
+    /*
+      ページめくり（動きは JS の turnPage が毎フレーム描く）。
+      紙を縦の短冊に切り、綴じ目（左端）から先へいくほど角度を足して並べることで、
+      板ではなく紙がしなりながらめくれるように見せる。
+    */
+    .page-leaf, .page-under, .page-shadow { position: absolute; margin: 0; pointer-events: none; }
     .page-under { z-index: 0; }
-    .content-layout.is-landing { z-index: 2; background-color: var(--background); box-shadow: 0 0 0 var(--leaf-pad) var(--background), 0 18px 40px calc(var(--leaf-pad) - 18px) var(--leaf-shadow); animation: leafLand 0.72s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
-    .page-leaf::after, .content-layout.is-landing::after, .page-shadow {
-      position: absolute;
-      z-index: 5;
-      content: "";
-      pointer-events: none;
-    }
-    .page-leaf::after, .content-layout.is-landing::after { background: linear-gradient(90deg, transparent 0%, var(--leaf-shade) 65%, var(--leaf-shade) 100%); }
-    .page-leaf::after { inset: 0; animation: leafShadeUp 0.72s ease-in forwards; }
-    .content-layout.is-landing::after { inset: calc(var(--leaf-pad) * -1); animation: leafShadeDown 0.72s ease-out forwards; }
-    .page-shadow { z-index: 1; background: linear-gradient(90deg, var(--leaf-shade) 0%, transparent 70%); }
-    .page-shadow.is-away { animation: castShadowAway 0.72s ease-out forwards; }
-    .page-shadow.is-land { animation: castShadowLand 0.72s ease-in forwards; }
+    .page-shadow { z-index: 1; }
+    .page-leaf { z-index: 3; transform-style: preserve-3d; }
+    .leaf-strip { position: absolute; top: 0; left: 0; height: 100%; overflow: hidden; background-color: var(--background); transform-origin: 0 50%; will-change: transform; }
+    .leaf-strip-page { position: absolute; top: 0; box-sizing: border-box; height: 100%; }
+    .leaf-strip-shade { position: absolute; inset: 0; }
+    /* 裏返った短冊は紙の裏（文字は見せない） */
+    .leaf-strip.is-back .leaf-strip-page { visibility: hidden; }
+    .content-layout.is-covered { visibility: hidden; }
     /* 登場の段階（1→3 の順に遅れて出る） */
     .delay-1 { animation-delay: 120ms; }
     .delay-2 { animation-delay: 220ms; }
@@ -1073,15 +1043,17 @@
     /* =========================================
        ページめくり
        ========================================= */
+    const PAGE_TURN_MS = 950;
+    let pageTurnFrame = null;
+
     // 写しは見た目だけ使う（登場アニメのクラスは外して最初から見えている状態にする）
-    function createPageSnapshot(className) {
+    function createPageSnapshot() {
       const snapshot = els.contentLayout.cloneNode(true);
-      snapshot.classList.remove('is-landing');
+      snapshot.classList.remove('is-covered');
       snapshot.querySelectorAll('.anim-ready, [class*="play-"], [class*="delay-"]').forEach(el => {
         el.classList.remove(...Array.from(el.classList).filter(name => name === 'anim-ready' || /^(play|delay)-/.test(name)));
       });
       snapshot.querySelectorAll('.is-active').forEach(el => el.classList.remove('is-active'));
-      snapshot.classList.add(className);
       snapshot.setAttribute('aria-hidden', 'true');
       snapshot.inert = true;
       return snapshot;
@@ -1097,47 +1069,123 @@
     }
 
     function clearPageTurn() {
-      window.clearTimeout(pageTurnTimer);
-      pageTurnTimer = null;
+      if (pageTurnFrame !== null) window.cancelAnimationFrame(pageTurnFrame);
+      pageTurnFrame = null;
       els.contentStage.querySelectorAll('.page-leaf, .page-under, .page-shadow').forEach(el => el.remove());
-      els.contentLayout.classList.remove('is-landing');
+      els.contentLayout.classList.remove('is-covered');
     }
 
-    // 次へ：今のページを写した紙が手前にめくれ、下から新しいページが出る
-    // 前へ：新しいページ（本体）が左から倒れ込み、今のページの写しに重なる
+    // めくる紙を縦の短冊に切って組む。短冊それぞれが同じページの写しを、自分の幅の分だけ覗かせる
+    function buildLeaf(snapshot, pageRect, coverRect, pad) {
+      const leaf = document.createElement('div');
+      leaf.className = 'page-leaf';
+      leaf.setAttribute('aria-hidden', 'true');
+      placeInStage(leaf, coverRect, pad);
+      const width = coverRect.width + pad * 2;
+      const count = Math.max(10, Math.min(22, Math.round(width / 40)));
+      const stripWidth = width / count;
+      leaf.style.perspective = `${Math.round(Math.max(1200, width * 3))}px`;
+      const strips = Array.from({ length: count }, (_, index) => {
+        const strip = document.createElement('div');
+        strip.className = 'leaf-strip';
+        strip.style.width = `${stripWidth + 1}px`; // 継ぎ目の隙間を 1px 重ねて隠す
+        const page = document.createElement('div');
+        page.className = 'leaf-strip-page';
+        page.style.left = `${-index * stripWidth}px`;
+        page.style.width = `${width}px`;
+        page.style.padding = `${pageRect.top - coverRect.top + pad}px ${pad}px ${pad}px`;
+        page.append(index === 0 ? snapshot : snapshot.cloneNode(true));
+        const shade = document.createElement('div');
+        shade.className = 'leaf-strip-shade';
+        strip.append(page, shade);
+        leaf.append(strip);
+        return { strip, shade };
+      });
+      return { leaf, strips, stripWidth };
+    }
+
+    const easeInOut = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const smoothstep = (from, to, value) => {
+      const x = Math.min(1, Math.max(0, (value - from) / (to - from)));
+      return x * x * (3 - 2 * x);
+    };
+
+    /*
+      t = 0 で平ら、t = 1 で綴じ目の向こうへ倒れきる。
+      紙は綴じ目から先へいくほど角度が大きい（めくる指に近い端が先に上がる）ので、途中で柔らかく反る。
+      前へ戻るときは逆向きに、端が遅れて着地する。
+    */
+    function drawLeaf({ leaf, strips, stripWidth }, shadow, t, direction) {
+      const base = 180 * easeInOut(t);
+      const bend = 78 * Math.sin(Math.PI * t) * (direction === 'next' ? 1 : -1);
+      const count = strips.length;
+      const angleAt = (along) => Math.min(180, Math.max(0, base + bend * Math.pow(along, 1.35)));
+      // 光は正面から。立つほど陰り、裏返ると少し暗い紙の裏になる
+      const shadeAt = (angle) => {
+        const facing = Math.cos(angle * Math.PI / 180);
+        return (angle > 90 ? 0.05 + (1 + facing) * 0.22 : (1 - facing) * 0.3).toFixed(3);
+      };
+      let x = 0;
+      let z = 0;
+      let reach = 0;
+      strips.forEach(({ strip, shade }, index) => {
+        const angle = angleAt((index + 0.5) / count);
+        const radian = angle * Math.PI / 180;
+        const facing = Math.cos(radian);
+        strip.style.transform = `translate3d(${x.toFixed(2)}px, 0, ${z.toFixed(2)}px) rotateY(${(-angle).toFixed(2)}deg)`;
+        strip.classList.toggle('is-back', angle > 90);
+        // 陰影は短冊の両端の角度でつなぎ、継ぎ目に段が出ないようにする
+        shade.style.background = `linear-gradient(90deg, rgba(0,0,0,${shadeAt(angleAt(index / count))}), rgba(0,0,0,${shadeAt(angleAt((index + 1) / count))}))`;
+        x += stripWidth * facing;
+        z += stripWidth * Math.sin(radian);
+        reach = Math.max(reach, x);
+      });
+      leaf.style.opacity = (1 - smoothstep(128, 172, base)).toFixed(3);
+      const strength = 0.2 * Math.sin(Math.PI * Math.min(1, t * 1.15));
+      shadow.style.background = `linear-gradient(90deg, rgba(0,0,0,${(strength * 0.9).toFixed(3)}) 0px, rgba(0,0,0,${(strength * 0.5).toFixed(3)}) ${Math.round(reach * 0.75)}px, rgba(0,0,0,0) ${Math.round(reach + 36)}px)`;
+    }
+
+    // 次へ：今のページの写しがしなりながら左へめくれ、下から新しいページが出る
+    // 前へ：新しいページの写しが左から戻ってきて、今のページの写しに重なる
     function turnPage(direction, token, update) {
       clearPageTurn();
       const pad = window.innerWidth < 640 ? 12 : 24;
       const fromRect = els.contentLayout.getBoundingClientRect();
-      const snapshot = createPageSnapshot(direction === 'next' ? 'page-leaf' : 'page-under');
-      els.contentStage.style.setProperty('--leaf-pad', `${pad}px`);
-      els.contentStage.style.setProperty('--leaf-perspective', `${Math.round(Math.max(1100, fromRect.width * 2.6))}px`);
+      const before = createPageSnapshot();
 
       update();
 
       // 高さが変わるとステージが上下に動くので、差し込みは更新後の位置で測る
       const toRect = els.contentLayout.getBoundingClientRect();
+      const top = Math.min(fromRect.top, toRect.top);
+      const coverRect = { top, left: fromRect.left, width: fromRect.width, height: Math.max(fromRect.bottom, toRect.bottom) - top };
       const shadow = document.createElement('div');
-      shadow.className = `page-shadow ${direction === 'next' ? 'is-away' : 'is-land'}`;
+      shadow.className = 'page-shadow';
+      placeInStage(shadow, coverRect, pad);
+
+      let parts;
       if (direction === 'next') {
-        // めくる紙は新旧どちらのページも覆う大きさにし、写しの本文は元の位置に留める
-        const top = Math.min(fromRect.top, toRect.top);
-        const bottom = Math.max(fromRect.bottom, toRect.bottom);
-        placeInStage(snapshot, { top, left: fromRect.left, width: fromRect.width, height: bottom - top }, pad);
-        snapshot.style.padding = `${fromRect.top - top + pad}px ${pad}px ${pad}px`;
-        placeInStage(shadow, toRect, pad);
-        els.contentStage.append(shadow, snapshot);
+        parts = buildLeaf(before, fromRect, coverRect, pad);
+        els.contentStage.append(shadow, parts.leaf);
       } else {
-        placeInStage(snapshot, fromRect);
-        placeInStage(shadow, fromRect);
-        els.contentStage.append(snapshot, shadow);
-        void els.contentLayout.offsetWidth;
-        els.contentLayout.classList.add('is-landing');
+        const after = createPageSnapshot();
+        before.classList.add('page-under');
+        placeInStage(before, fromRect);
+        parts = buildLeaf(after, toRect, coverRect, pad);
+        els.contentLayout.classList.add('is-covered');
+        els.contentStage.append(before, shadow, parts.leaf);
       }
 
-      pageTurnTimer = window.setTimeout(() => {
-        if (token === transitionToken) clearPageTurn();
-      }, 760);
+      const startedAt = performance.now();
+      const frame = (now) => {
+        if (token !== transitionToken) return;
+        const progress = Math.min(1, (now - startedAt) / PAGE_TURN_MS);
+        drawLeaf(parts, shadow, direction === 'next' ? progress : 1 - progress, direction);
+        if (progress < 1) pageTurnFrame = window.requestAnimationFrame(frame);
+        else clearPageTurn();
+      };
+      drawLeaf(parts, shadow, direction === 'next' ? 0 : 1, direction);
+      pageTurnFrame = window.requestAnimationFrame(frame);
     }
 
     // history: 'push' はボタン操作、'replace' は矢印・スワイプ・キーでの順送り（履歴を積まない）
