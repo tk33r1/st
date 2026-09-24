@@ -217,11 +217,11 @@
     }
     .icon-button:hover, .progress-arrow:hover { color: var(--text); background: var(--soft-fill); }
     /*
-      本文の向き。「縦」「横」を両方見せ、今の向きを濃い文字と下線で示す（押した先ではなく今の状態を出す）。
-      押せる範囲は ::before で上下に広げる
+      表示の二択（本文の向き「縦｜横」、明るさ「昼｜夜」）。両方を見せ、今の状態を濃い文字と下線で示す
+      （押した先ではなく今の状態を出す）。押せる範囲は ::before で上下に広げる
     */
-    .writing-switch { display: inline-flex; align-items: stretch; border: 1px solid var(--border); border-radius: 2px; background: var(--soft-fill); transition: opacity 0.5s ease-in-out; }
-    .writing-option {
+    .mode-switch { display: inline-flex; align-items: stretch; border: 1px solid var(--border); border-radius: 2px; background: var(--soft-fill); transition: opacity 0.5s ease-in-out; }
+    .mode-option {
       position: relative;
       display: inline-flex;
       align-items: center;
@@ -238,40 +238,11 @@
       cursor: pointer;
       transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
     }
-    .writing-option::before { position: absolute; inset: -0.5rem 0; content: ""; }
-    .writing-option + .writing-option { border-left: 1px solid var(--border); }
-    .writing-option[aria-pressed="true"] { background: var(--background); color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--text); cursor: default; }
-    .writing-option[aria-pressed="false"]:hover { color: var(--text); }
+    .mode-option::before { position: absolute; inset: -0.5rem 0; content: ""; }
+    .mode-option + .mode-option { border-left: 1px solid var(--border); }
+    .mode-option[aria-pressed="true"] { background: var(--background); color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--text); cursor: default; }
+    .mode-option[aria-pressed="false"]:hover { color: var(--text); }
     .icon { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
-    .theme-switch {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      width: 2.75rem;
-      height: 1.5rem;
-      padding: 2px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--soft-fill);
-      color: var(--muted);
-      cursor: pointer;
-      transition: background-color 0.35s ease, border-color 0.35s ease;
-    }
-    .theme-switch-icons { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 0.36rem; opacity: 0.45; pointer-events: none; }
-    .theme-switch-icons .icon { width: 0.7rem; height: 0.7rem; }
-    #themeToggleHandle {
-      position: relative;
-      z-index: 1;
-      display: block;
-      width: 1rem;
-      height: 1rem;
-      border-radius: 50%;
-      background: var(--background);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-      transform: translateX(0);
-      transition: transform 0.35s ease, background-color 0.35s ease;
-    }
-    .dark-mode #themeToggleHandle { transform: translateX(1.25rem); }
     /* =========================================
        Main Content
        ========================================= */
@@ -552,20 +523,17 @@
     /* =========================================
        Zen Mode Styles (集中モード)
        ========================================= */
-    #zenToggleBtn, #themeToggleBtn { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.5s ease-in-out; }
+    #zenToggleBtn { transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.5s ease-in-out; }
     .zen-mode .zen-hide { opacity: 0 !important; filter: blur(4px) !important; pointer-events: none !important; }
     .zen-mode .action-btns-wrapper,
-    .zen-mode #writingModeSwitch,
-    .zen-mode #zenToggleBtn,
-    .zen-mode #themeToggleBtn { opacity: 0.35 !important; }
+    .zen-mode .mode-switch,
+    .zen-mode #zenToggleBtn { opacity: 0.35 !important; }
     .zen-mode .action-btns-wrapper:hover,
     .zen-mode .action-btns-wrapper:focus-within,
-    .zen-mode #writingModeSwitch:hover,
-    .zen-mode #writingModeSwitch:focus-within,
+    .zen-mode .mode-switch:hover,
+    .zen-mode .mode-switch:focus-within,
     .zen-mode #zenToggleBtn:hover,
-    .zen-mode #zenToggleBtn:focus-visible,
-    .zen-mode #themeToggleBtn:hover,
-    .zen-mode #themeToggleBtn:focus-visible { opacity: 1 !important; }
+    .zen-mode #zenToggleBtn:focus-visible { opacity: 1 !important; }
 
     /* =========================================
        Animation Definitions
@@ -662,9 +630,10 @@
       .footer-inner { padding-right: max(1.25rem, env(safe-area-inset-right)); padding-left: max(1.25rem, env(safe-area-inset-left)); }
       .modal-panel { padding: 1.5rem; }
     }
-    /* さらに狭い画面では、表題の左の線を外して表題と操作ボタンの幅を確保する */
-    @media (max-width: 359px) {
+    /* さらに狭い画面では、表題の左の線を外し、二択のボタンも少し細くして表題と操作ボタンの幅を確保する */
+    @media (max-width: 374px) {
       #topMark { display: none; }
+      .mode-option { width: 1.6rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
@@ -692,23 +661,20 @@
           </div>
 
           <div class="display-controls">
-            <!-- 本文の向き。縦書きが標準で、今の向きのほうを押された状態（濃い文字＋下線）で見せる -->
-            <div id="writingModeSwitch" class="writing-switch" role="group" aria-label="本文の向き">
-              <button type="button" class="writing-option" data-mode="vertical" aria-label="縦書き" title="縦書き" aria-pressed="true"><span aria-hidden="true">縦</span></button>
-              <button type="button" class="writing-option" data-mode="horizontal" aria-label="横書き" title="横書き" aria-pressed="false"><span aria-hidden="true">横</span></button>
+            <!-- 本文の向きと明るさ。どちらも今の状態のほうを押された状態（濃い文字＋下線）で見せる（初期値は JS が合わせる） -->
+            <div id="writingModeSwitch" class="mode-switch" role="group" aria-label="本文の向き">
+              <button type="button" class="mode-option" data-mode="vertical" aria-label="縦書き" title="縦書き" aria-pressed="true"><span aria-hidden="true">縦</span></button>
+              <button type="button" class="mode-option" data-mode="horizontal" aria-label="横書き" title="横書き" aria-pressed="false"><span aria-hidden="true">横</span></button>
+            </div>
+
+            <div id="colorModeSwitch" class="mode-switch" role="group" aria-label="明るさ">
+              <button type="button" class="mode-option" data-mode="light" aria-label="昼（ライトモード）" title="昼の余白" aria-pressed="true"><span aria-hidden="true">昼</span></button>
+              <button type="button" class="mode-option" data-mode="dark" aria-label="夜（ダークモード）" title="夜の余白" aria-pressed="false"><span aria-hidden="true">夜</span></button>
             </div>
 
             <button type="button" id="zenToggleBtn" class="icon-button" title="集中モードにする" aria-label="集中モードにする" aria-pressed="false">
               <svg id="zenEnterIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
               <svg id="zenExitIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
-            </button>
-
-            <button type="button" id="themeToggleBtn" class="theme-switch" title="夜の余白へ" aria-label="ダークモードにする" aria-pressed="false">
-              <span class="theme-switch-icons" aria-hidden="true">
-                <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
-                <svg class="icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-              </span>
-              <span id="themeToggleHandle" aria-hidden="true"></span>
             </button>
           </div>
         </div>
@@ -952,7 +918,7 @@
       revisionsRow: document.getElementById('revisionsRow'),
       liveStatus: document.getElementById('liveStatus'),
       disclosureModal: document.getElementById('disclosureModal'),
-      themeToggleBtn: document.getElementById('themeToggleBtn'),
+      colorOptions: document.querySelectorAll('#colorModeSwitch .mode-option'),
       zenToggleBtn: document.getElementById('zenToggleBtn'),
       zenEnterIcon: document.getElementById('zenEnterIcon'),
       zenExitIcon: document.getElementById('zenExitIcon'),
@@ -967,7 +933,7 @@
       pageNoteHistory: document.getElementById('pageNoteHistory'),
       exportNotesBtn: document.getElementById('exportNotesBtn'),
       noteToast: document.getElementById('noteToast'),
-      writingOptions: document.querySelectorAll('.writing-option'),
+      writingOptions: document.querySelectorAll('#writingModeSwitch .mode-option'),
       breathOverlay: document.getElementById('breathOverlay'),
       breathText: document.getElementById('breathText'),
       breathSkipBtn: document.getElementById('breathSkipBtn'),
@@ -1544,9 +1510,9 @@
       els.root.classList.toggle('dark-mode', isDarkMode);
       els.root.classList.toggle('zen-mode', isZenMode);
       els.themeColor.setAttribute('content', isDarkMode ? '#161618' : '#ffffff');
-      els.themeToggleBtn.setAttribute('aria-pressed', String(isDarkMode));
-      els.themeToggleBtn.setAttribute('aria-label', isDarkMode ? 'ライトモードにする' : 'ダークモードにする');
-      els.themeToggleBtn.title = isDarkMode ? '昼の余白へ' : '夜の余白へ';
+      els.colorOptions.forEach(option => {
+        option.setAttribute('aria-pressed', String((option.dataset.mode === 'dark') === isDarkMode));
+      });
       els.zenToggleBtn.setAttribute('aria-pressed', String(isZenMode));
       els.zenToggleBtn.setAttribute('aria-label', isZenMode ? '集中モードを終了する' : '集中モードにする');
       els.zenToggleBtn.title = isZenMode ? '集中モードを終了' : '集中モードにする';
@@ -2435,11 +2401,14 @@
     });
     els.subtitle.addEventListener('click', () => switchTheme(null));
 
-    els.themeToggleBtn.addEventListener('click', () => {
-      isDarkMode = !isDarkMode;
+    // 選んだら覚えておく（選ぶまでは OS の設定に従う）
+    els.colorOptions.forEach(option => option.addEventListener('click', () => {
+      const dark = option.dataset.mode === 'dark';
+      if (dark === isDarkMode) return;
+      isDarkMode = dark;
       writeStorage('localStorage', STORAGE_KEYS.dark, String(isDarkMode));
       applyDisplayModes();
-    });
+    }));
 
     // 手動で切り替えていなければ OS の設定変更に追従する
     colorSchemeQuery.addEventListener('change', (event) => {
