@@ -242,6 +242,8 @@
       min-width: 0;
       flex-wrap: nowrap;
       gap: 0.65rem;
+      /* 横スクロールの箱は上下もはみ出しを切るので、ホバーで浮く 1px と下の影の分だけ内側に余白を取る */
+      padding: 3px 0;
       overflow-x: auto;
       overscroll-behavior-x: contain;
       scrollbar-width: none;
@@ -253,9 +255,9 @@
       position: relative;
       isolation: isolate;
       flex: 0 0 auto;
-      min-width: 7.5rem;
       min-height: 2.75rem;
-      padding: 0.65rem 1.05rem;
+      /* 右は折り返した角（0.7rem）の分だけ広く取り、文字が見た目の中央に来るようにする */
+      padding: 0.6rem 1.35rem 0.6rem 1rem;
       overflow: hidden;
       border: 0;
       border-radius: 0;
@@ -544,7 +546,7 @@
       #subtitle { font-size: 0.6rem; letter-spacing: 0.14em; }
       .display-controls { gap: 0.25rem; }
       #buttonScroller { gap: 0.45rem; }
-      .theme-btn { padding: 0.5rem 0.75rem; font-size: 0.88rem; }
+      .theme-btn { padding: 0.5rem 1.1rem 0.5rem 0.8rem; font-size: 0.88rem; }
       .main-section { margin: 2.5rem 0 1rem; }
       .content-stage { padding: 0 0.25rem; }
       .content-layout { gap: 1.65rem; }
