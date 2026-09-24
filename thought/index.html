@@ -1049,6 +1049,8 @@
        ========================================= */
     const PAGE_TURN_MS = 950;
     let pageTurnFrame = null;
+    // 指を離したあとの「めくり切る／戻る」の途中で次の操作が来たら、先にその結末まで進める
+    let pendingSettle = null;
 
     // 写しは見た目だけ使う（登場アニメのクラスは外して最初から見えている状態にする）
     function createPageSnapshot() {
@@ -1109,6 +1111,7 @@
     }
 
     const easeInOut = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
     const smoothstep = (from, to, value) => {
       const x = Math.min(1, Math.max(0, (value - from) / (to - from)));
       return x * x * (3 - 2 * x);
@@ -1119,11 +1122,28 @@
       紙は綴じ目から先へいくほど角度が大きい（めくる指に近い端が先に上がる）ので、途中で柔らかく反る。
       前へ戻るときは逆向きに、端が遅れて着地する。
     */
-    function drawLeaf({ leaf, strips, stripWidth }, shadow, t, direction) {
+    function leafShape(t, direction) {
       const base = 180 * easeInOut(t);
       const bend = 78 * Math.sin(Math.PI * t) * (direction === 'next' ? 1 : -1);
+      return { base, angleAt: (along) => Math.min(180, Math.max(0, base + bend * Math.pow(along, 1.35))) };
+    }
+
+    // 綴じ目から distance の位置にある紙の点が、画面上でどこ（綴じ目からの x）に来るか
+    function leafPointX(t, direction, count, stripWidth, distance) {
+      const { angleAt } = leafShape(t, direction);
+      let x = 0;
+      let remaining = distance;
+      for (let index = 0; index < count && remaining > 0; index++) {
+        const length = Math.min(stripWidth, remaining);
+        x += length * Math.cos(angleAt((index + 0.5) / count) * Math.PI / 180);
+        remaining -= length;
+      }
+      return x;
+    }
+
+    function drawLeaf({ leaf, strips, stripWidth }, shadow, t, direction) {
+      const { base, angleAt } = leafShape(t, direction);
       const count = strips.length;
-      const angleAt = (along) => Math.min(180, Math.max(0, base + bend * Math.pow(along, 1.35)));
       // 光は正面から。立つほど陰り、裏返ると少し暗い紙の裏になる
       const shadeAt = (angle) => {
         const facing = Math.cos(angle * Math.PI / 180);
@@ -1149,9 +1169,12 @@
       shadow.style.background = `linear-gradient(90deg, rgba(0,0,0,${(strength * 0.9).toFixed(3)}) 0px, rgba(0,0,0,${(strength * 0.5).toFixed(3)}) ${Math.round(reach * 0.75)}px, rgba(0,0,0,0) ${Math.round(reach + 36)}px)`;
     }
 
-    // 次へ：今のページの写しがしなりながら左へめくれ、下から新しいページが出る
-    // 前へ：新しいページの写しが左から戻ってきて、今のページの写しに重なる
-    function turnPage(direction, token, update) {
+    /*
+      めくりの準備だけをする（描画は renderTurn / animateTurn）。
+      次へ：今のページの写しがしなりながら左へめくれ、下から新しいページが出る（t: 0 → 1）
+      前へ：新しいページの写しが左から戻ってきて、今のページの写しに重なる（t: 1 → 0）
+    */
+    function beginPageTurn(direction, token, update) {
       clearPageTurn();
       const pad = window.innerWidth < 640 ? 12 : 24;
       const fromRect = els.contentLayout.getBoundingClientRect();
@@ -1179,28 +1202,62 @@
         els.contentLayout.classList.add('is-covered');
         els.contentStage.append(before, shadow, parts.leaf);
       }
+      const turn = {
+        direction,
+        token,
+        parts,
+        shadow,
+        t: direction === 'next' ? 0 : 1,
+        spineX: coverRect.left - pad, // 綴じ目（めくる紙の左端）の画面上の位置
+        width: coverRect.width + pad * 2
+      };
+      renderTurn(turn, turn.t);
+      return turn;
+    }
 
+    function renderTurn(turn, t) {
+      turn.t = t;
+      drawLeaf(turn.parts, turn.shadow, t, turn.direction);
+    }
+
+    // t を from から to へ動かす。progressMap で時間の進み方を変えられる
+    function animateTurn(turn, to, duration, { progressMap = easeOutCubic, onDone = clearPageTurn } = {}) {
+      if (pageTurnFrame !== null) window.cancelAnimationFrame(pageTurnFrame);
+      const from = turn.t;
+      const startedAt = performance.now();
+      const frame = (now) => {
+        if (turn.token !== transitionToken) return;
+        const progress = Math.min(1, (now - startedAt) / duration);
+        renderTurn(turn, from + (to - from) * progressMap(progress));
+        if (progress < 1) {
+          pageTurnFrame = window.requestAnimationFrame(frame);
+        } else {
+          pageTurnFrame = null;
+          onDone();
+        }
+      };
+      pageTurnFrame = window.requestAnimationFrame(frame);
+    }
+
+    // ボタン・矢印・キーでのめくり（時間で進める）
+    function turnPage(direction, token, update) {
+      const turn = beginPageTurn(direction, token, update);
       // 次へは、先を行く紙の端がすぐ綴じ目の向こう（見えない側）へ抜けるため、同じ速さだと
       // 見えている時間が前へ戻る場合の半分ほどになり速く感じる。持ち上げを遅らせて、
       // 紙が見えている間の動き（おおよそ 0.4〜0.65 秒）を前へと揃える
-      const leafProgress = (progress) => direction === 'next' ? Math.pow(progress, 1.6) : 1 - progress;
-      const startedAt = performance.now();
-      const frame = (now) => {
-        if (token !== transitionToken) return;
-        const progress = Math.min(1, (now - startedAt) / PAGE_TURN_MS);
-        drawLeaf(parts, shadow, leafProgress(progress), direction);
-        if (progress < 1) pageTurnFrame = window.requestAnimationFrame(frame);
-        else clearPageTurn();
-      };
-      drawLeaf(parts, shadow, leafProgress(0), direction);
-      pageTurnFrame = window.requestAnimationFrame(frame);
+      animateTurn(turn, direction === 'next' ? 1 : 0, PAGE_TURN_MS, {
+        progressMap: direction === 'next' ? (progress) => Math.pow(progress, 1.6) : (progress) => progress
+      });
     }
 
     // history: 'push' はボタン操作、'replace' は矢印・スワイプ・キーでの順送り（履歴を積まない）
     // めくる向きは並び順で決める（イントロが先頭）
-    function switchTheme(themeName, { history: historyMode = 'push', animate = true } = {}) {
+    // interactive: true のときは紙を用意するだけで動かさず、指で動かすための turn を返す
+    // silent: true のときは読み上げない（スワイプを途中でやめて元に戻すとき）
+    function switchTheme(themeName, { history: historyMode = 'push', animate = true, interactive = false, silent = false } = {}) {
+      if (pendingSettle) pendingSettle();
       const normalizedTheme = AVAILABLE_THEMES.includes(themeName) ? themeName : null;
-      if (currentTheme === normalizedTheme) return;
+      if (currentTheme === normalizedTheme) return null;
 
       const fromIndex = themeIndex();
       hideSelectionToolbar(true);
@@ -1215,14 +1272,21 @@
 
       const update = () => {
         updateContentData(currentTheme);
-        els.liveStatus.textContent = `${els.title.textContent}。${getCurrentBodyText()}`;
+        // 指でめくっている途中は、めくり終えたときに読み上げる
+        if (!interactive && !silent) announceTheme();
       };
+      if (interactive) return beginPageTurn(direction, token, update);
       if (animate && !reducedMotionQuery.matches) {
         turnPage(direction, token, update);
       } else {
         clearPageTurn();
         update();
       }
+      return null;
+    }
+
+    function announceTheme() {
+      els.liveStatus.textContent = `${els.title.textContent}。${getCurrentBodyText()}`;
     }
 
     function updateArrows() {
@@ -1746,32 +1810,172 @@
     els.progressPrevBtn.addEventListener('click', () => moveTheme(-1));
     els.progressNextBtn.addEventListener('click', () => moveTheme(1));
 
-    let touchStart = null;
+    /*
+      横スワイプは指に紙が付いてくる。
+      - 動き始めが横向きならめくりを始め、以後は縦スクロールさせない（縦向きなら何もしない）
+      - 次へ：指でつまんだ紙の一点が指と一緒に動く。前へ：左に伏せてある前のページを指で引き戻す
+      - 離したとき、十分めくれているか、はらうように速く動かしていればめくり切る。そうでなければ元に戻す
+    */
+    const DRAG_START_DISTANCE = 10;
+    const FLICK_SPEED = 0.35; // px/ms
+    let gesture = null;
+
+    const hasBodySelection = () => {
+      const selection = window.getSelection();
+      return Boolean(selection && !selection.isCollapsed && els.body.contains(selection.anchorNode));
+    };
+
+    // 指の位置に合う t を、紙の形を先に計算した表から探す
+    function buildDragTable(turn, grabDistance) {
+      const { parts, direction } = turn;
+      const samples = 96;
+      return Array.from({ length: samples + 1 }, (_, index) => {
+        const t = index / samples;
+        return { t, x: leafPointX(t, direction, parts.strips.length, parts.stripWidth, grabDistance) };
+      });
+    }
+
+    function findDragT(gesture, fingerX) {
+      const { turn, table, grabDistance, startX } = gesture;
+      const dx = fingerX - startX;
+      if (turn.direction === 'next') {
+        const target = grabDistance + dx;
+        for (let index = 1; index < table.length; index++) {
+          const prev = table[index - 1];
+          const cur = table[index];
+          if (cur.x <= target) return prev.t + (cur.t - prev.t) * ((prev.x - target) / Math.max(1e-6, prev.x - cur.x));
+        }
+        return 1;
+      }
+      // 前へは紙が画面の外（左）から来るので、指の移動の倍だけ紙の端を動かす
+      const target = -grabDistance + dx * 2;
+      for (let index = table.length - 2; index >= 0; index--) {
+        const prev = table[index + 1];
+        const cur = table[index];
+        if (cur.x >= target) return prev.t + (cur.t - prev.t) * ((target - prev.x) / Math.max(1e-6, cur.x - prev.x));
+      }
+      return 0;
+    }
+
+    function startDrag(touch) {
+      const step = touch.clientX - gesture.startX < 0 ? 1 : -1;
+      const target = themeIndex() + step;
+      if (target < -1 || target >= AVAILABLE_THEMES.length) return false;
+      if (document.activeElement?.matches('.theme-btn')) document.activeElement.blur();
+      els.swipeHint.classList.add('is-dismissed');
+      gesture.fromTheme = currentTheme;
+      gesture.turn = switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace', interactive: true });
+      if (!gesture.turn) return false;
+      // つまんだ位置が綴じ目に近すぎると、少しの動きで紙が大きく跳ねるので、紙幅の 6 割より手前はつままない
+      const { spineX, width } = gesture.turn;
+      gesture.grabDistance = Math.min(width, Math.max(width * 0.6, gesture.startX - spineX));
+      gesture.table = buildDragTable(gesture.turn, gesture.grabDistance);
+      return true;
+    }
+
+    // 離す瞬間は指が止まっているので、直近 80ms の動きから速さを出す
+    const VELOCITY_WINDOW_MS = 80;
+    function trackVelocity(touch) {
+      const now = performance.now();
+      gesture.samples.push({ x: touch.clientX, time: now });
+      while (gesture.samples.length > 2 && now - gesture.samples[1].time > VELOCITY_WINDOW_MS) gesture.samples.shift();
+    }
+    function releaseVelocity() {
+      const samples = gesture.samples;
+      if (samples.length < 2) return 0;
+      const first = samples[0];
+      const last = samples[samples.length - 1];
+      if (performance.now() - last.time > VELOCITY_WINDOW_MS) return 0; // 止めてから離した
+      return (last.x - first.x) / Math.max(1, last.time - first.time);
+    }
+
+    function releaseDrag(cancelled = false) {
+      const { turn, fromTheme } = gesture;
+      const velocity = releaseVelocity();
+      gesture = null;
+      if (turn.token !== transitionToken) return;
+      const isNext = turn.direction === 'next';
+      const turned = isNext ? turn.t : 1 - turn.t;
+      const flicked = isNext ? velocity < -FLICK_SPEED : velocity > FLICK_SPEED;
+      const flickedBack = isNext ? velocity > FLICK_SPEED : velocity < -FLICK_SPEED;
+      const commit = !cancelled && !flickedBack && (flicked || turned > 0.3);
+      const end = commit === isNext ? 1 : 0;
+      const duration = 160 + 620 * Math.abs(end - turn.t);
+      const settle = () => {
+        pendingSettle = null;
+        if (turn.token !== transitionToken) return;
+        if (commit) {
+          clearPageTurn();
+          announceTheme();
+        } else {
+          // 元のページに戻す。紙と中身の入れ替えは同じフレーム内で済ませるので、画面は動かない
+          switchTheme(fromTheme, { history: 'replace', animate: false, silent: true });
+        }
+      };
+      pendingSettle = settle;
+      animateTurn(turn, end, duration, { onDone: settle });
+    }
 
     els.contentStage.addEventListener('touchstart', (e) => {
-      if (e.target.closest('button, a, input, textarea, select, summary')) {
-        touchStart = null;
+      if (gesture?.mode === 'drag') return; // めくっている最中に増えた指は無視する
+      if (pendingSettle) pendingSettle();
+      if (e.touches.length > 1 || e.target.closest('button, a, input, textarea, select, summary')) {
+        gesture = null;
         return;
       }
-      touchStart = {
-        x: e.changedTouches[0].screenX,
-        y: e.changedTouches[0].screenY
-      };
+      const touch = e.changedTouches[0];
+      gesture = { mode: 'pending', startX: touch.clientX, startY: touch.clientY, samples: [{ x: touch.clientX, time: performance.now() }] };
     }, { passive: true });
 
-    els.contentStage.addEventListener('touchend', (e) => {
-      if (!touchStart) return;
-      const touchEndX = e.changedTouches[0].screenX;
-      const touchEndY = e.changedTouches[0].screenY;
-      const xDiff = touchStart.x - touchEndX;
-      const yDiff = touchStart.y - touchEndY;
-      touchStart = null;
-
-      if (Math.abs(xDiff) > 60 && Math.abs(xDiff) > Math.abs(yDiff) * 1.25) {
-        if (document.activeElement?.matches('.theme-btn')) document.activeElement.blur();
-        els.swipeHint.classList.add('is-dismissed');
-        moveTheme(xDiff > 0 ? 1 : -1);
+    els.contentStage.addEventListener('touchmove', (e) => {
+      if (!gesture || gesture.mode === 'ignore') return;
+      const touch = e.changedTouches[0];
+      trackVelocity(touch);
+      if (gesture.mode === 'pending') {
+        const dx = touch.clientX - gesture.startX;
+        const dy = touch.clientY - gesture.startY;
+        if (Math.hypot(dx, dy) < DRAG_START_DISTANCE) return;
+        // 縦の動き・複数指・本文を選択中・動きを減らす設定のときは、指に付いてこさせない
+        const horizontal = Math.abs(dx) > Math.abs(dy) * 1.2;
+        if (!horizontal || e.touches.length > 1 || hasBodySelection() || reducedMotionQuery.matches) {
+          gesture.mode = horizontal && reducedMotionQuery.matches ? 'swipe' : 'ignore';
+          return;
+        }
+        if (!startDrag(touch)) {
+          gesture.mode = 'ignore';
+          return;
+        }
+        gesture.mode = 'drag';
       }
+      if (gesture.mode !== 'drag') return;
+      if (gesture.turn.token !== transitionToken) {
+        gesture = null;
+        return;
+      }
+      if (e.cancelable) e.preventDefault();
+      renderTurn(gesture.turn, Math.min(1, Math.max(0, findDragT(gesture, touch.clientX))));
+    }, { passive: false });
+
+    els.contentStage.addEventListener('touchend', (e) => {
+      if (!gesture) return;
+      if (gesture.mode === 'drag') {
+        releaseDrag();
+        return;
+      }
+      // 動きを減らす設定では、従来どおり離したときにだけ送る（紙は動かさない）
+      if (gesture.mode === 'swipe') {
+        const xDiff = gesture.startX - e.changedTouches[0].clientX;
+        if (Math.abs(xDiff) > 60) {
+          els.swipeHint.classList.add('is-dismissed');
+          moveTheme(xDiff > 0 ? 1 : -1);
+        }
+      }
+      gesture = null;
+    }, { passive: true });
+
+    els.contentStage.addEventListener('touchcancel', () => {
+      if (gesture?.mode === 'drag') releaseDrag(true);
+      else gesture = null;
     }, { passive: true });
 
     els.themeBtns.forEach(btn => btn.addEventListener('click', () => switchTheme(btn.dataset.theme)));
