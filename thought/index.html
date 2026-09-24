@@ -321,10 +321,11 @@
     [data-color="green"] { --marker: var(--hl-green); }
     #body mark.thought-highlight { padding: 0.05em 0; border-radius: 0.08em; background: linear-gradient(transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); color: inherit; box-decoration-break: clone; -webkit-box-decoration-break: clone; cursor: pointer; }
     /*
-      縦書き（標準）。列の長さ（高さ）は fitVerticalBody が本文の量と幅に合わせて決める。
-      横スクロールはページめくりのスワイプとぶつかるので、全文が幅に収まる長さにする
+      縦書き（標準）。列の長さ（高さ）は fitVerticalBody が本文の量と幅に合わせて決め、全文を幅に収める。
+      overflow は念のための横スクロール用。フォーカスの枠や点線（outline）が箱の端で切れないよう、
+      内側に余白を取り、同じだけ外へ広げて文字の位置は変えない
     */
-    .vertical-writing #body { max-width: 100%; height: 16em; overflow-x: auto; overflow-y: hidden; writing-mode: vertical-rl; line-height: 2.1; scrollbar-width: thin; }
+    .vertical-writing #body { max-width: calc(100% + 0.8em); height: 16em; margin: -0.4em -0.4em 0; padding: 0.4em; overflow-x: auto; overflow-y: hidden; writing-mode: vertical-rl; line-height: 2.1; scrollbar-width: thin; }
     /* 蛍光ペンは横書きの「下半分」に合わせ、縦書きでは行の左側（下側）に引く */
     .vertical-writing #body mark.thought-highlight { padding: 0 0.05em; background: linear-gradient(to left, transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); }
     .vertical-writing #body .margin-note { margin: 0.2em 0 0.35em; }
@@ -418,6 +419,8 @@
     /* 日をまたいで書き直すと、前の書き留めは日付つきでここに残る */
     .page-note-history { margin-top: 1rem; font-size: 0.85rem; letter-spacing: 0.06em; }
     .page-note-history .revision-body { color: var(--pencil); font-family: var(--hand); font-weight: 600; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .page-note-history-delete { min-height: 2rem; margin-left: 0.8em; padding: 0 0.3em; border: 0; background: transparent; color: var(--quiet); font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer; }
+    .page-note-history-delete:hover { color: var(--text); }
     .note-panel-actions { margin-top: 0.4rem; }
     /* パネルを閉じているときは、書き留めた内容を本文の下に手書きのまま残す（押すと書き直せる） */
     .page-note {
@@ -675,16 +678,16 @@
 
             <div class="display-controls">
               <!-- 本文は縦書きが標準。表示は切り替え先の文字（縦書きのときは「横」） -->
-              <button type="button" id="writingModeBtn" class="icon-button writing-mode-btn" title="横書きにする" aria-label="横書きにする" aria-pressed="false">
+              <button type="button" id="writingModeBtn" class="icon-button writing-mode-btn" title="横書きにする" aria-label="横書き" aria-pressed="false">
                 <span id="writingModeGlyph" aria-hidden="true">横</span>
               </button>
 
-              <button type="button" id="zenToggleBtn" class="icon-button" title="集中モードにする" aria-label="集中モードにする" aria-pressed="false">
+              <button type="button" id="zenToggleBtn" class="icon-button" title="集中モードにする" aria-label="集中モード" aria-pressed="false">
                 <svg id="zenEnterIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
                 <svg id="zenExitIcon" class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
               </button>
 
-              <button type="button" id="themeToggleBtn" class="theme-switch" title="夜の余白へ" aria-label="ダークモードにする" aria-pressed="false">
+              <button type="button" id="themeToggleBtn" class="theme-switch" title="夜の余白へ" aria-label="ダークモード" aria-pressed="false">
                 <span class="theme-switch-icons" aria-hidden="true">
                   <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
                   <svg class="icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
@@ -1119,6 +1122,17 @@
       return nodes;
     };
 
+    // 「過去の版」と「過去の自分の書き留め」で共通の、日付つきの一件
+    const createDatedItem = (date, text) => {
+      const item = document.createElement('li');
+      const body = document.createElement('p');
+      body.className = 'revision-body';
+      body.textContent = text;
+      if (date) item.append(createTime(date));
+      item.append(body);
+      return item;
+    };
+
     const buildRevisionNodes = (revisions) => {
       if (!revisions.length) return null;
       const details = document.createElement('details');
@@ -1126,14 +1140,7 @@
       const summary = document.createElement('summary');
       summary.textContent = `過去の版を読む（${revisions.length}）`;
       const list = document.createElement('ol');
-      revisions.forEach(revision => {
-        const item = document.createElement('li');
-        const body = document.createElement('p');
-        body.className = 'revision-body';
-        body.textContent = revision.body;
-        item.append(createTime(revision.date), body);
-        list.append(item);
-      });
+      revisions.forEach(revision => list.append(createDatedItem(revision.date, revision.body)));
       details.append(summary, list);
       return [details];
     };
@@ -1460,24 +1467,36 @@
     }
 
     /*
-      縦書きの列の長さ（本文の高さ）を、全文が幅に収まる最短の長さにする（二分探索で数回測るだけ）。
-      最短でも VERTICAL_MIN_EM、最長の VERTICAL_MAX_EM でも収まらないときだけ横スクロールに任せる
+      縦書きの列の長さ（本文の高さ）を、全文が幅に収まる最短の長さにする。
+      横にはみ出すと、横スクロールがページめくりのスワイプや左右キーとぶつかって読めなくなるので、
+      長いメモが入っても列を伸ばして必ず収める（倍々に伸ばして収まる長さを見つけ、あとは二分探索で詰める）。
+      幅・文字の大きさ・中身が前回と同じなら測り直さない（ダーク切替や、アドレスバーの伸縮による resize など）
     */
     const VERTICAL_MIN_EM = 14;
-    const VERTICAL_MAX_EM = 40;
-    function fitVerticalBody() {
+    const VERTICAL_LIMIT_EM = 2000; // 念のための上限（ここまで来たら横スクロールに任せる）
+    let lastFitKey = '';
+    function fitVerticalBody({ force = false } = {}) {
       const body = els.body;
       if (!isVertical) {
         body.style.height = '';
+        lastFitKey = '';
         return;
       }
+      const key = `${body.parentElement.clientWidth}|${getComputedStyle(body).fontSize}|${body.textContent}`;
+      if (!force && key === lastFitKey) return;
+      lastFitKey = key;
       const fits = (em) => {
         body.style.height = `${em}em`;
         return body.scrollWidth <= body.clientWidth + 1;
       };
-      if (fits(VERTICAL_MIN_EM) || !fits(VERTICAL_MAX_EM)) return;
+      if (fits(VERTICAL_MIN_EM)) return;
       let low = VERTICAL_MIN_EM;
-      let high = VERTICAL_MAX_EM;
+      let high = VERTICAL_MIN_EM * 2;
+      while (!fits(high)) {
+        low = high;
+        high *= 2;
+        if (high > VERTICAL_LIMIT_EM) return;
+      }
       while (high - low > 0.5) {
         const mid = (low + high) / 2;
         if (fits(mid)) high = mid;
@@ -1490,19 +1509,16 @@
       els.root.classList.toggle('dark-mode', isDarkMode);
       els.root.classList.toggle('zen-mode', isZenMode);
       els.themeColor.setAttribute('content', isDarkMode ? '#161618' : '#ffffff');
+      // 切り替えボタンの読み上げ名は固定し、状態は aria-pressed で伝える（title は押すとどうなるかを示す）
       els.themeToggleBtn.setAttribute('aria-pressed', String(isDarkMode));
-      els.themeToggleBtn.setAttribute('aria-label', isDarkMode ? 'ライトモードにする' : 'ダークモードにする');
       els.themeToggleBtn.title = isDarkMode ? '昼の余白へ' : '夜の余白へ';
       els.zenToggleBtn.setAttribute('aria-pressed', String(isZenMode));
-      els.zenToggleBtn.setAttribute('aria-label', isZenMode ? '集中モードを終了する' : '集中モードにする');
       els.zenToggleBtn.title = isZenMode ? '集中モードを終了' : '集中モードにする';
       els.zenEnterIcon.hidden = isZenMode;
       els.zenExitIcon.hidden = !isZenMode;
       els.root.classList.toggle('vertical-writing', isVertical);
-      const writingLabel = isVertical ? '横書きにする' : '縦書きにする';
       els.writingModeBtn.setAttribute('aria-pressed', String(!isVertical));
-      els.writingModeBtn.setAttribute('aria-label', writingLabel);
-      els.writingModeBtn.title = writingLabel;
+      els.writingModeBtn.title = isVertical ? '横書きにする' : '縦書きにする';
       els.writingModeGlyph.textContent = isVertical ? '横' : '縦';
       fitVerticalBody();
       updateArrows();
@@ -1637,7 +1653,8 @@
     let toastTimer = null;
     function showNoteMessage(message) {
       window.clearTimeout(toastTimer);
-      els.noteToast.textContent = message;
+      els.noteToast.textContent = '';
+      window.requestAnimationFrame(() => { els.noteToast.textContent = message; });
       els.noteToast.classList.add('is-shown');
       toastTimer = window.setTimeout(() => els.noteToast.classList.remove('is-shown'), 3600);
     }
@@ -1772,7 +1789,9 @@
       if (!stored) return empty;
       let parsed;
       try { parsed = JSON.parse(stored); } catch (_) { parsed = null; }
-      if (!parsed || typeof parsed !== 'object') return { ...empty, text: stored.slice(0, MAX_PAGE_NOTE) };
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || typeof parsed.text !== 'string') {
+        return { ...empty, text: stored.slice(0, MAX_PAGE_NOTE) };
+      }
       const clean = (entry) => ({
         text: typeof entry?.text === 'string' ? entry.text.slice(0, MAX_PAGE_NOTE) : '',
         date: typeof entry?.date === 'string' ? entry.date.slice(0, 10) : ''
@@ -1814,15 +1833,32 @@
       const { history } = pageNote;
       els.pageNoteHistory.hidden = !history.length;
       els.pageNoteHistory.querySelector('summary').textContent = `過去の自分の書き留め（${history.length}）`;
-      els.pageNoteHistory.querySelector('ol').replaceChildren(...history.map(entry => {
-        const item = document.createElement('li');
-        const body = document.createElement('p');
-        body.className = 'revision-body';
-        body.textContent = entry.text;
-        item.append(entry.date ? createTime(entry.date) : '', body);
+      els.pageNoteHistory.querySelector('ol').replaceChildren(...history.map((entry, index) => {
+        const item = createDatedItem(entry.date, entry.text);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'page-note-history-delete';
+        remove.dataset.index = String(index);
+        remove.textContent = '消す';
+        remove.setAttribute('aria-label', `${entry.date || '日付なし'}の書き留めを消す`);
+        item.firstChild.after(remove);
         return item;
       }));
     }
+
+    // 共有の端末などで残したくないときのために、過去の書き留めは一件ずつ消せる
+    els.pageNoteHistory.addEventListener('click', event => {
+      const remove = event.target.closest('.page-note-history-delete');
+      if (!remove) return;
+      const index = Number(remove.dataset.index);
+      if (!pageNote.history[index] || !window.confirm('この日の書き留めを消しますか？')) return;
+      pageNote.history.splice(index, 1);
+      savePageNote();
+      renderPageNoteHistory();
+      if (pageNote.history.length) els.pageNoteHistory.querySelector('summary').focus();
+      else els.pageNoteInput.focus();
+      showNoteMessage('過去の書き留めを消しました。');
+    });
 
     els.pageNoteInput.addEventListener('input', () => {
       const today = formatDate(new Date());
@@ -2413,15 +2449,16 @@
 
     // 幅や書体が変わると縦書きの列に収まる長さも変わる
     let fitFrame = null;
-    const queueFitVerticalBody = () => {
+    const queueFitVerticalBody = (options) => {
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame);
       fitFrame = window.requestAnimationFrame(() => {
         fitFrame = null;
-        fitVerticalBody();
+        fitVerticalBody(options);
       });
     };
-    window.addEventListener('resize', queueFitVerticalBody, { passive: true });
-    document.fonts?.addEventListener?.('loadingdone', queueFitVerticalBody);
+    window.addEventListener('resize', () => queueFitVerticalBody(), { passive: true });
+    // 書体が届くと、中身が同じでも字の幅が変わるので測り直す
+    document.fonts?.addEventListener?.('loadingdone', () => queueFitVerticalBody({ force: true }));
 
     /* =========================================
        ひと呼吸（吸って 4 秒、吐いて 4 秒。どこを押しても、どのキーでも終わる）
@@ -2476,7 +2513,7 @@
     const getFormattedContent = () => {
       const annotations = currentAnnotations.map(annotation => (
         annotation.kind === 'memo'
-          ? `・メモ「${annotation.quote}」\n  ${annotation.note.replace(/\n/g, '\n  ')}`
+          ? `・メモ「${annotation.quote}」\n  ${indentLines(annotation.note, '  ')}`
           : `・蛍光ペン「${annotation.quote}」`
       )).join('\n');
       const annotationBlock = annotations ? `\n\n― 本文への書き込み\n${annotations}` : '';
@@ -2541,7 +2578,7 @@
 
     // スマホは OS の共有シートを優先し、使えないときや PC ではモーダルを出す
     els.openShareModalBtn.addEventListener('click', async () => {
-      if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
+      if (navigator.share && coarsePointerQuery.matches) {
         const { text, shareUrl } = getShareInfo();
         try {
           await navigator.share({ title: document.title, text, url: shareUrl });
