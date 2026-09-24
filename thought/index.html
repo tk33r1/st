@@ -272,9 +272,9 @@
       transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
     }
     .theme-btn::after { position: absolute; top: 0; right: 0; width: 0.7rem; height: 0.7rem; background: linear-gradient(225deg, var(--background) 0 47%, var(--surface) 48% 56%, var(--strong-fill) 57% 100%); content: ""; pointer-events: none; }
-    .theme-btn[aria-pressed="true"] { background: var(--background); color: var(--text); font-weight: 600; box-shadow: inset 0 -3px 0 var(--text), inset 0 0 0 1px var(--border); }
+    .theme-btn[aria-pressed="true"] { color: var(--text); font-weight: 600; box-shadow: inset 0 -3px 0 var(--text), inset 0 0 0 1px var(--border); }
     @media (hover: hover) {
-      .theme-btn:hover { background: var(--background); color: var(--text); transform: translateY(-1px); }
+      .theme-btn:hover { color: var(--text); transform: translateY(-1px); }
     }
 
     /* =========================================
@@ -377,7 +377,6 @@
     .annotation-guide small { display: block; margin-top: 0.35rem; color: var(--quiet); font-size: 0.72rem; }
 
     .selection-toolbar { position: fixed; z-index: 100; display: flex; align-items: center; gap: 0.2rem; padding: 0.3rem 0.35rem 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--background); color: var(--text); box-shadow: var(--shadow); transform: translateX(-50%); }
-    .selection-toolbar[hidden] { display: none; }
     .toolbar-label { margin-right: 0.1rem; color: var(--quiet); font-size: 0.7rem; letter-spacing: 0.06em; white-space: nowrap; }
     .toolbar-divider { flex: none; width: 1px; height: 1.3rem; margin: 0 0.2rem; background: var(--border); }
     .color-picker { display: flex; align-items: center; }
@@ -735,12 +734,8 @@
   <!-- 本文を選んだとき：色を押すとその色で蛍光ペンを引く。メモは蛍光ペンとは別で、線は引かない -->
   <div id="selectionToolbar" class="selection-toolbar" role="toolbar" aria-label="選択した本文への操作" hidden>
     <span class="toolbar-label" aria-hidden="true">蛍光ペン</span>
-    <div class="color-picker" role="group" aria-label="蛍光ペンを引く">
-      <button type="button" class="color-swatch" data-color="yellow" aria-label="黄の蛍光ペンを引く" title="黄" aria-pressed="false"></button>
-      <button type="button" class="color-swatch" data-color="pink" aria-label="桃の蛍光ペンを引く" title="桃" aria-pressed="false"></button>
-      <button type="button" class="color-swatch" data-color="blue" aria-label="青の蛍光ペンを引く" title="青" aria-pressed="false"></button>
-      <button type="button" class="color-swatch" data-color="green" aria-label="緑の蛍光ペンを引く" title="緑" aria-pressed="false"></button>
-    </div>
+    <!-- 色見本は HIGHLIGHT_COLOR_NAMES から JS で並べる -->
+    <div id="selectionColors" class="color-picker" role="group" aria-label="蛍光ペンを引く"></div>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" id="memoSelectionBtn" class="selection-tool">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -750,12 +745,7 @@
 
   <!-- 蛍光ペンをタップしたとき：色の変更と削除。メモをタップしたとき：編集と削除 -->
   <div id="annotationToolbar" class="selection-toolbar" role="toolbar" aria-label="書き込みへの操作" hidden>
-    <div id="annotationColors" class="color-picker" role="group" aria-label="蛍光ペンの色を変える">
-      <button type="button" class="color-swatch" data-color="yellow" aria-label="黄に変える" title="黄" aria-pressed="false"></button>
-      <button type="button" class="color-swatch" data-color="pink" aria-label="桃に変える" title="桃" aria-pressed="false"></button>
-      <button type="button" class="color-swatch" data-color="blue" aria-label="青に変える" title="青" aria-pressed="false"></button>
-      <button type="button" class="color-swatch" data-color="green" aria-label="緑に変える" title="緑" aria-pressed="false"></button>
-    </div>
+    <div id="annotationColors" class="color-picker" role="group" aria-label="蛍光ペンの色を変える"></div>
     <span id="annotationDivider" class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" id="annotationMemoBtn" class="selection-tool">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -838,6 +828,7 @@
       notePanel: document.getElementById('notePanel'),
       noteHint: document.getElementById('noteHint'),
       selectionToolbar: document.getElementById('selectionToolbar'),
+      selectionColors: document.getElementById('selectionColors'),
       memoSelectionBtn: document.getElementById('memoSelectionBtn'),
       annotationToolbar: document.getElementById('annotationToolbar'),
       annotationColors: document.getElementById('annotationColors'),
@@ -1021,23 +1012,24 @@
 
     const formatIndex = (n) => String(n).padStart(2, '0');
 
-    function updateContentData(themeName) {
-      const theme = themeName ? themes[themeName] : intro;
+    // 表示は常に currentTheme に合わせる
+    function updateContentData() {
+      const theme = getCurrentThemeData();
       els.title.textContent = theme.title;
-      currentAnnotations = loadAnnotations(themeName, theme.body);
-      renderAnnotatedBody(theme.body);
+      currentAnnotations = loadAnnotations();
+      renderAnnotatedBody();
 
       const hasUpdated = setMetaRow(els.lastUpdated, '最終更新日', buildUpdatedNodes(theme.lastUpdated));
       const hasReference = setMetaRow(els.reference, '参考文献', buildReferenceNodes(theme.reference));
       const hasRevisions = setMetaRow(els.revisionsRow, '改訂履歴', buildRevisionNodes(theme.revisions), 'div');
       els.metaContent.hidden = !(hasUpdated || hasReference || hasRevisions);
 
-      const index = AVAILABLE_THEMES.indexOf(themeName);
+      const index = themeIndex();
       els.progress.hidden = index < 0;
       els.progressText.textContent = index < 0 ? '' : `${formatIndex(index + 1)} / ${formatIndex(AVAILABLE_THEMES.length)}`;
 
       if (!els.notePanel.hidden) resetNoteHint();
-      document.title = themeName ? `${theme.title} | 思索の余白` : '思索の余白';
+      document.title = currentTheme ? `${theme.title} | 思索の余白` : '思索の余白';
     }
 
     function setThemeUrl(themeName, replace = false) {
@@ -1269,11 +1261,10 @@
       const token = ++transitionToken;
 
       if (historyMode !== 'none') setThemeUrl(currentTheme, historyMode === 'replace');
-      updateButtonsHighlight();
-      updateArrows();
+      syncNav();
 
       const update = () => {
-        updateContentData(currentTheme);
+        updateContentData();
         // 指でめくっている途中は、めくり終えたときに読み上げる
         if (!interactive && !silent) announceTheme();
       };
@@ -1289,6 +1280,12 @@
 
     function announceTheme() {
       els.liveStatus.textContent = `${els.title.textContent}。${getCurrentBodyText()}`;
+    }
+
+    // テーマボタンの選択状態と前後の矢印を currentTheme に合わせる
+    function syncNav() {
+      updateButtonsHighlight();
+      updateArrows();
     }
 
     function updateArrows() {
@@ -1342,23 +1339,51 @@
     const getAnnotationKey = (themeName) => `${STORAGE_KEYS.annotationPrefix}${themeName || 'intro'}`;
     const NOTE_HINT = els.noteHint.textContent;
     const MAX_ANNOTATIONS = 80;
-    const HIGHLIGHT_COLORS = ['yellow', 'pink', 'blue', 'green'];
+    const HIGHLIGHT_COLOR_NAMES = { yellow: '黄', pink: '桃', blue: '青', green: '緑' };
+    const HIGHLIGHT_COLORS = Object.keys(HIGHLIGHT_COLOR_NAMES);
+    const KIND_LABEL = { memo: 'メモ', highlight: '蛍光ペン' };
     const normalizeColor = (color) => HIGHLIGHT_COLORS.includes(color) ? color : HIGHLIGHT_COLORS[0];
     let lastHighlightColor = normalizeColor(readStorage('localStorage', STORAGE_KEYS.highlightColor));
 
+    // 選んだ本文用（「〜の蛍光ペンを引く」）と、引いた蛍光ペン用（「〜に変える」）の色見本を並べる
+    const renderSwatches = (container, labelOf) => {
+      container.append(...HIGHLIGHT_COLORS.map(color => {
+        const swatch = document.createElement('button');
+        swatch.type = 'button';
+        swatch.className = 'color-swatch';
+        swatch.dataset.color = color;
+        swatch.title = HIGHLIGHT_COLOR_NAMES[color];
+        swatch.setAttribute('aria-label', labelOf(HIGHLIGHT_COLOR_NAMES[color]));
+        swatch.setAttribute('aria-pressed', 'false');
+        return swatch;
+      }));
+    };
+    renderSwatches(els.selectionColors, name => `${name}の蛍光ペンを引く`);
+    renderSwatches(els.annotationColors, name => `${name}に変える`);
+
+    function getCurrentThemeData() {
+      return currentTheme ? themes[currentTheme] : intro;
+    }
     function getCurrentBodyText() {
-      return (currentTheme ? themes[currentTheme] : intro).body;
+      return getCurrentThemeData().body;
     }
 
     const findAnnotation = (id) => currentAnnotations.find(item => item.id === id);
     const findBodyElements = (id) => Array.from(els.body.querySelectorAll('[data-annotation-id]'))
       .filter(element => element.dataset.annotationId === id);
+    // フォーカスを当てられる一片（途切れた蛍光ペンは最初の <mark>、メモはメモ本文）
+    const findFocusTarget = (id) => findBodyElements(id).find(element => element.matches('mark[tabindex], .margin-note'));
+    const hasBodySelection = () => {
+      const selection = window.getSelection();
+      return Boolean(selection && !selection.isCollapsed && els.body.contains(selection.anchorNode));
+    };
     const createAnnotationId = () => window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const overlapsRange = (a, b) => a.start < b.end && a.end > b.start;
     const sameRange = (a, b) => a.start === b.start && a.end === b.end;
 
-    function loadAnnotations(themeName, bodyText) {
-      const stored = readStorage('localStorage', getAnnotationKey(themeName));
+    function loadAnnotations() {
+      const bodyText = getCurrentBodyText();
+      const stored = readStorage('localStorage', getAnnotationKey(currentTheme));
       if (!stored) return [];
       try {
         const parsed = JSON.parse(stored);
@@ -1405,15 +1430,13 @@
       const value = currentAnnotations.length ? JSON.stringify(currentAnnotations) : null;
       if (!writeStorage('localStorage', getAnnotationKey(currentTheme), value)) {
         showNoteMessage('この環境では書き込みを保存できません。「写す」で内容をコピーしてください。');
-        return false;
       }
-      return true;
     }
 
     function commitAnnotations() {
       currentAnnotations.sort((a, b) => a.start - b.start || a.end - b.end);
       saveAnnotations();
-      renderAnnotatedBody(getCurrentBodyText());
+      renderAnnotatedBody();
     }
 
     /*
@@ -1421,7 +1444,8 @@
       蛍光ペンは <mark>、メモの対象範囲は見た目のない <span class="memo-anchor">（選択中だけ枠を出す）、
       メモ本文は対象範囲の直後に .margin-note として差し込む（本文の文字位置の計算からは外す：getSelectionOffsets）
     */
-    function renderAnnotatedBody(bodyText) {
+    function renderAnnotatedBody() {
+      const bodyText = getCurrentBodyText();
       const highlights = currentAnnotations.filter(item => item.kind === 'highlight');
       const memos = currentAnnotations.filter(item => item.kind === 'memo');
       const points = [...new Set([0, bodyText.length, ...currentAnnotations.flatMap(item => [item.start, item.end])])].sort((a, b) => a - b);
@@ -1619,36 +1643,35 @@
       const exact = sameKind.find(item => sameRange(item, selectionData));
       if (exact) return { exact };
       if (sameKind.some(item => overlapsRange(item, selectionData))) {
-        return { error: kind === 'memo' ? 'ほかのメモと重ならない範囲を選んでください。' : 'ほかの蛍光ペンと重ならない範囲を選んでください。' };
+        return { error: `ほかの${KIND_LABEL[kind]}と重ならない範囲を選んでください。` };
       }
       if (currentAnnotations.length >= MAX_ANNOTATIONS) return { error: `書き込みは${MAX_ANNOTATIONS}件まで保存できます。` };
       return {};
     }
 
+    // 案内を戻すのは保存の前（保存に失敗したときの知らせを消さないため）
     function addHighlight(selectionData, color = lastHighlightColor) {
-      if (!selectionData) return false;
+      if (!selectionData) return;
       const { exact, error } = checkPlacement('highlight', selectionData);
       if (error) {
         showNoteMessage(error);
-        return false;
+        return;
       }
+      resetNoteHint();
       if (exact) exact.color = color;
       else currentAnnotations.push({ id: createAnnotationId(), kind: 'highlight', ...selectionData, color });
       commitAnnotations();
-      resetNoteHint();
-      return true;
     }
 
     function addMemo(selectionData, note) {
       const { error } = checkPlacement('memo', selectionData);
       if (error) {
         showNoteMessage(error);
-        return false;
+        return;
       }
+      resetNoteHint();
       currentAnnotations.push({ id: createAnnotationId(), kind: 'memo', ...selectionData, note });
       commitAnnotations();
-      resetNoteHint();
-      return true;
     }
 
     function removeAnnotation(id) {
@@ -1670,7 +1693,7 @@
     }
 
     function focusAnnotation(id) {
-      const target = findBodyElements(id).find(element => element.matches('mark[tabindex], .margin-note'));
+      const target = findFocusTarget(id);
       if (!target) return;
       target.scrollIntoView({ behavior: reducedMotionQuery.matches ? 'auto' : 'smooth', block: 'nearest' });
       target.classList.remove('is-located');
@@ -1680,15 +1703,13 @@
 
     els.noteToggleBtn.addEventListener('click', () => setNoteOpen(els.notePanel.hidden));
 
+    const hideToolbars = () => {
+      hideSelectionToolbar();
+      hideAnnotationToolbar();
+    };
     document.addEventListener('selectionchange', queueSelectionToolbarUpdate);
-    document.getElementById('app').addEventListener('scroll', () => {
-      hideSelectionToolbar();
-      hideAnnotationToolbar();
-    }, { passive: true });
-    window.addEventListener('resize', () => {
-      hideSelectionToolbar();
-      hideAnnotationToolbar();
-    }, { passive: true });
+    document.getElementById('app').addEventListener('scroll', hideToolbars, { passive: true });
+    window.addEventListener('resize', hideToolbars, { passive: true });
 
     els.selectionToolbar.addEventListener('click', event => {
       const swatch = event.target.closest('.color-swatch');
@@ -1725,10 +1746,11 @@
       } else if (event.target.closest('#annotationMemoBtn') && annotation.kind === 'memo') {
         openMemoDialog({ start: annotation.start, end: annotation.end, quote: annotation.quote }, annotation);
       } else if (event.target.closest('#annotationDeleteBtn')) {
-        if (!window.confirm(annotation.kind === 'memo' ? 'このメモを削除しますか？' : 'この蛍光ペンを削除しますか？')) return;
+        const label = KIND_LABEL[annotation.kind];
+        if (!window.confirm(`この${label}を削除しますか？`)) return;
         hideAnnotationToolbar();
         removeAnnotation(annotation.id);
-        els.liveStatus.textContent = annotation.kind === 'memo' ? 'メモを削除しました。' : '蛍光ペンを削除しました。';
+        els.liveStatus.textContent = `${label}を削除しました。`;
       }
     });
 
@@ -1766,9 +1788,7 @@
     const ANNOTATION_TARGET = 'mark[data-annotation-id], .margin-note';
     els.body.addEventListener('click', event => {
       const target = event.target.closest(ANNOTATION_TARGET);
-      if (!target) return;
-      const selection = window.getSelection();
-      if (selection && !selection.isCollapsed && els.body.contains(selection.anchorNode)) return;
+      if (!target || hasBodySelection()) return;
       const id = target.dataset.annotationId;
       if (activeAnnotationId === id && !els.annotationToolbar.hidden) {
         hideAnnotationToolbar();
@@ -1784,17 +1804,9 @@
     });
     document.addEventListener('pointerdown', event => {
       if (els.annotationToolbar.hidden) return;
-      if (event.target.closest(`#annotationToolbar, #body ${ANNOTATION_TARGET.replace(', ', ', #body ')}`)) return;
+      // 書き込みは本文にしかない（めくり中の写しは pointer-events: none）ので #body で絞らなくてよい
+      if (event.target.closest(`#annotationToolbar, ${ANNOTATION_TARGET}`)) return;
       hideAnnotationToolbar();
-    });
-    document.addEventListener('keydown', event => {
-      if (event.key !== 'Escape') return;
-      if (!els.annotationToolbar.hidden) {
-        const target = findBodyElements(activeAnnotationId).find(element => element.matches('mark[tabindex], .margin-note'));
-        hideAnnotationToolbar();
-        target?.focus();
-      }
-      if (!els.selectionToolbar.hidden) hideSelectionToolbar();
     });
 
     /* =========================================
@@ -1821,11 +1833,6 @@
     const DRAG_START_DISTANCE = 10;
     const FLICK_SPEED = 0.35; // px/ms
     let gesture = null;
-
-    const hasBodySelection = () => {
-      const selection = window.getSelection();
-      return Boolean(selection && !selection.isCollapsed && els.body.contains(selection.anchorNode));
-    };
 
     // 指の位置に合う t を、紙の形を先に計算した表から探す
     function buildDragTable(turn, grabDistance) {
@@ -2114,6 +2121,16 @@
     });
 
     document.addEventListener('keydown', (event) => {
+      // Escape は書き込みのツールバーを閉じ、フォーカスを書き込みに戻す
+      if (event.key === 'Escape') {
+        if (!els.annotationToolbar.hidden) {
+          const target = findFocusTarget(activeAnnotationId);
+          hideAnnotationToolbar();
+          target?.focus();
+        }
+        hideSelectionToolbar();
+        return;
+      }
       // Alt+← などブラウザ側の操作とは重ねない。ボタンにフォーカスがあっても矢印キーでは送る
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
@@ -2132,9 +2149,8 @@
 
     if (location.hash && !currentTheme) setThemeUrl(null, true);
     applyDisplayModes();
-    updateContentData(currentTheme);
-    updateButtonsHighlight();
-    updateArrows();
+    updateContentData();
+    syncNav();
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
