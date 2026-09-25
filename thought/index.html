@@ -727,8 +727,8 @@
 
           <div class="content-layout">
             <div class="title-panel">
-              <h1 id="title" class="content-element anim-ready play-fade-up">思索の余白</h1>
-              <div id="progress" class="theme-progress zen-hide content-element anim-ready play-fade-in delay-2" hidden>
+              <h1 id="title" class="anim-ready play-fade-up">思索の余白</h1>
+              <div id="progress" class="theme-progress zen-hide anim-ready play-fade-in delay-2" hidden>
                 <button type="button" id="progressPrevBtn" class="progress-arrow" aria-label="前の思索へ">
                   <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
@@ -745,11 +745,11 @@
               </div>
             </div>
 
-            <div id="vLine" class="content-element anim-ready play-fade-in delay-2"></div>
+            <div id="vLine" class="anim-ready play-fade-in delay-2"></div>
 
             <div class="prose-panel">
               <!-- イントロ本文。data-updated はイントロの最終更新日、data-question は書き留め欄に出す問い（各テーマの分は #thoughtSource の article 側） -->
-              <div id="body" class="content-element anim-ready play-fade-up delay-1" data-updated="2025.10.12" data-question="いま、あなたが最新化したい人生のテーマは何だろう。">
+              <div id="body" class="anim-ready play-fade-up delay-1" data-updated="2025.10.12" data-question="いま、あなたが最新化したい人生のテーマは何だろう。">
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
               </div>
 
@@ -763,12 +763,12 @@
               </details>
 
               <!-- 目次（イントロのページだけに出す）。項目は #thoughtSource の h2 から並べ、data-slots 個に満たない分は空欄で残す -->
-              <nav id="toc" class="toc zen-hide content-element anim-ready play-fade-up delay-2" aria-labelledby="tocHeading" data-slots="9">
+              <nav id="toc" class="toc zen-hide anim-ready play-fade-up delay-2" aria-labelledby="tocHeading" data-slots="9">
                 <p id="tocHeading" class="toc-heading">目次</p>
                 <ol id="tocList" class="toc-list"></ol>
               </nav>
 
-              <div id="metaInfo" class="content-element anim-ready play-fade-up delay-2">
+              <div id="metaInfo" class="anim-ready play-fade-up delay-2">
                 <div id="metaContent" class="zen-hide">
                   <p id="lastUpdated"></p>
                   <p id="reference"></p>
@@ -1131,6 +1131,11 @@
     // -1 はイントロ（null は AVAILABLE_THEMES に含まれないので indexOf がそのまま -1 を返す）
     const themeIndex = () => AVAILABLE_THEMES.indexOf(currentTheme);
     const themeHash = (themeName) => themeName ? `#${encodeURIComponent(themeName)}` : '';
+    // step（-1 で前、+1 で次）の先へ送れるか。イントロ（-1）から最後のテーマまで
+    const canStep = (step) => {
+      const target = themeIndex() + step;
+      return target >= -1 && target < AVAILABLE_THEMES.length;
+    };
 
     /* =========================================
        Core Logic
@@ -1172,8 +1177,6 @@
       return true;
     };
 
-    const buildUpdatedNodes = (updated) => updated ? [createTime(updated)] : null;
-
     const buildReferenceNodes = (referenceSource) => {
       if (!referenceSource) return null;
       const nodes = Array.from(referenceSource.childNodes, node => node.cloneNode(true));
@@ -1211,7 +1214,7 @@
       renderAnnotatedBody();
       renderOrphanedAnnotations();
 
-      const hasUpdated = setMetaRow(els.lastUpdated, '最終更新日', buildUpdatedNodes(theme.lastUpdated));
+      const hasUpdated = setMetaRow(els.lastUpdated, '最終更新日', theme.lastUpdated ? [createTime(theme.lastUpdated)] : null);
       const hasReference = setMetaRow(els.reference, '参考文献', buildReferenceNodes(theme.reference));
       const hasRevisions = setMetaRow(els.revisionsRow, '改訂履歴', buildRevisionNodes(theme.revisions), 'div');
       els.metaContent.hidden = !(hasUpdated || hasReference || hasRevisions);
@@ -1501,24 +1504,17 @@
     const stepForSide = (side) => (side === 'left' ? -1 : 1) * (isVertical ? -1 : 1);
 
     function updateArrows() {
-      const canStep = (step) => {
-        const target = themeIndex() + step;
-        return target >= -1 && target < AVAILABLE_THEMES.length;
-      };
       [['left', els.prevThemeBtn, els.progressPrevBtn], ['right', els.nextThemeBtn, els.progressNextBtn]].forEach(([side, navArrow, progressArrow]) => {
         const step = stepForSide(side);
         const label = step > 0 ? '次の思索へ' : '前の思索へ';
         navArrow.setAttribute('aria-label', label);
         progressArrow.setAttribute('aria-label', label);
-        setArrowsEnabled(navArrow, progressArrow, canStep(step));
+        // 左右の矢印は disabled で消える（CSS）。見えない矢印は読み上げにも出さない
+        const enabled = canStep(step);
+        navArrow.disabled = progressArrow.disabled = !enabled;
+        navArrow.setAttribute('aria-hidden', String(!enabled));
       });
       updateSwipeHint();
-    }
-
-    // 左右の矢印は disabled で消える（CSS）。見えない矢印は読み上げにも出さない
-    function setArrowsEnabled(navArrow, progressArrow, enabled) {
-      navArrow.disabled = progressArrow.disabled = !enabled;
-      navArrow.setAttribute('aria-hidden', String(!enabled));
     }
 
     /*
@@ -1529,7 +1525,7 @@
     const narrowQuery = window.matchMedia('(max-width: 639px)');
     const writingModeName = () => (isVertical ? 'vertical' : 'horizontal');
     const hasLearnedSwipe = () => readStorage('localStorage', STORAGE_KEYS.swipeLearned) === writingModeName();
-    const hasNextPage = () => themeIndex() + 1 < AVAILABLE_THEMES.length;
+    const hasNextPage = () => canStep(1);
 
     function updateSwipeHint() {
       els.swipeHint.hidden = hasLearnedSwipe();
@@ -1627,14 +1623,12 @@
     }
 
     function startDrag(touch) {
-      // 次へは綴じ目の側へ払う（横書きは左へ、縦書きは右へ）
-      const dx = touch.clientX - gesture.startX;
-      const step = (isVertical ? dx > 0 : dx < 0) ? 1 : -1;
-      const target = themeIndex() + step;
-      if (target < -1 || target >= AVAILABLE_THEMES.length) return false;
+      // 左へ払うのは右の矢印と同じ（次へは綴じ目の側へ払う：横書きは左へ、縦書きは右へ）
+      const step = stepForSide(touch.clientX < gesture.startX ? 'right' : 'left');
+      if (!canStep(step)) return false;
       if (document.activeElement?.matches('.toc-link, .progress-index')) document.activeElement.blur();
       gesture.fromTheme = currentTheme;
-      gesture.turn = switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace', interactive: true });
+      gesture.turn = switchTheme(AVAILABLE_THEMES[themeIndex() + step] ?? null, { history: 'replace', interactive: true });
       if (!gesture.turn) return false;
       // つまんだ位置が綴じ目に近すぎると、少しの動きで紙が大きく跳ねるので、紙幅の 6 割より手前はつままない
       const { spineX, width, mirrored } = gesture.turn;
@@ -1777,7 +1771,7 @@
       if (gesture.mode === 'swipe') {
         const xDiff = gesture.startX - e.changedTouches[0].clientX;
         if (Math.abs(xDiff) > 60) {
-          moveTheme((xDiff > 0) !== isVertical ? 1 : -1);
+          moveTheme(stepForSide(xDiff > 0 ? 'right' : 'left'));
           learnSwipe();
         }
       }
@@ -2148,6 +2142,14 @@
     */
     const ORPHANED_HEADING = '本文の改訂で位置を失った書き込み';
 
+    // 書き込みの削除は確かめてから行い、消したことを読み上げる（remove が実際に消す）
+    function confirmRemoval(annotation, remove) {
+      const label = KIND_LABEL[annotation.kind];
+      if (!window.confirm(`この${label}を削除しますか？`)) return;
+      remove();
+      els.liveStatus.textContent = `${label}を削除しました。`;
+    }
+
     function renderOrphanedAnnotations() {
       const container = els.orphanedNotes;
       container.hidden = !orphanedAnnotations.length;
@@ -2187,14 +2189,13 @@
       if (!button) return;
       const annotation = orphanedAnnotations.find(item => item.id === button.dataset.annotationId);
       if (!annotation) return;
-      const label = KIND_LABEL[annotation.kind];
-      if (!window.confirm(`この${label}を削除しますか？`)) return;
-      orphanedAnnotations = orphanedAnnotations.filter(item => item !== annotation);
-      saveAnnotations();
-      renderOrphanedAnnotations();
-      // 押したボタンは描き直しで消えるので、一覧の見出しへ（一覧ごと消えたら「余白に書く」へ）
-      (els.orphanedNotes.hidden ? els.noteToggleBtn : els.orphanedNotes.querySelector('summary')).focus({ preventScroll: true });
-      els.liveStatus.textContent = `${label}を削除しました。`;
+      confirmRemoval(annotation, () => {
+        orphanedAnnotations = orphanedAnnotations.filter(item => item !== annotation);
+        saveAnnotations();
+        renderOrphanedAnnotations();
+        // 押したボタンは描き直しで消えるので、一覧の見出しへ（一覧ごと消えたら「余白に書く」へ）
+        (els.orphanedNotes.hidden ? els.noteToggleBtn : els.orphanedNotes.querySelector('summary')).focus({ preventScroll: true });
+      });
     });
 
     els.pageNoteInput.addEventListener('input', () => {
@@ -2502,11 +2503,8 @@
       } else if (event.target.closest('#annotationMemoBtn') && annotation.kind === 'memo') {
         openMemoDialog({ start: annotation.start, end: annotation.end, quote: annotation.quote }, annotation);
       } else if (event.target.closest('#annotationDeleteBtn')) {
-        const label = KIND_LABEL[annotation.kind];
-        if (!window.confirm(`この${label}を削除しますか？`)) return;
-        // 先に消す（描き直しでツールバーが閉じ、フォーカスは「余白に書く」へ戻る）
-        removeAnnotation(annotation.id);
-        els.liveStatus.textContent = `${label}を削除しました。`;
+        // 描き直しでツールバーが閉じ、フォーカスは「余白に書く」へ戻る
+        confirmRemoval(annotation, () => removeAnnotation(annotation.id));
       }
     });
 
@@ -2579,9 +2577,8 @@
        ========================================= */
     // step: -1 で前、+1 で次。イントロ（-1）から最後のテーマまでの範囲で送る
     function moveTheme(step) {
-      const target = themeIndex() + step;
-      if (target < -1 || target >= AVAILABLE_THEMES.length) return;
-      switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace' });
+      if (!canStep(step)) return;
+      switchTheme(AVAILABLE_THEMES[themeIndex() + step] ?? null, { history: 'replace' });
     }
 
     /*
@@ -2681,7 +2678,7 @@
     const getFormattedContent = () => {
       const formatAnnotations = (list) => list.map(annotation => (
         annotation.kind === 'memo'
-          ? `・メモ「${annotation.quote}」\n  ${annotation.note.replace(/\n/g, '\n  ')}`
+          ? `・メモ「${annotation.quote}」\n  ${indentLines(annotation.note, '  ')}`
           : `・蛍光ペン「${annotation.quote}」`
       )).join('\n');
       const annotations = formatAnnotations(currentAnnotations);
@@ -2749,7 +2746,7 @@
 
     // スマホは OS の共有シートを優先し、使えないときや PC ではモーダルを出す
     els.openShareModalBtn.addEventListener('click', async () => {
-      if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
+      if (navigator.share && coarsePointerQuery.matches) {
         const { text, shareUrl } = getShareInfo();
         try {
           await navigator.share({ title: document.title, text, url: shareUrl });
@@ -2804,10 +2801,9 @@
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
       if (event.target.closest('#annotationToolbar, #selectionToolbar')) return;
-      if (els.shareModal.open || els.disclosureModal.open || els.memoModal.open) return;
+      if (document.querySelector('dialog[open]')) return;
       if (event.target.closest('input, textarea, select, [contenteditable]')) return;
-      if (event.key === 'ArrowLeft') moveTheme(stepForSide('left'));
-      if (event.key === 'ArrowRight') moveTheme(stepForSide('right'));
+      moveTheme(stepForSide(event.key === 'ArrowLeft' ? 'left' : 'right'));
     });
 
     const syncThemeFromUrl = () => {
