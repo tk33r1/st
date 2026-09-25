@@ -137,8 +137,7 @@ class TreeBuilder(HTMLParser):
         if tag not in VOID_TAGS:
             self.stack.append(node)
 
-    def handle_startendtag(self, tag, attrs):
-        self.stack[-1].children.append(Node(tag, {k: (v if v is not None else '') for k, v in attrs}))
+    # 自己終了タグ（<line /> 等）は HTMLParser の既定で starttag → endtag と呼ばれるので、上書きしない
 
     def handle_endtag(self, tag):
         for i in range(len(self.stack) - 1, 0, -1):
@@ -177,8 +176,8 @@ def node_text(node):
     def walk(n):
         # data-magi-lead の子は、DOM 上の位置に関係なく親の先頭に出す。年表のように見た目の都合で
         # 年のラベルが本文の後ろに置かれていると、文字列にしたとき次の項目の年に読めてしまうため
-        lead = [c for c in n.children if isinstance(c, Node) and 'data-magi-lead' in c.attrs]
-        for child in lead + [c for c in n.children if not (isinstance(c, Node) and 'data-magi-lead' in c.attrs)]:
+        # （安定ソートなので、lead 同士・それ以外同士の順序は保たれる）
+        for child in sorted(n.children, key=lambda c: not (isinstance(c, Node) and 'data-magi-lead' in c.attrs)):
             if isinstance(child, str):
                 parts.append(re.sub(r'\s+', ' ', child))
                 continue
@@ -193,8 +192,7 @@ def node_text(node):
             if child.tag in HEADING_TAGS:
                 parts.append('■ ')
             walk(child)
-            if child.attrs.get('data-updated'):
-                parts.append(f"\n（最終更新 {child.attrs['data-updated']}）")
+            # data-updated（最終更新日）は読まない。カードに日付は出ず、日付だけの修正で作り直しが走るため
             if child.attrs.get('data-question'):
                 parts.append(f"\n読み手への問い: {child.attrs['data-question']}")
             if block:
@@ -295,7 +293,7 @@ def validate_card(card):
         card = re.sub(r'^```\w*\s*|\s*```$', '', card).strip()
     if not (CARD_MIN <= len(card) <= CARD_MAX):
         raise RuntimeError(f'人格カードの長さが範囲外（{len(card)} 字、許容 {CARD_MIN}〜{CARD_MAX}）')
-    if not card.lstrip().startswith('-'):
+    if not card.startswith('-'):
         raise RuntimeError('人格カードが箇条書きになっていない: ' + card[:80])
     return card
 
