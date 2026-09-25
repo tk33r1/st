@@ -18,10 +18,6 @@ dom.txt
 err.txt
 *.log
 
-# MAGI 評価の本人の答えと結果（公開リポジトリなので置かない。→ workers/magi2/eval/run.mjs）
-workers/magi2/eval/cases.json
-workers/magi2/eval/results/
-
 # Python cache
 __pycache__/
 *.pyc
