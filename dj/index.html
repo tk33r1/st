@@ -4224,7 +4224,8 @@
           </details>
         </div>
       </div>
-      <div class="reveal">
+      <!-- 予定表は Google カレンダーの埋め込みだけで、抽出すると見出しだけが残り「予定なし」と読まれるので外す -->
+      <div class="reveal" data-magi-skip>
         <h2 class="operation-title"><svg class="section-icon" aria-hidden="true"><use href="#icon-calendar" /></svg><span lang="en">Schedule / Future</span></h2>
         <div class="calendar-container">
           <iframe

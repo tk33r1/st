@@ -16,8 +16,9 @@
      呼ばれない。
   3. 要約: 変わった人格だけ、素材からゼロで人格カードを作る。前回のカードは渡さない
      （渡すと前回の誤りや消した内容が残りやすい。言い回しが多少変わるのは許容する）。
-  4. 検査して data/magi-context.json に書く。どこかで失敗したら何も書かずに exit 1。
-     Worker は前回のカードで動き続ける。
+  4. 検査して data/magi-context.json に書く。抽出で失敗したら何も書かずに exit 1。
+     要約や検査で失敗した人格は前回のカードのまま残し、作れた人格だけ書いてから exit 1。
+     Worker は残ったカードで動き続ける。
 
 ローカル確認: `python .github/scripts/magi-context.py --dry-run` で抽出結果と
 「どの人格が再生成対象か」だけを表示する（API キー不要）。
@@ -25,6 +26,7 @@
 
 import argparse
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -173,11 +175,10 @@ def node_text(node):
     """要素のテキストを、ブロック要素ごとに改行を入れて取り出す。"""
     parts = []
 
+    # テキストは DOM の順に読む。見出し（年表の年など）は本文より前に置くこと。CSS で見た目の
+    # 位置を変えても、文字列にしたときは DOM 順になり、後ろの年は次の項目の年に読めてしまう
     def walk(n):
-        # data-magi-lead の子は、DOM 上の位置に関係なく親の先頭に出す。年表のように見た目の都合で
-        # 年のラベルが本文の後ろに置かれていると、文字列にしたとき次の項目の年に読めてしまうため
-        # （安定ソートなので、lead 同士・それ以外同士の順序は保たれる）
-        for child in sorted(n.children, key=lambda c: not (isinstance(c, Node) and 'data-magi-lead' in c.attrs)):
+        for child in n.children:
             if isinstance(child, str):
                 parts.append(re.sub(r'\s+', ' ', child))
                 continue
@@ -198,8 +199,11 @@ def node_text(node):
             if block:
                 parts.append('\n')
 
-    walk(node)
-    lines = (re.sub(r'^■\s+', '■ ', line.strip()) for line in ''.join(parts).split('\n'))
+    # 目印の要素自身の属性（data-question 等）も子と同じく読むため、包んでから辿る
+    wrapper = Node('#marked', {})
+    wrapper.children = [node]
+    walk(wrapper)
+    lines =(re.sub(r'^■\s+', '■ ', line.strip()) for line in ''.join(parts).split('\n'))
     return '\n'.join(line for line in lines if line)
 
 
@@ -270,7 +274,9 @@ def call_openai(api_key, system, user):
             detail = e.read().decode('utf-8', errors='ignore')[:300]
             error = f'HTTP {e.code}: {detail}'
             retryable = e.code == 429 or e.code >= 500  # 一時的なもの（レート制限・サーバ側）だけ再試行
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+        # URLError・タイムアウト・接続切れ（RemoteDisconnected 等）はすべて OSError。urllib が
+        # URLError に包むのは送信時だけで、応答待ちや読み込み中の切断は素の例外で上がってくる
+        except (OSError, http.client.HTTPException, json.JSONDecodeError) as e:
             error, retryable = f'{type(e).__name__}: {e}', True
         if not retryable or attempt == len(RETRY_WAITS):
             raise RuntimeError(f'OpenAI の呼び出しに失敗: {error}')
@@ -338,15 +344,27 @@ def main():
         sys.exit('OPENAI_API_KEY が未設定')
 
     now = datetime.now(JST).isoformat(timespec='seconds')
-    updated = {}
+    updated, errors = {}, []
     for conf, system, source, digest in todo:
         # 前回のカードは渡さず、毎回素材からゼロで作る（前回の誤りや消した内容を引き継がないため）
-        card = validate_card(call_openai(api_key, system, f'【素材】\n{source}'))
+        try:
+            card = validate_card(call_openai(api_key, system, f'【素材】\n{source}'))
+        except RuntimeError as e:
+            # 1人格の失敗で、料金を払って作れたほかの人格まで捨てないよう、続けて最後にまとめて失敗させる
+            errors.append(f"{conf['codename']}: {e}")
+            print(f"[ERROR] {conf['codename']}: {e}", file=sys.stderr)
+            continue
         updated[conf['codename']] = {'card': card, 'source_hash': digest, 'updated_at': now}
         print(f"--- {conf['codename']}（{len(card)} 字）\n{card}\n")
 
-    # 全人格が成功したときだけ書く。途中で落ちたら前回の JSON がそのまま残る
-    personas = {**previous, **updated}
+    # 作れた人格だけ書く。失敗した人格は前回のカードとハッシュのまま残るので、次の実行で作り直される
+    if updated:
+        write_output({**previous, **updated})
+    if errors:
+        raise RuntimeError(f'{len(errors)} 人格のカードを作れなかった（作れた人格は保存済み）')
+
+
+def write_output(personas):
     out = {
         'note': '自動生成（.github/scripts/magi-context.py）。手で編集しない。元の文章は各ページの data-magi の目印の中身',
         'personas': {c['codename']: personas[c['codename']] for c in PERSONAS.values() if c['codename'] in personas},

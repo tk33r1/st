@@ -1858,42 +1858,43 @@
         <!-- 2007 -->
         <div class="story-node">
           <div class="story-marker"></div>
+          <div class="story-date-wrap"><span class="story-date">2007</span></div>
           <div class="story-card">
             <h3 class="story-title">映画『イージー★ライダー』との出会い</h3>
             <p class="story-body">
               大学生のとき、映画『イージー★ライダー』を観てハーレーに強烈な憧憬を抱く。ヒッピー文化、風と自由への生涯にわたる傾倒がここから始まり、休日のレンタルバイクで風を感じる原点となる。
             </p>
           </div>
-          <div class="story-date-wrap" data-magi-lead><span class="story-date">2007</span></div>
         </div>
 
         <!-- 2024 -->
         <div class="story-node">
           <div class="story-marker"></div>
+          <div class="story-date-wrap"><span class="story-date">2024</span></div>
           <div class="story-card">
             <h3 class="story-title">スポーツモデル「ナイトスター」新車購入</h3>
             <p class="story-body">
               現在もお世話になっているハーレーダビッドソン東久留米店にて、最新水冷レボリューションマックス搭載のスポーツモデル「ナイトスター (RH975)」を新車購入。毎週末のツーリングに胸を躍らせる。
             </p>
           </div>
-          <div class="story-date-wrap" data-magi-lead><span class="story-date">2024</span></div>
         </div>
 
         <!-- 2025 -->
         <div class="story-node">
           <div class="story-marker accident"></div>
+          <div class="story-date-wrap"><span class="story-date">2025</span></div>
           <div class="story-card">
             <h3 class="story-title">交差点事故・40日間の入院と記憶喪失</h3>
             <p class="story-body">
               仕事からの帰宅中、交差点で右折してきた対向車とナイトスターが激しく衝突。40日間にわたる入院、腕と腰の骨折、そして記憶障害。日常生活への復帰すら危ぶまれる生死の淵を経験し、愛機は廃車となった。
             </p>
           </div>
-          <div class="story-date-wrap" data-magi-lead><span class="story-date">2025</span></div>
         </div>
 
         <!-- 2026 -->
         <div class="story-node">
           <div class="story-marker"></div>
+          <div class="story-date-wrap"><span class="story-date">2026</span></div>
           <div class="story-card">
             <h3 class="story-title">「人生にはハーレーが必要だ」—— Liberty Edition との巡り合わせ</h3>
             <p class="story-body">
@@ -1901,7 +1902,6 @@
               Classic Liberty Edition』の抽選受付が、ちょうど始まっているところだという。——結果は、当選。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ、リターンを果たす。
             </p>
           </div>
-          <div class="story-date-wrap" data-magi-lead><span class="story-date">2026</span></div>
         </div>
       </div>
     </div>
@@ -2137,9 +2137,9 @@
   <section class="section" id="channel">
     <div class="container">
       <div class="teaser-card">
-        <span class="teaser-status" data-channel-status data-magi="melchior">第1弾「納車」 2026年11月 公開予定</span>
+        <span class="teaser-status" data-channel-status>第1弾「納車」 2026年11月 公開予定</span>
         <h2 class="teaser-title" data-channel-title><span>YouTube チャンネルにて</span><br><span>始動準備中</span></h2>
-        <p class="teaser-desc" data-channel-description data-magi="melchior">
+        <p class="teaser-desc" data-channel-description>
           『LIBERTY MOTOVLOG』の第1弾は「納車」。2026年11月の公開に向けて、撮影・編集を進めています。<br>
           走り出しの通知を受け取れるよう、ぜひチャンネル登録をしてお待ちください！
         </p>
@@ -2235,9 +2235,6 @@
       // 公開後はこの設定だけを更新する。
       // 注: latestVideo を設定すると VideoObject の JSON-LD を JS で生成する。
       //     JS を実行しないクローラにも渡すため、公開時は <head> に静的にも書き出すこと。
-      // 注: 同じく公開時は、#channel の teaser-status / teaser-desc の静的な文言（「公開予定」）も
-      //     書き換えること。JS が表示を差し替えても HTML には残り、MAGI の人格カード
-      //     （data-magi の目印。JS を実行せずに読む）が「まだ公開前」と覚えたままになる。
       const config = {
         youtubeUrl: 'https://www.youtube.com/@liberty_motovlog',
         subscribeUrl: 'https://www.youtube.com/@liberty_motovlog?sub_confirmation=1',

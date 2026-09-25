@@ -43,6 +43,10 @@ jobs:
       run: python3 .github/scripts/magi-context.py ${{ inputs.force && '--force' || '' }}
 
     - name: Commit and push
+      # 生成が一部の人格で失敗しても、作れた人格のカードは保存済みなのでコミットする
+      # （しないと料金を払って作ったカードが捨てられ、次の push で同じ要約をやり直すことになる）。
+      # 生成の工程が失敗していれば、この工程が成功しても job 全体は失敗として通知される
+      if: ${{ !cancelled() }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
@@ -51,13 +55,4 @@ jobs:
         # どこにあっても）のコミットをビルドせず、JSON が次の push まで公開されなくなる。
         # GITHUB_TOKEN の push はほかの workflow を起動しないので、付けなくてもループはしない
         git commit -m "Auto-generated MAGI persona context" || exit 0
-        # 同じ push で sitemap.yml も main にコミットしてくるので、取り込んでから push する。
-        # 取り込んだ直後に相手が先に push すると弾かれるので、取り込みからやり直す（負けると
-        # 生成したカードがコミットされず、次の push でもう一度要約の料金がかかる）
-        for i in 1 2 3 4; do
-          git pull --rebase origin main && git push origin HEAD:main && exit 0
-          git rebase --abort 2>/dev/null || true
-          sleep $((i * 5))
-        done
-        echo "push に4回失敗した" >&2
-        exit 1
+        bash .github/scripts/push-with-retry.sh

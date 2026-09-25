@@ -107,9 +107,9 @@
     手動実行の `force` は素材が同じでも全人格を作り直す。コミットメッセージに CI を止める印を入れない
     （Cloudflare Pages がビルドを省略し、JSON が次の push まで公開されない）。
   - `sitemap.yml` と `magi-context.yml` は同じ push で main にコミットしうるので、どちらも
-    `git pull --rebase` してから push し、弾かれたら取り込みからやり直す（最大4回）。
-    workflow をまたぐ `concurrency.group` の共有はしない（待機中の実行が新しい実行に
-    キャンセルされ、sitemap が黙って飛ぶため）。bot のコミットを増やすときも同じ形にすること。
+    `.github/scripts/push-with-retry.sh` で push する（取り込んでから push し、弾かれたら取り込みから
+    やり直す）。workflow をまたぐ `concurrency.group` の共有はしない（待機中の実行が新しい実行に
+    キャンセルされ、sitemap が黙って飛ぶため）。bot のコミットを増やすときも同じスクリプトを使うこと。
 
 ## コーディング規約
 
@@ -142,13 +142,13 @@
   SEO の都合で直すたびに作り直しが走るため）。人格に知らせたい事実は本文に書いて目印を付ける。
   **ページを改修するときは `data-magi` の属性を残すこと**（class や id は自由に変えてよい）。
   目印の内側で読ませたくない部分は `data-magi-skip` を付けて外す（job の Signal Board のような
-  演出用の数値や、料金・機材仕様などの実務情報は入れない）。年表の年のように、見た目の都合で
-  本文の後ろに置いた見出しには `data-magi-lead` を付けると、抽出時に親の先頭へ回る
-  （付けないと LLM が次の項目の年として読む）。目印が消えると workflow が
-  エラーで止まり、Worker は前回のカードのまま動き続ける。素材のページを増やすときは
-  `magi-context.py` の `PERSONAS` にだけ足す（workflow は絞り込みをしていない）。
-  抽出は JS を実行しないので、JS で書き換える文言（motovlog の「公開予定」など）は静的な HTML 側も
-  更新すること。抽出結果は `python .github/scripts/magi-context.py --dry-run --show` で API キーなしに確認できる。
+  演出用の数値、料金、数値の仕様表（排気量・寸法など）といった実務情報は入れない。愛機のデザインの
+  特徴のように、こだわりとして語れるものは入れてよい）。抽出は DOM の順に読むので、年表の年のような
+  見出しは HTML 上で本文より前に置く（見た目の位置は CSS で決める。後ろに置くと LLM が次の項目の年として
+  読む）。抽出は JS を実行しないので、JS で書き換わる部分（motovlog の近況など）には目印を付けない。
+  目印が消えると workflow がエラーで止まり、Worker は前回のカードのまま動き続ける。要約に失敗した人格も
+  前回のカードのまま残り、作れた人格だけが保存される。素材のページを増やすときは
+  `magi-context.py` の `PERSONAS` にだけ足す（workflow は絞り込みをしていない）。抽出結果は `python .github/scripts/magi-context.py --dry-run --show` で API キーなしに確認できる。
   Worker は `https://tk.st/data/magi-context.json` を isolate ごとに10分使い回し（期限切れ後は手元の
   カードで答えつつ裏で取り直す）、取得に失敗したり3人格そろわなかったりしたら1分後に再試行する。
   カードは人格ごとに上書きし、JSON に欠けた人格は直近のカードを保つ。反映は10分強遅れることがある。
