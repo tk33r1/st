@@ -132,18 +132,18 @@
   }
   </script>
 
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
+  <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
   <!-- encoding-japanese: ブラウザ標準の TextDecoder は「読む」ことしかできない。
        Shift_JIS / EUC-JP / ISO-2022-JP へ「書き出す」ところだけこれに任せる。 -->
-  <script src="https://cdn.jsdelivr.net/npm/encoding-japanese@2/encoding.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="../../data/vendor/encoding-japanese@2.4.0/encoding.min.js"></script>
+  <script src="../../data/vendor/jszip@3.10.1/jszip.min.js"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
+       Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
+  <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
   <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260823"></script>
+  <script src="../../data/tools-ui.js?v=20260926"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->

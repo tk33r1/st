@@ -4,8 +4,8 @@
  * 書き出しを受け持つ。
  *
  * 入力した内容そのものは、符号化から検査・書き出しまで一度も外へ出ない。
- * 外へ出るのはページの計測・装飾アイコンと、表示・書き出しに使うフォントの
- * 取得だけ。
+ * フォント・デコーダ・エンコーダ・アイコンは同梱してあり、外とやりとりするのは
+ * ページの計測だけ（入力には触れない）。
  */
 (function () {
   'use strict';
@@ -559,17 +559,8 @@
       // merge は DEFAULTS のキーを再帰的に埋めるので、frame.paint / logo.paint /
       // font などの穴埋めはここでは要らない。値の妥当性は sanitizeStyle が見る。
       if (saved.style) state.style = window.QRStyle.merge(window.QRStyle.DEFAULTS, saved.style);
-      if (state.style.markerFrame && !hasId(A.MARKER_FRAMES, state.style.markerFrame)) {
-        state.style.markerFrame = window.QRStyle.DEFAULTS.markerFrame;
-      }
-      if (state.style.markerEye && !hasId(A.MARKER_EYES, state.style.markerEye)) {
-        state.style.markerEye = window.QRStyle.DEFAULTS.markerEye;
-      }
-      if (state.style.frame && state.style.frame.type && !hasId(A.FRAMES, state.style.frame.type)) {
-        state.style.frame.type = 'none';
-      }
-      // iconData の引き直しは sanitizeStyle が無条件でやる（保存された
-      // オブジェクトは信用せず、id から毎回引く）ので、ここでは触らない。
+      // 知らない形の id や iconData の引き直しは sanitizeStyle が無条件でやる
+      // （保存されたオブジェクトは信用せず、id から毎回引く）ので、ここでは触らない。
       sanitizeStyle(state.style);
     } catch (e) { /* 壊れた保存は捨てる */ }
   }
@@ -602,10 +593,7 @@
   }
 
   function resolveHistoryImage(val) {
-    if (typeof val === 'string' && val.indexOf('__img_ref_') === 0 && val.slice(-2) === '__' && historyImagePool.has(val)) {
-      return historyImagePool.get(val);
-    }
-    return val;
+    return typeof val === 'string' && historyImagePool.has(val) ? historyImagePool.get(val) : val;
   }
 
   function cleanHistoryImagePool() {
@@ -656,14 +644,14 @@
     cleanHistoryImagePool();
   }
 
+  function cancelPendingHistory() {
+    if (historyTimer) { clearTimeout(historyTimer); historyTimer = null; }
+  }
+
   function recordHistorySoon(immediate) {
     if (isApplyingHistory) return;
-    if (immediate) {
-      if (historyTimer) { clearTimeout(historyTimer); historyTimer = null; }
-      commitHistory();
-      return;
-    }
-    if (historyTimer) clearTimeout(historyTimer);
+    cancelPendingHistory();
+    if (immediate) { commitHistory(); return; }
     historyTimer = setTimeout(() => {
       historyTimer = null;
       commitHistory();
@@ -671,14 +659,9 @@
   }
 
   function updateHistoryButtons() {
-    const btnUndo = $('btn-undo');
-    const btnRedo = $('btn-redo');
-    if (btnUndo) {
-      btnUndo.disabled = undoStack.length === 0;
-    }
-    if (btnRedo) {
-      btnRedo.disabled = redoStack.length === 0;
-    }
+    const btnUndo = $('btn-undo'), btnRedo = $('btn-redo');
+    if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+    if (btnRedo) btnRedo.disabled = redoStack.length === 0;
   }
 
   function applySnapshot(snapStr) {
@@ -715,12 +698,11 @@
       buildTypeChips();
       buildTypeFields();
       rebuildDesignUI();
-      // 分類とアイコンのタブも履歴に乗っているので、見た目も戻す
+      // 分類も履歴に乗っているので、見た目も戻す（アイコンのタブは rebuildDesignUI）
       if (state.presetCategory !== prevPresetCategory) {
         buildPresetCategoryChips();
         buildPresets();
       }
-      eachSegButton('icon-tabs', b => setActive(b, b.dataset.group === state.iconGroup));
       update();
     } finally {
       isApplyingHistory = false;
@@ -729,11 +711,8 @@
   }
 
   function undo() {
-    if (historyTimer) {
-      clearTimeout(historyTimer);
-      historyTimer = null;
-      commitHistory();
-    }
+    // 待っている1手を先に確定させる（打ちかけの変更ごと戻す）
+    if (historyTimer) recordHistorySoon(true);
     if (undoStack.length === 0) return;
     const prev = undoStack.pop();
     redoStack.push(getSnapshot());
@@ -748,7 +727,7 @@
   }
 
   function resetHistory() {
-    if (historyTimer) { clearTimeout(historyTimer); historyTimer = null; }
+    cancelPendingHistory();
     undoStack.length = 0;
     redoStack.length = 0;
     historyImagePool.clear();
@@ -774,6 +753,9 @@
   // ラベルの中身（文字・アイコン・画像）
   const CONTENT_MODES = ['text', 'icon', 'image'];
 
+  // 多色で持てる色の数
+  const MAX_MULTI_COLORS = 8;
+
   function sanitizePaint(p, kind, defaultType, fallbackColor) {
     if (!p || typeof p !== 'object') p = {};
     const isPlate = kind === 'plate';
@@ -784,9 +766,9 @@
     p.mid = p.mid ? normHex(p.mid, '') : '';
     p.angle = clampNum(p.angle, 0, 359, 45);
     if (!Array.isArray(p.colors) || p.colors.length === 0) {
-      p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
+      p.colors = window.QRStyle.DEFAULTS.fg.colors.slice();
     } else {
-      p.colors = p.colors.map(c => normHex(c, '#2563EB')).slice(0, 8);
+      p.colors = p.colors.map(c => normHex(c, '#2563EB')).slice(0, MAX_MULTI_COLORS);
       if (p.colors.length < 2) p.colors.push('#7C3AED');
     }
     p.seed = typeof p.seed === 'number' && !isNaN(p.seed) ? Math.floor(p.seed) : 0;
@@ -861,12 +843,19 @@
     s.frame.text = String(s.frame.text == null ? D.frame.text : s.frame.text);
     s.logo.text = String(s.logo.text == null ? '' : s.logo.text);
     s.logo.font = oneOf(s.logo.font, FONTS, 'sans');
+    // 知らない種類だと、中央のセルを抜いたまま何も描かれない
+    s.logo.type = oneOf(s.logo.type, ['none', 'icon', 'image', 'text'], 'none');
     s.logo.src = sanitizeImageUrl(s.logo.src);
     // ロゴの下のセルを抜くか。画面には出していないが、テンプレートや古い保存が
     // 落としてくることがあるので、真偽値には均しておく
     s.logo.knockout = s.logo.knockout !== false;
     s.invertOk = !!s.invertOk;
+    // 形の id。知らないものは既定へ寄せる（一覧のどれも選ばれていない画面になるため）
     if (!hasId(A.CELL_SHAPES, s.cell)) s.cell = D.cell;
+    s.markerFrame = window.QRStyle.markerFrameIdOf(s.markerFrame);
+    if (!hasId(A.MARKER_FRAMES, s.markerFrame)) s.markerFrame = D.markerFrame;
+    if (!hasId(A.MARKER_EYES, s.markerEye)) s.markerEye = D.markerEye;
+    if (!hasId(A.FRAMES, s.frame.type)) s.frame.type = 'none';
   }
 
   // 同梱アイコンの id と実体（iconData）を組で決める。実体は保存・共有された
@@ -989,36 +978,23 @@
   // 明るさの式は qr-style.js の encodedLuma ひとつに寄せる。ここだけ別の
   // 係数で測っていると、同じ色を「明るい」と言ったり言わなかったりする。
   function getCellLuminance() {
-    const fg = state.style && state.style.fg;
-    if (!fg) return 0;
-    const luma = window.QRStyle.encodedLuma;
-    if (fg.type === 'solid') return luma(fg.color);
-    let cols = null;
-    if (fg.type === 'linear' || fg.type === 'radial') {
-      cols = fg.mid ? [fg.from, fg.mid, fg.to] : [fg.from, fg.to];
-    } else if (fg.type === 'multi') {
-      cols = Array.isArray(fg.colors) && fg.colors.length ? fg.colors : ['#2563EB', '#7C3AED', '#DB2777'];
-    }
+    const fg = state.style.fg;
+    const cols = fg.type === 'solid' ? [fg.color]
+      : fg.type === 'multi' ? fg.colors
+      : (fg.type === 'linear' || fg.type === 'radial') ? [fg.from, fg.mid, fg.to].filter(Boolean)
+      : null;
     if (!cols) return 0;   // 画像などは絵柄しだいなので暗いほうに倒しておく
-    let sum = 0, count = 0;
-    cols.forEach(c => {
-      if (hexToRgb(c)) { sum += luma(c); count++; }
-    });
-    return count ? sum / count : 0;
+    const luma = window.QRStyle.encodedLuma;
+    return cols.reduce((sum, c) => sum + luma(c), 0) / cols.length;
   }
 
   function updateCanvasChecker() {
-    const card = $('canvas-card') || document.querySelector('.canvas-card');
+    const card = $('canvas-card');
     if (!card) return;
-    let isDark = false;
-    if (state.previewChecker === 'dark') {
-      isDark = true;
-    } else if (state.previewChecker === 'light') {
-      isDark = false;
-    } else {
-      // 'auto': セルが明るい（輝度 >= 130）なら黒ベース市松、暗いなら白ベース市松
-      isDark = getCellLuminance() >= 130;
-    }
+    // 'auto': セルが明るい（輝度 >= 130）なら黒ベース市松、暗いなら白ベース市松
+    const isDark = state.previewChecker === 'auto'
+      ? getCellLuminance() >= 130
+      : state.previewChecker === 'dark';
     card.classList.toggle('theme-dark', isDark);
     card.classList.toggle('theme-light', !isDark);
 
@@ -1153,12 +1129,8 @@
         const platform = values.platform;
         const icon = findById(A.ICONS, 'si-' + platform);
         if (icon) {
-          state.style.logo.type = 'icon';
-          state.style.logo.icon = icon.id;
-          state.style.logo.iconData = icon;
-          state.presetName = '';
-          syncControls();
-          update();
+          setLogoIcon(icon);
+          designChanged();
           showToast('中央ロゴに ' + platform + ' を設定しました');
         }
       });
@@ -1227,8 +1199,7 @@
         setActive(btn, btn.dataset.presetName === state.presetName);
       });
     }
-    const hint = $('hint-preset');
-    if (hint) hint.textContent = state.presetName || 'カスタム';
+    setText('hint-preset', state.presetName || 'カスタム');
   }
 
   function presetThumb(style) {
@@ -1318,10 +1289,8 @@
     }
 
     // 持ち出しの口と説明は「マイ」を見ているときだけ
-    const foot = $('my-foot');
-    if (foot) foot.classList.toggle('hidden', !isMine);
-    const empty = $('my-design-empty');
-    if (empty) empty.classList.toggle('hidden', !isMine || mine.length > 0);
+    showIf('my-foot', isMine);
+    showIf('my-design-empty', isMine && !mine.length);
 
     syncPresetActive();
   }
@@ -1354,19 +1323,16 @@
     // 拍子に同じ内容がそのまま書き戻されてしまう。
     TYPES.forEach(t => { state.values[t.id] = Object.assign({}, t.init); });
     state.type = 'url';
-    state.style = JSON.parse(JSON.stringify(window.QRStyle.DEFAULTS));
-    state.minVersion = 1;
-    state.presetName = '';
     state.presetCategory = 'all';
     state.ec = 'H';
 
     closeSaveRow();
     buildTypeChips();
     buildTypeFields();
-    rebuildDesignUI();
     buildPresetCategoryChips();
     buildPresets();
-    update();
+    // 見た目は「デザインを初期化」と同じ入口で既定へ戻す（組み直しと描き直しまで）
+    applyStyle({}, '', { minVersion: 1 });
 
     // update() が予約した履歴と書き戻しを取り消す。Undo/Redo や画像プールに
     // 消す前の入力が残ると、この画面だけで復元できてしまう。
@@ -1392,8 +1358,7 @@
   }
 
   function closeSaveRow() {
-    const row = $('my-save-row');
-    if (row) row.classList.add('hidden');
+    showIf('my-save-row', false);
   }
 
   function syncShapeGridActive(hostId, currentId) {
@@ -1419,8 +1384,7 @@
   // 選んでいるセルの形の名前を説明文のところに出す。一覧を組み直したときも、
   // 選び直しただけのときも同じものを出したいので、1か所に置く。
   function syncShapeHint() {
-    const hintShape = $('hint-shape');
-    if (hintShape) hintShape.textContent = nameOf(A.CELL_SHAPES, state.style.cell);
+    setText('hint-shape', nameOf(A.CELL_SHAPES, state.style.cell));
   }
 
   function syncShapeActive() {
@@ -1436,14 +1400,13 @@
 
   // 形を選ぶ一覧（セル・マーカー枠・下地・枠線・マーカー目）。
   // どれも「見本を敷いたボタンを並べて、押されたら state を書いて描き直す」だけで、
-  // 違うのは一覧・見本の起こし方・押したときの後始末に限られる。手で5回書くと、
-  // 1つだけ後始末を忘れる、といったズレが出るのでここに寄せる。
+  // 違うのは一覧と見本の起こし方と state の書き方に限られる。選択の印や、ほかの
+  // 一覧の見本（マーカー枠は目とセルの形を映す）は designChanged が合わせ直す。
   //   items   … { id, name } の一覧
   //   current … いま選ばれている id を返す関数（描き直すたびに引き直す）
   //   preview … id から見本の SVG を起こす関数
   //   pick    … 押されたときに state を書く関数
-  //   after   … その一覧だけに要る追加の後始末（省略可）
-  function buildShapeGrid(hostId, items, current, preview, pick, after) {
+  function buildShapeGrid(hostId, items, current, preview, pick) {
     const host = $(hostId);
     if (!host) return;
     host.innerHTML = '';
@@ -1458,10 +1421,7 @@
       b.appendChild(el('i', null, s.name));
       b.addEventListener('click', () => {
         pick(s.id);
-        state.presetName = '';
-        syncShapeActive();
-        if (after) after();
-        update();
+        designChanged();
       });
       host.appendChild(b);
     });
@@ -1469,7 +1429,6 @@
 
   function buildShapeGrids() {
     const S = window.QRStyle;
-    const frame = () => state.style.frame || {};
 
     buildShapeGrid('cell-grid', A.CELL_SHAPES,
       () => state.style.cell, S.cellPreview,
@@ -1486,26 +1445,24 @@
       id => { state.style.logo.backdrop = id; });
 
     buildShapeGrid('frame-backdrop-grid', A.BACKDROP_SHAPES,
-      () => frame().backdrop, S.backdropPreview,
+      () => state.style.frame.backdrop, S.backdropPreview,
       id => { state.style.frame.backdrop = id; });
 
     // 枠線の種類。見本は本番と同じ描画コードから起こす
     buildShapeGrid('frame-line-grid', A.FRAME_LINES,
-      () => frame().line, S.linePreview,
+      () => state.style.frame.line, S.linePreview,
       id => {
         const ls = S.LINE_STYLES[id] || {};
         state.style.frame.line = id;
         state.style.frame.lineWidth = ls.stroke;
         state.style.frame.lineWidth2 = ls.inner || 0.28;
-      },
-      // 太さの既定値と、二重線のときだけ出る2本目のスライダーを描き直す
-      () => { buildFrameChips(); syncControls(); });
+        // 見出しの脇の要約（「枠線」ではなく線の種類名）を描き直す
+        buildFrameChips();
+      });
 
     buildShapeGrid('eye-grid', A.MARKER_EYES,
       () => state.style.markerEye, S.eyePreview,
-      id => { state.style.markerEye = id; },
-      // マーカー枠の見本は目の形を映して描くので、こちらも起こし直す
-      updateFrameGridPreviews);
+      id => { state.style.markerEye = id; });
 
     syncShapeHint();
   }
@@ -1530,54 +1487,58 @@
     btn.disabled = !on;
   }
 
+  // 多色・グラデーションの色の1行（見本・カラーコード・削除ボタン）。
+  // 見本だけでなくカラーコードを押しても色を選べるように、<label> で包む。
+  // ラベルはクリックを中の input へ渡すので、こちらで転送を書く必要はない。
+  //   label       … 見本の読み上げ名。削除ボタンは removeLabel（省略時は label）＋「を削除」
+  //   role        … 見本の脇に出す役割（グラデーションの開始・中間・終了）
+  //   onColor(hex) … 色が動いたときに state へ書く
+  //   onRemove    … 削除したときに state を書く。null なら押せない
+  function colorRow(o) {
+    const hex = normHex(o.value, '#000000');
+    const item = el('div', { class: 'multi-color-item' });
+    const hit = el('label', { class: 'mc-hit' });
+    const picker = el('input', { type: 'color', value: hex, 'aria-label': o.label });
+    const hexSpan = el('span', { class: 'color-hex' }, hex);
+    const removeText = (o.removeLabel || o.label) + 'を削除';
+    const removeBtn = el('button', {
+      class: 'btn-remove-color', type: 'button', title: removeText, 'aria-label': removeText
+    }, '×');
+    removeBtn.disabled = !o.onRemove;
+
+    // つまみを動かしているあいだは検査を待たせる。ここを素の update() に
+    // すると、ドラッグ1コマごとにデコーダが起動して画面が固まる
+    picker.addEventListener('input', () => {
+      const v = picker.value.toUpperCase();
+      hexSpan.textContent = v;
+      o.onColor(v);
+      designDragged();
+    });
+    picker.addEventListener('change', verifyOnCommit);
+    if (o.onRemove) {
+      removeBtn.addEventListener('click', () => { o.onRemove(); designChanged(); });
+    }
+
+    hit.appendChild(picker);
+    if (o.role) {
+      hit.appendChild(el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, o.role));
+    }
+    hit.appendChild(hexSpan);
+    item.appendChild(hit);
+    item.appendChild(removeBtn);
+    return item;
+  }
+
   function renderMultiColorsList(host, p, addBtn) {
     if (!host) return;
     host.innerHTML = '';
-    if (!Array.isArray(p.colors)) p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
     const colors = p.colors;
-    colors.forEach((c, idx) => {
-      const item = el('div', { class: 'multi-color-item' });
-      // 見本だけでなくカラーコードを押しても色を選べるように、<label> で包む。
-      // ラベルはクリックを中の input へ渡すので、こちらで転送を書く必要はない。
-      const hit = el('label', { class: 'mc-hit' });
-      const picker = el('input', { type: 'color', value: normHex(c, '#2563EB'), 'aria-label': '色 ' + (idx + 1) });
-      const hexSpan = el('span', { class: 'color-hex' }, normHex(c, '#2563EB'));
-      const removeBtn = el('button', {
-        class: 'btn-remove-color',
-        type: 'button',
-        title: 'この色を削除',
-        'aria-label': 'この色を削除'
-      }, '×');
-      if (colors.length <= 2) {
-        removeBtn.disabled = true;
-      }
-
-      // つまみを動かしているあいだは検査を待たせる。ここを素の update() に
-      // すると、ドラッグ1コマごとにデコーダが起動して画面が固まる
-      picker.addEventListener('input', () => {
-        const hex = picker.value.toUpperCase();
-        hexSpan.textContent = hex;
-        colors[idx] = hex;
-        state.presetName = '';
-        update({ debounceVerify: true });
-      });
-      picker.addEventListener('change', verifyOnCommit);
-      removeBtn.addEventListener('click', () => {
-        if (colors.length <= 2) return;
-        colors.splice(idx, 1);
-        state.presetName = '';
-        syncControls();
-        update();
-      });
-
-      hit.appendChild(picker);
-      hit.appendChild(hexSpan);
-      item.appendChild(hit);
-      item.appendChild(removeBtn);
-      host.appendChild(item);
-    });
-
-    showButton(addBtn, colors.length < 8);
+    colors.forEach((c, idx) => host.appendChild(colorRow({
+      value: c, label: '色 ' + (idx + 1), removeLabel: 'この色',
+      onColor: v => { colors[idx] = v; },
+      onRemove: colors.length > 2 ? () => { colors.splice(idx, 1); } : null
+    })));
+    showButton(addBtn, colors.length < MAX_MULTI_COLORS);
   }
 
   function renderMultiPalettes(host, getPaint, onSelect) {
@@ -1596,65 +1557,24 @@
       btn.addEventListener('click', () => {
         if (onSelect) onSelect();
         getPaint().colors = p.colors.slice();
-        state.presetName = '';
-        syncControls();
-        update();
+        designChanged();
       });
       host.appendChild(btn);
     });
   }
 
+  const GRAD_ROLES = { from: '開始', mid: '中間', to: '終了' };
+
   function renderGradColorsList(host, p, addBtn) {
     if (!host) return;
     host.innerHTML = '';
     const hasMid = !!p.mid;
-    const items = [{ key: 'from', role: '開始', val: p.from || '#FC466B' }]
-      .concat(hasMid ? [{ key: 'mid', role: '中間', val: p.mid }] : [])
-      .concat([{ key: 'to', role: '終了', val: p.to || '#3F5EFB' }]);
-
-    items.forEach((item) => {
-      const elItem = el('div', { class: 'multi-color-item' });
-      const hit = el('label', { class: 'mc-hit' });
-      const picker = el('input', { type: 'color', value: normHex(item.val, '#FC466B'), 'aria-label': item.role + '色' });
-      const roleSpan = el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, item.role);
-      const hexSpan = el('span', { class: 'color-hex' }, normHex(item.val, '#FC466B'));
-      const removeBtn = el('button', {
-        class: 'btn-remove-color',
-        type: 'button',
-        title: item.role + '色を削除',
-        'aria-label': item.role + '色を削除'
-      }, '×');
-
-      if (!hasMid) {
-        removeBtn.disabled = true;
-      }
-
-      picker.addEventListener('input', () => {
-        const hex = picker.value.toUpperCase();
-        hexSpan.textContent = hex;
-        p[item.key] = hex;
-        state.presetName = '';
-        update({ debounceVerify: true });
-      });
-      picker.addEventListener('change', verifyOnCommit);
-      removeBtn.addEventListener('click', () => {
-        if (!hasMid) return;
-        // 端の色を消したら、中間の色がその端へ繰り上がる
-        if (item.key !== 'mid') p[item.key] = p.mid;
-        p.mid = '';
-        state.presetName = '';
-        syncControls();
-        update();
-      });
-
-      hit.appendChild(picker);
-      hit.appendChild(roleSpan);
-      hit.appendChild(hexSpan);
-      elItem.appendChild(hit);
-      elItem.appendChild(removeBtn);
-      host.appendChild(elItem);
-    });
-
+    (hasMid ? ['from', 'mid', 'to'] : ['from', 'to']).forEach(key => host.appendChild(colorRow({
+      value: p[key], label: GRAD_ROLES[key] + '色', role: GRAD_ROLES[key],
+      onColor: v => { p[key] = v; },
+      // 端の色を消したら、中間の色がその端へ繰り上がる
+      onRemove: hasMid ? () => { if (key !== 'mid') p[key] = p.mid; p.mid = ''; } : null
+    })));
     showButton(addBtn, !hasMid);
   }
 
@@ -1674,9 +1594,7 @@
         p.to = g.to;
         p.angle = g.angle;
         if (p.type === 'solid' || p.type === 'multi' || p.type === 'auto') p.type = 'linear';
-        state.presetName = '';
-        syncControls();
-        update();
+        designChanged();
       });
       host.appendChild(b);
     });
@@ -1694,9 +1612,7 @@
         b.style.background = c;
         b.addEventListener('click', () => {
           onPickColor(c);
-          state.presetName = '';
-          syncControls();
-          update();
+          designChanged();
         });
         row.appendChild(b);
       });
@@ -1725,7 +1641,7 @@
       if (p.type === 'solid') {
         p.color = c;
       } else if (p.type === 'multi') {
-        if (p.colors.indexOf(c) < 0 && p.colors.length < 8) p.colors.push(c);
+        if (p.colors.indexOf(c) < 0 && p.colors.length < MAX_MULTI_COLORS) p.colors.push(c);
         else p.colors[p.colors.length - 1] = c;
       } else {
         if (!p.mid) p.mid = c;
@@ -1783,33 +1699,42 @@
       b.appendChild(renderIconSvg(icon, uidPrefix));
       b.addEventListener('click', () => {
         onPick(icon);
-        eachSegButton(host, child => setActive(child, child.dataset.id === icon.id));
-        state.presetName = '';
-        syncControls();
-        update();
+        designChanged();   // 選択の印も syncControls が付け直す
       });
       host.appendChild(b);
     });
   }
 
+  // ロゴ・ラベルのアイコンを差し替える。id と実体（iconData）は必ず組で書く。
+  function setLogoIcon(icon) {
+    const lg = state.style.logo;
+    lg.type = 'icon';
+    lg.icon = icon.id;
+    lg.iconData = icon;
+  }
+
+  // ラベルは上下で別々に持てるが、アイコンを選ぶ欄はひとつなので両方へ入れる。
+  function setFrameIcon(icon) {
+    const fr = state.style.frame;
+    fr.icon = fr.topIcon = icon.id;
+    fr.iconData = fr.topIconData = icon;
+    fr.contentMode = fr.topContentMode = 'icon';
+  }
+
+  // ラベルのアイコンの一覧で選ばれているもの。「上」だけに出すときは上の指定、
+  // それ以外（下・上下）は下の指定を見せる（ほかの欄と同じ決め方）
+  function shownFrameIcon() {
+    const fr = state.style.frame;
+    return fr.pos === 'top' ? fr.topIcon : fr.icon;
+  }
+
   function buildIconGrid() {
-    renderIconGrid($('icon-grid'), state.iconGroup, state.style.logo.icon, 'grid_', icon => {
-      state.style.logo.icon = icon.id;
-      state.style.logo.iconData = icon;
-      state.style.logo.type = 'icon';
-    });
+    renderIconGrid($('icon-grid'), state.iconGroup, state.style.logo.icon, 'grid_', setLogoIcon);
   }
 
   function buildFrameIconGrid() {
-    const currentIcon = (state.style.frame && (state.style.frame.icon || state.style.frame.topIcon)) || 'si-instagram';
-    renderIconGrid($('frame-icon-grid'), state.frameIconGroup || 'brand', currentIcon, 'frame_icon_grid_', icon => {
-      state.style.frame.icon = icon.id;
-      state.style.frame.iconData = icon;
-      state.style.frame.topIcon = icon.id;
-      state.style.frame.topIconData = icon;
-      state.style.frame.contentMode = 'icon';
-      state.style.frame.topContentMode = 'icon';
-    });
+    renderIconGrid($('frame-icon-grid'), state.frameIconGroup, shownFrameIcon(),
+      'frame_icon_grid_', setFrameIcon);
   }
 
   function buildFrameChips() {
@@ -1820,16 +1745,14 @@
       setActive(b, state.style.frame.type === f.id);
       b.addEventListener('click', () => {
         state.style.frame.type = f.id;
-        state.presetName = '';
         buildFrameChips();
-        syncControls();
-        update();
+        designChanged();
       });
       host.appendChild(b);
     });
     const frameName = nameOf(A.FRAMES, state.style.frame.type, 'なし');
     const lineName = nameOf(A.FRAME_LINES, state.style.frame.line);
-    $('hint-frame').textContent = state.style.frame.type === 'line' && lineName ? lineName : frameName;
+    setText('hint-frame', state.style.frame.type === 'line' && lineName ? lineName : frameName);
   }
 
   // ------------------------------------------------------------------
@@ -2114,6 +2037,14 @@
   function showIf(target, on) { const n = asEl(target); if (n) n.classList.toggle('hidden', !on); }
   function setImgSrc(target, src) { const n = asEl(target); if (n && src) n.src = src; }
 
+  // 補足の段落。色分け（ok / warn / err）は class で付ける
+  function setNote(target, cls, text) {
+    const n = asEl(target);
+    if (!n) return;
+    n.className = 'print-note' + (cls ? ' ' + cls : '');
+    n.textContent = text;
+  }
+
   // スライダーと、その横の値の表示
   function setRange(id, labelId, v, label) {
     setVal(id, v);
@@ -2137,8 +2068,7 @@
     // ブランド色そのものが無いので、「SNS・ブランド」の一覧を開いている
     // ときだけ出す。ロゴとラベルで別々の一覧を持っているので、対象ごとに見る。
     const iconGroupOf = { logoicon: state.iconGroup, frameicon: state.frameIconGroup };
-    const showBrand = meta.kind === 'brand' &&
-      (iconGroupOf[scope] || 'brand') === 'brand';
+    const showBrand = meta.kind === 'brand' && iconGroupOf[scope] === 'brand';
 
     [['btn-mode-white', isPlate], ['btn-mode-black', isPlate],
      ['btn-mode-none', isPlate], ['btn-mode-brand', showBrand],
@@ -2205,7 +2135,7 @@
     setVal(cq(scope, 'color-picker'), hex);
     setVal(cq(scope, 'color-hex'), hex);
 
-    setRange(cq(scope, 'angle'), cq(scope, 'val-angle'), p.angle || 45, (p.angle || 45) + '°');
+    setRange(cq(scope, 'angle'), cq(scope, 'val-angle'), p.angle, p.angle + '°');
     showIf(cq(scope, 'angle-row'), p.type !== 'radial');
 
     const hasImage = !!(isImage && p.src);
@@ -2235,17 +2165,11 @@
     balloon: '※ しっぽのぶん、下に伸びます。'
   };
 
-  // ラベルの位置。qr-style.js が受ける3通りをそのまま返す（画面の並びと対）。
-  function framePosOf() {
-    const p = (state.style.frame || {}).pos;
-    return (p === 'top' || p === 'both') ? p : 'bottom';
-  }
-
   // ラベルの文字は上下で入れ物が違う（text / textTop）。qr-style.js が
   // その位置で実際に描くほうのキーを返す。「上下」のときは下を指し、
   // 上の文字は専用の欄（frame-text-top）が受け持つ。
   function frameTextKey() {
-    return framePosOf() === 'top' ? 'textTop' : 'text';
+    return state.style.frame.pos === 'top' ? 'textTop' : 'text';
   }
 
   // 角丸の上限。係数は qr-style.js が持っているので、そこから引いて
@@ -2260,23 +2184,23 @@
 
     syncShapeActive();
 
-    $('opt-ec').value = state.ec;
-    $('opt-size').value = String(state.exportSize);
+    setVal('opt-ec', state.ec);
+    setVal('opt-size', String(state.exportSize));
     syncSizeUnit();
     syncCompress();
 
     COLOR_SCOPES.forEach(syncColorPanel);
 
     // 見出しの脇に出す要約
-    $('hint-shape-color').textContent = paintLabel(state.style.fg);
-    $('hint-bg').textContent = paintLabel(state.style.bg);
+    setText('hint-shape-color', paintLabel(s.fg));
+    setText('hint-bg', paintLabel(s.bg));
     // 枠と目（またはその塗り）が同じなら1つだけ、違えば並べて出す
     const pairText = (a, b) => (a === b ? a : a + '／' + b);
     setText('hint-marker', pairText(nameOf(A.MARKER_FRAMES, s.markerFrame), nameOf(A.MARKER_EYES, s.markerEye)));
     setText('hint-marker-color', pairText(paintLabel(s.markerFramePaint), paintLabel(s.markerEyePaint)));
 
     setRange('opt-cellscale', 'val-cellscale', s.cellScale, pct(s.cellScale));
-    setRange('opt-celljitter', 'val-celljitter', s.cellJitter || 0, pct(s.cellJitter || 0));
+    setRange('opt-celljitter', 'val-celljitter', s.cellJitter, pct(s.cellJitter));
     setRange('opt-margin', 'val-margin', s.margin, s.margin);
     // 角丸の上限は余白しだい。はみ出したぶんを削るのは余白を動かした側の
     // 仕事で、ここは見せるだけ（syncControls が state を書き換えると、
@@ -2294,17 +2218,17 @@
     showIf('logo-text-pane', s.logo.type === 'text');
     showIf('logo-common', s.logo.type !== 'none');
 
-    setSeg('logo-font-seg', s.logo.font || 'sans', 'font');
-    setVal('logo-text', s.logo.text || '');
+    setSeg('logo-font-seg', s.logo.font, 'font');
+    setVal('logo-text', s.logo.text);
 
     // ロゴ共通
     setRange('logo-size', 'val-logosize', s.logo.size, pct(s.logo.size));
     setRange('logo-pad', 'val-logopad', s.logo.pad, pct(s.logo.pad));
     showIf('logo-thumb', s.logo.type === 'image' && s.logo.src);
     setImgSrc('logo-thumb-img', s.logo.src);
-    $('hint-logo').textContent = s.logo.type === 'none' ? 'なし'
+    setText('hint-logo', s.logo.type === 'none' ? 'なし'
       : s.logo.type === 'icon' ? nameOf(A.ICONS, s.logo.icon, 'アイコン')
-      : s.logo.type === 'image' ? '画像' : '文字';
+      : s.logo.type === 'image' ? '画像' : '文字');
 
     // フレーム同期
     showIf('frame-line-opts', s.frame.type === 'line');
@@ -2316,38 +2240,36 @@
     showIf('frame-line-width2-row', isDoubleLine);
     setText('frame-line-width-label', isDoubleLine ? '外側の太さ' : '太さ');
     setText('frame-line-note', FRAME_LINE_NOTES[s.frame.line] || '');
-    const framePos = framePosOf();
-    const isBothPos = framePos === 'both';
-    setSeg('frame-pos-seg', framePos, 'pos');
+    // 「上」だけのときは上の指定を、それ以外（下・上下）は下の指定を見せる
+    const isTopPos = s.frame.pos === 'top';
+    const isBothPos = s.frame.pos === 'both';
+    setSeg('frame-pos-seg', s.frame.pos, 'pos');
 
-    const cMode = (framePos === 'top' ? (s.frame.topContentMode || s.frame.contentMode) : s.frame.contentMode) || 'text';
+    const cMode = isTopPos ? s.frame.topContentMode : s.frame.contentMode;
     setSeg('frame-content-mode-seg', cMode, 'mode');
     CONTENT_MODES.forEach(m => showIf('frame-pane-' + m, cMode === m));
 
     // テキスト。上下に出すときだけ、上の文字を別の欄で受ける
-    setVal('frame-text', s.frame[frameTextKey()] || '');
+    setVal('frame-text', s.frame[frameTextKey()]);
     setText('frame-text-label', isBothPos ? '下部の文字' : '表示する文字');
     showIf('frame-text-top-row', isBothPos);
-    setVal('frame-text-top', s.frame.textTop || '');
-    setSeg('frame-font-seg', s.frame.font || 'sans', 'font');
+    setVal('frame-text-top', s.frame.textTop);
+    setSeg('frame-font-seg', s.frame.font, 'font');
 
-    // アイコン
-    eachSegButton('frame-icon-tabs', t => {
-      setActive(t, t.dataset.group === (state.frameIconGroup || 'brand'));
-    });
-    const curIcon = (framePos === 'top' ? (s.frame.topIcon || s.frame.icon) : s.frame.icon) || 'si-instagram';
-    syncShapeGridActive('frame-icon-grid', curIcon);
+    // アイコン（一覧のタブはロゴとラベルで別々に持つ）
+    setSeg('icon-tabs', state.iconGroup, 'group');
+    setSeg('frame-icon-tabs', state.frameIconGroup, 'group');
+    syncShapeGridActive('icon-grid', s.logo.icon);
+    syncShapeGridActive('frame-icon-grid', shownFrameIcon());
 
-    // 画像
-    const curImgSrc = (framePos === 'top' ? (s.frame.topSrc || s.frame.src) : s.frame.src) || '';
+    // 画像。上の画像が空なら下の画像を使うのは qr-style.js と同じ
+    const curImgSrc = isTopPos ? (s.frame.topSrc || s.frame.src) : s.frame.src;
     showIf('frame-image-thumb', curImgSrc);
     setImgSrc('frame-image-thumb-img', curImgSrc);
 
     // 中身の大きさ・余白
-    const fcSize = s.frame.contentSize != null ? s.frame.contentSize : 1;
-    const fcPad = s.frame.contentPad != null ? s.frame.contentPad : 0.2;
-    setRange('frame-content-size', 'val-frame-content-size', fcSize, pct(fcSize));
-    setRange('frame-content-pad', 'val-frame-content-pad', fcPad, pct(fcPad));
+    setRange('frame-content-size', 'val-frame-content-size', s.frame.contentSize, pct(s.frame.contentSize));
+    setRange('frame-content-pad', 'val-frame-content-pad', s.frame.contentPad, pct(s.frame.contentPad));
 
     updateCanvasChecker();
   }
@@ -2478,6 +2400,23 @@
     }
   }
 
+  // デザインを触ったあとの一式。テンプレートから外れたことにして、操作部品を
+  // state に合わせ直し、描き直す。操作ごとに手で並べると、どこかで1行抜ける。
+  //   opts.keepPreset … 誤り訂正のようにデザインではない設定なら、名前を残す
+  //   ほかは update() にそのまま渡す
+  function designChanged(opts) {
+    if (!(opts && opts.keepPreset)) state.presetName = '';
+    syncControls();
+    update(opts);
+  }
+
+  // つまみや色を動かしているあいだ。部品は動かしている本人が映しているので
+  // 組み直さず、検査も手を止めるまで待たせる（1コマごとにデコーダを起こさない）。
+  function designDragged() {
+    state.presetName = '';
+    update({ debounceVerify: true });
+  }
+
   // 絵を出せないとき（空・入りきらない・描画で落ちた）の後始末。前の絵と判定を
   // 残すと、いまの設定とは違う絵がそのまま書き出されてしまうので、検査の予約も
   // 含めて全部片づける。
@@ -2563,8 +2502,18 @@
   // 実際に書き出される絵の幅。印刷の目安はこれを分母に取る。
   let lastModuleW = 0;
 
-  function printPx() {
+  // 1枚の canvas に持てる大きさには上限がある。Chrome でも 18898px 四方
+  // （400mm・1200dpi）は描けず、書き出しが黙って失敗した。mm 指定で解像度を
+  // 上げすぎたときはここで頭を打ち、実際の解像度が下がることは印刷の注記で伝える。
+  const MAX_OUTPUT_PX = 8192;
+
+  // 寸法と解像度どおりの画素数（上限をかける前）
+  function wantedPrintPx() {
     return Math.max(64, Math.round(state.printMm / MM_PER_INCH * state.printDpi));
+  }
+
+  function printPx() {
+    return Math.min(MAX_OUTPUT_PX, wantedPrintPx());
   }
 
   // 書き出す画素数。px 指定ならそのまま、mm 指定なら解像度から起こす。
@@ -2602,33 +2551,24 @@
 
   function syncCompress() {
     setSeg('compress-seg', state.lossless ? 'lossless' : 'lossy', 'mode');
-    const q = $('opt-quality');
-    const ef = $('opt-effort');
-    const label = $('compress-label');
-    const val = $('val-compress');
-    const note = $('compress-note');
-    const fmt = compressFor === 'webp' ? 'WebP' : 'AVIF';
     // WebP の可逆には強弱がない。効かないつまみを出しておくより、消して
     // 「ここは選ぶところがない」と分かるほうがよい。
     const noKnob = compressFor === 'webp' && state.lossless;
-    const title = $('compress-title');
-    if (title) title.textContent = fmt + ' の圧縮';
-    const row = $('compress-slider-row');
-    if (row) row.classList.toggle('hidden', noKnob);
-    if (q) { q.value = state.quality; q.classList.toggle('hidden', state.lossless); }
-    if (ef) { ef.value = state.effort; ef.classList.toggle('hidden', !state.lossless); }
-    if (label) label.textContent = state.lossless ? '圧縮の強さ' : '品質';
-    if (val) val.textContent = state.lossless ? EFFORT_WORDS[state.effort] : String(state.quality);
-    if (note) {
-      note.className = 'print-note';
-      note.textContent = noKnob
-        ? 'WebPの可逆圧縮に強弱の設定はありません。元の絵と1ピクセルも変わらないまま保存します。'
-        : state.lossless
-        ? '元の絵と1ピクセルも変わりません。強くするほど小さくなりますが、書き出しに時間がかかります'
-          + '（1024pxの黒白QRで、ふつう51KB・0.5秒／小ささ優先33KB・4秒）。'
-        : '元の絵とごくわずかに変わりますが、読み取りには影響しません'
-          + '（1024pxの黒白QRで13KBほど。可逆なら51KB、PNGなら43KB）。';
-    }
+    setText('compress-title', (compressFor === 'webp' ? 'WebP' : 'AVIF') + ' の圧縮');
+    showIf('compress-slider-row', !noKnob);
+    setVal('opt-quality', state.quality);
+    showIf('opt-quality', !state.lossless);
+    setVal('opt-effort', state.effort);
+    showIf('opt-effort', state.lossless);
+    setText('compress-label', state.lossless ? '圧縮の強さ' : '品質');
+    setText('val-compress', state.lossless ? EFFORT_WORDS[state.effort] : String(state.quality));
+    setNote('compress-note', '', noKnob
+      ? 'WebPの可逆圧縮に強弱の設定はありません。元の絵と1ピクセルも変わらないまま保存します。'
+      : state.lossless
+      ? '元の絵と1ピクセルも変わりません。強くするほど小さくなりますが、書き出しに時間がかかります'
+        + '（1024pxの黒白QRで、ふつう51KB・0.5秒／小ささ優先33KB・4秒）。'
+      : '元の絵とごくわずかに変わりますが、読み取りには影響しません'
+        + '（1024pxの黒白QRで13KBほど。可逆なら51KB、PNGなら43KB）。');
   }
 
   // 押したボタンの真下へ引き出しを向ける。AVIF は左列、WebP は右列。
@@ -2645,8 +2585,7 @@
   }
 
   function closeCompress() {
-    const box = $('opt-compress');
-    if (box) box.classList.add('hidden');
+    showIf('opt-compress', false);
     compressFor = '';
     markCompressButtons('');
   }
@@ -2663,47 +2602,37 @@
   function syncSizeUnit() {
     const isMm = state.sizeUnit === 'mm';
     setSeg('size-unit-seg', state.sizeUnit, 'unit');
-    const fields = $('print-fields');
-    if (fields) fields.classList.toggle('hidden', !isMm);
-    const pxFields = $('px-fields');
-    if (pxFields) pxFields.classList.toggle('hidden', isMm);
-    const mm = $('opt-print-mm');
-    if (mm) mm.value = String(state.printMm);
-    const dpi = $('opt-print-dpi');
-    if (dpi) dpi.value = String(state.printDpi);
+    showIf('print-fields', isMm);
+    showIf('px-fields', !isMm);
+    setVal('opt-print-mm', String(state.printMm));
+    setVal('opt-print-dpi', String(state.printDpi));
     syncPrintNote();
   }
 
   function syncPrintNote(moduleW) {
     if (moduleW !== undefined) lastModuleW = moduleW;
-    const note = $('print-note');
-    const derived = $('opt-size-derived');
-    if (!note) return;
+    const isMm = state.sizeUnit === 'mm';
+    setText('opt-size-derived', lastModuleW && isMm ? printPx() + ' px' : '');
 
     if (!lastModuleW) {
-      note.className = 'print-note';
-      note.textContent = '';
-      if (derived) derived.textContent = '';
-      return;
-    }
-
-    if (state.sizeUnit === 'mm') {
+      setNote('print-note', '', '');
+    } else if (isMm) {
       const mm = moduleMm();
       const lv = moduleMmLevel(mm);
-      const px = printPx();
-      if (derived) derived.textContent = px + ' px';
-      note.className = 'print-note ' + lv.cls;
-      note.textContent = '幅 ' + state.printMm + 'mm・' + state.printDpi + 'dpi なら ' + px +
-        'px で書き出します。1モジュール ' + fmtMm(mm) + 'mm（' + lv.word + '）。' +
-        '読み取り距離の目安は ' + fmtScanDistance(state.printMm) + 'まで。';
+      const capped = wantedPrintPx() > MAX_OUTPUT_PX;
+      const realDpi = Math.round(printPx() / (state.printMm / MM_PER_INCH));
+      setNote('print-note', lv.cls, '幅 ' + state.printMm + 'mm・' + state.printDpi + 'dpi なら ' +
+        (capped
+          ? wantedPrintPx() + 'px になりますが、書き出せる上限の ' + MAX_OUTPUT_PX + 'px（約' + realDpi + 'dpi）で書き出します。'
+          : printPx() + 'px で書き出します。') +
+        '1モジュール ' + fmtMm(mm) + 'mm（' + lv.word + '）。' +
+        '読み取り距離の目安は ' + fmtScanDistance(state.printMm) + 'まで。');
     } else {
       // 幅が決まっていないので、逆に「最低これだけ要る」を言う
       const minMm = Math.ceil(lastModuleW * MODULE_MM_OK);
-      note.className = 'print-note';
-      note.textContent = '印刷するなら幅 ' + minMm + 'mm 以上（1モジュール ' + MODULE_MM_OK +
+      setNote('print-note', '', '印刷するなら幅 ' + minMm + 'mm 以上（1モジュール ' + MODULE_MM_OK +
         'mm）。それより小さいと、にじみでマス目が潰れることがあります。' +
-        '寸法で決めたいときは「印刷（mm）」に切り替えてください。';
-      if (derived) derived.textContent = '';
+        '寸法で決めたいときは「印刷（mm）」に切り替えてください。');
     }
   }
 
@@ -2718,11 +2647,7 @@
   // 直した結果をひと通り画面に反映する。履歴には1手として残す。
   function applyFix(fn, message, opts) {
     if (fn() === false) return;
-    // デザインを触った直しはテンプレートから外れる。誤り訂正のように
-    // デザインではない設定を変えただけなら、テンプレート名は残す。
-    if (!(opts && opts.keepPreset)) state.presetName = '';
-    syncControls();
-    update({ immediateHistory: true });
+    designChanged({ keepPreset: !!(opts && opts.keepPreset), immediateHistory: true });
     if (message) showToast(message);
   }
 
@@ -2836,7 +2761,9 @@
       return {
         label: 'セルの色に合わせる',
         onClick: () => applyFix(() => {
-          state.style[key] = { type: 'auto' };
+          // 種類だけ戻す。塗りを丸ごと差し替えると、ほかのモードの色（多色の並びや
+          // グラデーションの端）まで消え、あとで切り替えたときに空の塗りになる
+          state.style[key].type = 'auto';
           return true;
         }, 'マーカーの色をセルに合わせました')
       };
@@ -3023,75 +2950,157 @@
   // 書き出し
   // ------------------------------------------------------------------
   // ---- 書き出し用のフォント -------------------------------------------
-  // 画面のプレビューはページが読み込んだ Google Fonts で描かれるが、書き出しは
-  // SVG を data URL の <img> として読ませるため、外部リソースを取りに行けず、
-  // ページのフォントも受け継がない。放っておくと、選んだ書体が画面にだけ効いて
-  // 書き出した画像は既定の書体になる（実測でも指定あり／なしが同じ形になった）。
+  // 画面のプレビューはページが読み込んだフォント（data/fonts/ に同梱）で描かれるが、
+  // 書き出しは SVG を data URL の <img> として読ませるため、ページのフォントを
+  // 受け継がない。放っておくと、選んだ書体が画面にだけ効いて、書き出した画像は
+  // 既定の書体になる（実測でも指定あり／なしが同じ形になった）。
   //
-  // そこで書き出す直前に「いま実際に使っている字だけ」を woff2 で取り寄せて、
-  // @font-face として SVG に埋める。Google Fonts の &text= で欲しい字だけに
-  // 絞れるので、数キロバイトで済む。
+  // そこで書き出す直前に、いま使っている字を含むフォントのファイルだけを
+  // @font-face として SVG に埋める。フォントは字の範囲（unicode-range）ごとに
+  // 分けて同梱してあるので、埋めるのは使った字の範囲のぶんだけで済む。
+  // 取りに行くのはこのサイトの data/fonts/ だけで、字をどこかへ問い合わせることはない。
   //
-  // 取り寄せに失敗しても書き出し自体は止めない（今までどおり既定の書体で出る）。
-  // 直近ぶんだけ覚えておく。字面が変わるたびに別の項目になるので、
-  // 上限を置かないと base64 のフォントがセッション中ずっと溜まりつづける。
-  const FONT_CACHE_MAX = 8;
-  const fontCssCache = new Map();
+  // 取れなかったぶんは諦める（書き出し自体は止めず、既定の書体で出る）。
 
-  async function fetchWithTimeout(url, ms) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), ms);
-    try {
-      return await fetch(url, { signal: ctrl.signal });
-    } finally {
-      clearTimeout(timer);
+  // "U+0000-00FF, U+0131" → [[0, 255], [305, 305]]。範囲の指定が無い面は全域とみなす
+  function parseUnicodeRange(text) {
+    const s = String(text || '').trim();
+    if (!s) return [[0, 0x10FFFF]];
+    return s.split(',').map(part => {
+      const p = part.trim().replace(/^u\+/i, '');
+      // U+4?? のような書き方は、? を 0 と F に置いた範囲
+      if (p.indexOf('?') >= 0) return [parseInt(p.replace(/\?/g, '0'), 16), parseInt(p.replace(/\?/g, 'F'), 16)];
+      const [lo, hi] = p.split('-');
+      return [parseInt(lo, 16), parseInt(hi || lo, 16)];
+    });
+  }
+
+  function coversAny(ranges, text) {
+    for (const ch of text) {
+      const c = ch.codePointAt(0);
+      if (ranges.some(r => c >= r[0] && c <= r[1])) return true;
     }
+    return false;
   }
 
-  async function fetchFontFace(run) {
-    const cssUrl = 'https://fonts.googleapis.com/css2?family=' +
-      encodeURIComponent(run.web).replace(/%20/g, '+') + ':wght@' + run.weight +
-      '&text=' + encodeURIComponent(run.text);
-    const cssRes = await fetchWithTimeout(cssUrl, 6000);
-    if (!cssRes.ok) throw new Error('font css ' + cssRes.status);
-    const css = await cssRes.text();
-
-    // &text= を付けたときの応答は @font-face ひとつ。そこから woff2 の URL を拾う。
-    // 字を絞った配信は拡張子が付かない（/l/font?kit=… の形）ので、
-    // 拡張子ではなく format('woff2') の側で見分ける。
-    const m = css.match(/url\((https:\/\/[^)]+)\)\s*format\('woff2'\)/);
-    if (!m) throw new Error('no woff2');
-    const fontRes = await fetchWithTimeout(m[1], 6000);
-    if (!fontRes.ok) throw new Error('font ' + fontRes.status);
-    const dataUrl = await blobToDataUrl(await fontRes.blob());
-
-    return '@font-face{font-family:"' + run.web + '";font-style:normal;font-weight:' +
-      run.weight + ";src:url(" + dataUrl + ") format('woff2');}";
+  // ページが読み込んだ @font-face（data/fonts/*.css）。索引を別に持たず、CSS を
+  // そのまま引く（別に作ると、CSS と食い違ったときに気づけない）。
+  // このサイトのファイルを指すものだけを拾うので、書き出しが外へ出ることはない。
+  let bundledFaces = null;
+  function bundledFontFaces() {
+    if (bundledFaces) return bundledFaces;
+    const out = [];
+    Array.prototype.forEach.call(document.styleSheets, sheet => {
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { return; }   // 別オリジンの CSS は中を読めない
+      Array.prototype.forEach.call(rules, rule => {
+        if (!(rule instanceof CSSFontFaceRule)) return;
+        const st = rule.style;
+        const src = st.getPropertyValue('src').match(/url\(\s*["']?([^"')]+)["']?\s*\)/);
+        if (!src) return;
+        const url = new URL(src[1], sheet.href || location.href);
+        if (url.origin !== location.origin) return;
+        out.push({
+          family: st.getPropertyValue('font-family').replace(/["']/g, '').trim(),
+          weight: Number(st.getPropertyValue('font-weight')) || 400,
+          url: url.href,
+          range: st.getPropertyValue('unicode-range').trim(),
+          ranges: parseUnicodeRange(st.getPropertyValue('unicode-range'))
+        });
+      });
+    });
+    // CSS がまだ読めていないうちの空振りは覚えない
+    if (out.length) bundledFaces = out;
+    return out;
   }
 
-  // 覚えるのは「結果」ではなく「取り寄せ中の約束」。書き出しを続けて押しても
-  // 取りに行くのは一度で済み、取れなかったこと自体も覚える（取れない環境で
-  // 書き出すたびに待ち時間だけ払う、ということがなくなる）。
-  function fontFaceCss(run) {
-    const key = run.web + '|' + run.weight + '|' + run.text;
-    let p = fontCssCache.get(key);
+  // フォントのファイルを data URL に。同じファイルは一度しか読まない。
+  // ファイルの数は同梱したぶんで頭打ちなので、上限は置かない。失敗は覚えず、次にまた試す。
+  const fontFileCache = new Map();
+  function fontFileDataUrl(url) {
+    let p = fontFileCache.get(url);
     if (!p) {
-      p = fetchFontFace(run).catch(() => '');
-      fontCssCache.set(key, p);
-      if (fontCssCache.size > FONT_CACHE_MAX) {
-        fontCssCache.delete(fontCssCache.keys().next().value);
-      }
+      p = fetch(url)
+        .then(res => { if (!res.ok) throw new Error('font ' + res.status); return res.blob(); })
+        .then(blobToDataUrl)
+        .catch(e => { fontFileCache.delete(url); throw e; });
+      fontFileCache.set(url, p);
     }
     return p;
   }
 
-  // そのスタイルで実際に描く字だけの @font-face。取れなかったぶんは諦める。
+  // その面で描く字のうち、見える最初の1字（空白は描いても跡が残らないので外す）
+  function firstInkChar(ranges, text) {
+    for (const ch of text) {
+      const c = ch.codePointAt(0);
+      if (/\S/.test(ch) && ranges.some(r => c >= r[0] && c <= r[1])) return ch;
+    }
+    return '';
+  }
+
+  // 埋め込んだフォントは、SVG を <img> で描く最初の一回には間に合わない。初回の
+  // 描画で読み込みが始まるので、その絵では字が抜ける（実測で、字の範囲ごとに分けた
+  // 面を複数使うとラベルの文字が丸ごと消えた）。同じ @font-face を持つ小さな見本を
+  // 先に描き、面ごとに1字ずつ出るまで待っておけば、読み込み済みのフォントが本番の
+  // SVG にも最初から効く（同じ data URL のフォントは使い回される）。
+  // 読み込めない面があっても、ブラウザが代わりの書体に切り替える 3 秒で打ち切る。
+  let warmFonts = null;   // 予熱に使った見本。参照を手放すと、読み込んだフォントごと捨てられうる
+  async function warmUpFonts(css, probes) {
+    if (!probes.length || (warmFonts && warmFonts.css === css)) return;
+    const cell = 40;
+    const x = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    const w = probes.length * cell;
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + cell +
+      '" width="' + w + '" height="' + cell + '"><defs><style>' + css + '</style></defs>' +
+      probes.map((p, i) => '<text x="' + (i * cell + cell / 2) + '" y="30" font-size="30" font-weight="' +
+        p.weight + '" text-anchor="middle" font-family="' + x('"' + p.family + '"') + '">' + x(p.ch) + '</text>').join('') +
+      '</svg>';
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    try { await img.decode(); } catch (e) { return; }
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = cell;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    // どの升にも字の跡があるか
+    const inked = () => {
+      ctx.clearRect(0, 0, w, cell);
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0, 0, w, cell).data;
+      return probes.every((p, i) => {
+        for (let y = 0; y < cell; y++) {
+          for (let px = i * cell; px < (i + 1) * cell; px++) if (d[(y * w + px) * 4 + 3] > 0) return true;
+        }
+        return false;
+      });
+    };
+    const until = performance.now() + 3000;
+    while (!inked() && performance.now() < until) await new Promise(r => setTimeout(r, 16));
+    warmFonts = { css: css, img: img };
+  }
+
+  // そのスタイルで実際に描く字を含むフォントだけの @font-face。取れなかったぶんは諦める。
+  // 返す前に予熱まで済ませるので、この CSS を埋めた SVG は最初の描画から字が出る。
   async function exportFontCss(style) {
     let runs = [];
     try { runs = window.QRStyle.textRuns(style); } catch (e) { return ''; }
     if (!runs.length) return '';
-    const faces = await Promise.all(runs.map(fontFaceCss));
-    return faces.join('');
+    const faces = bundledFontFaces();
+    const picks = [];
+    runs.forEach(run => faces.forEach(f => {
+      if (f.family === run.web && f.weight === run.weight && coversAny(f.ranges, run.text)) {
+        picks.push({ face: f, ch: firstInkChar(f.ranges, run.text) });
+      }
+    }));
+    const loaded = await Promise.all(picks.map(p => fontFileDataUrl(p.face.url).then(
+      data => '@font-face{font-family:"' + p.face.family + '";font-style:normal;font-weight:' + p.face.weight +
+        ';src:url(' + data + ") format('woff2')" + (p.face.range ? ';unicode-range:' + p.face.range : '') + ';}',
+      () => '')));
+    const css = loaded.join('');
+    // 読めた面のうち、見える字を描くものだけを予熱の見本にする
+    await warmUpFonts(css, picks.filter((p, i) => loaded[i] && p.ch)
+      .map(p => ({ family: p.face.family, weight: p.face.weight, ch: p.ch })));
+    return css;
   }
 
   // 書き出す SVG に、いまの絵で使っている書体を埋めて返す。
@@ -3422,6 +3431,22 @@
     return askExportAnyway();
   }
 
+  // 書き出しに失敗したときの言い方。大きな絵は端末の上限にかかっていることが多い
+  // （とくに iPhone の Safari は、canvas がおよそ 4096px 四方まで）ので、下げれば
+  // 通ることを添える。
+  function exportFailMessage(what) {
+    return outputPx() > 4096
+      ? what + 'に失敗しました。この端末では大きすぎるようです。寸法か解像度を下げてください'
+      : what + 'に失敗しました';
+  }
+
+  // 書き出す絵があるか。無ければ知らせて止める
+  function hasPreview() {
+    if (lastSvg) return true;
+    showToast('先に内容を入力してください', 'error');
+    return false;
+  }
+
   // 1枚ぶんを焼く。AVIF だけはブラウザが焼けないので、同梱した
   // エンコーダに渡す（toBlob に image/avif を渡すと黙って PNG が返る）。
   async function encodeCanvas(canvas, mime, avifOpts) {
@@ -3434,7 +3459,7 @@
   }
 
   async function exportRaster(mime, ext) {
-    if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
+    if (!hasPreview()) return;
     if (!(await okToExport())) return;
 
     // AVIF のエンコーダは 3.4MB ある。取りに行っているあいだ画面が
@@ -3467,13 +3492,13 @@
         : 'このブラウザは' + ext.toUpperCase() + 'に対応していないため' +
           realExt.toUpperCase() + 'で保存しました');
     } catch (e) {
-      showToast('書き出しに失敗しました', 'error');
+      showToast(exportFailMessage('書き出し'), 'error');
     }
     setStatus('ready', 'idle');
   }
 
   async function exportSvg() {
-    if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
+    if (!hasPreview()) return;
     if (!(await okToExport())) return;
     const doc = svgDocument(await withExportFonts(lastSvg));
     saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), fileStem() + '.svg');
@@ -3491,7 +3516,7 @@
   }
 
   async function copyImage() {
-    if (!lastSvg) { showToast('先に内容を入力してください', 'error'); return; }
+    if (!hasPreview()) return;
     if (!navigator.clipboard || typeof window.ClipboardItem === 'undefined') {
       showToast('このブラウザは画像コピーに対応していません', 'error');
       return;
@@ -3581,7 +3606,7 @@
     const sel = $('bulk-sheet');
     if (!row || !sel) return;
     const many = bulk.sheets.length > 1;
-    row.classList.toggle('hidden', !many);
+    showIf(row, many);
     if (!many) return;
     sel.innerHTML = '';
     bulk.sheets.forEach((sh, i) => {
@@ -3599,11 +3624,15 @@
     return !!(box && box.checked);
   }
 
+  // 見出し行（使わないときは空）
+  function bulkHeadRow() {
+    return (bulkUseHeader() && bulk.rows[0]) || [];
+  }
+
   // 列の見出し。1行目を見出しに使わないときは「1列目」「2列目」…と数える。
   function bulkColumns() {
     const width = bulk.rows.reduce((m, r) => Math.max(m, r.length), 0);
-    const useHeader = bulkUseHeader();
-    const head = (useHeader && bulk.rows[0]) || [];
+    const head = bulkHeadRow();
     const out = [];
     for (let i = 0; i < width; i++) {
       const name = (head[i] || '').trim();
@@ -3663,8 +3692,7 @@
 
   // 見出しの名前で当たりを付ける。合わなければ空を返して「固定」のままにする。
   function bulkGuessColumn(type, field) {
-    const useHeader = bulkUseHeader();
-    const head = (useHeader && bulk.rows[0]) || [];
+    const head = bulkHeadRow();
     if (!head.length) return '';
     const want = [field.label, field.k]
       .concat(BULK_ALIAS[bulkMapKey(type, field)] || []).map(bulkNorm);
@@ -3688,6 +3716,12 @@
   }
 
   function bulkMapKey(type, field) { return type.id + BULK_DOT + field.k; }
+
+  // その項目に当てた列の番号。当てていなければ -1
+  function bulkColumnOf(type, field) {
+    const v = bulkMap[bulkMapKey(type, field)];
+    return v == null || v === BULK_NONE ? -1 : Number(v);
+  }
 
   // 項目ひとつにつき1本のセレクト。当てなければ「内容」の値のまま。
   function bulkFillSelects() {
@@ -3745,7 +3779,7 @@
 
   // 当てた列がひとつでもあるか。ぜんぶ「固定」だと、同じ絵が行数ぶん出る。
   function bulkMappedFields(type) {
-    return type.fields.filter(f => bulkMap[bulkMapKey(type, f)] !== BULK_NONE);
+    return type.fields.filter(f => bulkColumnOf(type, f) >= 0);
   }
 
   // 選択肢とチェックは、CSV に何と書かれていても拾えるようにする。
@@ -3815,9 +3849,8 @@
     const vals = Object.assign({}, base);
     const errors = [];
     type.fields.forEach(f => {
-      const pick = bulkMap[bulkMapKey(type, f)];
-      if (pick === BULK_NONE || pick == null) return;
-      const col = Number(pick);
+      const col = bulkColumnOf(type, f);
+      if (col < 0) return;
       const got = bulkCoerce(type, f, row[col], base[f.k]);
       vals[f.k] = got.value;
       if (!got.ok) errors.push({ col: col, label: f.label, raw: got.raw, words: got.words });
@@ -3848,10 +3881,8 @@
     // 列番号 → 当てた項目名（同じ列を2つの項目に当てることもできる）
     const picked = {};
     type.fields.forEach(f => {
-      const v = bulkMap[bulkMapKey(type, f)];
-      if (v === BULK_NONE || v == null) return;
-      const i = Number(v);
-      picked[i] = picked[i] ? picked[i] + BULK_SEP + f.label : f.label;
+      const i = bulkColumnOf(type, f);
+      if (i >= 0) picked[i] = picked[i] ? picked[i] + BULK_SEP + f.label : f.label;
     });
 
     const table = el('table');
@@ -3882,17 +3913,16 @@
     // 全行ぶん見ておく。1行目だけ見て「大丈夫そう」と押させない。
     // 見出し行があるぶん、CSV の行番号は1つずれる
     const headOffset = bulkUseHeader() ? 2 : 1;
-    const badAt = built.map((b, n) => n).filter(n => built[n].errors.length);
-    const badRows = badAt.length;
+    const badRows = built.filter(b => b.errors.length).length;
+    const firstBad = built.findIndex(b => b.errors.length);
 
     const first = built[0];
     let line;
     if (badRows) {
-      const firstBad = { line: badAt[0] + headOffset, err: built[badAt[0]].errors[0] };
-      const e = firstBad.err;
+      const e = built[firstBad].errors[0];
       line = el('p', { class: 'bulk-map-out empty' },
         badRows + '行で、選べない値が使われています。このままだと、その行は作られません。' + BULK_NL +
-        firstBad.line + '行目「' + e.label + '：' + e.raw + '」' + BULK_NL +
+        (firstBad + headOffset) + '行目「' + e.label + '：' + e.raw + '」' + BULK_NL +
         '書ける値：' + (e.words || []).join(''));
     } else if (first.text) {
       line = el('p', { class: 'bulk-map-out' }, '1行目はこうなります：' + BULK_NL + first.text);
@@ -3911,17 +3941,14 @@
   }
 
   function syncBulkHint() {
-    const hint = $('hint-bulk');
-    if (hint) hint.textContent = bulkSummary();
+    setText('hint-bulk', bulkSummary());
   }
 
   // 読み込んだファイルの見出し。行数は「これから作る枚数」＝データ行で数える。
   // 見出し行を含めた総数を出すと、右肩の要約や書き出した枚数と1つずれる。
   function syncBulkFileName() {
-    const host = $('bulk-file-name');
-    if (!host) return;
-    host.textContent = bulk.fileName
-      ? bulk.fileName + '（' + bulkDataRows().length + '行）' : '';
+    setText('bulk-file-name', bulk.fileName
+      ? bulk.fileName + '（' + bulkDataRows().length + '行）' : '');
   }
 
   function bulkRefresh() {
@@ -4051,7 +4078,9 @@
     const use = over ? rows.slice(0, BULK_MAX) : rows;
 
     // デザインは全行で同じ。フレームの文字も、画面で入れた値のまま出る。
-    const baseStyle = Object.assign({}, state.style);
+    // 走っているあいだに画面で色を触っても途中から変わらないよう、押した時点の
+    // ものを丸ごと写して使う（merge は入れ子まで写す）
+    const baseStyle = window.QRStyle.merge(window.QRStyle.DEFAULTS, state.style);
 
     const btn = $('btn-bulk-run');
     bulk.running = true;
@@ -4152,7 +4181,6 @@
         });
         const zip = window.QRBulk.zip(files);
         saveBlob(zip, 'qr-bulk-' + stamp() + '.zip');
-        if (window.STShare) STShare.celebrate();
       }
 
       bulkReport({
@@ -4163,7 +4191,7 @@
     } catch (e) {
       showToast(String(e && e.message) === 'zip too large'
         ? 'ZIPが大きすぎます。サイズを下げるか、行を分けてください'
-        : '一括生成に失敗しました', 'error');
+        : exportFailMessage('一括生成'), 'error');
     } finally {
       bulk.running = false;
       bulk.abort = false;
@@ -4234,9 +4262,8 @@
   // AVIF は1枚ごとにエンコーダを回すので、行数が多いと目に見えて遅い。
   // 選んだ時点で言う（1000行走らせてから気づくのが一番困る）。
   function syncBulkFormatNote() {
-    const note = $('bulk-format-note');
     const sel = $('bulk-format');
-    if (note && sel) note.classList.toggle('hidden', sel.value !== 'avif');
+    if (sel) showIf('bulk-format-note', sel.value === 'avif');
   }
 
   function wireBulk() {
@@ -4281,8 +4308,7 @@
       const v = normHex(picker.value, '#000000');
       if (hex) hex.value = v;
       apply(v);
-      state.presetName = '';
-      update({ debounceVerify: true });
+      designDragged();
     });
     picker.addEventListener('change', verifyOnCommit);
     if (hex) {
@@ -4304,9 +4330,7 @@
     eachSegButton(hostId, b => {
       b.addEventListener('click', () => {
         apply(b.dataset[attr]);
-        state.presetName = '';
-        syncControls();
-        update();
+        designChanged();
       });
     });
   }
@@ -4319,8 +4343,7 @@
       const v = parseFloat(input.value);
       if (label) label.textContent = format(v);
       apply(v);
-      state.presetName = '';
-      update({ debounceVerify: true });
+      designDragged();
     });
     input.addEventListener('change', verifyOnCommit);
   }
@@ -4362,9 +4385,7 @@
       clear();
       const fileInput = asEl(fileId);
       if (fileInput) fileInput.value = '';
-      state.presetName = '';
-      syncControls();
-      update();
+      designChanged();
     });
   }
 
@@ -4405,14 +4426,11 @@
     if (addColor) addColor.addEventListener('click', () => {
       touch();
       const p = paintOf(scope);
-      if (!Array.isArray(p.colors)) p.colors = ['#2563EB', '#7C3AED', '#DB2777'];
-      if (p.colors.length >= 8) return;
+      if (p.colors.length >= MAX_MULTI_COLORS) return;
       const candidates = ['#EF4444', '#F59E0B', '#10B981', '#06B6D4', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'];
       p.colors.push(candidates.find(c => p.colors.indexOf(c) < 0) ||
         candidates[Math.floor(Math.random() * candidates.length)]);
-      state.presetName = '';
-      syncControls();
-      update();
+      designChanged();
     });
 
     const shuffleColor = cq(scope, 'btn-shuffle-color');
@@ -4428,10 +4446,8 @@
       touch();
       const p = paintOf(scope);
       if (p.mid) return;
-      p.mid = towardHex(p.from || '#FC466B', p.to || '#3F5EFB', 0.5);
-      state.presetName = '';
-      syncControls();
-      update();
+      p.mid = towardHex(p.from, p.to, 0.5);
+      designChanged();
     });
 
     // 画像
@@ -4445,9 +4461,7 @@
     if (scaleReset) scaleReset.addEventListener('click', () => {
       touch();
       paintOf(scope).imgScale = 1;
-      state.presetName = '';
-      syncControls();
-      update();
+      designChanged();
     });
 
     wireImageClear(cq(scope, 'btn-image-clear'), cq(scope, 'image-file'), () => {
@@ -4465,10 +4479,7 @@
       b.addEventListener('click', () => {
         const part = b.dataset.part;
         eachSegButton('marker-color-seg', o => setActive(o, o === b));
-        ['frame', 'eye'].forEach(scope => {
-          const panel = colorPanel(scope);
-          if (panel) panel.classList.toggle('hidden', scope !== part);
-        });
+        ['frame', 'eye'].forEach(scope => showIf(colorPanel(scope), scope === part));
         state.colorScope = part;
       });
     });
@@ -4524,8 +4535,7 @@
     if (inQuality) {
       inQuality.addEventListener('input', () => {
         state.quality = Math.round(clampNum(inQuality.value, QUALITY_MIN, QUALITY_MAX, 95));
-        const val = $('val-compress');
-        if (val) val.textContent = String(state.quality);
+        setText('val-compress', String(state.quality));
       });
       inQuality.addEventListener('change', saveNow);
     }
@@ -4533,8 +4543,7 @@
     if (inEffort) {
       inEffort.addEventListener('input', () => {
         state.effort = Math.round(clampNum(inEffort.value, 1, 3, 2));
-        const val = $('val-compress');
-        if (val) val.textContent = EFFORT_WORDS[state.effort];
+        setText('val-compress', EFFORT_WORDS[state.effort]);
       });
       inEffort.addEventListener('change', saveNow);
     }
@@ -4554,11 +4563,9 @@
     // ロゴ種類
     bindSeg('logo-mode', 'mode', v => {
       state.style.logo.type = v;
+      // ロゴは既定でアイコンを持たない。選ばないまま切り替えたら、開いている一覧の先頭を置く
       if (v === 'icon' && !state.style.logo.iconData) {
-        const first = A.ICONS.find(i => i.group === state.iconGroup) || A.ICONS[0];
-        state.style.logo.icon = first.id;
-        state.style.logo.iconData = first;
-        buildIconGrid();
+        setLogoIcon(A.ICONS.find(i => i.group === state.iconGroup) || A.ICONS[0]);
       }
     });
 
@@ -4604,29 +4611,9 @@
     });
 
     bindSeg('frame-content-mode-seg', 'mode', v => {
+      // アイコンの実体は sanitizeStyle が必ず埋めているので、切り替えるだけでよい
       state.style.frame.contentMode = v;
       state.style.frame.topContentMode = v;
-      if (v === 'icon' && !state.style.frame.iconData) {
-        const first = A.ICONS.find(i => i.group === (state.frameIconGroup || 'brand')) || A.ICONS[0];
-        state.style.frame.icon = first.id;
-        state.style.frame.iconData = first;
-        state.style.frame.topIcon = first.id;
-        state.style.frame.topIconData = first;
-        buildFrameIconGrid();
-      }
-    });
-
-    eachSegButton('frame-icon-tabs', b => {
-      b.addEventListener('click', () => {
-        state.frameIconGroup = b.dataset.group;
-        eachSegButton('frame-icon-tabs', t => setActive(t, t === b));
-        buildFrameIconGrid();
-        // 一覧を替えるとブランドカラーを出せるかどうかが変わる。
-        // 色パネルを組み直さないと、ベーシックのアイコンに
-        // 「ブランドカラー」が残ったままになる。
-        syncControls();
-        update();
-      });
     });
 
     bindSeg('frame-font-seg', 'font', v => {
@@ -4646,16 +4633,18 @@
       });
     }
 
-    eachSegButton('icon-tabs', b => {
-      b.addEventListener('click', () => {
-        state.iconGroup = b.dataset.group;
-        eachSegButton('icon-tabs', x => setActive(x, x === b));
-        buildIconGrid();
-        // 一覧を替えるとブランドカラーを出せるかどうかが変わり、syncControls が
-        // logo.paint の 'brand' を 'auto' へ寄せる。描き直さないと、画面だけ
-        // ブランド色のまま取り残される（ラベル側の frame-icon-tabs と同じ理由）。
-        syncControls();
-        update();
+    // アイコンの一覧の切り替え（ロゴ用とラベル用）。一覧を替えるとブランドカラーを
+    // 出せるかどうかが変わり、syncControls が 'brand' を 'auto' へ寄せる。描き直さないと、
+    // 画面だけブランド色のまま取り残される。タブの印は syncControls が付ける。
+    [['icon-tabs', 'iconGroup', buildIconGrid],
+     ['frame-icon-tabs', 'frameIconGroup', buildFrameIconGrid]].forEach(([hostId, key, rebuild]) => {
+      eachSegButton(hostId, b => {
+        b.addEventListener('click', () => {
+          state[key] = b.dataset.group;
+          rebuild();
+          syncControls();
+          update();
+        });
       });
     });
 
@@ -4674,7 +4663,7 @@
     });
 
     // ---- プレビュー領域への画像ドロップ（選択中の対象画像として反映） ----
-    wireImageDrop(document.querySelector('.canvas-card'), null, IMAGE_TARGETS.target);
+    wireImageDrop('canvas-card', null, IMAGE_TARGETS.target);
 
     // ---- プレビュー市松模様の明暗切り替え ----
     eachSegButton('checker-toggle', btn => {
@@ -4894,9 +4883,7 @@
 
   function applyImage(src, target) {
     target.apply(src);
-    state.presetName = '';
-    syncControls();
-    update();
+    designChanged();
     showToast(target.label() + 'を適用しました');
   }
 
@@ -5036,10 +5023,10 @@
     if (window.lucide) lucide.createIcons();
     $('currentYear').textContent = new Date().getFullYear();
 
+    // 保存が無いときの既定も、復元したときと同じ形に揃えておく（iconData の
+    // 引き直しなど）。以後の画面の同期は、値がそろっている前提で書いてある
+    sanitizeStyle(state.style);
     restore();
-    eachSegButton('icon-tabs', b => {
-      setActive(b, b.dataset.group === state.iconGroup);
-    });
 
     buildTypeChips();
     buildTypeFields();

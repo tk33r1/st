@@ -112,19 +112,22 @@
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234F46E5'/%3E%3Cpath d='M9.5 4H18L24 10V26.5A1.5 1.5 0 0 1 22.5 28h-13A1.5 1.5 0 0 1 8 26.5V5.5A1.5 1.5 0 0 1 9.5 4Z' fill='%23fff'/%3E%3Cpath d='M18 4 24 10h-6Z' fill='%234F46E5' opacity='.42'/%3E%3C/svg%3E" type="image/svg+xml">
 
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <!-- AVIF・WebP のエンコーダ（jsquash）は 'wasm-feature-detect' を名前だけで読む。
+       同梱した版へ向ける（ライブラリ自体は書き換えない） -->
+  <script type="importmap">{"imports":{"wasm-feature-detect":"../../data/vendor/wasm-feature-detect@1.9.0/index.js"}}</script>
+  <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
+  <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
 
   <!-- PDF.js (render) / pdf-lib (write) / JSZip (bundle) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="../../data/vendor/pdfjs-dist@3.11.174/pdf.min.js"></script>
+  <script src="../../data/vendor/pdf-lib@1.17.1/pdf-lib.min.js"></script>
+  <script src="../../data/vendor/jszip@3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260823"></script>
+  <script src="../../data/tools-ui.js?v=20260926"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
+       Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
+  <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->

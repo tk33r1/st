@@ -127,7 +127,7 @@
       ]
     }
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -141,9 +141,9 @@
             }
         }
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
+         Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
+    <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
     <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
 
     <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
@@ -157,8 +157,8 @@
       })();
     </script>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/encoding-japanese@2/encoding.min.js"></script>
+    <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
+    <script src="../../data/vendor/encoding-japanese@2.4.0/encoding.min.js"></script>
     <style>
         /* ------------------------------------------------------------------
            CSV JSON Bridge — Dual-pane. The Instrument shell comes from

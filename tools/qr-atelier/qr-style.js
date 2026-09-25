@@ -139,13 +139,22 @@
   // 種類が消えた古い保存を拾い直す
   const LINE_ALIAS = { doubleBold: 'double', dotted: 'dashed' };
 
+  // マーカーの枠も同じ。旧「ドット枠」は、セルの形で粒を並べる「セル枠」に置き換えた
+  // （同梱のテンプレートも同じ読み替えで移してある）
+  const MARKER_FRAME_ALIAS = { dots: 'cells' };
+
+  function markerFrameIdOf(id) {
+    return MARKER_FRAME_ALIAS[id] || id;
+  }
+
   // 文字の書体。ロゴの文字とフレームのラベルで同じ一覧を使う。
   //
-  // web は「その見た目を出すのに Google Fonts が要る書体」。書き出しでは SVG を
-  // data URL の <img> として読み込むが、その文脈の SVG は外部リソースを取りに
-  // 行けず、ページが読み込んだフォントも受け継がない。指定したままだと画面と
-  // 書き出しで書体が変わってしまうので、app.js 側がこの名前を頼りにフォントを
-  // 埋め込んでから書き出す。impact はどの環境にもある想定なので web は無し。
+  // web は「その見た目を出すのに Web フォント（data/fonts/ に同梱）が要る書体」。
+  // 書き出しでは SVG を data URL の <img> として読み込むが、その文脈の SVG は
+  // 外部リソースを取りに行けず、ページが読み込んだフォントも受け継がない。
+  // 指定したままだと画面と書き出しで書体が変わってしまうので、app.js 側がこの
+  // 名前を頼りにフォントを埋め込んでから書き出す（名前は data/fonts/*.css の
+  // font-family と一致させること）。impact はどの環境にもある想定なので web は無し。
   const FONT_STACKS = {
     sans:    { stack: 'Inter, "Noto Sans JP", system-ui, sans-serif', web: 'Inter' },
     rounded: { stack: '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif', web: 'M PLUS Rounded 1c' },
@@ -638,8 +647,8 @@
   function singleCellPath(shape, x0, y0, s) {
     const x1 = x0 + s, y1 = y0 + s;
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    // connected / liquid / circuit / mosaic は隣のセルとつながる形なので、
-    // 1セルだけでは決まらない。cellsPath 側の専用ループが先に受けるため
+    // connected / liquid / circuit / mosaic と縦横ラインは隣のセルとつながる形なので、
+    // 1セルだけでは決まらない。cellsGroupedPath の専用ループが先に受けるため
     // ここには来ない。
     switch (shape) {
       case 'square':   return rectPath(x0, y0, s, s, 0);
@@ -823,11 +832,6 @@
     return [{ color: null, d: singleParts.join('') }];
   }
 
-  function cellsPath(grid, size, ox, oy, shape, scale, jitter) {
-    const groups = cellsGroupedPath(grid, size, ox, oy, shape, scale, jitter, null, 0);
-    return groups[0].d;
-  }
-
   // パスの数値をまとめて u 倍する（原点まわりの相似拡大）。cellsGroupedPath は
   // 「1セル＝1」の座標系で組み立てるので、セルの大きさが 1 でない場所で使い回す
   // ときにこれを通す。呼ぶ側が原点も u で割った系で渡せば平行移動は要らず、
@@ -854,24 +858,8 @@
   // ------------------------------------------------------------------
   // 位置検出パターン（マーカー）
   // ------------------------------------------------------------------
-  // 枠の丸みは「読み取り機が1行ずつ走査したときに 1:1:3:1:1 が取れる範囲」で
-  // 上限を決めてある。完全な円まで丸めると中心行しか条件を満たさなくなる。
   // 四隅とも同じ丸み
   const all4 = k => [k, k, k, k];
-
-  function frameShape(x, y, s, style) {
-    const x1 = x + s, y1 = y + s;
-    switch (style) {
-      case 'square':   return boxPath(x, y, x1, y1, all4(0), all4(0));
-      case 'rounded':  return boxPath(x, y, x1, y1, all4(s * 0.16), all4(1));
-      case 'xrounded': return boxPath(x, y, x1, y1, all4(s * 0.34), all4(1));
-      case 'circle':   return boxPath(x, y, x1, y1, all4(s * 0.42), all4(1));
-      case 'octagon':  return octagonPath(x, y, s, s * 0.26);
-      case 'leaf':     return boxPath(x, y, x1, y1, [s * 0.36, 0, s * 0.36, 0], [1, 0, 1, 0]);
-      case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.34, s * 0.34, s * 0.34], [0, 1, 1, 1]);
-      default:         return boxPath(x, y, x1, y1, all4(s * 0.16), all4(1));
-    }
-  }
 
   // スカラップ（花型）の外周パス。マーカーの 7x7 を基準に、辺の長さ s へ伸縮する
   function scallopPath(x0, y0, s) {
@@ -1047,8 +1035,11 @@
   // ロゴの下地
   // ------------------------------------------------------------------
   // 形はマーカーの枠と同じ 9 種。ただし枠はリング（外形から内側を抜いたもの）
-  // なので、下地では同じ輪郭を塗りつぶしで描く。角の丸みの比率は frameShape と
-  // 揃えてあり、抜き（knockout）の判定もこの表から作る。
+  // なので、下地では同じ輪郭を塗りつぶしで描く。角の丸みの比率はマーカーの枠と
+  // 下地でこの表ひとつを使い（cornerBox）、抜き（knockout）の判定もここから作る。
+  //
+  // マーカーの枠の丸みは「読み取り機が1行ずつ走査したときに 1:1:3:1:1 が取れる
+  // 範囲」で上限を決めてある。完全な円まで丸めると中心行しか条件を満たさなくなる。
   const BACKDROP_CORNERS = {
     square:   [0, 0, 0, 0],
     rounded:  [0.16, 0.16, 0.16, 0.16],
@@ -1062,10 +1053,16 @@
   };
   const OCTAGON_CUT = 0.26;
 
+  // 一辺 s の正方形を、表の比率で角を落とした形。マーカーの枠と下地で共通
+  function cornerBox(x, y, s, style) {
+    if (style === 'octagon') return octagonPath(x, y, s, s * OCTAGON_CUT);
+    const c = BACKDROP_CORNERS[style] || BACKDROP_CORNERS.rounded;
+    return boxPath(x, y, x + s, y + s, c.map(k => k * s), c.map(k => (k > 0 ? 1 : 0)));
+  }
+
   function backdropPath(cx, cy, side, style) {
     const half = side / 2;
     const x = cx - half, y = cy - half;
-    if (style === 'octagon') return octagonPath(x, y, side, side * OCTAGON_CUT);
     if (style === 'flower') return scallopPath(x, y, side);
     if (style === 'dots') {
       // 縁に丸を並べた枠の塗り版。内側の四角と縁の丸の和で、ふちが波打つ札になる
@@ -1079,9 +1076,7 @@
       }
       return d;
     }
-    const c = BACKDROP_CORNERS[style] || BACKDROP_CORNERS.rounded;
-    return boxPath(x, y, x + side, y + side,
-      c.map(k => k * side), c.map(k => (k > 0 ? 1 : 0)));
+    return cornerBox(x, y, side, style);
   }
 
   // 下地の内側かどうか。抜きが下地からはみ出すと、下地の外にセルを消した跡が
@@ -1154,24 +1149,20 @@
       const t = Math.max(0.35, Math.min(1.15, (Number(o.cellScale) || 1) * 1.15));
       return cellsGroupedPath(ring, 7, fx, fy, o.cell || 'rounded', t, 0, null, 0)[0].d;
     }
-    if (style === 'dots') {
-      const parts = [];
-      for (let dy = 0; dy < 7; dy++) {
-        for (let dx = 0; dx < 7; dx++) {
-          if (dx !== 0 && dx !== 6 && dy !== 0 && dy !== 6) continue;
-          parts.push(circlePath(fx + dx + 0.5, fy + dy + 0.5, 0.58));
-        }
-      }
-      return parts.join('');
-    }
     if (style === 'flower') {
       const outer = scallopPath(fx, fy, 7);
       const hole = boxPath(fx + 1, fy + 1, fx + 6, fy + 6, [1.4, 1.4, 1.4, 1.4], [1, 1, 1, 1]);
       return outer + hole;
     }
-    const outer = frameShape(fx, fy, 7, style);
-    const hole = frameShape(fx + 1, fy + 1, 5, style);
-    return outer + hole;
+    return cornerBox(fx, fy, 7, style) + cornerBox(fx + 1, fy + 1, 5, style);
+  }
+
+  // マーカーの枠を塗った <path>。本番の絵もボタンの見本もここを通す。
+  // セル枠は粒を並べるだけで穴を抜かない。evenodd だと重なりが白く抜ける
+  function markerFrameMarkup(fx, fy, style, opts, fill) {
+    const id = markerFrameIdOf(style);
+    return '<path d="' + markerFramePath(fx, fy, id, opts) + '" fill="' + fill + '"' +
+      (id === 'cells' ? '' : ' fill-rule="evenodd"') + '/>';
   }
 
   // 目の形も同じ理由で丸めすぎない。完全な円（半径1.5）にすると走査で
@@ -1289,26 +1280,17 @@
   }
 
   function getMarkerFill(paint, fg, id, fgRef, cornerIdx, part) {
-    if (!paint || paint.type === 'auto' || paint.type === 'none') {
-      if (fg.type === 'multi') {
-        const colors = (Array.isArray(fg.colors) && fg.colors.length) ? fg.colors : ['#111827'];
-        return esc(pickMarkerColor(colors, fg.seed, cornerIdx, part));
-      }
-      return fgRef;
+    // 「セルの色」はセルの塗りで考える。多色なら、追従していても自前でも同じ配り方
+    const follow = !paint || paint.type === 'auto' || paint.type === 'none';
+    const p = follow ? fg : paint;
+    if (p.type === 'multi') {
+      const colors = (Array.isArray(p.colors) && p.colors.length) ? p.colors : ['#111827'];
+      return esc(pickMarkerColor(colors, p.seed, cornerIdx, part));
     }
-    if (paint.type === 'solid') {
-      return esc(paint.color || '#111827');
-    }
-    if (paint.type === 'multi') {
-      const colors = (Array.isArray(paint.colors) && paint.colors.length) ? paint.colors : ['#111827'];
-      return esc(pickMarkerColor(colors, paint.seed, cornerIdx, part));
-    }
-    if (paint.type === 'image') {
-      return paint.src ? 'url(#' + id + ')' : esc(paint.color || '#111827');
-    }
-    if (paint.type === 'linear' || paint.type === 'radial') {
-      return 'url(#' + id + ')';
-    }
+    if (follow) return fgRef;
+    if (p.type === 'solid') return esc(p.color || '#111827');
+    if (p.type === 'image') return p.src ? 'url(#' + id + ')' : esc(p.color || '#111827');
+    if (p.type === 'linear' || p.type === 'radial') return 'url(#' + id + ')';
     return fgRef;
   }
 
@@ -1689,26 +1671,14 @@
 
     // 外枠の地
     if (st.frame.type === 'label') {
-      const fr = st.frame.radius;
-      const flPaint = st.frame.paint;
-      const labelD = rectPath(0, 0, W, H, fr);
-      const isFlAuto = flPaint.type === 'auto';
-      if (isFlAuto && usesDef(st.fg)) {
-        defs += '<clipPath id="' + uid + 'flc"><path d="' + labelD + '"/></clipPath>';
-        body += '<g clip-path="url(#' + uid + 'flc)"><path d="' +
-          rectPath(0, 0, W, H, 0) + '" fill="' + (fgRef || '#111827') + '"/></g>';
-      } else {
-        const cellOpts = isFlAuto ? cellTile(qrBox) : null;
-        const actualPaint = isFlAuto ? st.fg : flPaint;
-        const layer = paintedShape(actualPaint, { x: 0, y: 0, w: W, h: H }, uid + 'fl', '<path d="' + labelD + '"/>', cellOpts);
-        if (layer) {
-          defs += layer.defs;
-          body += layer.body;
-        } else {
-          const c = isFlAuto ? (st.fg.color || '#111827') : (flPaint.color || '#111827');
-          body += '<path d="' + labelD + '" fill="' + esc(c) + '"/>';
-        }
-      }
+      // 帯の地は、ロゴの下地と塗りの解き方が同じ（単色・セルの色・面で塗る塗り）
+      const labelD = rectPath(0, 0, W, H, st.frame.radius);
+      const band = backdropLayer(resolvePaint(st.frame.paint, st.fg), st.frame.paint,
+        { x: 0, y: 0, w: W, h: H }, uid + 'fl', '<path d="' + labelD + '"/>',
+        (fill, fillOp) => '<path d="' + labelD + '" fill="' + fill + '"' + fillOp + '/>',
+        fgRef, qrBox);
+      defs += band.defs;
+      body += band.body;
       // QRブロックの下地
       if (bgPaint.type !== 'none' && bgOpacity > 0) {
         if (bgPaint.type === 'multi') {
@@ -1760,16 +1730,11 @@
             mosaicTiles(frameBox, multiColors, multiSeed, tileSize, multiOrigin, 103) +
             '</g>';
         } else {
-          // 単色は色そのもの、グラデ・画像は url(#...)。どちらも stroke にも fill にも使える
-          let strokeVal = '';
+          // 単色は色そのもの、グラデ・画像は url(#...)。どちらも stroke にも fill にも使える。
+          // 「セルの色」はセルと同じ参照（fgRef）をそのまま使う
+          let strokeVal;
           if (isFlAuto) {
-            if (usesDef(st.fg)) {
-              strokeVal = fgRef || '#111827';
-            } else {
-              strokeVal = esc(st.fg.color || '#111827');
-            }
-          } else if (flPaint.type === 'solid') {
-            strokeVal = esc(flPaint.color || '#111827');
+            strokeVal = fgRef;
           } else if (usesDef(flPaint)) {
             defs += paintDef(flPaint, uid + 'fl', frameBox);
             strokeVal = paintRef(flPaint, uid + 'fl', '#111827');
@@ -1799,10 +1764,7 @@
       const fx = ox + c[0], fy = oy + c[1];
       const frameFill = getMarkerFill(mfPaint, st.fg, uid + 'mf', fgRef, idx, 'frame');
       const eyeFill = getMarkerFill(mePaint, st.fg, uid + 'me', fgRef, idx, 'eye');
-      // セル枠は粒を並べるだけで穴を抜かない。evenodd だと重なりが白く抜ける
-      const mfEvenOdd = st.markerFrame === 'cells' ? '' : ' fill-rule="evenodd"';
-      body += '<path d="' + markerFramePath(fx, fy, st.markerFrame, { cell: st.cell, cellScale: st.cellScale }) +
-        '" fill="' + frameFill + '"' + mfEvenOdd + '/>';
+      body += markerFrameMarkup(fx, fy, st.markerFrame, { cell: st.cell, cellScale: st.cellScale }, frameFill);
       body += '<path d="' + markerEyePath(fx, fy, st.markerEye) + '" fill="' + eyeFill + '"/>';
     });
 
@@ -2116,15 +2078,14 @@
     const size = 3;
     const grid = new Uint8Array(9);
     [0, 1, 3, 4, 5, 7, 8].forEach(i => { grid[i] = 1; });
-    const d = cellsPath(grid, size, 0, 0, shape, 1);
+    const d = cellsGroupedPath(grid, size, 0, 0, shape, 1, 0, null, 0)[0].d;
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.2 -0.2 3.4 3.4"><path d="' + d +
       '" fill="currentColor"/></svg>';
   }
 
   function markerPreview(frameStyle, eyeStyle, opts) {
-    const eo = frameStyle === 'cells' ? '' : ' fill-rule="evenodd"';
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.3 -0.3 7.6 7.6">' +
-      '<path d="' + markerFramePath(0, 0, frameStyle, opts) + '" fill="currentColor"' + eo + '/>' +
+      markerFrameMarkup(0, 0, frameStyle, opts, 'currentColor') +
       '<path d="' + markerEyePath(0, 0, eyeStyle) + '" fill="currentColor"/></svg>';
   }
 
@@ -2168,6 +2129,7 @@
     linePreview: linePreview,
     LINE_STYLES: LINE_STYLES,
     lineIdOf: lineIdOf,
+    markerFrameIdOf: markerFrameIdOf,
     maxRadius: maxRadius,
     contrastRatio: contrastRatio,
     // 色の分解も app.js（混色・明るさの計算）が同じものを使う。二重に持つと、

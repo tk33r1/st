@@ -1,0 +1,5 @@
+# 取り込んだ外部ファイル（ライブラリ・フォント）は、取得したバイトのまま持つ。
+# 中身の SHA-256 を data/vendor/SOURCES.json に記録しているので、改行を書き換えられると
+# 記録と食い違う（.github/scripts/vendor/fetch-vendor.js --check で確かめる）。
+data/vendor/** -text
+data/fonts/** -text

@@ -107,7 +107,7 @@
             "name": "入力した内容やロゴ画像はサーバーに送られますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "送られません。QRコードの生成もロゴの合成も画像の書き出しも、すべてブラウザの中だけで行われます。ロゴ画像も端末から出ません。例外はひとつだけで、フレームのラベルや文字ロゴを入れて書き出すときに限り、その字を描くためのフォントをGoogle Fontsから取り寄せます（必要な字だけを問い合わせるので、その文字だけがGoogleに渡ります）。QRコードに埋め込む内容そのもの（URL・Wi-Fiのパスワード・連絡先など）は、このときも送られません。文字を使わないデザインなら、この通信も起きません。"
+              "text": "送られません。QRコードの生成もロゴの合成も画像の書き出しも、すべてブラウザの中だけで行われ、入力した内容（URL・Wi-Fiのパスワード・連絡先など）もロゴ画像もラベルの文字も、どこにも送られません。書き出しに使うフォント、読み取りテストのデコーダ、AVIFのエンコーダはこのサイトに同梱しているので、使うときに外部へ問い合わせることもありません。画面の部品もすべてこのサイトから読み込み、外部とやりとりするのはアクセス解析（Googleアナリティクス・Ahrefs・Cloudflare）だけで、どれも入力内容は扱いません。"
             }
           },
           {
@@ -188,13 +188,15 @@
   }
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" integrity="sha384-JNhb/AfQ8tCvhjfm2WXKx9qovmn7LcndXYllHYDf2CcTBaBMAiPsjRJeC3f9U8V6" crossorigin="anonymous"></script>
+  <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@700;800&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
+  <!-- フォントはこのサイトに同梱（data/fonts/）。Google Fonts から読むと、画面に出た字
+       （＝打った字）に応じて外へ取りに行くうえ、書き出しでは字そのものを問い合わせていた。
+       書き出しもこの CSS の @font-face を引いて埋め込む -->
+  <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260925">
+  <link rel="stylesheet" href="../../data/fonts/jp.css?v=20260925">
   <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260823"></script>
+  <script src="../../data/tools-ui.js?v=20260926"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -1886,12 +1888,11 @@
         コードに埋め込まれるので、このサイトが将来なくなっても、印刷済みのQRコードは動き続けます。
       </p>
       <p>
-        ブラウザの外に出るものを正確に書いておきます。フレームのラベルや文字ロゴを入れて書き出すときだけ、
-        画面と同じ書体で書き出すために、その字を描くフォントをGoogle Fontsから取り寄せます。必要な字だけを
-        問い合わせる仕組みなので、Googleに渡るのは<strong>ラベルに入れた文字そのもの</strong>です。
-        QRコードに埋め込む内容（URL・Wi-Fiのパスワード・連絡先など）とロゴ画像は、このときも送られません。
-        文字を使わないデザインなら、この通信自体が起きません。
-        読み取りテストのデコーダとAVIFのエンコーダはこのサイトに同梱してあり、そちらは外部の通信を伴いません。
+        ブラウザの外とのやりとりを正確に書いておきます。QRコードに埋め込む内容（URL・Wi-Fiのパスワード・連絡先など）、
+        ロゴ画像、ラベルや文字ロゴの文字は、どこにも送られません。書き出しに使うフォント、読み取りテストのデコーダ、
+        AVIFのエンコーダはすべてこのサイトに同梱してあり、使うときに外部へ問い合わせることもありません。
+        画面の部品（アイコンなど）もすべてこのサイトから読み込み、外部とやりとりするのはアクセス解析
+        （Googleアナリティクス・Ahrefs・Cloudflare）だけで、どれも入力内容は扱いません。
       </p>
 
       <h3>QRコードにできる中身</h3>
@@ -2203,12 +2204,12 @@
       </template>
 
   <script src="qr-core.js?v=20260918_1"></script>
-  <script src="qr-style.js?v=20260925_1"></script>
+  <script src="qr-style.js?v=20260925_4"></script>
   <script src="qr-assets.js?v=20260924_1"></script>
   <script src="qr-verify.js?v=20260924_1"></script>
   <script src="qr-bulk.js?v=20260918_1"></script>
   <script src="qr-xlsx.js?v=20260924_1"></script>
   <script src="qr-avif.js?v=20260918_1"></script>
-  <script src="app.js?v=20260925_1"></script>
+  <script src="app.js?v=20260926_1"></script>
 </body>
 </html>

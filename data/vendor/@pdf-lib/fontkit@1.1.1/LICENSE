@@ -1,0 +1,3 @@
+@pdf-lib/fontkit 1.1.1 は MIT License（package.json の license 欄）。
+npm のパッケージにもリポジトリ（github.com/Hopding/fontkit）にもライセンス文のファイルが無いため、この記録を置く。
+元になった fontkit（Devon Govett）も MIT License。

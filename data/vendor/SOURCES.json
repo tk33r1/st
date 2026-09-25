@@ -1,0 +1,218 @@
+{
+ "files": {
+  "tailwindcss@3.4.17/tailwind.js": {
+   "from": "https://cdn.tailwindcss.com/3.4.17",
+   "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+  },
+  "tailwindcss@3.4.17/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.17/LICENSE",
+   "sha256": "60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985"
+  },
+  "lucide@0.263.0/lucide.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js",
+   "sha256": "b9c0e0f892c6958b192b8fdecb652310d934533464b4300be9d52c7f57a014a5"
+  },
+  "lucide@0.263.0/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/lucide@0.263.0/LICENSE",
+   "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
+  },
+  "encoding-japanese@2.4.0/encoding.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/encoding-japanese@2.4.0/encoding.min.js",
+   "sha256": "93fd931949dceb6ea3e153ffced4d13a8cb12adc95c35020d6339e2fa9916cac"
+  },
+  "encoding-japanese@2.4.0/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/encoding-japanese@2.4.0/LICENSE",
+   "sha256": "a0977543d7fb164a7bd5e3cb317161ca8a8f679a4e4b9dcecb93c1c499e6dceb"
+  },
+  "jszip@3.10.1/jszip.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+   "sha256": "acc7e41455a80765b5fd9c7ee1b8078a6d160bbbca455aeae854de65c947d59e"
+  },
+  "jszip@3.10.1/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/LICENSE.markdown",
+   "sha256": "566c953c6090b1218ca6217dd7359d45dde46581968586dc607d59a78af6a9c4"
+  },
+  "sortablejs@1.15.2/Sortable.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js",
+   "sha256": "ca68430703c4f5960e90735867c6e94d29b5a3de37107d8100e5a301007e9e6e"
+  },
+  "sortablejs@1.15.2/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/LICENSE",
+   "sha256": "e94dfc31e800d169257569db270457c9f028440c9ccae41e7eb78b2db18f1298"
+  },
+  "heic2any@0.0.4/heic2any.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js",
+   "sha256": "0963cfa50e9e1e7e6af929a40a81e3e898a673f1270eafa6917dd137e4968164"
+  },
+  "heic2any@0.0.4/LICENSE": {
+   "from": "https://raw.githubusercontent.com/alexcorvi/heic2any/master/LICENSE.md",
+   "sha256": "17e4c847dac6cf3ba1f6846464160a749e020accf7dd9f412c6c55bc96285009"
+  },
+  "imagetracerjs@1.2.6/imagetracer_v1.2.6.js": {
+   "from": "https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js",
+   "sha256": "1f7e21062196c53f2565120fc0708eac197c8403ec1bea28b381056ea0c3fdb9"
+  },
+  "imagetracerjs@1.2.6/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/LICENSE",
+   "sha256": "60d2c28d19d2bdf7bbaa59829e7a595234265e8111a01ccb74d25d6c4d2d013a"
+  },
+  "svgo@3.2.0/svgo.browser.js": {
+   "from": "https://cdn.jsdelivr.net/npm/svgo@3.2.0/dist/svgo.browser.js",
+   "sha256": "bdcbbf4e38db6a2bfc1d3c2d3d9a1638e1c14d894774bfadb92c890ec12b79d6"
+  },
+  "svgo@3.2.0/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/svgo@3.2.0/LICENSE",
+   "sha256": "d2b5640808aeec9c243152ae733cf9cca3a86189ad7817bf50335290dbb31012"
+  },
+  "pdfjs-dist@3.11.174/pdf.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js",
+   "sha256": "5b5799e6f8c680663207ac5b42ee14eed2a406fa7af48f50c154f0c0b1566946"
+  },
+  "pdfjs-dist@3.11.174/pdf.worker.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js",
+   "sha256": "feabdf309770ed24bba31a5467836cdc8cf639c705af27d52b585b041bb8527b"
+  },
+  "pdfjs-dist@3.11.174/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/LICENSE",
+   "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+  },
+  "pdf-lib@1.17.1/pdf-lib.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js",
+   "sha256": "0f9a5cad07941f0826586c94e089d89b918c46e5c17cf2d5a3c6f666e3bc694f"
+  },
+  "pdf-lib@1.17.1/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/LICENSE.md",
+   "sha256": "f2c9fc00fdb66eb99ac156ba52d734af66d8d309f65753ae809ad34ee2883bcb"
+  },
+  "@pdf-lib/fontkit@1.1.1/fontkit.umd.min.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js",
+   "sha256": "d8df561b9fba98e24f2e5130e40948809281bbbc55a20c412359f1a0a5eb35a6"
+  },
+  "@pdf-lib/fontkit@1.1.1/LICENSE": {
+   "from": "package.json",
+   "sha256": "5e38a9e979c919727c959291ad78a4d22802c8591394ce33ef6f2c08861e58e0"
+  },
+  "@ffmpeg/ffmpeg@0.12.10/ffmpeg.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js",
+   "sha256": "a4c09a1997ac582a735fc21e20f9913df4af6dde4ebb373f1d714a4b6e7616f1"
+  },
+  "@ffmpeg/ffmpeg@0.12.10/814.ffmpeg.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js",
+   "sha256": "c4702e2f749671b2f9cf07e4738abaf4511fc0d89525ad6a93bc3c2a8ad0822a"
+  },
+  "@ffmpeg/ffmpeg@0.12.10/LICENSE": {
+   "from": "https://raw.githubusercontent.com/ffmpegwasm/ffmpeg.wasm/v0.12.10/LICENSE",
+   "sha256": "3e123e29517d76504ffce77b3f8e2ccffd4712493f27694b0aba3e376676459f"
+  },
+  "@ffmpeg/util@0.12.1/index.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js",
+   "sha256": "bd47584d5d74825c896195f5eab75e32e2374969d3289eec4cfc6ba661d4fbf1"
+  },
+  "@ffmpeg/util@0.12.1/LICENSE": {
+   "from": "https://raw.githubusercontent.com/ffmpegwasm/ffmpeg.wasm/v0.12.10/LICENSE",
+   "sha256": "3e123e29517d76504ffce77b3f8e2ccffd4712493f27694b0aba3e376676459f"
+  },
+  "@ffmpeg/core@0.12.6/ffmpeg-core.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js",
+   "sha256": "c972f5abeafcd5f3949e54edfbdc74a9badb27025809feb1945d468ffbcfb7f1"
+  },
+  "@ffmpeg/core@0.12.6/LICENSE": {
+   "from": "https://raw.githubusercontent.com/ffmpegwasm/ffmpeg.wasm/v0.12.10/LICENSE",
+   "sha256": "3e123e29517d76504ffce77b3f8e2ccffd4712493f27694b0aba3e376676459f"
+  },
+  "@jsquash/avif@2.1.1/encode.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/encode.js",
+   "sha256": "b12efc4bf99688b9a203e78db5ec0411653b195ecb8c84ad1c2cdbe724ac60d5"
+  },
+  "@jsquash/avif@2.1.1/meta.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/meta.js",
+   "sha256": "d062b5f127754c61cebd2a9bf3ad381ad06494502eb931636561132c207a8570"
+  },
+  "@jsquash/avif@2.1.1/utils.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/utils.js",
+   "sha256": "e71535eeee820d68b68ece7c8af761c39f3ddec93d3d957d2f83b19191339e0d"
+  },
+  "@jsquash/avif@2.1.1/codec/enc/avif_enc.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/codec/enc/avif_enc.js",
+   "sha256": "c6805e62cae5c1b9870fcc0448437da9e4edfc58c3da264af52361281082c63c"
+  },
+  "@jsquash/avif@2.1.1/codec/enc/avif_enc.wasm": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/codec/enc/avif_enc.wasm",
+   "sha256": "d9f2a95164362af48558d176e619becfd49dd97b50b86c679b47100860522b3d"
+  },
+  "@jsquash/avif@2.1.1/codec/enc/avif_enc_mt.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/codec/enc/avif_enc_mt.js",
+   "sha256": "b2fbada547e79de2b436a63c5eafcd000f169a6a2e6fc02b80ab8e8926db6ed9"
+  },
+  "@jsquash/avif@2.1.1/codec/enc/avif_enc_mt.wasm": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/codec/enc/avif_enc_mt.wasm",
+   "sha256": "202d7ec9fb7d658df7cbf17fd85d83da724ac9551818c2d5161c858353a683a4"
+  },
+  "@jsquash/avif@2.1.1/codec/enc/avif_enc_mt.worker.mjs": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/codec/enc/avif_enc_mt.worker.mjs",
+   "sha256": "89a64cae14ec07dec00cdd6df943fad039501e9eef1748fb1504508d4252bafe"
+  },
+  "@jsquash/avif@2.1.1/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/LICENSE",
+   "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20"
+  },
+  "@jsquash/webp@1.4.0/encode.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/encode.js",
+   "sha256": "8ad6f5872cd9c623b577d6e114044579569af764ed905049735b656ca0d636cf"
+  },
+  "@jsquash/webp@1.4.0/meta.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/meta.js",
+   "sha256": "3d70163a00e6264fc5a8fa7c8f3b1fa21a50a00d910f4d2de3ef1bbd2fdc98ab"
+  },
+  "@jsquash/webp@1.4.0/utils.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/utils.js",
+   "sha256": "e71535eeee820d68b68ece7c8af761c39f3ddec93d3d957d2f83b19191339e0d"
+  },
+  "@jsquash/webp@1.4.0/codec/LICENSE.codec.md": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/codec/LICENSE.codec.md",
+   "sha256": "e293d1dddc9785200b1f58a4f5293543cf8566d9e0b8a3c02fad955035b19f42"
+  },
+  "@jsquash/webp@1.4.0/codec/enc/webp_enc.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/codec/enc/webp_enc.js",
+   "sha256": "5fd62301662e37785aec38e38807926f72933d4c8b919018a43faf1b1ca760f6"
+  },
+  "@jsquash/webp@1.4.0/codec/enc/webp_enc.wasm": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/codec/enc/webp_enc.wasm",
+   "sha256": "b6085bb6702f144e9dc6016d58d230b34a84976bf0d080b7390b4b4b137d6ab7"
+  },
+  "@jsquash/webp@1.4.0/codec/enc/webp_enc_simd.js": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/codec/enc/webp_enc_simd.js",
+   "sha256": "3038e60ebba6252baba08c691e31d1efe5036a185435daa7b4afaef3cc9273f9"
+  },
+  "@jsquash/webp@1.4.0/codec/enc/webp_enc_simd.wasm": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/codec/enc/webp_enc_simd.wasm",
+   "sha256": "39c279269ec1163b987b6d69749458e3d5b03b9585f58b6ca5455b76b504a305"
+  },
+  "@jsquash/webp@1.4.0/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/LICENSE",
+   "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20"
+  },
+  "wasm-feature-detect@1.9.0/index.js": {
+   "from": "https://cdn.jsdelivr.net/npm/wasm-feature-detect@1.9.0/dist/esm/index.js",
+   "sha256": "871246e709a8564b583265a37df4b90bebf6aabea6e7b86a41ab6ed986651154"
+  },
+  "wasm-feature-detect@1.9.0/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/wasm-feature-detect@1.9.0/LICENSE",
+   "sha256": "bcf29b4fd3ec2cb5f9d40a0866da446f6da62170d2ccedf4aeca9cf9406dd20c"
+  },
+  "@fontsource/noto-sans-jp@5.3.0/japanese-400-normal.ttf": {
+   "from": "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@5.3.0/japanese-400-normal.ttf",
+   "sha256": "58dd9a063bfdeefcbb771a81958dbe2dd10df8d7ac073f2acb2687840dc17823"
+  },
+  "@fontsource/noto-sans-jp@5.3.0/LICENSE": {
+   "from": "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5.3.0/LICENSE",
+   "sha256": "18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3"
+  }
+ },
+ "remote": {
+  "FFMPEG_CORE_WASM": {
+   "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm",
+   "sha256": "2390efa7fb66e7e42dbae15427571a5ffc96b829480904c30f471f0a78967f61"
+  }
+ }
+}

@@ -13,8 +13,9 @@
   const { formatBytes, showToast, switchView, setupDropzone, isPrivateHost } = window.STCommon;
   const { PDFDocument, StandardFonts, degrees, rgb } = PDFLib;
 
+  // 外部ライブラリはすべてこのサイトに同梱したもの（data/vendor/）
   pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    '../../data/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js';
 
   const MAX_FILE_SIZE = 300 * 1024 * 1024;
   const HEAVY_PAGE_COUNT = 400;
@@ -28,7 +29,7 @@
   // One ratio for both the preview and the output keeps them in agreement.
   const TEXT_ASCENT = 0.8;
   const JP_FONT_FAMILY = 'PdfStudioJP';
-  const JP_FONT_URL = 'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@latest/japanese-400-normal.ttf';
+  const JP_FONT_URL = '../../data/vendor/@fontsource/noto-sans-jp@5.3.0/japanese-400-normal.ttf';
   // ASCII-only labels are embedded as Helvetica, so the fallbacks after the
   // Japanese face have to be the same metrics — otherwise the preview and the
   // exported page disagree about how wide the text is.
@@ -1110,10 +1111,26 @@
   let jpFontPromise = null;
   let jpFontReady = false;
 
+  // fontkit は UMD 版を同梱してある。読み込むと window.fontkit に入る
+  let fontkitPromise = null;
+  function loadFontkit() {
+    if (!fontkitPromise) {
+      fontkitPromise = new Promise((resolve, reject) => {
+        if (window.fontkit) { resolve(window.fontkit); return; }
+        const s = document.createElement('script');
+        s.src = '../../data/vendor/@pdf-lib/fontkit@1.1.1/fontkit.umd.min.js';
+        s.onload = () => (window.fontkit ? resolve(window.fontkit) : reject(new Error('fontkit missing')));
+        s.onerror = () => reject(new Error('fontkit load failed'));
+        document.head.appendChild(s);
+      }).catch((err) => { fontkitPromise = null; throw err; });
+    }
+    return fontkitPromise;
+  }
+
   function loadJpFont() {
     if (!jpFontPromise) {
       jpFontPromise = (async () => {
-        const fontkit = (await import('https://esm.sh/@pdf-lib/fontkit@1.1.1')).default;
+        const fontkit = await loadFontkit();
         const res = await fetch(JP_FONT_URL);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buffer = await res.arrayBuffer();
@@ -1602,9 +1619,9 @@
   function loadEncoder(kind) {
     if (!encoderPromises[kind]) {
       const url = kind === 'avif'
-        ? 'https://esm.sh/@jsquash/avif@2.1.1'
-        : 'https://esm.sh/@jsquash/webp@1.4.0';
-      encoderPromises[kind] = import(url).then((m) => m.encode).catch((err) => {
+        ? '../../data/vendor/@jsquash/avif@2.1.1/encode.js'
+        : '../../data/vendor/@jsquash/webp@1.4.0/encode.js';
+      encoderPromises[kind] = import(url).then((m) => m.default).catch((err) => {
         encoderPromises[kind] = null; // let a later attempt retry the download
         console.warn(`${kind} encoder failed to load`, err);
         throw new Error(`${kind.toUpperCase()} エンコーダを読み込めませんでした（オフラインの可能性があります）`);

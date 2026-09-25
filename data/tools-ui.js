@@ -214,8 +214,35 @@
     };
   }
 
+  // ---- 外から取る部品の照合 ----------------------------------------------
+  // ライブラリは data/vendor/ に置いてこのサイトから読む。ただ、Cloudflare Pages の
+  // 1ファイル 25MB の上限を超えるもの（FFmpeg のコアの wasm、32MB）だけは置けない。
+  // そういうものは CDN から取り、中身の SHA-256 が記録どおりのときだけ使う。
+  // CDN 側で差し替わっても、違う中身は動かさない。
+  // 値は .github/scripts/vendor/fetch-vendor.js が出すもの（data/vendor/SOURCES.json の remote）。
+  const REMOTE_PARTS = {
+    ffmpegCoreWasm: {
+      url: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
+      sha256: '2390efa7fb66e7e42dbae15427571a5ffc96b829480904c30f471f0a78967f61'
+    }
+  };
+
+  // 取ってきた中身が記録と一致したら blob: の URL にして返す。違えば使わずに止める。
+  async function fetchVerified(name, type) {
+    const part = REMOTE_PARTS[name];
+    if (!part) throw new Error('unknown part: ' + name);
+    const res = await fetch(part.url, { credentials: 'omit' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const buf = await res.arrayBuffer();
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
+    const hex = Array.from(digest, b => b.toString(16).padStart(2, '0')).join('');
+    if (hex !== part.sha256) throw new Error('部品の中身が記録と違うため、使いませんでした（' + name + '）');
+    return URL.createObjectURL(new Blob([buf], { type: type }));
+  }
+
   global.STCommon = {
     formatBytes,
+    fetchVerified,
     showToast,
     switchView,
     isPrivateHost,
