@@ -327,7 +327,8 @@
       それでも収まらない（長いメモを書いた等）ときの指での横スクロールは、ブラウザに任せず JS が動かす
       （touch-action で横の既定動作を止め、スクロールできる間はめくりより先にスクロールする）
     */
-    .vertical-writing #body { max-width: 100%; height: 16em; overflow-x: auto; overflow-y: hidden; writing-mode: vertical-rl; line-height: 2.1; scrollbar-width: thin; touch-action: pan-y; }
+    /* 縦書き本文は、本と同じく右端から読み始める */
+    .vertical-writing #body { max-width: 100%; height: 16em; margin-right: 0; margin-left: auto; overflow-x: auto; overflow-y: hidden; writing-mode: vertical-rl; line-height: 2.1; scrollbar-width: thin; touch-action: pan-y; }
     /* 蛍光ペンは横書きの「下半分」に合わせ、縦書きでは行の左側（下側）に引く */
     .vertical-writing #body mark.thought-highlight { padding: 0 0.05em; background: linear-gradient(to left, transparent 42%, var(--marker) 42%, var(--marker) 88%, transparent 88%); }
     .vertical-writing #body .margin-note { margin: 0.2em 0 0.35em; }
