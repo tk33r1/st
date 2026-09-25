@@ -2971,7 +2971,7 @@
     <h3><a href="?cmd=clear">clear</a></h3>
     <p>Clear terminal</p>
     <h3><a href="?cmd=help">help</a></h3>
-    <p>Show this menu</p>
+    <p>Show menu</p>
     <h2>Hidden Commands</h2>
     <h3><a href="?cmd=web3">web3</a></h3>
     <p>Dive into my Web3 page</p>
@@ -3477,7 +3477,7 @@
         const channel = /Extension|拡張機能/i.test(msg) ? 'Extensions' : /Theme|テーマ/i.test(msg) ? 'Theme' : 'System';
         systemLog.push({ t: new Date(), channel, msg });
         if (systemLog.length > MAX_HISTORY) systemLog.shift();
-        if (!document.getElementById('panel-output').classList.contains('hidden')) renderOutput();
+        if (!DOM.panelOutput.classList.contains('hidden')) renderOutput();
       }
     }
 
@@ -3711,7 +3711,7 @@
       }
     };
 
-    // Descriptions live solely in CMD_DESC (single source of truth); extensionMeta
+    // Descriptions live solely in CMD_DESCS (single source of truth); extensionMeta
     // carries only marketplace metadata (author/visibility).
     const extensionMeta = {
       akutagawa: { name: 'akutagawa', author: 'ST', isHidden: true },
@@ -3789,7 +3789,7 @@
     function extCardHtml({ cmd, meta, isInstalled }) {
       const tm = treeMeta(cmd);
       const color = iconColor(cmd, tm.name);
-      const desc = cdesc(cmd) || meta.desc || '';
+      const desc = cdesc(cmd);
       const pending = extPending.has(cmd);
       const busyLabel = `<span class="ext-spinner"></span> ${isInstalled ? tr('Uninstalling', 'アンインストール中') : tr('Installing', 'インストール中')}`;
       return `
@@ -4254,15 +4254,18 @@
       const tableRows = createThemesTable(data.themes, isV2);
       const titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
 
-      const mTitle = pick(data.m, 't'), sTitle = pick(data.s, 't');
-      const mbtiHtml = data.m.l ? `<a href="${data.m.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 inline-block hover:underline" style="color: ${titleColor};">${mTitle}</a>` : `<div class="text-sm font-bold glow mb-4" style="color: ${titleColor}; pointer-events: none;">${mTitle}</div>`;
-      const strHtml = data.s.l ? `<a href="${data.s.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${sTitle}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${sTitle}</div>`;
+      // Each test title links out when it has a source URL, and is a plain heading otherwise.
+      const titleHtml = (o, cls, display) => o.l
+        ? `<a href="${o.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow ${cls} ${display} hover:underline" style="color: ${titleColor};">${pick(o, 't')}</a>`
+        : `<div class="text-sm font-bold glow ${cls}" style="color: ${titleColor}; pointer-events: none;">${pick(o, 't')}</div>`;
+      const RULED = 'mb-4 mt-6 pt-4 border-t border-color';
+      const mbtiHtml = titleHtml(data.m, 'mb-4', 'inline-block');
+      const strHtml = titleHtml(data.s, RULED, 'block');
 
       // ver.1.0 predates the Big Five test, so the whole block is data-driven and simply absent there.
       let bfHtml = '';
       if (data.bigfive && data.b) {
-        const bTitle = pick(data.b, 't');
-        const bfTitleHtml = data.b.l ? `<a href="${data.b.l}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t block hover:underline border-color" style="color: ${titleColor};">${bTitle}</a>` : `<div class="text-sm font-bold glow mb-4 mt-6 pt-4 border-t border-color" style="color: ${titleColor}; pointer-events: none;">${bTitle}</div>`;
+        const bfTitleHtml = titleHtml(data.b, RULED, 'block');
         bfHtml = `
             ${bfTitleHtml}
             <div>${createBigFiveRows(data.bigfive, isV2)}</div>
@@ -4375,7 +4378,7 @@
 
     const commands = {
       help: () => {
-        const base = [['about', tr('Learn about me', '私について')], ['identify', tr('View personality versions', '人格のバージョン')], ['timeline', tr('Trace my life events', '人生の出来事を辿る')], ['pages', tr('Explore my creations', '制作物を見る')], ['contact', tr('Contact me', '連絡先')], ['clear', tr('Clear terminal', 'ターミナルをクリア')], ['help', tr('Show this menu', 'このメニューを表示')]];
+        const base = sidebarFiles.map(c => [c, cdesc(c)]);
         const installed = installedList().sort().map(c => [c, cdesc(c)]);
         return renderCmdList('Available Commands:', base.concat(installed));
       },
@@ -4536,9 +4539,9 @@
         addProblem('warn', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...', { file: 'meltdown.sh' });
         document.body.classList.add('system-meltdown');
         const safeElements = new Set([
-          ...ancestorsOf(document.getElementById('input-line'), 'app'),
-          ...ancestorsOf(document.getElementById('terminal-log'), 'app'),
-          document.getElementById('app')
+          ...ancestorsOf(DOM.inputLine, 'app'),
+          ...ancestorsOf(DOM.terminalLog, 'app'),
+          DOM.app
         ]);
         const elements = Array.from(document.querySelectorAll('#app *'))
           .filter(el => !safeElements.has(el) && !el.closest('#input-line'));
@@ -4910,8 +4913,8 @@
         };
         // The instant of contact: a hot ring flaring out and gone in a breath, so a hit
         // registers at once instead of waiting for the eye to find the new scar.
-        const hitFlash = (x, y, power, hot = true) => ringFx(x, y, 3, 12 + power * 15, 0.13, 1.4 + power, 2,
-          k => hot ? `rgba(255,214,150,${0.5 * (1 - k) * (1 - k)})` : `rgba(214,228,255,${0.45 * (1 - k) * (1 - k)})`);
+        const hitFlash = (x, y, power) => ringFx(x, y, 3, 12 + power * 15, 0.13, 1.4 + power, 2,
+          k => `rgba(255,214,150,${0.5 * (1 - k) * (1 - k)})`);
 
         // --- Per-section HP. Shots damage the section under the pointer; when its HP
         //     hits 0 the section collapses using the SAME fly-off effect as `meltdown`. ---
@@ -4957,7 +4960,7 @@
           s.flown = []; s.stripped = [];
           if (s.bar) { s.bar.remove(); s.bar = null; }
           // keep the terminal input usable even if its container collapses
-          const safe = ancestorsOf(document.getElementById('input-line'));
+          const safe = ancestorsOf(DOM.inputLine);
           const els = [s.el, ...s.extras].flatMap(r => [r, ...r.querySelectorAll('*')]).filter(el => !safe.has(el) && !el.closest('#input-line'));
           // The section box itself can't fly when it holds the protected input (e.g. #panel),
           // so strip its frame (border/bg/shadow) — otherwise an empty outline lingers.
@@ -6390,11 +6393,12 @@
     const sidebarEl = document.getElementById('sidebar');
     function renderExplorerTree() {
       const files = [...sidebarFiles, ...installedList()];
+      // Read the selection before the rewrite below throws the highlighted node away.
+      const activeCmd = sidebarTree.querySelector('.tree-item.active')?.dataset.cmd;
       sidebarTree.innerHTML = files.map(c => {
         const m = treeMeta(c);
         return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span style="color:${iconColor(c, m.name)}">${m.icon}</span><span>${esc(m.name)}</span></button>`;
       }).join('');
-      const activeCmd = document.querySelector('.tree-item.active')?.dataset.cmd;
       if (activeCmd) setActiveTree(activeCmd);
     }
     renderExplorerTree();
@@ -6717,6 +6721,17 @@
       { codename: 'BALTHASAR-2', name: 'HUMANIST', name_ja: '人間主義者', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.', desc_ja: '慈愛の自我。フロム、ストア哲学、仏教を内面化した、詩的で内向的な夢想家。つねに人間性を中心に据える。' },
       { codename: 'CASPER-3', name: 'STRATEGIST', name_ja: '戦略家', desc: 'The logical self. A data-driven strategist relentlessly solving for the optimal answer, embracing both reproducible tactics and novelty.', desc_ja: '論理の自我。再現可能な戦術と新規性の双方を取り込み、最適解をひたすら追い求めるデータドリブンな戦略家。' },
     ];
+    // 3人格の討議カード。送信直後（debate なし）は thinking 状態の空カード、履歴復元では保存済みの討議を流し込む。
+    const personaCardsHTML = (debate) => `<div class="agent-personas">${AGENT_PERSONAS.map(p => {
+      const deb = (debate && debate[p.codename]) || { round1: '…', round2: '…' };
+      return `
+        <div class="persona-card${debate ? '' : ' thinking'}" data-codename="${p.codename}">
+          <div class="persona-head"><span class="text-primary" aria-hidden="true">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
+          <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">${esc(deb.round1)}</div></div>
+          <div class="persona-round" data-round="2"${deb.round2 === '…' ? ' hidden' : ''}><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">${esc(deb.round2)}</div></div>
+          ${reactionBarHTML(p.codename)}
+        </div>`;
+    }).join('')}</div>`;
     const AGENT_MAX_HISTORY = 12;
     const agentHintHTML = () => '<div class="agent-splash">'
       + '<svg aria-hidden="true" class="magi-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
@@ -7010,13 +7025,7 @@
       const turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
       // メッセージID：リアクション状態を履歴項目と対応付けるための一意キー
       const mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
-      turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => `
-        <div class="persona-card thinking" data-codename="${p.codename}">
-          <div class="persona-head"><span class="text-primary" aria-hidden="true">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
-          <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">…</div></div>
-          <div class="persona-round" data-round="2" hidden><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">…</div></div>
-          ${reactionBarHTML(p.codename)}
-        </div>`).join('')}</div>`;
+      turn.innerHTML = personaCardsHTML();
       const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
       replyEl.innerHTML = `<span class="agent-who">✦ ${tr('Shinya Takeda', '武田 伸也')}</span><span class="agent-reply-body"></span>${reactionBarHTML('integrated')}`;
       turn.appendChild(replyEl);
@@ -7293,17 +7302,7 @@
           turn.dataset.mid = item.mid;
 
           if (item.debate) {
-            turn.innerHTML = `<div class="agent-personas">${AGENT_PERSONAS.map(p => {
-              const deb = item.debate[p.codename] || { round1: '…', round2: '…' };
-              const r2Hidden = deb.round2 === '…' ? 'hidden' : '';
-              return `
-                <div class="persona-card" data-codename="${p.codename}">
-                  <div class="persona-head"><span class="text-primary" aria-hidden="true">⬡</span><span class="persona-code">${p.codename}</span><span class="persona-name">${esc(pick(p, 'name'))}</span></div>
-                  <div class="persona-round" data-round="1"><span class="persona-round-label">${tr('Initial', '初回')}</span><div class="persona-text">${esc(deb.round1)}</div></div>
-                  <div class="persona-round" data-round="2" ${r2Hidden}><span class="persona-round-label">${tr('After debate', '討議後')}</span><div class="persona-text">${esc(deb.round2)}</div></div>
-                  ${reactionBarHTML(p.codename)}
-                </div>`;
-            }).join('')}</div>`;
+            turn.innerHTML = personaCardsHTML(item.debate);
           }
 
           const replyEl = document.createElement('div');
