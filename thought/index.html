@@ -1131,11 +1131,15 @@
     // -1 はイントロ（null は AVAILABLE_THEMES に含まれないので indexOf がそのまま -1 を返す）
     const themeIndex = () => AVAILABLE_THEMES.indexOf(currentTheme);
     const themeHash = (themeName) => themeName ? `#${encodeURIComponent(themeName)}` : '';
-    // step（-1 で前、+1 で次）の先へ送れるか。イントロ（-1）から最後のテーマまで
-    const canStep = (step) => {
+    // step（-1 で前、+1 で次）の先のテーマ。イントロは null、範囲（イントロから最後のテーマまで）の外は undefined
+    const stepTarget = (step) => {
       const target = themeIndex() + step;
-      return target >= -1 && target < AVAILABLE_THEMES.length;
+      if (target < -1 || target >= AVAILABLE_THEMES.length) return undefined;
+      return AVAILABLE_THEMES[target] ?? null;
     };
+    const canStep = (step) => stepTarget(step) !== undefined;
+    // 開いているモーダルがあるか（キーでの送りやめくりの見本を止める）
+    const isDialogOpen = () => Boolean(document.querySelector('dialog[open]'));
 
     /* =========================================
        Core Logic
@@ -1525,11 +1529,10 @@
     const narrowQuery = window.matchMedia('(max-width: 639px)');
     const writingModeName = () => (isVertical ? 'vertical' : 'horizontal');
     const hasLearnedSwipe = () => readStorage('localStorage', STORAGE_KEYS.swipeLearned) === writingModeName();
-    const hasNextPage = () => canStep(1);
 
     function updateSwipeHint() {
       els.swipeHint.hidden = hasLearnedSwipe();
-      els.swipeHint.classList.toggle('is-dismissed', !hasNextPage());
+      els.swipeHint.classList.toggle('is-dismissed', !canStep(1));
     }
 
     // めくれたら静かに消す（場所は次にページを替えるときに詰める。今詰めると本文が跳ねる）
@@ -1553,10 +1556,10 @@
     }
 
     function previewPageTurn() {
-      const busy = gesture || pendingSettle || pageTurnFrame !== null || document.querySelector('dialog[open]');
+      const busy = gesture || pendingSettle || pageTurnFrame !== null || isDialogOpen();
       const typing = els.contentLayout.contains(document.activeElement) && document.activeElement.matches('input, textarea');
       if (busy || typing || document.hidden || isZenMode || !narrowQuery.matches || reducedMotionQuery.matches) return;
-      if (hasLearnedSwipe() || !hasNextPage()) return;
+      if (hasLearnedSwipe() || !canStep(1)) return;
       const token = ++transitionToken;
       const pad = 12;
       const rect = els.contentLayout.getBoundingClientRect();
@@ -1625,10 +1628,11 @@
     function startDrag(touch) {
       // 左へ払うのは右の矢印と同じ（次へは綴じ目の側へ払う：横書きは左へ、縦書きは右へ）
       const step = stepForSide(touch.clientX < gesture.startX ? 'right' : 'left');
-      if (!canStep(step)) return false;
+      const target = stepTarget(step);
+      if (target === undefined) return false;
       if (document.activeElement?.matches('.toc-link, .progress-index')) document.activeElement.blur();
       gesture.fromTheme = currentTheme;
-      gesture.turn = switchTheme(AVAILABLE_THEMES[themeIndex() + step] ?? null, { history: 'replace', interactive: true });
+      gesture.turn = switchTheme(target, { history: 'replace', interactive: true });
       if (!gesture.turn) return false;
       // つまんだ位置が綴じ目に近すぎると、少しの動きで紙が大きく跳ねるので、紙幅の 6 割より手前はつままない
       const { spineX, width, mirrored } = gesture.turn;
@@ -1770,10 +1774,7 @@
       // 動きを減らす設定では、従来どおり離したときにだけ送る（紙は動かさない）
       if (gesture.mode === 'swipe') {
         const xDiff = gesture.startX - e.changedTouches[0].clientX;
-        if (Math.abs(xDiff) > 60) {
-          moveTheme(stepForSide(xDiff > 0 ? 'right' : 'left'));
-          learnSwipe();
-        }
+        if (Math.abs(xDiff) > 60 && moveTheme(stepForSide(xDiff > 0 ? 'right' : 'left'))) learnSwipe();
       }
       gesture = null;
     }, { passive: true });
@@ -2142,14 +2143,6 @@
     */
     const ORPHANED_HEADING = '本文の改訂で位置を失った書き込み';
 
-    // 書き込みの削除は確かめてから行い、消したことを読み上げる（remove が実際に消す）
-    function confirmRemoval(annotation, remove) {
-      const label = KIND_LABEL[annotation.kind];
-      if (!window.confirm(`この${label}を削除しますか？`)) return;
-      remove();
-      els.liveStatus.textContent = `${label}を削除しました。`;
-    }
-
     function renderOrphanedAnnotations() {
       const container = els.orphanedNotes;
       container.hidden = !orphanedAnnotations.length;
@@ -2217,6 +2210,11 @@
        思索ノートを書き出す（全テーマの書き込みを Markdown にまとめる。書き込みはこの端末にしかないため）
        ========================================= */
     const indentLines = (text, indent) => text.replace(/\n/g, `\n${indent}`);
+    // 書き込み1件を箇条書きの1項目にする（「写す」と書き出しで共通。label は「メモ」「蛍光ペン」などの前置き）
+    const annotationLine = (item, bullet, label = '') => {
+      const head = `${bullet}${label}「${item.quote}」`;
+      return item.kind === 'memo' ? `${head}\n  ${indentLines(item.note, '  ')}` : head;
+    };
 
     function buildNotebook() {
       const sections = [null, ...AVAILABLE_THEMES].map(themeName => {
@@ -2228,14 +2226,9 @@
         if (theme.question) lines.push('', `問い：${theme.question}`);
         const highlights = annotations.filter(item => item.kind === 'highlight');
         const memos = annotations.filter(item => item.kind === 'memo');
-        const memoLine = (item, label = '') => `- ${label}「${item.quote}」\n  ${indentLines(item.note, '  ')}`;
-        if (highlights.length) lines.push('', '### 蛍光ペン', ...highlights.map(item => `- 「${item.quote}」`));
-        if (memos.length) lines.push('', '### メモ', ...memos.map(item => memoLine(item)));
-        if (orphaned.length) {
-          lines.push('', `### ${ORPHANED_HEADING}`, ...orphaned.map(item => (
-            item.kind === 'memo' ? memoLine(item, 'メモ') : `- 蛍光ペン「${item.quote}」`
-          )));
-        }
+        if (highlights.length) lines.push('', '### 蛍光ペン', ...highlights.map(item => annotationLine(item, '- ')));
+        if (memos.length) lines.push('', '### メモ', ...memos.map(item => annotationLine(item, '- ')));
+        if (orphaned.length) lines.push('', `### ${ORPHANED_HEADING}`, ...orphaned.map(item => annotationLine(item, '- ', KIND_LABEL[item.kind])));
         if (note.text.trim()) lines.push('', `### 余白に書き留めたこと${note.date ? `（${note.date}）` : ''}`, '', note.text.trim());
         if (note.history.length) {
           lines.push('', '### 過去の自分の書き留め');
@@ -2430,6 +2423,14 @@
       commitAnnotations();
     }
 
+    // 書き込みの削除は確かめてから行い、消したことを読み上げる（remove が実際に消す。ツールバーと位置を失った一覧で共通）
+    function confirmRemoval(annotation, remove) {
+      const label = KIND_LABEL[annotation.kind];
+      if (!window.confirm(`この${label}を削除しますか？`)) return;
+      remove();
+      els.liveStatus.textContent = `${label}を削除しました。`;
+    }
+
     function openMemoDialog(selectionData, memo = null) {
       pendingMemoSelection = selectionData;
       editingAnnotationId = memo?.id || null;
@@ -2575,10 +2576,12 @@
     /* =========================================
        Event Listeners
        ========================================= */
-    // step: -1 で前、+1 で次。イントロ（-1）から最後のテーマまでの範囲で送る
+    // step: -1 で前、+1 で次。イントロ（-1）から最後のテーマまでの範囲で送る。送れたら true
     function moveTheme(step) {
-      if (!canStep(step)) return;
-      switchTheme(AVAILABLE_THEMES[themeIndex() + step] ?? null, { history: 'replace' });
+      const target = stepTarget(step);
+      if (target === undefined) return false;
+      switchTheme(target, { history: 'replace' });
+      return true;
     }
 
     /*
@@ -2676,11 +2679,7 @@
     document.fonts?.addEventListener?.('loadingdone', queueFitVerticalBody);
 
     const getFormattedContent = () => {
-      const formatAnnotations = (list) => list.map(annotation => (
-        annotation.kind === 'memo'
-          ? `・メモ「${annotation.quote}」\n  ${indentLines(annotation.note, '  ')}`
-          : `・蛍光ペン「${annotation.quote}」`
-      )).join('\n');
+      const formatAnnotations = (list) => list.map(item => annotationLine(item, '・', KIND_LABEL[item.kind])).join('\n');
       const annotations = formatAnnotations(currentAnnotations);
       const annotationBlock = annotations ? `\n\n― 本文への書き込み\n${annotations}` : '';
       const orphaned = formatAnnotations(orphanedAnnotations);
@@ -2801,7 +2800,7 @@
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
       if (event.target.closest('#annotationToolbar, #selectionToolbar')) return;
-      if (document.querySelector('dialog[open]')) return;
+      if (isDialogOpen()) return;
       if (event.target.closest('input, textarea, select, [contenteditable]')) return;
       moveTheme(stepForSide(event.key === 'ArrowLeft' ? 'left' : 'right'));
     });
