@@ -455,16 +455,6 @@
     .orphan-delete:hover { color: var(--text); }
     .orphan-quote { margin: 0; color: var(--secondary); line-height: 1.9; overflow-wrap: anywhere; }
 
-    /* ひと呼吸。見出しの細い線（.breath-line）と同じ線が、吸うと伸び、吐くと縮む */
-    .breath-overlay { position: fixed; inset: 0; z-index: 150; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6rem; background: var(--background); opacity: 0; transition: opacity 0.8s ease; }
-    .breath-overlay.is-shown { opacity: 1; }
-    .breath-overlay:not(.is-shown) { pointer-events: none; }
-    .breath-bar { display: block; width: min(60vw, 16rem); height: 1px; background: var(--muted); transform: scaleX(0.12); transition: transform 4s ease-in-out; }
-    .breath-overlay.is-inhale .breath-bar { transform: scaleX(1); }
-    .breath-text { min-height: 1.5em; margin: 0; color: var(--secondary); font-size: 0.95rem; letter-spacing: 0.5em; text-indent: 0.5em; }
-    .breath-skip { position: absolute; bottom: max(2rem, env(safe-area-inset-bottom)); min-height: 2.75rem; padding: 0 1rem; border: 0; background: transparent; color: var(--quiet); font-size: 0.75rem; letter-spacing: 0.12em; cursor: pointer; }
-    .breath-skip:hover { color: var(--text); }
-
     /* 書き込みの知らせ（重なる・保存できない等）。パネルを開かずに画面下へ短く出す */
     .note-toast { position: fixed; left: 50%; bottom: max(1.5rem, env(safe-area-inset-bottom)); z-index: 120; width: max-content; max-width: min(calc(100vw - 2rem), 26rem); padding: 0.7rem 1.1rem; border-radius: 0.5rem; background: var(--text); color: var(--background); box-shadow: var(--shadow); font-size: 0.8rem; line-height: 1.7; letter-spacing: 0.05em; opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, 0.5rem); transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease; }
     .note-toast.is-shown { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
@@ -561,6 +551,17 @@
     .zen-mode .mode-switch:focus-within,
     .zen-mode #zenToggleBtn:hover,
     .zen-mode #zenToggleBtn:focus-visible { opacity: 1 !important; }
+    /* 集中モードに入るときの一呼吸。表題の左の線だけを残し、表題の跡まで一度深く伸びてから縮んで消える。
+       本文は覆わない（線が消えたあとも表題の枠は透明なまま、押せないまま残る） */
+    #subtitle { transition: opacity 0.8s ease, filter 0.8s ease; }
+    .zen-mode.zen-breath #headerTitleArea { opacity: 1 !important; filter: none !important; }
+    .zen-mode.zen-breath #subtitle { opacity: 0; filter: blur(4px); }
+    .zen-mode.zen-breath #topMark { transform-origin: left center; animation: zenBreath 4.2s ease-in-out forwards; }
+    @keyframes zenBreath {
+      0% { transform: scaleX(0.9); opacity: 0.6; }
+      45% { transform: scaleX(2.6); opacity: 1; }
+      100% { transform: scaleX(0); opacity: 0; }
+    }
 
     /* =========================================
        Animation Definitions
@@ -864,13 +865,6 @@
   <p id="liveStatus" class="sr-only" aria-live="polite"></p>
   <p id="noteToast" class="note-toast" role="status" aria-live="polite"></p>
 
-  <!-- ひと呼吸：集中モードに入るとき、読み始める前に一度だけ呼吸を促す（どこを押しても、キーでも終わる） -->
-  <div id="breathOverlay" class="breath-overlay" hidden>
-    <span class="breath-bar" aria-hidden="true"></span>
-    <p id="breathText" class="breath-text" aria-hidden="true"></p>
-    <button type="button" id="breathSkipBtn" class="breath-skip" aria-label="ひと呼吸をやめて、すぐに読む">すぐに読む</button>
-  </div>
-
   <!-- 本文を選んだとき：色を押すとその色で蛍光ペンを引く。メモは蛍光ペンとは別で、線は引かない -->
   <div id="selectionToolbar" class="selection-toolbar" role="toolbar" aria-label="選択した本文への操作" hidden>
     <span class="toolbar-label" aria-hidden="true">蛍光ペン</span>
@@ -946,6 +940,7 @@
       tocList: document.getElementById('tocList'),
       title: document.getElementById('title'),
       subtitle: document.getElementById('subtitle'),
+      topMark: document.getElementById('topMark'),
       body: document.getElementById('body'),
       progress: document.getElementById('progress'),
       progressText: document.getElementById('progressText'),
@@ -975,9 +970,6 @@
       exportNotesBtn: document.getElementById('exportNotesBtn'),
       noteToast: document.getElementById('noteToast'),
       writingOptions: document.querySelectorAll('#writingModeSwitch .mode-option'),
-      breathOverlay: document.getElementById('breathOverlay'),
-      breathText: document.getElementById('breathText'),
-      breathSkipBtn: document.getElementById('breathSkipBtn'),
       selectionToolbar: document.getElementById('selectionToolbar'),
       selectionColors: document.getElementById('selectionColors'),
       memoSelectionBtn: document.getElementById('memoSelectionBtn'),
@@ -2644,13 +2636,17 @@
       applyDisplayModes();
     });
 
-    // 集中モードはこのタブの間だけ（次回訪問はナビが見える状態で始める）。入るときは、ひと呼吸おいてから読む
+    // 集中モードはこのタブの間だけ（次回訪問はナビが見える状態で始める）。
+    // 入るときは表題の左の線が一度だけ呼吸して消える（本文は覆わず、すぐ読める）
     els.zenToggleBtn.addEventListener('click', () => {
       isZenMode = !isZenMode;
       writeStorage('sessionStorage', STORAGE_KEYS.zen, isZenMode ? 'true' : null);
+      els.root.classList.remove('zen-breath');
+      if (isZenMode && !reducedMotionQuery.matches) {
+        void els.topMark.offsetWidth; // 入り直したときも線の動きを最初から見せる
+        els.root.classList.add('zen-breath');
+      }
       applyDisplayModes();
-      if (isZenMode) startBreath();
-      else endBreath(true);
     });
 
     // 標準（スマホは縦、PC は横。<head> で決めている）と違う向きを選んだときだけ覚えておく
@@ -2677,56 +2673,6 @@
     };
     window.addEventListener('resize', queueFitVerticalBody, { passive: true });
     document.fonts?.addEventListener?.('loadingdone', queueFitVerticalBody);
-
-    /* =========================================
-       ひと呼吸（吸って 4 秒、吐いて 4 秒。どこを押しても、どのキーでも終わる）
-       ========================================= */
-    const BREATH_IN_MS = 4000;
-    const BREATH_OUT_MS = 4000;
-    const BREATH_FADE_MS = 800;
-    let breathTimers = [];
-
-    function startBreath() {
-      if (reducedMotionQuery.matches) return;
-      endBreath(true);
-      hideToolbars();
-      const overlay = els.breathOverlay;
-      overlay.hidden = false;
-      els.breathText.textContent = '吸って';
-      void overlay.offsetWidth; // 表示してから class を付けて、伸びる動きを最初から見せる
-      overlay.classList.add('is-shown', 'is-inhale');
-      els.breathSkipBtn.focus({ preventScroll: true });
-      breathTimers = [
-        window.setTimeout(() => {
-          els.breathText.textContent = '吐いて';
-          overlay.classList.remove('is-inhale');
-        }, BREATH_IN_MS),
-        window.setTimeout(() => endBreath(), BREATH_IN_MS + BREATH_OUT_MS)
-      ];
-    }
-
-    function endBreath(immediate = false) {
-      breathTimers.forEach(timer => window.clearTimeout(timer));
-      breathTimers = [];
-      const overlay = els.breathOverlay;
-      if (overlay.hidden) return;
-      if (overlay.contains(document.activeElement)) els.zenToggleBtn.focus({ preventScroll: true });
-      overlay.classList.remove('is-shown', 'is-inhale');
-      if (immediate) {
-        overlay.hidden = true;
-        return;
-      }
-      breathTimers = [window.setTimeout(() => { overlay.hidden = true; }, BREATH_FADE_MS)];
-    }
-
-    els.breathOverlay.addEventListener('click', () => endBreath());
-    // 呼吸の間のキーは、ほかの操作（ページ送り等）に渡さずに終わらせるだけにする。Tab だけは通す
-    document.addEventListener('keydown', event => {
-      if (!els.breathOverlay.classList.contains('is-shown') || event.key === 'Tab') return;
-      event.preventDefault();
-      event.stopPropagation();
-      endBreath();
-    }, true);
 
     const getFormattedContent = () => {
       const formatAnnotations = (list) => list.map(annotation => (
