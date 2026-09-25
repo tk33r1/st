@@ -6,15 +6,16 @@
 人格もそれに追従する、というのが狙い。
 
 流れ:
-  1. 抽出: 各ページの `data-magi="<人格キー>"` を付けた要素のテキスト（語り）と、
-     JSON-LD（事実）と、一覧 JSON（tools.json 等）を人格ごとに集める。
+  1. 抽出: 各ページの `data-magi="<人格キー>"` を付けた要素のテキストと、一覧 JSON
+     （tools.json 等）を人格ごとに集める。素材は意図して目印を付けたものだけに絞る
+     （JSON-LD は本文の言い換えばかりで、SEO の都合で直すたびに作り直しが走るので使わない）。
      class や id には依存しないので、デザインを改修しても目印さえ残せば壊れない。
      目印の内側で読ませたくない部分には `data-magi-skip` を付ける。
   2. 差分判定: 素材＋要約プロンプトのハッシュを前回と比べ、変わった人格だけを次へ。
      sitemap の bot が dateModified を書き換えただけ、CSS を直しただけ、では LLM は
-     呼ばれない（dateModified は抽出対象外）。
-  3. 要約: 変わった人格だけ OpenAI で人格カードに要約する。前回のカードも渡し、
-     変わった部分だけ直させる（1文字の修正でカード全体が書き変わるのを防ぐ）。
+     呼ばれない。
+  3. 要約: 変わった人格だけ、素材からゼロで人格カードを作る。前回のカードは渡さない
+     （渡すと前回の誤りや消した内容が残りやすい。言い回しが多少変わるのは許容する）。
   4. 検査して data/magi-context.json に書く。どこかで失敗したら何も書かずに exit 1。
      Worker は前回のカードで動き続ける。
 
@@ -54,7 +55,6 @@ PERSONAS = {
         'codename': 'BALTHASAR-2',
         'name': 'Humanist',
         'pages': ['thought/index.html'],
-        'jsonld': [],
         'lists': [],
         'focus': (
             '人間・愛・幸せ・失敗・人生についての本人の思索。テーマごとの結論と、その拠り所にした書物、'
@@ -66,7 +66,6 @@ PERSONAS = {
         'codename': 'MELCHIOR-1',
         'name': 'Enthusiast',
         'pages': ['dj/index.html', 'motovlog/index.html'],
-        'jsonld': ['dj/index.html', 'motovlog/index.html'],
         'lists': [],
         'focus': (
             '音楽・DJ・ハーレーへの熱量。好きなジャンルやこだわり、DJ としての考え方、原体験、'
@@ -77,7 +76,6 @@ PERSONAS = {
         'codename': 'CASPER-3',
         'name': 'Strategist',
         'pages': ['job/index.html'],
-        'jsonld': ['job/index.html'],
         'lists': [
             # (パス, 見出し, 項目の配列を取り出す関数, 1項目を1行にする関数)
             ('data/tools.json', '自作して公開しているブラウザツール',
@@ -97,13 +95,11 @@ SYSTEM_PROMPT = """あなたは、ある人物（Shinya Takeda）の内面の一
 重視する内容: {focus}
 
 ルール:
-- 素材（本人のサイトから抜き出した文章と構造化データ）に書かれていることだけを使う。推測で補わない。
+- 素材（本人のサイトから抜き出した文章）に書かれていることだけを使う。推測で補わない。
 - 一人称や口調の指定は不要（別途指定される）。本人についてのメモとして「〜を大切にしている」「〜の経験がある」のように書く。
 - 本人の言い回しで核心を突いている表現は、できるだけそのまま残す。
 - 連絡先・料金・申込方法・URL・ボタンの文言・機材の細かい仕様など、人格の形成に関係しない実務情報は捨てる。
-- 見出し・前置き・後書きを付けず、「- 」で始まる箇条書きだけを出力する。全体で{target}字以内。
-
-前回のカードが与えられた場合: 素材から読み取れる変化だけを反映し、変わっていない項目は文言を変えずに残す。素材から消えた内容はカードからも消す。"""
+- 見出し・前置き・後書きを付けず、「- 」で始まる箇条書きだけを出力する。全体で{target}字以内。"""
 
 
 # ---------------------------------------------------------------- 抽出（HTML）
@@ -219,46 +215,7 @@ def marked_text(path, key):
     return '\n\n'.join(t for t in texts if t)
 
 
-# ---------------------------------------------------------------- 抽出（JSON-LD・一覧 JSON）
-
-# 人格の素材にならないキー（URL・画像・日付・参照 ID）。日付を落とすのは、sitemap の bot が
-# dateModified を書き換えるたびにハッシュが変わって要約が走るのを防ぐため。
-JSONLD_DROP_KEYS = {'@context', '@id', 'url', 'item', 'image', 'logo', 'sameAs', 'contentUrl', 'width', 'height',
-                    'datePublished', 'dateModified', 'dateCreated', 'mainEntityOfPage', 'breadcrumb',
-                    'primaryImageOfPage', 'inLanguage', 'publisher', 'author', 'member'}
-JSONLD_DROP_TYPES = {'BreadcrumbList', 'FAQPage', 'ImageObject'}
-
-
-def flatten_jsonld(value, prefix=''):
-    lines = []
-    if isinstance(value, dict):
-        if value.get('@type') in JSONLD_DROP_TYPES:
-            return lines
-        for k, v in value.items():
-            if k in JSONLD_DROP_KEYS or k == '@type':
-                continue
-            lines += flatten_jsonld(v, f'{prefix}{k}.' if isinstance(v, (dict, list)) else f'{prefix}{k}')
-    elif isinstance(value, list):
-        if all(isinstance(v, str) for v in value):
-            if value:
-                lines.append(f"{prefix.rstrip('.')}: {'、'.join(value)}")
-        else:
-            for v in value:
-                lines += flatten_jsonld(v, prefix)
-    elif isinstance(value, str) and value.strip():
-        lines.append(f'{prefix}: {value.strip()}')
-    return lines
-
-
-def jsonld_text(path):
-    with open(os.path.join(ROOT, path), encoding='utf-8') as f:
-        html = f.read()
-    lines = []
-    for m in re.finditer(r'<script[^>]*application/ld\+json[^>]*>([\s\S]*?)</script>', html):
-        data = json.loads(m.group(1))
-        lines += flatten_jsonld(data.get('@graph', data) if isinstance(data, dict) else data)
-    return '\n'.join(lines)
-
+# ---------------------------------------------------------------- 抽出（一覧 JSON）
 
 def list_text(path, heading, pick, fmt):
     with open(os.path.join(ROOT, path), encoding='utf-8') as f:
@@ -277,11 +234,6 @@ def build_source(key, conf):
         if not text:
             raise RuntimeError(f'{path} に data-magi="{key}" の目印が見つからない（または中身が空）')
         blocks.append(f'＝＝ {path} ＝＝\n{text}')
-    for path in conf['jsonld']:
-        text = jsonld_text(path)
-        if not text:
-            raise RuntimeError(f'{path} の JSON-LD から何も取り出せなかった')
-        blocks.append(f'＝＝ {path}（構造化データ） ＝＝\n{text}')
     for path, heading, pick, fmt in conf['lists']:
         blocks.append(f'＝＝ {path} ＝＝\n{list_text(path, heading, pick, fmt)}')
     source = '\n\n'.join(blocks)
@@ -361,8 +313,7 @@ def load_previous():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dry-run', action='store_true', help='抽出と差分判定だけ行い、API は呼ばない')
-    ap.add_argument('--force', action='store_true',
-                    help='素材が変わっていなくても全人格を、前回のカードを参照せずゼロから作り直す')
+    ap.add_argument('--force', action='store_true', help='素材が変わっていなくても全人格を作り直す')
     ap.add_argument('--show', action='store_true', help='抽出した素材を全文表示する')
     args = ap.parse_args()
 
@@ -374,16 +325,12 @@ def main():
         source = build_source(key, conf)
         # プロンプトもハッシュに含める。プロンプトを直せば、素材が同じでも作り直される
         digest = hashlib.sha256(f'{MODEL}\n{system}\n{source}'.encode('utf-8')).hexdigest()
-        prev = previous.get(conf['codename'], {})
-        changed = args.force or prev.get('source_hash') != digest
+        changed = args.force or previous.get(conf['codename'], {}).get('source_hash') != digest
         print(f"{conf['codename']:<12} 素材 {len(source):>5} 字  {'再生成' if changed else '変更なし'}")
         if args.show:
             print(source, '\n')
         if changed:
-            # 前回のカードは「変わっていない項目は文言を残せ」という指示とセットで渡すので、
-            # 前回のカード自体が誤っていると、素材を直してもその誤りが残りやすい。
-            # --force はそれを断ち切るための作り直しなので、前回のカードを渡さない
-            todo.append((conf, system, source, digest, None if args.force else prev.get('card')))
+            todo.append((conf, system, source, digest))
 
     if args.dry_run or not todo:
         return
@@ -394,9 +341,9 @@ def main():
 
     now = datetime.now(JST).isoformat(timespec='seconds')
     updated = {}
-    for conf, system, source, digest, prev_card in todo:
-        user = (f'【前回のカード】\n{prev_card}\n\n' if prev_card else '') + f'【素材】\n{source}'
-        card = validate_card(call_openai(api_key, system, user))
+    for conf, system, source, digest in todo:
+        # 前回のカードは渡さず、毎回素材からゼロで作る（前回の誤りや消した内容を引き継がないため）
+        card = validate_card(call_openai(api_key, system, f'【素材】\n{source}'))
         updated[conf['codename']] = {'card': card, 'source_hash': digest, 'updated_at': now}
         print(f"--- {conf['codename']}（{len(card)} 字）\n{card}\n")
 

@@ -102,9 +102,9 @@
     `dry-run` での本文確認に使う（生成は走らない）。
   - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が
     MAGI の人格カードを作り直して `data/magi-context.json` にコミットする（後述「MAGI の人格カード」）。
-    push のたびに起動するが、素材のハッシュが前回と同じ人格は LLM を呼ばない。通常は前回のカードを
-    渡して差分だけ直させる。カードに誤りが残ったときは手動実行の `force` で、前回のカードを参照せず
-    全人格をゼロから作り直す。コミットメッセージに CI を止める印を入れない
+    push のたびに起動するが、素材のハッシュが前回と同じ人格は LLM を呼ばない。変わった人格は
+    毎回素材からゼロで作る（前回のカードは渡さない。言い回しが多少変わるのは許容）。
+    手動実行の `force` は素材が同じでも全人格を作り直す。コミットメッセージに CI を止める印を入れない
     （Cloudflare Pages がビルドを省略し、JSON が次の push まで公開されない）。
   - `sitemap.yml` と `magi-context.yml` は同じ push で main にコミットしうるので、どちらも
     `git pull --rebase` してから push し、弾かれたら取り込みからやり直す（最大4回）。
@@ -138,7 +138,8 @@
 - **MAGI の人格カード（`data-magi` の目印）**: magi2 の3人格は、固定の骨格プロンプト（personas.js）に
   サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
   付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、
-  ほかに各ページの JSON-LD と `data/tools.json`・`data/glitch.json` を使う。
+  ほかに `data/tools.json`・`data/glitch.json` を使う。JSON-LD は使わない（本文の言い換えばかりで、
+  SEO の都合で直すたびに作り直しが走るため）。人格に知らせたい事実は本文に書いて目印を付ける。
   **ページを改修するときは `data-magi` の属性を残すこと**（class や id は自由に変えてよい）。
   目印の内側で読ませたくない部分は `data-magi-skip` を付けて外す（job の Signal Board のような
   演出用の数値や、料金・機材仕様などの実務情報は入れない）。年表の年のように、見た目の都合で

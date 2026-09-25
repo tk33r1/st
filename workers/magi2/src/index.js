@@ -163,13 +163,13 @@ async function fetchTitle(env, lastContent, signal, log) {
 // --- 人格カード：サイト本文から自動生成した JSON を取り、人格の system プロンプトに足す ---
 // isolate 内に保持する。取得できないときは直近のカード、それも無ければカード無しで動く
 // （＝従来どおり固定プロンプトのみ）。カードが無くても会話は止めない。
-//   ok: 直近の取得で3人格ぶんそろったか（そろえば ttl_ms、欠けや失敗なら retry_ms 後に取り直す）
+//   expiresAt: 次に取り直す時刻。3人格そろえば ttl_ms 後、欠けや失敗なら retry_ms 後
 //   refreshing: 期限切れ後の裏での取り直しが進行中か（取り直しを重ねないため）。
 //     isolate の起動直後で手元にカードが無い間は、同時に来たリクエストがそれぞれ取得する。
 //     取得中の Promise を共有すれば1本にまとまるが、先に来たリクエストが待たずに終わる
 //     （429 で返す等）と取得が打ち切られ、共有して待つ側が止まりうるので、あえて共有しない。
 //     重なるのは起動直後の数本だけで、小さな JSON を余分に取るにとどまる。
-const personaCards = { at: 0, ok: false, cards: null, refreshing: false };
+const personaCards = { cards: null, expiresAt: 0, refreshing: false };
 
 async function refreshPersonaCards(log) {
   const t = withTimeout(PERSONA_CONTEXT.fetch_timeout_ms);
@@ -193,8 +193,8 @@ async function refreshPersonaCards(log) {
   // 直近のカードを保つ（まるごと置き換えると、欠けた人格だけ固定プロンプトに戻ってしまう）
   const missing = cards ? PERSONAS.map(p => p.codename).filter(c => !cards[c]) : [];
   if (missing.length) log('persona_context', 'missing', missing.join(','));
-  personaCards.at = Date.now();
-  personaCards.ok = !!cards && !missing.length;
+  const complete = !!cards && !missing.length;
+  personaCards.expiresAt = Date.now() + (complete ? PERSONA_CONTEXT.ttl_ms : PERSONA_CONTEXT.retry_ms);
   if (cards) personaCards.cards = { ...personaCards.cards, ...cards };
   return personaCards.cards;
 }
@@ -202,8 +202,7 @@ async function refreshPersonaCards(log) {
 // 会話1回ぶんのカードを返す。期限切れでも手元にカードがあれば、それを返して裏で取り直す
 // （会話を取得待ちにしない）。isolate の起動直後などで手元に何も無いときだけ取得を待つ。
 function getPersonaCards(ctx, log) {
-  const age = Date.now() - personaCards.at;
-  if (age < (personaCards.ok ? PERSONA_CONTEXT.ttl_ms : PERSONA_CONTEXT.retry_ms)) return Promise.resolve(personaCards.cards);
+  if (Date.now() < personaCards.expiresAt) return Promise.resolve(personaCards.cards);
   if (!personaCards.cards) return refreshPersonaCards(log);
   if (!personaCards.refreshing) {
     personaCards.refreshing = true;

@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: '全人格を、前回のカードを参照せずゼロから作り直す'
+        description: '素材が変わっていなくても全人格を作り直す'
         type: boolean
         default: false
 
