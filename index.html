@@ -2427,6 +2427,8 @@
 
     .toast-close {
       flex-shrink: 0;
+      font-size: inherit;
+      line-height: inherit;
       color: var(--secondary-color);
       cursor: pointer;
     }
@@ -3317,7 +3319,9 @@
     // job title from the live attribute — hard-coding light would show the wrong title
     // in that case until the first manual toggle.
     const isDarkNow = () => document.documentElement.getAttribute('data-theme') === 'dark';
-    const config = { display_name: 'Shinya Takeda', job_title: jobTitleFor(isDarkNow()) };
+    const config = { display_name: 'Shinya Takeda', display_name_ja: '武田 伸也', job_title: jobTitleFor(isDarkNow()) };
+    // The name in the active language. Every on-screen use goes through here.
+    const displayName = () => tr(config.display_name, config.display_name_ja);
     const DOM = {
       app: document.getElementById('app'),
       output: document.getElementById('output-area'),
@@ -3443,6 +3447,9 @@
     // Every ←/→/↑↓ list in here — both tab bars, IntelliSense, the command palette — wraps
     // the same way, and each used to re-derive the `+ len) % len` trick on its own.
     const wrapIndex = (i, dir, len) => (i + dir + len) % len;
+    // 変換中（または変換を確定した直後）のキーは IME のもの。Safari は確定の Enter を
+    // compositionend の後に isComposing=false・keyCode 229 で送るので、両方を見る。
+    const isImeKey = e => e.isComposing || e.keyCode === 229;
 
     function updateGitBadge() {
       if (DOM.badgeGit) {
@@ -3614,8 +3621,6 @@
       web3: ['Dive into my Web3 page', 'Web3ページへ'],
       japanese: ['Switch to Japanese', '英語に切り替え']
     };
-    const CMD_DESC = Object.fromEntries(Object.entries(CMD_DESCS).map(([k, v]) => [k, v[0]]));
-    const CMD_DESC_JA = Object.fromEntries(Object.entries(CMD_DESCS).map(([k, v]) => [k, v[1]]));
     const cdesc = c => { const d = CMD_DESCS[c]; return d ? tr(d[0], d[1]) : ''; };
 
     const projects = [
@@ -3744,6 +3749,8 @@
     // A command is usable if it isn't hidden, or its backing extension is installed.
     // Single source for every cmd filter.
     const isCmdAvailable = c => !UNLISTED_CMDS.has(c) && (!hiddenCommands.includes(c) || installedExtensions.has(backingExt(c)));
+    // `commands` is defined further down; this is only ever called from event handlers.
+    const availableCmdKeys = () => Object.keys(commands).filter(isCmdAvailable);
 
     // Shared file-type color system: the Explorer tree, file tabs, and the
     // Extensions Marketplace cards all derive their icon colour from here so a
@@ -4051,14 +4058,15 @@
     // known extension (welcome, japanese.lang) reads as plain Shell.
     const getLangMode = (cmd) => { const m = cmd && FILE_META[cmd]; return (m && (FILETYPE[extOf(m.name)] || {}).lang) || 'Shell'; };
     let tabState = {}, tabOrder = [], activeTab = null;
-    const fileLabel = c => (FILE_META[c] || { name: c }).name;
+    const treeMeta = c => FILE_META[c] || { name: c, icon: '•' };
+    const fileLabel = c => treeMeta(c).name;
 
     function renderEditor() {
       const activeCmd = document.querySelector('.tree-item.active')?.dataset.cmd;
       const langEl = document.getElementById('status-lang');
       if (langEl) langEl.textContent = getLangMode(activeTab || activeCmd);
       DOM.tabbar.innerHTML = tabOrder.map(c => {
-        const m = FILE_META[c] || { name: c, icon: '•' };
+        const m = treeMeta(c);
         // role/tabindex/aria-selected mirror the bottom panel's tabs; the ✕ stays a plain
         // span (a focusable child inside a role="tab" is invalid) and is reachable from the
         // keyboard through the Delete handler below instead.
@@ -4167,11 +4175,11 @@
     };
     const term = en => tr(en, JA_TERMS[en]);
 
-    const createMBTIRows = (traits, isVer2) => traits.map(t => {
+    // Every identify renderer takes the version's accent colour, decided once in executeIdentifyVersion.
+    const createMBTIRows = (traits, color) => traits.map(t => {
       // t.pct is the % toward t.name; flip to show the dominant side in the caption label only.
       const pct = t.pct >= 50 ? t.pct : 100 - t.pct;
       const name = t.pct >= 50 ? t.name : t.opposite;
-      const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
       return `
         <div class="text-xs mb-4">
           <div class="flex items-center justify-between mb-1.5"><span class="text-normal">${esc(term(t.name))}</span><span class="text-secondary">${esc(term(t.opposite))}</span></div>
@@ -4181,9 +4189,8 @@
     }).join('');
 
     let strengthsPatternSeq = 0;
-    const createStrengthsHTML = (strengths, isVer2) => {
-      const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
-      const vp = (isVer2 ? 'v2' : 'v1') + '-' + (++strengthsPatternSeq);
+    const createStrengthsHTML = (strengths, color) => {
+      const vp = 'str-' + (++strengthsPatternSeq);
       const barHTML = `
         <svg aria-hidden="true" width="0" height="0" style="position:absolute;"><defs>
           <pattern id="${vp}-diagonal" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="8" height="8" fill="${color}"/><line x1="0" y1="0" x2="8" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/><line x1="8" y1="0" x2="0" y2="8" stroke="var(--bg-color)" stroke-width="1.5"/></pattern>
@@ -4204,9 +4211,9 @@
       return { barHTML, strengthsRows };
     };
 
-    const createThemesTable = (themes, isVer2) => themes.map(row => `
+    const createThemesTable = (themes, color) => themes.map(row => `
       <div class="flex text-xs border-b last:border-0 border-color py-2">
-        <div class="w-8" style="color: ${isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)'};">${row.rank}</div>
+        <div class="w-8" style="color: ${color};">${row.rank}</div>
         <div class="flex-1 truncate text-normal">${esc(term(row.theme))}</div>
         <div class="w-56 text-right truncate text-secondary">${esc(term(row.category))}</div>
       </div>`).join('');
@@ -4218,8 +4225,7 @@
     // Report percentiles arrive capped ('> 95', '< 2'): keep the label, take the number.
     const bfPctWidth = p => Math.max(0, Math.min(100, parseFloat(String(p).replace(/[^0-9.]/g, '')) || 0));
     const bfPctLabel = p => String(p).replace(/\s+/g, '');
-    const createBigFiveRows = (domains, isVer2) => {
-      const color = isVer2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+    const createBigFiveRows = (domains, color) => {
       return domains.map(d => `
         <div class="text-xs mb-6">
           <div class="flex items-center justify-between mb-1.5">
@@ -4247,12 +4253,11 @@
     };
 
     const executeIdentifyVersion = async (version, targetId) => {
-      const isV2 = version === '2.0';
       const data = PROFILE_DATA[version] || PROFILE_DATA['1.0'];
-      const rows = createMBTIRows(data.traits, isV2);
-      const { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, isV2);
-      const tableRows = createThemesTable(data.themes, isV2);
-      const titleColor = isV2 ? 'var(--primary-color)' : 'var(--secondary-color)';
+      const titleColor = version === '2.0' ? 'var(--primary-color)' : 'var(--secondary-color)';
+      const rows = createMBTIRows(data.traits, titleColor);
+      const { barHTML, strengthsRows } = createStrengthsHTML(data.strengths, titleColor);
+      const tableRows = createThemesTable(data.themes, titleColor);
 
       // Each test title links out when it has a source URL, and is a plain heading otherwise.
       const titleHtml = (o, cls, display) => o.l
@@ -4268,7 +4273,7 @@
         const bfTitleHtml = titleHtml(data.b, RULED, 'block');
         bfHtml = `
             ${bfTitleHtml}
-            <div>${createBigFiveRows(data.bigfive, isV2)}</div>
+            <div>${createBigFiveRows(data.bigfive, titleColor)}</div>
             <div class="text-[10px] text-dim">${tr(`Bars are community percentiles. Numbers are raw IPIP-NEO-120 scores: domains ${BIGFIVE_DOMAIN_RANGE}, facets ${BIGFIVE_FACET_RANGE}.`, `バーはコミュニティ・パーセンタイル。数値は IPIP-NEO-120 の素点で、領域が ${BIGFIVE_DOMAIN_RANGE}、ファセットが ${BIGFIVE_FACET_RANGE} の範囲です。`)}</div>`;
       }
 
@@ -4408,7 +4413,7 @@
           tr(r.val[0], r.val[1])
         ]);
         return wrapCmd(`
-            <div class="text-lg font-bold glow mb-1 text-primary">${esc(tr(config.display_name, '武田 伸也'))}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
+            <div class="text-lg font-bold glow mb-1 text-primary">${esc(displayName())}<span class="dancing-emoji">🧑🏻‍🦱</span><span id="about-version-el">${currentVersion > 1 ? verBadge() : ''}</span></div>
             <div class="text-xs mb-4 text-secondary dynamic-job-title">${esc(config.job_title)}</div>
             <div class="text-xs leading-relaxed mb-4 text-normal">${bioLines.map(esc).join('<br/>')}</div>
             <div class="space-y-1 pt-2 border-t border-color">${rows.map(r => `<div class="flex justify-between text-xs"><span class="text-secondary">${r[0]}</span><span class="text-normal">${esc(r[1])}</span></div>`).join('')}</div>
@@ -4570,7 +4575,7 @@
               regenTabs(THEME_DOC_TABS); // the version badge these two show has just changed
               document.body.classList.remove('system-meltdown');
               const nameEl = document.getElementById('display-name-el');
-              if (nameEl) nameEl.innerHTML = `${esc(config.display_name)}${verBadge()}`;
+              if (nameEl) nameEl.innerHTML = `${esc(displayName())}${verBadge()}`;
               const aboutVerEl = document.getElementById('about-version-el');
               if (aboutVerEl) aboutVerEl.innerHTML = verBadge();
               // After the fly-back animations finish, hard-reconcile the layout so nothing is left
@@ -6008,7 +6013,8 @@
       }
     };
 
-    const urlCommands = { '/dj': 'https://tk.st/dj/', '/job': 'https://tk.st/job/', '/game': 'https://tk.st/game/', '/glitch': 'https://tk.st/glitch/', '/thought': 'https://tk.st/thought/', '/tools': 'https://tk.st/tools/', '/motovlog': 'https://tk.st/motovlog/', 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
+    // The /pages entries come from `projects`, so a new page is added in one place only.
+    const urlCommands = { ...Object.fromEntries(projects.map(p => [p.name, p.link])), 'contact': 'https://tk.st/contact/', 'web3': 'https://web3.tk.st/' };
     Object.entries(urlCommands).forEach(([cmd, url]) => {
       commands[cmd] = () => {
         // Auto-run via ?cmd=... has no user gesture, so the popup is blocked: fall back to
@@ -6054,15 +6060,19 @@
     document.addEventListener('mousemove', (e) => handleChoreomaniaMove(e.clientX, e.clientY), { passive: true });
     document.addEventListener('touchmove', (e) => { if (e.touches.length > 0) handleChoreomaniaMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 
+    // Put the prompt back from its `sudo` password mode.
+    function restorePrompt() {
+      DOM.input.type = 'text';
+      DOM.input.placeholder = tr("type 'help'...", "「help」と入力…");
+    }
     // Cancel a pending `sudo` password prompt and restore the input. Used when a
     // command arrives from somewhere other than the prompt (Explorer, search, palette,
     // IntelliSense, PROBLEMS row): those must not be swallowed as a password attempt.
     function cancelSudo() {
       if (!sudoContext) return;
       sudoContext = null;
-      DOM.input.type = 'text';
+      restorePrompt();
       DOM.input.value = '';
-      DOM.input.placeholder = tr("type 'help'...", "「help」と入力…");
       printToTerminal(tr(`<div class="text-xs my-1 text-secondary">sudo: password prompt cancelled.</div>`,
         `<div class="text-xs my-1 text-secondary">sudo: パスワード入力をキャンセルしました。</div>`));
     }
@@ -6075,8 +6085,7 @@
         const pwd = input.trim();
         const ctx = sudoContext;
         sudoContext = null;
-        DOM.input.type = 'text';
-        DOM.input.placeholder = tr("type 'help'...", "「help」と入力…");
+        restorePrompt();
 
         const echo = document.createElement('div');
         echo.className = 'text-xs mt-2';
@@ -6155,7 +6164,7 @@
 ███████║<span style="opacity:0">╚══</span>██║
 ╚══════╝<span style="opacity:0">╚══</span>╚═╝</pre>
         <div class="flex flex-col justify-center space-y-1">
-          <div id="display-name-el" class="text-lg font-bold glow text-primary">${esc(tr(config.display_name, '武田 伸也'))}${currentVersion > 1 ? verBadge() : ''}</div>
+          <div id="display-name-el" class="text-lg font-bold glow text-primary">${esc(displayName())}${currentVersion > 1 ? verBadge() : ''}</div>
           <div id="header-job-title" class="text-secondary text-xs dynamic-job-title">${esc(config.job_title)}</div>
           <div class="text-secondary text-[10px]"><span class="text-primary">Web2</span> ${tr('standalone system · Get Started', '自己完結型システム · 起動')}</div>
         </div>
@@ -6171,10 +6180,10 @@
       // appears in the marketplace/Explorer, then translate the chrome once the
       // welcome tab is open (below).
       if (currentLang === 'ja') installedExtensions.add('japanese');
-      const bootMessages = [{ text: tr('Initializing terminal...', 'ターミナルを初期化中…'), delay: 250 }, { text: tr(`Loading profile: ${config.display_name}`, `プロファイルを読み込み中: ${config.display_name}`), delay: 400 }, { text: '', delay: 150 }];
+      const bootMessages = [{ text: tr('Initializing terminal...', 'ターミナルを初期化中…'), delay: 250 }, { text: tr(`Loading profile: ${displayName()}`, `プロファイルを読み込み中: ${displayName()}`), delay: 400 }, { text: '', delay: 150 }];
       for (const line of bootMessages) {
         await delay(line.delay);
-        const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.innerHTML = line.text; DOM.terminalLog.appendChild(div); scrollTerminal();
+        const div = document.createElement('div'); div.className = 'text-xs fade-in text-secondary'; div.textContent = line.text; DOM.terminalLog.appendChild(div); scrollTerminal();
       }
       await delay(200);
 
@@ -6222,6 +6231,7 @@
 
     DOM.input.addEventListener('keydown', async (e) => {
       if (isMatrixActive || isMeditationActive) return;
+      if (isImeKey(e)) return;
       // While the IntelliSense popup is open it owns navigation/accept.
       if (suggestOpen()) {
         if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggest(1); return; }
@@ -6254,7 +6264,7 @@
       } else if (e.key === 'Tab') {
         e.preventDefault();
         const val = DOM.input.value.toLowerCase(); if (!val) return;
-        const matches = Object.keys(commands).filter(isCmdAvailable).filter(c => c.startsWith(val));
+        const matches = availableCmdKeys().filter(c => c.startsWith(val)).sort();
         if (matches.length === 0) return;
         if (matches.length === 1) {
           DOM.input.value = matches[0]; updateCaret(); closeSuggest();
@@ -6328,8 +6338,7 @@
       // layout the same way resetAgent() already did for the MAGI dock's width.
       sidebarEl.style.removeProperty('width');
       document.getElementById('panel').style.removeProperty('height');
-      document.getElementById('panel').classList.remove('collapsed');
-      document.getElementById('panel-resizer').classList.remove('collapsed');
+      setPanelCollapsed(false);
       resetAgent();
       DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
       DOM.input.value = ''; updateCaret(); DOM.inputLine.classList.add('hidden'); DOM.inputLine.classList.remove('flex', 'fade-in');
@@ -6388,7 +6397,6 @@
 
     // --- Explorer (file tree) ---
     const sidebarFiles = ['about', 'identify', 'timeline', 'pages', 'contact', 'clear', 'help'];
-    const treeMeta = c => FILE_META[c] || { name: c, icon: '•' };
     const sidebarTree = document.getElementById('sidebar-tree');
     const sidebarEl = document.getElementById('sidebar');
     function renderExplorerTree() {
@@ -6469,7 +6477,7 @@
     function buildSearchIndex() {
       const renderable = ['about', 'pages', 'help', 'identify', 'timeline']; // pure, side-effect-free string renderers
       Object.keys(commands).forEach(c => {
-        let text = c + ' ' + (CMD_DESC[c] || '') + ' ' + (CMD_DESC_JA[c] || '');
+        let text = c + ' ' + (CMD_DESCS[c] || []).join(' ');
         if (renderable.includes(c)) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) { } }
         SEARCH_INDEX[c] = text.toLowerCase();
       });
@@ -6488,7 +6496,7 @@
     function renderSearch(q) {
       q = (q || '').trim().toLowerCase();
       if (!q) { searchCount.textContent = ''; searchResults.innerHTML = ''; return; }
-      const cmds = Object.keys(commands).filter(isCmdAvailable).sort();
+      const cmds = availableCmdKeys().sort();
       const matches = cmds.filter(c => (SEARCH_INDEX[c] || '').includes(q));
       searchCount.textContent = tr(`${matches.length} result${matches.length === 1 ? '' : 's'}`, `${matches.length} 件`);
       searchResults.innerHTML = matches.length
@@ -6496,7 +6504,7 @@
         : tr(`<div class="px-3 py-2 text-xs text-secondary">No results found.</div>`, `<div class="px-3 py-2 text-xs text-secondary">結果が見つかりませんでした。</div>`);
     }
     searchInput.addEventListener('input', () => renderSearch(searchInput.value));
-    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { searchInput.value = ''; renderSearch(''); } });
+    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !isImeKey(e)) { searchInput.value = ''; renderSearch(''); } });
     searchResults.addEventListener('click', runFromSidebar);
 
     // Install and uninstall are the same marketplace ritual — spinner, disable the button,
@@ -6830,14 +6838,8 @@
       agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
       attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
       agentDockEl.style.removeProperty('width');
-      agentInitialState(keepOpen);
-      updateAgentActionButtons();
-
-      const panel = document.getElementById('agent-history-panel');
-      if (panel) panel.remove();
-
-      const infoPanel = document.getElementById('agent-info-panel');
-      if (infoPanel) infoPanel.remove();
+      agentInitialState(keepOpen); // also refreshes the share/export buttons
+      closeAgentPanels();
     }
     const agentScroll = () => { agentLog.scrollTop = agentLog.scrollHeight; };
     // One announcement per finished turn (see the comment on #agent-log). Replaying a saved
@@ -7027,7 +7029,7 @@
       const mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
       turn.innerHTML = personaCardsHTML();
       const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
-      replyEl.innerHTML = `<span class="agent-who">✦ ${tr('Shinya Takeda', '武田 伸也')}</span><span class="agent-reply-body"></span>${reactionBarHTML('integrated')}`;
+      replyEl.innerHTML = `<span class="agent-who">✦ ${esc(displayName())}</span><span class="agent-reply-body"></span>${reactionBarHTML('integrated')}`;
       turn.appendChild(replyEl);
       agentLog.appendChild(turn); agentScroll();
       const replyBody = replyEl.querySelector('.agent-reply-body');
@@ -7125,7 +7127,7 @@
       }
     }
     agentSendBtn.addEventListener('click', agentSend);
-    agentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
+    agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
     document.getElementById('btn-reset-agent').addEventListener('click', () => resetAgent(true));
 
     // --- リアクション（コピー / いいね / 絵文字）---
@@ -7307,7 +7309,7 @@
 
           const replyEl = document.createElement('div');
           replyEl.className = 'agent-reply';
-          replyEl.innerHTML = `<span class="agent-who">✦ ${tr('Shinya Takeda', '武田 伸也')}</span><span class="agent-reply-body">${esc(item.content)}</span>${reactionBarHTML('integrated')}`;
+          replyEl.innerHTML = `<span class="agent-who">✦ ${esc(displayName())}</span><span class="agent-reply-body">${esc(item.content)}</span>${reactionBarHTML('integrated')}`;
           turn.appendChild(replyEl);
 
           applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
@@ -7365,9 +7367,10 @@
     // MAGIドック内のオーバーレイパネル（履歴 / システム情報）を生成。
     // 同じ id が既に開いていればトグルで閉じて null を返す。もう一方のパネルは常に閉じる。
     const AGENT_PANEL_IDS = ['agent-history-panel', 'agent-info-panel'];
+    const closeAgentPanels = () => AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p) p.remove(); });
     function makeAgentPanel(id, title, bodyHTML) {
       if (document.getElementById(id)) { document.getElementById(id).remove(); return null; }
-      AGENT_PANEL_IDS.forEach(pid => { const p = document.getElementById(pid); if (p) p.remove(); });
+      closeAgentPanels();
       const panel = document.createElement('div');
       panel.id = id;
       panel.className = 'bg-surface z-40 flex flex-col p-3 text-xs border-t border-color';
@@ -7451,10 +7454,7 @@
 
     function deleteSavedSession(id) {
       // 削除対象が現在のセッションなら追跡を解除
-      if (currentSessionId === id) {
-        currentSessionId = null;
-        safeRemove('magi_current_session_id');
-      }
+      if (currentSessionId === id) archiveCurrentHistory();
       let sessions = safeParse(safeGet('magi_saved_sessions'), []);
       sessions = sessions.filter(s => s.id !== id);
       safeStore('magi_saved_sessions', sessions);
@@ -7640,7 +7640,7 @@
       const t = document.createElement('div');
       t.className = 'toast' + (type === 'warn' ? ' warn' : '');
       const icon = type === 'warn' ? '⚠' : '✓';
-      t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${esc(msg)}</span><span class="toast-close" title="${tr('Dismiss', '閉じる')}">✕</span>`;
+      t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${esc(msg)}</span><button type="button" class="toast-close" title="${tr('Dismiss', '閉じる')}" aria-label="${tr('Dismiss', '閉じる')}"><span aria-hidden="true">✕</span></button>`;
       c.appendChild(t);
       const remove = () => { t.classList.add('hide'); setTimeout(() => t.remove(), 300); };
       t.querySelector('.toast-close').addEventListener('click', remove);
@@ -7739,8 +7739,7 @@
       if (DOM.input.type === 'password') { closeSuggest(); return; }
       const val = DOM.input.value.toLowerCase().trim();
       if (!val) { closeSuggest(); return; }
-      const avail = Object.keys(commands).filter(isCmdAvailable);
-      suggestItems = avail.filter(c => c.startsWith(val) && c !== val).sort().slice(0, 8);
+      suggestItems = availableCmdKeys().filter(c => c.startsWith(val) && c !== val).sort().slice(0, 8);
       suggestSel = -1;
       renderSuggest();
     });
@@ -7758,16 +7757,15 @@
       if (sidebarHidden()) ensureSidebarOpen();
       else isMobile() ? sidebarEl.classList.remove('open') : sidebarEl.classList.add('collapsed');
     }
-    function togglePanel() {
-      const panel = document.getElementById('panel');
+    // The bottom panel and its drag handle always collapse together.
+    function setPanelCollapsed(collapsed) {
+      document.getElementById('panel').classList.toggle('collapsed', collapsed);
       const rsz = document.getElementById('panel-resizer');
-      const collapsed = panel.classList.toggle('collapsed');
       if (rsz) rsz.classList.toggle('collapsed', collapsed);
     }
+    function togglePanel() { setPanelCollapsed(!document.getElementById('panel').classList.contains('collapsed')); }
     function focusTerminal() {
-      const panel = document.getElementById('panel');
-      const rsz = document.getElementById('panel-resizer');
-      panel.classList.remove('collapsed'); if (rsz) rsz.classList.remove('collapsed');
+      setPanelCollapsed(false);
       showPanel('terminal');
       DOM.input.focus({ preventScroll: true });
     }
@@ -7779,7 +7777,6 @@
     const paletteCount = document.getElementById('cmd-palette-count');
     let paletteFiltered = [], paletteSel = 0;
 
-    const availableCmdKeys = () => Object.keys(commands).filter(isCmdAvailable);
     function runFromPalette(cmd) { clearCmdParam(); handleCommand(cmd); DOM.input.focus({ preventScroll: true }); }
     function paletteSource(mode) {
       if (mode === 'command') {
@@ -7860,6 +7857,7 @@
     function runPaletteSel() { const it = paletteFiltered[paletteSel]; if (!it) return; closePalette(); it.run(); }
     paletteInput.addEventListener('input', () => { paletteSel = 0; renderPalette(); });
     paletteInput.addEventListener('keydown', (e) => {
+      if (isImeKey(e)) return;
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); movePalette(e.key === 'ArrowDown' ? 1 : -1); }
       else if (e.key === 'Enter') { e.preventDefault(); runPaletteSel(); }
       else if (e.key === 'Escape') { e.preventDefault(); closePalette(); DOM.input.focus({ preventScroll: true }); }
@@ -7930,6 +7928,9 @@
     document.addEventListener('keydown', (e) => {
       // Key check first: this fires on every keystroke, and typing is the whole page.
       if (e.key !== 'Escape' && e.key !== 'Tab') return;
+      // The palette input returns early on IME keys without stopping propagation, so the
+      // Esc that cancels a conversion would otherwise still close the palette from here.
+      if (isImeKey(e)) return;
       const dlg = openDialog();
       if (!dlg) return; // includes the case where the palette input just handled Escape itself
       if (e.key === 'Escape') {
