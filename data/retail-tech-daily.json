@@ -1,5 +1,185 @@
 [
   {
+    "date": "20260926",
+    "title": "2026年9月26日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "チェックアウト変革が加速。品川駅ナカのスキャンレス購入実証や図書館内の無人ショップなど、無人・非対面の新店舗モデルが相次ぎ、同時にセルフレジをめぐる生活者の分断もSNSで顕在化した。 AI活用は二面性が鮮明。食品・日用品のAI需要予測は迅速実装が進む一方、海外では「食品小売のAIはハイプ段階」との冷静な評価も出ており、実効性の見極めが経営課題に。",
+    "count": 9,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "チェックアウト変革が加速。品川駅ナカのスキャンレス購入実証や図書館内の無人ショップなど、無人・非対面の新店舗モデルが相次ぎ、同時にセルフレジをめぐる生活者の分断もSNSで顕在化した。",
+      "AI活用は二面性が鮮明。食品・日用品のAI需要予測は迅速実装が進む一方、海外では「食品小売のAIはハイプ段階」との冷静な評価も出ており、実効性の見極めが経営課題に。",
+      "リテールメディアはID-POS起点の高度化へ。イオンがWAON POINTに紐づくID-POS活用を本格化し、コストコはデジタル売上330億ドルと20％超成長。データ資産とデジタルチャネルが収益の柱に。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "品川エキナカに6日間限定——生花や鉄道グッズを「スキャンレス」で購入、TTG・日比谷花壇・JR東が実証",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-02",
+        "summary": "TTG・日比谷花壇・JR東日本は、品川駅ナカに6日間限定の実験店舗をオープンする。生花や鉄道グッズを、商品をスキャンせずに持ち出す「スキャンレス」方式で購入できるようにする実証で、駅ナカという短時間・高トラフィック環境での決済体験を検証する。混雑時でも並ばずに購入できる導線づくりが焦点となる。",
+        "why_it_matters": "駅ナカは滞在時間が短く、レジ待ちが購買機会の損失に直結する。スキャンレス実証は、決済端末とAIカメラ・センサーを組み合わせたレジレス運用の収益性を測る試金石であり、得られた購買データは品揃えや動線最適化にも波及。無人化投資の可否を左右する。",
+        "tags": [
+          "スキャンレス",
+          "レジレス決済",
+          "駅ナカ",
+          "実証実験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9CWi1tc09wU1RDbldlMk5CX2YxV01aMXMxcjdUNE9XX1FITWxaNl81a1ZQTFhqQ01OTDFaZndhTm9DUmluZjJTMmEwSFNqTHJmMEo4X0NGWU9UaDNheWhMZGN6VzFSbkRubFBGNTRKNlJhVG1ZQ2g0M0JQRQ?oc=5",
+        "source_pub_ts": 1790348436
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "「さっさとやれよ！」——セルフレジでまごつく高齢女性に怒鳴る男性、店の対応にSNSで賛否",
+        "original_title": "",
+        "source": "au Webポータル",
+        "source_id": "JP-04",
+        "summary": "行列のできる店舗のセルフレジで、操作に戸惑う高齢女性に対し中年男性が怒鳴る出来事が報じられ、SNSで反響を呼んでいる。店側の対応も含めて議論が広がり、セルフレジの操作性や高齢者への配慮、混雑時のサポート体制のあり方が改めて問われている。",
+        "why_it_matters": "セルフレジは人件費削減の切り札である一方、操作難易度が顧客体験とオペレーションのリスクを生む。特に高齢層の離脱やトラブルは客単価・リピートに直結する。UI簡素化、有人サポートの配置、混雑平準化は導入効果を最大化する経営課題だ。",
+        "tags": [
+          "セルフレジ",
+          "顧客体験",
+          "高齢者対応",
+          "SNS反響"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1Wb3BINzE0VDFQc3R1bEluM1lfT3BiWnRjaUxwcWRrendIZFFTeG1UclRDSUloNXU1TFFXMUJjdG04MmdTdjBtZWwybml3REVoZUF5cXVaX2lPWUZJM0lSVTNsdzZ0b19sSXRDTFhn?oc=5",
+        "source_pub_ts": 1790341500
+      },
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "食品・飲料・日用品の高精度AI需要予測を迅速実装——欠品と過剰在庫を同時抑制",
+        "original_title": "",
+        "source": "bp-Affairs",
+        "source_id": "JP-14",
+        "summary": "食品・飲料・日用品など消費財領域で、高精度なAI活用型の需要予測を迅速に実装する動きが報じられた。気象や販促、POSデータを取り込み、欠品と過剰在庫を同時に抑えることを狙う。発注精度の向上は物流コストや廃棄ロスの削減、店舗在庫の適正化につながる。",
+        "why_it_matters": "需要予測は小売・卸の収益を左右する基盤技術で、精度向上は欠品率低下と在庫回転改善を同時に実現し、フードロス削減にも寄与する。実装スピードが競争力を分けるため、データ基盤の整備と現場での運用定着の設計が成否を握る。",
+        "tags": [
+          "AI需要予測",
+          "欠品削減",
+          "在庫最適化",
+          "フードロス"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE9SUEdjS3JwSDQ3ZFdxbEVtRHlibGliLVZUOHZFamFINnUyOTFsVE5PeEFMcUt5aUJ2alBMT3BVSHNYUGZNbVNSdXo1bVg0MWVndlcyZE5ZOXV1TGRpSS0xdVZZTWFFUQ?oc=5",
+        "source_pub_ts": 1790312233
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "日販、図書館内の無人ショップ「TOSHOP」を八王子に10月3日オープン",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-23",
+        "summary": "日本出版販売は、図書館内に無人で運営するショップ「TOSHOP」を10月3日に八王子にオープンする。店員を常駐させずに書籍などを販売する新業態で、公共施設という限られた人流の中でも成立する小売モデルを検証する。返本や品揃え管理などオペレーションの自動化が鍵となる。",
+        "why_it_matters": "書店の閉店が相次ぐ中、無人運営は固定費を抑えた出店モデルとして注目される。図書館という滞在型の集客拠点を活かし、セルフ決済と在庫管理を組み合わせれば、地方や小商圏でも収益化の余地がある。出版流通のDX事例として他業態にも示唆は大きい。",
+        "tags": [
+          "無人店舗",
+          "セルフ決済",
+          "書店DX",
+          "新業態"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE1vWklWRXRmQ09NOEpGVnVtNXFMajZhalE2Ti01aXQ4ZnFGamw2WVl0UHg3SV9qdGtYeF92VkFzaEtEVWMwcGZQVEFER004cnpFVVhOdg?oc=5",
+        "source_pub_ts": 1790304000
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "イオンのリテールメディア、WAON POINTに紐づくID-POS活用を本格化——「規模」と「多様さ」を強みに",
+        "original_title": "",
+        "source": "Agenda note (アジェンダノート)",
+        "source_id": "JP-39",
+        "summary": "イオンは、リテールメディアの強みを「規模」と「多様さ」と位置づけ、WAON POINTに紐づくID-POSデータの活用を本格化させる。購買データを起点に、メーカーへの販促支援を企画から効果検証まで一気通貫で提供する体制を整え、広告収益を成長の柱に育てる狙いだ。",
+        "why_it_matters": "ID-POSは小売が持つ最大の資産であり、リテールメディアの競争力はデータ粒度と実行力で決まる。グループ横断の購買データを一気通貫で使えれば広告主への提案価値は飛躍的に高まる。コンビニ各陣営との顧客接点競争を睨んだ布石となる。",
+        "tags": [
+          "リテールメディア",
+          "ID-POS",
+          "WAON POINT",
+          "販促DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBGUnhseUZmUHlPSWNYZmdYN3gtSEZiZG1aMkZlT2VEMWRtanZhdlFYNW81U0o0dzZwN3hzSFBNeFF4RlQ5eFk1c2h6c01mQ0hybzZmX1UxODRnT0pMWmR6Z2R6eFY?oc=5",
+        "source_pub_ts": 1790277137
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "食品小売のAIは「ハイプ全開」——期待と現実のギャップをどう埋めるか",
+        "original_title": "The Friday Checkout: Grocery AI is in full hype mode right now",
+        "source": "Grocery Dive",
+        "source_id": "GL-04",
+        "summary": "Grocery Diveの連載コラムは、食品小売におけるAI活用が「ハイプ（過剰な期待）全開」の段階にあると指摘する。需要予測やパーソナライズ、店舗運営への応用が喧伝される一方、実運用での成果はまだ限定的だ。投資と実装のギャップを見極める目が事業者に求められている。",
+        "why_it_matters": "AIブームの中で、実効性のあるユースケースの選別が経営判断の焦点になる。食品は欠品・廃棄・労働力に直結するため、需要予測や補充最適化など効果測定しやすい領域から着手すべきだ。過度な期待は投資対効果の評価を歪め、現場の疲弊を招く。",
+        "tags": [
+          "AI活用",
+          "食品小売",
+          "過剰期待",
+          "グローバル動向"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPNkJmenFlY2l2aU81eVdkNnhZaFh4RF9IaWh1V09kNEF2QnZmd19KMlphYnd1REs0UEVEREs3c0RwSTg5ZC1ibV9MZDFiQmRCNG1sUzRLY1B3eGdTTGt4UUxJOU9ja1A5YWFyX2FoVHNWTklQOUxMUFM1YWo1Y2prTTgwRGFELVhP?oc=5",
+        "source_pub_ts": 1790351537
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "コストコのデジタル売上が2026年に330億ドル、前年比20％超で成長",
+        "original_title": "Costco’s digital sales hit $33 billion in 2026, growing more than 20%",
+        "source": "Modern Retail",
+        "source_id": "GL-10",
+        "summary": "コストコのデジタル売上が2026年に330億ドルに達し、前年比20％超で成長した。会員制倉庫型店舗でありながら、ECとアプリ経由の購買が急拡大していることを示す。店舗とデジタルの融合や、会員データを活かした販促が成長を牽引しているとみられる。",
+        "why_it_matters": "倉庫型・低価格帯のビジネスモデルでもデジタルが成長エンジンになり得ることを示す。会員IDと購買履歴を軸にしたEC・アプリ施策は、リテールメディアやサブスク収益への展開余地が大きい。日本勢のオムニチャネル戦略にも示唆を与える。",
+        "tags": [
+          "デジタル売上",
+          "EC",
+          "会員データ",
+          "オムニチャネル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPTkFjaHRkSE5xZE4taWtfYlljNEN3VFh2ekoycl9XZjQwbkFIRk1aM2JXekE2Q2dlRmR3UFhDNmhQNkYycUJEckc0cS1NRElRMDhVSFFPaTlFZE5sYmRZVTVyVzBPV2kxQnBZXzFOcTZtVFpYeDhWUUFMQVFsX19taGxoYWRid1BJV1FyODM0Tl90VnhwdXVTWE90STRWN0pjaWtTWjJVNVY?oc=5",
+        "source_pub_ts": 1790286328
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "インスタカートとドアダッシュ、オンライン食品の「手頃さ」問題に苦慮",
+        "original_title": "Instacart and DoorDash wrestle with online grocery’s growing affordability problem",
+        "source": "Grocery Dive",
+        "source_id": "GL-13",
+        "summary": "インスタカートとドアダッシュは、オンライン食料品における価格の割高感という課題への対応を迫られている。配送料や手数料が上乗せされ、節約志向の消費者が実店舗に回帰する動きが重荷になっている。低価格帯の選択肢や会員特典などで対抗策を探る。",
+        "why_it_matters": "ラストマイル配送は利便性とコストのバランスが常に問われる。手数料の高さが利用継続の壁になれば、プラットフォーマーは収益構造の見直しを迫られる。日本でも配送料の最適化やまとめ買い促進、会員プログラム設計が普及のカギになる。",
+        "tags": [
+          "オンライン食料品",
+          "ラストマイル",
+          "価格戦略",
+          "サブスク"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNWFJZOHRxOGlFdTRwYndwSG42V05PMnRYQmdzcTNaMnUwVUtCU0xyVG1DUm5LU3NwLUdRaHNuSEt6VG03TDZva25kTjhaTEswMUdScnA5QzdXRFVwelJmcWpCRDhOM01NWENfM2JyNXZoazBBTTBWQ25ld3VmUURZUVpyd0FtTFlscklNT1hEYTJ5N25oeGdQSTJrMA?oc=5",
+        "source_pub_ts": 1790263263
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "サムズクラブ、会員の声を品揃えに反映させる仕組みを強化",
+        "original_title": "How Sam’s Club gives shoppers a say in what it sells",
+        "source": "Grocery Dive",
+        "source_id": "GL-15",
+        "summary": "サムズクラブは、会員が自ら商品の評価や要望を発信し、それが実際の品揃えに反映される仕組みを強化している。購買データと会員のフィードバックを組み合わせ、需要の高い商品を素早く投入する狙いだ。会員制ならではのロイヤルティ向上策として注目される。",
+        "why_it_matters": "顧客の声を商品開発・調達に直接つなぐ仕組みは、品揃えの精度とロイヤルティを同時に高める。ID-POSとレビューを統合すれば、メーカーとの共同開発やPB戦略にも活用できる。日本勢がアプリ経由でデータを循環させる際の参考になる。",
+        "tags": [
+          "会員制",
+          "品揃え最適化",
+          "顧客の声",
+          "ロイヤルティ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOeW9qWkZFUUxyT09yOE43eTB4cWRVWUV5TGJOQVBGaXN3ejA1YzJXVGp0b1NOUFZOWk5BSlJjajhuUEVHRm5CUmdaQ2VKSWdjTjgweUJMdmJVTjR5eFVxSUFyX3ExV0hFY3dGQVMzaGg2QW9TSl9fYk1wZFdLdWNBQWwxQnFGWDZSd3BxWlNXaC1VM1I5MGttYW5acUZmYXBoTFdoRFR3?oc=5",
+        "source_pub_ts": 1790262363
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260925",
     "title": "2026年9月25日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "コンビニ3陣営がリテールメディアを成長の柱に据え、提携・新会社で広告と購買データの収益化を加速。ベストバイがコネクテッドTVを軸に据えるなど、小売の収益源が売上高から広告・データへ移る流れが国内外で同時進行した。 省人化・無人化の実装が本格化。三洋堂書店40店舗のAI顔認証による無人営業、郵便局のセルフレジ決済、カスハラ対策義務化を見据えた店舗DXなど、現場のオペレーション改革が規制と人手不足を追い風に広がっている。",
