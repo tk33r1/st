@@ -9,9 +9,15 @@
  * どこから取ったか・中身の SHA-256 を data/vendor/SOURCES.json に残す。
  * 版を上げるときは下の LIBS を直して実行し、SOURCES.json の差分ごとコミットする。
  *
- * 例外は ffmpeg-core.wasm（32MB）。Cloudflare Pages の1ファイル 25MB の上限を超えるので
- * 置けない。そちらは CDN から取り、使う前にツール側で SHA-256 を照らし合わせる
- * （FFMPEG_CORE_WASM の値をツールに書く）。
+ * ffmpeg-core.wasm（32MB）は Cloudflare Pages の1ファイル 25MB の上限を超えるので、
+ * 2つに分けて置く（split）。使うときは data/tools-ui.js の STCommon.fetchVerified が
+ * SOURCES.json の split を読んでつなぎ直し、元のファイルの SHA-256 と照らし合わせる。
+ *
+ * ページは Content-Security-Policy で 'unsafe-eval' を許していないので、文字列からコードを
+ * 作るライブラリはそのままでは止まる。取り込みのたびに patches.js の置き換えを当て、当てた
+ * あとの SHA-256 を記録する（data/vendor の外にある LOCAL_PATCHED にも当てる）。
+ * 同梱の JS に文字列からコードを作る処理が残っていないかも毎回確かめ、DYNAMIC_OK に
+ * 理由を書いたもの以外が見つかったら止める。
  */
 'use strict';
 
@@ -62,10 +68,10 @@ const LIBS = [
             [JSD + '@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js', '814.ffmpeg.js']] },
   { dir: '@ffmpeg/util@0.12.1', license: FFMPEG_WASM_LICENSE,
     files: [[JSD + '@ffmpeg/util@0.12.1/dist/umd/index.js', 'index.js']] },
-  // コアの JS だけ置く。wasm（32MB）は置けないので CDN から取り、ツール側で SHA-256 を確かめる
+  // wasm（32MB）は1ファイルでは置けないので、2つに分けて置く
   { dir: '@ffmpeg/core@0.12.6', license: FFMPEG_WASM_LICENSE,
     files: [[JSD + '@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js', 'ffmpeg-core.js']],
-    remote: [[JSD + '@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm', 'FFMPEG_CORE_WASM']] },
+    split: [[JSD + '@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm', 'ffmpeg-core.wasm', 2]] },
   // jsquash は 'wasm-feature-detect' を名前だけで import する。使うページの import map で
   // 下の wasm-feature-detect へ向ける（ライブラリ自体は書き換えない）
   { dir: '@jsquash/avif@2.1.1', license: JSD + '@jsquash/avif@2.1.1/LICENSE',
@@ -85,7 +91,36 @@ const LIBS = [
     files: [['https://cdn.jsdelivr.net/fontsource/fonts/noto-sans-jp@5.3.0/japanese-400-normal.ttf', 'japanese-400-normal.ttf']] }
 ];
 
+const { PATCHES, DYNAMIC_CODE, applyPatches } = require('./patches');
+
+// data/vendor の外にあって取り込みの対象ではないが、置き換えは当てるもの
+const LOCAL_PATCHED = ['tools/qr-atelier/vendor/wechat/wasm.js'];
+
+// 同梱の JS に残っていてよい「文字列からコードを作る処理」とその件数。どれも CSP の下では
+// 通らない経路なので実害がない。件数が変わったら（版を上げたときなど）中身を見て判断し直す
+const DYNAMIC_OK = {
+  'data/vendor/@ffmpeg/ffmpeg@0.12.10/ffmpeg.js': [1, 'globalThis が無い古い環境向けの予備（いまのブラウザでは通らない）'],
+  'data/vendor/jszip@3.10.1/jszip.min.js': [1, 'setImmediate に関数以外が渡されたときの予備（使われない）'],
+  'data/vendor/pdfjs-dist@3.11.174/pdf.min.js': [3, 'eval が使えるかを試してから使う（CSP の下では使わない）。eval("require") は Node.js 向けの分岐'],
+  'data/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js': [2, 'eval が使えるかを試してから使う（CSP の下では使わない）']
+};
+
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
+
+// 置き換えを当てる。{ buf, applied（今回当てた数）, count（当てるべき数） }。形が変わっていて
+// 当てられないものがあれば止める（黙って当てないまま置くと、CSP の下で動かない）
+function patchBuffer(key, buf) {
+  const list = PATCHES[key];
+  if (!list) return { buf, applied: 0, count: 0 };
+  const r = applyPatches(buf.toString('utf8'), list);
+  if (r.pending) throw new Error('置き換えを当てられない（ライブラリの形が変わった）: ' + key);
+  return { buf: r.applied ? Buffer.from(r.text, 'utf8') : buf, applied: r.applied, count: list.length };
+}
+
+function walk(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .flatMap(e => e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]);
+}
 
 async function get(url) {
   const res = await fetch(url);
@@ -96,8 +131,8 @@ async function get(url) {
 (async () => {
   const checkOnly = process.argv.includes('--check');
   const recordFile = path.join(OUT, 'SOURCES.json');
-  const prev = fs.existsSync(recordFile) ? JSON.parse(fs.readFileSync(recordFile, 'utf8')) : { files: {}, remote: {} };
-  const record = { files: {}, remote: {} };
+  const prev = fs.existsSync(recordFile) ? JSON.parse(fs.readFileSync(recordFile, 'utf8')) : { files: {}, split: {}, local: {} };
+  const record = { files: {}, split: {}, local: {} };
   let fetched = 0, bad = 0;
 
   for (const lib of LIBS) {
@@ -114,24 +149,78 @@ async function get(url) {
       const rel = lib.dir + '/' + name;
       const file = path.join(OUT, lib.dir, name);
       const known = prev.files[rel];
+      let buf;
       if (fs.existsSync(file)) {
-        const sum = sha256(fs.readFileSync(file));
-        if (known && known.sha256 !== sum) { console.error('記録と違う: ' + rel); bad++; }
-        record.files[rel] = { from: from, sha256: sum };
-        continue;
+        buf = fs.readFileSync(file);
+      } else if (checkOnly) {
+        console.error('置かれていない: ' + rel); bad++; continue;
+      } else {
+        buf = await get(from);
+        fetched++;
       }
-      if (checkOnly) { console.error('置かれていない: ' + rel); bad++; continue; }
-      const buf = await get(from);
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, buf);
-      record.files[rel] = { from: from, sha256: sha256(buf) };
-      fetched++;
+      const p = patchBuffer('data/vendor/' + rel, buf);
+      if (p.applied && checkOnly) { console.error('置き換えが当たっていない: ' + rel); bad++; }
+      if (p.applied || !fs.existsSync(file)) {
+        if (!checkOnly) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, p.buf); }
+        if (p.applied) console.log('置き換えを当てた: ' + rel + '（' + p.applied + ' か所）');
+      }
+      const sum = sha256(p.buf);
+      // 今回置き換えを当てたものは、記録と違って当然なので咎めない
+      if (known && known.sha256 !== sum && !p.applied) { console.error('記録と違う: ' + rel); bad++; }
+      record.files[rel] = p.count ? { from: from, sha256: sum, patched: p.count } : { from: from, sha256: sum };
     }
-    for (const [from, key] of lib.remote || []) {
-      const sum = checkOnly && prev.remote[key] ? prev.remote[key].sha256 : sha256(await get(from));
-      record.remote[key] = { from: from, sha256: sum };
-      console.log(key + ' = ' + sum + '（ツール側に書く値）');
+    // 分けて置くもの。<名前>.part1, .part2 … に分け、つないだときの SHA-256 も残す
+    for (const [from, name, count] of lib.split || []) {
+      const parts = Array.from({ length: count }, (_, i) => name + '.part' + (i + 1));
+      const files = parts.map(p => path.join(OUT, lib.dir, p));
+      let whole;
+      if (files.every(f => fs.existsSync(f))) {
+        whole = Buffer.concat(files.map(f => fs.readFileSync(f)));
+      } else if (checkOnly) {
+        console.error('置かれていない: ' + lib.dir + '/' + name + '.part*'); bad++; continue;
+      } else {
+        whole = await get(from);
+        const size = Math.ceil(whole.length / count);
+        files.forEach((f, i) => fs.writeFileSync(f, whole.subarray(i * size, (i + 1) * size)));
+        fetched += count;
+      }
+      parts.forEach((p, i) => {
+        const rel = lib.dir + '/' + p;
+        const sum = sha256(fs.readFileSync(files[i]));
+        if (prev.files[rel] && prev.files[rel].sha256 !== sum) { console.error('記録と違う: ' + rel); bad++; }
+        record.files[rel] = { from: from + '（' + count + '分割の' + (i + 1) + '）', sha256: sum };
+      });
+      const key = lib.dir + '/' + name;
+      const sum = sha256(whole);
+      if (prev.split && prev.split[key] && prev.split[key].sha256 !== sum) { console.error('記録と違う: ' + key); bad++; }
+      record.split[key] = { from: from, parts: parts.map(p => lib.dir + '/' + p), size: whole.length, sha256: sum };
     }
+  }
+
+  // data/vendor の外にあるが、置き換えを当てるもの
+  for (const rel of LOCAL_PATCHED) {
+    const file = path.join(ROOT, rel);
+    const p = patchBuffer(rel, fs.readFileSync(file));
+    if (p.applied) {
+      if (checkOnly) { console.error('置き換えが当たっていない: ' + rel); bad++; }
+      else { fs.writeFileSync(file, p.buf); console.log('置き換えを当てた: ' + rel + '（' + p.applied + ' か所）'); }
+    }
+    // 改行の違い（Git の自動変換）で値が揺れないよう、LF にそろえてから測る
+    const sum = sha256(Buffer.from(p.buf.toString('utf8').replace(/\r\n/g, '\n'), 'utf8'));
+    const known = prev.local && prev.local[rel];
+    if (known && known.sha256 !== sum && !p.applied) { console.error('記録と違う: ' + rel); bad++; }
+    record.local[rel] = { sha256: sum, patched: p.count };
+  }
+
+  // 同梱の JS に、文字列からコードを作る処理が残っていないか（CSP の下で止まる）
+  const dirs = [OUT].concat(fs.readdirSync(path.join(ROOT, 'tools'))
+    .map(t => path.join(ROOT, 'tools', t, 'vendor')).filter(d => fs.existsSync(d)));
+  const re = new RegExp(DYNAMIC_CODE.source, 'g');
+  for (const f of dirs.flatMap(walk).filter(f => /\.m?js$/.test(f))) {
+    const rel = path.relative(ROOT, f).split(path.sep).join('/');
+    const n = (fs.readFileSync(f, 'utf8').match(re) || []).length;
+    const ok = DYNAMIC_OK[rel] ? DYNAMIC_OK[rel][0] : 0;
+    if (n !== ok) { console.error('文字列からコードを作る処理が ' + n + ' 件（許しているのは ' + ok + ' 件）: ' + rel); bad++; }
   }
 
   if (!checkOnly) fs.writeFileSync(recordFile, JSON.stringify(record, null, 1) + '\n');

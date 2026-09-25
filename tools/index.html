@@ -4,9 +4,12 @@
   <!-- The character set has to land inside the first 1024 bytes, so it goes
        ahead of the analytics tags rather than after them. -->
   <meta charset="UTF-8">
+  <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
+       このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）だけに制限する。寄付の窓口（Ko-fi）は
+       埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
+       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -50,7 +53,7 @@
         "@type": "ItemList",
         "@id": "https://tk.st/tools/#list",
         "name": "SAFE TOOLS",
-        "description": "ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集",
+        "description": "ファイルはサーバーに保存されません。ブラウザの中だけで完結し、通信先もContent-Security-Policyでこのサイトとアクセス解析だけに制限したWebツール集",
         "url": "https://tk.st/tools/",
         "//": "data/tools.json のミラー。ツールを追加したら両方を更新すること（node .github/scripts/ogp/generate.js --check で検証）",
         "itemListElement": [
@@ -73,7 +76,7 @@
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../data/tools-ui.css?v=20260829">
+  <link rel="stylesheet" href="../data/tools-ui.css?v=20260926">
 
   <!-- Stamp the remembered theme before first paint. The tools write the same
        key, so a choice made there carries over to the index. -->
@@ -450,6 +453,7 @@
       <span class="fact"><i data-lucide="shield-check"></i>端末内で処理</span>
       <span class="fact"><i data-lucide="cloud-off"></i>アップロードなし</span>
       <span class="fact"><i data-lucide="zap"></i>インストール不要</span>
+      <span class="fact" title="ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。"><i data-lucide="lock"></i>通信先を制限</span>
     </div>
   </div>
 

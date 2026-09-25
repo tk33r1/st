@@ -1,8 +1,12 @@
 <!doctype html>
 <html lang="ja" class="st-theme">
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <meta charset="UTF-8">
+  <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
+       このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）だけに制限する。寄付の窓口（Ko-fi）は
+       埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
+       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -10,7 +14,6 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="日本発。面倒な設定なしで不要な情報を削除し、SVGファイルを1クリックで軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。">
   <meta name="robots" content="max-image-preview:large">
@@ -52,6 +55,7 @@
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Any",
         "description": "日本発。面倒な設定なしで不要な情報を削除し、SVGファイルを1クリックで軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。",
+        "featureList": ["通信先をContent-Security-Policyでこのサイトとアクセス解析だけに制限"],
         "url": "https://tk.st/tools/light-svg/",
         "offers": {
           "@type": "Offer",
@@ -65,8 +69,8 @@
 
   <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260926"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
+  <script src="../../data/tools-ui.js?v=20260926_3"></script>
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
@@ -533,13 +537,8 @@
         </div>
       </div>
 
-      <div class="url-row">
-        <span class="st-lbl">url</span>
-        <input type="url" id="url-input" placeholder="画像のURLを貼り付けてインポート">
-        <button id="url-btn" class="st-btn-quiet" type="button">インポート</button>
-      </div>
-
       <p class="note">最適化はすべてブラウザ内で行われます。ファイルがサーバーに送られることはありません。</p>
+    <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。</p>
     </div>
 
     <!-- ===================== view 2 : processing ===================== -->
@@ -742,7 +741,7 @@
   <script type="module">
     import { optimize } from '../../data/vendor/svgo@3.2.0/svgo.browser.js';
 
-    const { formatBytes, showToast, switchView: baseSwitchView, setupDropzone, isPrivateHost } = window.STCommon;
+    const { formatBytes, showToast, switchView: baseSwitchView, setupDropzone } = window.STCommon;
 
     // The precision controls only mean anything once a file is loaded, so the
     // toolbar rides along with the editor view rather than sitting there inert.
@@ -839,8 +838,6 @@
 
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
-    const urlInput = document.getElementById('url-input');
-    const urlBtn = document.getElementById('url-btn');
 
     const sizeOriginal = document.getElementById('size-original');
     const sizeOptimized = document.getElementById('size-optimized');
@@ -1215,112 +1212,6 @@
       const file = e.target.files[0];
       if (file) handleFile(file);
       fileInput.value = '';
-    });
-
-    async function loadFromUrl(url) {
-      if (!url) return;
-
-      let urlObj;
-      try {
-        urlObj = new URL(url);
-      } catch (e) {
-        showToast('URLの形式が正しくありません', 'error');
-        return;
-      }
-      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
-        showToast('http(s) のURLを指定してください', 'error');
-        return;
-      }
-      if (isPrivateHost && isPrivateHost(urlObj.hostname)) {
-        showToast('ローカル/プライベートIPのURLは利用できません', 'error');
-        return;
-      }
-
-      switchView('view-loading');
-      clearLog();
-      setStatus('fetching');
-      loadingMsg.textContent = `fetch ${urlObj.href}`;
-
-      try {
-        let response;
-        let usedProxy = false;
-        let directError = null;
-        try {
-          response = await fetch(url, { mode: 'cors', credentials: 'omit' });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        } catch (e) {
-          directError = e;
-          const ok = window.confirm(
-            '直接の取得に失敗しました。\n外部プロキシ経由で再試行しますか？\n\n注意: プロキシ運営者にURLが渡ります。'
-          );
-          if (!ok) {
-            switchView('view-upload');
-            return;
-          }
-          console.warn('Direct fetch failed:', directError);
-          usedProxy = true;
-
-          const stripped = url.replace(/^https?:\/\//, '');
-          const proxies = [
-            `https://images.weserv.nl/?url=${encodeURIComponent(stripped)}`,
-            `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-          ];
-
-          let lastErr = null;
-          let lastProxyHost = null;
-          response = null;
-          for (const proxyUrl of proxies) {
-            try {
-              console.log('Trying proxy:', proxyUrl);
-              const r = await fetch(proxyUrl, { mode: 'cors', credentials: 'omit' });
-              if (!r.ok) throw new Error(`HTTP ${r.status}`);
-              response = r;
-              break;
-            } catch (perr) {
-              lastErr = perr;
-              try { lastProxyHost = new URL(proxyUrl).host; } catch (_) { lastProxyHost = proxyUrl; }
-              console.warn('Proxy failed:', proxyUrl, perr);
-            }
-          }
-          if (!response) {
-            const hostHint = lastProxyHost ? ` (${lastProxyHost})` : '';
-            throw new Error(`すべてのプロキシで失敗${hostHint}: ${lastErr?.message || '不明'}`);
-          }
-        }
-
-        const contentType = response.headers.get('content-type') || '';
-        const blob = await response.blob();
-        const blobType = blob.type || contentType;
-
-        let filename = 'downloaded_image.svg';
-        const pathParts = urlObj.pathname.split('/');
-        const lastPart = pathParts[pathParts.length - 1];
-        if (lastPart && lastPart.includes('.')) {
-          filename = lastPart;
-        }
-
-        const file = new File([blob], filename, { type: blobType || 'image/svg+xml' });
-        if (usedProxy) showToast('プロキシ経由で取得しました');
-        handleFile(file);
-      } catch (err) {
-        console.error('URL Load error:', err);
-        logLine('✗ ' + (err.message || 'fetch failed'), 'err');
-        setStatus('fetch failed', 'err');
-        showToast(`取得失敗: ${err.message || 'unknown'}`, 'error');
-        switchView('view-upload');
-      }
-    }
-
-    urlBtn.addEventListener('click', () => {
-      const url = urlInput.value.trim();
-      if (url) loadFromUrl(url);
-    });
-
-    urlInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const url = urlInput.value.trim();
-        if (url) loadFromUrl(url);
-      }
     });
 
     btnDownload.addEventListener('click', () => {

@@ -54,19 +54,6 @@
     if (viewId !== 'view-loading') target.classList.add('fade-in');
   }
 
-  function isPrivateHost(hostname) {
-    if (!hostname) return true;
-    const h = hostname.toLowerCase();
-    if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local')) return true;
-    if (h === '127.0.0.1' || h === '0.0.0.0' || h === '::1') return true;
-    if (/^10\./.test(h)) return true;
-    if (/^192\.168\./.test(h)) return true;
-    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(h)) return true;
-    if (/^169\.254\./.test(h)) return true;
-    if (/^f[cd][0-9a-f]{2}:/i.test(h)) return true;
-    return false;
-  }
-
   function preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -214,30 +201,39 @@
     };
   }
 
-  // ---- 外から取る部品の照合 ----------------------------------------------
-  // ライブラリは data/vendor/ に置いてこのサイトから読む。ただ、Cloudflare Pages の
-  // 1ファイル 25MB の上限を超えるもの（FFmpeg のコアの wasm、32MB）だけは置けない。
-  // そういうものは CDN から取り、中身の SHA-256 が記録どおりのときだけ使う。
-  // CDN 側で差し替わっても、違う中身は動かさない。
-  // 値は .github/scripts/vendor/fetch-vendor.js が出すもの（data/vendor/SOURCES.json の remote）。
-  const REMOTE_PARTS = {
-    ffmpegCoreWasm: {
-      url: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
-      sha256: '2390efa7fb66e7e42dbae15427571a5ffc96b829480904c30f471f0a78967f61'
-    }
-  };
+  // ---- 分けて置いた部品の組み立て ----------------------------------------
+  // ライブラリはすべて data/vendor/ に置いてこのサイトから読む（外部の CDN へは行かない。
+  // ページの Content-Security-Policy でも止めている）。ただ、Cloudflare Pages は1ファイル
+  // 25MB までなので、FFmpeg のコアの wasm（32MB）は2つに分けて置いてある。ここでつなぎ
+  // 直し、元のファイルの SHA-256 と一致したときだけ使う（つなぎ間違いや欠けを動かさない）。
+  // 部品の名前・大きさ・SHA-256 は、取り込んだときの記録（data/vendor/SOURCES.json の split）を
+  // そのまま読む。ここに値を書き写すと、版を上げたときに合わせ忘れる。
+  const VENDOR_BASE = new URL('vendor/', (document.currentScript && document.currentScript.src) || location.href);
 
-  // 取ってきた中身が記録と一致したら blob: の URL にして返す。違えば使わずに止める。
-  async function fetchVerified(name, type) {
-    const part = REMOTE_PARTS[name];
-    if (!part) throw new Error('unknown part: ' + name);
-    const res = await fetch(part.url, { credentials: 'omit' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const buf = await res.arrayBuffer();
-    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
+  //   key … data/vendor/ からのパス（例: '@ffmpeg/core@0.12.6/ffmpeg-core.wasm'）
+  // つないだ中身が記録と一致したら blob: の URL にして返す。違えば使わずに止める。
+  async function fetchVerified(key, type) {
+    const res = await fetch(new URL('SOURCES.json', VENDOR_BASE));
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' SOURCES.json');
+    const entry = ((await res.json()).split || {})[key];
+    if (!entry) throw new Error('unknown part: ' + key);
+    // つなぎ先を先に確保し、部品は1つずつ取ってきて書き込む。32MB の部品を全部抱えてから
+    // つなぐと、スマホではメモリが足りずにタブが落ちることがある
+    const whole = new Uint8Array(entry.size);
+    let at = 0;
+    for (const part of entry.parts) {
+      const r = await fetch(new URL(part, VENDOR_BASE));
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + part);
+      const buf = new Uint8Array(await r.arrayBuffer());
+      if (at + buf.length > whole.length) throw new Error('部品の大きさが記録と違います（' + key + '）');
+      whole.set(buf, at);
+      at += buf.length;
+    }
+    if (at !== whole.length) throw new Error('部品の大きさが記録と違います（' + key + '）');
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', whole));
     const hex = Array.from(digest, b => b.toString(16).padStart(2, '0')).join('');
-    if (hex !== part.sha256) throw new Error('部品の中身が記録と違うため、使いませんでした（' + name + '）');
-    return URL.createObjectURL(new Blob([buf], { type: type }));
+    if (hex !== entry.sha256) throw new Error('部品の中身が記録と違うため、使いませんでした（' + key + '）');
+    return URL.createObjectURL(new Blob([whole], { type: type }));
   }
 
   global.STCommon = {
@@ -245,7 +241,6 @@
     fetchVerified,
     showToast,
     switchView,
-    isPrivateHost,
     preventDefaults,
     setupDropzone,
     setupInlineCompare,

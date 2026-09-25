@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  const { formatBytes, showToast, switchView, setupDropzone, isPrivateHost } = window.STCommon;
+  const { formatBytes, showToast, switchView, setupDropzone } = window.STCommon;
   const { PDFDocument, StandardFonts, degrees, rgb } = PDFLib;
 
   // 外部ライブラリはすべてこのサイトに同梱したもの（data/vendor/）
@@ -368,100 +368,6 @@
       if (doc) total += doc.size;
     });
     return total;
-  }
-
-  // ---------------------------------------------------------------- url import
-
-  let urlLoading = false;
-
-  async function loadFromUrl(rawUrl) {
-    const url = String(rawUrl || '').trim();
-    if (!url || urlLoading) return;
-
-    let target;
-    try {
-      target = new URL(url);
-    } catch {
-      showToast('URLの形式が正しくありません', 'error');
-      return;
-    }
-    if (target.protocol !== 'http:' && target.protocol !== 'https:') {
-      showToast('http(s) のURLを指定してください', 'error');
-      return;
-    }
-    if (isPrivateHost(target.hostname)) {
-      showToast('ローカル/プライベートIPのURLは利用できません', 'error');
-      return;
-    }
-
-    const fallbackView = pages.length ? 'view-preview' : 'view-upload';
-    urlLoading = true;
-    $('url-btn').disabled = true;
-    setView('view-loading');
-    setProgress(0, 'ダウンロード中...', 'PDFを取得しています');
-
-    try {
-      const file = await fetchPdfAsFile(url, target);
-      $('url-input').value = '';
-      await addFiles([file]);
-    } catch (err) {
-      setView(fallbackView);
-      if (!err || err.name !== 'AbortByUser') {
-        console.error('URL load failed', err);
-        setStatus('fetch failed', 'err');
-        showToast(`取得失敗: ${err && err.message ? err.message : 'unknown'}`, 'error');
-      }
-    } finally {
-      urlLoading = false;
-      $('url-btn').disabled = false;
-    }
-  }
-
-  async function fetchPdfAsFile(url, target) {
-    let response;
-    let usedProxy = false;
-
-    try {
-      response = await fetch(url, { mode: 'cors', credentials: 'omit' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    } catch (directError) {
-      console.warn('direct fetch failed', directError);
-      const ok = window.confirm(
-        '直接のPDF取得に失敗しました。\n外部プロキシ経由で再試行しますか？\n\n'
-        + '注意: プロキシ運営者にURLとPDFの内容が渡ります。'
-      );
-      if (!ok) {
-        const cancelled = new Error('cancelled by user');
-        cancelled.name = 'AbortByUser';
-        throw cancelled;
-      }
-      usedProxy = true;
-      const proxied = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-        { mode: 'cors', credentials: 'omit' });
-      if (!proxied.ok) throw new Error(`プロキシでも失敗 (HTTP ${proxied.status})`);
-      response = proxied;
-    }
-
-    const blob = await response.blob();
-    const type = (blob.type || response.headers.get('content-type') || '').toLowerCase();
-    const looksLikePdf = type.includes('pdf')
-      || type === 'application/octet-stream'
-      || /\.pdf(?:$|\?)/i.test(target.pathname);
-    if (!looksLikePdf) {
-      throw new Error(`PDFではないデータを受信しました (${type || 'unknown'})`);
-    }
-
-    // Check the %PDF- magic too, so a redirected HTML error page can't slip
-    // through the octet-stream / .pdf-path heuristics above.
-    const head = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
-    if (String.fromCharCode.apply(null, head) !== '%PDF-') {
-      throw new Error('受信したデータがPDFではありません');
-    }
-
-    const last = target.pathname.split('/').pop();
-    const filename = last && /\.pdf$/i.test(last) ? decodeURIComponent(last) : 'downloaded.pdf';
-    if (usedProxy) showToast('プロキシ経由で取得しました');
-    return new File([blob], filename, { type: 'application/pdf' });
   }
 
   // ---------------------------------------------------------------- geometry
@@ -2209,14 +2115,6 @@
     $('file-input').addEventListener('change', (e) => {
       if (e.target.files.length) addFiles(e.target.files);
       e.target.value = '';
-    });
-
-    $('url-btn').addEventListener('click', () => loadFromUrl($('url-input').value));
-    $('url-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        loadFromUrl($('url-input').value);
-      }
     });
   }
 

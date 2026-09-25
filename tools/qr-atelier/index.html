@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="ja" class="st-theme">
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <meta charset="UTF-8">
+  <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
+       このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）だけに制限する。寄付の窓口（Ko-fi）は
+       埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
+       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -10,7 +14,6 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="おしゃれなQRコードを完全無料・ブラウザ内で作成。セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインでき、PNG・SVG・AVIF・WebPで書き出せます。印刷はmm指定、作ったデザインは保存もリンク共有も可能。短縮URLを挟まないので広告も有効期限もありません。">
   <meta name="robots" content="max-image-preview:large">
@@ -54,7 +57,7 @@
           "priceCurrency": "JPY"
         },
         "browserRequirements": "Requires JavaScript",
-        "featureList": "40種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先（vCard・MeCard）/位置情報/暗号通貨（Bitcoin・Lightning）, PNG・SVG・AVIF・WebP書き出し（AVIFは同梱エンコーダで生成、可逆・非可逆を選択可）, 印刷サイズをmmで指定, 読み取りテストと直し方の提示, マイテンプレートとデザインのシェア, CSV一括生成, サーバーへの送信なし"
+        "featureList": "40種類のデザインテンプレート, 20種類のセル形状（連結セル含む）, 9種類のマーカー枠と14種類の目, グラデーション・多色モザイク対応, 中央ロゴ（SNSアイコン・画像・文字）, 枠線8種類とラベルのフレーム, URL/SNS/テキスト/カレンダー/メール/電話/SMS/Wi-Fi/連絡先（vCard・MeCard）/位置情報/暗号通貨（Bitcoin・Lightning）, PNG・SVG・AVIF・WebP書き出し（AVIFは同梱エンコーダで生成、可逆・非可逆を選択可）, 印刷サイズをmmで指定, 読み取りテストと直し方の提示, マイテンプレートとデザインのシェア, CSV一括生成, サーバーへの送信なし, 通信先をContent-Security-Policyでこのサイトとアクセス解析だけに制限"
       },
       {
         "@type": "BreadcrumbList",
@@ -107,7 +110,7 @@
             "name": "入力した内容やロゴ画像はサーバーに送られますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "送られません。QRコードの生成もロゴの合成も画像の書き出しも、すべてブラウザの中だけで行われ、入力した内容（URL・Wi-Fiのパスワード・連絡先など）もロゴ画像もラベルの文字も、どこにも送られません。書き出しに使うフォント、読み取りテストのデコーダ、AVIFのエンコーダはこのサイトに同梱しているので、使うときに外部へ問い合わせることもありません。画面の部品もすべてこのサイトから読み込み、外部とやりとりするのはアクセス解析（Googleアナリティクス・Ahrefs・Cloudflare）だけで、どれも入力内容は扱いません。"
+              "text": "送られません。QRコードの生成もロゴの合成も画像の書き出しも、すべてブラウザの中だけで行われ、入力した内容（URL・Wi-Fiのパスワード・連絡先など）もロゴ画像もラベルの文字も、どこにも送られません。書き出しに使うフォント、読み取りテストのデコーダ、AVIFのエンコーダはこのサイトに同梱しているので、使うときに外部へ問い合わせることもありません。画面の部品もすべてこのサイトから読み込み、外部とやりとりするのはアクセス解析（Googleアナリティクス・Cloudflare Web Analytics）だけで、入力内容は扱いません。読み込みや送信に使える通信先も、Content-Security-Policyでこのサイトとアクセス解析だけに制限しています。"
             }
           },
           {
@@ -181,6 +184,14 @@
               "@type": "Answer",
               "text": "SVGで書き出せます。IllustratorやInDesignで開けば、拡大しても輪郭がぼけません。印刷（mm）に切り替えればSVGもその寸法のまま書き出すので、配置するときに拡大率をいじる必要がありません。PNG・WebP・AVIFは最大4096pxまで指定できます。"
             }
+          },
+          {
+            "@type": "Question",
+            "name": "ファイルや入力が外部に送られないことは、どうすれば確かめられますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。"
+            }
           }
         ]
       }
@@ -195,8 +206,8 @@
        書き出しもこの CSS の @font-face を引いて埋め込む -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260925">
   <link rel="stylesheet" href="../../data/fonts/jp.css?v=20260925">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260926"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
+  <script src="../../data/tools-ui.js?v=20260926_3"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -1892,7 +1903,9 @@
         ロゴ画像、ラベルや文字ロゴの文字は、どこにも送られません。書き出しに使うフォント、読み取りテストのデコーダ、
         AVIFのエンコーダはすべてこのサイトに同梱してあり、使うときに外部へ問い合わせることもありません。
         画面の部品（アイコンなど）もすべてこのサイトから読み込み、外部とやりとりするのはアクセス解析
-        （Googleアナリティクス・Ahrefs・Cloudflare）だけで、どれも入力内容は扱いません。
+        （Googleアナリティクス・Cloudflare Web Analytics）だけで、入力内容は扱いません。そのうえで、
+        このページが読み込みや送信に使える通信先を、ブラウザのセキュリティ機能（Content-Security-Policy）で
+        このサイトとアクセス解析だけに制限しています。
       </p>
 
       <h3>QRコードにできる中身</h3>

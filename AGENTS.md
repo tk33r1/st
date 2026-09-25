@@ -14,6 +14,7 @@
   **例外は head の Ahrefs と GTM の2本だけ**で、これは公開サイト側の計測用。インスクリプション版は
   この2行を落としたものになる。新しく外部参照を増やすときは、その前提を壊していないか確認すること。
   **この制約はトップページ（ルートの `index.html`）だけ**で、他のページは外部の CSS / JS / フォントを使ってよい。
+  ただし **SAFE TOOLS（`tools/` 配下）は別の決まり**があり、外部とやりとりするのはアクセス解析（GTM 経由の GA4 と Cloudflare Web Analytics）だけ（後述「SAFE TOOLS の通信制限」）。
 - **Workers** (`workers/`): 認証・DB・AI 呼び出しなどのサーバーサイド機能。
   Cloudflare Workers + D1 (SQLite)。すべて `src/index.js` 単一ファイル構成で、
   `export default { async fetch(request, env) {...} }` の標準形。
@@ -27,7 +28,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` 由来（`data/tools-ui.css` の `--cat-*`）で、ツール個別には持たない。ダウンロード等の完了地点では `STShare.celebrate()` を呼ぶ（後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
@@ -116,8 +117,29 @@
 - **言語**: コメント・ドキュメントは原則**日本語**（magi-app の README や
   tools-ui.js の一部など例外あり）。コミットメッセージは短い英語（`update` 等）。
 - **スタイル**: ページごとに自給自足が基本。外部参照を禁じるのはトップページ（ルートの `index.html`）
-  だけで、それ以外のページは Google Fonts などの Web フォントや CDN の CSS/JS を読み込んでよい。
-  共有したい自前の CSS/JS は `data/` に置く。フレームワーク・ビルドツールを勝手に持ち込まない。
+  と SAFE TOOLS（`tools/` 配下。次項）で、それ以外のページは Google Fonts などの Web フォントや CDN の
+  CSS/JS を読み込んでよい。共有したい自前の CSS/JS は `data/` に置く。フレームワーク・ビルドツールを勝手に持ち込まない。
+- **SAFE TOOLS の通信制限**: `tools/` 配下の全ページは head の先頭で Content-Security-Policy を宣言し、
+  読み込みや送信に使える通信先を、このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）
+  だけに制限している（寄付ウィジェットの Ko-fi は iframe の表示だけ許可）。GA4 はシグナル・広告系の送り先
+  （doubleclick.net・google.com）を許していないので、そこへの送信は止まる。Ahrefs や Microsoft Clarity は
+  入れない（Clarity は GTM 側で `tk.st/tools/` を除外済み。セッション記録が入力や QR の中身まで送っていた。
+  除外が外れても CSP が止める）。
+  - ページの注記・FAQ・構造化データでも説明している。CSP が保証するのは「読み込みと送信の通信先」まで
+    （ページの移動や、許した送り先へ何を載せるかは縛れない）なので、「どんな不具合があっても送れない」の
+    ような言い方はしない。「中身を送る処理を持たない」＋「通信先を制限している」の2段で書く。
+  - ライブラリ・フォントは CDN から読まず、`data/vendor/`・`data/fonts/` に同梱して読む。版を上げる・足すときは
+    `fetch-vendor.js` の `LIBS` を直して実行し、`SOURCES.json` の差分ごとコミットする（`--check` で照合だけできる）。
+    25MB を超えるファイル（FFmpeg のコア wasm）は分割して置き、`STCommon.fetchVerified` が `SOURCES.json` の
+    `split` を読んでつなぎ、SHA-256 を照合する。
+  - CSP は `'unsafe-eval'` を許していない。文字列からコードを作る古い Emscripten 出力（heic2any の libheif、
+    QR Atelier の OpenCV WeChat）は `.github/scripts/vendor/patches.js` の置き換えで同じ働きのクロージャに
+    直してあり、`fetch-vendor.js` が取り込みのたびに当てる。`--check` は同梱の JS 全体を調べ、理由を書いて
+    許したもの（`DYNAMIC_OK`）以外に文字列からコードを作る処理が見つかったら止まる。ライブラリを足したら必ず走らせる。
+  - `data/vendor/`・`data/fonts/` は `.gitattributes` で改行変換を止めている（記録した SHA-256 と食い違うため）。
+  - CSP は各ページに同じ文字列で書いてある。外部の通信先を足すと約束の説明（注記・FAQ・構造化データ）も
+    変わるので、広げる前に同梱で済まないかを考える。新しいツールを足すときも同じ `<meta>` を head の先頭
+    （`<meta charset>` の直後、どのスクリプトよりも前）に置く。
 - **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`data/glitch.js` が
   描画する。記事追加時は HTML ではなく JSON を編集する。tools/game の一覧も同様に
   `data/tools.json` / `data/game.json` が正。

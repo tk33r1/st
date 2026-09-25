@@ -549,29 +549,6 @@
 .st-theme .dz-in b { font-size: 15px; font-weight: 700; }
 .st-theme .dz-sub { font-size: 12.5px; color: var(--ink-3); }
 
-.st-theme .url-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 8px 12px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-1);
-  background: var(--panel);
-}
-.st-theme .url-row input[type="url"] {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 13.5px;
-  padding: 4px 0;
-}
-.st-theme .url-row input[type="url"]:focus { outline: none; }
-.st-theme .url-row input[type="url"]::placeholder { color: var(--ink-3); }
-
 .st-theme .note {
   margin: 14px 0 0;
   font-size: 12px;

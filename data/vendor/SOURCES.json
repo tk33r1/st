@@ -42,7 +42,8 @@
   },
   "heic2any@0.0.4/heic2any.min.js": {
    "from": "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js",
-   "sha256": "0963cfa50e9e1e7e6af929a40a81e3e898a673f1270eafa6917dd137e4968164"
+   "sha256": "a64e521d2090fe084a689fd0a2a8080b8bdfc89878e1899cf1c0c1e07242682b",
+   "patched": 4
   },
   "heic2any@0.0.4/LICENSE": {
    "from": "https://raw.githubusercontent.com/alexcorvi/heic2any/master/LICENSE.md",
@@ -119,6 +120,14 @@
   "@ffmpeg/core@0.12.6/LICENSE": {
    "from": "https://raw.githubusercontent.com/ffmpegwasm/ffmpeg.wasm/v0.12.10/LICENSE",
    "sha256": "3e123e29517d76504ffce77b3f8e2ccffd4712493f27694b0aba3e376676459f"
+  },
+  "@ffmpeg/core@0.12.6/ffmpeg-core.wasm.part1": {
+   "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm（2分割の1）",
+   "sha256": "a09862c9c70d9ccabde1f6a091b9ea97d0b90d0a686f139a002e90f856420992"
+  },
+  "@ffmpeg/core@0.12.6/ffmpeg-core.wasm.part2": {
+   "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm（2分割の2）",
+   "sha256": "48ec349225f556a2eaae052c1186da73aa41e0660d98419b8c29ca5d45abff17"
   },
   "@jsquash/avif@2.1.1/encode.js": {
    "from": "https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/encode.js",
@@ -209,10 +218,21 @@
    "sha256": "18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3"
   }
  },
- "remote": {
-  "FFMPEG_CORE_WASM": {
+ "split": {
+  "@ffmpeg/core@0.12.6/ffmpeg-core.wasm": {
    "from": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm",
+   "parts": [
+    "@ffmpeg/core@0.12.6/ffmpeg-core.wasm.part1",
+    "@ffmpeg/core@0.12.6/ffmpeg-core.wasm.part2"
+   ],
+   "size": 32129114,
    "sha256": "2390efa7fb66e7e42dbae15427571a5ffc96b829480904c30f471f0a78967f61"
+  }
+ },
+ "local": {
+  "tools/qr-atelier/vendor/wechat/wasm.js": {
+   "sha256": "89529f9154aa615726739b0ffb5ef654955d42adf778eb6ebe218fa41c925c1f",
+   "patched": 3
   }
  }
 }

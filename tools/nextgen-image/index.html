@@ -2,8 +2,12 @@
 <html lang="ja" class="st-theme">
 
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <meta charset="UTF-8">
+  <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
+       このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）だけに制限する。寄付の窓口（Ko-fi）は
+       埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
+       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- Google Tag Manager -->
   <script>(function (w, d, s, l, i) {
       w[l] = w[l] || []; w[l].push({
@@ -14,10 +18,9 @@
           'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
-    content="日本初。ロスレスWebP変換対応。HEICやURL指定、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。">
+    content="日本初。ロスレスWebP変換対応。HEIC対応、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。">
   <meta name="robots" content="max-image-preview:large">
   <title>NextGen Image - 次世代画像変換ツール | SAFE TOOLS</title>
   <link rel="canonical" href="https://tk.st/tools/nextgen-image/">
@@ -26,7 +29,7 @@
   <!-- OGP / Twitter -->
   <meta property="og:title" content="NextGen Image - 次世代画像変換ツール">
   <meta property="og:description"
-    content="日本初。ロスレスWebP変換対応。HEICやURL指定、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。">
+    content="日本初。ロスレスWebP変換対応。HEIC対応、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。">
   <meta property="og:image" content="https://tk.st/images/ogp/nextgen-image-ogp.png">
   <meta property="og:url" content="https://tk.st/tools/nextgen-image/">
   <meta property="og:type" content="website">
@@ -35,7 +38,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="NextGen Image - 次世代画像変換ツール">
   <meta name="twitter:description"
-    content="日本初。ロスレスWebP変換対応。HEICやURL指定、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。">
+    content="日本初。ロスレスWebP変換対応。HEIC対応、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。">
   <meta name="twitter:image" content="https://tk.st/images/ogp/nextgen-image-ogp.png">
 
   <!-- JSON-LD -->
@@ -56,7 +59,8 @@
         "name": "NextGen Image",
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
-        "description": "日本初。ロスレスWebP変換対応。HEICやURL指定、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。",
+        "description": "日本初。ロスレスWebP変換対応。HEIC対応、一括変換コピペや画像URL共有など、かゆいところに手が届く機能を搭載。高画質・高圧縮・高速な次世代画像フォーマット（WEBP, AVIF）に変換できるツールです。",
+        "featureList": ["通信先をContent-Security-Policyでこのサイトとアクセス解析だけに制限"],
         "url": "https://tk.st/tools/nextgen-image/",
         "offers": {
           "@type": "Offer",
@@ -77,8 +81,8 @@
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
   <script src="../../data/vendor/heic2any@0.0.4/heic2any.min.js"></script>
   <script src="../../data/vendor/jszip@3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260926"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
+  <script src="../../data/tools-ui.js?v=20260926_3"></script>
 
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
@@ -297,13 +301,8 @@
         </div>
       </div>
 
-      <div class="url-row">
-        <span class="st-lbl">url</span>
-        <input type="url" id="url-input" placeholder="画像のURLを貼り付けてインポート">
-        <button id="url-btn" class="st-btn-quiet" type="button">インポート</button>
-      </div>
-
       <p class="note">変換はすべてブラウザ内で行われます。画像がサーバーに送られることはありません。</p>
+    <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。</p>
     </div>
 
     <!-- ===================== view 2 : processing ===================== -->
@@ -423,7 +422,7 @@
   </script>
 
   <script>
-    const { formatBytes, showToast, switchView, isPrivateHost, setupDropzone, setupInlineCompare } = window.STCommon;
+    const { formatBytes, showToast, switchView, setupDropzone, setupInlineCompare } = window.STCommon;
 
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
@@ -583,9 +582,6 @@
     const btnDownloadAll = document.getElementById('btn-download-all');
     const btnDownloadAllLabel = document.getElementById('btn-download-all-label');
     const btnReset = document.getElementById('btn-reset');
-
-    const urlInput = document.getElementById('url-input');
-    const urlBtn = document.getElementById('url-btn');
 
     let results = [];        // array of result objects
     // Teardowns for each rendered inline compare slider — replaced wholesale
@@ -1066,105 +1062,6 @@
       compareTeardowns = [];
     }
 
-    async function loadFromUrl(url) {
-      if (!url) return;
-
-      let urlObj;
-      try {
-        urlObj = new URL(url);
-      } catch (e) {
-        showToast('URLの形式が正しくありません', 'error');
-        return;
-      }
-      if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
-        showToast('http(s) のURLを指定してください', 'error');
-        return;
-      }
-      if (isPrivateHost(urlObj.hostname)) {
-        showToast('ローカル/プライベートIPのURLは利用できません', 'error');
-        return;
-      }
-
-      switchView('view-loading');
-      clearLog();
-      setStatus('fetching');
-      loadingMsg.textContent = `fetch ${urlObj.href}`;
-      loadingSubmsg.textContent = '画像を取得しています…';
-
-      try {
-        let response;
-        let usedProxy = false;
-        let directError = null;
-        try {
-          response = await fetch(url, { mode: 'cors', credentials: 'omit' });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        } catch (e) {
-          directError = e;
-          const ok = window.confirm(
-            '直接の画像取得に失敗しました。\n外部プロキシ経由で再試行しますか？\n\n注意: プロキシ運営者にURLと画像内容が渡ります。'
-          );
-          if (!ok) {
-            switchView('view-upload');
-            return;
-          }
-          console.warn('Direct fetch failed:', directError);
-          usedProxy = true;
-
-          // Try image-specialized proxy first (more reliable than generic CORS proxies)
-          const stripped = url.replace(/^https?:\/\//, '');
-          const proxies = [
-            `https://images.weserv.nl/?url=${encodeURIComponent(stripped)}`,
-            `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-          ];
-
-          let lastErr = null;
-          let lastProxyHost = null;
-          response = null;
-          for (const proxyUrl of proxies) {
-            try {
-              console.log('Trying proxy:', proxyUrl);
-              const r = await fetch(proxyUrl, { mode: 'cors', credentials: 'omit' });
-              if (!r.ok) throw new Error(`HTTP ${r.status}`);
-              response = r;
-              break;
-            } catch (perr) {
-              lastErr = perr;
-              try { lastProxyHost = new URL(proxyUrl).host; } catch (_) { lastProxyHost = proxyUrl; }
-              console.warn('Proxy failed:', proxyUrl, perr);
-            }
-          }
-          if (!response) {
-            const hostHint = lastProxyHost ? ` (${lastProxyHost})` : '';
-            throw new Error(`すべてのプロキシで失敗${hostHint}: ${lastErr?.message || '不明'}`);
-          }
-        }
-
-        const contentType = response.headers.get('content-type') || '';
-        const blob = await response.blob();
-        const blobType = blob.type || contentType;
-
-        if (blobType && !blobType.startsWith('image/') && blobType !== 'application/octet-stream') {
-          throw new Error(`画像ではないデータを受信しました (${blobType})`);
-        }
-
-        let filename = 'downloaded_image';
-        const pathParts = urlObj.pathname.split('/');
-        const lastPart = pathParts[pathParts.length - 1];
-        if (lastPart && lastPart.includes('.')) {
-          filename = lastPart;
-        }
-
-        const file = new File([blob], filename, { type: blobType || 'image/png' });
-        if (usedProxy) showToast('プロキシ経由で取得しました');
-        processFiles([file]);
-      } catch (err) {
-        console.error('URL Load error:', err);
-        setStatus('fetch failed', 'err');
-        showToast(`取得失敗: ${err.message || 'unknown'}`, 'error');
-        switchView('view-upload');
-      }
-    }
-
     function filterImageFiles(fileList) {
       return Array.from(fileList || []).filter(f => {
         if (!f) return false;
@@ -1209,18 +1106,6 @@
       if (pastedFiles.length) processFiles(pastedFiles);
     });
 
-    urlBtn.addEventListener('click', () => {
-      const url = urlInput.value.trim();
-      if (url) loadFromUrl(url);
-    });
-
-    urlInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const url = urlInput.value.trim();
-        if (url) loadFromUrl(url);
-      }
-    });
-
     btnDownloadAll.addEventListener('click', () => {
       downloadAllAsZip();
     });
@@ -1232,7 +1117,6 @@
       blobUrls = [];
       results = [];
       resultList.innerHTML = '';
-      urlInput.value = '';
       clearLog();
       setStatus('ready', 'idle');
     });

@@ -1,8 +1,12 @@
 <!doctype html>
 <html lang="ja" class="st-theme">
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <meta charset="UTF-8">
+  <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
+       このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）だけに制限する。寄付の窓口（Ko-fi）は
+       埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
+       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -10,7 +14,6 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="世界初。サーバーレスで動画からAPNGや可逆WebP、GIFに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。">
   <meta name="robots" content="max-image-preview:large">
@@ -50,6 +53,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "description": "世界初。サーバーレスで動画からAPNGや可逆WebP、GIFに直接変換。プライバシーも安心。フレームレートやサイズの調整も可能。",
+        "featureList": ["通信先をContent-Security-Policyでこのサイトとアクセス解析だけに制限"],
         "url": "https://tk.st/tools/video-to-animation/",
         "offers": {
           "@type": "Offer",
@@ -69,8 +73,8 @@
   <!-- ffmpeg.wasm dependencies -->
   <script src="../../data/vendor/@ffmpeg/ffmpeg@0.12.10/ffmpeg.js"></script>
   <script src="../../data/vendor/@ffmpeg/util@0.12.1/index.js"></script>
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260926"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
+  <script src="../../data/tools-ui.js?v=20260926_3"></script>
 
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
@@ -235,6 +239,7 @@
       </div>
 
       <p class="note">変換はすべてブラウザ内で行われます。動画がサーバーに送られることはありません。</p>
+      <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。</p>
       <p class="note warn">ブラウザ内で処理するため、長い動画ほど時間がかかります。</p>
     </div>
 
@@ -536,8 +541,8 @@
 
       // Use ESM build of core because @ffmpeg/ffmpeg@0.12.10's worker is a module worker
       // and falls back to `await import(coreURL)`, which requires a default export.
-      // FFmpeg の部品はこのサイトに同梱したもの（data/vendor/）。コアの wasm だけは 32MB あって
-      // 置けないので CDN から取り、中身が記録どおりのときだけ使う（STCommon.fetchVerified）。
+      // FFmpeg の部品はすべてこのサイトに同梱したもの（data/vendor/）。コアの wasm は 32MB あって
+      // 1ファイルでは置けないので2つに分けてあり、STCommon.fetchVerified がつなぎ直して照合する。
       const coreBase = '../../data/vendor/@ffmpeg/core@0.12.6';
       const ffmpegBase = '../../data/vendor/@ffmpeg/ffmpeg@0.12.10';
 
@@ -546,7 +551,7 @@
       console.log('[init] fetching core js (ESM)');
       const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
       console.log('[init] fetching core wasm');
-      const wasmURL = await window.STCommon.fetchVerified('ffmpegCoreWasm', 'application/wasm');
+      const wasmURL = await window.STCommon.fetchVerified('@ffmpeg/core@0.12.6/ffmpeg-core.wasm', 'application/wasm');
       console.log('[init] calling ffmpeg.load');
 
       await ffmpeg.load({ classWorkerURL, coreURL, wasmURL });

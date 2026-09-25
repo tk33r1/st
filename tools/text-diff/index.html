@@ -1,8 +1,12 @@
 <!doctype html>
 <html lang="ja" class="st-theme">
 <head>
-  <!-- Ahrefs -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <meta charset="UTF-8">
+  <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
+       このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）だけに制限する。寄付の窓口（Ko-fi）は
+       埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
+       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -10,7 +14,6 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="2つの文章の違いを1文字単位で色分け表示するテキスト差分ツール。全角半角・空白・記号・送り仮名の表記ゆれを無視して比較でき、変更を1箇所ずつ採用／却下して最終稿を組み立てられます。文字数カウント、X・meta descriptionなど媒体別の文字数制限チェック、AI検索に引用されやすいかのローカル採点つき。文章はサーバーに送信されません。">
   <meta name="robots" content="max-image-preview:large">
@@ -59,7 +62,8 @@
           "空白・改行の可視化",
           "文字数・バイト数・行数・原稿用紙換算のカウント",
           "X / meta description / OGP など媒体別の文字数制限チェック",
-          "AI検索に引用されやすいかのローカル採点"
+          "AI検索に引用されやすいかのローカル採点",
+          "通信先をContent-Security-Policyでこのサイトとアクセス解析だけに制限"
         ],
         "offers": {
           "@type": "Offer",
@@ -101,6 +105,14 @@
               "@type": "Answer",
               "text": "用途によって正解が違うため、複数の数え方を同時に表示します。見た目どおりの文字数（書記素単位。絵文字を1文字と数える）、JavaScriptのlengthやデータベースの文字数制限に対応するUTF-16単位、空白を除いた数、全角と半角の内訳、UTF-8バイト数、Shift_JISバイト数、行数、段落数、文数、400字詰原稿用紙の枚数を出します。"
             }
+          },
+          {
+            "@type": "Question",
+            "name": "ファイルや入力が外部に送られないことは、どうすれば確かめられますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。"
+            }
           }
         ]
       }
@@ -113,8 +125,8 @@
   <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
 
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260829">
-  <script src="../../data/tools-ui.js?v=20260926"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
+  <script src="../../data/tools-ui.js?v=20260926_3"></script>
 
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
@@ -508,6 +520,7 @@
 
     <div id="hero" style="margin-bottom:22px">
       <p class="note">2つの文章の違いを1文字単位で色分け。変更は1箇所ずつ採用／却下できます。文章はブラウザの外に出ません。</p>
+    <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。</p>
     </div>
 
     <div class="tabs" role="tablist" aria-label="表示するパネル">
