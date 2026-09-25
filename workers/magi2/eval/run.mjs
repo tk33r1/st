@@ -12,7 +12,7 @@
 // 使い方（PowerShell）:
 //   git pull   # 人格カードは bot が main に書き込むので、最新を取り込んでから測る
 //   Copy-Item workers/magi2/eval/cases.example.json workers/magi2/eval/cases.json   # 初回のみ。答えを書く
-//   $env:OPENAI_API_KEY = Read-Host -MaskInput 'OpenAI API key'
+//   $env:OPENAI_API_KEY = Read-Host -MaskInput 'OpenAI API key'   # または workers/magi2/.dev.vars に MAGI_OPENAI_API_KEY=...
 //   node workers/magi2/eval/run.mjs [--runs 2] [--theme light|dark] [--only id1,id2] [--cases path]
 //
 // --runs: MAGI は temperature 1.0 前後で揺れるので、1問を何回答えさせて平均するか（既定 1）。
@@ -40,8 +40,12 @@ const only = opt('only', null)?.split(',');
 const out = console.log.bind(console);
 const die = (msg) => { console.error(`[ERROR] ${msg}`); process.exit(1); };
 
-const apiKey = (process.env.OPENAI_API_KEY || '').trim();
-if (!apiKey) die('OPENAI_API_KEY が未設定');
+// キーは環境変数か、Worker の手元用シークレット（workers/magi2/.dev.vars。.gitignore 済み）の MAGI_OPENAI_API_KEY から取る
+const devVarsKey = () => {
+  try { return readFileSync(join(ROOT, 'workers/magi2/.dev.vars'), 'utf8').match(/^MAGI_OPENAI_API_KEY\s*=\s*"?([^"\r\n]+)"?/m)?.[1]; } catch { return ''; }
+};
+const apiKey = (process.env.OPENAI_API_KEY || devVarsKey() || '').trim();
+if (!apiKey) die('OpenAI のキーが無い。OPENAI_API_KEY を設定するか、workers/magi2/.dev.vars に MAGI_OPENAI_API_KEY=... を書くこと');
 if (!existsSync(casesPath)) die(`${casesPath} が無い。cases.example.json をコピーして本人の答えを書くこと`);
 if (theme && theme !== 'light' && theme !== 'dark') die('--theme は light か dark');
 
