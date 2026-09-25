@@ -141,7 +141,7 @@
     button:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
     [hidden] { display: none !important; }
     .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-    /* 集中モードで隠す要素。矢印は後段の .nav-arrow の transition を優先させたいので、ここ（前方）で定義する */
+    /* 集中モードで隠す要素 */
     .zen-hide { transition: opacity 0.8s ease, filter 0.8s ease; }
 
     /* 上品な紙の質感を表現するノイズ背景 */
@@ -314,7 +314,6 @@
     .vertical-writing .swipe-label-horizontal { display: none; }
     .vertical-writing .swipe-label-vertical { display: inline; }
     #vLine { width: 1px; height: 10rem; background: linear-gradient(to bottom, transparent, var(--surface), transparent); }
-    #hLine { width: 3rem; height: 3px; margin-bottom: 2rem; background: var(--surface); }
     #body { max-width: 36rem; color: var(--secondary); font-size: 1.125rem; line-height: 2.2; letter-spacing: 0.08em; transition: color 0.5s ease; }
     [data-color] { --marker: var(--hl-yellow); }
     [data-color="pink"] { --marker: var(--hl-pink); }
@@ -551,6 +550,10 @@
     .zen-mode .mode-switch:focus-within,
     .zen-mode #zenToggleBtn:hover,
     .zen-mode #zenToggleBtn:focus-visible { opacity: 1 !important; }
+    /* 左右の矢印は集中モードでも送れるように残す（本文の邪魔にならないよう薄くし、触れたときだけ濃くする） */
+    .zen-mode .nav-arrow:not(:disabled) { opacity: 0.2; }
+    .zen-mode .nav-arrow:not(:disabled):hover,
+    .zen-mode .nav-arrow:not(:disabled):focus-visible { opacity: 1; }
     /* 集中モードに入るときの一呼吸。表題の左の線だけを残し、表題の跡まで一度深く伸びてから縮んで消える。
        本文は覆わない（線が消えたあとも表題の枠は透明なまま、押せないまま残る） */
     #subtitle { transition: opacity 0.8s ease, filter 0.8s ease; }
@@ -646,7 +649,6 @@
       .content-stage { padding: 0 0.25rem; }
       .content-layout { gap: 1.65rem; }
       #title { font-size: clamp(2rem, 11vw, 2.8rem); }
-      #hLine { margin-bottom: 1.5rem; }
       #body { font-size: 1rem; line-height: 2.15; }
       #metaInfo { font-size: 0.8rem; }
       /* 目次は表紙の 1 画面目に収めたいので、狭い画面では間を詰める */
@@ -716,10 +718,10 @@
         <div id="contentStage" class="content-stage">
 
           <!-- Navigation Arrows -->
-          <button type="button" id="prevThemeBtn" class="nav-arrow zen-hide" aria-label="前の思索へ" aria-hidden="true" disabled>
+          <button type="button" id="prevThemeBtn" class="nav-arrow" aria-label="前の思索へ" aria-hidden="true" disabled>
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <button type="button" id="nextThemeBtn" class="nav-arrow zen-hide" aria-label="次の思索へ">
+          <button type="button" id="nextThemeBtn" class="nav-arrow" aria-label="次の思索へ">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg>
           </button>
 
@@ -746,8 +748,6 @@
             <div id="vLine" class="content-element anim-ready play-fade-in delay-2"></div>
 
             <div class="prose-panel">
-              <div id="hLine" class="content-element anim-ready play-fade-in delay-2"></div>
-
               <!-- イントロ本文。data-updated はイントロの最終更新日、data-question は書き留め欄に出す問い（各テーマの分は #thoughtSource の article 側） -->
               <div id="body" class="content-element anim-ready play-fade-up delay-1" data-updated="2025.10.12" data-question="いま、あなたが最新化したい人生のテーマは何だろう。">
                 交通事故により、一時的に理性や記憶が制限される中、自分を取り戻そうともがきながら見えた本心と、その後の学びから得た人生のテーマ。ここは、それらを最新化し、ともに思索するための場所です。
