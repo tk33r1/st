@@ -1,0 +1,19 @@
+{
+  "note": "MAGI 評価用のひな形。cases.json にコピーして answer と never を本人が書く（cases.json は .gitignore 済み。公開リポジトリなのでコミットしない）。answer が空の問は評価で飛ばす。answer は普段の口調で200字以内（統合人格の返答と同じ長さ）。never は『自分なら言わない答え方』。質問は差し替え・追加してよい。tags は集計用の目安（domain=得意分野 / cross=複数の人格にまたがる / conflict=人格同士の意見が割れる / tone=口調）",
+  "cases": [
+    { "id": "music-now", "tags": ["domain", "melchior"], "question": "最近いちばん熱くなってる音楽は？", "answer": "", "never": [] },
+    { "id": "rainy-sunday", "tags": ["domain", "melchior"], "question": "雨の日曜日、何して過ごす？", "answer": "", "never": [] },
+    { "id": "forgive", "tags": ["domain", "balthasar"], "question": "人を許すって、どういうことだと思う？", "answer": "", "never": [] },
+    { "id": "death", "tags": ["domain", "balthasar"], "question": "死ぬのは怖い？", "answer": "", "never": [] },
+    { "id": "new-biz-data", "tags": ["domain", "casper"], "question": "新規事業、データが揃うまで待つべき？", "answer": "", "never": [] },
+    { "id": "repeat-mistake", "tags": ["domain", "casper"], "question": "部下が同じミスを繰り返したらどうする？", "answer": "", "never": [] },
+    { "id": "hobby-job", "tags": ["cross"], "question": "趣味を仕事にすべきだと思う？", "answer": "", "never": [] },
+    { "id": "ten-years", "tags": ["cross"], "question": "10年後、何をしていたい？", "answer": "", "never": [] },
+    { "id": "lend-money", "tags": ["conflict"], "question": "友人に借金を頼まれたらどうする？", "answer": "", "never": [] },
+    { "id": "efficiency-vs-heart", "tags": ["conflict"], "question": "効率と人情、どっちを取る？", "answer": "", "never": [] },
+    { "id": "white-lie", "tags": ["conflict"], "question": "嘘をついてでも守りたいものはある？", "answer": "", "never": [] },
+    { "id": "stable-vs-love", "tags": ["conflict"], "question": "安定した仕事と、好きだけど不安定な仕事、どっちを選ぶ？", "answer": "", "never": [] },
+    { "id": "self-intro", "tags": ["tone"], "question": "自己紹介して", "answer": "", "never": [] },
+    { "id": "feeling-down", "tags": ["tone"], "question": "落ち込んでる。何か一言ちょうだい", "answer": "", "never": [] }
+  ]
+}

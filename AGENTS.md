@@ -152,6 +152,13 @@
   Worker は `https://tk.st/data/magi-context.json` を isolate ごとに10分使い回し（期限切れ後は手元の
   カードで答えつつ裏で取り直す）、取得に失敗したり3人格そろわなかったりしたら1分後に再試行する。
   カードは人格ごとに上書きし、JSON に欠けた人格は直近のカードを保つ。反映は10分強遅れることがある。
+- **MAGI の評価（本人らしさの採点）**: `workers/magi2/eval/run.mjs` が、本人が自分の言葉で書いた答え
+  （`cases.json`）と MAGI の統合人格の答えを LLM の審査員に比べさせ、1〜5 で採点する。personas.js や
+  人格カードを変えたら、前後で走らせて点数の上下を見る（直前の結果との差を自動で出す）。MAGI は本番を
+  呼ばず Worker のコードを Node に読み込んで動かし、人格カードも手元の `data/magi-context.json` を使うので、
+  本番の利用枠を減らさず、デプロイ前の変更を測れる（先に `git pull` で最新のカードを取り込む）。
+  `cases.json`（本人の答え）と `results/` は `.gitignore` 済み。**公開リポジトリなのでコミットしない**。
+  ひな形は `cases.example.json`。実行には `OPENAI_API_KEY` が要る。使い方は run.mjs の冒頭を参照。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで
