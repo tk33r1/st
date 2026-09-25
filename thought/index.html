@@ -931,69 +931,71 @@
     /* =========================================
        DOM Elements
        ========================================= */
+    const byId = id => document.getElementById(id);
     const els = {
       root: document.documentElement,
       themeColor: document.querySelector('meta[name="theme-color"]'),
-      contentStage: document.getElementById('contentStage'),
+      app: byId('app'),
+      contentStage: byId('contentStage'),
       contentLayout: document.querySelector('.content-layout'),
-      toc: document.getElementById('toc'),
-      tocList: document.getElementById('tocList'),
-      title: document.getElementById('title'),
-      subtitle: document.getElementById('subtitle'),
-      topMark: document.getElementById('topMark'),
-      body: document.getElementById('body'),
-      progress: document.getElementById('progress'),
-      progressText: document.getElementById('progressText'),
-      progressPrevBtn: document.getElementById('progressPrevBtn'),
-      progressNextBtn: document.getElementById('progressNextBtn'),
-      swipeHint: document.getElementById('swipeHint'),
-      metaContent: document.getElementById('metaContent'),
-      lastUpdated: document.getElementById('lastUpdated'),
-      reference: document.getElementById('reference'),
-      revisionsRow: document.getElementById('revisionsRow'),
-      liveStatus: document.getElementById('liveStatus'),
-      disclosureModal: document.getElementById('disclosureModal'),
+      toc: byId('toc'),
+      tocList: byId('tocList'),
+      title: byId('title'),
+      subtitle: byId('subtitle'),
+      topMark: byId('topMark'),
+      body: byId('body'),
+      progress: byId('progress'),
+      progressText: byId('progressText'),
+      progressPrevBtn: byId('progressPrevBtn'),
+      progressNextBtn: byId('progressNextBtn'),
+      swipeHint: byId('swipeHint'),
+      metaContent: byId('metaContent'),
+      lastUpdated: byId('lastUpdated'),
+      reference: byId('reference'),
+      revisionsRow: byId('revisionsRow'),
+      liveStatus: byId('liveStatus'),
+      disclosureModal: byId('disclosureModal'),
       colorOptions: document.querySelectorAll('#colorModeSwitch .mode-option'),
-      zenToggleBtn: document.getElementById('zenToggleBtn'),
-      zenEnterIcon: document.getElementById('zenEnterIcon'),
-      zenExitIcon: document.getElementById('zenExitIcon'),
-      copyContentBtn: document.getElementById('copyContentBtn'),
-      copyContentLabel: document.getElementById('copyContentLabel'),
-      openShareModalBtn: document.getElementById('openShareModalBtn'),
-      noteToggleBtn: document.getElementById('noteToggleBtn'),
-      notePanel: document.getElementById('notePanel'),
-      pageNote: document.getElementById('pageNote'),
-      pageNoteInput: document.getElementById('pageNoteInput'),
-      pageNoteQuestion: document.getElementById('pageNoteQuestion'),
-      pageNoteHistory: document.getElementById('pageNoteHistory'),
-      orphanedNotes: document.getElementById('orphanedNotes'),
-      exportNotesBtn: document.getElementById('exportNotesBtn'),
-      noteToast: document.getElementById('noteToast'),
+      zenToggleBtn: byId('zenToggleBtn'),
+      zenEnterIcon: byId('zenEnterIcon'),
+      zenExitIcon: byId('zenExitIcon'),
+      copyContentBtn: byId('copyContentBtn'),
+      copyContentLabel: byId('copyContentLabel'),
+      openShareModalBtn: byId('openShareModalBtn'),
+      noteToggleBtn: byId('noteToggleBtn'),
+      notePanel: byId('notePanel'),
+      pageNote: byId('pageNote'),
+      pageNoteInput: byId('pageNoteInput'),
+      pageNoteQuestion: byId('pageNoteQuestion'),
+      pageNoteHistory: byId('pageNoteHistory'),
+      orphanedNotes: byId('orphanedNotes'),
+      exportNotesBtn: byId('exportNotesBtn'),
+      noteToast: byId('noteToast'),
       writingOptions: document.querySelectorAll('#writingModeSwitch .mode-option'),
-      selectionToolbar: document.getElementById('selectionToolbar'),
-      selectionColors: document.getElementById('selectionColors'),
-      memoSelectionBtn: document.getElementById('memoSelectionBtn'),
-      annotationToolbar: document.getElementById('annotationToolbar'),
-      annotationColors: document.getElementById('annotationColors'),
-      annotationDivider: document.getElementById('annotationDivider'),
-      annotationMemoBtn: document.getElementById('annotationMemoBtn'),
-      annotationDeleteBtn: document.getElementById('annotationDeleteBtn'),
-      memoModal: document.getElementById('memoModal'),
-      memoModalTitle: document.getElementById('memoModalTitle'),
-      memoForm: document.getElementById('memoForm'),
-      memoQuote: document.getElementById('memoQuote'),
-      memoInput: document.getElementById('memoInput'),
-      memoHint: document.getElementById('memoHint'),
-      memoCancelBtn: document.getElementById('memoCancelBtn'),
-      shareModal: document.getElementById('shareModal'),
-      shareX: document.getElementById('shareX'),
-      shareLine: document.getElementById('shareLine'),
-      shareNotion: document.getElementById('shareNotion'),
-      shareCopy: document.getElementById('shareCopy'),
-      shareCopyLabel: document.getElementById('shareCopyLabel'),
+      selectionToolbar: byId('selectionToolbar'),
+      selectionColors: byId('selectionColors'),
+      memoSelectionBtn: byId('memoSelectionBtn'),
+      annotationToolbar: byId('annotationToolbar'),
+      annotationColors: byId('annotationColors'),
+      annotationDivider: byId('annotationDivider'),
+      annotationMemoBtn: byId('annotationMemoBtn'),
+      memoModal: byId('memoModal'),
+      memoModalTitle: byId('memoModalTitle'),
+      memoForm: byId('memoForm'),
+      memoQuote: byId('memoQuote'),
+      memoInput: byId('memoInput'),
+      memoHint: byId('memoHint'),
+      memoCancelBtn: byId('memoCancelBtn'),
+      shareModal: byId('shareModal'),
+      shareX: byId('shareX'),
+      shareLine: byId('shareLine'),
+      shareNotion: byId('shareNotion'),
+      shareCopy: byId('shareCopy'),
+      shareCopyLabel: byId('shareCopyLabel'),
       zenHidden: document.querySelectorAll('.zen-hide'),
-      prevThemeBtn: document.getElementById('prevThemeBtn'),
-      nextThemeBtn: document.getElementById('nextThemeBtn')
+      prevThemeBtn: byId('prevThemeBtn'),
+      nextThemeBtn: byId('nextThemeBtn'),
+      copyrightYear: byId('copyright-year')
     };
 
     /* =========================================
@@ -1140,6 +1142,16 @@
       return time;
     };
 
+    const createHistoryItem = (text, date, { requireDate = false } = {}) => {
+      const item = document.createElement('li');
+      const body = document.createElement('p');
+      body.className = 'revision-body';
+      body.textContent = text;
+      if (date || requireDate) item.append(createTime(date));
+      item.append(body);
+      return item;
+    };
+
     const createBadge = (text) => {
       const badge = document.createElement('span');
       badge.className = 'meta-badge';
@@ -1184,14 +1196,7 @@
       const summary = document.createElement('summary');
       summary.textContent = `過去の版を読む（${revisions.length}）`;
       const list = document.createElement('ol');
-      revisions.forEach(revision => {
-        const item = document.createElement('li');
-        const body = document.createElement('p');
-        body.className = 'revision-body';
-        body.textContent = revision.body;
-        item.append(createTime(revision.date), body);
-        list.append(item);
-      });
+      list.append(...revisions.map(revision => createHistoryItem(revision.body, revision.date, { requireDate: true })));
       details.append(summary, list);
       return [details];
     };
@@ -1579,6 +1584,212 @@
     }
 
     /*
+      横スワイプは指に紙が付いてくる。
+      - 動き始めが横向きならめくりを始め、以後は縦スクロールさせない（縦向きなら何もしない）
+      - 次へ：指でつまんだ紙の一点が指と一緒に動く。前へ：左に伏せてある前のページを指で引き戻す
+      - 離したとき、十分めくれているか、はらうように速く動かしていればめくり切る。そうでなければ元に戻す
+    */
+    const DRAG_START_DISTANCE = 10;
+    const FLICK_SPEED = 0.35; // px/ms
+    let gesture = null;
+
+    // 指の位置に合う t を、紙の形を先に計算した表から探す
+    function buildDragTable(turn, grabDistance) {
+      const { parts, direction } = turn;
+      const samples = 96;
+      return Array.from({ length: samples + 1 }, (_, index) => {
+        const t = index / samples;
+        return { t, x: leafPointX(t, direction, parts.strips.length, parts.stripWidth, grabDistance) };
+      });
+    }
+
+    function findDragT(gesture, fingerX) {
+      const { turn, table, grabDistance, startX } = gesture;
+      // 綴じ目から離れる向きを正にそろえる（右綴じでは左向きが正）
+      const dx = (fingerX - startX) * (turn.mirrored ? -1 : 1);
+      if (turn.direction === 'next') {
+        const target = grabDistance + dx;
+        for (let index = 1; index < table.length; index++) {
+          const prev = table[index - 1];
+          const cur = table[index];
+          if (cur.x <= target) return prev.t + (cur.t - prev.t) * ((prev.x - target) / Math.max(1e-6, prev.x - cur.x));
+        }
+        return 1;
+      }
+      // 前へは紙が画面の外（左）から来るので、指の移動の倍だけ紙の端を動かす
+      const target = -grabDistance + dx * 2;
+      for (let index = table.length - 2; index >= 0; index--) {
+        const prev = table[index + 1];
+        const cur = table[index];
+        if (cur.x >= target) return prev.t + (cur.t - prev.t) * ((target - prev.x) / Math.max(1e-6, cur.x - prev.x));
+      }
+      return 0;
+    }
+
+    function startDrag(touch) {
+      // 次へは綴じ目の側へ払う（横書きは左へ、縦書きは右へ）
+      const dx = touch.clientX - gesture.startX;
+      const step = (isVertical ? dx > 0 : dx < 0) ? 1 : -1;
+      const target = themeIndex() + step;
+      if (target < -1 || target >= AVAILABLE_THEMES.length) return false;
+      if (document.activeElement?.matches('.toc-link, .progress-index')) document.activeElement.blur();
+      gesture.fromTheme = currentTheme;
+      gesture.turn = switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace', interactive: true });
+      if (!gesture.turn) return false;
+      // つまんだ位置が綴じ目に近すぎると、少しの動きで紙が大きく跳ねるので、紙幅の 6 割より手前はつままない
+      const { spineX, width, mirrored } = gesture.turn;
+      gesture.grabDistance = Math.min(width, Math.max(width * 0.6, (gesture.startX - spineX) * (mirrored ? -1 : 1)));
+      gesture.table = buildDragTable(gesture.turn, gesture.grabDistance);
+      return true;
+    }
+
+    // 離す瞬間は指が止まっているので、直近 80ms の動きから速さを出す
+    const VELOCITY_WINDOW_MS = 80;
+    function trackVelocity(touch) {
+      const now = performance.now();
+      gesture.samples.push({ x: touch.clientX, time: now });
+      while (gesture.samples.length > 2 && now - gesture.samples[1].time > VELOCITY_WINDOW_MS) gesture.samples.shift();
+    }
+    function releaseVelocity() {
+      const samples = gesture.samples;
+      if (samples.length < 2) return 0;
+      const first = samples[0];
+      const last = samples[samples.length - 1];
+      if (performance.now() - last.time > VELOCITY_WINDOW_MS) return 0; // 止めてから離した
+      return (last.x - first.x) / Math.max(1, last.time - first.time);
+    }
+
+    function releaseDrag(cancelled = false) {
+      const { turn, fromTheme } = gesture;
+      // 綴じ目へ向かう速さを負にそろえる（右綴じでは右向きが綴じ目へ）
+      const velocity = releaseVelocity() * (turn.mirrored ? -1 : 1);
+      gesture = null;
+      if (turn.token !== transitionToken) return;
+      const isNext = turn.direction === 'next';
+      const turned = isNext ? turn.t : 1 - turn.t;
+      const flicked = isNext ? velocity < -FLICK_SPEED : velocity > FLICK_SPEED;
+      const flickedBack = isNext ? velocity > FLICK_SPEED : velocity < -FLICK_SPEED;
+      const commit = !cancelled && !flickedBack && (flicked || turned > 0.3);
+      const end = commit === isNext ? 1 : 0;
+      const duration = 160 + 620 * Math.abs(end - turn.t);
+      const settle = () => {
+        pendingSettle = null;
+        if (turn.token !== transitionToken) return;
+        if (commit) {
+          clearPageTurn();
+          announceTheme();
+          learnSwipe();
+        } else {
+          // 元のページに戻す。紙と中身の入れ替えは同じフレーム内で済ませるので、画面は動かない
+          switchTheme(fromTheme, { history: 'replace', animate: false, silent: true });
+        }
+      };
+      pendingSettle = settle;
+      animateTurn(turn, end, duration, { onDone: settle });
+    }
+
+    els.contentStage.addEventListener('touchstart', (e) => {
+      if (gesture?.mode === 'drag') return; // めくっている最中に増えた指は無視する
+      if (pendingSettle) pendingSettle();
+      if (e.touches.length > 1 || e.target.closest('button, a, input, textarea, select, summary')) {
+        gesture = null;
+        return;
+      }
+      const touch = e.changedTouches[0];
+      gesture = {
+        mode: 'pending',
+        startX: touch.clientX,
+        startY: touch.clientY,
+        inBody: els.body.contains(e.target),
+        samples: [{ x: touch.clientX, time: performance.now() }]
+      };
+    }, { passive: true });
+
+    /*
+      本文が横にはみ出しているとき（縦書きで長いメモを書いた等）、指の向き dx の先にまだ読む分が残っているか。
+      残っていればめくりより先に本文をスクロールし、端まで来たら次のスワイプでめくる。
+      縦書き（vertical-rl）の scrollLeft は右端が 0 で左へ負になるので、始まりの端からの距離は絶対値で見る
+    */
+    function bodyCanScroll(dx) {
+      const body = els.body;
+      const max = body.scrollWidth - body.clientWidth;
+      if (max <= 1) return false;
+      const fromStart = Math.abs(body.scrollLeft);
+      // 縦書きは左へ、横書きは右へ読み進む。指はその逆向きに払う
+      const forward = isVertical ? dx > 0 : dx < 0;
+      return forward ? fromStart < max - 1 : fromStart > 1;
+    }
+    const BODY_FLING_MS = 250;
+
+    els.contentStage.addEventListener('touchmove', (e) => {
+      if (!gesture || gesture.mode === 'ignore') return;
+      const touch = e.changedTouches[0];
+      trackVelocity(touch);
+      if (gesture.mode === 'pending') {
+        const dx = touch.clientX - gesture.startX;
+        const dy = touch.clientY - gesture.startY;
+        if (Math.hypot(dx, dy) < DRAG_START_DISTANCE) return;
+        // 縦の動き・複数指・本文を選択中・動きを減らす設定のときは、指に付いてこさせない
+        const horizontal = Math.abs(dx) > Math.abs(dy) * 1.2;
+        if (horizontal && gesture.inBody && e.touches.length === 1 && !hasBodySelection() && bodyCanScroll(dx)) {
+          gesture.mode = 'scroll';
+          gesture.scrollOriginX = touch.clientX;
+          gesture.scrollOrigin = els.body.scrollLeft;
+        } else if (!horizontal || e.touches.length > 1 || hasBodySelection() || reducedMotionQuery.matches) {
+          gesture.mode = horizontal && reducedMotionQuery.matches ? 'swipe' : 'ignore';
+          return;
+        } else if (!startDrag(touch)) {
+          gesture.mode = 'ignore';
+          return;
+        } else {
+          gesture.mode = 'drag';
+        }
+      }
+      if (gesture.mode === 'scroll') {
+        if (e.cancelable) e.preventDefault();
+        // 本文が指に付いてくる（ブラウザが範囲に収める）
+        els.body.scrollLeft = gesture.scrollOrigin - (touch.clientX - gesture.scrollOriginX);
+        return;
+      }
+      if (gesture.mode !== 'drag') return;
+      if (gesture.turn.token !== transitionToken) {
+        gesture = null;
+        return;
+      }
+      if (e.cancelable) e.preventDefault();
+      renderTurn(gesture.turn, Math.min(1, Math.max(0, findDragT(gesture, touch.clientX))));
+    }, { passive: false });
+
+    els.contentStage.addEventListener('touchend', (e) => {
+      if (!gesture) return;
+      if (gesture.mode === 'drag') {
+        releaseDrag();
+        return;
+      }
+      // 払って離したら、その勢いの分だけ滑らせる
+      if (gesture.mode === 'scroll') {
+        const velocity = releaseVelocity();
+        if (Math.abs(velocity) > FLICK_SPEED) {
+          els.body.scrollBy({ left: -velocity * BODY_FLING_MS, behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
+        }
+      }
+      // 動きを減らす設定では、従来どおり離したときにだけ送る（紙は動かさない）
+      if (gesture.mode === 'swipe') {
+        const xDiff = gesture.startX - e.changedTouches[0].clientX;
+        if (Math.abs(xDiff) > 60) {
+          moveTheme((xDiff > 0) !== isVertical ? 1 : -1);
+          learnSwipe();
+        }
+      }
+      gesture = null;
+    }, { passive: true });
+
+    els.contentStage.addEventListener('touchcancel', () => {
+      if (gesture?.mode === 'drag') releaseDrag(true);
+      else gesture = null;
+    }, { passive: true });
+
+    /*
       縦書きの列の長さ（本文の高さ）を、全文が幅に収まる最短の長さにする（二分探索で数回測るだけ）。
       最短でも VERTICAL_MIN_EM、最長の VERTICAL_MAX_EM でも収まらないときだけ横スクロールに任せる
     */
@@ -1605,22 +1816,22 @@
       body.style.height = `${high}em`;
     }
 
+    const syncModeOptions = (options, activeMode) => {
+      options.forEach(option => option.setAttribute('aria-pressed', String(option.dataset.mode === activeMode)));
+    };
+
     function applyDisplayModes() {
       els.root.classList.toggle('dark-mode', isDarkMode);
       els.root.classList.toggle('zen-mode', isZenMode);
       els.themeColor.setAttribute('content', isDarkMode ? '#161618' : '#ffffff');
-      els.colorOptions.forEach(option => {
-        option.setAttribute('aria-pressed', String((option.dataset.mode === 'dark') === isDarkMode));
-      });
+      syncModeOptions(els.colorOptions, isDarkMode ? 'dark' : 'light');
       els.zenToggleBtn.setAttribute('aria-pressed', String(isZenMode));
       els.zenToggleBtn.setAttribute('aria-label', isZenMode ? '集中モードを終了する' : '集中モードにする');
       els.zenToggleBtn.title = isZenMode ? '集中モードを終了' : '集中モードにする';
       els.zenEnterIcon.hidden = isZenMode;
       els.zenExitIcon.hidden = !isZenMode;
       els.root.classList.toggle('vertical-writing', isVertical);
-      els.writingOptions.forEach(option => {
-        option.setAttribute('aria-pressed', String((option.dataset.mode === 'vertical') === isVertical));
-      });
+      syncModeOptions(els.writingOptions, writingModeName());
       fitVerticalBody();
       updateArrows();
       // 見えなくした要素に Tab で入らないようにする
@@ -1680,10 +1891,10 @@
       .filter(element => element.dataset.annotationId === id);
     // フォーカスを当てられる一片（途切れた蛍光ペンは最初の <mark>、メモはメモ本文）
     const findFocusTarget = (id) => findBodyElements(id).find(element => element.matches('mark[tabindex], .margin-note'));
-    const hasBodySelection = () => {
+    function hasBodySelection() {
       const selection = window.getSelection();
       return Boolean(selection && !selection.isCollapsed && els.body.contains(selection.anchorNode));
-    };
+    }
     const createAnnotationId = () => window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const overlapsRange = (a, b) => a.start < b.end && a.end > b.start;
     const sameRange = (a, b) => a.start === b.start && a.end === b.end;
@@ -1696,45 +1907,51 @@
       付け直せなかった書き込み（改訂で文言が消えた等）は orphaned として捨てずに返す。保存時にも書き戻すので、
       文言を元に戻せばまた本文に付く。
     */
+    function parseStoredAnnotations(stored) {
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return [];
+      const items = [];
+      parsed.slice(0, MAX_ANNOTATIONS).forEach((item, index) => {
+        if (!item || typeof item !== 'object') return;
+        const start = Number(item.start);
+        const end = Number(item.end);
+        const quote = typeof item.quote === 'string' ? item.quote.slice(0, 600) : '';
+        const note = typeof item.note === 'string' ? item.note.slice(0, 1200) : '';
+        if (!Number.isInteger(start) || !Number.isInteger(end) || !quote || start < 0 || end <= start) return;
+        // 以前の形式（kind なし）は、メモ付きならメモだけ、なければ蛍光ペンとして読む（メモに自動で引いていた線は捨てる）
+        const kind = item.kind === 'memo' || item.kind === 'highlight' ? item.kind : (note ? 'memo' : 'highlight');
+        if (kind === 'memo' && !note) return;
+        const base = { id: typeof item.id === 'string' ? item.id : `${Date.now()}-${index}`, kind, start, end, quote };
+        items.push(kind === 'memo' ? { ...base, note } : { ...base, color: normalizeColor(item.color) });
+      });
+      return items;
+    }
+
+    function placeAnnotations(items, bodyText) {
+      // sort は安定なので、ずれが同じなら保存順が先のものを優先する
+      const candidates = items.flatMap(item => findQuoteStarts(bodyText, item.quote)
+        .map(start => ({ item, start, distance: Math.abs(start - item.start) })))
+        .sort((a, b) => a.distance - b.distance);
+      const placed = new Map();
+      candidates.forEach(({ item, start }) => {
+        if (placed.has(item)) return;
+        const range = { start, end: start + item.quote.length };
+        if (Array.from(placed.values()).some(existing => existing.kind === item.kind && overlapsRange(existing, range))) return;
+        placed.set(item, { ...item, ...range });
+      });
+      return {
+        placed: Array.from(placed.values()).sort((a, b) => a.start - b.start),
+        orphaned: items.filter(item => !placed.has(item))
+      };
+    }
+
     // 書き出しでは表示中以外のテーマも読むので、テーマを渡せるようにしてある
     function loadAnnotations(themeName = currentTheme) {
       const empty = { placed: [], orphaned: [] };
-      const bodyText = getThemeData(themeName).body;
       const stored = readStorage('localStorage', getAnnotationKey(themeName));
       if (!stored) return empty;
       try {
-        const parsed = JSON.parse(stored);
-        if (!Array.isArray(parsed)) return empty;
-        const items = [];
-        parsed.slice(0, MAX_ANNOTATIONS).forEach((item, index) => {
-          if (!item || typeof item !== 'object') return;
-          const start = Number(item.start);
-          const end = Number(item.end);
-          const quote = typeof item.quote === 'string' ? item.quote.slice(0, 600) : '';
-          const note = typeof item.note === 'string' ? item.note.slice(0, 1200) : '';
-          if (!Number.isInteger(start) || !Number.isInteger(end) || !quote || start < 0 || end <= start) return;
-          // 以前の形式（kind なし）は、メモ付きならメモだけ、なければ蛍光ペンとして読む（メモに自動で引いていた線は捨てる）
-          const kind = item.kind === 'memo' || item.kind === 'highlight' ? item.kind : (note ? 'memo' : 'highlight');
-          if (kind === 'memo' && !note) return;
-          const base = { id: typeof item.id === 'string' ? item.id : `${Date.now()}-${index}`, kind, start, end, quote };
-          items.push(kind === 'memo' ? { ...base, note } : { ...base, color: normalizeColor(item.color) });
-        });
-
-        // sort は安定なので、ずれが同じなら保存順が先のものを優先する
-        const candidates = items.flatMap(item => findQuoteStarts(bodyText, item.quote)
-          .map(start => ({ item, start, distance: Math.abs(start - item.start) })))
-          .sort((a, b) => a.distance - b.distance);
-        const placed = new Map();
-        candidates.forEach(({ item, start }) => {
-          if (placed.has(item)) return;
-          const range = { start, end: start + item.quote.length };
-          if (Array.from(placed.values()).some(existing => existing.kind === item.kind && overlapsRange(existing, range))) return;
-          placed.set(item, { ...item, ...range });
-        });
-        return {
-          placed: Array.from(placed.values()).sort((a, b) => a.start - b.start),
-          orphaned: items.filter(item => !placed.has(item))
-        };
+        return placeAnnotations(parseStoredAnnotations(stored), getThemeData(themeName).body);
       } catch (_) {
         return empty;
       }
@@ -1922,14 +2139,7 @@
       const { history } = pageNote;
       els.pageNoteHistory.hidden = !history.length;
       els.pageNoteHistory.querySelector('summary').textContent = `過去の自分の書き留め（${history.length}）`;
-      els.pageNoteHistory.querySelector('ol').replaceChildren(...history.map(entry => {
-        const item = document.createElement('li');
-        const body = document.createElement('p');
-        body.className = 'revision-body';
-        body.textContent = entry.text;
-        item.append(entry.date ? createTime(entry.date) : '', body);
-        return item;
-      }));
+      els.pageNoteHistory.querySelector('ol').replaceChildren(...history.map(entry => createHistoryItem(entry.text, entry.date)));
     }
 
     /*
@@ -2251,7 +2461,7 @@
       hideAnnotationToolbar();
     };
     document.addEventListener('selectionchange', queueSelectionToolbarUpdate);
-    document.getElementById('app').addEventListener('scroll', hideToolbars, { passive: true });
+    els.app.addEventListener('scroll', hideToolbars, { passive: true });
     window.addEventListener('resize', hideToolbars, { passive: true });
 
     els.selectionToolbar.addEventListener('click', event => {
@@ -2392,212 +2602,6 @@
       const usable = (element) => !element.disabled && !element.closest('[hidden]');
       focusWhenShown(usable(button) ? button : usable(partner) ? partner : els.tocLinks[0]);
     }));
-
-    /*
-      横スワイプは指に紙が付いてくる。
-      - 動き始めが横向きならめくりを始め、以後は縦スクロールさせない（縦向きなら何もしない）
-      - 次へ：指でつまんだ紙の一点が指と一緒に動く。前へ：左に伏せてある前のページを指で引き戻す
-      - 離したとき、十分めくれているか、はらうように速く動かしていればめくり切る。そうでなければ元に戻す
-    */
-    const DRAG_START_DISTANCE = 10;
-    const FLICK_SPEED = 0.35; // px/ms
-    let gesture = null;
-
-    // 指の位置に合う t を、紙の形を先に計算した表から探す
-    function buildDragTable(turn, grabDistance) {
-      const { parts, direction } = turn;
-      const samples = 96;
-      return Array.from({ length: samples + 1 }, (_, index) => {
-        const t = index / samples;
-        return { t, x: leafPointX(t, direction, parts.strips.length, parts.stripWidth, grabDistance) };
-      });
-    }
-
-    function findDragT(gesture, fingerX) {
-      const { turn, table, grabDistance, startX } = gesture;
-      // 綴じ目から離れる向きを正にそろえる（右綴じでは左向きが正）
-      const dx = (fingerX - startX) * (turn.mirrored ? -1 : 1);
-      if (turn.direction === 'next') {
-        const target = grabDistance + dx;
-        for (let index = 1; index < table.length; index++) {
-          const prev = table[index - 1];
-          const cur = table[index];
-          if (cur.x <= target) return prev.t + (cur.t - prev.t) * ((prev.x - target) / Math.max(1e-6, prev.x - cur.x));
-        }
-        return 1;
-      }
-      // 前へは紙が画面の外（左）から来るので、指の移動の倍だけ紙の端を動かす
-      const target = -grabDistance + dx * 2;
-      for (let index = table.length - 2; index >= 0; index--) {
-        const prev = table[index + 1];
-        const cur = table[index];
-        if (cur.x >= target) return prev.t + (cur.t - prev.t) * ((target - prev.x) / Math.max(1e-6, cur.x - prev.x));
-      }
-      return 0;
-    }
-
-    function startDrag(touch) {
-      // 次へは綴じ目の側へ払う（横書きは左へ、縦書きは右へ）
-      const dx = touch.clientX - gesture.startX;
-      const step = (isVertical ? dx > 0 : dx < 0) ? 1 : -1;
-      const target = themeIndex() + step;
-      if (target < -1 || target >= AVAILABLE_THEMES.length) return false;
-      if (document.activeElement?.matches('.toc-link, .progress-index')) document.activeElement.blur();
-      gesture.fromTheme = currentTheme;
-      gesture.turn = switchTheme(AVAILABLE_THEMES[target] ?? null, { history: 'replace', interactive: true });
-      if (!gesture.turn) return false;
-      // つまんだ位置が綴じ目に近すぎると、少しの動きで紙が大きく跳ねるので、紙幅の 6 割より手前はつままない
-      const { spineX, width, mirrored } = gesture.turn;
-      gesture.grabDistance = Math.min(width, Math.max(width * 0.6, (gesture.startX - spineX) * (mirrored ? -1 : 1)));
-      gesture.table = buildDragTable(gesture.turn, gesture.grabDistance);
-      return true;
-    }
-
-    // 離す瞬間は指が止まっているので、直近 80ms の動きから速さを出す
-    const VELOCITY_WINDOW_MS = 80;
-    function trackVelocity(touch) {
-      const now = performance.now();
-      gesture.samples.push({ x: touch.clientX, time: now });
-      while (gesture.samples.length > 2 && now - gesture.samples[1].time > VELOCITY_WINDOW_MS) gesture.samples.shift();
-    }
-    function releaseVelocity() {
-      const samples = gesture.samples;
-      if (samples.length < 2) return 0;
-      const first = samples[0];
-      const last = samples[samples.length - 1];
-      if (performance.now() - last.time > VELOCITY_WINDOW_MS) return 0; // 止めてから離した
-      return (last.x - first.x) / Math.max(1, last.time - first.time);
-    }
-
-    function releaseDrag(cancelled = false) {
-      const { turn, fromTheme } = gesture;
-      // 綴じ目へ向かう速さを負にそろえる（右綴じでは右向きが綴じ目へ）
-      const velocity = releaseVelocity() * (turn.mirrored ? -1 : 1);
-      gesture = null;
-      if (turn.token !== transitionToken) return;
-      const isNext = turn.direction === 'next';
-      const turned = isNext ? turn.t : 1 - turn.t;
-      const flicked = isNext ? velocity < -FLICK_SPEED : velocity > FLICK_SPEED;
-      const flickedBack = isNext ? velocity > FLICK_SPEED : velocity < -FLICK_SPEED;
-      const commit = !cancelled && !flickedBack && (flicked || turned > 0.3);
-      const end = commit === isNext ? 1 : 0;
-      const duration = 160 + 620 * Math.abs(end - turn.t);
-      const settle = () => {
-        pendingSettle = null;
-        if (turn.token !== transitionToken) return;
-        if (commit) {
-          clearPageTurn();
-          announceTheme();
-          learnSwipe();
-        } else {
-          // 元のページに戻す。紙と中身の入れ替えは同じフレーム内で済ませるので、画面は動かない
-          switchTheme(fromTheme, { history: 'replace', animate: false, silent: true });
-        }
-      };
-      pendingSettle = settle;
-      animateTurn(turn, end, duration, { onDone: settle });
-    }
-
-    els.contentStage.addEventListener('touchstart', (e) => {
-      if (gesture?.mode === 'drag') return; // めくっている最中に増えた指は無視する
-      if (pendingSettle) pendingSettle();
-      if (e.touches.length > 1 || e.target.closest('button, a, input, textarea, select, summary')) {
-        gesture = null;
-        return;
-      }
-      const touch = e.changedTouches[0];
-      gesture = {
-        mode: 'pending',
-        startX: touch.clientX,
-        startY: touch.clientY,
-        inBody: els.body.contains(e.target),
-        samples: [{ x: touch.clientX, time: performance.now() }]
-      };
-    }, { passive: true });
-
-    /*
-      本文が横にはみ出しているとき（縦書きで長いメモを書いた等）、指の向き dx の先にまだ読む分が残っているか。
-      残っていればめくりより先に本文をスクロールし、端まで来たら次のスワイプでめくる。
-      縦書き（vertical-rl）の scrollLeft は右端が 0 で左へ負になるので、始まりの端からの距離は絶対値で見る
-    */
-    function bodyCanScroll(dx) {
-      const body = els.body;
-      const max = body.scrollWidth - body.clientWidth;
-      if (max <= 1) return false;
-      const fromStart = Math.abs(body.scrollLeft);
-      // 縦書きは左へ、横書きは右へ読み進む。指はその逆向きに払う
-      const forward = isVertical ? dx > 0 : dx < 0;
-      return forward ? fromStart < max - 1 : fromStart > 1;
-    }
-    const BODY_FLING_MS = 250;
-
-    els.contentStage.addEventListener('touchmove', (e) => {
-      if (!gesture || gesture.mode === 'ignore') return;
-      const touch = e.changedTouches[0];
-      trackVelocity(touch);
-      if (gesture.mode === 'pending') {
-        const dx = touch.clientX - gesture.startX;
-        const dy = touch.clientY - gesture.startY;
-        if (Math.hypot(dx, dy) < DRAG_START_DISTANCE) return;
-        // 縦の動き・複数指・本文を選択中・動きを減らす設定のときは、指に付いてこさせない
-        const horizontal = Math.abs(dx) > Math.abs(dy) * 1.2;
-        if (horizontal && gesture.inBody && e.touches.length === 1 && !hasBodySelection() && bodyCanScroll(dx)) {
-          gesture.mode = 'scroll';
-          gesture.scrollOriginX = touch.clientX;
-          gesture.scrollOrigin = els.body.scrollLeft;
-        } else if (!horizontal || e.touches.length > 1 || hasBodySelection() || reducedMotionQuery.matches) {
-          gesture.mode = horizontal && reducedMotionQuery.matches ? 'swipe' : 'ignore';
-          return;
-        } else if (!startDrag(touch)) {
-          gesture.mode = 'ignore';
-          return;
-        } else {
-          gesture.mode = 'drag';
-        }
-      }
-      if (gesture.mode === 'scroll') {
-        if (e.cancelable) e.preventDefault();
-        // 本文が指に付いてくる（ブラウザが範囲に収める）
-        els.body.scrollLeft = gesture.scrollOrigin - (touch.clientX - gesture.scrollOriginX);
-        return;
-      }
-      if (gesture.mode !== 'drag') return;
-      if (gesture.turn.token !== transitionToken) {
-        gesture = null;
-        return;
-      }
-      if (e.cancelable) e.preventDefault();
-      renderTurn(gesture.turn, Math.min(1, Math.max(0, findDragT(gesture, touch.clientX))));
-    }, { passive: false });
-
-    els.contentStage.addEventListener('touchend', (e) => {
-      if (!gesture) return;
-      if (gesture.mode === 'drag') {
-        releaseDrag();
-        return;
-      }
-      // 払って離したら、その勢いの分だけ滑らせる
-      if (gesture.mode === 'scroll') {
-        const velocity = releaseVelocity();
-        if (Math.abs(velocity) > FLICK_SPEED) {
-          els.body.scrollBy({ left: -velocity * BODY_FLING_MS, behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
-        }
-      }
-      // 動きを減らす設定では、従来どおり離したときにだけ送る（紙は動かさない）
-      if (gesture.mode === 'swipe') {
-        const xDiff = gesture.startX - e.changedTouches[0].clientX;
-        if (Math.abs(xDiff) > 60) {
-          moveTheme((xDiff > 0) !== isVertical ? 1 : -1);
-          learnSwipe();
-        }
-      }
-      gesture = null;
-    }, { passive: true });
-
-    els.contentStage.addEventListener('touchcancel', () => {
-      if (gesture?.mode === 'drag') releaseDrag(true);
-      else gesture = null;
-    }, { passive: true });
 
     // 前へめくる間は本物のページが隠れていて focus できないので、めくり終えてから移す
     function focusWhenShown(element) {
@@ -2817,7 +2821,7 @@
     // 登場のアニメーションが落ち着いてから
     scheduleTurnPreview(1600);
 
-    document.getElementById('copyright-year').textContent = new Date().getFullYear();
+    els.copyrightYear.textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
