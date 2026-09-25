@@ -1864,7 +1864,7 @@
               大学生のとき、映画『イージー★ライダー』を観てハーレーに強烈な憧憬を抱く。ヒッピー文化、風と自由への生涯にわたる傾倒がここから始まり、休日のレンタルバイクで風を感じる原点となる。
             </p>
           </div>
-          <div class="story-date-wrap"><span class="story-date">2007</span></div>
+          <div class="story-date-wrap" data-magi-lead><span class="story-date">2007</span></div>
         </div>
 
         <!-- 2024 -->
@@ -1876,7 +1876,7 @@
               現在もお世話になっているハーレーダビッドソン東久留米店にて、最新水冷レボリューションマックス搭載のスポーツモデル「ナイトスター (RH975)」を新車購入。毎週末のツーリングに胸を躍らせる。
             </p>
           </div>
-          <div class="story-date-wrap"><span class="story-date">2024</span></div>
+          <div class="story-date-wrap" data-magi-lead><span class="story-date">2024</span></div>
         </div>
 
         <!-- 2025 -->
@@ -1888,7 +1888,7 @@
               仕事からの帰宅中、交差点で右折してきた対向車とナイトスターが激しく衝突。40日間にわたる入院、腕と腰の骨折、そして記憶障害。日常生活への復帰すら危ぶまれる生死の淵を経験し、愛機は廃車となった。
             </p>
           </div>
-          <div class="story-date-wrap"><span class="story-date">2025</span></div>
+          <div class="story-date-wrap" data-magi-lead><span class="story-date">2025</span></div>
         </div>
 
         <!-- 2026 -->
@@ -1901,7 +1901,7 @@
               Classic Liberty Edition』の抽選受付が、ちょうど始まっているところだという。——結果は、当選。「攻めるスポーツモデル」から「ゆったりと風と景色を味わうクルーザー」へ、リターンを果たす。
             </p>
           </div>
-          <div class="story-date-wrap"><span class="story-date">2026</span></div>
+          <div class="story-date-wrap" data-magi-lead><span class="story-date">2026</span></div>
         </div>
       </div>
     </div>
@@ -2235,6 +2235,9 @@
       // 公開後はこの設定だけを更新する。
       // 注: latestVideo を設定すると VideoObject の JSON-LD を JS で生成する。
       //     JS を実行しないクローラにも渡すため、公開時は <head> に静的にも書き出すこと。
+      // 注: 同じく公開時は、#channel の teaser-status / teaser-desc の静的な文言（「公開予定」）も
+      //     書き換えること。JS が表示を差し替えても HTML には残り、MAGI の人格カード
+      //     （data-magi の目印。JS を実行せずに読む）が「まだ公開前」と覚えたままになる。
       const config = {
         youtubeUrl: 'https://www.youtube.com/@liberty_motovlog',
         subscribeUrl: 'https://www.youtube.com/@liberty_motovlog?sub_confirmation=1',

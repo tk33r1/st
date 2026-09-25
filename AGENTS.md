@@ -100,9 +100,14 @@
     `_ACCESS_TOKEN_SECRET` の4点（メディアごと）を置く。未設定なら警告だけ出して生成は通す。
   - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
     `dry-run` での本文確認に使う（生成は走らない）。
-  - `magi-context.yml`（元ページの push 時＋手動）: `.github/scripts/magi-context.py` が
+  - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が
     MAGI の人格カードを作り直して `data/magi-context.json` にコミットする（後述「MAGI の人格カード」）。
-    素材のハッシュが前回と同じ人格は LLM を呼ばない。手動実行の `force` で全人格を作り直す。
+    push のたびに起動するが、素材のハッシュが前回と同じ人格は LLM を呼ばない。通常は前回のカードを
+    渡して差分だけ直させる。カードに誤りが残ったときは手動実行の `force` で、前回のカードを参照せず
+    全人格をゼロから作り直す。コミットメッセージに CI を止める印を入れない
+    （Cloudflare Pages がビルドを省略し、JSON が次の push まで公開されない）。
+  - `sitemap.yml` と `magi-context.yml` は同じ push で main にコミットしうるので、どちらも
+    `git pull --rebase` してから push する。bot のコミットを増やすときも同じ形にすること。
 
 ## コーディング規約
 
@@ -134,11 +139,15 @@
   ほかに各ページの JSON-LD と `data/tools.json`・`data/glitch.json` を使う。
   **ページを改修するときは `data-magi` の属性を残すこと**（class や id は自由に変えてよい）。
   目印の内側で読ませたくない部分は `data-magi-skip` を付けて外す（job の Signal Board のような
-  演出用の数値や、料金・機材仕様などの実務情報は入れない）。目印が消えると workflow が
+  演出用の数値や、料金・機材仕様などの実務情報は入れない）。年表の年のように、見た目の都合で
+  本文の後ろに置いた見出しには `data-magi-lead` を付けると、抽出時に親の先頭へ回る
+  （付けないと LLM が次の項目の年として読む）。目印が消えると workflow が
   エラーで止まり、Worker は前回のカードのまま動き続ける。素材のページを増やすときは
-  `magi-context.py` の `PERSONAS` と `magi-context.yml` の `paths` の両方に足す。
-  抽出結果は `python .github/scripts/magi-context.py --dry-run --show` で API キーなしに確認できる。
-  Worker は `https://tk.st/data/magi-context.json` を10分キャッシュで読むので、反映は最大10分遅れる。
+  `magi-context.py` の `PERSONAS` にだけ足す（workflow は絞り込みをしていない）。
+  抽出は JS を実行しないので、JS で書き換える文言（motovlog の「公開予定」など）は静的な HTML 側も
+  更新すること。抽出結果は `python .github/scripts/magi-context.py --dry-run --show` で API キーなしに確認できる。
+  Worker は `https://tk.st/data/magi-context.json` を isolate ごとに10分使い回し（期限切れ後は手元の
+  カードで答えつつ裏で取り直す）、取得に失敗したら1分後に再試行する。反映は10分強遅れることがある。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで

@@ -1,24 +1,16 @@
 name: MAGI Persona Context
 
 # 人格カード（data/magi-context.json）を、元ページが変わったときだけ作り直す。
-# 実際に LLM を呼ぶかどうかはスクリプトが人格ごとのハッシュで決めるので、
-# ここで起動しても素材が変わっていなければ API 呼び出しは 0 回で終わる。
+# 起動は push のたび。素材の一覧は magi-context.py の PERSONAS だけが持ち、LLM を呼ぶか
+# どうかも人格ごとのハッシュで決めるので、素材が変わっていなければ API 呼び出しは 0 回で終わる
+# （paths で絞ると素材の一覧が2か所に分かれ、足し忘れた素材の更新が黙って無視されるため絞らない）。
 on:
   push:
     branches: [ main ]
-    # .github/scripts/magi-context.py の PERSONAS に並べた素材と揃えること
-    paths:
-      - thought/index.html
-      - dj/index.html
-      - motovlog/index.html
-      - job/index.html
-      - data/tools.json
-      - data/glitch.json
-      - .github/scripts/magi-context.py
   workflow_dispatch:
     inputs:
       force:
-        description: '素材が変わっていなくても全人格を作り直す'
+        description: '全人格を、前回のカードを参照せずゼロから作り直す'
         type: boolean
         default: false
 
@@ -39,6 +31,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        # 起動したコミットではなく main の最新を取る。順番待ちしていた実行が、前の実行の
+        # 生成結果を知らない古い JSON から始めると、同じ人格を二重に要約した末に rebase で衝突する
+        ref: main
 
     - name: Generate persona cards
       env:
@@ -51,9 +47,9 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "$BOT_EMAIL"
         git add data/magi-context.json
-        # [skip ci] は付けない。Cloudflare Pages はこの印のコミットをビルドしないため、JSON が
-        # 次の push まで公開されなくなる。GITHUB_TOKEN の push はほかの workflow を起動しないし、
-        # この JSON は上の paths に無いので、付けなくてもループはしない
+        # CI を止める印はコミットメッセージに入れない。Cloudflare Pages はその印（メッセージの
+        # どこにあっても）のコミットをビルドせず、JSON が次の push まで公開されなくなる。
+        # GITHUB_TOKEN の push はほかの workflow を起動しないので、付けなくてもループはしない
         git commit -m "Auto-generated MAGI persona context" || exit 0
         # 同じ push で sitemap.yml も main にコミットしてくるので、取り込んでから push する
         git pull --rebase origin main

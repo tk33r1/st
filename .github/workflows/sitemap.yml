@@ -44,4 +44,7 @@ jobs:
         # コミットを無視して冪等なので、仮にこの印が外れてもループはしない（2周目が
         # 同じ値を書く → 差分なし → commit が空振りして exit 0）。
         git commit -m "Auto-generated sitemap + dateModified [skip ci]" || exit 0
+        # 同じ push で magi-context.yml も main にコミットすることがあるので、取り込んでから push する
+        # （素の push だと先を越されたときに弾かれ、この回の sitemap と dateModified が失われる）
+        git pull --rebase origin main
         git push

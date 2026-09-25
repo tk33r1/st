@@ -48,7 +48,7 @@ CARD_MIN, CARD_MAX = 80, 1400
 SOURCE_MAX = 20000
 
 # 人格ごとの素材。キーはページ側の data-magi の値、codename は Worker 側の PERSONAS と一致させる。
-# ※ ここにファイルを足したら .github/workflows/magi-context.yml の paths にも足すこと。
+# 素材の一覧はここだけが正。workflow は push のたびに起動し、変わったかどうかはハッシュで判定する。
 PERSONAS = {
     'balthasar': {
         'codename': 'BALTHASAR-2',
@@ -70,7 +70,7 @@ PERSONAS = {
         'lists': [],
         'focus': (
             '音楽・DJ・ハーレーへの熱量。好きなジャンルやこだわり、DJ としての考え方、原体験、'
-            '事故からバイクに戻った経緯と愛機への思い、直近の出演や活動予定を残す。'
+            '事故からバイクに戻った経緯と愛機への思いを残す。'
         ),
     },
     'casper': {
@@ -179,7 +179,10 @@ def node_text(node):
     parts = []
 
     def walk(n):
-        for child in n.children:
+        # data-magi-lead の子は、DOM 上の位置に関係なく親の先頭に出す。年表のように見た目の都合で
+        # 年のラベルが本文の後ろに置かれていると、文字列にしたとき次の項目の年に読めてしまうため
+        lead = [c for c in n.children if isinstance(c, Node) and 'data-magi-lead' in c.attrs]
+        for child in lead + [c for c in n.children if not (isinstance(c, Node) and 'data-magi-lead' in c.attrs)]:
             if isinstance(child, str):
                 parts.append(re.sub(r'\s+', ' ', child))
                 continue
@@ -286,31 +289,49 @@ def build_source(key, conf):
 
 # ---------------------------------------------------------------- 要約
 
+RETRY_WAITS = (5, 20)  # 再試行までの待ち秒。回数はこの長さ＋1回
+
+
 def call_openai(api_key, system, user):
+    """人格カード1枚を生成する。失敗はすべて RuntimeError にそろえる（呼び出し側で整形して止めるため）。"""
     payload = {
         'model': MODEL,
         # 省略すると推論が走り max_completion_tokens を食い潰すので明示する（magi2 と同じ理由）
         'reasoning_effort': 'none',
         'temperature': 0.2,
-        'max_completion_tokens': 1500,
+        # 日本語は1字あたり1トークン前後。CARD_MAX を超える長さまで出させ、切れたかどうかは
+        # finish_reason で判定する（上限で切られた文は検査の文字数範囲に収まってしまうため）
+        'max_completion_tokens': 4000,
         'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
     }
     req = urllib.request.Request(
         ENDPOINT, data=json.dumps(payload).encode('utf-8'),
         headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {api_key}'},
     )
-    for attempt in (1, 2):
+    for attempt in range(len(RETRY_WAITS) + 1):
         try:
             with urllib.request.urlopen(req, timeout=90) as resp:
                 body = json.loads(resp.read().decode('utf-8'))
-            return (body['choices'][0]['message'].get('content') or '').strip()
+            break
         except urllib.error.HTTPError as e:
             detail = e.read().decode('utf-8', errors='ignore')[:300]
-            if e.code >= 500 and attempt == 1:
-                print(f'[WARN] HTTP {e.code}、再試行します: {detail}', file=sys.stderr)
-                time.sleep(5)
-                continue
-            raise RuntimeError(f'OpenAI HTTP {e.code}: {detail}') from e
+            error = f'HTTP {e.code}: {detail}'
+            retryable = e.code == 429 or e.code >= 500  # 一時的なもの（レート制限・サーバ側）だけ再試行
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+            error, retryable = f'{type(e).__name__}: {e}', True
+        if not retryable or attempt == len(RETRY_WAITS):
+            raise RuntimeError(f'OpenAI の呼び出しに失敗: {error}')
+        print(f'[WARN] {error} — {RETRY_WAITS[attempt]} 秒後に再試行します', file=sys.stderr)
+        time.sleep(RETRY_WAITS[attempt])
+
+    try:
+        choice = body['choices'][0]
+        content = (choice['message'].get('content') or '').strip()
+    except (KeyError, IndexError, TypeError) as e:
+        raise RuntimeError(f'OpenAI の応答の形が想定外: {str(body)[:300]}') from e
+    if choice.get('finish_reason') != 'stop':
+        raise RuntimeError(f"人格カードが途中で終わった（finish_reason={choice.get('finish_reason')}）")
+    return content
 
 
 def validate_card(card):
@@ -337,7 +358,8 @@ def load_previous():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--dry-run', action='store_true', help='抽出と差分判定だけ行い、API は呼ばない')
-    ap.add_argument('--force', action='store_true', help='素材が変わっていなくても全人格を作り直す')
+    ap.add_argument('--force', action='store_true',
+                    help='素材が変わっていなくても全人格を、前回のカードを参照せずゼロから作り直す')
     ap.add_argument('--show', action='store_true', help='抽出した素材を全文表示する')
     args = ap.parse_args()
 
@@ -355,7 +377,10 @@ def main():
         if args.show:
             print(source, '\n')
         if changed:
-            todo.append((conf, system, source, digest, prev.get('card')))
+            # 前回のカードは「変わっていない項目は文言を残せ」という指示とセットで渡すので、
+            # 前回のカード自体が誤っていると、素材を直してもその誤りが残りやすい。
+            # --force はそれを断ち切るための作り直しなので、前回のカードを渡さない
+            todo.append((conf, system, source, digest, None if args.force else prev.get('card')))
 
     if args.dry_run or not todo:
         return
@@ -386,6 +411,7 @@ def main():
 if __name__ == '__main__':
     # Windows のコンソール（cp932）で素材の表示が落ちないように
     sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
     try:
         main()
     except RuntimeError as e:

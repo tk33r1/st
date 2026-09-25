@@ -161,13 +161,15 @@ async function fetchTitle(env, lastContent, signal, log) {
 }
 
 // --- 人格カード：サイト本文から自動生成した JSON を取り、人格の system プロンプトに足す ---
-// isolate 内で ttl_ms だけ保持。取得に失敗したら直近の成功値、それも無ければカード無しで動く
+// isolate 内に保持する。取得できないときは直近のカード、それも無ければカード無しで動く
 // （＝従来どおり固定プロンプトのみ）。カードが無くても会話は止めない。
-let personaCards = { at: 0, cards: null };
-async function loadPersonaCards(log) {
-  if (Date.now() - personaCards.at < PERSONA_CONTEXT.ttl_ms) return personaCards.cards;
-  let cards = null;
+//   ok: 直近の取得が成功したか（成功なら ttl_ms、失敗なら retry_ms 後に取り直す）
+//   refreshing: 裏での取り直しが進行中か（同時に来たリクエストが重ねて取りに行かないように）
+const personaCards = { at: 0, ok: false, cards: null, refreshing: false };
+
+async function refreshPersonaCards(log) {
   const t = withTimeout(PERSONA_CONTEXT.fetch_timeout_ms);
+  let cards = null;
   try {
     const res = await fetch(PERSONA_CONTEXT.url, { signal: t.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -177,12 +179,30 @@ async function loadPersonaCards(log) {
     for (const [codename, v] of Object.entries((data && data.personas) || {})) {
       if (v && typeof v.card === 'string' && v.card.trim()) cards[codename] = v.card.trim().slice(0, PERSONA_CONTEXT.max_chars);
     }
+    if (!Object.keys(cards).length) throw new Error('no cards in JSON');
     log('persona_context', `cards=${Object.keys(cards).length}`);
   } catch (e) {
+    cards = null;
     log('persona_context', 'failed', e && e.message);
   } finally { t.clear(); }
-  personaCards = { at: Date.now(), cards: cards || personaCards.cards };
+  // 失敗や空の JSON では、直近のカードを上書きしない
+  personaCards.at = Date.now();
+  personaCards.ok = !!cards;
+  if (cards) personaCards.cards = cards;
   return personaCards.cards;
+}
+
+// 会話1回ぶんのカードを返す。期限切れでも手元にカードがあれば、それを返して裏で取り直す
+// （会話を取得待ちにしない）。isolate の起動直後などで手元に何も無いときだけ取得を待つ。
+function getPersonaCards(ctx, log) {
+  const age = Date.now() - personaCards.at;
+  if (age < (personaCards.ok ? PERSONA_CONTEXT.ttl_ms : PERSONA_CONTEXT.retry_ms)) return Promise.resolve(personaCards.cards);
+  if (!personaCards.cards) return refreshPersonaCards(log);
+  if (!personaCards.refreshing) {
+    personaCards.refreshing = true;
+    ctx.waitUntil(refreshPersonaCards(log).finally(() => { personaCards.refreshing = false; }));
+  }
+  return Promise.resolve(personaCards.cards);
 }
 
 const withCard = (p, cards) => (cards && cards[p.codename])
@@ -197,7 +217,7 @@ function withTimeout(ms) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';
     const cors = corsHeaders(origin);
     const requestId = crypto.randomUUID();
@@ -304,6 +324,9 @@ export default {
       return httpError(400, { stage: 'bad_request', code: 'invalid_json', message: 'リクエストボディの JSON が不正です', retryable: false }, requestId, cors);
     }
 
+    // 人格カードの取得は、レート制限の DB 処理と並行して始めておく（失敗しても reject しない）
+    const cardsPromise = getPersonaCards(ctx, log);
+
     // 3) rate_limit: IP×UTC日次（DB 未設定の dev では skip）
     if (env.DB) {
       try {
@@ -364,7 +387,7 @@ export default {
           if (personaTemp != null) log('persona_call', 'temperature', theme, personaTemp);
 
           // 人格カード（サイト本文由来の「いまの中身」）を骨格プロンプトに足す。R2 は opinions 経由で同じものを使う
-          const cards = await loadPersonaCards(log);
+          const cards = await cardsPromise;
           const personas = PERSONAS.map(p => withCard(p, cards));
 
           // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
