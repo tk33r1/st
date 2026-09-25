@@ -121,8 +121,9 @@
   CSS/JS を読み込んでよい。共有したい自前の CSS/JS は `data/` に置く。フレームワーク・ビルドツールを勝手に持ち込まない。
 - **SAFE TOOLS の通信制限**: `tools/` 配下の全ページは head の先頭で Content-Security-Policy を宣言し、
   読み込みや送信に使える通信先を、このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）
-  だけに制限している（寄付ウィジェットの Ko-fi は iframe の表示だけ許可）。GA4 はシグナル・広告系の送り先
-  （doubleclick.net・google.com）を許していないので、そこへの送信は止まる。Ahrefs や Microsoft Clarity は
+  だけに制限している（寄付ウィジェットの Ko-fi は iframe の表示だけ許可）。GA4 の Google シグナルの送り先
+  （*.g.doubleclick.net・www.google.com・www.google.co.jp）も許している。国別の google ドメインは日本だけなので、
+  ほかの国からの訪問ではシグナルの一部が止まる。広告コンバージョンは GA4 側で切ってある。Ahrefs や Microsoft Clarity は
   入れない（Clarity は GTM 側で `tk.st/tools/` を除外済み。セッション記録が入力や QR の中身まで送っていた。
   除外が外れても CSP が止める）。
   - ページの注記・FAQ・構造化データでも説明している。CSP が保証するのは「読み込みと送信の通信先」まで
