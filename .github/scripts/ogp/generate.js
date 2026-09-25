@@ -64,7 +64,7 @@ function buildHtml(card) {
   <div class="foot">
     <div class="url">tk.st/tools/${card.slug}</div>
     <i class="rule"></i>
-    <div class="noup">NO UPLOAD</div>
+    <div class="privacy">NO SERVER STORAGE</div>
   </div>
 </body></html>`;
 }

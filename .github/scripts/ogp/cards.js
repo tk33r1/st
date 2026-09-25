@@ -9,25 +9,26 @@
  */
 'use strict';
 
-/* Category accents, dark-theme values from data/tools-ui.css. The card is dark,
- * so the light values (#0F766E etc.) would sink into it. */
+/* Category accents, light-theme values from data/tools-ui.css. The shelf and
+ * its cards use the same category language: the surface changes, the meaning
+ * of each colour does not. */
 const CATEGORIES = {
-  converter: { accent: '#2DD4BF', ink: '#052E2B', label: 'CONVERTER' },
-  optimizer: { accent: '#38BDF8', ink: '#06283A', label: 'OPTIMIZER' },
-  editor:    { accent: '#818CF8', ink: '#14153A', label: 'EDITOR' },
-  generator: { accent: '#E879F9', ink: '#2A0D31', label: 'GENERATOR' },
+  converter: { accent: '#0F766E', ink: '#FFFFFF', label: 'CONVERTER' },
+  optimizer: { accent: '#0369A1', ink: '#FFFFFF', label: 'OPTIMIZER' },
+  editor:    { accent: '#4F46E5', ink: '#FFFFFF', label: 'EDITOR' },
+  generator: { accent: '#C026D3', ink: '#FFFFFF', label: 'GENERATOR' },
 };
 
 const SHELL_CSS = `
   :root {
-    --canvas: #0E1113;
-    --canvas-2: #14181B;
-    --canvas-3: #101416;
-    --canvas-rule: #242A2E;
-    --canvas-rule-2: #333C43;
-    --ink: #F2F5F6;
-    --ink-2: #99A3AA;
-    --ink-3: #6B757C;
+    --canvas: #F4F7FB;
+    --canvas-2: #FFFFFF;
+    --canvas-3: #F7F9FC;
+    --canvas-rule: #D8E2EC;
+    --canvas-rule-2: #AEBECD;
+    --ink: #102A43;
+    --ink-2: #405A73;
+    --ink-3: #6B8196;
     --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
     --jp: "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", "Meiryo", system-ui, sans-serif;
   }
@@ -47,11 +48,12 @@ const SHELL_CSS = `
 
   .main { flex: 1; display: flex; align-items: center; gap: 44px; padding-top: 6px; }
   .left { width: 470px; flex: none; }
-  h1 { font-weight: 900; font-size: 60px; line-height: 1.16; letter-spacing: .01em; color: #FFFFFF; }
+  h1 { font-weight: 900; font-size: 60px; line-height: 1.16; letter-spacing: .01em; color: var(--ink); }
   .sub { margin-top: 24px; font-size: 20px; line-height: 1.8; font-weight: 500; color: var(--ink-2); }
   .chips { margin-top: 30px; display: flex; gap: 11px; }
   .chip {
-    border: 1px solid var(--canvas-rule-2); border-radius: 5px; padding: 9px 15px;
+    border: 1px solid var(--canvas-rule); border-radius: 5px; padding: 9px 15px;
+    background: #FFFFFF;
     font-size: 14.5px; font-weight: 500; color: var(--ink-2); white-space: nowrap;
   }
   .chips.mono .chip { font-family: var(--mono); font-size: 13.5px; letter-spacing: .04em; }
@@ -59,7 +61,7 @@ const SHELL_CSS = `
   .right { flex: 1; display: flex; align-items: center; gap: 18px; min-width: 0; }
   .panel {
     flex: 1; background: var(--canvas-2); border: 1px solid var(--canvas-rule);
-    border-radius: 9px; overflow: hidden;
+    border-radius: 9px; overflow: hidden; box-shadow: 0 12px 30px rgb(11 42 69 / .08);
   }
   .panel-h {
     font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .2em;
@@ -68,7 +70,7 @@ const SHELL_CSS = `
 
   .foot { display: flex; align-items: center; gap: 22px; }
   .url { font-family: var(--mono); font-size: 15px; font-weight: 700; letter-spacing: .04em; color: var(--ink); }
-  .noup { font-family: var(--mono); font-size: 15px; font-weight: 700; letter-spacing: .2em; color: var(--accent); }
+  .privacy { font-family: var(--mono); font-size: 13.5px; font-weight: 700; letter-spacing: .14em; color: var(--accent); }
 `;
 
 const CARDS = [
@@ -81,11 +83,11 @@ const CARDS = [
       .row { display: flex; align-items: center; justify-content: space-between; gap: 14px;
              padding: 14px 19px; border-bottom: 1px solid var(--canvas-rule); }
       .row:last-child { border-bottom: 0; }
-      .fname { font-family: var(--mono); font-size: 15.5px; color: #D7DCDF; }
+      .fname { font-family: var(--mono); font-size: 15.5px; color: #1D3550; }
       .enc { font-family: var(--mono); font-size: 12.5px; border: 1px solid var(--canvas-rule-2);
-             border-radius: 5px; padding: 3px 9px; color: #C3CACF; white-space: nowrap; }
+             border-radius: 5px; padding: 3px 9px; color: #49647D; white-space: nowrap; }
       .row.flag .enc { border-color: var(--accent); color: var(--accent); }
-      .arrow { font-size: 20px; color: #556067; }
+      .arrow { font-size: 20px; color: #7E90A3; }
       .pill { font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: .04em;
               background: var(--accent); color: var(--accent-ink); padding: 12px 16px;
               border-radius: 8px; white-space: nowrap; }`,
@@ -112,7 +114,7 @@ const CARDS = [
               border-radius: 8px; overflow: hidden; height: 300px; }
       .code-h { font-family: var(--mono); font-size: 11.5px; letter-spacing: .2em; color: var(--ink-3);
                 padding: 10px 14px; border-bottom: 1px solid var(--canvas-rule); background: var(--canvas-2); }
-      .code-b { font-family: var(--mono); font-size: 12.5px; line-height: 1.95; color: #C3CACF;
+      .code-b { font-family: var(--mono); font-size: 12.5px; line-height: 1.95; color: #334E68;
                 padding: 12px 14px; background: var(--canvas-3); height: 100%; white-space: pre; }
       .swap { display: flex; flex-direction: column; gap: 9px; flex: none; }
       .btn { font-family: var(--mono); font-size: 12.5px; font-weight: 700; letter-spacing: .06em;
@@ -151,7 +153,7 @@ const CARDS = [
               text-align: right; padding-top: 10px; letter-spacing: .1em; }
       .bar { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
       .bar-l { font-family: var(--mono); font-size: 12.5px; letter-spacing: .16em; color: var(--ink-3); width: 66px; }
-      .track { flex: 1; height: 11px; border-radius: 6px; background: #1B2126; }
+      .track { flex: 1; height: 11px; border-radius: 6px; background: #E4EBF2; }
       .track i { display: block; height: 100%; border-radius: 6px; }
       .bar-v { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--ink); width: 74px; text-align: right; }`,
     panel: `
@@ -163,7 +165,7 @@ const CARDS = [
             <div class="meta">3 FILES<br>204 MS</div>
           </div>
           <div class="bar"><span class="bar-l">BEFORE</span>
-            <span class="track"><i style="width:100%;background:#3B454D"></i></span>
+            <span class="track"><i style="width:100%;background:#8294A6"></i></span>
             <span class="bar-v">2.41 MB</span></div>
           <div class="bar"><span class="bar-l">AFTER</span>
             <span class="track"><i style="width:27%;background:var(--accent)"></i></span>
@@ -183,7 +185,7 @@ const CARDS = [
       .frame { flex: 1; aspect-ratio: 1/1; border-radius: 5px; }
       .bar { display: flex; align-items: center; gap: 16px; margin-top: 18px; }
       .bar-l { font-family: var(--mono); font-size: 12.5px; letter-spacing: .16em; color: var(--ink-3); width: 66px; }
-      .track { flex: 1; height: 11px; border-radius: 6px; background: #1B2126; }
+      .track { flex: 1; height: 11px; border-radius: 6px; background: #E4EBF2; }
       .track i { display: block; height: 100%; border-radius: 6px; }
       .bar-v { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--ink); width: 66px; text-align: right; }`,
     panel: `
@@ -196,7 +198,7 @@ const CARDS = [
             <div class="frame" style="background:linear-gradient(150deg,#2DD4BF,#CCF5EF)"></div>
           </div>
           <div class="bar"><span class="bar-l">SOURCE</span>
-            <span class="track"><i style="width:100%;background:#3B454D"></i></span>
+            <span class="track"><i style="width:100%;background:#8294A6"></i></span>
             <span class="bar-v">123 KB</span></div>
           <div class="bar"><span class="bar-l">OUTPUT</span>
             <span class="track"><i style="width:14%;background:var(--accent)"></i></span>
@@ -272,7 +274,7 @@ const CARDS = [
   {
     slug: 'pdf-studio', out: 'images/ogp/pdf-studio-ogp.png', cat: 'editor',
     h1: 'PDF<br>Studio',
-    sub: '回転・結合・分割・面付け・墨消しを<br>1画面で。アップロード不要。',
+    sub: '回転・結合・分割・面付け・墨消しを<br>1画面で。サーバー保存なし。',
     chips: ['交互結合', '中綴じ面付け', '墨消し', '圧縮'],
     css: `
       .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; padding: 16px 18px 18px; }
@@ -308,13 +310,13 @@ const CARDS = [
       .side-h { font-size: 13px; color: var(--ink-3); padding: 11px 15px;
                 border-bottom: 1px solid var(--canvas-rule); }
       .side-h b { font-family: var(--mono); font-weight: 500; margin-left: 8px; }
-      .side-b { padding: 14px 15px 16px; font-size: 15px; line-height: 2.1; color: #DDE2E5; }
+      .side-b { padding: 14px 15px 16px; font-size: 15px; line-height: 2.1; color: #2C435B; }
       /* Diff colours are semantic, never the accent — same rule as the tool page. */
-      .del { background: rgb(220 38 38 / .30); border-radius: 2px; }
-      .ins { background: rgb(14 159 110 / .32); border-radius: 2px; }
+      .del { background: rgb(220 38 38 / .16); border-radius: 2px; }
+      .ins { background: rgb(14 159 110 / .18); border-radius: 2px; }
       .tally { display: flex; align-items: center; gap: 18px; font-family: var(--mono);
                font-size: 15px; font-weight: 700; }
-      .tally .p { color: #34D399; } .tally .m { color: #F87171; }
+      .tally .p { color: #047857; } .tally .m { color: #B91C1C; }
       .tally .n { color: var(--ink-3); font-weight: 500; }`,
     panel: `
       <div class="pair">

@@ -53,15 +53,15 @@ node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP
 `generate.js` が起動時に照合して食い違えば止まる（`imageUrl` の綴りも見る）。
 カードだけ色が違う、という事故を防ぐため。
 
-使う値は `data/tools-ui.css` の **ダークテーマ側**。カード自体が暗いので、
-ライト側の値（`#0F766E` など）だと沈む。
+使う値は `data/tools-ui.css` の **ライトテーマ側**。SAFE TOOLS のトップページと
+同じく白を基調にし、カテゴリ色はページ上のバッジや操作色と一致させる。
 
 | category | カード上のアクセント |
 |---|---|
-| `converter` | `#2DD4BF` |
-| `optimizer` | `#38BDF8` |
-| `editor` | `#818CF8` |
-| `generator` | `#E879F9` |
+| `converter` | `#0F766E` |
+| `optimizer` | `#0369A1` |
+| `editor` | `#4F46E5` |
+| `generator` | `#C026D3` |
 
 ## QR Atelier の図版だけは実物
 

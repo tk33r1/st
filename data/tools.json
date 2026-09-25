@@ -81,7 +81,7 @@
     "url": "https://tk.st/tools/pdf-studio/",
     "imageUrl": "https://tk.st/images/ogp/pdf-studio-ogp.png",
     "category": "editor",
-    "description": "アップロード不要。回転・結合・分割・並べ替えを1画面で完結。片面スキャンの奇数偶数交互結合、2in1・中綴じ小冊子の面付け、下のテキストごと消える墨消し、ローカル圧縮に対応。PDFをPNG・WEBP（通常/可逆）・AVIF画像に変換してZIPで一括ダウンロードもできます。",
+    "description": "サーバーに保存せず、回転・結合・分割・並べ替えを1画面で完結。片面スキャンの奇数偶数交互結合、2in1・中綴じ小冊子の面付け、下のテキストごと消える墨消し、ローカル圧縮に対応。PDFをPNG・WEBP（通常/可逆）・AVIF画像に変換してZIPで一括ダウンロードもできます。",
     "tags": [
       "PDF",
       "編集",

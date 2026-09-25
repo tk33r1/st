@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" class="st-theme">
+<html lang="ja" class="st-theme" data-theme="light">
 <head>
   <!-- The character set has to land inside the first 1024 bytes, so it goes
        ahead of the analytics tags rather than after them. -->
@@ -10,6 +10,7 @@
        足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0D2F4F">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -77,7 +78,7 @@
             "name": "SAFE TOOLS とは何ですか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "CSV・PDF・画像・動画・テキスト・QRコードなどの変換、編集、生成をブラウザ上で行える Web ツール集です。専用ソフトをインストールせずに使え、ファイルや入力内容を外部へ送らないことを共通方針にしています。"
+              "text": "CSV・PDF・画像・動画・テキスト・QRコードなどの変換、編集、生成をブラウザ上で行える Web ツール集です。専用ソフトをインストールせずに使え、読み込んだファイルや入力内容を tk.st のサーバーに保存しないことを共通方針にしています。"
             }
           },
           {
@@ -93,15 +94,15 @@
             "name": "SAFE TOOLS は安全に使えますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "SAFE TOOLS は、入力したファイルや文字列を外部へ送らず、変換・編集・生成などの処理を利用者のブラウザ内で完結させる設計です。機密性の高いデータを扱う場合は、信頼できる端末と最新のブラウザを利用してください。"
+              "text": "SAFE TOOLS ではファイルをツールへアップロードする操作がありますが、変換・編集・生成などの処理は利用者のブラウザ内で行い、処理対象や結果を tk.st のサーバーに保存しません。機密性の高いデータを扱う場合は、信頼できる端末と最新のブラウザを利用してください。"
             }
           },
           {
             "@type": "Question",
-            "name": "なぜファイルや入力内容が外部へ送られないのですか？",
+            "name": "アップロードしたファイルがサーバーに保存されないのはなぜですか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "各ツールはファイルや入力内容を送信する処理を持たず、ブラウザ内の JavaScript で処理します。さらに Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先だけに制限しています。この二段構えはページ先頭の CSP 設定から確認できます。"
+              "text": "アップロードしたファイルはブラウザ内の JavaScript で処理し、tk.st のサーバーへ送って保存する仕組みを持ちません。さらに Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先だけに制限しています。この二段構えはページ先頭の CSP 設定から確認できます。"
             }
           },
           {
@@ -146,10 +147,10 @@
           },
           {
             "@type": "Question",
-            "name": "処理したファイルはサーバーに保存されますか？",
+            "name": "処理結果はどこに保存されますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "いいえ。処理対象と処理結果を tk.st のサーバーへ保存する機能はありません。書き出したファイルは、利用者が指定した端末上の保存先にダウンロードされます。"
+              "text": "処理結果は tk.st のサーバーには保存されません。書き出したファイルは、利用者が指定した端末上の保存先にダウンロードされます。"
             }
           }
         ]
@@ -189,8 +190,56 @@
 
     /* The index shows a grid rather than a single instrument, so its shell
        is wider than a tool's. Every other measurement stays theirs. */
-    .st-theme { --shell: 1080px; }
+    /* The shelf defaults to an explicit light theme rather than inheriting the
+       operating system setting. Navy carries the identity; white and cool
+       blue-grey surfaces keep the catalogue calm and easy to audit. */
+    .st-theme {
+      --shell: 1080px;
+      --bg: #F3F6FA;
+      --panel: #FFFFFF;
+      --panel-2: #EAF0F6;
+      --rule: #D8E2EC;
+      --rule-strong: #AEBECD;
+      --ink: #102A43;
+      --ink-2: #405A73;
+      --ink-3: #6B8196;
+      --accent: #164E78;
+      --accent-ink: #FFFFFF;
+      --accent-soft: #E7F0F7;
+      --shadow-1: 0 1px 2px rgb(11 42 69 / .07), 0 10px 28px rgb(11 42 69 / .08);
+      color-scheme: light;
+    }
+    :root.st-theme[data-theme="dark"] { color-scheme: dark; }
     .st-theme main { max-width: var(--shell); padding: 22px 20px 56px; }
+
+    /* A restrained navy masthead gives the index a dependable service-like
+       presence while the working area remains bright. Explicitly scoped to
+       light mode so the existing dark theme keeps its own surface system. */
+    :root.st-theme:not([data-theme="dark"]) .app-bar {
+      background: #0D2F4F;
+      border-bottom-color: #082640;
+      box-shadow: 0 1px 0 rgb(255 255 255 / .08), 0 8px 24px rgb(11 42 69 / .12);
+    }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .crumb a { color: #B9C9D8; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .crumb a:hover { color: #FFFFFF; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .crumb li + li::before { color: #66829B; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .crumb [aria-current="page"] { color: #FFFFFF; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .crumb-mark { color: #FFFFFF; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .crumb-mark svg path:last-child { fill: #0D2F4F; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .bar-status { color: #C4D2DF; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .st-led { background: #5DD6C5; }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .icon-btn {
+      border-color: rgb(255 255 255 / .22);
+      background: rgb(255 255 255 / .07);
+      color: #DCE7F0;
+    }
+    :root.st-theme:not([data-theme="dark"]) .app-bar .icon-btn:hover {
+      border-color: rgb(255 255 255 / .48);
+      color: #FFFFFF;
+    }
+    :root.st-theme:not([data-theme="dark"]) .toolbar {
+      box-shadow: 0 4px 16px rgb(11 42 69 / .04);
+    }
 
     /* Lucide stamps 24x24 onto every icon it injects, and this page carries
        no utility classes to override that, so the sizes live here. */
@@ -350,6 +399,7 @@
       color: inherit;
       text-decoration: none;
       overflow: hidden;
+      box-shadow: 0 1px 3px rgb(11 42 69 / .035);
       transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
     }
     .tool-card:hover { border-color: var(--accent); box-shadow: var(--shadow-1); transform: translateY(-2px); }
@@ -429,6 +479,7 @@
       color: var(--ink-2);
       display: -webkit-box;
       -webkit-line-clamp: 3;
+      line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -625,9 +676,10 @@
   <div class="shelf">
     <div class="shelf-facts">
       <span class="fact"><i data-lucide="shield-check"></i>端末内で処理</span>
-      <span class="fact"><i data-lucide="cloud-off"></i>アップロードなし</span>
+      <span class="fact"><i data-lucide="cloud-off"></i>サーバー保存なし</span>
+      <span class="fact" title="広告および広告配信のためのコードはありません。"><i data-lucide="ban"></i>広告なし</span>
       <span class="fact"><i data-lucide="zap"></i>インストール不要</span>
-      <span class="fact" title="ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。"><i data-lucide="lock"></i>通信先を制限</span>
+      <span class="fact" title="ファイルをツールへアップロードしても、処理対象や結果は tk.st のサーバーに保存しません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。"><i data-lucide="lock"></i>通信先を制限</span>
     </div>
   </div>
 
@@ -677,7 +729,7 @@
       <div class="faq-list">
         <details class="faq-item" open>
           <summary class="faq-question">SAFE TOOLS とは何ですか？</summary>
-          <p class="faq-answer">CSV・PDF・画像・動画・テキスト・QRコードなどの変換、編集、生成をブラウザ上で行える Web ツール集です。専用ソフトをインストールせずに使え、ファイルや入力内容を外部へ送らないことを共通方針にしています。</p>
+          <p class="faq-answer">CSV・PDF・画像・動画・テキスト・QRコードなどの変換、編集、生成をブラウザ上で行える Web ツール集です。専用ソフトをインストールせずに使え、読み込んだファイルや入力内容を tk.st のサーバーに保存しないことを共通方針にしています。</p>
         </details>
 
         <details class="faq-item">
@@ -687,12 +739,12 @@
 
         <details class="faq-item">
           <summary class="faq-question">SAFE TOOLS は安全に使えますか？</summary>
-          <p class="faq-answer">SAFE TOOLS は、入力したファイルや文字列を外部へ送らず、変換・編集・生成などの処理を利用者のブラウザ内で完結させる設計です。機密性の高いデータを扱う場合は、信頼できる端末と最新のブラウザを利用してください。</p>
+          <p class="faq-answer">SAFE TOOLS ではファイルをツールへアップロードする操作がありますが、変換・編集・生成などの処理は利用者のブラウザ内で行い、処理対象や結果を tk.st のサーバーに保存しません。機密性の高いデータを扱う場合は、信頼できる端末と最新のブラウザを利用してください。</p>
         </details>
 
         <details class="faq-item">
-          <summary class="faq-question">なぜファイルや入力内容が外部へ送られないのですか？</summary>
-          <p class="faq-answer">各ツールはファイルや入力内容を送信する処理を持たず、ブラウザ内の JavaScript で処理します。さらに <code>Content-Security-Policy</code>（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先だけに制限しています。この二段構えはページ先頭の CSP 設定から確認できます。</p>
+          <summary class="faq-question">アップロードしたファイルがサーバーに保存されないのはなぜですか？</summary>
+          <p class="faq-answer">アップロードしたファイルはブラウザ内の JavaScript で処理し、tk.st のサーバーへ送って保存する仕組みを持ちません。さらに <code>Content-Security-Policy</code>（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先だけに制限しています。この二段構えはページ先頭の CSP 設定から確認できます。</p>
         </details>
 
         <details class="faq-item">
@@ -721,8 +773,8 @@
         </details>
 
         <details class="faq-item">
-          <summary class="faq-question">処理したファイルはサーバーに保存されますか？</summary>
-          <p class="faq-answer">いいえ。処理対象と処理結果を tk.st のサーバーへ保存する機能はありません。書き出したファイルは、利用者が指定した端末上の保存先にダウンロードされます。</p>
+          <summary class="faq-question">処理結果はどこに保存されますか？</summary>
+          <p class="faq-answer">処理結果は tk.st のサーバーには保存されません。書き出したファイルは、利用者が指定した端末上の保存先にダウンロードされます。</p>
         </details>
       </div>
     </section>
