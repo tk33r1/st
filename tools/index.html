@@ -206,10 +206,16 @@
       --accent: #164E78;
       --accent-ink: #FFFFFF;
       --accent-soft: #E7F0F7;
+      --trust: #0B7A5A;
+      --trust-soft: #E7F6F1;
       --shadow-1: 0 1px 2px rgb(11 42 69 / .07), 0 10px 28px rgb(11 42 69 / .08);
       color-scheme: light;
     }
-    :root.st-theme[data-theme="dark"] { color-scheme: dark; }
+    :root.st-theme[data-theme="dark"] {
+      --trust: #5DD6B3;
+      --trust-soft: #12352D;
+      color-scheme: dark;
+    }
     .st-theme main { max-width: var(--shell); padding: 22px 20px 56px; }
 
     /* A restrained navy masthead gives the index a dependable service-like
@@ -282,6 +288,7 @@
       white-space: nowrap;
     }
     .fact svg { color: var(--accent); flex: none; }
+    .fact.is-trust svg { color: var(--trust); }
 
     /* ===== toolbar =====
        Search, categories and sort ride the tools' own sticky toolbar, so the
@@ -538,7 +545,7 @@
     .faq-kicker {
       display: block;
       margin-bottom: 6px;
-      color: var(--accent);
+      color: var(--trust);
       font-family: var(--font-mono);
       font-size: 10px;
       font-weight: 700;
@@ -581,7 +588,7 @@
     .faq-question::-webkit-details-marker { display: none; }
     .faq-question::before {
       content: "Q";
-      color: var(--accent);
+      color: var(--trust);
       font-family: var(--font-mono);
       font-size: 11px;
       flex: none;
@@ -675,11 +682,11 @@
   <!-- ===================== shelf head ===================== -->
   <div class="shelf">
     <div class="shelf-facts">
-      <span class="fact"><i data-lucide="shield-check"></i>端末内で処理</span>
-      <span class="fact"><i data-lucide="cloud-off"></i>サーバー保存なし</span>
-      <span class="fact" title="広告および広告配信のためのコードはありません。"><i data-lucide="ban"></i>広告なし</span>
-      <span class="fact"><i data-lucide="zap"></i>インストール不要</span>
-      <span class="fact" title="ファイルをツールへアップロードしても、処理対象や結果は tk.st のサーバーに保存しません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。"><i data-lucide="lock"></i>通信先を制限</span>
+      <span class="fact is-trust"><i data-lucide="shield-check"></i>端末内で処理</span>
+      <span class="fact is-trust"><i data-lucide="cloud-off"></i>サーバー保存なし</span>
+      <span class="fact is-trust" title="広告および広告配信のためのコードはありません。"><i data-lucide="ban"></i>広告なし</span>
+      <span class="fact is-trust"><i data-lucide="zap"></i>インストール不要</span>
+      <span class="fact is-trust" title="ファイルをツールへアップロードしても、処理対象や結果は tk.st のサーバーに保存しません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。"><i data-lucide="lock"></i>通信先を制限</span>
     </div>
   </div>
 
