@@ -74,6 +74,22 @@
         "mainEntity": [
           {
             "@type": "Question",
+            "name": "SAFE TOOLS とは何ですか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "CSV・PDF・画像・動画・テキスト・QRコードなどの変換、編集、生成をブラウザ上で行える Web ツール集です。専用ソフトをインストールせずに使え、ファイルや入力内容を外部へ送らないことを共通方針にしています。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "無料で使えますか？会員登録は必要ですか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "すべて無料で、会員登録やログインも必要ありません。機能を使うためのアプリのインストールも不要です。任意の寄付は、ツールの利用可否や機能に影響しません。"
+            }
+          },
+          {
+            "@type": "Question",
             "name": "SAFE TOOLS は安全に使えますか？",
             "acceptedAnswer": {
               "@type": "Answer",
@@ -98,10 +114,34 @@
           },
           {
             "@type": "Question",
+            "name": "広告は表示されますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "いいえ。SAFE TOOLS には広告を掲載しておらず、広告配信のためのコードも組み込んでいません。サイトの改善に使うアクセス解析はありますが、広告コンバージョンは無効にしています。"
+            }
+          },
+          {
+            "@type": "Question",
             "name": "外部のライブラリやフォントを読み込みますか？",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。外部との通信はアクセス解析に必要なものに限り、寄付の窓口である Ko-fi はページ内容を読めない別の埋め込み枠としてのみ許可しています。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "スマートフォンやタブレットでも使えますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "多くのツールはスマートフォンやタブレットにも対応しています。ただし、大きなファイルや動画など負荷の高い処理は、端末の性能や空きメモリの影響を受けるため、パソコンでの利用をおすすめします。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "大きなファイルも処理できますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "処理できるサイズは、使用する端末のメモリやブラウザ、ツールの種類によって異なります。処理はサーバーではなく端末内で行うため、ファイルが大きいと時間がかかったり、メモリ不足で完了できなかったりする場合があります。"
             }
           },
           {
@@ -629,13 +669,23 @@
 
     <section class="faq-section" aria-labelledby="faq-title">
       <div class="faq-head">
-        <span class="faq-kicker">Security &amp; privacy</span>
+        <span class="faq-kicker">About &amp; privacy</span>
         <h2 id="faq-title" class="faq-title">よくある質問</h2>
-        <p class="faq-lede">SAFE TOOLS が何を外へ送らず、どの通信だけを許可しているかを説明します。</p>
+        <p class="faq-lede">サービスの内容、料金、安全性、利用環境について、よくある疑問に回答します。</p>
       </div>
 
       <div class="faq-list">
         <details class="faq-item" open>
+          <summary class="faq-question">SAFE TOOLS とは何ですか？</summary>
+          <p class="faq-answer">CSV・PDF・画像・動画・テキスト・QRコードなどの変換、編集、生成をブラウザ上で行える Web ツール集です。専用ソフトをインストールせずに使え、ファイルや入力内容を外部へ送らないことを共通方針にしています。</p>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">無料で使えますか？会員登録は必要ですか？</summary>
+          <p class="faq-answer">すべて無料で、会員登録やログインも必要ありません。機能を使うためのアプリのインストールも不要です。任意の寄付は、ツールの利用可否や機能に影響しません。</p>
+        </details>
+
+        <details class="faq-item">
           <summary class="faq-question">SAFE TOOLS は安全に使えますか？</summary>
           <p class="faq-answer">SAFE TOOLS は、入力したファイルや文字列を外部へ送らず、変換・編集・生成などの処理を利用者のブラウザ内で完結させる設計です。機密性の高いデータを扱う場合は、信頼できる端末と最新のブラウザを利用してください。</p>
         </details>
@@ -651,8 +701,23 @@
         </details>
 
         <details class="faq-item">
+          <summary class="faq-question">広告は表示されますか？</summary>
+          <p class="faq-answer">いいえ。SAFE TOOLS には広告を掲載しておらず、広告配信のためのコードも組み込んでいません。サイトの改善に使うアクセス解析はありますが、広告コンバージョンは無効にしています。</p>
+        </details>
+
+        <details class="faq-item">
           <summary class="faq-question">外部のライブラリやフォントを読み込みますか？</summary>
           <p class="faq-answer">ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。外部との通信はアクセス解析に必要なものに限り、寄付の窓口である Ko-fi はページ内容を読めない別の埋め込み枠としてのみ許可しています。</p>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">スマートフォンやタブレットでも使えますか？</summary>
+          <p class="faq-answer">多くのツールはスマートフォンやタブレットにも対応しています。ただし、大きなファイルや動画など負荷の高い処理は、端末の性能や空きメモリの影響を受けるため、パソコンでの利用をおすすめします。</p>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">大きなファイルも処理できますか？</summary>
+          <p class="faq-answer">処理できるサイズは、使用する端末のメモリやブラウザ、ツールの種類によって異なります。処理はサーバーではなく端末内で行うため、ファイルが大きいと時間がかかったり、メモリ不足で完了できなかったりする場合があります。</p>
         </details>
 
         <details class="faq-item">
