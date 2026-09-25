@@ -163,8 +163,12 @@ async function fetchTitle(env, lastContent, signal, log) {
 // --- 人格カード：サイト本文から自動生成した JSON を取り、人格の system プロンプトに足す ---
 // isolate 内に保持する。取得できないときは直近のカード、それも無ければカード無しで動く
 // （＝従来どおり固定プロンプトのみ）。カードが無くても会話は止めない。
-//   ok: 直近の取得が成功したか（成功なら ttl_ms、失敗なら retry_ms 後に取り直す）
-//   refreshing: 裏での取り直しが進行中か（同時に来たリクエストが重ねて取りに行かないように）
+//   ok: 直近の取得で3人格ぶんそろったか（そろえば ttl_ms、欠けや失敗なら retry_ms 後に取り直す）
+//   refreshing: 期限切れ後の裏での取り直しが進行中か（取り直しを重ねないため）。
+//     isolate の起動直後で手元にカードが無い間は、同時に来たリクエストがそれぞれ取得する。
+//     取得中の Promise を共有すれば1本にまとまるが、先に来たリクエストが待たずに終わる
+//     （429 で返す等）と取得が打ち切られ、共有して待つ側が止まりうるので、あえて共有しない。
+//     重なるのは起動直後の数本だけで、小さな JSON を余分に取るにとどまる。
 const personaCards = { at: 0, ok: false, cards: null, refreshing: false };
 
 async function refreshPersonaCards(log) {
@@ -185,10 +189,13 @@ async function refreshPersonaCards(log) {
     cards = null;
     log('persona_context', 'failed', e && e.message);
   } finally { t.clear(); }
-  // 失敗や空の JSON では、直近のカードを上書きしない
+  // 人格ごとに上書きする。失敗・空の JSON・一部の人格が欠けた JSON でも、欠けた人格は
+  // 直近のカードを保つ（まるごと置き換えると、欠けた人格だけ固定プロンプトに戻ってしまう）
+  const missing = cards ? PERSONAS.map(p => p.codename).filter(c => !cards[c]) : [];
+  if (missing.length) log('persona_context', 'missing', missing.join(','));
   personaCards.at = Date.now();
-  personaCards.ok = !!cards;
-  if (cards) personaCards.cards = cards;
+  personaCards.ok = !!cards && !missing.length;
+  if (cards) personaCards.cards = { ...personaCards.cards, ...cards };
   return personaCards.cards;
 }
 

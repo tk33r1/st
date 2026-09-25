@@ -262,7 +262,10 @@ def jsonld_text(path):
 
 def list_text(path, heading, pick, fmt):
     with open(os.path.join(ROOT, path), encoding='utf-8') as f:
-        items = pick(json.load(f))
+        items = list(pick(json.load(f)))
+    # 見出しだけ返すと、一覧が誤って空になっても気づかないまま、その関心の抜けたカードができる
+    if not items:
+        raise RuntimeError(f'{path} の一覧が空（{heading}）')
     return f'■ {heading}\n' + '\n'.join(f'- {fmt(item)}' for item in items)
 
 

@@ -107,7 +107,9 @@
     全人格をゼロから作り直す。コミットメッセージに CI を止める印を入れない
     （Cloudflare Pages がビルドを省略し、JSON が次の push まで公開されない）。
   - `sitemap.yml` と `magi-context.yml` は同じ push で main にコミットしうるので、どちらも
-    `git pull --rebase` してから push する。bot のコミットを増やすときも同じ形にすること。
+    `git pull --rebase` してから push し、弾かれたら取り込みからやり直す（最大4回）。
+    workflow をまたぐ `concurrency.group` の共有はしない（待機中の実行が新しい実行に
+    キャンセルされ、sitemap が黙って飛ぶため）。bot のコミットを増やすときも同じ形にすること。
 
 ## コーディング規約
 
@@ -147,7 +149,8 @@
   抽出は JS を実行しないので、JS で書き換える文言（motovlog の「公開予定」など）は静的な HTML 側も
   更新すること。抽出結果は `python .github/scripts/magi-context.py --dry-run --show` で API キーなしに確認できる。
   Worker は `https://tk.st/data/magi-context.json` を isolate ごとに10分使い回し（期限切れ後は手元の
-  カードで答えつつ裏で取り直す）、取得に失敗したら1分後に再試行する。反映は10分強遅れることがある。
+  カードで答えつつ裏で取り直す）、取得に失敗したり3人格そろわなかったりしたら1分後に再試行する。
+  カードは人格ごとに上書きし、JSON に欠けた人格は直近のカードを保つ。反映は10分強遅れることがある。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで
