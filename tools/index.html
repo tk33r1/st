@@ -67,6 +67,52 @@
           {"@type": "ListItem", "position": 8, "name": "Diff Studio - テキスト差分比較・文字数カウントツール", "url": "https://tk.st/tools/text-diff/"},
           {"@type": "ListItem", "position": 9, "name": "QR Atelier - おしゃれなQRコード作成ツール", "url": "https://tk.st/tools/qr-atelier/"}
         ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://tk.st/tools/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "SAFE TOOLS は安全に使えますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "SAFE TOOLS は、入力したファイルや文字列を外部へ送らず、変換・編集・生成などの処理を利用者のブラウザ内で完結させる設計です。機密性の高いデータを扱う場合は、信頼できる端末と最新のブラウザを利用してください。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "なぜファイルや入力内容が外部へ送られないのですか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "各ツールはファイルや入力内容を送信する処理を持たず、ブラウザ内の JavaScript で処理します。さらに Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先だけに制限しています。この二段構えはページ先頭の CSP 設定から確認できます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "アクセス解析でファイルや入力内容が送信されますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "いいえ。Google アナリティクスと Cloudflare Web Analytics はサイトの利用状況を把握するために使用していますが、ツールにはファイルや入力内容をアクセス解析へ渡す処理がありません。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "外部のライブラリやフォントを読み込みますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。外部との通信はアクセス解析に必要なものに限り、寄付の窓口である Ko-fi はページ内容を読めない別の埋め込み枠としてのみ許可しています。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "処理したファイルはサーバーに保存されますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "いいえ。処理対象と処理結果を tk.st のサーバーへ保存する機能はありません。書き出したファイルは、利用者が指定した端末上の保存先にダウンロードされます。"
+            }
+          }
+        ]
       }
     ]
   }
@@ -389,6 +435,91 @@
     }
     #empty-state p { margin: 0; font-size: 13px; color: var(--ink-3); }
 
+    /* ===== FAQ =====
+       The answers are part of the page, not a claim hidden only in metadata.
+       Native details elements keep the explanation usable without JavaScript. */
+    .faq-section {
+      margin-top: 56px;
+      padding-top: 30px;
+      border-top: 1px solid var(--rule);
+    }
+    .faq-head { margin-bottom: 18px; }
+    .faq-kicker {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .faq-title {
+      margin: 0;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.4;
+      letter-spacing: -0.02em;
+    }
+    .faq-lede {
+      max-width: 720px;
+      margin: 7px 0 0;
+      color: var(--ink-2);
+      font-size: 12.5px;
+      line-height: 1.75;
+    }
+    .faq-list { display: grid; gap: 9px; }
+    .faq-item {
+      border: 1px solid var(--rule);
+      border-radius: var(--r-1);
+      background: var(--panel);
+    }
+    .faq-item[open] { border-color: var(--rule-strong); }
+    .faq-question {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      color: var(--ink);
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.55;
+      cursor: pointer;
+      list-style: none;
+    }
+    .faq-question::-webkit-details-marker { display: none; }
+    .faq-question::before {
+      content: "Q";
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      flex: none;
+    }
+    .faq-question::after {
+      content: "+";
+      margin-left: auto;
+      color: var(--ink-3);
+      font-family: var(--font-mono);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1;
+      flex: none;
+    }
+    .faq-item[open] .faq-question::after { content: "−"; }
+    .faq-question:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .faq-answer {
+      margin: 0;
+      padding: 0 16px 15px 39px;
+      color: var(--ink-2);
+      font-size: 12.5px;
+      line-height: 1.85;
+    }
+    .faq-answer code {
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.92em;
+    }
+
     .fade-up { animation: fadeUp 300ms ease both; }
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(6px); }
@@ -403,6 +534,9 @@
       .shelf-facts { gap: 4px 12px; }
       .fact { border: 0; background: none; padding: 0; font-size: 10px; }
       #tool-grid { grid-template-columns: 1fr; }
+      .faq-section { margin-top: 42px; padding-top: 24px; }
+      .faq-question { padding: 13px 14px; }
+      .faq-answer { padding: 0 14px 14px 37px; }
     }
   </style>
 </head>
@@ -492,6 +626,41 @@
     </div>
 
     <div id="tool-grid"></div>
+
+    <section class="faq-section" aria-labelledby="faq-title">
+      <div class="faq-head">
+        <span class="faq-kicker">Security &amp; privacy</span>
+        <h2 id="faq-title" class="faq-title">よくある質問</h2>
+        <p class="faq-lede">SAFE TOOLS が何を外へ送らず、どの通信だけを許可しているかを説明します。</p>
+      </div>
+
+      <div class="faq-list">
+        <details class="faq-item" open>
+          <summary class="faq-question">SAFE TOOLS は安全に使えますか？</summary>
+          <p class="faq-answer">SAFE TOOLS は、入力したファイルや文字列を外部へ送らず、変換・編集・生成などの処理を利用者のブラウザ内で完結させる設計です。機密性の高いデータを扱う場合は、信頼できる端末と最新のブラウザを利用してください。</p>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">なぜファイルや入力内容が外部へ送られないのですか？</summary>
+          <p class="faq-answer">各ツールはファイルや入力内容を送信する処理を持たず、ブラウザ内の JavaScript で処理します。さらに <code>Content-Security-Policy</code>（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先だけに制限しています。この二段構えはページ先頭の CSP 設定から確認できます。</p>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">アクセス解析でファイルや入力内容が送信されますか？</summary>
+          <p class="faq-answer">いいえ。Google アナリティクスと Cloudflare Web Analytics はサイトの利用状況を把握するために使用していますが、ツールにはファイルや入力内容をアクセス解析へ渡す処理がありません。</p>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">外部のライブラリやフォントを読み込みますか？</summary>
+          <p class="faq-answer">ツールの処理に使うライブラリとフォントは tk.st 内に同梱し、外部 CDN から読み込みません。外部との通信はアクセス解析に必要なものに限り、寄付の窓口である Ko-fi はページ内容を読めない別の埋め込み枠としてのみ許可しています。</p>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-question">処理したファイルはサーバーに保存されますか？</summary>
+          <p class="faq-answer">いいえ。処理対象と処理結果を tk.st のサーバーへ保存する機能はありません。書き出したファイルは、利用者が指定した端末上の保存先にダウンロードされます。</p>
+        </details>
+      </div>
+    </section>
   </main>
 
   <!-- ===================== footer ===================== -->
