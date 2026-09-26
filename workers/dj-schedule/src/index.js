@@ -114,22 +114,32 @@ function rowToResponse(row) {
   };
 }
 
-// 月のデータ。DB に行が無くても「空の月」として成立する
+// month_memos の行から、確定日と開催不可日を取り出す。
+// 候補日は月から導くので、月の日曜でなくなった値はここで落とす
+function readStatus(row, dates) {
+  const decided = row && dates.includes(row.decided) ? row.decided : null;
+  const list = row ? safeJsonParse(row.blocked, []) : [];
+  const blocked = Array.isArray(list) ? list.filter((d) => dates.includes(d) && d !== decided) : [];
+  return { decided, blocked };
+}
+
+// 確定日と開催不可日が同じかを比べるための文字列（開催不可日の並び順と重複は問わない）
+function statusKey(status) {
+  const blocked = Array.isArray(status?.blocked) ? status.blocked : [];
+  return `${status?.decided ?? ''}|${[...new Set(blocked)].sort().join(',')}`;
+}
+
+// 月のデータ。DB に行が無くても「空の月」として成立する。2本の SELECT は1往復で投げる
 async function loadMonth(env, ym) {
   const dates = sundaysOf(ym);
-  const row = await env.DB.prepare(
-    'SELECT memo, decided, blocked, updated_at FROM month_memos WHERE ym = ?'
-  ).bind(ym).first();
-
-  const { results } = await env.DB.prepare(
-    'SELECT id, name, answers, comment, updated_at FROM month_responses WHERE ym = ? ORDER BY id ASC'
-  ).bind(ym).all();
-
-  // 候補日は月から導くので、月の日曜でなくなった値はここで落とす
-  const decided = row && dates.includes(row.decided) ? row.decided : null;
-  const blocked = row
-    ? safeJsonParse(row.blocked, []).filter((d) => dates.includes(d) && d !== decided)
-    : [];
+  const [memo, responses] = await env.DB.batch([
+    env.DB.prepare('SELECT memo, decided, blocked, updated_at FROM month_memos WHERE ym = ?').bind(ym),
+    env.DB.prepare(
+      'SELECT id, name, answers, comment, updated_at FROM month_responses WHERE ym = ? ORDER BY id ASC'
+    ).bind(ym),
+  ]);
+  const row = memo.results?.[0] ?? null;
+  const { decided, blocked } = readStatus(row, dates);
 
   return {
     month: ym,
@@ -138,7 +148,7 @@ async function loadMonth(env, ym) {
     decided,
     blocked,
     status_updated_at: row ? row.updated_at : null,
-    responses: (results || []).map(rowToResponse),
+    responses: (responses.results || []).map(rowToResponse),
   };
 }
 
@@ -154,8 +164,13 @@ async function readBody(request) {
 // /months/:ym 以下を1本で受ける。responses だけが末尾に :id を持てる
 const MONTH_ROUTE = /^\/months\/(\d{4}-\d{2})(?:\/(memo|status|responses)(?:\/(\d+))?)?$/;
 
+// 操作の失敗。400 はエラー文だけ、409 は画面を最新に戻せるよう月のデータも付けて返す
+function fail(status, error) {
+  return { status, error };
+}
+
 // /months/:ym 以下の操作。キーは「メソッド パス」。
-// どれも成功したら最新の月データを返すので、ここでは失敗時のエラー文（400）だけを返す
+// どれも成功したら最新の月データを返すので、ここでは失敗したときだけ fail() を返す
 const MONTH_ACTIONS = {
   // 月のデータを返すだけ
   'GET /months/:ym': async () => {},
@@ -170,7 +185,9 @@ const MONTH_ACTIONS = {
     ).bind(ym, memo).run();
   },
 
-  // 確定した開催日と開催不可日
+  // 確定した開催日と開催不可日。
+  // base（画面が見ていた状態）が付いていれば、DB の状態がそれと同じときだけ書く。
+  // 違えば、ほかの人が先に変えたということなので上書きせず 409 を返す。base が無ければ従来どおり上書き
   'PUT /months/:ym/status': async (env, ym, body) => {
     const dates = sundaysOf(ym);
     const decided = dates.includes(body.decided) ? body.decided : null;
@@ -178,39 +195,52 @@ const MONTH_ACTIONS = {
       ? [...new Set(body.blocked.filter((d) => dates.includes(d) && d !== decided))].sort()
       : [];
 
-    await env.DB.prepare(
-      `INSERT INTO month_memos (ym, decided, blocked) VALUES (?, ?, ?)
-       ON CONFLICT(ym) DO UPDATE SET decided = excluded.decided, blocked = excluded.blocked,
-                                     updated_at = CURRENT_TIMESTAMP`
-    ).bind(ym, decided, JSON.stringify(blocked)).run();
+    if (!body.base) {
+      await env.DB.prepare(
+        `INSERT INTO month_memos (ym, decided, blocked) VALUES (?, ?, ?)
+         ON CONFLICT(ym) DO UPDATE SET decided = excluded.decided, blocked = excluded.blocked,
+                                       updated_at = CURRENT_TIMESTAMP`
+      ).bind(ym, decided, JSON.stringify(blocked)).run();
+      return;
+    }
+
+    const conflict = fail(409, '開催日の設定がほかの画面で変更されています');
+    const row = await env.DB.prepare('SELECT decided, blocked FROM month_memos WHERE ym = ?')
+      .bind(ym).first();
+    if (statusKey(readStatus(row, dates)) !== statusKey(body.base)) return conflict;
+
+    // 読んでから書くまでの間に変わっていないことも、書くときの条件で確かめる
+    const { meta } = row
+      ? await env.DB.prepare(
+        `UPDATE month_memos SET decided = ?, blocked = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE ym = ? AND decided IS ? AND blocked = ?`
+      ).bind(decided, JSON.stringify(blocked), ym, row.decided, row.blocked).run()
+      : await env.DB.prepare(
+        'INSERT INTO month_memos (ym, decided, blocked) VALUES (?, ?, ?) ON CONFLICT(ym) DO NOTHING'
+      ).bind(ym, decided, JSON.stringify(blocked)).run();
+    if (!meta.changes) return conflict;
   },
 
-  // 回答の登録・更新。(ym, name) が同じなら上書き
+  // 回答の登録・更新。(ym, name) が同じなら上書き。
+  // 上限の確認と書き込みを1文にして、確認と書き込みの間に他の回答が割り込めないようにする
   'POST /months/:ym/responses': async (env, ym, body) => {
     const name = clean(body.name, 20);
-    if (!name) return '名前を入力してください';
+    if (!name) return fail(400, '名前を入力してください');
 
     const answers = parseAnswers(body.answers, sundaysOf(ym));
     const comment = clean(body.comment, 200);
 
-    const existing = await env.DB.prepare(
-      'SELECT id FROM month_responses WHERE ym = ? AND name = ?'
-    ).bind(ym, name).first();
-
-    if (!existing) {
-      const counted = await env.DB.prepare(
-        'SELECT COUNT(*) AS c FROM month_responses WHERE ym = ?'
-      ).bind(ym).first();
-      if ((counted?.c ?? 0) >= MAX_RESPONSES) return '回答数の上限に達しました';
-    }
-
-    await env.DB.prepare(
-      `INSERT INTO month_responses (ym, name, answers, comment) VALUES (?, ?, ?, ?)
+    const { meta } = await env.DB.prepare(
+      `INSERT INTO month_responses (ym, name, answers, comment)
+       SELECT ?1, ?2, ?3, ?4
+       WHERE EXISTS (SELECT 1 FROM month_responses WHERE ym = ?1 AND name = ?2)
+          OR (SELECT COUNT(*) FROM month_responses WHERE ym = ?1) < ?5
        ON CONFLICT(ym, name) DO UPDATE SET
          answers = excluded.answers,
          comment = excluded.comment,
          updated_at = CURRENT_TIMESTAMP`
-    ).bind(ym, name, JSON.stringify(answers), comment).run();
+    ).bind(ym, name, JSON.stringify(answers), comment, MAX_RESPONSES).run();
+    if (!meta.changes) return fail(400, '回答数の上限に達しました');
   },
 
   'DELETE /months/:ym/responses/:id': async (env, ym, _body, id) => {
@@ -274,10 +304,15 @@ export default {
         if (!body) return json({ error: 'リクエストが不正です' }, 400, cors);
       }
 
-      const error = await handler(env, ym, body, id);
-      if (error) return json({ error }, 400, cors);
+      const failed = await handler(env, ym, body, id);
+      if (failed) {
+        const month = failed.status === 409 ? await loadMonth(env, ym) : {};
+        return json({ ...month, error: failed.error }, failed.status, cors);
+      }
       return json(await loadMonth(env, ym), 200, cors);
     } catch (e) {
+      // 利用者には一律の文言だけ返し、原因は wrangler tail で追えるようにログへ残す
+      console.error('dj-schedule', request.method, url.pathname, e);
       return json({ error: 'サーバー側でエラーが発生しました' }, 500, cors);
     }
   },

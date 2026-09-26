@@ -58,6 +58,15 @@ npx wrangler d1 execute dj-schedule-db --remote --file=./migrate-add-status.sql
 
 2回流すと `duplicate column name` で落ちる。適用済みという意味なので無視してよい。
 
+### 重複していた索引の削除（既存 DB のみ）
+
+以前の `schema.sql` は `idx_month_responses_ym` を作っていたが、`UNIQUE (ym, name)` の索引と重複するので外した。
+既存 DB からも消すなら次を流す（何度流しても害はない）。
+
+```bash
+npx wrangler d1 execute dj-schedule-db --remote --file=./migrate-drop-ym-index.sql
+```
+
 ### イベント作成方式からの移行
 
 初期版は `events` / `responses` テーブルを使っていた。月ベースに変えたので、
@@ -90,16 +99,20 @@ npx wrangler dev --local --port 8787 --config ./wrangler.dev.toml
 | GET | `/dj/api/schedule/months` | 回答が入っている月の一覧（新しい順・最大24件） |
 | GET | `/dj/api/schedule/months/:ym` | その月の日曜日・メモ・全回答。DB に行が無くても空の月として 200 を返す |
 | PUT | `/dj/api/schedule/months/:ym/memo` | 月のメモを更新 `{memo}` |
-| PUT | `/dj/api/schedule/months/:ym/status` | 確定日と開催不可日 `{decided:"2026-09-13"\|null, blocked:["2026-09-06"]}` |
+| PUT | `/dj/api/schedule/months/:ym/status` | 確定日と開催不可日 `{decided:"2026-09-13"\|null, blocked:["2026-09-06"], base?:{decided, blocked}}` |
 | POST | `/dj/api/schedule/months/:ym/responses` | 回答の登録・更新 `{name, answers:{date:"o"\|"t"\|"x"}, comment}` |
 | DELETE | `/dj/api/schedule/months/:ym/responses/:responseId` | 回答を1件削除 |
 
 `answers` は日付をキーにした連想配列。その月の日曜日以外のキーは保存時に捨てられる。
 `decided` / `blocked` も同様に、その月の日曜日以外は捨てられる。`decided` に指定した日は `blocked` から自動で外れる。
 `status` は毎回 2つの値をまとめて上書きするので、画面側は現在値を含めて送ること。
+`base` に「画面が見ていた確定日と開催不可日」を付けると、DB の状態がそれと違うとき（ほかの人が先に変えたとき）は
+書き込まずに `409` を返す。`409` の本文は `error` に加えて最新の月データ（GET と同じ形）を持つ。
+画面は必ず `base` を付けて送る。`base` なしは従来どおり無条件に上書きする（外部クライアントとの互換性のため）。
 回答は `(ym, name)` で一意で、同じ名前で再送すると上書き（＝修正）になる。
 
 ## 制限値
 
 回答 60件/月 / 名前 20文字 / ひとこと 200文字 / メモ 500文字。
+回答数の上限は、確認と書き込みを1つの SQL で行うので、同時に登録されても超えない。
 保存時に `<` `>` と制御文字を落とす（メモのみ改行を保持）。表示側は全て `textContent` で描画。

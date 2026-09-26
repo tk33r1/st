@@ -37,6 +37,12 @@
       margin-bottom: 8vh;
     }
 
+    /* 月の読み込み中（操作できない）。すぐ終わる読み込みでちらつかないよう、薄くするのは少し待ってから */
+    .section[inert] {
+      opacity: 0.45;
+      transition: opacity 0.2s 0.2s;
+    }
+
     .section-title {
       font-family: var(--f-dot);
       font-size: 0.9375rem;
@@ -90,9 +96,15 @@
       transition: color 0.2s, border-color 0.2s;
     }
 
-    .nav-btn:hover {
+    .nav-btn:hover:not(:disabled) {
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
+    }
+
+    /* API が受け付ける範囲（2020-01〜2099-12）の外へは移れない */
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
     }
 
     /* ===== FORM ===== */
@@ -510,9 +522,20 @@
       transition: all 0.15s;
     }
 
-    .block-chip:hover {
+    .block-chip:hover:not(:disabled) {
       color: var(--fg);
       border-color: var(--fg-dim);
+    }
+
+    /* 保存中は押せない（見た目は変えず、カーソルだけ） */
+    .block-chip:disabled {
+      cursor: progress;
+    }
+
+    /* 開催日に決めた日は開催不可にできない */
+    .block-chip.is-decided {
+      opacity: 0.35;
+      cursor: not-allowed;
     }
 
     .block-chip[aria-pressed="true"] {
@@ -601,6 +624,7 @@
         <button class="nav-btn" id="nextMonth" type="button">→</button>
       </div>
       <div id="globalNotice" class="notice error" role="status" hidden></div>
+      <button class="btn small" id="retryLoad" type="button" style="margin-top:10px" hidden>もう一度読み込む</button>
     </section>
 
     <!-- ===== 回答 ===== -->
@@ -692,6 +716,8 @@
       var data = null;       // サーバーから取得した月データ
       var answers = {};      // { 'YYYY-MM-DD': 'o'|'t'|'x' }
       var editingId = null;  // 修正中の回答 id
+      var formDirty = false; // 出欠やひとことを手で入れたか。入れた内容は名前の選び直しで捨てない
+      var statusSaving = false; // 開催日の保存中。次の変更は保存が終わるまで受け付けない（保存同士の追い越し防止）
 
       // ===== ユーティリティ =====
       function $(id) { return document.getElementById(id); }
@@ -769,7 +795,12 @@
           throw new Error('サーバーに接続できませんでした');
         });
         var payload = await res.json().catch(function () { return {}; });
-        if (!res.ok) throw new Error(payload.error || ('通信に失敗しました (' + res.status + ')'));
+        if (!res.ok) {
+          var err = new Error(payload.error || ('通信に失敗しました (' + res.status + ')'));
+          err.status = res.status;
+          err.payload = payload; // 409 には最新の月データが入っている
+          throw err;
+        }
         return payload;
       }
 
@@ -797,15 +828,31 @@
         if (payload.month !== month) return;
         var prevDecided = data ? data.decided : null;
         data = payload;
-        if (resetForm) resetAnswerForm(true);
+        if (resetForm) prepareForm();
         renderAll();
         if (data.decided && data.decided !== prevDecided && window.djCelebrate) window.djCelebrate();
       }
 
       // ===== 読み込み =====
+      // 画面のデータが表示中の月のものか。月を移ってから読み込みが終わるまでは false
+      function isLoaded() {
+        return !!data && data.month === month;
+      }
+
+      // 読み込みが終わるまで出欠・集計・開催日を操作させない。
+      // 前の月の画面のまま保存すると、移った先の月の回答や開催日を前の月の中身で上書きしてしまう
+      function syncLock() {
+        var locked = !isLoaded();
+        Array.prototype.forEach.call(document.querySelectorAll('.wrap > .section'), function (s) {
+          s.inert = locked;
+        });
+      }
+
       async function load(ym) {
         month = ym;
+        syncLock();
         notice('');
+        $('retryLoad').hidden = true;
         renderMonthBar();
         try {
           var payload = await api('/months/' + ym);
@@ -813,32 +860,36 @@
           if (ym !== month) return;
           // ここは月の切り替え。前の月の開催日と比べても意味がないので applyData は通さない
           data = payload;
-          resetAnswerForm(true);
+          prepareForm();
           renderAll();
         } catch (err) {
-          if (ym === month) notice(err.message);
+          if (ym !== month) return;
+          // 読み込めなかった月は操作できないままなので、その場で読み直せるようにする
+          notice(err.message);
+          $('retryLoad').hidden = false;
         }
       }
 
       function renderAll() {
         var summary = buildSummary();
+        syncLock();
         document.title = eventLabel(month) + ' スケジュール調整';
         renderMonthBar();
         renderTable(summary);
         renderBest(summary);
         renderStatusEditor();
-        restoreName();
-        autoLoadOwnResponse();
         renderAnswerRows();
       }
 
       // ===== 月バー =====
       function renderMonthBar() {
         $('monthLabel').textContent = eventLabel(month);
-        var count = data && data.month === month ? data.dates.length : 0;
+        var count = isLoaded() ? data.dates.length : 0;
         $('monthSub').textContent = fmtMonth(month) + (count ? ' / 日曜 ' + count + '回' : '');
         $('prevMonth').textContent = '← ' + eventLabel(shiftMonth(month, -1));
         $('nextMonth').textContent = eventLabel(shiftMonth(month, 1)) + ' →';
+        $('prevMonth').disabled = !isMonth(shiftMonth(month, -1));
+        $('nextMonth').disabled = !isMonth(shiftMonth(month, 1));
       }
 
       // ===== 集計表 =====
@@ -1011,49 +1062,76 @@
       }
 
       // ===== 開催日の設定 =====
-      function renderStatusEditor() {
+      // view を渡すと、保存中に押した結果を先に見せる（省略時は保存済みの状態）
+      function renderStatusEditor(view) {
+        var shown = view || data;
         var sel = $('decidedSelect');
         sel.textContent = '';
         addOption(sel, '', '未定');
         data.dates.forEach(function (iso) { addOption(sel, iso, fmtDateLong(iso)); });
-        sel.value = data.decided || '';
+        sel.value = shown.decided || '';
+        sel.disabled = statusSaving;
 
         var box = $('blockChips');
         box.textContent = '';
         data.dates.forEach(function (iso) {
+          var decided = iso === shown.decided;
           var chip = document.createElement('button');
           chip.type = 'button';
-          chip.className = 'block-chip';
+          chip.className = 'block-chip' + (decided ? ' is-decided' : '');
           chip.dataset.iso = iso;
           chip.textContent = fmtDate(iso);
-          chip.setAttribute('aria-pressed', isBlocked(iso) ? 'true' : 'false');
+          chip.setAttribute('aria-pressed', shown.blocked.indexOf(iso) !== -1 ? 'true' : 'false');
+          // 開催日に決めた日はサーバーが開催不可を受け付けないので、押せないようにしておく
+          chip.disabled = statusSaving || decided;
+          if (decided) chip.title = '開催日は開催不可にできません';
           chip.addEventListener('click', function () {
-            var on = chip.getAttribute('aria-pressed') === 'true';
-            chip.setAttribute('aria-pressed', on ? 'false' : 'true');
-            saveStatus();
+            var blocked = isBlocked(iso)
+              ? data.blocked.filter(function (d) { return d !== iso; })
+              : data.blocked.concat(iso);
+            saveStatus(data.decided, blocked);
           });
           box.appendChild(chip);
         });
       }
 
-      // 開催日 / 開催不可日を変更した時点で即保存する
-      async function saveStatus() {
-        var decided = $('decidedSelect').value || null;
-        var blocked = Array.prototype.filter.call(
-          $('blockChips').children,
-          function (chip) { return chip.getAttribute('aria-pressed') === 'true'; }
-        ).map(function (chip) { return chip.dataset.iso; });
+      // 開催日 / 開催不可日を変更した時点で即保存する。
+      // 一度に1件だけ送り、この画面が見ていた状態（base）も添える。
+      // サーバーの状態が base と違えば 409 で断られるので、ほかの人が先に決めた開催日を消さずに済む
+      async function saveStatus(decided, blocked) {
+        if (!isLoaded() || statusSaving) return; // inert に対応していないブラウザ向けの念押しを兼ねる
+        var before = data;
+        statusSaving = true;
+        renderStatusEditor({ decided: decided, blocked: blocked });
 
+        var payload = null;
+        var error = null;
         try {
-          var payload = await api('/months/' + month + '/status', {
+          payload = await api('/months/' + month + '/status', {
             method: 'PUT',
-            body: { decided: decided, blocked: blocked }
+            body: { decided: decided, blocked: blocked, base: { decided: before.decided, blocked: before.blocked } }
           });
-          applyData(payload);
-          notice(payload.decided ? '開催日を ' + fmtDateLong(payload.decided) + ' に設定しました' : '開催日の設定を保存しました', false);
         } catch (err) {
-          notice(err.message);
+          error = err;
         }
+        statusSaving = false;
+        // 保存中の見た目（押した結果と操作止め）を外す。失敗したときはこれで保存済みの状態に戻る
+        if (isLoaded()) renderStatusEditor();
+
+        if (payload) {
+          applyData(payload);
+          notice(statusMessage(before, payload), false);
+        } else if (error.status === 409 && error.payload) {
+          applyData(error.payload);
+          notice('ほかの人が先に開催日の設定を変えていました。最新の状態を表示しているので、必要ならもう一度操作してください');
+        } else {
+          notice(error.message);
+        }
+      }
+
+      function statusMessage(before, after) {
+        if (after.decided === before.decided) return '開催できない日を保存しました';
+        return after.decided ? '開催日を ' + fmtDateLong(after.decided) + ' に設定しました' : '開催日を未定に戻しました';
       }
 
       // ===== 回答フォーム =====
@@ -1065,21 +1143,23 @@
         addOption(sel, OTHER, 'その他（自由入力）');
       }
 
-      // 前回この端末で登録した名前を名前欄に戻す。修正中は選んである名前のまま
+      // 月を開いたときと、登録・削除のあと。フォームを空にして、この端末で前回登録した名前と
+      // その人の回答を入れ直す。開催日の保存などほかの再描画では呼ばない（選び途中の名前を保存名で上書きしないため）
+      function prepareForm() {
+        resetAnswerForm(true);
+        restoreName();
+        var mine = responseByName(selectedName());
+        if (mine) loadResponseIntoForm(mine, { scroll: false, rerender: false });
+      }
+
+      // 前回この端末で登録した名前を名前欄に戻す
       function restoreName() {
-        if (editingId) return;
         var saved = '';
         try { saved = localStorage.getItem(STORE_KEY) || ''; } catch (e) { /* プライベートモード等 */ }
-        var sel = $('ansName');
-        if (!saved) {
-          sel.value = '';
-        } else if (isMember(saved)) {
-          sel.value = saved;
-        } else {
-          // 自由入力で登録した名前。入力途中の文字があればそちらを残す
-          sel.value = OTHER;
-          if (!$('ansCustomName').value) $('ansCustomName').value = saved;
-        }
+        var member = !saved || isMember(saved);
+        $('ansName').value = member ? saved : OTHER;
+        // 自由入力欄は、表で別の人をタップしたときの名前が残っていることがあるので必ず入れ直す
+        $('ansCustomName').value = member ? '' : saved;
         syncCustomNameField();
       }
 
@@ -1139,6 +1219,7 @@
             b.addEventListener('click', function () {
               // ○/△/× は常にどれか一つが選ばれている状態にする（未回答には戻さない）
               answers[iso] = v;
+              formDirty = true;
               Array.prototype.forEach.call(seg.children, function (child) {
                 child.setAttribute('aria-pressed', answers[iso] === child.dataset.v ? 'true' : 'false');
               });
@@ -1150,24 +1231,21 @@
         });
       }
 
-      // 前回この端末で登録した名前に回答があれば、開いた時点で読み込んでおく
-      function autoLoadOwnResponse() {
-        if (editingId) return;
-        var name = selectedName();
-        if (!name) return;
-        var mine = responseByName(name);
-        if (mine) loadResponseIntoForm(mine, { scroll: false, rerender: false });
+      // フォームの見出しとボタンを「その人の回答を修正」か「新しく入れる」に切り替える
+      function setEditing(r) {
+        editingId = r ? r.id : null;
+        $('answerTitle').textContent = r ? r.name + ' の回答を修正' : '出欠を入れる';
+        $('submitAnswer').textContent = r ? '更新する' : '登録する';
+        $('deleteAnswer').hidden = !r;
       }
 
       function loadResponseIntoForm(r, options) {
         var opts = options || {};
-        editingId = r.id;
+        setEditing(r);
         answers = Object.assign({}, r.answers);
+        formDirty = false;
         setName(r.name);
         $('ansComment').value = r.comment || '';
-        $('answerTitle').textContent = r.name + ' の回答を修正';
-        $('submitAnswer').textContent = '更新する';
-        $('deleteAnswer').hidden = false;
         if (opts.rerender !== false) renderAnswerRows();
         if (opts.scroll !== false) $('ansList').scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -1184,14 +1262,12 @@
       }
 
       function resetAnswerForm(skipRender) {
-        editingId = null;
+        setEditing(null);
         answers = {};
+        formDirty = false;
         // 未回答者は最初から全部○の状態にしておく
         if (data) fillAnswers('o');
         $('ansComment').value = '';
-        $('answerTitle').textContent = '出欠を入れる';
-        $('submitAnswer').textContent = '登録する';
-        $('deleteAnswer').hidden = true;
         if (!skipRender) renderAnswerRows();
       }
 
@@ -1200,14 +1276,21 @@
         data.dates.forEach(function (iso) { if (!isBlocked(iso)) answers[iso] = v; });
       }
 
-      // 名前を選び直したとき、その人の既存回答があれば読み込む
+      // 名前を選び直したとき、その人の既存回答があれば読み込む。
+      // ただし手で入れた出欠やひとことがあれば捨てず、修正の対象だけ切り替える
+      // （自由入力欄の blur は「登録する」を押した瞬間にも起きるので、ここで入れ替えると入力が消える）
       function onNameChanged() {
         syncCustomNameField();
         var name = selectedName();
         if (!name) return;
         var existing = responseByName(name);
-        if (existing) {
+        if (existing && formDirty) {
+          setEditing(existing);
+          if (!$('ansComment').value) $('ansComment').value = existing.comment || '';
+        } else if (existing) {
           loadResponseIntoForm(existing);
+        } else if (editingId && formDirty) {
+          setEditing(null);
         } else if (editingId) {
           resetAnswerForm();
         }
@@ -1224,11 +1307,15 @@
         btn.addEventListener('click', function () {
           if (!data) return;
           fillAnswers(btn.dataset.fill);
+          formDirty = true;
           renderAnswerRows();
         });
       });
 
+      $('ansComment').addEventListener('input', function () { formDirty = true; });
+
       $('submitAnswer').addEventListener('click', async function () {
+        if (!isLoaded()) return;
         var name = selectedName();
         if (!name) { notice('名前を選んでください'); return; }
         if (!Object.keys(answers).length) { notice('○ △ × をひとつ以上選んでください'); return; }
@@ -1252,7 +1339,7 @@
       });
 
       $('deleteAnswer').addEventListener('click', async function () {
-        if (!editingId) return;
+        if (!editingId || !isLoaded()) return;
         // 名前の選択欄は途中で変えられるので、消す相手は editingId が指す回答から取る
         var target = data.responses.find(function (r) { return r.id === editingId; });
         if (!target) { resetAnswerForm(); return; }
@@ -1272,7 +1359,11 @@
         }
       });
 
-      $('decidedSelect').addEventListener('change', saveStatus);
+      $('decidedSelect').addEventListener('change', function () {
+        saveStatus(this.value || null, data.blocked);
+      });
+
+      $('retryLoad').addEventListener('click', function () { load(month); });
 
       window.addEventListener('popstate', function () { load(monthFromUrl()); });
 

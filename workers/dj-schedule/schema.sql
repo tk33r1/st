@@ -20,7 +20,5 @@ CREATE TABLE IF NOT EXISTS month_responses (
   comment    TEXT NOT NULL DEFAULT '',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (ym, name)
+  UNIQUE (ym, name)                      -- この一意制約の索引（先頭が ym）で ym の絞り込みも賄う
 );
-
-CREATE INDEX IF NOT EXISTS idx_month_responses_ym ON month_responses(ym);
