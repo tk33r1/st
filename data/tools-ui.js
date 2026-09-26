@@ -304,7 +304,8 @@
   //   3. securitypolicyviolation … Content-Security-Policy によってブラウザが止めたもの
   // どれもページ自身による計測で、Worker の中の通信は見えない（Worker は blob: から起動して
   // ページの CSP を引き継がせている）。画面にもそう書く。
-  // ツールのスクリプトより先に仕掛ける必要があるので、このファイルを読んだ時点で始める。
+  // GTM やツールのスクリプトより先に仕掛ける必要があるので、各ページは CSP の meta の直後で
+  // このファイルを読み、ここは読んだ時点で始める。
   const GUARD_HOST = 'example.com';
   const GUARD_PATH = '/st-guard-test';
   const ANALYTICS_HOSTS = [
@@ -335,29 +336,26 @@
     }, 150);
   }
 
+  // 行き先の分類。blob: や data: のように端末の外へ出ないものは null
   function describeDestination(url) {
     let u;
     try {
       u = new URL(url, location.href);
     } catch (_) {
-      return { kind: 'other', host: String(url).slice(0, 80), label: '読み取れない行き先' };
+      return { kind: 'other', href: String(url), host: String(url).slice(0, 80), label: '読み取れない行き先' };
     }
-    if (!/^(https?|wss?):$/.test(u.protocol)) return { kind: 'local', host: u.protocol, label: '端末の中' };
+    if (!/^(https?|wss?):$/.test(u.protocol)) return null;
+    const href = u.href;
     const host = u.hostname;
-    if (host === GUARD_HOST && u.pathname.indexOf(GUARD_PATH) === 0) {
-      return { kind: 'test', host, label: 'ガードの試験' };
-    }
-    if (u.origin === location.origin) return { kind: 'site', host, label: 'このサイト（tk.st）' };
-    if (AD_HOSTS.test(host)) return { kind: 'ad', host, label: '広告の配信元' };
+    const as = (kind, label) => ({ kind, href, host, label });
+    if (host === GUARD_HOST && u.pathname.indexOf(GUARD_PATH) === 0) return as('test', 'ガードの試験');
+    if (u.origin === location.origin) return as('site', 'このサイト（tk.st）');
+    if (AD_HOSTS.test(host)) return as('ad', '広告の配信元');
     for (const [re, label] of ANALYTICS_HOSTS) {
-      if (re.test(host)) return { kind: 'analytics', host, label };
+      if (re.test(host)) return as('analytics', label);
     }
-    if (/(^|\.)ko-fi\.com$/.test(host)) return { kind: 'donation', host, label: 'Ko-fi（寄付の窓口）' };
-    return { kind: 'other', host, label: '想定外の行き先' };
-  }
-
-  function absoluteHref(url) {
-    try { return new URL(url, location.href).href; } catch (_) { return String(url); }
+    if (/(^|\.)ko-fi\.com$/.test(host)) return as('donation', 'Ko-fi（寄付の窓口）');
+    return as('other', '想定外の行き先');
   }
 
   // 載せた中身のバイト数。数えられない形（ストリームなど）は -1
@@ -379,23 +377,45 @@
     return -1;
   }
 
+  // 呼び出しを書き留めた通信のうち、Resource Timing の記録がまだ届いていないもの（via + href ごと）。
+  // Resource Timing に出ない WebSocket / EventSource は入れない
+  const awaitingTiming = new Map();
+  const TIMED_VIAS = ['fetch', 'xhr', 'beacon'];
+  function awaitingKey(entry) {
+    return entry.via + ' ' + entry.href;
+  }
+  // 待ちから外したら true
+  function stopAwaiting(entry) {
+    const key = awaitingKey(entry);
+    const list = awaitingTiming.get(key);
+    const i = list ? list.indexOf(entry) : -1;
+    if (i === -1) return false;
+    list.splice(i, 1);
+    if (!list.length) awaitingTiming.delete(key);
+    return true;
+  }
+  // 止められた呼び出しのうち、Resource Timing の記録がまだ来ていないもの。Chrome は止めた通信にも
+  // 記録を出すので、それを別の通信として数えないために取っておく（Firefox は出さないので残る）
+  const blockedCalls = [];
   function recordCall(via, url, method, body) {
     const dest = describeDestination(url);
-    if (dest.kind === 'local') return;
+    if (!dest) return;
     const m = String(method || 'GET').toUpperCase();
     const bytes = bodySize(body);
-    net.entries.push(Object.assign({
+    const entry = Object.assign({
       at: performance.now(),
-      href: absoluteHref(url),
       via,
-      method: m,
       bytes,
       carries: bytes !== 0 || !(m === 'GET' || m === 'HEAD'),
       size: 0,
-      fromCall: true,
-      timed: false,
       blocked: false,
-    }, dest));
+    }, dest);
+    net.entries.push(entry);
+    if (TIMED_VIAS.indexOf(via) !== -1) {
+      const key = awaitingKey(entry);
+      if (!awaitingTiming.has(key)) awaitingTiming.set(key, []);
+      awaitingTiming.get(key).push(entry);
+    }
     notifyNet();
   }
 
@@ -451,44 +471,68 @@
         const Native = global[name];
         if (typeof Native !== 'function' || typeof Proxy !== 'function') return;
         global[name] = new Proxy(Native, {
-          construct(target, args) {
+          // newTarget を渡さないと、継承したクラスで new しても元のクラスのものが返る
+          construct(target, args, newTarget) {
             try { recordCall(via, String(args[0]), method, null); } catch (_) { /* 同上 */ }
-            return Reflect.construct(target, args);
+            return Reflect.construct(target, args, newTarget);
           },
         });
       } catch (_) { /* 同上 */ }
     });
   })();
 
-  // blockedURI はオリジンまで削られることがあるので、前方一致で同じ通信とみなす
+  // 止めた知らせ（blockedURI）と通信の行が同じ行き先か。blockedURI はリダイレクトなどで
+  // オリジンまで削られることがあり、そのときだけオリジンで合わせる
   function sameTarget(href, blockedUri) {
-    return Boolean(blockedUri) && (href === blockedUri || href.indexOf(blockedUri) === 0 || blockedUri.indexOf(href) === 0);
+    if (!blockedUri) return false;
+    if (href === blockedUri) return true;
+    const origin = blockedUri.replace(/\/$/, '');
+    return /^[a-z][a-z0-9+.-]*:\/\/[^/?#]+$/i.test(origin) && href.indexOf(origin + '/') === 0;
   }
-  // Chrome は CSP が止めた通信も Resource Timing に1件として載せる。止めた知らせと
-  // 結び付けて「止められた」にしないと、出ていない通信を送信として数えてしまう
-  function linkBlocked(entry, block) {
-    entry.blocked = true;
-    entry.directive = block.directive;
-    block.linked = true;
+  // 止めたルールと通信の種類が合うか（許された fetch に、同じ行き先で止められた画像の知らせを付けない）。
+  // 表にないルールは種類で絞らない
+  const DIRECTIVE_VIAS = {
+    'connect-src': ['fetch', 'xhr', 'xmlhttprequest', 'beacon', 'websocket', 'eventsource'],
+    'img-src': ['img', 'css', 'other'],
+    'script-src': ['script', 'other'],
+    'script-src-elem': ['script', 'other'],
+    'style-src': ['link', 'css', 'other'],
+    'style-src-elem': ['link', 'css', 'other'],
+    'font-src': ['css', 'other'],
+    'media-src': ['video', 'audio', 'other'],
+    'frame-src': ['iframe', 'other'],
+    'child-src': ['iframe', 'other'],
+  };
+  function sameRequest(via, href, block) {
+    const vias = DIRECTIVE_VIAS[block.directive];
+    return (!vias || vias.indexOf(via) !== -1) && sameTarget(href, block.href);
   }
 
+  // Chrome は CSP が止めた通信も Resource Timing に1件として載せる。止めた知らせと
+  // 結び付けて「止められた」にしないと、出ていない通信を送信として数えてしまう
   const TIMED_CALLS = { fetch: 'fetch', xmlhttprequest: 'xhr', beacon: 'beacon' };
   function takeResource(entry) {
     const dest = describeDestination(entry.name);
-    if (dest.kind === 'local') return;
+    if (!dest) return;
     const size = entry.encodedBodySize || entry.transferSize || 0;
     const via = TIMED_CALLS[entry.initiatorType];
-    if (via) {
-      // 呼び出しを書き留めた通信なら、同じ行に受け取った大きさを足すだけ
-      const call = net.entries.find(e => e.fromCall && !e.timed && e.via === via && e.href === entry.name);
-      if (call) {
-        call.timed = true;
-        call.size = size;
-        notifyNet();
-        return;
-      }
+    // 呼び出しを書き留めた通信なら、同じ行に受け取った大きさを足すだけ
+    const key = via && via + ' ' + dest.href;
+    const waiting = key && awaitingTiming.get(key);
+    if (waiting) {
+      waiting.shift().size = size;
+      if (!waiting.length) awaitingTiming.delete(key);
+      notifyNet();
+      return;
     }
-    const block = net.blocked.find(b => !b.linked && !b.absorbed && b.network && sameTarget(entry.name, b.href));
+    // 止められた呼び出しの記録なら、行は増やさない
+    const blockedCall = blockedCalls.findIndex(c => c.via === via && c.href === dest.href);
+    if (blockedCall !== -1) {
+      blockedCalls.splice(blockedCall, 1);
+      return;
+    }
+    const block = net.blocked.find(b => !b.linked && !b.absorbed && b.kind !== 'code'
+      && sameRequest(entry.initiatorType || 'other', dest.href, b));
     if (block) {
       // 止めた知らせが先に届いていた通信。行は増やさず、知らせのほうを一覧に残す
       block.absorbed = true;
@@ -497,34 +541,32 @@
     }
     net.entries.push(Object.assign({
       at: entry.startTime,
-      href: entry.name,
       via: entry.initiatorType || 'other',
-      method: via === 'beacon' ? 'POST' : (via ? '' : 'GET'),
-      bytes: via === 'beacon' ? -1 : 0,
+      bytes: 0,
       // 書き留める前に始まった fetch / XHR は、中身を載せたかどうか分からない
       carries: via === 'beacon' ? true : (via ? null : false),
       size,
-      fromCall: false,
-      timed: true,
       blocked: false,
     }, dest));
     notifyNet();
   }
 
-  function takeViolation(blockedUri, rawDirective, at) {
+  function takeViolation(blockedUri, rawDirective) {
     const uri = String(blockedUri || '');
     const directive = String(rawDirective || '').split(' ')[0];
-    const network = /^(https?|wss?):/i.test(uri);
-    const dest = network
-      ? describeDestination(uri)
-      : { kind: 'code', host: uri || directive, label: 'ページ内の処理' };
-    const record = Object.assign({ at, href: uri, directive, network, linked: false }, dest);
-    if (network) {
+    // 通信でないもの（インラインや eval の実行）は kind: 'code'
+    const dest = (/^(https?|wss?):/i.test(uri) && describeDestination(uri))
+      || { kind: 'code', host: uri || directive, label: 'ページ内の処理' };
+    const record = Object.assign({ at: performance.now(), directive, linked: false }, dest, { href: uri });
+    if (record.kind !== 'code') {
       // 呼び出しの行か Resource Timing の行が先にあれば、そこに「止められた」を付ける
       for (let i = net.entries.length - 1; i >= 0; i--) {
         const c = net.entries[i];
-        if (c.blocked || c.host !== dest.host || !sameTarget(c.href, uri)) continue;
-        linkBlocked(c, record);
+        if (c.blocked || c.host !== record.host || !sameRequest(c.via, c.href, record)) continue;
+        c.blocked = true;
+        c.directive = directive;
+        record.linked = true;
+        if (stopAwaiting(c)) blockedCalls.push(c);
         break;
       }
     }
@@ -532,14 +574,9 @@
     notifyNet();
   }
 
-  // GTM などはこのファイルより先に動くので、その間に止めた分は head 先頭のインライン
-  // スクリプトが window.__stCspLog に書き留めている。それを引き取ってから自分で聞く
-  // （引き取ったあとは null にして、先頭の書き留めを止める）。要素に紐づかない違反は
-  // ドキュメントに届くので、window の捕捉で両方拾う
-  (global.__stCspLog || []).forEach(v => takeViolation(v.u, v.d, v.t));
-  global.__stCspLog = null;
+  // 要素に紐づかない違反はドキュメントに届くので、window の捕捉で両方拾う
   global.addEventListener('securitypolicyviolation', e => {
-    takeViolation(e.blockedURI, e.effectiveDirective || e.violatedDirective, performance.now());
+    takeViolation(e.blockedURI, e.effectiveDirective || e.violatedDirective);
   }, true);
 
   try {
@@ -550,29 +587,32 @@
     try { performance.getEntriesByType('resource').forEach(takeResource); } catch (__) { /* 計測なし */ }
   }
 
-  // ファイルを受け取った時点を区切りにする。ツールごとの処理より先に拾えるよう捕捉で聞く
-  function markWork(fileList) {
+  // ファイルを受け取った時点を区切りにする。ツールごとの処理より先に拾えるよう捕捉で聞く。
+  // 受け取った分は、どの入力から来たか（source）と一緒に持つ
+  function markWork(fileList, source) {
     const files = [];
     Array.from(fileList || []).forEach(f => {
       if (f && typeof f.size === 'number') files.push({ name: f.name || '名前のないファイル', size: f.size });
     });
     if (!files.length) return;
-    if (!net.work || net.work.reported) net.work = { at: performance.now(), files: [], reported: false };
-    net.work.files.push(...files);
+    if (!net.work || net.work.reported) net.work = { at: performance.now(), picks: [], reported: false };
+    // 1つしか選べない入力で選び直したら、その入力で前に選んだ分と置き換える
+    if (source) net.work.picks = net.work.picks.filter(p => p.source !== source);
+    net.work.picks.push({ source, files });
     notifyNet();
   }
+  // 複数選べる入力（PDF の追加など）は足していき、1つしか選べない入力は入力ごとに選び直しとして
+  // 置き換える（PDF Studio のスタンプ画像のように、別の入力で選んだ分は残す）。ドロップと貼り付けは、
+  // ツールがどちらの扱いか分からないので足していく
   document.addEventListener('change', e => {
     const t = e.target;
-    if (t && t.type === 'file' && t.files) markWork(t.files);
+    if (t && t.type === 'file' && t.files) markWork(t.files, t.multiple ? null : t);
   }, true);
   document.addEventListener('drop', e => { if (e.dataTransfer) markWork(e.dataTransfer.files); }, true);
   document.addEventListener('paste', e => { if (e.clipboardData) markWork(e.clipboardData.files); }, true);
 
   function tallyNet(since) {
-    const t = {
-      sends: 0, sendsSite: 0, unknown: 0,
-      site: 0, siteBytes: 0, analytics: 0, donation: 0, ad: 0, other: 0, blocked: 0,
-    };
+    const t = { sends: 0, sendsSite: 0, site: 0, siteBytes: 0, analytics: 0, ad: 0, other: 0, blocked: 0 };
     net.entries.forEach(e => {
       if (e.at < since || e.kind === 'test' || e.blocked) return;
       t[e.kind] = (t[e.kind] || 0) + 1;
@@ -581,12 +621,11 @@
       // 中身を確かめられない送信も、送ったものとして数える（緑にしない側へ倒す）
       if (e.carries !== false || e.kind === 'other' || e.kind === 'ad') {
         t.sends += 1;
-        if (e.carries === null) t.unknown += 1;
         if (e.kind === 'site') t.sendsSite += 1;
       }
     });
     net.blocked.forEach(b => {
-      if (b.at >= since && b.kind !== 'test' && b.network) t.blocked += 1;
+      if (b.at >= since && b.kind !== 'test' && b.kind !== 'code') t.blocked += 1;
     });
     return t;
   }
@@ -596,6 +635,10 @@
     if (className) node.className = className;
     if (text != null) node.textContent = text;
     return node;
+  }
+  // 通信のたびに更新するので、変わっていない文字は書き直さない
+  function setText(node, text) {
+    if (node.textContent !== text) node.textContent = text;
   }
 
   // ---- 通信先の制限（CSP）の点検 --------------------------------------------
@@ -672,7 +715,7 @@
       h('p', null, 'ボタンを押すと、このページからあえて外部のサイト（' + GUARD_HOST + '）へ短い試験用の文字列を送ろうとします。'
         + '通信先の制限が働いていれば、ブラウザが送信を始める前に止めます。ファイルや入力の中身は使いません。')
     );
-    const button = h('button', 'safety-guard-btn', '外部への送信を試す');
+    const button = h('button', 'st-btn-quiet safety-guard-btn', '外部への送信を試す');
     button.type = 'button';
     head.append(text, button);
     const list = h('ul', 'safety-guard-results');
@@ -708,7 +751,7 @@
         render();
       }
     });
-    return { root };
+    return root;
   }
 
   // ---- 通信の一覧 ------------------------------------------------------------
@@ -749,25 +792,26 @@
       const dest = h('span', 'safety-log-dest', e.label);
       const use = h('span', 'safety-log-use');
       if (blocked) {
-        use.textContent = (e.network === false ? 'ブラウザが止めた処理' : 'ブラウザが止めた通信')
+        use.textContent = (e.kind === 'code' ? 'ブラウザが止めた処理' : 'ブラウザが止めた通信')
           + '（' + (e.directive || 'CSP') + '）';
       } else {
         use.textContent = describeUse(e);
       }
-      const target = h('span', 'safety-log-path', e.network === false ? e.host : shortTarget(e.href));
+      const target = h('span', 'safety-log-path', e.kind === 'code' ? e.host : shortTarget(e.href));
       target.title = e.href || e.host;
       use.appendChild(target);
       li.append(time, dest, use);
       return li;
     }
 
+    // 閉じているあいだは件数だけ出す（並べ替えと行の組み立ては開いているときだけ）
     function render() {
-      const items = [];
-      net.entries.forEach(entry => items.push({ at: entry.at, entry }));
-      net.blocked.forEach(block => { if (!block.linked) items.push({ at: block.at, block }); });
-      items.sort((a, b) => a.at - b.at);
-      summary.textContent = '通信の一覧（' + items.length + '件・ページを開いてからの順）';
+      const unlinked = net.blocked.filter(block => !block.linked);
+      setText(summary, '通信の一覧（' + (net.entries.length + unlinked.length) + '件・ページを開いてからの順）');
       if (!root.open) return;
+      const items = net.entries.map(entry => ({ at: entry.at, entry }))
+        .concat(unlinked.map(block => ({ at: block.at, block })))
+        .sort((a, b) => a.at - b.at);
       list.replaceChildren(...items.slice(-400).map(row));
     }
     root.addEventListener('toggle', render);
@@ -777,12 +821,16 @@
   // ---- 安全設計カード --------------------------------------------------------
   // SAFE TOOLS 共通の5項目を、宣言ではなく、このページで確かめた結果として見せる。
   // 通信の数字は使っているあいだ更新し、想定外のことが起きたら緑のチェックにしない。
-  let safetyUi = null;
+  let openSafetyLog = null;
   function renderSafetyProof() {
     if (document.querySelector('.safety-proof')) return;
     const main = document.querySelector('main');
     if (!main) return;
     const csp = inspectCsp();
+    // 広告のコードは読み込み時点で一度だけ見る。あとから差し込まれた広告は、配信元との通信（t.ad）で拾える
+    const hasAdCode = Boolean(document.querySelector(
+      'script[src*="googlesyndication"], script[src*="adservice"], ins.adsbygoogle, [data-ad-client]'
+    ));
 
     const section = h('section', 'safety-proof');
     section.setAttribute('aria-label', 'このツールの安全設計');
@@ -805,7 +853,8 @@
     });
 
     const meter = h('div', 'safety-meter');
-    const meterLive = h('span', 'safety-meter-live', 'このページの通信');
+    const meterLive = h('span', 'safety-meter-live');
+    meterLive.append(h('span', 'st-led'), 'このページの通信');
     const meterItem = (label, key) => {
       const item = h('span', 'safety-meter-item' + (key ? ' is-key' : ''), label);
       const value = h('b');
@@ -834,23 +883,19 @@
       grid.appendChild(box);
       return { name, explanation };
     });
-    const guardUi = buildGuard();
     const log = buildLog();
     const note = h('p', 'safety-proof-note',
       'この表示は、このページのスクリプトが自分の通信を数えたものです。ページが別スレッド（Worker）で行う通信は'
       + '数えていません（Worker も同じ通信先の制限の下で動きます）。ページを信用せずに確かめたいときは、'
       + 'ブラウザの開発者ツールの「ネットワーク」で、同じ通信を見られます。');
-    body.append(intro, grid, guardUi.root, log.root, note);
+    body.append(intro, grid, buildGuard(), log.root, note);
     details.append(summary, body);
     section.appendChild(details);
     main.before(section);
 
-    function proofs() {
-      const t = tallyNet(0);
+    function proofs(t) {
       const w = net.work ? tallyNet(net.work.at) : null;
-      const hasAdCode = Boolean(document.querySelector(
-        'script[src*="googlesyndication"], script[src*="adservice"], ins.adsbygoogle, [data-ad-client]'
-      ));
+      const adOk = !hasAdCode && t.ad === 0;
       const unexpected = t.other > 0 ? '許可していない行き先との通信を検出しました。下の通信の一覧で確かめてください。' : '';
       const localOk = t.sends === 0 && t.other === 0;
       const sendsText = 'データの送信は' + t.sends + '件です（アクセス解析の閲覧記録を除く）。';
@@ -871,12 +916,14 @@
         },
         {
           ok: t.sendsSite === 0,
-          detail: 'tk.st へのデータの送信は' + t.sendsSite + '件で、tk.st とのやりとりは部品の受け取り（' + t.site + '件）だけです。'
+          detail: (t.sendsSite === 0
+            ? 'tk.st へのデータの送信は0件で、tk.st とのやりとりは部品の受け取り（' + t.site + '件）だけです。'
+            : 'tk.st へのデータの送信を' + t.sendsSite + '件検出しました。下の通信の一覧で確かめてください。')
             + '結果はブラウザから端末へ直接ダウンロードします。設定や作業状態を、この端末のブラウザ内へ保存するツールはあります。',
         },
         {
-          ok: !hasAdCode && t.ad === 0,
-          detail: !hasAdCode && t.ad === 0
+          ok: adOk,
+          detail: adOk
             ? '広告枠も、広告の配信元との通信もありません。アクセス解析（' + t.analytics + '件）はありますが、ファイルや入力内容を渡す処理はありません。'
             : '広告のコードか、広告の配信元との通信を検出しました。下の通信の一覧で確かめてください。',
         },
@@ -898,45 +945,44 @@
     }
 
     function update() {
-      const list = proofs();
+      const t = tallyNet(0);
+      const list = proofs(t);
       const okCount = list.filter(p => p.ok).length;
       const allOk = okCount === list.length;
-      shield.textContent = allOk ? '✓' : '!';
+      setText(shield, allOk ? '✓' : '!');
       shield.classList.toggle('is-warning', !allOk);
-      count.textContent = okCount + ' / ' + list.length + ' 確認';
+      setText(count, okCount + ' / ' + list.length + ' 確認');
       count.classList.toggle('is-warning', !allOk);
       list.forEach((p, i) => {
         chipEls[i].classList.toggle('is-warning', !p.ok);
-        itemEls[i].name.textContent = (p.ok ? '✓ ' : '! ') + LABELS[i];
-        itemEls[i].explanation.textContent = p.detail;
+        setText(itemEls[i].name, (p.ok ? '✓ ' : '! ') + LABELS[i]);
+        setText(itemEls[i].explanation, p.detail);
       });
 
-      const t = tallyNet(0);
-      mSends.value.textContent = t.sends + '件';
+      setText(mSends.value, t.sends + '件');
       mSends.item.classList.toggle('is-warning', t.sends > 0);
-      mAnalytics.value.textContent = t.analytics + '件';
-      mSite.value.textContent = t.site + '件';
-      mBlocked.value.textContent = t.blocked + '件';
+      setText(mAnalytics.value, t.analytics + '件');
+      setText(mSite.value, t.site + '件');
+      setText(mBlocked.value, t.blocked + '件');
       meter.classList.toggle('is-warning', t.sends > 0 || t.other > 0);
       log.render();
     }
 
-    safetyUi = {
-      openLog() {
-        details.open = true;
-        log.root.open = true;
-        log.render();
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      },
+    // 一覧を開くと toggle で描画される
+    openSafetyLog = () => {
+      details.open = true;
+      log.root.open = true;
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
     netListeners.push(update);
     update();
   }
 
   // ---- 処理レシート ----------------------------------------------------------
-  // 用が済んだ瞬間（STShare.celebrate を呼ぶところ）に、ファイルを受け取ってからの通信を
-  // 1枚にまとめて見せる。出ているあいだに届いた通信（解析など）も数字に足していく。
-  const receipt = { card: null, since: 0, work: null, timer: null, hovering: false };
+  // 用が済んだ瞬間（ツールが st:complete を出したとき。STShare.celebrate が出す）に、
+  // ファイルを受け取ってからの通信を1枚にまとめて見せる。出ているあいだに届いた通信
+  // （解析など）も数字に足していく。
+  const receipt = { card: null, work: null, timer: null };
   function buildReceipt() {
     const card = h('aside', 'st-receipt');
     card.setAttribute('role', 'status');
@@ -974,32 +1020,31 @@
     close.addEventListener('click', hideReceipt);
     more.addEventListener('click', () => {
       hideReceipt();
-      if (safetyUi) safetyUi.openLog();
+      if (openSafetyLog) openSafetyLog();
     });
-    card.addEventListener('mouseenter', () => { receipt.hovering = true; });
-    card.addEventListener('mouseleave', () => { receipt.hovering = false; });
 
     receipt.fill = () => {
-      const t = tallyNet(receipt.since);
       const work = receipt.work;
+      const t = tallyNet(work ? work.at : 0);
       rInput.row.hidden = !work;
       if (work) {
-        const total = work.files.reduce((sum, f) => sum + f.size, 0);
-        rInput.dd.textContent = work.files[0].name
-          + (work.files.length > 1 ? ' ほか' + (work.files.length - 1) + '件' : '')
-          + ' · ' + formatBytes(total, 1);
-        rInput.dd.title = work.files.map(f => f.name).join('\n');
+        const files = [].concat(...work.picks.map(p => p.files));
+        const total = files.reduce((sum, f) => sum + f.size, 0);
+        setText(rInput.dd, files[0].name
+          + (files.length > 1 ? ' ほか' + (files.length - 1) + '件' : '')
+          + ' · ' + formatBytes(total, 1));
+        rInput.dd.title = files.map(f => f.name).join('\n');
       }
       const warn = t.sends > 0 || t.other > 0;
       card.classList.toggle('is-warning', warn);
-      mark.textContent = warn ? '!' : '✓';
-      title.textContent = warn ? '処理レシート（送信を検出）' : '処理レシート';
-      rSends.dd.textContent = t.sends + '件';
-      rAnalytics.dd.textContent = t.analytics + '件';
-      rBlocked.dd.textContent = t.blocked + '件';
-      note.textContent = (work ? 'ファイルを受け取ってから' : 'ページを開いてから')
-        + 'の通信を、このページ自身が数えた結果です。';
-      more.hidden = !safetyUi;
+      setText(mark, warn ? '!' : '✓');
+      setText(title, warn ? '処理レシート（送信を検出）' : '処理レシート');
+      setText(rSends.dd, t.sends + '件');
+      setText(rAnalytics.dd, t.analytics + '件');
+      setText(rBlocked.dd, t.blocked + '件');
+      setText(note, (work ? 'ファイルを受け取ってから' : 'ページを開いてから')
+        + 'の通信を、このページ自身が数えた結果です。');
+      more.hidden = !openSafetyLog;
     };
     netListeners.push(() => { if (!card.hidden) receipt.fill(); });
     return card;
@@ -1016,7 +1061,6 @@
   function showReceipt() {
     if (!document.body) return;
     receipt.work = net.work;
-    receipt.since = net.work ? net.work.at : 0;
     if (net.work) net.work.reported = true;
     if (!receipt.card) receipt.card = buildReceipt();
     const card = receipt.card;
@@ -1027,12 +1071,13 @@
     clearTimeout(receipt.timer);
     const autoHide = () => {
       receipt.timer = setTimeout(() => {
-        if (receipt.hovering || card.contains(document.activeElement)) autoHide();
+        if (card.matches(':hover') || card.contains(document.activeElement)) autoHide();
         else hideReceipt();
       }, 15000);
     };
     autoHide();
   }
+  document.addEventListener('st:complete', showReceipt);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -1054,6 +1099,5 @@
     setupInlineCompare,
     renderSafetyProof,
     renderFaqFromStructuredData,
-    showReceipt,
   };
 })(window);

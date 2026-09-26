@@ -340,14 +340,17 @@
   }
 
   async function loadOneFile(file) {
+    // worker の取得は、下の pdf-lib の解析と並べて先に始めておく
+    const workerReady = ensurePdfWorker();
+    workerReady.catch(() => {}); // 解析が先に失敗したときの未処理扱いを防ぐ（失敗は下の await で拾う）
     const bytes = new Uint8Array(await file.arrayBuffer());
 
     // pdf-lib refuses encrypted documents outright, which is the cleanest
     // place to detect them — pdf.js would only fail later, mid-render.
     const pdflib = await PDFDocument.load(bytes.slice(), { throwOnInvalidObject: false });
     // pdf.js takes ownership of whatever buffer it is handed, so give it a copy.
-    await ensurePdfWorker();
-    const pdfjs =await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+    await workerReady;
+    const pdfjs = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
 
     const id = ++docSeq;
     // `bytes` itself is not kept: pdf.js and pdf-lib each own a copy already,

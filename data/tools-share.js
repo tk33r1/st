@@ -51,6 +51,7 @@
   var shownThisSession = false;
   var completions = 0;
   var pendingTimer = null;
+  var resuming = false; // 裏に回ったタブが戻ってきて、同じ完了のお願いを出し直している最中
   var current = null; // 表示中のカード
 
   function readStore() {
@@ -485,9 +486,10 @@
     opts = opts || {};
     completions += 1;
 
-    // 処理レシート（ファイルを受け取ってからの通信のまとめ）は、下の頻度制御とは別に毎回出す
-    if (global.STCommon && typeof global.STCommon.showReceipt === 'function') {
-      try { global.STCommon.showReceipt(); } catch (e) { /* レシートの失敗でお願いを止めない */ }
+    // 「用が済んだ」合図。下の頻度制御とは関係なく完了ごとに1回出す（tools-ui.js が処理レシートを出す）。
+    // タブが裏に回っていて出し直すとき（resuming）は、同じ完了なので出さない
+    if (!resuming) {
+      try { document.dispatchEvent(new CustomEvent('st:complete')); } catch (e) { /* 合図の失敗でお願いを止めない */ }
     }
 
     var preview = opts.force === true || isPreview();
@@ -509,7 +511,12 @@
           document.removeEventListener('visibilitychange', once);
           if (document.hidden) return;
           completions -= 1; // 再入で二重に数えない
-          celebrate(Object.assign({}, opts, { force: preview, delay: 500 }));
+          resuming = true;
+          try {
+            celebrate(Object.assign({}, opts, { force: preview, delay: 500 }));
+          } finally {
+            resuming = false;
+          }
         });
         return;
       }
