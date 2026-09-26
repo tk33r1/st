@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" class="st-theme">
+<html lang="ja" class="st-theme" data-category="converter">
 <head>
     <meta charset="UTF-8">
     <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
@@ -9,7 +9,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
     <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
          （どのスクリプトよりも前）に置く -->
-    <script src="../../data/tools-ui.js?v=20260926_13"></script>
+    <script src="../../data/tools-ui.js?v=20260926_14"></script>
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -145,24 +145,10 @@
       ]
     }
     </script>
-    <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        nitori: { DEFAULT: 'rgb(0, 158, 150)', 50: 'rgba(0, 158, 150, 0.1)', 300: 'rgba(0, 158, 150, 0.4)', 700: 'rgb(0, 126, 120)' },
-                        csvcolor: { DEFAULT: 'rgb(48, 115, 240)', 50: 'rgba(48, 115, 240, 0.1)', 700: 'rgb(38, 92, 192)' },
-                        jsoncolor: { DEFAULT: 'rgb(102, 170, 20)', 50: 'rgba(102, 170, 20, 0.1)', 700: 'rgb(82, 140, 15)' }
-                    }
-                }
-            }
-        }
-    </script>
     <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
          Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
     <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-    <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_8">
+    <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_9">
 
     <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
          visitor gets a white flash while the rest of the page loads. -->
@@ -183,12 +169,6 @@
            data/tools-ui.css; this block holds the two facing editors, the
            swap column between them and the per-pane chrome.
            ------------------------------------------------------------------ */
-
-        :root {
-            --accent: var(--cat-converter);
-            --accent-ink: var(--cat-converter-ink);
-            --accent-soft: var(--cat-converter-soft);
-        }
 
         .st-theme main {
             padding: 14px 20px 16px;
@@ -384,32 +364,9 @@
             border-color: var(--rule);
         }
         .swap-btn.quiet:hover { border-color: var(--accent); color: var(--accent); filter: none; }
-
-        /* ===== toast (this tool predates the shared helper) ===== */
-        #toast {
-            position: fixed;
-            bottom: 22px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            max-width: calc(100vw - 40px);
-            padding: 10px 16px;
-            border: 1px solid var(--canvas-rule);
-            border-radius: var(--r-1);
-            background: var(--canvas);
-            color: var(--canvas-ink);
-            font-size: 13px;
-            box-shadow: var(--shadow-1);
-            z-index: 120;
-            pointer-events: none;
-            transition: opacity 220ms ease, transform 220ms ease;
-        }
-        #toast.hide { transform: translate(-50%, 80px); opacity: 0; }
-        #toast .t-ok { color: var(--accent); }
-        #toast .t-err { color: #F87171; }
     </style>
+    <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は data/tools-base.css の冒頭） -->
+    <link rel="stylesheet" href="../../data/tools-base.css?v=20260926_1">
 </head>
 
 <body>
@@ -576,10 +533,10 @@
     </footer>
 
     <!-- ===================== toast ===================== -->
-    <div id="toast" class="hide" role="status" aria-live="polite">
-        <i id="toastIconSuccess" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
-        <i id="toastIconError" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
-        <span id="toastMessage"></span>
+    <div id="toast" class="translate-y-20 opacity-0" role="status" aria-live="polite">
+        <i id="toast-icon-success" data-lucide="check-circle-2" class="t-ok w-4 h-4"></i>
+        <i id="toast-icon-error" data-lucide="alert-circle" class="t-err w-4 h-4 hidden"></i>
+        <span id="toast-msg"></span>
     </div>
 
     <script>
@@ -627,6 +584,8 @@
     </script>
 
         <script>
+        const { showToast, setStatus, setupDropzone, saveBlob } = window.STCommon;
+
         lucide.createIcons();
 
         // DOM要素の取得
@@ -650,31 +609,7 @@
         const jsonStats      = document.getElementById('jsonStats');
         const jsonPanel      = document.getElementById('jsonPanel');
         const hasHeaderCheck = document.getElementById('hasHeaderCheck');
-        const toast            = document.getElementById('toast');
-        const toastMessage     = document.getElementById('toastMessage');
-        const toastIconSuccess = document.getElementById('toastIconSuccess');
-        const toastIconError   = document.getElementById('toastIconError');
-
-        // トースト通知を表示する関数
-        let toastTimeout;
-        function showToast(message, type = 'success') {
-            const isSuccess = type === 'success';
-            toastMessage.textContent = message;
-            toast.classList.remove('hide');
-            toastIconSuccess.classList.toggle('hidden', !isSuccess);
-            toastIconError.classList.toggle('hidden', isSuccess);
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => toast.classList.add('hide'), 3000);
-        }
-
-        // ---- status bar ------------------------------------------------
-        const statusLed = document.getElementById('status-led');
-        const statusText = document.getElementById('status-text');
-        // state: '' (working, pulsing), 'idle', 'err'
-        function setStatus(text, state) {
-            statusText.textContent = text;
-            statusLed.className = 'st-led' + (state ? ' ' + state : '');
-        }
+        // トーストとステータス行（#status-led / #status-text）は tools-ui.js の共通実装を使う
 
         // One beat of accent on the pane that just received a conversion, so
         // the result is easy to find on a two-column screen.
@@ -973,17 +908,8 @@
             
             // 従来のダウンロード方式（フォールバック）
             const useFallbackDownload = () => {
-                const blob = new Blob([data], { type: mimeType });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                saveBlob(new Blob([data], { type: mimeType }), filename);
                 showToast(filename + ' をダウンロードしました。');
-                if (window.STShare) STShare.celebrate();
             };
 
             if ('showSaveFilePicker' in window) {
@@ -1081,26 +1007,18 @@
         setupFileUpload(jsonUploadBtn, jsonFileInput, jsonTextarea, 'JSON');
 
         function setupDragDrop(panel, textarea, typeLabel, acceptedExts) {
-            panel.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                panel.classList.add('drag-over');
-            });
-            panel.addEventListener('dragleave', (e) => {
-                if (!panel.contains(e.relatedTarget)) {
-                    panel.classList.remove('drag-over');
-                }
-            });
-            panel.addEventListener('drop', (e) => {
-                e.preventDefault();
-                panel.classList.remove('drag-over');
-                const file = e.dataTransfer.files[0];
-                if (!file) return;
-                const ext = file.name.split('.').pop().toLowerCase();
-                if (!acceptedExts.includes(ext)) {
-                    showToast(`${acceptedExts.join(' / ')} ファイルをドロップしてください。`, 'error');
-                    return;
-                }
-                readFileToTextarea(file, textarea, typeLabel);
+            setupDropzone({
+                dropzone: panel,
+                dragoverClass: 'drag-over',
+                onFiles: (files) => {
+                    const file = files[0];
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    if (!acceptedExts.includes(ext)) {
+                        showToast(`${acceptedExts.join(' / ')} ファイルをドロップしてください。`, 'error');
+                        return;
+                    }
+                    readFileToTextarea(file, textarea, typeLabel);
+                },
             });
         }
 

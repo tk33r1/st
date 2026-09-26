@@ -35,8 +35,6 @@ const FFMPEG_WASM_LICENSE = 'https://raw.githubusercontent.com/ffmpegwasm/ffmpeg
 //   files … [取得元, 置く名前]。置く名前は dir からの相対
 //   license … ライセンス文の取得元（dir/LICENSE に置く）。取れる場所が無いときは { text } で書く
 const LIBS = [
-  { dir: 'tailwindcss@3.4.17', license: JSD + 'tailwindcss@3.4.17/LICENSE',
-    files: [['https://cdn.tailwindcss.com/3.4.17', 'tailwind.js']] },
   { dir: 'lucide@0.263.0', license: JSD + 'lucide@0.263.0/LICENSE',
     files: [[JSD + 'lucide@0.263.0/dist/umd/lucide.min.js', 'lucide.min.js']] },
   { dir: 'encoding-japanese@2.4.0', license: JSD + 'encoding-japanese@2.4.0/LICENSE',

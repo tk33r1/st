@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" class="st-theme">
+<html lang="ja" class="st-theme" data-category="converter">
 <head>
   <meta charset="UTF-8">
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
@@ -9,7 +9,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260926_13"></script>
+  <script src="../../data/tools-ui.js?v=20260926_14"></script>
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -109,7 +109,6 @@
   
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F766E'/%3E%3Crect x='6' y='11' width='6' height='10' rx='1.5' fill='%23fff' opacity='.45'/%3E%3Crect x='13' y='11' width='6' height='10' rx='1.5' fill='%23fff' opacity='.72'/%3E%3Crect x='20' y='11' width='6' height='10' rx='1.5' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
   
-  <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
   <script src="../../data/vendor/sortablejs@1.15.2/Sortable.min.js"></script>
   
@@ -119,7 +118,7 @@
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_8">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_9">
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -138,12 +137,6 @@
        Darkroom canvas, Console voice. Only what is specific to this tool
        lives here; the shell comes from the shared stylesheet.
        ------------------------------------------------------------------ */
-
-    :root {
-      --accent: var(--cat-converter);
-      --accent-ink: var(--cat-converter-ink);
-      --accent-soft: var(--cat-converter-soft);
-    }
 
     /* ---- frame strip (reorder) ---- */
     .preview-grid {
@@ -239,6 +232,8 @@
 
     #btn-reset { width: 100%; margin-top: 16px; }
   </style>
+  <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は data/tools-base.css の冒頭） -->
+  <link rel="stylesheet" href="../../data/tools-base.css?v=20260926_1">
 </head>
 
 <body>
@@ -458,7 +453,10 @@
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 
   <script>
-    const { formatBytes, showToast, switchView, setupDropzone } = window.STCommon;
+    const {
+      formatBytes, showToast, switchView, setupDropzone, saveBlob,
+      logLine, clearLog, setStatus, animateCount, loadFFmpeg, runFFmpeg, ffmpegError,
+    } = window.STCommon;
 
     lucide.createIcons();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
@@ -475,51 +473,10 @@
 
     // ---- Console -------------------------------------------------------
     // FFmpeg genuinely goes through stages; the log says which one is running
-    // instead of spinning a wheel that means nothing.
-    const consoleBox = document.getElementById('console');
-    const logStream = document.getElementById('log-stream');
-    const statusLed = document.getElementById('status-led');
-    const statusText = document.getElementById('status-text');
-
-    function logLine(text, cls) {
-      const el = document.createElement('div');
-      el.className = 'cl' + (cls ? ' ' + cls : '');
-      el.textContent = text;
-      logStream.appendChild(el);
-      consoleBox.scrollTop = consoleBox.scrollHeight;
-    }
-    function clearLog() { logStream.innerHTML = ''; }
-
-    // state: '' (working, pulsing), 'idle', 'err'
-    function setStatus(text, state) {
-      statusText.textContent = text;
-      statusLed.className = 'st-led' + (state ? ' ' + state : '');
-    }
+    // instead of spinning a wheel that means nothing. logLine / setStatus は
+    // tools-ui.js の共通実装（#log-stream と #status-led / #status-text に書く）。
 
     // ---- Gauge ---------------------------------------------------------
-    function beatMs() {
-      const bpm = parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue('--bpm')
-      );
-      return 60000 / (bpm > 0 ? bpm : 60);
-    }
-    function animateCount(el, to, render) {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        el.textContent = render(to);
-        return;
-      }
-      const duration = beatMs();
-      const start = performance.now();
-      function frame(now) {
-        const t = Math.min(1, (now - start) / duration);
-        const eased = 1 - Math.pow(1 - t, 3);
-        el.textContent = render(to * eased);
-        if (t < 1) requestAnimationFrame(frame);
-        else el.textContent = render(to);
-      }
-      requestAnimationFrame(frame);
-    }
-
     const resultSavings = document.getElementById('result-savings');
     const srcSizeEl = document.getElementById('src-size');
     const outSizeEl = document.getElementById('out-size');
@@ -638,12 +595,9 @@
     // 積算して、OOM でタブごと落ちる前に打ち切る。
     const MAX_FRAME_BYTES = 512 * 1024 * 1024; // 512MB
 
-    let ffmpeg = null;
     let isProcessing = false;
     let resultBlobUrl = null;
     let resultFilename = 'animation.webp';
-    let conversionStarted = false;
-    let ffmpegLogBuffer = [];
 
     // Memory management for preview
     let currentFiles = [];
@@ -777,66 +731,6 @@
       }
       fileInputAdd.value = '';
     });
-
-    function buildFFmpegError(exitCode, hint) {
-      const tail = ffmpegLogBuffer.slice(-15).join('\n');
-      const lower = tail.toLowerCase();
-      let summary = hint;
-      if (!summary) {
-        if (/unknown encoder|encoder .* not found|encoder not found/.test(lower)) {
-          summary = 'このフォーマット用のエンコーダが現在のビルドに含まれていません';
-        } else {
-          const m = tail.match(/error[^\n]*/i);
-          summary = m ? m[0] : `FFmpeg がコード ${exitCode} で終了しました`;
-        }
-      }
-      console.error('[ffmpeg log tail]\n' + tail);
-      return new Error(summary);
-    }
-
-    async function initFFmpeg() {
-      if (ffmpeg) return ffmpeg;
-
-      const { FFmpeg } = FFmpegWASM;
-      const { toBlobURL } = FFmpegUtil;
-      const instance = new FFmpeg();
-
-      instance.on('log', ({ message }) => {
-        console.log('[ffmpeg]', message);
-        ffmpegLogBuffer.push(message);
-        if (ffmpegLogBuffer.length > 30) ffmpegLogBuffer.shift();
-      });
-
-      instance.on('progress', ({ progress }) => {
-        if (!conversionStarted) return;
-        const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
-        progressBar.style.width = `${pct}%`;
-        progressText.textContent = `${pct}%`;
-      });
-
-      // The caller already wrote the command line; don't clobber it here.
-      loadingSubmsg.textContent = 'FFmpeg エンジンを読み込んでいます…';
-
-      // FFmpeg の部品はすべてこのサイトに同梱したもの（data/vendor/）。コアの wasm は 32MB あって
-      // 1ファイルでは置けないので2つに分けてあり、STCommon.fetchVerified がつなぎ直して照合する。
-      const coreBase = '../../data/vendor/@ffmpeg/core@0.12.6';
-      const ffmpegBase = '../../data/vendor/@ffmpeg/ffmpeg@0.12.10';
-
-      // ロードに成功したインスタンスだけをキャッシュする。途中で失敗したものを
-      // 掴むと、以降ずっと「ffmpeg is not loaded」で復旧できなくなる。
-      try {
-        const classWorkerURL = await toBlobURL(`${ffmpegBase}/814.ffmpeg.js`, 'text/javascript');
-        const coreURL = await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript');
-        const wasmURL = await window.STCommon.fetchVerified('@ffmpeg/core@0.12.6/ffmpeg-core.wasm', 'application/wasm');
-        await instance.load({ classWorkerURL, coreURL, wasmURL });
-      } catch (err) {
-        try { instance.terminate(); } catch (_) {}
-        throw err;
-      }
-
-      ffmpeg = instance;
-      return ffmpeg;
-    }
 
     const getImageSize = (file) => new Promise((resolve, reject) => {
       const img = new Image();
@@ -1052,7 +946,6 @@
       if (isProcessing) return;
 
       isProcessing = true;
-      conversionStarted = false;
 
       switchView('view-loading');
       clearLog();
@@ -1074,7 +967,7 @@
         // Yield to allow UI update
         await new Promise(r => setTimeout(r, 50));
 
-        ff = await initFFmpeg();
+        ff = await loadFFmpeg();
         const { fetchFile } = FFmpegUtil;
 
         logLine('> ffmpeg ready');
@@ -1214,7 +1107,6 @@
 
         logLine(`> ${files.length} frames decoded`);
         loadingSubmsg.textContent = 'encoding — ブラウザが重くなることがあります';
-        conversionStarted = true;
 
         if (selectedFormat === 'gif') {
           // GIF は 256 色パレットなので、全フレームから最適パレットを作る
@@ -1250,10 +1142,10 @@
 
         args.push(outputName);
 
-        ffmpegLogBuffer = [];
-        const exitCode = await ff.exec(args);
-        conversionStarted = false;
-        if (exitCode !== 0) throw buildFFmpegError(exitCode);
+        await runFFmpeg(ff, args, (pct) => {
+          progressBar.style.width = `${pct}%`;
+          progressText.textContent = `${pct}%`;
+        });
 
         loadingSubmsg.textContent = 'muxing output …';
         const data = await ff.readFile(outputName);
@@ -1267,7 +1159,7 @@
         // 静止画を「変換完了」として返さないよう、ここでエラーにする。
         const outFrames = countOutputFrames(data, selectedFormat);
         if (frameNames.length > 1 && outFrames === 1) {
-          throw buildFFmpegError(0, '画像を1枚しかデコードできませんでした。別のフォーマットでお試しください');
+          throw ffmpegError(0, '画像を1枚しかデコードできませんでした。別のフォーマットでお試しください');
         }
 
         const mimeType = formatMimeTypes[selectedFormat];
@@ -1303,7 +1195,6 @@
         showToast(`エラー: ${detail.slice(0, 80)}`, 'error');
         switchView('view-upload');
       } finally {
-        conversionStarted = false;
         isProcessing = false;
         // プレビュー用に確保したメモリを解放する
         cleanupPreview();
@@ -1317,32 +1208,11 @@
     }
 
     // Event Listeners
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) showPreview(e.target.files);
-      fileInput.value = '';
-    });
-
-    setupDropzone({
-      dropzone,
-      fileInput,
-      onFiles: (files) => {
-        if (files.length > 0) {
-          showPreview(files);
-        } else {
-          showToast('画像ファイルを選択してください。', 'error');
-        }
-      },
-    });
+    // 画像以外が混ざっていたら showPreview が外し、1枚も残らなければ知らせる
+    setupDropzone({ dropzone, fileInput, onFiles: showPreview });
 
     btnDownload.addEventListener('click', () => {
-      if (!resultBlobUrl) return;
-      const a = document.createElement('a');
-      a.href = resultBlobUrl;
-      a.download = resultFilename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      if (window.STShare) STShare.celebrate();
+      if (resultBlobUrl) saveBlob(resultBlobUrl, resultFilename);
     });
 
     if (navigator.share) {

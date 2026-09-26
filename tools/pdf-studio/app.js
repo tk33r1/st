@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  const { formatBytes, showToast, switchView, setupDropzone } = window.STCommon;
+  const { formatBytes, showToast, switchView, setupDropzone, saveBlob, setStatus } = window.STCommon;
   const { PDFDocument, StandardFonts, degrees, rgb } = PDFLib;
 
   // 外部ライブラリはすべてこのサイトに同梱したもの（data/vendor/）
@@ -124,14 +124,6 @@
     );
   }
 
-  // state: '' (working, pulsing), 'idle', 'err'
-  function setStatus(text, state) {
-    const t = $('status-text');
-    const led = $('status-led');
-    if (t) t.textContent = text;
-    if (led) led.className = 'st-led' + (state ? ' ' + state : '');
-  }
-
   function setProgress(ratio, msg, submsg) {
     const pct = Math.max(0, Math.min(100, Math.round(ratio * 100)));
     $('progress-bar').style.width = pct + '%';
@@ -219,19 +211,6 @@
 
   function stripExtension(name) {
     return String(name || '').replace(/\.pdf$/i, '');
-  }
-
-  function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    // ファイルが手元に落ちた＝この人の用は足りた。共通の「よかったらシェアを」。
-    if (window.STShare) STShare.celebrate();
   }
 
   // ---------------------------------------------------------------- history
@@ -1994,7 +1973,7 @@
     }
 
     setView('view-result');
-    downloadBlob(blob, filename);
+    saveBlob(blob, filename);
     showToast('書き出しが完了しました！');
   }
 
@@ -2137,10 +2116,6 @@
       dropzone: $('dropzone'),
       fileInput: $('file-input'),
       onFiles: addFiles,
-    });
-    $('file-input').addEventListener('change', (e) => {
-      if (e.target.files.length) addFiles(e.target.files);
-      e.target.value = '';
     });
   }
 
@@ -2391,12 +2366,11 @@
     $('btn-export').addEventListener('click', openExport);
     $('btn-back-editor').addEventListener('click', () => setView('view-preview'));
     $('btn-download').addEventListener('click', () => {
-      if (lastBlob) downloadBlob(lastBlob, lastFilename);
+      if (lastBlob) saveBlob(lastBlob, lastFilename);
     });
 
-    // Drop a PDF anywhere in the editor to merge it in. This has to live on
-    // <body>: setupDropzone already stops propagation there, so a listener on
-    // `document` would never see the event.
+    // Drop a PDF anywhere in the editor to merge it in. The upload dropzone is
+    // hidden by then, so nothing else claims the drop.
     ['dragover', 'drop'].forEach((name) => {
       document.body.addEventListener(name, (e) => {
         if ($('view-preview').classList.contains('hidden')) return;

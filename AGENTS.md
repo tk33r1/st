@@ -28,8 +28,8 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
-| `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` 由来（`data/tools-ui.css` の `--cat-*`）で、ツール個別には持たない。ダウンロード等の完了地点では `STShare.celebrate()` を呼ぶ（後述） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
+| `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`data/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
@@ -178,6 +178,7 @@
   `data/tools.json` / `data/game.json` が正。
 - **完了時のお願い**: ツールがユーザーの用を足した瞬間（ダウンロード・保存・書き出し、
   text-diff なら結果のコピー）で `if (window.STShare) STShare.celebrate();` を呼ぶ。
+  ファイルの保存は `STCommon.saveBlob(blob, name)` がこれを呼ぶので、保存を通すツールは何もしなくてよい。
   文面・共有 URL はページの JSON-LD / og:title / canonical から自動で組み立てるので
   引数は不要。パネルには「要望・不具合を伝える」の行き先も置いてあり、
   `/contact/?subject=[ツール名] 改善のご提案` へ飛ぶ（`contact/index.html` が
@@ -185,7 +186,7 @@
   頻度制御（1セッション1回、21日クールダウン、応じた人は180日、
   「今後は表示しない」は永久）は `data/tools-share.js` 側に閉じているので、
   呼び出し側で条件分岐しない。ツールを増やすときは `<script src="../../data/tools-share.js">`
-  を `buy-me-oil.js` の隣に置き、ダウンロード処理を通す共通関数に1行足すだけでよい。
+  を `buy-me-oil.js` の隣に置き、ダウンロードを `STCommon.saveBlob` で行えばよい（コピーなど保存以外の完了地点だけ1行足す）。
   見た目の確認は URL に `?st-share=preview` を付けて完了操作をすると抑制を無視して出る。
 - **AIモデル設定**: モデルIDの正本は `config/ai-models.json`。Pythonからは
   `.github/scripts/ai_model_registry.py` を通して読み、Worker はJSONを `import` する（wrangler が

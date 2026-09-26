@@ -1,13 +1,5 @@
 {
  "files": {
-  "tailwindcss@3.4.17/tailwind.js": {
-   "from": "https://cdn.tailwindcss.com/3.4.17",
-   "sha256": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
-  },
-  "tailwindcss@3.4.17/LICENSE": {
-   "from": "https://cdn.jsdelivr.net/npm/tailwindcss@3.4.17/LICENSE",
-   "sha256": "60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985"
-  },
   "lucide@0.263.0/lucide.min.js": {
    "from": "https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js",
    "sha256": "b9c0e0f892c6958b192b8fdecb652310d934533464b4300be9d52c7f57a014a5"

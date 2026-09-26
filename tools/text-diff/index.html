@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" class="st-theme">
+<html lang="ja" class="st-theme" data-category="editor">
 <head>
   <meta charset="UTF-8">
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
@@ -9,7 +9,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260926_13"></script>
+  <script src="../../data/tools-ui.js?v=20260926_14"></script>
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -129,13 +129,12 @@
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234F46E5'/%3E%3Crect x='15' y='6' width='2' height='20' fill='%23fff' opacity='.42'/%3E%3Crect x='5' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='19' y='15' width='8' height='2' rx='1' fill='%23fff'/%3E%3Crect x='22' y='12' width='2' height='8' rx='1' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
 
-  <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
 
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_8">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_9">
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -156,9 +155,6 @@
        ------------------------------------------------------------------ */
 
     :root {
-      --accent: var(--cat-editor);
-      --accent-ink: var(--cat-editor-ink);
-      --accent-soft: var(--cat-editor-soft);
       /* Diff colours are semantic, not accent — red and green must survive
          both themes, so they are stated as tints laid over the panel. */
       --del-bg: rgb(220 38 38 / .18);
@@ -450,6 +446,8 @@
       text-align: center;
     }
   </style>
+  <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は data/tools-base.css の冒頭） -->
+  <link rel="stylesheet" href="../../data/tools-base.css?v=20260926_1">
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -783,7 +781,7 @@
     import { count, LIMIT_PRESETS, checkLimit, scoreAIO, aioInstructions } from './metrics.js?v=20260903';
 
     const $ = (id) => document.getElementById(id);
-    const toast = (m, t) => window.STCommon.showToast(m, t);
+    const { showToast: toast, setStatus, setupDropzone, saveBlob } = window.STCommon;
 
     const taA = $('text-a');
     const taB = $('text-b');
@@ -792,8 +790,6 @@
     const viewInline = $('view-inline');
     const resultText = $('result-text');
     const modeNote = $('mode-note');
-    const led = $('status-led');
-    const statusText = $('status-text');
 
     const OPTS_KEY = 'st-diff-opts';
 
@@ -981,8 +977,7 @@
     let timer = null;
 
     function setBusy(busy) {
-      led.classList.toggle('idle', !busy);
-      statusText.textContent = busy ? 'diffing' : 'ready';
+      setStatus(busy ? 'diffing' : 'ready', busy ? '' : 'idle');
     }
 
     function scheduleCompute() {
@@ -1302,15 +1297,8 @@
 
     $('btn-download').addEventListener('click', () => {
       if (!resultText.value) { toast('保存する文章がありません', 'error'); return; }
-      const blob = new Blob([resultText.value], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'diff-result.txt';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      saveBlob(new Blob([resultText.value], { type: 'text/plain;charset=utf-8' }), 'diff-result.txt');
       toast('diff-result.txt を保存しました');
-      if (window.STShare) STShare.celebrate();
     });
 
     $('btn-copy-aio').addEventListener('click', async () => {
@@ -1341,13 +1329,10 @@
       reader.readAsText(file, 'UTF-8');
     }
 
-    // Only the panes claim the drop. Cancelling the default on window keeps the
-    // browser from navigating away when a file lands beside them, without
-    // stopping propagation — that is what would kill the panes' own handlers.
-    for (const name of ['dragover', 'drop']) {
-      window.addEventListener(name, (e) => e.preventDefault());
-    }
-
+    // Only the panes claim the drop. Clicking a pane must not open the file
+    // dialog (it holds a textarea), so the file button is wired separately.
+    // setupDropzone also keeps the browser from navigating away when a file
+    // lands beside the panes.
     function wirePane(paneId, textarea, fileInputId, fileBtnId, clearBtnId) {
       const pane = $(paneId);
       const input = $(fileInputId);
@@ -1363,17 +1348,7 @@
         compute();
       });
 
-      pane.addEventListener('dragenter', () => pane.classList.add('dragover'));
-      pane.addEventListener('dragover', (e) => { e.preventDefault(); pane.classList.add('dragover'); });
-      pane.addEventListener('dragleave', (e) => {
-        if (!pane.contains(e.relatedTarget)) pane.classList.remove('dragover');
-      });
-      pane.addEventListener('drop', (e) => {
-        e.preventDefault();
-        pane.classList.remove('dragover');
-        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        if (file) readInto(textarea, file);
-      });
+      setupDropzone({ dropzone: pane, onFiles: (files) => readInto(textarea, files[0]) });
     }
 
     wirePane('pane-a', taA, 'file-a', 'btn-file-a', 'btn-clear-a');

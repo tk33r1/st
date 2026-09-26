@@ -55,7 +55,8 @@
   --bpm: 60;
   --beat: calc(60s / var(--bpm));
 
-  /* accent — each tool points these three at its category below */
+  /* accent — a tool points these three at its category with
+     <html data-category="…"> (rules right after this block) */
   --accent: var(--cat-converter);
   --accent-ink: var(--cat-converter-ink);
   --accent-soft: var(--cat-converter-soft);
@@ -77,6 +78,13 @@
   --cat-generator-ink:  #FFFFFF;
   --cat-generator-soft: #FAE8FF;
 }
+
+/* A tool page (<html data-category>) and its card on the index wear the
+   colour of their category — the same value data/tools.json gives them. */
+[data-category="optimizer"] { --accent: var(--cat-optimizer); --accent-ink: var(--cat-optimizer-ink); --accent-soft: var(--cat-optimizer-soft); }
+[data-category="converter"] { --accent: var(--cat-converter); --accent-ink: var(--cat-converter-ink); --accent-soft: var(--cat-converter-soft); }
+[data-category="editor"]    { --accent: var(--cat-editor);    --accent-ink: var(--cat-editor-ink);    --accent-soft: var(--cat-editor-soft); }
+[data-category="generator"] { --accent: var(--cat-generator); --accent-ink: var(--cat-generator-ink); --accent-soft: var(--cat-generator-soft); }
 
 /* Dark: redefine tokens only. Components never name a colour directly, so
    they follow automatically. The :not() guard lets an explicit light choice

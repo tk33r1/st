@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  const { showToast } = window.STCommon;
+  const { showToast, setStatus, setupDropzone, saveBlob } = window.STCommon;
   const A = window.QRAssets;
   // 選べる書体は qr-style.js の表がひとつの出どころ。検証もシャッフルもそこから引く。
   const FONTS = window.QRStyle.FONT_KEYS;
@@ -909,12 +909,6 @@
         b.setAttribute('aria-pressed', b.classList.contains('active') ? 'true' : 'false');
       }
     });
-  }
-
-  function setStatus(text, cls) {
-    const led = $('status-led'), t = $('status-text');
-    led.className = 'st-led' + (cls ? ' ' + cls : '');
-    t.textContent = text;
   }
 
   function clampNum(v, lo, hi, fallback) {
@@ -3154,19 +3148,6 @@
     return 'qr-' + state.type + '-' + stamp() + size;
   }
 
-  function saveBlob(blob, name) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    // 書き出しまで届いた＝この人の用は足りた。共通の「よかったらシェアを」。
-    if (window.STShare) STShare.celebrate();
-  }
-
   function flashButtonSuccess(btn, successText) {
     if (!btn) return;
     const orig = btn.textContent;
@@ -4033,7 +4014,6 @@
     $('bulk-setup').classList.add('hidden');
     $('bulk-preview').innerHTML = '';
     $('bulk-report').innerHTML = '';
-    $('bulk-file').value = '';
     syncBulkFileName();
     syncBulkHint();
   }
@@ -4275,13 +4255,10 @@
 
     if (!window.QRBulk) return;
     const zone = $('bulk-drop'), input = $('bulk-file');
-    window.STCommon.setupDropzone({
+    setupDropzone({
       dropzone: zone,
       fileInput: input,
       onFiles: files => loadBulkFile(files[0])
-    });
-    input.addEventListener('change', e => {
-      if (e.target.files && e.target.files.length) loadBulkFile(e.target.files[0]);
     });
     $('btn-bulk-clear').addEventListener('click', clearBulk);
     $('bulk-header').addEventListener('change', bulkRefresh);
@@ -4354,37 +4331,25 @@
 
   // 落とされたものを受けるだけの部分。プレビュー領域のように、
   // ファイル選択ボタンを持たない場所でも使う。
-  // 枠そのもの（クリック・Enter/Space・ドラッグ中の見た目・ファイルの受け取り）は
-  // ツール共通の STCommon.setupDropzone に任せる。ここで足すのは、共通側が
-  // click までしか見ないファイル選択ダイアログの change だけ。
+  // 枠そのもの（クリック・Enter/Space・ファイル選択・ドラッグ中の見た目・ファイルの受け取り）は
+  // ツール共通の STCommon.setupDropzone に任せる。
   // fileId を渡さなければ、落とすだけの領域（プレビュー）として使える。
   function wireImageDrop(zoneId, fileId, target, before) {
     const zone = asEl(zoneId);
     if (!zone) return;
-    const fileInput = fileId ? asEl(fileId) : null;
-    const take = file => { if (before) before(); loadImageFile(file, target); };
-
-    window.STCommon.setupDropzone({
+    setupDropzone({
       dropzone: zone,
-      fileInput: fileInput,
-      onFiles: files => take(files[0])
+      fileInput: fileId ? asEl(fileId) : null,
+      onFiles: files => { if (before) before(); loadImageFile(files[0], target); }
     });
-
-    if (fileInput) {
-      fileInput.addEventListener('change', e => {
-        if (e.target.files && e.target.files.length) take(e.target.files[0]);
-      });
-    }
   }
 
-  // 画像を外す。file 欄を空にしないと、同じファイルを選び直しても change が出ない
-  function wireImageClear(btnId, fileId, clear) {
+  // 画像を外す。file 欄は setupDropzone が選んだ直後に空にしているので、同じファイルを選び直せる
+  function wireImageClear(btnId, clear) {
     const btn = asEl(btnId);
     if (!btn) return;
     btn.addEventListener('click', () => {
       clear();
-      const fileInput = asEl(fileId);
-      if (fileInput) fileInput.value = '';
       designChanged();
     });
   }
@@ -4464,7 +4429,7 @@
       designChanged();
     });
 
-    wireImageClear(cq(scope, 'btn-image-clear'), cq(scope, 'image-file'), () => {
+    wireImageClear(cq(scope, 'btn-image-clear'), () => {
       touch();
       const p = paintOf(scope);
       p.src = '';
@@ -4650,14 +4615,14 @@
 
     // ---- ロゴ画像 ----
     wireImageDrop('logo-drop', 'logo-file', IMAGE_TARGETS.logo);
-    wireImageClear('btn-logo-clear', 'logo-file', () => {
+    wireImageClear('btn-logo-clear', () => {
       state.style.logo.src = '';
       state.style.logo.type = 'none';
     });
 
     // ---- フレーム画像 ----
     wireImageDrop('frame-image-drop', 'frame-image-file', IMAGE_TARGETS.frame);
-    wireImageClear('btn-frame-image-clear', 'frame-image-file', () => {
+    wireImageClear('btn-frame-image-clear', () => {
       state.style.frame.src = '';
       state.style.frame.topSrc = '';
     });

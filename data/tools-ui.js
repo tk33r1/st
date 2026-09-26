@@ -54,23 +54,41 @@
     if (viewId !== 'view-loading') target.classList.add('fade-in');
   }
 
-  function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  // 枠の外に落としたファイルを、ブラウザが開いてページを離れないようにする。
+  // 伝播は止めない（止めると、枠の外でドロップを受けたいツールの処理まで届かなくなる）。
+  // 入力欄の中への文字のドラッグは、ブラウザの動きのまま通す。
+  let pageDropGuarded = false;
+  function guardPageDrop() {
+    if (pageDropGuarded) return;
+    pageDropGuarded = true;
+    const guard = (e) => {
+      const types = (e.dataTransfer && e.dataTransfer.types) || [];
+      const hasFiles = Array.prototype.indexOf.call(types, 'Files') !== -1;
+      const t = e.target;
+      const editable = t && t.closest && t.closest('input, textarea, [contenteditable=""], [contenteditable="true"]');
+      if (hasFiles || !editable) e.preventDefault();
+    };
+    global.addEventListener('dragover', guard);
+    global.addEventListener('drop', guard);
   }
 
   // setupDropzone wires the common dropzone interactions:
   //   - clicking / Enter / Space opens the hidden file input
-  //   - drag enter/over adds the dragover class
-  //   - drag leave/drop removes it
-  //   - drop forwards e.dataTransfer.files to onFiles
-  // Tool-specific filtering (image / pdf / video) belongs in onFiles.
+  //   - picking files in that input forwards them to onFiles, then clears the
+  //     input so choosing the same file again still fires change
+  //   - drag enter/over adds the dragover class; it goes away on drop or when
+  //     the pointer leaves the zone (crossing onto a child does not count)
+  //   - drop forwards the files to onFiles and stops there, so a page-level
+  //     drop handler never receives the same files twice
+  // onFiles always gets an array. Tool-specific filtering (image / pdf /
+  // video) belongs in onFiles.
   function setupDropzone(opts) {
     const dropzone = opts.dropzone;
     const fileInput = opts.fileInput;
     const dragoverClass = opts.dragoverClass || 'dragover';
     const onFiles = opts.onFiles;
     if (!dropzone) return;
+    guardPageDrop();
 
     if (fileInput) {
       dropzone.addEventListener('click', () => fileInput.click());
@@ -80,26 +98,109 @@
           fileInput.click();
         }
       });
+      if (onFiles) {
+        fileInput.addEventListener('change', () => {
+          const files = Array.from(fileInput.files || []);
+          fileInput.value = '';
+          if (files.length) onFiles(files);
+        });
+      }
     }
 
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
-      dropzone.addEventListener(name, preventDefaults, false);
-      document.body.addEventListener(name, preventDefaults, false);
-    });
     ['dragenter', 'dragover'].forEach(name => {
-      dropzone.addEventListener(name, () => dropzone.classList.add(dragoverClass), false);
-    });
-    ['dragleave', 'drop'].forEach(name => {
-      dropzone.addEventListener(name, () => dropzone.classList.remove(dragoverClass), false);
-    });
-
-    if (onFiles) {
-      dropzone.addEventListener('drop', (e) => {
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-          onFiles(e.dataTransfer.files);
-        }
+      dropzone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropzone.classList.add(dragoverClass);
       });
+    });
+    dropzone.addEventListener('dragleave', (e) => {
+      if (!dropzone.contains(e.relatedTarget)) dropzone.classList.remove(dragoverClass);
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove(dragoverClass);
+      const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+      if (onFiles && files.length) onFiles(files);
+    });
+  }
+
+  // Blob（または作ってある blob: の URL）をファイルとして保存させ、完了時のお願い
+  // （STShare.celebrate）を出す。ツールの「用が足りた」地点はここに集まる。
+  // 渡された Blob から作った URL は少し待ってから解放する（クリック直後に解放すると、
+  // ブラウザによっては保存が始まる前に中身が消える）。
+  function saveBlob(blob, name) {
+    const url = typeof blob === 'string' ? blob : URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    if (url !== blob) setTimeout(() => URL.revokeObjectURL(url), 4000);
+    if (global.STShare) global.STShare.celebrate();
+  }
+
+  // ---- 画面下のコンソールとステータス行 ------------------------------------
+  // どのツールも同じ id（#console > #log-stream、#status-led と #status-text）で置いている。
+  function logLine(text, cls) {
+    const stream = document.getElementById('log-stream');
+    if (!stream) return;
+    const el = document.createElement('div');
+    el.className = 'cl' + (cls ? ' ' + cls : '');
+    el.textContent = text;
+    stream.appendChild(el);
+    const box = document.getElementById('console');
+    if (box) box.scrollTop = box.scrollHeight;
+  }
+
+  function clearLog() {
+    const stream = document.getElementById('log-stream');
+    if (stream) stream.innerHTML = '';
+  }
+
+  // state: '' (working, pulsing), 'idle', 'err'
+  function setStatus(text, state) {
+    const t = document.getElementById('status-text');
+    const led = document.getElementById('status-led');
+    if (t) t.textContent = text;
+    if (led) led.className = 'st-led' + (state ? ' ' + state : '');
+  }
+
+  // ---- 数字のカウントアップ ------------------------------------------------
+  // 結果の数字は1拍（--bpm）かけて数え上げ、カーソルやステータスの LED と同じ拍で着地させる。
+  function beatMs() {
+    const bpm = parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--bpm')
+    );
+    return 60000 / (bpm > 0 ? bpm : 60);
+  }
+
+  // 数え上げは1拍のあいだ表示を握り、最後に数え始めた値を書く。そのあいだに別の値を
+  // 書くと古い数字で上書きされるので、同じ要素への新しい数え上げ（と stopCount）が前のを止める。
+  const countRafs = new WeakMap();
+  function stopCount(el) {
+    const raf = countRafs.get(el);
+    if (raf != null) cancelAnimationFrame(raf);
+    countRafs.delete(el);
+  }
+
+  function animateCount(el, to, render) {
+    stopCount(el);
+    if (global.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = render(to);
+      return;
     }
+    const duration = beatMs();
+    const start = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = render(to * eased);
+      if (t < 1) countRafs.set(el, requestAnimationFrame(frame));
+      else { countRafs.delete(el); el.textContent = render(to); }
+    }
+    countRafs.set(el, requestAnimationFrame(frame));
   }
 
   // Build an inline Before/After compare slider into `container`.
@@ -234,6 +335,76 @@
     const hex = Array.from(digest, b => b.toString(16).padStart(2, '0')).join('');
     if (hex !== entry.sha256) throw new Error('部品の中身が記録と違うため、使いませんでした（' + key + '）');
     return URL.createObjectURL(new Blob([whole], { type: type }));
+  }
+
+  // ---- FFmpeg（画像→アニメーション、動画→アニメーションで共用） --------------
+  // ページ側で @ffmpeg/ffmpeg と @ffmpeg/util を読み込んでおく（FFmpegWASM / FFmpegUtil）。
+  // worker とコアは blob: の URL にしてから渡す（ページの CSP を引き継がせるため）。
+  const FFMPEG_CORE = '@ffmpeg/core@0.12.6';
+  const FFMPEG_JS = '@ffmpeg/ffmpeg@0.12.10';
+  const ffmpegLog = [];
+  let ffmpegPromise = null;
+  let ffmpegOnProgress = null;
+
+  // 読み込めたインスタンスだけを使い回す。途中で失敗したものを掴むと、以降ずっと
+  // 「ffmpeg is not loaded」で復旧できなくなるので、失敗したら次にまた読み込ませる。
+  function loadFFmpeg() {
+    if (!ffmpegPromise) {
+      ffmpegPromise = (async () => {
+        const instance = new global.FFmpegWASM.FFmpeg();
+        instance.on('log', ({ message }) => {
+          console.log('[ffmpeg]', message);
+          ffmpegLog.push(message);
+          if (ffmpegLog.length > 30) ffmpegLog.shift();
+        });
+        instance.on('progress', ({ progress }) => {
+          if (ffmpegOnProgress) ffmpegOnProgress(Math.max(0, Math.min(100, Math.round(progress * 100))));
+        });
+        try {
+          // コアの wasm は 32MB あって1ファイルでは置けないので2つに分けてあり、fetchVerified がつなぎ直して照合する。
+          // ffmpeg@0.12.10 の worker は module worker で、コアを await import(coreURL) で読む（ESM 版のコアが要る）
+          const { toBlobURL } = global.FFmpegUtil;
+          const classWorkerURL = await toBlobURL(new URL(FFMPEG_JS + '/814.ffmpeg.js', VENDOR_BASE).href, 'text/javascript');
+          const coreURL = await toBlobURL(new URL(FFMPEG_CORE + '/ffmpeg-core.js', VENDOR_BASE).href, 'text/javascript');
+          const wasmURL = await fetchVerified(FFMPEG_CORE + '/ffmpeg-core.wasm', 'application/wasm');
+          await instance.load({ classWorkerURL, coreURL, wasmURL });
+        } catch (err) {
+          try { instance.terminate(); } catch (_) { /* 起動前なら止めるものがない */ }
+          ffmpegPromise = null;
+          throw err;
+        }
+        return instance;
+      })();
+    }
+    return ffmpegPromise;
+  }
+
+  // FFmpeg のログの末尾から、利用者に見せる短い理由を作る。hint を渡せばそれを使う
+  function ffmpegError(exitCode, hint) {
+    const tail = ffmpegLog.slice(-15).join('\n');
+    let summary = hint;
+    if (!summary) {
+      if (/unknown encoder|encoder .* not found|encoder not found/.test(tail.toLowerCase())) {
+        summary = 'このフォーマット用のエンコーダが現在のビルドに含まれていません';
+      } else {
+        const m = tail.match(/error[^\n]*/i);
+        summary = m ? m[0] : `FFmpeg がコード ${exitCode} で終了しました`;
+      }
+    }
+    console.error('[ffmpeg log tail]\n' + tail);
+    return new Error(summary);
+  }
+
+  // 1回の変換を走らせる。onProgress(0〜100) はこの実行のあいだだけ呼ぶ。失敗したら理由つきで投げる
+  async function runFFmpeg(ff, args, onProgress) {
+    ffmpegLog.length = 0;
+    ffmpegOnProgress = onProgress || null;
+    try {
+      const exitCode = await ff.exec(args);
+      if (exitCode !== 0) throw ffmpegError(exitCode);
+    } finally {
+      ffmpegOnProgress = null;
+    }
   }
 
   // FAQPage の本文を画面にも出す。既に静的な .faq-section があるページでは
@@ -1293,13 +1464,19 @@
 
   global.STCommon = {
     formatBytes,
-    fetchVerified,
     showToast,
     switchView,
-    preventDefaults,
     setupDropzone,
+    saveBlob,
+    logLine,
+    clearLog,
+    setStatus,
+    animateCount,
+    stopCount,
     setupInlineCompare,
-    renderSafetyProof,
-    renderFaqFromStructuredData,
+    fetchVerified,
+    loadFFmpeg,
+    runFFmpeg,
+    ffmpegError,
   };
 })(window);

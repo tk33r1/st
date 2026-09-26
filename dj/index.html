@@ -1247,6 +1247,8 @@
        */
       --berserk-amber: #ffa629;
       --berserk-hazard: #14060a;
+      /* 「PATTERN BLUE」の BLUE だけに差す青。黒地の札の上で 6:1 ほど出る明るさ */
+      --berserk-blue: #4d8dff;
       color-scheme: dark;
     }
 
@@ -1717,6 +1719,10 @@
 
     .berserk-code--left {
       left: 14px;
+    }
+
+    .berserk-code-blue {
+      color: var(--berserk-blue, #4d8dff);
     }
 
     .berserk-code--right {
@@ -3874,7 +3880,7 @@
   <!-- 暴走モードの演出（非常事態のトラ柄・走査線・六角パネル・赤の脈動）と、活動停止の暗転。どちらも装飾 -->
   <div class="berserk-fx" aria-hidden="true">
     <div class="berserk-band berserk-band--top">
-      <span class="berserk-code berserk-code--left" lang="en">PATTERN ORANGE</span>
+      <span class="berserk-code berserk-code--left" lang="en">PATTERN <span class="berserk-code-blue">BLUE</span></span>
       <span class="berserk-alert" lang="ja">暴走</span>
       <span class="berserk-code berserk-code--right" id="berserkElapsed" lang="en">ELAPSED 00:00</span>
     </div>
@@ -4671,14 +4677,18 @@
 
     /*
      * SYNC RATE。フッターの上端が画面の下端に届くまでをスクロール量で 0〜100% に割り当てる。
-     * フッターが見えている間は計器が勝手に上がり、3 秒で 400% に届く。400% で 3 秒明滅して
+     * フッターが見えている間は計器が勝手に上がり、2 秒で 400% に届く。400% で 3 秒明滅して
      * から ∞% になって暴走モードに入る。いきなり反転させると驚かせるだけなので、
      * 何か起きそうだと先に見せる猶予を置いている。
      * ∞% の前にフッターより上へ戻ると、上がったときと同じ速さで今のスクロール位置の値まで下がる。
+     * 下がりきる手前の SYNC_EASE_RANGE では一定の割合で減速し、目標でちょうど止まる。
      */
     const SYNC_BASE = 100;
     const SYNC_MAX = 400;
-    const SYNC_SPEED = (SYNC_MAX - SYNC_BASE) / 3000; // % / ms
+    const SYNC_SPEED = (SYNC_MAX - SYNC_BASE) / 2000; // % / ms
+    const SYNC_EASE_RANGE = 60; // %。この距離を 0.8 秒かけて減速する
+    // 残り SYNC_EASE_RANGE で SYNC_SPEED から 0 に落ちる減速度（% / ms²）
+    const SYNC_DECEL = (SYNC_SPEED * SYNC_SPEED) / (2 * SYNC_EASE_RANGE);
     const SYNC_HOLD_MS = 3000;
     /*
      * 400% での明滅は、1 周期を 600ms から 80ms まで縮めていく。周期を途中で変えると
@@ -5059,7 +5069,16 @@
         syncHeldMs = 0;
         syncBlinkPhase = 0;
         // 勝手に上がった分だけ時間をかけて下げる。ふだんの上スクロールはそのまま追従させる
-        if (syncElevated) syncRate -= SYNC_SPEED * dt;
+        if (syncElevated) {
+          /*
+           * 残りの距離から「ここで止まれる速さ」を出して、上限の SYNC_SPEED と小さいほうで下げる。
+           * 遠いうちは SYNC_SPEED のまま、近づくと一定の減速度で落ちていく。目標がスクロールで
+           * 動いても毎コマ残りから測り直すので、そのまま追える。
+           */
+          const gap = syncRate - syncScrollRate;
+          const speed = Math.min(SYNC_SPEED, Math.sqrt(2 * SYNC_DECEL * Math.max(0, gap)));
+          syncRate -= speed * dt;
+        }
         if (!syncElevated || syncRate <= syncScrollRate) {
           syncRate = syncScrollRate;
           syncElevated = false;

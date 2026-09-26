@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" class="st-theme">
+<html lang="ja" class="st-theme" data-category="generator">
 <head>
   <meta charset="UTF-8">
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
@@ -9,7 +9,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260926_13"></script>
+  <script src="../../data/tools-ui.js?v=20260926_14"></script>
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -237,7 +237,7 @@
        書き出しもこの CSS の @font-face を引いて埋め込む -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
   <link rel="stylesheet" href="../../data/fonts/jp.css?v=20260925">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_8">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_9">
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -255,12 +255,6 @@
        QR Atelier — 外枠は data/tools-ui.css。ここが持つのは、左のプレビューと
        右のデザインパネル（スウォッチ・形の選択・ロゴ）だけ。
        ------------------------------------------------------------------ */
-    :root {
-      --accent: var(--cat-generator);
-      --accent-ink: var(--cat-generator-ink);
-      --accent-soft: var(--cat-generator-soft);
-    }
-
     /* このページで使う基本リセット。以前はアイコン寸法のためだけに読み込んだ
        Tailwind の Preflight が偶然ここも受け持っていた。 */
     button, input, select, textarea { margin: 0; font: inherit; color: inherit; }
@@ -2249,7 +2243,7 @@
   <script src="qr-verify.js?v=20260924_1"></script>
   <script src="qr-bulk.js?v=20260918_1"></script>
   <script src="qr-xlsx.js?v=20260924_1"></script>
-  <script src="qr-avif.js?v=20260918_1"></script>
-  <script src="app.js?v=20260926_1"></script>
+  <script src="qr-avif.js?v=20260926_1"></script>
+  <script src="app.js?v=20260926_2"></script>
 </body>
 </html>
