@@ -1,5 +1,142 @@
 [
   {
+    "date": "20260927",
+    "title": "2026年9月27日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "セルフレジ・無人店舗の「光と影」が同時に可視化された一日。韓国ではバーコード読み取り偽装や試着室での隠匿など無人店舗の窃盗被害が相次ぎ、日本ではセルフレジの操作性やマナーをめぐるSNS論争が継続。省人化投資は、防犯・UI設計まで含めた運用設計が収益を左右する段階に入った。 海外では「AI棚」が台頭し、電子棚札（ESL）とセンサー・AIを組み合わせた棚が在庫可視化・動的価格・販促配信の店舗内データ基盤へと進化。店舗DXの主戦場がレジから棚へ移り、リテールメディアと需要予測の起点を誰が握るかが競争軸になる。",
+    "count": 7,
+    "generated_by": "DeepSeek (deepseek-flash)",
+    "engine_type": "deepseek",
+    "executive_summary": [
+      "セルフレジ・無人店舗の「光と影」が同時に可視化された一日。韓国ではバーコード読み取り偽装や試着室での隠匿など無人店舗の窃盗被害が相次ぎ、日本ではセルフレジの操作性やマナーをめぐるSNS論争が継続。省人化投資は、防犯・UI設計まで含めた運用設計が収益を左右する段階に入った。",
+      "海外では「AI棚」が台頭し、電子棚札（ESL）とセンサー・AIを組み合わせた棚が在庫可視化・動的価格・販促配信の店舗内データ基盤へと進化。店舗DXの主戦場がレジから棚へ移り、リテールメディアと需要予測の起点を誰が握るかが競争軸になる。",
+      "気候変動と値上げが需要予測・価値認知の前提を揺さぶる。TJXは分散型物流で天候リスクを吸収し、コストコは会員制の量大パッケージで「お得感」認知を高めた。柔軟なサプライチェーンと、データに基づく価値の可視化が競争力を分ける。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "韓国で無人店舗の窃盗被害が多発——バーコードを読むふり、試着室で商品を隠す手口も",
+        "original_title": "",
+        "source": "KOREA WAVE",
+        "source_id": "JP-03",
+        "summary": "韓国で無人店舗・セルフレジ店舗の窃盗被害が相次いでいる。バーコードを読み取るふりをして実際には精算しない、試着室で商品を隠すといった手口が報告され、無人化に伴う監視体制の脆弱さが課題として浮上。人件費削減を狙った省人化投資が、ロス率の上昇という形で収益を圧迫しかねない構図が浮き彫りになった。",
+        "why_it_matters": "国内でも無人店舗・セルフレジの導入が加速する中、防犯対策は導入時の必須設計要件になりつつある。AIカメラやRFID、異常検知アルゴリズムへの投資対効果を、削減した人件費とロス率の両面から評価する視点が、小売経営者には不可欠だ。",
+        "tags": [
+          "無人店舗",
+          "ロス対策",
+          "セルフレジ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMitgJBVV95cUxORUlKOVp6MlAtT0ZyTDVhMm5EcVc2dFpQcHNrRzRsc0s0QWI0RFBQeGlFTjdUQ1BVMm5tQ0s5ZEdYYnR1ZWhQQjdIM003MFVpLTZnQlVNUnZUSzFTSlptd0ZBMFVZSkRXWHAtenJXd19CbmFlNmxxRHRsOEVPWi12MGtXTFctcE5Ia1pzQlJCUTd4b3hTb1pwbU5aQ3FDR3JFYW1pZFQyZElFMEo1LTQ0a2ZTbk44czJHcWh0Z1BrcmoyVXpmNHlHVk5adVphVkRPeDdveXBqTXZnNGJQSWItbWRmTWY2a0tGeXhDUkpYWXVsQVU0cnpETmtrVmtlWW14VGZNVGFVTk1BTWpKclJ6VjJiWWNMV2hqWC1oYWNwSVFqZFJPbXJNVGlCSi1TWTZ0VnlIUDRn?oc=5",
+        "source_pub_ts": 1790420440
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジに小銭を大量投入——店員が明かす「やってはいけないNG行動」と現場の本音",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-08",
+        "summary": "セルフレジに小銭を大量に投入する、精算後に商品を追加するなど、利用者が無意識に行いがちなNG行動と、それに対する店員側の本音を漫画作者への取材を通じて紹介する内容。セルフレジの操作性と利用マナーの両面に課題があることを示し、買い物客の間で共感と反発が交錯している。",
+        "why_it_matters": "セルフレジは省人化の切り札だが、操作性の分かりにくさが現場トラブルや離脱の原因になる。UIとソフト面の案内設計を怠れば、人件費削減効果が顧客満足度の低下で相殺される。導入後の運用改善こそが投資回収の鍵となる。",
+        "tags": [
+          "セルフレジ",
+          "店内UX",
+          "生活者反応"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1rN1Jmd1JfRmItclpMWjFSOGxuNjhybUpvbHBDYV9teU1TMWhBWHRFRDQwLXYxWVRRLXFLZ3pEb2loa3oxd1kzOWZBTkMwMHZNX1g5Q2ktMktfZkxKQ0ozMF96YUM1X2p2XzdjY2tB?oc=5",
+        "source_pub_ts": 1790391868
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ミスターマックス、茨城・つくばに延床1万4000㎡超の大型商業施設を開設へ",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-01",
+        "summary": "大店立地法の届出状況をまとめた週次速報によると、ミスターマックスが茨城県つくば市で延床面積1万4000㎡超の大型商業施設の開設を計画していることが分かった。食品・日用品を軸としたディスカウント型の店舗とみられ、地域の競合スーパーとの顧客争奪が一段と激しくなる可能性がある。",
+        "why_it_matters": "大型店の出店は箱の競争ではなく、セルフレジや電子棚札、リテールメディアなど店内テックの実装競争でもある。新規大型店は最新の店舗DXを一括導入する場になりやすく、ソリューション提供企業にとっては注目すべき案件だ。",
+        "tags": [
+          "大型店",
+          "出店戦略",
+          "店舗DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE9Kd0JtTU9odG1RdkRsd0FIaVAzQXpLUktTNmNmYlZSZEdYMzdwYUo5RDdoMkljVDNzbnNhdElHZ3RONjYxRG56Sk5aeEI?oc=5",
+        "source_pub_ts": 1790448419
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ハローズが神戸市に2店舗目「本多聞店」——オーケー・ロピアと直接競合する食品スーパー",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-09",
+        "summary": "食品スーパーのハローズが神戸市に2店舗目となる「本多聞店」を開業し、低価格帯で知られるオーケーやロピアと直接競合する立地に出店した。店舗レイアウトや品揃え、価格戦略をレポートし、関西市場におけるディスカウント型食品スーパーの競争激化を伝えている。",
+        "why_it_matters": "低価格帯食品スーパーの競争は、オペレーション効率と店内テックへの投資余力が明暗を分ける。省人化レジや発注AI、リテールメディアへの投資をどこまで価格に還元できるかが、集客と収益の両立を左右する。",
+        "tags": [
+          "食品スーパー",
+          "競合分析",
+          "低価格戦略"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5KM3pNcXhwYjc4MExDTEZSeHVycWVObHZvZ0tnTVNEZ1FLNTA4SFJFY1o2M3pvQUZ6bjZXenlqU2R5Y1pibVRVWmxKaUVjeHRRUjFhQk1kZUFwdERycVladNIBZkFVX3lxTE5FMDZjMjRMT3V2QURIcEtZUnhETW5iNGRaWGlTR2czOXdJNFNSLUY5eEJ1WWVGRDd5Wjg4WmJON3R2WGN2bkttV1pweXM2TVFpblg5U290YUpiQ2xJem1CeEdrN0c4UQ?oc=5",
+        "source_pub_ts": 1790390408
+      },
+      {
+        "region": "GLOBAL",
+        "category": "店舗DX・次世代決済",
+        "title": "「AI棚」の台頭——店舗の棚がデータ端末に変わる",
+        "original_title": "The rise of the AI shelf",
+        "source": "Modern Retail",
+        "source_id": "GL-01",
+        "summary": "米小売業界で、電子棚札（ESL）やセンサー、AIを組み合わせた「AI棚」の導入が広がっている。価格表示の即時更新にとどまらず、在庫の可視化、販促のパーソナライズ、欠品検知までを担う店舗内インフラへと進化。棚そのものがデータ収集と顧客接点のプラットフォームになりつつある。",
+        "why_it_matters": "電子棚札は単なるコスト削減ではなく、価格の動的変更やリテールメディア配信の起点になる。棚を起点としたデータ基盤を握る企業が、店舗メディアと需要予測の主導権を握る。日本勢も標準規格とAPI設計の議論に早期参画すべきだ。",
+        "tags": [
+          "電子棚札",
+          "AI棚",
+          "店舗DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE1Pb1pHR3hZQ2kxd1lxRllkMlFWRENvTVA2RVJnZ1dtc2hoZzczbEcyb1dQOGV2NHVGclU1SmdkTzBUTEI5aGNCVHZXVHpDQUdtZC0zSGFKVEttMGNWMk5rQmx4RnNBMjhiYlF5NXdnalVDZw?oc=5",
+        "source_pub_ts": 1790395439
+      },
+      {
+        "region": "GLOBAL",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "TJX CEO、エルニーニョに揺れる季節商戦——分散型物流モデルが強みに",
+        "original_title": "TJX CEO: Distribution model will help weather El Niño",
+        "source": "Retail Dive",
+        "source_id": "GL-02",
+        "summary": "オフプライスのTJXのCEOは、エルニーニョの影響で季節商品の需要が読みにくくなる中、柔軟な調達・配送網が天候リスクの緩衝材になると述べた。在庫を機動的に配分できる物流モデルが、天候不順による需要変動への対応力を高めると強調している。",
+        "why_it_matters": "気候変動は需要予測の前提を崩し、季節商品の在庫リスクを高める。単一の予測モデルに頼らず、物流網の柔軟性と在庫の再配分能力を組み合わせることが変動時代の競争力になる。サプライチェーン設計は経営課題だ。",
+        "tags": [
+          "サプライチェーン",
+          "需要予測",
+          "在庫管理"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBmRDJ3TUw5M3g5cTdBMnZLMmpyQnBoclpJYlRZUFRiNEZWZm9FbHY2MDFEa0plMjJ1RGhSbDRsWFU0dlVRNTlUTDNpNm1fX2tmX1Vqc19DUVhkckc1N0pVVjJYbVNXT2w1WTJRQ0pXa0xIRVdweG5uTzg3YjNBM2s?oc=5",
+        "source_pub_ts": 1790370716
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "「お得感」でコストコがアルディを上回る——消費者データが示す価値認知の逆転",
+        "original_title": "Costco trumps Aldi in grocery value perception, data shows",
+        "source": "Grocery Dive",
+        "source_id": "GL-06",
+        "summary": "消費者調査データによると、食品の「価値・お得感」の認知でコストコがアルディを上回った。会員制倉庫型の量大パッケージと価格訴求が、値上げ局面でも支持を集めている。一方、低価格路線のアルディは価値認知で劣勢に立たされ、値頃感の定義が変化していることがうかがえる。",
+        "why_it_matters": "値上げが続く中、消費者の「お得感」は単価ではなく体験や会員特典を含む総合評価に移りつつある。価格訴求だけでは優位を保てず、リテールメディアや会員データを使った価値の可視化が差別化要因になる。日本のPB戦略にも示唆が大きい。",
+        "tags": [
+          "価値認知",
+          "会員制",
+          "消費者データ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE5QOUFyNTNzQnh1NS1rZDFmMEZlbno2V3AzT1dIMnFLQVEwVk1TUm5PWU8wN1QzNlhTMHVSMzBSeDg4SF9jUHVrcGpnVXJ3X0tkbi1VZFZlVDFhVjVmMUZvTkJubnhkRFVZaTNjQUVxbWVCYkMtQlRHQXZqeW1TZw?oc=5",
+        "source_pub_ts": 1790351537
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260926",
     "title": "2026年9月26日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "チェックアウト変革が加速。品川駅ナカのスキャンレス購入実証や図書館内の無人ショップなど、無人・非対面の新店舗モデルが相次ぎ、同時にセルフレジをめぐる生活者の分断もSNSで顕在化した。 AI活用は二面性が鮮明。食品・日用品のAI需要予測は迅速実装が進む一方、海外では「食品小売のAIはハイプ段階」との冷静な評価も出ており、実効性の見極めが経営課題に。",

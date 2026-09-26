@@ -5,11 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sat, 26 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sat, 26 Sep 2026 05:13:40 +0900</lastBuildDate>
+    <pubDate>Sun, 27 Sep 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sun, 27 Sep 2026 04:31:46 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年9月27日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20260927/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260927/</guid>
+      <pubDate>Sun, 27 Sep 2026 08:00:00 +0900</pubDate>
+      <description>セルフレジ・無人店舗の「光と影」が同時に可視化された一日。韓国ではバーコード読み取り偽装や試着室での隠匿など無人店舗の窃盗被害が相次ぎ、日本ではセルフレジの操作性やマナーをめぐるSNS論争が継続。省人化投資は、防犯・UI設計まで含めた運用設計が収益を左右する段階に入った。 海外では「AI棚」が台頭し、電子棚札（ESL）とセンサー・AIを組み合わせた棚が在庫可視化・動的価格・販促配信の店舗内データ基盤へと進化。店舗DXの主戦場がレジから棚へ移り、リテールメディアと需要予測の起点を誰が握るかが競争軸になる。</description>
+    </item>
     <item>
       <title>2026年9月26日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20260926/</link>
@@ -107,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260913/</guid>
       <pubDate>Sun, 13 Sep 2026 08:00:00 +0900</pubDate>
       <description>国内はアインHDの次世代薬局モデル実証やカインズの「AI×Slack」活用など、大規模投資に頼らず店舗業務と顧客接点を組み替える“軽量DX”の発表が目立った一日となった。 サプライチェーン分析市場が2035年に20億6,980万ドル規模へ拡大するとの予測が示され、需要予測・在庫・物流最適化へのデータ投資が国内でも本格化している。</description>
-    </item>
-    <item>
-      <title>2026年9月12日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260912/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260912/</guid>
-      <pubDate>Sat, 12 Sep 2026 08:00:00 +0900</pubDate>
-      <description>ファミマが10年ぶりレジ全面刷新で「店員・客切り替え式」を導入。 / イトーヨーカ堂のリテールメディア組織論やアスタリスクのRFIDスマートカート開発など、リアル店舗のDXが加速。</description>
     </item>
   </channel>
 </rss>
