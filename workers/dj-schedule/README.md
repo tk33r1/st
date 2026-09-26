@@ -3,7 +3,7 @@
 白昼夢（人類踊狂計画）の日程調整ページ用 API。
 
 - フロント: [`/dj/schedule/index.html`](../../dj/schedule/index.html) → https://tk.st/dj/schedule/
-- API ルート: `tk.st/dj/api/*`
+- API ルート: `tk.st/dj/api/schedule/*`
 - ストレージ: D1（`dj-schedule-db`）
 
 ログイン無し・身内限定。ページ側は `noindex, nofollow`、API レスポンスにも `X-Robots-Tag: noindex` を付けている。
@@ -78,8 +78,8 @@ npx wrangler d1 execute dj-schedule-db --local --file=./schema.sql --config ./wr
 npx wrangler dev --local --port 8787 --config ./wrangler.dev.toml
 ```
 
-ページ側の `API_BASE` は `/dj/api` 固定（同一オリジン）なので、ローカルで通しで触るときは
-静的配信サーバから `/dj/api/*` を `127.0.0.1:8787` にプロキシする。
+ページ側の `API_BASE` は `/dj/api/schedule` 固定（同一オリジン）なので、ローカルで通しで触るときは
+静的配信サーバから `/dj/api/schedule/*` を `127.0.0.1:8787` にプロキシする。
 
 ## エンドポイント
 
@@ -87,12 +87,12 @@ npx wrangler dev --local --port 8787 --config ./wrangler.dev.toml
 
 | メソッド | パス | 用途 |
 | --- | --- | --- |
-| GET | `/dj/api/months` | 回答が入っている月の一覧（新しい順・最大24件） |
-| GET | `/dj/api/months/:ym` | その月の日曜日・メモ・全回答。DB に行が無くても空の月として 200 を返す |
-| PUT | `/dj/api/months/:ym/memo` | 月のメモを更新 `{memo}` |
-| PUT | `/dj/api/months/:ym/status` | 確定日と開催不可日 `{decided:"2026-09-13"\|null, blocked:["2026-09-06"]}` |
-| POST | `/dj/api/months/:ym/responses` | 回答の登録・更新 `{name, answers:{date:"o"\|"t"\|"x"}, comment}` |
-| DELETE | `/dj/api/months/:ym/responses/:responseId` | 回答を1件削除 |
+| GET | `/dj/api/schedule/months` | 回答が入っている月の一覧（新しい順・最大24件） |
+| GET | `/dj/api/schedule/months/:ym` | その月の日曜日・メモ・全回答。DB に行が無くても空の月として 200 を返す |
+| PUT | `/dj/api/schedule/months/:ym/memo` | 月のメモを更新 `{memo}` |
+| PUT | `/dj/api/schedule/months/:ym/status` | 確定日と開催不可日 `{decided:"2026-09-13"\|null, blocked:["2026-09-06"]}` |
+| POST | `/dj/api/schedule/months/:ym/responses` | 回答の登録・更新 `{name, answers:{date:"o"\|"t"\|"x"}, comment}` |
+| DELETE | `/dj/api/schedule/months/:ym/responses/:responseId` | 回答を1件削除 |
 
 `answers` は日付をキーにした連想配列。その月の日曜日以外のキーは保存時に捨てられる。
 `decided` / `blocked` も同様に、その月の日曜日以外は捨てられる。`decided` に指定した日は `blocked` から自動で外れる。

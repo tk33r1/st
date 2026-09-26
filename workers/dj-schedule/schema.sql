@@ -1,7 +1,7 @@
 -- 白昼夢スケジュール調整 D1 スキーマ
 -- npx wrangler d1 execute dj-schedule-db --remote --file=./schema.sql
 --
--- 候補日（その月の日曜日）は月から導けるので保存しない。月ごとの回答とメモだけを持つ。
+-- 候補日（その月の日曜日）は月から導けるので保存しない。月ごとの状態・メモ・回答だけを持つ。
 
 -- 月ごとの状態（メモ・確定した開催日・開催不可日）
 CREATE TABLE IF NOT EXISTS month_memos (

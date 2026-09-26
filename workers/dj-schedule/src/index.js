@@ -2,7 +2,7 @@
 // route: tk.st/dj/api/schedule/*
 //
 // 白昼夢は毎月1回・日曜開催なので「月」がそのままイベント。
-// 候補日は月から機械的に導けるため DB には持たず、回答とメモだけを保存する。
+// 候補日は月から機械的に導けるため DB には持たず、月の状態・メモ・回答だけを保存する。
 //
 // ログイン無しの身内向けツール。アクセス制限は事実上かかっていない。
 //
@@ -174,7 +174,7 @@ export default {
     const route = path.slice(BASE_PATH.length) || '/';
 
     try {
-      // ---- 回答が入っている月の一覧（画面のショートカット用）----
+      // ---- 回答が入っている月の一覧（外部クライアントとの互換性のため維持）----
       if (route === '/months') {
         if (request.method !== 'GET') {
           return new Response('Method Not Allowed', { status: 405, headers: cors });
@@ -198,7 +198,7 @@ export default {
         return new Response('Method Not Allowed', { status: 405, headers: cors });
       }
 
-      // ---- /months/:ym/memo ----
+      // ---- /months/:ym/memo ---- 外部クライアントとの互換性のため維持
       const memoMatch = route.match(/^\/months\/(\d{4}-\d{2})\/memo$/);
       if (memoMatch && request.method === 'PUT') {
         const ym = memoMatch[1];

@@ -244,6 +244,8 @@
        * 詰めすぎるとセクションの切れ目が読めず、情報量の多いページほど窮屈に見える。
        */
       --section-pad-y: 80px;
+      /* 計器・端末風のラベル（SYNC RATE の札、フォームの項目名、モーダルのタグなど）の等幅 */
+      --font-mono: 'Courier New', Courier, monospace;
       /*
        * 六角形の切り抜き。GEAR のカードと SNS ボタンで同じ形を使う。
        * 形を変えるならここ 1 か所（A.T. フィールドの層は別形なので含めない）。
@@ -458,7 +460,7 @@
       top: 15px;
       right: 20px;
       font-size: 0.85rem;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-weight: bold;
       /* .sync-retreat の位置がこの行の高さから決まるので、継承に任せず固定する */
       line-height: 1.6;
@@ -657,7 +659,7 @@
     }
 
     .gear-label-hint {
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.65rem;
       letter-spacing: 0.22em;
       color: var(--white);
@@ -673,11 +675,7 @@
 
     .at-field {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      height: 100%;
+      inset: 0;
       opacity: 0;
       pointer-events: none;
     }
@@ -689,12 +687,12 @@
 
     @keyframes at-field-pulse {
       0% {
-        transform: translate(-50%, -50%) scale(0.8);
+        transform: scale(0.8);
         opacity: 1;
       }
 
       100% {
-        transform: translate(-50%, -50%) scale(1.2);
+        transform: scale(1.2);
         opacity: 0;
       }
     }
@@ -703,8 +701,7 @@
     .at-field::after {
       content: '';
       position: absolute;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       border: 2px solid var(--neo-purple);
       clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
     }
@@ -1221,7 +1218,7 @@
      * 暴走の予兆。SYNC RATE が 100% を超えると画面の縁から赤がにじみ、400% で張りつめる。
      * 濃さ（opacity）と広がり（--omen-scale）は JS が計器の値から毎コマ決める。時間で動かさず
      * 値に結ぶのは、上へ戻れば同じ動きで引いていくのを見せて、止め方を体で分からせるため。
-     * 形は暴走中の赤（.berserk-fx::after）と同じにしてあり、突入時はそのまま引き継いで消える。
+     * 色と濃さの段は暴走中の赤（.berserk-fx::after）と同じで、突入時はその赤と入れ替わって消える。
      * 札・進捗バー・back-to-top（1000）より下、セクションナビ（900）とライブ告知（950）より上。
      */
     .sync-omen {
@@ -1233,13 +1230,18 @@
       opacity: 0;
     }
 
-    /* 大きく敷いて縮める。拡大していると赤い縁が画面の外にあり、縮むほど内側へ寄ってくる */
+    /*
+     * 大きく敷いて縮める。拡大していると赤い縁が画面の外にあり、縮むほど内側へ寄ってくる。
+     * 中心を上へずらして、赤がフッターの側（下）から迫り、上の縁は薄いまま残るようにする。
+     * 逃げ道は上だと、文字を読まなくても分かる形。縮める起点も同じ点に合わせる。
+     */
     .sync-omen::before {
       content: '';
       position: absolute;
       inset: 0;
       transform: scale(var(--omen-scale, 1));
-      background: radial-gradient(ellipse at center,
+      transform-origin: 50% 30%;
+      background: radial-gradient(ellipse at 50% 30%,
           transparent 45%,
           rgba(255, 59, 48, 0.16) 78%,
           rgba(255, 59, 48, 0.4) 100%);
@@ -1259,34 +1261,76 @@
     }
 
     /*
-     * 止め方の案内。札は 400% で明滅するが、こちらは読ませたいので点けたままにする
+     * 止め方の案内。ヒーローの SCROLL の合図（.hero-scroll-cue）を上下逆にした形で、
+     * 下りてきた人は全員あれを見ているので「来た道を戻る」と読める。
+     * 赤にはしない。赤は危ない側の色なので、平時の文字色で淡く出して「戻れば落ち着く」側に置く。
+     * 札は 400% で明滅するが、こちらは読ませたいので点けたままにする
      * （札の ::after にすると札の明滅に巻き込まれるので別の要素にしてある）。
-     * 位置は札の下端（top 15px + 1 行 + 上下 padding 8px + 枠 2px）から 4px 空けた所。
+     * 位置は札の下端（top 15px + 1 行 + 上下 padding 8px + 枠 2px）から 6px 空けた所。
+     * 横は札の中央に JS が合わせる（札の幅は文字数で決まるので CSS では追えない）。
      */
     .sync-retreat {
       position: fixed;
-      top: calc(15px + 0.85rem * 1.6 + 10px + 4px);
+      top: calc(15px + 0.85rem * 1.6 + 10px + 6px);
       right: 20px;
       z-index: 1000;
       pointer-events: none;
-      padding: 2px 8px;
-      font-size: 0.72rem;
-      font-family: 'Courier New', Courier, monospace;
-      font-weight: bold;
-      line-height: 1.6;
-      letter-spacing: 0.15em;
-      color: var(--accent-red);
-      background: rgba(var(--surface-rgb), 0.9);
-      border: 1px solid rgba(255, 51, 51, 0.5);
-      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: var(--ink);
+      /* 地の上に直に乗るので、本文と重なっても字が崩れないよう地の色で縁取る */
+      text-shadow: 0 0 3px rgb(var(--surface-rgb)), 0 0 8px rgba(var(--surface-rgb), 0.9);
       opacity: 0;
-      transform: translateY(-4px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: translate(50%, 6px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
     }
 
     .sync-retreat.show {
-      opacity: 1;
-      transform: translateY(0);
+      /* ヒーローの合図と同じ淡さ */
+      opacity: 0.55;
+      transform: translate(50%, 0);
+    }
+
+    .sync-retreat svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* 見えている間だけ回す。伏せている間も回すと無駄に描き続ける */
+    .sync-retreat.show svg {
+      animation: sync-retreat-rise 1.8s ease-out infinite;
+    }
+
+    /* 下から浮いてきて、上へ抜けながら消える。行き先が上だと動きで見せる */
+    @keyframes sync-retreat-rise {
+      0% {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      35% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+    }
+
+    .sync-retreat-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      /* letter-spacing は最後の字の右にも入る。その分だけ戻して中央に見せる */
+      padding-left: 0.3em;
     }
 
     /* ===== 暴走モード =====
@@ -1783,7 +1827,7 @@
       padding: 2px 8px;
       background: var(--berserk-hazard, #14060a);
       color: var(--berserk-amber, #ffa629);
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.62rem;
       font-weight: bold;
       line-height: 1;
@@ -2350,7 +2394,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.68rem;
       font-weight: bold;
       letter-spacing: 0.2em;
@@ -2380,7 +2424,6 @@
     .offer-select,
     .offer-textarea {
       width: 100%;
-      box-sizing: border-box;
       padding: 11px 13px;
       font-family: inherit;
       font-size: 0.95rem;
@@ -2417,11 +2460,6 @@
      */
     .offer-input--datetime {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239c7af7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='4' rx='2' ry='2'/%3E%3Cline x1='16' x2='16' y1='2' y2='6'/%3E%3Cline x1='8' x2='8' y1='2' y2='6'/%3E%3Cline x1='3' x2='21' y1='10' y2='10'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 18px 18px;
-      padding-right: 36px;
-      cursor: pointer;
     }
 
     .offer-input--datetime::-webkit-calendar-picker-indicator {
@@ -2432,6 +2470,11 @@
     /* select だけは矢印が消えるので背景画像で描き直す（SVG は data URI で内包） */
     .offer-select {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239c7af7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+
+    /* 右端のアイコンの置き方は日時欄と select で共通。違うのは絵（background-image）だけ */
+    .offer-input--datetime,
+    .offer-select {
       background-repeat: no-repeat;
       background-position: right 10px center;
       background-size: 18px 18px;
@@ -2494,7 +2537,7 @@
       gap: 10px;
       min-width: 260px;
       padding: 15px 34px;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.82rem;
       font-weight: bold;
       letter-spacing: 0.2em;
@@ -2862,6 +2905,26 @@
       transform: none;
     }
 
+    /* 形と :hover の地は .modal-close と共通（Image Modal 側にまとめてある） */
+    .gear-modal-close {
+      --modal-close-size: 34px;
+      top: 10px;
+      right: 10px;
+      /*
+       * 画像の上に重なるので、下地が暗くても × が読めるよう白を敷く。
+       * 文字色は --ink-deep だと暴走モードで白へ振れ、この白地に沈んで見えなくなる。
+       * 反転しても暗いままの --dark-blue-purple を使う（暴走中は暗赤に寄る）。
+       */
+      color: var(--dark-blue-purple);
+      background: rgba(255, 255, 255, 0.92);
+      font-size: 1.5rem;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .gear-modal-close:hover {
+      color: var(--white);
+    }
+
     .gear-modal-figure {
       width: 100%;
       height: 160px;
@@ -2873,7 +2936,7 @@
 
     .gear-modal-tag {
       display: block;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.72rem;
       font-weight: bold;
       letter-spacing: 0.22em;
@@ -2980,30 +3043,11 @@
       transform: translateY(-2px);
     }
 
-    .gear-modal-close {
-      --modal-close-size: 34px;
-      top: 10px;
-      right: 10px;
-      /*
-       * 画像の上に重なるので、下地が暗くても × が読めるよう白を敷く。
-       * 文字色は --ink-deep だと暴走モードで白へ振れ、この白地に沈んで見えなくなる。
-       * 反転しても暗いままの --dark-blue-purple を使う（暴走中は暗赤に寄る）。
-       */
-      color: var(--dark-blue-purple);
-      background: rgba(255, 255, 255, 0.92);
-      font-size: 1.5rem;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-
-    .gear-modal-close:hover {
-      color: var(--white);
-    }
-
     .mobile-break {
       display: none;
     }
 
-    /* ===== REDUCED MOTION ===== */
+    /* ===== SCREEN READER ONLY ===== */
     /* 見た目には出さないが読み上げには残す（::after の data-label は読まれない環境がある） */
     .sr-only {
       position: absolute;
@@ -3045,7 +3089,10 @@
       text-transform: uppercase;
     }
 
-    /* .operation-title だけは左寄せ（2 カラムの見出しなので中央に置くと軸がずれる） */
+    /*
+     * .operation-title だけは左寄せ（2 カラムの見出しなので中央に置くと軸がずれる）。
+     * 上の center と同じ詳細度なので、後ろに置いて勝たせている。前の .operation-title へ移さないこと
+     */
     .operation-title {
       justify-content: flex-start;
     }
@@ -3120,7 +3167,7 @@
     }
 
     .hero-scroll-label {
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.65rem;
       letter-spacing: 0.3em;
       /* letter-spacing は最後の字の右にも入る。その分だけ戻して中央に見せる */
@@ -3201,7 +3248,7 @@
       top: 50%;
       transform: translateY(-50%);
       white-space: nowrap;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.65rem;
       letter-spacing: 0.12em;
       color: var(--white);
@@ -3337,7 +3384,7 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 0.58rem;
       font-weight: 700;
       letter-spacing: 0.14em;
@@ -3539,7 +3586,8 @@
       }
 
       /* 上の一括指定は duration しか潰せない。位置が動くものは transform ごと止める */
-      .hero-scroll-cue svg {
+      .hero-scroll-cue svg,
+      .sync-retreat.show svg {
         animation: none;
       }
     }
@@ -3952,7 +4000,10 @@
   <div class="sync-rate-text" id="syncRateText" aria-hidden="true" lang="en">SYNC RATE: 0.00%</div>
   <!-- 暴走の予兆（縁の赤）と止め方の案内。どちらも装飾 -->
   <div class="sync-omen" id="syncOmen" aria-hidden="true"></div>
-  <div class="sync-retreat" id="syncRetreat" aria-hidden="true" lang="en">▲ RETREAT</div>
+  <div class="sync-retreat" id="syncRetreat" aria-hidden="true">
+    <svg><use href="#icon-chevron-up" /></svg>
+    <span class="sync-retreat-label" lang="en">RETREAT</span>
+  </div>
 
   <!-- 暴走モードの演出（非常事態のトラ柄・走査線・六角パネル・赤の脈動）と、活動停止の暗転。どちらも装飾 -->
   <div class="berserk-fx" aria-hidden="true">
@@ -4229,9 +4280,8 @@
           <div class="timeline-item">
             <div class="timeline-year">2026</div>
             <div class="timeline-event">
-              <a href="../images/contents/daydream_03-01.avif" data-images="
-                   ../images/contents/daydream_03-01.avif
-                   ../images/contents/daydream_03-02.avif" data-alts="
+              <a href="../images/contents/daydream_03-01.avif"
+                data-images="../images/contents/daydream_03-02.avif" data-alts="
                    白昼夢 vol.03 の出演者フライヤー。赤地にドット絵のハート柄。MAIN DJ は DJ ポー、ほかに Myxri・DJ SUGAR・人類踊狂計画・MAMEPY・Alulage、VJ に Mitsuki Oboro と KUROTORA、PAINT に Aya
                    |白昼夢 vol.03 のタイムテーブル。12 時のフリーブースから 19 時半まで、20 時撤収完了。人類踊狂計画は 14 時と 15 時半の 2 枠" target="_blank"
                 rel="noopener noreferrer" class="timeline-link">
@@ -4241,9 +4291,8 @@
               </a>
             </div>
             <div class="timeline-event">
-              <a href="../images/contents/Live-DJ_Factory.webp" data-images="
-                   ../images/contents/Live-DJ_Factory.webp
-                   ../images/contents/Live-DJ_Factory2.webp" data-alts="
+              <a href="../images/contents/Live-DJ_Factory.webp"
+                data-images="../images/contents/Live-DJ_Factory2.webp" data-alts="
                    Live&amp;Dj Factory のフライヤー。7 月 26 日（日）15 時開演、渋谷 R Lounge 6F、入場 2,700 円 + 1 ドリンク。ライブに雨音とアプローズ・#03-USHIMITU-・HELLZAPOPPIN'、DJ に彼方玲・ハシバタカナリ・zensen・Alulage・人類踊狂計画
                    |Live&amp;Dj Factory のタイムテーブル。14 時 40 分開場から 21 時終演まで。人類踊狂計画は 18 時 15 分から踊れるアイドル楽曲セット"
                 target="_blank" rel="noopener noreferrer" class="timeline-link">
@@ -4254,7 +4303,6 @@
             </div>
             <div class="timeline-event">
               <a href="../images/contents/daydream_02-1.avif" data-images="
-                   ../images/contents/daydream_02-1.avif
                    ../images/contents/daydream_02-2.avif
                    ../images/contents/daydream_02-3.avif"
                 data-alts="
@@ -4688,7 +4736,6 @@
 
     gearItems.forEach(item => {
       const atField = item.querySelector('.at-field');
-      if (!atField) return;
 
       // 終了イベントで外す（setTimeout だと CSS 側の 0.6s を JS に二重管理させることになる）。
       // ::after の animationend も同じ要素へ届くため、親側のアニメーション名で絞る
@@ -4704,16 +4751,11 @@
     // タイトルのタイピングが終わってから出す。blink-caret は infinite で animationend が
     // 上がらないので、typing だけを名前で拾う。
     // 何かの理由でイベントが来なくても出ないままにはしないよう、保険のタイマーを添える。
-    if (heroScrollCue) {
-      const tagline = document.querySelector('.hero-tagline.typewriter-text');
-      const showCue = () => heroScrollCue.classList.add('ready');
-      if (tagline) {
-        tagline.addEventListener('animationend', (e) => {
-          if (e.animationName === 'typing') showCue();
-        });
-      }
-      setTimeout(showCue, 3600);
-    }
+    const showCue = () => heroScrollCue.classList.add('ready');
+    document.querySelector('.hero-tagline.typewriter-text').addEventListener('animationend', (e) => {
+      if (e.animationName === 'typing') showCue();
+    });
+    setTimeout(showCue, 3600);
 
     // 3. Scroll Reveal Animation
     const revealElements = document.querySelectorAll('.reveal');
@@ -4783,11 +4825,12 @@
      * 画面の縁ぜんぶが光るので、1 秒に 3 回を超える点滅は出さない（光過敏の目安）。
      * 毎回合わせると 400% に着いて 1 秒足らずで上限に届くので、1 拍おきにして脈の見える時間を倍にしてある。
      * 脈の周期（明滅 2 回分）が OMEN_PULSE_MIN に近づくほど振れ幅を絞り、そこを割ったら脈を止めて
-     * 張りつめたまま保つ。
+     * 張りつめたまま保つ。絞り方は平方根で、終盤まで振れ幅を残す（比例で絞ると 2 拍目から
+     * ほとんど揺れず、3 拍目は見えなくなる）。
      */
     const OMEN_RISE = 0.75;
     const OMEN_SPREAD = 0.35;
-    const OMEN_PULSE_DEPTH = 0.4;
+    const OMEN_PULSE_DEPTH = 0.6;
     const OMEN_PULSE_MIN = 1000 / 3;
     let syncRate = 0;
     let syncScrollRate = 0; // 今のスクロール位置が指す値。updateScrollUi が更新する
@@ -4819,7 +4862,6 @@
     let berserkStartedAt = 0;
 
     const renderElapsed = () => {
-      if (!berserkElapsed) return;
       const total = Math.min(Math.floor((Date.now() - berserkStartedAt) / 1000), 5999);
       const mm = String(Math.floor(total / 60)).padStart(2, '0');
       const ss = String(total % 60).padStart(2, '0');
@@ -4918,9 +4960,9 @@
       elapsedTimer = null;
       // 0 起点で renderElapsed すると差分が巨大になって 99:59 が出る。直に戻す
       berserkStartedAt = 0;
-      if (berserkElapsed) berserkElapsed.textContent = 'ELAPSED 00:00';
+      berserkElapsed.textContent = 'ELAPSED 00:00';
       // 展開中の A.T. フィールドが暗転明けに残らないようにする
-      if (atBurstLayer) atBurstLayer.replaceChildren();
+      atBurstLayer.replaceChildren();
       // 次に暴走したときは、面をもう一度張るところからやり直す
       iframeVeils.forEach((veil) => {
         veil.classList.remove('at-iframe-veil--off', 'at-iframe-veil--breaking');
@@ -5063,7 +5105,7 @@
       });
 
     document.addEventListener('pointerdown', (event) => {
-      if (!berserk || shuttingDown || reduceMotion.matches || !atBurstLayer) return;
+      if (!berserk || shuttingDown || reduceMotion.matches) return;
       /*
        * モーダル（z-index 2000）の中で出しても板の裏に隠れ、縁からはみ出すだけ。
        * 膜の上でも出さない。同じクリックで面が破れるので、干渉の六角が重なると
@@ -5092,25 +5134,22 @@
      * 遅延読み込みで高さが伸びると 1 回の scrollTo では底に届かないので、
      * 伸びたぶんだけ送り直す。
      */
-    const navPlunge = document.getElementById('navPlunge');
-    if (navPlunge) {
-      navPlunge.addEventListener('click', () => {
-        let tries = 0;
-        let lastHeight = 0;
-        const plunge = () => {
-          if (berserk) return;
-          const height = document.documentElement.scrollHeight;
-          // 高さが変わったときだけ送り直す。毎回呼ぶと滑らかな移動が作り直されて詰まる
-          if (height !== lastHeight) {
-            lastHeight = height;
-            window.scrollTo({ top: height, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
-          }
-          tries += 1;
-          if (tries < 12) setTimeout(plunge, 250);
-        };
-        plunge();
-      });
-    }
+    document.getElementById('navPlunge').addEventListener('click', () => {
+      let tries = 0;
+      let lastHeight = 0;
+      const plunge = () => {
+        if (berserk) return;
+        const height = document.documentElement.scrollHeight;
+        // 高さが変わったときだけ送り直す。毎回呼ぶと滑らかな移動が作り直されて詰まる
+        if (height !== lastHeight) {
+          lastHeight = height;
+          window.scrollTo({ top: height, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+        }
+        tries += 1;
+        if (tries < 12) setTimeout(plunge, 250);
+      };
+      plunge();
+    });
 
     const shutdown = () => {
       if (!berserk || shuttingDown) return;
@@ -5185,7 +5224,6 @@
     };
 
     const renderSyncRate = () => {
-      if (!syncRateText) return;
       // 赤はスクロールでは届かない 100% を超えてから。計器が勝手に上がり始めた合図にする
       const isRunaway = berserk || syncRate > SYNC_BASE;
       syncRateText.textContent = `SYNC RATE: ${berserk ? '∞' : syncRate.toFixed(2)}%`;
@@ -5197,16 +5235,27 @@
       const holding = !berserk && syncInZone && syncRate >= SYNC_MAX;
       const dim = holding && !reduceMotion.matches && syncBlinkPhase % 1 >= 0.5;
       syncRateText.style.opacity = dim ? '0.15' : '';
-      if (progressBar) progressBar.classList.toggle('runaway', isRunaway);
+      progressBar.classList.toggle('runaway', isRunaway);
       // 勝手に上がっている最中だけ止め方を出す。上へ戻り始めたら（圏外）もう要らない
-      if (syncRetreat) syncRetreat.classList.toggle('show', !berserk && syncInZone && syncRate > SYNC_BASE);
+      const retreat = !berserk && syncInZone && syncRate > SYNC_BASE;
+      if (retreat && !syncRetreat.classList.contains('show')) alignRetreat();
+      syncRetreat.classList.toggle('show', retreat);
       renderSyncOmen(holding);
+    };
+
+    /*
+     * 案内の中心を札の中心に合わせる。出す瞬間に 1 度だけ測る（毎コマ測ると強制レイアウトになる）。
+     * 札の幅は数字の桁で変わるが、100% を超えてからは桁が揃っているので出ている間は動かない。
+     * 基準はスクロールバーを除いた幅。fixed の right はそこから測られる。
+     */
+    const alignRetreat = () => {
+      const rect = syncRateText.getBoundingClientRect();
+      syncRetreat.style.right = `${document.documentElement.clientWidth - (rect.left + rect.width / 2)}px`;
     };
 
     let omenLive = false;
 
     const renderSyncOmen = (holding) => {
-      if (!syncOmen) return;
       /*
        * 暴走に入ったら濃さだけ 0 へ。body.berserk の transition で暴走中の赤と入れ替わる。
        * 広がりは触らない（戻すと引いていく途中で縁が外へ跳ねて見える）。
@@ -5226,7 +5275,7 @@
         if (!reduceMotion.matches) {
           const pulsePeriod = syncBlinkPeriod() * 2;
           const depth = OMEN_PULSE_DEPTH
-            * Math.max(0, Math.min(1, (pulsePeriod - OMEN_PULSE_MIN) / (SYNC_BLINK_FROM * 2 - OMEN_PULSE_MIN)));
+            * Math.sqrt(Math.max(0, Math.min(1, (pulsePeriod - OMEN_PULSE_MIN) / (SYNC_BLINK_FROM * 2 - OMEN_PULSE_MIN))));
           /*
            * 明滅 2 回で 1 周。偶数回目に札が点く瞬間に最大で、そこから 1 回目の明滅を通して
            * ゆっくり引き、2 回目に札が落ちている間に一気に戻す。鼓動のように「点く瞬間」に
@@ -5265,7 +5314,7 @@
        * 最上部では入れない。スクロールできない高さ（極端な拡大など）だとフッターが
        * 最初から見えていて、入って即停止を繰り返すため。
        */
-      let inZone = !!footer && scrollTop > 0 && scrollTop >= footerTopScroll;
+      let inZone = scrollTop > 0 && scrollTop >= footerTopScroll;
       if (inZone && !syncInZone) {
         footerTopScroll = footer.offsetTop - clientHeight;
         inZone = scrollTop >= footerTopScroll;
@@ -5281,22 +5330,18 @@
 
       // バーは SYNC RATE と同じ目盛り（フッターの上端で満タン）。
       // 暴走中は振り切れたまま戻さない。∞% と目盛りの食い違いをなくす
-      if (progressBar) progressBar.style.width = berserk ? '100%' : `${syncScrollRate}%`;
+      progressBar.style.width = berserk ? '100%' : `${syncScrollRate}%`;
       renderSyncRate();
 
-      if (backToTopBtn) {
-        backToTopBtn.classList.toggle('visible', scrollTop > 300);
-      }
+      backToTopBtn.classList.toggle('visible', scrollTop > 300);
 
       // ポップアップもアンカーリンクボタン（backToTop）と同じ表示高さ（scrollTop > 300）で連動
-      if (livePop && canShowLivePop) {
+      if (canShowLivePop) {
         livePop.classList.toggle('show', scrollTop > 300);
       }
 
       // 「続きがある」の合図なので、動き出した時点で役目が終わる
-      if (heroScrollCue) {
-        heroScrollCue.classList.toggle('hidden', scrollTop > 60);
-      }
+      heroScrollCue.classList.toggle('hidden', scrollTop > 60);
     };
 
     let scrollTicking = false;
@@ -5310,7 +5355,7 @@
     }, { passive: true });
 
     const remeasure = () => {
-      footerTopScroll = footer ? footer.offsetTop - window.innerHeight : 0;
+      footerTopScroll = footer.offsetTop - window.innerHeight;
       updateScrollUi();
     };
 
@@ -5320,13 +5365,11 @@
     new ResizeObserver(remeasure).observe(document.body);
     remeasure();
 
-    if (backToTopBtn) {
-      backToTopBtn.addEventListener('click', () => {
-        // behavior を省くと既定の 'auto' になり、html の scroll-behavior に従う。
-        // reduced-motion の打ち消しは CSS 側 1 か所で済む
-        window.scrollTo({ top: 0 });
-      });
-    }
+    backToTopBtn.addEventListener('click', () => {
+      // behavior を省くと既定の 'auto' になり、html の scroll-behavior に従う。
+      // reduced-motion の打ち消しは CSS 側 1 か所で済む
+      window.scrollTo({ top: 0 });
+    });
 
     // 5. Image Modal Control (scroll-snap carousel)
     const modal = document.getElementById('imageModal');
@@ -5339,14 +5382,12 @@
     let clearTimer = null;
     let lastFocused = null;
 
-    // href（1枚）または data-images（複数）から画像URLを取り出す。
+    // 1枚目は href、2枚目以降は data-images に書く（href を data-images に重ねて書かない）。
     // URL に生の空白は入り得ないので、空白・改行区切りが最も安全。カンマ区切りも受け付ける。
-    const getImages = (link) => {
-      const raw = link.dataset.images || link.getAttribute('href') || '';
-      return raw.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
-    };
+    const getImages = (link) => `${link.getAttribute('href') || ''} ${link.dataset.images || ''}`
+      .split(/[\s,]+/).filter(Boolean);
 
-    // data-alts は | 区切りで data-images と同じ並び。属性内の改行・字下げは 1 個の空白に潰す。
+    // data-alts は | 区切りで画像と同じ並び（1枚目が href の分）。属性内の改行・字下げは 1 個の空白に潰す。
     // 足りない分は呼び出し側でイベント名にフォールバックする（画像だけ足したときに落ちないように）
     const getAlts = (link) => (link.dataset.alts || '')
       .split('|').map(t => t.replace(/\s+/g, ' ').trim());
@@ -5586,93 +5627,81 @@
     // 見えている中でいちばん上のセクションを現在地とする。スクロール量では、
     // セクションごとに高さが違うぶん境目がずれるので、交差そのものを見る。
     const sectionNav = document.getElementById('sectionNav');
-    if (sectionNav) {
-      // リンクと節はペアで持つ。片方だけ filter すると添字がずれて別のドットが光る
-      const navItems = Array.from(sectionNav.querySelectorAll('a'))
-        .map(link => ({ link, section: document.querySelector(link.getAttribute('href')) }))
-        .filter(item => item.section);
-      const visible = new Set();
-      // どの節も交差帯に入らない瞬間に先頭へ飛ばないよう、直前の現在地を持ち越す
-      let current = navItems.length ? navItems[0].section : null;
+    // リンクと節はペアで持つ。片方だけ filter すると添字がずれて別のドットが光る
+    const navItems = Array.from(sectionNav.querySelectorAll('a'))
+      .map(link => ({ link, section: document.querySelector(link.getAttribute('href')) }))
+      .filter(item => item.section);
+    const visible = new Set();
+    // どの節も交差帯に入らない瞬間に先頭へ飛ばないよう、直前の現在地を持ち越す
+    let current = navItems.length ? navItems[0].section : null;
 
-      const markCurrent = () => {
-        // navItems は文書順。先頭から探せば「見えている中の最上部」になる
-        const found = navItems.find(item => visible.has(item.section));
-        if (found) current = found.section;
-        navItems.forEach(({ link, section }) => {
-          if (section === current) {
-            link.setAttribute('aria-current', 'true');
-          } else {
-            link.removeAttribute('aria-current');
-          }
-        });
-      };
-
-      const navObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            visible.add(entry.target);
-          } else {
-            visible.delete(entry.target);
-          }
-        });
-        markCurrent();
-      }, {
-        // 上下端の 40% を無視して、画面の真ん中に入ったものだけを現在地にする
-        rootMargin: '-40% 0px -40% 0px',
-        threshold: 0
+    const markCurrent = () => {
+      // navItems は文書順。先頭から探せば「見えている中の最上部」になる
+      const found = navItems.find(item => visible.has(item.section));
+      if (found) current = found.section;
+      navItems.forEach(({ link, section }) => {
+        if (section === current) {
+          link.setAttribute('aria-current', 'true');
+        } else {
+          link.removeAttribute('aria-current');
+        }
       });
+    };
 
-      navItems.forEach(item => navObserver.observe(item.section));
+    const navObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          visible.add(entry.target);
+        } else {
+          visible.delete(entry.target);
+        }
+      });
       markCurrent();
-    }
+    }, {
+      // 上下端の 40% を無視して、画面の真ん中に入ったものだけを現在地にする
+      rootMargin: '-40% 0px -40% 0px',
+      threshold: 0
+    });
+
+    navItems.forEach(item => navObserver.observe(item.section));
+    markCurrent();
 
     // 7. Live Popup
     // 受付中の回があるときだけ出す。取れなくても黙って何もしない
     //（このページの主題はポートフォリオで、リクエストは付随機能）。
     // 閉じた状態は canShowLivePop（JS 変数）だけで管理。リロードすれば再表示される。
-    if (livePop) {
-      const isPreview = new URLSearchParams(location.search).get('live') === '1';
-      const getEvent = isPreview
-        ? Promise.resolve({ open: true, title: '人類踊狂計画 Live Session', code: 'preview' })
-        : fetch('/dj/api/req/event', { headers: { Accept: 'application/json' } })
-          .then(res => res.ok ? res.json() : null)
-          .catch(() => null);
+    const isPreview = new URLSearchParams(location.search).get('live') === '1';
+    const getEvent = isPreview
+      ? Promise.resolve({ open: true, title: '人類踊狂計画 Live Session', code: 'preview' })
+      : fetch('/dj/api/req/event', { headers: { Accept: 'application/json' } })
+        .then(res => res.ok ? res.json() : null)
+        .catch(() => null);
 
-      getEvent.then(data => {
-        if (!data || !data.open) return;
+    getEvent.then(data => {
+      if (!data || !data.open) return;
 
-        // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる
-        const title = document.getElementById('livePopTitle');
-        if (title) {
-          title.textContent = data.title || '曲リクエスト受付中';
-        }
-        livePop.hidden = false;
-        canShowLivePop = true;
+      // 会場で入れた文字列がそのまま返る。組み立てず textContent で入れる
+      document.getElementById('livePopTitle').textContent = data.title || '曲リクエスト受付中';
+      livePop.hidden = false;
+      canShowLivePop = true;
 
-        // 即表示ではなく、スクロール量（backToTopBtn と同じ閾値）に合わせて表示判定。
-        // hidden 解除と .show 付与が同じタスクだとスタイル再計算が挟まらず、
-        // スライドアップが再生されない。1 フレーム空ける
-        requestAnimationFrame(updateScrollUi);
+      // 即表示ではなく、スクロール量（backToTopBtn と同じ閾値）に合わせて表示判定。
+      // hidden 解除と .show 付与が同じタスクだとスタイル再計算が挟まらず、
+      // スライドアップが再生されない。1 フレーム空ける
+      requestAnimationFrame(updateScrollUi);
+    });
 
-        const closeBtn = document.getElementById('livePopClose');
-        if (closeBtn) {
-          closeBtn.addEventListener('click', (e) => {
-            // 親カードの <a> によるページ遷移を防ぐ
-            e.preventDefault();
-            e.stopPropagation();
-            canShowLivePop = false;
-            livePop.classList.remove('show');
-            // hidden にするとフォーカスが body へ落ちる。同じ閾値で必ず出ている
-            // back-to-top へ預けて、キーボード操作の文脈を保つ
-            if (livePop.contains(document.activeElement) && backToTopBtn) {
-              backToTopBtn.focus({ preventScroll: true });
-            }
-            setTimeout(() => { livePop.hidden = true; }, 350);
-          });
-        }
-      });
-    }
+    // × はカードの <a> の外（兄弟）に置いてあるので、遷移を止める必要はない
+    document.getElementById('livePopClose').addEventListener('click', () => {
+      canShowLivePop = false;
+      livePop.classList.remove('show');
+      // hidden にするとフォーカスが body へ落ちる。同じ閾値で必ず出ている
+      // back-to-top へ預けて、キーボード操作の文脈を保つ
+      if (livePop.contains(document.activeElement)) {
+        backToTopBtn.focus({ preventScroll: true });
+      }
+      setTimeout(() => { livePop.hidden = true; }, 350);
+    });
 
     // 8. Offer Form
     /*
@@ -5687,259 +5716,240 @@
      * 必ず空に戻して、古いトークンで送信できないようにする。
      */
     const offerForm = document.getElementById('offerForm');
-    if (offerForm) {
-      const OFFER_API = '/dj/api/offer/send';
-      const OFFER_SITE_KEY = '0x4AAAAAACwi9fjjeeh8ujIK';
-      const OFFER_TIMEOUT_MS = 30_000;
-      // DM の案内は失敗時にだけ添える。成功時に別の連絡先を出しても迷わせるだけ
-      const OFFER_DM = '<a class="text-link" href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の DM</a>';
+    const OFFER_API = '/dj/api/offer/send';
+    const OFFER_SITE_KEY = '0x4AAAAAACwi9fjjeeh8ujIK';
+    const OFFER_TIMEOUT_MS = 30_000;
+    // DM の案内は失敗時にだけ添える。成功時に別の連絡先を出しても迷わせるだけ
+    const OFFER_DM = '<a class="text-link" href="https://ig.me/m/dj_hcp" target="_blank" rel="noopener noreferrer">Instagram の DM</a>';
 
-      /*
-       * 会場の常設機材を選んだときだけ機材名の欄を出す。閉じるときは値も捨てる
-       * （見えない欄に前の入力が残ったまま送られるのを防ぐ）。
-       */
-      const gearSelect = document.getElementById('offerGear');
-      const venueGearField = document.getElementById('offerVenueGearField');
-      const venueGearInput = document.getElementById('offerVenueGear');
-      const syncVenueGear = () => {
-        const show = gearSelect.value === 'venue';
-        venueGearField.hidden = !show;
-        if (!show) venueGearInput.value = '';
-      };
-      gearSelect.addEventListener('change', syncVenueGear);
-      syncVenueGear();
+    /*
+     * 会場の常設機材を選んだときだけ機材名の欄を出す。閉じるときは値も捨てる
+     * （見えない欄に前の入力が残ったまま送られるのを防ぐ）。
+     */
+    const gearSelect = document.getElementById('offerGear');
+    const venueGearField = document.getElementById('offerVenueGearField');
+    const venueGearInput = document.getElementById('offerVenueGear');
+    const syncVenueGear = () => {
+      const show = gearSelect.value === 'venue';
+      venueGearField.hidden = !show;
+      if (!show) venueGearInput.value = '';
+    };
+    gearSelect.addEventListener('change', syncVenueGear);
+    syncVenueGear();
 
-      const submitBtn = document.getElementById('offerSubmit');
-      const submitIcon = submitBtn.querySelector('.offer-submit-icon');
-      const submitSpinner = submitBtn.querySelector('.offer-spinner');
-      const submitLabel = document.getElementById('offerSubmitLabel');
-      const statusEl = document.getElementById('offerStatus');
-      const turnstileBox = document.getElementById('offerTurnstile');
-      let turnstileToken = '';
-      let widgetId = null;
-      let sending = false;
+    const submitBtn = document.getElementById('offerSubmit');
+    const submitIcon = submitBtn.querySelector('.offer-submit-icon');
+    const submitSpinner = submitBtn.querySelector('.offer-spinner');
+    const submitLabel = document.getElementById('offerSubmitLabel');
+    const statusEl = document.getElementById('offerStatus');
+    const turnstileBox = document.getElementById('offerTurnstile');
+    let turnstileToken = '';
+    let widgetId = null;
+    let sending = false;
 
-      /*
-       * html にはこのファイルが持つ文言だけを渡すこと。サーバーから返る文字列を
-       * 混ぜるときは setServerStatus を通す（+ で連結して innerHTML へ渡すと、
-       * Worker がいつか入力を含むエラーを返した瞬間に XSS になる）。
-       */
-      const setStatus = (html, state) => {
-        if (!statusEl) return;
-        if (!html) {
-          statusEl.hidden = true;
-          statusEl.removeAttribute('data-state');
-          statusEl.innerHTML = '';
-          return;
-        }
-        // live region は「見えている状態で中身が変わる」ことで読み上げられる。
-        // hidden を外してから書き込む（逆順だと読み上げない支援技術がある）
-        statusEl.hidden = false;
-        statusEl.dataset.state = state;
-        statusEl.innerHTML = html;
-      };
-
-      // サーバーの文言はテキストとして入れ、案内文だけをこちら側の HTML で足す
-      const setServerStatus = (text, state) => {
-        setStatus('<span data-server-text></span><br>解決しない場合は ' + OFFER_DM + ' からご連絡ください。', state);
-        if (statusEl) statusEl.querySelector('[data-server-text]').textContent = text;
-      };
-
-      const setSending = (on) => {
-        sending = on;
-        submitBtn.disabled = on;
-        submitIcon.toggleAttribute('hidden', on);
-        submitSpinner.hidden = !on;
-        submitLabel.textContent = on ? 'Sending...' : 'Send Offer';
-      };
-
-      /* ── 開催日時 ────────────────────────────
-       * datetime-local は、Chrome だと右端のアイコンを狙わないとカレンダーが出ない。
-       * 欄のどこを押しても開くよう showPicker() を明示的に呼ぶ。
-       * ユーザー操作の中でしか呼べず、未対応・二重呼び出しでは例外を投げるので握る。
-       */
-      const dateInput = document.getElementById('offerDate');
-
-      /*
-       * 送信時は「2026-03-14T21:00」ではなく読める形に直す。メールを開いた側が
-       * ISO 文字列を頭の中で変換する羽目にならないよう、曜日まで添える。
-       * 値が空、または想定外の形なら素通しする（サーバー側で長さだけ詰める）。
-       */
-      const formatDateTime = (raw) => {
-        const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/.exec(raw || '');
-        if (!m) return raw || '';
-        const [, y, mo, d, h, mi] = m;
-        const dt = new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi));
-        if (Number.isNaN(dt.getTime())) return raw;
-        const wd = '日月火水木金土'[dt.getDay()];
-        return `${y}年${Number(mo)}月${Number(d)}日(${wd}) ${h}:${mi}`;
-      };
-
-      if (dateInput) {
-        const openPicker = () => {
-          if (typeof dateInput.showPicker !== 'function') return;
-          try { dateInput.showPicker(); } catch (e) { /* 既に開いている等 */ }
-        };
-        dateInput.addEventListener('click', openPicker);
-        // キーボードで到達した人にも同じ入口を用意する（矢印キーでの直接入力も残る）
-        dateInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            openPicker();
-          }
-        });
-
+    /*
+     * html にはこのファイルが持つ文言だけを渡すこと。サーバーから返る文字列を
+     * 混ぜるときは setServerStatus を通す（+ で連結して innerHTML へ渡すと、
+     * Worker がいつか入力を含むエラーを返した瞬間に XSS になる）。
+     */
+    const setStatus = (html, state) => {
+      if (!html) {
+        statusEl.hidden = true;
+        statusEl.removeAttribute('data-state');
+        statusEl.innerHTML = '';
+        return;
       }
+      // live region は「見えている状態で中身が変わる」ことで読み上げられる。
+      // hidden を外してから書き込む（逆順だと読み上げない支援技術がある）
+      statusEl.hidden = false;
+      statusEl.dataset.state = state;
+      statusEl.innerHTML = html;
+    };
 
-      /* ── Turnstile の遅延読み込み ───────────────── */
-      window.onOfferTurnstileLoad = function () {
-        try {
-          widgetId = turnstile.render('#offerTurnstile', {
-            sitekey: OFFER_SITE_KEY,
-            callback: (token) => { turnstileToken = token; },
-            'expired-callback': () => { turnstileToken = ''; },
-            'error-callback': () => { turnstileToken = ''; },
-          });
-        } catch (e) {
-          // 読めてもレンダリングで落ちることがある。送信時に文言で拾う
-          turnstileToken = '';
-        }
-      };
+    // サーバーの文言はテキストとして入れ、案内文だけをこちら側の HTML で足す
+    const setServerStatus = (text, state) => {
+      setStatus('<span data-server-text></span><br>解決しない場合は ' + OFFER_DM + ' からご連絡ください。', state);
+      statusEl.querySelector('[data-server-text]').textContent = text;
+    };
 
-      // 失敗したトークンは使い回せない。次の送信に備えて引き直す
-      const resetTurnstile = () => {
-        turnstileToken = '';
-        if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);
-      };
+    const setSending = (on) => {
+      sending = on;
+      submitBtn.disabled = on;
+      submitIcon.toggleAttribute('hidden', on);
+      submitSpinner.hidden = !on;
+      submitLabel.textContent = on ? 'Sending...' : 'Send Offer';
+    };
 
-      let turnstileRequested = false;
-      const loadTurnstile = () => {
-        if (turnstileRequested) return;
-        turnstileRequested = true;
-        const s = document.createElement('script');
-        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onOfferTurnstileLoad&render=explicit';
-        s.async = true;
-        s.defer = true;
-        document.head.appendChild(s);
-      };
+    /* ── 開催日時 ────────────────────────────
+     * datetime-local は、Chrome だと右端のアイコンを狙わないとカレンダーが出ない。
+     * 欄のどこを押しても開くよう showPicker() を明示的に呼ぶ。
+     * ユーザー操作の中でしか呼べず、未対応・二重呼び出しでは例外を投げるので握る。
+     */
+    const dateInput = document.getElementById('offerDate');
 
-      if ('IntersectionObserver' in window) {
-        const offerObserver = new IntersectionObserver((entries, observer) => {
-          entries.forEach((entry) => {
-            if (!entry.isIntersecting) return;
-            loadTurnstile();
-            observer.disconnect();
-          });
-          // 画面に入る少し手前で読み始め、たどり着いた頃には枠が出ている状態にする
-        }, { rootMargin: '200px' });
-        offerObserver.observe(offerForm);
-      } else {
-        loadTurnstile();
-      }
-      // 直接フォームへフォーカスされた場合（タブ移動・#offer リンク）も取りこぼさない
-      offerForm.addEventListener('focusin', loadTurnstile, { once: true });
+    /*
+     * 送信時は「2026-03-14T21:00」ではなく読める形に直す。メールを開いた側が
+     * ISO 文字列を頭の中で変換する羽目にならないよう、曜日まで添える。
+     * 値が空、または想定外の形なら素通しする（サーバー側で長さだけ詰める）。
+     */
+    const formatDateTime = (raw) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/.exec(raw || '');
+      if (!m) return raw || '';
+      const [, y, mo, d, h, mi] = m;
+      const wd = '日月火水木金土'[new Date(Number(y), Number(mo) - 1, Number(d)).getDay()];
+      return `${y}年${Number(mo)}月${Number(d)}日(${wd}) ${h}:${mi}`;
+    };
 
-      /* ── 送信 ───────────────────────────────── */
-      offerForm.addEventListener('submit', async (e) => {
+    const openPicker = () => {
+      if (typeof dateInput.showPicker !== 'function') return;
+      try { dateInput.showPicker(); } catch (e) { /* 既に開いている等 */ }
+    };
+    dateInput.addEventListener('click', openPicker);
+    // キーボードで到達した人にも同じ入口を用意する（矢印キーでの直接入力も残る）
+    dateInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        if (sending) return;
+        openPicker();
+      }
+    });
 
-        const value = (id) => (document.getElementById(id).value || '').trim();
-        const payload = {
-          name: value('offerName'),
-          org: value('offerOrg'),
-          email: value('offerEmail'),
-          contact: value('offerContact'),
-          event: value('offerEvent'),
-          date: formatDateTime(value('offerDate')),
-          venue: value('offerVenue'),
-          gear: value('offerGear'),
-          venueGear: value('offerVenueGear'),
-          message: value('offerMessage'),
-          website: value('offerWebsite'),
-          token: turnstileToken,
-        };
+    /* ── Turnstile の遅延読み込み ───────────────── */
+    window.onOfferTurnstileLoad = function () {
+      try {
+        widgetId = turnstile.render('#offerTurnstile', {
+          sitekey: OFFER_SITE_KEY,
+          callback: (token) => { turnstileToken = token; },
+          'expired-callback': () => { turnstileToken = ''; },
+          'error-callback': () => { turnstileToken = ''; },
+        });
+      } catch (e) {
+        // 読めてもレンダリングで落ちることがある。送信時に文言で拾う
+        turnstileToken = '';
+      }
+    };
 
-        // 必須の確認はサーバー側でもやるが、往復させる前にここで止める。
-        // 足りない欄へフォーカスを移し、どこを直すのかを画面で示す
-        const missing = [
-          ['offerName', 'お名前'],
-          ['offerEmail', '返信先メールアドレス'],
-          ['offerMessage', 'ご相談内容'],
-        ].find(([id]) => !value(id));
-        if (missing) {
-          setStatus(missing[1] + 'をご記入ください。', 'error');
-          document.getElementById(missing[0]).focus();
+    // 失敗したトークンは使い回せない。次の送信に備えて引き直す
+    const resetTurnstile = () => {
+      turnstileToken = '';
+      if (widgetId !== null && window.turnstile) turnstile.reset(widgetId);
+    };
+
+    let turnstileRequested = false;
+    const loadTurnstile = () => {
+      if (turnstileRequested) return;
+      turnstileRequested = true;
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onOfferTurnstileLoad&render=explicit';
+      s.async = true;
+      s.defer = true;
+      document.head.appendChild(s);
+    };
+
+    // 画面に入る少し手前で読み始め、たどり着いた頃には枠が出ている状態にする
+    new IntersectionObserver((entries, observer) => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      loadTurnstile();
+      observer.disconnect();
+    }, { rootMargin: '200px' }).observe(offerForm);
+    // 直接フォームへフォーカスされた場合（タブ移動・#offer リンク）も取りこぼさない
+    offerForm.addEventListener('focusin', loadTurnstile, { once: true });
+
+    /* ── 送信 ───────────────────────────────── */
+    offerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (sending) return;
+
+      const value = (id) => (document.getElementById(id).value || '').trim();
+      const payload = {
+        name: value('offerName'),
+        org: value('offerOrg'),
+        email: value('offerEmail'),
+        contact: value('offerContact'),
+        event: value('offerEvent'),
+        date: formatDateTime(value('offerDate')),
+        venue: value('offerVenue'),
+        gear: value('offerGear'),
+        venueGear: value('offerVenueGear'),
+        message: value('offerMessage'),
+        website: value('offerWebsite'),
+        token: turnstileToken,
+      };
+
+      // 必須の確認はサーバー側でもやるが、往復させる前にここで止める。
+      // 足りない欄へフォーカスを移し、どこを直すのかを画面で示す
+      const missing = [
+        ['offerName', 'お名前'],
+        ['offerEmail', '返信先メールアドレス'],
+        ['offerMessage', 'ご相談内容'],
+      ].find(([id]) => !value(id));
+      if (missing) {
+        setStatus(missing[1] + 'をご記入ください。', 'error');
+        document.getElementById(missing[0]).focus();
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(payload.email)) {
+        setStatus('メールアドレスの形式をご確認ください。', 'error');
+        document.getElementById('offerEmail').focus();
+        return;
+      }
+      if (!payload.token) {
+        loadTurnstile();
+        setStatus('認証の読み込みが終わるまで少しお待ちください。しばらく経っても変わらない場合は ' + OFFER_DM + ' からご連絡ください。', 'error');
+        return;
+      }
+
+      setSending(true);
+      setStatus('送信しています…', 'sending');
+      let timeoutId;
+
+      try {
+        const controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), OFFER_TIMEOUT_MS);
+        const res = await fetch(OFFER_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.ok) {
+          // 送信済みのフォームは畳む。同じ内容を二度送れる状態にしておかない
+          offerForm.querySelector('.offer-grid').hidden = true;
+          turnstileBox.hidden = true;
+          submitBtn.hidden = true;
+          setStatus('送信しました。ありがとうございます。<br>内容を確認のうえ、通常2〜3日以内にご記入のメールアドレスへ返信いたします。', 'done');
+          // 押した送信ボタンごと畳むので、放っておくとフォーカスが body へ落ちる。
+          // 結果の文言へ預けて、キーボード操作の文脈を保つ
+          statusEl.focus({ preventScroll: true });
           return;
         }
-        if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(payload.email)) {
-          setStatus('メールアドレスの形式をご確認ください。', 'error');
-          document.getElementById('offerEmail').focus();
-          return;
-        }
-        if (!payload.token) {
-          loadTurnstile();
-          setStatus('認証の読み込みが終わるまで少しお待ちください。しばらく経っても変わらない場合は ' + OFFER_DM + ' からご連絡ください。', 'error');
-          return;
-        }
 
-        setSending(true);
-        setStatus('送信しています…', 'sending');
-        let timeoutId;
+        resetTurnstile();
+        setServerStatus(data.error || '送信に失敗しました。', 'error');
+      } catch (err) {
+        resetTurnstile();
+        const message = err && err.name === 'AbortError'
+          ? '送信がタイムアウトしました。送信済みの場合もあるため、重複を避ける場合は ' + OFFER_DM + ' からご確認ください。'
+          : '通信に失敗しました。電波の良い場所でお試しいただくか、' + OFFER_DM + ' からご連絡ください。';
+        setStatus(message, 'error');
+      } finally {
+        clearTimeout(timeoutId);
+        // 成功時はボタンごと伏せてあるので、ここで戻しても画面には出てこない。
+        // 分岐を持たせると「送信中のまま」の取りこぼしが生まれるので必ず戻す
+        setSending(false);
+      }
+    });
 
-        try {
-          const controller = new AbortController();
-          timeoutId = setTimeout(() => controller.abort(), OFFER_TIMEOUT_MS);
-          const res = await fetch(OFFER_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: controller.signal,
-          });
-          const data = await res.json().catch(() => ({}));
-
-          if (res.ok && data.ok) {
-            // 送信済みのフォームは畳む。同じ内容を二度送れる状態にしておかない
-            offerForm.querySelector('.offer-grid').hidden = true;
-            turnstileBox.hidden = true;
-            submitBtn.hidden = true;
-            setStatus('送信しました。ありがとうございます。<br>内容を確認のうえ、通常2〜3日以内にご記入のメールアドレスへ返信いたします。', 'done');
-            // 押した送信ボタンごと畳むので、放っておくとフォーカスが body へ落ちる。
-            // 結果の文言へ預けて、キーボード操作の文脈を保つ
-            if (statusEl) statusEl.focus({ preventScroll: true });
-            return;
-          }
-
-          resetTurnstile();
-          setServerStatus(data.error || '送信に失敗しました。', 'error');
-        } catch (err) {
-          resetTurnstile();
-          const message = err && err.name === 'AbortError'
-            ? '送信がタイムアウトしました。送信済みの場合もあるため、重複を避ける場合は ' + OFFER_DM + ' からご確認ください。'
-            : '通信に失敗しました。電波の良い場所でお試しいただくか、' + OFFER_DM + ' からご連絡ください。';
-          setStatus(message, 'error');
-        } finally {
-          clearTimeout(timeoutId);
-          // 成功時はボタンごと伏せてあるので、ここで戻しても画面には出てこない。
-          // 分岐を持たせると「送信中のまま」の取りこぼしが生まれるので必ず戻す
-          setSending(false);
-        }
-      });
-
-      // ここまで例外なく初期化できた場合だけ、フォームの通常の submit 操作を有効にする
-      submitBtn.type = 'submit';
-    }
-
-    // 9. Lucide アイコンはインライン SVG 化済みのため createIcons() は不要
+    // ここまで例外なく初期化できた場合だけ、フォームの通常の submit 操作を有効にする
+    submitBtn.type = 'submit';
 
     // 開始年はマークアップ（JS 無効時にそのまま表示されるフォールバックでもある）を唯一の情報源にし、
     // 終了年だけ現在年に更新する。年をまたいでもソースの書き換えは不要。
     const yearEl = document.getElementById('copyright-year');
-    if (yearEl) {
-      const since = yearEl.textContent.trim().slice(0, 4);
-      const now = String(new Date().getFullYear());
-      yearEl.textContent = now === since ? since : `${since}-${now}`;
-    }
+    const since = yearEl.textContent.trim().slice(0, 4);
+    const now = String(new Date().getFullYear());
+    yearEl.textContent = now === since ? since : `${since}-${now}`;
   </script>
 </body>
 

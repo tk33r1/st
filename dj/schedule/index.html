@@ -758,24 +758,24 @@
         return year >= 2020 && year <= 2099;
       }
 
-      function api(path, options) {
+      async function api(path, options) {
         var opts = options || {};
-        return fetch(API_BASE + path, {
-          method: opts.method || 'GET',
-          headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
-          body: opts.body ? JSON.stringify(opts.body) : undefined,
-          cache: 'no-store'
-        }).then(function (res) {
-          return res.json().catch(function () { return {}; }).then(function (payload) {
-            if (!res.ok) throw new Error(payload.error || ('通信に失敗しました (' + res.status + ')'));
-            return payload;
+        try {
+          var res = await fetch(API_BASE + path, {
+            method: opts.method || 'GET',
+            headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
+            body: opts.body ? JSON.stringify(opts.body) : undefined,
+            cache: 'no-store'
           });
-        }).catch(function (err) {
+          var payload = await res.json().catch(function () { return {}; });
+          if (!res.ok) throw new Error(payload.error || ('通信に失敗しました (' + res.status + ')'));
+          return payload;
+        } catch (err) {
           if (err instanceof TypeError) {
             throw new Error('サーバーに接続できませんでした');
           }
           throw err;
-        });
+        }
       }
 
       // ===== ルーティング =====
@@ -799,25 +799,27 @@
       }
 
       // ===== 読み込み =====
-      function load(ym) {
+      async function load(ym) {
         month = ym;
         notice('');
         renderMonthBar();
-        api('/months/' + ym).then(function (payload) {
+        try {
+          var payload = await api('/months/' + ym);
           // ここは月の切り替え。前の月の開催日と比べても意味がないので applyData は通さない
           data = payload;
           resetAnswerForm(true);
           renderAll();
-        }).catch(function (err) {
+        } catch (err) {
           notice(err.message);
-        });
+        }
       }
 
       function renderAll() {
+        var summary = buildSummary();
         document.title = eventLabel(month) + ' スケジュール調整';
         renderMonthBar();
-        renderTable();
-        renderBest();
+        renderTable(summary);
+        renderBest(summary);
         renderStatusEditor();
         renderNameSelect();
         autoLoadOwnResponse();
@@ -843,53 +845,51 @@
         return (r && r.answers[iso]) || 'o';
       }
 
-      // 集計に並べるのはメンバー全員＋自由入力で回答した人。
-      // 未登録の人も列を持ち、予定を入れていない日は○として扱う
-      function tallyNames() {
+      // 集計に必要な名前・回答・日別集計・有力候補を、再描画ごとに一度だけ組み立てる。
+      // 未登録のメンバーも列を持ち、予定を入れていない日は○として扱う。
+      function buildSummary() {
         var names = MEMBERS.slice();
+        var byName = {};
         data.responses.forEach(function (r) {
+          byName[r.name] = r;
           if (names.indexOf(r.name) === -1) names.push(r.name);
         });
-        return names;
-      }
-
-      function responsesByName() {
-        var byName = {};
-        data.responses.forEach(function (r) { byName[r.name] = r; });
-        return byName;
-      }
-
-      function tallyOf(iso) {
-        var t = { o: 0, t: 0, x: 0 };
-        var byName = responsesByName();
-        tallyNames().forEach(function (name) {
-          var v = answerOf(byName[name], iso);
-          if (v) t[v] += 1;
+        var tallies = {};
+        data.dates.forEach(function (iso) {
+          var tally = { o: 0, t: 0, x: 0 };
+          names.forEach(function (name) {
+            var answer = answerOf(byName[name], iso);
+            if (answer) tally[answer] += 1;
+          });
+          tallies[iso] = tally;
         });
-        return t;
+
+        var top = -1;
+        var best = [];
+        if (data.responses.length) {
+          // ○=2点 / △=1点。× が付いた日と開催不可日は候補から外す。
+          data.dates.forEach(function (iso) {
+            if (isBlocked(iso)) return;
+            var tally = tallies[iso];
+            if (tally.x > 0) return;
+            var score = tally.o * 2 + tally.t;
+            if (score > top) { top = score; best = [iso]; }
+            else if (score === top) { best.push(iso); }
+          });
+        }
+
+        return { names: names, byName: byName, tallies: tallies, best: top > 0 ? best : [] };
       }
 
       function isBlocked(iso) {
         return data.blocked.indexOf(iso) !== -1;
       }
 
-      // ○=2点 / △=1点 で最高スコアの日を拾う（× が付いた日と開催不可日は除外）
-      function bestDates() {
-        if (!data.responses.length) return [];
-        var top = -1;
-        var winners = [];
-        data.dates.forEach(function (iso) {
-          if (isBlocked(iso)) return;
-          var t = tallyOf(iso);
-          if (t.x > 0) return;
-          var score = t.o * 2 + t.t;
-          if (score > top) { top = score; winners = [iso]; }
-          else if (score === top) { winners.push(iso); }
-        });
-        return top > 0 ? winners : [];
+      function responseByName(name) {
+        return data.responses.find(function (r) { return r.name === name; });
       }
 
-      function renderTable() {
+      function renderTable(summary) {
         var table = $('grid');
         table.textContent = '';
 
@@ -902,8 +902,8 @@
         var thTally = document.createElement('th');
         thTally.textContent = '○ / △ / ×';
         hr.appendChild(thTally);
-        var names = tallyNames();
-        var byName = responsesByName();
+        var names = summary.names;
+        var byName = summary.byName;
         names.forEach(function (name) {
           var th = document.createElement('th');
           // 未登録の人もフリー入力の人も、ここを押せばその人の入力を始められる
@@ -920,7 +920,7 @@
         table.appendChild(thead);
 
         // 確定してしまえば有力候補のハイライトは意味がないので出さない
-        var best = data.decided ? [] : bestDates();
+        var best = data.decided ? [] : summary.best;
         var tbody = document.createElement('tbody');
         data.dates.forEach(function (iso) {
           var tr = document.createElement('tr');
@@ -934,7 +934,7 @@
           dateTd.textContent = fmtDate(iso);
           tr.appendChild(dateTd);
 
-          var t = tallyOf(iso);
+          var t = summary.tallies[iso];
           var tallyTd = document.createElement('td');
           tallyTd.className = 'tally';
           [['o', t.o], ['t', t.t], ['x', t.x]].forEach(function (pair, i) {
@@ -977,7 +977,7 @@
         }
       }
 
-      function renderBest() {
+      function renderBest(summary) {
         var status = $('statusLine');
         status.hidden = !data.decided;
         if (data.decided) status.textContent = '開催日 ' + fmtDateLong(data.decided);
@@ -994,7 +994,7 @@
           el.textContent = 'まだ回答がありません';
           return;
         }
-        var best = bestDates();
+        var best = summary.best;
         if (!best.length) {
           el.textContent = '全員が空いている日はまだありません';
           return;
@@ -1039,22 +1039,23 @@
       }
 
       // 開催日 / 開催不可日を変更した時点で即保存する
-      function saveStatus() {
+      async function saveStatus() {
         var decided = $('decidedSelect').value || null;
         var blocked = Array.prototype.filter.call(
           $('blockChips').children,
           function (chip) { return chip.getAttribute('aria-pressed') === 'true'; }
         ).map(function (chip) { return chip.dataset.iso; });
 
-        api('/months/' + month + '/status', {
-          method: 'PUT',
-          body: { decided: decided, blocked: blocked }
-        }).then(function (payload) {
+        try {
+          var payload = await api('/months/' + month + '/status', {
+            method: 'PUT',
+            body: { decided: decided, blocked: blocked }
+          });
           applyData(payload);
           notice(data.decided ? '開催日を ' + fmtDateLong(data.decided) + ' に設定しました' : '開催日の設定を保存しました', false);
-        }).catch(function (err) {
+        } catch (err) {
           notice(err.message);
-        });
+        }
       }
 
       // ===== 回答フォーム =====
@@ -1158,7 +1159,7 @@
         if (editingId) return;
         var name = selectedName();
         if (!name) return;
-        var mine = data.responses.filter(function (r) { return r.name === name; })[0];
+        var mine = responseByName(name);
         if (mine) loadResponseIntoForm(mine, { scroll: false, rerender: false });
       }
 
@@ -1183,7 +1184,7 @@
 
       // 表の名前をタップしたとき。登録済みなら修正、未登録なら全部○の状態で入力を始める
       function answerAs(name) {
-        var existing = responsesByName()[name];
+        var existing = responseByName(name);
         if (existing) { loadResponseIntoForm(existing); return; }
         resetAnswerForm(true);
         var member = isMember(name);
@@ -1214,7 +1215,7 @@
         syncCustomNameField();
         var name = selectedName();
         if (!name) return;
-        var existing = data.responses.filter(function (r) { return r.name === name; })[0];
+        var existing = responseByName(name);
         if (existing) {
           loadResponseIntoForm(existing);
         } else if (editingId) {
@@ -1239,46 +1240,47 @@
         });
       });
 
-      $('submitAnswer').addEventListener('click', function () {
+      $('submitAnswer').addEventListener('click', async function () {
         var name = selectedName();
         if (!name) { notice('名前を選んでください'); return; }
         if (!Object.keys(answers).length) { notice('○ △ × をひとつ以上選んでください'); return; }
 
         var btn = this;
         btn.disabled = true;
-        api('/months/' + month + '/responses', {
-          method: 'POST',
-          body: { name: name, answers: answers, comment: $('ansComment').value.trim() }
-        }).then(function (payload) {
-          btn.disabled = false;
+        try {
+          var payload = await api('/months/' + month + '/responses', {
+            method: 'POST',
+            body: { name: name, answers: answers, comment: $('ansComment').value.trim() }
+          });
           try { localStorage.setItem(STORE_KEY, name); } catch (e) { /* noop */ }
           applyData(payload, true);
           notice(eventLabel(month) + ' の ' + name + ' の回答を保存しました', false);
-        }).catch(function (err) {
-          btn.disabled = false;
+        } catch (err) {
           notice(err.message);
-        });
+        } finally {
+          btn.disabled = false;
+        }
       });
 
-      $('deleteAnswer').addEventListener('click', function () {
+      $('deleteAnswer').addEventListener('click', async function () {
         if (!editingId) return;
         // 名前の選択欄は途中で変えられるので、消す相手は editingId が指す回答から取る
-        var target = data.responses.filter(function (r) { return r.id === editingId; })[0];
+        var target = data.responses.find(function (r) { return r.id === editingId; });
         if (!target) { resetAnswerForm(); return; }
         // メンバーは回答が消えても列が残って全部○に戻るが、自由入力の人は列ごと集計から消える
         var member = isMember(target.name);
         if (!confirm(target.name + ' の回答を削除します。' + (member ? '全部○の状態に戻ります。' : '集計からも消えます。') + 'よろしいですか？')) return;
         var btn = this;
         btn.disabled = true;
-        api('/months/' + month + '/responses/' + editingId, { method: 'DELETE' })
-          .then(function (payload) {
-            btn.disabled = false;
-            applyData(payload, true);
-            notice('回答を削除しました', false);
-          }).catch(function (err) {
-            btn.disabled = false;
-            notice(err.message);
-          });
+        try {
+          var payload = await api('/months/' + month + '/responses/' + editingId, { method: 'DELETE' });
+          applyData(payload, true);
+          notice('回答を削除しました', false);
+        } catch (err) {
+          notice(err.message);
+        } finally {
+          btn.disabled = false;
+        }
       });
 
       $('decidedSelect').addEventListener('change', saveStatus);
