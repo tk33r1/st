@@ -33,15 +33,17 @@
   const hhmm = (v) => { const d = asDate(v); return d ? pad2(d.getHours()) + ':' + pad2(d.getMinutes()) : ''; };
   const ymd = (v) => { const d = asDate(v); return d ? d.getFullYear() + '.' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()) : ''; };
 
-  /* appleUrl は投稿時にブラウザから届く値で、サーバは長さと制御文字しか見ていない。
-     href や location に入れる前に、Apple Music の https URL であることを確かめる。
-     それ以外（javascript: など）は空文字を返す。 */
+  /* appleUrl は投稿時にブラウザから届く値。href や location に入れる前に、Apple Music の
+     https URL であることを確かめる。それ以外（javascript: など）は空文字を返す。
+     許すホストは Worker（workers/dj-request の URL_DOMAINS.apple）とそろえ、サブドメインも通す。
+     そろっていないと、Worker が保存して返した URL のリンクがここで黙って消える。 */
+  const APPLE_HOSTS = ['music.apple.com', 'itunes.apple.com'];
   function appleHref(url) {
     try {
       const u = new URL(String(url || ''));
-      if (u.protocol !== 'https:') return '';
+      if (u.protocol !== 'https:' || u.username || u.password) return '';
       const h = u.hostname.toLowerCase();
-      return (h === 'music.apple.com' || h === 'itunes.apple.com') ? u.href : '';
+      return APPLE_HOSTS.some((d) => h === d || h.endsWith('.' + d)) ? u.href : '';
     } catch { return ''; }
   }
 

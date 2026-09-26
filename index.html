@@ -122,7 +122,6 @@
     .w-full { width: 100% }
     .w-3 { width: 0.8125rem }
     .h-3 { height: 0.8125rem }
-    .w-24 { width: 6rem }
     .w-8 { width: 2rem }
     .w-56 { width: 14rem }
     .w-\[90\%\] { width: 90% }
@@ -147,7 +146,6 @@
     .gap-2 { gap: 0.5rem }
     .gap-2\.5 { gap: 0.625rem }
     .gap-3 { gap: 0.75rem }
-    .gap-1 { gap: 0.25rem }
     .gap-4 { gap: 1rem }
     .p-4 { padding: 1rem }
     .p-3 { padding: 0.8125rem }
@@ -278,8 +276,6 @@
     .border-l { border-left-width: 1px }
     .border-none { border-width: 0 }
     .bg-transparent { background-color: transparent }
-    .bg-\[\#faf6f0\] { background-color: #faf6f0 }
-    .text-\[\#2c2b29\] { color: #2c2b29 }
     .text-\[9px\] { font-size: 9px }
     .text-\[11px\] { font-size: 11px }
     .align-middle { vertical-align: middle }
@@ -854,6 +850,116 @@
       border: none !important;
       background: transparent !important;
       box-shadow: none !important;
+    }
+
+    /* A section's HP bar. updateBar() only places it and sets the fill. */
+    .rampage-hpbar {
+      position: fixed;
+      height: 5px;
+      z-index: 9998;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .rampage-hpbar i {
+      display: block;
+      height: 100%;
+      transition: width 0.15s, background 0.15s;
+    }
+
+    /* akutagawa's letter.txt: paper rather than terminal. */
+    .letter {
+      font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif;
+      line-height: 2;
+      color: #2c2b29;
+      background-color: #faf6f0;
+      background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0);
+      background-size: 8px 8px;
+      background-position: 0 0, 4px 4px;
+      border-color: #e3dac9;
+      border-radius: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      width: fit-content;
+      max-width: 95%;
+      min-width: 280px;
+      padding: 24px 36px;
+      box-sizing: border-box;
+    }
+
+    .letter-head {
+      border-bottom: 1px dashed #d1c7bd;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: #8c7e6e;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    .letter-body { margin: 0 0 24px 0; font-style: italic; }
+
+    .letter-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 20px;
+      min-height: 45px;
+    }
+
+    .letter-flower {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.1;
+      color: #7693b5;
+      text-align: left;
+      opacity: 0.85;
+      font-weight: bold;
+    }
+
+    .letter-sign { text-align: right; font-size: 12px; color: #5c5246; padding-bottom: 4px; }
+
+    /* The ✕ window button's "Connection closed." screen. */
+    #close-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-color);
+      color: var(--secondary-color);
+      cursor: pointer;
+      z-index: 10000;
+    }
+
+    #close-overlay > div { animation: fadeSlide 1s ease forwards; }
+    #close-overlay > div:first-child { margin-bottom: 1rem; }
+    #close-overlay > div + div { animation-delay: 0.5s; opacity: 0; }
+
+    /* The pill the minimize button leaves behind; JS fades it in and out. */
+    #minimized-icon {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 16px;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 10001;
+      font-size: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     .arsenal-item {
@@ -1613,7 +1719,6 @@
       color: var(--text-color);
       font-size: 10px;
       padding: 0.1rem 0.3rem;
-      outline: none;
     }
 
     .port-num {
@@ -1773,7 +1878,7 @@
       background-color: var(--surface-hover);
     }
 
-    /* Share / Download are placeholders until the feature lands. */
+    /* Share / Download stay off until there is a conversation (updateAgentActionButtons). */
     .dock-menu-item.disabled {
       opacity: 0.3;
       pointer-events: none;
@@ -2610,6 +2715,7 @@
       background: var(--primary-color);
       color: var(--bg-color);
       cursor: pointer;
+      font: inherit;
     }
 
     #remote-badge:hover { filter: brightness(1.1) }
@@ -2675,7 +2781,8 @@
       color: var(--secondary-color);
     }
 
-    #notif-center-clear { cursor: pointer }
+    /* A real <button> so the keyboard can reach it; it keeps the header's small type. */
+    #notif-center-clear { cursor: pointer; font: inherit; letter-spacing: inherit }
     #notif-center-clear:hover { color: var(--text-color) }
 
     #notif-center-list {
@@ -2846,7 +2953,6 @@
       align-items: center;
       justify-content: center;
       transition: color var(--duration-fast), transform var(--duration-fast);
-      outline: none;
     }
 
     #apk-download-close:hover {
@@ -2960,6 +3066,9 @@
     /* Keyboard focus must stay visible. This lives last in the sheet so it wins by
        source order over the component-level `outline: none` resets above (those exist
        to suppress the ring for mouse/touch, which :focus-visible already handles).
+       Source order only outranks *class*-level resets: an `outline: none` under an id
+       selector beats this rule outright, which is how #output-channel and the APK
+       dialog's close button lost their ring. Give ids no outline reset of their own.
        The terminal input opts out — it draws its own BPM caret instead. */
     :focus-visible {
       outline: 2px solid var(--primary-color);
@@ -3109,16 +3218,15 @@
     // paint() instead, so the two theme-color hexes have exactly one home.
     (function () {
       var T = window.TK = {
-        // Light is the standard theme. Nothing is persisted and the OS
-        // `prefers-color-scheme` is deliberately ignored — every load starts here.
-        pref: function () { return 'light'; },
         paint: function (t) {
           document.documentElement.setAttribute('data-theme', t);
           var m = document.querySelector('meta[name="theme-color"]');
           if (m) m.setAttribute('content', t === 'dark' ? '#0c0c0c' : '#f3f4f6');
         }
       };
-      T.paint(T.pref());
+      // Light is the standard theme. Nothing is persisted and the OS
+      // `prefers-color-scheme` is deliberately ignored — every load starts here.
+      T.paint('light');
     })();
   </script>
 </head>
@@ -3283,11 +3391,11 @@
           aria-label="Search"><svg aria-hidden="true" width="22" height="22" stroke-width="1.7"><use href="#ic-search" /></svg></button>
         <button class="act-btn" data-act="git" title="Source Control (operation history)" data-ja-title="ソース管理（操作履歴）"
           data-ja-aria="ソース管理" aria-label="Source Control"><svg aria-hidden="true" width="22" height="22" stroke-width="1.7"><use href="#ic-git" /></svg>
-          <div id="badge-git" class="nav-badge hidden">0</div>
+          <span id="badge-git" class="nav-badge hidden">0</span>
         </button>
         <button class="act-btn" data-act="extensions" title="Extensions" data-ja-title="拡張機能" data-ja-aria="拡張機能"
           aria-label="Extensions"><svg aria-hidden="true" width="22" height="22" stroke-width="1.7"><use href="#ic-extensions" /></svg>
-          <div id="badge-extensions" class="nav-badge hidden">0</div>
+          <span id="badge-extensions" class="nav-badge hidden">0</span>
         </button>
         <button id="act-arsenal" class="act-btn hidden" data-act="arsenal" title="Arsenal — switch weapon"
           data-ja-title="アーセナル — 武器を切替" data-ja-aria="アーセナル" aria-label="Arsenal"><svg aria-hidden="true" width="22"
@@ -3474,8 +3582,8 @@
       class="relative flex items-center justify-between px-3 py-1 text-[10px] border-t mt-auto bg-surface border-color text-secondary">
       <div class="footer-status-row flex items-center justify-between w-full">
         <div class="flex items-center gap-3 truncate">
-          <span id="remote-badge" title="Open a Remote Window — Command Palette" data-ja-title="リモートウィンドウを開く — コマンドパレット"
-            data-ja-aria="リモート" aria-label="Remote"><svg aria-hidden="true" class="rb-icon" width="16" height="10.2" stroke-width="1.8"><use href="#ic-remote" /></svg></span>
+          <button type="button" id="remote-badge" title="Open a Remote Window — Command Palette" data-ja-title="リモートウィンドウを開く — コマンドパレット"
+            data-ja-aria="リモート" aria-label="Remote"><svg aria-hidden="true" class="rb-icon" width="16" height="10.2" stroke-width="1.8"><use href="#ic-remote" /></svg></button>
           <span class="text-primary"><span>⎇</span> <span>main</span></span>
           <span id="status-left"><span>⊘</span> <span>0</span> <span>⚠</span> <span>0</span></span>
         </div>
@@ -3544,8 +3652,8 @@
   </div>
   <div id="toast-container" aria-live="polite"></div>
   <div id="notif-center" class="hidden" role="dialog" aria-label="Notifications">
-    <div id="notif-center-head"><span data-ja="通知">NOTIFICATIONS</span><span id="notif-center-clear"
-        title="Clear all notifications" data-ja-title="すべての通知を消去" data-ja="すべて消去">Clear all</span></div>
+    <div id="notif-center-head"><span data-ja="通知">NOTIFICATIONS</span><button type="button" id="notif-center-clear"
+        title="Clear all notifications" data-ja-title="すべての通知を消去" data-ja="すべて消去">Clear all</button></div>
     <div id="notif-center-list"></div>
   </div>
 
@@ -3595,19 +3703,35 @@
       probBadge: document.getElementById('panel-problems-badge'),
       panelProblems: document.getElementById('panel-problems'),
       panelOutput: document.getElementById('panel-output'),
-      panelPorts: document.getElementById('panel-ports')
+      panelPorts: document.getElementById('panel-ports'),
+      panelTabs: document.getElementById('panel-tabs'),
+      panel: document.getElementById('panel'),
+      panelResizer: document.getElementById('panel-resizer'),
+      badgeExt: document.getElementById('badge-extensions'),
+      extList: document.getElementById('extensions-list'),
+      extSearch: document.getElementById('ext-search-input'),
+      statusLang: document.getElementById('status-lang'),
+      statusPos: document.getElementById('status-pos'),
+      statusBpm: document.getElementById('status-bpm'),
+      gutter: document.getElementById('editor-gutter'),
+      editorContent: document.getElementById('editor-content')
     };
     const delay = ms => new Promise(r => setTimeout(r, ms));
     const esc = str => String(str).replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
+    // A one-line message in the active language. The wrapper is written once, so the English
+    // and Japanese copies cannot drift apart in how they are styled.
+    const msgHTML = (cls, en, ja) => `<div class="${cls}">${tr(en, ja)}</div>`;
+    // A count badge (Source Control, Extensions, PROBLEMS): hidden at zero. The number sits
+    // in its own span so choreomania has a child to move.
+    const setBadge = (el, n) => { el.innerHTML = `<span>${n}</span>`; el.classList.toggle('hidden', n === 0); };
     // Only ever put an http(s) URL in an href. esc() stops the attribute being broken out
     // of, but not a `javascript:` payload — and the one place this is needed (MAGI's
     // legacy_url) takes its value from a Worker response rather than from this file.
     // The empty guard is not redundant: new URL('undefined', location.href) resolves to a
     // perfectly valid same-origin path, so a missing value would otherwise become a link.
     const safeUrl = u => { if (!u) return ''; try { const p = new URL(String(u), location.href); return (p.protocol === 'http:' || p.protocol === 'https:') ? p.href : ''; } catch (_) { return ''; } };
-    const cmdNotFoundHTML = cmd => tr(
-      `<div class="text-xs my-1 text-red-500">Command not found: '${esc(cmd)}'. Check <span class="text-normal font-bold">Explorer</span> for commands, or type <span class="text-normal font-bold">help</span> for the FAQ.</div>`,
-      `<div class="text-xs my-1 text-red-500">コマンドが見つかりません: '${esc(cmd)}'. コマンドは <span class="text-normal font-bold">Explorer</span>、使い方は <span class="text-normal font-bold">help</span> で確認できます。</div>`);
+    const cmdNotFoundHTML = cmd => msgHTML('text-xs my-1 text-red-500', `Command not found: '${esc(cmd)}'. Check <span class="text-normal font-bold">Explorer</span> for commands, or type <span class="text-normal font-bold">help</span> for the FAQ.`,
+      `コマンドが見つかりません: '${esc(cmd)}'. コマンドは <span class="text-normal font-bold">Explorer</span>、使い方は <span class="text-normal font-bold">help</span> で確認できます。`);
 
     // Three separate limits that happen to agree today. Kept apart on purpose: the first
     // bounds an in-memory log, the second bounds what is written to localStorage, and the
@@ -3619,25 +3743,30 @@
     // events too), inputHistory is only what was typed, so ↑/↓ never recall a [SYS] line.
     let commandHistory = [], inputHistory = [], historyIndex = -1, currentVersion = 2;
     let isMeltdown = false, meltdownElements = [], meltdownInterval = null, rebuildInterval = null;
-    let isMatrixActive = false, isMeditationActive = false, isRampageActive = false;
+    // Each full-screen effect is running exactly while its teardown is set; there is no
+    // separate "active" flag to keep in step with it.
     let matrixTeardown = null, meditationTeardown = null, rampageTeardown = null, rampageSetWeapon = null;
+    const overlayActive = () => !!(matrixTeardown || meditationTeardown);
     // Rampage arsenal — shared so the Arsenal sidebar view can list/select weapons.
+    // `rampage <arg>` accepts the key, an alias, or the weapon's 1-based position here.
     const RAMPAGE_WEAPONS = [
-      { key: 'mg', label: '⇶ MACHINE GUN', label_ja: '⇶ マシンガン' },
-      { key: 'sg', label: '✸ SHOTGUN', label_ja: '✸ ショットガン' },
-      { key: 'grenade', label: '✦ GRENADE LAUNCHER', label_ja: '✦ グレネードランチャー' },
-      { key: 'flame', label: '♨ FLAMETHROWER', label_ja: '♨ 火炎放射器' },
-      { key: 'hammer', label: '⚒ HAMMER', label_ja: '⚒ ハンマー' },
-      { key: 'coin', label: '◉ COIN', label_ja: '◉ コイン' },
-      { key: 'shock', label: '⊚ SHOCK CANNON', label_ja: '⊚ ショックカノン' },
-      { key: 'repair', label: '✚ NANO REPAIR', label_ja: '✚ ナノリペア' }
+      { key: 'mg', alias: ['machinegun', 'machine-gun'], label: '⇶ MACHINE GUN', label_ja: '⇶ マシンガン' },
+      { key: 'sg', alias: ['shotgun'], label: '✸ SHOTGUN', label_ja: '✸ ショットガン' },
+      { key: 'grenade', alias: ['launcher', 'nade'], label: '✦ GRENADE LAUNCHER', label_ja: '✦ グレネードランチャー' },
+      { key: 'flame', alias: ['flamethrower', 'fire'], label: '♨ FLAMETHROWER', label_ja: '♨ 火炎放射器' },
+      { key: 'hammer', alias: ['sledge', 'melee'], label: '⚒ HAMMER', label_ja: '⚒ ハンマー' },
+      { key: 'coin', alias: ['key', 'scratch'], label: '◉ COIN', label_ja: '◉ コイン' },
+      { key: 'shock', alias: ['cannon', 'wave'], label: '⊚ SHOCK CANNON', label_ja: '⊚ ショックカノン' },
+      { key: 'repair', alias: ['heal', 'fix', 'nano'], label: '✚ NANO REPAIR', label_ja: '✚ ナノリペア' }
     ];
-    let rampageWeaponKey = null; // currently-armed weapon while rampage is active
+    // The armed weapon; null exactly when no rampage is running (set before the Arsenal
+    // first renders during setup, cleared in the teardown).
+    let rampageWeaponKey = null;
     // When the shock cannon's reserve finishes filling. Module-scope because the Arsenal
     // view renders the countdown, and it outlives any single charge.
     let shockReadyAt = 0;
     let errorCount = 0, warnCount = 0;
-    let sudoContext = null, akutagawaSudoValid = false;
+    let sudoContext = null;
     let unreadHistoryCount = 0;
 
     // Shared helpers (deduped across the script).
@@ -3651,6 +3780,21 @@
     // would abort the whole script and leave a blank terminal.
     const safeGet = key => { try { return localStorage.getItem(key); } catch (_) { return null; } };
     const safeRemove = key => { try { localStorage.removeItem(key); } catch (_) { } };
+    // MAGI history read back from storage is checked for shape as well as for JSON: one
+    // malformed entry used to throw while the dock replayed it at load, which aborted the
+    // rest of this script and left the whole page blank. An item this page could have
+    // written is a user turn (text, or text + image parts) or an assistant reply (text);
+    // anything else is dropped rather than rendered.
+    const isContentPart = p => !!p && (p.type === 'text' ? typeof p.text === 'string'
+      : p.type === 'image_url' && !!p.image_url && typeof p.image_url.url === 'string');
+    const isHistoryItem = it => !!it && typeof it === 'object' && (it.role === 'assistant'
+      ? typeof it.content === 'string'
+      : it.role === 'user' && (typeof it.content === 'string' || (Array.isArray(it.content) && it.content.every(isContentPart))));
+    const cleanHistory = h => (Array.isArray(h) ? h.filter(isHistoryItem) : []);
+    const loadSavedSessions = () => {
+      const s = safeParse(safeGet('magi_saved_sessions'), []);
+      return Array.isArray(s) ? s.filter(x => !!x && typeof x === 'object') : [];
+    };
     // Defensive localStorage write: if the browser quota is exceeded, trim the
     // oldest saved MAGI sessions and retry. Silently drops writes only when
     // storage is completely irrecoverable (e.g. private-browsing hard limit).
@@ -3667,7 +3811,7 @@
         return;
       }
       try {
-        const ss = safeParse(safeGet('magi_saved_sessions'), []);
+        const ss = loadSavedSessions();
         while (ss.length > 5) ss.pop();
         localStorage.setItem('magi_saved_sessions', JSON.stringify(ss));
       } catch (__) { return; /* storage is irrecoverable — silently drop */ }
@@ -3686,6 +3830,11 @@
       el.style.setProperty('--deg', `${(Math.random() - 0.5) * 360}deg`);
     };
     const clearTransformVars = el => ['--dx', '--dy', '--deg'].forEach(p => el.style.removeProperty(p));
+    // Put every flown (or still flying back) element of the IDE straight into place.
+    const settleFlown = () => document.querySelectorAll('#app .meltdown-element, #app .rebuilding-element').forEach(el => {
+      el.classList.remove('meltdown-element', 'rebuilding-element');
+      clearTransformVars(el);
+    });
     // An element plus its ancestors, stopping *before* the one whose id is `stopId`
     // (omit to walk to the root). Used to shield the terminal input line from the
     // meltdown / rampage fly-off so the prompt stays usable.
@@ -3706,12 +3855,7 @@
     // compositionend の後に isComposing=false・keyCode 229 で送るので、両方を見る。
     const isImeKey = e => e.isComposing || e.keyCode === 229;
 
-    function updateGitBadge() {
-      if (DOM.badgeGit) {
-        DOM.badgeGit.innerHTML = `<span>${unreadHistoryCount}</span>`;
-        DOM.badgeGit.classList.toggle('hidden', unreadHistoryCount === 0);
-      }
-    }
+    const updateGitBadge = () => setBadge(DOM.badgeGit, unreadHistoryCount);
 
     // Prepend to a capped, consecutive-duplicate-free log. Returns whether it actually
     // grew, so callers don't count a suppressed repeat as new activity. `cap` is a parameter
@@ -3725,8 +3869,7 @@
 
     function addToHistory(entry) {
       const added = pushCapped(commandHistory, entry);
-      const gv = document.getElementById('view-git');
-      if (gv && !gv.classList.contains('hidden')) {
+      if (!document.getElementById('view-git').classList.contains('hidden')) {
         renderGit();
         unreadHistoryCount = 0;
       } else if (added) { // a suppressed repeat added nothing, so it is not unread either
@@ -3744,15 +3887,15 @@
     }
 
     // --- PROBLEMS panel (footer ⊘ errors · ⚠ warnings + diagnostics list) ---
-    // (FILE_CMD, the file→command map this panel links through, is derived from FILE_META below.)
+    // (FILE_CMD, the file→command map this panel links through, is derived from CMD_META.)
     // Starts empty: problems are recorded only from real events (unknown commands, sudo failures, etc.).
     const problems = [];
     function recountProblems() {
       errorCount = problems.filter(p => p.sev === 'error').length;
       warnCount = problems.filter(p => p.sev === 'warn').length;
-      if (DOM.statusLeft) DOM.statusLeft.innerHTML = `<span>⊘</span> <span>${errorCount}</span> <span>⚠</span> <span>${warnCount}</span>`;
-      if (DOM.probBadge) { const n = errorCount + warnCount; DOM.probBadge.innerHTML = `<span>${n}</span>`; DOM.probBadge.classList.toggle('hidden', n === 0); }
-      if (DOM.panelProblems && !DOM.panelProblems.classList.contains('hidden')) renderProblems();
+      DOM.statusLeft.innerHTML = `<span>⊘</span> <span>${errorCount}</span> <span>⚠</span> <span>${warnCount}</span>`;
+      setBadge(DOM.probBadge, errorCount + warnCount);
+      if (!DOM.panelProblems.classList.contains('hidden')) renderProblems();
     }
     function addProblem(sev, msg, opts = {}) {
       problems.push({ sev, msg, file: opts.file || 'terminal', line: opts.line || 0, cmd: opts.cmd || FILE_CMD[opts.file] || null });
@@ -3763,8 +3906,7 @@
     }
     function renderProblems() {
       const pane = DOM.panelProblems;
-      if (!pane) return;
-      if (!problems.length) { pane.innerHTML = tr(`<div class="text-dim">No problems have been detected.</div>`, `<div class="text-dim">問題は検出されていません。</div>`); return; }
+      if (!problems.length) { pane.innerHTML = msgHTML('text-dim', 'No problems have been detected.', '問題は検出されていません。'); return; }
       pane.innerHTML = problems.map((p, i) => {
         const icon = p.sev === 'error' ? '<span class="text-red-500">⊘</span>' : '<span style="color:#fbbf24">⚠</span>';
         const loc = `${esc(p.file)}${p.line ? ':' + p.line : ''}`;
@@ -3781,7 +3923,6 @@
     let outputChannel = 'All';
     function renderOutput() {
       const pane = DOM.panelOutput;
-      if (!pane) return;
       const channels = ['All', 'System', 'Extensions', 'Theme'];
       const channelLabel = c => tr(c, { All: 'すべて', System: 'システム', Extensions: '拡張機能', Theme: 'テーマ' }[c]);
       const rows = systemLog.filter(e => outputChannel === 'All' || e.channel === outputChannel);
@@ -3805,9 +3946,7 @@
       { port: 4040, svc: 'ko-fi / shinyatakeda', proto: 'http', state: 'Running', url: 'https://ko-fi.com/shinyatakeda' }
     ];
     function renderPorts() {
-      const pane = DOM.panelPorts;
-      if (!pane) return;
-      pane.innerHTML =
+      DOM.panelPorts.innerHTML =
         `<div class="port-row text-secondary" style="border-bottom-width:2px"><span class="port-num">${tr('PORT', 'ポート')}</span><span class="flex-1">${tr('SERVICE', 'サービス')}</span><span class="whitespace-nowrap">${tr('STATE', '状態')}</span><span style="width:3.2rem"></span></div>` +
         PORTS.map(p => `<a class="port-row port-link no-underline" href="${p.url}" target="_blank" rel="noopener noreferrer" title="${tr(`Open ${esc(p.svc)} in a new tab`, `${esc(p.svc)} を新しいタブで開く`)}">
           <span class="port-num">${p.port}</span>
@@ -3821,7 +3960,7 @@
     const PANEL_PANES = { terminal: 'terminal', problems: 'panel-problems', output: 'panel-output', ports: 'panel-ports' };
     function showPanel(name) {
       Object.entries(PANEL_PANES).forEach(([k, id]) => document.getElementById(id).classList.toggle('hidden', k !== name));
-      document.querySelectorAll('#panel-tabs .panel-tab').forEach(t => {
+      DOM.panelTabs.querySelectorAll('.panel-tab').forEach(t => {
         const sel = t.dataset.panel === name;
         t.classList.toggle('active', sel);
         t.setAttribute('aria-selected', sel ? 'true' : 'false');
@@ -3833,17 +3972,15 @@
     }
 
     function updateCaret() {
-      if (!DOM.input) return;
       const pos = DOM.input.selectionStart || 0;
       DOM.mirror.textContent = DOM.input.value.substring(0, pos);
       const offset = Math.max(0, DOM.mirror.offsetWidth - DOM.input.scrollLeft);
       DOM.caret.style.transform = `translateX(${offset}px)`;
-      const sp = document.getElementById('status-pos');
-      if (sp) sp.innerHTML = tr(`<span>Ln 1,</span> <span>Col ${pos + 1}</span>`, `<span>行 1,</span> <span>列 ${pos + 1}</span>`);
+      DOM.statusPos.innerHTML = `<span>${tr('Ln', '行')} 1,</span> <span>${tr('Col', '列')} ${pos + 1}</span>`;
     }
     const MAX_TERMINAL_LOGS = 200;
     const scrollTerminal = () => {
-      while (DOM.terminalLog && DOM.terminalLog.children.length > MAX_TERMINAL_LOGS) {
+      while (DOM.terminalLog.children.length > MAX_TERMINAL_LOGS) {
         DOM.terminalLog.firstElementChild.remove();
       }
       DOM.terminal.scrollTop = DOM.terminal.scrollHeight;
@@ -3855,28 +3992,51 @@
       });
     });
 
-    // --- PORTFOLIO DATA (single source of truth for portfolio contents) ---
-    const CMD_DESCS = {
-      about: ['Learn about me', '私について'],
-      identify: ['View personality versions', '人格のバージョン'],
-      timeline: ['Trace my life events', '人生の出来事を辿る'],
-      pages: ['Explore my creations', '制作物を見る'],
-      contact: ['Contact me', '連絡先'],
-      clear: ['Clear terminal', 'ターミナルをクリア'],
-      help: ['Open FAQ and usage guide', 'FAQと使い方を開く'],
-      akutagawa: ['A message from the past', '過去からのメッセージ'],
-      bpm: ['Tap out the system heartbeat', 'システムの鼓動をタップで設定'],
-      choreomania: ['Merging souls in ecstasy', '心の壁を溶かすエクスタシー'],
-      meltdown: ['And rebuild', 'そしてrebuild'],
-      rebuild: ['Restore the system', 'システムを復旧する'],
-      matrix: ['Enter the Matrix', 'マトリックスへ'],
-      meditation: ['Clear your mind', '心を整える'],
-      rampage: ['Wreck the screen', '画面を破壊'],
-      theme: ['Change terminal color', 'ターミナルの色を変更'],
-      web3: ['Dive into my Web3 page', 'Web3ページへ'],
-      japanese: ['Switch to Japanese', '英語に切り替え']
+    // --- COMMANDS: one row per command ------------------------------------------
+    // Every per-command fact lives in this one table, so adding or renaming a command is
+    // one edit rather than a hunt through parallel lists.
+    //   desc     [en, ja] line for the Explorer, IntelliSense, the palette and search
+    //   file     what it is called as a "file" (Explorer, tabs, palette), with its icon
+    //   color    an icon colour that beats the file-type colour (a heart is red, ⚠ amber)
+    //   sidebar  listed in the Explorer, in this order
+    //   doc      opens as an editor tab instead of printing to the TERMINAL
+    //   pure     its renderer is a side-effect-free string function, so search indexes it
+    //   faq      help.md's inline `code` for it is a button that runs it
+    //   reopen   a PROBLEMS row naming its file re-opens it (a rampage.exe row must not
+    //            re-fire rampage, so only documents worth reopening say so)
+    //   lang / theme  an open tab is re-rendered on a language / theme switch (and on
+    //            `rebuild`, which bumps the version badge). identify and akutagawa stay out:
+    //            their tabs hold a result (the picked profile, the unlocked letter) that a
+    //            re-render would throw away.
+    //   ext      a hidden command, delivered by a marketplace extension. A string names the
+    //            extension it rides on instead: `rebuild` ships with meltdown, unlisted.
+    const CMD_META = {
+      welcome: { file: 'welcome', icon: '★', lang: true, theme: true },
+      about: { desc: ['Learn about me', '私について'], file: 'about.yaml', icon: '≡', sidebar: true, doc: true, pure: true, faq: true, reopen: true, lang: true, theme: true },
+      identify: { desc: ['View personality versions', '人格のバージョン'], file: 'identify.yaml', icon: '⚙', sidebar: true, doc: true, pure: true, faq: true, reopen: true },
+      timeline: { desc: ['Trace my life events', '人生の出来事を辿る'], file: 'timeline.json', icon: '┃', sidebar: true, doc: true, pure: true, faq: true, lang: true },
+      pages: { desc: ['Explore my creations', '制作物を見る'], file: 'pages.json', icon: '[]', sidebar: true, doc: true, pure: true, faq: true, lang: true },
+      contact: { desc: ['Contact me', '連絡先'], file: 'contact.txt', icon: '@', sidebar: true, faq: true },
+      clear: { desc: ['Clear terminal', 'ターミナルをクリア'], file: 'clear.sh', icon: '⌧', sidebar: true },
+      help: { desc: ['Open FAQ and usage guide', 'FAQと使い方を開く'], file: 'help.md', icon: '?', sidebar: true, doc: true, pure: true, reopen: true, lang: true },
+      akutagawa: { desc: ['A message from the past', '過去からのメッセージ'], file: 'letter.txt', icon: '✉', doc: true, reopen: true, ext: true },
+      bpm: { desc: ['Tap out the system heartbeat', 'システムの鼓動をタップで設定'], file: 'bpm.css', icon: '♥', color: '#e0556b', reopen: true, ext: true },
+      choreomania: { desc: ['Merging souls in ecstasy', '心の壁を溶かすエクスタシー'], file: 'choreomania.py', icon: '∿', ext: true },
+      meltdown: { desc: ['And rebuild', 'そしてrebuild'], file: 'meltdown.sh', icon: '⚠', color: '#e0a93e', ext: true },
+      rebuild: { desc: ['Restore the system', 'システムを復旧する'], ext: 'meltdown' },
+      matrix: { desc: ['Enter the Matrix', 'マトリックスへ'], file: 'matrix.bin', icon: '░', color: '#4eb85a', ext: true },
+      meditation: { desc: ['Clear your mind', '心を整える'], file: 'meditation.bin', icon: '○', color: '#4eb85a', ext: true },
+      rampage: { desc: ['Wreck the screen', '画面を破壊'], file: 'rampage.exe', icon: '✶', color: '#e0524e', ext: true },
+      theme: { desc: ['Change terminal color', 'ターミナルの色を変更'], file: 'theme.css', icon: '#', ext: true },
+      web3: { desc: ['Dive into my Web3 page', 'Web3ページへ'], file: 'web3.html', icon: '⬡', ext: true },
+      japanese: { desc: ['Switch to Japanese', '英語に切り替え'], file: 'japanese.lang', icon: 'あ', ext: true }
     };
-    const cdesc = c => { const d = CMD_DESCS[c]; return d ? tr(d[0], d[1]) : ''; };
+    // Own-property lookups: these names arrive from typed / URL input, and a plain object
+    // inherits constructor/__proto__/… from Object.prototype.
+    const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+    const cmdMeta = c => (hasOwn(CMD_META, c) ? CMD_META[c] : {});
+    const cmdsWhere = flag => Object.keys(CMD_META).filter(c => CMD_META[c][flag]);
+    const cdesc = c => { const d = cmdMeta(c).desc; return d ? tr(d[0], d[1]) : ''; };
 
     const projects = [
       { name: '/dj', desc: 'Overview | DJ Human Choreomania Project', desc_ja: '概要｜DJ 人類踊狂計画', tech: 'Big room House, melodic techno, full-on Psytrance, Dance POP, Parapara', link: 'https://tk.st/dj/' },
@@ -3890,8 +4050,8 @@
 
     // The English wording mirrors the FAQPage JSON-LD above. Keep both in step when
     // editing: the structured answers are these English answers with the inline marks
-    // stripped. Marks: `cmd` is inline code (a button when the command is in
-    // FAQ_RUNNABLE), {keys} is a key combo.
+    // stripped. Marks: `cmd` is inline code (a button when CMD_META marks the command
+    // `faq`), {keys} is a key combo.
     const FAQ_SECTIONS = [
       { key: 'nav', title: ['Getting around', '歩き方'] },
       { key: 'magi', title: ['MAGI', 'MAGI'] },
@@ -3901,90 +4061,88 @@
       {
         sec: 'nav',
         question: 'How do I explore this site?',
-        question_ja: 'このサイトはどう巡ればいいですか？',
+        question_ja: 'このサイトはどうやって巡ればいいですか？',
         answer: 'Open files from the Explorer on the left, or type a command in the terminal below; {Tab} completes it. {Ctrl/Cmd+P} jumps to a file and {Ctrl/Cmd+Shift+P} opens the Command Palette.',
-        answer_ja: '左のエクスプローラーからファイルを開くか、下のターミナルにコマンドを入力してください。{Tab} で補完できます。{Ctrl/Cmd+P} でファイルへ移動、{Ctrl/Cmd+Shift+P} でコマンドパレットが開きます。'
+        answer_ja: '左のエクスプローラーからファイルを開くか、画面下のターミナルにコマンドを入力してください。{Tab} で補完できます。{Ctrl/Cmd+P} で目的のファイルへ素早く移動でき、{Ctrl/Cmd+Shift+P} でコマンドパレットが開きます。'
       },
       {
         sec: 'nav',
         question: 'Where are the projects, career, and profile?',
         question_ja: '制作物・経歴・プロフィールはどこにありますか？',
         answer: '`pages` lists projects, `about` is a short bio, `timeline` traces life events, and `identify` holds personality profiles. The full work history lives on /job.',
-        answer_ja: '制作物は `pages`、短いプロフィールは `about`、これまでの出来事は `timeline`、性格診断は `identify` にあります。詳しい職歴は /job へ。'
+        answer_ja: '制作物一覧は `pages`、自己紹介・略歴は `about`、これまでの歩みは `timeline`、性格プロファイルは `identify` で確認できます。詳細な職務経歴は /job をご覧ください。'
       },
       {
         sec: 'nav',
         question: 'Where are the social links?',
         question_ja: 'SNS などのリンクはどこにありますか？',
         answer: 'Open PORTS in the bottom panel. Each profile runs as a forwarded port: GitHub on 22, X on 443, Mixcloud on 8000, Ko-fi on 4040, and more.',
-        answer_ja: '下部パネルの「ポート」を開いてください。各プロフィールがポートとして稼働しています。GitHub は 22、X は 443、Mixcloud は 8000、Ko-fi は 4040 などです。'
+        answer_ja: '下部パネルの「ポート（PORTS）」を開いてください。各リンクが転送ポートに見立てて稼働しています（GitHub は 22番、X は 443番、Mixcloud は 8000番、Ko-fi は 4040番など）。'
       },
       {
         sec: 'nav',
         question: 'How do I switch to Japanese or dark mode?',
-        question_ja: '日本語表示やダークモードにするには？',
+        question_ja: '日本語表示やダークモードに切り替えるには？',
         answer: 'For Japanese, install the language pack from Extensions (the four-square icon) and run `japanese`. The gear icon or {Ctrl/Cmd+,} toggles light and dark. Every visit starts in English and light mode.',
-        answer_ja: '日本語は拡張機能（四角が4つのアイコン）から言語パックを入れて `japanese` を実行します。ライトとダークは歯車アイコンか {Ctrl/Cmd+,} で切り替えられます。表示は毎回、英語・ライトから始まります。'
+        answer_ja: '日本語表示にするには、拡張機能（4つの四角のアイコン）から言語パックをインストールし、`japanese` を実行します。テーマ（ライト/ダーク）の切り替えは歯車アイコンまたは {Ctrl/Cmd+,} で行えます。なお、アクセス時は毎回初期状態（英語・ライトモード）で始まります。'
       },
       {
         sec: 'nav',
         question: 'Does it work on a phone?',
         question_ja: 'スマホでも使えますか？',
         answer: 'Yes. Tap the icons on the left edge for Explorer, Search, and Extensions, and type commands in the terminal as usual. Keyboard shortcuts are for desktop only.',
-        answer_ja: '使えます。左端のアイコンからエクスプローラー・検索・拡張機能を開き、コマンドはいつもどおりターミナルへ。キーボードショートカットはパソコン向けです。'
+        answer_ja: '使えます。画面左端のアイコンをタップしてエクスプローラー・検索・拡張機能を開き、コマンドは画面下のターミナルから入力できます（※キーボードショートカットはPC専用です）。'
       },
       {
         sec: 'magi',
         question: 'What is MAGI, and where do my messages go?',
-        question_ja: 'MAGI とは何ですか？送った内容はどうなりますか？',
+        question_ja: 'MAGI とは何ですか？送信したデータはどう扱われますか？',
         answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
-        answer_ja: '3つのAI人格が議論し、ひとつの回答にまとめる実験的なチャットです。吹き出しのアイコンから開けます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ送られます。履歴はブラウザ内に保存され、サイトのデータベースに残るのは回答にリアクションしたときだけです。機密情報や個人情報は送らないでください。'
+        answer_ja: '3つのAI人格が議論を重ね、統合されたひとつの回答を導き出す実験的なチャットです。左端の吹き出しアイコンから開けます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ送信されます。チャット履歴はお使いのブラウザ内にのみ保持され、サイトのデータベースに保存されるのは回答にリアクション（評価）したときだけです。機密情報や個人情報は入力しないでください。'
       },
       {
         sec: 'magi',
         question: 'Is there a MAGI app?',
         question_ja: 'MAGI のアプリはありますか？',
         answer: 'The Android app is on the MAGI start screen as an APK download. iOS is coming soon.',
-        answer_ja: 'Android 版は MAGI の起動画面から APK でダウンロードできます。iOS 版は準備中です。'
+        answer_ja: 'Android 版は MAGI の起動画面から APK ファイルとしてダウンロードできます。iOS 版は準備中です。'
       },
       {
         sec: 'deep',
         question: 'Which keyboard shortcuts are useful?',
-        question_ja: '便利なキーボードショートカットは？',
+        question_ja: '便利なキーボードショートカットはありますか？',
         answer: '{Ctrl/Cmd+B} toggles the side bar, {Ctrl/Cmd+J} the bottom panel, and {Ctrl/Cmd+`} jumps to the terminal. There, the up and down arrows recall earlier commands.',
-        answer_ja: '{Ctrl/Cmd+B} でサイドバー、{Ctrl/Cmd+J} で下部パネルを開閉し、{Ctrl/Cmd+`} でターミナルへ移動します。ターミナルでは上下キーで入力履歴を呼び出せます。'
+        answer_ja: '{Ctrl/Cmd+B} でサイドバー、{Ctrl/Cmd+J} で下部パネルを開閉でき、{Ctrl/Cmd+`} でターミナルにフォーカスします。ターミナル内では上下キー（↑ / ↓）で過去のコマンド履歴を呼び出せます。'
       },
       {
         sec: 'deep',
         question: 'Can I link straight to a section?',
         question_ja: '特定の画面へ直接リンクできますか？',
         answer: 'Yes. Add ?cmd= and a command to the URL: `tk.st/?cmd=timeline` opens straight to the timeline.',
-        answer_ja: 'できます。URL に ?cmd= とコマンド名を付けてください。`tk.st/?cmd=timeline` なら、開いた瞬間にタイムラインが表示されます。'
+        answer_ja: '可能です。URL の末尾に ?cmd=<コマンド名> を付与してください。例えば `tk.st/?cmd=timeline` にアクセスすると、直接タイムラインが開きます。'
       },
       {
         sec: 'deep',
         question: 'Are there hidden functions?',
         question_ja: '隠し機能はありますか？',
         answer: 'Not every command is documented. Install whatever catches your eye in Extensions, type a few letters, and press {Tab}. The system responds to rhythm, stillness, and controlled destruction.',
-        answer_ja: 'すべてのコマンドが文書化されているわけではありません。拡張機能で気になるものを入れ、数文字打って {Tab} を。このシステムは、リズム、静寂、そして制御された破壊に反応します。'
+        answer_ja: 'すべてのコマンドが一覧に掲載されているわけではありません。拡張機能から気になるものをインストールし、数文字入力して {Tab} を押してみてください。このシステムは、リズム、静寂、そして制御された破壊に反応します。'
       },
       {
         sec: 'deep',
         question: 'Something broke. How do I recover?',
-        question_ja: '画面が操作できなくなったら？',
+        question_ja: '画面がおかしくなったり、操作できなくなったりしたときは？',
         answer: 'Press {Esc} first. The Command Palette ({Ctrl/Cmd+Shift+P}) lives outside the main interface, so it can still reach a command that switches an effect off. After a MELTDOWN, remember that every meltdown has a rebuild. Reloading starts a fresh session.',
-        answer_ja: 'まず {Esc} を。コマンドパレット（{Ctrl/Cmd+Shift+P}）はメイン画面の外にあるので、効果を止めるコマンドへ届きます。MELTDOWN と出たら、すべての meltdown には rebuild があることを思い出して。リロードすればセッションは初期化されます。'
+        answer_ja: 'まずは {Esc} を押してください。コマンドパレット（{Ctrl/Cmd+Shift+P}）はメイン画面の影響を受けないため、エフェクトを解除するコマンドを実行できます。MELTDOWN が起きたときは、すべての meltdown の後に rebuild があることを思い出してください。ページをリロード（再読み込み）すれば、いつでも新しいセッションに戻せます。'
       },
       {
         sec: 'deep',
         question: 'Is this site really stored on Bitcoin?',
-        question_ja: 'このサイトは本当にビットコイン上にあるのですか？',
+        question_ja: 'このサイトは本当にビットコイン上に記録されているのですか？',
         answer: 'Yes. tk.st is a single self-contained HTML file with no external fonts, images, or libraries, which let it be inscribed in the Witness area of the Bitcoin blockchain as an Ordinals inscription. The web3 extension leads to its Web3 page.',
-        answer_ja: 'はい。tk.st は外部のフォント・画像・ライブラリを使わない1枚の HTML で、そのままビットコインのブロックチェーンの Witness 領域に刻まれています（Ordinals インスクリプション）。Web3 のページへは web3 拡張機能から。'
+        answer_ja: 'はい。tk.st は外部のフォント・画像・ライブラリを一切使わない単一の自己完結型 HTML で作られており、ビットコインのブロックチェーン（Witness 領域）に Ordinals インスクリプションとして恒久的に刻まれています。Web3 関連のページへは `web3` コマンドまたは拡張機能からアクセスできます。'
       }
     ];
-    // Doc commands that are always installed, so a click in help.md can run them.
-    const FAQ_RUNNABLE = new Set(['about', 'identify', 'timeline', 'pages', 'contact']);
 
     const ABOUT_DATA = {
       bio: {
@@ -4069,22 +4227,7 @@
       }
     };
 
-    // Descriptions live solely in CMD_DESCS (single source of truth); extensionMeta
-    // carries only marketplace metadata (author/visibility).
-    const extensionMeta = {
-      akutagawa: { name: 'akutagawa', author: 'ST', isHidden: true },
-      bpm: { name: 'bpm', author: 'ST', isHidden: true },
-      choreomania: { name: 'choreomania', author: 'ST', isHidden: true },
-      meltdown: { name: 'meltdown', author: 'ST', isHidden: true },
-      matrix: { name: 'matrix', author: 'ST', isHidden: true },
-      meditation: { name: 'meditation', author: 'ST', isHidden: true },
-      rampage: { name: 'rampage', author: 'ST', isHidden: true },
-      theme: { name: 'theme', author: 'ST', isHidden: true },
-      web3: { name: 'web3', author: 'ST', isHidden: true },
-      japanese: { name: 'japanese', author: 'ST', isHidden: true },
-      rebuild: { name: 'rebuild', author: 'ST', isHidden: true, hideFromList: true }
-    };
-    const hiddenCommands = Object.keys(extensionMeta).filter(k => extensionMeta[k].isHidden);
+    const hiddenCommands = cmdsWhere('ext');
     const installedExtensions = new Set();
     // Commands that stay runnable but are never advertised (Tab completion, IntelliSense,
     // Command Palette, side-bar search). 'sudo' is a hidden mechanic — listing it would
@@ -4093,12 +4236,9 @@
     // The extension a hidden command is delivered by. Almost always itself, but `rebuild`
     // rides on `meltdown` and has no marketplace entry of its own — which is why installing
     // `rebuild` directly (e.g. from `?cmd=rebuild`) put an extension in the set that nothing
-    // could ever satisfy. Every place that maps a command to an extension goes through here.
-    const backingExt = c => (c === 'rebuild' ? 'meltdown' : c);
-    // The installed extensions as a list, for anything that renders them (the Explorer tree
-    // and the palette's file list). `rebuild` is excluded — backingExt() already keeps it out
-    // of the set, so this is belt-and-braces, but as one predicate rather than three copies.
-    const installedList = () => [...installedExtensions].filter(c => c !== 'rebuild');
+    // could ever satisfy. Every place that maps a command to an extension goes through here,
+    // so the set only ever holds listed extensions and can be rendered as it is.
+    const backingExt = c => (typeof cmdMeta(c).ext === 'string' ? cmdMeta(c).ext : c);
     // A command is usable if it isn't hidden, or its backing extension is installed.
     // Single source for every cmd filter.
     const isCmdAvailable = c => !UNLISTED_CMDS.has(c) && (!hiddenCommands.includes(c) || installedExtensions.has(backingExt(c)));
@@ -4111,7 +4251,7 @@
     // One row per extension: the icon colour and the language the status bar reports for it.
     // Both were keyed by extension already but lived in two tables edited together, and the
     // status-bar half had drifted into a ladder of per-command cases. A file type is one fact.
-    // Every extension in FILE_META has an entry here, and nothing else does — a missing one
+    // Every file extension in CMD_META has an entry here, and nothing else does — a missing one
     // silently reads as the grey of a plain .txt, which is what web3.html and japanese.lang
     // used to do.
     const FILETYPE = {
@@ -4129,26 +4269,17 @@
     };
     const extOf = name => (name && name.includes('.')) ? name.split('.').pop() : '';
     const fileTypeColor = name => (FILETYPE[extOf(name)] || {}).c || '#8a8f98';
-    // Some glyphs carry a strong conventional color (a heart is red, a warning sign is amber).
-    // These override the file-type color so the icon reads naturally regardless of its extension.
-    const ICON_COLOR = {
-      bpm: '#e0556b', // ♥ heart   - red/pink
-      meltdown: '#e0a93e', // ⚠ warning - amber
-      matrix: '#4eb85a', // ░ matrix  - green
-      meditation: '#4eb85a', // ○ meditation - green (same as matrix)
-      rampage: '#e0524e', // ✶ rampage - red
-    };
-    function iconColor(cmd, name) {
-      return ICON_COLOR[cmd] || fileTypeColor(name);
-    }
+    // A glyph with a strong conventional colour (CMD_META's `color`) beats the file-type colour.
+    const iconColor = c => cmdMeta(c).color || fileTypeColor(treeMeta(c).name);
     // Extensions whose install/uninstall is mid-flight. The marketplace re-renders for
     // reasons of its own (the search box filters on every keystroke, a language switch
     // rebuilds every card), which used to hand back a fresh, enabled button underneath a
     // pending operation — so the pending state lives here rather than on the DOM node.
     const extPending = new Set();
-    function extCardHtml({ cmd, meta, isInstalled }) {
+    // The marketplace lists each extension under its command name, published by 'ST'.
+    function extCardHtml({ cmd, isInstalled }) {
       const tm = treeMeta(cmd);
-      const color = iconColor(cmd, tm.name);
+      const color = iconColor(cmd);
       const desc = cdesc(cmd);
       const pending = extPending.has(cmd);
       const busyLabel = `<span class="ext-spinner"></span> ${isInstalled ? tr('Uninstalling', 'アンインストール中') : tr('Installing', 'インストール中')}`;
@@ -4157,35 +4288,31 @@
           <div class="ext-icon" style="background:linear-gradient(135deg,${color},${color}b3)">${esc(tm.icon)}</div>
           <div class="ext-card-info">
             <div class="flex items-center" style="min-width: 0; gap: 0.35rem;">
-              <span class="font-bold text-normal text-xs truncate">${esc(meta.name)}</span>
+              <span class="font-bold text-normal text-xs truncate">${esc(cmd)}</span>
               ${isInstalled ? `<span class="ext-installed-tag" title="${tr('Installed', 'インストール済み')}" aria-label="${tr('Installed', 'インストール済み')}">✓</span>` : ''}
             </div>
             <div class="text-[10px] text-secondary truncate" title="${esc(desc)}">${esc(desc)}</div>
           </div>
-          <div class="ext-author text-[10px] text-secondary truncate">${esc(meta.author)}</div>
+          <div class="ext-author text-[10px] text-secondary truncate">ST</div>
           ${isInstalled
-          ? `<button class="ext-uninstall-btn ext-btn ext-btn-block ext-btn-uninstall" data-ext="${cmd}" ${pending ? 'disabled' : ''} title="${tr(`Uninstall ${esc(meta.name)}`, `${esc(meta.name)} をアンインストール`)}">${pending ? busyLabel : tr('Uninstall', 'アンインストール')}</button>`
+          ? `<button class="ext-uninstall-btn ext-btn ext-btn-block ext-btn-uninstall" data-ext="${cmd}" ${pending ? 'disabled' : ''} title="${tr(`Uninstall ${esc(cmd)}`, `${esc(cmd)} をアンインストール`)}">${pending ? busyLabel : tr('Uninstall', 'アンインストール')}</button>`
           : `<button class="ext-install-btn ext-btn ext-btn-block ext-btn-install" data-ext="${cmd}" ${pending ? 'disabled' : ''}>${pending ? busyLabel : tr('Install', 'インストール')}</button>`}
         </div>
       `;
     }
     function renderExtensions() {
-      const list = document.getElementById('extensions-list');
-      if (!list) return;
       const isDark = isDarkNow();
-      const query = (document.getElementById('ext-search-input')?.value || '').trim().toLowerCase();
+      const query = DOM.extSearch.value.trim().toLowerCase();
 
       let uninstalledCount = 0;
       const installed = [], available = [];
       hiddenCommands.forEach(cmd => {
-        const meta = extensionMeta[cmd] || { name: cmd, author: 'ST' };
-        if (meta.hideFromList) return; // e.g. 'rebuild' — it ships with the meltdown extension
+        if (CMD_META[cmd].ext !== true) return; // e.g. 'rebuild' — it ships with the meltdown extension
         if (cmd === 'akutagawa' && !isDark) return;
-        const desc = cdesc(cmd);
         const isInstalled = installedExtensions.has(cmd);
         if (!isInstalled) uninstalledCount++;
-        if (query && !(meta.name.toLowerCase().includes(query) || desc.toLowerCase().includes(query))) return;
-        (isInstalled ? installed : available).push({ cmd, meta, isInstalled });
+        if (query && !(cmd.includes(query) || cdesc(cmd).toLowerCase().includes(query))) return;
+        (isInstalled ? installed : available).push({ cmd, isInstalled });
       });
 
       let html = '';
@@ -4198,16 +4325,11 @@
         html += available.map(extCardHtml).join('');
       }
       if (!installed.length && !available.length) {
-        html = tr(`<div class="text-[10px] text-dim pt-2">No extensions found matching your search.</div>`,
-          `<div class="text-[10px] text-dim pt-2">検索に一致する拡張機能は見つかりませんでした。</div>`);
+        html = msgHTML('text-[10px] text-dim pt-2', 'No extensions found matching your search.',
+          '検索に一致する拡張機能は見つかりませんでした。');
       }
-      list.innerHTML = html;
-
-      const badgeExt = document.getElementById('badge-extensions');
-      if (badgeExt) {
-        badgeExt.innerHTML = `<span>${uninstalledCount}</span>`;
-        badgeExt.classList.toggle('hidden', uninstalledCount === 0);
-      }
+      DOM.extList.innerHTML = html;
+      setBadge(DOM.badgeExt, uninstalledCount);
     }
 
     // Recompute the job title for the current theme and push it into every place it
@@ -4222,7 +4344,7 @@
     function applyTheme(isDark) {
       TK.paint(isDark ? 'dark' : 'light'); // data-theme + theme-color, defined in the head script
       setJobTitle(isDark);
-      regenTabs(THEME_DOC_TABS);
+      regenTabs(cmdsWhere('theme'));
       // The search index is theme-independent (both job-title variants are indexed once
       // in buildSearchIndex), so no reindex/re-render is needed on theme toggle.
       renderExtensions();
@@ -4258,17 +4380,7 @@
       swapAttr('[data-ja-aria]', 'jaAria', 'enAria', 'aria-label');
     }
 
-    // Doc commands that render into editor tabs and are safe to regenerate on a
-    // language switch (akutagawa is async/animated, so it is intentionally left).
-    // 'identify' is left out for the same reason as akutagawa: its tab holds a *result*
-    // (executeIdentifyVersion writes the chosen profile back into tabState), and
-    // regenerating it from commands.identify() would discard that and drop the reader back
-    // on the version picker.
-    const LANG_DOC_TABS = ['about', 'timeline', 'pages', 'help'];
-    // The tabs that show the job title or the version badge, and so go stale on a theme
-    // switch and on `rebuild` (which bumps currentVersion) rather than on a language switch.
-    const THEME_DOC_TABS = ['welcome', 'about'];
-    // Re-render the named tabs in place, skipping any that aren't open. Three events
+    // Re-render the named tabs (CMD_META's `lang` / `theme`) in place, skipping any that aren't open. Three events
     // invalidate an open document — theme switch, language switch, `rebuild` — and each used
     // to hand-write the same loop. `welcome` renders from welcomeHTML() rather than commands{};
     // that exception now lives here once instead of at every call site.
@@ -4279,11 +4391,10 @@
     });
     function applyLang() {
       document.documentElement.setAttribute('lang', currentLang);
-      const isDark = isDarkNow();
-      setJobTitle(isDark);
+      setJobTitle(isDarkNow());
       applyChrome();
       // Regenerate any open document tabs so their content matches the language.
-      regenTabs(['welcome', ...LANG_DOC_TABS]);
+      regenTabs(cmdsWhere('lang'));
       renderEditor();
       renderExplorerTree();
       renderExtensions();
@@ -4302,13 +4413,10 @@
       // Refresh the MAGI agent splash if it is the only thing on screen: its
       // button labels (APK/App Download, etc.) are baked in via tr() at render
       // time, so a one-shot innerHTML never updates on a later language switch.
-      if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) {
-        agentLog.innerHTML = agentHintHTML();
-      }
+      if (splashOnly()) agentLog.innerHTML = agentHintHTML();
       // Rebuild the content search index against the active language.
       buildSearchIndex();
-      const searchInputEl = document.getElementById('search-input');
-      if (searchInputEl && searchInputEl.value) renderSearch(searchInputEl.value);
+      if (searchInput.value) renderSearch(searchInput.value);
     }
     function setLanguage(lang) {
       const next = lang === 'ja' ? 'ja' : 'en';
@@ -4385,47 +4493,23 @@
           const isSys = cmd.startsWith('[SYS]');
           return `<div class="tree-item ${isSys ? 'text-dim italic' : 'text-normal'} truncate" title="${esc(cmd)}"><span class="text-secondary">${isSys ? '•' : '$'}</span><span class="truncate">${esc(cmd)}</span></div>`;
         }).join('')
-        : tr(`<div class="px-3 py-2 text-xs text-secondary">No operation history yet.</div>`, `<div class="px-3 py-2 text-xs text-secondary">操作履歴はまだありません。</div>`);
+        : msgHTML('px-3 py-2 text-xs text-secondary', 'No operation history yet.', '操作履歴はまだありません。');
     }
 
-    // File name + icon for every command surfaced as a "file" (Explorer tree, tabs,
-    // IntelliSense, palette). Doc files open as editor tabs; the rest are hidden
-    // extensions that only carry an icon/label.
-    const FILE_META = {
-      welcome: { name: 'welcome', icon: '★' },
-      about: { name: 'about.yaml', icon: '≡' },
-      identify: { name: 'identify.yaml', icon: '⚙' },
-      timeline: { name: 'timeline.json', icon: '┃' },
-      pages: { name: 'pages.json', icon: '[]' },
-      akutagawa: { name: 'letter.txt', icon: '✉' },
-      help: { name: 'help.md', icon: '?' },
-      contact: { name: 'contact.txt', icon: '@' },
-      clear: { name: 'clear.sh', icon: '⌧' },
-      bpm: { name: 'bpm.css', icon: '♥' },
-      choreomania: { name: 'choreomania.py', icon: '∿' },
-      meltdown: { name: 'meltdown.sh', icon: '⚠' },
-      matrix: { name: 'matrix.bin', icon: '░' },
-      meditation: { name: 'meditation.bin', icon: '○' },
-      rampage: { name: 'rampage.exe', icon: '✶' },
-      theme: { name: 'theme.css', icon: '#' },
-      web3: { name: 'web3.html', icon: '⬡' },
-      japanese: { name: 'japanese.lang', icon: 'あ' }
-    };
-    // FILE_META reversed, for the PROBLEMS panel: which command re-opens a given file. Only
-    // documents worth reopening are listed — a `rampage.exe` row must not re-fire rampage.
-    // Derived, not retyped, so a rename above cannot leave this pointing at a dead filename.
-    const FILE_CMD = Object.fromEntries(['identify', 'bpm', 'akutagawa', 'about', 'help'].map(c => [FILE_META[c].name, c]));
+    // For the PROBLEMS panel: which command re-opens a given file (CMD_META's `reopen`).
+    const FILE_CMD = Object.fromEntries(cmdsWhere('reopen').map(c => [CMD_META[c].file, c]));
     // The file's own extension decides the mode — no per-command cases. A name without a
     // known extension (welcome, japanese.lang) reads as plain Shell.
-    const getLangMode = (cmd) => { const m = cmd && FILE_META[cmd]; return (m && (FILETYPE[extOf(m.name)] || {}).lang) || 'Shell'; };
+    const getLangMode = (cmd) => (FILETYPE[extOf(cmdMeta(cmd).file)] || {}).lang || 'Shell';
     let tabState = {}, tabOrder = [], activeTab = null;
-    const treeMeta = c => FILE_META[c] || { name: c, icon: '•' };
+    // File name + icon for anything surfaced as a "file" (Explorer, tabs, IntelliSense,
+    // palette). A command without a `file` in CMD_META shows under its own name.
+    const treeMeta = c => { const m = cmdMeta(c); return { name: m.file || c, icon: m.icon || '•' }; };
     const fileLabel = c => treeMeta(c).name;
 
     function renderEditor() {
       const activeCmd = document.querySelector('.tree-item.active')?.dataset.cmd;
-      const langEl = document.getElementById('status-lang');
-      if (langEl) langEl.textContent = getLangMode(activeTab || activeCmd);
+      DOM.statusLang.textContent = getLangMode(activeTab || activeCmd);
       DOM.tabbar.innerHTML = tabOrder.map(c => {
         const m = treeMeta(c);
         // role/tabindex/aria-selected mirror the bottom panel's tabs; the ✕ stays a plain
@@ -4443,12 +4527,11 @@
       DOM.breadcrumb.innerHTML = activeTab ? `<span>tk.st</span> <span class="opacity-50">›</span> <span>${esc(fileLabel(activeTab))}</span>` : '<span>tk.st</span>';
       const div = document.createElement('div');
       div.className = 'fade-in';
-      div.innerHTML = activeTab ? tabState[activeTab] : tr(`<div class="my-3 text-xs text-secondary">No file open. Type a command in the terminal below, or open the <span class="text-normal font-bold">Explorer</span>.</div>`,
-        `<div class="my-3 text-xs text-secondary">開いているファイルはありません。下のターミナルにコマンドを入力するか、<span class="text-normal font-bold">エクスプローラー</span> から開いてください。</div>`);
+      div.innerHTML = activeTab ? tabState[activeTab] : msgHTML('my-3 text-xs text-secondary', `No file open. Type a command in the terminal below, or open the <span class="text-normal font-bold">Explorer</span>.`,
+        `開いているファイルはありません。下のターミナルにコマンドを入力するか、<span class="text-normal font-bold">エクスプローラー</span> から開いてください。`);
       DOM.output.innerHTML = '';
       DOM.output.appendChild(div);
-      const statusEl = document.getElementById('editor-status');
-      if (statusEl) statusEl.textContent = activeTab ? tr(`Opened ${fileLabel(activeTab)}`, `${fileLabel(activeTab)} を開きました`) : '';
+      document.getElementById('editor-status').textContent = activeTab ? tr(`Opened ${fileLabel(activeTab)}`, `${fileLabel(activeTab)} を開きました`) : '';
       DOM.editor.scrollTop = 0;
       requestAnimationFrame(updateGutter);
     }
@@ -4607,7 +4690,7 @@
     // text. {keys} goes first and hides its own backticks ({Ctrl/Cmd+`}) from the code pass.
     const mdInline = text => esc(text)
       .replace(/\{([^{}]+)\}/g, (_, k) => `<kbd>${k.replace(/`/g, '&#96;')}</kbd>`)
-      .replace(/`([^`]+)`/g, (_, c) => FAQ_RUNNABLE.has(c)
+      .replace(/`([^`]+)`/g, (_, c) => cmdMeta(c).faq
         ? `<button type="button" class="md-cmd" data-action="faq-run" data-cmd="${c}" title="${tr(`Run ${c}`, `${c} を実行`)}">${c}</button>`
         : `<code>${c}</code>`);
     const mdMark = m => `<span class="md-mark" aria-hidden="true">${m}</span>`;
@@ -4627,7 +4710,7 @@
           <h2 id="faq-title" class="help-title glow">${mdMark('#')}${tr('Help', 'ヘルプ')}</h2>
           <p class="help-lead">${mdMark('>')}${tr('Lost? Open a question, or just type a command.', '迷ったら、質問を開くか、そのままコマンドを入力してください。')}</p>
           ${sections}
-          <p class="help-foot">${mdInline(tr('Need a human? Run `contact`.', '本人への連絡は `contact` から。'))}</p>
+          <p class="help-foot">${mdInline(tr('Need a human? Run `contact`.', '直接連絡を取りたい場合は `contact` を実行してください。'))}</p>
         </article>
       `, 'faq-wrap');
     };
@@ -4692,8 +4775,7 @@
     // Repaint of everything showing the tempo. Split out of setBpm() so `rebuild`,
     // which clears the inline property rather than writing one, can reuse it.
     function syncBpmUI(bpm) {
-      const bpmEl = document.getElementById('status-bpm');
-      if (bpmEl) bpmEl.innerHTML = `<span>♥</span> <span>${bpm}</span>`;
+      DOM.statusBpm.innerHTML = `<span>♥</span> <span>${bpm}</span>`;
       document.querySelectorAll('.bpm-value').forEach(el => { el.textContent = bpm; });
     }
     function setBpm(value) {
@@ -4769,8 +4851,8 @@
         const targetCmd = args[0].toLowerCase();
         if (targetCmd !== 'akutagawa') {
           addProblem('error', `${targetCmd} is not allowed to be executed with sudo`, { file: 'terminal' });
-          return tr(`<div class="text-xs my-1 text-red-500">${esc(targetCmd)} is not allowed to be executed with sudo.</div>`,
-            `<div class="text-xs my-1 text-red-500">${esc(targetCmd)} は sudo での実行を許可されていません。</div>`);
+          return msgHTML('text-xs my-1 text-red-500', `${esc(targetCmd)} is not allowed to be executed with sudo.`,
+            `${esc(targetCmd)} は sudo での実行を許可されていません。`);
         }
         if (!installedExtensions.has('akutagawa')) {
           addProblem('error', "Command not found: 'akutagawa'", { file: 'terminal' });
@@ -4779,8 +4861,8 @@
         sudoContext = { cmd: targetCmd, args: args.slice(1) };
         DOM.input.type = 'password';
         DOM.input.placeholder = '[sudo] password for ST: ';
-        return tr(`<div class="text-xs my-1 text-secondary">Enter password for ST:</div>`,
-          `<div class="text-xs my-1 text-secondary">ST のパスワードを入力してください：</div>`);
+        return msgHTML('text-xs my-1 text-secondary', 'Enter password for ST:',
+          'ST のパスワードを入力してください：');
       },
       about() {
         const bioLines = tr(ABOUT_DATA.bio.en, ABOUT_DATA.bio.ja);
@@ -4857,40 +4939,40 @@
             <div id="identify-result-${uniqueId}"></div>
           `);
       },
-      async akutagawa() {
-        if (!akutagawaSudoValid) {
+      async akutagawa(args, { sudo } = {}) {
+        if (!sudo) {
           addProblem('error', "Failed to open 'letter.txt': insufficient permissions", { file: 'letter.txt' });
-          await printToTerminal(tr(`<div class="text-xs my-1 text-red-500">Failed to open 'letter.txt': Insufficient permissions. Try running with 'sudo'.</div>`,
-            `<div class="text-xs my-1 text-red-500">'letter.txt' を開けませんでした: 権限が不足しています。'sudo' を付けて実行してみてください。</div>`), 20);
+          await printToTerminal(msgHTML('text-xs my-1 text-red-500', `Failed to open 'letter.txt': Insufficient permissions. Try running with 'sudo'.`,
+            `'letter.txt' を開けませんでした: 権限が不足しています。'sudo' を付けて実行してみてください。`), 20);
           return null;
         }
         const loadingDiv = document.createElement('div'); loadingDiv.className = 'text-xs fade-in w-[90%] max-w-[400px] text-primary'; DOM.terminalLog.appendChild(loadingDiv); scrollTerminal();
         const spinners = ['|', '/', '-', '\\']; let frameIndex = 0;
         const loadingInterval = setInterval(() => { loadingDiv.textContent = `${tr('Loading', '読み込み中')}...  ${spinners[frameIndex++ % 4]}`; }, 300);
         await delay(8000); clearInterval(loadingInterval); loadingDiv.remove();
-        return `<div class="my-4 border rounded text-sm bg-[#faf6f0] text-[#2c2b29] relative" style="font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif; line-height: 2; border-color: #e3dac9; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-image: radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0), radial-gradient(rgba(0,0,0,0.02) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; width: fit-content; max-width: 95%; min-width: 280px; padding: 24px 36px; box-sizing: border-box;">
-          <div style="border-bottom: 1px dashed #d1c7bd; padding-bottom: 12px; margin-bottom: 20px; font-weight: bold; font-size: 11px; letter-spacing: 0.1em; color: #8c7e6e; font-family: ui-monospace, SFMono-Regular, monospace;">LETTER.TXT</div>
-          <p style="margin: 0 0 24px 0; font-style: italic; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif;">${tr(`I'm sorry for the psychological burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.`, `あなたに心理的な負担をかけてしまって、ごめんなさい。<br>私にはあなたの人生に責任を持つ資格はないと、わかっています。<br>それでも、あなたの健康と成長を、いつも願っています。`)}</p>
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; min-height: 45px;">
-            <pre style="margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; line-height: 1.1; color: #7693b5; text-align: left; opacity: 0.85; font-weight: bold;" title="Forget-me-not (勿忘草)">
+        return `<div class="letter my-4 border text-sm relative">
+          <div class="letter-head">LETTER.TXT</div>
+          <p class="letter-body">${tr(`I'm sorry for the psychological burden I've placed on you.<br>I realize I don't have the right to be responsible for your life.<br>Even so, I will always be rooting for your health and personal growth.`, `あなたに心理的な負担をかけてしまって、ごめんなさい。<br>私にはあなたの人生に責任を持つ資格はないと、わかっています。<br>それでも、あなたの健康と成長を、いつも願っています。`)}</p>
+          <div class="letter-foot">
+            <pre class="letter-flower" title="Forget-me-not (勿忘草)">
    _
  _( )_
 (_(*)_)
   (_)</pre>
-            <div style="text-align: right; font-size: 12px; color: #5c5246; font-family: Georgia, 'BIZ Mincho', 'Yu Mincho', serif; padding-bottom: 4px;">— ST</div>
+            <div class="letter-sign">— ST</div>
           </div>
         </div>`;
       },
       theme(args) {
         const colors = { green: '#4ade80', blue: '#60a5fa', pink: '#f472b6', orange: '#fb923c', purple: '#c084fc', white: '#ffffff', red: '#f87171', yellow: '#fbbf24', cyan: '#22d3ee' };
-        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return tr(`<div class="my-3 text-xs text-secondary">Usage: theme &lt;color&gt;<br>Available colors: <span class="text-normal">${Object.keys(colors).join(', ')}</span></div>`,
-          `<div class="my-3 text-xs text-secondary">使い方: theme &lt;color&gt;<br>選べる色: <span class="text-normal">${Object.keys(colors).join(', ')}</span></div>`);
+        if (!args || args.length === 0 || !colors[args[0].toLowerCase()]) return msgHTML('my-3 text-xs text-secondary', `Usage: theme &lt;color&gt;<br>Available colors: <span class="text-normal">${Object.keys(colors).join(', ')}</span>`,
+          `使い方: theme &lt;color&gt;<br>選べる色: <span class="text-normal">${Object.keys(colors).join(', ')}</span>`);
         const newColor = colors[args[0].toLowerCase()];
         document.documentElement.style.setProperty('--primary-color', newColor);
         document.documentElement.style.setProperty('--primary-bg', newColor + '26');
         document.documentElement.style.setProperty('--primary-bg-hover', newColor + '40');
-        return tr(`<div class="my-3 text-xs text-primary">Theme color successfully changed to ${esc(args[0])}.</div>`,
-          `<div class="my-3 text-xs text-primary">テーマカラーを ${esc(args[0])} に変更しました。</div>`);
+        return msgHTML('my-3 text-xs text-primary', `Theme color successfully changed to ${esc(args[0])}.`,
+          `テーマカラーを ${esc(args[0])} に変更しました。`);
       },
       // The 'japanese' extension flips the entire UI + content between English and
       // Japanese. With no argument it toggles; `japanese en|ja` forces a direction.
@@ -4909,14 +4991,14 @@
         // A number still sets the tempo outright; anything else opens the tap checker.
         if (arg !== undefined && arg !== "" && !isNaN(arg)) {
           const newBpm = setBpm(parseFloat(arg));
-          return tr(`<div class="my-3 text-xs text-primary">System heartbeat synced to ${newBpm} BPM.</div>`,
-            `<div class="my-3 text-xs text-primary">システムの鼓動を ${newBpm} BPM に同期しました。</div>`);
+          return msgHTML('my-3 text-xs text-primary', `System heartbeat synced to ${newBpm} BPM.`,
+            `システムの鼓動を ${newBpm} BPM に同期しました。`);
         }
         return bpmTapHTML();
       },
       meltdown() {
-        if (isMeltdown) return tr(`<div class="my-3 text-xs text-red-500 font-bold">System is already in meltdown. Waiting for 'rebuild'.</div>`,
-          `<div class="my-3 text-xs text-red-500 font-bold">システムは既にメルトダウン中です。'rebuild' を待っています。</div>`);
+        if (isMeltdown) return msgHTML('my-3 text-xs text-red-500 font-bold', `System is already in meltdown. Waiting for 'rebuild'.`,
+          `システムは既にメルトダウン中です。'rebuild' を待っています。`);
         isMeltdown = true; meltdownElements = [];
         addProblem('warn', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...', { file: 'meltdown.sh' });
         document.body.classList.add('system-meltdown');
@@ -4939,8 +5021,8 @@
             }
           }
         }, 30);
-        return tr(`<div class="my-3 text-xs text-red-500 font-bold">CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...</div>`,
-          `<div class="my-3 text-xs text-red-500 font-bold">重大なエラー: システムメルトダウンを開始しました…</div>`);
+        return msgHTML('my-3 text-xs text-red-500 font-bold', 'CRITICAL ERROR: SYSTEM MELTDOWN INITIATED...',
+          '重大なエラー: システムメルトダウンを開始しました…');
       },
       rebuild() {
         if (!isMeltdown) return null;
@@ -4949,7 +5031,7 @@
           for (let i = 0; i < 5; i++) {
             if (elements.length === 0) {
               clearInterval(rebuildInterval); rebuildInterval = null; isMeltdown = false; meltdownElements = []; currentVersion++;
-              regenTabs(THEME_DOC_TABS); // the version badge these two show has just changed
+              regenTabs(cmdsWhere('theme')); // the version badge these show has just changed
               document.body.classList.remove('system-meltdown');
               const nameEl = document.getElementById('display-name-el');
               if (nameEl) nameEl.innerHTML = `${esc(displayName())}${verBadge()}`;
@@ -4958,10 +5040,7 @@
               // After the fly-back animations finish, hard-reconcile the layout so nothing is left
               // mid-transform and the input line is re-anchored to the bottom of the terminal.
               setTimeout(() => {
-                document.querySelectorAll('#app .meltdown-element, #app .rebuilding-element').forEach(el => {
-                  el.classList.remove('meltdown-element', 'rebuilding-element');
-                  clearTransformVars(el);
-                });
+                settleFlown();
                 renderEditor();
                 scrollTerminal();
               }, 1100);
@@ -4978,37 +5057,27 @@
             }
           }
         }, 30);
-        return tr(`<div class="my-3 text-xs text-primary">System rebuild initiated... restoring core components.</div>`,
-          `<div class="my-3 text-xs text-primary">システムの再構築を開始… コアコンポーネントを復旧しています。</div>`);
+        return msgHTML('my-3 text-xs text-primary', 'System rebuild initiated... restoring core components.',
+          'システムの再構築を開始… コアコンポーネントを復旧しています。');
       },
       rampage(args) {
-        // Resolve an optional weapon argument (name / alias / number) to an index.
-        const ALIAS = {
-          mg: 0, machinegun: 0, 'machine-gun': 0, '1': 0,
-          sg: 1, shotgun: 1, '2': 1,
-          grenade: 2, launcher: 2, nade: 2, '3': 2,
-          flame: 3, flamethrower: 3, fire: 3, '4': 3,
-          hammer: 4, sledge: 4, melee: 4, '5': 4,
-          coin: 5, key: 5, scratch: 5, '6': 5,
-          shock: 6, cannon: 6, wave: 6, '7': 6,
-          repair: 7, heal: 7, fix: 7, nano: 7, '8': 7
-        };
+        // Resolve an optional weapon argument (key / alias / 1-based number) to an index.
         const argKey = args && args[0] ? String(args[0]).toLowerCase() : null;
-        const initialWeapon = (argKey && ALIAS[argKey] != null) ? ALIAS[argKey] : null;
+        const found = argKey ? RAMPAGE_WEAPONS.findIndex((w, i) => argKey === w.key || argKey === String(i + 1) || w.alias.includes(argKey)) : -1;
+        const initialWeapon = found >= 0 ? found : null;
 
         // Toggle: a bare second 'rampage' (or ESC) ceases fire. The crack overlay is a
         // fixed, pointer-events:none canvas, so the whole UI stays clickable and
         // other commands can still be typed while the screen is being shattered.
-        if (isRampageActive) {
+        if (rampageTeardown) {
           if (initialWeapon != null) { // `rampage <weapon>` while armed → just switch
-            if (rampageSetWeapon) rampageSetWeapon(RAMPAGE_WEAPONS[initialWeapon].key);
+            rampageSetWeapon(RAMPAGE_WEAPONS[initialWeapon].key);
             return '';
           }
-          if (rampageTeardown) rampageTeardown();
-          return tr(`<div class="my-3 text-xs text-secondary">Ceasefire. The screen heals.</div>`,
-            `<div class="my-3 text-xs text-secondary">停戦。画面が修復されます。</div>`);
+          rampageTeardown();
+          return msgHTML('my-3 text-xs text-secondary', 'Ceasefire. The screen heals.',
+            '停戦。画面が修復されます。');
         }
-        isRampageActive = true;
         document.body.classList.add('rampage-active');
 
         const canvas = document.createElement('canvas');
@@ -5312,7 +5381,7 @@
         const flownEls = [], rampageIntervals = [], strippedEls = [], rampageTimers = [];
         // Staged effects (a blast settling over ~half a second) run on timers; a ceasefire
         // in the middle of one must not keep painting a canvas that is already gone.
-        const later = (ms, fn) => rampageTimers.push(setTimeout(() => { if (isRampageActive) fn(); }, ms));
+        const later = (ms, fn) => rampageTimers.push(setTimeout(() => { if (rampageTeardown) fn(); }, ms));
 
         // `bucket` records the section's own debris as well, so nano repair can fly back
         // exactly what this collapse threw off (flownEls stays the catch-all for teardown).
@@ -5376,10 +5445,10 @@
           if (s.dead) return;
           const r = s.el.getBoundingClientRect();
           if (r.width < 2 || r.height < 2) return;
-          if (!s.bar) { s.bar = document.createElement('div'); s.bar.className = 'rampage-hpbar'; s.bar.innerHTML = '<i></i>'; (document.getElementById('app') || document.body).appendChild(s.bar); }
+          if (!s.bar) { s.bar = document.createElement('div'); s.bar.className = 'rampage-hpbar'; s.bar.innerHTML = '<i></i>'; DOM.app.appendChild(s.bar); }
           const f = Math.max(0, s.hp / s.max);
-          s.bar.style.cssText = `position:fixed;left:${r.left + 4}px;top:${r.top + 4}px;width:${Math.min(120, r.width - 8)}px;height:5px;z-index:9998;pointer-events:none;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.25);border-radius:2px;overflow:hidden;`;
-          s.bar.firstChild.style.cssText = `display:block;height:100%;width:${f * 100}%;background:${hpColor(f)};transition:width 0.15s, background 0.15s;`;
+          s.bar.style.cssText = `left:${r.left + 4}px;top:${r.top + 4}px;width:${Math.min(120, r.width - 8)}px;`;
+          s.bar.firstChild.style.cssText = `width:${f * 100}%;background:${hpColor(f)};`;
         };
 
         const damageAt = (x, y, amount) => {
@@ -5447,7 +5516,7 @@
         let wIdx = (initialWeapon != null) ? initialWeapon : 0;
         const weapon = () => WEAPONS[wIdx].key;
 
-        const announce = () => { rampageWeaponKey = WEAPONS[wIdx].key; renderArsenal(); printToTerminal(tr(`<div class="text-xs mt-1" style="color:#e0524e;">▸ Armed: <b>${WEAPONS[wIdx].label}</b></div>`, `<div class="text-xs mt-1" style="color:#e0524e;">▸ 装備: <b>${WEAPONS[wIdx].label_ja}</b></div>`)); };
+        const announce = () => { rampageWeaponKey = WEAPONS[wIdx].key; renderArsenal(); printToTerminal(`<div class="text-xs mt-1" style="color:#e0524e;">${tr(`▸ Armed: <b>${WEAPONS[wIdx].label}</b>`, `▸ 装備: <b>${WEAPONS[wIdx].label_ja}</b>`)}</div>`); };
         const setWeapon = (key) => { const i = WEAPONS.findIndex(w => w.key === key); if (i >= 0 && i !== wIdx) { wIdx = i; announce(); } };
         rampageSetWeapon = setWeapon;
         rampageWeaponKey = WEAPONS[wIdx].key;
@@ -5461,8 +5530,8 @@
         rampageIntervals.push(setInterval(() => {
           const ready = performance.now() >= shockReadyAt;
           if (ready && !shockWasReady) {
-            printToTerminal(tr(`<div class="text-xs mt-1" style="color:#7fd4ff;">▸ SHOCK CANNON: energy charge complete. Hold to charge, release at 120% to fire.</div>`,
-              `<div class="text-xs mt-1" style="color:#7fd4ff;">▸ ショックカノン: エネルギー充填完了。長押しで充填し、120%で手を離すと発射。</div>`));
+            printToTerminal(`<div class="text-xs mt-1" style="color:#7fd4ff;">${tr('▸ SHOCK CANNON: energy charge complete. Hold to charge, release at 120% to fire.',
+              '▸ ショックカノン: エネルギー充填完了。長押しで充填し、120%で手を離すと発射。')}</div>`);
           }
           shockWasReady = ready;
           renderArsenal(); // cheap, and it keeps the countdown honest even when the view is closed
@@ -5497,7 +5566,7 @@
             }
             el = el.parentElement;
           }
-          return fallback || document.getElementById('editor') || document.scrollingElement || document.documentElement;
+          return fallback || DOM.editor;
         };
         // Auto-fire cadence tracks the system BPM (60 = baseline): faster heartbeat → faster fire.
         const cadence = (baseMs) => Math.max(16, Math.round(baseMs * 60 / getBpm()));
@@ -5802,7 +5871,7 @@
         };
         const fireGrenade = (tx, ty) => {
           // Lob first, detonate on arrival — and never paint into a canvas a ceasefire removed.
-          lobShell(tx, ty, () => { if (isRampageActive) detonate(tx, ty); });
+          lobShell(tx, ty, () => { if (rampageTeardown) detonate(tx, ty); });
         };
         // --- Shock cannon ---------------------------------------------------------------
         // The ship's gun, and nothing like the rest of the arsenal. It runs off a reserve
@@ -5823,8 +5892,8 @@
           if (shockLeft() > 0) { // the reserve is still filling; it will not even spin up
             if (performance.now() > shockNagAt) {
               shockNagAt = performance.now() + 2000; // one warning, not one per click
-              printToTerminal(tr(`<div class="text-xs my-1" style="color:#7fb4d8;">▸ SHOCK CANNON: reserve still charging — <b>${shockLeft()}s</b> remaining.</div>`,
-                `<div class="text-xs my-1" style="color:#7fb4d8;">▸ ショックカノン: エネルギー充填中 — 残り <b>${shockLeft()}秒</b>。</div>`));
+              printToTerminal(`<div class="text-xs my-1" style="color:#7fb4d8;">${tr(`▸ SHOCK CANNON: reserve still charging — <b>${shockLeft()}s</b> remaining.`,
+                `▸ ショックカノン: エネルギー充填中 — 残り <b>${shockLeft()}秒</b>。`)}</div>`);
             }
             return;
           }
@@ -5873,8 +5942,8 @@
                 if (Math.random() > 0.6) { const a = rnd(0, Math.PI * 2); ember(p.x, p.y, Math.cos(a) * rnd(80, 240), Math.sin(a) * rnd(80, 240), true); }
                 if (!p.full) {
                   p.full = true;
-                  printToTerminal(tr(`<div class="text-xs mt-1" style="color:#7fd4ff;">▸ Energy charge <b>120%</b> — release to fire.</div>`,
-                    `<div class="text-xs mt-1" style="color:#7fd4ff;">▸ エネルギー充填 <b>120%</b> — 手を離して発射。</div>`));
+                  printToTerminal(`<div class="text-xs mt-1" style="color:#7fd4ff;">${tr(`▸ Energy charge <b>120%</b> — release to fire.`,
+                    `▸ エネルギー充填 <b>120%</b> — 手を離して発射。`)}</div>`);
                 }
               }
             }
@@ -5890,8 +5959,8 @@
           const far = Math.hypot(window.innerWidth, window.innerHeight) * 1.1; // past every corner
           const R_BURN = 300, R_KILL = 470;
 
-          printToTerminal(tr(`<div class="my-1 text-xs font-bold" style="color:#7fd4ff;">▸ SHOCK CANNON — FIRE.</div>`,
-            `<div class="my-1 text-xs font-bold" style="color:#7fd4ff;">▸ ショックカノン — 発射。</div>`));
+          printToTerminal(`<div class="my-1 text-xs font-bold" style="color:#7fd4ff;">${tr('▸ SHOCK CANNON — FIRE.',
+            '▸ ショックカノン — 発射。')}</div>`);
           blastFlash(0.55, 0.25);
           for (let i = 0; i < 9; i++) later(i * 120, () => kick(1.15 + rnd(-0.2, 0.2), true)); // the hull rides it out
           for (let i = 0; i < 60; i++) { // matter torn off the bore and thrown back at the viewer
@@ -6000,8 +6069,8 @@
           if (!shoot) return;
           if (c < 1) {
             for (let i = 0; i < 16; i++) { const a = rnd(0, Math.PI * 2); ember(lastX, lastY, Math.cos(a) * rnd(60, 280), Math.sin(a) * rnd(60, 280), true); }
-            printToTerminal(tr(`<div class="text-xs my-1 text-secondary">Charge vented at ${Math.round(c * 120)}% — the shock cannon will not fire short.</div>`,
-              `<div class="text-xs my-1 text-secondary">充填 ${Math.round(c * 120)}% で放電 — 未充填では発射できません。</div>`));
+            printToTerminal(msgHTML('text-xs my-1 text-secondary', `Charge vented at ${Math.round(c * 120)}% — the shock cannon will not fire short.`,
+              `充填 ${Math.round(c * 120)}% で放電 — 未充填では発射できません。`));
             return;
           }
           shockReadyAt = performance.now() + SHOCK_RELOAD; // one discharge empties the reserve
@@ -6188,8 +6257,8 @@
         const onKey = (e) => {
           if (e.key === 'Escape' && rampageTeardown) {
             rampageTeardown();
-            printToTerminal(tr(`<div class="my-2 text-xs text-secondary">Ceasefire — RAMPAGE mode disengaged. The screen heals.</div>`,
-              `<div class="my-2 text-xs text-secondary">停戦 — RAMPAGE モードを解除。画面が修復されます。</div>`));
+            printToTerminal(msgHTML('my-2 text-xs text-secondary', 'Ceasefire — RAMPAGE mode disengaged. The screen heals.',
+              '停戦 — RAMPAGE モードを解除。画面が修復されます。'));
           }
         };
         const repositionBars = () => sections.forEach(s => { if (s.bar && !s.dead) updateBar(s); });
@@ -6227,7 +6296,7 @@
           document.body.classList.remove('rampage-active', 'rampage-shake', 'rampage-shake-hard', 'rampage-shake-blast');
           document.body.style.removeProperty('--kick');
           sections.forEach(sec => sec.el.classList.remove('rampage-mended'));
-          isRampageActive = false; rampageTeardown = null; rampageSetWeapon = null; rampageWeaponKey = null;
+          rampageTeardown = null; rampageSetWeapon = null; rampageWeaponKey = null;
           // Hide the Arsenal icon and leave its view if it was open.
           document.getElementById('act-arsenal').classList.add('hidden');
           renderArsenal();
@@ -6237,25 +6306,24 @@
           }
         };
 
-        return tr(`<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire — drag to scratch with the coin, the <b>hammer</b> lands one heavy swing at a time, the <b>shock cannon</b> must be <b>held until its charge reads 120%</b> — release early and it vents — hold nano repair over damage to mend it. <b>Two-finger swipe scrolls</b> the page. Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · grenade · flame · hammer · coin · shock · repair. Each screen section has HP — drain it to <b>0</b> and the section collapses; the <b>shock cannon</b> runs off a reserve that has to fill before it will fire, and one discharge — fired straight ahead, taking out everything around the point you aimed at — empties it again; <b>nano repair</b> puts HP back, and holding it over a collapsed section brings that section home. Type 'rampage' again or ESC to cease fire (heals everything).</span></div>`,
-          `<div class="my-3 text-xs font-bold" style="color:#e0524e;">RAMPAGE モード: 装備 &nbsp;·&nbsp; ${WEAPONS[wIdx].label_ja}<br><span class="text-secondary" style="font-weight:normal;">クリック / タップ / 長押しで発射 — コインはドラッグでスクラッチ、<b>ハンマー</b>は一撃ずつ重く振り下ろし、<b>ショックカノン</b>は<b>充填120%まで長押し</b>（途中で離すと放電して不発）、ナノリペアは傷の上で長押しして修復。<b>2本指スワイプ</b>でページをスクロール。武器の切替: 左のアクティビティバーの<b>ターゲットアイコン</b>（拡張機能の下）を開いて<b>アーセナル</b>から選ぶか、<b>rampage &lt;name&gt;</b> を実行 — mg · shotgun · grenade · flame · hammer · coin · shock · repair。各セクションにはHPがあり、<b>0</b>にするとそのセクションが崩壊します。<b>ショックカノン</b>はエネルギーが充填されるまで撃てず、一射（正面へ発射し、狙点の周囲を消し飛ばす）ごとに空になります。<b>ナノリペア</b>はHPを回復し、崩壊したセクションの跡地で長押しすると元に戻せます。もう一度 'rampage' か ESC で停戦（すべて修復）。</span></div>`);
+        return `<div class="my-3 text-xs font-bold" style="color:#e0524e;">${tr(`RAMPAGE MODE: ARMED &nbsp;·&nbsp; ${WEAPONS[wIdx].label}<br><span class="text-secondary" style="font-weight:normal;">Click / tap / hold to fire — drag to scratch with the coin, the <b>hammer</b> lands one heavy swing at a time, the <b>shock cannon</b> must be <b>held until its charge reads 120%</b> — release early and it vents — hold nano repair over damage to mend it. <b>Two-finger swipe scrolls</b> the page. Switch weapon: open the <b>target icon</b> in the left activity bar (below Extensions) and pick from the <b>Arsenal</b>, or run <b>rampage &lt;name&gt;</b> — mg · shotgun · grenade · flame · hammer · coin · shock · repair. Each screen section has HP — drain it to <b>0</b> and the section collapses; the <b>shock cannon</b> runs off a reserve that has to fill before it will fire, and one discharge — fired straight ahead, taking out everything around the point you aimed at — empties it again; <b>nano repair</b> puts HP back, and holding it over a collapsed section brings that section home. Type 'rampage' again or ESC to cease fire (heals everything).</span>`,
+          `RAMPAGE モード: 装備 &nbsp;·&nbsp; ${WEAPONS[wIdx].label_ja}<br><span class="text-secondary" style="font-weight:normal;">クリック / タップ / 長押しで発射 — コインはドラッグでスクラッチ、<b>ハンマー</b>は一撃ずつ重く振り下ろし、<b>ショックカノン</b>は<b>充填120%まで長押し</b>（途中で離すと放電して不発）、ナノリペアは傷の上で長押しして修復。<b>2本指スワイプ</b>でページをスクロール。武器の切替: 左のアクティビティバーの<b>ターゲットアイコン</b>（拡張機能の下）を開いて<b>アーセナル</b>から選ぶか、<b>rampage &lt;name&gt;</b> を実行 — mg · shotgun · grenade · flame · hammer · coin · shock · repair。各セクションにはHPがあり、<b>0</b>にするとそのセクションが崩壊します。<b>ショックカノン</b>はエネルギーが充填されるまで撃てず、一射（正面へ発射し、狙点の周囲を消し飛ばす）ごとに空になります。<b>ナノリペア</b>はHPを回復し、崩壊したセクションの跡地で長押しすると元に戻せます。もう一度 'rampage' か ESC で停戦（すべて修復）。</span>`)}</div>`;
       },
       choreomania() {
         document.body.classList.toggle('choreomania-active');
         if (document.body.classList.contains('choreomania-active')) {
           document.body.style.setProperty('--mouse-x', '0.5'); document.body.style.setProperty('--mouse-y', '0.5');
-          return tr(`<div class="my-3 text-xs font-bold glow" style="color: #ff00ff;">CHOREOMANIA MODE: ACTIVATED.<br>Transcending the ego.</div>`,
-            `<div class="my-3 text-xs font-bold glow" style="color: #ff00ff;">CHOREOMANIA モード：起動。<br>自我を超越中。</div>`);
+          return `<div class="my-3 text-xs font-bold glow" style="color: #ff00ff;">${tr(`CHOREOMANIA MODE: ACTIVATED.<br>Transcending the ego.`,
+            `CHOREOMANIA モード：起動。<br>自我を超越中。`)}</div>`;
         } else {
           document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
-          return tr(`<div class="my-3 text-xs text-secondary">Choreomania mode deactivated. Back to reality.</div>`,
-            `<div class="my-3 text-xs text-secondary">CHOREOMANIA モードを解除。現実に戻りました。</div>`);
+          return msgHTML('my-3 text-xs text-secondary', 'Choreomania mode deactivated. Back to reality.',
+            'CHOREOMANIA モードを解除。現実に戻りました。');
         }
       },
       meditation() {
-        if (isMeditationActive) return tr(`<div class="my-3 text-xs text-red-500">Meditation is already active.</div>`,
-          `<div class="my-3 text-xs text-red-500">メディテーションは既に起動しています。</div>`);
-        isMeditationActive = true;
+        if (meditationTeardown) return msgHTML('my-3 text-xs text-red-500', 'Meditation is already active.',
+          'メディテーションは既に起動しています。');
         return new Promise(resolve => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           const primaryColor = getPrimaryColor();
@@ -6315,7 +6383,7 @@
             isMeditating = false;
             clearTimeout(timeoutId);
             document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
-            overlay.remove(); isMeditationActive = false; meditationTeardown = null;
+            overlay.remove(); meditationTeardown = null;
             // Settle the promise handleCommand() is awaiting; a bare teardown (softReload)
             // would otherwise leave that await pending forever. null → no terminal output.
             resolve(null);
@@ -6326,9 +6394,9 @@
             isMeditating = false;
             overlay.style.opacity = '0';
             document.removeEventListener('click', exitMeditation); document.removeEventListener('keydown', exitMeditation);
-            await delay(4000); overlay.remove(); isMeditationActive = false; meditationTeardown = null;
-            resolve(tr(`<div class="my-3 text-xs text-secondary">Returned to reality.</div>`,
-              `<div class="my-3 text-xs text-secondary">現実に戻りました。</div>`));
+            await delay(4000); overlay.remove(); meditationTeardown = null;
+            resolve(msgHTML('my-3 text-xs text-secondary', 'Returned to reality.',
+              '現実に戻りました。'));
           };
           timeoutId = setTimeout(() => {
             if (isMeditating) {
@@ -6339,9 +6407,8 @@
         });
       },
       matrix() {
-        if (isMatrixActive) return tr(`<div class="my-3 text-xs text-red-500">Matrix is already active.</div>`,
-          `<div class="my-3 text-xs text-red-500">マトリックスは既に起動しています。</div>`);
-        isMatrixActive = true;
+        if (matrixTeardown) return msgHTML('my-3 text-xs text-red-500', 'Matrix is already active.',
+          'マトリックスは既に起動しています。');
         return new Promise(resolve => {
           const canvas = document.createElement('canvas');
           canvas.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;`;
@@ -6367,25 +6434,26 @@
               drops[i] += speedFactor;
             }
           }, 33);
-          const teardown = () => {
+          // Settles the promise handleCommand() is awaiting. A bare teardown (softReload)
+          // passes nothing, so it prints nothing; endMatrix() passes the farewell. The
+          // message has to go in here: a promise settles once, so resolving it again after
+          // a teardown that had already resolved null used to drop the farewell silently.
+          const teardown = (result = null) => {
             clearInterval(interval); canvas.remove();
             window.removeEventListener('resize', resizeCanvas); window.removeEventListener('keydown', endMatrix, true); window.removeEventListener('click', endMatrix, true);
-            isMatrixActive = false; matrixTeardown = null;
-            // Settle the awaited promise even when torn down externally (softReload);
-            // endMatrix() resolves again with its own message, which is a no-op.
-            resolve(null);
+            matrixTeardown = null;
+            resolve(result);
           };
-          matrixTeardown = teardown;
+          matrixTeardown = () => teardown();
           const endMatrix = (e) => {
             if (e.type === 'keydown' && e.key !== 'Escape') return;
             e.stopPropagation(); e.preventDefault();
-            teardown();
-            resolve(tr(`<div class="text-xs mt-2 text-primary">Matrix simulation ended.</div>`,
-              `<div class="text-xs mt-2 text-primary">マトリックスのシミュレーションを終了しました。</div>`));
+            teardown(msgHTML('text-xs mt-2 text-primary', 'Matrix simulation ended.',
+              'マトリックスのシミュレーションを終了しました。'));
           };
           window.addEventListener('keydown', endMatrix, true); window.addEventListener('click', endMatrix, true);
-          printToTerminal(tr(`<div class="text-xs mb-2 text-secondary">Entering Matrix... Press ESC or Click to exit.</div>`,
-            `<div class="text-xs mb-2 text-secondary">マトリックスに入ります… 終了するには ESC かクリック。</div>`));
+          printToTerminal(msgHTML('text-xs mb-2 text-secondary', 'Entering Matrix... Press ESC or Click to exit.',
+            'マトリックスに入ります… 終了するには ESC かクリック。'));
         });
       }
     };
@@ -6407,20 +6475,16 @@
             : `<span class="text-primary">${esc(cmd)}</span>`;
 
         if (blocked) {
-          return tr(`<div class="my-3 text-xs text-secondary">Open ${labelHtml}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`,
-            `<div class="my-3 text-xs text-secondary">${labelHtml} を開く: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a></div>`);
+          return msgHTML('my-3 text-xs text-secondary', `Open ${labelHtml}: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a>`,
+            `${labelHtml} を開く: <a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline text-primary">${esc(url)}</a>`);
         }
-        return tr(`<div class="my-3 text-xs text-secondary">Opening ${labelHtml}...</div>`,
-          `<div class="my-3 text-xs text-secondary">${labelHtml} を開いています…</div>`);
+        return msgHTML('my-3 text-xs text-secondary', `Opening ${labelHtml}...`,
+          `${labelHtml} を開いています…`);
       };
     });
 
-    // Doc-type commands open as editor tabs (via openDoc); everything else prints to the TERMINAL.
-    ['about', 'identify', 'pages', 'timeline', 'help', 'akutagawa'].forEach(c => { if (commands[c]) commands[c].isDoc = true; });
-    // Own-property check for command lookups fed by user/URL input: a plain object
-    // inherits constructor/__proto__/… from Object.prototype, which would otherwise
-    // resolve to a truthy non-handler (and throw when "called").
-    const hasCmd = c => Object.prototype.hasOwnProperty.call(commands, c);
+    // Own-property check for command lookups fed by user/URL input (see hasOwn).
+    const hasCmd = c => hasOwn(commands, c);
 
     let choreoTicking = false;
     const handleChoreomaniaMove = (clientX, clientY) => {
@@ -6450,46 +6514,44 @@
       sudoContext = null;
       restorePrompt();
       DOM.input.value = '';
-      printToTerminal(tr(`<div class="text-xs my-1 text-secondary">sudo: password prompt cancelled.</div>`,
-        `<div class="text-xs my-1 text-secondary">sudo: パスワード入力をキャンセルしました。</div>`));
+      printToTerminal(msgHTML('text-xs my-1 text-secondary', 'sudo: password prompt cancelled.',
+        'sudo: パスワード入力をキャンセルしました。'));
+    }
+
+    // Echo a line as if typed at the prompt (a password answer echoes as blank).
+    function echoPrompt(text) {
+      const echo = document.createElement('div');
+      echo.className = 'text-xs mt-2';
+      echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(text)}</span>`;
+      DOM.terminalLog.appendChild(echo); scrollTerminal();
     }
 
     // `fromPrompt` marks input typed into the terminal itself — the only source allowed
-    // to answer a pending sudo password prompt.
-    async function handleCommand(input, noEcho = false, fromPrompt = false) {
+    // to answer a pending sudo password prompt. `asSudo` is that answer's authorisation,
+    // handed to this one run only: a page-wide flag stayed raised through akutagawa's 8s
+    // load, so a plain `akutagawa` typed meanwhile opened the letter without a password.
+    async function handleCommand(input, noEcho = false, fromPrompt = false, asSudo = false) {
       if (sudoContext && !fromPrompt) cancelSudo();
       if (sudoContext) {
         const pwd = input.trim();
         const ctx = sudoContext;
         sudoContext = null;
         restorePrompt();
-
-        const echo = document.createElement('div');
-        echo.className = 'text-xs mt-2';
-        echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal"></span>`;
-        DOM.terminalLog.appendChild(echo); scrollTerminal();
+        echoPrompt('');
 
         if (pwd === 'oshitanka') {
-          akutagawaSudoValid = true;
-          await handleCommand(ctx.cmd + ' ' + ctx.args.join(' '), true);
-          akutagawaSudoValid = false;
+          await handleCommand(ctx.cmd + ' ' + ctx.args.join(' '), true, false, true);
         } else {
           addProblem('error', 'sudo: incorrect password', { file: 'terminal' });
-          const errDiv = document.createElement('div');
-          errDiv.innerHTML = tr(`<div class="text-xs my-1 text-red-500">sudo: incorrect password</div>`,
-            `<div class="text-xs my-1 text-red-500">sudo: パスワードが違います</div>`);
-          DOM.terminalLog.appendChild(errDiv);
-          scrollTerminal();
+          await printToTerminal(msgHTML('text-xs my-1 text-red-500', 'sudo: incorrect password',
+            'sudo: パスワードが違います'));
         }
         return;
       }
 
       const trimmed = input.trim(); if (!trimmed) return;
       if (!noEcho) {
-        const echo = document.createElement('div');
-        echo.className = 'text-xs mt-2';
-        echo.innerHTML = `<span class="text-primary">ST@portfolio:~$</span> <span class="text-normal">${esc(input)}</span>`;
-        DOM.terminalLog.appendChild(echo); scrollTerminal();
+        echoPrompt(input);
         addToHistory(trimmed);
         pushCapped(inputHistory, trimmed); // recallable with ↑/↓ at the prompt
       }
@@ -6503,25 +6565,18 @@
         return;
       }
 
-      if (hiddenCommands.includes(cmd)) {
-        const requiredExt = backingExt(cmd);
-        if (!installedExtensions.has(requiredExt)) {
-          addProblem('error', `Command not found: '${cmd}'`, { file: 'terminal' });
-          await printToTerminal(cmdNotFoundHTML(cmd), 50);
-          return;
-        }
-      }
-
-      if (hasCmd(cmd)) {
-        const result = await commands[cmd](args);
-        if (result) {
-          if (commands[cmd].isDoc) openDoc(cmd, result);
-          else await printToTerminal(result, 100);
-        }
-      } else {
+      // Unknown, or a hidden command whose extension isn't installed: both are "not found".
+      // (Not isCmdAvailable(): that also hides `sudo`, which must still run.)
+      if (!hasCmd(cmd) || (hiddenCommands.includes(cmd) && !installedExtensions.has(backingExt(cmd)))) {
         addProblem('error', `Command not found: '${cmd}'`, { file: 'terminal' });
         await printToTerminal(cmdNotFoundHTML(cmd), 50);
+        return;
       }
+      const result = await commands[cmd](args, { sudo: asSudo });
+      if (!result) return;
+      // Doc-type commands open as editor tabs; everything else prints to the TERMINAL.
+      if (cmdMeta(cmd).doc) openDoc(cmd, result);
+      else await printToTerminal(result, 100);
     }
 
     const WELCOME_TIPS = [
@@ -6553,9 +6608,9 @@
     </div>`;
 
     async function boot() {
-      // Restore a previously-chosen Japanese UI: install the backing extension so it
-      // appears in the marketplace/Explorer, then translate the chrome once the
-      // welcome tab is open (below).
+      // A soft reload keeps the session's language (only a full load starts in English), so
+      // put the language pack back in the marketplace/Explorer, then translate the chrome
+      // once the welcome tab is open (below).
       if (currentLang === 'ja') installedExtensions.add('japanese');
       const bootMessages = [{ text: tr('Initializing terminal...', 'ターミナルを初期化中…'), delay: 250 }, { text: tr(`Loading profile: ${displayName()}`, `プロファイルを読み込み中: ${displayName()}`), delay: 400 }, { text: '', delay: 150 }];
       for (const line of bootMessages) {
@@ -6584,7 +6639,7 @@
       }
 
       openDoc('welcome', welcomeHTML());
-      // With a persisted Japanese preference, translate the static chrome and refresh
+      // Still in Japanese after a soft reload: translate the static chrome and refresh
       // the Explorer/Extensions/search now that all views exist.
       if (currentLang === 'ja') applyLang();
       DOM.inputLine.classList.remove('hidden'); DOM.inputLine.classList.add('flex', 'fade-in');
@@ -6607,14 +6662,14 @@
     }
 
     DOM.input.addEventListener('keydown', async (e) => {
-      if (isMatrixActive || isMeditationActive) return;
+      if (overlayActive()) return;
       if (isImeKey(e)) return;
       // While the IntelliSense popup is open it owns navigation/accept.
       if (suggestOpen()) {
         if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggest(1); return; }
         if (e.key === 'ArrowUp') { e.preventDefault(); moveSuggest(-1); return; }
         if (e.key === 'Escape') { e.preventDefault(); closeSuggest(); return; }
-        if (e.key === 'Tab') { e.preventDefault(); acceptSuggest(suggestSel < 0 ? 0 : suggestSel); return; }
+        if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); acceptSuggest(suggestSel < 0 ? 0 : suggestSel); return; }
         if (e.key === 'Enter' && suggestSel >= 0) {
           e.preventDefault();
           const chosen = suggestItems[suggestSel];
@@ -6638,11 +6693,14 @@
         e.preventDefault();
         if (historyIndex > 0) { DOM.input.value = inputHistory[--historyIndex]; } else { historyIndex = -1; DOM.input.value = ''; }
         updateCaret();
-      } else if (e.key === 'Tab') {
-        e.preventDefault();
+      } else if (e.key === 'Tab' && !e.shiftKey) {
+        // Only a Tab that completes something is taken. Otherwise (empty prompt, nothing
+        // matching, the word already complete) it moves focus on as anywhere else — taking
+        // every Tab trapped keyboard users in the prompt with no way out.
         const val = DOM.input.value.toLowerCase(); if (!val) return;
         const matches = availableCmdKeys().filter(c => c.startsWith(val)).sort();
-        if (matches.length === 0) return;
+        if (matches.length === 0 || (matches.length === 1 && matches[0] === val)) return;
+        e.preventDefault();
         if (matches.length === 1) {
           DOM.input.value = matches[0]; updateCaret(); closeSuggest();
         } else {
@@ -6653,17 +6711,16 @@
     });
 
     DOM.app.addEventListener('click', (e) => {
-      const sb = document.getElementById('sidebar');
-      if (sb && sb.classList.contains('open') && !e.target.closest('#sidebar, #activitybar')) { sb.classList.remove('open'); return; }
-      const ad = document.getElementById('agentdock');
-      if (isMobile() && ad && ad.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"], [data-act="settings"]')) { closeAgentDock(); return; }
+      if (sidebarEl.classList.contains('open') && !e.target.closest('#sidebar, #activitybar')) { sidebarEl.classList.remove('open'); return; }
+      if (isMobile() && agentDockEl.classList.contains('open') && !e.target.closest('#agentdock, [data-act="agent"], [data-act="settings"]')) { closeAgentDock(); return; }
       if (!window.getSelection().toString() && !e.target.closest('a, .cursor-pointer, input, .window-btn, #sidebar, #activitybar, #agentdock, [data-act="agent"]')) DOM.input.focus({ preventScroll: true });
     });
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
 
     // Guards against a double-click on ⟳ (and on the close overlay): softReload awaits a
-    // 300ms fade with the button still live, so a second click used to start a *second*
-    // boot() alongside the first — duplicated banner lines, and the ?cmd= easter egg run twice.
+    // 300ms fade and then a ~1s boot with the button still live, so a second click used to
+    // start a *second* boot() alongside the first — duplicated banner lines, and the ?cmd=
+    // easter egg run twice.
     let reloading = false;
     async function softReload() {
       if (reloading) return;
@@ -6685,6 +6742,11 @@
       renderNotifCenter();
       closeNotifCenter();
       historyIndex = -1; isMeltdown = false; meltdownElements = []; if (meltdownInterval) clearInterval(meltdownInterval); if (rebuildInterval) { clearInterval(rebuildInterval); rebuildInterval = null; } currentVersion = 2;
+      // A meltdown (or its rebuild) caught mid-flight: bring every piece home and drop the
+      // meltdown look. Clearing the flag alone left what had already flown off invisible,
+      // with `rebuild` refusing to run because the system was no longer "in meltdown".
+      settleFlown();
+      document.body.classList.remove('system-meltdown');
       problems.length = 0; recountProblems();
       installedExtensions.clear();
       renderExplorerTree();
@@ -6695,7 +6757,6 @@
       if (matrixTeardown) matrixTeardown();
       if (meditationTeardown) meditationTeardown();
       if (rampageTeardown) rampageTeardown();
-      isMatrixActive = false; isMeditationActive = false; isRampageActive = false;
 
       document.documentElement.style.removeProperty('--primary-color');
       document.documentElement.style.removeProperty('--primary-bg');
@@ -6705,7 +6766,7 @@
       setActiveTree(null);
 
       // Back to the standard theme (light); nothing is persisted to restore.
-      applyTheme(TK.pref() === 'dark');
+      applyTheme(false);
 
       tabState = {}; tabOrder = []; activeTab = null;
       showSidebarView('explorer'); searchInput.value = ''; sidebarEl.classList.remove('collapsed', 'open');
@@ -6714,7 +6775,7 @@
       // Drop the inline sizes the drag handles wrote, so a reload restores the default
       // layout the same way resetAgent() already did for the MAGI dock's width.
       sidebarEl.style.removeProperty('width');
-      document.getElementById('panel').style.removeProperty('height');
+      DOM.panel.style.removeProperty('height');
       setPanelCollapsed(false);
       resetAgent();
       DOM.terminalLog.innerHTML = ''; DOM.output.innerHTML = ''; DOM.tabbar.innerHTML = ''; DOM.breadcrumb.innerHTML = '<span>tk.st</span>';
@@ -6722,8 +6783,10 @@
       document.body.classList.remove('choreomania-active'); document.body.style.removeProperty('--mouse-x'); document.body.style.removeProperty('--mouse-y');
       clearCmdParam();
       DOM.app.style.opacity = '1';
-      reloading = false;
-      boot();
+      // Held until the new boot() is done, not just the fade: released before it, a click
+      // landing while the banner was still printing interleaved two boots' lines. The URL
+      // param is already gone, so this boot runs no ?cmd= and always finishes on its own.
+      try { await boot(); } finally { reloading = false; }
     }
 
     document.getElementById('btn-reload').addEventListener('click', () => { softReload(); });
@@ -6731,9 +6794,7 @@
     document.getElementById('btn-close').addEventListener('click', async () => {
       DOM.app.style.opacity = '0'; await delay(500);
       const overlay = document.createElement('div'); overlay.id = 'close-overlay';
-      overlay.style.cssText = `position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-color); color:var(--secondary-color); cursor:pointer; z-index:10000;`;
-      overlay.innerHTML = tr(`<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">Connection closed.</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ Click anywhere to reconnect ]</div>`,
-        `<div style="margin-bottom:1rem; animation:fadeSlide 1s ease forwards;">接続を終了しました。</div><div class="hover:underline text-primary" style="animation:fadeSlide 1s ease forwards; animation-delay: 0.5s; opacity:0;">[ クリックして再接続 ]</div>`);
+      overlay.innerHTML = `<div>${tr('Connection closed.', '接続を終了しました。')}</div><div class="hover:underline text-primary">${tr('[ Click anywhere to reconnect ]', '[ クリックして再接続 ]')}</div>`;
       overlay.addEventListener('click', () => { softReload(); });
       document.body.appendChild(overlay);
     });
@@ -6747,9 +6808,7 @@
       let minIcon = document.getElementById('minimized-icon');
       if (!minIcon) {
         minIcon = document.createElement('div'); minIcon.id = 'minimized-icon';
-        minIcon.innerHTML = tr(`<span class="text-primary">▸ Terminal</span> <span class="text-secondary">[Click to unfold]</span>`,
-          `<span class="text-primary">▸ ターミナル</span> <span class="text-secondary">[クリックで展開]</span>`);
-        minIcon.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--surface-color);border:1px solid var(--border-color);border-radius:8px;cursor:pointer;z-index:10001;font-size:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;`;
+        minIcon.innerHTML = `<span class="text-primary">▸ ${tr('Terminal', 'ターミナル')}</span> <span class="text-secondary">${tr('[Click to unfold]', '[クリックで展開]')}</span>`;
         minIcon.addEventListener('click', async () => {
           addToHistory(tr('[SYS] Terminal restored from minimized state', '[SYS] ターミナルを最小化状態から復元しました'));
           minIcon.style.opacity = '0'; await delay(300); minIcon.style.display = 'none';
@@ -6766,33 +6825,30 @@
 
     document.getElementById('btn-maximize').addEventListener('click', () => {
       if (!document.fullscreenElement) {
-        addToHistory(tr('[SYS] Fullscreen requested', '[SYS] 全画面表示を要求しました')); document.documentElement.requestFullscreen().catch(() => printToTerminal(tr(`<div class="text-xs text-red-500 mt-2 font-bold">[!] ERROR: Fullscreen API is blocked in this environment.</div>`, `<div class="text-xs text-red-500 mt-2 font-bold">[!] エラー: この環境では全画面表示APIがブロックされています。</div>`)));
+        addToHistory(tr('[SYS] Fullscreen requested', '[SYS] 全画面表示を要求しました')); document.documentElement.requestFullscreen().catch(() => printToTerminal(msgHTML('text-xs text-red-500 mt-2 font-bold', '[!] ERROR: Fullscreen API is blocked in this environment.', '[!] エラー: この環境では全画面表示APIがブロックされています。')));
       } else {
         addToHistory(tr('[SYS] Exit fullscreen requested', '[SYS] 全画面表示の終了を要求しました')); if (document.exitFullscreen) document.exitFullscreen();
       }
     });
 
     // --- Explorer (file tree) ---
-    const sidebarFiles = ['about', 'identify', 'timeline', 'pages', 'contact', 'clear', 'help'];
+    const sidebarFiles = cmdsWhere('sidebar');
     const sidebarTree = document.getElementById('sidebar-tree');
     const sidebarEl = document.getElementById('sidebar');
     function renderExplorerTree() {
-      const files = [...sidebarFiles, ...installedList()];
+      const files = [...sidebarFiles, ...installedExtensions];
       // Read the selection before the rewrite below throws the highlighted node away.
       const activeCmd = sidebarTree.querySelector('.tree-item.active')?.dataset.cmd;
       sidebarTree.innerHTML = files.map(c => {
         const m = treeMeta(c);
-        return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span style="color:${iconColor(c, m.name)}">${m.icon}</span><span>${esc(m.name)}</span></button>`;
+        return `<button type="button" class="tree-item text-xs text-normal" data-cmd="${c}"><span style="color:${iconColor(c)}">${m.icon}</span><span>${esc(m.name)}</span></button>`;
       }).join('');
       if (activeCmd) setActiveTree(activeCmd);
     }
     renderExplorerTree();
     function setActiveTree(cmd) {
       sidebarTree.querySelectorAll('.tree-item').forEach(el => el.classList.toggle('active', el.dataset.cmd === cmd));
-      if (!activeTab) {
-        const langEl = document.getElementById('status-lang');
-        if (langEl) langEl.textContent = getLangMode(cmd);
-      }
+      if (!activeTab) DOM.statusLang.textContent = getLangMode(cmd);
     }
     // Explorer and Search results behave identically once a [data-cmd] entry is picked:
     // close the mobile drawer (a no-op on desktop, where .open is never set), drop the
@@ -6821,10 +6877,9 @@
     // Arsenal sidebar view — weapon picker for RAMPAGE mode.
     function renderArsenal() {
       const list = document.getElementById('arsenal-list');
-      if (!list) return;
-      if (!isRampageActive) {
-        list.innerHTML = tr(`<div class="px-1 py-2 text-[11px] text-dim leading-relaxed">No rampage in progress.<br>Run <span class="text-normal font-bold">rampage</span> to arm your arsenal.</div>`,
-          `<div class="px-1 py-2 text-[11px] text-dim leading-relaxed">進行中のランページはありません。<br><span class="text-normal font-bold">rampage</span> を実行して武器を装備しよう。</div>`);
+      if (rampageWeaponKey == null) {
+        list.innerHTML = msgHTML('px-1 py-2 text-[11px] text-dim leading-relaxed', `No rampage in progress.<br>Run <span class="text-normal font-bold">rampage</span> to arm your arsenal.`,
+          `進行中のランページはありません。<br><span class="text-normal font-bold">rampage</span> を実行して武器を装備しよう。`);
         return;
       }
       const wait = Math.ceil((shockReadyAt - performance.now()) / 1000);
@@ -6852,10 +6907,9 @@
     const SEARCH_INDEX = {};
     const textOf = (html) => { const d = document.createElement('div'); d.innerHTML = html; return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
     function buildSearchIndex() {
-      const renderable = ['about', 'pages', 'help', 'identify', 'timeline']; // pure, side-effect-free string renderers
       Object.keys(commands).forEach(c => {
-        let text = c + ' ' + (CMD_DESCS[c] || []).join(' ');
-        if (renderable.includes(c)) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) { } }
+        let text = c + ' ' + (cmdMeta(c).desc || []).join(' ');
+        if (cmdMeta(c).pure) { try { const out = commands[c](); if (typeof out === 'string') text += ' ' + textOf(out); } catch (err) { } }
         SEARCH_INDEX[c] = text.toLowerCase();
       });
       try { SEARCH_INDEX['identify'] += ' ' + JSON.stringify(PROFILE_DATA).toLowerCase(); } catch (err) { }
@@ -6878,7 +6932,7 @@
       searchCount.textContent = tr(`${matches.length} result${matches.length === 1 ? '' : 's'}`, `${matches.length} 件`);
       searchResults.innerHTML = matches.length
         ? matches.map(c => `<button type="button" class="tree-item text-xs text-normal" data-cmd="${esc(c)}" title="${esc(cdesc(c))}"><span class="text-secondary">⌕</span><span>${esc(c)}</span></button>`).join('')
-        : tr(`<div class="px-3 py-2 text-xs text-secondary">No results found.</div>`, `<div class="px-3 py-2 text-xs text-secondary">結果が見つかりませんでした。</div>`);
+        : msgHTML('px-3 py-2 text-xs text-secondary', 'No results found.', '結果が見つかりませんでした。');
     }
     searchInput.addEventListener('input', () => renderSearch(searchInput.value));
     searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !isImeKey(e)) { searchInput.value = ''; renderSearch(''); } });
@@ -6894,8 +6948,8 @@
         apply: cmd => installedExtensions.add(cmd),
         history: cmd => tr(`[SYS] Extension '${cmd}' installed`, `[SYS] 拡張機能 '${cmd}' をインストールしました`),
         toast: cmd => tr(`Extension '${cmd}' installed — type ${cmd} to use it`, `拡張機能 '${cmd}' をインストールしました — ${cmd} と入力して使用`),
-        term: cmd => tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.</div>`,
-          `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> のインストールが完了しました。<span class="text-normal font-bold">${cmd}</span> と入力して使用してください。</div>`)
+        term: cmd => msgHTML('text-xs my-1 text-secondary', `Extension <span class="text-normal font-bold">'${cmd}'</span> installed successfully. Type <span class="text-normal font-bold">${cmd}</span> to use it.`,
+          `拡張機能 <span class="text-normal font-bold">'${cmd}'</span> のインストールが完了しました。<span class="text-normal font-bold">${cmd}</span> と入力して使用してください。`)
       },
       uninstall: {
         ms: 600,
@@ -6910,8 +6964,8 @@
         },
         history: cmd => tr(`[SYS] Extension '${cmd}' uninstalled`, `[SYS] 拡張機能 '${cmd}' をアンインストールしました`),
         toast: cmd => tr(`Extension '${cmd}' was uninstalled`, `拡張機能 '${cmd}' をアンインストールしました`),
-        term: cmd => tr(`<div class="text-xs my-1 text-secondary">Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.</div>`,
-          `<div class="text-xs my-1 text-secondary">拡張機能 <span class="text-normal font-bold">'${cmd}'</span> をアンインストールしました。</div>`)
+        term: cmd => msgHTML('text-xs my-1 text-secondary', `Extension <span class="text-normal font-bold">'${cmd}'</span> was uninstalled.`,
+          `拡張機能 <span class="text-normal font-bold">'${cmd}'</span> をアンインストールしました。`)
       }
     };
     document.getElementById('view-extensions').addEventListener('click', (e) => {
@@ -6935,7 +6989,7 @@
       }, act.ms);
     });
 
-    document.getElementById('ext-search-input').addEventListener('input', renderExtensions);
+    DOM.extSearch.addEventListener('input', renderExtensions);
 
     document.getElementById('view-arsenal').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-weapon]'); if (!btn) return;
@@ -6943,20 +6997,20 @@
     });
 
     // --- Bottom panel (TERMINAL / PROBLEMS / OUTPUT / PORTS) ---
-    document.getElementById('panel-tabs').addEventListener('click', (e) => {
+    DOM.panelTabs.addEventListener('click', (e) => {
       const t = e.target.closest('.panel-tab'); if (!t) return;
       showPanel(t.dataset.panel);
     });
     // Keyboard parity with #tabbar: ←/→ walk the tablist (wrapping), Home/End jump to the
     // ends, Enter/Space activate. With the roving tabindex above, arrows are the *only* way
     // to reach the unselected tabs, so this is required rather than a nicety.
-    document.getElementById('panel-tabs').addEventListener('keydown', (e) => {
+    DOM.panelTabs.addEventListener('keydown', (e) => {
       const t = e.target.closest('.panel-tab'); if (!t) return;
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showPanel(t.dataset.panel); return; }
       const keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
       if (!keys.includes(e.key)) return;
       e.preventDefault();
-      const tabs = [...document.querySelectorAll('#panel-tabs .panel-tab')];
+      const tabs = [...DOM.panelTabs.querySelectorAll('.panel-tab')];
       const i = tabs.indexOf(t);
       const next = e.key === 'Home' ? 0
         : e.key === 'End' ? tabs.length - 1
@@ -6966,24 +7020,23 @@
       showPanel(tabs[next].dataset.panel);
       tabs[next].focus();
     });
-    document.getElementById('panel-problems').addEventListener('click', (e) => {
-      const row = e.target.closest('.prob-row[data-cmd]'); if (!row) return;
-      handleCommand(row.dataset.cmd); DOM.input.focus({ preventScroll: true });
+    // A PROBLEMS row that names a file re-opens it, by click or by Enter/Space.
+    const openProblemRow = (row) => { handleCommand(row.dataset.cmd); DOM.input.focus({ preventScroll: true }); };
+    DOM.panelProblems.addEventListener('click', (e) => {
+      const row = e.target.closest('.prob-row[data-cmd]');
+      if (row) openProblemRow(row);
     });
-    document.getElementById('panel-problems').addEventListener('keydown', (e) => {
-      const row = e.target.closest('.prob-row[data-cmd]'); if (!row) return;
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCommand(row.dataset.cmd); DOM.input.focus({ preventScroll: true }); }
+    DOM.panelProblems.addEventListener('keydown', (e) => {
+      const row = e.target.closest('.prob-row[data-cmd]');
+      if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openProblemRow(row); }
     });
-    document.getElementById('panel-output').addEventListener('change', (e) => {
+    DOM.panelOutput.addEventListener('change', (e) => {
       if (e.target.id === 'output-channel') { outputChannel = e.target.value; renderOutput(); }
     });
 
     // --- Drag-to-resize: sidebar width (X) & bottom panel height (Y) ---
     (function setupResizers() {
-      const sidebar = document.getElementById('sidebar');
-      const panel = document.getElementById('panel');
       const editorGroup = document.getElementById('editor-group');
-      const agentDock = document.getElementById('agentdock');
       const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
       // Generic drag: `start()` measures once at pointerdown and returns the onMove(ev) that
       // sizes the target. Per-drag, not per-move: pointermove fires at pointer rate and
@@ -7008,16 +7061,16 @@
         });
       }
       bindResizer(document.getElementById('sidebar-resizer'), 'resizing-x', () => {
-        const left = sidebar.getBoundingClientRect().left, max = window.innerWidth * 0.6;
-        return (ev) => { sidebar.style.width = clamp(ev.clientX - left, 140, max) + 'px'; };
+        const left = sidebarEl.getBoundingClientRect().left, max = window.innerWidth * 0.6;
+        return (ev) => { sidebarEl.style.width = clamp(ev.clientX - left, 140, max) + 'px'; };
       });
-      bindResizer(document.getElementById('panel-resizer'), 'resizing-y', () => {
+      bindResizer(DOM.panelResizer, 'resizing-y', () => {
         const rect = editorGroup.getBoundingClientRect();
-        return (ev) => { panel.style.height = clamp(rect.bottom - ev.clientY, 64, rect.height - 80) + 'px'; };
+        return (ev) => { DOM.panel.style.height = clamp(rect.bottom - ev.clientY, 64, rect.height - 80) + 'px'; };
       });
       bindResizer(document.getElementById('agentdock-resizer'), 'resizing-x', () => {
-        const right = agentDock.getBoundingClientRect().right, max = window.innerWidth * 0.6;
-        return (ev) => { agentDock.style.width = clamp(right - ev.clientX, 220, max) + 'px'; };
+        const right = agentDockEl.getBoundingClientRect().right, max = window.innerWidth * 0.6;
+        return (ev) => { agentDockEl.style.width = clamp(right - ev.clientX, 220, max) + 'px'; };
       });
     })();
 
@@ -7076,7 +7129,7 @@
     }
     // item.reactions の変更を localStorage（現在履歴＋保存セッション）へ反映
     function persistReactions() {
-      safeStore('magi_current_history', agentHistory);
+      saveCurrentHistory();
       syncCurrentToSaved();
     }
     // 復元：保存済み reactions をターン内のバーに反映（いいね or 絵文字＋ロック）
@@ -7205,19 +7258,22 @@
     const agentActBtn = document.querySelector('#activitybar [data-act="agent"]');
     const agentTitleEl = document.getElementById('agentdock-title');
     let agentHistory = [], agentBusy = false, agentDead = false, agentTitle = '';
+    const saveCurrentHistory = () => safeStore('magi_current_history', agentHistory);
+    // Nothing asked yet: the splash is the only thing in the dock.
+    const splashOnly = () => agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash');
+    // The text box, send and attach buttons are always switched on and off together.
+    const setAgentInputEnabled = (on) => { agentInput.disabled = agentSendBtn.disabled = attachBtn.disabled = !on; };
 
     // チャットボックスのタイトル（既定「MAGI」）を要約タイトルで差し替え／復元する
     function setAgentTitle(text) {
       agentTitle = (text || '').trim();
-      if (agentTitleEl) {
-        agentTitleEl.innerHTML = `<span class="text-sm inline-block">✦</span> ${esc(agentTitle || 'MAGI')}`;
-      }
+      agentTitleEl.innerHTML = `<span class="text-sm inline-block">✦</span> ${esc(agentTitle || 'MAGI')}`;
       if (agentTitle) safeStore('magi_current_title', agentTitle);
       else safeRemove('magi_current_title');
     }
 
     const agentDockOpen = () => isMobile() ? agentDockEl.classList.contains('open') : !agentDockEl.classList.contains('collapsed');
-    function setAgentActive(on) { if (agentActBtn) agentActBtn.classList.toggle('active', on); }
+    function setAgentActive(on) { agentActBtn.classList.toggle('active', on); }
     function openAgentDock() {
       if (isMobile()) agentDockEl.classList.add('open'); else agentDockEl.classList.remove('collapsed');
       setAgentActive(true);
@@ -7239,7 +7295,7 @@
       }
       else { agentDockEl.classList.remove('collapsed'); setAgentActive(true); }
 
-      agentHistory = safeParse(safeGet('magi_current_history'), []);
+      agentHistory = cleanHistory(safeParse(safeGet('magi_current_history'), []));
 
       setAgentTitle(safeGet('magi_current_title') || '');
 
@@ -7250,15 +7306,25 @@
       }
       updateAgentActionButtons();
     }
+    // The request in flight, if any. Starting over (New Conversation, a soft reload) or
+    // switching to a saved chat drops it: bumping the generation tells the old agentSend()
+    // its dock is gone, so a reply that still arrives can no longer land in the new
+    // conversation's history — which is what it used to do.
+    let agentGen = 0, agentCtrl = null;
+    function dropAgentRequest() {
+      agentGen++;
+      if (agentCtrl) { agentCtrl.abort(); agentCtrl = null; }
+    }
     function resetAgent(keepOpen = false) {
+      dropAgentRequest();
       archiveCurrentHistory();
       agentHistory = []; agentBusy = false; agentDead = false;
       safeRemove('magi_current_history');
       safeRemove('magi_current_title');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
       announceAgent('');
-      agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
-      attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
+      setAgentInputEnabled(true); agentInput.value = '';
+      attachments = []; attachNotice = ''; renderAttachTray();
       agentDockEl.style.removeProperty('width');
       agentInitialState(keepOpen); // also refreshes the share/export buttons
       closeAgentPanels();
@@ -7267,12 +7333,12 @@
     // One announcement per finished turn (see the comment on #agent-log). Replaying a saved
     // session deliberately says nothing: the reader asked for it and can walk the log.
     const agentStatusEl = document.getElementById('agent-status');
-    const announceAgent = (text) => { if (agentStatusEl) agentStatusEl.textContent = text || ''; };
+    const announceAgent = (text) => { agentStatusEl.textContent = text || ''; };
     function agentDegrade(msg) {
       agentDead = true;
       agentDegraded.textContent = msg || tr('MAGI only runs in the live environment (tk.st). Legacy MAGI ↗ is still available.', 'MAGI は本番環境（tk.st）でのみ動作します。旧MAGI ↗ は引き続きご利用いただけます。');
       agentDegraded.classList.remove('hidden');
-      agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
+      setAgentInputEnabled(false);
     }
     function renderAgentError(env) {
       env = env || {};
@@ -7428,6 +7494,23 @@
       if (img) img.classList.toggle('expanded');
     });
 
+    // The two kinds of entry in the log, shared by a live send and a replayed session.
+    function userBubbleEl(content) {
+      const u = document.createElement('div');
+      u.className = 'agent-user fade-in';
+      u.innerHTML = `<span>${userContentHTML(content)}</span>`;
+      return u;
+    }
+    // An assistant turn: the persona cards (when there are any) above the integrated reply.
+    function agentTurnEl(mid, cardsHTML, reply, streaming) {
+      const turn = document.createElement('div');
+      turn.className = 'fade-in agent-turn';
+      turn.dataset.mid = mid; // リアクション状態を履歴項目と対応付けるための一意キー
+      turn.innerHTML = cardsHTML
+        + `<div class="agent-reply${streaming ? ' streaming' : ''}"><span class="agent-who">✦ ${esc(displayName())}</span><span class="agent-reply-body">${esc(reply)}</span>${reactionBarHTML('integrated')}</div>`;
+      return turn;
+    }
+
     async function agentSend() {
       if (agentBusy || agentDead) return;
       const text = agentInput.value.trim().slice(0, 1000);
@@ -7443,32 +7526,27 @@
       ];
       const sendContent = atts.length ? partsOf('url') : text;
       const storeContent = atts.length ? partsOf('thumb') : text;
-      if (agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash')) agentLog.innerHTML = '';
-      const u = document.createElement('div'); u.className = 'agent-user fade-in'; u.innerHTML = `<span>${userContentHTML(storeContent)}</span>`;
+      if (splashOnly()) agentLog.innerHTML = '';
+      const u = userBubbleEl(storeContent);
       agentLog.appendChild(u);
-      const turn = document.createElement('div'); turn.className = 'fade-in agent-turn';
-      // メッセージID：リアクション状態を履歴項目と対応付けるための一意キー
-      const mid = genMid(); turn.dataset.mid = mid; pendingReactions[mid] = {};
-      turn.innerHTML = personaCardsHTML();
-      const replyEl = document.createElement('div'); replyEl.className = 'agent-reply streaming';
-      replyEl.innerHTML = `<span class="agent-who">✦ ${esc(displayName())}</span><span class="agent-reply-body"></span>${reactionBarHTML('integrated')}`;
-      turn.appendChild(replyEl);
+      const mid = genMid(); pendingReactions[mid] = {};
+      const turn = agentTurnEl(mid, personaCardsHTML(), '', true);
       agentLog.appendChild(turn); agentScroll();
+      const replyEl = turn.querySelector('.agent-reply');
       const replyBody = replyEl.querySelector('.agent-reply-body');
 
       agentHistory.push({ role: 'user', content: storeContent });
-      safeStore('magi_current_history', agentHistory);
+      saveCurrentHistory();
 
-      agentBusy = true; agentInput.disabled = true; agentSendBtn.disabled = true; attachBtn.disabled = true;
+      agentBusy = true; setAgentInputEnabled(false);
       let reply = '', errored = false, timedOut = false;
-      const debateData = {};
-      AGENT_PERSONAS.forEach(p => {
-        debateData[p.codename] = { round1: '…', round2: '…' };
-      });
+      const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…' }]));
 
       // Abort only the connection / initial-response phase (30s). Once the stream
       // starts the debate may legitimately run long, so the timer is cleared below.
       const ctrl = new AbortController();
+      const gen = agentGen; agentCtrl = ctrl;
+      const dropped = () => gen !== agentGen; // the dock was reset / switched under us
       const connectTimer = setTimeout(() => { timedOut = true; ctrl.abort(); }, 30000);
       try {
         const theme = isDarkNow() ? 'dark' : 'light';
@@ -7487,7 +7565,7 @@
           turn.remove(); renderAgentError(env); errored = true;
         } else {
           await parseSSE(res.body, {
-            title: (d) => { if (d && d.text) { setAgentTitle(d.text); syncCurrentToSaved(); } },
+            title: (d) => { if (d && d.text && !dropped()) { setAgentTitle(d.text); syncCurrentToSaved(); } },
             persona: (d) => {
               const card = turn.querySelector(`.persona-card[data-codename="${cssEsc(d.codename)}"]`);
               if (!card) return;
@@ -7495,14 +7573,7 @@
               if (slot) { slot.hidden = false; slot.querySelector('.persona-text').textContent = d.text; }
               if (d.round === 2) card.classList.remove('thinking');
               agentScroll();
-
-              if (debateData[d.codename]) {
-                if (d.round === 2) {
-                  debateData[d.codename].round2 = d.text;
-                } else {
-                  debateData[d.codename].round1 = d.text;
-                }
-              }
+              if (debateData[d.codename]) debateData[d.codename][d.round === 2 ? 'round2' : 'round1'] = d.text;
             },
             integrated: (d) => { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
             error: (d) => { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
@@ -7511,6 +7582,7 @@
         }
       } catch (err) {
         clearTimeout(connectTimer);
+        if (dropped()) return; // aborted on purpose; the finally below still tidies up
         console.error('[agent] fetch failed', AGENT_API, err);
         turn.remove();
         // A timeout is transient — show a retryable error rather than permanently
@@ -7518,16 +7590,23 @@
         if (timedOut || err.name === 'AbortError') { errored = true; renderAgentError({ message: tr('Request timed out. Please try again.', 'リクエストがタイムアウトしました。もう一度お試しください。'), code: 'timeout' }); }
         else agentDegrade();
       } finally {
-        replyEl.classList.remove('streaming');
-        agentBusy = false;
-        if (!agentDead) { agentInput.disabled = false; agentSendBtn.disabled = false; attachBtn.disabled = false; agentInput.focus({ preventScroll: true }); }
+        if (agentCtrl === ctrl) agentCtrl = null;
+        // A dropped request leaves the dock to whoever took it over: resetAgent() has
+        // already reset these, and a later send may be busy with them by now.
+        if (!dropped()) {
+          replyEl.classList.remove('streaming');
+          agentBusy = false;
+          if (!agentDead) { setAgentInputEnabled(true); agentInput.focus({ preventScroll: true }); }
+        }
       }
+      if (dropped()) { delete pendingReactions[mid]; return; }
       if (reply && !errored) {
         // pendingReactions[mid] は同一参照のまま item.reactions になる（ストリーミング中のリアクションも引き継ぐ）
         announceAgent(tr('MAGI replied. ', 'MAGI が回答しました。') + reply);
-        agentHistory.push({ role: 'assistant', content: reply, debate: JSON.parse(JSON.stringify(debateData)), mid, reactions: pendingReactions[mid] || {} });
+        // debateData is this call's own object and the stream is over, so it is stored as is.
+        agentHistory.push({ role: 'assistant', content: reply, debate: debateData, mid, reactions: pendingReactions[mid] || {} });
         delete pendingReactions[mid];
-        safeStore('magi_current_history', agentHistory);
+        saveCurrentHistory();
         updateAgentActionButtons();
         syncCurrentToSaved();
       } else if (!turn.isConnected) {
@@ -7541,7 +7620,7 @@
         if (last && last.role === 'user' && last.content === storeContent) agentHistory.pop();
         delete pendingReactions[mid];
         u.remove();
-        if (agentHistory.length) safeStore('magi_current_history', agentHistory);
+        if (agentHistory.length) saveCurrentHistory();
         else safeRemove('magi_current_history');
         // Nothing left in the dock → restore the splash, but never on top of the error that
         // explains why (renderAgentError appended it to this same log).
@@ -7582,15 +7661,18 @@
     // 値の正規化（旧データは絵文字文字列、現行は { em, id }）
     const reEmoji = (v) => (typeof v === 'string' ? v : (v && v.em) || '');
     const reId = (v) => (v && typeof v === 'object' ? v.id : undefined);
+    // リアクション API への POST（登録も取り消しも同じ形）
+    const postReact = (body, extra) => fetch(REACT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      ...extra,
+    });
     // いいね/絵文字が付いたら request/response を DB に保存（コピーは保存しない）。挿入行の id を返す。
     async function sendReaction(target, reaction, request, response) {
       if (!response) return undefined;
       try {
-        const res = await fetch(REACT_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ target, reaction, request, response }),
-        });
+        const res = await postReact({ target, reaction, request, response });
         if (!res.ok) return undefined;
         const j = await res.json().catch(() => null);
         return j && j.id;
@@ -7599,14 +7681,7 @@
     // 取り消し：登録時に得た行 id で D1 から該当行を削除
     function deleteReaction(target, id) {
       if (id == null) return;
-      try {
-        fetch(REACT_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ op: 'remove', target, id }),
-          keepalive: true,
-        }).catch(() => { });
-      } catch (_) { }
+      try { postReact({ op: 'remove', target, id }, { keepalive: true }).catch(() => { }); } catch (_) { }
     }
     // リアクション確定：UIロック→保存→返ってきた id を store に記録して永続化
     function registerReaction(bar, target, em, ctx) {
@@ -7716,29 +7791,11 @@
     function renderHistoryToLog(history) {
       agentLog.innerHTML = '';
       history.forEach(item => {
-        if (item.role === 'user') {
-          const u = document.createElement('div');
-          u.className = 'agent-user fade-in';
-          u.innerHTML = `<span>${userContentHTML(item.content)}</span>`;
-          agentLog.appendChild(u);
-        } else {
-          const turn = document.createElement('div');
-          turn.className = 'fade-in agent-turn';
-          if (!item.mid) item.mid = genMid(); // 旧データには mid を遅延付与
-          turn.dataset.mid = item.mid;
-
-          if (item.debate) {
-            turn.innerHTML = personaCardsHTML(item.debate);
-          }
-
-          const replyEl = document.createElement('div');
-          replyEl.className = 'agent-reply';
-          replyEl.innerHTML = `<span class="agent-who">✦ ${esc(displayName())}</span><span class="agent-reply-body">${esc(item.content)}</span>${reactionBarHTML('integrated')}`;
-          turn.appendChild(replyEl);
-
-          applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
-          agentLog.appendChild(turn);
-        }
+        if (item.role === 'user') { agentLog.appendChild(userBubbleEl(item.content)); return; }
+        if (!item.mid) item.mid = genMid(); // 旧データには mid を遅延付与
+        const turn = agentTurnEl(item.mid, item.debate ? personaCardsHTML(item.debate) : '', item.content, false);
+        applyReactionsToTurn(turn, item.reactions); // 保存済みリアクションを復元
+        agentLog.appendChild(turn);
       });
       agentScroll();
     }
@@ -7763,7 +7820,7 @@
 
       const firstText = contentText(firstUserMsg.content) || tr('Image', '画像');
       const title = agentTitle || (firstText.slice(0, 30) + (firstText.length > 30 ? '...' : ''));
-      let sessions = safeParse(safeGet('magi_saved_sessions'), []);
+      let sessions = loadSavedSessions();
 
       if (currentSessionId) {
         // 既存セッションを更新：一旦リストから取り除く（このあと先頭に再挿入）
@@ -7805,7 +7862,7 @@
           <button class="agent-panel-close text-[10px] text-secondary hover:text-primary cursor-pointer border-none bg-transparent">✕ ${tr('CLOSE', '閉じる')}</button>
         </div>
         ${bodyHTML}`;
-      document.getElementById('agentdock').appendChild(panel);
+      agentDockEl.appendChild(panel);
       panel.querySelector('.agent-panel-close').addEventListener('click', () => panel.remove());
       return panel;
     }
@@ -7814,16 +7871,23 @@
       const panel = makeAgentPanel('agent-history-panel', tr('Saved Chats', '保存されたチャット'),
         `<div class="flex-1 overflow-y-auto space-y-1.5 pr-1" id="agent-history-list"></div>`);
       if (!panel) return;
+      // One listener for the panel's lifetime: the list re-renders underneath it.
+      panel.querySelector('#agent-history-list').addEventListener('click', (e) => {
+        const del = e.target.closest('.btn-delete-session');
+        if (del) { deleteSavedSession(del.dataset.id); return; }
+        const load = e.target.closest('.btn-load-session');
+        if (load) { loadSavedSession(load.dataset.id); panel.remove(); }
+      });
       renderSavedSessionsList();
     }
 
     function renderSavedSessionsList() {
       const listContainer = document.getElementById('agent-history-list');
-      if (!listContainer) return;
+      if (!listContainer) return; // the panel is closed
 
       // Everything below is read back from localStorage, so it is treated as untrusted like
       // any other outside input — ids go through esc() the same way titles do.
-      const sessions = safeParse(safeGet('magi_saved_sessions'), []);
+      const sessions = loadSavedSessions();
       if (sessions.length === 0) {
         listContainer.innerHTML = `<div class="text-center text-secondary py-8">${tr('No saved conversations.', '保存されたチャット履歴はありません。')}</div>`;
         return;
@@ -7840,34 +7904,20 @@
           </button>
         </div>
       `).join('');
-
-      listContainer.querySelectorAll('.btn-load-session').forEach(el => {
-        el.addEventListener('click', () => {
-          const id = el.dataset.id;
-          loadSavedSession(id);
-          const panel = document.getElementById('agent-history-panel');
-          if (panel) panel.remove();
-        });
-      });
-
-      listContainer.querySelectorAll('.btn-delete-session').forEach(el => {
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = el.dataset.id;
-          deleteSavedSession(id);
-        });
-      });
     }
 
     function loadSavedSession(id) {
       syncCurrentToSaved(); // 現在の会話を保存
 
-      const sessions = safeParse(safeGet('magi_saved_sessions'), []);
-      const session = sessions.find(s => s.id === id);
+      const session = loadSavedSessions().find(s => s.id === id);
       if (!session) return;
 
-      agentHistory = [...session.history];
-      safeStore('magi_current_history', agentHistory);
+      // A reply still streaming belongs to the chat being left, not to this one.
+      dropAgentRequest();
+      agentBusy = false;
+      if (!agentDead) setAgentInputEnabled(true);
+      agentHistory = cleanHistory(session.history);
+      saveCurrentHistory();
       setAgentTitle(session.title || '');
       // ロードしたセッションを現在のセッションとして追跡
       currentSessionId = session.id;
@@ -7879,9 +7929,7 @@
     function deleteSavedSession(id) {
       // 削除対象が現在のセッションなら追跡を解除
       if (currentSessionId === id) archiveCurrentHistory();
-      let sessions = safeParse(safeGet('magi_saved_sessions'), []);
-      sessions = sessions.filter(s => s.id !== id);
-      safeStore('magi_saved_sessions', sessions);
+      safeStore('magi_saved_sessions', loadSavedSessions().filter(s => s.id !== id));
       renderSavedSessionsList();
     }
 
@@ -7910,22 +7958,20 @@
 
     const moreBtn = document.getElementById('btn-more-agent');
     const moreDropdown = document.getElementById('agent-more-dropdown');
-    if (moreBtn && moreDropdown) {
-      moreBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        moreDropdown.classList.toggle('hidden');
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      moreDropdown.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!moreDropdown.classList.contains('hidden') && !e.target.closest('#agent-more-dropdown')) {
+        moreDropdown.classList.add('hidden');
+      }
+    });
+    moreDropdown.querySelectorAll('button, a').forEach(item => {
+      item.addEventListener('click', () => {
+        moreDropdown.classList.add('hidden');
       });
-      document.addEventListener('click', (e) => {
-        if (!moreDropdown.classList.contains('hidden') && !e.target.closest('#agent-more-dropdown')) {
-          moreDropdown.classList.add('hidden');
-        }
-      });
-      moreDropdown.querySelectorAll('button, a').forEach(item => {
-        item.addEventListener('click', () => {
-          moreDropdown.classList.add('hidden');
-        });
-      });
-    }
+    });
 
     // エクスポート＆共有ロジック
     function updateAgentActionButtons() {
@@ -7936,7 +7982,7 @@
       // from the tab order and the accessibility tree, so set both.
       ['btn-share-agent', 'btn-export-agent'].forEach(id => {
         const btn = document.getElementById(id);
-        if (btn) { btn.classList.toggle('disabled', !hasHistory); btn.disabled = !hasHistory; }
+        btn.classList.toggle('disabled', !hasHistory); btn.disabled = !hasHistory;
       });
     }
 
@@ -7989,12 +8035,11 @@
         await navigator.clipboard.writeText(md);
         const originalTitle = btn.getAttribute('title');
         btn.setAttribute('title', 'Copied to clipboard! ✓');
-        const agentTitleBtn = document.getElementById('agentdock-title');
-        const originalText = agentTitleBtn.innerHTML;
-        agentTitleBtn.innerHTML = `<span class="text-sm inline-block">✓</span> COPIED!`;
+        const originalText = agentTitleEl.innerHTML;
+        agentTitleEl.innerHTML = `<span class="text-sm inline-block">✓</span> COPIED!`;
         setTimeout(() => {
           btn.setAttribute('title', originalTitle);
-          agentTitleBtn.innerHTML = originalText;
+          agentTitleEl.innerHTML = originalText;
         }, 2000);
       } catch (err) {
         console.error('Clipboard copy failed', err);
@@ -8034,7 +8079,6 @@
     const notifList = document.getElementById('notif-center-list');
 
     function updateNotifBell() {
-      if (!notifBell || !notifCount) return;
       notifCount.textContent = unreadNotifications > 99 ? '99+' : String(unreadNotifications);
       notifCount.classList.toggle('hidden', unreadNotifications === 0);
       notifBell.classList.toggle('has-unread', unreadNotifications > 0);
@@ -8047,7 +8091,6 @@
       notifBell.title = title;
     }
     function renderNotifCenter() {
-      if (!notifList) return;
       const fmt = d => d.toTimeString().slice(0, 5);
       notifList.innerHTML = notifications.length
         ? notifications.map(n => `<div class="notif-row ${n.type === 'warn' ? 'warn' : ''}"><span class="notif-ic">${n.type === 'warn' ? '⚠' : '✓'}</span><span class="notif-tx">${esc(n.msg)}</span><span class="notif-tm">${fmt(n.t)}</span></div>`).join('')
@@ -8057,31 +8100,28 @@
     function showToast(msg, type) {
       // Record into the notification center first (so the bell reflects it even if the toast is missed).
       pushCapped(notifications, { msg, type: type === 'warn' ? 'warn' : 'info', t: new Date() }, MAX_NOTIFICATIONS);
-      if (notifCenter && !notifCenter.classList.contains('hidden')) { renderNotifCenter(); }
+      if (!notifCenter.classList.contains('hidden')) { renderNotifCenter(); }
       else { unreadNotifications++; updateNotifBell(); }
 
-      const c = document.getElementById('toast-container');
-      if (!c) return;
       const t = document.createElement('div');
       t.className = 'toast' + (type === 'warn' ? ' warn' : '');
       const icon = type === 'warn' ? '⚠' : '✓';
       t.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-msg">${esc(msg)}</span><button type="button" class="toast-close" title="${tr('Dismiss', '閉じる')}" aria-label="${tr('Dismiss', '閉じる')}"><span aria-hidden="true">✕</span></button>`;
-      c.appendChild(t);
+      document.getElementById('toast-container').appendChild(t);
       const remove = () => { t.classList.add('hide'); setTimeout(() => t.remove(), 300); };
       t.querySelector('.toast-close').addEventListener('click', remove);
       setTimeout(remove, 4200);
     }
 
-    function openNotifCenter() { if (!notifCenter) return; unreadNotifications = 0; updateNotifBell(); renderNotifCenter(); notifCenter.classList.remove('hidden'); }
-    function closeNotifCenter() { if (notifCenter) notifCenter.classList.add('hidden'); }
-    if (notifBell) notifBell.addEventListener('click', (e) => {
+    function openNotifCenter() { unreadNotifications = 0; updateNotifBell(); renderNotifCenter(); notifCenter.classList.remove('hidden'); }
+    function closeNotifCenter() { notifCenter.classList.add('hidden'); }
+    notifBell.addEventListener('click', (e) => {
       e.stopPropagation();
       notifCenter.classList.contains('hidden') ? openNotifCenter() : closeNotifCenter();
     });
-    const notifClear = document.getElementById('notif-center-clear');
-    if (notifClear) notifClear.addEventListener('click', (e) => { e.stopPropagation(); notifications.length = 0; unreadNotifications = 0; updateNotifBell(); renderNotifCenter(); });
+    document.getElementById('notif-center-clear').addEventListener('click', (e) => { e.stopPropagation(); notifications.length = 0; unreadNotifications = 0; updateNotifBell(); renderNotifCenter(); });
     document.addEventListener('click', (e) => {
-      if (notifCenter && !notifCenter.classList.contains('hidden') && !e.target.closest('#notif-center, #notif-bell')) closeNotifCenter();
+      if (!notifCenter.classList.contains('hidden') && !e.target.closest('#notif-center, #notif-bell')) closeNotifCenter();
     });
 
     // --- Editor gutter (line numbers + hover active line) ---
@@ -8089,21 +8129,14 @@
     // both divide by it, and all three used to spell 20 separately.
     const LINE_H = 20;
     function updateGutter() {
-      const gutter = document.getElementById('editor-gutter');
-      const content = document.getElementById('editor-content');
-      const ed = document.getElementById('editor');
-      if (!gutter || !content || !ed) return;
-      const h = Math.max(content.scrollHeight, ed.clientHeight);
+      const h = Math.max(DOM.editorContent.scrollHeight, DOM.editor.clientHeight);
       const n = Math.max(1, Math.ceil(h / LINE_H));
       let html = '';
       for (let i = 1; i <= n; i++) html += `<div class="ed-ln">${i}</div>`;
-      gutter.innerHTML = html;
+      DOM.gutter.innerHTML = html;
     }
     (function setupGutterHover() {
-      const ed = document.getElementById('editor');
-      const gutter = document.getElementById('editor-gutter');
-      const content = document.getElementById('editor-content');
-      if (!ed || !gutter || !content) return;
+      const { editor: ed, gutter, editorContent: content } = DOM;
       // getComputedStyle() and getBoundingClientRect() force layout, and this fires on every
       // mousemove across the reading pane. Neither value changes as the cursor moves, so both
       // are measured once and refreshed only on scroll/resize.
@@ -8145,19 +8178,18 @@
       else DOM.input.removeAttribute('aria-activedescendant');
     }
     function renderSuggest() {
-      if (!suggestBox) return;
       if (!suggestItems.length) { suggestBox.classList.add('hidden'); syncSuggestAria(); return; }
       suggestBox.classList.remove('hidden');
       suggestBox.innerHTML = suggestItems.map((c, i) => {
         const m = treeMeta(c);
         return `<div class="sg-item ${i === suggestSel ? 'active' : ''}" id="sg-item-${i}" role="option" aria-selected="${i === suggestSel ? 'true' : 'false'}" data-i="${i}">
-          <span class="sg-icon" aria-hidden="true" style="color:${iconColor(c, m.name)}">${esc(m.icon || '›')}</span>
+          <span class="sg-icon" aria-hidden="true" style="color:${iconColor(c)}">${esc(m.icon)}</span>
           <span class="sg-label">${esc(c)}</span>
           <span class="sg-desc">${esc(cdesc(c))}</span></div>`;
       }).join('');
       syncSuggestAria();
     }
-    function closeSuggest() { suggestItems = []; suggestSel = -1; if (suggestBox) suggestBox.classList.add('hidden'); syncSuggestAria(); }
+    function closeSuggest() { suggestItems = []; suggestSel = -1; suggestBox.classList.add('hidden'); syncSuggestAria(); }
     function moveSuggest(dir) { if (!suggestItems.length) return; suggestSel = wrapIndex(suggestSel, dir, suggestItems.length); renderSuggest(); }
     function acceptSuggest(i) { const c = suggestItems[i]; if (c == null) return; DOM.input.value = c; updateCaret(); closeSuggest(); DOM.input.focus({ preventScroll: true }); }
     DOM.input.addEventListener('input', () => {
@@ -8169,7 +8201,7 @@
       renderSuggest();
     });
     DOM.input.addEventListener('blur', () => setTimeout(closeSuggest, 120));
-    if (suggestBox) suggestBox.addEventListener('mousedown', (e) => {
+    suggestBox.addEventListener('mousedown', (e) => {
       const it = e.target.closest('.sg-item'); if (!it) return;
       e.preventDefault();
       // Accept, don't run — same as [Tab], and same as clicking a VS Code completion.
@@ -8184,11 +8216,10 @@
     }
     // The bottom panel and its drag handle always collapse together.
     function setPanelCollapsed(collapsed) {
-      document.getElementById('panel').classList.toggle('collapsed', collapsed);
-      const rsz = document.getElementById('panel-resizer');
-      if (rsz) rsz.classList.toggle('collapsed', collapsed);
+      DOM.panel.classList.toggle('collapsed', collapsed);
+      DOM.panelResizer.classList.toggle('collapsed', collapsed);
     }
-    function togglePanel() { setPanelCollapsed(!document.getElementById('panel').classList.contains('collapsed')); }
+    function togglePanel() { setPanelCollapsed(!DOM.panel.classList.contains('collapsed')); }
     function focusTerminal() {
       setPanelCollapsed(false);
       showPanel('terminal');
@@ -8213,21 +8244,16 @@
           { icon: '✦', label: tr('View: Toggle ST Multi Agent', '表示: ST マルチエージェントの切替'), run: toggleAgentDock },
           { icon: '❯', label: tr('Terminal: Focus', 'ターミナル: フォーカス'), run: focusTerminal },
         ];
-        const cmds = availableCmdKeys().sort().map(c => {
-          const m = treeMeta(c);
-          return { icon: m.icon || '›', iconColor: iconColor(c, m.name), label: c, desc: cdesc(c), run: () => runFromPalette(c) };
-        });
+        const cmds = availableCmdKeys().sort().map(c =>
+          ({ icon: treeMeta(c).icon, iconColor: iconColor(c), label: c, desc: cdesc(c), run: () => runFromPalette(c) }));
         return actions.concat(cmds);
       }
-      const files = ['welcome', ...sidebarFiles, ...installedList()];
-      const seen = new Set(), items = [];
-      files.forEach(c => {
-        if (seen.has(c)) return; seen.add(c);
+      // welcome, the Explorer's files and the installed extensions never overlap.
+      const files = ['welcome', ...sidebarFiles, ...installedExtensions].map(c => {
         const m = treeMeta(c);
-        items.push({ icon: m.icon || '•', iconColor: iconColor(c, m.name), label: m.name, desc: cdesc(c), run: () => (c === 'welcome' ? openDoc('welcome', welcomeHTML()) : runFromPalette(c)) });
+        return { icon: m.icon, iconColor: iconColor(c), label: m.name, desc: cdesc(c), run: () => (c === 'welcome' ? openDoc('welcome', welcomeHTML()) : runFromPalette(c)) };
       });
-      projects.forEach(p => items.push({ icon: '↗', iconColor: getPrimaryColor(), label: p.name, desc: pick(p, 'desc'), run: () => runFromPalette(p.name) }));
-      return items;
+      return files.concat(projects.map(p => ({ icon: '↗', iconColor: getPrimaryColor(), label: p.name, desc: pick(p, 'desc'), run: () => runFromPalette(p.name) })));
     }
     function fuzzyScore(q, text) {
       text = text.toLowerCase();
@@ -8268,7 +8294,7 @@
       if (active) active.scrollIntoView({ block: 'nearest' });
     }
     function openPalette(initial) {
-      if (isMatrixActive || isMeditationActive) return;
+      if (overlayActive()) return;
       closeSuggest();
       paletteEl.classList.remove('hidden');
       paletteSel = 0;
@@ -8298,8 +8324,7 @@
     paletteEl.addEventListener('mousedown', (e) => { if (e.target === paletteEl) closePalette(); });
 
     // --- Status bar remote badge → opens the palette ---
-    const remoteBadge = document.getElementById('remote-badge');
-    if (remoteBadge) remoteBadge.addEventListener('click', () => openPalette('>'));
+    document.getElementById('remote-badge').addEventListener('click', () => openPalette('>'));
 
     // --- APK Download Modal Control ---
     const apkModal = document.getElementById('apk-download-modal');
@@ -8309,7 +8334,7 @@
     // close button + download link; the palette: its input), so no visibility filtering
     // is needed.
     const focusablesIn = (root) => Array.from(root.querySelectorAll('a[href], button:not([disabled]), input:not([disabled])'));
-    const apkOpen = () => !!apkModal && apkModal.classList.contains('active');
+    const apkOpen = () => apkModal.classList.contains('active');
     const paletteOpen = () => !paletteEl.classList.contains('hidden');
     // "Some dialog owns the keyboard." Both of these are aria-modal, so the global
     // shortcuts must stand down for either — otherwise Ctrl+Shift+P opens the palette
@@ -8321,7 +8346,6 @@
     let apkLastFocus = null;
 
     function showApkDownloadModal() {
-      if (!apkModal) return;
       // The QR is an inline SVG filled with currentColor via .text-primary, so it tracks
       // the theme on its own — nothing to rebuild, and no request to a third-party host.
       apkLastFocus = document.activeElement;
@@ -8330,7 +8354,7 @@
       // visibility:hidden and focus() is a silent no-op. Reading `visibility` forces a
       // style recalc only; the usual `void offsetWidth` idiom would force a full layout.
       void getComputedStyle(apkModal).visibility;
-      if (apkCloseBtn) apkCloseBtn.focus();
+      apkCloseBtn.focus();
     }
 
     function closeApkDownloadModal() {
@@ -8342,14 +8366,10 @@
       apkLastFocus = null;
     }
 
-    if (apkCloseBtn) {
-      apkCloseBtn.addEventListener('click', closeApkDownloadModal);
-    }
-    if (apkModal) {
-      apkModal.addEventListener('mousedown', (e) => {
-        if (e.target === apkModal) closeApkDownloadModal();
-      });
-    }
+    apkCloseBtn.addEventListener('click', closeApkDownloadModal);
+    apkModal.addEventListener('mousedown', (e) => {
+      if (e.target === apkModal) closeApkDownloadModal();
+    });
     document.addEventListener('keydown', (e) => {
       // Key check first: this fires on every keystroke, and typing is the whole page.
       if (e.key !== 'Escape' && e.key !== 'Tab') return;
@@ -8377,20 +8397,25 @@
     // --- Global keyboard shortcuts ---
     let chordK = false, chordTimer = null;
     document.addEventListener('keydown', (e) => {
-      if (isMatrixActive || isMeditationActive) return;
+      if (overlayActive()) return;
       const mod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase(); // Shift (and Caps Lock) turn 'p' into 'P'
       if (chordK) {
         chordK = false; if (chordTimer) clearTimeout(chordTimer);
-        if (mod && (e.key === 't' || e.key === 'T')) { e.preventDefault(); toggleTheme(); return; }
+        if (mod && key === 't') { e.preventDefault(); toggleTheme(); return; }
       }
-      if (modalOpen()) return; // an open dialog owns the keyboard
-      if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette('>'); return; }
-      if (mod && !e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); openPalette(''); return; }
-      if (mod && (e.key === 'b' || e.key === 'B')) { e.preventDefault(); toggleSidebar(); return; }
-      if (mod && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); togglePanel(); return; }
-      if (mod && e.key === '`') { e.preventDefault(); focusTerminal(); return; }
-      if (mod && e.key === ',') { e.preventDefault(); toggleTheme(); return; }
-      if (mod && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); chordK = true; chordTimer = setTimeout(() => { chordK = false; }, 1500); return; }
+      if (modalOpen() || !mod) return; // an open dialog owns the keyboard
+      const SHORTCUTS = {
+        p: () => openPalette(e.shiftKey ? '>' : ''),
+        b: toggleSidebar,
+        j: togglePanel,
+        '`': focusTerminal,
+        ',': toggleTheme,
+        k: () => { chordK = true; chordTimer = setTimeout(() => { chordK = false; }, 1500); }
+      };
+      if (!hasOwn(SHORTCUTS, key)) return;
+      e.preventDefault();
+      SHORTCUTS[key]();
     });
 
     boot();

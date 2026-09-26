@@ -498,6 +498,8 @@
     .alt .len { margin-left: auto; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
 
     .nomatch { border: 1px dashed var(--line); border-radius: 2px; padding: 22px 18px; text-align: center; color: var(--faint); font-size: 13px; }
+    /* 検索結果の下の「一覧に無い曲を…」。候補の下にも、見つからなかった札の下にも置く */
+    #toFree { margin-top: 12px; }
 
     .rows { display: flex; flex-direction: column; gap: 7px; }
 
@@ -964,6 +966,43 @@
     .magi-head .mt { font-size: 15px; letter-spacing: .24em; line-height: 1.2; font-family: var(--f-display); color: var(--heart-secondary); }
     .magi-head .ms { font-size: 11.5px; letter-spacing: .04em; margin-top: 3px; font-family: var(--f-body); color: var(--fg-dim); }
 
+    /* AI への送信先と保持方針は、相談の流れを止めないよう情報ボタンの中に置く */
+    .ai-info { position: relative; align-self: flex-start; margin-left: auto; }
+    .ai-info summary {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      place-items: center;
+      list-style: none;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--fg-dim);
+      font: 700 14px/1 var(--f-body);
+      cursor: pointer;
+    }
+    .ai-info summary::-webkit-details-marker { display: none; }
+    .ai-info summary:hover,
+    .ai-info summary:focus-visible,
+    .ai-info[open] summary { border-color: var(--heart-secondary); color: var(--heart-secondary); }
+    .ai-info-card {
+      position: absolute;
+      z-index: 20;
+      top: 38px;
+      right: 0;
+      width: min(350px, calc(100vw - 44px));
+      padding: 15px 17px;
+      border: 1px solid var(--heart-secondary);
+      background: var(--card);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, .48);
+      color: var(--fg-dim);
+      font: 12px/1.65 var(--f-body);
+    }
+    .ai-info-card strong { color: var(--fg); }
+    .ai-info-card ul { margin: 0; padding-left: 1.25em; }
+    .ai-info-card li + li { margin-top: 7px; }
+    .ai-info-card .warn { color: var(--heart-primary); font-weight: 700; }
+
     .seeds { display: flex; flex-wrap: wrap; gap: 7px; }
 
     .seed { padding: 7px 12px; text-align: left; }
@@ -1205,6 +1244,17 @@
             <div class="mt">MAGI</div>
             <div class="ms">Shinya Takeda AI — 選曲相談</div>
           </div>
+          <details class="ai-info">
+            <summary title="AI相談の送信先とデータの扱い" aria-label="AI相談の送信先とデータの扱い">i</summary>
+            <div class="ai-info-card">
+              <ul>
+                <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Google Gemini の3社すべて</strong>へ送信されます。</li>
+                <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
+                <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）、Google の有料 Gemini は一定期間記録（製品改善には不使用）、DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
+                <li class="warn">機密情報や個人情報は入力しないでください。</li>
+              </ul>
+            </div>
+          </details>
         </div>
         <p class="lede">曲名が決まっていなくても大丈夫。<br>気分やシーンを話しかけると、<b>DJ 本人の思考を模した 3つの AI</b> が合議して、曲を挙げてくれます。</p>
         <div class="seeds" id="seeds">
@@ -1348,7 +1398,7 @@
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
-  <script src="../../data/dj-request-core.js?v=20260926"></script>
+  <script src="../../data/dj-request-core.js?v=20260927"></script>
   <script>
     const API = '/dj/api/req';
     const {
@@ -1504,6 +1554,35 @@
       return html;
     }
 
+    /* iTunes Search API の通信口。検索欄は次の入力で中断し、AI 回答の照合は
+       指定時間で打ち切る。用途ごとの違いは options に残し、URL と JSON 読み込みは共通にする。 */
+    const itunes = (() => {
+      const BASE = 'https://itunes.apple.com';
+
+      async function read(path, { signal, timeout = 0 } = {}) {
+        const controller = timeout ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), timeout) : null;
+        try {
+          const res = await fetch(BASE + path, { signal: controller ? controller.signal : signal });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return await res.json();
+        } finally {
+          if (timer !== null) clearTimeout(timer);
+        }
+      }
+
+      return {
+        search(term, { country = 'JP', limit = 50, ...options } = {}) {
+          return read('/search?term=' + encodeURIComponent(term) + '&entity=song&limit=' + limit +
+            '&country=' + encodeURIComponent(country), options);
+        },
+        lookup(ids, { country = 'US', ...options } = {}) {
+          const value = Array.isArray(ids) ? ids.join(',') : String(ids || '');
+          return read('/lookup?id=' + value + '&country=' + encodeURIComponent(country), options);
+        },
+      };
+    })();
+
     /* 待っている検索と通信中の検索を止める。新しく検索するときも、欄を空にするときも、
        短すぎて検索しないときも必ず通す。残すと、古い結果が遅れて出る */
     function abortSearch() {
@@ -1519,26 +1598,19 @@
       box.innerHTML = loadingHTML('検索中…');
 
       searchAbort = new AbortController();
-      const url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) +
-        '&entity=song&limit=50&country=JP';
       try {
-        const res = await fetch(url, { signal: searchAbort.signal });
-        const data = await res.json();
+        const data = await itunes.search(q, { signal: searchAbort.signal });
         groupsCache = refine(data.results || []);
       } catch (e) {
         if (e.name === 'AbortError') return;
         box.innerHTML = '<div class="nomatch">検索に失敗しました。電波の良い場所で試してみてください。</div>';
         return;
       }
-      if (!groupsCache.length) {
-        box.innerHTML = '<div class="nomatch">「' + esc(q) + '」に合う曲が見つかりませんでした</div>' +
-          '<div style="height:10px"></div>' +
-          '<button class="linkbtn" id="toFree">一覧に無い曲をリクエストする →</button>';
-        return;
-      }
-      box.innerHTML = '<div class="cands">' + groupsCache.map(candHTML).join('') + '</div>' +
-        '<div style="height:12px"></div>' +
-        '<button class="linkbtn" id="toFree">この中に無い曲をリクエストする →</button>';
+      const found = groupsCache.length > 0;
+      box.innerHTML = (found
+        ? '<div class="cands">' + groupsCache.map(candHTML).join('') + '</div>'
+        : '<div class="nomatch">「' + esc(q) + '」に合う曲が見つかりませんでした</div>') +
+        '<button class="linkbtn" id="toFree">' + (found ? 'この中に無い曲' : '一覧に無い曲') + 'をリクエストする →</button>';
     }
 
     $('#q').addEventListener('input', (e) => {
@@ -1733,26 +1805,12 @@
       storage.setJSON(TOKEN_KEY, saved);
     };
 
-    /* iTunes の API を JSON で読む。本文の読み込みまで含めて ms で打ち切る
-       （ヘッダーだけ届いて止まる回線がある） */
-    async function itunesJson(url, ms) {
-      const ac = new AbortController();
-      const to = setTimeout(() => ac.abort(), ms);
-      try {
-        const res = await fetch(url, { signal: ac.signal });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.json();
-      } finally {
-        clearTimeout(to);
-      }
-    }
-
     /** rekordbox の検索で当たりやすいラテン表記を US ストアフロントから取る。
         trackId はストアフロント共通なので同じ曲を引ける。失敗しても送信は続ける。 */
     async function latinArtist(trackId) {
       if (!trackId) return '';
       try {
-        const d = await itunesJson('https://itunes.apple.com/lookup?id=' + trackId + '&country=US', 2500);
+        const d = await itunes.lookup(trackId, { country: 'US', timeout: 2500 });
         return (d.results && d.results[0] && d.results[0].artistName) || '';
       } catch { return ''; }
     }
@@ -2022,7 +2080,8 @@
 
     async function openPast(code) {
       const req = ++pastReq;
-      // 過去の回にはプレーヤーが無いので、試聴は止めない（曲の詳細から戻るときは呼ぶ側で止める）
+      // 過去の回にはプレーヤーが無いので、ここでは試聴を止めない（曲の詳細から戻るときは呼ぶ側で止める）
+
       // 曲の詳細から戻ってくるときの行き先。読み込みに失敗しても残す
       $('#pastRows').dataset.ev = code;
       $('#pastTitle').textContent = '読み込んでいます';
@@ -2171,9 +2230,13 @@
       }
     }
 
-    $('#pane-board').addEventListener('click', (e) => {
+    // いいねは一覧にも曲の詳細にも出るので、まとめて拾う（終わった回の ♥ は data-like を持たない）
+    $('.sheet').addEventListener('click', (e) => {
       const like = e.target.closest('.like[data-like]');
-      if (like) { toggleLike(Number(like.dataset.like)); return; }
+      if (like) toggleLike(Number(like.dataset.like));
+    });
+
+    $('#pane-board').addEventListener('click', (e) => {
       const ev = e.target.closest('.evrow[data-ev]');
       if (ev) { openPast(ev.dataset.ev); return; }
       // 曲の行（.rowopen）も NOW PLAYING のカード（.now）も data-song を持つ
@@ -2192,11 +2255,6 @@
     $('#songBack').addEventListener('click', () => {
       stopAudio();   // 確認画面の「戻る」と同じく、閉じる画面の試聴は止める
       if (songFrom) openPast(songFrom); else openBoard();
-    });
-
-    $('#pane-song').addEventListener('click', (e) => {
-      const like = e.target.closest('.like[data-like]');
-      if (like) toggleLike(Number(like.dataset.like));
     });
 
     autoGrow($('#mineMsg'));
@@ -2222,8 +2280,6 @@
             songId: s.id,
             title: '変更しました',
             track: { title: s.title, artist: s.isFree ? '' : s.artist },
-            pos: '',
-            celebrate: false,
           });
         } catch (e) {
           if (handleMineLock(e)) return;
@@ -2260,18 +2316,22 @@
        tk.st の MAGI と同じ Worker（/magi2/chat）を SSE で読む。3人格の短い意見が
        先に流れ、続いて統合された「Shinya Takeda」の回答が delta で届く。人格の
        プロンプトは Worker 側にあるので、DJ の文脈（イベント名・かかった曲・
-       得意ジャンル）は最初のユーザー発言の前置きとして渡す。 */
+       得意ジャンル）は送る窓の最初のユーザー発言の前置きとして渡す。 */
     const MAGI_API = 'https://workers.tk.st/magi2/chat';
+    /* Worker は段階（初回・討議・統合）が終わるまで何も送らないので、いちばん長い
+       統合の待ち（workers/magi2/personas.js の synthesizer_ms）より少し長く取る */
+    const MAGI_IDLE_MS = 25000;
     const MAGI_PERSONAS = [
       { cn: 'MELCHIOR-1', ja: '熱狂者' },
       { cn: 'BALTHASAR-2', ja: '人間主義者' },
       { cn: 'CASPER-3', ja: '戦略家' },
     ];
     const CHAT_MAX = 12;          // Worker 側も同数で trim される
-    let chatHistory = [];
-    let chatBusy = false, contextSent = false;
+    let chatHistory = [];      // 会話だけ。DJ の文脈は入れず、送るときに messagesForMagi が付ける
+    let chatBusy = false;
 
-    /* イベントの状況を前置きにする。取れなくても相談自体は続けられる。 */
+    /* イベントの状況を前置きにする。取れなくても相談自体は続けられる。
+       送るたびに作り直す（相談の途中や、履歴から開き直したあとにかかった曲も「かけた曲」に入れるため） */
     async function djContext() {
       let title = '', played = [], waiting = [];
       try {
@@ -2297,7 +2357,8 @@
       return L.join('\n');
     }
 
-    /* 状況説明の終わりの目印。別の回の相談を開き直したとき、古い状況をここまで切り落とす */
+    /* 状況説明の終わりの目印。旧形式の保存データは最初の発言に文脈が埋め込まれているので、
+       開き直すときにここまで切り落とす */
     const CONTEXT_END = '--- ここからユーザーの相談 ---';
     function stripContext(m) {
       const s = String(m.content || '');
@@ -2305,14 +2366,25 @@
       return i < 0 ? m : { ...m, content: s.slice(i + CONTEXT_END.length).replace(/^\n/, '') };
     }
 
-    /* SSE を event / data ブロックに切り分けて handlers に流す */
-    async function parseSSE(body, handlers) {
+    /* Worker に渡す直近12件。先頭が回答だけになる場合は切り落とし、残った最初の発言
+       （＝ユーザーの発言）の頭に DJ の文脈を付ける。最初の発言が窓から落ちても文脈は残る */
+    function messagesForMagi(context) {
+      const messages = chatHistory.slice(-CHAT_MAX).map((m) => ({ ...m }));
+      while (messages[0] && messages[0].role === 'assistant') messages.shift();
+      if (messages[0]) messages[0].content = context + '\n' + messages[0].content;
+      return messages;
+    }
+
+    /* SSE を event / data ブロックに切り分けて handlers に流す。
+       onChunk は本文のかたまりが届くたびに呼ぶ（無通信の見張りを延ばすため） */
+    async function parseSSE(body, handlers, onChunk) {
       const reader = body.getReader();
       const dec = new TextDecoder();
       let buf = '';
       for (;;) {
         const r = await reader.read();
         if (r.done) break;
+        if (onChunk) onChunk();
         buf += dec.decode(r.value, { stream: true });
         let i;
         while ((i = buf.indexOf('\n\n')) >= 0) {
@@ -2360,6 +2432,9 @@
       log.appendChild(turn);
       return turn;
     }
+
+    // 人格カードの中の、初回（1）か討議後（2）の枠。それ以外の回は null
+    const roundSlot = (card, round) => card.querySelector('.pr[data-round="' + round + '"]');
 
     // 回答が届き終わった（または履歴から組み直した）ターンの見た目を落ち着かせる
     function finishTurn(turn) {
@@ -2429,8 +2504,7 @@
         const artist = cut[0], title = cut.slice(1).join(' - ');
         const want = titleKeys(splitVariant(title).base || title);
         try {
-          const d = await itunesJson('https://itunes.apple.com/search?term=' +
-            encodeURIComponent(artist + ' ' + title) + '&entity=song&limit=25&country=JP', 8000);
+          const d = await itunes.search(artist + ' ' + title, { country: 'JP', limit: 25, timeout: 8000 });
           const wantArtist = artistKeys(artist);
           // 並びは関連度順のまま
           const titled = toTracks(d.results || []).filter((t) => sameTitle(t.title, want));
@@ -2445,7 +2519,7 @@
       let us = null;   // trackId → US ストアの結果。null は引けなかった
       if (ids.length) {
         try {
-          const d = await itunesJson('https://itunes.apple.com/lookup?country=US&id=' + ids.join(','), 6000);
+          const d = await itunes.lookup(ids, { country: 'US', timeout: 6000 });
           us = new Map((d.results || []).map((r) => [r.trackId, r]));
         } catch { /* US で確かめられなかった分は unknown に回る */ }
       }
@@ -2491,20 +2565,20 @@
         ok.push(c.track);
       }
       pickTracksOf.set(wrap, ok);
-      const chips = (list) => '<div class="picks">' + list.map((c) =>
-        '<button class="pick" data-q="' + esc(c.label) + '">' + esc(c.label) + '</button>').join('') + '</div>';
-      const missing = checked.filter((c) => c.state === 'missing');
-      const unknown = checked.filter((c) => c.state === 'unknown');
       let html = '';
       if (ok.length) {
         html += '<p class="picklede">Apple Music で見つかった曲です。タップするとリクエストできます</p>' +
           '<div class="cands">' + ok.map((t, i) => candButtonHTML(t, 'data-p="' + i + '"')).join('') + '</div>';
       }
-      if (missing.length) {
-        html += '<p class="picklede">Apple Music で照合できなかった曲です。タップすると検索して探せます</p>' + chips(missing);
-      }
-      if (unknown.length) {
-        html += '<p class="picklede">通信の都合で確かめられなかった曲です。タップすると検索して探せます</p>' + chips(unknown);
+      for (const [state, lede] of [
+        ['missing', 'Apple Music で照合できなかった曲です'],
+        ['unknown', '通信の都合で確かめられなかった曲です'],
+      ]) {
+        const list = checked.filter((c) => c.state === state);
+        if (!list.length) continue;
+        html += '<p class="picklede">' + lede + '。タップすると検索して探せます</p><div class="picks">' +
+          list.map((c) => '<button class="pick" data-q="' + esc(c.label) + '">' + esc(c.label) + '</button>').join('') +
+          '</div>';
       }
       wrap.innerHTML = html;
     }
@@ -2529,12 +2603,18 @@
 
     /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
        失敗したら履歴と turn を片付けてエラーを出し、null を返す */
-    async function askMagi(turn, content) {
+    async function askMagi(turn, content, context) {
       chatHistory.push({ role: 'user', content });
 
+      /* 見張るのは「何も届かない時間」。全体の長さは Worker が段階ごとの上限で縛っているので、
+         ここでは回線が途中で止まったことだけを見る。何か届くたびに数え直す */
       const ctrl = new AbortController();
-      let timedOut = false;
-      const to = setTimeout(() => { timedOut = true; ctrl.abort(); }, 45000);
+      let timedOut = false, to = null;
+      const watch = () => {
+        clearTimeout(to);
+        to = setTimeout(() => { timedOut = true; ctrl.abort(); }, MAGI_IDLE_MS);
+      };
+      watch();
       const bodyEl = turn.querySelector('.ab');
       let reply = '', failure = null;
 
@@ -2542,10 +2622,10 @@
         const res = await fetch(MAGI_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: chatHistory.slice(-CHAT_MAX), theme: 'dark' }),
+          body: JSON.stringify({ messages: messagesForMagi(context), theme: 'dark' }),
           signal: ctrl.signal,
         });
-        clearTimeout(to);
+        watch();
         if (!res.ok || !res.body) {
           let env = null;
           try { env = (await res.json()).error; } catch { /* 本文が JSON でない */ }
@@ -2562,7 +2642,7 @@
               if (d.absent && round >= 2) return;
               // 初回と討議後は別の枠に入れる（同じ枠に書くと初回が討議後で上書きされて消える）。
               // 枠の無い回は捨てる
-              const slot = card.querySelector('.pr[data-round="' + round + '"]');
+              const slot = roundSlot(card, round);
               if (!slot) return;
               slot.hidden = false;
               slot.querySelector('.px').textContent = d.text || '';
@@ -2571,14 +2651,14 @@
             integrated: (d) => { reply += d.delta || ''; bodyEl.textContent = reply; chatScroll(); },
             error: (d) => { failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
             done: () => { },
-          });
+          }, watch);
         }
       } catch (e) {
-        clearTimeout(to);
         failure = (timedOut || e.name === 'AbortError')
           ? '時間内に返事が来ませんでした。もう一度お試しください。'
           : '通信に失敗しました。電波の良い場所でもう一度お試しください。';
       } finally {
+        clearTimeout(to);
         finishTurn(turn);
       }
 
@@ -2601,23 +2681,16 @@
       if (text.length < 2) return;
 
       chatBusy = true;
-      $('#chatSend').disabled = true;
-      $('#chatInput').disabled = true;
       $('#chatErr').hidden = true;
-      $('#seeds').hidden = true;
-      $('#chatInput').value = '';
-      growInput();
-      syncChatBar();
+      $('.ai-info').open = false;   // 開いたままだと最初の回答の上に被さる
+      setValue($('#chatInput'), '');   // 高さと送信ボタンも input で揃う
+      renderConsultUI();
 
       const turn = chatTurn(text);
       chatScroll(true);
 
       try {
-        // 文脈は初回だけ。以降は履歴に残るので毎回は送らない
-        const withContext = !contextSent;
-        const outbound = withContext ? (await djContext()) + '\n' + text : text;
-        contextSent = true;
-        const reply = await askMagi(turn, outbound);
+        const reply = await askMagi(turn, text, await djContext());
         if (reply) {
           const c = conv || (conv = newConsult(text));
           // 曲が挙がっていない回答は照合するものが無いので、はじめから済ませておく
@@ -2625,28 +2698,23 @@
           c.turns = c.turns.concat(entry).slice(-TURN_MAX);
           c.count = (c.count || 0) + 1;
           c.messages = chatHistory.slice(-CHAT_MAX);
-          c.code = eventCode;
           c.title = eventTitle;
           storeConsult(c);
           // 照合は待たずに入力を戻す。候補はこの回答の枠に出るので、次の相談と混ざらない
           showPicks(turn, verifyEntry(c.id, entry));
-        } else if (withContext) {
-          // 文脈を載せた発言が届かなかったので、次の送信でもう一度載せる
-          contextSent = false;
         }
       } finally {
         chatBusy = false;
-        $('#chatInput').disabled = false;
-        $('#chatSend').disabled = $('#chatInput').value.trim().length < 2;
-        syncChatBar();
+        renderConsultUI();
       }
     }
 
     /* ── 相談の履歴 ──────────────────────────
        この端末の localStorage にだけ置く（サーバには送らない）。1件の形は
-       { id, first, count, code, title, at, messages, turns: [{ id, q, personas, reply, picks }] }。
-       messages は Worker へ送る形そのままで、最初の発言に DJ の文脈が付いている。開き直した
-       会話の続きを話せるよう持っておく。turns は画面を組み直すためのもので、古い往復は捨てるので、
+       { id, first, count, title, at, messages, turns: [{ id, q, personas, reply, picks }] }。
+       messages は Worker へ送る直近の会話で、開き直した会話の続きを話すために持つ。DJ の文脈は
+       送るたびに作り直すので含まない（旧形式は最初の発言に文脈が埋め込まれ、code と context も
+       持っているが、どちらももう読まない）。turns は画面を組み直すためのもので、古い往復は捨てるので、
        一覧の見出し（first）と往復数（count）は別に持つ。picks は照合結果（届く前に閉じられたら null、
        通信の都合で確かめられなかった曲を含むこともある。どちらも開き直したときに引き直す） */
     const CONSULT_KEY = 'tkdj.consults';
@@ -2655,14 +2723,14 @@
     // 履歴全体の上限（JSON の文字数）。localStorage は tk.st 全体で約5MB を分け合い、投稿を直すための
     // 鍵（tkdj.tokens）やいいねもここに入る。履歴で埋めると、それらの保存が黙って失敗する
     const CONSULT_CHARS = 400000;
-    let eventCode = '', eventTitle = '';
+    let eventTitle = '';
     let conv = null;          // 画面に出ている会話。まだ1往復も終わっていなければ null
     let histOpen = false;
     let savedCount = 0;       // 保存済みの件数。ボタンの出し入れのたびに履歴を読み直さないため
 
     const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const newConsult = (first) => ({
-      id: uid(), first, count: 0, code: '', title: '', at: '', messages: [], turns: [],
+      id: uid(), first, count: 0, title: '', at: '', messages: [], turns: [],
     });
     const savedConsults = () => storage.getJSON(CONSULT_KEY, [])
       .filter((c) => c && typeof c.id === 'string' && Array.isArray(c.turns) && Array.isArray(c.messages));
@@ -2676,7 +2744,7 @@
       while (keep.length && !storage.setJSON(CONSULT_KEY, keep)) keep.pop();
       if (!keep.length) storage.remove(CONSULT_KEY);
       savedCount = keep.length;
-      syncChatBar();
+      renderConsultUI();
       if (histOpen) renderHistory(keep);
     }
 
@@ -2726,7 +2794,7 @@
     // 人格ごとの [初回, 討議後]。出さなかった回は null
     const readPersonas = (turn) => Object.fromEntries([...turn.querySelectorAll('.pcard')].map((card) =>
       [card.dataset.cn, [1, 2].map((r) => {
-        const slot = card.querySelector('.pr[data-round="' + r + '"]');
+        const slot = roundSlot(card, r);
         return slot.hidden ? null : slot.querySelector('.px').textContent;
       })]));
 
@@ -2736,7 +2804,7 @@
       turn.querySelectorAll('.pcard').forEach((card) => {
         const got = (entry.personas && entry.personas[card.dataset.cn]) || [];
         [1, 2].forEach((r, k) => {
-          const slot = card.querySelector('.pr[data-round="' + r + '"]');
+          const slot = roundSlot(card, r);
           slot.hidden = typeof got[k] !== 'string';
           if (!slot.hidden) slot.querySelector('.px').textContent = got[k];
         });
@@ -2750,35 +2818,49 @@
     function clearChat() {
       conv = null;
       chatHistory = [];
-      contextSent = false;
       $('#chatLog').replaceChildren();
       $('#chatErr').hidden = true;
+      renderConsultUI();
     }
 
-    function syncChatBar() {
+    /* 相談まわりの表示・操作可否は、状態からこの一か所で決める。
+       送信・履歴・受付停止の各処理が個別に hidden / disabled を触ると、
+       組み合わせによって戻し忘れが起きるため。 */
+    function renderConsultUI() {
       const hasLog = $('#chatLog').children.length > 0;
       const hasSaved = savedCount > 0;
+      const input = $('#chatInput');
+
+      $('#chatHist').hidden = !histOpen;
+      $('#chatLog').hidden = histOpen;
+      $('#composer').hidden = histOpen || consultLocked;
+      $('#chatHint').hidden = histOpen || consultLocked;
+      // 送信に失敗して会話が空に戻ったら、例文もまた出す
+      $('#seeds').hidden = histOpen || consultLocked || chatBusy || hasLog;
+
       $('#chatNew').hidden = !hasLog;
       $('#chatHistBtn').hidden = !hasSaved && !histOpen;
       $('#chatBar').hidden = consultLocked || (!hasLog && !hasSaved && !histOpen);
       // 回答を受け取っている最中は切り替えさせない（届いた回答の行き先が無くなるため）
       $('#chatNew').disabled = chatBusy;
       $('#chatHistBtn').disabled = chatBusy;
+      $('#chatHistBtn').textContent = histOpen ? '× 履歴を閉じる' : '履歴';
+      $('#chatHistBtn').setAttribute('aria-expanded', String(histOpen));
+
+      input.disabled = chatBusy || consultLocked;
+      input.placeholder = consultLocked ? 'いまは相談できません' : 'どんな曲が聴きたい？';
+      $('#chatSend').disabled = chatBusy || consultLocked || input.value.trim().length < 2;
+
+      $('#chatLock').hidden = !consultLocked;
+      $('#toConsultFromFree').hidden = consultLocked;
     }
 
     // 履歴を開いている間は、会話と入力欄を引っ込めて一覧だけにする
     function setHistOpen(open) {
       histOpen = open;
       if (open) renderHistory();
-      $('#chatHist').hidden = !open;
-      $('#chatLog').hidden = open;
-      $('#composer').hidden = open;
-      $('#chatHint').hidden = open;
       $('#chatErr').hidden = true;
-      $('#seeds').hidden = open || consultLocked || $('#chatLog').children.length > 0;
-      $('#chatHistBtn').textContent = open ? '× 履歴を閉じる' : '履歴';
-      $('#chatHistBtn').setAttribute('aria-expanded', String(open));
-      syncChatBar();
+      renderConsultUI();
     }
 
     function renderHistory(list = savedConsults()) {
@@ -2799,11 +2881,9 @@
       if (!c || chatBusy) return;
       clearChat();
       conv = c;
-      // 別の回の相談を開いたら、古い回の状況を切り落とし、いまの回の状況を次の発言に付け直す
-      // （残すと「かけた曲は挙げない」が前の回の曲にまでかかる）
-      const sameEvent = !!eventCode && c.code === eventCode;
-      chatHistory = (sameEvent ? c.messages : c.messages.map(stripContext)).slice(-CHAT_MAX);
-      contextSent = sameEvent;
+      // 旧形式の保存データは最初の発言に文脈が埋め込まれている。古い状況を残すと「かけた曲は
+      // 挙げない」が前の時点の曲にかかるので剥がして持つ（いまの状況は次の送信で作って付ける）
+      chatHistory = c.messages.map(stripContext).slice(-CHAT_MAX);
       // 照合し直す往復は1つずつ引く。iTunes は IP ごとに毎分およそ20回までで、検索タブと枠を分け合う
       let queue = Promise.resolve();
       for (const entry of c.turns) {
@@ -2843,18 +2923,11 @@
       if (open) openConsult(open.dataset.id);
     });
     savedCount = savedConsults().length;
-    syncChatBar();
+    renderConsultUI();
 
-    /* 入力欄：内容に合わせて伸ばし、2文字以上で送信可に */
-    function growInput() {
-      const ta = $('#chatInput');
-      ta.style.height = 'auto';
-      ta.style.height = Math.min(150, ta.scrollHeight) + 'px';
-    }
-    $('#chatInput').addEventListener('input', () => {
-      growInput();
-      $('#chatSend').disabled = chatBusy || $('#chatInput').value.trim().length < 2;
-    });
+    /* 入力欄：内容に合わせて伸ばし（上限は CSS の max-height）、2文字以上で送信可に */
+    autoGrow($('#chatInput'));
+    $('#chatInput').addEventListener('input', renderConsultUI);
     // 物理キーボードのある環境だけ Enter 送信（スマホでは改行のまま）
     $('#chatInput').addEventListener('keydown', (e) => {
       const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
@@ -2880,30 +2953,30 @@
       const b = e.target.closest('.pick');
       if (!b) return;
       const q = b.dataset.q.replace(/\s*[-–—・]\s*/g, ' ').trim();
-      $('#q').value = q;
-      $('#field').classList.add('filled');
+      setValue($('#q'), q);   // 入力が予約する検索は、すぐ下の doSearch が取り消して即座に引く
       show('search');
       doSearch(q);
     });
 
     $('#toConsultFromFree').addEventListener('click', () => show('consult'));
 
+    // AI への送信先の説明カードは、外側を押したら閉じる（送信したときは sendConsult が閉じる）
+    document.addEventListener('click', (e) => {
+      const info = $('.ai-info');
+      if (info.open && !info.contains(e.target)) info.open = false;
+    });
+
     /* ── 起動 ─────────────────────────────── */
-    // 受付していないときも、こういう相談相手がいること自体は見てほしい。
-    // タブと中身は残したまま、投げられないように入力だけ塞ぐ
-    function lockConsult(why) {
+    /* 受付停止中・オフライン。受付していないときも、こういう相談相手がいること自体は
+       見てほしいので、相談のタブと中身は残したまま、投げられないように入力だけ塞ぐ */
+    function closeRequests(badge, why) {
+      $('#badge').textContent = badge;
+      $('#badge').classList.add('shut');
       if (histOpen) setHistOpen(false);
       consultLocked = true;
-      $('#chatBar').hidden = true;
       $('#chatLock').textContent = why;
-      $('#chatLock').hidden = false;
-      $('#seeds').hidden = true;
-      $('#chatInput').disabled = true;
-      $('#chatInput').placeholder = 'いまは相談できません';
-      $('#chatSend').disabled = true;
-      $('#composer').hidden = true;
-      $('#chatHint').hidden = true;
-      $('#toConsultFromFree').hidden = true;
+      renderConsultUI();
+      show('shut');
     }
 
     (async function boot() {
@@ -2911,7 +2984,6 @@
         const ev = await apiJson('/event');
         eventOpen = !!ev.open;
         if (ev.open) {
-          eventCode = ev.code || '';
           eventTitle = ev.title || '';
           $('#evTitle').textContent = ev.title;
           document.title = ev.title + ' - リクエスト';
@@ -2919,16 +2991,10 @@
           $('#badge').classList.remove('shut');
           show('search');
         } else {
-          $('#badge').textContent = '受付停止中';
-          $('#badge').classList.add('shut');
-          lockConsult('いまはリクエストの受付時間外のため、相談はお休みしています。次回の受付までお待ちください。');
-          show('shut');
+          closeRequests('受付停止中', 'いまはリクエストの受付時間外のため、相談はお休みしています。次回の受付までお待ちください。');
         }
       } catch {
-        $('#badge').textContent = 'オフライン';
-        $('#badge').classList.add('shut');
-        lockConsult('サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。');
-        show('shut');
+        closeRequests('オフライン', 'サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。');
       }
     })();
 
