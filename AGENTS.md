@@ -14,7 +14,7 @@
   **例外は head の Ahrefs と GTM の2本だけ**で、これは公開サイト側の計測用。インスクリプション版は
   この2行を落としたものになる。新しく外部参照を増やすときは、その前提を壊していないか確認すること。
   **この制約はトップページ（ルートの `index.html`）だけ**で、他のページは外部の CSS / JS / フォントを使ってよい。
-  ただし **SAFE TOOLS（`tools/` 配下）は別の決まり**があり、外部とやりとりするのはアクセス解析（GTM 経由の GA4 と Cloudflare Web Analytics）だけ（後述「SAFE TOOLS の通信制限」）。
+  ただし **SAFE TOOLS（`tools/` 配下）は別の決まり**があり、外部とやりとりするのはアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics、Ahrefs Web Analytics）だけ（後述「SAFE TOOLS の通信制限」）。
 - **Workers** (`workers/`): 認証・DB・AI 呼び出しなどのサーバーサイド機能。
   Cloudflare Workers + D1 (SQLite)。すべて `src/index.js` 単一ファイル構成で、
   `export default { async fetch(request, env) {...} }` の標準形。
@@ -124,12 +124,14 @@
   と SAFE TOOLS（`tools/` 配下。次項）で、それ以外のページは Google Fonts などの Web フォントや CDN の
   CSS/JS を読み込んでよい。共有したい自前の CSS/JS は `data/` に置く。フレームワーク・ビルドツールを勝手に持ち込まない。
 - **SAFE TOOLS の通信制限**: `tools/` 配下の全ページは head の先頭で Content-Security-Policy を宣言し、
-  読み込みや送信に使える通信先を、このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics）
-  だけに制限している（寄付ウィジェットの Ko-fi は iframe の表示だけ許可）。GA4 の Google シグナルの送り先
+  読み込みや送信に使える通信先を、このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics、
+  Ahrefs Web Analytics）だけに制限している（寄付ウィジェットの Ko-fi は iframe の表示だけ許可）。GA4 の Google シグナルの送り先
   （*.g.doubleclick.net・www.google.com・www.google.co.jp）も許している。国別の google ドメインは日本だけなので、
-  ほかの国からの訪問ではシグナルの一部が止まる。広告コンバージョンは GA4 側で切ってある。Ahrefs や Microsoft Clarity は
-  入れない（Clarity は GTM 側で `tk.st/tools/` を除外済み。セッション記録が入力や QR の中身まで送っていた。
-  除外が外れても CSP が止める）。
+  ほかの国からの訪問ではシグナルの一部が止まる。広告コンバージョンは GA4 側で切ってある。Microsoft Clarity は
+  入れない（GTM 側で `tk.st/tools/` を除外済み。セッション記録が入力や QR の中身まで送っていた。
+  除外が外れても CSP が止める）。Ahrefs は `analytics.ahrefs.com` を script-src と connect-src に許し、GTM の直後の
+  インラインスクリプトから読み込む。Ahrefs は URL を丸ごと送るので、`data-page-location` にパスとクエリだけを渡して
+  `#` 以降（QR Atelier の共有デザイン `#d=` など）を載せない。
   - ページの注記・FAQ・構造化データでも説明している。CSP が保証するのは「読み込みと送信の通信先」まで
     （ページの移動や、許した送り先へ何を載せるかは縛れない）なので、「どんな不具合があっても送れない」の
     ような言い方はしない。「中身を送る処理を持たない」＋「通信先を制限している」の2段で書く。
@@ -156,18 +158,21 @@
   CSP が止めた知らせ）と CSP の点検から決める。「データの送信」（中身を載せられる送り方。アクセス解析は別に数える）が
   1件でもあれば緑にしない。ページの CSP がどの指定でも許していない行き先なのに、止められずに Resource Timing に
   現れた通信は、ページのプログラムからは出せないので「ブラウザや拡張機能」として分け、送信に数えない
-  （Perplexity の Comet がフォントを差し込むなど）。「ガードを試す」は example.com へあえて送ろうとし、ブラウザが止めるのを見せる。
+  （Perplexity の Comet がフォントを差し込むなど）。CSP が止めたフォント（font-src）も同じ扱いにする。フォントは
+  スタイルシートからしか読み込まれず、このサイトのスタイルは許していない行き先のフォントを使わないため
+  （止めた知らせの中身では、ページ自身が差し込んだものと見分けがつかないので、何が止まったかで判断している）。
+  サイトのスタイルに外部のフォントを足すと、この前提が崩れる。「ガードを試す」は example.com へあえて送ろうとし、ブラウザが止めるのを見せる。
   処理レシートは `STShare.celebrate()` のたびに出る（celebrate が `st:complete` イベントを出し、tools-ui.js が
   それを受けて出す。ツール側の追加作業はない）。
   区切りはファイルを受け取った時点（change / drop / paste を捕捉で拾う）。どれもページ自身による計測で、
   Worker の中の通信は数えていない。画面にもそう書いてあるので、「送れない」のような言い方に変えないこと。
   カードはツールのすぐ下（`<main>` の直後。`<main>` 直下に `.prose-tool` / `.prose` の説明文があればその手前）に出る。
 - **アクセス解析を止める**: 安全設計カードの下のボタンで、利用者が止められる。設定は localStorage の
-  `st-analytics`（`off` で停止）。止めていると、`tools/` の各ページの GTM スニペットが先頭でこのキーを見て
-  GTM を読み込まず、`tools-ui.js` が Cloudflare Web Analytics の差し込みスクリプトを実行前に取り除き、
-  途中で止めたときは以後の解析への fetch / XHR / sendBeacon を送らずに捨てる。新しいツールの GTM スニペットにも
-  同じ判定（`try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}`）を入れる。一覧ページ
-  （`tools/index.html`）は GTM だけ止まる（`tools-ui.js` を読まないので Cloudflare の分は止まらない）。
+  `st-analytics`（`off` で停止）。止めていると、`tools/` の各ページの GTM と Ahrefs の読み込みスニペットが先頭で
+  このキーを見て読み込まず、`tools-ui.js` が Cloudflare Web Analytics の差し込みスクリプトを実行前に取り除き、
+  途中で止めたときは以後の解析（Ahrefs を含む）への fetch / XHR / sendBeacon を送らずに捨てる。新しいツールの
+  GTM と Ahrefs のスニペットにも同じ判定（`try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}`）を
+  入れる。一覧ページ（`tools/index.html`）は GTM と Ahrefs が止まる（`tools-ui.js` を読まないので Cloudflare の分は止まらない）。
 - **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`data/glitch.js` が
   描画する。記事追加時は HTML ではなく JSON を編集する。tools/game の一覧も同様に
   `data/tools.json` / `data/game.json` が正。

@@ -312,6 +312,7 @@
     [/(^|\.)googletagmanager\.com$/, 'Google タグマネージャー'],
     [/(^|\.)google-analytics\.com$|(^|\.)analytics\.google\.com$|(^|\.)g\.doubleclick\.net$|^www\.google\.com$|^www\.google\.co\.jp$/, 'Google アナリティクス'],
     [/(^|\.)cloudflareinsights\.com$/, 'Cloudflare Web Analytics'],
+    [/^analytics\.ahrefs\.com$/, 'Ahrefs Web Analytics'],
   ];
   // 広告の配信元。GA4 の Google シグナルが使う stats.g.doubleclick.net は解析のほうに数える
   const AD_HOSTS = /(^|\.)googlesyndication\.com$|(^|\.)googleadservices\.com$|(^|\.)adservice\.google\.|^(securepubads|pubads)\.g\.doubleclick\.net$|^ad\.doubleclick\.net$|(^|\.)amazon-adsystem\.com$|(^|\.)adnxs\.com$|(^|\.)criteo\.(com|net)$|(^|\.)taboola\.com$|(^|\.)outbrain\.com$/;
@@ -439,10 +440,10 @@
   const blockedCalls = [];
   // ---- アクセス解析を止める ------------------------------------------------------
   // 利用者が止めた場合（localStorage の st-analytics が off）は、この端末のブラウザでは
-  //   - ページを開いたとき: GTM を読み込まない（各ページの GTM スニペットの先頭が同じキーを見る）。
+  //   - ページを開いたとき: GTM と Ahrefs を読み込まない（各ページの読み込みスニペットの先頭が同じキーを見る）。
   //     Cloudflare が末尾に差し込む Web Analytics のスクリプトは、ここで実行前に取り除く
   //   - 途中で止めたとき: 以後の解析への送信（fetch / XHR / sendBeacon）を、送らずに捨てる
-  // キー名を変えるときは、tools/ の全ページの GTM スニペットも合わせて直すこと
+  // キー名を変えるときは、tools/ の全ページの GTM と Ahrefs のスニペットも合わせて直すこと
   const ANALYTICS_KEY = 'st-analytics';
   const analytics = { off: false, offAtLoad: false, saved: true, dropped: 0, observer: null };
   try {
@@ -609,6 +610,9 @@
     return (!vias || vias.indexOf(via) !== -1) && sameTarget(href, block.href);
   }
 
+  // ページの外（ブラウザ本体や拡張機能）による通信の分類。このページの通信には数えない
+  const OUTSIDE = { kind: 'outside', label: 'ブラウザや拡張機能' };
+
   // Chrome は CSP が止めた通信も Resource Timing に1件として載せる。止めた知らせと
   // 結び付けて「止められた」にしないと、出ていない通信を送信として数えてしまう
   const TIMED_CALLS = { fetch: 'fetch', xmlhttprequest: 'xhr', beacon: 'beacon' };
@@ -645,7 +649,7 @@
     // 分ける（例: Perplexity の Comet が差し込む自前のフォント）。このページの送信には数えない。
     // 止められていた通信なら、あとから届く知らせと結び付けるときに元の分類へ戻す
     if (dest.kind !== 'site' && !cspAllowsSomewhere(dest.href)) {
-      Object.assign(dest, { kind: 'outside', label: 'ブラウザや拡張機能' });
+      Object.assign(dest, OUTSIDE);
     }
     net.entries.push(Object.assign({
       // 止めている間の解析の読み込み。スクリプトは実行前に取り除いているので、取得だけで終わっている
@@ -667,13 +671,20 @@
     // 通信でないもの（インラインや eval の実行）は kind: 'code'
     const dest = (/^(https?|wss?):/i.test(uri) && describeDestination(uri))
       || { kind: 'code', host: uri || directive, label: 'ページ内の処理' };
+    // フォントはスタイルシート（@font-face）からしか読み込まれず、このサイトのスタイルは CSP が許していない
+    // 行き先のフォントを使わない。ここで止まったフォントは、ブラウザ本体や拡張機能が差し込んだスタイルのもの
+    // とみなす（例: Perplexity の Comet が差し込む自前のフォント）。止めた知らせの中身（sourceFile は空、
+    // 対象は document）は、ページ自身が差し込んだ場合と見分けがつかないので、何が止まったかで判断する
+    const fromOutside = directive === 'font-src' && dest.kind !== 'test';
+    if (fromOutside) Object.assign(dest, OUTSIDE);
     const record = Object.assign({ at: performance.now(), directive, linked: false }, dest, { href: uri });
     if (record.kind !== 'code') {
       // 呼び出しの行か Resource Timing の行が先にあれば、そこに「止められた」を付ける
       for (let i = net.entries.length - 1; i >= 0; i--) {
         const c = net.entries[i];
         if (c.blocked || c.host !== record.host || !sameRequest(c.via, c.href, record)) continue;
-        if (c.kind === 'outside') Object.assign(c, describeDestination(c.href));
+        if (fromOutside) Object.assign(c, OUTSIDE);
+        else if (c.kind === 'outside') Object.assign(c, describeDestination(c.href));
         c.blocked = true;
         c.directive = directive;
         record.linked = true;
@@ -737,7 +748,9 @@
       }
     });
     net.blocked.forEach(b => {
-      if (b.at >= since && b.kind !== 'test' && b.kind !== 'code') t.blocked += 1;
+      if (b.at < since || b.kind === 'test' || b.kind === 'code') return;
+      if (b.kind === 'outside') t.outside += 1;
+      else t.blocked += 1;
     });
     return t;
   }
@@ -877,7 +890,7 @@
       if (!off) {
         message = analytics.offAtLoad
           ? 'アクセス解析を再開します。このページでは解析を読み込んでいないので、次にページを開いたときから送られます。'
-          : 'アクセス解析（Google アナリティクス・Cloudflare Web Analytics）が受け取るのは閲覧状況だけで、'
+          : 'アクセス解析（Google アナリティクス・Cloudflare Web Analytics・Ahrefs Web Analytics）が受け取るのは閲覧状況だけで、'
             + 'ファイルや入力内容は送りません。それでも気になるときは止められます。';
       } else {
         message = (analytics.offAtLoad
@@ -1123,8 +1136,9 @@
             + (t.blocked ? 'ページを開いてから、ブラウザが止めた通信は' + t.blocked + '件です。' : '')
             + guardText + unexpected
             + (t.outside
-              ? 'このほか、ブラウザ本体や拡張機能がこのページに差し込んだ通信が' + t.outside + '件あります（通信の一覧の「ブラウザや拡張機能」）。'
-                + 'この CSP が許していない行き先で、このページのプログラムからは出せないため、このページの通信には数えていません。'
+              ? 'このほか、ブラウザ本体や拡張機能によるとみられる通信が' + t.outside + '件あります（通信の一覧の「ブラウザや拡張機能」）。'
+                + 'CSP が許していない行き先へのフォントの読み込みなど、このサイトのプログラムやスタイルが使わないものなので、'
+                + 'このページの通信には数えていません。'
               : ''),
         },
       ];

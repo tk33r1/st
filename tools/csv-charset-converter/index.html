@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
-       このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
+       このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics、Ahrefs Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
        埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
        足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260926_11"></script>
+  <script src="../../data/tools-ui.js?v=20260926_13"></script>
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -17,6 +17,10 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
+  <!-- Ahrefs Web Analytics（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の
+       ANALYTICS_KEY と同じ）。Ahrefs は URL を丸ごと送るので、# 以降（QR Atelier の共有デザインなど）が
+       載らないよう、data-page-location にパスとクエリだけを渡す -->
+  <script>(function(d){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}var a=d.createElement('script');a.src='https://analytics.ahrefs.com/analytics.js';a.async=true;a.setAttribute('data-key','HKe6iphbuiskJsOdfXIOog');a.setAttribute('data-page-location',location.pathname+location.search);d.head.appendChild(a)})(document)</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="CSVの文字コードを自動判別して表示し、UTF-8・Shift_JIS・EUC-JPなどへ一括変換。BOMの付け外し、改行コードの統一、変換できない文字の事前チェックに対応。ブラウザ内で完結します。">
   <meta name="robots" content="max-image-preview:large">
@@ -137,7 +141,7 @@
             "name": "ファイルや入力が外部に送られないことは、どうすれば確かめられますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。"
+              "text": "このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics、Ahrefs Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。"
             }
           }
         ]
@@ -417,7 +421,7 @@
       </div>
 
       <p class="note">判別も変換もすべてブラウザ内で完結します。ファイルがサーバーに送られることはありません。</p>
-      <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。</p>
+      <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics・Ahrefs Web Analytics）だけに制限しています。</p>
       <p class="note">ExcelでそのままCSVを開くなら「UTF-8 (BOM付き)」か「Shift_JIS」。BOMなしのUTF-8はExcelが文字化けさせます。</p>
     </div>
 
@@ -476,7 +480,7 @@
       <details class="faq-item"><summary class="faq-question">Excelで文字化けしない文字コードはどれですか？</summary><p class="faq-answer">「UTF-8 (BOM付き)」または「Shift_JIS」を選んでください。BOMなしのUTF-8はExcelがShift_JISとして開いてしまい、文字化けの原因になります。</p></details>
       <details class="faq-item"><summary class="faq-question">Shift_JISに変換できない文字が含まれていたらどうなりますか？</summary><p class="faq-answer">変換前に該当する文字と出現回数を一覧表示します。置き換え方法は「?」に置換、数値文字参照に置換、削除の3種類から選べます。</p></details>
       <details class="faq-item"><summary class="faq-question">何ファイルまで一度に変換できますか？</summary><p class="faq-answer">件数の上限は設けていません。ブラウザのメモリが許す限りまとめて変換でき、2件以上ならZIPでダウンロードできます。</p></details>
-      <details class="faq-item"><summary class="faq-question">ファイルや入力が外部に送られないことは、どうすれば確かめられますか？</summary><p class="faq-answer">このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。</p></details>
+      <details class="faq-item"><summary class="faq-question">ファイルや入力が外部に送られないことは、どうすれば確かめられますか？</summary><p class="faq-answer">このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics、Ahrefs Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。</p></details>
     </div>
   </section>
 

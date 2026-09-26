@@ -5,10 +5,10 @@
        ahead of the analytics tags rather than after them. -->
   <meta charset="UTF-8">
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
-       このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
+       このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics、Ahrefs Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
        埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
        足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0D2F4F">
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
@@ -18,6 +18,10 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
+  <!-- Ahrefs Web Analytics（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の
+       ANALYTICS_KEY と同じ）。Ahrefs は URL を丸ごと送るので、# 以降（QR Atelier の共有デザインなど）が
+       載らないよう、data-page-location にパスとクエリだけを渡す -->
+  <script>(function(d){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}var a=d.createElement('script');a.src='https://analytics.ahrefs.com/analytics.js';a.async=true;a.setAttribute('data-key','HKe6iphbuiskJsOdfXIOog');a.setAttribute('data-page-location',location.pathname+location.search);d.head.appendChild(a)})(document)</script>
   <meta name="description" content="ファイルはサーバーに保存されません。ブラウザの中だけで完結するWebツール集">
   <meta name="robots" content="max-image-preview:large">
   <title>SAFE TOOLS</title>
@@ -110,7 +114,7 @@
             "name": "アクセス解析でファイルや入力内容が送信されますか？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "いいえ。Google アナリティクスと Cloudflare Web Analytics はサイトの利用状況を把握するために使用していますが、ツールにはファイルや入力内容をアクセス解析へ渡す処理がありません。"
+              "text": "いいえ。Google アナリティクス、Cloudflare Web Analytics、Ahrefs Web Analytics はサイトの利用状況を把握するために使用していますが、ツールにはファイルや入力内容をアクセス解析へ渡す処理がありません。"
             }
           },
           {
@@ -598,7 +602,7 @@
       <span class="fact is-trust"><i data-lucide="cloud-off"></i>サーバー保存なし</span>
       <span class="fact is-trust" title="広告および広告配信のためのコードはありません。"><i data-lucide="ban"></i>広告なし</span>
       <span class="fact is-trust"><i data-lucide="zap"></i>インストール不要</span>
-      <span class="fact is-trust" title="ファイルをツールへアップロードしても、処理対象や結果は tk.st のサーバーに保存しません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。"><i data-lucide="lock"></i>通信先を制限</span>
+      <span class="fact is-trust" title="ファイルをツールへアップロードしても、処理対象や結果は tk.st のサーバーに保存しません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics・Ahrefs Web Analytics）だけに制限しています。"><i data-lucide="lock"></i>通信先を制限</span>
     </div>
   </div>
 
@@ -669,7 +673,7 @@
 
         <details class="faq-item">
           <summary class="faq-question">アクセス解析でファイルや入力内容が送信されますか？</summary>
-          <p class="faq-answer">いいえ。Google アナリティクスと Cloudflare Web Analytics はサイトの利用状況を把握するために使用していますが、ツールにはファイルや入力内容をアクセス解析へ渡す処理がありません。</p>
+          <p class="faq-answer">いいえ。Google アナリティクス、Cloudflare Web Analytics、Ahrefs Web Analytics はサイトの利用状況を把握するために使用していますが、ツールにはファイルや入力内容をアクセス解析へ渡す処理がありません。</p>
         </details>
 
         <details class="faq-item">

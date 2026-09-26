@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
-       このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
+       このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics、Ahrefs Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
        埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
        足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260926_11"></script>
+  <script src="../../data/tools-ui.js?v=20260926_13"></script>
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -17,6 +17,10 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
+  <!-- Ahrefs Web Analytics（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の
+       ANALYTICS_KEY と同じ）。Ahrefs は URL を丸ごと送るので、# 以降（QR Atelier の共有デザインなど）が
+       載らないよう、data-page-location にパスとクエリだけを渡す -->
+  <script>(function(d){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}var a=d.createElement('script');a.src='https://analytics.ahrefs.com/analytics.js';a.async=true;a.setAttribute('data-key','HKe6iphbuiskJsOdfXIOog');a.setAttribute('data-page-location',location.pathname+location.search);d.head.appendChild(a)})(document)</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="日本発。面倒な設定なしで不要な情報を削除し、SVGファイルを1クリックで軽量化。ブラウザ内で完結する安全で高速なSVG最適化ツールです。">
   <meta name="robots" content="max-image-preview:large">
@@ -575,7 +579,7 @@
       </div>
 
       <p class="note">最適化はすべてブラウザ内で行われます。ファイルがサーバーに送られることはありません。</p>
-    <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics）だけに制限しています。</p>
+    <p class="note">ファイルや入力の中身は、どこにも送りません。そのうえで、このページが読み込みや送信に使える通信先を、Content-Security-Policy でこのサイトとアクセス解析（Google アナリティクス・Cloudflare Web Analytics・Ahrefs Web Analytics）だけに制限しています。</p>
     </div>
 
     <!-- ===================== view 2 : processing ===================== -->
