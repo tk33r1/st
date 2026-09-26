@@ -336,6 +336,46 @@
     }, 150);
   }
 
+  // ---- ページの CSP ------------------------------------------------------------
+  // 各ページは CSP の meta をこのファイルより前に置いているので、読み込んだ時点で読める
+  const FETCH_DIRECTIVES = ['default-src', 'connect-src', 'img-src', 'script-src', 'style-src',
+    'font-src', 'media-src', 'frame-src', 'worker-src', 'object-src'];
+  const pageCsp = (() => {
+    const meta = document.querySelector('meta[http-equiv="Content-Security-Policy" i]');
+    const dirs = {};
+    if (meta) {
+      String(meta.content || '').split(';').forEach(part => {
+        const tokens = part.trim().split(/\s+/).filter(Boolean);
+        if (tokens.length) dirs[tokens[0].toLowerCase()] = tokens.slice(1);
+      });
+    }
+    return { meta, dirs };
+  })();
+
+  // CSP の書き方1つ（'self'、スキーム、ホスト（先頭の *. と末尾のパス可））が URL を許すか。
+  // このサイトの CSP が使う書き方はこれで全部。'unsafe-inline' などの指定は行き先と関係ないので外す
+  const HOST_SOURCE = /^(?:([a-z][a-z0-9+.-]*):\/\/)?(\*\.)?([^/:]+)(?::(\d+|\*))?(\/.*)?$/i;
+  function sourceAllows(src, u) {
+    if (src === "'self'") return u.host === location.host;
+    if (src.charAt(0) === "'") return false;
+    if (/^[a-z][a-z0-9+.-]*:$/i.test(src)) return u.protocol === src.toLowerCase();
+    const m = HOST_SOURCE.exec(src);
+    if (!m) return false;
+    if (m[1] && u.protocol !== m[1].toLowerCase() + ':') return false;
+    const host = m[3].toLowerCase();
+    if (host !== '*' && (m[2] ? !u.hostname.endsWith('.' + host) : u.hostname !== host)) return false;
+    if (m[4] && m[4] !== '*' && u.port !== m[4]) return false;
+    if (m[5]) return m[5].endsWith('/') ? u.pathname.indexOf(m[5]) === 0 : u.pathname === m[5];
+    return true;
+  }
+  // ページの CSP のどれかの指定で許されている行き先か。CSP が無いページでは判定しない（true）
+  function cspAllowsSomewhere(href) {
+    if (!pageCsp.meta) return true;
+    let u;
+    try { u = new URL(href); } catch (_) { return true; }
+    return FETCH_DIRECTIVES.some(name => (pageCsp.dirs[name] || []).some(src => sourceAllows(src, u)));
+  }
+
   // 行き先の分類。blob: や data: のように端末の外へ出ないものは null
   function describeDestination(url) {
     let u;
@@ -397,9 +437,56 @@
   // 止められた呼び出しのうち、Resource Timing の記録がまだ来ていないもの。Chrome は止めた通信にも
   // 記録を出すので、それを別の通信として数えないために取っておく（Firefox は出さないので残る）
   const blockedCalls = [];
+  // ---- アクセス解析を止める ------------------------------------------------------
+  // 利用者が止めた場合（localStorage の st-analytics が off）は、この端末のブラウザでは
+  //   - ページを開いたとき: GTM を読み込まない（各ページの GTM スニペットの先頭が同じキーを見る）。
+  //     Cloudflare が末尾に差し込む Web Analytics のスクリプトは、ここで実行前に取り除く
+  //   - 途中で止めたとき: 以後の解析への送信（fetch / XHR / sendBeacon）を、送らずに捨てる
+  // キー名を変えるときは、tools/ の全ページの GTM スニペットも合わせて直すこと
+  const ANALYTICS_KEY = 'st-analytics';
+  const analytics = { off: false, offAtLoad: false, saved: true, dropped: 0, observer: null };
+  try {
+    analytics.off = analytics.offAtLoad = localStorage.getItem(ANALYTICS_KEY) === 'off';
+  } catch (_) {
+    analytics.saved = false;
+  }
+  function blockAnalyticsScripts() {
+    if (analytics.observer || typeof MutationObserver !== 'function') return;
+    const stop = node => {
+      if (node.tagName !== 'SCRIPT' || !node.src) return;
+      const dest = describeDestination(node.src);
+      if (!dest || dest.kind !== 'analytics') return;
+      node.type = 'javascript/blocked'; // 実行前に種類を変えると、ブラウザは実行しない
+      node.remove();
+      analytics.dropped += 1;
+      notifyNet();
+    };
+    analytics.observer = new MutationObserver(list => list.forEach(m => m.addedNodes.forEach(stop)));
+    analytics.observer.observe(document.documentElement, { childList: true, subtree: true });
+  }
+  function setAnalyticsOff(off) {
+    analytics.off = off;
+    try {
+      if (off) localStorage.setItem(ANALYTICS_KEY, 'off');
+      else localStorage.removeItem(ANALYTICS_KEY);
+      analytics.saved = true;
+    } catch (_) {
+      analytics.saved = false;
+    }
+    if (off) {
+      blockAnalyticsScripts();
+    } else if (analytics.observer) {
+      analytics.observer.disconnect();
+      analytics.observer = null;
+    }
+    notifyNet();
+  }
+  if (analytics.off) blockAnalyticsScripts();
+
+  // 書き留めた行を返す。suppressed の行は、利用者の設定で送らずに捨てる解析の送信
   function recordCall(via, url, method, body) {
     const dest = describeDestination(url);
-    if (!dest) return;
+    if (!dest) return null;
     const m = String(method || 'GET').toUpperCase();
     const bytes = bodySize(body);
     const entry = Object.assign({
@@ -409,29 +496,36 @@
       carries: bytes !== 0 || !(m === 'GET' || m === 'HEAD'),
       size: 0,
       blocked: false,
+      suppressed: analytics.off && dest.kind === 'analytics',
     }, dest);
     net.entries.push(entry);
-    if (TIMED_VIAS.indexOf(via) !== -1) {
+    if (entry.suppressed) {
+      analytics.dropped += 1;
+    } else if (TIMED_VIAS.indexOf(via) !== -1) {
       const key = awaitingKey(entry);
       if (!awaitingTiming.has(key)) awaitingTiming.set(key, []);
       awaitingTiming.get(key).push(entry);
     }
     notifyNet();
+    return entry;
   }
 
-  // 呼び出しを横で書き留めるだけで、引数も戻り値もそのまま渡す。計測で失敗しても通信は止めない
+  // 呼び出しを横で書き留めるだけで、引数も戻り値もそのまま渡す。計測で失敗しても通信は止めない。
+  // 例外は、利用者が止めたアクセス解析への送信だけ（送ったことにして捨てる）
   (function wrapNetworkApis() {
     try {
       const nativeFetch = global.fetch;
       if (typeof nativeFetch === 'function') {
         global.fetch = function (input, init) {
+          let entry = null;
           try {
             const isRequest = typeof Request !== 'undefined' && input instanceof Request;
             const method = (init && init.method) || (isRequest ? input.method : 'GET');
             let body = init && init.body != null ? init.body : null;
             if (body == null && isRequest && input.body) body = input.body; // ストリームは大きさ不明
-            recordCall('fetch', isRequest ? input.url : String(input), method, body);
+            entry = recordCall('fetch', isRequest ? input.url : String(input), method, body);
           } catch (_) { /* 計測だけ諦める */ }
+          if (entry && entry.suppressed) return Promise.resolve(new Response(null, { status: 204 }));
           return nativeFetch.apply(global, arguments);
         };
       }
@@ -447,10 +541,15 @@
         return open.apply(this, arguments);
       };
       proto.send = function (body) {
+        let entry = null;
         try {
           const p = pending.get(this);
-          if (p) recordCall('xhr', p.url, p.method, body);
+          if (p) entry = recordCall('xhr', p.url, p.method, body);
         } catch (_) { /* 同上 */ }
+        if (entry && entry.suppressed) {
+          try { this.abort(); } catch (_) { /* 同上 */ }
+          return undefined;
+        }
         return send.apply(this, arguments);
       };
     } catch (_) { /* 同上 */ }
@@ -459,7 +558,9 @@
       const beacon = navigator.sendBeacon;
       if (typeof beacon === 'function') {
         navigator.sendBeacon = function (url, data) {
-          try { recordCall('beacon', String(url), 'POST', data); } catch (_) { /* 同上 */ }
+          let entry = null;
+          try { entry = recordCall('beacon', String(url), 'POST', data); } catch (_) { /* 同上 */ }
+          if (entry && entry.suppressed) return true;
           return beacon.apply(navigator, arguments);
         };
       }
@@ -539,7 +640,16 @@
       notifyNet();
       return;
     }
+    // ページの CSP がどの指定でも許していない行き先なのに、止めた知らせが無いまま記録だけが来たもの。
+    // ページのプログラムからは出せない通信なので、ブラウザ本体や拡張機能がページに差し込んだものとして
+    // 分ける（例: Perplexity の Comet が差し込む自前のフォント）。このページの送信には数えない。
+    // 止められていた通信なら、あとから届く知らせと結び付けるときに元の分類へ戻す
+    if (dest.kind !== 'site' && !cspAllowsSomewhere(dest.href)) {
+      Object.assign(dest, { kind: 'outside', label: 'ブラウザや拡張機能' });
+    }
     net.entries.push(Object.assign({
+      // 止めている間の解析の読み込み。スクリプトは実行前に取り除いているので、取得だけで終わっている
+      suppressed: analytics.off && dest.kind === 'analytics',
       at: entry.startTime,
       via: entry.initiatorType || 'other',
       bytes: 0,
@@ -563,6 +673,7 @@
       for (let i = net.entries.length - 1; i >= 0; i--) {
         const c = net.entries[i];
         if (c.blocked || c.host !== record.host || !sameRequest(c.via, c.href, record)) continue;
+        if (c.kind === 'outside') Object.assign(c, describeDestination(c.href));
         c.blocked = true;
         c.directive = directive;
         record.linked = true;
@@ -612,12 +723,13 @@
   document.addEventListener('paste', e => { if (e.clipboardData) markWork(e.clipboardData.files); }, true);
 
   function tallyNet(since) {
-    const t = { sends: 0, sendsSite: 0, site: 0, siteBytes: 0, analytics: 0, ad: 0, other: 0, blocked: 0 };
+    const t = { sends: 0, sendsSite: 0, site: 0, siteBytes: 0, analytics: 0, ad: 0, other: 0, outside: 0, blocked: 0 };
     net.entries.forEach(e => {
-      if (e.at < since || e.kind === 'test' || e.blocked) return;
+      if (e.at < since || e.kind === 'test' || e.blocked || e.suppressed) return;
       t[e.kind] = (t[e.kind] || 0) + 1;
       if (e.kind === 'site') t.siteBytes += e.size || 0;
-      if (e.kind === 'analytics' || e.kind === 'donation') return;
+      // ページの外（ブラウザや拡張機能）の通信は、このページの送信に数えない
+      if (e.kind === 'analytics' || e.kind === 'donation' || e.kind === 'outside') return;
       // 中身を確かめられない送信も、送ったものとして数える（緑にしない側へ倒す）
       if (e.carries !== false || e.kind === 'other' || e.kind === 'ad') {
         t.sends += 1;
@@ -644,16 +756,9 @@
   // ---- 通信先の制限（CSP）の点検 --------------------------------------------
   // meta があるだけでは足りない。どのスクリプトより前にあること、読み込み・送信の通信先に
   // 「どこでも」（* や https: だけの指定）が混じっていないことまで見る。
-  const FETCH_DIRECTIVES = ['default-src', 'connect-src', 'img-src', 'script-src', 'style-src',
-    'font-src', 'media-src', 'frame-src', 'worker-src', 'object-src'];
   function inspectCsp() {
-    const meta = document.querySelector('meta[http-equiv="Content-Security-Policy" i]');
+    const { meta, dirs } = pageCsp;
     if (!meta) return { ok: false, reason: 'ページ先頭に Content-Security-Policy が見つかりませんでした。' };
-    const dirs = {};
-    String(meta.content || '').split(';').forEach(part => {
-      const tokens = part.trim().split(/\s+/).filter(Boolean);
-      if (tokens.length) dirs[tokens[0].toLowerCase()] = tokens.slice(1);
-    });
     const firstScript = document.querySelector('script');
     const early = meta.parentNode === document.head && (!firstScript
       || Boolean(meta.compareDocumentPosition(firstScript) & Node.DOCUMENT_POSITION_FOLLOWING));
@@ -754,6 +859,39 @@
     return root;
   }
 
+  // ---- アクセス解析を止めるボタン ------------------------------------------------
+  // カードを閉じていても見えるよう、カードのすぐ下に置く
+  function buildAnalyticsControl() {
+    const root = h('div', 'safety-analytics');
+    const text = h('p', 'safety-analytics-text');
+    const button = h('button', 'st-btn-quiet safety-analytics-btn');
+    button.type = 'button';
+    root.append(text, button);
+    button.addEventListener('click', () => setAnalyticsOff(!analytics.off));
+
+    function render() {
+      const off = analytics.off;
+      button.setAttribute('aria-pressed', String(off));
+      setText(button, off ? 'アクセス解析を再開する' : 'アクセス解析を止める');
+      let message;
+      if (!off) {
+        message = analytics.offAtLoad
+          ? 'アクセス解析を再開します。このページでは解析を読み込んでいないので、次にページを開いたときから送られます。'
+          : 'アクセス解析（Google アナリティクス・Cloudflare Web Analytics）が受け取るのは閲覧状況だけで、'
+            + 'ファイルや入力内容は送りません。それでも気になるときは止められます。';
+      } else {
+        message = (analytics.offAtLoad
+          ? 'アクセス解析を止めています。このブラウザでは、SAFE TOOLS のページで解析を読み込まず、送信もしません。'
+          : 'ここからのアクセス解析の送信を止めました。次にページを開いたときからは、解析を読み込みもしません。')
+          + (analytics.dropped ? 'このページで止めた解析の通信は' + analytics.dropped + '件です。' : '');
+      }
+      if (!analytics.saved) message += '（この端末のブラウザに設定を保存できないため、ページを閉じると元に戻ります）';
+      setText(text, message);
+      root.classList.toggle('is-off', off);
+    }
+    return { root, render };
+  }
+
   // ---- 通信の一覧 ------------------------------------------------------------
   const USE_LABELS = {
     script: 'プログラムの読み込み', link: '部品の読み込み', css: '部品の読み込み', img: '画像の読み込み',
@@ -762,6 +900,8 @@
   };
   function describeUse(e) {
     if (e.kind === 'test') return 'ガードの試験';
+    if (e.suppressed) return e.via === 'script' ? '解析プログラム（設定により実行しません）' : '閲覧の記録（設定により送っていません）';
+    if (e.kind === 'outside') return (USE_LABELS[e.via] || '読み込み') + '（このページの外から）';
     const sent = e.bytes > 0 ? '（' + formatBytes(e.bytes, 1) + '）' : '';
     if (e.kind === 'analytics') return e.via === 'script' ? '解析プログラムの読み込み' : '閲覧の記録' + sent;
     if (e.carries === true) return 'データの送信' + sent;
@@ -822,6 +962,33 @@
   // SAFE TOOLS 共通の5項目を、宣言ではなく、このページで確かめた結果として見せる。
   // 通信の数字は使っているあいだ更新し、想定外のことが起きたら緑のチェックにしない。
   let openSafetyLog = null;
+
+  // 5項目のアイコン。ツール一覧（tools/index.html）の同じ5項目と同じ Lucide の形
+  // （shield-check / cloud-off / ban / zap / lock）。Lucide を読まないツールもあるので形をここに持つ
+  const PROOFS = [
+    ['端末内で処理', [['path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' }], ['path', { d: 'm9 12 2 2 4-4' }]]],
+    ['サーバー保存なし', [['path', { d: 'm2 2 20 20' }],
+      ['path', { d: 'M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193' }],
+      ['path', { d: 'M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07' }]]],
+    ['広告なし', [['circle', { cx: '12', cy: '12', r: '10' }], ['path', { d: 'm4.9 4.9 14.2 14.2' }]]],
+    ['インストール不要', [['polygon', { points: '13 2 3 14 12 14 11 22 21 10 12 10 13 2' }]]],
+    ['通信先を制限', [['rect', { width: '18', height: '11', x: '3', y: '11', rx: '2', ry: '2' }],
+      ['path', { d: 'M7 11V7a5 5 0 0 1 10 0v4' }]]],
+  ];
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  function proofIcon(shapes) {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    [['class', 'safety-proof-icon'], ['viewBox', '0 0 24 24'], ['fill', 'none'], ['stroke', 'currentColor'],
+      ['stroke-width', '2'], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round'], ['aria-hidden', 'true']]
+      .forEach(([k, v]) => svg.setAttribute(k, v));
+    shapes.forEach(([tag, attrs]) => {
+      const node = document.createElementNS(SVG_NS, tag);
+      Object.keys(attrs).forEach(k => node.setAttribute(k, attrs[k]));
+      svg.appendChild(node);
+    });
+    return svg;
+  }
+
   function renderSafetyProof() {
     if (document.querySelector('.safety-proof')) return;
     const main = document.querySelector('main');
@@ -843,11 +1010,11 @@
     const count = h('span', 'safety-proof-count');
     heading.append(shield, h('span', 'safety-proof-title', 'このツールの安全設計'), count);
 
-    const LABELS = ['端末内で処理', 'サーバー保存なし', '広告なし', 'インストール不要', '通信先を制限'];
+    // 左にアイコン、右に確認の印（✓ / !。CSS の ::after で出す）
     const chips = h('div', 'safety-proof-chips');
-    const chipEls = LABELS.map(label => {
+    const chipEls = PROOFS.map(([label, shapes]) => {
       const chip = h('span', 'safety-proof-chip');
-      chip.appendChild(h('span', null, label));
+      chip.append(proofIcon(shapes), h('span', null, label));
       chips.appendChild(chip);
       return chip;
     });
@@ -875,23 +1042,36 @@
       + '数字は使っているあいだ更新されます。「データの送信」は、ファイルや入力を載せられる送り方（POST など）を'
       + 'アクセス解析の閲覧記録とは別に数えたものです。');
     const grid = h('div', 'safety-proof-grid');
-    const itemEls = LABELS.map(() => {
+    const itemEls = PROOFS.map(([label, shapes]) => {
       const box = h('div', 'safety-proof-item');
       const name = h('b');
+      const mark = h('span', 'safety-proof-mark');
+      mark.setAttribute('aria-hidden', 'true');
+      name.append(proofIcon(shapes), h('span', null, label), mark);
       const explanation = h('p');
       box.append(name, explanation);
       grid.appendChild(box);
-      return { name, explanation };
+      return { box, mark, explanation };
     });
     const log = buildLog();
     const note = h('p', 'safety-proof-note',
       'この表示は、このページのスクリプトが自分の通信を数えたものです。ページが別スレッド（Worker）で行う通信は'
-      + '数えていません（Worker も同じ通信先の制限の下で動きます）。ページを信用せずに確かめたいときは、'
+      + '数えていません（Worker も同じ通信先の制限の下で動きます）。ブラウザ本体や拡張機能がページに差し込んだ通信は、'
+      + '一覧に「ブラウザや拡張機能」として分けて出します。ページを信用せずに確かめたいときは、'
       + 'ブラウザの開発者ツールの「ネットワーク」で、同じ通信を見られます。');
     body.append(intro, grid, buildGuard(), log.root, note);
     details.append(summary, body);
-    section.appendChild(details);
-    main.before(section);
+    const analyticsControl = buildAnalyticsControl();
+    section.append(details, analyticsControl.root);
+    // 置き場所はツールのすぐ下。<main> の中に説明文を持つページ（PDF Studio・Text Diff・QR Atelier）は、
+    // その説明文の手前に入れる。それ以外は <main> の直後（FAQ の手前）
+    const prose = main.querySelector(':scope > .prose-tool, :scope > .prose');
+    if (prose) {
+      section.classList.add('is-inside-main');
+      prose.before(section);
+    } else {
+      main.after(section);
+    }
 
     function proofs(t) {
       const w = net.work ? tallyNet(net.work.at) : null;
@@ -924,7 +1104,9 @@
         {
           ok: adOk,
           detail: adOk
-            ? '広告枠も、広告の配信元との通信もありません。アクセス解析（' + t.analytics + '件）はありますが、ファイルや入力内容を渡す処理はありません。'
+            ? '広告枠も、広告の配信元との通信もありません。' + (analytics.off
+              ? 'アクセス解析は、あなたの設定で止めています。'
+              : 'アクセス解析（' + t.analytics + '件）はありますが、ファイルや入力内容を渡す処理はありません。下のボタンで止められます。')
             : '広告のコードか、広告の配信元との通信を検出しました。下の通信の一覧で確かめてください。',
         },
         {
@@ -939,7 +1121,11 @@
             ? 'ページ先頭の Content-Security-Policy で、読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先に絞っています（Ko-fi は別枠の表示だけ）。'
             : csp.reason)
             + (t.blocked ? 'ページを開いてから、ブラウザが止めた通信は' + t.blocked + '件です。' : '')
-            + guardText + unexpected,
+            + guardText + unexpected
+            + (t.outside
+              ? 'このほか、ブラウザ本体や拡張機能がこのページに差し込んだ通信が' + t.outside + '件あります（通信の一覧の「ブラウザや拡張機能」）。'
+                + 'この CSP が許していない行き先で、このページのプログラムからは出せないため、このページの通信には数えていません。'
+              : ''),
         },
       ];
     }
@@ -955,16 +1141,18 @@
       count.classList.toggle('is-warning', !allOk);
       list.forEach((p, i) => {
         chipEls[i].classList.toggle('is-warning', !p.ok);
-        setText(itemEls[i].name, (p.ok ? '✓ ' : '! ') + LABELS[i]);
+        itemEls[i].box.classList.toggle('is-warning', !p.ok);
+        setText(itemEls[i].mark, p.ok ? '✓' : '!');
         setText(itemEls[i].explanation, p.detail);
       });
 
       setText(mSends.value, t.sends + '件');
       mSends.item.classList.toggle('is-warning', t.sends > 0);
-      setText(mAnalytics.value, t.analytics + '件');
+      setText(mAnalytics.value, analytics.off ? '停止中' : t.analytics + '件');
       setText(mSite.value, t.site + '件');
       setText(mBlocked.value, t.blocked + '件');
       meter.classList.toggle('is-warning', t.sends > 0 || t.other > 0);
+      analyticsControl.render();
       log.render();
     }
 
@@ -1040,7 +1228,7 @@
       setText(mark, warn ? '!' : '✓');
       setText(title, warn ? '処理レシート（送信を検出）' : '処理レシート');
       setText(rSends.dd, t.sends + '件');
-      setText(rAnalytics.dd, t.analytics + '件');
+      setText(rAnalytics.dd, analytics.off ? '停止中' : t.analytics + '件');
       setText(rBlocked.dd, t.blocked + '件');
       setText(note, (work ? 'ファイルを受け取ってから' : 'ページを開いてから')
         + 'の通信を、このページ自身が数えた結果です。');

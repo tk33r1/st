@@ -708,10 +708,13 @@
    The summary keeps all five promises visible at a glance. The disclosure
    underneath explains what each promise means on this exact page, including
    the CSP check, without making readers understand response headers first. */
+/* Sits right under the tool: after <main>, or inside it just before the
+   explanatory prose when the page keeps that prose in <main>. */
 .st-theme .safety-proof {
   width: min(var(--shell), calc(100% - 40px));
-  margin: 18px auto 0;
+  margin: 32px auto 0;
 }
+.st-theme .safety-proof.is-inside-main { width: auto; margin: 40px 0 0; }
 .st-theme .safety-proof-card {
   border: 1px solid var(--rule);
   border-radius: var(--r-2);
@@ -784,15 +787,22 @@
   font-weight: 600;
   line-height: 1.25;
 }
-.st-theme .safety-proof-chip::before {
+.st-theme .safety-proof-chip::after,
+.st-theme .safety-proof-mark {
   content: "✓";
+  margin-left: auto;
+  padding-left: 4px;
   color: var(--ok);
   font-family: var(--font-mono);
   font-weight: 700;
   flex: none;
 }
-.st-theme .safety-proof-chip.is-warning::before { content: "!"; color: var(--warn); }
+.st-theme .safety-proof-chip.is-warning::after { content: "!"; color: var(--warn); }
 .st-theme .safety-proof-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Same Lucide icons as the promise row on the tools list (tools/index.html). */
+.st-theme .safety-proof-icon { width: 13px; height: 13px; flex: none; color: var(--ok); }
+.st-theme .is-warning .safety-proof-icon { color: var(--warn); }
+.st-theme .safety-proof-item.is-warning .safety-proof-mark { color: var(--warn); }
 .st-theme .safety-proof-body {
   padding: 0 15px 15px;
   border-top: 1px solid var(--rule);
@@ -815,6 +825,7 @@
 .st-theme .safety-proof-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .st-theme .safety-proof-item b,
 .st-theme .safety-guard-text b { display: block; margin-bottom: 3px; color: var(--ink); font-size: 12px; }
+.st-theme .safety-proof-item b { display: flex; align-items: center; gap: 6px; }
 .st-theme .safety-proof-item p,
 .st-theme .safety-guard-text p { margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.7; }
 .st-theme .safety-proof-item code { font-family: var(--font-mono); font-size: .92em; color: var(--ink); }
@@ -941,8 +952,22 @@
 .st-theme .safety-log-row.is-warning .safety-log-dest,
 .st-theme .safety-log-row.is-warning .safety-log-use { color: var(--warn); }
 .st-theme .safety-proof-note { margin: 12px 0 0; color: var(--ink-3); font-size: 11px; line-height: 1.75; }
+
+/* Analytics opt-out — under the card so it stays visible while the card is closed. */
+.st-theme .safety-analytics {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+.st-theme .safety-analytics-text { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--ink-3); font-size: 11px; line-height: 1.7; }
+.st-theme .safety-analytics.is-off .safety-analytics-text { color: var(--ink-2); }
+.st-theme .safety-analytics-btn { flex: none; padding: 6px 11px; font-size: 11.5px; white-space: nowrap; }
+.st-theme .safety-analytics.is-off .safety-analytics-btn { border-color: var(--ok); color: var(--ok); }
 @media (max-width: 760px) {
   .st-theme .safety-guard-head { flex-direction: column; align-items: stretch; }
+  .st-theme .safety-analytics { flex-direction: column; align-items: stretch; gap: 8px; }
   .st-theme .safety-log-row { grid-template-columns: 50px minmax(0, 1fr); }
   .st-theme .safety-log-use { grid-column: 2; }
 }

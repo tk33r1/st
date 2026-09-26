@@ -154,11 +154,20 @@
 - **安全設計カードと処理レシート**: `tools-ui.js` が各ツールの `<main>` の前に出す。5項目のチェックは
   宣言ではなく、そのページで実際に起きた通信（Resource Timing、fetch / XHR / sendBeacon などの呼び出し、
   CSP が止めた知らせ）と CSP の点検から決める。「データの送信」（中身を載せられる送り方。アクセス解析は別に数える）が
-  1件でもあれば緑にしない。「ガードを試す」は example.com へあえて送ろうとし、ブラウザが止めるのを見せる。
+  1件でもあれば緑にしない。ページの CSP がどの指定でも許していない行き先なのに、止められずに Resource Timing に
+  現れた通信は、ページのプログラムからは出せないので「ブラウザや拡張機能」として分け、送信に数えない
+  （Perplexity の Comet がフォントを差し込むなど）。「ガードを試す」は example.com へあえて送ろうとし、ブラウザが止めるのを見せる。
   処理レシートは `STShare.celebrate()` のたびに出る（celebrate が `st:complete` イベントを出し、tools-ui.js が
   それを受けて出す。ツール側の追加作業はない）。
   区切りはファイルを受け取った時点（change / drop / paste を捕捉で拾う）。どれもページ自身による計測で、
   Worker の中の通信は数えていない。画面にもそう書いてあるので、「送れない」のような言い方に変えないこと。
+  カードはツールのすぐ下（`<main>` の直後。`<main>` 直下に `.prose-tool` / `.prose` の説明文があればその手前）に出る。
+- **アクセス解析を止める**: 安全設計カードの下のボタンで、利用者が止められる。設定は localStorage の
+  `st-analytics`（`off` で停止）。止めていると、`tools/` の各ページの GTM スニペットが先頭でこのキーを見て
+  GTM を読み込まず、`tools-ui.js` が Cloudflare Web Analytics の差し込みスクリプトを実行前に取り除き、
+  途中で止めたときは以後の解析への fetch / XHR / sendBeacon を送らずに捨てる。新しいツールの GTM スニペットにも
+  同じ判定（`try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}`）を入れる。一覧ページ
+  （`tools/index.html`）は GTM だけ止まる（`tools-ui.js` を読まないので Cloudflare の分は止まらない）。
 - **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`data/glitch.js` が
   描画する。記事追加時は HTML ではなく JSON を編集する。tools/game の一覧も同様に
   `data/tools.json` / `data/game.json` が正。
