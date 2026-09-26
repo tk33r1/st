@@ -4659,9 +4659,8 @@
     document.querySelectorAll('.hero-section .reveal').forEach(el => el.classList.add('active'));
 
     // 4. SYNC RATE & Back to Top (Scroll Progress)
-    // scrollHeight / offsetTop の読み取りは強制同期レイアウトを起こすので、
+    // offsetTop の読み取りは強制同期レイアウトを起こすので、
     // スクロール中は測らずキャッシュを使い、寸法が変わったときだけ measure() し直す。
-    let scrollHeight = 0;
     let footerTopScroll = 0;
 
     /*
@@ -5128,7 +5127,6 @@
        */
       let inZone = !!footer && scrollTop > 0 && scrollTop >= footerTopScroll;
       if (inZone && !syncInZone) {
-        scrollHeight = document.documentElement.scrollHeight;
         footerTopScroll = footer.offsetTop - clientHeight;
         inZone = scrollTop >= footerTopScroll;
       }
@@ -5137,15 +5135,13 @@
         ? Math.max(0, Math.min(1, scrollTop / footerTopScroll)) * SYNC_BASE
         : 0;
 
-      const maxScroll = scrollHeight - clientHeight;
-      const scrollPercent = maxScroll > 0 ? Math.max(0, Math.min(1, scrollTop / maxScroll)) : 0;
-
       advanceSyncRate();
       // 活動停止は最上部に着いたとき。ゴム band で負の値になる環境も拾えるよう 0 以下で見る
       if (berserk && !shuttingDown && scrollTop <= 0) shutdown();
 
+      // バーは SYNC RATE と同じ目盛り（フッターの上端で満タン）。
       // 暴走中は振り切れたまま戻さない。∞% と目盛りの食い違いをなくす
-      if (progressBar) progressBar.style.width = berserk ? '100%' : `${scrollPercent * 100}%`;
+      if (progressBar) progressBar.style.width = berserk ? '100%' : `${syncScrollRate}%`;
       renderSyncRate();
 
       if (backToTopBtn) {
@@ -5174,7 +5170,6 @@
     }, { passive: true });
 
     const remeasure = () => {
-      scrollHeight = document.documentElement.scrollHeight;
       footerTopScroll = footer ? footer.offsetTop - window.innerHeight : 0;
       updateScrollUi();
     };
