@@ -113,7 +113,15 @@ def expect_ok_json(body):
 
 # スモークテストは実運用の呼び出し方を最小の形でなぞる。呼び出し方を変えたらここも直すこと。
 def smoke_openai(url, api_key, model):
-    # 日刊生成・人格カード・ゲームAPI：非推論、低温、JSON出力
+    # 日刊生成：既定と同じ medium 推論、JSON出力。GPT-6 は推論時に temperature を送れない。
+    expect_ok_json(post_json(url, api_key, {
+        'model': model,
+        'messages': JSON_MESSAGES,
+        'reasoning_effort': 'medium',
+        'max_completion_tokens': 1024,
+        'response_format': {'type': 'json_object'},
+    }))
+    # 人格カード・ゲームAPI：非推論、低温、JSON出力
     expect_ok_json(post_json(url, api_key, {
         'model': model,
         'messages': JSON_MESSAGES,
@@ -143,7 +151,7 @@ def smoke_openai(url, api_key, model):
         'stream': True,
     }, stream=True)
     smoke_openai_web_search(api_key, model)
-    return 'JSON/非推論、画像/高温/top_p、推論/stream、Web検索強制/推論/JSONスキーマ'
+    return 'JSON/medium、JSON/非推論、画像/高温/top_p、推論/stream、Web検索強制/推論/JSONスキーマ'
 
 
 OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
@@ -163,9 +171,13 @@ def smoke_openai_web_search(api_key, model):
             'type': 'object', 'additionalProperties': False, 'required': ['year'],
             'properties': {'year': {'type': ['integer', 'null']}},
         }}},
-        'max_output_tokens': 2000,
+        # 本番（requestSongInfo の SONG_INFO.maxOutputTokens）と同じ上限。小さくすると推論 high で
+        # 使い切って本文が空になり、本番では起きない失敗を報告してしまう
+        'max_output_tokens': 6000,
         'store': False,
     })
+    if isinstance(body, dict) and body.get('status') == 'incomplete':
+        raise RuntimeError(f'応答が途中で切れました: {body.get("incomplete_details")}')
     output = body.get('output') if isinstance(body, dict) else None
     if not isinstance(output, list):
         raise RuntimeError(f'Responses API の output がありません: {str(body)[:500]}')
@@ -184,7 +196,7 @@ def smoke_openai_web_search(api_key, model):
 
 
 def smoke_deepseek(url, api_key, model):
-    # 日刊生成の一次プロバイダー：JSON出力
+    # 日刊生成のフォールバック（一次は OpenAI）：JSON出力
     expect_ok_json(post_json(url, api_key, {
         'model': model,
         'messages': JSON_MESSAGES,

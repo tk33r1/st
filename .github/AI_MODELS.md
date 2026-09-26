@@ -42,11 +42,12 @@ PR本文にも同じ手順を出す。
 
 | プロバイダー | 試すこと | なぞっている利用箇所 |
 | --- | --- | --- |
-| OpenAI | 非推論・temperature 0.2・JSON出力 | 日刊生成、MAGIの人格カード、ゲームAPI |
+| OpenAI | 推論 medium（temperature なし）・JSON出力 | 日刊生成（一次プロバイダー） |
+| OpenAI | 非推論・temperature 0.2・JSON出力 | MAGIの人格カード、ゲームAPI |
 | OpenAI | 非推論・temperature 1.3・top_p・画像入力（data URL） | magi2 の Strategist（揺らぎの最大温度、画像付きの質問） |
 | OpenAI | 推論 high・ストリーミング | magi2 の統合（上位モデルでは組織認証を求められることがある） |
 | OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
-| DeepSeek | temperature 0.2・JSON出力 | 日刊生成 |
+| DeepSeek | temperature 0.2・JSON出力 | 日刊生成（OpenAI が失敗したときのフォールバック） |
 | DeepSeek | 推論なし（`thinking` disabled）・temperature 1.3・top_p・画像入力 | magi2 の Enthusiast |
 | Google | 推論 minimal（Gemini 3 系は切れない）・temperature 1.3・top_p・画像入力 | magi2 の Humanist |
 

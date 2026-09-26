@@ -770,11 +770,13 @@ def call_llm_api(endpoint, api_key, model_name, prompt_content, user_agent):
             {"role": "user", "content": prompt_content}
         ],
         "response_format": {"type": "json_object"},
-        "temperature": 0.2,
     }
-    # OpenAI の最新推論モデル等では reasoning_effort: 'none' が必要な場合がある
+    # OpenAI の推論モデルは既定と同じ medium で推論させる。推論を有効にしたモデルへは
+    # temperature を送れないため、低温指定は DeepSeek 等だけに適用する。
     if 'gpt' in model_name.lower() or 'luna' in model_name.lower():
-        payload["reasoning_effort"] = "none"
+        payload["reasoning_effort"] = "medium"
+    else:
+        payload["temperature"] = 0.2
 
     def do_request(p_data):
         req = urllib.request.Request(
@@ -903,22 +905,22 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
             print(f"[WARN] モデル設定を読めません: {e}", file=sys.stderr)
             return ''
 
-    deepseek_model = configured_model('deepseek', 'flash', 'DEEPSEEK_MODEL')
     openai_model = configured_model('openai', 'luna', 'OPENAI_MODEL')
+    deepseek_model = configured_model('deepseek', 'flash', 'DEEPSEEK_MODEL')
     providers = [
-        {
-            "name": "DeepSeek",
-            "model": deepseek_model,
-            "key": os.environ.get('DEEPSEEK_API_KEY', '').strip(),
-            "url": "https://api.deepseek.com/chat/completions",
-            "badge_label": f"DeepSeek ({deepseek_model})"
-        },
         {
             "name": "OpenAI",
             "model": openai_model,
             "key": os.environ.get('OPENAI_API_KEY', '').strip(),
             "url": "https://api.openai.com/v1/chat/completions",
             "badge_label": f"OpenAI ({openai_model})"
+        },
+        {
+            "name": "DeepSeek",
+            "model": deepseek_model,
+            "key": os.environ.get('DEEPSEEK_API_KEY', '').strip(),
+            "url": "https://api.deepseek.com/chat/completions",
+            "badge_label": f"DeepSeek ({deepseek_model})"
         }
     ]
 

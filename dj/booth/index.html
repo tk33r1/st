@@ -1148,6 +1148,10 @@
       return b && b < 90 ? b * 2 : b;
     };
 
+    /* 並べ替えと繋ぎ候補で使う BPM。タップで手入れした値だけは読み替えない（cardHTML の bpmChip と同じ考え）。
+       規則を1か所に置き、BPM 順の並びと NEXT の候補が食い違わないようにする */
+    const bpmForMix = (s) => (s.bpmTapped ? s.bpm : effBpm(s.bpm)) || null;
+
     /* キャメロット（"11A"）は文字列のままだと 10A → 11A → 1A と並ぶ。
        数字→文字の順に直すとホイールの並びになり、隣り合うキーが近くに来る。 */
     const camelotRank = (c) => {
@@ -1366,7 +1370,7 @@
       // どちらも同じなら安定ソートなので新着順のまま残る。
       pop: (a, b) => (b.likes || 0) - (a.likes || 0) || (b.votes || 0) - (a.votes || 0),
       genre: byKey((s) => s.genre, (x, y) => x.localeCompare(y, 'ja')),
-      bpm: byKey((s) => (s.bpmTapped ? s.bpm : effBpm(s.bpm)) || null, (x, y) => x - y),
+      bpm: byKey(bpmForMix, (x, y) => x - y),
       key: byKey(songKeyRank, (x, y) => x - y),
     };
 
@@ -1746,7 +1750,6 @@
        起点は最後に再生済にした曲。新着と採用済から、BPM とキー（Camelot）の相性で3曲選ぶ。
        繋ぎ方の型もここで決める（LLM には訊かない。数値から機械的に決まることだから）。
        背景カードに出典つきの「沸く所」や「AI の見立て」があれば添える。 */
-    const bpmForMix = (s) => (s.bpmTapped ? s.bpm : effBpm(s.bpm)) || null;
 
     // songKeyRank は Camelot 番号 × 2 ＋ B なら 1
     const camelotOf = (s) => {
@@ -1802,16 +1805,23 @@
       return 'カットインかエコーアウトで切り替え';
     }
 
+    /* NEXT 欄は読み上げ領域（aria-live）。render() は5秒ごとのポーリングでも走るので、
+       中身が変わったときだけ書き換える。毎回書くと、同じ候補を何度も読み上げて新着の知らせが埋もれる */
+    const nextShown = { base: null, list: null };
+    function paintNext(base, list) {
+      if (nextShown.base !== base) { nextShown.base = base; $('#nextBase').innerHTML = base; }
+      if (nextShown.list !== list) { nextShown.list = list; $('#nextList').innerHTML = list; }
+    }
+
     function renderNext() {
       const base = songs.filter((s) => s.status === 'played' && s.playedAt)
         .sort((a, b) => (asDate(b.playedAt) || 0) - (asDate(a.playedAt) || 0))[0];
       if (!base) {
-        $('#nextBase').textContent = '再生済にした曲を起点に、BPM とキーの相性で候補を出します';
-        $('#nextList').innerHTML = '';
+        paintNext(esc('再生済にした曲を起点に、BPM とキーの相性で候補を出します'), '');
         return;
       }
       const bb = bpmForMix(base);
-      $('#nextBase').innerHTML = 'NOW <b>' + esc(base.title) + '</b> · ' +
+      const baseHTML = 'NOW <b>' + esc(base.title) + '</b> · ' +
         esc((bb ? Math.round(bb) + ' BPM' : 'BPM 不明') + ' · ' + (base.camelot || base.songKey || 'キー不明'));
 
       const picks = songs
@@ -1825,7 +1835,7 @@
         .sort((a, b) => a.score - b.score)
         .slice(0, 3);
 
-      $('#nextList').innerHTML = picks.length ? picks.map(({ s, bf, kf }) => {
+      paintNext(baseHTML, picks.length ? picks.map(({ s, bf, kf }) => {
         const fit = bpmPenalty(bf) + kf.score;
         const cls = fit <= 1 ? '' : fit <= 3 ? ' meh' : ' bad';
         const bpmText = bf
@@ -1841,7 +1851,7 @@
           '<span class="how">' + esc(mixPlan(bf, kf)) + '</span>' +
           (hint ? '<span class="hint">' + esc(hint) + '</span>' : '') +
           '</li>';
-      }).join('') : '<li class="blank">候補になる曲（新着・採用済）がありません</li>';
+      }).join('') : '<li class="blank">候補になる曲（新着・採用済）がありません</li>');
     }
 
     // 候補を押したら、その曲のカードへ（タブも切り替える）

@@ -21,7 +21,7 @@
  *   GET   /dj/api/req/admin/events       全イベント（削除の対象を選ぶための一覧）
  *   DELETE /dj/api/req/admin/events/:code 過去の回を曲・投稿・いいねごと消す
  *   PATCH /dj/api/req/admin/songs/:id/analysis  プレビューから推定した BPM・キー（空欄のときだけ入る）
- *   POST  /dj/api/req/admin/songs/:id/info      背景カードを作り直す（ADMIN_KEY があれば鍵が要る）
+ *   POST  /dj/api/req/admin/songs/:id/info      背景カードを作り直す（料金が掛かるので ADMIN_KEY 必須）
  *
  * 文字列は素のまま保存し、エスケープは表示側で行う。DB に HTML エスケープ済みの
  * 文字列を入れると、DJ がコピーする曲名に &amp; が混ざって検索が外れるため。
@@ -233,10 +233,12 @@ async function bpmFromDeezer(artists, title, durationMs) {
   const list = (d && d.data) || [];
   // 再生時間とアーティストが合うものだけ採用する。尺だけだと、同じ長さのトリビュート盤
   // （別人のカバー）を掴む（Bloody Mary で実際に起きた）。
+  // 部分一致は3文字以上のときだけ。1〜2文字の名前（"B" など）だと、ほとんどの名前に含まれてしまう。
+  const sameArtist = (a, b) => a === b || (Math.min(a.length, b.length) >= 3 && (a.includes(b) || b.includes(a)));
   const cand = list.find((x) => {
     const got = looseName(x.artist && x.artist.name);
     return Math.abs(x.duration - sec) <= 3
-      && !!got && names.some((n) => got.includes(n) || n.includes(got))
+      && !!got && names.some((n) => sameArtist(got, n))
       && (!COVER_WORDS.test(x.title) || COVER_WORDS.test(title));
   });
   if (!cand) return null;
@@ -280,8 +282,9 @@ async function enrichSong(env, songId, artist, title, durationMs, altArtist) {
    付けさせ、その URL が実際に取得した検索結果（sources）に無ければ保存する前に捨てる。
 
    曲（Apple の trackId）ごとに1枚を、イベントをまたいで使い回す。作るのは投稿で新しい曲が
-   入ったとき（ctx.waitUntil）と、ブースの「作り直す」だけ。ブースの API は鍵なしで、
-   trackId も来場者のブラウザが送る値なので、料金が青天井にならないよう1日の生成数に上限を置く。
+   入ったとき（ctx.waitUntil）と、ブースの「作り直す」（ADMIN_KEY 必須）だけ。trackId は来場者の
+   ブラウザが送る値なので、iTunes で本物の曲か確かめ、LLM に渡す曲の情報もそちらを使う（lookupTrack）。
+   料金が青天井にならないよう1日の生成数にも上限を置く。
    送るのは曲のメタ情報だけで、来場者の名前やひとことは送らない。 */
 
 const SONG_INFO = {
@@ -292,7 +295,7 @@ const SONG_INFO = {
   // ブースの「作り直す」はリクエストの中で待てるので長めに取る
   refreshTimeoutMs: 45000,
   maxOutputTokens: 6000,
-  dailyCap: 300,       // 24時間で作ってよい枚数（作り直しも1枚と数える）
+  dailyCap: 300,       // 24時間で OpenAI を呼んでよい回数（作り直しも1回と数える）
   maxAttempts: 2,      // 自動で作るのは失敗しても2回まで。以降はブースの「作り直す」だけ
   staleSec: 90,        // pending のまま残った行（途中で落ちた）を取り直せるまでの秒数
 };
@@ -456,12 +459,15 @@ async function requestSongInfo(env, song, timeoutMs) {
 }
 
 /** 生成の権利を取る。同じ曲を二重に作らない・1日の上限を越えない、を1文で判定する。
-    force はブースの「作り直す」。できあがっているカードや、失敗を重ねた曲もやり直す。 */
+    force はブースの「作り直す」。できあがっているカードや、失敗を重ねた曲もやり直す。
+    上限は行数ではなく attempts の合計で数える。行数だと、同じ曲の作り直しが何度でも1枚に見える
+    （過去の日の attempts も混ざるので多めに数えるが、料金の歯止めとしてはそのほうが安全）。 */
 async function claimSongInfo(env, trackId, force) {
   const r = await env.DB.prepare(
     `INSERT INTO song_info (track_id, status, attempts, updated_at)
      SELECT ?1, 'pending', 1, CURRENT_TIMESTAMP
-      WHERE (SELECT COUNT(*) FROM song_info WHERE updated_at > datetime('now', '-1 day')) < ?2
+      WHERE (SELECT COALESCE(SUM(attempts), 0) FROM song_info
+              WHERE updated_at > datetime('now', '-1 day')) < ?2
      ON CONFLICT(track_id) DO UPDATE
         SET status = 'pending', attempts = song_info.attempts + 1, updated_at = CURRENT_TIMESTAMP
       WHERE (song_info.status = 'pending' AND song_info.updated_at < datetime('now', ?3))
@@ -485,23 +491,52 @@ async function saveSongInfo(env, trackId, result) {
 /** カードを作れる曲か。trackId はブラウザが送る値なので、Apple の数字の ID だけ通す。 */
 const canDescribe = (env, song) => !!env.OPENAI_API_KEY && !song.isFree && /^\d{1,15}$/.test(String(song.trackId || ''));
 
-/** 権利を取れたら、OpenAI の応答を待つ Promise を返す（D1 には書かない。失敗しても投げない）。
-    取れなければ null。保存は呼び出し側が saveSongInfo で行う。 */
-async function startSongInfo(env, song, { force = false, timeoutMs = SONG_INFO.timeoutMs } = {}) {
-  if (!canDescribe(env, song)) return null;
-  if (!(await claimSongInfo(env, String(song.trackId), force))) return null;
-  return requestSongInfo(env, song, timeoutMs)
-    .then((d) => ({ card: buildSongCard(d) }))
-    .catch((e) => ({ error: e && e.name === 'AbortError' ? '時間切れ' : String((e && e.message) || e).slice(0, 200) }));
+/** trackId が本当にその曲の ID か、iTunes で引いて確かめる。trackId も曲名もブラウザが送る値なので、
+    有名曲の ID に別の曲名（や、曲名欄に仕込んだ指示）を付けて送られると、取り違えたカードが
+    その ID に保存され、イベントをまたいで出続ける。確かめたうえで、カードの入力も iTunes の値を使う。
+    英語のアーティスト名は検索の手掛かりに US のストアからも引く（取れなくても構わない）。 */
+async function lookupTrack(trackId, title) {
+  const [jp, us] = await Promise.all([
+    fetchJson('https://itunes.apple.com/lookup?country=JP&id=' + encodeURIComponent(trackId)),
+    fetchJson('https://itunes.apple.com/lookup?country=US&id=' + encodeURIComponent(trackId)),
+  ]);
+  const pick = (d) => (d && Array.isArray(d.results) ? d.results.find((x) => x && String(x.trackId) === trackId) : null);
+  const r = pick(jp);
+  if (!r || !r.trackName) return null;
+  const got = looseName(r.trackName), sent = looseName(title);
+  if (!got || !sent || !(got.includes(sent) || sent.includes(got))) return null;
+  const en = pick(us);
+  return {
+    trackId,
+    title: clean(r.trackName, LIMITS.title),
+    artist: clean(r.artistName, LIMITS.artist),
+    artistEn: en && en.artistName !== r.artistName ? clean(en.artistName, LIMITS.artist) : '',
+    album: clean(r.collectionName, LIMITS.album),
+    genre: clean(r.primaryGenreName, 60),
+    releaseYear: Number(String(r.releaseDate || '').slice(0, 4)) || 0,
+    durationMs: Number(r.trackTimeMillis) || 0,
+  };
 }
 
-/** songs の行を背景カードの入力に直す */
-const songForInfo = (s) => ({
-  trackId: s.track_id, isFree: !!s.is_free, title: s.title, artist: s.artist, artistEn: s.artist_en,
-  album: s.album, genre: s.genre, releaseYear: s.release_year, durationMs: s.duration_ms,
-});
+/** 権利を取れたら { promise } を返す。promise は OpenAI の応答を待ち、{ card } か { error } に解決する
+    （D1 には書かず、投げない。保存は呼び出し側が saveSongInfo で行う）。取れなければ { skip: 理由 }。
+    Promise をそのまま返さないのは、async 関数の戻り値に取り込まれて、呼び出し側の await が
+    応答まで待ってしまうため（BPM の取得と並べられなくなる）。 */
+async function startSongInfo(env, song, { force = false, timeoutMs = SONG_INFO.timeoutMs } = {}) {
+  if (!canDescribe(env, song)) return { skip: 'unavailable' };
+  const real = await lookupTrack(String(song.trackId), song.title);
+  if (!real) return { skip: 'lookup' };
+  if (!(await claimSongInfo(env, real.trackId, force))) return { skip: 'claim' };
+  const promise = requestSongInfo(env, real, timeoutMs)
+    .then((d) => ({ card: buildSongCard(d) }))
+    .catch((e) => ({ error: e && e.name === 'AbortError' ? '時間切れ' : String((e && e.message) || e).slice(0, 200) }));
+  return { promise };
+}
 
-/** 画面に出す形。pending のまま時間が経った行は、途中で落ちたものとして failed に見せる。 */
+/** songs の行から、startSongInfo の照合に使う値だけを取り出す（中身は iTunes で引き直す） */
+const songForInfo = (s) => ({ trackId: s.track_id, isFree: !!s.is_free, title: s.title });
+
+/** 画面に出す形。pending のまま時間が経った行を failed に見せる読み替えは、adminSongs の SQL で行う。 */
 function shapeInfo(s) {
   if (!s.info_status) return null;
   let card = null;
@@ -651,12 +686,10 @@ async function postRequest(request, env, cors, ctx) {
       if (isNewSong && !isFree) {
         // 背景カードは OpenAI の応答待ちが長いので、権利だけ先に取って BPM の取得と並べる。
         // D1 への書き込みは直列のまま（応答が届いてから保存する）。
-        const info = await startSongInfo(env, {
-          trackId: track.trackId, isFree, title, artist, artistEn, album: clean(track.album, LIMITS.album),
-          genre: clean(track.genre, 60), releaseYear: Number(track.releaseYear) || 0, durationMs,
-        }).catch(() => null);
+        // 曲の中身は startSongInfo が iTunes で引き直すので、ここで渡すのは照合に使う ID と曲名だけ。
+        const info = await startSongInfo(env, { trackId: track.trackId, isFree, title }).catch(() => null);
         await enrichSong(env, song.id, artistForLookup, title, durationMs, artist);
-        if (info) await saveSongInfo(env, String(track.trackId), await info);
+        if (info && info.promise) await saveSongInfo(env, String(track.trackId), await info.promise);
       }
     })());
   }
@@ -1181,30 +1214,34 @@ async function adminPatchAnalysis(id, request, env, cors) {
 }
 
 /* ── 管理: 背景カードを作り直す ───────────────
-   料金が掛かる操作なので、ADMIN_KEY を設定してあるときは鍵を要求する（削除と同じ錠）。
+   料金が掛かる操作なので、ほかの管理 API と違って鍵は必須。ADMIN_KEY を設定していなければ
+   作り直しそのものを受け付けない（鍵なしで開けると、ループで叩かれたときに料金が青天井になる）。
    応答はリクエストの中で待つ（ブースは「調べています」を出して待つ）。 */
 async function adminRefreshInfo(id, request, env, cors) {
-  if (env.ADMIN_KEY && bearer(request) !== env.ADMIN_KEY) {
+  if (!env.ADMIN_KEY) {
+    return json({ error: 'no_admin_key', message: 'ADMIN_KEY を設定するまで、背景の作り直しはできません' }, 403, cors);
+  }
+  if (bearer(request) !== env.ADMIN_KEY) {
     return json({ error: 'unauthorized', message: '管理キーが必要です' }, 401, cors);
   }
-  const s = await env.DB.prepare(
-    `SELECT id, track_id, is_free, title, artist, artist_en, album, genre, release_year, duration_ms
-       FROM songs WHERE id = ?`
-  ).bind(id).first();
+  const s = await env.DB.prepare(`SELECT id, track_id, is_free, title FROM songs WHERE id = ?`).bind(id).first();
   if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
   const song = songForInfo(s);
   if (!canDescribe(env, song)) {
     return json({ error: 'unavailable', message: 'この曲は背景を調べられません（カタログ外の曲か、API キーが未設定です）' }, 400, cors);
   }
 
-  const pending = await startSongInfo(env, song, { force: true, timeoutMs: SONG_INFO.refreshTimeoutMs });
-  if (!pending) {
+  const started = await startSongInfo(env, song, { force: true, timeoutMs: SONG_INFO.refreshTimeoutMs });
+  if (started.skip === 'lookup') {
+    return json({ error: 'lookup', message: 'Apple Music のカタログでこの曲を確かめられませんでした' }, 409, cors);
+  }
+  if (!started.promise) {
     const row = await env.DB.prepare(`SELECT status FROM song_info WHERE track_id = ?`).bind(song.trackId).first();
     return row && row.status === 'pending'
       ? json({ error: 'busy', message: 'いま調べている最中です。少し待ってから開き直してください' }, 409, cors)
       : json({ error: 'limit', message: '今日調べられる曲数の上限に達しました' }, 429, cors);
   }
-  const result = await pending;
+  const result = await started.promise;
   await saveSongInfo(env, song.trackId, result);
 
   const row = await env.DB.prepare(
@@ -1220,7 +1257,8 @@ async function adminEnrich(env, cors, ctx) {
 
   const { results } = await env.DB.prepare(
     `SELECT id, artist, artist_en, title, duration_ms FROM songs
-      WHERE event_code = ? AND is_free = 0 AND (bpm IS NULL OR bpm_src = 'est') LIMIT 30`
+      WHERE event_code = ? AND is_free = 0 AND (bpm IS NULL OR bpm_src = 'est')
+      ORDER BY (bpm IS NULL) DESC, id DESC LIMIT 30`
   ).bind(ev.code).all();
 
   // 同時に大量の UPDATE を投げると D1 が詰まるので直列に流す
