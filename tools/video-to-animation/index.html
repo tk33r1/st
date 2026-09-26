@@ -64,6 +64,41 @@
     ]
   }
   </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": "https://tk.st/tools/video-to-animation/#faq",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "どのアニメーション形式に変換できますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "通常のWebP、可逆WebP、APNG、GIFの4種類に変換できます。元動画の用途や、画質・ファイルサイズ・互換性の優先順位に合わせて選べます。"}
+      },
+      {
+        "@type": "Question",
+        "name": "フレームレートや画像サイズは変更できますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "はい。元動画のフレームレートを保つほか、24・15・10fpsから選べます。最大幅も指定でき、縦横比を保ったまま縮小できます。"}
+      },
+      {
+        "@type": "Question",
+        "name": "変換できる動画のファイルサイズに上限はありますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "上限は200MBです。変換中は動画と展開したフレームを端末のメモリ上で扱うため、長い動画や高解像度の動画では、フレームレートや最大幅を下げると処理しやすくなります。"}
+      },
+      {
+        "@type": "Question",
+        "name": "変換後のファイルが元動画より大きくなることはありますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "あります。動画用コーデックは連続する映像の圧縮に適しているため、同じ長さのアニメーション画像は元動画より大きくなる場合があります。最大幅やfpsを下げると容量を抑えられます。"}
+      },
+      {
+        "@type": "Question",
+        "name": "動画はサーバーや外部サービスに送られますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "いいえ。動画の読み込みと変換は、サイト内に同梱した変換プログラムを使ってブラウザ内で行い、動画の中身を送る処理を持ちません。そのうえでContent-Security-Policyにより、読み込みや送信に使える通信先をこのサイトとアクセス解析に必要な送信先だけに制限しています。"}
+      }
+    ]
+  }
+  </script>
   
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F766E'/%3E%3Cpath d='M13 9.5 24 16 13 22.5 Z' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
   
@@ -73,12 +108,11 @@
   <!-- ffmpeg.wasm dependencies -->
   <script src="../../data/vendor/@ffmpeg/ffmpeg@0.12.10/ffmpeg.js"></script>
   <script src="../../data/vendor/@ffmpeg/util@0.12.1/index.js"></script>
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
-  <script src="../../data/tools-ui.js?v=20260926_3"></script>
-
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_3">
+  <script src="../../data/tools-ui.js?v=20260926_5"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -162,7 +196,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
+          <li><a class="crumb-section" href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">Video to Animation</h1></li>
         </ol>
       </nav>
@@ -298,6 +332,21 @@
     </div>
 
   </main>
+
+  <section class="faq-section" aria-labelledby="faq-title">
+    <div class="faq-head">
+      <span class="faq-kicker">FAQ</span>
+      <h2 id="faq-title" class="faq-title">よくある質問</h2>
+      <p class="faq-lede">出力形式、画質と容量、動画ファイルの扱いについて回答します。</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item"><summary class="faq-question">どのアニメーション形式に変換できますか？</summary><p class="faq-answer">通常のWebP、可逆WebP、APNG、GIFの4種類に変換できます。元動画の用途や、画質・ファイルサイズ・互換性の優先順位に合わせて選べます。</p></details>
+      <details class="faq-item"><summary class="faq-question">フレームレートや画像サイズは変更できますか？</summary><p class="faq-answer">はい。元動画のフレームレートを保つほか、24・15・10fpsから選べます。最大幅も指定でき、縦横比を保ったまま縮小できます。</p></details>
+      <details class="faq-item"><summary class="faq-question">変換できる動画のファイルサイズに上限はありますか？</summary><p class="faq-answer">上限は200MBです。変換中は動画と展開したフレームを端末のメモリ上で扱うため、長い動画や高解像度の動画では、フレームレートや最大幅を下げると処理しやすくなります。</p></details>
+      <details class="faq-item"><summary class="faq-question">変換後のファイルが元動画より大きくなることはありますか？</summary><p class="faq-answer">あります。動画用コーデックは連続する映像の圧縮に適しているため、同じ長さのアニメーション画像は元動画より大きくなる場合があります。最大幅やfpsを下げると容量を抑えられます。</p></details>
+      <details class="faq-item"><summary class="faq-question">動画はサーバーや外部サービスに送られますか？</summary><p class="faq-answer">いいえ。動画の読み込みと変換は、サイト内に同梱した変換プログラムを使ってブラウザ内で行い、動画の中身を送る処理を持ちません。そのうえでContent-Security-Policyにより、読み込みや送信に使える通信先をこのサイトとアクセス解析に必要な送信先だけに制限しています。</p></details>
+    </div>
+  </section>
 
   <!-- ===================== status bar ===================== -->
   <footer class="site-foot">

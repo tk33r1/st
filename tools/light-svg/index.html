@@ -67,13 +67,48 @@
   }
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": "https://tk.st/tools/light-svg/#faq",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "SVGはどのように軽量化されますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "コメント、メタデータ、不要な属性や空の要素を削除し、数値、色、パスの記述を短くします。viewBoxは保ち、通常は見た目を変えずにファイルサイズを小さくします。"}
+      },
+      {
+        "@type": "Question",
+        "name": "PNGやJPEGをSVGに変換できますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "はい。PNGまたはJPEGを読み込むと輪郭を解析してベクターデータへ変換し、その結果をさらにSVGとして最適化します。写真よりも、ロゴ、アイコン、線画のように色や輪郭がはっきりした画像に向いています。"}
+      },
+      {
+        "@type": "Question",
+        "name": "最適化で見た目が変わっていないか確認できますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "はい。元の画像と最適化後の画像を重ねた比較表示で境界を動かし、見た目の違いを確認できます。元より大きくなる場合は、そのことも画面に表示します。"}
+      },
+      {
+        "@type": "Question",
+        "name": "最適化したSVGをコードとしてコピーできますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "できます。SVGコードそのものに加え、HTMLやCSSへ貼り付けやすいdata URI形式でもコピーできます。ファイルとしてダウンロードすることもできます。"}
+      },
+      {
+        "@type": "Question",
+        "name": "SVGや画像はサーバーや外部サービスに送られますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "いいえ。SVGの最適化と画像のベクター化はブラウザ内で行い、ファイルの中身を送る処理を持ちません。処理ライブラリもサイト内に同梱し、Content-Security-Policyにより、読み込みや送信に使える通信先をこのサイトとアクセス解析に必要な送信先だけに制限しています。"}
+      }
+    ]
+  }
+  </script>
+
   <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
-  <script src="../../data/tools-ui.js?v=20260926_3"></script>
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_3">
+  <script src="../../data/tools-ui.js?v=20260926_5"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -474,7 +509,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
+          <li><a class="crumb-section" href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">Light SVG</h1></li>
         </ol>
       </nav>
@@ -644,6 +679,21 @@
     </div>
 
   </main>
+
+  <section class="faq-section" aria-labelledby="faq-title">
+    <div class="faq-head">
+      <span class="faq-kicker">FAQ</span>
+      <h2 id="faq-title" class="faq-title">よくある質問</h2>
+      <p class="faq-lede">SVGの最適化、画像のベクター化、書き出し方法について回答します。</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item"><summary class="faq-question">SVGはどのように軽量化されますか？</summary><p class="faq-answer">コメント、メタデータ、不要な属性や空の要素を削除し、数値、色、パスの記述を短くします。viewBoxは保ち、通常は見た目を変えずにファイルサイズを小さくします。</p></details>
+      <details class="faq-item"><summary class="faq-question">PNGやJPEGをSVGに変換できますか？</summary><p class="faq-answer">はい。PNGまたはJPEGを読み込むと輪郭を解析してベクターデータへ変換し、その結果をさらにSVGとして最適化します。写真よりも、ロゴ、アイコン、線画のように色や輪郭がはっきりした画像に向いています。</p></details>
+      <details class="faq-item"><summary class="faq-question">最適化で見た目が変わっていないか確認できますか？</summary><p class="faq-answer">はい。元の画像と最適化後の画像を重ねた比較表示で境界を動かし、見た目の違いを確認できます。元より大きくなる場合は、そのことも画面に表示します。</p></details>
+      <details class="faq-item"><summary class="faq-question">最適化したSVGをコードとしてコピーできますか？</summary><p class="faq-answer">できます。SVGコードそのものに加え、HTMLやCSSへ貼り付けやすいdata URI形式でもコピーできます。ファイルとしてダウンロードすることもできます。</p></details>
+      <details class="faq-item"><summary class="faq-question">SVGや画像はサーバーや外部サービスに送られますか？</summary><p class="faq-answer">いいえ。SVGの最適化と画像のベクター化はブラウザ内で行い、ファイルの中身を送る処理を持ちません。処理ライブラリもサイト内に同梱し、Content-Security-Policyにより、読み込みや送信に使える通信先をこのサイトとアクセス解析に必要な送信先だけに制限しています。</p></details>
+    </div>
+  </section>
 
   <!-- ===================== status bar ===================== -->
   <footer class="site-foot">

@@ -13,6 +13,7 @@
 'use strict';
 
 const fs = require('fs');
+const crypto = require('crypto');
 const os = require('os');
 const path = require('path');
 const { launch, connect, newPage, evalJs, sleep } = require('./cdp.js');
@@ -26,6 +27,16 @@ const WIDTH = 1200;
 const HEIGHT = 630;
 const SCALE = 2;              // 1200x630 CSS px at dsf 2 -> the 2400x1260 asset
 const WEBP_QUALITY = 92;
+const VERSION_LENGTH = 12;
+
+function imageVersion(file) {
+  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, VERSION_LENGTH);
+}
+
+function versionedImageUrl(card) {
+  const file = path.join(ROOT, card.out);
+  return 'https://tk.st/' + card.out + '?v=' + imageVersion(file);
+}
 
 function dataUri(file) {
   const ext = path.extname(file).slice(1).toLowerCase();
@@ -85,9 +96,9 @@ function checkCategories() {
     if (tool.category !== card.cat) {
       problems.push(card.slug + ': card says "' + card.cat + '", tools.json says "' + tool.category + '"');
     }
-    const want = 'https://tk.st/' + card.out;
+    const want = versionedImageUrl(card);
     if (tool.imageUrl !== want) {
-      problems.push(card.slug + ': tools.json imageUrl is ' + tool.imageUrl + ', card writes ' + want);
+      problems.push(card.slug + ': tools.json imageUrl is ' + tool.imageUrl + ', current image requires ' + want);
     }
   }
   for (const [slug] of bySlug) {
@@ -151,6 +162,34 @@ function checkToolRecords(tools) {
   return problems;
 }
 
+/* A Cloudflare purge cannot erase an image already cached by a visitor's
+ * browser. Keep the public path stable for og:image, but fingerprint the URL
+ * used by the tools shelf. Running the generator refreshes that fingerprint;
+ * --check catches an image changed without updating data/tools.json. */
+function updateShelfImageVersions(cards) {
+  const file = path.join(ROOT, 'data/tools.json');
+  const raw = fs.readFileSync(file, 'utf8');
+  const eol = raw.includes('\r\n') ? '\r\n' : '\n';
+  const tools = JSON.parse(raw);
+  const bySlug = new Map(
+    tools.map((t) => [t.url.replace(/.*\/tools\//, '').replace(/\/$/, ''), t])
+  );
+  let changed = false;
+  for (const card of cards) {
+    const tool = bySlug.get(card.slug);
+    if (!tool) continue;
+    const next = versionedImageUrl(card);
+    if (tool.imageUrl !== next) {
+      tool.imageUrl = next;
+      changed = true;
+    }
+  }
+  if (changed) {
+    fs.writeFileSync(file, JSON.stringify(tools, null, 2).replace(/\n/g, eol) + eol);
+    console.log('updated data/tools.json image fingerprints');
+  }
+}
+
 (async () => {
   const args = process.argv.slice(2);
   const checkOnly = args.includes('--check');
@@ -209,6 +248,7 @@ function checkToolRecords(tools) {
         card.out.replace('images/ogp/', '').padEnd(32) + kb + 'KB'
       );
     }
+    updateShelfImageVersions(targets);
     cdp.ws.close();
   } finally {
     chrome.close();

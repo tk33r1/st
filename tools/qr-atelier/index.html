@@ -192,6 +192,30 @@
               "@type": "Answer",
               "text": "このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。"
             }
+          },
+          {
+            "@type": "Question",
+            "name": "あとからリンク先を変えられますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "変えられません。短縮URLを挟まない代わりに、リンク先の差し替えもできない仕様です。差し替えたい場合は、自分のドメインでリダイレクト用のページを用意して、そのURLをQRコードにしてください。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "スマートフォンでも使えますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "使えます。デザインパネルは縦に積み替わり、生成した画像はそのまま写真アプリに保存できます。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "内蔵アイコンのライセンスはどうなっていますか？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "ブランドマークはSimple Icons（CC0）、汎用アイコンはBootstrap Icons（MIT）を使っています。各社のロゴは、そのサービスへ誘導する目的でお使いください。"
+            }
           }
         ]
       }
@@ -204,10 +228,10 @@
   <!-- フォントはこのサイトに同梱（data/fonts/）。Google Fonts から読むと、画面に出た字
        （＝打った字）に応じて外へ取りに行くうえ、書き出しでは字そのものを問い合わせていた。
        書き出しもこの CSS の @font-face を引いて埋め込む -->
-  <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260925">
+  <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
   <link rel="stylesheet" href="../../data/fonts/jp.css?v=20260925">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
-  <script src="../../data/tools-ui.js?v=20260926_3"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_3">
+  <script src="../../data/tools-ui.js?v=20260926_5"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -1218,7 +1242,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
+          <li><a class="crumb-section" href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">QR Atelier</h1></li>
         </ol>
       </nav>
@@ -1959,16 +1983,16 @@
         検査のために画像が外部へ送られることはありません。
       </p>
 
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. 商用利用はできますか？</b>
         できます。料金も登録も透かしもありません。チラシ・名刺・商品パッケージにそのまま使えます。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. あとからリンク先を変えられますか？</b>
         変えられません。短縮URLを挟まない代わりに、リンク先の差し替えもできない仕様です。
         差し替えたい場合は、自分のドメインでリダイレクト用のページを用意して、そのURLをQRコードにしてください。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. ロゴはどのくらいまで大きくできますか？</b>
         誤り訂正レベルHなら面積の17%あたりまでが安全圏です。そこを超えると注意を出し、
         26%を超えると「大きすぎます」とはっきり止めます。誤り訂正レベルを下げると、この目安も一緒に下がります。
@@ -1977,27 +2001,27 @@
         同じ「22%」でも、条件しだいで実際の被覆は6%にも16%にもなります。だから上限を決めて選べなくするのではなく、
         実際に覆われたマス目を数えて割合を出し、超えたときは「安全な大きさに縮める」ボタンを添えています。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. 何ミリで印刷すれば読み取れますか？</b>
         マス目1つが0.4mmを下回らない大きさが目安です。書き出し設定を「印刷（mm）」に切り替えて仕上がりの幅と
         解像度を入れると、マス目1つが何ミリになるか、その大きさで足りるか、読み取り距離の目安（おおむねQRの一辺の10倍）を
         表示し、必要な画素数を自動で計算します。SVGもその寸法のまま書き出すので、IllustratorやInDesignに
         読み込めば拡大率をいじらずに配置できます。「画面（px）」のままでも、いまのデザインなら最低何ミリ必要かは出しています。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. 余白（クワイエットゾーン）は必ず4以上にしないと駄目ですか？</b>
         いいえ。クワイエットゾーンは「QRの周囲4マスぶんが地の色であること」が条件で、
         画像の外側で確保されていても規格上は成立します。白いチラシや名刺に置くなら、余白を0にして
         書き出し、レイアウトの側で余白を取るのが正しい使い方です。だからこのツールは余白0を選べないようにはせず、
         注意を出したうえで「余白を4にする」ボタンを添えるにとどめています。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. 背景を透明にできますか？</b>
         できます。背景の色を「透明」にすれば、PNG・WebP・AVIF・SVGのすべてが透過のまま書き出せます。
         以前あったJPEGは透過を持てない形式だったため、AVIFに置き換えました。
         プレビューの市松模様は透けている部分を確かめるためのもので、白地／黒地に切り替えられます。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. どの形式で保存するのがよいですか？</b>
         印刷に出すならSVG、ウェブに載せるならAVIFかWebP、どこでも確実に開きたいならPNGです。
         AVIFは同じ絵をいちばん小さく収められて、透過も持てます（1024pxの黒白QRなら、PNGの43KBに対して13KB）。
@@ -2010,7 +2034,7 @@
         非可逆13KB・可逆51KB・PNG43KBでした。可逆のときの「圧縮の強さ」は、時間をかけて縮めるかどうかの設定で、
         絵の中身は変わりません（ふつう51KB・0.5秒／小ささ優先33KB・4秒）。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. 入力した内容はこの端末に残りますか？消せますか？</b>
         同じブラウザで開き直せば、直前の内容とデザインが戻ります。残る先はこの端末のブラウザの中だけで、
         サーバーには何も送られません。ただし残るのは「いま開いているもの」ひとつだけなので、
@@ -2020,7 +2044,7 @@
         入力した内容・作りかけのデザイン・マイテンプレートを、まとめて消します。
         フレームやロゴに入れた文字や読み込んだ画像もデザインの一部として残っているので、これでまとめて消えます。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. 作ったデザインを取っておいたり、他の人に渡したりできますか？</b>
         できます。「テンプレート」で「マイ」を選び、並びの先頭にある「＋ 見た目を追加」に名前を付けると、
         次からひと押しで戻せます。自分で足したものは、はじめから入っているテンプレートと同じ棚に並びます。
@@ -2030,11 +2054,11 @@
         リンクはURLの<code>#</code>から後ろにデザインを詰めたもので、その部分はサーバーへ送られない仕組みです。
         ただし埋め込んだ画像は載らないので、画像を使うデザインは渡した先で入れ直してもらってください。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. スマホでも使えますか？</b>
         使えます。デザインパネルは縦に積み替わり、生成した画像はそのまま写真アプリに保存できます。
       </div>
-      <div class="qa">
+      <div class="qa" hidden>
         <b>Q. アイコンの著作権は？</b>
         ブランドマークは <a href="https://simpleicons.org/" target="_blank" rel="noopener noreferrer">Simple Icons</a>（CC0）、
         汎用アイコンは <a href="https://icons.getbootstrap.com/" target="_blank" rel="noopener noreferrer">Bootstrap Icons</a>（MIT）を使っています。

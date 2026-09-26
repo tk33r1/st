@@ -125,12 +125,11 @@
   <script src="../../data/vendor/tailwindcss@3.4.17/tailwind.js"></script>
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
 
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
-  <script src="../../data/tools-ui.js?v=20260926_3"></script>
-
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_3">
+  <script src="../../data/tools-ui.js?v=20260926_5"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -461,7 +460,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
+          <li><a class="crumb-section" href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">Diff Studio</h1></li>
         </ol>
       </nav>
@@ -702,6 +701,21 @@
     </section>
 
   </main>
+
+  <section class="faq-section" aria-labelledby="faq-title">
+    <div class="faq-head">
+      <span class="faq-kicker">FAQ</span>
+      <h2 id="faq-title" class="faq-title">よくある質問</h2>
+      <p class="faq-lede">差分の無視設定、変更の採否、文字数の数え方について回答します。</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item"><summary class="faq-question">入力した文章はサーバーに送信されますか？</summary><p class="faq-answer">いいえ。比較・カウント・採点のすべてがブラウザ内のJavaScriptで実行されます。入力した文章がネットワークに送信されることはありません。読み込みが終わればオフラインでも動作します。</p></details>
+      <details class="faq-item"><summary class="faq-question">「行なう」と「行う」のような送り仮名の違いを差分から外せますか？</summary><p class="faq-answer">はい。「送り仮名」を無視する設定にすると、行なう／行う、問合せ／問い合わせ、下さい／ください といった実務で頻出する表記ゆれを同じ語として扱い、差分に出しません。全角半角、空白、記号、英字の大文字小文字についても個別に無視を指定できます。</p></details>
+      <details class="faq-item"><summary class="faq-question">変更のうち一部だけを採用できますか？</summary><p class="faq-answer">はい。色が付いた変更箇所をクリックすると、その1箇所だけを却下（変更前のまま）に切り替えられます。採用した変更だけを反映した文章が「結果」に組み上がるので、そのままコピーして使えます。校正者の赤字を1つずつ判断して取り込む用途を想定しています。</p></details>
+      <details class="faq-item"><summary class="faq-question">文字数はどの数え方ですか？</summary><p class="faq-answer">用途によって正解が違うため、複数の数え方を同時に表示します。見た目どおりの文字数（書記素単位。絵文字を1文字と数える）、JavaScriptのlengthやデータベースの文字数制限に対応するUTF-16単位、空白を除いた数、全角と半角の内訳、UTF-8バイト数、Shift_JISバイト数、行数、段落数、文数、400字詰原稿用紙の枚数を出します。</p></details>
+      <details class="faq-item"><summary class="faq-question">ファイルや入力が外部に送られないことは、どうすれば確かめられますか？</summary><p class="faq-answer">このページのプログラムは、ファイルや入力の中身を送る処理を持っていません。そのうえで Content-Security-Policy（CSP）により、ページが読み込みや送信に使える通信先を、このサイトとアクセス解析（Google アナリティクス、Cloudflare Web Analytics）だけに制限しています。アクセス解析が受け取るのは閲覧状況だけです。寄付の窓口（Ko-fi）を開いたときの埋め込み表示は別の枠として許可していますが、この枠からページの中身は読めません。設定はページのソースの先頭（Content-Security-Policy の meta タグ）で誰でも確認できます。</p></details>
+    </div>
+  </section>
 
   <!-- ===================== status bar ===================== -->
   <footer class="site-foot">

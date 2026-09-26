@@ -271,7 +271,8 @@
 .st-theme *, .st-theme *::before, .st-theme *::after { box-sizing: border-box; }
 .st-theme h1, .st-theme h2, .st-theme h3, .st-theme h4 { margin: 0; letter-spacing: -0.02em; }
 
-.st-theme .hidden { display: none !important; }
+.st-theme .hidden,
+.st-theme [hidden] { display: none !important; }
 .st-theme .num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -354,6 +355,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+/* SAFE TOOLS keeps the same mono breadcrumb face whether it is the current
+   listing page or the parent link on a tool detail page. */
+.st-theme .crumb .crumb-section {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
 }
 /* On a narrow screen the trail keeps its immediate parent and drops the root
    rather than collapsing into a bare back arrow. ルート表記が「⌂ Shinya Takeda」に
@@ -695,6 +703,217 @@
   max-width: 55%;
 }
 .st-theme .panel-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ---- safety proof ----
+   The summary keeps all five promises visible at a glance. The disclosure
+   underneath explains what each promise means on this exact page, including
+   the CSP check, without making readers understand response headers first. */
+.st-theme .safety-proof {
+  width: min(var(--shell), calc(100% - 40px));
+  margin: 18px auto 0;
+}
+.st-theme .safety-proof-card {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--panel);
+  overflow: hidden;
+}
+.st-theme .safety-proof-card[open] { border-color: var(--rule-strong); box-shadow: var(--shadow-1); }
+.st-theme .safety-proof-summary {
+  padding: 13px 15px;
+  cursor: pointer;
+  list-style: none;
+}
+.st-theme .safety-proof-summary::-webkit-details-marker { display: none; }
+.st-theme .safety-proof-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.st-theme .safety-proof-shield {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ok) 13%, transparent);
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  flex: none;
+}
+.st-theme .safety-proof-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.st-theme .safety-proof-count {
+  margin-left: auto;
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.st-theme .safety-proof-summary::after {
+  content: "+ 詳しい確認内容";
+  margin-left: 10px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.st-theme .safety-proof-card[open] .safety-proof-summary::after { content: "− 閉じる"; }
+.st-theme .safety-proof-chips {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+}
+.st-theme .safety-proof-chip {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink-2);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.st-theme .safety-proof-chip::before {
+  content: "✓";
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  flex: none;
+}
+.st-theme .safety-proof-chip.is-warning::before { content: "!"; color: var(--warn); }
+.st-theme .safety-proof-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-theme .safety-proof-body {
+  padding: 0 15px 15px;
+  border-top: 1px solid var(--rule);
+}
+.st-theme .safety-proof-intro {
+  margin: 13px 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.75;
+}
+.st-theme .safety-proof-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.st-theme .safety-proof-item {
+  padding: 11px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--bg);
+}
+.st-theme .safety-proof-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.st-theme .safety-proof-item b { display: block; margin-bottom: 3px; color: var(--ink); font-size: 12px; }
+.st-theme .safety-proof-item p { margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.7; }
+.st-theme .safety-proof-item code { font-family: var(--font-mono); font-size: .92em; color: var(--ink); }
+@media (max-width: 760px) {
+  .st-theme .safety-proof-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-theme .safety-proof-chip:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .st-theme .safety-proof-grid { grid-template-columns: 1fr; }
+  .st-theme .safety-proof-summary::after { display: block; margin: 9px 0 0 34px; }
+}
+
+/* ---- FAQ ----
+   All SAFE TOOLS pages use the same native disclosure pattern. Most pages
+   keep the same copy in HTML and FAQPage; a page with an existing large
+   FAQPage can let tools-ui.js build this markup from that data. */
+.st-theme .faq-section {
+  width: min(var(--shell), calc(100% - 40px));
+  margin: 48px auto;
+  padding-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+.st-theme .faq-head { margin-bottom: 18px; }
+.st-theme .faq-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.st-theme .faq-title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 20px;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+.st-theme .faq-lede {
+  max-width: 720px;
+  margin: 7px 0 0;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.75;
+}
+.st-theme .faq-list { display: grid; gap: 9px; }
+.st-theme .faq-item {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--panel);
+}
+.st-theme .faq-item[open] { border-color: var(--rule-strong); }
+.st-theme .faq-question {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.55;
+  cursor: pointer;
+  list-style: none;
+}
+.st-theme .faq-question::-webkit-details-marker { display: none; }
+.st-theme .faq-question::before {
+  content: "Q";
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  flex: none;
+}
+.st-theme .faq-question::after {
+  content: "+";
+  margin-left: auto;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1;
+  flex: none;
+}
+.st-theme .faq-item[open] .faq-question::after { content: "−"; }
+.st-theme .faq-question:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.st-theme .faq-answer {
+  margin: 0;
+  padding: 0 16px 15px 39px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.85;
+}
+.st-theme .faq-answer + .faq-answer { padding-top: 0; }
+.st-theme .faq-answer code {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+@media (max-width: 560px) {
+  .st-theme .faq-section { width: calc(100% - 40px); margin: 40px auto; padding-top: 24px; }
+  .st-theme .faq-question { padding: 13px 14px; }
+  .st-theme .faq-answer { padding: 0 14px 14px 37px; }
+}
 
 /* ---- footer ----
    Three fixed slots on every page: the support widget, the notice, and the

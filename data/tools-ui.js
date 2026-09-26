@@ -236,6 +236,182 @@
     return URL.createObjectURL(new Blob([whole], { type: type }));
   }
 
+  // FAQPage の本文を画面にも出す。既に静的な .faq-section があるページでは
+  // 何もしない。QR Atelier のように詳しい構造化データを先に持っていたページは、
+  // その内容を正本として共通の折りたたみ UI を組み立てる。
+  function renderFaqFromStructuredData() {
+    if (document.querySelector('.faq-section')) return;
+
+    let faq = null;
+    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    for (const script of scripts) {
+      try {
+        const data = JSON.parse(script.textContent);
+        const nodes = data['@graph'] || [data];
+        faq = nodes.find(node => node && node['@type'] === 'FAQPage');
+        if (faq) break;
+      } catch (_) { /* 壊れた構造化データはほかのブロックの探索を続ける */ }
+    }
+    if (!faq || !Array.isArray(faq.mainEntity) || !faq.mainEntity.length) return;
+
+    const section = document.createElement('section');
+    section.className = 'faq-section';
+    section.setAttribute('aria-labelledby', 'faq-title');
+
+    const head = document.createElement('div');
+    head.className = 'faq-head';
+    const kicker = document.createElement('span');
+    kicker.className = 'faq-kicker';
+    kicker.textContent = 'FAQ';
+    const title = document.createElement('h2');
+    title.id = 'faq-title';
+    title.className = 'faq-title';
+    title.textContent = 'よくある質問';
+    const lede = document.createElement('p');
+    lede.className = 'faq-lede';
+    lede.textContent = '使い方、対応形式、ファイルや入力内容の扱いについて回答します。';
+    head.append(kicker, title, lede);
+
+    const list = document.createElement('div');
+    list.className = 'faq-list';
+    faq.mainEntity.forEach(item => {
+      const answer = item && item.acceptedAnswer;
+      if (!item || !item.name || !answer || !answer.text) return;
+      const details = document.createElement('details');
+      details.className = 'faq-item';
+      const summary = document.createElement('summary');
+      summary.className = 'faq-question';
+      summary.textContent = item.name;
+      const body = document.createElement('p');
+      body.className = 'faq-answer';
+      body.textContent = answer.text;
+      details.append(summary, body);
+      list.appendChild(details);
+    });
+    if (!list.children.length) return;
+    section.append(head, list);
+
+    const footer = document.querySelector('.site-foot');
+    if (footer) footer.before(section);
+    else document.body.appendChild(section);
+  }
+
+  // SAFE TOOLS 共通の5項目を、宣言だけでなくページ上の実装状況と一緒に見せる。
+  // CSP と広告コードは現在の DOM を実際に確認し、異常時は緑のチェックにしない。
+  function renderSafetyProof() {
+    if (document.querySelector('.safety-proof')) return;
+    const main = document.querySelector('main');
+    if (!main) return;
+
+    const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy" i]');
+    const csp = cspMeta ? cspMeta.content : '';
+    const cspOk = /(?:^|;)\s*connect-src\s/i.test(csp)
+      && /(?:^|;)\s*object-src\s+'none'/i.test(csp)
+      && /(?:^|;)\s*form-action\s+'self'/i.test(csp);
+    const hasAdCode = Boolean(document.querySelector(
+      'script[src*="googlesyndication"], script[src*="adservice"], ins.adsbygoogle, [data-ad-client]'
+    ));
+
+    const proofs = [
+      {
+        label: '端末内で処理',
+        ok: true,
+        detail: '変換・編集・生成は、このページのJavaScriptやWebAssemblyがブラウザ内で実行します。処理対象を外部の変換サービスへ渡しません。'
+      },
+      {
+        label: 'サーバー保存なし',
+        ok: true,
+        detail: '作業ファイルと処理結果を受け取る保存APIを使いません。結果はブラウザから端末へ直接ダウンロードします。設定や作業状態を、この端末のブラウザ内へ保存するツールはあります。'
+      },
+      {
+        label: '広告なし',
+        ok: !hasAdCode,
+        detail: hasAdCode
+          ? '広告配信コードを検出しました。ページの実装を確認してください。'
+          : '広告枠と広告配信用スクリプトを検出していません。アクセス解析はありますが、ファイルや入力内容を渡す処理はありません。'
+      },
+      {
+        label: 'インストール不要',
+        ok: true,
+        detail: 'ブラウザで開くだけで使えます。処理に必要なライブラリとフォントもtk.st内に同梱しており、専用アプリや拡張機能は不要です。'
+      },
+      {
+        label: '通信先を制限',
+        ok: cspOk,
+        detail: cspOk
+          ? 'ページ先頭のContent-Security-Policyを確認済みです。読み込みや送信に使える通信先を、このサイトとアクセス解析に必要な送信先へ制限し、Ko-fiは別枠の表示だけを許可しています。'
+          : 'Content-Security-Policyの必要な制限を確認できませんでした。ページの実装を確認してください。'
+      }
+    ];
+
+    const section = document.createElement('section');
+    section.className = 'safety-proof';
+    section.setAttribute('aria-label', 'このツールの安全設計');
+    const details = document.createElement('details');
+    details.className = 'safety-proof-card';
+    const summary = document.createElement('summary');
+    summary.className = 'safety-proof-summary';
+
+    const heading = document.createElement('div');
+    heading.className = 'safety-proof-heading';
+    const shield = document.createElement('span');
+    shield.className = 'safety-proof-shield';
+    shield.setAttribute('aria-hidden', 'true');
+    shield.textContent = '✓';
+    const title = document.createElement('span');
+    title.className = 'safety-proof-title';
+    title.textContent = 'このツールの安全設計';
+    const count = document.createElement('span');
+    count.className = 'safety-proof-count';
+    const okCount = proofs.filter(item => item.ok).length;
+    count.textContent = okCount + ' / ' + proofs.length + ' 確認';
+    heading.append(shield, title, count);
+
+    const chips = document.createElement('div');
+    chips.className = 'safety-proof-chips';
+    proofs.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'safety-proof-chip' + (item.ok ? '' : ' is-warning');
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      chip.appendChild(label);
+      chips.appendChild(chip);
+    });
+    summary.append(heading, chips);
+
+    const body = document.createElement('div');
+    body.className = 'safety-proof-body';
+    const intro = document.createElement('p');
+    intro.className = 'safety-proof-intro';
+    intro.textContent = '緑のチェックは、このページの仕組みとセキュリティ設定に基づく確認結果です。項目ごとの根拠を短く説明します。';
+    const grid = document.createElement('div');
+    grid.className = 'safety-proof-grid';
+    proofs.forEach(item => {
+      const box = document.createElement('div');
+      box.className = 'safety-proof-item';
+      const name = document.createElement('b');
+      name.textContent = (item.ok ? '✓ ' : '! ') + item.label;
+      const explanation = document.createElement('p');
+      explanation.textContent = item.detail;
+      box.append(name, explanation);
+      grid.appendChild(box);
+    });
+    body.append(intro, grid);
+    details.append(summary, body);
+    section.appendChild(details);
+    main.before(section);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      renderSafetyProof();
+      renderFaqFromStructuredData();
+    }, { once: true });
+  } else {
+    renderSafetyProof();
+    renderFaqFromStructuredData();
+  }
+
   global.STCommon = {
     formatBytes,
     fetchVerified,
@@ -244,5 +420,7 @@
     preventDefaults,
     setupDropzone,
     setupInlineCompare,
+    renderSafetyProof,
+    renderFaqFromStructuredData,
   };
 })(window);

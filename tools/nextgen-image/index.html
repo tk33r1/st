@@ -72,6 +72,41 @@
   }
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": "https://tk.st/tools/nextgen-image/#faq",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "どの画像形式をWebPやAVIFに変換できますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "JPG、PNG、WebP、HEIC、HEIFなど、ブラウザまたは同梱デコーダで読み込める画像に対応しています。出力は通常のWebP、可逆WebP、AVIFから選べます。"}
+      },
+      {
+        "@type": "Question",
+        "name": "複数の画像をまとめて変換できますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "はい。複数ファイルの選択、ドラッグ＆ドロップ、クリップボードからの貼り付けに対応しています。変換結果は個別に保存でき、複数ある場合はまとめてダウンロードできます。"}
+      },
+      {
+        "@type": "Question",
+        "name": "通常のWebPと可逆WebPはどう違いますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "通常のWebPは品質を調整して容量を小さくする非可逆圧縮です。可逆WebPは画素を変えずに保存するため、ロゴ、図版、スクリーンショットなど細部をそのまま保ちたい画像に向いています。"}
+      },
+      {
+        "@type": "Question",
+        "name": "HEICの画像も変換できますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "はい。iPhoneなどで作られたHEIC・HEIF画像を読み込み、WebPまたはAVIFへ変換できます。HEICの読み込みに使うプログラムもサイト内に同梱しています。"}
+      },
+      {
+        "@type": "Question",
+        "name": "画像はサーバーや外部サービスに送られますか？",
+        "acceptedAnswer": {"@type": "Answer", "text": "いいえ。画像の読み込みと変換はブラウザ内で行い、画像の中身を送る処理を持ちません。変換ライブラリもサイト内に同梱し、Content-Security-Policyにより、読み込みや送信に使える通信先をこのサイトとアクセス解析に必要な送信先だけに制限しています。"}
+      }
+    ]
+  }
+  </script>
+
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F766E'/%3E%3Crect x='7' y='11' width='18' height='4' rx='2' fill='%23fff' opacity='.55'/%3E%3Crect x='7' y='18' width='8' height='4' rx='2' fill='%23fff'/%3E%3C/svg%3E" type="image/svg+xml">
 
   <!-- AVIF・WebP のエンコーダ（jsquash）は 'wasm-feature-detect' を名前だけで読む。
@@ -81,12 +116,11 @@
   <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
   <script src="../../data/vendor/heic2any@0.0.4/heic2any.min.js"></script>
   <script src="../../data/vendor/jszip@3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926">
-  <script src="../../data/tools-ui.js?v=20260926_3"></script>
-
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_3">
+  <script src="../../data/tools-ui.js?v=20260926_5"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -224,7 +258,7 @@
       <nav class="crumb" aria-label="パンくずリスト">
         <ol>
           <li class="crumb-root"><a href="https://tk.st/"><span aria-hidden="true">⌂</span> Shinya Takeda</a></li>
-          <li><a href="https://tk.st/tools/">SAFE TOOLS</a></li>
+          <li><a class="crumb-section" href="https://tk.st/tools/">SAFE TOOLS</a></li>
           <li><h1 aria-current="page">NextGen Image</h1></li>
         </ol>
       </nav>
@@ -356,6 +390,21 @@
     </div>
 
   </main>
+
+  <section class="faq-section" aria-labelledby="faq-title">
+    <div class="faq-head">
+      <span class="faq-kicker">FAQ</span>
+      <h2 id="faq-title" class="faq-title">よくある質問</h2>
+      <p class="faq-lede">対応する画像形式、一括変換、圧縮方式について回答します。</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item"><summary class="faq-question">どの画像形式をWebPやAVIFに変換できますか？</summary><p class="faq-answer">JPG、PNG、WebP、HEIC、HEIFなど、ブラウザまたは同梱デコーダで読み込める画像に対応しています。出力は通常のWebP、可逆WebP、AVIFから選べます。</p></details>
+      <details class="faq-item"><summary class="faq-question">複数の画像をまとめて変換できますか？</summary><p class="faq-answer">はい。複数ファイルの選択、ドラッグ＆ドロップ、クリップボードからの貼り付けに対応しています。変換結果は個別に保存でき、複数ある場合はまとめてダウンロードできます。</p></details>
+      <details class="faq-item"><summary class="faq-question">通常のWebPと可逆WebPはどう違いますか？</summary><p class="faq-answer">通常のWebPは品質を調整して容量を小さくする非可逆圧縮です。可逆WebPは画素を変えずに保存するため、ロゴ、図版、スクリーンショットなど細部をそのまま保ちたい画像に向いています。</p></details>
+      <details class="faq-item"><summary class="faq-question">HEICの画像も変換できますか？</summary><p class="faq-answer">はい。iPhoneなどで作られたHEIC・HEIF画像を読み込み、WebPまたはAVIFへ変換できます。HEICの読み込みに使うプログラムもサイト内に同梱しています。</p></details>
+      <details class="faq-item"><summary class="faq-question">画像はサーバーや外部サービスに送られますか？</summary><p class="faq-answer">いいえ。画像の読み込みと変換はブラウザ内で行い、画像の中身を送る処理を持ちません。変換ライブラリもサイト内に同梱し、Content-Security-Policyにより、読み込みや送信に使える通信先をこのサイトとアクセス解析に必要な送信先だけに制限しています。</p></details>
+    </div>
+  </section>
 
   <!-- ===================== status bar ===================== -->
   <footer class="site-foot">
