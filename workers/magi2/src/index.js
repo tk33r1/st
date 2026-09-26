@@ -12,7 +12,7 @@ function corsHeaders(origin) {
   const allow = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allow,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
   };
 }
@@ -257,6 +257,20 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     const url = new URL(request.url);
+
+    // --- 各人格がいま使っている LLM（スプラッシュの人格説明が表示する）---
+    // モデルIDの正本は config/ai-models.json で、週次の監視で更新されうるのでページには直書きしない。
+    // 公開して困る情報ではないので認可は付けない（読めるのは CORS で許した Origin のページだけ）
+    if (request.method === 'GET' && url.pathname === '/magi2/models') {
+      const pickModel = (cfg) => ({ provider: cfg.provider, model: cfg.model });
+      const body = {
+        personas: Object.fromEntries(Object.entries(DEFAULTS.models.persona).map(([codename, cfg]) => [codename, pickModel(cfg)])),
+        synthesizer: pickModel(DEFAULTS.models.synthesizer),
+      };
+      return new Response(JSON.stringify(body), {
+        status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=600', ...cors },
+      });
+    }
 
     // --- リアクション保存: いいね/絵文字が付いたら request/response を DB に記録 ---
     if (request.method === 'POST' && url.pathname === '/magi2/react') {

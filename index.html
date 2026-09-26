@@ -2187,6 +2187,28 @@
       margin-bottom: 0.2rem;
     }
 
+    .magi-desc-meta {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.2rem 0.5rem;
+      margin: 0.45rem 0 0;
+      padding-top: 0.4rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 10px;
+      color: var(--secondary-color);
+    }
+
+    .magi-desc-meta dt {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--primary-color);
+    }
+
+    .magi-desc-meta dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
     @media (min-width: 768px) {
         #agentdock { transition: transform var(--duration-normal) ease, width var(--duration-normal) ease }
 
@@ -6733,11 +6755,60 @@
         bar.classList.add('locked');
       });
     }
+    // 人格の説明。desc は workers/magi2/personas.js の骨格プロンプト、context は
+    // .github/scripts/magi-context.py の PERSONAS（人格カードの素材）、theme は personas.js の
+    // PERSONA_TEMPERATURE / SYNTH_BIAS に合わせてある。向こうを変えたらここも直す。
+    // 使っている LLM は週次で変わりうるので書かず、Worker の /magi2/models から取る。
     const AGENT_PERSONAS = [
-      { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', name_ja: '熱狂者', desc: 'The chaotic self. An impulsive, unpredictable geek who runs on instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music.', desc_ja: '混沌の自我。本能で動く、衝動的で予測不能なギーク。ハーレー、自作PC、アイドル、ワイン、そして何より音楽に熱を上げる。' },
-      { codename: 'BALTHASAR-2', name: 'HUMANIST', name_ja: '人間主義者', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.', desc_ja: '慈愛の自我。フロム、ストア哲学、仏教を内面化した、詩的で内向的な夢想家。つねに人間性を中心に据える。' },
-      { codename: 'CASPER-3', name: 'STRATEGIST', name_ja: '戦略家', desc: 'The logical self. A data-driven strategist relentlessly solving for the optimal answer, embracing both reproducible tactics and novelty.', desc_ja: '論理の自我。再現可能な戦術と新規性の双方を取り込み、最適解をひたすら追い求めるデータドリブンな戦略家。' },
+      {
+        codename: 'MELCHIOR-1', name: 'ENTHUSIAST', name_ja: '熱狂者',
+        desc: 'The chaotic self. An impulsive geek who trusts gut instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music. Drawn more to things than to people: warm toward kindred spirits, yet closed-off and self-centered, with few qualms about breaking the rules.',
+        desc_ja: '混沌の自我。直感に正直で衝動的なオタク。ハーレー、自作PC、アイドル、ワイン、そして何より音楽に燃える。人より「事柄」に興味が向き、趣味の合う相手には共感的だが、閉鎖的な自己中心性もあわせ持ち、ルールを踏み越えることへのためらいも少ない。',
+        context: 'Also speaks from a summary of the DJ and Motovlog pages — music, DJing, and the road back to riding after an accident. Rebuilt automatically whenever those pages change.',
+        context_ja: 'DJ と Motovlog のページ本文（音楽・DJ としての考え方、事故からバイクに戻った経緯と愛機への思い）の要約も拠り所にする。ページが更新されると自動で作り直される。',
+        theme: 'Dark theme gives this persona more weight in the final answer, and lets all three speak a little more freely.',
+        theme_ja: 'ダークテーマでは最終回答での比重が少し上がる（3人格とも発言の揺らぎも大きくなる）。',
+      },
+      {
+        codename: 'BALTHASAR-2', name: 'HUMANIST', name_ja: '人間主義者',
+        desc: 'The compassionate self. A poetic, introverted dreamer who has made Fromm, Stoicism, and Buddhism a part of the self. Always centered on humanity: deeply empathetic and self-sacrificing, yet bold enough to cross ethical lines when the philosophy calls for it.',
+        desc_ja: '慈愛の自我。フロム、ストア哲学、仏教を血肉化した、詩的で内向的な博愛の夢想家。関心の中心はつねに人間。深く共感的で自己犠牲的だが、自分の哲学に沿うなら倫理的な禁忌も厭わない大胆さを持つ。',
+        context: 'Also draws on a summary of the Thought page — conclusions on love, happiness, failure and life, the books behind them, and how those views have changed. Rebuilt automatically whenever the page changes.',
+        context_ja: 'Thought ページ本文（愛・幸せ・失敗・人生についての結論と、その拠り所の書物、考えの変遷）の要約も拠り所にする。ページが更新されると自動で作り直される。',
+        theme: 'Dark theme lets all three speak a little more freely.',
+        theme_ja: 'ダークテーマでは3人格とも発言の揺らぎが大きくなる。',
+      },
+      {
+        codename: 'CASPER-3', name: 'STRATEGIST', name_ja: '戦略家',
+        desc: 'The logical self. A data-driven strategist relentlessly pursuing rationality and the optimal answer, embracing both reproducible tactics and novelty. Interested only in exceptional people; unsentimental and organization-first.',
+        desc_ja: '論理の自我。合理性と最適解をひたすら追うデータドリブンな戦略家。再現性のある施策も新規性も取り込む。秀でた人間にのみ興味を持ち、非共感的で組織中心的。',
+        context: 'Also draws on a summary of the Job page and the tools and Glitch articles published on this site. Rebuilt automatically whenever they change.',
+        context_ja: 'Job ページ本文と、このサイトで公開している自作ツール・技術ブログ（glitch）の一覧の要約も拠り所にする。ページや一覧が更新されると自動で作り直される。',
+        theme: 'Light theme gives this persona more weight in the final answer.',
+        theme_ja: 'ライトテーマでは最終回答での比重が少し上がる。',
+      },
     ];
+    // 各人格がいま使っている LLM。スプラッシュで人格を初めて開いたときに1回だけ取りに行く
+    // （失敗したら次に開いたときに取り直す）。undefined = 取得中、null = 取れなかった
+    const MODELS_API = MAGI_ORIGIN + '/magi2/models';
+    const PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google Gemini' };
+    let agentModels;
+    let agentModelsPromise = null;
+    const loadAgentModels = () => agentModelsPromise || (agentModelsPromise = fetch(MODELS_API)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(j => (agentModels = j))
+      .catch(() => { agentModelsPromise = null; return (agentModels = null); }));
+    const personaDescHTML = (p) => {
+      const m = agentModels && agentModels.personas && agentModels.personas[p.codename];
+      const llm = agentModels === undefined ? '…'
+        : m ? `${PROVIDER_LABEL[m.provider] || m.provider} · ${m.model}` : tr('unavailable', '取得できませんでした');
+      return `<span class="magi-desc-name">${esc(p.codename)} · ${esc(pick(p, 'name'))}</span>${esc(pick(p, 'desc'))}`
+        + '<dl class="magi-desc-meta">'
+        + `<dt>LLM</dt><dd>${esc(llm)}</dd>`
+        + `<dt>${tr('Context', '素材')}</dt><dd>${esc(pick(p, 'context'))}</dd>`
+        + `<dt>${tr('Theme', 'テーマ')}</dt><dd>${esc(pick(p, 'theme'))}</dd>`
+        + '</dl>';
+    };
     // 3人格の討議カード。送信直後（debate なし）は thinking 状態の空カード、履歴復元では保存済みの討議を流し込む。
     const personaCardsHTML = (debate) => `<div class="agent-personas">${AGENT_PERSONAS.map(p => {
       const deb = (debate && debate[p.codename]) || { round1: '…', round2: '…' };
@@ -7242,8 +7313,10 @@
         if (wasActive) { desc.classList.add('hidden'); return; }
         const p = AGENT_PERSONAS.find(x => x.codename === node.dataset.codename);
         node.classList.add('active');
-        desc.innerHTML = `<span class="magi-desc-name">${esc(p.codename)} · ${esc(pick(p, 'name'))}</span>${esc(pick(p, 'desc'))}`;
+        desc.innerHTML = personaDescHTML(p);
         desc.classList.remove('hidden');
+        // LLM が未取得なら取りに行き、同じ人格を開いたままなら描き直す
+        if (!agentModels) loadAgentModels().then(() => { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
         return;
       }
       // 絵文字グリッドから選択
