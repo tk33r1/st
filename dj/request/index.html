@@ -1034,9 +1034,10 @@
     .answer.streaming .ab::after { content: '▍'; animation: blink 1s steps(2) infinite; color: var(--heart-secondary); }
     @keyframes blink { 50% { opacity: 0; } }
 
-    .picks { display: flex; flex-wrap: wrap; gap: 7px; margin-left: 38px; }
+    .pickwrap { display: flex; flex-direction: column; gap: 8px; margin-left: 38px; }
+    .picks { display: flex; flex-wrap: wrap; gap: 7px; }
     .pick::after { content: '↗'; font-size: 11px; color: var(--heart-secondary); }
-    .picklede { font-size: 11.5px; color: var(--faint); margin: 2px 0 0 38px; }
+    .picklede { font-size: 11.5px; color: var(--faint); margin: 2px 0 0; }
 
     /* 受付時間外・オフラインのときに composer の代わりに出す。
        できない理由だけ伝えて、相談そのものは塞ぐ */
@@ -1183,7 +1184,7 @@
           <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
           <button id="chatSend" disabled>送信</button>
         </div>
-        <p class="hint" id="chatHint">AI の提案のため、実在しない曲を挙げることがあります。</p>
+        <p class="hint" id="chatHint">AI が挙げた曲は Apple Music で照合しています。照合できなかった曲は、検索して探してください。</p>
       </section>
 
       <!-- 完了 -->
@@ -1368,7 +1369,8 @@
 
     const bigArt = (u) => String(u || '').replace(/\/\d+x\d+bb\.jpg$/, '/240x240bb.webp');
 
-    function refine(results) {
+    // DJ ミックス収録版を落とし、画面で使う形に直す（並びは iTunes の関連度順のまま）
+    function toTracks(results) {
       const kept = [];
       for (const r of results) {
         if (MIXED.test(r.trackName || '') || DJMIX.test(r.collectionName || '')) continue;
@@ -1385,9 +1387,12 @@
           key: norm(r.artistName) + '|' + norm(base),
         });
       }
+      return kept;
+    }
 
+    function refine(results) {
       const groups = new Map();
-      for (const t of kept) {
+      for (const t of toTracks(results)) {
         if (!groups.has(t.key)) groups.set(t.key, []);
         const g = groups.get(t.key);
         // 同じバージョンで尺もほぼ同じなら同一音源とみなして畳む
@@ -1416,7 +1421,8 @@
     let consultLocked = false;   // 受付時間外・オフライン時は相談を止める
     const TAB_OF = { consult: 'consult', board: 'board', past: 'board', song: 'board' };
 
-    function show(pane) {
+    // y を渡すとその位置へ戻す（省略時は先頭へ）
+    function show(pane, y) {
       $$('.pane').forEach((p) => p.classList.remove('on'));
       $('#pane-' + pane).classList.add('on');
       // 曲の詳細は一覧から入るので、リクエストの流れの戻り先には数えない
@@ -1425,21 +1431,25 @@
       $$('.tabs button').forEach((b) =>
         b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
       if (pane === 'board') startBoardPolling(); else stopBoardPolling();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo(y == null ? { top: 0, behavior: 'smooth' } : { top: y });
     }
 
     /* ── 検索 ─────────────────────────────── */
     let searchTimer = null, searchAbort = null, groupsCache = [];
 
-    function candHTML(g, i) {
-      const t = g.rep;
+    // 候補の1行。検索結果と AI 相談の「見つかった曲」で共通
+    function candButtonHTML(t, attr) {
       const v = t.variant ? '<span class="vtag">' + esc(t.variant) + '</span>' : '';
-      let html = '<button class="cand" data-g="' + i + '">' + artHTML(t.artwork, true) +
+      return '<button class="cand" ' + attr + '>' + artHTML(t.artwork, true) +
         '<span><span class="t trunc">' + esc(t.title) + v + '</span>' +
         '<span class="a trunc">' + esc(t.artist) + '</span>' +
         // 尺は曲を選ぶ判断材料なので、長いアルバム名に押し出されないよう先頭に置く
         '<span class="d trunc">' + formatDurationMs(t.durationMs) + ' · ' + esc(t.album) + '</span></span>' +
         '<span class="chev">›</span></button>';
+    }
+
+    function candHTML(g, i) {
+      let html = candButtonHTML(g.rep, 'data-g="' + i + '"');
       if (g.alts.length) {
         html += '<details class="alts"><summary>他のバージョン (' + g.alts.length + ')</summary>' +
           g.alts.map((a, ai) => '<button class="alt" data-g="' + i + '" data-a="' + ai + '">' +
@@ -1565,7 +1575,11 @@
         (free ? '' : '<div class="d">' + esc(track.album) + ' · ' + formatDurationMs(track.durationMs) + '</div>');
     }
 
-    function toConfirm(track, artFallback) {
+    // 確認画面の「戻る」の行き先。相談から来たときは相談の元の位置へ帰す
+    let confirmFrom = { pane: 'search' };
+
+    function toConfirm(track, artFallback, from = { pane: 'search' }) {
+      confirmFrom = from;
       picked = Object.assign({}, track);
       if (!picked.artwork && artFallback) picked.artwork = artFallback;
       $('#hero').innerHTML = trackHeroHTML(picked);
@@ -1590,7 +1604,7 @@
 
     bindPlayer('#play', '#bar', '#ptime', () => picked && picked.previewUrl);
 
-    $('#back').addEventListener('click', () => { stopAudio(); show('search'); });
+    $('#back').addEventListener('click', () => { stopAudio(); show(confirmFrom.pane, confirmFrom.y); });
     $('#back2').addEventListener('click', () => show('search'));
 
     /* 打った量に合わせて背を伸ばす。いったん auto に戻さないと、消したときに縮まない。
@@ -1675,18 +1689,28 @@
       storage.setJSON(TOKEN_KEY, saved);
     };
 
+    /* iTunes の API を JSON で読む。本文の読み込みまで含めて ms で打ち切る
+       （ヘッダーだけ届いて止まる回線がある） */
+    async function itunesJson(url, ms) {
+      const ac = new AbortController();
+      const to = setTimeout(() => ac.abort(), ms);
+      try {
+        const res = await fetch(url, { signal: ac.signal });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } finally {
+        clearTimeout(to);
+      }
+    }
+
     /** rekordbox の検索で当たりやすいラテン表記を US ストアフロントから取る。
         trackId はストアフロント共通なので同じ曲を引ける。失敗しても送信は続ける。 */
     async function latinArtist(trackId) {
       if (!trackId) return '';
-      // 本文の読み込みまで含めて 2.5 秒で打ち切る。ヘッダーだけ届いて止まる回線がある
-      const ac = new AbortController();
-      const to = setTimeout(() => ac.abort(), 2500);
       try {
-        const r = await fetch('https://itunes.apple.com/lookup?id=' + trackId + '&country=US', { signal: ac.signal });
-        const d = await r.json();
+        const d = await itunesJson('https://itunes.apple.com/lookup?id=' + trackId + '&country=US', 2500);
         return (d.results && d.results[0] && d.results[0].artistName) || '';
-      } catch { return ''; } finally { clearTimeout(to); }
+      } catch { return ''; }
     }
 
     /* 完了画面。受付と変更で見出しと添え書きだけ差し替える。
@@ -1743,7 +1767,8 @@
 
     $('#send').addEventListener('click', async () => {
       await withBusy($('#send'), async () => {
-        const artistEn = await latinArtist(picked.trackId);
+        // AI 相談の照合で US ストアを引いた曲は、英字名義をもう持っている
+        const artistEn = picked.artistEn || await latinArtist(picked.trackId);
         await submit({
           track: { ...picked, artistEn: artistEn || picked.artist },
           name: $('#name').value,
@@ -2218,7 +2243,8 @@
       if (title) L.push('今回のイベント: ' + title);
       if (played.length) L.push('すでにかけた曲: ' + played.join(' / '));
       if (waiting.length) L.push('受付済みでこれからかける曲: ' + waiting.join(' / '));
-      L.push('回答ルール: 実在する曲を1〜3曲だけ挙げ、必ず「アーティスト名 - 曲名」のように鉤括弧で囲む（他の括弧は使わない）。'
+      L.push('回答ルール: Apple Music（日本）で配信されている実在の曲を1〜3曲だけ挙げ、必ず「アーティスト名 - 曲名」のように鉤括弧で囲む（他の括弧は使わない）。'
+        + 'アーティスト名と曲名は Apple Music での表記に合わせる（挙げた曲は Apple Music で照合される）。'
         + 'すでにかけた曲・受付済みの曲は挙げない。挙げた理由をひとことだけ添える。');
       L.push('--- ここからユーザーの相談 ---');
       return L.join('\n');
@@ -2280,48 +2306,165 @@
 
     /* 統合回答から括弧の中身を拾って検索語にする。回答のたびに鉤括弧・隅付き
        括弧・引用符のどれで囲まれるかが変わるので、いずれも受け取る。 */
+    const SONG_RE = /[「『【〔"“]([^「」『』【】〔〕"”\n]{2,60})[」』】〕"”]/g;
+    const songLabel = (s) => s.trim().replace(/\s+/g, ' ');
+
     function pickSongs(text) {
       const out = [];
-      const re = /[「『【〔"“]([^「」『』【】〔〕"”\n]{2,60})[」』】〕"”]/g;
-      let m;
-      while ((m = re.exec(text))) {
-        const s = m[1].trim().replace(/\s+/g, ' ');
+      for (const m of text.matchAll(SONG_RE)) {
+        const s = songLabel(m[1]);
         if (s.length < 2 || /[。、！？!?]/.test(s) || out.includes(s)) continue;
         out.push(s);
       }
       return out.slice(0, 4);
     }
 
-    function renderPicks(turn, text) {
-      const songs = pickSongs(text);
-      if (!songs.length) return;
-      const wrap = document.createElement('div');
-      wrap.innerHTML = '<p class="picklede">タップすると検索してリクエストできます</p>' +
-        '<div class="picks">' + songs.map((s) =>
-          '<button class="pick" data-q="' + esc(s) + '">' + esc(s) + '</button>').join('') + '</div>';
-      turn.appendChild(wrap);
+    /* 挙げられた曲を、検索タブと同じ iTunes Search API（Apple Music と同じ曲目録）で引く。
+       Apple Music API そのものは開発者登録と署名済みトークンが要るうえ、中身は同じなので使わない。
+       Worker から引くと Cloudflare の IP で回数制限を食い合うので、ブラウザから直接引く。
+       ok = 見つかった（track 付き）/ missing = 見つからない / unknown = 通信の失敗で確かめられない */
+    const bare = (s) => norm(s).replace(/\s/g, '');
+
+    /* 曲名は完全一致だけを認める（前方一致にすると「Animal」が「Animals」に化ける）。
+       括弧の版表記は splitVariant で外してあるので、ここでは「- Remastered 2011」のような
+       ハイフン区切りの版表記を外した形も比べる */
+    const titleKeys = (s) => new Set([bare(s), bare(String(s).replace(/\s+[-–—]\s+.*$/, ''))].filter(Boolean));
+    const sameTitle = (got, want) => [...titleKeys(got)].some((k) => want.has(k));
+
+    /* アーティストは連名を1人ずつに分けて比べ、挙げた全員がそろっていれば本人とみなす。
+       feat. で参加している人も数える（「Sia - Titanium」は David Guetta feat. Sia で当たる）。
+       分けると名前が壊れる名義（X JAPAN → 「」と「JAPAN」）は分けずに1人として扱う */
+    const ARTIST_SEP = /\s*(?:&|,|、|\/|\+|\bx\b|\bvs\.?|\bfeat\.?|\bft\.?|\bwith\b)\s*/i;
+    function artistKeys(s) {
+      s = String(s || '');
+      const parts = s.split(ARTIST_SEP).map(bare);
+      return parts.some((k) => !k) ? [bare(s)].filter(Boolean) : parts;
+    }
+    const featOf = (s) => { const m = /feat\.?\s([^)\]/]*)/i.exec(s || ''); return m ? m[1] : ''; };
+
+    /* 0 = 別人、1 = 連名や feat. の一員として参加、2 = 名義がそのまま一致。
+       2 を優先しないと「Earth, Wind & Fire - September」が映画の共演版に化ける */
+    function artistScore(want, name, withFeat) {
+      const main = artistKeys(name);
+      const all = new Set([...main, ...artistKeys(featOf(withFeat))]);
+      if (!want.length || !want.every((k) => all.has(k))) return 0;
+      return main.length === want.length && main.every((k) => want.includes(k)) ? 2 : 1;
     }
 
-    async function sendConsult(text) {
-      if (chatBusy || consultLocked) return;
-      text = String(text || '').trim().slice(0, 300);
-      if (text.length < 2) return;
+    /* 照合は2段。まず日本のストアで1曲ずつ引き、曲名の合う候補に絞る。日本のストアは洋楽の
+       アーティスト名をカナで返す（Avicii → アヴィーチー）ので、名義がそのまま合わなかった分は、
+       trackId 共通の US ストアで英字の名前を引いて比べ直す。US は全曲まとめて1本で引く
+       （iTunes は IP ごとに毎分およそ20回までで、検索タブと枠を分け合うため） */
+    async function verifySongs(labels) {
+      const jobs = await Promise.all(labels.map(async (label) => {
+        const cut = label.split(/\s+[-–—]\s+/);
+        // アーティスト名の無い挙げ方は、同名の別の曲と見分けられないので照合しない
+        if (cut.length < 2) return { label, state: 'missing' };
+        const artist = cut[0], title = cut.slice(1).join(' - ');
+        const want = titleKeys(splitVariant(title).base || title);
+        try {
+          const d = await itunesJson('https://itunes.apple.com/search?term=' +
+            encodeURIComponent(artist + ' ' + title) + '&entity=song&limit=25&country=JP', 8000);
+          const wantArtist = artistKeys(artist);
+          // 並びは関連度順のまま
+          const titled = toTracks(d.results || []).filter((t) => sameTitle(t.title, want));
+          const score = new Map(titled.map((t) => [t.trackId, artistScore(wantArtist, t.artist, t.variant)]));
+          return { label, wantArtist, titled, score, needUS: titled.length > 0 && ![...score.values()].includes(2) };
+        } catch {
+          return { label, state: 'unknown' };
+        }
+      }));
 
-      chatBusy = true;
-      $('#chatSend').disabled = true;
-      $('#chatInput').disabled = true;
-      $('#chatErr').hidden = true;
-      $('#seeds').hidden = true;
-      $('#chatInput').value = '';
-      growInput();
+      const ids = [...new Set(jobs.filter((j) => j.needUS).flatMap((j) => j.titled.slice(0, 10).map((t) => t.trackId)))];
+      let us = null;   // trackId → US ストアの結果。null は引けなかった
+      if (ids.length) {
+        try {
+          const d = await itunesJson('https://itunes.apple.com/lookup?country=US&id=' + ids.join(','), 6000);
+          us = new Map((d.results || []).map((r) => [r.trackId, r]));
+        } catch { /* US で確かめられなかった分は unknown に回る */ }
+      }
+      return jobs.map((j) => settle(j, us));
+    }
 
-      const turn = chatTurn(text);
-      chatScroll(true);
+    function settle(j, us) {
+      if (j.state) return j;
+      const { label, titled, score } = j;
+      const latin = new Map();   // カナ名義 → US での英字名義
+      if (j.needUS && us) {
+        // 日本限定の盤は US に無く、原曲がそこにしか無いことがある。US で確かめた一致度は
+        // 同じカナ名義の曲すべてに広げる
+        const byName = new Map();
+        for (const t of titled) {
+          const r = us.get(t.trackId);
+          const s = r ? artistScore(j.wantArtist, r.artistName, r.trackName) : 0;
+          if (s > (byName.get(t.artist) || 0)) { byName.set(t.artist, s); latin.set(t.artist, r.artistName); }
+        }
+        for (const t of titled) score.set(t.trackId, Math.max(score.get(t.trackId), byName.get(t.artist) || 0));
+      }
+      // 原曲（バージョン表記なし、または feat. だけ）を最優先にし、その中で名義がそのまま合うものを
+      // 先にする。名義を先にすると「Sia - Titanium」が Sia 名義の別録音（Megan's V3rsion）に化ける
+      const isOrig = (t) => !t.variant || /^feat\.?\s[^/]*$/i.test(t.variant);
+      const rank = (t) => score.get(t.trackId) ? (isOrig(t) ? 2 : 0) + score.get(t.trackId) : 0;
+      let track = null;
+      for (const t of titled) if (rank(t) && (!track || rank(t) > rank(track))) track = t;   // 同点は関連度順
+      if (!track) return { label, state: j.needUS && !us ? 'unknown' : 'missing' };
+      // 送信時に rekordbox 向けの英字名義を引き直さずに済むよう持たせておく
+      if (latin.has(track.artist)) track.artistEn = latin.get(track.artist);
+      return { label, state: 'ok', track };
+    }
 
-      // 文脈は初回だけ。以降は履歴に残るので毎回は送らない
-      const outbound = contextSent ? text : (await djContext()) + '\n' + text;
-      contextSent = true;
-      chatHistory.push({ role: 'user', content: outbound });
+    const pickTracksOf = new WeakMap();   // 候補の枠 → その枠の曲。ボタンの data-p はこの添字
+
+    /* 照合で一致した曲だけを確認画面へ直行できる行にする。一致しなかった曲も「存在しない」とは
+       言い切れない（ローマ字表記などで照合が外れることがある）ので、捨てずに検索へ渡すボタンで残す */
+    function renderPicks(wrap, checked) {
+      const ok = [], ids = new Set();
+      for (const c of checked) {
+        if (c.state !== 'ok' || ids.has(c.track.trackId)) continue;
+        ids.add(c.track.trackId);
+        ok.push(c.track);
+      }
+      pickTracksOf.set(wrap, ok);
+      const chips = (list) => '<div class="picks">' + list.map((c) =>
+        '<button class="pick" data-q="' + esc(c.label) + '">' + esc(c.label) + '</button>').join('') + '</div>';
+      const missing = checked.filter((c) => c.state === 'missing');
+      const unknown = checked.filter((c) => c.state === 'unknown');
+      let html = '';
+      if (ok.length) {
+        html += '<p class="picklede">Apple Music で見つかった曲です。タップするとリクエストできます</p>' +
+          '<div class="cands">' + ok.map((t, i) => candButtonHTML(t, 'data-p="' + i + '"')).join('') + '</div>';
+      }
+      if (missing.length) {
+        html += '<p class="picklede">Apple Music で照合できなかった曲です。タップすると検索して探せます</p>' + chips(missing);
+      }
+      if (unknown.length) {
+        html += '<p class="picklede">通信の都合で確かめられなかった曲です。タップすると検索して探せます</p>' + chips(unknown);
+      }
+      wrap.innerHTML = html;
+    }
+
+    async function checkPicks(turn, reply) {
+      const songs = pickSongs(reply);
+      if (!songs.length) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'pickwrap';
+      wrap.innerHTML = loadingHTML('Apple Music で曲を確かめています…');
+      turn.appendChild(wrap);
+      chatScroll();
+      let checked;
+      try {
+        checked = await verifySongs(songs);
+      } catch {
+        checked = songs.map((label) => ({ label, state: 'unknown' }));
+      }
+      renderPicks(wrap, checked);
+      chatScroll();
+    }
+
+    /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
+       失敗したら履歴と turn を片付けてエラーを出し、null を返す */
+    async function askMagi(turn, content) {
+      chatHistory.push({ role: 'user', content });
 
       const ctrl = new AbortController();
       let timedOut = false;
@@ -2367,16 +2510,11 @@
         const det = turn.querySelector('details.debate');
         det.open = false;
         det.querySelector('summary').textContent = '3つの人格の議論';
-        chatBusy = false;
-        $('#chatInput').disabled = false;
-        $('#chatSend').disabled = $('#chatInput').value.trim().length < 2;
       }
 
       if (reply && !failure) {
         chatHistory.push({ role: 'assistant', content: reply });
-        renderPicks(turn, reply);
-        chatScroll();
-        return;
+        return reply;
       }
       // 失敗したターンは履歴から外す（次の送信で壊れた文脈を引きずらない）
       chatHistory.pop();
@@ -2385,6 +2523,37 @@
       $('#chatErr').textContent = failure || '返事を受け取れませんでした。もう一度お試しください。';
       $('#chatErr').hidden = false;
       chatScroll();
+      return null;
+    }
+
+    async function sendConsult(text) {
+      if (chatBusy || consultLocked) return;
+      text = String(text || '').trim().slice(0, 300);
+      if (text.length < 2) return;
+
+      chatBusy = true;
+      $('#chatSend').disabled = true;
+      $('#chatInput').disabled = true;
+      $('#chatErr').hidden = true;
+      $('#seeds').hidden = true;
+      $('#chatInput').value = '';
+      growInput();
+
+      const turn = chatTurn(text);
+      chatScroll(true);
+
+      try {
+        // 文脈は初回だけ。以降は履歴に残るので毎回は送らない
+        const outbound = contextSent ? text : (await djContext()) + '\n' + text;
+        contextSent = true;
+        const reply = await askMagi(turn, outbound);
+        // 照合は待たずに入力を戻す。候補はこの回答の枠に出るので、次の相談と混ざらない
+        if (reply) checkPicks(turn, reply);
+      } finally {
+        chatBusy = false;
+        $('#chatInput').disabled = false;
+        $('#chatSend').disabled = $('#chatInput').value.trim().length < 2;
+      }
     }
 
     /* 入力欄：内容に合わせて伸ばし、2文字以上で送信可に */
@@ -2411,8 +2580,14 @@
       if (b) sendConsult(b.textContent);
     });
 
-    // 提案された曲をそのまま検索へ渡す（区切りのハイフンは検索の邪魔なので落とす）
     $('#chatLog').addEventListener('click', (e) => {
+      // Apple Music で見つかった曲はその場で確認画面へ。戻ると相談の同じ位置に帰る
+      const c = e.target.closest('.cand[data-p]');
+      if (c) {
+        toConfirm(pickTracksOf.get(c.closest('.pickwrap'))[+c.dataset.p], null, { pane: 'consult', y: window.scrollY });
+        return;
+      }
+      // 照合できなかった曲は検索へ渡す（区切りのハイフンは検索の邪魔なので落とす）
       const b = e.target.closest('.pick');
       if (!b) return;
       const q = b.dataset.q.replace(/\s*[-–—・]\s*/g, ' ').trim();
