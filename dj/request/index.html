@@ -2296,7 +2296,9 @@
         '<details class="debate" open><summary>3つの人格が考えています…</summary><div class="pcards">' +
         MAGI_PERSONAS.map((p) => '<div class="pcard thinking" data-cn="' + p.cn + '">' +
           '<span class="cn">' + p.cn + ' / ' + p.ja + '</span>' +
-          '<span class="px">…</span></div>').join('') +
+          '<div class="pr" data-round="1"><span class="rl">初回</span><span class="px">…</span></div>' +
+          '<div class="pr" data-round="2" hidden><span class="rl">討議後</span><span class="px"></span></div>' +
+          '</div>').join('') +
         '</div></details>' +
         '<div class="answer streaming"><span class="av">ST</span>' +
         '<div><div class="who">Shinya Takeda</div><div class="ab"></div></div></div>';
