@@ -1017,7 +1017,9 @@
     details.debate:not([open]) summary::after { content: '▸'; }
     .pcards { display: flex; flex-direction: column; gap: 9px; padding: 2px 12px 12px; }
     .pcard .cn { font-size: 10px; letter-spacing: .1em; font-family: var(--f-display); color: var(--heart-secondary); }
-    .pcard .px { font-size: 12px; color: var(--muted); line-height: 1.65; margin-top: 2px; overflow-wrap: anywhere; font-family: var(--f-body); }
+    .pcard .pr { margin-top: 6px; }
+    .pcard .rl { display: block; font-size: 10px; letter-spacing: .1em; line-height: 1.4; color: var(--faint); font-family: var(--f-body); }
+    .pcard .px { display: block; font-size: 12px; color: var(--muted); line-height: 1.65; margin-top: 2px; overflow-wrap: anywhere; font-family: var(--f-body); }
     .pcard.thinking .px { color: var(--faint); }
 
     .answer { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
@@ -2492,8 +2494,17 @@
             persona: (d) => {
               const card = turn.querySelector('.pcard[data-cn="' + String(d.codename || '').replace(/"/g, '') + '"]');
               if (!card) return;
-              card.querySelector('.px').textContent = d.text || '';
-              if (d.round === 2) card.classList.remove('thinking');
+              const round = Number(d.round) || 1;
+              if (round >= 2) card.classList.remove('thinking');
+              // 討議に加われなかった回は枠を出さない。初回で失敗したなら初回の枠に印が出ているし、
+              // 討議だけ抜けたなら初回意見がそのまま統合に使われている
+              if (d.absent && round >= 2) return;
+              // 初回と討議後は別の枠に入れる（同じ枠に書くと初回が討議後で上書きされて消える）。
+              // 枠の無い回は捨てる
+              const slot = card.querySelector('.pr[data-round="' + round + '"]');
+              if (!slot) return;
+              slot.hidden = false;
+              slot.querySelector('.px').textContent = d.text || '';
               chatScroll();
             },
             integrated: (d) => { reply += d.delta || ''; bodyEl.textContent = reply; chatScroll(); },
