@@ -96,6 +96,10 @@ const withImages = (text, images) => images.length ? [...images, { type: 'text',
 // 人格が答えられなかった回に、画面のカードへ出す印（persona イベントの absent:true と一緒に送る）
 const PERSONA_ABSENT = '[NO RESPONSE]';
 
+// 「120文字以内」の指定を数えて、末尾に「（109文字）」「(98 characters)」と書き足すモデルがある（Gemini）。
+// プロンプトでも止めているが、書かれたときはここで落とす
+const stripCharCount = (text) => text.replace(/\s*[（(]\s*\d+\s*(?:文字|字|characters?|chars?)\s*[）)]\s*$/i, '').trim();
+
 // 会社ごとの呼び出し方の違いはここに閉じる（値は personas.js の DEFAULTS.models）。
 function requestBody(cfg, { messages, stream, temperature }) {
   const sampling = { temperature: temperature != null ? temperature : DEFAULTS.temperature, top_p: DEFAULTS.top_p };
@@ -150,7 +154,7 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
       throw stageError('persona_call', `${cfg.provider}_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
     }
     const choice = (await res.json()).choices?.[0] || {};
-    const text = (choice.message?.content || '').trim();
+    const text = stripCharCount((choice.message?.content || '').trim());
     log('persona_call', p.codename, cfg.provider, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
     if (text) return text;
     // 空応答は1回だけ再試行。安全フィルターで止められた（content_filter）なら同じ結果になるので試さない
