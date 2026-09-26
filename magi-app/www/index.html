@@ -203,7 +203,7 @@
 
     /* splash */
     @keyframes magiFlow { from { stroke-dashoffset: 20; } to { stroke-dashoffset: 0; } }
-    .agent-splash { position: relative; margin: auto 0; text-align: center; padding: 1rem 0.5rem 9rem; }
+    .agent-splash { position: relative; margin: auto 0; text-align: center; padding: 1rem 0.5rem; }
     .magi-emblem { width: 110px; height: 110px; display: inline-block; }
     .magi-emblem .hx { fill: var(--primary-bg); stroke: var(--primary-color); stroke-width: 2; }
     .magi-emblem .hl-bg { stroke: var(--primary-color); stroke-width: 2; opacity: 0.2; }
@@ -218,8 +218,13 @@
     .magi-node { font-size: 10px; letter-spacing: 0.06em; color: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.3rem 0.7rem; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast); }
     .magi-node:hover, .magi-node:active { color: var(--primary-color); border-color: var(--primary-color); }
     .magi-node.active { color: var(--bg-color); background: var(--primary-color); border-color: var(--primary-color); }
-    .magi-desc { position: absolute; bottom: 0.5rem; left: 50%; transform: translateX(-50%); width: calc(100% - 1rem); max-width: 20rem; font-size: 12px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.4rem 0.7rem; background: var(--primary-bg); box-sizing: border-box; }
+    /* in normal flow below the nodes (it used to overlay the bottom padding, but the LLM / context / theme
+       lines made it too tall for that) */
+    .magi-desc { margin: 1rem auto 0; width: calc(100% - 1rem); max-width: 20rem; font-size: 12px; line-height: 1.6; color: var(--text-color); text-align: left; border-left: 2px solid var(--primary-color); padding: 0.4rem 0.7rem; background: var(--primary-bg); box-sizing: border-box; }
     .magi-desc-name { display: block; font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); margin-bottom: 0.2rem; }
+    .magi-desc-meta { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.5rem; margin: 0.45rem 0 0; padding-top: 0.4rem; border-top: 1px solid var(--border-color); font-size: 11px; color: var(--text-color); }
+    .magi-desc-meta dt { font-size: 10px; letter-spacing: 0.08em; color: var(--primary-color); }
+    .magi-desc-meta dd { margin: 0; overflow-wrap: anywhere; }
   </style>
 </head>
 <body>

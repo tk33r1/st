@@ -24,11 +24,55 @@ var AGENT_API = API_BASE + '/magi2/chat';
 var REACT_API = API_BASE + '/magi2/react';
 var AGENT_MAX_HISTORY = 12;
 
+// Persona descriptions — kept in step with tk.st's index.html (AGENT_PERSONAS there). desc follows
+// workers/magi2/personas.js, context follows .github/scripts/magi-context.py (PERSONAS), theme follows
+// PERSONA_TEMPERATURE / SYNTH_BIAS. The LLM each persona runs on can change weekly, so it is not written
+// here but fetched from the Worker's /magi2/models.
 var AGENT_PERSONAS = [
-  { codename: 'MELCHIOR-1', name: 'ENTHUSIAST', desc: 'The chaotic self. An impulsive, unpredictable geek who runs on instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music.' },
-  { codename: 'BALTHASAR-2', name: 'HUMANIST', desc: 'The compassionate self. A poetic, introverted dreamer who has internalized Fromm, Stoicism, and Buddhism. Always centered on humanity.' },
-  { codename: 'CASPER-3', name: 'STRATEGIST', desc: 'The logical self. A data-driven strategist relentlessly solving for the optimal answer, embracing both reproducible tactics and novelty.' },
+  {
+    codename: 'MELCHIOR-1', name: 'ENTHUSIAST',
+    desc: 'The chaotic self. An impulsive geek who trusts gut instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music. Drawn more to things than to people: warm toward kindred spirits, yet closed-off and self-centered, with few qualms about breaking the rules.',
+    context: 'Also speaks from a summary of the DJ and Motovlog pages — music, DJing, and the road back to riding after an accident. Rebuilt automatically whenever those pages change.',
+    theme: 'Dark theme gives this persona more weight in the final answer, and lets all three speak a little more freely.',
+  },
+  {
+    codename: 'BALTHASAR-2', name: 'HUMANIST',
+    desc: 'The compassionate self. A poetic, introverted dreamer who has made Fromm, Stoicism, and Buddhism a part of the self. Always centered on humanity: deeply empathetic and self-sacrificing, yet bold enough to cross ethical lines when the philosophy calls for it.',
+    context: 'Also draws on a summary of the Thought page — conclusions on love, happiness, failure and life, the books behind them, and how those views have changed. Rebuilt automatically whenever the page changes.',
+    theme: 'Dark theme lets all three speak a little more freely.',
+  },
+  {
+    codename: 'CASPER-3', name: 'STRATEGIST',
+    desc: 'The logical self. A data-driven strategist relentlessly pursuing rationality and the optimal answer, embracing both reproducible tactics and novelty. Interested only in exceptional people; unsentimental and organization-first.',
+    context: 'Also draws on a summary of the Job page and the tools and Glitch articles published on tk.st. Rebuilt automatically whenever they change.',
+    theme: 'Light theme gives this persona more weight in the final answer.',
+  },
 ];
+// The LLM behind each persona. Fetched once, the first time a persona is opened on the splash
+// (retried on the next open if it fails). undefined = loading, null = unavailable.
+var MODELS_API = API_BASE + '/magi2/models';
+var PROVIDER_LABEL = { openai: 'OpenAI', deepseek: 'DeepSeek', google: 'Google Gemini' };
+var agentModels;
+var agentModelsPromise = null;
+function loadAgentModels() {
+  if (!agentModelsPromise) {
+    agentModelsPromise = fetch(MODELS_API)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) { agentModels = j; return j; })
+      .catch(function () { agentModelsPromise = null; agentModels = null; return null; });
+  }
+  return agentModelsPromise;
+}
+function personaDescHTML(p) {
+  var m = agentModels && agentModels.personas && agentModels.personas[p.codename];
+  var llm = agentModels === undefined ? '…' : m ? (PROVIDER_LABEL[m.provider] || m.provider) + ' · ' + m.model : 'unavailable';
+  return '<span class="magi-desc-name">' + esc(p.codename) + ' · ' + esc(p.name) + '</span>' + esc(p.desc)
+    + '<dl class="magi-desc-meta">'
+    + '<dt>LLM</dt><dd>' + esc(llm) + '</dd>'
+    + '<dt>Context</dt><dd>' + esc(p.context) + '</dd>'
+    + '<dt>Theme</dt><dd>' + esc(p.theme) + '</dd>'
+    + '</dl>';
+}
 var REACT_EMOJIS = ['👎', '❤️', '😂', '🎉', '🔥', '👏', '🙏', '💯', '🤔', '👀', '😮', '😢', '😍', '🤯', '🙌', '🥳', '😎', '😅', '🤝', '💪', '✨', '💡', '✅', '🚀', '👌', '🫡', '🤩', '😇', '🥹', '🫶'];
 
 // ---- DOM / state ------------------------------------------------------------
@@ -87,7 +131,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 3.0 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-ver">ver 3.1 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('') + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
   + '</div>';
@@ -534,8 +578,10 @@ agentLog.addEventListener('click', function (e) {
     if (wasActive) { desc.classList.add('hidden'); return; }
     var p = AGENT_PERSONAS.find(function (x) { return x.codename === node.dataset.codename; });
     node.classList.add('active');
-    desc.innerHTML = '<span class="magi-desc-name">' + esc(p.codename) + ' · ' + esc(p.name) + '</span>' + esc(p.desc);
+    desc.innerHTML = personaDescHTML(p);
     desc.classList.remove('hidden');
+    // fetch the LLM names if not loaded yet, then redraw if the same persona is still open
+    if (!agentModels) loadAgentModels().then(function () { if (node.classList.contains('active')) desc.innerHTML = personaDescHTML(p); });
     return;
   }
   // emoji selection
