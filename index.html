@@ -66,6 +66,7 @@
       --duration-normal: calc(0.162s * var(--phi));
       --duration-slow: calc(0.262s * var(--phi));
       --music-color: #8b5cf6;
+      --bike-color: #ea580c;
     }
 
     [data-theme="dark"] {
@@ -81,6 +82,7 @@
       --dim-color: #8f8f8f;
       --border-color: #333333;
       --music-color: #c084fc;
+      --bike-color: #fb923c;
     }
 
     *, ::before, ::after {
@@ -1167,6 +1169,7 @@
 
     .tl-node.digital { background: var(--primary-color) }
     .tl-node.music { background: var(--music-color) }
+    .tl-node.bike { background: var(--bike-color) }
     .tl-node.flânerie { background: var(--secondary-color) }
 
     .tl-badge {
@@ -1187,6 +1190,11 @@
     .tl-badge.music {
       color: var(--music-color);
       border-color: var(--music-color);
+    }
+
+    .tl-badge.bike {
+      color: var(--bike-color);
+      border-color: var(--bike-color);
     }
 
     .tl-badge.flânerie {
@@ -2944,8 +2952,8 @@
     <h1>Shinya Takeda - Terminal Portfolio</h1>
     <h2>Available Commands</h2>
     <h3><a href="?cmd=about">about</a></h3>
-    <p>Learn about me. Shinya Takeda, Technical Marketing Lead. The sun for the cyber realm, The moon for music and
-      philosophy. I love profound tranquility, laced with a spoonful of madness.</p>
+    <p>Learn about me. Shinya Takeda, Technical Marketing Lead. A digital mind. A pulse for music and bikes. A
+      flâneur across both worlds. Love peace. Love insanity.</p>
     <h3><a href="?cmd=identify">identify</a></h3>
     <p>View personality versions. MBTI, CliftonStrengths and Big Five (OCEAN) profile.</p>
     <h4><a href="?cmd=identify&v=2.0">ver.2.0 [ACTIVE]</a></h4>
@@ -2953,7 +2961,7 @@
     <h4><a href="?cmd=identify&v=1.0">ver.1.0 [ARCHIVED]</a></h4>
     <p>Pre-traffic accident</p>
     <h3><a href="?cmd=timeline">timeline</a></h3>
-    <p>Trace my life events. Chronological records of my digital projects, music achievements, and
+    <p>Trace my life events. Chronological records of my digital projects, music achievements, bike journeys, and
       life reflections.</p>
     <h3><a href="?cmd=pages">pages</a></h3>
     <p>Explore my creations</p>
@@ -3635,8 +3643,16 @@
 
     const ABOUT_DATA = {
       bio: {
-        en: ["The sun for the digital, The moon for music and flânerie.", "Love peace. Love insanity."],
-        ja: ["昼はデジタル、夜は音楽とフラヌリ。", "平穏と狂気を愛してる。"]
+        en: [
+          "A digital mind. A pulse for music and bikes.",
+          "A flâneur across both worlds.",
+          "Love peace. Love insanity."
+        ],
+        ja: [
+          "デジタルの思考と、音楽とバイクの鼓動。",
+          "ふたつの世界を、あてもなく歩き続ける。",
+          "平穏と狂気を愛してる。"
+        ]
       },
       rows: [
         { label: ['🗼 Origin', '🗼 出身地'], val: ['Tokyo, Japan', '東京、日本'] },
@@ -3658,7 +3674,7 @@
       { year: '2025.10', cat: 'flânerie', title: 'Memento Mori', title_ja: 'メメント・モリ', desc: 'Submitted my will, which I drafted while hospitalized, to the Legal Affairs Bureau. No one can predict when they will die; living with a constant awareness of death is vital.', desc_ja: '入院中に書いた遺言書を法務局に提出した。人はいつ死ぬか分からない。常に死を意識して生きることが大切だ。' },
       { year: '2025.09', cat: 'music', title: 'First Live DJ Gig', title_ja: '初のDJライブ', desc: 'An organizer saw my hospital posts and invited me to perform after my discharge. Playing live at the venue offered practical lessons that could never be learned in a classroom.', desc_ja: '入院中の投稿を見た主催者が、退院後の出演に誘ってくれた。現場でのライブは、教室では決して学べない実践的な学びを与えてくれた。' },
       { year: '2025.08', cat: 'flânerie', title: 'ver 2.0 — Reboot', title_ja: 'ver 2.0 — 再起動', desc: 'Discharged after 40 days in the hospital. Through the responsible kindness of the nurses, support from those around me, and books given by friends, my values transformed, starting my second life.', desc_ja: '40日間の入院を経て退院。看護師さんたちの責任ある優しさ、周囲の支え、友人がくれた本を通して価値観が一変し、第二の人生が始まった。' },
-      { year: '2025.07', cat: 'flânerie', title: 'Motorcycle Accident', title_ja: 'バイク事故', desc: 'On my way home from work, my Harley collided with a right-turning car at an intersection, resulting in memory loss and fractures in my arm and hip.', desc_ja: '仕事帰り、交差点で右折車とハーレーが衝突。記憶障害と腕・腰の骨折を負った。' },
+      { year: '2025.07', cat: 'bike', title: 'Motorcycle Accident', title_ja: 'バイク事故', desc: 'On my way home from work, my Harley collided with a right-turning car at an intersection, resulting in memory loss and fractures in my arm and hip.', desc_ja: '仕事帰り、交差点で右折車とハーレーが衝突。記憶障害と腕・腰の骨折を負った。' },
       { year: '2025.04', cat: 'digital', title: 'President\'s Silver Award', title_ja: '社長賞銀賞', desc: 'Recognized for the year-round success of the AI-driven content generation project (FY2024).', desc_ja: 'AIによるコンテンツ生成プロジェクトの通年での成功が評価された（2024年度）。' },
       { year: '2024.11', cat: 'digital', title: 'President\'s Gold Award (2Q)', title_ja: '社長賞金賞（2Q）', desc: 'Awarded for pioneering the AI product content generation initiative (FY2024).', desc_ja: 'AIによる商品コンテンツ生成の先駆的な取り組みが評価された（2024年度）。' },
       { year: '2024.10', cat: 'music', title: 'DJ "Human Choreomania Project"', title_ja: 'DJ「人類踊狂計画」', desc: 'Began studying DJing at Noah Music School to launch a project aimed at breaking down mental barriers by losing oneself in dance through music.', desc_ja: '音楽を通じて踊り狂うことで、心の壁を取り払うプロジェクトを立ち上げるために、ノアミュージックスクールでDJを学び始めた。' },
@@ -3675,7 +3691,7 @@
       { year: '2011.03', cat: 'flânerie', title: 'Forklift Crashed into Wall', title_ja: 'フォークリフトで壁に突入', desc: 'Accidentally bumped a warehouse wall with a forklift. Although it seemed fine at the time, a subsequent earthquake caused that spot to collapse, creating a "well-ventilated" company straight into the neighboring business.', desc_ja: 'フォークリフトで倉庫の壁にうっかりぶつけた。その時は無事に見えたが、後に地震でその箇所が崩れ、隣の会社まで筒抜けの「風通しの良い」会社ができてしまった。' },
       { year: '2010.03', cat: 'digital', title: 'Joined NITORI', title_ja: 'ニトリ入社', desc: 'For my graduation thesis, I researched high-growth companies and was convinced of Nitori\'s future. Due to the Lehman Brothers shock, this was the only job offer I received — a true tightrope walk.', desc_ja: '卒論で高成長企業を研究し、ニトリの将来性を確信した。リーマンショックの影響で、内定はここ一社のみ。まさに綱渡りだった。' },
       { year: '2009', cat: 'flânerie', title: 'Exchange at Buddhism Univ', title_ja: '仏教大学への交換留学', desc: 'Although born from a lack of academic credits, it became the definitive origin of my passion for philosophy.', desc_ja: '単位不足がきっかけだったが、これが哲学への情熱の決定的な原点となった。' },
-      { year: '2007', cat: 'flânerie', title: 'Easy Rider Encounter', title_ja: '『イージー・ライダー』との出会い', desc: 'Discovered the film "Easy Rider" — sparking a lifelong fascination with motorcycles, hippie culture, and psytrance.', desc_ja: '映画『イージー・ライダー』に出会い、バイク・ヒッピー文化・サイケデリックトランスへの生涯にわたる傾倒が始まった。' },
+      { year: '2007', cat: 'bike', title: 'Easy Rider Encounter', title_ja: '『イージー・ライダー』との出会い', desc: 'Discovered the film "Easy Rider" — sparking a lifelong fascination with motorcycles, hippie culture, and psytrance.', desc_ja: '映画『イージー・ライダー』に出会い、バイク・ヒッピー文化・サイケデリックトランスへの生涯にわたる傾倒が始まった。' },
       { year: '2006.04', cat: 'flânerie', title: 'Entering Ritsumei Univ', title_ja: '立命館大学に入学', desc: 'Entered Ritsumeikan University, studying business administration while flying gliders in the aviation club, leaving me inspired but broke.', desc_ja: '立命館大学に入学し、経営学を学びながら航空部でグライダーを操縦。心は満たされたが、財布は空になった。' },
       { year: '2005', cat: 'flânerie', title: 'Gap Year Detour', title_ja: '浪人という回り道', desc: 'Spent a gap year (ronin) after failing university entrance exams—a challenging period struggling to maintain focus.', desc_ja: '大学受験に失敗し浪人生活を送った。集中力を保つのに苦しんだ、厳しい時期だった。' },
       { year: '2003', cat: 'digital', title: 'Computer Research Club', title_ja: 'コンピュータ研究部', desc: 'Created CG graphics and built custom PCs, marking the definitive origin of my current technical roots.', desc_ja: 'CGグラフィックスを制作し、自作PCを組み立てた。今の技術的なルーツの決定的な原点となった。' },
@@ -4429,6 +4445,7 @@
         const cats = [
           { key: 'digital', label: tr('Digital', 'デジタル') },
           { key: 'music', label: tr('Music', '音楽') },
+          { key: 'bike', label: tr('Bike', 'バイク') },
           { key: 'flânerie', label: tr('Flânerie', 'フラヌリ') },
         ];
         const labelMap = Object.fromEntries(cats.map(c => [c.key, c.label]));
