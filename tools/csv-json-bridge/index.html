@@ -162,7 +162,7 @@
     <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
          Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
     <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-    <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_7">
+    <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_8">
 
     <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
          visitor gets a white flash while the rest of the page loads. -->
@@ -190,11 +190,8 @@
             --accent-soft: var(--cat-converter-soft);
         }
 
-        /* A facing-page editor wants the whole window, not a reading column. */
-        .st-theme { --shell: 1440px; }
         .st-theme main {
-            max-width: 1440px;
-            padding: 14px 16px 16px;
+            padding: 14px 20px 16px;
             display: flex;
             flex-direction: column;
             min-height: 0;
@@ -207,6 +204,18 @@
             grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
             gap: 12px;
             min-height: 0;
+        }
+        /* The textareas are absolutely positioned, so the panes have no height of
+           their own. flex: 1 alone only shares out what is left of the window,
+           and the notes, safety card and FAQ under main leave nothing: the
+           editors collapsed to a single line. Give them the window minus the
+           sticky bars instead, so the facing pages fill the first screen. */
+        @media (min-width: 901px) {
+            .dual {
+                flex: none;
+                height: max(420px, calc(100vh - 150px));
+                height: max(420px, calc(100dvh - 150px));
+            }
         }
         @media (max-width: 900px) {
             .dual {

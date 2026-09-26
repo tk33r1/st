@@ -167,7 +167,7 @@
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../data/tools-ui.css?v=20260926_7">
+  <link rel="stylesheet" href="../data/tools-ui.css?v=20260926_8">
 
   <!-- Stamp the remembered theme before first paint. The tools write the same
        key, so a choice made there carries over to the index. -->
@@ -192,13 +192,10 @@
        the index card, its badge and the tool page it opens agree on colour.
        ------------------------------------------------------------------ */
 
-    /* The index shows a grid rather than a single instrument, so its shell
-       is wider than a tool's. Every other measurement stays theirs. */
     /* The shelf defaults to an explicit light theme rather than inheriting the
        operating system setting. Navy carries the identity; white and cool
        blue-grey surfaces keep the catalogue calm and easy to audit. */
     .st-theme {
-      --shell: 1080px;
       --bg: #F3F6FA;
       --panel: #FFFFFF;
       --panel-2: #EAF0F6;
@@ -220,7 +217,7 @@
       --trust-soft: #12352D;
       color-scheme: dark;
     }
-    .st-theme main { max-width: var(--shell); padding: 22px 20px 56px; }
+    .st-theme main { padding: 22px 20px 56px; }
 
     /* A restrained navy masthead gives the index a dependable service-like
        presence while the working area remains bright. Explicitly scoped to

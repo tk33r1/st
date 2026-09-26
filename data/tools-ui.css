@@ -285,7 +285,10 @@
 }
 
 /* ---- app bar ---- */
-.st-theme { --bar-h: 52px; --shell: 900px; }
+/* One desktop width for the index and every tool, so moving between them
+   never shifts the frame. Pages do not override it: the bars, main, the
+   safety card, the FAQ and the footer all line up on this measure. */
+.st-theme { --bar-h: 52px; --shell: 1200px; }
 
 .st-theme .app-bar {
   background: var(--panel);
@@ -517,7 +520,7 @@
 .st-theme main {
   flex: 1;
   width: 100%;
-  max-width: 720px;
+  max-width: var(--shell);
   margin: 0 auto;
   padding: 28px 20px 48px;
 }
@@ -711,7 +714,7 @@
 /* Sits right under the tool: after <main>, or inside it just before the
    explanatory prose when the page keeps that prose in <main>. */
 .st-theme .safety-proof {
-  width: min(var(--shell), calc(100% - 40px));
+  width: min(calc(var(--shell) - 40px), calc(100% - 40px));
   margin: 32px auto 0;
 }
 .st-theme .safety-proof.is-inside-main { width: auto; margin: 40px 0 0; }
@@ -1064,7 +1067,7 @@
    keep the same copy in HTML and FAQPage; a page with an existing large
    FAQPage can let tools-ui.js build this markup from that data. */
 .st-theme .faq-section {
-  width: min(var(--shell), calc(100% - 40px));
+  width: min(calc(var(--shell) - 40px), calc(100% - 40px));
   margin: 48px auto;
   padding-top: 28px;
   border-top: 1px solid var(--rule);

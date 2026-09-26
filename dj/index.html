@@ -1215,8 +1215,16 @@
       box-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
     }
 
+    /*
+     * 400% に達してから ∞% に振り切れるまでの 3 秒。暴走中と同じ明滅を速めに回して、
+     * 次に何か起きると身構えさせる。keyframes は暴走モードの節で定義している。
+     */
+    .sync-rate-text.critical {
+      animation: berserk-blink 0.5s steps(1, end) infinite;
+    }
+
     /* ===== 暴走モード =====
-     * 最下部（SYNC RATE ∞%）まで読み切ると突入する。以降は上へ戻っても ∞% のまま、
+     * フッターが見えて SYNC RATE が 400% から ∞% に振り切れると突入する。以降は上へ戻っても ∞% のまま、
      * 配色は紫から赤へ振り切れて地と文字が反転する。最上部まで戻ると活動停止して
      * 元に戻る。仕掛けは body.berserk のトークン差し替え 1 か所に集約してあり、
      * セクション個別の上書きは持たない（増えると戻し忘れが必ず出る）。
@@ -3431,6 +3439,7 @@
        * 中に何を足しても自動で拾える。詳細度は打ち消す側と同じ (0,2,1) で、
        * 後に置いてあるぶんこちらが勝つ。
        */
+      .sync-rate-text.critical,
       body.berserk .sync-rate-text,
       body.berserk .berserk-fx,
       body.berserk .berserk-fx::after,
@@ -4659,7 +4668,7 @@
     let footerTopScroll = 0;
 
     /*
-     * 暴走モード。最下部（SYNC RATE ∞%）まで読み切ると入り、以降は上へ戻っても
+     * 暴走モード。SYNC RATE が ∞% に振り切れると入り、以降は上へ戻っても
      * ∞% のまま配色が反転する。最上部まで戻ると活動停止して元に戻る。
      * 突入は「一番下まで見た」ことへの応答なので、リロードをまたいでは持ち越さない。
      */
@@ -4668,6 +4677,35 @@
     let shutdownTimer = null;
     let flashTimer = null;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    /*
+     * SYNC RATE。フッターの上端が画面の下端に届くまでをスクロール量で 0〜100% に割り当てる。
+     * フッターが見えている間は計器が勝手に上がり、5 秒で 400% に届く。400% で 3 秒明滅して
+     * から ∞% になって暴走モードに入る。いきなり反転させると驚かせるだけなので、
+     * 何か起きそうだと先に見せる猶予を置いている。
+     * ∞% の前にフッターより上へ戻ると、上がったときと同じ速さで今のスクロール位置の値まで下がる。
+     */
+    const SYNC_BASE = 100;
+    const SYNC_MAX = 400;
+    const SYNC_SPEED = (SYNC_MAX - SYNC_BASE) / 5000; // % / ms
+    const SYNC_HOLD_MS = 3000;
+    let syncRate = 0;
+    let syncScrollRate = 0; // 今のスクロール位置が指す値。updateScrollUi が更新する
+    let syncInZone = false; // フッターが見えているか
+    let syncElevated = false; // スクロールを離れて勝手に上がった分が残っているか
+    let syncHeldMs = 0; // 400% で明滅している時間
+    let syncLastAt = 0;
+    let syncFrame = 0;
+
+    // 暴走に入ったら計器は ∞% 表示に任せる。明けたときは 0 から素直にスクロールへ追従させる
+    const resetSyncMeter = () => {
+      cancelAnimationFrame(syncFrame);
+      syncFrame = 0;
+      syncRate = 0;
+      syncElevated = false;
+      syncHeldMs = 0;
+      syncLastAt = 0;
+    };
 
     /*
      * 警告帯の右に出す経過時間。飾りの英数字ではなく実際に動いている値を出したいので、
@@ -4742,6 +4780,7 @@
     const enterBerserk = () => {
       if (berserk) return;
       berserk = true;
+      resetSyncMeter();
       document.body.classList.add('berserk');
 
       // 疑似カーソルを出せたときだけ本物を消す。用意できなければ url() の手が残る
@@ -4946,9 +4985,10 @@
     }, { passive: true });
 
     /*
-     * ナビ最下部の「???」。押すと最下部まで落として暴走モードに入る。
+     * ナビ最下部の「???」。押すと最下部まで落とす。フッターが見えれば SYNC RATE が
+     * 振り切れていき、スクロールで入るときと同じ猶予を経て暴走モードに入る。
      * 遅延読み込みで高さが伸びると 1 回の scrollTo では底に届かないので、
-     * 伸びたぶんだけ送り直し、それでも入らなければ最後に直接呼ぶ。
+     * 伸びたぶんだけ送り直す。
      */
     const navPlunge = document.getElementById('navPlunge');
     if (navPlunge) {
@@ -4964,12 +5004,7 @@
             window.scrollTo({ top: height, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
           }
           tries += 1;
-          if (tries < 12) {
-            setTimeout(plunge, 250);
-            return;
-          }
-          enterBerserk();
-          updateScrollUi();
+          if (tries < 12) setTimeout(plunge, 250);
         };
         plunge();
       });
@@ -4994,55 +5029,96 @@
       }, 620);
     };
 
+    /*
+     * SYNC RATE を経過時間ぶん進める。フッターが見えている間は 400% へ上げて明滅させ、
+     * 3 秒もてば暴走に入る。外れたら勝手に上がった分を同じ速さで下げていく。
+     * 時刻は rAF の引数ではなく performance.now() で揃える。スクロール側からも呼ぶので、
+     * 時計が 2 本あると同じコマの時間を二重に数える。
+     */
+    const advanceSyncRate = () => {
+      if (berserk) return;
+      const now = performance.now();
+      // タブが裏に回ると rAF が止まる。戻った瞬間に何秒ぶんも進まないよう 1 コマの幅を抑える
+      const dt = syncLastAt ? Math.max(0, Math.min(now - syncLastAt, 100)) : 0;
+      syncLastAt = now;
+
+      if (syncInZone) {
+        // フッターの上端が 100%。そこを飛び越えて入ってきても 100% から上げ始める
+        syncRate = Math.min(SYNC_MAX, Math.max(syncRate, SYNC_BASE) + SYNC_SPEED * dt);
+        syncElevated = true;
+        if (syncRate >= SYNC_MAX) {
+          syncHeldMs += dt;
+          if (syncHeldMs >= SYNC_HOLD_MS) {
+            enterBerserk();
+            return;
+          }
+        }
+      } else {
+        syncHeldMs = 0;
+        // 勝手に上がった分だけ時間をかけて下げる。ふだんの上スクロールはそのまま追従させる
+        if (syncElevated) syncRate -= SYNC_SPEED * dt;
+        if (!syncElevated || syncRate <= syncScrollRate) {
+          syncRate = syncScrollRate;
+          syncElevated = false;
+        }
+      }
+
+      if (syncElevated) {
+        if (!syncFrame) syncFrame = requestAnimationFrame(tickSyncRate);
+      } else {
+        syncLastAt = 0;
+      }
+    };
+
+    const renderSyncRate = () => {
+      if (!syncRateText) return;
+      // 赤はスクロールでは届かない 100% を超えてから。計器が勝手に上がり始めた合図にする
+      const isRunaway = berserk || syncRate > SYNC_BASE;
+      syncRateText.textContent = `SYNC RATE: ${berserk ? '∞' : syncRate.toFixed(2)}%`;
+      syncRateText.classList.toggle('runaway', isRunaway);
+      syncRateText.classList.toggle('critical', !berserk && syncInZone && syncRate >= SYNC_MAX);
+      if (progressBar) progressBar.classList.toggle('runaway', isRunaway);
+    };
+
+    const tickSyncRate = () => {
+      syncFrame = 0;
+      advanceSyncRate();
+      renderSyncRate();
+    };
+
     const updateScrollUi = () => {
       const scrollTop = window.scrollY;
       const clientHeight = window.innerHeight;
 
       /*
-       * キャッシュした高さは遅延読み込みが済む前だと短い。ブラウザが復元した
-       * スクロール位置と噛み合うと「まだ読んでいないのに最下部」と誤判定し、
-       * 暴走モードに入ったまま戻らなくなる。最下部に見えたときだけ実測で
-       * 確かめ直す（最下部付近でしか通らないので、毎フレーム測ることにはならない）。
+       * フッターの上端が画面の下端に届いたら計器が勝手に上がり始める。
+       * キャッシュした位置は遅延読み込みが済む前だと浅い。ブラウザが復元した
+       * スクロール位置と噛み合うと「まだ読んでいないのにフッター」と誤判定するので、
+       * 入ったときだけ実測で確かめ直す（毎フレーム測ることにはならない）。
+       * 最上部では入れない。スクロールできない高さ（極端な拡大など）だとフッターが
+       * 最初から見えていて、入って即停止を繰り返すため。
        */
-      let isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
-      if (isAtBottom) {
+      let inZone = !!footer && scrollTop > 0 && scrollTop >= footerTopScroll;
+      if (inZone && !syncInZone) {
         scrollHeight = document.documentElement.scrollHeight;
-        isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 2;
+        footerTopScroll = footer.offsetTop - clientHeight;
+        inZone = scrollTop >= footerTopScroll;
       }
+      syncInZone = inZone;
+      syncScrollRate = footerTopScroll > 0
+        ? Math.max(0, Math.min(1, scrollTop / footerTopScroll)) * SYNC_BASE
+        : 0;
 
       const maxScroll = scrollHeight - clientHeight;
       const scrollPercent = maxScroll > 0 ? Math.max(0, Math.min(1, scrollTop / maxScroll)) : 0;
 
-      // スクロールできない高さ（極端な拡大など）では最上部と最下部が同じ点になる。
-      // そこで突入させると入って即停止を繰り返すので、動ける場合だけ拾う
-      if (isAtBottom && maxScroll > 0) enterBerserk();
+      advanceSyncRate();
       // 活動停止は最上部に着いたとき。ゴム band で負の値になる環境も拾えるよう 0 以下で見る
       if (berserk && !shuttingDown && scrollTop <= 0) shutdown();
 
-      if (progressBar && syncRateText && footer) {
-        // 暴走中は振り切れたまま戻さない。∞% と目盛りの食い違いをなくす
-        progressBar.style.width = berserk ? '100%' : `${scrollPercent * 100}%`;
-
-        let displayRate = '';
-        let isRunaway = false;
-
-        if (berserk || isAtBottom) {
-          displayRate = '∞%';
-          isRunaway = true;
-        } else if (scrollTop >= footerTopScroll) {
-          displayRate = '400.00%';
-          isRunaway = true;
-        } else {
-          const ratePercent = footerTopScroll > 0 ? (scrollTop / footerTopScroll) : 0;
-          const syncRate = ratePercent * 399.99;
-          displayRate = `${syncRate.toFixed(2)}%`;
-          isRunaway = syncRate > 300;
-        }
-
-        syncRateText.textContent = `SYNC RATE: ${displayRate}`;
-        syncRateText.classList.toggle('runaway', isRunaway);
-        progressBar.classList.toggle('runaway', isRunaway);
-      }
+      // 暴走中は振り切れたまま戻さない。∞% と目盛りの食い違いをなくす
+      if (progressBar) progressBar.style.width = berserk ? '100%' : `${scrollPercent * 100}%`;
+      renderSyncRate();
 
       if (backToTopBtn) {
         backToTopBtn.classList.toggle('visible', scrollTop > 300);
