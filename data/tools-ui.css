@@ -1,7 +1,8 @@
 /* Shared styles for SAFE TOOLS pages.
  *
  * Layer 1 — design tokens. Every tool reads its surfaces, ink and geometry
- *           from here and declares only its own --accent trio.
+ *           from here. Its accent comes from <html data-category="…"> (the
+ *           same category as data/tools.json); pages never set --accent.
  * Layer 2 — primitives (st-* classes) and the shared page chrome.
  * Layer 3 — components that must look identical everywhere (compare slider).
  *

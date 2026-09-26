@@ -54,6 +54,12 @@
     if (viewId !== 'view-loading') target.classList.add('fade-in');
   }
 
+  // ドラッグの中身にファイルがあるか（dragover の時点では types しか読めない）
+  function carriesFiles(e) {
+    const types = (e.dataTransfer && e.dataTransfer.types) || [];
+    return Array.prototype.indexOf.call(types, 'Files') !== -1;
+  }
+
   // 枠の外に落としたファイルを、ブラウザが開いてページを離れないようにする。
   // 伝播は止めない（止めると、枠の外でドロップを受けたいツールの処理まで届かなくなる）。
   // 入力欄の中への文字のドラッグは、ブラウザの動きのまま通す。
@@ -62,11 +68,9 @@
     if (pageDropGuarded) return;
     pageDropGuarded = true;
     const guard = (e) => {
-      const types = (e.dataTransfer && e.dataTransfer.types) || [];
-      const hasFiles = Array.prototype.indexOf.call(types, 'Files') !== -1;
       const t = e.target;
       const editable = t && t.closest && t.closest('input, textarea, [contenteditable=""], [contenteditable="true"]');
-      if (hasFiles || !editable) e.preventDefault();
+      if (carriesFiles(e) || !editable) e.preventDefault();
     };
     global.addEventListener('dragover', guard);
     global.addEventListener('drop', guard);
@@ -80,6 +84,8 @@
   //     the pointer leaves the zone (crossing onto a child does not count)
   //   - drop forwards the files to onFiles and stops there, so a page-level
   //     drop handler never receives the same files twice
+  //   - only drags that carry files are claimed. Dragged text passes through,
+  //     so a textarea inside the zone (text-diff, CSV JSON Bridge) still takes it
   // onFiles always gets an array. Tool-specific filtering (image / pdf /
   // video) belongs in onFiles.
   function setupDropzone(opts) {
@@ -109,6 +115,7 @@
 
     ['dragenter', 'dragover'].forEach(name => {
       dropzone.addEventListener(name, (e) => {
+        if (!carriesFiles(e)) return;
         e.preventDefault();
         dropzone.classList.add(dragoverClass);
       });
@@ -117,6 +124,7 @@
       if (!dropzone.contains(e.relatedTarget)) dropzone.classList.remove(dragoverClass);
     });
     dropzone.addEventListener('drop', (e) => {
+      if (!carriesFiles(e)) return;
       e.preventDefault();
       e.stopPropagation();
       dropzone.classList.remove(dragoverClass);
@@ -350,17 +358,18 @@
   // 「ffmpeg is not loaded」で復旧できなくなるので、失敗したら次にまた読み込ませる。
   function loadFFmpeg() {
     if (!ffmpegPromise) {
-      ffmpegPromise = (async () => {
-        const instance = new global.FFmpegWASM.FFmpeg();
-        instance.on('log', ({ message }) => {
-          console.log('[ffmpeg]', message);
-          ffmpegLog.push(message);
-          if (ffmpegLog.length > 30) ffmpegLog.shift();
-        });
-        instance.on('progress', ({ progress }) => {
-          if (ffmpegOnProgress) ffmpegOnProgress(Math.max(0, Math.min(100, Math.round(progress * 100))));
-        });
+      const loading = (async () => {
+        let instance = null;
         try {
+          instance = new global.FFmpegWASM.FFmpeg();
+          instance.on('log', ({ message }) => {
+            console.log('[ffmpeg]', message);
+            ffmpegLog.push(message);
+            if (ffmpegLog.length > 30) ffmpegLog.shift();
+          });
+          instance.on('progress', ({ progress }) => {
+            if (ffmpegOnProgress) ffmpegOnProgress(Math.max(0, Math.min(100, Math.round(progress * 100))));
+          });
           // コアの wasm は 32MB あって1ファイルでは置けないので2つに分けてあり、fetchVerified がつなぎ直して照合する。
           // ffmpeg@0.12.10 の worker は module worker で、コアを await import(coreURL) で読む（ESM 版のコアが要る）
           const { toBlobURL } = global.FFmpegUtil;
@@ -369,12 +378,15 @@
           const wasmURL = await fetchVerified(FFMPEG_CORE + '/ffmpeg-core.wasm', 'application/wasm');
           await instance.load({ classWorkerURL, coreURL, wasmURL });
         } catch (err) {
-          try { instance.terminate(); } catch (_) { /* 起動前なら止めるものがない */ }
-          ffmpegPromise = null;
+          try { if (instance) instance.terminate(); } catch (_) { /* 起動前なら止めるものがない */ }
           throw err;
         }
         return instance;
       })();
+      // 失敗したら忘れる。関数の中で null に戻すと、最初の await より前（FFmpeg の生成など）で
+      // 投げたときに、この代入が後から失敗した Promise を入れ直してしまう
+      ffmpegPromise = loading;
+      loading.catch(() => { if (ffmpegPromise === loading) ffmpegPromise = null; });
     }
     return ffmpegPromise;
   }

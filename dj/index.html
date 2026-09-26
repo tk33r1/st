@@ -4686,7 +4686,7 @@
     const SYNC_BASE = 100;
     const SYNC_MAX = 400;
     const SYNC_SPEED = (SYNC_MAX - SYNC_BASE) / 2000; // % / ms
-    const SYNC_EASE_RANGE = 60; // %。この距離を 0.8 秒かけて減速する
+    const SYNC_EASE_RANGE = 120; // %。この距離を 1.6 秒かけて減速する
     // 残り SYNC_EASE_RANGE で SYNC_SPEED から 0 に落ちる減速度（% / ms²）
     const SYNC_DECEL = (SYNC_SPEED * SYNC_SPEED) / (2 * SYNC_EASE_RANGE);
     const SYNC_HOLD_MS = 3000;

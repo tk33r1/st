@@ -9,7 +9,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260926_14"></script>
+  <script src="../../data/tools-ui.js?v=20260926_15"></script>
   <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -117,7 +117,7 @@
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_9">
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_10">
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -263,7 +263,7 @@
     <!-- ===================== view 1 : upload ===================== -->
     <div id="view-upload" class="fade-in">
       <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="動画ファイルをドロップまたは選択">
-        <input type="file" id="file-input" accept="video/*" class="hidden">
+        <input type="file" id="file-input" accept="video/*,.ts,.mts,.m2ts,.mkv" class="hidden">
         <div class="dz-in">
           <span class="dz-mark">+</span>
           <b>動画をドロップ</b>
@@ -643,13 +643,18 @@
     }
 
     // Event Listeners
+    // OS が報告する種類は当てにならない（Windows は .ts を TypeScript、.mts を別の種類として返し、
+    // .mkv などは空のことがある）。種類か拡張子のどちらかで動画と分かれば FFmpeg に渡す
+    const VIDEO_EXT = /\.(mp4|m4v|mov|qt|webm|mkv|avi|wmv|asf|flv|f4v|mpe?g|m2v|ts|mts|m2ts|vob|3gp|3g2|ogv)$/i;
+    const looksLikeVideo = (file) =>
+      !file.type || file.type.startsWith('video/') || VIDEO_EXT.test(file.name);
+
     setupDropzone({
       dropzone,
       fileInput,
       onFiles: (files) => {
         const file = files[0];
-        // 種類が空のファイル（環境によっては .mkv など）は、FFmpeg に読めるかを任せる
-        if (file && (!file.type || file.type.startsWith('video/'))) {
+        if (looksLikeVideo(file)) {
           processVideo(file);
         } else {
           showToast('動画ファイル(MP4等)を選択してください。', 'error');
