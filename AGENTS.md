@@ -28,7 +28,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`data/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
@@ -216,6 +216,12 @@
   カードは人格ごとに上書きし、JSON に欠けた人格は直近のカードを保つ。反映は10分強遅れることがある。
 - **XSS 対策**: ユーザー入力は保存時に `<` `>` と制御文字を除去し、表示はすべて
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
+  - **例外は曲リクエスト**（`workers/dj-request` と `dj/request/`・`dj/booth/`）。保存時に落とすのは制御文字と
+    長さの超過だけで、`<` `>` は残る。表示は一覧を `innerHTML` で組むので、来場者由来の値は必ず
+    `escapeHTML`（`data/dj-request-core.js`。各ページでは `esc`）を通してから文字列に入れる。表示する値を足すときも同じ。
+  - URL はエスケープでは防げない（`javascript:` がそのまま残る）。来場者が送った URL（`appleUrl`）を `href` や
+    `location` に入れる前に、`appleHref` で Apple の https URL か確かめ、違えば使わない。ジャケットとプレビューの URL は
+    `<img src>` と `new Audio()` にしか渡さないので、エスケープだけでよい。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで
   許可し、それ以外は API キー（`x-api-key` / `x-admin-key`）を要求。magi2 は Capacitor アプリの
   `https://localhost` オリジンも正規表現で許可。

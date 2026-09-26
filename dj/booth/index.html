@@ -989,13 +989,13 @@
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
     const API = '/dj/api/req';
     const {
-      $, $$, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock, formatDurationMs, storage,
+      $, $$, appleHref, asDate, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock,
+      formatDurationMs, storage, ymd,
     } = window.DJRequestCore;
     const apiJson = createApi(API, '通信に失敗しました。接続を確認してください');
 
     function ago(iso) {
-      if (!iso) return '';
-      const t = Date.parse(String(iso).replace(' ', 'T') + 'Z');
+      const t = asDate(iso);
       if (!t) return '';
       const m = Math.round((Date.now() - t) / 60000);
       if (m < 1) return 'たった今';
@@ -1047,7 +1047,12 @@
     let filter = 'pending', sort = 'new', sel = null, undoStack = null;
     let seen = new Set();
     let votes = new Map();   // id -> 直近に見たリクエスト数（追加投票の検知用）
-    const inflight = new Map();   // 書き込み中の id -> status
+    /* 状態の書き込みと、それより古い読み込みの応答が食い違ったときに手元を守る。
+       id -> { status, seq: 書き込みの番号, done: 書き込みが終わった時点の loadSeq }
+       done より後に出した読み込みの応答が届くまで、手元の status を優先する。 */
+    const pins = new Map();
+    let writeSeq = 0;
+    let loadSeq = 0, loadShown = 0;   // 出した読み込みの番号と、画面に描いた応答の番号
     const preview = createPreviewController({
       onStateChange: () => render(),
       onProgress: (state) => paintPrevBar(state),
@@ -1195,8 +1200,13 @@
     }
 
     async function load(first) {
+      const req = ++loadSeq;
       try {
         const d = await apiJson('/admin/songs');
+        // 後から出した読み込みの応答をもう描いていたら、この古い応答は捨てる
+        //（ポーリングの途中で新しいイベントを始めたときなど）
+        if (req < loadShown) return;
+        loadShown = req;
         const ev = d.event;
         if (ev) {
           $('#evTitle').textContent = ev.title;
@@ -1217,8 +1227,12 @@
             if (!prev.has(song.id)) { song.isNew = true; fresh.push(song); }
             else if (song.status === 'pending' && song.votes > (prevVotes.get(song.id) ?? song.votes)) again.push(song);
           }
-          // 書き込み中の曲はサーバの古い値で上書きしない
-          if (inflight.has(song.id)) song.status = inflight.get(song.id);
+          // 書き込み中・書き込み直後の曲は、サーバの古い値で上書きしない
+          const pin = pins.get(song.id);
+          if (pin) {
+            if (req > pin.done) pins.delete(song.id);
+            else song.status = pin.status;
+          }
           // タップで測った BPM も同じく手元を優先する（サーバは値を持っていない）
           if (tapMap.has(song.id)) { song.bpm = tapMap.get(song.id); song.bpmTapped = true; }
         });
@@ -1229,7 +1243,7 @@
         render();
         announce(fresh, again);
       } catch {
-        online(false);
+        if (req > loadShown) online(false);
       }
     }
 
@@ -1248,7 +1262,16 @@
       undoStack = undo || null;
       $('#toast').classList.add('show');
       clearTimeout(toast._t);
-      toast._t = setTimeout(() => $('#toast').classList.remove('show'), 5000);
+      // 取り消せるのはトーストが見えている間だけ。消えたあとの Z で黙って戻らないようにする
+      toast._t = setTimeout(() => { $('#toast').classList.remove('show'); undoStack = null; }, 5000);
+    }
+
+    // 取り消しは1回だけ。押した時点で手放すので、通信中に重ねて押しても2回は送らない
+    function undo() {
+      const run = undoStack;
+      undoStack = null;
+      $('#toastUndo').hidden = true;
+      if (run) run();
     }
 
     /* 5秒ポーリングが songs を丸ごと差し替えるので、曲は必ず id で引き直す。
@@ -1257,15 +1280,21 @@
       const s = songs.find((x) => x.id === id);
       if (!s) return;
       const prev = s.status;
+      const seq = ++writeSeq;
       s.status = next;            // 先に描画を進めて、失敗したら戻す
-      inflight.set(id, next);     // 書き込み中はポーリングの結果より手元を優先する
+      pins.set(id, { status: next, seq, done: Infinity });
       render();
       try {
         await patch(id, next);
-        inflight.delete(id);
+        // 同じ曲に後から別の書き込みを始めていたら、守るのはそちらに任せる
+        const pin = pins.get(id);
+        if (pin && pin.seq === seq) pin.done = loadSeq;
         toast(label, offerUndo === false ? null : () => setStatus(id, prev, '取り消しました', false));
       } catch {
-        inflight.delete(id);
+        // 後から別の書き込みを始めていたら戻さない。最後の結果はそちらが決める
+        const pin = pins.get(id);
+        if (!pin || pin.seq !== seq) return;
+        pins.delete(id);
         const cur = songs.find((x) => x.id === id);
         if (cur) cur.status = prev;
         render();
@@ -1303,7 +1332,8 @@
       }
       if (what === 'apple') {
         // https:// を music:// に差し替えると macOS の Music.app が直接開く
-        const web = s.appleUrl ||
+        // appleUrl は来場者が送った値。Apple の https URL でなければ使わず、検索に切り替える
+        const web = appleHref(s.appleUrl) ||
           ('https://music.apple.com/jp/search?term=' + encodeURIComponent(((s.artistEn || s.artist) + ' ' + s.title).trim()));
         location.href = web.replace(/^https:\/\//, 'music://');
         return;
@@ -1361,7 +1391,7 @@
     const adminKey = () => storage.getText(ADMIN_KEY);
 
     function evrowHTML(e) {
-      const day = String(e.at || '').slice(0, 10).replace(/-/g, '.');
+      const day = ymd(e.at);
       const meta = [e.code, day, e.songs + '曲', e.requests + '件'].join(' · ');
       return '<div class="evrow' + (e.current ? ' cur' : '') + '">' +
         '<div><div class="t">' + esc(e.title) + '</div><div class="m">' + esc(meta) + '</div></div>' +
@@ -1426,7 +1456,7 @@
       if (b) deleteEvent(b.dataset.del, b);
     });
 
-    $('#toastUndo').addEventListener('click', () => { if (undoStack) undoStack(); });
+    $('#toastUndo').addEventListener('click', undo);
 
     document.addEventListener('keydown', (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -1434,8 +1464,9 @@
       // ダイアログを開いている間はカードを触らせない。焦点はダイアログの中に
       // あるので、素通しすると 1/2/3 が裏の曲のステータスを動かしてしまう。
       if ($('#evDlg').open) return;
-      // パンくずとパッドに触れている間は Space/Enter を素の打鍵として通す
-      if (e.target.closest?.('.site-crumb, .tapbox')) return;
+      // パンくずとパッドのボタン上では、Space/Enter だけはボタンの押下として素通しする。
+      // ほかのキー（T・J/K・1/2/3 など）はショートカットとして効かせる
+      if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('.site-crumb, .tapbox')) return;
       // T はカードが1枚も無くても効くよう、一覧を見る前に処理する
       if (e.key.toLowerCase() === 't') { e.preventDefault(); tap(); return; }
       const list = visible(); if (!list.length) return;
@@ -1457,7 +1488,7 @@
       else if (k === '1') act(s, 'queued');
       else if (k === '2') act(s, 'played');
       else if (k === '3') act(s, 'skipped');
-      else if (k === 'z') { if (undoStack) undoStack(); }
+      else if (k === 'z') undo();
     });
 
     /* ── データ提供元の説明 ───────────────── */

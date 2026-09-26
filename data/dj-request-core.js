@@ -21,6 +21,30 @@
     return formatClock(seconds);
   }
 
+  /* D1 が入れる時刻は UTC の "YYYY-MM-DD HH:MM:SS"。文字列から切り出すと
+     時差のぶんだけずれるので、必ず Date に通してから端末の時計で出す。 */
+  function asDate(v) {
+    const t = String(v || '').trim();
+    if (!t) return null;
+    const ms = Date.parse(/[Zz]$|[+-]\d{2}:?\d{2}$/.test(t) ? t : t.replace(' ', 'T') + 'Z');
+    return Number.isFinite(ms) ? new Date(ms) : null;
+  }
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const hhmm = (v) => { const d = asDate(v); return d ? pad2(d.getHours()) + ':' + pad2(d.getMinutes()) : ''; };
+  const ymd = (v) => { const d = asDate(v); return d ? d.getFullYear() + '.' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()) : ''; };
+
+  /* appleUrl は投稿時にブラウザから届く値で、サーバは長さと制御文字しか見ていない。
+     href や location に入れる前に、Apple Music の https URL であることを確かめる。
+     それ以外（javascript: など）は空文字を返す。 */
+  function appleHref(url) {
+    try {
+      const u = new URL(String(url || ''));
+      if (u.protocol !== 'https:') return '';
+      const h = u.hostname.toLowerCase();
+      return (h === 'music.apple.com' || h === 'itunes.apple.com') ? u.href : '';
+    } catch { return ''; }
+  }
+
   const bearer = (token) => (token ? { Authorization: 'Bearer ' + token } : {});
 
   /* json を渡すと Content-Type と body を組み立てる。
@@ -60,10 +84,14 @@
     remove(key) {
       try { localStorage.removeItem(key); return true; } catch { return false; }
     },
+    /* 形が既定値と違う値（壊れた "null" や、配列の場所にあるオブジェクト）は既定値に替える。
+       呼び出し側は try を持たずに中身を触るので、ここで型までそろえて返す */
     getJSON(key, fallback) {
       try {
-        const value = localStorage.getItem(key);
-        return value === null ? fallback : JSON.parse(value);
+        const value = JSON.parse(localStorage.getItem(key));
+        const sameShape = value !== null && typeof value === typeof fallback
+          && Array.isArray(value) === Array.isArray(fallback);
+        return sameShape ? value : fallback;
       } catch { return fallback; }
     },
     setJSON(key, value) {
@@ -98,7 +126,12 @@
 
     // 頭出しまで戻す停止。別の曲に移るときと鳴り終わったときはこちら
     function stop(notify = true) {
-      if (audio) audio.pause();
+      if (audio) {
+        audio.pause();
+        // 参照を捨てるだけだと裏で読み込みを続けるので、src を外して読み込みごと止める
+        audio.removeAttribute('src');
+        audio.load();
+      }
       stopTimer();
       audio = null;
       key = null;
@@ -131,7 +164,12 @@
         if (audio !== target) return;
         stopTimer();
         timer = setInterval(emitProgress, interval);
-      }).catch(() => { if (audio === target) stop(); });
+      }).catch((error) => {
+        if (audio !== target) return;
+        // 読み込み中に一時停止された。止めたのは利用者なので、頭出しには戻さない
+        if (error && error.name === 'AbortError' && target.paused) return;
+        stop();
+      });
     }
 
     function pause() {
@@ -174,6 +212,7 @@
   }
 
   global.DJRequestCore = {
-    $, $$, bearer, createApi, createPreviewController, escapeHTML, formatClock, formatDurationMs, storage,
+    $, $$, appleHref, asDate, bearer, createApi, createPreviewController, escapeHTML, formatClock, formatDurationMs,
+    hhmm, storage, ymd,
   };
 })(window);

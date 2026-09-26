@@ -1307,7 +1307,8 @@
   <script>
     const API = '/dj/api/req';
     const {
-      $, $$, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock, formatDurationMs, storage,
+      $, $$, appleHref, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock, formatDurationMs,
+      hhmm, storage, ymd,
     } = window.DJRequestCore;
     const apiJson = createApi(API, '通信に失敗しました。電波の良い場所でもう一度お試しください。');
 
@@ -1332,18 +1333,6 @@
         else btn.disabled = false;
       }
     }
-
-    /* D1 が入れる時刻は UTC の "YYYY-MM-DD HH:MM:SS"。文字列から切り出すと
-       時差のぶんだけずれるので、必ず Date に通してから端末の時計で出す。 */
-    function asDate(v) {
-      const t = String(v || '').trim();
-      if (!t) return null;
-      const ms = Date.parse(/[Zz]$|[+-]\d{2}:?\d{2}$/.test(t) ? t : t.replace(' ', 'T') + 'Z');
-      return Number.isFinite(ms) ? new Date(ms) : null;
-    }
-    const pad2 = (n) => String(n).padStart(2, '0');
-    const hhmm = (v) => { const d = asDate(v); return d ? pad2(d.getHours()) + ':' + pad2(d.getMinutes()) : ''; };
-    const ymd = (v) => { const d = asDate(v); return d ? d.getFullYear() + '.' + pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()) : ''; };
 
     /* 状態バッジ。「受付」はまだ直せる、「確認済」は DJ が目を通したあとで直せない。
        採用か見送りかはサーバも返さないので、ここでは区別しない。
@@ -1461,12 +1450,20 @@
       return html;
     }
 
+    /* 待っている検索と通信中の検索を止める。新しく検索するときも、欄を空にするときも、
+       短すぎて検索しないときも必ず通す。残すと、古い結果が遅れて出る */
+    function abortSearch() {
+      clearTimeout(searchTimer);
+      if (searchAbort) searchAbort.abort();
+      searchAbort = null;
+    }
+
     async function doSearch(q) {
+      abortSearch();
       const box = $('#results');
       if (q.trim().length < 2) { box.innerHTML = ''; return; }
       box.innerHTML = loadingHTML('検索中…');
 
-      if (searchAbort) searchAbort.abort();
       searchAbort = new AbortController();
       const url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) +
         '&entity=song&limit=50&country=JP';
@@ -1497,6 +1494,7 @@
       searchTimer = setTimeout(() => doSearch(v), 300);   // 打鍵ごとに叩かない
     });
     function clearSearch() {
+      abortSearch();
       $('#q').value = ''; $('#field').classList.remove('filled');
       $('#results').innerHTML = '';
     }
@@ -1681,14 +1679,14 @@
         trackId はストアフロント共通なので同じ曲を引ける。失敗しても送信は続ける。 */
     async function latinArtist(trackId) {
       if (!trackId) return '';
+      // 本文の読み込みまで含めて 2.5 秒で打ち切る。ヘッダーだけ届いて止まる回線がある
+      const ac = new AbortController();
+      const to = setTimeout(() => ac.abort(), 2500);
       try {
-        const ac = new AbortController();
-        const to = setTimeout(() => ac.abort(), 2500);
         const r = await fetch('https://itunes.apple.com/lookup?id=' + trackId + '&country=US', { signal: ac.signal });
-        clearTimeout(to);
         const d = await r.json();
         return (d.results && d.results[0] && d.results[0].artistName) || '';
-      } catch { return ''; }
+      } catch { return ''; } finally { clearTimeout(to); }
     }
 
     /* 完了画面。受付と変更で見出しと添え書きだけ差し替える。
@@ -1950,7 +1948,11 @@
       }
     }
 
+    /* 回線が遅いと、前に開いた回の応答が後から届く。最後に開いたものだけを描く */
+    let pastReq = 0;
+
     async function openPast(code) {
+      const req = ++pastReq;
       stopAudio();
       // 曲の詳細から戻ってくるときの行き先。読み込みに失敗しても残す
       $('#pastRows').dataset.ev = code;
@@ -1961,6 +1963,7 @@
       show('past');
       try {
         const d = await apiJson('/events/' + encodeURIComponent(code));
+        if (req !== pastReq) return;
         const ids = new Set(mine());
         $('#pastTitle').textContent = d.event.title;
         $('#pastDate').textContent = ymd(d.event.at);
@@ -1972,6 +1975,7 @@
           + '終わった回なので、♥ や内容の変更はできません。';
         $('#pastNote').hidden = false;
       } catch {
+        if (req !== pastReq) return;
         $('#pastTitle').textContent = '読み込めませんでした';
         $('#pastRows').innerHTML = '<div class="blank">この回を読み込めませんでした</div>';
       }
@@ -2017,17 +2021,6 @@
       detail.lock = error.data && error.data.error === 'closed' ? 'closed' : 'moved';
       renderSong();
       return true;
-    }
-
-    /* appleUrl は投稿時にブラウザから届く値で、サーバは長さと制御文字しか見ていない。
-       href に入れる前に、Apple Music の https URL であることをこちら側で確かめる。 */
-    function appleHref(url) {
-      try {
-        const u = new URL(String(url || ''));
-        if (u.protocol !== 'https:') return '';
-        const h = u.hostname.toLowerCase();
-        return (h === 'music.apple.com' || h === 'itunes.apple.com') ? u.href : '';
-      } catch { return ''; }
     }
 
     /* 空欄のときは灰色の言い換えを置く。空の枠だけが並ぶと消えたように見える */
@@ -2081,7 +2074,11 @@
       apple.hidden = !href;
     }
 
+    // openPast と同じく、最後に開いた曲の応答だけを描く
+    let songReq = 0;
+
     async function openSong(id, from) {
+      const req = ++songReq;
       stopAudio();
       songFrom = from || '';
       $('#songBack').textContent = songFrom ? '← この回の一覧に戻る' : '← みんなのリクエストに戻る';
@@ -2094,9 +2091,12 @@
       $('#songNote').hidden = true;
       show('song');
       try {
-        detail = await apiJson('/songs/' + id, { headers: bearer(tokenOf(id)) });
+        const d = await apiJson('/songs/' + id, { headers: bearer(tokenOf(id)) });
+        if (req !== songReq) return;
+        detail = d;
         renderSong();
       } catch {
+        if (req !== songReq) return;
         $('#songHero').innerHTML = '<div class="nomatch">この曲を読み込めませんでした</div>';
       }
     }
