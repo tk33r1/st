@@ -2022,7 +2022,7 @@
 
     async function openPast(code) {
       const req = ++pastReq;
-      stopAudio();
+      // 過去の回にはプレーヤーが無いので、試聴は止めない（曲の詳細から戻るときは呼ぶ側で止める）
       // 曲の詳細から戻ってくるときの行き先。読み込みに失敗しても残す
       $('#pastRows').dataset.ev = code;
       $('#pastTitle').textContent = '読み込んでいます';
@@ -2050,8 +2050,9 @@
       }
     }
 
+    /* タブの切り替えや一覧の中の移動では試聴を止めない（元の画面へ戻れば止められる）。
+       曲の詳細を閉じて戻るときの停止は、呼ぶ側で行う。 */
     function openBoard() {
-      stopAudio();
       show('board');
       loadBoard();
     }
@@ -2189,6 +2190,7 @@
     $('#pastBack').addEventListener('click', openBoard);
 
     $('#songBack').addEventListener('click', () => {
+      stopAudio();   // 確認画面の「戻る」と同じく、閉じる画面の試聴は止める
       if (songFrom) openPast(songFrom); else openBoard();
     });
 
@@ -2239,6 +2241,7 @@
         try {
           await apiJson('/songs/' + detail.song.id + '/mine', { method: 'DELETE', headers: bearer(tokenOf(detail.song.id)) });
           forgetSong(detail.song.id);
+          stopAudio();
           openBoard();
         } catch (e) {
           if (handleMineLock(e)) return;
