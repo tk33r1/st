@@ -460,6 +460,8 @@
       font-size: 0.85rem;
       font-family: 'Courier New', Courier, monospace;
       font-weight: bold;
+      /* .sync-retreat の位置がこの行の高さから決まるので、継承に任せず固定する */
+      line-height: 1.6;
       color: var(--neo-purple);
       z-index: 1000;
       letter-spacing: 0.1em;
@@ -1213,6 +1215,78 @@
     .progress-bar.runaway {
       background: var(--accent-red);
       box-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
+    }
+
+    /*
+     * 暴走の予兆。SYNC RATE が 100% を超えると画面の縁から赤がにじみ、400% で張りつめる。
+     * 濃さ（opacity）と広がり（--omen-scale）は JS が計器の値から毎コマ決める。時間で動かさず
+     * 値に結ぶのは、上へ戻れば同じ動きで引いていくのを見せて、止め方を体で分からせるため。
+     * 形は暴走中の赤（.berserk-fx::after）と同じにしてあり、突入時はそのまま引き継いで消える。
+     * 札・進捗バー・back-to-top（1000）より下、セクションナビ（900）とライブ告知（950）より上。
+     */
+    .sync-omen {
+      position: fixed;
+      inset: 0;
+      z-index: 990;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    /* 大きく敷いて縮める。拡大していると赤い縁が画面の外にあり、縮むほど内側へ寄ってくる */
+    .sync-omen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: scale(var(--omen-scale, 1));
+      background: radial-gradient(ellipse at center,
+          transparent 45%,
+          rgba(255, 59, 48, 0.16) 78%,
+          rgba(255, 59, 48, 0.4) 100%);
+    }
+
+    .sync-omen.is-live::before {
+      will-change: transform;
+    }
+
+    .sync-omen.is-live {
+      will-change: opacity;
+    }
+
+    /* 突入時は暴走中の赤がフェードインするのと同じ 0.6s で引く */
+    body.berserk .sync-omen {
+      transition: opacity 0.6s ease;
+    }
+
+    /*
+     * 止め方の案内。札は 400% で明滅するが、こちらは読ませたいので点けたままにする
+     * （札の ::after にすると札の明滅に巻き込まれるので別の要素にしてある）。
+     * 位置は札の下端（top 15px + 1 行 + 上下 padding 8px + 枠 2px）から 4px 空けた所。
+     */
+    .sync-retreat {
+      position: fixed;
+      top: calc(15px + 0.85rem * 1.6 + 10px + 4px);
+      right: 20px;
+      z-index: 1000;
+      pointer-events: none;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      line-height: 1.6;
+      letter-spacing: 0.15em;
+      color: var(--accent-red);
+      background: rgba(var(--surface-rgb), 0.9);
+      border: 1px solid rgba(255, 51, 51, 0.5);
+      border-radius: 2px;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .sync-retreat.show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     /* ===== 暴走モード =====
@@ -3876,6 +3950,9 @@
   </div>
   <!-- 演出であって進捗の読み上げではない。支援技術には渡さない -->
   <div class="sync-rate-text" id="syncRateText" aria-hidden="true" lang="en">SYNC RATE: 0.00%</div>
+  <!-- 暴走の予兆（縁の赤）と止め方の案内。どちらも装飾 -->
+  <div class="sync-omen" id="syncOmen" aria-hidden="true"></div>
+  <div class="sync-retreat" id="syncRetreat" aria-hidden="true" lang="en">▲ RETREAT</div>
 
   <!-- 暴走モードの演出（非常事態のトラ柄・走査線・六角パネル・赤の脈動）と、活動停止の暗転。どちらも装飾 -->
   <div class="berserk-fx" aria-hidden="true">
@@ -4592,6 +4669,8 @@
     // 1. DOM Elements Cache
     const progressBar = document.getElementById('progressBar');
     const syncRateText = document.getElementById('syncRateText');
+    const syncOmen = document.getElementById('syncOmen');
+    const syncRetreat = document.getElementById('syncRetreat');
     const footer = document.querySelector('.site-footer');
     const backToTopBtn = document.getElementById('backToTop');
     const heroScrollCue = document.getElementById('heroScrollCue');
@@ -4695,6 +4774,21 @@
      */
     const SYNC_BLINK_FROM = 600;
     const SYNC_BLINK_TO = 80;
+    // 明滅の今の周期（ms）。400% に着いてからの経過で縮む
+    const syncBlinkPeriod = () =>
+      SYNC_BLINK_FROM * (SYNC_BLINK_TO / SYNC_BLINK_FROM) ** (syncHeldMs / SYNC_HOLD_MS);
+    /*
+     * 縁の赤（予兆）。100→400% で濃さ 0→OMEN_RISE、広がりは拡大 1+OMEN_SPREAD→1 まで寄せる。
+     * 400% の間は残りを積んで 1 まで張りつめ、札の明滅 2 回に 1 回の割で脈打つ。
+     * 画面の縁ぜんぶが光るので、1 秒に 3 回を超える点滅は出さない（光過敏の目安）。
+     * 毎回合わせると 400% に着いて 1 秒足らずで上限に届くので、1 拍おきにして脈の見える時間を倍にしてある。
+     * 脈の周期（明滅 2 回分）が OMEN_PULSE_MIN に近づくほど振れ幅を絞り、そこを割ったら脈を止めて
+     * 張りつめたまま保つ。
+     */
+    const OMEN_RISE = 0.75;
+    const OMEN_SPREAD = 0.35;
+    const OMEN_PULSE_DEPTH = 0.4;
+    const OMEN_PULSE_MIN = 1000 / 3;
     let syncRate = 0;
     let syncScrollRate = 0; // 今のスクロール位置が指す値。updateScrollUi が更新する
     let syncInZone = false; // フッターが見えているか
@@ -5061,8 +5155,7 @@
             return;
           }
           // 周期は経過に対して指数で縮める。直線だと終盤の数コマで急に詰まって見える
-          const progress = syncHeldMs / SYNC_HOLD_MS;
-          syncBlinkPhase += dt / (SYNC_BLINK_FROM * (SYNC_BLINK_TO / SYNC_BLINK_FROM) ** progress);
+          syncBlinkPhase += dt / syncBlinkPeriod();
         }
       } else {
         syncHeldMs = 0;
@@ -5105,6 +5198,53 @@
       const dim = holding && !reduceMotion.matches && syncBlinkPhase % 1 >= 0.5;
       syncRateText.style.opacity = dim ? '0.15' : '';
       if (progressBar) progressBar.classList.toggle('runaway', isRunaway);
+      // 勝手に上がっている最中だけ止め方を出す。上へ戻り始めたら（圏外）もう要らない
+      if (syncRetreat) syncRetreat.classList.toggle('show', !berserk && syncInZone && syncRate > SYNC_BASE);
+      renderSyncOmen(holding);
+    };
+
+    let omenLive = false;
+
+    const renderSyncOmen = (holding) => {
+      if (!syncOmen) return;
+      /*
+       * 暴走に入ったら濃さだけ 0 へ。body.berserk の transition で暴走中の赤と入れ替わる。
+       * 広がりは触らない（戻すと引いていく途中で縁が外へ跳ねて見える）。
+       */
+      if (berserk) {
+        if (omenLive) {
+          omenLive = false;
+          syncOmen.classList.remove('is-live');
+          syncOmen.style.opacity = '0';
+        }
+        return;
+      }
+      const heat = Math.max(0, Math.min(1, (syncRate - SYNC_BASE) / (SYNC_MAX - SYNC_BASE)));
+      let level = heat * OMEN_RISE;
+      if (holding) {
+        level += (1 - OMEN_RISE) * Math.min(1, syncHeldMs / SYNC_HOLD_MS);
+        if (!reduceMotion.matches) {
+          const pulsePeriod = syncBlinkPeriod() * 2;
+          const depth = OMEN_PULSE_DEPTH
+            * Math.max(0, Math.min(1, (pulsePeriod - OMEN_PULSE_MIN) / (SYNC_BLINK_FROM * 2 - OMEN_PULSE_MIN)));
+          /*
+           * 明滅 2 回で 1 周。偶数回目に札が点く瞬間に最大で、そこから 1 回目の明滅を通して
+           * ゆっくり引き、2 回目に札が落ちている間に一気に戻す。鼓動のように「点く瞬間」に
+           * 当てるための非対称。位相 0 で最大なので 400% の着地とも繋がる。
+           */
+          const t = (syncBlinkPhase / 2) % 1;
+          const wave = t < 0.75
+            ? (1 + Math.cos(Math.PI * t / 0.75)) / 2
+            : (1 - Math.cos(Math.PI * (t - 0.75) / 0.25)) / 2;
+          level *= 1 - depth * (1 - wave);
+        }
+      }
+      // 平時は毎スクロール書き換えない。0 に戻した直後の 1 回だけ書く
+      if (level <= 0 && !omenLive) return;
+      omenLive = level > 0;
+      syncOmen.classList.toggle('is-live', omenLive);
+      syncOmen.style.opacity = String(level);
+      syncOmen.style.setProperty('--omen-scale', String(1 + OMEN_SPREAD * (1 - heat)));
     };
 
     const tickSyncRate = () => {
