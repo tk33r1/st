@@ -9,7 +9,7 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
 - Pythonの生成処理は `ai_model_registry.py` から正本を読む。`OPENAI_MODEL` /
   `DEEPSEEK_MODEL` はローカルで別モデルを試す場合だけの上書き手段で、GitHub Actionsの
   実運用workflowでは設定しない。日刊生成は正本を読めなくてもルールベースで号を出す。
-- Cloudflare Worker（`workers/magi2`・`workers/wrangler`）は正本のJSONを `import` する。
+- Cloudflare Worker（`workers/magi2`・`workers/wrangler`・`workers/dj-request`）は正本のJSONを `import` する。
   wrangler がデプロイ時にバンドルへ取り込むので、正本を変えたら再デプロイで反映される。
 - 正本にはモデルIDだけを置く。モデル一覧・Chat CompletionsのURL、APIキーの環境変数、
   版番号のパターン、スモークテストの中身といったプロバイダー固有の知識は `ai_models.py` の
@@ -32,7 +32,8 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
    PRの作成失敗のいずれかがあれば、Issueを作成または追記する。
 
 自動マージとWorkerの自動デプロイはしない。PRをマージするとGitHub Actionsの生成処理は更新される。
-MAGI本体とゲーム共通APIは `workers/magi2` と `workers/wrangler` を手動デプロイして本番へ反映する。
+MAGI本体・ゲーム共通API・DJ ブースの曲の背景カードは `workers/magi2`・`workers/wrangler`・`workers/dj-request` を
+手動デプロイして本番へ反映する。
 PR本文にも同じ手順を出す。
 
 ### スモークテストの中身
@@ -44,6 +45,7 @@ PR本文にも同じ手順を出す。
 | OpenAI | 非推論・temperature 0.2・JSON出力 | 日刊生成、MAGIの人格カード、ゲームAPI |
 | OpenAI | 非推論・temperature 1.3・top_p・画像入力（data URL） | magi2 の Strategist（揺らぎの最大温度、画像付きの質問） |
 | OpenAI | 推論 high・ストリーミング | magi2 の統合（上位モデルでは組織認証を求められることがある） |
+| OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
 | DeepSeek | temperature 0.2・JSON出力 | 日刊生成 |
 | DeepSeek | 推論なし（`thinking` disabled）・temperature 1.3・top_p・画像入力 | magi2 の Enthusiast |
 | Google | 推論 minimal（Gemini 3 系は切れない）・temperature 1.3・top_p・画像入力 | magi2 の Humanist |

@@ -28,7 +28,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`dj-audio-analysis.js`（`dj/booth/` 専用。30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`data/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
@@ -47,7 +47,7 @@
 | `workers/auth` | tk-st-auth | `tk.st/bitcoinyen/bbm/*` | Basic 認証。secret: `BASIC_AUTH_USER` / `BASIC_AUTH_PASS` |
 | `workers/comments` | tk-st-comments | `tk.st/glitch/api/*` | glitch 記事のコメント。D1: `glitch-comments-db` |
 | `workers/dj-schedule` | tk-st-dj-schedule | `tk.st/dj/api/schedule/*` | 日程調整 API。D1: `dj-schedule-db`。**詳細は同ディレクトリの README.md を読むこと** |
-| `workers/dj-request` | tk-st-dj-request | `tk.st/dj/api/req/*` | 曲リクエスト API。D1: `dj-request-db`。secret: `ADMIN_KEY`, `IP_SALT` |
+| `workers/dj-request` | tk-st-dj-request | `tk.st/dj/api/req/*` | 曲リクエスト API。D1: `dj-request-db`。secret: `ADMIN_KEY`, `IP_SALT`, `SONGBPM_KEY`, `OPENAI_API_KEY`。ブース向けに曲の背景カード（OpenAI の Web 検索を強制、出典を照合した事実だけ保存、trackId ごとにイベントをまたいで使い回し、1日の生成数に上限）を作る |
 | `workers/dj-offer` | tk-st-dj-offer | `tk.st/dj/api/offer/*` | 出演オファーフォームの受け口。D1 なし（内容は Resend でメール転送するだけ）。secret: `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `OFFER_TO`, `OFFER_FROM`。**Resend / Turnstile の初期設定は同ディレクトリの README.md を読むこと** |
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版。secret: `MAGI_API_KEY` |
 | `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応）。人格ごとに会社を分けている（Enthusiast = DeepSeek、Humanist = Gemini、Strategist・統合 = OpenAI）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY` |
@@ -228,6 +228,8 @@
   - URL はエスケープでは防げない（`javascript:` がそのまま残る）。来場者が送った URL（`appleUrl`）を `href` や
     `location` に入れる前に、`appleHref` で Apple の https URL か確かめ、違えば使わない。ジャケットとプレビューの URL は
     `<img src>` と `new Audio()` にしか渡さないので、エスケープだけでよい。
+  - ブースの背景カード（LLM の出力と、Web 検索で拾った出典 URL）も来場者由来と同じ扱いにする。文字列は `esc` を通し、
+    出典 URL は Worker（`linkUrl`）とブース（`httpUrl`）の両方で http(s) か確かめてから `href` に入れる。
 - **CORS 方針**: `ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st']` に Origin ベースで
   許可し、それ以外は API キー（`x-api-key` / `x-admin-key`）を要求。magi2 は Capacitor アプリの
   `https://localhost` オリジンも正規表現で許可。

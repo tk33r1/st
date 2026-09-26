@@ -364,6 +364,78 @@
       border-color: var(--glitch-accent);
     }
 
+    /* プレビューから推定した値。外部サービスの値と見分けられるよう、枠を点線にして沈める */
+    .spec.est {
+      color: var(--fg-dim);
+      border-style: dashed;
+      border-color: var(--heart-secondary);
+    }
+
+    .spec.busy { color: var(--faint); border-style: dashed; }
+
+    /* ===== 背景カード（OpenAI + Web 検索）=====
+       事実は出典つきの行、出典の無い見立ては「AI の見立て」として分けて出す */
+    .bg {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-left: 2px solid var(--glitch-accent);
+      padding: 2px 0 2px 12px;
+      font-family: var(--f-body);
+      font-size: 0.78125rem;
+      line-height: 1.6;
+      color: var(--fg);
+    }
+
+    .bg .row { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+    .bg .row > span:last-child { min-width: 0; word-break: break-word; }
+
+    .bg .tag {
+      flex: none;
+      font-family: var(--f-display);
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0 5px;
+      color: var(--fg-dim);
+    }
+
+    .bg .tag.hot { color: var(--glitch-accent); border-color: var(--glitch-accent); }
+    .bg .guess { color: var(--fg-dim); }
+
+    .bg a.src {
+      margin-left: 6px;
+      font-family: var(--f-display);
+      font-size: 0.625rem;
+      letter-spacing: 0.06em;
+      color: var(--fg-dim);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--fg-dim);
+    }
+
+    .bg a.src:hover { color: var(--heart-secondary); border-bottom-color: var(--heart-secondary); }
+
+    .bg .foot {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--f-display);
+      font-size: 0.625rem;
+      letter-spacing: 0.06em;
+      color: var(--faint);
+    }
+
+    .bg .foot button {
+      font: inherit;
+      color: var(--fg-dim);
+      border-bottom: 1px dotted var(--fg-dim);
+    }
+
+    .bg .foot button:hover { color: var(--heart-secondary); border-bottom-color: var(--heart-secondary); }
+    .bg .foot button[disabled] { opacity: .5; cursor: default; }
+    .bg.quiet { border-left-color: var(--border); color: var(--fg-dim); }
+
     .flag {
       display: inline-flex;
       align-items: center;
@@ -670,6 +742,61 @@
       color: var(--fg-dim);
     }
 
+    /* ===== 繋ぎ候補 =====
+       いま流している曲（最後に再生済にした曲）から、BPM とキーの相性で次の候補を並べる */
+    .nextbox {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nextbox .base {
+      font-family: var(--f-display);
+      font-size: 0.6875rem;
+      line-height: 1.5;
+      color: var(--fg-dim);
+    }
+
+    .nextbox .base b { color: var(--fg); font-weight: 400; font-family: var(--f-body); }
+    .nextbox ol { gap: 8px; }
+
+    .nextbox li.cand {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    .nextbox li.cand:hover { border-color: var(--heart-secondary); }
+
+    .cand .t { font-size: 12.5px; }
+
+    .cand .fit {
+      display: block;
+      margin-top: 3px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--heart-secondary);
+    }
+
+    .cand .fit.meh { color: var(--glitch-accent); }
+    .cand .fit.bad { color: var(--fg-dim); }
+
+    .cand .how, .cand .hint {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      line-height: 1.55;
+      font-family: var(--f-body);
+      color: var(--fg-dim);
+    }
+
+    .cand .hint { color: var(--glitch-accent); }
+
     .taprow { display: flex; gap: 6px; }
     .taprow .act { flex: 1; justify-content: center; padding: 6px 0; font-size: 12px; }
 
@@ -914,6 +1041,11 @@
     <div class="grid">
       <section class="feed" id="feed"></section>
       <aside class="rail">
+        <section class="nextbox" aria-live="polite">
+          <h2>NEXT — 繋ぎ候補</h2>
+          <p class="base" id="nextBase">再生済にした曲を起点に、BPM とキーの相性で候補を出します</p>
+          <ol id="nextList"></ol>
+        </section>
         <section class="tapbox">
           <h2>TAP BPM</h2>
           <button type="button" class="tappad" id="tapPad">
@@ -953,14 +1085,18 @@
       <li>
         <span aria-current="page">ブースコンソール</span>
         <button type="button" class="crumb-info" id="crumbInfo" aria-expanded="false" aria-controls="crumbNote"
-          aria-label="BPM とキーのデータ提供元 GetSongBPM について">i</button>
+          aria-label="BPM・キーのデータ提供元と、推定・背景カードについて">i</button>
       </li>
     </ol>
     <p class="crumb-note" id="crumbNote" hidden>
       このページの BPM とキーは
       <a href="https://getsongbpm.com/" target="_blank" rel="noopener">GetSongBPM</a>
       から提供を受けています。GetSongBPM は楽曲の BPM・キー・拍子といったデータを
-      無料で公開している音楽データベースで、API を通して誰でも利用できます。
+      無料で公開している音楽データベースで、API を通して誰でも利用できます。<br>
+      そこで取れなかった値は、このブラウザが30秒プレビューを解析して推定しています（点線の「推定」）。
+      音声はどこにも送りません。プレビューは曲の一部なので、キーは平行調（Am と C など）を取り違えることがあります。<br>
+      曲の背景は、OpenAI に Web 検索をさせて作っています。送るのは曲名・アーティスト名などの曲の情報だけで、
+      リクエストした人の名前やひとことは送りません。出典を確かめられた事実だけを出し、出典の無い繋ぎの助言は「AI の見立て」と書いています。
     </p>
   </nav>
 
@@ -985,6 +1121,7 @@
   <div class="toast" id="toast"><span id="toastTxt"></span><button id="toastUndo">取り消す</button></div>
 
   <script src="../../data/dj-request-core.js?v=20260927"></script>
+  <script src="../../data/dj-audio-analysis.js?v=20260927"></script>
   <script>
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
     const API = '/dj/api/req';
@@ -1093,21 +1230,25 @@
       const chip = (v, cls) => v ? '<span class="spec' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span>' : '';
 
       /* 見比べて戸惑わないよう、ハーフタイム表記のときは倍も添える（effBpm 参照）。
-         タップで手入れした値だけは読み替えない。半分で取ったのが本人の判断のことがある。 */
+         タップで手入れした値だけは読み替えない。半分で取ったのが本人の判断のことがある。
+         プレビューから推定した値（bpmSrc / keySrc が est）は点線の「推定」で見分ける。 */
       const bpmChip = (s) => {
         if (s.bpmTapped) return chip(s.bpm.toFixed(1) + ' BPM · TAP', 'hi');
         if (!s.bpm) return '';
         const b = Math.round(s.bpm);
-        return chip(b < 90 ? b + ' BPM (×2 ' + effBpm(s.bpm) + ')' : b + ' BPM', 'hi');
+        const text = b < 90 ? b + ' BPM (×2 ' + effBpm(s.bpm) + ')' : b + ' BPM';
+        return s.bpmSrc === 'est' ? chip(text + ' · 推定', 'est') : chip(text, 'hi');
       };
+      const keyText = [s.camelot, s.songKey].filter(Boolean).join(' · ');
+      const keyChip = s.keySrc === 'est' ? chip(keyText && keyText + ' · 推定', 'est') : chip(keyText, 'hi');
       const specs = '<div class="specs">' +
         chip(formatDurationMs(s.durationMs, '—')) +
         chip(s.genre) +
         chip(s.releaseYear || '') +
         (s.explicitness === 'explicit' ? '<span class="spec ex">EXPLICIT</span>'
           : s.explicitness === 'cleaned' ? '<span class="spec">CLEAN</span>' : '') +
-        bpmChip(s) +
-        chip([s.camelot, s.songKey].filter(Boolean).join(' · '), 'hi') +
+        bpmChip(s) + keyChip +
+        (analyzing.has(s.id) ? '<span class="spec busy">プレビューを解析中…</span>' : '') +
         '</div>';
       const info = '<div class="info">' + (s.isFree
         ? '<div class="flag">⚠ カタログ外 — 本人の自由入力</div>' +
@@ -1133,7 +1274,7 @@
         '<div class="counts">' +
         '<div class="votes' + (s.votes >= 3 ? ' hot' : '') + '"><b>' + s.votes + '</b><span>REQ</span></div>' +
         '<div class="votes likes' + (s.likes >= 3 ? ' hot' : '') + '"><b>' + (s.likes || 0) + '</b><span>LIKE</span></div>' +
-        '</div>' + info +
+        '</div>' + info + bgHTML(s) +
         voices +
         (s.previewUrl ? playerHTML(s) : '') +
         '<div class="acts">' + primary + links +
@@ -1141,6 +1282,74 @@
         '<button class="act done" data-do="played">再生済</button>' +
         '<button class="act drop" data-do="skipped">見送り</button>' +
         '</div></div></article>';
+    }
+
+    /* ── 背景カード ─────────────────────────
+       Worker が OpenAI に Web 検索をさせて作ったもの。事実は出典つきの行だけで、
+       出典の無い繋ぎの助言は「AI の見立て」と書き分ける。URL はリンクにする前に
+       http(s) か確かめる（サーバでも確かめているが、href に入れる側でもう一度） */
+    const INFO_KIND = { tieup: 'タイアップ', viral: 'SNS', chart: 'チャート', revival: 'リバイバル', other: '情報' };
+    const infoBusy = new Set();   // 「作り直す」を押して応答を待っている曲
+    const analyzing = new Set();  // プレビューを解析している曲（下の「プレビューからの推定」）
+    const analyzed = new Set();   // この画面で一度解析を試した曲。失敗しても繰り返さない
+
+    function httpUrl(v) {
+      try {
+        const u = new URL(String(v || ''));
+        return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : '';
+      } catch { return ''; }
+    }
+
+    const srcLink = (url) => {
+      const u = httpUrl(url);
+      return u ? '<a class="src" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">出典</a>' : '';
+    };
+
+    const bgRow = (label, html, hot) =>
+      '<div class="row"><span class="tag' + (hot ? ' hot' : '') + '">' + label + '</span><span>' + html + '</span></div>';
+
+    /* 刺さる世代は LLM に訊かず年から出す（訊くと空欄か当たり障りのない答えになった）。
+       その年に10代だった人の、いまの年齢 */
+    function generation(year) {
+      const d = new Date().getFullYear() - year;
+      if (!(year > 1900) || d < 0) return '';
+      if (d <= 2) return 'いまの曲';
+      return '当時10代 → いま' + (d + 13) + '〜' + (d + 19) + '歳';
+    }
+
+    function bgHTML(s) {
+      if (s.isFree || !s.trackId) return '';
+      const info = s.info;
+      const busy = infoBusy.has(s.id) || (!!info && info.status === 'pending');
+      const redo = (label) => busy ? '' : '<button type="button" data-do="info">' + label + '</button>';
+      const c = info && info.card;
+      if (!c) {
+        const msg = busy ? '背景を Web 検索で調べています…'
+          : info && info.status === 'failed' ? '背景を調べられませんでした' + (info.error ? '（' + info.error + '）' : '')
+            : '背景はまだ調べていません';
+        return '<div class="bg quiet"><div class="foot"><span>' + esc(msg) + '</span>' +
+          redo(info ? 'もう一度調べる' : '背景を調べる') + '</div></div>';
+      }
+
+      const rows = [];
+      const head = [];
+      if (c.originalYear && c.originalYear !== s.releaseYear) {
+        head.push('原曲 ' + c.originalYear + (c.yearNote ? '（' + c.yearNote + '）' : ''));
+      }
+      const gen = generation(c.originalYear || s.releaseYear);
+      if (gen) head.push(gen);
+      if (head.length) rows.push(bgRow('年代', esc(head.join(' · '))));
+      (c.facts || []).forEach((f) => rows.push(bgRow(INFO_KIND[f.kind] || '情報',
+        esc(f.text) + srcLink(f.url), f.kind === 'tieup' || f.kind === 'viral')));
+      if (c.viralVersion) rows.push(bgRow('流行った版', esc(c.viralVersion), true));
+      if (c.floorTip) rows.push(bgRow('沸く所', esc(c.floorTip) + srcLink(c.floorTipUrl), true));
+      if (c.mixHint) rows.push(bgRow('繋ぎ', '<span class="guess">' + esc(c.mixHint) + '（AI の見立て）</span>'));
+      if (!(c.facts || []).length && !c.floorTip && !c.viralVersion) {
+        rows.push('<div class="row"><span class="guess">出典を確かめられる情報は見つかりませんでした</span></div>');
+      }
+      const foot = '<div class="foot"><span>' +
+        esc(busy ? '調べ直しています…' : 'Web 検索 · ' + ymd(c.at)) + '</span>' + redo('作り直す') + '</div>';
+      return '<div class="bg">' + rows.join('') + foot + '</div>';
     }
 
     /* 値が取れていない曲は末尾へ送る。BPM もキーも外部サービス頼みで
@@ -1186,6 +1395,7 @@
           '<span class="a trunc">' + esc(s.artist || '不明') + '</span></span></li>').join('')
         : '<li class="blank">採用した曲がここに並びます</li>';
 
+      renderNext();
       counts();
       songs.forEach((s) => { delete s.isNew; });
       paintPrevBar();
@@ -1233,7 +1443,9 @@
             if (req > pin.done) pins.delete(song.id);
             else song.status = pin.status;
           }
-          // タップで測った BPM も同じく手元を優先する（サーバは値を持っていない）
+          // タップで測った BPM も同じく手元を優先する（サーバは値を持っていない）。
+          // 推定が要るかはサーバの値で決めるので、差し替える前の値を残しておく
+          song.serverBpm = song.bpm;
           if (tapMap.has(song.id)) { song.bpm = tapMap.get(song.id); song.bpmTapped = true; }
         });
         seen = nextSeen;
@@ -1242,6 +1454,7 @@
         online(true);
         render();
         announce(fresh, again);
+        analyzeQueue();
       } catch {
         if (req > loadShown) online(false);
       }
@@ -1339,11 +1552,14 @@
         return;
       }
       if (what === 'prev') { preview.toggle(s.id, s.previewUrl); return; }
+      if (what === 'info') { refreshInfo(s.id); return; }
       if (STATUS_DONE[what]) setStatus(s.id, what, STATUS_DONE[what]);
     }
 
     $('#feed').addEventListener('click', (e) => {
       const card = e.target.closest('.card'); if (!card) return;
+      // 出典のリンクはそのまま開かせる。ここで描き直すと、押した要素ごと消えることがある
+      if (e.target.closest('a')) return;
       const s = songs.find((x) => x.id === Number(card.dataset.id)); if (!s) return;
       // render() で作り直す前に、いま画面にあるバーから位置を採る
       const bar = e.target.closest('.prev');
@@ -1390,6 +1606,20 @@
     const ADMIN_KEY = 'tkdj.adminKey';
     const adminKey = () => storage.getText(ADMIN_KEY);
 
+    /* 鍵の要る操作（削除・背景の作り直し）。ADMIN_KEY を後から設定した場合に備えて、
+       401 のときだけ一度訊いて、次からは黙って通す。訊かれて閉じたら null を返す */
+    async function withAdminKey(run) {
+      try {
+        return await run(adminKey());
+      } catch (e) {
+        if (e.status !== 401) throw e;
+        const key = prompt('管理キーを入力してください');
+        if (key === null) return null;
+        storage.setText(ADMIN_KEY, key.trim());
+        return await run(key.trim());
+      }
+    }
+
     function evrowHTML(e) {
       const day = ymd(e.at);
       const meta = [e.code, day, e.songs + '曲', e.requests + '件'].join(' · ');
@@ -1429,18 +1659,9 @@
 
       btn.disabled = true;
       try {
-        const del = (key) => apiJson('/admin/events/' + encodeURIComponent(code), { method: 'DELETE', headers: bearer(key) });
-        let d;
-        try {
-          d = await del(adminKey());
-        } catch (e) {
-          // ADMIN_KEY を後から設定した場合。一度だけ訊いて、次からは黙って通す
-          if (e.status !== 401) throw e;
-          const key = prompt('管理キーを入力してください');
-          if (key === null) { btn.disabled = false; return; }
-          storage.setText(ADMIN_KEY, key.trim());
-          d = await del(key.trim());
-        }
+        const d = await withAdminKey((key) =>
+          apiJson('/admin/events/' + encodeURIComponent(code), { method: 'DELETE', headers: bearer(key) }));
+        if (!d) { btn.disabled = false; return; }
         toast('「' + d.title + '」を削除しました（' + d.songs + '曲 / ' + d.requests + '件）');
         await loadEvents();
       } catch (e) {
@@ -1450,6 +1671,192 @@
     }
 
     $('#pastEvents').addEventListener('click', () => { $('#evDlg').showModal(); loadEvents(); });
+
+    /* ── 背景カードの作り直し ───────────────
+       料金の掛かる操作なので鍵を通す。応答まで十数秒かかるので、その間は「調べ直しています」を出す */
+    async function refreshInfo(id) {
+      if (infoBusy.has(id)) return;
+      infoBusy.add(id);
+      render();
+      try {
+        const d = await withAdminKey((key) =>
+          apiJson('/admin/songs/' + id + '/info', { method: 'POST', headers: bearer(key) }));
+        if (d) {
+          const cur = songs.find((x) => x.id === id);
+          if (cur && d.info) cur.info = d.info;
+          toast(d.ok ? '背景を調べ直しました' : '調べられませんでした（' + (d.error || '不明なエラー') + '）');
+        }
+      } catch (e) {
+        toast(e.message || '調べられませんでした');
+      } finally {
+        infoBusy.delete(id);
+        render();
+      }
+    }
+
+    /* ── プレビューからの推定 ───────────────
+       GetSongBPM でも Deezer でも取れなかった曲は、このブラウザでプレビューを解析して
+       推定値をサーバへ入れる（空欄のときだけ入る。中身は data/dj-audio-analysis.js）。
+       投稿直後は外部サービスの取得が裏で走っているので、少し待ってから手を付ける。
+       解析は主スレッドで数百 ms かかるので、1曲ずつ間を空けて流す。 */
+    const ANALYZE_AFTER = 20000;
+    let analyzeRunning = false;
+
+    const needsAnalysis = (s) => !s.isFree && !!s.previewUrl && !analyzed.has(s.id)
+      && (s.serverBpm == null || !(s.camelot || s.songKey))
+      && Date.now() - (asDate(s.createdAt) || 0) > ANALYZE_AFTER;
+
+    async function analyzeQueue() {
+      if (analyzeRunning || !window.DJAudioAnalysis) return;
+      analyzeRunning = true;
+      try {
+        for (;;) {
+          // 見ているタブの曲から先に
+          const next = visible().find(needsAnalysis) || songs.find(needsAnalysis);
+          if (!next) break;
+          const id = next.id;
+          analyzed.add(id);
+          analyzing.add(id);
+          render();
+          try {
+            const r = await DJAudioAnalysis.analyzeUrl(next.previewUrl);
+            if (r.bpm || r.camelot) {
+              const d = await apiJson('/admin/songs/' + id + '/analysis', {
+                method: 'PATCH', json: { bpm: r.bpm, camelot: r.camelot, songKey: r.songKey },
+              });
+              // 5秒ポーリングで songs は差し替わるので、曲は id で引き直す
+              const cur = songs.find((x) => x.id === id);
+              if (cur) {
+                cur.serverBpm = d.bpm;
+                if (!cur.bpmTapped) cur.bpm = d.bpm;
+                Object.assign(cur, { bpmSrc: d.bpmSrc, songKey: d.songKey, camelot: d.camelot, keySrc: d.keySrc });
+              }
+            }
+          } catch { /* 読めないプレビューは諦めて次の曲へ */ }
+          analyzing.delete(id);
+          render();
+          await new Promise((ok) => setTimeout(ok, 800));
+        }
+      } finally {
+        analyzeRunning = false;
+      }
+    }
+
+    /* ── 繋ぎ候補 ─────────────────────────
+       起点は最後に再生済にした曲。新着と採用済から、BPM とキー（Camelot）の相性で3曲選ぶ。
+       繋ぎ方の型もここで決める（LLM には訊かない。数値から機械的に決まることだから）。
+       背景カードに出典つきの「沸く所」や「AI の見立て」があれば添える。 */
+    const bpmForMix = (s) => (s.bpmTapped ? s.bpm : effBpm(s.bpm)) || null;
+
+    // songKeyRank は Camelot 番号 × 2 ＋ B なら 1
+    const camelotOf = (s) => {
+      const r = songKeyRank(s);
+      return r === null ? null : { n: Math.floor(r / 2), b: r % 2 === 1 };
+    };
+
+    function keyFit(a, b) {
+      const x = camelotOf(a), y = camelotOf(b);
+      if (!x || !y) return { score: 2, label: 'キー不明' };
+      const d = (y.n - x.n + 12) % 12;
+      if (d === 0) return x.b === y.b ? { score: 0, label: '同じキー' } : { score: 1, label: '平行調' };
+      if (x.b === y.b) {
+        if (d === 1) return { score: 1, label: '+1 上げる' };
+        if (d === 11) return { score: 1, label: '−1 落ち着かせる' };
+        if (d === 2) return { score: 2, label: '+2 ブースト' };
+        if (d === 7) return { score: 2, label: '半音上げ' };
+      } else if (d === 1 || d === 11) {
+        return { score: 2, label: '斜め（少し濁る）' };
+      }
+      return { score: 4, label: 'キーが合わない' };
+    }
+
+    /* 次の曲の BPM が今の曲からどれだけ離れているか。倍・半分で数えたほうが近ければそちらで */
+    function bpmFit(a, b) {
+      const x = bpmForMix(a), y = bpmForMix(b);
+      if (!x || !y) return null;
+      let best = null;
+      for (const m of [1, 2, 0.5]) {
+        const pct = (y * m - x) / x * 100;
+        if (!best || Math.abs(pct) < Math.abs(best.pct)) best = { pct, m, bpm: y };
+      }
+      return best;
+    }
+
+    const bpmPenalty = (bf) => {
+      if (!bf) return 3;
+      const p = Math.abs(bf.pct);
+      return (p <= 3 ? 0 : p <= 6 ? 1 : p <= 10 ? 2.5 : 4) + (bf.m !== 1 ? 0.5 : 0);
+    };
+
+    function mixPlan(bf, kf) {
+      if (!bf) return 'BPM 不明 — プレビューで確かめてから';
+      if (bf.m !== 1) return 'ハーフタイムで繋ぐ（片方を倍で数える）';
+      const p = Math.abs(bf.pct);
+      // 次の曲をどれだけ速く／遅くすれば今の曲に揃うか
+      const adj = (1 / (1 + bf.pct / 100) - 1) * 100;
+      const pitch = 'ピッチ ' + (adj >= 0 ? '+' : '−') + Math.abs(adj).toFixed(1) + '%';
+      if (p <= 3 && kf.score <= 1) return 'ロングミックス（16〜32小節かけて混ぜる）· ' + pitch;
+      if (p <= 3) return '短めに混ぜる（キーがぶつかるのでベースを EQ で入れ替え）· ' + pitch;
+      if (p <= 6) return 'テンポを寄せてミックス · ' + pitch;
+      if (p <= 10) return 'ブレイクで切り替え（エコーやフィルターで抜く）';
+      return 'カットインかエコーアウトで切り替え';
+    }
+
+    function renderNext() {
+      const base = songs.filter((s) => s.status === 'played' && s.playedAt)
+        .sort((a, b) => (asDate(b.playedAt) || 0) - (asDate(a.playedAt) || 0))[0];
+      if (!base) {
+        $('#nextBase').textContent = '再生済にした曲を起点に、BPM とキーの相性で候補を出します';
+        $('#nextList').innerHTML = '';
+        return;
+      }
+      const bb = bpmForMix(base);
+      $('#nextBase').innerHTML = 'NOW <b>' + esc(base.title) + '</b> · ' +
+        esc((bb ? Math.round(bb) + ' BPM' : 'BPM 不明') + ' · ' + (base.camelot || base.songKey || 'キー不明'));
+
+      const picks = songs
+        .filter((s) => s.id !== base.id && (s.status === 'queued' || s.status === 'pending'))
+        .map((s) => {
+          const bf = bpmFit(base, s), kf = keyFit(base, s);
+          // 人気（いいね・同じ曲のリクエスト）と、採用済かどうかは軽く効かせるだけ
+          const pop = Math.min(1.5, 0.3 * (s.likes || 0) + 0.3 * Math.max(0, (s.votes || 0) - 1));
+          return { s, bf, kf, score: bpmPenalty(bf) + kf.score - pop - (s.status === 'queued' ? 0.5 : 0) };
+        })
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 3);
+
+      $('#nextList').innerHTML = picks.length ? picks.map(({ s, bf, kf }) => {
+        const fit = bpmPenalty(bf) + kf.score;
+        const cls = fit <= 1 ? '' : fit <= 3 ? ' meh' : ' bad';
+        const bpmText = bf
+          ? Math.round(bf.bpm) + ' BPM (' + (bf.pct >= 0 ? '+' : '−') + Math.abs(bf.pct).toFixed(1) + '%)'
+          : 'BPM 不明';
+        const key = s.camelot || s.songKey;
+        const c = s.info && s.info.card;
+        const hint = c ? (c.floorTip || (c.mixHint ? c.mixHint + '（AI の見立て）' : '')) : '';
+        return '<li class="cand" data-id="' + s.id + '">' +
+          '<span class="t trunc">' + esc(s.title) + '</span>' +
+          '<span class="a trunc">' + esc((s.artist || '不明') + (s.status === 'queued' ? ' · 採用済' : '')) + '</span>' +
+          '<span class="fit' + cls + '">' + esc(bpmText + ' · ' + (key ? key + '（' + kf.label + '）' : kf.label)) + '</span>' +
+          '<span class="how">' + esc(mixPlan(bf, kf)) + '</span>' +
+          (hint ? '<span class="hint">' + esc(hint) + '</span>' : '') +
+          '</li>';
+      }).join('') : '<li class="blank">候補になる曲（新着・採用済）がありません</li>';
+    }
+
+    // 候補を押したら、その曲のカードへ（タブも切り替える）
+    $('#nextList').addEventListener('click', (e) => {
+      const li = e.target.closest('li.cand');
+      if (!li) return;
+      const s = songs.find((x) => x.id === Number(li.dataset.id));
+      if (!s) return;
+      const tab = $('.tab[data-f="' + s.status + '"]');
+      if (tab && filter !== s.status) tab.click();
+      sel = s.id;
+      render();
+      const el = $('.card.sel');
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
 
     $('#evList').addEventListener('click', (e) => {
       const b = e.target.closest('.evdel[data-del]');

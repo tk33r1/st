@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS songs (
   bpm          REAL,
   song_key     TEXT,   -- "F#m" のような表記
   camelot      TEXT,   -- "11A" のようなキャメロット表記
+  -- 値の出どころ。NULL は外部サービス由来の古い行。est はブースがプレビューから推定した値で、
+  -- 空欄のときだけ入る（外部サービスの値があればそちらが勝つ）。
+  bpm_src      TEXT,   -- gsb | deezer | est
+  key_src      TEXT,   -- gsb | est
   votes       INTEGER NOT NULL DEFAULT 0,  -- リクエストした人数（投稿しないと増えない）
   likes       INTEGER NOT NULL DEFAULT 0,  -- いいねの数（曲を送っていない人も押せる）
   status      TEXT NOT NULL DEFAULT 'pending', -- pending | queued | played | skipped
@@ -110,3 +114,20 @@ CREATE TABLE IF NOT EXISTS post_log (
 
 CREATE INDEX IF NOT EXISTS idx_post_log_rate ON post_log(device_key, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_post_log_age  ON post_log(created_at);
+
+-- ── 曲の背景カード ─────────────────────────
+-- OpenAI に Web 検索を必ずさせて作る（タイアップ・SNS での流行・リバイバルなど）。
+-- 曲（Apple の trackId）ごとに1枚で、イベントをまたいで使い回す。出典 URL が検索結果に
+-- 含まれない項目は保存前に捨てる。
+CREATE TABLE IF NOT EXISTS song_info (
+  track_id   TEXT PRIMARY KEY,
+  status     TEXT NOT NULL DEFAULT 'pending', -- pending | ok | failed
+  card       TEXT,                            -- 画面に出す JSON（出典を照合済みの項目だけ）
+  model      TEXT NOT NULL DEFAULT '',
+  error      TEXT NOT NULL DEFAULT '',
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_song_info_updated ON song_info(updated_at);

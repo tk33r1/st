@@ -20,6 +20,8 @@
  *   PATCH /dj/api/req/admin/event        受付の開始／停止
  *   GET   /dj/api/req/admin/events       全イベント（削除の対象を選ぶための一覧）
  *   DELETE /dj/api/req/admin/events/:code 過去の回を曲・投稿・いいねごと消す
+ *   PATCH /dj/api/req/admin/songs/:id/analysis  プレビューから推定した BPM・キー（空欄のときだけ入る）
+ *   POST  /dj/api/req/admin/songs/:id/info      背景カードを作り直す（ADMIN_KEY があれば鍵が要る）
  *
  * 文字列は素のまま保存し、エスケープは表示側で行う。DB に HTML エスケープ済みの
  * 文字列を入れると、DJ がコピーする曲名に &amp; が混ざって検索が外れるため。
@@ -41,6 +43,9 @@
  * 持つ device_key で見る。連打の判定は requests ではなく post_log で数える
  * （requests は取り下げで消えるため、数えると上限がすり抜けられる）。
  */
+
+// モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む（.github/AI_MODELS.md）
+import aiModels from '../../../config/ai-models.json';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 const API_BASE = '/dj/api/req';
@@ -165,7 +170,9 @@ async function currentEvent(env) {
    GetSongBPM は type=both（曲名＋アーティスト名）でのみ引く。
    曲名だけで引くと 15曲中12曲で別アーティストの曲が返ることを実測したため、
    フォールバックは絶対に入れない。見つからなければ黙って諦める。
-   BPM だけは Deezer で補完する（再生時間で照合を検証できるので比較的安全）。 */
+   BPM だけは Deezer で補完する（再生時間で照合を検証できるので比較的安全）。
+   どちらでも取れなかった値は、ブースがプレビューを解析して埋める（adminPatchAnalysis）。
+   外部サービスの値のほうが確かなので、推定値が先に入っていても上書きする。 */
 
 const GSB_BASE = 'https://api.getsong.co';
 
@@ -209,38 +216,297 @@ async function fromGetSongBpm(env, artist, title) {
   };
 }
 
-async function bpmFromDeezer(artist, title, durationMs) {
-  if (!artist || !title) return null;
+const COVER_WORDS = /tribute|karaoke|instrumental|cover|originally performed/i;
+const looseName = (s) => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+
+/** artists は表記違いの候補（英語名・日本のストア表記）。Deezer は日本からだと片仮名で返すことがある。 */
+async function bpmFromDeezer(artists, title, durationMs) {
   const sec = Math.round((durationMs || 0) / 1000);
-  const q = 'artist:"' + artist.replace(/"/g, '') + '" track:"' + title.replace(/"/g, '') + '"';
-  const d = await fetchJson('https://api.deezer.com/search?limit=10&q=' + encodeURIComponent(q));
+  const names = artists.map(looseName).filter(Boolean);
+  // 照合の要は再生時間。尺の分からない曲は、別の曲を掴んでも見分けられないので引かない。
+  if (!names.length || !title || !sec) return null;
+  // artist:"…" track:"…" の絞り込み検索は、日本から引くと有名曲でも 0 件になる
+  // （2026-09 実測。Billie Jean も One More Time も 0 件）。ふつうの検索で引いて絞る。
+  // 「(Single Version)」のような括弧書きが付くと、ふつうの検索でも 0 件になる。
+  const bare = title.replace(/\s*[(\[（【][^)\]）】]*[)\]）】]/g, '').trim() || title;
+  const d = await fetchJson('https://api.deezer.com/search?limit=10&q=' + encodeURIComponent(artists[0] + ' ' + bare));
   const list = (d && d.data) || [];
-  // 再生時間が合うものだけ採用する。曲名が同じ別録音を掴まないための検証。
-  const cand = sec ? list.find((x) => Math.abs(x.duration - sec) <= 3) : list[0];
+  // 再生時間とアーティストが合うものだけ採用する。尺だけだと、同じ長さのトリビュート盤
+  // （別人のカバー）を掴む（Bloody Mary で実際に起きた）。
+  const cand = list.find((x) => {
+    const got = looseName(x.artist && x.artist.name);
+    return Math.abs(x.duration - sec) <= 3
+      && !!got && names.some((n) => got.includes(n) || n.includes(got))
+      && (!COVER_WORDS.test(x.title) || COVER_WORDS.test(title));
+  });
   if (!cand) return null;
   const full = await fetchJson('https://api.deezer.com/track/' + cand.id);
   const bpm = full && Number(full.bpm);
   return Number.isFinite(bpm) && bpm > 0 ? bpm : null;
 }
 
-/** 投稿のレスポンスを待たせないよう ctx.waitUntil から呼ぶ。失敗しても何も壊さない。 */
-async function enrichSong(env, songId, artist, title, durationMs) {
+/** 投稿のレスポンスを待たせないよう ctx.waitUntil から呼ぶ。失敗しても何も壊さない。
+    artist は英語名を優先した検索用の表記、altArtist は日本のストア表記（Deezer の照合だけに使う）。 */
+async function enrichSong(env, songId, artist, title, durationMs, altArtist) {
   try {
     const gsb = await fromGetSongBpm(env, artist, title);
-    if (gsb && (gsb.bpm || gsb.songKey || gsb.camelot)) {
+    const hasKey = !!(gsb && (gsb.songKey || gsb.camelot));
+    if (gsb && (gsb.bpm || hasKey)) {
+      // 取れた値だけ書く。BPM が無いのに NULL で上書きすると、先に入った推定値まで消える。
       await env.DB.prepare(
-        'UPDATE songs SET bpm = ?, song_key = ?, camelot = ? WHERE id = ?'
-      ).bind(gsb.bpm, gsb.songKey, gsb.camelot, songId).run();
+        `UPDATE songs
+            SET bpm      = COALESCE(?1, bpm),
+                bpm_src  = CASE WHEN ?1 IS NULL THEN bpm_src ELSE 'gsb' END,
+                song_key = CASE WHEN ?2 THEN ?3 ELSE song_key END,
+                camelot  = CASE WHEN ?2 THEN ?4 ELSE camelot END,
+                key_src  = CASE WHEN ?2 THEN 'gsb' ELSE key_src END
+          WHERE id = ?5`
+      ).bind(gsb.bpm, hasKey ? 1 : 0, gsb.songKey, gsb.camelot, songId).run();
       // キーだけ取れた場合は、BPM を埋めるため Deezer の照合も続ける。
       if (gsb.bpm) return;
     }
-    const bpm = await bpmFromDeezer(artist, title, durationMs);
+    const bpm = await bpmFromDeezer([artist, altArtist], title, durationMs);
     if (bpm) {
-      await env.DB.prepare('UPDATE songs SET bpm = ? WHERE id = ?').bind(bpm, songId).run();
+      await env.DB.prepare(`UPDATE songs SET bpm = ?, bpm_src = 'deezer' WHERE id = ?`).bind(bpm, songId).run();
     }
   } catch {
     // 付帯情報が付かないだけなので握りつぶす
   }
+}
+
+/* ── 曲の背景カード ─────────────────────────
+   OpenAI（Responses API）に Web 検索を必ずさせて、タイアップ・SNS での流行・リバイバルなどを
+   短く答えさせる。検索させても検索結果に無いことを書くことはあるので、事実には出典 URL を
+   付けさせ、その URL が実際に取得した検索結果（sources）に無ければ保存する前に捨てる。
+
+   曲（Apple の trackId）ごとに1枚を、イベントをまたいで使い回す。作るのは投稿で新しい曲が
+   入ったとき（ctx.waitUntil）と、ブースの「作り直す」だけ。ブースの API は鍵なしで、
+   trackId も来場者のブラウザが送る値なので、料金が青天井にならないよう1日の生成数に上限を置く。
+   送るのは曲のメタ情報だけで、来場者の名前やひとことは送らない。 */
+
+const SONG_INFO = {
+  model: aiModels.openai.luna,
+  reasoning: 'high',
+  // ctx.waitUntil は応答を返してからおよそ30秒で打ち切られる。実測は 8〜19秒/曲
+  timeoutMs: 25000,
+  // ブースの「作り直す」はリクエストの中で待てるので長めに取る
+  refreshTimeoutMs: 45000,
+  maxOutputTokens: 6000,
+  dailyCap: 300,       // 24時間で作ってよい枚数（作り直しも1枚と数える）
+  maxAttempts: 2,      // 自動で作るのは失敗しても2回まで。以降はブースの「作り直す」だけ
+  staleSec: 90,        // pending のまま残った行（途中で落ちた）を取り直せるまでの秒数
+};
+
+const INFO_KINDS = ['tieup', 'viral', 'chart', 'revival', 'other'];
+
+const nullable = (type, description) => ({ type: [type, 'null'], description });
+const SONG_INFO_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['identified', 'original_year', 'year_note', 'facts', 'viral_version', 'floor_tip', 'floor_tip_source', 'mix_hint'],
+  properties: {
+    identified: { type: 'boolean', description: '検索でこの曲そのものを確認できたか' },
+    original_year: nullable('integer', '原曲の初出年。確認できなければ null'),
+    year_note: nullable('string', 'iTunes の年と原曲の年が違う理由（リマスター・再録など）。同じなら null'),
+    facts: {
+      type: 'array',
+      maxItems: 4,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['kind', 'text', 'source_url'],
+        properties: {
+          kind: { type: 'string', enum: INFO_KINDS },
+          text: { type: 'string', description: '40字以内の日本語' },
+          source_url: { type: 'string', description: 'この記述の根拠にした検索結果の URL' },
+        },
+      },
+    },
+    viral_version: nullable('string', 'SNS で広まったのが原曲以外の版なら、その版（sped up、リミックスなど）'),
+    floor_tip: nullable('string', 'フロアで反応を取りやすい使いどころ（SNS で使われたパートなど）。50字以内'),
+    floor_tip_source: nullable('string', 'floor_tip の根拠にした検索結果の URL'),
+    mix_hint: nullable('string', 'この曲へ繋ぎ入れるときの具体的な助言（イントロの構成など）。50字以内'),
+  },
+};
+
+const SONG_INFO_INSTRUCTIONS = `あなたは DJ ブースの補助係。渡された曲について、必ず Web 検索で確かめてから JSON で答える。
+- 事実（年・タイアップ・SNS での流行・チャート・リバイバル）は検索結果に書いてあることだけを書く。facts の各項目には根拠にした検索結果の URL を入れる。
+- 確認できない項目は null か空配列にする。推測で埋めない。facts は少なくてよい。
+- 渡した iTunes の年はこの音源の発売年。原曲の年と違うときは year_note に理由を書く。
+- SNS で広まったのが sped up 版やリミックスなど原曲以外なら viral_version に書く。
+- floor_tip は「どこを使うと沸くか」。SNS で使われたパートなど、出典で裏付けられることだけ書く。「サビで盛り上げる」のような、どの曲にも言えることは書かない。
+- mix_hint は、この曲へ繋ぎ入れるときの具体的な助言（ドラムだけのイントロが長い、アカペラで始まる、など）。確かなことが無ければ null。一般論は書かない。
+- 文章は日本語、短く。`;
+
+/** 出典の照合に使う形。末尾のスラッシュ・www・#・utm_ の違いは同じ URL とみなす。 */
+function normUrl(u) {
+  try {
+    const x = new URL(u);
+    x.hash = '';
+    [...x.searchParams.keys()].filter((k) => k.startsWith('utm_')).forEach((k) => x.searchParams.delete(k));
+    return (x.host.replace(/^www\./, '') + x.pathname.replace(/\/$/, '') + x.search).toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+/** 画面でリンクにする URL。http(s) 以外は捨てる。 */
+function linkUrl(v) {
+  const raw = clean(v, LIMITS.url);
+  try {
+    const u = new URL(raw);
+    return (u.protocol === 'https:' || u.protocol === 'http:') && !u.username && !u.password ? u.href : '';
+  } catch {
+    return '';
+  }
+}
+
+/** Responses API の応答から、出典を照合したカードを作る。検索していなければ失敗にする。 */
+function buildSongCard(d) {
+  const output = Array.isArray(d && d.output) ? d.output : [];
+  const searches = output.filter((o) => o && o.type === 'web_search_call');
+  if (!searches.length) throw new Error('検索が実行されませんでした');
+
+  const sources = new Set();
+  for (const s of searches) {
+    for (const src of (s.action && s.action.sources) || []) if (src && src.url) sources.add(normUrl(src.url));
+  }
+  const msg = output.find((o) => o && o.type === 'message');
+  const part = msg && Array.isArray(msg.content) ? msg.content.find((c) => c && c.type === 'output_text') : null;
+  for (const a of (part && part.annotations) || []) if (a && a.url) sources.add(normUrl(a.url));
+  sources.delete('');
+
+  let raw;
+  try {
+    raw = JSON.parse(part ? part.text : '');
+  } catch {
+    throw new Error('応答を JSON として読めませんでした');
+  }
+
+  const verified = (u) => !!linkUrl(u) && sources.has(normUrl(u));
+  const allFacts = Array.isArray(raw.facts) ? raw.facts : [];
+  const facts = allFacts
+    .filter((f) => f && verified(f.source_url) && clean(f.text, 80))
+    .slice(0, 4)
+    .map((f) => ({
+      kind: INFO_KINDS.includes(f.kind) ? f.kind : 'other',
+      text: clean(f.text, 80),
+      url: linkUrl(f.source_url),
+    }));
+  const year = Number(raw.original_year);
+  const originalYear = Number.isInteger(year) && year >= 1900 && year <= 2100 ? year : null;
+  const tipOk = verified(raw.floor_tip_source);
+
+  return {
+    identified: !!raw.identified,
+    originalYear,
+    yearNote: originalYear ? clean(raw.year_note, 80) : '',
+    facts,
+    // 「どの版が流行ったか」は出典を持たない項目なので、流行の事実が残ったときだけ出す
+    viralVersion: facts.some((f) => f.kind === 'viral') ? clean(raw.viral_version, 60) : '',
+    floorTip: tipOk ? clean(raw.floor_tip, 80) : '',
+    floorTipUrl: tipOk ? linkUrl(raw.floor_tip_source) : '',
+    // 出典の無い見立て。ブースでは「AI の見立て」として事実と分けて出す
+    mixHint: clean(raw.mix_hint, 80),
+    dropped: allFacts.length - facts.length,
+    sources: sources.size,
+    at: new Date().toISOString(),
+  };
+}
+
+async function requestSongInfo(env, song, timeoutMs) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    const res = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      signal: ac.signal,
+      headers: { Authorization: 'Bearer ' + env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: SONG_INFO.model,
+        reasoning: { effort: SONG_INFO.reasoning },
+        tools: [{ type: 'web_search', user_location: { type: 'approximate', country: 'JP', timezone: 'Asia/Tokyo' } }],
+        // 検索を任意にすると、知っているつもりの曲で検索を飛ばして記憶で書く
+        tool_choice: 'required',
+        include: ['web_search_call.action.sources'],
+        instructions: SONG_INFO_INSTRUCTIONS,
+        input: '曲の情報（iTunes JP）:\n' + JSON.stringify({
+          title: song.title,
+          artist: song.artist,
+          artistEn: song.artistEn || undefined,
+          album: song.album || undefined,
+          genre: song.genre || undefined,
+          releaseYear: song.releaseYear || undefined,
+          durationSec: song.durationMs ? Math.round(song.durationMs / 1000) : undefined,
+        }),
+        text: { format: { type: 'json_schema', name: 'song_background', strict: true, schema: SONG_INFO_SCHEMA } },
+        max_output_tokens: SONG_INFO.maxOutputTokens,
+        store: false,
+      }),
+    });
+    let d = null;
+    try { d = await res.json(); } catch { /* JSON でないエラー応答 */ }
+    if (!res.ok) {
+      throw new Error('OpenAI ' + res.status + (d && d.error && d.error.message ? ': ' + d.error.message : ''));
+    }
+    return d;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** 生成の権利を取る。同じ曲を二重に作らない・1日の上限を越えない、を1文で判定する。
+    force はブースの「作り直す」。できあがっているカードや、失敗を重ねた曲もやり直す。 */
+async function claimSongInfo(env, trackId, force) {
+  const r = await env.DB.prepare(
+    `INSERT INTO song_info (track_id, status, attempts, updated_at)
+     SELECT ?1, 'pending', 1, CURRENT_TIMESTAMP
+      WHERE (SELECT COUNT(*) FROM song_info WHERE updated_at > datetime('now', '-1 day')) < ?2
+     ON CONFLICT(track_id) DO UPDATE
+        SET status = 'pending', attempts = song_info.attempts + 1, updated_at = CURRENT_TIMESTAMP
+      WHERE (song_info.status = 'pending' AND song_info.updated_at < datetime('now', ?3))
+         OR (song_info.status = 'failed' AND (?4 OR song_info.attempts < ?5))
+         OR (song_info.status = 'ok' AND ?4)`
+  ).bind(trackId, SONG_INFO.dailyCap, `-${SONG_INFO.staleSec} seconds`, force ? 1 : 0, SONG_INFO.maxAttempts).run();
+  return !!(r.meta && r.meta.changes > 0);
+}
+
+/** 失敗しても前のカードは残す（作り直しの失敗で、読めていた情報まで消さない）。 */
+async function saveSongInfo(env, trackId, result) {
+  const card = result.card ? JSON.stringify(result.card) : null;
+  await env.DB.prepare(
+    `UPDATE song_info
+        SET status = CASE WHEN ?1 IS NOT NULL OR card IS NOT NULL THEN 'ok' ELSE 'failed' END,
+            card = COALESCE(?1, card), model = ?2, error = ?3, updated_at = CURRENT_TIMESTAMP
+      WHERE track_id = ?4`
+  ).bind(card, SONG_INFO.model, result.error || '', trackId).run();
+}
+
+/** カードを作れる曲か。trackId はブラウザが送る値なので、Apple の数字の ID だけ通す。 */
+const canDescribe = (env, song) => !!env.OPENAI_API_KEY && !song.isFree && /^\d{1,15}$/.test(String(song.trackId || ''));
+
+/** 権利を取れたら、OpenAI の応答を待つ Promise を返す（D1 には書かない。失敗しても投げない）。
+    取れなければ null。保存は呼び出し側が saveSongInfo で行う。 */
+async function startSongInfo(env, song, { force = false, timeoutMs = SONG_INFO.timeoutMs } = {}) {
+  if (!canDescribe(env, song)) return null;
+  if (!(await claimSongInfo(env, String(song.trackId), force))) return null;
+  return requestSongInfo(env, song, timeoutMs)
+    .then((d) => ({ card: buildSongCard(d) }))
+    .catch((e) => ({ error: e && e.name === 'AbortError' ? '時間切れ' : String((e && e.message) || e).slice(0, 200) }));
+}
+
+/** songs の行を背景カードの入力に直す */
+const songForInfo = (s) => ({
+  trackId: s.track_id, isFree: !!s.is_free, title: s.title, artist: s.artist, artistEn: s.artist_en,
+  album: s.album, genre: s.genre, releaseYear: s.release_year, durationMs: s.duration_ms,
+});
+
+/** 画面に出す形。pending のまま時間が経った行は、途中で落ちたものとして failed に見せる。 */
+function shapeInfo(s) {
+  if (!s.info_status) return null;
+  let card = null;
+  try { card = s.info_card ? JSON.parse(s.info_card) : null; } catch { /* 壊れた行は無いものとする */ }
+  return { status: s.info_status, card, error: s.info_error || '' };
 }
 
 /* ── 公開: 現在のイベント ───────────────── */
@@ -383,7 +649,14 @@ async function postRequest(request, env, cors, ctx) {
         `DELETE FROM post_log WHERE created_at < datetime('now', ?)`
       ).bind(`-${RATE_KEEP_MIN} minutes`).run();
       if (isNewSong && !isFree) {
-        await enrichSong(env, song.id, artistForLookup, title, durationMs);
+        // 背景カードは OpenAI の応答待ちが長いので、権利だけ先に取って BPM の取得と並べる。
+        // D1 への書き込みは直列のまま（応答が届いてから保存する）。
+        const info = await startSongInfo(env, {
+          trackId: track.trackId, isFree, title, artist, artistEn, album: clean(track.album, LIMITS.album),
+          genre: clean(track.genre, 60), releaseYear: Number(track.releaseYear) || 0, durationMs,
+        }).catch(() => null);
+        await enrichSong(env, song.id, artistForLookup, title, durationMs, artist);
+        if (info) await saveSongInfo(env, String(track.trackId), await info);
       }
     })());
   }
@@ -763,9 +1036,15 @@ async function adminSongs(env, cors) {
   const ev = await currentEvent(env);
   if (!ev) return json({ event: null, songs: [] }, 200, cors);
 
+  // 背景カードは曲ごとの別表。pending のまま時間が経った行は途中で落ちたものなので failed に見せる
   const songs = await env.DB.prepare(
-    `SELECT * FROM songs WHERE event_code = ? ORDER BY id DESC`
-  ).bind(ev.code).all();
+    `SELECT s.*,
+            CASE WHEN i.status = 'pending' AND i.updated_at < datetime('now', ?)
+                 THEN 'failed' ELSE i.status END AS info_status,
+            i.card AS info_card, i.error AS info_error
+       FROM songs s LEFT JOIN song_info i ON i.track_id = s.track_id
+      WHERE s.event_code = ? ORDER BY s.id DESC`
+  ).bind(`-${SONG_INFO.staleSec} seconds`, ev.code).all();
 
   const voices = await env.DB.prepare(
     `SELECT song_id, from_name, message, created_at FROM requests
@@ -799,6 +1078,9 @@ async function adminSongs(env, cors) {
       bpm: s.bpm,
       songKey: s.song_key || '',
       camelot: s.camelot || '',
+      bpmSrc: s.bpm_src || '',
+      keySrc: s.key_src || '',
+      info: shapeInfo(s),
       votes: s.votes,
       likes: s.likes || 0,
       status: s.status,
@@ -862,21 +1144,90 @@ async function adminToggleEvent(request, env, cors) {
   return json({ ok: true, open: true, code: current.code }, 200, cors);
 }
 
-/** BPM が空の曲をまとめて引き直す。API が落ちていた時の取りこぼし回収用。 */
+/* ── 管理: プレビューから推定した BPM・キー ─────
+   ブースがブラウザの中で解析した値を受け取る。入れるのは空欄のときだけで、
+   外部サービスの値は上書きしない（逆に、あとから外部サービスの値が届けばそちらが勝つ）。
+   鍵なしの口だが、空欄を埋めることしかできないので、ほかの管理 API と同じ扱いにする。 */
+async function adminPatchAnalysis(id, request, env, cors) {
+  const body = await readJson(request) || {};
+  const n = Number(body.bpm);
+  const bpm = Number.isFinite(n) && n >= 40 && n <= 250 ? Math.round(n * 10) / 10 : null;
+  const camelot = /^(1[0-2]|[1-9])[AB]$/.test(String(body.camelot || '')) ? String(body.camelot) : '';
+  const songKey = camelot && /^[A-G][#b]?m?$/.test(String(body.songKey || '')) ? String(body.songKey) : '';
+  if (!bpm && !camelot) {
+    return json({ error: 'bad_request', message: '推定値が読み取れませんでした' }, 400, cors);
+  }
+
+  // SET の右辺はどれも更新前の値を見るので、判定の条件を各列で揃えて書ける
+  const noKey = `(COALESCE(camelot, '') = '' AND COALESCE(song_key, '') = '')`;
+  await env.DB.prepare(
+    `UPDATE songs
+        SET bpm      = CASE WHEN bpm IS NULL AND ?1 IS NOT NULL THEN ?1 ELSE bpm END,
+            bpm_src  = CASE WHEN bpm IS NULL AND ?1 IS NOT NULL THEN 'est' ELSE bpm_src END,
+            song_key = CASE WHEN ${noKey} AND ?2 <> '' THEN ?3 ELSE song_key END,
+            camelot  = CASE WHEN ${noKey} AND ?2 <> '' THEN ?2 ELSE camelot END,
+            key_src  = CASE WHEN ${noKey} AND ?2 <> '' THEN 'est' ELSE key_src END
+      WHERE id = ?4`
+  ).bind(bpm, camelot, songKey, id).run();
+
+  const s = await env.DB.prepare(
+    `SELECT bpm, bpm_src, song_key, camelot, key_src FROM songs WHERE id = ?`
+  ).bind(id).first();
+  if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
+  return json({
+    ok: true, bpm: s.bpm, bpmSrc: s.bpm_src || '',
+    songKey: s.song_key || '', camelot: s.camelot || '', keySrc: s.key_src || '',
+  }, 200, cors);
+}
+
+/* ── 管理: 背景カードを作り直す ───────────────
+   料金が掛かる操作なので、ADMIN_KEY を設定してあるときは鍵を要求する（削除と同じ錠）。
+   応答はリクエストの中で待つ（ブースは「調べています」を出して待つ）。 */
+async function adminRefreshInfo(id, request, env, cors) {
+  if (env.ADMIN_KEY && bearer(request) !== env.ADMIN_KEY) {
+    return json({ error: 'unauthorized', message: '管理キーが必要です' }, 401, cors);
+  }
+  const s = await env.DB.prepare(
+    `SELECT id, track_id, is_free, title, artist, artist_en, album, genre, release_year, duration_ms
+       FROM songs WHERE id = ?`
+  ).bind(id).first();
+  if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
+  const song = songForInfo(s);
+  if (!canDescribe(env, song)) {
+    return json({ error: 'unavailable', message: 'この曲は背景を調べられません（カタログ外の曲か、API キーが未設定です）' }, 400, cors);
+  }
+
+  const pending = await startSongInfo(env, song, { force: true, timeoutMs: SONG_INFO.refreshTimeoutMs });
+  if (!pending) {
+    const row = await env.DB.prepare(`SELECT status FROM song_info WHERE track_id = ?`).bind(song.trackId).first();
+    return row && row.status === 'pending'
+      ? json({ error: 'busy', message: 'いま調べている最中です。少し待ってから開き直してください' }, 409, cors)
+      : json({ error: 'limit', message: '今日調べられる曲数の上限に達しました' }, 429, cors);
+  }
+  const result = await pending;
+  await saveSongInfo(env, song.trackId, result);
+
+  const row = await env.DB.prepare(
+    `SELECT status AS info_status, card AS info_card, error AS info_error FROM song_info WHERE track_id = ?`
+  ).bind(song.trackId).first();
+  return json({ ok: !result.error, info: row ? shapeInfo(row) : null, error: result.error || '' }, 200, cors);
+}
+
+/** BPM が空の曲（推定値しか無い曲も）をまとめて引き直す。API が落ちていた時の取りこぼし回収用。 */
 async function adminEnrich(env, cors, ctx) {
   const ev = await currentEvent(env);
   if (!ev) return json({ ok: true, queued: 0 }, 200, cors);
 
   const { results } = await env.DB.prepare(
     `SELECT id, artist, artist_en, title, duration_ms FROM songs
-      WHERE event_code = ? AND is_free = 0 AND bpm IS NULL LIMIT 30`
+      WHERE event_code = ? AND is_free = 0 AND (bpm IS NULL OR bpm_src = 'est') LIMIT 30`
   ).bind(ev.code).all();
 
   // 同時に大量の UPDATE を投げると D1 が詰まるので直列に流す
   if (ctx) {
     ctx.waitUntil((async () => {
       for (const r of results) {
-        await enrichSong(env, r.id, r.artist_en || r.artist, r.title, r.duration_ms);
+        await enrichSong(env, r.id, r.artist_en || r.artist, r.title, r.duration_ms, r.artist);
       }
     })());
   }
@@ -940,6 +1291,12 @@ export default {
 
       const m = path.match(/^\/admin\/songs\/(\d+)$/);
       if (m && method === 'PATCH') return await adminPatchSong(Number(m[1]), request, env, cors);
+
+      const an = path.match(/^\/admin\/songs\/(\d+)\/analysis$/);
+      if (an && method === 'PATCH') return await adminPatchAnalysis(Number(an[1]), request, env, cors);
+
+      const info = path.match(/^\/admin\/songs\/(\d+)\/info$/);
+      if (info && method === 'POST') return await adminRefreshInfo(Number(info[1]), request, env, cors);
 
       return json({ error: 'not_found' }, 404, cors);
     } catch (e) {

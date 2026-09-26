@@ -142,7 +142,45 @@ def smoke_openai(url, api_key, model):
         'max_completion_tokens': 128,
         'stream': True,
     }, stream=True)
-    return 'JSON/非推論、画像/高温/top_p、推論/stream'
+    smoke_openai_web_search(api_key, model)
+    return 'JSON/非推論、画像/高温/top_p、推論/stream、Web検索強制/推論/JSONスキーマ'
+
+
+OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
+
+
+def smoke_openai_web_search(api_key, model):
+    """DJ ブースの曲の背景カード（workers/dj-request の requestSongInfo）：Responses API で
+    Web 検索を強制し、推論 high、strict な JSON スキーマで答えさせる。検索が実行されたことまで確かめる。"""
+    body = post_json(OPENAI_RESPONSES_URL, api_key, {
+        'model': model,
+        'reasoning': {'effort': 'high'},
+        'tools': [{'type': 'web_search', 'user_location': {'type': 'approximate', 'country': 'JP', 'timezone': 'Asia/Tokyo'}}],
+        'tool_choice': 'required',
+        'include': ['web_search_call.action.sources'],
+        'input': 'In what year was "Billie Jean" by Michael Jackson first released?',
+        'text': {'format': {'type': 'json_schema', 'name': 'smoke', 'strict': True, 'schema': {
+            'type': 'object', 'additionalProperties': False, 'required': ['year'],
+            'properties': {'year': {'type': ['integer', 'null']}},
+        }}},
+        'max_output_tokens': 2000,
+        'store': False,
+    })
+    output = body.get('output') if isinstance(body, dict) else None
+    if not isinstance(output, list):
+        raise RuntimeError(f'Responses API の output がありません: {str(body)[:500]}')
+    if not any(isinstance(o, dict) and o.get('type') == 'web_search_call' for o in output):
+        raise RuntimeError('Web 検索が実行されませんでした（tool_choice: required が効いていない）')
+    text = next((
+        c.get('text', '') for o in output if isinstance(o, dict) and o.get('type') == 'message'
+        for c in (o.get('content') or []) if isinstance(c, dict) and c.get('type') == 'output_text'
+    ), '')
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f'JSON本文ではありません: {text[:500]}') from e
+    if not isinstance(parsed, dict) or 'year' not in parsed:
+        raise RuntimeError(f'期待した応答ではありません: {text[:500]}')
 
 
 def smoke_deepseek(url, api_key, model):
@@ -373,11 +411,12 @@ def update_registry():
             '## マージ後の反映',
             '',
             'GitHub Actionsの生成処理はmainへの反映後から新モデルを使います。',
-            'Cloudflare Workerは次の2件を手動デプロイしてください（正本のJSONはデプロイ時に取り込まれる）。',
+            'Cloudflare Workerは次の3件を手動デプロイしてください（正本のJSONはデプロイ時に取り込まれる）。',
             '',
             '```bash',
             'npx wrangler deploy --config workers/magi2/wrangler.toml',
             'npx wrangler deploy --config workers/wrangler/wrangler.toml',
+            'npx wrangler deploy --config workers/dj-request/wrangler.toml',
             '```',
         ])
         REGISTRY_PATH.write_text(
