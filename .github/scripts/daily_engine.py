@@ -38,6 +38,9 @@ JST = timezone(timedelta(hours=9))
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
 PERSON_ID = "https://tk.st/#author"
+# RSS の更新を知らせる WebSub の hub（Google が運営）。フィードに rel="hub" で載せ、
+# 公開後に websub-ping.py がここへ publish を送ると、購読している Google が取りに来る。
+WEBSUB_HUB = "https://pubsubhubbub.appspot.com/"
 
 # 共有 SVG アイコン
 ICON_EXTERNAL_SVG = '<svg class="external-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>'
@@ -2129,6 +2132,7 @@ def generate_rss_xml(config, articles_history):
     <ttl>720</ttl>
     <generator>{config['media_name']} generator</generator>
     <atom:link href="{base_url}rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="{WEBSUB_HUB}" rel="hub"/>
 {items_joined}
   </channel>
 </rss>
@@ -2140,12 +2144,22 @@ def trigger_daily_ogp_generation(config, date_key):
     if not os.path.exists(ogp_script):
         raise FileNotFoundError(f"OGP 生成スクリプトが見つかりません: {ogp_script}")
     print(f" -> 日刊 OGP 画像生成中 (Lossless WebP): {date_key}...")
+    import subprocess
     try:
-        import subprocess
-        res = subprocess.run(['node', ogp_script, config['ogp_target'], str(date_key)], cwd=REPO_ROOT, capture_output=True, text=True, check=True)
-        print(f" -> {res.stdout.strip()}")
-    except Exception as e:
+        # やり直しは generate-daily-ogp.js 側で行う。ここの timeout は Chrome が固まったときの保険
+        res = subprocess.run(['node', ogp_script, config['ogp_target'], str(date_key)], cwd=REPO_ROOT, capture_output=True, text=True, check=True, timeout=300)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        # 出力を捨てると失敗の原因が CI のログに残らない（2026-09-25 号の欠番で理由が追えなかった）
+        for label, out in (('stdout', e.stdout), ('stderr', e.stderr)):
+            if isinstance(out, bytes):
+                out = out.decode('utf-8', 'replace')
+            if out and out.strip():
+                print(f"[OGP {label}]\n{out.rstrip()}", file=sys.stderr)
         raise RuntimeError(f"OGP 画像生成に失敗しました: {e}") from e
+    if res.stderr.strip():
+        # やり直して成功した場合も、途中の失敗は記録しておく
+        print(f"[OGP stderr]\n{res.stderr.rstrip()}", file=sys.stderr)
+    print(f" -> {res.stdout.strip()}")
 
 
 def format_issue_date(date_key):

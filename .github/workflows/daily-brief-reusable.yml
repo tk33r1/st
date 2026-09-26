@@ -64,7 +64,8 @@ jobs:
             ;;
         esac
 
-    - name: Commit and push changes
+    # push はサイトマップと一緒に後ろでまとめて行う。ここではコミットと取り込みだけ。
+    - name: Commit generated issue
       env:
         MEDIA: ${{ inputs.media }}
       run: |
@@ -80,9 +81,39 @@ jobs:
             commit_message="Auto-generate nitori daily"
             ;;
         esac
-        git commit -m "$commit_message" || exit 0
+        git commit -m "$commit_message" || true
         git pull --rebase -X ours origin main || (git rebase --abort && git pull -s recursive -X ours origin main)
-        git push origin HEAD:main
+
+    # 新しい号をサイトマップに載せ、号と同じ push で公開する。
+    # GITHUB_TOKEN の push は sitemap.yml を起動しないうえ、sitemap.yml のコミットは
+    # [skip ci] で Pages がビルドしないため、任せると号が載るのが手動の push 2回あとになる。
+    # 手順は sitemap.yml と同じ（号のコミット後に走らせるのは、lastmod を git の日時から引くため）。
+    - name: Sync JSON-LD dateModified with commit dates
+      run: python .github/scripts/update-modified.py
+
+    - name: Generate Sitemap
+      uses: cicirello/generate-sitemap@v1
+      with:
+        base-url-path: https://tk.st/
+
+    # 先頭のコミットに [skip ci] を付けない（付けると Pages がこの push をビルドしない）
+    - name: Commit sitemap and push
+      run: |
+        git add sitemap.xml robots.txt
+        git add -u -- '*.html'   # update-modified.py が書き換えた HTML だけ（生成物の他の差分は拾わない）
+        git commit -m "Update sitemap for new daily issue" || true
+        if [ -z "$(git log origin/main..HEAD --oneline)" ]; then
+          echo "push するコミットがない"
+          exit 0
+        fi
+        bash .github/scripts/push-with-retry.sh
+
+    # RSS の更新を WebSub の hub へ知らせる（Google に新しい号を取りに来てもらう）。
+    # 公開反映を待つので、後ろの X ポストはここで待たずに済む。失敗しても止めない。
+    - name: Notify WebSub hub
+      env:
+        MEDIA: ${{ inputs.media }}
+      run: python .github/scripts/websub-ping.py --media "$MEDIA"
 
     # 号ページの公開反映を待ってから公式 X へポストし、投稿 ID を号の JSON に記録する
     - name: Post to X

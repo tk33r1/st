@@ -28,6 +28,10 @@ function findChrome() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// A crashed or wedged Chrome would otherwise leave a CDP call pending forever,
+// and the CI job would sit there until the 6h runner timeout.
+const CALL_TIMEOUT_MS = 30000;
+
 /** Starts headless Chrome and resolves once its CDP endpoint answers. */
 async function launch(port = 9222) {
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ogp-chrome-'));
@@ -40,29 +44,44 @@ async function launch(port = 9222) {
     '--disable-gpu',
     '--no-sandbox',
   ], { stdio: 'ignore', detached: false });
+  const exited = new Promise((res) => proc.once('exit', res));
+  // unref: once Chrome is gone, the fallback timer must not keep node alive.
+  const grace = (ms) => new Promise((r) => setTimeout(r, ms).unref());
+
+  // Resolves once Chrome has actually exited, so a retry can reuse the same port
+  // without talking to the old instance. Callers that don't await it still work.
+  const close = async () => {
+    if (proc.exitCode === null && proc.signalCode === null) {
+      try { proc.kill(); } catch {}
+      const done = await Promise.race([exited.then(() => true), grace(5000).then(() => false)]);
+      if (!done) {
+        try { proc.kill('SIGKILL'); } catch {}
+        await Promise.race([exited, grace(2000)]);
+      }
+    }
+    try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch {}
+  };
 
   for (let i = 0; i < 60; i++) {
+    if (proc.exitCode !== null || proc.signalCode !== null) break;
     try {
       await fetch('http://127.0.0.1:' + port + '/json/version');
-      return {
-        proc,
-        close() {
-          try { proc.kill(); } catch {}
-          try { fs.rmSync(userDataDir, { recursive: true, force: true }); } catch {}
-        },
-      };
+      return { proc, close };
     } catch {
       await sleep(250);
     }
   }
-  try { proc.kill(); } catch {}
+  await close();
   throw new Error('Chrome did not open a CDP port within 15s');
 }
 
 async function connect(port = 9222) {
   const ver = await (await fetch('http://127.0.0.1:' + port + '/json/version')).json();
   const ws = new WebSocket(ver.webSocketDebuggerUrl);
-  await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
+  await new Promise((res, rej) => {
+    ws.onopen = res;
+    ws.onerror = () => rej(new Error('CDP WebSocket failed to open'));
+  });
 
   let id = 0;
   const pending = new Map();
@@ -71,19 +90,32 @@ async function connect(port = 9222) {
   ws.onmessage = (e) => {
     const msg = JSON.parse(e.data);
     if (msg.id && pending.has(msg.id)) {
-      const { res, rej } = pending.get(msg.id);
+      const { method, res, rej } = pending.get(msg.id);
       pending.delete(msg.id);
-      msg.error ? rej(new Error(JSON.stringify(msg.error))) : res(msg.result);
+      msg.error ? rej(new Error(`CDP ${method}: ${JSON.stringify(msg.error)}`)) : res(msg.result);
     } else if (msg.method) {
       handlers.forEach((h) => h(msg));
     }
+  };
+  // If Chrome dies mid-run, fail the outstanding calls instead of hanging.
+  ws.onclose = () => {
+    for (const { rej } of pending.values()) rej(new Error('CDP connection closed'));
+    pending.clear();
   };
 
   const send = (method, params = {}, sessionId) =>
     new Promise((res, rej) => {
       const m = { id: ++id, method, params };
       if (sessionId) m.sessionId = sessionId;
-      pending.set(m.id, { res, rej });
+      const timer = setTimeout(() => {
+        pending.delete(m.id);
+        rej(new Error(`CDP ${method} timed out after ${CALL_TIMEOUT_MS}ms`));
+      }, CALL_TIMEOUT_MS);
+      pending.set(m.id, {
+        method,
+        res: (v) => { clearTimeout(timer); res(v); },
+        rej: (e) => { clearTimeout(timer); rej(e); },
+      });
       ws.send(JSON.stringify(m));
     });
 
@@ -98,9 +130,16 @@ async function newPage(cdp, url) {
   await s('Page.enable');
   await s('Runtime.enable');
   if (url) {
-    const loaded = new Promise((res) => {
-      cdp.on((m) => { if (m.sessionId === sessionId && m.method === 'Page.loadEventFired') res(); });
+    const loaded = new Promise((res, rej) => {
+      const timer = setTimeout(
+        () => rej(new Error(`Page load timed out after ${CALL_TIMEOUT_MS}ms: ${url}`)),
+        CALL_TIMEOUT_MS
+      );
+      cdp.on((m) => {
+        if (m.sessionId === sessionId && m.method === 'Page.loadEventFired') { clearTimeout(timer); res(); }
+      });
     });
+    loaded.catch(() => {}); // navigate may throw first; don't leave an unhandled rejection behind
     await s('Page.navigate', { url });
     await loaded;
   }

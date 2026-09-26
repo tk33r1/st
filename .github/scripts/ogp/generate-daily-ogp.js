@@ -319,6 +319,39 @@ function buildDailyHtml(brandCfg, issue) {
 </html>`;
 }
 
+async function captureCard(port, htmlPath, outPngPath) {
+  const chrome = await launch(port);
+  try {
+    const cdp = await connect(port);
+    try {
+      const { s } = await newPage(cdp, 'file:///' + htmlPath.replace(/\\/g, '/'));
+      await s('Emulation.setDeviceMetricsOverride', {
+        width: WIDTH, height: HEIGHT, deviceScaleFactor: SCALE, mobile: false,
+      });
+
+      await evalJs(s, `(async () => await Promise.race([
+        document.fonts.ready.then(() => 'ready'),
+        new Promise(r => setTimeout(() => r('TIMEOUT'), 6000)),
+      ]))()`);
+      await sleep(800);
+
+      const shot = await s('Page.captureScreenshot', {
+        format: 'png',
+        clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 },
+        captureBeyondViewport: true,
+      });
+      if (!shot || !shot.data) throw new Error('Page.captureScreenshot returned no data');
+
+      fs.writeFileSync(outPngPath, Buffer.from(shot.data, 'base64'));
+    } finally {
+      cdp.ws.close();
+    }
+  } finally {
+    // 終了を待つ（やり直しで同じポートの古い Chrome につながらないように）
+    await chrome.close();
+  }
+}
+
 async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
   const brandKey = targetBrand;
   const brandCfg = BRAND_CONFIGS[brandKey];
@@ -351,30 +384,21 @@ async function generateDailyOgp(targetBrand = 'retail-tech', targetDate = '') {
   const htmlPath = path.join(tmp, 'card.html');
   fs.writeFileSync(htmlPath, htmlContent, 'utf8');
 
-  const chrome = await launch(brandCfg.port);
+  // headless Chrome はまれに撮影や CDP の途中で失敗する（2026-09-25 号がこれで欠番になった）。
+  // AI 要約まで済んだ号を1回の失敗で捨てないよう、Chrome を起動し直して数回やり直す
+  const MAX_ATTEMPTS = 3;
   try {
-    const cdp = await connect(brandCfg.port);
-    const { s } = await newPage(cdp, 'file:///' + htmlPath.replace(/\\/g, '/'));
-    await s('Emulation.setDeviceMetricsOverride', {
-      width: WIDTH, height: HEIGHT, deviceScaleFactor: SCALE, mobile: false,
-    });
-
-    await evalJs(s, `(async () => await Promise.race([
-      document.fonts.ready.then(() => 'ready'),
-      new Promise(r => setTimeout(() => r('TIMEOUT'), 6000)),
-    ]))()`);
-    await sleep(800);
-
-    const shot = await s('Page.captureScreenshot', {
-      format: 'png',
-      clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 },
-      captureBeyondViewport: true,
-    });
-
-    fs.writeFileSync(outPngPath, Buffer.from(shot.data, 'base64'));
-    cdp.ws.close();
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await captureCard(brandCfg.port, htmlPath, outPngPath);
+        break;
+      } catch (e) {
+        console.error(`[attempt ${attempt}/${MAX_ATTEMPTS}] OGP capture failed: ${e && e.stack || e}`);
+        if (attempt >= MAX_ATTEMPTS) throw e;
+        await sleep(2000 * attempt);
+      }
+    }
   } finally {
-    chrome.close();
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 
