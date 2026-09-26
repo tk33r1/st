@@ -2290,8 +2290,16 @@
       L.push('回答ルール: Apple Music（日本）で配信されている実在の曲を1〜3曲だけ挙げ、必ず「アーティスト名 - 曲名」のように鉤括弧で囲む（他の括弧は使わない）。'
         + 'アーティスト名と曲名は Apple Music での表記に合わせる（挙げた曲は Apple Music で照合される）。'
         + 'すでにかけた曲・受付済みの曲は挙げない。挙げた理由をひとことだけ添える。');
-      L.push('--- ここからユーザーの相談 ---');
+      L.push(CONTEXT_END);
       return L.join('\n');
+    }
+
+    /* 状況説明の終わりの目印。別の回の相談を開き直したとき、古い状況をここまで切り落とす */
+    const CONTEXT_END = '--- ここからユーザーの相談 ---';
+    function stripContext(m) {
+      const s = String(m.content || '');
+      const i = m.role === 'user' ? s.indexOf(CONTEXT_END) : -1;
+      return i < 0 ? m : { ...m, content: s.slice(i + CONTEXT_END.length).replace(/^\n/, '') };
     }
 
     /* SSE を event / data ブロックに切り分けて handlers に流す */
@@ -2498,37 +2506,22 @@
       wrap.innerHTML = html;
     }
 
-    // 照合結果を返す（曲が挙がっていなければ空の配列）。履歴に残して、開き直すときに引き直さない
-    async function checkPicks(turn, reply) {
-      const songs = pickSongs(reply);
-      if (!songs.length) return [];
+    /* 回答の下に照合の枠を出す。checked は照合結果か、それを返す Promise
+       （届くまでは「確かめています」を出す）。曲が挙がっていなければ何も出さない */
+    async function showPicks(turn, checked) {
+      if (Array.isArray(checked) && !checked.length) return;
       const wrap = document.createElement('div');
       wrap.className = 'pickwrap';
-      wrap.innerHTML = loadingHTML('Apple Music で曲を確かめています…');
       turn.appendChild(wrap);
-      chatScroll();
-      let checked;
-      try {
-        checked = await verifySongs(songs);
-      } catch {
-        checked = songs.map((label) => ({ label, state: 'unknown' }));
+      if (!Array.isArray(checked)) {
+        wrap.innerHTML = loadingHTML('Apple Music で曲を確かめています…');
+        chatScroll();
+        checked = await checked;
+        if (!checked.length) { wrap.remove(); return; }
       }
       renderPicks(wrap, checked);
       // 照合中に「新しい相談」で消された回答なら、画面を動かさない
       if (turn.isConnected) chatScroll();
-      return checked;
-    }
-
-    // 照合の枠を足す。照合結果が届く前ならその場で引く
-    function showPicks(turn, reply, checked) {
-      if (!Array.isArray(checked)) return checkPicks(turn, reply);
-      if (checked.length) {
-        const wrap = document.createElement('div');
-        wrap.className = 'pickwrap';
-        turn.appendChild(wrap);
-        renderPicks(wrap, checked);
-      }
-      return Promise.resolve(checked);
     }
 
     /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
@@ -2592,7 +2585,6 @@
       }
       // 失敗したターンは履歴から外す（次の送信で壊れた文脈を引きずらない）
       chatHistory.pop();
-      if (!chatHistory.length) contextSent = false;
       turn.remove();
       $('#chatErr').textContent = failure || '返事を受け取れませんでした。もう一度お試しください。';
       $('#chatErr').hidden = false;
@@ -2619,19 +2611,25 @@
 
       try {
         // 文脈は初回だけ。以降は履歴に残るので毎回は送らない
-        const outbound = contextSent ? text : (await djContext()) + '\n' + text;
+        const withContext = !contextSent;
+        const outbound = withContext ? (await djContext()) + '\n' + text : text;
         contextSent = true;
         const reply = await askMagi(turn, outbound);
         if (reply) {
-          const c = conv || (conv = newConsult());
-          const entry = { q: text, personas: readPersonas(turn), reply, picks: null };
+          const c = conv || (conv = newConsult(text));
+          // 曲が挙がっていない回答は照合するものが無いので、はじめから済ませておく
+          const entry = { id: uid(), q: text, personas: readPersonas(turn), reply, picks: pickSongs(reply).length ? null : [] };
           c.turns = c.turns.concat(entry).slice(-TURN_MAX);
+          c.count = (c.count || 0) + 1;
           c.messages = chatHistory.slice(-CHAT_MAX);
           c.code = eventCode;
           c.title = eventTitle;
-          storeConsult(c, true);
+          storeConsult(c);
           // 照合は待たずに入力を戻す。候補はこの回答の枠に出るので、次の相談と混ざらない
-          checkPicks(turn, reply).then((checked) => { entry.picks = checked; storeConsult(c, false); });
+          showPicks(turn, verifyEntry(c.id, entry));
+        } else if (withContext) {
+          // 文脈を載せた発言が届かなかったので、次の送信でもう一度載せる
+          contextSent = false;
         }
       } finally {
         chatBusy = false;
@@ -2643,44 +2641,84 @@
 
     /* ── 相談の履歴 ──────────────────────────
        この端末の localStorage にだけ置く（サーバには送らない）。1件の形は
-       { id, code, title, at, messages, turns: [{ q, personas, reply, picks }] }。
+       { id, first, count, code, title, at, messages, turns: [{ id, q, personas, reply, picks }] }。
        messages は Worker へ送る形そのままで、最初の発言に DJ の文脈が付いている。開き直した
-       会話の続きを話せるよう持っておく。turns は画面を組み直すためのもので、picks は照合結果
-       （届く前に閉じられたら null。開き直したときに引き直す） */
+       会話の続きを話せるよう持っておく。turns は画面を組み直すためのもので、古い往復は捨てるので、
+       一覧の見出し（first）と往復数（count）は別に持つ。picks は照合結果（届く前に閉じられたら null、
+       通信の都合で確かめられなかった曲を含むこともある。どちらも開き直したときに引き直す） */
     const CONSULT_KEY = 'tkdj.consults';
     const CONSULT_MAX = 20;
     const TURN_MAX = 30;
+    // 履歴全体の上限（JSON の文字数）。localStorage は tk.st 全体で約5MB を分け合い、投稿を直すための
+    // 鍵（tkdj.tokens）やいいねもここに入る。履歴で埋めると、それらの保存が黙って失敗する
+    const CONSULT_CHARS = 400000;
     let eventCode = '', eventTitle = '';
     let conv = null;          // 画面に出ている会話。まだ1往復も終わっていなければ null
     let histOpen = false;
+    let savedCount = 0;       // 保存済みの件数。ボタンの出し入れのたびに履歴を読み直さないため
 
-    const newConsult = () => ({
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-      code: '', title: '', at: '', messages: [], turns: [],
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const newConsult = (first) => ({
+      id: uid(), first, count: 0, code: '', title: '', at: '', messages: [], turns: [],
     });
     const savedConsults = () => storage.getJSON(CONSULT_KEY, [])
       .filter((c) => c && typeof c.id === 'string' && Array.isArray(c.turns) && Array.isArray(c.messages));
 
-    /* touch = 新しい往復が増えた。更新日時を今にして先頭へ動かす。
-       touch でないとき（照合結果の書き足し）は、消された会話なら生き返らせない */
-    function storeConsult(c, touch) {
-      const list = savedConsults();
-      const i = list.findIndex((x) => x.id === c.id);
-      if (touch) {
-        if (i >= 0) list.splice(i, 1);
-        c.at = new Date().toISOString();
-        list.unshift(c);
-      } else if (i >= 0) {
-        list[i] = c;
-      } else {
-        return;
-      }
-      // 容量が足りなければ古い会話から捨てる
+    // 件数と文字数の上限に収めて書く。入り切らなければ古い会話から捨てる（最新の1件は残す）
+    function writeConsults(list) {
       const keep = list.slice(0, CONSULT_MAX);
+      const sizes = keep.map((c) => JSON.stringify(c).length);
+      let total = sizes.reduce((a, b) => a + b, 0);
+      while (keep.length > 1 && total > CONSULT_CHARS) { keep.pop(); total -= sizes.pop(); }
       while (keep.length && !storage.setJSON(CONSULT_KEY, keep)) keep.pop();
+      if (!keep.length) storage.remove(CONSULT_KEY);
+      savedCount = keep.length;
       syncChatBar();
-      if (histOpen) renderHistory();
+      if (histOpen) renderHistory(keep);
     }
+
+    // 新しい往復が増えた会話を、更新日時を今にして先頭へ動かす
+    function storeConsult(c) {
+      const list = savedConsults().filter((x) => x.id !== c.id);
+      c.at = new Date().toISOString();
+      writeConsults([c, ...list]);
+    }
+
+    /* 照合結果を書き足す。照合の途中で同じ会話が開き直されたり続きが保存されたりしているので、
+       手元の会話で丸ごと上書きせず、最新の保存データの該当する往復にだけ入れる。
+       消された会話なら何もしない（生き返らせない） */
+    function savePicks(convId, entryId, checked) {
+      const list = savedConsults();
+      const c = list.find((x) => x.id === convId);
+      const e = c && c.turns.find((t) => t.id === entryId);
+      if (e) { e.picks = checked; writeConsults(list); }
+      // 開き直した同じ会話にも入れておく（続きを保存したときに照合結果が落ちないように）
+      const shown = conv && conv.id === convId && conv.turns.find((t) => t.id === entryId);
+      if (shown) shown.picks = checked;
+    }
+
+    /* 往復1つぶんの曲を照合する。同じ往復の照合が走っていればそれを待つ
+       （照合中に会話を開き直したときに、iTunes を二重に引かない） */
+    const picking = new Map();   // 往復の id → 照合中の Promise
+    function verifyEntry(convId, entry) {
+      const songs = pickSongs(entry.reply);
+      if (!songs.length) return [];
+      if (!picking.has(entry.id)) {
+        picking.set(entry.id, verifySongs(songs)
+          .catch(() => songs.map((label) => ({ label, state: 'unknown' })))
+          .then((checked) => {
+            picking.delete(entry.id);
+            entry.picks = checked;
+            savePicks(convId, entry.id, checked);
+            return checked;
+          }));
+      }
+      return picking.get(entry.id);
+    }
+
+    // 開き直したときに照合し直すか。届く前に閉じた往復と、通信の都合で確かめられなかった曲を含む往復
+    const needsVerify = (entry) =>
+      !Array.isArray(entry.picks) || entry.picks.some((p) => !p || p.state === 'unknown');
 
     // 人格ごとの [初回, 討議後]。出さなかった回は null
     const readPersonas = (turn) => Object.fromEntries([...turn.querySelectorAll('.pcard')].map((card) =>
@@ -2689,7 +2727,8 @@
         return slot.hidden ? null : slot.querySelector('.px').textContent;
       })]));
 
-    function restoreTurn(c, entry) {
+    // 保存した往復を画面に組み直す（照合の枠は呼び出し側で足す）
+    function restoreTurn(entry) {
       const turn = chatTurn(entry.q);
       turn.querySelectorAll('.pcard').forEach((card) => {
         const got = (entry.personas && entry.personas[card.dataset.cn]) || [];
@@ -2701,11 +2740,7 @@
       });
       turn.querySelector('.ab').textContent = entry.reply;
       finishTurn(turn);
-      if (!Array.isArray(entry.picks)) {
-        showPicks(turn, entry.reply, null).then((checked) => { entry.picks = checked; storeConsult(c, false); });
-      } else {
-        showPicks(turn, entry.reply, entry.picks);
-      }
+      return turn;
     }
 
     // 画面の会話を片付ける（保存済みの履歴には触らない）
@@ -2719,7 +2754,7 @@
 
     function syncChatBar() {
       const hasLog = $('#chatLog').children.length > 0;
-      const hasSaved = savedConsults().length > 0;
+      const hasSaved = savedCount > 0;
       $('#chatNew').hidden = !hasLog;
       $('#chatHistBtn').hidden = !hasSaved && !histOpen;
       $('#chatBar').hidden = consultLocked || (!hasLog && !hasSaved && !histOpen);
@@ -2743,11 +2778,10 @@
       syncChatBar();
     }
 
-    function renderHistory() {
-      const list = savedConsults();
+    function renderHistory(list = savedConsults()) {
       $('#histList').innerHTML = list.length ? list.map((c) => {
-        const first = c.turns[0] ? String(c.turns[0].q) : '';
-        const meta = [ymd(c.at) + ' ' + hhmm(c.at), c.title, c.turns.length + ' 往復']
+        const first = String(c.first || (c.turns[0] && c.turns[0].q) || '');
+        const meta = [ymd(c.at) + ' ' + hhmm(c.at), c.title, (c.count || c.turns.length) + ' 往復']
           .filter((s) => String(s).trim()).join(' ・ ');
         return '<div class="histitem' + (conv && conv.id === c.id ? ' on' : '') + '">' +
           '<button type="button" class="histopen" data-id="' + esc(c.id) + '">' +
@@ -2762,10 +2796,19 @@
       if (!c || chatBusy) return;
       clearChat();
       conv = c;
-      chatHistory = c.messages.slice(-CHAT_MAX);
-      // 別の回の相談を開いたら、いまの回の状況を次の発言に付け直す
-      contextSent = !!eventCode && c.code === eventCode;
-      c.turns.forEach((entry) => restoreTurn(c, entry));
+      // 別の回の相談を開いたら、古い回の状況を切り落とし、いまの回の状況を次の発言に付け直す
+      // （残すと「かけた曲は挙げない」が前の回の曲にまでかかる）
+      const sameEvent = !!eventCode && c.code === eventCode;
+      chatHistory = (sameEvent ? c.messages : c.messages.map(stripContext)).slice(-CHAT_MAX);
+      contextSent = sameEvent;
+      // 照合し直す往復は1つずつ引く。iTunes は IP ごとに毎分およそ20回までで、検索タブと枠を分け合う
+      let queue = Promise.resolve();
+      for (const entry of c.turns) {
+        const turn = restoreTurn(entry);
+        if (!needsVerify(entry)) { showPicks(turn, entry.picks); continue; }
+        queue = queue.then(() => verifyEntry(c.id, entry));
+        showPicks(turn, queue);
+      }
       setHistOpen(false);
       chatScroll(true);
     }
@@ -2788,16 +2831,15 @@
     $('#histList').addEventListener('click', (e) => {
       const del = e.target.closest('.histdel');
       if (del) {
-        storage.setJSON(CONSULT_KEY, savedConsults().filter((c) => c.id !== del.dataset.del));
         // 画面に出ている会話を消したら、画面からも下ろす
         if (conv && conv.id === del.dataset.del) clearChat();
-        renderHistory();
-        syncChatBar();
+        writeConsults(savedConsults().filter((c) => c.id !== del.dataset.del));
         return;
       }
       const open = e.target.closest('.histopen');
       if (open) openConsult(open.dataset.id);
     });
+    savedCount = savedConsults().length;
     syncChatBar();
 
     /* 入力欄：内容に合わせて伸ばし、2文字以上で送信可に */

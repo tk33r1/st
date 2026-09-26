@@ -21,7 +21,7 @@ export const DEFAULTS = {
   temperature: 1.0,
   top_p: 1.0,
   history_max_messages: 12, // サーバ側の防御的 trim
-  daily_limit: 24,  // IP×日次の上限（メッセージ数）
+  daily_limit: 60,  // IP×日次の上限（メッセージ数）
   // 画像付きは前処理（デコード・タイル化）のぶん遅くなるので人格側の猶予を広げる
   timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000 },
   // マルチモーダル入力（画像）の受け入れ条件。data: URL のみ許可する

@@ -706,7 +706,7 @@ function showInfoPanel() {
     '<ul>'
     + '<li>A multi-agent system with 3 debating personas modeled on <strong>Shinya Takeda\'s personality</strong>.</li>'
     + '<li>This is a <strong>parody &amp; experimental system</strong> inspired by the MAGI system from <strong>Neon Genesis Evangelion</strong>. It is not intended for practical tasks like coding.</li>'
-    + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>24 daily requests</strong>, and <strong>12 rounds</strong> per session.</li>'
+    + '<li>Strict limits: max <strong>1,000 characters</strong> per input, limited output tokens, <strong>60 daily requests</strong>, and <strong>12 rounds</strong> per session.</li>'
     + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
