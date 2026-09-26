@@ -1215,14 +1215,6 @@
       box-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
     }
 
-    /*
-     * 400% に達してから ∞% に振り切れるまでの 3 秒。暴走中と同じ明滅を速めに回して、
-     * 次に何か起きると身構えさせる。keyframes は暴走モードの節で定義している。
-     */
-    .sync-rate-text.critical {
-      animation: berserk-blink 0.5s steps(1, end) infinite;
-    }
-
     /* ===== 暴走モード =====
      * フッターが見えて SYNC RATE が 400% から ∞% に振り切れると突入する。以降は上へ戻っても ∞% のまま、
      * 配色は紫から赤へ振り切れて地と文字が反転する。最上部まで戻ると活動停止して
@@ -3439,7 +3431,6 @@
        * 中に何を足しても自動で拾える。詳細度は打ち消す側と同じ (0,2,1) で、
        * 後に置いてあるぶんこちらが勝つ。
        */
-      .sync-rate-text.critical,
       body.berserk .sync-rate-text,
       body.berserk .berserk-fx,
       body.berserk .berserk-fx::after,
@@ -4680,20 +4671,27 @@
 
     /*
      * SYNC RATE。フッターの上端が画面の下端に届くまでをスクロール量で 0〜100% に割り当てる。
-     * フッターが見えている間は計器が勝手に上がり、5 秒で 400% に届く。400% で 3 秒明滅して
+     * フッターが見えている間は計器が勝手に上がり、3 秒で 400% に届く。400% で 3 秒明滅して
      * から ∞% になって暴走モードに入る。いきなり反転させると驚かせるだけなので、
      * 何か起きそうだと先に見せる猶予を置いている。
      * ∞% の前にフッターより上へ戻ると、上がったときと同じ速さで今のスクロール位置の値まで下がる。
      */
     const SYNC_BASE = 100;
     const SYNC_MAX = 400;
-    const SYNC_SPEED = (SYNC_MAX - SYNC_BASE) / 5000; // % / ms
+    const SYNC_SPEED = (SYNC_MAX - SYNC_BASE) / 3000; // % / ms
     const SYNC_HOLD_MS = 3000;
+    /*
+     * 400% での明滅は、1 周期を 600ms から 80ms まで縮めていく。周期を途中で変えると
+     * CSS のアニメーションは頭から回り直してちらつくので、位相を JS で積んで opacity を直に切り替える。
+     */
+    const SYNC_BLINK_FROM = 600;
+    const SYNC_BLINK_TO = 80;
     let syncRate = 0;
     let syncScrollRate = 0; // 今のスクロール位置が指す値。updateScrollUi が更新する
     let syncInZone = false; // フッターが見えているか
     let syncElevated = false; // スクロールを離れて勝手に上がった分が残っているか
     let syncHeldMs = 0; // 400% で明滅している時間
+    let syncBlinkPhase = 0; // 明滅の周回数。小数部が 1 周期のどこにいるか
     let syncLastAt = 0;
     let syncFrame = 0;
 
@@ -4704,6 +4702,7 @@
       syncRate = 0;
       syncElevated = false;
       syncHeldMs = 0;
+      syncBlinkPhase = 0;
       syncLastAt = 0;
     };
 
@@ -5052,9 +5051,13 @@
             enterBerserk();
             return;
           }
+          // 周期は経過に対して指数で縮める。直線だと終盤の数コマで急に詰まって見える
+          const progress = syncHeldMs / SYNC_HOLD_MS;
+          syncBlinkPhase += dt / (SYNC_BLINK_FROM * (SYNC_BLINK_TO / SYNC_BLINK_FROM) ** progress);
         }
       } else {
         syncHeldMs = 0;
+        syncBlinkPhase = 0;
         // 勝手に上がった分だけ時間をかけて下げる。ふだんの上スクロールはそのまま追従させる
         if (syncElevated) syncRate -= SYNC_SPEED * dt;
         if (!syncElevated || syncRate <= syncScrollRate) {
@@ -5076,7 +5079,13 @@
       const isRunaway = berserk || syncRate > SYNC_BASE;
       syncRateText.textContent = `SYNC RATE: ${berserk ? '∞' : syncRate.toFixed(2)}%`;
       syncRateText.classList.toggle('runaway', isRunaway);
-      syncRateText.classList.toggle('critical', !berserk && syncInZone && syncRate >= SYNC_MAX);
+      /*
+       * 1 周期の前半は点け、後半は落とす。暴走中の明滅（CSS の berserk-blink）と同じ 0.15 まで下げる。
+       * reduced-motion では明滅させず、3 秒の猶予だけ残す。
+       */
+      const holding = !berserk && syncInZone && syncRate >= SYNC_MAX;
+      const dim = holding && !reduceMotion.matches && syncBlinkPhase % 1 >= 0.5;
+      syncRateText.style.opacity = dim ? '0.15' : '';
       if (progressBar) progressBar.classList.toggle('runaway', isRunaway);
     };
 
