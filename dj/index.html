@@ -71,7 +71,7 @@
           "@id": "https://tk.st/dj/#profilepage",
           "name": "人類踊狂計画 - DJ Human Choreomania Project",
           "description": "東京を拠点にビッグルームハウス・サイトランスを中心に活動するボランティアDJ『人類踊狂計画』の公式ポートフォリオ。使用機材・出演実績・ブッキング詳細を掲載。",
-          "dateModified": "2026-09-26T18:10:43+09:00",
+          "dateModified": "2026-09-26T17:55:03+09:00",
           "url": "https://tk.st/dj/",
           "inLanguage": "ja",
           "author": {
@@ -1293,14 +1293,13 @@
       transform: translate(50%, 0);
     }
 
+    /* 線の描き方はスプライト線画の一括指定（SECTION HEADING の後ろ）に任せる */
     .sync-retreat svg {
       width: 18px;
       height: 18px;
-      fill: none;
-      stroke: currentColor;
       stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+      /* text-shadow は SVG の線に効かない。字と同じ縁取りを filter で付ける */
+      filter: drop-shadow(0 0 1.5px rgb(var(--surface-rgb))) drop-shadow(0 0 4px rgba(var(--surface-rgb), 0.9));
     }
 
     /* 見えている間だけ回す。伏せている間も回すと無駄に描き続ける */
@@ -1323,14 +1322,6 @@
         opacity: 0;
         transform: translateY(-5px);
       }
-    }
-
-    .sync-retreat-label {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.3em;
-      /* letter-spacing は最後の字の右にも入る。その分だけ戻して中央に見せる */
-      padding-left: 0.3em;
     }
 
     /* ===== 暴走モード =====
@@ -3111,7 +3102,8 @@
     .timeline-icon,
     .faq-icon,
     .offer-submit-icon,
-    .hero-scroll-cue svg {
+    .hero-scroll-cue svg,
+    .sync-retreat svg {
       fill: none;
       stroke: currentColor;
       stroke-linecap: round;
@@ -3166,7 +3158,9 @@
       transform: translateX(-50%) translateY(10px);
     }
 
-    .hero-scroll-label {
+    /* RETREAT（.sync-retreat）は SCROLL を上下逆にした合図なので、字の組みを共有する */
+    .hero-scroll-label,
+    .sync-retreat-label {
       font-family: var(--font-mono);
       font-size: 0.65rem;
       letter-spacing: 0.3em;
@@ -4060,7 +4054,7 @@
     <div class="hero-content">
       <h1 class="hero-title reveal">人類踊狂計画</h1>
       <div class="hero-tagline-wrapper reveal">
-        <div class="hero-tagline typewriter-text" lang="en">DJ HUMAN CHOREOMANIA PROJECT</div>
+        <div class="hero-tagline typewriter-text" id="heroTagline" lang="en">DJ HUMAN CHOREOMANIA PROJECT</div>
       </div>
     </div>
 
@@ -4751,8 +4745,9 @@
     // タイトルのタイピングが終わってから出す。blink-caret は infinite で animationend が
     // 上がらないので、typing だけを名前で拾う。
     // 何かの理由でイベントが来なくても出ないままにはしないよう、保険のタイマーを添える。
+    // 要素は ID で取る。見た目のクラス名に頼ると、改名した瞬間にここで落ちて以降の初期化が全部止まる
     const showCue = () => heroScrollCue.classList.add('ready');
-    document.querySelector('.hero-tagline.typewriter-text').addEventListener('animationend', (e) => {
+    document.getElementById('heroTagline').addEventListener('animationend', (e) => {
       if (e.animationName === 'typing') showCue();
     });
     setTimeout(showCue, 3600);
@@ -5796,7 +5791,10 @@
       const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/.exec(raw || '');
       if (!m) return raw || '';
       const [, y, mo, d, h, mi] = m;
-      const wd = '日月火水木金土'[new Date(Number(y), Number(mo) - 1, Number(d)).getDay()];
+      // new Date(年, …) は 0〜99 年を 1900 年代に読み替える。年を 2 桁だけ打たれても曜日を誤らないよう setFullYear で入れる
+      const date = new Date(0);
+      date.setFullYear(Number(y), Number(mo) - 1, Number(d));
+      const wd = '日月火水木金土'[date.getDay()];
       return `${y}年${Number(mo)}月${Number(d)}日(${wd}) ${h}:${mi}`;
     };
 

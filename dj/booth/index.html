@@ -21,105 +21,6 @@
   <style>
     .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto;
             padding: 0 calc(20px + env(safe-area-inset-right)) 64px calc(20px + env(safe-area-inset-left)); }
-    .brand { display: flex; align-items: baseline; gap: 12px; margin-right: auto; }
-
-    /* ポーリングが通っている間だけ明滅させる。止まった＝切断なので点きっぱなし */
-    @keyframes blip { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
-
-    /* スイッチと操作ボタンの入れ物。スイッチ以外も入るので名前は「操作群」 */
-    .rigctl { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    /* .accept が display を指定しているので、hidden だけでは消えない */
-    .accept[hidden] { display: none; }
-    .offline.show { display: flex; }
-
-    .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 18px 0; }
-
-    .sort { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; min-width: 0; }
-
-    .grid { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: 26px; align-items: start; }
-    @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-    .feed { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-    .card.fresh { animation: pulse 1.6s ease-out 2; }
-    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 35% { box-shadow: 0 0 0 2px var(--accent-dim); } }
-
-    .art { width: 64px; height: 64px; border-radius: 2px; overflow: hidden; background: var(--ink); }
-    .art img { width: 100%; height: 100%; display: block; }
-
-    /* 本文は1本の列。右肩に乗るのは REQ/LIKE だけで、ほかは行いっぱいに広がる。
-       仕様や本文まで名前の柱に閉じ込めると、細い画面で右に穴が空いて札が縦に伸びる */
-    .body {
-      min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto;
-      align-items: start; gap: 10px 12px;
-    }
-    .body > * { grid-column: 1 / -1; min-width: 0; }
-    .names { grid-column: 1; grid-row: 1; }
-    .counts { grid-column: 2; grid-row: 1; }
-    /* 曲そのものの素性。札の中では一塊に見せたいので、行の間隔だけ詰める */
-    .info { display: flex; flex-direction: column; gap: 5px; }
-    .meta { font-family: var(--mono); font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
-
-    /* 繋ぎの判断材料。暗所で一瞥して拾えるよう、等幅で1行に並べる */
-    .specs { display: flex; flex-wrap: wrap; gap: 6px; }
-
-    /* REQ = リクエストした人数、LIKE = 来場者が押したいいね。別物なので並べて出す */
-    .counts { display: flex; gap: 6px; flex-shrink: 0; }
-    .msg + .msg { margin-top: 6px; }
-
-    /* 繋ぐ位置を探すのに一番使うので、鳴らしていなくても最初から出しておく。
-       再生ボタン・バー・残り時間を1行に並べ、伸び縮みするのはバーだけ */
-    .player { display: flex; align-items: center; gap: 12px; }
-    /* 鳴っていないバーは沈めておく。いまどのカードを試聴中かは一目で分かるように */
-    .prev:not(.on) { opacity: .5; }
-    .player:hover .prev { opacity: 1; }
-
-    .acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .acts .spacer { flex: 1; }
-
-    /* 細い画面。数字を右肩に残すと曲名が細い柱に押し込まれ、
-       右に穴の空いた縦長の札になる。REQ/LIKE は横並びに畳んで、幅を名前へ返す */
-    @media (max-width: 560px) {
-      .card { grid-template-columns: 52px minmax(0, 1fr); gap: 13px; padding: 14px 15px 13px; }
-      .art { width: 52px; height: 52px; }
-      .counts { grid-column: 1 / -1; grid-row: auto; }
-      .votes { flex-direction: row; align-items: baseline; gap: 6px; padding: 3px 9px; }
-      .votes b { font-size: 14px; }
-      /* 右へ逃がす余白がないので、操作ボタンは左から詰める。
-         手元にキーボードは無い画面なので、ショートカットの表示も落とす */
-      .acts .spacer { display: none; }
-      .acts .kbd { display: none; }
-    }
-    .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-    .rail li { display: grid; grid-template-columns: 15px 34px minmax(0, 1fr); gap: 10px; align-items: center; }
-    .rail .art { width: 34px; height: 34px; border-radius: 2px; }
-    .tappad:hover { border-color: var(--accent-dim); }
-    .tappad .hint { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--faint); }
-    .taprow { display: flex; gap: 6px; }
-    .taprow .act { flex: 1; justify-content: center; padding: 6px 0; font-size: 12px; }
-    .act.wide { justify-content: center; }
-    .act[disabled] { opacity: .38; cursor: default; }
-    .act[disabled]:hover { background: none; color: var(--muted); border-color: var(--line); }
-    .taptgt { margin: 0; font-family: var(--mono); font-size: 10.5px; line-height: 1.5; color: var(--faint); }
-    .keys span { display: inline-flex; align-items: center; gap: 6px; }
-
-    .crumb-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-
-    .toast > span { min-width: 0; word-break: break-all; }
-    #evDlg::backdrop { background: rgba(0, 0, 0, .68); }
-    .evhead { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; }
-    #evList { display: flex; flex-direction: column; gap: 8px; }
-    .evrow .m { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 3px; letter-spacing: .06em; }
-    .evdel {
-      font-size: 12.5px; white-space: nowrap; padding: 7px 13px; border-radius: var(--r);
-      color: var(--stop); border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
-    }
-    .evdel:hover { background: color-mix(in srgb, var(--stop) 16%, var(--ink)); color: #FFC9C9; }
-    .evdel:disabled { opacity: .45; cursor: not-allowed; }
-    .evnote { font-size: 12px; color: var(--faint); line-height: 1.8; margin: 16px 0 0; }
-    .evnote strong { color: var(--stop); font-weight: 600; }
-    .evblank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 20px 0; }
-
-    /* ===== コンポーネント別スタイル ===== */
 
     /* ===== HEADER ===== */
     .rig {
@@ -127,10 +28,11 @@
       align-items: center;
       gap: 20px;
       flex-wrap: wrap;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid var(--border);
       padding: 6vh 0 18px;
-      border-bottom-color: var(--border);
     }
+
+    .brand { display: flex; align-items: baseline; gap: 12px; margin-right: auto; }
 
     .brand h1 {
       margin: 0;
@@ -142,14 +44,13 @@
     }
 
     .brand .code {
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       padding: 2px 7px;
       border-radius: 2px;
       font-family: var(--f-display);
       font-size: 0.6875rem;
       letter-spacing: 0.12em;
       color: var(--fg-dim);
-      border-color: var(--border);
     }
 
     .gauge {
@@ -161,6 +62,9 @@
       font-size: 0.6875rem;
       letter-spacing: 0.08em;
     }
+
+    /* ポーリングが通っている間だけ明滅させる。止まった＝切断なので点きっぱなし */
+    @keyframes blip { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
 
     .gauge .dot {
       width: 7px;
@@ -177,9 +81,11 @@
       box-shadow: 0 0 8px var(--heart-primary);
     }
 
+    /* スイッチと操作ボタンの入れ物。スイッチ以外も入るので名前は「操作群」 */
+    .rigctl { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
     /* 受付・通知はトグルスイッチ。状態はノブの位置と色が出すので、ラベルは名前で固定。
        倒れている向きは aria-checked ひとつで持ち、見た目もそれを見て切り替える */
-
     .accept {
       display: inline-flex;
       align-items: center;
@@ -197,10 +103,9 @@
       flex: none;
       width: 30px;
       height: 16px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: 999px;
       transition: background .18s ease, border-color .18s ease;
-      border-color: var(--border);
       background: var(--bg-elevated);
     }
 
@@ -232,7 +137,7 @@
     }
 
     .ghostbtn {
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       font-family: var(--f-dot);
       font-size: 0.6875rem;
@@ -242,7 +147,6 @@
     }
 
     .ghostbtn:hover {
-      background: transparent;
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
     }
@@ -251,18 +155,21 @@
       display: none;
       align-items: center;
       gap: 10px;
-      border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
+      border: 1px solid var(--heart-primary);
       border-radius: var(--r);
       padding: 10px 16px;
       margin-top: 16px;
       font-size: 13.5px;
       font-family: var(--f-body);
       background: var(--bg-elevated);
-      border-color: var(--heart-primary);
       color: var(--fg);
     }
 
+    .offline.show { display: flex; }
+
     /* ===== TABS / SORT ===== */
+    .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 18px 0; }
+
     .tab {
       display: inline-flex;
       align-items: center;
@@ -278,12 +185,10 @@
     }
 
     .tab:hover {
-      background: transparent;
       color: var(--fg);
     }
 
     .tab[aria-selected="true"] {
-      background: transparent;
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
     }
@@ -294,7 +199,6 @@
       padding: 1px 7px;
       font-family: var(--f-display);
       font-size: 0.6875rem;
-      background: transparent;
       border: 1px solid var(--border);
       color: var(--fg-dim);
     }
@@ -303,6 +207,8 @@
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
     }
+
+    .sort { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; min-width: 0; }
 
     .sort .lbl {
       color: var(--faint);
@@ -327,22 +233,23 @@
     }
 
     .sort button[aria-pressed="true"] {
-      background: transparent;
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
     }
+
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) 288px; gap: 26px; align-items: start; }
+    .feed { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
     /* ===== CARD ===== */
     .card {
       display: grid;
       grid-template-columns: 64px minmax(0, 1fr);
       gap: 16px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--heart-secondary);
       border-radius: var(--r);
       padding: 16px 18px 14px;
       background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
-      border-color: var(--border);
-      border-left: 3px solid var(--heart-secondary);
     }
 
     .card:hover {
@@ -351,9 +258,11 @@
 
     .card.sel {
       border-color: var(--heart-secondary);
-      box-shadow: none;
       background: rgba(55, 242, 230, 0.07);
     }
+
+    .card.fresh { animation: pulse 1.6s ease-out 2; }
+    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 35% { box-shadow: 0 0 0 2px var(--accent-dim); } }
 
     /* 採用済は開催日と同じ扱いなので、スケジュール表の決定色（黄）で塗り分ける */
     .card[data-status="queued"] {
@@ -375,10 +284,8 @@
       text-decoration-color: var(--fg-dim);
     }
 
-    .art,
-    .art img {
-      border-radius: 2px;
-    }
+    .art { width: 64px; height: 64px; border-radius: 2px; overflow: hidden; background: var(--ink); }
+    .art img { width: 100%; height: 100%; display: block; border-radius: 2px; }
 
     .art.none {
       display: grid;
@@ -387,6 +294,15 @@
       background: repeating-linear-gradient(45deg, #17171d 0 6px, #121216 6px 12px);
       color: var(--glitch-accent);
     }
+
+    /* 本文は1本の列。右肩に乗るのは REQ/LIKE だけで、ほかは行いっぱいに広がる。
+       仕様や本文まで名前の柱に閉じ込めると、細い画面で右に穴が空いて札が縦に伸びる */
+    .body {
+      min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start; gap: 10px 12px;
+    }
+    .body > * { grid-column: 1 / -1; min-width: 0; }
+    .names { grid-column: 1; grid-row: 1; }
 
     .artist {
       color: var(--muted);
@@ -405,7 +321,7 @@
 
     .title .variant {
       font-size: 11.5px;
-      border: 1px solid var(--accent-dim);
+      border: 1px solid var(--heart-secondary);
       border-radius: 2px;
       padding: 1px 6px;
       margin-left: 8px;
@@ -413,24 +329,29 @@
       font-family: var(--f-display);
       font-weight: 400;
       color: var(--heart-secondary);
-      border-color: var(--heart-secondary);
     }
 
-    .meta,
-    .spec {
+    /* 曲そのものの素性。札の中では一塊に見せたいので、行の間隔だけ詰める */
+    .info { display: flex; flex-direction: column; gap: 5px; }
+
+    .meta {
+      color: var(--faint);
+      font-variant-numeric: tabular-nums;
       font-family: var(--f-display);
       font-size: 0.6875rem;
     }
+
+    /* 繋ぎの判断材料。暗所で一瞥して拾えるよう、等幅で1行に並べる */
+    .specs { display: flex; flex-wrap: wrap; gap: 6px; }
 
     .spec {
       font-family: var(--mono);
       font-size: 11.5px;
       font-variant-numeric: tabular-nums;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: 2px;
       padding: 1px 7px;
       color: var(--fg-dim);
-      border-color: var(--border);
     }
 
     .spec.hi {
@@ -447,15 +368,17 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
+      border: 1px solid var(--glitch-accent);
       border-radius: 2px;
       padding: 1px 7px;
       align-self: flex-start;
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       color: var(--glitch-accent);
-      border-color: var(--glitch-accent);
     }
+
+    /* REQ = リクエストした人数、LIKE = 来場者が押したいいね。別物なので並べて出す */
+    .counts { grid-column: 2; grid-row: 1; display: flex; gap: 6px; flex-shrink: 0; }
 
     .votes {
       display: flex;
@@ -463,12 +386,11 @@
       align-items: center;
       gap: 1px;
       font-variant-numeric: tabular-nums;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: 2px;
       padding: 5px 10px;
       flex-shrink: 0;
       font-family: var(--f-display);
-      border-color: var(--border);
     }
 
     .votes b {
@@ -495,13 +417,14 @@
     }
 
     .msg {
-      border-left: 2px solid var(--line);
+      border-left: 2px solid var(--border);
       padding: 2px 0 2px 12px;
       font-family: var(--f-body);
       font-size: 0.8125rem;
       color: var(--fg);
-      border-left-color: var(--border);
     }
+
+    .msg + .msg { margin-top: 6px; }
 
     .msg .who {
       margin-left: 8px;
@@ -510,17 +433,20 @@
       color: var(--fg-dim);
     }
 
+    /* 繋ぐ位置を探すのに一番使うので、鳴らしていなくても最初から出しておく。
+       再生ボタン・バー・残り時間を1行に並べ、伸び縮みするのはバーだけ */
+    .player { display: flex; align-items: center; gap: 12px; }
+
     .pbtn {
       width: 38px;
       height: 38px;
       flex: none;
       border-radius: var(--r);
-      border: 1px solid var(--accent-dim);
+      border: 1px solid var(--heart-secondary);
       display: grid;
       place-items: center;
       font-size: 13px;
       line-height: 1;
-      border-color: var(--heart-secondary);
       color: var(--heart-secondary);
     }
 
@@ -529,9 +455,8 @@
       color: var(--bg);
     }
 
-    /* 見た目は 3px の細線のまま。padding で当たり判定だけ上下へ広げる */
-
-    /* background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
+    /* 見た目は 3px の細線のまま。padding で当たり判定だけ上下へ広げる。
+       background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
     .prev {
       flex: 1;
       min-width: 0;
@@ -545,6 +470,10 @@
       display: block;
       background-color: var(--border);
     }
+
+    /* 鳴っていないバーは沈めておく。いまどのカードを試聴中かは一目で分かるように */
+    .prev:not(.on) { opacity: .5; }
+    .player:hover .prev { opacity: 1; }
 
     .prev b {
       display: block;
@@ -566,8 +495,11 @@
     }
 
     /* ===== ACTIONS ===== */
+    .acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .acts .spacer { flex: 1; }
+
     .act {
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: 2px;
       padding: 8px 13px;
       display: inline-flex;
@@ -577,14 +509,15 @@
       font-size: 0.6875rem;
       letter-spacing: 0.1em;
       color: var(--fg-dim);
-      border-color: var(--border);
     }
 
     .act:hover {
-      background: transparent;
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
     }
+
+    .act[disabled] { opacity: .38; cursor: default; }
+    .act[disabled]:hover { color: var(--muted); border-color: var(--line); }
 
     .act.primary {
       background: var(--heart-secondary);
@@ -599,24 +532,20 @@
       color: var(--bg);
     }
 
-    .act.done:hover {
-      color: var(--heart-secondary);
-      border-color: var(--heart-secondary);
-    }
-
     .act.drop:hover {
       color: var(--heart-primary);
       border-color: var(--heart-primary);
     }
 
+    .act.wide { justify-content: center; }
+
     .kbd {
       font-size: 10px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: 2px;
       padding: 0 4px;
       line-height: 1.5;
       font-family: var(--f-display);
-      border-color: var(--border);
       color: var(--fg-dim);
     }
 
@@ -626,19 +555,18 @@
     }
 
     .empty {
-      border: 1px dashed var(--line);
+      border: 1px dashed var(--border);
       border-radius: var(--r);
       padding: 44px 20px;
       text-align: center;
       font-size: 13.5px;
       font-family: var(--f-body);
-      border-color: var(--border);
       color: var(--fg-dim);
     }
 
     /* ===== RAIL ===== */
     .rail {
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 16px;
       position: sticky;
@@ -646,8 +574,6 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      background: transparent;
-      border-color: var(--border);
     }
 
     .rail h2 {
@@ -658,6 +584,11 @@
       letter-spacing: 0.14em;
       color: var(--heart-secondary);
     }
+
+    .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+    .rail li { display: grid; grid-template-columns: 15px 34px minmax(0, 1fr); gap: 10px; align-items: center; }
+    .rail .art { width: 34px; height: 34px; }
+    .rail .art.none { font-size: 14px; }
 
     .rail .no {
       font-size: 12px;
@@ -681,7 +612,6 @@
     }
 
     /* 空表示はグリッドの1列目(15px)に入ると1文字ずつ折り返すので、行ごと通常フローに戻す */
-
     .rail li.blank {
       display: block;
       font-size: 12.5px;
@@ -689,32 +619,30 @@
       color: var(--fg-dim);
     }
 
-    /* 暗いブースで狙って叩ける大きさを最優先。押した瞬間だけ枠が光る */
-
     /* ===== TAP BPM ===== */
     .tapbox {
       display: flex;
       flex-direction: column;
       gap: 8px;
       padding-bottom: 14px;
-      border-bottom: 1px solid var(--line);
-      border-bottom-color: var(--border);
+      border-bottom: 1px solid var(--border);
     }
 
+    /* 暗いブースで狙って叩ける大きさを最優先。押した瞬間だけ枠が光る */
     .tappad {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 4px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 13px 10px 11px;
       user-select: none;
       -webkit-user-select: none;
       touch-action: manipulation;
-      background: transparent;
-      border-color: var(--border);
     }
+
+    .tappad:hover { border-color: var(--accent-dim); }
 
     .tappad.hit {
       background: var(--bg-elevated);
@@ -728,33 +656,40 @@
       font-variant-numeric: tabular-nums;
       color: var(--heart-secondary);
     }
+
     .tappad .val.idle {
       color: var(--fg-dim);
     }
+
+    .tappad .hint { font-size: 10.5px; letter-spacing: .06em; }
+    .taptgt { margin: 0; font-size: 10.5px; line-height: 1.5; }
 
     .tappad .hint,
     .taptgt {
       font-family: var(--f-display);
       color: var(--fg-dim);
     }
+
+    .taprow { display: flex; gap: 6px; }
+    .taprow .act { flex: 1; justify-content: center; padding: 6px 0; font-size: 12px; }
+
     .keys {
       margin-top: 22px;
       padding-top: 18px;
-      border-top: 1px solid var(--line);
+      border-top: 1px solid var(--border);
       display: flex;
       gap: 20px;
       flex-wrap: wrap;
       font-family: var(--f-display);
       font-size: 0.6875rem;
       letter-spacing: 0.06em;
-      border-top-color: var(--border);
       color: var(--fg-dim);
     }
 
-    /* GetSongBPM は利用条件として表示リンクを求めているので、隠さず出す */
-    /* ===== パンくずの補足ボタン（土台は data/bijutsu-shisui.css）===== */
+    .keys span { display: inline-flex; align-items: center; gap: 6px; }
 
-    /* ===== パンくずの補足ボタン ===== */
+    /* ===== パンくずの補足ボタン（土台は data/bijutsu-shisui.css）=====
+       GetSongBPM は利用条件として表示リンクを求めているので、隠さず出す */
     .crumb-info {
       appearance: none;
       width: 17px;
@@ -763,42 +698,39 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid rgba(156, 122, 247, 0.35);
+      border: 1px solid var(--border);
       border-radius: 50%;
-      background: none;
       cursor: pointer;
       transition: color .2s ease, border-color .2s ease, background .2s ease;
-      border-color: var(--border);
       color: var(--fg-dim);
       font: 400 11px/1 var(--f-display);
     }
 
     .crumb-info:hover,
     .crumb-info[aria-expanded="true"] {
-      background: transparent;
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
     }
+
+    .crumb-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .crumb-note {
       max-width: var(--page-max);
       margin: 10px auto 0;
       padding: 11px 13px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       font-size: 12px;
       line-height: 1.7;
       font-family: var(--f-body);
       background: var(--bg-elevated);
-      border-color: var(--border);
       color: var(--fg-dim);
     }
 
     .crumb-note a {
       text-decoration: none;
-      border-bottom: 1px solid var(--accent-dim);
+      border-bottom: 1px solid var(--heart-secondary);
       color: var(--heart-secondary);
-      border-bottom-color: var(--heart-secondary);
     }
 
     .crumb-note a:hover {
@@ -807,22 +739,23 @@
     }
 
     /* ===== 過去のイベント（削除ダイアログ）===== */
-
-    /* ===== 過去のイベント ===== */
     #evDlg {
       /* 土台の CSS が余白を全部落とすので、中央寄せは自分で戻す */ margin: auto;
       overflow: auto;
       width: min(560px, calc(100vw - 32px));
       max-height: min(80vh, 720px);
       color: var(--text);
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 20px;
       box-shadow: 0 30px 70px -20px #000;
       background: var(--bg-elevated);
-      border-color: var(--border);
       font-family: var(--f-body);
     }
+
+    #evDlg::backdrop { background: rgba(0, 0, 0, .68); }
+
+    .evhead { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; }
 
     .evhead h2 {
       font-size: 16px;
@@ -833,19 +766,24 @@
       letter-spacing: 0.1em;
     }
 
+    #evList { display: flex; flex-direction: column; gap: 8px; }
+
     /* 1行に「どの回か」と「何が消えるか」を並べる。数を見ないと消してよいか
        決められないので、件数は削除ボタンの隣に置く。 */
-
     .evrow {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 14px;
       align-items: center;
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 11px 13px;
       background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
-      border-color: var(--border);
+    }
+
+    .evrow.cur {
+      background: var(--card-hi);
+      border-color: var(--heart-secondary);
     }
 
     .evrow .t {
@@ -853,22 +791,25 @@
       font-weight: 400;
     }
 
-    .evrow .m,
-    .evrow .now,
-    .evdel {
-      font-family: var(--f-display);
-    }
+    .evrow .m { font-family: var(--f-display); font-size: 11px; color: var(--faint); margin-top: 3px; letter-spacing: .06em; }
 
-    .evrow.cur {
-      background: var(--card-hi);
-      border-color: var(--heart-secondary);
-    }
     .evrow .now {
       font-family: var(--mono);
       font-size: 11px;
       white-space: nowrap;
       color: var(--heart-secondary);
     }
+
+    .evdel {
+      font-family: var(--f-display);
+      font-size: 12.5px; white-space: nowrap; padding: 7px 13px; border-radius: var(--r);
+      color: var(--stop); border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
+    }
+    .evdel:hover { background: color-mix(in srgb, var(--stop) 16%, var(--ink)); color: #FFC9C9; }
+    .evdel:disabled { opacity: .45; cursor: not-allowed; }
+    .evnote { font-size: 12px; color: var(--faint); line-height: 1.8; margin: 16px 0 0; }
+    .evnote strong { color: var(--stop); font-weight: 600; }
+    .evblank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 20px 0; }
 
     /* ===== TOAST ===== */
     .toast {
@@ -879,7 +820,7 @@
       display: flex;
       align-items: center;
       gap: 16px;
-      border: 1px solid var(--accent-dim);
+      border: 1px solid var(--heart-secondary);
       border-radius: var(--r);
       padding: 12px 14px 12px 18px;
       font-size: 13.5px;
@@ -889,10 +830,11 @@
       max-width: calc(100vw - 32px);
       font-family: var(--f-body);
       background: var(--bg-elevated);
-      border-color: var(--heart-secondary);
-      box-shadow: none;
       z-index: 41;
     }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+    .toast > span { min-width: 0; word-break: break-all; }
 
     .toast button {
       font-size: 13px;
@@ -902,6 +844,23 @@
       font-weight: 400;
       letter-spacing: 0.08em;
       color: var(--heart-secondary);
+    }
+
+    /* ===== 画面幅 ===== */
+    @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+    /* 細い画面。数字を右肩に残すと曲名が細い柱に押し込まれ、
+       右に穴の空いた縦長の札になる。REQ/LIKE は横並びに畳んで、幅を名前へ返す */
+    @media (max-width: 560px) {
+      .card { grid-template-columns: 52px minmax(0, 1fr); gap: 13px; padding: 14px 15px 13px; }
+      .art { width: 52px; height: 52px; }
+      .counts { grid-column: 1 / -1; grid-row: auto; }
+      .votes { flex-direction: row; align-items: baseline; gap: 6px; padding: 3px 9px; }
+      .votes b { font-size: 14px; }
+      /* 右へ逃がす余白がないので、操作ボタンは左から詰める。
+         手元にキーボードは無い画面なので、ショートカットの表示も落とす */
+      .acts .spacer { display: none; }
+      .acts .kbd { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -917,7 +876,7 @@
   <div class="vignette" aria-hidden="true"></div>
   <div class="scanlines" aria-hidden="true"></div>
 
-  <div class="wrap" id="app">
+  <div class="wrap">
     <header class="rig">
       <div class="brand">
         <h1 id="evTitle">—</h1>
@@ -934,7 +893,7 @@
     </header>
 
     <div class="offline" id="offline">
-      <span>⚠</span><span id="offlineTxt">回線が切れています。復帰したら自動で読み込み直します</span>
+      <span>⚠</span><span>回線が切れています。復帰したら自動で読み込み直します</span>
     </div>
 
     <nav class="controls" role="tablist">
@@ -1025,13 +984,14 @@
 
   <div class="toast" id="toast"><span id="toastTxt"></span><button id="toastUndo">取り消す</button></div>
 
+  <script src="../../data/dj-request-core.js?v=20260926"></script>
   <script>
+    // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
     const API = '/dj/api/req';
-    const $ = (s) => document.querySelector(s);
-    const $$ = (s) => Array.from(document.querySelectorAll(s));
-    const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const mmss = (ms) => { const s = Math.round(ms / 1000); return s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '—'; };
+    const {
+      $, $$, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock, formatDurationMs, storage,
+    } = window.DJRequestCore;
+    const apiJson = createApi(API, '通信に失敗しました。接続を確認してください');
 
     function ago(iso) {
       if (!iso) return '';
@@ -1083,50 +1043,37 @@
       return r === null ? keyRank(s.songKey) : r;
     };
 
-    let songs = [], ev = null;
+    let songs = [];
     let filter = 'pending', sort = 'new', sel = null, undoStack = null;
-    let audio = null, playingId = null, audioTimer = null;
     let seen = new Set();
     let votes = new Map();   // id -> 直近に見たリクエスト数（追加投票の検知用）
     const inflight = new Map();   // 書き込み中の id -> status
-
-    // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
-    async function apiJson(path, opts = {}) {
-      let res;
-      try {
-        res = await fetch(API + path, opts);
-      } catch {
-        throw new Error('通信に失敗しました。接続を確認してください');
-      }
-      let data = {};
-      try { data = await res.json(); } catch { /* JSON でないエラー応答 */ }
-      if (!res.ok) {
-        const error = new Error(data.message || '通信に失敗しました');
-        error.status = res.status;
-        error.data = data;
-        throw error;
-      }
-      return data;
-    }
+    const preview = createPreviewController({
+      onStateChange: () => render(),
+      onProgress: (state) => paintPrevBar(state),
+    });
 
     /* ── 描画 ─────────────────────────────── */
     function counts() {
-      ['pending', 'queued', 'played', 'skipped'].forEach((k) => {
-        $('[data-c="' + k + '"]').textContent = songs.filter((s) => s.status === k).length;
+      const totals = { pending: 0, queued: 0, played: 0, skipped: 0 };
+      songs.forEach((song) => { if (song.status in totals) totals[song.status] += 1; });
+      Object.entries(totals).forEach(([status, total]) => {
+        $('[data-c="' + status + '"]').textContent = total;
       });
     }
 
     /* 再生ボタン・バー・残り時間の1行。状態はボタンの記号が出すので、
        暗所で読ませる文字は増やさない（読み上げには aria-label で渡す） */
     function playerHTML(s) {
-      const live = playingId === s.id && !!audio;
+      const state = preview.getState();
+      const live = state.active && state.key === s.id;
       const label = live
-        ? (audio.paused ? 'プレビューを再開' : 'プレビューを一時停止')
+        ? (state.paused ? 'プレビューを再開' : 'プレビューを一時停止')
         : '30秒プレビューを再生';
       return '<div class="player">' +
         '<button class="pbtn" data-do="prev" aria-label="' + label + '">' +
-        (live && !audio.paused ? '❚❚' : '▶') + '</button>' +
-        '<div class="prev' + (playingId === s.id ? ' on' : '') +
+        (live && !state.paused ? '❚❚' : '▶') + '</button>' +
+        '<div class="prev' + (live ? ' on' : '') +
         '" title="押した位置から試聴"><b id="prevbar-' + s.id + '"></b></div>' +
         '<span class="ptime" id="ptime-' + s.id + '">0:30</span>' +
         '</div>';
@@ -1149,7 +1096,7 @@
         return chip(b < 90 ? b + ' BPM (×2 ' + effBpm(s.bpm) + ')' : b + ' BPM', 'hi');
       };
       const specs = '<div class="specs">' +
-        chip(mmss(s.durationMs)) +
+        chip(formatDurationMs(s.durationMs, '—')) +
         chip(s.genre) +
         chip(s.releaseYear || '') +
         (s.explicitness === 'explicit' ? '<span class="spec ex">EXPLICIT</span>'
@@ -1229,7 +1176,7 @@
       $('#railList').innerHTML = q.length
         ? q.map((s, i) => '<li><span class="no">' + (i + 1) + '</span>' +
           (s.artwork ? '<span class="art"><img src="' + esc(s.artwork) + '" alt=""></span>'
-            : '<span class="art none" style="font-size:14px">⚠</span>') +
+            : '<span class="art none">⚠</span>') +
           '<span><span class="t trunc">' + esc(s.title) + '</span>' +
           '<span class="a trunc">' + esc(s.artist || '不明') + '</span></span></li>').join('')
         : '<li class="blank">採用した曲がここに並びます</li>';
@@ -1250,7 +1197,7 @@
     async function load(first) {
       try {
         const d = await apiJson('/admin/songs');
-        ev = d.event;
+        const ev = d.event;
         if (ev) {
           $('#evTitle').textContent = ev.title;
           $('#evCode').textContent = ev.code;
@@ -1261,17 +1208,22 @@
            既にある曲への追加投票（同じ曲をもう一人が送った）も
            リクエストが1件入ったことに変わりはないので拾う。 */
         const prev = seen, prevVotes = votes;
-        seen = new Set(d.songs.map((s) => s.id));
-        votes = new Map(d.songs.map((s) => [s.id, s.votes]));
+        const nextSeen = new Set(), nextVotes = new Map();
         const fresh = [], again = [];
-        if (!first) d.songs.forEach((s) => {
-          if (!prev.has(s.id)) { s.isNew = true; fresh.push(s); }
-          else if (s.status === 'pending' && s.votes > (prevVotes.get(s.id) ?? s.votes)) again.push(s);
+        d.songs.forEach((song) => {
+          nextSeen.add(song.id);
+          nextVotes.set(song.id, song.votes);
+          if (!first) {
+            if (!prev.has(song.id)) { song.isNew = true; fresh.push(song); }
+            else if (song.status === 'pending' && song.votes > (prevVotes.get(song.id) ?? song.votes)) again.push(song);
+          }
+          // 書き込み中の曲はサーバの古い値で上書きしない
+          if (inflight.has(song.id)) song.status = inflight.get(song.id);
+          // タップで測った BPM も同じく手元を優先する（サーバは値を持っていない）
+          if (tapMap.has(song.id)) { song.bpm = tapMap.get(song.id); song.bpmTapped = true; }
         });
-        // 書き込み中の曲はサーバの古い値で上書きしない
-        d.songs.forEach((s) => { if (inflight.has(s.id)) s.status = inflight.get(s.id); });
-        // タップで測った BPM も同じく手元を優先する（サーバは値を持っていない）
-        d.songs.forEach((s) => { if (tapMap.has(s.id)) { s.bpm = tapMap.get(s.id); s.bpmTapped = true; } });
+        seen = nextSeen;
+        votes = nextVotes;
         songs = d.songs;
         online(true);
         render();
@@ -1287,13 +1239,7 @@
       $('#connTxt').textContent = ok ? '接続中' : '切断';
     }
 
-    async function patch(id, status) {
-      await apiJson('/admin/songs/' + id, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-    }
+    const patch = (id, status) => apiJson('/admin/songs/' + id, { method: 'PATCH', json: { status } });
 
     /* ── 操作 ─────────────────────────────── */
     function toast(text, undo) {
@@ -1327,50 +1273,13 @@
       }
     }
 
-    // 頭出しまで戻す停止。別の曲に移るときと鳴り終わったときはこちら
-    function stopAudio() {
-      if (audio) { audio.pause(); audio = null; }
-      clearInterval(audioTimer); audioTimer = null;
-      playingId = null;
-      render();
-    }
-
-    const left = (sec) => {
-      const s = Math.max(0, Math.round(sec));
-      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-    };
-
     // render() で作り直された直後のバーと残り時間に、鳴っている位置を戻す
-    function paintPrevBar() {
-      if (!audio || playingId == null) return;
-      const dur = audio.duration || 30;
-      const bar = document.getElementById('prevbar-' + playingId);
-      if (bar) bar.style.width = (audio.currentTime / dur * 100) + '%';
-      const t = document.getElementById('ptime-' + playingId);
-      if (t) t.textContent = left(dur - audio.currentTime);
-    }
-
-    // 読み込む前は duration が出ていないので、メタデータが来てから飛ばす
-    function seekAudio(ratio) {
-      const apply = () => {
-        const dur = audio.duration || 30;
-        audio.currentTime = Math.max(0, Math.min(dur - 0.05, dur * ratio));
-        paintPrevBar();
-      };
-      if (audio.readyState > 0) apply();
-      else audio.addEventListener('loadedmetadata', apply, { once: true });
-    }
-
-    function startPreview(s, ratio) {
-      stopAudio();
-      if (!s.previewUrl) return;
-      audio = new Audio(s.previewUrl);
-      playingId = s.id;
-      audio.addEventListener('ended', stopAudio);
-      if (ratio) seekAudio(ratio);
-      // play() を先に。paused が倒れてからでないとボタンが「再開」に見える
-      audio.play().then(trackAudio).catch(() => stopAudio());
-      render();
+    function paintPrevBar(state = preview.getState()) {
+      if (!state.active || state.key == null) return;
+      const bar = document.getElementById('prevbar-' + state.key);
+      if (bar) bar.style.width = (state.progress * 100) + '%';
+      const time = document.getElementById('ptime-' + state.key);
+      if (time) time.textContent = formatClock(state.remaining);
     }
 
     /* バーを押したら、その位置へ。鳴らしていない曲ならそこから鳴らしはじめ、
@@ -1379,14 +1288,10 @@
       const r = bar.getBoundingClientRect();
       if (!r.width) return;
       const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      if (playingId === s.id && audio) seekAudio(ratio);
-      else startPreview(s, ratio);
+      preview.seekOrStart(s.id, s.previewUrl, ratio);
     }
 
-    function trackAudio() {
-      clearInterval(audioTimer);
-      audioTimer = setInterval(paintPrevBar, 200);
-    }
+    const STATUS_DONE = { queued: '採用しました', played: '再生済にしました', skipped: '見送りにしました' };
 
     function act(s, what) {
       if (what === 'copy') {
@@ -1403,24 +1308,8 @@
         location.href = web.replace(/^https:\/\//, 'music://');
         return;
       }
-      if (what === 'prev') {
-        // 鳴らしている最中の同じ曲なら、頭に戻さず一時停止と再開を往復する
-        if (playingId === s.id && audio) {
-          if (audio.paused) {
-            audio.play().then(() => { trackAudio(); render(); }).catch(() => stopAudio());
-          } else {
-            audio.pause();
-            clearInterval(audioTimer); audioTimer = null;
-            render();
-          }
-          return;
-        }
-        startPreview(s, 0);
-        return;
-      }
-      if (what === 'played') { setStatus(s.id, 'played', '再生済にしました'); return; }
-      if (what === 'skipped') { setStatus(s.id, 'skipped', '見送りにしました'); return; }
-      if (what === 'queued') { setStatus(s.id, 'queued', '採用しました'); }
+      if (what === 'prev') { preview.toggle(s.id, s.previewUrl); return; }
+      if (STATUS_DONE[what]) setStatus(s.id, what, STATUS_DONE[what]);
     }
 
     $('#feed').addEventListener('click', (e) => {
@@ -1447,11 +1336,7 @@
     $('#accept').addEventListener('click', async () => {
       const want = $('#accept').getAttribute('aria-checked') === 'true' ? 'closed' : 'open';
       try {
-        const d = await apiJson('/admin/event', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: want }),
-        });
+        const d = await apiJson('/admin/event', { method: 'PATCH', json: { status: want } });
         paintSwitch('#accept', !!d.open);
         toast(d.open ? 'リクエストの受付を再開しました' : 'リクエストの受付を停止しました');
       } catch (e) { toast(e.message || '切り替えられませんでした'); }
@@ -1462,12 +1347,7 @@
       if (title === null) return;
       if (!confirm('現在のイベントを締めて、新しいイベントを開始します。よろしいですか？')) return;
       try {
-        const d = await apiJson('/admin/event', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title }),
-        });
-        seen = new Set();
+        const d = await apiJson('/admin/event', { method: 'POST', json: { title } });
         await load(true);
         toast('「' + d.title + '」を開始しました（' + d.code + '）');
       } catch (e) { toast(e.message || '作成できませんでした'); }
@@ -1478,7 +1358,7 @@
        取り消せる操作ではないので、確認は「はい/いいえ」ではなく回のコードを
        打たせる。押し間違いで一晩の記録が消えるほうが、ひと手間より高くつく。 */
     const ADMIN_KEY = 'tkdj.adminKey';
-    const adminKey = () => { try { return localStorage.getItem(ADMIN_KEY) || ''; } catch { return ''; } };
+    const adminKey = () => storage.getText(ADMIN_KEY);
 
     function evrowHTML(e) {
       const day = String(e.at || '').slice(0, 10).replace(/-/g, '.');
@@ -1519,22 +1399,17 @@
 
       btn.disabled = true;
       try {
-        const path = '/admin/events/' + encodeURIComponent(code);
+        const del = (key) => apiJson('/admin/events/' + encodeURIComponent(code), { method: 'DELETE', headers: bearer(key) });
         let d;
         try {
-          d = await apiJson(path, {
-            method: 'DELETE',
-            headers: adminKey() ? { Authorization: 'Bearer ' + adminKey() } : {},
-          });
+          d = await del(adminKey());
         } catch (e) {
           // ADMIN_KEY を後から設定した場合。一度だけ訊いて、次からは黙って通す
           if (e.status !== 401) throw e;
           const key = prompt('管理キーを入力してください');
           if (key === null) { btn.disabled = false; return; }
-          try { localStorage.setItem(ADMIN_KEY, key.trim()); } catch {}
-          d = await apiJson(path, {
-            method: 'DELETE', headers: { Authorization: 'Bearer ' + key.trim() },
-          });
+          storage.setText(ADMIN_KEY, key.trim());
+          d = await del(key.trim());
         }
         toast('「' + d.title + '」を削除しました（' + d.songs + '曲 / ' + d.requests + '件）');
         await loadEvents();
@@ -1559,9 +1434,8 @@
       // ダイアログを開いている間はカードを触らせない。焦点はダイアログの中に
       // あるので、素通しすると 1/2/3 が裏の曲のステータスを動かしてしまう。
       if ($('#evDlg').open) return;
-      if (e.target.closest && e.target.closest('.site-crumb')) return;
-      // パッドに触れている間は Space/Enter を素の打鍵として通す
-      if (e.target.closest && e.target.closest('.tapbox')) return;
+      // パンくずとパッドに触れている間は Space/Enter を素の打鍵として通す
+      if (e.target.closest?.('.site-crumb, .tapbox')) return;
       // T はカードが1枚も無くても効くよう、一覧を見る前に処理する
       if (e.key.toLowerCase() === 't') { e.preventDefault(); tap(); return; }
       const list = visible(); if (!list.length) return;
@@ -1614,8 +1488,8 @@
     let lastNotified = null;   // 通知をクリックしたときに開く曲
 
     // プライベートモードなどで localStorage が投げても通知機能ごと落とさない
-    const remember = (v) => { try { localStorage.setItem(NOTIFY_KEY, v ? '1' : '0'); } catch {} };
-    const remembered = () => { try { return localStorage.getItem(NOTIFY_KEY) === '1'; } catch { return false; } };
+    const remember = (v) => storage.setText(NOTIFY_KEY, v ? '1' : '0');
+    const remembered = () => storage.getText(NOTIFY_KEY) === '1';
 
     /* tag を固定して差し替えにする。1曲ごとに積み上げると、
        混んだ時間帯に通知センターが埋まって逆に読めなくなる。 */
@@ -1701,16 +1575,15 @@
 
     // イベントが変われば前回の実測値は無関係になるので、コードごと持って捨てる
     function tapLoad(code) {
-      try {
-        const d = JSON.parse(localStorage.getItem(TAP_KEY) || 'null');
-        if (!d || d.code !== code) { localStorage.removeItem(TAP_KEY); return new Map(); }
-        return new Map(Object.keys(d.map).map((k) => [Number(k), d.map[k]]));
-      } catch { return new Map(); }
+      const saved = storage.getJSON(TAP_KEY, null);
+      if (!saved || saved.code !== code || !saved.map || typeof saved.map !== 'object') {
+        storage.remove(TAP_KEY);
+        return new Map();
+      }
+      return new Map(Object.keys(saved.map).map((key) => [Number(key), saved.map[key]]));
     }
     function tapSave() {
-      try {
-        localStorage.setItem(TAP_KEY, JSON.stringify({ code: tapCode, map: Object.fromEntries(tapMap) }));
-      } catch {}
+      storage.setJSON(TAP_KEY, { code: tapCode, map: Object.fromEntries(tapMap) });
     }
 
     /* 端から端までの経過を打数で割る。1打ごとの差を平均するのと同値だが、
@@ -1724,19 +1597,20 @@
     }
 
     const tapSong = () => {
-      const id = playingId != null ? playingId : sel;
+      const id = preview.getState().key ?? sel;
       return id == null ? null : songs.find((s) => s.id === id) || null;
     };
 
     function paintTap() {
       const v = tapValue(), s = tapSong();
+      const playing = preview.getState().key;
       $('#tapVal').textContent = v ? v.toFixed(1) : '— — —';
       $('#tapVal').classList.toggle('idle', !v);
       $('#tapHint').textContent = v ? taps.length + ' 打 · 叩くほど落ち着きます' : '叩く / T';
       ['#tapHalf', '#tapDouble', '#tapReset'].forEach((q) => { $(q).disabled = !v; });
       $('#tapApply').disabled = !v || !s;
       $('#tapTgt').textContent = s
-        ? (playingId != null ? '▶ ' : '→ ') + (s.artist ? s.artist + ' — ' : '') + s.title
+        ? (playing != null ? '▶ ' : '→ ') + (s.artist ? s.artist + ' — ' : '') + s.title
         : 'プレビュー中か選択中の曲に入ります';
     }
 

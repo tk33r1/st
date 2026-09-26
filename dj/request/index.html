@@ -99,302 +99,6 @@
     /* パンくずとフッターの横幅。このページは細い1カラム。
        他の変数とリセットは data/bijutsu-shisui.css */
     :root { --page-max: 480px; }
-    @media (max-width: 480px) {
-      .stage { padding: 0 0 40px; }
-      .sheet { border-radius: 0; border-left: 0; border-right: 0; border-top: 0; min-height: 100vh; }
-    }
-    /* 受付が開いている間だけ明滅させる。停止中とオフラインは点きっぱなし */
-    @keyframes badge-blip { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
-    .badge.shut::before { background: var(--faint); box-shadow: none; animation: none; }
-
-    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
-    @media (max-width: 380px) { .tabs button { font-size: 11.5px; letter-spacing: -.02em; } }
-    .pane.on { display: flex; }
-    .lede b { color: var(--text); font-weight: 600; }
-
-    .field { position: relative; }
-    .field input {
-      width: 100%; font: inherit; font-size: 16px;
-      background: var(--ink); color: var(--text);
-      border: 1px solid var(--line); border-radius: 2px; padding: 15px 44px 15px 15px;
-    }
-    .field input::placeholder { color: var(--faint); }
-    .field input:focus { border-color: var(--accent-dim); outline: none; }
-    .field .clear {
-      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-      width: 34px; height: 34px; border-radius: 50%; color: var(--faint); font-size: 17px;
-      display: none; align-items: center; justify-content: center;
-    }
-    .field.filled .clear { display: flex; }
-
-    .hint { font-size: 12px; color: var(--faint); margin: -6px 0 0; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .cands { display: flex; flex-direction: column; gap: 8px; }
-    .cand {
-      display: grid; grid-template-columns: 56px minmax(0, 1fr) 18px; gap: 13px; align-items: center;
-      width: 100%; text-align: left;
-      background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 11px 13px;
-    }
-    .cand img { width: 56px; height: 56px; border-radius: 2px; display: block; background: var(--ink); }
-    .cand .a { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-    .cand .d { font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
-    .cand .chev { color: var(--faint); font-size: 15px; }
-
-    /* グリッド内の span は inline のままだと縦に積まれず truncate も効かない */
-    .cand .t, .cand .a, .cand .d,
-    .row .t, .row .a, .row .by,
-    .now .t, .now .a { display: block; }
-
-    details.alts { margin: -2px 0 2px 69px; }
-    details.alts summary::-webkit-details-marker { display: none; }
-    details.alts summary::before { content: '▸ '; }
-    details.alts[open] summary::before { content: '▾ '; }
-    .alt {
-      display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
-      font-size: 12.5px; color: var(--muted); padding: 8px 11px;
-      border: 1px solid var(--line); border-radius: 2px; margin-top: 5px;
-    }
-    .alt .v { font-family: var(--mono); font-size: 11px; color: var(--accent); }
-    .alt .len { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
-
-    .nomatch { border: 1px dashed var(--line); border-radius: 2px; padding: 22px 18px; text-align: center; color: var(--faint); font-size: 13px; }
-
-    .hero { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
-    .hero img { width: 200px; height: 200px; border-radius: 2px; display: block; background: var(--card); }
-    .hero .ph {
-      width: 200px; height: 200px; border-radius: 2px; display: grid; place-items: center;
-      background: repeating-linear-gradient(45deg, #241B33 0 8px, #1D1729 8px 16px);
-      color: var(--warn); font-size: 40px;
-    }
-    .hero .d { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
-    .vtag {
-      font-family: var(--mono); font-size: 11.5px; color: var(--accent);
-      border: 1px solid var(--accent-dim); border-radius: 2px; padding: 1px 7px; margin-left: 7px; vertical-align: 2px;
-    }
-
-    .player { display: flex; align-items: center; gap: 12px; width: 100%; }
-    /* .f は縦積みなので、見出しと補足はひとつの行にまとめてから渡す */
-    .f .fh { display: block; }
-    textarea, input.txt {
-      font: inherit; font-size: 16px; width: 100%;
-      background: var(--ink); color: var(--text);
-      border: 1px solid var(--line); border-radius: 2px; padding: 13px;
-    }
-    textarea { resize: vertical; min-height: 84px; }
-    /* ひとことは1行ぶんで始めて、打った量に合わせて JS が伸ばす */
-    textarea.one { min-height: 0; resize: none; overflow-y: hidden; }
-    textarea:focus, input.txt:focus { border-color: var(--accent-dim); outline: none; }
-
-    .done { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0 4px; }
-    .done .what b { color: var(--text); font-weight: 600; }
-    #pane-board .note { border-top: none; padding-top: 4px; }
-
-    /* ここから下は過ぎた回。いまの回と地続きに見えないよう線で切る */
-    .pastsep { border: none; border-top: 1px solid var(--line); margin: 6px 0 0; width: 100%; }
-
-    .boardhead { display: flex; align-items: baseline; gap: 10px; }
-    .boardhead h2 { font-size: 11.5px; font-family: var(--mono); letter-spacing: .13em; color: var(--faint); margin: 0; font-weight: 500; flex: 1; }
-    .fresh { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
-
-    /* いまかかっている曲。曲の行と同じく、押せば詳細に飛べる。
-       ボタンとして組み、右端に chev を置いて押せると分かるようにする。 */
-    .now {
-      display: grid; grid-template-columns: 72px minmax(0, 1fr) 14px; gap: 14px; align-items: center;
-      width: 100%; text-align: left;
-      background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 17%, var(--card)), var(--card));
-      border: 1px solid var(--accent-dim); border-radius: 2px; padding: 14px;
-    }
-    .now:hover { border-color: var(--accent); }
-    .now .chev { color: var(--accent); font-size: 15px; }
-    .now img { width: 72px; height: 72px; border-radius: 2px; display: block; }
-    .now .lab { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--accent); display: flex; align-items: center; gap: 7px; }
-    .now .t { font-size: 15.5px; font-weight: 700; line-height: 1.35; margin-top: 4px; }
-    .now .a { font-size: 12.5px; color: var(--muted); }
-
-    .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
-    .eq i { width: 2.5px; background: var(--accent); border-radius: 2px; animation: bounce .9s ease-in-out infinite; }
-    .eq i:nth-child(1) { height: 40%; animation-delay: -.5s; }
-    .eq i:nth-child(2) { height: 100%; animation-delay: -.2s; }
-    .eq i:nth-child(3) { height: 65%; animation-delay: -.7s; }
-    .eq i:nth-child(4) { height: 85%; }
-    @keyframes bounce { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
-
-    .rows { display: flex; flex-direction: column; gap: 7px; }
-    /* 行そのものは器。button の中に button は置けないので、曲を開くボタンと
-       いいねボタンを分けて持つ。いいねは状態バッジの下に積む——横に並べると
-       320px 幅の端末で曲名の居場所が無くなるが、縦なら行の高さはほぼ変わらない。 */
-    .row {
-      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center;
-      background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 9px 12px;
-    }
-    .rowopen {
-      display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: center;
-      min-width: 0; width: 100%; padding: 0; text-align: left;
-    }
-    .row.mine { border-color: var(--accent-dim); background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
-    .row img { width: 44px; height: 44px; border-radius: 2px; display: block; }
-    .row .ph, .cand .ph {
-      width: 44px; height: 44px; border-radius: 2px; display: grid; place-items: center;
-      background: repeating-linear-gradient(45deg, #241B33 0 5px, #1D1729 5px 10px);
-      color: var(--warn); font-size: 15px;
-    }
-    .cand .ph { width: 56px; height: 56px; border-radius: 2px; font-size: 20px; }
-    .row .t { font-size: 13.5px; font-weight: 600; }
-    .row .a { font-size: 11.5px; color: var(--muted); }
-    .row .by { font-size: 11px; color: var(--faint); }
-    .row.played .t, .row.played .a { color: var(--faint); }
-    .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-    .state { font-size: 11px; font-weight: 600; border-radius: 2px; padding: 2px 9px; white-space: nowrap; color: var(--faint); border: 1px solid var(--line); }
-    .state.done { color: var(--go); border-color: color-mix(in srgb, var(--go) 45%, var(--line)); }
-    /* 受付＝まだ直せる／確認済＝DJ が目を通したあと。
-       直せるほうを点灯させ、直せないほうを沈める。色の濃さと明るさで
-       「こちらはまだ触れる」と分かるようにする（文言だけに頼らない）。 */
-    .state.open { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); background: color-mix(in srgb, var(--warn) 13%, transparent); }
-    /* 受付中バッジ（画面上部）と同じ「灯った丸」で、まだ動かせることを示す */
-    .state.open::before {
-      content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
-      background: var(--warn); box-shadow: 0 0 6px var(--warn); margin-right: 6px; vertical-align: middle;
-    }
-    .state.seen { color: var(--faint); border-color: var(--line); background: transparent; }
-    .at { font-family: var(--mono); font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
-    .mytag { font-size: 10px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent-dim); border-radius: 2px; padding: 0 5px; }
-
-    /* いいね。押した本人だけがピンクに灯る。指で狙える大きさを最優先にする */
-    .like {
-      display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0;
-      font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums;
-      color: var(--faint); border: 1px solid var(--line); border-radius: 999px;
-      padding: 7px 13px; line-height: 1; transition: color .15s, border-color .15s, background .15s;
-    }
-    /* 行の中では状態バッジと横幅をそろえる。ばらばらの幅が縦に積まれると散らかる */
-    .right .like { align-self: stretch; margin-top: 1px; }
-    .like:hover { color: var(--stop); border-color: color-mix(in srgb, var(--stop) 45%, var(--line)); }
-    .like.on {
-      color: var(--stop); border-color: color-mix(in srgb, var(--stop) 55%, var(--line));
-      background: color-mix(in srgb, var(--stop) 13%, transparent);
-    }
-    .like .hh { font-size: 13px; }
-    /* 押した瞬間だけ跳ねる。反応があると分かるのが目的なので短く */
-    .like.just .hh { animation: likepop .3s ease-out; }
-    @keyframes likepop { 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
-    .blank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 18px 0; }
-
-    /* ===== 過去のイベント ===== */
-    /* 曲の行（.row）と同じ器に見せる。中身は曲ではなく回なので、
-       ジャケットの代わりに曲数を置いて、行の高さを1段ぶん低くする。 */
-    .evrow {
-      display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; gap: 12px; align-items: center;
-      width: 100%; text-align: left;
-      background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 11px 13px;
-    }
-    .evrow:hover { background: var(--card-hi); border-color: var(--accent-dim); }
-    .evrow .t { display: block; font-size: 13.5px; font-weight: 600; }
-    .evrow .d { display: block; font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
-    .evrow .n { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
-    .evrow .chev { color: var(--faint); font-size: 15px; }
-
-    .pasthead { display: flex; align-items: baseline; gap: 10px; }
-    .pasthead h2 { font-family: var(--serif); font-weight: 900; font-size: 16px; margin: 0; flex: 1; line-height: 1.35; }
-
-    /* 終わった回はもう押せない。枠を外して、押せる場所と見間違えないようにする。
-       自分が押した曲は当時のまま灯したままにする（記録として読めるほうがよい）。 */
-    .like.static {
-      pointer-events: none; border-color: transparent; background: none; padding: 7px 2px;
-    }
-
-    /* ===== 投げ銭（Buy Me Oil）===== */
-    .tipbox {
-      width: 100%; padding: 18px 16px;
-      background: var(--card); border: 1px solid var(--line); border-radius: 2px;
-      display: flex; flex-direction: column; align-items: center; gap: 11px;
-      cursor: pointer; transition: border-color .15s, background .15s;
-    }
-    .tipbox:hover { background: var(--card-hi); border-color: var(--accent-dim); }
-    .tipbox .tiplede { font-size: 12.5px; color: var(--muted); }
-    .tipbox .tipnote { font-size: 11.5px; color: var(--faint); line-height: 1.75; }
-    .tipbox .tipnote b { display: block; color: var(--accent); font-weight: 600; letter-spacing: .06em; font-family: var(--mono); }
-    /* ウィジェット既定の 32px は指で狙うには小さいので、この画面だけ大きくする */
-    .tipbox .donation-widget-button { width: 46px; height: 46px; }
-
-    /* ===== MAGI 相談 ===== */
-    .magi-head { display: flex; align-items: center; gap: 12px; }
-    .magi-head .emblem { width: 44px; height: 44px; flex-shrink: 0; }
-    .magi-head .emblem .hx { fill: none; stroke: var(--accent-dim); stroke-width: 3.5; }
-    .magi-head .emblem .hl { stroke: var(--accent-dim); stroke-width: 2.5; }
-    .magi-head .emblem .hn { fill: var(--accent); font-family: var(--mono); font-size: 17px; }
-    .magi-head .mt { font-family: var(--mono); font-size: 15px; letter-spacing: .24em; color: var(--accent); line-height: 1.2; }
-    .magi-head .ms { font-size: 11.5px; color: var(--faint); letter-spacing: .04em; margin-top: 3px; }
-
-    .seeds { display: flex; flex-wrap: wrap; gap: 7px; }
-    .seeds[hidden] { display: none; }
-    .seed {
-      font-size: 12px; color: var(--muted); background: var(--card);
-      border: 1px solid var(--line); border-radius: 2px; padding: 7px 12px; text-align: left;
-    }
-    .seed:hover { color: var(--text); border-color: var(--accent-dim); }
-
-    .chatlog { display: flex; flex-direction: column; gap: 15px; }
-    .chatlog:empty { display: none; }
-    .bubble {
-      align-self: flex-end; max-width: 85%; font-size: 14px;
-      background: var(--card-hi); border: 1px solid var(--line);
-      border-radius: 2px; padding: 10px 13px;
-      white-space: pre-wrap; overflow-wrap: anywhere;
-    }
-    .turn { display: flex; flex-direction: column; gap: 10px; }
-
-    details.debate { border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
-    details.debate summary {
-      list-style: none; cursor: pointer; padding: 9px 12px;
-      font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--faint);
-      display: flex; align-items: center; gap: 8px;
-    }
-    details.debate summary::-webkit-details-marker { display: none; }
-    details.debate summary::after { content: '▾'; margin-left: auto; }
-    details.debate:not([open]) summary::after { content: '▸'; }
-    .pcards { display: flex; flex-direction: column; gap: 9px; padding: 2px 12px 12px; }
-    .pcard .cn { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--accent); }
-    .pcard .px { font-size: 12px; color: var(--muted); line-height: 1.65; margin-top: 2px; overflow-wrap: anywhere; }
-    .pcard.thinking .px { color: var(--faint); }
-
-    .answer { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
-    .answer .av {
-      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-dim);
-      color: var(--accent); font-family: var(--mono); font-size: 11px; display: grid; place-items: center;
-    }
-    .answer .who { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--faint); margin-bottom: 4px; }
-    .answer .ab { font-size: 14.5px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .answer.streaming .ab::after { content: '▍'; color: var(--accent); animation: blink 1s steps(2) infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-
-    .picks { display: flex; flex-wrap: wrap; gap: 7px; margin-left: 38px; }
-    .pick {
-      font-size: 12.5px; color: var(--text); background: var(--card);
-      border: 1px solid var(--accent-dim); border-radius: 2px; padding: 7px 13px;
-      display: inline-flex; align-items: center; gap: 6px; text-align: left;
-    }
-    .pick::after { content: '↗'; color: var(--accent); font-size: 11px; }
-    .pick:hover { background: var(--card-hi); }
-    .picklede { font-size: 11.5px; color: var(--faint); margin: 2px 0 0 38px; }
-
-    /* 受付時間外・オフラインのときに composer の代わりに出す。
-       できない理由だけ伝えて、相談そのものは塞ぐ */
-    .chatlock {
-      border: 1px dashed var(--line); border-radius: 2px; padding: 15px 14px;
-      text-align: center; font-size: 12.5px; color: var(--faint); line-height: 1.7;
-    }
-
-    .composer { display: flex; gap: 8px; align-items: flex-end; }
-    .composer[hidden] { display: none; }
-    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px; }
-    .composer button {
-      flex-shrink: 0; height: 48px; padding: 0 16px; border-radius: 2px;
-      background: var(--accent); color: #14091F; font-size: 13.5px; font-weight: 700;
-    }
-    .composer button:disabled { background: var(--card); color: var(--faint); cursor: not-allowed; }
-
-    /* ===== コンポーネント別スタイル ===== */
 
     /* シートの箱を外して、スケジュール表と同じ「背景の上に直接組む」形にする */
     .stage {
@@ -419,20 +123,14 @@
       .stage {
         padding: 0 calc(14px + env(safe-area-inset-right)) 6vh calc(14px + env(safe-area-inset-left));
       }
-
-      .sheet {
-        border: 0;
-        min-height: 0;
-      }
     }
 
     .top {
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 7vh 0 18px;
-      border-bottom-color: var(--border);
     }
 
     .top h1 {
@@ -446,7 +144,7 @@
     }
 
     .badge {
-      border: 1px solid color-mix(in srgb, var(--go) 45%, var(--line));
+      border: 1px solid currentColor;
       border-radius: 2px;
       display: inline-flex;
       align-items: center;
@@ -457,9 +155,11 @@
       font-size: 0.625rem;
       letter-spacing: 0.1em;
       color: var(--heart-secondary);
-      border-color: currentColor;
       padding: 3px 9px;
     }
+
+    /* 受付が開いている間だけ明滅させる。停止中とオフラインは点きっぱなし */
+    @keyframes badge-blip { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
 
     .badge::before {
       content: '';
@@ -468,13 +168,16 @@
       border-radius: 50%;
       animation: badge-blip 1.6s ease-in-out infinite;
       background: currentColor;
-      box-shadow: none;
     }
 
     .badge.shut {
       color: var(--fg-dim);
       border-color: var(--border);
     }
+
+    .badge.shut::before { background: var(--faint); animation: none; }
+
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
 
     .tabs button {
       padding: 13px 4px;
@@ -492,12 +195,16 @@
       border-bottom-color: var(--heart-secondary);
     }
 
+    @media (max-width: 380px) { .tabs button { font-size: 11.5px; letter-spacing: -.02em; } }
+
     .pane {
       display: none;
       flex-direction: column;
       padding: 24px 0 0;
       gap: 18px;
     }
+
+    .pane.on { display: flex; }
 
     .lede {
       color: var(--muted);
@@ -513,6 +220,8 @@
       color: var(--heart-secondary);
       font-weight: 400;
     }
+
+    .hint { font-size: 12px; color: var(--faint); margin: -6px 0 0; }
 
     .hint,
     .note,
@@ -533,6 +242,9 @@
       gap: 8px;
     }
 
+    /* .f は縦積みなので、見出しと補足はひとつの行にまとめてから渡す */
+    .f .fh { display: block; }
+
     .f .req {
       font-family: var(--f-body);
       font-size: 0.6875rem;
@@ -540,17 +252,31 @@
       color: rgba(154, 154, 160, 0.62);
     }
 
+    .field { position: relative; }
+
     .field input,
     textarea,
     input.txt {
+      font: inherit;
+      font-size: 16px;
       font-family: var(--f-body);
+      width: 100%;
+      color: var(--text);
       background: var(--bg-elevated);
-      border-color: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 2px;
     }
+
+    .field input { padding: 15px 44px 15px 15px; }
+    textarea, input.txt { padding: 13px; }
+    textarea { resize: vertical; min-height: 84px; }
+    /* ひとことは1行ぶんで始めて、打った量に合わせて JS が伸ばす */
+    textarea.one { min-height: 0; resize: none; overflow-y: hidden; }
 
     .field input:focus,
     textarea:focus,
     input.txt:focus {
+      outline: none;
       border-color: var(--heart-secondary);
     }
 
@@ -559,6 +285,13 @@
     input.txt::placeholder {
       color: rgba(154, 154, 160, 0.6);
     }
+
+    .field .clear {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 34px; height: 34px; border-radius: 50%; color: var(--faint); font-size: 17px;
+      display: none; align-items: center; justify-content: center;
+    }
+    .field.filled .clear { display: flex; }
 
     .count {
       font-size: 11px;
@@ -599,10 +332,6 @@
       color: rgba(154, 154, 160, 0.45);
     }
 
-    .again {
-      box-shadow: none;
-    }
-
     .linkbtn {
       width: 100%;
       border: 1px solid var(--line);
@@ -615,7 +344,6 @@
     }
 
     .linkbtn:hover {
-      background: transparent;
       border-color: var(--heart-secondary);
       color: var(--heart-secondary);
     }
@@ -638,8 +366,6 @@
       text-align: center;
       text-decoration: none;
     }
-
-    a.linkbtn[hidden] { display: none; }
 
     /* 取り下げ。押し間違えたときの被害が大きいので、白昼夢のピンクで警告色にする */
     .linkbtn.drop {
@@ -690,24 +416,16 @@
       margin-top: 4px;
     }
 
-    /* 行の左半分はタップして詳細に入る。button なので既定の中央寄せを戻す */
-    .rowopen {
-      font: inherit;
-    }
-
-    .row:hover {
-      border-color: var(--heart-secondary);
-    }
-
     /* ===== 候補 / 一覧 ===== */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     .spin {
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      border: 2px solid var(--line);
-      animation: spin .7s linear infinite;
-      border-color: var(--border);
+      border: 2px solid var(--border);
       border-top-color: var(--heart-secondary);
+      animation: spin .7s linear infinite;
     }
 
     .loading {
@@ -720,10 +438,13 @@
       font-family: var(--f-body);
     }
 
-    .cand,
-    .row {
+    .cands { display: flex; flex-direction: column; gap: 8px; }
+
+    .cand {
+      display: grid; grid-template-columns: 56px minmax(0, 1fr) 18px; gap: 13px; align-items: center;
+      width: 100%; text-align: left;
+      border: 1px solid var(--border); border-radius: 2px; padding: 11px 13px;
       background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
-      border-color: var(--border);
     }
 
     .cand:hover {
@@ -731,19 +452,82 @@
       border-color: var(--heart-secondary);
     }
 
-    .cand .t,
-    .row .t,
-    .now .t,
-    .hero h2,
-    .done h2 {
-      font-weight: 400;
-    }
-
     .cand .t {
       font-weight: 600;
       line-height: 1.35;
       font-family: var(--f-body);
       font-size: 0.875rem;
+    }
+
+    .cand .a { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+    .cand .d { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
+    .cand .chev { color: var(--faint); font-size: 15px; }
+
+    /* グリッド内の span は inline のままだと縦に積まれず truncate も効かない */
+    .cand .t, .cand .a, .cand .d,
+    .row .t, .row .a, .row .by,
+    .now .t, .now .a { display: block; }
+
+    details.alts { margin: -2px 0 2px 69px; }
+
+    details.alts summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 3px 0;
+      font-family: var(--f-dot);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      color: var(--heart-secondary);
+    }
+
+    details.alts summary::-webkit-details-marker { display: none; }
+    details.alts summary::before { content: '▸ '; }
+    details.alts[open] summary::before { content: '▾ '; }
+
+    .alt {
+      display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+      font-size: 12.5px; color: var(--muted); padding: 8px 11px;
+      border: 1px solid var(--line); border-radius: 2px; margin-top: 5px;
+    }
+
+    .alt:hover {
+      border-color: var(--heart-secondary);
+    }
+
+    .alt .v { font-size: 11px; color: var(--accent); }
+    .alt .len { margin-left: auto; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+    .nomatch { border: 1px dashed var(--line); border-radius: 2px; padding: 22px 18px; text-align: center; color: var(--faint); font-size: 13px; }
+
+    .rows { display: flex; flex-direction: column; gap: 7px; }
+
+    /* 行そのものは器。button の中に button は置けないので、曲を開くボタンと
+       いいねボタンを分けて持つ。いいねは状態バッジの下に積む——横に並べると
+       320px 幅の端末で曲名の居場所が無くなるが、縦なら行の高さはほぼ変わらない。 */
+    .row {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center;
+      border: 1px solid var(--border); border-radius: 2px; padding: 9px 12px;
+      background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
+    }
+
+    .row:hover {
+      border-color: var(--heart-secondary);
+    }
+
+    /* 行の左半分はタップして詳細に入る。button なので既定の中央寄せを戻す */
+    .rowopen {
+      display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: center;
+      min-width: 0; width: 100%; padding: 0; text-align: left;
+      font: inherit;
+    }
+
+    .row .t { font-size: 13.5px; }
+    .row .a { font-size: 11.5px; color: var(--muted); }
+    .row .by { font-size: 11px; color: var(--faint); }
+
+    .row .t,
+    .now .t {
+      font-weight: 400;
     }
 
     .cand .a,
@@ -764,12 +548,21 @@
       font-family: var(--f-display);
     }
 
+    .cand img { width: 56px; height: 56px; display: block; background: var(--ink); }
+    .row img { width: 44px; height: 44px; display: block; }
+
     .cand img,
     .row img,
     .now img,
     .hero img {
       border-radius: 2px;
     }
+
+    .row .ph {
+      width: 44px; height: 44px; border-radius: 2px; display: grid; place-items: center;
+      font-size: 15px;
+    }
+    .cand .ph { width: 56px; height: 56px; border-radius: 2px; display: grid; place-items: center; font-size: 20px; }
 
     .row .ph,
     .cand .ph,
@@ -788,21 +581,17 @@
       color: rgba(154, 154, 160, 0.5);
     }
 
-    details.alts summary {
-      cursor: pointer;
-      list-style: none;
-      padding: 3px 0;
-      font-family: var(--f-dot);
-      font-size: 0.6875rem;
-      letter-spacing: 0.06em;
-      color: var(--heart-secondary);
-    }
-
-    .alt:hover {
-      border-color: var(--heart-secondary);
-    }
+    .right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .at { font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
 
     /* ===== 確認 ===== */
+    .hero { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+    .hero img { width: 200px; height: 200px; display: block; background: var(--card); }
+    .hero .ph {
+      width: 200px; height: 200px; border-radius: 2px; display: grid; place-items: center;
+      font-size: 40px;
+    }
+
     .hero h2 {
       font-weight: 700;
       margin: 0;
@@ -819,10 +608,11 @@
       font-family: var(--f-body);
     }
 
+    .hero .d { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
     .vtag,
     .mytag,
-    .state,
-    .queuepos {
+    .state {
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 0.625rem;
@@ -833,39 +623,57 @@
     .vtag,
     .mytag {
       color: var(--heart-secondary);
-      border-color: var(--heart-secondary);
+      border: 1px solid var(--heart-secondary);
     }
 
+    .vtag { padding: 1px 7px; margin-left: 7px; vertical-align: 2px; }
+    .mytag { padding: 0 5px; }
+
     .state {
-      border-color: var(--border);
+      padding: 2px 9px;
+      white-space: nowrap;
+      border: 1px solid var(--border);
       color: var(--fg-dim);
     }
 
-    .state.done {
+    /* 受付＝まだ直せる／確認済＝DJ が目を通したあと。
+       直せるほうを点灯させ、直せないほうを沈める。色の濃さと明るさで
+       「こちらはまだ触れる」と分かるようにする（文言だけに頼らない）。 */
+    .state.open { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); background: color-mix(in srgb, var(--warn) 13%, transparent); }
+    /* 受付中バッジ（画面上部）と同じ「灯った丸」で、まだ動かせることを示す */
+    .state.open::before {
+      content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--warn); box-shadow: 0 0 6px var(--warn); margin-right: 6px; vertical-align: middle;
+    }
+    .state.seen { color: var(--faint); border-color: var(--line); background: transparent; }
+
+    .state.played {
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
     }
 
     .queuepos {
       font-family: var(--mono);
+      font-weight: 400;
       font-size: 12.5px;
-      border: 1px solid var(--accent-dim);
+      letter-spacing: 0.1em;
+      border: 1px solid var(--glitch-accent);
       border-radius: 2px;
       color: var(--glitch-accent);
-      border-color: var(--glitch-accent);
       padding: 4px 12px;
     }
 
+    .player { display: flex; align-items: center; gap: 12px; width: 100%; }
+
     .player button {
       flex-shrink: 0;
-      border: 1px solid var(--accent-dim);
+      border: 1px solid var(--heart-secondary);
       font-size: 15px;
       display: grid;
       place-items: center;
       width: 44px;
       height: 44px;
       border-radius: 0;
-      border-color: var(--heart-secondary);
       color: var(--heart-secondary);
     }
 
@@ -874,9 +682,8 @@
       color: var(--bg);
     }
 
-    /* 見た目は 4px の細線のまま。指で押せるよう、上下に当たり判定だけ足す */
-
-    /* background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
+    /* 見た目は 4px の細線のまま。指で押せるよう、上下に当たり判定だけ足す。
+       background の一括指定は background-clip を初期値に戻してしまうので、色だけ差す */
     .player .bar {
       flex: 1;
       height: 4px;
@@ -917,15 +724,16 @@
     }
 
     /* ===== 完了 ===== */
+    .done { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0 4px; }
+
     .tick {
       width: 62px;
       height: 62px;
       display: grid;
       place-items: center;
-      border: 2px solid var(--go);
+      border: 2px solid var(--heart-secondary);
       font-size: 27px;
       border-radius: 0;
-      border-color: var(--heart-secondary);
       color: var(--heart-secondary);
     }
 
@@ -947,12 +755,13 @@
       font-size: 12.5px;
       color: var(--faint);
       line-height: 1.7;
-      border-top: 1px solid var(--line);
+      border-top: 1px solid var(--border);
       padding-top: 14px;
       width: 100%;
       margin: 0;
-      border-top-color: var(--border);
     }
+
+    #pane-board .note { border-top: none; padding-top: 4px; }
 
     .shutbox {
       text-align: center;
@@ -973,7 +782,11 @@
     }
 
     /* ===== 一覧見出し。スケジュール表の .section-title に合わせる ===== */
+    .boardhead { display: flex; align-items: baseline; gap: 10px; }
+
     .boardhead h2 {
+      margin: 0;
+      flex: 1;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 0.9375rem;
@@ -1003,29 +816,70 @@
       color: var(--fg-dim);
     }
 
+    /* ここから下は過ぎた回。いまの回と地続きに見えないよう線で切る */
+    .pastsep { border: none; border-top: 1px solid var(--line); margin: 6px 0 0; width: 100%; }
+
+    /* いまかかっている曲。曲の行と同じく、押せば詳細に飛べる。
+       ボタンとして組み、右端に chev を置いて押せると分かるようにする。 */
     .now {
-      border-color: var(--heart-secondary);
+      display: grid; grid-template-columns: 72px minmax(0, 1fr) 14px; gap: 14px; align-items: center;
+      width: 100%; text-align: left;
+      border: 1px solid var(--heart-secondary); border-radius: 2px; padding: 14px;
       background: rgba(55, 242, 230, 0.07);
     }
+    .now .chev { color: var(--accent); font-size: 15px; }
+    .now img { width: 72px; height: 72px; display: block; }
 
     .now .lab {
+      font-size: 10.5px; letter-spacing: .12em; display: flex; align-items: center; gap: 7px;
       font-family: var(--f-display);
       color: var(--heart-secondary);
     }
 
     .now .t {
+      font-size: 15.5px; line-height: 1.35; margin-top: 4px;
       font-family: var(--f-dot);
       letter-spacing: 0.02em;
     }
 
-    .eq i {
-      background: var(--heart-secondary);
+    .now .a { font-size: 12.5px; color: var(--muted); }
+
+    .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
+    .eq i { width: 2.5px; border-radius: 2px; animation: bounce .9s ease-in-out infinite; background: var(--heart-secondary); }
+    .eq i:nth-child(1) { height: 40%; animation-delay: -.5s; }
+    .eq i:nth-child(2) { height: 100%; animation-delay: -.2s; }
+    .eq i:nth-child(3) { height: 65%; animation-delay: -.7s; }
+    .eq i:nth-child(4) { height: 85%; }
+    @keyframes bounce { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+
+    /* いいね。押した本人だけがピンクに灯る。指で狙える大きさを最優先にする */
+    .like {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0;
+      font-size: 12px; font-variant-numeric: tabular-nums;
+      color: var(--faint); border: 1px solid var(--line); border-radius: 999px;
+      padding: 7px 13px; line-height: 1; transition: color .15s, border-color .15s, background .15s;
     }
+    /* 行の中では状態バッジと横幅をそろえる。ばらばらの幅が縦に積まれると散らかる */
+    .right .like { align-self: stretch; margin-top: 1px; }
+    .like:hover { color: var(--stop); border-color: color-mix(in srgb, var(--stop) 45%, var(--line)); }
+    .like.on {
+      color: var(--stop); border-color: color-mix(in srgb, var(--stop) 55%, var(--line));
+      background: color-mix(in srgb, var(--stop) 13%, transparent);
+    }
+    .like .hh { font-size: 13px; }
+    /* 押した瞬間だけ跳ねる。反応があると分かるのが目的なので短く */
+    .like.just .hh { animation: likepop .3s ease-out; }
+    @keyframes likepop { 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
+    .blank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 18px 0; }
 
     /* ===== 過去のイベント ===== */
+    /* 曲の行（.row）と同じ器に見せる。中身は曲ではなく回なので、
+       ジャケットの代わりに曲数を置いて、行の高さを1段ぶん低くする。 */
     .evrow {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; gap: 12px; align-items: center;
+      width: 100%; text-align: left;
+      border: 1px solid var(--border); border-radius: 2px; padding: 11px 13px;
       background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
-      border-color: var(--border);
       font-family: var(--f-body);
     }
 
@@ -1034,24 +888,41 @@
       border-color: var(--heart-secondary);
     }
 
-    .evrow .t { font-weight: 400; }
+    .evrow .t { display: block; font-size: 13.5px; font-weight: 400; }
+    .evrow .d { display: block; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; margin-top: 3px; }
+    .evrow .n { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
     .evrow .d,
     .evrow .n {
       font-family: var(--f-display);
     }
 
+    .evrow .chev { color: var(--faint); font-size: 15px; }
+
+    .pasthead { display: flex; align-items: baseline; gap: 10px; }
+
     .pasthead h2 {
+      margin: 0;
+      flex: 1;
+      line-height: 1.35;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 1.0625rem;
       letter-spacing: 0.03em;
     }
 
-    /* ===== 投げ銭 ===== */
+    /* 終わった回はもう押せない。枠を外して、押せる場所と見間違えないようにする。
+       自分が押した曲は当時のまま灯したままにする（記録として読めるほうがよい）。 */
+    .like.static {
+      pointer-events: none; border-color: transparent; background: none; padding: 7px 2px;
+    }
+
+    /* ===== 投げ銭（Buy Me Oil）===== */
     .tipbox {
-      background: transparent;
-      border-color: var(--border);
+      width: 100%; padding: 18px 16px;
+      border: 1px solid var(--border); border-radius: 2px;
+      display: flex; flex-direction: column; align-items: center; gap: 11px;
+      cursor: pointer; transition: border-color .15s, background .15s;
     }
 
     .tipbox:hover {
@@ -1059,37 +930,47 @@
       border-color: var(--heart-secondary);
     }
 
+    .tipbox .tiplede { font-size: 12.5px; color: var(--muted); }
+    .tipbox .tipnote { font-size: 11.5px; color: var(--faint); line-height: 1.75; }
+
     .tipbox .tiplede,
     .tipbox .tipnote {
       font-family: var(--f-body);
     }
 
     .tipbox .tipnote b {
+      display: block;
       font-family: var(--f-dot);
       font-weight: 400;
       letter-spacing: 0.1em;
       color: var(--heart-secondary);
     }
 
+    /* ウィジェット既定の 32px は指で狙うには小さいので、この画面だけ大きくする */
+    .tipbox .donation-widget-button { width: 46px; height: 46px; }
+
     /* ===== MAGI 相談 ===== */
+    .magi-head { display: flex; align-items: center; gap: 12px; }
+    .magi-head .emblem { width: 44px; height: 44px; flex-shrink: 0; }
+    .magi-head .emblem .hx { fill: none; stroke-width: 3.5; }
+    .magi-head .emblem .hl { stroke-width: 2.5; }
+
     .magi-head .emblem .hx,
     .magi-head .emblem .hl {
       stroke: rgba(55, 242, 230, 0.45);
     }
 
-    .magi-head .emblem .hn {
-      font-family: var(--f-display);
-      fill: var(--heart-secondary);
-    }
+    .magi-head .emblem .hn { font-size: 17px; font-family: var(--f-display); fill: var(--heart-secondary); }
+    .magi-head .mt { font-size: 15px; letter-spacing: .24em; line-height: 1.2; font-family: var(--f-display); color: var(--heart-secondary); }
+    .magi-head .ms { font-size: 11.5px; letter-spacing: .04em; margin-top: 3px; font-family: var(--f-body); color: var(--fg-dim); }
 
-    .magi-head .mt {
-      font-family: var(--f-display);
-      color: var(--heart-secondary);
-    }
+    .seeds { display: flex; flex-wrap: wrap; gap: 7px; }
 
-    .magi-head .ms {
-      font-family: var(--f-body);
-      color: var(--fg-dim);
+    .seed { padding: 7px 12px; text-align: left; }
+
+    .pick {
+      padding: 7px 13px;
+      display: inline-flex; align-items: center; gap: 6px; text-align: left;
     }
 
     .seed,
@@ -1097,69 +978,78 @@
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       letter-spacing: 0.06em;
-      background: transparent;
-      border-color: var(--border);
+      border: 1px solid var(--border);
       color: var(--fg-dim);
       border-radius: 0;
     }
 
     .seed:hover,
     .pick:hover {
-      background: transparent;
       border-color: var(--heart-secondary);
       color: var(--heart-secondary);
     }
 
-    .pick::after {
-      color: var(--heart-secondary);
-    }
+    .chatlog { display: flex; flex-direction: column; gap: 15px; }
+    .chatlog:empty { display: none; }
 
     .bubble {
+      align-self: flex-end; max-width: 85%; font-size: 14px;
+      border: 1px solid var(--border); border-radius: 2px; padding: 10px 13px;
+      white-space: pre-wrap; overflow-wrap: anywhere;
       font-family: var(--f-body);
       background: var(--bg-elevated);
-      border-color: var(--border);
-      border-radius: 2px;
     }
 
-    details.debate {
-      background: transparent;
-      border-color: var(--border);
-    }
+    .turn { display: flex; flex-direction: column; gap: 10px; }
+
+    details.debate { border: 1px solid var(--border); border-radius: 2px; }
 
     details.debate summary {
+      list-style: none; cursor: pointer; padding: 9px 12px;
+      font-size: 10.5px; letter-spacing: .12em;
+      display: flex; align-items: center; gap: 8px;
       font-family: var(--f-display);
       color: var(--fg-dim);
     }
 
-    .pcard .cn {
-      font-family: var(--f-display);
-      color: var(--heart-secondary);
-    }
+    details.debate summary::-webkit-details-marker { display: none; }
+    details.debate summary::after { content: '▾'; margin-left: auto; }
+    details.debate:not([open]) summary::after { content: '▸'; }
+    .pcards { display: flex; flex-direction: column; gap: 9px; padding: 2px 12px 12px; }
+    .pcard .cn { font-size: 10px; letter-spacing: .1em; font-family: var(--f-display); color: var(--heart-secondary); }
+    .pcard .px { font-size: 12px; color: var(--muted); line-height: 1.65; margin-top: 2px; overflow-wrap: anywhere; font-family: var(--f-body); }
+    .pcard.thinking .px { color: var(--faint); }
 
-    .pcard .px {
-      font-family: var(--f-body);
-    }
+    .answer { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
 
     .answer .av {
-      border-radius: 0;
-      border-color: var(--heart-secondary);
+      width: 28px; height: 28px; border: 1px solid var(--heart-secondary); border-radius: 0;
+      font-size: 11px; display: grid; place-items: center;
       color: var(--heart-secondary);
       font-family: var(--f-display);
     }
 
-    .answer .who {
-      font-family: var(--f-display);
+    .answer .who { font-size: 10.5px; letter-spacing: .08em; color: var(--faint); margin-bottom: 4px; font-family: var(--f-display); }
+    .answer .ab { font-size: 14.5px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--f-body); }
+    .answer.streaming .ab::after { content: '▍'; animation: blink 1s steps(2) infinite; color: var(--heart-secondary); }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .picks { display: flex; flex-wrap: wrap; gap: 7px; margin-left: 38px; }
+    .pick::after { content: '↗'; font-size: 11px; color: var(--heart-secondary); }
+    .picklede { font-size: 11.5px; color: var(--faint); margin: 2px 0 0 38px; }
+
+    /* 受付時間外・オフラインのときに composer の代わりに出す。
+       できない理由だけ伝えて、相談そのものは塞ぐ */
+    .chatlock {
+      border: 1px dashed var(--line); border-radius: 2px; padding: 15px 14px;
+      text-align: center; font-size: 12.5px; color: var(--faint); line-height: 1.7;
     }
 
-    .answer .ab {
-      font-family: var(--f-body);
-    }
-
-    .answer.streaming .ab::after {
-      color: var(--heart-secondary);
-    }
+    .composer { display: flex; gap: 8px; align-items: flex-end; }
+    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px; }
 
     .composer button {
+      flex-shrink: 0; height: 48px; padding: 0 16px;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 0.75rem;
@@ -1176,6 +1066,7 @@
     }
 
     .composer button:disabled {
+      cursor: not-allowed;
       background: transparent;
       border-color: var(--border);
       color: rgba(154, 154, 160, 0.45);
@@ -1412,30 +1303,19 @@
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
+  <script src="../../data/dj-request-core.js?v=20260926"></script>
   <script>
     const API = '/dj/api/req';
-    const $ = (s) => document.querySelector(s);
-    const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const mmss = (sec) => sec ? Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') : '';
+    const {
+      $, $$, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock, formatDurationMs, storage,
+    } = window.DJRequestCore;
+    const apiJson = createApi(API, '通信に失敗しました。電波の良い場所でもう一度お試しください。');
 
-    async function apiJson(path, opts = {}) {
-      let res;
-      try {
-        res = await fetch(API + path, opts);
-      } catch {
-        throw new Error('通信に失敗しました。電波の良い場所でもう一度お試しください。');
-      }
-      let data = {};
-      try { data = await res.json(); } catch { /* JSON でないエラー応答 */ }
-      if (!res.ok) {
-        const error = new Error(data.message || '通信に失敗しました');
-        error.status = res.status;
-        error.data = data;
-        throw error;
-      }
-      return data;
-    }
+    const loadingHTML = (text) => '<div class="loading"><span class="spin"></span>' + text + '</div>';
+    // ジャケット。無い曲は ♪ の札で埋める（一覧・候補・NOW PLAYING で共通）
+    const artHTML = (url, lazy) => url
+      ? '<img src="' + esc(url) + '" alt=""' + (lazy ? ' loading="lazy"' : '') + '>'
+      : '<span class="ph">♪</span>';
 
     async function withBusy(btn, task, label = '送信中…', after) {
       if (btn.dataset.busy === 'true') return;
@@ -1469,7 +1349,7 @@
        採用か見送りかはサーバも返さないので、ここでは区別しない。
        一覧と詳細で文言がずれないよう、組み立てるのはこの一か所だけ。 */
     function stateChip(s, suffix) {
-      if (s.playedAt) return '<span class="state done">✓ 再生済' + suffix + '</span>';
+      if (s.playedAt) return '<span class="state played">✓ 再生済' + suffix + '</span>';
       if (s.seen) return '<span class="state seen" title="DJ が確認したので変更できません">確認済</span>';
       return '<span class="state open" title="まだ変更できます">受付</span>';
     }
@@ -1548,12 +1428,12 @@
     const TAB_OF = { consult: 'consult', board: 'board', past: 'board', song: 'board' };
 
     function show(pane) {
-      document.querySelectorAll('.pane').forEach((p) => p.classList.remove('on'));
+      $$('.pane').forEach((p) => p.classList.remove('on'));
       $('#pane-' + pane).classList.add('on');
       // 曲の詳細は一覧から入るので、リクエストの流れの戻り先には数えない
       if (!TAB_OF[pane]) flowPane = pane;
       const tab = TAB_OF[pane] || 'search';   // 確認・自由入力・完了はすべて「リクエストする」の中
-      document.querySelectorAll('.tabs button').forEach((b) =>
+      $$('.tabs button').forEach((b) =>
         b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
       if (pane === 'board') startBoardPolling(); else stopBoardPolling();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1564,21 +1444,18 @@
 
     function candHTML(g, i) {
       const t = g.rep;
-      const art = t.artwork
-        ? '<img src="' + esc(t.artwork) + '" alt="" loading="lazy">'
-        : '<span class="ph">♪</span>';
       const v = t.variant ? '<span class="vtag">' + esc(t.variant) + '</span>' : '';
-      let html = '<button class="cand" data-g="' + i + '">' + art +
+      let html = '<button class="cand" data-g="' + i + '">' + artHTML(t.artwork, true) +
         '<span><span class="t trunc">' + esc(t.title) + v + '</span>' +
         '<span class="a trunc">' + esc(t.artist) + '</span>' +
         // 尺は曲を選ぶ判断材料なので、長いアルバム名に押し出されないよう先頭に置く
-        '<span class="d trunc">' + mmss(Math.round(t.durationMs / 1000)) + ' · ' + esc(t.album) + '</span></span>' +
+        '<span class="d trunc">' + formatDurationMs(t.durationMs) + ' · ' + esc(t.album) + '</span></span>' +
         '<span class="chev">›</span></button>';
       if (g.alts.length) {
         html += '<details class="alts"><summary>他のバージョン (' + g.alts.length + ')</summary>' +
           g.alts.map((a, ai) => '<button class="alt" data-g="' + i + '" data-a="' + ai + '">' +
             '<span class="v">' + esc(a.variant || '別バージョン') + '</span>' +
-            '<span class="len">' + mmss(Math.round(a.durationMs / 1000)) + '</span></button>').join('') +
+            '<span class="len">' + formatDurationMs(a.durationMs) + '</span></button>').join('') +
           '</details>';
       }
       return html;
@@ -1587,7 +1464,7 @@
     async function doSearch(q) {
       const box = $('#results');
       if (q.trim().length < 2) { box.innerHTML = ''; return; }
-      box.innerHTML = '<div class="loading"><span class="spin"></span>検索中…</div>';
+      box.innerHTML = loadingHTML('検索中…');
 
       if (searchAbort) searchAbort.abort();
       searchAbort = new AbortController();
@@ -1619,23 +1496,17 @@
       const v = e.target.value;
       searchTimer = setTimeout(() => doSearch(v), 300);   // 打鍵ごとに叩かない
     });
-    $('#clear').addEventListener('click', () => {
+    function clearSearch() {
       $('#q').value = ''; $('#field').classList.remove('filled');
-      $('#results').innerHTML = ''; $('#q').focus();
-    });
+      $('#results').innerHTML = '';
+    }
+    $('#clear').addEventListener('click', () => { clearSearch(); $('#q').focus(); });
 
     /* ── 確認画面 ─────────────────────────── */
     let picked = null;
-    let audio = null, audioTimer = null, audioUi = null, audioUrl = '';
-
-    // 確認画面と曲の詳細で1つずつ。鳴らせるのは常にどちらか片方だけ
     const players = [];
 
-    // 頭出しまで戻す停止。画面を離れるときはこちら
-    function stopAudio() {
-      if (audio) { audio.pause(); audio = null; }
-      clearInterval(audioTimer); audioTimer = null;
-      audioUi = null; audioUrl = '';
+    function resetPlayers() {
       for (const ui of players) {
         ui.bar.style.width = '0';
         ui.play.textContent = '▶';
@@ -1644,43 +1515,24 @@
       }
     }
 
-    function tickAudio(ui) {
-      if (!audio) return;
-      const left = Math.max(0, Math.round((audio.duration || 30) - audio.currentTime));
-      ui.bar.style.width = (audio.currentTime / (audio.duration || 30) * 100) + '%';
-      ui.time.textContent = '0:' + String(left).padStart(2, '0');
+    function paintPlayer(ui, state) {
+      ui.bar.style.width = (state.progress * 100) + '%';
+      ui.time.textContent = formatClock(state.remaining);
+      ui.play.textContent = state.paused ? '▶' : '❚❚';
+      ui.play.setAttribute('aria-label', state.paused ? 'プレビューを再開' : 'プレビューを一時停止');
     }
 
-    function runAudio(ui) {
-      return audio.play().then(() => {
-        ui.play.textContent = '❚❚';
-        ui.play.setAttribute('aria-label', 'プレビューを一時停止');
-        clearInterval(audioTimer);
-        audioTimer = setInterval(() => tickAudio(ui), 200);
-      });
-    }
-
-    // 読み込む前は duration が出ていないので、メタデータが来てから飛ばす
-    function seekAudio(ui, ratio) {
-      const apply = () => {
-        const dur = audio.duration || 30;
-        audio.currentTime = Math.max(0, Math.min(dur - 0.05, dur * ratio));
-        tickAudio(ui);
-      };
-      if (audio.readyState > 0) apply();
-      else audio.addEventListener('loadedmetadata', apply, { once: true });
-    }
-
-    function startAudio(ui, url, ratio) {
-      stopAudio();
-      audio = new Audio(url); audioUi = ui; audioUrl = url;
-      audio.addEventListener('ended', stopAudio);
-      if (ratio) seekAudio(ui, ratio);
-      return runAudio(ui).catch(() => { stopAudio(); });
-    }
-
-    // いま鳴らしている（あるいは一時停止している）のがこのプレイヤーのこの曲か
-    const holding = (ui, url) => !!audio && audioUi === ui && audioUrl === url;
+    // 確認画面と曲の詳細で1つずつ。鳴らせるのは常にどちらか片方だけ
+    const preview = createPreviewController({
+      onStateChange(state) {
+        resetPlayers();
+        if (state.active) paintPlayer(state.key, state);
+      },
+      onProgress(state) {
+        if (state.active) paintPlayer(state.key, state);
+      },
+    });
+    const stopAudio = () => preview.stop();
 
     // プレビューは必ずタップ起点で鳴らす（iOS は自動再生を許さない）
     function bindPlayer(playSel, barSel, timeSel, urlOf) {
@@ -1691,18 +1543,7 @@
       ui.play.addEventListener('click', () => {
         const url = urlOf();
         if (!url) return;
-        // 鳴らしている最中の同じ曲なら、頭に戻さず一時停止と再開を往復する
-        if (holding(ui, url)) {
-          if (audio.paused) runAudio(ui).catch(() => stopAudio());
-          else {
-            audio.pause();
-            clearInterval(audioTimer); audioTimer = null;
-            ui.play.textContent = '▶';
-            ui.play.setAttribute('aria-label', 'プレビューを再開');
-          }
-          return;
-        }
-        startAudio(ui, url, 0);
+        preview.toggle(ui, url);
       });
 
       /* バーを押したら、その位置へ。まだ鳴らしていなければそこから鳴らしはじめ、
@@ -1713,20 +1554,23 @@
         const r = ui.track.getBoundingClientRect();
         if (!r.width) return;
         const ratio = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-        if (holding(ui, url)) seekAudio(ui, ratio);
-        else startAudio(ui, url, ratio);
+        preview.seekOrStart(ui, url, ratio);
       });
+    }
+
+    function trackHeroHTML(track, allowFree = false) {
+      const free = allowFree && track.isFree;
+      const variant = track.variant ? '<span class="vtag">' + esc(track.variant) + '</span>' : '';
+      return (track.artwork ? '<img src="' + esc(track.artwork) + '" alt="">' : '<div class="ph">♪</div>') +
+        '<h2>' + esc(track.title) + variant + '</h2>' +
+        '<div class="a">' + esc(free ? '曲名を調べています' : track.artist) + '</div>' +
+        (free ? '' : '<div class="d">' + esc(track.album) + ' · ' + formatDurationMs(track.durationMs) + '</div>');
     }
 
     function toConfirm(track, artFallback) {
       picked = Object.assign({}, track);
       if (!picked.artwork && artFallback) picked.artwork = artFallback;
-      const v = picked.variant ? '<span class="vtag">' + esc(picked.variant) + '</span>' : '';
-      $('#hero').innerHTML =
-        (picked.artwork ? '<img src="' + esc(picked.artwork) + '" alt="">' : '<div class="ph">♪</div>') +
-        '<h2>' + esc(picked.title) + v + '</h2>' +
-        '<div class="a">' + esc(picked.artist) + '</div>' +
-        '<div class="d">' + esc(picked.album) + ' · ' + mmss(Math.round(picked.durationMs / 1000)) + '</div>';
+      $('#hero').innerHTML = trackHeroHTML(picked);
       stopAudio();
       $('#player').style.display = picked.previewUrl ? 'flex' : 'none';
       $('#sendErr').hidden = true;
@@ -1773,6 +1617,14 @@
       });
     }
     bindCount($('#msg'), $('#msgCount'), 50);
+
+    /* 文字数・高さ・送信ボタンの可否はどれも input を聞いて揃えている。
+       コードから値を入れるときも同じ道を通して、表示の直し漏れを作らない */
+    function setValue(el, value) {
+      el.value = value;
+      el.dispatchEvent(new Event('input'));
+    }
+
     const syncFreeSend = () => {
       $('#freeSend').disabled = $('#freeText').value.trim().length < 2;
     };
@@ -1784,50 +1636,45 @@
        localStorage が使えないときは空のまま送り、サーバ側で使い捨ての値になる。 */
     const DEVICE_KEY = 'tkdj.device';
     const deviceKey = (() => {
-      try {
-        let v = localStorage.getItem(DEVICE_KEY);
-        if (!v) {
-          v = [...crypto.getRandomValues(new Uint8Array(16))]
-            .map((n) => n.toString(16).padStart(2, '0')).join('');
-          localStorage.setItem(DEVICE_KEY, v);
-        }
-        return v;
-      } catch { return ''; }
+      const saved = storage.getText(DEVICE_KEY);
+      if (saved) return saved;
+      const value = [...crypto.getRandomValues(new Uint8Array(16))]
+        .map((n) => n.toString(16).padStart(2, '0')).join('');
+      return storage.setText(DEVICE_KEY, value) ? value : '';
     })();
 
     /* あとで自分の投稿を直す／取り下げるための鍵。サーバはこれでしか本人と認めない。
        クエリには載せない（アクセスログや Referer に残るため）。 */
     const LEGACY_MINE_KEY = 'tkdj.mine';
     const TOKEN_KEY = 'tkdj.tokens';
-    const tokens = () => { try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || '{}'); } catch { return {}; } };
-    const legacyMine = () => { try { return JSON.parse(localStorage.getItem(LEGACY_MINE_KEY) || '[]'); } catch { return []; } };
+    const tokens = () => storage.getJSON(TOKEN_KEY, {});
+    const legacyMine = () => storage.getJSON(LEGACY_MINE_KEY, []);
     // 編集トークン導入前の投稿は旧キーにしか残っていない。新規書き込みはせず、表示判定にだけ統合する。
     const mine = () => [...new Set([...legacyMine(), ...Object.keys(tokens()).map(Number)])].filter(Number.isFinite);
     const tokenOf = (id) => tokens()[id] || '';
     const rememberToken = (id, token) => {
       if (!token) return;
-      try { const m = tokens(); m[id] = token; localStorage.setItem(TOKEN_KEY, JSON.stringify(m)); } catch {}
+      const saved = tokens();
+      saved[id] = token;
+      storage.setJSON(TOKEN_KEY, saved);
     };
-    const authHeader = (token) => (token ? { Authorization: 'Bearer ' + token } : {});
 
     /* いいねを押した曲。1曲1回はサーバが device_key で担保するので、ここは
        ハートを灯すための控え。localStorage を消せば device_key も一緒に消え、
        サーバから見ても別端末になるので、両者の食い違いは起きない。 */
     const LIKE_KEY = 'tkdj.likes';
-    const likedIds = () => { try { return JSON.parse(localStorage.getItem(LIKE_KEY) || '[]'); } catch { return []; } };
+    const likedIds = () => storage.getJSON(LIKE_KEY, []);
     const liked = (id) => likedIds().includes(id);
     const setLiked = (id, on) => {
-      try {
-        const set = new Set(likedIds());
-        if (on) set.add(id); else set.delete(id);
-        localStorage.setItem(LIKE_KEY, JSON.stringify([...set]));
-      } catch {}
+      const set = new Set(likedIds());
+      if (on) set.add(id); else set.delete(id);
+      storage.setJSON(LIKE_KEY, [...set]);
     };
     const forgetSong = (id) => {
-      try {
-        localStorage.setItem(LEGACY_MINE_KEY, JSON.stringify(legacyMine().filter((x) => x !== id)));
-        const m = tokens(); delete m[id]; localStorage.setItem(TOKEN_KEY, JSON.stringify(m));
-      } catch {}
+      storage.setJSON(LEGACY_MINE_KEY, legacyMine().filter((x) => x !== id));
+      const saved = tokens();
+      delete saved[id];
+      storage.setJSON(TOKEN_KEY, saved);
     };
 
     /** rekordbox の検索で当たりやすいラテン表記を US ストアフロントから取る。
@@ -1848,10 +1695,18 @@
        紙吹雪は新しく受け付けたときだけで、内容の変更では出さない。 */
     let doneSongId = 0;   // 「リクエスト内容を修正する」の飛び先
 
-    function showDone({ songId, title, whatHTML, pos, celebrate }) {
+    function fillDoneTrack(track) {
+      const box = $('#doneWhat');
+      const name = document.createElement('b');
+      name.textContent = track.title;
+      box.replaceChildren(name);
+      if (track.artist) box.append(document.createElement('br'), document.createTextNode(track.artist));
+    }
+
+    function showDone({ songId, title, track, pos, celebrate }) {
       doneSongId = songId;
       $('#doneTitle').textContent = title;
-      $('#doneWhat').innerHTML = whatHTML;
+      fillDoneTrack(track);
       $('#donePos').textContent = pos || '';
       $('#donePos').hidden = !pos;
       $('#doneEdit').hidden = !songId;
@@ -1864,27 +1719,27 @@
       if (doneSongId) openSong(doneSongId);
     });
 
-    async function submit(payload, errBox, whatHTML) {
+    function showErr(box, error, fallback) {
+      box.textContent = error.message || fallback;
+      box.hidden = false;
+    }
+
+    async function submit(payload, errBox, track) {
       errBox.hidden = true;
       try {
-        const data = await apiJson('/requests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, device: deviceKey }),
-        });
+        const data = await apiJson('/requests', { method: 'POST', json: { ...payload, device: deviceKey } });
         rememberToken(data.songId, data.editToken);
         showDone({
           songId: data.songId,
           title: '受け付けました',
-          whatHTML,
+          track,
           pos: data.duplicate
             ? 'すでに受け付けている曲です'
             : '今回 ' + data.position + ' 件目のリクエストです',
           celebrate: true,
         });
       } catch (e) {
-        errBox.textContent = e.message || '通信に失敗しました。電波の良い場所でもう一度お試しください。';
-        errBox.hidden = false;
+        showErr(errBox, e, '通信に失敗しました。電波の良い場所でもう一度お試しください。');
       }
     }
 
@@ -1895,7 +1750,7 @@
           track: { ...picked, artistEn: artistEn || picked.artist },
           name: $('#name').value,
           message: $('#msg').value,
-        }, $('#sendErr'), '<b>' + esc(picked.title) + '</b><br>' + esc(picked.artist));
+        }, $('#sendErr'), { title: picked.title, artist: picked.artist });
       });
     });
 
@@ -1904,15 +1759,14 @@
       await withBusy($('#freeSend'), () => submit(
         { free: text, name: $('#freeName').value },
         $('#freeErr'),
-        '<b>' + esc(text) + '</b>'
+        { title: text, artist: '' }
       ), '送信中…', syncFreeSend);
     });
 
     $('#again').addEventListener('click', () => {
-      $('#q').value = ''; $('#field').classList.remove('filled');
-      $('#results').innerHTML = '';
-      $('#msg').value = ''; $('#msgCount').textContent = '0 / 50'; fitMsg();
-      $('#freeText').value = ''; $('#freeCount').textContent = '0 / 140'; $('#freeSend').disabled = true;
+      clearSearch();
+      setValue($('#msg'), '');
+      setValue($('#freeText'), '');
       show(eventOpen ? 'search' : 'shut');
     });
 
@@ -1952,7 +1806,7 @@
     /* 一覧と曲の詳細で同じ曲が同時に出ることはないが、どちらから押しても
        同じ道を通るよう、data-like が同じボタンはまとめて塗り替える。 */
     function paintLike(id, on, n) {
-      document.querySelectorAll('.like[data-like="' + id + '"]').forEach((b) => {
+      $$('.like[data-like="' + id + '"]').forEach((b) => {
         b.classList.toggle('on', on);
         b.setAttribute('aria-pressed', String(on));
         b.title = on ? 'いいねを取り消す' : 'いいねする';
@@ -1969,7 +1823,7 @@
        押せていないように見えて連打を誘う。失敗したら押す前の状態に戻す。 */
     async function toggleLike(id) {
       if (likeBusy.has(id)) return;
-      const cell = document.querySelector('.like[data-like="' + id + '"] .n');
+      const cell = $('.like[data-like="' + id + '"] .n');
       const before = Number(cell && cell.textContent) || 0;
       const on = !liked(id);
       const next = Math.max(0, before + (on ? 1 : -1));
@@ -1980,11 +1834,7 @@
       paintLike(id, on, next);
 
       try {
-        const d = await apiJson('/songs/' + id + '/like', {
-          method: on ? 'POST' : 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ device: deviceKey }),
-        });
+        const d = await apiJson('/songs/' + id + '/like', { method: on ? 'POST' : 'DELETE', json: { device: deviceKey } });
         setLiked(id, !!d.liked);
         likeFresh.set(id, d.likes);
         paintLike(id, !!d.liked, d.likes);
@@ -2017,13 +1867,10 @@
     }
 
     function rowHTML(s, isMine, past) {
-      const art = s.artwork
-        ? '<img src="' + esc(s.artwork) + '" alt="" loading="lazy">'
-        : '<span class="ph">♪</span>';
       const played = !!s.playedAt;
       const at = played ? hhmm(s.playedAt) : '';
       return '<div class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') + '">' +
-        '<button type="button" class="rowopen" data-song="' + s.id + '">' + art +
+        '<button type="button" class="rowopen" data-song="' + s.id + '">' + artHTML(s.artwork, true) +
         '<span><span class="t trunc">' + esc(s.title) + '</span>' +
         '<span class="a trunc">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</span>' +
         (s.by ? '<span class="by trunc">— ' + esc(s.by) + '</span>' : '') + '</span></button>' +
@@ -2042,7 +1889,7 @@
 
         $('#nowBox').innerHTML = d.now
           ? '<button type="button" class="now" data-song="' + d.now.id + '">' +
-          (d.now.artwork ? '<img src="' + esc(d.now.artwork) + '" alt="">' : '<span class="ph">♪</span>') +
+          artHTML(d.now.artwork) +
           '<span><span class="lab"><span class="eq"><i></i><i></i><i></i><i></i></span>NOW PLAYING</span>' +
           '<span class="t trunc">' + esc(d.now.title) + '</span>' +
           '<span class="a trunc">' + esc(d.now.artist) + '</span></span>' +
@@ -2091,7 +1938,7 @@
       const box = $('#pastEvents');
       // 読めるまで15秒ごとに試すので、すでに何か出ているときは差し替えない。
       // 毎回スピナーに戻すと、通じない場所でずっと点滅し続けることになる。
-      if (!box.firstChild) box.innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
+      if (!box.firstChild) box.innerHTML = loadingHTML('読み込んでいます');
       try {
         const d = await apiJson('/events');
         pastLoaded = true;   // 読めたときだけ立てる。失敗したら次の更新でまた試す
@@ -2110,7 +1957,7 @@
       $('#pastTitle').textContent = '読み込んでいます';
       $('#pastDate').textContent = '';
       $('#pastNote').hidden = true;
-      $('#pastRows').innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
+      $('#pastRows').innerHTML = loadingHTML('読み込んでいます');
       show('past');
       try {
         const d = await apiJson('/events/' + encodeURIComponent(code));
@@ -2136,15 +1983,10 @@
       loadBoard();
     }
 
-    document.querySelector('.tabs').addEventListener('click', (e) => {
-      const b = e.target.closest('button');
-      if (!b) return;
-      if (b.dataset.tab === 'consult') { show('consult'); return; }
-      if (b.dataset.tab === 'board') {
-        openBoard();
-      } else {
-        show(flowPane);
-      }
+    $('.tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('button')?.dataset.tab;
+      if (tab === 'board') openBoard();
+      else if (tab) show(tab === 'consult' ? 'consult' : flowPane);
     });
 
     /* ── 曲の詳細 ───────────────────────────
@@ -2199,13 +2041,9 @@
       const s = detail.song;
       const played = !!s.playedAt;
       const at = played ? hhmm(s.playedAt) : '';
-      const v = s.variant ? '<span class="vtag">' + esc(s.variant) + '</span>' : '';
 
       $('#songHero').innerHTML =
-        (s.artwork ? '<img src="' + esc(s.artwork) + '" alt="">' : '<div class="ph">♪</div>') +
-        '<h2>' + esc(s.title) + v + '</h2>' +
-        '<div class="a">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</div>' +
-        (s.isFree ? '' : '<div class="d">' + esc(s.album) + ' · ' + mmss(Math.round(s.durationMs / 1000)) + '</div>') +
+        trackHeroHTML(s, true) +
         '<div class="songstate">' +
         stateChip(s, ' ' + esc(at)) +
         (detail.past ? likeStatic(s) : likeHTML(s)) +
@@ -2217,11 +2055,8 @@
       $('#songEdit').hidden = !canEdit;
       $('#mineErr').hidden = true;
       if (canEdit) {
-        $('#mineMsg').value = detail.mine.message || '';
         $('#mineName').value = detail.mine.name || '';
-        $('#mineMsgCount').textContent = $('#mineMsg').value.length + ' / 50';
-        fitMine();
-        syncMineSave();
+        setValue($('#mineMsg'), detail.mine.message || '');   // 文字数・高さ・保存ボタンもここで揃う
       }
 
       // 直せなくなっても、自分が送った内容は読めるように差し替えて残す
@@ -2251,7 +2086,7 @@
       songFrom = from || '';
       $('#songBack').textContent = songFrom ? '← この回の一覧に戻る' : '← みんなのリクエストに戻る';
       detail = null;
-      $('#songHero').innerHTML = '<div class="loading"><span class="spin"></span>読み込んでいます</div>';
+      $('#songHero').innerHTML = loadingHTML('読み込んでいます');
       $('#songPlayer').style.display = 'none';
       $('#songEdit').hidden = true;
       $('#mineView').hidden = true;
@@ -2259,9 +2094,7 @@
       $('#songNote').hidden = true;
       show('song');
       try {
-        const token = tokenOf(id);
-        const d = await apiJson('/songs/' + id, { headers: authHeader(token) });
-        detail = d;
+        detail = await apiJson('/songs/' + id, { headers: bearer(tokenOf(id)) });
         renderSong();
       } catch {
         $('#songHero').innerHTML = '<div class="nomatch">この曲を読み込めませんでした</div>';
@@ -2295,7 +2128,7 @@
       if (like) toggleLike(Number(like.dataset.like));
     });
 
-    const fitMine = autoGrow($('#mineMsg'));
+    autoGrow($('#mineMsg'));
     bindCount($('#mineMsg'), $('#mineMsgCount'), 50, syncMineSave);
     $('#mineName').addEventListener('input', syncMineSave);   // 名前欄は文字数カウンタが無いので直に
 
@@ -2307,28 +2140,23 @@
         try {
           const d = await apiJson('/songs/' + detail.song.id + '/mine', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', ...authHeader(tokenOf(detail.song.id)) },
-            body: JSON.stringify({
-              name: $('#mineName').value,
-              message: $('#mineMsg').value,
-            }),
+            headers: bearer(tokenOf(detail.song.id)),
+            json: { name: $('#mineName').value, message: $('#mineMsg').value },
           });
           detail.mine = d.mine;
-          $('#mineMsg').value = d.mine.message;
           $('#mineName').value = d.mine.name;
-          $('#mineMsgCount').textContent = d.mine.message.length + ' / 50'; fitMine();
+          setValue($('#mineMsg'), d.mine.message);
           const s = detail.song;
           showDone({
             songId: s.id,
             title: '変更しました',
-            whatHTML: '<b>' + esc(s.title) + '</b>' + (s.isFree ? '' : '<br>' + esc(s.artist)),
+            track: { title: s.title, artist: s.isFree ? '' : s.artist },
             pos: '',
             celebrate: false,
           });
         } catch (e) {
           if (handleMineLock(e)) return;
-          err.textContent = e.message || '変更できませんでした。もう一度お試しください。';
-          err.hidden = false;
+          showErr(err, e, '変更できませんでした。もう一度お試しください。');
         }
       }, '送信中…', syncMineSave);
     });
@@ -2340,16 +2168,12 @@
       await withBusy(btn, async () => {
         err.hidden = true;
         try {
-          await apiJson('/songs/' + detail.song.id + '/mine', {
-            method: 'DELETE',
-            headers: authHeader(tokenOf(detail.song.id)),
-          });
+          await apiJson('/songs/' + detail.song.id + '/mine', { method: 'DELETE', headers: bearer(tokenOf(detail.song.id)) });
           forgetSong(detail.song.id);
           openBoard();
         } catch (e) {
           if (handleMineLock(e)) return;
-          err.textContent = e.message || '取り下げられませんでした。もう一度お試しください。';
-          err.hidden = false;
+          showErr(err, e, '取り下げられませんでした。もう一度お試しください。');
         }
       }, '処理中…');
     });
@@ -2598,10 +2422,7 @@
       doSearch(q);
     });
 
-    function openConsult() {
-      show('consult');
-    }
-    $('#toConsultFromFree').addEventListener('click', openConsult);
+    $('#toConsultFromFree').addEventListener('click', () => show('consult'));
 
     /* ── 起動 ─────────────────────────────── */
     // 受付していないときも、こういう相談相手がいること自体は見てほしい。
