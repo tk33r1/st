@@ -974,7 +974,8 @@
     }
 
     .seed,
-    .pick {
+    .pick,
+    .chatbtn {
       font-family: var(--f-dot);
       font-size: 0.6875rem;
       letter-spacing: 0.06em;
@@ -984,7 +985,8 @@
     }
 
     .seed:hover,
-    .pick:hover {
+    .pick:hover,
+    .chatbtn:hover:not(:disabled) {
       border-color: var(--heart-secondary);
       color: var(--heart-secondary);
     }
@@ -1047,6 +1049,38 @@
       border: 1px dashed var(--line); border-radius: 2px; padding: 15px 14px;
       text-align: center; font-size: 12.5px; color: var(--faint); line-height: 1.7;
     }
+
+    /* 「履歴」と「新しい相談」。やりとりか保存済みの相談があるときだけ出す */
+    .chatbar { display: flex; justify-content: flex-end; gap: 7px; margin: -6px 0 -8px; }
+    .chatbtn { padding: 6px 12px; }
+    .chatbtn:disabled { cursor: not-allowed; opacity: .45; }
+
+    /* 相談の履歴。開いている間は会話と入力欄の代わりに出す */
+    .chathist { display: flex; flex-direction: column; gap: 8px; }
+    .chathist .hint { margin: 0 0 4px; }
+
+    .histitem {
+      display: grid; grid-template-columns: minmax(0, 1fr) 44px;
+      border: 1px solid var(--border); border-radius: 2px;
+      background: var(--bg-elevated);
+    }
+
+    .histitem.on { border-color: var(--heart-secondary); }
+    .histopen { text-align: left; padding: 10px 13px; min-width: 0; }
+
+    .histopen .t {
+      display: block; font-size: 13.5px; font-family: var(--f-body);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .histopen .d {
+      display: block; margin-top: 3px; font-size: 11px; color: var(--faint);
+      font-family: var(--f-body); font-variant-numeric: tabular-nums;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .histdel { border-left: 1px solid var(--border); color: var(--faint); font-size: 15px; }
+    .histopen:hover .t, .histdel:hover { color: var(--heart-secondary); }
 
     .composer { display: flex; gap: 8px; align-items: flex-end; }
     .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px; }
@@ -1180,8 +1214,16 @@
           <button class="seed">最後を締めくくる一曲を選んで</button>
         </div>
         <div class="chatlog" id="chatLog"></div>
+        <div class="chathist" id="chatHist" hidden>
+          <p class="hint">相談の履歴は、この端末のブラウザにだけ保存しています（新しい順に 20 件まで）。</p>
+          <div class="cands" id="histList"></div>
+        </div>
         <div class="err" id="chatErr" hidden></div>
         <div class="chatlock" id="chatLock" hidden></div>
+        <div class="chatbar" id="chatBar" hidden>
+          <button class="chatbtn" id="chatHistBtn" type="button" aria-expanded="false" aria-controls="chatHist">履歴</button>
+          <button class="chatbtn" id="chatNew" type="button">＋ 新しい相談</button>
+        </div>
         <div class="composer" id="composer">
           <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
           <button id="chatSend" disabled>送信</button>
@@ -2308,6 +2350,15 @@
       return turn;
     }
 
+    // 回答が届き終わった（または履歴から組み直した）ターンの見た目を落ち着かせる
+    function finishTurn(turn) {
+      turn.querySelector('.answer').classList.remove('streaming');
+      turn.querySelectorAll('.pcard.thinking').forEach((c) => c.classList.remove('thinking'));
+      const det = turn.querySelector('details.debate');
+      det.open = false;
+      det.querySelector('summary').textContent = '3つの人格の議論';
+    }
+
     /* 統合回答から括弧の中身を拾って検索語にする。回答のたびに鉤括弧・隅付き
        括弧・引用符のどれで囲まれるかが変わるので、いずれも受け取る。 */
     const SONG_RE = /[「『【〔"“]([^「」『』【】〔〕"”\n]{2,60})[」』】〕"”]/g;
@@ -2447,9 +2498,10 @@
       wrap.innerHTML = html;
     }
 
+    // 照合結果を返す（曲が挙がっていなければ空の配列）。履歴に残して、開き直すときに引き直さない
     async function checkPicks(turn, reply) {
       const songs = pickSongs(reply);
-      if (!songs.length) return;
+      if (!songs.length) return [];
       const wrap = document.createElement('div');
       wrap.className = 'pickwrap';
       wrap.innerHTML = loadingHTML('Apple Music で曲を確かめています…');
@@ -2462,7 +2514,21 @@
         checked = songs.map((label) => ({ label, state: 'unknown' }));
       }
       renderPicks(wrap, checked);
-      chatScroll();
+      // 照合中に「新しい相談」で消された回答なら、画面を動かさない
+      if (turn.isConnected) chatScroll();
+      return checked;
+    }
+
+    // 照合の枠を足す。照合結果が届く前ならその場で引く
+    function showPicks(turn, reply, checked) {
+      if (!Array.isArray(checked)) return checkPicks(turn, reply);
+      if (checked.length) {
+        const wrap = document.createElement('div');
+        wrap.className = 'pickwrap';
+        turn.appendChild(wrap);
+        renderPicks(wrap, checked);
+      }
+      return Promise.resolve(checked);
     }
 
     /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
@@ -2473,7 +2539,6 @@
       const ctrl = new AbortController();
       let timedOut = false;
       const to = setTimeout(() => { timedOut = true; ctrl.abort(); }, 45000);
-      const ans = turn.querySelector('.answer');
       const bodyEl = turn.querySelector('.ab');
       let reply = '', failure = null;
 
@@ -2518,11 +2583,7 @@
           ? '時間内に返事が来ませんでした。もう一度お試しください。'
           : '通信に失敗しました。電波の良い場所でもう一度お試しください。';
       } finally {
-        ans.classList.remove('streaming');
-        turn.querySelectorAll('.pcard.thinking').forEach((c) => c.classList.remove('thinking'));
-        const det = turn.querySelector('details.debate');
-        det.open = false;
-        det.querySelector('summary').textContent = '3つの人格の議論';
+        finishTurn(turn);
       }
 
       if (reply && !failure) {
@@ -2551,6 +2612,7 @@
       $('#seeds').hidden = true;
       $('#chatInput').value = '';
       growInput();
+      syncChatBar();
 
       const turn = chatTurn(text);
       chatScroll(true);
@@ -2560,14 +2622,183 @@
         const outbound = contextSent ? text : (await djContext()) + '\n' + text;
         contextSent = true;
         const reply = await askMagi(turn, outbound);
-        // 照合は待たずに入力を戻す。候補はこの回答の枠に出るので、次の相談と混ざらない
-        if (reply) checkPicks(turn, reply);
+        if (reply) {
+          const c = conv || (conv = newConsult());
+          const entry = { q: text, personas: readPersonas(turn), reply, picks: null };
+          c.turns = c.turns.concat(entry).slice(-TURN_MAX);
+          c.messages = chatHistory.slice(-CHAT_MAX);
+          c.code = eventCode;
+          c.title = eventTitle;
+          storeConsult(c, true);
+          // 照合は待たずに入力を戻す。候補はこの回答の枠に出るので、次の相談と混ざらない
+          checkPicks(turn, reply).then((checked) => { entry.picks = checked; storeConsult(c, false); });
+        }
       } finally {
         chatBusy = false;
         $('#chatInput').disabled = false;
         $('#chatSend').disabled = $('#chatInput').value.trim().length < 2;
+        syncChatBar();
       }
     }
+
+    /* ── 相談の履歴 ──────────────────────────
+       この端末の localStorage にだけ置く（サーバには送らない）。1件の形は
+       { id, code, title, at, messages, turns: [{ q, personas, reply, picks }] }。
+       messages は Worker へ送る形そのままで、最初の発言に DJ の文脈が付いている。開き直した
+       会話の続きを話せるよう持っておく。turns は画面を組み直すためのもので、picks は照合結果
+       （届く前に閉じられたら null。開き直したときに引き直す） */
+    const CONSULT_KEY = 'tkdj.consults';
+    const CONSULT_MAX = 20;
+    const TURN_MAX = 30;
+    let eventCode = '', eventTitle = '';
+    let conv = null;          // 画面に出ている会話。まだ1往復も終わっていなければ null
+    let histOpen = false;
+
+    const newConsult = () => ({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      code: '', title: '', at: '', messages: [], turns: [],
+    });
+    const savedConsults = () => storage.getJSON(CONSULT_KEY, [])
+      .filter((c) => c && typeof c.id === 'string' && Array.isArray(c.turns) && Array.isArray(c.messages));
+
+    /* touch = 新しい往復が増えた。更新日時を今にして先頭へ動かす。
+       touch でないとき（照合結果の書き足し）は、消された会話なら生き返らせない */
+    function storeConsult(c, touch) {
+      const list = savedConsults();
+      const i = list.findIndex((x) => x.id === c.id);
+      if (touch) {
+        if (i >= 0) list.splice(i, 1);
+        c.at = new Date().toISOString();
+        list.unshift(c);
+      } else if (i >= 0) {
+        list[i] = c;
+      } else {
+        return;
+      }
+      // 容量が足りなければ古い会話から捨てる
+      const keep = list.slice(0, CONSULT_MAX);
+      while (keep.length && !storage.setJSON(CONSULT_KEY, keep)) keep.pop();
+      syncChatBar();
+      if (histOpen) renderHistory();
+    }
+
+    // 人格ごとの [初回, 討議後]。出さなかった回は null
+    const readPersonas = (turn) => Object.fromEntries([...turn.querySelectorAll('.pcard')].map((card) =>
+      [card.dataset.cn, [1, 2].map((r) => {
+        const slot = card.querySelector('.pr[data-round="' + r + '"]');
+        return slot.hidden ? null : slot.querySelector('.px').textContent;
+      })]));
+
+    function restoreTurn(c, entry) {
+      const turn = chatTurn(entry.q);
+      turn.querySelectorAll('.pcard').forEach((card) => {
+        const got = (entry.personas && entry.personas[card.dataset.cn]) || [];
+        [1, 2].forEach((r, k) => {
+          const slot = card.querySelector('.pr[data-round="' + r + '"]');
+          slot.hidden = typeof got[k] !== 'string';
+          if (!slot.hidden) slot.querySelector('.px').textContent = got[k];
+        });
+      });
+      turn.querySelector('.ab').textContent = entry.reply;
+      finishTurn(turn);
+      if (!Array.isArray(entry.picks)) {
+        showPicks(turn, entry.reply, null).then((checked) => { entry.picks = checked; storeConsult(c, false); });
+      } else {
+        showPicks(turn, entry.reply, entry.picks);
+      }
+    }
+
+    // 画面の会話を片付ける（保存済みの履歴には触らない）
+    function clearChat() {
+      conv = null;
+      chatHistory = [];
+      contextSent = false;
+      $('#chatLog').replaceChildren();
+      $('#chatErr').hidden = true;
+    }
+
+    function syncChatBar() {
+      const hasLog = $('#chatLog').children.length > 0;
+      const hasSaved = savedConsults().length > 0;
+      $('#chatNew').hidden = !hasLog;
+      $('#chatHistBtn').hidden = !hasSaved && !histOpen;
+      $('#chatBar').hidden = consultLocked || (!hasLog && !hasSaved && !histOpen);
+      // 回答を受け取っている最中は切り替えさせない（届いた回答の行き先が無くなるため）
+      $('#chatNew').disabled = chatBusy;
+      $('#chatHistBtn').disabled = chatBusy;
+    }
+
+    // 履歴を開いている間は、会話と入力欄を引っ込めて一覧だけにする
+    function setHistOpen(open) {
+      histOpen = open;
+      if (open) renderHistory();
+      $('#chatHist').hidden = !open;
+      $('#chatLog').hidden = open;
+      $('#composer').hidden = open;
+      $('#chatHint').hidden = open;
+      $('#chatErr').hidden = true;
+      $('#seeds').hidden = open || consultLocked || $('#chatLog').children.length > 0;
+      $('#chatHistBtn').textContent = open ? '× 履歴を閉じる' : '履歴';
+      $('#chatHistBtn').setAttribute('aria-expanded', String(open));
+      syncChatBar();
+    }
+
+    function renderHistory() {
+      const list = savedConsults();
+      $('#histList').innerHTML = list.length ? list.map((c) => {
+        const first = c.turns[0] ? String(c.turns[0].q) : '';
+        const meta = [ymd(c.at) + ' ' + hhmm(c.at), c.title, c.turns.length + ' 往復']
+          .filter((s) => String(s).trim()).join(' ・ ');
+        return '<div class="histitem' + (conv && conv.id === c.id ? ' on' : '') + '">' +
+          '<button type="button" class="histopen" data-id="' + esc(c.id) + '">' +
+          '<span class="t">' + esc(first) + '</span><span class="d">' + esc(meta) + '</span></button>' +
+          '<button type="button" class="histdel" data-del="' + esc(c.id) + '" aria-label="この相談を履歴から消す">×</button>' +
+          '</div>';
+      }).join('') : '<p class="blank">まだ相談の履歴はありません。</p>';
+    }
+
+    function openConsult(id) {
+      const c = savedConsults().find((x) => x.id === id);
+      if (!c || chatBusy) return;
+      clearChat();
+      conv = c;
+      chatHistory = c.messages.slice(-CHAT_MAX);
+      // 別の回の相談を開いたら、いまの回の状況を次の発言に付け直す
+      contextSent = !!eventCode && c.code === eventCode;
+      c.turns.forEach((entry) => restoreTurn(c, entry));
+      setHistOpen(false);
+      chatScroll(true);
+    }
+
+    /* いまの会話を閉じて、最初の相談からやり直す。会話は履歴に残っている。
+       次の送信で DJ の文脈も送り直す */
+    function resetConsult() {
+      if (chatBusy) return;
+      clearChat();
+      setHistOpen(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    $('#chatNew').addEventListener('click', resetConsult);
+    $('#chatHistBtn').addEventListener('click', () => {
+      if (chatBusy) return;
+      setHistOpen(!histOpen);
+      if (histOpen) window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    $('#histList').addEventListener('click', (e) => {
+      const del = e.target.closest('.histdel');
+      if (del) {
+        storage.setJSON(CONSULT_KEY, savedConsults().filter((c) => c.id !== del.dataset.del));
+        // 画面に出ている会話を消したら、画面からも下ろす
+        if (conv && conv.id === del.dataset.del) clearChat();
+        renderHistory();
+        syncChatBar();
+        return;
+      }
+      const open = e.target.closest('.histopen');
+      if (open) openConsult(open.dataset.id);
+    });
+    syncChatBar();
 
     /* 入力欄：内容に合わせて伸ばし、2文字以上で送信可に */
     function growInput() {
@@ -2616,7 +2847,9 @@
     // 受付していないときも、こういう相談相手がいること自体は見てほしい。
     // タブと中身は残したまま、投げられないように入力だけ塞ぐ
     function lockConsult(why) {
+      if (histOpen) setHistOpen(false);
       consultLocked = true;
+      $('#chatBar').hidden = true;
       $('#chatLock').textContent = why;
       $('#chatLock').hidden = false;
       $('#seeds').hidden = true;
@@ -2633,6 +2866,8 @@
         const ev = await apiJson('/event');
         eventOpen = !!ev.open;
         if (ev.open) {
+          eventCode = ev.code || '';
+          eventTitle = ev.title || '';
           $('#evTitle').textContent = ev.title;
           document.title = ev.title + ' - リクエスト';
           $('#badge').textContent = '受付中';
