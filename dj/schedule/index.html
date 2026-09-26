@@ -760,22 +760,24 @@
 
       async function api(path, options) {
         var opts = options || {};
-        try {
-          var res = await fetch(API_BASE + path, {
-            method: opts.method || 'GET',
-            headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
-            body: opts.body ? JSON.stringify(opts.body) : undefined,
-            cache: 'no-store'
-          });
-          var payload = await res.json().catch(function () { return {}; });
-          if (!res.ok) throw new Error(payload.error || ('通信に失敗しました (' + res.status + ')'));
-          return payload;
-        } catch (err) {
-          if (err instanceof TypeError) {
-            throw new Error('サーバーに接続できませんでした');
-          }
-          throw err;
-        }
+        var res = await fetch(API_BASE + path, {
+          method: opts.method || 'GET',
+          headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
+          body: opts.body ? JSON.stringify(opts.body) : undefined,
+          cache: 'no-store'
+        }).catch(function () {
+          throw new Error('サーバーに接続できませんでした');
+        });
+        var payload = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(payload.error || ('通信に失敗しました (' + res.status + ')'));
+        return payload;
+      }
+
+      function addOption(sel, value, text) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = text;
+        sel.appendChild(opt);
       }
 
       // ===== ルーティング =====
@@ -789,8 +791,10 @@
         load(ym);
       }
 
-      // 同じ月への書き込み結果を反映する。開催日が新しく決まった瞬間の検出はここ1箇所だけ
+      // 同じ月への書き込み結果を反映する。開催日が新しく決まった瞬間の検出はここ1箇所だけ。
+      // 応答を待つ間に別の月へ移っていたら、その月の表示を上書きしないよう捨てる
       function applyData(payload, resetForm) {
+        if (payload.month !== month) return;
         var prevDecided = data ? data.decided : null;
         data = payload;
         if (resetForm) resetAnswerForm(true);
@@ -805,12 +809,14 @@
         renderMonthBar();
         try {
           var payload = await api('/months/' + ym);
+          // 月を続けて切り替えると応答の順番が入れ替わることがある。表示中の月の分だけ使う
+          if (ym !== month) return;
           // ここは月の切り替え。前の月の開催日と比べても意味がないので applyData は通さない
           data = payload;
           resetAnswerForm(true);
           renderAll();
         } catch (err) {
-          notice(err.message);
+          if (ym === month) notice(err.message);
         }
       }
 
@@ -821,7 +827,7 @@
         renderTable(summary);
         renderBest(summary);
         renderStatusEditor();
-        renderNameSelect();
+        restoreName();
         autoLoadOwnResponse();
         renderAnswerRows();
       }
@@ -985,13 +991,13 @@
         var el = $('bestLine');
         el.className = 'best-line quiet';
 
-        // 確定済みなら有力候補は出さず、回答数だけ添える
-        if (data.decided) {
-          el.textContent = data.responses.length ? '回答 ' + data.responses.length + '人' : 'まだ回答がありません';
-          return;
-        }
         if (!data.responses.length) {
           el.textContent = 'まだ回答がありません';
+          return;
+        }
+        // 確定済みなら有力候補は出さず、回答数だけ添える
+        if (data.decided) {
+          el.textContent = '回答 ' + data.responses.length + '人';
           return;
         }
         var best = summary.best;
@@ -1008,16 +1014,8 @@
       function renderStatusEditor() {
         var sel = $('decidedSelect');
         sel.textContent = '';
-        var none = document.createElement('option');
-        none.value = '';
-        none.textContent = '未定';
-        sel.appendChild(none);
-        data.dates.forEach(function (iso) {
-          var opt = document.createElement('option');
-          opt.value = iso;
-          opt.textContent = fmtDateLong(iso);
-          sel.appendChild(opt);
-        });
+        addOption(sel, '', '未定');
+        data.dates.forEach(function (iso) { addOption(sel, iso, fmtDateLong(iso)); });
         sel.value = data.decided || '';
 
         var box = $('blockChips');
@@ -1052,46 +1050,44 @@
             body: { decided: decided, blocked: blocked }
           });
           applyData(payload);
-          notice(data.decided ? '開催日を ' + fmtDateLong(data.decided) + ' に設定しました' : '開催日の設定を保存しました', false);
+          notice(payload.decided ? '開催日を ' + fmtDateLong(payload.decided) + ' に設定しました' : '開催日の設定を保存しました', false);
         } catch (err) {
           notice(err.message);
         }
       }
 
       // ===== 回答フォーム =====
-      function renderNameSelect() {
+      // 選択肢は固定なので起動時に一度だけ作る
+      function buildNameSelect() {
         var sel = $('ansName');
-        var stored = '';
-        try { stored = localStorage.getItem(STORE_KEY) || ''; } catch (e) { /* プライベートモード等 */ }
-        var saved = editingId ? sel.value : stored;
-        sel.textContent = '';
+        addOption(sel, '', '選んでください');
+        MEMBERS.forEach(function (name) { addOption(sel, name, name); });
+        addOption(sel, OTHER, 'その他（自由入力）');
+      }
 
-        var placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = '選んでください';
-        sel.appendChild(placeholder);
-
-        MEMBERS.forEach(function (name) {
-          var opt = document.createElement('option');
-          opt.value = name;
-          opt.textContent = name;
-          sel.appendChild(opt);
-        });
-
-        var other = document.createElement('option');
-        other.value = OTHER;
-        other.textContent = 'その他（自由入力）';
-        sel.appendChild(other);
-
-        if (saved === OTHER) {
-          sel.value = OTHER;
-        } else if (saved && isMember(saved)) {
+      // 前回この端末で登録した名前を名前欄に戻す。修正中は選んである名前のまま
+      function restoreName() {
+        if (editingId) return;
+        var saved = '';
+        try { saved = localStorage.getItem(STORE_KEY) || ''; } catch (e) { /* プライベートモード等 */ }
+        var sel = $('ansName');
+        if (!saved) {
+          sel.value = '';
+        } else if (isMember(saved)) {
           sel.value = saved;
-        } else if (saved) {
-          // 自由入力で登録した名前を復元する
+        } else {
+          // 自由入力で登録した名前。入力途中の文字があればそちらを残す
           sel.value = OTHER;
           if (!$('ansCustomName').value) $('ansCustomName').value = saved;
         }
+        syncCustomNameField();
+      }
+
+      // 名前欄をその人に合わせる。メンバー以外は「その他」＋自由入力欄
+      function setName(name) {
+        var member = isMember(name);
+        $('ansName').value = member ? name : OTHER;
+        if (!member) $('ansCustomName').value = name;
         syncCustomNameField();
       }
 
@@ -1167,13 +1163,7 @@
         var opts = options || {};
         editingId = r.id;
         answers = Object.assign({}, r.answers);
-        if (isMember(r.name)) {
-          $('ansName').value = r.name;
-        } else {
-          $('ansName').value = OTHER;
-          $('ansCustomName').value = r.name;
-        }
-        syncCustomNameField();
+        setName(r.name);
         $('ansComment').value = r.comment || '';
         $('answerTitle').textContent = r.name + ' の回答を修正';
         $('submitAnswer').textContent = '更新する';
@@ -1187,10 +1177,7 @@
         var existing = responseByName(name);
         if (existing) { loadResponseIntoForm(existing); return; }
         resetAnswerForm(true);
-        var member = isMember(name);
-        $('ansName').value = member ? name : OTHER;
-        if (!member) $('ansCustomName').value = name;
-        syncCustomNameField();
+        setName(name);
         $('answerTitle').textContent = name + ' の出欠を入れる';
         renderAnswerRows();
         $('ansList').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1199,15 +1186,18 @@
       function resetAnswerForm(skipRender) {
         editingId = null;
         answers = {};
-        // 未回答者は最初から全部○の状態にしておく（開催不可日は除く）
-        if (data) {
-          data.dates.forEach(function (iso) { if (!isBlocked(iso)) answers[iso] = 'o'; });
-        }
+        // 未回答者は最初から全部○の状態にしておく
+        if (data) fillAnswers('o');
         $('ansComment').value = '';
         $('answerTitle').textContent = '出欠を入れる';
         $('submitAnswer').textContent = '登録する';
         $('deleteAnswer').hidden = true;
         if (!skipRender) renderAnswerRows();
+      }
+
+      // 開催不可日以外を全部 v にする（開催不可日は入力できない）
+      function fillAnswers(v) {
+        data.dates.forEach(function (iso) { if (!isBlocked(iso)) answers[iso] = v; });
       }
 
       // 名前を選び直したとき、その人の既存回答があれば読み込む
@@ -1233,9 +1223,7 @@
       Array.prototype.forEach.call(document.querySelectorAll('[data-fill]'), function (btn) {
         btn.addEventListener('click', function () {
           if (!data) return;
-          var v = btn.dataset.fill;
-          // 開催不可の日は一括入力の対象外
-          data.dates.forEach(function (iso) { if (!isBlocked(iso)) answers[iso] = v; });
+          fillAnswers(btn.dataset.fill);
           renderAnswerRows();
         });
       });
@@ -1246,15 +1234,16 @@
         if (!Object.keys(answers).length) { notice('○ △ × をひとつ以上選んでください'); return; }
 
         var btn = this;
+        var ym = month; // 保存を待つ間に月を移っても、通知は保存した月の名前で出す
         btn.disabled = true;
         try {
-          var payload = await api('/months/' + month + '/responses', {
+          var payload = await api('/months/' + ym + '/responses', {
             method: 'POST',
             body: { name: name, answers: answers, comment: $('ansComment').value.trim() }
           });
           try { localStorage.setItem(STORE_KEY, name); } catch (e) { /* noop */ }
           applyData(payload, true);
-          notice(eventLabel(month) + ' の ' + name + ' の回答を保存しました', false);
+          notice(eventLabel(ym) + ' の ' + name + ' の回答を保存しました', false);
         } catch (err) {
           notice(err.message);
         } finally {
@@ -1289,6 +1278,7 @@
 
       // ===== 起動 =====
       // 常に翌月を開く（URL の m パラメータは月移動時の履歴用としてのみ使う）
+      buildNameSelect();
       goto(shiftMonth(ymOf(new Date()), 1), true);
     })();
   </script>

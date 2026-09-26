@@ -151,6 +151,74 @@ async function readBody(request) {
   }
 }
 
+// /months/:ym 以下を1本で受ける。responses だけが末尾に :id を持てる
+const MONTH_ROUTE = /^\/months\/(\d{4}-\d{2})(?:\/(memo|status|responses)(?:\/(\d+))?)?$/;
+
+// /months/:ym 以下の操作。キーは「メソッド パス」。
+// どれも成功したら最新の月データを返すので、ここでは失敗時のエラー文（400）だけを返す
+const MONTH_ACTIONS = {
+  // 月のデータを返すだけ
+  'GET /months/:ym': async () => {},
+
+  // 外部クライアントとの互換性のため維持
+  'PUT /months/:ym/memo': async (env, ym, body) => {
+    const memo = cleanMultiline(body.memo, 500);
+    // 確定日・開催不可日も同じ行に入っているので、空メモでも行は消さない
+    await env.DB.prepare(
+      `INSERT INTO month_memos (ym, memo) VALUES (?, ?)
+       ON CONFLICT(ym) DO UPDATE SET memo = excluded.memo, updated_at = CURRENT_TIMESTAMP`
+    ).bind(ym, memo).run();
+  },
+
+  // 確定した開催日と開催不可日
+  'PUT /months/:ym/status': async (env, ym, body) => {
+    const dates = sundaysOf(ym);
+    const decided = dates.includes(body.decided) ? body.decided : null;
+    const blocked = Array.isArray(body.blocked)
+      ? [...new Set(body.blocked.filter((d) => dates.includes(d) && d !== decided))].sort()
+      : [];
+
+    await env.DB.prepare(
+      `INSERT INTO month_memos (ym, decided, blocked) VALUES (?, ?, ?)
+       ON CONFLICT(ym) DO UPDATE SET decided = excluded.decided, blocked = excluded.blocked,
+                                     updated_at = CURRENT_TIMESTAMP`
+    ).bind(ym, decided, JSON.stringify(blocked)).run();
+  },
+
+  // 回答の登録・更新。(ym, name) が同じなら上書き
+  'POST /months/:ym/responses': async (env, ym, body) => {
+    const name = clean(body.name, 20);
+    if (!name) return '名前を入力してください';
+
+    const answers = parseAnswers(body.answers, sundaysOf(ym));
+    const comment = clean(body.comment, 200);
+
+    const existing = await env.DB.prepare(
+      'SELECT id FROM month_responses WHERE ym = ? AND name = ?'
+    ).bind(ym, name).first();
+
+    if (!existing) {
+      const counted = await env.DB.prepare(
+        'SELECT COUNT(*) AS c FROM month_responses WHERE ym = ?'
+      ).bind(ym).first();
+      if ((counted?.c ?? 0) >= MAX_RESPONSES) return '回答数の上限に達しました';
+    }
+
+    await env.DB.prepare(
+      `INSERT INTO month_responses (ym, name, answers, comment) VALUES (?, ?, ?, ?)
+       ON CONFLICT(ym, name) DO UPDATE SET
+         answers = excluded.answers,
+         comment = excluded.comment,
+         updated_at = CURRENT_TIMESTAMP`
+    ).bind(ym, name, JSON.stringify(answers), comment).run();
+  },
+
+  'DELETE /months/:ym/responses/:id': async (env, ym, _body, id) => {
+    await env.DB.prepare('DELETE FROM month_responses WHERE id = ? AND ym = ?')
+      .bind(Number(id), ym).run();
+  },
+};
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -186,111 +254,29 @@ export default {
         return json(results || [], 200, cors);
       }
 
-      // ---- /months/:ym ----
-      const monthMatch = route.match(/^\/months\/(\d{4}-\d{2})$/);
-      if (monthMatch) {
-        const ym = monthMatch[1];
-        if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
+      // ---- /months/:ym 以下 ----
+      const monthMatch = route.match(MONTH_ROUTE);
+      if (!monthMatch) return new Response('Not Found', { status: 404, headers: cors });
 
-        if (request.method === 'GET') {
-          return json(await loadMonth(env, ym), 200, cors);
-        }
-        return new Response('Method Not Allowed', { status: 405, headers: cors });
-      }
+      const [, ym, sub, id] = monthMatch;
+      const handler = MONTH_ACTIONS[
+        `${request.method} /months/:ym${sub ? `/${sub}` : ''}${id ? '/:id' : ''}`
+      ];
+      // 月の下のパスは、受け付けていないメソッドなら 404。
+      // /months/:ym だけは月を確かめてから 405 を返す
+      if (!handler && sub) return new Response('Not Found', { status: 404, headers: cors });
+      if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
+      if (!handler) return new Response('Method Not Allowed', { status: 405, headers: cors });
 
-      // ---- /months/:ym/memo ---- 外部クライアントとの互換性のため維持
-      const memoMatch = route.match(/^\/months\/(\d{4}-\d{2})\/memo$/);
-      if (memoMatch && request.method === 'PUT') {
-        const ym = memoMatch[1];
-        if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
-
-        const body = await readBody(request);
+      let body = null;
+      if (request.method === 'PUT' || request.method === 'POST') {
+        body = await readBody(request);
         if (!body) return json({ error: 'リクエストが不正です' }, 400, cors);
-
-        const memo = cleanMultiline(body.memo, 500);
-        // 確定日・開催不可日も同じ行に入っているので、空メモでも行は消さない
-        await env.DB.prepare(
-          `INSERT INTO month_memos (ym, memo) VALUES (?, ?)
-           ON CONFLICT(ym) DO UPDATE SET memo = excluded.memo, updated_at = CURRENT_TIMESTAMP`
-        ).bind(ym, memo).run();
-        return json(await loadMonth(env, ym), 200, cors);
       }
 
-      // ---- /months/:ym/status ---- 確定した開催日と開催不可日
-      const statusMatch = route.match(/^\/months\/(\d{4}-\d{2})\/status$/);
-      if (statusMatch && request.method === 'PUT') {
-        const ym = statusMatch[1];
-        if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
-
-        const body = await readBody(request);
-        if (!body) return json({ error: 'リクエストが不正です' }, 400, cors);
-
-        const dates = sundaysOf(ym);
-        const decided = dates.includes(body.decided) ? body.decided : null;
-        const blocked = Array.isArray(body.blocked)
-          ? [...new Set(body.blocked.filter((d) => dates.includes(d) && d !== decided))].sort()
-          : [];
-
-        await env.DB.prepare(
-          `INSERT INTO month_memos (ym, decided, blocked) VALUES (?, ?, ?)
-           ON CONFLICT(ym) DO UPDATE SET decided = excluded.decided, blocked = excluded.blocked,
-                                         updated_at = CURRENT_TIMESTAMP`
-        ).bind(ym, decided, JSON.stringify(blocked)).run();
-
-        return json(await loadMonth(env, ym), 200, cors);
-      }
-
-      // ---- /months/:ym/responses ----
-      const responsesMatch = route.match(/^\/months\/(\d{4}-\d{2})\/responses$/);
-      if (responsesMatch && request.method === 'POST') {
-        const ym = responsesMatch[1];
-        if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
-
-        const body = await readBody(request);
-        if (!body) return json({ error: 'リクエストが不正です' }, 400, cors);
-
-        const name = clean(body.name, 20);
-        if (!name) return json({ error: '名前を入力してください' }, 400, cors);
-
-        const answers = parseAnswers(body.answers, sundaysOf(ym));
-        const comment = clean(body.comment, 200);
-
-        const existing = await env.DB.prepare(
-          'SELECT id FROM month_responses WHERE ym = ? AND name = ?'
-        ).bind(ym, name).first();
-
-        if (!existing) {
-          const counted = await env.DB.prepare(
-            'SELECT COUNT(*) AS c FROM month_responses WHERE ym = ?'
-          ).bind(ym).first();
-          if ((counted?.c ?? 0) >= MAX_RESPONSES) {
-            return json({ error: '回答数の上限に達しました' }, 400, cors);
-          }
-        }
-
-        await env.DB.prepare(
-          `INSERT INTO month_responses (ym, name, answers, comment) VALUES (?, ?, ?, ?)
-           ON CONFLICT(ym, name) DO UPDATE SET
-             answers = excluded.answers,
-             comment = excluded.comment,
-             updated_at = CURRENT_TIMESTAMP`
-        ).bind(ym, name, JSON.stringify(answers), comment).run();
-
-        return json(await loadMonth(env, ym), 200, cors);
-      }
-
-      // ---- /months/:ym/responses/:responseId ----
-      const oneResponse = route.match(/^\/months\/(\d{4}-\d{2})\/responses\/(\d+)$/);
-      if (oneResponse && request.method === 'DELETE') {
-        const [, ym, responseId] = oneResponse;
-        if (!isMonth(ym)) return json({ error: '対象の月が不正です' }, 400, cors);
-
-        await env.DB.prepare('DELETE FROM month_responses WHERE id = ? AND ym = ?')
-          .bind(Number(responseId), ym).run();
-        return json(await loadMonth(env, ym), 200, cors);
-      }
-
-      return new Response('Not Found', { status: 404, headers: cors });
+      const error = await handler(env, ym, body, id);
+      if (error) return json({ error }, 400, cors);
+      return json(await loadMonth(env, ym), 200, cors);
     } catch (e) {
       return json({ error: 'サーバー側でエラーが発生しました' }, 500, cors);
     }
