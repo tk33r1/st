@@ -1,6 +1,11 @@
 // MAGI — persona config (chat-only)
-// 人格・モデル設定の唯一の正本（src/index.js が import する）。
+// 人格・呼び出し設定の正本（モデルIDを除く。src/index.js が import する）。
 // 以前は人間用に persona.yaml を併置していたが、どこからも読まれず内容がずれたため廃止した。
+
+// モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む。
+import aiModels from '../../config/ai-models.json';
+
+const OPENAI_LUNA_MODEL = aiModels.openai.luna;
 
 export const DEFAULTS = {
   endpoint: 'https://api.openai.com/v1/chat/completions',
@@ -18,17 +23,17 @@ export const DEFAULTS = {
     max_image_bytes: 5 * 1024 * 1024, // base64 デコード後の1枚あたり上限
   },
   // 推論制御は reasoning_effort（none|low|medium|high|xhigh|max）で行う。
-  // 省略すると gpt-5.6 は medium で推論するため、全モデルで明示すること。
+  // 省略すると Luna は medium で推論するため、全モデルで明示すること。
   // temperature / top_p は reasoning_effort:'none' のときだけ受け付けられる（→ src/index.js）。
   models: {
     // 3人格：非推論・並列・短文（高速・低コスト。temperature の揺らぎもここで効く）
-    persona: { model: 'gpt-5.6-luna', reasoning_effort: 'none', max_completion_tokens: 512 },
+    persona: { model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_completion_tokens: 512 },
     // 統合：推論あり・ストリーミング。max_completion_tokens は推論トークン分の余裕を確保。
     // 推論ありのため temperature / top_p は送れない（送ると 400）。
-    synthesizer: { model: 'gpt-5.6-luna', reasoning_effort: 'high', max_completion_tokens: 1536 },
+    synthesizer: { model: OPENAI_LUNA_MODEL, reasoning_effort: 'high', max_completion_tokens: 1536 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
     // max_completion_tokens を推論が食い潰して content が空になるため 'none' 必須。
-    titler: { model: 'gpt-5.6-luna', reasoning_effort: 'none', max_completion_tokens: 48 },
+    titler: { model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_completion_tokens: 48 },
   },
 };
 

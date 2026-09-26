@@ -37,12 +37,14 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 
+from ai_model_registry import model_id_with_override
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT_PATH = os.path.join(ROOT, 'data', 'magi-context.json')
 JST = timezone(timedelta(hours=9))
 
 ENDPOINT = 'https://api.openai.com/v1/chat/completions'
-MODEL = os.environ.get('OPENAI_MODEL', '').strip() or 'gpt-5.6-luna'
+MODEL = model_id_with_override('openai', 'luna', 'OPENAI_MODEL')
 
 # 人格カードの長さ。プロンプトでは CARD_TARGET を指示し、検査は少し緩めに取る。
 CARD_TARGET = 800

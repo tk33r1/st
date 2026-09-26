@@ -1,0 +1,119 @@
+name: AI Model Update Watch
+
+on:
+  schedule:
+    # 毎週月曜 09:23 JST。各社APIのモデル一覧から更新候補を調べる。
+    - cron: '23 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-model-update-watch
+  cancel-in-progress: false
+
+env:
+  UPDATE_BRANCH: automation/ai-model-update
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout main
+      uses: actions/checkout@v4
+      with:
+        ref: main
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    # エイリアスの中身は各社が黙って差し替えるので、更新候補の有無にかかわらず
+    # 使っているモデルを毎週試す。
+    - name: Smoke test current models
+      id: smoke
+      continue-on-error: true
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        set -o pipefail
+        {
+          echo "## 現在のモデルのスモークテスト"
+          echo
+          python .github/scripts/ai_models.py smoke
+          echo
+        } 2>&1 | tee "$RUNNER_TEMP/smoke.md"
+
+    # 候補はスモークテストに通ったものだけが正本に書かれる。停止予定などの要確認事項が
+    # あると失敗扱いになるが、書かれた候補のPRはそれとは別に作る。
+    - name: Discover model updates
+      id: discover
+      continue-on-error: true
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        set -o pipefail
+        status=0
+        python .github/scripts/ai_models.py update 2>&1 | tee "$RUNNER_TEMP/ai-model-report.md" || status=$?
+        { echo; cat "$RUNNER_TEMP/smoke.md"; } >> "$RUNNER_TEMP/ai-model-report.md"
+        exit "$status"
+
+    - name: Create or update review PR
+      id: review_pr
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if git diff --quiet; then
+          echo "変更なし"
+          exit 0
+        fi
+        pr_number="$(gh pr list --state open --head "$UPDATE_BRANCH" --json number --jq '.[0].number // empty')"
+        if [ -n "$pr_number" ]; then
+          # 人が互換性の修正などを足したPRは上書きしない。候補の情報だけコメントで伝える
+          human_commits="$(gh pr view "$pr_number" --json commits --jq '[.commits[].authors[].email | select(contains("github-actions") | not)] | length')"
+          if [ "$human_commits" != "0" ]; then
+            gh pr comment "$pr_number" --body-file "$RUNNER_TEMP/ai-model-report.md"
+            echo "::warning::PR #$pr_number に人のコミットがあるため、ブランチを上書きしませんでした"
+            exit 0
+          fi
+        fi
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git switch -c "$UPDATE_BRANCH"
+        git commit -am "update AI models"
+        # ボットのコミットしかないブランチは、毎回 main から作り直して上書きしてよい
+        git push --force origin "HEAD:refs/heads/$UPDATE_BRANCH"
+        if [ -n "$pr_number" ]; then
+          gh pr edit "$pr_number" --title "Update AI models" --body-file "$RUNNER_TEMP/ai-model-report.md"
+        else
+          gh pr create --base main --head "$UPDATE_BRANCH" --title "Update AI models" --body-file "$RUNNER_TEMP/ai-model-report.md"
+        fi
+
+    - name: Report failure
+      if: ${{ always() && (steps.smoke.outcome == 'failure' || steps.discover.outcome == 'failure' || steps.review_pr.outcome == 'failure') }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_OUTCOME: ${{ steps.review_pr.outcome }}
+      run: |
+        touch "$RUNNER_TEMP/ai-model-report.md"
+        if [ "$PR_OUTCOME" = failure ]; then
+          title="AIモデル更新PRの作成に失敗"
+          printf '\nPR作成に失敗しました。ActionsがPull Requestを作成できるリポジトリ設定か確認してください。\n' >> "$RUNNER_TEMP/ai-model-report.md"
+        else
+          title="AIモデル更新監視で確認が必要"
+        fi
+        printf '\n実行: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$RUNNER_TEMP/ai-model-report.md"
+        issue_number="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+        if [ -n "$issue_number" ]; then
+          gh issue comment "$issue_number" --body-file "$RUNNER_TEMP/ai-model-report.md"
+        else
+          gh issue create --title "$title" --body-file "$RUNNER_TEMP/ai-model-report.md"
+        fi
+        exit 1

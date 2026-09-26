@@ -1,0 +1,8 @@
+{
+  "openai": {
+    "luna": "gpt-6-luna"
+  },
+  "deepseek": {
+    "flash": "deepseek-flash"
+  }
+}

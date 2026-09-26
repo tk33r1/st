@@ -485,6 +485,11 @@
     opts = opts || {};
     completions += 1;
 
+    // 処理レシート（ファイルを受け取ってからの通信のまとめ）は、下の頻度制御とは別に毎回出す
+    if (global.STCommon && typeof global.STCommon.showReceipt === 'function') {
+      try { global.STCommon.showReceipt(); } catch (e) { /* レシートの失敗でお願いを止めない */ }
+    }
+
     var preview = opts.force === true || isPreview();
     if (!preview) {
       if (shownThisSession) return;

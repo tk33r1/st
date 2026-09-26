@@ -1,3 +1,6 @@
+// モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む。
+import aiModels from '../../../config/ai-models.json';
+
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st', 'http://127.0.0.1:5500'];
 
 function getCorsHeaders(origin) {
@@ -22,7 +25,7 @@ function json(data, status = 200, extraHeaders = {}) {
 // モデル・max_completion_tokens・reasoning_effort はここで固定する。Origin ヘッダは
 // ブラウザ外から偽装できるので、料金に響くパラメータをクライアントに開けない。
 // ───────────────────────────────────────────────────────────────
-const GPT_MODEL = 'gpt-5.6-luna';
+const GPT_MODEL = aiModels.openai.luna;
 const MAX_HISTORY = 20;      // 会話履歴は際限なく伸びるので直近だけ通す
 const MAX_CHARS = 4000;      // 1メッセージあたり
 
@@ -51,7 +54,7 @@ async function callGPT(env, { system, messages, maxTokens }) {
       model: GPT_MODEL,
       messages: msgs,
       // ゲームの一言コメント／短い応答が用途。推論させる意味がないので速さと安さを取る。
-      // gpt-5.6 の既定は medium なので、省略すると黙って推論トークンを課金される
+      // Luna の既定は medium なので、省略すると黙って推論トークンを課金される
       reasoning_effort: 'none',
       max_completion_tokens: Math.min(Number(maxTokens) || 200, 800),
       stream: false,

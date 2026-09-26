@@ -7,6 +7,9 @@
        埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
        足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- ブラウザが CSP で止めた通信の書き留め。tools-ui.js（安全設計カードの通信メーター）より先に
+       起きた分も数えるため、どのスクリプトよりも前に置く -->
+  <script>window.__stCspLog=[];addEventListener('securitypolicyviolation',function(e){var l=window.__stCspLog;if(l)l.push({u:e.blockedURI,d:e.effectiveDirective||e.violatedDirective,t:performance.now()})},true)</script>
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -111,8 +114,8 @@
   <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
   <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_3">
-  <script src="../../data/tools-ui.js?v=20260926_5"></script>
+  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_4">
+  <script src="../../data/tools-ui.js?v=20260926_6"></script>
 
   <!-- Stamp the remembered theme before first paint, otherwise a dark-mode
        visitor gets a white flash while the rest of the page loads. -->
@@ -367,7 +370,7 @@
     <i data-lucide="arrow-up"></i>
   </button>
   <script src="../../data/buy-me-oil.js"></script>
-  <script src="../../data/tools-share.js?v=20260905"></script>
+  <script src="../../data/tools-share.js?v=20260926"></script>
   <script>new DonationWidget({ containerId: 'donation-button-container' }).init();</script>
 
   <script>

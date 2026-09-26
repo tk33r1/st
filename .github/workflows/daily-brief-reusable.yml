@@ -49,9 +49,7 @@ jobs:
         MEDIA: ${{ inputs.media }}
         TARGET_DATE: ${{ inputs.target-date }}
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        DEEPSEEK_MODEL: 'deepseek-flash'
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        OPENAI_MODEL: 'gpt-5.6-luna'
       run: |
         case "$MEDIA" in
           retailtechdaily)

@@ -819,6 +819,272 @@
   .st-theme .safety-proof-grid { grid-template-columns: 1fr; }
   .st-theme .safety-proof-summary::after { display: block; margin: 9px 0 0 34px; }
 }
+.st-theme .safety-proof-shield.is-warning {
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+  color: var(--warn);
+}
+.st-theme .safety-proof-count.is-warning { color: var(--warn); }
+
+/* Live meter — the numbers under the chips are counted on this page while
+   it is in use, so the promises read as measurements, not as copy. */
+.st-theme .safety-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--rule);
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.st-theme .safety-meter-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.st-theme .safety-meter-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: st-pulse var(--beat) ease-in-out infinite;
+}
+.st-theme .safety-meter.is-warning .safety-meter-live::before { background: var(--warn); }
+.st-theme .safety-meter-item { white-space: nowrap; }
+.st-theme .safety-meter-item b {
+  margin-left: 5px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+.st-theme .safety-meter-item.is-key b { color: var(--ok); }
+.st-theme .safety-meter-item.is-key.is-warning b { color: var(--warn); }
+@media (prefers-reduced-motion: reduce) {
+  .st-theme .safety-meter-live::before { animation: none; }
+}
+
+/* Guard test — asks the browser to send somewhere the CSP does not allow,
+   and shows the browser refusing. */
+.st-theme .safety-guard {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--bg);
+}
+.st-theme .safety-guard-head { display: flex; align-items: center; gap: 14px; }
+.st-theme .safety-guard-text { flex: 1 1 auto; min-width: 0; }
+.st-theme .safety-guard-text b { display: block; margin-bottom: 3px; color: var(--ink); font-size: 12px; }
+.st-theme .safety-guard-text p { margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 1.7; }
+.st-theme .safety-guard-btn {
+  flex: none;
+  padding: 8px 13px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-1);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.st-theme .safety-guard-btn:hover { border-color: var(--accent); color: var(--accent); }
+.st-theme .safety-guard-btn:disabled { opacity: .6; cursor: progress; }
+.st-theme .safety-guard-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.st-theme .safety-guard-results {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--rule);
+  list-style: none;
+}
+.st-theme .safety-guard-results[hidden] { display: none; }
+.st-theme .safety-guard-results li { display: flex; gap: 8px; color: var(--ink-2); font-size: 11.5px; line-height: 1.6; }
+.st-theme .safety-guard-results li::before {
+  content: attr(data-mark);
+  flex: none;
+  width: 12px;
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.st-theme .safety-guard-results li.is-warning::before { color: var(--warn); }
+.st-theme .safety-guard-results li b { color: var(--ink); font-weight: 600; }
+
+/* Network log — every request since the page opened, in plain words. */
+.st-theme .safety-log {
+  margin-top: 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--bg);
+}
+.st-theme .safety-log-summary {
+  padding: 10px 12px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.st-theme .safety-log-list {
+  max-height: 320px;
+  margin: 0;
+  padding: 0 12px 8px;
+  overflow: auto;
+  list-style: none;
+}
+.st-theme .safety-log-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 12em) minmax(0, 1fr);
+  gap: 2px 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-2);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.st-theme .safety-log-time { color: var(--ink-3); font-family: var(--font-mono); font-size: 10.5px; }
+.st-theme .safety-log-dest {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-theme .safety-log-use { min-width: 0; }
+.st-theme .safety-log-path {
+  display: block;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-theme .safety-log-row.is-blocked .safety-log-use { color: var(--ok); }
+.st-theme .safety-log-row.is-warning .safety-log-dest,
+.st-theme .safety-log-row.is-warning .safety-log-use { color: var(--warn); }
+.st-theme .safety-proof-note { margin: 12px 0 0; color: var(--ink-3); font-size: 11px; line-height: 1.75; }
+@media (max-width: 760px) {
+  .st-theme .safety-guard-head { flex-direction: column; align-items: stretch; }
+  .st-theme .safety-log-row { grid-template-columns: 50px minmax(0, 1fr); }
+  .st-theme .safety-log-use { grid-column: 2; }
+}
+
+/* ---- processing receipt ----
+   Shown at the moment a tool has done its job (STShare.celebrate). Bottom
+   left on desktop, clear of the share card and donation button on the
+   right; top of the screen on phones, where the share card spans the width. */
+.st-theme .st-receipt {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 105;
+  box-sizing: border-box;
+  width: min(320px, calc(100vw - 32px));
+  padding: 13px 14px 11px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-2);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  box-shadow: var(--shadow-1);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+.st-theme .st-receipt.is-in { opacity: 1; transform: none; }
+.st-theme .st-receipt[hidden] { display: none; }
+@media (max-width: 560px) {
+  .st-theme .st-receipt { top: 12px; right: 12px; bottom: auto; left: 12px; width: auto; transform: translateY(-10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-theme .st-receipt { transition: opacity 120ms linear; transform: none; }
+}
+.st-theme .st-receipt-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--rule);
+}
+.st-theme .st-receipt-mark {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ok) 13%, transparent);
+  color: var(--ok);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+.st-theme .st-receipt.is-warning .st-receipt-mark {
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+  color: var(--warn);
+}
+.st-theme .st-receipt-title { flex: 1 1 auto; font-size: 13px; font-weight: 700; }
+.st-theme .st-receipt-close {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  margin: -3px -5px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--ink-3);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.st-theme .st-receipt-close:hover { background: var(--panel-2); color: var(--ink); }
+.st-theme .st-receipt-rows { display: grid; gap: 4px; margin: 0; }
+.st-theme .st-receipt-rows > div { display: flex; justify-content: space-between; gap: 12px; font-size: 11.5px; line-height: 1.5; }
+.st-theme .st-receipt-rows > div[hidden] { display: none; }
+.st-theme .st-receipt-rows dt { flex: none; color: var(--ink-2); }
+.st-theme .st-receipt-rows dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-theme .st-receipt-rows .is-key dt { color: var(--ink); font-weight: 600; }
+.st-theme .st-receipt-rows .is-key dd { color: var(--ok); font-weight: 700; }
+.st-theme .st-receipt.is-warning .st-receipt-rows .is-key dd { color: var(--warn); }
+.st-theme .st-receipt-note { margin: 9px 0 0; color: var(--ink-3); font-size: 10.5px; line-height: 1.6; }
+.st-theme .st-receipt-more {
+  margin-top: 6px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.st-theme .st-receipt-more[hidden] { display: none; }
+.st-theme .st-receipt-close:focus-visible,
+.st-theme .st-receipt-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ---- FAQ ----
    All SAFE TOOLS pages use the same native disclosure pattern. Most pages

@@ -107,6 +107,10 @@
     毎回素材からゼロで作る（前回のカードは渡さない。言い回しが多少変わるのは許容）。
     手動実行の `force` は素材が同じでも全人格を作り直す。コミットメッセージに CI を止める印を入れない
     （Cloudflare Pages がビルドを省略し、JSON が次の push まで公開されない）。
+  - `ai-models.yml`（push＋PR）/ `ai-model-watch.yml`（週次＋手動）: AIモデル設定の正本
+    `config/ai-models.json` の形式とモデルIDの直書きがないことを検査し、OpenAI / DeepSeek の
+    `/models` APIから更新候補を検知する。スモークテストは毎週回し、候補が通ればレビュー用PRへ出し、
+    失敗したらIssueで通知する。自動マージ・自動デプロイはしない。運用詳細は `.github/AI_MODELS.md`。
   - `sitemap.yml` と `magi-context.yml` は同じ push で main にコミットしうるので、どちらも
     `.github/scripts/push-with-retry.sh` で push する（取り込んでから push し、弾かれたら取り込みから
     やり直す）。workflow をまたぐ `concurrency.group` の共有はしない（待機中の実行が新しい実行に
@@ -141,6 +145,19 @@
   - CSP は各ページに同じ文字列で書いてある。外部の通信先を足すと約束の説明（注記・FAQ・構造化データ）も
     変わるので、広げる前に同梱で済まないかを考える。新しいツールを足すときも同じ `<meta>` を head の先頭
     （`<meta charset>` の直後、どのスクリプトよりも前）に置く。
+  - CSP の meta の直後には、ブラウザが止めた通信を `window.__stCspLog` に書き留める1行のインライン
+    スクリプトを置いている（GTM など `tools-ui.js` より先に動くものが止められた分を、通信メーターが数えるため）。
+    新しいツールにも同じ行を置く。無いと、止めた通信が「想定外の行き先への送信」に見えて安全設計カードが「!」になる。
+  - Worker は blob: の URL から起動する（`toBlobURL` や `fetch` → `URL.createObjectURL`）。同じサイトの URL から
+    直接起動した Worker にはページの meta の CSP が効かない（Worker を返したときの HTTP ヘッダーの CSP が使われ、
+    このサイトは付けていない）。pdf.js の worker もこの理由で blob: にしてある。
+- **安全設計カードと処理レシート**: `tools-ui.js` が各ツールの `<main>` の前に出す。5項目のチェックは
+  宣言ではなく、そのページで実際に起きた通信（Resource Timing、fetch / XHR / sendBeacon などの呼び出し、
+  CSP が止めた知らせ）と CSP の点検から決める。「データの送信」（中身を載せられる送り方。アクセス解析は別に数える）が
+  1件でもあれば緑にしない。「ガードを試す」は example.com へあえて送ろうとし、ブラウザが止めるのを見せる。
+  処理レシートは `STShare.celebrate()` のたびに出る（tools-share.js から呼ぶので、ツール側の追加作業はない）。
+  区切りはファイルを受け取った時点（change / drop / paste を捕捉で拾う）。どれもページ自身による計測で、
+  Worker の中の通信は数えていない。画面にもそう書いてあるので、「送れない」のような言い方に変えないこと。
 - **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`data/glitch.js` が
   描画する。記事追加時は HTML ではなく JSON を編集する。tools/game の一覧も同様に
   `data/tools.json` / `data/game.json` が正。
@@ -155,9 +172,15 @@
   呼び出し側で条件分岐しない。ツールを増やすときは `<script src="../../data/tools-share.js">`
   を `buy-me-oil.js` の隣に置き、ダウンロード処理を通す共通関数に1行足すだけでよい。
   見た目の確認は URL に `?st-share=preview` を付けて完了操作をすると抑制を無視して出る。
-- **magi2 の人格設定**: `workers/magi2/personas.js` が唯一の正本（人格の骨格プロンプト、モデル、
-  タイムアウト、揺らぎ）。以前あった `persona.yaml` は読まれないまま内容がずれたので廃止した。
-  人間向けの別形式を並べて二重管理に戻さないこと。
+- **AIモデル設定**: モデルIDの正本は `config/ai-models.json`。Pythonからは
+  `.github/scripts/ai_model_registry.py` を通して読み、Worker はJSONを `import` する（wrangler が
+  デプロイ時に取り込む）。モデルIDを別の場所へ直書きしない（`ai_models.py check` が検出する）。
+  週次のスモークテスト（`ai_models.py` の `smoke_*`）は各利用箇所の呼び出し方（temperature・top_p・
+  画像・推論・ストリーミング）をなぞっているので、呼び出し方を変えたらそちらも合わせる。
+- **magi2 の人格設定**: `workers/magi2/personas.js` が人格の骨格プロンプト、用途ごとの推論強度、
+  トークン上限、タイムアウト、揺らぎの唯一の正本。モデルIDだけは上記の共通正本に従う。
+  以前あった `persona.yaml` は読まれないまま内容がずれたので廃止した。人間向けの別形式を
+  並べて二重管理に戻さないこと。
 - **MAGI の人格カード（`data-magi` の目印）**: magi2 の3人格は、固定の骨格プロンプト（personas.js）に
   サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
   付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、

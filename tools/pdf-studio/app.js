@@ -14,8 +14,30 @@
   const { PDFDocument, StandardFonts, degrees, rgb } = PDFLib;
 
   // 外部ライブラリはすべてこのサイトに同梱したもの（data/vendor/）
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    '../../data/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js';
+  // pdf.js の worker は blob: にしてから起動する。同じサイトの URL から直接起動すると、
+  // worker にはページ先頭の Content-Security-Policy（meta）が効かず、worker を返したときの
+  // HTTP ヘッダーの CSP が使われる（このサイトは付けていない）ので、通信先の制限の外で動く。
+  // blob: で起動した worker はページの CSP を引き継ぐ。FFmpeg・heic2any の worker と同じ扱い。
+  const PDF_WORKER_URL = '../../data/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js';
+  let pdfWorkerReady = null;
+  function ensurePdfWorker() {
+    if (!pdfWorkerReady) {
+      pdfWorkerReady = fetch(PDF_WORKER_URL)
+        .then(res => {
+          if (!res.ok) throw new Error('HTTP ' + res.status + ' pdf.worker.min.js');
+          return res.blob();
+        })
+        .then(blob => {
+          pdfjsLib.GlobalWorkerOptions.workerSrc =
+            URL.createObjectURL(new Blob([blob], { type: 'text/javascript' }));
+        })
+        .catch(err => {
+          pdfWorkerReady = null; // 次のファイルでもう一度取りに行く
+          throw err;
+        });
+    }
+    return pdfWorkerReady;
+  }
 
   const MAX_FILE_SIZE = 300 * 1024 * 1024;
   const HEAVY_PAGE_COUNT = 400;
@@ -324,7 +346,8 @@
     // place to detect them — pdf.js would only fail later, mid-render.
     const pdflib = await PDFDocument.load(bytes.slice(), { throwOnInvalidObject: false });
     // pdf.js takes ownership of whatever buffer it is handed, so give it a copy.
-    const pdfjs = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+    await ensurePdfWorker();
+    const pdfjs =await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
 
     const id = ++docSeq;
     // `bytes` itself is not kept: pdf.js and pdf-lib each own a copy already,

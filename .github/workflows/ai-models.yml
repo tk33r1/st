@@ -1,0 +1,26 @@
+name: AI Model Registry Check
+
+on:
+  push:
+    paths: ['config/**', '.github/**', 'workers/**']
+  pull_request:
+    paths: ['config/**', '.github/**', 'workers/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Check AI model registry
+      run: python .github/scripts/ai_models.py check

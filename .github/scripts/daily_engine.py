@@ -20,6 +20,8 @@ import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
+from ai_model_registry import model_id_with_override
+
 # Windows コンソール等の UTF-8 出力安全化
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -890,26 +892,36 @@ def analyze_news_with_fallback(config, candidates, target_date_str, yesterday_st
     print("[2/3] AI要約・インサイト生成プロセスを開始...")
     prompt, candidate_index = build_prompt(config, candidates, target_date_str, yesterday_str)
 
+    def configured_model(provider, channel, env_name):
+        # 正本が壊れていても、その日の号はルールベースで出す
+        try:
+            return model_id_with_override(provider, channel, env_name)
+        except Exception as e:
+            print(f"[WARN] モデル設定を読めません: {e}", file=sys.stderr)
+            return ''
+
+    deepseek_model = configured_model('deepseek', 'flash', 'DEEPSEEK_MODEL')
+    openai_model = configured_model('openai', 'luna', 'OPENAI_MODEL')
     providers = [
         {
             "name": "DeepSeek",
-            "model": os.environ.get('DEEPSEEK_MODEL', 'deepseek-flash').strip(),
+            "model": deepseek_model,
             "key": os.environ.get('DEEPSEEK_API_KEY', '').strip(),
             "url": "https://api.deepseek.com/chat/completions",
-            "badge_label": f"DeepSeek ({os.environ.get('DEEPSEEK_MODEL', 'deepseek-flash').strip()})"
+            "badge_label": f"DeepSeek ({deepseek_model})"
         },
         {
             "name": "OpenAI",
-            "model": os.environ.get('OPENAI_MODEL', 'gpt-5.6-luna').strip(),
+            "model": openai_model,
             "key": os.environ.get('OPENAI_API_KEY', '').strip(),
             "url": "https://api.openai.com/v1/chat/completions",
-            "badge_label": f"OpenAI ({os.environ.get('OPENAI_MODEL', 'gpt-5.6-luna').strip()})"
+            "badge_label": f"OpenAI ({openai_model})"
         }
     ]
 
     final_res = None
     for p in providers:
-        if not p['key']:
+        if not p['key'] or not p['model']:
             continue
         print(f" -> 試行中: {p['name']} ({p['model']})...")
         try:
