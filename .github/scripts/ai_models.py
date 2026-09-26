@@ -154,7 +154,36 @@ def smoke_deepseek(url, api_key, model):
         'max_tokens': 32,
         'response_format': {'type': 'json_object'},
     }))
-    return 'JSON'
+    # magi2 の Enthusiast：推論を切る、揺らぎの最大温度、top_p、画像付きの発言
+    message_content(post_json(url, api_key, {
+        'model': model,
+        'messages': [{'role': 'user', 'content': [
+            {'type': 'text', 'text': 'Name the color of this image in one word.'},
+            {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
+        ]}],
+        'thinking': {'type': 'disabled'},
+        'temperature': PERSONA_MAX_TEMPERATURE,
+        'top_p': 1.0,
+        'max_tokens': 16,
+    }))
+    return 'JSON、推論なし/画像/高温/top_p'
+
+
+def smoke_google(url, api_key, model):
+    # magi2 の Humanist：推論は最小（Gemini 3 系は切れない）、揺らぎの最大温度、top_p、画像付きの発言。
+    # 推論トークンも max_tokens に数えるので、本番と同じく余裕を持たせる
+    message_content(post_json(url, api_key, {
+        'model': model,
+        'messages': [{'role': 'user', 'content': [
+            {'type': 'text', 'text': 'Name the color of this image in one word.'},
+            {'type': 'image_url', 'image_url': {'url': solid_png_data_url()}},
+        ]}],
+        'reasoning_effort': 'minimal',
+        'temperature': PERSONA_MAX_TEMPERATURE,
+        'top_p': 1.0,
+        'max_tokens': 1024,
+    }))
+    return '推論minimal/画像/高温/top_p'
 
 
 # プロバイダー固有の知識はここだけに置き、正本（config/ai-models.json）にはモデルIDだけを持つ。
@@ -174,6 +203,14 @@ PROVIDERS = {
         'chat_url': 'https://api.deepseek.com/chat/completions',
         'channels': {'flash': None},
         'smoke': smoke_deepseek,
+    },
+    # Gemini の OpenAI 互換の口。一覧のIDは 'models/' 付きで返ることがあるので fetch_models で外す
+    'google': {
+        'key_env': 'GEMINI_API_KEY',
+        'models_url': 'https://generativelanguage.googleapis.com/v1beta/openai/models',
+        'chat_url': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        'channels': {'flash_lite': re.compile(r'gemini-(\d+(?:\.\d+)*)-flash-lite')},
+        'smoke': smoke_google,
     },
 }
 
@@ -259,7 +296,7 @@ def fetch_models(provider, pconf, api_key):
     models = body.get('data') if isinstance(body, dict) else None
     if not isinstance(models, list):
         raise RuntimeError(f'{provider}: モデル一覧の data が配列ではありません')
-    return {m['id']: m for m in models if isinstance(m, dict) and m.get('id')}
+    return {m['id'].removeprefix('models/'): m for m in models if isinstance(m, dict) and m.get('id')}
 
 
 def version_key(pattern, model):

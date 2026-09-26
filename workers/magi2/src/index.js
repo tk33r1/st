@@ -1,4 +1,4 @@
-import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_TEMPERATURE, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_TEMPERATURE, PROVIDERS, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -93,47 +93,68 @@ const contentImages = (c) => typeof c === 'string' ? [] : c.filter(p => p.type =
 // 画像があれば「画像＋テキスト」のパート配列を、無ければ素の文字列を返す
 const withImages = (text, images) => images.length ? [...images, { type: 'text', text }] : text;
 
-async function callGPT({ env, messages, cfg, stream, signal, temperature }) {
-  // temperature / top_p は非推論モード（reasoning_effort:'none'）でのみ受け付けられる。
-  // 推論を有効にしたまま送ると "Unsupported value" で 400 になるので、統合人格では落とす。
-  const sampling = cfg.reasoning_effort === 'none'
-    ? { temperature: temperature != null ? temperature : DEFAULTS.temperature, top_p: DEFAULTS.top_p }
-    : {};
-  return fetch(DEFAULTS.endpoint, {
+// 人格が答えられなかった回に、画面のカードへ出す印（persona イベントの absent:true と一緒に送る）
+const PERSONA_ABSENT = '[NO RESPONSE]';
+
+// 会社ごとの呼び出し方の違いはここに閉じる（値は personas.js の DEFAULTS.models）。
+function requestBody(cfg, { messages, stream, temperature }) {
+  const sampling = { temperature: temperature != null ? temperature : DEFAULTS.temperature, top_p: DEFAULTS.top_p };
+  const base = { model: cfg.model, stream: !!stream, messages };
+  switch (cfg.provider) {
+    case 'openai':
+      // reasoning_effort は省略すると medium になるので、非推論でも必ず送る。
+      // temperature / top_p は非推論のときだけ受け付けられる（推論ありで送ると "Unsupported value" で 400）
+      return {
+        ...base, reasoning_effort: cfg.reasoning_effort, max_completion_tokens: cfg.max_tokens,
+        ...(cfg.reasoning_effort === 'none' ? sampling : {}),
+      };
+    case 'deepseek':
+      // 推論の入り切りは thinking で明示する（省略すると推論あり）。推論ありだと temperature は黙って無視される
+      return cfg.reasoning_effort === 'none'
+        ? { ...base, thinking: { type: 'disabled' }, max_tokens: cfg.max_tokens, ...sampling }
+        : { ...base, thinking: { type: 'enabled' }, reasoning_effort: cfg.reasoning_effort, max_tokens: cfg.max_tokens };
+    case 'google':
+      // Gemini 3 系は推論を切れない（最低 minimal）。temperature / top_p は推論ありでも効く
+      return { ...base, reasoning_effort: cfg.reasoning_effort, max_tokens: cfg.max_tokens, ...sampling };
+    default:
+      throw stageError('internal', 'unknown_provider', `未知の呼び出し先です: ${cfg.provider}`, { retryable: false });
+  }
+}
+
+async function callModel({ env, messages, cfg, stream, signal, temperature }) {
+  const provider = PROVIDERS[cfg.provider];
+  const body = requestBody(cfg, { messages, stream, temperature });
+  const key = env[provider.key];
+  if (!key) throw stageError('internal', 'missing_api_key', `${provider.key} が未設定です`, { retryable: false });
+  return fetch(provider.endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.MAGI_OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model: cfg.model,
-      // 省略時の既定は medium。非推論にしたい呼び出しでも必ず明示する
-      reasoning_effort: cfg.reasoning_effort,
-      max_completion_tokens: cfg.max_completion_tokens,
-      ...sampling,
-      stream: !!stream,
-      messages,
-    }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify(body),
     signal,
   });
 }
 
-// 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら致命）。
+// 1人格ぶんの呼び出し。空応答 / 5xx は1回だけ自動リトライ（リトライ後も不可なら throw）。
 // temperature はテーマ依存の「揺らぎ」（未指定なら DEFAULTS.temperature）。
 async function fetchPersonaText(env, p, messages, signal, log, round = 1, temperature) {
+  const cfg = DEFAULTS.models.persona[p.codename];
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const res = await callGPT({
-      env, cfg: DEFAULTS.models.persona, stream: false, signal, temperature,
+    const res = await callModel({
+      env, cfg, stream: false, signal, temperature,
       messages: [{ role: 'system', content: p.system_prompt }, ...messages],
     });
     if (!res.ok) {
       const detail = (await res.text().catch(() => '')).slice(0, 200);
-      log('persona_call', p.codename, `r${round}`, `HTTP ${res.status}`, `attempt=${attempt}`);
+      log('persona_call', p.codename, cfg.provider, `r${round}`, `HTTP ${res.status}`, `attempt=${attempt}`, detail);
       if (res.status >= 500 && attempt < 2) continue; // 一時的なサーバ起因のみ再試行
-      throw stageError('persona_call', `gpt_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
+      throw stageError('persona_call', `${cfg.provider}_http_${res.status}`, `${p.codename} への呼び出しが失敗しました (HTTP ${res.status})`, { persona: p.codename, round, detail, retryable: res.status >= 500 });
     }
     const choice = (await res.json()).choices?.[0] || {};
     const text = (choice.message?.content || '').trim();
-    log('persona_call', p.codename, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
+    log('persona_call', p.codename, cfg.provider, `r${round}`, `finish_reason=${choice.finish_reason}`, `len=${text.length}`, `attempt=${attempt}`);
     if (text) return text;
-    if (attempt < 2) continue; // 空応答も1回だけ再試行
+    // 空応答は1回だけ再試行。安全フィルターで止められた（content_filter）なら同じ結果になるので試さない
+    if (attempt < 2 && choice.finish_reason !== 'content_filter') continue;
     throw stageError('persona_call', 'empty_persona_output', `${p.codename} が空の応答を返しました (finish_reason=${choice.finish_reason})`, { persona: p.codename, round, retryable: true });
   }
   // ループは attempt=2 で必ず return/throw に到達するためここには来ない（防御的）
@@ -143,7 +164,7 @@ async function fetchPersonaText(env, p, messages, signal, log, round = 1, temper
 // 会話の初回ユーザー発言からチャットタイトルを要約生成（非クリティカル：失敗しても null）。
 async function fetchTitle(env, lastContent, signal, log) {
   try {
-    const res = await callGPT({
+    const res = await callModel({
       env, cfg: DEFAULTS.models.titler, stream: false, signal,
       // lastContent は文字列か画像込みのパート配列。画像だけの発言でも題を付けられる
       messages: [{ role: 'system', content: TITLER.system_prompt }, { role: 'user', content: lastContent }],
@@ -360,7 +381,7 @@ export default {
       log('rate_limit', 'skipped (no DB binding)');
     }
 
-    // 4-5) SSE: 3人格（並列・1つでも失敗で即エラー）→ 統合（stream）
+    // 4-5) SSE: 3人格（並列・欠けた人格は抜かして続ける。全員失敗でエラー）→ 統合（stream）
     const stream = new ReadableStream({
       async start(controller) {
         const enc = new TextEncoder();
@@ -396,36 +417,56 @@ export default {
           const cards = await cardsPromise;
           const personas = PERSONAS.map(p => withCard(p, cards));
 
+          // 人格ごとに呼び出し先の会社が違うので、1人格の失敗（相手側の障害・安全フィルター・時間切れ）では
+          // 止めず、その人格を抜かして進める。画面のカードを「考え中」のまま残さないよう、欠けた回には印を送る。
+          const absent = (p, round, reason) => {
+            log('persona_call', p.codename, `r${round}`, 'dropped', reason && ((reason.envelope && reason.envelope.code) || reason.name || reason.message));
+            send('persona', { round, codename: p.codename, name: p.name, text: PERSONA_ABSENT, absent: true });
+          };
+
           // --- R1: 3人格が並列に初回意見（互いの意見は見ない）---
           log('persona_call', 'round1 start');
           const t1 = withTimeout(personaTimeoutMs);
-          let opinions;
+          let r1;
           try {
-            opinions = await Promise.all(personas.map(async (p) => {
+            r1 = await Promise.allSettled(personas.map(async (p) => {
               const text = await fetchPersonaText(env, p, messages, t1.signal, log, 1, personaTemp);
               send('persona', { round: 1, codename: p.codename, name: p.name, text });
               return { ...p, r1: text };
             }));
           } finally { t1.clear(); }
-          log('persona_call', 'round1 ok');
+          const opinions = [];
+          r1.forEach((r, i) => {
+            if (r.status === 'fulfilled') { opinions.push(r.value); return; }
+            absent(personas[i], 1, r.reason);
+            absent(personas[i], 2);
+          });
+          // 全員が失敗したときだけエラーにする（時間切れなら外側の catch が upstream timeout にする）
+          if (!opinions.length) throw r1[0].reason;
+          log('persona_call', 'round1 ok', `personas=${opinions.length}`);
 
-          // --- R2: 各人格が他2人格のR1意見を踏まえて討議・更新 ---
+          // --- R2: 各人格が他の人格のR1意見を踏まえて討議・更新 ---
+          // 失敗した人格は初回意見のまま統合に回す。相手がいない（1人しか残っていない）ときは討議しない
           log('persona_call', 'round2 start');
           const t2 = withTimeout(personaTimeoutMs);
           try {
             await Promise.all(opinions.map(async (p) => {
               const others = opinions.filter(o => o.codename !== p.codename)
                 .map(o => `- ${o.name}（${o.codename}）: ${o.r1}`).join('\n');
-              const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。単なる繰り返しは避ける]\n${others}`;
-              p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: withImages(dmsg, lastImages) }], t2.signal, log, 2, personaTemp);
-              send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
+              if (!others) { absent(p, 2); return; }
+              // 寄り添い寄りのモデルは他の意見に流されやすいので、賛同するにも自分の理由を求める
+              const dmsg = `${lastUser}\n\n[あなたの初回意見]\n${p.r1}\n\n[討議メモ：他の人格の初回意見は以下。これを踏まえ、賛同・反論・補強のいずれかで自分の考えを更新せよ。賛同するなら自分の理由で述べ、自分の関心と価値観は手放さない。単なる繰り返しは避ける]\n${others}`;
+              try {
+                p.r2 = await fetchPersonaText(env, p, [...history, { role: 'user', content: withImages(dmsg, lastImages) }], t2.signal, log, 2, personaTemp);
+                send('persona', { round: 2, codename: p.codename, name: p.name, text: p.r2 });
+              } catch (e) { absent(p, 2, e); }
             }));
           } finally { t2.clear(); }
-          log('persona_call', 'round2 ok');
+          log('persona_call', 'round2 ok', `personas=${opinions.filter(o => o.r2).length}`);
 
           // --- 統合コール（推論あり・stream）---
-          const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}\n  討議後: ${o.r2}`).join('\n');
-          const augmented = `${lastUser}\n\n[内部討議メモ：以下は3人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
+          const memo = opinions.map(o => `- ${o.name}（${o.codename}）\n  初回: ${o.r1}${o.r2 ? `\n  討議後: ${o.r2}` : ''}`).join('\n');
+          const augmented = `${lastUser}\n\n[内部討議メモ：以下は各人格の初回意見と討議後の見解。これらを統合し、私(Shinya Takeda)として一人称で答える。人格名は出さない]\n${memo}`;
           // 揺らぎ：UI テーマに応じて優先人格を少し強める（light=Strategist / dark=Enthusiast）
           const bias = theme ? SYNTH_BIAS[theme] : null;
           if (bias) log('synthesizer_call', 'bias', theme);
@@ -441,7 +482,7 @@ export default {
           try {
             log('synthesizer_call', 'start');
             // 成功時は reader 完了後に clear。throw 時はここで確実に解除しておく
-            synthRes = await callGPT({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal: synthTimer.signal, messages: synthMessages });
+            synthRes = await callModel({ env, cfg: DEFAULTS.models.synthesizer, stream: true, signal: synthTimer.signal, messages: synthMessages });
           } catch (e) { synthTimer.clear(); throw e; }
           if (!synthRes.ok) {
             const detail = (await synthRes.text().catch(() => '')).slice(0, 200);
@@ -480,7 +521,7 @@ export default {
         } catch (err) {
           // タイムアウト(AbortError)は upstream として表現
           if (err && err.name === 'AbortError') {
-            const env2 = stageError('upstream', 'timeout', 'GPT への応答がタイムアウトしました', { retryable: true });
+            const env2 = stageError('upstream', 'timeout', 'AI の応答がタイムアウトしました', { retryable: true });
             log('error', 'upstream', 'timeout');
             send('error', toEnvelope(env2, requestId));
           } else {

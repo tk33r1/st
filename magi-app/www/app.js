@@ -260,7 +260,7 @@ async function parseSSE(body, handlers) {
 }
 
 // ---- 画像添付（マルチモーダル入力）------------------------------------------
-// 画像は data URL のまま Worker → OpenAI へ送る。送信用（長辺1024）と保存用
+// 画像は data URL のまま Worker → 各人格の API（OpenAI・DeepSeek・Gemini）へ送る。送信用（長辺1024）と保存用
 // サムネ（長辺320）を分けて作り、localStorage には軽いサムネだけを残す。
 var ATTACH_MAX = 4;
 var ATTACH_SEND_DIM = 1024;
@@ -664,7 +664,8 @@ function showInfoPanel() {
     + '<li>Images can be attached (up to <strong>4 per message</strong>, resized on your device before sending) and are sent to the API just like text.</li>'
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
-    + '<li>Powered by <strong>OpenAI API</strong> (inputs are sent to OpenAI in the US and retained up to 30 days for abuse monitoring; API inputs are not used for AI training by default).</li>'
+    + '<li>Powered by <strong>OpenAI API</strong>, <strong>DeepSeek API</strong> and <strong>Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong>sent to all three</strong>.</li>'
+    + '<li>OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini, paid tier): logged for a limited period for abuse detection; not used to improve Google\'s products. DeepSeek: <strong>stored on servers in China and may be used to train its models</strong>.</li>'
     + '<li class="warn">DO NOT input any confidential or personal information.</li>'
     + '</ul>');
 }

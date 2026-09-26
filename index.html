@@ -6912,7 +6912,7 @@
       if (buf.trim()) processBlock(buf);
     }
     // --- マルチモーダル入力（画像添付）---
-    // 画像は data URL のまま Worker → OpenAI へ渡す。アップロード先を持たない
+    // 画像は data URL のまま Worker → 各人格の API（OpenAI・DeepSeek・Gemini）へ渡す。アップロード先を持たない
     // インスクリプションなので、外部ストレージには一切依存させない。
     const ATTACH_MAX = 4;         // 1メッセージあたりの枚数（Worker 側の上限と一致）
     const ATTACH_SEND_DIM = 1024; // 送信用の長辺 px（認識精度とトークン量の折り合い）
@@ -7483,7 +7483,8 @@
             <li>${tr('Images can be attached (up to <strong class="text-normal">4 per message</strong>, resized in your browser before sending) and are sent to the API just like text.', '画像も添付できます（1メッセージ<strong class="text-normal">最大4枚</strong>。送信前にブラウザ側で縮小されます）。テキスト同様に API へ送信されます。')}</li>
             <li>${tr('By default, inputs are <strong class="text-normal">not saved</strong> in the database, unless you <strong class="text-normal">react</strong> to a reply (👍/emoji) to help improve MAGI.', 'デフォルトでは、MAGI向上のために回答へ<strong class="text-normal">リアクション</strong>（👍や絵文字）をしない限り、入力内容はデータベースに<strong class="text-normal">保存されません</strong>。')}</li>
             <li>${tr('Chat history is stored in your browser\'s <strong class="text-normal">Local Storage</strong> (not permanent; please export important chats).', 'チャット履歴はお使いのブラウザの<strong class="text-normal">ローカルストレージ</strong>に保存されます（永続的ではないため、重要な履歴はエクスポート機能をご利用ください）。')}</li>
-            <li>${tr('Powered by <strong class="text-normal">OpenAI API</strong> (inputs are sent to OpenAI in the US and retained up to 30 days for abuse monitoring; API inputs are not used for AI training by default).', '<strong class="text-normal">OpenAI API</strong>を使用しています（入力内容は米国の OpenAI へ送信され、不正利用監視のため最大30日間保持されます。API 経由の入力は既定ではAIの学習に利用されません）。')}</li>
+            <li>${tr('Powered by <strong class="text-normal">OpenAI API</strong>, <strong class="text-normal">DeepSeek API</strong> and <strong class="text-normal">Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong class="text-normal">sent to all three</strong>.', '<strong class="text-normal">OpenAI API</strong>・<strong class="text-normal">DeepSeek API</strong>・<strong class="text-normal">Gemini API</strong>を使用しています。人格ごとに別の API で動くため、入力内容（画像を含む）は<strong class="text-normal">3社すべてへ送信</strong>されます。')}</li>
+            <li>${tr('OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini, paid tier): logged for a limited period for abuse detection; not used to improve Google\'s products. DeepSeek: <strong class="text-normal">stored on servers in China and may be used to train its models</strong>.', 'OpenAI：米国へ送信され、不正利用監視のため最大30日間保持されます。既定ではAIの学習に利用されません。Google（Gemini・有料枠）：不正利用の検知のため一定期間記録されますが、Google の製品改善には利用されません。DeepSeek：<strong class="text-normal">中国のサーバーに保存され、同社のモデルの学習に利用されることがあります</strong>。')}</li>
             <li class="text-red-500 font-semibold">${tr('DO NOT input any confidential or personal information.', '機密情報や個人情報は絶対に入力しないでください。')}</li>
           </ul>
         </div>`);

@@ -50,7 +50,7 @@
 | `workers/dj-request` | tk-st-dj-request | `tk.st/dj/api/req/*` | 曲リクエスト API。D1: `dj-request-db`。secret: `ADMIN_KEY`, `IP_SALT` |
 | `workers/dj-offer` | tk-st-dj-offer | `tk.st/dj/api/offer/*` | 出演オファーフォームの受け口。D1 なし（内容は Resend でメール転送するだけ）。secret: `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, `OFFER_TO`, `OFFER_FROM`。**Resend / Turnstile の初期設定は同ディレクトリの README.md を読むこと** |
 | `workers/magi` | tk-st-magi-api | `workers.tk.st/magi*` | MAGI 旧版。secret: `MAGI_API_KEY` |
-| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`（`MAGI_DEEPSEEK_API_KEY` は未使用の保持） |
+| `workers/magi2` | tk-st-magi2-api | `workers.tk.st/magi2*` | MAGI 現行（3人格＋統合、SSE ストリーミング、画像対応）。人格ごとに会社を分けている（Enthusiast = DeepSeek、Humanist = Gemini、Strategist・統合 = OpenAI）。D1: `tk-st-magi2-db`。secret: `MAGI_OPENAI_API_KEY`・`MAGI_DEEPSEEK_API_KEY`・`MAGI_GEMINI_API_KEY` |
 | `workers/wrangler` | st-games-api | ルートなし（`*.workers.dev` 直叩き） | ゲーム共通 API（ランキング、GPT 呼び出し）。D1: `st-games-ranking-db`。wrangler のみ npm 依存 |
 
 ## ビルドとテスト
@@ -197,6 +197,12 @@
   トークン上限、タイムアウト、揺らぎの唯一の正本。モデルIDだけは上記の共通正本に従う。
   以前あった `persona.yaml` は読まれないまま内容がずれたので廃止した。人間向けの別形式を
   並べて二重管理に戻さないこと。
+  - 3人格は答えの癖と間違え方をばらけさせるため、人格ごとに会社を分けている（`DEFAULTS.models.persona` を
+    codename で引く）。呼び出し先は `PROVIDERS`、会社ごとの推論の切り方やトークン上限の名前の違いは
+    `src/index.js` の `requestBody` に閉じている。1人格が失敗しても（障害・安全フィルター・キー未設定・時間切れ）
+    その人格を `[NO RESPONSE]` にして残りで討議と統合を続け、全員が失敗したときだけエラーにする。
+  - 入力は3社すべてに送られる。会社を変えたり足したりしたら、トップページと `magi-app/www/app.js` の
+    「System & Privacy」の送信先・保持・学習利用の説明も直すこと。Gemini は有料枠のキーを使う（無料枠は入力が学習に使われる）。
 - **MAGI の人格カード（`data-magi` の目印）**: magi2 の3人格は、固定の骨格プロンプト（personas.js）に
   サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
   付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、

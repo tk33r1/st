@@ -1,7 +1,7 @@
 # AIモデルの更新管理
 
 AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダー → 用途チャネル → モデルID）。
-実運用で直接モデルを選ぶプロバイダーは OpenAI と DeepSeek の2社で、旧MAGIの `magi.tk.st` は
+実運用で直接モデルを選ぶプロバイダーは OpenAI・DeepSeek・Google（Gemini）の3社で、旧MAGIの `magi.tk.st` は
 外部バックエンドへの中継だけなので、この仕組みからは背後のモデルを確認・変更できない。
 
 ## 仕組み
@@ -23,7 +23,7 @@ AI APIで使うモデルIDの正本は `config/ai-models.json`（プロバイダ
 1. **現在のモデルのスモークテスト**。DeepSeekの `flash` チャネルはIDが固定のエイリアスで、
    中身はDeepSeek側で黙って差し替わるため、候補の有無にかかわらず毎週試す。
 2. **更新候補の検知**。各社の `/models` APIを見て、OpenAIは同じLuna系列のより新しい世代番号
-   （`6` と `6.0` は同じ版として扱う）を探す。現在のモデルが一覧から消えていても後継は探す。
+   （`6` と `6.0` は同じ版として扱う）を、Googleは同じFlash-Lite系列のより新しい世代番号を探す。現在のモデルが一覧から消えていても後継は探す。
    候補はその場でスモークテストにかけ、**合格したものだけ**を正本に書く。
 3. **レビュー用PR**。正本が変わっていればPRを作る（ブランチ `automation/ai-model-update`）。
    ほかの要確認事項（停止予定、DeepSeekの一覧取得失敗など）があってもPRは止めない。
@@ -42,12 +42,15 @@ PR本文にも同じ手順を出す。
 | プロバイダー | 試すこと | なぞっている利用箇所 |
 | --- | --- | --- |
 | OpenAI | 非推論・temperature 0.2・JSON出力 | 日刊生成、MAGIの人格カード、ゲームAPI |
-| OpenAI | 非推論・temperature 1.3・top_p・画像入力（data URL） | magi2 の3人格（揺らぎの最大温度、画像付きの質問） |
+| OpenAI | 非推論・temperature 1.3・top_p・画像入力（data URL） | magi2 の Strategist（揺らぎの最大温度、画像付きの質問） |
 | OpenAI | 推論 high・ストリーミング | magi2 の統合（上位モデルでは組織認証を求められることがある） |
 | DeepSeek | temperature 0.2・JSON出力 | 日刊生成 |
+| DeepSeek | 推論なし（`thinking` disabled）・temperature 1.3・top_p・画像入力 | magi2 の Enthusiast |
+| Google | 推論 minimal（Gemini 3 系は切れない）・temperature 1.3・top_p・画像入力 | magi2 の Humanist |
 
-OpenAIのモデル一覧は `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY` を使う。どちらも既存の
-Repository Secretをそのまま利用し、モデル監視用の追加シークレットは不要。
+OpenAIのモデル一覧は `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、Googleは `GEMINI_API_KEY` を使う。
+OpenAIとDeepSeekは既存のRepository Secretをそのまま使う。`GEMINI_API_KEY` はmagi2の Humanist 用に足した
+Repository Secretで、Worker の `MAGI_GEMINI_API_KEY` と同じ有料枠のキーでよい（未設定だと監視がIssueで知らせる）。
 レビュー用PRを自動作成するには、GitHubのリポジトリ設定で Actions にPull Requestの作成を
 許可しておく。許可されていない場合も、workflowは失敗内容をIssueで通知する。
 ボットが作ったPRでは `ai-models.yml` が走らない（GITHUB_TOKEN の push は workflow を起動しない）が、
@@ -59,10 +62,10 @@ Repository Secretをそのまま利用し、モデル監視用の追加シーク
 # 正本の形式と直書きの検査（APIキー不要）
 python .github/scripts/ai_models.py check
 
-# 各社のモデル一覧から新しい版を探し、スモークテストに通れば正本へ反映する（両社のAPIキーが必要）
+# 各社のモデル一覧から新しい版を探し、スモークテストに通れば正本へ反映する（3社のAPIキーが必要）
 python .github/scripts/ai_models.py update
 
-# 正本のモデルで実APIの最小互換性テスト（両社のAPIキーが必要。少額のAPI利用が発生）
+# 正本のモデルで実APIの最小互換性テスト（3社のAPIキーが必要。少額のAPI利用が発生）
 python .github/scripts/ai_models.py smoke
 ```
 

@@ -6,9 +6,18 @@
 import aiModels from '../../config/ai-models.json';
 
 const OPENAI_LUNA_MODEL = aiModels.openai.luna;
+const DEEPSEEK_FLASH_MODEL = aiModels.deepseek.flash;
+const GEMINI_FLASH_LITE_MODEL = aiModels.google.flash_lite;
+
+// 呼び出し先。3社とも OpenAI 互換の Chat Completions を持つ。key は Wrangler secret の名前。
+// 各社で違う呼び出し方（推論の切り方・トークン上限の名前）は src/index.js の requestBody に置く。
+export const PROVIDERS = {
+  openai: { endpoint: 'https://api.openai.com/v1/chat/completions', key: 'MAGI_OPENAI_API_KEY' },
+  deepseek: { endpoint: 'https://api.deepseek.com/chat/completions', key: 'MAGI_DEEPSEEK_API_KEY' },
+  google: { endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: 'MAGI_GEMINI_API_KEY' },
+};
 
 export const DEFAULTS = {
-  endpoint: 'https://api.openai.com/v1/chat/completions',
   temperature: 1.0,
   top_p: 1.0,
   history_max_messages: 12, // サーバ側の防御的 trim
@@ -22,18 +31,28 @@ export const DEFAULTS = {
     max_images_total: 8,              // 1リクエスト（履歴全体）あたり
     max_image_bytes: 5 * 1024 * 1024, // base64 デコード後の1枚あたり上限
   },
-  // 推論制御は reasoning_effort（none|low|medium|high|xhigh|max）で行う。
-  // 省略すると Luna は medium で推論するため、全モデルで明示すること。
-  // temperature / top_p は reasoning_effort:'none' のときだけ受け付けられる（→ src/index.js）。
+  // 推論制御は reasoning_effort で行う。値の意味と送れるパラメータは会社ごとに違う（→ src/index.js の requestBody）。
+  //   OpenAI  : none|low|medium|high|xhigh|max。省略すると Luna は medium で推論するので必ず明示する。
+  //             temperature / top_p は 'none' のときだけ受け付けられる（推論ありで送ると 400）。
+  //   DeepSeek: 'none' で推論を切る（既定は推論あり＝ high）。temperature は推論なしのときだけ効く。
+  //   Google  : Gemini 3 系は推論を切れず、最低が 'minimal'。推論トークンも max_tokens に数えるので余裕を持たせる。
+  // max_tokens は出力の上限（推論トークンを含む）。OpenAI には max_completion_tokens として送る。
   models: {
-    // 3人格：非推論・並列・短文（高速・低コスト。temperature の揺らぎもここで効く）
-    persona: { model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_completion_tokens: 512 },
-    // 統合：推論あり・ストリーミング。max_completion_tokens は推論トークン分の余裕を確保。
-    // 推論ありのため temperature / top_p は送れない（送ると 400）。
-    synthesizer: { model: OPENAI_LUNA_MODEL, reasoning_effort: 'high', max_completion_tokens: 1536 },
+    // 3人格：推論なし（Gemini は最小）・並列・短文。temperature の揺らぎもここで効く。
+    // 人格ごとに会社を分け、答えの癖と間違え方をばらけさせる（codename で引く）。
+    persona: {
+      // 前向きに寄る癖と描写の濃い文体が「熱狂者」に合う
+      'MELCHIOR-1': { provider: 'deepseek', model: DEEPSEEK_FLASH_MODEL, reasoning_effort: 'none', max_tokens: 512 },
+      // 寄り添いの強さが「人間主義者」に合う。推論ぶんを見込んで上限を広げる
+      'BALTHASAR-2': { provider: 'google', model: GEMINI_FLASH_LITE_MODEL, reasoning_effort: 'minimal', max_tokens: 1024 },
+      // 手順立てて言い切る実務寄りの型が「戦略家」に合う
+      'CASPER-3': { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_tokens: 512 },
+    },
+    // 統合：推論あり・ストリーミング。max_tokens は推論トークン分の余裕を確保。
+    synthesizer: { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'high', max_tokens: 1536 },
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
-    // max_completion_tokens を推論が食い潰して content が空になるため 'none' 必須。
-    titler: { model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_completion_tokens: 48 },
+    // max_tokens を推論が食い潰して content が空になるため 'none' 必須。
+    titler: { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_tokens: 48 },
   },
 };
 

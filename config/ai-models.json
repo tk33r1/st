@@ -4,5 +4,8 @@
   },
   "deepseek": {
     "flash": "deepseek-flash"
+  },
+  "google": {
+    "flash_lite": "gemini-3.5-flash-lite"
   }
 }
