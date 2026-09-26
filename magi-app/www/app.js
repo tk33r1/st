@@ -33,19 +33,19 @@ var AGENT_PERSONAS = [
     codename: 'MELCHIOR-1', name: 'ENTHUSIAST',
     desc: 'The chaotic self. An impulsive geek who trusts gut instinct — fired up by Harleys, custom PCs, idols, wine, and above all, music. Drawn more to things than to people: warm toward kindred spirits, yet closed-off and self-centered, with few qualms about breaking the rules.',
     context: 'Also speaks from a summary of the DJ and Motovlog pages — music, DJing, and the road back to riding after an accident. Rebuilt automatically whenever those pages change.',
-    theme: 'Dark theme gives this persona more weight in the final answer, and lets all three speak a little more freely.',
+    theme: 'Light: default. Dark: speaks a little more freely, with more weight in the final answer.',
   },
   {
     codename: 'BALTHASAR-2', name: 'HUMANIST',
     desc: 'The compassionate self. A poetic, introverted dreamer who has made Fromm, Stoicism, and Buddhism a part of the self. Always centered on humanity: deeply empathetic and self-sacrificing, yet bold enough to cross ethical lines when the philosophy calls for it.',
     context: 'Also draws on a summary of the Thought page — conclusions on love, happiness, failure and life, the books behind them, and how those views have changed. Rebuilt automatically whenever the page changes.',
-    theme: 'Dark theme lets all three speak a little more freely.',
+    theme: 'Light: default. Dark: speaks a little more freely.',
   },
   {
     codename: 'CASPER-3', name: 'STRATEGIST',
     desc: 'The logical self. A data-driven strategist relentlessly pursuing rationality and the optimal answer, embracing both reproducible tactics and novelty. Interested only in exceptional people; unsentimental and organization-first.',
     context: 'Also draws on a summary of the Job page and the tools and Glitch articles published on tk.st. Rebuilt automatically whenever they change.',
-    theme: 'Light theme gives this persona more weight in the final answer.',
+    theme: 'Light: more weight in the final answer. Dark: speaks a little more freely.',
   },
 ];
 // The LLM behind each persona. Fetched once, the first time a persona is opened on the splash
