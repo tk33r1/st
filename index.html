@@ -1259,47 +1259,27 @@
 
     .tl-details[open] .tl-desc { animation: tl-fade-in var(--duration-fast) ease-out }
 
-    /* help.md is a terminal-native knowledge base rather than another copy of the
-       Explorer. Native <details> keeps every answer keyboard-accessible without JS. */
-    .help-faq {
-      position: relative;
-      overflow: hidden;
+    /* help.md renders as the Markdown it is named after: dim syntax marks (#, ##, >),
+       questions as a quiet list, answers as blockquotes. No card, no badges — the
+       editor already frames it. Native <details> keeps every answer keyboard-accessible
+       without JS. */
+    .help-md {
       min-width: 0;
       max-width: 100%;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      background: var(--surface-color);
-      box-shadow: inset 3px 0 0 var(--primary-color);
+      color: var(--text-color);
+      font-size: 0.75rem;
+      line-height: var(--phi);
     }
 
-    .help-faq::before {
-      content: '';
-      position: absolute;
-      inset: 0 0 auto;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary-color), transparent 72%);
-      opacity: 0.7;
-      pointer-events: none;
+    .md-mark {
+      margin-right: 0.5em;
+      color: var(--dim-color);
+      font-weight: 400;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    .faq-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 1rem 1rem 0.75rem 1.2rem;
-      background: var(--surface-alt);
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .faq-eyebrow {
-      margin-bottom: 0.15rem;
-      color: var(--secondary-color);
-      font-size: 0.625rem;
-      letter-spacing: 0.12em;
-    }
-
-    .faq-title {
+    .help-title {
       margin: 0;
       color: var(--primary-color);
       font-size: 1rem;
@@ -1307,152 +1287,84 @@
       letter-spacing: 0.04em;
     }
 
-    .faq-title span {
+    .help-lead {
+      margin: 0.35rem 0 0;
       color: var(--secondary-color);
-      font-weight: 400;
     }
 
-    .faq-status {
-      flex-shrink: 0;
-      padding: 0.2rem 0.45rem;
-      border: 1px solid var(--border-color);
-      border-radius: 9999px;
-      color: var(--secondary-color);
-      background: var(--surface-color);
-      font-size: 0.625rem;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
+    .help-sec + .help-sec, .help-lead + .help-sec { margin-top: 1.4rem }
 
-    .faq-status-dot {
-      color: var(--primary-color);
-      text-shadow: 0 0 6px var(--primary-color);
-    }
-
-    .faq-console-line {
-      padding: 0.5rem 1rem 0.5rem 1.2rem;
-      border-bottom: 1px dashed var(--border-color);
+    .help-sec h3 {
+      margin: 0 0 0.3rem;
       color: var(--text-color);
-      background: var(--surface-color);
       font-size: 0.6875rem;
-    }
-
-    .faq-console-line .faq-prompt { color: var(--primary-color) }
-    .faq-console-line .faq-ok { color: var(--secondary-color) }
-
-    .faq-intro {
-      margin: 0;
-      padding: 0.75rem 1rem 0.25rem 1.2rem;
-      color: var(--secondary-color);
-      font-size: 0.75rem;
-      line-height: var(--phi);
-    }
-
-    .faq-list { padding: 0.5rem 1rem 0.9rem 1.2rem }
-
-    .faq-item {
-      border-top: 1px solid var(--border-color);
-      transition: background-color var(--duration-fast), border-color var(--duration-fast);
-    }
-
-    .faq-item:last-child { border-bottom: 1px solid var(--border-color) }
-
-    .faq-item[open] {
-      border-color: var(--primary-color);
-      background: var(--primary-bg);
-    }
-
-    .faq-question {
-      display: grid;
-      grid-template-columns: 2rem minmax(0, 1fr) auto auto;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.65rem 0.6rem;
-      color: var(--text-color);
-      cursor: pointer;
-      list-style: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    .faq-question::-webkit-details-marker { display: none }
-
-    .faq-index {
-      color: var(--primary-color);
-      font-size: 0.625rem;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .faq-question-text {
-      min-width: 0;
-      overflow-wrap: anywhere;
-      font-size: 0.8125rem;
-      font-weight: 700;
-      line-height: 1.45;
-    }
-
-    .faq-tag {
-      padding: 0.05rem 0.35rem;
-      border: 1px solid var(--border-color);
-      border-radius: 2px;
-      color: var(--secondary-color);
-      background: var(--surface-alt);
-      font-size: 0.5625rem;
       letter-spacing: 0.08em;
     }
 
-    .faq-toggle {
-      width: 0.9rem;
-      color: var(--secondary-color);
-      font-size: 0.75rem;
+    .faq-q {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin: 0 -0.5rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 3px;
+      cursor: pointer;
+      list-style: none;
+      transition: background-color var(--duration-fast), color var(--duration-fast);
+    }
+
+    .faq-q::-webkit-details-marker { display: none }
+    .faq-q:hover { background: var(--surface-hover) }
+    .faq-q:focus-visible { outline: 1px solid var(--primary-color); outline-offset: -1px }
+
+    .faq-q::before {
+      content: '›';
+      flex-shrink: 0;
+      width: 0.6rem;
+      color: var(--dim-color);
       text-align: center;
       transition: transform var(--duration-fast), color var(--duration-fast);
     }
 
-    .faq-item[open] .faq-toggle {
-      color: var(--primary-color);
-      transform: rotate(45deg);
-    }
+    .faq-item[open] > .faq-q { color: var(--primary-color) }
+    .faq-item[open] > .faq-q::before { color: var(--primary-color); transform: rotate(90deg) }
 
-    .faq-answer {
-      display: grid;
-      grid-template-columns: 2rem minmax(0, 1fr);
-      gap: 0.6rem;
-      margin: 0 0.6rem;
-      padding: 0.7rem 0 0.8rem;
-      border-top: 1px dashed var(--border-color);
+    .faq-a {
+      margin: 0.1rem 0 0.6rem 0.2rem;
+      padding: 0.05rem 0 0.05rem 0.85rem;
+      border-left: 2px solid var(--primary-color);
       color: var(--secondary-color);
-      font-size: 0.75rem;
-      line-height: var(--phi);
+      overflow-wrap: anywhere;
       animation: tl-fade-in var(--duration-fast) ease-out;
     }
 
-    .faq-answer span, .faq-console-line { overflow-wrap: anywhere }
-
-    .faq-answer::before {
-      content: '\21B3';
-      color: var(--primary-color);
-      text-align: center;
-    }
-
-    .faq-foot {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      padding: 0.65rem 1rem 0.7rem 1.2rem;
-      border-top: 1px solid var(--border-color);
-      color: var(--secondary-color);
-      background: var(--surface-alt);
-      font-size: 0.6875rem;
-    }
-
-    .faq-foot code {
-      padding: 0.05rem 0.3rem;
+    .help-md code, .help-md kbd, .md-cmd {
+      padding: 0 0.3em;
       border: 1px solid var(--border-color);
       border-radius: 3px;
+      background: var(--surface-alt);
+      color: var(--text-color);
+      font: inherit;
+      font-size: 0.95em;
+      white-space: nowrap;
+    }
+
+    .help-md kbd { color: var(--secondary-color) }
+
+    /* Commands that are always installed run on click, like typing them. */
+    .md-cmd {
       color: var(--primary-color);
-      background: var(--surface-color);
-      font-family: inherit;
+      cursor: pointer;
+      transition: border-color var(--duration-fast), background-color var(--duration-fast);
+    }
+
+    .md-cmd:hover, .md-cmd:focus-visible { border-color: var(--primary-color); background: var(--primary-bg); outline: none }
+
+    .help-foot {
+      margin-top: 1.4rem;
+      padding-top: 0.6rem;
+      border-top: 1px dashed var(--border-color);
+      color: var(--secondary-color);
     }
 
     @media (max-width: 580px) {
@@ -1460,11 +1372,6 @@
           width: calc(100vw - 4.5rem) !important;
           max-width: calc(100vw - 4.5rem);
         }
-        .faq-head { align-items: stretch; flex-direction: column; gap: 0.55rem }
-        .faq-status { align-self: flex-start }
-        .faq-question { grid-template-columns: 1.5rem minmax(0, 1fr) auto }
-        .faq-tag { display: none }
-        .faq-answer { grid-template-columns: 1.5rem minmax(0, 1fr) }
     }
 
     @keyframes tl-fade-in {
@@ -3100,31 +3007,55 @@
               "name": "How do I explore this site?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Use the Explorer on the left to open portfolio files, or type a command in the terminal. Search scans both file names and their contents. Press Ctrl/Cmd+P for Quick Open and Ctrl/Cmd+Shift+P for the Command Palette."
+                "text": "Open files from the Explorer on the left, or type a command in the terminal below; Tab completes it. Ctrl/Cmd+P jumps to a file and Ctrl/Cmd+Shift+P opens the Command Palette."
               }
             },
             {
               "@type": "Question",
-              "name": "Where can I find projects, career details, and the person behind tk.st?",
+              "name": "Where are the projects, career, and profile?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Open pages for project links, about for a short biography, timeline for a chronology, and identify for personality profiles. The /job page contains detailed work history, while contact opens the message route."
+                "text": "pages lists projects, about is a short bio, timeline traces life events, and identify holds personality profiles. The full work history lives on /job."
               }
             },
             {
               "@type": "Question",
-              "name": "How do I switch to Japanese or change the color theme?",
+              "name": "Where are the social links?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Open Extensions from the four-square icon, install the Japanese language pack, and run japanese. Use the gear icon or the Ctrl/Cmd+, shortcut to toggle the color theme; the optional theme extension also adds a theme command."
+                "text": "Open PORTS in the bottom panel. Each profile runs as a forwarded port: GitHub on 22, X on 443, Mixcloud on 8000, Ko-fi on 4040, and more."
               }
             },
             {
               "@type": "Question",
-              "name": "What is MAGI, and what happens to messages I send?",
+              "name": "How do I switch to Japanese or dark mode?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "MAGI is an experimental chat where three AI personas debate before one answer is synthesized. Open it from the MAGI icon in the left activity bar. Messages and attached images are sent to OpenAI, DeepSeek, and Google Gemini. Inputs are not saved in the site database by default unless you react to a reply; chat history is stored in your browser. Do not send confidential or personal information."
+                "text": "For Japanese, install the language pack from Extensions (the four-square icon) and run japanese. The gear icon or Ctrl/Cmd+, toggles light and dark. Every visit starts in English and light mode."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it work on a phone?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Tap the icons on the left edge for Explorer, Search, and Extensions, and type commands in the terminal as usual. Keyboard shortcuts are for desktop only."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is MAGI, and where do my messages go?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is there a MAGI app?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Android app is on the MAGI start screen as an APK download. iOS is coming soon."
               }
             },
             {
@@ -3132,23 +3063,39 @@
               "name": "Which keyboard shortcuts are useful?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Ctrl/Cmd+B toggles the side bar, Ctrl/Cmd+J toggles the bottom panel, and Ctrl/Cmd+backtick focuses the terminal. Tab accepts a command suggestion, while the up and down arrows recall commands you typed."
+                "text": "Ctrl/Cmd+B toggles the side bar, Ctrl/Cmd+J the bottom panel, and Ctrl/Cmd+` jumps to the terminal. There, the up and down arrows recall earlier commands."
               }
             },
             {
               "@type": "Question",
-              "name": "Is this only a portfolio, or are there hidden functions?",
+              "name": "Can I link straight to a section?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Not every command is documented. Open Extensions, install whatever catches your eye, and press Tab after typing a few letters. The system responds to rhythm, stillness, and controlled destruction. Some discoveries change the interface itself."
+                "text": "Yes. Add ?cmd= and a command to the URL: tk.st/?cmd=timeline opens straight to the timeline."
               }
             },
             {
               "@type": "Question",
-              "name": "How do I recover if an experiment makes the interface unusable?",
+              "name": "Are there hidden functions?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Press Escape first. The Command Palette lives outside the main interface, so Ctrl/Cmd+Shift+P can still reach a command that toggles an effect off. If the terminal reports a MELTDOWN, remember that every meltdown has a rebuild. The reload control resets the session."
+                "text": "Not every command is documented. Install whatever catches your eye in Extensions, type a few letters, and press Tab. The system responds to rhythm, stillness, and controlled destruction."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Something broke. How do I recover?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Press Esc first. The Command Palette (Ctrl/Cmd+Shift+P) lives outside the main interface, so it can still reach a command that switches an effect off. After a MELTDOWN, remember that every meltdown has a rebuild. Reloading starts a fresh session."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is this site really stored on Bitcoin?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. tk.st is a single self-contained HTML file with no external fonts, images, or libraries, which let it be inscribed in the Witness area of the Bitcoin blockchain as an Ordinals inscription. The web3 extension leads to its Web3 page."
               }
             }
           ]
@@ -3942,58 +3889,102 @@
     ];
 
     // The English wording mirrors the FAQPage JSON-LD above. Keep both in step when
-    // editing: the structured answers describe exactly what help.md renders by default.
+    // editing: the structured answers are these English answers with the inline marks
+    // stripped. Marks: `cmd` is inline code (a button when the command is in
+    // FAQ_RUNNABLE), {keys} is a key combo.
+    const FAQ_SECTIONS = [
+      { key: 'nav', title: ['Getting around', '歩き方'] },
+      { key: 'magi', title: ['MAGI', 'MAGI'] },
+      { key: 'deep', title: ['Under the hood', '裏側'] }
+    ];
     const FAQ_DATA = [
       {
-        tag: 'NAV',
+        sec: 'nav',
         question: 'How do I explore this site?',
-        question_ja: 'このサイトはどうやって巡ればいいですか？',
-        answer: 'Use the Explorer on the left to open portfolio files, or type a command in the terminal. Search scans both file names and their contents. Press Ctrl/Cmd+P for Quick Open and Ctrl/Cmd+Shift+P for the Command Palette.',
-        answer_ja: '左側の Explorer からポートフォリオのファイルを開くか、ターミナルへコマンドを入力してください。検索ではファイル名だけでなく中身も探せます。Ctrl/Cmd+P でクイックオープン、Ctrl/Cmd+Shift+P でコマンドパレットを開けます。'
+        question_ja: 'このサイトはどう巡ればいいですか？',
+        answer: 'Open files from the Explorer on the left, or type a command in the terminal below; {Tab} completes it. {Ctrl/Cmd+P} jumps to a file and {Ctrl/Cmd+Shift+P} opens the Command Palette.',
+        answer_ja: '左のエクスプローラーからファイルを開くか、下のターミナルにコマンドを入力してください。{Tab} で補完できます。{Ctrl/Cmd+P} でファイルへ移動、{Ctrl/Cmd+Shift+P} でコマンドパレットが開きます。'
       },
       {
-        tag: 'FILES',
-        question: 'Where can I find projects, career details, and the person behind tk.st?',
-        question_ja: '制作物や経歴、tk.st を作った人についてはどこで見られますか？',
-        answer: 'Open pages for project links, about for a short biography, timeline for a chronology, and identify for personality profiles. The /job page contains detailed work history, while contact opens the message route.',
-        answer_ja: '制作物へのリンクは pages、短いプロフィールは about、これまでの出来事は timeline、性格診断は identify で見られます。詳しい職歴は /job、連絡先は contact から開けます。'
+        sec: 'nav',
+        question: 'Where are the projects, career, and profile?',
+        question_ja: '制作物・経歴・プロフィールはどこにありますか？',
+        answer: '`pages` lists projects, `about` is a short bio, `timeline` traces life events, and `identify` holds personality profiles. The full work history lives on /job.',
+        answer_ja: '制作物は `pages`、短いプロフィールは `about`、これまでの出来事は `timeline`、性格診断は `identify` にあります。詳しい職歴は /job へ。'
       },
       {
-        tag: 'LOCALE',
-        question: 'How do I switch to Japanese or change the color theme?',
-        question_ja: '日本語表示やカラーテーマへの切り替え方は？',
-        answer: 'Open Extensions from the four-square icon, install the Japanese language pack, and run japanese. Use the gear icon or the Ctrl/Cmd+, shortcut to toggle the color theme; the optional theme extension also adds a theme command.',
-        answer_ja: '四角が4つ並ぶ Extensions アイコンを開き、日本語パックをインストールして japanese を実行してください。カラーテーマは歯車アイコンまたは Ctrl/Cmd+, で切り替えられます。theme 拡張機能を入れると theme コマンドも使えます。'
+        sec: 'nav',
+        question: 'Where are the social links?',
+        question_ja: 'SNS などのリンクはどこにありますか？',
+        answer: 'Open PORTS in the bottom panel. Each profile runs as a forwarded port: GitHub on 22, X on 443, Mixcloud on 8000, Ko-fi on 4040, and more.',
+        answer_ja: '下部パネルの「ポート」を開いてください。各プロフィールがポートとして稼働しています。GitHub は 22、X は 443、Mixcloud は 8000、Ko-fi は 4040 などです。'
       },
       {
-        tag: 'MAGI',
-        question: 'What is MAGI, and what happens to messages I send?',
-        question_ja: 'MAGIとは何ですか？送ったメッセージはどう扱われますか？',
-        answer: 'MAGI is an experimental chat where three AI personas debate before one answer is synthesized. Open it from the MAGI icon in the left activity bar. Messages and attached images are sent to OpenAI, DeepSeek, and Google Gemini. Inputs are not saved in the site database by default unless you react to a reply; chat history is stored in your browser. Do not send confidential or personal information.',
-        answer_ja: 'MAGIは3つのAI人格が議論し、ひとつの回答へ統合する実験的なチャットです。左側のアクティビティバーにある MAGI アイコンから開けます。メッセージと添付画像は OpenAI・DeepSeek・Google Gemini の3社へ送信されます。回答にリアクションしない限り、入力は原則サイトのデータベースへ保存されず、チャット履歴はブラウザ内に保存されます。機密情報や個人情報は送らないでください。'
+        sec: 'nav',
+        question: 'How do I switch to Japanese or dark mode?',
+        question_ja: '日本語表示やダークモードにするには？',
+        answer: 'For Japanese, install the language pack from Extensions (the four-square icon) and run `japanese`. The gear icon or {Ctrl/Cmd+,} toggles light and dark. Every visit starts in English and light mode.',
+        answer_ja: '日本語は拡張機能（四角が4つのアイコン）から言語パックを入れて `japanese` を実行します。ライトとダークは歯車アイコンか {Ctrl/Cmd+,} で切り替えられます。表示は毎回、英語・ライトから始まります。'
       },
       {
-        tag: 'KEYMAP',
+        sec: 'nav',
+        question: 'Does it work on a phone?',
+        question_ja: 'スマホでも使えますか？',
+        answer: 'Yes. Tap the icons on the left edge for Explorer, Search, and Extensions, and type commands in the terminal as usual. Keyboard shortcuts are for desktop only.',
+        answer_ja: '使えます。左端のアイコンからエクスプローラー・検索・拡張機能を開き、コマンドはいつもどおりターミナルへ。キーボードショートカットはパソコン向けです。'
+      },
+      {
+        sec: 'magi',
+        question: 'What is MAGI, and where do my messages go?',
+        question_ja: 'MAGI とは何ですか？送った内容はどうなりますか？',
+        answer: 'An experimental chat where three AI personas debate, then one answer is synthesized. Open it with the speech-bubble icon. Messages and images are sent to OpenAI, DeepSeek, and Google Gemini. Chat history stays in your browser; the site database keeps an exchange only when you react to a reply. Do not send confidential or personal information.',
+        answer_ja: '3つのAI人格が議論し、ひとつの回答にまとめる実験的なチャットです。吹き出しのアイコンから開けます。メッセージと画像は OpenAI・DeepSeek・Google Gemini の3社へ送られます。履歴はブラウザ内に保存され、サイトのデータベースに残るのは回答にリアクションしたときだけです。機密情報や個人情報は送らないでください。'
+      },
+      {
+        sec: 'magi',
+        question: 'Is there a MAGI app?',
+        question_ja: 'MAGI のアプリはありますか？',
+        answer: 'The Android app is on the MAGI start screen as an APK download. iOS is coming soon.',
+        answer_ja: 'Android 版は MAGI の起動画面から APK でダウンロードできます。iOS 版は準備中です。'
+      },
+      {
+        sec: 'deep',
         question: 'Which keyboard shortcuts are useful?',
-        question_ja: '便利なキーボードショートカットはありますか？',
-        answer: 'Ctrl/Cmd+B toggles the side bar, Ctrl/Cmd+J toggles the bottom panel, and Ctrl/Cmd+backtick focuses the terminal. Tab accepts a command suggestion, while the up and down arrows recall commands you typed.',
-        answer_ja: 'Ctrl/Cmd+B でサイドバー、Ctrl/Cmd+J で下部パネルを開閉でき、Ctrl/Cmd+バッククォートでターミナルへ移動できます。Tab はコマンド候補の確定、上下キーは入力履歴の呼び出しです。'
+        question_ja: '便利なキーボードショートカットは？',
+        answer: '{Ctrl/Cmd+B} toggles the side bar, {Ctrl/Cmd+J} the bottom panel, and {Ctrl/Cmd+`} jumps to the terminal. There, the up and down arrows recall earlier commands.',
+        answer_ja: '{Ctrl/Cmd+B} でサイドバー、{Ctrl/Cmd+J} で下部パネルを開閉し、{Ctrl/Cmd+`} でターミナルへ移動します。ターミナルでは上下キーで入力履歴を呼び出せます。'
       },
       {
-        tag: 'UNKNOWN',
-        question: 'Is this only a portfolio, or are there hidden functions?',
-        question_ja: 'これはポートフォリオだけですか？隠し機能もありますか？',
-        answer: 'Not every command is documented. Open Extensions, install whatever catches your eye, and press Tab after typing a few letters. The system responds to rhythm, stillness, and controlled destruction. Some discoveries change the interface itself.',
-        answer_ja: 'すべてのコマンドが文書化されているわけではありません。Extensions を開いて気になるものをインストールし、何文字か入力して Tab を押してみてください。このシステムは、リズム、静寂、そして制御された破壊に反応します。画面そのものを変える発見もあります。'
+        sec: 'deep',
+        question: 'Can I link straight to a section?',
+        question_ja: '特定の画面へ直接リンクできますか？',
+        answer: 'Yes. Add ?cmd= and a command to the URL: `tk.st/?cmd=timeline` opens straight to the timeline.',
+        answer_ja: 'できます。URL に ?cmd= とコマンド名を付けてください。`tk.st/?cmd=timeline` なら、開いた瞬間にタイムラインが表示されます。'
       },
       {
-        tag: 'RECOVERY',
-        question: 'How do I recover if an experiment makes the interface unusable?',
-        question_ja: '実験中に画面が操作できなくなったら、どう復旧しますか？',
-        answer: 'Press Escape first. The Command Palette lives outside the main interface, so Ctrl/Cmd+Shift+P can still reach a command that toggles an effect off. If the terminal reports a MELTDOWN, remember that every meltdown has a rebuild. The reload control resets the session.',
-        answer_ja: 'まず Escape を押してください。コマンドパレットはメイン画面の外側にあるため、Ctrl/Cmd+Shift+P から効果を止めるコマンドへ到達できます。ターミナルに MELTDOWN と出たなら、すべての meltdown には rebuild があることを思い出してください。リロード操作でもセッションを初期化できます。'
+        sec: 'deep',
+        question: 'Are there hidden functions?',
+        question_ja: '隠し機能はありますか？',
+        answer: 'Not every command is documented. Install whatever catches your eye in Extensions, type a few letters, and press {Tab}. The system responds to rhythm, stillness, and controlled destruction.',
+        answer_ja: 'すべてのコマンドが文書化されているわけではありません。拡張機能で気になるものを入れ、数文字打って {Tab} を。このシステムは、リズム、静寂、そして制御された破壊に反応します。'
+      },
+      {
+        sec: 'deep',
+        question: 'Something broke. How do I recover?',
+        question_ja: '画面が操作できなくなったら？',
+        answer: 'Press {Esc} first. The Command Palette ({Ctrl/Cmd+Shift+P}) lives outside the main interface, so it can still reach a command that switches an effect off. After a MELTDOWN, remember that every meltdown has a rebuild. Reloading starts a fresh session.',
+        answer_ja: 'まず {Esc} を。コマンドパレット（{Ctrl/Cmd+Shift+P}）はメイン画面の外にあるので、効果を止めるコマンドへ届きます。MELTDOWN と出たら、すべての meltdown には rebuild があることを思い出して。リロードすればセッションは初期化されます。'
+      },
+      {
+        sec: 'deep',
+        question: 'Is this site really stored on Bitcoin?',
+        question_ja: 'このサイトは本当にビットコイン上にあるのですか？',
+        answer: 'Yes. tk.st is a single self-contained HTML file with no external fonts, images, or libraries, which let it be inscribed in the Witness area of the Bitcoin blockchain as an Ordinals inscription. The web3 extension leads to its Web3 page.',
+        answer_ja: 'はい。tk.st は外部のフォント・画像・ライブラリを使わない1枚の HTML で、そのままビットコインのブロックチェーンの Witness 領域に刻まれています（Ordinals インスクリプション）。Web3 のページへは web3 拡張機能から。'
       }
     ];
+    // Doc commands that are always installed, so a click in help.md can run them.
+    const FAQ_RUNNABLE = new Set(['about', 'identify', 'timeline', 'pages', 'contact']);
 
     const ABOUT_DATA = {
       bio: {
@@ -4337,6 +4328,14 @@
         await executeIdentifyVersion(identifyBtn.dataset.version, identifyBtn.dataset.id);
       }
 
+      // help.md's inline commands run as if typed; like the Explorer, drop ?cmd= first.
+      const faqRun = e.target.closest('[data-action="faq-run"]');
+      if (faqRun) {
+        e.preventDefault();
+        clearCmdParam();
+        await handleCommand(faqRun.dataset.cmd);
+      }
+
       const projectLink = e.target.closest('[data-action="project-link"]');
       if (projectLink) {
         e.preventDefault();
@@ -4604,31 +4603,32 @@
 
     const wrapCmd = (content, extraClass = '') => `<div class="my-3 w-[90%] max-w-[809px] ${extraClass}">${content}</div>`;
 
+    // The two inline marks FAQ_DATA uses. Escaped first, so the marks can only ever wrap
+    // text. {keys} goes first and hides its own backticks ({Ctrl/Cmd+`}) from the code pass.
+    const mdInline = text => esc(text)
+      .replace(/\{([^{}]+)\}/g, (_, k) => `<kbd>${k.replace(/`/g, '&#96;')}</kbd>`)
+      .replace(/`([^`]+)`/g, (_, c) => FAQ_RUNNABLE.has(c)
+        ? `<button type="button" class="md-cmd" data-action="faq-run" data-cmd="${c}" title="${tr(`Run ${c}`, `${c} を実行`)}">${c}</button>`
+        : `<code>${c}</code>`);
+    const mdMark = m => `<span class="md-mark" aria-hidden="true">${m}</span>`;
+
     const renderFAQ = () => {
-      const items = FAQ_DATA.map((item, i) => `
-          <details class="faq-item"${i === 0 ? ' open' : ''}>
-            <summary class="faq-question">
-              <span class="faq-index">${String(i + 1).padStart(2, '0')}</span>
-              <span class="faq-question-text">${esc(pick(item, 'question'))}</span>
-              <span class="faq-tag">${esc(item.tag)}</span>
-              <span class="faq-toggle" aria-hidden="true">+</span>
-            </summary>
-            <div class="faq-answer"><span>${esc(pick(item, 'answer'))}</span></div>
-          </details>`).join('');
+      const sections = FAQ_SECTIONS.map(s => `
+          <section class="help-sec">
+            <h3>${mdMark('##')}${esc(tr(s.title[0], s.title[1]))}</h3>
+            ${FAQ_DATA.filter(item => item.sec === s.key).map(item => `
+            <details class="faq-item">
+              <summary class="faq-q">${esc(pick(item, 'question'))}</summary>
+              <div class="faq-a">${mdInline(pick(item, 'answer'))}</div>
+            </details>`).join('')}
+          </section>`).join('');
       return wrapCmd(`
-        <section class="help-faq" aria-labelledby="faq-title">
-          <header class="faq-head">
-            <div>
-              <div class="faq-eyebrow">TK.ST / KNOWLEDGE BASE</div>
-              <h2 id="faq-title" class="faq-title">${tr('HELP CENTER', 'ヘルプセンター')} <span>// FAQ</span></h2>
-            </div>
-            <div class="faq-status"><span class="faq-status-dot" aria-hidden="true">●</span> ${FAQ_DATA.length} ${tr('ARTICLES ONLINE', '件 接続中')}</div>
-          </header>
-          <div class="faq-console-line"><span class="faq-prompt">ST@tk.st:~$</span> help --faq <span class="faq-ok">${tr('· knowledge base mounted', '· ナレッジベース接続済み')}</span></div>
-          <p class="faq-intro">${tr('Start here when the interface feels unfamiliar. Open a question to inspect the answer.', '操作に迷ったときは、ここからどうぞ。質問を開くと回答を確認できます。')}</p>
-          <div class="faq-list">${items}</div>
-          <footer class="faq-foot"><span aria-hidden="true">›</span><span>${tr('Commands live in Explorer. Need a human?', 'コマンド一覧は Explorer にあります。本人への連絡は')} <code>contact</code>${tr('.', ' へ。')}</span></footer>
-        </section>
+        <article class="help-md" aria-labelledby="faq-title">
+          <h2 id="faq-title" class="help-title glow">${mdMark('#')}${tr('Help', 'ヘルプ')}</h2>
+          <p class="help-lead">${mdMark('>')}${tr('Lost? Open a question, or just type a command.', '迷ったら、質問を開くか、そのままコマンドを入力してください。')}</p>
+          ${sections}
+          <p class="help-foot">${mdInline(tr('Need a human? Run `contact`.', '本人への連絡は `contact` から。'))}</p>
+        </article>
       `, 'faq-wrap');
     };
 
