@@ -57,7 +57,7 @@
       display: flex;
       align-items: center;
       gap: 7px;
-      color: var(--muted);
+      color: var(--fg-dim);
       font-family: var(--f-display);
       font-size: 0.6875rem;
       letter-spacing: 0.08em;
@@ -184,15 +184,6 @@
       border: 1px solid transparent;
     }
 
-    .tab:hover {
-      color: var(--fg);
-    }
-
-    .tab[aria-selected="true"] {
-      color: var(--heart-secondary);
-      border-color: var(--heart-secondary);
-    }
-
     .tab .n {
       font-variant-numeric: tabular-nums;
       border-radius: 2px;
@@ -228,10 +219,13 @@
       border: 1px solid transparent;
     }
 
+    /* タブと並べ替えは同じ押し心地。hover を先に置き、選択中の色が勝つようにする */
+    .tab:hover,
     .sort button:hover {
       color: var(--fg);
     }
 
+    .tab[aria-selected="true"],
     .sort button[aria-pressed="true"] {
       color: var(--heart-secondary);
       border-color: var(--heart-secondary);
@@ -305,7 +299,7 @@
     .names { grid-column: 1; grid-row: 1; }
 
     .artist {
-      color: var(--muted);
+      color: var(--fg-dim);
       font-family: var(--f-body);
       font-size: 0.75rem;
     }
@@ -589,7 +583,7 @@
     }
 
     .act[disabled] { opacity: .38; cursor: default; }
-    .act[disabled]:hover { color: var(--muted); border-color: var(--line); }
+    .act[disabled]:hover { color: var(--fg-dim); border-color: var(--border); }
 
     .act.primary {
       background: var(--heart-secondary);
@@ -871,7 +865,7 @@
       overflow: auto;
       width: min(560px, calc(100vw - 32px));
       max-height: min(80vh, 720px);
-      color: var(--text);
+      color: var(--fg);
       border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 20px;
@@ -930,10 +924,19 @@
     .evdel {
       font-family: var(--f-display);
       font-size: 12.5px; white-space: nowrap; padding: 7px 13px; border-radius: var(--r);
-      color: var(--stop); border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--line));
+      color: var(--stop); border: 1px solid color-mix(in srgb, var(--stop) 45%, var(--border));
     }
     .evdel:hover { background: color-mix(in srgb, var(--stop) 16%, var(--ink)); color: #FFC9C9; }
     .evdel:disabled { opacity: .45; cursor: not-allowed; }
+    .evacts { display: flex; gap: 6px; }
+    /* 戻すのは取り消せる操作なので、削除の赤ではなく普段のボタンの色 */
+    .evback {
+      font-family: var(--f-display);
+      font-size: 12.5px; white-space: nowrap; padding: 7px 13px; border-radius: var(--r);
+      color: var(--fg-dim); border: 1px solid var(--border);
+    }
+    .evback:hover { color: var(--heart-secondary); border-color: var(--heart-secondary); }
+    .evback:disabled { opacity: .45; cursor: not-allowed; }
     .evnote { font-size: 12px; color: var(--faint); line-height: 1.8; margin: 16px 0 0; }
     .evnote strong { color: var(--stop); font-weight: 600; }
     .evblank { color: var(--faint); font-size: 12.5px; text-align: center; padding: 20px 0; }
@@ -1114,7 +1117,8 @@
     <div id="evList"></div>
     <p class="evnote">
       削除すると、その回の曲・リクエスト・いいねが DB から消えます。<strong>取り消せません。</strong><br>
-      開催中の回は削除できません。新しいイベントを開始してから消してください。
+      開催中の回は削除できません。新しいイベントを開始してから消してください。<br>
+      「戻す」を押すと、その回を受付中に戻します。いまの回は締めますが、中身は消えません。
     </p>
   </dialog>
 
@@ -1147,6 +1151,8 @@
       return Math.floor(m / 60) + '時間前';
     }
 
+    const songLabel = (s) => (s.artist ? s.artist + ' — ' : '') + s.title;
+
     /* GetSongBPM はハーフタイム表記を返すことがある（HUMBLE. が 76、
        Don't Stop Me Now が 80）。rekordbox は倍の値を出すので、90 未満は
        倍に読み替える。カードの「×2」表記と BPM 順の基準をここで揃える。 */
@@ -1171,7 +1177,9 @@
     /* camelot が空で songKey（"F#m"）だけ届くことがある。カードはキーを
        出しているのに末尾へ落ちる、という食い違いを避けるため五度圏から
        番号を割り出す。C=8B を起点に完全五度ごとに +1 で回るので
-       (pc * 7 + 7) % 12 + 1。短調は平行長調（+3 半音）の番号を借りる。 */
+       (pc * 7 + 7) % 12 + 1。短調は平行長調（+3 半音）の番号を借りる。
+       式は dj-audio-analysis.js の camelotNo と同じだが、あちらが読めなくても
+       一覧が動くよう、ここにも持っておく。 */
     const PITCH = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
     const keyCamelot = (k) => {
       const m = /^([A-Ga-g])([#b♯♭]?)(m|min|minor)?$/.exec(String(k || '').trim());
@@ -1194,8 +1202,8 @@
 
     let songs = [];
     let filter = 'pending', sort = 'new', sel = null, undoStack = null;
-    let seen = new Set();
-    let votes = new Map();   // id -> 直近に見たリクエスト数（追加投票の検知用）
+    let votes = new Map();   // id -> 直近に見たリクエスト数（新着と追加投票の検知用）
+    let votesCode;           // votes がどの回のものか。まだ読めていなければ undefined
     /* 状態の書き込みと、それより古い読み込みの応答が食い違ったときに手元を守る。
        id -> { status, seq: 書き込みの番号, done: 書き込みが終わった時点の loadSeq }
        done より後に出した読み込みの応答が届くまで、手元の status を優先する。 */
@@ -1210,10 +1218,8 @@
 
     /* ── 描画 ─────────────────────────────── */
     function counts() {
-      const totals = Object.fromEntries(Object.keys(STATUS_META).map((status) => [status, 0]));
-      songs.forEach((song) => { if (STATUS_META[song.status]) totals[song.status] += 1; });
-      Object.entries(totals).forEach(([status, total]) => {
-        $('[data-c="' + status + '"]').textContent = total;
+      Object.keys(STATUS_META).forEach((status) => {
+        $('[data-c="' + status + '"]').textContent = songs.filter((song) => song.status === status).length;
       });
     }
 
@@ -1394,23 +1400,34 @@
       return cmp ? list.slice().sort(cmp) : list;
     };
 
+    /* render() は5秒ポーリングのたびに走る。中身が同じなら DOM に触らない。
+       作り直すと、押しかけのクリックが消え、キーボードの焦点が外れ、新着の点滅が途中で切れる。
+       NEXT 欄は読み上げ領域なので、同じ候補を何度も読み上げさせない意味もある */
+    const paintedHTML = new Map();
+    function paintHTML(selector, html) {
+      if (paintedHTML.get(selector) === html) return;
+      paintedHTML.set(selector, html);
+      $(selector).innerHTML = html;
+    }
+
     function render() {
       const list = visible();
       const empty = STATUS_META[filter].empty;
-      $('#feed').innerHTML = list.length ? list.map(cardHTML).join('') : '<div class="empty">' + empty + '</div>';
+      paintHTML('#feed', list.length ? list.map(cardHTML).join('') : '<div class="empty">' + empty + '</div>');
 
       const q = songs.filter((s) => s.status === 'queued');
-      $('#railList').innerHTML = q.length
+      paintHTML('#railList', q.length
         ? q.map((s, i) => '<li><span class="no">' + (i + 1) + '</span>' +
           (s.artwork ? '<span class="art"><img src="' + esc(s.artwork) + '" alt=""></span>'
             : '<span class="art none">⚠</span>') +
            '<span><span class="t trunc">' + esc(s.title) + '</span>' +
            '<span class="a trunc">' + esc(s.artist || '不明') + '</span></span></li>').join('')
-        : '<li class="blank">' + STATUS_META.queued.empty + '</li>';
+        : '<li class="blank">' + STATUS_META.queued.empty + '</li>');
 
       renderNext();
       counts();
-      songs.forEach((s) => { delete s.isNew; });
+      // isNew（新着の点滅）は消さない。次のポーリングで曲ごと差し替わるので、そこで自然に外れる。
+      // 途中で消すと、それだけで一覧を作り直して点滅が切れる
       paintPrevBar();
       paintTap();
     }
@@ -1435,8 +1452,8 @@
     /* ── 通信 ─────────────────────────────── */
     /* 受付も通知も同じトグル。倒れている向きは aria-checked ひとつが持ち、
        読み上げも CSS（.accept[aria-checked="true"]）もそれだけを見る */
-    function paintSwitch(sel, on) {
-      $(sel).setAttribute('aria-checked', String(on));
+    function paintSwitch(selector, on) {
+      $(selector).setAttribute('aria-checked', String(on));
     }
 
     function applyEvent(ev) {
@@ -1450,19 +1467,22 @@
       }
     }
 
-    function trackRequests(nextSongs, first) {
-      const prev = seen, prevVotes = votes;
-      const nextSeen = new Set(), nextVotes = new Map();
+    /* 見比べる相手がいないとき（初めて読めたとき・回が切り替わったとき）は、
+       並んでいる曲を全部新着として光らせない。起動時の読み込みに失敗しても、
+       過去の回に戻しても、既存の曲で通知が埋まらないようにする。 */
+    function trackRequests(nextSongs, code) {
+      const prevVotes = votes;
+      const nextVotes = new Map();
       const fresh = [], again = [];
+      const baseline = code !== votesCode;
       nextSongs.forEach((song) => {
-        nextSeen.add(song.id);
         nextVotes.set(song.id, song.votes);
-        if (!first) {
-          if (!prev.has(song.id)) { song.isNew = true; fresh.push(song); }
+        if (!baseline) {
+          if (!prevVotes.has(song.id)) { song.isNew = true; fresh.push(song); }
           else if (song.status === 'pending' && song.votes > (prevVotes.get(song.id) ?? song.votes)) again.push(song);
         }
       });
-      return { fresh, again, nextSeen, nextVotes };
+      return { fresh, again, nextVotes };
     }
 
     function applyLocalSongState(song, req) {
@@ -1478,7 +1498,7 @@
       if (tapMap.has(song.id)) { song.bpm = tapMap.get(song.id); song.bpmTapped = true; }
     }
 
-    async function load(first) {
+    async function load() {
       const req = ++loadSeq;
       try {
         const d = await apiJson('/admin/songs');
@@ -1491,10 +1511,11 @@
         /* 前回の取得に無かった id を新着として光らせる。
            既にある曲への追加投票（同じ曲をもう一人が送った）も
            リクエストが1件入ったことに変わりはないので拾う。 */
-        const { fresh, again, nextSeen, nextVotes } = trackRequests(d.songs, first);
+        const code = ev ? ev.code : null;
+        const { fresh, again, nextVotes } = trackRequests(d.songs, code);
         d.songs.forEach((song) => applyLocalSongState(song, req));
-        seen = nextSeen;
         votes = nextVotes;
+        votesCode = code;
         songs = d.songs;
         online(true);
         render();
@@ -1536,7 +1557,9 @@
        オブジェクト参照を握ったままだと、取り消しが「消えた行」を書き換えて何も起きない。 */
     async function setStatus(id, next, label, offerUndo) {
       const s = songById(id);
-      if (!s) return;
+      // 同じステータスへは送らない。サーバは played を受けるたびに played_at を今にするので、
+      // 再生済の曲で 2 を押し直すと、その曲が NEXT の起点（NOW）にすり替わる
+      if (!s || s.status === next) return;
       const prev = s.status;
       const seq = ++writeSeq;
       s.status = next;            // 先に描画を進めて、失敗したら戻す
@@ -1578,11 +1601,15 @@
       preview.seekOrStart(s.id, s.previewUrl, ratio);
     }
 
+    // Music.app で探すときの名前。英語表記があればそちらを使う
+    const searchArtist = (s) => s.artistEn || s.artist || '';
+
     async function copySong(s) {
-      const text = (s.artistEn || s.artist ? (s.artistEn || s.artist) + ' - ' : '') + s.title;
+      const artist = searchArtist(s);
+      const text = (artist ? artist + ' - ' : '') + s.title;
       let copied = false;
       try {
-        if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') throw new Error('clipboard');
+        // クリップボードが無い環境では、ここが投げて下の catch に落ちる
         await navigator.clipboard.writeText(text);
         copied = true;
       } catch { /* 採用操作は続け、コピーできなかったことを文言で知らせる */ }
@@ -1609,7 +1636,7 @@
         // https:// を music:// に差し替えると macOS の Music.app が直接開く
         // appleUrl は来場者が送った値。Apple の https URL でなければ使わず、検索に切り替える
         const web = appleHref(s.appleUrl) ||
-          ('https://music.apple.com/jp/search?term=' + encodeURIComponent(((s.artistEn || s.artist) + ' ' + s.title).trim()));
+          ('https://music.apple.com/jp/search?term=' + encodeURIComponent((searchArtist(s) + ' ' + s.title).trim()));
         location.href = web.replace(/^https:\/\//, 'music://');
         return;
       }
@@ -1654,7 +1681,7 @@
       if (!confirm('現在のイベントを締めて、新しいイベントを開始します。よろしいですか？')) return;
       try {
         const d = await apiJson('/admin/event', { method: 'POST', json: { title } });
-        await load(true);
+        await load();
         toast('「' + d.title + '」を開始しました（' + d.code + '）');
       } catch (e) { toast(e.message || '作成できませんでした'); }
     });
@@ -1667,16 +1694,17 @@
     const adminKey = () => storage.getText(ADMIN_KEY);
 
     /* 鍵の要る操作（削除・背景の作り直し）。ADMIN_KEY を後から設定した場合に備えて、
-       401 のときだけ一度訊いて、次からは黙って通す。訊かれて閉じたら null を返す */
+       401 のときだけ一度訊いて、次からは黙って通す。訊かれて閉じたり空で返したりしたら null を返す */
     async function withAdminKey(run) {
       try {
         return await run(adminKey());
       } catch (e) {
         if (e.status !== 401) throw e;
-        const key = prompt('管理キーを入力してください');
-        if (key === null) return null;
-        storage.setText(ADMIN_KEY, key.trim());
-        return await run(key.trim());
+        // 空のまま OK を押したのも中止と同じ扱い。空の鍵を覚えると、以後毎回 401 から訊き直しになる
+        const key = (prompt('管理キーを入力してください') ?? '').trim();
+        if (!key) return null;
+        storage.setText(ADMIN_KEY, key);
+        return await run(key);
       }
     }
 
@@ -1687,7 +1715,9 @@
         '<div><div class="t">' + esc(e.title) + '</div><div class="m">' + esc(meta) + '</div></div>' +
         (e.current
           ? '<span class="now">' + (e.open ? '受付中' : '最新の回') + '</span>'
-          : '<button type="button" class="evdel" data-del="' + esc(e.code) + '">削除</button>') +
+          : '<div class="evacts">' +
+            '<button type="button" class="evback" data-back="' + esc(e.code) + '">戻す</button>' +
+            '<button type="button" class="evdel" data-del="' + esc(e.code) + '">削除</button></div>') +
         '</div>';
     }
 
@@ -1727,6 +1757,28 @@
       } catch (e) {
         btn.disabled = false;
         toast(e.message || '削除できませんでした');
+      }
+    }
+
+    /* 過去の回に戻す。「新しいイベントを開始」は鍵なしで押せるので、押し間違いや
+       いたずらで回が切り替わっても、ここで元の回を受付中に戻せる。
+       いまの回は締めるだけで中身は残るので、同じ操作でまた行き来できる */
+    async function reopenEvent(code, btn) {
+      const title = btn.closest('.evrow').querySelector('.t').textContent;
+      if (!confirm([
+        '「' + title + '」に戻して、受付を再開します。',
+        'いまの回は締めます（曲やリクエストは消えません）。',
+      ].join(String.fromCharCode(10)))) return;
+
+      btn.disabled = true;
+      try {
+        const d = await apiJson('/admin/events/' + encodeURIComponent(code) + '/reopen', { method: 'POST' });
+        await load();
+        toast('「' + d.title + '」に戻しました（' + d.code + '）');
+        await loadEvents();
+      } catch (e) {
+        btn.disabled = false;
+        toast(e.message || '戻せませんでした');
       }
     }
 
@@ -1855,12 +1907,11 @@
       return 'カットインかエコーアウトで切り替え';
     }
 
-    /* NEXT 欄は読み上げ領域（aria-live）。render() は5秒ごとのポーリングでも走るので、
-       中身が変わったときだけ書き換える。毎回書くと、同じ候補を何度も読み上げて新着の知らせが埋もれる */
-    const nextShown = { base: null, list: null };
+    /* NEXT 欄は読み上げ領域（aria-live）。paintHTML で中身が変わったときだけ書き換える。
+       毎回書くと、同じ候補を何度も読み上げて新着の知らせが埋もれる */
     function paintNext(base, list) {
-      if (nextShown.base !== base) { nextShown.base = base; $('#nextBase').innerHTML = base; }
-      if (nextShown.list !== list) { nextShown.list = list; $('#nextList').innerHTML = list; }
+      paintHTML('#nextBase', base);
+      paintHTML('#nextList', list);
     }
 
     function renderNext() {
@@ -1914,12 +1965,15 @@
     });
 
     $('#evList').addEventListener('click', (e) => {
-      const b = e.target.closest('.evdel[data-del]');
-      if (b) deleteEvent(b.dataset.del, b);
+      const del = e.target.closest('.evdel[data-del]');
+      if (del) { deleteEvent(del.dataset.del, del); return; }
+      const back = e.target.closest('.evback[data-back]');
+      if (back) reopenEvent(back.dataset.back, back);
     });
 
     $('#toastUndo').addEventListener('click', undo);
 
+    const ONE_SHOT_KEYS = new Set(['t', 'z', 'c', ' ', '1', '2', '3']);
     document.addEventListener('keydown', (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
@@ -1929,16 +1983,22 @@
       // パンくずとパッドのボタン上では、Space/Enter だけはボタンの押下として素通しする。
       // ほかのキー（T・J/K・1/2/3 など）はショートカットとして効かせる
       if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('.site-crumb, .tapbox')) return;
+      const k = e.key.toLowerCase();
+      // 押しっぱなしの自動連打は J/K の移動にだけ効かせる。T なら BPM が暴れ、
+      // C や Space なら同じ操作が重なる（トーストの取り消しも上書きされる）
+      if (e.repeat && ONE_SHOT_KEYS.has(k)) { e.preventDefault(); return; }
       // T はカードが1枚も無くても効くよう、一覧を見る前に処理する
-      if (e.key.toLowerCase() === 't') { e.preventDefault(); tap(); return; }
+      if (k === 't') { e.preventDefault(); tap(); return; }
+      // Z も一覧を見る前に。採用・見送りなどをしたカードは別のタブへ移っていて、
+      // いまの一覧からは選択中の曲が見つからない
+      if (k === 'z') { undo(); return; }
       const list = visible(); if (!list.length) return;
       let i = list.findIndex((s) => s.id === sel);
-      const k = e.key.toLowerCase();
 
       if (k === 'j' || k === 'k') {
         e.preventDefault();
+        // 未選択（-1）から J なら先頭、K なら 0 で止まる。どちらも 0 未満にはならない
         i = k === 'j' ? Math.min(i + 1, list.length - 1) : Math.max(i - 1, 0);
-        if (i < 0) i = 0;
         focusSong(list[i].id, { behavior: 'smooth' });
         return;
       }
@@ -1949,7 +2009,6 @@
       else if (k === '1') act(s, 'queued');
       else if (k === '2') act(s, 'played');
       else if (k === '3') act(s, 'skipped');
-      else if (k === 'z') undo();
     });
 
     /* ── データ提供元の説明 ───────────────── */
@@ -1982,32 +2041,32 @@
     const remember = (v) => storage.setText(NOTIFY_KEY, v ? '1' : '0');
     const remembered = () => storage.getText(NOTIFY_KEY) === '1';
 
+    function setNotify(on) {
+      notifyOn = on;
+      remember(on);
+      paintSwitch('#notify', on);
+    }
+
     /* tag を固定して差し替えにする。1曲ごとに積み上げると、
        混んだ時間帯に通知センターが埋まって逆に読めなくなる。 */
     function fire(title, body, icon, songId = null) {
       try {
         const n = new Notification(title, {
-          body: body,
+          body,
           tag: 'dj-request',
           renotify: true,
           icon: icon || undefined,
         });
-        n.onclick = () => { window.focus(); openPending(songId); n.close(); };
+        // 新着タブを開き、曲が分かればそのカードへ（null なら選択を外すだけ）
+        n.onclick = () => { window.focus(); focusSong(songId, { filterTo: 'pending' }); n.close(); };
         setTimeout(() => n.close(), 20000);
       } catch { /* 環境によっては new Notification 自体が投げる */ }
     }
 
-    function openPending(id) {
-      if (id == null) { setFilter('pending'); return; }
-      focusSong(id, { filterTo: 'pending' });
-    }
-
-    const songLabel = (s) => (s.artist ? s.artist + ' — ' : '') + s.title;
-
     function announce(fresh, again) {
       if (!notifyOn) return;
       if (Notification.permission !== 'granted') {   // 設定から後で取り消されることがある
-        notifyOn = false; remember(false); paintSwitch('#notify', notifyOn); return;
+        setNotify(false); return;
       }
       if (document.hasFocus()) return;
       const all = fresh.concat(again);
@@ -2027,7 +2086,7 @@
       paintSwitch('#notify', notifyOn);
       $('#notify').addEventListener('click', async () => {
         if (notifyOn) {
-          notifyOn = false; remember(false); paintSwitch('#notify', notifyOn);
+          setNotify(false);
           toast('新着リクエストの通知を切りました');
           return;
         }
@@ -2039,7 +2098,7 @@
           toast('ブラウザ側で通知がブロックされています。アドレスバーの錠アイコンから許可してください');
           return;
         }
-        notifyOn = true; remember(true); paintSwitch('#notify', notifyOn);
+        setNotify(true);
         toast('新着リクエストを通知します（このページを見ている間は出ません）');
         fire('通知をオンにしました', '新しいリクエストが届くとここに出ます');
       });
@@ -2060,27 +2119,37 @@
     let tapMap = new Map();  // id -> 手で入れた BPM。5秒ポーリングの上書きから守る
     let tapCode = null;      // 保存を紐づけるイベントコード
 
-    const validTapBpm = (value) => typeof value === 'number' && Number.isFinite(value) && value > 0;
+    // Number.isFinite は数値以外にも false を返すので、型の確認を兼ねる
+    const validTapBpm = (value) => Number.isFinite(value) && value > 0;
 
-    // イベントが変われば前回の実測値は無関係になるので、コードごと持って捨てる
+    /* 実測値は回ごとに持ち、直近 TAP_KEEP 回ぶんだけ残す。過去の回に戻したときに、
+       その回で叩いた値も戻ってくるように。並びは古い順で、最後に書いた回が末尾。
+       キーをオブジェクトにしないのは、数字だけの回コードが整数扱いで先頭へ並び替わるため */
+    const TAP_KEEP = 3;
+
+    function tapStore() {
+      const list = storage.getJSON(TAP_KEY, []);
+      if (list.length) return list.filter((e) => e && typeof e.code === 'string');
+      // 以前の版は1回ぶんだけを { code, map } で持っていた
+      const old = storage.getJSON(TAP_KEY, {});
+      return typeof old.code === 'string' ? [{ code: old.code, map: old.map }] : [];
+    }
+
+    // 壊れた保存値は読み飛ばす。有効な値だけが次の tapSave で書き戻る
     function tapLoad(code) {
-      const saved = storage.getJSON(TAP_KEY, null);
-      if (!saved || saved.code !== code || !saved.map || typeof saved.map !== 'object' || Array.isArray(saved.map)) {
-        storage.remove(TAP_KEY);
-        return new Map();
-      }
-      const raw = Object.entries(saved.map);
-      const entries = raw.flatMap(([key, bpm]) => {
+      const saved = tapStore().find((e) => e.code === code);
+      const raw = saved && saved.map;
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return new Map();
+      return new Map(Object.entries(raw).flatMap(([key, bpm]) => {
         const id = Number(key);
         return Number.isSafeInteger(id) && id > 0 && validTapBpm(bpm) ? [[id, bpm]] : [];
-      });
-      const map = new Map(entries);
-      // 古い版や壊れた保存値が混ざっていたら、有効な値だけで保存し直す。
-      if (entries.length !== raw.length) storage.setJSON(TAP_KEY, { code, map: Object.fromEntries(map) });
-      return map;
+      }));
     }
+
     function tapSave() {
-      storage.setJSON(TAP_KEY, { code: tapCode, map: Object.fromEntries(tapMap) });
+      const rest = tapStore().filter((e) => e.code !== tapCode);
+      if (tapMap.size) rest.push({ code: tapCode, map: Object.fromEntries(tapMap) });
+      storage.setJSON(TAP_KEY, rest.slice(-TAP_KEEP));
     }
 
     /* 端から端までの経過を打数で割る。1打ごとの差を平均するのと同値だが、
@@ -2122,7 +2191,7 @@
       $('#tapReset').disabled = !taps.length;
       $('#tapApply').disabled = !hasValue || !s;
       $('#tapTgt').textContent = s
-        ? (playing != null ? '▶ ' : '→ ') + (s.artist ? s.artist + ' — ' : '') + s.title
+        ? (playing != null ? '▶ ' : '→ ') + songLabel(s)
         : 'プレビュー中か選択中の曲に入ります';
     }
 
@@ -2159,7 +2228,7 @@
           current.bpmTapped = hadPrevious;
           render();
         }
-        load(false);          // 最新のサーバ値へ、復元した手元の値をもう一度合成する
+        load();               // 最新のサーバ値へ、復元した手元の値をもう一度合成する
         toast('取り消しました');
       });
     }
@@ -2172,10 +2241,10 @@
     paintTap();
 
     /* ── 起動 ─────────────────────────────── */
-    function poll(first = false) {
-      load(first).finally(() => setTimeout(poll, 5000));
+    function poll() {
+      load().finally(() => setTimeout(poll, 5000));
     }
-    poll(true);
+    poll();
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>

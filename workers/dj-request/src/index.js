@@ -16,10 +16,11 @@
  * ブースAPI（鍵なしの公開。ページをどこからもリンクしないことで運用上隠す）
  *   GET   /dj/api/req/admin/songs        全件（ひとこと・内部ステータス込み）
  *   PATCH /dj/api/req/admin/songs/:id    ステータス更新
- *   POST  /dj/api/req/admin/event        新しいイベントを開始
+ *   POST  /dj/api/req/admin/event        新しいイベントを開始（前の回は締まる。reopen で戻せる）
  *   PATCH /dj/api/req/admin/event        受付の開始／停止
  *   GET   /dj/api/req/admin/events       全イベント（削除の対象を選ぶための一覧）
  *   DELETE /dj/api/req/admin/events/:code 過去の回を曲・投稿・いいねごと消す
+ *   POST  /dj/api/req/admin/events/:code/reopen  過去の回を受付中に戻す（いまの回は締める）
  *   PATCH /dj/api/req/admin/songs/:id/analysis  プレビューから推定した BPM・キー（空欄のときだけ入る）
  *   POST  /dj/api/req/admin/songs/:id/info      背景カードを作り直す（料金が掛かるので ADMIN_KEY 必須）
  *
@@ -158,11 +159,15 @@ function newEventCode() {
   return [...r].map((n) => A[n % A.length]).join('');
 }
 
-/** 受付中の回を優先し、なければ最新の回を返す。公開一覧とブースの基準はここに揃える。 */
+/** 受付中の回を優先し、なければ最後まで使っていた回（締めた時刻が一番新しい回）を返す。
+    公開一覧とブースの基準はここに揃える。
+    作った順ではなく締めた順で見るのは、ブースで過去の回に戻したあと受付を止めても、
+    あとから作った回（戻す前に使っていた回）へ切り替わらないようにするため。
+    新しい回を作ると前の回は同じ時刻に締まるので、同着は作った順で新しいほうを採る。 */
 async function currentEvent(env) {
   return env.DB.prepare(
     `SELECT code, title, status, created_at FROM events
-      ORDER BY (status = 'open') DESC, created_at DESC LIMIT 1`
+      ORDER BY (status = 'open') DESC, COALESCE(closed_at, created_at) DESC, created_at DESC LIMIT 1`
   ).first();
 }
 
@@ -1154,6 +1159,26 @@ async function adminNewEvent(request, env, cors) {
   return json({ ok: true, code, title }, 200, cors);
 }
 
+/* ── 管理: 過去の回に戻す ───────────────────
+   「新しいイベントを開始」は鍵なしで押せるので、押し間違いやいたずらで回が切り替わっても
+   元の回へ戻せるようにする。指定した回を受付中にし、いま開いている回は締める。
+   締めた回の曲・投稿・いいねはそのまま残るので、同じ操作でまた行き来できる。 */
+async function adminReopenEvent(code, env, cors) {
+  const ev = await env.DB.prepare(
+    `SELECT code, title, status FROM events WHERE code = ?`
+  ).bind(code).first();
+  if (!ev) return json({ error: 'not_found', message: 'この回は見つかりませんでした' }, 404, cors);
+
+  if (ev.status !== 'open') {
+    // 新しい回を作るときと同じく「閉じてから開く」を1バッチで（open は部分ユニークで1件まで）
+    await env.DB.batch([
+      env.DB.prepare(`UPDATE events SET status = 'closed', closed_at = CURRENT_TIMESTAMP WHERE status = 'open'`),
+      env.DB.prepare(`UPDATE events SET status = 'open', closed_at = NULL WHERE code = ?`).bind(code),
+    ]);
+  }
+  return json({ ok: true, code: ev.code, title: ev.title }, 200, cors);
+}
+
 async function adminToggleEvent(request, env, cors) {
   const body = await readJson(request) || {};
   const want = body.status === 'open' ? 'open' : 'closed';
@@ -1326,6 +1351,9 @@ export default {
       if (adminEv && method === 'DELETE') {
         return await adminDeleteEvent(adminEv[1].toUpperCase(), request, env, cors);
       }
+
+      const reopen = path.match(/^\/admin\/events\/([0-9A-Za-z]{1,12})\/reopen$/);
+      if (reopen && method === 'POST') return await adminReopenEvent(reopen[1].toUpperCase(), env, cors);
 
       const m = path.match(/^\/admin\/songs\/(\d+)$/);
       if (m && method === 'PATCH') return await adminPatchSong(Number(m[1]), request, env, cors);
