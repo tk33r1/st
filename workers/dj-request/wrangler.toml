@@ -14,8 +14,7 @@ pattern   = "tk.st/dj/api/req/*"
 zone_name = "tk.st"
 
 # secret は wrangler secret put で設定する（コミットしない）:
-#   wrangler secret put ADMIN_KEY   … ブースコンソールの管理操作キー
-#   wrangler secret put IP_SALT     … IP ハッシュのソルト
+#   wrangler secret put IP_SALT    … IP ハッシュのソルト
 #   wrangler secret put SONGBPM_KEY … GetSongBPM の API キー（BPM・キーの取得）
 #   wrangler secret put OPENAI_API_KEY … 曲の背景カード（Web 検索付き）。未設定ならカードを作らない
 #

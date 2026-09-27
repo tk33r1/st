@@ -22,7 +22,7 @@
  *   DELETE /dj/api/req/admin/events/:code 過去の回を曲・投稿・いいねごと消す
  *   POST  /dj/api/req/admin/events/:code/reopen  過去の回を受付中に戻す（いまの回は締める）
  *   PATCH /dj/api/req/admin/songs/:id/analysis  プレビューから推定した BPM・キー（空欄のときだけ入る）
- *   POST  /dj/api/req/admin/songs/:id/info      背景カードを作り直す（料金が掛かるので ADMIN_KEY 必須）
+ *   POST  /dj/api/req/admin/songs/:id/info      背景カードを作り直す（料金は1日の上限 SONG_INFO.dailyCap の内側）
  *
  * 文字列は素のまま保存し、エスケープは表示側で行う。DB に HTML エスケープ済みの
  * 文字列を入れると、DJ がコピーする曲名に &amp; が混ざって検索が外れるため。
@@ -287,9 +287,10 @@ async function enrichSong(env, songId, artist, title, durationMs, altArtist) {
    付けさせ、その URL が実際に取得した検索結果（sources）に無ければ保存する前に捨てる。
 
    曲（Apple の trackId）ごとに1枚を、イベントをまたいで使い回す。作るのは投稿で新しい曲が
-   入ったとき（ctx.waitUntil）と、ブースの「作り直す」（ADMIN_KEY 必須）だけ。trackId は来場者の
+   入ったとき（ctx.waitUntil）、ブースが一覧を読んだときにまだカードの無い曲（describeMissing）、
+   ブースの「作り直す」の3か所。ブースの操作には鍵を掛けていないので、料金の歯止めは
+   1日の生成数の上限（dailyCap）が受け持つ。trackId は来場者の
    ブラウザが送る値なので、iTunes で本物の曲か確かめ、LLM に渡す曲の情報もそちらを使う（lookupTrack）。
-   料金が青天井にならないよう1日の生成数にも上限を置く。
    送るのは曲のメタ情報だけで、来場者の名前やひとことは送らない。 */
 
 const SONG_INFO = {
@@ -300,8 +301,9 @@ const SONG_INFO = {
   // ブースの「作り直す」はリクエストの中で待てるので長めに取る
   refreshTimeoutMs: 45000,
   maxOutputTokens: 6000,
-  dailyCap: 300,       // 24時間で OpenAI を呼んでよい回数（作り直しも1回と数える）
-  maxAttempts: 2,      // 自動で作るのは失敗しても2回まで。以降はブースの「作り直す」だけ
+  dailyCap: 1000,      // 24時間で OpenAI を呼んでよい回数（作り直しも1回と数える）
+  maxAttempts: 2,      // 自動で作るのは失敗しても2回まで。以降はブースの「もう一度調べる」だけ
+  autoPerLoad: 2,      // ブースの一覧読み込み1回あたりに、裏で作り始めてよい曲の数（5秒ごとに来る）
   staleSec: 90,        // pending のまま残った行（途中で落ちた）を取り直せるまでの秒数
 };
 
@@ -1027,15 +1029,8 @@ async function adminEvents(env, cors) {
    曲・投稿・いいねをまとめて落とす。取り消せる操作ではないので、消せるのは
    終わった回だけにする。いまの回（受付中か、/board が映している最新の回）は
    対象外。開催中の記録が足元から消えると、来場者の画面もブースも破綻する。
-
-   ブースAPI は他が鍵なしの公開だが、それは戻せる操作しか無かったから。
-   これは戻せないので、ADMIN_KEY を設定してあるときだけ鍵を要求する
-   （設定していなければ今までどおり通る）。掛けたい人が掛けられる錠。 */
-async function adminDeleteEvent(code, request, env, cors) {
-  if (env.ADMIN_KEY && bearer(request) !== env.ADMIN_KEY) {
-    return json({ error: 'unauthorized', message: '管理キーが必要です' }, 401, cors);
-  }
-
+   ほかのブースAPI と同じく鍵は掛けない。押し間違いの歯止めは、ブースで回のコードを打たせる確認だけ。 */
+async function adminDeleteEvent(code, env, cors) {
   const ev = await env.DB.prepare(
     `SELECT code, title FROM events WHERE code = ?`
   ).bind(code).first();
@@ -1069,8 +1064,48 @@ async function adminDeleteEvent(code, request, env, cors) {
   }, 200, cors);
 }
 
+/* ── 管理: まだ背景カードの無い曲を裏で作る ───────
+   投稿時の生成は、iTunes の照合に落ちた・1日の上限に掛かった・機能より前に入った、などで
+   カードが無いまま残ることがある。ブースは5秒ごとに一覧を読むので、そのついでに新しい曲から
+   autoPerLoad 曲ずつ作り始める（ブースは押さずに待っていれば出てくる）。
+   作るのはこれから掛けるかもしれない曲（新着・採用済）だけで、再生済・見送りの曲は作らない。
+   失敗した曲は maxAttempts まで自動でやり直す。同じ曲を二重に作らないのは claimSongInfo の役目。 */
+async function describeMissing(env, rows) {
+  if (!env.OPENAI_API_KEY) return;
+  const picks = rows.filter((s) => (s.status === 'pending' || s.status === 'queued')
+    && !s.is_free && s.track_id
+    && (!s.info_status
+      || (s.info_status === 'failed' && s.info_attempts >= 1 && s.info_attempts < SONG_INFO.maxAttempts))
+  ).slice(0, SONG_INFO.autoPerLoad);
+  if (!picks.length) return;
+
+  // 上限に達していたら iTunes の照合もしない（5秒ごとに空振りの照合を重ねない）。判定の本番は claimSongInfo
+  const used = await env.DB.prepare(
+    `SELECT COALESCE(SUM(attempts), 0) AS n FROM song_info WHERE updated_at > datetime('now', '-1 day')`
+  ).first();
+  if (used && used.n >= SONG_INFO.dailyCap) return;
+
+  // D1 への書き込みは直列に流し、OpenAI の応答待ちだけを並べる
+  const started = [];
+  for (const s of picks) {
+    const r = await startSongInfo(env, songForInfo(s)).catch(() => null);
+    if (r && r.skip === 'lookup') {
+      // iTunes で確かめられない曲は失敗の行を残す。残さないと5秒ごとに同じ照合を繰り返す。
+      // attempts は 0 のままなので1日の上限には数えず、自動のやり直しからも外れる
+      // （やり直しはブースの「もう一度調べる」から）
+      await env.DB.prepare(
+        `INSERT OR IGNORE INTO song_info (track_id, status, attempts, error, updated_at)
+         VALUES (?, 'failed', 0, ?, CURRENT_TIMESTAMP)`
+      ).bind(String(s.track_id), 'Apple Music のカタログで確かめられませんでした').run();
+    } else if (r && r.promise) {
+      started.push({ trackId: String(s.track_id), promise: r.promise });
+    }
+  }
+  for (const x of started) await saveSongInfo(env, x.trackId, await x.promise);
+}
+
 /* ── 管理 ───────────────────────────────── */
-async function adminSongs(env, cors) {
+async function adminSongs(env, cors, ctx) {
   const ev = await currentEvent(env);
   if (!ev) return json({ event: null, songs: [] }, 200, cors);
 
@@ -1079,7 +1114,7 @@ async function adminSongs(env, cors) {
     `SELECT s.*,
             CASE WHEN i.status = 'pending' AND i.updated_at < datetime('now', ?)
                  THEN 'failed' ELSE i.status END AS info_status,
-            i.card AS info_card, i.error AS info_error
+            i.card AS info_card, i.error AS info_error, i.attempts AS info_attempts
        FROM songs s LEFT JOIN song_info i ON i.track_id = s.track_id
       WHERE s.event_code = ? ORDER BY s.id DESC`
   ).bind(`-${SONG_INFO.staleSec} seconds`, ev.code).all();
@@ -1088,6 +1123,9 @@ async function adminSongs(env, cors) {
     `SELECT song_id, from_name, message, created_at FROM requests
       WHERE event_code = ? ORDER BY id ASC`
   ).bind(ev.code).all();
+
+  // 読み込みが済んでから始める（本体の読み書きと並べると D1 が詰まる）。失敗しても一覧は返す
+  if (ctx) ctx.waitUntil(describeMissing(env, songs.results).catch(() => {}));
 
   const bySong = new Map();
   for (const v of voices.results) {
@@ -1239,16 +1277,10 @@ async function adminPatchAnalysis(id, request, env, cors) {
 }
 
 /* ── 管理: 背景カードを作り直す ───────────────
-   料金が掛かる操作なので、ほかの管理 API と違って鍵は必須。ADMIN_KEY を設定していなければ
-   作り直しそのものを受け付けない（鍵なしで開けると、ループで叩かれたときに料金が青天井になる）。
+   ほかのブースAPI と同じく鍵は掛けない。料金が掛かる操作なので、ループで叩かれても
+   1日の生成数の上限（dailyCap。claimSongInfo が作り直しも1回と数える）で止まる。
    応答はリクエストの中で待つ（ブースは「調べています」を出して待つ）。 */
-async function adminRefreshInfo(id, request, env, cors) {
-  if (!env.ADMIN_KEY) {
-    return json({ error: 'no_admin_key', message: 'ADMIN_KEY を設定するまで、背景の作り直しはできません' }, 403, cors);
-  }
-  if (bearer(request) !== env.ADMIN_KEY) {
-    return json({ error: 'unauthorized', message: '管理キーが必要です' }, 401, cors);
-  }
+async function adminRefreshInfo(id, env, cors) {
   const s = await env.DB.prepare(`SELECT id, track_id, is_free, title FROM songs WHERE id = ?`).bind(id).first();
   if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
   const song = songForInfo(s);
@@ -1341,7 +1373,7 @@ export default {
       if (like && method === 'POST')   return await setLike(Number(like[1]), true, request, env, cors);
       if (like && method === 'DELETE') return await setLike(Number(like[1]), false, request, env, cors);
 
-      if (path === '/admin/songs' && method === 'GET')    return await adminSongs(env, cors);
+      if (path === '/admin/songs' && method === 'GET')    return await adminSongs(env, cors, ctx);
       if (path === '/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);
       if (path === '/admin/event' && method === 'POST')   return await adminNewEvent(request, env, cors);
       if (path === '/admin/event' && method === 'PATCH')  return await adminToggleEvent(request, env, cors);
@@ -1349,7 +1381,7 @@ export default {
 
       const adminEv = path.match(/^\/admin\/events\/([0-9A-Za-z]{1,12})$/);
       if (adminEv && method === 'DELETE') {
-        return await adminDeleteEvent(adminEv[1].toUpperCase(), request, env, cors);
+        return await adminDeleteEvent(adminEv[1].toUpperCase(), env, cors);
       }
 
       const reopen = path.match(/^\/admin\/events\/([0-9A-Za-z]{1,12})\/reopen$/);
@@ -1362,7 +1394,7 @@ export default {
       if (an && method === 'PATCH') return await adminPatchAnalysis(Number(an[1]), request, env, cors);
 
       const info = path.match(/^\/admin\/songs\/(\d+)\/info$/);
-      if (info && method === 'POST') return await adminRefreshInfo(Number(info[1]), request, env, cors);
+      if (info && method === 'POST') return await adminRefreshInfo(Number(info[1]), env, cors);
 
       return json({ error: 'not_found' }, 404, cors);
     } catch (e) {

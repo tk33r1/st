@@ -1130,7 +1130,7 @@
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
     const API = '/dj/api/req';
     const {
-      $, $$, appleHref, asDate, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock,
+      $, $$, appleHref, asDate, createApi, createPreviewController, escapeHTML: esc, formatClock,
       formatDurationMs, storage, ymd,
     } = window.DJRequestCore;
     const apiJson = createApi(API, '通信に失敗しました。接続を確認してください');
@@ -1348,11 +1348,17 @@
       const redo = (label) => busy ? '' : '<button type="button" data-do="info">' + label + '</button>';
       const c = info && info.card;
       if (!c) {
+        // まだ無い曲は、Worker が一覧を返すついでに新着・採用済から順に作る。押すボタンは出さない。
+        // 再生済・見送りの曲は作らないので、何も出さない
+        if (!info && !busy) {
+          return s.status === 'pending' || s.status === 'queued'
+            ? '<div class="bg quiet"><div class="foot"><span>背景をこれから Web 検索で調べます…</span></div></div>'
+            : '';
+        }
         const msg = busy ? '背景を Web 検索で調べています…'
-          : info && info.status === 'failed' ? '背景を調べられませんでした' + (info.error ? '（' + info.error + '）' : '')
-            : '背景はまだ調べていません';
+          : '背景を調べられませんでした' + (info.error ? '（' + info.error + '）' : '');
         return '<div class="bg quiet"><div class="foot"><span>' + esc(msg) + '</span>' +
-          redo(info ? 'もう一度調べる' : '背景を調べる') + '</div></div>';
+          redo('もう一度調べる') + '</div></div>';
       }
 
       const rows = [];
@@ -1690,23 +1696,9 @@
        消せるかどうかはサーバが current で答える。ここはその答えを描くだけ。
        取り消せる操作ではないので、確認は「はい/いいえ」ではなく回のコードを
        打たせる。押し間違いで一晩の記録が消えるほうが、ひと手間より高くつく。 */
-    const ADMIN_KEY = 'tkdj.adminKey';
-    const adminKey = () => storage.getText(ADMIN_KEY);
 
-    /* 鍵の要る操作（削除・背景の作り直し）。ADMIN_KEY を後から設定した場合に備えて、
-       401 のときだけ一度訊いて、次からは黙って通す。訊かれて閉じたり空で返したりしたら null を返す */
-    async function withAdminKey(run) {
-      try {
-        return await run(adminKey());
-      } catch (e) {
-        if (e.status !== 401) throw e;
-        // 空のまま OK を押したのも中止と同じ扱い。空の鍵を覚えると、以後毎回 401 から訊き直しになる
-        const key = (prompt('管理キーを入力してください') ?? '').trim();
-        if (!key) return null;
-        storage.setText(ADMIN_KEY, key);
-        return await run(key);
-      }
-    }
+    // 以前の版は管理キーをこの名前で覚えていた。いまは鍵を使わないので、残っていれば消す
+    storage.remove('tkdj.adminKey');
 
     function evrowHTML(e) {
       const day = ymd(e.at);
@@ -1749,9 +1741,7 @@
 
       btn.disabled = true;
       try {
-        const d = await withAdminKey((key) =>
-          apiJson('/admin/events/' + encodeURIComponent(code), { method: 'DELETE', headers: bearer(key) }));
-        if (!d) { btn.disabled = false; return; }
+        const d = await apiJson('/admin/events/' + encodeURIComponent(code), { method: 'DELETE' });
         toast('「' + d.title + '」を削除しました（' + d.songs + '曲 / ' + d.requests + '件）');
         await loadEvents();
       } catch (e) {
@@ -1785,19 +1775,18 @@
     $('#pastEvents').addEventListener('click', () => { $('#evDlg').showModal(); loadEvents(); });
 
     /* ── 背景カードの作り直し ───────────────
-       料金の掛かる操作なので鍵を通す。応答まで十数秒かかるので、その間は「調べ直しています」を出す */
+       まだカードの無い曲は、Worker が一覧を返すついでに裏で作る（押さなくてよい）。
+       ここは失敗した曲のやり直しと、できたカードの作り直し。
+       応答まで十数秒かかるので、その間は「調べ直しています」を出す */
     async function refreshInfo(id) {
       if (infoBusy.has(id)) return;
       infoBusy.add(id);
       render();
       try {
-        const d = await withAdminKey((key) =>
-          apiJson('/admin/songs/' + id + '/info', { method: 'POST', headers: bearer(key) }));
-        if (d) {
-          const cur = songById(id);
-          if (cur && d.info) cur.info = d.info;
-          toast(d.ok ? '背景を調べ直しました' : '調べられませんでした（' + (d.error || '不明なエラー') + '）');
-        }
+        const d = await apiJson('/admin/songs/' + id + '/info', { method: 'POST' });
+        const cur = songById(id);
+        if (cur && d.info) cur.info = d.info;
+        toast(d.ok ? '背景を調べ直しました' : '調べられませんでした（' + (d.error || '不明なエラー') + '）');
       } catch (e) {
         toast(e.message || '調べられませんでした');
       } finally {
