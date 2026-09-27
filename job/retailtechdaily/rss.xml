@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Sun, 27 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Sun, 27 Sep 2026 04:31:46 +0900</lastBuildDate>
+    <pubDate>Mon, 28 Sep 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Mon, 28 Sep 2026 04:57:33 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年9月28日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20260928/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260928/</guid>
+      <pubDate>Mon, 28 Sep 2026 08:00:00 +0900</pubDate>
+      <description>候補の中では、店舗技術の大型発表よりも、食品ロス削減、会員基盤の連携、採用・人材確保に関する運営改善が中心となった。 ベイシアの食品ロス削減アプリ導入は3店舗での展開。対象や運用実績が限られる段階のため、今後の拡大と効果検証が焦点となる。</description>
+    </item>
     <item>
       <title>2026年9月27日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20260927/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260914/</guid>
       <pubDate>Mon, 14 Sep 2026 08:00:00 +0900</pubDate>
       <description>セルフレジの是非が世界的な争点に——欧米では撤去・見直しが進む一方、日本では導入が拡大。顧客の納得感と監視・運用コストを含めた総合ROIが投資判断を左右する段階に入った。 店頭メディアの再定義が加速——アマゾンのChatGPT内広告試験、ウォルグリーンのデジタルサイネージ再挑戦、アドインテの豪州展示会出展など、リテールメディアがAIチャネルと店頭を横断し始めている。</description>
-    </item>
-    <item>
-      <title>2026年9月13日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260913/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260913/</guid>
-      <pubDate>Sun, 13 Sep 2026 08:00:00 +0900</pubDate>
-      <description>国内はアインHDの次世代薬局モデル実証やカインズの「AI×Slack」活用など、大規模投資に頼らず店舗業務と顧客接点を組み替える“軽量DX”の発表が目立った一日となった。 サプライチェーン分析市場が2035年に20億6,980万ドル規模へ拡大するとの予測が示され、需要予測・在庫・物流最適化へのデータ投資が国内でも本格化している。</description>
     </item>
   </channel>
 </rss>

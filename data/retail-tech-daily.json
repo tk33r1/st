@@ -1,5 +1,91 @@
 [
   {
+    "date": "20260928",
+    "title": "2026年9月28日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "候補の中では、店舗技術の大型発表よりも、食品ロス削減、会員基盤の連携、採用・人材確保に関する運営改善が中心となった。 ベイシアの食品ロス削減アプリ導入は3店舗での展開。対象や運用実績が限られる段階のため、今後の拡大と効果検証が焦点となる。",
+    "count": 4,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "候補の中では、店舗技術の大型発表よりも、食品ロス削減、会員基盤の連携、採用・人材確保に関する運営改善が中心となった。",
+      "ベイシアの食品ロス削減アプリ導入は3店舗での展開。対象や運用実績が限られる段階のため、今後の拡大と効果検証が焦点となる。",
+      "セルフレジの人件費削減と価格還元をめぐる発言は、効率化の成果を顧客価値へどう結び付けるかという論点を浮き彫りにした。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ベイシア、食品ロス削減アプリを東京・埼玉の3店舗に導入",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-27",
+        "summary": "ベイシアは、食品ロス削減を目的とするアプリ「Too Good To Go」を東京・埼玉の3店舗に導入する。今回の発表で示された導入範囲は3店舗で、食品小売が外部アプリを活用してロス削減に取り組む事例となる。対象店舗での運用を通じ、店舗業務との両立や取り組みの広がりが注目される。",
+        "why_it_matters": "食品ロス対策は廃棄削減だけでなく、販売機会や店舗オペレーションにも関わる。まずは限定店舗で導入し、利用状況や現場負荷を見極めることが重要だ。効果が確認できれば、アプリ連携を地域・店舗単位の施策から全社的な運用へ広げる判断材料になる。",
+        "tags": [
+          "食品ロス",
+          "アプリ活用",
+          "店舗運営"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBabXd6NUdJM2lFckJuRVhaUDV6NTJaNVdtMnY2TGFRSENHaklDNWkwcEw5TnowakRWVllTRTFNWi1NQWVDNmxpUTNya1BPdk00?oc=5",
+        "source_pub_ts": 1790311380
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ロイヤルHD、MyROYALとホテル会員のアカウント連携を開始",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-32",
+        "summary": "ロイヤルHDは、会員サービス「MyROYAL」とホテル会員のアカウント連携を開始し、グループ内サービスの相互利用を促進する。発表の中心は会員アカウントの接続であり、異なるサービスの顧客接点をつなぐ取り組みだ。連携による利用促進を掲げる一方、具体的な利用実績や効果は今後の展開で明らかになる。",
+        "why_it_matters": "会員基盤を個別サービスごとに閉じず、グループ横断で活用できれば、顧客接点を広げる余地が生まれる。重要なのはアカウント連携そのものではなく、利用者にとっての便益と継続利用につながる体験を設計し、連携後の効果を測定することだ。",
+        "tags": [
+          "会員基盤",
+          "アカウント連携",
+          "顧客体験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE81WEhFNFB5WTZxU3l6MmNrWTNQR0lUd2R6MWxjOHh0WXpRT0wxNWZFS1c0d3RkV1c3Y2hpUGxQRTRFQ2JEX0owV2RtQ0x5X1dZ?oc=5",
+        "source_pub_ts": 1790304960
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "ファミマの「バイト改革」——制服・髪色・録画面接から見る人材確保策",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-35",
+        "summary": "ファミリーマートのアルバイト採用・働き方の改革を、制服や髪色の見直し、録画面接などの取り組みから扱う記事。人手不足を背景に、従業員を会社の既存ルールに合わせる従来の発想を問い直し、働き手の確保を目指す動きを紹介している。採用手法のデジタル化と職場の柔軟性がテーマとなる。",
+        "why_it_matters": "店舗運営の省人化だけでなく、必要な人材を採用し定着させることも現場の生産性を左右する。録画面接のような採用手法の効率化と、働きやすさに関わる制度変更を組み合わせる姿勢は、労働力不足に直面する小売各社にとって検討材料となる。",
+        "tags": [
+          "採用DX",
+          "人手不足",
+          "店舗運営"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPNFZqb3Mxc011X3JNM2VNUUl5T3RyRm9kcXZWU3VranRGNmpRMFVoUXB4YnBKRm1hUmxZdDhzYUVRbjBIYkRtNzdqeXBnZF9wSnR2ZGR2UTdMZTNCT1NhVENYaXBWTE9ucTVkYzlpMUlPSklweGFhQ2V4OFRPUTJMYm1XQWVmQWdxZ0NUVUl3?oc=5",
+        "source_pub_ts": 1790303341
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・生活者のリアル",
+        "title": "セルフレジで削減した人件費、値下げに還元すべき？発言が提起した論点",
+        "original_title": "",
+        "source": "Yahoo!ニュース",
+        "source_id": "JP-08",
+        "summary": "元青汁王子が、セルフレジによる人件費削減を進めながら商品を値下げしない企業について、疑問を呈した。記事はその発言を取り上げ、セルフレジの導入で生じるコスト削減と、価格を通じた顧客への還元をめぐる見方を紹介している。効率化の利益を誰が受け取るのかが、生活者目線の論点として示された。",
+        "why_it_matters": "セルフレジは省人化の手段だが、顧客には待ち時間や操作負担も生じ得る。コスト削減だけを訴求しても納得感が得られるとは限らず、価格・サービス・利便性のどこに効果を還元するのかを説明することが、導入後の評価を左右する。",
+        "tags": [
+          "セルフレジ",
+          "価格還元",
+          "生活者の声"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBCQTFUd0UtU09FVnBwRWVXNWo4bm5OQjB3YWY3eVZQQUVvMW9kYnhWMVdmYzc0amk3a1o5dGtmQXo4VGdNMVNDQlU5SmhEUmlSUVhrTHFxVndwX2w4M2Z2ZzFrSGVNenQ5Z1B1NnhBanJZM21xaTZWRFBNRnEzSXc?oc=5",
+        "source_pub_ts": 1790405874
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260927",
     "title": "2026年9月27日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "セルフレジ・無人店舗の「光と影」が同時に可視化された一日。韓国ではバーコード読み取り偽装や試着室での隠匿など無人店舗の窃盗被害が相次ぎ、日本ではセルフレジの操作性やマナーをめぐるSNS論争が継続。省人化投資は、防犯・UI設計まで含めた運用設計が収益を左右する段階に入った。 海外では「AI棚」が台頭し、電子棚札（ESL）とセンサー・AIを組み合わせた棚が在庫可視化・動的価格・販促配信の店舗内データ基盤へと進化。店舗DXの主戦場がレジから棚へ移り、リテールメディアと需要予測の起点を誰が握るかが競争軸になる。",
