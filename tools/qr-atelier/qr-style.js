@@ -174,16 +174,84 @@
   // 字送りの見積もり（em 単位）。文字を実際に組まずに、箱の幅と文字サイズを
   // 先に決めるための近似。ロゴの下地とラベルの帯が同じ数字を使うので、係数は
   // ここひとつに置く（片方だけ直すと、同じ文字列なのに場所で幅が変わる）。
-  // 0x2E80 より上は CJK＝全角とみなして 1em、それ以外は半角として扱う。
+  // 見積もりは、はみ出さない側に寄せる（小さく見積もると字が下地や帯からはみ出す）。
+  //   絵文字・記号（★ ☕ ⚡ ✨ ⭐ など）… 1.2em。カラー絵文字は全角より少し広い
+  //   全角（0x2E80 より上の CJK）… 1em
+  //   半角 … 0.6em を基本に、太字で幅のある英大文字は広く、i や l は狭く見る。
+  //           等幅の書体は字ごとの差がないので、一律 MONO_EM で見る
+  // 係数は Inter・M PLUS Rounded 1c・Noto Serif JP・JetBrains Mono・Impact の太字で、
+  // 実際に描いた幅と突き合わせて決めた（W は太字だと 1em を超える）。
+  // 数えるのはコードポイント単位。UTF-16 の単位で数えると、絵文字が
+  // 2文字ぶん（2em）と見積もられて半分の大きさまで縮んでしまう。
   const HALF_WIDTH_EM = 0.6;
+  const MONO_EM = 0.6;
+  const EMOJI_EM = 1.2;
+  const NARROW_CHARS = "ilIj.,:;!|' ";
 
-  function textUnits(str) {
-    const s = String(str || '');
+  // 絵文字として描かれやすい記号の範囲。0x2E80 より下にあるので、
+  // 全角の判定だけでは半角と見なされてしまう
+  function isEmojiLike(c) {
+    return (c >= 0x2300 && c <= 0x23FF) ||   // ⌚ ⏰ ⏳ など
+      (c >= 0x25A0 && c <= 0x27BF) ||          // 図形・その他の記号・装飾記号（● ★ ☕ ⚡ ❤ ✨）
+      (c >= 0x2B00 && c <= 0x2BFF) ||          // ⬛ ⭐ など
+      c >= 0x1F000;                            // 絵文字の面
+  }
+
+  function charEm(c, ch, mono) {
+    if (isEmojiLike(c)) return EMOJI_EM;
+    if (c > 0x2E80) return 1;
+    if (c >= 0x2190 && c <= 0x22FF) return 1;  // 矢印・数学記号（→ ≠ など）
+    if (mono) return MONO_EM;
+    if (ch === 'W') return 1.2;
+    if (ch === 'M') return 1.0;
+    if (ch === 'm' || ch === 'w') return 0.95;
+    if (c >= 65 && c <= 90) return 0.74;       // そのほかの英大文字
+    if (NARROW_CHARS.indexOf(ch) >= 0) return 0.32;
+    return HALF_WIDTH_EM;
+  }
+
+  //   fontKey … FONT_STACKS のキー。等幅（mono）だけ半角の見積もりが変わる
+  function textUnits(str, fontKey) {
+    const mono = fontKey === 'mono';
     let units = 0;
-    for (let i = 0; i < s.length; i++) {
-      units += s.charCodeAt(i) > 0x2E80 ? 1 : HALF_WIDTH_EM;
+    let last = 0;
+    let joined = false;
+    for (const ch of String(str || '')) {
+      const c = ch.codePointAt(0);
+      // ゼロ幅接合子でつないだ次の字は、前の絵文字と1つの絵に合わさる（👨‍👩‍👧 など）
+      if (c === 0x200D) { joined = true; continue; }
+      if (joined) { joined = false; continue; }
+      // 囲みのキーキャップ（1️⃣）は、前の字ごと絵文字1字ぶんの幅になる
+      if (c === 0x20E3) { units += EMOJI_EM - last; last = EMOJI_EM; continue; }
+      // 字幅を持たない記号：異体字セレクタ・肌の色の修飾子・結合文字・
+      // タグ文字（イングランドなどの旗の絵文字の中身）
+      if ((c >= 0xFE00 && c <= 0xFE0F) || (c >= 0x1F3FB && c <= 0x1F3FF) ||
+          (c >= 0x0300 && c <= 0x036F) || (c >= 0xE0020 && c <= 0xE007F)) continue;
+      // 地域指示子は2つで1つの国旗（🇯🇵）になる。1つを半分に数えれば、対で絵文字1字ぶん
+      last = (c >= 0x1F1E6 && c <= 0x1F1FF) ? EMOJI_EM / 2 : charEm(c, ch, mono);
+      units += last;
     }
     return units;
+  }
+
+  // ロゴの文字を行に分ける。改行は LF にそろえ（CR は捨てる）、前後の空行は落とす。
+  // 描画・ロゴの有無の判定・書き出し用のフォント集め（textRuns）で同じ分け方を使う。
+  const LF = String.fromCharCode(10);
+  const CR = String.fromCharCode(13);
+
+  // ロゴの文字の大きさ（ロゴの一辺に対する比）。
+  //   LOGO_TEXT_MAX … 1〜2字のときの上限（これより大きいと下地の余白を食う）
+  //   LOGO_TEXT_FIT … いちばん長い行が占めてよい幅。字幅は見積もりなので少し残す
+  //   LOGO_LINE_H   … 行の送り（文字の大きさに対する比）
+  const LOGO_TEXT_MAX = 0.78;
+  const LOGO_TEXT_FIT = 0.92;
+  const LOGO_LINE_H = 1.15;
+
+  function logoTextLines(text) {
+    const lines = String(text || '').split(CR).join('').split(LF);
+    while (lines.length && !lines[0].trim()) lines.shift();
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    return lines;
   }
 
   // 角を丸めすぎると、下地の角が削れてクワイエットゾーンを食う。余白の1.5倍を
@@ -503,14 +571,6 @@
       'a' + n(r) + ' ' + n(r) + ' 0 1 0 ' + n(-r * 2) + ' 0Z';
   }
 
-  // 塗りを足し合わせるための円。boxPath と回り方（時計回り）を揃えてある。
-  // circlePath は逆回りなので、和をとると nonzero 規則で穴が空いてしまう。
-  function circlePathCW(cx, cy, r) {
-    return 'M' + n(cx - r) + ' ' + n(cy) +
-      'a' + n(r) + ' ' + n(r) + ' 0 1 1 ' + n(r * 2) + ' 0' +
-      'a' + n(r) + ' ' + n(r) + ' 0 1 1 ' + n(-r * 2) + ' 0Z';
-  }
-
   function polyPath(pts) {
     return 'M' + pts.map(p => n(p[0]) + ' ' + n(p[1])).join('L') + 'Z';
   }
@@ -591,7 +651,12 @@
 
   // 四隅を斜めにカットした八角形（面取り幅 c）
   function octagonPath(x0, y0, s, c) {
-    const x1 = x0 + s, y1 = y0 + s;
+    return octagonRectPath(x0, y0, s, s, c);
+  }
+
+  // 幅 w・高さ h の矩形の四隅を、同じ幅 c で斜めに落とす
+  function octagonRectPath(x0, y0, w, h, c) {
+    const x1 = x0 + w, y1 = y0 + h;
     return polyPath([
       [x0 + c, y0],
       [x1 - c, y0],
@@ -863,18 +928,36 @@
 
   // スカラップ（花型）の外周パス。マーカーの 7x7 を基準に、辺の長さ s へ伸縮する
   function scallopPath(x0, y0, s) {
-    const u = s / 7;
-    const p = (x, y) => n(x0 + x * u) + ' ' + n(y0 + y * u);
-    const R = 2.8 * u;
-    const arc = (x, y) => 'A' + n(R) + ' ' + n(R) + ' 0 0 1 ' + p(x, y);
-    const cr = 1.0 * u;
-    const corner = (x, y) => 'A' + n(cr) + ' ' + n(cr) + ' 0 0 1 ' + p(x, y);
+    return scallopFlowerRect(x0, y0, s, s);
+  }
 
-    return 'M' + p(1, 0) +
-      arc(3.5, 0) + arc(6, 0) + corner(7, 1) +
-      arc(7, 3.5) + arc(7, 6) + corner(6, 7) +
-      arc(3.5, 7) + arc(1, 7) + corner(0, 6) +
-      arc(0, 3.5) + arc(0, 1) + corner(1, 0) + 'Z';
+  // 花型を幅 w・高さ h の札にしたもの。u は短い辺の 1/7 で、四隅の丸み（1u）と
+  // 花びら1枚の幅（約 2.5u）を正方形のときと同じ大きさに保ち、長い辺は花びらの
+  // 枚数を増やして埋める（正方形の花型を伸ばすと、花びらが潰れた楕円になる）。
+  // 正方形なら各辺2枚・弧の半径 2.8u で、マーカーの花型そのものになる。
+  function scallopFlowerRect(x0, y0, w, h) {
+    const u = Math.min(w, h) / 7;
+    const P = (x, y) => n(x) + ' ' + n(y);
+    const arc = (r, x, y) => 'A' + n(r) + ' ' + n(r) + ' 0 0 1 ' + P(x, y);
+    // 花びらの枚数と1枚の幅。弧の半径は幅に比例させる（2.5u の幅で 2.8u）
+    const petals = len => {
+      const count = Math.max(2, Math.round((len - 2 * u) / (2.5 * u)));
+      const step = (len - 2 * u) / count;
+      return { count: count, step: step, r: step * 1.12 };
+    };
+    const px = petals(w), py = petals(h);
+    const x1 = x0 + w, y1 = y0 + h;
+
+    let d = 'M' + P(x0 + u, y0);
+    for (let i = 1; i <= px.count; i++) d += arc(px.r, x0 + u + i * px.step, y0);
+    d += arc(u, x1, y0 + u);
+    for (let j = 1; j <= py.count; j++) d += arc(py.r, x1, y0 + u + j * py.step);
+    d += arc(u, x1 - u, y1);
+    for (let i = 1; i <= px.count; i++) d += arc(px.r, x1 - u - i * px.step, y1);
+    d += arc(u, x0, y1 - u);
+    for (let j = 1; j <= py.count; j++) d += arc(py.r, x0, y1 - u - j * py.step);
+    d += arc(u, x0 + u, y0);
+    return d + 'Z';
   }
 
   // ------------------------------------------------------------------
@@ -1047,40 +1130,108 @@
     circle:   [0.42, 0.42, 0.42, 0.42],
     leaf:     [0.36, 0, 0.36, 0],
     cut:      [0, 0.34, 0.34, 0.34],
-    // ドット枠とフラワーは縁が波打つ。角の欠けは浅いので小さい丸みで近似する
-    dots:     [0.06, 0.06, 0.06, 0.06],
+    // セル枠とフラワーは縁が波打つ。角の欠けは浅いので小さい丸みで近似する
+    cells:    [0.06, 0.06, 0.06, 0.06],
     flower:   [0.14, 0.14, 0.14, 0.14]
   };
   const OCTAGON_CUT = 0.26;
 
   // 一辺 s の正方形を、表の比率で角を落とした形。マーカーの枠と下地で共通
   function cornerBox(x, y, s, style) {
-    if (style === 'octagon') return octagonPath(x, y, s, s * OCTAGON_CUT);
+    return cornerRect(x, y, s, s, style);
+  }
+
+  // 幅 w・高さ h の矩形を、表の比率で角を落とした形。比率は短い辺に掛けるので、
+  // 横長でも角は正方形のときと同じ丸み・欠け方のまま、まっすぐな辺だけが伸びる
+  function cornerRect(x, y, w, h, style) {
+    const s = Math.min(w, h);
+    if (style === 'octagon') return octagonRectPath(x, y, w, h, s * OCTAGON_CUT);
     const c = BACKDROP_CORNERS[style] || BACKDROP_CORNERS.rounded;
-    return boxPath(x, y, x + s, y + s, c.map(k => k * s), c.map(k => (k > 0 ? 1 : 0)));
+    return boxPath(x, y, x + w, y + h, c.map(k => k * s), c.map(k => (k > 0 ? 1 : 0)));
   }
 
   function backdropPath(cx, cy, side, style) {
-    const half = side / 2;
-    const x = cx - half, y = cy - half;
-    if (style === 'flower') return scallopPath(x, y, side);
-    if (style === 'dots') {
-      // 縁に丸を並べた枠の塗り版。内側の四角と縁の丸の和で、ふちが波打つ札になる
-      const u = side / 7;
-      let d = rectPath(x + u * 0.5, y + u * 0.5, side - u, side - u, 0);
-      for (let j = 0; j < 7; j++) {
-        for (let i = 0; i < 7; i++) {
-          if (i !== 0 && i !== 6 && j !== 0 && j !== 6) continue;
-          d += circlePathCW(x + (i + 0.5) * u, y + (j + 0.5) * u, u * 0.58);
-        }
-      }
-      return d;
-    }
-    return cornerBox(x, y, side, style);
+    return backdropRectPath(cx, cy, side, side, style);
   }
 
-  // 下地の内側かどうか。抜きが下地からはみ出すと、下地の外にセルを消した跡が
-  // 地色のまま残ってしまうので、実際に描く形に合わせて判定する。
+  // 幅 w・高さ h の下地（ラベルの帯）。正方形の下地を横へ引き伸ばすと、角の丸みや
+  // 面取りまで横長に潰れて不自然になるので、角は高さを基準に正方形のときと同じ
+  // 形で描き、長さは辺を伸ばして（花型は花びらを増やして）合わせる。
+  // セル枠は粒の数で合わせるので cellsPlate を使う
+  function backdropRectPath(cx, cy, w, h, style) {
+    const x = cx - w / 2, y = cy - h / 2;
+    if (style === 'flower') return scallopFlowerRect(x, y, w, h);
+    return cornerRect(x, y, w, h, style);
+  }
+
+  // 下地を単色で塗るマークアップを作る関数（backdropLayer の solid に渡す）。
+  // 2本に分かれる形（セル枠）は、重なりが二重に濃くならないよう透過を <g> にまとめて掛ける
+  function solidPlate(ds, shape) {
+    return (fill, fillOp) => ds.length === 1
+      ? '<path d="' + ds[0] + '" fill="' + fill + '"' + fillOp + '/>'
+      : '<g fill="' + fill + '"' + fillOp.replace('fill-opacity', 'opacity') + '>' + shape + '</g>';
+  }
+
+  // 下地の「セル枠」。縁に本体と同じ形のセルを並べ、内側を四角で埋めた札。
+  // 粒は正方形のまま並べ、横長の札は横に並べる数を増やして幅を合わせる
+  // （ほかの形のように正方形を横へ伸ばすと、粒まで横長に潰れる）。
+  // 粒の大きさは QR のモジュールに寄せる。縦に並べる数を高さから丸めて決め
+  // （cellsPlateUnit）、横の数はその粒の大きさで幅を割って切り上げる。
+  // 切り上げるので札は w より狭くならず（中身を覆い切る）、最大で粒1つぶん広がる。
+  // 実際の幅（w）を返すので、塗りの箱は呼び出し側がそれに合わせる。
+  // maxW を超えるときだけ切り捨てる。ラベルの帯は、文字を組める幅を全幅より
+  // 3モジュール狭く取っているので、粒1つぶん（約1モジュール）狭まっても字は覆える。
+  // 粒と内側を別の <path> にするのは、セルの形ごとに回り方がまちまちで
+  // （circlePath は反時計回り）、1本にまとめると nonzero で重なりが抜けるため。
+  //   opts     … { cell, cellScale }
+  //   minCount … 一辺に並べる最少の数
+  function cellsPlate(cx, cy, w, h, opts, minCount, maxW) {
+    const o = opts || {};
+    const u = cellsPlateUnit(h, minCount);
+    const rows = Math.round(h / u);
+    // 割り切れる幅で切り上げが1つ余分に増えないよう、ごく小さい誤差は切り捨てる
+    let cols = Math.max(minCount, Math.ceil(w / u - 1e-6));
+    if (maxW && cols * u > maxW + 1e-6) cols = Math.max(minCount, Math.floor(maxW / u + 1e-6));
+    const pw = cols * u;
+    const x = cx - pw / 2, y = cy - h / 2;
+    // cellsGroupedPath は正方の格子を前提にしているので、一辺は長いほうに合わせる
+    // （余りはすべて明のまま）。枠線のセル枠と同じ組み方
+    const N = Math.max(cols, rows);
+    const ring = new Uint8Array(N * N);
+    for (let i = 0; i < cols; i++) {
+      ring[i] = 1;
+      ring[(rows - 1) * N + i] = 1;
+    }
+    for (let j = 1; j < rows - 1; j++) {
+      ring[j * N] = 1;
+      ring[j * N + cols - 1] = 1;
+    }
+    // 枠線のセル枠と同じく少し痩せさせ、粒の切れ目を縁の凹みとして見せる
+    const t = Math.max(0.35, Math.min(0.86, (Number(o.cellScale) || 1) * 0.82));
+    const ringD = cellsGroupedPath(ring, N, x / u, y / u, o.cell || 'rounded', t, 0, null, 0)[0].d;
+    return {
+      w: pw,
+      ds: [rectPath(x + u * 0.5, y + u * 0.5, pw - u, h - u, 0), scalePath(ringD, u)]
+    };
+  }
+
+  // 正方形の下地の形を <path> の d の並びで返す。ふつうは1本で、「セル枠」だけ2本になる。
+  //   opts … セル枠のときだけ見る { cell, cellScale }
+  function backdropPaths(cx, cy, side, style, opts) {
+    if (style !== 'cells') return [backdropPath(cx, cy, side, style)];
+    return cellsPlate(cx, cy, side, side, opts, LOGO_CELLS_MIN).ds;
+  }
+
+  // セル枠の粒の大きさ。高さ h に並べる数（最少 minCount）を丸めて決める
+  function cellsPlateUnit(h, minCount) {
+    return h / Math.max(minCount, Math.round(h));
+  }
+
+  // ロゴの下地のセル枠で、一辺に並べる最少の粒の数
+  const LOGO_CELLS_MIN = 5;
+
+  // 下地が覆う範囲かどうか（ロゴが隠すマスの数え上げに使う）。
+  // セルを消す範囲は knockInside で、形によってはこれより狭い。
   function insideBackdrop(dx, dy, half, style) {
     const ax = Math.abs(dx), ay = Math.abs(dy);
     if (ax > half || ay > half) return false;
@@ -1093,6 +1244,16 @@
     const inner = half - r;
     if (ax <= inner || ay <= inner) return true;
     return Math.hypot(ax - inner, ay - inner) <= r;
+  }
+
+  // 下地の下のセルを消してよいかどうか。抜きが下地の塗りからはみ出すと、下地の外に
+  // セルを消した跡が地色のまま残ってしまうので、必ず塗られる範囲に絞る。
+  // セル枠の縁は、粒と粒の間が塗られない（粒の太さはセルの太さしだいで、細くすると
+  // 隙間が広がる）。確実に塗られるのは、粒の中心を結んだ内側の四角だけなので、そこに絞る。
+  function knockInside(dx, dy, half, style) {
+    if (style !== 'cells') return insideBackdrop(dx, dy, half, style);
+    const inner = half - cellsPlateUnit(half * 2, LOGO_CELLS_MIN) / 2;
+    return Math.abs(dx) <= inner && Math.abs(dy) <= inner;
   }
 
   // ラベルの上下に「何を」「どの文字・画像で」出すか。位置の指定と、上側だけ
@@ -1519,17 +1680,32 @@
       return { defs: '', body: '<image href="' + esc(logo.src) + '" x="' + n(x) + '" y="' + n(y) + '" width="' +
         n(side) + '" height="' + n(side) + '" preserveAspectRatio="xMidYMid meet"/>' };
     }
-    if (logo.type === 'text' && logo.text) {
-      const fs = side * (logo.text.length > 2 ? 0.5 : 0.78);
+    const lines = logo.type === 'text' ? logoTextLines(logo.text) : [];
+    if (lines.length) {
+      // いちばん長い行が一辺に、行を積んだ高さも一辺に収まる大きさにする。
+      // 幅は字数ではなく字幅（textUnits）で見る。字数で決めていたころは、
+      // 全角の字が半角の倍近く幅を取るぶんを見ておらず、「白昼夢」のような
+      // 日本語が下地からはみ出していた。
+      const maxUnits = Math.max(HALF_WIDTH_EM, ...lines.map(l => textUnits(l, logo.font)));
+      const fs = side * Math.min(LOGO_TEXT_MAX, LOGO_TEXT_FIT / maxUnits,
+        1 / (lines.length * LOGO_LINE_H));
+      const lh = fs * LOGO_LINE_H;
       const fontFamily = fontOf(logo.font).stack;
-      const tw = Math.max(side, fs * textUnits(logo.text));
-      const th = Math.max(side, fs * 1.15);
+      const tw = Math.max(side, fs * maxUnits);
+      const th = Math.max(side, lh * lines.length);
       const box = { x: cx - tw / 2, y: cy - th / 2, w: tw, h: th };
 
+      // 1行なら従来どおり <text> に直接書く。複数行は <tspan> を行ごとに置き、
+      // 行の並び全体の中心を下地の中心にそろえる。dominant-baseline を継がない
+      // 環境があるので、<tspan> にも書いておく
+      const top = cy - lh * (lines.length - 1) / 2;
+      const content = lines.length === 1 ? esc(lines[0]) : lines.map((l, i) =>
+        '<tspan x="' + n(cx) + '" y="' + n(top + lh * i) + '" dominant-baseline="central">' +
+        esc(l) + '</tspan>').join('');
       const textEl = fill => '<text x="' + n(cx) + '" y="' + n(cy) + '" font-size="' + n(fs) +
         '" font-weight="' + FONT_WEIGHT + '"' + (fill ? ' fill="' + fill + '"' : '') +
         ' text-anchor="middle" dominant-baseline="central" ' +
-        'font-family="' + esc(fontFamily) + '">' + esc(logo.text) + '</text>';
+        'font-family="' + esc(fontFamily) + '">' + content + '</text>';
 
       // textPaint が今のキー。旧データはアイコンと同じ paint を共有していた。
       return paintedText(textEl, logo.textPaint || logo.paint, fg, fgRef, box, pid, qrBox, '#111827');
@@ -1599,7 +1775,7 @@
     // ---- ロゴの抜き（ノックアウト） -----------------------------------
     const logo = st.logo;
     const hasLogo = logo.type !== 'none' &&
-      (logo.type === 'icon' ? !!logo.iconData : logo.type === 'image' ? !!logo.src : !!logo.text);
+      (logo.type === 'icon' ? !!logo.iconData : logo.type === 'image' ? !!logo.src : logoTextLines(logo.text).length > 0);
     const cx = ox + size / 2, cy = oy + size / 2;
     const logoSizeRaw = Number(logo.size), logoPadRaw = Number(logo.pad);
     const logoSide = (isFinite(logoSizeRaw) ? Math.max(0.06, Math.min(0.34, logoSizeRaw)) : 0.22) * size;
@@ -1620,7 +1796,9 @@
           const mx = ox + x + 0.5, my = oy + y + 0.5;
           if (!insideBackdrop(mx - cx, my - cy, half, bdStyle)) continue;
           knocked++;
-          if (logo.knockout && !isFinder(x, y)) grid[y * size + x] = 0;
+          if (logo.knockout && !isFinder(x, y) && knockInside(mx - cx, my - cy, half, bdStyle)) {
+            grid[y * size + x] = 0;
+          }
         }
       }
     }
@@ -1643,17 +1821,23 @@
     // （透明にしたいときは type:'none' か transparency を明示する）
     const bgTransparency = bgPaint.transparency !== undefined ? Number(bgPaint.transparency) : 0;
     const bgOpacity = bgPaint.type === 'none' ? 0 : Math.max(0, Math.min(1, (100 - bgTransparency) / 100));
-    // 地を単色・グラデ・画像で塗る path（多色は buildBgMosaic）
+    // 背景を描くかどうか。透明や透過100%なら描かない。「背景の色」の下地も同じ判定に従う
+    const bgVisible = bgPaint.type !== 'none' && bgOpacity > 0;
+    // 地を単色・グラデ・画像で塗る path（多色や形で切り抜くときは bgClipped）
     const bgPlate = d => '<path d="' + d + '" fill="' + bgRef + '"' +
       (bgOpacity < 1 ? ' fill-opacity="' + n(bgOpacity) + '"' : '') + '/>';
 
-    function buildBgMosaic(box, r, colors, seed, opac, shapeD) {
-      const clipId = uid + 'bgc';
-      defs += '<clipPath id="' + clipId + '"><path d="' +
-        (shapeD || rectPath(box.x, box.y, box.w, box.h, r)) + '" clip-rule="evenodd"/></clipPath>';
-      const tileSize = Math.max(1.8, Math.min(2.6, box.w / 18));
-      return '<g clip-path="url(#' + clipId + ')"' + (opac < 1 ? ' opacity="' + n(opac) + '"' : '') + '>' +
-        mosaicTiles(box, colors, seed, tileSize, null, 103) + '</g>';
+    // 背景の模様を、背景の箱に敷いたまま clipShape（<clipPath> の中身）で切り抜いて描く。
+    // 多色はモザイク、それ以外は bgRef で塗った矩形。背景そのもの（多色・枠の形で
+    // 切り抜くとき）と、ロゴの下地の「背景の色」がこれを通すので、模様の寸法や
+    // 種がずれず、下地の中の模様が背景とつながる。
+    function bgClipped(clipId, clipShape) {
+      defs += '<clipPath id="' + clipId + '">' + clipShape + '</clipPath>';
+      const pattern = bgPaint.type === 'multi'
+        ? mosaicTiles(bgBox, bgPaint.colors, bgPaint.seed, Math.max(1.8, Math.min(2.6, bgBox.w / 18)), null, 103)
+        : '<path d="' + rectPath(bgBox.x, bgBox.y, bgBox.w, bgBox.h, 0) + '" fill="' + bgRef + '"/>';
+      return '<g clip-path="url(#' + clipId + ')"' + (bgOpacity < 1 ? ' opacity="' + n(bgOpacity) + '"' : '') + '>' +
+        pattern + '</g>';
     }
 
     const mfPaint = st.markerFramePaint;
@@ -1680,9 +1864,9 @@
       defs += band.defs;
       body += band.body;
       // QRブロックの下地
-      if (bgPaint.type !== 'none' && bgOpacity > 0) {
+      if (bgVisible) {
         if (bgPaint.type === 'multi') {
-          body += buildBgMosaic({ x: bx, y: by, w: inner, h: inner }, radius, bgPaint.colors, bgPaint.seed, bgOpacity);
+          body += bgClipped(uid + 'bgc', '<path d="' + rectPath(bx, by, inner, inner, radius) + '" clip-rule="evenodd"/>');
         } else {
           body += bgPlate(rectPath(bx, by, inner, inner, radius));
         }
@@ -1697,15 +1881,12 @@
         : { strokes: [], fillD: '', bgClipD: '' };
       const bgShapeD = lineParts.bgClipD || '';
 
-      if (bgPaint.type !== 'none' && bgOpacity > 0) {
-        if (bgPaint.type === 'multi') {
-          body += buildBgMosaic({ x: 0, y: 0, w: W, h: H }, radius, bgPaint.colors, bgPaint.seed, bgOpacity, bgShapeD);
-        } else if (bgShapeD) {
-          // 塗るのは矩形のまま。形はクリップ側で決める（evenodd を直塗りすると、
-          // 札の外へはみ出した切り欠きが逆に塗られてしまう）
-          const cutId = uid + 'cut';
-          defs += '<clipPath id="' + cutId + '"><path d="' + bgShapeD + '" clip-rule="evenodd"/></clipPath>';
-          body += '<g clip-path="url(#' + cutId + ')">' + bgPlate(rectPath(0, 0, W, H, 0)) + '</g>';
+      if (bgVisible) {
+        if (bgPaint.type === 'multi' || bgShapeD) {
+          // 切り取り線・切手・吹き出しの形は、塗るのは矩形のまま形をクリップ側で決める
+          // （evenodd を直塗りすると、札の外へはみ出した切り欠きが逆に塗られてしまう）
+          body += bgClipped(uid + 'bgc', '<path d="' + (bgShapeD || rectPath(0, 0, W, H, radius)) +
+            '" clip-rule="evenodd"/>');
         } else {
           body += bgPlate(rectPath(0, 0, W, H, radius));
         }
@@ -1770,17 +1951,24 @@
 
     // ロゴ
     if (hasLogo) {
-      const bdPaint = backdropPaintOf(logo, st.fg);
-      if (bdPaint.type !== 'none') {
-        const d = backdropPath(cx, cy, knockSide, bdStyle);
+      // 「背景の色」は背景の指定をそのまま使う（透過も含めて同じにする）
+      const followBg = !!(logo.backdropPaint && logo.backdropPaint.type === 'bg');
+      const bdPaint = followBg ? bgPaint : backdropPaintOf(logo, st.fg);
+      if (followBg ? bgVisible : bdPaint.type !== 'none') {
+        const ds = backdropPaths(cx, cy, knockSide, bdStyle, { cell: st.cell, cellScale: st.cellScale });
+        const shape = ds.map(d => '<path d="' + d + '"/>').join('');
         const half = knockSide / 2;
         const bdBox = { x: cx - half, y: cy - half, w: knockSide, h: knockSide };
-        const layer = backdropLayer(bdPaint, logo.backdropPaint, bdBox, uid + 'bd',
-          '<path d="' + d + '"/>',
-          (fill, fillOp) => '<path d="' + d + '" fill="' + fill + '"' + fillOp + '/>',
-          fgRef, qrBox);
-        defs += layer.defs;
-        body += layer.body;
+        if (followBg) {
+          // 背景を、背景と同じ座標のまま下地の形で切り抜く。下地の箱で塗り直すと、
+          // グラデーション・画像・多色の模様が背景とつながらない
+          body += bgClipped(uid + 'bdc', shape);
+        } else {
+          const layer = backdropLayer(bdPaint, logo.backdropPaint, bdBox, uid + 'bd', shape,
+            solidPlate(ds, shape), fgRef, qrBox);
+          defs += layer.defs;
+          body += layer.body;
+        }
       }
       const lo = logoSvg(logo, cx, cy, logoSide, uid, st.fg, fgRef, qrBox);
       defs += lo.defs;
@@ -1794,7 +1982,7 @@
       // 下地を先に敷くために、文字の寸法だけを取り出せるようにしておく
       function frameTextMetrics(textStr) {
         const avail = W - 3;
-        const units = textUnits(textStr);
+        const units = textUnits(textStr, st.frame.font);
         const cap = contentSide * 0.85;
         const fs = Math.max(contentSide * 0.4, Math.min(cap, units ? avail / units : cap));
         return { fs: fs, units: units, tw: Math.max(fs * 2, fs * units) };
@@ -1859,27 +2047,32 @@
         return { w: m.tw + m.fs * 0.5, h: contentSide };
       }
 
-      // 中身の後ろに敷く板。正方形の下地を描いてから横に伸ばすので、
-      // 文字のように横長のときは角の丸みも一緒に伸びて帯になる。
+      // 中身の後ろに敷く板。文字のように横長のときは、角の形はそのままで横に長い
+      // 帯になる（backdropRectPath。セル枠は粒の数で合わせる cellsPlate）。
       function renderFrameBackdrop(cy, idSuffix, isTop) {
-        const bdPaint = backdropPaintOf(st.frame, st.fg);
-        if (!bdPaint || bdPaint.type === 'none') return;
+        // 「背景の色」は背景の指定をそのまま使う（透過も含めて同じにする）。
+        // 帯は背景（QRブロック）の外にあるので、模様は帯の箱で塗り直す
+        const followBg = !!(st.frame.backdropPaint && st.frame.backdropPaint.type === 'bg');
+        const bdPaint = followBg ? bgPaint : backdropPaintOf(st.frame, st.fg);
+        if (followBg ? !bgVisible : (!bdPaint || bdPaint.type === 'none')) return;
         const box = frameContentBox(isTop);
         if (!box || box.w <= 0 || box.h <= 0) return;
 
         const bh = box.h + contentPadU;
         const bw = Math.min(W, box.w + contentPadU);
         const style = (st.frame.backdrop && st.frame.backdrop !== 'none') ? st.frame.backdrop : 'rounded';
-        const d = backdropPath(0, 0, bh, style);
-        const sx = bh > 0 ? bw / bh : 1;
-        const tf = 'translate(' + n(W / 2) + ' ' + n(cy) + ') scale(' + n(sx) + ' 1)';
-        const shape = '<g transform="' + tf + '"><path d="' + d + '"/></g>';
-        const bdBox = { x: W / 2 - bw / 2, y: cy - bh / 2, w: bw, h: bh };
-        const pid = uid + 'fbd' + idSuffix;
-        const layer = backdropLayer(bdPaint, st.frame.backdropPaint, bdBox, pid, shape,
-          (fill, fillOp) => '<g transform="' + tf + '" fill="' + fill + '"' + fillOp +
-            '><path d="' + d + '"/></g>',
-          fgRef, qrBox);
+        let ds, plateW = bw;
+        if (style === 'cells') {
+          const plate = cellsPlate(W / 2, cy, bw, bh, { cell: st.cell, cellScale: st.cellScale }, 3, W);
+          ds = plate.ds;
+          plateW = plate.w;
+        } else {
+          ds = [backdropRectPath(W / 2, cy, bw, bh, style)];
+        }
+        const shape = ds.map(d => '<path d="' + d + '"/>').join('');
+        const bdBox = { x: W / 2 - plateW / 2, y: cy - bh / 2, w: plateW, h: bh };
+        const layer = backdropLayer(bdPaint, followBg ? st.bg : st.frame.backdropPaint, bdBox,
+          uid + 'fbd' + idSuffix, shape, solidPlate(ds, shape), fgRef, qrBox);
         defs += layer.defs;
         body += layer.body;
       }
@@ -2017,7 +2210,7 @@
       byFont.set(web, (byFont.get(web) || '') + t);
     };
 
-    if (st.logo.type === 'text') add(st.logo.font, st.logo.text);
+    if (st.logo.type === 'text') add(st.logo.font, logoTextLines(st.logo.text).join(''));
 
     const L = frameLabelParts(st);
     if (L.isLabel) {
@@ -2089,10 +2282,13 @@
       '<path d="' + markerEyePath(0, 0, eyeStyle) + '" fill="currentColor"/></svg>';
   }
 
-  // ロゴの下地の形を選ぶグリッド用。中央にロゴの当たりを重ねて向きが分かるようにする
-  function backdropPreview(style) {
+  // 下地（ロゴ・ラベル）の形を選ぶグリッド用。中央にロゴの当たりを重ねて向きが分かるようにする。
+  // セル枠は2本の <path> になるので、薄くするのは <g> でまとめて掛ける
+  //   opts … セル枠のときだけ見る { cell, cellScale }
+  function backdropPreview(style, opts) {
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.3 -0.3 7.6 7.6">' +
-      '<path d="' + backdropPath(3.5, 3.5, 7, style) + '" fill="currentColor" opacity="0.32"/>' +
+      '<g fill="currentColor" opacity="0.32">' +
+      backdropPaths(3.5, 3.5, 7, style, opts).map(d => '<path d="' + d + '"/>').join('') + '</g>' +
       '<circle cx="3.5" cy="3.5" r="1.6" fill="currentColor"/></svg>';
   }
 

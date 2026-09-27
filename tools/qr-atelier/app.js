@@ -370,14 +370,14 @@
     eye:         { paint: s => s.markerEyePaint,    kind: 'auto',  clearType: 'auto',  label: 'マーカーの目' },
     logoicon:    { paint: s => s.logo.paint,        kind: 'brand', clearType: 'brand', label: 'ロゴのアイコン' },
     logotext:    { paint: s => s.logo.textPaint,    kind: 'auto',  clearType: 'auto',  label: 'ロゴの文字' },
-    logobd:      { paint: s => s.logo.backdropPaint, kind: 'plate', clearType: 'white', label: 'ロゴの下地' },
+    logobd:      { paint: s => s.logo.backdropPaint, kind: 'bdplate', clearType: 'white', label: 'ロゴの下地' },
     frameborder: { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '枠線' },
     framelabel:  { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '帯' },
     // 文字は既定どおり単色（白）へ戻す。帯は既定で「セルの色」なので、文字まで
     // 'auto' に戻すと帯と同じ色になって読めなくなる
     frametext:   { paint: s => s.frame.textPaint,   kind: 'auto',  clearType: 'solid', label: 'ラベルの文字' },
     frameicon:   { paint: s => s.frame.iconPaint,   kind: 'brand', clearType: 'brand', label: 'ラベルのアイコン' },
-    framebd:     { paint: s => s.frame.backdropPaint, kind: 'plate', clearType: 'none', label: 'ラベルの下地' }
+    framebd:     { paint: s => s.frame.backdropPaint, kind: 'bdplate', clearType: 'none', label: 'ラベルの下地' }
   };
   const COLOR_SCOPES = Object.keys(COLOR_SCOPE_META);
 
@@ -423,6 +423,7 @@
       p.type === 'black' ? '黒' :
       p.type === 'none' ? '透明' :
       p.type === 'auto' ? 'セルの色' :
+      p.type === 'bg' ? '背景の色' :
       p.type === 'solid' ? '単色' :
       p.type === 'multi' ? '多色 (' + ((p.colors || []).length) + '色)' :
       p.type === 'image' ? '画像' :
@@ -441,7 +442,7 @@
   // 覚えるときに大きすぎる画像を落とす場所。[持ち主, キー名] で並べる。
   function storedImageSlots(s) {
     return [
-      [s.logo, 'src'], [s.logo.paint, 'src'], [s.logo.textPaint, 'src'],
+      [s.logo, 'src'], [s.logo.paint, 'src'], [s.logo.textPaint, 'src'], [s.logo.backdropPaint, 'src'],
       [s.fg, 'src'], [s.bg, 'src'],
       [s.markerFramePaint, 'src'], [s.markerEyePaint, 'src'],
       [s.frame.paint, 'src'], [s.frame.textPaint, 'src'], [s.frame.backdropPaint, 'src'],
@@ -742,12 +743,15 @@
   //   basic … セル。自分が追従先なので「セルの色」は持てない
   //   auto  … マーカー・枠線・帯・ラベルの文字。既定は「セルの色に追従」
   //   brand … アイコン。ブランド公式色を選べる
-  //   plate … 背景と下地。敷く面なので白・黒・透明まで選べる
+  //   plate … 背景。敷く面なので白・黒・透明まで選べる
+  //   bdplate … ロゴ・ラベルの下地。plate に加えて「背景の色に追従」（bg）を持つ。
+  //             背景には持たせない（背景が自分を指すと解けない）
   const PAINT_MODES = {
     basic: ['solid', 'multi', 'linear', 'radial', 'image'],
     auto: ['auto', 'solid', 'multi', 'linear', 'radial', 'image'],
     brand: ['brand', 'auto', 'solid', 'multi', 'linear', 'radial', 'image'],
-    plate: ['white', 'black', 'none', 'auto', 'solid', 'multi', 'linear', 'radial', 'image']
+    plate: ['white', 'black', 'none', 'auto', 'solid', 'multi', 'linear', 'radial', 'image'],
+    bdplate: ['white', 'black', 'none', 'auto', 'bg', 'solid', 'multi', 'linear', 'radial', 'image']
   };
 
   // ラベルの中身（文字・アイコン・画像）
@@ -756,9 +760,14 @@
   // 多色で持てる色の数
   const MAX_MULTI_COLORS = 8;
 
+  // 敷く面（背景・下地）の塗りかどうか。白・黒・透明と透過のスライダーを持つ
+  function isPlateKind(kind) {
+    return kind === 'plate' || kind === 'bdplate';
+  }
+
   function sanitizePaint(p, kind, defaultType, fallbackColor) {
     if (!p || typeof p !== 'object') p = {};
-    const isPlate = kind === 'plate';
+    const isPlate = isPlateKind(kind);
     if (PAINT_MODES[kind].indexOf(p.type) < 0) p.type = defaultType;
     p.color = normHex(p.color, fallbackColor || (isPlate ? '#FFFFFF' : '#111827'));
     p.from = normHex(p.from, isPlate ? '#FFFFFF' : '#FC466B');
@@ -784,6 +793,12 @@
   // localStorage の中身はそのまま SVG の属性と数値に流れる。壊れた保存や
   // 別経路で書き換えられた値が fill="..." を閉じて属性を足せてしまわないよう、
   // 色は #RRGGBB に、数値は範囲内の数に必ず均しておく。
+  // 下地の旧「ドット枠」は、セルの形で粒を並べる「セル枠」に置き換えた。
+  // 保存や共有 URL に残った古い指定は、既定へ戻さずセル枠として読む
+  function backdropIdOf(id) {
+    return id === 'dots' ? 'cells' : id;
+  }
+
   function sanitizeStyle(s) {
     const D = window.QRStyle.DEFAULTS;
     s.fg = sanitizePaint(s.fg, 'basic', 'solid', '#111827');
@@ -810,16 +825,18 @@
     s.frame.lineWidth = clampNum(s.frame.lineWidth, 0.15, 2.5, lineDef.stroke);
     s.frame.lineWidth2 = clampNum(s.frame.lineWidth2, 0.15, 2.5, lineDef.inner || 0.28);
 
-    // ラベルの中身の下地。形は下地用の一覧から選ぶ
+    // ラベルの中身の下地。形は下地用の一覧から選ぶ（旧「ドット枠」はセル枠に読み替える）
+    s.frame.backdrop = backdropIdOf(s.frame.backdrop);
     if (!hasId(A.BACKDROP_SHAPES, s.frame.backdrop)) s.frame.backdrop = D.frame.backdrop;
     // 透過は sanitizePaint が埋める（下地は plate なので、未指定は 0＝不透明）
-    s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'plate', 'none', '#FFFFFF');
+    s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, COLOR_SCOPE_META.framebd.kind, 'none', '#FFFFFF');
 
     s.bg = sanitizePaint(s.bg, 'plate', 'solid', '#FFFFFF');
 
-    // ロゴの下地。形は下地用の一覧から選ぶ
+    // ロゴの下地。ラベルの下地と同じ一覧から選ぶ
+    s.logo.backdrop = backdropIdOf(s.logo.backdrop);
     if (!hasId(A.BACKDROP_SHAPES, s.logo.backdrop)) s.logo.backdrop = D.logo.backdrop;
-    s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'plate', 'solid', '#FFFFFF');
+    s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, COLOR_SCOPE_META.logobd.kind, 'solid', '#FFFFFF');
 
     // ロゴ本体の塗り。ここだけ 'brand'（アイコンのブランド公式色）を選べる。
     // 画面では、ブランド以外のアイコン群を選んでいるときに syncControls が
@@ -1373,6 +1390,12 @@
         holder.innerHTML = window.QRStyle.markerPreview(id, state.style.markerEye, opts);
       }
     });
+    // 下地（ロゴ・ラベル）のセル枠も、セルの形を映す
+    ['logo-backdrop-grid', 'frame-backdrop-grid'].forEach(hostId => {
+      const host = $(hostId);
+      const holder = host && host.querySelector('.shape-btn[data-id="cells"] .preview-holder');
+      if (holder) holder.innerHTML = window.QRStyle.backdropPreview('cells', opts);
+    });
   }
 
   // 選んでいるセルの形の名前を説明文のところに出す。一覧を組み直したときも、
@@ -1433,13 +1456,15 @@
       id => S.markerPreview(id, state.style.markerEye, markerPreviewOpts()),
       id => { state.style.markerFrame = id; });
 
-    // ロゴの下地とラベルの下地は同じ形の一覧から選ぶ
+    // ロゴの下地とラベルの下地は同じ形の一覧から選ぶ。セル枠の見本はセルの形を映す
     buildShapeGrid('logo-backdrop-grid', A.BACKDROP_SHAPES,
-      () => state.style.logo.backdrop, S.backdropPreview,
+      () => state.style.logo.backdrop,
+      id => S.backdropPreview(id, markerPreviewOpts()),
       id => { state.style.logo.backdrop = id; });
 
     buildShapeGrid('frame-backdrop-grid', A.BACKDROP_SHAPES,
-      () => state.style.frame.backdrop, S.backdropPreview,
+      () => state.style.frame.backdrop,
+      id => S.backdropPreview(id, markerPreviewOpts()),
       id => { state.style.frame.backdrop = id; });
 
     // 枠線の種類。見本は本番と同じ描画コードから起こす
@@ -1482,8 +1507,10 @@
   }
 
   // 多色・グラデーションの色の1行（見本・カラーコード・削除ボタン）。
-  // 見本だけでなくカラーコードを押しても色を選べるように、<label> で包む。
+  // 見本と役割名を <label> で包み、役割名を押しても色を選べるようにする。
   // ラベルはクリックを中の input へ渡すので、こちらで転送を書く必要はない。
+  // カラーコードは打ち込めるように、ラベルの外に置いた入力欄にする
+  // （ラベルの中に置くと、欄を押したときにピッカーまで開く）。
   //   label       … 見本の読み上げ名。削除ボタンは removeLabel（省略時は label）＋「を削除」
   //   role        … 見本の脇に出す役割（グラデーションの開始・中間・終了）
   //   onColor(hex) … 色が動いたときに state へ書く
@@ -1493,7 +1520,10 @@
     const item = el('div', { class: 'multi-color-item' });
     const hit = el('label', { class: 'mc-hit' });
     const picker = el('input', { type: 'color', value: hex, 'aria-label': o.label });
-    const hexSpan = el('span', { class: 'color-hex' }, hex);
+    const hexInput = el('input', {
+      type: 'text', class: 'color-hex-input', value: hex, spellcheck: 'false',
+      maxlength: '7', autocomplete: 'off', 'aria-label': o.label + 'のカラーコード'
+    });
     const removeText = (o.removeLabel || o.label) + 'を削除';
     const removeBtn = el('button', {
       class: 'btn-remove-color', type: 'button', title: removeText, 'aria-label': removeText
@@ -1504,11 +1534,25 @@
     // すると、ドラッグ1コマごとにデコーダが起動して画面が固まる
     picker.addEventListener('input', () => {
       const v = picker.value.toUpperCase();
-      hexSpan.textContent = v;
+      hexInput.value = v;
       o.onColor(v);
       designDragged();
     });
     picker.addEventListener('change', verifyOnCommit);
+    // 単色の欄（bindColor）と同じく、確定したときに形式を確かめて反映する
+    hexInput.addEventListener('change', () => {
+      const v = normHex(hexInput.value, null);
+      if (!v) {
+        showToast('カラーコードの形式が違います', 'error');
+        hexInput.value = picker.value.toUpperCase();
+        return;
+      }
+      hexInput.value = v;
+      picker.value = v;
+      o.onColor(v);
+      state.presetName = '';
+      update();
+    });
     if (o.onRemove) {
       removeBtn.addEventListener('click', () => { o.onRemove(); designChanged(); });
     }
@@ -1517,8 +1561,8 @@
     if (o.role) {
       hit.appendChild(el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, o.role));
     }
-    hit.appendChild(hexSpan);
     item.appendChild(hit);
+    item.appendChild(hexInput);
     item.appendChild(removeBtn);
     return item;
   }
@@ -2057,7 +2101,9 @@
     const isLogoBd = scope === 'logobd';
     const isFrameBd = scope === 'framebd';
     // 背景と下地は「敷く面」なので、白・黒・透明まで選べる
-    const isPlate = meta.kind === 'plate';
+    const isPlate = isPlateKind(meta.kind);
+    // 「背景の色」を選べるかは kind の顔ぶれで決まる（ロゴ・ラベルの下地）
+    const canFollowBg = PAINT_MODES[meta.kind].indexOf('bg') >= 0;
     // ブランドカラーはアイコンにしか意味がない。さらに、汎用アイコンには
     // ブランド色そのものが無いので、「SNS・ブランド」の一覧を開いている
     // ときだけ出す。ロゴとラベルで別々の一覧を持っているので、対象ごとに見る。
@@ -2066,11 +2112,12 @@
 
     [['btn-mode-white', isPlate], ['btn-mode-black', isPlate],
      ['btn-mode-none', isPlate], ['btn-mode-brand', showBrand],
-     ['btn-mode-auto', !isCell]].forEach(pair => showButton(cq(scope, pair[0]), pair[1]));
+     ['btn-mode-auto', !isCell], ['btn-mode-bg', canFollowBg]].forEach(pair => showButton(cq(scope, pair[0]), pair[1]));
 
     // 出せない指定が残っていたら、いちばん近い意味に寄せる
     if (p.type === 'brand' && !showBrand) p.type = 'auto';
     if (p.type === 'auto' && isCell) p.type = 'solid';
+    if (p.type === 'bg' && !canFollowBg) p.type = isPlate ? 'white' : 'auto';
     if (!isPlate && (p.type === 'white' || p.type === 'black' || p.type === 'none')) {
       p.type = p.type === 'none' ? 'auto' : 'solid';
     }
@@ -2078,6 +2125,7 @@
     const isWhite = p.type === 'white';
     const isBlack = p.type === 'black';
     const isAuto = p.type === 'auto';
+    const isBgFollow = p.type === 'bg';
     const isNone = p.type === 'none';
     const isBrand = p.type === 'brand';
     const isSolid = p.type === 'solid';
@@ -2088,7 +2136,7 @@
     setSeg(cq(scope, 'color-mode-seg'), p.type, 'mode');
 
     [['pane-white', isWhite], ['pane-black', isBlack], ['pane-auto', isAuto],
-     ['pane-none', isNone], ['pane-brand', isBrand], ['pane-solid', isSolid],
+     ['pane-bg', isBgFollow], ['pane-none', isNone], ['pane-brand', isBrand], ['pane-solid', isSolid],
      ['pane-grad', isGrad], ['pane-multi', isMulti], ['pane-image', isImage]].forEach(pair => {
       showIf(cq(scope, pair[0]), pair[1]);
     });
@@ -2106,6 +2154,13 @@
           ? 'セルの色設定と連動します。<br>多色のときは、3つのマーカーに色が1つずつ振られます。'
           : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
     }
+    // ロゴは背景の上に載るので模様がつながる。ラベルの帯は背景の外なので、帯の中で塗り直す
+    const bgNotice = cq(scope, 'bg-notice');
+    if (bgNotice) {
+      bgNotice.innerHTML = isFrameBd
+        ? '背景の色設定と連動します。<br>グラデーション・放射・画像・多色も、透明度を含めて背景と同じ設定でラベルの下地に描画されます。'
+        : '背景の色設定と連動します。<br>グラデーション・放射・画像・多色も、透明度を含めて背景と同じ設定で、背景とつながった模様として描画されます。';
+    }
     setText(cq(scope, 'white-notice'), plateWord + 'を不透明な白（#FFFFFF）に固定します。');
     setText(cq(scope, 'black-notice'), plateWord + 'を不透明な黒（#000000）に固定します。');
     const noneNotice = cq(scope, 'none-notice');
@@ -2117,17 +2172,20 @@
           : '背景を透明にします。<br>透過PNGや透過SVGとして背景のない画像を書き出せます。';
     }
 
-    const hideSwatch = isImage || isAuto || isNone || isWhite || isBlack || isBrand;
+    const hideSwatch = isImage || isAuto || isBgFollow || isNone || isWhite || isBlack || isBrand;
     if (!hideSwatch) ensurePanelPart(scope, 'swatch');
     showIf(cq(scope, 'swatch-host'), !hideSwatch);
 
-    showIf(cq(scope, 'transparency-row'), isPlate && !isNone && !isWhite && !isBlack);
+    // 背景の色に追従するときは、透過も背景の指定に従う
+    showIf(cq(scope, 'transparency-row'), isPlate && !isNone && !isWhite && !isBlack && !isBgFollow);
     const transVal = p.transparency !== undefined ? p.transparency : 0;
     setRange(cq(scope, 'transparency'), cq(scope, 'val-transparency'), transVal, transVal + '%');
 
     const hex = normHex(p.color, isPlate ? '#FFFFFF' : '#111827');
     setVal(cq(scope, 'color-picker'), hex);
     setVal(cq(scope, 'color-hex'), hex);
+    const rgb = hexToRgb(hex);
+    ['r', 'g', 'b'].forEach((k, i) => setVal(cq(scope, 'color-' + k), rgb[i]));
 
     setRange(cq(scope, 'angle'), cq(scope, 'val-angle'), p.angle, p.angle + '°');
     showIf(cq(scope, 'angle-row'), p.type !== 'radial');
@@ -2944,157 +3002,10 @@
   // 書き出し
   // ------------------------------------------------------------------
   // ---- 書き出し用のフォント -------------------------------------------
-  // 画面のプレビューはページが読み込んだフォント（data/fonts/ に同梱）で描かれるが、
-  // 書き出しは SVG を data URL の <img> として読ませるため、ページのフォントを
-  // 受け継がない。放っておくと、選んだ書体が画面にだけ効いて、書き出した画像は
-  // 既定の書体になる（実測でも指定あり／なしが同じ形になった）。
-  //
-  // そこで書き出す直前に、いま使っている字を含むフォントのファイルだけを
-  // @font-face として SVG に埋める。フォントは字の範囲（unicode-range）ごとに
-  // 分けて同梱してあるので、埋めるのは使った字の範囲のぶんだけで済む。
-  // 取りに行くのはこのサイトの data/fonts/ だけで、字をどこかへ問い合わせることはない。
-  //
-  // 取れなかったぶんは諦める（書き出し自体は止めず、既定の書体で出る）。
-
-  // "U+0000-00FF, U+0131" → [[0, 255], [305, 305]]。範囲の指定が無い面は全域とみなす
-  function parseUnicodeRange(text) {
-    const s = String(text || '').trim();
-    if (!s) return [[0, 0x10FFFF]];
-    return s.split(',').map(part => {
-      const p = part.trim().replace(/^u\+/i, '');
-      // U+4?? のような書き方は、? を 0 と F に置いた範囲
-      if (p.indexOf('?') >= 0) return [parseInt(p.replace(/\?/g, '0'), 16), parseInt(p.replace(/\?/g, 'F'), 16)];
-      const [lo, hi] = p.split('-');
-      return [parseInt(lo, 16), parseInt(hi || lo, 16)];
-    });
-  }
-
-  function coversAny(ranges, text) {
-    for (const ch of text) {
-      const c = ch.codePointAt(0);
-      if (ranges.some(r => c >= r[0] && c <= r[1])) return true;
-    }
-    return false;
-  }
-
-  // ページが読み込んだ @font-face（data/fonts/*.css）。索引を別に持たず、CSS を
-  // そのまま引く（別に作ると、CSS と食い違ったときに気づけない）。
-  // このサイトのファイルを指すものだけを拾うので、書き出しが外へ出ることはない。
-  let bundledFaces = null;
-  function bundledFontFaces() {
-    if (bundledFaces) return bundledFaces;
-    const out = [];
-    Array.prototype.forEach.call(document.styleSheets, sheet => {
-      let rules;
-      try { rules = sheet.cssRules; } catch (e) { return; }   // 別オリジンの CSS は中を読めない
-      Array.prototype.forEach.call(rules, rule => {
-        if (!(rule instanceof CSSFontFaceRule)) return;
-        const st = rule.style;
-        const src = st.getPropertyValue('src').match(/url\(\s*["']?([^"')]+)["']?\s*\)/);
-        if (!src) return;
-        const url = new URL(src[1], sheet.href || location.href);
-        if (url.origin !== location.origin) return;
-        out.push({
-          family: st.getPropertyValue('font-family').replace(/["']/g, '').trim(),
-          weight: Number(st.getPropertyValue('font-weight')) || 400,
-          url: url.href,
-          range: st.getPropertyValue('unicode-range').trim(),
-          ranges: parseUnicodeRange(st.getPropertyValue('unicode-range'))
-        });
-      });
-    });
-    // CSS がまだ読めていないうちの空振りは覚えない
-    if (out.length) bundledFaces = out;
-    return out;
-  }
-
-  // フォントのファイルを data URL に。同じファイルは一度しか読まない。
-  // ファイルの数は同梱したぶんで頭打ちなので、上限は置かない。失敗は覚えず、次にまた試す。
-  const fontFileCache = new Map();
-  function fontFileDataUrl(url) {
-    let p = fontFileCache.get(url);
-    if (!p) {
-      p = fetch(url)
-        .then(res => { if (!res.ok) throw new Error('font ' + res.status); return res.blob(); })
-        .then(blobToDataUrl)
-        .catch(e => { fontFileCache.delete(url); throw e; });
-      fontFileCache.set(url, p);
-    }
-    return p;
-  }
-
-  // その面で描く字のうち、見える最初の1字（空白は描いても跡が残らないので外す）
-  function firstInkChar(ranges, text) {
-    for (const ch of text) {
-      const c = ch.codePointAt(0);
-      if (/\S/.test(ch) && ranges.some(r => c >= r[0] && c <= r[1])) return ch;
-    }
-    return '';
-  }
-
-  // 埋め込んだフォントは、SVG を <img> で描く最初の一回には間に合わない。初回の
-  // 描画で読み込みが始まるので、その絵では字が抜ける（実測で、字の範囲ごとに分けた
-  // 面を複数使うとラベルの文字が丸ごと消えた）。同じ @font-face を持つ小さな見本を
-  // 先に描き、面ごとに1字ずつ出るまで待っておけば、読み込み済みのフォントが本番の
-  // SVG にも最初から効く（同じ data URL のフォントは使い回される）。
-  // 読み込めない面があっても、ブラウザが代わりの書体に切り替える 3 秒で打ち切る。
-  let warmFonts = null;   // 予熱に使った見本。参照を手放すと、読み込んだフォントごと捨てられうる
-  async function warmUpFonts(css, probes) {
-    if (!probes.length || (warmFonts && warmFonts.css === css)) return;
-    const cell = 40;
-    const x = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-    const w = probes.length * cell;
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + cell +
-      '" width="' + w + '" height="' + cell + '"><defs><style>' + css + '</style></defs>' +
-      probes.map((p, i) => '<text x="' + (i * cell + cell / 2) + '" y="30" font-size="30" font-weight="' +
-        p.weight + '" text-anchor="middle" font-family="' + x('"' + p.family + '"') + '">' + x(p.ch) + '</text>').join('') +
-      '</svg>';
-    const img = new Image();
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-    try { await img.decode(); } catch (e) { return; }
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = cell;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    // どの升にも字の跡があるか
-    const inked = () => {
-      ctx.clearRect(0, 0, w, cell);
-      ctx.drawImage(img, 0, 0);
-      const d = ctx.getImageData(0, 0, w, cell).data;
-      return probes.every((p, i) => {
-        for (let y = 0; y < cell; y++) {
-          for (let px = i * cell; px < (i + 1) * cell; px++) if (d[(y * w + px) * 4 + 3] > 0) return true;
-        }
-        return false;
-      });
-    };
-    const until = performance.now() + 3000;
-    while (!inked() && performance.now() < until) await new Promise(r => setTimeout(r, 16));
-    warmFonts = { css: css, img: img };
-  }
-
-  // そのスタイルで実際に描く字を含むフォントだけの @font-face。取れなかったぶんは諦める。
-  // 返す前に予熱まで済ませるので、この CSS を埋めた SVG は最初の描画から字が出る。
-  async function exportFontCss(style) {
-    let runs = [];
-    try { runs = window.QRStyle.textRuns(style); } catch (e) { return ''; }
-    if (!runs.length) return '';
-    const faces = bundledFontFaces();
-    const picks = [];
-    runs.forEach(run => faces.forEach(f => {
-      if (f.family === run.web && f.weight === run.weight && coversAny(f.ranges, run.text)) {
-        picks.push({ face: f, ch: firstInkChar(f.ranges, run.text) });
-      }
-    }));
-    const loaded = await Promise.all(picks.map(p => fontFileDataUrl(p.face.url).then(
-      data => '@font-face{font-family:"' + p.face.family + '";font-style:normal;font-weight:' + p.face.weight +
-        ';src:url(' + data + ") format('woff2')" + (p.face.range ? ';unicode-range:' + p.face.range : '') + ';}',
-      () => '')));
-    const css = loaded.join('');
-    // 読めた面のうち、見える字を描くものだけを予熱の見本にする
-    await warmUpFonts(css, picks.filter((p, i) => loaded[i] && p.ch)
-      .map(p => ({ family: p.face.family, weight: p.face.weight, ch: p.ch })));
-    return css;
+  // SVG を画像として書き出すとページのフォントを受け継がないので、使っている字の
+  // フォントだけを SVG に埋める。中身は qr-export.js（dj/request の回の QR と共用）。
+  function exportFontCss(style) {
+    return window.QRExport.fontCss(style);
   }
 
   // 書き出す SVG に、いまの絵で使っている書体を埋めて返す。
@@ -3111,35 +3022,9 @@
     return '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) + sized;
   }
 
-  // 画像の読み込み待ちは onload ではなく decode() を使う。onload は描画の
-  // 都合で発火が遅れたり落ちたりすることがあり、読み取りテストのように
-  // 短い間隔で何枚も起こすと止まってしまう。
-  async function svgToImage(svg, px) {
-    const img = new Image();
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(window.QRStyle.resize(svg, px));
-    if (typeof img.decode === 'function') {
-      await img.decode();
-      return img;
-    }
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = () => reject(new Error('svg load failed'));
-    });
-    return img;
-  }
-
-  async function rasterize(svg, px, flatten) {
-    const img = await svgToImage(svg, px);
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth || px;
-    canvas.height = img.naturalHeight || px;
-    const ctx = canvas.getContext('2d');
-    if (flatten) {
-      ctx.fillStyle = flatten;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas;
+  // 横 px のキャンバスに描く（qr-export.js と共用）
+  function rasterize(svg, px, flatten) {
+    return window.QRExport.rasterize(svg, px, flatten);
   }
 
   function fileStem() {
@@ -4277,13 +4162,22 @@
   // ------------------------------------------------------------------
   // 配線
   // ------------------------------------------------------------------
-  function bindColor(pickerId, hexId, apply) {
+  // 色の見本・カラーコード・RGB の欄を1組で配線する。どこから変えても残りを揃える。
+  //   rgbIds … [R, G, B] の数値欄（単色だけが持つ）。省略可
+  function bindColor(pickerId, hexId, apply, rgbIds) {
     const picker = asEl(pickerId);
     if (!picker) return;
     const hex = hexId ? asEl(hexId) : null;
+    const rgb = (rgbIds || []).map(asEl).filter(Boolean);
+    const hasRgb = rgb.length === 3;
+    const showRgb = v => {
+      const c = hasRgb ? hexToRgb(v) : null;
+      if (c) rgb.forEach((n, i) => { n.value = c[i]; });
+    };
     picker.addEventListener('input', () => {
       const v = normHex(picker.value, '#000000');
       if (hex) hex.value = v;
+      showRgb(v);
       apply(v);
       designDragged();
     });
@@ -4294,9 +4188,38 @@
         if (!v) { showToast('カラーコードの形式が違います', 'error'); return; }
         hex.value = v;
         picker.value = v;
+        showRgb(v);
         apply(v);
         state.presetName = '';
         update();
+      });
+    }
+    if (hasRgb) {
+      // 空の欄は 0 と読まない（消して打ち直している途中を黒にしない）
+      const readRgb = () => rgb.map(n => n.value.trim() === '' ? NaN : Number(n.value));
+      const setFromRgb = c => {
+        const v = window.QRStyle.rgbToHex(c);
+        if (v === normHex(picker.value, '')) return false;
+        picker.value = v;
+        if (hex) hex.value = v;
+        apply(v);
+        designDragged();
+        return true;
+      };
+      rgb.forEach(n => {
+        // 打っている途中（空・256 以上・小数）は色を動かさず、3つとも
+        // 0〜255 の整数にそろったときだけ映す
+        n.addEventListener('input', () => {
+          const c = readRgb();
+          if (c.every(x => Number.isInteger(x) && x >= 0 && x <= 255)) setFromRgb(c);
+        });
+        // 確定したら範囲の外や小数は丸めて取り込み、読めない値は今の色に戻す
+        n.addEventListener('change', () => {
+          const c = readRgb();
+          if (c.every(x => isFinite(x))) setFromRgb(c);
+          showRgb(normHex(picker.value, '#000000'));
+          verifyOnCommit();
+        });
       });
     }
   }
@@ -4377,7 +4300,7 @@
     bindColor(cq(scope, 'color-picker'), cq(scope, 'color-hex'), v => {
       touch();
       paintOf(scope).color = v;
-    });
+    }, ['r', 'g', 'b'].map(k => cq(scope, 'color-' + k)));
     bindRange(cq(scope, 'angle'), cq(scope, 'val-angle'), v => v + '°', v => {
       touch();
       paintOf(scope).angle = v;

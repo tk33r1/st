@@ -614,6 +614,8 @@
       cursor: pointer;
     }
     .field textarea { min-height: 96px; resize: vertical; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
+    /* ロゴの文字は数文字なので、内容欄ほどの高さは要らない。見た目は1行の欄にそろえる */
+    .field #logo-text { min-height: 0; font-family: var(--font-ui); font-size: 13.5px; line-height: 1.5; }
     .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--accent); }
     .field .sub { font-size: 11.5px; color: var(--ink-3); }
     .remember-row { flex-direction: row; align-items: center; gap: 9px;
@@ -660,7 +662,7 @@
     .sw:hover { transform: scale(1.14); }
     .sw.active { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
 
-    .color-row { display: flex; align-items: center; gap: 8px; }
+    .color-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .color-row input[type="color"] {
       width: 38px; height: 32px; padding: 0; border: 1px solid var(--rule);
       border-radius: var(--r-1); background: var(--panel); cursor: pointer;
@@ -671,6 +673,17 @@
       border-radius: var(--r-1); background: var(--bg); color: var(--ink);
     }
     .color-row .st-btn-quiet { padding: 7px 10px; font-size: 11.5px; }
+    /* 単色の RGB 指定。狭い画面ではカラーコードの下へ折り返す */
+    .rgb-fields { display: flex; gap: 6px; }
+    .rgb-field {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3);
+    }
+    .color-row input[type="number"] {
+      font-family: var(--font-mono); font-size: 12px;
+      width: 58px; padding: 7px 4px 7px 7px; border: 1px solid var(--rule);
+      border-radius: var(--r-1); background: var(--bg); color: var(--ink);
+    }
 
     .grad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
     .grad-btn {
@@ -700,7 +713,7 @@
       border: 1px solid var(--rule);
       border-radius: var(--r-1);
     }
-    /* 見本・役割名・カラーコードをまとめた当たり判定。
+    /* 見本と役割名をまとめた当たり判定。
        ここを押すと中の input[type=color] が開く */
     .multi-color-item .mc-hit {
       display: inline-flex;
@@ -735,6 +748,29 @@
       font-size: 11px;
       text-transform: uppercase;
       color: var(--ink-2);
+    }
+    /* カラーコードの入力欄。ふだんは文字だけに見せ、触ったときに枠を出す。
+       .field input[type="text"] と同じ強さで後ろに置き、そちらの寸法を打ち消す */
+    .multi-color-item input.color-hex-input {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      width: 8.5ch;
+      padding: 2px 4px;
+      margin: 0 -2px 0 -4px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: transparent;
+    }
+    .multi-color-item input.color-hex-input:hover {
+      border-color: var(--rule);
+    }
+    .multi-color-item input.color-hex-input:focus {
+      outline: none;
+      border-color: var(--accent, #2563EB);
+      background: var(--panel);
+      color: var(--ink);
     }
     .multi-color-item .btn-remove-color {
       background: none;
@@ -1008,6 +1044,11 @@
     .seg-sm > * { padding: 5px 11px; font-size: 11.5px; }
     /* パネルの中では、選択肢の数だけの幅に収める（列いっぱいに伸ばさない）。 */
     .sec .st-seg { align-self: flex-start; max-width: 100%; }
+    /* 色の塗り方は、背景やロゴの下地だと9〜10個並ぶ。1行に詰めると「グラデーション」が
+       3行に折れて読めないので、ボタンごと次の行へ送る。区切り線は隙間に枠の色を
+       透かして描く（border-left だと、折り返した行の頭に線が残る） */
+    .st-seg[data-cid="color-mode-seg"] { flex-wrap: wrap; gap: 1px; background: var(--rule); }
+    .st-seg[data-cid="color-mode-seg"] > * { flex: 1 0 auto; white-space: nowrap; border-left: 0; }
     #logo-common, #logo-icon-pane, #logo-image-pane, #logo-text-pane {
       display: flex; flex-direction: column; gap: 12px;
     }
@@ -1609,8 +1650,8 @@
             <div id="logo-text-pane" class="hidden">
               <div class="field">
                 <label for="logo-text">中央に置く文字・絵文字</label>
-                <input type="text" id="logo-text" maxlength="4" placeholder="例：ST / 🎧 / ★">
-                <span class="sub">2文字までが読みやすいです。</span>
+                <textarea id="logo-text" rows="2" maxlength="12" spellcheck="false" placeholder="例：ST / 🎧 / ★"></textarea>
+                <span class="sub">Enter で改行できます。文字の大きさは下地に収まるよう自動で合わせます。2文字までが読みやすいです。</span>
               </div>
               <div class="field" style="margin-top:12px">
                 <span class="field-label" id="lbl-logo-font-seg">フォント</span>
@@ -2136,6 +2177,7 @@
             <button type="button" data-mode="none" data-cid="btn-mode-none" class="hidden">透明</button>
             <button type="button" data-mode="brand" data-cid="btn-mode-brand" class="hidden">ブランドカラー</button>
             <button type="button" data-mode="auto" data-cid="btn-mode-auto" class="hidden">セルの色</button>
+            <button type="button" data-mode="bg" data-cid="btn-mode-bg" class="hidden">背景の色</button>
             <button type="button" data-mode="solid" class="active">単色</button>
             <button type="button" data-mode="multi">多色</button>
             <button type="button" data-mode="linear">グラデーション</button>
@@ -2168,6 +2210,12 @@
           </div>
         </div>
 
+        <div data-cid="pane-bg" class="hidden">
+          <div class="notice" data-cid="bg-notice">
+            背景の色設定と連動します。
+          </div>
+        </div>
+
         <div data-cid="pane-none" class="hidden">
           <div class="notice" data-cid="none-notice">
             背景を透明にします。
@@ -2178,6 +2226,11 @@
           <div class="color-row">
             <input type="color" data-cid="color-picker" value="#111827" aria-label="選択中の色">
             <input type="text" data-cid="color-hex" value="#111827" spellcheck="false" aria-label="選択中の色のカラーコード">
+            <div class="rgb-fields" role="group" aria-label="RGB で指定">
+              <label class="rgb-field"><span aria-hidden="true">R</span><input type="number" data-cid="color-r" value="17" min="0" max="255" step="1" inputmode="numeric" aria-label="赤（R）0〜255"></label>
+              <label class="rgb-field"><span aria-hidden="true">G</span><input type="number" data-cid="color-g" value="24" min="0" max="255" step="1" inputmode="numeric" aria-label="緑（G）0〜255"></label>
+              <label class="rgb-field"><span aria-hidden="true">B</span><input type="number" data-cid="color-b" value="39" min="0" max="255" step="1" inputmode="numeric" aria-label="青（B）0〜255"></label>
+            </div>
           </div>
         </div>
 
@@ -2238,12 +2291,13 @@
       </template>
 
   <script src="qr-core.js?v=20260918_1"></script>
-  <script src="qr-style.js?v=20260925_4"></script>
-  <script src="qr-assets.js?v=20260924_1"></script>
+  <script src="qr-style.js?v=20260928_1"></script>
+  <script src="qr-assets.js?v=20260928_1"></script>
+  <script src="qr-export.js?v=20260928_1"></script>
   <script src="qr-verify.js?v=20260924_1"></script>
   <script src="qr-bulk.js?v=20260918_1"></script>
   <script src="qr-xlsx.js?v=20260924_1"></script>
   <script src="qr-avif.js?v=20260926_1"></script>
-  <script src="app.js?v=20260926_2"></script>
+  <script src="app.js?v=20260928_1"></script>
 </body>
 </html>

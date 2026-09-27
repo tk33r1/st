@@ -303,7 +303,9 @@ const SONG_INFO = {
   maxOutputTokens: 6000,
   dailyCap: 1000,      // 24時間で OpenAI を呼んでよい回数（作り直しも1回と数える）
   maxAttempts: 2,      // 自動で作るのは失敗しても2回まで。以降はブースの「もう一度調べる」だけ
-  autoPerLoad: 2,      // ブースの一覧読み込み1回あたりに、裏で作り始めてよい曲の数（5秒ごとに来る）
+  lookupRetryMin: 10,  // 曲を確かめられなかった曲を、自動で確かめ直すまでの分数（OpenAI は呼ばないので上限に数えない）
+  retrySec: 60,        // OpenAI で失敗した曲を、自動でやり直すまでの秒数
+  minWaitMs: 12000,    // OpenAI を待てる時間がこれより短ければ、生成を始めない（実測 8〜19秒/曲）
   staleSec: 90,        // pending のまま残った行（途中で落ちた）を取り直せるまでの秒数
 };
 
@@ -498,17 +500,62 @@ async function saveSongInfo(env, trackId, result) {
 /** カードを作れる曲か。trackId はブラウザが送る値なので、Apple の数字の ID だけ通す。 */
 const canDescribe = (env, song) => !!env.OPENAI_API_KEY && !song.isFree && /^\d{1,15}$/.test(String(song.trackId || ''));
 
+/** ISO 8601 の長さ（"PT4M49S"）をミリ秒に。読めなければ 0 */
+function isoDurationMs(v) {
+  const m = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(String(v || ''));
+  return m ? Math.round(((Number(m[1] || 0) * 60 + Number(m[2] || 0)) * 60 + Number(m[3] || 0)) * 1000) : 0;
+}
+
+/** iTunes の lookup は、Apple の前段キャッシュ（Akamai）に載っている曲しか Workers に返さない。
+    載っていない曲は Cloudflare の IP からだと 403 になる（2026-09-27 実測。未取得の6曲がすべて 403、
+    同じ曲の Apple Music の曲ページはすべて 200）。このため背景カードが1枚も作れていなかった。
+    User-Agent を変えても 403 は変わらない（同日実測）。
+    iTunes が返さなかったときは、曲ページに埋め込まれた構造化データ（schema:song）から
+    lookup と同じ形の値を組み立てる。別の曲のページを読まないよう、構造化データの URL の末尾の
+    曲 ID も照合する。曲名かアーティストが取れないページは使わない（取り違えの元になる）。 */
+async function songFromPage(trackId) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 6000);
+  try {
+    const r = await fetch('https://music.apple.com/jp/song/' + encodeURIComponent(trackId),
+      { headers: { Accept: 'text/html' }, signal: ac.signal });
+    if (!r.ok) return null;
+    const html = await r.text();
+    const ld = /<script[^>]*\bid=["']?schema:song["']?[^>]*>([\s\S]*?)<\/script>/.exec(html);
+    if (!ld) return null;
+    const song = JSON.parse(ld[1]);
+    const rec = song.audio || {};
+    const idOf = (u) => (/\/(\d+)(?:[?#]|$)/.exec(String(u || '')) || [])[1];
+    if (idOf(rec.url || song.url) !== trackId) return null;
+    const artists = [].concat(rec.byArtist || []).map((a) => a && a.name).filter(Boolean);
+    if (!(rec.name || song.name) || !artists.length) return null;
+    return {
+      trackName: rec.name || song.name,
+      artistName: artists.join(' & '),
+      collectionName: rec.inAlbum && rec.inAlbum.name,
+      primaryGenreName: [].concat(rec.genre || [])[0],
+      releaseDate: rec.datePublished || song.datePublished,
+      trackTimeMillis: isoDurationMs(rec.duration || song.timeRequired),
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** trackId が本当にその曲の ID か、iTunes で引いて確かめる。trackId も曲名もブラウザが送る値なので、
     有名曲の ID に別の曲名（や、曲名欄に仕込んだ指示）を付けて送られると、取り違えたカードが
     その ID に保存され、イベントをまたいで出続ける。確かめたうえで、カードの入力も iTunes の値を使う。
-    英語のアーティスト名は検索の手掛かりに US のストアからも引く（取れなくても構わない）。 */
+    英語のアーティスト名は検索の手掛かりに US のストアからも引く（取れなくても構わない）。
+    iTunes が返さなかった曲は Apple Music の曲ページで確かめる（songFromPage）。 */
 async function lookupTrack(trackId, title) {
   const [jp, us] = await Promise.all([
     fetchJson('https://itunes.apple.com/lookup?country=JP&id=' + encodeURIComponent(trackId)),
     fetchJson('https://itunes.apple.com/lookup?country=US&id=' + encodeURIComponent(trackId)),
   ]);
   const pick = (d) => (d && Array.isArray(d.results) ? d.results.find((x) => x && String(x.trackId) === trackId) : null);
-  const r = pick(jp);
+  const r = pick(jp) || await songFromPage(trackId);
   if (!r || !r.trackName) return null;
   const got = looseName(r.trackName), sent = looseName(title);
   if (!got || !sent || !(got.includes(sent) || sent.includes(got))) return null;
@@ -520,7 +567,8 @@ async function lookupTrack(trackId, title) {
     artistEn: en && en.artistName !== r.artistName ? clean(en.artistName, LIMITS.artist) : '',
     album: clean(r.collectionName, LIMITS.album),
     genre: clean(r.primaryGenreName, 60),
-    releaseYear: Number(String(r.releaseDate || '').slice(0, 4)) || 0,
+    // iTunes も曲ページも ISO 形式だが、形が変わっても先頭の4桁を拾えるように
+    releaseYear: Number((/\d{4}/.exec(String(r.releaseDate || '')) || [])[0]) || 0,
     durationMs: Number(r.trackTimeMillis) || 0,
   };
 }
@@ -528,13 +576,20 @@ async function lookupTrack(trackId, title) {
 /** 権利を取れたら { promise } を返す。promise は OpenAI の応答を待ち、{ card } か { error } に解決する
     （D1 には書かず、投げない。保存は呼び出し側が saveSongInfo で行う）。取れなければ { skip: 理由 }。
     Promise をそのまま返さないのは、async 関数の戻り値に取り込まれて、呼び出し側の await が
-    応答まで待ってしまうため（BPM の取得と並べられなくなる）。 */
+    応答まで待ってしまうため（BPM の取得と並べられなくなる）。
+    timeoutMs は呼んだ時点からの持ち時間。曲の照合（曲ページの取得は数秒かかる）に使ったぶんは
+    OpenAI の待ち時間から引く。ctx.waitUntil の打ち切り（約30秒）を越えないように。
+    残りが minWaitMs に満たなければ、権利を取らずに { skip: 'time' } を返す（取ってから打ち切られると、
+    attempts と1日の上限だけ減って行が pending のまま残る）。 */
 async function startSongInfo(env, song, { force = false, timeoutMs = SONG_INFO.timeoutMs } = {}) {
+  const t0 = Date.now();
   if (!canDescribe(env, song)) return { skip: 'unavailable' };
   const real = await lookupTrack(String(song.trackId), song.title);
   if (!real) return { skip: 'lookup' };
+  const left = timeoutMs - (Date.now() - t0);
+  if (left < SONG_INFO.minWaitMs) return { skip: 'time' };
   if (!(await claimSongInfo(env, real.trackId, force))) return { skip: 'claim' };
-  const promise = requestSongInfo(env, real, timeoutMs)
+  const promise = requestSongInfo(env, real, left)
     .then((d) => ({ card: buildSongCard(d) }))
     .catch((e) => ({ error: e && e.name === 'AbortError' ? '時間切れ' : String((e && e.message) || e).slice(0, 200) }));
   return { promise };
@@ -1067,41 +1122,38 @@ async function adminDeleteEvent(code, env, cors) {
 /* ── 管理: まだ背景カードの無い曲を裏で作る ───────
    投稿時の生成は、iTunes の照合に落ちた・1日の上限に掛かった・機能より前に入った、などで
    カードが無いまま残ることがある。ブースは5秒ごとに一覧を読むので、そのついでに新しい曲から
-   autoPerLoad 曲ずつ作り始める（ブースは押さずに待っていれば出てくる）。
+   1曲ずつ作り始める（ブースは押さずに待っていれば出てくる）。1回に1曲なのは、ctx.waitUntil の
+   持ち時間（約30秒）を1曲で使い切れるようにするため。次の曲は次の読み込みが並行して受け持つ。
    作るのはこれから掛けるかもしれない曲（新着・採用済）だけで、再生済・見送りの曲は作らない。
-   失敗した曲は maxAttempts まで自動でやり直す。同じ曲を二重に作らないのは claimSongInfo の役目。 */
+   失敗した曲をいつやり直すか（info_retry）は adminSongs の SQL が決める。
+   同じ曲を二重に作らないのは claimSongInfo の役目。 */
 async function describeMissing(env, rows) {
   if (!env.OPENAI_API_KEY) return;
-  const picks = rows.filter((s) => (s.status === 'pending' || s.status === 'queued')
-    && !s.is_free && s.track_id
-    && (!s.info_status
-      || (s.info_status === 'failed' && s.info_attempts >= 1 && s.info_attempts < SONG_INFO.maxAttempts))
-  ).slice(0, SONG_INFO.autoPerLoad);
-  if (!picks.length) return;
+  const s = rows.find((r) => (r.status === 'pending' || r.status === 'queued')
+    && !r.is_free && r.track_id && (!r.info_status || r.info_retry));
+  if (!s) return;
 
-  // 上限に達していたら iTunes の照合もしない（5秒ごとに空振りの照合を重ねない）。判定の本番は claimSongInfo
+  // 上限に達していたら照合もしない（5秒ごとに空振りの照合を重ねない）。判定の本番は claimSongInfo
   const used = await env.DB.prepare(
     `SELECT COALESCE(SUM(attempts), 0) AS n FROM song_info WHERE updated_at > datetime('now', '-1 day')`
   ).first();
   if (used && used.n >= SONG_INFO.dailyCap) return;
 
-  // D1 への書き込みは直列に流し、OpenAI の応答待ちだけを並べる
-  const started = [];
-  for (const s of picks) {
-    const r = await startSongInfo(env, songForInfo(s)).catch(() => null);
-    if (r && r.skip === 'lookup') {
-      // iTunes で確かめられない曲は失敗の行を残す。残さないと5秒ごとに同じ照合を繰り返す。
-      // attempts は 0 のままなので1日の上限には数えず、自動のやり直しからも外れる
-      // （やり直しはブースの「もう一度調べる」から）
-      await env.DB.prepare(
-        `INSERT OR IGNORE INTO song_info (track_id, status, attempts, error, updated_at)
-         VALUES (?, 'failed', 0, ?, CURRENT_TIMESTAMP)`
-      ).bind(String(s.track_id), 'Apple Music のカタログで確かめられませんでした').run();
-    } else if (r && r.promise) {
-      started.push({ trackId: String(s.track_id), promise: r.promise });
-    }
+  const trackId = String(s.track_id);
+  const r = await startSongInfo(env, songForInfo(s)).catch(() => null);
+  if (r && r.promise) {
+    await saveSongInfo(env, trackId, await r.promise);
+  } else if (r && r.skip === 'lookup') {
+    // 確かめられない曲は失敗の行を残し、確かめた時刻を更新する（残さないと5秒ごとに同じ照合を
+    // 繰り返す）。やり直しは info_retry の間隔を空けてから。attempts は変えないので、
+    // 照合だけの失敗は1日の上限にも自動のやり直し回数にも数えない
+    await env.DB.prepare(
+      `INSERT INTO song_info (track_id, status, attempts, error, updated_at)
+       VALUES (?1, 'failed', 0, ?2, CURRENT_TIMESTAMP)
+       ON CONFLICT(track_id) DO UPDATE SET status = 'failed', error = ?2, updated_at = CURRENT_TIMESTAMP
+        WHERE song_info.status <> 'ok'`
+    ).bind(trackId, 'Apple Music のカタログで確かめられませんでした').run();
   }
-  for (const x of started) await saveSongInfo(env, x.trackId, await x.promise);
 }
 
 /* ── 管理 ───────────────────────────────── */
@@ -1112,12 +1164,18 @@ async function adminSongs(env, cors, ctx) {
   // 背景カードは曲ごとの別表。pending のまま時間が経った行は途中で落ちたものなので failed に見せる
   const songs = await env.DB.prepare(
     `SELECT s.*,
-            CASE WHEN i.status = 'pending' AND i.updated_at < datetime('now', ?)
+            CASE WHEN i.status = 'pending' AND i.updated_at < datetime('now', ?1)
                  THEN 'failed' ELSE i.status END AS info_status,
-            i.card AS info_card, i.error AS info_error, i.attempts AS info_attempts
+            i.card AS info_card, i.error AS info_error,
+            -- 自動でやり直してよいか（describeMissing が見る）。できあがった曲と、OpenAI の失敗が
+            -- maxAttempts に達した曲は除く。待つ時間は、照合だけの失敗（attempts 0）なら lookupRetryMin、
+            -- 途中で落ちた pending なら staleSec、OpenAI の失敗なら retrySec
+            (i.status <> 'ok' AND i.attempts < ?4 AND i.updated_at < datetime('now',
+               CASE WHEN i.attempts = 0 THEN ?2 WHEN i.status = 'pending' THEN ?1 ELSE ?3 END)) AS info_retry
        FROM songs s LEFT JOIN song_info i ON i.track_id = s.track_id
-      WHERE s.event_code = ? ORDER BY s.id DESC`
-  ).bind(`-${SONG_INFO.staleSec} seconds`, ev.code).all();
+      WHERE s.event_code = ?5 ORDER BY s.id DESC`
+  ).bind(`-${SONG_INFO.staleSec} seconds`, `-${SONG_INFO.lookupRetryMin} minutes`,
+    `-${SONG_INFO.retrySec} seconds`, SONG_INFO.maxAttempts, ev.code).all();
 
   const voices = await env.DB.prepare(
     `SELECT song_id, from_name, message, created_at FROM requests
@@ -1291,6 +1349,9 @@ async function adminRefreshInfo(id, env, cors) {
   const started = await startSongInfo(env, song, { force: true, timeoutMs: SONG_INFO.refreshTimeoutMs });
   if (started.skip === 'lookup') {
     return json({ error: 'lookup', message: 'Apple Music のカタログでこの曲を確かめられませんでした' }, 409, cors);
+  }
+  if (started.skip === 'time') {
+    return json({ error: 'slow', message: '曲の確認に時間がかかりました。もう一度押してください' }, 504, cors);
   }
   if (!started.promise) {
     const row = await env.DB.prepare(`SELECT status FROM song_info WHERE track_id = ?`).bind(song.trackId).first();

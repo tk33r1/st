@@ -903,6 +903,42 @@
 
     .pasthead { display: flex; align-items: baseline; gap: 10px; }
 
+    /* いまの回の名前と共有ボタン。一覧のいちばん上に置く */
+    .evbar { display: flex; align-items: center; gap: 10px; }
+    .evbar .t { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+
+    /* 回の共有。見出しの横に置くので、送信ボタンより小さく、枠だけで押せると分かるようにする */
+    .sharebtn {
+      flex: none; align-self: center;
+      border: 1px solid var(--line); border-radius: 0; padding: 5px 10px;
+      font-family: var(--f-dot); font-size: 0.6875rem; letter-spacing: 0.08em; color: var(--fg-dim);
+      white-space: nowrap;
+    }
+
+    .sharebtn:hover { border-color: var(--heart-secondary); color: var(--heart-secondary); }
+
+    /* 回の QR コード。絵は QR Atelier の描画エンジンで作った PNG をそのまま見せる
+       （長押しで保存したときも、保存ボタンと同じ絵になるように） */
+    .qrdlg {
+      /* margin は共通のリセットで 0 になっているので、auto に戻して画面の中央に置く */
+      margin: auto; width: min(360px, calc(100% - 32px)); max-height: calc(100% - 32px);
+      padding: 20px 18px 16px; border: 1px solid var(--line); border-radius: 2px;
+      background: var(--bg); color: var(--fg);
+      flex-direction: column; gap: 10px;
+    }
+
+    .qrdlg[open] { display: flex; }
+    .qrdlg::backdrop { background: rgba(0, 0, 0, 0.72); }
+
+    .qrdlg .qrh {
+      margin: 0; font-family: var(--f-dot); font-weight: 400; font-size: 0.875rem;
+      letter-spacing: 0.08em; color: var(--heart-secondary);
+    }
+
+    .qrdlg .qrimg { display: grid; place-items: center; min-height: 240px; }
+    .qrdlg .qrimg img { display: block; width: 100%; height: auto; }
+    .qrdlg .note { margin: 0; }
+
     .pasthead h2 {
       margin: 0;
       flex: 1;
@@ -1306,6 +1342,11 @@
 
       <!-- 一覧 -->
       <section class="pane" id="pane-board">
+        <div class="evbar" id="boardBar" hidden>
+          <span class="t trunc" id="boardTitle"></span>
+          <button type="button" class="sharebtn" id="boardShare">この回を共有</button>
+          <button type="button" class="sharebtn" id="boardQR">QR</button>
+        </div>
         <div id="nowBox"></div>
         <div class="boardhead">
           <h2>再生済</h2><span class="fresh" id="fresh"></span>
@@ -1328,6 +1369,8 @@
         <div class="pasthead">
           <h2 id="pastTitle"></h2>
           <span class="at" id="pastDate"></span>
+          <button type="button" class="sharebtn" id="pastShare" hidden>共有</button>
+          <button type="button" class="sharebtn" id="pastQR" hidden>QR</button>
         </div>
         <div class="rows" id="pastRows"></div>
         <p class="note" id="pastNote"></p>
@@ -1383,6 +1426,17 @@
       </section>
     </div>
   </div>
+
+  <!-- 回の QR コード。「QR」ボタンから開く -->
+  <dialog class="qrdlg" id="qrDlg" aria-labelledby="qrHead">
+    <h2 class="qrh" id="qrHead">この回の QR コード</h2>
+    <div class="qrimg" id="qrBox"></div>
+    <p class="note" id="qrNote"></p>
+    <div class="err" id="qrErr" hidden></div>
+    <button type="button" class="send" id="qrSave" disabled>画像を保存</button>
+    <button type="button" class="linkbtn" id="qrShareImg" hidden>画像を共有</button>
+    <button type="button" class="linkbtn" id="qrClose">閉じる</button>
+  </dialog>
 
   <!-- BREADCRUMB -->
   <nav class="site-crumb" aria-label="パンくずリスト">
@@ -1515,6 +1569,11 @@
     let consultLocked = false;   // 受付時間外・オフライン時は相談を止める
     const TAB_OF = { consult: 'consult', board: 'board', past: 'board', song: 'board' };
 
+    let paneNow = 'search';
+    // 起動中、共有リンクの行き先が決まるまでは ?ev= を消さない（その間に再読み込みされても同じ回が開くように）
+    let holdEventParam = false;
+    const eventParamOf = (pane) => (pane === 'past' || (pane === 'song' && songFrom) ? $('#pastRows').dataset.ev : '');
+
     // y を渡すとその位置へ戻す（省略時は先頭へ）
     function show(pane, y) {
       $$('.pane').forEach((p) => p.classList.remove('on'));
@@ -1525,6 +1584,10 @@
       $$('.tabs button').forEach((b) =>
         b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
       if (pane === 'board') startBoardPolling(); else stopBoardPolling();
+      // 過去の回（とそこから開いた曲）を見ている間だけ、アドレスに回のコードを載せる。
+      // ブラウザのメニューから共有しても、同じ回が開くように
+      paneNow = pane;
+      if (!holdEventParam) syncEventParam(eventParamOf(pane));
       window.scrollTo(y == null ? { top: 0, behavior: 'smooth' } : { top: y });
     }
 
@@ -2009,46 +2072,54 @@
 
     async function loadBoard() {
       try {
-        const d = await apiJson('/board');
-        const ids = new Set(mine());
-
-        $('#nowBox').innerHTML = d.now
-          ? '<button type="button" class="now" data-song="' + d.now.id + '">' +
-          artHTML(d.now.artwork) +
-          '<span><span class="lab"><span class="eq"><i></i><i></i><i></i><i></i></span>NOW PLAYING</span>' +
-          '<span class="t trunc">' + esc(d.now.title) + '</span>' +
-          '<span class="a trunc">' + esc(d.now.artist) + '</span></span>' +
-          '<span class="chev">›</span></button>'
-          : '';
-
-        /* いまかかっている曲は上のカードで出しているので、再生済からは外す。
-           同じ曲が2か所に並ぶと、鳴っているのか終わったのかが読めなくなる。 */
-        const played = d.now ? d.played.filter((s) => s.id !== d.now.id) : d.played;
-        $('#playedRows').innerHTML = played.length
-          ? played.map((s) => rowHTML(s, ids.has(s.id))).join('')
-          : '<div class="blank">' +
-          (d.now ? 'いまかかっている曲が最初の1曲です' : 'まだ1曲もかかっていません') + '</div>';
-        $('#waitingRows').innerHTML = d.waiting.length
-          ? d.waiting.map((s) => rowHTML(s, ids.has(s.id))).join('')
-          : '<div class="blank">リクエストはまだありません</div>';
-
-        // DJ が新しい回を開くと、いまの回だった回が過去に移る。
-        // 一覧を開いたままでも入れ替わるよう、回が変わったら引き直す。
-        const code = (d.event && d.event.code) || '';
-        if (code !== boardEvent) { boardEvent = code; pastLoaded = false; }
-        loadPastEvents();
-
-        lastFetch = Date.now();
-        $('#fresh').textContent = 'たった今更新';
+        renderBoard(await apiJson('/board'));
       } catch {
         $('#fresh').textContent = '更新できません';
       }
     }
 
+    // 取得と描画を分けてあるのは、共有リンクの振り分け（openShared）で読んだ /board をそのまま描くため
+    function renderBoard(d) {
+      const ids = new Set(mine());
+
+      $('#nowBox').innerHTML = d.now
+        ? '<button type="button" class="now" data-song="' + d.now.id + '">' +
+        artHTML(d.now.artwork) +
+        '<span><span class="lab"><span class="eq"><i></i><i></i><i></i><i></i></span>NOW PLAYING</span>' +
+        '<span class="t trunc">' + esc(d.now.title) + '</span>' +
+        '<span class="a trunc">' + esc(d.now.artist) + '</span></span>' +
+        '<span class="chev">›</span></button>'
+        : '';
+
+      /* いまかかっている曲は上のカードで出しているので、再生済からは外す。
+         同じ曲が2か所に並ぶと、鳴っているのか終わったのかが読めなくなる。 */
+      const played = d.now ? d.played.filter((s) => s.id !== d.now.id) : d.played;
+      $('#playedRows').innerHTML = played.length
+        ? played.map((s) => rowHTML(s, ids.has(s.id))).join('')
+        : '<div class="blank">' +
+        (d.now ? 'いまかかっている曲が最初の1曲です' : 'まだ1曲もかかっていません') + '</div>';
+      $('#waitingRows').innerHTML = d.waiting.length
+        ? d.waiting.map((s) => rowHTML(s, ids.has(s.id))).join('')
+        : '<div class="blank">リクエストはまだありません</div>';
+
+      // DJ が新しい回を開くと、いまの回だった回が過去に移る。
+      // 一覧を開いたままでも入れ替わるよう、回が変わったら引き直す。
+      const code = (d.event && d.event.code) || '';
+      if (code !== boardEvent) { boardEvent = code; pastLoaded = false; }
+      boardTitle = (d.event && d.event.title) || '';
+      // 受付中は画面の見出しが回名なので、同じ名前を二度並べない（受付外の見出しは「リクエスト」）
+      $('#boardTitle').textContent = boardTitle === $('#evTitle').textContent ? '' : boardTitle;
+      $('#boardBar').hidden = !code;
+      loadPastEvents();
+
+      lastFetch = Date.now();
+      $('#fresh').textContent = 'たった今更新';
+    }
+
     /* ── 過去のイベント ─────────────────────
        いまの回の下に置く。終わった回は中身が動かないので、一覧も中身も
        一度読めば足りる（15秒ごとの更新には乗せない）。 */
-    let boardEvent = '', pastLoaded = false;
+    let boardEvent = '', boardTitle = '', pastLoaded = false;
 
     function evrowHTML(e) {
       return '<button type="button" class="evrow" data-ev="' + esc(e.code) + '">' +
@@ -2086,6 +2157,8 @@
       $('#pastRows').dataset.ev = code;
       $('#pastTitle').textContent = '読み込んでいます';
       $('#pastDate').textContent = '';
+      $('#pastShare').hidden = true;   // 回の名前が読めてから出す（共有文と QR のラベルに使う）
+      $('#pastQR').hidden = true;
       $('#pastNote').hidden = true;
       $('#pastRows').innerHTML = loadingHTML('読み込んでいます');
       show('past');
@@ -2095,6 +2168,10 @@
         const ids = new Set(mine());
         $('#pastTitle').textContent = d.event.title;
         $('#pastDate').textContent = ymd(d.event.at);
+        $('#pastShare').dataset.title = d.event.title + '（' + ymd(d.event.at) + '）';
+        $('#pastShare').hidden = false;
+        $('#pastQR').dataset.title = d.event.title;
+        $('#pastQR').hidden = false;
         $('#pastRows').innerHTML = d.played.length
           ? d.played.map((x) => rowHTML(x, ids.has(x.id), true)).join('')
           : '<div class="blank">この回でかかった曲はありません</div>';
@@ -2115,6 +2192,264 @@
       show('board');
       loadBoard();
     }
+
+    /* ── 回の共有 ─────────────────────────────
+       共有するのは ?ev=<回のコード> 付きの URL。いまの回のリンクも同じ形にしておくと、
+       回が終わったあとに開いても、その回でかかった曲の一覧が出る。
+       回のコードはブースの URL とは別物で、知られても公開一覧が見えるだけ。 */
+    const EV_PARAM = 'ev';
+    const EV_CODE = /^[0-9A-Za-z]{1,12}$/;   // Worker の /events/:code と同じ形だけ受け付ける
+
+    const eventUrl = (code) => location.origin + location.pathname + '?' + EV_PARAM + '=' + encodeURIComponent(code);
+
+    function syncEventParam(code) {
+      try {
+        const u = new URL(location.href);
+        if (code) u.searchParams.set(EV_PARAM, code); else u.searchParams.delete(EV_PARAM);
+        if (u.href !== location.href) history.replaceState(history.state, '', u.href);
+      } catch { /* アドレスを書き換えられなくても画面は動かす */ }
+    }
+
+    // 押したボタンの文言を少しのあいだ差し替える（コピーできたかを知らせる）
+    function flashLabel(btn, text) {
+      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+      btn.textContent = text;
+      clearTimeout(btn._flash);
+      btn._flash = setTimeout(() => { btn.textContent = btn.dataset.label; }, 2000);
+    }
+
+    /* 共有シートがあれば（主にスマホ）それを開き、無ければ URL をコピーする。
+       共有シートを閉じただけ（AbortError）ならコピーに回さない */
+    async function shareEvent(btn, code, text) {
+      const url = eventUrl(code);
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: text, text, url });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        flashLabel(btn, 'リンクをコピーしました');
+      } catch {
+        window.prompt('このリンクを共有してください', url);
+      }
+    }
+
+    $('#boardShare').addEventListener('click', (e) => {
+      if (boardEvent) shareEvent(e.currentTarget, boardEvent, (boardTitle || 'DJ') + ' のリクエスト');
+    });
+
+    $('#pastShare').addEventListener('click', (e) => {
+      const code = $('#pastRows').dataset.ev;
+      if (code) shareEvent(e.currentTarget, code, e.currentTarget.dataset.title + 'でかかった曲');
+    });
+
+    /* 共有リンク（?ev=）から来たとき。受付中のいまの回なら「リクエストする」のまま（呼ぶ側で振り分ける）。
+       受付を止めたいまの回ならみんなのリクエストを、それ以外（終わった回）ならその回でかかった曲を開く。
+       いまの回かどうかは /board の回と比べ、読んだ /board はそのまま描く */
+    async function openShared(code) {
+      try {
+        const d = await apiJson('/board');
+        if (d.event && d.event.code === code) {
+          show('board');
+          renderBoard(d);
+          return;
+        }
+      } catch { /* 読めなければ過去の回として試す（そちらで「読み込めませんでした」が出る） */ }
+      openPast(code);
+    }
+
+    /* ── 回の QR コード ───────────────────────
+       中身は共有と同じ ?ev= 付きの URL。絵は QR Atelier（tools/qr-atelier/）の
+       エンコーダと描画エンジンをそのまま読み込んで作る。デザインは下の QR_STYLE に固定で持ち、
+       上部のラベルにだけ回の名前を差し込む。キーと値は QR Atelier の画面の項目と対応している
+       （qr-style.js の DEFAULTS が正。ここに書いていない項目は既定値のまま）。
+       ライブラリとフォントは、押されたときに初めて読む（リクエストするだけの人には要らない）。 */
+    const QR_LIB = '../../tools/qr-atelier/';
+    // 描画に要る QR Atelier のファイル。この順に実行する（qr-export は qr-style を使う）
+    const QR_FILES = ['qr-core.js', 'qr-assets.js', 'qr-style.js', 'qr-export.js'];
+    const QR_FONT_CSS = '../../data/fonts/jp.css';
+    const QR_PX = 1024;          // 書き出す PNG の横幅
+    const QR_LABEL_MAX = 24;     // QR Atelier のラベル欄の上限と同じ
+
+    const QR_STYLE = {
+      cell: 'heart', cellScale: 0.9, cellJitter: 0.5,          // セル: ハート・太さ90%・バラつき50%
+      fg: { type: 'multi', colors: ['#37F2E6', '#FF2F6E'] },   // セルの色: 多色
+      markerFrame: 'cells', markerEye: 'heart',                 // マーカー: セル枠・ハート
+      markerFramePaint: { type: 'auto' }, markerEyePaint: { type: 'auto' },   // マーカーの色: セルの色
+      bg: { type: 'solid', color: '#121216', transparency: 0 }, // 背景: 単色・透明度0%
+      // 暗い地に明るいセルを置く反転 QR は意図どおり（注意の段階を下げるだけ）
+      invertOk: true,
+      margin: 2, radius: 2.5,
+      logo: {                                                    // 中央のロゴ: ベーシックの「音楽」
+        type: 'icon', icon: 'bi-music-note-beamed', paint: { type: 'auto' },
+        size: 0.14, pad: 0.02, backdrop: 'square', backdropPaint: { type: 'bg' },
+      },
+      frame: {                                                   // フレームと文字: 上部のラベル
+        type: 'label', pos: 'top', contentMode: 'text', text: '', font: 'rounded',
+        textPaint: { type: 'solid', color: '#FFFFFF', transparency: 0 },
+        contentSize: 0.8, contentPad: 0.4,
+        paint: { type: 'linear', from: '#37F2E6', mid: '', to: '#FF2F6E', angle: 45, transparency: 0 },
+        backdrop: 'rounded', backdropPaint: { type: 'bg' },
+      },
+    };
+
+    /* 回の名前をラベルに差し込む。名前が無ければラベルごと外す（文字の無い帯だけが出るため）。
+       アイコンは id だけでは描かれないので、QR Atelier と同じく同梱一覧の実体（iconData）を組で渡す。
+       id が一覧から消えていたらロゴを外して描き、コンソールに知らせる（QR 自体は読めるので止めない） */
+    function qrStyleFor(title) {
+      const chars = Array.from(String(title || '').trim());
+      const label = chars.length > QR_LABEL_MAX ? chars.slice(0, QR_LABEL_MAX - 1).join('') + '…' : chars.join('');
+      const icon = window.QRAssets.ICONS.find((i) => i.id === QR_STYLE.logo.icon);
+      if (!icon) console.warn('QR のロゴのアイコンが見つかりません: ' + QR_STYLE.logo.icon);
+      return {
+        ...QR_STYLE,
+        logo: icon ? { ...QR_STYLE.logo, iconData: icon } : { type: 'none' },
+        frame: label ? { ...QR_STYLE.frame, text: label } : { type: 'none' },
+      };
+    }
+
+    /* QR Atelier のファイルは、毎回サーバーに新しいかを確かめて（cache: 'no-cache'。変わっていなければ
+       304 で中身は来ない）から実行する。こちらで版の番号を持つと、QR Atelier を直したときに上げ忘れて、
+       古いファイルと新しいファイルが混ざりうる。取得は並べ、実行は QR_FILES の順に1本ずつ。
+       実行できたファイルは覚えておき、失敗したファイル（とその後ろ）だけを次に押したときに読み直す
+       （実行済みのファイルをもう一度実行しない） */
+    const qrRan = new Map();   // ファイル名 → 実行し終えたら解決する Promise
+
+    function runQRFile(file, after) {
+      const url = new URL(QR_LIB + file, location.href).href;
+      const code = fetch(url, { cache: 'no-cache' }).then((res) => {
+        if (!res.ok) throw new Error('load ' + file + ' ' + res.status);
+        return res.text();
+      });
+      return Promise.all([code, after]).then(([text]) => {
+        const s = document.createElement('script');
+        s.textContent = text + String.fromCharCode(10) + '//# sourceURL=' + url;   // 開発者ツールで元のファイル名が出るように
+        document.head.appendChild(s);
+      });
+    }
+
+    function loadQRLibs() {
+      let prev = Promise.resolve();
+      return Promise.all(QR_FILES.map((file) => {
+        if (!qrRan.has(file)) {
+          qrRan.set(file, runQRFile(file, prev).catch((e) => { qrRan.delete(file); throw e; }));
+        }
+        prev = qrRan.get(file);
+        return prev;
+      }));
+    }
+
+    // 同じ回・同じ名前なら作り直さない（失敗したものは覚えない）。
+    // ラベルの字のフォント埋め込みと画像化は QR Atelier の書き出しと共用（qr-export.js）。
+    // フォントの CSS はこのページが読み込んでいないので、場所を渡す
+    const qrCache = new Map();
+    function eventQR(code, title) {
+      const key = code + '|' + title;
+      if (!qrCache.has(key)) {
+        qrCache.set(key, (async () => {
+          await loadQRLibs();
+          const style = qrStyleFor(title);
+          const qr = window.QRCore.encode(eventUrl(code), { ec: 'H', minVersion: 1 });
+          const css = await window.QRExport.fontCss(style, { cssUrl: QR_FONT_CSS });
+          const canvas = await window.QRExport.rasterize(window.QRStyle.embedFontCss(window.QRStyle.render(qr, style).svg, css), QR_PX);
+          return new Promise((resolve, reject) =>
+            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('png'))), 'image/png'));
+        })().catch((e) => { qrCache.delete(key); throw e; }));
+      }
+      return qrCache.get(key);
+    }
+
+    let qrShown = null;   // { url, file, title }。いま見せている PNG（閉じたら object URL を手放す）
+    let qrReq = 0;
+
+    // 閉じたあとに届いた応答を捨てる番号は、close イベント（Esc で閉じたときも来る）で進める
+    function closeQR() {
+      $('#qrDlg').close();
+    }
+
+    function dropShownQR() {
+      if (qrShown) URL.revokeObjectURL(qrShown.url);
+      qrShown = null;
+    }
+
+    /* close イベントは閉じた瞬間ではなく、あとから届く。閉じてすぐ開き直すと、開き直したあとに
+       前回の close が届くので、そのとき開いていれば無視する（進めると、作っている最中の絵を捨ててしまう） */
+    $('#qrDlg').addEventListener('close', (e) => {
+      if (e.currentTarget.open) return;
+      qrReq += 1;
+      dropShownQR();
+    });
+
+    async function openQR(code, title, current) {
+      const req = ++qrReq;
+      const dlg = $('#qrDlg');
+      dropShownQR();   // 開き直したときは、上の close より先にここで前の絵を手放す
+      $('#qrHead').textContent = title ? title + ' の QR コード' : 'この回の QR コード';
+      $('#qrNote').textContent = current
+        ? '読み取ると、この回のリクエストのページが開きます。回が終わったあとは、この回でかかった曲の一覧が開きます。'
+        : '読み取ると、この回でかかった曲の一覧が開きます。';
+      $('#qrBox').innerHTML = loadingHTML('作っています');
+      $('#qrErr').hidden = true;
+      $('#qrSave').disabled = true;
+      $('#qrShareImg').hidden = true;
+      if (!dlg.open) dlg.showModal();
+      try {
+        const png = await eventQR(code, title);
+        if (req !== qrReq) return;
+        const file = new File([png], 'request-qr-' + code + '.png', { type: 'image/png' });
+        qrShown = { url: URL.createObjectURL(png), file, title };
+        const img = new Image();
+        img.src = qrShown.url;
+        img.alt = (title || 'この回') + ' の QR コード';
+        $('#qrBox').replaceChildren(img);
+        $('#qrSave').disabled = false;
+        // 画像ごと渡せる端末（主にスマホ）だけ、共有シートへの導線を出す
+        $('#qrShareImg').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+      } catch {
+        if (req !== qrReq) return;
+        $('#qrBox').innerHTML = '';
+        $('#qrErr').textContent = 'QR コードを作れませんでした。電波の良い場所でもう一度お試しください。';
+        $('#qrErr').hidden = false;
+      }
+    }
+
+    $('#qrSave').addEventListener('click', () => {
+      if (!qrShown) return;
+      const a = document.createElement('a');
+      a.href = qrShown.url;
+      a.download = qrShown.file.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+
+    $('#qrShareImg').addEventListener('click', async () => {
+      if (!qrShown) return;
+      try {
+        await navigator.share({ files: [qrShown.file], title: qrShown.title });
+      } catch { /* 閉じただけ・渡せなかったときは何もしない（保存ボタンが残っている） */ }
+    });
+
+    $('#qrClose').addEventListener('click', closeQR);
+    // 枠の外（::backdrop）を押しても閉じる。枠の内側の余白も dialog 自身に当たるので、位置で見分ける
+    $('#qrDlg').addEventListener('click', (e) => {
+      if (e.target !== e.currentTarget) return;
+      const r = e.currentTarget.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeQR();
+    });
+
+    $('#boardQR').addEventListener('click', () => {
+      if (boardEvent) openQR(boardEvent, boardTitle, true);
+    });
+
+    $('#pastQR').addEventListener('click', (e) => {
+      const code = $('#pastRows').dataset.ev;
+      if (code) openQR(code, e.currentTarget.dataset.title || '', false);
+    });
 
     $('.tabs').addEventListener('click', (e) => {
       const tab = e.target.closest('button')?.dataset.tab;
@@ -2980,10 +3315,18 @@
     }
 
     (async function boot() {
+      // 共有リンクの回。受付の状態（タイトル・バッジ・相談の可否）は下で通常どおり整えてから開く
+      let shared = '';
+      try { shared = new URL(location.href).searchParams.get(EV_PARAM) || ''; } catch { /* 読めなければ通常の起動 */ }
+      shared = EV_CODE.test(shared) ? shared.toUpperCase() : '';
+      if (!shared) syncEventParam('');   // 形の崩れた ?ev= は残さない
+      holdEventParam = !!shared;
+      let openCode = '';   // 受付中の回のコード
       try {
         const ev = await apiJson('/event');
         eventOpen = !!ev.open;
         if (ev.open) {
+          openCode = ev.code || '';
           eventTitle = ev.title || '';
           $('#evTitle').textContent = ev.title;
           document.title = ev.title + ' - リクエスト';
@@ -2995,6 +3338,12 @@
         }
       } catch {
         closeRequests('オフライン', 'サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。');
+      }
+      if (shared) {
+        // 受付中の回の QR・リンクは、リクエストを送ってもらうためのもの。「リクエストする」のまま置く
+        if (shared !== openCode) await openShared(shared);
+        holdEventParam = false;
+        syncEventParam(eventParamOf(paneNow));
       }
     })();
 
