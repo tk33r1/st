@@ -1,5 +1,264 @@
 [
   {
+    "date": "20260928",
+    "title": "2026年9月28日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "幅60cm・450Lの大型冷蔵庫は、限られた設置幅と大容量を両立し、日常の使いやすさまで具体化する商品開発の動きを示す。 アプリの進化と高水準の入社時年収を扱う記事から、デジタル接点の強化と人材獲得が事業競争力を支えるテーマとして浮かぶ。",
+    "count": 7,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "幅60cm・450Lの大型冷蔵庫は、限られた設置幅と大容量を両立し、日常の使いやすさまで具体化する商品開発の動きを示す。",
+      "アプリの進化と高水準の入社時年収を扱う記事から、デジタル接点の強化と人材獲得が事業競争力を支えるテーマとして浮かぶ。",
+      "収納・家具の反響では、折りたたみやキャスター追加など、価格だけでなく省スペース性や使い方の工夫が生活者の支持を集めている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "幅60cmで450L、ニトリのスリム大型冷蔵庫——奥まで届く棚を備え9万9900円",
+        "original_title": "",
+        "source": "Real Sound",
+        "source_id": "JP-07",
+        "summary": "ニトリのスリム大型冷蔵庫「NF450LJ1」が予約を開始した。容量は450L、幅は60cmで、設置スペースを抑えながら大容量を確保する設計。最上段の奥まで手が届きやすい「とれるん棚」を新たに搭載し、価格は9万9900円。省スペース性と日常の取り出しやすさを打ち出す。",
+        "why_it_matters": "大型冷蔵庫の購入では容量だけでなく、キッチンへの収まりや庫内の使いやすさも重要な選択軸になる。幅を抑えつつ、手が届きにくい棚の課題に応える設計は、価格と機能の両立を狙うニトリのPB開発力を示す。設置条件の厳しい世帯にも提案余地がある。",
+        "tags": [
+          "ニトリ",
+          "冷蔵庫",
+          "商品開発",
+          "省スペース"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE0tNGhCZWZWM2d1cS1wV0hUZjRjOGw3Q3JQLWFjdzg3NzEteHpSTG93SldKd2YwV25adk9wSTdObTJEX2cxeTR1SExnZVQwM29pZ3BvZG5CMjBnVEtiQlg4WtIBZkFVX3lxTE1Xc0dtR3lxQjJsSlAtaWR2VzJnVXNXd1k5a3pnSkVLZlRodWxNb2dFSXktN05zeUZpYVBkcUw0b0Vpd0dvTWt2amVsVVlqVW5YU0pHQXJIZ3VpRTNYdEI4STVpWlRtdw?oc=5",
+        "source_pub_ts": 1790458826
+      },
+      {
+        "region": "JP",
+        "category": "デジタル・EC・アプリ",
+        "title": "ニトリアプリの進化と入社時年収1300万円の賃金体系、インタビューで焦点に",
+        "original_title": "",
+        "source": "ウォーカープラス",
+        "source_id": "JP-08",
+        "summary": "ウォーカープラスの記事では、進化が著しいとされるニトリアプリと、入社時年収1300万円という賃金体系を取り上げ、関係者に話を聞いている。アプリの具体的な機能や賃金制度の詳細は見出しからは確認できないが、顧客向けデジタル施策と人材獲得の双方を扱う内容だ。",
+        "why_it_matters": "店舗とアプリをつなぐ顧客接点の改善は、商品探索や購買体験の質を左右する。一方、高い報酬水準を含む採用施策は、デジタルや事業変革を担う人材の確保という経営課題を示唆する。顧客体験への投資と、それを実現する人材基盤を併せて捉えたい。",
+        "tags": [
+          "ニトリ",
+          "アプリ",
+          "人材戦略",
+          "デジタル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1FU3ZDMWtZWFloN1pFTV9MRFlsSkJFZ0FHWXhab0xPWGdlcjRwWlVPVWllOE16TGZPNFMxSDc0Q3VOVGNjR0lpWU1Ncm9xbExRcjhGOS0wU3gwVHdGZVc5TlNSWWoycU5uVG9nN3ZB?oc=5",
+        "source_pub_ts": 1790418398
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "伸縮ケースにキャスターを追加、ニトリ用品でパントリー収納を工夫する動画が約6.1万回再生",
+        "original_title": "",
+        "source": "LIMO | Yahoo!ニュース",
+        "source_id": "JP-05",
+        "summary": "ニトリの伸縮ケースにキャスターを取り付け、パントリー収納を使いやすくする活用術が紹介された。動画は約6万1000回再生。既製品をそのまま使うだけでなく、収納場所や出し入れの動線に合わせてひと工夫する方法が、具体的な利用イメージとともに注目を集めている。",
+        "why_it_matters": "収納用品は単体の機能だけでなく、家の間取りや在庫管理に合わせた使い方が購買理由になる。手軽なアレンジが動画で伝わることで、既存商品の活用範囲が広がり、関連商品の追加購入にもつながり得る。生活者の工夫を売場や公式発信の提案に生かす余地がある。",
+        "tags": [
+          "ニトリ",
+          "収納",
+          "活用術",
+          "動画反響"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE12SkVaNmhCbmc2WWM0ZGY3TVNvZm81ZmlvOTF0VzFCT2RPMHBuZ2xhTFBseEVaVUIzWFJmOTZZY2RfRk43alF4bjV6MlFnaHZlcFhpUXBkQUtsNzUzR3RONVMwdDc4ejBVNTZDSGJWOUVRRGg2dXUwNU9VYlVjVGs?oc=5",
+        "source_pub_ts": 1790483150
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "「コスパで選ぶならニトリ」オフィスチェアに価格とデザインの反響",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-03",
+        "summary": "ニトリのオフィスチェアについて、人気チェアに似た印象ながら価格を抑えている点に、利用者から好意的な反応が寄せられている。記事タイトルでは「コスパで選ぶならニトリ、普通にアリ」との声を紹介。具体的な商品名や価格は見出しから特定できないが、比較検討時の価格訴求が話題の中心だ。",
+        "why_it_matters": "家具では見た目や座り心地への期待と、購入しやすい価格のバランスが選択を左右する。比較対象を意識した商品が生活者の検討候補に入ることは、ニトリの価格ポジションの強さを示す一方、機能や品質の違いを明確に伝える商品説明の重要性も高める。",
+        "tags": [
+          "ニトリ",
+          "オフィスチェア",
+          "価格戦略",
+          "生活者反響"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE91Vm5SVFUzdTVFUHRINVMzcGFrOGxzMFpBZ2J3ODhxNmxnbXQzaUR6MnJtNXNTVm5sUG83d0VIdGN4WG40UHdoWHVqZl9FaFRqXzJMUFcxU1hDdXpXUHY2amtB?oc=5",
+        "source_pub_ts": 1790489100
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "投票は9月30日まで、ニトリの「もふもふ」ぬいぐるみ総選挙",
+        "original_title": "",
+        "source": "ライブドアニュース",
+        "source_id": "JP-01",
+        "summary": "ニトリの「もふもふ」ぬいぐるみを対象とした総選挙が実施され、参加者は番号または動物名で投票できる。投票期限は9月30日。商品の人気投票を通じて、複数のぬいぐるみを選ぶ楽しさと、顧客が参加できる企画を組み合わせている。記事は9月27日に報じられた。",
+        "why_it_matters": "投票企画は商品の認知を広げるだけでなく、どの動物やデザインが支持されるかを知る接点にもなる。締切を明示した参加型施策は、購入前の関心を喚起し、SNSなどでの共有も促しやすい。反応を商品展開や売場訴求に結び付けられるかがポイントだ。",
+        "tags": [
+          "ニトリ",
+          "ぬいぐるみ",
+          "参加型企画",
+          "商品開発"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5yUUlnOVJ2WC1ncGhVVnlmQWROd09tdG9tZmxhTjcxZnNQOVl3TFhVdEoxWS1tMkUzQWhIVllMdWh3VHFVcG52bTFCelF1emdEVUNxWC00bkQ2NTlBZmVJ?oc=5",
+        "source_pub_ts": 1790507583
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "職場や学校でも楽しめる、デコネコ柄のひざ掛けがニトリに登場",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-02",
+        "summary": "ニトリから、猫のモチーフをあしらった「デコネコまみれのひざ掛け」が登場した。自宅だけでなく職場や学校での使用も想定した商品として紹介され、猫好きの休憩時間やリラックス需要に訴求する。日常的に持ち運びやすいアイテムに、シリーズのキャラクター性を取り入れた新商品だ。",
+        "why_it_matters": "ひざ掛けは季節の温度調整という実用性に、柄やキャラクターへの愛着を重ねやすい商品カテゴリーだ。使用場所を自宅外にも広げる提案は、生活シーンの拡張と認知接点の増加につながる。デコネコのようなシリーズ展開が、関連商品の回遊や継続購入を促すか注目される。",
+        "tags": [
+          "ニトリ",
+          "デコホーム",
+          "ひざ掛け",
+          "新商品"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE0zQkgzMmRtNFhsb0V5WUlxVWRZN0dQdENPcGhVbFltU2liWkdkb2V6aTZHRUs4cmFkLXhiTDFVMWUxTV81V3VZYUtLLTY?oc=5",
+        "source_pub_ts": 1790501400
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "折りたためて手頃な新作スチールワゴン、Xで6000件超のいいね",
+        "original_title": "",
+        "source": "X（投稿）",
+        "source_id": "SNS-01",
+        "summary": "Xでは、ニトリの新作スチールワゴンについて、使わないときに折りたたんでコンパクトにでき、トロリより安い点を評価する投稿が反響を呼んだ。投稿には6063件のいいねと414件のリポストが付いている。省スペース性と価格のわかりやすい比較が、商品への関心を集めた。",
+        "why_it_matters": "収納・運搬用品では、使うときの便利さに加えて、使わない時間の置き場所も購入判断に影響する。折りたたみ機能と価格差を生活者自身が短く伝える投稿は、商品価値を直感的に理解させる。比較される競合品や収納時の寸法を、売場・ECで明快に示すことが有効だ。",
+        "tags": [
+          "ニトリ",
+          "スチールワゴン",
+          "省スペース",
+          "X反響"
+        ],
+        "url": "https://x.com/taishonpresso/status/2104057603701801335",
+        "source_pub_ts": 1790506800
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリにトロリじゃない新作スチールワゴン出てた。 使わない時は折り畳んでコンパクトにできる上に、トロリより安いの神だろ😇 pic.x.com...",
+        "platform": "x",
+        "author": "@taishonpresso",
+        "url": "https://x.com/taishonpresso/status/2104057603701801335",
+        "likes": 6063,
+        "retweets": 414,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 12:56",
+        "captured_at": "",
+        "text": "ニトリにトロリじゃない新作スチールワゴン出てた。 使わない時は折り畳んでコンパクトにできる上に、トロリより安いの神だろ😇 pic.x.com/KcPRZBwXiA",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "常時車に積んでるストライダー。 タイヤの泥が気になってやっとちょうどいいの見つけた🥹 しかもこれだと持ち歩きも楽だけど、床置き以外に壁掛けも...",
+        "platform": "x",
+        "author": "@kopandababy",
+        "url": "https://x.com/kopandababy/status/2104162446634270938",
+        "likes": 416,
+        "retweets": 17,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 19:53",
+        "captured_at": "",
+        "text": "常時車に積んでるストライダー。 タイヤの泥が気になってやっとちょうどいいの見つけた🥹 しかもこれだと持ち歩きも楽だけど、床置き以外に壁掛けもできて最高！！ うちのはスリコ(2枚目)だけど、同じやつでニトリ(3枚目)のほうが安かったことに最近気づく… pic.x.com/1v5PoanSiu",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "おはようございます！ 『運がいい！』 この言葉を唱えてみてください。 何度も唱えて自分は「運がいい」 と思い込んでいきましょう。 「運がいい...",
+        "platform": "x",
+        "author": "@yone_358",
+        "url": "https://x.com/yone_358/status/2103939917168742481",
+        "likes": 261,
+        "retweets": 17,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 5:09",
+        "captured_at": "",
+        "text": "おはようございます！ 『運がいい！』 この言葉を唱えてみてください。 何度も唱えて自分は「運がいい」 と思い込んでいきましょう。 「運がいい」ことは最強です！ 唱え続けてると「運がいい」 と思えることがたくさん起きますよ。 家具やインテリアで有名な ニトリの創業者 似鳥昭雄会長が",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "ニトリで小型のフィギュアケース物色中 既存のフィギュアケースや他の家具の上に乗せられるサイズ感なので場所問題に悩まなくていいね pic.x....",
+        "platform": "x",
+        "author": "@laLN2OeJF9Qc3g1",
+        "url": "https://x.com/laLN2OeJF9Qc3g1/status/2104080344035254298",
+        "likes": 246,
+        "retweets": 14,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 14:27",
+        "captured_at": "",
+        "text": "ニトリで小型のフィギュアケース物色中 既存のフィギュアケースや他の家具の上に乗せられるサイズ感なので場所問題に悩まなくていいね pic.x.com/zrQaCIBYN3",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "ニトリでUL傘は盲点だったなあ…☂ 160gだしカーボンだし持ち手のコードロックがちょっと便利そうだし… pic.x.com/ujEz8OT2e9",
+        "platform": "x",
+        "author": "@KEC_Camp",
+        "url": "https://x.com/KEC_Camp/status/2104123550613557480",
+        "likes": 110,
+        "retweets": 11,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 17:18",
+        "captured_at": "",
+        "text": "ニトリでUL傘は盲点だったなあ…☂ 160gだしカーボンだし持ち手のコードロックがちょっと便利そうだし… pic.x.com/ujEz8OT2e9",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "Going to nitori for my house 👻🇯🇵 #nitori #japan",
+        "platform": "tiktok",
+        "author": "@elliott",
+        "url": "https://www.tiktok.com/@callmebelly/video/7689991590164696333",
+        "likes": 4830,
+        "retweets": 51,
+        "views": 96900,
+        "comments": 101,
+        "posted_on": "2026-09-27 08:35",
+        "captured_at": "2026-09-27T19:21:42.603245+09:00",
+        "text": "Going to nitori for my house 👻🇯🇵 #nitori #japan",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "Xでは折りたたみワゴンや小型ケース、持ち運びやすさなど、具体的な機能と価格・省スペース性を伝える投稿が目立つ。一方TikTokは「日本で家のためにニトリへ行く」という来店体験の動画が約9.7万回再生され、商品単体に限らない買い物体験への関心も示した。",
+    "sns_why_it_matters": "Xでは短い比較や使用上の発見が「自分にも便利そう」という共感や再共有につながり、商品価値の言語化が購買を後押しする。TikTokでは来店や選ぶ過程が視覚的に伝わり、店舗そのものが発見の場になる。媒体ごとの反応を分けて捉え、機能訴求と体験訴求を使い分けたい。"
+  },
+  {
     "date": "20260927",
     "title": "2026年9月27日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "9月26日は生活密着型のヒット商品が相次ぎ報道され、ニトリの160mlミニ水筒、レンジ対応せいろ、収納バスケット、0.2秒発熱のフラッシュトースター、ふかふか便座シートなど、低価格帯で時短・省スペース・体感品質を訴求する品揃えが支持を集めた。 キッチン家電から収納、季節の日用品までカテゴリ横断で「お値段以上」を体現し、購入レビューや口コミが複数買い・リピート購入を後押し。日用品から高付加価値家電へ提案領域を広げる動きが鮮明になった。",
