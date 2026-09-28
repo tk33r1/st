@@ -711,7 +711,7 @@ function showInfoPanel() {
     + '<li>By default, inputs are <strong>not saved</strong> in the database, unless you <strong>react</strong> to a reply (👍/emoji) to help improve MAGI.</li>'
     + '<li>Chat history is stored in your device\'s <strong>local storage</strong> (not permanent; please export important chats).</li>'
     + '<li>Powered by <strong>OpenAI API</strong>, <strong>DeepSeek API</strong> and <strong>Gemini API</strong>. Each persona runs on a different one, so every input (including images) is <strong>sent to all three</strong>.</li>'
-    + '<li>OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini, paid tier): logged for a limited period for abuse detection; not used to improve Google\'s products. DeepSeek: <strong>stored on servers in China and may be used to train its models</strong>.</li>'
+    + '<li>OpenAI: sent to the US and retained up to 30 days for abuse monitoring; not used for AI training by default. Google (Gemini API, free tier): <strong>used to improve Google\'s products and train its models, and may be read by human reviewers</strong>. DeepSeek: <strong>stored on servers in China and may be used to train its models</strong>.</li>'
     + '<li class="warn">DO NOT input any confidential or personal information.</li>'
     + '</ul>');
 }

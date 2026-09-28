@@ -53,7 +53,7 @@ PR本文にも同じ手順を出す。
 
 OpenAIのモデル一覧は `OPENAI_API_KEY`、DeepSeekは `DEEPSEEK_API_KEY`、Googleは `GEMINI_API_KEY` を使う。
 OpenAIとDeepSeekは既存のRepository Secretをそのまま使う。`GEMINI_API_KEY` はmagi2の Humanist 用に足した
-Repository Secretで、Worker の `MAGI_GEMINI_API_KEY` と同じ有料枠のキーでよい（未設定だと監視がIssueで知らせる）。
+Repository Secretで、Worker の `MAGI_GEMINI_API_KEY` と同じキーでよい（未設定だと監視がIssueで知らせる）。
 レビュー用PRを自動作成するには、GitHubのリポジトリ設定で Actions にPull Requestの作成を
 許可しておく。許可されていない場合も、workflowは失敗内容をIssueで通知する。
 ボットが作ったPRでは `ai-models.yml` が走らない（GITHUB_TOKEN の push は workflow を起動しない）が、

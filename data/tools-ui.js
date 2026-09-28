@@ -1464,12 +1464,58 @@
   }
   document.addEventListener('st:complete', showReceipt);
 
+  // ---- ページの枠（テーマ・パンくずの印・先頭へ戻る） --------------------
+  // どのツールも同じものを各ページに書いていたので、ここにまとめる。
+  //
+  // テーマは既定でシステムの設定に従い、選び直したものだけ覚える。<html> の
+  // data-theme が tools-ui.css の暗い配色の切り替え口。印は描画より前に付ける
+  // （このファイルは head で読むので間に合う）。遅れると、暗い表示を選んだ人に
+  // 白い画面が一瞬出る。
+  const THEME_KEY = 'st-theme';
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
+  } catch (e) { /* サイトデータが使えない環境。システムの設定に任せる */ }
+
+  function wirePageChrome() {
+    const root = document.documentElement;
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const current = root.getAttribute('data-theme') || (systemDark ? 'dark' : 'light');
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* 覚えられなくても切り替えは効く */ }
+      });
+    }
+
+    // パンくずの脇の印は、このページの favicon を <link> から読む。タブの絵とずれない
+    const icon = document.querySelector('link[rel="icon"]');
+    const mark = document.querySelector('.crumb-mark');
+    if (icon && mark) mark.style.backgroundImage = 'url("' + icon.href + '")';
+
+    // 先頭へ戻るボタンは、戻るほどスクロールしてから出す
+    const up = document.getElementById('scroll-top-btn');
+    if (up) {
+      window.addEventListener('scroll', () => {
+        up.classList.toggle('visible', window.scrollY > 300);
+      }, { passive: true });
+      up.addEventListener('click', () => {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      });
+    }
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+      wirePageChrome();
       renderSafetyProof();
       renderFaqFromStructuredData();
     }, { once: true });
   } else {
+    wirePageChrome();
     renderSafetyProof();
     renderFaqFromStructuredData();
   }

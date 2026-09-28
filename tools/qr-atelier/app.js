@@ -11,6 +11,9 @@
   'use strict';
 
   const { showToast, setStatus, setupDropzone, saveBlob } = window.STCommon;
+  // 書き出し（字の埋め込みと画像化）と data URL への読み込みは qr-export.js
+  // （dj/request の回の QR と共用）のものをそのまま使う
+  const { fontCss: exportFontCss, rasterize, blobToDataUrl } = window.QRExport;
   const A = window.QRAssets;
   // 選べる書体は qr-style.js の表がひとつの出どころ。検証もシャッフルもそこから引く。
   const FONTS = window.QRStyle.FONT_KEYS;
@@ -71,7 +74,13 @@
   const TYPES = [
     {
       id: 'url', name: 'URL', hint: 'URL',
-      fields: [{ k: 'url', label: 'リンク先URL', type: 'url', ph: 'https://tk.st/' }],
+      fields: [{
+        k: 'url', label: 'リンク先URL', type: 'url', ph: 'https://tk.st/',
+        bulk: {
+          aliases: ['url', 'リンク', 'リンク先', '内容', 'アドレス', 'リンクurl'],
+          examples: ['https://example.com/shop-a', 'https://example.com/shop-b', 'https://example.com/shop-c']
+        }
+      }],
       init: { url: 'https://tk.st/tools/qr-atelier/' },
       build: f => normalizeUrl(f.url)
     },
@@ -91,9 +100,29 @@
             ['github', 'GitHub'],
             ['note', 'note'],
             ['facebook', 'Facebook']
-          ]
+          ],
+          bulk: {
+            aliases: ['サービス', 'sns', 'プラットフォーム'],
+            optionAliases: {
+              x: ['twitter', 'ツイッター', 'ツイート', 'エックス'],
+              instagram: ['インスタ', 'インスタグラム', 'ig'],
+              youtube: ['yt', 'ユーチューブ'],
+              line: ['ライン'],
+              tiktok: ['ティックトック', 'ティクトク'],
+              facebook: ['fb', 'フェイスブック'],
+              threads: ['スレッズ'],
+              bluesky: ['ブルースカイ', 'bsky']
+            },
+            examples: ['instagram', 'x', 'line', 'youtube']
+          }
         },
-        { k: 'id', label: 'ユーザー名 / ID', type: 'text', ph: '例: shitake' }
+        {
+          k: 'id', label: 'ユーザー名 / ID', type: 'text', ph: '例: shitake',
+          bulk: {
+            aliases: ['id', 'ユーザー名', 'アカウント', 'ユーザーid', 'ユーザ名'],
+            examples: ['example_shop', 'example_shop', 'abcdefg', 'example_shop']
+          }
+        }
       ],
       init: { platform: 'instagram', id: '' },
       build: f => {
@@ -119,18 +148,39 @@
     },
     {
       id: 'text', name: 'テキスト', hint: 'テキスト',
-      fields: [{ k: 'text', label: '好きな文章', type: 'textarea', ph: 'そのまま表示される文字列' }],
+      fields: [{
+        k: 'text', label: '好きな文章', type: 'textarea', ph: 'そのまま表示される文字列',
+        bulk: {
+          aliases: ['文章', '本文', '内容', 'テキスト'],
+          examples: ['ご来店ありがとうございます', '10%OFF クーポン']
+        }
+      }],
       init: { text: '' },
       build: f => String(f.text || '')
     },
     {
       id: 'event', name: 'カレンダー', hint: 'iCal',
       fields: [
-        { k: 'title', label: '予定名', type: 'text', ph: '例：新商品リリース / 展示会' },
-        { k: 'start', label: '開始日時', type: 'datetime-local', ph: '' },
-        { k: 'end', label: '終了日時', type: 'datetime-local', ph: '' },
-        { k: 'location', label: '場所', type: 'text', ph: '例：東京ビッグサイト / オンライン' },
-        { k: 'desc', label: '詳細・メモ', type: 'textarea', ph: '詳細や参加用リンクなど' }
+        {
+          k: 'title', label: '予定名', type: 'text', ph: '例：新商品リリース / 展示会',
+          bulk: { aliases: ['予定名', 'タイトル', '名称', 'イベント名'], examples: ['新商品発表会', '内覧会'] }
+        },
+        {
+          k: 'start', label: '開始日時', type: 'datetime-local', ph: '',
+          bulk: { aliases: ['開始', '開始日時', '開始時刻'], examples: ['2026-10-01T13:00', '2026-10-02T10:00'] }
+        },
+        {
+          k: 'end', label: '終了日時', type: 'datetime-local', ph: '',
+          bulk: { aliases: ['終了', '終了日時', '終了時刻'], examples: ['2026-10-01T15:00', '2026-10-02T17:00'] }
+        },
+        {
+          k: 'location', label: '場所', type: 'text', ph: '例：東京ビッグサイト / オンライン',
+          bulk: { aliases: ['場所', '会場', '住所'], examples: ['東京ビッグサイト', '本社ショールーム'] }
+        },
+        {
+          k: 'desc', label: '詳細・メモ', type: 'textarea', ph: '詳細や参加用リンクなど',
+          bulk: { aliases: ['詳細', 'メモ', '説明', '備考', '詳細メモ'], examples: ['受付は12時30分から', ''] }
+        }
       ],
       init: { title: '', start: '', end: '', location: '', desc: '' },
       build: f => {
@@ -169,9 +219,18 @@
     {
       id: 'email', name: 'メール', hint: 'mailto',
       fields: [
-        { k: 'to', label: '宛先', type: 'email', ph: 'hello@example.com' },
-        { k: 'subject', label: '件名', type: 'text', ph: 'お問い合わせ' },
-        { k: 'body', label: '本文', type: 'textarea', ph: '' }
+        {
+          k: 'to', label: '宛先', type: 'email', ph: 'hello@example.com',
+          bulk: { aliases: ['宛先', 'メール', 'メールアドレス', 'email'], examples: ['info@example.com', 'support@example.com'] }
+        },
+        {
+          k: 'subject', label: '件名', type: 'text', ph: 'お問い合わせ',
+          bulk: { aliases: ['件名', 'タイトル'], examples: ['お問い合わせ', '修理のご依頼'] }
+        },
+        {
+          k: 'body', label: '本文', type: 'textarea', ph: '',
+          bulk: { aliases: ['本文', '内容'], examples: ['', '製品名：'] }
+        }
       ],
       init: { to: '', subject: '', body: '' },
       build: f => {
@@ -186,15 +245,24 @@
     },
     {
       id: 'tel', name: '電話', hint: 'tel',
-      fields: [{ k: 'tel', label: '電話番号', type: 'tel', ph: '+81312345678', sub: '国番号から書くと海外の端末でもかけられます。' }],
+      fields: [{
+        k: 'tel', label: '電話番号', type: 'tel', ph: '+81312345678', sub: '国番号から書くと海外の端末でもかけられます。',
+        bulk: { aliases: ['電話', '電話番号', '連絡先', 'tel'], examples: ['+81312345678', '09012345678'] }
+      }],
       init: { tel: '' },
       build: f => (f.tel ? 'tel:' + String(f.tel).replace(/[^0-9+]/g, '') : '')
     },
     {
       id: 'sms', name: 'SMS', hint: 'smsto',
       fields: [
-        { k: 'tel', label: '送信先', type: 'tel', ph: '09012345678' },
-        { k: 'msg', label: '本文', type: 'textarea', ph: '' }
+        {
+          k: 'tel', label: '送信先', type: 'tel', ph: '09012345678',
+          bulk: { aliases: ['送信先', '電話', '電話番号', 'tel'], examples: ['09012345678', '09087654321'] }
+        },
+        {
+          k: 'msg', label: '本文', type: 'textarea', ph: '',
+          bulk: { aliases: ['本文', 'メッセージ'], examples: ['予約をお願いします', ''] }
+        }
       ],
       init: { tel: '', msg: '' },
       build: f => (f.tel ? 'SMSTO:' + String(f.tel).replace(/[^0-9+]/g, '') + ':' + String(f.msg || '') : '')
@@ -202,10 +270,30 @@
     {
       id: 'wifi', name: 'Wi-Fi', hint: 'WIFI',
       fields: [
-        { k: 'ssid', label: 'ネットワーク名（SSID）', type: 'text', ph: 'MyHomeWiFi' },
-        { k: 'pass', label: 'パスワード', type: 'password', ph: '' },
-        { k: 'enc', label: '暗号化方式', type: 'select', options: [['WPA', 'WPA / WPA2 / WPA3'], ['WEP', 'WEP'], ['nopass', 'なし（オープン）']] },
-        { k: 'hidden', label: 'ステルスSSID', type: 'checkbox', sub: 'SSIDを隠している場合はオン' }
+        {
+          k: 'ssid', label: 'ネットワーク名（SSID）', type: 'text', ph: 'MyHomeWiFi',
+          bulk: { aliases: ['ssid', 'ネットワーク名', 'ネットワーク', 'ネットワーク名ssid'], examples: ['CafeWiFi-1F', 'CafeWiFi-2F', 'CafeWiFi-Free'] }
+        },
+        {
+          k: 'pass', label: 'パスワード', type: 'password', ph: '',
+          bulk: { aliases: ['パスワード', 'password', 'pass', 'キー'], examples: ['guest1234', 'guest5678', ''] }
+        },
+        {
+          k: 'enc', label: '暗号化方式', type: 'select',
+          options: [['WPA', 'WPA / WPA2 / WPA3'], ['WEP', 'WEP'], ['nopass', 'なし（オープン）']],
+          bulk: {
+            aliases: ['暗号化', '暗号化方式', '認証方式', 'セキュリティ'],
+            optionAliases: {
+              WPA: ['wpa2', 'wpa3', 'wpa/wpa2', 'wpa2psk', 'wpa2-psk', 'wpapsk', 'wpa2personal'],
+              nopass: ['オープン', 'open', 'none', '無し', 'なし', 'パスワードなし', 'フリー', 'free']
+            },
+            examples: ['WPA', 'WPA', 'なし（オープン）']
+          }
+        },
+        {
+          k: 'hidden', label: 'ステルスSSID', type: 'checkbox', sub: 'SSIDを隠している場合はオン',
+          bulk: { aliases: ['ステルス', 'ステルスssid', '非公開'], template: false }
+        }
       ],
       init: { ssid: '', pass: '', enc: 'WPA', hidden: false },
       build: f => {
@@ -223,16 +311,47 @@
         {
           k: 'format', label: '形式', type: 'select',
           options: [['vcard', 'vCard（標準・項目が多い）'], ['mecard', 'MeCard（短い・日本の端末に強い）']],
-          sub: 'MeCard は同じ内容でもデータ量が小さく、QRのマス目が粗くなるぶん読み取りやすくなります。会社・役職の欄を持たない規格なので、その2つはメモにまとめて入ります。'
+          sub: 'MeCard は同じ内容でもデータ量が小さく、QRのマス目が粗くなるぶん読み取りやすくなります。会社・役職の欄を持たない規格なので、その2つはメモにまとめて入ります。',
+          bulk: {
+            template: false,
+            optionAliases: {
+              vcard: ['vcard', 'ブイカード', '標準'],
+              mecard: ['mecard', 'ミーカード']
+            }
+          }
         },
-        { k: 'last', label: '姓', type: 'text', ph: '武田' },
-        { k: 'first', label: '名', type: 'text', ph: '慎也' },
-        { k: 'org', label: '会社・組織', type: 'text', ph: '' },
-        { k: 'title', label: '役職', type: 'text', ph: '' },
-        { k: 'tel', label: '電話', type: 'tel', ph: '' },
-        { k: 'email', label: 'メール', type: 'email', ph: '' },
-        { k: 'url', label: 'サイト', type: 'url', ph: '' },
-        { k: 'note', label: 'メモ', type: 'text', ph: '' }
+        {
+          k: 'last', label: '姓', type: 'text', ph: '武田',
+          bulk: { aliases: ['姓', '名字', '苗字'], examples: ['山田', '鈴木'] }
+        },
+        {
+          k: 'first', label: '名', type: 'text', ph: '慎也',
+          bulk: { aliases: ['名', '下の名前'], examples: ['太郎', '花子'] }
+        },
+        {
+          k: 'org', label: '会社・組織', type: 'text', ph: '',
+          bulk: { aliases: ['会社', '組織', '会社名', '所属', '会社組織'], examples: ['株式会社サンプル', '株式会社サンプル'] }
+        },
+        {
+          k: 'title', label: '役職', type: 'text', ph: '',
+          bulk: { aliases: ['役職', '肩書', '肩書き'], examples: ['営業部', '広報部'] }
+        },
+        {
+          k: 'tel', label: '電話', type: 'tel', ph: '',
+          bulk: { aliases: ['電話', '電話番号', '携帯'], examples: ['09012345678', '09087654321'] }
+        },
+        {
+          k: 'email', label: 'メール', type: 'email', ph: '',
+          bulk: { aliases: ['メール', 'メールアドレス', 'email'], examples: ['taro@example.com', 'hanako@example.com'] }
+        },
+        {
+          k: 'url', label: 'サイト', type: 'url', ph: '',
+          bulk: { aliases: ['サイト', 'url', 'ホームページ'], template: false }
+        },
+        {
+          k: 'note', label: 'メモ', type: 'text', ph: '',
+          bulk: { aliases: ['メモ', '備考'], template: false }
+        }
       ],
       init: { format: 'vcard', last: '', first: '', org: '', title: '', tel: '', email: '', url: '', note: '' },
       build: f => {
@@ -267,8 +386,14 @@
     {
       id: 'geo', name: '位置情報', hint: 'geo',
       fields: [
-        { k: 'lat', label: '緯度', type: 'text', ph: '35.681236' },
-        { k: 'lng', label: '経度', type: 'text', ph: '139.767125' }
+        {
+          k: 'lat', label: '緯度', type: 'text', ph: '35.681236',
+          bulk: { aliases: ['緯度', 'lat'], examples: ['35.681236', '34.702485'] }
+        },
+        {
+          k: 'lng', label: '経度', type: 'text', ph: '139.767125',
+          bulk: { aliases: ['経度', 'lng', 'lon', 'longitude'], examples: ['139.767125', '135.495951'] }
+        }
       ],
       init: { lat: '', lng: '' },
       build: f => (f.lat && f.lng ? 'geo:' + String(f.lat).trim() + ',' + String(f.lng).trim() : '')
@@ -279,11 +404,30 @@
       fields: [
         {
           k: 'chain', label: '種類', type: 'select',
-          options: [['bitcoin', 'Bitcoin（オンチェーン）'], ['lightning', 'Lightning（請求書 / LNURL）']]
+          options: [['bitcoin', 'Bitcoin（オンチェーン）'], ['lightning', 'Lightning（請求書 / LNURL）']],
+          bulk: {
+            template: false,
+            optionAliases: {
+              bitcoin: ['btc', 'ビットコイン', 'オンチェーン'],
+              lightning: ['ln', 'ライトニング', 'lnurl']
+            }
+          }
         },
-        { k: 'addr', label: 'アドレス / 請求書', type: 'textarea', ph: 'bc1q... / lnbc...' },
-        { k: 'amount', label: '金額（BTC）', type: 'text', ph: '0.001', sub: 'Bitcoin のみ。空欄なら、受け取り側のウォレットで金額を入れてもらいます。' },
-        { k: 'label', label: 'ラベル', type: 'text', ph: '例：ご支援ありがとうございます', sub: 'Bitcoin のみ。相手のウォレットの確認画面に出ます。' }
+        {
+          k: 'addr', label: 'アドレス / 請求書', type: 'textarea', ph: 'bc1q... / lnbc...',
+          bulk: {
+            aliases: ['アドレス', '請求書', 'address', 'アドレス請求書'],
+            examples: ['bc1qexampleaddressreplacemexxxxxxxxxxxxxxx', 'bc1qanotheraddressreplacemexxxxxxxxxxxxxxx']
+          }
+        },
+        {
+          k: 'amount', label: '金額（BTC）', type: 'text', ph: '0.001', sub: 'Bitcoin のみ。空欄なら、受け取り側のウォレットで金額を入れてもらいます。',
+          bulk: { aliases: ['金額', 'amount', '金額btc'], examples: ['0.001', ''] }
+        },
+        {
+          k: 'label', label: 'ラベル', type: 'text', ph: '例：ご支援ありがとうございます', sub: 'Bitcoin のみ。相手のウォレットの確認画面に出ます。',
+          bulk: { aliases: ['ラベル', 'label'], examples: ['ご支援ありがとうございます', ''] }
+        }
       ],
       init: { chain: 'bitcoin', addr: '', amount: '', label: '' },
       build: f => {
@@ -370,14 +514,14 @@
     eye:         { paint: s => s.markerEyePaint,    kind: 'auto',  clearType: 'auto',  label: 'マーカーの目' },
     logoicon:    { paint: s => s.logo.paint,        kind: 'brand', clearType: 'brand', label: 'ロゴのアイコン' },
     logotext:    { paint: s => s.logo.textPaint,    kind: 'auto',  clearType: 'auto',  label: 'ロゴの文字' },
-    logobd:      { paint: s => s.logo.backdropPaint, kind: 'bdplate', clearType: 'white', label: 'ロゴの下地' },
+    logobd:      { paint: s => s.logo.backdropPaint, kind: 'plate', followBg: true, clearType: 'white', label: 'ロゴの下地' },
     frameborder: { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '枠線' },
     framelabel:  { paint: s => s.frame.paint,       kind: 'auto',  clearType: 'auto',  label: '帯' },
     // 文字は既定どおり単色（白）へ戻す。帯は既定で「セルの色」なので、文字まで
     // 'auto' に戻すと帯と同じ色になって読めなくなる
     frametext:   { paint: s => s.frame.textPaint,   kind: 'auto',  clearType: 'solid', label: 'ラベルの文字' },
     frameicon:   { paint: s => s.frame.iconPaint,   kind: 'brand', clearType: 'brand', label: 'ラベルのアイコン' },
-    framebd:     { paint: s => s.frame.backdropPaint, kind: 'bdplate', clearType: 'none', label: 'ラベルの下地' }
+    framebd:     { paint: s => s.frame.backdropPaint, kind: 'plate', followBg: true, clearType: 'none', label: 'ラベルの下地' }
   };
   const COLOR_SCOPES = Object.keys(COLOR_SCOPE_META);
 
@@ -439,16 +583,57 @@
   // これより長い画像（data URL）は覚えない。localStorage の枠を1枚で使い切る。
   const MAX_STORED_SRC = 300000;
 
-  // 覚えるときに大きすぎる画像を落とす場所。[持ち主, キー名] で並べる。
+  // 塗り以外の画像。保存・共有リンクからの除去・画像の適用・「外す」が同じ定義を見る。
+  // clear は「外す」ボタンの動き。フレームは中身を画像のまま残し（空の画像欄が
+  // 見えるので選び直せる）、共有リンクで落とすとき（slots の戻り先）とは扱いが違う。
+  const CONTENT_IMAGE_META = {
+    logo: {
+      label: 'ロゴ画像',
+      slots: s => [[s.logo, 'src', 'type', 'none']],
+      apply: (s, src) => {
+        s.logo.src = src;
+        s.logo.type = 'image';
+      },
+      clear: s => {
+        s.logo.src = '';
+        s.logo.type = 'none';
+      }
+    },
+    frame: {
+      label: 'フレーム画像',
+      slots: s => [
+        [s.frame, 'src', 'contentMode', 'text'],
+        [s.frame, 'topSrc', 'topContentMode', 'text']
+      ],
+      apply: (s, src) => {
+        s.frame.src = src;
+        s.frame.topSrc = src;
+        s.frame.contentMode = 'image';
+        s.frame.topContentMode = 'image';
+      },
+      clear: s => {
+        s.frame.src = '';
+        s.frame.topSrc = '';
+      }
+    }
+  };
+
+  // 画像を持てる場所。[持ち主, 画像キー, モードキー, 画像を外したときの値]。
+  // 同じ塗りを指す色パネル（枠線と帯）は1枠にまとめる。
   function storedImageSlots(s) {
-    return [
-      [s.logo, 'src'], [s.logo.paint, 'src'], [s.logo.textPaint, 'src'], [s.logo.backdropPaint, 'src'],
-      [s.fg, 'src'], [s.bg, 'src'],
-      [s.markerFramePaint, 'src'], [s.markerEyePaint, 'src'],
-      [s.frame.paint, 'src'], [s.frame.textPaint, 'src'], [s.frame.backdropPaint, 'src'],
-      [s.frame.iconPaint, 'src'],
-      [s.frame, 'src'], [s.frame, 'topSrc']
-    ];
+    const slots = [];
+    function add(slot) {
+      if (!slot[0] || slots.some(x => x[0] === slot[0] && x[1] === slot[1])) return;
+      slots.push(slot);
+    }
+    COLOR_SCOPES.forEach(scope => {
+      const meta = COLOR_SCOPE_META[scope];
+      add([meta.paint(s), 'src', 'type', meta.clearType]);
+    });
+    Object.keys(CONTENT_IMAGE_META).forEach(id => {
+      CONTENT_IMAGE_META[id].slots(s).forEach(add);
+    });
+    return slots;
   }
 
   // 覚えるには重すぎる画像の場所。本体の保存もマイテンプレートも同じ線を引く。
@@ -743,15 +928,13 @@
   //   basic … セル。自分が追従先なので「セルの色」は持てない
   //   auto  … マーカー・枠線・帯・ラベルの文字。既定は「セルの色に追従」
   //   brand … アイコン。ブランド公式色を選べる
-  //   plate … 背景。敷く面なので白・黒・透明まで選べる
-  //   bdplate … ロゴ・ラベルの下地。plate に加えて「背景の色に追従」（bg）を持つ。
-  //             背景には持たせない（背景が自分を指すと解けない）
+  //   plate … 背景・下地。敷く面なので白・黒・透明まで選べる。
+  //             下地だけは COLOR_SCOPE_META の followBg で「背景の色」も足す
   const PAINT_MODES = {
     basic: ['solid', 'multi', 'linear', 'radial', 'image'],
     auto: ['auto', 'solid', 'multi', 'linear', 'radial', 'image'],
     brand: ['brand', 'auto', 'solid', 'multi', 'linear', 'radial', 'image'],
-    plate: ['white', 'black', 'none', 'auto', 'solid', 'multi', 'linear', 'radial', 'image'],
-    bdplate: ['white', 'black', 'none', 'auto', 'bg', 'solid', 'multi', 'linear', 'radial', 'image']
+    plate: ['white', 'black', 'none', 'auto', 'solid', 'multi', 'linear', 'radial', 'image']
   };
 
   // ラベルの中身（文字・アイコン・画像）
@@ -760,15 +943,14 @@
   // 多色で持てる色の数
   const MAX_MULTI_COLORS = 8;
 
-  // 敷く面（背景・下地）の塗りかどうか。白・黒・透明と透過のスライダーを持つ
-  function isPlateKind(kind) {
-    return kind === 'plate' || kind === 'bdplate';
-  }
-
-  function sanitizePaint(p, kind, defaultType, fallbackColor) {
+  // 塗りを均す。選べるモードは、その塗りを受け持つ色パネル（scope）の
+  // COLOR_SCOPE_META から引く。敷く面（plate）は白・黒・透明と透過のスライダーを持つ
+  function sanitizePaint(p, scope, defaultType, fallbackColor) {
     if (!p || typeof p !== 'object') p = {};
-    const isPlate = isPlateKind(kind);
-    if (PAINT_MODES[kind].indexOf(p.type) < 0) p.type = defaultType;
+    const meta = COLOR_SCOPE_META[scope];
+    const isPlate = meta.kind === 'plate';
+    const modes = meta.followBg ? PAINT_MODES[meta.kind].concat('bg') : PAINT_MODES[meta.kind];
+    if (modes.indexOf(p.type) < 0) p.type = defaultType;
     p.color = normHex(p.color, fallbackColor || (isPlate ? '#FFFFFF' : '#111827'));
     p.from = normHex(p.from, isPlate ? '#FFFFFF' : '#FC466B');
     p.to = normHex(p.to, isPlate ? '#E5E7EB' : '#3F5EFB');
@@ -793,26 +975,20 @@
   // localStorage の中身はそのまま SVG の属性と数値に流れる。壊れた保存や
   // 別経路で書き換えられた値が fill="..." を閉じて属性を足せてしまわないよう、
   // 色は #RRGGBB に、数値は範囲内の数に必ず均しておく。
-  // 下地の旧「ドット枠」は、セルの形で粒を並べる「セル枠」に置き換えた。
-  // 保存や共有 URL に残った古い指定は、既定へ戻さずセル枠として読む
-  function backdropIdOf(id) {
-    return id === 'dots' ? 'cells' : id;
-  }
-
   function sanitizeStyle(s) {
     const D = window.QRStyle.DEFAULTS;
-    s.fg = sanitizePaint(s.fg, 'basic', 'solid', '#111827');
+    s.fg = sanitizePaint(s.fg, 'cell', 'solid', '#111827');
 
-    s.markerFramePaint = sanitizePaint(s.markerFramePaint, 'auto', 'auto', s.fg.color);
-    s.markerEyePaint = sanitizePaint(s.markerEyePaint, 'auto', 'auto', s.fg.color);
-    s.frame.paint = sanitizePaint(s.frame.paint, 'auto', 'auto', s.fg.color);
-    s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'auto', 'solid', '#FFFFFF');
+    s.markerFramePaint = sanitizePaint(s.markerFramePaint, 'frame', 'auto', s.fg.color);
+    s.markerEyePaint = sanitizePaint(s.markerEyePaint, 'eye', 'auto', s.fg.color);
+    s.frame.paint = sanitizePaint(s.frame.paint, 'frameborder', 'auto', s.fg.color);
+    s.frame.textPaint = sanitizePaint(s.frame.textPaint, 'frametext', 'solid', '#FFFFFF');
     s.frame.font = oneOf(s.frame.font, FONTS, 'sans');
     s.frame.contentMode = oneOf(s.frame.contentMode, CONTENT_MODES, 'text');
     s.frame.topContentMode = oneOf(s.frame.topContentMode, CONTENT_MODES, 'text');
     s.frame.pos = oneOf(s.frame.pos, ['bottom', 'top', 'both'], 'bottom');
     pickIcon(s.frame, 'icon', 'iconData', D.frame.icon);
-    s.frame.iconPaint = sanitizePaint(s.frame.iconPaint, 'brand', 'brand', '#FFFFFF');
+    s.frame.iconPaint = sanitizePaint(s.frame.iconPaint, 'frameicon', 'brand', '#FFFFFF');
     s.frame.src = sanitizeImageUrl(s.frame.src);
 
     pickIcon(s.frame, 'topIcon', 'topIconData', D.frame.topIcon);
@@ -826,23 +1002,23 @@
     s.frame.lineWidth2 = clampNum(s.frame.lineWidth2, 0.15, 2.5, lineDef.inner || 0.28);
 
     // ラベルの中身の下地。形は下地用の一覧から選ぶ（旧「ドット枠」はセル枠に読み替える）
-    s.frame.backdrop = backdropIdOf(s.frame.backdrop);
+    s.frame.backdrop = window.QRStyle.shapeIdOf(s.frame.backdrop);
     if (!hasId(A.BACKDROP_SHAPES, s.frame.backdrop)) s.frame.backdrop = D.frame.backdrop;
     // 透過は sanitizePaint が埋める（下地は plate なので、未指定は 0＝不透明）
-    s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, COLOR_SCOPE_META.framebd.kind, 'none', '#FFFFFF');
+    s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'framebd', 'none', '#FFFFFF');
 
-    s.bg = sanitizePaint(s.bg, 'plate', 'solid', '#FFFFFF');
+    s.bg = sanitizePaint(s.bg, 'bg', 'solid', '#FFFFFF');
 
     // ロゴの下地。ラベルの下地と同じ一覧から選ぶ
-    s.logo.backdrop = backdropIdOf(s.logo.backdrop);
+    s.logo.backdrop = window.QRStyle.shapeIdOf(s.logo.backdrop);
     if (!hasId(A.BACKDROP_SHAPES, s.logo.backdrop)) s.logo.backdrop = D.logo.backdrop;
-    s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, COLOR_SCOPE_META.logobd.kind, 'solid', '#FFFFFF');
+    s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'logobd', 'solid', '#FFFFFF');
 
     // ロゴ本体の塗り。ここだけ 'brand'（アイコンのブランド公式色）を選べる。
     // 画面では、ブランド以外のアイコン群を選んでいるときに syncControls が
     // 'auto' へ寄せるので、ここでは 'brand' をそのまま通してよい。
-    s.logo.paint = sanitizePaint(s.logo.paint, 'brand', 'brand', D.logo.paint.color);
-    s.logo.textPaint = sanitizePaint(s.logo.textPaint, 'auto', 'auto', D.logo.textPaint.color);
+    s.logo.paint = sanitizePaint(s.logo.paint, 'logoicon', 'brand', D.logo.paint.color);
+    s.logo.textPaint = sanitizePaint(s.logo.textPaint, 'logotext', 'auto', D.logo.textPaint.color);
     pickIcon(s.logo, 'icon', 'iconData', D.logo.icon);
 
     s.cellScale = clampNum(s.cellScale, 0.3, 1.15, D.cellScale);
@@ -869,7 +1045,7 @@
     s.invertOk = !!s.invertOk;
     // 形の id。知らないものは既定へ寄せる（一覧のどれも選ばれていない画面になるため）
     if (!hasId(A.CELL_SHAPES, s.cell)) s.cell = D.cell;
-    s.markerFrame = window.QRStyle.markerFrameIdOf(s.markerFrame);
+    s.markerFrame = window.QRStyle.shapeIdOf(s.markerFrame);
     if (!hasId(A.MARKER_FRAMES, s.markerFrame)) s.markerFrame = D.markerFrame;
     if (!hasId(A.MARKER_EYES, s.markerEye)) s.markerEye = D.markerEye;
     if (!hasId(A.FRAMES, s.frame.type)) s.frame.type = 'none';
@@ -960,16 +1136,6 @@
     const d = new Date();
     return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) +
       '-' + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
-  }
-
-  // Blob / File を data URL に。画像もフォントもこれ1本で読む。
-  function blobToDataUrl(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error('read failed'));
-      reader.readAsDataURL(blob);
-    });
   }
 
   function normHex(v, fallback) {
@@ -1082,9 +1248,7 @@
       } else if (f.type === 'checkbox') {
         input = el('input', { type: 'checkbox', id: id, class: 'tb-check' });
         input.checked = !!values[f.k];
-        wrap.classList.add('color-row');
-        wrap.style.flexDirection = 'row';
-        wrap.style.alignItems = 'center';
+        wrap.classList.add('color-row', 'field-check');
         wrap.insertBefore(input, wrap.firstChild);
       } else if (f.type === 'password') {
         const pwrap = el('div', { class: 'pwd-wrap' });
@@ -1130,8 +1294,7 @@
     if (type.id === 'sns') {
       const btnLogoSync = el('button', {
         type: 'button',
-        class: 'st-btn-quiet btn-sm',
-        style: 'align-self: flex-start; margin-top: 4px;'
+        class: 'st-btn-quiet btn-sm btn-logo-sync'
       }, '中央ロゴもこのSNSアイコンにする');
       btnLogoSync.addEventListener('click', () => {
         // SNS の選択肢の id と、同梱アイコンの id は 'si-' を足すだけで対応する。
@@ -1559,7 +1722,7 @@
 
     hit.appendChild(picker);
     if (o.role) {
-      hit.appendChild(el('span', { class: 'color-hex', style: 'font-size:10px; color:var(--ink-3); margin-right:2px;' }, o.role));
+      hit.appendChild(el('span', { class: 'color-hex mc-role' }, o.role));
     }
     item.appendChild(hit);
     item.appendChild(hexInput);
@@ -1831,32 +1994,24 @@
   }
 
   // 画像をすべて外す（リンクに載せるとき用）。落としたあとは、その画像が
-  // 無いと描けない塗りの種類も戻しておかないと、空の絵になる。戻り先は
-  // 色パネルで「外す」を押したときと同じ（COLOR_SCOPE_META.clearType）。
+  // 無いと描けないモードも、各スロットに決めた戻り先へ戻す。
   function stripImages(st) {
     let dropped = false;
-    COLOR_SCOPES.forEach(scope => {
-      const meta = COLOR_SCOPE_META[scope];
-      const owner = meta.paint(st);
-      if (!owner) return;
-      if (owner.src) { owner.src = ''; dropped = true; }
-      if (owner.type === 'image') { owner.type = meta.clearType; dropped = true; }
+    storedImageSlots(st).forEach(slot => {
+      const owner = slot[0];
+      const imageKey = slot[1];
+      const modeKey = slot[2];
+      if (owner[imageKey]) { owner[imageKey] = ''; dropped = true; }
+      if (modeKey && owner[modeKey] === 'image') {
+        owner[modeKey] = slot[3];
+        dropped = true;
+      }
     });
-    if (st.logo.src) { st.logo.src = ''; dropped = true; }
-    if (st.logo.type === 'image') { st.logo.type = 'none'; dropped = true; }
-    if (st.frame.src) { st.frame.src = ''; dropped = true; }
-    if (st.frame.topSrc) { st.frame.topSrc = ''; dropped = true; }
-    if (st.frame.contentMode === 'image') { st.frame.contentMode = 'text'; dropped = true; }
-    if (st.frame.topContentMode === 'image') { st.frame.topContentMode = 'text'; dropped = true; }
     return dropped;
   }
 
-  // 取っておく形・渡す形。アイコンの実体（iconData）は QRAssets から
+  // 取っておく形・渡す形の写し。アイコンの実体（iconData）は QRAssets から
   // 引き直せるので入れない。本体の保存が replacer で落としているのと同じ扱い。
-  function styleForExport() {
-    return withoutIconData(state.style);
-  }
-
   function withoutIconData(style) {
     const st = JSON.parse(JSON.stringify(style || {}));
     if (st.logo) delete st.logo.iconData;
@@ -1922,7 +2077,7 @@
     const clean = String(name || '').trim().slice(0, 24);
     if (!clean) { showToast('名前を入れてください', 'error'); return false; }
 
-    const style = styleForExport();
+    const style = withoutIconData(state.style);
     const dropped = trimStoredImages(style);
 
     // 同じ名前で保存し直したら上書き。似た名前が積み上がるほうが困る。
@@ -1987,7 +2142,7 @@
   }
 
   async function shareDesign() {
-    const style = styleForExport();
+    const style = withoutIconData(state.style);
     const dropped = stripImages(style);
 
     let token;
@@ -2097,13 +2252,10 @@
     const meta = COLOR_SCOPE_META[scope];
     const p = paintOf(scope);
     const isCell = scope === 'cell';
-    const isBg = scope === 'bg';
-    const isLogoBd = scope === 'logobd';
-    const isFrameBd = scope === 'framebd';
     // 背景と下地は「敷く面」なので、白・黒・透明まで選べる
-    const isPlate = isPlateKind(meta.kind);
-    // 「背景の色」を選べるかは kind の顔ぶれで決まる（ロゴ・ラベルの下地）
-    const canFollowBg = PAINT_MODES[meta.kind].indexOf('bg') >= 0;
+    const isPlate = meta.kind === 'plate';
+    // 「背景の色」は、背景自身ではなくロゴ・ラベルの下地だけが追従できる
+    const canFollowBg = !!meta.followBg;
     // ブランドカラーはアイコンにしか意味がない。さらに、汎用アイコンには
     // ブランド色そのものが無いので、「SNS・ブランド」の一覧を開いている
     // ときだけ出す。ロゴとラベルで別々の一覧を持っているので、対象ごとに見る。
@@ -2144,33 +2296,6 @@
     // 一覧の中身は重いので、その塗り方を選んだときに一度だけ組み立てる
     if (isGrad) ensurePanelPart(scope, 'grad');
     if (isMulti) ensurePanelPart(scope, 'multi');
-
-    const plateWord = isLogoBd ? 'ロゴの下地' : isFrameBd ? 'ラベルの下地' : '背景';
-    const autoNotice = cq(scope, 'auto-notice');
-    if (autoNotice) {
-      autoNotice.innerHTML = isBg
-        ? 'セルの色設定と連動します。<br>グラデーション・放射・画像・多色のテクスチャが指定の透明度で背景に反映されます。'
-        : (scope === 'frame' || scope === 'eye')
-          ? 'セルの色設定と連動します。<br>多色のときは、3つのマーカーに色が1つずつ振られます。'
-          : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。';
-    }
-    // ロゴは背景の上に載るので模様がつながる。ラベルの帯は背景の外なので、帯の中で塗り直す
-    const bgNotice = cq(scope, 'bg-notice');
-    if (bgNotice) {
-      bgNotice.innerHTML = isFrameBd
-        ? '背景の色設定と連動します。<br>グラデーション・放射・画像・多色も、透明度を含めて背景と同じ設定でラベルの下地に描画されます。'
-        : '背景の色設定と連動します。<br>グラデーション・放射・画像・多色も、透明度を含めて背景と同じ設定で、背景とつながった模様として描画されます。';
-    }
-    setText(cq(scope, 'white-notice'), plateWord + 'を不透明な白（#FFFFFF）に固定します。');
-    setText(cq(scope, 'black-notice'), plateWord + 'を不透明な黒（#000000）に固定します。');
-    const noneNotice = cq(scope, 'none-notice');
-    if (noneNotice) {
-      noneNotice.innerHTML = isLogoBd
-        ? 'ロゴの下地を描きません。<br>セルを消す範囲（下地の形）はそのまま残るので、背景が抜けて見えます。'
-        : isFrameBd
-          ? 'ラベルの下地を描きません。<br>文字やアイコンだけがフレームの上に載ります。'
-          : '背景を透明にします。<br>透過PNGや透過SVGとして背景のない画像を書き出せます。';
-    }
 
     const hideSwatch = isImage || isAuto || isBgFollow || isNone || isWhite || isBlack || isBrand;
     if (!hideSwatch) ensurePanelPart(scope, 'swatch');
@@ -2599,7 +2724,12 @@
   // いるのかを持っておく。見出しも、保存ボタンの文言も、つまみを出すかも
   // これで決まる。
   let compressFor = '';
-  const COMPRESS_MIME = { avif: 'image/avif', webp: 'image/webp' };
+  const EXPORT_FORMATS = {
+    png:  { ext: 'png',  mime: 'image/png' },
+    avif: { ext: 'avif', mime: 'image/avif' },
+    webp: { ext: 'webp', mime: 'image/webp' },
+    svg:  { ext: 'svg',  mime: '' }
+  };
 
   function syncCompress() {
     setSeg('compress-seg', state.lossless ? 'lossless' : 'lossy', 'mode');
@@ -3002,13 +3132,8 @@
   // 書き出し
   // ------------------------------------------------------------------
   // ---- 書き出し用のフォント -------------------------------------------
-  // SVG を画像として書き出すとページのフォントを受け継がないので、使っている字の
-  // フォントだけを SVG に埋める。中身は qr-export.js（dj/request の回の QR と共用）。
-  function exportFontCss(style) {
-    return window.QRExport.fontCss(style);
-  }
-
-  // 書き出す SVG に、いまの絵で使っている書体を埋めて返す。
+  // SVG を画像として書き出すとページのフォントを受け継がないので、いまの絵で
+  // 使っている字のフォントだけを SVG に埋めて返す（exportFontCss は qr-export.js）。
   async function withExportFonts(svg) {
     return window.QRStyle.embedFontCss(svg, await exportFontCss(state.style));
   }
@@ -3020,11 +3145,6 @@
       ? window.QRStyle.resizeMm(svg, state.printMm)
       : window.QRStyle.resize(svg, 1024);
     return '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) + sized;
-  }
-
-  // 横 px のキャンバスに描く（qr-export.js と共用）
-  function rasterize(svg, px, flatten) {
-    return window.QRExport.rasterize(svg, px, flatten);
   }
 
   function fileStem() {
@@ -3085,59 +3205,21 @@
   // ------------------------------------------------------------------
   // CSV のひな形
   // ------------------------------------------------------------------
-  // 種類ごとに1本。見出しは項目の名前そのものにするので、落としてそのまま
-  // 読み込ませれば、どの列がどの項目かは bulkGuessColumn が自動で当てる。
-  // cols は項目キー。行ごとに変わらない設定（連絡先の形式、暗号通貨の種類、
-  // ステルスSSID）は列に出さない。「内容」で一度選べば全行に効く。
-  const TEMPLATE_ROWS = {
-    url: { cols: ['url'], rows: [
-      ['https://example.com/shop-a'],
-      ['https://example.com/shop-b'],
-      ['https://example.com/shop-c']] },
-    sns: { cols: ['platform', 'id'], rows: [
-      ['instagram', 'example_shop'],
-      ['x', 'example_shop'],
-      ['line', 'abcdefg'],
-      ['youtube', 'example_shop']] },
-    text: { cols: ['text'], rows: [
-      ['ご来店ありがとうございます'],
-      ['10%OFF クーポン']] },
-    event: { cols: ['title', 'start', 'end', 'location', 'desc'], rows: [
-      ['新商品発表会', '2026-10-01T13:00', '2026-10-01T15:00', '東京ビッグサイト', '受付は12時30分から'],
-      ['内覧会', '2026-10-02T10:00', '2026-10-02T17:00', '本社ショールーム', '']] },
-    email: { cols: ['to', 'subject', 'body'], rows: [
-      ['info@example.com', 'お問い合わせ', ''],
-      ['support@example.com', '修理のご依頼', '製品名：']] },
-    tel: { cols: ['tel'], rows: [
-      ['+81312345678'],
-      ['09012345678']] },
-    sms: { cols: ['tel', 'msg'], rows: [
-      ['09012345678', '予約をお願いします'],
-      ['09087654321', '']] },
-    wifi: { cols: ['ssid', 'pass', 'enc'], rows: [
-      ['CafeWiFi-1F', 'guest1234', 'WPA'],
-      ['CafeWiFi-2F', 'guest5678', 'WPA'],
-      ['CafeWiFi-Free', '', 'なし（オープン）']] },
-    vcard: { cols: ['last', 'first', 'org', 'title', 'tel', 'email'], rows: [
-      ['山田', '太郎', '株式会社サンプル', '営業部', '09012345678', 'taro@example.com'],
-      ['鈴木', '花子', '株式会社サンプル', '広報部', '09087654321', 'hanako@example.com']] },
-    geo: { cols: ['lat', 'lng'], rows: [
-      ['35.681236', '139.767125'],
-      ['34.702485', '135.495951']] },
-    crypto: { cols: ['addr', 'amount', 'label'], rows: [
-      ['bc1qexampleaddressreplacemexxxxxxxxxxxxxxx', '0.001', 'ご支援ありがとうございます'],
-      ['bc1qanotheraddressreplacemexxxxxxxxxxxxxxx', '', '']] }
-  };
-
-  // ひな形の中身。見出しは項目の名前そのもの。
+  // ひな形の中身。見出し・見本・一括生成での扱いは TYPES の各項目に寄せる。
+  // bulk.template=false の項目はひな形に載せないが、読み込んだ列を手で
+  // 割り当てれば、ほかの項目と同じように行ごとに変えられる。
   function templateParts(type) {
-    const tpl = TEMPLATE_ROWS[type.id];
-    if (!tpl) return null;
-    const fields = tpl.cols.map(k => type.fields.find(x => x.k === k) || { k: k, label: k });
+    const fields = type.fields.filter(f => f.bulk && f.bulk.template !== false);
+    if (!fields.length) return null;
+    const rowCount = fields.reduce((n, f) => Math.max(n, (f.bulk.examples || []).length), 0);
+    const sourceRows = [];
+    for (let row = 0; row < rowCount; row++) {
+      sourceRows.push(fields.map(f => (f.bulk.examples || [])[row] || ''));
+    }
     // 選ぶ項目は、ドロップダウンに並ぶ言葉そのものを見本にする。'WPA' と
     // 書いておくと、一覧に無い値として Excel に弾かれる（一覧側は
     // 'WPA / WPA2 / WPA3' という表示名で持っているため）。
-    const rows = tpl.rows.map(r => r.map((v, i) => {
+    const rows = sourceRows.map(r => r.map((v, i) => {
       const f = fields[i];
       if (!f || f.type !== 'select') return v;
       const hit = (f.options || []).find(o => o[0] === v || o[1] === v);
@@ -3222,11 +3304,7 @@
 
   function templateCsv(type) {
     const t = templateParts(type);
-    if (!t) return '';
-    const lines = [t.headers.map(csvCell).join(',')];
-    t.rows.forEach(r => lines.push(r.map(csvCell).join(',')));
-    // Excel で開いたときに日本語が化けないよう BOM を付ける
-    return String.fromCharCode(0xFEFF) + lines.join(CRLF) + CRLF;
+    return t ? csvText([t.headers].concat(t.rows)) : '';
   }
 
   function buildTemplateGrid() {
@@ -3391,7 +3469,7 @@
     // write を呼ぶと操作の有効期限が切れるので、中身は Promise のまま渡す。
     const png = (async () => {
       const canvas = await rasterize(await withExportFonts(lastSvg), Math.min(2048, outputPx()), null);
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      const blob = await encodeCanvas(canvas, 'image/png');
       if (!blob) throw new Error('encode failed');
       return blob;
     })();
@@ -3512,56 +3590,17 @@
     return bulk.rows.slice(useHeader ? 1 : 0);
   }
 
-  // 項目に列を当てるときの手がかり。見出しが項目名そのものでなくても拾える
-  // ように、よくある言い換えを持っておく。キーは「種類.項目」にすること。
-  // 項目キーだけで引くと、カレンダーの「予定名」と連絡先の「役職」が同じ
-  // title で衝突して、まるで関係のない列を掴む。
-  const BULK_ALIAS = {
-    'url.url': ['url', 'リンク', 'リンク先', '内容', 'アドレス', 'リンクurl'],
-    'sns.id': ['id', 'ユーザー名', 'アカウント', 'ユーザーid', 'ユーザ名'],
-    'sns.platform': ['サービス', 'sns', 'プラットフォーム'],
-    'text.text': ['文章', '本文', '内容', 'テキスト'],
-    'event.title': ['予定名', 'タイトル', '名称', 'イベント名'],
-    'event.start': ['開始', '開始日時', '開始時刻'],
-    'event.end': ['終了', '終了日時', '終了時刻'],
-    'event.location': ['場所', '会場', '住所'],
-    'event.desc': ['詳細', 'メモ', '説明', '備考', '詳細メモ'],
-    'email.to': ['宛先', 'メール', 'メールアドレス', 'email'],
-    'email.subject': ['件名', 'タイトル'],
-    'email.body': ['本文', '内容'],
-    'tel.tel': ['電話', '電話番号', '連絡先', 'tel'],
-    'sms.tel': ['送信先', '電話', '電話番号', 'tel'],
-    'sms.msg': ['本文', 'メッセージ'],
-    'wifi.ssid': ['ssid', 'ネットワーク名', 'ネットワーク', 'ネットワーク名ssid'],
-    'wifi.pass': ['パスワード', 'password', 'pass', 'キー'],
-    'wifi.enc': ['暗号化', '暗号化方式', '認証方式', 'セキュリティ'],
-    'wifi.hidden': ['ステルス', 'ステルスssid', '非公開'],
-    'vcard.last': ['姓', '名字', '苗字'],
-    'vcard.first': ['名', '下の名前'],
-    'vcard.org': ['会社', '組織', '会社名', '所属', '会社組織'],
-    'vcard.title': ['役職', '肩書', '肩書き'],
-    'vcard.tel': ['電話', '電話番号', '携帯'],
-    'vcard.email': ['メール', 'メールアドレス', 'email'],
-    'vcard.url': ['サイト', 'url', 'ホームページ'],
-    'vcard.note': ['メモ', '備考'],
-    'geo.lat': ['緯度', 'lat'],
-    'geo.lng': ['経度', 'lng', 'lon', 'longitude'],
-    'crypto.addr': ['アドレス', '請求書', 'address', 'アドレス請求書'],
-    'crypto.amount': ['金額', 'amount', '金額btc'],
-    'crypto.label': ['ラベル', 'label']
-  };
-
   function bulkNorm(v) {
     return String(v == null ? '' : v).trim().toLowerCase()
       .split(' ').join('').split('　').join('');
   }
 
   // 見出しの名前で当たりを付ける。合わなければ空を返して「固定」のままにする。
-  function bulkGuessColumn(type, field) {
+  function bulkGuessColumn(field) {
     const head = bulkHeadRow();
     if (!head.length) return '';
     const want = [field.label, field.k]
-      .concat(BULK_ALIAS[bulkMapKey(type, field)] || []).map(bulkNorm);
+      .concat((field.bulk && field.bulk.aliases) || []).map(bulkNorm);
     for (let i = 0; i < head.length; i++) {
       const name = bulkNorm(head[i]);
       if (name && want.indexOf(name) >= 0) return String(i);
@@ -3618,7 +3657,7 @@
       // 何も当てないと全行が同じ絵になるので、頭の1項目だけ1列目を指しておく。
       // 選択肢やチェックの項目を指しても意味が通らないので、文字の項目から選ぶ。
       const fallback = f === firstText ? '0' : BULK_NONE;
-      sel.value = has ? keep : (bulkGuessColumn(type, f) || fallback);
+      sel.value = has ? keep : (bulkGuessColumn(f) || fallback);
       // 列がまだ1本も無いときは、どの値も選べない。空のままにしない。
       if (sel.selectedIndex < 0) sel.value = BULK_NONE;
       bulkMap[key] = sel.value;
@@ -3653,25 +3692,6 @@
   const BULK_TRUE = ['true', '1', 'yes', 'y', 'on', 'はい', 'オン', 'あり', '○'];
   const BULK_FALSE = ['false', '0', 'no', 'n', 'off', 'いいえ', 'オフ', 'なし', '×'];
 
-  // 選択式の別名。人が手で打つ以上、正式な綴りだけを通しても取りこぼす。
-  // キーは「種類.項目.選択肢の値」。ここに無い綴りは通さず、行ごと止める。
-  const BULK_OPTION_ALIAS = {
-    'wifi.enc.WPA': ['wpa2', 'wpa3', 'wpa/wpa2', 'wpa2psk', 'wpa2-psk', 'wpapsk', 'wpa2personal'],
-    'wifi.enc.nopass': ['オープン', 'open', 'none', '無し', 'なし', 'パスワードなし', 'フリー', 'free'],
-    'sns.platform.x': ['twitter', 'ツイッター', 'ツイート', 'エックス'],
-    'sns.platform.instagram': ['インスタ', 'インスタグラム', 'ig'],
-    'sns.platform.youtube': ['yt', 'ユーチューブ'],
-    'sns.platform.line': ['ライン'],
-    'sns.platform.tiktok': ['ティックトック', 'ティクトク'],
-    'sns.platform.facebook': ['fb', 'フェイスブック'],
-    'sns.platform.threads': ['スレッズ'],
-    'sns.platform.bluesky': ['ブルースカイ', 'bsky'],
-    'vcard.format.vcard': ['vcard', 'ブイカード', '標準'],
-    'vcard.format.mecard': ['mecard', 'ミーカード'],
-    'crypto.chain.bitcoin': ['btc', 'ビットコイン', 'オンチェーン'],
-    'crypto.chain.lightning': ['ln', 'ライトニング', 'lnurl']
-  };
-
   // その項目で選べる値。画面のドロップダウンに出ているものと同じ。
   // 「WPA / WPA2 / WPA3」のように選択肢の名前自体に区切り記号が入るので、
   // 中黒で並べるとどこで切れるのか読めない。1つずつ括ってから並べる。
@@ -3681,7 +3701,7 @@
 
   // 突き合わせの結果。ok が false の行は作らない。黙って既定値に倒すと、
   // 形としては正しいQRができてしまい、刷ってから間違いに気づくことになる。
-  function bulkCoerce(type, field, raw, fallback) {
+  function bulkCoerce(field, raw, fallback) {
     const s = String(raw == null ? '' : raw).trim();
     if (field.type === 'checkbox') {
       const k = bulkNorm(s);
@@ -3698,7 +3718,7 @@
       let hit = opts.find(o => bulkNorm(o[0]) === k || bulkNorm(o[1]) === k);
       if (!hit) {
         hit = opts.find(o => {
-          const alias = BULK_OPTION_ALIAS[bulkMapKey(type, field) + BULK_DOT + o[0]];
+          const alias = field.bulk && field.bulk.optionAliases && field.bulk.optionAliases[o[0]];
           return alias && alias.some(a => bulkNorm(a) === k);
         });
       }
@@ -3717,7 +3737,7 @@
     type.fields.forEach(f => {
       const col = bulkColumnOf(type, f);
       if (col < 0) return;
-      const got = bulkCoerce(type, f, row[col], base[f.k]);
+      const got = bulkCoerce(f, row[col], base[f.k]);
       vals[f.k] = got.value;
       if (!got.ok) errors.push({ col: col, label: f.label, raw: got.raw, words: got.words });
     });
@@ -3841,9 +3861,9 @@
     }
     try {
       const buf = await file.arrayBuffer();
-      let out, encoding;
       let sheets = [];
-      let pickAt = 0;
+      let at = 0;
+      let rows, encoding;
       if (looksXlsx(buf, file.name)) {
         if (!window.QRXlsx || !window.QRXlsx.canRead()) {
           showToast('この環境ではExcelブックを開けません。CSVで保存し直してください', 'error');
@@ -3854,26 +3874,24 @@
         sheets = book.sheets.filter(sh => !sh.hidden);
         if (!sheets.length) sheets = book.sheets;
         // いま選んでいる種類のタブ → 中身のあるタブ → 先頭、の順で当てる
-        let at = bulkSheetForType(sheets, currentType().name);
+        at = bulkSheetForType(sheets, currentType().name);
         if (at < 0) at = sheets.findIndex(bulkSheetHasData);
         if (at < 0) at = 0;
-        out = { rows: sheets[at].rows };
-        encoding = excelLabel(sheets[at]);
-        pickAt = at;
+        rows = sheets[at].rows;
       } else {
         const parsed = window.QRBulk.decodeText(buf);
-        out = window.QRBulk.parse(parsed.text);
+        rows = window.QRBulk.parse(parsed.text).rows;
         encoding = parsed.encoding;
       }
-      if (!out.rows.length) {
+      if (!rows.length) {
         showToast('ファイルに行がありません', 'error');
         return;
       }
       bulk.sheets = sheets;
-      bulk.sheetAt = pickAt;
-      bulk.rows = out.rows;
       bulk.fileName = file.name;
-      bulk.encoding = encoding;
+      // ブックなら選んだシートを読む（読み込み元の表示もシート名になる）
+      if (sheets.length) bulkUseSheet(at);
+      else Object.assign(bulk, { sheetAt: 0, rows: rows, encoding: encoding });
       // 別のファイルなら列の並びも違う。前の選択は引き継がず、見出しから引き直す
       clearBulkPicked();
       $('bulk-setup').classList.remove('hidden');
@@ -3910,13 +3928,6 @@
     $('bulk-progress-text').textContent = note || (done + ' / ' + total);
   }
 
-  const BULK_FORMATS = {
-    png:  { ext: 'png',  mime: 'image/png',  quality: undefined },
-    avif: { ext: 'avif', mime: 'image/avif' },
-    webp: { ext: 'webp', mime: 'image/webp' },
-    svg:  { ext: 'svg',  mime: '' }
-  };
-
   async function runBulk() {
     if (bulk.running) { bulk.abort = true; return; }
     // 判定待ちや確認ダイアログのあいだに押し直されても、2本目を走らせない
@@ -3933,7 +3944,7 @@
       showToast('CSVの列をひとつも当てていません', 'error');
       return;
     }
-    const fmt = BULK_FORMATS[$('bulk-format').value] || BULK_FORMATS.png;
+    const fmt = EXPORT_FORMATS[$('bulk-format').value] || EXPORT_FORMATS.png;
     // AVIF のエンコードはメインスレッドを止める。可逆の「小ささ優先」は
     // 1枚4秒ほどかかり、そのあいだ「中止」も効かないので、一括では「ふつう」まで。
     const isAvif = fmt.ext === 'avif';
@@ -4037,13 +4048,8 @@
           bulk.abort ? undefined : 'error');
       } else {
         setBulkProgress(use.length, use.length, 'ZIPにまとめています…');
-        // どのファイルが何の中身かを一覧にして同梱する。Excel で開けるよう
-        // BOM を付ける（付けないと日本語が化ける）
-        const csv = manifest.map(r => r.map(csvCell).join(',')).join(CRLF) + CRLF;
-        files.push({
-          name: '一覧.csv',
-          bytes: new TextEncoder().encode(String.fromCharCode(0xFEFF) + csv)
-        });
+        // どのファイルが何の中身かを一覧にして同梱する
+        files.push({ name: '一覧.csv', bytes: new TextEncoder().encode(csvText(manifest)) });
         const zip = window.QRBulk.zip(files);
         saveBlob(zip, 'qr-bulk-' + stamp() + '.zip');
       }
@@ -4084,6 +4090,11 @@
       String.fromCharCode(10), String.fromCharCode(13)];
     const needs = marks.some(m => s.indexOf(m) >= 0);
     return needs ? q + s.split(q).join(q + q) + q : s;
+  }
+
+  // 行の並びを CSV の本文に。Excel で開いたときに日本語が化けないよう BOM を付ける
+  function csvText(rows) {
+    return String.fromCharCode(0xFEFF) + rows.map(r => r.map(csvCell).join(',')).join(CRLF) + CRLF;
   }
 
   function bulkReport(r) {
@@ -4277,7 +4288,32 @@
     });
   }
 
-  // テンプレートから色パネルを起こし、そのスコープ専用に結線する
+  // 色パネルの注記。どのパネルかだけで決まるので、パネルを起こしたときに一度だけ入れる。
+  // 出番のないパネル（白・黒・透明を持たないセルなど）の注記は、枠ごと隠れている。
+  function panelNotices(scope) {
+    const isFrameBd = scope === 'framebd';
+    const plateWord = scope === 'logobd' ? 'ロゴの下地' : isFrameBd ? 'ラベルの下地' : '背景';
+    return {
+      'auto-notice': scope === 'bg'
+        ? 'セルの色設定と連動します。<br>グラデーション・放射・画像・多色のテクスチャが指定の透明度で背景に反映されます。'
+        : (scope === 'frame' || scope === 'eye')
+          ? 'セルの色設定と連動します。<br>多色のときは、3つのマーカーに色が1つずつ振られます。'
+          : 'セルの色設定と連動します。<br>グラデーション・放射・画像の時はセルと一体の連続したテクスチャとして描画されます。',
+      // ロゴは背景の上に載るので模様がつながる。ラベルの帯は背景の外なので、帯の中で塗り直す
+      'bg-notice': isFrameBd
+        ? '背景の色設定と連動します。<br>グラデーション・放射・画像・多色も、透明度を含めて背景と同じ設定でラベルの下地に描画されます。'
+        : '背景の色設定と連動します。<br>グラデーション・放射・画像・多色も、透明度を含めて背景と同じ設定で、背景とつながった模様として描画されます。',
+      'white-notice': plateWord + 'を不透明な白（#FFFFFF）に固定します。',
+      'black-notice': plateWord + 'を不透明な黒（#000000）に固定します。',
+      'none-notice': scope === 'logobd'
+        ? 'ロゴの下地を描きません。<br>セルを消す範囲（下地の形）はそのまま残るので、背景が抜けて見えます。'
+        : isFrameBd
+          ? 'ラベルの下地を描きません。<br>文字やアイコンだけがフレームの上に載ります。'
+          : '背景を透明にします。<br>透過PNGや透過SVGとして背景のない画像を書き出せます。'
+    };
+  }
+
+  // テンプレートから色パネルを起こし、そのスコープ専用の注記を入れる
   function buildColorPanels() {
     const tpl = $('color-panel-tpl');
     if (!tpl) return;
@@ -4285,6 +4321,11 @@
       const host = colorPanel(scope);
       if (!host || host.childElementCount) return;
       host.appendChild(tpl.content.cloneNode(true));
+      const notices = panelNotices(scope);
+      Object.keys(notices).forEach(cid => {
+        const node = cq(scope, cid);
+        if (node) node.innerHTML = notices[cid];
+      });
     });
   }
 
@@ -4536,19 +4577,11 @@
       });
     });
 
-    // ---- ロゴ画像 ----
+    // ---- ロゴ画像・フレーム画像 ----
     wireImageDrop('logo-drop', 'logo-file', IMAGE_TARGETS.logo);
-    wireImageClear('btn-logo-clear', () => {
-      state.style.logo.src = '';
-      state.style.logo.type = 'none';
-    });
-
-    // ---- フレーム画像 ----
+    wireImageClear('btn-logo-clear', () => CONTENT_IMAGE_META.logo.clear(state.style));
     wireImageDrop('frame-image-drop', 'frame-image-file', IMAGE_TARGETS.frame);
-    wireImageClear('btn-frame-image-clear', () => {
-      state.style.frame.src = '';
-      state.style.frame.topSrc = '';
-    });
+    wireImageClear('btn-frame-image-clear', () => CONTENT_IMAGE_META.frame.clear(state.style));
 
     // ---- プレビュー領域への画像ドロップ（選択中の対象画像として反映） ----
     wireImageDrop('canvas-card', null, IMAGE_TARGETS.target);
@@ -4622,12 +4655,13 @@
       openCompress(fmt);
     }
 
-    $('btn-png').addEventListener('click', () => exportRaster('image/png', 'png'));
+    $('btn-png').addEventListener('click', () => exportRaster(EXPORT_FORMATS.png.mime, EXPORT_FORMATS.png.ext));
     $('btn-avif').addEventListener('click', () => toggleCompress('avif'));
     $('btn-webp').addEventListener('click', () => toggleCompress('webp'));
     const btnCompressSave = $('btn-compress-save');
     if (btnCompressSave) btnCompressSave.addEventListener('click', () => {
-      if (compressFor) exportRaster(COMPRESS_MIME[compressFor], compressFor);
+      const fmt = EXPORT_FORMATS[compressFor];
+      if (fmt) exportRaster(fmt.mime, fmt.ext);
     });
     $('btn-svg').addEventListener('click', exportSvg);
     $('btn-copy').addEventListener('click', copyImage);
@@ -4741,23 +4775,17 @@
 
   // 画像の受け口。入り口の検査と後始末は共通で、違うのは「どこに入れるか」
   // だけなので、行き先ごとに apply と label を持たせる。
+  function contentImageTarget(id) {
+    const meta = CONTENT_IMAGE_META[id];
+    return {
+      label: () => meta.label,
+      apply: src => meta.apply(state.style, src)
+    };
+  }
+
   const IMAGE_TARGETS = {
-    logo: {
-      label: () => 'ロゴ画像',
-      apply: src => {
-        state.style.logo.src = src;
-        state.style.logo.type = 'image';
-      }
-    },
-    frame: {
-      label: () => 'フレーム画像',
-      apply: src => {
-        state.style.frame.src = src;
-        state.style.frame.topSrc = src;
-        state.style.frame.contentMode = 'image';
-        state.style.frame.topContentMode = 'image';
-      }
-    },
+    logo: contentImageTarget('logo'),
+    frame: contentImageTarget('frame'),
     // いま触っている色パネルの塗り
     target: {
       label: () => getTargetLabel() + '画像',
@@ -4906,8 +4934,8 @@
   // 起動
   // ------------------------------------------------------------------
   function init() {
-    // 飾りのアイコンは CDN 頼み。取れなかったときにここで転ぶと、
-    // ローカルだけで動くはずの本体まで巻き添えで死ぬ。
+    // 飾りのアイコン（同梱の lucide）。読み込めなかったときにここで転ぶと、
+    // アイコンが無くても動くはずの本体まで巻き添えで止まる。
     if (window.lucide) lucide.createIcons();
     $('currentYear').textContent = new Date().getFullYear();
 

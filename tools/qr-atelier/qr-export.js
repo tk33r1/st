@@ -27,7 +27,7 @@
   //
   // 取れなかったぶんは諦める（書き出し自体は止めず、既定の書体で出る）。
 
-  // Blob を data URL に
+  // Blob / File を data URL に
   function blobToDataUrl(blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -249,6 +249,8 @@
 
   global.QRExport = {
     fontCss: fontCss,
-    rasterize: rasterize
+    rasterize: rasterize,
+    // 画像ファイルの読み込み（app.js）もこれを使う
+    blobToDataUrl: blobToDataUrl
   };
 })(window);

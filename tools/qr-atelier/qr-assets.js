@@ -798,17 +798,7 @@
   // ラベルの横長の帯でも形は伸ばさない。角は高さを基準に正方形のときと同じ形で
   // 描き、長さは辺を延ばして合わせる（花型は花びら、セル枠は粒の数を増やす）。
   // 描き分けは qr-style.js の backdropRectPath と cellsPlate。
-  const BACKDROP_SHAPES = [
-    { id: 'square',   name: '四角' },
-    { id: 'rounded',  name: '角丸' },
-    { id: 'xrounded', name: '丸み強' },
-    { id: 'circle',   name: 'まる' },
-    { id: 'octagon',  name: '八角形' },
-    { id: 'flower',   name: 'フラワー' },
-    { id: 'leaf',     name: 'リーフ' },
-    { id: 'cut',      name: '雫' },
-    { id: 'cells',    name: 'セル枠' }
-  ];
+  const BACKDROP_SHAPES = MARKER_FRAMES.map(shape => ({ id: shape.id, name: shape.name }));
 
   const MARKER_EYES = [
     { id: 'square',   name: '四角' },

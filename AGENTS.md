@@ -28,7 +28,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`dj-audio-analysis.js`（`dj/booth/` 専用。30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ。テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印もここが受け持つので、ページ側に書かない）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`dj-audio-analysis.js`（`dj/booth/` 専用。30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`data/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
@@ -202,7 +202,7 @@
     `src/index.js` の `requestBody` に閉じている。1人格が失敗しても（障害・安全フィルター・キー未設定・時間切れ）
     その人格を `[NO RESPONSE]` にして残りで討議と統合を続け、全員が失敗したときだけエラーにする。
   - 入力は3社すべてに送られる。会社を変えたり足したりしたら、トップページと `magi-app/www/app.js` の
-    「System & Privacy」の送信先・保持・学習利用の説明も直すこと。Gemini は有料枠のキーを使う（無料枠は入力が学習に使われる）。
+    「System & Privacy」の送信先・保持・学習利用の説明も直すこと。Gemini はいま無料枠のキーで動いている（入力が Google の製品改善とモデルの学習に使われ、人が読むこともある）。注意文はそれに合わせてあるので、有料枠に切り替えたら説明も直すこと。
 - **MAGI の人格カード（`data-magi` の目印）**: magi2 の3人格は、固定の骨格プロンプト（personas.js）に
   サイト本文から要約した「いまの中身」を足して動く。元ネタはページ内で `data-magi="<人格>"` を
   付けた要素だけ（`balthasar` = `thought/`、`melchior` = `dj/`・`motovlog/`、`casper` = `job/`）で、

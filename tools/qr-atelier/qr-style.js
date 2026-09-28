@@ -62,8 +62,7 @@
       type: 'none', icon: '', src: '', text: '',
       font: 'sans',
       size: 0.22, pad: 0.14, backdrop: 'rounded',
-      // 下地の塗り。背景と同じ 9 モード（白・黒・透明・セルの色・単色・
-      // 多色・グラデーション・放射・画像）を受け付ける
+      // 下地の塗り。背景のモードに加えて「背景の色に追従」も受け付ける
       backdropPaint: platePaint({ type: 'white', colors: PLATE_COLORS }),
       knockout: true,
       // アイコンの塗り。ここだけ 'brand'（アイコン公式色）を選べる
@@ -139,12 +138,12 @@
   // 種類が消えた古い保存を拾い直す
   const LINE_ALIAS = { doubleBold: 'double', dotted: 'dashed' };
 
-  // マーカーの枠も同じ。旧「ドット枠」は、セルの形で粒を並べる「セル枠」に置き換えた
-  // （同梱のテンプレートも同じ読み替えで移してある）
-  const MARKER_FRAME_ALIAS = { dots: 'cells' };
+  // マーカーの枠と下地で共通。旧「ドット枠」は、セルの形で粒を並べる
+  // 「セル枠」に置き換えた（同梱のテンプレートも同じ読み替えで移してある）
+  const SHAPE_ALIAS = { dots: 'cells' };
 
-  function markerFrameIdOf(id) {
-    return MARKER_FRAME_ALIAS[id] || id;
+  function shapeIdOf(id) {
+    return SHAPE_ALIAS[id] || id;
   }
 
   // 文字の書体。ロゴの文字とフレームのラベルで同じ一覧を使う。
@@ -649,12 +648,7 @@
     return polyPath(pts);
   }
 
-  // 四隅を斜めにカットした八角形（面取り幅 c）
-  function octagonPath(x0, y0, s, c) {
-    return octagonRectPath(x0, y0, s, s, c);
-  }
-
-  // 幅 w・高さ h の矩形の四隅を、同じ幅 c で斜めに落とす
+  // 幅 w・高さ h の矩形の四隅を、同じ幅 c で斜めに落とす（正方形なら八角形）
   function octagonRectPath(x0, y0, w, h, c) {
     const x1 = x0 + w, y1 = y0 + h;
     return polyPath([
@@ -726,7 +720,7 @@
       case 'plus':     return plusPath(cx, cy, s * 0.68, s * 0.3);
       case 'xmark':    return crossPath(cx, cy, s * 0.46, s * 0.2);
       case 'hexagon':  return hexagonPath(cx, cy, s * 0.58);
-      case 'octagon':  return octagonPath(x0, y0, s, s * 0.28);
+      case 'octagon':  return octagonRectPath(x0, y0, s, s, s * 0.28);
       case 'flower':   return flowerPath(cx, cy, s * 0.54);
       case 'classy':   return boxPath(x0, y0, x1, y1, [s / 2, 0, s / 2, 0], [1, 0, 1, 0]);
       case 'classy2':  return boxPath(x0, y0, x1, y1, [0, s / 2, s / 2, s / 2], [0, 1, 1, 1]);
@@ -920,18 +914,39 @@
     return out;
   }
 
+  // 外周だけを暗にした cols×rows の格子に、本体と同じ形のセルを並べたパス。
+  // セル枠（枠線・下地・マーカーの枠）で共通の組み方で、座標は「1セル＝1」の系
+  // （原点 ox, oy）。並べ方を cellsGroupedPath に任せるので、隣を見て形が変わる
+  // 種類（連結・リキッド・サーキット・モザイク）も本体と同じつながり方になる。
+  // cellsGroupedPath は正方の格子を前提にしているので、一辺は長いほうに合わせる
+  // （余りはすべて明のまま）。
+  function ringCellsPath(cols, rows, ox, oy, cell, t) {
+    const N = Math.max(cols, rows);
+    const ring = new Uint8Array(N * N);
+    for (let i = 0; i < cols; i++) {
+      ring[i] = 1;
+      ring[(rows - 1) * N + i] = 1;
+    }
+    for (let j = 1; j < rows - 1; j++) {
+      ring[j * N] = 1;
+      ring[j * N + cols - 1] = 1;
+    }
+    return cellsGroupedPath(ring, N, ox, oy, cell || 'rounded', t, 0, null, 0)[0].d;
+  }
+
+  // 枠線・下地のセル枠の粒の太さ。本体のセルは 100% だと隣とくっついてベタ帯に
+  // 見えるので少し痩せさせ、粒の切れ目を縁の凹みとして見せる
+  function ringCellScale(cellScale) {
+    return Math.max(0.35, Math.min(0.86, (Number(cellScale) || 1) * 0.82));
+  }
+
   // ------------------------------------------------------------------
   // 位置検出パターン（マーカー）
   // ------------------------------------------------------------------
   // 四隅とも同じ丸み
   const all4 = k => [k, k, k, k];
 
-  // スカラップ（花型）の外周パス。マーカーの 7x7 を基準に、辺の長さ s へ伸縮する
-  function scallopPath(x0, y0, s) {
-    return scallopFlowerRect(x0, y0, s, s);
-  }
-
-  // 花型を幅 w・高さ h の札にしたもの。u は短い辺の 1/7 で、四隅の丸み（1u）と
+  // 花型（スカラップ）を幅 w・高さ h の札にしたもの。u は短い辺の 1/7 で、四隅の丸み（1u）と
   // 花びら1枚の幅（約 2.5u）を正方形のときと同じ大きさに保ち、長い辺は花びらの
   // 枚数を増やして埋める（正方形の花型を伸ばすと、花びらが潰れた楕円になる）。
   // 正方形なら各辺2枚・弧の半径 2.8u で、マーカーの花型そのものになる。
@@ -1028,24 +1043,9 @@
       const cols = Math.max(3, Math.round((W - inset * 2) / u));
       const rows = Math.max(3, Math.round((H - inset * 2) / u));
       const x0 = (W - cols * u) / 2, y0 = (H - rows * u) / 2;
-      // 本体のセルは 100% だと隣とくっついてベタ帯に見えるので、枠では少し痩せさせる
-      const t = Math.max(0.35, Math.min(0.86, (Number(o.cellScale) || 1) * 0.82));
-      // 外周だけを暗にした格子を作って渡す。cellsGroupedPath は正方の格子を
-      // 前提にしているので、一辺は長いほうに合わせる（余りはすべて明のまま）。
-      const N = Math.max(cols, rows);
-      const ring = new Uint8Array(N * N);
-      for (let i = 0; i < cols; i++) {
-        ring[i] = 1;
-        ring[(rows - 1) * N + i] = 1;
-      }
-      for (let j = 1; j < rows - 1; j++) {
-        ring[j * N] = 1;
-        ring[j * N + cols - 1] = 1;
-      }
       // 「1セル＝1」で組んでから u 倍する。原点も u で割って渡しておけば、
       // 拡大だけで正しい位置に収まる。
-      const ringD = cellsGroupedPath(ring, N, x0 / u, y0 / u, o.cell || 'rounded', t, 0, null, 0)[0].d;
-      fillD = scalePath(ringD, u);
+      fillD = scalePath(ringCellsPath(cols, rows, x0 / u, y0 / u, o.cell, ringCellScale(o.cellScale)), u);
     } else if (g.key === 'stamp') {
       // ミシン目で縁取った札。地もこの形に切り抜くので、食い込みがそのまま外形になる
       const bite = stampBite(ls, lw);
@@ -1119,7 +1119,7 @@
   // ------------------------------------------------------------------
   // 形はマーカーの枠と同じ 9 種。ただし枠はリング（外形から内側を抜いたもの）
   // なので、下地では同じ輪郭を塗りつぶしで描く。角の丸みの比率はマーカーの枠と
-  // 下地でこの表ひとつを使い（cornerBox）、抜き（knockout）の判定もここから作る。
+  // 下地でこの表ひとつを使い（cornerRect）、抜き（knockout）の判定もここから作る。
   //
   // マーカーの枠の丸みは「読み取り機が1行ずつ走査したときに 1:1:3:1:1 が取れる
   // 範囲」で上限を決めてある。完全な円まで丸めると中心行しか条件を満たさなくなる。
@@ -1136,22 +1136,14 @@
   };
   const OCTAGON_CUT = 0.26;
 
-  // 一辺 s の正方形を、表の比率で角を落とした形。マーカーの枠と下地で共通
-  function cornerBox(x, y, s, style) {
-    return cornerRect(x, y, s, s, style);
-  }
-
-  // 幅 w・高さ h の矩形を、表の比率で角を落とした形。比率は短い辺に掛けるので、
-  // 横長でも角は正方形のときと同じ丸み・欠け方のまま、まっすぐな辺だけが伸びる
+  // 幅 w・高さ h の矩形を、表の比率で角を落とした形。マーカーの枠と下地で共通。
+  // 比率は短い辺に掛けるので、横長でも角は正方形のときと同じ丸み・欠け方のまま、
+  // まっすぐな辺だけが伸びる
   function cornerRect(x, y, w, h, style) {
     const s = Math.min(w, h);
     if (style === 'octagon') return octagonRectPath(x, y, w, h, s * OCTAGON_CUT);
     const c = BACKDROP_CORNERS[style] || BACKDROP_CORNERS.rounded;
     return boxPath(x, y, x + w, y + h, c.map(k => k * s), c.map(k => (k > 0 ? 1 : 0)));
-  }
-
-  function backdropPath(cx, cy, side, style) {
-    return backdropRectPath(cx, cy, side, side, style);
   }
 
   // 幅 w・高さ h の下地（ラベルの帯）。正方形の下地を横へ引き伸ばすと、角の丸みや
@@ -1194,21 +1186,7 @@
     if (maxW && cols * u > maxW + 1e-6) cols = Math.max(minCount, Math.floor(maxW / u + 1e-6));
     const pw = cols * u;
     const x = cx - pw / 2, y = cy - h / 2;
-    // cellsGroupedPath は正方の格子を前提にしているので、一辺は長いほうに合わせる
-    // （余りはすべて明のまま）。枠線のセル枠と同じ組み方
-    const N = Math.max(cols, rows);
-    const ring = new Uint8Array(N * N);
-    for (let i = 0; i < cols; i++) {
-      ring[i] = 1;
-      ring[(rows - 1) * N + i] = 1;
-    }
-    for (let j = 1; j < rows - 1; j++) {
-      ring[j * N] = 1;
-      ring[j * N + cols - 1] = 1;
-    }
-    // 枠線のセル枠と同じく少し痩せさせ、粒の切れ目を縁の凹みとして見せる
-    const t = Math.max(0.35, Math.min(0.86, (Number(o.cellScale) || 1) * 0.82));
-    const ringD = cellsGroupedPath(ring, N, x / u, y / u, o.cell || 'rounded', t, 0, null, 0)[0].d;
+    const ringD = ringCellsPath(cols, rows, x / u, y / u, o.cell, ringCellScale(o.cellScale));
     return {
       w: pw,
       ds: [rectPath(x + u * 0.5, y + u * 0.5, pw - u, h - u, 0), scalePath(ringD, u)]
@@ -1218,7 +1196,7 @@
   // 正方形の下地の形を <path> の d の並びで返す。ふつうは1本で、「セル枠」だけ2本になる。
   //   opts … セル枠のときだけ見る { cell, cellScale }
   function backdropPaths(cx, cy, side, style, opts) {
-    if (style !== 'cells') return [backdropPath(cx, cy, side, style)];
+    if (style !== 'cells') return [backdropRectPath(cx, cy, side, side, style)];
     return cellsPlate(cx, cy, side, side, opts, LOGO_CELLS_MIN).ds;
   }
 
@@ -1296,32 +1274,27 @@
   function markerFramePath(fx, fy, style, opts) {
     if (style === 'cells') {
       // 枠線の「セル枠」と同じ考え方で、外周7マスに本体と同じ形のセルを並べる。
-      // 並べ方は cellsGroupedPath に任せるので、隣を見て形が変わる種類
-      // （連結・リキッド・サーキット・モザイク）も本体と同じつながり方になる。
       const o = opts || {};
-      const ring = new Uint8Array(49);
-      for (let i = 0; i < 7; i++) { ring[i] = 1; ring[42 + i] = 1; }
-      for (let j = 1; j < 6; j++) { ring[j * 7] = 1; ring[j * 7 + 6] = 1; }
       // ここは飾りである前に位置検出パターンなので、外周の枠線とは逆に、
       // 隣とわずかに重なるまで太らせる。粒の間に地色の隙間が空くと
       // 1:1:3:1:1 の走査が途切れ、読み取りが目に見えて落ちる（実測で
       // ドットのセルが 6解像度中 1 まで落ちた）。旧「ドット枠」も直径 1.16
       // モジュールの円を重ねて輪にしていたので、太さの狙いはそれに合わせる。
       const t = Math.max(0.35, Math.min(1.15, (Number(o.cellScale) || 1) * 1.15));
-      return cellsGroupedPath(ring, 7, fx, fy, o.cell || 'rounded', t, 0, null, 0)[0].d;
+      return ringCellsPath(7, 7, fx, fy, o.cell, t);
     }
     if (style === 'flower') {
-      const outer = scallopPath(fx, fy, 7);
+      const outer = scallopFlowerRect(fx, fy, 7, 7);
       const hole = boxPath(fx + 1, fy + 1, fx + 6, fy + 6, [1.4, 1.4, 1.4, 1.4], [1, 1, 1, 1]);
       return outer + hole;
     }
-    return cornerBox(fx, fy, 7, style) + cornerBox(fx + 1, fy + 1, 5, style);
+    return cornerRect(fx, fy, 7, 7, style) + cornerRect(fx + 1, fy + 1, 5, 5, style);
   }
 
   // マーカーの枠を塗った <path>。本番の絵もボタンの見本もここを通す。
   // セル枠は粒を並べるだけで穴を抜かない。evenodd だと重なりが白く抜ける
   function markerFrameMarkup(fx, fy, style, opts, fill) {
-    const id = markerFrameIdOf(style);
+    const id = shapeIdOf(style);
     return '<path d="' + markerFramePath(fx, fy, id, opts) + '" fill="' + fill + '"' +
       (id === 'cells' ? '' : ' fill-rule="evenodd"') + '/>';
   }
@@ -1341,7 +1314,7 @@
       case 'xrounded': return boxPath(x, y, x1, y1, all4(s * 0.34), all4(1));
       case 'circle':   return boxPath(x, y, x1, y1, all4(EYE_R), all4(1));
       case 'hexagon':  return hexagonPath(cx, cy, 1.6);
-      case 'octagon':  return octagonPath(x, y, s, 0.78);
+      case 'octagon':  return octagonRectPath(x, y, s, s, 0.78);
       case 'flower':   return flowerPath(cx, cy, 1.55);
       case 'leaf':     return boxPath(x, y, x1, y1, [EYE_R, 0, EYE_R, 0], [1, 0, 1, 0]);
       case 'cut':      return boxPath(x, y, x1, y1, [0, s * 0.45, s * 0.45, s * 0.45], [0, 1, 1, 1]);
@@ -1497,16 +1470,12 @@
     const type = paint.type;
     let defs = '<clipPath id="' + id + 'c">' + shape + '</clipPath>';
     let fill = '';
-    if (type === 'image') {
-      if (!paint.src) return null;
-      // 倍率つきの升目をそのまま使いたいので、直に <image> を置かずパターン越しに塗る
-      defs += paintDef(paint, id, box);
-      fill = '<path d="' + rectPath(box.x, box.y, box.w, box.h, 0) + '" fill="url(#' + id + ')"/>';
-    } else if (type === 'multi') {
+    if (type === 'multi') {
       const o = opts || {};
       const tile = o.tile || Math.max(0.2, box.w / 6);
       fill = mosaicTiles(box, paint.colors, paint.seed, tile, o.origin, o.seedShift || 103);
-    } else if (type === 'linear' || type === 'radial') {
+    } else if (usesDef(paint) && (type !== 'image' || paint.src)) {
+      // 画像も、倍率つきの升目をそのまま使いたいので、直に <image> を置かずパターン越しに塗る
       defs += paintDef(paint, id, box);
       fill = '<path d="' + rectPath(box.x, box.y, box.w, box.h, 0) + '" fill="url(#' + id + ')"/>';
     } else {
@@ -2325,7 +2294,7 @@
     linePreview: linePreview,
     LINE_STYLES: LINE_STYLES,
     lineIdOf: lineIdOf,
-    markerFrameIdOf: markerFrameIdOf,
+    shapeIdOf: shapeIdOf,
     maxRadius: maxRadius,
     contrastRatio: contrastRatio,
     // 色の分解も app.js（混色・明るさの計算）が同じものを使う。二重に持つと、

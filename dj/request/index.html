@@ -325,7 +325,8 @@
       color: var(--bg);
     }
 
-    .send:disabled {
+    .send:disabled,
+    .composer button:disabled {
       cursor: not-allowed;
       background: transparent;
       border-color: var(--border);
@@ -380,13 +381,8 @@
     }
 
     /* ===== 曲の詳細 ===== */
-    #songEdit {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* 直せなくなったあとも、自分が何を書いたかは読めるようにしておく */
+    /* #mineView: 直せなくなったあとも、自分が何を書いたかは読めるようにしておく */
+    #songEdit,
     #mineView {
       display: flex;
       flex-direction: column;
@@ -560,15 +556,15 @@
       border-radius: 2px;
     }
 
-    .row .ph {
-      width: 44px; height: 44px; border-radius: 2px; display: grid; place-items: center;
-      font-size: 15px;
-    }
-    .cand .ph { width: 56px; height: 56px; border-radius: 2px; display: grid; place-items: center; font-size: 20px; }
+    .row .ph { width: 44px; height: 44px; font-size: 15px; }
+    .cand .ph { width: 56px; height: 56px; font-size: 20px; }
+    .now .ph { width: 72px; height: 72px; font-size: 24px; }
 
     .row .ph,
     .cand .ph,
+    .now .ph,
     .hero .ph {
+      border-radius: 2px; display: grid; place-items: center;
       background: repeating-linear-gradient(45deg, #17171d 0 6px, #121216 6px 12px);
       color: var(--glitch-accent);
     }
@@ -589,10 +585,7 @@
     /* ===== 確認 ===== */
     .hero { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
     .hero img { width: 200px; height: 200px; display: block; background: var(--card); }
-    .hero .ph {
-      width: 200px; height: 200px; border-radius: 2px; display: grid; place-items: center;
-      font-size: 40px;
-    }
+    .hero .ph { width: 200px; height: 200px; font-size: 40px; }
 
     .hero h2 {
       font-weight: 700;
@@ -786,7 +779,8 @@
     /* ===== 一覧見出し。スケジュール表の .section-title に合わせる ===== */
     .boardhead { display: flex; align-items: baseline; gap: 10px; }
 
-    .boardhead h2 {
+    .boardhead h2,
+    .boardhead h3 {
       margin: 0;
       flex: 1;
       font-family: var(--f-dot);
@@ -802,15 +796,7 @@
       color: color-mix(in srgb, var(--glitch-accent) 72%, var(--fg-dim));
     }
 
-    .boardhead h3 {
-      font-family: var(--f-dot);
-      font-weight: 400;
-      font-size: 0.9375rem;
-      letter-spacing: 0.14em;
-      color: var(--muted);
-      margin: 0;
-      flex: 1;
-    }
+    .boardhead h3 { color: var(--muted); }
 
     .fresh {
       font-size: 0.625rem;
@@ -901,21 +887,48 @@
 
     .evrow .chev { color: var(--faint); font-size: 15px; }
 
-    .pasthead { display: flex; align-items: baseline; gap: 10px; }
+    /* 共有と QR のアイコン（枠つきの四角）が並ぶので、文字の下端ではなく中央でそろえる */
+    .pasthead { display: flex; align-items: center; gap: 10px; }
+    .pasthead .iconbtn + .iconbtn { margin-left: -4px; }   /* 2つのアイコンはヘッダーと同じ 6px 間隔に */
 
-    /* いまの回の名前と共有ボタン。一覧のいちばん上に置く */
+    /* いまの回の名前。画面の見出しと違うとき（受付外）だけ、一覧のいちばん上に出す */
     .evbar { display: flex; align-items: center; gap: 10px; }
     .evbar .t { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
 
-    /* 回の共有。見出しの横に置くので、送信ボタンより小さく、枠だけで押せると分かるようにする */
-    .sharebtn {
-      flex: none; align-self: center;
-      border: 1px solid var(--line); border-radius: 0; padding: 5px 10px;
-      font-family: var(--f-dot); font-size: 0.6875rem; letter-spacing: 0.08em; color: var(--fg-dim);
-      white-space: nowrap;
+    /* 回の共有と QR。文字を置かず、見慣れた形のアイコンだけで伝える。
+       何をするボタンかは aria-label と title（マウスを載せたときの札）で補う */
+    .evtools { display: flex; gap: 6px; flex: none; }
+
+    .iconbtn {
+      flex: none; display: grid; place-items: center;
+      width: 36px; height: 36px; padding: 0;
+      border: 1px solid var(--line); border-radius: 0; color: var(--fg-dim);
+      transition: color .15s, border-color .15s, background .15s;
     }
 
-    .sharebtn:hover { border-color: var(--heart-secondary); color: var(--heart-secondary); }
+    .iconbtn:hover { border-color: var(--heart-secondary); color: var(--heart-secondary); }
+    .iconbtn:active { background: color-mix(in srgb, var(--heart-secondary) 14%, transparent); }
+
+    .iconbtn svg {
+      width: 18px; height: 18px; fill: none; stroke: currentColor;
+      stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* QR の切り出しマーカーの芯と、右下のセル。点を四角く打って QR らしく見せる */
+    .iconbtn svg .dot { stroke-width: 2.6; stroke-linecap: square; }
+    .iconbtn svg .mod { stroke-width: 2.2; stroke-linecap: square; }
+
+    /* リンクをコピーできたときの知らせ。画面の下に少しだけ出す */
+    .toast {
+      position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); z-index: 42;
+      transform: translate(-50%, 8px); opacity: 0; visibility: hidden;
+      transition: opacity .2s, transform .2s, visibility 0s .2s;
+      max-width: calc(100% - 32px); padding: 10px 16px;
+      background: var(--card); border: 1px solid var(--heart-secondary); color: var(--fg);
+      font: 12.5px/1.5 var(--f-body); letter-spacing: 0.04em; pointer-events: none;
+    }
+
+    .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity .2s, transform .2s; }
 
     /* 回の QR コード。絵は QR Atelier の描画エンジンで作った PNG をそのまま見せる
        （長押しで保存したときも、保存ボタンと同じ絵になるように） */
@@ -935,9 +948,11 @@
       letter-spacing: 0.08em; color: var(--heart-secondary);
     }
 
+    /* 縦の短い画面（PC のブラウザなど）では枠が高さに収まらない。flex の既定のまま縮めると、
+       画像の枠だけが min-height まで潰れて絵がはみ出し、下の注記が絵に重なる。縮めずに枠ごとスクロールさせる */
+    .qrdlg > * { flex-shrink: 0; }
     .qrdlg .qrimg { display: grid; place-items: center; min-height: 240px; }
     .qrdlg .qrimg img { display: block; width: 100%; height: auto; }
-    .qrdlg .note { margin: 0; }
 
     .pasthead h2 {
       margin: 0;
@@ -1177,13 +1192,6 @@
       border-color: var(--fg);
     }
 
-    .composer button:disabled {
-      cursor: not-allowed;
-      background: transparent;
-      border-color: var(--border);
-      color: rgba(154, 154, 160, 0.45);
-    }
-
     @media (prefers-reduced-motion: reduce) {
       .badge::before { animation: none; }
     }
@@ -1204,6 +1212,15 @@
     <div class="sheet">
       <div class="top">
         <h1 id="evTitle">リクエスト</h1>
+        <!-- いまの回の共有と QR。回のコードが分かってから出す -->
+        <div class="evtools" id="evTools" hidden>
+          <button type="button" class="iconbtn" id="evShare" aria-label="この回を共有" title="この回を共有">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4M8.5 10.5H7a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-1.5"/></svg>
+          </button>
+          <button type="button" class="iconbtn" id="evQR" aria-label="この回の QR コード" title="この回の QR コード">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path class="dot" d="M6.5 6.5h.01M17.5 6.5h.01M6.5 17.5h.01"/><path class="mod" d="M14.5 14.5h.01M20 14.5h.01M17.25 17.25h.01M14.5 20h.01M20 20h.01"/></svg>
+          </button>
+        </div>
         <span class="badge" id="badge">確認中</span>
       </div>
 
@@ -1286,7 +1303,7 @@
               <ul>
                 <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Google Gemini の3社すべて</strong>へ送信されます。</li>
                 <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
-                <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）、Google の有料 Gemini は一定期間記録（製品改善には不使用）、DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
+                <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）。Google の Gemini は無料枠のため、<strong>製品改善とモデルの学習に使われ、人が内容を読むことがあります</strong>。DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
                 <li class="warn">機密情報や個人情報は入力しないでください。</li>
               </ul>
             </div>
@@ -1314,7 +1331,7 @@
           <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
           <button id="chatSend" disabled>送信</button>
         </div>
-        <p class="hint" id="chatHint">AI が挙げた曲は Apple Music で照合しています。照合できなかった曲は、検索して探してください。</p>
+        <p class="hint" id="chatHint">AI が挙げた曲は iTunes Search API で照合しています。照合できなかった曲は、検索して探してください。</p>
       </section>
 
       <!-- 完了 -->
@@ -1344,8 +1361,6 @@
       <section class="pane" id="pane-board">
         <div class="evbar" id="boardBar" hidden>
           <span class="t trunc" id="boardTitle"></span>
-          <button type="button" class="sharebtn" id="boardShare">この回を共有</button>
-          <button type="button" class="sharebtn" id="boardQR">QR</button>
         </div>
         <div id="nowBox"></div>
         <div class="boardhead">
@@ -1369,8 +1384,12 @@
         <div class="pasthead">
           <h2 id="pastTitle"></h2>
           <span class="at" id="pastDate"></span>
-          <button type="button" class="sharebtn" id="pastShare" hidden>共有</button>
-          <button type="button" class="sharebtn" id="pastQR" hidden>QR</button>
+          <button type="button" class="iconbtn" id="pastShare" aria-label="この回を共有" title="この回を共有" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4M8.5 10.5H7a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-1.5"/></svg>
+          </button>
+          <button type="button" class="iconbtn" id="pastQR" aria-label="この回の QR コード" title="この回の QR コード" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path class="dot" d="M6.5 6.5h.01M17.5 6.5h.01M6.5 17.5h.01"/><path class="mod" d="M14.5 14.5h.01M20 14.5h.01M17.25 17.25h.01M14.5 20h.01M20 20h.01"/></svg>
+          </button>
         </div>
         <div class="rows" id="pastRows"></div>
         <p class="note" id="pastNote"></p>
@@ -1427,7 +1446,10 @@
     </div>
   </div>
 
-  <!-- 回の QR コード。「QR」ボタンから開く -->
+  <!-- 共有のボタンは文字を持たないので、リンクをコピーできたことはここで知らせる -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- 回の QR コード。QR のアイコンのボタンから開く -->
   <dialog class="qrdlg" id="qrDlg" aria-labelledby="qrHead">
     <h2 class="qrh" id="qrHead">この回の QR コード</h2>
     <div class="qrimg" id="qrBox"></div>
@@ -1745,10 +1767,10 @@
       });
     }
 
-    function trackHeroHTML(track, allowFree = false) {
-      const free = allowFree && track.isFree;
+    function trackHeroHTML(track) {
+      const free = track.isFree;
       const variant = track.variant ? '<span class="vtag">' + esc(track.variant) + '</span>' : '';
-      return (track.artwork ? '<img src="' + esc(track.artwork) + '" alt="">' : '<div class="ph">♪</div>') +
+      return artHTML(track.artwork) +
         '<h2>' + esc(track.title) + variant + '</h2>' +
         '<div class="a">' + esc(free ? '曲名を調べています' : track.artist) + '</div>' +
         (free ? '' : '<div class="d">' + esc(track.album) + ' · ' + formatDurationMs(track.durationMs) + '</div>');
@@ -2056,7 +2078,6 @@
 
     function rowHTML(s, isMine, past) {
       const played = !!s.playedAt;
-      const at = played ? hhmm(s.playedAt) : '';
       return '<div class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') + '">' +
         '<button type="button" class="rowopen" data-song="' + s.id + '">' + artHTML(s.artwork, true) +
         '<span><span class="t trunc">' + esc(s.title) + '</span>' +
@@ -2065,16 +2086,22 @@
         '<span class="right">' +
         (isMine ? '<span class="mytag">あなた</span>' : '') +
         stateChip(s, '') +
-        (played ? '<span class="at">' + esc(at) + '</span>' : '') +
+        (played ? '<span class="at">' + esc(hhmm(s.playedAt)) + '</span>' : '') +
         (past ? likeStatic(s) : likeHTML(s)) +
         '</span></div>';
     }
 
+    /* 15秒ごとの更新と、一覧を開いたときの読み込みは重なりうる。
+       後から届いた古い応答で新しい表示を戻さないよう、最後に出したものだけを描く */
+    let boardReq = 0;
+
     async function loadBoard() {
+      const req = ++boardReq;
       try {
-        renderBoard(await apiJson('/board'));
+        const d = await apiJson('/board');
+        if (req === boardReq) renderBoard(d);
       } catch {
-        $('#fresh').textContent = '更新できません';
+        if (req === boardReq) $('#fresh').textContent = '更新できません';
       }
     }
 
@@ -2087,7 +2114,7 @@
         artHTML(d.now.artwork) +
         '<span><span class="lab"><span class="eq"><i></i><i></i><i></i><i></i></span>NOW PLAYING</span>' +
         '<span class="t trunc">' + esc(d.now.title) + '</span>' +
-        '<span class="a trunc">' + esc(d.now.artist) + '</span></span>' +
+        '<span class="a trunc">' + esc(d.now.isFree ? '曲名を調べています' : d.now.artist) + '</span></span>' +
         '<span class="chev">›</span></button>'
         : '';
 
@@ -2104,12 +2131,12 @@
 
       // DJ が新しい回を開くと、いまの回だった回が過去に移る。
       // 一覧を開いたままでも入れ替わるよう、回が変わったら引き直す。
-      const code = (d.event && d.event.code) || '';
-      if (code !== boardEvent) { boardEvent = code; pastLoaded = false; }
-      boardTitle = (d.event && d.event.title) || '';
+      if (((d.event && d.event.code) || '') !== boardEvent) pastLoaded = false;
+      setCurrentEvent(d.event);
       // 受付中は画面の見出しが回名なので、同じ名前を二度並べない（受付外の見出しは「リクエスト」）
-      $('#boardTitle').textContent = boardTitle === $('#evTitle').textContent ? '' : boardTitle;
-      $('#boardBar').hidden = !code;
+      const shownTitle = boardTitle === $('#evTitle').textContent ? '' : boardTitle;
+      $('#boardTitle').textContent = shownTitle;
+      $('#boardBar').hidden = !shownTitle;
       loadPastEvents();
 
       lastFetch = Date.now();
@@ -2120,6 +2147,19 @@
        いまの回の下に置く。終わった回は中身が動かないので、一覧も中身も
        一度読めば足りる（15秒ごとの更新には乗せない）。 */
     let boardEvent = '', boardTitle = '', pastLoaded = false;
+
+    /* いまの回（受付中なら /event、受付外なら /board の回）。ヘッダーの共有と QR はこれを使う。
+       受付外でも、終わった直後の回を共有できるようにボタンは出す */
+    function setCurrentEvent(ev) {
+      boardEvent = (ev && ev.code) || '';
+      boardTitle = (ev && ev.title) || '';
+      const label = boardTitle ? '「' + boardTitle + '」' : 'この回';
+      $('#evShare').setAttribute('aria-label', label + 'を共有');
+      $('#evShare').title = label + 'を共有';
+      $('#evQR').setAttribute('aria-label', label + 'の QR コード');
+      $('#evQR').title = label + 'の QR コード';
+      $('#evTools').hidden = !boardEvent;
+    }
 
     function evrowHTML(e) {
       return '<button type="button" class="evrow" data-ev="' + esc(e.code) + '">' +
@@ -2210,17 +2250,19 @@
       } catch { /* アドレスを書き換えられなくても画面は動かす */ }
     }
 
-    // 押したボタンの文言を少しのあいだ差し替える（コピーできたかを知らせる）
-    function flashLabel(btn, text) {
-      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
-      btn.textContent = text;
-      clearTimeout(btn._flash);
-      btn._flash = setTimeout(() => { btn.textContent = btn.dataset.label; }, 2000);
+    // 画面の下に短い知らせを出す（アイコンのボタンは文言を差し替えられないため）
+    let toastTimer = null;
+    function toast(text) {
+      const el = $('#toast');
+      el.textContent = text;
+      el.classList.add('on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('on'), 2200);
     }
 
     /* 共有シートがあれば（主にスマホ）それを開き、無ければ URL をコピーする。
        共有シートを閉じただけ（AbortError）ならコピーに回さない */
-    async function shareEvent(btn, code, text) {
+    async function shareEvent(code, text) {
       const url = eventUrl(code);
       if (navigator.share) {
         try {
@@ -2232,19 +2274,19 @@
       }
       try {
         await navigator.clipboard.writeText(url);
-        flashLabel(btn, 'リンクをコピーしました');
+        toast('リンクをコピーしました');
       } catch {
         window.prompt('このリンクを共有してください', url);
       }
     }
 
-    $('#boardShare').addEventListener('click', (e) => {
-      if (boardEvent) shareEvent(e.currentTarget, boardEvent, (boardTitle || 'DJ') + ' のリクエスト');
+    $('#evShare').addEventListener('click', () => {
+      if (boardEvent) shareEvent(boardEvent, (boardTitle || 'DJ') + ' のリクエスト');
     });
 
     $('#pastShare').addEventListener('click', (e) => {
       const code = $('#pastRows').dataset.ev;
-      if (code) shareEvent(e.currentTarget, code, e.currentTarget.dataset.title + 'でかかった曲');
+      if (code) shareEvent(code, e.currentTarget.dataset.title + 'でかかった曲');
     });
 
     /* 共有リンク（?ev=）から来たとき。受付中のいまの回なら「リクエストする」のまま（呼ぶ側で振り分ける）。
@@ -2442,7 +2484,7 @@
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeQR();
     });
 
-    $('#boardQR').addEventListener('click', () => {
+    $('#evQR').addEventListener('click', () => {
       if (boardEvent) openQR(boardEvent, boardTitle, true);
     });
 
@@ -2496,13 +2538,11 @@
 
     function renderSong() {
       const s = detail.song;
-      const played = !!s.playedAt;
-      const at = played ? hhmm(s.playedAt) : '';
 
       $('#songHero').innerHTML =
-        trackHeroHTML(s, true) +
+        trackHeroHTML(s) +
         '<div class="songstate">' +
-        stateChip(s, ' ' + esc(at)) +
+        stateChip(s, ' ' + esc(hhmm(s.playedAt))) +
         (detail.past ? likeStatic(s) : likeHTML(s)) +
         '</div>';
 
@@ -2596,27 +2636,33 @@
     bindCount($('#mineMsg'), $('#mineMsgCount'), 50, syncMineSave);
     $('#mineName').addEventListener('input', syncMineSave);   // 名前欄は文字数カウンタが無いので直に
 
+    /* 変更・取り下げは、押した時点の曲（opened）に対して行う。応答を待つ間に「戻る」から
+       別の曲を開けるので、応答後に detail を読むと別の曲の鍵を消したり、別の曲名で完了画面を
+       出したりする。画面を動かすのは、まだ同じ曲を開いているときだけ */
     $('#mineSave').addEventListener('click', async () => {
       const btn = $('#mineSave');
       const err = $('#mineErr');
+      const opened = detail;
+      const s = opened.song;
       await withBusy(btn, async () => {
         err.hidden = true;
         try {
-          const d = await apiJson('/songs/' + detail.song.id + '/mine', {
+          const d = await apiJson('/songs/' + s.id + '/mine', {
             method: 'PATCH',
-            headers: bearer(tokenOf(detail.song.id)),
+            headers: bearer(tokenOf(s.id)),
             json: { name: $('#mineName').value, message: $('#mineMsg').value },
           });
-          detail.mine = d.mine;
+          opened.mine = d.mine;
+          if (detail !== opened) return;
           $('#mineName').value = d.mine.name;
           setValue($('#mineMsg'), d.mine.message);
-          const s = detail.song;
           showDone({
             songId: s.id,
             title: '変更しました',
             track: { title: s.title, artist: s.isFree ? '' : s.artist },
           });
         } catch (e) {
+          if (detail !== opened) return;
           if (handleMineLock(e)) return;
           showErr(err, e, '変更できませんでした。もう一度お試しください。');
         }
@@ -2627,14 +2673,18 @@
       if (!confirm('このリクエストを取り下げます。よろしいですか？')) return;
       const btn = $('#mineDrop');
       const err = $('#mineErr');
+      const opened = detail;
+      const id = opened.song.id;
       await withBusy(btn, async () => {
         err.hidden = true;
         try {
-          await apiJson('/songs/' + detail.song.id + '/mine', { method: 'DELETE', headers: bearer(tokenOf(detail.song.id)) });
-          forgetSong(detail.song.id);
+          await apiJson('/songs/' + id + '/mine', { method: 'DELETE', headers: bearer(tokenOf(id)) });
+          forgetSong(id);
+          if (detail !== opened) return;
           stopAudio();
           openBoard();
         } catch (e) {
+          if (detail !== opened) return;
           if (handleMineLock(e)) return;
           showErr(err, e, '取り下げられませんでした。もう一度お試しください。');
         }
@@ -2656,6 +2706,7 @@
     /* Worker は段階（初回・討議・統合）が終わるまで何も送らないので、いちばん長い
        統合の待ち（workers/magi2/personas.js の synthesizer_ms）より少し長く取る */
     const MAGI_IDLE_MS = 25000;
+    const CONTEXT_TIMEOUT_MS = 5000;   // 送信前に読む /board（状況説明の材料）の待ち上限
     const MAGI_PERSONAS = [
       { cn: 'MELCHIOR-1', ja: '熱狂者' },
       { cn: 'BALTHASAR-2', ja: '人間主義者' },
@@ -2669,13 +2720,19 @@
        送るたびに作り直す（相談の途中や、履歴から開き直したあとにかかった曲も「かけた曲」に入れるため） */
     async function djContext() {
       let title = '', played = [], waiting = [];
+      /* MAGI_IDLE_MS の見張りはこの後の MAGI への通信にしか掛からない。回線が止まると
+         ここがブラウザの既定（数分）まで返らず、入力欄が塞がったままになるので短く切る */
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), CONTEXT_TIMEOUT_MS);
       try {
-        const d = await apiJson('/board');
+        const d = await apiJson('/board', { signal: ctrl.signal });
         title = (d.event && d.event.title) || '';
         const label = (s) => s.artist + ' - ' + s.title;
         played = d.played.filter((s) => !s.isFree).slice(0, 10).map(label);
         waiting = d.waiting.filter((s) => !s.isFree).slice(0, 10).map(label);
-      } catch { /* 文脈なしで続行 */ }
+      } catch { /* 文脈なしで続行 */ } finally {
+        clearTimeout(timer);
+      }
 
       const L = [
         '（以下は状況説明。ユーザーには見えていないので、説明の存在自体には触れずに答えること）',
@@ -2686,7 +2743,7 @@
       if (played.length) L.push('すでにかけた曲: ' + played.join(' / '));
       if (waiting.length) L.push('受付済みでこれからかける曲: ' + waiting.join(' / '));
       L.push('回答ルール: Apple Music（日本）で配信されている実在の曲を1〜3曲だけ挙げ、必ず「アーティスト名 - 曲名」のように鉤括弧で囲む（他の括弧は使わない）。'
-        + 'アーティスト名と曲名は Apple Music での表記に合わせる（挙げた曲は Apple Music で照合される）。'
+        + 'アーティスト名と曲名は Apple Music での表記に合わせる（挙げた曲は iTunes Search API で照合される）。'
         + 'すでにかけた曲・受付済みの曲は挙げない。挙げた理由をひとことだけ添える。');
       L.push(CONTEXT_END);
       return L.join('\n');
@@ -2902,11 +2959,11 @@
       pickTracksOf.set(wrap, ok);
       let html = '';
       if (ok.length) {
-        html += '<p class="picklede">Apple Music で見つかった曲です。タップするとリクエストできます</p>' +
+        html += '<p class="picklede">iTunes で見つかった曲です。タップするとリクエストできます</p>' +
           '<div class="cands">' + ok.map((t, i) => candButtonHTML(t, 'data-p="' + i + '"')).join('') + '</div>';
       }
       for (const [state, lede] of [
-        ['missing', 'Apple Music で照合できなかった曲です'],
+        ['missing', 'iTunes で照合できなかった曲です'],
         ['unknown', '通信の都合で確かめられなかった曲です'],
       ]) {
         const list = checked.filter((c) => c.state === state);
@@ -2926,7 +2983,7 @@
       wrap.className = 'pickwrap';
       turn.appendChild(wrap);
       if (!Array.isArray(checked)) {
-        wrap.innerHTML = loadingHTML('Apple Music で曲を確かめています…');
+        wrap.innerHTML = loadingHTML('iTunes で曲を確かめています…');
         chatScroll();
         checked = await checked;
         if (!checked.length) { wrap.remove(); return; }
@@ -3278,7 +3335,7 @@
     });
 
     $('#chatLog').addEventListener('click', (e) => {
-      // Apple Music で見つかった曲はその場で確認画面へ。戻ると相談の同じ位置に帰る
+      // iTunes で見つかった曲はその場で確認画面へ。戻ると相談の同じ位置に帰る
       const c = e.target.closest('.cand[data-p]');
       if (c) {
         toConfirm(pickTracksOf.get(c.closest('.pickwrap'))[+c.dataset.p], null, { pane: 'consult', y: window.scrollY });
@@ -3332,9 +3389,13 @@
           document.title = ev.title + ' - リクエスト';
           $('#badge').textContent = '受付中';
           $('#badge').classList.remove('shut');
+          setCurrentEvent(ev);
           show('search');
         } else {
           closeRequests('受付停止中', 'いまはリクエストの受付時間外のため、相談はお休みしています。次回の受付までお待ちください。');
+          // /event は受付外だと回を返さない。ヘッダーの共有と QR のために、終わった直後の回を /board から引く
+          // （先に一覧が読めていれば、そちらの回のほうが新しいので上書きしない）
+          apiJson('/board').then((d) => { if (!boardEvent) setCurrentEvent(d.event); }).catch(() => { });
         }
       } catch {
         closeRequests('オフライン', 'サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。');
