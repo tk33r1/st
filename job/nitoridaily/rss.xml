@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 28 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 28 Sep 2026 05:00:17 +0900</lastBuildDate>
+    <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 29 Sep 2026 07:28:30 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年9月29日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20260929/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260929/</guid>
+      <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
+      <description>中国では小物中心の小型店を増やし、出店を再拡大する方針が示された。大型店とは異なる立地・需要への対応力を高める動きとして注目される。 店舗の狭い空間をロボット倉庫として活用する実証が始動。売場面積を圧迫せずに在庫機能を持たせられるか、店舗運営と物流の一体化に向けた検証が焦点となる。</description>
+    </item>
     <item>
       <title>2026年9月28日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20260928/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260914/</guid>
       <pubDate>Mon, 14 Sep 2026 08:00:00 +0900</pubDate>
       <description>本日はニトリグループに関する国内・海外の新規ニュース候補がなく、一次情報は生活者発信（X・TikTok）に限定された。経営・商品・出店の新発表がないため、選定はSNSリアル反響2件に集約し、生活者インサイトから示唆を抽出した。 Xでは「Francfrancで買わなくてもよくない？」など他ブランド比較による“デザイン価格比”の再評価が約9,160いいねに到達。SPAの垂直統合が生む価格優位が、専門店の代替という生活者言語で可視化されている。</description>
-    </item>
-    <item>
-      <title>2026年9月13日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20260913/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260913/</guid>
-      <pubDate>Sun, 13 Sep 2026 08:00:00 +0900</pubDate>
-      <description>低価格帯の定番キッチン・食器が生活者の口コミで再評価。洗いやすさ・軽さ・見た目の質感を両立したPB商品が、複数買いと買い替え需要を喚起している。 1,490円のネコクッションなど、感情価値型の低単価商品がSNSで拡散。癒やしやペット文脈が衝動買い・ギフト需要を生み、新規顧客層の開拓につながる。</description>
     </item>
   </channel>
 </rss>
