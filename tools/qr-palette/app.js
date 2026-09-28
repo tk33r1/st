@@ -1,4 +1,4 @@
-/* QR Atelier — 画面まわり
+/* QR Palette — 画面まわり
  *
  * qr-core.js（符号化）と qr-style.js（描画）をつなぎ、入力・デザイン操作・
  * 書き出しを受け持つ。
@@ -17,6 +17,13 @@
   const A = window.QRAssets;
   // 選べる書体は qr-style.js の表がひとつの出どころ。検証もシャッフルもそこから引く。
   const FONTS = window.QRStyle.FONT_KEYS;
+  // 下地（ロゴ・ラベルの後ろに敷く板）の形。マーカーの枠と同じ並びのうち、
+  // qr-style.js が下地として描けるものだけ。「セル枠」は縁に本体と同じ形のセルを
+  // 並べ、内側を四角で埋めた板にする。ラベルの横長の帯でも形は伸ばさず、角は
+  // 高さを基準に正方形のときと同じ形で描いて、長さは辺を延ばして合わせる
+  // （花型は花びら、セル枠は粒の数を増やす）。描き分けは qr-style.js の
+  // backdropRectPath と cellsPlate。
+  const BACKDROP_SHAPES = A.MARKER_FRAMES.filter(shape => window.QRStyle.canDrawBackdrop(shape.id));
 
   // 制御文字はエスケープ表記が化けやすいので、必ずコードポイントから作る。
   const CRLF = String.fromCharCode(13) + String.fromCharCode(10);
@@ -81,7 +88,7 @@
           examples: ['https://example.com/shop-a', 'https://example.com/shop-b', 'https://example.com/shop-c']
         }
       }],
-      init: { url: 'https://tk.st/tools/qr-atelier/' },
+      init: { url: 'https://tk.st/tools/qr-palette/' },
       build: f => normalizeUrl(f.url)
     },
     {
@@ -206,7 +213,7 @@
         // UID は規格上必須。ただし毎回ランダムにすると、色を変えただけで
         // QR の中身まで変わってしまう（payload() は再描画のたびに呼ばれる）。
         // 予定の中身から決まる値にして、同じ予定なら同じ QR になるようにする。
-        L.push('UID:' + eventUid(f, start, end) + '@qr-atelier.tk.st');
+        L.push('UID:' + eventUid(f, start, end) + '@qr-palette.tk.st');
         L.push('SUMMARY:' + vcardEscape(f.title));
         if (start) L.push('DTSTART:' + start);
         if (end) L.push('DTEND:' + end);
@@ -575,7 +582,9 @@
       'グラデーション (' + n + ')';
   }
 
-  const STORE_KEY = 'qr-atelier-v1';
+  const STORE_KEY = 'qr-palette-v1';
+  // 改名前の保存内容も同じオリジンに残っているので、初回だけ拾って移す。
+  const LEGACY_STORE_KEY = 'qr-atelier-v1';
 
   // 受け付ける画像ファイルの上限。
   const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -672,10 +681,12 @@
       // 複製してから消すと、これから捨てる data URL を一度そっくり作り直す
       // ことになる（4MB の画像なら往復で 10MB 級の文字列になる）。
       const drop = new Set();
-      let logoDropped = false;
+      const resets = new Map();   // 持ち主 → { モードのキー: 戻り先 }
       oversizedImageSlots(state.style).forEach(slot => {
         drop.add(slot[0][slot[1]]);
-        if (slot[0] === state.style.logo && slot[1] === 'src') logoDropped = true;
+        if (!slot[2]) return;
+        if (!resets.has(slot[0])) resets.set(slot[0], {});
+        resets.get(slot[0])[slot[2]] = slot[3];
       });
       const json = JSON.stringify(state, function (k, v) {
         // アイコンの実体は QRAssets から引き直せるので覚えない
@@ -683,8 +694,10 @@
         // 入力内容はここで差し替える（パスワードを抜く／丸ごと落とす）
         if (k === 'values' && this === state) return valuesToStore();
         if (typeof v === 'string' && drop.has(v)) return '';
-        // ロゴ本体の画像だけは、消したあと種類も戻さないと空のロゴが残る
-        if (logoDropped && k === 'type' && this === state.style.logo) return 'none';
+        // 落とした画像のモードも dropImageSlot と同じ戻り先へ戻す。「画像」のまま
+        // だと、次に開いたとき空の画像欄が開いて何も描かれない
+        const reset = resets.get(this);
+        if (reset && v === 'image' && Object.prototype.hasOwnProperty.call(reset, k)) return reset[k];
         return v;
       });
       localStorage.setItem(STORE_KEY, json);
@@ -712,7 +725,14 @@
 
   function restore() {
     let raw = null;
-    try { raw = localStorage.getItem(STORE_KEY); } catch (e) { return; }
+    let legacy = false;
+    try {
+      raw = localStorage.getItem(STORE_KEY);
+      if (!raw) {
+        raw = localStorage.getItem(LEGACY_STORE_KEY);
+        legacy = !!raw;
+      }
+    } catch (e) { return; }
     if (!raw) return;
     try {
       const saved = JSON.parse(raw);
@@ -748,6 +768,7 @@
       // 知らない形の id や iconData の引き直しは sanitizeStyle が無条件でやる
       // （保存されたオブジェクトは信用せず、id から毎回引く）ので、ここでは触らない。
       sanitizeStyle(state.style);
+      if (legacy) localStorage.setItem(STORE_KEY, raw);
     } catch (e) { /* 壊れた保存は捨てる */ }
   }
 
@@ -863,6 +884,7 @@
 
     isApplyingHistory = true;
     const prevPresetCategory = state.presetCategory;
+    const prevType = state.type;
     try {
       if (data.type && TYPES.some(t => t.id === data.type)) state.type = data.type;
       if (data.values) {
@@ -883,6 +905,7 @@
 
       buildTypeChips();
       buildTypeFields();
+      if (state.type !== prevType) syncBulkToType();
       rebuildDesignUI();
       // 分類も履歴に乗っているので、見た目も戻す（アイコンのタブは rebuildDesignUI）
       if (state.presetCategory !== prevPresetCategory) {
@@ -1003,7 +1026,7 @@
 
     // ラベルの中身の下地。形は下地用の一覧から選ぶ（旧「ドット枠」はセル枠に読み替える）
     s.frame.backdrop = window.QRStyle.shapeIdOf(s.frame.backdrop);
-    if (!hasId(A.BACKDROP_SHAPES, s.frame.backdrop)) s.frame.backdrop = D.frame.backdrop;
+    if (!hasId(BACKDROP_SHAPES, s.frame.backdrop)) s.frame.backdrop = D.frame.backdrop;
     // 透過は sanitizePaint が埋める（下地は plate なので、未指定は 0＝不透明）
     s.frame.backdropPaint = sanitizePaint(s.frame.backdropPaint, 'framebd', 'none', '#FFFFFF');
 
@@ -1011,7 +1034,7 @@
 
     // ロゴの下地。ラベルの下地と同じ一覧から選ぶ
     s.logo.backdrop = window.QRStyle.shapeIdOf(s.logo.backdrop);
-    if (!hasId(A.BACKDROP_SHAPES, s.logo.backdrop)) s.logo.backdrop = D.logo.backdrop;
+    if (!hasId(BACKDROP_SHAPES, s.logo.backdrop)) s.logo.backdrop = D.logo.backdrop;
     s.logo.backdropPaint = sanitizePaint(s.logo.backdropPaint, 'logobd', 'solid', '#FFFFFF');
 
     // ロゴ本体の塗り。ここだけ 'brand'（アイコンのブランド公式色）を選べる。
@@ -1193,19 +1216,26 @@
         state.type = t.id;
         buildTypeChips();
         buildTypeFields();
-        // 種類ごとのタブが入ったブックなら、その種類のタブへ一緒に移る
-        if (bulk.sheets.length > 1) {
-          const at = bulkSheetForType(bulk.sheets, t.name);
-          if (at >= 0 && at !== bulk.sheetAt) {
-            bulkUseSheet(at);
-            clearBulkPicked();
-          }
-        }
-        bulkRefresh();
+        syncBulkToType();
         update();
       });
       host.appendChild(b);
     });
+  }
+
+  // 「内容」の種類が変わったあと、一括生成の欄（列の割り当て・見本）を合わせ直す。
+  // 種類のボタンのほか、Undo/Redo や「この端末から消す」でも種類は変わるので、
+  // どの経路もここを通す（通さないと、割り当ての欄が前の種類の項目のまま残る）。
+  // 種類ごとのタブが入ったブックなら、その種類のタブへ一緒に移る。
+  function syncBulkToType() {
+    if (bulk.sheets.length > 1) {
+      const at = bulkSheetForType(bulk.sheets, currentType().name);
+      if (at >= 0 && at !== bulk.sheetAt) {
+        bulkUseSheet(at);
+        clearBulkPicked();
+      }
+    }
+    bulkRefresh();
   }
 
   // 見出しの脇に出す要約。形式を選べる種別（連絡先・暗号通貨）は、選んだ
@@ -1381,6 +1411,12 @@
     const thumbStyle = window.QRStyle.merge(window.QRStyle.DEFAULTS, style);
     // テンプレートが余白を指定していないときだけ、見本用に少し詰める
     if (style.margin === undefined) thumbStyle.margin = 3;
+    // マイテンプレートはアイコンの実体（iconData）を持たずに保存してあるので、
+    // id から引き直さないと見本にロゴのアイコンが出ない（ラベルのアイコンは
+    // 描画側が id から引く）
+    if (thumbStyle.logo.type === 'icon') {
+      pickIcon(thumbStyle.logo, 'icon', 'iconData', window.QRStyle.DEFAULTS.logo.icon);
+    }
     const thumb = el('div', { class: 'preset-thumb' });
     try {
       thumb.innerHTML = window.QRStyle.render(previewQR, thumbStyle).svg;
@@ -1490,7 +1526,9 @@
 
     try {
       localStorage.removeItem(STORE_KEY);
+      localStorage.removeItem(LEGACY_STORE_KEY);
       localStorage.removeItem(MY_KEY);
+      localStorage.removeItem(LEGACY_MY_KEY);
     } catch (e) { /* サイトデータが使えない環境。画面だけ戻す */ }
 
     // 画面に出ているものも初期状態へ戻す。ここを残すと、次に何か触った
@@ -1503,6 +1541,7 @@
     closeSaveRow();
     buildTypeChips();
     buildTypeFields();
+    syncBulkToType();
     buildPresetCategoryChips();
     buildPresets();
     // 見た目は「デザインを初期化」と同じ入口で既定へ戻す（組み直しと描き直しまで）
@@ -1514,7 +1553,9 @@
     cancelPendingSave();
     try {
       localStorage.removeItem(STORE_KEY);
+      localStorage.removeItem(LEGACY_STORE_KEY);
       localStorage.removeItem(MY_KEY);
+      localStorage.removeItem(LEGACY_MY_KEY);
     } catch (e) { /* 同上 */ }
 
     showToast('この端末に残していたものを消しました');
@@ -1620,12 +1661,12 @@
       id => { state.style.markerFrame = id; });
 
     // ロゴの下地とラベルの下地は同じ形の一覧から選ぶ。セル枠の見本はセルの形を映す
-    buildShapeGrid('logo-backdrop-grid', A.BACKDROP_SHAPES,
+    buildShapeGrid('logo-backdrop-grid', BACKDROP_SHAPES,
       () => state.style.logo.backdrop,
       id => S.backdropPreview(id, markerPreviewOpts()),
       id => { state.style.logo.backdrop = id; });
 
-    buildShapeGrid('frame-backdrop-grid', A.BACKDROP_SHAPES,
+    buildShapeGrid('frame-backdrop-grid', BACKDROP_SHAPES,
       () => state.style.frame.backdrop,
       id => S.backdropPreview(id, markerPreviewOpts()),
       id => { state.style.frame.backdrop = id; });
@@ -1963,13 +2004,19 @@
   // 取っておく棚と、別の端末や他人へ渡す口をここで用意する。
   // 渡すのはデザインだけで、内容（URL・Wi-Fiのパスワード・連絡先）は
   // 一切入れない。ここが漏れると、保存先を端末内に閉じている意味がなくなる。
-  const MY_KEY = 'qr-atelier-mydesigns-v1';
+  const MY_KEY = 'qr-palette-mydesigns-v1';
+  const LEGACY_MY_KEY = 'qr-atelier-mydesigns-v1';
   const MY_MAX = 24;
-  const DESIGN_KIND = 'qr-atelier-design';
+  const DESIGN_KIND = 'qr-palette-design';
+  const LEGACY_DESIGN_KIND = 'qr-atelier-design';
 
   function loadMyDesigns() {
     try {
-      const raw = localStorage.getItem(MY_KEY);
+      let raw = localStorage.getItem(MY_KEY);
+      if (!raw) {
+        raw = localStorage.getItem(LEGACY_MY_KEY);
+        if (raw) localStorage.setItem(MY_KEY, raw);
+      }
       const list = raw ? JSON.parse(raw) : [];
       return Array.isArray(list) ? list.filter(d => d && d.style && d.name) : [];
     } catch (e) { return []; }
@@ -1986,27 +2033,28 @@
     }
   }
 
+  // 画像をひとつ外し、その画像が無いと描けないモードを、その場所に決めた戻り先へ
+  // 戻す（storedImageSlots の [持ち主, 画像キー, モードキー, 戻り先]）。本体の保存・
+  // マイテンプレート・共有リンクのどれもこの決まりで落とす。何か変えたら true
+  function dropImageSlot(slot) {
+    const owner = slot[0], imageKey = slot[1], modeKey = slot[2];
+    let changed = false;
+    if (owner[imageKey]) { owner[imageKey] = ''; changed = true; }
+    if (modeKey && owner[modeKey] === 'image') { owner[modeKey] = slot[3]; changed = true; }
+    return changed;
+  }
+
   // 覚えるには重すぎる画像を落とす。本体の保存と同じ線を引く。
   function trimStoredImages(st) {
     const slots = oversizedImageSlots(st);
-    slots.forEach(slot => { slot[0][slot[1]] = ''; });
+    slots.forEach(dropImageSlot);
     return slots.length > 0;
   }
 
-  // 画像をすべて外す（リンクに載せるとき用）。落としたあとは、その画像が
-  // 無いと描けないモードも、各スロットに決めた戻り先へ戻す。
+  // 画像をすべて外す（リンクに載せるとき用）
   function stripImages(st) {
     let dropped = false;
-    storedImageSlots(st).forEach(slot => {
-      const owner = slot[0];
-      const imageKey = slot[1];
-      const modeKey = slot[2];
-      if (owner[imageKey]) { owner[imageKey] = ''; dropped = true; }
-      if (modeKey && owner[modeKey] === 'image') {
-        owner[modeKey] = slot[3];
-        dropped = true;
-      }
-    });
+    storedImageSlots(st).forEach(slot => { if (dropImageSlot(slot)) dropped = true; });
     return dropped;
   }
 
@@ -2128,16 +2176,38 @@
     return 'j' + b64urlEncode(bytes);
   }
 
+  // 共有リンクの中身の上限（展開したあとの大きさ）。画像を抜いたデザインは数 KB に
+  // 収まる。数 KB のリンクでも、細工すれば展開して何 GB にもなる（開いたタブが
+  // 固まって落ちる）ので、展開しながら数えて、超えたところで止める。
+  const MAX_DESIGN_BYTES = 1024 * 1024;
+
+  async function inflateDesign(bytes) {
+    const reader = new Blob([bytes]).stream()
+      .pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+    const chunks = [];
+    let total = 0;
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      total += part.value.byteLength;
+      if (total > MAX_DESIGN_BYTES) {
+        try { await reader.cancel(); } catch (e) { /* 大きすぎるのが本来の理由 */ }
+        throw new Error('design too large');
+      }
+      chunks.push(part.value);
+    }
+    return new Uint8Array(await new Blob(chunks).arrayBuffer());
+  }
+
   async function unpackDesign(token) {
     const tag = token.charAt(0);
     const body = b64urlDecode(token.slice(1));
     if (tag === 'z') {
       if (typeof DecompressionStream !== 'function') throw new Error('no inflate');
-      const stream = new Blob([body]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-      const buf = await new Response(stream).arrayBuffer();
-      return JSON.parse(new TextDecoder().decode(buf));
+      return JSON.parse(new TextDecoder().decode(await inflateDesign(body)));
     }
     if (tag !== 'j') throw new Error('unknown tag');
+    if (body.byteLength > MAX_DESIGN_BYTES) throw new Error('design too large');
     return JSON.parse(new TextDecoder().decode(body));
   }
 
@@ -2165,7 +2235,7 @@
     const canWebShare = typeof navigator.share === 'function' && navigator.maxTouchPoints > 0;
     if (canWebShare) {
       try {
-        await navigator.share({ title: 'QR Atelier のデザイン', url: url });
+        await navigator.share({ title: 'QR Palette のデザイン', url: url });
         return;
       } catch (e) {
         // 取り消しは失敗ではないので、何も言わずに引き下がる
@@ -2193,7 +2263,7 @@
     if (hash.slice(0, 3) !== '#d=') return;
     try {
       const doc = await unpackDesign(hash.slice(3));
-      if (!doc || doc.kind !== DESIGN_KIND || !doc.style) throw new Error('bad');
+      if (!doc || (doc.kind !== DESIGN_KIND && doc.kind !== LEGACY_DESIGN_KIND) || !doc.style) throw new Error('bad');
       applyStyle(doc.style, doc.name || '');
       showToast('共有されたデザインを読み込みました');
     } catch (e) {
@@ -3138,11 +3208,16 @@
     return window.QRStyle.embedFontCss(svg, await exportFontCss(state.style));
   }
 
-  // 書き出す SVG 文書。mm 指定のときは mm のまま書き出す。Illustrator や
+  // 印刷の寸法（mm）。画面向け（px）で書き出すときは 0
+  function printWidthMm() {
+    return state.sizeUnit === 'mm' ? state.printMm : 0;
+  }
+
+  // 書き出す SVG 文書。mm を渡したら mm のまま書き出す。Illustrator や
   // InDesign に読ませたときに、拡大率をいじらなくてもその寸法で入る。
-  function svgDocument(svg) {
-    const sized = state.sizeUnit === 'mm'
-      ? window.QRStyle.resizeMm(svg, state.printMm)
+  function svgDocument(svg, mm) {
+    const sized = mm
+      ? window.QRStyle.resizeMm(svg, mm)
       : window.QRStyle.resize(svg, 1024);
     return '<?xml version="1.0" encoding="UTF-8"?>' + String.fromCharCode(10) + sized;
   }
@@ -3378,8 +3453,9 @@
   // 書き出しに失敗したときの言い方。大きな絵は端末の上限にかかっていることが多い
   // （とくに iPhone の Safari は、canvas がおよそ 4096px 四方まで）ので、下げれば
   // 通ることを添える。
-  function exportFailMessage(what) {
-    return outputPx() > 4096
+  //   px … 書き出そうとした画素数
+  function exportFailMessage(what, px) {
+    return px > 4096
       ? what + 'に失敗しました。この端末では大きすぎるようです。寸法か解像度を下げてください'
       : what + 'に失敗しました';
   }
@@ -3402,7 +3478,9 @@
     return new Promise(res => canvas.toBlob(res, mime, q));
   }
 
-  async function exportRaster(mime, ext) {
+  //   fmt … EXPORT_FORMATS の1つ（png / avif / webp）
+  async function exportRaster(fmt) {
+    const mime = fmt.mime, ext = fmt.ext;
     if (!hasPreview()) return;
     if (!(await okToExport())) return;
 
@@ -3436,7 +3514,7 @@
         : 'このブラウザは' + ext.toUpperCase() + 'に対応していないため' +
           realExt.toUpperCase() + 'で保存しました');
     } catch (e) {
-      showToast(exportFailMessage('書き出し'), 'error');
+      showToast(exportFailMessage('書き出し', outputPx()), 'error');
     }
     setStatus('ready', 'idle');
   }
@@ -3444,7 +3522,7 @@
   async function exportSvg() {
     if (!hasPreview()) return;
     if (!(await okToExport())) return;
-    const doc = svgDocument(await withExportFonts(lastSvg));
+    const doc = svgDocument(await withExportFonts(lastSvg), printWidthMm());
     saveBlob(new Blob([doc], { type: 'image/svg+xml;charset=utf-8' }), fileStem() + '.svg');
     flashButtonSuccess($('btn-svg'), '✓ 保存完了');
     showToast('SVGを保存しました');
@@ -3682,9 +3760,14 @@
     });
   }
 
-  // 当てた列がひとつでもあるか。ぜんぶ「固定」だと、同じ絵が行数ぶん出る。
-  function bulkMappedFields(type) {
-    return type.fields.filter(f => bulkColumnOf(type, f) >= 0);
+  // 行の組み立てに使う「内容」の値と、項目ごとに当てた列（type.fields と同じ並び）。
+  // 一括生成は押した時点のものを写して最後まで使う（走っているあいだに画面で
+  // 値や割り当てを触っても、途中の行から中身が変わらないように）。
+  function bulkPlan(type) {
+    return {
+      base: Object.assign({}, state.values[type.id] || {}),
+      cols: type.fields.map(f => bulkColumnOf(type, f))
+    };
   }
 
   // 選択肢とチェックは、CSV に何と書かれていても拾えるようにする。
@@ -3730,12 +3813,12 @@
 
   // 1行ぶんの中身を、画面と同じ build() で組み立てる。
   // 戻りは { text, errors }。errors があれば、その行は作らない。
-  function bulkPayload(type, row) {
-    const base = state.values[type.id] || {};
+  function bulkPayload(type, row, plan) {
+    const base = plan.base;
     const vals = Object.assign({}, base);
     const errors = [];
-    type.fields.forEach(f => {
-      const col = bulkColumnOf(type, f);
+    type.fields.forEach((f, i) => {
+      const col = plan.cols[i];
       if (col < 0) return;
       const got = bulkCoerce(f, row[col], base[f.k]);
       vals[f.k] = got.value;
@@ -3763,7 +3846,8 @@
     const cols = bulkColumns();
     const type = currentType();
     // 組み立ては行ごとに1回だけ。表の赤・全行の点検・1行目の見本で使い回す
-    const built = rows.map(r => bulkPayload(type, r));
+    const plan = bulkPlan(type);
+    const built = rows.map(r => bulkPayload(type, r, plan));
     // 列番号 → 当てた項目名（同じ列を2つの項目に当てることもできる）
     const picked = {};
     type.fields.forEach(f => {
@@ -3934,29 +4018,37 @@
     if (bulk.starting) return;
     const rows = bulkDataRows();
     if (!rows.length) { showToast('読み込んだ行がありません', 'error'); return; }
-    bulk.starting = true;
-    let ok;
-    try { ok = await okToExport(); } finally { bulk.starting = false; }
-    if (!ok) return;
 
+    // ここから先は、押した時点の設定で最後まで作る。走っているあいだも画面は
+    // 触れるので、行ごとに state を読み直すと、途中で誤り訂正や寸法、列の割り当てを
+    // 変えたときに違う設定の絵が1つの ZIP に混ざる。
     const type = currentType();
-    if (!bulkMappedFields(type).length) {
+    const plan = bulkPlan(type);
+    // 当てた列がひとつも無いと、同じ絵が行数ぶん出る
+    if (!plan.cols.some(c => c >= 0)) {
       showToast('CSVの列をひとつも当てていません', 'error');
       return;
     }
+    const qrOpts = { ec: state.ec, minVersion: state.minVersion };
+    const px = outputPx();
+    const printMm = printWidthMm();
+    const headOffset = bulkUseHeader() ? 2 : 1;
     const fmt = EXPORT_FORMATS[$('bulk-format').value] || EXPORT_FORMATS.png;
     // AVIF のエンコードはメインスレッドを止める。可逆の「小ささ優先」は
     // 1枚4秒ほどかかり、そのあいだ「中止」も効かないので、一括では「ふつう」まで。
     const isAvif = fmt.ext === 'avif';
     const bulkAvif = Object.assign(avifOptions(), { effort: Math.min(state.effort, 2) });
+    // デザインは全行で同じ。フレームの文字も、画面で入れた値のまま出る
+    // （merge は入れ子まで写す）
+    const baseStyle = window.QRStyle.merge(window.QRStyle.DEFAULTS, state.style);
 
     const over = rows.length > BULK_MAX ? rows.length - BULK_MAX : 0;
     const use = over ? rows.slice(0, BULK_MAX) : rows;
 
-    // デザインは全行で同じ。フレームの文字も、画面で入れた値のまま出る。
-    // 走っているあいだに画面で色を触っても途中から変わらないよう、押した時点の
-    // ものを丸ごと写して使う（merge は入れ子まで写す）
-    const baseStyle = window.QRStyle.merge(window.QRStyle.DEFAULTS, state.style);
+    bulk.starting = true;
+    let ok;
+    try { ok = await okToExport(); } finally { bulk.starting = false; }
+    if (!ok) return;
 
     const btn = $('btn-bulk-run');
     bulk.running = true;
@@ -3972,7 +4064,6 @@
     const failed = [];    // 入りきらなかった行
     const invalid = [];   // 選べない値が書かれていた行（{ line, label, raw, words }）
     const take = window.QRBulk.nameTaker();
-    const headOffset = bulkUseHeader() ? 2 : 1;
     const digits = String(use.length).length;
     const pad = n => String(n).padStart(digits, '0');
     const manifest = [['行', 'ファイル名', '中身']];
@@ -3994,7 +4085,7 @@
         }
         const row = use[i];
         const lineNo = i + headOffset;
-        const built = bulkPayload(type, row);
+        const built = bulkPayload(type, row, plan);
         // 選べない値は、黙って既定値に倒さない。形の正しいQRができてしまうと、
         // 読み取り検査も通り、刷ってから気づくことになる。
         if (built.errors.length) {
@@ -4012,7 +4103,7 @@
 
         let qr;
         try {
-          qr = window.QRCore.encode(text, { ec: state.ec, minVersion: state.minVersion });
+          qr = window.QRCore.encode(text, qrOpts);
         } catch (e) {
           failed.push(lineNo);
           continue;
@@ -4026,9 +4117,9 @@
         let bytes;
         if (fmt.ext === 'svg') {
           // 1枚ずつの書き出しと同じく、mm 指定ならその寸法で出す
-          bytes = new TextEncoder().encode(svgDocument(svg));
+          bytes = new TextEncoder().encode(svgDocument(svg, printMm));
         } else {
-          const canvas = await rasterize(svg, outputPx(), null);
+          const canvas = await rasterize(svg, px, null);
           const blob = await encodeCanvas(canvas, fmt.mime, bulkAvif);
           if (!blob) { failed.push(lineNo); continue; }
           bytes = new Uint8Array(await blob.arrayBuffer());
@@ -4062,7 +4153,7 @@
     } catch (e) {
       showToast(String(e && e.message) === 'zip too large'
         ? 'ZIPが大きすぎます。サイズを下げるか、行を分けてください'
-        : exportFailMessage('一括生成'), 'error');
+        : exportFailMessage('一括生成', px), 'error');
     } finally {
       bulk.running = false;
       bulk.abort = false;
@@ -4072,10 +4163,7 @@
     }
   }
 
-  // CSV のセル。区切り・引用符・改行が入っていたら引用符でくるむ
-  // 区切りの見分けは引用符の外だけを数えるので、「;」やタブを含むセルも
-  // 囲んでおく。囲まないと WIFI: の「;」だらけの行がセミコロン区切りに
-  // 見えてしまい、読み直したときに列がばらばらになる。
+  // 表計算ソフトで開く一覧の中身。数式として評価されないようにする
   function spreadsheetText(v) {
     const s = String(v == null ? '' : v);
     // 引用符で囲むだけでは Excel 等の数式評価は止まらない。先頭の空白を
@@ -4083,6 +4171,10 @@
     return (/^[\u0000-\u0020]*[=+\-@]/.test(s) || /^[\t\r\n]/.test(s)) ? "'" + s : s;
   }
 
+  // CSV のセル。区切り・引用符・改行が入っていたら引用符でくるむ
+  // 区切りの見分けは引用符の外だけを数えるので、「;」やタブを含むセルも
+  // 囲んでおく。囲まないと WIFI: の「;」だらけの行がセミコロン区切りに
+  // 見えてしまい、読み直したときに列がばらばらになる。
   function csvCell(v) {
     const s = String(v == null ? '' : v);
     const q = String.fromCharCode(34);
@@ -4655,13 +4747,13 @@
       openCompress(fmt);
     }
 
-    $('btn-png').addEventListener('click', () => exportRaster(EXPORT_FORMATS.png.mime, EXPORT_FORMATS.png.ext));
+    $('btn-png').addEventListener('click', () => exportRaster(EXPORT_FORMATS.png));
     $('btn-avif').addEventListener('click', () => toggleCompress('avif'));
     $('btn-webp').addEventListener('click', () => toggleCompress('webp'));
     const btnCompressSave = $('btn-compress-save');
     if (btnCompressSave) btnCompressSave.addEventListener('click', () => {
       const fmt = EXPORT_FORMATS[compressFor];
-      if (fmt) exportRaster(fmt.mime, fmt.ext);
+      if (fmt) exportRaster(fmt);
     });
     $('btn-svg').addEventListener('click', exportSvg);
     $('btn-copy').addEventListener('click', copyImage);

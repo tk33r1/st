@@ -339,8 +339,8 @@ const CARDS = [
   },
 
   {
-    slug: 'qr-atelier', out: 'images/ogp/qr-atelier-ogp.png', cat: 'generator',
-    h1: 'QR<br>Atelier',
+    slug: 'qr-palette', out: 'images/ogp/qr-palette-ogp.png', cat: 'generator',
+    h1: 'QR<br>Palette',
     sub: 'セル・マーカー・色・ロゴまで。<br>おしゃれなQRコードを、無料で。',
     chips: ['デザイン28種', 'セル16種', 'グラデーション', 'SVG書き出し'],
     css: `

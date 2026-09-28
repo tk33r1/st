@@ -28,7 +28,7 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ。テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印もここが受け持つので、ページ側に書かない）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Atelier は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`dj-audio-analysis.js`（`dj/booth/` 専用。30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
+| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ。テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印もここが受け持つので、ページ側に書かない）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Palette は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`dj-audio-analysis.js`（`dj/booth/` 専用。30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
 | `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`data/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
@@ -131,7 +131,7 @@
   入れない（GTM 側で `tk.st/tools/` を除外済み。セッション記録が入力や QR の中身まで送っていた。
   除外が外れても CSP が止める）。Ahrefs は `analytics.ahrefs.com` を script-src と connect-src に許し、GTM の直後の
   インラインスクリプトから読み込む。Ahrefs は URL を丸ごと送るので、`data-page-location` にパスとクエリだけを渡して
-  `#` 以降（QR Atelier の共有デザイン `#d=` など）を載せない。
+  `#` 以降（QR Palette の共有デザイン `#d=` など）を載せない。
   - ページの注記・FAQ・構造化データでも説明している。CSP が保証するのは「読み込みと送信の通信先」まで
     （ページの移動や、許した送り先へ何を載せるかは縛れない）なので、「どんな不具合があっても送れない」の
     ような言い方はしない。「中身を送る処理を持たない」＋「通信先を制限している」の2段で書く。
@@ -140,7 +140,7 @@
     25MB を超えるファイル（FFmpeg のコア wasm）は分割して置き、`STCommon.fetchVerified` が `SOURCES.json` の
     `split` を読んでつなぎ、SHA-256 を照合する。
   - CSP は `'unsafe-eval'` を許していない。文字列からコードを作る古い Emscripten 出力（heic2any の libheif、
-    QR Atelier の OpenCV WeChat）は `.github/scripts/vendor/patches.js` の置き換えで同じ働きのクロージャに
+    QR Palette の OpenCV WeChat）は `.github/scripts/vendor/patches.js` の置き換えで同じ働きのクロージャに
     直してあり、`fetch-vendor.js` が取り込みのたびに当てる。`--check` は同梱の JS 全体を調べ、理由を書いて
     許したもの（`DYNAMIC_OK`）以外に文字列からコードを作る処理が見つかったら止まる。ライブラリを足したら必ず走らせる。
   - `data/vendor/`・`data/fonts/` は `.gitattributes` で改行変換を止めている（記録した SHA-256 と食い違うため）。

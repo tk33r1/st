@@ -1,7 +1,7 @@
-/* QR Atelier — 書き出し（フォントの埋め込みと画像化）
+/* QR Palette — 書き出し（フォントの埋め込みと画像化）
  *
  * QRStyle.render が返す SVG を、画像として書き出せる形に仕上げる。
- * QR Atelier の書き出しと、ほかのページ（dj/request の回の QR など）で同じものを使う。
+ * QR Palette の書き出しと、ほかのページ（dj/request の回の QR など）で同じものを使う。
  * 二か所に写しを持つと、予熱や unicode-range の解釈を直したときに片方だけ残る。
  *
  *   const css = await QRExport.fontCss(style);            // いまの絵で使う字のフォント

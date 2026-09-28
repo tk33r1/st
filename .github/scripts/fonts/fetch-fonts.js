@@ -4,7 +4,7 @@
  *   node .github/scripts/fonts/fetch-fonts.js
  *
  * Google Fonts をページから直接読むと、画面に出した字（＝使う人が打った字）に
- * 応じて字の範囲ごとのファイルを Google へ取りに行く。QR Atelier の書き出しは
+ * 応じて字の範囲ごとのファイルを Google へ取りに行く。QR Palette の書き出しは
  * さらに、ラベルの字そのものを問い合わせていた。どちらも「アップロードなし」と
  * 並べるには苦しいので、Google が配っている分割済みのファイルをそのまま手元に置く。
  *
@@ -17,7 +17,7 @@
  *   data/fonts/<書体>/OFL.txt  … ライセンス（どれも SIL Open Font License 1.1）
  *   data/fonts/<CSS名>.css     … ページが読む @font-face（下の CSS_FILES の単位）
  *
- * 書き出し（QR Atelier）は別の索引を持たず、ページが読み込んだこの CSS の
+ * 書き出し（QR Palette）は別の索引を持たず、ページが読み込んだこの CSS の
  * @font-face をそのまま引く。索引を別に作ると、CSS と食い違ったときに気づけない。
  *
  * 書体や太さを足すときは FAMILIES に足して実行し直す。同じファイルは取り直さない。
@@ -48,7 +48,7 @@ const FAMILIES = [
 
 const CSS_FILES = {
   ui: '画面の文字（SAFE TOOLS 共通の Inter と JetBrains Mono）',
-  jp: '日本語の書体（QR Atelier のラベルと文字ロゴ）'
+  jp: '日本語の書体（QR Palette のラベルと文字ロゴ）'
 };
 
 async function get(url, binary) {

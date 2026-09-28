@@ -930,7 +930,7 @@
 
     .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity .2s, transform .2s; }
 
-    /* 回の QR コード。絵は QR Atelier の描画エンジンで作った PNG をそのまま見せる
+    /* 回の QR コード。絵は QR Palette の描画エンジンで作った PNG をそのまま見せる
        （長押しで保存したときも、保存ボタンと同じ絵になるように） */
     .qrdlg {
       /* margin は共通のリセットで 0 になっているので、auto に戻して画面の中央に置く */
@@ -2146,13 +2146,14 @@
     /* ── 過去のイベント ─────────────────────
        いまの回の下に置く。終わった回は中身が動かないので、一覧も中身も
        一度読めば足りる（15秒ごとの更新には乗せない）。 */
-    let boardEvent = '', boardTitle = '', pastLoaded = false;
+    let boardEvent = '', boardTitle = '', boardAt = '', pastLoaded = false;
 
     /* いまの回（受付中なら /event、受付外なら /board の回）。ヘッダーの共有と QR はこれを使う。
        受付外でも、終わった直後の回を共有できるようにボタンは出す */
     function setCurrentEvent(ev) {
       boardEvent = (ev && ev.code) || '';
       boardTitle = (ev && ev.title) || '';
+      boardAt = (ev && ev.at) || '';
       const label = boardTitle ? '「' + boardTitle + '」' : 'この回';
       $('#evShare').setAttribute('aria-label', label + 'を共有');
       $('#evShare').title = label + 'を共有';
@@ -2211,6 +2212,7 @@
         $('#pastShare').dataset.title = d.event.title + '（' + ymd(d.event.at) + '）';
         $('#pastShare').hidden = false;
         $('#pastQR').dataset.title = d.event.title;
+        $('#pastQR').dataset.at = d.event.at;
         $('#pastQR').hidden = false;
         $('#pastRows').innerHTML = d.played.length
           ? d.played.map((x) => rowHTML(x, ids.has(x.id), true)).join('')
@@ -2305,17 +2307,17 @@
     }
 
     /* ── 回の QR コード ───────────────────────
-       中身は共有と同じ ?ev= 付きの URL。絵は QR Atelier（tools/qr-atelier/）の
+       中身は共有と同じ ?ev= 付きの URL。絵は QR Palette（tools/qr-palette/）の
        エンコーダと描画エンジンをそのまま読み込んで作る。デザインは下の QR_STYLE に固定で持ち、
-       上部のラベルにだけ回の名前を差し込む。キーと値は QR Atelier の画面の項目と対応している
+       上部のラベルに回の名前、下部に開いた日を差し込む。キーと値は QR Palette の画面の項目と対応している
        （qr-style.js の DEFAULTS が正。ここに書いていない項目は既定値のまま）。
        ライブラリとフォントは、押されたときに初めて読む（リクエストするだけの人には要らない）。 */
-    const QR_LIB = '../../tools/qr-atelier/';
-    // 描画に要る QR Atelier のファイル。この順に実行する（qr-export は qr-style を使う）
+    const QR_LIB = '../../tools/qr-palette/';
+    // 描画に要る QR Palette のファイル。この順に実行する（qr-export は qr-style を使う）
     const QR_FILES = ['qr-core.js', 'qr-assets.js', 'qr-style.js', 'qr-export.js'];
     const QR_FONT_CSS = '../../data/fonts/jp.css';
     const QR_PX = 1024;          // 書き出す PNG の横幅
-    const QR_LABEL_MAX = 24;     // QR Atelier のラベル欄の上限と同じ
+    const QR_LABEL_MAX = 24;     // QR Palette のラベル欄の上限と同じ
 
     const QR_STYLE = {
       cell: 'heart', cellScale: 0.9, cellJitter: 0.5,          // セル: ハート・太さ90%・バラつき50%
@@ -2330,8 +2332,9 @@
         type: 'icon', icon: 'bi-music-note-beamed', paint: { type: 'auto' },
         size: 0.14, pad: 0.02, backdrop: 'square', backdropPaint: { type: 'bg' },
       },
-      frame: {                                                   // フレームと文字: 上部のラベル
-        type: 'label', pos: 'top', contentMode: 'text', text: '', font: 'rounded',
+      frame: {                                                   // フレームと文字: 上下のラベル
+        type: 'label', pos: 'both', contentMode: 'text', text: '',
+        topContentMode: 'text', textTop: '', font: 'rounded',
         textPaint: { type: 'solid', color: '#FFFFFF', transparency: 0 },
         contentSize: 0.8, contentPad: 0.4,
         paint: { type: 'linear', from: '#37F2E6', mid: '', to: '#FF2F6E', angle: 45, transparency: 0 },
@@ -2339,23 +2342,25 @@
       },
     };
 
-    /* 回の名前をラベルに差し込む。名前が無ければラベルごと外す（文字の無い帯だけが出るため）。
-       アイコンは id だけでは描かれないので、QR Atelier と同じく同梱一覧の実体（iconData）を組で渡す。
+    /* 回の名前を上、開いた日を下のラベルに差し込む。両方とも無ければ
+       ラベルごと外す（文字の無い帯だけが出るため）。
+       アイコンは id だけでは描かれないので、QR Palette と同じく同梱一覧の実体（iconData）を組で渡す。
        id が一覧から消えていたらロゴを外して描き、コンソールに知らせる（QR 自体は読めるので止めない） */
-    function qrStyleFor(title) {
+    function qrStyleFor(title, at) {
       const chars = Array.from(String(title || '').trim());
       const label = chars.length > QR_LABEL_MAX ? chars.slice(0, QR_LABEL_MAX - 1).join('') + '…' : chars.join('');
+      const date = ymd(at);
       const icon = window.QRAssets.ICONS.find((i) => i.id === QR_STYLE.logo.icon);
       if (!icon) console.warn('QR のロゴのアイコンが見つかりません: ' + QR_STYLE.logo.icon);
       return {
         ...QR_STYLE,
         logo: icon ? { ...QR_STYLE.logo, iconData: icon } : { type: 'none' },
-        frame: label ? { ...QR_STYLE.frame, text: label } : { type: 'none' },
+        frame: label || date ? { ...QR_STYLE.frame, textTop: label, text: date } : { type: 'none' },
       };
     }
 
-    /* QR Atelier のファイルは、毎回サーバーに新しいかを確かめて（cache: 'no-cache'。変わっていなければ
-       304 で中身は来ない）から実行する。こちらで版の番号を持つと、QR Atelier を直したときに上げ忘れて、
+    /* QR Palette のファイルは、毎回サーバーに新しいかを確かめて（cache: 'no-cache'。変わっていなければ
+       304 で中身は来ない）から実行する。こちらで版の番号を持つと、QR Palette を直したときに上げ忘れて、
        古いファイルと新しいファイルが混ざりうる。取得は並べ、実行は QR_FILES の順に1本ずつ。
        実行できたファイルは覚えておき、失敗したファイル（とその後ろ）だけを次に押したときに読み直す
        （実行済みのファイルをもう一度実行しない） */
@@ -2385,16 +2390,16 @@
       }));
     }
 
-    // 同じ回・同じ名前なら作り直さない（失敗したものは覚えない）。
-    // ラベルの字のフォント埋め込みと画像化は QR Atelier の書き出しと共用（qr-export.js）。
+    // 同じ回・同じ名前・同じ日付なら作り直さない（失敗したものは覚えない）。
+    // ラベルの字のフォント埋め込みと画像化は QR Palette の書き出しと共用（qr-export.js）。
     // フォントの CSS はこのページが読み込んでいないので、場所を渡す
     const qrCache = new Map();
-    function eventQR(code, title) {
-      const key = code + '|' + title;
+    function eventQR(code, title, at) {
+      const key = JSON.stringify([code, title, at]);
       if (!qrCache.has(key)) {
         qrCache.set(key, (async () => {
           await loadQRLibs();
-          const style = qrStyleFor(title);
+          const style = qrStyleFor(title, at);
           const qr = window.QRCore.encode(eventUrl(code), { ec: 'H', minVersion: 1 });
           const css = await window.QRExport.fontCss(style, { cssUrl: QR_FONT_CSS });
           const canvas = await window.QRExport.rasterize(window.QRStyle.embedFontCss(window.QRStyle.render(qr, style).svg, css), QR_PX);
@@ -2426,7 +2431,7 @@
       dropShownQR();
     });
 
-    async function openQR(code, title, current) {
+    async function openQR(code, title, at, current) {
       const req = ++qrReq;
       const dlg = $('#qrDlg');
       dropShownQR();   // 開き直したときは、上の close より先にここで前の絵を手放す
@@ -2440,7 +2445,17 @@
       $('#qrShareImg').hidden = true;
       if (!dlg.open) dlg.showModal();
       try {
-        const png = await eventQR(code, title);
+        // Worker と静的ページの反映順が前後して、/event ・ /board がまだ at を返さない間も、
+        // 回の詳細から開いた日を補い、今日の日付で代用しない。
+        let eventAt = at;
+        if (!eventAt) {
+          try {
+            const d = await apiJson('/events/' + encodeURIComponent(code));
+            eventAt = (d.event && d.event.at) || '';
+          } catch { /* 日付を補えなくても、回名だけの QR は作る */ }
+        }
+        if (req !== qrReq) return;
+        const png = await eventQR(code, title, eventAt);
         if (req !== qrReq) return;
         const file = new File([png], 'request-qr-' + code + '.png', { type: 'image/png' });
         qrShown = { url: URL.createObjectURL(png), file, title };
@@ -2485,12 +2500,12 @@
     });
 
     $('#evQR').addEventListener('click', () => {
-      if (boardEvent) openQR(boardEvent, boardTitle, true);
+      if (boardEvent) openQR(boardEvent, boardTitle, boardAt, true);
     });
 
     $('#pastQR').addEventListener('click', (e) => {
       const code = $('#pastRows').dataset.ev;
-      if (code) openQR(code, e.currentTarget.dataset.title || '', false);
+      if (code) openQR(code, e.currentTarget.dataset.title || '', e.currentTarget.dataset.at || '', false);
     });
 
     $('.tabs').addEventListener('click', (e) => {

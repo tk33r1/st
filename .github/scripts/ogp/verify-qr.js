@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-/* The QR Atelier card carries real, scannable QR codes. If a regeneration ever
+/* The QR Palette card carries real, scannable QR codes. If a regeneration ever
  * resamples them badly the picture still *looks* right, so check by decoding.
  *
  *   node .github/scripts/ogp/verify-qr.js
  *
- * Uses the same jsQR build the tool itself loads, so a pass here means the same
- * thing a pass in the tool does. Needs network for the CDN.
+ * Uses the same bundled jsQR build the tool itself loads, so a pass here means
+ * the same thing a pass in the tool does. Network access is not required.
  */
 'use strict';
 
@@ -15,8 +15,8 @@ const os = require('os');
 const { launch, connect, newPage, evalJs } = require('./cdp.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
-const CARD = path.join(ROOT, 'images/ogp/qr-atelier-ogp.png');
-const EXPECT = 'https://tk.st/tools/qr-atelier/';
+const CARD = path.join(ROOT, 'images/ogp/qr-palette-ogp.png');
+const EXPECT = 'https://tk.st/tools/qr-palette/';
 const PORT = 9334;
 
 // Windows onto each of the three codes, in the 2400x1260 asset.
@@ -25,9 +25,10 @@ const BOXES = [[1330, 300, 700, 700], [1900, 250, 420, 420], [1900, 620, 420, 42
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ogp-qr-'));
   const host = path.join(tmp, 'decode.html');
-  fs.writeFileSync(host, '<!DOCTYPE html><html><head><meta charset="utf-8">' +
-    '<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>' +
-    '</head><body></body></html>');
+  const jsqr = fs.readFileSync(path.join(ROOT, 'tools/qr-palette/vendor/jsQR.js'), 'utf8')
+    .replace(/<\/script/gi, '<\\/script');
+  fs.writeFileSync(host, '<!DOCTYPE html><html><head><meta charset="utf-8"><script>' +
+    jsqr + '</script></head><body></body></html>');
 
   const chrome = await launch(PORT);
   try {
@@ -35,7 +36,7 @@ const BOXES = [[1330, 300, 700, 700], [1900, 250, 420, 420], [1900, 620, 420, 42
     const { s } = await newPage(cdp, 'file:///' + host.split(path.sep).join('/'));
 
     const ready = await evalJs(s, `typeof window.jsQR === 'function'`);
-    if (!ready) throw new Error('jsQR did not load (offline?)');
+    if (!ready) throw new Error('bundled jsQR did not load');
 
     const b64 = fs.readFileSync(CARD).toString('base64');
     const results = await evalJs(s, `(async () => {

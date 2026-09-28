@@ -1,4 +1,4 @@
-/* QR Atelier — マス目を SVG に起こす描画エンジン
+/* QR Palette — マス目を SVG に起こす描画エンジン
  *
  * QRCore が返したモジュール配列を受け取り、セル形状・マーカー・配色・
  * ロゴ・外枠をのせた SVG 文字列を組み立てる。座標系は「1モジュール = 1」で、
@@ -934,10 +934,12 @@
     return cellsGroupedPath(ring, N, ox, oy, cell || 'rounded', t, 0, null, 0)[0].d;
   }
 
-  // 枠線・下地のセル枠の粒の太さ。本体のセルは 100% だと隣とくっついてベタ帯に
-  // 見えるので少し痩せさせ、粒の切れ目を縁の凹みとして見せる
-  function ringCellScale(cellScale) {
-    return Math.max(0.35, Math.min(0.86, (Number(cellScale) || 1) * 0.82));
+  // セル枠の粒の太さ（セルの太さの設定に掛ける係数と上限）。枠線・下地では、
+  // 本体のセルは 100% だと隣とくっついてベタ帯に見えるので少し痩せさせ、粒の
+  // 切れ目を縁の凹みとして見せる（既定の 0.82 / 0.86）。マーカーの枠は逆に太らせる
+  function ringCellScale(cellScale, factor, max) {
+    const k = factor || 0.82;
+    return Math.max(0.35, Math.min(max || 0.86, (Number(cellScale) || 1) * k));
   }
 
   // ------------------------------------------------------------------
@@ -1136,6 +1138,14 @@
   };
   const OCTAGON_CUT = 0.26;
 
+  // 下地（ロゴ・ラベルの後ろに敷く板）として描ける形か。角の比率の表にあるもの
+  // （花型とセル枠は専用の描き方を持つが、抜きの判定のために表にも載せてある）と
+  // 八角形だけ。マーカーの枠に形を足しても、ここで描けないものは下地の一覧に出さない
+  // （出すと角丸の四角で描かれ、セルを消す範囲とも食い違う）。
+  function canDrawBackdrop(id) {
+    return !!BACKDROP_CORNERS[id] || id === 'octagon';
+  }
+
   // 幅 w・高さ h の矩形を、表の比率で角を落とした形。マーカーの枠と下地で共通。
   // 比率は短い辺に掛けるので、横長でも角は正方形のときと同じ丸み・欠け方のまま、
   // まっすぐな辺だけが伸びる
@@ -1280,8 +1290,7 @@
       // 1:1:3:1:1 の走査が途切れ、読み取りが目に見えて落ちる（実測で
       // ドットのセルが 6解像度中 1 まで落ちた）。旧「ドット枠」も直径 1.16
       // モジュールの円を重ねて輪にしていたので、太さの狙いはそれに合わせる。
-      const t = Math.max(0.35, Math.min(1.15, (Number(o.cellScale) || 1) * 1.15));
-      return ringCellsPath(7, 7, fx, fy, o.cell, t);
+      return ringCellsPath(7, 7, fx, fy, o.cell, ringCellScale(o.cellScale, 1.15, 1.15));
     }
     if (style === 'flower') {
       const outer = scallopFlowerRect(fx, fy, 7, 7);
@@ -2295,6 +2304,7 @@
     LINE_STYLES: LINE_STYLES,
     lineIdOf: lineIdOf,
     shapeIdOf: shapeIdOf,
+    canDrawBackdrop: canDrawBackdrop,
     maxRadius: maxRadius,
     contrastRatio: contrastRatio,
     // 色の分解も app.js（混色・明るさの計算）が同じものを使う。二重に持つと、

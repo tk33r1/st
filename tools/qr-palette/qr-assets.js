@@ -1,4 +1,4 @@
-/* QR Atelier — 見た目の素材（アイコン・配色・プリセット）
+/* QR Palette — 見た目の素材（アイコン・配色・プリセット）
  *
  * ロジックを持たない純粋なデータ。index.html はここを読んで
  * スウォッチやプリセットのボタンを組み立てる。
@@ -781,6 +781,8 @@
     { id: 'mosaic',   name: 'モザイク' }
   ];
 
+  // マーカーの枠の形。ロゴ・ラベルの下地の一覧も、このうち qr-style.js が
+  // 下地として描けるもの（QRStyle.canDrawBackdrop）を app.js が拾って作る
   const MARKER_FRAMES = [
     { id: 'square',   name: '四角' },
     { id: 'rounded',  name: '角丸' },
@@ -792,13 +794,6 @@
     { id: 'cut',      name: '雫' },
     { id: 'cells',    name: 'セル枠' }
   ];
-
-  // 下地（ロゴ・ラベルの後ろに敷く板）の形。マーカーの枠と同じ並び。
-  // 「セル枠」は縁に本体と同じ形のセルを並べ、内側を四角で埋めた板にする。
-  // ラベルの横長の帯でも形は伸ばさない。角は高さを基準に正方形のときと同じ形で
-  // 描き、長さは辺を延ばして合わせる（花型は花びら、セル枠は粒の数を増やす）。
-  // 描き分けは qr-style.js の backdropRectPath と cellsPlate。
-  const BACKDROP_SHAPES = MARKER_FRAMES.map(shape => ({ id: shape.id, name: shape.name }));
 
   const MARKER_EYES = [
     { id: 'square',   name: '四角' },
@@ -843,7 +838,6 @@
     PRESETS: PRESETS,
     CELL_SHAPES: CELL_SHAPES,
     MARKER_FRAMES: MARKER_FRAMES,
-    BACKDROP_SHAPES: BACKDROP_SHAPES,
     FRAME_LINES: FRAME_LINES,
     MARKER_EYES: MARKER_EYES,
     FRAMES: FRAMES

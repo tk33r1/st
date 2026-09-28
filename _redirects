@@ -1,4 +1,11 @@
 # 旧 URL → 新 URL の恒久リダイレクト（301）
+# 改名: 2026-09-29  QR Atelier → QR Palette
+# 共有済みのデザインリンク（#d=）はフラグメントをブラウザが引き継ぐ。
+/tools/qr-atelier      /tools/qr-palette/  301
+/tools/qr-atelier/     /tools/qr-palette/  301
+/tools/qr-atelier/*    /tools/qr-palette/:splat  301
+/images/ogp/qr-atelier-ogp.png   /images/ogp/qr-palette-ogp.png  301
+
 # 移動: 2026-09-02  tk.st/matsumura40/ → tk.st/anniversary/matsumura40/
 /matsumura40      /anniversary/matsumura40/  301
 /matsumura40/     /anniversary/matsumura40/  301

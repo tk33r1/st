@@ -610,7 +610,7 @@ function shapeInfo(s) {
 async function getEvent(env, cors) {
   const ev = await currentEvent(env);
   return json(ev && ev.status === 'open'
-    ? { open: true, code: ev.code, title: ev.title }
+    ? { open: true, code: ev.code, title: ev.title, at: ev.created_at }
     : { open: false }, 200, cors);
 }
 
@@ -990,7 +990,7 @@ async function getBoard(env, cors) {
 
   const p = played.results.map(shape);
   return json({
-    event: { code: ev.code, title: ev.title, open: ev.status === 'open' },
+    event: { code: ev.code, title: ev.title, open: ev.status === 'open', at: ev.created_at },
     now: p[0] || null,
     played: p,
     waiting: waiting.results.map(shape),

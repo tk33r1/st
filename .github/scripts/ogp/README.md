@@ -11,6 +11,7 @@
 node .github/scripts/ogp/generate.js              # 全部
 node .github/scripts/ogp/generate.js light-svg    # 1枚だけ
 node .github/scripts/ogp/generate.js --check      # 検査のみ、書き出さない
+node .github/scripts/ogp/generate-qr-artwork.js   # QR Palette の実QR図版を作り直す
 node .github/scripts/ogp/verify-qr.js             # QR が読めるか確認
 ```
 
@@ -28,8 +29,9 @@ Web フォント（JetBrains Mono / Noto Sans JP）を Google Fonts から読む
 |---|---|
 | `cards.js` | カードの定義。共通シェルの CSS と、ツールごとの図版・文言・カテゴリ |
 | `generate.js` | 1枚を画像にする処理だけ。ツール固有のことは持たない |
-| `verify-qr.js` | QR Atelier のカードに入っている QR が実際にデコードできるか検査 |
-| `assets/qr-artwork.png` | QR Atelier の図版（後述） |
+| `generate-qr-artwork.js` | QR Palette と同じ描画エンジンで実QRの図版を生成 |
+| `verify-qr.js` | QR Palette のカードに入っている QR が実際にデコードできるか検査 |
+| `assets/qr-artwork.png` | QR Palette の図版（後述） |
 
 ツールを増やすときは `cards.js` に1エントリ足す。
 
@@ -63,17 +65,16 @@ node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP
 | `editor` | `#4F46E5` |
 | `generator` | `#C026D3` |
 
-## QR Atelier の図版だけは実物
+## QR Palette の図版だけは実物
 
-`assets/qr-artwork.png` は、ツールが実際に書き出した**読み取り可能な QR**を
-切り出したもの。CSS で似せて描くと「QR に見える絵」になり、共有された先で
-スキャンできない。
+`assets/qr-artwork.png` は、ツール本体と同じ描画エンジンで作る**読み取り可能な QR**。
+CSS で似せて描くと「QR に見える絵」になり、共有された先でスキャンできない。
 
 このカードを触ったあとは必ず `verify-qr.js` を通す。3つとも
-`https://tk.st/tools/qr-atelier/` にデコードできれば OK。
+`https://tk.st/tools/qr-palette/` にデコードできれば OK。
 
-図版を差し替えるときは、ツールで QR を書き出して背景を透過させた PNG を
-`assets/qr-artwork.png` に置く（背景が透明なら台紙の色が変わっても馴染む）。
+図版を差し替えるときは `generate-qr-artwork.js` を実行する。背景は透過なので、
+カードの台紙の色が変わっても馴染む。
 
 ## 生成 HTML をリポジトリに置かない理由
 

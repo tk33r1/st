@@ -134,9 +134,9 @@
   },
   {
     "id": 10,
-    "title": "QR Atelier - おしゃれなQRコード作成ツール",
-    "url": "https://tk.st/tools/qr-atelier/",
-    "imageUrl": "https://tk.st/images/ogp/qr-atelier-ogp.png?v=c11cf54c2b50",
+    "title": "QR Palette - おしゃれなQRコード作成ツール",
+    "url": "https://tk.st/tools/qr-palette/",
+    "imageUrl": "https://tk.st/images/ogp/qr-palette-ogp.png?v=c3ccf85babe6",
     "category": "generator",
     "description": "セルやマーカーの形、グラデーション、中央ロゴ、フレーム文字まで自由にデザインできるQRコード作成ツール。短縮URLを挟まないので広告も有効期限もなく、書き出す絵をその場でデコードして読み取りを確認します。PNGとSVGで保存できます。",
     "tags": [

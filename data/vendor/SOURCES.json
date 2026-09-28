@@ -222,7 +222,7 @@
   }
  },
  "local": {
-  "tools/qr-atelier/vendor/wechat/wasm.js": {
+  "tools/qr-palette/vendor/wechat/wasm.js": {
    "sha256": "89529f9154aa615726739b0ffb5ef654955d42adf778eb6ebe218fa41c925c1f",
    "patched": 3
   }

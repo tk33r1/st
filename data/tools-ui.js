@@ -420,7 +420,7 @@
   }
 
   // FAQPage の本文を画面にも出す。既に静的な .faq-section があるページでは
-  // 何もしない。QR Atelier のように詳しい構造化データを先に持っていたページは、
+  // 何もしない。QR Palette のように詳しい構造化データを先に持っていたページは、
   // その内容を正本として共通の折りたたみ UI を組み立てる。
   function renderFaqFromStructuredData() {
     if (document.querySelector('.faq-section')) return;
@@ -1259,7 +1259,7 @@
     details.append(summary, body);
     const analyticsControl = buildAnalyticsControl();
     section.append(details, analyticsControl.root);
-    // 置き場所はツールのすぐ下。<main> の中に説明文を持つページ（PDF Studio・Text Diff・QR Atelier）は、
+    // 置き場所はツールのすぐ下。<main> の中に説明文を持つページ（PDF Studio・Text Diff・QR Palette）は、
     // その説明文の手前に入れる。それ以外は <main> の直後（FAQ の手前）
     const prose = main.querySelector(':scope > .prose-tool, :scope > .prose');
     if (prose) {

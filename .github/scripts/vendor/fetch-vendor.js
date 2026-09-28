@@ -92,7 +92,7 @@ const LIBS = [
 const { PATCHES, DYNAMIC_CODE, applyPatches } = require('./patches');
 
 // data/vendor の外にあって取り込みの対象ではないが、置き換えは当てるもの
-const LOCAL_PATCHED = ['tools/qr-atelier/vendor/wechat/wasm.js'];
+const LOCAL_PATCHED = ['tools/qr-palette/vendor/wechat/wasm.js'];
 
 // 同梱の JS に残っていてよい「文字列からコードを作る処理」とその件数。どれも CSP の下では
 // 通らない経路なので実害がない。件数が変わったら（版を上げたときなど）中身を見て判断し直す
