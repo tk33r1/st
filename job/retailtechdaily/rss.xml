@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Mon, 28 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Mon, 28 Sep 2026 04:57:33 +0900</lastBuildDate>
+    <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Tue, 29 Sep 2026 07:23:45 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年9月29日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20260929/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260929/</guid>
+      <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
+      <description>国内では、買い物支援や駐車場管理の実証、リテールメディア市場予測など、店舗・地域の運営課題をデータや仕組みで解く動きが確認された。 海外では、Instacartの店舗情報可視化やHy-Veeのオンライン購買迅速化が注目される。オンラインと実店舗をつなぐ運営改善が競争力の焦点になっている。</description>
+    </item>
     <item>
       <title>2026年9月28日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20260928/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260915/</guid>
       <pubDate>Tue, 15 Sep 2026 08:00:00 +0900</pubDate>
       <description>国内では、イオンが有事を想定した新物流センターを開設し、店舗網を支える物流の冗長性と地域分散を強化した。 消費減税を巡る調査では、流通企業が短期間に複数回のシステム改修を迫られる懸念が浮上し、制度変更対応のITコストが焦点になった。</description>
-    </item>
-    <item>
-      <title>2026年9月14日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260914/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260914/</guid>
-      <pubDate>Mon, 14 Sep 2026 08:00:00 +0900</pubDate>
-      <description>セルフレジの是非が世界的な争点に——欧米では撤去・見直しが進む一方、日本では導入が拡大。顧客の納得感と監視・運用コストを含めた総合ROIが投資判断を左右する段階に入った。 店頭メディアの再定義が加速——アマゾンのChatGPT内広告試験、ウォルグリーンのデジタルサイネージ再挑戦、アドインテの豪州展示会出展など、リテールメディアがAIチャネルと店頭を横断し始めている。</description>
     </item>
   </channel>
 </rss>

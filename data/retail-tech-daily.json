@@ -1,5 +1,142 @@
 [
   {
+    "date": "20260929",
+    "title": "2026年9月29日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "国内では、買い物支援や駐車場管理の実証、リテールメディア市場予測など、店舗・地域の運営課題をデータや仕組みで解く動きが確認された。 海外では、Instacartの店舗情報可視化やHy-Veeのオンライン購買迅速化が注目される。オンラインと実店舗をつなぐ運営改善が競争力の焦点になっている。",
+    "count": 7,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "国内では、買い物支援や駐車場管理の実証、リテールメディア市場予測など、店舗・地域の運営課題をデータや仕組みで解く動きが確認された。",
+      "海外では、Instacartの店舗情報可視化やHy-Veeのオンライン購買迅速化が注目される。オンラインと実店舗をつなぐ運営改善が競争力の焦点になっている。",
+      "個人データを使った価格設定を行わないというウォルマートCEOの発言は、価格最適化の技術だけでなく、顧客の信頼と透明性が重要であることを示した。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "中部薬品、岐阜県恵那市と買い物支援の実証事業を開始",
+        "original_title": "",
+        "source": "ダイヤモンド・チェーンストアオンライン",
+        "source_id": "JP-22",
+        "summary": "中部薬品は10月1日、岐阜県恵那市と連携した買い物支援の実証事業を開始する。候補記事から確認できるのは、自治体と小売事業者が協力して地域の買い物を支える取り組みであることと開始日までで、具体的な提供方法や対象地域、検証項目は明らかでない。",
+        "why_it_matters": "地域の買い物支援は、店舗網だけではカバーしにくい住民ニーズに小売が関与する機会となる。実証では利用者の利便性に加え、自治体との役割分担や継続可能な運営コストをどう設計するかが、本格展開の判断材料になる。",
+        "tags": [
+          "買い物支援",
+          "地域連携",
+          "実証事業"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBmb1llbUQzZl9sUERFcnFEeW1WSFgzYkprTkZab2RFcjI2eUJ0d3IzQzdDNXVpRVpyMzlWOEdJa3VtSHJST2pjc3RRc0lBQnFEbTBF?oc=5",
+        "source_pub_ts": 1790577691
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "アイシン、トレッサ横浜で駐車場管理支援システムの実験を開始",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-26",
+        "summary": "アイシンは商業施設トレッサ横浜で、駐車場管理を支援するシステムの実験を開始した。候補記事の情報では実験の開始と実施場所が確認できる一方、システムの機能、利用者向けの具体的なサービス、実証期間や評価指標は示されていない。",
+        "why_it_matters": "駐車場は来店前後の顧客体験と施設運営の双方に関わる接点だ。実証で混雑や案内などの課題をどこまで改善できるかが見極められれば、施設の回遊性や運営効率を高める仕組みとして、他の商業施設への展開余地も生まれる。",
+        "tags": [
+          "駐車場管理",
+          "店舗DX",
+          "実証実験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFAwRjhfOGZuYWs1ZzlEVHUydFhveklhRUJOU2VtTlFKVlhXbFB3QjExQTJzTm5nNmYwQ1BCT0JWQzFHdzk1MmVqYnZqZ3BidnZ0?oc=5",
+        "source_pub_ts": 1790571480
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "リテールメディア市場、2035年に5200億ドル規模との予測",
+        "original_title": "",
+        "source": "dreamnews.jp",
+        "source_id": "JP-25",
+        "summary": "市場調査の発表は、リテールメディアネットワーク市場が2035年に5200億米ドルへ拡大すると予測している。購買データと広告の融合が小売業の新たな収益基盤になるとの見立てを示す内容だが、候補情報には予測の前提や地域別内訳、算定方法は記載されていない。",
+        "why_it_matters": "市場規模の予測は成長期待を示す一方、個社の収益化を保証するものではない。小売企業には、購買データの活用と広告効果の測定、プライバシーへの配慮を両立し、広告主に説明できる成果指標を整えることが求められる。",
+        "tags": [
+          "リテールメディア",
+          "購買データ",
+          "広告収益"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5ZQkN1bDlwQkIyUmlMVTc3dVIxVWxhaHM3dDQ4NjRISEducFBTbWVOX0xlNU1qVWxYR0NUSXF5UklxYXozcnZHUy1BZjdoekR1dHhv?oc=5",
+        "source_pub_ts": 1790571600
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "AI学習用か、Amazonで古書の大量自動発注が発生か",
+        "original_title": "",
+        "source": "日経ビジネス電子版",
+        "source_id": "JP-04",
+        "summary": "日経ビジネス電子版は、AI学習用とみられる古書がAmazon上で大量に自動発注され、発送先が同一の事業者だったと報じた。候補情報からは発注の規模や発注主体、Amazon側の対応までは確認できない。オンライン市場で自動化された注文が流通に及ぼす影響が問われる事例だ。",
+        "why_it_matters": "注文の自動化は取引を効率化する一方、短期間の大量発注が在庫や出品者の業務に影響する可能性もある。プラットフォームには、正当な需要を損なわず異常な注文を検知する仕組みと、出品者への説明・対応手順の整備が重要になる。",
+        "tags": [
+          "EC",
+          "注文自動化",
+          "マーケットプレイス"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFB4QUJlZGdlQ3JEUnpBM2lEdldITU1xQVdiWWJhX0pDelBMN0htYkxfeDFEbXAtZVBDdTA2M3BFX3d1Y3FqdjFocjFNNWotU21GR2t4NWg4YWlLNENuSWNqYVc2RVEwVHc?oc=5",
+        "source_pub_ts": 1790625600
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "Instacart、食品小売とメーカーに全店舗の状況をリアルタイムで可視化",
+        "original_title": "Instacart gives grocers and CPG brands a live view of every store",
+        "source": "Grocery Dive",
+        "source_id": "GL-03",
+        "summary": "Instacartが、食品小売事業者と消費財メーカーに各店舗の状況をリアルタイムで見られる仕組みを提供すると報じられた。候補記事の見出しからは「全店舗」のライブな可視化が中心と分かるが、表示対象となる情報や利用機能、提供開始時期などの詳細は確認できない。",
+        "why_it_matters": "小売とメーカーが店舗状況を共通の視点で把握できれば、店頭の課題発見や連携判断を速める可能性がある。価値を生むには、情報の鮮度・正確性だけでなく、データの共有範囲や利用権限、実際の業務改善への結び付きを明確にする必要がある。",
+        "tags": [
+          "店舗データ",
+          "小売・メーカー連携",
+          "リアルタイム可視化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPN0huTVhqR3NieUFYUmV1dnJuSnlGYzFfRHhxeHRkRWF4R3NtLTY3VG9mZmxvOGtzZmVsdHB6UUp2QTFrN2hXR0hiWHBmXzUtYWxfMXE1a1hTbHpLbTBhZl9hdGFsZk40cHlrSS1sVHF0Mll1eldYMF9CQ2V4Mkl3aFpsek00a3BnZlBQS2ZRNDdST3ZqdGNLak52dXEwY3BwaFNSdWY0Wi1vMTg?oc=5",
+        "source_pub_ts": 1790623056
+      },
+      {
+        "region": "GLOBAL",
+        "category": "流通DX一般",
+        "title": "Hy-Vee、オンライン購買の大幅なスピードアップを目指す",
+        "original_title": "Hy-Vee looks to dramatically speed up online shopping",
+        "source": "Grocery Dive",
+        "source_id": "GL-05",
+        "summary": "米食品小売のHy-Veeが、オンライン購買を大幅に速める方針だと報じられた。候補記事の見出しからはスピード向上が取り組みの主眼と読み取れるが、対象となる工程や導入技術、実施時期、短縮目標などの具体策は確認できない。オンライン注文の利便性向上をめぐる動きとして注目される。",
+        "why_it_matters": "オンライン購買の速さは顧客体験を左右するが、単なる処理時間の短縮ではなく、店舗のピッキングや受け渡しを含む全体最適が必要だ。どの工程を改善し、欠品・人件費・顧客満足とのバランスをどう取るかが、施策の持続性を決める。",
+        "tags": [
+          "オンライン購買",
+          "注文処理",
+          "顧客体験"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxNYzQ3YnpXRHBRLUxUNDd2Z2t5WHZabk9lWUUwSGVNQVhZd045SHhaSnF0ZzBRcG1lT2Q2bmZCeXRfaXg1MGtQRmtoR3dCYW0wQU4tdXpIWFhlWHRkVjNKbC1ON2JZWGlzZFZRYXVwT0x3S28teEZoSGE0U0dvVXAyTFR5V3FncmpjVlBDX2hqVlI?oc=5",
+        "source_pub_ts": 1790616756
+      },
+      {
+        "region": "GLOBAL",
+        "category": "SNS話題・生活者のリアル",
+        "title": "ウォルマートCEO、個人データを使った個別価格設定は「行わない」と表明",
+        "original_title": "Walmart CEO addresses dynamic pricing concerns",
+        "source": "Retail Dive",
+        "source_id": "GL-06",
+        "summary": "ウォルマートCEOが、動的価格設定への懸念に対応し、個人データに基づく個別価格設定を行わない考えを示した。候補記事の見出しはCEOの発言と懸念への対応を伝えるが、発言の詳細な背景や対象となる価格施策の範囲までは明らかでない。価格設定と個人データ利用への関心を映す話題だ。",
+        "why_it_matters": "価格を柔軟に変える技術の導入可否だけでなく、顧客ごとに不公平な価格を提示するのではという不信への対応が問われている。小売企業は価格決定のルールやデータ利用の範囲を明確にし、利便性と透明性を両立させる必要がある。",
+        "tags": [
+          "価格設定",
+          "個人データ",
+          "顧客信頼"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxPazJiLVdmdXRhU1NYZ0o5TmRRNW5MUXE2amlUdHZralBPTmh4RzBVVUNUeV9yZzA0S0ZveXhya2RXNEV0TGxjOXpuWDNfZ1VuLXlLazdkczQ0UlNkM2lfTlZnTFBIUkZHbGg4QTdxT0ZfVndfVV9BR29veUtPRG1HSjhB?oc=5",
+        "source_pub_ts": 1790612645
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260928",
     "title": "2026年9月28日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "候補の中では、店舗技術の大型発表よりも、食品ロス削減、会員基盤の連携、採用・人材確保に関する運営改善が中心となった。 ベイシアの食品ロス削減アプリ導入は3店舗での展開。対象や運用実績が限られる段階のため、今後の拡大と効果検証が焦点となる。",
