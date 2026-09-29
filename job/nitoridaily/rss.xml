@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Tue, 29 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Tue, 29 Sep 2026 07:28:30 +0900</lastBuildDate>
+    <pubDate>Wed, 30 Sep 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Wed, 30 Sep 2026 06:19:39 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年9月30日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20260930/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260930/</guid>
+      <pubDate>Wed, 30 Sep 2026 08:00:00 +0900</pubDate>
+      <description>ニトリは約350アイテムを10％引きで販売する期間限定施策を開始。冬支度需要を取り込み、季節商品の購買を促す価格戦略が焦点となる。 宅配ボックスやアニマルクッションなど、日常の不便解消と選ぶ楽しさを備えた商品が登場。生活者の具体的な使用場面に根差す商品提案が続く。</description>
+    </item>
     <item>
       <title>2026年9月29日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20260929/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260915/</guid>
       <pubDate>Tue, 15 Sep 2026 08:00:00 +0900</pubDate>
       <description>ニトリリテールタイが全14拠点に請求書受領・経理業務のデジタル基盤を導入し、海外事業の管理標準化を進めた。 国内では、ニトリへの信頼度調査で首位となり、価格・品ぞろえ・利便性を含む総合的なブランド評価の強さが示された。</description>
-    </item>
-    <item>
-      <title>2026年9月14日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20260914/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260914/</guid>
-      <pubDate>Mon, 14 Sep 2026 08:00:00 +0900</pubDate>
-      <description>本日はニトリグループに関する国内・海外の新規ニュース候補がなく、一次情報は生活者発信（X・TikTok）に限定された。経営・商品・出店の新発表がないため、選定はSNSリアル反響2件に集約し、生活者インサイトから示唆を抽出した。 Xでは「Francfrancで買わなくてもよくない？」など他ブランド比較による“デザイン価格比”の再評価が約9,160いいねに到達。SPAの垂直統合が生む価格優位が、専門店の代替という生活者言語で可視化されている。</description>
     </item>
   </channel>
 </rss>
