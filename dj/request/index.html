@@ -1697,12 +1697,16 @@
   </footer>
 
   <script src="../../data/dj-request-core.js?v=20260927"></script>
+  <script src="./catalog.js?v=20260930"></script>
   <script>
     const API = '/dj/api/req';
     const {
       $, $$, appleHref, bearer, createApi, createPreviewController, escapeHTML: esc, formatClock, formatDurationMs,
       hhmm, storage, ymd,
     } = window.DJRequestCore;
+    const {
+      latinArtist, pickSongs, refine, search: searchItunes, verifyRecommendations,
+    } = window.DJRequestCatalog;
     const apiJson = createApi(API, '通信に失敗しました。電波の良い場所でもう一度お試しください。');
 
     const loadingHTML = (text) => '<div class="loading"><span class="spin"></span>' + text + '</div>';
@@ -1710,8 +1714,17 @@
     const artHTML = (url, lazy) => url
       ? '<img src="' + esc(url) + '" alt=""' + (lazy ? ' loading="lazy"' : '') + '>'
       : '<span class="ph">♪</span>';
+    // 曲名だけの依頼は、DJ が曲を特定するまでアーティストの代わりにこう出す
+    const artistLabel = (s) => (s.isFree ? '曲名を調べています' : s.artist);
 
-    async function withBusy(btn, task, label = '送信中…', after) {
+    /* 回線が遅いと、前に出した要求の応答が後から届く。呼ぶたびに前の要求を古くし、
+       返した関数は「これがまだ最後の要求か」を答える。古い応答は描かずに捨てる */
+    function latestOnly() {
+      let n = 0;
+      return () => { const me = ++n; return () => me === n; };
+    }
+
+    async function withBusy(btn, task, { label = '送信中…', after } = {}) {
       if (btn.dataset.busy === 'true') return;
       const idleLabel = btn.textContent;
       btn.dataset.busy = 'true';
@@ -1736,77 +1749,6 @@
       return '<span class="state open" title="まだ変更できます">受付</span>';
     }
 
-    /* ── iTunes Search API の結果を整える ───────────────
-       同じ曲の DJ ミックス収録版が1曲につき10件以上返ってくるので、
-       まず落とし、次にバージョン違いを畳んで、原曲を代表に押し上げる。 */
-    const MIXED = /[(\[]\s*(mixed|continuous mix)\s*[)\]]/i;
-    const DJMIX = /\(dj mix\)|\bdj mix\b/i;
-    const SUFFIX = /\s*[(\[]([^)\]]*)[)\]]\s*$/;
-    const FEAT = /\s*[(\[]?\bfeat\.?\s[^)\]]*[)\]]?/i;
-
-    const norm = (s) => String(s || '').replace(FEAT, '')
-      .replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim().toLowerCase();
-
-    function splitVariant(name) {
-      const parts = [];
-      let s = name;
-      for (;;) {
-        const m = SUFFIX.exec(s);
-        if (!m) break;
-        parts.unshift(m[1].trim());
-        s = s.slice(0, m.index);
-      }
-      return { base: s.trim(), variant: parts.join(' / ') };
-    }
-
-    const bigArt = (u) => String(u || '').replace(/\/\d+x\d+bb\.jpg$/, '/240x240bb.webp');
-
-    // DJ ミックス収録版を落とし、画面で使う形に直す（並びは iTunes の関連度順のまま）
-    function toTracks(results) {
-      const kept = [];
-      for (const r of results) {
-        if (MIXED.test(r.trackName || '') || DJMIX.test(r.collectionName || '')) continue;
-        const { base, variant } = splitVariant(r.trackName || '');
-        kept.push({
-          trackId: r.trackId, artist: r.artistName || '', title: base, variant,
-          album: r.collectionName || '', durationMs: r.trackTimeMillis || 0,
-          // 繋ぎの判断材料。iTunes の応答にそのまま入っているので拾うだけ
-          genre: r.primaryGenreName || '',
-          releaseYear: Number(String(r.releaseDate || '').slice(0, 4)) || 0,
-          explicitness: r.trackExplicitness || '',   // explicit | cleaned | notExplicit
-          artwork: bigArt(r.artworkUrl100), appleUrl: r.trackViewUrl || '',
-          previewUrl: r.previewUrl || '',
-          key: norm(r.artistName) + '|' + norm(base),
-        });
-      }
-      return kept;
-    }
-
-    function refine(results) {
-      const groups = new Map();
-      for (const t of toTracks(results)) {
-        if (!groups.has(t.key)) groups.set(t.key, []);
-        const g = groups.get(t.key);
-        // 同じバージョンで尺もほぼ同じなら同一音源とみなして畳む
-        const half = Math.round(t.durationMs / 2000);
-        if (g.some((x) => x.variant.toLowerCase() === t.variant.toLowerCase()
-          && Math.abs(Math.round(x.durationMs / 2000) - half) <= 1)) continue;
-        g.push(t);
-      }
-
-      const out = [];
-      for (const g of groups.values()) {
-        // 代表は「バージョン表記なし」→「Single/EP 収録」→「尺が長い」→「trackId が古い」
-        g.sort((a, b) =>
-          (a.variant ? 1 : 0) - (b.variant ? 1 : 0) ||
-          (/-\s*(single|ep)$/i.test(a.album) ? 0 : 1) - (/-\s*(single|ep)$/i.test(b.album) ? 0 : 1) ||
-          b.durationMs - a.durationMs ||
-          a.trackId - b.trackId);
-        out.push({ rep: g[0], alts: g.slice(1, 6) });
-      }
-      return out.slice(0, 5);
-    }
-
     /* ── 画面遷移 ─────────────────────────── */
     let flowPane = 'search';
     let eventOpen = false;
@@ -1816,7 +1758,7 @@
     let paneNow = 'search';
     // 起動中、共有リンクの行き先が決まるまでは ?ev= を消さない（その間に再読み込みされても同じ回が開くように）
     let holdEventParam = false;
-    const eventParamOf = (pane) => (pane === 'past' || (pane === 'song' && songFrom) ? $('#pastRows').dataset.ev : '');
+    const eventParamOf = (pane) => (pane === 'past' || (pane === 'song' && songFrom) ? evCode(pastEvent) : '');
 
     // y を渡すとその位置へ戻す（省略時は先頭へ）
     function show(pane, y) {
@@ -1861,35 +1803,6 @@
       return html;
     }
 
-    /* iTunes Search API の通信口。検索欄は次の入力で中断し、AI 回答の照合は
-       指定時間で打ち切る。用途ごとの違いは options に残し、URL と JSON 読み込みは共通にする。 */
-    const itunes = (() => {
-      const BASE = 'https://itunes.apple.com';
-
-      async function read(path, { signal, timeout = 0 } = {}) {
-        const controller = timeout ? new AbortController() : null;
-        const timer = controller ? setTimeout(() => controller.abort(), timeout) : null;
-        try {
-          const res = await fetch(BASE + path, { signal: controller ? controller.signal : signal });
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return await res.json();
-        } finally {
-          if (timer !== null) clearTimeout(timer);
-        }
-      }
-
-      return {
-        search(term, { country = 'JP', limit = 50, ...options } = {}) {
-          return read('/search?term=' + encodeURIComponent(term) + '&entity=song&limit=' + limit +
-            '&country=' + encodeURIComponent(country), options);
-        },
-        lookup(ids, { country = 'US', ...options } = {}) {
-          const value = Array.isArray(ids) ? ids.join(',') : String(ids || '');
-          return read('/lookup?id=' + value + '&country=' + encodeURIComponent(country), options);
-        },
-      };
-    })();
-
     /* 待っている検索と通信中の検索を止める。新しく検索するときも、欄を空にするときも、
        短すぎて検索しないときも必ず通す。残すと、古い結果が遅れて出る */
     function abortSearch() {
@@ -1906,7 +1819,7 @@
 
       searchAbort = new AbortController();
       try {
-        const data = await itunes.search(q, { signal: searchAbort.signal });
+        const data = await searchItunes(q, { signal: searchAbort.signal });
         groupsCache = refine(data.results || []);
       } catch (e) {
         if (e.name === 'AbortError') return;
@@ -1994,17 +1907,16 @@
       const variant = track.variant ? '<span class="vtag">' + esc(track.variant) + '</span>' : '';
       return artHTML(track.artwork) +
         '<h2>' + esc(track.title) + variant + '</h2>' +
-        '<div class="a">' + esc(free ? '曲名を調べています' : track.artist) + '</div>' +
+        '<div class="a">' + esc(artistLabel(track)) + '</div>' +
         (free ? '' : '<div class="d">' + esc(track.album) + ' · ' + formatDurationMs(track.durationMs) + '</div>');
     }
 
     // 確認画面の「戻る」の行き先。相談から来たときは相談の元の位置へ帰す
     let confirmFrom = { pane: 'search' };
 
-    function toConfirm(track, artFallback, from = { pane: 'search' }) {
+    function toConfirm(track, from = { pane: 'search' }) {
       confirmFrom = from;
       picked = Object.assign({}, track);
-      if (!picked.artwork && artFallback) picked.artwork = artFallback;
       $('#hero').innerHTML = trackHeroHTML(picked);
       stopAudio();
       $('#player').style.display = picked.previewUrl ? 'flex' : 'none';
@@ -2018,7 +1930,7 @@
       const alt = e.target.closest('.alt');
       if (alt) {
         const g = groupsCache[+alt.dataset.g];
-        toConfirm(g.alts[+alt.dataset.a], g.rep.artwork);
+        toConfirm(g.alts[+alt.dataset.a]);
         return;
       }
       const c = e.target.closest('.cand');
@@ -2112,16 +2024,6 @@
       storage.setJSON(TOKEN_KEY, saved);
     };
 
-    /** rekordbox の検索で当たりやすいラテン表記を US ストアフロントから取る。
-        trackId はストアフロント共通なので同じ曲を引ける。失敗しても送信は続ける。 */
-    async function latinArtist(trackId) {
-      if (!trackId) return '';
-      try {
-        const d = await itunes.lookup(trackId, { country: 'US', timeout: 2500 });
-        return (d.results && d.results[0] && d.results[0].artistName) || '';
-      } catch { return ''; }
-    }
-
     /* 完了画面。受付と変更で見出しと添え書きだけ差し替える。
        紙吹雪は新しく受け付けたときだけで、内容の変更では出さない。 */
     let doneSongId = 0;   // 「リクエスト内容を修正する」の飛び先
@@ -2192,7 +2094,7 @@
         { free: text, name: $('#freeName').value },
         $('#freeErr'),
         { title: text, artist: '' }
-      ), '送信中…', syncFreeSend);
+      ), { after: syncFreeSend });
     });
 
     $('#again').addEventListener('click', () => {
@@ -2217,22 +2119,16 @@
       return n;
     }
 
-    function likeHTML(s) {
-      const on = liked(s.id);
-      return '<button type="button" class="like' + (on ? ' on' : '') + '" data-like="' + s.id +
-        '" aria-pressed="' + on + '" aria-label="いいね"' +
-        ' title="' + (on ? 'いいねを取り消す' : 'いいねする') + '">' +
-        '<span class="hh" aria-hidden="true">♥</span><span class="n">' + likeCount(s) + '</span></button>';
-    }
-
-    /* 終わった回のいいねは押せない（サーバも受け付けない）ので、ボタンではなく
+    /* 終わった回（past）のいいねは押せない（サーバも受け付けない）ので、ボタンではなく
        数字だけ置く。0 のときは何も出さない——増えようのない 0 を並べても
        読む側には何も伝わらないため。 */
-    function likeStatic(s) {
-      const n = likeCount(s);
-      if (!n) return '';
-      return '<span class="like static' + (liked(s.id) ? ' on' : '') + '">' +
-        '<span class="hh" aria-hidden="true">♥</span><span class="n">' + n + '</span></span>';
+    function likeHTML(s, past) {
+      const on = liked(s.id), n = likeCount(s);
+      const inner = '<span class="hh" aria-hidden="true">♥</span><span class="n">' + n + '</span>';
+      if (past) return n ? '<span class="like static' + (on ? ' on' : '') + '">' + inner + '</span>' : '';
+      return '<button type="button" class="like' + (on ? ' on' : '') + '" data-like="' + s.id +
+        '" aria-pressed="' + on + '" aria-label="いいね"' +
+        ' title="' + (on ? 'いいねを取り消す' : 'いいねする') + '">' + inner + '</button>';
     }
 
     /* 一覧と曲の詳細で同じ曲が同時に出ることはないが、どちらから押しても
@@ -2303,27 +2199,27 @@
       return '<div class="row' + (played ? ' played' : '') + (isMine ? ' mine' : '') + '">' +
         '<button type="button" class="rowopen" data-song="' + s.id + '">' + artHTML(s.artwork, true) +
         '<span><span class="t trunc">' + esc(s.title) + '</span>' +
-        '<span class="a trunc">' + esc(s.isFree ? '曲名を調べています' : s.artist) + '</span>' +
+        '<span class="a trunc">' + esc(artistLabel(s)) + '</span>' +
         (s.by ? '<span class="by trunc">— ' + esc(s.by) + '</span>' : '') + '</span></button>' +
         '<span class="right">' +
         (isMine ? '<span class="mytag">あなた</span>' : '') +
         stateChip(s, '') +
         (played ? '<span class="at">' + esc(hhmm(s.playedAt)) + '</span>' : '') +
-        (past ? likeStatic(s) : likeHTML(s)) +
+        likeHTML(s, past) +
         '</span></div>';
     }
 
     /* 15秒ごとの更新と、一覧を開いたときの読み込みは重なりうる。
        後から届いた古い応答で新しい表示を戻さないよう、最後に出したものだけを描く */
-    let boardReq = 0;
+    const boardLatest = latestOnly();
 
     async function loadBoard() {
-      const req = ++boardReq;
+      const isLatest = boardLatest();
       try {
         const d = await apiJson('/board');
-        if (req === boardReq) renderBoard(d);
+        if (isLatest()) renderBoard(d);
       } catch {
-        if (req === boardReq) $('#fresh').textContent = '更新できません';
+        if (isLatest()) $('#fresh').textContent = '更新できません';
       }
     }
 
@@ -2336,7 +2232,7 @@
         artHTML(d.now.artwork) +
         '<span><span class="lab"><span class="eq"><i></i><i></i><i></i><i></i></span>NOW PLAYING</span>' +
         '<span class="t trunc">' + esc(d.now.title) + '</span>' +
-        '<span class="a trunc">' + esc(d.now.isFree ? '曲名を調べています' : d.now.artist) + '</span></span>' +
+        '<span class="a trunc">' + esc(artistLabel(d.now)) + '</span></span>' +
         '<span class="chev">›</span></button>'
         : '';
 
@@ -2353,10 +2249,11 @@
 
       // DJ が新しい回を開くと、いまの回だった回が過去に移る。
       // 一覧を開いたままでも入れ替わるよう、回が変わったら引き直す。
-      if (((d.event && d.event.code) || '') !== boardEvent) pastLoaded = false;
+      if (evCode(d.event) !== evCode(currentEvent)) pastLoaded = false;
       setCurrentEvent(d.event);
       // 受付中は画面の見出しが回名なので、同じ名前を二度並べない（受付外の見出しは「リクエスト」）
-      const shownTitle = boardTitle === $('#evTitle').textContent ? '' : boardTitle;
+      const title = (d.event && d.event.title) || '';
+      const shownTitle = title === $('#evTitle').textContent ? '' : title;
       $('#boardTitle').textContent = shownTitle;
       $('#boardBar').hidden = !shownTitle;
       loadPastEvents();
@@ -2368,20 +2265,20 @@
     /* ── 過去のイベント ─────────────────────
        いまの回の下に置く。終わった回は中身が動かないので、一覧も中身も
        一度読めば足りる（15秒ごとの更新には乗せない）。 */
-    let boardEvent = '', boardTitle = '', boardAt = '', pastLoaded = false;
+    /* 回は { code, title, at } の形で持つ。currentEvent はいまの回（受付中なら /event、受付外なら
+       /board の回）で、ヘッダーの共有と QR はこれを使う。受付外でも、終わった直後の回を共有できるように
+       ボタンは出す。pastEvent は開いている過去の回で、読み込む前や失敗したときは code だけ持つ */
+    let currentEvent = null, pastEvent = null, pastLoaded = false;
+    const evCode = (ev) => (ev && ev.code) || '';
 
-    /* いまの回（受付中なら /event、受付外なら /board の回）。ヘッダーの共有と QR はこれを使う。
-       受付外でも、終わった直後の回を共有できるようにボタンは出す */
     function setCurrentEvent(ev) {
-      boardEvent = (ev && ev.code) || '';
-      boardTitle = (ev && ev.title) || '';
-      boardAt = (ev && ev.at) || '';
-      const label = boardTitle ? '「' + boardTitle + '」' : 'この回';
+      currentEvent = evCode(ev) ? ev : null;
+      const label = currentEvent && currentEvent.title ? '「' + currentEvent.title + '」' : 'この回';
       $('#evShare').setAttribute('aria-label', label + 'を共有');
       $('#evShare').title = label + 'を共有';
       $('#evQR').setAttribute('aria-label', label + 'の QR コード');
       $('#evQR').title = label + 'の QR コード';
-      $('#evTools').hidden = !boardEvent;
+      $('#evTools').hidden = !currentEvent;
     }
 
     function evrowHTML(e) {
@@ -2409,15 +2306,14 @@
       }
     }
 
-    /* 回線が遅いと、前に開いた回の応答が後から届く。最後に開いたものだけを描く */
-    let pastReq = 0;
+    const pastLatest = latestOnly();
 
     async function openPast(code) {
-      const req = ++pastReq;
+      const isLatest = pastLatest();
       // 過去の回にはプレーヤーが無いので、ここでは試聴を止めない（曲の詳細から戻るときは呼ぶ側で止める）
 
       // 曲の詳細から戻ってくるときの行き先。読み込みに失敗しても残す
-      $('#pastRows').dataset.ev = code;
+      pastEvent = { code };
       $('#pastTitle').textContent = '読み込んでいます';
       $('#pastDate').textContent = '';
       $('#pastShare').hidden = true;   // 回の名前が読めてから出す（共有文と QR のラベルに使う）
@@ -2427,14 +2323,12 @@
       show('past');
       try {
         const d = await apiJson('/events/' + encodeURIComponent(code));
-        if (req !== pastReq) return;
+        if (!isLatest()) return;
         const ids = new Set(mine());
+        pastEvent = { ...d.event, code };
         $('#pastTitle').textContent = d.event.title;
         $('#pastDate').textContent = ymd(d.event.at);
-        $('#pastShare').dataset.title = d.event.title + '（' + ymd(d.event.at) + '）';
         $('#pastShare').hidden = false;
-        $('#pastQR').dataset.title = d.event.title;
-        $('#pastQR').dataset.at = d.event.at;
         $('#pastQR').hidden = false;
         $('#pastRows').innerHTML = d.played.length
           ? d.played.map((x) => rowHTML(x, ids.has(x.id), true)).join('')
@@ -2444,7 +2338,7 @@
           + '終わった回なので、♥ や内容の変更はできません。';
         $('#pastNote').hidden = false;
       } catch {
-        if (req !== pastReq) return;
+        if (!isLatest()) return;
         $('#pastTitle').textContent = '読み込めませんでした';
         $('#pastRows').innerHTML = '<div class="blank">この回を読み込めませんでした</div>';
       }
@@ -2505,20 +2399,20 @@
     }
 
     $('#evShare').addEventListener('click', () => {
-      if (boardEvent) shareEvent(boardEvent, (boardTitle || 'DJ') + ' のリクエスト');
+      if (currentEvent) shareEvent(currentEvent.code, (currentEvent.title || 'DJ') + ' のリクエスト');
     });
 
-    $('#pastShare').addEventListener('click', (e) => {
-      const code = $('#pastRows').dataset.ev;
-      if (code) shareEvent(code, e.currentTarget.dataset.title + 'でかかった曲');
+    // 共有と QR のボタンは、回の名前が読めてから出している
+    $('#pastShare').addEventListener('click', () => {
+      if (pastEvent) shareEvent(pastEvent.code, pastEvent.title + '（' + ymd(pastEvent.at) + '）でかかった曲');
     });
 
     /* 共有リンク（?ev=）から来たとき。受付中のいまの回なら「リクエストする」のまま（呼ぶ側で振り分ける）。
        受付を止めたいまの回ならみんなのリクエストを、それ以外（終わった回）ならその回でかかった曲を開く。
        いまの回かどうかは /board の回と比べ、読んだ /board はそのまま描く */
-    async function openShared(code) {
+    async function openShared(code, boardLoad) {
       try {
-        const d = await apiJson('/board');
+        const d = await (boardLoad || apiJson('/board'));
         if (d.event && d.event.code === code) {
           show('board');
           renderBoard(d);
@@ -2633,9 +2527,9 @@
     }
 
     let qrShown = null;   // { url, file, title }。いま見せている PNG（閉じたら object URL を手放す）
-    let qrReq = 0;
+    const qrLatest = latestOnly();
 
-    // 閉じたあとに届いた応答を捨てる番号は、close イベント（Esc で閉じたときも来る）で進める
+    // 閉じたあとに届いた応答は、close イベント（Esc で閉じたときも来る）で古くして捨てる
     function closeQR() {
       $('#qrDlg').close();
     }
@@ -2649,12 +2543,13 @@
        前回の close が届くので、そのとき開いていれば無視する（進めると、作っている最中の絵を捨ててしまう） */
     $('#qrDlg').addEventListener('close', (e) => {
       if (e.currentTarget.open) return;
-      qrReq += 1;
+      qrLatest();
       dropShownQR();
     });
 
-    async function openQR(code, title, at, current) {
-      const req = ++qrReq;
+    async function openQR(ev, current) {
+      const isLatest = qrLatest();
+      const code = ev.code, title = ev.title || '', at = ev.at || '';
       const dlg = $('#qrDlg');
       dropShownQR();   // 開き直したときは、上の close より先にここで前の絵を手放す
       $('#qrHead').textContent = title ? title + ' の QR コード' : 'この回の QR コード';
@@ -2667,18 +2562,8 @@
       $('#qrShareImg').hidden = true;
       if (!dlg.open) dlg.showModal();
       try {
-        // Worker と静的ページの反映順が前後して、/event ・ /board がまだ at を返さない間も、
-        // 回の詳細から開いた日を補い、今日の日付で代用しない。
-        let eventAt = at;
-        if (!eventAt) {
-          try {
-            const d = await apiJson('/events/' + encodeURIComponent(code));
-            eventAt = (d.event && d.event.at) || '';
-          } catch { /* 日付を補えなくても、回名だけの QR は作る */ }
-        }
-        if (req !== qrReq) return;
-        const png = await eventQR(code, title, eventAt);
-        if (req !== qrReq) return;
+        const png = await eventQR(code, title, at);
+        if (!isLatest()) return;
         const file = new File([png], 'request-qr-' + code + '.png', { type: 'image/png' });
         qrShown = { url: URL.createObjectURL(png), file, title };
         const img = new Image();
@@ -2689,7 +2574,7 @@
         // 画像ごと渡せる端末（主にスマホ）だけ、共有シートへの導線を出す
         $('#qrShareImg').hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
       } catch {
-        if (req !== qrReq) return;
+        if (!isLatest()) return;
         $('#qrBox').innerHTML = '';
         $('#qrErr').textContent = 'QR コードを作れませんでした。電波の良い場所でもう一度お試しください。';
         $('#qrErr').hidden = false;
@@ -2722,12 +2607,11 @@
     });
 
     $('#evQR').addEventListener('click', () => {
-      if (boardEvent) openQR(boardEvent, boardTitle, boardAt, true);
+      if (currentEvent) openQR(currentEvent, true);
     });
 
-    $('#pastQR').addEventListener('click', (e) => {
-      const code = $('#pastRows').dataset.ev;
-      if (code) openQR(code, e.currentTarget.dataset.title || '', e.currentTarget.dataset.at || '', false);
+    $('#pastQR').addEventListener('click', () => {
+      if (pastEvent) openQR(pastEvent, false);
     });
 
     $('.tabs').addEventListener('click', (e) => {
@@ -2780,7 +2664,7 @@
         trackHeroHTML(s) +
         '<div class="songstate">' +
         stateChip(s, ' ' + esc(hhmm(s.playedAt))) +
-        (detail.past ? likeStatic(s) : likeHTML(s)) +
+        likeHTML(s, detail.past) +
         '</div>';
 
       $('#songPlayer').style.display = s.previewUrl ? 'flex' : 'none';
@@ -2816,10 +2700,10 @@
     }
 
     // openPast と同じく、最後に開いた曲の応答だけを描く
-    let songReq = 0;
+    const songLatest = latestOnly();
 
     async function openSong(id, from) {
-      const req = ++songReq;
+      const isLatest = songLatest();
       stopAudio();
       songFrom = from || '';
       $('#songBack').textContent = songFrom ? '← この回の一覧に戻る' : '← みんなのリクエストに戻る';
@@ -2833,11 +2717,11 @@
       show('song');
       try {
         const d = await apiJson('/songs/' + id, { headers: bearer(tokenOf(id)) });
-        if (req !== songReq) return;
+        if (!isLatest()) return;
         detail = d;
         renderSong();
       } catch {
-        if (req !== songReq) return;
+        if (!isLatest()) return;
         $('#songHero').innerHTML = '<div class="nomatch">この曲を読み込めませんでした</div>';
       }
     }
@@ -2859,7 +2743,7 @@
     /* 過去の回の行も同じように開く。いいねは出していないので曲だけ見る。 */
     $('#pane-past').addEventListener('click', (e) => {
       const row = e.target.closest('.rowopen[data-song]');
-      if (row) openSong(Number(row.dataset.song), $('#pastRows').dataset.ev || '');
+      if (row) openSong(Number(row.dataset.song), evCode(pastEvent));
     });
 
     $('#pastBack').addEventListener('click', openBoard);
@@ -2903,7 +2787,7 @@
           if (handleMineLock(e)) return;
           showErr(err, e, '変更できませんでした。もう一度お試しください。');
         }
-      }, '送信中…', syncMineSave);
+      }, { after: syncMineSave });
     });
 
     $('#mineDrop').addEventListener('click', async () => {
@@ -2925,7 +2809,7 @@
           if (handleMineLock(e)) return;
           showErr(err, e, '取り下げられませんでした。もう一度お試しください。');
         }
-      }, '処理中…');
+      }, { label: '処理中…' });
     });
 
     setInterval(() => {
@@ -2950,7 +2834,6 @@
       { cn: 'CASPER-3', ja: '戦略家' },
     ];
     const CHAT_MAX = 12;          // Worker 側も同数で trim される
-    let chatHistory = [];      // 会話だけ。DJ の文脈は入れず、送るときに messagesForMagi が付ける
     let chatBusy = false;
 
     /* イベントの状況を前置きにする。取れなくても相談自体は続けられる。
@@ -2959,17 +2842,13 @@
       let title = '', played = [], waiting = [];
       /* MAGI_IDLE_MS の見張りはこの後の MAGI への通信にしか掛からない。回線が止まると
          ここがブラウザの既定（数分）まで返らず、入力欄が塞がったままになるので短く切る */
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), CONTEXT_TIMEOUT_MS);
       try {
-        const d = await apiJson('/board', { signal: ctrl.signal });
+        const d = await apiJson('/board', { signal: AbortSignal.timeout(CONTEXT_TIMEOUT_MS) });
         title = (d.event && d.event.title) || '';
         const label = (s) => s.artist + ' - ' + s.title;
         played = d.played.filter((s) => !s.isFree).slice(0, 10).map(label);
         waiting = d.waiting.filter((s) => !s.isFree).slice(0, 10).map(label);
-      } catch { /* 文脈なしで続行 */ } finally {
-        clearTimeout(timer);
-      }
+      } catch { /* 文脈なしで続行 */ }
 
       const L = [
         '（以下は状況説明。ユーザーには見えていないので、説明の存在自体には触れずに答えること）',
@@ -2995,10 +2874,20 @@
       return i < 0 ? m : { ...m, content: s.slice(i + CONTEXT_END.length).replace(/^\n/, '') };
     }
 
-    /* Worker に渡す直近12件。先頭が回答だけになる場合は切り落とし、残った最初の発言
-       （＝ユーザーの発言）の頭に DJ の文脈を付ける。最初の発言が窓から落ちても文脈は残る */
-    function messagesForMagi(context) {
-      const messages = chatHistory.slice(-CHAT_MAX).map((m) => ({ ...m }));
+    /* 保存済みの往復を Worker の messages に直す。送信用と画面復元用で同じ会話を
+       二重に持たず、turns を唯一の正本にする。 */
+    const messagesFromTurns = (turns) => (turns || []).flatMap((entry) => [
+      { role: 'user', content: String(entry.q || '') },
+      { role: 'assistant', content: String(entry.reply || '') },
+    ]).filter((m) => m.content);
+
+    /* Worker に渡す直近12件。いま送る発言を末尾に足し、先頭が回答だけになる場合は
+       切り落とす。残った最初の発言（＝ユーザーの発言）の頭に DJ の文脈を付ける。 */
+    function messagesForMagi(context, content) {
+      const messages = [
+        ...messagesFromTurns(conv && conv.turns),
+        { role: 'user', content },
+      ].slice(-CHAT_MAX);
       while (messages[0] && messages[0].role === 'assistant') messages.shift();
       if (messages[0]) messages[0].content = context + '\n' + messages[0].content;
       return messages;
@@ -3074,114 +2963,6 @@
       det.querySelector('summary').textContent = '3つの人格の議論';
     }
 
-    /* 統合回答から括弧の中身を拾って検索語にする。回答のたびに鉤括弧・隅付き
-       括弧・引用符のどれで囲まれるかが変わるので、いずれも受け取る。 */
-    const SONG_RE = /[「『【〔"“]([^「」『』【】〔〕"”\n]{2,60})[」』】〕"”]/g;
-    const songLabel = (s) => s.trim().replace(/\s+/g, ' ');
-
-    function pickSongs(text) {
-      const out = [];
-      for (const m of text.matchAll(SONG_RE)) {
-        const s = songLabel(m[1]);
-        if (s.length < 2 || /[。、！？!?]/.test(s) || out.includes(s)) continue;
-        out.push(s);
-      }
-      return out.slice(0, 4);
-    }
-
-    /* 挙げられた曲を、検索タブと同じ iTunes Search API（Apple Music と同じ曲目録）で引く。
-       Apple Music API そのものは開発者登録と署名済みトークンが要るうえ、中身は同じなので使わない。
-       Worker から引くと Cloudflare の IP で回数制限を食い合うので、ブラウザから直接引く。
-       ok = 見つかった（track 付き）/ missing = 見つからない / unknown = 通信の失敗で確かめられない */
-    const bare = (s) => norm(s).replace(/\s/g, '');
-
-    /* 曲名は完全一致だけを認める（前方一致にすると「Animal」が「Animals」に化ける）。
-       括弧の版表記は splitVariant で外してあるので、ここでは「- Remastered 2011」のような
-       ハイフン区切りの版表記を外した形も比べる */
-    const titleKeys = (s) => new Set([bare(s), bare(String(s).replace(/\s+[-–—]\s+.*$/, ''))].filter(Boolean));
-    const sameTitle = (got, want) => [...titleKeys(got)].some((k) => want.has(k));
-
-    /* アーティストは連名を1人ずつに分けて比べ、挙げた全員がそろっていれば本人とみなす。
-       feat. で参加している人も数える（「Sia - Titanium」は David Guetta feat. Sia で当たる）。
-       分けると名前が壊れる名義（X JAPAN → 「」と「JAPAN」）は分けずに1人として扱う */
-    const ARTIST_SEP = /\s*(?:&|,|、|\/|\+|\bx\b|\bvs\.?|\bfeat\.?|\bft\.?|\bwith\b)\s*/i;
-    function artistKeys(s) {
-      s = String(s || '');
-      const parts = s.split(ARTIST_SEP).map(bare);
-      return parts.some((k) => !k) ? [bare(s)].filter(Boolean) : parts;
-    }
-    const featOf = (s) => { const m = /feat\.?\s([^)\]/]*)/i.exec(s || ''); return m ? m[1] : ''; };
-
-    /* 0 = 別人、1 = 連名や feat. の一員として参加、2 = 名義がそのまま一致。
-       2 を優先しないと「Earth, Wind & Fire - September」が映画の共演版に化ける */
-    function artistScore(want, name, withFeat) {
-      const main = artistKeys(name);
-      const all = new Set([...main, ...artistKeys(featOf(withFeat))]);
-      if (!want.length || !want.every((k) => all.has(k))) return 0;
-      return main.length === want.length && main.every((k) => want.includes(k)) ? 2 : 1;
-    }
-
-    /* 照合は2段。まず日本のストアで1曲ずつ引き、曲名の合う候補に絞る。日本のストアは洋楽の
-       アーティスト名をカナで返す（Avicii → アヴィーチー）ので、名義がそのまま合わなかった分は、
-       trackId 共通の US ストアで英字の名前を引いて比べ直す。US は全曲まとめて1本で引く
-       （iTunes は IP ごとに毎分およそ20回までで、検索タブと枠を分け合うため） */
-    async function verifySongs(labels) {
-      const jobs = await Promise.all(labels.map(async (label) => {
-        const cut = label.split(/\s+[-–—]\s+/);
-        // アーティスト名の無い挙げ方は、同名の別の曲と見分けられないので照合しない
-        if (cut.length < 2) return { label, state: 'missing' };
-        const artist = cut[0], title = cut.slice(1).join(' - ');
-        const want = titleKeys(splitVariant(title).base || title);
-        try {
-          const d = await itunes.search(artist + ' ' + title, { country: 'JP', limit: 25, timeout: 8000 });
-          const wantArtist = artistKeys(artist);
-          // 並びは関連度順のまま
-          const titled = toTracks(d.results || []).filter((t) => sameTitle(t.title, want));
-          const score = new Map(titled.map((t) => [t.trackId, artistScore(wantArtist, t.artist, t.variant)]));
-          return { label, wantArtist, titled, score, needUS: titled.length > 0 && ![...score.values()].includes(2) };
-        } catch {
-          return { label, state: 'unknown' };
-        }
-      }));
-
-      const ids = [...new Set(jobs.filter((j) => j.needUS).flatMap((j) => j.titled.slice(0, 10).map((t) => t.trackId)))];
-      let us = null;   // trackId → US ストアの結果。null は引けなかった
-      if (ids.length) {
-        try {
-          const d = await itunes.lookup(ids, { country: 'US', timeout: 6000 });
-          us = new Map((d.results || []).map((r) => [r.trackId, r]));
-        } catch { /* US で確かめられなかった分は unknown に回る */ }
-      }
-      return jobs.map((j) => settle(j, us));
-    }
-
-    function settle(j, us) {
-      if (j.state) return j;
-      const { label, titled, score } = j;
-      const latin = new Map();   // カナ名義 → US での英字名義
-      if (j.needUS && us) {
-        // 日本限定の盤は US に無く、原曲がそこにしか無いことがある。US で確かめた一致度は
-        // 同じカナ名義の曲すべてに広げる
-        const byName = new Map();
-        for (const t of titled) {
-          const r = us.get(t.trackId);
-          const s = r ? artistScore(j.wantArtist, r.artistName, r.trackName) : 0;
-          if (s > (byName.get(t.artist) || 0)) { byName.set(t.artist, s); latin.set(t.artist, r.artistName); }
-        }
-        for (const t of titled) score.set(t.trackId, Math.max(score.get(t.trackId), byName.get(t.artist) || 0));
-      }
-      // 原曲（バージョン表記なし、または feat. だけ）を最優先にし、その中で名義がそのまま合うものを
-      // 先にする。名義を先にすると「Sia - Titanium」が Sia 名義の別録音（Megan's V3rsion）に化ける
-      const isOrig = (t) => !t.variant || /^feat\.?\s[^/]*$/i.test(t.variant);
-      const rank = (t) => score.get(t.trackId) ? (isOrig(t) ? 2 : 0) + score.get(t.trackId) : 0;
-      let track = null;
-      for (const t of titled) if (rank(t) && (!track || rank(t) > rank(track))) track = t;   // 同点は関連度順
-      if (!track) return { label, state: j.needUS && !us ? 'unknown' : 'missing' };
-      // 送信時に rekordbox 向けの英字名義を引き直さずに済むよう持たせておく
-      if (latin.has(track.artist)) track.artistEn = latin.get(track.artist);
-      return { label, state: 'ok', track };
-    }
-
     const pickTracksOf = new WeakMap();   // 候補の枠 → その枠の曲。ボタンの data-p はこの添字
 
     /* 照合で一致した曲だけを確認画面へ直行できる行にする。一致しなかった曲も「存在しない」とは
@@ -3233,8 +3014,6 @@
     /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
        失敗したら履歴と turn を片付けてエラーを出し、null を返す */
     async function askMagi(turn, content, context) {
-      chatHistory.push({ role: 'user', content });
-
       /* 見張るのは「何も届かない時間」。全体の長さは Worker が段階ごとの上限で縛っているので、
          ここでは回線が途中で止まったことだけを見る。何か届くたびに数え直す */
       const ctrl = new AbortController();
@@ -3251,7 +3030,7 @@
         const res = await fetch(MAGI_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messagesForMagi(context), theme: 'dark' }),
+          body: JSON.stringify({ messages: messagesForMagi(context, content), theme: 'dark' }),
           signal: ctrl.signal,
         });
         watch();
@@ -3279,7 +3058,6 @@
             },
             integrated: (d) => { reply += d.delta || ''; bodyEl.textContent = reply; chatScroll(); },
             error: (d) => { failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
-            done: () => { },
           }, watch);
         }
       } catch (e) {
@@ -3292,11 +3070,8 @@
       }
 
       if (reply && !failure) {
-        chatHistory.push({ role: 'assistant', content: reply });
         return reply;
       }
-      // 失敗したターンは履歴から外す（次の送信で壊れた文脈を引きずらない）
-      chatHistory.pop();
       turn.remove();
       $('#chatErr').textContent = failure || '返事を受け取れませんでした。もう一度お試しください。';
       $('#chatErr').hidden = false;
@@ -3326,7 +3101,6 @@
           const entry = { id: uid(), q: text, personas: readPersonas(turn), reply, picks: pickSongs(reply).length ? null : [] };
           c.turns = c.turns.concat(entry).slice(-TURN_MAX);
           c.count = (c.count || 0) + 1;
-          c.messages = chatHistory.slice(-CHAT_MAX);
           c.title = eventTitle;
           storeConsult(c);
           // 照合は待たずに入力を戻す。候補はこの回答の枠に出るので、次の相談と混ざらない
@@ -3340,10 +3114,10 @@
 
     /* ── 相談の履歴 ──────────────────────────
        この端末の localStorage にだけ置く（サーバには送らない）。1件の形は
-       { id, first, count, title, at, messages, turns: [{ id, q, personas, reply, picks }] }。
-       messages は Worker へ送る直近の会話で、開き直した会話の続きを話すために持つ。DJ の文脈は
-       送るたびに作り直すので含まない（旧形式は最初の発言に文脈が埋め込まれ、code と context も
-       持っているが、どちらももう読まない）。turns は画面を組み直すためのもので、古い往復は捨てるので、
+       { id, first, count, title, at, turns: [{ id, q, personas, reply, picks }] }。
+       turns は画面の復元と Worker へ送る直近の会話の両方の正本。DJ の文脈は送るたびに作り直すので
+       含まない。旧形式の messages は読み込み時に turns へ直し、次に保存するときに落とす。
+       古い往復は捨てるので、
        一覧の見出し（first）と往復数（count）は別に持つ。picks は照合結果（届く前に閉じられたら null、
        通信の都合で確かめられなかった曲を含むこともある。どちらも開き直したときに引き直す） */
     const CONSULT_KEY = 'tkdj.consults';
@@ -3359,10 +3133,42 @@
 
     const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const newConsult = (first) => ({
-      id: uid(), first, count: 0, title: '', at: '', messages: [], turns: [],
+      id: uid(), first, count: 0, title: '', at: '', turns: [],
     });
+
+    /* messages だけに会話を持つ旧保存形式を、表示にも送信にも使える turns へ直す。
+       id は保存のたびに変わらないよう、会話IDと位置から決める。 */
+    function turnsFromLegacyMessages(id, messages) {
+      // localStorage は利用者や拡張機能からも書き換えられる。壊れた要素1件で
+      // ページ全体の起動を止めず、復元できる user / assistant の組だけを拾う。
+      const clean = (messages || [])
+        .filter((m) => m && typeof m === 'object' && (m.role === 'user' || m.role === 'assistant'))
+        .map(stripContext);
+      const turns = [];
+      for (let i = 0; i < clean.length - 1; i += 1) {
+        const q = clean[i], a = clean[i + 1];
+        if (q.role !== 'user' || a.role !== 'assistant') continue;
+        turns.push({
+          id: id + '-legacy-' + turns.length,
+          q: String(q.content || ''), personas: {}, reply: String(a.content || ''), picks: null,
+        });
+        i += 1;
+      }
+      return turns;
+    }
+
+    function normalizeConsult(c) {
+      const turns = Array.isArray(c.turns) && c.turns.length
+        ? c.turns
+        : turnsFromLegacyMessages(c.id, Array.isArray(c.messages) ? c.messages : []);
+      // messages / code / context は旧形式だけの値。戻り値へ含めず、次の保存で自然に移行する。
+      const { messages, code, context, ...rest } = c;
+      return { ...rest, turns };
+    }
+
     const savedConsults = () => storage.getJSON(CONSULT_KEY, [])
-      .filter((c) => c && typeof c.id === 'string' && Array.isArray(c.turns) && Array.isArray(c.messages));
+      .filter((c) => c && typeof c.id === 'string' && (Array.isArray(c.turns) || Array.isArray(c.messages)))
+      .map(normalizeConsult);
 
     // 件数と文字数の上限に収めて書く。入り切らなければ古い会話から捨てる（最新の1件は残す）
     function writeConsults(list) {
@@ -3404,7 +3210,7 @@
       const songs = pickSongs(entry.reply);
       if (!songs.length) return [];
       if (!picking.has(entry.id)) {
-        picking.set(entry.id, verifySongs(songs)
+        picking.set(entry.id, verifyRecommendations(songs)
           .catch(() => songs.map((label) => ({ label, state: 'unknown' })))
           .then((checked) => {
             picking.delete(entry.id);
@@ -3446,7 +3252,6 @@
     // 画面の会話を片付ける（保存済みの履歴には触らない）
     function clearChat() {
       conv = null;
-      chatHistory = [];
       $('#chatLog').replaceChildren();
       $('#chatErr').hidden = true;
       renderConsultUI();
@@ -3510,9 +3315,6 @@
       if (!c || chatBusy) return;
       clearChat();
       conv = c;
-      // 旧形式の保存データは最初の発言に文脈が埋め込まれている。古い状況を残すと「かけた曲は
-      // 挙げない」が前の時点の曲にかかるので剥がして持つ（いまの状況は次の送信で作って付ける）
-      chatHistory = c.messages.map(stripContext).slice(-CHAT_MAX);
       // 照合し直す往復は1つずつ引く。iTunes は IP ごとに毎分およそ20回までで、検索タブと枠を分け合う
       let queue = Promise.resolve();
       for (const entry of c.turns) {
@@ -3575,7 +3377,7 @@
       // iTunes で見つかった曲はその場で確認画面へ。戻ると相談の同じ位置に帰る
       const c = e.target.closest('.cand[data-p]');
       if (c) {
-        toConfirm(pickTracksOf.get(c.closest('.pickwrap'))[+c.dataset.p], null, { pane: 'consult', y: window.scrollY });
+        toConfirm(pickTracksOf.get(c.closest('.pickwrap'))[+c.dataset.p], { pane: 'consult', y: window.scrollY });
         return;
       }
       // 照合できなかった曲は検索へ渡す（区切りのハイフンは検索の邪魔なので落とす）
@@ -3616,6 +3418,7 @@
       if (!shared) syncEventParam('');   // 形の崩れた ?ev= は残さない
       holdEventParam = !!shared;
       let openCode = '';   // 受付中の回のコード
+      let boardLoad = null;   // 受付停止中のヘッダーと共有リンクの判定で同じ /board を使う
       try {
         const ev = await apiJson('/event');
         eventOpen = !!ev.open;
@@ -3632,14 +3435,15 @@
           closeRequests('受付停止中', 'いまはリクエストの受付時間外のため、相談はお休みしています。次回の受付までお待ちください。');
           // /event は受付外だと回を返さない。ヘッダーの共有と QR のために、終わった直後の回を /board から引く
           // （先に一覧が読めていれば、そちらの回のほうが新しいので上書きしない）
-          apiJson('/board').then((d) => { if (!boardEvent) setCurrentEvent(d.event); }).catch(() => { });
+          boardLoad = apiJson('/board');
+          boardLoad.then((d) => { if (!currentEvent) setCurrentEvent(d.event); }).catch(() => { });
         }
       } catch {
         closeRequests('オフライン', 'サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。');
       }
       if (shared) {
         // 受付中の回の QR・リンクは、リクエストを送ってもらうためのもの。「リクエストする」のまま置く
-        if (shared !== openCode) await openShared(shared);
+        if (shared !== openCode) await openShared(shared, boardLoad);
         holdEventParam = false;
         syncEventParam(eventParamOf(paneNow));
       }

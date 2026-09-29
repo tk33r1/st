@@ -762,21 +762,24 @@ async function postRequest(request, env, cors, ctx) {
   }, 200, cors);
 }
 
+/* 公開一覧・詳細に出す「最初に送った人」。別クエリで投稿を全件読む代わりに、
+   曲の SELECT ごとに同じ規則で1件だけ拾う。idx_requests_song で song_id を引ける。 */
+const FIRST_NAME_COL = `(SELECT r.from_name FROM requests r
+  WHERE r.song_id = s.id AND r.from_name <> '' ORDER BY r.id ASC LIMIT 1) AS first_name`;
+const BOARD_COLS = `s.id, s.title, s.artist, s.variant, s.artwork, s.is_free,
+  s.votes, s.likes, s.played_at, s.status, ${FIRST_NAME_COL}`;
+
 /* ── 公開: 曲の詳細 ─────────────────────────
    Authorization に鍵を添えると、その鍵が指す自分の投稿だけが一緒に返る。
    他人のひとことは誰が見ても返さない（/board と同じ方針）。 */
 async function getSong(id, request, env, cors) {
   const s = await env.DB.prepare(
-    `SELECT id, event_code, title, artist, variant, album, duration_ms, artwork, apple_url, preview_url,
-            is_free, genre, release_year, explicitness, votes, likes, status, played_at
-       FROM songs WHERE id = ?`
+    `SELECT s.id, s.event_code, s.title, s.artist, s.variant, s.album, s.duration_ms,
+            s.artwork, s.apple_url, s.preview_url, s.is_free, s.genre, s.release_year,
+            s.explicitness, s.votes, s.likes, s.status, s.played_at, ${FIRST_NAME_COL}
+       FROM songs s WHERE s.id = ?`
   ).bind(id).first();
   if (!s) return json({ error: 'not_found', message: 'この曲は見つかりませんでした' }, 404, cors);
-
-  const names = await env.DB.prepare(
-    `SELECT from_name FROM requests
-      WHERE song_id = ? AND from_name <> '' ORDER BY id ASC LIMIT 1`
-  ).bind(id).first();
 
   // 鍵はヘッダでだけ受け取る。クエリに載せるとアクセスログや Referer に残り、
   // 拾った側がそのまま PATCH / DELETE に使い回せてしまう。
@@ -799,7 +802,7 @@ async function getSong(id, request, env, cors) {
   const past = !ev || s.event_code !== ev.code;
 
   return json({
-    song: shapePublicSong(s, names ? names.from_name : '', { detailed: true }),
+    song: shapePublicSong(s, s.first_name, { detailed: true }),
     // queued か skipped かは外に出さない。畳んだ理由だけ closed / moved で伝える。
     editable,
     past,
@@ -929,19 +932,6 @@ async function setLike(id, on, request, env, cors) {
    採用か見送りかは区別できない。ひとことも返さない。UI で隠すのではなく、
    ここで返さないのが要点。 */
 
-const BOARD_COLS = `id, title, artist, variant, artwork, is_free, votes, likes, played_at, status`;
-
-/** 曲ごとの「最初に送った人」。名前を書かなかった投稿は数えない。 */
-async function firstNames(code, env) {
-  const rows = await env.DB.prepare(
-    `SELECT song_id, from_name FROM requests
-      WHERE event_code = ? AND from_name <> '' ORDER BY id ASC`
-  ).bind(code).all();
-  const m = new Map();
-  for (const r of rows.results) if (!m.has(r.song_id)) m.set(r.song_id, r.from_name);
-  return m;
-}
-
 /** 公開画面に出す曲。詳細だけに必要な項目も同じ関数で足し、一覧との名前ずれを防ぐ。 */
 const shapePublicSong = (s, firstName, { detailed = false } = {}) => ({
   id: s.id,
@@ -973,20 +963,20 @@ async function getBoard(env, cors) {
   const ev = await currentEvent(env);
   if (!ev) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
 
-  const played = await env.DB.prepare(
-    `SELECT ${BOARD_COLS} FROM songs
-      WHERE event_code = ? AND status = 'played'
-      ORDER BY played_at DESC, id DESC`
-  ).bind(ev.code).all();
+  const [played, waiting] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT ${BOARD_COLS} FROM songs s
+        WHERE s.event_code = ? AND s.status = 'played'
+        ORDER BY s.played_at DESC, s.id DESC`
+    ).bind(ev.code),
+    env.DB.prepare(
+      `SELECT ${BOARD_COLS} FROM songs s
+        WHERE s.event_code = ? AND s.status <> 'played'
+        ORDER BY s.votes DESC, s.id ASC LIMIT ?`
+    ).bind(ev.code, BOARD_WAITING),
+  ]);
 
-  const waiting = await env.DB.prepare(
-    `SELECT ${BOARD_COLS} FROM songs
-      WHERE event_code = ? AND status <> 'played'
-      ORDER BY votes DESC, id ASC LIMIT ?`
-  ).bind(ev.code, BOARD_WAITING).all();
-
-  const firstName = await firstNames(ev.code, env);
-  const shape = (s) => shapePublicSong(s, firstName.get(s.id));
+  const shape = (s) => shapePublicSong(s, s.first_name);
 
   const p = played.results.map(shape);
   return json({
@@ -1036,15 +1026,14 @@ async function getPastBoard(code, env, cors) {
   if (!ev) return json({ error: 'not_found', message: 'この回は見つかりませんでした' }, 404, cors);
 
   const played = await env.DB.prepare(
-    `SELECT ${BOARD_COLS} FROM songs
-      WHERE event_code = ? AND status = 'played'
-      ORDER BY played_at ASC, id ASC`
+    `SELECT ${BOARD_COLS} FROM songs s
+      WHERE s.event_code = ? AND s.status = 'played'
+      ORDER BY s.played_at ASC, s.id ASC`
   ).bind(code).all();
 
-  const firstName = await firstNames(code, env);
   return json({
     event: { code: ev.code, title: ev.title, at: ev.created_at },
-    played: played.results.map((s) => shapePublicSong(s, firstName.get(s.id))),
+    played: played.results.map((s) => shapePublicSong(s, s.first_name)),
   }, 200, cors);
 }
 
