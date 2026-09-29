@@ -170,6 +170,12 @@
        他の変数とリセットは data/bijutsu-shisui.css */
     :root { --page-max: 480px; }
 
+    /* このページでは、移動先を選ぶホバー表示をピンクにそろえる */
+    .site-crumb a:hover {
+      color: var(--heart-primary);
+      border-bottom-color: var(--heart-primary);
+    }
+
     /* シートの箱を外して、スケジュール表と同じ「背景の上に直接組む」形にする */
     .stage {
       display: flex;
@@ -262,7 +268,7 @@
 
     .tabs button[aria-selected="true"] {
       color: var(--heart-secondary);
-      border-bottom-color: var(--heart-secondary);
+      border-bottom-color: var(--heart-primary);
     }
 
     @media (max-width: 380px) { .tabs button { font-size: 11.5px; letter-spacing: -.02em; } }
@@ -347,7 +353,7 @@
     textarea:focus,
     input.txt:focus {
       outline: none;
-      border-color: var(--heart-secondary);
+      border-color: var(--heart-primary);
     }
 
     .field input::placeholder,
@@ -796,10 +802,10 @@
       height: 62px;
       display: grid;
       place-items: center;
-      border: 2px solid var(--heart-secondary);
+      border: 2px solid var(--heart-primary);
       font-size: 27px;
       border-radius: 0;
-      color: var(--heart-secondary);
+      color: var(--heart-primary);
     }
 
     .done h2 {
@@ -1304,7 +1310,7 @@
     }
 
     .request-faq-item[open] {
-      border-color: var(--heart-secondary);
+      border-color: var(--heart-primary);
     }
 
     .request-faq-question {
@@ -1335,12 +1341,13 @@
     }
 
     .request-faq-answer a {
-      color: var(--heart-secondary);
+      color: var(--fg-dim);
       text-decoration: underline;
       text-underline-offset: 3px;
+      transition: color .15s;
     }
 
-    .request-faq-answer a:hover { color: var(--fg); }
+    .request-faq-answer a:hover { color: var(--heart-primary); }
 
     @media (max-width: 480px) {
       .request-faq {
