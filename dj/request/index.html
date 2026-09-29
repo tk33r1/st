@@ -82,6 +82,76 @@
             "@type": "Person",
             "@id": "https://tk.st/#shitake"
           }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://tk.st/dj/request/#faqpage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "曲をリクエストするにはどうすればよいですか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "「リクエストする」で曲名かアーティスト名を検索し、候補から曲を選んで送信してください。ニックネームとひとことは任意です。アーティスト名は英語で入力すると見つかりやすくなります。"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "検索に出てこない曲もリクエストできますか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "はい。検索結果の下にある「一覧に無い曲をリクエストする」から、分かる範囲で曲名やアーティスト名、曲の特徴を入力できます。ただし、Apple Music トルコ版に登録のない曲はかけることができません。"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "AIに相談とは何ですか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "DJ本人がサイトに書いた音楽・思想・仕事と、本人の口調・考え方をもとに、「熱狂者」「人間主義者」「戦略家」の3人格AIが別々に選曲を考え、その意見を1つの回答に統合します。AIによる再現であり、本人がリアルタイムに回答しているものではありません。"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "AIへ相談した内容は、どこに送られますか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "リクエストした曲は必ず再生されますか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "必ず再生されるとは限りません。DJが会場の流れや持ち時間を見ながら確認するため、リクエストを受け付けてもかけられないことがあります。"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "送ったリクエストを変更・取り下げできますか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "送信したブラウザから「みんなのリクエスト」で自分の曲を開くと、ニックネームとひとことの変更、またはリクエストの取り下げができます。ただし、受付中でDJがまだ確認していない間に限ります。"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "ハート（♥）は何のためにありますか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "気になる曲を1端末につき1曲1回まで応援できます。ハートが多い曲は優先的に検討されますが、再生を保証するものではありません。押したハートはもう一度押すと取り消せます。"
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "過去のイベントでかかった曲を確認することはできますか？",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "はい。「みんなのリクエスト」の下部にある「過去のイベント」から、各イベントで実際にかかった曲を再生順に確認できます。表示されるのは、実際に再生された曲がある直近20件のイベントです。受付されたものの再生されなかった曲は含まれません。"
+              }
+            }
+          ]
         }
       ]
     }
@@ -1192,6 +1262,93 @@
       border-color: var(--fg);
     }
 
+    /* ===== FAQ ===== */
+    .request-faq {
+      position: relative;
+      z-index: 1;
+      padding: 0 calc(20px + env(safe-area-inset-right)) 32px calc(20px + env(safe-area-inset-left));
+    }
+
+    .request-faq-inner {
+      width: 100%;
+      max-width: var(--page-max);
+      margin: 0 auto;
+    }
+
+    .request-faq h2 {
+      margin: 0 0 8px;
+      font-family: var(--f-dot);
+      font-size: 1.125rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--fg);
+    }
+
+    .request-faq-lede {
+      margin: 0 0 18px;
+      font-family: var(--f-body);
+      font-size: 0.8125rem;
+      color: var(--fg-dim);
+    }
+
+    .request-faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .request-faq-item {
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--bg-elevated), rgba(18, 18, 22, 0.4));
+    }
+
+    .request-faq-item[open] {
+      border-color: var(--heart-secondary);
+    }
+
+    .request-faq-question {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 13px 14px;
+      list-style: none;
+      cursor: pointer;
+      font-family: var(--f-dot);
+      font-size: 0.8125rem;
+      line-height: 1.7;
+      color: var(--fg);
+    }
+
+    .request-faq-question::-webkit-details-marker { display: none; }
+    .request-faq-question::before { content: 'Q.'; flex: none; color: var(--heart-secondary); }
+    .request-faq-question::after { content: '＋'; flex: none; margin-left: auto; color: var(--heart-secondary); }
+    .request-faq-item[open] .request-faq-question::after { content: '−'; }
+
+    .request-faq-answer {
+      padding: 12px 14px 15px 43px;
+      border-top: 1px dashed var(--border);
+      font-family: var(--f-body);
+      font-size: 0.8125rem;
+      line-height: 1.85;
+      color: var(--fg-dim);
+    }
+
+    .request-faq-answer a {
+      color: var(--heart-secondary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .request-faq-answer a:hover { color: var(--fg); }
+
+    @media (max-width: 480px) {
+      .request-faq {
+        padding-right: calc(14px + env(safe-area-inset-right));
+        padding-left: calc(14px + env(safe-area-inset-left));
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .badge::before { animation: none; }
     }
@@ -1459,6 +1616,64 @@
     <button type="button" class="linkbtn" id="qrShareImg" hidden>画像を共有</button>
     <button type="button" class="linkbtn" id="qrClose">閉じる</button>
   </dialog>
+
+  <!-- FAQ -->
+  <section class="request-faq" id="faq" aria-labelledby="faq-title">
+    <div class="request-faq-inner">
+      <h2 id="faq-title">よくある質問</h2>
+      <p class="request-faq-lede">曲のリクエストや選曲相談について、よくある質問をまとめました。</p>
+      <div class="request-faq-list">
+        <details class="request-faq-item">
+          <summary class="request-faq-question">曲をリクエストするにはどうすればよいですか？</summary>
+          <div class="request-faq-answer">
+            <p>「リクエストする」で曲名かアーティスト名を検索し、候補から曲を選んで送信してください。ニックネームとひとことは任意です。アーティスト名は英語で入力すると見つかりやすくなります。</p>
+          </div>
+        </details>
+        <details class="request-faq-item">
+          <summary class="request-faq-question">検索に出てこない曲もリクエストできますか？</summary>
+          <div class="request-faq-answer">
+            <p>はい。検索結果の下にある「一覧に無い曲をリクエストする」から、分かる範囲で曲名やアーティスト名、曲の特徴を入力できます。ただし、<a href="https://tk.st/glitch/002/" target="_blank" rel="noopener noreferrer">Apple Music トルコ版</a>に登録のない曲はかけることができません。</p>
+          </div>
+        </details>
+        <details class="request-faq-item">
+          <summary class="request-faq-question">AIに相談とは何ですか？</summary>
+          <div class="request-faq-answer">
+            <p>DJ本人がサイトに書いた音楽・思想・仕事と、本人の口調・考え方をもとに、「熱狂者」「人間主義者」「戦略家」の3人格AIが別々に選曲を考え、その意見を1つの回答に統合します。AIによる再現であり、本人がリアルタイムに回答しているものではありません。</p>
+          </div>
+        </details>
+        <details class="request-faq-item">
+          <summary class="request-faq-question">AIへ相談した内容は、どこに送られますか？</summary>
+          <div class="request-faq-answer">
+            <p>相談文とその回のリクエスト状況は、回答のためOpenAI、DeepSeek、Google Geminiの3社すべてに送信されます。会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。機密情報や個人情報は入力しないでください。</p>
+          </div>
+        </details>
+        <details class="request-faq-item">
+          <summary class="request-faq-question">リクエストした曲は必ず再生されますか？</summary>
+          <div class="request-faq-answer">
+            <p>必ず再生されるとは限りません。DJが会場の流れや持ち時間を見ながら確認するため、リクエストを受け付けてもかけられないことがあります。</p>
+          </div>
+        </details>
+        <details class="request-faq-item">
+          <summary class="request-faq-question">送ったリクエストを変更・取り下げできますか？</summary>
+          <div class="request-faq-answer">
+            <p>送信したブラウザから「みんなのリクエスト」で自分の曲を開くと、ニックネームとひとことの変更、またはリクエストの取り下げができます。ただし、受付中でDJがまだ確認していない間に限ります。</p>
+          </div>
+        </details>
+        <details class="request-faq-item">
+          <summary class="request-faq-question">ハート（♥）は何のためにありますか？</summary>
+          <div class="request-faq-answer">
+            <p>気になる曲を1端末につき1曲1回まで応援できます。ハートが多い曲は優先的に検討されますが、再生を保証するものではありません。押したハートはもう一度押すと取り消せます。</p>
+          </div>
+        </details>
+        <details class="request-faq-item">
+          <summary class="request-faq-question">過去のイベントでかかった曲を確認することはできますか？</summary>
+          <div class="request-faq-answer">
+            <p>はい。「みんなのリクエスト」の下部にある「過去のイベント」から、各イベントで実際にかかった曲を再生順に確認できます。表示されるのは、実際に再生された曲がある直近20件のイベントです。受付されたものの再生されなかった曲は含まれません。</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
 
   <!-- BREADCRUMB -->
   <nav class="site-crumb" aria-label="パンくずリスト">
