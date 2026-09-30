@@ -373,11 +373,16 @@
       color: rgba(154, 154, 160, 0.6);
     }
 
-    .field .clear {
+    /* 消すボタンは自前の ✕ に揃える。type="search" にブラウザが付ける ✕ は出さない（二重になる） */
+    .field input::-webkit-search-cancel-button,
+    .field input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+
+    .clear {
       position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
       width: 34px; height: 34px; border-radius: 50%; color: var(--faint); font-size: 17px;
       display: none; align-items: center; justify-content: center;
     }
+    .clear:hover { color: var(--heart-secondary); }
     .field.filled .clear { display: flex; }
 
     .count {
@@ -414,7 +419,7 @@
     }
 
     .send:disabled,
-    .composer button:disabled {
+    .composer > button:disabled {
       cursor: not-allowed;
       background: transparent;
       border-color: var(--border);
@@ -1147,7 +1152,17 @@
     .ai-info-card li + li { margin-top: 7px; }
     .ai-info-card .warn { color: var(--glitch-accent); font-weight: 700; }
 
-    .seeds { display: flex; flex-wrap: wrap; gap: 7px; }
+    /* 例文。テーマを切り替えて選べる */
+    .seeds { display: flex; flex-direction: column; gap: 9px; }
+    .seedtabs, .seedlist { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .seedtab {
+      padding: 4px 10px;
+      font-family: var(--f-display); font-size: 10.5px; letter-spacing: .08em;
+      border: 1px solid transparent; border-radius: 0; color: var(--faint);
+    }
+    .seedtab:hover { color: var(--heart-secondary); }
+    .seedtab[aria-pressed="true"] { border-color: var(--heart-secondary); color: var(--heart-secondary); }
 
     .seed { padding: 7px 12px; text-align: left; }
 
@@ -1266,9 +1281,13 @@
     .histopen:hover .t, .histdel:hover { color: var(--heart-secondary); }
 
     .composer { display: flex; gap: 8px; align-items: flex-end; }
-    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px; }
+    .composer textarea { min-height: 48px; max-height: 150px; border-radius: 2px; padding: 13px 44px 13px 13px; }
+    /* 入力欄が伸びても ✕ は1行目の高さに留める */
+    .composer .cfield { position: relative; flex: 1; min-width: 0; display: flex; }
+    .composer .clear { top: 7px; transform: none; }
+    .composer .cfield.filled .clear { display: flex; }
 
-    .composer button {
+    .composer > button {
       flex-shrink: 0; height: 48px; padding: 0 16px;
       font-family: var(--f-dot);
       font-weight: 400;
@@ -1280,7 +1299,7 @@
       color: var(--bg);
     }
 
-    .composer button:hover:not(:disabled) {
+    .composer > button:hover:not(:disabled) {
       background: var(--fg);
       border-color: var(--fg);
     }
@@ -1516,10 +1535,8 @@
         </div>
         <p class="lede">曲名が決まっていなくても大丈夫。<br>気分やシーンを話しかけると、<b>DJ 本人の思考を模した 3つの AI</b> が合議して、曲を挙げてくれます。</p>
         <div class="seeds" id="seeds">
-          <button class="seed">とにかく上がる曲がかけてほしい</button>
-          <button class="seed">みんなで踊れる定番は？</button>
-          <button class="seed">名前は忘れたけど、CMで聴いたEDM</button>
-          <button class="seed">最後を締めくくる一曲を選んで</button>
+          <div class="seedtabs" id="seedTabs" role="group" aria-label="例文のテーマ"></div>
+          <div class="seedlist" id="seedList"></div>
         </div>
         <div class="chatlog" id="chatLog"></div>
         <div class="chathist" id="chatHist" hidden>
@@ -1533,7 +1550,10 @@
           <button class="chatbtn" id="chatNew" type="button">＋ 新しい相談</button>
         </div>
         <div class="composer" id="composer">
-          <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
+          <div class="cfield" id="chatField">
+            <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
+            <button class="clear" id="chatClear" type="button" aria-label="入力を消す">✕</button>
+          </div>
           <button id="chatSend" disabled>送信</button>
         </div>
         <p class="hint" id="chatHint">AI が挙げた曲は iTunes Search API で照合しています。照合できなかった曲は、検索して探してください。</p>
@@ -3313,6 +3333,7 @@
 
       input.disabled = chatBusy || consultLocked;
       input.placeholder = consultLocked ? 'いまは相談できません' : 'どんな曲が聴きたい？';
+      $('#chatField').classList.toggle('filled', !!input.value && !input.disabled);
       $('#chatSend').disabled = chatBusy || consultLocked || input.value.trim().length < 2;
 
       $('#chatLock').hidden = !consultLocked;
@@ -3398,7 +3419,55 @@
       }
     });
     $('#chatSend').addEventListener('click', () => sendConsult($('#chatInput').value));
+    $('#chatClear').addEventListener('click', () => { setValue($('#chatInput'), ''); $('#chatInput').focus(); });
+
+    /* 例文。押すとそのまま相談として送る。MAGI にはこの回のかけた曲・受付済みの曲も渡しているので、
+       「流れで」はそれを踏まえた相談になる */
+    const SEEDS = [
+      ['アゲたい', [
+        'ドロップで全員が跳べる Big Room を1曲',
+        'サビで手が上がる、歌えるダンスポップは？',
+        'サイトランスで一気に景色を変えたい',
+        'J-POP のリミックスでフロアが沸く曲ある？',
+      ]],
+      ['流れで', [
+        'ここまでかかった曲の流れに続けるなら？',
+        'まだ出ていない系統で、空気を変える1曲を',
+        'リクエスト済みの曲と被らない、意外な一曲',
+        '最後を締めくくるなら、どの曲がいい？',
+      ]],
+      ['なつかし', [
+        'パラパラで踊れる、ユーロビートの名曲',
+        '2010年代のフェスで鳴りまくってた EDM',
+        '平成の J-POP で、いまかかったら上がる曲',
+        'クラブで映えるアニソンのダンスアレンジ',
+      ]],
+      ['シーン', [
+        '乾杯のあとに流したい、明るく跳ねる曲',
+        '友だちの誕生日。お祝いに合う踊れる曲は？',
+        'クラブが初めての友だちでも乗れる定番',
+        '一緒に来た人と歌える、盛り上がる曲',
+      ]],
+      ['うろ覚え', [
+        'CMで流れてた、女性ボーカルの EDM を探したい',
+        'TikTok で流行ってた、振り付けのあるダンス曲',
+        '口笛のメロディが印象的なハウス、なんだっけ',
+        '映画のエンドロールで流れてた洋楽のダンス曲',
+      ]],
+    ];
+
+    $('#seedTabs').innerHTML = SEEDS.map(([name], i) =>
+      '<button type="button" class="seedtab" data-i="' + i + '">' + esc(name) + '</button>').join('');
+    function renderSeeds(at) {
+      $('#seedTabs').querySelectorAll('.seedtab').forEach((t, i) => t.setAttribute('aria-pressed', String(i === at)));
+      $('#seedList').innerHTML = SEEDS[at][1].map((s) =>
+        '<button type="button" class="seed">' + esc(s) + '</button>').join('');
+    }
+    renderSeeds(0);
+
     $('#seeds').addEventListener('click', (e) => {
+      const tab = e.target.closest('.seedtab');
+      if (tab) { renderSeeds(+tab.dataset.i); return; }
       const b = e.target.closest('.seed');
       if (b) sendConsult(b.textContent);
     });
@@ -3508,6 +3577,35 @@
       let layer = null;
       let live = 0;
 
+      /* 動きの途中で速さが途切れないよう、位置・大きさ・濃さをそれぞれ1本の曲線で決め、
+         細かく刻んだキーフレームに落とす（全体の進みは等速）。
+         区間ごとに緩急を付けると、つなぎ目で速さが 0 になったり跳ねたりして
+         「飛び出す→止まる→消える」が段になって見える。
+         どの曲線も、つなぎ目と終わりで傾きが 0 になる形を選んでいる */
+      const STEPS = 20;
+      const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+      const smooth = (t) => t * t * (3 - 2 * t);   // 両端の傾きが 0
+
+      function heartFrames(x0, y0, dx, dy, rise, rot) {
+        const frames = [];
+        for (let k = 0; k <= STEPS; k++) {
+          const t = k / STEPS;
+          const e = easeOut(t);
+          // 飛び出す勢いはだんだん落ち、浮き上がりは最後まで同じ速さで続く。止まって見える瞬間を作らない
+          const px = x0 + dx * e;
+          const py = y0 + dy * e - rise * t;
+          // 最初の 2 割でふくらみ、あとは消えるまでゆっくりしぼむ
+          const sc = t < 0.2 ? 0.4 + 0.6 * easeOut(t / 0.2) : 1 - 0.3 * smooth((t - 0.2) / 0.8);
+          // 形が分かるよう前半は濃いまま保ち、後半でなだらかに消す
+          const op = t < 0.4 ? 1 : 1 - smooth((t - 0.4) / 0.6);
+          frames.push({
+            transform: `translate(${px.toFixed(2)}px, ${py.toFixed(2)}px) scale(${sc.toFixed(3)}) rotate(${(rot * e).toFixed(1)}deg)`,
+            opacity: +op.toFixed(3),
+          });
+        }
+        return frames;
+      }
+
       function burst(x, y) {
         if (!layer) {
           layer = document.createElement('div');
@@ -3523,7 +3621,8 @@
           const ang = base + (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 1.3;
           const dist = 26 + Math.random() * 26;
           const dx = Math.cos(ang) * dist;
-          const dy = Math.sin(ang) * dist - 10;   // 少しだけ浮き上がる
+          const dy = Math.sin(ang) * dist;
+          const rise = 10 + Math.random() * 8;   // 勢いが落ちたあとも、ふわっと浮き続ける量
           const rot = (Math.random() - 0.5) * 40;   // 傾けすぎるとハートの形に見えない
           // ドット1粒が 2px を切るとハートと読めない（形は 7×6 マス）ので、14px を下限にする
           const size = 14 + Math.random() * 7;
@@ -3535,15 +3634,7 @@
           el.style.color = COLORS[Math.random() < 0.5 ? 0 : 1];
           layer.appendChild(el);
           live++;
-          /* 緩急は区間ごとに付ける。全体に掛けると時間の進みごと前倒しになり、
-             飛び出してすぐ消える区間に入ってしまう（ほとんどの時間が薄れた状態になる） */
-          const a = el.animate([
-            { transform: `translate(${x0}px, ${y0}px) scale(.4)`, opacity: 1, easing: 'cubic-bezier(.2, .7, .3, 1)' },
-            { transform: `translate(${x0 + dx * 0.75}px, ${y0 + dy * 0.75}px) scale(1) rotate(${rot * 0.7}deg)`, opacity: 1, offset: 0.35, easing: 'linear' },
-            // 形を見せる間を取ってから消す。広がりきってすぐ薄れると、ハートと分かる前に消える
-            { transform: `translate(${x0 + dx * 0.92}px, ${y0 + dy * 0.92 - 3}px) scale(.95) rotate(${rot * 0.9}deg)`, opacity: 0.9, offset: 0.7, easing: 'ease-in' },
-            { transform: `translate(${x0 + dx}px, ${y0 + dy - 8}px) scale(.7) rotate(${rot}deg)`, opacity: 0 },
-          ], { duration: 720 + Math.random() * 240, fill: 'forwards' });
+          const a = el.animate(heartFrames(x0, y0, dx, dy, rise, rot), { duration: 850 + Math.random() * 250, fill: 'forwards' });
           let gone = false;
           const done = () => { if (gone) return; gone = true; el.remove(); live--; };
           a.onfinish = done;
