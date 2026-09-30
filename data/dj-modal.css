@@ -1,0 +1,166 @@
+/* DJ の各画面で共通して使うモーダル。閉じ方と余白をページごとに変えない。 */
+.dj-modal {
+  --dj-modal-width: 480px;
+  box-sizing: border-box;
+  margin: auto;
+  width: min(var(--dj-modal-width), calc(100% - 32px));
+  max-width: none;
+  max-height: min(760px, calc(100dvh - 32px));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border, var(--line, #383840));
+  border-radius: var(--r, 2px);
+  background: var(--bg-elevated, var(--bg, #0a0a0c));
+  color: var(--fg, #eeeef0);
+  box-shadow: 0 30px 70px -20px #000;
+  font-family: var(--f-body, sans-serif);
+}
+
+.dj-modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dj-modal::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.dj-modal--wide { --dj-modal-width: 560px; }
+.dj-modal--compact { --dj-modal-width: 360px; }
+
+.dj-modal__head {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 54px;
+  padding: 17px 58px 14px 18px;
+  border-bottom: 1px solid var(--border, var(--line, #383840));
+}
+
+.dj-modal__title {
+  margin: 0;
+  color: var(--heart-secondary, #37f2e6);
+  font-family: var(--f-dot, sans-serif);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.08em;
+}
+
+.dj-modal__close {
+  appearance: none;
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg-dim, #b8b8be);
+  font: 300 26px/1 var(--f-display, monospace);
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+
+.dj-modal__close:hover,
+.dj-modal__close:focus-visible {
+  border-color: var(--heart-secondary, #37f2e6);
+  background: color-mix(in srgb, var(--heart-secondary, #37f2e6) 8%, transparent);
+  color: var(--heart-secondary, #37f2e6);
+  outline: none;
+}
+
+.dj-modal__body {
+  min-height: 0;
+  padding: 18px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.dj-modal__body > :first-child { margin-top: 0; }
+.dj-modal__body > :last-child { margin-bottom: 0; }
+
+.dj-modal__message {
+  margin: 0;
+  color: var(--fg-dim, #b8b8be);
+  font-size: 0.8125rem;
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+.dj-modal__field {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px 12px;
+  border: 1px solid var(--border, var(--line, #383840));
+  border-radius: 2px;
+  background: var(--bg, #0a0a0c);
+  color: var(--fg, #eeeef0);
+  font: 0.875rem/1.5 var(--f-body, sans-serif);
+}
+
+.dj-modal__field:focus {
+  border-color: var(--heart-secondary, #37f2e6);
+  outline: none;
+}
+
+.dj-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.dj-modal__button {
+  appearance: none;
+  padding: 10px 16px;
+  border: 1px solid var(--border, var(--line, #383840));
+  border-radius: 2px;
+  background: transparent;
+  color: var(--fg-dim, #b8b8be);
+  font: 400 0.75rem/1.4 var(--f-dot, sans-serif);
+  letter-spacing: .08em;
+  cursor: pointer;
+}
+
+.dj-modal__button:hover,
+.dj-modal__button:focus-visible {
+  border-color: var(--heart-secondary, #37f2e6);
+  color: var(--heart-secondary, #37f2e6);
+  outline: none;
+}
+
+.dj-modal__button--primary {
+  border-color: var(--heart-secondary, #37f2e6);
+  background: var(--heart-secondary, #37f2e6);
+  color: var(--bg, #0a0a0c);
+}
+
+.dj-modal__button--primary:hover,
+.dj-modal__button--primary:focus-visible {
+  background: var(--fg, #eeeef0);
+  border-color: var(--fg, #eeeef0);
+  color: var(--bg, #0a0a0c);
+}
+
+.dj-modal__button--danger {
+  border-color: var(--heart-primary, #ff2f6e);
+  background: var(--heart-primary, #ff2f6e);
+  color: var(--bg, #0a0a0c);
+}
+
+@media (max-width: 420px) {
+  .dj-modal {
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .dj-modal__head { padding-left: 15px; }
+  .dj-modal__body { padding: 15px; }
+  .dj-modal__actions { flex-direction: column-reverse; }
+  .dj-modal__button { width: 100%; }
+}

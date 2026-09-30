@@ -170,10 +170,15 @@
        他の変数とリセットは data/bijutsu-shisui.css */
     :root { --page-max: 480px; }
 
-    /* このページでは、移動先を選ぶホバー表示をピンクにそろえる */
-    .site-crumb a:hover {
-      color: var(--heart-primary);
-      border-bottom-color: var(--heart-primary);
+    /* 色の役割。どこに何色を置くかは、この3つの決まりだけで選ぶ
+         水色（--heart-secondary）… 土台。見出し・選択中のタブ・フォーカス・ホバー・再生・状態の表示
+         ピンク（--heart-primary）  … 要所。押してほしい主ボタン、♥、受け付けた瞬間、文中の要の語
+         黄色（--glitch-accent）    … その他・注意事項。エラー、取り下げ、ごあんない、補足、過ぎた回
+       ピンクを増やすと要所が埋もれるので、迷ったら水色にする。
+       パンくずのホバーは土台どおり水色（data/bijutsu-shisui.css の既定のまま） */
+    :root {
+      --caution-line: color-mix(in srgb, var(--glitch-accent) 50%, var(--line));
+      --caution-bg: color-mix(in srgb, var(--glitch-accent) 9%, transparent);
     }
 
     /* シートの箱を外して、スケジュール表と同じ「背景の上に直接組む」形にする */
@@ -268,7 +273,7 @@
 
     .tabs button[aria-selected="true"] {
       color: var(--heart-secondary);
-      border-bottom-color: var(--heart-primary);
+      border-bottom-color: var(--heart-secondary);
     }
 
     @media (max-width: 380px) { .tabs button { font-size: 11.5px; letter-spacing: -.02em; } }
@@ -297,7 +302,13 @@
       font-weight: 400;
     }
 
+    /* 導入文の要の語（「リクエスト」「3つの AI」）はピンク。注記の太字は注意なので黄色 */
+    .lede b { color: var(--heart-primary); }
+    .note b { color: var(--glitch-accent); }
+
     .hint { font-size: 12px; color: var(--faint); margin: -6px 0 0; }
+    /* 補足の頭に黄色の ※ を打って、本文や操作と別の話だと分かるようにする */
+    .hint::before { content: '※ '; color: var(--glitch-accent); }
 
     .hint,
     .note,
@@ -353,7 +364,7 @@
     textarea:focus,
     input.txt:focus {
       outline: none;
-      border-color: var(--heart-primary);
+      border-color: var(--heart-secondary);
     }
 
     .field input::placeholder,
@@ -382,14 +393,15 @@
     }
 
     /* ===== BUTTONS ===== */
+    /* 送信は画面でいちばん押してほしいボタンなので、要所のピンク */
     .send {
       width: 100%;
       font-family: var(--f-dot);
       font-weight: 400;
       font-size: 0.8125rem;
       letter-spacing: 0.12em;
-      background: var(--heart-secondary);
-      border: 1px solid var(--heart-secondary);
+      background: var(--heart-primary);
+      border: 1px solid var(--heart-primary);
       color: var(--bg);
       border-radius: 0;
       padding: 14px;
@@ -444,15 +456,15 @@
       text-decoration: none;
     }
 
-    /* 取り下げ。押し間違えたときの被害が大きいので、白昼夢のピンクで警告色にする */
+    /* 取り下げ。押し間違えたときの被害が大きいので、注意の黄色にする */
     .linkbtn.drop {
-      color: var(--heart-primary);
-      border-color: rgba(255, 47, 110, 0.5);
+      color: var(--glitch-accent);
+      border-color: var(--caution-line);
     }
 
     .linkbtn.drop:hover {
-      background: var(--heart-primary);
-      border-color: var(--heart-primary);
+      background: var(--glitch-accent);
+      border-color: var(--glitch-accent);
       color: var(--bg);
     }
 
@@ -642,7 +654,7 @@
     .hero .ph {
       border-radius: 2px; display: grid; place-items: center;
       background: repeating-linear-gradient(45deg, #17171d 0 6px, #121216 6px 12px);
-      color: var(--glitch-accent);
+      color: var(--accent-dim);
     }
 
     .row.mine {
@@ -707,20 +719,22 @@
       color: var(--fg-dim);
     }
 
-    /* 受付＝まだ直せる／確認済＝DJ が目を通したあと。
+    /* 受付＝まだ直せる／確認済＝DJ が目を通したあと／再生済＝もう終わった曲。
        直せるほうを点灯させ、直せないほうを沈める。色の濃さと明るさで
-       「こちらはまだ触れる」と分かるようにする（文言だけに頼らない）。 */
-    .state.open { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); background: color-mix(in srgb, var(--warn) 13%, transparent); }
+       「こちらはまだ触れる」と分かるようにする（文言だけに頼らない）。
+       状態の表示なので土台の水色。灯っているのは「受付」だけにする */
+    .state.open { color: var(--heart-secondary); border-color: color-mix(in srgb, var(--heart-secondary) 55%, var(--line)); background: color-mix(in srgb, var(--heart-secondary) 12%, transparent); }
     /* 受付中バッジ（画面上部）と同じ「灯った丸」で、まだ動かせることを示す */
     .state.open::before {
       content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
-      background: var(--warn); box-shadow: 0 0 6px var(--warn); margin-right: 6px; vertical-align: middle;
+      background: var(--heart-secondary); box-shadow: 0 0 6px var(--heart-secondary); margin-right: 6px; vertical-align: middle;
     }
     .state.seen { color: var(--faint); border-color: var(--line); background: transparent; }
 
+    /* 再生済の行は曲名ごと沈めているので、札も枠だけ残して控えめにする */
     .state.played {
-      color: var(--heart-secondary);
-      border-color: var(--heart-secondary);
+      color: color-mix(in srgb, var(--heart-secondary) 70%, var(--fg-dim));
+      border-color: color-mix(in srgb, var(--heart-secondary) 35%, var(--line));
     }
 
     .queuepos {
@@ -728,9 +742,9 @@
       font-weight: 400;
       font-size: 12.5px;
       letter-spacing: 0.1em;
-      border: 1px solid var(--glitch-accent);
+      border: 1px solid var(--heart-secondary);
       border-radius: 2px;
-      color: var(--glitch-accent);
+      color: var(--heart-secondary);
       padding: 4px 12px;
     }
 
@@ -788,8 +802,9 @@
       border-radius: 2px;
       padding: 12px 14px;
       font-size: 13px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--heart-primary);
+      background: var(--caution-bg);
+      border: 1px solid var(--caution-line);
+      border-left: 3px solid var(--glitch-accent);
       color: var(--fg);
       font-family: var(--f-body);
     }
@@ -797,6 +812,7 @@
     /* ===== 完了 ===== */
     .done { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0 4px; }
 
+    /* 受け付けた瞬間はこの画面の要所。ピンクで灯す */
     .tick {
       width: 62px;
       height: 62px;
@@ -872,7 +888,8 @@
       color: color-mix(in srgb, var(--glitch-accent) 72%, var(--fg-dim));
     }
 
-    .boardhead h3 { color: var(--muted); }
+    /* 「ごあんない」は注意事項の見出しなので黄色 */
+    .boardhead h3 { color: var(--glitch-accent); }
 
     .fresh {
       font-size: 0.625rem;
@@ -1072,7 +1089,7 @@
       font-family: var(--f-dot);
       font-weight: 400;
       letter-spacing: 0.1em;
-      color: var(--heart-secondary);
+      color: var(--glitch-accent);   /* 本筋（リクエスト）とは別のお願いなので黄色 */
     }
 
     /* ウィジェット既定の 32px は指で狙うには小さいので、この画面だけ大きくする */
@@ -1128,7 +1145,7 @@
     .ai-info-card strong { color: var(--fg); }
     .ai-info-card ul { margin: 0; padding-left: 1.25em; }
     .ai-info-card li + li { margin-top: 7px; }
-    .ai-info-card .warn { color: var(--heart-primary); font-weight: 700; }
+    .ai-info-card .warn { color: var(--glitch-accent); font-weight: 700; }
 
     .seeds { display: flex; flex-wrap: wrap; gap: 7px; }
 
@@ -1212,7 +1229,7 @@
     /* 受付時間外・オフラインのときに composer の代わりに出す。
        できない理由だけ伝えて、相談そのものは塞ぐ */
     .chatlock {
-      border: 1px dashed var(--line); border-radius: 2px; padding: 15px 14px;
+      border: 1px dashed var(--caution-line); border-radius: 2px; padding: 15px 14px;
       text-align: center; font-size: 12.5px; color: var(--faint); line-height: 1.7;
     }
 
@@ -1257,9 +1274,9 @@
       font-weight: 400;
       font-size: 0.75rem;
       letter-spacing: 0.1em;
-      border: 1px solid var(--heart-secondary);
+      border: 1px solid var(--heart-primary);
       border-radius: 0;
-      background: var(--heart-secondary);
+      background: var(--heart-primary);
       color: var(--bg);
     }
 
@@ -1310,7 +1327,7 @@
     }
 
     .request-faq-item[open] {
-      border-color: var(--heart-primary);
+      border-color: var(--heart-secondary);
     }
 
     .request-faq-question {
@@ -1347,13 +1364,37 @@
       transition: color .15s;
     }
 
-    .request-faq-answer a:hover { color: var(--heart-primary); }
+    .request-faq-answer a:hover { color: var(--heart-secondary); }
 
     @media (max-width: 480px) {
       .request-faq {
         padding-right: calc(14px + env(safe-area-inset-right));
         padding-left: calc(14px + env(safe-area-inset-left));
       }
+    }
+
+    /* ===== タップのハート =====
+       押したところから散るドットのハート。中身は下のスクリプトが出し入れする。
+       当たり判定を持たせないので、下のボタンや入力欄の操作を邪魔しない。
+       クラッカー（41）とトースト（42）より手前に出す */
+    .taphearts {
+      position: fixed;
+      inset: 0;
+      z-index: 43;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .taphearts svg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: auto;
+      fill: currentColor;
+      shape-rendering: crispEdges;
+      /* 光は控えめに。広げるとドットの輪郭がにじんでハートに見えなくなる */
+      filter: drop-shadow(0 0 2px currentColor);
+      will-change: transform, opacity;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2372,29 +2413,34 @@
 
     // 画面の下に短い知らせを出す（アイコンのボタンは文言を差し替えられないため）
     let toastTimer = null;
-    function toast(text) {
+    function toast(text, ms = 2200) {
       const el = $('#toast');
       el.textContent = text;
       el.classList.add('on');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.remove('on'), 2200);
+      toastTimer = setTimeout(() => el.classList.remove('on'), ms);
     }
 
     /* 共有シートがあれば（主にスマホ）それを開き、無ければ URL をコピーする。
-       共有シートを閉じただけ（AbortError）ならコピーに回さない */
+       共有シートを閉じただけ（AbortError）ならコピーに回さない。
+       共有シートを出せるかはブラウザ次第（アプリ内の WebView などは navigator.share を持たない）なので、
+       コピーに回ったときは理由を知らせに添える。呼び直しはしない（1回目の share が
+       クリックの権利を使い切るので、2回目は NotAllowedError で必ず落ちる） */
     async function shareEvent(code, text) {
       const url = eventUrl(code);
+      let why = 'このブラウザは共有画面を開けないため';
       if (navigator.share) {
         try {
           await navigator.share({ title: text, text, url });
           return;
         } catch (e) {
           if (e && e.name === 'AbortError') return;
+          why = '共有画面を開けなかったため（' + ((e && e.name) || 'Error') + '）';
         }
       }
       try {
         await navigator.clipboard.writeText(url);
-        toast('リンクをコピーしました');
+        toast(why + '、リンクをコピーしました', 4000);
       } catch {
         window.prompt('このリンクを共有してください', url);
       }
@@ -3431,6 +3477,94 @@
         holdEventParam = false;
         syncEventParam(eventParamOf(paneNow));
       }
+    })();
+
+    /* ── タップのハート ─────────────────────── */
+    /* 押したところから水色とピンクのハートが、ばらばらの向きと数で少しだけ飛び出して消える。
+       楽しさを足すだけの演出なので操作は邪魔しない。層は当たり判定を持たず、
+       スクロールの指（pointercancel になる）・ドラッグ・長押しでは出さず、同時に出る数にも上限を置く。
+       動きを減らす設定の端末では出さない（背景とクラッカーと同じ扱い） */
+    (function () {
+      if (!window.matchMedia || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (!Element.prototype.animate) return;
+
+      // data/bijutsu-shisui.js の art.HEART と同じドットの形
+      const GRID = ['0110110', '1111111', '1111111', '0111110', '0011100', '0001000'];
+      let d = '';
+      GRID.forEach((row, y) => [...row].forEach((c, x) => { if (c === '1') d += 'M' + x + ' ' + y + 'h1v1h-1z'; }));
+      const NS = 'http://www.w3.org/2000/svg';
+      const tpl = document.createElementNS(NS, 'svg');
+      tpl.setAttribute('viewBox', '0 0 7 6');
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', d);
+      tpl.appendChild(path);
+
+      const css = getComputedStyle(document.documentElement);
+      const COLORS = [
+        css.getPropertyValue('--heart-secondary').trim() || '#37f2e6',
+        css.getPropertyValue('--heart-primary').trim() || '#ff2f6e',
+      ];
+      const MAX_LIVE = 24;   // 連打しても画面がハートで埋まらないように
+      let layer = null;
+      let live = 0;
+
+      function burst(x, y) {
+        if (!layer) {
+          layer = document.createElement('div');
+          layer.className = 'taphearts';
+          layer.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(layer);
+        }
+        // 原則 3 個。四つ葉のクローバーを見つけるように、10 回に 1 回くらいだけ 4 個になる
+        const n = Math.random() < 0.1 ? 4 : 3;
+        const base = Math.random() * Math.PI * 2;
+        for (let i = 0; i < n && live < MAX_LIVE; i++) {
+          // 向きは等分にしてから揺らす。まったくの乱数だと片側に固まって見える
+          const ang = base + (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 1.3;
+          const dist = 26 + Math.random() * 26;
+          const dx = Math.cos(ang) * dist;
+          const dy = Math.sin(ang) * dist - 10;   // 少しだけ浮き上がる
+          const rot = (Math.random() - 0.5) * 40;   // 傾けすぎるとハートの形に見えない
+          // ドット1粒が 2px を切るとハートと読めない（形は 7×6 マス）ので、14px を下限にする
+          const size = 14 + Math.random() * 7;
+          const x0 = x - size / 2;
+          const y0 = y - size * 3 / 7;
+
+          const el = tpl.cloneNode(true);
+          el.style.width = size + 'px';
+          el.style.color = COLORS[Math.random() < 0.5 ? 0 : 1];
+          layer.appendChild(el);
+          live++;
+          /* 緩急は区間ごとに付ける。全体に掛けると時間の進みごと前倒しになり、
+             飛び出してすぐ消える区間に入ってしまう（ほとんどの時間が薄れた状態になる） */
+          const a = el.animate([
+            { transform: `translate(${x0}px, ${y0}px) scale(.4)`, opacity: 1, easing: 'cubic-bezier(.2, .7, .3, 1)' },
+            { transform: `translate(${x0 + dx * 0.75}px, ${y0 + dy * 0.75}px) scale(1) rotate(${rot * 0.7}deg)`, opacity: 1, offset: 0.35, easing: 'linear' },
+            // 形を見せる間を取ってから消す。広がりきってすぐ薄れると、ハートと分かる前に消える
+            { transform: `translate(${x0 + dx * 0.92}px, ${y0 + dy * 0.92 - 3}px) scale(.95) rotate(${rot * 0.9}deg)`, opacity: 0.9, offset: 0.7, easing: 'ease-in' },
+            { transform: `translate(${x0 + dx}px, ${y0 + dy - 8}px) scale(.7) rotate(${rot}deg)`, opacity: 0 },
+          ], { duration: 720 + Math.random() * 240, fill: 'forwards' });
+          let gone = false;
+          const done = () => { if (gone) return; gone = true; el.remove(); live--; };
+          a.onfinish = done;
+          a.oncancel = done;
+        }
+      }
+
+      // タップ（指やマウスをほぼ動かさずに離した）ときだけ出す
+      let down = null;
+      document.addEventListener('pointerdown', (e) => {
+        down = e.isPrimary && e.button === 0 ? { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp } : null;
+      }, { passive: true });
+      document.addEventListener('pointerup', (e) => {
+        if (!down || e.pointerId !== down.id) return;
+        const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+        const held = e.timeStamp - down.t;
+        down = null;
+        if (moved > 12 || held > 600) return;
+        burst(e.clientX, e.clientY);
+      }, { passive: true });
+      document.addEventListener('pointercancel', () => { down = null; }, { passive: true });
     })();
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
