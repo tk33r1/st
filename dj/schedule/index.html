@@ -18,6 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
+  <link rel="stylesheet" href="../../data/dj-modal.css?v=20261001">
 
   <style>
     /* ===== LAYOUT ===== */
@@ -695,6 +696,7 @@
   <!-- 背景のテイクオーバーとクラッカー。中身は data/bijutsu-shisui.js。
        djCelebrate() を下のスクリプトから呼ぶので defer は付けない -->
   <script src="../../data/bijutsu-shisui.js?v=20260902"></script>
+  <script src="../../data/dj-modal.js?v=20261001"></script>
 
   <script>
     (function () {
@@ -1345,7 +1347,12 @@
         if (!target) { resetAnswerForm(); return; }
         // メンバーは回答が消えても列が残って全部○に戻るが、自由入力の人は列ごと集計から消える
         var member = isMember(target.name);
-        if (!confirm(target.name + ' の回答を削除します。' + (member ? '全部○の状態に戻ります。' : '集計からも消えます。') + 'よろしいですか？')) return;
+        if (!await DJModal.confirm({
+          title: '回答を削除',
+          message: target.name + ' の回答を削除します。' + (member ? '全部○の状態に戻ります。' : '集計からも消えます。') + 'よろしいですか？',
+          confirmText: '削除する',
+          danger: true,
+        })) return;
         var btn = this;
         btn.disabled = true;
         try {

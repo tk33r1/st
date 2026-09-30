@@ -17,6 +17,7 @@
     href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
   <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
+  <link rel="stylesheet" href="../../data/dj-modal.css?v=20261001">
 
   <style>
     .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto;
@@ -836,15 +837,10 @@
     .crumb-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     .crumb-note {
-      max-width: var(--page-max);
-      margin: 10px auto 0;
-      padding: 11px 13px;
-      border: 1px solid var(--border);
-      border-radius: var(--r);
+      margin: 0;
       font-size: 12px;
       line-height: 1.7;
       font-family: var(--f-body);
-      background: var(--bg-elevated);
       color: var(--fg-dim);
     }
 
@@ -860,32 +856,7 @@
     }
 
     /* ===== 過去のイベント（削除ダイアログ）===== */
-    #evDlg {
-      /* 土台の CSS が余白を全部落とすので、中央寄せは自分で戻す */ margin: auto;
-      overflow: auto;
-      width: min(560px, calc(100vw - 32px));
-      max-height: min(80vh, 720px);
-      color: var(--fg);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 20px;
-      box-shadow: 0 30px 70px -20px #000;
-      background: var(--bg-elevated);
-      font-family: var(--f-body);
-    }
-
-    #evDlg::backdrop { background: rgba(0, 0, 0, .68); }
-
-    .evhead { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; }
-
-    .evhead h2 {
-      font-size: 16px;
-      margin: 0;
-      flex: 1;
-      font-family: var(--f-dot);
-      font-weight: 400;
-      letter-spacing: 0.1em;
-    }
+    #evDlg .dj-modal__body { display: flex; flex-direction: column; gap: 14px; }
 
     #evList { display: flex; flex-direction: column; gap: 8px; }
 
@@ -1087,20 +1058,10 @@
       <li><a href="https://tk.st/dj/">人類踊狂計画</a></li>
       <li>
         <span aria-current="page">ブースコンソール</span>
-        <button type="button" class="crumb-info" id="crumbInfo" aria-expanded="false" aria-controls="crumbNote"
+        <button type="button" class="crumb-info" id="crumbInfo" aria-expanded="false" aria-haspopup="dialog" aria-controls="sourceDlg"
           aria-label="BPM・キーのデータ提供元と、推定・背景カードについて">i</button>
       </li>
     </ol>
-    <p class="crumb-note" id="crumbNote" hidden>
-      このページの BPM とキーは
-      <a href="https://getsongbpm.com/" target="_blank" rel="noopener">GetSongBPM</a>
-      から提供を受けています。GetSongBPM は楽曲の BPM・キー・拍子といったデータを
-      無料で公開している音楽データベースで、API を通して誰でも利用できます。<br>
-      そこで取れなかった値は、このブラウザが30秒プレビューを解析して推定しています（点線の「推定」）。
-      音声はどこにも送りません。プレビューは曲の一部なので、キーは平行調（Am と C など）を取り違えることがあります。<br>
-      曲の背景は、OpenAI に Web 検索をさせて作っています。送るのは曲名・アーティスト名などの曲の情報だけで、
-      リクエストした人の名前やひとことは送りません。出典を確かめられた事実だけを出し、出典の無い繋ぎの助言は「AI の見立て」と書いています。
-    </p>
   </nav>
 
   <!-- FOOTER -->
@@ -1108,22 +1069,45 @@
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
+  <!-- データ提供元と推定方法。パンくずの情報ボタンから開く -->
+  <dialog class="dj-modal dj-modal--wide" id="sourceDlg" aria-labelledby="sourceDlgHead">
+    <div class="dj-modal__head">
+      <h2 class="dj-modal__title" id="sourceDlgHead">データ提供元と推定について</h2>
+      <button type="button" class="dj-modal__close" data-dj-modal-close aria-label="閉じる">×</button>
+    </div>
+    <div class="dj-modal__body">
+      <p class="crumb-note">
+        このページの BPM とキーは
+        <a href="https://getsongbpm.com/" target="_blank" rel="noopener">GetSongBPM</a>
+        から提供を受けています。GetSongBPM は楽曲の BPM・キー・拍子といったデータを
+        無料で公開している音楽データベースで、API を通して誰でも利用できます。<br>
+        そこで取れなかった値は、このブラウザが30秒プレビューを解析して推定しています（点線の「推定」）。
+        音声はどこにも送りません。プレビューは曲の一部なので、キーは平行調（Am と C など）を取り違えることがあります。<br>
+        曲の背景は、OpenAI に Web 検索をさせて作っています。送るのは曲名・アーティスト名などの曲の情報だけで、
+        リクエストした人の名前やひとことは送りません。出典を確かめられた事実だけを出し、出典の無い繋ぎの助言は「AI の見立て」と書いています。
+      </p>
+    </div>
+  </dialog>
+
   <!-- 過去のイベント。削除は取り消せないので、消える中身を数で見せてから訊く -->
-  <dialog id="evDlg">
-    <form method="dialog" class="evhead">
-      <h2>過去のイベント</h2>
-      <button class="ghostbtn" value="close">閉じる</button>
-    </form>
-    <div id="evList"></div>
-    <p class="evnote">
-      削除すると、その回の曲・リクエスト・いいねが DB から消えます。<strong>取り消せません。</strong><br>
-      開催中の回は削除できません。新しいイベントを開始してから消してください。<br>
-      「戻す」を押すと、その回を受付中に戻します。いまの回は締めますが、中身は消えません。
-    </p>
+  <dialog class="dj-modal dj-modal--wide" id="evDlg" aria-labelledby="evDlgHead">
+    <div class="dj-modal__head">
+      <h2 class="dj-modal__title" id="evDlgHead">過去のイベント</h2>
+      <button type="button" class="dj-modal__close" data-dj-modal-close aria-label="閉じる">×</button>
+    </div>
+    <div class="dj-modal__body">
+      <div id="evList"></div>
+      <p class="evnote">
+        削除すると、その回の曲・リクエスト・いいねが DB から消えます。<strong>取り消せません。</strong><br>
+        開催中の回は削除できません。新しいイベントを開始してから消してください。<br>
+        「戻す」を押すと、その回を受付中に戻します。いまの回は締めますが、中身は消えません。
+      </p>
+    </div>
   </dialog>
 
   <div class="toast" id="toast"><span id="toastTxt"></span><button id="toastUndo">取り消す</button></div>
 
+  <script src="../../data/dj-modal.js?v=20261001"></script>
   <script src="../../data/dj-request-core.js?v=20261001"></script>
   <script src="../../data/dj-audio-analysis.js?v=20260927"></script>
   <script>
@@ -1688,9 +1672,20 @@
     });
 
     $('#newEvent').addEventListener('click', async () => {
-      const title = prompt('新しいイベント名を入力してください', '今回のリクエスト');
+      const title = await DJModal.prompt({
+        title: '新しいイベント',
+        message: '新しいイベント名を入力してください。',
+        inputLabel: 'イベント名',
+        value: '今回のリクエスト',
+        maxLength: 60,
+        confirmText: '次へ',
+      });
       if (title === null) return;
-      if (!confirm('現在のイベントを締めて、新しいイベントを開始します。よろしいですか？')) return;
+      if (!await DJModal.confirm({
+        title: '新しいイベントを開始',
+        message: '現在のイベントを締めて、新しいイベントを開始します。よろしいですか？',
+        confirmText: '開始する',
+      })) return;
       try {
         const d = await apiJson('/admin/event', { method: 'POST', json: { title }, timeout: WRITE_TIMEOUT });
         await load();
@@ -1736,12 +1731,18 @@
       const row = btn.closest('.evrow');
       const title = row.querySelector('.t').textContent;
       const meta = row.querySelector('.m').textContent;
-      const typed = prompt([
-        '「' + title + '」を削除します。',
-        meta + ' が DB から消え、元に戻せません。',
-        '',
-        '消してよければ、この回のコード ' + code + ' を入力してください。',
-      ].join(String.fromCharCode(10)));
+      const typed = await DJModal.prompt({
+        title: 'イベントを削除',
+        message: [
+          '「' + title + '」を削除します。',
+          meta + ' が DB から消え、元に戻せません。',
+          '',
+          '消してよければ、この回のコード ' + code + ' を入力してください。',
+        ].join(String.fromCharCode(10)),
+        inputLabel: '確認用のイベントコード',
+        confirmText: '削除する',
+        danger: true,
+      });
       if (typed === null) return;
       if (typed.trim().toUpperCase() !== code) { toast('コードが違うので中止しました'); return; }
 
@@ -1761,10 +1762,14 @@
        いまの回は締めるだけで中身は残るので、同じ操作でまた行き来できる */
     async function reopenEvent(code, btn) {
       const title = btn.closest('.evrow').querySelector('.t').textContent;
-      if (!confirm([
-        '「' + title + '」に戻して、受付を再開します。',
-        'いまの回は締めます（曲やリクエストは消えません）。',
-      ].join(String.fromCharCode(10)))) return;
+      if (!await DJModal.confirm({
+        title: '過去のイベントに戻す',
+        message: [
+          '「' + title + '」に戻して、受付を再開します。',
+          'いまの回は締めます（曲やリクエストは消えません）。',
+        ].join(String.fromCharCode(10)),
+        confirmText: '戻して再開する',
+      })) return;
 
       btn.disabled = true;
       try {
@@ -1778,7 +1783,7 @@
       }
     }
 
-    $('#pastEvents').addEventListener('click', () => { $('#evDlg').showModal(); loadEvents(); });
+    $('#pastEvents').addEventListener('click', () => { DJModal.show($('#evDlg')); loadEvents(); });
 
     /* ── 背景カードの作り直し ───────────────
        まだカードの無い曲は、Worker が一覧を返すついでに裏で作る（押さなくてよい）。
@@ -1975,7 +1980,7 @@
       if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
       // ダイアログを開いている間はカードを触らせない。焦点はダイアログの中に
       // あるので、素通しすると 1/2/3 が裏の曲のステータスを動かしてしまう。
-      if ($('#evDlg').open) return;
+      if (document.querySelector('dialog[open]')) return;
       // パンくずとパッドのボタン上では、Space/Enter だけはボタンの押下として素通しする。
       // ほかのキー（T・J/K・1/2/3 など）はショートカットとして効かせる
       if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('.site-crumb, .tapbox')) return;
@@ -2009,18 +2014,12 @@
 
     /* ── データ提供元の説明 ───────────────── */
     (() => {
-      const btn = $('#crumbInfo'), note = $('#crumbNote');
-      const setOpen = (open) => {
-        note.hidden = !open;
-        btn.setAttribute('aria-expanded', String(open));
-      };
-      btn.addEventListener('click', (e) => { e.stopPropagation(); setOpen(note.hidden); });
-      document.addEventListener('click', (e) => {
-        if (!note.hidden && !note.contains(e.target)) setOpen(false);
+      const btn = $('#crumbInfo'), dialog = $('#sourceDlg');
+      btn.addEventListener('click', () => {
+        btn.setAttribute('aria-expanded', 'true');
+        DJModal.show(dialog);
       });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !note.hidden) { setOpen(false); btn.focus(); }
-      });
+      dialog.addEventListener('close', () => btn.setAttribute('aria-expanded', 'false'));
     })();
 
     /* ── 新着通知 ─────────────────────────

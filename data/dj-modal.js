@@ -2,8 +2,89 @@
 (function (global) {
   'use strict';
 
+  const returnFocus = new WeakMap();
+  const fallbackBackdrops = new WeakMap();
+  const fallbackStack = [];
+  const FOCUSABLE = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+
+  function hasNativeDialog(dialog) {
+    return typeof dialog.showModal === 'function' && typeof dialog.close === 'function';
+  }
+
+  function isOpen(dialog) {
+    return hasNativeDialog(dialog) ? dialog.open : dialog.hasAttribute('open');
+  }
+
+  function focusableIn(dialog) {
+    return Array.from(dialog.querySelectorAll(FOCUSABLE)).filter(function (element) {
+      return !element.hidden && element.getAttribute('aria-hidden') !== 'true' && element.getClientRects().length;
+    });
+  }
+
+  function syncFallbackLayers() {
+    fallbackStack.forEach(function (dialog, index) {
+      const backdrop = fallbackBackdrops.get(dialog);
+      if (backdrop) backdrop.style.zIndex = String(1000 + index * 2);
+      dialog.style.zIndex = String(1001 + index * 2);
+    });
+    document.documentElement.classList.toggle('dj-modal-fallback-active', fallbackStack.length > 0);
+  }
+
+  function showFallback(dialog) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'dj-modal-fallback-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    backdrop.addEventListener('click', function () { close(dialog); });
+    dialog.before(backdrop);
+    fallbackBackdrops.set(dialog, backdrop);
+    fallbackStack.push(dialog);
+
+    dialog.classList.add('dj-modal--fallback-open');
+    dialog.setAttribute('open', '');
+    // 未対応ブラウザの dialog は通常の HTMLElement なので、既存コード用に open も持たせる。
+    try { dialog.open = true; } catch { /* 属性を正本にする */ }
+    if (!dialog.hasAttribute('role')) dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    syncFallbackLayers();
+
+    const first = focusableIn(dialog)[0];
+    if (first) first.focus();
+    else {
+      dialog.setAttribute('tabindex', '-1');
+      dialog.focus();
+    }
+  }
+
+  function closeFallback(dialog) {
+    if (!dialog.hasAttribute('open')) return;
+    dialog.removeAttribute('open');
+    dialog.removeAttribute('aria-modal');
+    try { dialog.open = false; } catch { /* 属性を正本にする */ }
+    dialog.classList.remove('dj-modal--fallback-open');
+    dialog.style.removeProperty('z-index');
+
+    const backdrop = fallbackBackdrops.get(dialog);
+    if (backdrop) backdrop.remove();
+    fallbackBackdrops.delete(dialog);
+    const index = fallbackStack.indexOf(dialog);
+    if (index !== -1) fallbackStack.splice(index, 1);
+    syncFallbackLayers();
+
+    // ネイティブの close() と同じく、利用側の後片付けを close イベントへ集約する。
+    dialog.dispatchEvent(new Event('close'));
+  }
+
   function close(dialog) {
-    if (dialog && dialog.open) dialog.close();
+    if (!dialog || !isOpen(dialog)) return;
+    if (hasNativeDialog(dialog)) dialog.close();
+    else closeFallback(dialog);
   }
 
   function bind(dialog) {
@@ -17,12 +98,16 @@
         return;
       }
 
-      // ::backdrop は要素ではないので、dialog 自身に届いた座標が枠外かで見分ける。
-      if (event.target !== dialog) return;
-      const rect = dialog.getBoundingClientRect();
-      const outside = event.clientX < rect.left || event.clientX > rect.right
-        || event.clientY < rect.top || event.clientY > rect.bottom;
-      if (outside) close(dialog);
+      /* ネイティブの ::backdrop は要素ではなく、そこでのクリックは dialog 自身に届く。
+         共通モーダルは padding: 0 でヘッダーと本文が枠内を覆うため、dialog 自身なら背景と判断できる。
+         フォールバックには実体の backdrop があるので、そちらの click で閉じる。 */
+      if (hasNativeDialog(dialog) && event.target === dialog) close(dialog);
+    });
+
+    dialog.addEventListener('close', function () {
+      const target = returnFocus.get(dialog);
+      returnFocus.delete(dialog);
+      if (target && target.isConnected && typeof target.focus === 'function') target.focus({ preventScroll: true });
     });
 
     return dialog;
@@ -30,9 +115,42 @@
 
   function show(dialog) {
     bind(dialog);
-    if (!dialog.open) dialog.showModal();
+    if (!isOpen(dialog)) {
+      returnFocus.set(dialog, document.activeElement);
+      if (hasNativeDialog(dialog)) dialog.showModal();
+      else showFallback(dialog);
+    }
     return dialog;
   }
+
+  /* dialog 未対応時の Esc とフォーカストラップ。背景のページへ Tab が抜けないよう、
+     最前面のモーダルだけを対象にする。 */
+  document.addEventListener('keydown', function (event) {
+    if (!fallbackStack.length) return;
+    const dialog = fallbackStack[fallbackStack.length - 1];
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close(dialog);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const items = focusableIn(dialog);
+    if (!items.length) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+    const first = items[0], last = items[items.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || !dialog.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }, true);
 
   function button(label, className) {
     const el = document.createElement('button');
@@ -106,9 +224,13 @@
     const input = document.createElement('input');
     input.className = 'dj-modal__field';
     input.type = 'text';
-    input.value = opts.value || '';
+    input.value = opts.value == null ? '' : String(opts.value);
     if (opts.placeholder) input.placeholder = opts.placeholder;
     if (opts.maxLength) input.maxLength = opts.maxLength;
+    const label = document.createElement('label');
+    label.className = 'dj-modal__label';
+    label.textContent = opts.inputLabel || opts.title || '入力';
+    label.appendChild(input);
 
     const actions = document.createElement('div');
     actions.className = 'dj-modal__actions';
@@ -117,7 +239,7 @@
     const ok = button(opts.confirmText || '決定', opts.danger ? 'dj-modal__button--danger' : 'dj-modal__button--primary');
     ok.type = 'submit';
     actions.append(cancel, ok);
-    form.append(input, actions);
+    form.append(label, actions);
     ui.body.appendChild(form);
 
     return new Promise(function (resolve) {

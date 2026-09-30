@@ -164,6 +164,7 @@
     href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
   <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
+  <link rel="stylesheet" href="../../data/dj-modal.css?v=20261001">
 
   <style>
     /* パンくずとフッターの横幅。このページは細い1カラム。
@@ -1030,25 +1031,11 @@
 
     /* 回の QR コード。絵は QR Palette の描画エンジンで作った PNG をそのまま見せる
        （長押しで保存したときも、保存ボタンと同じ絵になるように） */
-    .qrdlg {
-      /* margin は共通のリセットで 0 になっているので、auto に戻して画面の中央に置く */
-      margin: auto; width: min(360px, calc(100% - 32px)); max-height: calc(100% - 32px);
-      padding: 20px 18px 16px; border: 1px solid var(--line); border-radius: 2px;
-      background: var(--bg); color: var(--fg);
-      flex-direction: column; gap: 10px;
-    }
-
-    .qrdlg[open] { display: flex; }
-    .qrdlg::backdrop { background: rgba(0, 0, 0, 0.72); }
-
-    .qrdlg .qrh {
-      margin: 0; font-family: var(--f-dot); font-weight: 400; font-size: 0.875rem;
-      letter-spacing: 0.08em; color: var(--heart-secondary);
-    }
+    .qrdlg .dj-modal__body { display: flex; flex-direction: column; gap: 10px; }
 
     /* 縦の短い画面（PC のブラウザなど）では枠が高さに収まらない。flex の既定のまま縮めると、
        画像の枠だけが min-height まで潰れて絵がはみ出し、下の注記が絵に重なる。縮めずに枠ごとスクロールさせる */
-    .qrdlg > * { flex-shrink: 0; }
+    .qrdlg .dj-modal__body > * { flex-shrink: 0; }
     .qrdlg .qrimg { display: grid; place-items: center; min-height: 240px; }
     .qrdlg .qrimg img { display: block; width: 100%; height: auto; }
 
@@ -1115,35 +1102,25 @@
     .magi-head .mt { font-size: 15px; letter-spacing: .24em; line-height: 1.2; font-family: var(--f-display); color: var(--heart-secondary); }
     .magi-head .ms { font-size: 11.5px; letter-spacing: .04em; margin-top: 3px; font-family: var(--f-body); color: var(--fg-dim); }
 
-    /* AI への送信先と保持方針は、相談の流れを止めないよう情報ボタンの中に置く */
-    .ai-info { position: relative; align-self: flex-start; margin-left: auto; }
-    .ai-info summary {
+    /* AI への送信先と保持方針は、相談の流れを止めないよう情報ボタンからモーダルで開く */
+    .ai-info {
       display: grid;
+      align-self: flex-start;
+      margin-left: auto;
       width: 30px;
       height: 30px;
       padding: 0;
       place-items: center;
-      list-style: none;
       border: 1px solid var(--line);
       border-radius: 50%;
+      background: transparent;
       color: var(--fg-dim);
       font: 700 14px/1 var(--f-body);
       cursor: pointer;
     }
-    .ai-info summary::-webkit-details-marker { display: none; }
-    .ai-info summary:hover,
-    .ai-info summary:focus-visible,
-    .ai-info[open] summary { border-color: var(--heart-secondary); color: var(--heart-secondary); }
+    .ai-info:hover,
+    .ai-info:focus-visible { border-color: var(--heart-secondary); color: var(--heart-secondary); outline: none; }
     .ai-info-card {
-      position: absolute;
-      z-index: 20;
-      top: 38px;
-      right: 0;
-      width: min(350px, calc(100vw - 44px));
-      padding: 15px 17px;
-      border: 1px solid var(--heart-secondary);
-      background: var(--card);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, .48);
       color: var(--fg-dim);
       font: 12px/1.65 var(--f-body);
     }
@@ -1521,17 +1498,8 @@
             <div class="mt">MAGI</div>
             <div class="ms">Shinya Takeda AI — 選曲相談</div>
           </div>
-          <details class="ai-info">
-            <summary title="AI相談の送信先とデータの扱い" aria-label="AI相談の送信先とデータの扱い">i</summary>
-            <div class="ai-info-card">
-              <ul>
-                <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Google Gemini の3社すべて</strong>へ送信されます。</li>
-                <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
-                <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）。Google の Gemini は無料枠のため、<strong>製品改善とモデルの学習に使われ、人が内容を読むことがあります</strong>。DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
-                <li class="warn">機密情報や個人情報は入力しないでください。</li>
-              </ul>
-            </div>
-          </details>
+          <button type="button" class="ai-info" id="aiInfoBtn" aria-haspopup="dialog" aria-controls="aiInfoDlg"
+            title="AI相談の送信先とデータの扱い" aria-label="AI相談の送信先とデータの扱い">i</button>
         </div>
         <p class="lede">曲名が決まっていなくても大丈夫。<br>気分やシーンを話しかけると、<b>DJ 本人の思考を模した 3つの AI</b> が合議して、曲を挙げてくれます。</p>
         <div class="seeds" id="seeds">
@@ -1674,15 +1642,35 @@
   <!-- 共有のボタンは文字を持たないので、リンクをコピーできたことはここで知らせる -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <!-- AI 相談の送信先。情報ボタンから、ほかと同じモーダルで開く -->
+  <dialog class="dj-modal" id="aiInfoDlg" aria-labelledby="aiInfoHead">
+    <div class="dj-modal__head">
+      <h2 class="dj-modal__title" id="aiInfoHead">AI相談の送信先とデータの扱い</h2>
+      <button type="button" class="dj-modal__close" data-dj-modal-close aria-label="閉じる">×</button>
+    </div>
+    <div class="dj-modal__body ai-info-card">
+      <ul>
+        <li>相談文とこの回のリクエスト状況は、回答のため <strong>OpenAI・DeepSeek・Google Gemini の3社すべて</strong>へ送信されます。</li>
+        <li>会話履歴はこのブラウザにだけ保存し、このサイトのデータベースには保存しません。</li>
+        <li>OpenAI は不正利用監視のため最大30日保持（既定では学習不使用）。Google の Gemini は無料枠のため、<strong>製品改善とモデルの学習に使われ、人が内容を読むことがあります</strong>。DeepSeek は中国のサーバーに保存され、モデルの学習に使われることがあります。</li>
+        <li class="warn">機密情報や個人情報は入力しないでください。</li>
+      </ul>
+    </div>
+  </dialog>
+
   <!-- 回の QR コード。QR のアイコンのボタンから開く -->
-  <dialog class="qrdlg" id="qrDlg" aria-labelledby="qrHead">
-    <h2 class="qrh" id="qrHead">この回の QR コード</h2>
-    <div class="qrimg" id="qrBox"></div>
-    <p class="note" id="qrNote"></p>
-    <div class="err" id="qrErr" hidden></div>
-    <button type="button" class="send" id="qrSave" disabled>画像を保存</button>
-    <button type="button" class="linkbtn" id="qrShareImg" hidden>画像を共有</button>
-    <button type="button" class="linkbtn" id="qrClose">閉じる</button>
+  <dialog class="dj-modal dj-modal--compact qrdlg" id="qrDlg" aria-labelledby="qrHead">
+    <div class="dj-modal__head">
+      <h2 class="dj-modal__title" id="qrHead">この回の QR コード</h2>
+      <button type="button" class="dj-modal__close" data-dj-modal-close aria-label="閉じる">×</button>
+    </div>
+    <div class="dj-modal__body">
+      <div class="qrimg" id="qrBox"></div>
+      <p class="note" id="qrNote"></p>
+      <div class="err" id="qrErr" hidden></div>
+      <button type="button" class="send" id="qrSave" disabled>画像を保存</button>
+      <button type="button" class="linkbtn" id="qrShareImg" hidden>画像を共有</button>
+    </div>
   </dialog>
 
   <!-- FAQ -->
@@ -1757,6 +1745,7 @@
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
+  <script src="../../data/dj-modal.js?v=20261001"></script>
   <script src="../../data/dj-request-core.js?v=20261001"></script>
   <script src="./catalog.js?v=20261001"></script>
   <script>
@@ -2462,7 +2451,13 @@
         await navigator.clipboard.writeText(url);
         toast(why + '、リンクをコピーしました', 4000);
       } catch {
-        window.prompt('このリンクを共有してください', url);
+        await DJModal.prompt({
+          title: 'このリンクを共有してください',
+          message: '下のリンクを選択してコピーできます。',
+          inputLabel: '共有するリンク',
+          value: url,
+          confirmText: '完了',
+        });
       }
     }
 
@@ -2598,10 +2593,6 @@
     const qrLatest = latestOnly();
 
     // 閉じたあとに届いた応答は、close イベント（Esc で閉じたときも来る）で古くして捨てる
-    function closeQR() {
-      $('#qrDlg').close();
-    }
-
     function dropShownQR() {
       if (qrShown) URL.revokeObjectURL(qrShown.url);
       qrShown = null;
@@ -2628,7 +2619,7 @@
       $('#qrErr').hidden = true;
       $('#qrSave').disabled = true;
       $('#qrShareImg').hidden = true;
-      if (!dlg.open) dlg.showModal();
+      DJModal.show(dlg);
       try {
         const png = await eventQR(code, title, at);
         if (!isLatest()) return;
@@ -2664,14 +2655,6 @@
       try {
         await navigator.share({ files: [qrShown.file], title: qrShown.title });
       } catch { /* 閉じただけ・渡せなかったときは何もしない（保存ボタンが残っている） */ }
-    });
-
-    $('#qrClose').addEventListener('click', closeQR);
-    // 枠の外（::backdrop）を押しても閉じる。枠の内側の余白も dialog 自身に当たるので、位置で見分ける
-    $('#qrDlg').addEventListener('click', (e) => {
-      if (e.target !== e.currentTarget) return;
-      const r = e.currentTarget.getBoundingClientRect();
-      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeQR();
     });
 
     $('#evQR').addEventListener('click', () => {
@@ -2859,7 +2842,12 @@
     });
 
     $('#mineDrop').addEventListener('click', async () => {
-      if (!confirm('このリクエストを取り下げます。よろしいですか？')) return;
+      if (!await DJModal.confirm({
+        title: 'リクエストの取り下げ',
+        message: 'このリクエストを取り下げます。よろしいですか？',
+        confirmText: '取り下げる',
+        danger: true,
+      })) return;
       const btn = $('#mineDrop');
       const err = $('#mineErr');
       const opened = detail;
@@ -3148,7 +3136,7 @@
 
       chatBusy = true;
       $('#chatErr').hidden = true;
-      $('.ai-info').open = false;   // 開いたままだと最初の回答の上に被さる
+      DJModal.close($('#aiInfoDlg'));
       setValue($('#chatInput'), '');   // 高さと送信ボタンも input で揃う
       renderConsultUI();
 
@@ -3490,11 +3478,7 @@
 
     $('#toConsultFromFree').addEventListener('click', () => show('consult'));
 
-    // AI への送信先の説明カードは、外側を押したら閉じる（送信したときは sendConsult が閉じる）
-    document.addEventListener('click', (e) => {
-      const info = $('.ai-info');
-      if (info.open && !info.contains(e.target)) info.open = false;
-    });
+    $('#aiInfoBtn').addEventListener('click', () => DJModal.show($('#aiInfoDlg')));
 
     /* ── 起動 ─────────────────────────────── */
     /* 受付停止中・オフライン。受付していないときも、こういう相談相手がいること自体は

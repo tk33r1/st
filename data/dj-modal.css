@@ -5,6 +5,8 @@
   margin: auto;
   width: min(var(--dj-modal-width), calc(100% - 32px));
   max-width: none;
+  /* dvh 非対応の古い iOS でも画面からはみ出さないよう、先に vh のフォールバックを置く。 */
+  max-height: calc(100vh - 32px);
   max-height: min(760px, calc(100dvh - 32px));
   padding: 0;
   overflow: hidden;
@@ -21,8 +23,33 @@
   flex-direction: column;
 }
 
+/* dialog 非対応ブラウザでは UA の非表示規則が無いので、閉じている要素を明示的に隠す。 */
+.dj-modal:not([open]) { display: none; }
+
 .dj-modal::backdrop {
   background: rgba(0, 0, 0, 0.72);
+}
+
+/* Safari 15.0〜15.3 など showModal() の無いブラウザ向け。
+   JS が実体の backdrop と重なり順を作り、このクラスで top layer 相当の位置へ固定する。 */
+.dj-modal.dj-modal--fallback-open {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+}
+
+.dj-modal-fallback-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  touch-action: none;
+}
+
+html.dj-modal-fallback-active,
+html.dj-modal-fallback-active body {
+  overflow: hidden;
 }
 
 .dj-modal--wide { --dj-modal-width: 560px; }
@@ -32,7 +59,7 @@
   position: relative;
   flex: 0 0 auto;
   min-height: 54px;
-  padding: 17px 58px 14px 18px;
+  padding: 17px 62px 14px 18px;
   border-bottom: 1px solid var(--border, var(--line, #383840));
 }
 
@@ -49,18 +76,18 @@
 .dj-modal__close {
   appearance: none;
   position: absolute;
-  top: 9px;
-  right: 9px;
+  top: 6px;
+  right: 6px;
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   place-items: center;
   border: 1px solid transparent;
   border-radius: 50%;
   background: transparent;
   color: var(--fg-dim, #b8b8be);
-  font: 300 26px/1 var(--f-display, monospace);
+  font: 300 28px/1 var(--f-display, monospace);
   cursor: pointer;
   transition: color .15s, border-color .15s, background .15s;
 }
@@ -90,6 +117,16 @@
   line-height: 1.75;
   white-space: pre-line;
 }
+
+.dj-modal__label {
+  display: block;
+  margin-top: 16px;
+  color: var(--fg-dim, #b8b8be);
+  font: 400 0.6875rem/1.4 var(--f-dot, sans-serif);
+  letter-spacing: .08em;
+}
+
+.dj-modal__label .dj-modal__field { margin-top: 7px; }
 
 .dj-modal__field {
   display: block;
@@ -153,9 +190,17 @@
   color: var(--bg, #0a0a0c);
 }
 
+.dj-modal__button--danger:hover,
+.dj-modal__button--danger:focus-visible {
+  border-color: var(--heart-primary, #ff2f6e);
+  background: transparent;
+  color: var(--heart-primary, #ff2f6e);
+}
+
 @media (max-width: 420px) {
   .dj-modal {
     width: calc(100% - 24px);
+    max-height: calc(100vh - 24px);
     max-height: calc(100dvh - 24px);
   }
 
