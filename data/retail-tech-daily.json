@@ -1,5 +1,91 @@
 [
   {
+    "date": "20261001",
+    "title": "2026年10月1日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "トライアルとスギ薬局の企業横断型リテールメディア研究会が発足。共通指標の整備は、広告効果測定の標準化に向けた一歩となる。 品川駅では、レジ待ちや商品スキャンをなくす無人決済ストアの期間限定展開が登場。人流の多い駅で、利用者の受容性を試す動きに注目。",
+    "count": 4,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "トライアルとスギ薬局の企業横断型リテールメディア研究会が発足。共通指標の整備は、広告効果測定の標準化に向けた一歩となる。",
+      "品川駅では、レジ待ちや商品スキャンをなくす無人決済ストアの期間限定展開が登場。人流の多い駅で、利用者の受容性を試す動きに注目。",
+      "リテールメディアの効果測定や全国規模の店舗DX支援など、導入後の成果可視化と、現場への展開力を高める取り組みが進んでいる。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "トライアルとスギ薬局、企業横断のリテールメディア研究会を設立　共通指標を策定へ",
+        "original_title": "",
+        "source": "ryutsuu.biz",
+        "source_id": "JP-10",
+        "summary": "トライアルとスギ薬局が、企業横断でリテールメディアを研究する「東京リテールメディア研究会」を設立し、共通指標の策定を目指す。小売各社の広告在庫や購買データを生かす取り組みが広がるなか、企業の枠を越えて測定・評価の基準づくりに着手する動きとして注目される。",
+        "why_it_matters": "リテールメディアの拡大には、広告主が媒体をまたいで成果を比較できる環境が欠かせない。共通指標が整えば、出稿判断の透明性が高まり、広告主の投資拡大や小売各社の媒体価値向上につながる可能性がある。実際にどこまで指標を統一できるかが焦点だ。",
+        "tags": [
+          "リテールメディア",
+          "効果測定",
+          "共通指標"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5qbWs4NjRaWlgwN05ZYUNPN1FFQUZaLXlCUWczWFY3TDZoQU8zNjNkLU9IODNMNFFRbWRBWlZTUV9keHBnRGNnUkRKNXFKMzNE?oc=5",
+        "source_pub_ts": 1790753460
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "品川駅にレジ待ち・商品スキャン不要の無人決済ストア　6日間限定で展開",
+        "original_title": "",
+        "source": "DXマガジン",
+        "source_id": "JP-07",
+        "summary": "TOUCH TO GOと日比谷花壇が、品川駅にレジ待ちや商品スキャンを必要としない無人決済ストアを6日間限定でオープンする。駅利用者に、商品を選んで購入するまでの手間を抑えた買い物体験を提供する取り組みだ。期間限定の出店を通じ、駅という人流の多い場所で無人決済を訴求する。",
+        "why_it_matters": "駅ナカは短時間で買い物を済ませたい利用者が多く、会計の省力化が体験価値に直結しやすい。期間限定の展開は、常設店の投資判断に先立つ認知獲得や利用状況の確認にもなる。導入効果を評価するには、決済の円滑さだけでなく、運営負荷や再利用意向も見極めたい。",
+        "tags": [
+          "無人店舗",
+          "次世代決済",
+          "駅ナカ"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9NWlBMWWhiR2tUSUNEZzZEaEtJUHhXOFgwMmpuVHUycGhDOEdFci1pMFRMZzlKbHhjRnJrQmYwc0toUnVMZmJsQVFqeWFkOXRpUXh3?oc=5",
+        "source_pub_ts": 1790755079
+      },
+      {
+        "region": "JP",
+        "category": "リテールメディア・広告",
+        "title": "スイッチメディア、クロスメディア分析をリテールメディアに拡張　ファミマTVに対応",
+        "original_title": "",
+        "source": "株式会社スイッチメディア",
+        "source_id": "JP-17",
+        "summary": "スイッチメディアは、テレビなどの媒体を横断して分析する「クロスメディアインサイト」の対象をリテールメディア領域へ広げ、第一弾として「ファミマTV」に対応する。小売店舗内の広告媒体を、従来のメディア分析の枠組みに加える動きで、リテールメディアの評価方法を拡張する取り組みとなる。",
+        "why_it_matters": "広告主にとって、テレビと店舗内メディアを別々に評価する状態が続けば、予算配分や施策比較が難しい。横断分析の対象が増えれば、媒体間の役割を検討する材料が広がる。今後は測定可能な指標や分析結果の活用範囲が、サービスの実効性を左右する。",
+        "tags": [
+          "リテールメディア",
+          "クロスメディア",
+          "広告効果測定"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5zMS1PR3VpVnZOZUlJZjFvd2JjcWpST3h4WHh2anZqU0lqaXMzU2w5d1NXVWNyaFM4emRnZWEzODV2dnoxanREZlloWUN3eUNHU2NvdGFPQUVPZw?oc=5",
+        "source_pub_ts": 1790741204
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "スマレジ、SB C&Sとの連携で全国の店舗DX支援を加速",
+        "original_title": "",
+        "source": "ニュースメディアVOIX",
+        "source_id": "JP-23",
+        "summary": "スマレジはSB C&Sと連携し、全国の店舗に向けたDX支援を加速する。店舗向けサービスを展開する企業と、IT製品・サービスの流通を担う企業が協力し、店舗のデジタル化を広域で後押しする方針だ。具体的な支援機能や提供体制の詳細は、今後の展開と合わせて確認したい。",
+        "why_it_matters": "店舗DXは製品の機能だけでなく、導入先の開拓、設置、運用支援まで含めた実行力が普及を左右する。全国網を持つパートナーとの連携は、地域や企業規模を越えた導入機会を広げうる。支援範囲や導入後のサポートが具体化するかが、成果を見極めるポイントだ。",
+        "tags": [
+          "店舗DX",
+          "POS",
+          "導入支援"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1ra3Rrcmx6N3B2MWdsNHIyc1lmTXkwQWxqRERTTXVUNkZuNV9WQlJnM3RsNlJ4RFB6dTNXQm9GUnhrT2Vpd0NIekhXN0I4RVp5LUhF?oc=5",
+        "source_pub_ts": 1790735532
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20260930",
     "title": "2026年9月30日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "国内では、ファミリーマートがコーヒーマシンを活用したリテールメディアを開始。オフィス内メディアの提供開始もあり、売場外の接点を広告・購買につなげる動きが広がっています。 カラオケ店舗約720店への自動発注導入や、店舗DXサービスの導入5,000店突破など、現場業務の省力化と運用基盤の拡張が進展。導入規模を伴う実装が注目されます。",

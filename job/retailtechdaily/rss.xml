@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Wed, 30 Sep 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Wed, 30 Sep 2026 06:13:10 +0900</lastBuildDate>
+    <pubDate>Thu, 01 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Thu, 01 Oct 2026 06:11:30 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月1日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261001/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261001/</guid>
+      <pubDate>Thu, 01 Oct 2026 08:00:00 +0900</pubDate>
+      <description>トライアルとスギ薬局の企業横断型リテールメディア研究会が発足。共通指標の整備は、広告効果測定の標準化に向けた一歩となる。 品川駅では、レジ待ちや商品スキャンをなくす無人決済ストアの期間限定展開が登場。人流の多い駅で、利用者の受容性を試す動きに注目。</description>
+    </item>
     <item>
       <title>2026年9月30日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20260930/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260917/</guid>
       <pubDate>Thu, 17 Sep 2026 08:00:00 +0900</pubDate>
       <description>リテールメディアが「枠の販売」から「行動変容の設計」へ——USEN MEDIA PROMOTIONとDearOneの提携、ロケットの店頭立体装飾、ウォルマートのScintilla AI強化など、購買データと店頭接点を統合する動きが国内外で同時に進んだ。 決済・レジ周辺の体験と運用課題が顕在化——ウォークスルー決済や顔認証改札の普及が進む一方、100均セルフレジの行列など生活者の不満も表面化し、技術導入と運用設計の両立が問われている。</description>
-    </item>
-    <item>
-      <title>2026年9月16日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260916/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260916/</guid>
-      <pubDate>Wed, 16 Sep 2026 08:00:00 +0900</pubDate>
-      <description>国内の焦点はニトリHDの基幹システムOCI移行。需要予測処理が約4分の1、日次バッチが始業前に完了し、競争軸が「処理速度」から「データ鮮度＝当日の意思決定」へ移ったことを象徴する。 リテールメディアはアークランズの「ARUTANA」参画でホームセンター領域へ拡張。リーチ数ではなく購買文脈の解像度をどう広告価値に変えるかが次の争点になる。</description>
     </item>
   </channel>
 </rss>
