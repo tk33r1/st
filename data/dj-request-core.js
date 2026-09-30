@@ -49,14 +49,25 @@
 
   const bearer = (token) => (token ? { Authorization: 'Bearer ' + token } : {});
 
-  /* json を渡すと Content-Type と body を組み立てる。
+  /* ms 後に中断する signal。AbortSignal.timeout は iOS 16 からなので、無い端末では
+     AbortController で組む（iOS 15 までしか上げられない iPhone がまだ会場に来る） */
+  function timeoutSignal(ms) {
+    if (typeof AbortSignal.timeout === 'function') return AbortSignal.timeout(ms);
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), ms);
+    return controller.signal;
+  }
+
+  /* json を渡すと Content-Type と body を組み立てる。timeout（ms）を渡すと、その時間で打ち切って
+     networkMessage のエラーにする（回線が止まると、ブラウザの既定では数分待ち続ける）。
      ほかの fetch の指定（method / headers / signal）はそのまま通す。 */
   function createApi(base, networkMessage) {
-    return async function apiJson(path, { json, ...options } = {}) {
+    return async function apiJson(path, { json, timeout, ...options } = {}) {
       if (json !== undefined) {
         options.headers = { 'Content-Type': 'application/json', ...options.headers };
         options.body = JSON.stringify(json);
       }
+      if (timeout) options.signal = timeoutSignal(timeout);
       let response;
       try {
         response = await fetch(base + path, options);
@@ -215,6 +226,6 @@
 
   global.DJRequestCore = {
     $, $$, appleHref, asDate, bearer, createApi, createPreviewController, escapeHTML, formatClock, formatDurationMs,
-    hhmm, storage, ymd,
+    hhmm, storage, timeoutSignal, ymd,
   };
 })(window);

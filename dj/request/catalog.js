@@ -1,6 +1,9 @@
-/* DJ リクエスト画面の iTunes 検索・候補整理・AI 推薦曲の照合。 */
+/* DJ リクエスト画面の iTunes 検索・候補整理・AI 推薦曲の照合。
+   data/dj-request-core.js（DJRequestCore）の後に読む。 */
 (function (global) {
   'use strict';
+
+  const { timeoutSignal } = global.DJRequestCore;
 
   /* 同じ曲の DJ ミックス収録版が1曲につき10件以上返ってくるので、
      まず落とし、次にバージョン違いを畳んで、原曲を代表に押し上げる。 */
@@ -79,7 +82,7 @@
   const BASE = 'https://itunes.apple.com';
 
   async function read(path, { signal, timeout = 0 } = {}) {
-    const res = await fetch(BASE + path, { signal: timeout ? AbortSignal.timeout(timeout) : signal });
+    const res = await fetch(BASE + path, { signal: timeout ? timeoutSignal(timeout) : signal });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   }
@@ -108,18 +111,24 @@
      括弧・引用符のどれで囲まれるかが変わるので、いずれも受け取る。 */
   const SONG_RE = /[「『【〔"“]([^「」『』【】〔〕"”\n]{2,60})[」』】〕"”]/g;
   const songLabel = (s) => s.trim().replace(/\s+/g, ' ');
+  const LABEL_SEP = /\s+[-–—]\s+/;   // 「アーティスト名 - 曲名」の区切り
 
+  /* 句読点を含むのは、ふつうは括弧で囲んだ文章なので捨てる。ただし「アーティスト名 - 曲名」の
+     形なら名前の一部として残す（モーニング娘。・Wham!・Panic! At The Disco など） */
   function pickSongs(text) {
     const out = [];
     for (const m of text.matchAll(SONG_RE)) {
       const s = songLabel(m[1]);
-      if (s.length < 2 || /[。、！？!?]/.test(s) || out.includes(s)) continue;
+      if (s.length < 2 || out.includes(s)) continue;
+      if (!LABEL_SEP.test(s) && /[。、！？!?]/.test(s)) continue;
       out.push(s);
     }
     return out.slice(0, 4);
   }
 
   /* 挙げられた曲を、検索タブと同じ iTunes Search API（Apple Music と同じ曲目録）で引く。
+     Apple Music API そのものは開発者登録と署名済みトークンが要るうえ、中身は同じなので使わない。
+     Worker から引くと Cloudflare の IP で回数制限を食い合うので、ブラウザから直接引く。
      ok = 見つかった（track 付き）/ missing = 見つからない / unknown = 通信の失敗で確かめられない */
   const bare = (s) => norm(s).replace(/\s/g, '');
 
@@ -154,7 +163,7 @@
      英字の名前を引いて比べ直す。US は全曲まとめて1本で引く。 */
   async function verifyRecommendations(labels) {
     const jobs = await Promise.all(labels.map(async (label) => {
-      const cut = label.split(/\s+[-–—]\s+/);
+      const cut = label.split(LABEL_SEP);
       // アーティスト名の無い挙げ方は、同名の別の曲と見分けられないので照合しない
       if (cut.length < 2) return { label, state: 'missing' };
       const artist = cut[0], title = cut.slice(1).join(' - ');

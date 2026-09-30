@@ -1696,8 +1696,8 @@
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
-  <script src="../../data/dj-request-core.js?v=20260927"></script>
-  <script src="./catalog.js?v=20260930"></script>
+  <script src="../../data/dj-request-core.js?v=20261001"></script>
+  <script src="./catalog.js?v=20261001"></script>
   <script>
     const API = '/dj/api/req';
     const {
@@ -2212,11 +2212,13 @@
     /* 15秒ごとの更新と、一覧を開いたときの読み込みは重なりうる。
        後から届いた古い応答で新しい表示を戻さないよう、最後に出したものだけを描く */
     const boardLatest = latestOnly();
+    const BOARD_TIMEOUT = 10000;
 
     async function loadBoard() {
       const isLatest = boardLatest();
       try {
-        const d = await apiJson('/board');
+        // 次の更新は応答を待ってから予約するので、止まった通信で更新ごと止まらないよう上限を付ける
+        const d = await apiJson('/board', { timeout: BOARD_TIMEOUT });
         if (isLatest()) renderBoard(d);
       } catch {
         if (isLatest()) $('#fresh').textContent = '更新できません';
@@ -2843,7 +2845,7 @@
       /* MAGI_IDLE_MS の見張りはこの後の MAGI への通信にしか掛からない。回線が止まると
          ここがブラウザの既定（数分）まで返らず、入力欄が塞がったままになるので短く切る */
       try {
-        const d = await apiJson('/board', { signal: AbortSignal.timeout(CONTEXT_TIMEOUT_MS) });
+        const d = await apiJson('/board', { timeout: CONTEXT_TIMEOUT_MS });
         title = (d.event && d.event.title) || '';
         const label = (s) => s.artist + ' - ' + s.title;
         played = d.played.filter((s) => !s.isFree).slice(0, 10).map(label);
@@ -2865,14 +2867,8 @@
       return L.join('\n');
     }
 
-    /* 状況説明の終わりの目印。旧形式の保存データは最初の発言に文脈が埋め込まれているので、
-       開き直すときにここまで切り落とす */
+    // 状況説明の終わりの目印。最初の発言の頭に付けるので、どこから相談の本文かを MAGI に示す
     const CONTEXT_END = '--- ここからユーザーの相談 ---';
-    function stripContext(m) {
-      const s = String(m.content || '');
-      const i = m.role === 'user' ? s.indexOf(CONTEXT_END) : -1;
-      return i < 0 ? m : { ...m, content: s.slice(i + CONTEXT_END.length).replace(/^\n/, '') };
-    }
 
     /* 保存済みの往復を Worker の messages に直す。送信用と画面復元用で同じ会話を
        二重に持たず、turns を唯一の正本にする。 */
@@ -3012,7 +3008,7 @@
     }
 
     /* 1往復ぶん MAGI に聞いて turn に流し込む。成功なら回答の本文を返す。
-       失敗したら履歴と turn を片付けてエラーを出し、null を返す */
+       失敗したら turn を画面から外してエラーを出し、null を返す（履歴への保存は成功したときに sendConsult が行う） */
     async function askMagi(turn, content, context) {
       /* 見張るのは「何も届かない時間」。全体の長さは Worker が段階ごとの上限で縛っているので、
          ここでは回線が途中で止まったことだけを見る。何か届くたびに数え直す */
@@ -3116,9 +3112,7 @@
        この端末の localStorage にだけ置く（サーバには送らない）。1件の形は
        { id, first, count, title, at, turns: [{ id, q, personas, reply, picks }] }。
        turns は画面の復元と Worker へ送る直近の会話の両方の正本。DJ の文脈は送るたびに作り直すので
-       含まない。旧形式の messages は読み込み時に turns へ直し、次に保存するときに落とす。
-       古い往復は捨てるので、
-       一覧の見出し（first）と往復数（count）は別に持つ。picks は照合結果（届く前に閉じられたら null、
+       含まない。古い往復は捨てるので、一覧の見出し（first）と往復数（count）は別に持つ。picks は照合結果（届く前に閉じられたら null、
        通信の都合で確かめられなかった曲を含むこともある。どちらも開き直したときに引き直す） */
     const CONSULT_KEY = 'tkdj.consults';
     const CONSULT_MAX = 20;
@@ -3136,39 +3130,29 @@
       id: uid(), first, count: 0, title: '', at: '', turns: [],
     });
 
-    /* messages だけに会話を持つ旧保存形式を、表示にも送信にも使える turns へ直す。
-       id は保存のたびに変わらないよう、会話IDと位置から決める。 */
-    function turnsFromLegacyMessages(id, messages) {
-      // localStorage は利用者や拡張機能からも書き換えられる。壊れた要素1件で
-      // ページ全体の起動を止めず、復元できる user / assistant の組だけを拾う。
-      const clean = (messages || [])
-        .filter((m) => m && typeof m === 'object' && (m.role === 'user' || m.role === 'assistant'))
-        .map(stripContext);
-      const turns = [];
-      for (let i = 0; i < clean.length - 1; i += 1) {
-        const q = clean[i], a = clean[i + 1];
-        if (q.role !== 'user' || a.role !== 'assistant') continue;
-        turns.push({
-          id: id + '-legacy-' + turns.length,
-          q: String(q.content || ''), personas: {}, reply: String(a.content || ''), picks: null,
-        });
-        i += 1;
-      }
-      return turns;
-    }
+    /* localStorage は利用者や拡張機能からも書き換えられる。壊れた往復1件で履歴の一覧や開き直しを
+       止めないよう、形の合う往復だけを残す。照合結果（picks）の形が崩れていたら引き直しに回す。
+       最初期（2026-09-26）の往復は id を持たないので、会話の id と位置から決めて振る（照合結果の
+       書き戻し先を id で探すため。無いと別の往復に書き込む）。messages / code / context も最初期の
+       保存形式にだけある値で、読まずに落とす（turns と同じ会話が入っていた）。どちらも次の保存で書き直される */
+    const validPicks = (picks) => Array.isArray(picks) && picks.every((p) => p && (p.state !== 'ok' || p.track));
 
     function normalizeConsult(c) {
-      const turns = Array.isArray(c.turns) && c.turns.length
-        ? c.turns
-        : turnsFromLegacyMessages(c.id, Array.isArray(c.messages) ? c.messages : []);
-      // messages / code / context は旧形式だけの値。戻り値へ含めず、次の保存で自然に移行する。
       const { messages, code, context, ...rest } = c;
+      const turns = c.turns
+        .filter((t) => t && typeof t === 'object' && typeof t.q === 'string' && typeof t.reply === 'string')
+        .map((t, i) => ({
+          ...t,
+          id: typeof t.id === 'string' && t.id ? t.id : c.id + '-' + i,
+          picks: validPicks(t.picks) ? t.picks : null,
+        }));
       return { ...rest, turns };
     }
 
     const savedConsults = () => storage.getJSON(CONSULT_KEY, [])
-      .filter((c) => c && typeof c.id === 'string' && (Array.isArray(c.turns) || Array.isArray(c.messages)))
-      .map(normalizeConsult);
+      .filter((c) => c && typeof c.id === 'string' && Array.isArray(c.turns))
+      .map(normalizeConsult)
+      .filter((c) => c.turns.length);
 
     // 件数と文字数の上限に収めて書く。入り切らなければ古い会話から捨てる（最新の1件は残す）
     function writeConsults(list) {

@@ -1124,16 +1124,22 @@
 
   <div class="toast" id="toast"><span id="toastTxt"></span><button id="toastUndo">取り消す</button></div>
 
-  <script src="../../data/dj-request-core.js?v=20260927"></script>
+  <script src="../../data/dj-request-core.js?v=20261001"></script>
   <script src="../../data/dj-audio-analysis.js?v=20260927"></script>
   <script>
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
     const API = '/dj/api/req';
     const {
       $, $$, appleHref, asDate, createApi, createPreviewController, escapeHTML: esc, formatClock,
-      formatDurationMs, storage, ymd,
+      formatDurationMs, storage, timeoutSignal, ymd,
     } = window.DJRequestCore;
     const apiJson = createApi(API, '通信に失敗しました。接続を確認してください');
+    /* 通信の待ち上限。会場の回線は応答が来ないまま止まることがあり、上限が無いとブラウザの既定（数分）まで
+       待つ。その間は5秒ポーリングも「切断」の表示も止まり、押した操作も終わらない */
+    const READ_TIMEOUT = 10000;    // 一覧の読み込み
+    const WRITE_TIMEOUT = 15000;   // 状態や推定値の書き込み
+    const INFO_TIMEOUT = 60000;    // 背景カードの作り直し（Worker が 45 秒で打ち切るので、それより長く）
+    const PREVIEW_TIMEOUT = 20000; // 解析に使うプレビュー音源の取得
 
     const STATUS_META = {
       pending: { empty: 'まだ新しいリクエストはありません' },
@@ -1507,7 +1513,7 @@
     async function load() {
       const req = ++loadSeq;
       try {
-        const d = await apiJson('/admin/songs');
+        const d = await apiJson('/admin/songs', { timeout: READ_TIMEOUT });
         // 後から出した読み込みの応答をもう描いていたら、この古い応答は捨てる
         //（ポーリングの途中で新しいイベントを始めたときなど）
         if (req < loadShown) return;
@@ -1538,7 +1544,7 @@
       $('#connTxt').textContent = ok ? '接続中' : '切断';
     }
 
-    const patch = (id, status) => apiJson('/admin/songs/' + id, { method: 'PATCH', json: { status } });
+    const patch = (id, status) => apiJson('/admin/songs/' + id, { method: 'PATCH', json: { status }, timeout: WRITE_TIMEOUT });
 
     /* ── 操作 ─────────────────────────────── */
     function toast(text, undo) {
@@ -1675,7 +1681,7 @@
     $('#accept').addEventListener('click', async () => {
       const want = $('#accept').getAttribute('aria-checked') === 'true' ? 'closed' : 'open';
       try {
-        const d = await apiJson('/admin/event', { method: 'PATCH', json: { status: want } });
+        const d = await apiJson('/admin/event', { method: 'PATCH', json: { status: want }, timeout: WRITE_TIMEOUT });
         paintSwitch('#accept', !!d.open);
         toast(d.open ? 'リクエストの受付を再開しました' : 'リクエストの受付を停止しました');
       } catch (e) { toast(e.message || '切り替えられませんでした'); }
@@ -1686,7 +1692,7 @@
       if (title === null) return;
       if (!confirm('現在のイベントを締めて、新しいイベントを開始します。よろしいですか？')) return;
       try {
-        const d = await apiJson('/admin/event', { method: 'POST', json: { title } });
+        const d = await apiJson('/admin/event', { method: 'POST', json: { title }, timeout: WRITE_TIMEOUT });
         await load();
         toast('「' + d.title + '」を開始しました（' + d.code + '）');
       } catch (e) { toast(e.message || '作成できませんでした'); }
@@ -1717,7 +1723,7 @@
       const box = $('#evList');
       box.innerHTML = '<div class="evblank">読み込んでいます…</div>';
       try {
-        const d = await apiJson('/admin/events');
+        const d = await apiJson('/admin/events', { timeout: READ_TIMEOUT });
         box.innerHTML = d.events.length
           ? d.events.map(evrowHTML).join('')
           : '<div class="evblank">イベントがありません</div>';
@@ -1741,7 +1747,7 @@
 
       btn.disabled = true;
       try {
-        const d = await apiJson('/admin/events/' + encodeURIComponent(code), { method: 'DELETE' });
+        const d = await apiJson('/admin/events/' + encodeURIComponent(code), { method: 'DELETE', timeout: WRITE_TIMEOUT });
         toast('「' + d.title + '」を削除しました（' + d.songs + '曲 / ' + d.requests + '件）');
         await loadEvents();
       } catch (e) {
@@ -1762,7 +1768,7 @@
 
       btn.disabled = true;
       try {
-        const d = await apiJson('/admin/events/' + encodeURIComponent(code) + '/reopen', { method: 'POST' });
+        const d = await apiJson('/admin/events/' + encodeURIComponent(code) + '/reopen', { method: 'POST', timeout: WRITE_TIMEOUT });
         await load();
         toast('「' + d.title + '」に戻しました（' + d.code + '）');
         await loadEvents();
@@ -1783,7 +1789,7 @@
       infoBusy.add(id);
       render();
       try {
-        const d = await apiJson('/admin/songs/' + id + '/info', { method: 'POST' });
+        const d = await apiJson('/admin/songs/' + id + '/info', { method: 'POST', timeout: INFO_TIMEOUT });
         const cur = songById(id);
         if (cur && d.info) cur.info = d.info;
         toast(d.ok ? '背景を調べ直しました' : '調べられませんでした（' + (d.error || '不明なエラー') + '）');
@@ -1820,10 +1826,11 @@
           analyzing.add(id);
           render();
           try {
-            const r = await DJAudioAnalysis.analyzeUrl(next.previewUrl);
+            // 止まった取得で解析の列ごと詰まらないよう、上限を付ける
+            const r = await DJAudioAnalysis.analyzeUrl(next.previewUrl, { signal: timeoutSignal(PREVIEW_TIMEOUT) });
             if (r.bpm || r.camelot) {
               const d = await apiJson('/admin/songs/' + id + '/analysis', {
-                method: 'PATCH', json: { bpm: r.bpm, camelot: r.camelot, songKey: r.songKey },
+                method: 'PATCH', json: { bpm: r.bpm, camelot: r.camelot, songKey: r.songKey }, timeout: WRITE_TIMEOUT,
               });
               // 5秒ポーリングで songs は差し替わるので、曲は id で引き直す
               const cur = songById(id);
