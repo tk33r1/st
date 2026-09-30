@@ -1,5 +1,262 @@
 [
   {
+    "date": "20261001",
+    "title": "2026年10月1日号：昨日のニトリニュース＆SNS話題まとめ",
+    "summary": "ニトリはマレーシア15店舗目の出店を発表。東南アジアで店舗網を広げ、現地の商業施設への出店を通じた顧客接点拡大を進める。 島忠の値下げ企画や家電の1対1回収が話題に。価格対応と購入後の処分支援を組み合わせ、顧客の買い替え負担を抑える動きが見られる。",
+    "count": 7,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "ニトリはマレーシア15店舗目の出店を発表。東南アジアで店舗網を広げ、現地の商業施設への出店を通じた顧客接点拡大を進める。",
+      "島忠の値下げ企画や家電の1対1回収が話題に。価格対応と購入後の処分支援を組み合わせ、顧客の買い替え負担を抑える動きが見られる。",
+      "SNSでは、長く使えるソファベッドへの実感と、季節・用途に合わせたベビー用品の紹介が反響。耐久性への信頼と具体的な使用提案が生活者の関心を集めている。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "店舗展開・海外戦略",
+        "title": "ニトリ、マレーシア15店舗目を発表　Pavilion Damansara Heightsに出店",
+        "original_title": "",
+        "source": "PR TIMES",
+        "source_id": "JP-09",
+        "summary": "ニトリはマレーシアで15店舗目となる「NITORI PAVILION DAMANSARA HEIGHTS店」の出店を発表した。現地の商業施設への出店を通じ、マレーシアでの店舗網を拡大する。候補情報には店舗名と15店舗目であることが示されており、同国での出店継続を伝える発表となっている。",
+        "why_it_matters": "海外店舗の拡大は、商品を売る場の増加にとどまらず、現地顧客の嗜好や購買データを蓄積する接点づくりでもある。店舗網が広がれば、商品供給や認知形成の効率向上が期待できる一方、商圏ごとの品ぞろえと運営採算の両立が鍵となる。",
+        "tags": [
+          "ニトリ",
+          "マレーシア",
+          "海外出店"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE42MXRIZy1ZdDZzNmxSbkRTOXp1WkRJOUFoRWxVOWpqLXpOV21aTjlOeXhyZ0hKOEhrcTVyNm5nYWR5bVRxXzNIUzhKMllHNzMybjg5NUlHZ3FUZlhFaEZmcTY5SUdFOHBlNlE?oc=5",
+        "source_pub_ts": 1790748002
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "島忠、「爆安挑戦セール」第9弾を開始　物価高のなか価格訴求を継続",
+        "original_title": "",
+        "source": "ニコニコニュース",
+        "source_id": "JP-06",
+        "summary": "島忠は9月30日から、物価高に対応する「爆安挑戦セール」の第9弾を開催すると発表した。生活者の節約志向が続くなか、シリーズ企画として価格訴求を継続する。候補情報ではセールの開始日と第9弾であることが示されているが、個別商品の価格や対象範囲は確認できない。",
+        "why_it_matters": "継続的な価格企画は、値ごろ感を求める顧客の来店動機をつくり、島忠の価格イメージを強化しうる。一方、単純な値下げ競争では粗利を損ないかねない。集客商品から関連購買へつなぐ売場設計と、企画ごとの利益検証が重要になる。",
+        "tags": [
+          "島忠",
+          "価格戦略",
+          "セール"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9YQkFLQTBTc0tBcENuNmdRYnhFd1Z5ZC1aT09nR0xpUG9PX0tQaHdKMDFCUE1STXB6cHE2UWNkQXBBNGdxYUlQZHROMkFubEZ4YlVUaGFyVUc2SzJ5NkZvLVJ3OERWRDRhMDVHYkstQUJMX0xabkhGVDZHbw?oc=5",
+        "source_pub_ts": 1790761537
+      },
+      {
+        "region": "JP",
+        "category": "物流・サプライチェーン",
+        "title": "ニトリの家電購入時に旧製品を1対1回収　他社製品も対象に",
+        "original_title": "",
+        "source": "DXマガジン",
+        "source_id": "JP-07",
+        "summary": "ニトリで家電を購入する際に利用できる、旧製品の1対1回収サービスが紹介された。記事によると、回収対象には他社製品も含まれ、購入品と同数の製品を引き取る仕組みで、処分費用がかからないケースを取り上げている。買い替えに伴う処分の手間と費用を軽減するサービスとして報じられた。",
+        "why_it_matters": "回収を購入時の体験に組み込めば、買い替え時の心理的・実務的な障壁を下げ、販売機会を後押しできる。競合製品も受け入れる設計は顧客利便性を高める一方、回収後の選別や再資源化を含む逆物流の効率と費用管理が、継続性を左右する。",
+        "tags": [
+          "ニトリ",
+          "家電",
+          "回収サービス",
+          "リサイクル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE1NLTBJTkJyLWVraTBvOVlYUmRGdGxaZ1VpdnliZW1KMG9velJ3ZXJBdkpPc1dXaWU1NkxlcGpzb0kzN3hnMlppTkZrQWFrcTFpN0J2d0dyMEQ?oc=5",
+        "source_pub_ts": 1790760432
+      },
+      {
+        "region": "JP",
+        "category": "商品開発・ヒット商品",
+        "title": "ニトリ×ハローキティ、初のアパレルコレクション　全4型を展開",
+        "original_title": "",
+        "source": "LIMO | くらしとお金の経済メディア",
+        "source_id": "JP-11",
+        "summary": "ニトリとハローキティの初コラボとなるアパレルコレクションが紹介された。シャツやデニムなど全4型で、価格は2,990円から。記事では、刺繍やチェック柄を取り入れたデザインを特徴として挙げている。キャラクターを前面に出しすぎず、大人も取り入れやすい衣料品として訴求する商品企画だ。",
+        "why_it_matters": "知名度の高いキャラクターと日常着を組み合わせることで、既存の家具・生活用品とは異なる来店動機を生み出せる。手に取りやすい価格と普段使いできるデザインの両立は、ファン層だけでなく新たな顧客との接点にもなりうる。コラボ商品の売れ行きと販路横断の効果に注目したい。",
+        "tags": [
+          "ニトリ",
+          "ハローキティ",
+          "コラボ商品",
+          "アパレル"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFBVOHJRaGo5UGgtSXJSQ1ZxRkRVOUQwZWVYMXpxcmlMZG5FVmtGbFpKNkJzUnBkV0NTQnRiUE1uNWNaLWJaZ1dRMDNkOW4?oc=5",
+        "source_pub_ts": 1790728200
+      },
+      {
+        "region": "JP",
+        "category": "経営・価格戦略・PB",
+        "title": "ニトリなど3社が札幌・北海道GXファンドに出資　参加は17社、総額61億円に",
+        "original_title": "",
+        "source": "ｄメニューニュース",
+        "source_id": "JP-03",
+        "summary": "「札幌・北海道GXファンド」にニトリを含む3社が新たに出資し、参加企業は計17社、ファンド総額は61億円になったと報じられた。候補情報から確認できるのは新規出資の事実と参加社数、総額であり、ニトリの出資額や投資先の個別案件は示されていない。",
+        "why_it_matters": "地域のGX投資への参加は、環境対応を個社の取り組みにとどめず、地域企業や事業者との連携につなげる可能性がある。小売・物流の脱炭素化では、店舗や輸送の改善を投資先の技術・事業と結び付け、事業上の効果と環境価値の双方を評価できるかがポイントとなる。",
+        "tags": [
+          "ニトリ",
+          "GX",
+          "サステナビリティ",
+          "北海道"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxPVVpoOE9WQ01yU29DUWhpM1IwdFBtRjdWLWhvZ0FTamVrNHNzOHBNZ04xVlNjcEp1TjNLbEV6cFp5dWs5MTJjb2dJbTdxSFVGTWpubHVmWWNDVmNYY0R4SEJ1R0phc0tqUHBNcFBVSnc5a2daVDVSU0ozTmstbXdwaGZR0gGCAUFVX3lxTE9VWmg4T1ZDTXJTb0NRaGkzUjB0UG1GN1YtaG9nQVNqZWs0c3M4cE1nTjFWU2NwSnVOM0tsRXpwWnl1azkxMmNvZ0ltN3FIVUZNam5sdWZZY0NWY1hjRHhIQnVHSmFzS2pQcE1wUFVKdzlrZ1pUNVJTSjNOay1td3BoZlE?oc=5",
+        "source_pub_ts": 1790773080
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "「今も現役で助かる」ニトリのソファベッド、長期使用と寝心地への実感が反響",
+        "original_title": "",
+        "source": "X",
+        "source_id": "SNS-01",
+        "summary": "Xでは、ニトリのソファベッドを購入した際の絵日記と、現在も使い続けているという投稿が6,148いいねを集めた。投稿者は寝心地の良さを評価し、ソファカバーを複数試した末に気に入ったものに出会えたとも記している。購入後の使用実感と、暮らしに合わせた工夫が伝わる内容だ。",
+        "why_it_matters": "長期間使えて寝心地にも満足しているという実体験は、価格だけでなく耐久性や使用価値が購入後の信頼を生むことを示す。ソファとベッドを兼ねる機能は限られた住空間にも合致し、カバー選びまで含めた継続利用の工夫が、商品改善や関連商品の提案にもつながる。",
+        "tags": [
+          "ニトリ",
+          "ソファベッド",
+          "長期使用",
+          "生活者の声"
+        ],
+        "url": "https://x.com/yuyumaru222/status/2105093775781716288",
+        "source_pub_ts": 1790766000
+      },
+      {
+        "region": "JP",
+        "category": "SNS話題・リアル反響",
+        "title": "ニトリベビーの秋冬出産準備動画が7.8万再生　Nウォームに注目",
+        "original_title": "",
+        "source": "TikTok",
+        "source_id": "SNS-06",
+        "summary": "TikTokでは、ニトリベビーの2026年秋冬向け出産準備を紹介する動画が77,900回再生、2,221いいねを獲得した。投稿はNウォームを取り上げ、寒くなる季節に赤ちゃんが快適に過ごすためのアイテム選びを案内している。プレママ向けの情報発信として、季節需要と購入準備を結び付けた内容だ。",
+        "why_it_matters": "短尺動画では、商品名や機能の説明に加えて、誰がいつ使うのかを具体的に示すことで検討初期の不安を減らせる。季節商品と出産準備という明確な需要を掛け合わせた発信は、保存・共有を通じて購買検討につながる可能性があり、対象者別の情報設計が重要となる。",
+        "tags": [
+          "ニトリ",
+          "ニトリベビー",
+          "Nウォーム",
+          "TikTok"
+        ],
+        "url": "https://www.tiktok.com/@moco_premama/video/7689238193304046868",
+        "source_pub_ts": 1790290284.0
+      }
+    ],
+    "sns_buzz": [
+      {
+        "source_id": "SNS-01",
+        "title": "ニトリのソファベッドを買った時の絵日記 未だに現役で めちゃくちゃ助けられまくってます！ マットレスだから当たり前なんだけど 寝心地が良すぎ...",
+        "platform": "x",
+        "author": "@yuyumaru222",
+        "url": "https://x.com/yuyumaru222/status/2105093775781716288",
+        "likes": 6148,
+        "retweets": 438,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 9:34",
+        "captured_at": "",
+        "text": "ニトリのソファベッドを買った時の絵日記 未だに現役で めちゃくちゃ助けられまくってます！ マットレスだから当たり前なんだけど 寝心地が良すぎる…！ ソファカバーはずっと色々悩んで試していて 遂に最高のものに出会えました ⬇️つなげてく #ニトリ pic.x.com/pKQMkwFnGy",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-02",
+        "title": "ニトリからもこういうチェア出てるのよすぎる！ pic.x.com/iXCxLxLXi3",
+        "platform": "x",
+        "author": "@Oo_syk_oO",
+        "url": "https://x.com/Oo_syk_oO/status/2105149111909642275",
+        "likes": 1534,
+        "retweets": 82,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 13:13",
+        "captured_at": "",
+        "text": "ニトリからもこういうチェア出てるのよすぎる！ pic.x.com/iXCxLxLXi3",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-03",
+        "title": "【悲報💧】ニトリ元社長の「八王子総合クリニック」、10/1オープンに向けて医師が集まらず時給2万円で内科医を急募‼️ pic.x.com/N...",
+        "platform": "x",
+        "author": "@drlion1111",
+        "url": "https://x.com/drlion1111/status/2105081378429976884",
+        "likes": 775,
+        "retweets": 187,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 8:44",
+        "captured_at": "",
+        "text": "【悲報💧】ニトリ元社長の「八王子総合クリニック」、10/1オープンに向けて医師が集まらず時給2万円で内科医を急募‼️ pic.x.com/NSi7RanlZQ x.com/drlion1111/sta…",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-04",
+        "title": "サバゲ3大やめとけ ・異名を持つな ・階級をつけるな ・部屋がとっ散らかってるのを見せたくないために唯一キレイなベッドを設置している側の壁を...",
+        "platform": "x",
+        "author": "@urataroura",
+        "url": "https://x.com/urataroura/status/2105107436566901200",
+        "likes": 545,
+        "retweets": 87,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 10:28",
+        "captured_at": "",
+        "text": "サバゲ3大やめとけ ・異名を持つな ・階級をつけるな ・部屋がとっ散らかってるのを見せたくないために唯一キレイなベッドを設置している側の壁を背にし、フル装備ニキ＋黄ばんだ寝具＋ニトリのお母さんチョイスのカーテンという奇抜な組み合わせで自宅タクトレ動画を撮るな",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-05",
+        "title": "このリモコン置きニトリに売ってるのかな pic.x.com/eyyNhL5d2a",
+        "platform": "x",
+        "author": "@fTj498UMs25w2nP",
+        "url": "https://x.com/fTj498UMs25w2nP/status/2105276117485822266",
+        "likes": 413,
+        "retweets": 46,
+        "views": 0,
+        "comments": 0,
+        "posted_on": "昨日 21:38",
+        "captured_at": "",
+        "text": "このリモコン置きニトリに売ってるのかな pic.x.com/eyyNhL5d2a",
+        "tags": [
+          "SNS話題",
+          "生活者UX",
+          "バズアイテム"
+        ]
+      },
+      {
+        "source_id": "SNS-06",
+        "title": "【@moco_premama】◀︎過去の投稿はこちら 今日の投稿は 【ニトリベビー 2026秋冬 出産準備】です！ 今年も出ましたNウォーム...",
+        "platform": "tiktok",
+        "author": "@もこ",
+        "url": "https://www.tiktok.com/@moco_premama/video/7689238193304046868",
+        "likes": 2221,
+        "retweets": 349,
+        "views": 77900,
+        "comments": 2,
+        "posted_on": "2026-09-25 07:51",
+        "captured_at": "2026-09-30T19:53:51.731083+09:00",
+        "text": "【@moco_premama】◀︎過去の投稿はこちら 今日の投稿は 【ニトリベビー 2026秋冬 出産準備】です！ 今年も出ましたNウォーム！ これからどんどん寒くなってくるから ニトリのあったか素材で 赤ちゃんも快適に過ごせるよ♪ ぜひ参考にしてね☺️✨️ ↓こちらのアカウントでは @moco_premama プレママや出産準備に向けての情報を投稿しています いいね、フォロー、シェア、保存していただけると励みになります✨ #ニトリ #ニトリべビー #Nウォーム #ニトリベビー購入品 #出産準備",
+        "tags": [
+          "TikTok話題",
+          "生活者UX",
+          "バズ動画"
+        ]
+      }
+    ],
+    "sns_summary": "投稿全体では、Xでソファベッドの長期使用や寝心地といった購入後の実感が反響を集める一方、チェアへの関心や商品特定を尋ねる声も見られる。TikTokではNウォームの出産準備を紹介する動画が7.8万回再生。短文・画像中心のXは共感や評価、動画は季節や使用場面を伝える内容が目立つ。",
+    "sns_why_it_matters": "生活者は商品スペックだけでなく、長く使える安心感や自分の生活に取り入れる具体像に反応している。Xの体験談は耐久性や満足度への信頼を広げ、TikTokの実用紹介は季節需要や対象者別の選び方を伝えやすい。媒体の特性に合わせ、購入後の声と使用シーンを販促・商品改善に生かしたい。"
+  },
+  {
     "date": "20260930",
     "title": "2026年9月30日号：昨日のニトリニュース＆SNS話題まとめ",
     "summary": "ニトリは約350アイテムを10％引きで販売する期間限定施策を開始。冬支度需要を取り込み、季節商品の購買を促す価格戦略が焦点となる。 宅配ボックスやアニマルクッションなど、日常の不便解消と選ぶ楽しさを備えた商品が登場。生活者の具体的な使用場面に根差す商品提案が続く。",
