@@ -32,24 +32,38 @@
     0 30px 80px -20px rgba(0, 0, 0, 0.75),
     0 0 0 1px rgba(0, 0, 0, 0.25);
   font-family: var(--f-body, sans-serif);
-}
-
-/* 開くときだけ、ふわっと浮かせる。fallback の位置決めは transform を使うので、
-   ここでは個別の scale / translate だけを動かして打ち消し合わないようにする。 */
-@keyframes dj-modal-in {
-  from { opacity: 0; scale: 0.96; translate: 0 8px; }
-  to { opacity: 1; scale: 1; translate: 0 0; }
-}
-
-@keyframes dj-modal-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  /* 開閉の演出。fallback の位置決めは transform を使うので、
+     ここでは個別の scale / translate だけを動かして打ち消し合わないようにする。
+     閉じるときはこの値（短く、少しだけ縮む）が使われる。display と overlay を allow-discrete で
+     遅らせて、消える途中も top layer に残す。未対応のブラウザはこれまでどおり一瞬で閉じる。 */
+  opacity: 0;
+  scale: 0.97;
+  translate: 0 4px;
+  transition:
+    opacity .15s ease-in,
+    scale .15s ease-in,
+    translate .15s ease-in,
+    display .15s allow-discrete,
+    overlay .15s allow-discrete;
 }
 
 .dj-modal[open] {
   display: flex;
   flex-direction: column;
-  animation: dj-modal-in .22s cubic-bezier(.2, .8, .2, 1);
+  opacity: 1;
+  scale: 1;
+  translate: 0 0;
+  transition-duration: .22s;
+  transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* 開いた直後の出発点。ここから .dj-modal[open] の値へ、ふわっと浮かび上がる。 */
+@starting-style {
+  .dj-modal[open] {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 8px;
+  }
 }
 
 /* dialog 非対応ブラウザでは UA の非表示規則が無いので、閉じている要素を明示的に隠す。 */
@@ -59,7 +73,21 @@
   background: rgba(4, 4, 8, 0.5);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  animation: dj-modal-fade .22s ease-out;
+  opacity: 0;
+  transition:
+    opacity .15s ease-in,
+    display .15s allow-discrete,
+    overlay .15s allow-discrete;
+}
+
+.dj-modal[open]::backdrop {
+  opacity: 1;
+  transition-duration: .22s;
+  transition-timing-function: ease-out;
+}
+
+@starting-style {
+  .dj-modal[open]::backdrop { opacity: 0; }
 }
 
 /* Safari 15.0〜15.3 など showModal() の無いブラウザ向け。
@@ -276,8 +304,8 @@ html.dj-modal-fallback-active body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dj-modal[open],
+  .dj-modal,
   .dj-modal::backdrop {
-    animation: none;
+    transition: none;
   }
 }
