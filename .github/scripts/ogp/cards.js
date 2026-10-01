@@ -9,7 +9,7 @@
  */
 'use strict';
 
-/* Category accents, light-theme values from data/tools-ui.css. The shelf and
+/* Category accents, light-theme values from tools/assets/tools-ui.css. The shelf and
  * its cards use the same category language: the surface changes, the meaning
  * of each colour does not. */
 const CATEGORIES = {

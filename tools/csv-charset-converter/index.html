@@ -5,19 +5,19 @@
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
        このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics、Ahrefs Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
        埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
-       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+       足すときは、ここを広げる前に同梱（assets/vendor/）で済まないかを考えること -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260928_1"></script>
-  <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
+  <script src="../../tools/assets/tools-ui.js?v=20260928_1"></script>
+  <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは tools/assets/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function(w,d,s,l,i){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
   j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <!-- Ahrefs Web Analytics（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の
+  <!-- Ahrefs Web Analytics（利用者がアクセス解析を止めていたら読み込まない。キーは tools/assets/tools-ui.js の
        ANALYTICS_KEY と同じ）。Ahrefs は URL を丸ごと送るので、# 以降（QR Palette の共有デザインなど）が
        載らないよう、data-page-location にパスとクエリだけを渡す -->
   <script>(function(d){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}var a=d.createElement('script');a.src='https://analytics.ahrefs.com/analytics.js';a.async=true;a.setAttribute('data-key','HKe6iphbuiskJsOdfXIOog');a.setAttribute('data-page-location',location.pathname+location.search);d.head.appendChild(a)})(document)</script>
@@ -150,20 +150,20 @@
   }
   </script>
 
-  <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
+  <script src="../../assets/vendor/lucide@0.263.0/lucide.min.js"></script>
   <!-- encoding-japanese: ブラウザ標準の TextDecoder は「読む」ことしかできない。
        Shift_JIS / EUC-JP / ISO-2022-JP へ「書き出す」ところだけこれに任せる。 -->
-  <script src="../../data/vendor/encoding-japanese@2.4.0/encoding.min.js"></script>
-  <script src="../../data/vendor/jszip@3.10.1/jszip.min.js"></script>
+  <script src="../../assets/vendor/encoding-japanese@2.4.0/encoding.min.js"></script>
+  <script src="../../assets/vendor/jszip@3.10.1/jszip.min.js"></script>
 
-  <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
+  <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（assets/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
-  <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_10">
+  <link rel="stylesheet" href="../../assets/fonts/ui.css?v=20260926">
+  <link rel="stylesheet" href="../../tools/assets/tools-ui.css?v=20260926_10">
 
   <style>
     /* ------------------------------------------------------------------
-       CSV Charset Converter — 外枠は data/tools-ui.css。ここが持つのは
+       CSV Charset Converter — 外枠は tools/assets/tools-ui.css。ここが持つのは
        ファイルカード（判別結果 → 変換先の流れ、プレビュー、警告）だけ。
        ------------------------------------------------------------------ */
     /* ---- 結果ビュー上部のまとめ ---- */
@@ -315,8 +315,8 @@
       .f-ctl .st-btn-quiet { flex: 1 1 auto; justify-content: center; }
     }
   </style>
-  <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は data/tools-base.css の冒頭） -->
-  <link rel="stylesheet" href="../../data/tools-base.css?v=20260926_1">
+  <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は tools/assets/tools-base.css の冒頭） -->
+  <link rel="stylesheet" href="../../tools/assets/tools-base.css?v=20260926_1">
 </head>
 
 <body>
@@ -483,8 +483,8 @@
   <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
     <i data-lucide="arrow-up"></i>
   </button>
-  <script src="../../data/buy-me-oil.js"></script>
-  <script src="../../data/tools-share.js?v=20260926_3"></script>
+  <script src="../../assets/buy-me-oil.js"></script>
+  <script src="../../tools/assets/tools-share.js?v=20260926_3"></script>
   <script>
     new DonationWidget({ containerId: 'donation-button-container' }).init();
   </script>

@@ -25,12 +25,12 @@
     href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
   <!-- 白昼夢テーマの土台（トークン / リセット / 背景演出 / フッター）。
-       対になる演出は body 末尾の data/bijutsu-shisui.js -->
-  <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260902">
+       対になる演出は body 末尾の assets/bijutsu-shisui.js -->
+  <link rel="stylesheet" href="../../assets/bijutsu-shisui.css?v=20260902">
 
   <style>
     /* このページ固有のものだけを置く。色・書体・リセット・背景演出・
-       .site-footer は data/bijutsu-shisui.css の側にある */
+       .site-footer は assets/bijutsu-shisui.css の側にある */
     :root {
       --page-max: 820px;
     }
@@ -759,7 +759,7 @@
     <p style="padding:20px">このページの閲覧には JavaScript が必要です。</p>
   </noscript>
 
-  <!-- 背景演出。中身は data/bijutsu-shisui.js が描く -->
+  <!-- 背景演出。中身は assets/bijutsu-shisui.js が描く -->
   <canvas id="bs-takeover-canvas" aria-hidden="true"></canvas>
   <canvas id="celebrate-canvas" aria-hidden="true" hidden></canvas>
   <div class="vignette" aria-hidden="true"></div>
@@ -934,7 +934,7 @@
 
   <!-- 背景のテイクオーバーとクラッカー。canvas より後ろ、かつ djCelebrate() を
        呼ぶ下のスクリプトより先に読み込む -->
-  <script src="../../data/bijutsu-shisui.js?v=20260902"></script>
+  <script src="../../assets/bijutsu-shisui.js?v=20260902"></script>
 
   <script>
     'use strict';

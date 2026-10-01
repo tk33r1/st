@@ -311,15 +311,17 @@
   }
 
   // ---- 分けて置いた部品の組み立て ----------------------------------------
-  // ライブラリはすべて data/vendor/ に置いてこのサイトから読む（外部の CDN へは行かない。
+  // ライブラリはすべて assets/vendor/ に置いてこのサイトから読む（外部の CDN へは行かない。
   // ページの Content-Security-Policy でも止めている）。ただ、Cloudflare Pages は1ファイル
   // 25MB までなので、FFmpeg のコアの wasm（32MB）は2つに分けて置いてある。ここでつなぎ
   // 直し、元のファイルの SHA-256 と一致したときだけ使う（つなぎ間違いや欠けを動かさない）。
-  // 部品の名前・大きさ・SHA-256 は、取り込んだときの記録（data/vendor/SOURCES.json の split）を
+  // 部品の名前・大きさ・SHA-256 は、取り込んだときの記録（assets/vendor/SOURCES.json の split）を
   // そのまま読む。ここに値を書き写すと、版を上げたときに合わせ忘れる。
-  const VENDOR_BASE = new URL('vendor/', (document.currentScript && document.currentScript.src) || location.href);
+  // このファイルは tools/assets/ にあり、vendor/ はサイト直下の assets/ にある（2つ上がってから降りる）。
+  // ページの階層に依存しないよう、ページではなくこのファイルの場所から決める。
+  const VENDOR_BASE = new URL('../../assets/vendor/', (document.currentScript && document.currentScript.src) || location.href);
 
-  //   key … data/vendor/ からのパス（例: '@ffmpeg/core@0.12.6/ffmpeg-core.wasm'）
+  //   key … assets/vendor/ からのパス（例: '@ffmpeg/core@0.12.6/ffmpeg-core.wasm'）
   // つないだ中身が記録と一致したら blob: の URL にして返す。違えば使わずに止める。
   async function fetchVerified(key, type) {
     const res = await fetch(new URL('SOURCES.json', VENDOR_BASE));
@@ -1107,7 +1109,8 @@
   function shortTarget(href) {
     try {
       const u = new URL(href);
-      return u.origin === location.origin ? u.pathname.replace(/^.*\/data\//, 'data/') : u.host + u.pathname;
+      // このサイトの中は、共有の置き場（data/・assets/）から先だけを見せる
+      return u.origin === location.origin ? u.pathname.replace(/^.*\/(data|assets)\//, '$1/') : u.host + u.pathname;
     } catch (_) {
       return href;
     }

@@ -28,17 +28,34 @@
 | パス | 内容 |
 | --- | --- |
 | `index.html` | トップページ。ターミナル風ポートフォリオ兼 MAGI チャット UI（英語メイン） |
-| `data/` | 共有 JS/CSS/JSON。`buy-me-oil.js`（寄付ウィジェット）、`glitch.js`+`glitch.json`（記事メタ一元管理）、`tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ。テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印もここが受け持つので、ページ側に書かない）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Palette は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`）、`dj-audio-analysis.js`（`dj/booth/` 専用。30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）、`game.json`/`tools.json`（一覧データ）、`oil-price.json`（GitHub Actions が週次更新）、`magi-context.json`（MAGI の人格カード。GitHub Actions が生成、手で編集しない）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
-| `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。`tools-ui.js` を共有。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`data/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
+| `data/` | データ（JSON）だけを置く。手で直す正本は `tools.json`/`game.json`（一覧データ）と `glitch.json`（記事メタ一元管理）。GitHub Actions が作る生成物（手で編集しない）は `oil-price.json`（週次）、`magi-context.json`（MAGI の人格カード。magi2 が `https://tk.st/data/magi-context.json` から読むので場所を変えない）、`nitori-daily.json`/`retail-tech-daily.json`（日刊の号データ）、`nitori-tiktok-buzz.json`（日刊ニトリの TikTok の取得結果）。ここに置いたものはすべて公開される |
+| `assets/` | 区画をまたいで使う自前のコードと、取り込んだ外部物。`analytics.js`（GTM と Ahrefs の読み込みをまとめたもの。いまは `job/` が使う）、`buy-me-oil.js`（寄付ウィジェット。`oil-price.json` は自分の場所から `../data/` を引く）、`bijutsu-shisui.js`+`.css`（DJ の各ページと `anniversary/mitsuki32/` の背景演出）、`vendor/`（SAFE TOOLS が使う外部ライブラリの同梱。`.github/scripts/vendor/fetch-vendor.js` が取り込み、出どころと SHA-256 を `vendor/SOURCES.json` に記録。手で置かない）、`fonts/`（Web フォントの同梱。`.github/scripts/fonts/fetch-fonts.js` が作る） |
+| `files/` | ダウンロード用の資料（PDF）。トップページからリンクしている。旧 `data/` の URL は `_redirects` で 301（インスクリプション版のトップページが旧 URL を持っているので外さない） |
+| `tools/` | ブラウザ内完結のツール群（csv-json-bridge, light-svg, pdf-studio 等）。共通部品は `tools/assets/`: `tools-ui.js`+`tools-ui.css`（SAFE TOOLS 共通 UI、`window.STCommon`。ドロップ枠・保存・コンソール表示・FFmpeg の読み込みなども持つ。テーマの切り替え（描画前の反映を含む）・先頭へ戻るボタン・パンくずの印もここが受け持つので、ページ側に書かない）、`tools-base.css`（SAFE TOOLS の土台のリセットとアイコン寸法などの部品クラス。以前 Tailwind の実行版が組み立てていたものの書き写し。QR Palette は読まない）、`tools-share.js`（完了時のシェア/寄付のお願い、`window.STShare`）。アクセント色は `tools.json` の `category` と同じ値を `<html data-category="…">` に書いて決める（`tools/assets/tools-ui.css` の `--cat-*`）。ページの CSS で `--accent` を持たない。ダウンロードは `STCommon.saveBlob()` を通す（`STShare.celebrate()` まで呼ぶ。後述） |
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
-| `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
-| `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト）、`booth/`（ブースコンソール） |
-| `magi/`, `contact/`, `job/`, `thought/` | 個別ページ |
+| `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments`。共通部品は `glitch/assets/`（`glitch.js` が `data/glitch.json` から記事メタを描く、`glitch.css`） |
+| `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト。`catalog.js` は iTunes 検索と AI 推薦曲の照合）、`booth/`（ブースコンソール。`audio-analysis.js` は30秒プレビューから BPM とキーをブラウザ内で推定する、`window.DJAudioAnalysis`。音声はどこにも送らない）。共通部品は `dj/assets/`: `dj-modal.js`+`.css`（request・booth・schedule のモーダル）、`dj-request-core.js`（`dj/request/` と `dj/booth/` の共通処理、`window.DJRequestCore`。API 呼び出し・localStorage・30秒プレビューの再生・日時の整形・`escapeHTML`・`appleHref`） |
+| `job/` | 職務ページと日刊ブリーフ（`nitoridaily/`・`retailtechdaily/`。号ページは GitHub Actions が生成する）。日刊の共通部品は `job/assets/`（`daily-ui.js`、`daily-base.css`、メディアごとの `nitori-daily.css`・`retail-tech-daily.css`） |
+| `magi/`, `contact/`, `thought/` | 個別ページ |
 | `anniversary/` | 記念日ページ。`matsumura40/`（旧 `/matsumura40/`。`_redirects` で 301 済み） |
 | `images/` | `common/`, `contents/`, `favicons/`, `ogp/` |
 | `workers/` | Cloudflare Workers（下表参照） |
 | `magi-app/` | MAGI モバイルアプリ（PWA + Capacitor 6）。`www/` が出荷物 |
+
+### ファイルの置き場所
+
+ビルド工程がないので、ページはパスを直書きして読む。置き場所は次の順で決める。
+
+1. 1ページでしか使わない JS・CSS は、そのページの横に置く（例: `dj/request/catalog.js`）
+2. 1つの区画（`tools/`・`dj/`・`glitch/`・`job/` など）の複数のページで使うものは、その区画の `assets/` に置く
+3. 区画をまたいで使うものは、ルートの `assets/` に置く
+4. 外部から取り込んだライブラリ・フォントは `assets/vendor/`・`assets/fonts/`。取り込みスクリプトを通し、手で置かない
+5. データ（JSON）は `data/` に置く。GitHub Actions が作るものは、上の表に「手で編集しない」と書く
+6. ダウンロード用の資料は `files/` に置く
+
+どこに置いても公開される（公開しない置き場はない）。公開した URL は外部から直リンクされうるので、
+動かしたら必ず `_redirects` に 301 を足す。
 
 ### Workers 一覧（各ディレクトリに `wrangler.toml` と `src/index.js`）
 
@@ -122,7 +139,7 @@
   tools-ui.js の一部など例外あり）。コミットメッセージは短い英語（`update` 等）。
 - **スタイル**: ページごとに自給自足が基本。外部参照を禁じるのはトップページ（ルートの `index.html`）
   と SAFE TOOLS（`tools/` 配下。次項）で、それ以外のページは Google Fonts などの Web フォントや CDN の
-  CSS/JS を読み込んでよい。共有したい自前の CSS/JS は `data/` に置く。フレームワーク・ビルドツールを勝手に持ち込まない。
+  CSS/JS を読み込んでよい。共有したい自前の CSS/JS は `assets/`（区画の中だけなら `<区画>/assets/`）に置く（「ファイルの置き場所」参照）。フレームワーク・ビルドツールを勝手に持ち込まない。
 - **SAFE TOOLS の通信制限**: `tools/` 配下の全ページは head の先頭で Content-Security-Policy を宣言し、
   読み込みや送信に使える通信先を、このサイトとアクセス解析（GTM 経由の GA4、Cloudflare Web Analytics、
   Ahrefs Web Analytics）だけに制限している（寄付ウィジェットの Ko-fi は iframe の表示だけ許可）。GA4 の Google シグナルの送り先
@@ -135,7 +152,7 @@
   - ページの注記・FAQ・構造化データでも説明している。CSP が保証するのは「読み込みと送信の通信先」まで
     （ページの移動や、許した送り先へ何を載せるかは縛れない）なので、「どんな不具合があっても送れない」の
     ような言い方はしない。「中身を送る処理を持たない」＋「通信先を制限している」の2段で書く。
-  - ライブラリ・フォントは CDN から読まず、`data/vendor/`・`data/fonts/` に同梱して読む。版を上げる・足すときは
+  - ライブラリ・フォントは CDN から読まず、`assets/vendor/`・`assets/fonts/` に同梱して読む。版を上げる・足すときは
     `fetch-vendor.js` の `LIBS` を直して実行し、`SOURCES.json` の差分ごとコミットする（`--check` で照合だけできる）。
     25MB を超えるファイル（FFmpeg のコア wasm）は分割して置き、`STCommon.fetchVerified` が `SOURCES.json` の
     `split` を読んでつなぎ、SHA-256 を照合する。
@@ -143,11 +160,11 @@
     QR Palette の OpenCV WeChat）は `.github/scripts/vendor/patches.js` の置き換えで同じ働きのクロージャに
     直してあり、`fetch-vendor.js` が取り込みのたびに当てる。`--check` は同梱の JS 全体を調べ、理由を書いて
     許したもの（`DYNAMIC_OK`）以外に文字列からコードを作る処理が見つかったら止まる。ライブラリを足したら必ず走らせる。
-  - `data/vendor/`・`data/fonts/` は `.gitattributes` で改行変換を止めている（記録した SHA-256 と食い違うため）。
+  - `assets/vendor/`・`assets/fonts/` は `.gitattributes` で改行変換を止めている（記録した SHA-256 と食い違うため）。
   - CSP は各ページに同じ文字列で書いてある。外部の通信先を足すと約束の説明（注記・FAQ・構造化データ）も
     変わるので、広げる前に同梱で済まないかを考える。新しいツールを足すときも同じ `<meta>` を head の先頭
     （`<meta charset>` の直後、どのスクリプトよりも前）に置く。
-  - `data/tools-ui.js` は CSP の meta の直後、GTM を含むどのスクリプトよりも前に読む（通信メーターが GTM の通信や
+  - `tools/assets/tools-ui.js` は CSP の meta の直後、GTM を含むどのスクリプトよりも前に読む（通信メーターが GTM の通信や
     ブラウザが止めた通信まで数えるため）。新しいツールでも同じ位置に置く。後ろに置くと、先に止められた通信が
     「想定外の行き先への送信」に見えて安全設計カードが「!」になる。
   - Worker は blob: の URL から起動する（`toBlobURL` や `fetch` → `URL.createObjectURL`）。同じサイトの URL から
@@ -173,7 +190,7 @@
   途中で止めたときは以後の解析（Ahrefs を含む）への fetch / XHR / sendBeacon を送らずに捨てる。新しいツールの
   GTM と Ahrefs のスニペットにも同じ判定（`try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}`）を
   入れる。一覧ページ（`tools/index.html`）は GTM と Ahrefs が止まる（`tools-ui.js` を読まないので Cloudflare の分は止まらない）。
-- **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`data/glitch.js` が
+- **データ一元化**: glitch 記事のメタは `data/glitch.json` にだけ持ち、`glitch/assets/glitch.js` が
   描画する。記事追加時は HTML ではなく JSON を編集する。tools/game の一覧も同様に
   `data/tools.json` / `data/game.json` が正。
 - **完了時のお願い**: ツールがユーザーの用を足した瞬間（ダウンロード・保存・書き出し、
@@ -184,8 +201,8 @@
   `/contact/?subject=[ツール名] 改善のご提案` へ飛ぶ（`contact/index.html` が
   `?subject=` を制御文字除去＋エンコードのうえ mailto に載せる。省略時は従来どおり件名なし）。
   頻度制御（1セッション1回、21日クールダウン、応じた人は180日、
-  「今後は表示しない」は永久）は `data/tools-share.js` 側に閉じているので、
-  呼び出し側で条件分岐しない。ツールを増やすときは `<script src="../../data/tools-share.js">`
+  「今後は表示しない」は永久）は `tools/assets/tools-share.js` 側に閉じているので、
+  呼び出し側で条件分岐しない。ツールを増やすときは `<script src="../../tools/assets/tools-share.js">`
   を `buy-me-oil.js` の隣に置き、ダウンロードを `STCommon.saveBlob` で行えばよい（コピーなど保存以外の完了地点だけ1行足す）。
   見た目の確認は URL に `?st-share=preview` を付けて完了操作をすると抑制を無視して出る。
 - **AIモデル設定**: モデルIDの正本は `config/ai-models.json`。Pythonからは
@@ -224,7 +241,7 @@
   `textContent` で描画する（dj-schedule README「制限値」節の方針が全 worker 共通）。
   - **例外は曲リクエスト**（`workers/dj-request` と `dj/request/`・`dj/booth/`）。保存時に落とすのは制御文字と
     長さの超過だけで、`<` `>` は残る。表示は一覧を `innerHTML` で組むので、来場者由来の値は必ず
-    `escapeHTML`（`data/dj-request-core.js`。各ページでは `esc`）を通してから文字列に入れる。表示する値を足すときも同じ。
+    `escapeHTML`（`dj/assets/dj-request-core.js`。各ページでは `esc`）を通してから文字列に入れる。表示する値を足すときも同じ。
   - URL はエスケープでは防げない（`javascript:` がそのまま残る）。来場者が送った URL（`appleUrl`）を `href` や
     `location` に入れる前に、`appleHref` で Apple の https URL か確かめ、違えば使わない。ジャケットとプレビューの URL は
     `<img src>` と `new Audio()` にしか渡さないので、エスケープだけでよい。

@@ -1,5 +1,5 @@
 /**
- * Daily Brief 共通 UI インタラクション (data/daily-ui.js)
+ * Daily Brief 共通 UI インタラクション (job/assets/daily-ui.js)
  * 依存ゼロ・Vanilla JS / 完全自給自足型
  */
 (function() {

@@ -2231,7 +2231,7 @@
     // 触る端末では OS の共有シートに渡す（LINE でも Slack でも、その人が
     // ふだん使うところへ届く）。デスクトップにも navigator.share はあるが、
     // そこはリンクが手元に残るコピーのほうが素直なので分ける。
-    // 判断の基準は data/tools-share.js と揃えてある。
+    // 判断の基準は tools/assets/tools-share.js と揃えてある。
     const canWebShare = typeof navigator.share === 'function' && navigator.maxTouchPoints > 0;
     if (canWebShare) {
       try {

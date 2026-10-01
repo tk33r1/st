@@ -8,7 +8,7 @@
  *   const svg = QRStyle.embedFontCss(out.svg, css);
  *   const canvas = await QRExport.rasterize(svg, 1024);    // 横 1024px のキャンバス
  *
- * フォントの一覧は、既定ではページが読み込んだ @font-face（data/fonts/*.css）から拾う。
+ * フォントの一覧は、既定ではページが読み込んだ @font-face（assets/fonts/*.css）から拾う。
  * その CSS を読み込んでいないページは fontCss(style, { cssUrl }) で CSS の場所を渡す。
  * 取りに行くのはこのサイトのファイルだけで、字をどこかへ問い合わせることはない。
  */
@@ -16,7 +16,7 @@
   'use strict';
 
   // ---- 書き出し用のフォント -------------------------------------------
-  // 画面のプレビューはページが読み込んだフォント（data/fonts/ に同梱）で描かれるが、
+  // 画面のプレビューはページが読み込んだフォント（assets/fonts/ に同梱）で描かれるが、
   // 書き出しは SVG を data URL の <img> として読ませるため、ページのフォントを
   // 受け継がない。放っておくと、選んだ書体が画面にだけ効いて、書き出した画像は
   // 既定の書体になる（実測でも指定あり／なしが同じ形になった）。
@@ -90,7 +90,7 @@
     return out;
   }
 
-  // ページが読み込んだ @font-face（data/fonts/*.css）。索引を別に持たず、CSS を
+  // ページが読み込んだ @font-face（assets/fonts/*.css）。索引を別に持たず、CSS を
   // そのまま引く（別に作ると、CSS と食い違ったときに気づけない）。
   let pageFaces = null;
   function pageFontFaces() {

@@ -40,3 +40,29 @@
 # 既にXやSNSへ出ている号のカード画像が 404 にならないように 301 を張る。
 /images/ogp/nitoridaily-*      /images/ogp/nitoridaily/:splat  301
 /images/ogp/retailtechdaily-*  /images/ogp/retailtechdaily/:splat  301
+
+# 移動: 2026-10-02  data/ の整理（data/ は JSON だけにし、コード・同梱物・資料を分けた）
+# トップページはインスクリプションに刻んであり PDF の旧 URL を書き換えられないので、この 301 は外さない。
+# ほかは、旧パスを読む古いページ（ブラウザに残ったもの・外部からの直リンク）のための受け皿。
+/data/vendor/*   /assets/vendor/:splat  301
+/data/fonts/*    /assets/fonts/:splat   301
+/data/Dummy_Client_IPIP-NEO-120_2026-09-12.pdf   /files/Dummy_Client_IPIP-NEO-120_2026-09-12.pdf  301
+/data/st-cliftonstrengths-top5-ver2.pdf          /files/st-cliftonstrengths-top5-ver2.pdf  301
+/data/analytics.js          /assets/analytics.js  301
+/data/buy-me-oil.js         /assets/buy-me-oil.js  301
+/data/bijutsu-shisui.js     /assets/bijutsu-shisui.js  301
+/data/bijutsu-shisui.css    /assets/bijutsu-shisui.css  301
+/data/tools-ui.js           /tools/assets/tools-ui.js  301
+/data/tools-ui.css          /tools/assets/tools-ui.css  301
+/data/tools-base.css        /tools/assets/tools-base.css  301
+/data/tools-share.js        /tools/assets/tools-share.js  301
+/data/dj-modal.js           /dj/assets/dj-modal.js  301
+/data/dj-modal.css          /dj/assets/dj-modal.css  301
+/data/dj-request-core.js    /dj/assets/dj-request-core.js  301
+/data/dj-audio-analysis.js  /dj/booth/audio-analysis.js  301
+/data/glitch.js             /glitch/assets/glitch.js  301
+/data/glitch.css            /glitch/assets/glitch.css  301
+/data/daily-ui.js           /job/assets/daily-ui.js  301
+/data/daily-base.css        /job/assets/daily-base.css  301
+/data/nitori-daily.css      /job/assets/nitori-daily.css  301
+/data/retail-tech-daily.css /job/assets/retail-tech-daily.css  301

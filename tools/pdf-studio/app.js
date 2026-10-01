@@ -13,12 +13,12 @@
   const { formatBytes, showToast, switchView, setupDropzone, saveBlob, setStatus } = window.STCommon;
   const { PDFDocument, StandardFonts, degrees, rgb } = PDFLib;
 
-  // 外部ライブラリはすべてこのサイトに同梱したもの（data/vendor/）
+  // 外部ライブラリはすべてこのサイトに同梱したもの（assets/vendor/）
   // pdf.js の worker は blob: にしてから起動する。同じサイトの URL から直接起動すると、
   // worker にはページ先頭の Content-Security-Policy（meta）が効かず、worker を返したときの
   // HTTP ヘッダーの CSP が使われる（このサイトは付けていない）ので、通信先の制限の外で動く。
   // blob: で起動した worker はページの CSP を引き継ぐ。FFmpeg・heic2any の worker と同じ扱い。
-  const PDF_WORKER_URL = '../../data/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js';
+  const PDF_WORKER_URL = '../../assets/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js';
   let pdfWorkerReady = null;
   function ensurePdfWorker() {
     if (!pdfWorkerReady) {
@@ -51,7 +51,7 @@
   // One ratio for both the preview and the output keeps them in agreement.
   const TEXT_ASCENT = 0.8;
   const JP_FONT_FAMILY = 'PdfStudioJP';
-  const JP_FONT_URL = '../../data/vendor/@fontsource/noto-sans-jp@5.3.0/japanese-400-normal.ttf';
+  const JP_FONT_URL = '../../assets/vendor/@fontsource/noto-sans-jp@5.3.0/japanese-400-normal.ttf';
   // ASCII-only labels are embedded as Helvetica, so the fallbacks after the
   // Japanese face have to be the same metrics — otherwise the preview and the
   // exported page disagree about how wide the text is.
@@ -1029,7 +1029,7 @@
       fontkitPromise = new Promise((resolve, reject) => {
         if (window.fontkit) { resolve(window.fontkit); return; }
         const s = document.createElement('script');
-        s.src = '../../data/vendor/@pdf-lib/fontkit@1.1.1/fontkit.umd.min.js';
+        s.src = '../../assets/vendor/@pdf-lib/fontkit@1.1.1/fontkit.umd.min.js';
         s.onload = () => (window.fontkit ? resolve(window.fontkit) : reject(new Error('fontkit missing')));
         s.onerror = () => reject(new Error('fontkit load failed'));
         document.head.appendChild(s);
@@ -1530,8 +1530,8 @@
   function loadEncoder(kind) {
     if (!encoderPromises[kind]) {
       const url = kind === 'avif'
-        ? '../../data/vendor/@jsquash/avif@2.1.1/encode.js'
-        : '../../data/vendor/@jsquash/webp@1.4.0/encode.js';
+        ? '../../assets/vendor/@jsquash/avif@2.1.1/encode.js'
+        : '../../assets/vendor/@jsquash/webp@1.4.0/encode.js';
       encoderPromises[kind] = import(url).then((m) => m.default).catch((err) => {
         encoderPromises[kind] = null; // let a later attempt retry the download
         console.warn(`${kind} encoder failed to load`, err);

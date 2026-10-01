@@ -55,7 +55,7 @@ node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP
 `generate.js` が起動時に照合して食い違えば止まる（`imageUrl` の綴りも見る）。
 カードだけ色が違う、という事故を防ぐため。
 
-使う値は `data/tools-ui.css` の **ライトテーマ側**。SAFE TOOLS のトップページと
+使う値は `tools/assets/tools-ui.css` の **ライトテーマ側**。SAFE TOOLS のトップページと
 同じく白を基調にし、カテゴリ色はページ上のバッジや操作色と一致させる。
 
 | category | カード上のアクセント |

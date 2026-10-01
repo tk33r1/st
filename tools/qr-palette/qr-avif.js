@@ -11,18 +11,18 @@
  *
  * 可逆と非可逆のどちらでも焼ける。どちらを使うかは画面の設定で決まる。
  * エンコーダは 3.4MB あるので、AVIF を押されたときに初めて読み込む。
- * エンコーダは data/vendor/ の @jsquash/avif（Next-Gen Image・PDF Studio と同じもの）を
+ * エンコーダは assets/vendor/ の @jsquash/avif（Next-Gen Image・PDF Studio と同じもの）を
  * 使う。実行時に外へ出る通信はない（読み取りテストのデコーダと同じ扱い）。
  */
 (function (global) {
   'use strict';
 
-  // data/vendor/ の場所はこのファイルからの相対で決める。ページの階層に依存しない。
+  // assets/vendor/ の場所はこのファイルからの相対で決める。ページの階層に依存しない。
   const HERE = (function () {
     const s = document.currentScript;
     return s ? s.src : location.href;
   })();
-  const ENCODER = new URL('../../data/vendor/@jsquash/avif@2.1.1/codec/enc/avif_enc.js', HERE).href;
+  const ENCODER = new URL('../../assets/vendor/@jsquash/avif@2.1.1/codec/enc/avif_enc.js', HERE).href;
 
   // 動かさない部分。subsample:3 は YUV444 で色を間引かないので、多色モザイクの
   // ようにセル単位で色が変わる絵でも輪郭が濁らない。qualityAlpha:-1 は

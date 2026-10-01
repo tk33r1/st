@@ -16,8 +16,8 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
-  <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
-  <link rel="stylesheet" href="../../data/dj-modal.css?v=20261001d">
+  <link rel="stylesheet" href="../../assets/bijutsu-shisui.css?v=20260831">
+  <link rel="stylesheet" href="../../dj/assets/dj-modal.css?v=20261001d">
 
   <style>
     .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto;
@@ -810,7 +810,7 @@
 
     .keys span { display: inline-flex; align-items: center; gap: 6px; }
 
-    /* ===== パンくずの補足ボタン（土台は data/bijutsu-shisui.css）=====
+    /* ===== パンくずの補足ボタン（土台は assets/bijutsu-shisui.css）=====
        GetSongBPM は利用条件として表示リンクを求めているので、隠さず出す */
     .crumb-info {
       appearance: none;
@@ -1107,9 +1107,9 @@
 
   <div class="toast" id="toast"><span id="toastTxt"></span><button id="toastUndo">取り消す</button></div>
 
-  <script src="../../data/dj-modal.js?v=20261001b"></script>
-  <script src="../../data/dj-request-core.js?v=20261002"></script>
-  <script src="../../data/dj-audio-analysis.js?v=20260927"></script>
+  <script src="../../dj/assets/dj-modal.js?v=20261001b"></script>
+  <script src="../../dj/assets/dj-request-core.js?v=20261002"></script>
+  <script src="./audio-analysis.js?v=20261002"></script>
   <script>
     // 鍵は掛けていない。どこからもリンクせず noindex にすることで運用上隠している。
     const API = '/dj/api/req';
@@ -1168,7 +1168,7 @@
        出しているのに末尾へ落ちる、という食い違いを避けるため五度圏から
        番号を割り出す。C=8B を起点に完全五度ごとに +1 で回るので
        (pc * 7 + 7) % 12 + 1。短調は平行長調（+3 半音）の番号を借りる。
-       式は dj-audio-analysis.js の camelotNo と同じだが、あちらが読めなくても
+       式は audio-analysis.js の camelotNo と同じだが、あちらが読めなくても
        一覧が動くよう、ここにも持っておく。 */
     const PITCH = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
     const keyCamelot = (k) => {
@@ -1808,7 +1808,7 @@
 
     /* ── プレビューからの推定 ───────────────
        GetSongBPM でも Deezer でも取れなかった曲は、このブラウザでプレビューを解析して
-       推定値をサーバへ入れる（空欄のときだけ入る。中身は data/dj-audio-analysis.js）。
+       推定値をサーバへ入れる（空欄のときだけ入る。中身は同じディレクトリの audio-analysis.js）。
        投稿直後は外部サービスの取得が裏で走っているので、少し待ってから手を付ける。
        解析は主スレッドで数百 ms かかるので、1曲ずつ間を空けて流す。 */
     const ANALYZE_AFTER = 20000;
@@ -2243,8 +2243,8 @@
 
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
-  <!-- 背景のテイクオーバー。中身は data/bijutsu-shisui.js -->
-  <script src="../../data/bijutsu-shisui.js?v=20260902"></script>
+  <!-- 背景のテイクオーバー。中身は assets/bijutsu-shisui.js -->
+  <script src="../../assets/bijutsu-shisui.js?v=20260902"></script>
 
 </body>
 

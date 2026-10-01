@@ -2,7 +2,7 @@
  * tk.st 共通計測タグローダー（Google Tag Manager + Ahrefs Analytics）
  *
  * 各ページに同じスニペットをコピペすると ID の変更漏れが出るため、ここに集約する。
- * 読み込み側は <script src="（相対パス）/data/analytics.js" async></script> の1行だけ。
+ * 読み込み側は <script src="（相対パス）/assets/analytics.js" async></script> の1行だけ。
  * <noscript> の GTM iframe は body 内に置く必要があるため各ページに残す。
  */
 (function (w, d) {

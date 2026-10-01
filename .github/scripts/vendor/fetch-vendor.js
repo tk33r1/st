@@ -1,21 +1,21 @@
 #!/usr/bin/env node
-/* SAFE TOOLS が使う外部ライブラリを data/vendor/ に取り込む（手元で実行する。CI では動かさない）
+/* SAFE TOOLS が使う外部ライブラリを assets/vendor/ に取り込む（手元で実行する。CI では動かさない）
  *
  *   node .github/scripts/vendor/fetch-vendor.js           取り込む（既にあるものは中身を確かめるだけ）
  *   node .github/scripts/vendor/fetch-vendor.js --check   取り込まず、置いてあるものが記録と同じかだけ見る
  *
  * CDN から読むスクリプトは、ページと同じ権限で動く（読み込んだファイルにも手が届く）。
  * CDN 側で中身が差し替わっても気づけないので、版を固定したものをこのサイトに置き、
- * どこから取ったか・中身の SHA-256 を data/vendor/SOURCES.json に残す。
+ * どこから取ったか・中身の SHA-256 を assets/vendor/SOURCES.json に残す。
  * 版を上げるときは下の LIBS を直して実行し、SOURCES.json の差分ごとコミットする。
  *
  * ffmpeg-core.wasm（32MB）は Cloudflare Pages の1ファイル 25MB の上限を超えるので、
- * 2つに分けて置く（split）。使うときは data/tools-ui.js の STCommon.fetchVerified が
+ * 2つに分けて置く（split）。使うときは tools/assets/tools-ui.js の STCommon.fetchVerified が
  * SOURCES.json の split を読んでつなぎ直し、元のファイルの SHA-256 と照らし合わせる。
  *
  * ページは Content-Security-Policy で 'unsafe-eval' を許していないので、文字列からコードを
  * 作るライブラリはそのままでは止まる。取り込みのたびに patches.js の置き換えを当て、当てた
- * あとの SHA-256 を記録する（data/vendor の外にある LOCAL_PATCHED にも当てる）。
+ * あとの SHA-256 を記録する（assets/vendor の外にある LOCAL_PATCHED にも当てる）。
  * 同梱の JS に文字列からコードを作る処理が残っていないかも毎回確かめ、DYNAMIC_OK に
  * 理由を書いたもの以外が見つかったら止める。
  */
@@ -26,12 +26,12 @@ const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..', '..', '..');
-const OUT = path.join(ROOT, 'data', 'vendor');
+const OUT = path.join(ROOT, 'assets', 'vendor');
 const JSD = 'https://cdn.jsdelivr.net/npm/';
 // @ffmpeg の3パッケージは同じリポジトリ（ffmpegwasm/ffmpeg.wasm、MIT）。npm には LICENSE が入っていない
 const FFMPEG_WASM_LICENSE = 'https://raw.githubusercontent.com/ffmpegwasm/ffmpeg.wasm/v0.12.10/LICENSE';
 
-//   dir   … data/vendor/ の下の置き場所（パッケージ名@版）
+//   dir   … assets/vendor/ の下の置き場所（パッケージ名@版）
 //   files … [取得元, 置く名前]。置く名前は dir からの相対
 //   license … ライセンス文の取得元（dir/LICENSE に置く）。取れる場所が無いときは { text } で書く
 const LIBS = [
@@ -91,16 +91,16 @@ const LIBS = [
 
 const { PATCHES, DYNAMIC_CODE, applyPatches } = require('./patches');
 
-// data/vendor の外にあって取り込みの対象ではないが、置き換えは当てるもの
+// assets/vendor の外にあって取り込みの対象ではないが、置き換えは当てるもの
 const LOCAL_PATCHED = ['tools/qr-palette/vendor/wechat/wasm.js'];
 
 // 同梱の JS に残っていてよい「文字列からコードを作る処理」とその件数。どれも CSP の下では
 // 通らない経路なので実害がない。件数が変わったら（版を上げたときなど）中身を見て判断し直す
 const DYNAMIC_OK = {
-  'data/vendor/@ffmpeg/ffmpeg@0.12.10/ffmpeg.js': [1, 'globalThis が無い古い環境向けの予備（いまのブラウザでは通らない）'],
-  'data/vendor/jszip@3.10.1/jszip.min.js': [1, 'setImmediate に関数以外が渡されたときの予備（使われない）'],
-  'data/vendor/pdfjs-dist@3.11.174/pdf.min.js': [3, 'eval が使えるかを試してから使う（CSP の下では使わない）。eval("require") は Node.js 向けの分岐'],
-  'data/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js': [2, 'eval が使えるかを試してから使う（CSP の下では使わない）']
+  'assets/vendor/@ffmpeg/ffmpeg@0.12.10/ffmpeg.js': [1, 'globalThis が無い古い環境向けの予備（いまのブラウザでは通らない）'],
+  'assets/vendor/jszip@3.10.1/jszip.min.js': [1, 'setImmediate に関数以外が渡されたときの予備（使われない）'],
+  'assets/vendor/pdfjs-dist@3.11.174/pdf.min.js': [3, 'eval が使えるかを試してから使う（CSP の下では使わない）。eval("require") は Node.js 向けの分岐'],
+  'assets/vendor/pdfjs-dist@3.11.174/pdf.worker.min.js': [2, 'eval が使えるかを試してから使う（CSP の下では使わない）']
 };
 
 const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
@@ -156,7 +156,7 @@ async function get(url) {
         buf = await get(from);
         fetched++;
       }
-      const p = patchBuffer('data/vendor/' + rel, buf);
+      const p = patchBuffer('assets/vendor/' + rel, buf);
       if (p.applied && checkOnly) { console.error('置き換えが当たっていない: ' + rel); bad++; }
       if (p.applied || !fs.existsSync(file)) {
         if (!checkOnly) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, p.buf); }
@@ -195,7 +195,7 @@ async function get(url) {
     }
   }
 
-  // data/vendor の外にあるが、置き換えを当てるもの
+  // assets/vendor の外にあるが、置き換えを当てるもの
   for (const rel of LOCAL_PATCHED) {
     const file = path.join(ROOT, rel);
     const p = patchBuffer(rel, fs.readFileSync(file));

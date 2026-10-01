@@ -21,7 +21,7 @@ const NOTE = '/*tk.st: CSP で unsafe-eval を許さないため、文字列か�
 
 const PATCHES = {
   // heic2any に同梱の libheif（HEIC を処理する worker のコード。文字列として埋め込まれている）
-  'data/vendor/heic2any@0.0.4/heic2any.min.js': [
+  'assets/vendor/heic2any@0.0.4/heic2any.min.js': [
     { // createNamedFunction（1か所目）
       start: 'function QA(A,e){return A=YA(A),new Function(', end: ')(e)}',
       replace: 'function QA(A,e){' + NOTE + 'return A=YA(A),{[A]:function(){return e.apply(this,arguments)}}[A]}' },

@@ -1,6 +1,6 @@
 /* SAFE TOOLS の土台のリセットと、アイコンの寸法など少しの部品クラス。
  *
- * 以前は Tailwind の実行版（data/vendor/tailwindcss、約400KB）を読み込み、ページを開くたびに
+ * 以前は Tailwind の実行版（assets/vendor/tailwindcss、約400KB）を読み込み、ページを開くたびに
  * ブラウザの中でこの CSS を組み立てていた。実際に使っていたのは下の Preflight と数個の
  * クラスだけだったので、Tailwind が組み立てた結果をそのまま書き写して置き換えた。
  *

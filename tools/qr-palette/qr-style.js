@@ -148,11 +148,11 @@
 
   // 文字の書体。ロゴの文字とフレームのラベルで同じ一覧を使う。
   //
-  // web は「その見た目を出すのに Web フォント（data/fonts/ に同梱）が要る書体」。
+  // web は「その見た目を出すのに Web フォント（assets/fonts/ に同梱）が要る書体」。
   // 書き出しでは SVG を data URL の <img> として読み込むが、その文脈の SVG は
   // 外部リソースを取りに行けず、ページが読み込んだフォントも受け継がない。
   // 指定したままだと画面と書き出しで書体が変わってしまうので、app.js 側がこの
-  // 名前を頼りにフォントを埋め込んでから書き出す（名前は data/fonts/*.css の
+  // 名前を頼りにフォントを埋め込んでから書き出す（名前は assets/fonts/*.css の
   // font-family と一致させること）。impact はどの環境にもある想定なので web は無し。
   const FONT_STACKS = {
     sans:    { stack: 'Inter, "Noto Sans JP", system-ui, sans-serif', web: 'Inter' },

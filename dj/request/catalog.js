@@ -1,5 +1,5 @@
 /* DJ リクエスト画面の iTunes 検索・候補整理・AI 推薦曲の照合。
-   data/dj-request-core.js（DJRequestCore）の後に読む。 */
+   dj/assets/dj-request-core.js（DJRequestCore）の後に読む。 */
 (function (global) {
   'use strict';
 

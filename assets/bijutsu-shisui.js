@@ -3,7 +3,7 @@
 
    /dj/schedule/（日程調整）・/dj/request/（曲リクエスト）・/dj/booth/（ブース
    コンソール）の3ページが共有する背景演出。3ページに同じものが写経されていた
-   ので、ここへ一本化した。対になる見た目は data/bijutsu-shisui.css。
+   ので、ここへ一本化した。対になる見た目は assets/bijutsu-shisui.css。
 
    中身は3つ:
      1. window.DJ_ART … ドット絵のハートと配色、canvas を DPR 込みで張る道具
@@ -15,7 +15,7 @@
    prefers-reduced-motion が効いている環境では 2 と 3 は起動しない。
 
    使い方（body の末尾、canvas より後ろで）:
-     <script src="/data/bijutsu-shisui.js?v=YYYYMMDD"></script>
+     <script src="/assets/bijutsu-shisui.js?v=YYYYMMDD"></script>
    defer / async は付けないこと。djCelebrate() を呼ぶページ側スクリプトより
    先に評価される必要がある。
    =========================================================================== */

@@ -6,12 +6,12 @@
   <!-- SAFE TOOLS は入力やファイルを外へ出さない。その約束をブラウザに守らせるため、通信先を
        このサイトとアクセス解析（GTM 経由の GA4 と Google シグナル、Cloudflare Web Analytics、Ahrefs Web Analytics）だけに制限する。国別の google ドメインは .co.jp だけ許す。寄付の窓口（Ko-fi）は
        埋め込み表示だけ許す（別オリジンの枠なので、ページの中身は読めない）。外部の読み込みを
-       足すときは、ここを広げる前に同梱（data/vendor/）で済まないかを考えること -->
+       足すときは、ここを広げる前に同梱（assets/vendor/）で済まないかを考えること -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://static.cloudflareinsights.com https://analytics.ahrefs.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; font-src 'self' data:; connect-src 'self' data: blob: https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://cloudflareinsights.com https://analytics.ahrefs.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.jp; media-src 'self' data: blob:; worker-src 'self' blob:; frame-src https://www.googletagmanager.com https://ko-fi.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- 共通 UI。安全設計カードの通信メーターが GTM などの通信も数えられるよう、CSP の直後
        （どのスクリプトよりも前）に置く -->
-  <script src="../../data/tools-ui.js?v=20260928_1"></script>
-  <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の ANALYTICS_KEY と同じ） -->
+  <script src="../../tools/assets/tools-ui.js?v=20260928_1"></script>
+  <!-- Google Tag Manager（利用者がアクセス解析を止めていたら読み込まない。キーは tools/assets/tools-ui.js の ANALYTICS_KEY と同じ） -->
   <script>(function (w, d, s, l, i) {try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}
       w[l] = w[l] || []; w[l].push({
         'gtm.start':
@@ -21,7 +21,7 @@
           'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-59NWV9XK');</script>
   <!-- End Google Tag Manager -->
-  <!-- Ahrefs Web Analytics（利用者がアクセス解析を止めていたら読み込まない。キーは data/tools-ui.js の
+  <!-- Ahrefs Web Analytics（利用者がアクセス解析を止めていたら読み込まない。キーは tools/assets/tools-ui.js の
        ANALYTICS_KEY と同じ）。Ahrefs は URL を丸ごと送るので、# 以降（QR Palette の共有デザインなど）が
        載らないよう、data-page-location にパスとクエリだけを渡す -->
   <script>(function(d){try{if(localStorage.getItem('st-analytics')==='off')return}catch(e){}var a=d.createElement('script');a.src='https://analytics.ahrefs.com/analytics.js';a.async=true;a.setAttribute('data-key','HKe6iphbuiskJsOdfXIOog');a.setAttribute('data-page-location',location.pathname+location.search);d.head.appendChild(a)})(document)</script>
@@ -118,18 +118,18 @@
 
   <!-- AVIF・WebP のエンコーダ（jsquash）は 'wasm-feature-detect' を名前だけで読む。
        同梱した版へ向ける（ライブラリ自体は書き換えない） -->
-  <script type="importmap">{"imports":{"wasm-feature-detect":"../../data/vendor/wasm-feature-detect@1.9.0/index.js"}}</script>
-  <script src="../../data/vendor/lucide@0.263.0/lucide.min.js"></script>
-  <script src="../../data/vendor/heic2any@0.0.4/heic2any.min.js"></script>
-  <script src="../../data/vendor/jszip@3.10.1/jszip.min.js"></script>
-  <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（data/fonts/）。
+  <script type="importmap">{"imports":{"wasm-feature-detect":"../../assets/vendor/wasm-feature-detect@1.9.0/index.js"}}</script>
+  <script src="../../assets/vendor/lucide@0.263.0/lucide.min.js"></script>
+  <script src="../../assets/vendor/heic2any@0.0.4/heic2any.min.js"></script>
+  <script src="../../assets/vendor/jszip@3.10.1/jszip.min.js"></script>
+  <!-- 画面の文字（Inter・JetBrains Mono）はこのサイトに同梱したもの（assets/fonts/）。
        Google Fonts から読むと、画面に出た字に応じて外へ取りに行く -->
-  <link rel="stylesheet" href="../../data/fonts/ui.css?v=20260926">
-  <link rel="stylesheet" href="../../data/tools-ui.css?v=20260926_10">
+  <link rel="stylesheet" href="../../assets/fonts/ui.css?v=20260926">
+  <link rel="stylesheet" href="../../tools/assets/tools-ui.css?v=20260926_10">
 
   <style>
     /* ------------------------------------------------------------------
-       NextGen Image — the Instrument shell comes from data/tools-ui.css.
+       NextGen Image — the Instrument shell comes from tools/assets/tools-ui.css.
        This block holds only what belongs to this tool: its accent, the
        Darkroom result canvas, and the result rows.
        ------------------------------------------------------------------ */
@@ -230,8 +230,8 @@
     }
     #summary-badge.negative { color: var(--warn); background: none; }
   </style>
-  <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は data/tools-base.css の冒頭） -->
-  <link rel="stylesheet" href="../../data/tools-base.css?v=20260926_1">
+  <!-- 土台のリセットと部品クラス。ページの <style> より後ろに置く（理由は tools/assets/tools-base.css の冒頭） -->
+  <link rel="stylesheet" href="../../tools/assets/tools-base.css?v=20260926_1">
 </head>
 
 <body>
@@ -412,8 +412,8 @@
   <button id="scroll-top-btn" type="button" aria-label="ページ先頭へ戻る">
     <i data-lucide="arrow-up"></i>
   </button>
-  <script src="../../data/buy-me-oil.js"></script>
-  <script src="../../data/tools-share.js?v=20260926_3"></script>
+  <script src="../../assets/buy-me-oil.js"></script>
+  <script src="../../tools/assets/tools-share.js?v=20260926_3"></script>
   <script>
     new DonationWidget({ containerId: 'donation-button-container' }).init();
   </script>
@@ -570,7 +570,7 @@
     let avifEncoderPromise = null;
     function loadAvifEncoder() {
       if (!avifEncoderPromise) {
-        avifEncoderPromise = import('../../data/vendor/@jsquash/avif@2.1.1/encode.js').then(m => m.default);
+        avifEncoderPromise = import('../../assets/vendor/@jsquash/avif@2.1.1/encode.js').then(m => m.default);
       }
       return avifEncoderPromise;
     }
@@ -578,7 +578,7 @@
     let webpEncoderPromise = null;
     function loadWebpEncoder() {
       if (!webpEncoderPromise) {
-        webpEncoderPromise = import('../../data/vendor/@jsquash/webp@1.4.0/encode.js').then(m => m.default);
+        webpEncoderPromise = import('../../assets/vendor/@jsquash/webp@1.4.0/encode.js').then(m => m.default);
       }
       return webpEncoderPromise;
     }

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* SAFE TOOLS が使う Web フォントを data/fonts/ に取り込む（手元で実行する。CI では動かさない）
+/* SAFE TOOLS が使う Web フォントを assets/fonts/ に取り込む（手元で実行する。CI では動かさない）
  *
  *   node .github/scripts/fonts/fetch-fonts.js
  *
@@ -13,9 +13,9 @@
  * 書き出しも使った字を含むファイルだけを SVG に埋め込めばよい。
  *
  * 書き出すもの:
- *   data/fonts/<書体>/*.woff2  … 分割されたフォント本体（Google のファイル名のまま）
- *   data/fonts/<書体>/OFL.txt  … ライセンス（どれも SIL Open Font License 1.1）
- *   data/fonts/<CSS名>.css     … ページが読む @font-face（下の CSS_FILES の単位）
+ *   assets/fonts/<書体>/*.woff2  … 分割されたフォント本体（Google のファイル名のまま）
+ *   assets/fonts/<書体>/OFL.txt  … ライセンス（どれも SIL Open Font License 1.1）
+ *   assets/fonts/<CSS名>.css     … ページが読む @font-face（下の CSS_FILES の単位）
  *
  * 書き出し（QR Palette）は別の索引を持たず、ページが読み込んだこの CSS の
  * @font-face をそのまま引く。索引を別に作ると、CSS と食い違ったときに気づけない。
@@ -27,14 +27,14 @@
 const fs = require('fs');
 const path = require('path');
 
-const OUT = path.join(__dirname, '..', '..', '..', 'data', 'fonts');
+const OUT = path.join(__dirname, '..', '..', '..', 'assets', 'fonts');
 
 // woff2 と unicode-range 付きの CSS を返してもらうため、今のブラウザを名乗る
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
 //   query … Google Fonts css2 の family 指定
-//   dir   … data/fonts/ の下の置き場所
+//   dir   … assets/fonts/ の下の置き場所
 //   ofl   … google/fonts リポジトリでのライセンスの場所
 //   css   … どの CSS に入れるか（ページごとに要る書体だけを読ませる）
 const FAMILIES = [

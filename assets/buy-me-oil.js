@@ -31,9 +31,9 @@ const DONATION_FOCUSABLE_SELECTOR = [
 ].join(',');
 
 /*
- * oil-price.json は buy-me-oil.js と同じ data/ に置いている。読み込み側が
- * /data/buy-me-oil.js だったり ../../data/buy-me-oil.js だったりページごとに
- * まちまちなので、固定パスではなく自分の src から相対で解決する。
+ * oil-price.json はデータなので data/ に、このファイルは assets/ に置いている（どちらもサイト直下）。
+ * 読み込み側が /assets/buy-me-oil.js だったり ../../assets/buy-me-oil.js だったりページごとに
+ * まちまちなので、固定パスではなく自分の src から相対（../data/）で解決する。
  */
 const DONATION_SCRIPT_SRC = typeof document !== 'undefined' ? document.currentScript?.src : null;
 
@@ -46,7 +46,7 @@ class DonationWidget {
         // null を渡すと価格の表示だけを止められる
         this.oilPriceUrl = config.oilPriceUrl !== undefined
             ? config.oilPriceUrl
-            : (DONATION_SCRIPT_SRC ? new URL('oil-price.json', DONATION_SCRIPT_SRC).href : null);
+            : (DONATION_SCRIPT_SRC ? new URL('../data/oil-price.json', DONATION_SCRIPT_SRC).href : null);
         this.onOpen = typeof config.onOpen === 'function' ? config.onOpen : null;
         this.onClose = typeof config.onClose === 'function' ? config.onClose : null;
 

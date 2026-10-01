@@ -163,12 +163,12 @@
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&family=Shippori+Mincho&display=swap">
 
-  <link rel="stylesheet" href="../../data/bijutsu-shisui.css?v=20260831">
-  <link rel="stylesheet" href="../../data/dj-modal.css?v=20261001d">
+  <link rel="stylesheet" href="../../assets/bijutsu-shisui.css?v=20260831">
+  <link rel="stylesheet" href="../../dj/assets/dj-modal.css?v=20261001d">
 
   <style>
     /* パンくずとフッターの横幅。このページは細い1カラム。
-       他の変数とリセットは data/bijutsu-shisui.css */
+       他の変数とリセットは assets/bijutsu-shisui.css */
     :root { --page-max: 480px; }
 
     /* 色の役割。どこに何色を置くかは、この3つの決まりだけで選ぶ
@@ -176,7 +176,7 @@
          ピンク（--heart-primary）  … 要所。押してほしい主ボタン、♥、受け付けた瞬間、文中の要の語
          黄色（--glitch-accent）    … その他・注意事項。エラー、取り下げ、ごあんない、補足、過ぎた回
        ピンクを増やすと要所が埋もれるので、迷ったら水色にする。
-       パンくずのホバーは土台どおり水色（data/bijutsu-shisui.css の既定のまま） */
+       パンくずのホバーは土台どおり水色（assets/bijutsu-shisui.css の既定のまま） */
     :root {
       --caution-line: color-mix(in srgb, var(--glitch-accent) 50%, var(--line));
       --caution-bg: color-mix(in srgb, var(--glitch-accent) 9%, transparent);
@@ -1542,7 +1542,7 @@
           <button class="send again" id="again">＋ もう1曲リクエストする</button>
           <button class="linkbtn" id="doneEdit">リクエスト内容を修正する</button>
 
-          <!-- 投げ銭。ボタンとモーダルは data/buy-me-oil.js が描画する -->
+          <!-- 投げ銭。ボタンとモーダルは assets/buy-me-oil.js が描画する -->
           <div class="tipbox" id="tipbox">
             <span class="tiplede">人類踊狂計画はボランティアで活動しています</span>
             <div id="donation-button-container"></div>
@@ -1746,8 +1746,8 @@
     © <span id="copyright-year">2024-2026</span> Shinya Takeda
   </footer>
 
-  <script src="../../data/dj-modal.js?v=20261001b"></script>
-  <script src="../../data/dj-request-core.js?v=20261002"></script>
+  <script src="../../dj/assets/dj-modal.js?v=20261001b"></script>
+  <script src="../../dj/assets/dj-request-core.js?v=20261002"></script>
   <script src="./catalog.js?v=20261001"></script>
   <script>
     const API = '/dj/api/req';
@@ -2522,7 +2522,7 @@
     const QR_LIB = '../../tools/qr-palette/';
     // 描画に要る QR Palette のファイル。この順に実行する（qr-export は qr-style を使う）
     const QR_FILES = ['qr-core.js', 'qr-assets.js', 'qr-style.js', 'qr-export.js'];
-    const QR_FONT_CSS = '../../data/fonts/jp.css';
+    const QR_FONT_CSS = '../../assets/fonts/jp.css';
     const QR_PX = 1024;          // 書き出す PNG の横幅
     const QR_LABEL_MAX = 24;     // QR Palette のラベル欄の上限と同じ
 
@@ -3629,7 +3629,7 @@
       if (!window.matchMedia || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       if (!Element.prototype.animate) return;
 
-      // data/bijutsu-shisui.js の art.HEART と同じドットの形
+      // assets/bijutsu-shisui.js の art.HEART と同じドットの形
       const GRID = ['0110110', '1111111', '1111111', '0111110', '0011100', '0001000'];
       let d = '';
       GRID.forEach((row, y) => [...row].forEach((c, x) => { if (c === '1') d += 'M' + x + ' ' + y + 'h1v1h-1z'; }));
@@ -3733,7 +3733,7 @@
     document.getElementById('copyright-year').textContent = new Date().getFullYear();
   </script>
 
-  <script src="/data/buy-me-oil.js"></script>
+  <script src="/assets/buy-me-oil.js"></script>
   <script>
     // 完了画面に置くので、リクエストを送り終えた人にだけ見える。
     // ペインが表示された時点で給油ポンプが数回揺れる（IntersectionObserver 任せ）。
@@ -3750,9 +3750,9 @@
       if (btn) btn.click();
     });
   </script>
-  <!-- 背景のテイクオーバーとクラッカー。中身は data/bijutsu-shisui.js。
+  <!-- 背景のテイクオーバーとクラッカー。中身は assets/bijutsu-shisui.js。
        djCelebrate() を上のスクリプトから呼ぶので defer は付けない -->
-  <script src="../../data/bijutsu-shisui.js?v=20260902"></script>
+  <script src="../../assets/bijutsu-shisui.js?v=20260902"></script>
 
 </body>
 

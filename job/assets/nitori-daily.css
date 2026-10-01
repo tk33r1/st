@@ -4,7 +4,7 @@
 /**
  * Nitori Daily Brief — テーマ CSS
  * ブランドカラー: ニトリグリーン R0 G158 B150 (#009e96)
- * 共通UI基盤: data/daily-base.css
+ * 共通UI基盤: job/assets/daily-base.css
  */
 :root {
   --primary: #009e96;

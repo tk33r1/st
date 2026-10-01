@@ -274,7 +274,7 @@ def render_head(config, rel, title, social_title, description, canonical,
     extra_html = ''.join('  ' + tag + '\n' for tag in extra_links)
     return f"""  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="{rel}data/analytics.js" async></script>
+  <script src="{rel}assets/analytics.js" async></script>
   <title>{title}</title>
   <meta name="description" content="{description}">
   <meta name="author" content="Shinya Takeda">
@@ -303,7 +303,7 @@ def render_head(config, rel, title, social_title, description, canonical,
   <script type="application/ld+json">
 {jsonld_str}
   </script>
-  <link rel="stylesheet" href="{rel}data/{config['css_file']}">"""
+  <link rel="stylesheet" href="{rel}job/assets/{config['css_file']}">"""
 
 
 _JSONLD_SCRIPT_ESCAPE_TABLE = str.maketrans({'<': '\\u003c', '>': '\\u003e', '&': '\\u0026'})
@@ -1732,8 +1732,8 @@ def render_article_html(config, issue_data, date_key, formatted_date, prev_issue
 
   {site_footer_html}
 
-  <script src="../../../data/buy-me-oil.js"></script>
-  <script src="../../../data/daily-ui.js"></script>
+  <script src="../../../assets/buy-me-oil.js"></script>
+  <script src="../../../job/assets/daily-ui.js"></script>
 </body>
 </html>
 """
@@ -2089,8 +2089,8 @@ def render_top_index_html(config, articles_history):
 
   {site_footer_html}
 
-  <script src="../../data/buy-me-oil.js"></script>
-  <script src="../../data/daily-ui.js"></script>
+  <script src="../../assets/buy-me-oil.js"></script>
+  <script src="../../job/assets/daily-ui.js"></script>
 </body>
 </html>
 """
