@@ -39,10 +39,12 @@
  * いいねは曲を送っていない人でも押せる。ブースは REQ と LIKE を並べて出し、
  * 人気順は LIKE で並べる。どちらも同じ端末からは1曲につき1回しか増えない。
  *
- * ip_hash は保存するだけで、判定には一切使わない。会場の Wi-Fi では来場者全員が
- * 同じ値になるので、本人確認にも連投の判定にも使えない。「同じ人か」はブラウザが
- * 持つ device_key で見る。連打の判定は requests ではなく post_log で数える
- * （requests は取り下げで消えるため、数えると上限がすり抜けられる）。
+ * ip_hash は本人確認には使わない。会場の Wi-Fi では来場者全員が同じ値になるので、
+ * 「同じ人か」はブラウザが持つ device_key で見る。連打の判定は requests ではなく
+ * post_log で数える（requests は取り下げで消えるため、数えると上限がすり抜けられる）。
+ * device_key はブラウザが作る値で、送らなかったり毎回作り直したりすれば端末ごとの上限は
+ * 掛からない。そこで端末の鍵を持たない投稿と、いいねだけは IP ごとの広い上限も掛ける。
+ * 会場の全員で分け合っても足りる値にしてあり、止めるのはスクリプトでの水増しだけ。
  */
 
 // モデルIDの正本。wrangler がデプロイ時にバンドルへ取り込む（.github/AI_MODELS.md）
@@ -57,7 +59,11 @@ const API_BASE = '/dj/api/req';
 const RATE_WINDOW_MIN = 1;    // 直近この分数で
 const RATE_MAX        = 6;    // 1つの端末から投稿できる件数
 const RATE_KEEP_MIN   = 60;   // 元帳をこの分数だけ残す（端末の鍵を持ち続けない）
-const BOARD_WAITING   = 10;   // 公開一覧に出す「受付済」の件数
+// IP ごとの上限（会場の Wi-Fi では全員で分け合う）。どちらも RATE_WINDOW_MIN あたり
+const RATE_IP_MAX     = 30;   // 端末の鍵を持たない投稿
+const LIKE_IP_MAX     = 120;  // いいね（取り消しは数えない）
+const BOARD_WAITING   = 10;   // 公開一覧に出す「まだかかっていない曲」の件数（自分の曲は別に足す）
+const BOARD_MINE_MAX  = 30;   // 「自分の曲」として受け付ける曲 ID の数
 const PAST_EVENTS     = 20;   // 「過去のイベント」に並べる回の数
 
 // message は来場者ページの入力欄（maxlength）と同じ値にする
@@ -148,6 +154,26 @@ async function hashIp(ip, eventCode, salt) {
   const data = new TextEncoder().encode(`${salt}|${eventCode}|${ip}`);
   const buf = await crypto.subtle.digest('SHA-256', data);
   return [...new Uint8Array(buf)].slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** 連打の元帳（post_log）に1行足せたら true。key ごとに直近 RATE_WINDOW_MIN 分の行数が
+    max 未満のときだけ足す。判定と記録を1文で行い、同時の要求がそろって数え上げを通り、
+    上限を越える隙を作らない。key は端末の鍵か、接頭辞を付けた IP のハッシュ。 */
+async function takeRate(env, key, max) {
+  const r = await env.DB.prepare(
+    `INSERT INTO post_log (device_key)
+     SELECT ?1
+      WHERE (SELECT COUNT(*) FROM post_log
+              WHERE device_key = ?1 AND created_at > datetime('now', ?2)) < ?3`
+  ).bind(key, `-${RATE_WINDOW_MIN} minutes`, max).run();
+  return !!(r.meta && r.meta.changes > 0);
+}
+
+/** 連打の判定に効かなくなった元帳を捨てる。端末の鍵や IP のハッシュを必要以上に持たない。 */
+async function prunePostLog(env) {
+  await env.DB.prepare(
+    `DELETE FROM post_log WHERE created_at < datetime('now', ?)`
+  ).bind(`-${RATE_KEEP_MIN} minutes`).run();
 }
 
 /** 投稿の修正・取り下げに使う鍵。当てずっぽうで通らない長さがあればよい。 */
@@ -646,27 +672,28 @@ async function postRequest(request, env, cors, ctx) {
     return json({ error: 'bad_request', message: '曲名を入力してください' }, 400, cors);
   }
 
-  // 記録するだけ。荒らしを後から追う手掛かりで、判定には使わない。
+  // 荒らしを後から追う手掛かり。本人の判定には使わず、端末の鍵が無い投稿の上限にだけ使う。
   const ip = request.headers.get('CF-Connecting-IP') || '';
   const ipHash = await hashIp(ip, ev.code, env.IP_SALT);
 
   // 端末の鍵はブラウザが作る。古いキャッシュのページから鍵なしで来たときは
   // その場で使い捨ての値を作って投稿自体は通す（空文字のままだと
   // UNIQUE(song_id, device_key) が別人の行と衝突して、投稿が黙って消える）。
-  const deviceKey = clean(body.device, 64) || newEditToken();
+  const sentDevice = clean(body.device, 64);
+  const deviceKey = sentDevice || newEditToken();
 
-  // 判定と記録を1文で行う。同時投稿が SELECT をそろって通り、上限を越える隙を作らない。
   // 数えるのは requests ではなく post_log。requests は取り下げると行ごと消えるため。
-  const logged = await env.DB.prepare(
-    `INSERT INTO post_log (device_key)
-     SELECT ?
-      WHERE (SELECT COUNT(*) FROM post_log
-              WHERE device_key = ? AND created_at > datetime('now', ?)) < ?`
-  ).bind(deviceKey, deviceKey, `-${RATE_WINDOW_MIN} minutes`, RATE_MAX).run();
-  if (!logged.meta || logged.meta.changes < 1) {
+  // 使い捨ての鍵で数えても上限にならないので、鍵の無い投稿は IP ごとの広い枠で数える
+  // （IP_SALT が無いとハッシュが空になり、鍵の無い投稿すべてで1つの枠を分け合う）。
+  const ok = sentDevice
+    ? await takeRate(env, deviceKey, RATE_MAX)
+    : await takeRate(env, 'ip:' + ipHash, RATE_IP_MAX);
+  if (!ok) {
     return json({
       error: 'rate_limited',
-      message: `リクエストは${RATE_WINDOW_MIN}分に${RATE_MAX}曲までです。少し時間をおいてください`,
+      message: sentDevice
+        ? `リクエストは${RATE_WINDOW_MIN}分に${RATE_MAX}曲までです。少し時間をおいてください`
+        : 'リクエストが混み合っています。少し時間をおいてください',
     }, 429, cors);
   }
 
@@ -682,14 +709,18 @@ async function postRequest(request, env, cors, ctx) {
   let editToken = newEditToken();
 
   /* 曲の作成・端末票の作成・集計を1つの batch にまとめる。曲IDをアプリ側で先に読むと、
-     同じ曲の同時投稿や取り下げとの間に削除・重複作成の隙ができるため、SQL 内で曲を引く。 */
+     同じ曲の同時投稿や取り下げとの間に削除・重複作成の隙ができるため、SQL 内で曲を引く。
+     冒頭で受付中を確かめたあとに DJ が受付を閉じることもあるので、書き込みの SQL でも
+     回がまだ受付中かを確かめる（閉じた回に投稿を入れない）。 */
+  const OPEN = `EXISTS (SELECT 1 FROM events WHERE code = ? AND status = 'open')`;
   const [songIns, requestIns] = await env.DB.batch([
     env.DB.prepare(
       `INSERT INTO songs
          (event_code, dedupe_key, track_id, title, artist, artist_en, variant, album,
           duration_ms, artwork, apple_url, preview_url, is_free,
           genre, release_year, explicitness, votes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0
+        WHERE ${OPEN}
        ON CONFLICT(event_code, dedupe_key) DO NOTHING`
     ).bind(
       ev.code, key,
@@ -706,13 +737,14 @@ async function postRequest(request, env, cors, ctx) {
       isFree ? 1 : 0,
       clean(track.genre, 60),
       intIn(track.releaseYear, 1900, 2100),
-      clean(track.explicitness, 20)
+      clean(track.explicitness, 20),
+      ev.code
     ),
     env.DB.prepare(
       `INSERT OR IGNORE INTO requests
          (song_id, event_code, from_name, message, ip_hash, device_key, edit_token)
-       SELECT id, ?, ?, ?, ?, ?, ? FROM songs WHERE event_code = ? AND dedupe_key = ?`
-    ).bind(ev.code, name, message, ipHash, deviceKey, editToken, ev.code, key),
+       SELECT id, ?, ?, ?, ?, ?, ? FROM songs WHERE event_code = ? AND dedupe_key = ? AND ${OPEN}`
+    ).bind(ev.code, name, message, ipHash, deviceKey, editToken, ev.code, key, ev.code),
     env.DB.prepare(
       `UPDATE songs
           SET votes = (SELECT COUNT(*) FROM requests WHERE requests.song_id = songs.id)
@@ -720,13 +752,22 @@ async function postRequest(request, env, cors, ctx) {
     ).bind(ev.code, key),
   ]);
 
+  const isNewSong = !!(songIns.meta && songIns.meta.changes > 0);
+  const added = !!(requestIns.meta && requestIns.meta.changes > 0);
+  if (!added) {
+    // 弾かれたのは、送り直しか、確かめたあとに受付が閉じたか。閉じていたら受付外として返す
+    const live = await env.DB.prepare(
+      `SELECT 1 AS ok FROM events WHERE code = ? AND status = 'open'`
+    ).bind(ev.code).first();
+    if (!live) {
+      return json({ error: 'closed', message: 'ただいまリクエストの受付時間外です' }, 409, cors);
+    }
+  }
+
   const song = await env.DB.prepare(
     `SELECT id FROM songs WHERE event_code = ? AND dedupe_key = ?`
   ).bind(ev.code, key).first();
   if (!song) throw new Error('song write did not persist');
-
-  const isNewSong = !!(songIns.meta && songIns.meta.changes > 0);
-  const added = !!(requestIns.meta && requestIns.meta.changes > 0);
   // 送り直しで書いたニックネーム・ひとことを、前の投稿に反映できたか。
   // updated = 差し替えた / locked = DJ が触ったあとなので差し替えなかった
   let updated = false, locked = false;
@@ -787,10 +828,7 @@ async function postRequest(request, env, cors, ctx) {
   if (ctx) {
     const artistForLookup = artistEn || artist;
     ctx.waitUntil((async () => {
-      // 連打の判定に効かなくなった元帳は捨てる。端末の鍵を必要以上に持たない。
-      await env.DB.prepare(
-        `DELETE FROM post_log WHERE created_at < datetime('now', ?)`
-      ).bind(`-${RATE_KEEP_MIN} minutes`).run();
+      await prunePostLog(env);
       if (isNewSong && !isFree) {
         // 背景カードは OpenAI の応答待ちが長いので、権利だけ先に取って BPM の取得と並べる。
         // D1 への書き込みは直列のまま（応答が届いてから保存する）。
@@ -957,15 +995,18 @@ async function deleteMine(id, request, env, cors) {
 }
 
 /* ── 公開: いいね ───────────────────────────
-   誰の票かは device_key で見る。ブラウザが作る値なので作り直せば増やせるが、
-   止めたいのは面白半分の連打で、そこは端末単位で十分に効く（votes と同じ考え）。
+   誰の票かは device_key で見る。ブラウザが作る値なので作り直せば増やせる。
+   スクリプトで鍵を変えながら押し続ける水増しは、IP ごとの広い上限（LIKE_IP_MAX）で抑える。
+   会場の Wi-Fi では全員で1つの枠を分け合うので、人の手で押す数では届かない値にしてある。
+   IP_SALT が無いと IP のハッシュが作れないので、そのときはこの上限を掛けない
+   （全員で1つの枠を分け合うことになり、混んだ会場で押せなくなるため）。
 
    押せるのは「いちばん新しい回」の曲だけ。受付が終わったあとも会場は続くので
    open は条件にしないが、前の回の記録が後から動くのは防ぐ。
 
    合計は songs.likes に持つ。引き算ではなく likes を数え直して書き戻すので、
    途中で失敗して値がずれても、次に誰かが押した時点で正しい数に戻る。 */
-async function setLike(id, on, request, env, cors) {
+async function setLike(id, on, request, env, cors, ctx) {
   const body = await readJson(request) || {};
   const deviceKey = clean(body.device, 64);
   if (!deviceKey) {
@@ -978,6 +1019,15 @@ async function setLike(id, on, request, env, cors) {
   const current = await currentEvent(env);
   if (!current || s.event_code !== current.code) {
     return json({ error: 'closed', message: 'この回はもう終わっています' }, 409, cors);
+  }
+
+  // 数えるのは押したときだけ（取り消しは水増しにならない）
+  const ipHash = on ? await hashIp(request.headers.get('CF-Connecting-IP') || '', s.event_code, env.IP_SALT) : '';
+  if (ipHash) {
+    if (!(await takeRate(env, 'like:' + ipHash, LIKE_IP_MAX))) {
+      return json({ error: 'rate_limited', message: 'いいねが混み合っています。少し時間をおいてください' }, 429, cors);
+    }
+    if (ctx) ctx.waitUntil(prunePostLog(env).catch(() => {}));
   }
 
   const change = on
@@ -1032,11 +1082,26 @@ const shapePublicSong = (s, firstName, { detailed = false } = {}) => ({
   by: firstName || '',
 });
 
-async function getBoard(env, cors) {
+/* 「まだかかっていない曲」の並び。いいねで後押しできるのは DJ がまだ確認していない曲なので、
+   それを先にし、その中はブースの人気順（LIKE → REQ）にそろえる。同点は新しい曲を先にする
+   （古い順だと、早く来た曲で枠が埋まり、あとから来た曲が一覧に出ないまま、いいねも集められない）。
+   確認済の曲は採用も見送りも同じ扱いで後ろに回る（どちらかは外から区別できない）。 */
+const WAITING_ORDER = `(s.status = 'pending') DESC, s.likes DESC, s.votes DESC, s.id DESC`;
+
+/** ?mine=1,2,3 の曲 ID。来場者のブラウザが覚えている自分の曲で、枠の外でも一覧に足す。
+    曲 ID は一覧に出ている公開の値なので、鍵（edit_token）とは違いクエリに載せてよい。 */
+function mineIds(url) {
+  const ids = String(url.searchParams.get('mine') || '').split(',')
+    .filter((v) => /^\d{1,12}$/.test(v)).map(Number);
+  return [...new Set(ids)].slice(0, BOARD_MINE_MAX);
+}
+
+async function getBoard(url, env, cors) {
   const ev = await currentEvent(env);
   if (!ev) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
 
-  const [played, waiting] = await env.DB.batch([
+  const mine = mineIds(url);
+  const [played, waiting, own] = await env.DB.batch([
     env.DB.prepare(
       `SELECT ${BOARD_COLS} FROM songs s
         WHERE s.event_code = ? AND s.status = 'played'
@@ -1045,18 +1110,26 @@ async function getBoard(env, cors) {
     env.DB.prepare(
       `SELECT ${BOARD_COLS} FROM songs s
         WHERE s.event_code = ? AND s.status <> 'played'
-        ORDER BY s.votes DESC, s.id ASC LIMIT ?`
+        ORDER BY ${WAITING_ORDER} LIMIT ?`
     ).bind(ev.code, BOARD_WAITING),
+    // 自分の曲は枠から外れても出す（一覧から開いて直したり、いいねの数を見たりできるように）
+    ...(mine.length ? [env.DB.prepare(
+      `SELECT ${BOARD_COLS} FROM songs s
+        WHERE s.event_code = ? AND s.status <> 'played' AND s.id IN (${mine.map(() => '?').join(', ')})
+        ORDER BY ${WAITING_ORDER}`
+    ).bind(ev.code, ...mine)] : []),
   ]);
 
   const shape = (s) => shapePublicSong(s, s.first_name);
 
+  const top = new Set(waiting.results.map((s) => s.id));
+  const extra = own ? own.results.filter((s) => !top.has(s.id)) : [];
   const p = played.results.map(shape);
   return json({
     event: { code: ev.code, title: ev.title, open: ev.status === 'open', at: ev.created_at },
     now: p[0] || null,
     played: p,
-    waiting: waiting.results.map(shape),
+    waiting: waiting.results.concat(extra).map(shape),
   }, 200, cors);
 }
 
@@ -1297,12 +1370,17 @@ async function adminPatchSong(id, request, env, cors) {
   }
   // played に入った瞬間の時刻が「今かかっている曲」の根拠になる。
   // played から戻したときは消して、順序が壊れないようにする。
+  // すでに played の曲をもう一度 played にしたときは時刻を残す（ブースの「再生済」はどの曲にも
+  // 出ているので、押し直すと前にかけた曲が NOW PLAYING に戻り、セットリストの順も変わるため）。
+  // SET の右辺は更新前の status を見る
   await env.DB.prepare(
     `UPDATE songs
-        SET status = ?,
-            played_at = CASE WHEN ? = 'played' THEN CURRENT_TIMESTAMP ELSE NULL END
-      WHERE id = ?`
-  ).bind(status, status, id).run();
+        SET status = ?1,
+            played_at = CASE WHEN ?1 <> 'played' THEN NULL
+                             WHEN status = 'played' AND played_at IS NOT NULL THEN played_at
+                             ELSE CURRENT_TIMESTAMP END
+      WHERE id = ?2`
+  ).bind(status, id).run();
   return json({ ok: true }, 200, cors);
 }
 
@@ -1479,7 +1557,7 @@ export default {
 
     try {
       if (path === '/event' && method === 'GET')     return await getEvent(env, cors);
-      if (path === '/board' && method === 'GET')     return await getBoard(env, cors);
+      if (path === '/board' && method === 'GET')     return await getBoard(url, env, cors);
       if (path === '/events' && method === 'GET')    return await getPastEvents(env, cors);
 
       const past = path.match(/^\/events\/([0-9A-Za-z]{1,12})$/);
@@ -1495,8 +1573,8 @@ export default {
       if (own && method === 'DELETE') return await deleteMine(Number(own[1]), request, env, cors);
 
       const like = path.match(/^\/songs\/(\d+)\/like$/);
-      if (like && method === 'POST')   return await setLike(Number(like[1]), true, request, env, cors);
-      if (like && method === 'DELETE') return await setLike(Number(like[1]), false, request, env, cors);
+      if (like && method === 'POST')   return await setLike(Number(like[1]), true, request, env, cors, ctx);
+      if (like && method === 'DELETE') return await setLike(Number(like[1]), false, request, env, cors, ctx);
 
       if (path === '/admin/songs' && method === 'GET')    return await adminSongs(env, cors, ctx);
       if (path === '/admin/enrich' && method === 'POST')  return await adminEnrich(env, cors, ctx);

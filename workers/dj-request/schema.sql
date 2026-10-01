@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS requests (
   from_name  TEXT NOT NULL DEFAULT '',
   message    TEXT NOT NULL DEFAULT '',
   -- あとから荒らしを追うための手掛かり。会場の Wi-Fi では全員同じ値になるので、
-  -- 「同じ人か」の判定にも連投の判定にも使ってはいけない。
+  -- 「同じ人か」の判定に使ってはいけない。連投の判定に使うのは、端末の鍵を持たない投稿と
+  -- いいねに掛ける、会場の全員で分け合っても足りる広い上限だけ（post_log に 'ip:' / 'like:' を付けて数える）。
   ip_hash    TEXT NOT NULL DEFAULT '',
   -- 端末を見分ける鍵。ブラウザの localStorage が持つ値をそのまま受け取る。
   -- 作り直せば別端末として扱われるが、止めたいのは面白半分の連打なので足りる。
@@ -105,7 +106,9 @@ CREATE INDEX IF NOT EXISTS idx_likes_song ON likes(song_id);
 -- ── 連打カウンタの元帳 ─────────────────────
 -- 投稿が通るたびに1行増やす。requests とは別に持つのが要点で、requests は
 -- 取り下げると行ごと消えるため、それを数えると投稿→取り下げの繰り返しで
--- 上限がいくらでも戻ってしまう。判定に要らなくなった行は投稿のたびに捨てる。
+-- 上限がいくらでも戻ってしまう。判定に要らなくなった行は投稿・いいねのたびに捨てる。
+-- device_key は数える単位のキー。端末の鍵のほか、鍵の無い投稿は 'ip:<ip_hash>'、
+-- いいねは 'like:<ip_hash>' で数える（列名は最初に端末の鍵だけを数えていた名残り）。
 CREATE TABLE IF NOT EXISTS post_log (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   device_key TEXT NOT NULL,

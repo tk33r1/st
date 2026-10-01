@@ -75,14 +75,17 @@
         throw new Error(networkMessage);
       }
 
-      let data = {};
-      try { data = await response.json(); } catch { /* JSON でないエラー応答 */ }
+      let data = null;
+      try { data = await response.json(); } catch { /* JSON でない応答・本文の途中で打ち切られた応答 */ }
       if (!response.ok) {
-        const error = new Error(data.message || '通信に失敗しました');
+        const error = new Error((data && data.message) || '通信に失敗しました');
         error.status = response.status;
-        error.data = data;
+        error.data = data || {};
         throw error;
       }
+      // 成功の応答でも本文が読めなければ失敗にする。空のオブジェクトを返すと、
+      // 呼び出し側が「件数 undefined」のような画面を出してしまう
+      if (!data || typeof data !== 'object') throw new Error(networkMessage);
       return data;
     };
   }

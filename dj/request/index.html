@@ -1747,7 +1747,7 @@
   </footer>
 
   <script src="../../data/dj-modal.js?v=20261001b"></script>
-  <script src="../../data/dj-request-core.js?v=20261001"></script>
+  <script src="../../data/dj-request-core.js?v=20261002"></script>
   <script src="./catalog.js?v=20261001"></script>
   <script>
     const API = '/dj/api/req';
@@ -2230,8 +2230,10 @@
         setLiked(id, !!d.liked);
         likeFresh.set(id, d.likes);
         paintLike(id, !!d.liked, d.likes);
-      } catch {
-        // 押す前に戻す。数が合わないままにするより、押し直せるほうがよい
+      } catch (e) {
+        // 押す前に戻す。数が合わないままにするより、押し直せるほうがよい。
+        // 上限に掛かったときだけは、押せなかった理由を知らせる（黙って戻ると壊れて見える）
+        if (e.status === 429) toast(e.message, 3000);
         setLiked(id, !on);
         likeFresh.delete(id);
         paintLike(id, !on, before);
@@ -2277,12 +2279,21 @@
        後から届いた古い応答で新しい表示を戻さないよう、最後に出したものだけを描く */
     const boardLatest = latestOnly();
     const BOARD_TIMEOUT = 10000;
+    const BOARD_MINE_MAX = 30;   // Worker の BOARD_MINE_MAX と同じ数
+
+    /* 一覧の「まだかかっていない曲」は上位の数件だけなので、自分の曲は ID を添えて別に返してもらう
+       （枠から外れても一覧から開いて直せるように）。ID は公開の値で、鍵は載せない。
+       覚えている曲は前の回の分も含むので、新しい（ID の大きい）ものから送る */
+    function boardPath() {
+      const ids = mine().sort((a, b) => b - a).slice(0, BOARD_MINE_MAX);
+      return '/board' + (ids.length ? '?mine=' + ids.join(',') : '');
+    }
 
     async function loadBoard() {
       const isLatest = boardLatest();
       try {
         // 次の更新は応答を待ってから予約するので、止まった通信で更新ごと止まらないよう上限を付ける
-        const d = await apiJson('/board', { timeout: BOARD_TIMEOUT });
+        const d = await apiJson(boardPath(), { timeout: BOARD_TIMEOUT });
         if (isLatest()) renderBoard(d);
       } catch {
         if (isLatest()) $('#fresh').textContent = '更新できません';
@@ -2313,9 +2324,6 @@
         ? d.waiting.map((s) => rowHTML(s, ids.has(s.id))).join('')
         : '<div class="blank">リクエストはまだありません</div>';
 
-      // DJ が新しい回を開くと、いまの回だった回が過去に移る。
-      // 一覧を開いたままでも入れ替わるよう、回が変わったら引き直す。
-      if (evCode(d.event) !== evCode(currentEvent)) pastLoaded = false;
       // 受付の開始・停止も、開いた時点のままにせずここで追う（見出しの比べ合わせより先に）
       syncOpenState(d.event);
       setCurrentEvent(d.event);
@@ -2340,6 +2348,10 @@
     const evCode = (ev) => (ev && ev.code) || '';
 
     function setCurrentEvent(ev) {
+      // DJ が新しい回を開くと、いまの回だった回が過去に移るので、過去のイベントを引き直す。
+      // 回が変わったと気づくのは一覧の更新とは限らない（ほかの画面では /event の定期確認が先に
+      // ここを通る）ので、比べるのはいまの回を書き換えるこの一か所で行う
+      if (evCode(ev) !== evCode(currentEvent)) pastLoaded = false;
       currentEvent = evCode(ev) ? ev : null;
       const label = currentEvent && currentEvent.title ? '「' + currentEvent.title + '」' : 'この回';
       $('#evShare').setAttribute('aria-label', label + 'を共有');
@@ -2491,7 +2503,7 @@
        いまの回かどうかは /board の回と比べ、読んだ /board はそのまま描く */
     async function openShared(code, boardLoad) {
       try {
-        const d = await (boardLoad || apiJson('/board'));
+        const d = await (boardLoad || apiJson(boardPath()));
         if (d.event && d.event.code === code) {
           show('board');
           renderBoard(d);
@@ -3594,7 +3606,7 @@
           closeRequests(SHUT_BADGE, SHUT_WHY);
           // /event は受付外だと回を返さない。ヘッダーの共有と QR のために、終わった直後の回を /board から引く
           // （先に一覧が読めていれば、そちらの回のほうが新しいので上書きしない）
-          boardLoad = apiJson('/board');
+          boardLoad = apiJson(boardPath());
           boardLoad.then((d) => { if (!currentEvent) setCurrentEvent(d.event); }).catch(() => { });
         }
       } catch {
