@@ -1534,6 +1534,7 @@
           <h2 id="doneTitle">受け付けました</h2>
           <div class="what" id="doneWhat"></div>
           <span class="queuepos" id="donePos" hidden></span>
+          <p class="note" id="doneDup" hidden></p>
           <p class="note">
             リクエストは DJ が順番に確認しています。<br>
             流れの都合で <b>かけられないこともあります</b>。あらかじめご了承ください。
@@ -2086,12 +2087,14 @@
       if (track.artist) box.append(document.createElement('br'), document.createTextNode(track.artist));
     }
 
-    function showDone({ songId, title, track, pos, celebrate }) {
+    function showDone({ songId, title, track, pos, dupNote, celebrate }) {
       doneSongId = songId;
       $('#doneTitle').textContent = title;
       fillDoneTrack(track);
       $('#donePos').textContent = pos || '';
       $('#donePos').hidden = !pos;
+      $('#doneDup').textContent = dupNote || '';
+      $('#doneDup').hidden = !dupNote;
       $('#doneEdit').hidden = !songId;
       stopAudio();
       show('done');
@@ -2107,6 +2110,14 @@
       box.hidden = false;
     }
 
+    /* 同じ曲を送り直したとき、書いたニックネーム・ひとことがどうなったか。
+       Worker は DJ がまだ触っていなければ前の投稿に入れ（updated）、触ったあとなら入れない（locked） */
+    function dupNoteOf(data) {
+      if (data.updated) return '今回書いたニックネーム・ひとことに差し替えました。';
+      if (data.locked) return 'DJ がすでに確認しているため、ニックネーム・ひとことは前に送った内容のままです。';
+      return '';
+    }
+
     async function submit(payload, errBox, track) {
       errBox.hidden = true;
       try {
@@ -2119,9 +2130,12 @@
           pos: data.duplicate
             ? 'すでに受け付けている曲です'
             : '今回 ' + data.position + ' 件目のリクエストです',
+          dupNote: data.duplicate ? dupNoteOf(data) : '',
           celebrate: true,
         });
       } catch (e) {
+        // 開いたあとに DJ が受付を止めていた。ヘッダーと相談もここで受付外に揃える
+        if (e.status === 409 && e.data && e.data.error === 'closed') markClosed(SHUT_BADGE, SHUT_WHY);
         showErr(errBox, e, '通信に失敗しました。電波の良い場所でもう一度お試しください。');
       }
     }
@@ -2302,6 +2316,8 @@
       // DJ が新しい回を開くと、いまの回だった回が過去に移る。
       // 一覧を開いたままでも入れ替わるよう、回が変わったら引き直す。
       if (evCode(d.event) !== evCode(currentEvent)) pastLoaded = false;
+      // 受付の開始・停止も、開いた時点のままにせずここで追う（見出しの比べ合わせより先に）
+      syncOpenState(d.event);
       setCurrentEvent(d.event);
       // 受付中は画面の見出しが回名なので、同じ名前を二度並べない（受付外の見出しは「リクエスト」）
       const title = (d.event && d.event.title) || '';
@@ -2900,6 +2916,9 @@
          ここがブラウザの既定（数分）まで返らず、入力欄が塞がったままになるので短く切る */
       try {
         const d = await apiJson('/board', { timeout: CONTEXT_TIMEOUT_MS });
+        // 相談を送る直前にも受付状態を合わせる。閉じた回の文脈で MAGI を呼ばない。
+        syncOpenState(d.event);
+        if (!d.event || !d.event.open) return null;
         title = (d.event && d.event.title) || '';
         const label = (s) => s.artist + ' - ' + s.title;
         played = d.played.filter((s) => !s.isFree).slice(0, 10).map(label);
@@ -3144,7 +3163,9 @@
       chatScroll(true);
 
       try {
-        const reply = await askMagi(turn, text, await djContext());
+        const context = await djContext();
+        if (context === null) { turn.remove(); return; }
+        const reply = await askMagi(turn, text, context);
         if (reply) {
           const c = conv || (conv = newConsult(text));
           // 曲が挙がっていない回答は照合するものが無いので、はじめから済ませておく
@@ -3482,16 +3503,77 @@
 
     /* ── 起動 ─────────────────────────────── */
     /* 受付停止中・オフライン。受付していないときも、こういう相談相手がいること自体は
-       見てほしいので、相談のタブと中身は残したまま、投げられないように入力だけ塞ぐ */
-    function closeRequests(badge, why) {
+       見てほしいので、相談のタブと中身は残したまま、投げられないように入力だけ塞ぐ。
+       受付の状態は開いた時点で決め切らず、一覧の更新・定期確認・送信の 409 から追い直す
+       （QR を読んだまま置いておかれる画面なので、DJ があとから受付を始めても気づけるように） */
+    const SHUT_BADGE = '受付停止中';
+    const SHUT_WHY = 'いまはリクエストの受付時間外のため、相談はお休みしています。次回の受付までお待ちください。';
+    const OFFLINE_BADGE = 'オフライン';
+    const OFFLINE_WHY = 'サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。';
+    const DEFAULT_TITLE = $('#evTitle').textContent;
+    const DEFAULT_DOC_TITLE = document.title;
+    let shutWhy = '';   // いま出している受付外の理由（同じ理由で描き直さないため）
+
+    // 画面は動かさない。受付外の画面（shut）へ移すのは、起動時と「もう1曲」だけ（closeRequests）
+    function markClosed(badge, why) {
+      if (!eventOpen && shutWhy === why) return;
+      eventOpen = false;
+      shutWhy = why;
+      eventTitle = '';
+      $('#evTitle').textContent = DEFAULT_TITLE;
+      document.title = DEFAULT_DOC_TITLE;
       $('#badge').textContent = badge;
       $('#badge').classList.add('shut');
       if (histOpen) setHistOpen(false);
       consultLocked = true;
       $('#chatLock').textContent = why;
       renderConsultUI();
+      // 一覧などを見ている間に止まったら、「リクエストする」のタブの戻り先を受付外の画面にしておく。
+      // いま見ている確認画面などは、書きかけを消さないようそのまま残す（送れば理由が出る）
+      if (flowPane !== paneNow) flowPane = 'shut';
+    }
+
+    function closeRequests(badge, why) {
+      markClosed(badge, why);
       show('shut');
     }
+
+    function openRequests(ev) {
+      eventOpen = true;
+      shutWhy = '';
+      eventTitle = ev.title || '';
+      $('#evTitle').textContent = ev.title;
+      document.title = ev.title + ' - リクエスト';
+      $('#badge').textContent = '受付中';
+      $('#badge').classList.remove('shut');
+      consultLocked = false;
+      renderConsultUI();
+      setCurrentEvent(ev);
+      // 受付外の画面にいたら検索へ。ほかを見ているなら、「リクエストする」のタブの戻り先だけ直す
+      if (flowPane === 'shut') {
+        if (paneNow === 'shut') show('search'); else flowPane = 'search';
+      }
+    }
+
+    /* 読めた /event か /board の回（どちらも open を持つ。回がまだ無ければ null）に合わせる。
+       変わったときだけ描き直す。読めたのでオフラインの表示もここで外れる */
+    function syncOpenState(ev) {
+      if (ev && ev.open) {
+        if (!eventOpen || evCode(ev) !== evCode(currentEvent) || ev.title !== eventTitle) openRequests(ev);
+      } else {
+        markClosed(SHUT_BADGE, SHUT_WHY);
+      }
+    }
+
+    /* 一覧以外では受付の開始・停止・回の入れ替わりを見に行く。一覧を開いている間は
+       15秒ごとの /board 更新に任せ、同じ状態確認を二重に送らない。 */
+    const EVENT_WATCH_MS = 30000;
+    setInterval(async () => {
+      if (document.hidden || paneNow === 'board') return;
+      try {
+        syncOpenState(await apiJson('/event', { timeout: 10000 }));
+      } catch { /* 次の回にまた試す */ }
+    }, EVENT_WATCH_MS);
 
     (async function boot() {
       // 共有リンクの回。受付の状態（タイトル・バッジ・相談の可否）は下で通常どおり整えてから開く
@@ -3504,25 +3586,19 @@
       let boardLoad = null;   // 受付停止中のヘッダーと共有リンクの判定で同じ /board を使う
       try {
         const ev = await apiJson('/event');
-        eventOpen = !!ev.open;
         if (ev.open) {
           openCode = ev.code || '';
-          eventTitle = ev.title || '';
-          $('#evTitle').textContent = ev.title;
-          document.title = ev.title + ' - リクエスト';
-          $('#badge').textContent = '受付中';
-          $('#badge').classList.remove('shut');
-          setCurrentEvent(ev);
+          openRequests(ev);
           show('search');
         } else {
-          closeRequests('受付停止中', 'いまはリクエストの受付時間外のため、相談はお休みしています。次回の受付までお待ちください。');
+          closeRequests(SHUT_BADGE, SHUT_WHY);
           // /event は受付外だと回を返さない。ヘッダーの共有と QR のために、終わった直後の回を /board から引く
           // （先に一覧が読めていれば、そちらの回のほうが新しいので上書きしない）
           boardLoad = apiJson('/board');
           boardLoad.then((d) => { if (!currentEvent) setCurrentEvent(d.event); }).catch(() => { });
         }
       } catch {
-        closeRequests('オフライン', 'サーバーに接続できないため、いまは相談できません。電波の良い場所で、しばらくしてからお試しください。');
+        closeRequests(OFFLINE_BADGE, OFFLINE_WHY);
       }
       if (shared) {
         // 受付中の回の QR・リンクは、リクエストを送ってもらうためのもの。「リクエストする」のまま置く

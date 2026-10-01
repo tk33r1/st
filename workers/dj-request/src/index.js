@@ -60,7 +60,8 @@ const RATE_KEEP_MIN   = 60;   // 元帳をこの分数だけ残す（端末の�
 const BOARD_WAITING   = 10;   // 公開一覧に出す「受付済」の件数
 const PAST_EVENTS     = 20;   // 「過去のイベント」に並べる回の数
 
-const LIMITS = { title: 200, artist: 200, album: 200, name: 20, message: 140, url: 500 };
+// message は来場者ページの入力欄（maxlength）と同じ値にする
+const LIMITS = { title: 200, artist: 200, album: 200, name: 20, message: 50, url: 500 };
 const URL_DOMAINS = {
   artwork: ['mzstatic.com'],
   apple: ['music.apple.com', 'itunes.apple.com'],
@@ -120,15 +121,24 @@ function trustedHttpsUrl(v, domains) {
   }
 }
 
-/** 同じ曲をまとめるためのキー。trackId があればそれが一番確実。 */
-function dedupeKey(track) {
-  if (track.trackId) return 'id:' + String(track.trackId);
-  const norm = (s) => String(s ?? '')
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return 'txt:' + norm(track.artist) + '|' + norm(track.title);
+/** 同じ曲をまとめるためのキー。trackId があればそれが一番確実。
+    渡すのは clean 済みの値（長さが詰めてあるので、キーも長くならない）。 */
+function dedupeKey({ trackId, artist, title }) {
+  if (trackId) return 'id:' + trackId;
+  const squash = (s) => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const norm = (s) => squash(String(s ?? '').replace(/[^\p{L}\p{N}\s]/gu, ''));
+  // 記号や絵文字だけの曲名は正規化すると空になり、別々の依頼が1曲に束ねられてしまう。
+  // そのときは記号を残したまま比べる
+  return 'txt:' + norm(artist) + '|' + (norm(title) || squash(title));
+}
+
+/** Apple の trackId（数字だけ）。それ以外はブラウザが作った値なので、曲を特定できたとはみなさない */
+const appleTrackId = (v) => (/^\d{1,15}$/.test(String(v ?? '')) ? String(v) : '');
+
+/** 範囲外の数値は 0（不明）にする。値は来場者のブラウザが送るので、負の値や桁外れの値も届く */
+function intIn(v, min, max) {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= min && n <= max ? n : 0;
 }
 
 /** IP は生で保存しない。イベント単位でソルトを混ぜて追跡性も下げる。 */
@@ -498,7 +508,7 @@ async function saveSongInfo(env, trackId, result) {
 }
 
 /** カードを作れる曲か。trackId はブラウザが送る値なので、Apple の数字の ID だけ通す。 */
-const canDescribe = (env, song) => !!env.OPENAI_API_KEY && !song.isFree && /^\d{1,15}$/.test(String(song.trackId || ''));
+const canDescribe = (env, song) => !!env.OPENAI_API_KEY && !song.isFree && !!appleTrackId(song.trackId);
 
 /** ISO 8601 の長さ（"PT4M49S"）をミリ秒に。読めなければ 0 */
 function isoDurationMs(v) {
@@ -627,7 +637,10 @@ async function postRequest(request, env, cors, ctx) {
   }
 
   const track = body.track || {};
-  const isFree = !track.trackId && !track.title;
+  // 数字でない trackId は捨てて、曲名とアーティスト名でまとめる曲として扱う。
+  // 残すと背景カードの対象に選ばれ続けて（describeMissing）、ほかの曲のカードが作られなくなる
+  const trackId = appleTrackId(track.trackId);
+  const isFree = !trackId && !track.title;
   const title = clean(isFree ? body.free : track.title, LIMITS.title);
   if (title.length < 1) {
     return json({ error: 'bad_request', message: '曲名を入力してください' }, 400, cors);
@@ -657,10 +670,10 @@ async function postRequest(request, env, cors, ctx) {
     }, 429, cors);
   }
 
-  const key = dedupeKey(isFree ? { title } : track);
   const artist = clean(track.artist, LIMITS.artist);
+  const key = dedupeKey(isFree ? { title } : { trackId, artist, title });
   const artistEn = clean(track.artistEn, LIMITS.artist);
-  const durationMs = Number(track.durationMs) || 0;
+  const durationMs = intIn(track.durationMs, 0, 3 * 60 * 60 * 1000);   // 3時間まで
   const name = clean(body.name, LIMITS.name);
   const message = clean(body.message, LIMITS.message);
   const artwork = trustedHttpsUrl(track.artwork, URL_DOMAINS.artwork);
@@ -680,7 +693,7 @@ async function postRequest(request, env, cors, ctx) {
        ON CONFLICT(event_code, dedupe_key) DO NOTHING`
     ).bind(
       ev.code, key,
-      track.trackId ? String(track.trackId) : null,
+      trackId || null,
       title,
       artist,
       artistEn,
@@ -692,7 +705,7 @@ async function postRequest(request, env, cors, ctx) {
       previewUrl,
       isFree ? 1 : 0,
       clean(track.genre, 60),
-      Number(track.releaseYear) || 0,
+      intIn(track.releaseYear, 1900, 2100),
       clean(track.explicitness, 20)
     ),
     env.DB.prepare(
@@ -714,6 +727,9 @@ async function postRequest(request, env, cors, ctx) {
 
   const isNewSong = !!(songIns.meta && songIns.meta.changes > 0);
   const added = !!(requestIns.meta && requestIns.meta.changes > 0);
+  // 送り直しで書いたニックネーム・ひとことを、前の投稿に反映できたか。
+  // updated = 差し替えた / locked = DJ が触ったあとなので差し替えなかった
+  let updated = false, locked = false;
   if (!added) {
     // 弾かれた＝この端末はもうこの曲を送っている。あとで直せるよう既存の鍵を返す。
     // 引くのは必ず device_key。ip_hash で引くと、同じ Wi-Fi にいる別人の行を掴んで
@@ -729,6 +745,36 @@ async function postRequest(request, env, cors, ctx) {
     } else {
       // 自分の行が無いのに弾かれた＝想定外。誰の鍵も渡さない。
       editToken = '';
+    }
+
+    // 送り直した人は、いま書いた内容を届けたいはず。黙って捨てずに前の投稿へ入れる。
+    // 空欄の項目は前の値を残す（ひとことだけ書き足した人の名前を消さない）。
+    // 修正（patchMine）と同じく、受付中で DJ がまだ触っていない曲だけ。
+    // 冒頭の確認後にも状態は変わりうるため、実際の UPDATE でも確かめる
+    if (row && (name || message)) {
+      // 状態を読んでから書くと、その間に DJ が曲を確認したり受付を閉じたりできてしまう。
+      // open + pending の判定を UPDATE 自体に入れ、ロック後の内容を競合で書き換えない。
+      const changed = await env.DB.prepare(
+        `UPDATE requests
+            SET from_name = CASE WHEN ?1 <> '' THEN ?1 ELSE from_name END,
+                message   = CASE WHEN ?2 <> '' THEN ?2 ELSE message END
+          WHERE id = ?3
+            AND EXISTS (
+              SELECT 1 FROM songs s JOIN events e ON e.code = s.event_code
+               WHERE s.id = requests.song_id
+                 AND s.status = 'pending' AND e.status = 'open'
+            )`
+      ).bind(name, message, row.id).run();
+      updated = !!(changed.meta && changed.meta.changes > 0);
+      if (!updated) {
+        const live = await env.DB.prepare(
+          `SELECT 1 AS ok FROM events WHERE code = ? AND status = 'open'`
+        ).bind(ev.code).first();
+        if (!live) {
+          return json({ error: 'closed', message: 'ただいまリクエストの受付時間外です' }, 409, cors);
+        }
+        locked = true;
+      }
     }
   }
 
@@ -749,15 +795,15 @@ async function postRequest(request, env, cors, ctx) {
         // 背景カードは OpenAI の応答待ちが長いので、権利だけ先に取って BPM の取得と並べる。
         // D1 への書き込みは直列のまま（応答が届いてから保存する）。
         // 曲の中身は startSongInfo が iTunes で引き直すので、ここで渡すのは照合に使う ID と曲名だけ。
-        const info = await startSongInfo(env, { trackId: track.trackId, isFree, title }).catch(() => null);
+        const info = await startSongInfo(env, { trackId, isFree, title }).catch(() => null);
         await enrichSong(env, song.id, artistForLookup, title, durationMs, artist);
-        if (info && info.promise) await saveSongInfo(env, String(track.trackId), await info.promise);
+        if (info && info.promise) await saveSongInfo(env, trackId, await info.promise);
       }
     })());
   }
 
   return json({
-    ok: true, songId: song.id, duplicate: !added,
+    ok: true, songId: song.id, duplicate: !added, updated, locked,
     position: total ? total.n : 0, editToken,
   }, 200, cors);
 }
@@ -844,15 +890,27 @@ async function ownRequest(id, token, env) {
 /* ── 公開: 自分の投稿を直す ───────────────── */
 async function patchMine(id, request, env, cors) {
   const body = await readJson(request) || {};
+  const token = bearer(request);
 
-  const got = await ownRequest(id, bearer(request), env);
+  const got = await ownRequest(id, token, env);
   if (got.error) return errorResponse(got.error, cors);
 
   const name = clean(body.name, LIMITS.name);
   const message = clean(body.message, LIMITS.message);
-  await env.DB.prepare(
-    `UPDATE requests SET from_name = ?, message = ? WHERE id = ?`
-  ).bind(name, message, got.row.id).run();
+  const changed = await env.DB.prepare(
+    `UPDATE requests SET from_name = ?, message = ?
+      WHERE song_id = ? AND edit_token = ?
+        AND EXISTS (
+          SELECT 1 FROM songs s JOIN events e ON e.code = s.event_code
+           WHERE s.id = requests.song_id
+             AND s.status = 'pending' AND e.status = 'open'
+        )`
+  ).bind(name, message, id, token).run();
+  if (!changed.meta || changed.meta.changes < 1) {
+    const now = await ownRequest(id, token, env);
+    if (now.error) return errorResponse(now.error, cors);
+    return json({ error: 'locked', message: '状態が変わったため、内容を変更できませんでした' }, 409, cors);
+  }
 
   return json({ ok: true, mine: { name, message } }, 200, cors);
 }
@@ -860,12 +918,22 @@ async function patchMine(id, request, env, cors) {
 /* ── 公開: 自分の投稿を取り下げる ───────────
    取り下げるのは自分の1票だけ。同じ曲を他の人も送っていれば曲は残る。 */
 async function deleteMine(id, request, env, cors) {
-  const got = await ownRequest(id, bearer(request), env);
+  const token = bearer(request);
+  const got = await ownRequest(id, token, env);
   if (got.error) return errorResponse(got.error, cors);
 
   // 票の削除・再集計・空になった曲の後始末を不可分にし、同時投稿の票を消さない。
-  await env.DB.batch([
-    env.DB.prepare(`DELETE FROM requests WHERE id = ?`).bind(got.row.id),
+  // 最初の DELETE 自体でも open + pending を確かめ、事前確認との間に DJ が動かした曲を消さない。
+  const [removed] = await env.DB.batch([
+    env.DB.prepare(
+      `DELETE FROM requests
+        WHERE song_id = ? AND edit_token = ?
+          AND EXISTS (
+            SELECT 1 FROM songs s JOIN events e ON e.code = s.event_code
+             WHERE s.id = requests.song_id
+               AND s.status = 'pending' AND e.status = 'open'
+          )`
+    ).bind(id, token),
     env.DB.prepare(
       `UPDATE songs SET votes = (SELECT COUNT(*) FROM requests WHERE song_id = ?) WHERE id = ?`
     ).bind(id, id),
@@ -876,6 +944,11 @@ async function deleteMine(id, request, env, cors) {
       `DELETE FROM songs WHERE id = ? AND NOT EXISTS (SELECT 1 FROM requests WHERE song_id = ?)`
     ).bind(id, id),
   ]);
+  if (!removed.meta || removed.meta.changes < 1) {
+    const now = await ownRequest(id, token, env);
+    if (now.error) return errorResponse(now.error, cors);
+    return json({ error: 'locked', message: '状態が変わったため、リクエストを取り下げられませんでした' }, 409, cors);
+  }
   const left = await env.DB.prepare(`SELECT votes FROM songs WHERE id = ?`).bind(id).first();
   const songRemoved = !left;
   const votes = left ? left.votes : 0;
@@ -1118,8 +1191,10 @@ async function adminDeleteEvent(code, env, cors) {
    同じ曲を二重に作らないのは claimSongInfo の役目。 */
 async function describeMissing(env, rows) {
   if (!env.OPENAI_API_KEY) return;
+  // canDescribe で作れない曲（数字でない trackId など）を選ぶと、startSongInfo が何も記録せずに戻るので
+  // 毎回同じ曲を選び続け、それより前に入った曲のカードが作られなくなる。はじめから候補に入れない
   const s = rows.find((r) => (r.status === 'pending' || r.status === 'queued')
-    && !r.is_free && r.track_id && (!r.info_status || r.info_retry));
+    && canDescribe(env, songForInfo(r)) && (!r.info_status || r.info_retry));
   if (!s) return;
 
   // 上限に達していたら照合もしない（5秒ごとに空振りの照合を重ねない）。判定の本番は claimSongInfo
