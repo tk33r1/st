@@ -1,5 +1,11 @@
-/* DJ の各画面で共通して使うモーダル。閉じ方と余白をページごとに変えない。 */
+/* DJ の各画面で共通して使うモーダル。閉じ方と余白をページごとに変えない。
+   見た目はすりガラス。半透明の面の奥をぼかして、上辺に光の縁を1本入れる。
+   backdrop-filter の無いブラウザでは、文字が背景に負けないよう不透明の面に戻す（末尾の @supports）。 */
 .dj-modal {
+  --dj-glass-radius: 20px;
+  --dj-glass-line: rgba(255, 255, 255, 0.14);
+  --dj-glass-line-soft: rgba(255, 255, 255, 0.08);
+  --dj-glass-fill: rgba(255, 255, 255, 0.06);
   --dj-modal-width: 480px;
   box-sizing: border-box;
   margin: auto;
@@ -10,24 +16,78 @@
   max-height: min(760px, calc(100dvh - 32px));
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--border, var(--line, #383840));
-  border-radius: var(--r, 2px);
-  background: var(--bg-elevated, var(--bg, #0a0a0c));
+  border: 1px solid var(--dj-glass-line);
+  border-radius: var(--dj-glass-radius);
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--heart-secondary, #37f2e6) 10%, transparent), transparent 60%),
+    radial-gradient(100% 70% at 100% 100%, color-mix(in srgb, var(--heart-primary, #ff2f6e) 7%, transparent), transparent 60%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03) 45%, rgba(255, 255, 255, 0.05)),
+    rgba(18, 18, 24, 0.55);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   color: var(--fg, #eeeef0);
-  box-shadow: 0 30px 70px -20px #000;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 30px 80px -20px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
   font-family: var(--f-body, sans-serif);
+  /* 開閉の演出。fallback の位置決めは transform を使うので、
+     ここでは個別の scale / translate だけを動かして打ち消し合わないようにする。
+     閉じるときはこの値（短く、少しだけ縮む）が使われる。display と overlay を allow-discrete で
+     遅らせて、消える途中も top layer に残す。未対応のブラウザはこれまでどおり一瞬で閉じる。 */
+  opacity: 0;
+  scale: 0.97;
+  translate: 0 4px;
+  transition:
+    opacity .15s ease-in,
+    scale .15s ease-in,
+    translate .15s ease-in,
+    display .15s allow-discrete,
+    overlay .15s allow-discrete;
 }
 
 .dj-modal[open] {
   display: flex;
   flex-direction: column;
+  opacity: 1;
+  scale: 1;
+  translate: 0 0;
+  transition-duration: .22s;
+  transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* 開いた直後の出発点。ここから .dj-modal[open] の値へ、ふわっと浮かび上がる。 */
+@starting-style {
+  .dj-modal[open] {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 8px;
+  }
 }
 
 /* dialog 非対応ブラウザでは UA の非表示規則が無いので、閉じている要素を明示的に隠す。 */
 .dj-modal:not([open]) { display: none; }
 
 .dj-modal::backdrop {
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(4, 4, 8, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition:
+    opacity .15s ease-in,
+    display .15s allow-discrete,
+    overlay .15s allow-discrete;
+}
+
+.dj-modal[open]::backdrop {
+  opacity: 1;
+  transition-duration: .22s;
+  transition-timing-function: ease-out;
+}
+
+@starting-style {
+  .dj-modal[open]::backdrop { opacity: 0; }
 }
 
 /* Safari 15.0〜15.3 など showModal() の無いブラウザ向け。
@@ -43,7 +103,9 @@
 .dj-modal-fallback-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(4, 4, 8, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   touch-action: none;
 }
 
@@ -59,8 +121,9 @@ html.dj-modal-fallback-active body {
   position: relative;
   flex: 0 0 auto;
   min-height: 54px;
-  padding: 17px 62px 14px 18px;
-  border-bottom: 1px solid var(--border, var(--line, #383840));
+  padding: 18px 62px 15px 20px;
+  border-bottom: 1px solid var(--dj-glass-line-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
 }
 
 .dj-modal__title {
@@ -76,33 +139,33 @@ html.dj-modal-fallback-active body {
 .dj-modal__close {
   appearance: none;
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 8px;
+  right: 8px;
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   place-items: center;
-  border: 1px solid transparent;
+  border: 1px solid var(--dj-glass-line-soft);
   border-radius: 50%;
-  background: transparent;
+  background: var(--dj-glass-fill);
   color: var(--fg-dim, #b8b8be);
-  font: 300 28px/1 var(--f-display, monospace);
+  font: 300 24px/1 var(--f-display, monospace);
   cursor: pointer;
   transition: color .15s, border-color .15s, background .15s;
 }
 
 .dj-modal__close:hover,
 .dj-modal__close:focus-visible {
-  border-color: var(--heart-secondary, #37f2e6);
-  background: color-mix(in srgb, var(--heart-secondary, #37f2e6) 8%, transparent);
+  border-color: color-mix(in srgb, var(--heart-secondary, #37f2e6) 60%, transparent);
+  background: color-mix(in srgb, var(--heart-secondary, #37f2e6) 12%, transparent);
   color: var(--heart-secondary, #37f2e6);
   outline: none;
 }
 
 .dj-modal__body {
   min-height: 0;
-  padding: 18px;
+  padding: 20px;
   overflow: auto;
   overscroll-behavior: contain;
 }
@@ -132,16 +195,21 @@ html.dj-modal-fallback-active body {
   display: block;
   width: 100%;
   margin-top: 16px;
-  padding: 11px 12px;
-  border: 1px solid var(--border, var(--line, #383840));
-  border-radius: 2px;
-  background: var(--bg, #0a0a0c);
+  padding: 11px 14px;
+  border: 1px solid var(--dj-glass-line);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
   color: var(--fg, #eeeef0);
   font: 0.875rem/1.5 var(--f-body, sans-serif);
+  transition: border-color .15s, box-shadow .15s;
 }
 
 .dj-modal__field:focus {
   border-color: var(--heart-secondary, #37f2e6);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 0 3px color-mix(in srgb, var(--heart-secondary, #37f2e6) 22%, transparent);
   outline: none;
 }
 
@@ -154,19 +222,22 @@ html.dj-modal-fallback-active body {
 
 .dj-modal__button {
   appearance: none;
-  padding: 10px 16px;
-  border: 1px solid var(--border, var(--line, #383840));
-  border-radius: 2px;
-  background: transparent;
+  padding: 10px 20px;
+  border: 1px solid var(--dj-glass-line);
+  border-radius: 999px;
+  background: var(--dj-glass-fill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   color: var(--fg-dim, #b8b8be);
   font: 400 0.75rem/1.4 var(--f-dot, sans-serif);
   letter-spacing: .08em;
   cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s, box-shadow .15s;
 }
 
 .dj-modal__button:hover,
 .dj-modal__button:focus-visible {
-  border-color: var(--heart-secondary, #37f2e6);
+  border-color: color-mix(in srgb, var(--heart-secondary, #37f2e6) 60%, transparent);
+  background: color-mix(in srgb, var(--heart-secondary, #37f2e6) 10%, transparent);
   color: var(--heart-secondary, #37f2e6);
   outline: none;
 }
@@ -174,6 +245,9 @@ html.dj-modal-fallback-active body {
 .dj-modal__button--primary {
   border-color: var(--heart-secondary, #37f2e6);
   background: var(--heart-secondary, #37f2e6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 20px -6px color-mix(in srgb, var(--heart-secondary, #37f2e6) 55%, transparent);
   color: var(--bg, #0a0a0c);
 }
 
@@ -187,25 +261,51 @@ html.dj-modal-fallback-active body {
 .dj-modal__button--danger {
   border-color: var(--heart-primary, #ff2f6e);
   background: var(--heart-primary, #ff2f6e);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 6px 20px -6px color-mix(in srgb, var(--heart-primary, #ff2f6e) 55%, transparent);
   color: var(--bg, #0a0a0c);
 }
 
 .dj-modal__button--danger:hover,
 .dj-modal__button--danger:focus-visible {
   border-color: var(--heart-primary, #ff2f6e);
-  background: transparent;
+  background: color-mix(in srgb, var(--heart-primary, #ff2f6e) 12%, transparent);
+  box-shadow: none;
   color: var(--heart-primary, #ff2f6e);
 }
 
 @media (max-width: 420px) {
   .dj-modal {
+    --dj-glass-radius: 18px;
     width: calc(100% - 24px);
     max-height: calc(100vh - 24px);
     max-height: calc(100dvh - 24px);
   }
 
-  .dj-modal__head { padding-left: 15px; }
-  .dj-modal__body { padding: 15px; }
+  .dj-modal__head { padding-left: 16px; }
+  .dj-modal__body { padding: 16px; }
   .dj-modal__actions { flex-direction: column-reverse; }
   .dj-modal__button { width: 100%; }
+}
+
+/* すりガラスが効かないブラウザ。半透明のままだと後ろの文字が透けて読みにくいので、面を不透明にする。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dj-modal {
+    background:
+      linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+      var(--bg-elevated, #121216);
+  }
+
+  .dj-modal::backdrop,
+  .dj-modal-fallback-backdrop {
+    background: rgba(0, 0, 0, 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dj-modal,
+  .dj-modal::backdrop {
+    transition: none;
+  }
 }

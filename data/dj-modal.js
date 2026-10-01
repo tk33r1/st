@@ -194,6 +194,17 @@
     return { dialog, body };
   }
 
+  /* 使い捨てのモーダルは、閉じる演出（dj-modal.css の transition）が終わってから DOM から外す。
+     結果は close の時点で返すので、呼び出し側の処理は演出を待たない。
+     演出に対応しないブラウザでは走っている transition が無く、そのまま次のフレームで外れる。 */
+  function removeAfterClose(dialog) {
+    requestAnimationFrame(function () {
+      const running = typeof dialog.getAnimations === 'function' ? dialog.getAnimations() : [];
+      Promise.all(running.map(function (a) { return a.finished.catch(function () {}); }))
+        .then(function () { dialog.remove(); });
+    });
+  }
+
   function confirmModal(options) {
     const opts = typeof options === 'string' ? { message: options } : (options || {});
     const ui = shell(opts.title || '確認', opts.message || '');
@@ -209,7 +220,7 @@
       let accepted = false;
       ok.addEventListener('click', function () { accepted = true; close(ui.dialog); });
       ui.dialog.addEventListener('close', function () {
-        ui.dialog.remove();
+        removeAfterClose(ui.dialog);
         resolve(accepted);
       }, { once: true });
       show(ui.dialog);
@@ -250,7 +261,7 @@
         close(ui.dialog);
       });
       ui.dialog.addEventListener('close', function () {
-        ui.dialog.remove();
+        removeAfterClose(ui.dialog);
         resolve(value);
       }, { once: true });
       show(ui.dialog);
