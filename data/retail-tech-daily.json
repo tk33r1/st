@@ -1,5 +1,159 @@
 [
   {
+    "date": "20261002",
+    "title": "2026年10月2日号：昨日のリテールテック＆流通DXまとめ",
+    "summary": "国内では、需要予測を倉庫の作業量見積もりやアパレルの発注・在庫運営に活用する動きが表面化。予測を現場の実行判断までつなぐ取り組みが進んでいます。 岡山市役所の新庁舎に無人決済コンビニが開店。カメラやセンサー、はかりを使った省人化店舗が、駅や商業施設に限らず公共施設にも広がる事例です。",
+    "count": 8,
+    "generated_by": "OpenAI (gpt-6-luna)",
+    "engine_type": "openai",
+    "executive_summary": [
+      "国内では、需要予測を倉庫の作業量見積もりやアパレルの発注・在庫運営に活用する動きが表面化。予測を現場の実行判断までつなぐ取り組みが進んでいます。",
+      "岡山市役所の新庁舎に無人決済コンビニが開店。カメラやセンサー、はかりを使った省人化店舗が、駅や商業施設に限らず公共施設にも広がる事例です。",
+      "海外では、リテールメディアをデジタル売上やAIで高度化する動きに加え、テキストメッセージを通じた買い物支援も登場。広告と購買体験の接続が焦点です。"
+    ],
+    "articles": [
+      {
+        "region": "JP",
+        "category": "サプライチェーン・店舗自動化",
+        "title": "NTTロジスコ、需要予測を倉庫の作業量見積もりに活用",
+        "original_title": "",
+        "source": "logi-today.com",
+        "source_id": "JP-01",
+        "summary": "NTTロジスコが、需要予測を基に倉庫で必要となる作業量を見積もる取り組みを進めています。需要の変動を事前に捉え、出荷量だけでなく倉庫現場の業務負荷の把握にもつなげる内容です。予測を物流オペレーションの計画に反映する動向として注目されます。",
+        "why_it_matters": "需要予測の価値は、売上や在庫の予測精度だけでなく、現場の人員・作業計画に連動させて初めて広がります。倉庫作業量を早期に見積もれれば、繁閑差への対応や人員配置の効率化につながり、物流現場の省力化を後押しします。",
+        "tags": [
+          "需要予測",
+          "倉庫自動化",
+          "物流DX"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiSkFVX3lxTFAzdXZ3WFE2am9GS0FOeEowMFRITlZRTEtJU3h3T2xLVzRrdEpnWjJjUjE0YVB4NjY3clA2Z3BESndyODljejAwR0l3?oc=5",
+        "source_pub_ts": 1790887795
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "SENSYと両備システムズ、AI需要予測でアパレルの発注・在庫運営を最適化",
+        "original_title": "",
+        "source": "Infoseek",
+        "source_id": "JP-02",
+        "summary": "SENSYと両備システムズが業務提携し、アパレル向け基幹システム「Sunny-Side for Retail」にAI需要予測を連携します。初回発注・初回配分から販売、在庫運営までを支援する構想で、商品投入の初期段階から予測を活用し、販売と在庫の最適化を目指します。",
+        "why_it_matters": "アパレルはシーズン性や商品ごとの販売差が大きく、初回発注の判断が在庫過多・欠品を左右します。基幹システムと予測を一体化することで、担当者の経験に依存しがちな計画業務をデータで支え、発注から販売後の在庫運営まで判断の連続性を高められます。",
+        "tags": [
+          "AI需要予測",
+          "アパレル",
+          "在庫最適化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFBlNXlRQUhOMUtLSU5JUm0wMmlha1VwQ0txTTJsakMtUUdYRVo0QUpZdms3b2xhOWh5SDdrM19WZFlVdFp4ZlJ4NzQ3bGdxLTFOcHpQWU1TN2NJbDFhNFRVdC1QaXBlbTdYSVFadThKZ0dGUQ?oc=5",
+        "source_pub_ts": 1790874928
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "岡山市役所新庁舎に無人決済コンビニ、センサーとはかりで商品を認識",
+        "original_title": "",
+        "source": "news.ksb.co.jp",
+        "source_id": "JP-24",
+        "summary": "岡山市役所の新庁舎に、無人決済システムを備えたコンビニが開店しました。来店客や商品をセンサーとはかりで感知し、選んだ商品の金額を表示する仕組みです。市役所の新庁舎内に設けられた店舗で、従来のレジ業務を省力化する買い物環境を提供します。",
+        "why_it_matters": "無人決済は、駅や商業施設だけでなく、職員・来庁者の利用が見込まれる公共施設にも展開し得ることを示す事例です。カメラ以外にセンサーや重量計測を組み合わせる方式は、導入環境や商品構成に応じたシステム選択の幅を広げ、省人化店舗の普及を後押しします。",
+        "tags": [
+          "無人店舗",
+          "次世代決済",
+          "店舗省人化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1XUndjczQ0RHlGYzZSbW5ZMzVEQWhWVkx2YzlCV2dFTjRabGZpaW92Xy04VGphUWJ5SFFLRklEZ1VTalFrU2h5Und5aTFZb0RB?oc=5",
+        "source_pub_ts": 1790825280
+      },
+      {
+        "region": "JP",
+        "category": "流通DX一般",
+        "title": "アダストリア、AI共創の新ブランドで商品撮影・登録業務を3人から1人に",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-18",
+        "summary": "アダストリアが、AI共創型の新ブランド「エルミラ」を開始しました。商品撮影・採寸・原稿作成などを担う「ささげ」業務では、担当者を従来の3人から1人にできたとしています。ブランド立ち上げにAIを取り入れ、商品情報をECなどで販売可能な形に整える業務の効率化を図ります。",
+        "why_it_matters": "商品情報の作成は、ECの品ぞろえ拡大に伴って工数が膨らみやすい領域です。AIを単なる制作補助ではなくブランド運営の仕組みに組み込み、担当人数の削減につなげた点が重要です。効率化した人員を企画や顧客対応に振り向けられるかが、導入効果を左右します。",
+        "tags": [
+          "生成AI",
+          "EC運営",
+          "業務効率化"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBPR3NtdURuYS00Uk96M0hJUkl2Tmx5TG1QR054NzFfUXQwTUR2c0x1YkRvdkt1U0YwZFV3YVY5U1FQaXVSM0V1VmN4bFlIbGRfRS1ZMXlFcE1wZw?oc=5",
+        "source_pub_ts": 1790831160
+      },
+      {
+        "region": "JP",
+        "category": "店舗DX・次世代決済",
+        "title": "NTTデータ、エディオンにモバイル決済端末2,000台を提供",
+        "original_title": "",
+        "source": "流通ニュース",
+        "source_id": "JP-34",
+        "summary": "NTTデータが、エディオンに「ADAPTIS」のモバイル決済端末を2,000台提供します。家電量販店の店舗現場で使う決済端末をまとまった規模で整備する取り組みです。導入店舗や運用方法の詳細は候補情報からは確認できませんが、店頭決済環境の更新を進める動きとして報じられています。",
+        "why_it_matters": "決済端末のモバイル化は、会計場所の柔軟化や接客中の決済など、店頭オペレーションの設計に影響します。2,000台規模の提供は、単店実験ではなくチェーン運営を支える基盤整備として注目されます。導入後は処理速度やスタッフ動線、顧客体験の改善が焦点です。",
+        "tags": [
+          "モバイル決済",
+          "店舗DX",
+          "家電量販店"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1kYkFWUGFPQUFFY1BxczNLcklyVlEyNmNKRTJla2FqT1ZfY19Uemh4OV9nQkNQY3FVdW1zWGRDYnJOWTF6VkFZcW9NdkxYTEEx?oc=5",
+        "source_pub_ts": 1790817300
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "Kroger、リテールメディア広告とデジタル売上の連動を前進",
+        "original_title": "Kroger takes key step forward in tying retail media creative with digital sales",
+        "source": "Grocery Dive",
+        "source_id": "GL-05",
+        "summary": "Krogerが、リテールメディアの広告クリエイティブとデジタル売上を結び付けるうえで重要な一歩を進めたと報じられました。記事の見出しから具体的な仕組みや成果数値は確認できませんが、広告表現とオンライン購買の関係を捉え、販促効果の把握を強化する動きです。",
+        "why_it_matters": "リテールメディアの成長には、広告表示回数だけでなく購買への寄与を説明できる計測が欠かせません。クリエイティブとデジタル売上の接続が進めば、メーカーは施策ごとの効果を比較しやすくなり、小売は広告在庫の価値を示しやすくなります。測定基準の整備が競争力を左右します。",
+        "tags": [
+          "リテールメディア",
+          "広告効果測定",
+          "デジタル売上"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxORllaemE1bnQtVlhSTWQzdzQ4UzJkQnNpdzBBZVU5dzhLUTkzRlkzcFVjWmlQT3BxTHFmdU9CU2VVTUJKUDdpOFdyLWc2Rml5Z3k0VkxqTy1JaHB5OVphdEkwdUtIakJzV2RmZnlDa19JcFNvNTdlUWZnRXl3RzBCdGlzZ05RMG0wX0psbA?oc=5",
+        "source_pub_ts": 1790869532
+      },
+      {
+        "region": "GLOBAL",
+        "category": "リテールメディア・広告",
+        "title": "Ahold Delhaize、AIを活用してリテールメディアを高度化",
+        "original_title": "How Ahold Delhaize is tapping AI to improve retail media",
+        "source": "Grocery Dive",
+        "source_id": "GL-06",
+        "summary": "食品小売グループのAhold Delhaizeが、リテールメディアの改善にAIを活用している取り組みが紹介されました。見出しでは具体的な用途や成果の詳細は示されていませんが、AIを広告事業の運用や価値向上に取り入れる動きとして、海外小売の実践例が報じられています。",
+        "why_it_matters": "リテールメディアでは、購買データを広告配信や効果分析に生かすことが差別化の鍵です。AI活用が進めば、顧客・商品・販促の分析や広告運用の効率化が期待されます。一方で、成果の透明性やデータ利用への信頼を保ちながら、広告主に再現性ある価値を示せるかが重要です。",
+        "tags": [
+          "AI",
+          "リテールメディア",
+          "データ活用"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQaGc4QlFNb29XUFNHcGZMNVdjRDNpRlFhUjZvdncySE1lUlNZX1I3RURvQm9zV3VkbEpfNGxLdGx5UDJaYk1MNFZudGJFQTVJdTdndC05SkMwaTg5NVdDMjl6NU1rLWdfTnh4QUlqcVlVanRLU0NITndTdnpyWWM4elBqXzRoeTM5V2pBcmxVeTJGQ0VJOVBQRld6TW8xTjJWdUJPYkN0aFloSGtmcGZWNHNLd2p0Yy1NcjVPTlJtbmhCRTg?oc=5",
+        "source_pub_ts": 1790869532
+      },
+      {
+        "region": "GLOBAL",
+        "category": "グローバル先端トレンド",
+        "title": "DoorDash、新たな小売パートナーとテキスト型買い物アシスタントを追加",
+        "original_title": "DoorDash adds new retailers, texting shopping assistant",
+        "source": "Modern Retail",
+        "source_id": "GL-11",
+        "summary": "DoorDashが新たな小売事業者をサービスに加えるとともに、テキストメッセージで利用できる買い物アシスタントを導入したと報じられました。見出しからは対応店舗やアシスタントの具体的な機能範囲までは分かりませんが、メッセージングを通じて買い物を支援するサービス拡張です。",
+        "why_it_matters": "買い物アシスタントをテキスト経由で提供することで、専用アプリ内の検索に限らない注文導線を作れる可能性があります。小売パートナーの拡大と組み合わせれば、商品の発見から購入までの接点を増やせます。利便性に加え、提案精度や注文完了率をどう高めるかが成否を分けます。",
+        "tags": [
+          "買い物アシスタント",
+          "メッセージング",
+          "EC"
+        ],
+        "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNV2ZsVFdNOHJGRTV5b1ZIWXVWZFJEMXN1RXFhRmJEOVBVRktYSll0clNDanA0Z0FMcVNheE5JMlJ1STJ3SzVfX1dUcDJZTU5uNUllbm9sNkxQSVBKSldia3dqR3MySFdocWZFMEQydE14UG02WUx2LTlyeGlHOTlNX1VZOFExOW92XzdaeF9XTGVudGk1UmRuQ2lNT3B4UQ?oc=5",
+        "source_pub_ts": 1790827413
+      }
+    ],
+    "sns_buzz": [],
+    "sns_summary": "",
+    "sns_why_it_matters": ""
+  },
+  {
     "date": "20261001",
     "title": "2026年10月1日号：昨日のリテールテック＆流通DXまとめ",
     "summary": "トライアルとスギ薬局の企業横断型リテールメディア研究会が発足。共通指標の整備は、広告効果測定の標準化に向けた一歩となる。 品川駅では、レジ待ちや商品スキャンをなくす無人決済ストアの期間限定展開が登場。人流の多い駅で、利用者の受容性を試す動きに注目。",

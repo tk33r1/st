@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 01 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 01 Oct 2026 06:11:30 +0900</lastBuildDate>
+    <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 02 Oct 2026 06:33:27 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月2日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261002/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261002/</guid>
+      <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
+      <description>国内では、需要予測を倉庫の作業量見積もりやアパレルの発注・在庫運営に活用する動きが表面化。予測を現場の実行判断までつなぐ取り組みが進んでいます。 岡山市役所の新庁舎に無人決済コンビニが開店。カメラやセンサー、はかりを使った省人化店舗が、駅や商業施設に限らず公共施設にも広がる事例です。</description>
+    </item>
     <item>
       <title>2026年10月1日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261001/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260918/</guid>
       <pubDate>Fri, 18 Sep 2026 08:00:00 +0900</pubDate>
       <description>AI需要予測と店頭インフラの高度化が加速。フォーティエンスの消費財向けAI需要予測サービス開始、イシダの電子棚札急成長など、在庫・補充・価格変更をデータで自動化する動きが同時多発した。 セルフレジが生活者の関心の中心に。郵便局のセルフレジ対応開始やユニクロのRFID一括会計の仕組みとリスクが話題を集め、利便性と読み取り精度・不正対策の両立が改めて問われている。</description>
-    </item>
-    <item>
-      <title>2026年9月17日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260917/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260917/</guid>
-      <pubDate>Thu, 17 Sep 2026 08:00:00 +0900</pubDate>
-      <description>リテールメディアが「枠の販売」から「行動変容の設計」へ——USEN MEDIA PROMOTIONとDearOneの提携、ロケットの店頭立体装飾、ウォルマートのScintilla AI強化など、購買データと店頭接点を統合する動きが国内外で同時に進んだ。 決済・レジ周辺の体験と運用課題が顕在化——ウォークスルー決済や顔認証改札の普及が進む一方、100均セルフレジの行列など生活者の不満も表面化し、技術導入と運用設計の両立が問われている。</description>
     </item>
   </channel>
 </rss>
