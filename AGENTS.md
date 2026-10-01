@@ -33,7 +33,7 @@
 | `images/ogp/` | 各ページの OGP 画像（2400×1260）。ツールの分は `.github/scripts/ogp/generate.js` で生成する。手で描き直さない。日刊の号別カードは `images/ogp/<media_id>/<YYYYMMDD>.webp`（旧 `<media_id>-<date>.webp` は `_redirects` で 301） |
 | `game/` | ゲーム群（masala-tetris 系、reverse-recaptcha 等）。ランキングは `workers/wrangler`（st-games-api） |
 | `glitch/` | 技術ブログ記事（001〜005）。コメントは `workers/comments` |
-| `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト）、`booth/`（ブースコンソール） |
+| `dj/` | DJ 関連。`index.html`（ポートフォリオ。末尾に出演オファーフォーム）、`schedule/`（日程調整）、`request/`（曲リクエスト。iTunes の検索・候補の整理・AI 推薦曲の照合は同じディレクトリの `catalog.js`（`window.DJRequestCatalog`、DOM に触らない）に分けてある。このページ専用なので `data/` には置かない。`dj-request-core.js` の後に読む）、`booth/`（ブースコンソール） |
 | `magi/`, `contact/`, `job/`, `thought/` | 個別ページ |
 | `anniversary/` | 記念日ページ。`matsumura40/`（旧 `/matsumura40/`。`_redirects` で 301 済み） |
 | `images/` | `common/`, `contents/`, `favicons/`, `ogp/` |
