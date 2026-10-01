@@ -21,3 +21,9 @@ err.txt
 # Python cache
 __pycache__/
 *.pyc
+
+# Codex に添付した画像の一時置き場（サイトの公開範囲に入るので、コミットしない）
+.codex-remote-attachments/
+
+# エディタの手元設定（1人で管理しているので共有しない。リポジトリ直下は公開範囲にも入る）
+.vscode/

@@ -39,7 +39,7 @@
 | `job/` | 職務ページと日刊ブリーフ（`nitoridaily/`・`retailtechdaily/`。号ページは GitHub Actions が生成する）。日刊の共通部品は `job/assets/`（`daily-ui.js`、`daily-base.css`、メディアごとの `nitori-daily.css`・`retail-tech-daily.css`） |
 | `magi/`, `contact/`, `thought/` | 個別ページ |
 | `anniversary/` | 記念日ページ。`matsumura40/`（旧 `/matsumura40/`。`_redirects` で 301 済み） |
-| `images/` | `common/`, `contents/`, `favicons/`, `ogp/` |
+| `images/` | `contents/`（ページ内の画像。区画ごとに分ける: `dj/`、`glitch/<記事番号>/`、`motovlog/`（360° ビューのコマは `motovlog/liberty-edition/`））、`favicons/`（ファビコンと apple-touch-icon。iOS は SVG を使えないので、SVG のファビコンとは別に 180px の PNG を置く）、`ogp/`（下の行） |
 | `workers/` | Cloudflare Workers（下表参照） |
 | `magi-app/` | MAGI モバイルアプリ（PWA + Capacitor 6）。`www/` が出荷物 |
 
@@ -53,6 +53,10 @@
 4. 外部から取り込んだライブラリ・フォントは `assets/vendor/`・`assets/fonts/`。取り込みスクリプトを通し、手で置かない
 5. データ（JSON）は `data/` に置く。GitHub Actions が作るものは、上の表に「手で編集しない」と書く
 6. ダウンロード用の資料は `files/` に置く
+7. 画像は `images/` に置く（ページの横には置かない。OGP やファビコンは外部から絶対 URL で参照されるため、1か所にまとめる）。
+   ページ内の画像は `images/contents/<区画>/`。ファイル名は小文字のハイフン区切りにし、空白・大文字・`_` を使わない
+   （空白は URL で `%20` になり、大文字小文字の違いは環境によって別のファイルになる）。高解像度版は `@2x` を付ける。
+   手で作る OGP 画像は WebP にする（PNG だと 1MB を超えることがある）
 
 どこに置いても公開される（公開しない置き場はない）。公開した URL は外部から直リンクされうるので、
 動かしたら必ず `_redirects` に 301 を足す。

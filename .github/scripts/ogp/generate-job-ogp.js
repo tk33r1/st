@@ -3,7 +3,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { launch, connect, newPage, evalJs, sleep } = require('./cdp.js');
+const { launch, connect, newPage, evalJs, sleep, WEBP_QUALITY } = require('./cdp.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const PORT = 9334;
@@ -206,16 +206,19 @@ const HTML_CONTENT = `<!DOCTYPE html>
     console.log('Fonts status:', fontState);
     await sleep(800);
 
+    // job/index.html が読むのは webp。以前は png を書き出していて、作り直してもページに反映されなかった。
+    // 画質は SAFE TOOLS のカードと共通の値（cdp.js の WEBP_QUALITY）
     const shot = await s('Page.captureScreenshot', {
-      format: 'png',
+      format: 'webp',
+      quality: WEBP_QUALITY,
       clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 },
       captureBeyondViewport: true,
     });
 
-    const dest = path.join(ROOT, 'images', 'ogp', 'job-ogp.png');
+    const dest = path.join(ROOT, 'images', 'ogp', 'job-ogp.webp');
     fs.writeFileSync(dest, Buffer.from(shot.data, 'base64'));
     const kb = (fs.statSync(dest).size / 1024).toFixed(0);
-    console.log('SUCCESS: Written images/ogp/job-ogp.png (' + kb + ' KB, 2400x1260)');
+    console.log('SUCCESS: Written images/ogp/job-ogp.webp (' + kb + ' KB, 2400x1260)');
     cdp.ws.close();
   } finally {
     chrome.close();

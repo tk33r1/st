@@ -633,7 +633,7 @@ export default function App() {
     const metaTags = [
       { property: 'og:title', content: '逆reCaptcha潜入捜査 | ST GAMES' },
       { property: 'og:description', content: 'AIだとバレずに適度に失敗しながら認証を突破する訓練' },
-      { property: 'og:image', content: 'https://tk.st/images/ogp/reverse-recaptcha-ogp.png' },
+      { property: 'og:image', content: 'https://tk.st/images/ogp/reverse-recaptcha-ogp.webp' },
       { property: 'og:url', content: 'https://tk.st/game/reverse-recaptcha/' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' }

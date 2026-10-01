@@ -44,7 +44,7 @@
   <meta name="twitter:image" content="https://tk.st/images/ogp/motovlog-ogp.jpg">
 
   <!-- Preload Critical Hero Media (LCP) -->
-  <link rel="preload" href="../images/contents/motovlog-liberty-canyon.jpg" as="image">
+  <link rel="preload" href="../images/contents/motovlog/motovlog-liberty-canyon.jpg" as="image">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -191,7 +191,7 @@
 
     .hero-bg-media {
       position: absolute;
-      background-image: url('../images/contents/motovlog-liberty-canyon.jpg');
+      background-image: url('../images/contents/motovlog/motovlog-liberty-canyon.jpg');
       background-repeat: no-repeat;
       background-size: cover;
     }
@@ -1226,7 +1226,7 @@
     }
 
     #dealerVideoBtn {
-      background-image: url('../images/contents/motovlog-dealer-liberty-review.jpg');
+      background-image: url('../images/contents/motovlog/motovlog-dealer-liberty-review.jpg');
     }
 
     /* サムネイル自体がタイトルを持つため、文言は右カラムに逃がし再生ボタンのみ重ねる */
@@ -1362,7 +1362,7 @@
       overflow: hidden;
       background:
         linear-gradient(110deg, rgba(5, 7, 10, .94) 0%, rgba(5, 7, 10, .78) 54%, rgba(5, 7, 10, .35) 100%),
-        url('../images/contents/motovlog-liberty-canyon.jpg') center 56% / cover;
+        url('../images/contents/motovlog/motovlog-liberty-canyon.jpg') center 56% / cover;
     }
 
     .teaser-card {
@@ -1761,7 +1761,7 @@
   <header class="nav-header">
     <div class="container nav-inner">
       <a href="https://tk.st/motovlog/" class="brand-link">
-        <img src="../images/contents/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式ロゴ" class="nav-logo" width="34"
+        <img src="../images/contents/motovlog/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式ロゴ" class="nav-logo" width="34"
           height="34">
         <span>LIBERTY MOTOVLOG</span>
       </a>
@@ -1936,7 +1936,7 @@
               role="group" aria-roledescription="360度ビューワー"
               aria-label="車両を360度で見る。左右矢印キーまたはドラッグで回転"
               aria-describedby="viewerInstructions">
-              <img id="bike360Img" src="../images/contents/liberty-edition/liberty-edition_01.webp"
+              <img id="bike360Img" src="../images/contents/motovlog/liberty-edition/liberty-edition-01.webp"
                 alt="ハーレーダビッドソン 2026 ヘリテイジ クラシック リバティ エディション 360度ビュー" width="1200" height="720"
                 loading="lazy" decoding="async" draggable="false">
 
@@ -2061,7 +2061,7 @@
 
       <div class="shop-card">
         <div class="side-photo-wrap">
-          <img src="../images/contents/Harley-Davidson%20HIGASHI%20KURUME.webp" alt="ハーレーダビッドソン東久留米 店舗外観"
+          <img src="../images/contents/motovlog/harley-davidson-higashi-kurume.webp" alt="ハーレーダビッドソン東久留米 店舗外観"
             loading="lazy" width="1200" height="708">
         </div>
         <div class="shop-copy">
@@ -2184,7 +2184,7 @@
     <div class="container">
       <div class="footer-inner">
         <div class="footer-brand">
-          <img src="../images/contents/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式ロゴ" width="36" height="36"
+          <img src="../images/contents/motovlog/motovlog-logo.webp" alt="LIBERTY MOTOVLOG 公式ロゴ" width="36" height="36"
             loading="lazy">
           <div>
             <span class="footer-title">LIBERTY MOTOVLOG</span>
@@ -2281,7 +2281,7 @@
         if (shell && loadButton && frame) {
           shell.hidden = false;
           loadButton.setAttribute('aria-label', (video.title || '最新動画') + 'をYouTubeで再生');
-          const thumbnail = video.thumbnailUrl || '../images/contents/motovlog-liberty-canyon.jpg';
+          const thumbnail = video.thumbnailUrl || '../images/contents/motovlog/motovlog-liberty-canyon.jpg';
           loadButton.style.backgroundImage = 'url("' + thumbnail.replace(/"/g, '%22') + '")';
           bindConsentVideo(loadButton, frame, video.id, video.title || 'LIBERTY MOTOVLOG 最新動画');
         }
@@ -2352,7 +2352,7 @@
       const PX_PER_FRAME = 12;
       const PRELOAD_RADIUS = 3;
       const paths = Array.from({ length: TOTAL_FRAMES }, (_, index) =>
-        '../images/contents/liberty-edition/liberty-edition_' + String(index + 1).padStart(2, '0') + '.webp'
+        '../images/contents/motovlog/liberty-edition/liberty-edition-' + String(index + 1).padStart(2, '0') + '.webp'
       );
       const image = document.getElementById('bike360Img');
       const canvas = document.getElementById('bikeCanvasBox');

@@ -16,7 +16,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const os = require('os');
 const path = require('path');
-const { launch, connect, newPage, evalJs, sleep } = require('./cdp.js');
+const { launch, connect, newPage, evalJs, sleep, WEBP_QUALITY } = require('./cdp.js');
 const { CATEGORIES, SHELL_CSS, CARDS } = require('./cards.js');
 
 const ROOT = path.resolve(__dirname, '../../..');
@@ -26,7 +26,6 @@ const PORT = 9333;
 const WIDTH = 1200;
 const HEIGHT = 630;
 const SCALE = 2;              // 1200x630 CSS px at dsf 2 -> the 2400x1260 asset
-const WEBP_QUALITY = 92;
 const VERSION_LENGTH = 12;
 
 function imageVersion(file) {

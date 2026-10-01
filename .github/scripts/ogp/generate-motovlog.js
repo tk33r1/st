@@ -27,8 +27,8 @@ const HEIGHT = 630;
 const SCALE = 2;              // 1200x630 を dsf 2 で撮って 2400x1260
 const JPEG_QUALITY = 90;
 
-const SHOT = 'images/contents/motovlog-liberty-canyon.jpg';
-const MARK = 'images/contents/motovlog-logo.webp';
+const SHOT = 'images/contents/motovlog/motovlog-liberty-canyon.jpg';
+const MARK = 'images/contents/motovlog/motovlog-logo.webp';
 
 function dataUri(rel) {
   const ext = path.extname(rel).slice(1).toLowerCase();

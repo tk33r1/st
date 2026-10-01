@@ -66,3 +66,56 @@
 /data/daily-base.css        /job/assets/daily-base.css  301
 /data/nitori-daily.css      /job/assets/nitori-daily.css  301
 /data/retail-tech-daily.css /job/assets/retail-tech-daily.css  301
+
+# 移動: 2026-10-02  images/contents/ を区画ごと（dj・glitch/<記事>・motovlog）に分け、名前を小文字のハイフン区切りにそろえた。
+# 記事の画像は画像検索などに載っているので、旧 URL から 301 を張る。
+/images/contents/Live-DJ_Factory.webp  /images/contents/dj/live-dj-factory.webp  301
+/images/contents/Live-DJ_Factory2.webp  /images/contents/dj/live-dj-factory-2.webp  301
+/images/contents/NEXTORM-BASE-16_Ohjo-bldg.avif  /images/contents/dj/nextorm-base-16-ohjo-bldg.avif  301
+/images/contents/Night-Drip_Shinjuku-HEIST.jpg  /images/contents/dj/night-drip-shinjuku-heist.jpg  301
+/images/contents/OPUS-QUAD.avif  /images/contents/dj/opus-quad.avif  301
+/images/contents/daydream_02-1.avif  /images/contents/dj/daydream-02-1.avif  301
+/images/contents/daydream_02-2.avif  /images/contents/dj/daydream-02-2.avif  301
+/images/contents/daydream_02-3.avif  /images/contents/dj/daydream-02-3.avif  301
+/images/contents/daydream_03-01.avif  /images/contents/dj/daydream-03-01.avif  301
+/images/contents/daydream_03-02.avif  /images/contents/dj/daydream-03-02.avif  301
+/images/contents/dj-logo4.avif  /images/contents/dj/dj-logo4.avif  301
+/images/contents/happy-death.avif  /images/contents/dj/happy-death.avif  301
+/images/contents/lollipop-headphone.avif  /images/contents/dj/lollipop-headphone.avif  301
+/images/contents/re-camera-logo.webp  /images/contents/dj/re-camera-logo.webp  301
+/images/contents/shisui-logo.png  /images/contents/dj/shisui-logo.png  301
+/images/contents/real-hand-cursor_1.png  /images/contents/dj/real-hand-cursor-1.png  301
+/images/contents/real-hand-cursor_1@2x.png  /images/contents/dj/real-hand-cursor-1@2x.png  301
+/images/contents/real-hand-cursor_2.png  /images/contents/dj/real-hand-cursor-2.png  301
+/images/contents/real-hand-cursor_2@2x.png  /images/contents/dj/real-hand-cursor-2@2x.png  301
+/images/contents/Claude-Code_deepseek-v4-pro.avif  /images/contents/glitch/001/claude-code-deepseek-v4-pro.avif  301
+/images/contents/deepseek-usage.avif  /images/contents/glitch/001/deepseek-usage.avif  301
+/images/contents/subscription_try.avif  /images/contents/glitch/002/subscription-try.avif  301
+/images/contents/0.99_TRY.avif  /images/contents/glitch/003/0-99-try.avif  301
+/images/contents/utada_TRY.webp  /images/contents/glitch/003/utada-try.webp  301
+/images/contents/rakuten-cash.avif  /images/contents/glitch/004/rakuten-cash.avif  301
+/images/contents/cosmo_4plan.avif  /images/contents/glitch/005/cosmo-4plan.avif  301
+/images/contents/pht01.png  /images/contents/glitch/005/pht01.png  301
+/images/contents/Harley-Davidson%20HIGASHI%20KURUME.webp  /images/contents/motovlog/harley-davidson-higashi-kurume.webp  301
+/images/contents/motovlog-dealer-liberty-review.jpg  /images/contents/motovlog/motovlog-dealer-liberty-review.jpg  301
+/images/contents/motovlog-liberty-canyon.jpg  /images/contents/motovlog/motovlog-liberty-canyon.jpg  301
+/images/contents/motovlog-logo.webp  /images/contents/motovlog/motovlog-logo.webp  301
+/images/contents/liberty-edition/liberty-edition_*  /images/contents/motovlog/liberty-edition/liberty-edition-:splat  301
+
+# 置き換え: 2026-10-02  手作りの OGP 画像を PNG から WebP に（最大 1.5MB → 0.2MB）。共有済みのカードが崩れないように 301 を張る。
+/images/ogp/ascii-roguelike-ogp.png  /images/ogp/ascii-roguelike-ogp.webp  301
+/images/ogp/dj-ogp.png  /images/ogp/dj-ogp.webp  301
+/images/ogp/glitch-ogp.png  /images/ogp/glitch-ogp.webp  301
+/images/ogp/magi-ogp.png  /images/ogp/magi-ogp.webp  301
+/images/ogp/masala-tetris-dx-ogp.png  /images/ogp/masala-tetris-dx-ogp.webp  301
+/images/ogp/masala-tetris-ogp.png  /images/ogp/masala-tetris-ogp.webp  301
+/images/ogp/omeme-tetris-ogp.png  /images/ogp/omeme-tetris-ogp.webp  301
+/images/ogp/reverse-recaptcha-ogp.png  /images/ogp/reverse-recaptcha-ogp.webp  301
+/images/ogp/safe-tools-ogp.png  /images/ogp/safe-tools-ogp.webp  301
+/images/ogp/st-games-ogp.png  /images/ogp/st-games-ogp.webp  301
+/images/ogp/thought-ogp.png  /images/ogp/thought-ogp.webp  301
+/images/ogp/job-ogp.png  /images/ogp/job-ogp.webp  301
+
+# 削除: 2026-10-02  使われていなかった think-favicon.png。thought ページの旧ファビコンなので、いまのものへ向ける
+# （ブックマークやホーム画面のアイコンが古い URL を覚えている）。ほかに消した未使用の画像は後継が無いので張らない。
+/images/favicons/think-favicon.png  /images/favicons/thought-favicon.png  301

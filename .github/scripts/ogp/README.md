@@ -46,7 +46,7 @@ node .github/scripts/ogp/generate-motovlog.js   # /motovlog/ の OGP
 ```
 
 カードの色・書体・グラデーションは `motovlog/index.html` のヒーローと同じ値を
-持ち、左肩のマークもページのナビと同じ `images/contents/motovlog-logo.webp` を
+持ち、左肩のマークもページのナビと同じ `images/contents/motovlog/motovlog-logo.webp` を
 読む。ページ側のデザインを変えたらスクリプトも合わせて直すこと。
 
 ## アクセントカラーはカテゴリで決まる

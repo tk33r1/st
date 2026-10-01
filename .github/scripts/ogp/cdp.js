@@ -28,6 +28,10 @@ function findChrome() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// WebP quality for every OGP card these scripts write (Page.captureScreenshot
+// takes 0-100). Kept here so the tool cards and the hand-built ones match.
+const WEBP_QUALITY = 92;
+
 // A crashed or wedged Chrome would otherwise leave a CDP call pending forever,
 // and the CI job would sit there until the 6h runner timeout.
 const CALL_TIMEOUT_MS = 30000;
@@ -152,4 +156,4 @@ async function evalJs(s, expression) {
   return r.result.value;
 }
 
-module.exports = { launch, connect, newPage, evalJs, findChrome, sleep };
+module.exports = { launch, connect, newPage, evalJs, findChrome, sleep, WEBP_QUALITY };
