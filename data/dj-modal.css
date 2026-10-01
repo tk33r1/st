@@ -16,6 +16,9 @@
   max-height: min(760px, calc(100dvh - 32px));
   padding: 0;
   overflow: hidden;
+  /* 縦並びは [open] に限らず常に持たせる。閉じる演出の間は display が flex のまま残り、
+     ここが [open] 側にあると横並びに戻って、見出しと本文が左右に割れて縦に伸びる。 */
+  flex-direction: column;
   border: 1px solid var(--dj-glass-line);
   border-radius: var(--dj-glass-radius);
   background:
@@ -49,7 +52,6 @@
 
 .dj-modal[open] {
   display: flex;
-  flex-direction: column;
   opacity: 1;
   scale: 1;
   translate: 0 0;
