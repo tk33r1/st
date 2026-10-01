@@ -5,12 +5,19 @@
     <link>https://tk.st/job/nitoridaily/</link>
     <description>ニトリの最新動向とSNS（X・TikTok）の反響を、毎朝8時にお届け。ヒット商品から生活者UX、店舗・SPA物流DXの最前線まで、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Thu, 01 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Thu, 01 Oct 2026 06:20:42 +0900</lastBuildDate>
+    <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Fri, 02 Oct 2026 06:53:41 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Nitori Daily generator</generator>
     <atom:link href="https://tk.st/job/nitoridaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月2日号：昨日のニトリニュース＆SNS話題まとめ</title>
+      <link>https://tk.st/job/nitoridaily/20261002/</link>
+      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20261002/</guid>
+      <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
+      <description>似鳥会長が直接指揮する月約1,000点の新商品開発が報じられ、商品投入の速度と開発体制が競争力の焦点に。 Nウォームの新柄・機能提案や、低価格ヘッドホンの評価記事から、価格だけでなく選ぶ楽しさや使用価値を磨く動きが見える。</description>
+    </item>
     <item>
       <title>2026年10月1日号：昨日のニトリニュース＆SNS話題まとめ</title>
       <link>https://tk.st/job/nitoridaily/20261001/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260917/</guid>
       <pubDate>Thu, 17 Sep 2026 08:00:00 +0900</pubDate>
       <description>ニトリが基幹システムをOCIへ移行し、夜間バッチ処理を6時間弱から約1時間半へ短縮。SPAの需給判断や店舗オペレーションを支えるデータ反映リードタイムの短縮が、実店舗とECの連動精度を左右する基盤整備として進む。 商品面ではニトリ×ちふれの初コラボなど異業種・消耗品領域へのPB拡大が進み、999円のネコ型ケーキスタンドや1合ずつ出る米びつなど低価格の造形雑貨・キッチン用品が支持を集める。島忠の「爆安挑戦セール」第8弾と合わせ、価格訴求と来店動機づくりが並走。</description>
-    </item>
-    <item>
-      <title>2026年9月16日号：昨日のニトリニュース＆SNS話題まとめ</title>
-      <link>https://tk.st/job/nitoridaily/20260916/</link>
-      <guid isPermaLink="true">https://tk.st/job/nitoridaily/20260916/</guid>
-      <pubDate>Wed, 16 Sep 2026 08:00:00 +0900</pubDate>
-      <description>9月15日の最大の論点は基幹系・需要予測の刷新。ニトリがオラクルを導入し需要予測処理を約4分の1に短縮したと報じられ、SPAの在庫・物流判断を高速化するDX投資が経営課題の中核に据わった。 AI×産学連携も始動。北海道大学と共同で「理想のインテリア」を数値化する研究に着手し、感性領域をデータ化して商品開発とレコメンドに接続する構えを見せた。</description>
     </item>
   </channel>
 </rss>
