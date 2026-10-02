@@ -123,6 +123,7 @@
   `/in`・`/tw`・`/ln_100y`・`/magi-app/android/` などの短縮 URL は Cloudflare のゾーン側のリダイレクトで、リポジトリにはない。
 - **Workers**: 手動デプロイ。wrangler は `workers/` に共通で入れてあるので、`cd workers` してから
   `npx wrangler deploy --config <name>/wrangler.toml`（ほかの場所で `npx` すると毎回ダウンロードが走る）。
+  手元に環境が無いときは、GitHub の Actions 画面から `deploy-worker.yml` を Worker を選んで実行する（下記）。
 - **シークレット**: `wrangler secret put <NAME> --config workers/<name>/wrangler.toml` で設定。
   リポジトリにコミットしない。`.dev.vars` も `.gitignore` 済み。
 - **D1 の初期化**: `npx wrangler d1 create <db>` → database_id を `wrangler.toml` に貼る →
@@ -144,6 +145,10 @@
     二重ポストの抑止を兼ねる。認証は OAuth 1.0a で、リポジトリ Secrets に
     `X_<MEDIA_ID 大文字>_CONSUMER_KEY` / `_CONSUMER_SECRET` / `_ACCESS_TOKEN` /
     `_ACCESS_TOKEN_SECRET` の4点（メディアごと）を置く。未設定なら警告だけ出して生成は通す。
+  - `deploy-worker.yml`（手動のみ）: 選んだ Worker を `wrangler deploy` で出す（`dry-run` ならバンドルの確認だけ）。
+    リポジトリ Secrets に `CLOUDFLARE_API_TOKEN`（テンプレート「Edit Cloudflare Workers」で作り、ゾーン tk.st の
+    Workers Routes の編集権限を含める）と `CLOUDFLARE_ACCOUNT_ID` を置く。Worker の secret は Cloudflare 側のまま使う。
+    Worker を足したら `options` にも足す。
   - `post-to-x.yml`（手動のみ）: 既存の号を X へポストし直す。再送・バックフィルと、
     `dry-run` での本文確認に使う（生成は走らない）。
   - `magi-context.yml`（push 時＋手動）: `.github/scripts/magi-context.py` が

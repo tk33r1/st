@@ -1,0 +1,70 @@
+name: Deploy Worker
+
+# Cloudflare Workers を GitHub の Actions 画面から手動でデプロイする（手元に wrangler の環境が無くても出せるように）。
+# push では動かさない（Worker は従来どおり、出すと決めたときだけ出す）。
+#
+# リポジトリ Secrets に次の2つを置く:
+#   CLOUDFLARE_API_TOKEN  … Cloudflare の API トークン（テンプレート「Edit Cloudflare Workers」で作る。ルートを持つ
+#                           Worker があるので、ゾーン tk.st の Workers Routes の編集権限も要る）
+#   CLOUDFLARE_ACCOUNT_ID … Cloudflare のアカウント ID
+# Worker の secret（IP_SALT など）は Cloudflare 側に入っているもののまま使われ、ここでは触らない。
+# dry-run は Secrets なしで動く（バンドルできるかだけ確かめる）。
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: 'デプロイする Worker（workers/ の下のフォルダ名）'
+        required: true
+        type: choice
+        options:
+          - dj-request
+          - dj-schedule
+          - dj-offer
+          - comments
+          - auth
+          - magi
+          - magi2
+          - games
+      dry-run:
+        description: 'バンドルできるかだけ確かめ、デプロイしない'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# 同じ Worker のデプロイを重ねない（後から押したほうを待たせる）
+concurrency:
+  group: deploy-worker-${{ inputs.worker }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # wrangler は全 Worker 共通で workers/package.json に入れてある
+    - name: Install wrangler
+      working-directory: workers
+      run: npm ci --no-audit --no-fund
+
+    - name: Deploy
+      working-directory: workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        WORKER: ${{ inputs.worker }}
+        DRY_RUN: ${{ inputs.dry-run }}
+      run: |
+        if [ "$DRY_RUN" = "true" ]; then
+          npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/bundle" --config "$WORKER/wrangler.toml"
+          exit 0
+        fi
+        if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+          echo "::error::リポジトリ Secrets に CLOUDFLARE_API_TOKEN と CLOUDFLARE_ACCOUNT_ID を登録してください"
+          exit 1
+        fi
+        npx wrangler deploy --config "$WORKER/wrangler.toml"
