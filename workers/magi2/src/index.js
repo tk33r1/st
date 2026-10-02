@@ -1,4 +1,4 @@
-import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_TEMPERATURE, PROVIDERS, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
+import { DEFAULTS, PERSONAS, PERSONA_CONTEXT, PERSONA_TEMPERATURE, PROVIDERS, SUGGESTER, SYNTHESIZER, SYNTH_BIAS, TITLER } from '../personas.js';
 
 const ALLOWED_ORIGINS = ['https://tk.st', 'https://www.tk.st'];
 // Native app shells (Capacitor/Ionic) and local dev all serve from a localhost
@@ -185,6 +185,36 @@ async function fetchTitle(env, lastContent, signal, log) {
   }
 }
 
+// 次の質問の予測（非クリティカル：失敗・時間切れでも null）。
+// 会話は1本の文字起こしにして渡す（チャットの形のまま渡すと、モデルが AI の続きとして答えてしまう）。
+// 1発言は末尾を残して切る：相談の1通目は DJ の文脈の前置きの後ろに本文があり、頭を残すと本文が消える。
+async function fetchSuggestion(env, convo, signal, log) {
+  try {
+    const clip = (t) => t.length > SUGGESTER.message_max_chars ? '…' + t.slice(-SUGGESTER.message_max_chars) : t;
+    const transcript = convo.slice(-SUGGESTER.history_messages).map((m) => {
+      const imgs = contentImages(m.content).length;
+      const text = clip(contentText(m.content).trim()) + (imgs ? ` [画像${imgs}枚]` : '');
+      return `${m.role === 'user' ? 'ユーザー' : 'AI'}: ${text}`;
+    }).join('\n');
+    const res = await callModel({
+      env, cfg: DEFAULTS.models.suggester, stream: false, signal, temperature: SUGGESTER.temperature,
+      messages: [{ role: 'system', content: SUGGESTER.system_prompt }, { role: 'user', content: `【会話】\n${transcript}` }],
+    });
+    if (!res.ok) { log('suggest_call', `HTTP ${res.status}`); return null; }
+    const raw = ((await res.json()).choices?.[0]?.message?.content || '').trim();
+    // 1行目だけを使い、話者の名乗り・囲みの引用符を落とす
+    const line = (raw.split(/\r?\n/).find(l => l.trim()) || '')
+      .replace(/^\s*(?:ユーザー|user)\s*[:：]\s*/i, '')
+      .replace(/^[「『"'“]+|[」』"'”]+$/g, '')
+      .trim().slice(0, SUGGESTER.max_chars);
+    log('suggest_call', `len=${line.length}`);
+    return line || null;
+  } catch (e) {
+    log('suggest_call', 'failed', e && e.message);
+    return null;
+  }
+}
+
 // --- 人格カード：サイト本文から自動生成した JSON を取り、人格の system プロンプトに足す ---
 // isolate 内に保持する。取得できないときは直近のカード、それも無ければカード無しで動く
 // （＝従来どおり固定プロンプトのみ）。カードが無くても会話は止めない。
@@ -349,10 +379,12 @@ export default {
     // 2) bad_request: body 検証
     let messages;
     let theme = null; // 'light' | 'dark'：統合の揺らぎに使用
+    let wantSuggest = false; // 統合の答えの後に、次の質問の予測を送るか（頼んだ画面だけ。呼び出し1回ぶん増える）
     try {
       const body = await request.json();
       messages = body && body.messages;
       theme = (body && (body.theme === 'light' || body.theme === 'dark')) ? body.theme : null;
+      wantSuggest = !!(body && body.suggest === true);
       if (!Array.isArray(messages) || messages.length === 0) {
         throw stageError('bad_request', 'invalid_messages', 'messages は1件以上の配列が必要です', { retryable: false });
       }
@@ -512,6 +544,7 @@ export default {
           const reader = synthRes.body.getReader();
           const dec = new TextDecoder();
           let buf = '';
+          let answer = ''; // 次の質問の予測に渡すため、中継した本文をためておく
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -526,12 +559,19 @@ export default {
               try {
                 const j = JSON.parse(payload);
                 const delta = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
-                if (delta) send('integrated', { delta });
+                if (delta) { answer += delta; send('integrated', { delta }); }
               } catch (_) { /* 部分行は次ループで再構成 */ }
             }
           }
           synthTimer.clear();
           log('synthesizer_call', 'ok');
+          // 次の質問の予測：答え全体を読んでから作るので、答えの後に1回だけ。失敗しても会話は終える
+          if (wantSuggest && answer.trim()) {
+            const st = withTimeout(DEFAULTS.timeouts.suggest_ms);
+            const text = await fetchSuggestion(env, [...messages, { role: 'assistant', content: answer }], st.signal, log);
+            st.clear();
+            if (text) send('suggest', { text });
+          }
           // 並列生成したタイトルが未送出なら送出を待つ（通常は既に完了）
           if (titlePromise) { try { await titlePromise; } catch (_) {} }
           send('done', { request_id: requestId });

@@ -2128,6 +2128,42 @@
 
     #agent-input:disabled { opacity: 0.5 }
 
+    /* 次の質問の予測：空の入力欄に薄く重ね、右の › で入れる。文字は入力欄と同じ位置・大きさに揃える */
+    #agent-input-wrap { position: relative; min-width: 0; display: flex }
+    #agent-input-wrap #agent-input { width: 100%; min-width: 0 }
+    #agent-input.has-suggest::placeholder { color: transparent }
+    #agent-suggest {
+      position: absolute;
+      inset: 1px 1px 1px calc(0.6rem + 1px);
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+      pointer-events: none;
+      font-size: 0.875rem;
+    }
+    #agent-suggest[hidden] { display: none }
+    #agent-suggest-text {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: var(--secondary-color);
+      opacity: 0.55;
+    }
+    #agent-suggest-use {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 4px;
+      color: var(--primary-color);
+      pointer-events: auto;
+      transition: background-color var(--duration-fast);
+    }
+    #agent-suggest-use:hover, #agent-suggest-use:focus-visible { background: var(--primary-bg) }
+
     /* --- 画像添付（マルチモーダル入力）--- */
     #agent-attach {
       display: flex;
@@ -3569,9 +3605,16 @@
             tabindex="-1">
           <button id="agent-attach" title="Attach an image" data-ja-title="画像を添付" data-ja-aria="画像を添付"
             aria-label="Attach an image"><svg aria-hidden="true" width="16" height="16" stroke-width="1.8"><use href="#ic-paperclip" /></svg></button>
-          <input type="text" id="agent-input" class="cmd-input flex-1 text-sm" autocomplete="off" spellcheck="false"
-            maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
-            aria-label="Message MAGI">
+          <div id="agent-input-wrap" class="flex-1">
+            <input type="text" id="agent-input" class="cmd-input text-sm" autocomplete="off" spellcheck="false"
+              maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
+              aria-label="Message MAGI">
+            <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
+            <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use"
+                title="Use this question" data-ja-title="この質問を入れる"><svg aria-hidden="true" width="14" height="14"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                  stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
+          </div>
           <button id="agent-send" class="text-primary hover:opacity-70" title="Send" data-ja-title="送信"
             data-ja-aria="送信" aria-label="Send"><svg aria-hidden="true" width="18" height="18" stroke-width="1.8"><use href="#ic-send" /></svg></button>
         </div>
@@ -7261,8 +7304,35 @@
     const saveCurrentHistory = () => safeStore('magi_current_history', agentHistory);
     // Nothing asked yet: the splash is the only thing in the dock.
     const splashOnly = () => agentLog.children.length === 1 && agentLog.firstElementChild.classList.contains('agent-splash');
+    // 次の質問の予測（Worker の suggest イベント）。入力欄が空で送れる状態のときだけ薄く重ね、
+    // › で入力欄に入れる（送信はしない）。会話を切り替える・送る・使うと消える。
+    const agentSuggestEl = document.getElementById('agent-suggest');
+    const agentSuggestText = document.getElementById('agent-suggest-text');
+    const agentSuggestUse = document.getElementById('agent-suggest-use');
+    let agentSuggestion = '';
+    function renderAgentSuggest() {
+      const show = !!agentSuggestion && !agentInput.value && !agentInput.disabled;
+      agentSuggestEl.hidden = !show;
+      agentInput.classList.toggle('has-suggest', show);
+      if (!show) return;
+      agentSuggestText.textContent = agentSuggestion;
+      agentSuggestUse.setAttribute('aria-label', tr(`Use the suggested question: ${agentSuggestion}`, `予測した質問を入れる：${agentSuggestion}`));
+    }
+    function setAgentSuggestion(text) { agentSuggestion = (text || '').trim(); renderAgentSuggest(); }
+    agentSuggestUse.addEventListener('click', () => {
+      if (!agentSuggestion || agentInput.disabled) return;
+      agentInput.value = agentSuggestion.slice(0, 1000);
+      setAgentSuggestion('');
+      agentInput.focus({ preventScroll: true });
+      agentInput.setSelectionRange(agentInput.value.length, agentInput.value.length);
+    });
+    // 打ち始めたら隠し、全部消したらまた出す（予測は直前の答えに対するものなので、残しておいてよい）
+    agentInput.addEventListener('input', renderAgentSuggest);
     // The text box, send and attach buttons are always switched on and off together.
-    const setAgentInputEnabled = (on) => { agentInput.disabled = agentSendBtn.disabled = attachBtn.disabled = !on; };
+    const setAgentInputEnabled = (on) => {
+      agentInput.disabled = agentSendBtn.disabled = attachBtn.disabled = !on;
+      renderAgentSuggest();
+    };
 
     // チャットボックスのタイトル（既定「MAGI」）を要約タイトルで差し替え／復元する
     function setAgentTitle(text) {
@@ -7314,6 +7384,8 @@
     function dropAgentRequest() {
       agentGen++;
       if (agentCtrl) { agentCtrl.abort(); agentCtrl = null; }
+      // 予測は直前の会話に対するものなので、会話が替わったら捨てる
+      setAgentSuggestion('');
     }
     function resetAgent(keepOpen = false) {
       dropAgentRequest();
@@ -7516,6 +7588,7 @@
       const text = agentInput.value.trim().slice(0, 1000);
       const atts = attachments.slice();
       if (!text && !atts.length) return;
+      setAgentSuggestion('');
       agentInput.value = '';
       attachments = []; renderAttachTray();
       // 送信は長辺1024の画像、履歴に残すのはサムネ。原寸を履歴に持つと
@@ -7539,7 +7612,7 @@
       saveCurrentHistory();
 
       agentBusy = true; setAgentInputEnabled(false);
-      let reply = '', errored = false, timedOut = false;
+      let reply = '', errored = false, timedOut = false, suggestion = '';
       const debateData = Object.fromEntries(AGENT_PERSONAS.map(p => [p.codename, { round1: '…', round2: '…' }]));
 
       // Abort only the connection / initial-response phase (30s). Once the stream
@@ -7555,7 +7628,7 @@
         const outbound = agentHistory.slice(-AGENT_MAX_HISTORY);
         // 直近の発言だけ送信用の解像度に差し替える（過去ターンはサムネのままで十分）
         if (atts.length) outbound[outbound.length - 1] = { role: 'user', content: sendContent };
-        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme }), signal: ctrl.signal });
+        const res = await fetch(AGENT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: outbound, theme, suggest: true }), signal: ctrl.signal });
         clearTimeout(connectTimer);
         if (!res.ok || !res.body) {
           const raw = await res.text().catch(() => '');
@@ -7577,6 +7650,8 @@
             },
             integrated: (d) => { reply += d.delta || ''; replyBody.textContent = reply; agentScroll(); },
             error: (d) => { errored = true; turn.querySelectorAll('.persona-card.thinking').forEach(c => c.classList.remove('thinking')); replyEl.remove(); renderAgentError(d); },
+            // 次の質問の予測。答えが最後まで届いたときだけ、下で入力欄に出す
+            suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text : ''; },
             done: () => { },
           });
         }
@@ -7609,6 +7684,7 @@
         saveCurrentHistory();
         updateAgentActionButtons();
         syncCurrentToSaved();
+        setAgentSuggestion(suggestion);
       } else if (!turn.isConnected) {
         // The whole turn was discarded (HTTP error / network / timeout), so the question it
         // belonged to has to come back out of agentHistory too. Leaving it made the *next*

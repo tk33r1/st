@@ -23,7 +23,8 @@ export const DEFAULTS = {
   history_max_messages: 12, // サーバ側の防御的 trim
   daily_limit: 60,  // IP×日次の上限（メッセージ数）
   // 画像付きは前処理（デコード・タイル化）のぶん遅くなるので人格側の猶予を広げる
-  timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000 },
+  // suggest_ms は次の質問の予測の上限。統合の答えが出た後に待つぶん入力欄の再開が遅れるので短く切る
+  timeouts: { persona_ms: 30000, persona_vision_ms: 45000, synthesizer_ms: 60000, suggest_ms: 4000 },
   // マルチモーダル入力（画像）の受け入れ条件。data: URL のみ許可する
   // （外部 URL を許すと Worker 経由の任意フェッチになるため受け付けない）。
   vision: {
@@ -53,6 +54,9 @@ export const DEFAULTS = {
     // タイトル要約：会話の初回ユーザー発言のみに使用。推論を無効化しないと
     // max_tokens を推論が食い潰して content が空になるため 'none' 必須。
     titler: { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_tokens: 48 },
+    // 次の質問の予測：統合の答えが出た後に1回だけ（リクエストに suggest:true がある画面だけ）。
+    // 入力欄に薄く出す1文なので、軽量モデル・推論なし・短文で十分
+    suggester: { provider: 'openai', model: OPENAI_LUNA_MODEL, reasoning_effort: 'none', max_tokens: 80 },
   },
 };
 
@@ -153,5 +157,20 @@ export const TITLER = {
     '- 名詞句・体言止めで簡潔に。語尾や助詞は最小限。',
     '- 句読点・記号・引用符・絵文字・改行を含めない。',
     '- タイトルだけを出力し、前置きや説明を一切付けない。',
+  ].join('\n'),
+};
+
+// 統合の答えを読んだ利用者が、次に送りそうな質問を1つ予測する（入力欄に薄く出し、タップで入れる）。
+export const SUGGESTER = {
+  temperature: 0.7,         // 突飛な候補を避けつつ、毎回同じ型にならない程度に揺らす
+  history_messages: 6,      // 予測に使う直近の発言数（直前の答えを含む）
+  message_max_chars: 600,   // 1発言あたり。末尾を残す（相談の1通目は、前置きの後ろに本文があるため）
+  max_chars: 100,           // 出力の上限（念のための切り詰め）
+  system_prompt: [
+    'あなたは、AI との会話を見て、ユーザーが次に送りそうなメッセージを1つだけ予測する。',
+    '- 直前の AI の答えを読んだユーザーが、自然に続けて聞きそうなこと（深掘り・具体化・次の一歩）を書く。',
+    '- ユーザー本人が入力欄に打つ言葉として書く。AI の立場で書かない。ユーザーの入力言語と口調に合わせる。',
+    '- 日本語なら40字以内、ほかの言語なら12語以内の1文。',
+    '- 引用符・番号・前置き・説明を付けず、予測した文だけを出力する。',
   ].join('\n'),
 };

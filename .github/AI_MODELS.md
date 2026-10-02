@@ -44,7 +44,7 @@ PR本文にも同じ手順を出す。
 | --- | --- | --- |
 | OpenAI | 推論 medium（temperature なし）・JSON出力 | 日刊生成（一次プロバイダー） |
 | OpenAI | 非推論・temperature 0.2・JSON出力 | MAGIの人格カード、ゲームAPI |
-| OpenAI | 非推論・temperature 1.3・top_p・画像入力（data URL） | magi2 の Strategist（揺らぎの最大温度、画像付きの質問） |
+| OpenAI | 非推論・temperature 1.3・top_p・画像入力（data URL） | magi2 の Strategist（揺らぎの最大温度、画像付きの質問）。同じ呼び方の magi2 のタイトル要約と次の質問の予測もここで代表させる |
 | OpenAI | 推論 high・ストリーミング | magi2 の統合（上位モデルでは組織認証を求められることがある） |
 | OpenAI | Responses API・Web 検索の強制（`tool_choice: required`）・推論 high・strict な JSON スキーマ | DJ ブースの曲の背景カード（`workers/dj-request`）。検索が実行されたことまで確かめる |
 | DeepSeek | temperature 0.2・JSON出力 | 日刊生成（OpenAI が失敗したときのフォールバック） |

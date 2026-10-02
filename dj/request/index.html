@@ -1263,6 +1263,23 @@
     .composer .cfield { position: relative; flex: 1; min-width: 0; display: flex; }
     .composer .clear { top: 7px; transform: none; }
     .composer .cfield.filled .clear { display: flex; }
+    /* 次の相談の予測：空の入力欄の1行目に薄く重ね、右の › で入れる。文字は入力欄の余白に揃える */
+    .composer textarea.has-suggest::placeholder { color: transparent; }
+    .csuggest {
+      position: absolute; left: 1px; right: 1px; top: 1px; height: 46px;
+      padding-left: 13px; display: flex; align-items: center; gap: 2px; pointer-events: none;
+      font-size: 16px; font-family: var(--f-body);
+    }
+    .csuggest[hidden] { display: none; }
+    .csuggest .cst {
+      min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+      color: rgba(154, 154, 160, 0.6);
+    }
+    .csuggest .csgo {
+      flex-shrink: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      color: var(--heart-primary); pointer-events: auto;
+    }
+    .csuggest .csgo:hover, .csuggest .csgo:focus-visible { color: var(--heart-secondary); }
 
     .composer > button {
       flex-shrink: 0; height: 48px; padding: 0 16px;
@@ -1521,6 +1538,11 @@
           <div class="cfield" id="chatField">
             <textarea id="chatInput" maxlength="300" rows="1" placeholder="どんな曲が聴きたい？"></textarea>
             <button class="clear" id="chatClear" type="button" aria-label="入力を消す">✕</button>
+            <!-- 次の相談の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（MAGI の suggest イベント） -->
+            <div class="csuggest" id="chatSuggest" hidden><span class="cst" id="chatSuggestText"></span><button type="button"
+                class="csgo" id="chatSuggestUse" title="この相談を入れる"><svg aria-hidden="true" width="16" height="16"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                  stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg></button></div>
           </div>
           <button id="chatSend" disabled>送信</button>
         </div>
@@ -2923,6 +2945,8 @@
     ];
     const CHAT_MAX = 12;          // Worker 側も同数で trim される
     let chatBusy = false;
+    // MAGI が予測した次の相談。空の入力欄に薄く出し、› で入れる（送信・会話の切り替え・使用で消す）
+    let chatSuggestion = '';
 
     /* イベントの状況を前置きにする。取れなくても相談自体は続けられる。
        送るたびに作り直す（相談の途中や、履歴から開き直したあとにかかった曲も「かけた曲」に入れるため） */
@@ -3109,13 +3133,13 @@
       };
       watch();
       const bodyEl = turn.querySelector('.ab');
-      let reply = '', failure = null;
+      let reply = '', failure = null, suggestion = '';
 
       try {
         const res = await fetch(MAGI_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: messagesForMagi(context, content), theme: 'dark' }),
+          body: JSON.stringify({ messages: messagesForMagi(context, content), theme: 'dark', suggest: true }),
           signal: ctrl.signal,
         });
         watch();
@@ -3142,6 +3166,8 @@
               chatScroll();
             },
             integrated: (d) => { reply += d.delta || ''; bodyEl.textContent = reply; chatScroll(); },
+            // 次の相談の予測。回答が最後まで届いたときだけ使う（下の成功の分岐）
+            suggest: (d) => { suggestion = (d && typeof d.text === 'string') ? d.text.trim() : ''; },
             error: (d) => { failure = (d && d.message) || '相談の途中でエラーが起きました。'; },
           }, watch);
         }
@@ -3155,6 +3181,7 @@
       }
 
       if (reply && !failure) {
+        chatSuggestion = suggestion;
         return reply;
       }
       turn.remove();
@@ -3170,6 +3197,7 @@
       if (text.length < 2) return;
 
       chatBusy = true;
+      chatSuggestion = '';
       $('#chatErr').hidden = true;
       DJModal.close($('#aiInfoDlg'));
       setValue($('#chatInput'), '');   // 高さと送信ボタンも input で揃う
@@ -3332,6 +3360,7 @@
     // 画面の会話を片付ける（保存済みの履歴には触らない）
     function clearChat() {
       conv = null;
+      chatSuggestion = '';
       $('#chatLog').replaceChildren();
       $('#chatErr').hidden = true;
       renderConsultUI();
@@ -3364,6 +3393,14 @@
       input.disabled = chatBusy || consultLocked;
       input.placeholder = consultLocked ? 'いまは相談できません' : 'どんな曲が聴きたい？';
       $('#chatField').classList.toggle('filled', !!input.value && !input.disabled);
+      // 次の相談の予測は、空の入力欄に送れる状態のときだけ出す
+      const suggest = !!chatSuggestion && !input.value && !input.disabled && !histOpen;
+      $('#chatSuggest').hidden = !suggest;
+      input.classList.toggle('has-suggest', suggest);
+      if (suggest) {
+        $('#chatSuggestText').textContent = chatSuggestion;
+        $('#chatSuggestUse').setAttribute('aria-label', '予測した相談を入れる：' + chatSuggestion);
+      }
       $('#chatSend').disabled = chatBusy || consultLocked || input.value.trim().length < 2;
 
       $('#chatLock').hidden = !consultLocked;
@@ -3450,6 +3487,16 @@
     });
     $('#chatSend').addEventListener('click', () => sendConsult($('#chatInput').value));
     $('#chatClear').addEventListener('click', () => { setValue($('#chatInput'), ''); $('#chatInput').focus(); });
+    // 予測を入れるだけで送らない（直してから送れるように）。入れたら予測は消す
+    $('#chatSuggestUse').addEventListener('click', () => {
+      const input = $('#chatInput');
+      if (!chatSuggestion || input.disabled) return;
+      const text = chatSuggestion.slice(0, 300);
+      chatSuggestion = '';
+      setValue(input, text);
+      input.focus();
+      input.setSelectionRange(text.length, text.length);
+    });
 
     /* 例文。押すとそのまま相談として送る。MAGI にはこの回のかけた曲・受付済みの曲も渡しているので、
        「流れで」はそれを踏まえた相談になる */
