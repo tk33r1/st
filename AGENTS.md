@@ -19,7 +19,8 @@
   Cloudflare Workers + D1 (SQLite)。すべて `src/index.js` 単一ファイル構成で、
   `export default { async fetch(request, env) {...} }` の標準形。
 - **MAGI アプリ** (`magi-app/`): MAGI チャットのモバイル版。PWA + Capacitor で
-  iOS/Android にパッケージングする唯一の npm 管理サブプロジェクト。
+  iOS/Android にパッケージングする npm 管理のサブプロジェクト（npm を使うのはほかに
+  `game/reverse-recaptcha/` と `workers/wrangler/` だけ。「ビルドとテスト」参照）。
 - **GitHub Actions** (`.github/`): サイトマップ生成とガソリン価格 JSON の週次更新。
   `.github/scripts/ogp/` は CI ではなく手元で叩く OGP カード生成（`README.md` 参照）。
 
@@ -56,7 +57,8 @@
 7. 画像は `images/` に置く（ページの横には置かない。OGP やファビコンは外部から絶対 URL で参照されるため、1か所にまとめる）。
    ページ内の画像は `images/contents/<区画>/`。ファイル名は小文字のハイフン区切りにし、空白・大文字・`_` を使わない
    （空白は URL で `%20` になり、大文字小文字の違いは環境によって別のファイルになる）。高解像度版は `@2x` を付ける。
-   手で作る OGP 画像は WebP にする（PNG だと 1MB を超えることがある）
+   手で作る OGP 画像は WebP にする（PNG だと 1MB を超えることがある）。
+   例外は `magi-app/www/` の PWA アイコン（`icon-*.png`）。Capacitor はアプリに `www/` しか同梱しないので、出荷物の中に置く
 
 どこに置いても公開される（公開しない置き場はない）。公開した URL は外部から直リンクされうるので、
 動かしたら必ず `_redirects` に 301 を足す。
@@ -94,7 +96,11 @@
   ```
 - Worker のローカル実行: `npx wrangler dev --local`（`workers/dj-schedule/wrangler.dev.toml`
   はローカル D1 用の設定例。同 README.md「ローカル確認」節を参照）。
-- `magi-app/` のみ npm あり: `npm run serve`（PWA 確認）、`npm run sync`（Capacitor 同期）。
+- npm を使うのは次の3つだけ:
+  - `magi-app/`: `npm run serve`（PWA 確認）、`npm run sync`（Capacitor 同期）。
+  - `game/reverse-recaptcha/`: `npm install` → `npm run build`（本番のビルドは Cloudflare Pages 側）。
+    `package-lock.json` は `package.json` とずれているので `npm ci` は通らない。
+  - `workers/wrangler/`: wrangler だけ。
 
 ## デプロイ
 
@@ -275,5 +281,7 @@
 - `.gitignore`: `node_modules/`, `.wrangler/`, `.dev.vars`, `*.apk`（APK は GitHub Releases で配布）、
   デバッグ用ダンプ（`dom.txt`, `err.txt`, `*.log`）、`.claude/settings.local.json`（Claude Code の手元の許可リスト。
   リポジトリ直下はサイトとして公開されるので、手元のパスやコマンド履歴を載せない）。
+- `.claude/settings.json`（共有する Claude Code の設定）もリポジトリごと公開されている（GitHub もサイトも）。
+  手元の絶対パス（`c:\dev\…`・ユーザー名入りのパス）を含む許可や `additionalDirectories` は `.claude/settings.local.json` に置く。
 - ルート `index.html` は巨大かつ高頻度で編集される。変更後は上記の script 抽出＋
   `node --check` で構文確認するのがこのリポジトリの習慣。

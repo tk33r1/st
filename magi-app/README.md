@@ -58,7 +58,8 @@ npm run open:ios     # or: npm run open:android  → build & run from the IDE
   generator would write unused `icons/*.webp` (PNG data despite the name) and a
   stray `www/manifest.json` that the app never loads. `icon-maskable-512.png` is
   `icon-512.png` flattened onto `#0c0c0c` (the artwork already sits inside the
-  maskable safe zone): `convert icon-512.png -background '#0c0c0c' -alpha remove -alpha off icon-maskable-512.png`.
+  maskable safe zone): `magick icon-512.png -background '#0c0c0c' -alpha remove -alpha off icon-maskable-512.png`
+  (ImageMagick 7; with ImageMagick 6 use `convert` — but not on Windows, where `convert` is a system tool).
 
 ## Backend CORS
 

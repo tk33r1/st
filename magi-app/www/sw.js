@@ -1,16 +1,18 @@
 /* MAGI PWA service worker — cache the app shell only.
  * API calls (/magi2/*) are always network: never cache streamed responses. */
 var CACHE = 'magi-shell-v8';
-// Core files that must exist. Icons are cached opportunistically (they may not be
-// generated yet) so a missing icon never fails the whole install.
-var CORE = ['./', './index.html', './app.js', './manifest.webmanifest'];
-var OPTIONAL = ['./icon-192.png', './icon-512.png'];
+// Shell files, icons included (they are committed in www/).
+var CORE = [
+  './', './index.html', './app.js', './manifest.webmanifest',
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png'
+];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) {
-    // Cache optional assets individually; ignore any that 404.
-    OPTIONAL.forEach(function (u) { c.add(u).catch(function () {}); });
-    return c.addAll(CORE);
+    // Bypass the HTTP cache (the site sends max-age=14400): otherwise a new
+    // version can re-cache stale copies, such as the HTML the host returned
+    // for icons before they existed.
+    return c.addAll(CORE.map(function (u) { return new Request(u, { cache: 'reload' }); }));
   }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener('activate', function (e) {
