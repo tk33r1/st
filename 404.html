@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- Ahrefs -->
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="HKe6iphbuiskJsOdfXIOog" async></script>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-59NWV9XK');</script>
+  <!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#f3f4f6">
+  <title>404 Not Found | tk.st</title>
+  <!-- Cloudflare Pages は存在しないパスすべてにこのページを 404 で返す（どの深さでも同じファイル）。
+       相対パスは表示中の URL を基準に解決されて壊れるので、リンクと画像はルートからのパスで書く。 -->
+  <link rel="icon" href="/images/favicons/st-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/images/favicons/st-favicon.png">
+  <style>
+    /* 色はトップページのライトテーマと同じ値 */
+    :root {
+      --bg-color: #f3f4f6;
+      --surface-color: #ffffff;
+      --text-color: #1f2937;
+      --primary-color: #15803d;
+      --primary-bg: #dcfce7;
+      --secondary-color: #4b5563;
+      --border-color: #d1d5db;
+      --error-color: #b91c1c;
+    }
+    *, ::before, ::after { box-sizing: border-box; }
+    html { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.7;
+    }
+    main {
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .bar {
+      display: flex;
+      gap: 6px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--border-color); }
+    .term { padding: 20px 20px 24px; font-size: 14px; }
+    .term p { margin: 0; overflow-wrap: anywhere; }
+    .prompt { color: var(--primary-color); }
+    .err { color: var(--error-color); }
+    h1 { margin: 20px 0 4px; font-size: 20px; font-weight: 700; }
+    .term .note { color: var(--secondary-color); margin: 0 0 20px; }
+    ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+    a {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    a:hover, a:focus-visible { background: var(--primary-bg); border-color: var(--primary-color); }
+    .cursor { display: inline-block; width: 0.6em; height: 1.1em; vertical-align: text-bottom; background: var(--primary-color); animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  </style>
+</head>
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59NWV9XK"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  <main>
+    <div class="bar" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="term">
+      <p><span class="prompt">guest@tk.st:~$</span> cd <span id="path">このページ</span></p>
+      <p class="err">cd: No such file or directory</p>
+      <h1>404 Not Found</h1>
+      <p class="note">お探しのページは見つかりませんでした。移動したか、URL が間違っている可能性があります。</p>
+      <ul>
+        <li><a href="/">cd ~</a></li>
+        <li><a href="/tools/">tools/</a></li>
+        <li><a href="/game/">game/</a></li>
+        <li><a href="/glitch/">glitch/</a></li>
+      </ul>
+      <p style="margin-top:20px"><span class="prompt">guest@tk.st:~$</span> <span class="cursor" aria-hidden="true"></span></p>
+    </div>
+  </main>
+  <script>
+    // 要求されたパスを表示する。URL 由来の値なので textContent で入れる。
+    (function () {
+      var p = document.getElementById('path');
+      try { p.textContent = decodeURIComponent(location.pathname); } catch (e) { p.textContent = location.pathname; }
+    })();
+  </script>
+</body>
+</html>

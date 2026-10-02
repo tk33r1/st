@@ -124,3 +124,8 @@
 # 192/512 以外のサイズは、アプリが読まない www/manifest.json（同時に削除）にだけ載っていた未使用品なので消した（後継が無いので張らない）。
 /magi-app/icons/icon-192.webp  /magi-app/www/icon-192.png  301
 /magi-app/icons/icon-512.webp  /magi-app/www/icon-512.png  301
+
+# 2026-10-02  404.html を置いたので、存在しないパスはトップページではなく 404 になる。
+# ascii-roguelike のクリア報酬ボタンが指すこの URL はページが無く、これまでトップページが出ていた。
+# 動きを変えないよう明示的にトップへ送る（行き先を後で変えられるよう 302）。
+/bitcoinyen/certification  /  302

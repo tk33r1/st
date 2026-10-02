@@ -98,15 +98,18 @@
   はローカル D1 用の設定例。同 README.md「ローカル確認」節を参照）。
 - npm を使うのは次の3つだけ:
   - `magi-app/`: `npm run serve`（PWA 確認）、`npm run sync`（Capacitor 同期）。
-  - `game/reverse-recaptcha/`: `npm install` → `npm run build`（本番のビルドは Cloudflare Pages 側）。
-    `package-lock.json` は `package.json` とずれているので `npm ci` は通らない。
+  - `game/reverse-recaptcha/`: `npm ci` → `npm run build`（本番のビルドは Cloudflare Pages 側）。
+    依存を変えたら `npm install` で `package-lock.json` も更新してコミットする（ずれると `npm ci` が通らない）。
   - `workers/wrangler/`: wrangler だけ。
 
 ## デプロイ
 
 - **静的サイト**: `main` への push で Cloudflare 側に反映される前提（リポジトリ内に
   Pages 設定ファイルはない。`_headers` は未使用、`_redirects` はルートに置いて
-  旧 URL の 301 リダイレクトのみ定義している）。
+  旧 URL のリダイレクトだけを定義している）。
+  存在しないパスにはルートの `404.html` が 404 で返る（置く前は Pages がトップページを 200 で返していた）。
+  このページはどの深さのパスでも同じファイルが出るので、中のリンク・画像はルートからのパス（`/…`）で書く。
+  `/in`・`/tw`・`/ln_100y`・`/magi-app/android/` などの短縮 URL は Cloudflare のゾーン側のリダイレクトで、リポジトリにはない。
 - **Workers**: 手動デプロイ。各ディレクトリで `npx wrangler deploy`
   （ルートから `npx wrangler deploy --config workers/<name>/wrangler.toml` でも可）。
 - **シークレット**: `wrangler secret put <NAME> --config workers/<name>/wrangler.toml` で設定。
