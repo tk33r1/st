@@ -5,12 +5,19 @@
     <link>https://tk.st/job/retailtechdaily/</link>
     <description>国内外のリテールテック・流通DXの最新情報を、毎朝8時にお届け。スマートカートやリテールメディアなどの先端事例を、AIの解説付きで配信します。</description>
     <language>ja</language>
-    <pubDate>Fri, 02 Oct 2026 08:00:00 +0900</pubDate>
-    <lastBuildDate>Fri, 02 Oct 2026 06:33:27 +0900</lastBuildDate>
+    <pubDate>Sat, 03 Oct 2026 08:00:00 +0900</pubDate>
+    <lastBuildDate>Sat, 03 Oct 2026 06:08:57 +0900</lastBuildDate>
     <ttl>720</ttl>
     <generator>Retail Tech Daily generator</generator>
     <atom:link href="https://tk.st/job/retailtechdaily/rss.xml" rel="self" type="application/rss+xml"/>
     <atom:link href="https://pubsubhubbub.appspot.com/" rel="hub"/>
+    <item>
+      <title>2026年10月3日号：昨日のリテールテック＆流通DXまとめ</title>
+      <link>https://tk.st/job/retailtechdaily/20261003/</link>
+      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20261003/</guid>
+      <pubDate>Sat, 03 Oct 2026 08:00:00 +0900</pubDate>
+      <description>博報堂のAaaSが7社のリテールメディア事業者と連携し、認知から購買までを横断する統合プランニングへ。媒体間連携と効果検証の仕組みづくりが、広告主の投資判断を左右する。 セルフレジの硬貨投入や自治体窓口のセミセルフレジなど、セルフ決済の運用設計が注目点に。省人化だけでなく、利用者の使いやすさと機器負荷を両立する必要がある。</description>
+    </item>
     <item>
       <title>2026年10月2日号：昨日のリテールテック＆流通DXまとめ</title>
       <link>https://tk.st/job/retailtechdaily/20261002/</link>
@@ -108,13 +115,6 @@
       <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260919/</guid>
       <pubDate>Sat, 19 Sep 2026 08:00:00 +0900</pubDate>
       <description>コンビニのレジ刷新が本格化。ファミリーマートが全国約1万6500店のPOSを一新し、レジ業務を1日あたり約2割削減する方針を示した。セルフレジが前提となった今、決済端末の更新は店舗オペレーションと人材配置の再設計へと意味を変えている。 AIの業務適用が「対話」から「異常検知と施策提案」へ進展。NECは物流・在庫の異常を察知し7つの専門エージェントが解決案を示すSCMソリューションを披露、住友電装も需要予測から物流遅延検知までの一気通貫AI連携構想を打ち出した。</description>
-    </item>
-    <item>
-      <title>2026年9月18日号：昨日のリテールテック＆流通DXまとめ</title>
-      <link>https://tk.st/job/retailtechdaily/20260918/</link>
-      <guid isPermaLink="true">https://tk.st/job/retailtechdaily/20260918/</guid>
-      <pubDate>Fri, 18 Sep 2026 08:00:00 +0900</pubDate>
-      <description>AI需要予測と店頭インフラの高度化が加速。フォーティエンスの消費財向けAI需要予測サービス開始、イシダの電子棚札急成長など、在庫・補充・価格変更をデータで自動化する動きが同時多発した。 セルフレジが生活者の関心の中心に。郵便局のセルフレジ対応開始やユニクロのRFID一括会計の仕組みとリスクが話題を集め、利便性と読み取り精度・不正対策の両立が改めて問われている。</description>
     </item>
   </channel>
 </rss>
