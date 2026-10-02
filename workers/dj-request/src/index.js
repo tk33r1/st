@@ -61,9 +61,9 @@ const RATE_MAX        = 6;    // 1つの端末から投稿できる件数
 const RATE_KEEP_MIN   = 60;   // 元帳をこの分数だけ残す（端末の鍵を持ち続けない）
 // IP ごとの上限（会場の Wi-Fi では全員で分け合う）。どちらも RATE_WINDOW_MIN あたり
 const RATE_IP_MAX     = 30;   // 端末の鍵を持たない投稿
-const LIKE_IP_MAX     = 120;  // いいね（取り消しは数えない）
+const LIKE_IP_MAX     = 120;  // いいね（取り消しと押し直しは数えない）
 const BOARD_WAITING   = 10;   // 公開一覧に出す「まだかかっていない曲」の件数（自分の曲は別に足す）
-const BOARD_MINE_MAX  = 30;   // 「自分の曲」として受け付ける曲 ID の数
+const BOARD_MINE_MAX  = 30;   // 「自分の曲」として受け付ける曲 ID の数（/board の mineMax でページにも知らせる）
 const PAST_EVENTS     = 20;   // 「過去のイベント」に並べる回の数
 
 // message は来場者ページの入力欄（maxlength）と同じ値にする
@@ -133,9 +133,10 @@ function dedupeKey({ trackId, artist, title }) {
   if (trackId) return 'id:' + trackId;
   const squash = (s) => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
   const norm = (s) => squash(String(s ?? '').replace(/[^\p{L}\p{N}\s]/gu, ''));
-  // 記号や絵文字だけの曲名は正規化すると空になり、別々の依頼が1曲に束ねられてしまう。
-  // そのときは記号を残したまま比べる
-  return 'txt:' + norm(artist) + '|' + (norm(title) || squash(title));
+  // 記号や絵文字だけの名前は正規化すると空になり、別々の依頼が1曲に束ねられてしまう。
+  // そのときは記号を残したまま比べる（曲名もアーティスト名も同じ）
+  const key = (v) => norm(v) || squash(v);
+  return 'txt:' + key(artist) + '|' + key(title);
 }
 
 /** Apple の trackId（数字だけ）。それ以外はブラウザが作った値なので、曲を特定できたとはみなさない */
@@ -154,6 +155,25 @@ async function hashIp(ip, eventCode, salt) {
   const data = new TextEncoder().encode(`${salt}|${eventCode}|${ip}`);
   const buf = await crypto.subtle.digest('SHA-256', data);
   return [...new Uint8Array(buf)].slice(0, 16).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* 回が受付中か。書き込みの SQL の WHERE に入れて、冒頭で確かめたあとに DJ が受付を閉じても
+   閉じた回へ書かない。バインドするのは回のコード1つ。 */
+const EVENT_OPEN = `EXISTS (SELECT 1 FROM events WHERE code = ? AND status = 'open')`;
+
+/* 来場者が自分の投稿を直せる・取り下げられるか（曲が DJ の確認前で、回が受付中）。
+   requests を対象にした UPDATE / DELETE の WHERE に入れ、状態を読んでから書くまでの間に
+   DJ が曲を確認したり受付を閉じたりしても書き換えない。 */
+const REQUEST_EDITABLE = `EXISTS (
+  SELECT 1 FROM songs s JOIN events e ON e.code = s.event_code
+   WHERE s.id = requests.song_id
+     AND s.status = 'pending' AND e.status = 'open'
+)`;
+
+/** 回が受付中か。書き込みが弾かれたとき、受付が閉じたせいかを見分けるのに使う。 */
+async function isEventOpen(env, code) {
+  const r = await env.DB.prepare(`SELECT ${EVENT_OPEN} AS ok`).bind(code).first();
+  return !!(r && r.ok);
 }
 
 /** 連打の元帳（post_log）に1行足せたら true。key ごとに直近 RATE_WINDOW_MIN 分の行数が
@@ -711,8 +731,7 @@ async function postRequest(request, env, cors, ctx) {
   /* 曲の作成・端末票の作成・集計を1つの batch にまとめる。曲IDをアプリ側で先に読むと、
      同じ曲の同時投稿や取り下げとの間に削除・重複作成の隙ができるため、SQL 内で曲を引く。
      冒頭で受付中を確かめたあとに DJ が受付を閉じることもあるので、書き込みの SQL でも
-     回がまだ受付中かを確かめる（閉じた回に投稿を入れない）。 */
-  const OPEN = `EXISTS (SELECT 1 FROM events WHERE code = ? AND status = 'open')`;
+     回がまだ受付中かを確かめる（閉じた回に投稿を入れない。EVENT_OPEN）。 */
   const [songIns, requestIns] = await env.DB.batch([
     env.DB.prepare(
       `INSERT INTO songs
@@ -720,7 +739,7 @@ async function postRequest(request, env, cors, ctx) {
           duration_ms, artwork, apple_url, preview_url, is_free,
           genre, release_year, explicitness, votes)
        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0
-        WHERE ${OPEN}
+        WHERE ${EVENT_OPEN}
        ON CONFLICT(event_code, dedupe_key) DO NOTHING`
     ).bind(
       ev.code, key,
@@ -743,7 +762,7 @@ async function postRequest(request, env, cors, ctx) {
     env.DB.prepare(
       `INSERT OR IGNORE INTO requests
          (song_id, event_code, from_name, message, ip_hash, device_key, edit_token)
-       SELECT id, ?, ?, ?, ?, ?, ? FROM songs WHERE event_code = ? AND dedupe_key = ? AND ${OPEN}`
+       SELECT id, ?, ?, ?, ?, ?, ? FROM songs WHERE event_code = ? AND dedupe_key = ? AND ${EVENT_OPEN}`
     ).bind(ev.code, name, message, ipHash, deviceKey, editToken, ev.code, key, ev.code),
     env.DB.prepare(
       `UPDATE songs
@@ -756,10 +775,7 @@ async function postRequest(request, env, cors, ctx) {
   const added = !!(requestIns.meta && requestIns.meta.changes > 0);
   if (!added) {
     // 弾かれたのは、送り直しか、確かめたあとに受付が閉じたか。閉じていたら受付外として返す
-    const live = await env.DB.prepare(
-      `SELECT 1 AS ok FROM events WHERE code = ? AND status = 'open'`
-    ).bind(ev.code).first();
-    if (!live) {
+    if (!(await isEventOpen(env, ev.code))) {
       return json({ error: 'closed', message: 'ただいまリクエストの受付時間外です' }, 409, cors);
     }
   }
@@ -799,19 +815,11 @@ async function postRequest(request, env, cors, ctx) {
         `UPDATE requests
             SET from_name = CASE WHEN ?1 <> '' THEN ?1 ELSE from_name END,
                 message   = CASE WHEN ?2 <> '' THEN ?2 ELSE message END
-          WHERE id = ?3
-            AND EXISTS (
-              SELECT 1 FROM songs s JOIN events e ON e.code = s.event_code
-               WHERE s.id = requests.song_id
-                 AND s.status = 'pending' AND e.status = 'open'
-            )`
+          WHERE id = ?3 AND ${REQUEST_EDITABLE}`
       ).bind(name, message, row.id).run();
       updated = !!(changed.meta && changed.meta.changes > 0);
       if (!updated) {
-        const live = await env.DB.prepare(
-          `SELECT 1 AS ok FROM events WHERE code = ? AND status = 'open'`
-        ).bind(ev.code).first();
-        if (!live) {
+        if (!(await isEventOpen(env, ev.code))) {
           return json({ error: 'closed', message: 'ただいまリクエストの受付時間外です' }, 409, cors);
         }
         locked = true;
@@ -937,12 +945,7 @@ async function patchMine(id, request, env, cors) {
   const message = clean(body.message, LIMITS.message);
   const changed = await env.DB.prepare(
     `UPDATE requests SET from_name = ?, message = ?
-      WHERE song_id = ? AND edit_token = ?
-        AND EXISTS (
-          SELECT 1 FROM songs s JOIN events e ON e.code = s.event_code
-           WHERE s.id = requests.song_id
-             AND s.status = 'pending' AND e.status = 'open'
-        )`
+      WHERE song_id = ? AND edit_token = ? AND ${REQUEST_EDITABLE}`
   ).bind(name, message, id, token).run();
   if (!changed.meta || changed.meta.changes < 1) {
     const now = await ownRequest(id, token, env);
@@ -965,12 +968,7 @@ async function deleteMine(id, request, env, cors) {
   const [removed] = await env.DB.batch([
     env.DB.prepare(
       `DELETE FROM requests
-        WHERE song_id = ? AND edit_token = ?
-          AND EXISTS (
-            SELECT 1 FROM songs s JOIN events e ON e.code = s.event_code
-             WHERE s.id = requests.song_id
-               AND s.status = 'pending' AND e.status = 'open'
-          )`
+        WHERE song_id = ? AND edit_token = ? AND ${REQUEST_EDITABLE}`
     ).bind(id, token),
     env.DB.prepare(
       `UPDATE songs SET votes = (SELECT COUNT(*) FROM requests WHERE song_id = ?) WHERE id = ?`
@@ -1021,13 +1019,15 @@ async function setLike(id, on, request, env, cors, ctx) {
     return json({ error: 'closed', message: 'この回はもう終わっています' }, 409, cors);
   }
 
-  // 数えるのは押したときだけ（取り消しは水増しにならない）
-  const ipHash = on ? await hashIp(request.headers.get('CF-Connecting-IP') || '', s.event_code, env.IP_SALT) : '';
-  if (ipHash) {
-    if (!(await takeRate(env, 'like:' + ipHash, LIKE_IP_MAX))) {
-      return json({ error: 'rate_limited', message: 'いいねが混み合っています。少し時間をおいてください' }, 429, cors);
-    }
-    if (ctx) ctx.waitUntil(prunePostLog(env).catch(() => {}));
+  // 数えるのは押したときだけ（取り消しは水増しにならない）。押し済みの曲をもう一度押しても
+  // 何も変わらないので数えない（通信のやり直しなどで、会場の Wi-Fi で分け合う枠を減らさない）
+  const already = on && !!(await env.DB.prepare(
+    `SELECT 1 AS ok FROM likes WHERE song_id = ? AND device_key = ?`
+  ).bind(id, deviceKey).first());
+  const ipHash = on && !already
+    ? await hashIp(request.headers.get('CF-Connecting-IP') || '', s.event_code, env.IP_SALT) : '';
+  if (ipHash && !(await takeRate(env, 'like:' + ipHash, LIKE_IP_MAX))) {
+    return json({ error: 'rate_limited', message: 'いいねが混み合っています。少し時間をおいてください' }, 429, cors);
   }
 
   const change = on
@@ -1045,6 +1045,10 @@ async function setLike(id, on, request, env, cors, ctx) {
 
   const n = await env.DB.prepare(`SELECT likes FROM songs WHERE id = ?`).bind(id).first();
   const likes = n ? n.likes : 0;
+
+  // 元帳の後始末は、ここまでの D1 操作が終わってから始める（postRequest と同じ。本体の書き込みと
+  // 並行させると D1 が競合してタイムアウトする）
+  if (ipHash && ctx) ctx.waitUntil(prunePostLog(env).catch(() => {}));
 
   return json({ ok: true, likes, liked: !!on && !!n }, 200, cors);
 }
@@ -1098,7 +1102,7 @@ function mineIds(url) {
 
 async function getBoard(url, env, cors) {
   const ev = await currentEvent(env);
-  if (!ev) return json({ event: null, now: null, played: [], waiting: [] }, 200, cors);
+  if (!ev) return json({ event: null, now: null, played: [], waiting: [], mineMax: BOARD_MINE_MAX }, 200, cors);
 
   const mine = mineIds(url);
   const [played, waiting, own] = await env.DB.batch([
@@ -1130,6 +1134,8 @@ async function getBoard(url, env, cors) {
     now: p[0] || null,
     played: p,
     waiting: waiting.results.concat(extra).map(shape),
+    // ?mine= で受け付ける曲 ID の数。ページはこれを見て送る数を決める（数を二重に持たない）
+    mineMax: BOARD_MINE_MAX,
   }, 200, cors);
 }
 

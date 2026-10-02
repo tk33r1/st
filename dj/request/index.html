@@ -2279,13 +2279,16 @@
        後から届いた古い応答で新しい表示を戻さないよう、最後に出したものだけを描く */
     const boardLatest = latestOnly();
     const BOARD_TIMEOUT = 10000;
-    const BOARD_MINE_MAX = 30;   // Worker の BOARD_MINE_MAX と同じ数
+    /* 自分の曲として送る ID の数は Worker が決め、/board の応答（mineMax）で知らせてくる
+       （数を二重に持たない）。知らせが届く前の最初の読み込みは、URL を長くしすぎない範囲で
+       多めに送る。受け付けきれない分は Worker が先頭（新しいもの）から数えて切る */
+    let boardMineMax = 100;
 
     /* 一覧の「まだかかっていない曲」は上位の数件だけなので、自分の曲は ID を添えて別に返してもらう
        （枠から外れても一覧から開いて直せるように）。ID は公開の値で、鍵は載せない。
        覚えている曲は前の回の分も含むので、新しい（ID の大きい）ものから送る */
     function boardPath() {
-      const ids = mine().sort((a, b) => b - a).slice(0, BOARD_MINE_MAX);
+      const ids = mine().sort((a, b) => b - a).slice(0, boardMineMax);
       return '/board' + (ids.length ? '?mine=' + ids.join(',') : '');
     }
 
@@ -2294,6 +2297,7 @@
       try {
         // 次の更新は応答を待ってから予約するので、止まった通信で更新ごと止まらないよう上限を付ける
         const d = await apiJson(boardPath(), { timeout: BOARD_TIMEOUT });
+        if (d && Number.isInteger(d.mineMax) && d.mineMax > 0) boardMineMax = d.mineMax;
         if (isLatest()) renderBoard(d);
       } catch {
         if (isLatest()) $('#fresh').textContent = '更新できません';
@@ -3174,11 +3178,13 @@
       const turn = chatTurn(text);
       chatScroll(true);
 
+      let answered = false;
       try {
         const context = await djContext();
         if (context === null) { turn.remove(); return; }
         const reply = await askMagi(turn, text, context);
         if (reply) {
+          answered = true;
           const c = conv || (conv = newConsult(text));
           // 曲が挙がっていない回答は照合するものが無いので、はじめから済ませておく
           const entry = { id: uid(), q: text, personas: readPersonas(turn), reply, picks: pickSongs(reply).length ? null : [] };
@@ -3190,6 +3196,9 @@
           showPicks(turn, verifyEntry(c.id, entry));
         }
       } finally {
+        // 届かなかった相談（受付が閉じていた・通信に失敗した）は入力欄に戻す。送る前に欄を空にして
+        // いるので、戻さないと打った文が消える。待つ間に新しく打ち始めていたら、そちらを残す
+        if (!answered && !$('#chatInput').value.trim()) setValue($('#chatInput'), text);
         chatBusy = false;
         renderConsultUI();
       }
