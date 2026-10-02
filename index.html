@@ -1931,6 +1931,8 @@
       background: var(--surface-hover);
       color: var(--text-color);
       word-break: break-word;
+      /* 入力欄の Shift+Enter で入れた改行をそのまま見せる */
+      white-space: pre-wrap;
     }
 
     .agent-personas {
@@ -2109,6 +2111,8 @@
     #agent-inputline {
       gap: 0.4rem;
       padding: 0.6rem;
+      /* 入力欄が伸びても、添付と送信のボタンは最終行の横に留める */
+      align-items: flex-end;
     }
 
     #agent-input {
@@ -2127,6 +2131,14 @@
     }
 
     #agent-input:disabled { opacity: 0.5 }
+
+    /* 1行で始め、打った量に合わせて JS（fitAgentInput）が高さを伸ばす。7行を超えたら中でスクロール */
+    #agent-input {
+      display: block;
+      resize: none;
+      overflow-y: hidden;
+      max-height: calc(1.25rem * 7 + 0.8rem + 2px);
+    }
 
     /* 次の質問の予測：空の入力欄に薄く重ね、右の › で入れる。文字は入力欄と同じ位置・大きさに揃える */
     #agent-input-wrap { position: relative; min-width: 0; display: flex }
@@ -3606,9 +3618,10 @@
           <button id="agent-attach" title="Attach an image" data-ja-title="画像を添付" data-ja-aria="画像を添付"
             aria-label="Attach an image"><svg aria-hidden="true" width="16" height="16" stroke-width="1.8"><use href="#ic-paperclip" /></svg></button>
           <div id="agent-input-wrap" class="flex-1">
-            <input type="text" id="agent-input" class="cmd-input text-sm" autocomplete="off" spellcheck="false"
+            <!-- 内容に合わせて伸び縮みする（fitAgentInput）。Enter で送信、Shift+Enter で改行 -->
+            <textarea id="agent-input" class="cmd-input text-sm" rows="1" autocomplete="off" spellcheck="false"
               maxlength="1000" placeholder="Ask Shinya Takeda AI..." data-ja-ph="武田伸也AIに質問…" data-ja-aria="MAGIにメッセージ"
-              aria-label="Message MAGI">
+              aria-label="Message MAGI"></textarea>
             <!-- 次の質問の予測。入力欄が空のときだけ薄く重ね、› で入力欄に入れる（Worker の suggest イベント） -->
             <div id="agent-suggest" hidden><span id="agent-suggest-text"></span><button type="button" id="agent-suggest-use"
                 title="Use this question" data-ja-title="この質問を入れる"><svg aria-hidden="true" width="14" height="14"
@@ -7333,11 +7346,29 @@
       if (!agentSuggestion || agentInput.disabled) return;
       agentInput.value = agentSuggestion.slice(0, 1000);
       setAgentSuggestion('');
+      fitAgentInput();
       agentInput.focus({ preventScroll: true });
       agentInput.setSelectionRange(agentInput.value.length, agentInput.value.length);
     });
     // 打ち始めたら隠し、全部消したらまた出す（予測は直前の答えに対するものなので、残しておいてよい）
     agentInput.addEventListener('input', renderAgentSuggest);
+    // 入力欄は内容に合わせて伸び縮みさせる（上限は CSS の max-height。超えたら欄の中でスクロール）。
+    // コードから値を入れたとき（予測の › ・送信後の空欄・リセット）も呼ぶ。
+    function fitAgentInput() {
+      agentInput.style.height = 'auto';
+      const border = agentInput.offsetHeight - agentInput.clientHeight; // box-sizing: border-box なので枠を足す
+      const max = parseFloat(getComputedStyle(agentInput).maxHeight) || Infinity;
+      const want = agentInput.scrollHeight + border;
+      agentInput.style.height = Math.min(want, max) + 'px';
+      agentInput.style.overflowY = want > max ? 'auto' : 'hidden';
+    }
+    agentInput.addEventListener('input', fitAgentInput);
+    // 幅が変わると折り返しも変わる（ドックの幅の変更・画面の回転）。高さの変化では呼ばないよう幅だけを見る
+    let agentInputWidth = 0;
+    new ResizeObserver(([entry]) => {
+      const w = Math.round(entry.contentRect.width);
+      if (w !== agentInputWidth) { agentInputWidth = w; fitAgentInput(); }
+    }).observe(agentInput);
     // The text box, send and attach buttons are always switched on and off together.
     const setAgentInputEnabled = (on) => {
       agentInput.disabled = agentSendBtn.disabled = attachBtn.disabled = !on;
@@ -7405,7 +7436,7 @@
       safeRemove('magi_current_title');
       agentLog.innerHTML = ''; agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
       announceAgent('');
-      setAgentInputEnabled(true); agentInput.value = '';
+      setAgentInputEnabled(true); agentInput.value = ''; fitAgentInput();
       attachments = []; attachNotice = ''; renderAttachTray();
       agentDockEl.style.removeProperty('width');
       agentInitialState(keepOpen); // also refreshes the share/export buttons
@@ -7599,7 +7630,7 @@
       const atts = attachments.slice();
       if (!text && !atts.length) return;
       setAgentSuggestion('');
-      agentInput.value = '';
+      agentInput.value = ''; fitAgentInput();
       attachments = []; renderAttachTray();
       // 送信は長辺1024の画像、履歴に残すのはサムネ。原寸を履歴に持つと
       // localStorage をすぐ食い潰すので、保存用と送信用で解像度を分ける。
@@ -7714,7 +7745,8 @@
       }
     }
     agentSendBtn.addEventListener('click', agentSend);
-    agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
+    // Enter で送信、Shift+Enter で改行（入力欄は textarea）
+    agentInput.addEventListener('keydown', (e) => { if (isImeKey(e)) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agentSend(); } });
     document.getElementById('btn-reset-agent').addEventListener('click', () => resetAgent(true));
 
     // --- リアクション（コピー / いいね / 絵文字）---
