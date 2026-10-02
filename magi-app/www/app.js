@@ -103,11 +103,29 @@ agentSuggestUse.addEventListener('click', function () {
   if (!agentSuggestion || agentInput.disabled) return;
   agentInput.value = agentSuggestion.slice(0, 1000);
   setAgentSuggestion('');
+  fitAgentInput();
   agentInput.focus({ preventScroll: true });
   agentInput.setSelectionRange(agentInput.value.length, agentInput.value.length);
 });
 // 打ち始めたら隠し、全部消したらまた出す（予測は直前の答えに対するものなので、残しておいてよい）
 agentInput.addEventListener('input', renderAgentSuggest);
+// 入力欄は内容に合わせて伸び縮みさせる（上限は CSS の max-height。超えたら欄の中でスクロール）。
+// コードから値を入れたとき（予測の › ・送信後の空欄・リセット）も呼ぶ。
+function fitAgentInput() {
+  agentInput.style.height = 'auto';
+  var border = agentInput.offsetHeight - agentInput.clientHeight; // box-sizing: border-box なので枠を足す
+  var max = parseFloat(getComputedStyle(agentInput).maxHeight) || Infinity;
+  var want = agentInput.scrollHeight + border;
+  agentInput.style.height = Math.min(want, max) + 'px';
+  agentInput.style.overflowY = want > max ? 'auto' : 'hidden';
+}
+agentInput.addEventListener('input', fitAgentInput);
+// 幅が変わると折り返しも変わる（画面の回転など）。高さの変化では呼ばないよう幅だけを見る
+var agentInputWidth = 0;
+new ResizeObserver(function (entries) {
+  var w = Math.round(entries[0].contentRect.width);
+  if (w !== agentInputWidth) { agentInputWidth = w; fitAgentInput(); }
+}).observe(agentInput);
 
 // ---- Helpers ----------------------------------------------------------------
 function esc(s) {
@@ -156,7 +174,7 @@ var AGENT_HINT = '<div class="agent-splash">'
   + '</svg>'
   + '<div class="magi-title glow">MAGI</div>'
   + '<div class="magi-sub">Multi-Agent Generative Intelligence</div>'
-  + '<div class="magi-ver">ver 3.2 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
+  + '<div class="magi-ver">ver 3.3 <button type="button" id="btn-info-agent" class="magi-info-btn" title="System & Privacy"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>'
   + '<div class="magi-nodes">' + AGENT_PERSONAS.map(function (p) { return '<button type="button" class="magi-node" data-codename="' + p.codename + '">' + p.codename.replace('-', '·') + '</button>'; }).join('') + '</div>'
   + '<div class="magi-desc hidden" aria-live="polite"></div>'
   + '</div>';
@@ -281,7 +299,7 @@ function resetAgent() {
   localStorage.removeItem('magi_current_title');
   agentLog.innerHTML = '';
   agentDegraded.classList.add('hidden'); agentDegraded.textContent = '';
-  agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = '';
+  agentInput.disabled = false; agentSendBtn.disabled = false; agentInput.value = ''; fitAgentInput();
   attachBtn.disabled = false; attachments = []; attachNotice = ''; renderAttachTray();
   setAgentSuggestion('');
   closeAgentPanels();
@@ -437,7 +455,7 @@ async function agentSend() {
   var atts = attachments.slice();
   if (!text && !atts.length) return;
   setAgentSuggestion('');
-  agentInput.value = '';
+  agentInput.value = ''; fitAgentInput();
   attachments = []; renderAttachTray();
   // 送信は長辺1024、履歴に残すのはサムネ（端末のストレージを食い潰さないため）
   var partsOf = function (key) {
@@ -811,7 +829,11 @@ function exportAgentChat() {
 
 // ---- Wire up ----------------------------------------------------------------
 agentSendBtn.addEventListener('click', agentSend);
-agentInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); agentSend(); } });
+// Enter で送信、Shift+Enter で改行（入力欄は textarea）。日本語入力の変換を確定する Enter では送らない
+agentInput.addEventListener('keydown', function (e) {
+  if (e.isComposing || e.keyCode === 229) return;
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agentSend(); }
+});
 document.getElementById('btn-reset').addEventListener('click', resetAgent);
 document.getElementById('btn-history-agent').addEventListener('click', showHistoryPanel);
 
